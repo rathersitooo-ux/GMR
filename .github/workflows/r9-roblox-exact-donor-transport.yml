@@ -1,0 +1,89 @@
+name: R9 Roblox Exact Donor Transport
+
+on:
+  push:
+    branches:
+      - work/GITHUB-ROBLOX-CODE-PLACEMENT-001-R9-XZ-TRANSPORT
+    paths:
+      - .github/workflows/r9-roblox-exact-donor-transport.yml
+
+permissions:
+  contents: write
+
+jobs:
+  exact-donor-transport:
+    if: github.event.head_commit.message == '[GITHUB-ROBLOX-CODE-PLACEMENT-001 R9] add temporary exact donor executor'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout R9 branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and verify exact formal Roblox raw
+        shell: bash
+        run: |
+          set -euo pipefail
+          donor='adc438d59dc0579fac49fe543ffa5a2a1c11471a'
+          donor_branch='work/GITHUB-ROBLOX-CODE-PLACEMENT-001'
+          target='roblox/GAMEROAD.rbxlx'
+          expected_b64_size='136000'
+          expected_size='10245508'
+          expected_sha256='b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51'
+          expected_blob='093a719cf1aaf18b838ee6a98102856abaadd008'
+
+          test "$(git rev-parse HEAD)" = "${GITHUB_SHA}"
+          git fetch --no-tags origin "refs/heads/${donor_branch}:refs/remotes/origin/gameroad-r6-donor"
+          git cat-file -e "${donor}^{commit}"
+
+          tmp="$(mktemp -d)"
+          trap 'rm -rf "${tmp}"' EXIT
+          : > "${tmp}/payload.b64"
+          for part in 00 01 02 03 04 05 06; do
+            git show "${donor}:.gameroad-transport/r6-part-${part}.b64" >> "${tmp}/payload.b64"
+          done
+
+          actual_b64_size="$(wc -c < "${tmp}/payload.b64" | tr -d ' ')"
+          test "${actual_b64_size}" = "${expected_b64_size}"
+          base64 --decode "${tmp}/payload.b64" > "${tmp}/payload.xz"
+          xz --test "${tmp}/payload.xz"
+
+          mkdir -p roblox
+          xz --decompress --stdout "${tmp}/payload.xz" > "${target}"
+
+          actual_size="$(wc -c < "${target}" | tr -d ' ')"
+          test "${actual_size}" = "${expected_size}"
+
+          actual_sha256="$(sha256sum "${target}" | awk '{print $1}')"
+          test "${actual_sha256}" = "${expected_sha256}"
+
+          actual_blob="$(git hash-object "${target}")"
+          test "${actual_blob}" = "${expected_blob}"
+
+          python3 - "${target}" <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+
+          path = sys.argv[1]
+          root = ET.parse(path).getroot()
+          tag = root.tag.rsplit('}', 1)[-1]
+          if tag != 'roblox':
+              raise SystemExit(f'expected <roblox> root, got <{tag}>')
+          if not root.attrib.get('version'):
+              raise SystemExit('roblox root missing version attribute')
+          print(f'exact Roblox raw verified: root={tag} version={root.attrib["version"]}')
+          PY
+
+      - name: Commit only verified formal raw
+        shell: bash
+        run: |
+          set -euo pipefail
+          target='roblox/GAMEROAD.rbxlx'
+          git config user.name 'gameroad-r9-exact-transport'
+          git config user.email 'gameroad-r9-exact-transport@users.noreply.github.com'
+          git add -- "${target}"
+          staged="$(git diff --cached --name-only)"
+          test "${staged}" = "${target}"
+          git commit -m '[GITHUB-ROBLOX-CODE-PLACEMENT-001 R9] place exact formal Roblox raw'
+          git push origin "HEAD:${GITHUB_REF_NAME}"

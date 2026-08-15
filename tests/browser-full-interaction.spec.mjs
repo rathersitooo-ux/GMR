@@ -71,6 +71,12 @@ async function bootCurrentBrowser(page) {
   await expect(page.locator('section[data-screen="home"]')).toBeVisible();
 }
 
+function visibleHomeControl(page, target) {
+  return page
+    .locator(`[data-go="${target}"]:visible, [data-home-target="${target}"]:visible`)
+    .first();
+}
+
 test('captures success-state screenshots for current pointer navigation', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
@@ -83,7 +89,7 @@ test('captures success-state screenshots for current pointer navigation', async 
     await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(500);
 
-    const control = page.locator(`[data-go="${target}"]:visible`).first();
+    const control = visibleHomeControl(page, target);
     if ((await control.count()) === 0) {
       unreachableTargets.push(target);
       continue;
@@ -100,10 +106,10 @@ test('captures success-state screenshots for current pointer navigation', async 
   if (unreachableTargets.length > 0) {
     testInfo.annotations.push({
       type: 'not-yet-covered',
-      description: `No visible root data-go control for: ${unreachableTargets.join(', ')}. This R1 evidence does not claim full interaction coverage.`,
+      description: `No visible root control for: ${unreachableTargets.join(', ')}. This R1 evidence does not claim full interaction coverage.`,
     });
   }
 
-  expect(pointerTransitions, 'at least one real visible data-go pointer transition').toBeGreaterThan(0);
+  expect(pointerTransitions, 'at least one real visible Home pointer transition').toBeGreaterThan(0);
   runtime.assertClean(testInfo);
 });

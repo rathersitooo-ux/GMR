@@ -1,4 +1,4 @@
-name: Diagnose Roblox transport partial XZ output
+name: Diagnose confirmed Drive Roblox download
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  diagnose-xz-output:
+  diagnose-drive-confirm:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout work branch
@@ -20,34 +20,110 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
-      - name: Measure partial XZ output against exact Drive identity
+      - name: Resolve Google Drive confirmation flow read-only
         shell: bash
         env:
+          DRIVE_FILE_ID: 1YUO7GvwPBaVu6Umgp7IJcKrzDfjOBZ5C
           EXPECTED_SIZE: "10245508"
           EXPECTED_SHA256: b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51
         run: |
           set -euo pipefail
           test "$GITHUB_REF_NAME" = "work/GITHUB-ROBLOX-CODE-PLACEMENT-001"
-          python - <<'PY'
-          from pathlib import Path
-          import base64
-          cat = b"".join(b"".join(Path(f".github/import/roblox-baseline.part{i:03d}.b64").read_bytes().split()) for i in range(10))
-          usable = cat[: (len(cat) // 4) * 4]
-          Path("/tmp/roblox-prefix.xz").write_bytes(base64.b64decode(usable, validate=True))
-          print(f"transport_len={len(cat)} usable_base64_len={len(usable)} dropped_tail={cat[len(usable):]!r}")
-          PY
+          cookie="$RUNNER_TEMP/drive.cookies"
+          first="$RUNNER_TEMP/drive-first"
+          first_headers="$RUNNER_TEMP/drive-first.headers"
+          direct="$RUNNER_TEMP/drive-direct"
+          direct_headers="$RUNNER_TEMP/drive-direct.headers"
+          resolved="$RUNNER_TEMP/drive-resolved"
+          resolved_headers="$RUNNER_TEMP/drive-resolved.headers"
 
-          set +e
-          xz --decompress --stdout /tmp/roblox-prefix.xz > /tmp/GAMEROAD.partial.rbxlx 2>/tmp/xz.err
-          xz_rc=$?
-          set -e
-          cat /tmp/xz.err || true
-          raw_size="$(wc -c < /tmp/GAMEROAD.partial.rbxlx | tr -d ' ')"
-          raw_sha="$(sha256sum /tmp/GAMEROAD.partial.rbxlx | awk '{print $1}')"
-          echo "xz_rc=$xz_rc raw_size=$raw_size raw_sha256=$raw_sha"
-          if [ "$raw_size" = "$EXPECTED_SIZE" ] && [ "$raw_sha" = "$EXPECTED_SHA256" ]; then
-            echo "RAW_PAYLOAD_EXACT_MATCH_DESPITE_TRUNCATED_XZ_TAIL"
+          verify_candidate() {
+            local label="$1" file="$2"
+            local size sha
+            size="$(wc -c < "$file" | tr -d ' ')"
+            sha="$(sha256sum "$file" | awk '{print $1}')"
+            echo "$label size=$size sha256=$sha"
+            if [ "$size" = "$EXPECTED_SIZE" ] && [ "$sha" = "$EXPECTED_SHA256" ]; then
+              echo "$label EXACT_DRIVE_MATCH"
+              return 0
+            fi
+            return 1
+          }
+
+          # Candidate A: current Drive large-file download endpoint with explicit confirm.
+          curl --fail --location --silent --show-error \
+            --cookie-jar "$cookie" --cookie "$cookie" \
+            --dump-header "$direct_headers" \
+            --output "$direct" \
+            "https://drive.usercontent.google.com/download?id=${DRIVE_FILE_ID}&export=download&confirm=t" || true
+          sed -n '1,20p' "$direct_headers" || true
+          if verify_candidate usercontent-confirm "$direct"; then
             exit 0
           fi
-          echo "RAW_PAYLOAD_NOT_EXACT" >&2
-          exit 44
+
+          # Candidate B: fetch the interstitial, parse its form and hidden fields exactly, then submit it.
+          : > "$cookie"
+          curl --fail --location --silent --show-error \
+            --cookie-jar "$cookie" --cookie "$cookie" \
+            --dump-header "$first_headers" \
+            --output "$first" \
+            "https://drive.google.com/uc?export=download&id=${DRIVE_FILE_ID}" || true
+          sed -n '1,20p' "$first_headers" || true
+          verify_candidate first-response "$first" && exit 0
+
+          python - "$first" "$RUNNER_TEMP/drive-form-url.txt" <<'PY'
+          import html
+          import sys
+          import urllib.parse
+          from html.parser import HTMLParser
+
+          source, out = sys.argv[1:]
+          class FormParser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.action = None
+                  self.in_form = False
+                  self.fields = []
+              def handle_starttag(self, tag, attrs):
+                  attrs = dict(attrs)
+                  if tag == "form" and self.action is None:
+                      self.action = attrs.get("action")
+                      self.in_form = True
+                  elif tag == "input" and self.in_form:
+                      name = attrs.get("name")
+                      if name:
+                          self.fields.append((name, attrs.get("value", "")))
+              def handle_endtag(self, tag):
+                  if tag == "form" and self.in_form:
+                      self.in_form = False
+
+          raw = open(source, "rb").read().decode("utf-8", "replace")
+          p = FormParser(); p.feed(raw)
+          print("interstitial_head=", repr(raw[:500]))
+          print("form_action=", p.action)
+          print("form_fields=", [(k, "<redacted>" if k.lower() in {"uuid"} else v) for k,v in p.fields])
+          if not p.action:
+              raise SystemExit(61)
+          action = urllib.parse.urljoin("https://drive.google.com/", html.unescape(p.action))
+          url = action + ("&" if "?" in action else "?") + urllib.parse.urlencode(p.fields)
+          open(out, "w", encoding="utf-8").write(url)
+          PY
+
+          resolved_url="$(cat "$RUNNER_TEMP/drive-form-url.txt")"
+          echo "resolved_origin=$(python - "$resolved_url" <<'PY'
+          import sys, urllib.parse
+          u=urllib.parse.urlsplit(sys.argv[1]); print(f'{u.scheme}://{u.netloc}{u.path}')
+          PY
+          )"
+          curl --fail --location --silent --show-error \
+            --cookie-jar "$cookie" --cookie "$cookie" \
+            --dump-header "$resolved_headers" \
+            --output "$resolved" \
+            "$resolved_url" || true
+          sed -n '1,20p' "$resolved_headers" || true
+          if verify_candidate resolved-form "$resolved"; then
+            exit 0
+          fi
+
+          echo "No confirmation-flow candidate matched the current Drive byte identity" >&2
+          exit 62

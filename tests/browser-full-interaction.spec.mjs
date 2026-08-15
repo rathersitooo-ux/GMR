@@ -238,7 +238,7 @@ async function playVisibleTwoPlayerToResult(page, testInfo, evidencePrefix) {
   expect(roundsSubmitted, 'at least one visible plan was submitted').toBeGreaterThan(0);
   expect(presentationAdvances, 'at least one visible Battle result advance was used').toBeGreaterThan(0);
   const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';
-  expect(roundsText, 'Result exposes a real round count').toMatch(/\d+巡/);
+  expect(roundsText, 'Result exposes a real round count').toMatch(/\d+ラウンド/);
   await expect(result.locator('#resultRanking .rankLine')).toHaveCount(2);
   await expect(result.locator('#resultMode')).toHaveText('二人');
   await attachStateScreenshot(page, testInfo, `${evidencePrefix}-result-visible`);

@@ -62,6 +62,15 @@ async function battleSnapshot(page) {
     aria: node.getAttribute('aria-label'),
     text: (node.textContent || '').replace(/\s+/g, ' ').trim(),
   })));
+  const enabledButtons = await battle.locator('button:visible:not(:disabled)').evaluateAll((nodes) => nodes.slice(0, 60).map((node) => ({
+    id: node.id || null,
+    text: (node.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 120),
+    aria: node.getAttribute('aria-label'),
+    className: typeof node.className === 'string' ? node.className : null,
+    data: Object.fromEntries([...node.attributes]
+      .filter((attribute) => attribute.name.startsWith('data-'))
+      .map((attribute) => [attribute.name, attribute.value])),
+  })));
   return {
     visibleScreens,
     text: ((await battle.textContent()) || '').replace(/\s+/g, ' ').trim().slice(0, 2500),
@@ -72,10 +81,11 @@ async function battleSnapshot(page) {
     readyEnabled: await battle.locator('#readyPlan').isEnabled().catch(() => false),
     visibleHand,
     enabledPositions,
+    enabledButtons,
   };
 }
 
-test('R3 staged diagnostic: visible hand planning and first ready attempt', async ({ page }, testInfo) => {
+test('R3 staged diagnostic: visible hand planning and attack-phase controls', async ({ page }, testInfo) => {
   await boot(page);
   await buildAndSaveLegal40(page);
   await page.reload({ waitUntil: 'domcontentloaded' });
@@ -96,7 +106,6 @@ test('R3 staged diagnostic: visible hand planning and first ready attempt', asyn
     before: await battleSnapshot(page),
     afterFirstCard: null,
     afterSecondCard: null,
-    afterPosition: null,
     afterReady: null,
   };
 
@@ -113,25 +122,17 @@ test('R3 staged diagnostic: visible hand planning and first ready attempt', asyn
   await page.waitForTimeout(250);
   diagnostic.afterSecondCard = await battleSnapshot(page);
 
-  const enabledPosition = battle.locator('button[data-pos]:visible:not(:disabled)').first();
-  if ((await enabledPosition.count()) > 0) {
-    await enabledPosition.click();
-    await page.waitForTimeout(250);
-    diagnostic.afterPosition = await battleSnapshot(page);
-  }
-
   const ready = battle.locator('#readyPlan:visible');
-  if ((await ready.count()) > 0 && await ready.isEnabled()) {
-    await ready.click();
-    await page.waitForTimeout(2_200);
-    diagnostic.afterReady = await battleSnapshot(page);
-  }
+  await expect(ready).toBeEnabled();
+  await ready.click();
+  await page.waitForTimeout(2_000);
+  diagnostic.afterReady = await battleSnapshot(page);
 
-  await testInfo.attach(`${testInfo.project.name}-r3-hand-plan-stages.json`, {
+  await testInfo.attach(`${testInfo.project.name}-r3-attack-controls.json`, {
     body: Buffer.from(JSON.stringify(diagnostic, null, 2)),
     contentType: 'application/json',
   });
-  await testInfo.attach(`${testInfo.project.name}-r3-hand-plan-final.png`, {
+  await testInfo.attach(`${testInfo.project.name}-r3-attack-controls.png`, {
     body: await page.screenshot({ fullPage: true, animations: 'disabled' }),
     contentType: 'image/png',
   });

@@ -208,3 +208,68 @@ test('persists a legal 40-card deck across save and page reload through visible 
 
   runtime.assertClean(testInfo);
 });
+
+async function inventoryElements(locator) {
+  return locator.evaluateAll((nodes) => nodes.map((node) => ({
+    tag: node.tagName.toLowerCase(),
+    id: node.id || null,
+    text: (node.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 240),
+    visible: Boolean(node.getClientRects().length) && getComputedStyle(node).visibility !== 'hidden',
+    disabled: 'disabled' in node ? Boolean(node.disabled) : false,
+    value: 'value' in node ? node.value : null,
+    ariaLabel: node.getAttribute('aria-label'),
+    data: Object.fromEntries([...node.attributes]
+      .filter((attribute) => attribute.name.startsWith('data-'))
+      .map((attribute) => [attribute.name, attribute.value])),
+  })));
+}
+
+test('R3 diagnostic: inventories current Setup Battle Result visible contracts', async ({ page }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+
+  const setupControl = visibleHomeControl(page, 'setup');
+  await expect(setupControl).toBeVisible();
+  await setupControl.click();
+  const setup = page.locator('section[data-screen="setup"]');
+  await expect(setup).toBeVisible();
+  await page.waitForTimeout(250);
+
+  const diagnostic = {
+    setupBeforeStart: {
+      text: (await setup.textContent())?.replace(/\s+/g, ' ').trim().slice(0, 3000),
+      buttons: await inventoryElements(setup.locator('button')),
+      selects: await inventoryElements(setup.locator('select')),
+      inputs: await inventoryElements(setup.locator('input')),
+    },
+    activeScreenAfterStartAttempt: null,
+    battleAfterStartAttempt: null,
+    resultContract: {
+      buttons: await inventoryElements(page.locator('section[data-screen="result"] button')),
+    },
+  };
+
+  const startMatch = setup.locator('#startMatch:visible');
+  if ((await startMatch.count()) > 0 && await startMatch.isEnabled()) {
+    await startMatch.click();
+    await page.waitForTimeout(500);
+    diagnostic.activeScreenAfterStartAttempt = await page.locator('section[data-screen]:visible').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-screen')));
+    const battle = page.locator('section[data-screen="battle"]');
+    diagnostic.battleAfterStartAttempt = {
+      visible: await battle.isVisible().catch(() => false),
+      text: (await battle.textContent())?.replace(/\s+/g, ' ').trim().slice(0, 4000),
+      buttons: await inventoryElements(battle.locator('button')),
+      selects: await inventoryElements(battle.locator('select')),
+      inputs: await inventoryElements(battle.locator('input')),
+    };
+    await attachStateScreenshot(page, testInfo, 'r3-after-start-attempt');
+  } else {
+    await attachStateScreenshot(page, testInfo, 'r3-setup-start-unavailable');
+  }
+
+  await testInfo.attach(`${testInfo.project.name}-r3-setup-battle-result-inventory.json`, {
+    body: Buffer.from(JSON.stringify(diagnostic, null, 2)),
+    contentType: 'application/json',
+  });
+  runtime.assertClean(testInfo);
+});

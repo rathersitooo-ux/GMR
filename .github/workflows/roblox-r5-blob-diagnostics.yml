@@ -1,4 +1,4 @@
-name: Roblox R5 blob diagnostics
+name: Roblox R5 Drive fetch probe
 
 on:
   push:
@@ -11,33 +11,35 @@ permissions:
   contents: read
 
 jobs:
-  diagnose:
+  probe:
     runs-on: ubuntu-latest
     steps:
-      - name: Hash orphan transport blob by 4096-byte chunks
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Probe current Drive raw without changing sharing
+        shell: bash
         run: |
-          python3 - <<'PY'
-          import base64, hashlib, json, os, urllib.request
-
-          repo = os.environ['GITHUB_REPOSITORY']
-          token = os.environ['GH_TOKEN']
-          blob_sha = '6726cc2f9d4dbd4282259819391b00616ec9ff1a'
-          req = urllib.request.Request(
-              f'https://api.github.com/repos/{repo}/git/blobs/{blob_sha}',
-              headers={
-                  'Authorization': f'Bearer {token}',
-                  'Accept': 'application/vnd.github+json',
-                  'X-GitHub-Api-Version': '2022-11-28',
-              },
+          set -u
+          EXPECT_SIZE=10245508
+          EXPECT_SHA=b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51
+          ID=1YUO7GvwPBaVu6Umgp7IJcKrzDfjOBZ5C
+          urls=(
+            "https://drive.usercontent.google.com/download?id=${ID}&export=download&confirm=t"
+            "https://drive.google.com/uc?export=download&id=${ID}&confirm=t"
           )
-          with urllib.request.urlopen(req) as response:
-              obj = json.load(response)
-          data = base64.b64decode(obj['content'])
-          print(f'SIZE {len(data)}')
-          print(f'SHA256 {hashlib.sha256(data).hexdigest()}')
-          for index, start in enumerate(range(0, len(data), 4096)):
-              chunk = data[start:start + 4096]
-              print(f'CHUNK {index} OFFSET {start} SIZE {len(chunk)} SHA256 {hashlib.sha256(chunk).hexdigest()}')
-          PY
+          for i in 0 1; do
+            rm -f /tmp/gameroad.raw
+            echo "PROBE_URL_INDEX $i"
+            if curl -L --fail --silent --show-error --max-time 90 "${urls[$i]}" -o /tmp/gameroad.raw; then
+              size=$(stat -c%s /tmp/gameroad.raw)
+              sha=$(sha256sum /tmp/gameroad.raw | awk '{print $1}')
+              prefix=$(head -c 16 /tmp/gameroad.raw | od -An -tx1 | tr -d ' \n')
+              echo "FETCH_RESULT index=$i size=$size sha256=$sha prefix_hex=$prefix"
+              if [ "$size" = "$EXPECT_SIZE" ] && [ "$sha" = "$EXPECT_SHA" ]; then
+                echo "DIRECT_DRIVE_FETCH_EXACT_MATCH"
+                exit 0
+              fi
+            else
+              echo "FETCH_FAILED index=$i"
+            fi
+          done
+          echo "DIRECT_DRIVE_FETCH_NO_EXACT_MATCH"
+          exit 1

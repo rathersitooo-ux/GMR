@@ -444,3 +444,160 @@ test('secret round operations are deterministic and do not mutate caller inputs'
   assert.ok(Object.isFrozen(finalA.snapshot.selections));
   assert.ok(Object.isFrozen(finalA.snapshot.cards));
 });
+
+
+const {
+  PURSUIT_SECRET_ROUND_SNAPSHOT_SCHEMA,
+  exportPursuitSecretRoundSnapshot,
+  restorePursuitSecretRoundSnapshot,
+} = await import('../browser/pursuit-triad-core.mjs');
+
+test('authority-private snapshot round-trips partial commitment state without secret selection fields', async () => {
+  const a = secretReveal('a', 'club', 4);
+  let round = createPursuitSecretRound({
+    roundId: 'round-42',
+    revision: 7,
+    participantIds: ['b', 'a'],
+  });
+  round = commitPursuitSelection(round, {
+    roundId: 'round-42',
+    revision: 7,
+    playerId: 'a',
+    commitment: await createPursuitCommitment(a, sha256),
+  });
+
+  const snapshot = exportPursuitSecretRoundSnapshot(round);
+  assert.equal(snapshot.schema, PURSUIT_SECRET_ROUND_SNAPSHOT_SCHEMA);
+  assert.notStrictEqual(snapshot.round, round);
+  assert.notStrictEqual(snapshot.round.participantIds, round.participantIds);
+  assert.notStrictEqual(snapshot.round.commitments, round.commitments);
+  assert.deepEqual(snapshot.round, round);
+
+  const restored = restorePursuitSecretRoundSnapshot(snapshot, {
+    roundId: 'round-42',
+    revision: 7,
+    participantIds: ['b', 'a'],
+  });
+  assert.deepEqual(restored, round);
+  assert.deepEqual(getPursuitSecretRoundPublicState(restored), getPursuitSecretRoundPublicState(round));
+
+  const persisted = JSON.stringify(snapshot);
+  for (const forbiddenKey of ['"hand"', '"cardId"', '"value"', '"mode"', '"nonce"']) {
+    assert.equal(persisted.includes(forbiddenKey), false, `persisted secret field key: ${forbiddenKey}`);
+  }
+});
+
+test('fully committed snapshot restores the reveal barrier and finalizes with original authoritative reveals', async () => {
+  const reveals = [
+    secretReveal('b', 'diamond', 6),
+    secretReveal('a', 'club', 2, { mode: PURSUIT_MODE_FINISHER }),
+  ];
+  const round = await fullyCommittedRound(reveals);
+  const restored = restorePursuitSecretRoundSnapshot(
+    exportPursuitSecretRoundSnapshot(round),
+    { roundId: 'round-42', revision: 7, participantIds: ['a', 'b'] },
+  );
+
+  assert.equal(getPursuitSecretRoundPublicState(restored).phase, 'reveal-ready');
+  const final = await finalizePursuitSecretRound(restored, [reveals[1], reveals[0]], sha256);
+  assert.deepEqual(resolvePursuitRound(final.snapshot).outcomes, [
+    { playerId: 'a', hand: 'club', won: true, value: 2, mode: 'finisher', battleAddend: 4, disposition: 'battle' },
+    { playerId: 'b', hand: 'diamond', won: false, value: 6, mode: 'normal', battleAddend: 0, disposition: 'subdeck' },
+  ]);
+});
+
+test('closed snapshot restores only as closed and cannot replay finalization', async () => {
+  const reveals = [
+    secretReveal('a', 'club', 3),
+    secretReveal('b', 'diamond', 5),
+  ];
+  const committed = await fullyCommittedRound(reveals);
+  const final = await finalizePursuitSecretRound(committed, reveals, sha256);
+  const restored = restorePursuitSecretRoundSnapshot(
+    exportPursuitSecretRoundSnapshot(final.round),
+    { roundId: 'round-42', revision: 7, participantIds: ['a', 'b'] },
+  );
+
+  assert.equal(getPursuitSecretRoundPublicState(restored).phase, 'closed');
+  await assert.rejects(() => finalizePursuitSecretRound(restored, reveals, sha256), /already closed/);
+});
+
+test('snapshot restore fails closed on schema, shape, identity, canonical-state, or participant mismatch', async () => {
+  const reveals = [
+    secretReveal('a', 'club', 1),
+    secretReveal('b', 'diamond', 2),
+  ];
+  const round = await fullyCommittedRound(reveals);
+  const snapshot = exportPursuitSecretRoundSnapshot(round);
+  const expected = { roundId: 'round-42', revision: 7, participantIds: ['a', 'b'] };
+
+  assert.throws(
+    () => restorePursuitSecretRoundSnapshot({ ...snapshot, schema: 'future' }, expected),
+    /snapshot schema/,
+  );
+  assert.throws(
+    () => restorePursuitSecretRoundSnapshot({ ...snapshot, extra: true }, expected),
+    /unsupported or missing fields/,
+  );
+  assert.throws(
+    () => restorePursuitSecretRoundSnapshot({ ...snapshot, round: { ...snapshot.round, extra: true } }, expected),
+    /unsupported or missing fields/,
+  );
+  assert.throws(
+    () => restorePursuitSecretRoundSnapshot(snapshot, { ...expected, roundId: 'other-round' }),
+    /roundId/,
+  );
+  assert.throws(
+    () => restorePursuitSecretRoundSnapshot(snapshot, { ...expected, revision: 8 }),
+    /revision/,
+  );
+  assert.throws(
+    () => restorePursuitSecretRoundSnapshot(snapshot, { ...expected, participantIds: ['a', 'c'] }),
+    /participantIds/,
+  );
+  assert.throws(
+    () => restorePursuitSecretRoundSnapshot({
+      ...snapshot,
+      round: { ...snapshot.round, participantIds: ['b', 'a'] },
+    }, expected),
+    /canonical sorted order/,
+  );
+  assert.throws(
+    () => restorePursuitSecretRoundSnapshot({
+      ...snapshot,
+      round: { ...snapshot.round, closed: true, commitments: [snapshot.round.commitments[0]] },
+    }, expected),
+    /closed secret round/,
+  );
+});
+
+test('restored round is deeply frozen and detached from mutable persistence input', async () => {
+  const a = secretReveal('a', 'club', 2);
+  let round = createPursuitSecretRound({
+    roundId: 'round-42',
+    revision: 7,
+    participantIds: ['a', 'b'],
+  });
+  round = commitPursuitSelection(round, {
+    roundId: 'round-42',
+    revision: 7,
+    playerId: 'a',
+    commitment: await createPursuitCommitment(a, sha256),
+  });
+
+  const mutableSnapshot = JSON.parse(JSON.stringify(exportPursuitSecretRoundSnapshot(round)));
+  const restored = restorePursuitSecretRoundSnapshot(mutableSnapshot, {
+    roundId: 'round-42',
+    revision: 7,
+    participantIds: ['a', 'b'],
+  });
+  const before = JSON.stringify(restored);
+
+  mutableSnapshot.round.participantIds[0] = 'tampered';
+  mutableSnapshot.round.commitments[0].commitment = 'tampered';
+  assert.equal(JSON.stringify(restored), before);
+  assert.ok(Object.isFrozen(restored));
+  assert.ok(Object.isFrozen(restored.participantIds));
+  assert.ok(Object.isFrozen(restored.commitments));
+  assert.ok(Object.isFrozen(restored.commitments[0]));
+});

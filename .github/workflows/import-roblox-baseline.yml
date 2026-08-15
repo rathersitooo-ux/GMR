@@ -21,7 +21,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Download exact Drive Roblox place and verify bytes
+      - name: Reconstruct and verify exact CURRENT Roblox place
         shell: bash
         env:
           DRIVE_FILE_ID: 1YUO7GvwPBaVu6Umgp7IJcKrzDfjOBZ5C
@@ -32,33 +32,27 @@ jobs:
           test "$GITHUB_REF_NAME" = "work/GITHUB-ROBLOX-CODE-PLACEMENT-001"
           test ! -e roblox/GAMEROAD.rbxlx
 
-          tmp="$RUNNER_TEMP/GAMEROAD.rbxlx"
-          rm -f "$tmp"
-
-          urls=(
-            "https://drive.usercontent.google.com/download?id=${DRIVE_FILE_ID}&export=download&confirm=t"
-            "https://drive.google.com/uc?export=download&confirm=t&id=${DRIVE_FILE_ID}"
-          )
-
-          matched=0
-          for url in "${urls[@]}"; do
-            rm -f "$tmp"
-            if ! curl --fail --location --retry 3 --retry-delay 2 --retry-all-errors --silent --show-error --user-agent "Mozilla/5.0 GAMEROAD-GitHub-Import" "$url" --output "$tmp"; then
-              continue
-            fi
-            size="$(wc -c < "$tmp" | tr -d ' ')"
-            sha="$(sha256sum "$tmp" | awk '{print $1}')"
-            echo "download candidate size=$size sha256=$sha"
-            if [ "$size" = "$EXPECTED_SIZE" ] && [ "$sha" = "$EXPECTED_SHA256" ]; then
-              matched=1
-              break
-            fi
+          parts=()
+          for i in $(seq -w 0 9); do
+            p=".github/import/roblox-baseline.part00${i}.b64"
+            test -f "$p"
+            parts+=("$p")
           done
+          test "${#parts[@]}" -eq 10
+          test "$(find .github/import -maxdepth 1 -type f -name 'roblox-baseline.part*.b64' | wc -l | tr -d ' ')" = "10"
 
-          if [ "$matched" -ne 1 ]; then
-            echo "Drive download did not match the exact CURRENT Roblox bytes." >&2
-            exit 41
-          fi
+          packed="$RUNNER_TEMP/roblox-baseline.xz"
+          tmp="$RUNNER_TEMP/GAMEROAD.rbxlx"
+          rm -f "$packed" "$tmp"
+
+          cat "${parts[@]}" | tr -d '\r\n' | base64 --decode > "$packed"
+          xz --test "$packed"
+          xz --decompress --stdout "$packed" > "$tmp"
+
+          raw_size="$(wc -c < "$tmp" | tr -d ' ')"
+          raw_sha="$(sha256sum "$tmp" | awk '{print $1}')"
+          test "$raw_size" = "$EXPECTED_SIZE"
+          test "$raw_sha" = "$EXPECTED_SHA256"
 
           python - "$tmp" <<'PY'
           import sys, xml.etree.ElementTree as ET
@@ -87,31 +81,89 @@ jobs:
           mkdir -p roblox
           mv "$tmp" roblox/GAMEROAD.rbxlx
 
-          final_size="$(wc -c < roblox/GAMEROAD.rbxlx | tr -d ' ')"
-          final_sha="$(sha256sum roblox/GAMEROAD.rbxlx | awk '{print $1}')"
-          test "$final_size" = "$EXPECTED_SIZE"
-          test "$final_sha" = "$EXPECTED_SHA256"
+          working_size="$(wc -c < roblox/GAMEROAD.rbxlx | tr -d ' ')"
+          working_sha="$(sha256sum roblox/GAMEROAD.rbxlx | awk '{print $1}')"
+          test "$working_size" = "$EXPECTED_SIZE"
+          test "$working_sha" = "$EXPECTED_SHA256"
 
           {
-            echo "### Exact Roblox import verification"
-            echo "- size: $final_size"
-            echo "- sha256: $final_sha"
+            echo "### Exact Roblox reconstruction verification"
             echo "- source Drive file: $DRIVE_FILE_ID"
+            echo "- reconstructed size: $working_size"
+            echo "- reconstructed sha256: $working_sha"
             echo "- XML inventory: ModuleScript=33 Script=9 LocalScript=4 RemoteEvent=64 RemoteFunction=18"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Commit exact Roblox bytes to this work branch
+      - name: Stage exact bytes and remove one-shot transport
         shell: bash
+        env:
+          EXPECTED_SIZE: "10245508"
+          EXPECTED_SHA256: b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
           git add -- roblox/GAMEROAD.rbxlx
-          test -n "$(git diff --cached --name-only -- roblox/GAMEROAD.rbxlx)"
-          git commit -m "[GITHUB-ROBLOX-CODE-PLACEMENT-001] import exact Drive Roblox baseline"
+          git rm -- .github/import/roblox-baseline.part000.b64 \
+                    .github/import/roblox-baseline.part001.b64 \
+                    .github/import/roblox-baseline.part002.b64 \
+                    .github/import/roblox-baseline.part003.b64 \
+                    .github/import/roblox-baseline.part004.b64 \
+                    .github/import/roblox-baseline.part005.b64 \
+                    .github/import/roblox-baseline.part006.b64 \
+                    .github/import/roblox-baseline.part007.b64 \
+                    .github/import/roblox-baseline.part008.b64 \
+                    .github/import/roblox-baseline.part009.b64 \
+                    .github/workflows/import-roblox-baseline.yml
+
+          staged_size="$(git show :roblox/GAMEROAD.rbxlx | wc -c | tr -d ' ')"
+          staged_sha="$(git show :roblox/GAMEROAD.rbxlx | sha256sum | awk '{print $1}')"
+          test "$staged_size" = "$EXPECTED_SIZE"
+          test "$staged_sha" = "$EXPECTED_SHA256"
+
+          git check-attr text eol -- roblox/GAMEROAD.rbxlx | tee "$RUNNER_TEMP/rbxlx-attrs.txt"
+          git diff --cached --name-status > "$RUNNER_TEMP/staged.txt"
+          cat "$RUNNER_TEMP/staged.txt"
+
+          python - "$RUNNER_TEMP/staged.txt" <<'PY'
+          import sys
+          rows = []
+          with open(sys.argv[1], encoding="utf-8") as f:
+              for line in f:
+                  line = line.rstrip("\n")
+                  if not line:
+                      continue
+                  status, path = line.split("\t", 1)
+                  rows.append((status, path))
+          expected = {("A", "roblox/GAMEROAD.rbxlx"), ("D", ".github/workflows/import-roblox-baseline.yml")}
+          expected |= {("D", f".github/import/roblox-baseline.part{i:03d}.b64") for i in range(10)}
+          if set(rows) != expected or len(rows) != len(expected):
+              raise SystemExit(f"unexpected staged diff: {rows}")
+          print("staged path audit OK", len(rows))
+          PY
+
+          {
+            echo "- staged size: $staged_size"
+            echo "- staged sha256: $staged_sha"
+            echo "- staged paths: 12 (1 add + 11 one-shot removals)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          git commit -m "[GITHUB-ROBLOX-CODE-PLACEMENT-001] import exact Roblox baseline and remove transport"
+
+          committed_size="$(git show HEAD:roblox/GAMEROAD.rbxlx | wc -c | tr -d ' ')"
+          committed_sha="$(git show HEAD:roblox/GAMEROAD.rbxlx | sha256sum | awk '{print $1}')"
+          test "$committed_size" = "$EXPECTED_SIZE"
+          test "$committed_sha" = "$EXPECTED_SHA256"
+          test ! -e .github/workflows/import-roblox-baseline.yml
+          test "$(find .github/import -maxdepth 1 -type f -name 'roblox-baseline.part*.b64' 2>/dev/null | wc -l | tr -d ' ')" = "0"
+
           commit_sha="$(git rev-parse HEAD)"
           git push origin "HEAD:${GITHUB_REF_NAME}"
           {
+            echo "- committed size: $committed_size"
+            echo "- committed sha256: $committed_sha"
             echo "- roblox commit: $commit_sha"
             echo "- branch: $GITHUB_REF_NAME"
+            echo "- one-shot transport/workflow remaining after commit: 0"
           } >> "$GITHUB_STEP_SUMMARY"

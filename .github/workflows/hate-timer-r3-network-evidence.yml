@@ -1,0 +1,143 @@
+name: HATE Timer R3 Network Evidence
+
+on:
+  push:
+    branches:
+      - 'work/HATE_TIMER-01-R3-NETWORK-EVIDENCE'
+    paths:
+      - '.github/workflows/hate-timer-r3-network-evidence.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+
+      - name: Report commit and production blob identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "COMMIT=$(git rev-parse HEAD)"
+          echo "HTML_BLOB=$(git hash-object browser/GAMEROAD.html)"
+          echo "HTML_BYTES=$(wc -c < browser/GAMEROAD.html)"
+          git status --short
+
+      - name: Byte-complete HATE and transport source inspection
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          print('SOURCE_BYTES', len(s.encode('utf-8')))
+          terms = [
+              'friendHateSignature','friendTickHate','tickPartnerHate',
+              'friendHumanIsConnected','friendHasSubmittedConnectedHuman',
+              'WebSocket','BroadcastChannel','RTCPeerConnection','EventSource',
+              'postMessage','navigator.sendBeacon','friendRoom','roomHuman',
+              'reconnect','retry','relay','socket','peer'
+          ]
+          for term in terms:
+              print(f'COUNT {term}={s.count(term)}')
+          for name in ['friendHumanIsConnected','friendHasSubmittedConnectedHuman','friendHateSignature','friendTickHate','tickPartnerHate']:
+              m = re.search(r'(?:function\s+' + re.escape(name) + r'\s*\([^)]*\)\s*\{|(?:const|let|var)\s+' + re.escape(name) + r'\s*=)', s)
+              print(f'ANCHOR {name}={m.start() if m else -1}')
+              if m:
+                  lo=max(0,m.start()-500); hi=min(len(s),m.start()+4500)
+                  print(f'--- {name} CONTEXT START ---')
+                  print(s[lo:hi].replace('\r',''))
+                  print(f'--- {name} CONTEXT END ---')
+          net_patterns = [
+              r'https?://[^\"\'<>\s]+',
+              r'wss?://[^\"\'<>\s]+',
+              r'new\s+WebSocket\s*\([^)]*\)',
+              r'new\s+BroadcastChannel\s*\([^)]*\)',
+              r'new\s+RTCPeerConnection\s*\([^)]*\)'
+          ]
+          for pat in net_patterns:
+              hits = re.findall(pat, s, flags=re.I)
+              print('NETWORK_PATTERN', pat, 'COUNT', len(hits))
+              for hit in hits[:20]: print('  ', hit[:300])
+          PY
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser runtime transport inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/hate-r3-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          cat >/tmp/hate-r3-probe.mjs <<'JS'
+          import { chromium } from '@playwright/test';
+
+          const browser = await chromium.launch({ headless: true });
+          const context = await browser.newContext();
+          const page = await context.newPage();
+          const ws = [];
+          const requests = [];
+          page.on('websocket', socket => ws.push(socket.url()));
+          page.on('request', req => requests.push(req.url()));
+          const response = await page.goto('http://127.0.0.1:4173/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
+          console.log('HTTP_STATUS', response?.status());
+          await page.waitForTimeout(1200);
+          const inventory = await page.evaluate(() => {
+            const globalKeys = Object.getOwnPropertyNames(window).filter(k => /friend|room|hate|socket|peer|relay|reconnect|retry/i.test(k)).sort();
+            const testKeys = Object.keys(window.__GAMEROAD_TEST__ || {}).filter(k => /friend|room|hate|socket|peer|relay|reconnect|retry/i.test(k)).sort();
+            const globals = {};
+            for (const k of globalKeys) {
+              let v;
+              try { v = window[k]; } catch { continue; }
+              if (typeof v === 'function') globals[k] = Function.prototype.toString.call(v).slice(0, 5000);
+              else if (v && typeof v === 'object') globals[k] = `[object ${v?.constructor?.name || 'Object'}]`;
+              else globals[k] = String(v).slice(0, 500);
+            }
+            const controls = [...document.querySelectorAll('button,a,input,select,[role="button"]')].map(el => ({
+              tag: el.tagName,
+              id: el.id || '',
+              text: (el.textContent || '').trim().slice(0,120),
+              action: el.getAttribute('data-action') || '',
+              go: el.getAttribute('data-go') || '',
+              mode: el.getAttribute('data-mode') || '',
+              friend: el.getAttribute('data-friend') || '',
+              room: el.getAttribute('data-room') || ''
+            })).filter(x => /friend|room|フレンド|部屋|招待|host|guest/i.test(JSON.stringify(x)));
+            return {
+              globalKeys,
+              testKeys,
+              globals,
+              controls,
+              hasWebSocket: typeof WebSocket === 'function',
+              hasBroadcastChannel: typeof BroadcastChannel === 'function',
+              hasRTCPeerConnection: typeof RTCPeerConnection === 'function',
+              href: location.href
+            };
+          });
+          console.log('RUNTIME_INVENTORY', JSON.stringify(inventory, null, 2));
+          console.log('WEBSOCKETS_OBSERVED', JSON.stringify(ws));
+          console.log('REQUESTS_OBSERVED', JSON.stringify(requests.filter(u => !u.startsWith('http://127.0.0.1:4173/')).slice(0,100)));
+          await browser.close();
+          JS
+          node /tmp/hate-r3-probe.mjs
+
+      - name: Production mutation guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          echo "FINAL_HTML_BLOB=$(git hash-object browser/GAMEROAD.html)"

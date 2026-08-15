@@ -8,6 +8,7 @@ on:
     paths:
       - 'tools/advice-collective-eval.mjs'
       - 'tests/advice-collective-eval.test.mjs'
+      - 'data/advice-collective-eval.boundary.json'
       - '.github/workflows/advice-collective-eval.yml'
   pull_request:
     branches:
@@ -15,6 +16,7 @@ on:
     paths:
       - 'tools/advice-collective-eval.mjs'
       - 'tests/advice-collective-eval.test.mjs'
+      - 'data/advice-collective-eval.boundary.json'
       - '.github/workflows/advice-collective-eval.yml'
 
 permissions:
@@ -28,5 +30,78 @@ jobs:
         uses: actions/checkout@v4
       - name: Show Node version
         run: node --version
+      - name: Validate repository data boundary
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+
+          const boundaryPath = 'data/advice-collective-eval.boundary.json';
+          const data = JSON.parse(readFileSync(boundaryPath, 'utf8'));
+          const expect = (condition, message) => {
+            if (!condition) throw new Error(message);
+          };
+
+          expect(data.schema === 'gameroad.repo-data-boundary.v1', 'unexpected boundary schema');
+          expect(data.taskId === 'GITHUB-TOOLS-DATA-CONFIG-PLACEMENT-001', 'unexpected boundary taskId');
+
+          const expectedOwner = {
+            sourceTask: 'COLLECTIVE-INTELLIGENCE-IMPROVEMENT-LOOP-001',
+            tool: 'tools/advice-collective-eval.mjs',
+            test: 'tests/advice-collective-eval.test.mjs',
+            workflow: '.github/workflows/advice-collective-eval.yml',
+          };
+          for (const [key, value] of Object.entries(expectedOwner)) {
+            expect(data.owner?.[key] === value, `unexpected owner.${key}`);
+          }
+
+          const expectedAuthority = {
+            driveCurrent: 'control-evidence-plane-reference-only-not-repo-source',
+            repoSource: 'tools/advice-collective-eval.mjs',
+            testFixture: 'synthetic-inline-in-tests',
+            runtimePlayerData: 'not-tracked',
+            humanApprovalEvidence: 'not-tracked-as-runtime-data',
+          };
+          for (const [key, value] of Object.entries(expectedAuthority)) {
+            expect(data.authority?.[key] === value, `unexpected authority.${key}`);
+          }
+
+          expect(data.config?.source === 'explicit-callsite-options-and-fail-closed-code-defaults', 'unexpected config source');
+          expect(data.config?.secretValues === 'forbidden', 'secret values must remain forbidden');
+          expect(data.config?.committedCredentialMaterial === false, 'credential material must remain uncommitted');
+          expect(data.config?.environmentFiles === 'ignored-by-repository-policy', 'environment files must remain ignored');
+
+          expect(Array.isArray(data.generated) && data.generated.length > 0, 'generated declarations are required');
+          for (const [index, entry] of data.generated.entries()) {
+            expect(entry?.persistence === 'not-tracked', `generated[${index}] must remain not-tracked`);
+            if (Object.hasOwn(entry, 'containsRawEvents')) {
+              expect(entry.containsRawEvents === false, `generated[${index}] must not contain raw events`);
+            }
+            if (Object.hasOwn(entry, 'containsPrivate')) {
+              expect(entry.containsPrivate === false, `generated[${index}] must not contain private data`);
+            }
+          }
+          const runtimeManifest = data.generated.find(
+            (entry) => entry?.schema === 'gameroad.partner-advice-runtime-manifest.v1',
+          );
+          expect(runtimeManifest, 'runtime manifest declaration is required');
+          expect(runtimeManifest.containsRawEvents === false, 'runtime manifest raw events must remain false');
+          expect(runtimeManifest.containsPrivate === false, 'runtime manifest private data must remain false');
+
+          const requiredForbidden = [
+            'Drive CURRENT body copies as repository source',
+            'raw player events',
+            'private player data',
+            'credentials or secret values',
+            'tool ZIP packages',
+            'generated reports treated as source-of-truth',
+          ];
+          expect(Array.isArray(data.forbidden), 'forbidden list is required');
+          const forbidden = new Set(data.forbidden);
+          for (const category of requiredForbidden) {
+            expect(forbidden.has(category), `missing forbidden category: ${category}`);
+          }
+
+          console.log('repository data boundary semantic validation passed');
+          NODE
       - name: Run collective advice evaluator tests
         run: node --test tests/advice-collective-eval.test.mjs

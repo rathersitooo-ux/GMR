@@ -1,4 +1,4 @@
-name: Diagnose Roblox baseline transport
+name: Diagnose truncated Roblox transport payload
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  diagnose-transport:
+  diagnose-payload:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout work branch
@@ -20,8 +20,11 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
-      - name: Inspect transport bytes without modifying game files
+      - name: Test whether complete raw payload survives truncated base64/XZ tail
         shell: bash
+        env:
+          EXPECTED_SIZE: "10245508"
+          EXPECTED_SHA256: b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51
         run: |
           set -euo pipefail
           test "$GITHUB_REF_NAME" = "work/GITHUB-ROBLOX-CODE-PLACEMENT-001"
@@ -29,35 +32,45 @@ jobs:
           from pathlib import Path
           import base64
           import hashlib
-          import string
+          import lzma
 
-          allowed = set((string.ascii_letters + string.digits + "+/=").encode())
-          normalized_parts = []
-          for i in range(10):
-              p = Path(f".github/import/roblox-baseline.part{i:03d}.b64")
-              raw = p.read_bytes()
-              norm = b"".join(raw.split())
-              bad = [(j, b) for j, b in enumerate(norm) if b not in allowed]
-              pads = [j for j, b in enumerate(norm) if b == ord("=")]
-              print(
-                  f"{p.name}: raw_len={len(raw)} norm_len={len(norm)} mod4={len(norm)%4} "
-                  f"bad_count={len(bad)} bad_head={bad[:8]} pads={pads[:8]} "
-                  f"first16={norm[:16]!r} last16={norm[-16:]!r}"
-              )
-              normalized_parts.append(norm)
+          cat = b"".join(b"".join(Path(f".github/import/roblox-baseline.part{i:03d}.b64").read_bytes().split()) for i in range(10))
+          usable = cat[: (len(cat) // 4) * 4]
+          print(f"transport_len={len(cat)} usable_base64_len={len(usable)} dropped_tail={cat[len(usable):]!r}")
+          packed = base64.b64decode(usable, validate=True)
+          print(f"packed_prefix_len={len(packed)} packed_prefix_sha256={hashlib.sha256(packed).hexdigest()} first8={packed[:8]!r} last16={packed[-16:]!r}")
 
-          cat = b"".join(normalized_parts)
-          bad = [(j, b) for j, b in enumerate(cat) if b not in allowed]
-          pads = [j for j, b in enumerate(cat) if b == ord("=")]
-          print(
-              f"concat: len={len(cat)} mod4={len(cat)%4} bad_count={len(bad)} "
-              f"bad_head={bad[:20]} pads_head={pads[:20]} pads_tail={pads[-20:]} "
-              f"first16={cat[:16]!r} last32={cat[-32:]!r} sha256={hashlib.sha256(cat).hexdigest()}"
-          )
+          dec = lzma.LZMADecompressor(format=lzma.FORMAT_XZ)
           try:
-              packed = base64.b64decode(cat, validate=True)
-          except Exception as e:
-              print(f"strict_decode_error={type(e).__name__}: {e}")
-              raise SystemExit(42)
-          print(f"strict_decode_ok packed_len={len(packed)} packed_sha256={hashlib.sha256(packed).hexdigest()} first8={packed[:8]!r}")
+              raw = dec.decompress(packed)
+              err = None
+          except lzma.LZMAError as e:
+              raw = b""
+              err = repr(e)
+          print(f"decompress_error={err} eof={getattr(dec, 'eof', None)} unused={len(getattr(dec, 'unused_data', b''))} raw_len={len(raw)} raw_sha256={hashlib.sha256(raw).hexdigest()}")
+
+          if len(raw) != int("10245508") or hashlib.sha256(raw).hexdigest() != "b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51":
+              raise SystemExit(43)
+          Path("/tmp/GAMEROAD.recovered.rbxlx").write_bytes(raw)
+          print("RAW_PAYLOAD_EXACT_MATCH")
+          PY
+
+          python - /tmp/GAMEROAD.recovered.rbxlx <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          p = sys.argv[1]
+          root = ET.parse(p).getroot()
+          scripts = {"ModuleScript": 0, "Script": 0, "LocalScript": 0}
+          remote_event = remote_function = 0
+          for item in root.iter("Item"):
+              cls = item.attrib.get("class")
+              if cls in scripts:
+                  scripts[cls] += 1
+              elif cls == "RemoteEvent":
+                  remote_event += 1
+              elif cls == "RemoteFunction":
+                  remote_function += 1
+          expected = {"ModuleScript": 33, "Script": 9, "LocalScript": 4}
+          if root.tag != "roblox" or scripts != expected or remote_event != 64 or remote_function != 18:
+              raise SystemExit(f"inventory mismatch root={root.tag} scripts={scripts} RemoteEvent={remote_event} RemoteFunction={remote_function}")
+          print("XML_INVENTORY_EXACT_MATCH", scripts, remote_event, remote_function)
           PY

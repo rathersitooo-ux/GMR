@@ -70,15 +70,12 @@ async function battleSnapshot(page) {
     partnerRuleValue: await battle.locator('#partnerRule').inputValue().catch(() => null),
     readyVisible: await battle.locator('#readyPlan').isVisible().catch(() => false),
     readyEnabled: await battle.locator('#readyPlan').isEnabled().catch(() => false),
-    delegateVisible: await battle.locator('#partnerDelegateBtn').isVisible().catch(() => false),
-    delegateEnabled: await battle.locator('#partnerDelegateBtn').isEnabled().catch(() => false),
-    delegateText: await battle.locator('#partnerDelegateBtn').getAttribute('aria-label').catch(() => null),
     visibleHand,
     enabledPositions,
   };
 }
 
-test('R3 staged diagnostic: visible delegate action and resulting Battle state', async ({ page }, testInfo) => {
+test('R3 staged diagnostic: visible hand planning and first ready attempt', async ({ page }, testInfo) => {
   await boot(page);
   await buildAndSaveLegal40(page);
   await page.reload({ waitUntil: 'domcontentloaded' });
@@ -95,26 +92,46 @@ test('R3 staged diagnostic: visible delegate action and resulting Battle state',
 
   const battle = page.locator('section[data-screen="battle"]');
   await expect(battle).toBeVisible();
-  const diagnostic = { before: await battleSnapshot(page), afterDelegate: null, afterReady: null };
+  const diagnostic = {
+    before: await battleSnapshot(page),
+    afterFirstCard: null,
+    afterSecondCard: null,
+    afterPosition: null,
+    afterReady: null,
+  };
 
-  const delegate = battle.locator('#partnerDelegateBtn:visible');
-  await expect(delegate).toBeEnabled();
-  await delegate.click();
-  await page.waitForTimeout(900);
-  diagnostic.afterDelegate = await battleSnapshot(page);
+  const hand = battle.locator('button[data-card-id]:visible:not(:disabled)');
+  expect(await hand.count(), 'at least two visible hand cards').toBeGreaterThanOrEqual(2);
+  const firstId = await hand.nth(0).getAttribute('data-card-id');
+  await hand.nth(0).click();
+  await page.waitForTimeout(250);
+  diagnostic.afterFirstCard = await battleSnapshot(page);
+
+  const second = battle.locator(`button[data-card-id]:visible:not(:disabled):not([data-card-id="${firstId}"])`).first();
+  await expect(second).toBeVisible();
+  await second.click();
+  await page.waitForTimeout(250);
+  diagnostic.afterSecondCard = await battleSnapshot(page);
+
+  const enabledPosition = battle.locator('button[data-pos]:visible:not(:disabled)').first();
+  if ((await enabledPosition.count()) > 0) {
+    await enabledPosition.click();
+    await page.waitForTimeout(250);
+    diagnostic.afterPosition = await battleSnapshot(page);
+  }
 
   const ready = battle.locator('#readyPlan:visible');
   if ((await ready.count()) > 0 && await ready.isEnabled()) {
     await ready.click();
-    await page.waitForTimeout(1_800);
+    await page.waitForTimeout(2_200);
     diagnostic.afterReady = await battleSnapshot(page);
   }
 
-  await testInfo.attach(`${testInfo.project.name}-r3-delegate-stages.json`, {
+  await testInfo.attach(`${testInfo.project.name}-r3-hand-plan-stages.json`, {
     body: Buffer.from(JSON.stringify(diagnostic, null, 2)),
     contentType: 'application/json',
   });
-  await testInfo.attach(`${testInfo.project.name}-r3-delegate-final.png`, {
+  await testInfo.attach(`${testInfo.project.name}-r3-hand-plan-final.png`, {
     body: await page.screenshot({ fullPage: true, animations: 'disabled' }),
     contentType: 'image/png',
   });

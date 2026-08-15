@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { selectPartnerLegalCandidate } from '../browser/partner-legal-action-adapter.mjs';
+import {
+  revalidateSelectedPartnerLegalCandidate,
+  selectPartnerLegalCandidate,
+} from '../browser/partner-legal-action-adapter.mjs';
 
 const V = Object.freeze({ rulesVersion: 'rules-r1', cardVersion: 'cards-r1', stateVersion: 'state-r1' });
 
@@ -20,6 +23,16 @@ function candidate(candidateId, overrides = {}) {
 
 function choose(rule, candidates, versions = V) {
   return selectPartnerLegalCandidate({ candidates, rule, sourceVersions: versions, targetVersions: V });
+}
+
+function revalidate(selectedCandidateId, rule, candidates, selectedVersions = V, currentVersions = V) {
+  return revalidateSelectedPartnerLegalCandidate({
+    selectedCandidateId,
+    rule,
+    selectedVersions,
+    candidates,
+    currentVersions,
+  });
 }
 
 test('left/right use explicit position and ties are candidate-id deterministic', () => {
@@ -98,6 +111,88 @@ test('private payload never leaves the adapter and input is unchanged', () => {
   const rows = [candidate('b', { positionOrder: 1 }), candidate('a', { positionOrder: 1 })];
   const before = structuredClone(rows);
   const result = choose('left', rows);
+  assert.deepEqual(rows, before);
+  assert.equal(result.containsPrivate, false);
+  assert.equal(JSON.stringify(result).includes('secret-'), false);
+  assert.equal('payload' in result.selected, false);
+  assert.deepEqual(Object.keys(result.selected).sort(), ['candidateId', 'comparisonValue', 'kind', 'positionOrder']);
+});
+
+test('execution-time revalidation returns the exact previously selected legal candidate', () => {
+  const rows = [
+    candidate('chosen', { positionOrder: 3, comparisonValue: 4 }),
+    candidate('other', { positionOrder: 1, comparisonValue: 9 }),
+  ];
+  const result = revalidate('chosen', 'max', rows);
+  assert.equal(result.ok, true);
+  assert.equal(result.selected.candidateId, 'chosen');
+  assert.deepEqual(result.versions, V);
+});
+
+test('execution-time revalidation never substitutes a different now-preferred legal candidate', () => {
+  const rows = [
+    candidate('chosen', { comparisonValue: 1 }),
+    candidate('now-better', { comparisonValue: 999 }),
+  ];
+  const result = revalidate('chosen', 'max', rows);
+  assert.equal(result.ok, true);
+  assert.equal(result.selected.candidateId, 'chosen');
+});
+
+test('execution-time revalidation rejects version drift before examining a replacement candidate', () => {
+  const current = { ...V, stateVersion: 'state-r2' };
+  const result = revalidate('chosen', 'left', [candidate('chosen'), candidate('replacement')], V, current);
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'VERSION_MISMATCH');
+  assert.equal(result.selected, null);
+});
+
+test('execution-time revalidation rejects absent and now-illegal selected ids without substitution', () => {
+  const absent = revalidate('chosen', 'left', [candidate('other')]);
+  assert.equal(absent.error, 'SELECTED_ID_NOT_FOUND');
+  assert.equal(absent.selected, null);
+
+  const illegal = revalidate('chosen', 'left', [
+    candidate('chosen', { legal: false }),
+    candidate('other', { legal: true }),
+  ]);
+  assert.equal(illegal.error, 'SELECTED_ID_NOT_LEGAL');
+  assert.equal(illegal.selected, null);
+});
+
+test('execution-time revalidation preserves hidden, asset and duplicate fail-closed boundaries', () => {
+  assert.equal(
+    revalidate('chosen', 'left', [candidate('chosen', { publicScope: false })]).error,
+    'HIDDEN_INFO_BLOCKED',
+  );
+  assert.equal(
+    revalidate('chosen', 'left', [candidate('chosen', { assetAction: 'PLAY_EFFECT' })]).error,
+    'ASSET_ACTION_BLOCKED',
+  );
+  assert.equal(
+    revalidate('chosen', 'left', [candidate('chosen'), candidate('chosen')]).error,
+    'DUPLICATE_OR_MISSING_ID',
+  );
+});
+
+test('execution-time revalidation rejects malformed current candidates', () => {
+  assert.equal(
+    revalidate('chosen', 'left', [candidate('chosen', { positionOrder: Number.NaN })]).error,
+    'POSITION_REQUIRED',
+  );
+  assert.equal(
+    revalidate('chosen', 'max', [candidate('chosen', { comparisonValue: null })]).error,
+    'COMPARISON_VALUE_UNRESOLVED',
+  );
+});
+
+test('execution-time revalidation emits no private payload and does not mutate fresh inputs', () => {
+  const rows = [
+    candidate('chosen', { positionOrder: 2 }),
+    candidate('other', { positionOrder: 1 }),
+  ];
+  const before = structuredClone(rows);
+  const result = revalidate('chosen', 'left', rows);
   assert.deepEqual(rows, before);
   assert.equal(result.containsPrivate, false);
   assert.equal(JSON.stringify(result).includes('secret-'), false);

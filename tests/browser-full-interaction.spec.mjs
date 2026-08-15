@@ -88,6 +88,10 @@ async function enterCardsFromHome(page) {
   return cards;
 }
 
+async function numericText(locator) {
+  return Number.parseInt((await locator.textContent()) ?? '', 10);
+}
+
 test('captures success-state screenshots for current pointer navigation', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
@@ -131,26 +135,47 @@ test('persists a legal 40-card deck across save and page reload through visible 
   let cards = await enterCardsFromHome(page);
 
   const deckCount = cards.locator('#deckCount');
-  const initialCount = Number.parseInt((await deckCount.textContent()) ?? '', 10);
+  const initialCount = await numericText(deckCount);
   expect(Number.isFinite(initialCount), 'initial main-deck count').toBeTruthy();
   expect(initialCount, 'default deck leaves room for UI additions').toBeLessThan(40);
 
-  for (let count = initialCount; count < 40; count += 1) {
-    const candidate = cards.locator('#collectionGrid button.slot.live.cardFace:not(.inDeck):visible').first();
-    await expect(candidate, `visible collection candidate for deck slot ${count + 1}`).toBeVisible();
-    await candidate.click();
+  const candidateIds = await cards
+    .locator('#collectionGrid button.slot.live.cardFace:not(.inDeck)[data-id]')
+    .evaluateAll((nodes) => [...new Set(nodes.map((node) => node.getAttribute('data-id')).filter(Boolean))]);
+  const rejectedCandidateIds = [];
 
+  for (const cardId of candidateIds) {
+    const before = await numericText(deckCount);
+    if (before >= 40) break;
+
+    const candidate = cards
+      .locator(`#collectionGrid button.slot.live.cardFace:not(.inDeck)[data-id="${cardId}"]:visible`)
+      .first();
+    if ((await candidate.count()) === 0) continue;
+
+    await candidate.click();
     const addSelected = cards.locator('#addSelectedCard');
-    await expect(addSelected, `add selected card for deck slot ${count + 1}`).toBeVisible();
-    await expect(addSelected).toBeEnabled();
+    await expect(addSelected, `add selected card ${cardId}`).toBeVisible();
+    await expect(addSelected, `add selected card ${cardId}`).toBeEnabled();
     await addSelected.click();
-    await expect(deckCount).toHaveText(String(count + 1));
+    await page.waitForTimeout(120);
+
+    const after = await numericText(deckCount);
+    expect([before, before + 1], `deck count after visible add attempt for ${cardId}`).toContain(after);
+    if (after === before) rejectedCandidateIds.push(cardId);
 
     const closePreview = cards.locator('#r4PreviewClose:visible');
     if ((await closePreview.count()) > 0) await closePreview.click();
   }
 
-  await expect(deckCount).toHaveText('40');
+  if (rejectedCandidateIds.length > 0) {
+    testInfo.annotations.push({
+      type: 'visible-rule-rejection',
+      description: `Current deck rules rejected visible add attempts for: ${rejectedCandidateIds.join(', ')}; test continued through other UI candidates without bypassing rules.`,
+    });
+  }
+
+  await expect(deckCount, 'a legal main deck can reach 40 through current visible UI').toHaveText('40');
   await expect(cards.locator('#exDeckCount')).toHaveText('0');
   const saveDeck = cards.locator('#saveDeck');
   await expect(saveDeck).toBeVisible();

@@ -1,4 +1,4 @@
-name: Import exact Roblox baseline
+name: Diagnose Roblox baseline transport
 
 on:
   push:
@@ -8,10 +8,10 @@ on:
       - .github/workflows/import-roblox-baseline.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  import-roblox:
+  diagnose-transport:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout work branch
@@ -19,151 +19,45 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
-          persist-credentials: true
 
-      - name: Reconstruct and verify exact CURRENT Roblox place
+      - name: Inspect transport bytes without modifying game files
         shell: bash
-        env:
-          DRIVE_FILE_ID: 1YUO7GvwPBaVu6Umgp7IJcKrzDfjOBZ5C
-          EXPECTED_SIZE: "10245508"
-          EXPECTED_SHA256: b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51
         run: |
           set -euo pipefail
           test "$GITHUB_REF_NAME" = "work/GITHUB-ROBLOX-CODE-PLACEMENT-001"
-          test ! -e roblox/GAMEROAD.rbxlx
+          python - <<'PY'
+          from pathlib import Path
+          import base64
+          import hashlib
+          import string
 
-          parts=()
-          for i in $(seq -w 0 9); do
-            p=".github/import/roblox-baseline.part00${i}.b64"
-            test -f "$p"
-            parts+=("$p")
-          done
-          test "${#parts[@]}" -eq 10
-          test "$(find .github/import -maxdepth 1 -type f -name 'roblox-baseline.part*.b64' | wc -l | tr -d ' ')" = "10"
-
-          packed="$RUNNER_TEMP/roblox-baseline.xz"
-          tmp="$RUNNER_TEMP/GAMEROAD.rbxlx"
-          rm -f "$packed" "$tmp"
-
-          cat "${parts[@]}" | tr -d '\r\n' | base64 --decode > "$packed"
-          xz --test "$packed"
-          xz --decompress --stdout "$packed" > "$tmp"
-
-          raw_size="$(wc -c < "$tmp" | tr -d ' ')"
-          raw_sha="$(sha256sum "$tmp" | awk '{print $1}')"
-          test "$raw_size" = "$EXPECTED_SIZE"
-          test "$raw_sha" = "$EXPECTED_SHA256"
-
-          python - "$tmp" <<'PY'
-          import sys, xml.etree.ElementTree as ET
-          p = sys.argv[1]
-          root = ET.parse(p).getroot()
-          if root.tag != "roblox":
-              raise SystemExit(f"unexpected root tag: {root.tag}")
-          scripts = {"ModuleScript": 0, "Script": 0, "LocalScript": 0}
-          remote_event = remote_function = 0
-          for item in root.iter("Item"):
-              cls = item.attrib.get("class")
-              if cls in scripts:
-                  scripts[cls] += 1
-              elif cls == "RemoteEvent":
-                  remote_event += 1
-              elif cls == "RemoteFunction":
-                  remote_function += 1
-          expected = {"ModuleScript": 33, "Script": 9, "LocalScript": 4}
-          if scripts != expected or remote_event != 64 or remote_function != 18:
-              raise SystemExit(
-                  f"inventory mismatch scripts={scripts} RemoteEvent={remote_event} RemoteFunction={remote_function}"
+          allowed = set((string.ascii_letters + string.digits + "+/=").encode())
+          normalized_parts = []
+          for i in range(10):
+              p = Path(f".github/import/roblox-baseline.part{i:03d}.b64")
+              raw = p.read_bytes()
+              norm = b"".join(raw.split())
+              bad = [(j, b) for j, b in enumerate(norm) if b not in allowed]
+              pads = [j for j, b in enumerate(norm) if b == ord("=")]
+              print(
+                  f"{p.name}: raw_len={len(raw)} norm_len={len(norm)} mod4={len(norm)%4} "
+                  f"bad_count={len(bad)} bad_head={bad[:8]} pads={pads[:8]} "
+                  f"first16={norm[:16]!r} last16={norm[-16:]!r}"
               )
-          print("XML parse/inventory OK", scripts, remote_event, remote_function)
+              normalized_parts.append(norm)
+
+          cat = b"".join(normalized_parts)
+          bad = [(j, b) for j, b in enumerate(cat) if b not in allowed]
+          pads = [j for j, b in enumerate(cat) if b == ord("=")]
+          print(
+              f"concat: len={len(cat)} mod4={len(cat)%4} bad_count={len(bad)} "
+              f"bad_head={bad[:20]} pads_head={pads[:20]} pads_tail={pads[-20:]} "
+              f"first16={cat[:16]!r} last32={cat[-32:]!r} sha256={hashlib.sha256(cat).hexdigest()}"
+          )
+          try:
+              packed = base64.b64decode(cat, validate=True)
+          except Exception as e:
+              print(f"strict_decode_error={type(e).__name__}: {e}")
+              raise SystemExit(42)
+          print(f"strict_decode_ok packed_len={len(packed)} packed_sha256={hashlib.sha256(packed).hexdigest()} first8={packed[:8]!r}")
           PY
-
-          mkdir -p roblox
-          mv "$tmp" roblox/GAMEROAD.rbxlx
-
-          working_size="$(wc -c < roblox/GAMEROAD.rbxlx | tr -d ' ')"
-          working_sha="$(sha256sum roblox/GAMEROAD.rbxlx | awk '{print $1}')"
-          test "$working_size" = "$EXPECTED_SIZE"
-          test "$working_sha" = "$EXPECTED_SHA256"
-
-          {
-            echo "### Exact Roblox reconstruction verification"
-            echo "- source Drive file: $DRIVE_FILE_ID"
-            echo "- reconstructed size: $working_size"
-            echo "- reconstructed sha256: $working_sha"
-            echo "- XML inventory: ModuleScript=33 Script=9 LocalScript=4 RemoteEvent=64 RemoteFunction=18"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Stage exact bytes and remove one-shot transport
-        shell: bash
-        env:
-          EXPECTED_SIZE: "10245508"
-          EXPECTED_SHA256: b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add -- roblox/GAMEROAD.rbxlx
-          git rm -- .github/import/roblox-baseline.part000.b64 \
-                    .github/import/roblox-baseline.part001.b64 \
-                    .github/import/roblox-baseline.part002.b64 \
-                    .github/import/roblox-baseline.part003.b64 \
-                    .github/import/roblox-baseline.part004.b64 \
-                    .github/import/roblox-baseline.part005.b64 \
-                    .github/import/roblox-baseline.part006.b64 \
-                    .github/import/roblox-baseline.part007.b64 \
-                    .github/import/roblox-baseline.part008.b64 \
-                    .github/import/roblox-baseline.part009.b64 \
-                    .github/workflows/import-roblox-baseline.yml
-
-          staged_size="$(git show :roblox/GAMEROAD.rbxlx | wc -c | tr -d ' ')"
-          staged_sha="$(git show :roblox/GAMEROAD.rbxlx | sha256sum | awk '{print $1}')"
-          test "$staged_size" = "$EXPECTED_SIZE"
-          test "$staged_sha" = "$EXPECTED_SHA256"
-
-          git check-attr text eol -- roblox/GAMEROAD.rbxlx | tee "$RUNNER_TEMP/rbxlx-attrs.txt"
-          git diff --cached --name-status > "$RUNNER_TEMP/staged.txt"
-          cat "$RUNNER_TEMP/staged.txt"
-
-          python - "$RUNNER_TEMP/staged.txt" <<'PY'
-          import sys
-          rows = []
-          with open(sys.argv[1], encoding="utf-8") as f:
-              for line in f:
-                  line = line.rstrip("\n")
-                  if not line:
-                      continue
-                  status, path = line.split("\t", 1)
-                  rows.append((status, path))
-          expected = {("A", "roblox/GAMEROAD.rbxlx"), ("D", ".github/workflows/import-roblox-baseline.yml")}
-          expected |= {("D", f".github/import/roblox-baseline.part{i:03d}.b64") for i in range(10)}
-          if set(rows) != expected or len(rows) != len(expected):
-              raise SystemExit(f"unexpected staged diff: {rows}")
-          print("staged path audit OK", len(rows))
-          PY
-
-          {
-            echo "- staged size: $staged_size"
-            echo "- staged sha256: $staged_sha"
-            echo "- staged paths: 12 (1 add + 11 one-shot removals)"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          git commit -m "[GITHUB-ROBLOX-CODE-PLACEMENT-001] import exact Roblox baseline and remove transport"
-
-          committed_size="$(git show HEAD:roblox/GAMEROAD.rbxlx | wc -c | tr -d ' ')"
-          committed_sha="$(git show HEAD:roblox/GAMEROAD.rbxlx | sha256sum | awk '{print $1}')"
-          test "$committed_size" = "$EXPECTED_SIZE"
-          test "$committed_sha" = "$EXPECTED_SHA256"
-          test ! -e .github/workflows/import-roblox-baseline.yml
-          test "$(find .github/import -maxdepth 1 -type f -name 'roblox-baseline.part*.b64' 2>/dev/null | wc -l | tr -d ' ')" = "0"
-
-          commit_sha="$(git rev-parse HEAD)"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
-          {
-            echo "- committed size: $committed_size"
-            echo "- committed sha256: $committed_sha"
-            echo "- roblox commit: $commit_sha"
-            echo "- branch: $GITHUB_REF_NAME"
-            echo "- one-shot transport/workflow remaining after commit: 0"
-          } >> "$GITHUB_STEP_SUMMARY"

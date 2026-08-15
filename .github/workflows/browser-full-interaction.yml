@@ -1,6 +1,7 @@
 name: Browser Full Interaction Evidence
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main

@@ -293,3 +293,45 @@ test('partner delegation preserves the player-selected match envelope and reject
   expect(evidence.staleRestore, 'an old match session must not restore into a new match instance').toBe(false);
   expect(evidence.secondCheck).toEqual({ ok: true, reason: 'ok' });
 });
+
+test('2v2 current runtime exposes four-seat team and target evidence', async ({ page }) => {
+  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
+  expect(response, 'main HTML response').not.toBeNull();
+  expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
+  await page.waitForTimeout(500);
+
+  const deckSetup = await installLegalBattleDeck(page);
+  expect(deckSetup.main).toHaveLength(40);
+  expect(deckSetup.setValidation.ok, `set deck validation: ${JSON.stringify(deckSetup.setValidation)}`).toBeTruthy();
+  expect(deckSetup.committed, 'legal test deck committed').toBeTruthy();
+
+  const evidence = await page.evaluate(() => {
+    const core = window.__GAMEROAD_TEST__;
+    if (!core) throw new Error('GAMEROAD runtime test hook is unavailable');
+    const match = core.start('2v2', 'road_shield');
+    if (!match) throw new Error('2v2 match failed to start');
+
+    const scalarSnapshot = (player) => Object.fromEntries(
+      Object.entries(player).filter(([, value]) => value == null || ['string', 'number', 'boolean'].includes(typeof value)),
+    );
+    const targetSelect = document.querySelector('#targetPlayer');
+    const targetOptions = targetSelect
+      ? Array.from(targetSelect.options).map((option) => ({ value: option.value, text: option.textContent ?? '' }))
+      : [];
+
+    return {
+      mode: match.mode ?? null,
+      screen: core.state.screen ?? null,
+      matchKeys: Object.keys(match).sort(),
+      players: Array.isArray(match.players) ? match.players.map(scalarSnapshot) : [],
+      targetOptions,
+      targetLaneOptions: Array.from(document.querySelector('#targetLane')?.options ?? []).map((option) => option.value),
+      targetShieldOptions: Array.from(document.querySelector('#targetShield')?.options ?? []).map((option) => option.value),
+    };
+  });
+
+  console.log(`GAMEROAD_2V2_RUNTIME_SNAPSHOT ${JSON.stringify(evidence)}`);
+  expect(evidence.mode).toBe('2v2');
+  expect(evidence.screen).toBe('battle');
+  expect(evidence.players).toHaveLength(4);
+});

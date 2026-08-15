@@ -444,3 +444,110 @@ test('secret round operations are deterministic and do not mutate caller inputs'
   assert.ok(Object.isFrozen(finalA.snapshot.selections));
   assert.ok(Object.isFrozen(finalA.snapshot.cards));
 });
+
+const {
+  PURSUIT_SECRET_ROUND_PERSISTENCE_SCHEMA,
+  exportPursuitSecretRoundSnapshot,
+  restorePursuitSecretRoundSnapshot,
+} = await import('../browser/pursuit-triad-core.mjs');
+
+function expectedRoundIdentity(round) {
+  return {
+    roundId: round.roundId,
+    revision: round.revision,
+    participantIds: [...round.participantIds].reverse(),
+  };
+}
+
+test('authority-private persistence round-trips partial, full, and closed rounds with public-state equivalence', async () => {
+  const a = secretReveal('a', 'club', 3);
+  const b = secretReveal('b', 'diamond', 6);
+
+  let partial = createPursuitSecretRound({ roundId: 'round-42', revision: 7, participantIds: ['b', 'a'] });
+  partial = commitPursuitSelection(partial, {
+    roundId: 'round-42', revision: 7, playerId: 'a', commitment: await createPursuitCommitment(a, sha256),
+  });
+  const full = await fullyCommittedRound([a, b]);
+  const closed = (await finalizePursuitSecretRound(full, [b, a], sha256)).round;
+
+  for (const round of [partial, full, closed]) {
+    const snapshot = exportPursuitSecretRoundSnapshot(round);
+    const restored = restorePursuitSecretRoundSnapshot(snapshot, expectedRoundIdentity(round));
+    assert.equal(snapshot.persistenceSchema, PURSUIT_SECRET_ROUND_PERSISTENCE_SCHEMA);
+    assert.deepEqual(Object.keys(snapshot).sort(), [
+      'closed', 'commitments', 'participantIds', 'persistenceSchema', 'revision', 'roundId', 'schema',
+    ]);
+    assert.deepEqual(restored, round);
+    assert.deepEqual(getPursuitSecretRoundPublicState(restored), getPursuitSecretRoundPublicState(round));
+    assert.ok(Object.isFrozen(restored));
+    assert.ok(Object.isFrozen(restored.participantIds));
+    assert.ok(Object.isFrozen(restored.commitments));
+    for (const commitment of restored.commitments) assert.ok(Object.isFrozen(commitment));
+  }
+});
+
+test('snapshot restore requires the caller expected round identity and rejects mismatches', async () => {
+  const round = await fullyCommittedRound([
+    secretReveal('a', 'club', 1),
+    secretReveal('b', 'diamond', 2),
+  ]);
+  const snapshot = exportPursuitSecretRoundSnapshot(round);
+  const expected = expectedRoundIdentity(round);
+
+  assert.throws(() => restorePursuitSecretRoundSnapshot(snapshot, { ...expected, roundId: 'other-round' }), /roundId/);
+  assert.throws(() => restorePursuitSecretRoundSnapshot(snapshot, { ...expected, revision: 6 }), /revision/);
+  assert.throws(() => restorePursuitSecretRoundSnapshot(snapshot, { ...expected, participantIds: ['a', 'c'] }), /participantIds/);
+  assert.throws(() => restorePursuitSecretRoundSnapshot(snapshot, { ...expected, participantIds: ['a'] }), /between 2 and 4/);
+});
+
+test('snapshot restore rejects malformed, extra-field, duplicate, noncanonical, and impossible state', async () => {
+  const a = secretReveal('a', 'club', 1);
+  let partial = createPursuitSecretRound({ roundId: 'round-42', revision: 7, participantIds: ['a', 'b'] });
+  partial = commitPursuitSelection(partial, {
+    roundId: 'round-42', revision: 7, playerId: 'a', commitment: await createPursuitCommitment(a, sha256),
+  });
+  const snapshot = exportPursuitSecretRoundSnapshot(partial);
+  const expected = expectedRoundIdentity(partial);
+
+  assert.throws(() => restorePursuitSecretRoundSnapshot({ ...snapshot, nonce: 'forbidden' }, expected), /fields/);
+  assert.throws(() => restorePursuitSecretRoundSnapshot({ ...snapshot, persistenceSchema: 'unknown' }, expected), /persistence schema/);
+  assert.throws(() => restorePursuitSecretRoundSnapshot({ ...snapshot, participantIds: ['b', 'a'] }, expected), /canonical sorted order/);
+  assert.throws(() => restorePursuitSecretRoundSnapshot({ ...snapshot, closed: true }, expected), /every participant commitment/);
+  assert.throws(() => restorePursuitSecretRoundSnapshot({
+    ...snapshot,
+    commitments: [snapshot.commitments[0], snapshot.commitments[0]],
+  }, expected), /duplicate commitment/);
+  assert.throws(() => restorePursuitSecretRoundSnapshot({
+    ...snapshot,
+    commitments: [{ ...snapshot.commitments[0], nonce: 'forbidden' }],
+  }, expected), /fields/);
+});
+
+test('snapshot persists no reveal secrets and restore is deeply immutable and non-aliasing', async () => {
+  const reveals = [
+    secretReveal('b', 'diamond', 5, { mode: PURSUIT_MODE_FINISHER, nonce: 'never-persist-b' }),
+    secretReveal('a', 'club', 3, { nonce: 'never-persist-a' }),
+  ];
+  const round = await fullyCommittedRound(reveals);
+  const snapshot = exportPursuitSecretRoundSnapshot(round);
+  const visible = JSON.stringify(snapshot);
+
+  for (const forbiddenKey of ['"hand"', '"cardId"', '"value"', '"mode"', '"nonce"']) {
+    assert.equal(visible.includes(forbiddenKey), false, `persisted secret key: ${forbiddenKey}`);
+  }
+  for (const reveal of reveals) {
+    for (const secret of [reveal.hand, reveal.cardId, reveal.mode, reveal.nonce]) {
+      assert.equal(visible.includes(secret), false, `persisted reveal secret: ${secret}`);
+    }
+  }
+
+  const portable = JSON.parse(visible);
+  const restored = restorePursuitSecretRoundSnapshot(portable, expectedRoundIdentity(round));
+  assert.notStrictEqual(restored.participantIds, portable.participantIds);
+  assert.notStrictEqual(restored.commitments, portable.commitments);
+  assert.notStrictEqual(restored.commitments[0], portable.commitments[0]);
+  const restoredBeforeMutation = JSON.stringify(restored);
+  portable.participantIds[0] = 'tampered';
+  portable.commitments[0].commitment = 'tampered';
+  assert.equal(JSON.stringify(restored), restoredBeforeMutation);
+});

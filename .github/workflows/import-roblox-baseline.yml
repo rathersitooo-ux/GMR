@@ -1,4 +1,4 @@
-name: Diagnose truncated Roblox transport payload
+name: Diagnose Roblox transport partial XZ output
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  diagnose-payload:
+  diagnose-xz-output:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout work branch
@@ -20,7 +20,7 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
-      - name: Test whether complete raw payload survives truncated base64/XZ tail
+      - name: Measure partial XZ output against exact Drive identity
         shell: bash
         env:
           EXPECTED_SIZE: "10245508"
@@ -31,46 +31,23 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import base64
-          import hashlib
-          import lzma
-
           cat = b"".join(b"".join(Path(f".github/import/roblox-baseline.part{i:03d}.b64").read_bytes().split()) for i in range(10))
           usable = cat[: (len(cat) // 4) * 4]
+          Path("/tmp/roblox-prefix.xz").write_bytes(base64.b64decode(usable, validate=True))
           print(f"transport_len={len(cat)} usable_base64_len={len(usable)} dropped_tail={cat[len(usable):]!r}")
-          packed = base64.b64decode(usable, validate=True)
-          print(f"packed_prefix_len={len(packed)} packed_prefix_sha256={hashlib.sha256(packed).hexdigest()} first8={packed[:8]!r} last16={packed[-16:]!r}")
-
-          dec = lzma.LZMADecompressor(format=lzma.FORMAT_XZ)
-          try:
-              raw = dec.decompress(packed)
-              err = None
-          except lzma.LZMAError as e:
-              raw = b""
-              err = repr(e)
-          print(f"decompress_error={err} eof={getattr(dec, 'eof', None)} unused={len(getattr(dec, 'unused_data', b''))} raw_len={len(raw)} raw_sha256={hashlib.sha256(raw).hexdigest()}")
-
-          if len(raw) != int("10245508") or hashlib.sha256(raw).hexdigest() != "b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51":
-              raise SystemExit(43)
-          Path("/tmp/GAMEROAD.recovered.rbxlx").write_bytes(raw)
-          print("RAW_PAYLOAD_EXACT_MATCH")
           PY
 
-          python - /tmp/GAMEROAD.recovered.rbxlx <<'PY'
-          import sys, xml.etree.ElementTree as ET
-          p = sys.argv[1]
-          root = ET.parse(p).getroot()
-          scripts = {"ModuleScript": 0, "Script": 0, "LocalScript": 0}
-          remote_event = remote_function = 0
-          for item in root.iter("Item"):
-              cls = item.attrib.get("class")
-              if cls in scripts:
-                  scripts[cls] += 1
-              elif cls == "RemoteEvent":
-                  remote_event += 1
-              elif cls == "RemoteFunction":
-                  remote_function += 1
-          expected = {"ModuleScript": 33, "Script": 9, "LocalScript": 4}
-          if root.tag != "roblox" or scripts != expected or remote_event != 64 or remote_function != 18:
-              raise SystemExit(f"inventory mismatch root={root.tag} scripts={scripts} RemoteEvent={remote_event} RemoteFunction={remote_function}")
-          print("XML_INVENTORY_EXACT_MATCH", scripts, remote_event, remote_function)
-          PY
+          set +e
+          xz --decompress --stdout /tmp/roblox-prefix.xz > /tmp/GAMEROAD.partial.rbxlx 2>/tmp/xz.err
+          xz_rc=$?
+          set -e
+          cat /tmp/xz.err || true
+          raw_size="$(wc -c < /tmp/GAMEROAD.partial.rbxlx | tr -d ' ')"
+          raw_sha="$(sha256sum /tmp/GAMEROAD.partial.rbxlx | awk '{print $1}')"
+          echo "xz_rc=$xz_rc raw_size=$raw_size raw_sha256=$raw_sha"
+          if [ "$raw_size" = "$EXPECTED_SIZE" ] && [ "$raw_sha" = "$EXPECTED_SHA256" ]; then
+            echo "RAW_PAYLOAD_EXACT_MATCH_DESPITE_TRUNCATED_XZ_TAIL"
+            exit 0
+          fi
+          echo "RAW_PAYLOAD_NOT_EXACT" >&2
+          exit 44

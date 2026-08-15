@@ -1,10 +1,19 @@
+import { createHash } from 'node:crypto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  PURSUIT_COMMITMENT_DOMAIN,
   PURSUIT_MODE_FINISHER,
   PURSUIT_MODE_NORMAL,
   PURSUIT_NO_HAND,
+  PURSUIT_SECRET_ROUND_SCHEMA,
   applyHoneyWake,
+  canonicalPursuitCommitmentPayload,
+  commitPursuitSelection,
+  createPursuitCommitment,
+  createPursuitSecretRound,
+  finalizePursuitSecretRound,
+  getPursuitSecretRoundPublicState,
   removePursuitPhysicalMana,
   resolvePursuitCard,
   resolvePursuitRound,
@@ -205,4 +214,233 @@ test('resolution is deterministic and independent of input arrival order', () =>
   ]);
   assert.deepEqual(a, b);
   assert.deepEqual(a.winners, ['a', 'b']);
+});
+
+
+function sha256(payload) {
+  return createHash('sha256').update(payload).digest('hex');
+}
+
+function secretReveal(playerId, hand, value, overrides = {}) {
+  return {
+    roundId: 'round-42',
+    revision: 7,
+    playerId,
+    hand,
+    cardId: `physical-card-${playerId}`,
+    value,
+    mode: PURSUIT_MODE_NORMAL,
+    nonce: `nonce-${playerId}`,
+    ...overrides,
+  };
+}
+
+async function fullyCommittedRound(reveals) {
+  let round = createPursuitSecretRound({
+    roundId: reveals[0].roundId,
+    revision: reveals[0].revision,
+    participantIds: reveals.map((entry) => entry.playerId),
+  });
+  for (const reveal of reveals) {
+    round = commitPursuitSelection(round, {
+      roundId: reveal.roundId,
+      revision: reveal.revision,
+      playerId: reveal.playerId,
+      commitment: await createPursuitCommitment(reveal, sha256),
+    });
+  }
+  return round;
+}
+
+test('secret commitment payload is domain-separated and canonical', async () => {
+  const reveal = secretReveal('b', 'club', 4, { mode: PURSUIT_MODE_FINISHER });
+  const payload = canonicalPursuitCommitmentPayload(reveal);
+  assert.equal(payload, JSON.stringify([
+    PURSUIT_COMMITMENT_DOMAIN,
+    'round-42',
+    7,
+    'b',
+    'club',
+    'physical-card-b',
+    4,
+    'finisher',
+    'nonce-b',
+  ]));
+  assert.equal(await createPursuitCommitment(reveal, sha256), sha256(payload));
+  await assert.rejects(() => createPursuitCommitment(reveal, (value) => value), /must not expose/);
+});
+
+test('pre-barrier public state exposes commitments and progress but no hidden selection fields', async () => {
+  const a = secretReveal('a', 'club', 7);
+  const b = secretReveal('b', 'diamond', 2);
+  let round = createPursuitSecretRound({
+    roundId: 'round-42',
+    revision: 7,
+    participantIds: ['b', 'a'],
+  });
+  round = commitPursuitSelection(round, {
+    roundId: 'round-42',
+    revision: 7,
+    playerId: 'a',
+    commitment: await createPursuitCommitment(a, sha256),
+  });
+
+  const publicState = getPursuitSecretRoundPublicState(round);
+  assert.equal(publicState.schema, PURSUIT_SECRET_ROUND_SCHEMA);
+  assert.deepEqual(publicState.participantIds, ['a', 'b']);
+  assert.equal(publicState.phase, 'commit');
+  assert.equal(publicState.committedCount, 1);
+  assert.equal(publicState.allCommitted, false);
+
+  const visible = JSON.stringify(publicState);
+  for (const forbiddenKey of ['"hand"', '"cardId"', '"value"', '"nonce"']) {
+    assert.equal(visible.includes(forbiddenKey), false, `leaked secret field key: ${forbiddenKey}`);
+  }
+  for (const secret of [a.hand, a.cardId, a.nonce, b.hand, b.cardId, b.nonce]) {
+    assert.equal(visible.includes(secret), false, `leaked secret field: ${secret}`);
+  }
+
+  await assert.rejects(
+    () => finalizePursuitSecretRound(round, [a, b], sha256),
+    /reveal blocked until every expected participant has committed/,
+  );
+});
+
+test('every expected participant must commit exactly once with matching round identity', async () => {
+  const a = secretReveal('a', 'club', 3);
+  let round = createPursuitSecretRound({
+    roundId: 'round-42',
+    revision: 7,
+    participantIds: ['a', 'b'],
+  });
+  const commitment = await createPursuitCommitment(a, sha256);
+  round = commitPursuitSelection(round, {
+    roundId: 'round-42',
+    revision: 7,
+    playerId: 'a',
+    commitment,
+  });
+
+  assert.throws(() => commitPursuitSelection(round, {
+    roundId: 'round-42',
+    revision: 7,
+    playerId: 'a',
+    commitment,
+  }), /duplicate commitment/);
+  assert.throws(() => commitPursuitSelection(round, {
+    roundId: 'old-round',
+    revision: 7,
+    playerId: 'b',
+    commitment: 'opaque',
+  }), /roundId/);
+  assert.throws(() => commitPursuitSelection(round, {
+    roundId: 'round-42',
+    revision: 6,
+    playerId: 'b',
+    commitment: 'opaque',
+  }), /revision/);
+  assert.throws(() => commitPursuitSelection(round, {
+    roundId: 'round-42',
+    revision: 7,
+    playerId: 'outsider',
+    commitment: 'opaque',
+  }), /unknown pursuit participant/);
+});
+
+test('2p reveal is all-at-once, stable-order, resolver-compatible, and closes exactly once', async () => {
+  const reveals = [
+    secretReveal('z', 'diamond', 6),
+    secretReveal('a', 'club', 4, { mode: PURSUIT_MODE_FINISHER }),
+  ];
+  const round = await fullyCommittedRound(reveals);
+  assert.equal(getPursuitSecretRoundPublicState(round).phase, 'reveal-ready');
+
+  const final = await finalizePursuitSecretRound(round, [reveals[0], reveals[1]], sha256);
+  assert.deepEqual(final.snapshot, {
+    selections: [
+      { playerId: 'a', hand: 'club' },
+      { playerId: 'z', hand: 'diamond' },
+    ],
+    cards: [
+      { playerId: 'a', cardId: 'physical-card-a', value: 4, mode: 'finisher' },
+      { playerId: 'z', cardId: 'physical-card-z', value: 6, mode: 'normal' },
+    ],
+  });
+  assert.deepEqual(resolvePursuitRound(final.snapshot).outcomes, [
+    { playerId: 'a', hand: 'club', won: true, value: 4, mode: 'finisher', battleAddend: 8, disposition: 'battle' },
+    { playerId: 'z', hand: 'diamond', won: false, value: 6, mode: 'normal', battleAddend: 0, disposition: 'subdeck' },
+  ]);
+  assert.equal(getPursuitSecretRoundPublicState(final.round).phase, 'closed');
+  assert.equal(JSON.stringify(final.round).includes('nonce-'), false);
+  await assert.rejects(() => finalizePursuitSecretRound(final.round, reveals, sha256), /already closed/);
+});
+
+test('4p reveal uses stable participant order independent of reveal arrival order', async () => {
+  const reveals = [
+    secretReveal('p3', 'diamond', 3),
+    secretReveal('p1', 'club', 1),
+    secretReveal('p4', 'diamond', 4),
+    secretReveal('p2', 'club', 2),
+  ];
+  const round = await fullyCommittedRound(reveals);
+  const final = await finalizePursuitSecretRound(round, [reveals[2], reveals[0], reveals[3], reveals[1]], sha256);
+  assert.deepEqual(final.snapshot.selections.map((entry) => entry.playerId), ['p1', 'p2', 'p3', 'p4']);
+  assert.deepEqual(resolvePursuitRound(final.snapshot).triad.winners, ['p1', 'p2']);
+});
+
+test('reveal rejects missing, duplicate, unknown, stale, and commitment-mismatched payloads', async () => {
+  const a = secretReveal('a', 'club', 1);
+  const b = secretReveal('b', 'diamond', 2);
+  const round = await fullyCommittedRound([a, b]);
+
+  await assert.rejects(() => finalizePursuitSecretRound(round, [a], sha256), /every expected participant/);
+  await assert.rejects(() => finalizePursuitSecretRound(round, [a, a], sha256), /duplicate reveal/);
+  await assert.rejects(() => finalizePursuitSecretRound(round, [a, { ...b, playerId: 'x' }], sha256), /nonparticipant/);
+  await assert.rejects(() => finalizePursuitSecretRound(round, [a, { ...b, revision: 6 }], sha256), /revision/);
+  await assert.rejects(() => finalizePursuitSecretRound(round, [a, { ...b, roundId: 'other' }], sha256), /roundId/);
+  await assert.rejects(() => finalizePursuitSecretRound(round, [a, { ...b, nonce: 'tampered' }], sha256), /commitment mismatch/);
+  await assert.rejects(() => finalizePursuitSecretRound(round, [a, { ...b, cardId: 'other-physical-card' }], sha256), /commitment mismatch/);
+});
+
+test('Dark, Heart, no-hand, missing physical identity, invalid value and invented mode fail closed before commitment', async () => {
+  for (const hand of ['dark', 'heart', PURSUIT_NO_HAND]) {
+    await assert.rejects(() => createPursuitCommitment(secretReveal('a', hand, 1), sha256), TypeError);
+  }
+  await assert.rejects(() => createPursuitCommitment(secretReveal('a', 'club', 1, { cardId: '' }), sha256), /cardId/);
+  await assert.rejects(() => createPursuitCommitment(secretReveal('a', 'club', 8), sha256), /value/);
+  await assert.rejects(() => createPursuitCommitment(secretReveal('a', 'club', 1, { mode: 'dark' }), sha256), /mode/);
+});
+
+test('nonce is externally supplied and never generated or retained by the round core', async () => {
+  const reveal = secretReveal('a', 'club', 2, { nonce: '' });
+  await assert.rejects(() => createPursuitCommitment(reveal, sha256), /nonce/);
+  const round = createPursuitSecretRound({ roundId: 'round-42', revision: 7, participantIds: ['a', 'b'] });
+  assert.equal(JSON.stringify(round).includes('nonce'), false);
+});
+
+test('secret round validates canonical state and participant constraints fail closed', () => {
+  assert.throws(() => createPursuitSecretRound({ roundId: 'r', revision: 0, participantIds: ['a'] }), /between 2 and 4/);
+  assert.throws(() => createPursuitSecretRound({ roundId: 'r', revision: 0, participantIds: ['a', 'a'] }), /duplicate/);
+  assert.throws(() => createPursuitSecretRound({ roundId: '', revision: 0, participantIds: ['a', 'b'] }), /roundId/);
+  assert.throws(() => createPursuitSecretRound({ roundId: 'r', revision: -1, participantIds: ['a', 'b'] }), /revision/);
+});
+
+test('secret round operations are deterministic and do not mutate caller inputs', async () => {
+  const reveals = [
+    secretReveal('b', 'diamond', 5),
+    secretReveal('a', 'club', 3),
+  ];
+  const before = JSON.stringify(reveals);
+  const roundA = await fullyCommittedRound(reveals);
+  const roundB = await fullyCommittedRound(reveals.map((entry) => ({ ...entry })));
+  assert.deepEqual(roundA, roundB);
+
+  const finalA = await finalizePursuitSecretRound(roundA, reveals, sha256);
+  const finalB = await finalizePursuitSecretRound(roundB, [reveals[1], reveals[0]], sha256);
+  assert.deepEqual(finalA, finalB);
+  assert.equal(JSON.stringify(reveals), before);
+  assert.ok(Object.isFrozen(finalA.round));
+  assert.ok(Object.isFrozen(finalA.snapshot));
+  assert.ok(Object.isFrozen(finalA.snapshot.selections));
+  assert.ok(Object.isFrozen(finalA.snapshot.cards));
 });

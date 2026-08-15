@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const CORE_SCREENS = ['home', 'cards', 'characters', 'setup', 'battle', 'result', 'shop'];
 const NAV_TARGETS = ['cards', 'characters', 'setup', 'battle', 'shop'];
+const STORAGE_KEY = 'gameroad.browser.v10.core.1';
 
 function observeRuntimeErrors(page) {
   const pageErrors = [];
@@ -77,6 +78,16 @@ function visibleHomeControl(page, target) {
     .first();
 }
 
+async function enterCardsFromHome(page) {
+  const cardsControl = visibleHomeControl(page, 'cards');
+  await expect(cardsControl).toBeVisible();
+  await cardsControl.click();
+  const cards = page.locator('section[data-screen="cards"]');
+  await expect(cards).toBeVisible();
+  await page.waitForTimeout(250);
+  return cards;
+}
+
 test('captures success-state screenshots for current pointer navigation', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
@@ -106,7 +117,7 @@ test('captures success-state screenshots for current pointer navigation', async 
   if (unreachableTargets.length > 0) {
     testInfo.annotations.push({
       type: 'not-yet-covered',
-      description: `No visible root control for: ${unreachableTargets.join(', ')}. This R1 evidence does not claim full interaction coverage.`,
+      description: `No visible root control for: ${unreachableTargets.join(', ')}. This evidence does not claim full interaction coverage.`,
     });
   }
 
@@ -114,61 +125,54 @@ test('captures success-state screenshots for current pointer navigation', async 
   runtime.assertClean(testInfo);
 });
 
-async function elementInventory(locator) {
-  return locator.evaluateAll((nodes) => nodes.map((node) => ({
-    tag: node.tagName.toLowerCase(),
-    id: node.id || null,
-    text: (node.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 160),
-    className: typeof node.className === 'string' ? node.className : null,
-    hidden: node.hidden,
-    disabled: 'disabled' in node ? Boolean(node.disabled) : false,
-    ariaLabel: node.getAttribute('aria-label'),
-    data: Object.fromEntries([...node.attributes]
-      .filter((attribute) => attribute.name.startsWith('data-'))
-      .map((attribute) => [attribute.name, attribute.value])),
-    visible: Boolean(node.getClientRects().length) && getComputedStyle(node).visibility !== 'hidden',
-  })));
-}
-
-test('R2 diagnostic: inventories current Cards, Battle and Result contracts without mutating game bytes', async ({ page }, testInfo) => {
+test('persists a legal 40-card deck across save and page reload through visible UI', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
+  let cards = await enterCardsFromHome(page);
 
-  const cardsControl = visibleHomeControl(page, 'cards');
-  await expect(cardsControl).toBeVisible();
-  await cardsControl.click();
-  const cards = page.locator('section[data-screen="cards"]');
-  await expect(cards).toBeVisible();
-  await page.waitForTimeout(300);
+  const deckCount = cards.locator('#deckCount');
+  const initialCount = Number.parseInt((await deckCount.textContent()) ?? '', 10);
+  expect(Number.isFinite(initialCount), 'initial main-deck count').toBeTruthy();
+  expect(initialCount, 'default deck leaves room for UI additions').toBeLessThan(40);
 
-  const inventory = {
-    cards: {
-      buttons: await elementInventory(cards.locator('button')),
-      collectionChildren: await elementInventory(cards.locator('#collectionGrid > *')),
-      deckSlots: await elementInventory(cards.locator('#deckSlots > *')),
-      exDeckSlots: await elementInventory(cards.locator('#exDeckSlots > *')),
-      saveDeck: await elementInventory(cards.locator('#saveDeck')),
-      trayToggle: await elementInventory(cards.locator('#r4DeckTrayToggle')),
-      text: await cards.locator('body').count().catch(() => 0),
-      deckCount: await cards.locator('#deckCount').textContent(),
-      exDeckCount: await cards.locator('#exDeckCount').textContent(),
-      trayCount: await cards.locator('#r4TrayCount').textContent(),
-      saveState: await cards.locator('#deckSaveState').textContent(),
-    },
-    battleHiddenContract: {
-      buttons: await elementInventory(page.locator('section[data-screen="battle"] button')),
-      selects: await elementInventory(page.locator('section[data-screen="battle"] select')),
-    },
-    resultHiddenContract: {
-      buttons: await elementInventory(page.locator('section[data-screen="result"] button')),
-    },
-    storageKeys: await page.evaluate(() => Object.keys(localStorage).sort()),
-  };
+  for (let count = initialCount; count < 40; count += 1) {
+    const candidate = cards.locator('#collectionGrid button.slot.live.cardFace:not(.inDeck):visible').first();
+    await expect(candidate, `visible collection candidate for deck slot ${count + 1}`).toBeVisible();
+    await candidate.click();
 
-  await testInfo.attach(`${testInfo.project.name}-r2-current-contract-inventory.json`, {
-    body: Buffer.from(JSON.stringify(inventory, null, 2)),
-    contentType: 'application/json',
-  });
-  await attachStateScreenshot(page, testInfo, 'r2-cards-inventory');
+    const addSelected = cards.locator('#addSelectedCard');
+    await expect(addSelected, `add selected card for deck slot ${count + 1}`).toBeVisible();
+    await expect(addSelected).toBeEnabled();
+    await addSelected.click();
+    await expect(deckCount).toHaveText(String(count + 1));
+
+    const closePreview = cards.locator('#r4PreviewClose:visible');
+    if ((await closePreview.count()) > 0) await closePreview.click();
+  }
+
+  await expect(deckCount).toHaveText('40');
+  await expect(cards.locator('#exDeckCount')).toHaveText('0');
+  const saveDeck = cards.locator('#saveDeck');
+  await expect(saveDeck).toBeVisible();
+  await expect(saveDeck).toBeEnabled();
+  await saveDeck.click();
+  await expect(cards.locator('#deckSaveState')).toHaveText('保存済み');
+
+  const storedBeforeReload = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
+  expect(storedBeforeReload, `${STORAGE_KEY} after Save`).not.toBeNull();
+  await attachStateScreenshot(page, testInfo, 'deck-saved-40');
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1_000);
+  await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+  cards = await enterCardsFromHome(page);
+
+  await expect(cards.locator('#deckCount'), 'main deck after reload').toHaveText('40');
+  await expect(cards.locator('#exDeckCount'), 'EX deck after reload').toHaveText('0');
+  await expect(cards.locator('#deckSaveState'), 'save state after reload').toHaveText('保存済み');
+  const storedAfterReload = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
+  expect(storedAfterReload, 'saved browser state must survive reload unchanged').toBe(storedBeforeReload);
+  await attachStateScreenshot(page, testInfo, 'deck-reloaded-40');
+
   runtime.assertClean(testInfo);
 });

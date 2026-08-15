@@ -1,4 +1,4 @@
-name: Battle Phase R2 Main Sync
+name: Battle Phase R2 DOM Observer Fixer
 
 on:
   push:
@@ -6,12 +6,13 @@ on:
       - work/BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001-R2
     paths:
       - .github/workflows/_battle-phase-r2-patcher.yml
+      - .github/scripts/battle_phase_r2_patch.py
 
 permissions:
   contents: write
 
 jobs:
-  sync-current-main:
+  fix-current-html:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -21,13 +22,27 @@ jobs:
           ref: work/BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001-R2
           fetch-depth: 0
 
-      - name: Merge exact latest main without losing current R2
+      - name: Apply DOM-observer isolation fix
+        run: python .github/scripts/battle_phase_r2_patch.py
+
+      - name: Audit exact source scope
+        shell: bash
+        run: |
+          git diff --check
+          test "$(git diff --name-only | wc -l)" -eq 1
+          test "$(git diff --name-only)" = "browser/GAMEROAD.html"
+          grep -Fq 'BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001-R2-DEDICATED-SURFACE' browser/GAMEROAD.html
+          grep -Fq 'BATTLE-PHASE-R2-CUTIN-HOLD' browser/GAMEROAD.html
+          grep -Fq 'new MutationObserver(syncShell)' browser/GAMEROAD.html
+          grep -Fq "characterId:'partner.naki',state:'dot_break_entry'" browser/GAMEROAD.html
+          ! grep -Fq 'const baseRenderBattle=renderBattle' browser/GAMEROAD.html
+          ! grep -Fq 'const baseSetBattlePresentation=setBattlePresentation' browser/GAMEROAD.html
+
+      - name: Commit isolated presentation fix
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git fetch origin main
-          git merge --no-edit origin/main
-          grep -Fq 'BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001-R2-DEDICATED-SURFACE' browser/GAMEROAD.html
-          grep -Fq "mountChar('#battlePhaseNaki','partner.naki','dot_break_entry')" browser/GAMEROAD.html
+          git add browser/GAMEROAD.html
+          git commit -m 'fix(browser): isolate dedicated battle phase presentation'
           git push origin HEAD:work/BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001-R2

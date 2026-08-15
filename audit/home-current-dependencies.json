@@ -1,0 +1,31 @@
+{
+  "sourceBlob": "40a5454a9b78b7534aaeb1d4e62206324b14dd45",
+  "bytes": 11794881,
+  "scriptSrcs": [],
+  "linkHrefs": [],
+  "fetchCalls": [
+    {
+      "line": 905,
+      "expression": "`${ROBLOX_ENDPOINT}?${q}`,{method:'GET',mode:'cors',credentials:'omit',cache:'force-cache',referrerPolicy:'no-referrer'}"
+    },
+    {
+      "line": 1066,
+      "expression": "`${CREATOR_THUMB_ENDPOINT}?${q}`,{mode:'cors',credentials:'omit',cache:'force-cache',referrerPolicy:'no-referrer'}"
+    },
+    {
+      "line": 2250,
+      "expression": "url.href,{cache:'no-store',credentials:'same-origin',headers:{'Accept':'application/json'}}"
+    }
+  ],
+  "dynamicImports": [],
+  "dataGoTargets": [
+    "cards",
+    "characters",
+    "gacha",
+    "missions",
+    "profile",
+    "records",
+    "settings",
+    "setup"
+  ]
+}

@@ -12,6 +12,7 @@ const blob=spawnSync('git',['hash-object',TARGET],{encoding:'utf8'}).stdout.trim
 if(blob!==EXPECTED_BLOB||buf.byteLength!==EXPECTED_SIZE)throw Error(`pre-patch identity mismatch ${blob}/${buf.byteLength}`);
 
 const count=(text,needle)=>text.split(needle).length-1;
+const dataGoElementCount=text=>[...text.matchAll(/<[^>]+\bdata-go\s*=/gi)].length;
 const digest=text=>createHash('sha256').update(text).digest('hex');
 function mustCount(needle,n,label=needle){const got=count(html,needle);if(got!==n)throw Error(`precondition ${label}: expected ${n}, got ${got}`)}
 function replaceExact(from,to,label){const n=count(html,from);if(n!==1)throw Error(`replace ${label}: expected exactly 1 source, got ${n}`);html=html.replace(from,to)}
@@ -25,7 +26,7 @@ const baselineCounts={
   partnerNaki:count(before,'partner.naki'),
   selectedPartnerId:count(before,'selectedPartnerId'),
   playerCharacterId:count(before,'playerCharacterId'),
-  dataGo:count(before,'data-go'),
+  dataGoElements:dataGoElementCount(before),
   navigateDetail:count(before,'navigateDetail'),
 };
 if(baselineCounts.partnerNaki!==11||baselineCounts.selectedPartnerId!==29||baselineCounts.playerCharacterId!==28)throw Error(`unexpected protected baseline counts ${JSON.stringify(baselineCounts)}`);
@@ -76,13 +77,10 @@ for(const key of Object.keys(protectedHashes))if(protectedHashes[key]!==afterHas
 
 const afterCounts={
   homeRuntime:count(html,'homeRuntime'),homeCharName:count(html,'homeCharName'),homeLivePartner:count(html,'homeLivePartner'),homeMount:count(html,'homeMount'),codexHeroRuntime:count(html,'codexHeroRuntime'),
-  partnerNaki:count(html,'partner.naki'),selectedPartnerId:count(html,'selectedPartnerId'),playerCharacterId:count(html,'playerCharacterId'),dataGo:count(html,'data-go'),navigateDetail:count(html,'navigateDetail')
+  partnerNaki:count(html,'partner.naki'),selectedPartnerId:count(html,'selectedPartnerId'),playerCharacterId:count(html,'playerCharacterId'),dataGoElements:dataGoElementCount(html),navigateDetail:count(html,'navigateDetail')
 };
 for(const key of ['homeRuntime','homeCharName','homeLivePartner','homeMount','codexHeroRuntime'])if(afterCounts[key]!==0)throw Error(`${key} remains after patch: ${afterCounts[key]}`);
-for(const key of ['partnerNaki','selectedPartnerId','playerCharacterId','dataGo','navigateDetail']){
-  const beforeKey={partnerNaki:'partnerNaki',selectedPartnerId:'selectedPartnerId',playerCharacterId:'playerCharacterId',dataGo:'dataGo',navigateDetail:'navigateDetail'}[key];
-  if(afterCounts[key]!==baselineCounts[beforeKey])throw Error(`protected count changed ${key}: ${baselineCounts[beforeKey]} -> ${afterCounts[key]}`);
-}
+for(const key of ['partnerNaki','selectedPartnerId','playerCharacterId','dataGoElements','navigateDetail'])if(afterCounts[key]!==baselineCounts[key])throw Error(`protected count changed ${key}: ${baselineCounts[key]} -> ${afterCounts[key]}`);
 if(count(html,"mountChar('#homeRuntime'")!==0)throw Error('Home mount call remains');
 if(count(html,"document.getElementById('homeLivePartner')")!==0)throw Error('Battle still depends on Home DOM partner label');
 if(count(html,"publicPartner=(typeof partnerInfo==='function'?partnerInfo()?.name:'')?.trim();")!==1)throw Error('Battle selected-partner state lookup missing');
@@ -104,4 +102,4 @@ await writeFile(TARGET,html,'utf8');
 const post=await readFile(TARGET);
 const postBlob=spawnSync('git',['hash-object',TARGET],{encoding:'utf8'}).stdout.trim();
 if(postBlob===EXPECTED_BLOB)throw Error('patch produced no Browser blob change');
-console.log('HOME_CLEANUP_PATCH_OK',JSON.stringify({preBlob:EXPECTED_BLOB,postBlob,preBytes:buf.byteLength,postBytes:post.byteLength,protectedHashes,afterCounts,homeTargets}));
+console.log('HOME_CLEANUP_PATCH_OK',JSON.stringify({preBlob:EXPECTED_BLOB,postBlob,preBytes:buf.byteLength,postBytes:post.byteLength,protectedHashes,baselineCounts,afterCounts,homeTargets}));

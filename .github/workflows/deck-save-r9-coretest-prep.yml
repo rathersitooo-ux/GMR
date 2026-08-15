@@ -1,0 +1,123 @@
+name: DeckSave R9 Core Test Prep
+
+on:
+  push:
+    branches:
+      - work/deck-save-r9-coretest-20260816
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-core-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/deck-save-r9-coretest-20260816
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Transform and verify exact core test slice
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 32e1355ba1b74b5a8527dce62e7e6d7f58cabba9 HEAD
+          python3 - <<'PY'
+          from pathlib import Path
+
+          core_path = Path('browser/deck-save-recovery-core.mjs')
+          test_path = Path('tests/deck-save-recovery-core.test.mjs')
+          core = core_path.read_text(encoding='utf-8')
+          test = test_path.read_text(encoding='utf-8')
+
+          functions = [
+              'inspectRawSave',
+              'classifyDeckProjection',
+              'prepareExplicitDeckCommit',
+              'readStorage',
+              'writePreparedSave',
+              'writePreparedSaveVerified',
+              'resetExplicitSaveKeys',
+          ]
+          for name in functions:
+              marker = f'export function {name}'
+              assert core.count(marker) == 1, f'{marker} count={core.count(marker)}'
+              core = core.replace(marker, f'function {name}', 1)
+
+          const_marker = 'export const DECK_SAVE_RECOVERY_CORE = Object.freeze({ schema: SCHEMA });'
+          assert core.count(const_marker) == 1, f'core const marker count={core.count(const_marker)}'
+          core = core.replace(
+              const_marker,
+              'const DECK_SAVE_RECOVERY_CORE = Object.freeze({ schema: SCHEMA });',
+              1,
+          )
+          assert 'export function ' not in core
+          assert 'export const ' not in core
+          assert 'globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE' not in core
+          core += """
+
+globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE = Object.freeze({
+  inspectRawSave,
+  classifyDeckProjection,
+  prepareExplicitDeckCommit,
+  readStorage,
+  writePreparedSave,
+  writePreparedSaveVerified,
+  resetExplicitSaveKeys,
+  DECK_SAVE_RECOVERY_CORE,
+});
+"""
+
+          old_import = """import {
+  inspectRawSave,
+  classifyDeckProjection,
+  prepareExplicitDeckCommit,
+  readStorage,
+  writePreparedSave,
+  writePreparedSaveVerified,
+  resetExplicitSaveKeys,
+  DECK_SAVE_RECOVERY_CORE,
+} from '../browser/deck-save-recovery-core.mjs';
+"""
+          new_import = """await import('../browser/deck-save-recovery-core.mjs');
+const {
+  inspectRawSave,
+  classifyDeckProjection,
+  prepareExplicitDeckCommit,
+  readStorage,
+  writePreparedSave,
+  writePreparedSaveVerified,
+  resetExplicitSaveKeys,
+  DECK_SAVE_RECOVERY_CORE,
+} = globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE;
+"""
+          assert test.count(old_import) == 1, f'test import count={test.count(old_import)}'
+          test = test.replace(old_import, new_import, 1)
+
+          core_path.write_text(core, encoding='utf-8')
+          test_path.write_text(test, encoding='utf-8')
+          PY
+          node --check browser/deck-save-recovery-core.mjs
+          node --check tests/deck-save-recovery-core.test.mjs
+          node --test tests/deck-save-recovery-core.test.mjs
+          git diff --check
+
+      - name: Self-clean and push verified donor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-r9-coretest-preparer'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm .github/workflows/deck-save-r9-coretest-prep.yml
+          git add browser/deck-save-recovery-core.mjs tests/deck-save-recovery-core.test.mjs
+          mapfile -t staged < <(git diff --cached --name-only | sort)
+          mapfile -t expected < <(printf '%s\n' \
+            .github/workflows/deck-save-r9-coretest-prep.yml \
+            browser/deck-save-recovery-core.mjs \
+            tests/deck-save-recovery-core.test.mjs | sort)
+          [[ "${#staged[@]}" -eq 3 ]]
+          [[ "$(printf '%s\n' "${staged[@]}")" == "$(printf '%s\n' "${expected[@]}")" ]]
+          git diff --cached --check
+          git commit -m 'DeckSave R9: prepare classic-compatible recovery core donor'
+          git push origin HEAD:work/deck-save-r9-coretest-20260816

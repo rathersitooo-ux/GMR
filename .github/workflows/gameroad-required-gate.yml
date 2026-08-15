@@ -43,6 +43,7 @@ jobs:
           advice=false
           replay=false
           ping=false
+          battle_2v2_reconnect=false
           result=false
           gacha=false
           pursuit=false
@@ -95,6 +96,10 @@ jobs:
               browser/battle-team-ping-core.mjs|\
               tests/battle-team-ping-core.test.mjs)
                 ping=true
+                ;;
+              browser/battle-2v2-reconnect-core.mjs|\
+              tests/battle-2v2-reconnect-core.test.mjs)
+                battle_2v2_reconnect=true
                 ;;
               browser/result-presentation-core.mjs|\
               tests/result-presentation-core.test.mjs)
@@ -165,6 +170,7 @@ jobs:
             echo "advice=${advice}"
             echo "replay=${replay}"
             echo "ping=${ping}"
+            echo "battle_2v2_reconnect=${battle_2v2_reconnect}"
             echo "result=${result}"
             echo "gacha=${gacha}"
             echo "pursuit=${pursuit}"
@@ -185,7 +191,7 @@ jobs:
           fi
 
       - name: Set up Node
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true' || steps.classify.outputs.partner_vtuber == 'true' || steps.classify.outputs.observability == 'true' || steps.classify.outputs.card_presentation == 'true'
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.battle_2v2_reconnect == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true' || steps.classify.outputs.partner_vtuber == 'true' || steps.classify.outputs.observability == 'true' || steps.classify.outputs.card_presentation == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -205,6 +211,10 @@ jobs:
       - name: Run Battle team ping core tests
         if: steps.classify.outputs.ping == 'true'
         run: node --test tests/battle-team-ping-core.test.mjs
+
+      - name: Run Battle 2v2 reconnect core tests
+        if: steps.classify.outputs.battle_2v2_reconnect == 'true'
+        run: node --test tests/battle-2v2-reconnect-core.test.mjs
 
       - name: Run Result presentation core tests
         if: steps.classify.outputs.result == 'true'

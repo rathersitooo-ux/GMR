@@ -3,8 +3,11 @@ const RECONNECT_SCHEMA = 'GAMEROAD_BATTLE_2V2_RECONNECT_V1';
 export const BATTLE_2V2_CONTROL_MODES = Object.freeze({
   SELF: 'self',
   TEMPORARY_PARTNER: 'temporary_partner',
+  PERMANENT_PARTNER: 'permanent_partner',
   UNCONTROLLED: 'uncontrolled'
 });
+
+const VALID_CONTROL_MODES = new Set(Object.values(BATTLE_2V2_CONTROL_MODES));
 
 function nonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
@@ -53,8 +56,22 @@ function validateState(state) {
     throw new TypeError('STATE_REVISION_INVALID');
   }
   validateSeatShape(state.seats);
-  if (state.seats.some(seat => typeof seat.connected !== 'boolean')) {
-    throw new TypeError('STATE_CONNECTION_INVALID');
+
+  for (const seat of state.seats) {
+    if (typeof seat.connected !== 'boolean') {
+      throw new TypeError('STATE_CONNECTION_INVALID');
+    }
+    if (!VALID_CONTROL_MODES.has(seat.controlMode)) {
+      throw new TypeError('STATE_CONTROL_MODE_INVALID');
+    }
+    if (!Number.isSafeInteger(seat.controlGeneration) || seat.controlGeneration < 0) {
+      throw new TypeError('STATE_CONTROL_GENERATION_INVALID');
+    }
+
+    const shouldBeConnected = seat.controlMode === BATTLE_2V2_CONTROL_MODES.SELF;
+    if (seat.connected !== shouldBeConnected) {
+      throw new TypeError('STATE_CONTROL_CONNECTION_MISMATCH');
+    }
   }
 }
 
@@ -66,7 +83,9 @@ function freezeState(seats, revision) {
       seatId: seat.seatId,
       playerId: seat.playerId,
       teamId: seat.teamId,
-      connected: seat.connected
+      connected: seat.connected,
+      controlMode: seat.controlMode,
+      controlGeneration: seat.controlGeneration
     }))
   });
 }
@@ -74,56 +93,188 @@ function freezeState(seats, revision) {
 export function create2v2ReconnectState({ seats } = {}) {
   validateSeatShape(seats);
   return freezeState(
-    seats.map(seat => ({ ...seat, connected: true })),
+    seats.map(seat => ({
+      ...seat,
+      connected: true,
+      controlMode: BATTLE_2V2_CONTROL_MODES.SELF,
+      controlGeneration: 0
+    })),
     0
   );
 }
 
-function setPlayerConnection(state, playerId, connected) {
+function findPlayerSeat(state, playerId) {
   validateState(state);
   if (!nonEmptyString(playerId)) {
-    return deepFreeze({ ok: false, reason: 'PLAYER_INVALID', changed: false, state });
+    return { ok: false, reason: 'PLAYER_INVALID' };
   }
 
-  const target = state.seats.find(seat => seat.playerId === playerId);
-  if (!target) {
-    return deepFreeze({ ok: false, reason: 'PLAYER_UNKNOWN', changed: false, state });
+  const seat = state.seats.find(candidate => candidate.playerId === playerId);
+  if (!seat) {
+    return { ok: false, reason: 'PLAYER_UNKNOWN' };
   }
-  if (target.connected === connected) {
-    return deepFreeze({ ok: true, status: 'unchanged', changed: false, state });
-  }
+  return { ok: true, seat };
+}
 
+function transitionSeat(state, targetSeat, patch, status) {
   const next = freezeState(
-    state.seats.map(seat => seat.playerId === playerId ? { ...seat, connected } : seat),
+    state.seats.map(seat => seat.seatId === targetSeat.seatId
+      ? {
+          ...seat,
+          ...patch,
+          controlGeneration: seat.controlGeneration + 1
+        }
+      : seat),
     state.revision + 1
   );
+
   return deepFreeze({
     ok: true,
-    status: connected ? 'reconnected' : 'disconnected',
+    status,
     changed: true,
     state: next
   });
 }
 
 export function disconnect2v2Player(state, playerId) {
-  return setPlayerConnection(state, playerId, false);
+  const found = findPlayerSeat(state, playerId);
+  if (!found.ok) {
+    return deepFreeze({ ok: false, reason: found.reason, changed: false, state });
+  }
+
+  const target = found.seat;
+  if (target.controlMode === BATTLE_2V2_CONTROL_MODES.TEMPORARY_PARTNER
+      || target.controlMode === BATTLE_2V2_CONTROL_MODES.PERMANENT_PARTNER) {
+    return deepFreeze({ ok: true, status: 'unchanged', changed: false, state });
+  }
+  if (target.controlMode !== BATTLE_2V2_CONTROL_MODES.SELF) {
+    return deepFreeze({
+      ok: false,
+      reason: 'CONTROL_STATE_INVALID_FOR_DISCONNECT',
+      changed: false,
+      state
+    });
+  }
+
+  return transitionSeat(
+    state,
+    target,
+    {
+      connected: false,
+      controlMode: BATTLE_2V2_CONTROL_MODES.TEMPORARY_PARTNER
+    },
+    'disconnected'
+  );
 }
 
 export function reconnect2v2Player(state, playerId) {
-  return setPlayerConnection(state, playerId, true);
+  const found = findPlayerSeat(state, playerId);
+  if (!found.ok) {
+    return deepFreeze({ ok: false, reason: found.reason, changed: false, state });
+  }
+
+  const target = found.seat;
+  if (target.controlMode === BATTLE_2V2_CONTROL_MODES.SELF) {
+    return deepFreeze({ ok: true, status: 'unchanged', changed: false, state });
+  }
+  if (target.controlMode === BATTLE_2V2_CONTROL_MODES.PERMANENT_PARTNER) {
+    return deepFreeze({
+      ok: false,
+      reason: 'PERMANENT_PARTNER_LOCKED',
+      changed: false,
+      state
+    });
+  }
+  if (target.controlMode !== BATTLE_2V2_CONTROL_MODES.TEMPORARY_PARTNER) {
+    return deepFreeze({
+      ok: false,
+      reason: 'CONTROL_STATE_INVALID_FOR_RECONNECT',
+      changed: false,
+      state
+    });
+  }
+
+  return transitionSeat(
+    state,
+    target,
+    {
+      connected: true,
+      controlMode: BATTLE_2V2_CONTROL_MODES.SELF
+    },
+    'reconnected'
+  );
+}
+
+export function expire2v2ReconnectGrace(state, playerId) {
+  const found = findPlayerSeat(state, playerId);
+  if (!found.ok) {
+    return deepFreeze({ ok: false, reason: found.reason, changed: false, state });
+  }
+
+  const target = found.seat;
+  if (target.controlMode === BATTLE_2V2_CONTROL_MODES.PERMANENT_PARTNER) {
+    return deepFreeze({ ok: true, status: 'unchanged', changed: false, state });
+  }
+  if (target.controlMode === BATTLE_2V2_CONTROL_MODES.SELF) {
+    return deepFreeze({
+      ok: false,
+      reason: 'GRACE_NOT_ACTIVE',
+      changed: false,
+      state
+    });
+  }
+  if (target.controlMode !== BATTLE_2V2_CONTROL_MODES.TEMPORARY_PARTNER) {
+    return deepFreeze({
+      ok: false,
+      reason: 'CONTROL_STATE_INVALID_FOR_EXPIRY',
+      changed: false,
+      state
+    });
+  }
+
+  return transitionSeat(
+    state,
+    target,
+    {
+      connected: false,
+      controlMode: BATTLE_2V2_CONTROL_MODES.PERMANENT_PARTNER
+    },
+    'permanent_partner'
+  );
+}
+
+export function isCurrent2v2ControlEnvelope(state, envelope) {
+  validateState(state);
+  if (!envelope || typeof envelope !== 'object' || Array.isArray(envelope)) return false;
+
+  const { seatId, controlMode, controlGeneration } = envelope;
+  if (!nonEmptyString(seatId)
+      || !VALID_CONTROL_MODES.has(controlMode)
+      || !Number.isSafeInteger(controlGeneration)
+      || controlGeneration < 0
+      || controlMode === BATTLE_2V2_CONTROL_MODES.UNCONTROLLED) {
+    return false;
+  }
+
+  const seat = state.seats.find(candidate => candidate.seatId === seatId);
+  if (!seat || seat.controlMode === BATTLE_2V2_CONTROL_MODES.UNCONTROLLED) return false;
+
+  return seat.controlMode === controlMode
+    && seat.controlGeneration === controlGeneration;
 }
 
 export function project2v2SeatControl(state) {
   validateState(state);
 
   const projected = state.seats.map(seat => {
-    if (seat.connected) {
+    if (seat.controlMode === BATTLE_2V2_CONTROL_MODES.SELF) {
       return {
         seatId: seat.seatId,
         playerId: seat.playerId,
         teamId: seat.teamId,
         connected: true,
-        controlMode: BATTLE_2V2_CONTROL_MODES.SELF,
+        controlMode: seat.controlMode,
+        controlGeneration: seat.controlGeneration,
         controllerSeatId: seat.seatId,
         controllerPlayerId: seat.playerId
       };
@@ -134,7 +285,8 @@ export function project2v2SeatControl(state) {
       playerId: seat.playerId,
       teamId: seat.teamId,
       connected: false,
-      controlMode: BATTLE_2V2_CONTROL_MODES.UNCONTROLLED,
+      controlMode: seat.controlMode,
+      controlGeneration: seat.controlGeneration,
       controllerSeatId: null,
       controllerPlayerId: null
     };

@@ -40,6 +40,41 @@ function collectStaticErrors(html) {
     errors.push('data-go navigation wiring is missing');
   }
 
+  const dedicatedBattleContracts = [
+    [/id=["']battlePhaseSurface["']/, 'missing dedicated battle phase surface'],
+    [/id=["']battlePhaseResolutionSlot["']/, 'missing dedicated battle phase resolution slot'],
+    [/BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001-R2-DEDICATED-SURFACE/, 'missing dedicated battle phase R2 marker'],
+    [/BATTLE-PHASE-R2-CUTIN-HOLD/, 'missing Naki cut-in secrecy hold'],
+    [/\.battle\.dedicatedBattlePhase\s+\.battleMap[^\{]*\{[^\}]*visibility\s*:\s*hidden\s*!important[^\}]*pointer-events\s*:\s*none\s*!important/i, 'battle board is not disabled during dedicated battle phase'],
+    [/new\s+MutationObserver\(syncShell\)/, 'dedicated battle phase is not observing public battle-resolution DOM'],
+    [/GameRoadThreeCharRuntime/, 'Naki cut-in is not using the public character runtime'],
+    [/characterId\s*:\s*["']partner\.naki["']/, 'Naki character is not wired to dedicated battle phase'],
+    [/state\s*:\s*["']dot_break_entry["']/, 'Naki dot_break_entry state is not wired to dedicated battle phase'],
+    [/__GAMEROAD_BATTLE_PHASE_R2__/, 'missing dedicated battle phase runtime probe'],
+  ];
+  for (const [pattern, message] of dedicatedBattleContracts) {
+    if (!pattern.test(html)) errors.push(message);
+  }
+
+  const dedicatedScriptMatch = html.match(
+    /<script\s+id=["']gameroad-battle-phase-presentation-r2-dedicated-script["'][^>]*>([\s\S]*?)<\/script\s*>/i,
+  );
+  if (!dedicatedScriptMatch) {
+    errors.push('missing dedicated Battle Phase script body');
+  } else {
+    const dedicatedScript = dedicatedScriptMatch[1];
+    for (const forbidden of [
+      'const baseRenderBattle=renderBattle',
+      'const baseSetBattlePresentation=setBattlePresentation',
+      "mountChar('#battlePhaseNaki",
+      'state.match',
+    ]) {
+      if (dedicatedScript.includes(forbidden)) {
+        errors.push(`dedicated battle phase leaks into private runtime scope: ${forbidden}`);
+      }
+    }
+  }
+
   return errors;
 }
 

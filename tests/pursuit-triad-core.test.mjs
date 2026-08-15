@@ -216,7 +216,6 @@ test('resolution is deterministic and independent of input arrival order', () =>
   assert.deepEqual(a.winners, ['a', 'b']);
 });
 
-
 function sha256(payload) {
   return createHash('sha256').update(payload).digest('hex');
 }
@@ -550,4 +549,58 @@ test('snapshot persists no reveal secrets and restore is deeply immutable and no
   portable.participantIds[0] = 'tampered';
   portable.commitments[0].commitment = 'tampered';
   assert.equal(JSON.stringify(restored), restoredBeforeMutation);
+});
+
+const {
+  persistPursuitSecretRoundSnapshot,
+  loadPursuitSecretRoundSnapshot,
+} = await import('../browser/pursuit-triad-core.mjs');
+
+test('persistence I/O bridge writes only the authority-private snapshot and restores by expected identity', async () => {
+  const reveals = [
+    secretReveal('a', 'club', 3, { nonce: 'never-store-a' }),
+    secretReveal('b', 'diamond', 5, { nonce: 'never-store-b', mode: PURSUIT_MODE_FINISHER }),
+  ];
+  const round = await fullyCommittedRound(reveals);
+  let stored;
+  const returned = await persistPursuitSecretRoundSnapshot(round, async (snapshot) => {
+    stored = JSON.parse(JSON.stringify(snapshot));
+  });
+
+  assert.deepEqual(returned, exportPursuitSecretRoundSnapshot(round));
+  const serialized = JSON.stringify(stored);
+  for (const forbiddenKey of ['"hand"', '"cardId"', '"value"', '"mode"', '"nonce"']) {
+    assert.equal(serialized.includes(forbiddenKey), false, `bridge persisted secret key: ${forbiddenKey}`);
+  }
+  for (const reveal of reveals) {
+    assert.equal(serialized.includes(reveal.cardId), false);
+    assert.equal(serialized.includes(reveal.nonce), false);
+  }
+
+  const restored = await loadPursuitSecretRoundSnapshot(async () => stored, expectedRoundIdentity(round));
+  assert.deepEqual(restored, round);
+  assert.deepEqual(getPursuitSecretRoundPublicState(restored), getPursuitSecretRoundPublicState(round));
+});
+
+test('persistence I/O bridge fails closed on missing I/O, storage errors, malformed bytes, and identity mismatch', async () => {
+  const round = await fullyCommittedRound([
+    secretReveal('a', 'club', 1),
+    secretReveal('b', 'diamond', 2),
+  ]);
+  const snapshot = exportPursuitSecretRoundSnapshot(round);
+
+  await assert.rejects(() => persistPursuitSecretRoundSnapshot(round), /saveSnapshot must be a function/);
+  await assert.rejects(() => loadPursuitSecretRoundSnapshot(), /loadSnapshot must be a function/);
+  await assert.rejects(
+    () => persistPursuitSecretRoundSnapshot(round, async () => { throw new Error('STORE_DOWN'); }),
+    /STORE_DOWN/,
+  );
+  await assert.rejects(
+    () => loadPursuitSecretRoundSnapshot(async () => ({ ...snapshot, nonce: 'forbidden' }), expectedRoundIdentity(round)),
+    /fields/,
+  );
+  await assert.rejects(
+    () => loadPursuitSecretRoundSnapshot(async () => snapshot, { ...expectedRoundIdentity(round), roundId: 'other' }),
+    /roundId/,
+  );
 });

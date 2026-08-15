@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Exact current source reconnect inventory
+      - name: Exact QA and plan source inventory
         shell: bash
         run: |
           set -euo pipefail
@@ -26,28 +26,14 @@ jobs:
           from pathlib import Path
           import re
           s=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          print('HTML_BYTES',len(s.encode('utf-8')))
-          names=['closeChannel','handleHostMessage','handleGuestMessage','joinRoom','send','friendTickHate','friendSyncHateClocks','friendHateSignature']
+          names=['qaState','qaSetFast','qaSetNoEffectHands','qaPlans','submitHostPlan','submitGuestPlan','hostStart','legalPlan']
           for name in names:
-              pats=[rf'function\s+{re.escape(name)}\s*\(',rf'(?:const|let|var)\s+{re.escape(name)}\s*=']
-              m=None
-              for p in pats:
-                  m=re.search(p,s)
-                  if m: break
+              m=re.search(r'function\s+'+re.escape(name)+r'\s*\(',s)
               print(f'\n===== {name} @ {m.start() if m else -1} =====')
-              if m:
-                  print(s[max(0,m.start()-400):min(len(s),m.start()+9000)].replace('\r',''))
-          print('\n===== REPO PATH INVENTORY =====')
-          for p in sorted(Path('.').rglob('*')):
-              if p.is_file() and any(x in str(p).lower() for x in ['relay','websocket','cloudflare','friend-room','friend_room']):
-                  print(p)
-          print('\n===== REPO CONTENT MATCHES =====')
-          for p in sorted(Path('.').rglob('*')):
-              if not p.is_file() or '.git/' in str(p): continue
-              try: t=p.read_text(encoding='utf-8')
-              except: continue
-              if 'gameroad.wsrelay.v1' in t or 'transport_reject' in t:
-                  print(p, 'wire=', t.count('gameroad.wsrelay.v1'), 'transport_reject=', t.count('transport_reject'))
+              if m: print(s[max(0,m.start()-250):min(len(s),m.start()+5500)].replace('\r',''))
+          i=s.find('window.GAMEROAD_FRIEND_ROOM_R2')
+          print('\n===== API EXPORT =====')
+          print(s[i:i+8000].replace('\r','') if i>=0 else 'NOT_FOUND')
           PY
       - name: No mutation
         run: test -z "$(git status --porcelain --untracked-files=all)"

@@ -224,8 +224,8 @@ async function playVisibleTwoPlayerToResult(page, testInfo, evidencePrefix) {
       continue;
     }
 
-    const ready = battle.locator('#readyPlan:visible');
-    if ((await ready.count()) > 0 && (await ready.isEnabled())) {
+    const roadSelect = battle.locator('#roadSelect:visible');
+    if ((await roadSelect.count()) > 0 && (await roadSelect.isEnabled())) {
       await submitVisiblePlan(battle);
       roundsSubmitted += 1;
       continue;

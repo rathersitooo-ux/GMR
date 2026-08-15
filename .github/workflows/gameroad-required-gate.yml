@@ -39,6 +39,7 @@ jobs:
 
           browser=false
           dino=false
+          learning=false
           advice=false
           replay=false
           ping=false
@@ -64,6 +65,12 @@ jobs:
               playwright.dino-dig.config.mjs|\
               .github/workflows/dino-dig-mobile-whitebox.yml)
                 dino=true
+                ;;
+              browser/learning-crossmedia-whitebox.html|\
+              tests/learning-crossmedia-whitebox.spec.mjs|\
+              playwright.learning-crossmedia.config.mjs|\
+              .github/workflows/learning-crossmedia-whitebox.yml)
+                learning=true
                 ;;
               tools/advice-collective-eval.mjs|\
               tests/advice-collective-eval.test.mjs|\
@@ -94,6 +101,7 @@ jobs:
           {
             echo "browser=${browser}"
             echo "dino=${dino}"
+            echo "learning=${learning}"
             echo "advice=${advice}"
             echo "replay=${replay}"
             echo "ping=${ping}"
@@ -106,7 +114,7 @@ jobs:
           fi
 
       - name: Set up Node
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true'
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -128,7 +136,7 @@ jobs:
         run: node --test tests/battle-team-ping-core.test.mjs
 
       - name: Install Playwright and Chromium
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true'
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true'
         run: |
           npm install --no-save --no-package-lock @playwright/test@1.62.0
           npx playwright install --with-deps chromium
@@ -144,6 +152,10 @@ jobs:
       - name: Run DINO DIG mobile whitebox smoke
         if: steps.classify.outputs.dino == 'true'
         run: npx playwright test --config=playwright.dino-dig.config.mjs --workers=1
+
+      - name: Run Learning Crossmedia whitebox smoke
+        if: steps.classify.outputs.learning == 'true'
+        run: npx playwright test --config=playwright.learning-crossmedia.config.mjs --workers=1
 
       - name: Fail closed on unclassified executable or CI paths
         if: always() && steps.classify.outputs.unclassified == 'true'

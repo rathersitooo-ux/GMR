@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>GAMEROAD intrinsic learning whitebox R2</title>
+<style>
+  :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark}
+  *{box-sizing:border-box} body{margin:0;min-height:100vh;background:#151515;color:#f4f4f4}
+  main{width:min(100%,760px);margin:0 auto;padding:16px} h1{font-size:20px;margin:0 0 6px} h2{font-size:17px;margin:18px 0 8px}
+  p{line-height:1.5}.muted{color:#b9b9b9}.warning{border-left:4px solid #999;padding:9px 11px;background:#222}
+  .row,.modes,.decisions{display:flex;gap:8px;flex-wrap:wrap}.panel{border:1px solid #555;border-radius:10px;padding:12px;margin:10px 0;background:#202020}
+  button,select{min-height:44px;font:inherit}button{border:1px solid #777;border-radius:8px;background:#2a2a2a;color:inherit;padding:8px 11px}
+  button[aria-pressed="true"]{outline:2px solid #fff;outline-offset:1px}button:disabled{opacity:.55}
+  .evidence{display:grid;gap:9px}.card{border:1px solid #555;border-radius:8px;padding:10px;background:#1b1b1b}.card[data-inspected="true"]{border-style:solid}.card p{margin:4px 0 8px}
+  .card-controls{display:grid;grid-template-columns:1fr;gap:7px}.card select{width:100%;padding:6px;background:#262626;color:inherit;border:1px solid #666;border-radius:7px}
+  .status{min-height:52px;padding:10px;border-left:4px solid #888;background:#1d1d1d;margin-top:10px}.record dl{display:grid;grid-template-columns:auto 1fr;gap:6px 10px}.record dt{color:#bbb}.record dd{margin:0;overflow-wrap:anywhere}
+  .hidden{display:none!important}.tag{display:inline-block;border:1px solid #666;border-radius:999px;padding:3px 8px;font-size:12px;margin-right:5px}
+  @media(min-width:620px){.card-controls{grid-template-columns:auto 1fr}.evidence{grid-template-columns:repeat(3,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<main>
+  <h1>証拠ボード／復元解釈 whitebox R2</h1>
+  <p class="muted">説明を読むだけではなく、証拠を観察・整理し、断定できる範囲と未解決を判断する独立試験です。正式ゲーム、正式科学表現、報酬、Battle能力には接続していません。</p>
+  <div class="modes" aria-label="比較fixture">
+    <button type="button" data-mode="fiction" aria-pressed="true">A 架空証拠</button>
+    <button type="button" data-mode="spinosaurus" aria-pressed="false">B Spinosaurus候補</button>
+  </div>
+  <div id="candidateWarning" class="warning hidden">BはDrive上のsource-backed candidate fixtureを技術検証へ使うだけです。科学分類・表示文はHuman未受理で、正式図鑑や現役科学正本へ昇格しません。</div>
+
+  <section class="panel" aria-labelledby="threadTitle">
+    <h2 id="threadTitle">調査thread</h2>
+    <p id="prompt"></p>
+    <div class="row"><span class="tag" id="fixtureId"></span><span class="tag" id="sourceVersion"></span></div>
+  </section>
+
+  <section aria-labelledby="evidenceTitle">
+    <h2 id="evidenceTitle">観察できる証拠</h2>
+    <div id="evidence" class="evidence"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="decisionTitle">
+    <h2 id="decisionTitle">いま言える範囲を選ぶ</h2>
+    <p class="muted">点数はありません。証拠を結び付けずに連打しても答えは開示されません。</p>
+    <div id="decisions" class="decisions"></div>
+    <div id="status" class="status" role="status">まず証拠を観察し、根拠の種類を整理してください。</div>
+  </section>
+
+  <section id="record" class="panel record hidden" aria-labelledby="recordTitle">
+    <h2 id="recordTitle">調査記録</h2>
+    <dl>
+      <dt>claim identity</dt><dd id="recordClaim"></dd>
+      <dt>source/version</dt><dd id="recordSource"></dd>
+      <dt>判断</dt><dd id="recordDecision"></dd>
+      <dt>結果</dt><dd id="recordOutcome"></dd>
+      <dt>根拠整理</dt><dd id="recordLinks"></dd>
+    </dl>
+  </section>
+
+  <button id="reset" type="button">同じfixtureを最初から</button>
+</main>
+<script>
+(() => {
+  'use strict';
+  const CONTRACT_VERSION='LEARNX-R2-INTERACTION-V1';
+  const LANES=['FOSSIL_CONFIRMED','RESEARCH_INFERRED','UNKNOWN_OR_DEBATED'];
+  const DECISIONS=[
+    {id:'BOUNDED_SUPPORT',label:'支持される部分と未解決を分ける'},
+    {id:'OVERCLAIM',label:'一つの強い断定へまとめる'},
+    {id:'ALL_UNRESOLVED',label:'すべて未解決として保留する'},
+  ];
+  const FIXTURES={
+    fiction:{
+      fixtureId:'FICTION-WHITEBOX-R2', claimId:'FICTION_CREATURE_LOCUS', sourceVersion:'WHITEBOX-FICTION-R2-v1', candidate:false,
+      prompt:'架空生物の骨格・堆積環境・足跡の食い違いから、どこまで復元像を支持できるか整理する。', expectedDecision:'BOUNDED_SUPPORT',
+      evidence:[
+        {id:'f1',title:'骨格形態',text:'保存された脚骨は短く頑丈な形を示す。',lane:'FOSSIL_CONFIRMED',source:'FICTION-DIRECT-01'},
+        {id:'f2',title:'堆積環境',text:'発見層には水辺環境を示す架空の痕跡があるが、生活様式を単独では確定しない。',lane:'RESEARCH_INFERRED',source:'FICTION-INFERENCE-02'},
+        {id:'f3',title:'移動痕跡',text:'足跡資料が互いに整合せず、陸上姿勢は一意に決められない。',lane:'UNKNOWN_OR_DEBATED',source:'FICTION-DEBATED-03'},
+      ]
+    },
+    spinosaurus:{
+      fixtureId:'SPINOSAURUS-CANDIDATE-R1', claimId:'DINO_SPINOSAURUS_RECONSTRUCTION_BOUNDARY', sourceVersion:'DINO-EVIDENCE-R1-2026-08-15', candidate:true,
+      prompt:'Spinosaurus候補fixtureで、形態の直接寄り証拠・生活様式の推論・陸上姿勢の議論中を混同せず復元解釈する。', expectedDecision:'BOUNDED_SUPPORT',
+      evidence:[
+        {id:'s1',title:'後肢の形態',text:'記載標本に基づく短い後肢という形態候補。生活様式の結論とは分離する。',lane:'FOSSIL_CONFIRMED',source:'Ibrahim2014'},
+        {id:'s2',title:'水生適応の解釈',text:'半水生適応を支持する研究候補がある一方、泳法や程度まで強く断定しない。',lane:'RESEARCH_INFERRED',source:'Ibrahim2014+Fabbri2022+competing-evidence'},
+        {id:'s3',title:'陸上姿勢',text:'二足か四足姿勢も取ったかは議論が残る候補として扱う。',lane:'UNKNOWN_OR_DEBATED',source:'NHM-current+Sereno2022'},
+      ]
+    }
+  };
+
+  const ui={
+    modes:[...document.querySelectorAll('[data-mode]')], warning:document.getElementById('candidateWarning'), prompt:document.getElementById('prompt'),
+    fixtureId:document.getElementById('fixtureId'), sourceVersion:document.getElementById('sourceVersion'), evidence:document.getElementById('evidence'),
+    decisions:document.getElementById('decisions'), status:document.getElementById('status'), record:document.getElementById('record'),
+    recordClaim:document.getElementById('recordClaim'),recordSource:document.getElementById('recordSource'),recordDecision:document.getElementById('recordDecision'),
+    recordOutcome:document.getElementById('recordOutcome'),recordLinks:document.getElementById('recordLinks'),reset:document.getElementById('reset')
+  };
+  let mode='fiction'; let fixture; let state;
+
+  function clone(v){return JSON.parse(JSON.stringify(v));}
+  function validateFixture(value){
+    if(!value||!value.fixtureId||!value.claimId||!value.sourceVersion)return {ok:false,reason:'SOURCE_INCOMPLETE'};
+    if(!Array.isArray(value.evidence)||value.evidence.length===0)return {ok:false,reason:'EVIDENCE_INCOMPLETE'};
+    for(const e of value.evidence){if(!e.id||!e.title||!e.text||!e.source||!LANES.includes(e.lane))return {ok:false,reason:'EVIDENCE_METADATA_INCOMPLETE'};}
+    return {ok:true,reason:null};
+  }
+  function newState(){
+    const validation=validateFixture(fixture);
+    return {contractVersion:CONTRACT_VERSION,fixtureId:fixture?.fixtureId||null,claimId:fixture?.claimId||null,sourceVersion:fixture?.sourceVersion||null,
+      candidate:Boolean(fixture?.candidate),validation:validation.reason||'VALID',inspected:[],links:{},decision:null,outcome:validation.ok?'READY':'FAIL_CLOSED',
+      blindAttempts:0,duplicateDecisionAttempts:0,lastDecisionSignature:null,recordVisible:false};
+  }
+  function reset(){state=newState();render();}
+  function setMode(next){if(!FIXTURES[next])return false;mode=next;fixture=clone(FIXTURES[next]);reset();return true;}
+  function loadFixtureForTest(value){mode='test';fixture=clone(value);reset();return snapshot();}
+  function inspectEvidence(id){
+    if(state.outcome==='FAIL_CLOSED'||!fixture.evidence.some(e=>e.id===id))return false;
+    if(!state.inspected.includes(id))state.inspected.push(id);render();return true;
+  }
+  function linkEvidence(id,lane){
+    if(state.outcome==='FAIL_CLOSED'||!state.inspected.includes(id)||!LANES.includes(lane))return false;
+    state.links[id]=lane;state.decision=null;state.recordVisible=false;state.outcome='READY';render();return true;
+  }
+  function decisionSignature(id){return `${id}|${fixture.evidence.map(e=>`${e.id}:${state.links[e.id]||'-'}`).join('|')}`;}
+  function decide(id){
+    if(state.outcome==='FAIL_CLOSED'||!DECISIONS.some(d=>d.id===id)){render();return state.outcome;}
+    const linked=fixture.evidence.filter(e=>state.links[e.id]).length;
+    if(linked<fixture.evidence.length){state.blindAttempts++;state.outcome='NEEDS_EVIDENCE';state.recordVisible=false;state.decision=null;render();return state.outcome;}
+    const signature=decisionSignature(id);
+    if(signature===state.lastDecisionSignature){state.duplicateDecisionAttempts++;state.outcome='NO_NEW_INFORMATION';state.recordVisible=false;render();return state.outcome;}
+    state.lastDecisionSignature=signature;state.decision=id;
+    const laneMismatch=fixture.evidence.some(e=>state.links[e.id]!==e.lane);
+    if(laneMismatch){state.outcome='REVIEW_EVIDENCE';state.recordVisible=true;}
+    else if(id==='OVERCLAIM'){state.outcome='OVERCLAIM_BOUNDARY';state.recordVisible=true;}
+    else if(id!==fixture.expectedDecision){state.outcome='REVIEW_SCOPE';state.recordVisible=true;}
+    else {state.outcome='COHERENT_BOUNDARY';state.recordVisible=true;}
+    render();return state.outcome;
+  }
+  function snapshot(){return clone({...state,mode,evidenceCount:fixture?.evidence?.length||0,decisionCount:DECISIONS.length,lanes:[...LANES]});}
+  function statusText(){
+    const map={READY:'証拠を観察し、根拠の種類を整理してください。',FAIL_CLOSED:`source/versionが不完全なため判定を停止しました: ${state.validation}`,
+      NEEDS_EVIDENCE:'未整理の証拠があります。同じ判断を連打しても答えは開示しません。',NO_NEW_INFORMATION:'根拠状態が同じため新しい情報は増えません。証拠の整理を見直してください。',
+      REVIEW_EVIDENCE:'根拠の種類と結び付けが一致していません。どの証拠が直接・推論・未解決か見直せます。',OVERCLAIM_BOUNDARY:'複数の根拠を一つの強い断定へまとめると、議論中の部分まで確定扱いになります。',
+      REVIEW_SCOPE:'証拠の整理はできていますが、支持できる範囲と保留範囲の分け方を見直せます。',COHERENT_BOUNDARY:'支持できる部分と未解決部分を分けて記録できました。'};
+    return map[state.outcome]||state.outcome;
+  }
+  function render(){
+    ui.modes.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));ui.warning.classList.toggle('hidden',!fixture?.candidate);
+    ui.prompt.textContent=fixture?.prompt||'fixture unavailable';ui.fixtureId.textContent=fixture?.fixtureId||'NO_FIXTURE';ui.sourceVersion.textContent=fixture?.sourceVersion||'NO_SOURCE_VERSION';
+    ui.evidence.innerHTML='';
+    for(const e of fixture?.evidence||[]){
+      const card=document.createElement('article');card.className='card';card.dataset.evidenceId=e.id;card.dataset.inspected=String(state.inspected.includes(e.id));
+      const title=document.createElement('strong');title.textContent=e.title;const text=document.createElement('p');text.textContent=state.inspected.includes(e.id)?e.text:'観察して内容を確認';
+      const controls=document.createElement('div');controls.className='card-controls';const inspect=document.createElement('button');inspect.type='button';inspect.textContent=state.inspected.includes(e.id)?'観察済み':'観察する';inspect.addEventListener('click',()=>inspectEvidence(e.id));
+      const select=document.createElement('select');select.setAttribute('aria-label',`${e.title} の根拠分類`);select.disabled=!state.inspected.includes(e.id)||state.outcome==='FAIL_CLOSED';
+      select.innerHTML='<option value="">根拠の種類を選ぶ</option>'+LANES.map(l=>`<option value="${l}">${l}</option>`).join('');select.value=state.links[e.id]||'';select.addEventListener('change',()=>linkEvidence(e.id,select.value));
+      controls.append(inspect,select);card.append(title,text,controls);ui.evidence.append(card);
+    }
+    ui.decisions.innerHTML='';for(const d of DECISIONS){const b=document.createElement('button');b.type='button';b.dataset.decision=d.id;b.textContent=d.label;b.disabled=state.outcome==='FAIL_CLOSED';b.addEventListener('click',()=>decide(d.id));ui.decisions.append(b);}
+    ui.status.textContent=statusText();ui.record.classList.toggle('hidden',!state.recordVisible);
+    if(state.recordVisible){ui.recordClaim.textContent=state.claimId;ui.recordSource.textContent=`${state.sourceVersion}${state.candidate?' / candidate・Human未受理':''}`;ui.recordDecision.textContent=state.decision||'none';ui.recordOutcome.textContent=state.outcome;ui.recordLinks.textContent=fixture.evidence.map(e=>`${e.title}=${state.links[e.id]||'未整理'} [${e.source}]`).join(' / ');}
+  }
+  ui.modes.forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));ui.reset.addEventListener('click',reset);
+  fixture=clone(FIXTURES[mode]);reset();
+  window.__LEARNING_CROSSMEDIA_WHITEBOX__={CONTRACT_VERSION,LANES:[...LANES],snapshot,setMode,reset,inspectEvidence,linkEvidence,decide,loadFixtureForTest,getFixture:()=>clone(fixture),fixtures:()=>clone(FIXTURES)};
+})();
+</script>
+</body>
+</html>

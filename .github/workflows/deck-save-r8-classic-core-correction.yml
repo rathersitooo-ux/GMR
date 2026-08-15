@@ -1,0 +1,81 @@
+name: DeckSave R8 Classic Core Correction
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  correct-classic-contract:
+    if: github.head_ref == 'work/deck-save-r8-clean-final2-20260816'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Apply exact classic-contract correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor a909065d3b2474773bec3849cac8265cfb463250 HEAD
+          python3 - <<'PY'
+          from pathlib import Path
+          hp=Path('browser/GAMEROAD.html')
+          cp=Path('browser/deck-save-recovery-core.mjs')
+          tp=Path('tests/deck-save-recovery-core.test.mjs')
+          h=hp.read_text(encoding='utf-8')
+          c=cp.read_text(encoding='utf-8')
+          t=tp.read_text(encoding='utf-8')
+
+          old='''<script type="module">\nimport { inspectRawSave, classifyDeckProjection, prepareExplicitDeckCommit, readStorage, writePreparedSaveVerified, resetExplicitSaveKeys } from './deck-save-recovery-core.mjs';\n'''
+          new='''<script src="./deck-save-recovery-core.mjs"></script>\n<script>\nconst { inspectRawSave, classifyDeckProjection, prepareExplicitDeckCommit, readStorage, writePreparedSaveVerified, resetExplicitSaveKeys } = window.GAMEROAD_DECK_SAVE_RECOVERY_CORE;\n'''
+          assert h.count(old)==1, f'html module preimage count={h.count(old)}'
+          h=h.replace(old,new,1)
+          assert '<script type="module">\nimport { inspectRawSave' not in h
+          assert h.count('<script src="./deck-save-recovery-core.mjs"></script>')==1
+
+          export_functions=['inspectRawSave','classifyDeckProjection','prepareExplicitDeckCommit','readStorage','writePreparedSave','writePreparedSaveVerified','resetExplicitSaveKeys']
+          for name in export_functions:
+            marker=f'export function {name}'
+            assert c.count(marker)==1, f'{marker} count={c.count(marker)}'
+            c=c.replace(marker,f'function {name}',1)
+          marker='export const DECK_SAVE_RECOVERY_CORE = Object.freeze({ schema: SCHEMA });'
+          assert c.count(marker)==1, f'core const marker count={c.count(marker)}'
+          c=c.replace(marker,'const DECK_SAVE_RECOVERY_CORE = Object.freeze({ schema: SCHEMA });',1)
+          assert 'export function ' not in c and 'export const ' not in c
+          global_marker='globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE'
+          assert global_marker not in c
+          c += '''\n\nglobalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE = Object.freeze({\n  inspectRawSave,\n  classifyDeckProjection,\n  prepareExplicitDeckCommit,\n  readStorage,\n  writePreparedSave,\n  writePreparedSaveVerified,\n  resetExplicitSaveKeys,\n  DECK_SAVE_RECOVERY_CORE,\n});\n'''
+
+          old_import="""import {\n  inspectRawSave,\n  classifyDeckProjection,\n  prepareExplicitDeckCommit,\n  readStorage,\n  writePreparedSave,\n  writePreparedSaveVerified,\n  resetExplicitSaveKeys,\n  DECK_SAVE_RECOVERY_CORE,\n} from '../browser/deck-save-recovery-core.mjs';\n"""
+          new_import="""await import('../browser/deck-save-recovery-core.mjs');\nconst {\n  inspectRawSave,\n  classifyDeckProjection,\n  prepareExplicitDeckCommit,\n  readStorage,\n  writePreparedSave,\n  writePreparedSaveVerified,\n  resetExplicitSaveKeys,\n  DECK_SAVE_RECOVERY_CORE,\n} = globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE;\n"""
+          assert t.count(old_import)==1, f'core test import count={t.count(old_import)}'
+          t=t.replace(old_import,new_import,1)
+
+          hp.write_text(h,encoding='utf-8')
+          cp.write_text(c,encoding='utf-8')
+          tp.write_text(t,encoding='utf-8')
+          PY
+          node --check browser/deck-save-recovery-core.mjs
+          node --check tests/deck-save-recovery-core.test.mjs
+          node --test tests/deck-save-recovery-core.test.mjs
+          git diff --check
+      - name: Self-clean and push correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-r8-classic-corrector'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm .github/workflows/deck-save-r8-classic-core-correction.yml
+          git add browser/GAMEROAD.html browser/deck-save-recovery-core.mjs tests/deck-save-recovery-core.test.mjs
+          mapfile -t staged < <(git diff --cached --name-only | sort)
+          expected=(.github/workflows/deck-save-r8-classic-core-correction.yml browser/GAMEROAD.html browser/deck-save-recovery-core.mjs tests/deck-save-recovery-core.test.mjs)
+          mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+          [[ "${#staged[@]}" -eq 4 ]]
+          [[ "$(printf '%s\n' "${staged[@]}")" == "$(printf '%s\n' "${expected_sorted[@]}")" ]]
+          git commit -m 'DeckSave R8: restore classic app global contract with single recovery core'
+          git push origin HEAD:${{ github.head_ref }}

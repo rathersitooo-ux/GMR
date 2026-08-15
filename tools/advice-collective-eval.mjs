@@ -275,7 +275,7 @@ export function compileRuntimeAdviceManifest(memory, decision, approval, options
 
   const contexts = [];
   for (const [fingerprint, actionMap] of memory.contexts.entries()) {
-    if (!safeToken(fingerprint) || !(actionMap instanceof Map)) continue;
+    if (typeof fingerprint !== 'string' || fingerprint.length === 0 || fingerprint.length > 512 || !(actionMap instanceof Map)) continue;
     const support = [...actionMap.values()].reduce((sum, item) => sum + Math.max(0, finiteNumber(item?.count)), 0);
     if (support < minContextSupport) continue;
     const selected = bestAction(actionMap, memory.regretPenalty);

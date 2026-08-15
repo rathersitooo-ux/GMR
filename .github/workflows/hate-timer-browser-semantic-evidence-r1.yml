@@ -1,0 +1,90 @@
+name: HATE Timer Browser Semantic Evidence R1
+
+on:
+  push:
+    branches:
+      - work/HATE-TIMER-01-R1-BROWSER-SEMANTIC-EVIDENCE
+    paths:
+      - .github/workflows/hate-timer-browser-semantic-evidence-r1.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Inspect byte-complete current Browser semantics
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "RUN_COMMIT=$(git rev-parse HEAD)"
+          echo "BROWSER_BLOB=$(git hash-object browser/GAMEROAD.html)"
+          node <<'NODE'
+          const fs = require('fs');
+          const text = fs.readFileSync('browser/GAMEROAD.html', 'utf8');
+          console.log(`BROWSER_BYTES=${Buffer.byteLength(text, 'utf8')}`);
+
+          const patterns = [
+            ['hateTime', /hateTime/gi],
+            ['remainingTime', /remainingTime/gi],
+            ['timerState', /timerState/gi],
+            ['hateState', /hateState/gi],
+            ['turnRemaining', /turnRemaining/gi],
+            ['HATE', /hate/gi],
+            ['Quick', /quick/gi],
+            ['delegate', /delegat/gi],
+            ['partner', /partner/gi]
+          ];
+
+          function allMatches(re) {
+            const out = [];
+            re.lastIndex = 0;
+            let m;
+            while ((m = re.exec(text)) !== null) {
+              out.push({index: m.index, match: m[0]});
+              if (m[0].length === 0) re.lastIndex++;
+            }
+            return out;
+          }
+
+          for (const [name, re] of patterns) {
+            const ms = allMatches(re);
+            console.log(`COUNT ${name}=${ms.length}`);
+          }
+
+          const identifiers = new Map();
+          for (const m of text.matchAll(/\b[A-Za-z_$][A-Za-z0-9_$]*hate[A-Za-z0-9_$]*\b/gi)) {
+            identifiers.set(m[0], (identifiers.get(m[0]) || 0) + 1);
+          }
+          console.log('HATE_IDENTIFIERS=' + JSON.stringify([...identifiers.entries()].sort((a,b)=>b[1]-a[1])));
+
+          const suspicious = [
+            ['HATE_ASSIGN_FROM_REMAINING', /\b[A-Za-z_$][A-Za-z0-9_$]*hate[A-Za-z0-9_$]*\s*(?:\+=|=)[^;\n]{0,320}\bremainingTime\b/gi],
+            ['HATETIME_FROM_TURNREMAINING', /\bhateTime\b\s*(?:\+=|=)[^;\n]{0,320}\bturnRemaining\b/gi],
+            ['OLD_OVER30_PATTERN', /\b(?:elapsed|over)\b[^;\n]{0,220}(?:30|turnRemaining)[^;\n]{0,220}/gi]
+          ];
+          for (const [name, re] of suspicious) {
+            const ms = allMatches(re);
+            console.log(`SUSPICIOUS ${name}=${ms.length}`);
+            ms.slice(0, 20).forEach((m, i) => {
+              const s = Math.max(0, m.index - 240), e = Math.min(text.length, m.index + m.match.length + 240);
+              console.log(`SUSPICIOUS_CONTEXT ${name}#${i+1} @${m.index}: ${JSON.stringify(text.slice(s,e))}`);
+            });
+          }
+
+          const hateMatches = allMatches(/hate/gi);
+          console.log(`HATE_CONTEXT_TOTAL=${hateMatches.length}`);
+          hateMatches.slice(0, 120).forEach((m, i) => {
+            const s = Math.max(0, m.index - 360), e = Math.min(text.length, m.index + 520);
+            console.log(`HATE_CONTEXT#${i+1} @${m.index}: ${JSON.stringify(text.slice(s,e))}`);
+          });
+
+          if (hateMatches.length === 0) {
+            console.error('No HATE-related token found in current Browser HTML; semantic evidence cannot be established.');
+            process.exit(2);
+          }
+          NODE

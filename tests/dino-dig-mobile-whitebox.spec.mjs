@@ -62,7 +62,7 @@ test('three presentations share one excavation state and rendering fallbacks do 
   runtime.assertClean();
 });
 
-test('pointer/touch-equivalent input mutates the shared state and reset restores the deterministic fixture', async ({ page }) => {
+test('real mobile touchscreen input mutates the shared state and reset restores the deterministic fixture', async ({ page }) => {
   const runtime = observeRuntimeErrors(page);
   await page.goto(WHITEBOX_URL, { waitUntil: 'domcontentloaded' });
 
@@ -73,22 +73,7 @@ test('pointer/touch-equivalent input mutates the shared state and reset restores
 
   const clientX = box.x + box.width * 0.15;
   const clientY = box.y + box.height * 0.15;
-  await canvas.dispatchEvent('pointerdown', {
-    pointerId: 17,
-    pointerType: 'touch',
-    isPrimary: true,
-    buttons: 1,
-    clientX,
-    clientY,
-  });
-  await canvas.dispatchEvent('pointerup', {
-    pointerId: 17,
-    pointerType: 'touch',
-    isPrimary: true,
-    buttons: 0,
-    clientX,
-    clientY,
-  });
+  await page.touchscreen.tap(clientX, clientY);
 
   const afterTouch = await snapshot(page);
   expect(afterTouch.inputCount).toBe(1);

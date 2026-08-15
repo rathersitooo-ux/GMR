@@ -1,0 +1,79 @@
+name: DeckSave R8 Schema Compatibility Correction
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  schema-correction:
+    if: github.head_ref == 'work/deck-save-r8-production-integration-20260816'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Apply schema-compatible exact corrections
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 600da47b7714a08ef0e9a13a7260ca05c835756a HEAD
+          python3 - <<'PY'
+          from pathlib import Path
+          hp=Path('browser/GAMEROAD.html'); tp=Path('tests/browser-full-interaction.spec.mjs')
+          h=hp.read_text(encoding='utf-8'); t=tp.read_text(encoding='utf-8')
+
+          old="function savePack(){return{v:3,partner:{id:state.selectedPartnerId,playerCharacterId:state.playerCharacterId,selectionRole:state.characterSelectionRole,profiles:state.partnerProfiles},history:state.history.slice(-20),settings:{...state.settings,audio:{...normalizeAudioSettings()}},progression:state.progression,deck:{main:[...state.savedDeck.main],ex:[...state.savedDeck.ex],ruleId:state.savedDeckRule?.id??null,ruleRevision:state.savedDeckRule?.revision??null},lastPackPreview:[...(state.lastPackPreview||[])]}}"
+          new="function savePack(){normalizeAudioSettings();state.partnerProfiles=normalizePartnerProfiles(state.partnerProfiles);return{v:3,playerCharacterId:state.playerCharacterId,partner:{schema:PARTNER_PROFILE_SCHEMA,selectedId:state.selectedPartnerId,profiles:state.partnerProfiles},settings:state.settings,history:state.history.slice(0,30),progression:{battlePoints:Math.max(0,Math.floor(Number(state.progression?.battlePoints)||0))},setupMode:state.setupMode,setupContent:state.setupContent,deck:{main:[...state.savedDeck.main],ex:[...state.savedDeck.ex],ruleId:state.savedDeckRule?.id??null,ruleRevision:state.savedDeckRule?.revision??null}}}"
+          assert h.count(old)==1, f'savePack preimage count={h.count(old)}'; h=h.replace(old,new,1)
+
+          old="function applyParsedSave(d){if(d.v===1){state.selectedPartnerId=d.char||state.selectedPartnerId;state.playerCharacterId=state.selectedPartnerId;state.characterSelectionRole='partner';state.partnerProfiles=normalizePartnerProfiles(null);state.history=Array.isArray(d.history)?d.history:[];state.settings={reduceMotion:!!d.settings?.reduceMotion,lowPerf:!!d.settings?.lowPerf,audio:normalizeAudioSettings(null)};state.progression={battlePoints:0};if(Array.isArray(d.deck)){state.savedDeck={main:d.deck,ex:[]};state.savedDeckRule={id:null,revision:null};state.deckDraft={main:[...d.deck],ex:[]}}}else if(d.v===2||d.v===3){state.selectedPartnerId=CHARACTERS.some(c=>c.id===d.partner?.id)?d.partner.id:state.selectedPartnerId;state.playerCharacterId=CHARACTERS.some(c=>c.id===d.partner?.playerCharacterId)?d.partner.playerCharacterId:state.selectedPartnerId;state.characterSelectionRole=d.partner?.selectionRole==='player'?'player':'partner';state.partnerProfiles=normalizePartnerProfiles(d.partner?.profiles);state.history=Array.isArray(d.history)?d.history:[];state.settings={reduceMotion:!!d.settings?.reduceMotion,lowPerf:!!d.settings?.lowPerf,audio:normalizeAudioSettings(d.settings?.audio)};state.progression=d.progression&&typeof d.progression==='object'?d.progression:{battlePoints:0};state.lastPackPreview=Array.isArray(d.lastPackPreview)?d.lastPackPreview.filter(id=>CARDS[id]).slice(-7):[];if(Array.isArray(d.deck?.main)&&Array.isArray(d.deck?.ex)){state.savedDeck={main:d.deck.main.filter(id=>CARDS[id]),ex:d.deck.ex.filter(id=>CARDS[id])};state.savedDeckRule={id:d.deck?.ruleId??null,revision:d.deck?.ruleRevision??null};state.deckDraft={main:[...state.savedDeck.main],ex:[...state.savedDeck.ex]}}}}"
+          new="function applyParsedSave(d){if(d.v<=2){const legacy=PROD_CHARS.some(c=>c.id===d.selectedCharacter)?d.selectedCharacter:'partner.naki';state.selectedPartnerId=legacy;state.playerCharacterId=legacy;state.partnerProfiles=normalizePartnerProfiles(null)}else{if(PROD_CHARS.some(c=>c.id===d.playerCharacterId))state.playerCharacterId=d.playerCharacterId;if(PROD_CHARS.some(c=>c.id===d.partner?.selectedId))state.selectedPartnerId=d.partner.selectedId;state.partnerProfiles=normalizePartnerProfiles(d.partner?.profiles)}if(d.settings)Object.assign(state.settings,d.settings);normalizeAudioSettings();if(Array.isArray(d.history))state.history=d.history.slice(0,30);state.progression={battlePoints:Math.max(0,Math.floor(Number(d.progression?.battlePoints)||0))};if(['2p','4p','2v2'].includes(d.setupMode))state.setupMode=d.setupMode;if(['road_shield','honey_hunt'].includes(d.setupContent))state.setupContent=d.setupContent;if((d.v===2||d.v===3)&&d.deck&&Array.isArray(d.deck.main)&&Array.isArray(d.deck.ex)){state.savedDeck={main:[...d.deck.main],ex:[...d.deck.ex]};state.savedDeckRule={id:typeof d.deck.ruleId==='string'?d.deck.ruleId:null,revision:Number.isInteger(d.deck.ruleRevision)?d.deck.ruleRevision:null}}state.deckDraft={main:[...state.savedDeck.main],ex:[...state.savedDeck.ex]}}"
+          assert h.count(old)==1, f'applyParsedSave preimage count={h.count(old)}'; h=h.replace(old,new,1)
+
+          old="const stampedRoot={...prepared.nextRoot,v:3},stampedPrepared={...prepared,serialized:JSON.stringify(stampedRoot),nextRoot:stampedRoot};"
+          new="const currentPack=savePack();currentPack.deck=nextDeck;const stampedRoot={...mergeKnownPack(prepared.nextRoot,currentPack),v:3},stampedPrepared={...prepared,serialized:JSON.stringify(stampedRoot),nextRoot:stampedRoot};"
+          assert h.count(old)==1, f'stampedRoot preimage count={h.count(old)}'; h=h.replace(old,new,1)
+
+          old="return verifiedRawWrite(JSON.stringify(mergeKnownPack(inspection.parsed,pack)),read.rawValue)}"
+          new="const ok=verifiedRawWrite(JSON.stringify(mergeKnownPack(inspection.parsed,pack)),read.rawValue);if(ok){$('#saveState').textContent='保存済み';$('#storageStatus')&&($('#storageStatus').textContent='端末保存')}return ok}"
+          assert h.count(old)==1, f'save UI preimage count={h.count(old)}'; h=h.replace(old,new,1)
+
+          old="const legacyRaw = JSON.stringify({ v: 2, partner: { id: 'partner.naki' }, history: [{ keep: 'legacy-history' }], settings: { reduceMotion: true }, progression: { battlePoints: 9 }, deck: { main: defaultDeck, ex: [], ruleId: 'FIRST_REGULATION', ruleRevision: 2 }, opaque: { keep: 9 } });"
+          new="const legacyRaw = JSON.stringify({ v: 2, selectedCharacter: 'partner.naki', history: [{ keep: 'legacy-history' }], settings: { reduceMotion: true }, progression: { battlePoints: 9 }, setupMode: '4p', setupContent: 'honey_hunt', deck: { main: defaultDeck, ex: [], ruleId: 'FIRST_REGULATION', ruleRevision: 2 }, opaque: { keep: 9 } });"
+          assert t.count(old)==1, f'legacy fixture count={t.count(old)}'; t=t.replace(old,new,1)
+
+          old="return page.evaluate((key) => ({ raw: localStorage.getItem(key), recovery: window.__GAMEROAD_SAVE_RECOVERY__.snapshot(), savedDeck: [...window.__GAMEROAD_TEST__.state.savedDeck.main], rule: { ...window.__GAMEROAD_TEST__.state.savedDeckRule } }), STORAGE_KEY);"
+          new="return page.evaluate((key) => ({ raw: localStorage.getItem(key), recovery: window.__GAMEROAD_SAVE_RECOVERY__.snapshot(), savedDeck: [...window.__GAMEROAD_TEST__.state.savedDeck.main], rule: { ...window.__GAMEROAD_TEST__.state.savedDeckRule }, playerCharacterId: window.__GAMEROAD_TEST__.state.playerCharacterId, selectedPartnerId: window.__GAMEROAD_TEST__.state.selectedPartnerId, setupMode: window.__GAMEROAD_TEST__.state.setupMode, setupContent: window.__GAMEROAD_TEST__.state.setupContent }), STORAGE_KEY);"
+          assert t.count(old)==1, f'reload projection count={t.count(old)}'; t=t.replace(old,new,1)
+
+          marker="  expect(stored.history[0].keep).toBe('legacy-history');"
+          add="\n  expect(stored.playerCharacterId).toBe('partner.naki');\n  expect(stored.partner.selectedId).toBe('partner.naki');\n  expect(stored.setupMode).toBe('4p');\n  expect(stored.setupContent).toBe('honey_hunt');\n  observed = await reloadWithRaw(JSON.stringify(stored));\n  expect(observed.playerCharacterId).toBe('partner.naki');\n  expect(observed.selectedPartnerId).toBe('partner.naki');\n  expect(observed.setupMode).toBe('4p');\n  expect(observed.setupContent).toBe('honey_hunt');"
+          assert t.count(marker)==1, f'legacy assertion marker count={t.count(marker)}'; t=t.replace(marker,marker+add,1)
+
+          hp.write_text(h,encoding='utf-8'); tp.write_text(t,encoding='utf-8')
+          PY
+          node --check tests/browser-full-interaction.spec.mjs
+          git diff --check
+
+      - name: Self-clean and push correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-r8-schema-corrector'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm .github/workflows/deck-save-r8-schema-correction.yml
+          git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
+          mapfile -t staged < <(git diff --cached --name-only | sort)
+          expected=(.github/workflows/deck-save-r8-schema-correction.yml browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs)
+          mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+          [[ "${#staged[@]}" -eq 3 ]]
+          [[ "$(printf '%s\n' "${staged[@]}")" == "$(printf '%s\n' "${expected_sorted[@]}")" ]]
+          git commit -m 'DeckSave R8: preserve production save envelope during recovery migration'
+          git push origin HEAD:${{ github.head_ref }}

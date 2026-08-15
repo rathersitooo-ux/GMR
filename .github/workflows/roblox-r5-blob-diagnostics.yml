@@ -1,0 +1,43 @@
+name: Roblox R5 blob diagnostics
+
+on:
+  push:
+    branches:
+      - 'work/GITHUB-ROBLOX-CODE-PLACEMENT-001'
+    paths:
+      - '.github/workflows/roblox-r5-blob-diagnostics.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hash orphan transport blob by 4096-byte chunks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import base64, hashlib, json, os, urllib.request
+
+          repo = os.environ['GITHUB_REPOSITORY']
+          token = os.environ['GH_TOKEN']
+          blob_sha = '6726cc2f9d4dbd4282259819391b00616ec9ff1a'
+          req = urllib.request.Request(
+              f'https://api.github.com/repos/{repo}/git/blobs/{blob_sha}',
+              headers={
+                  'Authorization': f'Bearer {token}',
+                  'Accept': 'application/vnd.github+json',
+                  'X-GitHub-Api-Version': '2022-11-28',
+              },
+          )
+          with urllib.request.urlopen(req) as response:
+              obj = json.load(response)
+          data = base64.b64decode(obj['content'])
+          print(f'SIZE {len(data)}')
+          print(f'SHA256 {hashlib.sha256(data).hexdigest()}')
+          for index, start in enumerate(range(0, len(data), 4096)):
+              chunk = data[start:start + 4096]
+              print(f'CHUNK {index} OFFSET {start} SIZE {len(chunk)} SHA256 {hashlib.sha256(chunk).hexdigest()}')
+          PY

@@ -2,11 +2,13 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   benchmarkReport,
+  compileRuntimeAdviceManifest,
   deriveAffectiveUxSignals,
   evaluateHoldout,
   eventEligibility,
   promotionDecision,
   recommendAction,
+  recommendFromRuntimeManifest,
   stateFingerprint,
   trainCollectiveMemory,
 } from '../tools/advice-collective-eval.mjs';
@@ -58,6 +60,18 @@ function deterministicHoldout(count = 200) {
       regretByAction: optimalActionId === 'guard' ? { guard: 0, push: 0.8 } : { guard: 0.8, push: 0 },
     };
   });
+}
+
+function approvedRuntimeGate(overrides = {}) {
+  return {
+    gateId: 'HUMAN-HOLDOUT-ACCEPTANCE',
+    approvalId: 'qa-human-acceptance-001',
+    humanGate: 'approved',
+    privacyScope: 'shared',
+    containsPrivate: false,
+    ...VERSIONS,
+    ...overrides,
+  };
 }
 
 test('fingerprint is versioned and stable', () => {
@@ -142,4 +156,74 @@ test('human-like affect is represented only as observable UX proxies', () => {
     interpretation: 'observable-ux-proxy-not-human-emotion',
     provisional: true,
   });
+});
+
+test('runtime manifest refuses synthetic promotion without explicit Human approval', () => {
+  const memory = trainCollectiveMemory(deterministicTrainingSet(), VERSIONS);
+  const metrics = evaluateHoldout(memory, deterministicHoldout(200));
+  const decision = promotionDecision(memory, metrics);
+  assert.equal(decision.promotion, true);
+
+  assert.equal(compileRuntimeAdviceManifest(memory, decision, null).reason, 'human-gate-not-approved');
+  assert.equal(
+    compileRuntimeAdviceManifest(memory, decision, approvedRuntimeGate({ humanGate: 'pending' })).reason,
+    'human-gate-not-approved',
+  );
+  assert.equal(
+    compileRuntimeAdviceManifest(memory, decision, approvedRuntimeGate({ privacyScope: 'private' })).reason,
+    'privacy-not-runtime-safe',
+  );
+  assert.equal(
+    compileRuntimeAdviceManifest(memory, decision, approvedRuntimeGate({ rulesVersion: 'rules-r0' })).reason,
+    'version-mismatch',
+  );
+  assert.equal(
+    compileRuntimeAdviceManifest(memory, { ...decision, promotion: false }, approvedRuntimeGate()).reason,
+    'offline-promotion-not-passed',
+  );
+});
+
+test('approved aggregate memory compiles to deterministic privacy-minimized runtime manifest', () => {
+  const memory = trainCollectiveMemory(deterministicTrainingSet(), VERSIONS);
+  const metrics = evaluateHoldout(memory, deterministicHoldout(200));
+  const decision = promotionDecision(memory, metrics);
+  const first = compileRuntimeAdviceManifest(memory, decision, approvedRuntimeGate());
+  const second = compileRuntimeAdviceManifest(memory, decision, approvedRuntimeGate());
+
+  assert.equal(first.ok, true);
+  assert.equal(JSON.stringify(first), JSON.stringify(second));
+  assert.equal(first.manifest.schema, 'gameroad.partner-advice-runtime-manifest.v1');
+  assert.equal(first.manifest.promotionSafe, true);
+  assert.equal(first.manifest.containsRawEvents, false);
+  assert.equal(first.manifest.containsPrivate, false);
+  assert.equal(first.manifest.livePlayerPerformanceProven, false);
+  assert.equal(first.manifest.contexts.length, 2);
+  assert.deepEqual(first.manifest.contexts.map((x) => x.actionId).sort(), ['guard', 'push']);
+
+  const serialized = JSON.stringify(first.manifest);
+  assert.equal(serialized.includes('event-'), false);
+  assert.equal(serialized.includes('rewardSum'), false);
+  assert.equal(serialized.includes('regretSum'), false);
+});
+
+test('runtime manifest serves exact approved context, deterministic fallback, and fails closed on version mismatch', () => {
+  const memory = trainCollectiveMemory(deterministicTrainingSet(), VERSIONS);
+  const metrics = evaluateHoldout(memory, deterministicHoldout(200));
+  const decision = promotionDecision(memory, metrics);
+  const compiled = compileRuntimeAdviceManifest(memory, decision, approvedRuntimeGate());
+  assert.equal(compiled.ok, true);
+
+  const high = recommendFromRuntimeManifest(compiled.manifest, state('high'), VERSIONS);
+  const low = recommendFromRuntimeManifest(compiled.manifest, state('low'), VERSIONS);
+  const unseen = recommendFromRuntimeManifest(compiled.manifest, state('medium'), VERSIONS);
+  const stale = recommendFromRuntimeManifest(compiled.manifest, state('high'), { ...VERSIONS, cardVersion: 'cards-r0' });
+
+  assert.equal(high.actionId, 'guard');
+  assert.equal(high.source, 'approved-similar-situation');
+  assert.equal(low.actionId, 'push');
+  assert.equal(low.source, 'approved-similar-situation');
+  assert.equal(unseen.actionId, compiled.manifest.defaultActionId);
+  assert.equal(unseen.source, 'approved-global-fallback');
+  assert.equal(stale.actionId, null);
+  assert.equal(stale.reason, 'version-mismatch');
 });

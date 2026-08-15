@@ -208,3 +208,92 @@ test('persists a legal 40-card deck across save and page reload through visible 
 
   runtime.assertClean(testInfo);
 });
+
+test('moves resolve off the board into the dedicated Battle Phase with Naki cut-in and four-player compare', async ({ page }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+
+  const deckSetup = await page.evaluate(() => {
+    const t = window.__GAMEROAD_TEST__;
+    const draft = [...t.state.deckDraft.main];
+    const available = t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id);
+    for (const id of available) {
+      if (draft.length >= 40) break;
+      if (!draft.includes(id)) draft.push(id);
+    }
+    t.deckSetDraft(draft.slice(0, 40), []);
+    const draftValidation = t.deckValidate(t.state.deckDraft, { forBattle: true });
+    if (draftValidation.ok) t.deckCommit();
+    return {
+      draftCount: t.state.deckDraft.main.length,
+      draftValidation,
+      savedValidation: t.deckValidate(t.state.savedDeck, { forBattle: true }),
+    };
+  });
+  expect(deckSetup.draftCount).toBe(40);
+  expect(deckSetup.draftValidation.ok, `test deck validation: ${JSON.stringify(deckSetup.draftValidation)}`).toBeTruthy();
+  expect(deckSetup.savedValidation.ok, `saved deck validation: ${JSON.stringify(deckSetup.savedValidation)}`).toBeTruthy();
+
+  await page.evaluate(() => {
+    const t = window.__GAMEROAD_TEST__;
+    t.battlePresentationFast(false);
+    t.start('4p', 'road_shield');
+    window.__R2_BATTLE_ROUND_PROMISE__ = t.autoRound();
+  });
+
+  const battle = page.locator('section[data-screen="battle"]');
+  const board = page.locator('#battleMap');
+  const surface = page.locator('#battlePhaseSurface');
+  await expect(battle).toBeVisible();
+
+  await page.waitForFunction(() => {
+    const s = window.__GAMEROAD_BATTLE_PHASE_R2__?.snapshot?.();
+    return s?.live === true && s?.stage === 'focus';
+  }, null, { timeout: 15_000 });
+
+  const focus = await page.evaluate(() => window.__GAMEROAD_BATTLE_PHASE_R2__.snapshot());
+  expect(focus.surfaceHidden).toBe(false);
+  expect(focus.boardVisibility).toBe('hidden');
+  expect(focus.boardPointer).toBe('none');
+  expect(focus.resolutionParent).toBe('battlePhaseResolutionSlot');
+  expect(focus.stage).toBe('focus');
+  await expect(surface).toBeVisible();
+  await expect(board).toBeHidden();
+  await page.waitForFunction(() => document.querySelector('#battlePhaseNaki')?.childElementCount > 0, null, { timeout: 5_000 });
+  const nakiState = await page.locator('#battlePhaseNaki').evaluate((node) => ({
+    children: node.childElementCount,
+    characterId: node.dataset.characterId ?? null,
+  }));
+  expect(nakiState.children, 'Naki cut-in mounted visible content').toBeGreaterThan(0);
+  await attachStateScreenshot(page, testInfo, 'battle-phase-naki-cutin');
+
+  await page.waitForFunction(() => {
+    const hook = window.__GAMEROAD_BATTLE_PHASE_R2__;
+    return hook?.snapshot?.().live === true && document.querySelectorAll('#battlePhaseSurface #battleResolution .resolutionPlayer').length === 4;
+  }, null, { timeout: 8_000 });
+  const compareStage = await page.evaluate(() => window.__GAMEROAD_BATTLE_PHASE_R2__.snapshot().stage);
+  expect(['reveal', 'read', 'compare', 'winner', 'settle']).toContain(compareStage);
+  await expect(page.locator('#battlePhaseSurface #battleResolution .resolutionPlayer')).toHaveCount(4);
+  await expect(page.locator('#battlePhaseTarget')).toContainText('4人全員比較');
+  await attachStateScreenshot(page, testInfo, 'battle-phase-four-player-compare');
+
+  await page.evaluate(async () => {
+    window.__GAMEROAD_TEST__.battlePresentationFast(true);
+    await window.__R2_BATTLE_ROUND_PROMISE__;
+  });
+  await page.waitForFunction(() => window.__GAMEROAD_BATTLE_PHASE_R2__?.snapshot?.().live === false, null, { timeout: 5_000 });
+
+  const after = await page.evaluate(() => ({
+    shell: window.__GAMEROAD_BATTLE_PHASE_R2__.snapshot(),
+    conservation: window.__GAMEROAD_TEST__.cardConservation(),
+    phase: window.__GAMEROAD_TEST__.state.match?.phase ?? null,
+    screen: window.__GAMEROAD_TEST__.state.screen,
+  }));
+  expect(after.shell.surfaceHidden).toBe(true);
+  expect(after.shell.resolutionParent).toBe('battleMap');
+  expect(after.conservation, 'card conservation after dedicated Battle Phase').toBe(true);
+  expect(['plan', null]).toContain(after.phase);
+  expect(['battle', 'result']).toContain(after.screen);
+
+  runtime.assertClean(testInfo);
+});

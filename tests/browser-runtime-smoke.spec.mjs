@@ -37,6 +37,17 @@ test('GAMEROAD boots and core navigation runs without JS errors', async ({ page 
     expect(count, `core screen ${screen}`).toBeGreaterThan(0);
   }
 
+  const battlePhaseSurface = page.locator('#battlePhaseSurface');
+  await expect(battlePhaseSurface, 'dedicated Battle Phase surface exists').toHaveCount(1);
+  await expect(battlePhaseSurface, 'dedicated Battle Phase is not visible outside resolve').toBeHidden();
+  const battlePhaseBoot = await page.evaluate(() => ({
+    hook: typeof window.__GAMEROAD_BATTLE_PHASE_R2__?.snapshot === 'function',
+    snapshot: window.__GAMEROAD_BATTLE_PHASE_R2__?.snapshot?.() ?? null,
+  }));
+  expect(battlePhaseBoot.hook, 'dedicated Battle Phase runtime hook').toBeTruthy();
+  expect(battlePhaseBoot.snapshot?.live).toBe(false);
+  expect(battlePhaseBoot.snapshot?.surfaceHidden).toBe(true);
+
   const dataGoCount = await page.locator('[data-go]').count();
   expect(dataGoCount, 'runtime data-go controls').toBeGreaterThan(0);
 

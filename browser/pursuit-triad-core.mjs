@@ -426,3 +426,51 @@ export async function finalizePursuitSecretRound(round, reveals, digestFn) {
 
   return Object.freeze({ round: closedRound, snapshot });
 }
+
+
+export const PURSUIT_SECRET_ROUND_SNAPSHOT_SCHEMA = 'gameroad.pursuit-secret-round-snapshot.v1';
+
+function requireExactObjectKeys(value, expectedKeys, label) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) fail(`${label} must be an object`);
+  const actual = Object.keys(value).sort(compareText);
+  const expected = [...expectedKeys].sort(compareText);
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    fail(`${label} contains unsupported or missing fields`);
+  }
+}
+
+export function exportPursuitSecretRoundSnapshot(round) {
+  const safe = normalizeSecretRound(round);
+  return Object.freeze({
+    schema: PURSUIT_SECRET_ROUND_SNAPSHOT_SCHEMA,
+    round: makeSecretRound(safe),
+  });
+}
+
+export function restorePursuitSecretRoundSnapshot(
+  snapshot,
+  { roundId, revision, participantIds } = {},
+) {
+  requireExactObjectKeys(snapshot, ['schema', 'round'], 'secret round snapshot');
+  if (snapshot.schema !== PURSUIT_SECRET_ROUND_SNAPSHOT_SCHEMA) {
+    fail('unsupported secret round snapshot schema');
+  }
+  requireExactObjectKeys(
+    snapshot.round,
+    ['schema', 'roundId', 'revision', 'participantIds', 'commitments', 'closed'],
+    'secret round snapshot round',
+  );
+
+  const safe = normalizeSecretRound(snapshot.round);
+  const expectedRoundId = requireRoundId(roundId);
+  const expectedRevision = requireRevision(revision);
+  const expectedParticipantIds = normalizeParticipantIds(participantIds);
+
+  if (safe.roundId !== expectedRoundId) fail('snapshot roundId does not match expected round');
+  if (safe.revision !== expectedRevision) fail('snapshot revision does not match expected revision');
+  if (JSON.stringify(safe.participantIds) !== JSON.stringify(expectedParticipantIds)) {
+    fail('snapshot participantIds do not match expected participants');
+  }
+
+  return makeSecretRound(safe);
+}

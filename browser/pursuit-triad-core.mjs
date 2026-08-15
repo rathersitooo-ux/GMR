@@ -499,3 +499,29 @@ export function restorePursuitSecretRoundSnapshot(
 
   return makeSecretRound(safe);
 }
+
+function requirePersistenceIo(io, label) {
+  if (typeof io !== 'function') fail(`${label} must be a function`);
+  return io;
+}
+
+/**
+ * Bridges the canonical authority-private snapshot to caller-owned persistence.
+ * The caller owns storage keys, durability, auth, encryption, TTL and retries.
+ */
+export async function persistPursuitSecretRoundSnapshot(round, saveSnapshot) {
+  const save = requirePersistenceIo(saveSnapshot, 'saveSnapshot');
+  const snapshot = exportPursuitSecretRoundSnapshot(round);
+  await save(snapshot);
+  return snapshot;
+}
+
+/**
+ * Loads caller-owned persisted bytes and validates them against the caller's
+ * expected authoritative round identity before returning a usable round.
+ */
+export async function loadPursuitSecretRoundSnapshot(loadSnapshot, expectedRoundIdentity) {
+  const load = requirePersistenceIo(loadSnapshot, 'loadSnapshot');
+  const snapshot = await load();
+  return restorePursuitSecretRoundSnapshot(snapshot, expectedRoundIdentity);
+}

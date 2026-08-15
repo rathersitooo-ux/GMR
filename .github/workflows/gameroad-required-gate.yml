@@ -41,6 +41,7 @@ jobs:
           dino=false
           advice=false
           replay=false
+          ping=false
           unclassified=false
           : > /tmp/gameroad-unclassified.txt
 
@@ -73,6 +74,10 @@ jobs:
               tests/battle-replay-core.test.mjs)
                 replay=true
                 ;;
+              browser/battle-team-ping-core.mjs|\
+              tests/battle-team-ping-core.test.mjs)
+                ping=true
+                ;;
               .github/workflows/gameroad-required-gate.yml|README.md|.gitignore|.gitattributes)
                 ;;
               browser/*|roblox/*|unity/*|tools/*|tests/*|.github/workflows/*|\
@@ -91,6 +96,7 @@ jobs:
             echo "dino=${dino}"
             echo "advice=${advice}"
             echo "replay=${replay}"
+            echo "ping=${ping}"
             echo "unclassified=${unclassified}"
           } >> "${GITHUB_OUTPUT}"
 
@@ -100,7 +106,7 @@ jobs:
           fi
 
       - name: Set up Node
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true'
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -116,6 +122,10 @@ jobs:
       - name: Run Battle replay core tests
         if: steps.classify.outputs.replay == 'true'
         run: node --test tests/battle-replay-core.test.mjs
+
+      - name: Run Battle team ping core tests
+        if: steps.classify.outputs.ping == 'true'
+        run: node --test tests/battle-team-ping-core.test.mjs
 
       - name: Install Playwright and Chromium
         if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true'

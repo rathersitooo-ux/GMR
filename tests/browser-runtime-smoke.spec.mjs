@@ -47,6 +47,8 @@ test('GAMEROAD boots and core navigation runs without JS errors', async ({ page 
   expect(battlePhaseBoot.hook, 'dedicated Battle Phase runtime hook').toBeTruthy();
   expect(battlePhaseBoot.snapshot?.live).toBe(false);
   expect(battlePhaseBoot.snapshot?.surfaceHidden).toBe(true);
+  expect(battlePhaseBoot.snapshot?.cutinHold).toBe(false);
+  expect(battlePhaseBoot.snapshot?.resolutionParent).toBe('battleMap');
 
   const dataGoCount = await page.locator('[data-go]').count();
   expect(dataGoCount, 'runtime data-go controls').toBeGreaterThan(0);

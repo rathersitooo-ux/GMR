@@ -21,7 +21,7 @@ jobs:
           ref: work/BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001-R2
           fetch-depth: 0
 
-      - name: Merge current main without losing R2
+      - name: Merge latest main without losing current R2
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'

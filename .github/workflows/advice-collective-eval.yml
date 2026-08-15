@@ -30,5 +30,3 @@ jobs:
         run: node --version
       - name: Run collective advice evaluator tests
         run: node --test tests/advice-collective-eval.test.mjs
-
-# Temporary R1 required-gate recognized-path probe; removed before merge.

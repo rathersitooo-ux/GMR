@@ -1,5 +1,6 @@
 import { defineConfig } from '@playwright/test';
 
+// R3 temporary diagnostic gate: this file is restored before any merge candidate is created.
 export default defineConfig({
   testDir: './tests',
   testMatch: 'r3-battle-staged-diagnostic.spec.mjs',

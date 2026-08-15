@@ -92,6 +92,31 @@ async function numericText(locator) {
   return Number.parseInt((await locator.textContent()) ?? '', 10);
 }
 
+async function installLegalBattleDeck(page) {
+  return page.evaluate(() => {
+    const t = window.__GAMEROAD_TEST__;
+    const publicMain = new Set(t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
+    const standard = window.__CARD_DATA__
+      .filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)))
+      .map((card) => card.id);
+    const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
+    const nonRoyal = standard.filter((id) => !t.isRoyalCard(id));
+    const main = [...nonRoyal.slice(0, 37), ...royalIds];
+    const setValidation = t.deckSetDraft(main, []);
+    const draftValidation = t.deckValidate(t.state.deckDraft, { forBattle: true });
+    const committed = draftValidation.ok ? t.deckCommit() : false;
+    const savedValidation = t.deckValidate(t.state.savedDeck, { forBattle: true });
+    return {
+      main,
+      publicRoyalIds: royalIds.filter((id) => publicMain.has(id)),
+      setValidation,
+      draftValidation,
+      committed,
+      savedValidation,
+    };
+  });
+}
+
 test('captures success-state screenshots for current pointer navigation', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
@@ -205,6 +230,86 @@ test('persists a legal 40-card deck across save and page reload through visible 
   const storedAfterReload = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
   expect(storedAfterReload, 'saved browser state must survive reload unchanged').toBe(storedBeforeReload);
   await attachStateScreenshot(page, testInfo, 'deck-reloaded-40');
+
+  runtime.assertClean(testInfo);
+});
+
+test('moves resolve off the board into the dedicated Battle Phase with Naki cut-in and four-player compare', async ({ page }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+
+  const deckSetup = await installLegalBattleDeck(page);
+  expect(deckSetup.main).toHaveLength(40);
+  expect(deckSetup.publicRoyalIds).toEqual(['SP_J', 'SP_Q', 'SP_K']);
+  expect(deckSetup.setValidation.ok, `set deck validation: ${JSON.stringify(deckSetup.setValidation)}`).toBeTruthy();
+  expect(deckSetup.draftValidation.ok, `test deck validation: ${JSON.stringify(deckSetup.draftValidation)}`).toBeTruthy();
+  expect(deckSetup.committed, 'legal test deck committed').toBeTruthy();
+  expect(deckSetup.savedValidation.ok, `saved deck validation: ${JSON.stringify(deckSetup.savedValidation)}`).toBeTruthy();
+
+  await page.evaluate(() => {
+    const t = window.__GAMEROAD_TEST__;
+    t.battlePresentationFast(false);
+    t.start('4p', 'road_shield');
+    window.__R2_BATTLE_ROUND_PROMISE__ = t.autoRound();
+  });
+
+  const battle = page.locator('section[data-screen="battle"]');
+  const board = page.locator('#battleMap');
+  const surface = page.locator('#battlePhaseSurface');
+  await expect(battle).toBeVisible();
+
+  await page.waitForFunction(() => {
+    const s = window.__GAMEROAD_BATTLE_PHASE_R2__?.snapshot?.();
+    return s?.live === true && s?.stage === 'focus';
+  }, null, { timeout: 15_000 });
+
+  const focus = await page.evaluate(() => window.__GAMEROAD_BATTLE_PHASE_R2__.snapshot());
+  expect(focus.surfaceHidden).toBe(false);
+  expect(focus.cutinHold, 'Naki cut-in keeps battle reveal hidden at scene entry').toBe(true);
+  expect(focus.boardVisibility).toBe('hidden');
+  expect(focus.boardPointer).toBe('none');
+  expect(focus.resolutionParent).toBe('battlePhaseResolutionSlot');
+  expect(focus.stage).toBe('focus');
+  expect(focus.nakiCharacter).toBe('partner.naki');
+  await expect(surface).toBeVisible();
+  await expect(board).toBeHidden();
+  await page.waitForFunction(() => document.querySelector('#battlePhaseNaki')?.childElementCount > 0, null, { timeout: 5_000 });
+  const nakiState = await page.locator('#battlePhaseNaki').evaluate((node) => ({
+    children: node.childElementCount,
+    characterId: node.dataset.characterId ?? null,
+  }));
+  expect(nakiState.children, 'Naki cut-in mounted visible content').toBeGreaterThan(0);
+  expect(nakiState.characterId).toBe('partner.naki');
+  await attachStateScreenshot(page, testInfo, 'battle-phase-naki-cutin');
+
+  await page.waitForFunction(() => {
+    const hook = window.__GAMEROAD_BATTLE_PHASE_R2__;
+    const snapshot = hook?.snapshot?.();
+    return snapshot?.live === true && snapshot?.cutinHold === false && document.querySelectorAll('#battlePhaseSurface #battleResolution .resolutionPlayer').length === 4;
+  }, null, { timeout: 8_000 });
+  const compareStage = await page.evaluate(() => window.__GAMEROAD_BATTLE_PHASE_R2__.snapshot().stage);
+  expect(['reveal', 'read', 'compare', 'winner', 'settle']).toContain(compareStage);
+  await expect(page.locator('#battlePhaseSurface #battleResolution .resolutionPlayer')).toHaveCount(4);
+  await expect(page.locator('#battlePhaseTarget')).toContainText('4人全員比較');
+  await attachStateScreenshot(page, testInfo, 'battle-phase-four-player-compare');
+
+  await page.evaluate(async () => {
+    window.__GAMEROAD_TEST__.battlePresentationFast(true);
+    await window.__R2_BATTLE_ROUND_PROMISE__;
+  });
+  await page.waitForFunction(() => window.__GAMEROAD_BATTLE_PHASE_R2__?.snapshot?.().live === false, null, { timeout: 5_000 });
+
+  const after = await page.evaluate(() => ({
+    shell: window.__GAMEROAD_BATTLE_PHASE_R2__.snapshot(),
+    conservation: window.__GAMEROAD_TEST__.cardConservation(),
+    phase: window.__GAMEROAD_TEST__.state.match?.phase ?? null,
+    screen: window.__GAMEROAD_TEST__.state.screen,
+  }));
+  expect(after.shell.surfaceHidden).toBe(true);
+  expect(after.shell.resolutionParent).toBe('battleMap');
+  expect(after.conservation, 'card conservation after dedicated Battle Phase').toBe(true);
+  expect(['plan', null]).toContain(after.phase);
+  expect(['battle', 'result']).toContain(after.screen);
 
   runtime.assertClean(testInfo);
 });

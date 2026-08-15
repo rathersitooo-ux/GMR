@@ -11,29 +11,163 @@ permissions:
   contents: read
 
 jobs:
-  source-probe:
+  actual-ws-evidence:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-      - name: Exact QA and plan source inventory
+
+      - name: Exact production identity
         shell: bash
         run: |
           set -euo pipefail
           echo "HEAD=$(git rev-parse HEAD)"
           echo "HTML_BLOB=$(git hash-object browser/GAMEROAD.html)"
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          s=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          names=['qaState','qaSetFast','qaSetNoEffectHands','qaPlans','submitHostPlan','submitGuestPlan','hostStart','legalPlan']
-          for name in names:
-              m=re.search(r'function\s+'+re.escape(name)+r'\s*\(',s)
-              print(f'\n===== {name} @ {m.start() if m else -1} =====')
-              if m: print(s[max(0,m.start()-250):min(len(s),m.start()+5500)].replace('\r',''))
-          i=s.find('window.GAMEROAD_FRIEND_ROOM_R2')
-          print('\n===== API EXPORT =====')
-          print(s[i:i+8000].replace('\r','') if i>=0 else 'NOT_FOUND')
-          PY
-      - name: No mutation
-        run: test -z "$(git status --porcelain --untracked-files=all)"
+          echo "HTML_BYTES=$(wc -c < browser/GAMEROAD.html)"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install diagnostic runtime only
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0 ws@8.18.3
+          npx playwright install --with-deps chromium
+
+      - name: Actual WebSocket disconnect and reconnect evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/hate-r3-http.log 2>&1 &
+          HTTP_PID=$!
+          trap 'kill "$HTTP_PID" 2>/dev/null || true' EXIT
+          cat >.hate-r3-actual-ws.mjs <<'JS'
+          import { chromium } from '@playwright/test';
+          import { WebSocketServer, WebSocket } from 'ws';
+
+          const WIRE='gameroad.wsrelay.v1';
+          const rooms=new Map();
+          const relayEvents=[];
+          const wss=new WebSocketServer({port:8765,path:'/ws'});
+          wss.on('connection',(socket,req)=>{
+            const u=new URL(req.url,'ws://127.0.0.1:8765');
+            const meta={socket,channel:u.searchParams.get('channel')||'',role:u.searchParams.get('role')||'',clientId:u.searchParams.get('clientId')||'',openedAt:Date.now()};
+            if(!rooms.has(meta.channel)) rooms.set(meta.channel,new Set());
+            rooms.get(meta.channel).add(meta);
+            relayEvents.push({event:'open',channel:meta.channel,role:meta.role,clientId:meta.clientId,at:Date.now()});
+            socket.on('message',buf=>{
+              let frame;
+              try{frame=JSON.parse(String(buf))}catch{return}
+              if(frame?.wire!==WIRE||frame?.op!=='data')return;
+              relayEvents.push({event:'data',channel:meta.channel,role:meta.role,type:String(frame.payload?.type||''),seq:Number(frame.payload?.seq)||0,at:Date.now()});
+              for(const peer of rooms.get(meta.channel)||[]){
+                if(peer===meta||peer.socket.readyState!==WebSocket.OPEN)continue;
+                peer.socket.send(JSON.stringify(frame));
+              }
+            });
+            socket.on('close',()=>{
+              rooms.get(meta.channel)?.delete(meta);
+              relayEvents.push({event:'close',channel:meta.channel,role:meta.role,clientId:meta.clientId,at:Date.now()});
+            });
+          });
+          await new Promise(r=>wss.once('listening',r));
+
+          const browser=await chromium.launch({headless:true});
+          const hostContext=await browser.newContext();
+          const guestContext=await browser.newContext();
+          const host=await hostContext.newPage();
+          const guest=await guestContext.newPage();
+          for(const [label,page] of [['HOST',host],['GUEST',guest]]){
+            page.on('console',m=>{if(/friend|room|relay|socket|hate|ヘイト|参加/i.test(m.text()))console.log(label+'_CONSOLE',m.type(),m.text())});
+            page.on('pageerror',e=>console.log(label+'_PAGEERROR',String(e)));
+          }
+          const relay='ws://127.0.0.1:8765/ws';
+          const app='http://127.0.0.1:4173/browser/GAMEROAD.html?grrelay=ws&grws='+encodeURIComponent(relay);
+          const api=p=>p.evaluate(()=>window.GAMEROAD_FRIEND_ROOM_R2.status());
+          const wait=async(fn,label,ms=7000)=>{
+            const start=Date.now(); let last;
+            while(Date.now()-start<ms){last=await fn();if(last)return last;await new Promise(r=>setTimeout(r,80));}
+            throw new Error('timeout:'+label+':'+JSON.stringify(last));
+          };
+          await host.goto(app,{waitUntil:'domcontentloaded'});
+          const code=await host.evaluate(()=>window.GAMEROAD_FRIEND_ROOM_R2.create(2));
+          await guest.goto(app,{waitUntil:'domcontentloaded'});
+          await guest.evaluate(c=>window.GAMEROAD_FRIEND_ROOM_R2.join(c),code);
+          await wait(async()=>{const s=await api(host);return s.participants?.find(x=>x.pid==='P2')?.connected?s:false},'guest-connected');
+          await guest.evaluate(()=>window.GAMEROAD_FRIEND_ROOM_R2.ready());
+          await host.evaluate(()=>window.GAMEROAD_FRIEND_ROOM_R2.ready());
+          await wait(async()=>{const s=await api(host);return s.ready&&s.participants?.find(x=>x.pid==='P2')?.ready?s:false},'all-ready');
+          const started=await host.evaluate(()=>window.GAMEROAD_FRIEND_ROOM_R2.start());
+          if(!started)throw new Error('host-start-failed');
+          await wait(async()=>{const s=await api(guest);return s.roomState==='playing'?s:false},'guest-playing');
+
+          const setup=await host.evaluate(()=>{
+            const api=window.GAMEROAD_FRIEND_ROOM_R2;
+            const hands=api.qaSetNoEffectHands();
+            return eval(`(()=>{const p=state.match.players.find(x=>x.id==='P1');const v=legalPlan(p,{roadId:hands.P1[0],battleId:hands.P1[1],path:[p.position]});if(!v.ok)throw Error('setup-plan:'+v.reason);FR.planValues.P1=v.plan;friendSyncHateClocks(performance.now());broadcastSnapshots();return {hands,signature:friendHateSignature('P2'),p2:Number(state.match.players.find(x=>x.id==='P2').hateTime)||0}})()`);
+          });
+          console.log('SETUP_WAIT_STATE',JSON.stringify(setup));
+          if(!String(setup.signature||'').startsWith('plan:'))throw new Error('p2-wait-signature-not-active');
+
+          const connectedTick=await wait(async()=>{
+            const s=await api(host);const h=s.hateAuthority?.values?.P2?.hateTime||0;return h>=1?{s,h}:false;
+          },'connected-hate-tick',4000);
+          const beforeDrop=connectedTick.h;
+          const hostBefore=await api(host);
+          console.log('BEFORE_NETWORK_DROP',JSON.stringify({hate:beforeDrop,p2:hostBefore.participants?.find(x=>x.pid==='P2'),signature:hostBefore.hateAuthority?.values?.P2?.signature}));
+
+          const channel='gameroad.friend.r2.'+code;
+          const guestMeta=[...(rooms.get(channel)||[])].find(x=>x.role==='guest');
+          if(!guestMeta)throw new Error('guest-ws-not-found');
+          guestMeta.socket.terminate();
+          await wait(async()=>relayEvents.some(e=>e.event==='close'&&e.channel===channel&&e.role==='guest'), 'relay-saw-guest-close');
+          await new Promise(r=>setTimeout(r,1450));
+          const duringDrop=await api(host);
+          const dropHate=duringDrop.hateAuthority?.values?.P2?.hateTime||0;
+          console.log('DURING_NETWORK_DROP',JSON.stringify({beforeDrop,dropHate,delta:dropHate-beforeDrop,p2:duringDrop.participants?.find(x=>x.pid==='P2'),signature:duringDrop.hateAuthority?.values?.P2?.signature}));
+
+          const guestAfterClose=await api(guest);
+          console.log('GUEST_AFTER_SOCKET_CLOSE',JSON.stringify(guestAfterClose));
+          await guest.evaluate(()=>window.GAMEROAD_FRIEND_ROOM_R2.rawSend({type:'sync'}));
+          await wait(async()=>{
+            const opens=relayEvents.filter(e=>e.event==='open'&&e.channel===channel&&e.role==='guest');
+            return opens.length>=2?opens:false;
+          },'guest-ws-reopen');
+          await new Promise(r=>setTimeout(r,650));
+          const afterReconnect=await api(host);
+          const reconnectHate=afterReconnect.hateAuthority?.values?.P2?.hateTime||0;
+          console.log('AFTER_RECONNECT',JSON.stringify({dropHate,reconnectHate,delta:reconnectHate-dropHate,p2:afterReconnect.participants?.find(x=>x.pid==='P2'),signature:afterReconnect.hateAuthority?.values?.P2?.signature}));
+          console.log('RELAY_EVENTS',JSON.stringify(relayEvents));
+
+          const disconnectedRecorded= duringDrop.participants?.find(x=>x.pid==='P2')?.connected===false;
+          const gapAccrual=dropHate-beforeDrop;
+          const semanticPass=disconnectedRecorded && gapAccrual===0;
+          const result={semanticPass,disconnectedRecorded,gapAccrual,beforeDrop,dropHate,reconnectHate,publicWssVerified:false,testRelayOnly:true,productionHtmlMutated:false};
+          console.log('HATE_R3_ACTUAL_WS_RESULT',JSON.stringify(result));
+          await browser.close();
+          await new Promise(r=>wss.close(r));
+          await import('node:fs/promises').then(fs=>fs.writeFile('/tmp/hate-r3-result.json',JSON.stringify(result)));
+          JS
+          node .hate-r3-actual-ws.mjs | tee /tmp/hate-r3-actual-ws.log
+          rm -f .hate-r3-actual-ws.mjs
+
+      - name: Production mutation guard
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf node_modules .hate-r3-actual-ws.mjs
+          echo "FINAL_HTML_BLOB=$(git hash-object browser/GAMEROAD.html)"
+          echo 'FINAL_STATUS_START'
+          git status --porcelain --untracked-files=all
+          echo 'FINAL_STATUS_END'
+          test -z "$(git status --porcelain --untracked-files=all)"
+
+      - name: Assert disconnect-gap semantics
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f /tmp/hate-r3-result.json
+          cat /tmp/hate-r3-result.json
+          node -e "const r=require('/tmp/hate-r3-result.json'); if(!r.semanticPass){console.error('SEMANTIC_FAIL: actual WS disconnect gap must record disconnected and accrue zero HATE');process.exit(1)}"

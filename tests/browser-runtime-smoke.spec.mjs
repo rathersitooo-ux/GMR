@@ -23,9 +23,39 @@ test('GAMEROAD boots and core navigation runs without JS errors', async ({ page 
     unexpectedHttpErrors.push(`${response.status()} ${url.pathname}`);
   });
 
+  const navigationWallStart = Date.now();
   const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
   expect(response, 'main HTML response').not.toBeNull();
   expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
+
+  const firstVisibleControl = page.locator('[data-go]:visible').first();
+  await firstVisibleControl.waitFor({ state: 'visible', timeout: 5_000 });
+  const firstVisibleControlWallMs = Date.now() - navigationWallStart;
+
+  await page.waitForLoadState('load');
+  const bootTiming = await page.evaluate(() => {
+    const nav = performance.getEntriesByType('navigation')[0];
+    if (!nav) return null;
+    return {
+      responseEndMs: Number(nav.responseEnd.toFixed(1)),
+      domInteractiveMs: Number(nav.domInteractive.toFixed(1)),
+      domContentLoadedMs: Number(nav.domContentLoadedEventEnd.toFixed(1)),
+      loadEventMs: Number(nav.loadEventEnd.toFixed(1)),
+      transferSizeBytes: nav.transferSize,
+      encodedBodySizeBytes: nav.encodedBodySize,
+      decodedBodySizeBytes: nav.decodedBodySize,
+    };
+  });
+
+  expect(bootTiming, 'Navigation Timing entry').not.toBeNull();
+  console.log(`GAMEROAD_LOAD_TIMING ${JSON.stringify({
+    ...bootTiming,
+    firstVisibleControlWallMs,
+  })}`);
+  test.info().annotations.push({
+    type: 'boot-timing',
+    description: JSON.stringify({ ...bootTiming, firstVisibleControlWallMs }),
+  });
 
   await page.waitForTimeout(1_000);
 

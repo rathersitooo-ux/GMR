@@ -183,3 +183,246 @@ export function applyHoneyWake({ physicalManaCount, availableMana, wakeCount } =
     availableMana: Math.min(physicalManaCount, availableMana + wakeCount),
   });
 }
+
+export const PURSUIT_SECRET_ROUND_SCHEMA = 'gameroad.pursuit-secret-round.v1';
+export const PURSUIT_COMMITMENT_DOMAIN = 'gameroad:pursuit-secret-commit:v1';
+
+function requireRoundId(roundId) {
+  if (typeof roundId !== 'string' || roundId.length === 0) fail('roundId must be a non-empty string');
+  return roundId;
+}
+
+function requireRevision(revision) {
+  if (!Number.isSafeInteger(revision) || revision < 0) fail('revision must be a non-negative safe integer');
+  return revision;
+}
+
+function requireCardId(cardId) {
+  if (typeof cardId !== 'string' || cardId.length === 0) fail('cardId must be a non-empty authoritative physical-card identity');
+  return cardId;
+}
+
+function requireNonce(nonce) {
+  if (typeof nonce !== 'string' || nonce.length === 0) fail('nonce must be a non-empty externally supplied string');
+  return nonce;
+}
+
+function requireCommitment(commitment) {
+  if (typeof commitment !== 'string' || commitment.length === 0) fail('commitment must be a non-empty opaque string');
+  return commitment;
+}
+
+function requireCommitHand(hand) {
+  const safe = requireHand(hand);
+  if (safe === PURSUIT_NO_HAND) fail('no-hand cannot enter the secret pursuit commitment barrier');
+  return safe;
+}
+
+function normalizeParticipantIds(participantIds) {
+  if (!Array.isArray(participantIds)) fail('participantIds must be an array');
+  if (participantIds.length < 2 || participantIds.length > 4) {
+    fail('participantIds must contain between 2 and 4 pursuit participants');
+  }
+  const normalized = participantIds.map(requirePlayerId).sort(compareText);
+  for (let index = 1; index < normalized.length; index += 1) {
+    if (normalized[index] === normalized[index - 1]) fail(`duplicate participantId: ${normalized[index]}`);
+  }
+  return normalized;
+}
+
+function freezeCommitments(commitments) {
+  return Object.freeze(commitments.map((entry) => Object.freeze({
+    playerId: entry.playerId,
+    commitment: entry.commitment,
+  })));
+}
+
+function makeSecretRound({ roundId, revision, participantIds, commitments, closed }) {
+  return Object.freeze({
+    schema: PURSUIT_SECRET_ROUND_SCHEMA,
+    roundId,
+    revision,
+    participantIds: Object.freeze([...participantIds]),
+    commitments: freezeCommitments(commitments),
+    closed,
+  });
+}
+
+function normalizeSecretRound(round) {
+  if (!round || typeof round !== 'object' || Array.isArray(round)) fail('secret round must be an object');
+  if (round.schema !== PURSUIT_SECRET_ROUND_SCHEMA) fail('unsupported secret round schema');
+
+  const roundId = requireRoundId(round.roundId);
+  const revision = requireRevision(round.revision);
+  const participantIds = normalizeParticipantIds(round.participantIds);
+  if (JSON.stringify(participantIds) !== JSON.stringify(round.participantIds)) {
+    fail('participantIds must use canonical sorted order');
+  }
+  if (!Array.isArray(round.commitments)) fail('round.commitments must be an array');
+  if (typeof round.closed !== 'boolean') fail('round.closed must be boolean');
+
+  const expected = new Set(participantIds);
+  const commitments = [];
+  const seen = new Set();
+  for (const entry of round.commitments) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) fail('commitment entry must be an object');
+    const playerId = requirePlayerId(entry.playerId);
+    const commitment = requireCommitment(entry.commitment);
+    if (!expected.has(playerId)) fail(`commitment supplied for nonparticipant: ${playerId}`);
+    if (seen.has(playerId)) fail(`duplicate commitment for playerId: ${playerId}`);
+    seen.add(playerId);
+    commitments.push({ playerId, commitment });
+  }
+  commitments.sort((a, b) => compareText(a.playerId, b.playerId));
+  if (JSON.stringify(commitments) !== JSON.stringify(round.commitments)) {
+    fail('commitments must use canonical participant order');
+  }
+  if (commitments.length > participantIds.length) fail('too many commitments');
+  if (round.closed && commitments.length !== participantIds.length) {
+    fail('closed secret round must retain every participant commitment');
+  }
+
+  return { roundId, revision, participantIds, commitments, closed: round.closed };
+}
+
+function requireSecretSelection(selection) {
+  if (!selection || typeof selection !== 'object' || Array.isArray(selection)) {
+    fail('secret selection must be an object');
+  }
+  return {
+    roundId: requireRoundId(selection.roundId),
+    revision: requireRevision(selection.revision),
+    playerId: requirePlayerId(selection.playerId),
+    hand: requireCommitHand(selection.hand),
+    cardId: requireCardId(selection.cardId),
+    value: requirePursuitValue(selection.value),
+    mode: requireMode(selection.mode ?? PURSUIT_MODE_NORMAL),
+    nonce: requireNonce(selection.nonce),
+  };
+}
+
+function requireDigestFunction(digestFn) {
+  if (typeof digestFn !== 'function') fail('digestFn must be a function');
+  return digestFn;
+}
+
+export function createPursuitSecretRound({ roundId, revision, participantIds } = {}) {
+  return makeSecretRound({
+    roundId: requireRoundId(roundId),
+    revision: requireRevision(revision),
+    participantIds: normalizeParticipantIds(participantIds),
+    commitments: [],
+    closed: false,
+  });
+}
+
+export function getPursuitSecretRoundPublicState(round) {
+  const safe = normalizeSecretRound(round);
+  const allCommitted = safe.commitments.length === safe.participantIds.length;
+  return Object.freeze({
+    schema: PURSUIT_SECRET_ROUND_SCHEMA,
+    roundId: safe.roundId,
+    revision: safe.revision,
+    participantIds: Object.freeze([...safe.participantIds]),
+    commitments: freezeCommitments(safe.commitments),
+    committedCount: safe.commitments.length,
+    expectedCount: safe.participantIds.length,
+    allCommitted,
+    phase: safe.closed ? 'closed' : allCommitted ? 'reveal-ready' : 'commit',
+  });
+}
+
+export function canonicalPursuitCommitmentPayload(selection = {}) {
+  const safe = requireSecretSelection(selection);
+  return JSON.stringify([
+    PURSUIT_COMMITMENT_DOMAIN,
+    safe.roundId,
+    safe.revision,
+    safe.playerId,
+    safe.hand,
+    safe.cardId,
+    safe.value,
+    safe.mode,
+    safe.nonce,
+  ]);
+}
+
+export async function createPursuitCommitment(selection = {}, digestFn) {
+  const payload = canonicalPursuitCommitmentPayload(selection);
+  const digest = await requireDigestFunction(digestFn)(payload);
+  const commitment = requireCommitment(digest);
+  if (commitment === payload) fail('digestFn must not expose the canonical secret payload as the commitment');
+  return commitment;
+}
+
+export function commitPursuitSelection(round, { roundId, revision, playerId, commitment } = {}) {
+  const safe = normalizeSecretRound(round);
+  if (safe.closed) fail('secret pursuit round is already closed');
+  if (requireRoundId(roundId) !== safe.roundId) fail('stale or mismatched roundId');
+  if (requireRevision(revision) !== safe.revision) fail('stale or mismatched revision');
+
+  const safePlayerId = requirePlayerId(playerId);
+  if (!safe.participantIds.includes(safePlayerId)) fail(`unknown pursuit participant: ${safePlayerId}`);
+  if (safe.commitments.some((entry) => entry.playerId === safePlayerId)) {
+    fail(`duplicate commitment for playerId: ${safePlayerId}`);
+  }
+
+  const commitments = [
+    ...safe.commitments,
+    { playerId: safePlayerId, commitment: requireCommitment(commitment) },
+  ].sort((a, b) => compareText(a.playerId, b.playerId));
+
+  return makeSecretRound({ ...safe, commitments });
+}
+
+export async function finalizePursuitSecretRound(round, reveals, digestFn) {
+  const safe = normalizeSecretRound(round);
+  if (safe.closed) fail('secret pursuit round is already closed');
+  if (safe.commitments.length !== safe.participantIds.length) {
+    fail('reveal blocked until every expected participant has committed');
+  }
+  if (!Array.isArray(reveals)) fail('reveals must be an array');
+  if (reveals.length !== safe.participantIds.length) {
+    fail('reveals must contain every expected participant exactly once');
+  }
+
+  const expected = new Set(safe.participantIds);
+  const revealByPlayer = new Map();
+  for (const reveal of reveals) {
+    const normalized = requireSecretSelection(reveal);
+    if (normalized.roundId !== safe.roundId) fail('stale or mismatched reveal roundId');
+    if (normalized.revision !== safe.revision) fail('stale or mismatched reveal revision');
+    if (!expected.has(normalized.playerId)) fail(`reveal supplied for nonparticipant: ${normalized.playerId}`);
+    if (revealByPlayer.has(normalized.playerId)) fail(`duplicate reveal for playerId: ${normalized.playerId}`);
+    revealByPlayer.set(normalized.playerId, normalized);
+  }
+
+  const commitmentByPlayer = new Map(safe.commitments.map((entry) => [entry.playerId, entry.commitment]));
+  for (const playerId of safe.participantIds) {
+    const reveal = revealByPlayer.get(playerId);
+    if (!reveal) fail(`missing reveal for playerId: ${playerId}`);
+    const actual = await createPursuitCommitment(reveal, digestFn);
+    if (actual !== commitmentByPlayer.get(playerId)) fail(`commitment mismatch for playerId: ${playerId}`);
+  }
+
+  const selections = safe.participantIds.map((playerId) => {
+    const reveal = revealByPlayer.get(playerId);
+    return Object.freeze({ playerId, hand: reveal.hand });
+  });
+  const cards = safe.participantIds.map((playerId) => {
+    const reveal = revealByPlayer.get(playerId);
+    return Object.freeze({
+      playerId,
+      cardId: reveal.cardId,
+      value: reveal.value,
+      mode: reveal.mode,
+    });
+  });
+  const snapshot = Object.freeze({
+    selections: Object.freeze(selections),
+    cards: Object.freeze(cards),
+  });
+  const closedRound = makeSecretRound({ ...safe, closed: true });
+
+  return Object.freeze({ round: closedRound, snapshot });
+}

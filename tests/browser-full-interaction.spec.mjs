@@ -234,6 +234,59 @@ test('persists a legal 40-card deck across save and page reload through visible 
   runtime.assertClean(testInfo);
 });
 
+test('starts through visible Setup and advances the first Battle decision through visible controls', async ({ page }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+
+  const deckSetup = await installLegalBattleDeck(page);
+  expect(deckSetup.main).toHaveLength(40);
+  expect(deckSetup.committed, 'legal deck precondition committed without starting or advancing the match').toBeTruthy();
+  expect(deckSetup.savedValidation.ok, `saved deck validation: ${JSON.stringify(deckSetup.savedValidation)}`).toBeTruthy();
+
+  const setupControl = visibleHomeControl(page, 'setup');
+  await expect(setupControl).toBeVisible();
+  await setupControl.click();
+
+  const setup = page.locator('section[data-screen="setup"]');
+  await expect(setup).toBeVisible();
+  await setup.locator('[data-content="road_shield"]').click();
+  await setup.locator('[data-mode="2p"]').click();
+  const startMatch = setup.locator('#startMatch');
+  await expect(startMatch).toBeVisible();
+  await expect(startMatch).toBeEnabled();
+  await attachStateScreenshot(page, testInfo, 'setup-ready-visible');
+
+  await startMatch.click();
+  const battle = page.locator('section[data-screen="battle"]');
+  await expect(battle).toBeVisible();
+  await expect(battle.locator('#phaseTitle')).toContainText('行動を計画');
+  await attachStateScreenshot(page, testInfo, 'battle-first-plan-visible');
+
+  const handCards = battle.locator('#hand .handCard:visible');
+  await expect(handCards).toHaveCount(3);
+  await handCards.nth(0).click();
+  await expect(battle.locator('#roadSelect')).not.toHaveValue('');
+  await handCards.nth(1).click();
+  await expect(battle.locator('#battleSelect')).not.toHaveValue('');
+
+  const roadValue = await battle.locator('#roadSelect').inputValue();
+  const battleValue = await battle.locator('#battleSelect').inputValue();
+  expect(roadValue, 'visible hand click selects a Road card').not.toBe('');
+  expect(battleValue, 'visible hand click selects a Battle card').not.toBe('');
+  expect(battleValue, 'Road and Battle use different visible hand cards').not.toBe(roadValue);
+
+  const ready = battle.locator('#readyPlan');
+  await expect(ready).toBeVisible();
+  await expect(ready).toBeEnabled();
+  await ready.click();
+
+  const cue = battle.locator('#first10Cue');
+  await expect(cue, 'visible first-cycle cue confirms Road decision, public reveal, and progression beyond Plan').toContainText('ロード決定 → 公開 → 次の行動まで確認 ✓', { timeout: 30_000 });
+  await attachStateScreenshot(page, testInfo, 'battle-first-decision-progressed-visible');
+
+  runtime.assertClean(testInfo);
+});
+
 test('moves resolve off the board into the dedicated Battle Phase with Naki cut-in and four-player compare', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);

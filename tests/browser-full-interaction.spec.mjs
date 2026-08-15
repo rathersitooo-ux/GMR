@@ -546,7 +546,7 @@ test('deck recovery adapter preserves blocked raw saves, legacy repair, storage 
     await page.evaluate(({ key, rawValue }) => localStorage.setItem(key, rawValue), { key: STORAGE_KEY, rawValue: raw });
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(800);
-    return page.evaluate((key) => ({ raw: localStorage.getItem(key), recovery: window.__GAMEROAD_SAVE_RECOVERY__.snapshot(), savedDeck: [...window.__GAMEROAD_TEST__.state.savedDeck.main], rule: { ...window.__GAMEROAD_TEST__.state.savedDeckRule } }), STORAGE_KEY);
+    return page.evaluate((key) => ({ raw: localStorage.getItem(key), recovery: window.__GAMEROAD_SAVE_RECOVERY__.snapshot(), savedDeck: [...window.__GAMEROAD_TEST__.state.savedDeck.main], rule: { ...window.__GAMEROAD_TEST__.state.savedDeckRule }, playerCharacterId: window.__GAMEROAD_TEST__.state.playerCharacterId, selectedPartnerId: window.__GAMEROAD_TEST__.state.selectedPartnerId, setupMode: window.__GAMEROAD_TEST__.state.setupMode, setupContent: window.__GAMEROAD_TEST__.state.setupContent }), STORAGE_KEY);
   };
 
   const corruptRaw = '{not-json';
@@ -565,7 +565,7 @@ test('deck recovery adapter preserves blocked raw saves, legacy repair, storage 
   expect(observed.raw).toBe(newerRaw);
   expect(observed.recovery.classification.reason).toBe('SAVE_REVISION_NEWER');
 
-  const legacyRaw = JSON.stringify({ v: 2, partner: { id: 'partner.naki' }, history: [{ keep: 'legacy-history' }], settings: { reduceMotion: true }, progression: { battlePoints: 9 }, deck: { main: defaultDeck, ex: [], ruleId: 'FIRST_REGULATION', ruleRevision: 2 }, opaque: { keep: 9 } });
+  const legacyRaw = JSON.stringify({ v: 2, selectedCharacter: 'partner.naki', history: [{ keep: 'legacy-history' }], settings: { reduceMotion: true }, progression: { battlePoints: 9 }, setupMode: '4p', setupContent: 'honey_hunt', deck: { main: defaultDeck, ex: [], ruleId: 'FIRST_REGULATION', ruleRevision: 2 }, opaque: { keep: 9 } });
   observed = await reloadWithRaw(legacyRaw);
   expect(observed.raw).toBe(legacyRaw);
   expect(observed.recovery.classification.status).toBe('recognized_legacy');
@@ -577,6 +577,15 @@ test('deck recovery adapter preserves blocked raw saves, legacy repair, storage 
   expect(stored.v).toBe(3);
   expect(stored.opaque.keep).toBe(9);
   expect(stored.history[0].keep).toBe('legacy-history');
+  expect(stored.playerCharacterId).toBe('partner.naki');
+  expect(stored.partner.selectedId).toBe('partner.naki');
+  expect(stored.setupMode).toBe('4p');
+  expect(stored.setupContent).toBe('honey_hunt');
+  observed = await reloadWithRaw(JSON.stringify(stored));
+  expect(observed.playerCharacterId).toBe('partner.naki');
+  expect(observed.selectedPartnerId).toBe('partner.naki');
+  expect(observed.setupMode).toBe('4p');
+  expect(observed.setupContent).toBe('honey_hunt');
   expect(stored.deck.main).toHaveLength(40);
   expect(stored.deck.ruleRevision).toBe(3);
 

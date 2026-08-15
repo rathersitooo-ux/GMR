@@ -113,3 +113,62 @@ test('captures success-state screenshots for current pointer navigation', async 
   expect(pointerTransitions, 'at least one real visible Home pointer transition').toBeGreaterThan(0);
   runtime.assertClean(testInfo);
 });
+
+async function elementInventory(locator) {
+  return locator.evaluateAll((nodes) => nodes.map((node) => ({
+    tag: node.tagName.toLowerCase(),
+    id: node.id || null,
+    text: (node.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 160),
+    className: typeof node.className === 'string' ? node.className : null,
+    hidden: node.hidden,
+    disabled: 'disabled' in node ? Boolean(node.disabled) : false,
+    ariaLabel: node.getAttribute('aria-label'),
+    data: Object.fromEntries([...node.attributes]
+      .filter((attribute) => attribute.name.startsWith('data-'))
+      .map((attribute) => [attribute.name, attribute.value])),
+    visible: Boolean(node.getClientRects().length) && getComputedStyle(node).visibility !== 'hidden',
+  })));
+}
+
+test('R2 diagnostic: inventories current Cards, Battle and Result contracts without mutating game bytes', async ({ page }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+
+  const cardsControl = visibleHomeControl(page, 'cards');
+  await expect(cardsControl).toBeVisible();
+  await cardsControl.click();
+  const cards = page.locator('section[data-screen="cards"]');
+  await expect(cards).toBeVisible();
+  await page.waitForTimeout(300);
+
+  const inventory = {
+    cards: {
+      buttons: await elementInventory(cards.locator('button')),
+      collectionChildren: await elementInventory(cards.locator('#collectionGrid > *')),
+      deckSlots: await elementInventory(cards.locator('#deckSlots > *')),
+      exDeckSlots: await elementInventory(cards.locator('#exDeckSlots > *')),
+      saveDeck: await elementInventory(cards.locator('#saveDeck')),
+      trayToggle: await elementInventory(cards.locator('#r4DeckTrayToggle')),
+      text: await cards.locator('body').count().catch(() => 0),
+      deckCount: await cards.locator('#deckCount').textContent(),
+      exDeckCount: await cards.locator('#exDeckCount').textContent(),
+      trayCount: await cards.locator('#r4TrayCount').textContent(),
+      saveState: await cards.locator('#deckSaveState').textContent(),
+    },
+    battleHiddenContract: {
+      buttons: await elementInventory(page.locator('section[data-screen="battle"] button')),
+      selects: await elementInventory(page.locator('section[data-screen="battle"] select')),
+    },
+    resultHiddenContract: {
+      buttons: await elementInventory(page.locator('section[data-screen="result"] button')),
+    },
+    storageKeys: await page.evaluate(() => Object.keys(localStorage).sort()),
+  };
+
+  await testInfo.attach(`${testInfo.project.name}-r2-current-contract-inventory.json`, {
+    body: Buffer.from(JSON.stringify(inventory, null, 2)),
+    contentType: 'application/json',
+  });
+  await attachStateScreenshot(page, testInfo, 'r2-cards-inventory');
+  runtime.assertClean(testInfo);
+});

@@ -152,6 +152,211 @@ export function createObservabilityQueue({ maxQueue = 32 } = {}) {
   return Object.freeze({ capture, snapshot, flush, maxQueue: limit });
 }
 
+const ENTRY_KEYS = Object.freeze(['envelope', 'count', 'firstSeenAtMs', 'lastSeenAtMs']);
+const ENVELOPE_KEYS = Object.freeze(['schema', 'kind', 'occurredAtMs', 'context', 'diagnostic', 'metric', 'fingerprint']);
+const DIAGNOSTIC_KEYS = Object.freeze(['errorName', 'faultCode']);
+const METRIC_KEYS = Object.freeze(['name', 'observed', 'threshold']);
+
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function hasExactKeys(value, expected) {
+  try {
+    if (!isRecord(value)) return false;
+    const keys = Object.keys(value).sort();
+    const wanted = [...expected].sort();
+    return keys.length === wanted.length && keys.every((key, index) => key === wanted[index]);
+  } catch {
+    return false;
+  }
+}
+
+function isSafeId(value) {
+  return typeof value === 'string' && SAFE_ID.test(value);
+}
+
+function isSafeCode(value) {
+  return typeof value === 'string' && SAFE_CODE.test(value);
+}
+
+function isNonNegativeFinite(value) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}
+
+function cloneContext(context) {
+  return Object.freeze({
+    releaseId: safeRead(context, 'releaseId'),
+    media: safeRead(context, 'media'),
+    surface: safeRead(context, 'surface'),
+    matchId: safeRead(context, 'matchId')
+  });
+}
+
+function cloneDiagnostic(diagnostic) {
+  return Object.freeze({
+    errorName: safeRead(diagnostic, 'errorName'),
+    faultCode: safeRead(diagnostic, 'faultCode')
+  });
+}
+
+function cloneMetric(metric) {
+  if (metric === null) return null;
+  return Object.freeze({
+    name: safeRead(metric, 'name'),
+    observed: safeRead(metric, 'observed'),
+    threshold: safeRead(metric, 'threshold')
+  });
+}
+
+function validateCollectorEntry(input) {
+  try {
+    if (!hasExactKeys(input, ENTRY_KEYS)) return null;
+    const envelope = safeRead(input, 'envelope');
+    if (!hasExactKeys(envelope, ENVELOPE_KEYS)) return null;
+    if (safeRead(envelope, 'schema') !== SCHEMA) return null;
+
+    const kind = safeRead(envelope, 'kind');
+    if (!KINDS.includes(kind)) return null;
+
+    const context = safeRead(envelope, 'context');
+    if (!hasExactKeys(context, CONTEXT_KEYS)) return null;
+    const releaseId = safeRead(context, 'releaseId');
+    const media = safeRead(context, 'media');
+    const surface = safeRead(context, 'surface');
+    const matchId = safeRead(context, 'matchId');
+    if (![releaseId, surface, matchId].every(isSafeId) || !MEDIA.includes(media)) return null;
+
+    const diagnostic = safeRead(envelope, 'diagnostic');
+    if (!hasExactKeys(diagnostic, DIAGNOSTIC_KEYS)) return null;
+    if (!isSafeId(safeRead(diagnostic, 'errorName')) || !isSafeCode(safeRead(diagnostic, 'faultCode'))) return null;
+
+    const metric = safeRead(envelope, 'metric');
+    if (kind === 'exception') {
+      if (metric !== null) return null;
+    } else {
+      if (!hasExactKeys(metric, METRIC_KEYS)) return null;
+      if (!isSafeId(safeRead(metric, 'name'))) return null;
+      if (!isNonNegativeFinite(safeRead(metric, 'observed')) || !isNonNegativeFinite(safeRead(metric, 'threshold'))) return null;
+    }
+
+    const occurredAtMs = safeRead(envelope, 'occurredAtMs');
+    const count = safeRead(input, 'count');
+    const firstSeenAtMs = safeRead(input, 'firstSeenAtMs');
+    const lastSeenAtMs = safeRead(input, 'lastSeenAtMs');
+    if (!isNonNegativeFinite(occurredAtMs) || !Number.isSafeInteger(count) || count <= 0) return null;
+    if (!isNonNegativeFinite(firstSeenAtMs) || !isNonNegativeFinite(lastSeenAtMs)) return null;
+    if (occurredAtMs !== firstSeenAtMs || firstSeenAtMs > lastSeenAtMs) return null;
+
+    const safeContext = cloneContext(context);
+    const safeDiagnostic = cloneDiagnostic(diagnostic);
+    const safeMetric = cloneMetric(metric);
+    const fingerprint = safeRead(envelope, 'fingerprint');
+    const expectedFingerprint = fnv1a(JSON.stringify({ kind, context: safeContext, diagnostic: safeDiagnostic, metric: safeMetric }));
+    if (fingerprint !== expectedFingerprint) return null;
+
+    return deepFreeze({
+      envelope: {
+        schema: SCHEMA,
+        kind,
+        occurredAtMs,
+        context: safeContext,
+        diagnostic: safeDiagnostic,
+        metric: safeMetric,
+        fingerprint
+      },
+      count,
+      firstSeenAtMs,
+      lastSeenAtMs
+    });
+  } catch {
+    return null;
+  }
+}
+
+export function createObservabilityIncidentCollector({ maxIncidents = 256 } = {}) {
+  const limit = Number.isSafeInteger(maxIncidents) && maxIncidents > 0 ? Math.min(maxIncidents, 256) : 256;
+  const incidents = new Map();
+  let sequence = 0;
+
+  function ingest(batch) {
+    try {
+      if (!Array.isArray(batch)) {
+        return Object.freeze({ ok: false, accepted: 0, incidents: incidents.size, reason: 'BATCH_REQUIRED' });
+      }
+      if (batch.length > OBSERVABILITY_CORE.maxQueue) {
+        return Object.freeze({ ok: false, accepted: 0, incidents: incidents.size, reason: 'BATCH_TOO_LARGE' });
+      }
+      const validated = batch.map(validateCollectorEntry);
+      if (validated.some((entry) => entry === null)) {
+        return Object.freeze({ ok: false, accepted: 0, incidents: incidents.size, reason: 'INVALID_ENTRY' });
+      }
+
+      let accepted = 0;
+      for (const entry of validated) {
+        const fingerprint = entry.envelope.fingerprint;
+        let incident = incidents.get(fingerprint);
+        if (!incident) {
+          incident = {
+            envelope: entry.envelope,
+            count: 0,
+            firstSeenAtMs: entry.firstSeenAtMs,
+            lastSeenAtMs: entry.lastSeenAtMs,
+            windows: new Map(),
+            sequence: sequence += 1
+          };
+          incidents.set(fingerprint, incident);
+        }
+
+        const windowKey = String(entry.firstSeenAtMs);
+        const priorWindow = incident.windows.get(windowKey);
+        const priorCount = priorWindow?.count ?? 0;
+        const nextCount = Math.max(priorCount, entry.count);
+        const delta = nextCount - priorCount;
+        if (delta > 0) {
+          incident.count = Math.min(Number.MAX_SAFE_INTEGER, incident.count + delta);
+          accepted += delta;
+        }
+        incident.windows.set(windowKey, {
+          count: nextCount,
+          lastSeenAtMs: Math.max(priorWindow?.lastSeenAtMs ?? entry.firstSeenAtMs, entry.lastSeenAtMs)
+        });
+        incident.firstSeenAtMs = Math.min(incident.firstSeenAtMs, entry.firstSeenAtMs);
+        incident.lastSeenAtMs = Math.max(incident.lastSeenAtMs, entry.lastSeenAtMs);
+      }
+
+      if (incidents.size > limit) {
+        const oldest = [...incidents.entries()]
+          .sort((a, b) => a[1].lastSeenAtMs - b[1].lastSeenAtMs || a[1].sequence - b[1].sequence);
+        while (incidents.size > limit && oldest.length > 0) {
+          incidents.delete(oldest.shift()[0]);
+        }
+      }
+
+      return Object.freeze({ ok: true, accepted, incidents: incidents.size, reason: batch.length === 0 ? 'EMPTY' : 'OK' });
+    } catch {
+      return Object.freeze({ ok: false, accepted: 0, incidents: incidents.size, reason: 'COLLECTOR_FAILED' });
+    }
+  }
+
+  function snapshot() {
+    try {
+      return [...incidents.values()]
+        .sort((a, b) => a.sequence - b.sequence)
+        .map((incident) => deepFreeze({
+          envelope: incident.envelope,
+          count: incident.count,
+          firstSeenAtMs: incident.firstSeenAtMs,
+          lastSeenAtMs: incident.lastSeenAtMs
+        }));
+    } catch {
+      return [];
+    }
+  }
+
+  return Object.freeze({ ingest, snapshot, maxIncidents: limit });
+}
+
 export const OBSERVABILITY_CORE = Object.freeze({
   schema: SCHEMA,
   media: MEDIA,

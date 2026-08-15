@@ -117,6 +117,138 @@ async function installLegalBattleDeck(page) {
   });
 }
 
+async function beginVisibleTwoPlayerRoadShield(page, testInfo, evidencePrefix) {
+  const deckSetup = await installLegalBattleDeck(page);
+  expect(deckSetup.main).toHaveLength(40);
+  expect(deckSetup.committed, 'legal deck precondition committed without starting or advancing the match').toBeTruthy();
+  expect(deckSetup.savedValidation.ok, `saved deck validation: ${JSON.stringify(deckSetup.savedValidation)}`).toBeTruthy();
+
+  const setupControl = visibleHomeControl(page, 'setup');
+  await expect(setupControl).toBeVisible();
+  await setupControl.click();
+  const setup = page.locator('section[data-screen="setup"]');
+  await expect(setup).toBeVisible();
+  await setup.locator('[data-content="road_shield"]').click();
+  await setup.locator('[data-mode="2p"]').click();
+  const startMatch = setup.locator('#startMatch');
+  await expect(startMatch).toBeVisible();
+  await expect(startMatch).toBeEnabled();
+  await startMatch.click();
+
+  const battle = page.locator('section[data-screen="battle"]');
+  await expect(battle).toBeVisible();
+  await expect(battle.locator('#phaseTitle')).toContainText('行動を計画');
+  await attachStateScreenshot(page, testInfo, `${evidencePrefix}-battle-start-visible`);
+  return battle;
+}
+
+async function satisfyVisibleAbilityChoice(page) {
+  const veil = page.locator('#abilityVeil.on:visible');
+  if ((await veil.count()) === 0) return false;
+  const choices = veil.locator('#abilityChoices .abilityChoice:visible');
+  const confirm = veil.locator('#abilityConfirm:visible');
+  const count = await choices.count();
+  expect(count, 'visible ability choice has at least one legal option').toBeGreaterThan(0);
+  for (let i = 0; i < count; i += 1) {
+    await choices.nth(i).click();
+    if (await confirm.isEnabled()) {
+      await confirm.click();
+      return true;
+    }
+  }
+  throw new Error('visible ability choice never enabled its confirm control');
+}
+
+async function submitVisiblePlan(battle) {
+  const roadSelect = battle.locator('#roadSelect');
+  const battleSelect = battle.locator('#battleSelect');
+  const ready = battle.locator('#readyPlan');
+  await expect(roadSelect).toBeVisible();
+  await expect(battleSelect).toBeVisible();
+  const handCards = battle.locator('#hand .handCard:visible:not(:disabled)');
+  expect(await handCards.count(), 'visible plan hand has at least two cards').toBeGreaterThanOrEqual(2);
+
+  if (!(await roadSelect.inputValue())) await handCards.nth(0).click();
+  if (!(await battleSelect.inputValue())) {
+    const roadValue = await roadSelect.inputValue();
+    const candidates = battle.locator('#hand .handCard:visible:not(:disabled)');
+    const candidateCount = await candidates.count();
+    let picked = false;
+    for (let i = 0; i < candidateCount; i += 1) {
+      const id = await candidates.nth(i).getAttribute('data-card-id');
+      if (!id || id === roadValue) continue;
+      await candidates.nth(i).click();
+      if (await battleSelect.inputValue()) {
+        picked = true;
+        break;
+      }
+    }
+    expect(picked, 'a different visible hand card can be reserved as Battle').toBeTruthy();
+  }
+
+  expect(await roadSelect.inputValue(), 'visible Road selection').not.toBe('');
+  expect(await battleSelect.inputValue(), 'visible Battle selection').not.toBe('');
+  expect(await battleSelect.inputValue(), 'Road and Battle remain distinct').not.toBe(await roadSelect.inputValue());
+  await expect(ready).toBeEnabled();
+  await ready.click();
+}
+
+async function playVisibleTwoPlayerToResult(page, testInfo, evidencePrefix) {
+  const battle = await beginVisibleTwoPlayerRoadShield(page, testInfo, evidencePrefix);
+  const result = page.locator('section[data-screen="result"]');
+  const deadline = Date.now() + 80_000;
+  let roundsSubmitted = 0;
+  let targetConfirms = 0;
+  let presentationAdvances = 0;
+  let abilityConfirms = 0;
+
+  while (Date.now() < deadline) {
+    if (await result.isVisible().catch(() => false)) break;
+
+    if (await satisfyVisibleAbilityChoice(page)) {
+      abilityConfirms += 1;
+      continue;
+    }
+
+    const advance = battle.locator('#battleResolution .resolutionAdvance:visible');
+    if ((await advance.count()) > 0) {
+      await advance.first().click();
+      presentationAdvances += 1;
+      continue;
+    }
+
+    const targetConfirm = battle.locator('#targetBox.on #confirmTarget:visible');
+    if ((await targetConfirm.count()) > 0) {
+      await targetConfirm.click();
+      targetConfirms += 1;
+      continue;
+    }
+
+    const ready = battle.locator('#readyPlan:visible');
+    if ((await ready.count()) > 0 && (await ready.isEnabled())) {
+      await submitVisiblePlan(battle);
+      roundsSubmitted += 1;
+      continue;
+    }
+
+    await page.waitForTimeout(80);
+  }
+
+  await expect(result, 'visible play reaches Result without direct result/state injection').toBeVisible({ timeout: 2_000 });
+  expect(roundsSubmitted, 'at least one visible plan was submitted').toBeGreaterThan(0);
+  expect(presentationAdvances, 'at least one visible Battle result advance was used').toBeGreaterThan(0);
+  const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';
+  expect(roundsText, 'Result exposes a real round count').toMatch(/\d+巡/);
+  await expect(result.locator('#resultRanking .rankLine')).toHaveCount(2);
+  await expect(result.locator('#resultMode')).toHaveText('二人');
+  await attachStateScreenshot(page, testInfo, `${evidencePrefix}-result-visible`);
+  testInfo.annotations.push({
+    type: 'visible-result-path',
+    description: `submitted=${roundsSubmitted}, targetConfirms=${targetConfirms}, battleAdvances=${presentationAdvances}, abilityConfirms=${abilityConfirms}, result=${roundsText}`,
+  });
+  return { battle, result, roundsSubmitted, targetConfirms, presentationAdvances, abilityConfirms, roundsText };
+}
+
 test('captures success-state screenshots for current pointer navigation', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
@@ -363,6 +495,41 @@ test('moves resolve off the board into the dedicated Battle Phase with Naki cut-
   expect(after.conservation, 'card conservation after dedicated Battle Phase').toBe(true);
   expect(['plan', null]).toContain(after.phase);
   expect(['battle', 'result']).toContain(after.screen);
+
+  runtime.assertClean(testInfo);
+});
+
+test('reaches Result and starts a rematch through visible controls only', async ({ page }, testInfo) => {
+  test.setTimeout(110_000);
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+  const { result } = await playVisibleTwoPlayerToResult(page, testInfo, 'visible-rematch');
+
+  const rematch = result.locator('#rematch');
+  await expect(rematch).toBeVisible();
+  await expect(rematch).toBeEnabled();
+  await rematch.click();
+  const battle = page.locator('section[data-screen="battle"]');
+  await expect(battle, 'visible Result rematch returns to a fresh Battle').toBeVisible();
+  await expect(battle.locator('#roundNo')).toHaveText('1');
+  await expect(battle.locator('#phaseTitle')).toContainText('行動を計画');
+  await attachStateScreenshot(page, testInfo, 'visible-rematch-battle-restarted');
+
+  runtime.assertClean(testInfo);
+});
+
+test('reaches Result and exits to Home through the visible Result control only', async ({ page }, testInfo) => {
+  test.setTimeout(110_000);
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+  const { result } = await playVisibleTwoPlayerToResult(page, testInfo, 'visible-result-home');
+
+  const home = result.locator('[data-root-go="home"]');
+  await expect(home).toBeVisible();
+  await expect(home).toBeEnabled();
+  await home.click();
+  await expect(page.locator('section[data-screen="home"]'), 'visible Result Home control returns to Home').toBeVisible();
+  await attachStateScreenshot(page, testInfo, 'visible-result-home-returned');
 
   runtime.assertClean(testInfo);
 });

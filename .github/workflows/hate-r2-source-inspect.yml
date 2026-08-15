@@ -1,0 +1,46 @@
+name: HATE R2 Source Inspect
+
+on:
+  push:
+    branches:
+      - work/HATE-TIMER-01-R2-BROWSER-REAL-WAIT-SEMANTIC-REPAIR
+    paths:
+      - .github/workflows/hate-r2-source-inspect.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect exact HATE authority context
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "HEAD=$(git rev-parse HEAD)"
+          echo "BLOB=$(git hash-object browser/GAMEROAD.html)"
+          test "$(git hash-object browser/GAMEROAD.html)" = "c0ebc14e27f4b500018b1957daa80eb50df19039"
+          node <<'NODE'
+          const fs=require('fs');
+          const s=fs.readFileSync('browser/GAMEROAD.html','utf8');
+          function extract(name){
+            const needle=`function ${name}(`;
+            const i=s.indexOf(needle);
+            if(i<0){console.log(`MISSING ${name}`);process.exitCode=2;return;}
+            const open=s.indexOf('{',i); let d=0,j=open;
+            for(;j<s.length;j++){ if(s[j]==='{') d++; else if(s[j]==='}' && --d===0){j++;break;} }
+            console.log(`FUNCTION ${name} @${i}\n${s.slice(i,j)}\nEND ${name}`);
+          }
+          ['partnerDecisionSignature','syncPartnerDecisionSession','tickPartnerHate','friendHateSignature','friendTickHate','friendApplyHateExplosion','friendReceivePlan','friendHostMaybeResolvePlan'].forEach(extract);
+          const keys=['roomHuman','connected','connection','peer','guest','FR.planValues','planValues','friendRoom','roomState','activeId'];
+          for(const k of keys){
+            let pos=0,n=0; const kl=k.toLowerCase();
+            while((pos=s.toLowerCase().indexOf(kl,pos))>=0 && n<25){
+              console.log(`CTX ${k}#${++n} @${pos}: ${JSON.stringify(s.slice(Math.max(0,pos-220),Math.min(s.length,pos+420)))}`);
+              pos+=Math.max(1,k.length);
+            }
+            console.log(`COUNT_CTX ${k}=${n}`);
+          }
+          NODE

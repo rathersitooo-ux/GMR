@@ -41,7 +41,7 @@ jobs:
       - name: Install Chromium and OS dependencies
         run: npx playwright install --with-deps chromium
 
-      - name: Run GAMEROAD full interaction evidence R1
+      - name: Run GAMEROAD full interaction evidence R2
         run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
 
       - name: Upload interaction evidence

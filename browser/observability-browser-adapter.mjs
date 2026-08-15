@@ -1,4 +1,4 @@
-import { createObservabilityQueue } from './observability-core.mjs';
+import { createObservabilityIncidentCollector, createObservabilityQueue } from './observability-core.mjs';
 
 function safeRead(source, key) {
   try {
@@ -34,6 +34,58 @@ function safeContext(contextProvider) {
     media: 'browser',
     surface: safeRead(source, 'surface'),
     matchId: safeRead(source, 'matchId')
+  };
+}
+
+function normalizeHttpEndpoint(endpoint) {
+  try {
+    if (typeof endpoint !== 'string') return null;
+    const trimmed = endpoint.trim();
+    if (!trimmed) return null;
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    if (parsed.username || parsed.password || parsed.search || parsed.hash) return null;
+    return parsed.href;
+  } catch {
+    return null;
+  }
+}
+
+function resolveFetch(fetchImpl) {
+  if (typeof fetchImpl === 'function') return fetchImpl;
+  try {
+    return typeof globalThis.fetch === 'function' ? globalThis.fetch.bind(globalThis) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function createBrowserObservabilityHttpSender({ endpoint, fetchImpl } = {}) {
+  const target = normalizeHttpEndpoint(endpoint);
+  const sendRequest = resolveFetch(fetchImpl);
+
+  return async function sendObservabilityBatch(batch) {
+    if (!target || typeof sendRequest !== 'function' || !Array.isArray(batch) || batch.length === 0) return false;
+    try {
+      const validator = createObservabilityIncidentCollector();
+      const validation = validator.ingest(batch);
+      if (!validation.ok) return false;
+      const safeBatch = validator.snapshot();
+      if (safeBatch.length !== batch.length) return false;
+
+      const response = await sendRequest(target, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(safeBatch),
+        credentials: 'omit',
+        redirect: 'error',
+        referrerPolicy: 'no-referrer',
+        cache: 'no-store'
+      });
+      return safeRead(response, 'ok') === true;
+    } catch {
+      return false;
+    }
   };
 }
 

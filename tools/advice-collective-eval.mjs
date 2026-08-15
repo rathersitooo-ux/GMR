@@ -1,5 +1,6 @@
 const REQUIRED_STATE_KEYS = ['phase', 'turnBand', 'pressureBand', 'manaBand', 'handBand'];
 const DEFAULT_ALLOWED_LABEL_SOURCES = new Set(['human', 'formal-evaluator', 'benchmark-approved']);
+const RUNTIME_MANIFEST_SCHEMA = 'gameroad.partner-advice-runtime-manifest.v1';
 
 function finiteNumber(value, fallback = 0) {
   const n = Number(value);
@@ -11,6 +12,10 @@ function safeToken(value) {
   const trimmed = value.trim();
   if (!trimmed || trimmed.length > 96) return null;
   return trimmed;
+}
+
+function sameVersions(a, b) {
+  return ['rulesVersion', 'cardVersion', 'stateVersion'].every((key) => safeToken(a?.[key]) && a[key] === b?.[key]);
 }
 
 export function normalizeState(state) {
@@ -245,5 +250,91 @@ export function benchmarkReport(memory, metrics, decision) {
     provisional: true,
     livePlayerPerformanceProven: false,
     humanAcceptanceProven: false,
+  };
+}
+
+function runtimeManifestReject(reason) {
+  return { ok: false, reason, manifest: null };
+}
+
+export function compileRuntimeAdviceManifest(memory, decision, approval, options = {}) {
+  if (!memory || !(memory.contexts instanceof Map) || !(memory.global instanceof Map)) return runtimeManifestReject('invalid-memory');
+  if (decision?.promotion !== true) return runtimeManifestReject('offline-promotion-not-passed');
+  if (decision?.formalPromotionRequiresHumanGate !== true) return runtimeManifestReject('human-gate-contract-missing');
+  if (approval?.gateId !== 'HUMAN-HOLDOUT-ACCEPTANCE' || approval?.humanGate !== 'approved') {
+    return runtimeManifestReject('human-gate-not-approved');
+  }
+  if (approval?.privacyScope !== 'shared' || approval?.containsPrivate === true) return runtimeManifestReject('privacy-not-runtime-safe');
+  const approvalId = safeToken(approval?.approvalId);
+  if (!approvalId) return runtimeManifestReject('approval-id-missing');
+  if (!sameVersions(memory.targetVersions, approval)) return runtimeManifestReject('version-mismatch');
+
+  const minContextSupport = Math.max(1, Math.trunc(finiteNumber(options.minContextSupport, 8)));
+  const baseline = bestAction(memory.global, memory.regretPenalty);
+  if (!baseline?.actionId) return runtimeManifestReject('no-baseline-evidence');
+
+  const contexts = [];
+  for (const [fingerprint, actionMap] of memory.contexts.entries()) {
+    if (typeof fingerprint !== 'string' || fingerprint.length === 0 || fingerprint.length > 512 || !(actionMap instanceof Map)) continue;
+    const support = [...actionMap.values()].reduce((sum, item) => sum + Math.max(0, finiteNumber(item?.count)), 0);
+    if (support < minContextSupport) continue;
+    const selected = bestAction(actionMap, memory.regretPenalty);
+    if (!selected?.actionId) continue;
+    contexts.push({ fingerprint, actionId: selected.actionId, support });
+  }
+  contexts.sort((a, b) => a.fingerprint.localeCompare(b.fingerprint) || a.actionId.localeCompare(b.actionId));
+
+  return {
+    ok: true,
+    reason: null,
+    manifest: {
+      schema: RUNTIME_MANIFEST_SCHEMA,
+      targetVersions: { ...memory.targetVersions },
+      approval: {
+        gateId: 'HUMAN-HOLDOUT-ACCEPTANCE',
+        approvalId,
+        humanGate: 'approved',
+        privacyScope: 'shared',
+      },
+      promotionSafe: true,
+      defaultActionId: baseline.actionId,
+      minContextSupport,
+      contexts,
+      sourceEvidence: 'offline-approved-aggregate-only',
+      containsRawEvents: false,
+      containsPrivate: false,
+      livePlayerPerformanceProven: false,
+    },
+  };
+}
+
+function runtimeRecommendationReject(reason) {
+  return { actionId: null, source: 'manifest-rejected', reason, fingerprint: null, support: 0 };
+}
+
+export function recommendFromRuntimeManifest(manifest, state, targetVersions) {
+  if (!manifest || manifest.schema !== RUNTIME_MANIFEST_SCHEMA || manifest.promotionSafe !== true) {
+    return runtimeRecommendationReject('manifest-not-approved');
+  }
+  if (manifest.approval?.gateId !== 'HUMAN-HOLDOUT-ACCEPTANCE' || manifest.approval?.humanGate !== 'approved') {
+    return runtimeRecommendationReject('human-gate-not-approved');
+  }
+  if (manifest.approval?.privacyScope !== 'shared' || manifest.containsPrivate === true || manifest.containsRawEvents === true) {
+    return runtimeRecommendationReject('privacy-not-runtime-safe');
+  }
+  if (!sameVersions(manifest.targetVersions, targetVersions)) return runtimeRecommendationReject('version-mismatch');
+  const fingerprint = stateFingerprint(state, targetVersions);
+  if (!fingerprint) return runtimeRecommendationReject('invalid-state');
+
+  const contexts = Array.isArray(manifest.contexts) ? manifest.contexts : [];
+  const exact = contexts.find((entry) => entry?.fingerprint === fingerprint && safeToken(entry?.actionId));
+  const fallback = safeToken(manifest.defaultActionId);
+  if (!exact && !fallback) return runtimeRecommendationReject('no-approved-recommendation');
+  return {
+    actionId: exact?.actionId ?? fallback,
+    source: exact ? 'approved-similar-situation' : 'approved-global-fallback',
+    reason: null,
+    fingerprint,
+    support: exact ? Math.max(0, finiteNumber(exact.support)) : 0,
   };
 }

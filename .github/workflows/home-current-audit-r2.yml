@@ -1,0 +1,35 @@
+name: Home current full-file audit R2
+
+on:
+  push:
+    branches:
+      - work/BROWSER-HOME-PRESENCE-LEGACY-CLEANUP-001-R2-CURRENT-REBASE
+    paths:
+      - '.github/scripts/home-current-audit-r2.mjs'
+      - '.github/workflows/home-current-audit-r2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  audit-current-home-r2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact work branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Audit byte-complete current Browser
+        run: node .github/scripts/home-current-audit-r2.mjs
+      - name: Commit audit report only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- audit/home-current-audit-r2.json
+          test -n "$(git diff --cached --name-only -- audit/home-current-audit-r2.json)"
+          git commit -m "[BROWSER-HOME-PRESENCE-LEGACY-CLEANUP-001 R2] record current Home full-file audit"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

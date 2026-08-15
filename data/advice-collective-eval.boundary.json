@@ -1,0 +1,48 @@
+{
+  "schema": "gameroad.repo-data-boundary.v1",
+  "taskId": "GITHUB-TOOLS-DATA-CONFIG-PLACEMENT-001",
+  "owner": {
+    "sourceTask": "COLLECTIVE-INTELLIGENCE-IMPROVEMENT-LOOP-001",
+    "tool": "tools/advice-collective-eval.mjs",
+    "test": "tests/advice-collective-eval.test.mjs",
+    "workflow": ".github/workflows/advice-collective-eval.yml"
+  },
+  "authority": {
+    "driveCurrent": "control-evidence-plane-reference-only-not-repo-source",
+    "repoSource": "tools/advice-collective-eval.mjs",
+    "testFixture": "synthetic-inline-in-tests",
+    "runtimePlayerData": "not-tracked",
+    "humanApprovalEvidence": "not-tracked-as-runtime-data"
+  },
+  "config": {
+    "source": "explicit-callsite-options-and-fail-closed-code-defaults",
+    "secretValues": "forbidden",
+    "committedCredentialMaterial": false,
+    "environmentFiles": "ignored-by-repository-policy"
+  },
+  "generated": [
+    {
+      "schema": "gameroad.advice-collective-offline-eval.v1",
+      "role": "generated-benchmark-report",
+      "persistence": "not-tracked",
+      "regeneration": "node --test tests/advice-collective-eval.test.mjs",
+      "source": "deterministic-synthetic-test-fixtures"
+    },
+    {
+      "schema": "gameroad.partner-advice-runtime-manifest.v1",
+      "role": "generated-runtime-export",
+      "persistence": "not-tracked",
+      "regeneration": "compileRuntimeAdviceManifest from approved aggregate memory and explicit HUMAN-HOLDOUT-ACCEPTANCE",
+      "containsRawEvents": false,
+      "containsPrivate": false
+    }
+  ],
+  "forbidden": [
+    "Drive CURRENT body copies as repository source",
+    "raw player events",
+    "private player data",
+    "credentials or secret values",
+    "tool ZIP packages",
+    "generated reports treated as source-of-truth"
+  ]
+}

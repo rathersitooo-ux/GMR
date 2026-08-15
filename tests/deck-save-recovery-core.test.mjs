@@ -6,6 +6,7 @@ import {
   prepareExplicitDeckCommit,
   readStorage,
   writePreparedSave,
+  writePreparedSaveVerified,
   resetExplicitSaveKeys,
   DECK_SAVE_RECOVERY_CORE,
 } from '../browser/deck-save-recovery-core.mjs';
@@ -74,8 +75,8 @@ test('non-object JSON blocks', () => {
   }
 });
 
-test('newer save revision blocks', () => {
-  const result = classify(parsed(), { ...currentProjection, saveRevision: 4 });
+test('newer save revision blocks before rule identity downgrade', () => {
+  const result = classify(parsed(), { ...currentProjection, saveRevision: 4, ruleId: null, ruleRevision: null });
   assert.equal(result.reason, 'SAVE_REVISION_NEWER');
 });
 
@@ -97,6 +98,37 @@ test('recognized legacy 24/26/39 remain repairable but inactive', () => {
   }
 });
 
+test('unversioned legacy with both rule fields absent stays recoverable without fabricated identity', () => {
+  for (const deckLegal of [false, true]) {
+    const result = classify(parsed(), {
+      saveRevision: 2,
+      ruleId: null,
+      ruleRevision: null,
+      deckSize: deckLegal ? 40 : 26,
+      deckLegal,
+    });
+    assert.equal(result.status, 'recognized_legacy');
+    assert.equal(result.unversioned, true);
+    assert.equal(
+      result.reason,
+      deckLegal ? 'LEGACY_UNVERSIONED_CURRENT_COMPATIBLE' : 'LEGACY_UNVERSIONED_REPAIRABLE',
+    );
+  }
+});
+
+test('partial or malformed rule identity blocks instead of downgrading to unversioned legacy', () => {
+  const projections = [
+    { ...currentProjection, ruleId: null, ruleRevision: 3 },
+    { ...currentProjection, ruleId: 'FIRST_REGULATION', ruleRevision: null },
+    { ...currentProjection, ruleId: '', ruleRevision: 3 },
+    { ...currentProjection, ruleId: 'FIRST_REGULATION', ruleRevision: '3' },
+  ];
+  assert.deepEqual(
+    projections.map((projection) => classify(parsed(), projection).reason),
+    ['RULE_IDENTITY_PARTIAL', 'RULE_IDENTITY_PARTIAL', 'RULE_IDENTITY_INVALID', 'RULE_IDENTITY_INVALID'],
+  );
+});
+
 test('current legal40 is current', () => {
   const result = classify(parsed());
   assert.equal(result.status, 'current');
@@ -116,6 +148,21 @@ test('explicit commit can start from missing only with a legal current next proj
   const inspection = inspectRawSave(null);
   const result = prepare(inspection, classify(inspection));
   assert.equal(result.status, 'prepared');
+  assert.equal(JSON.parse(result.serialized).deck.cards.length, 40);
+});
+
+test('explicit commit from unversioned legacy is allowed only through a legal current next deck', () => {
+  const inspection = parsed({ deck: { main: Array.from({ length: 26 }, (_, i) => `old${i}`) }, keep: 9 });
+  const legacy = classify(inspection, {
+    saveRevision: 2,
+    ruleId: null,
+    ruleRevision: null,
+    deckSize: 26,
+    deckLegal: false,
+  });
+  const result = prepare(inspection, legacy);
+  assert.equal(result.status, 'prepared');
+  assert.equal(JSON.parse(result.serialized).keep, 9);
   assert.equal(JSON.parse(result.serialized).deck.cards.length, 40);
 });
 
@@ -209,7 +256,7 @@ test('successful storage read can return null without writing', () => {
   assert.equal(writes, 0);
 });
 
-test('write success is reported only after setItem returns', () => {
+test('legacy write helper success is reported after setItem returns', () => {
   let stored = null;
   const inspection = parsed();
   const prepared = prepare(inspection);
@@ -220,13 +267,109 @@ test('write success is reported only after setItem returns', () => {
   assert.equal(stored[1], prepared.serialized);
 });
 
-test('write failure never reports saved success', () => {
+test('legacy write helper failure never reports saved success', () => {
   const inspection = parsed();
   const prepared = prepare(inspection);
   const storage = { setItem() { throw new Error('quota'); } };
   const result = writePreparedSave(storage, 'save', prepared);
   assert.equal(result.status, 'failed');
   assert.equal(result.reason, 'STORAGE_WRITE_FAILED');
+});
+
+test('verified write reports saved only after exact readback', () => {
+  const inspection = parsed();
+  const prepared = prepare(inspection);
+  let raw = JSON.stringify({ old: true });
+  const storage = {
+    getItem() { return raw; },
+    setItem(_key, value) { raw = value; },
+    removeItem() { raw = null; },
+  };
+  const result = writePreparedSaveVerified(storage, 'save', prepared);
+  assert.equal(result.status, 'saved');
+  assert.equal(result.reason, 'STORAGE_WRITE_READBACK_OK');
+  assert.equal(raw, prepared.serialized);
+});
+
+test('verified write mismatch rolls back exact previous durable raw', () => {
+  const prepared = prepare(parsed());
+  const previous = '{"opaque":"keep-exact"}';
+  let raw = previous;
+  let corruptNext = true;
+  const storage = {
+    getItem() { return raw; },
+    setItem(_key, value) {
+      raw = corruptNext ? `${value}x` : value;
+      corruptNext = false;
+    },
+    removeItem() { raw = null; },
+  };
+  const result = writePreparedSaveVerified(storage, 'save', prepared);
+  assert.equal(result.status, 'failed');
+  assert.equal(result.reason, 'STORAGE_READBACK_MISMATCH');
+  assert.equal(result.rolledBack, true);
+  assert.equal(result.originalPreserved, true);
+  assert.equal(raw, previous);
+});
+
+test('verified write readback failure rolls back exact previous durable raw', () => {
+  const prepared = prepare(parsed());
+  const previous = '{"opaque":"keep-exact"}';
+  let raw = previous;
+  let reads = 0;
+  const storage = {
+    getItem() {
+      reads += 1;
+      if (reads === 2) throw new Error('transient readback failure');
+      return raw;
+    },
+    setItem(_key, value) { raw = value; },
+    removeItem() { raw = null; },
+  };
+  const result = writePreparedSaveVerified(storage, 'save', prepared);
+  assert.equal(result.status, 'failed');
+  assert.equal(result.reason, 'STORAGE_READBACK_FAILED');
+  assert.equal(result.rolledBack, true);
+  assert.equal(result.originalPreserved, true);
+  assert.equal(raw, previous);
+});
+
+test('verified write from missing storage removes failed materialization during rollback', () => {
+  const inspection = inspectRawSave(null);
+  const prepared = prepare(inspection, classify(inspection));
+  let raw = null;
+  let first = true;
+  const storage = {
+    getItem() { return raw; },
+    setItem(_key, value) { raw = first ? `${value}x` : value; first = false; },
+    removeItem() { raw = null; },
+  };
+  const result = writePreparedSaveVerified(storage, 'save', prepared);
+  assert.equal(result.status, 'failed');
+  assert.equal(result.reason, 'STORAGE_READBACK_MISMATCH');
+  assert.equal(result.originalPreserved, true);
+  assert.equal(raw, null);
+});
+
+test('verified write rollback failure is never reported as saved or preserved', () => {
+  const prepared = prepare(parsed());
+  const previous = '{"keep":1}';
+  let raw = previous;
+  let writes = 0;
+  const storage = {
+    getItem() { return raw; },
+    setItem(_key, value) {
+      writes += 1;
+      if (writes === 1) raw = `${value}x`;
+      else throw new Error('rollback write failure');
+    },
+    removeItem() { throw new Error('rollback remove failure'); },
+  };
+  const result = writePreparedSaveVerified(storage, 'save', prepared);
+  assert.equal(result.status, 'failed');
+  assert.equal(result.reason, 'STORAGE_ROLLBACK_FAILED');
+  assert.equal(result.originalPreserved, false);
+  assert.notEqual(raw, previous);
 });
 
 test('reset requires explicit confirmation and removes only requested unique keys', () => {

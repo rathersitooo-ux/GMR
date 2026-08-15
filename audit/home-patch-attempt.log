@@ -1,0 +1,8 @@
+file:///home/runner/work/GMR/GMR/.github/scripts/home-apply-cleanup.mjs:84
+  if(afterCounts[key]!==baselineCounts[beforeKey])throw Error(`protected count changed ${key}: ${baselineCounts[beforeKey]} -> ${afterCounts[key]}`);
+                                                        ^
+
+Error: protected count changed dataGo: 22 -> 21
+    at file:///home/runner/work/GMR/GMR/.github/scripts/home-apply-cleanup.mjs:84:57
+
+Node.js v22.23.2

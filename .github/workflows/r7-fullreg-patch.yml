@@ -1,0 +1,55 @@
+name: R7 FullReg Exact Patch Executor
+
+on:
+  push:
+    branches:
+      - 'work/BROWSER-FULL-INTERACTION-SCREENSHOT-REGRESSION-CI-001-R7'
+    paths:
+      - '.github/workflows/r7-fullreg-patch.yml'
+      - 'tests/browser-full-interaction.spec.mjs'
+
+permissions:
+  contents: write
+
+jobs:
+  exact-patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Replace only the stale Result round-label assertion
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tests/browser-full-interaction.spec.mjs')
+          text = path.read_text(encoding='utf-8')
+          old = "expect(roundsText, 'Result exposes a real round count').toMatch(/\\d+巡/);"
+          new = "expect(roundsText, 'Result exposes a real round count').toMatch(/\\d+ラウンド/);"
+          old_count = text.count(old)
+          new_count = text.count(new)
+          if old_count == 1 and new_count == 0:
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+              print('patched exactly one stale assertion')
+          elif old_count == 0 and new_count == 1:
+              print('assertion already patched; no-op')
+          else:
+              raise SystemExit(f'fail closed: old_count={old_count}, new_count={new_count}')
+          PY
+
+      - name: Commit patch only when needed
+        run: |
+          if git diff --quiet -- tests/browser-full-interaction.spec.mjs; then
+            echo 'No patch commit needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- tests/browser-full-interaction.spec.mjs
+          test "$(git diff --cached --name-only | wc -l)" -eq 1
+          test "$(git diff --cached --name-only)" = 'tests/browser-full-interaction.spec.mjs'
+          git commit -m '[BROWSER-FULL-INTERACTION-SCREENSHOT-REGRESSION-CI-001 R7] align Result round label assertion'
+          git push origin "HEAD:${GITHUB_REF_NAME}"

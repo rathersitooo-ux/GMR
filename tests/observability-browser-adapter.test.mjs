@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createServer } from 'node:http';
 import { createObservabilityQueue } from '../browser/observability-core.mjs';
-import { createBrowserObservabilityAdapter } from '../browser/observability-browser-adapter.mjs';
+import {
+  createBrowserObservabilityAdapter,
+  createBrowserObservabilityHttpSender
+} from '../browser/observability-browser-adapter.mjs';
 
 class FakeEventTarget {
   constructor() { this.listeners = new Map(); }
@@ -28,6 +32,24 @@ function makeAdapter(overrides = {}) {
     now: overrides.now ?? (() => 100)
   });
   return { eventTarget, queue, adapter };
+}
+
+async function withHttpServer(handler, run) {
+  const server = createServer(handler);
+  await new Promise((resolve, reject) => {
+    const onError = (error) => reject(error);
+    server.once('error', onError);
+    server.listen(0, '127.0.0.1', () => {
+      server.off('error', onError);
+      resolve();
+    });
+  });
+  const address = server.address();
+  try {
+    return await run(`http://127.0.0.1:${address.port}`);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
 }
 
 test('start is idempotent and stop removes exactly owned listeners', () => {
@@ -137,4 +159,120 @@ test('missing event target and hostile queue methods fail closed without throwin
   const perf = adapter.reportPerformance({ name: 'frameMs', observed: 20, threshold: 16 });
   assert.deepEqual(perf, { accepted: false, reason: 'CAPTURE_FAILED' });
   assert.deepEqual(await adapter.flush(() => true), { ok: false, sent: 0, remaining: 0, reason: 'FLUSH_FAILED' });
+});
+
+test('HTTP sender performs a real local POST with only the validated safe batch', async () => {
+  let received = null;
+  await withHttpServer((request, response) => {
+    let body = '';
+    request.setEncoding('utf8');
+    request.on('data', (chunk) => { body += chunk; });
+    request.on('end', () => {
+      received = {
+        method: request.method,
+        url: request.url,
+        contentType: request.headers['content-type'],
+        body
+      };
+      response.writeHead(204);
+      response.end();
+    });
+  }, async (origin) => {
+    const { eventTarget, adapter } = makeAdapter();
+    adapter.start();
+    const error = new TypeError('Bearer RAW_TOKEN person@example.com');
+    error.stack = 'api_key=RAW_KEY private stack';
+    eventTarget.emit('error', { message: 'PRIVATE_EVENT_TEXT', error, privatePayload: 'PRIVATE_PAYLOAD' });
+
+    const sender = createBrowserObservabilityHttpSender({ endpoint: `${origin}/observability` });
+    const result = await adapter.flush(sender);
+    assert.deepEqual(result, { ok: true, sent: 1, remaining: 0, reason: 'OK' });
+  });
+
+  assert.equal(received.method, 'POST');
+  assert.equal(received.url, '/observability');
+  assert.match(received.contentType, /^application\/json(?:;|$)/i);
+  const batch = JSON.parse(received.body);
+  assert.equal(batch.length, 1);
+  assert.deepEqual(Object.keys(batch[0]).sort(), ['count', 'envelope', 'firstSeenAtMs', 'lastSeenAtMs']);
+  assert.deepEqual(batch[0].envelope.diagnostic, { errorName: 'TypeError', faultCode: 'BROWSER_ERROR' });
+  for (const secret of ['RAW_TOKEN', 'person@example.com', 'RAW_KEY', 'PRIVATE_EVENT_TEXT', 'PRIVATE_PAYLOAD']) {
+    assert.equal(received.body.includes(secret), false, secret);
+  }
+});
+
+test('HTTP sender keeps the queue when the server returns non-2xx', async () => {
+  await withHttpServer((request, response) => {
+    request.resume();
+    response.writeHead(503);
+    response.end('unavailable');
+  }, async (origin) => {
+    const { eventTarget, adapter } = makeAdapter();
+    adapter.start();
+    eventTarget.emit('error', { error: new Error('private') });
+    const sender = createBrowserObservabilityHttpSender({ endpoint: `${origin}/observability` });
+    const result = await adapter.flush(sender);
+    assert.deepEqual(result, { ok: false, sent: 0, remaining: 1, reason: 'SEND_REJECTED' });
+    assert.equal(adapter.snapshot().length, 1);
+  });
+});
+
+test('HTTP sender rejects malformed batches before network I/O', async () => {
+  let calls = 0;
+  const sender = createBrowserObservabilityHttpSender({
+    endpoint: 'https://collector.example.test/observability',
+    fetchImpl: async () => {
+      calls += 1;
+      return { ok: true };
+    }
+  });
+  const result = await sender([{ rawMessage: 'Bearer NEVER_SEND_THIS' }]);
+  assert.equal(result, false);
+  assert.equal(calls, 0);
+});
+
+test('HTTP sender omits ambient credentials and rejects credential-bearing endpoint URLs', async () => {
+  const queue = createObservabilityQueue();
+  queue.capture({ faultCode: 'NETWORK_FAILURE', context: { releaseId: 'r1', media: 'browser', surface: 'battle', matchId: 'm1' } }, 10);
+  let request = null;
+  const sender = createBrowserObservabilityHttpSender({
+    endpoint: 'https://collector.example.test/observability',
+    fetchImpl: async (url, options) => {
+      request = { url, options };
+      return { ok: true };
+    }
+  });
+  assert.deepEqual(await queue.flush(sender), { ok: true, sent: 1, remaining: 0, reason: 'OK' });
+  assert.equal(request.url, 'https://collector.example.test/observability');
+  assert.equal(request.options.method, 'POST');
+  assert.deepEqual(request.options.headers, { 'content-type': 'application/json' });
+  assert.equal(request.options.credentials, 'omit');
+  assert.equal(request.options.redirect, 'error');
+  assert.equal(request.options.referrerPolicy, 'no-referrer');
+  assert.equal(request.options.cache, 'no-store');
+  assert.equal('authorization' in request.options.headers, false);
+
+  let rejectedCalls = 0;
+  const invalidSender = createBrowserObservabilityHttpSender({
+    endpoint: 'https://user:password@collector.example.test/observability?token=secret',
+    fetchImpl: async () => {
+      rejectedCalls += 1;
+      return { ok: true };
+    }
+  });
+  const anotherQueue = createObservabilityQueue();
+  anotherQueue.capture({ faultCode: 'NETWORK_FAILURE', context: { releaseId: 'r1', media: 'browser', surface: 'battle', matchId: 'm1' } }, 11);
+  assert.deepEqual(await anotherQueue.flush(invalidSender), { ok: false, sent: 0, remaining: 1, reason: 'SEND_REJECTED' });
+  assert.equal(rejectedCalls, 0);
+});
+
+test('HTTP sender converts fetch failure to false so queue data is retained', async () => {
+  const queue = createObservabilityQueue();
+  queue.capture({ faultCode: 'NETWORK_FAILURE', context: { releaseId: 'r1', media: 'browser', surface: 'battle', matchId: 'm1' } }, 12);
+  const sender = createBrowserObservabilityHttpSender({
+    endpoint: 'https://collector.example.test/observability',
+    fetchImpl: async () => { throw new Error('offline'); }
+  });
+  assert.deepEqual(await queue.flush(sender), { ok: false, sent: 0, remaining: 1, reason: 'SEND_REJECTED' });
+  assert.equal(queue.snapshot().length, 1);
 });

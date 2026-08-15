@@ -1,0 +1,66 @@
+name: Bug
+description: Report a reproducible defect while preserving GAMEROAD traceability.
+title: "[BUG] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This Issue is a traceability record. It is not, by itself, specification approval, implementation proof, test completion, or release completion.
+  - type: input
+    id: task_id
+    attributes:
+      label: TaskID
+      description: Exact GAMEROAD TaskID from the current Drive work system.
+      placeholder: EXAMPLE-TASK-001
+    validations:
+      required: true
+  - type: input
+    id: acquire_key
+    attributes:
+      label: AcquireKey
+      description: Current acquisition key. Use NOT_ACQUIRED only when no task acquisition exists.
+      placeholder: NOT_ACQUIRED
+    validations:
+      required: true
+  - type: textarea
+    id: drive_authority
+    attributes:
+      label: Drive authority / reason
+      description: Current Drive parent canon, reason gate, or routing evidence that authorizes this work.
+      placeholder: "Parent canon / Reason Gate / relevant CURRENT route"
+    validations:
+      required: true
+  - type: textarea
+    id: observed_evidence
+    attributes:
+      label: Observed current evidence
+      description: Exact current behavior, reproduction, file/commit, logs, screenshots, or other directly observed evidence.
+      placeholder: "Observed on current code/state; distinguish facts from hypotheses."
+    validations:
+      required: true
+  - type: textarea
+    id: expected_completion
+    attributes:
+      label: Expected completion evidence
+      description: Evidence that would be required to call this TaskID complete.
+      placeholder: "Exact diff, tests/checks, runtime or Human evidence required by the current canon."
+    validations:
+      required: true
+  - type: textarea
+    id: unverified_boundary
+    attributes:
+      label: Unverified / blocked boundary
+      description: State what is not verified, not run, blocked, Human-only, device-only, or otherwise outside current evidence.
+      placeholder: "None, or explicit unverified/blocked items."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction and impact
+      description: Minimal reproduction steps and user/game impact when applicable.
+      placeholder: "1. ...\n2. ...\nImpact: ..."
+    validations:
+      required: false

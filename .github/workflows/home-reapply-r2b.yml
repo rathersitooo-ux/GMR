@@ -1,0 +1,61 @@
+name: Home cleanup R2B current reapply
+
+on:
+  push:
+    branches:
+      - work/BROWSER-HOME-PRESENCE-LEGACY-CLEANUP-001-R2B-CURRENT-REBASE
+    paths:
+      - '.github/workflows/home-reapply-r2b.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-current-home-r2b:
+    if: ${{ !contains(github.event.head_commit.message, 'remove R2B patch workflow') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact latest-main work branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Reuse audited semantic helper with literal replacement fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "3fdabd19fbffdbb7d5ee8153253676262f3f31b4"
+          test "$(git hash-object browser/GAMEROAD.html)" = "7bff1a088b7c756edf17a3f1c7e2918db93ac390"
+          git show 8a6d44b1306ce37c878e7c7bad2e3af3cc2c567d:.github/scripts/home-apply-cleanup-r2.mjs > /tmp/home-apply-cleanup-r2b.mjs
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/home-apply-cleanup-r2b.mjs')
+          s=p.read_text()
+          old="html=html.replace(from,to)"
+          new="html=html.replace(from,()=>to)"
+          assert s.count(old)==1, s.count(old)
+          p.write_text(s.replace(old,new))
+          PY
+          node /tmp/home-apply-cleanup-r2b.mjs
+          node - <<'NODE'
+          const fs=require('fs');
+          const s=fs.readFileSync('browser/GAMEROAD.html','utf8');
+          const good="state.screen=name;document.documentElement.classList.toggle('grCodexHomeActive',name==='home');$$('.screen').forEach";
+          const bad="state.screen=name;document.documentElement.classList.toggle('grCodexHomeActive',name==='home');$('.screen').forEach";
+          if(!s.includes(good)) throw new Error('double-dollar screen selector missing');
+          if(s.includes(bad)) throw new Error('single-dollar screen selector regression remains');
+          console.log('HOME_R2B_LITERAL_SELECTOR_OK');
+          NODE
+      - name: Run Browser static gate
+        run: node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+      - name: Commit Browser only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -- browser/GAMEROAD.html
+          test "$(git diff --cached --name-only)" = "browser/GAMEROAD.html"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "[BROWSER-HOME-PRESENCE-LEGACY-CLEANUP-001 R2B] decouple Home partner presence on current main"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

@@ -1,0 +1,34 @@
+name: Browser Node CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'work/**'
+    paths:
+      - 'browser/GAMEROAD.html'
+      - 'tests/browser-static-check.mjs'
+      - '.github/workflows/browser-node-ci.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'browser/GAMEROAD.html'
+      - 'tests/browser-static-check.mjs'
+      - '.github/workflows/browser-node-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  browser-static:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Node version
+        run: node --version
+
+      - name: Run checker self-test and current Browser check
+        run: node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html

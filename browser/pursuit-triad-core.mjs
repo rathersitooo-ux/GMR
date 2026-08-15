@@ -426,3 +426,76 @@ export async function finalizePursuitSecretRound(round, reveals, digestFn) {
 
   return Object.freeze({ round: closedRound, snapshot });
 }
+
+export const PURSUIT_SECRET_ROUND_PERSISTENCE_SCHEMA = 'gameroad.pursuit-secret-round-authority-snapshot.v1';
+
+const PURSUIT_SECRET_ROUND_SNAPSHOT_KEYS = Object.freeze([
+  'persistenceSchema',
+  'schema',
+  'roundId',
+  'revision',
+  'participantIds',
+  'commitments',
+  'closed',
+]);
+const PURSUIT_SECRET_COMMITMENT_SNAPSHOT_KEYS = Object.freeze(['playerId', 'commitment']);
+
+function requireExactObjectKeys(value, expectedKeys, label) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) fail(`${label} must be an object`);
+  const actual = Object.keys(value).sort(compareText);
+  const expected = [...expectedKeys].sort(compareText);
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+    fail(`${label} fields must match the canonical persistence schema exactly`);
+  }
+}
+
+function normalizePursuitSecretRoundSnapshot(snapshot) {
+  requireExactObjectKeys(snapshot, PURSUIT_SECRET_ROUND_SNAPSHOT_KEYS, 'secret round snapshot');
+  if (snapshot.persistenceSchema !== PURSUIT_SECRET_ROUND_PERSISTENCE_SCHEMA) {
+    fail('unsupported pursuit secret round persistence schema');
+  }
+  if (!Array.isArray(snapshot.commitments)) fail('snapshot commitments must be an array');
+  for (const entry of snapshot.commitments) {
+    requireExactObjectKeys(entry, PURSUIT_SECRET_COMMITMENT_SNAPSHOT_KEYS, 'snapshot commitment entry');
+  }
+  return normalizeSecretRound(snapshot);
+}
+
+/**
+ * Exports only authority-private commitment-barrier state. Reveal secrets,
+ * nonces, card identities, values and modes are deliberately absent.
+ */
+export function exportPursuitSecretRoundSnapshot(round) {
+  const safe = normalizeSecretRound(round);
+  return Object.freeze({
+    persistenceSchema: PURSUIT_SECRET_ROUND_PERSISTENCE_SCHEMA,
+    schema: PURSUIT_SECRET_ROUND_SCHEMA,
+    roundId: safe.roundId,
+    revision: safe.revision,
+    participantIds: Object.freeze([...safe.participantIds]),
+    commitments: freezeCommitments(safe.commitments),
+    closed: safe.closed,
+  });
+}
+
+/**
+ * Restores one canonical authority-private round only when the caller supplies
+ * the exact round identity expected by its own authority/session context.
+ */
+export function restorePursuitSecretRoundSnapshot(
+  snapshot,
+  { roundId, revision, participantIds } = {},
+) {
+  const safe = normalizePursuitSecretRoundSnapshot(snapshot);
+  const expectedRoundId = requireRoundId(roundId);
+  const expectedRevision = requireRevision(revision);
+  const expectedParticipantIds = normalizeParticipantIds(participantIds);
+
+  if (safe.roundId !== expectedRoundId) fail('snapshot roundId does not match expected roundId');
+  if (safe.revision !== expectedRevision) fail('snapshot revision does not match expected revision');
+  if (JSON.stringify(safe.participantIds) !== JSON.stringify(expectedParticipantIds)) {
+    fail('snapshot participantIds do not match expected participantIds');
+  }
+
+  return makeSecretRound(safe);
+}

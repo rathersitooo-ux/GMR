@@ -1,0 +1,117 @@
+name: Import exact Roblox baseline
+
+on:
+  push:
+    branches:
+      - work/GITHUB-ROBLOX-CODE-PLACEMENT-001
+    paths:
+      - .github/workflows/import-roblox-baseline.yml
+
+permissions:
+  contents: write
+
+jobs:
+  import-roblox:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout work branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Download exact Drive Roblox place and verify bytes
+        shell: bash
+        env:
+          DRIVE_FILE_ID: 1YUO7GvwPBaVu6Umgp7IJcKrzDfjOBZ5C
+          EXPECTED_SIZE: "10245508"
+          EXPECTED_SHA256: b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = "work/GITHUB-ROBLOX-CODE-PLACEMENT-001"
+          test ! -e roblox/GAMEROAD.rbxlx
+
+          tmp="$RUNNER_TEMP/GAMEROAD.rbxlx"
+          rm -f "$tmp"
+
+          urls=(
+            "https://drive.usercontent.google.com/download?id=${DRIVE_FILE_ID}&export=download&confirm=t"
+            "https://drive.google.com/uc?export=download&confirm=t&id=${DRIVE_FILE_ID}"
+          )
+
+          matched=0
+          for url in "${urls[@]}"; do
+            rm -f "$tmp"
+            if ! curl --fail --location --retry 3 --retry-delay 2 --retry-all-errors --silent --show-error --user-agent "Mozilla/5.0 GAMEROAD-GitHub-Import" "$url" --output "$tmp"; then
+              continue
+            fi
+            size="$(wc -c < "$tmp" | tr -d ' ')"
+            sha="$(sha256sum "$tmp" | awk '{print $1}')"
+            echo "download candidate size=$size sha256=$sha"
+            if [ "$size" = "$EXPECTED_SIZE" ] && [ "$sha" = "$EXPECTED_SHA256" ]; then
+              matched=1
+              break
+            fi
+          done
+
+          if [ "$matched" -ne 1 ]; then
+            echo "Drive download did not match the exact CURRENT Roblox bytes." >&2
+            exit 41
+          fi
+
+          python - "$tmp" <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          p = sys.argv[1]
+          root = ET.parse(p).getroot()
+          if root.tag != "roblox":
+              raise SystemExit(f"unexpected root tag: {root.tag}")
+          scripts = {"ModuleScript": 0, "Script": 0, "LocalScript": 0}
+          remote_event = remote_function = 0
+          for item in root.iter("Item"):
+              cls = item.attrib.get("class")
+              if cls in scripts:
+                  scripts[cls] += 1
+              elif cls == "RemoteEvent":
+                  remote_event += 1
+              elif cls == "RemoteFunction":
+                  remote_function += 1
+          expected = {"ModuleScript": 33, "Script": 9, "LocalScript": 4}
+          if scripts != expected or remote_event != 64 or remote_function != 18:
+              raise SystemExit(
+                  f"inventory mismatch scripts={scripts} RemoteEvent={remote_event} RemoteFunction={remote_function}"
+              )
+          print("XML parse/inventory OK", scripts, remote_event, remote_function)
+          PY
+
+          mkdir -p roblox
+          mv "$tmp" roblox/GAMEROAD.rbxlx
+
+          final_size="$(wc -c < roblox/GAMEROAD.rbxlx | tr -d ' ')"
+          final_sha="$(sha256sum roblox/GAMEROAD.rbxlx | awk '{print $1}')"
+          test "$final_size" = "$EXPECTED_SIZE"
+          test "$final_sha" = "$EXPECTED_SHA256"
+
+          {
+            echo "### Exact Roblox import verification"
+            echo "- size: $final_size"
+            echo "- sha256: $final_sha"
+            echo "- source Drive file: $DRIVE_FILE_ID"
+            echo "- XML inventory: ModuleScript=33 Script=9 LocalScript=4 RemoteEvent=64 RemoteFunction=18"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit exact Roblox bytes to this work branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- roblox/GAMEROAD.rbxlx
+          test -n "$(git diff --cached --name-only -- roblox/GAMEROAD.rbxlx)"
+          git commit -m "[GITHUB-ROBLOX-CODE-PLACEMENT-001] import exact Drive Roblox baseline"
+          commit_sha="$(git rev-parse HEAD)"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          {
+            echo "- roblox commit: $commit_sha"
+            echo "- branch: $GITHUB_REF_NAME"
+          } >> "$GITHUB_STEP_SUMMARY"

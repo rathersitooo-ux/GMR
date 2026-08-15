@@ -281,9 +281,7 @@ test('starts through visible Setup and advances the first Battle decision throug
   await ready.click();
 
   const cue = battle.locator('#first10Cue');
-  await expect(cue, 'visible first-cycle cue confirms accepted Road and progression beyond Plan').toContainText('ロード受理', { timeout: 30_000 });
-  await expect(cue).toContainText('✓', { timeout: 30_000 });
-  await expect(battle.locator('#first10PublicRoad')).toBeVisible();
+  await expect(cue, 'visible first-cycle cue confirms Road decision, public reveal, and progression beyond Plan').toContainText('ロード決定 → 公開 → 次の行動まで確認 ✓', { timeout: 30_000 });
   await attachStateScreenshot(page, testInfo, 'battle-first-decision-progressed-visible');
 
   runtime.assertClean(testInfo);

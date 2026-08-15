@@ -42,6 +42,7 @@ jobs:
           advice=false
           replay=false
           ping=false
+          highlander=false
           unclassified=false
           : > /tmp/gameroad-unclassified.txt
 
@@ -78,6 +79,10 @@ jobs:
               tests/battle-team-ping-core.test.mjs)
                 ping=true
                 ;;
+              tests/deck-highlander-conformance.spec.mjs|\
+              playwright.deck-highlander.config.mjs)
+                highlander=true
+                ;;
               .github/workflows/gameroad-required-gate.yml|README.md|.gitignore|.gitattributes)
                 ;;
               browser/*|roblox/*|unity/*|tools/*|tests/*|.github/workflows/*|\
@@ -97,6 +102,7 @@ jobs:
             echo "advice=${advice}"
             echo "replay=${replay}"
             echo "ping=${ping}"
+            echo "highlander=${highlander}"
             echo "unclassified=${unclassified}"
           } >> "${GITHUB_OUTPUT}"
 
@@ -106,7 +112,7 @@ jobs:
           fi
 
       - name: Set up Node
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true'
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.highlander == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -128,7 +134,7 @@ jobs:
         run: node --test tests/battle-team-ping-core.test.mjs
 
       - name: Install Playwright and Chromium
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true'
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.highlander == 'true'
         run: |
           npm install --no-save --no-package-lock @playwright/test@1.62.0
           npx playwright install --with-deps chromium
@@ -144,6 +150,10 @@ jobs:
       - name: Run DINO DIG mobile whitebox smoke
         if: steps.classify.outputs.dino == 'true'
         run: npx playwright test --config=playwright.dino-dig.config.mjs --workers=1
+
+      - name: Run Deck Highlander conformance
+        if: steps.classify.outputs.highlander == 'true'
+        run: npx playwright test --config=playwright.deck-highlander.config.mjs --workers=1
 
       - name: Fail closed on unclassified executable or CI paths
         if: always() && steps.classify.outputs.unclassified == 'true'

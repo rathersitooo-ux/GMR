@@ -22,8 +22,23 @@ jobs:
           fetch-depth: 0
           persist-credentials: true
 
-      - name: Apply deterministic current-blob Home patch
-        run: node .github/scripts/home-apply-cleanup.mjs
+      - name: Apply deterministic current-blob Home patch with diagnostic capture
+        shell: bash
+        run: |
+          set +e
+          mkdir -p audit
+          node .github/scripts/home-apply-cleanup.mjs > audit/home-patch-attempt.log 2>&1
+          code=$?
+          cat audit/home-patch-attempt.log
+          if [ "$code" -ne 0 ]; then
+            git checkout -- browser/GAMEROAD.html
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -- audit/home-patch-attempt.log
+            git commit -m "[BROWSER-HOME-PRESENCE-LEGACY-CLEANUP-001] record failed patch assertion"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+            exit "$code"
+          fi
 
       - name: Run Browser static CI locally before commit
         run: node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
@@ -32,8 +47,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          changed="$(git status --short)"
-          echo "$changed"
           git add -- browser/GAMEROAD.html
           test "$(git diff --cached --name-only)" = "browser/GAMEROAD.html"
           git config user.name "github-actions[bot]"

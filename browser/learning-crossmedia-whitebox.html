@@ -22,12 +22,12 @@
 <body>
 <main>
   <h1>証拠ボード／復元解釈 whitebox R2</h1>
-  <p class="muted">説明を読むだけではなく、証拠を観察・整理し、断定できる範囲と未解決を判断する独立試験です。正式ゲーム、正式科学表現、報酬、Battle能力には接続していません。</p>
+  <p class="muted">説明を読むだけではなく、証拠を観察・整理し、断定できる範囲と未解決を判断する独立試験です。正式ゲーム、報酬、Battle能力、production saveには接続していません。</p>
   <div class="modes" aria-label="比較fixture">
     <button type="button" data-mode="fiction" aria-pressed="true">A 架空証拠</button>
-    <button type="button" data-mode="spinosaurus" aria-pressed="false">B Spinosaurus候補</button>
+    <button type="button" data-mode="spinosaurus" aria-pressed="false">B Spinosaurus CURRENT</button>
   </div>
-  <div id="candidateWarning" class="warning hidden">BはDrive上のsource-backed candidate fixtureを技術検証へ使うだけです。科学分類・表示文はHuman未受理で、正式図鑑や現役科学正本へ昇格しません。</div>
+  <div id="authorityNotice" class="warning hidden">BはDrive CURRENTで既に定義されている「化石で確認／研究から推定／まだ不明・議論中」の三分類を技術whiteboxへ再結合します。このwhitebox自体を正式図鑑・production runtime・新しい科学裁定には昇格しません。</div>
 
   <section class="panel" aria-labelledby="threadTitle">
     <h2 id="threadTitle">調査thread</h2>
@@ -58,22 +58,55 @@
     </dl>
   </section>
 
+  <section id="migrationPanel" class="panel hidden" aria-labelledby="migrationTitle">
+    <h2 id="migrationTitle">復元版migration whitebox</h2>
+    <p class="muted">旧復元版で取得したwhitebox saveを、card identity・ownership・取得時版のprovenanceを変えずに現行表示版へ投影します。実saveは書き換えません。</p>
+    <button id="migrateDemo" type="button">旧復元版saveを現在表示へ移行</button>
+    <div id="migrationStatus" class="status" role="status">旧復元版saveの投影は未実行です。</div>
+    <dl id="migrationRecord" class="record hidden">
+      <dt>card identity</dt><dd id="migrationCard"></dd>
+      <dt>ownership</dt><dd id="migrationOwned"></dd>
+      <dt>取得時版</dt><dd id="migrationAcquired"></dd>
+      <dt>表示版</dt><dd id="migrationDisplay"></dd>
+      <dt>履歴保持</dt><dd id="migrationHistory"></dd>
+    </dl>
+  </section>
+
   <button id="reset" type="button">同じfixtureを最初から</button>
 </main>
 <script>
 (() => {
   'use strict';
   const CONTRACT_VERSION='LEARNX-R2-INTERACTION-V1';
+  const DINO_CANON_VERSION='SPINOSAURUS-LEARNING-CURRENT-20260723';
+  const DINO_AUTHORITY='DRIVE_CURRENT';
   const LANES=['FOSSIL_CONFIRMED','RESEARCH_INFERRED','UNKNOWN_OR_DEBATED'];
   const DECISIONS=[
     {id:'BOUNDED_SUPPORT',label:'支持される部分と未解決を分ける'},
     {id:'OVERCLAIM',label:'一つの強い断定へまとめる'},
     {id:'ALL_UNRESOLVED',label:'すべて未解決として保留する'},
   ];
+  const RECONSTRUCTION_IDENTITY=Object.freeze({
+    cardId:'WHITEBOX-SPINOSAURUS-CARD-IDENTITY',
+    speciesId:'SPINOSAURUS_AEGYPTIACUS'
+  });
+  const RECONSTRUCTION_VERSIONS=Object.freeze({
+    historical:Object.freeze({id:'SPINO-AEGYPTIACUS-RECON-HISTORICAL-V1',role:'HISTORICAL',label:'旧復元版'}),
+    current:Object.freeze({id:'SPINO-AEGYPTIACUS-RECON-CURRENT-20260723',role:'CURRENT',label:'現行復元版'})
+  });
+  const DEFAULT_HISTORICAL_SAVE=Object.freeze({
+    cardId:RECONSTRUCTION_IDENTITY.cardId,
+    speciesId:RECONSTRUCTION_IDENTITY.speciesId,
+    owned:true,
+    acquiredUnderVersion:RECONSTRUCTION_VERSIONS.historical.id,
+    displayVersion:RECONSTRUCTION_VERSIONS.historical.id,
+    resolvedCanonVersion:null,
+    historicalVersions:Object.freeze([RECONSTRUCTION_VERSIONS.historical.id])
+  });
   const FIXTURES={
     fiction:{
-      fixtureId:'FICTION-WHITEBOX-R2', claimId:'FICTION_CREATURE_LOCUS', sourceVersion:'WHITEBOX-FICTION-R2-v1', candidate:false,
-      prompt:'架空生物の骨格・堆積環境・足跡の食い違いから、どこまで復元像を支持できるか整理する。', expectedDecision:'BOUNDED_SUPPORT',
+      fixtureId:'FICTION-WHITEBOX-R2',claimId:'FICTION_CREATURE_LOCUS',sourceVersion:'WHITEBOX-FICTION-R2-v1',authority:'WHITEBOX_FICTION',candidate:false,
+      prompt:'架空生物の骨格・堆積環境・足跡の食い違いから、どこまで復元像を支持できるか整理する。',expectedDecision:'BOUNDED_SUPPORT',
       evidence:[
         {id:'f1',title:'骨格形態',text:'保存された脚骨は短く頑丈な形を示す。',lane:'FOSSIL_CONFIRMED',source:'FICTION-DIRECT-01'},
         {id:'f2',title:'堆積環境',text:'発見層には水辺環境を示す架空の痕跡があるが、生活様式を単独では確定しない。',lane:'RESEARCH_INFERRED',source:'FICTION-INFERENCE-02'},
@@ -81,28 +114,31 @@
       ]
     },
     spinosaurus:{
-      fixtureId:'SPINOSAURUS-CANDIDATE-R1', claimId:'DINO_SPINOSAURUS_RECONSTRUCTION_BOUNDARY', sourceVersion:'DINO-EVIDENCE-R1-2026-08-15', candidate:true,
-      prompt:'Spinosaurus候補fixtureで、形態の直接寄り証拠・生活様式の推論・陸上姿勢の議論中を混同せず復元解釈する。', expectedDecision:'BOUNDED_SUPPORT',
+      fixtureId:'SPINOSAURUS-CURRENT-R2',claimId:'DINO_SPINOSAURUS_RECONSTRUCTION_BOUNDARY',sourceVersion:DINO_CANON_VERSION,authority:DINO_AUTHORITY,candidate:false,
+      prompt:'Spinosaurus CURRENT fixtureで、化石で確認できる形態・研究から推定する生活様式・まだ不明／議論中の陸上姿勢を混同せず復元解釈する。',expectedDecision:'BOUNDED_SUPPORT',
       evidence:[
-        {id:'s1',title:'後肢の形態',text:'記載標本に基づく短い後肢という形態候補。生活様式の結論とは分離する。',lane:'FOSSIL_CONFIRMED',source:'Ibrahim2014'},
-        {id:'s2',title:'水生適応の解釈',text:'半水生適応を支持する研究候補がある一方、泳法や程度まで強く断定しない。',lane:'RESEARCH_INFERRED',source:'Ibrahim2014+Fabbri2022+competing-evidence'},
-        {id:'s3',title:'陸上姿勢',text:'二足か四足姿勢も取ったかは議論が残る候補として扱う。',lane:'UNKNOWN_OR_DEBATED',source:'NHM-current+Sereno2022'},
+        {id:'s1',title:'後肢の形態',text:'記載標本に基づく短い後肢を、生活様式の結論とは分離して扱う。',lane:'FOSSIL_CONFIRMED',source:'CURRENT-CANON:FOSSIL_CONFIRMED'},
+        {id:'s2',title:'水生適応の解釈',text:'半水生・水辺利用を支持する研究を推定として扱い、泳法や程度まで一つの確定像にしない。',lane:'RESEARCH_INFERRED',source:'CURRENT-CANON:RESEARCH_INFERRED'},
+        {id:'s3',title:'陸上姿勢',text:'陸上で常に二足だったか、四足姿勢も使ったかは議論中として保持する。',lane:'UNKNOWN_OR_DEBATED',source:'CURRENT-CANON:UNKNOWN_OR_DEBATED'},
       ]
     }
   };
 
   const ui={
-    modes:[...document.querySelectorAll('[data-mode]')], warning:document.getElementById('candidateWarning'), prompt:document.getElementById('prompt'),
-    fixtureId:document.getElementById('fixtureId'), sourceVersion:document.getElementById('sourceVersion'), evidence:document.getElementById('evidence'),
-    decisions:document.getElementById('decisions'), status:document.getElementById('status'), record:document.getElementById('record'),
+    modes:[...document.querySelectorAll('[data-mode]')],authorityNotice:document.getElementById('authorityNotice'),prompt:document.getElementById('prompt'),
+    fixtureId:document.getElementById('fixtureId'),sourceVersion:document.getElementById('sourceVersion'),evidence:document.getElementById('evidence'),
+    decisions:document.getElementById('decisions'),status:document.getElementById('status'),record:document.getElementById('record'),
     recordClaim:document.getElementById('recordClaim'),recordSource:document.getElementById('recordSource'),recordDecision:document.getElementById('recordDecision'),
-    recordOutcome:document.getElementById('recordOutcome'),recordLinks:document.getElementById('recordLinks'),reset:document.getElementById('reset')
+    recordOutcome:document.getElementById('recordOutcome'),recordLinks:document.getElementById('recordLinks'),reset:document.getElementById('reset'),
+    migrationPanel:document.getElementById('migrationPanel'),migrateDemo:document.getElementById('migrateDemo'),migrationStatus:document.getElementById('migrationStatus'),
+    migrationRecord:document.getElementById('migrationRecord'),migrationCard:document.getElementById('migrationCard'),migrationOwned:document.getElementById('migrationOwned'),
+    migrationAcquired:document.getElementById('migrationAcquired'),migrationDisplay:document.getElementById('migrationDisplay'),migrationHistory:document.getElementById('migrationHistory')
   };
-  let mode='fiction'; let fixture; let state;
+  let mode='fiction';let fixture;let state;let migrationResult=null;
 
   function clone(v){return JSON.parse(JSON.stringify(v));}
   function validateFixture(value){
-    if(!value||!value.fixtureId||!value.claimId||!value.sourceVersion)return {ok:false,reason:'SOURCE_INCOMPLETE'};
+    if(!value||!value.fixtureId||!value.claimId||!value.sourceVersion||!value.authority)return {ok:false,reason:'SOURCE_INCOMPLETE'};
     if(!Array.isArray(value.evidence)||value.evidence.length===0)return {ok:false,reason:'EVIDENCE_INCOMPLETE'};
     for(const e of value.evidence){if(!e.id||!e.title||!e.text||!e.source||!LANES.includes(e.lane))return {ok:false,reason:'EVIDENCE_METADATA_INCOMPLETE'};}
     return {ok:true,reason:null};
@@ -110,10 +146,10 @@
   function newState(){
     const validation=validateFixture(fixture);
     return {contractVersion:CONTRACT_VERSION,fixtureId:fixture?.fixtureId||null,claimId:fixture?.claimId||null,sourceVersion:fixture?.sourceVersion||null,
-      candidate:Boolean(fixture?.candidate),validation:validation.reason||'VALID',inspected:[],links:{},decision:null,outcome:validation.ok?'READY':'FAIL_CLOSED',
+      authority:fixture?.authority||null,candidate:Boolean(fixture?.candidate),validation:validation.reason||'VALID',inspected:[],links:{},decision:null,outcome:validation.ok?'READY':'FAIL_CLOSED',
       blindAttempts:0,duplicateDecisionAttempts:0,lastDecisionSignature:null,recordVisible:false};
   }
-  function reset(){state=newState();render();}
+  function reset(){state=newState();migrationResult=null;render();}
   function setMode(next){if(!FIXTURES[next])return false;mode=next;fixture=clone(FIXTURES[next]);reset();return true;}
   function loadFixtureForTest(value){mode='test';fixture=clone(value);reset();return snapshot();}
   function inspectEvidence(id){
@@ -139,7 +175,50 @@
     else {state.outcome='COHERENT_BOUNDARY';state.recordVisible=true;}
     render();return state.outcome;
   }
-  function snapshot(){return clone({...state,mode,evidenceCount:fixture?.evidence?.length||0,decisionCount:DECISIONS.length,lanes:[...LANES]});}
+  function validateVersionRegistry(registry){
+    if(!registry||typeof registry!=='object')return {ok:false,reason:'VERSION_REGISTRY_CONFLICT'};
+    const entries=Object.values(registry);
+    if(entries.length<2||entries.some(v=>!v||!v.id||!v.role))return {ok:false,reason:'VERSION_REGISTRY_CONFLICT'};
+    const ids=entries.map(v=>v.id);
+    if(new Set(ids).size!==ids.length)return {ok:false,reason:'VERSION_REGISTRY_CONFLICT'};
+    const currents=entries.filter(v=>v.role==='CURRENT');
+    const historical=entries.filter(v=>v.role==='HISTORICAL');
+    if(currents.length!==1||historical.length<1)return {ok:false,reason:'VERSION_REGISTRY_CONFLICT'};
+    return {ok:true,current:currents[0],entries};
+  }
+  function migrateReconstructionSave(input,registry=RECONSTRUCTION_VERSIONS){
+    const source=clone(input);
+    const registryCheck=validateVersionRegistry(registry);
+    if(!registryCheck.ok)return {ok:false,reason:registryCheck.reason,projection:null};
+    if(!source||source.cardId!==RECONSTRUCTION_IDENTITY.cardId||source.speciesId!==RECONSTRUCTION_IDENTITY.speciesId)return {ok:false,reason:'IDENTITY_MISMATCH',projection:null};
+    if(typeof source.owned!=='boolean')return {ok:false,reason:'OWNERSHIP_INVALID',projection:null};
+    if(!Array.isArray(source.historicalVersions))return {ok:false,reason:'HISTORY_INVALID',projection:null};
+    const known=new Map(registryCheck.entries.map(v=>[v.id,v]));
+    const versionFields=[source.acquiredUnderVersion,source.displayVersion,...source.historicalVersions];
+    if(versionFields.some(id=>!known.has(id)))return {ok:false,reason:'UNKNOWN_RECONSTRUCTION_VERSION',projection:null};
+    if(source.resolvedCanonVersion!==null&&source.resolvedCanonVersion!==undefined&&source.resolvedCanonVersion!==registryCheck.current.id)return {ok:false,reason:'VERSION_CONFLICT',projection:null};
+    const retained=[];
+    for(const id of [...source.historicalVersions,source.acquiredUnderVersion,source.displayVersion]){
+      if(known.get(id)?.role==='HISTORICAL'&&!retained.includes(id))retained.push(id);
+    }
+    const previousDisplayVersion=source.displayVersion;
+    const projection={
+      ...source,
+      displayVersion:registryCheck.current.id,
+      resolvedCanonVersion:registryCheck.current.id,
+      historicalVersions:retained,
+      migrationApplied:previousDisplayVersion!==registryCheck.current.id,
+      previousDisplayVersion,
+      provenanceLabel:`取得時版 ${source.acquiredUnderVersion} を保持`
+    };
+    return {ok:true,reason:null,projection};
+  }
+  function runMigrationDemo(){
+    migrationResult=migrateReconstructionSave(DEFAULT_HISTORICAL_SAVE);
+    renderMigration();
+    return clone(migrationResult);
+  }
+  function snapshot(){return clone({...state,mode,evidenceCount:fixture?.evidence?.length||0,decisionCount:DECISIONS.length,lanes:[...LANES],migrationVisible:mode==='spinosaurus'});}
   function statusText(){
     const map={READY:'証拠を観察し、根拠の種類を整理してください。',FAIL_CLOSED:`source/versionが不完全なため判定を停止しました: ${state.validation}`,
       NEEDS_EVIDENCE:'未整理の証拠があります。同じ判断を連打しても答えは開示しません。',NO_NEW_INFORMATION:'根拠状態が同じため新しい情報は増えません。証拠の整理を見直してください。',
@@ -147,8 +226,32 @@
       REVIEW_SCOPE:'証拠の整理はできていますが、支持できる範囲と保留範囲の分け方を見直せます。',COHERENT_BOUNDARY:'支持できる部分と未解決部分を分けて記録できました。'};
     return map[state.outcome]||state.outcome;
   }
+  function renderMigration(){
+    const visible=mode==='spinosaurus';
+    ui.migrationPanel.classList.toggle('hidden',!visible);
+    if(!visible)return;
+    if(!migrationResult){
+      ui.migrationStatus.textContent='旧復元版saveの投影は未実行です。';
+      ui.migrationRecord.classList.add('hidden');
+      return;
+    }
+    if(!migrationResult.ok){
+      ui.migrationStatus.textContent=`migration停止: ${migrationResult.reason}`;
+      ui.migrationRecord.classList.add('hidden');
+      return;
+    }
+    const p=migrationResult.projection;
+    ui.migrationStatus.textContent=p.migrationApplied?'旧表示版を現行表示版へ投影しました。実saveは未変更です。':'すでに現行表示版です。identity/provenanceを保持しました。';
+    ui.migrationRecord.classList.remove('hidden');
+    ui.migrationCard.textContent=p.cardId;
+    ui.migrationOwned.textContent=String(p.owned);
+    ui.migrationAcquired.textContent=p.acquiredUnderVersion;
+    ui.migrationDisplay.textContent=p.displayVersion;
+    ui.migrationHistory.textContent=p.historicalVersions.join(', ')||'none';
+  }
   function render(){
-    ui.modes.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));ui.warning.classList.toggle('hidden',!fixture?.candidate);
+    ui.modes.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
+    ui.authorityNotice.classList.toggle('hidden',fixture?.authority!==DINO_AUTHORITY);
     ui.prompt.textContent=fixture?.prompt||'fixture unavailable';ui.fixtureId.textContent=fixture?.fixtureId||'NO_FIXTURE';ui.sourceVersion.textContent=fixture?.sourceVersion||'NO_SOURCE_VERSION';
     ui.evidence.innerHTML='';
     for(const e of fixture?.evidence||[]){
@@ -161,11 +264,17 @@
     }
     ui.decisions.innerHTML='';for(const d of DECISIONS){const b=document.createElement('button');b.type='button';b.dataset.decision=d.id;b.textContent=d.label;b.disabled=state.outcome==='FAIL_CLOSED';b.addEventListener('click',()=>decide(d.id));ui.decisions.append(b);}
     ui.status.textContent=statusText();ui.record.classList.toggle('hidden',!state.recordVisible);
-    if(state.recordVisible){ui.recordClaim.textContent=state.claimId;ui.recordSource.textContent=`${state.sourceVersion}${state.candidate?' / candidate・Human未受理':''}`;ui.recordDecision.textContent=state.decision||'none';ui.recordOutcome.textContent=state.outcome;ui.recordLinks.textContent=fixture.evidence.map(e=>`${e.title}=${state.links[e.id]||'未整理'} [${e.source}]`).join(' / ');}
+    if(state.recordVisible){ui.recordClaim.textContent=state.claimId;ui.recordSource.textContent=`${state.sourceVersion}${state.authority===DINO_AUTHORITY?' / Drive CURRENT':''}`;ui.recordDecision.textContent=state.decision||'none';ui.recordOutcome.textContent=state.outcome;ui.recordLinks.textContent=fixture.evidence.map(e=>`${e.title}=${state.links[e.id]||'未整理'} [${e.source}]`).join(' / ');}
+    renderMigration();
   }
-  ui.modes.forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));ui.reset.addEventListener('click',reset);
+  ui.modes.forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));ui.reset.addEventListener('click',reset);ui.migrateDemo.addEventListener('click',runMigrationDemo);
   fixture=clone(FIXTURES[mode]);reset();
-  window.__LEARNING_CROSSMEDIA_WHITEBOX__={CONTRACT_VERSION,LANES:[...LANES],snapshot,setMode,reset,inspectEvidence,linkEvidence,decide,loadFixtureForTest,getFixture:()=>clone(fixture),fixtures:()=>clone(FIXTURES)};
+  window.__LEARNING_CROSSMEDIA_WHITEBOX__={
+    CONTRACT_VERSION,DINO_CANON_VERSION,DINO_AUTHORITY,LANES:[...LANES],
+    RECONSTRUCTION_IDENTITY:clone(RECONSTRUCTION_IDENTITY),RECONSTRUCTION_VERSIONS:clone(RECONSTRUCTION_VERSIONS),DEFAULT_HISTORICAL_SAVE:clone(DEFAULT_HISTORICAL_SAVE),
+    snapshot,setMode,reset,inspectEvidence,linkEvidence,decide,loadFixtureForTest,migrateReconstructionSave,validateVersionRegistry,runMigrationDemo,
+    getFixture:()=>clone(fixture),fixtures:()=>clone(FIXTURES)
+  };
 })();
 </script>
 </body>

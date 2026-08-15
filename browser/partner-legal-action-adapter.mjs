@@ -58,43 +58,30 @@ function preferenceFor(rule) {
   return (view) => -view.publicFacts.comparisonValue;
 }
 
-export function selectPartnerLegalCandidate({
-  candidates,
-  rule,
-  sourceVersions,
-  targetVersions,
-} = {}) {
-  if (!PARTNER_RULES.has(rule)) return fail('UNKNOWN_RULE');
-  if (!Array.isArray(candidates)) return fail('CANDIDATES_REQUIRED');
-
-  const source = exactVersionTuple(sourceVersions);
-  const target = exactVersionTuple(targetVersions);
-  if (!source || !target) return fail('VERSION_REQUIRED');
-  if (!sameVersions(source, target)) return fail('VERSION_MISMATCH');
-
+function buildCandidateBoundary(candidates, rule, versions) {
   const rows = [];
   const byId = new Map();
   const seen = new Set();
 
   for (const candidate of candidates) {
     const candidateId = exactToken(candidate?.candidateId);
-    if (!candidateId || seen.has(candidateId)) return fail('DUPLICATE_OR_MISSING_ID');
+    if (!candidateId || seen.has(candidateId)) return { error: 'DUPLICATE_OR_MISSING_ID' };
     seen.add(candidateId);
-    if (candidate?.assetAction !== NO_ASSET_ACTION) return fail('ASSET_ACTION_BLOCKED');
-    if (candidate?.publicScope !== true) return fail('HIDDEN_INFO_BLOCKED');
+    if (candidate?.assetAction !== NO_ASSET_ACTION) return { error: 'ASSET_ACTION_BLOCKED' };
+    if (candidate?.publicScope !== true) return { error: 'HIDDEN_INFO_BLOCKED' };
 
     const legal = candidate?.legal === true;
     let positionOrder = null;
     let comparisonValue = null;
     if (legal) {
       positionOrder = Number(candidate?.positionOrder);
-      if (!Number.isFinite(positionOrder)) return fail('POSITION_REQUIRED');
+      if (!Number.isFinite(positionOrder)) return { error: 'POSITION_REQUIRED' };
       if (rule === 'max' || rule === 'min') {
         if (candidate?.comparisonValue === null || candidate?.comparisonValue === undefined || candidate?.comparisonValue === '') {
-          return fail('COMPARISON_VALUE_UNRESOLVED');
+          return { error: 'COMPARISON_VALUE_UNRESOLVED' };
         }
         comparisonValue = Number(candidate.comparisonValue);
-        if (!Number.isFinite(comparisonValue)) return fail('COMPARISON_VALUE_UNRESOLVED');
+        if (!Number.isFinite(comparisonValue)) return { error: 'COMPARISON_VALUE_UNRESOLVED' };
       } else if (candidate?.comparisonValue !== null && candidate?.comparisonValue !== undefined && candidate?.comparisonValue !== '') {
         const optionalComparison = Number(candidate.comparisonValue);
         if (Number.isFinite(optionalComparison)) comparisonValue = optionalComparison;
@@ -110,7 +97,7 @@ export function selectPartnerLegalCandidate({
   const idRank = new Map([...seen].sort(idCompare).map((id, index) => [id, index]));
   const sharedCandidates = rows.map((candidate) => ({
     actionId: candidate.candidateId,
-    ...source,
+    ...versions,
     legal: candidate.legal,
     viewerSafe: true,
     stableOrder: idRank.get(candidate.candidateId),
@@ -120,10 +107,30 @@ export function selectPartnerLegalCandidate({
       comparisonValue: candidate.comparisonValue,
     },
   }));
-
-  const result = selectPreferredLegalAction(sharedCandidates, target, preferenceFor(rule));
   const legalCount = rows.reduce((count, candidate) => count + (candidate.legal ? 1 : 0), 0);
-  if (result.accepted.length !== legalCount) return fail('LEGAL_BOUNDARY_REJECTED');
+
+  return { error: null, rows, byId, sharedCandidates, legalCount };
+}
+
+export function selectPartnerLegalCandidate({
+  candidates,
+  rule,
+  sourceVersions,
+  targetVersions,
+} = {}) {
+  if (!PARTNER_RULES.has(rule)) return fail('UNKNOWN_RULE');
+  if (!Array.isArray(candidates)) return fail('CANDIDATES_REQUIRED');
+
+  const source = exactVersionTuple(sourceVersions);
+  const target = exactVersionTuple(targetVersions);
+  if (!source || !target) return fail('VERSION_REQUIRED');
+  if (!sameVersions(source, target)) return fail('VERSION_MISMATCH');
+
+  const boundary = buildCandidateBoundary(candidates, rule, source);
+  if (boundary.error) return fail(boundary.error);
+
+  const result = selectPreferredLegalAction(boundary.sharedCandidates, target, preferenceFor(rule));
+  if (result.accepted.length !== boundary.legalCount) return fail('LEGAL_BOUNDARY_REJECTED');
   if (result.reason === 'invalid-preference-score') return fail('PREFERENCE_SCORE_REJECTED');
 
   if (!result.selected) {
@@ -141,7 +148,7 @@ export function selectPartnerLegalCandidate({
   }
 
   const ordered = Object.freeze(result.scores.map((row) => row.actionId));
-  const selected = byId.get(result.selected.actionId);
+  const selected = boundary.byId.get(result.selected.actionId);
   if (!selected) return fail('SELECTED_ID_NOT_FOUND');
   const next = ordered.length > 1 ? ordered[1] : null;
   const reason = Object.freeze({
@@ -158,6 +165,49 @@ export function selectPartnerLegalCandidate({
     ordered,
     next,
     reason,
+    source: 'shared-legal-action-core',
+    containsPrivate: false,
+  });
+}
+
+export function revalidateSelectedPartnerLegalCandidate({
+  selectedCandidateId,
+  rule,
+  selectedVersions,
+  candidates,
+  currentVersions,
+} = {}) {
+  const selectedId = exactToken(selectedCandidateId);
+  if (!selectedId) return fail('SELECTED_ID_REQUIRED');
+  if (!PARTNER_RULES.has(rule)) return fail('UNKNOWN_RULE');
+  if (!Array.isArray(candidates)) return fail('CANDIDATES_REQUIRED');
+
+  const selectedVersionTuple = exactVersionTuple(selectedVersions);
+  const currentVersionTuple = exactVersionTuple(currentVersions);
+  if (!selectedVersionTuple || !currentVersionTuple) return fail('VERSION_REQUIRED');
+  if (!sameVersions(selectedVersionTuple, currentVersionTuple)) return fail('VERSION_MISMATCH');
+
+  const boundary = buildCandidateBoundary(candidates, rule, currentVersionTuple);
+  if (boundary.error) return fail(boundary.error);
+
+  const selected = boundary.byId.get(selectedId);
+  if (!selected) return fail('SELECTED_ID_NOT_FOUND');
+
+  const currentLegalSet = selectPreferredLegalAction(
+    boundary.sharedCandidates,
+    currentVersionTuple,
+    () => 0,
+  );
+  if (currentLegalSet.accepted.length !== boundary.legalCount) return fail('LEGAL_BOUNDARY_REJECTED');
+
+  const acceptedIds = new Set(currentLegalSet.accepted.map((candidate) => candidate.actionId));
+  if (!selected.legal || !acceptedIds.has(selectedId)) return fail('SELECTED_ID_NOT_LEGAL');
+
+  return Object.freeze({
+    ok: true,
+    error: null,
+    selected: publicCandidate(selected),
+    versions: Object.freeze({ ...currentVersionTuple }),
     source: 'shared-legal-action-core',
     containsPrivate: false,
   });

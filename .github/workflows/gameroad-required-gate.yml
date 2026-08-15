@@ -44,6 +44,7 @@ jobs:
           replay=false
           ping=false
           result=false
+          pursuit=false
           roblox=false
           unclassified=false
           : > /tmp/gameroad-unclassified.txt
@@ -91,6 +92,10 @@ jobs:
               tests/result-presentation-core.test.mjs)
                 result=true
                 ;;
+              browser/pursuit-triad-core.mjs|\
+              tests/pursuit-triad-core.test.mjs)
+                pursuit=true
+                ;;
               roblox/GAMEROAD.rbxlx)
                 roblox=true
                 ;;
@@ -115,6 +120,7 @@ jobs:
             echo "replay=${replay}"
             echo "ping=${ping}"
             echo "result=${result}"
+            echo "pursuit=${pursuit}"
             echo "roblox=${roblox}"
             echo "unclassified=${unclassified}"
           } >> "${GITHUB_OUTPUT}"
@@ -125,7 +131,7 @@ jobs:
           fi
 
       - name: Set up Node
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true'
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.pursuit == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -149,6 +155,10 @@ jobs:
       - name: Run Result presentation core tests
         if: steps.classify.outputs.result == 'true'
         run: node --test tests/result-presentation-core.test.mjs
+
+      - name: Run Pursuit triad core tests
+        if: steps.classify.outputs.pursuit == 'true'
+        run: node --test tests/pursuit-triad-core.test.mjs
 
       - name: Verify formal Roblox placement
         if: steps.classify.outputs.roblox == 'true'

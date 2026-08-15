@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   createObservabilityEnvelope,
+  createObservabilityIncidentCollector,
   createObservabilityQueue,
   OBSERVABILITY_CORE
 } from '../browser/observability-core.mjs';
@@ -99,4 +100,82 @@ test('hostile message and stack accessors are never read by the reporter', () =>
   const envelope = createObservabilityEnvelope({ error: hostile, faultCode: 'UNTRUSTED_EXCEPTION', context }, 50);
   assert.equal(touched, 0);
   assert.deepEqual(envelope.diagnostic, { errorName: 'TypeError', faultCode: 'UNTRUSTED_EXCEPTION' });
+});
+
+function queueBatch({ faultCode = 'BATTLE_RENDER_FAILED', now = 100, count = 1 } = {}) {
+  const queue = createObservabilityQueue();
+  for (let index = 0; index < count; index += 1) {
+    queue.capture({ error: new Error(`private-${index}`), faultCode, context }, now + index);
+  }
+  return queue.snapshot();
+}
+
+test('collector accepts the exact R7 queue snapshot and stores only the safe envelope', () => {
+  const collector = createObservabilityIncidentCollector();
+  const batch = queueBatch({ count: 2 });
+  assert.deepEqual(collector.ingest(batch), { ok: true, accepted: 2, incidents: 1, reason: 'OK' });
+  assert.deepEqual(collector.snapshot(), batch);
+});
+
+test('collector makes identical retransmission and cumulative retry idempotent for one capture window', () => {
+  const collector = createObservabilityIncidentCollector();
+  const queue = createObservabilityQueue();
+  queue.capture({ faultCode: 'NETWORK_FAILURE', context }, 200);
+  const first = queue.snapshot();
+  assert.equal(collector.ingest(first).accepted, 1);
+  assert.equal(collector.ingest(first).accepted, 0);
+  queue.capture({ faultCode: 'NETWORK_FAILURE', context }, 201);
+  assert.equal(collector.ingest(queue.snapshot()).accepted, 1);
+  const [incident] = collector.snapshot();
+  assert.equal(incident.count, 2);
+  assert.equal(incident.firstSeenAtMs, 200);
+  assert.equal(incident.lastSeenAtMs, 201);
+});
+
+test('collector rejects an entire batch with malformed or extra raw payload without state mutation', () => {
+  const collector = createObservabilityIncidentCollector();
+  const [entry] = queueBatch();
+  const poisoned = { ...entry, message: 'Bearer SUPER_SECRET person@example.com' };
+  assert.deepEqual(collector.ingest([entry, poisoned]), { ok: false, accepted: 0, incidents: 0, reason: 'INVALID_ENTRY' });
+  assert.equal(JSON.stringify(collector.snapshot()).includes('SUPER_SECRET'), false);
+  assert.equal(JSON.stringify(collector.snapshot()).includes('person@example.com'), false);
+});
+
+test('collector rejects fingerprint tampering rather than trusting client identity', () => {
+  const collector = createObservabilityIncidentCollector();
+  const [entry] = queueBatch();
+  const tampered = { ...entry, envelope: { ...entry.envelope, fingerprint: '00000000' } };
+  assert.equal(collector.ingest([tampered]).reason, 'INVALID_ENTRY');
+  assert.deepEqual(collector.snapshot(), []);
+});
+
+test('collector bounds unique incidents and evicts the least-recent incident', () => {
+  const collector = createObservabilityIncidentCollector({ maxIncidents: 2 });
+  collector.ingest(queueBatch({ faultCode: 'ONE', now: 1 }));
+  collector.ingest(queueBatch({ faultCode: 'TWO', now: 2 }));
+  collector.ingest(queueBatch({ faultCode: 'THREE', now: 3 }));
+  assert.deepEqual(collector.snapshot().map((entry) => entry.envelope.diagnostic.faultCode), ['TWO', 'THREE']);
+});
+
+test('collector rejects hostile accessors without throwing or reading arbitrary data', () => {
+  const collector = createObservabilityIncidentCollector();
+  let touched = 0;
+  const hostile = new Proxy({}, {
+    ownKeys() { touched += 1; throw new Error('hostile ownKeys'); }
+  });
+  const result = collector.ingest([hostile]);
+  assert.deepEqual(result, { ok: false, accepted: 0, incidents: 0, reason: 'INVALID_ENTRY' });
+  assert.equal(touched, 1);
+  assert.deepEqual(collector.snapshot(), []);
+});
+
+test('collector accepts a later independent window for the same fingerprint without creating a second incident', () => {
+  const collector = createObservabilityIncidentCollector();
+  collector.ingest(queueBatch({ now: 300, count: 2 }));
+  collector.ingest(queueBatch({ now: 400, count: 3 }));
+  const [incident] = collector.snapshot();
+  assert.equal(collector.snapshot().length, 1);
+  assert.equal(incident.count, 5);
+  assert.equal(incident.firstSeenAtMs, 300);
+  assert.equal(incident.lastSeenAtMs, 402);
 });

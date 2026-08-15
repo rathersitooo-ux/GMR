@@ -114,8 +114,13 @@ export function createObservabilityQueue({ maxQueue = 32 } = {}) {
       const envelope = createObservabilityEnvelope(input, now);
       const existing = items.find((entry) => entry.envelope.fingerprint === envelope.fingerprint);
       if (existing) {
+        const firstSeenAtMs = Math.min(existing.firstSeenAtMs, envelope.occurredAtMs);
         existing.count += 1;
-        existing.lastSeenAtMs = envelope.occurredAtMs;
+        existing.firstSeenAtMs = firstSeenAtMs;
+        existing.lastSeenAtMs = Math.max(existing.lastSeenAtMs, envelope.occurredAtMs);
+        if (existing.envelope.occurredAtMs !== firstSeenAtMs) {
+          existing.envelope = deepFreeze({ ...existing.envelope, occurredAtMs: firstSeenAtMs });
+        }
         return Object.freeze({ accepted: true, duplicate: true, fingerprint: envelope.fingerprint, size: items.length });
       }
       items.push({ envelope, count: 1, firstSeenAtMs: envelope.occurredAtMs, lastSeenAtMs: envelope.occurredAtMs });

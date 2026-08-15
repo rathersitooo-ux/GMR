@@ -1,0 +1,38 @@
+name: HATE Timer R3 Fresh2 Network Evidence
+
+on:
+  push:
+    branches:
+      - 'work/HATE_TIMER-01-R3-NETWORK-EVIDENCE-FRESH2'
+    paths:
+      - '.github/workflows/hate-timer-r3-fresh2-network-evidence.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  source-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exact current startMatch path
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "HEAD=$(git rev-parse HEAD)"
+          echo "HTML_BLOB=$(git hash-object browser/GAMEROAD.html)"
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          print('HTML_BYTES',len(s.encode('utf-8')))
+          for name in ['startMatch','createPlayer','loadSavedMainDeck','validateDeck','selectedMainDeck','ensureDeck','buildDeck']:
+              ms=list(re.finditer(r'function\s+'+re.escape(name)+r'\s*\(',s))
+              print(f'\n===== {name} COUNT {len(ms)} =====')
+              for m in ms[:3]:
+                  print('INDEX',m.start())
+                  print(s[max(0,m.start()-500):min(len(s),m.start()+12000)].replace('\r',''))
+          PY
+      - name: No mutation
+        run: test -z "$(git status --porcelain --untracked-files=all)"

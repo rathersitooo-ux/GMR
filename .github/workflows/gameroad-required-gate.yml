@@ -49,6 +49,7 @@ jobs:
           ui_feedback=false
           deck_ack=false
           self_deck=false
+          ai_optimal=false
           roblox=false
           unclassified=false
           : > /tmp/gameroad-unclassified.txt
@@ -116,6 +117,10 @@ jobs:
               tests/battle-self-deck-inspect-core.test.mjs)
                 self_deck=true
                 ;;
+              browser/partner-legal-action-adapter.mjs|\
+              tests/partner-legal-action-adapter.test.mjs)
+                ai_optimal=true
+                ;;
               roblox/GAMEROAD.rbxlx)
                 roblox=true
                 ;;
@@ -145,6 +150,7 @@ jobs:
             echo "ui_feedback=${ui_feedback}"
             echo "deck_ack=${deck_ack}"
             echo "self_deck=${self_deck}"
+            echo "ai_optimal=${ai_optimal}"
             echo "roblox=${roblox}"
             echo "unclassified=${unclassified}"
           } >> "${GITHUB_OUTPUT}"
@@ -155,7 +161,7 @@ jobs:
           fi
 
       - name: Set up Node
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true'
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -199,6 +205,10 @@ jobs:
       - name: Run Battle self remaining deck inspect core tests
         if: steps.classify.outputs.self_deck == 'true'
         run: node --test tests/battle-self-deck-inspect-core.test.mjs
+
+      - name: Run Partner legal action adapter tests
+        if: steps.classify.outputs.ai_optimal == 'true'
+        run: node --test tests/partner-legal-action-adapter.test.mjs
 
       - name: Verify formal Roblox placement
         if: steps.classify.outputs.roblox == 'true'

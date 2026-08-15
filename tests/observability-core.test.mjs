@@ -179,3 +179,20 @@ test('collector accepts a later independent window for the same fingerprint with
   assert.equal(incident.firstSeenAtMs, 300);
   assert.equal(incident.lastSeenAtMs, 402);
 });
+
+test('collector snapshot round-trips when an older same-fingerprint window arrives after a newer one', () => {
+  const collector = createObservabilityIncidentCollector();
+  assert.equal(collector.ingest(queueBatch({ now: 400, count: 2 })).accepted, 2);
+  assert.equal(collector.ingest(queueBatch({ now: 300, count: 3 })).accepted, 3);
+
+  const snapshot = collector.snapshot();
+  const [incident] = snapshot;
+  assert.equal(incident.count, 5);
+  assert.equal(incident.envelope.occurredAtMs, 300);
+  assert.equal(incident.firstSeenAtMs, 300);
+  assert.equal(incident.lastSeenAtMs, 401);
+
+  const restored = createObservabilityIncidentCollector();
+  assert.deepEqual(restored.ingest(snapshot), { ok: true, accepted: 5, incidents: 1, reason: 'OK' });
+  assert.deepEqual(restored.snapshot(), snapshot);
+});

@@ -6,10 +6,21 @@ const NAV_TARGETS = ['home', 'cards', 'characters', 'setup', 'battle', 'shop'];
 test('GAMEROAD boots and core navigation runs without JS errors', async ({ page }) => {
   const pageErrors = [];
   const consoleErrors = [];
+  const unexpectedHttpErrors = [];
+  let versionManifest404Count = 0;
 
   page.on('pageerror', (error) => pageErrors.push(error.message));
   page.on('console', (message) => {
     if (message.type() === 'error') consoleErrors.push(message.text());
+  });
+  page.on('response', (response) => {
+    if (response.status() < 400) return;
+    const url = new URL(response.url());
+    if (response.status() === 404 && url.pathname.endsWith('/browser/gameroad-version.json')) {
+      versionManifest404Count += 1;
+      return;
+    }
+    unexpectedHttpErrors.push(`${response.status()} ${url.pathname}`);
   });
 
   const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
@@ -41,7 +52,25 @@ test('GAMEROAD boots and core navigation runs without JS errors', async ({ page 
     }
   }
 
+  // The current repository intentionally does not contain the deployment-side
+  // gameroad-version.json companion. Preserve that gap as explicit evidence,
+  // but do not let its single browser-generated 404 console line hide real errors.
+  const remainingConsoleErrors = [...consoleErrors];
+  for (let i = 0; i < versionManifest404Count; i += 1) {
+    const index = remainingConsoleErrors.findIndex((message) =>
+      message.includes('Failed to load resource') && message.includes('404'),
+    );
+    if (index >= 0) remainingConsoleErrors.splice(index, 1);
+  }
+  if (versionManifest404Count > 0) {
+    test.info().annotations.push({
+      type: 'known-deployment-gap',
+      description: `gameroad-version.json returned 404 ${versionManifest404Count} time(s); tracked separately from runtime smoke`,
+    });
+  }
+
   expect(pointerClicks, 'at least one real visible data-go control was clicked').toBeGreaterThan(0);
+  expect(unexpectedHttpErrors, `unexpected HTTP errors:\n${unexpectedHttpErrors.join('\n')}`).toEqual([]);
   expect(pageErrors, `page errors:\n${pageErrors.join('\n')}`).toEqual([]);
-  expect(consoleErrors, `console errors:\n${consoleErrors.join('\n')}`).toEqual([]);
+  expect(remainingConsoleErrors, `console errors:\n${remainingConsoleErrors.join('\n')}`).toEqual([]);
 });

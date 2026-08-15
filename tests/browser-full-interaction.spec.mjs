@@ -177,6 +177,13 @@ test('persists a legal 40-card deck across save and page reload through visible 
 
   await expect(deckCount, 'a legal main deck can reach 40 through current visible UI').toHaveText('40');
   await expect(cards.locator('#exDeckCount')).toHaveText('0');
+
+  const mobileTrayToggle = cards.locator('#r4DeckTrayToggle:visible');
+  if ((await mobileTrayToggle.count()) > 0) {
+    await mobileTrayToggle.click();
+    await page.waitForTimeout(120);
+  }
+
   const saveDeck = cards.locator('#saveDeck');
   await expect(saveDeck).toBeVisible();
   await expect(saveDeck).toBeEnabled();

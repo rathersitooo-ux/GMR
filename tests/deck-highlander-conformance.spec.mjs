@@ -27,9 +27,7 @@ async function numericText(locator) {
   return Number.parseInt((await locator.textContent()) ?? '', 10);
 }
 
-async function openMobileDeckTrayIfNeeded(cards, page) {
-  const saveDeck = cards.locator('#saveDeck');
-  if (await saveDeck.isVisible()) return;
+async function openMobileDeckTray(cards, page) {
   const mobileTrayToggle = cards.locator('#r4DeckTrayToggle:visible');
   if ((await mobileTrayToggle.count()) > 0) {
     await mobileTrayToggle.click();
@@ -67,7 +65,7 @@ async function saveLegalFortyThroughVisibleUi(page) {
   await expect(deckCount, 'visible legal deck reaches 40 cards').toHaveText('40');
   await expect(cards.locator('#deckValidation')).toContainText('保存できます');
 
-  await openMobileDeckTrayIfNeeded(cards, page);
+  await openMobileDeckTray(cards, page);
   const saveDeck = cards.locator('#saveDeck');
   await expect(saveDeck).toBeVisible();
   await expect(saveDeck).toBeEnabled();
@@ -138,7 +136,7 @@ test('persisted duplicate is preserved on reload, rejected by save, and cannot s
   await expect(cards.locator('#deckValidation')).toContainText('同名1枚までです');
 
   const beforeRejectedSave = await readSavedDeck(page);
-  await openMobileDeckTrayIfNeeded(cards, page);
+  await openMobileDeckTray(cards, page);
   const saveDeck = cards.locator('#saveDeck');
   await expect(saveDeck).toBeVisible();
   await expect(saveDeck).toBeEnabled();

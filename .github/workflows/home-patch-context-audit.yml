@@ -1,0 +1,34 @@
+name: Home exact patch context audit
+
+on:
+  push:
+    branches:
+      - work/BROWSER-HOME-PRESENCE-LEGACY-CLEANUP-001
+    paths:
+      - '.github/scripts/home-patch-context-audit.mjs'
+      - '.github/workflows/home-patch-context-audit.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  audit-home-patch-context:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Extract exact patch context
+        run: node .github/scripts/home-patch-context-audit.mjs
+      - name: Commit context report only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- audit/home-patch-context.txt
+          test -n "$(git diff --cached --name-only)"
+          git commit -m "[BROWSER-HOME-PRESENCE-LEGACY-CLEANUP-001] record exact patch context"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

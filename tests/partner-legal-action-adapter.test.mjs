@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { selectPartnerLegalCandidate } from '../browser/partner-legal-action-adapter.mjs';
+import {
+  revalidatePartnerLegalCandidateForExecution,
+  selectPartnerLegalCandidate,
+} from '../browser/partner-legal-action-adapter.mjs';
 
 const V = Object.freeze({ rulesVersion: 'rules-r1', cardVersion: 'cards-r1', stateVersion: 'state-r1' });
 
@@ -20,6 +23,15 @@ function candidate(candidateId, overrides = {}) {
 
 function choose(rule, candidates, versions = V) {
   return selectPartnerLegalCandidate({ candidates, rule, sourceVersions: versions, targetVersions: V });
+}
+
+function revalidate(selectedCandidateId, currentCandidates, selectedVersions = V, currentVersions = V) {
+  return revalidatePartnerLegalCandidateForExecution({
+    selectedCandidateId,
+    selectedVersions,
+    currentCandidates,
+    currentVersions,
+  });
 }
 
 test('left/right use explicit position and ties are candidate-id deterministic', () => {
@@ -103,4 +115,78 @@ test('private payload never leaves the adapter and input is unchanged', () => {
   assert.equal(JSON.stringify(result).includes('secret-'), false);
   assert.equal('payload' in result.selected, false);
   assert.deepEqual(Object.keys(result.selected).sort(), ['candidateId', 'comparisonValue', 'kind', 'positionOrder']);
+});
+
+test('execution revalidation accepts the exact selected id without substituting a currently preferred alternative', () => {
+  const rows = [
+    candidate('preferred-now', { positionOrder: 1 }),
+    candidate('selected-before', { positionOrder: 9 }),
+  ];
+  const before = structuredClone(rows);
+  const result = revalidate('selected-before', rows);
+  assert.equal(result.ok, true);
+  assert.equal(result.error, null);
+  assert.equal(result.selected.candidateId, 'selected-before');
+  assert.deepEqual(result.ordered, ['selected-before']);
+  assert.equal(result.next, null);
+  assert.equal(result.reason, 'REVALIDATED_CURRENT_CANDIDATE');
+  assert.equal(result.containsPrivate, false);
+  assert.equal(JSON.stringify(result).includes('secret-'), false);
+  assert.equal('payload' in result.selected, false);
+  assert.deepEqual(rows, before);
+});
+
+test('execution revalidation rejects version drift and never falls through to another candidate', () => {
+  const rows = [candidate('selected-before'), candidate('fallback')];
+  const drifted = revalidate('selected-before', rows, V, { ...V, stateVersion: 'state-r2' });
+  assert.equal(drifted.ok, false);
+  assert.equal(drifted.error, 'VERSION_MISMATCH');
+  assert.equal(drifted.selected, null);
+  assert.deepEqual(drifted.ordered, []);
+  assert.equal(drifted.next, null);
+});
+
+test('execution revalidation rejects an absent or now-illegal selected id without selecting an alternative', () => {
+  const absent = revalidate('selected-before', [candidate('fallback', { positionOrder: 1 })]);
+  assert.equal(absent.error, 'SELECTED_ID_NOT_FOUND');
+  assert.equal(absent.selected, null);
+  assert.deepEqual(absent.ordered, []);
+
+  const nowIllegal = revalidate('selected-before', [
+    candidate('selected-before', { legal: false }),
+    candidate('fallback', { positionOrder: 1 }),
+  ]);
+  assert.equal(nowIllegal.error, 'SELECTED_NO_LONGER_LEGAL');
+  assert.equal(nowIllegal.selected, null);
+  assert.deepEqual(nowIllegal.ordered, []);
+});
+
+test('execution revalidation fails closed on hidden, asset, duplicate and malformed candidate ids', () => {
+  assert.equal(
+    revalidate('selected-before', [candidate('selected-before', { publicScope: false })]).error,
+    'HIDDEN_INFO_BLOCKED',
+  );
+  assert.equal(
+    revalidate('selected-before', [candidate('selected-before', { assetAction: 'PLAY_EFFECT' })]).error,
+    'ASSET_ACTION_BLOCKED',
+  );
+  assert.equal(
+    revalidate('selected-before', [candidate('selected-before'), candidate('selected-before')]).error,
+    'DUPLICATE_OR_MISSING_ID',
+  );
+  assert.equal(revalidate(' selected-before ', [candidate('selected-before')]).error, 'SELECTED_ID_REQUIRED');
+  assert.equal(
+    revalidate('selected-before', [candidate('selected-before'), candidate(' malformed ')]).error,
+    'DUPLICATE_OR_MISSING_ID',
+  );
+});
+
+test('execution revalidation negative paths do not mutate inputs or expose private payloads', () => {
+  const rows = [candidate('selected-before', { legal: false }), candidate('fallback')];
+  const before = structuredClone(rows);
+  const result = revalidate('selected-before', rows);
+  assert.deepEqual(rows, before);
+  assert.equal(result.containsPrivate, false);
+  assert.equal(JSON.stringify(result).includes('secret-'), false);
+  assert.equal(result.selected, null);
 });

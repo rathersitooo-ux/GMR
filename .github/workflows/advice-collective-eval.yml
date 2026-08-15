@@ -1,0 +1,32 @@
+name: Advice Collective Offline Eval
+
+on:
+  push:
+    branches:
+      - main
+      - 'work/**'
+    paths:
+      - 'tools/advice-collective-eval.mjs'
+      - 'tests/advice-collective-eval.test.mjs'
+      - '.github/workflows/advice-collective-eval.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'tools/advice-collective-eval.mjs'
+      - 'tests/advice-collective-eval.test.mjs'
+      - '.github/workflows/advice-collective-eval.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  offline-advice-eval:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Show Node version
+        run: node --version
+      - name: Run collective advice evaluator tests
+        run: node --test tests/advice-collective-eval.test.mjs

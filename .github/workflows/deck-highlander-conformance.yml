@@ -39,7 +39,21 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run isolated Deck Highlander conformance
-        run: npx playwright test --config=playwright.deck-highlander.config.mjs --workers=1
+        shell: bash
+        run: |
+          set +e
+          set -o pipefail
+          npx playwright test --config=playwright.deck-highlander.config.mjs --workers=1 --timeout=30000 2>&1 | tee deck-highlander-test-output.txt
+          status=${PIPESTATUS[0]}
+          if [[ "${status}" -ne 0 ]]; then
+            python3 - <<'PY'
+          from pathlib import Path
+          text = Path('deck-highlander-test-output.txt').read_text(errors='replace')[-6000:]
+          escaped = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+          print(f'::error file=tests/deck-highlander-conformance.spec.mjs,title=Deck Highlander Playwright failure::{escaped}')
+          PY
+          fi
+          exit "${status}"
 
       - name: Upload conformance evidence
         if: ${{ !cancelled() }}
@@ -49,5 +63,6 @@ jobs:
           path: |
             playwright-report-deck-highlander/
             test-results/
+            deck-highlander-test-output.txt
           if-no-files-found: warn
           retention-days: 14

@@ -40,6 +40,18 @@ function collectStaticErrors(html) {
     errors.push('data-go navigation wiring is missing');
   }
 
+  const dedicatedBattleContracts = [
+    [/id=["']battlePhaseSurface["']/, 'missing dedicated battle phase surface'],
+    [/id=["']battlePhaseResolutionSlot["']/, 'missing dedicated battle phase resolution slot'],
+    [/BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001-R2-DEDICATED-SURFACE/, 'missing dedicated battle phase R2 marker'],
+    [/\.battle\.dedicatedBattlePhase\s+\.battleMap[^\{]*\{[^\}]*visibility\s*:\s*hidden\s*!important[^\}]*pointer-events\s*:\s*none\s*!important/i, 'battle board is not disabled during dedicated battle phase'],
+    [/mountChar\(\s*["']#battlePhaseNaki["']\s*,\s*["']partner\.naki["']\s*,\s*["']dot_break_entry["']\s*\)/, 'Naki dot_break_entry cut-in is not wired to dedicated battle phase'],
+    [/__GAMEROAD_BATTLE_PHASE_R2__/, 'missing dedicated battle phase runtime probe'],
+  ];
+  for (const [pattern, message] of dedicatedBattleContracts) {
+    if (!pattern.test(html)) errors.push(message);
+  }
+
   return errors;
 }
 

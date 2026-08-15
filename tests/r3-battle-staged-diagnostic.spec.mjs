@@ -51,17 +51,6 @@ async function buildAndSaveLegal40(page) {
 async function battleSnapshot(page) {
   const battle = page.locator('section[data-screen="battle"]');
   const visibleScreens = await page.locator('section[data-screen]:visible').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-screen')));
-  const visibleHand = await battle.locator('button[data-card-id]:visible').evaluateAll((nodes) => nodes.map((node) => ({
-    id: node.getAttribute('data-card-id'),
-    aria: node.getAttribute('aria-label'),
-    role: node.getAttribute('data-plan-role'),
-    disabled: node.disabled,
-  })));
-  const enabledPositions = await battle.locator('button[data-pos]:visible:not(:disabled)').evaluateAll((nodes) => nodes.slice(0, 20).map((node) => ({
-    pos: node.getAttribute('data-pos'),
-    aria: node.getAttribute('aria-label'),
-    text: (node.textContent || '').replace(/\s+/g, ' ').trim(),
-  })));
   const enabledButtons = await battle.locator('button:visible:not(:disabled)').evaluateAll((nodes) => nodes.slice(0, 60).map((node) => ({
     id: node.id || null,
     text: (node.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 120),
@@ -73,19 +62,15 @@ async function battleSnapshot(page) {
   })));
   return {
     visibleScreens,
-    text: ((await battle.textContent()) || '').replace(/\s+/g, ' ').trim().slice(0, 2500),
+    text: ((await battle.textContent()) || '').replace(/\s+/g, ' ').trim().slice(0, 3200),
     roadValue: await battle.locator('#roadSelect').inputValue().catch(() => null),
     battleValue: await battle.locator('#battleSelect').inputValue().catch(() => null),
-    partnerRuleValue: await battle.locator('#partnerRule').inputValue().catch(() => null),
-    readyVisible: await battle.locator('#readyPlan').isVisible().catch(() => false),
     readyEnabled: await battle.locator('#readyPlan').isEnabled().catch(() => false),
-    visibleHand,
-    enabledPositions,
     enabledButtons,
   };
 }
 
-test('R3 staged diagnostic: visible hand planning and attack-phase controls', async ({ page }, testInfo) => {
+test('R3 staged diagnostic: visible round one through attack resolution advance', async ({ page }, testInfo) => {
   await boot(page);
   await buildAndSaveLegal40(page);
   await page.reload({ waitUntil: 'domcontentloaded' });
@@ -104,35 +89,49 @@ test('R3 staged diagnostic: visible hand planning and attack-phase controls', as
   await expect(battle).toBeVisible();
   const diagnostic = {
     before: await battleSnapshot(page),
-    afterFirstCard: null,
-    afterSecondCard: null,
     afterReady: null,
+    afterTargetConfirm: null,
+    afterAdvances: [],
   };
 
   const hand = battle.locator('button[data-card-id]:visible:not(:disabled)');
   expect(await hand.count(), 'at least two visible hand cards').toBeGreaterThanOrEqual(2);
   const firstId = await hand.nth(0).getAttribute('data-card-id');
   await hand.nth(0).click();
-  await page.waitForTimeout(250);
-  diagnostic.afterFirstCard = await battleSnapshot(page);
-
+  await page.waitForTimeout(180);
   const second = battle.locator(`button[data-card-id]:visible:not(:disabled):not([data-card-id="${firstId}"])`).first();
   await expect(second).toBeVisible();
   await second.click();
-  await page.waitForTimeout(250);
-  diagnostic.afterSecondCard = await battleSnapshot(page);
+  await page.waitForTimeout(180);
 
   const ready = battle.locator('#readyPlan:visible');
   await expect(ready).toBeEnabled();
   await ready.click();
-  await page.waitForTimeout(2_000);
+  await page.waitForTimeout(1_600);
   diagnostic.afterReady = await battleSnapshot(page);
 
-  await testInfo.attach(`${testInfo.project.name}-r3-attack-controls.json`, {
+  const confirmTarget = battle.locator('#confirmTarget:visible:not(:disabled)');
+  if ((await confirmTarget.count()) > 0) {
+    await confirmTarget.click();
+    await page.waitForTimeout(1_400);
+    diagnostic.afterTargetConfirm = await battleSnapshot(page);
+  }
+
+  for (let i = 0; i < 5; i += 1) {
+    const next = battle.locator('button.resolutionAdvance:visible:not(:disabled), button[aria-label="次へ"]:visible:not(:disabled)').first();
+    if ((await next.count()) === 0) break;
+    await next.click();
+    await page.waitForTimeout(900);
+    diagnostic.afterAdvances.push(await battleSnapshot(page));
+    const text = ((await battle.textContent()) || '').replace(/\s+/g, ' ');
+    if (/ラウンド\s*2|第2ラウンド/.test(text)) break;
+  }
+
+  await testInfo.attach(`${testInfo.project.name}-r3-round-resolution.json`, {
     body: Buffer.from(JSON.stringify(diagnostic, null, 2)),
     contentType: 'application/json',
   });
-  await testInfo.attach(`${testInfo.project.name}-r3-attack-controls.png`, {
+  await testInfo.attach(`${testInfo.project.name}-r3-round-resolution-final.png`, {
     body: await page.screenshot({ fullPage: true, animations: 'disabled' }),
     contentType: 'image/png',
   });

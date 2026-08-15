@@ -176,7 +176,7 @@ jobs:
           actual_sha256="$(sha256sum "${target}" | awk '{print $1}')"
           if [[ "${actual_sha256}" != "${expected_sha256}" ]]; then
             echo "Roblox placement SHA-256 mismatch."
-            echo "expected=${expected_sha256"
+            echo "expected=${expected_sha256}"
             echo "actual=${actual_sha256}"
             exit 1
           fi

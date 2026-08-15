@@ -1,4 +1,4 @@
-name: Diagnose single-character transport shift
+name: Diagnose broad single-character transport shift
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  diagnose-shift:
+  diagnose-broad-shift:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout work branch
@@ -20,7 +20,7 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
-      - name: Locate corruption and test one-character deletion around first XZ failure
+      - name: Search all single deletions before the first observed XZ corruption
         shell: bash
         env:
           EXPECTED_SIZE: "10245508"
@@ -30,59 +30,52 @@ jobs:
           test "$GITHUB_REF_NAME" = "work/GITHUB-ROBLOX-CODE-PLACEMENT-001"
           python - <<'PY'
           from pathlib import Path
-          import base64, hashlib, lzma
+          import base64, hashlib, lzma, time
 
+          expected_size = 10245508
+          expected_sha = "b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51"
           cat = b"".join(b"".join(Path(f".github/import/roblox-baseline.part{i:03d}.b64").read_bytes().split()) for i in range(10))
-          print(f"transport_len={len(cat)} mod4={len(cat)%4}")
-          usable = cat[: (len(cat)//4)*4]
-          packed = base64.b64decode(usable, validate=True)
-          print(f"usable_len={len(usable)} packed_len={len(packed)} packed_sha={hashlib.sha256(packed).hexdigest()}")
+          assert len(cat) == 159001 and len(cat) % 4 == 1
 
-          dec = lzma.LZMADecompressor(format=lzma.FORMAT_XZ)
-          out_len = 0
-          fail_end = None
-          step = 32
-          for start in range(0, len(packed), step):
-              chunk = packed[start:start+step]
-              try:
-                  out_len += len(dec.decompress(chunk))
-              except lzma.LZMAError as e:
-                  fail_end = start + len(chunk)
-                  print(f"first_stream_error input_range={start}:{start+len(chunk)} out_len={out_len} error={e!r}")
-                  break
-          if fail_end is None:
-              print(f"no_stream_error eof={dec.eof} out_len={out_len}")
-              fail_end = len(packed)
+          # The uncorrected stream first fails around compressed byte 18016.
+          # Test every possible single inserted base64 character before that point,
+          # but only decompress a prefix for pruning. A true correction must survive
+          # past the old failure before it is allowed to do a full decompression.
+          search_hi = min(len(cat), 26000)
+          probe_packed = 22000
+          survivors = []
+          t0 = time.time()
 
-          fail_b64 = (fail_end * 4) // 3
-          lo = max(0, fail_b64 - 1536)
-          hi = min(len(cat), fail_b64 + 1536)
-          print(f"search_delete_window={lo}:{hi} approx_fail_b64={fail_b64}")
-
-          best = []
-          for i in range(lo, hi):
+          for i in range(search_hi):
               cand = cat[:i] + cat[i+1:]
-              if len(cand) % 4:
-                  continue
               try:
                   cp = base64.b64decode(cand, validate=True)
               except Exception:
                   continue
+              dec = lzma.LZMADecompressor(format=lzma.FORMAT_XZ)
+              try:
+                  raw_prefix = dec.decompress(cp[:probe_packed])
+              except lzma.LZMAError:
+                  continue
+              # Wrong shifts that happen to parse should not be accepted merely for parsing.
+              # Survive beyond the previous corruption with nontrivial output before full test.
+              if len(raw_prefix) < 114500:
+                  continue
+              survivors.append((i, len(raw_prefix), dec.eof))
+              print(f"SURVIVOR delete_index={i} removed={cat[i:i+1]!r} prefix_raw={len(raw_prefix)} eof={dec.eof}")
               try:
                   raw = lzma.decompress(cp, format=lzma.FORMAT_XZ)
               except lzma.LZMAError:
                   continue
               size = len(raw)
               sha = hashlib.sha256(raw).hexdigest()
-              print(f"DECOMPRESS_OK delete_index={i} removed={cat[i:i+1]!r} packed_len={len(cp)} raw_size={size} raw_sha={sha}")
-              if size == int("10245508") and sha == "b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51":
+              print(f"FULL_DECOMPRESS delete_index={i} raw_size={size} raw_sha={sha}")
+              if size == expected_size and sha == expected_sha:
                   print(f"EXACT_SINGLE_DELETE_RECOVERY index={i} removed={cat[i:i+1]!r}")
                   Path("/tmp/recovered-delete-index.txt").write_text(str(i))
                   raise SystemExit(0)
-              best.append((size, i, sha))
 
-          print("no exact single-delete recovery in targeted window")
-          if best:
-              print("decompressible_nonmatching_candidates=", sorted(best, reverse=True)[:10])
+          print(f"searched=0:{search_hi} elapsed={time.time()-t0:.2f}s survivors={survivors[:50]} total_survivors={len(survivors)}")
+          print("NO_EXACT_SINGLE_DELETE_RECOVERY_BEFORE_FIRST_FAILURE")
           raise SystemExit(63)
           PY

@@ -105,7 +105,9 @@ jobs:
                 gacha=true
                 ;;
               browser/pursuit-triad-core.mjs|\
-              tests/pursuit-triad-core.test.mjs)
+              tests/pursuit-triad-core.test.mjs|\
+              browser/pursuit-triad-durable-store.mjs|\
+              tests/pursuit-triad-durable-store.test.mjs)
                 pursuit=true
                 ;;
               browser/ui-state-feedback-core.mjs|\
@@ -212,9 +214,9 @@ jobs:
         if: steps.classify.outputs.gacha == 'true'
         run: node --test tests/gacha-presentation-core.test.mjs
 
-      - name: Run Pursuit triad core tests
+      - name: Run Pursuit triad core and durable store tests
         if: steps.classify.outputs.pursuit == 'true'
-        run: node --test tests/pursuit-triad-core.test.mjs
+        run: node --test tests/pursuit-triad-core.test.mjs tests/pursuit-triad-durable-store.test.mjs
 
       - name: Run UI state feedback core tests
         if: steps.classify.outputs.ui_feedback == 'true'

@@ -47,6 +47,7 @@ jobs:
           gacha=false
           pursuit=false
           ui_feedback=false
+          deck_ack=false
           roblox=false
           unclassified=false
           : > /tmp/gameroad-unclassified.txt
@@ -106,6 +107,10 @@ jobs:
               tests/ui-state-feedback-core.test.mjs)
                 ui_feedback=true
                 ;;
+              browser/deck-save-ack-core.mjs|\
+              tests/deck-save-ack-core.test.mjs)
+                deck_ack=true
+                ;;
               roblox/GAMEROAD.rbxlx)
                 roblox=true
                 ;;
@@ -133,6 +138,7 @@ jobs:
             echo "gacha=${gacha}"
             echo "pursuit=${pursuit}"
             echo "ui_feedback=${ui_feedback}"
+            echo "deck_ack=${deck_ack}"
             echo "roblox=${roblox}"
             echo "unclassified=${unclassified}"
           } >> "${GITHUB_OUTPUT}"
@@ -143,7 +149,7 @@ jobs:
           fi
 
       - name: Set up Node
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true'
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -179,6 +185,10 @@ jobs:
       - name: Run UI state feedback core tests
         if: steps.classify.outputs.ui_feedback == 'true'
         run: node --test tests/ui-state-feedback-core.test.mjs
+
+      - name: Run Deck save ACK core tests
+        if: steps.classify.outputs.deck_ack == 'true'
+        run: node --test tests/deck-save-ack-core.test.mjs
 
       - name: Verify formal Roblox placement
         if: steps.classify.outputs.roblox == 'true'

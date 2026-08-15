@@ -452,3 +452,375 @@ export function selectPreferredLegalAction(candidates, targetVersions, preferenc
     reason: null,
   });
 }
+
+const COLLECTIVE_PROPOSAL_SCHEMA = 'gameroad.collective-improvement-proposal.v1';
+const COLLECTIVE_PROVENANCE = new Set(['fixture', 'synthetic', 'prototype_local', 'server_verified', 'public_production']);
+const COLLECTIVE_AUTHORITY_LEVELS = new Set(['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7']);
+const COLLECTIVE_RELEASE_PROVENANCE = new Set(['server_verified', 'public_production']);
+const COLLECTIVE_RELEASE_AUTHORITY = new Set(['L4', 'L5', 'L6', 'L7']);
+const COLLECTIVE_DECISION_AUTHORITIES = new Set(['human', 'formal-preauthorized']);
+const COLLECTIVE_VERSION_KEYS = ['releaseVersion', 'rulesVersion', 'contentVersion', 'cardVersion', 'stateVersion'];
+
+function proposalUnexpectedFields(value, allowed) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
+  return Object.keys(value)
+    .filter((key) => !allowed.has(key))
+    .sort()
+    .map((key) => `unexpected-field:${key}`);
+}
+
+function proposalVersionTuple(value, reasons, prefix = 'versions') {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    reasons.push(`${prefix}-invalid`);
+    return null;
+  }
+  for (const reason of proposalUnexpectedFields(value, new Set(COLLECTIVE_VERSION_KEYS))) {
+    reasons.push(`${prefix}-${reason}`);
+  }
+  const normalized = {};
+  for (const key of COLLECTIVE_VERSION_KEYS) {
+    const token = safeToken(value[key]);
+    if (!token) reasons.push(`${prefix}-${key}-invalid`);
+    else normalized[key] = token;
+  }
+  return COLLECTIVE_VERSION_KEYS.every((key) => normalized[key]) ? normalized : null;
+}
+
+function proposalVersionsEqual(a, b) {
+  return COLLECTIVE_VERSION_KEYS.every((key) => safeToken(a?.[key]) && a[key] === b?.[key]);
+}
+
+function proposalTokenArray(value, reasons, prefix) {
+  if (!Array.isArray(value)) {
+    reasons.push(`${prefix}-invalid`);
+    return [];
+  }
+  const normalized = [];
+  const seen = new Set();
+  for (let index = 0; index < value.length; index += 1) {
+    const token = safeToken(value[index]);
+    if (!token) {
+      reasons.push(`${prefix}-${index}-invalid`);
+      continue;
+    }
+    if (seen.has(token)) {
+      reasons.push(`${prefix}-${index}-duplicate`);
+      continue;
+    }
+    seen.add(token);
+    normalized.push(token);
+  }
+  return normalized;
+}
+
+function proposalEvidenceRef(value, expectedVersions, cohortId, reasons, prefix) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    reasons.push(`${prefix}-invalid`);
+    return null;
+  }
+  const allowed = new Set([
+    'evidenceId',
+    'ownerId',
+    'digest',
+    'acquiredAt',
+    'authorityLevel',
+    'provenance',
+    'cohortId',
+    'versions',
+    'summaryRef',
+  ]);
+  for (const reason of proposalUnexpectedFields(value, allowed)) reasons.push(`${prefix}-${reason}`);
+
+  const evidenceId = safeToken(value.evidenceId);
+  const ownerId = safeToken(value.ownerId);
+  const digest = safeToken(value.digest);
+  const acquiredAt = safeToken(value.acquiredAt);
+  const authorityLevel = safeToken(value.authorityLevel);
+  const provenance = safeToken(value.provenance);
+  const evidenceCohortId = safeToken(value.cohortId);
+  const summaryRef = value.summaryRef == null ? null : safeToken(value.summaryRef);
+  const versions = proposalVersionTuple(value.versions, reasons, `${prefix}-versions`);
+
+  if (!evidenceId) reasons.push(`${prefix}-evidenceId-invalid`);
+  if (!ownerId) reasons.push(`${prefix}-ownerId-invalid`);
+  if (!digest) reasons.push(`${prefix}-digest-invalid`);
+  if (!acquiredAt) reasons.push(`${prefix}-acquiredAt-invalid`);
+  if (!authorityLevel || !COLLECTIVE_AUTHORITY_LEVELS.has(authorityLevel)) reasons.push(`${prefix}-authorityLevel-invalid`);
+  if (!provenance || !COLLECTIVE_PROVENANCE.has(provenance)) reasons.push(`${prefix}-provenance-invalid`);
+  if (!evidenceCohortId || evidenceCohortId !== cohortId) reasons.push(`${prefix}-cohort-mismatch`);
+  if (value.summaryRef != null && !summaryRef) reasons.push(`${prefix}-summaryRef-invalid`);
+  if (versions && !proposalVersionsEqual(versions, expectedVersions)) reasons.push(`${prefix}-version-mismatch`);
+
+  if (!evidenceId || !ownerId || !digest || !acquiredAt || !authorityLevel || !provenance || !evidenceCohortId || !versions) return null;
+  return {
+    evidenceId,
+    ownerId,
+    digest,
+    acquiredAt,
+    authorityLevel,
+    provenance,
+    cohortId: evidenceCohortId,
+    versions,
+    summaryRef,
+  };
+}
+
+function proposalEvidenceList(value, expectedVersions, cohortId, reasons, prefix, { requireNonEmpty = false } = {}) {
+  if (!Array.isArray(value)) {
+    reasons.push(`${prefix}-invalid`);
+    return [];
+  }
+  if (requireNonEmpty && value.length === 0) reasons.push(`${prefix}-empty`);
+  const normalized = [];
+  const ids = new Set();
+  for (let index = 0; index < value.length; index += 1) {
+    const item = proposalEvidenceRef(value[index], expectedVersions, cohortId, reasons, `${prefix}-${index}`);
+    if (!item) continue;
+    if (ids.has(item.evidenceId)) {
+      reasons.push(`${prefix}-${index}-duplicate-evidenceId`);
+      continue;
+    }
+    ids.add(item.evidenceId);
+    normalized.push(item);
+  }
+  return normalized;
+}
+
+function proposalEvidenceIsReleaseGrade(item) {
+  return COLLECTIVE_RELEASE_PROVENANCE.has(item?.provenance) && COLLECTIVE_RELEASE_AUTHORITY.has(item?.authorityLevel);
+}
+
+function proposalResultEvidence(value, reasons) {
+  if (value == null) return null;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    reasons.push('resultEvidence-invalid');
+    return null;
+  }
+  const allowed = new Set(['state', 'evidenceId', 'authorityLevel', 'provenance']);
+  for (const reason of proposalUnexpectedFields(value, allowed)) reasons.push(`resultEvidence-${reason}`);
+  const state = safeToken(value.state);
+  const evidenceId = value.evidenceId == null ? null : safeToken(value.evidenceId);
+  const authorityLevel = value.authorityLevel == null ? null : safeToken(value.authorityLevel);
+  const provenance = value.provenance == null ? null : safeToken(value.provenance);
+  if (!['PENDING', 'VERIFIED'].includes(state)) reasons.push('resultEvidence-state-invalid');
+  if (state === 'PENDING') {
+    if (value.evidenceId != null || value.authorityLevel != null || value.provenance != null) reasons.push('resultEvidence-pending-must-not-claim-evidence');
+  } else if (state === 'VERIFIED') {
+    if (!evidenceId) reasons.push('resultEvidence-evidenceId-invalid');
+    if (!authorityLevel || !COLLECTIVE_AUTHORITY_LEVELS.has(authorityLevel)) reasons.push('resultEvidence-authorityLevel-invalid');
+    if (!provenance || !COLLECTIVE_PROVENANCE.has(provenance)) reasons.push('resultEvidence-provenance-invalid');
+  }
+  if (!state || !['PENDING', 'VERIFIED'].includes(state)) return null;
+  return { state, evidenceId, authorityLevel, provenance };
+}
+
+export function validateCollectiveImprovementProposal(input) {
+  const reasons = [];
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return deepFreeze({
+      ok: false,
+      reasons: ['invalid-proposal'],
+      proposal: null,
+      releaseEligible: false,
+      reuseEligible: false,
+    });
+  }
+
+  const allowedTop = new Set([
+    'proposalId',
+    'proposalVersion',
+    'kind',
+    'versions',
+    'cohort',
+    'missingData',
+    'supportingEvidence',
+    'counterEvidence',
+    'affectedOwnerId',
+    'affectedUseSiteRef',
+    'protectedInvariantRef',
+    'changeRef',
+    'expectedObservation',
+    'isolation',
+    'rollback',
+    'decision',
+    'releaseLink',
+    'resultEvidence',
+  ]);
+  reasons.push(...proposalUnexpectedFields(input, allowedTop));
+
+  const proposalId = safeToken(input.proposalId);
+  const proposalVersion = safeToken(input.proposalVersion);
+  const kind = safeToken(input.kind);
+  if (!proposalId) reasons.push('proposalId-invalid');
+  if (!proposalVersion) reasons.push('proposalVersion-invalid');
+  if (!['CHANGE', 'NO_CHANGE'].includes(kind)) reasons.push('kind-invalid');
+
+  const versions = proposalVersionTuple(input.versions, reasons);
+
+  const cohortAllowed = new Set(['cohortId', 'scopeRef']);
+  const cohort = input.cohort;
+  if (!cohort || typeof cohort !== 'object' || Array.isArray(cohort)) reasons.push('cohort-invalid');
+  else for (const reason of proposalUnexpectedFields(cohort, cohortAllowed)) reasons.push(`cohort-${reason}`);
+  const cohortId = safeToken(cohort?.cohortId);
+  const cohortScopeRef = safeToken(cohort?.scopeRef);
+  if (!cohortId) reasons.push('cohortId-invalid');
+  if (!cohortScopeRef) reasons.push('cohort-scopeRef-invalid');
+
+  const missingAllowed = new Set(['state', 'refs']);
+  const missingData = input.missingData;
+  if (!missingData || typeof missingData !== 'object' || Array.isArray(missingData)) reasons.push('missingData-invalid');
+  else for (const reason of proposalUnexpectedFields(missingData, missingAllowed)) reasons.push(`missingData-${reason}`);
+  const missingState = safeToken(missingData?.state);
+  if (!['NONE', 'PRESENT', 'UNKNOWN'].includes(missingState)) reasons.push('missingData-state-invalid');
+  const missingRefs = proposalTokenArray(missingData?.refs, reasons, 'missingData-refs');
+  if (missingState === 'NONE' && missingRefs.length > 0) reasons.push('missingData-none-with-refs');
+  if (missingState === 'PRESENT' && missingRefs.length === 0) reasons.push('missingData-present-without-refs');
+
+  const supportingEvidence = versions && cohortId
+    ? proposalEvidenceList(input.supportingEvidence, versions, cohortId, reasons, 'supportingEvidence', { requireNonEmpty: true })
+    : [];
+  if ((!versions || !cohortId) && !Array.isArray(input.supportingEvidence)) reasons.push('supportingEvidence-invalid');
+
+  const counterAllowed = new Set(['state', 'searchRef', 'items']);
+  const counterEvidence = input.counterEvidence;
+  if (!counterEvidence || typeof counterEvidence !== 'object' || Array.isArray(counterEvidence)) reasons.push('counterEvidence-invalid');
+  else for (const reason of proposalUnexpectedFields(counterEvidence, counterAllowed)) reasons.push(`counterEvidence-${reason}`);
+  const counterState = safeToken(counterEvidence?.state);
+  const counterSearchRef = safeToken(counterEvidence?.searchRef);
+  if (!['PRESENT', 'NONE_FOUND', 'UNKNOWN'].includes(counterState)) reasons.push('counterEvidence-state-invalid');
+  if (!counterSearchRef) reasons.push('counterEvidence-searchRef-invalid');
+  const counterItems = versions && cohortId
+    ? proposalEvidenceList(counterEvidence?.items, versions, cohortId, reasons, 'counterEvidence-items')
+    : [];
+  if (counterState === 'PRESENT' && counterItems.length === 0) reasons.push('counterEvidence-present-without-items');
+  if ((counterState === 'NONE_FOUND' || counterState === 'UNKNOWN') && counterItems.length > 0) {
+    reasons.push('counterEvidence-state-items-conflict');
+  }
+
+  const affectedOwnerId = safeToken(input.affectedOwnerId);
+  const affectedUseSiteRef = safeToken(input.affectedUseSiteRef);
+  const protectedInvariantRef = safeToken(input.protectedInvariantRef);
+  if (!affectedOwnerId) reasons.push('affectedOwnerId-invalid');
+  if (!affectedUseSiteRef) reasons.push('affectedUseSiteRef-invalid');
+  if (!protectedInvariantRef) reasons.push('protectedInvariantRef-invalid');
+
+  const changeRef = input.changeRef == null ? null : safeToken(input.changeRef);
+  if (kind === 'CHANGE' && !changeRef) reasons.push('changeRef-required-for-change');
+  if (kind === 'NO_CHANGE' && input.changeRef != null) reasons.push('changeRef-forbidden-for-no-change');
+
+  const observationAllowed = new Set(['metricRef', 'observationPlanRef']);
+  const expectedObservation = input.expectedObservation;
+  if (!expectedObservation || typeof expectedObservation !== 'object' || Array.isArray(expectedObservation)) reasons.push('expectedObservation-invalid');
+  else for (const reason of proposalUnexpectedFields(expectedObservation, observationAllowed)) reasons.push(`expectedObservation-${reason}`);
+  const metricRef = safeToken(expectedObservation?.metricRef);
+  const observationPlanRef = safeToken(expectedObservation?.observationPlanRef);
+  if (!metricRef) reasons.push('expectedObservation-metricRef-invalid');
+  if (!observationPlanRef) reasons.push('expectedObservation-observationPlanRef-invalid');
+
+  const isolationAllowed = new Set(['isolationRef', 'scopeRef']);
+  const isolation = input.isolation;
+  if (!isolation || typeof isolation !== 'object' || Array.isArray(isolation)) reasons.push('isolation-invalid');
+  else for (const reason of proposalUnexpectedFields(isolation, isolationAllowed)) reasons.push(`isolation-${reason}`);
+  const isolationRef = safeToken(isolation?.isolationRef);
+  const isolationScopeRef = safeToken(isolation?.scopeRef);
+  if (!isolationRef) reasons.push('isolation-isolationRef-invalid');
+  if (!isolationScopeRef) reasons.push('isolation-scopeRef-invalid');
+
+  const rollbackAllowed = new Set(['conditionRef', 'rollbackRef']);
+  const rollback = input.rollback;
+  if (!rollback || typeof rollback !== 'object' || Array.isArray(rollback)) reasons.push('rollback-invalid');
+  else for (const reason of proposalUnexpectedFields(rollback, rollbackAllowed)) reasons.push(`rollback-${reason}`);
+  const rollbackConditionRef = safeToken(rollback?.conditionRef);
+  const rollbackRef = safeToken(rollback?.rollbackRef);
+  if (!rollbackConditionRef) reasons.push('rollback-conditionRef-invalid');
+  if (!rollbackRef) reasons.push('rollback-rollbackRef-invalid');
+
+  const decisionAllowed = new Set(['state', 'authority', 'evidenceRef']);
+  const decision = input.decision ?? { state: 'PENDING' };
+  if (!decision || typeof decision !== 'object' || Array.isArray(decision)) reasons.push('decision-invalid');
+  else for (const reason of proposalUnexpectedFields(decision, decisionAllowed)) reasons.push(`decision-${reason}`);
+  const decisionState = safeToken(decision?.state) ?? 'PENDING';
+  const decisionAuthority = decision?.authority == null ? null : safeToken(decision.authority);
+  const decisionEvidenceRef = decision?.evidenceRef == null ? null : safeToken(decision.evidenceRef);
+  if (!['PENDING', 'APPROVED', 'REJECTED'].includes(decisionState)) reasons.push('decision-state-invalid');
+  if (decisionState === 'PENDING') {
+    if (decision?.authority != null || decision?.evidenceRef != null) reasons.push('decision-pending-must-not-claim-authority');
+  } else {
+    if (!decisionAuthority || !COLLECTIVE_DECISION_AUTHORITIES.has(decisionAuthority)) reasons.push('decision-authority-invalid');
+    if (!decisionEvidenceRef) reasons.push('decision-evidenceRef-invalid');
+  }
+
+  const releaseAllowed = new Set(['releaseId', 'resultRecordId']);
+  const releaseLink = input.releaseLink;
+  if (releaseLink != null && (!releaseLink || typeof releaseLink !== 'object' || Array.isArray(releaseLink))) reasons.push('releaseLink-invalid');
+  else if (releaseLink) for (const reason of proposalUnexpectedFields(releaseLink, releaseAllowed)) reasons.push(`releaseLink-${reason}`);
+  const releaseId = releaseLink == null ? null : safeToken(releaseLink.releaseId);
+  const resultRecordId = releaseLink == null ? null : safeToken(releaseLink.resultRecordId);
+  if (releaseLink != null && !releaseId) reasons.push('releaseLink-releaseId-invalid');
+  if (releaseLink != null && !resultRecordId) reasons.push('releaseLink-resultRecordId-invalid');
+
+  const resultEvidence = proposalResultEvidence(input.resultEvidence, reasons);
+  const uniqueReasons = [...new Set(reasons)].sort();
+  if (uniqueReasons.length > 0) {
+    return deepFreeze({
+      ok: false,
+      reasons: uniqueReasons,
+      proposal: null,
+      releaseEligible: false,
+      reuseEligible: false,
+    });
+  }
+
+  const normalized = {
+    schema: COLLECTIVE_PROPOSAL_SCHEMA,
+    proposalId,
+    proposalVersion,
+    kind,
+    versions,
+    cohort: { cohortId, scopeRef: cohortScopeRef },
+    missingData: { state: missingState, refs: missingRefs },
+    supportingEvidence,
+    counterEvidence: { state: counterState, searchRef: counterSearchRef, items: counterItems },
+    affectedOwnerId,
+    affectedUseSiteRef,
+    protectedInvariantRef,
+    changeRef,
+    expectedObservation: { metricRef, observationPlanRef },
+    isolation: { isolationRef, scopeRef: isolationScopeRef },
+    rollback: { conditionRef: rollbackConditionRef, rollbackRef },
+    decision: { state: decisionState, authority: decisionAuthority, evidenceRef: decisionEvidenceRef },
+    releaseLink: releaseLink == null ? null : { releaseId, resultRecordId },
+    resultEvidence,
+    automaticMutationAllowed: false,
+    formalDecisionRequired: true,
+    containsRawEvents: false,
+    containsPrivate: false,
+  };
+
+  const supportingReleaseGrade = supportingEvidence.every(proposalEvidenceIsReleaseGrade);
+  const counterReleaseGrade = counterState === 'NONE_FOUND' || counterItems.every(proposalEvidenceIsReleaseGrade);
+  const releaseEligible =
+    missingState === 'NONE'
+    && counterState !== 'UNKNOWN'
+    && decisionState === 'APPROVED'
+    && releaseLink != null
+    && supportingReleaseGrade
+    && counterReleaseGrade;
+  const reuseEligible =
+    releaseEligible
+    && resultEvidence?.state === 'VERIFIED'
+    && COLLECTIVE_RELEASE_PROVENANCE.has(resultEvidence.provenance)
+    && COLLECTIVE_RELEASE_AUTHORITY.has(resultEvidence.authorityLevel);
+
+  return deepFreeze({
+    ok: true,
+    reasons: [],
+    proposal: normalized,
+    releaseEligible,
+    reuseEligible,
+  });
+}
+
+export function buildCollectiveImprovementProposal(input) {
+  return validateCollectiveImprovementProposal(input);
+}

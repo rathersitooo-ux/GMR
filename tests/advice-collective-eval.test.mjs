@@ -296,3 +296,245 @@ test('legal action selector fails closed when no legal action or preference scor
   assert.equal(invalid.selected, null);
   assert.equal(invalid.reason, 'invalid-preference-score');
 });
+
+function collectiveProposalVersions() {
+  return {
+    releaseVersion: 'release-r2',
+    rulesVersion: 'rules-r1',
+    contentVersion: 'content-r3',
+    cardVersion: 'cards-r1',
+    stateVersion: 'state-r1',
+  };
+}
+
+function collectiveEvidence(
+  evidenceId,
+  {
+    provenance = 'synthetic',
+    authorityLevel = 'L2',
+    cohortId = 'cohort-a',
+    versions = collectiveProposalVersions(),
+  } = {},
+) {
+  return {
+    evidenceId,
+    ownerId: 'owner-advice-eval',
+    digest: `sha256-${evidenceId}`,
+    acquiredAt: '2026-08-15T22:47:00+09:00',
+    authorityLevel,
+    provenance,
+    cohortId,
+    versions,
+    summaryRef: `summary-${evidenceId}`,
+  };
+}
+
+function collectiveProposal(overrides = {}) {
+  const versions = collectiveProposalVersions();
+  const cohort = { cohortId: 'cohort-a', scopeRef: 'scope-advice-same-version' };
+  return {
+    proposalId: 'proposal-r2-001',
+    proposalVersion: 'proposal-schema-r1',
+    kind: 'CHANGE',
+    versions,
+    cohort,
+    missingData: { state: 'NONE', refs: [] },
+    supportingEvidence: [collectiveEvidence('support-1', { versions, cohortId: cohort.cohortId })],
+    counterEvidence: {
+      state: 'NONE_FOUND',
+      searchRef: 'counter-search-1',
+      items: [],
+    },
+    affectedOwnerId: 'owner-advice-runtime',
+    affectedUseSiteRef: 'use-site-advice-selection',
+    protectedInvariantRef: 'invariant-no-auto-gameplay-change',
+    changeRef: 'change-advice-ranking-candidate-1',
+    expectedObservation: {
+      metricRef: 'metric-advice-quality',
+      observationPlanRef: 'plan-isolated-holdout',
+    },
+    isolation: {
+      isolationRef: 'isolation-r2-001',
+      scopeRef: 'scope-offline-advice-only',
+    },
+    rollback: {
+      conditionRef: 'rollback-condition-any-regression',
+      rollbackRef: 'rollback-r2-001',
+    },
+    ...overrides,
+  };
+}
+
+test('collective proposal envelope accepts CHANGE and NO_CHANGE without mutating input or auto-approving', () => {
+  const change = collectiveProposal();
+  const before = structuredClone(change);
+  const builtChange = legalCore.buildCollectiveImprovementProposal(change);
+  assert.deepEqual(change, before);
+  assert.equal(builtChange.ok, true);
+  assert.equal(builtChange.proposal.schema, 'gameroad.collective-improvement-proposal.v1');
+  assert.equal(builtChange.proposal.kind, 'CHANGE');
+  assert.equal(builtChange.proposal.decision.state, 'PENDING');
+  assert.equal(builtChange.proposal.decision.authority, null);
+  assert.equal(builtChange.proposal.automaticMutationAllowed, false);
+  assert.equal(builtChange.releaseEligible, false);
+
+  const noChange = collectiveProposal({
+    proposalId: 'proposal-r2-no-change',
+    kind: 'NO_CHANGE',
+    changeRef: null,
+  });
+  const builtNoChange = legalCore.validateCollectiveImprovementProposal(noChange);
+  assert.equal(builtNoChange.ok, true);
+  assert.equal(builtNoChange.proposal.kind, 'NO_CHANGE');
+  assert.equal(builtNoChange.proposal.changeRef, null);
+  assert.equal(builtNoChange.proposal.decision.state, 'PENDING');
+});
+
+test('collective proposal preserves explicit UNKNOWN missing state and requires explicit counterevidence state', () => {
+  const unknown = collectiveProposal({
+    missingData: { state: 'UNKNOWN', refs: ['field-retention-window'] },
+  });
+  const unknownResult = legalCore.buildCollectiveImprovementProposal(unknown);
+  assert.equal(unknownResult.ok, true);
+  assert.equal(unknownResult.proposal.missingData.state, 'UNKNOWN');
+  assert.deepEqual(unknownResult.proposal.missingData.refs, ['field-retention-window']);
+  assert.equal(unknownResult.releaseEligible, false);
+
+  const missingCounterState = collectiveProposal({
+    counterEvidence: { searchRef: 'counter-search-1', items: [] },
+  });
+  const rejected = legalCore.buildCollectiveImprovementProposal(missingCounterState);
+  assert.equal(rejected.ok, false);
+  assert.ok(rejected.reasons.includes('counterEvidence-state-invalid'));
+});
+
+test('collective proposal fails closed on mixed version or cohort evidence while separate cohorts remain valid', () => {
+  const versions = collectiveProposalVersions();
+  const mixedVersion = collectiveProposal({
+    supportingEvidence: [
+      collectiveEvidence('support-current', { versions }),
+      collectiveEvidence('support-stale', { versions: { ...versions, cardVersion: 'cards-r0' } }),
+    ],
+  });
+  const badVersion = legalCore.buildCollectiveImprovementProposal(mixedVersion);
+  assert.equal(badVersion.ok, false);
+  assert.ok(badVersion.reasons.some((reason) => reason.endsWith('version-mismatch')));
+
+  const mixedCohort = collectiveProposal({
+    supportingEvidence: [
+      collectiveEvidence('support-a', { versions, cohortId: 'cohort-a' }),
+      collectiveEvidence('support-b', { versions, cohortId: 'cohort-b' }),
+    ],
+  });
+  const badCohort = legalCore.buildCollectiveImprovementProposal(mixedCohort);
+  assert.equal(badCohort.ok, false);
+  assert.ok(badCohort.reasons.some((reason) => reason.endsWith('cohort-mismatch')));
+
+  const cohortB = collectiveProposal({
+    proposalId: 'proposal-cohort-b',
+    cohort: { cohortId: 'cohort-b', scopeRef: 'scope-advice-same-version-b' },
+    supportingEvidence: [collectiveEvidence('support-b-only', { versions, cohortId: 'cohort-b' })],
+  });
+  assert.equal(legalCore.buildCollectiveImprovementProposal(collectiveProposal()).ok, true);
+  assert.equal(legalCore.buildCollectiveImprovementProposal(cohortB).ok, true);
+});
+
+test('collective proposal strict allowlist rejects raw/private/free-text payload fields without echoing them', () => {
+  const unsafe = collectiveProposal({
+    rawEvents: [{ userId: 123, text: 'private payload must not survive' }],
+    freeText: 'also forbidden',
+  });
+  const rejected = legalCore.buildCollectiveImprovementProposal(unsafe);
+  assert.equal(rejected.ok, false);
+  assert.equal(rejected.proposal, null);
+  assert.ok(rejected.reasons.includes('unexpected-field:rawEvents'));
+  assert.ok(rejected.reasons.includes('unexpected-field:freeText'));
+  const serialized = JSON.stringify(rejected);
+  assert.equal(serialized.includes('private payload must not survive'), false);
+  assert.equal(serialized.includes('123'), false);
+});
+
+test('release eligibility requires approved formal decision, release/result linkage, no missing data, and release-grade evidence', () => {
+  const versions = collectiveProposalVersions();
+  const syntheticApproved = collectiveProposal({
+    decision: { state: 'APPROVED', authority: 'human', evidenceRef: 'human-decision-1' },
+    releaseLink: { releaseId: 'release-candidate-1', resultRecordId: 'result-record-1' },
+  });
+  const syntheticResult = legalCore.buildCollectiveImprovementProposal(syntheticApproved);
+  assert.equal(syntheticResult.ok, true);
+  assert.equal(syntheticResult.releaseEligible, false);
+
+  const serverVerified = collectiveProposal({
+    supportingEvidence: [
+      collectiveEvidence('server-support-1', {
+        versions,
+        provenance: 'server_verified',
+        authorityLevel: 'L4',
+      }),
+    ],
+    decision: { state: 'APPROVED', authority: 'human', evidenceRef: 'human-decision-2' },
+    releaseLink: { releaseId: 'release-candidate-2', resultRecordId: 'result-record-2' },
+  });
+  const eligible = legalCore.buildCollectiveImprovementProposal(serverVerified);
+  assert.equal(eligible.ok, true);
+  assert.equal(eligible.releaseEligible, true);
+  assert.equal(eligible.reuseEligible, false);
+
+  const noLink = structuredClone(serverVerified);
+  delete noLink.releaseLink;
+  assert.equal(legalCore.buildCollectiveImprovementProposal(noLink).releaseEligible, false);
+
+  const unknownCounter = {
+    ...serverVerified,
+    counterEvidence: { state: 'UNKNOWN', searchRef: 'counter-search-unknown', items: [] },
+  };
+  assert.equal(legalCore.buildCollectiveImprovementProposal(unknownCounter).releaseEligible, false);
+});
+
+test('proposal evidence is reusable only after authoritative verified result evidence', () => {
+  const versions = collectiveProposalVersions();
+  const base = collectiveProposal({
+    supportingEvidence: [
+      collectiveEvidence('server-support-reuse', {
+        versions,
+        provenance: 'server_verified',
+        authorityLevel: 'L4',
+      }),
+    ],
+    decision: { state: 'APPROVED', authority: 'formal-preauthorized', evidenceRef: 'formal-decision-1' },
+    releaseLink: { releaseId: 'release-reuse-1', resultRecordId: 'result-reuse-1' },
+  });
+
+  const pending = legalCore.buildCollectiveImprovementProposal({
+    ...base,
+    resultEvidence: { state: 'PENDING' },
+  });
+  assert.equal(pending.ok, true);
+  assert.equal(pending.releaseEligible, true);
+  assert.equal(pending.reuseEligible, false);
+
+  const syntheticResult = legalCore.buildCollectiveImprovementProposal({
+    ...base,
+    resultEvidence: {
+      state: 'VERIFIED',
+      evidenceId: 'result-synthetic-1',
+      authorityLevel: 'L3',
+      provenance: 'synthetic',
+    },
+  });
+  assert.equal(syntheticResult.ok, true);
+  assert.equal(syntheticResult.reuseEligible, false);
+
+  const verified = legalCore.buildCollectiveImprovementProposal({
+    ...base,
+    resultEvidence: {
+      state: 'VERIFIED',
+      evidenceId: 'result-server-1',
+      authorityLevel: 'L4',
+      provenance: 'server_verified',
+    },
+  });
+  assert.equal(verified.ok, true);
+  assert.equal(verified.releaseEligible, true);
+  assert.equal(verified.reuseEligible, true);
+});

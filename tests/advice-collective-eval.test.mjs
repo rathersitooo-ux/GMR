@@ -227,3 +227,72 @@ test('runtime manifest serves exact approved context, deterministic fallback, an
   assert.equal(stale.actionId, null);
   assert.equal(stale.reason, 'version-mismatch');
 });
+
+const legalCore = await import('../tools/advice-collective-eval.mjs');
+
+function legalCandidate(actionId, overrides = {}) {
+  return {
+    actionId,
+    ...VERSIONS,
+    legal: true,
+    viewerSafe: true,
+    stableOrder: 0,
+    publicFacts: { projectedValue: 2 },
+    privateOpaque: { value: 'not-for-ranking' },
+    ...overrides,
+  };
+}
+
+test('legal action boundary rejects stale, illegal, viewer-unsafe and duplicate actions', () => {
+  const candidates = [
+    legalCandidate('road-a', { stableOrder: 4 }),
+    legalCandidate('stale', { stateVersion: 'state-r0', stableOrder: 1 }),
+    legalCandidate('illegal', { legal: false, stableOrder: 2 }),
+    legalCandidate('unsafe', { viewerSafe: false, stableOrder: 3 }),
+    legalCandidate('dup', { stableOrder: 5 }),
+    legalCandidate('dup', { stableOrder: 6 }),
+  ];
+  const before = structuredClone(candidates);
+  const result = legalCore.buildViewerSafeLegalActionSet(candidates, VERSIONS);
+  assert.deepEqual(candidates, before);
+  assert.deepEqual(result.accepted.map((x) => x.actionId), ['road-a']);
+  assert.equal(result.containsPrivate, false);
+  assert.equal(JSON.stringify(result).includes('not-for-ranking'), false);
+  assert.ok(result.rejected.find((x) => x.actionId === 'stale').reasons.includes('stateVersion-mismatch'));
+  assert.ok(result.rejected.find((x) => x.actionId === 'illegal').reasons.includes('illegal-action'));
+  assert.ok(result.rejected.find((x) => x.actionId === 'unsafe').reasons.includes('viewer-unsafe'));
+  assert.equal(result.rejected.filter((x) => x.actionId === 'dup').length, 2);
+});
+
+test('preference receives only public view and deterministic ties use stable order then action id', () => {
+  let calls = 0;
+  const candidates = [
+    legalCandidate('beta', { stableOrder: 2, publicFacts: { projectedValue: 7 } }),
+    legalCandidate('gamma', { stableOrder: 1, publicFacts: { projectedValue: 7 } }),
+    legalCandidate('alpha', { stableOrder: 1, publicFacts: { projectedValue: 7 } }),
+    legalCandidate('illegal-high', { legal: false, stableOrder: 0, publicFacts: { projectedValue: 999 } }),
+  ];
+  const first = legalCore.selectPreferredLegalAction(candidates, VERSIONS, (view) => {
+    calls += 1;
+    assert.deepEqual(Object.keys(view).sort(), ['actionId', 'publicFacts']);
+    assert.equal('privateOpaque' in view, false);
+    assert.equal(Object.isFrozen(view), true);
+    assert.equal(Object.isFrozen(view.publicFacts), true);
+    return view.publicFacts.projectedValue;
+  });
+  const second = legalCore.selectPreferredLegalAction(structuredClone(candidates), VERSIONS, (view) => view.publicFacts.projectedValue);
+  assert.equal(calls, 3);
+  assert.equal(first.selected.actionId, 'alpha');
+  assert.deepEqual(first.scores.map((x) => x.actionId), ['alpha', 'gamma', 'beta']);
+  assert.equal(first.scores.some((x) => x.actionId === 'illegal-high'), false);
+  assert.equal(JSON.stringify(first), JSON.stringify(second));
+});
+
+test('legal action selector fails closed when no legal action or preference score is invalid', () => {
+  const none = legalCore.selectPreferredLegalAction([legalCandidate('x', { legal: false })], VERSIONS, () => 1);
+  assert.equal(none.selected, null);
+  assert.equal(none.reason, 'no-legal-candidates');
+  const invalid = legalCore.selectPreferredLegalAction([legalCandidate('y')], VERSIONS, () => Number.NaN);
+  assert.equal(invalid.selected, null);
+  assert.equal(invalid.reason, 'invalid-preference-score');
+});

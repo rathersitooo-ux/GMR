@@ -338,3 +338,117 @@ export function recommendFromRuntimeManifest(manifest, state, targetVersions) {
     support: exact ? Math.max(0, finiteNumber(exact.support)) : 0,
   };
 }
+
+function clonePublicValue(value, depth = 0) {
+  if (depth > 16) throw new TypeError('publicFacts-too-deep');
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) throw new TypeError('publicFacts-non-finite-number');
+    return value;
+  }
+  if (Array.isArray(value)) return value.map((item) => clonePublicValue(item, depth + 1));
+  if (!value || typeof value !== 'object' || Object.getPrototypeOf(value) !== Object.prototype) {
+    throw new TypeError('publicFacts-must-be-json-like');
+  }
+  const output = {};
+  for (const key of Object.keys(value).sort()) {
+    const safeKey = safeToken(key);
+    if (!safeKey || safeKey !== key) throw new TypeError('publicFacts-invalid-key');
+    output[key] = clonePublicValue(value[key], depth + 1);
+  }
+  return output;
+}
+
+function deepFreeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  for (const child of Object.values(value)) deepFreeze(child);
+  return Object.freeze(value);
+}
+
+function validVersionTuple(versions) {
+  return ['rulesVersion', 'cardVersion', 'stateVersion'].every((key) => safeToken(versions?.[key]));
+}
+
+export function buildViewerSafeLegalActionSet(candidates, targetVersions) {
+  const rows = Array.isArray(candidates) ? candidates : [];
+  const accepted = [];
+  const rejected = [];
+  const targetValid = validVersionTuple(targetVersions);
+  const idCounts = new Map();
+
+  for (const candidate of rows) {
+    const actionId = safeToken(candidate?.actionId);
+    if (actionId) idCounts.set(actionId, (idCounts.get(actionId) ?? 0) + 1);
+  }
+
+  for (let index = 0; index < rows.length; index += 1) {
+    const candidate = rows[index];
+    const actionId = safeToken(candidate?.actionId);
+    const reasons = [];
+    if (!targetValid) reasons.push('invalid-target-versions');
+    if (!actionId) reasons.push('invalid-action-id');
+    if (actionId && idCounts.get(actionId) !== 1) reasons.push('duplicate-action-id');
+    for (const key of ['rulesVersion', 'cardVersion', 'stateVersion']) {
+      if (!safeToken(candidate?.[key]) || candidate[key] !== targetVersions?.[key]) reasons.push(`${key}-mismatch`);
+    }
+    if (candidate?.legal !== true) reasons.push('illegal-action');
+    if (candidate?.viewerSafe !== true) reasons.push('viewer-unsafe');
+
+    const stableOrder = candidate?.stableOrder ?? index;
+    if (!Number.isSafeInteger(stableOrder) || stableOrder < 0) reasons.push('invalid-stable-order');
+
+    let publicFacts = null;
+    if (reasons.length === 0) {
+      try {
+        publicFacts = clonePublicValue(candidate?.publicFacts ?? {});
+      } catch (error) {
+        reasons.push(error instanceof Error ? error.message : 'invalid-public-facts');
+      }
+    }
+
+    if (reasons.length > 0) {
+      rejected.push({ index, actionId: actionId ?? null, reasons: [...new Set(reasons)] });
+      continue;
+    }
+
+    accepted.push(deepFreeze({ actionId, stableOrder, publicFacts }));
+  }
+
+  accepted.sort((a, b) => a.stableOrder - b.stableOrder || a.actionId.localeCompare(b.actionId));
+  return deepFreeze({
+    targetVersions: targetValid ? { ...targetVersions } : null,
+    accepted,
+    rejected,
+    deterministic: true,
+    containsPrivate: false,
+  });
+}
+
+export function selectPreferredLegalAction(candidates, targetVersions, preference = null) {
+  const legalSet = buildViewerSafeLegalActionSet(candidates, targetVersions);
+  if (legalSet.accepted.length === 0) {
+    return deepFreeze({ ...legalSet, selected: null, scores: [], reason: 'no-legal-candidates' });
+  }
+  if (preference !== null && typeof preference !== 'function') {
+    return deepFreeze({ ...legalSet, selected: null, scores: [], reason: 'invalid-preference' });
+  }
+
+  const scoreRows = [];
+  for (const candidate of legalSet.accepted) {
+    const publicView = deepFreeze({ actionId: candidate.actionId, publicFacts: candidate.publicFacts });
+    const score = preference === null ? 0 : Number(preference(publicView));
+    if (!Number.isFinite(score)) {
+      return deepFreeze({ ...legalSet, selected: null, scores: [], reason: 'invalid-preference-score' });
+    }
+    scoreRows.push({ actionId: candidate.actionId, score, stableOrder: candidate.stableOrder });
+  }
+
+  scoreRows.sort((a, b) => b.score - a.score || a.stableOrder - b.stableOrder || a.actionId.localeCompare(b.actionId));
+  const winner = legalSet.accepted.find((candidate) => candidate.actionId === scoreRows[0].actionId) ?? null;
+  return deepFreeze({
+    ...legalSet,
+    selected: winner ? { actionId: winner.actionId, publicFacts: winner.publicFacts } : null,
+    scores: scoreRows.map(({ actionId, score }) => ({ actionId, score })),
+    reason: null,
+  });
+}

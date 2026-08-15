@@ -129,21 +129,6 @@ export function project2v2SeatControl(state) {
       };
     }
 
-    const partner = state.seats.find(candidate =>
-      candidate.teamId === seat.teamId && candidate.seatId !== seat.seatId
-    );
-    if (partner?.connected === true) {
-      return {
-        seatId: seat.seatId,
-        playerId: seat.playerId,
-        teamId: seat.teamId,
-        connected: false,
-        controlMode: BATTLE_2V2_CONTROL_MODES.TEMPORARY_PARTNER,
-        controllerSeatId: partner.seatId,
-        controllerPlayerId: partner.playerId
-      };
-    }
-
     return {
       seatId: seat.seatId,
       playerId: seat.playerId,

@@ -55,7 +55,7 @@ test('all connected humans control only their own seats initially', () => {
   }
 });
 
-test('partner disconnect creates temporary partner seat-operation takeover only', () => {
+test('partner disconnect does not transfer seat-operation control to the connected teammate during grace', () => {
   const disconnected = disconnect2v2Player(freshState(), 'H1');
   assert.deepEqual(
     { ok: disconnected.ok, status: disconnected.status, changed: disconnected.changed },
@@ -65,14 +65,16 @@ test('partner disconnect creates temporary partner seat-operation takeover only'
   const p1 = controlBySeat(disconnected.state, 'P1');
   const p2 = controlBySeat(disconnected.state, 'P2');
   const p3 = controlBySeat(disconnected.state, 'P3');
+  const p4 = controlBySeat(disconnected.state, 'P4');
   assert.equal(p1.playerId, 'H1');
   assert.equal(p1.connected, false);
-  assert.equal(p1.controlMode, 'temporary_partner');
-  assert.equal(p1.controllerPlayerId, 'H2');
+  assert.equal(p1.controlMode, 'uncontrolled');
+  assert.equal(p1.controllerSeatId, null);
+  assert.equal(p1.controllerPlayerId, null);
   assert.equal(p2.controlMode, 'self');
+  assert.equal(p2.controllerPlayerId, 'H2');
   assert.equal(p3.controllerPlayerId, 'H3');
-  assert.notEqual(p1.controllerPlayerId, 'H3');
-  assert.notEqual(p1.controllerPlayerId, 'H4');
+  assert.equal(p4.controllerPlayerId, 'H4');
 });
 
 test('reconnect returns the seat to the same human identity', () => {
@@ -118,7 +120,7 @@ test('when both teammates are disconnected neither seat receives an illegal cont
   assert.equal(controlBySeat(state, 'P4').controllerPlayerId, 'H4');
 });
 
-test('one teammate reconnecting restores self control and may temporarily operate the still-disconnected partner seat', () => {
+test('one teammate reconnecting restores only self control while the still-disconnected teammate remains uncontrolled', () => {
   let state = disconnect2v2Player(freshState(), 'H1').state;
   state = disconnect2v2Player(state, 'H2').state;
   state = reconnect2v2Player(state, 'H1').state;
@@ -128,8 +130,10 @@ test('one teammate reconnecting restores self control and may temporarily operat
   assert.equal(p1.controlMode, 'self');
   assert.equal(p1.controllerPlayerId, 'H1');
   assert.equal(p2.playerId, 'H2');
-  assert.equal(p2.controlMode, 'temporary_partner');
-  assert.equal(p2.controllerPlayerId, 'H1');
+  assert.equal(p2.connected, false);
+  assert.equal(p2.controlMode, 'uncontrolled');
+  assert.equal(p2.controllerSeatId, null);
+  assert.equal(p2.controllerPlayerId, null);
 });
 
 test('unknown or invalid player fails closed without state mutation', () => {
@@ -145,7 +149,7 @@ test('unknown or invalid player fails closed without state mutation', () => {
   assert.equal(state.revision, 0);
 });
 
-test('state and projections are deeply frozen and contain no invented outcome or timer policy', () => {
+test('state and projections are deeply frozen and contain no inferred teammate proxy, outcome, or timer policy', () => {
   const state = disconnect2v2Player(freshState(), 'H1').state;
   const view = project2v2SeatControl(state);
   assert.equal(Object.isFrozen(state), true);
@@ -155,7 +159,7 @@ test('state and projections are deeply frozen and contain no invented outcome or
   assert.equal(Object.isFrozen(view.seats[0]), true);
 
   const encoded = JSON.stringify({ state, view });
-  for (const forbidden of ['winner', 'forfeit', 'rating', 'reward', 'graceMs', 'graceSeconds', 'permanent_partner']) {
+  for (const forbidden of ['temporary_partner', 'winner', 'forfeit', 'rating', 'reward', 'graceMs', 'graceSeconds', 'permanent_partner']) {
     assert.equal(encoded.includes(forbidden), false);
   }
 });

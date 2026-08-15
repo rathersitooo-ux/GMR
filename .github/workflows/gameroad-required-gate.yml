@@ -40,6 +40,7 @@ jobs:
           browser=false
           dino=false
           advice=false
+          replay=false
           unclassified=false
           : > /tmp/gameroad-unclassified.txt
 
@@ -68,6 +69,10 @@ jobs:
               .github/workflows/advice-collective-eval.yml)
                 advice=true
                 ;;
+              browser/battle-replay-core.mjs|\
+              tests/battle-replay-core.test.mjs)
+                replay=true
+                ;;
               .github/workflows/gameroad-required-gate.yml|README.md|.gitignore|.gitattributes)
                 ;;
               browser/*|roblox/*|unity/*|tools/*|tests/*|.github/workflows/*|\
@@ -85,6 +90,7 @@ jobs:
             echo "browser=${browser}"
             echo "dino=${dino}"
             echo "advice=${advice}"
+            echo "replay=${replay}"
             echo "unclassified=${unclassified}"
           } >> "${GITHUB_OUTPUT}"
 
@@ -94,7 +100,7 @@ jobs:
           fi
 
       - name: Set up Node
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.advice == 'true'
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -106,6 +112,10 @@ jobs:
       - name: Run Advice offline evaluator tests
         if: steps.classify.outputs.advice == 'true'
         run: node --test tests/advice-collective-eval.test.mjs
+
+      - name: Run Battle replay core tests
+        if: steps.classify.outputs.replay == 'true'
+        run: node --test tests/battle-replay-core.test.mjs
 
       - name: Install Playwright and Chromium
         if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true'

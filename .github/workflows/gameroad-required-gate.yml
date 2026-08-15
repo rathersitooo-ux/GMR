@@ -51,6 +51,7 @@ jobs:
           self_deck=false
           ai_optimal=false
           partner_vtuber=false
+          observability=false
           roblox=false
           unclassified=false
           : > /tmp/gameroad-unclassified.txt
@@ -126,6 +127,12 @@ jobs:
               tests/partner-vtuber-public-context-core.test.mjs)
                 partner_vtuber=true
                 ;;
+              browser/observability-core.mjs|\
+              tests/observability-core.test.mjs|\
+              browser/observability-browser-adapter.mjs|\
+              tests/observability-browser-adapter.test.mjs)
+                observability=true
+                ;;
               roblox/GAMEROAD.rbxlx)
                 roblox=true
                 ;;
@@ -157,6 +164,7 @@ jobs:
             echo "self_deck=${self_deck}"
             echo "ai_optimal=${ai_optimal}"
             echo "partner_vtuber=${partner_vtuber}"
+            echo "observability=${observability}"
             echo "roblox=${roblox}"
             echo "unclassified=${unclassified}"
           } >> "${GITHUB_OUTPUT}"
@@ -167,7 +175,7 @@ jobs:
           fi
 
       - name: Set up Node
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true' || steps.classify.outputs.partner_vtuber == 'true'
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true' || steps.classify.outputs.partner_vtuber == 'true' || steps.classify.outputs.observability == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -219,6 +227,10 @@ jobs:
       - name: Run Partner VTuber public context boundary tests
         if: steps.classify.outputs.partner_vtuber == 'true'
         run: node --test tests/partner-vtuber-public-context-core.test.mjs
+
+      - name: Run Observability core and Browser adapter tests
+        if: steps.classify.outputs.observability == 'true'
+        run: node --test tests/observability-core.test.mjs tests/observability-browser-adapter.test.mjs
 
       - name: Verify formal Roblox placement
         if: steps.classify.outputs.roblox == 'true'

@@ -63,6 +63,24 @@ test('dedupes equal safe fingerprints and records occurrence count', () => {
   assert.equal(entry.lastSeenAtMs, 21);
 });
 
+test('queue snapshot round-trips when an older duplicate arrives after a newer one', () => {
+  const queue = createObservabilityQueue({ maxQueue: 4 });
+  const input = { error: new Error('private-newer'), faultCode: 'BATTLE_RENDER_FAILED', context };
+  assert.equal(queue.capture(input, 400).duplicate, false);
+  assert.equal(queue.capture({ ...input, error: new Error('private-older') }, 300).duplicate, true);
+
+  const snapshot = queue.snapshot();
+  const [entry] = snapshot;
+  assert.equal(entry.count, 2);
+  assert.equal(entry.envelope.occurredAtMs, 300);
+  assert.equal(entry.firstSeenAtMs, 300);
+  assert.equal(entry.lastSeenAtMs, 400);
+
+  const collector = createObservabilityIncidentCollector();
+  assert.deepEqual(collector.ingest(snapshot), { ok: true, accepted: 2, incidents: 1, reason: 'OK' });
+  assert.deepEqual(collector.snapshot(), snapshot);
+});
+
 test('bounds offline queue and evicts oldest unique incident', () => {
   const queue = createObservabilityQueue({ maxQueue: 2 });
   queue.capture({ faultCode: 'ONE', context }, 1);

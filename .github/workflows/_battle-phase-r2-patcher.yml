@@ -12,9 +12,34 @@ permissions:
   contents: write
 
 jobs:
-  probe:
+  patch-current-html:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
-      - name: Probe workflow execution
-        run: echo "battle-phase-r2 workflow probe"
+      - name: Checkout exact work branch
+        uses: actions/checkout@v4
+        with:
+          ref: work/BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001-R2
+          fetch-depth: 0
+
+      - name: Apply exact guarded patch
+        run: python .github/scripts/battle_phase_r2_patch.py
+
+      - name: Audit patch scope
+        shell: bash
+        run: |
+          git diff --check
+          test "$(git diff --name-only | wc -l)" -eq 1
+          test "$(git diff --name-only)" = "browser/GAMEROAD.html"
+          grep -Fq 'BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001-R2-DEDICATED-SURFACE' browser/GAMEROAD.html
+          grep -Fq "mountChar('#battlePhaseNaki','partner.naki','dot_break_entry')" browser/GAMEROAD.html
+          grep -Fq "m.mode==='4p'?' / 4人全員比較'" browser/GAMEROAD.html
+
+      - name: Commit guarded source patch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/GAMEROAD.html
+          git commit -m 'feat(browser): move battle phase to dedicated scene'
+          git push origin HEAD:work/BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001-R2

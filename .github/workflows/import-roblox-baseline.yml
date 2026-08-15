@@ -1,4 +1,4 @@
-name: Diagnose confirmed Drive Roblox download
+name: Diagnose single-character transport shift
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  diagnose-drive-confirm:
+  diagnose-shift:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout work branch
@@ -20,110 +20,69 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
-      - name: Resolve Google Drive confirmation flow read-only
+      - name: Locate corruption and test one-character deletion around first XZ failure
         shell: bash
         env:
-          DRIVE_FILE_ID: 1YUO7GvwPBaVu6Umgp7IJcKrzDfjOBZ5C
           EXPECTED_SIZE: "10245508"
           EXPECTED_SHA256: b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51
         run: |
           set -euo pipefail
           test "$GITHUB_REF_NAME" = "work/GITHUB-ROBLOX-CODE-PLACEMENT-001"
-          cookie="$RUNNER_TEMP/drive.cookies"
-          first="$RUNNER_TEMP/drive-first"
-          first_headers="$RUNNER_TEMP/drive-first.headers"
-          direct="$RUNNER_TEMP/drive-direct"
-          direct_headers="$RUNNER_TEMP/drive-direct.headers"
-          resolved="$RUNNER_TEMP/drive-resolved"
-          resolved_headers="$RUNNER_TEMP/drive-resolved.headers"
+          python - <<'PY'
+          from pathlib import Path
+          import base64, hashlib, lzma
 
-          verify_candidate() {
-            local label="$1" file="$2"
-            local size sha
-            size="$(wc -c < "$file" | tr -d ' ')"
-            sha="$(sha256sum "$file" | awk '{print $1}')"
-            echo "$label size=$size sha256=$sha"
-            if [ "$size" = "$EXPECTED_SIZE" ] && [ "$sha" = "$EXPECTED_SHA256" ]; then
-              echo "$label EXACT_DRIVE_MATCH"
-              return 0
-            fi
-            return 1
-          }
+          cat = b"".join(b"".join(Path(f".github/import/roblox-baseline.part{i:03d}.b64").read_bytes().split()) for i in range(10))
+          print(f"transport_len={len(cat)} mod4={len(cat)%4}")
+          usable = cat[: (len(cat)//4)*4]
+          packed = base64.b64decode(usable, validate=True)
+          print(f"usable_len={len(usable)} packed_len={len(packed)} packed_sha={hashlib.sha256(packed).hexdigest()}")
 
-          # Candidate A: current Drive large-file download endpoint with explicit confirm.
-          curl --fail --location --silent --show-error \
-            --cookie-jar "$cookie" --cookie "$cookie" \
-            --dump-header "$direct_headers" \
-            --output "$direct" \
-            "https://drive.usercontent.google.com/download?id=${DRIVE_FILE_ID}&export=download&confirm=t" || true
-          sed -n '1,20p' "$direct_headers" || true
-          if verify_candidate usercontent-confirm "$direct"; then
-            exit 0
-          fi
+          dec = lzma.LZMADecompressor(format=lzma.FORMAT_XZ)
+          out_len = 0
+          fail_end = None
+          step = 32
+          for start in range(0, len(packed), step):
+              chunk = packed[start:start+step]
+              try:
+                  out_len += len(dec.decompress(chunk))
+              except lzma.LZMAError as e:
+                  fail_end = start + len(chunk)
+                  print(f"first_stream_error input_range={start}:{start+len(chunk)} out_len={out_len} error={e!r}")
+                  break
+          if fail_end is None:
+              print(f"no_stream_error eof={dec.eof} out_len={out_len}")
+              fail_end = len(packed)
 
-          # Candidate B: fetch the interstitial, parse its form and hidden fields exactly, then submit it.
-          : > "$cookie"
-          curl --fail --location --silent --show-error \
-            --cookie-jar "$cookie" --cookie "$cookie" \
-            --dump-header "$first_headers" \
-            --output "$first" \
-            "https://drive.google.com/uc?export=download&id=${DRIVE_FILE_ID}" || true
-          sed -n '1,20p' "$first_headers" || true
-          verify_candidate first-response "$first" && exit 0
+          fail_b64 = (fail_end * 4) // 3
+          lo = max(0, fail_b64 - 1536)
+          hi = min(len(cat), fail_b64 + 1536)
+          print(f"search_delete_window={lo}:{hi} approx_fail_b64={fail_b64}")
 
-          python - "$first" "$RUNNER_TEMP/drive-form-url.txt" <<'PY'
-          import html
-          import sys
-          import urllib.parse
-          from html.parser import HTMLParser
+          best = []
+          for i in range(lo, hi):
+              cand = cat[:i] + cat[i+1:]
+              if len(cand) % 4:
+                  continue
+              try:
+                  cp = base64.b64decode(cand, validate=True)
+              except Exception:
+                  continue
+              try:
+                  raw = lzma.decompress(cp, format=lzma.FORMAT_XZ)
+              except lzma.LZMAError:
+                  continue
+              size = len(raw)
+              sha = hashlib.sha256(raw).hexdigest()
+              print(f"DECOMPRESS_OK delete_index={i} removed={cat[i:i+1]!r} packed_len={len(cp)} raw_size={size} raw_sha={sha}")
+              if size == int("10245508") and sha == "b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51":
+                  print(f"EXACT_SINGLE_DELETE_RECOVERY index={i} removed={cat[i:i+1]!r}")
+                  Path("/tmp/recovered-delete-index.txt").write_text(str(i))
+                  raise SystemExit(0)
+              best.append((size, i, sha))
 
-          source, out = sys.argv[1:]
-          class FormParser(HTMLParser):
-              def __init__(self):
-                  super().__init__()
-                  self.action = None
-                  self.in_form = False
-                  self.fields = []
-              def handle_starttag(self, tag, attrs):
-                  attrs = dict(attrs)
-                  if tag == "form" and self.action is None:
-                      self.action = attrs.get("action")
-                      self.in_form = True
-                  elif tag == "input" and self.in_form:
-                      name = attrs.get("name")
-                      if name:
-                          self.fields.append((name, attrs.get("value", "")))
-              def handle_endtag(self, tag):
-                  if tag == "form" and self.in_form:
-                      self.in_form = False
-
-          raw = open(source, "rb").read().decode("utf-8", "replace")
-          p = FormParser(); p.feed(raw)
-          print("interstitial_head=", repr(raw[:500]))
-          print("form_action=", p.action)
-          print("form_fields=", [(k, "<redacted>" if k.lower() in {"uuid"} else v) for k,v in p.fields])
-          if not p.action:
-              raise SystemExit(61)
-          action = urllib.parse.urljoin("https://drive.google.com/", html.unescape(p.action))
-          url = action + ("&" if "?" in action else "?") + urllib.parse.urlencode(p.fields)
-          open(out, "w", encoding="utf-8").write(url)
+          print("no exact single-delete recovery in targeted window")
+          if best:
+              print("decompressible_nonmatching_candidates=", sorted(best, reverse=True)[:10])
+          raise SystemExit(63)
           PY
-
-          resolved_url="$(cat "$RUNNER_TEMP/drive-form-url.txt")"
-          echo "resolved_origin=$(python - "$resolved_url" <<'PY'
-          import sys, urllib.parse
-          u=urllib.parse.urlsplit(sys.argv[1]); print(f'{u.scheme}://{u.netloc}{u.path}')
-          PY
-          )"
-          curl --fail --location --silent --show-error \
-            --cookie-jar "$cookie" --cookie "$cookie" \
-            --dump-header "$resolved_headers" \
-            --output "$resolved" \
-            "$resolved_url" || true
-          sed -n '1,20p' "$resolved_headers" || true
-          if verify_candidate resolved-form "$resolved"; then
-            exit 0
-          fi
-
-          echo "No confirmation-flow candidate matched the current Drive byte identity" >&2
-          exit 62

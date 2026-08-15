@@ -1,0 +1,64 @@
+name: Blocked Work
+description: Record a finite blocker and a concrete restart condition without treating the task as complete.
+title: "[BLOCKED] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A blocked Issue is a restart record, not completion. Record the verified blocker, preserve work ownership boundaries, and state the exact condition that permits safe resumption.
+  - type: input
+    id: task_id
+    attributes:
+      label: TaskID
+      description: Exact GAMEROAD TaskID currently blocked.
+      placeholder: EXAMPLE-TASK-001
+    validations:
+      required: true
+  - type: input
+    id: acquire_key
+    attributes:
+      label: AcquireKey
+      description: Acquisition key for the blocked work. Use NOT_ACQUIRED only if the task was not acquired.
+      placeholder: NOT_ACQUIRED
+    validations:
+      required: true
+  - type: textarea
+    id: drive_authority
+    attributes:
+      label: Drive authority / reason
+      description: Current canon, reason gate, or routing evidence that defines this task and blocker handling.
+      placeholder: "CURRENT source / Reason Gate / routing evidence"
+    validations:
+      required: true
+  - type: textarea
+    id: observed_evidence
+    attributes:
+      label: Verified blocker evidence
+      description: Direct evidence for the blocker. Separate confirmed blocker facts from hypotheses.
+      placeholder: "Exact error, unavailable capability, dependency state, owner/resource lock, or Human/device requirement."
+    validations:
+      required: true
+  - type: textarea
+    id: expected_completion
+    attributes:
+      label: Restart condition and completion evidence
+      description: Exact condition that permits restart plus evidence ultimately required for completion.
+      placeholder: "Restart when ...; completion still requires ..."
+    validations:
+      required: true
+  - type: textarea
+    id: unverified_boundary
+    attributes:
+      label: Unverified / blocked boundary
+      description: State what remains unverified and what must not be inferred while the blocker exists.
+      placeholder: "Explicit residuals and no-go assumptions."
+    validations:
+      required: true
+  - type: textarea
+    id: collision_boundary
+    attributes:
+      label: Ownership / collision boundary
+      description: Concurrent work, files, branches, locks, or resources that must not be entered while blocked.
+      placeholder: "Locks, owners, files, branches, or systems to avoid."
+    validations:
+      required: false

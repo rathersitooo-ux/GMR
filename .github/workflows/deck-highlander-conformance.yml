@@ -1,0 +1,53 @@
+name: Deck Highlander Conformance
+
+on:
+  push:
+    branches:
+      - 'work/DECK-HIGHLANDER-RUNTIME-ENFORCEMENT-001-R1'
+    paths:
+      - 'tests/deck-highlander-conformance.spec.mjs'
+      - 'playwright.deck-highlander.config.mjs'
+      - '.github/workflows/deck-highlander-conformance.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'tests/deck-highlander-conformance.spec.mjs'
+      - 'playwright.deck-highlander.config.mjs'
+      - '.github/workflows/deck-highlander-conformance.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  chromium-mobile-conformance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Run isolated Deck Highlander conformance
+        run: npx playwright test --config=playwright.deck-highlander.config.mjs --workers=1
+
+      - name: Upload conformance evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: deck-highlander-conformance-${{ github.run_id }}
+          path: |
+            playwright-report-deck-highlander/
+            test-results/
+          if-no-files-found: warn
+          retention-days: 14

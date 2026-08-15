@@ -162,3 +162,53 @@ export function selectPartnerLegalCandidate({
     containsPrivate: false,
   });
 }
+
+export function revalidatePartnerLegalCandidateForExecution({
+  selectedCandidateId,
+  selectedVersions,
+  currentCandidates,
+  currentVersions,
+} = {}) {
+  const selectedId = exactToken(selectedCandidateId);
+  if (!selectedId) return fail('SELECTED_ID_REQUIRED');
+
+  const selectedTuple = exactVersionTuple(selectedVersions);
+  const currentTuple = exactVersionTuple(currentVersions);
+  if (!selectedTuple || !currentTuple) return fail('VERSION_REQUIRED');
+  if (!sameVersions(selectedTuple, currentTuple)) return fail('VERSION_MISMATCH');
+
+  const currentBoundary = selectPartnerLegalCandidate({
+    candidates: currentCandidates,
+    rule: 'left',
+    sourceVersions: currentTuple,
+    targetVersions: currentTuple,
+  });
+  if (!currentBoundary.ok) return fail(currentBoundary.error);
+
+  const exactCurrent = currentCandidates.find((candidate) => candidate?.candidateId === selectedId);
+  if (!exactCurrent) return fail('SELECTED_ID_NOT_FOUND');
+  if (exactCurrent.legal !== true || !currentBoundary.ordered.includes(selectedId)) {
+    return fail('SELECTED_NO_LONGER_LEGAL');
+  }
+
+  const exactBoundary = selectPartnerLegalCandidate({
+    candidates: [exactCurrent],
+    rule: 'left',
+    sourceVersions: currentTuple,
+    targetVersions: currentTuple,
+  });
+  if (!exactBoundary.ok || !exactBoundary.selected || exactBoundary.selected.candidateId !== selectedId) {
+    return fail('SELECTED_NO_LONGER_LEGAL');
+  }
+
+  return Object.freeze({
+    ok: true,
+    error: null,
+    selected: exactBoundary.selected,
+    ordered: Object.freeze([selectedId]),
+    next: null,
+    reason: 'REVALIDATED_CURRENT_CANDIDATE',
+    source: 'shared-legal-action-core',
+    containsPrivate: false,
+  });
+}

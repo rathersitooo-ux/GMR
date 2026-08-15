@@ -1,0 +1,56 @@
+name: QA Evidence
+description: Record test or acceptance evidence without upgrading unrun or partial checks to PASS.
+title: "[QA] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        QA evidence must identify its exact target and execution state. Unrun, skipped, action_required, partial, stale-base, or Human-unconfirmed evidence is not PASS.
+  - type: input
+    id: task_id
+    attributes:
+      label: TaskID
+      description: Exact GAMEROAD TaskID this evidence belongs to.
+      placeholder: EXAMPLE-TASK-001
+    validations:
+      required: true
+  - type: input
+    id: acquire_key
+    attributes:
+      label: AcquireKey
+      description: Acquisition key used for the tested work. Use NOT_ACQUIRED only when no acquisition exists.
+      placeholder: NOT_ACQUIRED
+    validations:
+      required: true
+  - type: textarea
+    id: drive_authority
+    attributes:
+      label: Drive authority / acceptance source
+      description: Current canon or acceptance condition against which this evidence is evaluated.
+      placeholder: "CURRENT source / exact acceptance clause"
+    validations:
+      required: true
+  - type: textarea
+    id: observed_evidence
+    attributes:
+      label: Executed evidence
+      description: Exact commit/ref, environment, command/check/run, result, and captured artifact or log.
+      placeholder: "Target SHA/ref; execution; result; evidence link or artifact."
+    validations:
+      required: true
+  - type: textarea
+    id: expected_completion
+    attributes:
+      label: Completion evidence still required
+      description: State what additional evidence is required before the TaskID can be complete, or why the executed evidence is sufficient under the current canon.
+      placeholder: "Remaining automated/runtime/Human/device evidence, or exact completed acceptance."
+    validations:
+      required: true
+  - type: textarea
+    id: unverified_boundary
+    attributes:
+      label: Unverified / blocked boundary
+      description: Explicitly identify all unrun, skipped, stale, partial, Human-only, device-only, or otherwise unverified items.
+      placeholder: "Do not leave hidden residuals."
+    validations:
+      required: true

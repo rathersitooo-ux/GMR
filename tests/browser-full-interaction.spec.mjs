@@ -533,3 +533,116 @@ test('reaches Result and exits to Home through the visible Result control only',
 
   runtime.assertClean(testInfo);
 });
+
+test('deck recovery adapter preserves blocked raw saves, legacy repair, storage failures, and reset boundaries', async ({ page }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+  const initialRaw = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
+  expect(initialRaw, 'missing save is not implicitly materialized on boot').toBeNull();
+  const defaultDeck = await page.evaluate(() => [...window.__DEFAULT_DECK__]);
+  expect(defaultDeck).toHaveLength(26);
+
+  const reloadWithRaw = async (raw) => {
+    await page.evaluate(({ key, rawValue }) => localStorage.setItem(key, rawValue), { key: STORAGE_KEY, rawValue: raw });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(800);
+    return page.evaluate((key) => ({ raw: localStorage.getItem(key), recovery: window.__GAMEROAD_SAVE_RECOVERY__.snapshot(), savedDeck: [...window.__GAMEROAD_TEST__.state.savedDeck.main], rule: { ...window.__GAMEROAD_TEST__.state.savedDeckRule } }), STORAGE_KEY);
+  };
+
+  const corruptRaw = '{not-json';
+  let observed = await reloadWithRaw(corruptRaw);
+  expect(observed.raw).toBe(corruptRaw);
+  expect(observed.recovery.inspection.status).toBe('corrupt');
+  expect(observed.recovery.classification.status).toBe('blocked');
+
+  const unknownRaw = JSON.stringify({ v: 3, opaque: { keep: 7 }, deck: { main: defaultDeck, ex: [], ruleId: 'FIRST_REGULATION', ruleRevision: 99 } });
+  observed = await reloadWithRaw(unknownRaw);
+  expect(observed.raw).toBe(unknownRaw);
+  expect(observed.recovery.classification.reason).toBe('RULE_UNKNOWN_OR_UNSUPPORTED');
+
+  const newerRaw = JSON.stringify({ v: 4, opaque: { keep: 8 }, deck: { main: defaultDeck, ex: [], ruleId: 'FIRST_REGULATION', ruleRevision: 3 } });
+  observed = await reloadWithRaw(newerRaw);
+  expect(observed.raw).toBe(newerRaw);
+  expect(observed.recovery.classification.reason).toBe('SAVE_REVISION_NEWER');
+
+  const legacyRaw = JSON.stringify({ v: 2, partner: { id: 'partner.naki' }, history: [{ keep: 'legacy-history' }], settings: { reduceMotion: true }, progression: { battlePoints: 9 }, deck: { main: defaultDeck, ex: [], ruleId: 'FIRST_REGULATION', ruleRevision: 2 }, opaque: { keep: 9 } });
+  observed = await reloadWithRaw(legacyRaw);
+  expect(observed.raw).toBe(legacyRaw);
+  expect(observed.recovery.classification.status).toBe('recognized_legacy');
+  expect(observed.savedDeck).toHaveLength(26);
+  expect(observed.rule.revision).toBe(2);
+  let legal = await installLegalBattleDeck(page);
+  expect(legal.committed).toBeTruthy();
+  let stored = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), STORAGE_KEY);
+  expect(stored.v).toBe(3);
+  expect(stored.opaque.keep).toBe(9);
+  expect(stored.history[0].keep).toBe('legacy-history');
+  expect(stored.deck.main).toHaveLength(40);
+  expect(stored.deck.ruleRevision).toBe(3);
+
+  const previousRaw = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
+  const mismatch = await page.evaluate((key) => {
+    const t = window.__GAMEROAD_TEST__, proto = Object.getPrototypeOf(localStorage), originalSetItem = proto.setItem;
+    let writes = 0;
+    Object.defineProperty(proto, 'setItem', { configurable: true, writable: true, value(k, v) { writes += 1; return originalSetItem.call(this, k, writes === 1 ? `${v}x` : v); } });
+    let committed;
+    try { committed = t.deckCommit(); } finally { Object.defineProperty(proto, 'setItem', { configurable: true, writable: true, value: originalSetItem }); }
+    return { committed, raw: localStorage.getItem(key), recovery: window.__GAMEROAD_SAVE_RECOVERY__.snapshot() };
+  }, STORAGE_KEY);
+  expect(mismatch.committed).toBeFalsy();
+  expect(mismatch.raw).toBe(previousRaw);
+  expect(mismatch.recovery.write.reason).toBe('STORAGE_READBACK_MISMATCH');
+
+  const readFailure = await page.evaluate(() => {
+    const t = window.__GAMEROAD_TEST__, proto = Object.getPrototypeOf(localStorage), originalGetItem = proto.getItem;
+    Object.defineProperty(proto, 'getItem', { configurable: true, writable: true, value() { throw new Error('forced-storage-read-failure'); } });
+    let committed;
+    try { committed = t.deckCommit(); } finally { Object.defineProperty(proto, 'getItem', { configurable: true, writable: true, value: originalGetItem }); }
+    return { committed, savedCount: t.state.savedDeck.main.length, recovery: window.__GAMEROAD_SAVE_RECOVERY__.snapshot() };
+  });
+  expect(readFailure.committed).toBeFalsy();
+  expect(readFailure.savedCount).toBe(40);
+  expect(readFailure.recovery.write.reason).toBe('STORAGE_READ_FAILED');
+
+  page.once('dialog', async (dialog) => dialog.accept());
+  const removeFailure = page.evaluate(() => {
+    const proto = Object.getPrototypeOf(localStorage), originalRemoveItem = proto.removeItem;
+    Object.defineProperty(proto, 'removeItem', { configurable: true, writable: true, value() { throw new Error('forced-storage-remove-failure'); } });
+    document.querySelector('#resetSave').click();
+    Object.defineProperty(proto, 'removeItem', { configurable: true, writable: true, value: originalRemoveItem });
+    return { raw: localStorage.getItem('gameroad.browser.v10.core.1'), savedCount: window.__GAMEROAD_TEST__.state.savedDeck.main.length, recovery: window.__GAMEROAD_SAVE_RECOVERY__.snapshot() };
+  });
+  const removeFailureResult = await removeFailure;
+  expect(removeFailureResult.raw).toBe(previousRaw);
+  expect(removeFailureResult.savedCount).toBe(40);
+  expect(removeFailureResult.recovery.reset.reason).toBe('STORAGE_REMOVE_FAILED');
+
+  page.once('dialog', async (dialog) => dialog.accept());
+  await page.evaluate(() => document.querySelector('#resetSave').click());
+  await page.waitForTimeout(120);
+  const afterReset = await page.evaluate((key) => ({ raw: localStorage.getItem(key), savedCount: window.__GAMEROAD_TEST__.state.savedDeck.main.length, rule: { ...window.__GAMEROAD_TEST__.state.savedDeckRule } }), STORAGE_KEY);
+  expect(afterReset.raw, 'explicit reset does not resurrect default26 as a durable save').toBeNull();
+  expect(afterReset.savedCount).toBe(26);
+  expect(afterReset.rule.id).toBeNull();
+
+  const writeFailure = await page.evaluate((key) => {
+    const t = window.__GAMEROAD_TEST__;
+    const publicMain = new Set(t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
+    const standard = window.__CARD_DATA__.filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank))).map((card) => card.id);
+    const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
+    const nonRoyal = standard.filter((id) => !t.isRoyalCard(id));
+    const main = [...nonRoyal.slice(0, 37), ...royalIds];
+    const setValidation = t.deckSetDraft(main, []);
+    const proto = Object.getPrototypeOf(localStorage), originalSetItem = proto.setItem;
+    Object.defineProperty(proto, 'setItem', { configurable: true, writable: true, value() { throw new Error('forced-storage-write-failure'); } });
+    let committed;
+    try { committed = t.deckCommit(); } finally { Object.defineProperty(proto, 'setItem', { configurable: true, writable: true, value: originalSetItem }); }
+    return { committed, setValidation, raw: localStorage.getItem(key), recovery: window.__GAMEROAD_SAVE_RECOVERY__.snapshot(), savedCount: t.state.savedDeck.main.length };
+  }, STORAGE_KEY);
+  expect(writeFailure.setValidation.ok).toBeTruthy();
+  expect(writeFailure.committed).toBeFalsy();
+  expect(writeFailure.raw).toBeNull();
+  expect(writeFailure.savedCount).toBe(26);
+  expect(writeFailure.recovery.write.status).toBe('failed');
+  runtime.assertClean(testInfo);
+});

@@ -1,0 +1,12 @@
+* text=auto
+
+*.html text eol=lf
+*.htm text eol=lf
+*.xml text eol=lf
+*.rbxlx text eol=lf
+*.lua text eol=lf
+*.luau text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf

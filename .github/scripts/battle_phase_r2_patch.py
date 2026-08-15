@@ -1,33 +1,35 @@
 from pathlib import Path
+import subprocess
 
 PATH = Path("browser/GAMEROAD.html")
-SENTINEL = "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001-R2-DEDICATED-SURFACE"
+GOOD_R2_COMMIT = "915b78485d5064a739396032f37f3a86a2617ae9"
+STYLE_START = '<style id="gameroad-battle-phase-presentation-r2-dedicated">'
+STYLE_END = "</style>"
 SCRIPT_START = '<script id="gameroad-battle-phase-presentation-r2-dedicated-script">'
 SCRIPT_END = "</script>"
-CSS_ANCHOR = '@media(prefers-reduced-motion:reduce){.battlePhaseCutin{transition:none!important}.battlePhaseBackdrop{transform:none!important}}'
+SENTINEL = "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001-R2-DEDICATED-SURFACE"
 CUTIN_SENTINEL = "BATTLE-PHASE-R2-CUTIN-HOLD"
 
-text = PATH.read_text(encoding="utf-8")
-
-if text.count(SENTINEL) != 1:
-    raise SystemExit(f"R2 sentinel count={text.count(SENTINEL)}; expected 1")
-if text.count(SCRIPT_START) != 1:
-    raise SystemExit(f"R2 script start count={text.count(SCRIPT_START)}; expected 1")
-if text.count(CSS_ANCHOR) != 1:
-    raise SystemExit(f"R2 CSS anchor count={text.count(CSS_ANCHOR)}; expected 1")
-
-start = text.index(SCRIPT_START)
-end = text.index(SCRIPT_END, start) + len(SCRIPT_END)
-old_script = text[start:end]
-
-required_old_fragments = (
-    "const baseRenderBattle=renderBattle;",
-    "const baseSetBattlePresentation=setBattlePresentation;",
-    "mountChar('#battlePhaseNaki','partner.naki','dot_break_entry')",
+current = PATH.read_text(encoding="utf-8")
+good = subprocess.check_output(
+    ["git", "show", f"{GOOD_R2_COMMIT}:browser/GAMEROAD.html"],
+    text=True,
+    encoding="utf-8",
 )
-for fragment in required_old_fragments:
-    if fragment not in old_script:
-        raise SystemExit(f"expected broken R2 fragment missing: {fragment}")
+
+if current.count(STYLE_START) != 1:
+    raise SystemExit(f"current R2 style count={current.count(STYLE_START)}; expected 1")
+if good.count(STYLE_START) != 1 or good.count(SCRIPT_START) != 1:
+    raise SystemExit("verified pre-fix source does not contain exactly one R2 style/script block")
+if good.count(SENTINEL) != 1:
+    raise SystemExit("verified pre-fix source lost R2 sentinel")
+
+# Recover the exact known-good dedicated-scene CSS from the pre-fix commit.
+g_style_start = good.index(STYLE_START)
+g_style_end = good.index(STYLE_END, g_style_start) + len(STYLE_END)
+base_style = good[g_style_start:g_style_end]
+if "baseRenderBattle=renderBattle" not in good:
+    raise SystemExit("verified pre-fix source identity check failed")
 
 cutin_css = r'''
 /* BATTLE-PHASE-R2-CUTIN-HOLD: keep unrevealed battle data visually inaccessible until Naki's entry cut-in clears. */
@@ -37,11 +39,7 @@ cutin_css = r'''
 .battlePhaseSurface.cutinHold .battlePhaseResolutionSlot,.battlePhaseSurface.cutinHold .battlePhaseTarget{visibility:hidden!important;pointer-events:none!important}
 @media(max-width:700px){.battlePhaseSurface.cutinHold .battlePhaseCutin{top:8%!important;bottom:0!important}.battlePhaseSurface.cutinHold .battlePhaseNaki{inset:4% 10% 0!important}}
 '''
-
-if CUTIN_SENTINEL not in text:
-    text = text.replace(CSS_ANCHOR, cutin_css + CSS_ANCHOR, 1)
-elif text.count(CUTIN_SENTINEL) != 1:
-    raise SystemExit(f"cut-in hold sentinel count={text.count(CUTIN_SENTINEL)}; expected <=1")
+rebuilt_style = base_style[:-len(STYLE_END)] + cutin_css + STYLE_END
 
 new_script = r'''<script id="gameroad-battle-phase-presentation-r2-dedicated-script">
 (()=>{
@@ -102,30 +100,38 @@ new_script = r'''<script id="gameroad-battle-phase-presentation-r2-dedicated-scr
 })();
 </script>'''
 
-text = text[:start] + new_script + text[end:]
+# Replace the entire potentially malformed R2 style+script tail in one operation.
+c_style_start = current.index(STYLE_START)
+c_script_start = current.index(SCRIPT_START, c_style_start)
+c_script_end = current.index(SCRIPT_END, c_script_start) + len(SCRIPT_END)
+rebuilt_block = rebuilt_style + "\n" + new_script
+fixed = current[:c_style_start] + rebuilt_block + current[c_script_end:]
 
-new_block = text[text.index(SCRIPT_START):text.index(SCRIPT_END, text.index(SCRIPT_START)) + len(SCRIPT_END)]
+block = fixed[c_style_start:c_style_start + len(rebuilt_block)]
 checks = {
-    "sentinel": text.count(SENTINEL),
-    "surface": text.count('id="battlePhaseSurface"'),
-    "script": text.count(SCRIPT_START),
-    "cutin_hold": text.count(CUTIN_SENTINEL),
-    "probe": new_block.count("__GAMEROAD_BATTLE_PHASE_R2__"),
-    "observer": new_block.count("new MutationObserver(syncShell)"),
-    "naki_character": new_block.count("characterId:'partner.naki'"),
-    "naki_state": new_block.count("state:'dot_break_entry'"),
+    "style": fixed.count(STYLE_START),
+    "script": fixed.count(SCRIPT_START),
+    "sentinel": fixed.count(SENTINEL),
+    "surface": fixed.count('id="battlePhaseSurface"'),
+    "cutin_hold": block.count(CUTIN_SENTINEL),
+    "probe": block.count("__GAMEROAD_BATTLE_PHASE_R2__"),
+    "observer": block.count("new MutationObserver(syncShell)"),
+    "naki_character": block.count("characterId:'partner.naki'"),
+    "naki_state": block.count("state:'dot_break_entry'"),
 }
 bad = {key: value for key, value in checks.items() if value != 1}
 if bad:
-    raise SystemExit(f"post-fix uniqueness failure: {bad}")
+    raise SystemExit(f"post-rebuild uniqueness failure: {bad}")
 for forbidden in (
     "baseRenderBattle=renderBattle",
     "baseSetBattlePresentation=setBattlePresentation",
     "mountChar('#battlePhaseNaki",
     "state.match",
 ):
-    if forbidden in new_block:
+    if forbidden in block:
         raise SystemExit(f"private-runtime dependency still present: {forbidden}")
+if "</style>\n<script id=\"gameroad-battle-phase-presentation-r2-dedicated-script\">" not in rebuilt_block:
+    raise SystemExit("R2 style/script boundary is malformed")
 
-PATH.write_text(text, encoding="utf-8")
-print("R2 DOM-observer fix applied", checks)
+PATH.write_text(fixed, encoding="utf-8")
+print("R2 block rebuilt from verified source", checks)

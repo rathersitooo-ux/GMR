@@ -56,12 +56,23 @@ function collectStaticErrors(html) {
     if (!pattern.test(html)) errors.push(message);
   }
 
-  for (const forbidden of [
-    'const baseRenderBattle=renderBattle',
-    'const baseSetBattlePresentation=setBattlePresentation',
-    "mountChar('#battlePhaseNaki",
-  ]) {
-    if (html.includes(forbidden)) errors.push(`dedicated battle phase leaks into private runtime scope: ${forbidden}`);
+  const dedicatedScriptMatch = html.match(
+    /<script\s+id=["']gameroad-battle-phase-presentation-r2-dedicated-script["'][^>]*>([\s\S]*?)<\/script\s*>/i,
+  );
+  if (!dedicatedScriptMatch) {
+    errors.push('missing dedicated Battle Phase script body');
+  } else {
+    const dedicatedScript = dedicatedScriptMatch[1];
+    for (const forbidden of [
+      'const baseRenderBattle=renderBattle',
+      'const baseSetBattlePresentation=setBattlePresentation',
+      "mountChar('#battlePhaseNaki",
+      'state.match',
+    ]) {
+      if (dedicatedScript.includes(forbidden)) {
+        errors.push(`dedicated battle phase leaks into private runtime scope: ${forbidden}`);
+      }
+    }
   }
 
   return errors;

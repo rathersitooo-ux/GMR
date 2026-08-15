@@ -92,48 +92,8 @@ async function numericText(locator) {
   return Number.parseInt((await locator.textContent()) ?? '', 10);
 }
 
-test('captures success-state screenshots for current pointer navigation', async ({ page }, testInfo) => {
-  const runtime = observeRuntimeErrors(page);
-  await bootCurrentBrowser(page);
-  await attachStateScreenshot(page, testInfo, 'home');
-
-  let pointerTransitions = 0;
-  const unreachableTargets = [];
-
-  for (const target of NAV_TARGETS) {
-    await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(500);
-
-    const control = visibleHomeControl(page, target);
-    if ((await control.count()) === 0) {
-      unreachableTargets.push(target);
-      continue;
-    }
-
-    await control.click({ timeout: 5_000 });
-    pointerTransitions += 1;
-    const targetSection = page.locator(`section[data-screen="${target}"]`);
-    await expect(targetSection, `pointer navigation target ${target}`).toBeVisible();
-    await page.waitForTimeout(120);
-    await attachStateScreenshot(page, testInfo, target);
-  }
-
-  if (unreachableTargets.length > 0) {
-    testInfo.annotations.push({
-      type: 'not-yet-covered',
-      description: `No visible root control for: ${unreachableTargets.join(', ')}. This evidence does not claim full interaction coverage.`,
-    });
-  }
-
-  expect(pointerTransitions, 'at least one real visible Home pointer transition').toBeGreaterThan(0);
-  runtime.assertClean(testInfo);
-});
-
-test('persists a legal 40-card deck across save and page reload through visible UI', async ({ page }, testInfo) => {
-  const runtime = observeRuntimeErrors(page);
-  await bootCurrentBrowser(page);
-  let cards = await enterCardsFromHome(page);
-
+async function buildAndSaveLegal40Deck(page, testInfo) {
+  const cards = await enterCardsFromHome(page);
   const deckCount = cards.locator('#deckCount');
   const initialCount = await numericText(deckCount);
   expect(Number.isFinite(initialCount), 'initial main-deck count').toBeTruthy();
@@ -190,14 +150,58 @@ test('persists a legal 40-card deck across save and page reload through visible 
   await saveDeck.click();
   await expect(cards.locator('#deckSaveState')).toHaveText('保存済み');
 
-  const storedBeforeReload = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
-  expect(storedBeforeReload, `${STORAGE_KEY} after Save`).not.toBeNull();
+  const storedState = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
+  expect(storedState, `${STORAGE_KEY} after Save`).not.toBeNull();
+  return { cards, storedState };
+}
+
+test('captures success-state screenshots for current pointer navigation', async ({ page }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+  await attachStateScreenshot(page, testInfo, 'home');
+
+  let pointerTransitions = 0;
+  const unreachableTargets = [];
+
+  for (const target of NAV_TARGETS) {
+    await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(500);
+
+    const control = visibleHomeControl(page, target);
+    if ((await control.count()) === 0) {
+      unreachableTargets.push(target);
+      continue;
+    }
+
+    await control.click({ timeout: 5_000 });
+    pointerTransitions += 1;
+    const targetSection = page.locator(`section[data-screen="${target}"]`);
+    await expect(targetSection, `pointer navigation target ${target}`).toBeVisible();
+    await page.waitForTimeout(120);
+    await attachStateScreenshot(page, testInfo, target);
+  }
+
+  if (unreachableTargets.length > 0) {
+    testInfo.annotations.push({
+      type: 'not-yet-covered',
+      description: `No visible root control for: ${unreachableTargets.join(', ')}. This evidence does not claim full interaction coverage.`,
+    });
+  }
+
+  expect(pointerTransitions, 'at least one real visible Home pointer transition').toBeGreaterThan(0);
+  runtime.assertClean(testInfo);
+});
+
+test('persists a legal 40-card deck across save and page reload through visible UI', async ({ page }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+  const { storedState: storedBeforeReload } = await buildAndSaveLegal40Deck(page, testInfo);
   await attachStateScreenshot(page, testInfo, 'deck-saved-40');
 
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(1_000);
   await expect(page.locator('section[data-screen="home"]')).toBeVisible();
-  cards = await enterCardsFromHome(page);
+  const cards = await enterCardsFromHome(page);
 
   await expect(cards.locator('#deckCount'), 'main deck after reload').toHaveText('40');
   await expect(cards.locator('#exDeckCount'), 'EX deck after reload').toHaveText('0');
@@ -224,9 +228,14 @@ async function inventoryElements(locator) {
   })));
 }
 
-test('R3 diagnostic: inventories current Setup Battle Result visible contracts', async ({ page }, testInfo) => {
+test('R3 diagnostic: enters Battle after a legal visible deck and inventories current controls', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
+  await buildAndSaveLegal40Deck(page, testInfo);
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(1_000);
+  await expect(page.locator('section[data-screen="home"]')).toBeVisible();
 
   const setupControl = visibleHomeControl(page, 'setup');
   await expect(setupControl).toBeVisible();
@@ -239,35 +248,32 @@ test('R3 diagnostic: inventories current Setup Battle Result visible contracts',
     setupBeforeStart: {
       text: (await setup.textContent())?.replace(/\s+/g, ' ').trim().slice(0, 3000),
       buttons: await inventoryElements(setup.locator('button')),
-      selects: await inventoryElements(setup.locator('select')),
-      inputs: await inventoryElements(setup.locator('input')),
     },
-    activeScreenAfterStartAttempt: null,
-    battleAfterStartAttempt: null,
+    activeScreenAfterStart: null,
+    battleAfterStart: null,
     resultContract: {
       buttons: await inventoryElements(page.locator('section[data-screen="result"] button')),
     },
   };
 
   const startMatch = setup.locator('#startMatch:visible');
-  if ((await startMatch.count()) > 0 && await startMatch.isEnabled()) {
-    await startMatch.click();
-    await page.waitForTimeout(500);
-    diagnostic.activeScreenAfterStartAttempt = await page.locator('section[data-screen]:visible').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-screen')));
-    const battle = page.locator('section[data-screen="battle"]');
-    diagnostic.battleAfterStartAttempt = {
-      visible: await battle.isVisible().catch(() => false),
-      text: (await battle.textContent())?.replace(/\s+/g, ' ').trim().slice(0, 4000),
-      buttons: await inventoryElements(battle.locator('button')),
-      selects: await inventoryElements(battle.locator('select')),
-      inputs: await inventoryElements(battle.locator('input')),
-    };
-    await attachStateScreenshot(page, testInfo, 'r3-after-start-attempt');
-  } else {
-    await attachStateScreenshot(page, testInfo, 'r3-setup-start-unavailable');
-  }
+  await expect(startMatch, 'legal saved deck enables Setup start').toBeVisible();
+  await expect(startMatch, 'legal saved deck enables Setup start').toBeEnabled();
+  await startMatch.click();
+  await page.waitForTimeout(600);
 
-  await testInfo.attach(`${testInfo.project.name}-r3-setup-battle-result-inventory.json`, {
+  diagnostic.activeScreenAfterStart = await page.locator('section[data-screen]:visible').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-screen')));
+  const battle = page.locator('section[data-screen="battle"]');
+  await expect(battle, 'Setup start opens Battle').toBeVisible();
+  diagnostic.battleAfterStart = {
+    text: (await battle.textContent())?.replace(/\s+/g, ' ').trim().slice(0, 5000),
+    buttons: await inventoryElements(battle.locator('button')),
+    selects: await inventoryElements(battle.locator('select')),
+    inputs: await inventoryElements(battle.locator('input')),
+  };
+
+  await attachStateScreenshot(page, testInfo, 'r3-battle-entry');
+  await testInfo.attach(`${testInfo.project.name}-r3-battle-entry-inventory.json`, {
     body: Buffer.from(JSON.stringify(diagnostic, null, 2)),
     contentType: 'application/json',
   });

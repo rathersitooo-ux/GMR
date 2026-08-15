@@ -40,5 +40,6 @@ test('missing source/version fails closed and cannot be promoted by input',async
   const runtime=runtimeGuard(page);await page.goto(URL,{waitUntil:'domcontentloaded'});
   const broken=await page.evaluate(()=>{const api=window.__LEARNING_CROSSMEDIA_WHITEBOX__;const f=api.fixtures().spinosaurus;f.sourceVersion='';return api.loadFixtureForTest(f)});
   expect(broken.outcome).toBe('FAIL_CLOSED');expect(broken.validation).toBe('SOURCE_INCOMPLETE');expect(await page.evaluate(()=>window.__LEARNING_CROSSMEDIA_WHITEBOX__.decide('BOUNDED_SUPPORT'))).toBe('FAIL_CLOSED');
-  await expect(page.locator('#status')).toContainText('判定を停止');await expect(page.locator('button[data-decision]')).toBeDisabled();runtime.assertClean();
+  await expect(page.locator('#status')).toContainText('判定を停止');
+  const decisionButtons=page.locator('button[data-decision]');expect(await decisionButtons.count()).toBe(3);for(let i=0;i<3;i++)await expect(decisionButtons.nth(i)).toBeDisabled();runtime.assertClean();
 });

@@ -78,7 +78,7 @@ jobs:
           const host=await hostContext.newPage();
           const guest=await guestContext.newPage();
           for(const [label,page] of [['HOST',host],['GUEST',guest]]){
-            page.on('console',m=>{if(/friend|room|relay|socket|hate|ヘイト|参加/i.test(m.text()))console.log(label+'_CONSOLE',m.type(),m.text())});
+            page.on('console',m=>{if(/friend|room|relay|socket|hate|ヘイト|参加|deck|デッキ/i.test(m.text()))console.log(label+'_CONSOLE',m.type(),m.text())});
             page.on('pageerror',e=>console.log(label+'_PAGEERROR',String(e)));
           }
           const relay='ws://127.0.0.1:8765/ws';
@@ -93,12 +93,26 @@ jobs:
           const code=await host.evaluate(()=>window.GAMEROAD_FRIEND_ROOM_R2.create(2));
           await guest.goto(app,{waitUntil:'domcontentloaded'});
           await guest.evaluate(c=>window.GAMEROAD_FRIEND_ROOM_R2.join(c),code);
+          await wait(async()=>{const s=await api(guest);return s.pid==='P2'&&s.roomState==='lobby'?s:false},'guest-accepted');
           await wait(async()=>{const s=await api(host);return s.participants?.find(x=>x.pid==='P2')?.connected?s:false},'guest-connected');
-          await guest.evaluate(()=>window.GAMEROAD_FRIEND_ROOM_R2.ready());
-          await host.evaluate(()=>window.GAMEROAD_FRIEND_ROOM_R2.ready());
+
+          const guestReadyResult=await guest.evaluate(()=>window.GAMEROAD_FRIEND_ROOM_R2.ready());
+          console.log('GUEST_READY_RESULT',guestReadyResult);
+          await wait(async()=>{const s=await api(host);return s.participants?.find(x=>x.pid==='P2')?.ready?s:false},'guest-ready-reflected');
+
+          const hostReadyResult=await host.evaluate(()=>window.GAMEROAD_FRIEND_ROOM_R2.ready());
+          console.log('HOST_READY_RESULT',hostReadyResult);
           await wait(async()=>{const s=await api(host);return s.ready&&s.participants?.find(x=>x.pid==='P2')?.ready?s:false},'all-ready');
+          await new Promise(r=>setTimeout(r,250));
+          const preStart=await host.evaluate(()=>({status:window.GAMEROAD_FRIEND_ROOM_R2.status(),internal:eval(`({allReady:allReady(),roomState:FR.roomState,hostReady:FR.hostReady,p2:FR.slots.P2?{connected:FR.slots.P2.connected,ready:FR.slots.P2.ready,clientId:FR.slots.P2.clientId,lastSeq:FR.slots.P2.lastSeq}:null,setupMode:state.setupMode,setupContent:state.setupContent})`)}));
+          console.log('PRE_START',JSON.stringify(preStart));
           const started=await host.evaluate(()=>window.GAMEROAD_FRIEND_ROOM_R2.start());
-          if(!started)throw new Error('host-start-failed');
+          console.log('HOST_START_RESULT',started);
+          if(!started){
+            const postFail=await host.evaluate(()=>({status:window.GAMEROAD_FRIEND_ROOM_R2.status(),internal:eval(`({allReady:allReady(),roomState:FR.roomState,hostReady:FR.hostReady,p2:FR.slots.P2?{connected:FR.slots.P2.connected,ready:FR.slots.P2.ready,lastSeq:FR.slots.P2.lastSeq}:null,setupMode:state.setupMode,setupContent:state.setupContent,screen:state.screen})`)}));
+            console.log('POST_START_FAIL',JSON.stringify(postFail));
+            throw new Error('host-start-failed');
+          }
           await wait(async()=>{const s=await api(guest);return s.roomState==='playing'?s:false},'guest-playing');
 
           const setup=await host.evaluate(()=>{
@@ -139,14 +153,14 @@ jobs:
           console.log('AFTER_RECONNECT',JSON.stringify({dropHate,reconnectHate,delta:reconnectHate-dropHate,p2:afterReconnect.participants?.find(x=>x.pid==='P2'),signature:afterReconnect.hateAuthority?.values?.P2?.signature}));
           console.log('RELAY_EVENTS',JSON.stringify(relayEvents));
 
-          const disconnectedRecorded= duringDrop.participants?.find(x=>x.pid==='P2')?.connected===false;
+          const disconnectedRecorded=duringDrop.participants?.find(x=>x.pid==='P2')?.connected===false;
           const gapAccrual=dropHate-beforeDrop;
-          const semanticPass=disconnectedRecorded && gapAccrual===0;
+          const semanticPass=disconnectedRecorded&&gapAccrual===0;
           const result={semanticPass,disconnectedRecorded,gapAccrual,beforeDrop,dropHate,reconnectHate,publicWssVerified:false,testRelayOnly:true,productionHtmlMutated:false};
           console.log('HATE_R3_ACTUAL_WS_RESULT',JSON.stringify(result));
+          await import('node:fs/promises').then(fs=>fs.writeFile('/tmp/hate-r3-result.json',JSON.stringify(result)));
           await browser.close();
           await new Promise(r=>wss.close(r));
-          await import('node:fs/promises').then(fs=>fs.writeFile('/tmp/hate-r3-result.json',JSON.stringify(result)));
           JS
           node .hate-r3-actual-ws.mjs | tee /tmp/hate-r3-actual-ws.log
           rm -f .hate-r3-actual-ws.mjs

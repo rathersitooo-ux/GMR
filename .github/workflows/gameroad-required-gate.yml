@@ -1,0 +1,133 @@
+name: GAMEROAD Required Gate
+
+on:
+  pull_request:
+    branches:
+      - main
+  merge_group:
+
+permissions:
+  contents: read
+
+jobs:
+  required-gate:
+    name: GAMEROAD Required Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Classify changed paths
+        id: classify
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${BASE_SHA}" || -z "${HEAD_SHA}" ]]; then
+            echo "Unable to resolve comparison SHAs."
+            exit 1
+          fi
+
+          git diff --name-only "${BASE_SHA}" "${HEAD_SHA}" > /tmp/gameroad-changed.txt
+          echo "Changed paths:"
+          cat /tmp/gameroad-changed.txt
+
+          browser=false
+          dino=false
+          advice=false
+          unclassified=false
+          : > /tmp/gameroad-unclassified.txt
+
+          while IFS= read -r path; do
+            [[ -z "${path}" ]] && continue
+            case "${path}" in
+              browser/GAMEROAD.html|\
+              tests/browser-static-check.mjs|\
+              tests/browser-runtime-smoke.spec.mjs|\
+              tests/browser-full-interaction.spec.mjs|\
+              playwright.config.mjs|\
+              playwright.full-interaction.config.mjs|\
+              .github/workflows/browser-node-ci.yml|\
+              .github/workflows/browser-runtime-smoke.yml|\
+              .github/workflows/browser-full-interaction.yml)
+                browser=true
+                ;;
+              browser/dino-dig-mobile-whitebox.html|\
+              tests/dino-dig-mobile-whitebox.spec.mjs|\
+              playwright.dino-dig.config.mjs|\
+              .github/workflows/dino-dig-mobile-whitebox.yml)
+                dino=true
+                ;;
+              tools/advice-collective-eval.mjs|\
+              tests/advice-collective-eval.test.mjs|\
+              .github/workflows/advice-collective-eval.yml)
+                advice=true
+                ;;
+              .github/workflows/gameroad-required-gate.yml|README.md|.gitignore|.gitattributes)
+                ;;
+              browser/*|roblox/*|unity/*|tools/*|tests/*|.github/workflows/*|\
+              playwright*.mjs|*.js|*.mjs|*.ts|*.tsx|*.lua|*.luau|*.html|*.css|\
+              package.json|package-lock.json)
+                unclassified=true
+                printf '%s\n' "${path}" >> /tmp/gameroad-unclassified.txt
+                ;;
+              *)
+                ;;
+            esac
+          done < /tmp/gameroad-changed.txt
+
+          {
+            echo "browser=${browser}"
+            echo "dino=${dino}"
+            echo "advice=${advice}"
+            echo "unclassified=${unclassified}"
+          } >> "${GITHUB_OUTPUT}"
+
+          if [[ "${unclassified}" == "true" ]]; then
+            echo "Unclassified executable/CI paths:"
+            cat /tmp/gameroad-unclassified.txt
+          fi
+
+      - name: Set up Node
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.advice == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run Browser static check
+        if: steps.classify.outputs.browser == 'true'
+        run: node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+
+      - name: Run Advice offline evaluator tests
+        if: steps.classify.outputs.advice == 'true'
+        run: node --test tests/advice-collective-eval.test.mjs
+
+      - name: Install Playwright and Chromium
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true'
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+
+      - name: Run Browser runtime smoke
+        if: steps.classify.outputs.browser == 'true'
+        run: npx playwright test --config=playwright.config.mjs --workers=1
+
+      - name: Run Browser full interaction evidence
+        if: steps.classify.outputs.browser == 'true'
+        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
+
+      - name: Run DINO DIG mobile whitebox smoke
+        if: steps.classify.outputs.dino == 'true'
+        run: npx playwright test --config=playwright.dino-dig.config.mjs --workers=1
+
+      - name: Fail closed on unclassified executable or CI paths
+        if: always() && steps.classify.outputs.unclassified == 'true'
+        run: |
+          echo "Required gate has no approved test mapping for these executable/CI paths:"
+          cat /tmp/gameroad-unclassified.txt
+          exit 1

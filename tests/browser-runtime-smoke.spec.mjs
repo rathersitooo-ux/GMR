@@ -294,7 +294,7 @@ test('partner delegation preserves the player-selected match envelope and reject
   expect(evidence.secondCheck).toEqual({ ok: true, reason: 'ok' });
 });
 
-test('2v2 current runtime exposes four-seat team and target evidence', async ({ page }) => {
+test('2v2 starts four seats with canonical P1/P2 vs P3/P4 team assignment', async ({ page }) => {
   const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
   expect(response, 'main HTML response').not.toBeNull();
   expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
@@ -310,28 +310,21 @@ test('2v2 current runtime exposes four-seat team and target evidence', async ({ 
     if (!core) throw new Error('GAMEROAD runtime test hook is unavailable');
     const match = core.start('2v2', 'road_shield');
     if (!match) throw new Error('2v2 match failed to start');
-
-    const scalarSnapshot = (player) => Object.fromEntries(
-      Object.entries(player).filter(([, value]) => value == null || ['string', 'number', 'boolean'].includes(typeof value)),
-    );
-    const targetSelect = document.querySelector('#targetPlayer');
-    const targetOptions = targetSelect
-      ? Array.from(targetSelect.options).map((option) => ({ value: option.value, text: option.textContent ?? '' }))
-      : [];
-
     return {
       mode: match.mode ?? null,
       screen: core.state.screen ?? null,
-      matchKeys: Object.keys(match).sort(),
-      players: Array.isArray(match.players) ? match.players.map(scalarSnapshot) : [],
-      targetOptions,
-      targetLaneOptions: Array.from(document.querySelector('#targetLane')?.options ?? []).map((option) => option.value),
-      targetShieldOptions: Array.from(document.querySelector('#targetShield')?.options ?? []).map((option) => option.value),
+      teams: Array.isArray(match.players)
+        ? match.players.map((player) => ({ id: player.id, team: player.team ?? null }))
+        : [],
     };
   });
 
-  console.log(`GAMEROAD_2V2_RUNTIME_SNAPSHOT ${JSON.stringify(evidence)}`);
   expect(evidence.mode).toBe('2v2');
   expect(evidence.screen).toBe('battle');
-  expect(evidence.players).toHaveLength(4);
+  expect(evidence.teams).toEqual([
+    { id: 'P1', team: 'A' },
+    { id: 'P2', team: 'A' },
+    { id: 'P3', team: 'B' },
+    { id: 'P4', team: 'B' },
+  ]);
 });

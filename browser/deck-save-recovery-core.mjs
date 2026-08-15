@@ -110,14 +110,28 @@ export function classifyDeckProjection({ inspection, projection, authority } = {
   }
 
   const { saveRevision, ruleId, ruleRevision, deckSize, deckLegal } = projection;
-  if (!nonNegativeInteger(saveRevision) || !nonEmptyString(ruleId) ||
-      !nonNegativeInteger(ruleRevision) || !nonNegativeInteger(deckSize) ||
-      typeof deckLegal !== 'boolean') {
+  if (!nonNegativeInteger(saveRevision) || !nonNegativeInteger(deckSize) || typeof deckLegal !== 'boolean') {
     return decision('blocked', 'DECK_PROJECTION_INVALID');
   }
 
   if (saveRevision > normalizedAuthority.currentSaveRevision) {
     return decision('blocked', 'SAVE_REVISION_NEWER');
+  }
+
+  const ruleIdMissing = ruleId === null || ruleId === undefined;
+  const ruleRevisionMissing = ruleRevision === null || ruleRevision === undefined;
+  if (ruleIdMissing && ruleRevisionMissing) {
+    return decision(
+      'recognized_legacy',
+      deckLegal ? 'LEGACY_UNVERSIONED_CURRENT_COMPATIBLE' : 'LEGACY_UNVERSIONED_REPAIRABLE',
+      { unversioned: true },
+    );
+  }
+  if (ruleIdMissing !== ruleRevisionMissing) {
+    return decision('blocked', 'RULE_IDENTITY_PARTIAL');
+  }
+  if (!nonEmptyString(ruleId) || !nonNegativeInteger(ruleRevision)) {
+    return decision('blocked', 'RULE_IDENTITY_INVALID');
   }
 
   const isCurrentRule = ruleId === normalizedAuthority.currentRuleId &&
@@ -218,6 +232,91 @@ export function writePreparedSave(storage, key, preparedCommit) {
   } catch {
     return decision('failed', 'STORAGE_WRITE_FAILED');
   }
+}
+
+function restorePreviousRaw(storage, key, previousRawValue) {
+  try {
+    if (previousRawValue === null) {
+      if (typeof storage.removeItem !== 'function') {
+        return decision('failed', 'STORAGE_ROLLBACK_REMOVE_UNAVAILABLE', { originalPreserved: false });
+      }
+      storage.removeItem(key);
+    } else {
+      storage.setItem(key, previousRawValue);
+    }
+    const restored = storage.getItem(key);
+    if (restored !== previousRawValue) {
+      return decision('failed', 'STORAGE_ROLLBACK_VERIFY_FAILED', { originalPreserved: false });
+    }
+    return decision('restored', 'STORAGE_ROLLBACK_OK', { originalPreserved: true });
+  } catch {
+    return decision('failed', 'STORAGE_ROLLBACK_FAILED', { originalPreserved: false });
+  }
+}
+
+export function writePreparedSaveVerified(storage, key, preparedCommit, options = {}) {
+  if (!preparedCommit || preparedCommit.schema !== SCHEMA || preparedCommit.status !== 'prepared') {
+    return decision('failed', 'PREPARED_COMMIT_REQUIRED');
+  }
+  if (!storage || typeof storage.setItem !== 'function' || typeof storage.getItem !== 'function') {
+    return decision('failed', 'STORAGE_VERIFIED_WRITE_UNAVAILABLE');
+  }
+  if (!nonEmptyString(key)) throw new TypeError('STORAGE_KEY_REQUIRED');
+
+  let previousRawValue;
+  if (Object.prototype.hasOwnProperty.call(options, 'previousRawValue')) {
+    previousRawValue = options.previousRawValue;
+    if (previousRawValue !== null && typeof previousRawValue !== 'string') {
+      return decision('failed', 'PREVIOUS_RAW_INVALID');
+    }
+  } else {
+    try {
+      previousRawValue = storage.getItem(key);
+    } catch {
+      return decision('failed', 'STORAGE_READ_FAILED');
+    }
+  }
+
+  let writeFailed = false;
+  try {
+    storage.setItem(key, preparedCommit.serialized);
+  } catch {
+    writeFailed = true;
+  }
+
+  let readback;
+  let readbackFailed = false;
+  try {
+    readback = storage.getItem(key);
+  } catch {
+    readbackFailed = true;
+  }
+
+  if (!writeFailed && !readbackFailed && readback === preparedCommit.serialized) {
+    return decision('saved', 'STORAGE_WRITE_READBACK_OK', { originalPreserved: true });
+  }
+
+  if (writeFailed && !readbackFailed && readback === previousRawValue) {
+    return decision('failed', 'STORAGE_WRITE_FAILED', { originalPreserved: true, rolledBack: false });
+  }
+
+  const failureReason = writeFailed
+    ? 'STORAGE_WRITE_FAILED'
+    : readbackFailed
+      ? 'STORAGE_READBACK_FAILED'
+      : 'STORAGE_READBACK_MISMATCH';
+  const rollback = restorePreviousRaw(storage, key, previousRawValue);
+  if (rollback.status !== 'restored') {
+    return decision('failed', rollback.reason, {
+      originalPreserved: false,
+      rolledBack: false,
+      writeFailureReason: failureReason,
+    });
+  }
+  return decision('failed', failureReason, {
+    originalPreserved: true,
+    rolledBack: true,
+  });
 }
 
 export function resetExplicitSaveKeys(storage, keys, { confirmed = false } = {}) {

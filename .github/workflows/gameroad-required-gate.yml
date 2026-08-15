@@ -54,6 +54,7 @@ jobs:
           observability=false
           card_presentation=false
           battle2v2_reconnect=false
+          hate_presence=false
           roblox=false
           unclassified=false
           : > /tmp/gameroad-unclassified.txt
@@ -147,6 +148,10 @@ jobs:
               tests/battle-2v2-reconnect-core.test.mjs)
                 battle2v2_reconnect=true
                 ;;
+              browser/hate-peer-presence-core.mjs|\
+              tests/hate-peer-presence-core.test.mjs)
+                hate_presence=true
+                ;;
               roblox/GAMEROAD.rbxlx)
                 roblox=true
                 ;;
@@ -181,6 +186,7 @@ jobs:
             echo "observability=${observability}"
             echo "card_presentation=${card_presentation}"
             echo "battle2v2_reconnect=${battle2v2_reconnect}"
+            echo "hate_presence=${hate_presence}"
             echo "roblox=${roblox}"
             echo "unclassified=${unclassified}"
           } >> "${GITHUB_OUTPUT}"
@@ -191,7 +197,7 @@ jobs:
           fi
 
       - name: Set up Node
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true' || steps.classify.outputs.partner_vtuber == 'true' || steps.classify.outputs.observability == 'true' || steps.classify.outputs.card_presentation == 'true' || steps.classify.outputs.battle2v2_reconnect == 'true'
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true' || steps.classify.outputs.partner_vtuber == 'true' || steps.classify.outputs.observability == 'true' || steps.classify.outputs.card_presentation == 'true' || steps.classify.outputs.battle2v2_reconnect == 'true' || steps.classify.outputs.hate_presence == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -259,6 +265,10 @@ jobs:
       - name: Run Battle 2v2 reconnect core tests
         if: steps.classify.outputs.battle2v2_reconnect == 'true'
         run: node --test tests/battle-2v2-reconnect-core.test.mjs
+
+      - name: Run HATE peer presence core tests
+        if: steps.classify.outputs.hate_presence == 'true'
+        run: node --test tests/hate-peer-presence-core.test.mjs
 
       - name: Verify formal Roblox placement
         if: steps.classify.outputs.roblox == 'true'

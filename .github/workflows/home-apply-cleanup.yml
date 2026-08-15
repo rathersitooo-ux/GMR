@@ -1,0 +1,42 @@
+name: Apply Home presence cleanup
+
+on:
+  push:
+    branches:
+      - work/BROWSER-HOME-PRESENCE-LEGACY-CLEANUP-001
+    paths:
+      - '.github/scripts/home-apply-cleanup.mjs'
+      - '.github/workflows/home-apply-cleanup.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-home-cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact work branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Apply deterministic current-blob Home patch
+        run: node .github/scripts/home-apply-cleanup.mjs
+
+      - name: Run Browser static CI locally before commit
+        run: node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+
+      - name: Commit Browser only
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git status --short)"
+          echo "$changed"
+          git add -- browser/GAMEROAD.html
+          test "$(git diff --cached --name-only)" = "browser/GAMEROAD.html"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "[BROWSER-HOME-PRESENCE-LEGACY-CLEANUP-001] decouple Home partner presence"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

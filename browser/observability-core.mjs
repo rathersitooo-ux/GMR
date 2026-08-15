@@ -321,6 +321,9 @@ export function createObservabilityIncidentCollector({ maxIncidents = 256 } = {}
           count: nextCount,
           lastSeenAtMs: Math.max(priorWindow?.lastSeenAtMs ?? entry.firstSeenAtMs, entry.lastSeenAtMs)
         });
+        if (entry.firstSeenAtMs < incident.firstSeenAtMs) {
+          incident.envelope = deepFreeze({ ...incident.envelope, occurredAtMs: entry.firstSeenAtMs });
+        }
         incident.firstSeenAtMs = Math.min(incident.firstSeenAtMs, entry.firstSeenAtMs);
         incident.lastSeenAtMs = Math.max(incident.lastSeenAtMs, entry.lastSeenAtMs);
       }

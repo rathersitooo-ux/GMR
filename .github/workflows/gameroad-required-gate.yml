@@ -51,6 +51,7 @@ jobs:
           self_deck=false
           ai_optimal=false
           partner_vtuber=false
+          partner_humanlike=false
           observability=false
           card_presentation=false
           battle2v2_reconnect=false
@@ -134,6 +135,10 @@ jobs:
               tests/partner-vtuber-public-context-core.test.mjs)
                 partner_vtuber=true
                 ;;
+              browser/partner-humanlike-repair-evaluator.mjs|\
+              tests/partner-humanlike-repair-evaluator.test.mjs)
+                partner_humanlike=true
+                ;;
               browser/observability-core.mjs|\
               tests/observability-core.test.mjs|\
               browser/observability-browser-adapter.mjs|\
@@ -183,6 +188,7 @@ jobs:
             echo "self_deck=${self_deck}"
             echo "ai_optimal=${ai_optimal}"
             echo "partner_vtuber=${partner_vtuber}"
+            echo "partner_humanlike=${partner_humanlike}"
             echo "observability=${observability}"
             echo "card_presentation=${card_presentation}"
             echo "battle2v2_reconnect=${battle2v2_reconnect}"
@@ -197,7 +203,7 @@ jobs:
           fi
 
       - name: Set up Node
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true' || steps.classify.outputs.partner_vtuber == 'true' || steps.classify.outputs.observability == 'true' || steps.classify.outputs.card_presentation == 'true' || steps.classify.outputs.battle2v2_reconnect == 'true' || steps.classify.outputs.hate_presence == 'true'
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true' || steps.classify.outputs.partner_vtuber == 'true' || steps.classify.outputs.partner_humanlike == 'true' || steps.classify.outputs.observability == 'true' || steps.classify.outputs.card_presentation == 'true' || steps.classify.outputs.battle2v2_reconnect == 'true' || steps.classify.outputs.hate_presence == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -253,6 +259,10 @@ jobs:
       - name: Run Partner VTuber public context boundary tests
         if: steps.classify.outputs.partner_vtuber == 'true'
         run: node --test tests/partner-vtuber-public-context-core.test.mjs
+
+      - name: Run Partner humanlike repair evaluator tests
+        if: steps.classify.outputs.partner_humanlike == 'true'
+        run: node --test tests/partner-humanlike-repair-evaluator.test.mjs
 
       - name: Run Observability core and Browser adapter tests
         if: steps.classify.outputs.observability == 'true'

@@ -16,7 +16,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Exact current startMatch path
+      - name: Exact saved deck initialization and persistence path
         shell: bash
         run: |
           set -euo pipefail
@@ -27,12 +27,16 @@ jobs:
           import re
           s=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
           print('HTML_BYTES',len(s.encode('utf-8')))
-          for name in ['startMatch','createPlayer','loadSavedMainDeck','validateDeck','selectedMainDeck','ensureDeck','buildDeck']:
-              ms=list(re.finditer(r'function\s+'+re.escape(name)+r'\s*\(',s))
-              print(f'\n===== {name} COUNT {len(ms)} =====')
-              for m in ms[:3]:
-                  print('INDEX',m.start())
-                  print(s[max(0,m.start()-500):min(len(s),m.start()+12000)].replace('\r',''))
+          markers=['const state=','let state=','var state=','savedDeck:','function save(','function load(','localStorage','DEFAULT_DECK','DECK_RULE','publicDeckCard','commitDeck','deckDraft:']
+          for marker in markers:
+              print(f'\n===== MARKER {marker} COUNT {s.count(marker)} =====')
+              start=0
+              for _ in range(min(5,s.count(marker))):
+                  i=s.find(marker,start)
+                  if i<0: break
+                  print('INDEX',i)
+                  print(s[max(0,i-1800):min(len(s),i+6000)].replace('\r',''))
+                  start=i+len(marker)
           PY
       - name: No mutation
         run: test -z "$(git status --porcelain --untracked-files=all)"

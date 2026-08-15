@@ -43,6 +43,7 @@ jobs:
           advice=false
           replay=false
           ping=false
+          result=false
           roblox=false
           unclassified=false
           : > /tmp/gameroad-unclassified.txt
@@ -86,6 +87,10 @@ jobs:
               tests/battle-team-ping-core.test.mjs)
                 ping=true
                 ;;
+              browser/result-presentation-core.mjs|\
+              tests/result-presentation-core.test.mjs)
+                result=true
+                ;;
               roblox/GAMEROAD.rbxlx)
                 roblox=true
                 ;;
@@ -109,6 +114,7 @@ jobs:
             echo "advice=${advice}"
             echo "replay=${replay}"
             echo "ping=${ping}"
+            echo "result=${result}"
             echo "roblox=${roblox}"
             echo "unclassified=${unclassified}"
           } >> "${GITHUB_OUTPUT}"
@@ -119,7 +125,7 @@ jobs:
           fi
 
       - name: Set up Node
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true'
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -139,6 +145,10 @@ jobs:
       - name: Run Battle team ping core tests
         if: steps.classify.outputs.ping == 'true'
         run: node --test tests/battle-team-ping-core.test.mjs
+
+      - name: Run Result presentation core tests
+        if: steps.classify.outputs.result == 'true'
+        run: node --test tests/result-presentation-core.test.mjs
 
       - name: Verify formal Roblox placement
         if: steps.classify.outputs.roblox == 'true'

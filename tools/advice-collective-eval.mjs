@@ -1,5 +1,6 @@
 const REQUIRED_STATE_KEYS = ['phase', 'turnBand', 'pressureBand', 'manaBand', 'handBand'];
 const DEFAULT_ALLOWED_LABEL_SOURCES = new Set(['human', 'formal-evaluator', 'benchmark-approved']);
+const RUNTIME_MANIFEST_SCHEMA = 'gameroad.partner-advice-runtime-manifest.v1';
 
 function finiteNumber(value, fallback = 0) {
   const n = Number(value);
@@ -11,6 +12,10 @@ function safeToken(value) {
   const trimmed = value.trim();
   if (!trimmed || trimmed.length > 96) return null;
   return trimmed;
+}
+
+function sameVersions(a, b) {
+  return ['rulesVersion', 'cardVersion', 'stateVersion'].every((key) => safeToken(a?.[key]) && a[key] === b?.[key]);
 }
 
 export function normalizeState(state) {
@@ -246,4 +251,204 @@ export function benchmarkReport(memory, metrics, decision) {
     livePlayerPerformanceProven: false,
     humanAcceptanceProven: false,
   };
+}
+
+function runtimeManifestReject(reason) {
+  return { ok: false, reason, manifest: null };
+}
+
+export function compileRuntimeAdviceManifest(memory, decision, approval, options = {}) {
+  if (!memory || !(memory.contexts instanceof Map) || !(memory.global instanceof Map)) return runtimeManifestReject('invalid-memory');
+  if (decision?.promotion !== true) return runtimeManifestReject('offline-promotion-not-passed');
+  if (decision?.formalPromotionRequiresHumanGate !== true) return runtimeManifestReject('human-gate-contract-missing');
+  if (approval?.gateId !== 'HUMAN-HOLDOUT-ACCEPTANCE' || approval?.humanGate !== 'approved') {
+    return runtimeManifestReject('human-gate-not-approved');
+  }
+  if (approval?.privacyScope !== 'shared' || approval?.containsPrivate === true) return runtimeManifestReject('privacy-not-runtime-safe');
+  const approvalId = safeToken(approval?.approvalId);
+  if (!approvalId) return runtimeManifestReject('approval-id-missing');
+  if (!sameVersions(memory.targetVersions, approval)) return runtimeManifestReject('version-mismatch');
+
+  const minContextSupport = Math.max(1, Math.trunc(finiteNumber(options.minContextSupport, 8)));
+  const baseline = bestAction(memory.global, memory.regretPenalty);
+  if (!baseline?.actionId) return runtimeManifestReject('no-baseline-evidence');
+
+  const contexts = [];
+  for (const [fingerprint, actionMap] of memory.contexts.entries()) {
+    if (typeof fingerprint !== 'string' || fingerprint.length === 0 || fingerprint.length > 512 || !(actionMap instanceof Map)) continue;
+    const support = [...actionMap.values()].reduce((sum, item) => sum + Math.max(0, finiteNumber(item?.count)), 0);
+    if (support < minContextSupport) continue;
+    const selected = bestAction(actionMap, memory.regretPenalty);
+    if (!selected?.actionId) continue;
+    contexts.push({ fingerprint, actionId: selected.actionId, support });
+  }
+  contexts.sort((a, b) => a.fingerprint.localeCompare(b.fingerprint) || a.actionId.localeCompare(b.actionId));
+
+  return {
+    ok: true,
+    reason: null,
+    manifest: {
+      schema: RUNTIME_MANIFEST_SCHEMA,
+      targetVersions: { ...memory.targetVersions },
+      approval: {
+        gateId: 'HUMAN-HOLDOUT-ACCEPTANCE',
+        approvalId,
+        humanGate: 'approved',
+        privacyScope: 'shared',
+      },
+      promotionSafe: true,
+      defaultActionId: baseline.actionId,
+      minContextSupport,
+      contexts,
+      sourceEvidence: 'offline-approved-aggregate-only',
+      containsRawEvents: false,
+      containsPrivate: false,
+      livePlayerPerformanceProven: false,
+    },
+  };
+}
+
+function runtimeRecommendationReject(reason) {
+  return { actionId: null, source: 'manifest-rejected', reason, fingerprint: null, support: 0 };
+}
+
+export function recommendFromRuntimeManifest(manifest, state, targetVersions) {
+  if (!manifest || manifest.schema !== RUNTIME_MANIFEST_SCHEMA || manifest.promotionSafe !== true) {
+    return runtimeRecommendationReject('manifest-not-approved');
+  }
+  if (manifest.approval?.gateId !== 'HUMAN-HOLDOUT-ACCEPTANCE' || manifest.approval?.humanGate !== 'approved') {
+    return runtimeRecommendationReject('human-gate-not-approved');
+  }
+  if (manifest.approval?.privacyScope !== 'shared' || manifest.containsPrivate === true || manifest.containsRawEvents === true) {
+    return runtimeRecommendationReject('privacy-not-runtime-safe');
+  }
+  if (!sameVersions(manifest.targetVersions, targetVersions)) return runtimeRecommendationReject('version-mismatch');
+  const fingerprint = stateFingerprint(state, targetVersions);
+  if (!fingerprint) return runtimeRecommendationReject('invalid-state');
+
+  const contexts = Array.isArray(manifest.contexts) ? manifest.contexts : [];
+  const exact = contexts.find((entry) => entry?.fingerprint === fingerprint && safeToken(entry?.actionId));
+  const fallback = safeToken(manifest.defaultActionId);
+  if (!exact && !fallback) return runtimeRecommendationReject('no-approved-recommendation');
+  return {
+    actionId: exact?.actionId ?? fallback,
+    source: exact ? 'approved-similar-situation' : 'approved-global-fallback',
+    reason: null,
+    fingerprint,
+    support: exact ? Math.max(0, finiteNumber(exact.support)) : 0,
+  };
+}
+
+function clonePublicValue(value, depth = 0) {
+  if (depth > 16) throw new TypeError('publicFacts-too-deep');
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) throw new TypeError('publicFacts-non-finite-number');
+    return value;
+  }
+  if (Array.isArray(value)) return value.map((item) => clonePublicValue(item, depth + 1));
+  if (!value || typeof value !== 'object' || Object.getPrototypeOf(value) !== Object.prototype) {
+    throw new TypeError('publicFacts-must-be-json-like');
+  }
+  const output = {};
+  for (const key of Object.keys(value).sort()) {
+    const safeKey = safeToken(key);
+    if (!safeKey || safeKey !== key) throw new TypeError('publicFacts-invalid-key');
+    output[key] = clonePublicValue(value[key], depth + 1);
+  }
+  return output;
+}
+
+function deepFreeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  for (const child of Object.values(value)) deepFreeze(child);
+  return Object.freeze(value);
+}
+
+function validVersionTuple(versions) {
+  return ['rulesVersion', 'cardVersion', 'stateVersion'].every((key) => safeToken(versions?.[key]));
+}
+
+export function buildViewerSafeLegalActionSet(candidates, targetVersions) {
+  const rows = Array.isArray(candidates) ? candidates : [];
+  const accepted = [];
+  const rejected = [];
+  const targetValid = validVersionTuple(targetVersions);
+  const idCounts = new Map();
+
+  for (const candidate of rows) {
+    const actionId = safeToken(candidate?.actionId);
+    if (actionId) idCounts.set(actionId, (idCounts.get(actionId) ?? 0) + 1);
+  }
+
+  for (let index = 0; index < rows.length; index += 1) {
+    const candidate = rows[index];
+    const actionId = safeToken(candidate?.actionId);
+    const reasons = [];
+    if (!targetValid) reasons.push('invalid-target-versions');
+    if (!actionId) reasons.push('invalid-action-id');
+    if (actionId && idCounts.get(actionId) !== 1) reasons.push('duplicate-action-id');
+    for (const key of ['rulesVersion', 'cardVersion', 'stateVersion']) {
+      if (!safeToken(candidate?.[key]) || candidate[key] !== targetVersions?.[key]) reasons.push(`${key}-mismatch`);
+    }
+    if (candidate?.legal !== true) reasons.push('illegal-action');
+    if (candidate?.viewerSafe !== true) reasons.push('viewer-unsafe');
+
+    const stableOrder = candidate?.stableOrder ?? index;
+    if (!Number.isSafeInteger(stableOrder) || stableOrder < 0) reasons.push('invalid-stable-order');
+
+    let publicFacts = null;
+    if (reasons.length === 0) {
+      try {
+        publicFacts = clonePublicValue(candidate?.publicFacts ?? {});
+      } catch (error) {
+        reasons.push(error instanceof Error ? error.message : 'invalid-public-facts');
+      }
+    }
+
+    if (reasons.length > 0) {
+      rejected.push({ index, actionId: actionId ?? null, reasons: [...new Set(reasons)] });
+      continue;
+    }
+
+    accepted.push(deepFreeze({ actionId, stableOrder, publicFacts }));
+  }
+
+  accepted.sort((a, b) => a.stableOrder - b.stableOrder || a.actionId.localeCompare(b.actionId));
+  return deepFreeze({
+    targetVersions: targetValid ? { ...targetVersions } : null,
+    accepted,
+    rejected,
+    deterministic: true,
+    containsPrivate: false,
+  });
+}
+
+export function selectPreferredLegalAction(candidates, targetVersions, preference = null) {
+  const legalSet = buildViewerSafeLegalActionSet(candidates, targetVersions);
+  if (legalSet.accepted.length === 0) {
+    return deepFreeze({ ...legalSet, selected: null, scores: [], reason: 'no-legal-candidates' });
+  }
+  if (preference !== null && typeof preference !== 'function') {
+    return deepFreeze({ ...legalSet, selected: null, scores: [], reason: 'invalid-preference' });
+  }
+
+  const scoreRows = [];
+  for (const candidate of legalSet.accepted) {
+    const publicView = deepFreeze({ actionId: candidate.actionId, publicFacts: candidate.publicFacts });
+    const score = preference === null ? 0 : Number(preference(publicView));
+    if (!Number.isFinite(score)) {
+      return deepFreeze({ ...legalSet, selected: null, scores: [], reason: 'invalid-preference-score' });
+    }
+    scoreRows.push({ actionId: candidate.actionId, score, stableOrder: candidate.stableOrder });
+  }
+
+  scoreRows.sort((a, b) => b.score - a.score || a.stableOrder - b.stableOrder || a.actionId.localeCompare(b.actionId));
+  const winner = legalSet.accepted.find((candidate) => candidate.actionId === scoreRows[0].actionId) ?? null;
+  return deepFreeze({
+    ...legalSet,
+    selected: winner ? { actionId: winner.actionId, publicFacts: winner.publicFacts } : null,
+    scores: scoreRows.map(({ actionId, score }) => ({ actionId, score })),
+    reason: null,
+  });
 }

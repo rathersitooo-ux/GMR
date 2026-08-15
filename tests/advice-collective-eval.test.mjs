@@ -2,11 +2,13 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   benchmarkReport,
+  compileRuntimeAdviceManifest,
   deriveAffectiveUxSignals,
   evaluateHoldout,
   eventEligibility,
   promotionDecision,
   recommendAction,
+  recommendFromRuntimeManifest,
   stateFingerprint,
   trainCollectiveMemory,
 } from '../tools/advice-collective-eval.mjs';
@@ -58,6 +60,18 @@ function deterministicHoldout(count = 200) {
       regretByAction: optimalActionId === 'guard' ? { guard: 0, push: 0.8 } : { guard: 0.8, push: 0 },
     };
   });
+}
+
+function approvedRuntimeGate(overrides = {}) {
+  return {
+    gateId: 'HUMAN-HOLDOUT-ACCEPTANCE',
+    approvalId: 'qa-human-acceptance-001',
+    humanGate: 'approved',
+    privacyScope: 'shared',
+    containsPrivate: false,
+    ...VERSIONS,
+    ...overrides,
+  };
 }
 
 test('fingerprint is versioned and stable', () => {
@@ -142,4 +156,143 @@ test('human-like affect is represented only as observable UX proxies', () => {
     interpretation: 'observable-ux-proxy-not-human-emotion',
     provisional: true,
   });
+});
+
+test('runtime manifest refuses synthetic promotion without explicit Human approval', () => {
+  const memory = trainCollectiveMemory(deterministicTrainingSet(), VERSIONS);
+  const metrics = evaluateHoldout(memory, deterministicHoldout(200));
+  const decision = promotionDecision(memory, metrics);
+  assert.equal(decision.promotion, true);
+
+  assert.equal(compileRuntimeAdviceManifest(memory, decision, null).reason, 'human-gate-not-approved');
+  assert.equal(
+    compileRuntimeAdviceManifest(memory, decision, approvedRuntimeGate({ humanGate: 'pending' })).reason,
+    'human-gate-not-approved',
+  );
+  assert.equal(
+    compileRuntimeAdviceManifest(memory, decision, approvedRuntimeGate({ privacyScope: 'private' })).reason,
+    'privacy-not-runtime-safe',
+  );
+  assert.equal(
+    compileRuntimeAdviceManifest(memory, decision, approvedRuntimeGate({ rulesVersion: 'rules-r0' })).reason,
+    'version-mismatch',
+  );
+  assert.equal(
+    compileRuntimeAdviceManifest(memory, { ...decision, promotion: false }, approvedRuntimeGate()).reason,
+    'offline-promotion-not-passed',
+  );
+});
+
+test('approved aggregate memory compiles to deterministic privacy-minimized runtime manifest', () => {
+  const memory = trainCollectiveMemory(deterministicTrainingSet(), VERSIONS);
+  const metrics = evaluateHoldout(memory, deterministicHoldout(200));
+  const decision = promotionDecision(memory, metrics);
+  const first = compileRuntimeAdviceManifest(memory, decision, approvedRuntimeGate());
+  const second = compileRuntimeAdviceManifest(memory, decision, approvedRuntimeGate());
+
+  assert.equal(first.ok, true);
+  assert.equal(JSON.stringify(first), JSON.stringify(second));
+  assert.equal(first.manifest.schema, 'gameroad.partner-advice-runtime-manifest.v1');
+  assert.equal(first.manifest.promotionSafe, true);
+  assert.equal(first.manifest.containsRawEvents, false);
+  assert.equal(first.manifest.containsPrivate, false);
+  assert.equal(first.manifest.livePlayerPerformanceProven, false);
+  assert.equal(first.manifest.contexts.length, 2);
+  assert.deepEqual(first.manifest.contexts.map((x) => x.actionId).sort(), ['guard', 'push']);
+
+  const serialized = JSON.stringify(first.manifest);
+  assert.equal(serialized.includes('event-'), false);
+  assert.equal(serialized.includes('rewardSum'), false);
+  assert.equal(serialized.includes('regretSum'), false);
+});
+
+test('runtime manifest serves exact approved context, deterministic fallback, and fails closed on version mismatch', () => {
+  const memory = trainCollectiveMemory(deterministicTrainingSet(), VERSIONS);
+  const metrics = evaluateHoldout(memory, deterministicHoldout(200));
+  const decision = promotionDecision(memory, metrics);
+  const compiled = compileRuntimeAdviceManifest(memory, decision, approvedRuntimeGate());
+  assert.equal(compiled.ok, true);
+
+  const high = recommendFromRuntimeManifest(compiled.manifest, state('high'), VERSIONS);
+  const low = recommendFromRuntimeManifest(compiled.manifest, state('low'), VERSIONS);
+  const unseen = recommendFromRuntimeManifest(compiled.manifest, state('medium'), VERSIONS);
+  const stale = recommendFromRuntimeManifest(compiled.manifest, state('high'), { ...VERSIONS, cardVersion: 'cards-r0' });
+
+  assert.equal(high.actionId, 'guard');
+  assert.equal(high.source, 'approved-similar-situation');
+  assert.equal(low.actionId, 'push');
+  assert.equal(low.source, 'approved-similar-situation');
+  assert.equal(unseen.actionId, compiled.manifest.defaultActionId);
+  assert.equal(unseen.source, 'approved-global-fallback');
+  assert.equal(stale.actionId, null);
+  assert.equal(stale.reason, 'version-mismatch');
+});
+
+const legalCore = await import('../tools/advice-collective-eval.mjs');
+
+function legalCandidate(actionId, overrides = {}) {
+  return {
+    actionId,
+    ...VERSIONS,
+    legal: true,
+    viewerSafe: true,
+    stableOrder: 0,
+    publicFacts: { projectedValue: 2 },
+    privateOpaque: { value: 'not-for-ranking' },
+    ...overrides,
+  };
+}
+
+test('legal action boundary rejects stale, illegal, viewer-unsafe and duplicate actions', () => {
+  const candidates = [
+    legalCandidate('road-a', { stableOrder: 4 }),
+    legalCandidate('stale', { stateVersion: 'state-r0', stableOrder: 1 }),
+    legalCandidate('illegal', { legal: false, stableOrder: 2 }),
+    legalCandidate('unsafe', { viewerSafe: false, stableOrder: 3 }),
+    legalCandidate('dup', { stableOrder: 5 }),
+    legalCandidate('dup', { stableOrder: 6 }),
+  ];
+  const before = structuredClone(candidates);
+  const result = legalCore.buildViewerSafeLegalActionSet(candidates, VERSIONS);
+  assert.deepEqual(candidates, before);
+  assert.deepEqual(result.accepted.map((x) => x.actionId), ['road-a']);
+  assert.equal(result.containsPrivate, false);
+  assert.equal(JSON.stringify(result).includes('not-for-ranking'), false);
+  assert.ok(result.rejected.find((x) => x.actionId === 'stale').reasons.includes('stateVersion-mismatch'));
+  assert.ok(result.rejected.find((x) => x.actionId === 'illegal').reasons.includes('illegal-action'));
+  assert.ok(result.rejected.find((x) => x.actionId === 'unsafe').reasons.includes('viewer-unsafe'));
+  assert.equal(result.rejected.filter((x) => x.actionId === 'dup').length, 2);
+});
+
+test('preference receives only public view and deterministic ties use stable order then action id', () => {
+  let calls = 0;
+  const candidates = [
+    legalCandidate('beta', { stableOrder: 2, publicFacts: { projectedValue: 7 } }),
+    legalCandidate('gamma', { stableOrder: 1, publicFacts: { projectedValue: 7 } }),
+    legalCandidate('alpha', { stableOrder: 1, publicFacts: { projectedValue: 7 } }),
+    legalCandidate('illegal-high', { legal: false, stableOrder: 0, publicFacts: { projectedValue: 999 } }),
+  ];
+  const first = legalCore.selectPreferredLegalAction(candidates, VERSIONS, (view) => {
+    calls += 1;
+    assert.deepEqual(Object.keys(view).sort(), ['actionId', 'publicFacts']);
+    assert.equal('privateOpaque' in view, false);
+    assert.equal(Object.isFrozen(view), true);
+    assert.equal(Object.isFrozen(view.publicFacts), true);
+    return view.publicFacts.projectedValue;
+  });
+  const second = legalCore.selectPreferredLegalAction(structuredClone(candidates), VERSIONS, (view) => view.publicFacts.projectedValue);
+  assert.equal(calls, 3);
+  assert.equal(first.selected.actionId, 'alpha');
+  assert.deepEqual(first.scores.map((x) => x.actionId), ['alpha', 'gamma', 'beta']);
+  assert.equal(first.scores.some((x) => x.actionId === 'illegal-high'), false);
+  assert.equal(JSON.stringify(first), JSON.stringify(second));
+});
+
+test('legal action selector fails closed when no legal action or preference score is invalid', () => {
+  const none = legalCore.selectPreferredLegalAction([legalCandidate('x', { legal: false })], VERSIONS, () => 1);
+  assert.equal(none.selected, null);
+  assert.equal(none.reason, 'no-legal-candidates');
+  const invalid = legalCore.selectPreferredLegalAction([legalCandidate('y')], VERSIONS, () => Number.NaN);
+  assert.equal(invalid.selected, null);
+  assert.equal(invalid.reason, 'invalid-preference-score');
 });

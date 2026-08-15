@@ -761,6 +761,52 @@ html.r10LowPerf .setup.active .setupRuntime .grtc-image, html.r10Reduced .setup.
   .home.codexHome .codexHomeUtilities .homeUtilityBtn:focus-visible{outline:2px solid #ffe68e;outline-offset:2px}
 }
 </style>
+<style id="gameroad-battle-hand-fan-selection-r2">
+/* BATTLE-HAND-FAN-SELECTION-PRESENTATION-001 R2.
+   Presentation only: existing first10Road/first10Battle reservation truth is projected.
+   No legality, card identity, hand order, battle, save, network, 109, Honey or HATE semantics. */
+#hand.hand{
+  justify-content:center;
+  align-items:flex-end;
+  gap:4px;
+  overflow:visible;
+  perspective:640px;
+}
+#hand .handCard{
+  position:relative;
+  transform-origin:50% 116%;
+  z-index:1;
+  transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease;
+}
+#hand:has(> .handCard:nth-child(2):last-child) > .handCard:nth-child(1){transform:translateY(3px) rotate(-4deg)}
+#hand:has(> .handCard:nth-child(2):last-child) > .handCard:nth-child(2){transform:translateY(3px) rotate(4deg)}
+#hand:has(> .handCard:nth-child(3):last-child) > .handCard:nth-child(1){transform:translateY(6px) rotate(-7deg)}
+#hand:has(> .handCard:nth-child(3):last-child) > .handCard:nth-child(2){transform:translateY(0) rotate(0deg)}
+#hand:has(> .handCard:nth-child(3):last-child) > .handCard:nth-child(3){transform:translateY(6px) rotate(7deg)}
+#hand .handCard.select,
+#hand .handCard.first10Road,
+#hand .handCard.first10Battle{
+  transform:translateY(-14px) scale(1.10) rotate(0deg)!important;
+  z-index:30!important;
+  border-color:rgba(225,250,241,.92);
+  box-shadow:0 12px 28px rgba(0,0,0,.42),0 0 0 2px rgba(255,225,150,.30)!important;
+}
+@media(max-width:900px){
+  #hand:has(> .handCard:nth-child(3):last-child) > .handCard:nth-child(1){transform:translateY(5px) rotate(-6deg)}
+  #hand:has(> .handCard:nth-child(3):last-child) > .handCard:nth-child(3){transform:translateY(5px) rotate(6deg)}
+  #hand .handCard.select,#hand .handCard.first10Road,#hand .handCard.first10Battle{transform:translateY(-10px) scale(1.08) rotate(0deg)!important}
+}
+@media(max-width:540px) and (orientation:portrait){
+  #hand.hand{gap:3px}
+  #hand:has(> .handCard:nth-child(2):last-child) > .handCard:nth-child(1){transform:translateY(2px) rotate(-3deg)}
+  #hand:has(> .handCard:nth-child(2):last-child) > .handCard:nth-child(2){transform:translateY(2px) rotate(3deg)}
+  #hand:has(> .handCard:nth-child(3):last-child) > .handCard:nth-child(1){transform:translateY(4px) rotate(-5deg)}
+  #hand:has(> .handCard:nth-child(3):last-child) > .handCard:nth-child(3){transform:translateY(4px) rotate(5deg)}
+  #hand .handCard.select,#hand .handCard.first10Road,#hand .handCard.first10Battle{transform:translateY(-8px) scale(1.07) rotate(0deg)!important}
+}
+@media(prefers-reduced-motion:reduce){#hand .handCard{transition:none!important}}
+body.low-perf #hand .handCard{transition:none!important}
+</style>
 </head><body><div class="app" id="app"><header class="top"><div class="brand">GAMEROAD</div><div class="topRight"><div class="pill" id="saveState">保存済み</div><div class="pill" id="topMode">ホーム</div></div></header>
 <div id="screenMotionBridge" aria-hidden="true"></div>
 <section class="screen home codexHome active" data-screen="home" data-home-state="HOME_EXPANDED" data-home-preview="" data-codex-home-source="HomeMainMenuSlidePad-R2-shell+formal-clean-crops">
@@ -1573,10 +1619,9 @@ function partnerDelegated(){const pd=ensurePartnerRuntime();return !!(pd&&(pd.vo
 function partnerDecisionSignature(){const m=state.match;if(!m||state.screen!=='battle')return null;const p=currentHuman();if(!p)return null;if(m.partnerDecision?.ability)return `ability:${m.round}:${m.partnerDecision.ability.id}`;if(m.phase==='plan'&&!m.busy)return `plan:${m.round}:${p.id}`;const act=m.players.find(x=>x.id===m.activeId);if(m.phase==='target'&&!m.busy&&act?.human)return `target:${m.round}:${act.id}`;return null}
 function syncPartnerDecisionSession(){const m=state.match;if(!m)return;const pd=ensurePartnerRuntime(m),sig=partnerDecisionSignature();if(sig===pd.session?.signature)return;if(sig){pd.session={signature:sig,id:`${m.id}:${++pd.sessionSeq}:${sig}`,started:performance.now()};pd.lastTick=performance.now();pd.remainderMs=0}else{pd.session=null;pd.remainderMs=0;pd.lastTick=performance.now()}}
 function tickPartnerHate(now=performance.now()){
-  const m=state.match,p=currentHuman();if(!m||!p)return;const pd=ensurePartnerRuntime(m);if(m.friendRoom){pd.session=null;pd.remainderMs=0;pd.lastTick=now;return renderPartnerRuntime()}syncPartnerDecisionSession();if(!pd.session){pd.lastTick=now;return renderPartnerRuntime()}
-  const delta=Math.max(0,Math.min(5000,now-pd.lastTick));pd.lastTick=now;pd.remainderMs+=delta;
-  const sec=Math.floor(pd.remainderMs/1000);if(sec>0){pd.remainderMs-=sec*1000;const before=p.hateTime;p.hateTime=Math.min(1000,p.hateTime+sec);if(before<1000&&p.hateTime===1000&&!p.hateExploded){p.hateExploded=true;p.hateExplosionCount++;pd.forced=true;pd.voluntary=false;pd.blocker=null;log('ヘイト1000：この対局終了まで必須判断はパートナーへ強制委任されます。');attemptPartnerAutoDecision('hate-explosion').catch(e=>{pd.blocker=e.message;log(`強制委任停止：${e.message}`);renderPartnerRuntime()})}}
-  grPersistPartnerMatchSession(m);renderPartnerRuntime();
+  const m=state.match,p=currentHuman();if(!m||!p)return;const pd=ensurePartnerRuntime(m);
+  /* HATE is real-human wait time. Non-friend Browser matches have no authoritative second-human wait signal, while friend matches are host-authoritative below. */
+  pd.session=null;pd.remainderMs=0;pd.lastTick=now;return renderPartnerRuntime()
 }
 let partnerTickTimer=setInterval(()=>tickPartnerHate(performance.now()),250);
 function planCardCandidates(kind){const p=currentHuman();if(!p)return[];return normalizePartnerCandidates(p.hand.map((id,i)=>({kind,cardId:id,id,positionOrder:i,comparisonValue:Number(CARDS[id]?.power),legal:roadSelectable(id),assetAction:PARTNER_ASSET_NONE})).filter(x=>x.legal),kind)}
@@ -1942,7 +1987,10 @@ function joinRoom(raw){const code=validCode(raw);if(!code){toast('七文字の�
 function toggleReady(){if(FR.role==='host'){if(FR.roomState!=='lobby')return false;FR.hostReady=!FR.hostReady;sendAllLobby();return true}if(FR.role==='guest'&&FR.assignedPid&&FR.roomState==='lobby'){send({type:'ready',value:!FR.guestReady});return true}return false}
 const FRIEND_PARTNER_RULES=new Set(['left','right','max','min']);
 function friendRule(pid){if(pid==='P1')return FRIEND_PARTNER_RULES.has(currentPartnerRule())?currentPartnerRule():null;const r=FR.partnerRules[pid];return FRIEND_PARTNER_RULES.has(r)?r:null}
-function friendHateSignature(pid){const m=state.match,p=m?.players?.find(x=>x.id===pid);if(FR.role!=='host'||FR.roomState!=='playing'||!m?.friendRoom||!p?.roomHuman||p.hateExploded)return null;if(m.phase==='plan'&&!m.busy&&!FR.planValues[pid])return `plan:${m.round}:${pid}`;if(m.phase==='target'&&!m.busy&&m.activeId===pid)return `target:${m.round}:${pid}`;for(const [id,w] of FR.choiceWait)if(w.pid===pid)return `choice:${m.round}:${id}:${pid}`;if(pid==='P1'&&FR.choiceActorPid==='P1'&&m.partnerDecision?.ability)return `choice:${m.round}:local:${m.partnerDecision.ability.id}:P1`;return null}
+function friendHumanIsConnected(pid){if(pid==='P1')return FR.role==='host'&&FR.roomState==='playing';return !!slotByPid(pid)?.connected}
+function friendHasOtherConnectedHuman(pid){return pidList().some(other=>other!==pid&&friendHumanIsConnected(other))}
+function friendHasSubmittedConnectedHuman(pid){return pidList().some(other=>other!==pid&&friendHumanIsConnected(other)&&!!FR.planValues[other])}
+function friendHateSignature(pid){const m=state.match,p=m?.players?.find(x=>x.id===pid);if(FR.role!=='host'||FR.roomState!=='playing'||!m?.friendRoom||!p?.roomHuman||p.hateExploded||!friendHumanIsConnected(pid))return null;if(m.phase==='plan'&&!m.busy&&!FR.planValues[pid]&&friendHasSubmittedConnectedHuman(pid))return `plan:${m.round}:${pid}`;if(m.phase==='target'&&!m.busy&&m.activeId===pid&&friendHasOtherConnectedHuman(pid))return `target:${m.round}:${pid}`;for(const [id,w] of FR.choiceWait)if(w.pid===pid&&friendHasOtherConnectedHuman(pid))return `choice:${m.round}:${id}:${pid}`;if(pid==='P1'&&FR.choiceActorPid==='P1'&&m.partnerDecision?.ability&&friendHasOtherConnectedHuman(pid))return `choice:${m.round}:local:${m.partnerDecision.ability.id}:P1`;return null}
 function friendResetHateClocks(at=performance.now()){FR.hateClocks={};FR.hateLastTick=at;const m=state.match;if(FR.role!=='host'||!m?.friendRoom)return;for(const p of m.players)if(p.roomHuman)FR.hateClocks[p.id]={signature:friendHateSignature(p.id),lastTick:at,remainderMs:0}}
 function friendSyncHateClocks(at=performance.now()){const m=state.match;if(FR.role!=='host'||!m?.friendRoom)return;for(const p of m.players){if(!p.roomHuman)continue;const sig=friendHateSignature(p.id),c=FR.hateClocks[p.id]||(FR.hateClocks[p.id]={signature:sig,lastTick:at,remainderMs:0});if(c.signature!==sig){c.signature=sig;c.remainderMs=0;c.lastTick=at}else if(!sig){c.remainderMs=0;c.lastTick=at}}FR.hateLastTick=at}
 function friendPlanCandidatesFor(p,kind){return normalizePartnerCandidates(p.hand.map((id,i)=>({kind,cardId:id,id,positionOrder:i,comparisonValue:Number(CARDS[id]?.power),legal:roadSelectable(id),assetAction:PARTNER_ASSET_NONE})).filter(x=>x.legal),kind)}

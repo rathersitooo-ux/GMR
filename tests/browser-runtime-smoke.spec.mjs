@@ -122,6 +122,75 @@ test('GAMEROAD boots and core navigation runs without JS errors', async ({ page 
   expect(remainingConsoleErrors, `console errors:\n${remainingConsoleErrors.join('\n')}`).toEqual([]);
 });
 
+test('Highlander rejects distinct card IDs that resolve to the same canonical name', async ({ page }) => {
+  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
+  expect(response, 'main HTML response').not.toBeNull();
+  expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
+  await page.waitForTimeout(500);
+
+  const deckSetup = await installLegalBattleDeck(page);
+  expect(deckSetup.main).toHaveLength(40);
+  expect(deckSetup.setValidation.ok, `set deck validation: ${JSON.stringify(deckSetup.setValidation)}`).toBeTruthy();
+  expect(deckSetup.committed, 'legal test deck committed').toBeTruthy();
+  expect(deckSetup.savedValidation.ok, `saved deck validation: ${JSON.stringify(deckSetup.savedValidation)}`).toBeTruthy();
+
+  const evidence = await page.evaluate(({ aliasId, targetId }) => {
+    const core = window.__GAMEROAD_TEST__;
+    const cardData = window.__CARD_DATA__;
+    if (!core || !Array.isArray(cardData)) throw new Error('deck validation test hooks are unavailable');
+    if (!aliasId || !targetId || aliasId === targetId) throw new Error('two distinct deck card IDs are required');
+
+    const aliasCard = cardData.find((card) => card.id === aliasId);
+    const targetCard = cardData.find((card) => card.id === targetId);
+    if (!aliasCard || !targetCard) throw new Error('selected deck cards are missing from card data');
+
+    const targetCanonicalName = targetCard.canonical_name
+      || targetCard.base_card_name
+      || targetCard.display_name
+      || targetCard.id;
+    const hadCanonicalName = Object.prototype.hasOwnProperty.call(aliasCard, 'canonical_name');
+    const originalCanonicalName = aliasCard.canonical_name;
+    const before = core.deckValidate(core.state.savedDeck, { forBattle: true });
+    let aliased = null;
+    let restored = null;
+
+    try {
+      aliasCard.canonical_name = targetCanonicalName;
+      aliased = core.deckValidate(core.state.savedDeck, { forBattle: true });
+    } finally {
+      if (hadCanonicalName) aliasCard.canonical_name = originalCanonicalName;
+      else delete aliasCard.canonical_name;
+      restored = core.deckValidate(core.state.savedDeck, { forBattle: true });
+    }
+
+    return {
+      aliasId,
+      targetId,
+      targetCanonicalName,
+      hadCanonicalName,
+      originalCanonicalName: originalCanonicalName ?? null,
+      aliasCanonicalNameAfterRestore: aliasCard.canonical_name ?? null,
+      before,
+      aliased,
+      restored,
+    };
+  }, { aliasId: deckSetup.main[0], targetId: deckSetup.main[1] });
+
+  expect(evidence.aliasId).not.toBe(evidence.targetId);
+  expect(evidence.targetCanonicalName).toBeTruthy();
+  expect(evidence.before.ok, `pre-alias validation: ${JSON.stringify(evidence.before)}`).toBeTruthy();
+  expect(JSON.stringify(evidence.before)).not.toContain('同名1枚まで');
+  expect(evidence.aliased?.ok, `aliased validation: ${JSON.stringify(evidence.aliased)}`).toBeFalsy();
+  expect(JSON.stringify(evidence.aliased)).toContain('同名1枚まで');
+  expect(evidence.restored.ok, `restored validation: ${JSON.stringify(evidence.restored)}`).toBeTruthy();
+  expect(JSON.stringify(evidence.restored)).not.toContain('同名1枚まで');
+  if (evidence.hadCanonicalName) {
+    expect(evidence.aliasCanonicalNameAfterRestore).toBe(evidence.originalCanonicalName);
+  } else {
+    expect(evidence.aliasCanonicalNameAfterRestore).toBeNull();
+  }
+});
+
 test('partner delegation preserves the player-selected match envelope and rejects stale or mutated state', async ({ page }) => {
   const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
   expect(response, 'main HTML response').not.toBeNull();
@@ -223,4 +292,39 @@ test('partner delegation preserves the player-selected match envelope and reject
 
   expect(evidence.staleRestore, 'an old match session must not restore into a new match instance').toBe(false);
   expect(evidence.secondCheck).toEqual({ ok: true, reason: 'ok' });
+});
+
+test('2v2 starts four seats with canonical P1/P2 vs P3/P4 team assignment', async ({ page }) => {
+  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
+  expect(response, 'main HTML response').not.toBeNull();
+  expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
+  await page.waitForTimeout(500);
+
+  const deckSetup = await installLegalBattleDeck(page);
+  expect(deckSetup.main).toHaveLength(40);
+  expect(deckSetup.setValidation.ok, `set deck validation: ${JSON.stringify(deckSetup.setValidation)}`).toBeTruthy();
+  expect(deckSetup.committed, 'legal test deck committed').toBeTruthy();
+
+  const evidence = await page.evaluate(() => {
+    const core = window.__GAMEROAD_TEST__;
+    if (!core) throw new Error('GAMEROAD runtime test hook is unavailable');
+    const match = core.start('2v2', 'road_shield');
+    if (!match) throw new Error('2v2 match failed to start');
+    return {
+      mode: match.mode ?? null,
+      screen: core.state.screen ?? null,
+      teams: Array.isArray(match.players)
+        ? match.players.map((player) => ({ id: player.id, team: player.team ?? null }))
+        : [],
+    };
+  });
+
+  expect(evidence.mode).toBe('2v2');
+  expect(evidence.screen).toBe('battle');
+  expect(evidence.teams).toEqual([
+    { id: 'P1', team: 'A' },
+    { id: 'P2', team: 'A' },
+    { id: 'P3', team: 'B' },
+    { id: 'P4', team: 'B' },
+  ]);
 });

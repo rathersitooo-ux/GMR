@@ -1,4 +1,4 @@
-name: Diagnose broad single-character transport shift
+name: Diagnose old transport prefix identity
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  diagnose-broad-shift:
+  compare-prefix:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout work branch
@@ -20,62 +20,36 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
-      - name: Search all single deletions before the first observed XZ corruption
+      - name: Compare old decoded XZ prefix to independently regenerated exact XZ fingerprints
         shell: bash
-        env:
-          EXPECTED_SIZE: "10245508"
-          EXPECTED_SHA256: b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51
         run: |
           set -euo pipefail
-          test "$GITHUB_REF_NAME" = "work/GITHUB-ROBLOX-CODE-PLACEMENT-001"
           python - <<'PY'
           from pathlib import Path
-          import base64, hashlib, lzma, time
-
-          expected_size = 10245508
-          expected_sha = "b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51"
+          import base64, hashlib
           cat = b"".join(b"".join(Path(f".github/import/roblox-baseline.part{i:03d}.b64").read_bytes().split()) for i in range(10))
-          assert len(cat) == 159001 and len(cat) % 4 == 1
-
-          # The uncorrected stream first fails around compressed byte 18016.
-          # Test every possible single inserted base64 character before that point,
-          # but only decompress a prefix for pruning. A true correction must survive
-          # past the old failure before it is allowed to do a full decompression.
-          search_hi = min(len(cat), 26000)
-          probe_packed = 22000
-          survivors = []
-          t0 = time.time()
-
-          for i in range(search_hi):
-              cand = cat[:i] + cat[i+1:]
-              try:
-                  cp = base64.b64decode(cand, validate=True)
-              except Exception:
-                  continue
-              dec = lzma.LZMADecompressor(format=lzma.FORMAT_XZ)
-              try:
-                  raw_prefix = dec.decompress(cp[:probe_packed])
-              except lzma.LZMAError:
-                  continue
-              # Wrong shifts that happen to parse should not be accepted merely for parsing.
-              # Survive beyond the previous corruption with nontrivial output before full test.
-              if len(raw_prefix) < 114500:
-                  continue
-              survivors.append((i, len(raw_prefix), dec.eof))
-              print(f"SURVIVOR delete_index={i} removed={cat[i:i+1]!r} prefix_raw={len(raw_prefix)} eof={dec.eof}")
-              try:
-                  raw = lzma.decompress(cp, format=lzma.FORMAT_XZ)
-              except lzma.LZMAError:
-                  continue
-              size = len(raw)
-              sha = hashlib.sha256(raw).hexdigest()
-              print(f"FULL_DECOMPRESS delete_index={i} raw_size={size} raw_sha={sha}")
-              if size == expected_size and sha == expected_sha:
-                  print(f"EXACT_SINGLE_DELETE_RECOVERY index={i} removed={cat[i:i+1]!r}")
-                  Path("/tmp/recovered-delete-index.txt").write_text(str(i))
-                  raise SystemExit(0)
-
-          print(f"searched=0:{search_hi} elapsed={time.time()-t0:.2f}s survivors={survivors[:50]} total_survivors={len(survivors)}")
-          print("NO_EXACT_SINGLE_DELETE_RECOVERY_BEFORE_FIRST_FAILURE")
-          raise SystemExit(63)
+          usable = cat[: (len(cat)//4)*4]
+          packed = base64.b64decode(usable, validate=True)
+          expected = {
+            64:"4aa6f5cb87574f61a2bfd09f98e9bb17a24fffef573b90589da1cee7d1b3cca2",
+            256:"9464bc5e0722a6c4545d734c8f63828a3f2f6261b8341d34cb04b935c8dd8c8f",
+            1024:"22c1ac1f7e1756b29eaae8843c08e4d81a440d21247f4e29368c8cd18c7ae3ba",
+            4096:"a0afd955700032fdb9ef728ed9afd8aba1cfec288d2aab1fa578304b706dc605",
+            8192:"d143b51b0db5858194455dadf87bc5abd7eb2925b308193a0eccf3f1f00cb3d7",
+            16384:"ada8cf7ba7036dc7be7518fbfa3fb907812403fd4fda451cfd5131c39e62b2ea",
+            18000:"51fa795b9ad416a4b5967674fdc0a340276dcb769390edd861780af13f017a09",
+            20000:"b0e67461fd664b83d3777ae49e6a25e28d438a98e8ad443b175489d1549bb03a",
+            32000:"fc1af317dc4ea377932b0c9c92d03936e309c9ee010a051ec9cb8242d03c503f",
+            60000:"d92eb93ed58b87fe3bd29c5f3b76e0bef392874085d261b43d19205cfc9151ae",
+            100000:"60de52d73932537278ab3a92edb87ae6afa4765c5eb6d19d45cec1c0b420661f",
+            119000:"bdfe8fa1972c407a0af63e59b44cf37005459529794d27ad20da39e2a2d640d1",
+          }
+          last_match = 0
+          for n, want in expected.items():
+              got = hashlib.sha256(packed[:n]).hexdigest()
+              ok = got == want
+              print(f"prefix={n} match={ok} old_sha={got} exact_sha={want}")
+              if ok: last_match = n
+          print(f"LAST_MATCHED_PREFIX={last_match}")
+          # Diagnostic result is successful regardless of equality; this workflow proves identity/nonidentity only.
           PY

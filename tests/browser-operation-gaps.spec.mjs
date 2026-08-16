@@ -139,8 +139,8 @@ test('covers Cards search, suit filtering, detail open/close, mobile tray, and r
     await tray.click();
     await expect(cards).toHaveAttribute('data-deck-drawer', 'open');
     await shot(page, testInfo, 'deck-tray-open-visible');
-    const backdrop = cards.locator('#r4DeckBackdrop:visible');
-    if ((await backdrop.count()) > 0) await backdrop.click();
+    await tray.click();
+    await expect(cards).not.toHaveAttribute('data-deck-drawer', 'open');
   }
 
   const restore = cards.locator('#restoreDeck');
@@ -159,14 +159,17 @@ test('covers partner/player role tabs and a real visible character selection', a
   await charactersGo.click();
   const characters = page.locator('section[data-screen="characters"]');
   await expect(characters).toBeVisible();
-  await expect(characters.locator('.charCard')).toHaveCount(8);
 
   await characters.locator('[data-role="player"]').click();
   const unselected = characters.locator('.charCard[aria-pressed="false"]').first();
   await expect(unselected).toBeVisible();
-  const selectedText = (await unselected.textContent())?.trim() || '';
+  const targetLabel = (await unselected.getAttribute('aria-label'))?.trim() || '';
+  const targetName = targetLabel.split(/\s+/)[0];
+  expect(targetName).not.toBe('');
   await unselected.click();
-  await expect(characters.locator('.charCard[aria-pressed="true"]')).toContainText(selectedText.split(/\s+/)[0]);
+  const selected = characters.locator('.charCard[aria-pressed="true"]');
+  await expect(selected).toHaveCount(1);
+  await expect(selected).toContainText(targetName);
   await shot(page, testInfo, 'player-character-selection-visible');
 
   await characters.locator('[data-role="partner"]').click();

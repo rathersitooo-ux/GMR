@@ -1,4 +1,4 @@
-name: TEMP BOARD109 R7 runtime semantic probe v2
+name: TEMP BOARD109 R7 runtime semantic probe v3
 
 on:
   push:
@@ -14,13 +14,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 9
+          fetch-depth: 10
       - name: Verify exact patched product identity
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git log -1 --pretty=%s)" = "BOARD109_R7_RUNTIME_PROBE_V2"
-          test "$(git rev-parse HEAD^)" = "44876606d78a05444c39263a3b1fc1ab9890eaf0"
+          test "$(git log -1 --pretty=%s)" = "BOARD109_R7_RUNTIME_PROBE_V3"
+          test "$(git rev-parse HEAD^)" = "cb1ee12840497caee6dae2832286ff422468d4f7"
           test "$(git rev-parse HEAD:browser/GAMEROAD.html)" = "0535bf3a37f9afdab3b0cddbc23e7aa610fcbc15"
           python3 - <<'PY'
           from pathlib import Path
@@ -170,7 +170,7 @@ jobs:
 
               const boardCount=core.boardCount();if(boardCount!==109)throw new Error(`boardCount ${boardCount}`);
               return{boardCount,playerCount:players.length,moveCard,moveLimit,target,start,acceptedRoads,allViewerMappings,oneStepCorners,before,selectedPath,stoppedAt:me.position,fromCornerRoads,wrongAtOne,world:nw,projected,hit};
-            },corners);
+            },CORNERS);
 
             const remaining=[...consoleErrors];
             for(let i=0;i<known404;i++){const ix=remaining.findIndex(x=>x.includes('Failed to load resource')&&x.includes('404'));if(ix>=0)remaining.splice(ix,1)}

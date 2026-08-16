@@ -135,18 +135,23 @@ test('covers Cards search, suit filtering, detail open/close, mobile tray, and r
   expect(visibleSuits).toEqual(['SP']);
 
   const tray = cards.locator('#r4DeckTrayToggle:visible');
+  const restore = cards.locator('#restoreDeck');
   if ((await tray.count()) > 0) {
     await tray.click();
     await expect(cards).toHaveAttribute('data-deck-drawer', 'open');
     await shot(page, testInfo, 'deck-tray-open-visible');
-    await tray.click();
-    await expect(cards).not.toHaveAttribute('data-deck-drawer', 'open');
+    await expect(restore).toBeVisible();
+    await restore.click();
+    await shot(page, testInfo, 'cards-filtered-restored-visible');
+    if ((await cards.getAttribute('data-deck-drawer')) === 'open') {
+      await tray.click();
+      await expect(cards).not.toHaveAttribute('data-deck-drawer', 'open');
+    }
+  } else {
+    await expect(restore).toBeVisible();
+    await restore.click();
+    await shot(page, testInfo, 'cards-filtered-restored-visible');
   }
-
-  const restore = cards.locator('#restoreDeck');
-  await expect(restore).toBeVisible();
-  await restore.click();
-  await shot(page, testInfo, 'cards-filtered-restored-visible');
   runtime.assertClean(testInfo);
 });
 
@@ -163,8 +168,8 @@ test('covers partner/player role tabs and a real visible character selection', a
   await characters.locator('[data-role="player"]').click();
   const unselected = characters.locator('.charCard[aria-pressed="false"]').first();
   await expect(unselected).toBeVisible();
-  const targetLabel = (await unselected.getAttribute('aria-label'))?.trim() || '';
-  const targetName = targetLabel.split(/\s+/)[0];
+  const targetText = (await unselected.textContent())?.trim() || '';
+  const targetName = targetText.replace(/操作人物にする|選択中/g, '').trim();
   expect(targetName).not.toBe('');
   await unselected.click();
   const selected = characters.locator('.charCard[aria-pressed="true"]');

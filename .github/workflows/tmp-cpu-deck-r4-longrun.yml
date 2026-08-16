@@ -56,7 +56,7 @@ jobs:
               const draftValidation = api.deckValidate(api.state.deckDraft, { forBattle: true });
               if (!draft.ok || !draftValidation.ok) throw new Error('draft-invalid:' + JSON.stringify({draft, draftValidation}));
               const committed = api.deckCommit();
-              if (!committed.ok) throw new Error('commit-invalid:' + JSON.stringify(committed));
+              if (!committed) throw new Error('commit-invalid:' + JSON.stringify(committed));
               const saved = api.deckSaved().main;
               const savedValidation = api.deckValidate(api.state.savedDeck, { forBattle: true });
               if (!savedValidation.ok || saved.length !== 40) throw new Error('saved-invalid:' + JSON.stringify({savedLength:saved.length,savedValidation}));

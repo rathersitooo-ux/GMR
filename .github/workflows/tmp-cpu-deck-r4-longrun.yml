@@ -45,17 +45,21 @@ jobs:
             await page.waitForFunction(() => !!window.__GAMEROAD_TEST__);
             const report = await page.evaluate(async () => {
               const api = window.__GAMEROAD_TEST__;
-              const rule = api.deckRule();
-              const pub = api.deckPublic().filter(x => x.slot === 'main' && x.id !== 'DCG_SAASUNA_FROST_STRIKE');
-              let ids = pub.slice(0, rule.requiredMain).map(x => x.id);
-              const royal = pub.find(x => api.isRoyalCard(x.id));
-              if (!ids.some(x => api.isRoyalCard(x)) && royal) ids[ids.length - 1] = royal.id;
+              const publicMain = new Set(api.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
+              const standard = window.__CARD_DATA__
+                .filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)))
+                .map((card) => card.id);
+              const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
+              const nonRoyal = standard.filter((id) => !api.isRoyalCard(id));
+              const ids = [...nonRoyal.slice(0, 37), ...royalIds];
               const draft = api.deckSetDraft(ids, []);
-              if (!draft.ok) throw new Error('draft-invalid:' + JSON.stringify(draft));
+              const draftValidation = api.deckValidate(api.state.deckDraft, { forBattle: true });
+              if (!draft.ok || !draftValidation.ok) throw new Error('draft-invalid:' + JSON.stringify({draft, draftValidation}));
               const committed = api.deckCommit();
               if (!committed.ok) throw new Error('commit-invalid:' + JSON.stringify(committed));
               const saved = api.deckSaved().main;
-              if (saved.length !== rule.requiredMain) throw new Error('saved-length:' + saved.length);
+              const savedValidation = api.deckValidate(api.state.savedDeck, { forBattle: true });
+              if (!savedValidation.ok || saved.length !== 40) throw new Error('saved-invalid:' + JSON.stringify({savedLength:saved.length,savedValidation}));
               const cases = [];
               for (const content of ['road_shield', 'honey_hunt']) {
                 for (const mode of ['2p', '4p', '2v2']) {
@@ -73,7 +77,7 @@ jobs:
                   let error = null;
                   let result = false;
                   try { result = await api.autoToResult(120); } catch (e) { error = String(e?.message || e); }
-                  cases.push({ content, mode, allSourcesMatch, conservationAtStart, error, result, rounds: api.state.match?.round ?? null, savedLength: api.deckSaved().main.length });
+                  cases.push({ content, mode, initial, allSourcesMatch, conservationAtStart, error, result, rounds: api.state.match?.round ?? null, savedLength: api.deckSaved().main.length, conservationAtResult: api.cardConservation() });
                   if (error) throw new Error(mode + ':' + content + ':' + error);
                   if (!result) throw new Error('no-result:' + mode + ':' + content + ':round=' + (api.state.match?.round ?? 'null'));
                 }
@@ -84,7 +88,7 @@ jobs:
               const reload = api.start('4p', 'honey_hunt');
               api.battlePresentationFast(true);
               const reloadCpuSourcesMatch = reload.players.filter(p => !p.human).every(p => p.sourceDeckSize === saved.length && p.sourceDeckIds.length === saved.length && p.sourceDeckIds.every((id, i) => id === saved[i]));
-              return { requiredMain: rule.requiredMain, savedLength: saved.length, afterReload, reloadCpuSourcesMatch, reloadConservation: api.cardConservation(), cases };
+              return { requiredMain: 40, savedLength: saved.length, afterReload, reloadCpuSourcesMatch, reloadConservation: api.cardConservation(), cases };
             });
             console.log('CPUDECK_R4_REPORT ' + JSON.stringify(report));
             expect(report.requiredMain).toBe(40);
@@ -96,6 +100,7 @@ jobs:
             for (const c of report.cases) {
               expect(c.allSourcesMatch, JSON.stringify(c)).toBe(true);
               expect(c.conservationAtStart, JSON.stringify(c)).toBe(true);
+              expect(c.conservationAtResult, JSON.stringify(c)).toBe(true);
               expect(c.error, JSON.stringify(c)).toBeNull();
               expect(c.result, JSON.stringify(c)).toBe(true);
               expect(c.savedLength, JSON.stringify(c)).toBe(40);

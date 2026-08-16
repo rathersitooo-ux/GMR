@@ -57,6 +57,7 @@ jobs:
           battle2v2_reconnect=false
           hate_presence=false
           roblox=false
+          publichost=false
           unclassified=false
           : > /tmp/gameroad-unclassified.txt
 
@@ -160,6 +161,18 @@ jobs:
               roblox/GAMEROAD.rbxlx)
                 roblox=true
                 ;;
+              deploy/cloudflare/.gitignore|\
+              deploy/cloudflare/README.md|\
+              deploy/cloudflare/functions/ws.js|\
+              deploy/cloudflare/relay/src/relay-core.mjs|\
+              deploy/cloudflare/relay/src/relay-worker.mjs|\
+              deploy/cloudflare/relay/wrangler.toml|\
+              deploy/cloudflare/scripts/build.mjs|\
+              deploy/cloudflare/tests/build.test.mjs|\
+              deploy/cloudflare/tests/relay-core.test.mjs|\
+              deploy/cloudflare/wrangler.pages.toml)
+                publichost=true
+                ;;
               .github/workflows/gameroad-required-gate.yml|README.md|.gitignore|.gitattributes)
                 ;;
               browser/*|roblox/*|unity/*|tools/*|tests/*|.github/workflows/*|\
@@ -194,6 +207,7 @@ jobs:
             echo "battle2v2_reconnect=${battle2v2_reconnect}"
             echo "hate_presence=${hate_presence}"
             echo "roblox=${roblox}"
+            echo "publichost=${publichost}"
             echo "unclassified=${unclassified}"
           } >> "${GITHUB_OUTPUT}"
 
@@ -203,7 +217,7 @@ jobs:
           fi
 
       - name: Set up Node
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true' || steps.classify.outputs.partner_vtuber == 'true' || steps.classify.outputs.partner_humanlike == 'true' || steps.classify.outputs.observability == 'true' || steps.classify.outputs.card_presentation == 'true' || steps.classify.outputs.battle2v2_reconnect == 'true' || steps.classify.outputs.hate_presence == 'true'
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true' || steps.classify.outputs.partner_vtuber == 'true' || steps.classify.outputs.partner_humanlike == 'true' || steps.classify.outputs.observability == 'true' || steps.classify.outputs.card_presentation == 'true' || steps.classify.outputs.battle2v2_reconnect == 'true' || steps.classify.outputs.hate_presence == 'true' || steps.classify.outputs.publichost == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -279,6 +293,18 @@ jobs:
       - name: Run HATE peer presence core tests
         if: steps.classify.outputs.hate_presence == 'true'
         run: node --test tests/hate-peer-presence-core.test.mjs
+
+      - name: Run PublicHost Cloudflare deploy-prep tests
+        if: steps.classify.outputs.publichost == 'true'
+        run: node --test deploy/cloudflare/tests/relay-core.test.mjs deploy/cloudflare/tests/build.test.mjs
+
+      - name: Run PublicHost Cloudflare syntax checks
+        if: steps.classify.outputs.publichost == 'true'
+        run: |
+          node --check deploy/cloudflare/functions/ws.js
+          node --check deploy/cloudflare/relay/src/relay-core.mjs
+          node --check deploy/cloudflare/relay/src/relay-worker.mjs
+          node --check deploy/cloudflare/scripts/build.mjs
 
       - name: Verify formal Roblox placement
         if: steps.classify.outputs.roblox == 'true'

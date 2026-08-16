@@ -1,0 +1,7 @@
+name = "gameroad-friend-relay-r5"
+main = "src/relay-worker.mjs"
+compatibility_date = "2026-08-16"
+
+[exports.GAMEROADFriendRoomRelay]
+type = "durable-object"
+storage = "sqlite"

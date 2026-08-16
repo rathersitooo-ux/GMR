@@ -1,0 +1,8 @@
+name = "gameroad-browser-r5"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-08-16"
+
+[[durable_objects.bindings]]
+name = "GAMEROAD_ROOMS"
+class_name = "GAMEROADFriendRoomRelay"
+script_name = "gameroad-friend-relay-r5"

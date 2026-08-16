@@ -31,75 +31,13 @@ jobs:
             echo "main drifted: expected=${expected_main} actual=${actual_main}"
             exit 1
           fi
-
-          python3 - <<'PY'
-          from pathlib import Path
-
-          full_path = Path('tests/browser-full-interaction.spec.mjs')
-          extra_path = Path('tests/browser-operation-gaps.spec.mjs')
-          full = full_path.read_text(encoding='utf-8')
-          extra = extra_path.read_text(encoding='utf-8')
-
-          marker = '// FULLREG R12 supplemental visible-operation coverage'
-          start_marker = "test('covers Home collapse/expand plus auxiliary Settings navigation without claiming hidden controls'"
-          if marker in full:
-              raise SystemExit('supplemental marker already exists in full-interaction spec')
-          if extra.count(start_marker) != 1:
-              raise SystemExit(f'expected exactly one supplemental test start, found {extra.count(start_marker)}')
-          for required in [
-              'function observeRuntimeErrors(page)',
-              'async function shot(page, testInfo, name)',
-              'async function boot(page)',
-              'function visibleGo(page, target)',
-              'async function backVisible(page)',
-              'async function installLegalBattleDeck(page)',
-          ]:
-              if required not in extra:
-                  raise SystemExit(f'missing expected supplemental helper: {required}')
-          for required in [
-              'async function attachStateScreenshot(page, testInfo, stateName)',
-              'async function bootCurrentBrowser(page)',
-              'async function installLegalBattleDeck(page)',
-          ]:
-              if required not in full:
-                  raise SystemExit(f'missing expected existing helper: {required}')
-
-          body = extra[extra.index(start_marker):]
-          body = body.replace('await boot(page);', 'await bootCurrentBrowser(page);')
-          body = body.replace('await shot(page, testInfo,', 'await attachStateScreenshot(page, testInfo,')
-          body = body.replace('visibleGo(page,', 'visibleOperationGo(page,')
-          body = body.replace('backVisible(page)', 'backOperationVisible(page)')
-
-          forbidden = ['await boot(page);', 'await shot(page, testInfo,', 'visibleGo(page,', 'backVisible(page)']
-          leftovers = [token for token in forbidden if token in body]
-          if leftovers:
-              raise SystemExit(f'unrewritten supplemental helper calls: {leftovers}')
-
-          helpers = r'''
-function visibleOperationGo(page, target) {
-  return page
-    .locator(`[data-go="${target}"]:visible, [data-home-target="${target}"]:visible, [data-root-go="${target}"]:visible`)
-    .first();
-}
-
-async function backOperationVisible(page) {
-  const back = page.locator('section.screen.active [data-back]:visible').first();
-  await expect(back).toBeVisible();
-  await back.click();
-}
-'''.strip()
-
-          merged = full.rstrip() + '\n\n' + marker + '\n' + helpers + '\n\n' + body.rstrip() + '\n'
-          full_path.write_text(merged, encoding='utf-8')
-          PY
-
+          echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCgpmdWxsX3BhdGggPSBQYXRoKCJ0ZXN0cy9icm93c2VyLWZ1bGwtaW50ZXJhY3Rpb24uc3BlYy5tanMiKQpleHRyYV9wYXRoID0gUGF0aCgidGVzdHMvYnJvd3Nlci1vcGVyYXRpb24tZ2Fwcy5zcGVjLm1qcyIpCmZ1bGwgPSBmdWxsX3BhdGgucmVhZF90ZXh0KGVuY29kaW5nPSJ1dGYtOCIpCmV4dHJhID0gZXh0cmFfcGF0aC5yZWFkX3RleHQoZW5jb2Rpbmc9InV0Zi04IikKCm1hcmtlciA9ICIvLyBGVUxMUkVHIFIxMiBzdXBwbGVtZW50YWwgdmlzaWJsZS1vcGVyYXRpb24gY292ZXJhZ2UiCnN0YXJ0X21hcmtlciA9ICJ0ZXN0KCdjb3ZlcnMgSG9tZSBjb2xsYXBzZS9leHBhbmQgcGx1cyBhdXhpbGlhcnkgU2V0dGluZ3MgbmF2aWdhdGlvbiB3aXRob3V0IGNsYWltaW5nIGhpZGRlbiBjb250cm9scyciCmlmIG1hcmtlciBpbiBmdWxsOgogICAgcmFpc2UgU3lzdGVtRXhpdCgic3VwcGxlbWVudGFsIG1hcmtlciBhbHJlYWR5IGV4aXN0cyBpbiBmdWxsLWludGVyYWN0aW9uIHNwZWMiKQppZiBleHRyYS5jb3VudChzdGFydF9tYXJrZXIpICE9IDE6CiAgICByYWlzZSBTeXN0ZW1FeGl0KGYiZXhwZWN0ZWQgZXhhY3RseSBvbmUgc3VwcGxlbWVudGFsIHRlc3Qgc3RhcnQsIGZvdW5kIHtleHRyYS5jb3VudChzdGFydF9tYXJrZXIpfSIpCgpmb3IgcmVxdWlyZWQgaW4gWwogICAgImZ1bmN0aW9uIG9ic2VydmVSdW50aW1lRXJyb3JzKHBhZ2UpIiwKICAgICJhc3luYyBmdW5jdGlvbiBzaG90KHBhZ2UsIHRlc3RJbmZvLCBuYW1lKSIsCiAgICAiYXN5bmMgZnVuY3Rpb24gYm9vdChwYWdlKSIsCiAgICAiZnVuY3Rpb24gdmlzaWJsZUdvKHBhZ2UsIHRhcmdldCkiLAogICAgImFzeW5jIGZ1bmN0aW9uIGJhY2tWaXNpYmxlKHBhZ2UpIiwKICAgICJhc3luYyBmdW5jdGlvbiBpbnN0YWxsTGVnYWxCYXR0bGVEZWNrKHBhZ2UpIiwKXToKICAgIGlmIHJlcXVpcmVkIG5vdCBpbiBleHRyYToKICAgICAgICByYWlzZSBTeXN0ZW1FeGl0KGYibWlzc2luZyBleHBlY3RlZCBzdXBwbGVtZW50YWwgaGVscGVyOiB7cmVxdWlyZWR9IikKCmZvciByZXF1aXJlZCBpbiBbCiAgICAiYXN5bmMgZnVuY3Rpb24gYXR0YWNoU3RhdGVTY3JlZW5zaG90KHBhZ2UsIHRlc3RJbmZvLCBzdGF0ZU5hbWUpIiwKICAgICJhc3luYyBmdW5jdGlvbiBib290Q3VycmVudEJyb3dzZXIocGFnZSkiLAogICAgImFzeW5jIGZ1bmN0aW9uIGluc3RhbGxMZWdhbEJhdHRsZURlY2socGFnZSkiLApdOgogICAgaWYgcmVxdWlyZWQgbm90IGluIGZ1bGw6CiAgICAgICAgcmFpc2UgU3lzdGVtRXhpdChmIm1pc3NpbmcgZXhwZWN0ZWQgZXhpc3RpbmcgaGVscGVyOiB7cmVxdWlyZWR9IikKCmJvZHkgPSBleHRyYVtleHRyYS5pbmRleChzdGFydF9tYXJrZXIpOl0KYm9keSA9IGJvZHkucmVwbGFjZSgiYXdhaXQgYm9vdChwYWdlKTsiLCAiYXdhaXQgYm9vdEN1cnJlbnRCcm93c2VyKHBhZ2UpOyIpCmJvZHkgPSBib2R5LnJlcGxhY2UoImF3YWl0IHNob3QocGFnZSwgdGVzdEluZm8sIiwgImF3YWl0IGF0dGFjaFN0YXRlU2NyZWVuc2hvdChwYWdlLCB0ZXN0SW5mbywiKQpib2R5ID0gYm9keS5yZXBsYWNlKCJ2aXNpYmxlR28ocGFnZSwiLCAidmlzaWJsZU9wZXJhdGlvbkdvKHBhZ2UsIikKYm9keSA9IGJvZHkucmVwbGFjZSgiYmFja1Zpc2libGUocGFnZSkiLCAiYmFja09wZXJhdGlvblZpc2libGUocGFnZSkiKQoKZm9yIGZvcmJpZGRlbiBpbiBbCiAgICAiYXdhaXQgYm9vdChwYWdlKTsiLAogICAgImF3YWl0IHNob3QocGFnZSwgdGVzdEluZm8sIiwKICAgICJ2aXNpYmxlR28ocGFnZSwiLAogICAgImJhY2tWaXNpYmxlKHBhZ2UpIiwKXToKICAgIGlmIGZvcmJpZGRlbiBpbiBib2R5OgogICAgICAgIHJhaXNlIFN5c3RlbUV4aXQoZiJ1bnJld3JpdHRlbiBzdXBwbGVtZW50YWwgaGVscGVyIGNhbGw6IHtmb3JiaWRkZW59IikKCmhlbHBlcnMgPSAiXG4iLmpvaW4oWwogICAgImZ1bmN0aW9uIHZpc2libGVPcGVyYXRpb25HbyhwYWdlLCB0YXJnZXQpIHsiLAogICAgIiAgcmV0dXJuIHBhZ2UiLAogICAgIiAgICAubG9jYXRvcihgW2RhdGEtZ289XCIke3RhcmdldH1cIl06dmlzaWJsZSwgW2RhdGEtaG9tZS10YXJnZXQ9XCIke3RhcmdldH1cIl06dmlzaWJsZSwgW2RhdGEtcm9vdC1nbz1cIiR7dGFyZ2V0fVwiXTp2aXNpYmxlYCkiLAogICAgIiAgICAuZmlyc3QoKTsiLAogICAgIn0iLAogICAgIiIsCiAgICAiYXN5bmMgZnVuY3Rpb24gYmFja09wZXJhdGlvblZpc2libGUocGFnZSkgeyIsCiAgICAiICBjb25zdCBiYWNrID0gcGFnZS5sb2NhdG9yKCdzZWN0aW9uLnNjcmVlbi5hY3RpdmUgW2RhdGEtYmFja106dmlzaWJsZScpLmZpcnN0KCk7IiwKICAgICIgIGF3YWl0IGV4cGVjdChiYWNrKS50b0JlVmlzaWJsZSgpOyIsCiAgICAiICBhd2FpdCBiYWNrLmNsaWNrKCk7IiwKICAgICJ9IiwKXSkKCm1lcmdlZCA9IGZ1bGwucnN0cmlwKCkgKyAiXG5cbiIgKyBtYXJrZXIgKyAiXG4iICsgaGVscGVycyArICJcblxuIiArIGJvZHkucnN0cmlwKCkgKyAiXG4iCmZ1bGxfcGF0aC53cml0ZV90ZXh0KG1lcmdlZCwgZW5jb2Rpbmc9InV0Zi04IikK' | base64 -d > /tmp/fullreg-r12.py
+          python3 /tmp/fullreg-r12.py
           rm tests/browser-operation-gaps.spec.mjs
           git show origin/main:playwright.full-interaction.config.mjs > playwright.full-interaction.config.mjs
           git show origin/main:.github/workflows/browser-full-interaction.yml > .github/workflows/browser-full-interaction.yml
-
           git diff --check
           node --check tests/browser-full-interaction.spec.mjs
-
           git add tests/browser-full-interaction.spec.mjs tests/browser-operation-gaps.spec.mjs playwright.full-interaction.config.mjs .github/workflows/browser-full-interaction.yml
           mapfile -t changed < <(git diff --cached --name-only origin/main)
           printf 'Final staged paths against origin/main:\n'
@@ -108,7 +46,6 @@ async function backOperationVisible(page) {
             echo 'Final path assertion failed.'
             exit 1
           fi
-
           git config user.name 'rathersitooo-ux'
           git config user.email 'rathersitooo@gmail.com'
           git commit -m 'FULLREG R12: fold operation gaps into classified interaction spec'

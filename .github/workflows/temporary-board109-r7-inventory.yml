@@ -1,4 +1,4 @@
-name: TEMP BOARD109 R7 exact-current geometry inventory
+name: TEMP BOARD109 R7 exact corner patch executor
 
 on:
   push:
@@ -6,66 +6,153 @@ on:
       - 'work/BOARD-109-R7-CORNERFIX-20260816T1004-SOL'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  inventory:
+  patch:
+    if: github.event.head_commit.message == 'BOARD-109 R7: install exact corner patch executor'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 3
-      - name: Verify exact ancestry and inspect board geometry
+          fetch-depth: 4
+      - name: Fail closed on exact current branch/base/blob and patch only corner runtime semantics
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "af256e64b34aa796d998aeae807c45a949a14561"
-          test "$(git rev-parse HEAD~2)" = "2f115ac62bf124a1c118ebeeef6dbff1e52566e7"
+          test "$(git rev-parse HEAD^)" = "6eca8c0a2bda8932c8a59b587f6515ddefa833a6"
+          test "$(git rev-parse HEAD~3)" = "2f115ac62bf124a1c118ebeeef6dbff1e52566e7"
           test "$(git rev-parse HEAD:browser/GAMEROAD.html)" = "3a8d34bfadf263e0980a4b1c9ec78f75fea07646"
           python3 - <<'PY'
           from pathlib import Path
-          import hashlib, json, re, subprocess
+          import hashlib, subprocess
 
           path = Path('browser/GAMEROAD.html')
           raw = path.read_bytes()
+          assert hashlib.sha256(raw).hexdigest() == '8728ff16e341926c82a9a2c10a55f5fe58b0f6e3325a0cdb40fe91a616881f2f'
+          assert len(raw) == 11815819
           text = raw.decode('utf-8-sig')
-          git_blob = subprocess.check_output(['git','hash-object',str(path)], text=True).strip()
-          assert git_blob == '3a8d34bfadf263e0980a4b1c9ec78f75fea07646'
 
-          needles = [
-              'function projectionFor', 'function centerPort', 'function nodeWorld', 'function nodeXY',
-              'function posType', 'function activeNodes', 'function neighbors', 'function fieldFocusNodes',
-              'function nodeTopSurface', 'function nearestProjectedNode', 'function renderField3D',
-              'function renderBoard', "id.startsWith('K:')", '.node.corner', 'corner'
+          def repl(label, old, new):
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly 1 old token, found {count}')
+              if new in text:
+                  raise SystemExit(f'{label}: new token already present before patch')
+              text = text.replace(old, new, 1)
+
+          repl(
+              'active corners',
+              "function activeNodes(){const s=new Set(centerIds());",
+              "function cornerIds(){return['K:NW','K:NE','K:SW','K:SE']}\nfunction activeNodes(){const s=new Set([...centerIds(),...cornerIds()]);"
+          )
+
+          old_neighbors = "function neighbors(id,viewer){const act=activeNodes(),out=[];if(id.startsWith('C:')){const [,rs,cs]=id.split(':'),r=+rs,c=+cs;[[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([rr,cc])=>{const x=`C:${rr}:${cc}`;if(act.has(x))out.push(x)});state.match.players.forEach(p=>['L','C','R'].forEach(l=>{const sh=shieldId(p.id,l);if(centerPort(p.id,l,viewer)===id&&act.has(sh))out.push(sh)}))}else if(id.startsWith('S:')){const [,owner,lane]=id.split(':');out.push(centerPort(owner,lane,viewer));const r1=roadId(owner,lane,1);if(act.has(r1))out.push(r1)}else if(id.startsWith('R:')){const {owner,lane,depth}=parseRoad(id);if(depth===1)out.push(shieldId(owner,lane));const a=roadId(owner,lane,depth-1),b=roadId(owner,lane,depth+1);if(depth>1&&act.has(a))out.push(a);if(depth<7&&act.has(b))out.push(b)}return out.filter(x=>act.has(x))}"
+          new_neighbors = "function cornerRoadIds(id,viewer){const spec={'K:NW':[['N','L'],['W','R']],'K:NE':[['N','R'],['E','L']],'K:SW':[['S','R'],['W','L']],'K:SE':[['S','L'],['E','R']]}[id];if(!spec)return[];const ownerByArm={};Object.entries(projectionFor(viewer)).forEach(([owner,arm])=>ownerByArm[arm]=owner);return spec.map(([arm,lane])=>roadId(ownerByArm[arm],lane,1))}\nfunction neighbors(id,viewer){const act=activeNodes(),out=[];if(id.startsWith('C:')){const [,rs,cs]=id.split(':'),r=+rs,c=+cs;[[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([rr,cc])=>{const x=`C:${rr}:${cc}`;if(act.has(x))out.push(x)});state.match.players.forEach(p=>['L','C','R'].forEach(l=>{const sh=shieldId(p.id,l);if(centerPort(p.id,l,viewer)===id&&act.has(sh))out.push(sh)}))}else if(id.startsWith('S:')){const [,owner,lane]=id.split(':');out.push(centerPort(owner,lane,viewer));const r1=roadId(owner,lane,1);if(act.has(r1))out.push(r1)}else if(id.startsWith('R:')){const {owner,lane,depth}=parseRoad(id);if(depth===1){out.push(shieldId(owner,lane));cornerIds().forEach(k=>{if(cornerRoadIds(k,viewer).includes(id))out.push(k)})}const a=roadId(owner,lane,depth-1),b=roadId(owner,lane,depth+1);if(depth>1&&act.has(a))out.push(a);if(depth<7&&act.has(b))out.push(b)}else if(id.startsWith('K:'))out.push(...cornerRoadIds(id,viewer));return out.filter(x=>act.has(x))}"
+          repl('corner graph', old_neighbors, new_neighbors)
+
+          repl(
+              'corner world position',
+              "const k={NW:{x:-10,z:-10},NE:{x:10,z:-10},SW:{x:-10,z:10},SE:{x:10,z:10}}[id.split(':')[1]];return{k,y:.2,...k}}",
+              "const k={NW:{x:-3.6,z:-3.6},NE:{x:3.6,z:-3.6},SW:{x:-3.6,z:3.6},SE:{x:3.6,z:3.6}}[id.split(':')[1]];return{k,y:.2,...k}}"
+          )
+
+          repl(
+              'corner range surface',
+              "if(typ==='center'){size=1.06;topY=nw.y-.015+.16}else if(typ==='shield'){size=1.05;topY=nw.y+.24}else if(typ==='road'){if(!activeNodes().has(id))return null;size=.88;topY=nw.y-.01+.105}else return null;",
+              "if(typ==='center'){size=1.06;topY=nw.y-.015+.16}else if(typ==='shield'){size=1.05;topY=nw.y+.24}else if(typ==='road'){if(!activeNodes().has(id))return null;size=.88;topY=nw.y-.01+.105}else if(typ==='corner'){size=.88;topY=nw.y-.01+.105}else return null;"
+          )
+
+          repl(
+              'corner projected drag hit',
+              "for(const [id,p] of fieldProjection){if(id.startsWith('K:'))continue;if(onlyReach&&!reach.has(id))continue;",
+              "for(const [id,p] of fieldProjection){if(onlyReach&&!reach.has(id))continue;"
+          )
+
+          repl(
+              'corner 3d skip',
+              "for(const id of all){if(id.startsWith('K:'))continue;const nw=nodeWorld(id,viewer),typ=posType(id);",
+              "for(const id of all){const nw=nodeWorld(id,viewer),typ=posType(id);"
+          )
+
+          repl(
+              'corner 3d tile',
+              "box(nw.x,nw.y+(active.has(id)?.10:-.017),nw.z,active.has(id)?.42:.16,.014,active.has(id)?.42:.16,pc,active.has(id)?'roadMarkActive':'roadMark')}}if(m.honey?.byNode)",
+              "box(nw.x,nw.y+(active.has(id)?.10:-.017),nw.z,active.has(id)?.42:.16,.014,active.has(id)?.42:.16,pc,active.has(id)?'roadMarkActive':'roadMark')}else if(typ==='corner'){box(nw.x,nw.y-.01,nw.z,.88,.105,.88,[.46,.49,.43],'corner')}}if(m.honey?.byNode)"
+          )
+
+          repl(
+              'corner css hit',
+              ".node.corner{opacity:0;pointer-events:none}",
+              ".node.corner{opacity:0}"
+          )
+
+          repl(
+              'corner dom legality',
+              "if(id.startsWith('K:'))e.disabled=true;else if(!e.classList.contains('reachable'))e.disabled=true;else e.onclick=",
+              "if(!e.classList.contains('reachable'))e.disabled=true;else e.onclick="
+          )
+
+          # Exact source-level invariants after patch.
+          required = [
+              "function cornerIds(){return['K:NW','K:NE','K:SW','K:SE']}",
+              "'K:NW':[['N','L'],['W','R']]",
+              "'K:NE':[['N','R'],['E','L']]",
+              "'K:SW':[['S','R'],['W','L']]",
+              "'K:SE':[['S','L'],['E','R']]",
+              "else if(id.startsWith('K:'))out.push(...cornerRoadIds(id,viewer))",
+              "else if(typ==='corner'){size=.88;topY=nw.y-.01+.105}",
+              "else if(typ==='corner'){box(nw.x,nw.y-.01,nw.z,.88,.105,.88,[.46,.49,.43],'corner')}",
+              ".node.corner{opacity:0}"
           ]
-          out = {
-              'head': subprocess.check_output(['git','rev-parse','HEAD'], text=True).strip(),
-              'browser_git_blob': git_blob,
-              'browser_sha256': hashlib.sha256(raw).hexdigest(),
-              'browser_bytes': len(raw),
-              'occurrences': {}
+          for token in required:
+              assert token in text, token
+          assert "for(const [id,p] of fieldProjection){if(id.startsWith('K:'))continue" not in text
+          assert "for(const id of all){if(id.startsWith('K:'))continue" not in text
+          assert "if(id.startsWith('K:'))e.disabled=true" not in text
+          assert ".node.corner{opacity:0;pointer-events:none}" not in text
+
+          # Canonical 109 enumeration is unchanged: center9 + 4*(shield3 + road21) + corner4.
+          assert 9 + 4 * (3 + 21) + 4 == 109
+
+          # Independent model of the accepted two-arm graph for every viewer.
+          players = ['P1','P2','P3','P4']
+          arms = ['N','E','S','W']
+          spec = {
+              'K:NW':[('N','L'),('W','R')],
+              'K:NE':[('N','R'),('E','L')],
+              'K:SW':[('S','R'),('W','L')],
+              'K:SE':[('S','L'),('E','R')],
           }
-          for needle in needles:
-              hits = [m.start() for m in re.finditer(re.escape(needle), text)]
-              records=[]
-              limit=12 if needle!='corner' else 20
-              for pos in hits[:limit]:
-                  records.append({
-                      'line': text.count('\n',0,pos)+1,
-                      'context': text[max(0,pos-1400):min(len(text),pos+len(needle)+2200)]
-                  })
-              out['occurrences'][needle]={'count':len(hits),'records':records}
-          Path('board109_geometry_inventory.json').write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf-8')
-          print(json.dumps({'head':out['head'],'blob':git_blob,'sha256':out['browser_sha256'],'bytes':len(raw),'counts':{k:v['count'] for k,v in out['occurrences'].items()}},ensure_ascii=False,indent=2))
-          for key in ['function projectionFor','function centerPort','function nodeWorld','function nodeXY','function activeNodes','function neighbors','function fieldFocusNodes','function nodeTopSurface','function nearestProjectedNode','function renderField3D','function renderBoard','.node.corner']:
-              print(f'===== {key} =====')
-              for rec in out['occurrences'][key]['records'][:6]:
-                  print(f"--- line {rec['line']} ---")
-                  print(rec['context'])
+          corners = {'K:NW':(-3.6,-3.6),'K:NE':(3.6,-3.6),'K:SW':(-3.6,3.6),'K:SE':(3.6,3.6)}
+          off = {'L':-1.45,'C':0,'R':1.45}
+          def road_world(arm,lane):
+              d=3.6; o=off[lane]
+              return {'N':(o,-d),'S':(-o,d),'W':(-d,-o),'E':(d,o)}[arm]
+          for vi, viewer in enumerate(players):
+              projection = {pid:arms[(i-vi+4)%4] for i,pid in enumerate(players)}
+              owner_by_arm = {arm:owner for owner,arm in projection.items()}
+              for corner, pairs in spec.items():
+                  roads = [f"R:{owner_by_arm[arm]}:{lane}:1" for arm,lane in pairs]
+                  assert len(roads)==2 and len(set(roads))==2
+                  cx,cz=corners[corner]
+                  for arm,lane in pairs:
+                      rx,rz=road_world(arm,lane)
+                      # Grid-orthogonal visual edge: one coordinate is shared; no diagonal segment.
+                      assert abs(cx-rx)<1e-9 or abs(cz-rz)<1e-9, (viewer,corner,arm,lane,(cx,cz),(rx,rz))
+                  assert all(':C:1' not in r for r in roads)
+
+          out = text.encode('utf-8')
+          path.write_bytes(out)
+          print('patched_sha256', hashlib.sha256(out).hexdigest())
+          print('patched_bytes', len(out))
           PY
-      - name: Upload geometry inventory
-        uses: actions/upload-artifact@v4
-        with:
-          name: board109-r7-geometry-inventory
-          path: board109_geometry_inventory.json
-          if-no-files-found: error
+
+          test "$(git diff --name-only)" = "browser/GAMEROAD.html"
+          git diff --check
+          git config user.name "GAMEROAD Board109 R7"
+          git config user.email "actions@users.noreply.github.com"
+          git add browser/GAMEROAD.html
+          git commit -m "BOARD-109 R7: connect accepted walkable corners"
+          git push origin HEAD:work/BOARD-109-R7-CORNERFIX-20260816T1004-SOL

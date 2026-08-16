@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Verify exact current Browser and capture repair anchors
+      - name: Verify exact current Browser transport
         shell: bash
         run: |
           set -euo pipefail
@@ -25,32 +25,11 @@ jobs:
           echo "MAIN_BASE=$(git merge-base HEAD origin/main)"
           echo "BROWSER_BLOB=$ACTUAL_BLOB"
           test "$ACTUAL_BLOB" = "$EXPECTED_BLOB"
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('browser/GAMEROAD.html')
-          s=p.read_text(encoding='utf-8')
-          needles=['activeNodes','neighbors','nearestProjectedNode','renderBoard','K:NW','K:NE','K:SW','K:SE']
-          out=[]
-          out.append(f'BROWSER_CHARS {len(s)}')
-          for needle in needles:
-              pos=[]; start=0
-              while True:
-                  i=s.find(needle,start)
-                  if i<0: break
-                  pos.append(i); start=i+len(needle)
-              out.append(f'@@NEEDLE {needle} COUNT {len(pos)} POS {pos[:20]}')
-              for n,i in enumerate(pos[:12]):
-                  lo=max(0,i-2600); hi=min(len(s),i+5200)
-                  out.append(f'@@BEGIN {needle} #{n} [{lo}:{hi}]')
-                  out.append(s[lo:hi])
-                  out.append(f'@@END {needle} #{n}')
-          Path('/tmp/board109-r9-source-anchors.txt').write_text('\n'.join(out),encoding='utf-8')
-          print('\n'.join(out[:8]))
-          PY
+          cp browser/GAMEROAD.html /tmp/GAMEROAD.exact-current.html
           test -z "$(git status --porcelain -- browser/GAMEROAD.html)"
       - uses: actions/upload-artifact@v4
         with:
-          name: board109-r9-source-anchors
-          path: /tmp/board109-r9-source-anchors.txt
+          name: board109-r9-exact-current-browser
+          path: /tmp/GAMEROAD.exact-current.html
           if-no-files-found: error
           retention-days: 1

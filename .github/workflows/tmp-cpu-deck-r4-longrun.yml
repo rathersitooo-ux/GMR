@@ -1,0 +1,111 @@
+name: Temporary CPU Deck R4 Long-Run
+
+on:
+  push:
+    branches:
+      - work/BROWSER-CPU-DECK-RESERVATION-CONSISTENCY-001-R3-LONGRUN-20260816T2316-SOL-Q7N4V2
+    paths:
+      - .github/workflows/tmp-cpu-deck-r4-longrun.yml
+
+permissions:
+  contents: read
+
+jobs:
+  cpu-longrun:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install isolated browser test dependency
+        run: |
+          npm install --no-save --package-lock=false @playwright/test@1.55.0
+          npx playwright install chromium
+      - name: Write temporary current-head probe
+        run: |
+          cat > playwright.cpu-deck-r4.tmp.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir: './tests',
+            testMatch: 'cpu-deck-r4.tmp.spec.mjs',
+            timeout: 120000,
+            workers: 1,
+            use: { baseURL: 'http://127.0.0.1:4173', headless: true },
+            webServer: { command: 'python3 -m http.server 4173 --directory browser', url: 'http://127.0.0.1:4173/GAMEROAD.html', reuseExistingServer: false, timeout: 30000 },
+            projects: [{ name: 'chromium', use: { browserName: 'chromium' } }]
+          });
+          EOF
+          cat > tests/cpu-deck-r4.tmp.spec.mjs <<'EOF'
+          import { test, expect } from '@playwright/test';
+
+          test('validated 40-card snapshot feeds every CPU through full matches', async ({ page }) => {
+            await page.goto('/GAMEROAD.html');
+            await page.waitForFunction(() => !!window.__GAMEROAD_TEST__);
+            const report = await page.evaluate(async () => {
+              const api = window.__GAMEROAD_TEST__;
+              const rule = api.deckRule();
+              const pub = api.deckPublic().filter(x => x.slot === 'main' && x.id !== 'DCG_SAASUNA_FROST_STRIKE');
+              let ids = pub.slice(0, rule.requiredMain).map(x => x.id);
+              const royal = pub.find(x => api.isRoyalCard(x.id));
+              if (!ids.some(x => api.isRoyalCard(x)) && royal) ids[ids.length - 1] = royal.id;
+              const draft = api.deckSetDraft(ids, []);
+              if (!draft.ok) throw new Error('draft-invalid:' + JSON.stringify(draft));
+              const committed = api.deckCommit();
+              if (!committed.ok) throw new Error('commit-invalid:' + JSON.stringify(committed));
+              const saved = api.deckSaved().main;
+              if (saved.length !== rule.requiredMain) throw new Error('saved-length:' + saved.length);
+              const cases = [];
+              for (const content of ['road_shield', 'honey_hunt']) {
+                for (const mode of ['2p', '4p', '2v2']) {
+                  const m = api.start(mode, content);
+                  if (!m) throw new Error('start-failed:' + mode + ':' + content);
+                  api.battlePresentationFast(true);
+                  api.state.settings.reduceMotion = true;
+                  api.state.settings.lowPerf = true;
+                  const initial = m.players.map(p => ({
+                    id: p.id, human: p.human, sourceDeckSize: p.sourceDeckSize, sourceDeckIds: [...p.sourceDeckIds],
+                    mana: p.mana.length, shields: Object.values(p.shields).filter(Boolean).length, hand: p.hand.length, deck: p.deck.length
+                  }));
+                  const allSourcesMatch = initial.every(p => p.sourceDeckSize === saved.length && p.sourceDeckIds.length === saved.length && p.sourceDeckIds.every((id, i) => id === saved[i]));
+                  const conservationAtStart = api.cardConservation();
+                  let error = null;
+                  let result = false;
+                  try { result = await api.autoToResult(120); } catch (e) { error = String(e?.message || e); }
+                  cases.push({ content, mode, allSourcesMatch, conservationAtStart, error, result, rounds: api.state.match?.round ?? null, savedLength: api.deckSaved().main.length });
+                  if (error) throw new Error(mode + ':' + content + ':' + error);
+                  if (!result) throw new Error('no-result:' + mode + ':' + content + ':round=' + (api.state.match?.round ?? 'null'));
+                }
+              }
+              api.save();
+              api.load();
+              const afterReload = api.deckSaved().main.length;
+              const reload = api.start('4p', 'honey_hunt');
+              api.battlePresentationFast(true);
+              const reloadCpuSourcesMatch = reload.players.filter(p => !p.human).every(p => p.sourceDeckSize === saved.length && p.sourceDeckIds.length === saved.length && p.sourceDeckIds.every((id, i) => id === saved[i]));
+              return { requiredMain: rule.requiredMain, savedLength: saved.length, afterReload, reloadCpuSourcesMatch, reloadConservation: api.cardConservation(), cases };
+            });
+            console.log('CPUDECK_R4_REPORT ' + JSON.stringify(report));
+            expect(report.requiredMain).toBe(40);
+            expect(report.savedLength).toBe(40);
+            expect(report.afterReload).toBe(40);
+            expect(report.reloadCpuSourcesMatch).toBe(true);
+            expect(report.reloadConservation).toBe(true);
+            expect(report.cases).toHaveLength(6);
+            for (const c of report.cases) {
+              expect(c.allSourcesMatch, JSON.stringify(c)).toBe(true);
+              expect(c.conservationAtStart, JSON.stringify(c)).toBe(true);
+              expect(c.error, JSON.stringify(c)).toBeNull();
+              expect(c.result, JSON.stringify(c)).toBe(true);
+              expect(c.savedLength, JSON.stringify(c)).toBe(40);
+            }
+          });
+          EOF
+      - name: Run CPU long-run playable matrix
+        run: npx playwright test --config=playwright.cpu-deck-r4.tmp.config.mjs --reporter=line
+      - name: Run existing static Browser regression
+        run: node --test tests/browser-static.spec.mjs
+      - name: Remove runner-local probe files
+        if: always()
+        run: rm -f playwright.cpu-deck-r4.tmp.config.mjs tests/cpu-deck-r4.tmp.spec.mjs

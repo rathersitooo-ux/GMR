@@ -27,6 +27,15 @@ jobs:
           [[ "$(git hash-object browser/deck-save-recovery-core.mjs)" == "44d2c7f50309c99eec3ff0b9c106ae13e6b5dbee" ]]
           awk '/^[[:space:]]*python3 - <<'"'"'PY'"'"'$/ {take=1; next} take && /^[[:space:]]*PY$/ {exit} take {sub(/^          /,""); print}' .github/workflows/decksave-r11-apply.yml > /tmp/decksave-r11-apply.py
           test -s /tmp/decksave-r11-apply.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/decksave-r11-apply.py')
+          s=p.read_text()
+          old="""            marker=f'export function {name}'\n            assert core.count(marker)==1, (name, core.count(marker))\n            core=core.replace(marker,f'function {name}',1)"""
+          new="""            marker=f'export function {name}(' \n            assert core.count(marker)==1, (name, core.count(marker))\n            core=core.replace(marker,f'function {name}(',1)"""
+          assert s.count(old)==1, s.count(old)
+          p.write_text(s.replace(old,new,1))
+          PY
           python3 /tmp/decksave-r11-apply.py
           node --check browser/deck-save-recovery-core.mjs
           node --check tests/deck-save-recovery-core.test.mjs

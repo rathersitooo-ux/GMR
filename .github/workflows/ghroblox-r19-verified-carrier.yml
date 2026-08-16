@@ -1,0 +1,99 @@
+name: GHROBLOX R19 Verified Carrier Placement
+
+on:
+  push:
+    branches:
+      - work/GITHUB-ROBLOX-CODE-PLACEMENT-001-R19-MOUNTEDBLOB-20260816T2340-SOL
+    paths:
+      - .github/workflows/ghroblox-r19-verified-carrier.yml
+
+permissions:
+  contents: write
+
+jobs:
+  place:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and verify exact formal Roblox source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_SHA: 29d58936159b459caa3f26be9642b162890c0ac3
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${{ github.event.before }}" = "$BASE_SHA"
+
+          shas=(
+            4c863f339f79b75938ae623c5751e5c0cfe75588
+            dffd445e12158a590081c615024f80b1d74d272c
+            5bfe6bdbf2d2f65946e98e152c6b6095a874f072
+            416e52421a2291dac3a83bd1991325321350ef07
+            e2fb83e6a0cf473ff4699559f12064fa866b49b1
+            5dfd70ce275303482f55307b6ef6c910310916b4
+            c7b0ca2d760f39b157663e4e6bd0e4a92f69fbeb
+            0ea1dff0e7be34a021e8c4c722627bc4001474c3
+            415d956008fe2805b98a92351d398d585984cf69
+            83284cbc83ac71a8ed16f3e888f883ce98fd60f1
+            40604fca84f93bdd2ac103a89e7273923318084e
+            c9e28c1db9dfa5653f60b4bd20ea96de7e52ff1c
+            f46f0546926fbae2745769ec5367851776dfeaa1
+            9b46a7e8b69de8cc14d71314c3046b6dc6a9b2e3
+            3ae5fc273d7fa7fc546620ae00da39bccd75c240
+            e8f0d80202c80ecee357f9695dd0b1b6093e27bd
+            1cb23775871352438dc6aec6a20b61d7a905f6d2
+            86b9a535184eb973de313f3d2a6a728ecee28c7b
+            230a87ecbccec2b9e356f1ceba04318d8b04e013
+            e54e2812298162dffa95130b4513fd28f3114381
+            ddb13004440180ff8f6cac4c567a69611cabdca3
+            3e4fe42a5b3ff1ce146a9206f94406324f9fcad5
+            4f28a74fdaea04ff973cbc6019c8efaf5f881136
+            59bea4e5541d556ca82426062889aacc0bf41101
+            05a32726ba568448971900e15a4aa2e0f5853e56
+          )
+
+          rm -rf /tmp/r19parts
+          mkdir -p /tmp/r19parts
+          for i in "${!shas[@]}"; do
+            sha="${shas[$i]}"
+            out="/tmp/r19parts/$(printf '%03d' "$i")"
+            gh api "repos/${GITHUB_REPOSITORY}/git/blobs/${sha}" --jq '.content' | tr -d '\n' | base64 -d > "$out"
+            test "$(git hash-object "$out")" = "$sha"
+          done
+
+          cat /tmp/r19parts/* > /tmp/current.xz
+          test "$(wc -c < /tmp/current.xz)" = "216180"
+          echo 'ef1c3ebc5f9a91b317c582a013e70d06afc7458518c2ae6af8e784594e5fdd28  /tmp/current.xz' | sha256sum -c -
+          xz --test /tmp/current.xz
+          xz -dc /tmp/current.xz > /tmp/GAMEROAD.rbxlx
+          test "$(wc -c < /tmp/GAMEROAD.rbxlx)" = "10245508"
+          echo 'b5eb61ae6eca8d3c06a0ae5593ea41479e7597d6e8e8e7b6d941dafceaaa3d51  /tmp/GAMEROAD.rbxlx' | sha256sum -c -
+          test "$(git hash-object /tmp/GAMEROAD.rbxlx)" = "093a719cf1aaf18b838ee6a98102856abaadd008"
+          python - <<'PY'
+          import xml.etree.ElementTree as ET
+          root = ET.parse('/tmp/GAMEROAD.rbxlx').getroot()
+          assert root.tag == 'roblox', root.tag
+          PY
+
+      - name: Place exact target, remove transport workflow, and push
+        env:
+          BASE_SHA: 29d58936159b459caa3f26be9642b162890c0ac3
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p roblox
+          cp /tmp/GAMEROAD.rbxlx roblox/GAMEROAD.rbxlx
+          rm -f .github/workflows/ghroblox-r19-verified-carrier.yml
+          git add -A
+          mapfile -t changed < <(git diff --cached --name-only "$BASE_SHA")
+          printf '%s\n' "${changed[@]}"
+          test "${#changed[@]}" -eq 1
+          test "${changed[0]}" = "roblox/GAMEROAD.rbxlx"
+          test "$(git hash-object roblox/GAMEROAD.rbxlx)" = "093a719cf1aaf18b838ee6a98102856abaadd008"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Place exact GAMEROAD Roblox source (R19)' -m 'TaskID: GITHUB-ROBLOX-CODE-PLACEMENT-001 R19' -m 'AcquireKey: GHROBLOXPLACE-R19-MOUNTEDBLOB-20260816T2340-SOL-M8Q4V7N2K6'
+          git push origin HEAD:${GITHUB_REF_NAME}

@@ -1,0 +1,72 @@
+name: Character Remove R10 Exact Inventory
+
+on:
+  push:
+    branches:
+      - work/CHARACTER-REMOVE-R10-EXACT-INVENTORY-20260817
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Verify exact production Browser identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f browser/GAMEROAD.html
+          test "$(git hash-object browser/GAMEROAD.html)" = "d53769c0bf325cc139afc6705a0e8b12580582bd"
+          wc -c browser/GAMEROAD.html
+      - name: Build byte-complete character reference inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const crypto = require('crypto');
+          const path = 'browser/GAMEROAD.html';
+          const text = fs.readFileSync(path, 'utf8');
+          const bytes = fs.readFileSync(path);
+          const specs = [
+            ['rem_name','レム'],['rem_key','test.rem'],['rem_asset','4834621143'],
+            ['celica_name','セリカ'],['celica_key','test.celica'],['celica_asset','1405809866'],
+            ['paimon_name','パイモン'],['paimon_key','test.paimon'],['paimon_asset','8117753787'],
+            ['sinon_name','シノン'],['sinon_key','test.sinon'],['sinon_asset','166894654'],
+            ['miku_name','初音ミク'],['miku_key','test.miku'],['miku_asset','6669297625']
+          ];
+          function hits(needle) {
+            const out=[];
+            let from=0;
+            while (true) {
+              const i=text.indexOf(needle,from);
+              if(i<0) break;
+              const a=Math.max(0,i-320), b=Math.min(text.length,i+needle.length+320);
+              out.push({index:i,context:text.slice(a,b).replace(/\s+/g,' ')});
+              from=i+Math.max(1,needle.length);
+            }
+            return out;
+          }
+          const tokens={};
+          for (const [key,needle] of specs) tokens[key]={needle,hits:hits(needle)};
+          const result={
+            source:{path,bytes:bytes.length,sha256:crypto.createHash('sha256').update(bytes).digest('hex')},
+            tokens,
+            totals:Object.fromEntries(Object.entries(tokens).map(([k,v])=>[k,v.hits.length]))
+          };
+          fs.writeFileSync('charremove-r10-inventory.json',JSON.stringify(result,null,2));
+          console.log('CHARREMOVE_R10_INVENTORY_BEGIN');
+          console.log(JSON.stringify({source:result.source,totals:result.totals},null,2));
+          console.log('CHARREMOVE_R10_INVENTORY_END');
+          NODE
+      - name: Upload exact inventory artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: charremove-r10-exact-inventory
+          path: charremove-r10-inventory.json
+          if-no-files-found: error

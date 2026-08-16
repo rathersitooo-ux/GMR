@@ -1,4 +1,4 @@
-name: TEMP BOARD109 R7 runtime API diagnostic v4
+name: TEMP BOARD109 R7 test-hook source diagnostic v5
 
 on:
   push:
@@ -14,39 +14,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 11
-      - name: Verify exact patched product identity
+          fetch-depth: 12
+      - name: Verify exact patched product and print only hook-related exact source contexts
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git log -1 --pretty=%s)" = "BOARD109_R7_RUNTIME_API_DIAG_V4"
-          test "$(git rev-parse HEAD^)" = "57c1567852cb974a587fd747286d5b1ef71dda71"
+          test "$(git log -1 --pretty=%s)" = "BOARD109_R7_TESTHOOK_SOURCE_DIAG_V5"
+          test "$(git rev-parse HEAD^)" = "3e018f4123ea5b61b46cd7b8c68ceee12bb95b65"
           test "$(git rev-parse HEAD:browser/GAMEROAD.html)" = "0535bf3a37f9afdab3b0cddbc23e7aa610fcbc15"
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: npm install --no-save --no-package-lock @playwright/test@1.62.0
-      - run: npx playwright install --with-deps chromium
-      - name: Probe browser lexical/global API availability
-        shell: bash
-        run: |
-          mkdir -p .tmp-board109-r7/tests
-          cat > .tmp-board109-r7/playwright.config.mjs <<'EOF'
-          import { defineConfig } from '@playwright/test';
-          export default defineConfig({testDir:'./tests',testMatch:'diag.spec.mjs',timeout:90000,workers:1,retries:0,reporter:[['line']],use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true},webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1 --directory ..',url:'http://127.0.0.1:4173/browser/GAMEROAD.html',reuseExistingServer:false,timeout:120000}});
-          EOF
-          cat > .tmp-board109-r7/tests/diag.spec.mjs <<'EOF'
-          import {test,expect} from '@playwright/test';
-          test('runtime API diagnostic',async({page})=>{
-            const r=await page.goto('/browser/GAMEROAD.html',{waitUntil:'domcontentloaded'});expect(r?.ok()).toBeTruthy();await page.waitForTimeout(800);
-            const out=await page.evaluate(()=>{
-              const names=['cornerRoadIds','neighbors','reachable','shortest','renderBoard','selectEndpoint','animateResolvedPath','renderField3D','nodeWorld','nodeTopSurface','nearestProjectedNode','projectionFor','roadSelectable','normalMoveLimitForRoad','legalPlan','fieldProjection'];
-              const types={};
-              for(const n of names){try{types[n]=eval(`typeof ${n}`)}catch(e){types[n]=`ERR:${e.message}`}}
-              const hook=window.__GAMEROAD_TEST__||{};
-              return{types,hookKeys:Object.keys(hook).sort(),matchBefore:hook.state?.match?{mode:hook.state.match.mode,players:hook.state.match.players?.length}:null};
-            });
-            console.log('BOARD109_R7_API_DIAG '+JSON.stringify(out));
-          });
-          EOF
-          npx playwright test --config=.tmp-board109-r7/playwright.config.mjs --workers=1
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib,re
+          raw=Path('browser/GAMEROAD.html').read_bytes()
+          assert len(raw)==11816410
+          assert hashlib.sha256(raw).hexdigest()=='cbdc9c679282466a430ad81e7ce391cf4d0f159b971c9946ba910eb322a1d36a'
+          text=raw.decode('utf-8-sig')
+          for needle in ['window.__GAMEROAD_TEST__','targetLegalIds','projectionIndependent','visibleButtons','boardCount','show:','start:']:
+            print('===== '+needle+' =====')
+            hits=[m.start() for m in re.finditer(re.escape(needle),text)]
+            print('count',len(hits))
+            for pos in hits[:8]:
+              line=text.count('\n',0,pos)+1
+              print('--- line',line,'---')
+              print(text[max(0,pos-1800):min(len(text),pos+len(needle)+2800)])
+          PY

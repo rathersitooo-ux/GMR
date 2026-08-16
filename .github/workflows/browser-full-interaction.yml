@@ -1,59 +1,115 @@
 name: Browser Full Interaction Evidence
 
 on:
-  workflow_dispatch:
   push:
     branches:
-      - main
-      - 'work/**'
+      - 'work/fullreg-r10-operation-gaps'
     paths:
-      - 'browser/GAMEROAD.html'
-      - 'tests/browser-full-interaction.spec.mjs'
-      - 'tests/browser-operation-gaps.spec.mjs'
-      - 'playwright.full-interaction.config.mjs'
-      - '.github/workflows/browser-full-interaction.yml'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'browser/GAMEROAD.html'
-      - 'tests/browser-full-interaction.spec.mjs'
-      - 'tests/browser-operation-gaps.spec.mjs'
-      - 'playwright.full-interaction.config.mjs'
       - '.github/workflows/browser-full-interaction.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  chromium-interaction-evidence:
+  r12-normalize-classified-spec:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
-      - name: Checkout
+      - name: Checkout exact work branch
         uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          fetch-depth: 0
 
-      - name: Install Playwright test runner
-        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+      - name: Normalize supplemental coverage into classified spec
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_main='29d58936159b459caa3f26be9642b162890c0ac3'
+          git fetch origin main --no-tags
+          actual_main="$(git rev-parse origin/main)"
+          if [[ "${actual_main}" != "${expected_main}" ]]; then
+            echo "main drifted: expected=${expected_main} actual=${actual_main}"
+            exit 1
+          fi
 
-      - name: Install Chromium and OS dependencies
-        run: npx playwright install --with-deps chromium
+          python3 - <<'PY'
+          from pathlib import Path
 
-      - name: Run GAMEROAD full interaction evidence R10
-        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
+          full_path = Path('tests/browser-full-interaction.spec.mjs')
+          extra_path = Path('tests/browser-operation-gaps.spec.mjs')
+          full = full_path.read_text(encoding='utf-8')
+          extra = extra_path.read_text(encoding='utf-8')
 
-      - name: Upload interaction evidence
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: browser-full-interaction-${{ github.run_id }}
-          path: |
-            playwright-report-full-interaction/
-            test-results/full-interaction/
-          if-no-files-found: error
-          retention-days: 14
+          marker = '// FULLREG R12 supplemental visible-operation coverage'
+          start_marker = "test('covers Home collapse/expand plus auxiliary Settings navigation without claiming hidden controls'"
+          if marker in full:
+              raise SystemExit('supplemental marker already exists in full-interaction spec')
+          if extra.count(start_marker) != 1:
+              raise SystemExit(f'expected exactly one supplemental test start, found {extra.count(start_marker)}')
+          for required in [
+              'function observeRuntimeErrors(page)',
+              'async function shot(page, testInfo, name)',
+              'async function boot(page)',
+              'function visibleGo(page, target)',
+              'async function backVisible(page)',
+              'async function installLegalBattleDeck(page)',
+          ]:
+              if required not in extra:
+                  raise SystemExit(f'missing expected supplemental helper: {required}')
+          for required in [
+              'async function attachStateScreenshot(page, testInfo, stateName)',
+              'async function bootCurrentBrowser(page)',
+              'async function installLegalBattleDeck(page)',
+          ]:
+              if required not in full:
+                  raise SystemExit(f'missing expected existing helper: {required}')
+
+          body = extra[extra.index(start_marker):]
+          body = body.replace('await boot(page);', 'await bootCurrentBrowser(page);')
+          body = body.replace('await shot(page, testInfo,', 'await attachStateScreenshot(page, testInfo,')
+          body = body.replace('visibleGo(page,', 'visibleOperationGo(page,')
+          body = body.replace('backVisible(page)', 'backOperationVisible(page)')
+
+          forbidden = ['await boot(page);', 'await shot(page, testInfo,', 'visibleGo(page,', 'backVisible(page)']
+          leftovers = [token for token in forbidden if token in body]
+          if leftovers:
+              raise SystemExit(f'unrewritten supplemental helper calls: {leftovers}')
+
+          helpers = r'''
+function visibleOperationGo(page, target) {
+  return page
+    .locator(`[data-go="${target}"]:visible, [data-home-target="${target}"]:visible, [data-root-go="${target}"]:visible`)
+    .first();
+}
+
+async function backOperationVisible(page) {
+  const back = page.locator('section.screen.active [data-back]:visible').first();
+  await expect(back).toBeVisible();
+  await back.click();
+}
+'''.strip()
+
+          merged = full.rstrip() + '\n\n' + marker + '\n' + helpers + '\n\n' + body.rstrip() + '\n'
+          full_path.write_text(merged, encoding='utf-8')
+          PY
+
+          rm tests/browser-operation-gaps.spec.mjs
+          git show origin/main:playwright.full-interaction.config.mjs > playwright.full-interaction.config.mjs
+          git show origin/main:.github/workflows/browser-full-interaction.yml > .github/workflows/browser-full-interaction.yml
+
+          git diff --check
+          node --check tests/browser-full-interaction.spec.mjs
+
+          git add tests/browser-full-interaction.spec.mjs tests/browser-operation-gaps.spec.mjs playwright.full-interaction.config.mjs .github/workflows/browser-full-interaction.yml
+          mapfile -t changed < <(git diff --cached --name-only origin/main)
+          printf 'Final staged paths against origin/main:\n'
+          printf '%s\n' "${changed[@]}"
+          if [[ "${#changed[@]}" -ne 1 || "${changed[0]}" != 'tests/browser-full-interaction.spec.mjs' ]]; then
+            echo 'Final path assertion failed.'
+            exit 1
+          fi
+
+          git config user.name 'rathersitooo-ux'
+          git config user.email 'rathersitooo@gmail.com'
+          git commit -m 'FULLREG R12: fold operation gaps into classified interaction spec'
+          git push origin HEAD:work/fullreg-r10-operation-gaps

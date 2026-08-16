@@ -31,10 +31,13 @@ jobs:
           from pathlib import Path
           p=Path('/tmp/decksave-r11-apply.py')
           s=p.read_text()
-          old="""            marker=f'export function {name}'\n            assert core.count(marker)==1, (name, core.count(marker))\n            core=core.replace(marker,f'function {name}',1)"""
-          new="""            marker=f'export function {name}(' \n            assert core.count(marker)==1, (name, core.count(marker))\n            core=core.replace(marker,f'function {name}(',1)"""
-          assert s.count(old)==1, s.count(old)
-          p.write_text(s.replace(old,new,1))
+          a="marker=f'export function {name}'"
+          b="marker=f'export function {name}('"
+          c="core=core.replace(marker,f'function {name}',1)"
+          d="core=core.replace(marker,f'function {name}(',1)"
+          assert s.count(a)==1, s.count(a)
+          assert s.count(c)==1, s.count(c)
+          p.write_text(s.replace(a,b,1).replace(c,d,1))
           PY
           python3 /tmp/decksave-r11-apply.py
           node --check browser/deck-save-recovery-core.mjs

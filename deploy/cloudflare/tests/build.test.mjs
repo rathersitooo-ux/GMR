@@ -4,7 +4,11 @@ import { createHash } from 'node:crypto';
 import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { buildPackage } from '../scripts/build.mjs';
+
+const testHere = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(testHere, '../../..');
 
 function gitBlobSha1(buffer) {
   return createHash('sha1').update(Buffer.from(`blob ${buffer.length}\0`)).update(buffer).digest('hex');
@@ -50,6 +54,26 @@ test('build copies Browser and local runtime dependency bytes exactly and emits 
   });
   const manifest2 = await readFile(path.join(dist, 'manifest.json'), 'utf8');
   assert.equal(manifest1, manifest2);
+});
+
+test('build packages the current post-DeckSave production Browser dependency set exactly', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'gameroad-current-public-pack-'));
+  const dist = path.join(dir, 'dist');
+  const browserBytes = await readFile(path.join(repoRoot, 'browser/GAMEROAD.html'));
+  const coreBytes = await readFile(path.join(repoRoot, 'browser/deck-save-recovery-core.mjs'));
+  const expectedBlob = 'd53769c0bf325cc139afc6705a0e8b12580582bd';
+  const expectedCoreBlob = 'a21514cd3562005066298b2902f46da7c14f3caa';
+  const sourceCommit = '9e0421a22b3180e9524f5fa12d150f4f2a185962';
+
+  assert.equal(gitBlobSha1(browserBytes), expectedBlob);
+  assert.equal(gitBlobSha1(coreBytes), expectedCoreBlob);
+  const manifest = await buildPackage({ dist, expectedBlob, expectedCoreBlob, sourceCommit });
+
+  assert.equal((await readFile(path.join(dist, 'index.html'))).equals(browserBytes), true);
+  assert.equal((await readFile(path.join(dist, 'deck-save-recovery-core.mjs'))).equals(coreBytes), true);
+  assert.equal(manifest.source_commit, sourceCommit);
+  assert.equal(manifest.artifacts.index_html.git_blob_sha1, expectedBlob);
+  assert.equal(manifest.artifacts.deck_save_recovery_core.git_blob_sha1, expectedCoreBlob);
 });
 
 test('build aborts on stale Browser blob expectation', async () => {

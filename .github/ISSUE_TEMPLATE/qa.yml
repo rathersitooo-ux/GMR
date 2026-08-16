@@ -1,6 +1,8 @@
 name: QA Evidence
 description: Record test or acceptance evidence without upgrading unrun or partial checks to PASS.
 title: "[QA] "
+labels:
+  - QA
 body:
   - type: markdown
     attributes:

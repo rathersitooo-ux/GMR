@@ -55,16 +55,30 @@ jobs:
             }
             return out;
           }
+          function sliceFrom(startNeedle,endNeedle,maxLen=18000){
+            const a=text.indexOf(startNeedle);
+            if(a<0) return {startNeedle,error:'start-not-found'};
+            const rawEnd=endNeedle?text.indexOf(endNeedle,a+startNeedle.length):-1;
+            const b=rawEnd>=0?Math.min(text.length,rawEnd+endNeedle.length):Math.min(text.length,a+maxLen);
+            return {start:a,end:b,text:text.slice(a,b)};
+          }
           const tokens={};
           for (const [key,needle] of specs) tokens[key]={needle,hits:hits(needle)};
+          const slices={
+            roster:sliceFrom("const PROD_CHARS=[","const AUDIO_DEFAULTS"),
+            saveApplyLoad:sliceFrom("function savePack()","function renderHome()",30000),
+            characterRender:sliceFrom("function renderCharacters()","function makePlayer",22000),
+            makePlayer:sliceFrom("function makePlayer","function grDeckIdentityDigest",12000)
+          };
           const result={
             source:{path,bytes:bytes.length,sha256:crypto.createHash('sha256').update(bytes).digest('hex')},
             tokens,
-            totals:Object.fromEntries(Object.entries(tokens).map(([k,v])=>[k,v.hits.length]))
+            totals:Object.fromEntries(Object.entries(tokens).map(([k,v])=>[k,v.hits.length])),
+            slices
           };
           fs.writeFileSync('charremove-r10-inventory.json',JSON.stringify(result,null,2));
           console.log('CHARREMOVE_R10_INVENTORY_BEGIN');
-          console.log(JSON.stringify({source:result.source,totals:result.totals},null,2));
+          console.log(JSON.stringify({source:result.source,totals:result.totals,slices:Object.fromEntries(Object.entries(slices).map(([k,v])=>[k,{start:v.start,end:v.end,error:v.error||null}]))},null,2));
           console.log('CHARREMOVE_R10_INVENTORY_END');
           NODE
       - name: Upload exact inventory artifact

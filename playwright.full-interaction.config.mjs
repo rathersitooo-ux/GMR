@@ -1,5 +1,6 @@
 import { defineConfig } from '@playwright/test';
 
+// FULLREG R12 transient validation trigger; restored in the next commit.
 export default defineConfig({
   testDir: './tests',
   testMatch: 'browser-full-interaction.spec.mjs',

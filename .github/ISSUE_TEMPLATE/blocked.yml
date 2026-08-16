@@ -1,6 +1,8 @@
 name: Blocked Work
 description: Record a finite blocker and a concrete restart condition without treating the task as complete.
 title: "[BLOCKED] "
+labels:
+  - Blocked
 body:
   - type: markdown
     attributes:

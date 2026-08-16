@@ -1,0 +1,51 @@
+name: DeckSave R11 Bootstrap
+
+on:
+  push:
+    branches:
+      - 'work/BROWSER-DECK-SAVE-RECOVERY-NONDESTRUCTIVE-001-R11-PRODRECOVER-20260816T2241-SOL-H8K2V7'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Execute exact R11 payload from quarantined helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          [[ "$(git rev-parse origin/main)" == "07e9654841786d647b11b46f2efc04d871bba330" ]]
+          [[ "$(git hash-object browser/GAMEROAD.html)" == "7cb88f6f9a9e92001d13de72a343abddbd595a1c" ]]
+          [[ "$(git hash-object browser/deck-save-recovery-core.mjs)" == "44d2c7f50309c99eec3ff0b9c106ae13e6b5dbee" ]]
+          awk '/^[[:space:]]*python3 - <<'"'"'PY'"'"'$/ {take=1; next} take && /^[[:space:]]*PY$/ {exit} take {sub(/^          /,""); print}' .github/workflows/decksave-r11-apply.yml > /tmp/decksave-r11-apply.py
+          test -s /tmp/decksave-r11-apply.py
+          python3 /tmp/decksave-r11-apply.py
+          node --check browser/deck-save-recovery-core.mjs
+          node --check tests/deck-save-recovery-core.test.mjs
+          node --check tests/browser-full-interaction.spec.mjs
+          node --test tests/deck-save-recovery-core.test.mjs
+          node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+          git diff --check
+      - name: Commit only the product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-decksave-r11'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm .github/workflows/decksave-r11-source-inspect.yml .github/workflows/decksave-r11-apply.yml .github/workflows/decksave-r11-bootstrap.yml
+          git add browser/GAMEROAD.html browser/deck-save-recovery-core.mjs tests/deck-save-recovery-core.test.mjs tests/browser-full-interaction.spec.mjs
+          git commit -m 'BROWSER-DECK-SAVE R11 connect non-destructive production recovery'
+          mapfile -t net < <(git diff --name-only origin/main...HEAD | sort)
+          expected=(browser/GAMEROAD.html browser/deck-save-recovery-core.mjs tests/browser-full-interaction.spec.mjs tests/deck-save-recovery-core.test.mjs)
+          mapfile -t expected_sorted < <(printf '%s\n' "${expected[@]}" | sort)
+          [[ "${#net[@]}" -eq 4 ]]
+          [[ "$(printf '%s\n' "${net[@]}")" == "$(printf '%s\n' "${expected_sorted[@]}")" ]]
+          git push origin HEAD:${{ github.ref_name }}

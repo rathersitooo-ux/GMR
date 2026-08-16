@@ -1,0 +1,78 @@
+name: TEMP BOARD109 R7 exact-current inventory
+
+on:
+  push:
+    branches:
+      - 'work/BOARD-109-R7-CORNERFIX-20260816T1004-SOL'
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Verify exact base and inspect current Browser board source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "2f115ac62bf124a1c118ebeeef6dbff1e52566e7"
+          test "$(git rev-parse HEAD^:browser/GAMEROAD.html)" = "3a8d34bfadf263e0980a4b1c9ec78f75fea07646"
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, json, re, subprocess
+
+          path = Path('browser/GAMEROAD.html')
+          raw = path.read_bytes()
+          text = raw.decode('utf-8-sig')
+          git_blob = subprocess.check_output(['git','hash-object',str(path)], text=True).strip()
+          assert git_blob == '3a8d34bfadf263e0980a4b1c9ec78f75fea07646', git_blob
+
+          needles = [
+              'K:NW', 'K:NE', 'K:SW', 'K:SE',
+              'activeNodes', 'neighbors', 'nearestProjectedNode', 'renderBoard',
+              'pointerEvents', 'disabled', 'reachable', 'moveDistance'
+          ]
+          out = {
+              'head': subprocess.check_output(['git','rev-parse','HEAD'], text=True).strip(),
+              'parent': subprocess.check_output(['git','rev-parse','HEAD^'], text=True).strip(),
+              'browser_git_blob': git_blob,
+              'browser_sha256': hashlib.sha256(raw).hexdigest(),
+              'browser_bytes': len(raw),
+              'occurrences': {}
+          }
+
+          for needle in needles:
+              hits = [m.start() for m in re.finditer(re.escape(needle), text)]
+              records = []
+              for pos in hits[:30]:
+                  line = text.count('\n', 0, pos) + 1
+                  start = max(0, pos - 900)
+                  end = min(len(text), pos + len(needle) + 1300)
+                  records.append({'line': line, 'context': text[start:end]})
+              out['occurrences'][needle] = {'count': len(hits), 'records': records}
+
+          Path('board109_exact_inventory.json').write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(json.dumps({
+              'head': out['head'],
+              'parent': out['parent'],
+              'browser_git_blob': out['browser_git_blob'],
+              'browser_sha256': out['browser_sha256'],
+              'browser_bytes': out['browser_bytes'],
+              'counts': {k:v['count'] for k,v in out['occurrences'].items()}
+          }, ensure_ascii=False, indent=2))
+          for key in ['K:NW','K:NE','K:SW','K:SE','activeNodes','nearestProjectedNode','renderBoard']:
+              print(f'===== {key} =====')
+              for rec in out['occurrences'][key]['records'][:8]:
+                  print(f"--- line {rec['line']} ---")
+                  print(rec['context'])
+          PY
+      - name: Upload exact inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: board109-r7-exact-inventory
+          path: board109_exact_inventory.json
+          if-no-files-found: error

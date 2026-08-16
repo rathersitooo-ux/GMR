@@ -1,0 +1,66 @@
+name: Feature
+description: Propose implementation work without treating the Issue as specification authority.
+title: "[FEATURE] "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This Issue organizes implementation work. Drive CURRENT remains the authority for GAMEROAD specification, adoption, completion conditions, and conflict handling.
+  - type: input
+    id: task_id
+    attributes:
+      label: TaskID
+      description: Exact GAMEROAD TaskID from the current Drive work system.
+      placeholder: EXAMPLE-TASK-001
+    validations:
+      required: true
+  - type: input
+    id: acquire_key
+    attributes:
+      label: AcquireKey
+      description: Current acquisition key. Use NOT_ACQUIRED only when no task acquisition exists.
+      placeholder: NOT_ACQUIRED
+    validations:
+      required: true
+  - type: textarea
+    id: drive_authority
+    attributes:
+      label: Drive authority / reason
+      description: Current parent canon, routing, reason gate, or unresolved authority relationship.
+      placeholder: "Exact CURRENT source and why this work is authorized."
+    validations:
+      required: true
+  - type: textarea
+    id: observed_evidence
+    attributes:
+      label: Observed current evidence
+      description: Current implementation/state that creates the delta. Do not substitute remembered or proposed state.
+      placeholder: "Current code/files/runtime evidence and the verified gap."
+    validations:
+      required: true
+  - type: textarea
+    id: expected_completion
+    attributes:
+      label: Expected completion evidence
+      description: Exact implementation and verification evidence required before completion may be claimed.
+      placeholder: "Files/diff plus applicable automated/runtime/Human evidence."
+    validations:
+      required: true
+  - type: textarea
+    id: unverified_boundary
+    attributes:
+      label: Unverified / blocked boundary
+      description: Explicitly list unresolved dependencies, Human/device/editor needs, unrun checks, or assumptions.
+      placeholder: "None, or explicit residuals."
+    validations:
+      required: true
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals / collision boundary
+      description: Files, systems, rules, or concurrent work this Issue must not modify.
+      placeholder: "Keep the scope finite and collision-safe."
+    validations:
+      required: false

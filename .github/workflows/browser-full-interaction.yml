@@ -9,6 +9,7 @@ on:
     paths:
       - 'browser/GAMEROAD.html'
       - 'tests/browser-full-interaction.spec.mjs'
+      - 'tests/browser-operation-gaps.spec.mjs'
       - 'playwright.full-interaction.config.mjs'
       - '.github/workflows/browser-full-interaction.yml'
   pull_request:
@@ -17,6 +18,7 @@ on:
     paths:
       - 'browser/GAMEROAD.html'
       - 'tests/browser-full-interaction.spec.mjs'
+      - 'tests/browser-operation-gaps.spec.mjs'
       - 'playwright.full-interaction.config.mjs'
       - '.github/workflows/browser-full-interaction.yml'
 
@@ -42,7 +44,7 @@ jobs:
       - name: Install Chromium and OS dependencies
         run: npx playwright install --with-deps chromium
 
-      - name: Run GAMEROAD full interaction evidence R1
+      - name: Run GAMEROAD full interaction evidence R10
         run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
 
       - name: Upload interaction evidence

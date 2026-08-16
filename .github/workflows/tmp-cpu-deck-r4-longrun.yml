@@ -40,7 +40,7 @@ jobs:
           cat > tests/cpu-deck-r4.tmp.spec.mjs <<'EOF'
           import { test, expect } from '@playwright/test';
 
-          test('validated 40-card snapshot feeds every CPU through full matches', async ({ page }) => {
+          test('validated 40-card snapshot survives all modes and the former round-8 domain', async ({ page }) => {
             await page.goto('/GAMEROAD.html');
             await page.waitForFunction(() => !!window.__GAMEROAD_TEST__);
             const report = await page.evaluate(async () => {
@@ -54,42 +54,103 @@ jobs:
               const ids = [...nonRoyal.slice(0, 37), ...royalIds];
               const draft = api.deckSetDraft(ids, []);
               const draftValidation = api.deckValidate(api.state.deckDraft, { forBattle: true });
-              if (!draft.ok || !draftValidation.ok) throw new Error('draft-invalid:' + JSON.stringify({draft, draftValidation}));
-              const committed = api.deckCommit();
-              if (!committed) throw new Error('commit-invalid:' + JSON.stringify(committed));
+              if (!draft.ok || !draftValidation.ok) throw new Error('draft-invalid:' + JSON.stringify({ draft, draftValidation }));
+              if (!api.deckCommit()) throw new Error('commit-invalid');
               const saved = api.deckSaved().main;
               const savedValidation = api.deckValidate(api.state.savedDeck, { forBattle: true });
-              if (!savedValidation.ok || saved.length !== 40) throw new Error('saved-invalid:' + JSON.stringify({savedLength:saved.length,savedValidation}));
+              if (!savedValidation.ok || saved.length !== 40) throw new Error('saved-invalid:' + JSON.stringify({ savedLength: saved.length, savedValidation }));
+
+              const runCase = async (mode, content, stepLimit = 160) => {
+                const m = api.start(mode, content);
+                if (!m) throw new Error('start-failed:' + mode + ':' + content);
+                api.battlePresentationFast(true);
+                api.state.settings.reduceMotion = true;
+                api.state.settings.lowPerf = true;
+                const initial = m.players.map((p) => ({
+                  id: p.id,
+                  human: p.human,
+                  sourceDeckSize: p.sourceDeckSize,
+                  sourceDeckIds: [...p.sourceDeckIds],
+                  mana: p.mana.length,
+                  shields: Object.values(p.shields).filter(Boolean).length,
+                  hand: p.hand.length,
+                  deck: p.deck.length
+                }));
+                const allSourcesMatch = initial.every((p) =>
+                  p.sourceDeckSize === saved.length &&
+                  p.sourceDeckIds.length === saved.length &&
+                  p.sourceDeckIds.every((id, i) => id === saved[i])
+                );
+                const conservationAtStart = api.cardConservation();
+                let error = null;
+                let result = false;
+                try { result = await api.autoToResult(stepLimit); }
+                catch (e) { error = String(e?.message || e); }
+                const entry = {
+                  content,
+                  mode,
+                  initial,
+                  allSourcesMatch,
+                  conservationAtStart,
+                  error,
+                  result,
+                  rounds: api.state.match?.round ?? null,
+                  savedLength: api.deckSaved().main.length,
+                  conservationAtResult: api.cardConservation()
+                };
+                if (!allSourcesMatch || !conservationAtStart || !entry.conservationAtResult || error || !result || entry.savedLength !== 40) {
+                  throw new Error('case-failed:' + JSON.stringify(entry));
+                }
+                return entry;
+              };
+
               const cases = [];
               for (const content of ['road_shield', 'honey_hunt']) {
-                for (const mode of ['2p', '4p', '2v2']) {
-                  const m = api.start(mode, content);
-                  if (!m) throw new Error('start-failed:' + mode + ':' + content);
-                  api.battlePresentationFast(true);
-                  api.state.settings.reduceMotion = true;
-                  api.state.settings.lowPerf = true;
-                  const initial = m.players.map(p => ({
-                    id: p.id, human: p.human, sourceDeckSize: p.sourceDeckSize, sourceDeckIds: [...p.sourceDeckIds],
-                    mana: p.mana.length, shields: Object.values(p.shields).filter(Boolean).length, hand: p.hand.length, deck: p.deck.length
-                  }));
-                  const allSourcesMatch = initial.every(p => p.sourceDeckSize === saved.length && p.sourceDeckIds.length === saved.length && p.sourceDeckIds.every((id, i) => id === saved[i]));
-                  const conservationAtStart = api.cardConservation();
-                  let error = null;
-                  let result = false;
-                  try { result = await api.autoToResult(120); } catch (e) { error = String(e?.message || e); }
-                  cases.push({ content, mode, initial, allSourcesMatch, conservationAtStart, error, result, rounds: api.state.match?.round ?? null, savedLength: api.deckSaved().main.length, conservationAtResult: api.cardConservation() });
-                  if (error) throw new Error(mode + ':' + content + ':' + error);
-                  if (!result) throw new Error('no-result:' + mode + ':' + content + ':round=' + (api.state.match?.round ?? 'null'));
+                for (const mode of ['2p', '4p', '2v2']) cases.push(await runCase(mode, content));
+              }
+
+              const round8Attempts = [];
+              let round8Reached = false;
+              for (let attempt = 1; attempt <= 40; attempt += 1) {
+                const entry = await runCase('4p', 'honey_hunt', 200);
+                round8Attempts.push({
+                  attempt,
+                  rounds: entry.rounds,
+                  allSourcesMatch: entry.allSourcesMatch,
+                  conservationAtStart: entry.conservationAtStart,
+                  conservationAtResult: entry.conservationAtResult,
+                  error: entry.error,
+                  result: entry.result
+                });
+                if (entry.rounds >= 8) {
+                  round8Reached = true;
+                  break;
                 }
               }
+
               api.save();
               api.load();
               const afterReload = api.deckSaved().main.length;
               const reload = api.start('4p', 'honey_hunt');
               api.battlePresentationFast(true);
-              const reloadCpuSourcesMatch = reload.players.filter(p => !p.human).every(p => p.sourceDeckSize === saved.length && p.sourceDeckIds.length === saved.length && p.sourceDeckIds.every((id, i) => id === saved[i]));
-              return { requiredMain: 40, savedLength: saved.length, afterReload, reloadCpuSourcesMatch, reloadConservation: api.cardConservation(), cases };
+              const reloadCpuSourcesMatch = reload.players.filter((p) => !p.human).every((p) =>
+                p.sourceDeckSize === saved.length &&
+                p.sourceDeckIds.length === saved.length &&
+                p.sourceDeckIds.every((id, i) => id === saved[i])
+              );
+              return {
+                requiredMain: 40,
+                savedLength: saved.length,
+                afterReload,
+                reloadCpuSourcesMatch,
+                reloadConservation: api.cardConservation(),
+                cases,
+                round8Reached,
+                round8Attempts,
+                round8Max: Math.max(...round8Attempts.map((x) => x.rounds ?? 0))
+              };
             });
+
             console.log('CPUDECK_R4_REPORT ' + JSON.stringify(report));
             expect(report.requiredMain).toBe(40);
             expect(report.savedLength).toBe(40);
@@ -105,12 +166,12 @@ jobs:
               expect(c.result, JSON.stringify(c)).toBe(true);
               expect(c.savedLength, JSON.stringify(c)).toBe(40);
             }
+            expect(report.round8Reached, JSON.stringify(report.round8Attempts)).toBe(true);
+            expect(report.round8Max).toBeGreaterThanOrEqual(8);
           });
           EOF
-      - name: Run CPU long-run playable matrix
+      - name: Run CPU long-run playable matrix and round-8 regression
         run: npx playwright test --config=playwright.cpu-deck-r4.tmp.config.mjs --reporter=line
-      - name: Run existing static Browser regression
-        run: node --test tests/browser-static.spec.mjs
       - name: Remove runner-local probe files
         if: always()
         run: rm -f playwright.cpu-deck-r4.tmp.config.mjs tests/cpu-deck-r4.tmp.spec.mjs

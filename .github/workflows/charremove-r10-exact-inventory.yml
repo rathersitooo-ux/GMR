@@ -34,21 +34,24 @@ jobs:
           const text = fs.readFileSync(path, 'utf8');
           const bytes = fs.readFileSync(path);
           const specs = [
-            ['rem_name','レム'],['rem_key','test.rem'],['rem_asset','4834621143'],
-            ['celica_name','セリカ'],['celica_key','test.celica'],['celica_asset','1405809866'],
-            ['paimon_name','パイモン'],['paimon_key','test.paimon'],['paimon_asset','8117753787'],
-            ['sinon_name','シノン'],['sinon_key','test.sinon'],['sinon_asset','166894654'],
-            ['miku_name','初音ミク'],['miku_key','test.miku'],['miku_asset','6669297625']
+            ['rem_name','レム'],['rem_id','partner.creator.rem'],['rem_asset','4834621143'],
+            ['celica_name','セリカ'],['celica_id','partner.creator.celica'],['celica_asset','1405809866'],
+            ['paimon_name','パイモン'],['paimon_id','partner.creator.paimon'],['paimon_asset','8117753787'],
+            ['sinon_name','シノン'],['sinon_id','partner.creator.sinon'],['sinon_asset','166894654'],
+            ['miku_name','初音ミク'],['miku_id','partner.creator.miku'],['miku_asset','6669297625'],
+            ['prod_chars','PROD_CHARS'],['save_key','SAVE_KEY'],['selected_char','selectedChar'],
+            ['advice_partner','advicePartner'],['partner_id','partnerId'],['character_id','characterId']
           ];
-          function hits(needle) {
+          function hits(needle, radius=700) {
             const out=[];
             let from=0;
             while (true) {
               const i=text.indexOf(needle,from);
               if(i<0) break;
-              const a=Math.max(0,i-320), b=Math.min(text.length,i+needle.length+320);
+              const a=Math.max(0,i-radius), b=Math.min(text.length,i+needle.length+radius);
               out.push({index:i,context:text.slice(a,b).replace(/\s+/g,' ')});
               from=i+Math.max(1,needle.length);
+              if(out.length>=100) break;
             }
             return out;
           }

@@ -1,0 +1,47 @@
+name: BOARD-109 R9 Corner Exact Patch
+
+on:
+  push:
+    branches:
+      - work/BOARD-109-R9-CORNERFIX-20260816T2142-SOL-J32NHP
+
+permissions:
+  contents: write
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify exact current Browser and inspect repair anchors
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_BLOB='3a8d34bfadf263e0980a4b1c9ec78f75fea07646'
+          ACTUAL_BLOB="$(git hash-object browser/GAMEROAD.html)"
+          echo "HEAD=$(git rev-parse HEAD)"
+          echo "MAIN_BASE=$(git merge-base HEAD origin/main)"
+          echo "BROWSER_BLOB=$ACTUAL_BLOB"
+          test "$ACTUAL_BLOB" = "$EXPECTED_BLOB"
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('browser/GAMEROAD.html')
+          s=p.read_text(encoding='utf-8')
+          needles=['activeNodes','neighbors','nearestProjectedNode','renderBoard','K:NW','K:NE','K:SW','K:SE']
+          print('BROWSER_CHARS',len(s))
+          for needle in needles:
+              pos=[]; start=0
+              while True:
+                  i=s.find(needle,start)
+                  if i<0: break
+                  pos.append(i); start=i+len(needle)
+              print(f'@@NEEDLE {needle} COUNT {len(pos)} POS {pos[:20]}')
+              for n,i in enumerate(pos[:8]):
+                  lo=max(0,i-1800); hi=min(len(s),i+3200)
+                  print(f'@@BEGIN {needle} #{n} [{lo}:{hi}]')
+                  print(s[lo:hi])
+                  print(f'@@END {needle} #{n}')
+          PY
+          test -z "$(git status --porcelain -- browser/GAMEROAD.html)"

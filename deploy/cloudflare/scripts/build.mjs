@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, '../../..');
 const defaultSource = path.join(repoRoot, 'browser/GAMEROAD.html');
+const defaultCoreSource = path.join(repoRoot, 'browser/deck-save-recovery-core.mjs');
 const defaultDist = path.join(repoRoot, 'deploy/cloudflare/dist');
 
 function gitBlobSha1(buffer) {
@@ -17,18 +18,49 @@ function sha256(buffer) {
   return createHash('sha256').update(buffer).digest('hex');
 }
 
-export async function buildPackage({ source = defaultSource, dist = defaultDist, expectedBlob = '', sourceCommit = '' } = {}) {
+function provenance(source, output, input, blob) {
+  return {
+    source,
+    output,
+    git_blob_sha1: blob,
+    sha256: sha256(input),
+    bytes: input.length,
+  };
+}
+
+export async function buildPackage({
+  source = defaultSource,
+  coreSource = defaultCoreSource,
+  dist = defaultDist,
+  expectedBlob = '',
+  expectedCoreBlob = '',
+  sourceCommit = '',
+} = {}) {
   const input = await readFile(source);
+  const coreInput = await readFile(coreSource);
   const blob = gitBlobSha1(input);
+  const coreBlob = gitBlobSha1(coreInput);
   if (expectedBlob && blob !== expectedBlob) {
     throw new Error(`Browser blob mismatch: expected=${expectedBlob} actual=${blob}`);
   }
+  if (expectedCoreBlob && coreBlob !== expectedCoreBlob) {
+    throw new Error(`Deck save recovery core blob mismatch: expected=${expectedCoreBlob} actual=${coreBlob}`);
+  }
+
   await rm(dist, { recursive: true, force: true });
   await mkdir(dist, { recursive: true });
+
   const outputPath = path.join(dist, 'index.html');
   await writeFile(outputPath, input);
   const roundTrip = await readFile(outputPath);
   if (!input.equals(roundTrip)) throw new Error('dist/index.html is not byte-identical to Browser source');
+
+  const coreOutputPath = path.join(dist, 'deck-save-recovery-core.mjs');
+  await writeFile(coreOutputPath, coreInput);
+  const coreRoundTrip = await readFile(coreOutputPath);
+  if (!coreInput.equals(coreRoundTrip)) {
+    throw new Error('dist/deck-save-recovery-core.mjs is not byte-identical to Browser dependency source');
+  }
 
   const headers = '/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n';
   await writeFile(path.join(dist, '_headers'), headers, 'utf8');
@@ -40,6 +72,15 @@ export async function buildPackage({ source = defaultSource, dist = defaultDist,
     git_blob_sha1: blob,
     sha256: sha256(input),
     bytes: input.length,
+    artifacts: {
+      index_html: provenance('browser/GAMEROAD.html', 'index.html', input, blob),
+      deck_save_recovery_core: provenance(
+        'browser/deck-save-recovery-core.mjs',
+        'deck-save-recovery-core.mjs',
+        coreInput,
+        coreBlob,
+      ),
+    },
   };
   await writeFile(path.join(dist, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
   return manifest;
@@ -50,8 +91,10 @@ function parseArgs(argv) {
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--source') out.source = path.resolve(argv[++i]);
+    else if (a === '--core-source') out.coreSource = path.resolve(argv[++i]);
     else if (a === '--dist') out.dist = path.resolve(argv[++i]);
     else if (a === '--expected-blob') out.expectedBlob = argv[++i] || '';
+    else if (a === '--expected-core-blob') out.expectedCoreBlob = argv[++i] || '';
     else if (a === '--source-commit') out.sourceCommit = argv[++i] || '';
     else throw new Error(`Unknown argument: ${a}`);
   }

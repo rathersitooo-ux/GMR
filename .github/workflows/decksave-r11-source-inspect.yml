@@ -1,0 +1,52 @@
+name: DeckSave R11 Source Inspect
+
+on:
+  push:
+    branches:
+      - 'work/BROWSER-DECK-SAVE-RECOVERY-NONDESTRUCTIVE-001-R11-PRODRECOVER-20260816T2241-SOL-H8K2V7'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect exact current production Browser save anchors
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object browser/GAMEROAD.html)" = "7cb88f6f9a9e92001d13de72a343abddbd595a1c"
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('browser/GAMEROAD.html')
+          text=p.read_text(encoding='utf-8')
+          lines=text.splitlines()
+          print('HTML_BYTES',p.stat().st_size)
+          needles=[
+            'deck-save-recovery-core', 'inspectRawSave', 'classifyDeckProjection',
+            'prepareExplicitDeckCommit', 'writePreparedSaveVerified', 'resetExplicitSaveKeys',
+            'commitDeck', 'DEFAULT_DECK', 'localStorage.getItem', 'localStorage.setItem',
+            'FIRST_REGULATION', 'ruleRevision', 'saveRevision',
+          ]
+          for n in needles:
+            hits=[i+1 for i,l in enumerate(lines) if n in l]
+            print('COUNT',repr(n),len(hits),'LINES',hits[:40])
+          rx=re.compile(r'(function\s+[A-Za-z0-9_$]*(?:save|load|deck|reset|init)[A-Za-z0-9_$]*\s*\(|(?:save|load|deck|reset|init)[A-Za-z0-9_$]*\s*=\s*\([^\n]{0,120}=>)',re.I)
+          print('---FUNCTION_ANCHORS---')
+          for i,l in enumerate(lines,1):
+            if rx.search(l):
+              print(f'{i}:{l[:700]}')
+          print('---TARGET_CONTEXTS---')
+          selected=set()
+          for n in needles:
+            for i,l in enumerate(lines):
+              if n in l:
+                for j in range(max(0,i-2),min(len(lines),i+3)):
+                  selected.add(j)
+          for j in sorted(selected):
+            print(f'{j+1}:{lines[j][:900]}')
+          PY

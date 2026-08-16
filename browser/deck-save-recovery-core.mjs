@@ -75,7 +75,7 @@ function decision(status, reason, extra = {}) {
   return deepFreeze({ schema: SCHEMA, status, reason, ...extra });
 }
 
-export function inspectRawSave(rawValue) {
+function inspectRawSave(rawValue) {
   if (rawValue === null || rawValue === undefined || rawValue === '') {
     return decision('missing', 'SAVE_MISSING', { parsed: null });
   }
@@ -95,7 +95,7 @@ export function inspectRawSave(rawValue) {
   return decision('parsed', 'SAVE_PARSED', { parsed: freezeCopy(parsed) });
 }
 
-export function classifyDeckProjection({ inspection, projection, authority } = {}) {
+function classifyDeckProjection({ inspection, projection, authority } = {}) {
   if (!inspection || inspection.schema !== SCHEMA) throw new TypeError('INSPECTION_REQUIRED');
   const normalizedAuthority = normalizeAuthority(authority);
 
@@ -173,7 +173,7 @@ function setAtPath(root, path, nextValue) {
   return base;
 }
 
-export function prepareExplicitDeckCommit({
+function prepareExplicitDeckCommit({
   inspection,
   currentClassification,
   path,
@@ -210,7 +210,7 @@ export function prepareExplicitDeckCommit({
   });
 }
 
-export function readStorage(storage, key) {
+function readStorage(storage, key) {
   if (!storage || typeof storage.getItem !== 'function') return decision('failed', 'STORAGE_READ_UNAVAILABLE');
   if (!nonEmptyString(key)) throw new TypeError('STORAGE_KEY_REQUIRED');
   try {
@@ -220,7 +220,7 @@ export function readStorage(storage, key) {
   }
 }
 
-export function writePreparedSave(storage, key, preparedCommit) {
+function writePreparedSave(storage, key, preparedCommit) {
   if (!preparedCommit || preparedCommit.schema !== SCHEMA || preparedCommit.status !== 'prepared') {
     return decision('failed', 'PREPARED_COMMIT_REQUIRED');
   }
@@ -254,7 +254,7 @@ function restorePreviousRaw(storage, key, previousRawValue) {
   }
 }
 
-export function writePreparedSaveVerified(storage, key, preparedCommit, options = {}) {
+function writePreparedSaveVerified(storage, key, preparedCommit, options = {}) {
   if (!preparedCommit || preparedCommit.schema !== SCHEMA || preparedCommit.status !== 'prepared') {
     return decision('failed', 'PREPARED_COMMIT_REQUIRED');
   }
@@ -319,7 +319,7 @@ export function writePreparedSaveVerified(storage, key, preparedCommit, options 
   });
 }
 
-export function resetExplicitSaveKeys(storage, keys, { confirmed = false } = {}) {
+function resetExplicitSaveKeys(storage, keys, { confirmed = false } = {}) {
   if (confirmed !== true) return decision('blocked', 'RESET_CONFIRMATION_REQUIRED');
   if (!storage || typeof storage.removeItem !== 'function') return decision('failed', 'STORAGE_REMOVE_UNAVAILABLE');
   if (!Array.isArray(keys) || keys.length === 0 || keys.some((key) => !nonEmptyString(key))) {
@@ -334,4 +334,16 @@ export function resetExplicitSaveKeys(storage, keys, { confirmed = false } = {})
   }
 }
 
-export const DECK_SAVE_RECOVERY_CORE = Object.freeze({ schema: SCHEMA });
+const DECK_SAVE_RECOVERY_CORE = Object.freeze({ schema: SCHEMA });
+
+
+globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE = Object.freeze({
+  inspectRawSave,
+  classifyDeckProjection,
+  prepareExplicitDeckCommit,
+  readStorage,
+  writePreparedSave,
+  writePreparedSaveVerified,
+  resetExplicitSaveKeys,
+  DECK_SAVE_RECOVERY_CORE,
+});

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {
+await import('../browser/deck-save-recovery-core.mjs');
+const {
   inspectRawSave,
   classifyDeckProjection,
   prepareExplicitDeckCommit,
@@ -9,7 +10,7 @@ import {
   writePreparedSaveVerified,
   resetExplicitSaveKeys,
   DECK_SAVE_RECOVERY_CORE,
-} from '../browser/deck-save-recovery-core.mjs';
+} = globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE;
 
 const authority = Object.freeze({
   currentSaveRevision: 3,

@@ -9,27 +9,411 @@ permissions:
   contents: write
 
 jobs:
-  preflight:
+  corner-runtime:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      EXPECTED_MAIN: 2f115ac62bf124a1c118ebeeef6dbff1e52566e7
+      OLD_BROWSER_BLOB: 3a8d34bfadf263e0980a4b1c9ec78f75fea07646
+      NEW_BROWSER_BLOB: 7cb88f6f9a9e92001d13de72a343abddbd595a1c
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Verify exact current Browser transport
+
+      - name: Verify exact current ownership base and branch scope
         shell: bash
         run: |
           set -euo pipefail
-          EXPECTED_BLOB='3a8d34bfadf263e0980a4b1c9ec78f75fea07646'
-          ACTUAL_BLOB="$(git hash-object browser/GAMEROAD.html)"
-          echo "HEAD=$(git rev-parse HEAD)"
-          echo "MAIN_BASE=$(git merge-base HEAD origin/main)"
-          echo "BROWSER_BLOB=$ACTUAL_BLOB"
-          test "$ACTUAL_BLOB" = "$EXPECTED_BLOB"
-          cp browser/GAMEROAD.html /tmp/GAMEROAD.exact-current.html
-          test -z "$(git status --porcelain -- browser/GAMEROAD.html)"
-      - uses: actions/upload-artifact@v4
+          git fetch origin main --no-tags
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          test "$(git merge-base HEAD origin/main)" = "$EXPECTED_MAIN"
+          actual="$(git hash-object browser/GAMEROAD.html)"
+          echo "RUN_HEAD=$(git rev-parse HEAD)"
+          echo "BROWSER_BLOB=$actual"
+          test "$actual" = "$OLD_BROWSER_BLOB" -o "$actual" = "$NEW_BROWSER_BLOB"
+          files="$(git diff --name-only "$EXPECTED_MAIN"...HEAD | sort)"
+          if [ "$actual" = "$OLD_BROWSER_BLOB" ]; then
+            expected='.github/workflows/board109-r9-corner-exact-patch.yml'
+          else
+            expected=$(printf '%s\n%s' '.github/workflows/board109-r9-corner-exact-patch.yml' 'browser/GAMEROAD.html')
+          fi
+          test "$files" = "$expected"
+
+      - name: Apply fail-closed exact corner patch when still on old blob
+        id: patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git hash-object browser/GAMEROAD.html)"
+          if [ "$actual" = "$NEW_BROWSER_BLOB" ]; then
+            echo 'patched=false' >> "$GITHUB_OUTPUT"
+            cp browser/GAMEROAD.html /tmp/GAMEROAD.r9-product.html
+            exit 0
+          fi
+          test "$actual" = "$OLD_BROWSER_BLOB"
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+
+          path=Path('browser/GAMEROAD.html')
+          s=path.read_text(encoding='utf-8')
+          repls=[
+            (
+              "function activeNodes(){const s=new Set(centerIds());state.match.players.forEach(p=>{['L','C','R'].forEach(l=>{s.add(shieldId(p.id,l));for(let d=1;d<=p.lanes[l].length&&d<=7;d++)s.add(roadId(p.id,l,d))})});return s}",
+              "function activeNodes(){const s=new Set(centerIds());['K:NW','K:NE','K:SW','K:SE'].forEach(id=>s.add(id));state.match.players.forEach(p=>{['L','C','R'].forEach(l=>{s.add(shieldId(p.id,l));for(let d=1;d<=p.lanes[l].length&&d<=7;d++)s.add(roadId(p.id,l,d))})});return s}",
+              'activeNodes'
+            ),
+            (
+              "function neighbors(id,viewer){const act=activeNodes(),out=[];if(id.startsWith('C:')){const [,rs,cs]=id.split(':'),r=+rs,c=+cs;[[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([rr,cc])=>{const x=`C:${rr}:${cc}`;if(act.has(x))out.push(x)});state.match.players.forEach(p=>['L','C','R'].forEach(l=>{const sh=shieldId(p.id,l);if(centerPort(p.id,l,viewer)===id&&act.has(sh))out.push(sh)}))}else if(id.startsWith('S:')){const [,owner,lane]=id.split(':');out.push(centerPort(owner,lane,viewer));const r1=roadId(owner,lane,1);if(act.has(r1))out.push(r1)}else if(id.startsWith('R:')){const {owner,lane,depth}=parseRoad(id);if(depth===1)out.push(shieldId(owner,lane));const a=roadId(owner,lane,depth-1),b=roadId(owner,lane,depth+1);if(depth>1&&act.has(a))out.push(a);if(depth<7&&act.has(b))out.push(b)}return out.filter(x=>act.has(x))}",
+              "function neighbors(id,viewer){const act=activeNodes(),out=[],proj=projectionFor(viewer),ownerFor=arm=>state.match.players.find(p=>proj[p.id]===arm)?.id,cornerDefs={'K:NW':[['N','L'],['W','R']],'K:NE':[['N','R'],['E','L']],'K:SW':[['S','R'],['W','L']],'K:SE':[['S','L'],['E','R']]},cornerRoads=k=>(cornerDefs[k]||[]).map(([arm,lane])=>{const owner=ownerFor(arm);return owner?roadId(owner,lane,1):null}).filter(Boolean);if(id.startsWith('C:')){const [,rs,cs]=id.split(':'),r=+rs,c=+cs;[[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([rr,cc])=>{const x=`C:${rr}:${cc}`;if(act.has(x))out.push(x)});state.match.players.forEach(p=>['L','C','R'].forEach(l=>{const sh=shieldId(p.id,l);if(centerPort(p.id,l,viewer)===id&&act.has(sh))out.push(sh)}))}else if(id.startsWith('K:')){cornerRoads(id).forEach(x=>{if(act.has(x))out.push(x)})}else if(id.startsWith('S:')){const [,owner,lane]=id.split(':');out.push(centerPort(owner,lane,viewer));const r1=roadId(owner,lane,1);if(act.has(r1))out.push(r1)}else if(id.startsWith('R:')){const {owner,lane,depth}=parseRoad(id);if(depth===1){out.push(shieldId(owner,lane));Object.keys(cornerDefs).forEach(k=>{if(cornerRoads(k).includes(id))out.push(k)})}const a=roadId(owner,lane,depth-1),b=roadId(owner,lane,depth+1);if(depth>1&&act.has(a))out.push(a);if(depth<7&&act.has(b))out.push(b)}return out.filter(x=>act.has(x))}",
+              'neighbors'
+            ),
+            (
+              "for(const id of all){if(id.startsWith('K:'))continue;const nw=nodeWorld(id,viewer),typ=posType(id);",
+              "for(const id of all){const nw=nodeWorld(id,viewer),typ=posType(id);",
+              'renderField3D skip'
+            ),
+            (
+              "box(nw.x,nw.y+(active.has(id)?.10:-.017),nw.z,active.has(id)?.42:.16,.014,active.has(id)?.42:.16,pc,active.has(id)?'roadMarkActive':'roadMark')}}if(m.honey?.byNode)",
+              "box(nw.x,nw.y+(active.has(id)?.10:-.017),nw.z,active.has(id)?.42:.16,.014,active.has(id)?.42:.16,pc,active.has(id)?'roadMarkActive':'roadMark')}else if(typ==='corner'){box(nw.x,nw.y-.02,nw.z,.82,.10,.82,[.40,.42,.36],'corner')}}if(m.honey?.byNode)",
+              'renderField3D corner'
+            ),
+            (
+              "for(const [id,p] of fieldProjection){if(id.startsWith('K:'))continue;if(onlyReach&&!reach.has(id))continue;",
+              "for(const [id,p] of fieldProjection){if(onlyReach&&!reach.has(id))continue;",
+              'nearestProjectedNode'
+            ),
+            (
+              "if(id.startsWith('K:'))e.disabled=true;else if(!e.classList.contains('reachable'))e.disabled=true;else e.onclick=ev=>selectEndpoint(nearestProjectedNode(ev.clientX,ev.clientY,true)||id);",
+              "if(!e.classList.contains('reachable'))e.disabled=true;else e.onclick=ev=>selectEndpoint(nearestProjectedNode(ev.clientX,ev.clientY,true)||id);",
+              'renderBoard'
+            ),
+          ]
+          for old,new,name in repls:
+              count=s.count(old)
+              if count != 1:
+                  raise SystemExit(f'{name}: expected old token once, got {count}')
+              s=s.replace(old,new,1)
+              if s.count(old) != 0:
+                  raise SystemExit(f'{name}: old token remained')
+          path.write_text(s,encoding='utf-8')
+          b=path.read_bytes()
+          sha256=hashlib.sha256(b).hexdigest()
+          gitblob=hashlib.sha1(f'blob {len(b)}\0'.encode()+b).hexdigest()
+          print('R9_PRODUCT_BYTES',len(b))
+          print('R9_PRODUCT_SHA256',sha256)
+          print('R9_PRODUCT_GIT_BLOB',gitblob)
+          if gitblob != '7cb88f6f9a9e92001d13de72a343abddbd595a1c':
+              raise SystemExit(f'unexpected product git blob {gitblob}')
+          PY
+          test "$(git hash-object browser/GAMEROAD.html)" = "$NEW_BROWSER_BLOB"
+          cp browser/GAMEROAD.html /tmp/GAMEROAD.r9-product.html
+          echo 'patched=true' >> "$GITHUB_OUTPUT"
+
+      - name: Static invariant and negative-fault detector
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          required=[
+            "['K:NW','K:NE','K:SW','K:SE'].forEach(id=>s.add(id))",
+            "'K:NW':[['N','L'],['W','R']]",
+            "'K:NE':[['N','R'],['E','L']]",
+            "'K:SW':[['S','R'],['W','L']]",
+            "'K:SE':[['S','L'],['E','R']]",
+            "else if(typ==='corner'){box(nw.x,nw.y-.02,nw.z,.82,.10,.82,[.40,.42,.36],'corner')}",
+          ]
+          forbidden=[
+            "for(const [id,p] of fieldProjection){if(id.startsWith('K:'))continue;",
+            "if(id.startsWith('K:'))e.disabled=true;",
+          ]
+          def check(text):
+              return all(text.count(x)==1 for x in required) and all(x not in text for x in forbidden)
+          if not check(s): raise SystemExit('positive invariant check failed')
+          fault=s.replace("'K:NW':[['N','L'],['W','R']]","'K:NW':[['N','C'],['W','R']]",1)
+          if check(fault): raise SystemExit('fault injection was not detected')
+          if s.count('K:NW') < 1 or s.count('K:NE') < 1 or s.count('K:SW') < 1 or s.count('K:SE') < 1:
+              raise SystemExit('corner identity missing')
+          print('BOARD109_R9_STATIC_NEGATIVE_DETECTION=PASS')
+          PY
+
+      - uses: actions/setup-node@v4
         with:
-          name: board109-r9-exact-current-browser
-          path: /tmp/GAMEROAD.exact-current.html
-          if-no-files-found: error
-          retention-days: 1
+          node-version: '22'
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+
+      - name: Inject task-private hook and write positive runtime probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('browser/GAMEROAD.html')
+          s=p.read_text(encoding='utf-8')
+          needle="window.__GAMEROAD_TEST__={"
+          if s.count(needle)!=1:
+              raise SystemExit(f'expected one GAMEROAD test hook anchor, got {s.count(needle)}')
+          hook="window.__BOARD109_R9_TEST__={projectionFor,roadId,shieldId,neighbors,activeNodes,normalMoveLimitForRoad,renderBoard,fieldProjection,nearestProjectedNode,shortest,selectEndpoint};"
+          p.write_text(s.replace(needle,hook+needle,1),encoding='utf-8')
+          PY
+          cat > tests/board109-r9-temp.spec.mjs <<'EOF'
+          import { test, expect } from '@playwright/test';
+          import fs from 'node:fs';
+
+          const CORNERS = ['K:NW','K:NE','K:SW','K:SE'];
+          const DEFS = {
+            'K:NW': [['N','L'],['W','R']],
+            'K:NE': [['N','R'],['E','L']],
+            'K:SW': [['S','R'],['W','L']],
+            'K:SE': [['S','L'],['E','R']],
+          };
+
+          async function installLegalBattleDeck(page) {
+            return page.evaluate(() => {
+              const t = window.__GAMEROAD_TEST__;
+              const publicMain = new Set(t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
+              const standard = window.__CARD_DATA__
+                .filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)))
+                .map((card) => card.id);
+              const royalIds = ['SP_J','SP_Q','SP_K'];
+              const nonRoyal = standard.filter((id) => !t.isRoyalCard(id));
+              const main = [...nonRoyal.slice(0, 37), ...royalIds];
+              const setValidation = t.deckSetDraft(main, []);
+              const committed = setValidation.ok ? t.deckCommit() : false;
+              return { count: main.length, setValidation, committed, saved: t.deckValidate(t.state.savedDeck, { forBattle: true }) };
+            });
+          }
+
+          test('BOARD-109 R9 exact corners are canonical walkable two-arm bridges', async ({ page }) => {
+            const pageErrors=[];
+            const consoleErrors=[];
+            const unexpectedHttpErrors=[];
+            let manifest404=0;
+            page.on('pageerror', e => pageErrors.push(e.message));
+            page.on('console', m => { if (m.type()==='error') consoleErrors.push(m.text()); });
+            page.on('response', r => {
+              if (r.status()<400) return;
+              const path=new URL(r.url()).pathname;
+              if (r.status()===404 && path.endsWith('/browser/gameroad-version.json')) { manifest404 += 1; return; }
+              unexpectedHttpErrors.push(`${r.status()} ${path}`);
+            });
+            const response=await page.goto('/browser/GAMEROAD.html',{waitUntil:'load'});
+            expect(response?.ok()).toBeTruthy();
+            const deck=await installLegalBattleDeck(page);
+            expect(deck.count).toBe(40);
+            expect(deck.setValidation.ok, JSON.stringify(deck.setValidation)).toBeTruthy();
+            expect(deck.committed).toBeTruthy();
+            expect(deck.saved.ok, JSON.stringify(deck.saved)).toBeTruthy();
+
+            const evidence=await page.evaluate(({ corners, defs }) => {
+              const core=window.__GAMEROAD_TEST__;
+              const b=window.__BOARD109_R9_TEST__;
+              if (!b) throw new Error('BOARD109 R9 private hook unavailable');
+              const modeEvidence={};
+              const seedDepth1=(match) => {
+                const fallback=match.players[0]?.hand?.[0] || match.players[0]?.sourceDeckIds?.[0];
+                if (!fallback) throw new Error('no fallback card');
+                for (const player of match.players) {
+                  const card=player.hand?.[0] || player.sourceDeckIds?.[0] || fallback;
+                  for (const lane of ['L','C','R']) player.lanes[lane]=[card];
+                }
+              };
+              const inspectMode=(mode,lowPerf=false,reduceMotion=false) => {
+                core.state.settings.lowPerf=lowPerf;
+                core.state.settings.reduceMotion=reduceMotion;
+                const match=core.start(mode,'road_shield');
+                if (!match) throw new Error(`match failed ${mode}`);
+                seedDepth1(match);
+                const me=match.players[0];
+                const proj=b.projectionFor(me);
+                const ownerFor=arm=>match.players.find(p=>proj[p.id]===arm)?.id||null;
+                const expected={},actual={},reverse={};
+                for (const [corner,pairs] of Object.entries(defs)) {
+                  expected[corner]=pairs.map(([arm,lane])=>{const owner=ownerFor(arm);return owner?b.roadId(owner,lane,1):null}).filter(Boolean).sort();
+                  actual[corner]=[...b.neighbors(corner,me)].sort();
+                  reverse[corner]=expected[corner].map(road=>({road,hasCorner:b.neighbors(road,me).includes(corner)}));
+                }
+                b.renderBoard();
+                return {
+                  playerCount:match.players.length,
+                  boardCount:core.boardCount(),
+                  expected,actual,reverse,
+                  activeCorners:corners.map(k=>[k,b.activeNodes().has(k)]),
+                  projectedCorners:corners.map(k=>[k,b.fieldProjection.has(k)]),
+                  centerRoute:b.shortest('C:0:0','C:1:1',2,me),
+                  centerRoadRoute:ownerFor('N')?b.shortest('C:0:0',b.roadId(ownerFor('N'),'C',1),3,me):null,
+                  lowPerf:!!core.state.settings.lowPerf,
+                  reduceMotion:!!core.state.settings.reduceMotion,
+                };
+              };
+              modeEvidence['4p']=inspectMode('4p');
+              modeEvidence['2v2']=inspectMode('2v2');
+              modeEvidence['2p']=inspectMode('2p');
+              modeEvidence['4p-lowPerf-reduced']=inspectMode('4p',true,true);
+
+              core.state.settings.lowPerf=false;
+              core.state.settings.reduceMotion=false;
+              const cornerEvidence={};
+              for (const corner of corners) {
+                const match=core.start('4p','road_shield');
+                seedDepth1(match);
+                const me=match.players[0];
+                const proj=b.projectionFor(me);
+                const ownerFor=arm=>match.players.find(p=>proj[p.id]===arm)?.id||null;
+                const roads=defs[corner].map(([arm,lane])=>b.roadId(ownerFor(arm),lane,1));
+                const roadCard=me.hand.find(id=>b.normalMoveLimitForRoad(id)>=1) || me.sourceDeckIds.find(id=>b.normalMoveLimitForRoad(id)>=1);
+                if (!roadCard) throw new Error(`no movement card ${corner}`);
+                me.position=roads[0];
+                me.plan={roadId:roadCard,battleId:null,path:[roads[0]]};
+                match.phase='plan';
+                b.renderBoard();
+                const el=document.querySelector(`#board .node[data-pos="${corner}"]`);
+                const projected=b.fieldProjection.get(corner);
+                if (!el || !projected) throw new Error(`corner render missing ${corner}`);
+                const map=document.querySelector('#battleMap').getBoundingClientRect();
+                const pointerPick=b.nearestProjectedNode(map.left+projected.x/100*map.width,map.top+projected.y/100*map.height,true);
+                const bridgePath=b.shortest(roads[0],roads[1],2,me);
+                const before=[...me.plan.path];
+                b.selectEndpoint(corner);
+                const after=[...me.plan.path];
+                cornerEvidence[corner]={roads,disabled:el.disabled,reachable:el.classList.contains('reachable'),moveDistance:el.dataset.moveDistance||null,ariaLabel:el.getAttribute('aria-label'),pointerPick,bridgePath,before,after};
+              }
+              return {modeEvidence,cornerEvidence};
+            }, { corners: CORNERS, defs: DEFS });
+
+            for (const [mode,ev] of Object.entries(evidence.modeEvidence)) {
+              expect(ev.boardCount, `${mode} 109 conservation`).toBe(109);
+              expect(ev.centerRoute, `${mode} center route regression`).toHaveLength(3);
+              if (ev.centerRoadRoute) expect(ev.centerRoadRoute, `${mode} center-shield-road regression`).toHaveLength(4);
+              for (const corner of CORNERS) {
+                expect(ev.activeCorners.find(([k])=>k===corner)?.[1], `${mode} ${corner} active`).toBe(true);
+                expect(ev.projectedCorners.find(([k])=>k===corner)?.[1], `${mode} ${corner} projected`).toBe(true);
+                expect(ev.actual[corner], `${mode} ${corner} exact adjacency; no third/diagonal/center edge`).toEqual(ev.expected[corner]);
+                expect(ev.reverse[corner].every(x=>x.hasCorner), `${mode} ${corner} reverse adjacency`).toBe(true);
+              }
+              if (mode.startsWith('4p') || mode==='2v2') {
+                for (const corner of CORNERS) expect(ev.actual[corner], `${mode} ${corner} exactly two arms`).toHaveLength(2);
+              }
+            }
+
+            for (const corner of CORNERS) {
+              const ev=evidence.cornerEvidence[corner];
+              expect(ev.roads).toHaveLength(2);
+              expect(ev.disabled, `${corner} DOM legality`).toBe(false);
+              expect(ev.reachable, `${corner} reachable`).toBe(true);
+              expect(ev.moveDistance, `${corner} one-step from approved depth1`).toBe('1');
+              expect(ev.ariaLabel, `${corner} accessibility`).toContain('移動可能 1歩');
+              expect(ev.pointerPick, `${corner} 3D pointer hit`).toBe(corner);
+              expect(ev.bridgePath, `${corner} exact two-arm bridge`).toEqual([ev.roads[0],corner,ev.roads[1]]);
+              expect(ev.before).toEqual([ev.roads[0]]);
+              expect(ev.after, `${corner} stoppable endpoint`).toEqual([ev.roads[0],corner]);
+            }
+
+            const remaining=[...consoleErrors];
+            for (let i=0;i<manifest404;i+=1) {
+              const ix=remaining.findIndex(x=>x.includes('Failed to load resource')&&x.includes('404'));
+              if (ix>=0) remaining.splice(ix,1);
+            }
+            expect(pageErrors, pageErrors.join('\n')).toEqual([]);
+            expect(unexpectedHttpErrors, unexpectedHttpErrors.join('\n')).toEqual([]);
+            expect(remaining, remaining.join('\n')).toEqual([]);
+            const finalEvidence={...evidence,runtimeErrors:{pageErrors,unexpectedHttpErrors,consoleErrors:remaining,knownManifest404:manifest404}};
+            fs.writeFileSync('/tmp/board109-r9-runtime-evidence.json',`${JSON.stringify(finalEvidence,null,2)}\n`,'utf8');
+            console.log('BOARD109_R9_RUNTIME_EVIDENCE',JSON.stringify(finalEvidence));
+          });
+          EOF
+          cat > playwright.board109-r9-temp.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir:'./tests',
+            testMatch:'board109-r9-temp.spec.mjs',
+            timeout:90000,
+            expect:{timeout:5000},
+            workers:1,
+            retries:0,
+            reporter:[['line']],
+            use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,trace:'retain-on-failure',screenshot:'only-on-failure'},
+            webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1',url:'http://127.0.0.1:4173/browser/GAMEROAD.html',reuseExistingServer:false,timeout:120000},
+          });
+          EOF
+
+      - name: Run positive runtime probe
+        run: npx playwright test --config=playwright.board109-r9-temp.config.mjs --workers=1
+
+      - name: Prove runtime test detects one removed canonical edge
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp /tmp/GAMEROAD.r9-product.html browser/GAMEROAD.html
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('browser/GAMEROAD.html')
+          s=p.read_text(encoding='utf-8')
+          old="'K:NW':[['N','L'],['W','R']]"
+          new="'K:NW':[['N','C'],['W','R']]"
+          if s.count(old)!=1: raise SystemExit('fault anchor mismatch')
+          s=s.replace(old,new,1)
+          needle="window.__GAMEROAD_TEST__={"
+          hook="window.__BOARD109_R9_TEST__={projectionFor,roadId,shieldId,neighbors,activeNodes,normalMoveLimitForRoad,renderBoard,fieldProjection,nearestProjectedNode,shortest,selectEndpoint};"
+          if s.count(needle)!=1: raise SystemExit('hook anchor mismatch')
+          p.write_text(s.replace(needle,hook+needle,1),encoding='utf-8')
+          PY
+          set +e
+          npx playwright test --config=playwright.board109-r9-temp.config.mjs --workers=1 > /tmp/board109-r9-negative.log 2>&1
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
+            cat /tmp/board109-r9-negative.log
+            echo 'negative fault unexpectedly passed' >&2
+            exit 1
+          fi
+          echo "BOARD109_R9_RUNTIME_NEGATIVE_DETECTION=PASS status=$status"
+          cp /tmp/GAMEROAD.r9-product.html browser/GAMEROAD.html
+          test "$(git hash-object browser/GAMEROAD.html)" = "$NEW_BROWSER_BLOB"
+
+      - name: Run existing Browser runtime smoke on exact product candidate
+        run: npx playwright test --config=playwright.config.mjs --workers=1
+
+      - name: Remove all ephemeral test files and verify product-only worktree delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f tests/board109-r9-temp.spec.mjs playwright.board109-r9-temp.config.mjs
+          cp /tmp/GAMEROAD.r9-product.html browser/GAMEROAD.html
+          test "$(git hash-object browser/GAMEROAD.html)" = "$NEW_BROWSER_BLOB"
+          tracked="$(git status --porcelain --untracked-files=no | awk '{print $2}' | sort -u)"
+          if [ "${{ steps.patch.outputs.patched }}" = 'true' ]; then
+            test "$tracked" = 'browser/GAMEROAD.html'
+          else
+            test -z "$tracked"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: board109-r9-runtime-evidence-${{ github.run_id }}
+          path: |
+            /tmp/board109-r9-runtime-evidence.json
+            /tmp/board109-r9-negative.log
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Commit only exact product Browser delta
+        if: steps.patch.outputs.patched == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/GAMEROAD.html
+          test "$(git diff --cached --name-only)" = 'browser/GAMEROAD.html'
+          test "$(git hash-object browser/GAMEROAD.html)" = "$NEW_BROWSER_BLOB"
+          git commit -m 'board109: connect adjudicated corners'
+          git push origin HEAD:work/BOARD-109-R9-CORNERFIX-20260816T2142-SOL-J32NHP

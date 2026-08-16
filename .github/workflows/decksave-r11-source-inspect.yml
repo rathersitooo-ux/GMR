@@ -50,3 +50,11 @@ jobs:
           for j in sorted(selected):
             print(f'{j+1}:{lines[j][:900]}')
           PY
+      - name: Inspect repo recovery core consumers
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '---PATH REFERENCES---'
+          grep -R -n --exclude='decksave-r11-source-inspect.yml' --exclude-dir=.git 'deck-save-recovery-core.mjs' . || true
+          echo '---API REFERENCES---'
+          grep -R -n --exclude='deck-save-recovery-core.mjs' --exclude='decksave-r11-source-inspect.yml' --exclude-dir=.git -E 'inspectRawSave|classifyDeckProjection|prepareExplicitDeckCommit|writePreparedSaveVerified|resetExplicitSaveKeys' browser tests .github || true

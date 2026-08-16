@@ -1,49 +1,57 @@
 name: Browser Full Interaction Evidence
 
 on:
+  workflow_dispatch:
   push:
     branches:
-      - 'work/fullreg-r10-operation-gaps'
+      - main
+      - 'work/**'
     paths:
+      - 'browser/GAMEROAD.html'
+      - 'tests/browser-full-interaction.spec.mjs'
+      - 'playwright.full-interaction.config.mjs'
+      - '.github/workflows/browser-full-interaction.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'browser/GAMEROAD.html'
+      - 'tests/browser-full-interaction.spec.mjs'
+      - 'playwright.full-interaction.config.mjs'
       - '.github/workflows/browser-full-interaction.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  r12-fix-deck-helper-contract:
+  chromium-interaction-evidence:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
-      - name: Checkout exact work branch
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Repair one migrated assertion and restore workflow
-        shell: bash
-        run: |
-          set -euo pipefail
-          expected_main='29d58936159b459caa3f26be9642b162890c0ac3'
-          git fetch origin main --no-tags
-          actual_main="$(git rev-parse origin/main)"
-          if [[ "${actual_main}" != "${expected_main}" ]]; then
-            echo "main drifted: expected=${expected_main} actual=${actual_main}"
-            exit 1
-          fi
-          python3 -c "from pathlib import Path; p=Path('tests/browser-full-interaction.spec.mjs'); s=p.read_text(encoding='utf-8'); old='expect(deck.saved.ok).toBeTruthy();'; new='expect(deck.savedValidation.ok).toBeTruthy();'; c=s.count(old); assert c == 1, f'expected one old assertion, found {c}'; p.write_text(s.replace(old,new), encoding='utf-8')"
-          git show origin/main:.github/workflows/browser-full-interaction.yml > .github/workflows/browser-full-interaction.yml
-          git diff --check
-          node --check tests/browser-full-interaction.spec.mjs
-          git add tests/browser-full-interaction.spec.mjs .github/workflows/browser-full-interaction.yml
-          mapfile -t changed < <(git diff --cached --name-only origin/main)
-          printf 'Final staged paths against origin/main:\n'
-          printf '%s\n' "${changed[@]}"
-          if [[ "${#changed[@]}" -ne 1 || "${changed[0]}" != 'tests/browser-full-interaction.spec.mjs' ]]; then
-            echo 'Final path assertion failed.'
-            exit 1
-          fi
-          git config user.name 'rathersitooo-ux'
-          git config user.email 'rathersitooo@gmail.com'
-          git commit -m 'FULLREG R12: align migrated deck assertion with existing helper'
-          git push origin HEAD:work/fullreg-r10-operation-gaps
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Run GAMEROAD full interaction evidence R1
+        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
+
+      - name: Upload interaction evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-full-interaction-${{ github.run_id }}
+          path: |
+            playwright-report-full-interaction/
+            test-results/full-interaction/
+          if-no-files-found: error
+          retention-days: 14

@@ -774,7 +774,7 @@ test('covers Setup Honey/4P/2v2 plus Friend Room create, ready, waiting, and lea
   const deck = await installLegalBattleDeck(page);
   expect(deck.main).toHaveLength(40);
   expect(deck.committed).toBeTruthy();
-  expect(deck.saved.ok).toBeTruthy();
+  expect(deck.savedValidation.ok).toBeTruthy();
   testInfo.annotations.push({ type: 'deterministic-precondition', description: 'A legal 40-card deck is installed through the existing test API only to unlock visible Setup controls; no match state is injected.' });
 
   const setupGo = visibleOperationGo(page, 'setup');

@@ -1,4 +1,4 @@
-name: TEMP BOARD109 R7 exact corner executor v2
+name: TEMP BOARD109 R7 exact corner executor v3
 
 on:
   push:
@@ -14,17 +14,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 5
+          fetch-depth: 6
       - name: Exact guarded patch
         shell: bash
         run: |
           set -euo pipefail
-          if [ "$(git log -1 --pretty=%s)" != "BOARD109_R7_EXECUTOR_V2" ]; then
+          if [ "$(git log -1 --pretty=%s)" != "BOARD109_R7_EXECUTOR_V3" ]; then
             echo "non-executor push; no mutation"
             exit 0
           fi
-          test "$(git rev-parse HEAD^)" = "228ee9541224afaf79a7fb45f5764f032c212eb0"
-          test "$(git rev-parse HEAD~4)" = "2f115ac62bf124a1c118ebeeef6dbff1e52566e7"
+          test "$(git rev-parse HEAD^)" = "bdf5b90e2f7ecd68b7d50442895ea19c1e70601d"
+          test "$(git rev-parse HEAD~5)" = "2f115ac62bf124a1c118ebeeef6dbff1e52566e7"
           test "$(git rev-parse HEAD:browser/GAMEROAD.html)" = "3a8d34bfadf263e0980a4b1c9ec78f75fea07646"
           python3 - <<'PY'
           from pathlib import Path
@@ -41,7 +41,6 @@ jobs:
               global text
               n=text.count(old)
               if n!=1: raise SystemExit(f'{label}: expected1 found{n}')
-              if new in text: raise SystemExit(f'{label}: new already present')
               text=text.replace(old,new,1)
 
           r('active',"function activeNodes(){const s=new Set(centerIds());","function cornerIds(){return['K:NW','K:NE','K:SW','K:SE']}\nfunction activeNodes(){const s=new Set([...centerIds(),...cornerIds()]);")
@@ -77,22 +76,22 @@ jobs:
           ]: assert forbidden not in text, forbidden
           assert 9+4*(3+21)+4==109
 
-          players=['P1','P2','P3','P4']; arms=['N','E','S','W']
+          players=['P1','P2','P3','P4'];arms=['N','E','S','W']
           spec={'K:NW':[('N','L'),('W','R')],'K:NE':[('N','R'),('E','L')],'K:SW':[('S','R'),('W','L')],'K:SE':[('S','L'),('E','R')]}
           corners={'K:NW':(-3.6,-3.6),'K:NE':(3.6,-3.6),'K:SW':(-3.6,3.6),'K:SE':(3.6,3.6)}
           off={'L':-1.45,'C':0,'R':1.45}
-          def rw(arm,lane):
-              d=3.6;o=off[lane]
-              return {'N':(o,-d),'S':(-o,d),'W':(-d,-o),'E':(d,o)}[arm]
-          for vi,_ in enumerate(players):
+          def rw(a,l):
+              d=3.6;o=off[l]
+              return {'N':(o,-d),'S':(-o,d),'W':(-d,-o),'E':(d,o)}[a]
+          for vi in range(4):
               proj={pid:arms[(i-vi+4)%4] for i,pid in enumerate(players)}
-              oba={arm:pid for pid,arm in proj.items()}
+              oba={a:pid for pid,a in proj.items()}
               for k,pairs in spec.items():
-                  roads=[f'R:{oba[a]}:{lane}:1' for a,lane in pairs]
+                  roads=[f'R:{oba[a]}:{l}:1' for a,l in pairs]
                   assert len(set(roads))==2 and all(':C:1' not in x for x in roads)
                   cx,cz=corners[k]
-                  for a,lane in pairs:
-                      x,z=rw(a,lane)
+                  for a,l in pairs:
+                      x,z=rw(a,l)
                       assert abs(cx-x)<1e-9 or abs(cz-z)<1e-9
 
           encoded=text.encode('utf-8')

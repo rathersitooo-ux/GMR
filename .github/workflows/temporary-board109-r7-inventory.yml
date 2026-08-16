@@ -1,4 +1,4 @@
-name: TEMP BOARD109 R7 runtime semantic probe
+name: TEMP BOARD109 R7 runtime semantic probe v2
 
 on:
   push:
@@ -14,13 +14,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 8
+          fetch-depth: 9
       - name: Verify exact patched product identity
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git log -1 --pretty=%s)" = "BOARD109_R7_RUNTIME_PROBE_V1"
-          test "$(git rev-parse HEAD^)" = "c45b195d11f83fa96c37edba5caf0e0700355ec0"
+          test "$(git log -1 --pretty=%s)" = "BOARD109_R7_RUNTIME_PROBE_V2"
+          test "$(git rev-parse HEAD^)" = "44876606d78a05444c39263a3b1fc1ab9890eaf0"
           test "$(git rev-parse HEAD:browser/GAMEROAD.html)" = "0535bf3a37f9afdab3b0cddbc23e7aa610fcbc15"
           python3 - <<'PY'
           from pathlib import Path
@@ -51,7 +51,7 @@ jobs:
             retries: 0,
             reporter: [['line']],
             use: { baseURL:'http://127.0.0.1:4173', browserName:'chromium', headless:true, trace:'retain-on-failure', screenshot:'only-on-failure' },
-            webServer: { command:'python3 -m http.server 4173 --bind 127.0.0.1', url:'http://127.0.0.1:4173/browser/GAMEROAD.html', reuseExistingServer:false, timeout:120_000 },
+            webServer: { command:'python3 -m http.server 4173 --bind 127.0.0.1 --directory ..', url:'http://127.0.0.1:4173/browser/GAMEROAD.html', reuseExistingServer:false, timeout:120_000 },
           });
           EOF
           cat > .tmp-board109-r7/tests/corner-runtime.spec.mjs <<'EOF'

@@ -1,4 +1,4 @@
-name: TEMP BOARD109 R7 exact corner executor v3
+name: TEMP BOARD109 R7 runtime semantic probe
 
 on:
   push:
@@ -6,104 +6,180 @@ on:
       - work/BOARD-109-R7-CORNERFIX-20260816T1004-SOL
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch:
+  runtime:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 6
-      - name: Exact guarded patch
+          fetch-depth: 8
+      - name: Verify exact patched product identity
         shell: bash
         run: |
           set -euo pipefail
-          if [ "$(git log -1 --pretty=%s)" != "BOARD109_R7_EXECUTOR_V3" ]; then
-            echo "non-executor push; no mutation"
-            exit 0
-          fi
-          test "$(git rev-parse HEAD^)" = "bdf5b90e2f7ecd68b7d50442895ea19c1e70601d"
-          test "$(git rev-parse HEAD~5)" = "2f115ac62bf124a1c118ebeeef6dbff1e52566e7"
-          test "$(git rev-parse HEAD:browser/GAMEROAD.html)" = "3a8d34bfadf263e0980a4b1c9ec78f75fea07646"
+          test "$(git log -1 --pretty=%s)" = "BOARD109_R7_RUNTIME_PROBE_V1"
+          test "$(git rev-parse HEAD^)" = "c45b195d11f83fa96c37edba5caf0e0700355ec0"
+          test "$(git rev-parse HEAD:browser/GAMEROAD.html)" = "0535bf3a37f9afdab3b0cddbc23e7aa610fcbc15"
           python3 - <<'PY'
           from pathlib import Path
           import hashlib
-
-          p=Path('browser/GAMEROAD.html')
-          raw=p.read_bytes()
-          assert len(raw)==11815819
-          assert hashlib.sha256(raw).hexdigest()=='8728ff16e341926c82a9a2c10a55f5fe58b0f6e3325a0cdb40fe91a616881f2f'
-          bom=raw.startswith(b'\xef\xbb\xbf')
-          text=raw.decode('utf-8-sig')
-
-          def r(label,old,new):
-              global text
-              n=text.count(old)
-              if n!=1: raise SystemExit(f'{label}: expected1 found{n}')
-              text=text.replace(old,new,1)
-
-          r('active',"function activeNodes(){const s=new Set(centerIds());","function cornerIds(){return['K:NW','K:NE','K:SW','K:SE']}\nfunction activeNodes(){const s=new Set([...centerIds(),...cornerIds()]);")
-
-          old="function neighbors(id,viewer){const act=activeNodes(),out=[];if(id.startsWith('C:')){const [,rs,cs]=id.split(':'),r=+rs,c=+cs;[[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([rr,cc])=>{const x=`C:${rr}:${cc}`;if(act.has(x))out.push(x)});state.match.players.forEach(p=>['L','C','R'].forEach(l=>{const sh=shieldId(p.id,l);if(centerPort(p.id,l,viewer)===id&&act.has(sh))out.push(sh)}))}else if(id.startsWith('S:')){const [,owner,lane]=id.split(':');out.push(centerPort(owner,lane,viewer));const r1=roadId(owner,lane,1);if(act.has(r1))out.push(r1)}else if(id.startsWith('R:')){const {owner,lane,depth}=parseRoad(id);if(depth===1)out.push(shieldId(owner,lane));const a=roadId(owner,lane,depth-1),b=roadId(owner,lane,depth+1);if(depth>1&&act.has(a))out.push(a);if(depth<7&&act.has(b))out.push(b)}return out.filter(x=>act.has(x))}"
-          new="function cornerRoadIds(id,viewer){const spec={'K:NW':[['N','L'],['W','R']],'K:NE':[['N','R'],['E','L']],'K:SW':[['S','R'],['W','L']],'K:SE':[['S','L'],['E','R']]}[id];if(!spec)return[];const ownerByArm={};Object.entries(projectionFor(viewer)).forEach(([owner,arm])=>ownerByArm[arm]=owner);return spec.map(([arm,lane])=>roadId(ownerByArm[arm],lane,1))}\nfunction neighbors(id,viewer){const act=activeNodes(),out=[];if(id.startsWith('C:')){const [,rs,cs]=id.split(':'),r=+rs,c=+cs;[[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([rr,cc])=>{const x=`C:${rr}:${cc}`;if(act.has(x))out.push(x)});state.match.players.forEach(p=>['L','C','R'].forEach(l=>{const sh=shieldId(p.id,l);if(centerPort(p.id,l,viewer)===id&&act.has(sh))out.push(sh)}))}else if(id.startsWith('S:')){const [,owner,lane]=id.split(':');out.push(centerPort(owner,lane,viewer));const r1=roadId(owner,lane,1);if(act.has(r1))out.push(r1)}else if(id.startsWith('R:')){const {owner,lane,depth}=parseRoad(id);if(depth===1){out.push(shieldId(owner,lane));cornerIds().forEach(k=>{if(cornerRoadIds(k,viewer).includes(id))out.push(k)})}const a=roadId(owner,lane,depth-1),b=roadId(owner,lane,depth+1);if(depth>1&&act.has(a))out.push(a);if(depth<7&&act.has(b))out.push(b)}else if(id.startsWith('K:'))out.push(...cornerRoadIds(id,viewer));return out.filter(x=>act.has(x))}"
-          r('graph',old,new)
-
-          r('world',"const k={NW:{x:-10,z:-10},NE:{x:10,z:-10},SW:{x:-10,z:10},SE:{x:10,z:10}}[id.split(':')[1]];return{k,y:.2,...k}}","const k={NW:{x:-3.6,z:-3.6},NE:{x:3.6,z:-3.6},SW:{x:-3.6,z:3.6},SE:{x:3.6,z:3.6}}[id.split(':')[1]];return{k,y:.2,...k}}")
-          r('surface',"if(typ==='center'){size=1.06;topY=nw.y-.015+.16}else if(typ==='shield'){size=1.05;topY=nw.y+.24}else if(typ==='road'){if(!activeNodes().has(id))return null;size=.88;topY=nw.y-.01+.105}else return null;","if(typ==='center'){size=1.06;topY=nw.y-.015+.16}else if(typ==='shield'){size=1.05;topY=nw.y+.24}else if(typ==='road'){if(!activeNodes().has(id))return null;size=.88;topY=nw.y-.01+.105}else if(typ==='corner'){size=.88;topY=nw.y-.01+.105}else return null;")
-          r('drag',"for(const [id,p] of fieldProjection){if(id.startsWith('K:'))continue;if(onlyReach&&!reach.has(id))continue;","for(const [id,p] of fieldProjection){if(onlyReach&&!reach.has(id))continue;")
-          r('render-skip',"for(const id of all){if(id.startsWith('K:'))continue;const nw=nodeWorld(id,viewer),typ=posType(id);","for(const id of all){const nw=nodeWorld(id,viewer),typ=posType(id);")
-          r('render-tile',"box(nw.x,nw.y+(active.has(id)?.10:-.017),nw.z,active.has(id)?.42:.16,.014,active.has(id)?.42:.16,pc,active.has(id)?'roadMarkActive':'roadMark')}}if(m.honey?.byNode)","box(nw.x,nw.y+(active.has(id)?.10:-.017),nw.z,active.has(id)?.42:.16,.014,active.has(id)?.42:.16,pc,active.has(id)?'roadMarkActive':'roadMark')}else if(typ==='corner'){box(nw.x,nw.y-.01,nw.z,.88,.105,.88,[.46,.49,.43],'corner')}}if(m.honey?.byNode)")
-          r('css',".node.corner{opacity:0;pointer-events:none}",".node.corner{opacity:0}")
-          r('dom',"if(id.startsWith('K:'))e.disabled=true;else if(!e.classList.contains('reachable'))e.disabled=true;else e.onclick=","if(!e.classList.contains('reachable'))e.disabled=true;else e.onclick=")
-
-          for token in [
-              "function cornerIds(){return['K:NW','K:NE','K:SW','K:SE']}",
-              "'K:NW':[['N','L'],['W','R']]",
-              "'K:NE':[['N','R'],['E','L']]",
-              "'K:SW':[['S','R'],['W','L']]",
-              "'K:SE':[['S','L'],['E','R']]",
-              "else if(id.startsWith('K:'))out.push(...cornerRoadIds(id,viewer))",
-              "else if(typ==='corner'){size=.88;topY=nw.y-.01+.105}",
-              "else if(typ==='corner'){box(nw.x,nw.y-.01,nw.z,.88,.105,.88,[.46,.49,.43],'corner')}",
-              ".node.corner{opacity:0}"
-          ]: assert token in text, token
-          for forbidden in [
-              "for(const [id,p] of fieldProjection){if(id.startsWith('K:'))continue",
-              "for(const id of all){if(id.startsWith('K:'))continue",
-              "if(id.startsWith('K:'))e.disabled=true",
-              ".node.corner{opacity:0;pointer-events:none}"
-          ]: assert forbidden not in text, forbidden
-          assert 9+4*(3+21)+4==109
-
-          players=['P1','P2','P3','P4'];arms=['N','E','S','W']
-          spec={'K:NW':[('N','L'),('W','R')],'K:NE':[('N','R'),('E','L')],'K:SW':[('S','R'),('W','L')],'K:SE':[('S','L'),('E','R')]}
-          corners={'K:NW':(-3.6,-3.6),'K:NE':(3.6,-3.6),'K:SW':(-3.6,3.6),'K:SE':(3.6,3.6)}
-          off={'L':-1.45,'C':0,'R':1.45}
-          def rw(a,l):
-              d=3.6;o=off[l]
-              return {'N':(o,-d),'S':(-o,d),'W':(-d,-o),'E':(d,o)}[a]
-          for vi in range(4):
-              proj={pid:arms[(i-vi+4)%4] for i,pid in enumerate(players)}
-              oba={a:pid for pid,a in proj.items()}
-              for k,pairs in spec.items():
-                  roads=[f'R:{oba[a]}:{l}:1' for a,l in pairs]
-                  assert len(set(roads))==2 and all(':C:1' not in x for x in roads)
-                  cx,cz=corners[k]
-                  for a,l in pairs:
-                      x,z=rw(a,l)
-                      assert abs(cx-x)<1e-9 or abs(cz-z)<1e-9
-
-          encoded=text.encode('utf-8')
-          if bom: encoded=b'\xef\xbb\xbf'+encoded
-          p.write_bytes(encoded)
-          print('patched_sha256='+hashlib.sha256(encoded).hexdigest())
-          print('patched_bytes='+str(len(encoded)))
+          raw=Path('browser/GAMEROAD.html').read_bytes()
+          assert len(raw)==11816410, len(raw)
+          assert hashlib.sha256(raw).hexdigest()=='cbdc9c679282466a430ad81e7ce391cf4d0f159b971c9946ba910eb322a1d36a'
           PY
-          test "$(git diff --name-only)" = "browser/GAMEROAD.html"
-          git diff --check
-          git config user.name "GAMEROAD Board109 R7"
-          git config user.email "actions@users.noreply.github.com"
-          git add browser/GAMEROAD.html
-          git commit -m "BOARD-109 R7 connect accepted walkable corners"
-          git push origin HEAD:work/BOARD-109-R7-CORNERFIX-20260816T1004-SOL
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install isolated Playwright runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Create ephemeral runtime test
+        shell: bash
+        run: |
+          mkdir -p .tmp-board109-r7/tests
+          cat > .tmp-board109-r7/playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir: './tests',
+            testMatch: 'corner-runtime.spec.mjs',
+            timeout: 90_000,
+            expect: { timeout: 8_000 },
+            workers: 1,
+            retries: 0,
+            reporter: [['line']],
+            use: { baseURL:'http://127.0.0.1:4173', browserName:'chromium', headless:true, trace:'retain-on-failure', screenshot:'only-on-failure' },
+            webServer: { command:'python3 -m http.server 4173 --bind 127.0.0.1', url:'http://127.0.0.1:4173/browser/GAMEROAD.html', reuseExistingServer:false, timeout:120_000 },
+          });
+          EOF
+          cat > .tmp-board109-r7/tests/corner-runtime.spec.mjs <<'EOF'
+          import { test, expect } from '@playwright/test';
+
+          const CORNERS=['K:NW','K:NE','K:SW','K:SE'];
+
+          async function installLegalBattleDeck(page){
+            return page.evaluate(()=>{
+              const t=window.__GAMEROAD_TEST__;
+              if(!t||!Array.isArray(window.__CARD_DATA__))throw new Error('current runtime test hooks unavailable');
+              const publicMain=new Set(t.deckPublic().filter(c=>c.slot==='main').map(c=>c.id));
+              const standard=window.__CARD_DATA__.filter(c=>publicMain.has(c.id)&&/^(SP|HT|DI|CL)$/.test(c.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c=>c.id);
+              const royalIds=['SP_J','SP_Q','SP_K'];
+              const nonRoyal=standard.filter(id=>!t.isRoyalCard(id));
+              const main=[...nonRoyal.slice(0,37),...royalIds];
+              const set=t.deckSetDraft(main,[]);
+              const committed=set.ok?t.deckCommit():false;
+              return{count:main.length,set,committed,validation:t.deckValidate(t.state.savedDeck,{forBattle:true})};
+            });
+          }
+
+          test('BOARD-109 R7 accepted corners are real bidirectional walkable/stoppable runtime nodes', async({page})=>{
+            const pageErrors=[];const consoleErrors=[];const unexpectedHttp=[];let known404=0;
+            page.on('pageerror',e=>pageErrors.push(e.message));
+            page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text())});
+            page.on('response',r=>{if(r.status()<400)return;const u=new URL(r.url());if(r.status()===404&&u.pathname.endsWith('/browser/gameroad-version.json')){known404++;return}unexpectedHttp.push(`${r.status()} ${u.pathname}`)});
+
+            const res=await page.goto('/browser/GAMEROAD.html',{waitUntil:'domcontentloaded'});
+            expect(res?.ok()).toBeTruthy();
+            await page.waitForTimeout(700);
+            const deck=await installLegalBattleDeck(page);
+            expect(deck.count).toBe(40);expect(deck.set.ok,JSON.stringify(deck.set)).toBeTruthy();expect(deck.committed).toBeTruthy();expect(deck.validation.ok,JSON.stringify(deck.validation)).toBeTruthy();
+
+            const evidence=await page.evaluate(async(corners)=>{
+              const core=window.__GAMEROAD_TEST__;
+              const match=core.start('4p','road_shield');
+              if(!match)throw new Error('4p road_shield start failed');
+              if(core.state.match?.players?.length!==4)throw new Error(`expected 4 players, got ${core.state.match?.players?.length}`);
+              if(typeof cornerRoadIds!=='function'||typeof neighbors!=='function'||typeof reachable!=='function'||typeof shortest!=='function'||typeof renderBoard!=='function'||typeof selectEndpoint!=='function'||typeof animateResolvedPath!=='function')throw new Error('current board runtime functions unavailable');
+
+              const players=core.state.match.players;
+              const filler=window.__CARD_DATA__.find(c=>c&&c.id)?.id;
+              if(!filler)throw new Error('no filler card');
+              for(const p of players){p.lanes.L=[filler];p.lanes.C=[];p.lanes.R=[filler];}
+              const me=players[0];
+              const moveCard=window.__CARD_DATA__.map(c=>c.id).find(id=>roadSelectable(id)&&normalMoveLimitForRoad(id)>=1);
+              const battleCard=window.__CARD_DATA__.map(c=>c.id).find(id=>id!==moveCard&&roadSelectable(id));
+              if(!moveCard||!battleCard)throw new Error('no current legal movement card pair');
+              me.hand=[moveCard,battleCard,filler].filter((v,i,a)=>v&&a.indexOf(v)===i);
+              if(me.hand.length<2)throw new Error('hand setup failed');
+
+              const accepted={
+                'K:NW':[['N','L'],['W','R']],
+                'K:NE':[['N','R'],['E','L']],
+                'K:SW':[['S','R'],['W','L']],
+                'K:SE':[['S','L'],['E','R']],
+              };
+              const allViewerMappings={};
+              for(const viewer of players){
+                const proj=projectionFor(viewer);const ownerByArm=Object.fromEntries(Object.entries(proj).map(([owner,arm])=>[arm,owner]));
+                allViewerMappings[viewer.id]={};
+                for(const k of corners){
+                  const expected=accepted[k].map(([arm,lane])=>`R:${ownerByArm[arm]}:${lane}:1`);
+                  const actual=cornerRoadIds(k,viewer);
+                  if(JSON.stringify(actual)!==JSON.stringify(expected))throw new Error(`${viewer.id} ${k} mapping ${JSON.stringify(actual)} != ${JSON.stringify(expected)}`);
+                  const ns=neighbors(k,viewer);
+                  if(JSON.stringify(ns)!==JSON.stringify(expected))throw new Error(`${viewer.id} ${k} neighbors ${JSON.stringify(ns)} != ${JSON.stringify(expected)}`);
+                  for(const r of expected)if(!neighbors(r,viewer).includes(k))throw new Error(`${viewer.id} ${r} missing reverse ${k}`);
+                  allViewerMappings[viewer.id][k]=actual;
+                }
+              }
+
+              const target='K:NW';
+              const acceptedRoads=cornerRoadIds(target,me);
+              const start=acceptedRoads[0];
+              me.position=start;
+              me.plan={roadId:moveCard,battleId:battleCard,path:[start]};
+              const moveLimit=normalMoveLimitForRoad(moveCard);
+              if(moveLimit<1)throw new Error('movement limit unexpectedly <1');
+              const oneReach=reachable(me,1);
+              const directPath=shortest(start,target,1,me);
+              const oneStepCorners=corners.filter(k=>oneReach.get(k)===1);
+              if(JSON.stringify(directPath)!==JSON.stringify([start,target]))throw new Error(`shortest direct mismatch ${JSON.stringify(directPath)}`);
+              if(JSON.stringify(oneStepCorners)!==JSON.stringify([target]))throw new Error(`unexpected one-step corners ${JSON.stringify(oneStepCorners)}`);
+
+              renderBoard();
+              const targetEl=document.querySelector(`#board .node[data-pos="${target}"]`);
+              if(!targetEl)throw new Error('corner DOM missing');
+              const before={className:targetEl.className,disabled:targetEl.disabled,pointerEvents:getComputedStyle(targetEl).pointerEvents,distance:targetEl.dataset.moveDistance??null,aria:targetEl.getAttribute('aria-label')};
+              if(targetEl.disabled||!targetEl.classList.contains('reachable')||getComputedStyle(targetEl).pointerEvents==='none')throw new Error(`corner DOM not interactive ${JSON.stringify(before)}`);
+
+              selectEndpoint(target);
+              const selectedPath=[...me.plan.path];
+              if(JSON.stringify(selectedPath)!==JSON.stringify([start,target]))throw new Error(`selectEndpoint path ${JSON.stringify(selectedPath)}`);
+              const legal=typeof legalPlan==='function'?legalPlan(me,me.plan):null;
+              if(legal&&!legal.ok)throw new Error(`legalPlan rejected corner endpoint ${JSON.stringify(legal)}`);
+
+              await animateResolvedPath(me);
+              if(me.position!==target)throw new Error(`resolved movement did not stop on corner: ${me.position}`);
+
+              me.plan={roadId:moveCard,battleId:battleCard,path:[target]};
+              const fromCorner=reachable(me,1);
+              const fromCornerRoads=[...fromCorner.entries()].filter(([id,d])=>d===1&&id.startsWith('R:')).map(([id])=>id).sort();
+              const expectedRoads=[...acceptedRoads].sort();
+              if(JSON.stringify(fromCornerRoads)!==JSON.stringify(expectedRoads))throw new Error(`corner exits ${JSON.stringify(fromCornerRoads)} != ${JSON.stringify(expectedRoads)}`);
+              const wrongAtOne=[...fromCorner.entries()].filter(([id,d])=>d===1&&(id.startsWith('C:')||id.startsWith('S:')||(id.startsWith('K:')&&id!==target))).map(([id])=>id);
+              if(wrongAtOne.length)throw new Error(`corner has forbidden direct exits ${JSON.stringify(wrongAtOne)}`);
+
+              renderBoard();renderField3D();
+              const nw=nodeWorld(target,me);const surface=nodeTopSurface(target,me);const projected=fieldProjection.get(target);
+              if(!surface||!projected)throw new Error('corner 3D surface/projection missing');
+              const rect=document.querySelector('#battleMap').getBoundingClientRect();
+              const hit=nearestProjectedNode(rect.left+projected.x/100*rect.width,rect.top+projected.y/100*rect.height,true);
+              if(hit!==target)throw new Error(`projected hit expected ${target}, got ${hit}`);
+
+              const boardCount=core.boardCount();if(boardCount!==109)throw new Error(`boardCount ${boardCount}`);
+              return{boardCount,playerCount:players.length,moveCard,moveLimit,target,start,acceptedRoads,allViewerMappings,oneStepCorners,before,selectedPath,stoppedAt:me.position,fromCornerRoads,wrongAtOne,world:nw,projected,hit};
+            },corners);
+
+            const remaining=[...consoleErrors];
+            for(let i=0;i<known404;i++){const ix=remaining.findIndex(x=>x.includes('Failed to load resource')&&x.includes('404'));if(ix>=0)remaining.splice(ix,1)}
+            console.log('BOARD109_R7_RUNTIME '+JSON.stringify({...evidence,runtimeErrors:{pageErrors,consoleErrors:remaining,unexpectedHttp,known404}}));
+            expect(evidence.boardCount).toBe(109);
+            expect(evidence.stoppedAt).toBe('K:NW');
+            expect(evidence.fromCornerRoads.sort()).toEqual([...evidence.acceptedRoads].sort());
+            expect(pageErrors).toEqual([]);expect(unexpectedHttp).toEqual([]);expect(remaining).toEqual([]);
+          });
+          EOF
+      - name: Run current Chromium semantic probe
+        run: npx playwright test --config=.tmp-board109-r7/playwright.config.mjs --workers=1

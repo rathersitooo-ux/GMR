@@ -41,7 +41,7 @@ jobs:
           path = Path('browser/GAMEROAD.html')
           text = path.read_text(encoding='utf-8')
           old = '.battle .hateDial{grid-column:1!important;grid-row:1!important;width:50px!important;height:50px!important}'
-          new = '.battle .hateDial{grid-column:1!important;grid-row:1!important;width:50px!important;height:50px!important;left:clamp(125px,19vw,235px)!important}'
+          new = '.battle .hateDial{grid-column:1!important;grid-row:1!important;width:50px!important;height:50px!important;left:clamp(125px,19vw,235px)!important;top:-80px!important}'
           count = text.count(old)
           print('exact_target_count=', count)
           if count != 1:
@@ -109,7 +109,7 @@ jobs:
         run: |
           mkdir -p test-results/hatevfx-r8
           cp /tmp/hatevfx-r8-evidence/*.json test-results/hatevfx-r8/ 2>/dev/null || true
-          printf 'main_head=%s\nhtml_blob=%s\ncandidate=relative-left:clamp(125px,19vw,235px)\n' "$(git rev-parse origin/main)" "${EXPECTED_HTML_BLOB}" > test-results/hatevfx-r8/candidate-metadata.txt
+          printf 'main_head=%s\nhtml_blob=%s\ncandidate=relative-left:clamp(125px,19vw,235px);top:-80px\n' "$(git rev-parse origin/main)" "${EXPECTED_HTML_BLOB}" > test-results/hatevfx-r8/candidate-metadata.txt
 
       - name: Upload candidate proof
         if: ${{ !cancelled() }}

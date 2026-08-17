@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   BATTLE_REPLAY_LIVE_ADAPTER,
   appendAcceptedBattleResolution,
@@ -166,4 +167,22 @@ test('rematch uses a new isolated session and never carries prior replay events'
   assert.equal(second.matchId, 'M2');
   assert.equal(second.lastResolutionSerial, 0);
   assert.equal(second.ended, false);
+});
+
+
+test('production Browser mounts replay at the canonical accepted Battle seam without a guest-side second capture path', () => {
+  const html = readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
+  const count = (needle) => html.split(needle).length - 1;
+  assert.equal(count("import('./battle-replay-live-adapter.mjs')"), 1);
+  assert.equal(count('grBattleReplayBegin(state.match)'), 1);
+  assert.equal(count('grBattleReplayAcceptResolution(m,m.lastBattleResolution)'), 1);
+  assert.equal(count('grBattleReplayEnd(m,winners);return endMatch(winners)'), 1);
+  assert.equal(count('id="resultReplay"'), 1);
+  assert.equal(count('id="resultReplayEvents"'), 1);
+  assert.ok(html.indexOf('m.lastBattleResolution={serial:++m.resolutionSeq') < html.indexOf('grBattleReplayAcceptResolution(m,m.lastBattleResolution)'));
+  assert.ok(html.indexOf('grBattleReplayAcceptResolution(m,m.lastBattleResolution)') < html.indexOf('const slaykiaAttackEnd=grSlaykiaAttackEndHook(m)'));
+  assert.ok(html.indexOf('grBattleReplayEnd(m,winners);return endMatch(winners)') < html.indexOf('return endMatch(winners)}nextRound()'));
+  assert.match(html, /createBattleReplayVersionAuthority\(\{deckRule:DECK_RULE,cardData:window\.__CARD_DATA__\}\)/);
+  assert.match(html, /appendAcceptedBattleResolution\(session,resolution\)/);
+  assert.match(html, /appendAcceptedMatchEnd\(session,\{winnerIds:\[\.\.\.winners\],round:m\.round,mode:m\.mode\}\)/);
 });

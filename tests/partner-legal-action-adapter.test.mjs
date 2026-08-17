@@ -3,9 +3,12 @@ import test from 'node:test';
 import {
   revalidateSelectedPartnerLegalCandidate,
   selectPartnerLegalCandidate,
+  selectPartnerManifestOrRuleCandidate,
 } from '../browser/partner-legal-action-adapter.mjs';
 
 const V = Object.freeze({ rulesVersion: 'rules-r1', cardVersion: 'cards-r1', stateVersion: 'state-r1' });
+const RUNTIME_STATE = Object.freeze({ phase: 'plan', turnBand: 'early', pressureBand: 'low', manaBand: 'mid', handBand: 'three' });
+const RUNTIME_FINGERPRINT = 'rules=rules-r1|cards=cards-r1|state=state-r1|phase=plan|turnBand=early|pressureBand=low|manaBand=mid|handBand=three';
 
 function candidate(candidateId, overrides = {}) {
   return {
@@ -32,6 +35,39 @@ function revalidate(selectedCandidateId, rule, candidates, selectedVersions = V,
     selectedVersions,
     candidates,
     currentVersions,
+  });
+}
+
+function approvedManifest(overrides = {}) {
+  return {
+    schema: 'gameroad.partner-advice-runtime-manifest.v1',
+    targetVersions: { ...V },
+    approval: {
+      gateId: 'HUMAN-HOLDOUT-ACCEPTANCE',
+      approvalId: 'approval-r1',
+      humanGate: 'approved',
+      privacyScope: 'shared',
+    },
+    promotionSafe: true,
+    defaultActionId: 'heuristic',
+    minContextSupport: 8,
+    contexts: [{ fingerprint: RUNTIME_FINGERPRINT, actionId: 'learned', support: 12 }],
+    sourceEvidence: 'offline-approved-aggregate-only',
+    containsRawEvents: false,
+    containsPrivate: false,
+    livePlayerPerformanceProven: false,
+    ...overrides,
+  };
+}
+
+function chooseWithManifest({ candidates, rule = 'left', manifest = approvedManifest(), runtimeState = RUNTIME_STATE, sourceVersions = V, targetVersions = V } = {}) {
+  return selectPartnerManifestOrRuleCandidate({
+    candidates,
+    rule,
+    sourceVersions,
+    targetVersions,
+    manifest,
+    runtimeState,
   });
 }
 
@@ -198,4 +234,71 @@ test('execution-time revalidation emits no private payload and does not mutate f
   assert.equal(JSON.stringify(result).includes('secret-'), false);
   assert.equal('payload' in result.selected, false);
   assert.deepEqual(Object.keys(result.selected).sort(), ['candidateId', 'comparisonValue', 'kind', 'positionOrder']);
+});
+
+test('approved runtime manifest may replace the heuristic only with a currently legal public candidate', () => {
+  const result = chooseWithManifest({
+    candidates: [
+      candidate('heuristic', { positionOrder: 0 }),
+      candidate('learned', { positionOrder: 1 }),
+    ],
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.manifestUsed, true);
+  assert.equal(result.selected.candidateId, 'learned');
+  assert.equal(result.reason, 'APPROVED_RUNTIME_MANIFEST');
+  assert.equal(result.source, 'approved-runtime-manifest');
+  assert.equal(result.manifestSource, 'approved-similar-situation');
+  assert.equal(result.manifestSupport, 12);
+  assert.equal(result.containsPrivate, false);
+  assert.equal(JSON.stringify(result).includes('secret-'), false);
+});
+
+test('stale manifest version preserves the exact existing rule heuristic', () => {
+  const rows = [candidate('heuristic', { positionOrder: 0 }), candidate('learned', { positionOrder: 1 })];
+  const fallback = choose('left', rows);
+  const result = chooseWithManifest({
+    candidates: rows,
+    manifest: approvedManifest({ targetVersions: { ...V, stateVersion: 'state-r0' } }),
+  });
+  assert.equal(result.manifestUsed, false);
+  assert.equal(result.fallbackReason, 'VERSION_MISMATCH');
+  assert.equal(result.selected.candidateId, fallback.selected.candidateId);
+  assert.deepEqual(result.ordered, fallback.ordered);
+  assert.equal(result.reason, fallback.reason);
+});
+
+test('private/raw-event manifests preserve the existing heuristic and never expose private payloads', () => {
+  const rows = [candidate('heuristic', { positionOrder: 0 }), candidate('learned', { positionOrder: 1 })];
+  for (const manifest of [approvedManifest({ containsPrivate: true }), approvedManifest({ containsRawEvents: true })]) {
+    const result = chooseWithManifest({ candidates: rows, manifest });
+    assert.equal(result.manifestUsed, false);
+    assert.equal(result.fallbackReason, 'PRIVACY_NOT_RUNTIME_SAFE');
+    assert.equal(result.selected.candidateId, 'heuristic');
+    assert.equal(result.containsPrivate, false);
+    assert.equal(JSON.stringify(result).includes('secret-'), false);
+  }
+});
+
+test('manifest action outside the current legal set cannot execute and falls back to the rule heuristic', () => {
+  const rows = [
+    candidate('heuristic', { positionOrder: 0 }),
+    candidate('learned', { positionOrder: 1, legal: false }),
+  ];
+  const result = chooseWithManifest({ candidates: rows });
+  assert.equal(result.manifestUsed, false);
+  assert.equal(result.fallbackReason, 'MANIFEST_ACTION_NOT_CURRENTLY_LEGAL');
+  assert.equal(result.selected.candidateId, 'heuristic');
+});
+
+test('when no legal heuristic exists, rejected manifest does not invent an action', () => {
+  const result = chooseWithManifest({
+    candidates: [candidate('learned', { legal: false })],
+    manifest: approvedManifest({ containsPrivate: true }),
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.manifestUsed, false);
+  assert.equal(result.selected, null);
+  assert.deepEqual(result.ordered, []);
+  assert.equal(result.reason, 'NO_LEGAL_CANDIDATE');
 });

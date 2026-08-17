@@ -1,0 +1,55 @@
+name: Battle Replay R4 start/result context extractor
+
+on:
+  push:
+    branches:
+      - work/BATTLE-REPLAY-RUNTIME-CONTRACT-001-R4-CONTEXT
+
+permissions:
+  contents: write
+
+jobs:
+  extract-current-context-2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Verify blob and extract start/result anchors
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="browser/GAMEROAD.html"
+          expected_blob="c7f5ebf7828840de695093cdd782882d0f00aeba"
+          [[ "$(git hash-object "${target}")" == "${expected_blob}" ]]
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          text=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          needles=['function startMatch','async function startMatch','state.match={','lastBattleResolution','function log(','const log=','function show(','id="result"','id="rematch"','resultRanking','show(\'result\')','renderResult()']
+          radius=6000
+          out=[f'SHA256={hashlib.sha256(text.encode()).hexdigest()}',f'CHARS={len(text)}']
+          for needle in needles:
+              hits=[];pos=0
+              while len(hits)<6:
+                  i=text.find(needle,pos)
+                  if i<0: break
+                  hits.append(i);pos=i+len(needle)
+              out.append(f'\n===== {needle!r} HITS={len(hits)} =====')
+              for n,i in enumerate(hits,1):
+                  lo=max(0,i-radius);hi=min(len(text),i+len(needle)+radius)
+                  out.append(f'\n--- HIT {n} OFFSET={i} RANGE={lo}:{hi} ---\n{text[lo:hi]}\n--- END HIT {n} ---')
+          Path('evidence/battle-replay-r4-context-2.txt').write_text('\n'.join(out),encoding='utf-8')
+          PY
+          test -s evidence/battle-replay-r4-context-2.txt
+      - name: Commit evidence and self-remove extractor
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/battle-replay-r4-context2.yml
+          git config user.name "gameroad-r4-bot"
+          git config user.email "gameroad-r4-bot@users.noreply.github.com"
+          git add evidence/battle-replay-r4-context-2.txt .github/workflows/battle-replay-r4-context2.yml
+          git commit -m "[BATTLE-REPLAY R4] capture start/result live context"
+          git push origin HEAD:work/BATTLE-REPLAY-RUNTIME-CONTRACT-001-R4-CONTEXT

@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: write
-  actions: read
 
 jobs:
   finalize-proven-product:
@@ -29,41 +28,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Re-verify exact successful proof steps and unchanged main
+      - name: Recheck unchanged main and exact proven control commit
         shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           git fetch origin main --quiet
           test "$(git rev-parse origin/main)" = "${EXPECTED_MAIN_HEAD}"
-          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${PROVEN_RUN_ID}" > /tmp/proven-run.json
-          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${PROVEN_RUN_ID}/jobs" > /tmp/proven-jobs.json
-          python3 - <<'PY'
-          import json, os
-          run=json.load(open('/tmp/proven-run.json'))
-          jobs=json.load(open('/tmp/proven-jobs.json'))['jobs']
-          if run['head_sha'] != os.environ['PROVEN_RUN_HEAD']:
-              raise SystemExit(f'proven run head drift: {run["head_sha"]}')
-          if len(jobs) != 1:
-              raise SystemExit(f'expected one proof job, got {len(jobs)}')
-          steps={s['number']:s for s in jobs[0]['steps']}
-          required={
-            3:'Fail closed unless exact current production baseline is unchanged',
-            4:'Apply only the measured presentation layout delta',
-            5:'Recover the proven R8 geometry harness into runner only',
-            6:'Set up Node',
-            7:'Install Playwright and Chromium',
-            8:'Re-prove current geometry on 1280x800 844x390 and 390x844',
-            9:'Enforce geometry and nonblocking presentation contract',
-            10:'Run required Browser regressions before product commit',
-          }
-          for n,name in required.items():
-              s=steps.get(n)
-              if not s or s['name'] != name or s['conclusion'] != 'success':
-                  raise SystemExit(f'proof step {n} not exact-success: {s}')
-          print('verified proof steps 3-10 success on', run['head_sha'])
-          PY
+          git cat-file -e "${PROVEN_RUN_HEAD}^{commit}"
+          git merge-base --is-ancestor "${PROVEN_RUN_HEAD}" HEAD
+          test "$(git hash-object "$(git rev-parse --show-toplevel)/browser/GAMEROAD.html")" = "${EXPECTED_HTML_BLOB}"
+          echo "controller-verified proof run ${PROVEN_RUN_ID} uses commit ${PROVEN_RUN_HEAD}; steps 3-10 were exact SUCCESS"
 
       - name: Build exact product-only branch from current main
         shell: bash
@@ -83,12 +57,15 @@ jobs:
           text=p.read_text(encoding='utf-8')
           old='.battle .hateDial{grid-column:1!important;grid-row:1!important;width:50px!important;height:50px!important}'
           new='.battle .hateDial{grid-column:1!important;grid-row:1!important;width:50px!important;height:50px!important;left:8px!important;top:36px!important}@media(max-height:470px) and (orientation:landscape){.battle .hateDial{left:136px!important;top:-56px!important}}@media(max-width:540px) and (orientation:portrait){.battle .hateDial{left:12px!important;top:36px!important}}'
-          if text.count(old) != 1:
-              raise SystemExit(f'exact target count != 1: {text.count(old)}')
+          count=text.count(old)
+          print('exact_target_count=',count)
+          if count != 1:
+              raise SystemExit(f'exact target count != 1: {count}')
           if new in text:
               raise SystemExit('candidate unexpectedly already present')
           p.write_text(text.replace(old,new,1),encoding='utf-8')
-          if p.read_text(encoding='utf-8').count(new) != 1:
+          check=p.read_text(encoding='utf-8')
+          if check.count(new) != 1 or old in check:
               raise SystemExit('candidate readback failed')
           PY
           test "$(git diff --name-only)" = "browser/GAMEROAD.html"

@@ -1056,7 +1056,13 @@ test('R13 covers every visible card suit filter and mobile deck backdrop close',
     await expect(cards).toHaveAttribute('data-deck-drawer', 'open');
     const backdrop = cards.locator('#r4DeckBackdrop:visible');
     await expect(backdrop).toBeVisible();
-    await backdrop.click();
+    const backdropBox = await backdrop.boundingBox();
+    const drawerBox = await cards.locator('.deckBoard:visible').boundingBox();
+    expect(backdropBox).not.toBeNull();
+    expect(drawerBox).not.toBeNull();
+    const outsideX = backdropBox.x + backdropBox.width / 2;
+    const outsideY = Math.max(backdropBox.y + 2, drawerBox.y - 8);
+    await page.mouse.click(outsideX, outsideY);
     await expect(cards).not.toHaveAttribute('data-deck-drawer', 'open');
     await attachStateScreenshot(page, testInfo, 'r13-deck-backdrop-closed-visible');
   } else {
@@ -1117,7 +1123,7 @@ test('R13 covers four-player Friend Room ready toggle and visible Honey Hunt fou
   runtime.assertClean(testInfo);
 });
 
-test('R13 covers development audio selectors previews and visible save reset confirmation', async ({ page }, testInfo) => {
+test('R13 covers visible save reset confirmation and records hidden development-audio boundary', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
   const settingsGo = visibleOperationGo(page, 'settings');
@@ -1126,20 +1132,11 @@ test('R13 covers development audio selectors previews and visible save reset con
   const settings = page.locator('section[data-screen="settings"]');
   await expect(settings).toBeVisible();
 
-  await settings.locator('#audioPreviewPack').selectOption('unity_candidate_v1');
-  await expect(settings.locator('#audioPreviewPack')).toHaveValue('unity_candidate_v1');
-  await expect(settings.locator('#battleMusicKey')).toBeEnabled();
-  await settings.locator('#battleMusicKey').selectOption('preview_living_forest');
-  await expect(settings.locator('#battleMusicKey')).toHaveValue('preview_living_forest');
-
-  for (const id of ['previewBgm', 'previewMatchFound', 'previewBattleStart', 'previewComplete']) {
-    const preview = settings.locator(`#${id}`);
-    await expect(preview).toBeVisible();
-    await preview.click();
-    await page.waitForTimeout(80);
+  for (const id of ['audioPreviewPack', 'battleMusicKey', 'previewBgm', 'previewMatchFound', 'previewBattleStart', 'previewComplete']) {
+    await expect(settings.locator(`#${id}`), `${id} is development-only and must not be counted as a human-visible operation`).toBeHidden();
   }
-  await expect(settings.locator('#audioStatus')).not.toHaveText('');
-  await attachStateScreenshot(page, testInfo, 'r13-settings-audio-preview-controls-exercised');
+  testInfo.annotations.push({ type: 'not-human-visible', description: 'Development audio preview/select controls exist in DOM but their parent surface is hidden in the current product. They are excluded from the human-visible operation inventory rather than force-clicked.' });
+  await attachStateScreenshot(page, testInfo, 'r13-settings-hidden-development-audio-boundary');
 
   page.once('dialog', async (dialog) => {
     expect(dialog.type()).toBe('confirm');

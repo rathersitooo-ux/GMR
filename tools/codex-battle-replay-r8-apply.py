@@ -43,8 +43,8 @@ if html.count("import('./battle-replay-live-adapter.mjs')") != 1:
     raise SystemExit('Replay adapter import count mismatch')
 if html.count('grBattleReplayAcceptResolution(m,m.lastBattleResolution)') != 1:
     raise SystemExit('accepted Battle replay append count mismatch')
-if html.count('grBattleReplayEnd(m,winners)') != 1:
-    raise SystemExit('match end replay append count mismatch')
+if html.count('grBattleReplayEnd(m,winners);return endMatch(winners)') != 1:
+    raise SystemExit('match end replay append call count mismatch')
 if html.count('id="resultReplay"') != 1 or html.count('id="resultReplayEvents"') != 1:
     raise SystemExit('Result replay surface count mismatch')
 html_path.write_text(html, encoding='utf-8')
@@ -59,12 +59,12 @@ test('production Browser mounts replay at the canonical accepted Battle seam wit
   assert.equal(count("import('./battle-replay-live-adapter.mjs')"), 1);
   assert.equal(count('grBattleReplayBegin(state.match)'), 1);
   assert.equal(count('grBattleReplayAcceptResolution(m,m.lastBattleResolution)'), 1);
-  assert.equal(count('grBattleReplayEnd(m,winners)'), 1);
+  assert.equal(count('grBattleReplayEnd(m,winners);return endMatch(winners)'), 1);
   assert.equal(count('id="resultReplay"'), 1);
   assert.equal(count('id="resultReplayEvents"'), 1);
   assert.ok(html.indexOf('m.lastBattleResolution={serial:++m.resolutionSeq') < html.indexOf('grBattleReplayAcceptResolution(m,m.lastBattleResolution)'));
   assert.ok(html.indexOf('grBattleReplayAcceptResolution(m,m.lastBattleResolution)') < html.indexOf('const slaykiaAttackEnd=grSlaykiaAttackEndHook(m)'));
-  assert.ok(html.indexOf('grBattleReplayEnd(m,winners)') < html.indexOf('return endMatch(winners)}nextRound()'));
+  assert.ok(html.indexOf('grBattleReplayEnd(m,winners);return endMatch(winners)') < html.indexOf('return endMatch(winners)}nextRound()'));
   assert.match(html, /createBattleReplayVersionAuthority\(\{deckRule:DECK_RULE,cardData:window\.__CARD_DATA__\}\)/);
   assert.match(html, /appendAcceptedBattleResolution\(session,resolution\)/);
   assert.match(html, /appendAcceptedMatchEnd\(session,\{winnerIds:\[\.\.\.winners\],round:m\.round,mode:m\.mode\}\)/);

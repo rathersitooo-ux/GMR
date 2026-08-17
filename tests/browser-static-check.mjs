@@ -40,6 +40,18 @@ function collectStaticErrors(html) {
     errors.push('data-go navigation wiring is missing');
   }
 
+  const hatePresenceContracts = [
+    [/import\(['"]\.\/hate-peer-presence-core\.mjs['"]\)/, 'HATE peer presence core is not mounted in production Browser'],
+    [/FRIEND_TRANSPORT_PRESENCE_TYPE=['"]transport_presence['"]/, 'reserved transport presence type is missing'],
+    [/m\.type===FRIEND_TRANSPORT_PRESENCE_TYPE/, 'server transport presence is not handled by the host'],
+    [/friendAdvancePresence\(cid,'rejoin'\)/, 'join does not pass through authoritative presence'],
+    [/friendAdvancePresence\(cid,'sync'\)/, 'sync does not pass through authoritative presence'],
+    [/friendAdvancePresence\(cid,'disconnect'\)/, 'leave does not pass through authoritative presence'],
+  ];
+  for (const [pattern, message] of hatePresenceContracts) {
+    if (!pattern.test(html)) errors.push(message);
+  }
+
   const dedicatedBattleContracts = [
     [/id=["']battlePhaseSurface["']/, 'missing dedicated battle phase surface'],
     [/id=["']battlePhaseResolutionSlot["']/, 'missing dedicated battle phase resolution slot'],

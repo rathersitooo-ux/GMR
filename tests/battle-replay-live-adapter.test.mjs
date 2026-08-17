@@ -1,8 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  BATTLE_REPLAY_LIVE_ADAPTER,
   appendAcceptedBattleResolution,
   appendAcceptedMatchEnd,
+  battleReplayContentVersion,
+  battleReplayRulesVersion,
+  createBattleReplayVersionAuthority,
   createLiveReplaySession,
   projectAcceptedBattleResolution,
   readLiveReplay
@@ -43,7 +47,7 @@ function resolution(serial = 1) {
   };
 }
 
-test('production caller must provide all exact version authorities; adapter never invents them', () => {
+test('production session still requires all exact version authorities; capture never invents them', () => {
   for (const missing of ['rules', 'content', 'state']) {
     const bad = { ...versions };
     delete bad[missing];
@@ -52,6 +56,40 @@ test('production caller must provide all exact version authorities; adapter neve
       new RegExp(`VERSION_REQUIRED:${missing}`)
     );
   }
+});
+
+test('version authority derives rules only from current DECK_RULE identity and revision', () => {
+  assert.equal(
+    battleReplayRulesVersion({ id: 'FIRST_REGULATION', revision: 3 }),
+    'FIRST_REGULATION@3'
+  );
+  assert.throws(
+    () => battleReplayRulesVersion({ id: 'FIRST_REGULATION', revision: 0 }),
+    /DECK_RULE_AUTHORITY_INVALID/
+  );
+});
+
+test('content version is deterministic over canonical card content and changes when content changes', () => {
+  const left = [{ id: 'A', power: 3, nested: { b: 2, a: 1 } }];
+  const reordered = [{ nested: { a: 1, b: 2 }, power: 3, id: 'A' }];
+  const changed = [{ id: 'A', power: 4, nested: { a: 1, b: 2 } }];
+  assert.equal(battleReplayContentVersion(left), battleReplayContentVersion(reordered));
+  assert.notEqual(battleReplayContentVersion(left), battleReplayContentVersion(changed));
+});
+
+test('version bundle reuses live adapter schema as state authority instead of creating a second state schema', () => {
+  const authority = createBattleReplayVersionAuthority({
+    deckRule: { id: 'FIRST_REGULATION', revision: 3 },
+    cardData: [{ id: 'A', power: 3 }]
+  });
+  assert.equal(authority.rules, 'FIRST_REGULATION@3');
+  assert.match(authority.content, /^GAMEROAD_CARD_CONTENT_FNV1A64:1:[0-9a-f]{16}$/);
+  assert.equal(authority.state, BATTLE_REPLAY_LIVE_ADAPTER.schema);
+  assert.deepEqual(BATTLE_REPLAY_LIVE_ADAPTER.versionAuthoritySources, {
+    rules: 'DECK_RULE.id+revision',
+    content: 'window.__CARD_DATA__ canonical JSON fingerprint',
+    state: 'LIVE_ADAPTER_SCHEMA'
+  });
 });
 
 test('accepted battle projection is a strict public allowlist and strips unrelated secret fields', () => {

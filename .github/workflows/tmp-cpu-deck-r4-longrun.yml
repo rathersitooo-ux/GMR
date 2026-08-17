@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  cpu-longrun:
+  cpu-reservation-boundary:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -23,7 +23,7 @@ jobs:
         run: |
           npm install --no-save --package-lock=false @playwright/test@1.55.0
           npx playwright install chromium
-      - name: Write temporary legal-deck variant probe
+      - name: Write temporary R12-equivalent exhaustion probe
         run: |
           cat > playwright.cpu-deck-r4.tmp.config.mjs <<'EOF'
           import { defineConfig } from '@playwright/test';
@@ -32,114 +32,190 @@ jobs:
             testMatch: 'cpu-deck-r4.tmp.spec.mjs',
             timeout: 120000,
             fullyParallel: true,
-            workers: 8,
+            workers: 2,
             use: { baseURL: 'http://127.0.0.1:4173', headless: true },
-            webServer: { command: 'python3 -m http.server 4173 --directory browser', url: 'http://127.0.0.1:4173/GAMEROAD.html', reuseExistingServer: false, timeout: 30000 },
+            webServer: {
+              command: 'python3 -m http.server 4173 --directory browser',
+              url: 'http://127.0.0.1:4173/GAMEROAD.html',
+              reuseExistingServer: false,
+              timeout: 30000
+            },
             projects: [{ name: 'chromium', use: { browserName: 'chromium' } }]
           });
           EOF
           cat > tests/cpu-deck-r4.tmp.spec.mjs <<'EOF'
           import { test, expect } from '@playwright/test';
 
-          function seededShuffle(values, seed) {
-            const a = [...values];
-            let s = seed >>> 0;
-            const rand = () => {
-              s = (s + 0x6D2B79F5) >>> 0;
-              let t = s;
-              t = Math.imul(t ^ (t >>> 15), t | 1);
-              t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-              return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-            };
-            for (let i = a.length - 1; i > 0; i -= 1) {
-              const j = Math.floor(rand() * (i + 1));
-              [a[i], a[j]] = [a[j], a[i]];
-            }
-            return a;
-          }
-
-          async function prepare(page, gameSeed, deckSeed) {
-            await page.addInitScript((seedValue) => {
-              let state = seedValue >>> 0;
-              Math.random = () => {
+          function installDeterministicCrypto(page, seed) {
+            return page.addInitScript((initialSeed) => {
+              let state = initialSeed >>> 0;
+              const next = () => {
                 state = (state + 0x6D2B79F5) >>> 0;
                 let t = state;
                 t = Math.imul(t ^ (t >>> 15), t | 1);
                 t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+                return (t ^ (t >>> 14)) >>> 0;
               };
-            }, gameSeed);
+              Object.defineProperty(globalThis.crypto, 'getRandomValues', {
+                configurable: true,
+                value(array) {
+                  for (let i = 0; i < array.length; i += 1) array[i] = next();
+                  return array;
+                }
+              });
+              Math.random = () => next() / 4294967296;
+            }, seed);
+          }
+
+          async function installLegal40(page) {
             await page.goto('/GAMEROAD.html');
             await page.waitForFunction(() => !!window.__GAMEROAD_TEST__ && Array.isArray(window.__CARD_DATA__));
-            const pools = await page.evaluate(() => {
+            return page.evaluate(() => {
               const api = window.__GAMEROAD_TEST__;
-              const publicMain = new Set(api.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
-              const standard = window.__CARD_DATA__.filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)));
-              return {
-                nonRoyal: standard.filter((card) => !api.isRoyalCard(card.id)).map((card) => card.id),
-                J: standard.filter((card) => String(card.rank) === 'J').map((card) => card.id),
-                Q: standard.filter((card) => String(card.rank) === 'Q').map((card) => card.id),
-                K: standard.filter((card) => String(card.rank) === 'K').map((card) => card.id)
+              const publicMain = new Set(api.deckPublic().filter((c) => c.slot === 'main').map((c) => c.id));
+              const standard = window.__CARD_DATA__.filter((c) =>
+                publicMain.has(c.id) && /^(SP|HT|DI|CL)$/.test(c.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))
+              );
+              const royals = {
+                J: standard.find((c) => String(c.rank) === 'J')?.id,
+                Q: standard.find((c) => String(c.rank) === 'Q')?.id,
+                K: standard.find((c) => String(c.rank) === 'K')?.id
               };
-            });
-            const nonRoyal = seededShuffle(pools.nonRoyal, deckSeed).slice(0, 37);
-            const j = pools.J[deckSeed % pools.J.length];
-            const q = pools.Q[Math.floor(deckSeed / 4) % pools.Q.length];
-            const k = pools.K[Math.floor(deckSeed / 16) % pools.K.length];
-            const ids = [...nonRoyal, j, q, k];
-            const prep = await page.evaluate((ids) => {
-              const api = window.__GAMEROAD_TEST__;
+              const nonRoyal = standard.filter((c) => !api.isRoyalCard(c.id));
+              const noEffectCount = standard.filter((c) => c.effect_type === 'none').length;
+              const ids = [...nonRoyal.slice(0, 37).map((c) => c.id), royals.J, royals.Q, royals.K];
               const draft = api.deckSetDraft(ids, []);
               const validation = api.deckValidate(api.state.deckDraft, { forBattle: true });
               const committed = draft.ok && validation.ok ? api.deckCommit() : false;
-              const saved = api.deckSaved().main;
-              return { draft, validation, committed: !!committed, savedLength: saved.length, savedIds: [...saved] };
-            }, ids);
-            expect(prep.draft.ok, JSON.stringify(prep)).toBe(true);
-            expect(prep.validation.ok, JSON.stringify(prep)).toBe(true);
-            expect(prep.committed, JSON.stringify(prep)).toBe(true);
-            expect(prep.savedLength).toBe(40);
-            return prep.savedIds;
+              return {
+                noEffectCount,
+                ids,
+                draft,
+                validation,
+                committed: !!committed,
+                saved: api.deckSaved().main
+              };
+            });
           }
 
-          async function run(page, savedIds) {
-            return page.evaluate(async (savedIds) => {
+          async function runExhaustionBoundary(page, seed) {
+            await installDeterministicCrypto(page, seed);
+            const deck = await installLegal40(page);
+            expect(deck.draft.ok, JSON.stringify(deck)).toBe(true);
+            expect(deck.validation.ok, JSON.stringify(deck)).toBe(true);
+            expect(deck.committed, JSON.stringify(deck)).toBe(true);
+            expect(deck.saved).toHaveLength(40);
+
+            return page.evaluate(async ({ seed, saved }) => {
               const api = window.__GAMEROAD_TEST__;
-              const m = api.start('4p', 'honey_hunt');
-              if (!m) return { startFailed: true };
-              api.battlePresentationFast(true);
+              const m = api.start('4p', 'road_shield');
+              if (!m) throw new Error('start-failed');
+              api.battlePresentationFast(false);
               api.state.settings.reduceMotion = true;
               api.state.settings.lowPerf = true;
-              const sourceMatch = m.players.every((p) => p.sourceDeckSize === savedIds.length && p.sourceDeckIds.length === savedIds.length && p.sourceDeckIds.every((id, i) => id === savedIds[i]));
-              const cpuSourceMatch = m.players.filter((p) => !p.human).every((p) => p.sourceDeckSize === savedIds.length && p.sourceDeckIds.length === savedIds.length && p.sourceDeckIds.every((id, i) => id === savedIds[i]));
-              const conservationAtStart = api.cardConservation();
-              let error = null;
-              let result = false;
-              try { result = await api.autoToResult(260); } catch (e) { error = String(e?.message || e); }
-              return { sourceMatch, cpuSourceMatch, conservationAtStart, conservationAtResult: api.cardConservation(), error, result, rounds: api.state.match?.round ?? null, savedLength: api.deckSaved().main.length };
-            }, savedIds);
+
+              const initial = m.players.map((p) => ({
+                id: p.id,
+                human: p.human,
+                sourceDeckSize: p.sourceDeckSize,
+                sourceMatch: p.sourceDeckIds.length === saved.length && p.sourceDeckIds.every((id, i) => id === saved[i]),
+                deck: p.deck.length,
+                hand: p.hand.length,
+                shields: Object.values(p.shields).filter(Boolean).length,
+                mana: p.mana.length
+              }));
+              if (!initial.every((p) => p.sourceDeckSize === 40 && p.sourceMatch)) throw new Error('source-snapshot-mismatch');
+              if (!api.cardConservation()) throw new Error('initial-conservation-failed');
+
+              const rounds = [];
+              for (let step = 1; step <= 10; step += 1) {
+                const beforeRound = api.state.match?.round;
+                let drained = false;
+                let drainRecord = null;
+                const watcher = setInterval(() => {
+                  const mm = api.state.match;
+                  if (!mm || drained || mm.battlePresentation?.stage !== 'settle') return;
+                  const moved = [];
+                  for (const p of mm.players) {
+                    let count = 0;
+                    for (const lane of ['L', 'C', 'R']) {
+                      if (p.lanes[lane].length) {
+                        const cards = p.lanes[lane].splice(0);
+                        p.chip.push(...cards);
+                        count += cards.length;
+                      }
+                    }
+                    moved.push({ id: p.id, count });
+                  }
+                  drained = true;
+                  drainRecord = moved;
+                }, 1);
+
+                let error = null;
+                try {
+                  await api.autoRound();
+                } catch (e) {
+                  error = String(e?.message || e);
+                } finally {
+                  clearInterval(watcher);
+                }
+
+                const mm = api.state.match;
+                const record = {
+                  step,
+                  beforeRound,
+                  afterRound: mm?.round ?? null,
+                  screen: api.state.screen,
+                  phase: mm?.phase ?? null,
+                  drained,
+                  drainRecord,
+                  error,
+                  conservation: api.cardConservation(),
+                  players: mm?.players.map((p) => ({
+                    id: p.id,
+                    deck: p.deck.length,
+                    hand: p.hand.length,
+                    chip: p.chip.length,
+                    laneMax: Math.max(...Object.values(p.lanes).map((x) => x.length)),
+                    sourceDeckSize: p.sourceDeckSize,
+                    sourceMatch: p.sourceDeckIds.length === saved.length && p.sourceDeckIds.every((id, i) => id === saved[i])
+                  })) ?? []
+                };
+                rounds.push(record);
+                if (error) throw new Error(`round-${beforeRound}:${error}`);
+                if (!drained) throw new Error(`round-${beforeRound}:settle-drain-not-observed`);
+                if (record.screen !== 'battle' || record.phase !== 'plan') throw new Error(`round-${beforeRound}:unexpected-terminal-state:${record.screen}:${record.phase}`);
+                if (!record.conservation) throw new Error(`round-${beforeRound}:conservation-failed`);
+                if (!record.players.every((p) => p.sourceDeckSize === 40 && p.sourceMatch)) throw new Error(`round-${beforeRound}:source-drift`);
+                if (record.players.some((p) => p.laneMax !== 0)) throw new Error(`round-${beforeRound}:diagnostic-lane-drain-failed`);
+              }
+
+              return {
+                seed,
+                initial,
+                finalRound: api.state.match?.round ?? null,
+                finalScreen: api.state.screen,
+                finalConservation: api.cardConservation(),
+                reservationErrors: rounds.filter((r) => String(r.error || '').includes('reservation-not-owned')).length,
+                rounds
+              };
+            }, { seed, saved: deck.saved });
           }
 
-          for (let caseNo = 0; caseNo < 64; caseNo += 1) {
-            test(`legal variant ${caseNo}`, async ({ page }) => {
-              const gameSeed = 20001 + caseNo;
-              const deckSeed = 30001 + caseNo;
-              const savedIds = await prepare(page, gameSeed, deckSeed);
-              const result = await run(page, savedIds);
-              const record = { caseNo, gameSeed, deckSeed, savedIds, ...result };
-              console.log('CPUDECK_R4_VARIANT ' + JSON.stringify(record));
-              expect(result.startFailed, JSON.stringify(record)).not.toBe(true);
-              expect(result.sourceMatch, JSON.stringify(record)).toBe(true);
-              expect(result.cpuSourceMatch, JSON.stringify(record)).toBe(true);
-              expect(result.conservationAtStart, JSON.stringify(record)).toBe(true);
-              expect(result.conservationAtResult, JSON.stringify(record)).toBe(true);
-              expect(result.error, JSON.stringify(record)).toBeNull();
-              expect(result.result, JSON.stringify(record)).toBe(true);
-              expect(result.savedLength, JSON.stringify(record)).toBe(40);
+          for (const seed of [41001, 41002]) {
+            test(`R12 reservation exhaustion boundary seed ${seed}`, async ({ page }) => {
+              const report = await runExhaustionBoundary(page, seed);
+              console.log('CPUDECK_R4_R12_BOUNDARY ' + JSON.stringify(report));
+              expect(report.finalRound, JSON.stringify(report)).toBeGreaterThan(8);
+              expect(report.finalScreen, JSON.stringify(report)).toBe('battle');
+              expect(report.finalConservation, JSON.stringify(report)).toBe(true);
+              expect(report.reservationErrors, JSON.stringify(report)).toBe(0);
+              expect(report.rounds).toHaveLength(10);
+              expect(report.rounds.every((r) => r.players.every((p) => p.sourceDeckSize === 40 && p.sourceMatch))).toBe(true);
             });
           }
           EOF
-      - name: Run 64 deterministic legal deck variants
+      - name: Run R12-equivalent reservation exhaustion boundary on multiple deterministic seeds
         run: npx playwright test --config=playwright.cpu-deck-r4.tmp.config.mjs --reporter=line
       - name: Remove runner-local probe files
         if: always()

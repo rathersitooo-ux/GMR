@@ -1,0 +1,62 @@
+name: Battle Replay R5 Version Authority Extract
+
+on:
+  push:
+    branches:
+      - work/BATTLE-REPLAY-RUNTIME-CONTRACT-001-R5-VERSIONAUTH
+
+permissions:
+  contents: read
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract bounded current-version evidence
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          path = Path('browser/GAMEROAD.html')
+          text = path.read_text(encoding='utf-8')
+          patterns = [
+              r'__GAMEROAD_BUILD__',
+              r'FIRST_REGULATION',
+              r'DECK_RULE',
+              r'CARD_VERSION',
+              r'contentVersion',
+              r'rulesVersion',
+              r'stateVersion',
+              r'schemaVersion',
+              r'SCHEMA_VERSION',
+              r'cardVersion',
+          ]
+          print(f'FILE_BYTES={path.stat().st_size}')
+          for pattern in patterns:
+              matches = list(re.finditer(pattern, text))
+              print(f'PATTERN={pattern} COUNT={len(matches)}')
+              for i, m in enumerate(matches[:20], 1):
+                  start = max(0, m.start() - 700)
+                  end = min(len(text), m.end() + 900)
+                  snippet = text[start:end].replace('\r', '')
+                  print(f'--- {pattern} MATCH {i} OFFSET {m.start()} ---')
+                  print(snippet)
+                  print(f'--- END {pattern} MATCH {i} ---')
+
+          # Also expose bounded declarations around likely runtime authorities.
+          decl_patterns = [
+              r'const\s+DECK_RULE\s*=\s*[^;]+;',
+              r'window\.__GAMEROAD_BUILD__\s*=\s*\{',
+              r'const\s+[A-Z0-9_]*(?:VERSION|SCHEMA)[A-Z0-9_]*\s*=\s*[^;]+;',
+          ]
+          for pattern in decl_patterns:
+              matches = list(re.finditer(pattern, text, re.S))
+              print(f'DECL_PATTERN={pattern} COUNT={len(matches)}')
+              for i, m in enumerate(matches[:20], 1):
+                  start = max(0, m.start() - 300)
+                  end = min(len(text), m.end() + 1000)
+                  print(f'--- DECL MATCH {i} OFFSET {m.start()} ---')
+                  print(text[start:end].replace('\r', ''))
+                  print(f'--- END DECL MATCH {i} ---')

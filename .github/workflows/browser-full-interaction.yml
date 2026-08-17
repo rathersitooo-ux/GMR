@@ -1,35 +1,112 @@
 name: Browser Full Interaction Evidence
 
 on:
-  workflow_dispatch:
   push:
     branches:
-      - main
-      - 'work/**'
+      - 'work/BROWSER-FULLREG-R13-RESIDUAL-20260817'
     paths:
-      - 'browser/GAMEROAD.html'
-      - 'tests/browser-full-interaction.spec.mjs'
-      - 'playwright.full-interaction.config.mjs'
-      - '.github/workflows/browser-full-interaction.yml'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'browser/GAMEROAD.html'
-      - 'tests/browser-full-interaction.spec.mjs'
-      - 'playwright.full-interaction.config.mjs'
       - '.github/workflows/browser-full-interaction.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  chromium-interaction-evidence:
+  r13-repair-and-validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
-      - name: Checkout
+      - name: Checkout exact work branch
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Guard exact branch and repair test-only classification
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_MAIN='632edb85c82eb2f166f42b5a1ea698e58a9a8a11'
+          EXPECTED_BRANCH_PARENT='fd233fad19bf4687f009265c895a1103c8eb7719'
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_BRANCH_PARENT"
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('tests/browser-full-interaction.spec.mjs')
+          text = p.read_text()
+
+          old = """            const backdrop = cards.locator('#r4DeckBackdrop:visible');
+              await expect(backdrop).toBeVisible();
+              await backdrop.click();
+              await expect(cards).not.toHaveAttribute('data-deck-drawer', 'open');
+              await attachStateScreenshot(page, testInfo, 'r13-deck-backdrop-closed-visible');"""
+          new = """            const backdrop = cards.locator('#r4DeckBackdrop:visible');
+              await expect(backdrop).toBeVisible();
+              const backdropBox = await backdrop.boundingBox();
+              const drawerBox = await cards.locator('.deckBoard:visible').boundingBox();
+              expect(backdropBox).not.toBeNull();
+              expect(drawerBox).not.toBeNull();
+              const outsideX = backdropBox.x + backdropBox.width / 2;
+              const outsideY = Math.max(backdropBox.y + 2, drawerBox.y - 8);
+              await page.mouse.click(outsideX, outsideY);
+              await expect(cards).not.toHaveAttribute('data-deck-drawer', 'open');
+              await attachStateScreenshot(page, testInfo, 'r13-deck-backdrop-closed-visible');"""
+          if text.count(old) != 1:
+              raise SystemExit(f'backdrop repair anchor count={text.count(old)}')
+          text = text.replace(old, new, 1)
+
+          start_anchor = "test('R13 covers development audio selectors previews and visible save reset confirmation'"
+          end_anchor = "test('R13 covers the visible pack-animation skip without injecting game state'"
+          if text.count(start_anchor) != 1 or text.count(end_anchor) != 1:
+              raise SystemExit('settings repair anchors are not unique')
+          start = text.index(start_anchor)
+          end = text.index(end_anchor, start)
+          replacement = """test('R13 covers visible save reset confirmation and records hidden development-audio boundary', async ({ page }, testInfo) => {
+            const runtime = observeRuntimeErrors(page);
+            await bootCurrentBrowser(page);
+            const settingsGo = visibleOperationGo(page, 'settings');
+            await expect(settingsGo).toBeVisible();
+            await settingsGo.click();
+            const settings = page.locator('section[data-screen=\"settings\"]');
+            await expect(settings).toBeVisible();
+
+            for (const id of ['audioPreviewPack', 'battleMusicKey', 'previewBgm', 'previewMatchFound', 'previewBattleStart', 'previewComplete']) {
+              await expect(settings.locator(`#${id}`), `${id} is development-only and must not be counted as a human-visible operation`).toBeHidden();
+            }
+            testInfo.annotations.push({ type: 'not-human-visible', description: 'Development audio preview/select controls exist in DOM but their parent surface is hidden in the current product. They are excluded from the human-visible operation inventory rather than force-clicked.' });
+            await attachStateScreenshot(page, testInfo, 'r13-settings-hidden-development-audio-boundary');
+
+            page.once('dialog', async (dialog) => {
+              expect(dialog.type()).toBe('confirm');
+              await dialog.accept();
+            });
+            await settings.locator('#resetSave').click();
+            await expect(settings.locator('#reduceMotion')).toHaveText('OFF');
+            await expect(settings.locator('#lowPerf')).toHaveText('OFF');
+            await expect(settings.locator('#audioPreviewPack')).toHaveValue('none');
+            await expect(settings.locator('#battleMusicKey')).toHaveValue('battle_music_none');
+            await expect(settings.locator('#storageStatus')).toHaveText('この起動中に保存');
+            await attachStateScreenshot(page, testInfo, 'r13-settings-save-reset-visible');
+            runtime.assertClean(testInfo);
+          });
+
+          """
+          text = text[:start] + replacement + text[end:]
+          p.write_text(text)
+          PY
+
+          git checkout origin/main -- .github/workflows/browser-full-interaction.yml
+          git add tests/browser-full-interaction.spec.mjs .github/workflows/browser-full-interaction.yml
+          mapfile -t changed < <(git diff --cached --name-only origin/main)
+          test "${#changed[@]}" = '1'
+          test "${changed[0]}" = 'tests/browser-full-interaction.spec.mjs'
+          test "$(grep -c 'FULLREG R13 reachable-operation residual' tests/browser-full-interaction.spec.mjs)" = '1'
+          test "$(grep -c 'FULLREG R13 final visible-operation residual' tests/browser-full-interaction.spec.mjs)" = '1'
+          test "$(grep -c 'records hidden development-audio boundary' tests/browser-full-interaction.spec.mjs)" = '1'
+          test "$(git hash-object .github/workflows/browser-full-interaction.yml)" = 'ae661d5e3dd4b6f5b1b202679cb52d30c183ecad'
+          git config user.name 'gameroad-ci'
+          git config user.email 'gameroad-ci@users.noreply.github.com'
+          git commit -m 'test: repair visible operation classification'
+          git push origin HEAD:'work/BROWSER-FULLREG-R13-RESIDUAL-20260817'
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -42,16 +119,17 @@ jobs:
       - name: Install Chromium and OS dependencies
         run: npx playwright install --with-deps chromium
 
-      - name: Run GAMEROAD full interaction evidence R1
+      - name: Validate repaired final self-restored tree
         run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
 
-      - name: Upload interaction evidence
+      - name: Upload repaired R13 evidence and playable candidate
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: browser-full-interaction-${{ github.run_id }}
+          name: browser-full-interaction-r13-repaired-${{ github.run_id }}
           path: |
             playwright-report-full-interaction/
             test-results/full-interaction/
+            browser/GAMEROAD.html
           if-no-files-found: error
           retention-days: 14

@@ -7,6 +7,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, '../../..');
 const defaultSource = path.join(repoRoot, 'browser/GAMEROAD.html');
 const defaultCoreSource = path.join(repoRoot, 'browser/deck-save-recovery-core.mjs');
+const defaultPresenceCoreSource = path.join(repoRoot, 'browser/hate-peer-presence-core.mjs');
 const defaultDist = path.join(repoRoot, 'deploy/cloudflare/dist');
 
 function gitBlobSha1(buffer) {
@@ -31,20 +32,27 @@ function provenance(source, output, input, blob) {
 export async function buildPackage({
   source = defaultSource,
   coreSource = defaultCoreSource,
+  presenceCoreSource = defaultPresenceCoreSource,
   dist = defaultDist,
   expectedBlob = '',
   expectedCoreBlob = '',
+  expectedPresenceCoreBlob = '',
   sourceCommit = '',
 } = {}) {
   const input = await readFile(source);
   const coreInput = await readFile(coreSource);
+  const presenceCoreInput = await readFile(presenceCoreSource);
   const blob = gitBlobSha1(input);
   const coreBlob = gitBlobSha1(coreInput);
+  const presenceCoreBlob = gitBlobSha1(presenceCoreInput);
   if (expectedBlob && blob !== expectedBlob) {
     throw new Error(`Browser blob mismatch: expected=${expectedBlob} actual=${blob}`);
   }
   if (expectedCoreBlob && coreBlob !== expectedCoreBlob) {
     throw new Error(`Deck save recovery core blob mismatch: expected=${expectedCoreBlob} actual=${coreBlob}`);
+  }
+  if (expectedPresenceCoreBlob && presenceCoreBlob !== expectedPresenceCoreBlob) {
+    throw new Error(`HATE peer presence core blob mismatch: expected=${expectedPresenceCoreBlob} actual=${presenceCoreBlob}`);
   }
 
   await rm(dist, { recursive: true, force: true });
@@ -60,6 +68,13 @@ export async function buildPackage({
   const coreRoundTrip = await readFile(coreOutputPath);
   if (!coreInput.equals(coreRoundTrip)) {
     throw new Error('dist/deck-save-recovery-core.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const presenceCoreOutputPath = path.join(dist, 'hate-peer-presence-core.mjs');
+  await writeFile(presenceCoreOutputPath, presenceCoreInput);
+  const presenceCoreRoundTrip = await readFile(presenceCoreOutputPath);
+  if (!presenceCoreInput.equals(presenceCoreRoundTrip)) {
+    throw new Error('dist/hate-peer-presence-core.mjs is not byte-identical to Browser dependency source');
   }
 
   const headers = '/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n';
@@ -80,6 +95,12 @@ export async function buildPackage({
         coreInput,
         coreBlob,
       ),
+      hate_peer_presence_core: provenance(
+        'browser/hate-peer-presence-core.mjs',
+        'hate-peer-presence-core.mjs',
+        presenceCoreInput,
+        presenceCoreBlob,
+      ),
     },
   };
   await writeFile(path.join(dist, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
@@ -92,9 +113,11 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a === '--source') out.source = path.resolve(argv[++i]);
     else if (a === '--core-source') out.coreSource = path.resolve(argv[++i]);
+    else if (a === '--presence-core-source') out.presenceCoreSource = path.resolve(argv[++i]);
     else if (a === '--dist') out.dist = path.resolve(argv[++i]);
     else if (a === '--expected-blob') out.expectedBlob = argv[++i] || '';
     else if (a === '--expected-core-blob') out.expectedCoreBlob = argv[++i] || '';
+    else if (a === '--expected-presence-core-blob') out.expectedPresenceCoreBlob = argv[++i] || '';
     else if (a === '--source-commit') out.sourceCommit = argv[++i] || '';
     else throw new Error(`Unknown argument: ${a}`);
   }

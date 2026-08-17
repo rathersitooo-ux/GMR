@@ -1,0 +1,85 @@
+name: Battle Replay R5 Apply Version Authority
+
+on:
+  push:
+    branches:
+      - work/BATTLE-REPLAY-RUNTIME-CONTRACT-001-R5-VERSIONAUTH
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Apply bounded authority patch
+        shell: python
+        run: |
+          from pathlib import Path
+
+          html_path = Path('browser/GAMEROAD.html')
+          html = html_path.read_text(encoding='utf-8')
+          old_rule = "deckRule:'FIRST_REGULATION@2'"
+          new_rule = "deckRule:'FIRST_REGULATION@3'"
+          runtime_rule = "const DECK_RULE=Object.freeze({id:'FIRST_REGULATION',revision:3,"
+          save_rule = "currentRuleId:'FIRST_REGULATION',currentRuleRevision:3"
+          assert html.count(old_rule) == 1, f'stale build metadata count={html.count(old_rule)}'
+          assert html.count(new_rule) == 0, f'new build metadata already present count={html.count(new_rule)}'
+          assert html.count(runtime_rule) == 1, f'runtime rule authority count={html.count(runtime_rule)}'
+          assert html.count(save_rule) == 1, f'save rule authority count={html.count(save_rule)}'
+          html_path.write_text(html.replace(old_rule, new_rule, 1), encoding='utf-8')
+
+          gate_path = Path('.github/workflows/gameroad-required-gate.yml')
+          gate = gate_path.read_text(encoding='utf-8')
+          old_case = """              browser/battle-replay-core.mjs|\\
+              tests/battle-replay-core.test.mjs|\\
+              browser/battle-replay-live-adapter.mjs|\\
+              tests/battle-replay-live-adapter.test.mjs)
+                replay=true
+"""
+          new_case = """              browser/battle-replay-core.mjs|\\
+              tests/battle-replay-core.test.mjs|\\
+              browser/battle-replay-live-adapter.mjs|\\
+              tests/battle-replay-live-adapter.test.mjs|\\
+              browser/battle-replay-version-authority.mjs|\\
+              tests/battle-replay-version-authority.test.mjs)
+                replay=true
+"""
+          assert gate.count(old_case) == 1, f'replay classifier anchor count={gate.count(old_case)}'
+          old_cmd = "run: node --test tests/battle-replay-core.test.mjs tests/battle-replay-live-adapter.test.mjs"
+          new_cmd = "run: node --test tests/battle-replay-core.test.mjs tests/battle-replay-live-adapter.test.mjs tests/battle-replay-version-authority.test.mjs"
+          assert gate.count(old_cmd) == 1, f'replay test command anchor count={gate.count(old_cmd)}'
+          gate = gate.replace(old_case, new_case, 1).replace(old_cmd, new_cmd, 1)
+          gate_path.write_text(gate, encoding='utf-8')
+      - name: Verify candidate tests before commit
+        run: |
+          node --check browser/battle-replay-version-authority.mjs
+          node --test tests/battle-replay-core.test.mjs tests/battle-replay-live-adapter.test.mjs tests/battle-replay-version-authority.test.mjs
+          node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+      - name: Remove temporary extraction/apply workflows and commit exact diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/battle-replay-r5-version-authority-extract.yml
+          rm -f .github/workflows/battle-replay-r5-apply-version-authority.yml
+          mapfile -t changed < <(git status --short | sed -E 's/^.. //')
+          printf 'changed=%s\n' "${changed[*]}"
+          allowed=(
+            browser/GAMEROAD.html
+            .github/workflows/gameroad-required-gate.yml
+            .github/workflows/battle-replay-r5-version-authority-extract.yml
+            .github/workflows/battle-replay-r5-apply-version-authority.yml
+          )
+          for path in "${changed[@]}"; do
+            ok=false
+            for expected in "${allowed[@]}"; do [[ "${path}" == "${expected}" ]] && ok=true; done
+            [[ "${ok}" == true ]] || { echo "unexpected path: ${path}"; exit 1; }
+          done
+          git config user.name 'gameroad-r5-bot'
+          git config user.email 'gameroad-r5-bot@users.noreply.github.com'
+          git add browser/GAMEROAD.html .github/workflows/gameroad-required-gate.yml .github/workflows/battle-replay-r5-version-authority-extract.yml .github/workflows/battle-replay-r5-apply-version-authority.yml
+          git commit -m 'BATTLE-REPLAY R5: align version authority with current runtime'
+          git push origin HEAD:work/BATTLE-REPLAY-RUNTIME-CONTRACT-001-R5-VERSIONAUTH

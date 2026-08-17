@@ -1,0 +1,123 @@
+name: HATEVFX R8 Layout Candidate Proof
+
+on:
+  push:
+    branches:
+      - 'work/HATE-EXPLOSION-FORMAL-ASSET-ACCEPT-001-R8-GEOMETRY'
+    paths:
+      - '.github/workflows/hatevfx-r8-layout-candidate-proof.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  candidate-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      EXPECTED_MAIN_HEAD: 632edb85c82eb2f166f42b5a1ea698e58a9a8a11
+      EXPECTED_HTML_BLOB: ad8dc8e7fd13904260ea2ac6abf89f3e9ac724a5
+    steps:
+      - name: Checkout task branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Assert exact unchanged production baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          test "$(git rev-parse origin/main)" = "${EXPECTED_MAIN_HEAD}"
+          test "$(git hash-object browser/GAMEROAD.html)" = "${EXPECTED_HTML_BLOB}"
+          test -z "$(git diff --name-only origin/main -- browser/GAMEROAD.html)"
+
+      - name: Apply candidate in runner working tree only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          path = Path('browser/GAMEROAD.html')
+          text = path.read_text(encoding='utf-8')
+          pattern = re.compile(r'(\.battle\s+\.hateDial\s*\{\s*grid-area\s*:\s*1\s*/\s*1\s*!important\s*;\s*width\s*:\s*50px\s*!important\s*;\s*height\s*:\s*50px\s*!important\s*;)\s*\}')
+          matches = list(pattern.finditer(text))
+          print('candidate_target_count=', len(matches))
+          if len(matches) != 1:
+              raise SystemExit('expected exactly one .battle .hateDial canonical rule')
+          replacement = matches[0].group(1) + 'left:min(calc(100% - 30px),195px)!important;top:-60px!important;}'
+          text = text[:matches[0].start()] + replacement + text[matches[0].end():]
+          path.write_text(text, encoding='utf-8')
+          PY
+          test "$(git diff --name-only)" = "browser/GAMEROAD.html"
+          git diff --check
+          git diff -- browser/GAMEROAD.html
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Run candidate geometry proof
+        run: npx playwright test --config=playwright.hatevfx-r8.config.mjs --workers=1
+
+      - name: Assert collision-free envelope on all three viewports
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          root = Path('test-results/hatevfx-r8')
+          files = sorted(root.glob('*.json'))
+          print('geometry_files=', [p.name for p in files])
+          if len(files) != 3:
+              raise SystemExit(f'expected 3 geometry JSON files, got {len(files)}')
+          for p in files:
+              d = json.loads(p.read_text())
+              g = d['geometry']
+              print(p.name, 'overlap=', g['basePartnerOverlap'], 'safePadding=', g['safePadding'], 'status=', g['geometryStatus'], 'overflow=', g['docOverflow'])
+              if g['basePartnerOverlap'] > 0.5:
+                  raise SystemExit(f'{p.name}: partner overlap remains')
+              if g['safePadding'] is None or g['safePadding'] <= 0:
+                  raise SystemExit(f'{p.name}: no positive safe envelope')
+              if g['docOverflow']['x'] != 0 or g['docOverflow']['y'] != 0:
+                  raise SystemExit(f'{p.name}: document overflow introduced')
+              if not g['partnerVisible']:
+                  raise SystemExit(f'{p.name}: partner hidden')
+          PY
+          mkdir -p /tmp/hatevfx-r8-evidence
+          cp test-results/hatevfx-r8/*.json /tmp/hatevfx-r8-evidence/
+
+      - name: Run Browser static regression
+        run: node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+
+      - name: Run Browser runtime smoke regression
+        run: npx playwright test --config=playwright.config.mjs --workers=1
+
+      - name: Run Browser full interaction regression
+        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
+
+      - name: Restore geometry evidence
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          mkdir -p test-results/hatevfx-r8
+          cp /tmp/hatevfx-r8-evidence/*.json test-results/hatevfx-r8/ 2>/dev/null || true
+          printf 'main_head=%s\nhtml_blob=%s\ncandidate=relative-left:min(calc(100%% - 30px),195px);top:-60px\n' "$(git rev-parse origin/main)" "${EXPECTED_HTML_BLOB}" > test-results/hatevfx-r8/candidate-metadata.txt
+
+      - name: Upload candidate proof
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: hatevfx-r8-layout-candidate-${{ github.run_id }}
+          path: test-results/hatevfx-r8/
+          if-no-files-found: error
+          retention-days: 14

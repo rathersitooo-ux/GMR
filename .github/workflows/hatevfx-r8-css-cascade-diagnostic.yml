@@ -43,7 +43,7 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Diagnose matching CSS rules and computed insets
+      - name: Diagnose HATE parent chain and matching CSS rules
         shell: bash
         run: |
           set -euo pipefail
@@ -60,36 +60,63 @@ jobs:
             const page = await browser.newPage({ viewport: { width, height } });
             await page.goto('http://127.0.0.1:4178/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
             const record = await page.evaluate(() => {
-              const el = document.querySelector('#hateDial');
-              if (!(el instanceof HTMLElement)) throw new Error('#hateDial missing');
-              const walk = (rules, ancestry = [], acc = []) => {
-                for (const rule of [...rules]) {
-                  if (rule instanceof CSSStyleRule) {
-                    let matched = false;
-                    try { matched = el.matches(rule.selectorText); } catch {}
-                    if (matched) acc.push({ ancestry, selector: rule.selectorText, cssText: rule.cssText });
-                  } else if ('cssRules' in rule && rule.cssRules) {
-                    const label = rule.conditionText ? `${rule.constructor.name}:${rule.conditionText}` : rule.constructor.name;
-                    walk(rule.cssRules, [...ancestry, label], acc);
+              const dial = document.querySelector('#hateDial');
+              if (!(dial instanceof HTMLElement)) throw new Error('#hateDial missing');
+
+              const matchingRules = (el) => {
+                const acc = [];
+                const walk = (rules, ancestry = []) => {
+                  for (const rule of [...rules]) {
+                    if (rule instanceof CSSStyleRule) {
+                      let matched = false;
+                      try { matched = el.matches(rule.selectorText); } catch {}
+                      if (matched) acc.push({ ancestry, selector: rule.selectorText, cssText: rule.cssText });
+                    } else if ('cssRules' in rule && rule.cssRules) {
+                      const label = rule.conditionText ? `${rule.constructor.name}:${rule.conditionText}` : rule.constructor.name;
+                      walk(rule.cssRules, [...ancestry, label]);
+                    }
                   }
+                };
+                for (const sheet of [...document.styleSheets]) {
+                  try { walk(sheet.cssRules); } catch (error) { acc.push({ stylesheetError: String(error) }); }
                 }
                 return acc;
               };
-              const matched = [];
-              for (const sheet of [...document.styleSheets]) {
-                try { walk(sheet.cssRules, [], matched); } catch (error) { matched.push({ stylesheetError: String(error) }); }
+
+              const rect = (el) => {
+                const r = el.getBoundingClientRect();
+                return { left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width, height:r.height };
+              };
+              const computed = (el) => {
+                const s = getComputedStyle(el);
+                return {
+                  display:s.display, position:s.position, left:s.left, right:s.right, top:s.top, bottom:s.bottom,
+                  inset:s.inset, width:s.width, height:s.height, transform:s.transform, margin:s.margin,
+                  padding:s.padding, zIndex:s.zIndex, pointerEvents:s.pointerEvents,
+                  gridArea:s.gridArea, gridTemplateColumns:s.gridTemplateColumns, gridTemplateRows:s.gridTemplateRows,
+                  gridAutoFlow:s.gridAutoFlow, gap:s.gap, alignItems:s.alignItems, justifyItems:s.justifyItems,
+                  alignSelf:s.alignSelf, justifySelf:s.justifySelf, overflow:s.overflow
+                };
+              };
+
+              const chain = [];
+              let el = dial;
+              for (let depth = 0; el instanceof HTMLElement && depth < 8; depth += 1, el = el.parentElement) {
+                chain.push({
+                  depth,
+                  tag: el.tagName,
+                  id: el.id || '',
+                  className: String(el.className || ''),
+                  rect: rect(el),
+                  computed: computed(el),
+                  matched: matchingRules(el)
+                });
               }
-              const s = getComputedStyle(el);
+              const partner = document.querySelector('#battleAdvicePartnerStage');
               return {
-                viewport: { width: innerWidth, height: innerHeight },
-                computed: {
-                  position: s.position, left: s.left, right: s.right, top: s.top, bottom: s.bottom,
-                  inset: s.inset, width: s.width, height: s.height, transform: s.transform,
-                  margin: s.margin, zIndex: s.zIndex, pointerEvents: s.pointerEvents
-                },
-                inlineStyle: el.getAttribute('style'),
-                className: el.className,
-                matched
+                viewport:{ width:innerWidth, height:innerHeight },
+                chain,
+                partner: partner instanceof HTMLElement ? { rect:rect(partner), computed:computed(partner), matched:matchingRules(partner) } : null
               };
             });
             out.push(record);

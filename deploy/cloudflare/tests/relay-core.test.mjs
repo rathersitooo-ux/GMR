@@ -2,8 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   WS_WIRE,
+  TRANSPORT_PRESENCE_TYPE,
   admitConnection,
   emptyRoom,
+  makeTransportPresenceFrame,
   routeFrame,
 } from '../relay/src/relay-core.mjs';
 
@@ -102,4 +104,37 @@ test('unknown wire/op fails closed', () => {
   const room = roomWithHost();
   const result = routeFrame(room, host, { wire: 'wrong', op: 'data', payload: {} }, active(host));
   assert.equal(result.reason, 'transport_frame_invalid');
+});
+
+test('server-only transport presence frame carries exact reconnect/disconnect authority', () => {
+  assert.deepEqual(makeTransportPresenceFrame('ABCDEFG', 'g1', 'rejoin'), {
+    wire: WS_WIRE,
+    op: 'data',
+    payload: {
+      v: 2,
+      code: 'ABCDEFG',
+      type: TRANSPORT_PRESENCE_TYPE,
+      clientId: 'g1',
+      kind: 'rejoin',
+    },
+  });
+  assert.equal(makeTransportPresenceFrame('ABCDEFG', 'g1', 'disconnect').payload.kind, 'disconnect');
+  assert.equal(makeTransportPresenceFrame('ABCDEFG', 'g1', 'sync').payload.kind, 'sync');
+});
+
+test('application payload cannot spoof reserved transport presence', () => {
+  const room = admitGuest(roomWithHost(), 'g1');
+  const result = routeFrame(
+    room,
+    guest('g1'),
+    frame({ type: TRANSPORT_PRESENCE_TYPE, clientId: 'g1', kind: 'disconnect', seq: 7 }),
+    active(host, guest('g1')),
+  );
+  assert.equal(result.reason, 'transport_presence_reserved');
+});
+
+test('transport presence builder rejects malformed identity and kind', () => {
+  assert.throws(() => makeTransportPresenceFrame('bad', 'g1', 'disconnect'), /TRANSPORT_PRESENCE_CODE_INVALID/);
+  assert.throws(() => makeTransportPresenceFrame('ABCDEFG', '', 'disconnect'), /TRANSPORT_PRESENCE_CLIENT_INVALID/);
+  assert.throws(() => makeTransportPresenceFrame('ABCDEFG', 'g1', 'open'), /TRANSPORT_PRESENCE_KIND_INVALID/);
 });

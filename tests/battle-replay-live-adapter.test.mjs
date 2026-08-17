@@ -1,0 +1,131 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  appendAcceptedBattleResolution,
+  appendAcceptedMatchEnd,
+  createLiveReplaySession,
+  projectAcceptedBattleResolution,
+  readLiveReplay
+} from '../browser/battle-replay-live-adapter.mjs';
+
+const versions = Object.freeze({
+  rules: 'TEST_RULES_AUTHORITY',
+  content: 'TEST_CONTENT_AUTHORITY',
+  state: 'TEST_STATE_AUTHORITY'
+});
+
+function resolution(serial = 1) {
+  return {
+    serial,
+    round: serial,
+    mode: '2v2',
+    attackerId: 'P1',
+    defenderId: 'P3',
+    lane: 'C',
+    shield: 1,
+    winnerIds: ['P1', 'P2'],
+    winningTeam: 'A',
+    teamTotals: { A: 21, B: 18 },
+    players: [
+      {
+        id: 'P1', name: 'You', team: 'A', score: 11, winner: true,
+        cards: [{ cardId: 'C1', label: '公開札1', value: 6, origin: 'active_submission', hiddenDeckOrder: ['NO'] }],
+        hand: ['SECRET_HAND']
+      },
+      {
+        id: 'P3', name: 'CPU', team: 'B', score: 9, winner: false,
+        cards: [{ cardId: 'C2', label: '公開札2', value: 4, origin: 'active_submission' }]
+      }
+    ],
+    laneGains: [{ id: 'P1', lane: 'C', before: 2, after: 4, added: 2 }],
+    maxLaneProgress: [{ id: 'P1', before: 2, after: 4 }],
+    secretFutureState: { opponentHand: ['NO'] }
+  };
+}
+
+test('production caller must provide all exact version authorities; adapter never invents them', () => {
+  for (const missing of ['rules', 'content', 'state']) {
+    const bad = { ...versions };
+    delete bad[missing];
+    assert.throws(
+      () => createLiveReplaySession({ matchId: 'M1', versions: bad }),
+      new RegExp(`VERSION_REQUIRED:${missing}`)
+    );
+  }
+});
+
+test('accepted battle projection is a strict public allowlist and strips unrelated secret fields', () => {
+  const input = resolution();
+  const before = JSON.stringify(input);
+  const projected = projectAcceptedBattleResolution(input);
+  assert.equal(JSON.stringify(input), before);
+  assert.equal(Object.isFrozen(projected), true);
+  assert.deepEqual(Object.keys(projected).sort(), [
+    'attackerId', 'defenderId', 'lane', 'laneGains', 'maxLaneProgress', 'mode',
+    'players', 'round', 'serial', 'shield', 'teamTotals', 'winnerIds', 'winningTeam'
+  ].sort());
+  assert.equal('secretFutureState' in projected, false);
+  assert.equal('hand' in projected.players[0], false);
+  assert.equal('hiddenDeckOrder' in projected.players[0].cards[0], false);
+});
+
+test('resolution serial is enforced as the accepted Battle order and gap/reorder fails closed', () => {
+  const first = appendAcceptedBattleResolution(
+    createLiveReplaySession({ matchId: 'M1', versions }),
+    resolution(1)
+  );
+  assert.equal(first.lastResolutionSerial, 1);
+  assert.equal(first.log.events[0].sequence, 1);
+  assert.throws(
+    () => appendAcceptedBattleResolution(first, resolution(3)),
+    /RESOLUTION_SERIAL_GAP_OR_REORDER/
+  );
+  assert.throws(
+    () => appendAcceptedBattleResolution(first, resolution(1)),
+    /RESOLUTION_SERIAL_GAP_OR_REORDER/
+  );
+});
+
+test('viewer replay exposes only public accepted resolution and public match end', () => {
+  let session = createLiveReplaySession({ matchId: 'M1', versions });
+  session = appendAcceptedBattleResolution(session, resolution(1));
+  session = appendAcceptedMatchEnd(session, {
+    winnerIds: ['P1', 'P2'],
+    round: 1,
+    mode: '2v2'
+  });
+  const replay = readLiveReplay(session, {
+    viewer: { id: 'P1', authenticated: true }
+  });
+  assert.equal(replay.ok, true);
+  assert.deepEqual(replay.events.map(event => event.kind), ['battle_resolution', 'match_ended']);
+  assert.equal('privateData' in replay.events[0], false);
+  assert.equal('privateByViewer' in replay.events[0], false);
+  assert.equal('authorityOnly' in replay.events[0], false);
+  assert.equal(replay.events[0].publicData.players[0].cards[0].cardId, 'C1');
+});
+
+test('replay capture is immutable and cannot mutate accepted Battle inputs', () => {
+  const input = resolution(1);
+  const before = JSON.stringify(input);
+  const initial = createLiveReplaySession({ matchId: 'M1', versions });
+  const next = appendAcceptedBattleResolution(initial, input);
+  assert.equal(JSON.stringify(input), before);
+  assert.equal(initial.log.events.length, 0);
+  assert.equal(next.log.events.length, 1);
+  assert.equal(Object.isFrozen(next), true);
+  assert.equal(Object.isFrozen(next.log), true);
+});
+
+test('rematch uses a new isolated session and never carries prior replay events', () => {
+  let first = createLiveReplaySession({ matchId: 'M1', versions });
+  first = appendAcceptedBattleResolution(first, resolution(1));
+  first = appendAcceptedMatchEnd(first, { winnerIds: ['P1', 'P2'], round: 1, mode: '2v2' });
+
+  const second = createLiveReplaySession({ matchId: 'M2', versions });
+  assert.equal(readLiveReplay(first).events.length, 2);
+  assert.equal(readLiveReplay(second).events.length, 0);
+  assert.equal(second.matchId, 'M2');
+  assert.equal(second.lastResolutionSerial, 0);
+  assert.equal(second.ended, false);
+});

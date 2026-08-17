@@ -38,26 +38,15 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          import re
           path = Path('browser/GAMEROAD.html')
           text = path.read_text(encoding='utf-8')
-          rules = list(re.finditer(r'\.battle\s+\.hateDial\s*\{[^{}]*\}', text, flags=re.S))
-          targets = []
-          for m in rules:
-              normalized = re.sub(r'\s+', '', m.group(0))
-              if 'grid-area:1/1!important' in normalized and 'width:50px!important' in normalized and 'height:50px!important' in normalized:
-                  targets.append(m)
-          print('battle_hateDial_rule_count=', len(rules))
-          print('candidate_target_count=', len(targets))
-          for m in rules:
-              print('RULE:', m.group(0)[:600].replace('\n','\\n'))
-          if len(targets) != 1:
-              raise SystemExit('expected exactly one canonical .battle .hateDial 50x50 rule')
-          m = targets[0]
-          rule = m.group(0)
-          replacement = rule[:-1] + 'left:min(calc(100% - 30px),195px)!important;top:-60px!important;}'
-          text = text[:m.start()] + replacement + text[m.end():]
-          path.write_text(text, encoding='utf-8')
+          old = '.battle .hateDial{grid-column:1!important;grid-row:1!important;width:50px!important;height:50px!important}'
+          new = '.battle .hateDial{grid-column:1!important;grid-row:1!important;width:50px!important;height:50px!important;left:min(calc(100% - 30px),195px)!important;top:-60px!important}'
+          count = text.count(old)
+          print('exact_target_count=', count)
+          if count != 1:
+              raise SystemExit(f'expected exactly one exact HATE rule, got {count}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
           PY
           test "$(git diff --name-only)" = "browser/GAMEROAD.html"
           git diff --check

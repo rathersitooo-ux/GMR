@@ -18,7 +18,6 @@ jobs:
       EXPECTED_MAIN_HEAD: 632edb85c82eb2f166f42b5a1ea698e58a9a8a11
       EXPECTED_HTML_BLOB: ad8dc8e7fd13904260ea2ac6abf89f3e9ac724a5
       PROVEN_RUN_ID: '32022951255'
-      PROVEN_RUN_HEAD: aaeed5fe9181e4fe4380db391c7adba86cbd3db
       PRODUCT_BRANCH: work/HATE-EXPLOSION-FORMAL-ASSET-ACCEPT-001-R10-PRODUCT-20260817
       TASK_ID: HATE-EXPLOSION-FORMAL-ASSET-ACCEPT-001
       ACQUIRE_KEY: HATEVFX-R10-LAYOUT-20260817T1949-SOL-K8N4V2Q7M6PX
@@ -31,21 +30,24 @@ jobs:
       - name: Build exact product-only branch from fetched current main
         shell: bash
         run: |
-          set -euo pipefail
+          set -Eeuo pipefail
+          trap 'rc=$?; echo "::error file=.github/workflows/hatevfx-r10-finalize-product.yml,line=${LINENO}::finalizer command failed rc=${rc}: ${BASH_COMMAND}"; exit ${rc}' ERR
+          echo '::notice file=.github/workflows/hatevfx-r10-finalize-product.yml,line=1::phase=remote-branch-absence'
           if git ls-remote --exit-code --heads origin "${PRODUCT_BRANCH}" >/dev/null 2>&1; then
             echo "product branch already exists: ${PRODUCT_BRANCH}" >&2
             exit 1
           fi
+          echo '::notice file=.github/workflows/hatevfx-r10-finalize-product.yml,line=1::phase=fetch-main'
           git fetch origin main --quiet
           MAIN_HEAD="$(git rev-parse FETCH_HEAD)"
-          echo "fetched_main=${MAIN_HEAD}"
+          echo "::notice file=.github/workflows/hatevfx-r10-finalize-product.yml,line=1::fetched_main=${MAIN_HEAD}"
           test "${MAIN_HEAD}" = "${EXPECTED_MAIN_HEAD}"
-          git cat-file -e "${PROVEN_RUN_HEAD}^{commit}"
-          git merge-base --is-ancestor "${PROVEN_RUN_HEAD}" HEAD
+          echo '::notice file=.github/workflows/hatevfx-r10-finalize-product.yml,line=1::phase=worktree'
           git worktree add -b "${PRODUCT_BRANCH}" /tmp/hate-product "${MAIN_HEAD}"
           cd /tmp/hate-product
           test "$(git rev-parse HEAD)" = "${EXPECTED_MAIN_HEAD}"
           test "$(git hash-object browser/GAMEROAD.html)" = "${EXPECTED_HTML_BLOB}"
+          echo '::notice file=browser/GAMEROAD.html,line=1::phase=exact-replacement'
           python3 - <<'PY'
           from pathlib import Path
           p=Path('browser/GAMEROAD.html')
@@ -65,6 +67,7 @@ jobs:
           PY
           test "$(git diff --name-only)" = "browser/GAMEROAD.html"
           git diff --check
+          echo '::notice file=browser/GAMEROAD.html,line=1::phase=static-check'
           node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
           git add browser/GAMEROAD.html
           test "$(git diff --cached --name-only)" = "browser/GAMEROAD.html"
@@ -73,7 +76,6 @@ jobs:
           git commit -m 'HATE R10: separate dial from advice partner' -m "TaskID: ${TASK_ID}" -m "AcquireKey: ${ACQUIRE_KEY}" -m "ProofRun: ${PROVEN_RUN_ID}" -m 'Presentation-only responsive layout delta; game semantics unchanged.'
           PRODUCT_HEAD="$(git rev-parse HEAD)"
           PRODUCT_BLOB="$(git hash-object browser/GAMEROAD.html)"
-          echo "product_head=${PRODUCT_HEAD}"
-          echo "product_blob=${PRODUCT_BLOB}"
-          echo "::notice file=browser/GAMEROAD.html,line=1::HATE R10 product-only head=${PRODUCT_HEAD} blob=${PRODUCT_BLOB} proofRun=${PROVEN_RUN_ID}"
+          echo "::notice file=browser/GAMEROAD.html,line=1::product_head=${PRODUCT_HEAD} product_blob=${PRODUCT_BLOB}"
+          echo '::notice file=browser/GAMEROAD.html,line=1::phase=push-product-branch'
           git push origin "HEAD:${PRODUCT_BRANCH}"

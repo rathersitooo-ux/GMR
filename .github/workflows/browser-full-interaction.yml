@@ -25,7 +25,7 @@ jobs:
         run: |
           set -euo pipefail
           EXPECTED_MAIN='632edb85c82eb2f166f42b5a1ea698e58a9a8a11'
-          EXPECTED_BRANCH_PARENT='fd233fad19bf4687f009265c895a1103c8eb7719'
+          EXPECTED_BRANCH_PARENT='55cf56e1e467a2dbaceab656fb8c69baec5e1d99'
           git fetch origin main
           test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
           test "$(git rev-parse HEAD^)" = "$EXPECTED_BRANCH_PARENT"
@@ -34,32 +34,34 @@ jobs:
           p = Path('tests/browser-full-interaction.spec.mjs')
           text = p.read_text()
 
-          old = """            const backdrop = cards.locator('#r4DeckBackdrop:visible');
-              await expect(backdrop).toBeVisible();
-              await backdrop.click();
-              await expect(cards).not.toHaveAttribute('data-deck-drawer', 'open');
-              await attachStateScreenshot(page, testInfo, 'r13-deck-backdrop-closed-visible');"""
-          new = """            const backdrop = cards.locator('#r4DeckBackdrop:visible');
-              await expect(backdrop).toBeVisible();
-              const backdropBox = await backdrop.boundingBox();
+          cards_start_anchor = "test('R13 covers every visible card suit filter and mobile deck backdrop close'"
+          cards_end_anchor = "test('R13 covers four-player Friend Room ready toggle and visible Honey Hunt four-player start'"
+          if text.count(cards_start_anchor) != 1 or text.count(cards_end_anchor) != 1:
+              raise SystemExit('cards repair anchors are not unique')
+          cards_start = text.index(cards_start_anchor)
+          cards_end = text.index(cards_end_anchor, cards_start)
+          cards_chunk = text[cards_start:cards_end]
+          if cards_chunk.count('    await backdrop.click();') != 1:
+              raise SystemExit(f'backdrop click count={cards_chunk.count("    await backdrop.click();")}')
+          cards_chunk = cards_chunk.replace(
+              '    await backdrop.click();',
+              """    const backdropBox = await backdrop.boundingBox();
               const drawerBox = await cards.locator('.deckBoard:visible').boundingBox();
               expect(backdropBox).not.toBeNull();
               expect(drawerBox).not.toBeNull();
               const outsideX = backdropBox.x + backdropBox.width / 2;
               const outsideY = Math.max(backdropBox.y + 2, drawerBox.y - 8);
-              await page.mouse.click(outsideX, outsideY);
-              await expect(cards).not.toHaveAttribute('data-deck-drawer', 'open');
-              await attachStateScreenshot(page, testInfo, 'r13-deck-backdrop-closed-visible');"""
-          if text.count(old) != 1:
-              raise SystemExit(f'backdrop repair anchor count={text.count(old)}')
-          text = text.replace(old, new, 1)
+              await page.mouse.click(outsideX, outsideY);""",
+              1,
+          )
+          text = text[:cards_start] + cards_chunk + text[cards_end:]
 
-          start_anchor = "test('R13 covers development audio selectors previews and visible save reset confirmation'"
-          end_anchor = "test('R13 covers the visible pack-animation skip without injecting game state'"
-          if text.count(start_anchor) != 1 or text.count(end_anchor) != 1:
+          settings_start_anchor = "test('R13 covers development audio selectors previews and visible save reset confirmation'"
+          settings_end_anchor = "test('R13 covers the visible pack-animation skip without injecting game state'"
+          if text.count(settings_start_anchor) != 1 or text.count(settings_end_anchor) != 1:
               raise SystemExit('settings repair anchors are not unique')
-          start = text.index(start_anchor)
-          end = text.index(end_anchor, start)
+          settings_start = text.index(settings_start_anchor)
+          settings_end = text.index(settings_end_anchor, settings_start)
           replacement = """test('R13 covers visible save reset confirmation and records hidden development-audio boundary', async ({ page }, testInfo) => {
             const runtime = observeRuntimeErrors(page);
             await bootCurrentBrowser(page);
@@ -90,7 +92,7 @@ jobs:
           });
 
           """
-          text = text[:start] + replacement + text[end:]
+          text = text[:settings_start] + replacement + text[settings_end:]
           p.write_text(text)
           PY
 

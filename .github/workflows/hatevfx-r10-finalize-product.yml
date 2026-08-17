@@ -1,0 +1,107 @@
+name: HATEVFX R10 Finalize Product Branch
+
+on:
+  push:
+    branches:
+      - 'work/HATE-EXPLOSION-FORMAL-ASSET-ACCEPT-001-R10-LAYOUT-20260817'
+    paths:
+      - '.github/workflows/hatevfx-r10-finalize-product.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  finalize-proven-product:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      EXPECTED_MAIN_HEAD: 632edb85c82eb2f166f42b5a1ea698e58a9a8a11
+      EXPECTED_HTML_BLOB: ad8dc8e7fd13904260ea2ac6abf89f3e9ac724a5
+      PROVEN_RUN_ID: '32022951255'
+      PROVEN_RUN_HEAD: aaeed5fe9181e4fe4380db391c7adba86cbd3db
+      PRODUCT_BRANCH: work/HATE-EXPLOSION-FORMAL-ASSET-ACCEPT-001-R10-PRODUCT-20260817
+      TASK_ID: HATE-EXPLOSION-FORMAL-ASSET-ACCEPT-001
+      ACQUIRE_KEY: HATEVFX-R10-LAYOUT-20260817T1949-SOL-K8N4V2Q7M6PX
+    steps:
+      - name: Checkout control branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Re-verify exact successful proof steps and unchanged main
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          test "$(git rev-parse origin/main)" = "${EXPECTED_MAIN_HEAD}"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${PROVEN_RUN_ID}" > /tmp/proven-run.json
+          gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${PROVEN_RUN_ID}/jobs" > /tmp/proven-jobs.json
+          python3 - <<'PY'
+          import json, os
+          run=json.load(open('/tmp/proven-run.json'))
+          jobs=json.load(open('/tmp/proven-jobs.json'))['jobs']
+          if run['head_sha'] != os.environ['PROVEN_RUN_HEAD']:
+              raise SystemExit(f'proven run head drift: {run["head_sha"]}')
+          if len(jobs) != 1:
+              raise SystemExit(f'expected one proof job, got {len(jobs)}')
+          steps={s['number']:s for s in jobs[0]['steps']}
+          required={
+            3:'Fail closed unless exact current production baseline is unchanged',
+            4:'Apply only the measured presentation layout delta',
+            5:'Recover the proven R8 geometry harness into runner only',
+            6:'Set up Node',
+            7:'Install Playwright and Chromium',
+            8:'Re-prove current geometry on 1280x800 844x390 and 390x844',
+            9:'Enforce geometry and nonblocking presentation contract',
+            10:'Run required Browser regressions before product commit',
+          }
+          for n,name in required.items():
+              s=steps.get(n)
+              if not s or s['name'] != name or s['conclusion'] != 'success':
+                  raise SystemExit(f'proof step {n} not exact-success: {s}')
+          print('verified proof steps 3-10 success on', run['head_sha'])
+          PY
+
+      - name: Build exact product-only branch from current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --heads origin "${PRODUCT_BRANCH}" >/dev/null 2>&1; then
+            echo "product branch already exists: ${PRODUCT_BRANCH}" >&2
+            exit 1
+          fi
+          git worktree add -b "${PRODUCT_BRANCH}" /tmp/hate-product origin/main
+          cd /tmp/hate-product
+          test "$(git rev-parse HEAD)" = "${EXPECTED_MAIN_HEAD}"
+          test "$(git hash-object browser/GAMEROAD.html)" = "${EXPECTED_HTML_BLOB}"
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('browser/GAMEROAD.html')
+          text=p.read_text(encoding='utf-8')
+          old='.battle .hateDial{grid-column:1!important;grid-row:1!important;width:50px!important;height:50px!important}'
+          new='.battle .hateDial{grid-column:1!important;grid-row:1!important;width:50px!important;height:50px!important;left:8px!important;top:36px!important}@media(max-height:470px) and (orientation:landscape){.battle .hateDial{left:136px!important;top:-56px!important}}@media(max-width:540px) and (orientation:portrait){.battle .hateDial{left:12px!important;top:36px!important}}'
+          if text.count(old) != 1:
+              raise SystemExit(f'exact target count != 1: {text.count(old)}')
+          if new in text:
+              raise SystemExit('candidate unexpectedly already present')
+          p.write_text(text.replace(old,new,1),encoding='utf-8')
+          if p.read_text(encoding='utf-8').count(new) != 1:
+              raise SystemExit('candidate readback failed')
+          PY
+          test "$(git diff --name-only)" = "browser/GAMEROAD.html"
+          git diff --check
+          node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+          git add browser/GAMEROAD.html
+          test "$(git diff --cached --name-only)" = "browser/GAMEROAD.html"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'HATE R10: separate dial from advice partner' -m "TaskID: ${TASK_ID}" -m "AcquireKey: ${ACQUIRE_KEY}" -m "ProofRun: ${PROVEN_RUN_ID}" -m 'Presentation-only responsive layout delta; game semantics unchanged.'
+          PRODUCT_HEAD="$(git rev-parse HEAD)"
+          PRODUCT_BLOB="$(git hash-object browser/GAMEROAD.html)"
+          echo "product_head=${PRODUCT_HEAD}"
+          echo "product_blob=${PRODUCT_BLOB}"
+          echo "::notice file=browser/GAMEROAD.html,line=1::HATE R10 product-only head=${PRODUCT_HEAD} blob=${PRODUCT_BLOB} proofRun=${PROVEN_RUN_ID}"
+          git push origin "HEAD:${PRODUCT_BRANCH}"

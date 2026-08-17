@@ -1,4 +1,4 @@
-name: HATEVFX R8 Portrait Safe Search
+name: HATEVFX R8 Required-Viewport Safe Search
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  portrait-safe-search:
+  safe-search:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
@@ -34,7 +34,7 @@ jobs:
           node-version: '22'
       - run: npm install --no-save --no-package-lock @playwright/test@1.62.0
       - run: npx playwright install --with-deps chromium
-      - name: Search nearest collision-free portrait offsets
+      - name: Search nearest collision-free offsets on all required viewports
         shell: bash
         run: |
           set -euo pipefail
@@ -42,23 +42,21 @@ jobs:
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           mkdir -p test-results/hatevfx-r8
-          node --input-type=module <<'NODE' | tee test-results/hatevfx-r8/portrait-safe-search.json
+          node --input-type=module <<'NODE' | tee test-results/hatevfx-r8/all-safe-search.json
           import { chromium } from '@playwright/test';
           const browser = await chromium.launch({headless:true});
           const page = await browser.newPage({viewport:{width:390,height:844}});
           const url='http://127.0.0.1:4178/browser/GAMEROAD.html';
-          await page.goto(url,{waitUntil:'domcontentloaded'}); await page.waitForTimeout(700);
           const visibleHomeControl=(target)=>page.locator(`[data-go="${target}"]:visible, [data-home-target="${target}"]:visible`).first();
+          await page.goto(url,{waitUntil:'domcontentloaded'}); await page.waitForTimeout(700);
           await visibleHomeControl('cards').click();
           const cards=page.locator('section[data-screen="cards"]'); await cards.waitFor({state:'visible'});
-          const deckCount=cards.locator('#deckCount');
-          let count=Number.parseInt((await deckCount.textContent())??'',10);
+          const deckCount=cards.locator('#deckCount'); let count=Number.parseInt((await deckCount.textContent())??'',10);
           if(count<40){
             const ids=await cards.locator('#collectionGrid button.slot.live.cardFace:not(.inDeck)[data-id]').evaluateAll(ns=>[...new Set(ns.map(n=>n.getAttribute('data-id')).filter(Boolean))]);
             for(const id of ids){
               if(count>=40) break;
-              const c=cards.locator(`#collectionGrid button.slot.live.cardFace:not(.inDeck)[data-id="${id}"]:visible`).first();
-              if(await c.count()===0) continue;
+              const c=cards.locator(`#collectionGrid button.slot.live.cardFace:not(.inDeck)[data-id="${id}"]:visible`).first(); if(await c.count()===0) continue;
               await c.click(); const add=cards.locator('#addSelectedCard'); if(await add.count()===0||!(await add.isEnabled())) continue;
               await add.click(); await page.waitForTimeout(60); count=Number.parseInt((await deckCount.textContent())??'',10);
               const close=cards.locator('#r4PreviewClose:visible'); if(await close.count()) await close.click();
@@ -69,42 +67,42 @@ jobs:
           await page.goto(url,{waitUntil:'domcontentloaded'}); await page.waitForTimeout(700);
           await visibleHomeControl('setup').click(); const setup=page.locator('section[data-screen="setup"]'); await setup.waitFor({state:'visible'});
           await setup.locator('[data-content="road_shield"]').click(); await setup.locator('[data-mode="2p"]').click(); await setup.locator('#startMatch').click();
-          const battle=page.locator('section[data-screen="battle"]'); await battle.waitFor({state:'visible'}); await page.waitForTimeout(450);
-          const result=await page.evaluate(()=>{
-            const dial=document.querySelector('#hateDial'), partner=document.querySelector('#battleAdvicePartnerStage');
-            if(!(dial instanceof HTMLElement)||!(partner instanceof HTMLElement)) throw new Error('targets missing');
-            dial.style.setProperty('left','0px','important'); dial.style.setProperty('top','0px','important');
-            const base=dial.getBoundingClientRect();
-            const isVisible=(el)=>{if(!(el instanceof HTMLElement))return false;const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity)!==0&&r.width>1&&r.height>1};
-            const rect=(r)=>({left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height});
-            const overlap=(a,b)=>Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left))*Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
-            const actions=[...document.querySelectorAll('button,input,select,textarea,a[href],[role="button"],[tabindex]')].filter(isVisible).filter(el=>el!==dial&&!dial.contains(el)&&!el.contains(dial)).map(el=>({tag:el.tagName,id:el.id||'',cls:String(el.className||'').slice(0,100),rect:rect(el.getBoundingClientRect())}));
-            const pr=partner.getBoundingClientRect();
-            const scan=(pad)=>{
-              const safe=[];
-              for(let dy=-360;dy<=40;dy+=4){
-                for(let dx=-8;dx<=330;dx+=4){
+          await page.locator('section[data-screen="battle"]').waitFor({state:'visible'}); await page.waitForTimeout(450);
+
+          const cases=[{name:'desktop-1280x800',width:1280,height:800},{name:'short-landscape-844x390',width:844,height:390},{name:'phone-390x844',width:390,height:844}];
+          const output=[];
+          for(const c of cases){
+            await page.setViewportSize({width:c.width,height:c.height}); await page.waitForTimeout(200);
+            const result=await page.evaluate(()=>{
+              const dial=document.querySelector('#hateDial'),partner=document.querySelector('#battleAdvicePartnerStage');
+              if(!(dial instanceof HTMLElement)||!(partner instanceof HTMLElement)) throw new Error('targets missing');
+              dial.style.setProperty('left','0px','important'); dial.style.setProperty('top','0px','important');
+              const base=dial.getBoundingClientRect();
+              const isVisible=(el)=>{if(!(el instanceof HTMLElement))return false;const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&Number(s.opacity)!==0&&r.width>1&&r.height>1};
+              const rect=(r)=>({left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height});
+              const overlap=(a,b)=>Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left))*Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
+              const actions=[...document.querySelectorAll('button,input,select,textarea,a[href],[role="button"],[tabindex]')].filter(isVisible).filter(el=>el!==dial&&!dial.contains(el)&&!el.contains(dial)).map(el=>({rect:rect(el.getBoundingClientRect())}));
+              const pr=partner.getBoundingClientRect();
+              const scan=(pad)=>{
+                const safe=[];
+                for(let dy=-360;dy<=100;dy+=4){for(let dx=-20;dx<=350;dx+=4){
                   const r={left:base.left+dx,top:base.top+dy,right:base.left+dx+base.width,bottom:base.top+dy+base.height};
                   const e={left:r.left-pad,top:r.top-pad,right:r.right+pad,bottom:r.bottom+pad};
                   if(e.left<0||e.top<0||e.right>innerWidth||e.bottom>innerHeight) continue;
-                  if(overlap(e,pr)>.5) continue;
-                  const hits=actions.filter(a=>overlap(e,a.rect)>.5);
-                  if(hits.length) continue;
-                  const distance=Math.hypot(dx,dy);
-                  safe.push({pad,dx,dy,distance,rect:r,gapFromPartner:{x:r.left-pr.right,y:r.top-pr.bottom}});
-                }
-              }
-              safe.sort((a,b)=>a.distance-b.distance||Math.abs(a.dy)-Math.abs(b.dy)||Math.abs(a.dx)-Math.abs(b.dx));
-              return safe.slice(0,30);
-            };
-            return {viewport:{width:innerWidth,height:innerHeight},base:rect(base),partner:rect(pr),actionCount:actions.length,safe12:scan(12),safe16:scan(16),safe20:scan(20)};
-          });
-          console.log(JSON.stringify(result,null,2));
-          await browser.close();
+                  if(overlap(e,pr)>.5||actions.some(a=>overlap(e,a.rect)>.5)) continue;
+                  safe.push({pad,dx,dy,distance:Math.hypot(dx,dy),rect:r,gapX:r.left-pr.right,gapY:r.top-pr.bottom});
+                }}
+                safe.sort((a,b)=>a.distance-b.distance||Math.abs(a.dy)-Math.abs(b.dy)||Math.abs(a.dx)-Math.abs(b.dx)); return safe.slice(0,30);
+              };
+              return {viewport:{width:innerWidth,height:innerHeight},base:rect(base),partner:rect(pr),actionCount:actions.length,safe12:scan(12),safe16:scan(16),safe20:scan(20)};
+            });
+            output.push({name:c.name,...result});
+          }
+          console.log(JSON.stringify(output,null,2)); await browser.close();
           NODE
       - uses: actions/upload-artifact@v4
         with:
-          name: hatevfx-r8-portrait-safe-search-${{ github.run_id }}
-          path: test-results/hatevfx-r8/portrait-safe-search.json
+          name: hatevfx-r8-all-safe-search-${{ github.run_id }}
+          path: test-results/hatevfx-r8/all-safe-search.json
           if-no-files-found: error
           retention-days: 14

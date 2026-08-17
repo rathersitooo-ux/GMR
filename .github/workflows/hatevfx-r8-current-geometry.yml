@@ -1,0 +1,103 @@
+name: HATEVFX R8 Exact-Current Geometry Proof
+
+on:
+  push:
+    branches:
+      - 'work/HATE-EXPLOSION-FORMAL-ASSET-ACCEPT-001-R8-GEOMETRY'
+    paths:
+      - 'tests/hatevfx-r8-current-geometry.spec.mjs'
+      - 'playwright.hatevfx-r8.config.mjs'
+      - '.github/workflows/hatevfx-r8-current-geometry.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  exact-current-geometry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      EXPECTED_MAIN_HEAD: 632edb85c82eb2f166f42b5a1ea698e58a9a8a11
+      EXPECTED_HTML_BLOB: ad8dc8e7fd13904260ea2ac6abf89f3e9ac724a5
+    steps:
+      - name: Checkout task branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prove exact current baseline and temporary-only diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          actual_main="$(git rev-parse origin/main)"
+          actual_blob="$(git hash-object browser/GAMEROAD.html)"
+          echo "TASK_HEAD=${GITHUB_SHA}"
+          echo "EXPECTED_MAIN_HEAD=${EXPECTED_MAIN_HEAD}"
+          echo "ACTUAL_MAIN_HEAD=${actual_main}"
+          echo "EXPECTED_HTML_BLOB=${EXPECTED_HTML_BLOB}"
+          echo "ACTUAL_HTML_BLOB=${actual_blob}"
+          test "${actual_main}" = "${EXPECTED_MAIN_HEAD}"
+          test "${actual_blob}" = "${EXPECTED_HTML_BLOB}"
+          mapfile -t changed < <(git diff --name-only "${EXPECTED_MAIN_HEAD}" "${GITHUB_SHA}")
+          printf 'TEMP_DIFF=%s\n' "${changed[*]}"
+          test "${#changed[@]}" -eq 3
+          printf '%s\n' "${changed[@]}" | sort > /tmp/actual.txt
+          printf '%s\n' \
+            '.github/workflows/hatevfx-r8-current-geometry.yml' \
+            'playwright.hatevfx-r8.config.mjs' \
+            'tests/hatevfx-r8-current-geometry.spec.mjs' | sort > /tmp/expected.txt
+          diff -u /tmp/expected.txt /tmp/actual.txt
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Run HATE R8 exact-current geometry proof
+        run: npx playwright test --config=playwright.hatevfx-r8.config.mjs --workers=1
+
+      - name: Run Browser static regression
+        run: node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+
+      - name: Run Browser runtime smoke regression
+        run: npx playwright test --config=playwright.config.mjs --workers=1
+
+      - name: Run Browser full interaction regression
+        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
+
+      - name: Emit exact-head evidence metadata
+        if: ${{ !cancelled() }}
+        shell: bash
+        run: |
+          mkdir -p test-results/hatevfx-r8
+          {
+            echo "task_head=${GITHUB_SHA}"
+            echo "main_head=$(git rev-parse origin/main)"
+            echo "html_blob=$(git hash-object browser/GAMEROAD.html)"
+            echo "expected_main_head=${EXPECTED_MAIN_HEAD}"
+            echo "expected_html_blob=${EXPECTED_HTML_BLOB}"
+          } > test-results/hatevfx-r8/exact-head.txt
+          for f in test-results/hatevfx-r8/*.json; do
+            test -f "$f" || continue
+            echo "==== $f ===="
+            cat "$f"
+          done
+
+      - name: Upload HATE R8 evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: hatevfx-r8-current-geometry-${{ github.run_id }}
+          path: |
+            test-results/hatevfx-r8/
+            test-results/hatevfx-r8-playwright/
+            playwright-report-hatevfx-r8/
+          if-no-files-found: error
+          retention-days: 14

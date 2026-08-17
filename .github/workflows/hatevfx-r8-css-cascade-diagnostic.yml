@@ -1,0 +1,108 @@
+name: HATEVFX R8 CSS Cascade Diagnostic
+
+on:
+  push:
+    branches:
+      - 'work/HATE-EXPLOSION-FORMAL-ASSET-ACCEPT-001-R8-GEOMETRY'
+    paths:
+      - '.github/workflows/hatevfx-r8-css-cascade-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  css-cascade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EXPECTED_MAIN_HEAD: 632edb85c82eb2f166f42b5a1ea698e58a9a8a11
+      EXPECTED_HTML_BLOB: ad8dc8e7fd13904260ea2ac6abf89f3e9ac724a5
+    steps:
+      - name: Checkout task branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Assert unchanged production baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          test "$(git rev-parse origin/main)" = "${EXPECTED_MAIN_HEAD}"
+          test "$(git hash-object browser/GAMEROAD.html)" = "${EXPECTED_HTML_BLOB}"
+          test -z "$(git diff --name-only origin/main -- browser/GAMEROAD.html)"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Diagnose matching CSS rules and computed insets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4178 --bind 127.0.0.1 >/tmp/hatevfx-r8-http.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          mkdir -p test-results/hatevfx-r8
+          node --input-type=module <<'NODE' | tee test-results/hatevfx-r8/css-cascade-diagnostic.json
+          import { chromium } from '@playwright/test';
+          const browser = await chromium.launch({ headless: true });
+          const cases = [[1280,800],[844,390],[390,844]];
+          const out = [];
+          for (const [width,height] of cases) {
+            const page = await browser.newPage({ viewport: { width, height } });
+            await page.goto('http://127.0.0.1:4178/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
+            const record = await page.evaluate(() => {
+              const el = document.querySelector('#hateDial');
+              if (!(el instanceof HTMLElement)) throw new Error('#hateDial missing');
+              const walk = (rules, ancestry = [], acc = []) => {
+                for (const rule of [...rules]) {
+                  if (rule instanceof CSSStyleRule) {
+                    let matched = false;
+                    try { matched = el.matches(rule.selectorText); } catch {}
+                    if (matched) acc.push({ ancestry, selector: rule.selectorText, cssText: rule.cssText });
+                  } else if ('cssRules' in rule && rule.cssRules) {
+                    const label = rule.conditionText ? `${rule.constructor.name}:${rule.conditionText}` : rule.constructor.name;
+                    walk(rule.cssRules, [...ancestry, label], acc);
+                  }
+                }
+                return acc;
+              };
+              const matched = [];
+              for (const sheet of [...document.styleSheets]) {
+                try { walk(sheet.cssRules, [], matched); } catch (error) { matched.push({ stylesheetError: String(error) }); }
+              }
+              const s = getComputedStyle(el);
+              return {
+                viewport: { width: innerWidth, height: innerHeight },
+                computed: {
+                  position: s.position, left: s.left, right: s.right, top: s.top, bottom: s.bottom,
+                  inset: s.inset, width: s.width, height: s.height, transform: s.transform,
+                  margin: s.margin, zIndex: s.zIndex, pointerEvents: s.pointerEvents
+                },
+                inlineStyle: el.getAttribute('style'),
+                className: el.className,
+                matched
+              };
+            });
+            out.push(record);
+            await page.close();
+          }
+          await browser.close();
+          console.log(JSON.stringify(out, null, 2));
+          NODE
+
+      - name: Upload diagnostic evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: hatevfx-r8-css-cascade-${{ github.run_id }}
+          path: test-results/hatevfx-r8/css-cascade-diagnostic.json
+          if-no-files-found: error
+          retention-days: 14

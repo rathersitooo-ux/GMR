@@ -1,139 +1,57 @@
-name: Browser Full Interaction R14 Recovery2 Transport
+name: Browser Full Interaction Evidence
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - 'work/BROWSER-FULLREG-R14-R13-RECOVERY2-20260817'
+      - main
+      - 'work/**'
+    paths:
+      - 'browser/GAMEROAD.html'
+      - 'tests/browser-full-interaction.spec.mjs'
+      - 'playwright.full-interaction.config.mjs'
+      - '.github/workflows/browser-full-interaction.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'browser/GAMEROAD.html'
+      - 'tests/browser-full-interaction.spec.mjs'
+      - 'playwright.full-interaction.config.mjs'
+      - '.github/workflows/browser-full-interaction.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  rebuild-r13-residual-on-latest-main:
+  chromium-interaction-evidence:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
-      - name: Checkout recovery2 branch
+      - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
         with:
-          fetch-depth: 0
+          node-version: '22'
 
-      - name: Rebuild residual and self-restore workflow
-        shell: bash
-        run: |
-          set -euo pipefail
-          BASE_SHA='00b1900926b8c5a9a9c97c9ad8f48197ea0a42fe'
-          SOURCE_BRANCH='work/BROWSER-FULLREG-R14-R13-RECOVERY-20260817'
-          SOURCE_SHA='9878c409bc9984cbafe8f37407eac51df37946fb'
-          TARGET='tests/browser-full-interaction.spec.mjs'
-          WORKFLOW='.github/workflows/browser-full-interaction.yml'
-          MARKER='// FULLREG R13 reachable-operation residual'
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
 
-          git fetch origin main "${SOURCE_BRANCH}"
-          test "$(git rev-parse origin/main)" = "${BASE_SHA}"
-          test "$(git rev-parse origin/${SOURCE_BRANCH})" = "${SOURCE_SHA}"
-          test "$(git merge-base HEAD origin/main)" = "${BASE_SHA}"
-          test "$(git show origin/main:${TARGET} | grep -cF "${MARKER}" || true)" = '0'
-          test "$(git show origin/${SOURCE_BRANCH}:${TARGET} | grep -cF "${MARKER}" || true)" = '1'
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
 
-          git show "origin/${SOURCE_BRANCH}:${TARGET}" > /tmp/r14-source.mjs
-          awk -v marker="${MARKER}" '$0 == marker { found=1 } found { print }' /tmp/r14-source.mjs > /tmp/r14-residual.mjs
-          test "$(grep -cF "${MARKER}" /tmp/r14-residual.mjs)" = '1'
+      - name: Run GAMEROAD full interaction evidence R1
+        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
 
-          python3 - <<'PY'
-          from pathlib import Path
-          import textwrap
-
-          p = Path('/tmp/r14-residual.mjs')
-          s = p.read_text()
-
-          old_status = "await expect(settings.locator('#storageStatus')).toHaveText('この起動中に保存');"
-          new_status = "await expect(settings.locator('#storageStatus')).toHaveText('一時保存');"
-          if s.count(old_status) != 1:
-              raise SystemExit(f'expected one storage status assertion, found {s.count(old_status)}')
-          s = s.replace(old_status, new_status, 1)
-
-          start_token = "  const currentEndpoint = (await battle.locator('#endpointText').textContent()) || '';"
-          end_token = "  await attachStateScreenshot(page, testInfo, 'r13-route-undo-after-real-move-visible');"
-          if s.count(start_token) != 1 or s.count(end_token) != 1:
-              raise SystemExit(f'route markers must be unique: start={s.count(start_token)} end={s.count(end_token)}')
-          start = s.index(start_token)
-          end = s.index(end_token, start) + len(end_token)
-
-          raw_route = '''const currentEndpoint = (await battle.locator('#endpointText').textContent()) || '';
-          const visibleOneSteps = battle.locator('#board .node.reachable[data-move-distance="1"]:visible');
-          const visibleOneStepCount = await visibleOneSteps.count();
-          if (visibleOneStepCount > 0) {
-            const oneStep = visibleOneSteps.first();
-            const oneStepId = await oneStep.getAttribute('data-pos');
-            expect(oneStepId).toBeTruthy();
-            expect(oneStepId).not.toBe(currentEndpoint);
-
-            const hitTest = await oneStep.evaluate((node) => {
-              const rect = node.getBoundingClientRect();
-              const x = rect.left + rect.width / 2;
-              const y = rect.top + rect.height / 2;
-              const top = document.elementFromPoint(x, y);
-              return {
-                direct: top === node || node.contains(top),
-                blocker: top?.closest?.('#battleRuntime') ? 'battleRuntime' : String(top?.id || top?.className || top?.tagName || 'unknown'),
-              };
-            });
-
-            if (hitTest.direct) {
-              await oneStep.click();
-              await expect(battle.locator('#endpointText')).toHaveText(oneStepId);
-              await attachStateScreenshot(page, testInfo, 'r13-direct-select-node-route-visible');
-              await battle.locator('#clearPath').click();
-              await expect(battle.locator('#endpointText')).toHaveText(currentEndpoint);
-            } else {
-              testInfo.annotations.push({ type: 'not-human-reachable', description: `A one-step node is visibly rendered but its center hit target is intercepted by ${hitTest.blocker}; direct node click is not force-clicked.` });
-              await attachStateScreenshot(page, testInfo, 'r13-direct-node-hit-target-boundary');
-            }
-
-            const avatar = battle.locator('#battleRuntime:visible');
-            if ((await avatar.count()) > 0) {
-              const avatarBox = await avatar.boundingBox();
-              const targetBox = await oneStep.boundingBox();
-              if (avatarBox && targetBox) {
-                await page.mouse.move(avatarBox.x + avatarBox.width / 2, avatarBox.y + avatarBox.height / 2);
-                await page.mouse.down();
-                await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, { steps: 10 });
-                await page.mouse.up();
-                await expect(battle.locator('#endpointText')).toHaveText(oneStepId);
-                await attachStateScreenshot(page, testInfo, 'r13-avatar-drag-route-visible');
-                await battle.locator('#clearPath').click();
-                await expect(battle.locator('#endpointText')).toHaveText(currentEndpoint);
-                await attachStateScreenshot(page, testInfo, 'r13-route-undo-after-real-move-visible');
-              } else {
-                testInfo.annotations.push({ type: 'not-human-reachable', description: 'Avatar drag source or visible one-step target has no current layout box; drag is not fabricated.' });
-              }
-            } else {
-              testInfo.annotations.push({ type: 'not-human-visible', description: 'The draggable battle avatar is not visible in this viewport; avatar drag is excluded rather than force-invoked.' });
-            }
-          } else {
-            testInfo.annotations.push({ type: 'not-human-visible', description: 'No one-step reachable board node is human-visible in this viewport after direct Road selection; direct node click and node-targeted avatar drag are excluded rather than force-clicked.' });
-            await attachStateScreenshot(page, testInfo, 'r13-reachable-node-not-visible-boundary');
-          }'''
-          new_route = textwrap.indent(textwrap.dedent(raw_route), '  ')
-          s = s[:start] + new_route + s[end:]
-          p.write_text(s)
-          PY
-
-          printf '\n\n' >> "${TARGET}"
-          cat /tmp/r14-residual.mjs >> "${TARGET}"
-          git show "origin/main:${WORKFLOW}" > "${WORKFLOW}"
-
-          test "$(grep -cF "${MARKER}" "${TARGET}" || true)" = '1'
-          test "$(grep -cF "toHaveText('一時保存')" "${TARGET}" || true)" -ge '1'
-          test "$(grep -cF "not-human-reachable" "${TARGET}" || true)" -ge '1'
-          test "$(git diff --name-only origin/main -- | sort)" = "${TARGET}"
-          test "$(git diff --numstat origin/main -- "${TARGET}" | awk '{print $2}')" = '0'
-
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add "${TARGET}" "${WORKFLOW}"
-          git commit -m 'test: recover reachable-operation residual against latest main'
-          test "$(git diff --name-only origin/main..HEAD | sort)" = "${TARGET}"
-          git push origin HEAD:'work/BROWSER-FULLREG-R14-R13-RECOVERY2-20260817'
+      - name: Upload interaction evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-full-interaction-${{ github.run_id }}
+          path: |
+            playwright-report-full-interaction/
+            test-results/full-interaction/
+          if-no-files-found: error
+          retention-days: 14

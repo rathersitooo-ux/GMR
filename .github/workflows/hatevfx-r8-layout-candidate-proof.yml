@@ -41,13 +41,22 @@ jobs:
           import re
           path = Path('browser/GAMEROAD.html')
           text = path.read_text(encoding='utf-8')
-          pattern = re.compile(r'(\.battle\s+\.hateDial\s*\{\s*grid-area\s*:\s*1\s*/\s*1\s*!important\s*;\s*width\s*:\s*50px\s*!important\s*;\s*height\s*:\s*50px\s*!important\s*;)\s*\}')
-          matches = list(pattern.finditer(text))
-          print('candidate_target_count=', len(matches))
-          if len(matches) != 1:
-              raise SystemExit('expected exactly one .battle .hateDial canonical rule')
-          replacement = matches[0].group(1) + 'left:min(calc(100% - 30px),195px)!important;top:-60px!important;}'
-          text = text[:matches[0].start()] + replacement + text[matches[0].end():]
+          rules = list(re.finditer(r'\.battle\s+\.hateDial\s*\{[^{}]*\}', text, flags=re.S))
+          targets = []
+          for m in rules:
+              normalized = re.sub(r'\s+', '', m.group(0))
+              if 'grid-area:1/1!important' in normalized and 'width:50px!important' in normalized and 'height:50px!important' in normalized:
+                  targets.append(m)
+          print('battle_hateDial_rule_count=', len(rules))
+          print('candidate_target_count=', len(targets))
+          for m in rules:
+              print('RULE:', m.group(0)[:600].replace('\n','\\n'))
+          if len(targets) != 1:
+              raise SystemExit('expected exactly one canonical .battle .hateDial 50x50 rule')
+          m = targets[0]
+          rule = m.group(0)
+          replacement = rule[:-1] + 'left:min(calc(100% - 30px),195px)!important;top:-60px!important;}'
+          text = text[:m.start()] + replacement + text[m.end():]
           path.write_text(text, encoding='utf-8')
           PY
           test "$(git diff --name-only)" = "browser/GAMEROAD.html"

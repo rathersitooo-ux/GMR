@@ -32,7 +32,7 @@ jobs:
           test "$(git hash-object browser/GAMEROAD.html)" = "${EXPECTED_HTML_BLOB}"
           test -z "$(git diff --name-only origin/main -- browser/GAMEROAD.html)"
 
-      - name: Apply candidate in runner working tree only
+      - name: Apply measured candidate in runner working tree only
         shell: bash
         run: |
           set -euo pipefail
@@ -41,7 +41,7 @@ jobs:
           path = Path('browser/GAMEROAD.html')
           text = path.read_text(encoding='utf-8')
           old = '.battle .hateDial{grid-column:1!important;grid-row:1!important;width:50px!important;height:50px!important}'
-          new = '.battle .hateDial{grid-column:1!important;grid-row:1!important;width:50px!important;height:50px!important;left:clamp(125px,19vw,235px)!important;top:-80px!important}'
+          new = '.battle .hateDial{grid-column:1!important;grid-row:1!important;width:50px!important;height:50px!important;left:8px!important;top:36px!important}@media(max-height:470px) and (orientation:landscape){.battle .hateDial{left:136px!important;top:-56px!important}}@media(max-width:540px) and (orientation:portrait){.battle .hateDial{left:12px!important;top:36px!important}}'
           count = text.count(old)
           print('exact_target_count=', count)
           if count != 1:
@@ -66,7 +66,7 @@ jobs:
       - name: Run candidate geometry proof
         run: npx playwright test --config=playwright.hatevfx-r8.config.mjs --workers=1
 
-      - name: Assert collision-free envelope on all three viewports
+      - name: Assert collision-free 20px envelope on all three viewports
         shell: bash
         run: |
           set -euo pipefail
@@ -84,8 +84,8 @@ jobs:
               print(p.name, 'overlap=', g['basePartnerOverlap'], 'safePadding=', g['safePadding'], 'status=', g['geometryStatus'], 'overflow=', g['docOverflow'])
               if g['basePartnerOverlap'] > 0.5:
                   raise SystemExit(f'{p.name}: partner overlap remains')
-              if g['safePadding'] is None or g['safePadding'] <= 0:
-                  raise SystemExit(f'{p.name}: no positive safe envelope')
+              if g['safePadding'] is None or g['safePadding'] < 20:
+                  raise SystemExit(f'{p.name}: 20px safe envelope not proven')
               if g['docOverflow']['x'] != 0 or g['docOverflow']['y'] != 0:
                   raise SystemExit(f'{p.name}: document overflow introduced')
               if not g['partnerVisible']:
@@ -109,7 +109,7 @@ jobs:
         run: |
           mkdir -p test-results/hatevfx-r8
           cp /tmp/hatevfx-r8-evidence/*.json test-results/hatevfx-r8/ 2>/dev/null || true
-          printf 'main_head=%s\nhtml_blob=%s\ncandidate=relative-left:clamp(125px,19vw,235px);top:-80px\n' "$(git rev-parse origin/main)" "${EXPECTED_HTML_BLOB}" > test-results/hatevfx-r8/candidate-metadata.txt
+          printf 'main_head=%s\nhtml_blob=%s\ncandidate=desktop(+8,+36);low-landscape(+136,-56);portrait(+12,+36)\n' "$(git rev-parse origin/main)" "${EXPECTED_HTML_BLOB}" > test-results/hatevfx-r8/candidate-metadata.txt
 
       - name: Upload candidate proof
         if: ${{ !cancelled() }}

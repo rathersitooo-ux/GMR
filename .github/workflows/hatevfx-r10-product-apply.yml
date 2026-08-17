@@ -1,0 +1,139 @@
+name: HATEVFX R10 Product Apply
+
+on:
+  push:
+    branches:
+      - 'work/HATE-EXPLOSION-FORMAL-ASSET-ACCEPT-001-R10-LAYOUT-20260817'
+    paths:
+      - '.github/workflows/hatevfx-r10-product-apply.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-prove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      EXPECTED_MAIN_HEAD: 632edb85c82eb2f166f42b5a1ea698e58a9a8a11
+      EXPECTED_HTML_BLOB: ad8dc8e7fd13904260ea2ac6abf89f3e9ac724a5
+      R8_BRANCH: work/HATE-EXPLOSION-FORMAL-ASSET-ACCEPT-001-R8-GEOMETRY
+      TASK_ID: HATE-EXPLOSION-FORMAL-ASSET-ACCEPT-001
+      ACQUIRE_KEY: HATEVFX-R10-LAYOUT-20260817T1949-SOL-K8N4V2Q7M6PX
+    steps:
+      - name: Checkout exact R10 task branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fail closed unless exact current production baseline is unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          test "$(git rev-parse origin/main)" = "${EXPECTED_MAIN_HEAD}"
+          test "$(git hash-object browser/GAMEROAD.html)" = "${EXPECTED_HTML_BLOB}"
+          test "$(git rev-parse HEAD^)" = "${EXPECTED_MAIN_HEAD}"
+          test "$(git diff --name-only "${EXPECTED_MAIN_HEAD}" HEAD)" = ".github/workflows/hatevfx-r10-product-apply.yml"
+
+      - name: Apply only the measured presentation layout delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('browser/GAMEROAD.html')
+          text = path.read_text(encoding='utf-8')
+          old = '.battle .hateDial{grid-column:1!important;grid-row:1!important;width:50px!important;height:50px!important}'
+          new = '.battle .hateDial{grid-column:1!important;grid-row:1!important;width:50px!important;height:50px!important;left:8px!important;top:36px!important}@media(max-height:470px) and (orientation:landscape){.battle .hateDial{left:136px!important;top:-56px!important}}@media(max-width:540px) and (orientation:portrait){.battle .hateDial{left:12px!important;top:36px!important}}'
+          count = text.count(old)
+          print('exact_target_count=', count)
+          if count != 1:
+              raise SystemExit(f'expected exactly one exact HATE presentation rule, got {count}')
+          if new in text:
+              raise SystemExit('R10 layout delta already present unexpectedly')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          check = path.read_text(encoding='utf-8')
+          if check.count(new) != 1 or old in check:
+              raise SystemExit('exact replacement readback failed')
+          PY
+          test "$(git diff --name-only)" = "browser/GAMEROAD.html"
+          git diff --check
+          git diff -- browser/GAMEROAD.html
+
+      - name: Recover the proven R8 geometry harness into runner only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin "${R8_BRANCH}:refs/remotes/origin/hatevfx-r8-proof" --quiet
+          test "$(git rev-parse refs/remotes/origin/hatevfx-r8-proof)" = "d9cb2b3a8c5ae61a8f7e8d8e38d04bb14957cbed"
+          git show refs/remotes/origin/hatevfx-r8-proof:playwright.hatevfx-r8.config.mjs > playwright.hatevfx-r8.config.mjs
+          git show refs/remotes/origin/hatevfx-r8-proof:tests/hatevfx-r8-current-geometry.spec.mjs > tests/hatevfx-r8-current-geometry.spec.mjs
+          test -s playwright.hatevfx-r8.config.mjs
+          test -s tests/hatevfx-r8-current-geometry.spec.mjs
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+
+      - name: Re-prove current geometry on 1280x800 844x390 and 390x844
+        run: npx playwright test --config=playwright.hatevfx-r8.config.mjs --workers=1
+
+      - name: Enforce zero overlap 20px safe envelope visibility pointer and overflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          files = sorted(Path('test-results/hatevfx-r8').glob('*.json'))
+          if len(files) != 3:
+              raise SystemExit(f'expected 3 geometry JSON files, got {len(files)}')
+          for p in files:
+              d = json.loads(p.read_text())
+              g = d['geometry']
+              print(p.name, 'overlap=', g['basePartnerOverlap'], 'safePadding=', g['safePadding'], 'status=', g['geometryStatus'], 'overflow=', g['docOverflow'], 'pointer=', g['dialStyle']['pointerEvents'])
+              if g['basePartnerOverlap'] > 0.5:
+                  raise SystemExit(f'{p.name}: partner overlap remains')
+              if g['safePadding'] is None or g['safePadding'] < 20:
+                  raise SystemExit(f'{p.name}: 20px safe envelope not proven')
+              if g['docOverflow']['x'] != 0 or g['docOverflow']['y'] != 0:
+                  raise SystemExit(f'{p.name}: document overflow introduced')
+              if not g['partnerVisible']:
+                  raise SystemExit(f'{p.name}: partner hidden')
+              if g['dialStyle']['pointerEvents'] == 'none':
+                  raise SystemExit(f'{p.name}: HATE dial pointer disabled')
+          PY
+
+      - name: Run required Browser regressions before product commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+          npx playwright test --config=playwright.config.mjs --workers=1
+          npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
+
+      - name: Recheck main then commit only production HTML and self-remove executor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          test "$(git rev-parse origin/main)" = "${EXPECTED_MAIN_HEAD}"
+          rm -f playwright.hatevfx-r8.config.mjs tests/hatevfx-r8-current-geometry.spec.mjs
+          rm -f .github/workflows/hatevfx-r10-product-apply.yml
+          git add -A
+          mapfile -t changed < <(git diff --cached --name-only "${EXPECTED_MAIN_HEAD}")
+          printf '%s\n' "${changed[@]}"
+          test "${#changed[@]}" -eq 1
+          test "${changed[0]}" = "browser/GAMEROAD.html"
+          git diff --cached --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'HATE R10: separate dial from advice partner' -m "TaskID: ${TASK_ID}" -m "AcquireKey: ${ACQUIRE_KEY}" -m 'Presentation-only responsive layout delta; game semantics unchanged.'
+          git push origin HEAD:${GITHUB_REF_NAME}

@@ -7,6 +7,7 @@ import {
   parseChannel,
   routeFrame,
   transportReject,
+  makeTransportPresenceFrame,
 } from './relay-core.mjs';
 
 const ROOM_KEY = 'room.v1';
@@ -17,6 +18,19 @@ function attachmentOf(ws) {
 
 function activeEntries(ctx) {
   return ctx.getWebSockets().map((ws) => ({ ws, ...(attachmentOf(ws) || {}) }));
+}
+
+function sendGuestPresence(ctx, room, sender, kind) {
+  const host = activeEntries(ctx).find(
+    (entry) => entry.role === 'host' && entry.clientId === room.hostClientId
+  );
+  if (!host) return false;
+  try {
+    host.ws.send(JSON.stringify(makeTransportPresenceFrame(sender.code, sender.clientId, kind)));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function rejectSocket(ctx, reason) {
@@ -66,6 +80,9 @@ export class GAMEROADFriendRoomRelay extends DurableObject {
     const [client, server] = Object.values(pair);
     this.ctx.acceptWebSocket(server);
     server.serializeAttachment(admitted.attachment);
+    if (admitted.attachment.role === 'guest') {
+      sendGuestPresence(this.ctx, admitted.room, admitted.attachment, 'rejoin');
+    }
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -115,6 +132,15 @@ export class GAMEROADFriendRoomRelay extends DurableObject {
     const sender = attachmentOf(ws);
     if (!sender || sender.role === 'rejected') return;
     const room = normalizeRoom(await this.ctx.storage.get(ROOM_KEY));
+    if (sender.role === 'guest') {
+      const replacementAlive = activeEntries(this.ctx).some(
+        (entry) => entry.ws !== ws && entry.role === 'guest' && entry.clientId === sender.clientId
+      );
+      if (!replacementAlive && room.guests[sender.clientId]) {
+        sendGuestPresence(this.ctx, room, sender, 'disconnect');
+      }
+      return;
+    }
     if (sender.role === 'host' && room.hostClientId === sender.clientId) {
       for (const entry of activeEntries(this.ctx)) {
         if (entry.ws === ws || entry.role !== 'guest') continue;

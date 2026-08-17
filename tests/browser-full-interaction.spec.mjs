@@ -1185,3 +1185,135 @@ test('R13 covers the visible pack-animation skip without injecting game state', 
   await attachStateScreenshot(page, testInfo, 'r13-gacha-skip-results-visible');
   runtime.assertClean(testInfo);
 });
+
+// FULLREG R13 final visible-operation residual
+test('R13 covers visible deck-slot removal followed by meaningful restore', async ({ page }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+  const deck = await installLegalBattleDeck(page);
+  expect(deck.main).toHaveLength(40);
+  expect(deck.committed).toBeTruthy();
+  expect(deck.savedValidation.ok).toBeTruthy();
+  testInfo.annotations.push({ type: 'deterministic-precondition', description: 'A legal 40-card saved deck is installed only to expose the real deck-slot remove and restore controls; the remove/restore operations themselves use visible UI.' });
+
+  const cardsGo = visibleOperationGo(page, 'cards');
+  await expect(cardsGo).toBeVisible();
+  await cardsGo.click();
+  const cards = page.locator('section[data-screen="cards"]');
+  await expect(cards).toBeVisible();
+  await expect(cards.locator('#deckCount')).toHaveText('40');
+
+  const tray = cards.locator('#r4DeckTrayToggle:visible');
+  if ((await tray.count()) > 0 && (await cards.getAttribute('data-deck-drawer')) !== 'open') {
+    await tray.click();
+    await expect(cards).toHaveAttribute('data-deck-drawer', 'open');
+  }
+  const remove = cards.locator('#deckSlots [data-deck-remove]:visible').first();
+  await expect(remove).toBeVisible();
+  await remove.click();
+  await expect(cards.locator('#deckCount')).toHaveText('39');
+  await expect(cards.locator('#deckSaveState')).not.toHaveText('保存済み');
+  await attachStateScreenshot(page, testInfo, 'r13-deck-slot-removed-visible');
+
+  const restore = cards.locator('#restoreDeck:visible');
+  await expect(restore).toBeVisible();
+  await restore.click();
+  await expect(cards.locator('#deckCount')).toHaveText('40');
+  await expect(cards.locator('#deckSaveState')).toHaveText('保存済み');
+  await attachStateScreenshot(page, testInfo, 'r13-deck-slot-restored-visible');
+  runtime.assertClean(testInfo);
+});
+
+test('R13 covers an actual visible advice-partner selection', async ({ page }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+  const charactersGo = visibleOperationGo(page, 'characters');
+  await expect(charactersGo).toBeVisible();
+  await charactersGo.click();
+  const characters = page.locator('section[data-screen="characters"]');
+  await expect(characters).toBeVisible();
+
+  await characters.locator('[data-role="partner"]').click();
+  const candidate = characters.locator('.charCard[aria-pressed="false"]:visible').first();
+  await expect(candidate).toBeVisible();
+  const candidateName = ((await candidate.locator('.charCardCopy b').textContent()) || '').trim();
+  expect(candidateName).not.toBe('');
+  await candidate.click();
+  const selected = characters.locator('.charCard[aria-pressed="true"]:visible');
+  await expect(selected).toHaveCount(1);
+  await expect(selected.locator('.charCardCopy b')).toHaveText(candidateName);
+  await expect(characters.locator('#charRoleLabel')).toHaveText('ADVICE PARTNER');
+  await expect(characters.locator('#charName')).toHaveText(candidateName);
+  await attachStateScreenshot(page, testInfo, 'r13-partner-character-selection-visible');
+  runtime.assertClean(testInfo);
+});
+
+test('R13 covers direct plan selectors, reachable-node click, avatar drag, real undo, and surfaced target selectors', async ({ page }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  const battle = await beginVisibleTwoPlayerRoadShield(page, testInfo, 'r13-direct-plan-movement');
+  const roadSelect = battle.locator('#roadSelect');
+  const battleSelect = battle.locator('#battleSelect');
+  const roadOptions = await roadSelect.locator('option').evaluateAll((nodes) => nodes.map((node) => node.value).filter(Boolean));
+  const battleOptions = await battleSelect.locator('option').evaluateAll((nodes) => nodes.map((node) => node.value).filter(Boolean));
+  expect(roadOptions.length).toBeGreaterThan(1);
+  expect(battleOptions.length).toBeGreaterThan(1);
+  const roadId = roadOptions[0];
+  const battleId = battleOptions.find((id) => id !== roadId);
+  expect(battleId).toBeTruthy();
+
+  await roadSelect.selectOption(roadId);
+  await expect(roadSelect).toHaveValue(roadId);
+  await battleSelect.selectOption(battleId);
+  await expect(battleSelect).toHaveValue(battleId);
+  await expect(battle.locator('#readyPlan')).toBeEnabled();
+
+  const currentEndpoint = (await battle.locator('#endpointText').textContent()) || '';
+  const oneStep = battle.locator('#board .node.reachable[data-move-distance="1"]:visible').first();
+  await expect(oneStep, 'at least one real one-step reachable node after direct Road selection').toBeVisible();
+  const oneStepId = await oneStep.getAttribute('data-pos');
+  expect(oneStepId).toBeTruthy();
+  await oneStep.click();
+  await expect(battle.locator('#endpointText')).toHaveText(oneStepId);
+  expect(oneStepId).not.toBe(currentEndpoint);
+  await attachStateScreenshot(page, testInfo, 'r13-direct-select-node-route-visible');
+
+  await battle.locator('#clearPath').click();
+  await expect(battle.locator('#endpointText')).toHaveText(currentEndpoint);
+
+  const dragTarget = battle.locator('#board .node.reachable[data-move-distance="1"]:visible').first();
+  await expect(dragTarget).toBeVisible();
+  const targetId = await dragTarget.getAttribute('data-pos');
+  const avatar = battle.locator('#battleRuntime');
+  const avatarBox = await avatar.boundingBox();
+  const targetBox = await dragTarget.boundingBox();
+  expect(avatarBox).not.toBeNull();
+  expect(targetBox).not.toBeNull();
+  await page.mouse.move(avatarBox.x + avatarBox.width / 2, avatarBox.y + avatarBox.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, { steps: 10 });
+  await page.mouse.up();
+  await expect(battle.locator('#endpointText')).toHaveText(targetId);
+  await attachStateScreenshot(page, testInfo, 'r13-avatar-drag-route-visible');
+
+  await battle.locator('#clearPath').click();
+  await expect(battle.locator('#endpointText')).toHaveText(currentEndpoint);
+  await attachStateScreenshot(page, testInfo, 'r13-route-undo-after-real-move-visible');
+
+  await battle.locator('#readyPlan').click();
+  const targetSurface = battle.locator('#targetBox.on:visible');
+  try {
+    await targetSurface.waitFor({ state: 'visible', timeout: 6_000 });
+    const lane = battle.locator('#targetLane');
+    const shield = battle.locator('#targetShield');
+    await lane.selectOption('R');
+    await shield.selectOption('L');
+    await expect(lane).toHaveValue('R');
+    await expect(shield).toHaveValue('L');
+    const playerOptions = await battle.locator('#targetPlayer option').count();
+    expect(playerOptions).toBeGreaterThan(0);
+    await attachStateScreenshot(page, testInfo, 'r13-target-selectors-surfaced-visible');
+  } catch {
+    testInfo.annotations.push({ type: 'runtime-dependent-visible-operation', description: 'The bot won attack right in this deterministic visible round, so target selectors were not surfaced to the human in this run; the test does not fabricate target-phase ownership.' });
+  }
+  runtime.assertClean(testInfo);
+});

@@ -1,4 +1,4 @@
-import { selectPreferredLegalAction } from '../tools/advice-collective-eval.mjs';
+import { recommendFromRuntimeManifest, selectPreferredLegalAction } from '../tools/advice-collective-eval.mjs';
 
 const PARTNER_RULES = new Set(['left', 'right', 'max', 'min']);
 const VERSION_KEYS = ['rulesVersion', 'cardVersion', 'stateVersion'];
@@ -167,6 +167,87 @@ export function selectPartnerLegalCandidate({
     reason,
     source: 'shared-legal-action-core',
     containsPrivate: false,
+  });
+}
+
+export function selectPartnerManifestOrRuleCandidate({
+  candidates,
+  rule,
+  sourceVersions,
+  targetVersions,
+  manifest,
+  runtimeState,
+} = {}) {
+  const fallback = selectPartnerLegalCandidate({ candidates, rule, sourceVersions, targetVersions });
+  if (!fallback.ok) return Object.freeze({ ...fallback, manifestUsed: false, fallbackReason: 'HEURISTIC_BOUNDARY_FAILED' });
+
+  const source = exactVersionTuple(sourceVersions);
+  const target = exactVersionTuple(targetVersions);
+  if (!source || !target || !sameVersions(source, target)) {
+    return Object.freeze({ ...fallback, manifestUsed: false, fallbackReason: 'VERSION_MISMATCH' });
+  }
+
+  const boundary = buildCandidateBoundary(candidates, rule, source);
+  if (boundary.error) return Object.freeze({ ...fallback, manifestUsed: false, fallbackReason: boundary.error });
+
+  const runtime = recommendFromRuntimeManifest(manifest, runtimeState, target);
+  if (!runtime.actionId) {
+    return Object.freeze({
+      ...fallback,
+      manifestUsed: false,
+      fallbackReason: String(runtime.reason || 'MANIFEST_REJECTED').toUpperCase().replaceAll('-', '_'),
+      manifestSource: runtime.source,
+      manifestFingerprint: runtime.fingerprint,
+      manifestSupport: 0,
+    });
+  }
+
+  const selected = boundary.byId.get(runtime.actionId);
+  if (!selected?.legal) {
+    return Object.freeze({
+      ...fallback,
+      manifestUsed: false,
+      fallbackReason: 'MANIFEST_ACTION_NOT_CURRENTLY_LEGAL',
+      manifestSource: runtime.source,
+      manifestFingerprint: runtime.fingerprint,
+      manifestSupport: runtime.support,
+    });
+  }
+
+  const currentLegalSet = selectPreferredLegalAction(boundary.sharedCandidates, target, () => 0);
+  if (currentLegalSet.accepted.length !== boundary.legalCount) {
+    return Object.freeze({ ...fallback, manifestUsed: false, fallbackReason: 'LEGAL_BOUNDARY_REJECTED' });
+  }
+  const acceptedIds = new Set(currentLegalSet.accepted.map((candidate) => candidate.actionId));
+  if (!acceptedIds.has(runtime.actionId)) {
+    return Object.freeze({
+      ...fallback,
+      manifestUsed: false,
+      fallbackReason: 'MANIFEST_ACTION_NOT_CURRENTLY_LEGAL',
+      manifestSource: runtime.source,
+      manifestFingerprint: runtime.fingerprint,
+      manifestSupport: runtime.support,
+    });
+  }
+
+  const ordered = Object.freeze([
+    runtime.actionId,
+    ...fallback.ordered.filter((candidateId) => candidateId !== runtime.actionId),
+  ]);
+  return Object.freeze({
+    ok: true,
+    error: null,
+    selected: publicCandidate(selected),
+    ordered,
+    next: ordered.length > 1 ? ordered[1] : null,
+    reason: 'APPROVED_RUNTIME_MANIFEST',
+    source: 'approved-runtime-manifest',
+    containsPrivate: false,
+    manifestUsed: true,
+    fallbackReason: null,
+    manifestSource: runtime.source,
+    manifestFingerprint: runtime.fingerprint,
+    manifestSupport: runtime.support,
   });
 }
 

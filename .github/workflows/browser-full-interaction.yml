@@ -1,57 +1,79 @@
-name: Browser Full Interaction Evidence
+name: Browser Full Interaction R14 Recovery Transport
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - main
-      - 'work/**'
-    paths:
-      - 'browser/GAMEROAD.html'
-      - 'tests/browser-full-interaction.spec.mjs'
-      - 'playwright.full-interaction.config.mjs'
-      - '.github/workflows/browser-full-interaction.yml'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'browser/GAMEROAD.html'
-      - 'tests/browser-full-interaction.spec.mjs'
-      - 'playwright.full-interaction.config.mjs'
-      - '.github/workflows/browser-full-interaction.yml'
+      - 'work/BROWSER-FULLREG-R14-R13-RECOVERY-20260817'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  chromium-interaction-evidence:
+  repair-r13-residual-on-fresh-main:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
-      - name: Checkout
+      - name: Checkout recovery branch
         uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          fetch-depth: 0
 
-      - name: Install Playwright test runner
-        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+      - name: Reconstruct R13 residual and self-restore workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE_SHA='b41a48b5e8118bf42e952d4b3b85d387092520c5'
+          SOURCE_BRANCH='work/BROWSER-FULLREG-R13-RESIDUAL-20260817'
+          TARGET='tests/browser-full-interaction.spec.mjs'
+          WORKFLOW='.github/workflows/browser-full-interaction.yml'
+          MARKER='// FULLREG R13 reachable-operation residual'
 
-      - name: Install Chromium and OS dependencies
-        run: npx playwright install --with-deps chromium
+          git fetch origin main "${SOURCE_BRANCH}"
+          test "$(git rev-parse origin/main)" = "${BASE_SHA}"
+          test "$(git merge-base HEAD origin/main)" = "${BASE_SHA}"
+          test "$(git show origin/main:${TARGET} | grep -cF "${MARKER}" || true)" = '0'
+          test "$(git show origin/${SOURCE_BRANCH}:${TARGET} | grep -cF "${MARKER}" || true)" = '1'
 
-      - name: Run GAMEROAD full interaction evidence R1
-        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
+          git show "origin/${SOURCE_BRANCH}:${TARGET}" > /tmp/r13-source.mjs
+          awk -v marker="${MARKER}" '$0 == marker { found=1 } found { print }' /tmp/r13-source.mjs > /tmp/r13-residual.mjs
+          test "$(grep -cF "${MARKER}" /tmp/r13-residual.mjs)" = '1'
+          test "$(wc -l < /tmp/r13-residual.mjs | tr -d ' ')" -ge 300
 
-      - name: Upload interaction evidence
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: browser-full-interaction-${{ github.run_id }}
-          path: |
-            playwright-report-full-interaction/
-            test-results/full-interaction/
-          if-no-files-found: error
-          retention-days: 14
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('/tmp/r13-residual.mjs')
+          s = p.read_text()
+          checks = {
+              "await expect(settings.locator('#reduceMotion')).toHaveText('OFF');": "await expect(settings.locator('#reduceMotion')).toHaveText('オフ');",
+              "await expect(settings.locator('#lowPerf')).toHaveText('OFF');": "await expect(settings.locator('#lowPerf')).toHaveText('オフ');",
+              "await expect(characters.locator('#charRoleLabel')).toHaveText('ADVICE PARTNER');": "await expect(characters.locator('#charRoleLabel')).toHaveText('パートナー');",
+              "  const runtime = observeRuntimeErrors(page);\n  const battle = await beginVisibleTwoPlayerRoadShield(page, testInfo, 'r13-direct-plan-movement');": "  const runtime = observeRuntimeErrors(page);\n  await bootCurrentBrowser(page);\n  const battle = await beginVisibleTwoPlayerRoadShield(page, testInfo, 'r13-direct-plan-movement');",
+          }
+          for old, new in checks.items():
+              count = s.count(old)
+              if count != 1:
+                  raise SystemExit(f'expected exactly one repair target, found {count}: {old}')
+              s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+
+          cp "${TARGET}" /tmp/current-main-spec.mjs
+          printf '\n\n' >> "${TARGET}"
+          cat /tmp/r13-residual.mjs >> "${TARGET}"
+
+          git show "origin/main:${WORKFLOW}" > "${WORKFLOW}"
+
+          test "$(grep -cF "${MARKER}" "${TARGET}" || true)" = '1'
+          test "$(git diff --name-only origin/main -- | sort)" = "${TARGET}"
+          test "$(git diff --numstat origin/main -- "${TARGET}" | awk '{print $2}')" = '0'
+          grep -F "toHaveText('オフ')" "${TARGET}" >/dev/null
+          grep -F "toHaveText('パートナー')" "${TARGET}" >/dev/null
+          grep -F "await bootCurrentBrowser(page);" "${TARGET}" >/dev/null
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "${TARGET}" "${WORKFLOW}"
+          git commit -m 'test: recover R13 visible-operation residual on current main'
+          test "$(git diff --name-only origin/main..HEAD | sort)" = "${TARGET}"
+          git push origin HEAD:'work/BROWSER-FULLREG-R14-R13-RECOVERY-20260817'

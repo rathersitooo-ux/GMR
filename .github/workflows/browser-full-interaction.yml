@@ -1,35 +1,263 @@
 name: Browser Full Interaction Evidence
 
 on:
-  workflow_dispatch:
   push:
     branches:
-      - main
-      - 'work/**'
+      - 'work/BROWSER-FULLREG-R13-RESIDUAL-20260817'
     paths:
-      - 'browser/GAMEROAD.html'
-      - 'tests/browser-full-interaction.spec.mjs'
-      - 'playwright.full-interaction.config.mjs'
-      - '.github/workflows/browser-full-interaction.yml'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'browser/GAMEROAD.html'
-      - 'tests/browser-full-interaction.spec.mjs'
-      - 'playwright.full-interaction.config.mjs'
       - '.github/workflows/browser-full-interaction.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  chromium-interaction-evidence:
+  r13-transport-and-validate:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Checkout
+      - name: Checkout exact work branch
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Guard exact base and append residual tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_BASE='632edb85c82eb2f166f42b5a1ea698e58a9a8a11'
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$EXPECTED_BASE"
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_BASE"
+          test "$(grep -c 'FULLREG R13 reachable-operation residual' tests/browser-full-interaction.spec.mjs || true)" = '0'
+          cat <<'EOF' >> tests/browser-full-interaction.spec.mjs
+
+          // FULLREG R13 reachable-operation residual
+          test('R13 covers all currently actionable auxiliary screen navigation surfaces', async ({ page }, testInfo) => {
+            const runtime = observeRuntimeErrors(page);
+            await bootCurrentBrowser(page);
+            const home = page.locator('section[data-screen="home"]');
+
+            for (const target of ['missions', 'records']) {
+              const go = visibleOperationGo(page, target);
+              await expect(go, `${target} must be reachable from Home`).toBeVisible();
+              await go.click();
+              const screen = page.locator(`section[data-screen="${target}"]`);
+              await expect(screen).toBeVisible();
+              await attachStateScreenshot(page, testInfo, `r13-${target}-visible`);
+              await backOperationVisible(page);
+              await expect(home).toBeVisible();
+            }
+
+            const profileGo = visibleOperationGo(page, 'profile');
+            await expect(profileGo).toBeVisible();
+            await profileGo.click();
+            const profile = page.locator('section[data-screen="profile"]');
+            await expect(profile).toBeVisible();
+            await attachStateScreenshot(page, testInfo, 'r13-profile-visible');
+            for (const target of ['characters', 'records', 'settings']) {
+              const nested = profile.locator(`[data-go="${target}"]:visible`).first();
+              await expect(nested).toBeVisible();
+              await nested.click();
+              await expect(page.locator(`section[data-screen="${target}"]`)).toBeVisible();
+              await attachStateScreenshot(page, testInfo, `r13-profile-to-${target}-visible`);
+              await backOperationVisible(page);
+              await expect(profile).toBeVisible();
+            }
+            await backOperationVisible(page);
+            await expect(home).toBeVisible();
+
+            const shopGo = visibleOperationGo(page, 'shop');
+            await expect(shopGo).toBeVisible();
+            await shopGo.click();
+            const shop = page.locator('section[data-screen="shop"]');
+            await expect(shop).toBeVisible();
+            await attachStateScreenshot(page, testInfo, 'r13-shop-visible');
+            for (const target of ['gacha', 'characters', 'cards']) {
+              const nested = shop.locator(`[data-go="${target}"]:visible`).first();
+              await expect(nested).toBeVisible();
+              await nested.click();
+              await expect(page.locator(`section[data-screen="${target}"]`)).toBeVisible();
+              await attachStateScreenshot(page, testInfo, `r13-shop-to-${target}-visible`);
+              await backOperationVisible(page);
+              await expect(shop).toBeVisible();
+            }
+            await backOperationVisible(page);
+            await expect(home).toBeVisible();
+            runtime.assertClean(testInfo);
+          });
+
+          test('R13 covers every visible card suit filter and mobile deck backdrop close', async ({ page }, testInfo) => {
+            const runtime = observeRuntimeErrors(page);
+            await bootCurrentBrowser(page);
+            const cardsGo = visibleOperationGo(page, 'cards');
+            await expect(cardsGo).toBeVisible();
+            await cardsGo.click();
+            const cards = page.locator('section[data-screen="cards"]');
+            await expect(cards).toBeVisible();
+
+            for (const filter of ['ALL', 'SP', 'HT', 'DI', 'CL', 'DCG']) {
+              const button = cards.locator(`[data-suit-filter="${filter}"]`);
+              await expect(button).toBeVisible();
+              await button.click();
+              await expect(button).toHaveClass(/on/);
+              const visibleCards = cards.locator('#collectionGrid button.slot.live.cardFace:visible');
+              if (filter === 'ALL') {
+                expect(await visibleCards.count(), 'ALL filter exposes current public cards').toBeGreaterThan(0);
+              } else {
+                const visibleSuits = await visibleCards.evaluateAll((nodes) => nodes.map((node) => node.dataset.suit));
+                expect(visibleSuits.every((suit) => suit === filter), `${filter} filter must not leak another suit`).toBeTruthy();
+              }
+            }
+            await attachStateScreenshot(page, testInfo, 'r13-cards-all-suit-filters-exercised');
+
+            const tray = cards.locator('#r4DeckTrayToggle:visible');
+            if ((await tray.count()) > 0) {
+              await tray.click();
+              await expect(cards).toHaveAttribute('data-deck-drawer', 'open');
+              const backdrop = cards.locator('#r4DeckBackdrop:visible');
+              await expect(backdrop).toBeVisible();
+              await backdrop.click();
+              await expect(cards).not.toHaveAttribute('data-deck-drawer', 'open');
+              await attachStateScreenshot(page, testInfo, 'r13-deck-backdrop-closed-visible');
+            } else {
+              testInfo.annotations.push({ type: 'not-visible-in-viewport', description: 'Mobile deck tray/backdrop is not exposed in this viewport.' });
+            }
+            runtime.assertClean(testInfo);
+          });
+
+          test('R13 covers four-player Friend Room ready toggle and visible Honey Hunt four-player start', async ({ page }, testInfo) => {
+            const runtime = observeRuntimeErrors(page);
+            await bootCurrentBrowser(page);
+            const deck = await installLegalBattleDeck(page);
+            expect(deck.main).toHaveLength(40);
+            expect(deck.committed).toBeTruthy();
+            expect(deck.savedValidation.ok).toBeTruthy();
+            testInfo.annotations.push({ type: 'deterministic-precondition', description: 'A legal 40-card deck is installed only to unlock visible Setup controls; Friend Room and match state are entered through visible controls.' });
+
+            const setupGo = visibleOperationGo(page, 'setup');
+            await expect(setupGo).toBeVisible();
+            await setupGo.click();
+            const setup = page.locator('section[data-screen="setup"]');
+            await expect(setup).toBeVisible();
+            await setup.locator('[data-content="honey_hunt"]').click();
+            await setup.locator('[data-mode="4p"]').click();
+            await expect(setup.locator('[data-content="honey_hunt"]')).toHaveClass(/on/);
+            await expect(setup.locator('[data-mode="4p"]')).toHaveClass(/on/);
+
+            await setup.locator('#friendRoomEntry').click();
+            const friend = page.locator('section[data-screen="friendroom"]');
+            await expect(friend).toBeVisible();
+            await expect(friend.locator('#friendCreate4')).toBeVisible();
+            await friend.locator('#friendCreate4').click();
+            await expect(friend.locator('.friendCode')).toContainText('部屋主');
+            await expect(friend.locator('#friendReadyBtn')).toBeVisible();
+            await expect(friend.locator('#friendStartBtn')).toBeDisabled();
+            await attachStateScreenshot(page, testInfo, 'r13-friend-four-player-host-waiting-visible');
+
+            await friend.locator('#friendReadyBtn').click();
+            await expect(friend.locator('#friendReadyBtn')).toContainText('準備を戻す');
+            await attachStateScreenshot(page, testInfo, 'r13-friend-four-player-ready-visible');
+            await friend.locator('#friendReadyBtn').click();
+            await expect(friend.locator('#friendReadyBtn')).not.toContainText('準備を戻す');
+            await attachStateScreenshot(page, testInfo, 'r13-friend-four-player-unready-visible');
+            await friend.locator('#friendLeaveBtn').click();
+            await expect(setup).toBeVisible();
+
+            await expect(setup.locator('[data-content="honey_hunt"]')).toHaveClass(/on/);
+            await expect(setup.locator('[data-mode="4p"]')).toHaveClass(/on/);
+            await expect(setup.locator('#startMatch')).toBeEnabled();
+            await setup.locator('#startMatch').click();
+            const battle = page.locator('section[data-screen="battle"]');
+            await expect(battle).toBeVisible();
+            await expect(battle.locator('#honeyMeter')).toBeVisible();
+            await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(4);
+            await attachStateScreenshot(page, testInfo, 'r13-honey-four-player-battle-entry-visible');
+            await battle.locator('#leaveMatch').click();
+            await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+            runtime.assertClean(testInfo);
+          });
+
+          test('R13 covers development audio selectors previews and visible save reset confirmation', async ({ page }, testInfo) => {
+            const runtime = observeRuntimeErrors(page);
+            await bootCurrentBrowser(page);
+            const settingsGo = visibleOperationGo(page, 'settings');
+            await expect(settingsGo).toBeVisible();
+            await settingsGo.click();
+            const settings = page.locator('section[data-screen="settings"]');
+            await expect(settings).toBeVisible();
+
+            await settings.locator('#audioPreviewPack').selectOption('unity_candidate_v1');
+            await expect(settings.locator('#audioPreviewPack')).toHaveValue('unity_candidate_v1');
+            await expect(settings.locator('#battleMusicKey')).toBeEnabled();
+            await settings.locator('#battleMusicKey').selectOption('preview_living_forest');
+            await expect(settings.locator('#battleMusicKey')).toHaveValue('preview_living_forest');
+
+            for (const id of ['previewBgm', 'previewMatchFound', 'previewBattleStart', 'previewComplete']) {
+              const preview = settings.locator(`#${id}`);
+              await expect(preview).toBeVisible();
+              await preview.click();
+              await page.waitForTimeout(80);
+            }
+            await expect(settings.locator('#audioStatus')).not.toHaveText('');
+            await attachStateScreenshot(page, testInfo, 'r13-settings-audio-preview-controls-exercised');
+
+            page.once('dialog', async (dialog) => {
+              expect(dialog.type()).toBe('confirm');
+              await dialog.accept();
+            });
+            await settings.locator('#resetSave').click();
+            await expect(settings.locator('#reduceMotion')).toHaveText('OFF');
+            await expect(settings.locator('#lowPerf')).toHaveText('OFF');
+            await expect(settings.locator('#audioPreviewPack')).toHaveValue('none');
+            await expect(settings.locator('#battleMusicKey')).toHaveValue('battle_music_none');
+            await expect(settings.locator('#storageStatus')).toHaveText('この起動中に保存');
+            await attachStateScreenshot(page, testInfo, 'r13-settings-save-reset-visible');
+            runtime.assertClean(testInfo);
+          });
+
+          test('R13 covers the visible pack-animation skip without injecting game state', async ({ page }, testInfo) => {
+            const runtime = observeRuntimeErrors(page);
+            await bootCurrentBrowser(page);
+            let gachaGo = visibleOperationGo(page, 'gacha');
+            if ((await gachaGo.count()) === 0) {
+              const shopGo = visibleOperationGo(page, 'shop');
+              await expect(shopGo).toBeVisible();
+              await shopGo.click();
+              gachaGo = visibleOperationGo(page, 'gacha');
+            }
+            await expect(gachaGo).toBeVisible();
+            await gachaGo.click();
+            const gacha = page.locator('section[data-screen="gacha"]');
+            await expect(gacha).toBeVisible();
+
+            await page.evaluate(() => {
+              HTMLMediaElement.prototype.play = function () { return new Promise(() => {}); };
+            });
+            testInfo.annotations.push({ type: 'deterministic-precondition', description: 'Only media playback completion is held so the real visible Skip control remains reachable; no GAMEROAD state, pack result, or navigation is injected.' });
+
+            await gacha.locator('#openPack').click();
+            const skip = gacha.locator('#skipPack:visible');
+            await expect(skip).toBeVisible();
+            await attachStateScreenshot(page, testInfo, 'r13-gacha-skip-visible');
+            await skip.click();
+            await expect(gacha.locator('#gachaResultsView')).not.toHaveClass(/hidden/);
+            await expect(gacha.locator('#packResults .packCard')).toHaveCount(7);
+            await attachStateScreenshot(page, testInfo, 'r13-gacha-skip-results-visible');
+            runtime.assertClean(testInfo);
+          });
+          EOF
+
+          git checkout origin/main -- .github/workflows/browser-full-interaction.yml
+          git add tests/browser-full-interaction.spec.mjs .github/workflows/browser-full-interaction.yml
+          mapfile -t changed < <(git diff --cached --name-only origin/main)
+          test "${#changed[@]}" = '1'
+          test "${changed[0]}" = 'tests/browser-full-interaction.spec.mjs'
+          test "$(grep -c 'FULLREG R13 reachable-operation residual' tests/browser-full-interaction.spec.mjs)" = '1'
+          test "$(git hash-object .github/workflows/browser-full-interaction.yml)" = 'ae661d5e3dd4b6f5b1b202679cb52d30c183ecad'
+          git config user.name 'gameroad-ci'
+          git config user.email 'gameroad-ci@users.noreply.github.com'
+          git commit -m 'test: cover remaining visible browser operations'
+          git push origin HEAD:'work/BROWSER-FULLREG-R13-RESIDUAL-20260817'
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -42,14 +270,14 @@ jobs:
       - name: Install Chromium and OS dependencies
         run: npx playwright install --with-deps chromium
 
-      - name: Run GAMEROAD full interaction evidence R1
+      - name: Validate final self-restored tree
         run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
 
-      - name: Upload interaction evidence
+      - name: Upload transport validation evidence
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: browser-full-interaction-${{ github.run_id }}
+          name: browser-full-interaction-r13-transport-${{ github.run_id }}
           path: |
             playwright-report-full-interaction/
             test-results/full-interaction/

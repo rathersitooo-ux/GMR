@@ -1,0 +1,55 @@
+name: Battle Replay R4 version authority extractor
+
+on:
+  push:
+    branches:
+      - work/BATTLE-REPLAY-RUNTIME-CONTRACT-001-R4-CONTEXT
+
+permissions:
+  contents: write
+
+jobs:
+  extract-version-authority:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Verify production blob and extract bounded version definitions
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="browser/GAMEROAD.html"
+          expected_blob="c7f5ebf7828840de695093cdd782882d0f00aeba"
+          [[ "$(git hash-object "${target}")" == "${expected_blob}" ]]
+          python3 - <<'PY'
+          from pathlib import Path
+          text=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          needles=['__GAMEROAD_BUILD__','DECK_RULE=','DECK_RULE =','const DECK_RULE','let DECK_RULE','CARDS=','CARDS =','const CARDS','CARD_VERSION','cardVersion','contentVersion','rulesVersion','stateVersion','BUILD_VERSION','buildVersion','releaseVersion']
+          radius=1800
+          out=[]
+          for needle in needles:
+              hits=[];pos=0
+              while len(hits)<6:
+                  i=text.find(needle,pos)
+                  if i<0: break
+                  hits.append(i);pos=i+len(needle)
+              out.append(f'\n===== {needle!r} HITS={len(hits)} =====')
+              for n,i in enumerate(hits,1):
+                  lo=max(0,i-radius);hi=min(len(text),i+len(needle)+radius)
+                  snippet=text[lo:hi].replace('><','>\n<')
+                  out.append(f'--- HIT {n} OFFSET={i} ---\n{snippet}\n--- END HIT {n} ---')
+          Path('evidence/battle-replay-r4-version-context.txt').write_text('\n'.join(out),encoding='utf-8')
+          PY
+          test -s evidence/battle-replay-r4-version-context.txt
+      - name: Commit evidence and self-remove extractor
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/battle-replay-r4-version-context.yml
+          git config user.name "gameroad-r4-bot"
+          git config user.email "gameroad-r4-bot@users.noreply.github.com"
+          git add evidence/battle-replay-r4-version-context.txt .github/workflows/battle-replay-r4-version-context.yml
+          git commit -m "[BATTLE-REPLAY R4] capture current version authority context"
+          git push origin HEAD:work/BATTLE-REPLAY-RUNTIME-CONTRACT-001-R4-CONTEXT

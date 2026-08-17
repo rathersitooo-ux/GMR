@@ -69,7 +69,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf node_modules playwright-report test-results tools/__pycache__
+          rm -rf node_modules playwright-report playwright-report-full-interaction test-results tools/__pycache__
           git diff --check -- browser/GAMEROAD.html tests/battle-replay-live-adapter.test.mjs
           git rm .github/workflows/codex-battle-replay-r8-apply.yml tools/codex-battle-replay-r8-apply.py
           git add browser/GAMEROAD.html tests/battle-replay-live-adapter.test.mjs

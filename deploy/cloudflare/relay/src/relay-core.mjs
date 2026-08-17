@@ -1,7 +1,9 @@
 export const WS_WIRE = 'gameroad.wsrelay.v1';
 export const CHANNEL_PREFIX = 'gameroad.friend.r2.';
 export const MAX_GUESTS = 3;
+export const TRANSPORT_PRESENCE_TYPE = 'transport_presence';
 const CODE_RE = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{7}$/;
+const TRANSPORT_PRESENCE_KINDS = new Set(['disconnect', 'rejoin', 'sync']);
 
 export function emptyRoom() {
   return { hostClientId: '', guests: {} };
@@ -32,6 +34,26 @@ export function validClientId(value) {
 export function safeToken(value) {
   const text = String(value || '');
   return text.length <= 256 ? text : '';
+}
+
+export function makeTransportPresenceFrame(code, clientId, kind) {
+  const safeCode = String(code || '');
+  const safeClientId = String(clientId || '');
+  const safeKind = String(kind || '');
+  if (!CODE_RE.test(safeCode)) throw new TypeError('TRANSPORT_PRESENCE_CODE_INVALID');
+  if (!validClientId(safeClientId)) throw new TypeError('TRANSPORT_PRESENCE_CLIENT_INVALID');
+  if (!TRANSPORT_PRESENCE_KINDS.has(safeKind)) throw new TypeError('TRANSPORT_PRESENCE_KIND_INVALID');
+  return {
+    wire: WS_WIRE,
+    op: 'data',
+    payload: {
+      v: 2,
+      code: safeCode,
+      type: TRANSPORT_PRESENCE_TYPE,
+      clientId: safeClientId,
+      kind: safeKind,
+    },
+  };
 }
 
 export function admitConnection(roomInput, handshake, active = []) {
@@ -72,6 +94,7 @@ export function routeFrame(roomInput, sender, frame, active = []) {
   }
   const payload = frame.payload;
   if (String(payload.code || '') !== parsed.code) return reject('transport_room_mismatch', room);
+  if (payload.type === TRANSPORT_PRESENCE_TYPE) return reject('transport_presence_reserved', room);
 
   if (sender.role === 'guest') {
     if (String(payload.clientId || '') !== sender.clientId) return reject('transport_client_mismatch', room);

@@ -40,6 +40,20 @@ function collectStaticErrors(html) {
     errors.push('data-go navigation wiring is missing');
   }
 
+  const hatePresenceContracts = [
+    [/import\(['"]\.\/hate-peer-presence-core\.mjs['"]\)/, 'HATE peer presence core is not mounted in production Browser'],
+    [/FRIEND_TRANSPORT_PRESENCE_TYPE=['"]transport_presence['"]/, 'reserved transport presence type is missing'],
+    [/m\.type===FRIEND_TRANSPORT_PRESENCE_TYPE/, 'server transport presence is not handled by the host'],
+    [/friendApplyTransportPresence\(m\)/, 'server presence frame is not passed to authoritative presence core'],
+    [/a\.s\.connected=friendPresenceEligible\(cid\)/, 'join does not project authoritative presence eligibility'],
+    [/s\.connected=friendPresenceEligible\(cid\)/, 'sync does not project authoritative presence eligibility'],
+    [/FRIEND_PRESENCE\.states\.delete\(cid\)/, 'explicit leave does not reset peer presence session state'],
+    [/FRIEND_PRESENCE\.states\.clear\(\)/, 'friend-room reset does not clear peer presence session state'],
+  ];
+  for (const [pattern, message] of hatePresenceContracts) {
+    if (!pattern.test(html)) errors.push(message);
+  }
+
   const dedicatedBattleContracts = [
     [/id=["']battlePhaseSurface["']/, 'missing dedicated battle phase surface'],
     [/id=["']battlePhaseResolutionSlot["']/, 'missing dedicated battle phase resolution slot'],

@@ -2,8 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   WS_WIRE,
+  TRANSPORT_PRESENCE_TYPE,
   admitConnection,
+  bumpGuestPresenceRevision,
   emptyRoom,
+  makeTransportPresenceFrame,
   routeFrame,
 } from '../relay/src/relay-core.mjs';
 
@@ -75,12 +78,15 @@ test('host-established auth token rejects a bad reconnect without replacing acti
   assert.equal(bad.room.guests.g1.authToken, 'auth-1');
 });
 
-test('correct reconnect may replace the old socket only after auth validation', () => {
+test('correct reconnect may replace the old socket only after auth validation and advances authoritative presence revision', () => {
   let room = admitGuest(roomWithHost(), 'g1');
   room.guests.g1.authToken = 'auth-1';
+  assert.equal(room.guests.g1.presenceRevision, 1);
   const ok = admitConnection(room, guest('g1', 'auth-1'), active(host, guest('g1', 'auth-1')));
   assert.equal(ok.ok, true);
   assert.equal(ok.replaceClientId, 'g1');
+  assert.equal(ok.presenceRevision, 2);
+  assert.equal(ok.room.guests.g1.presenceRevision, 2);
 });
 
 test('guest auth must match the token bound by host accept', () => {
@@ -102,4 +108,53 @@ test('unknown wire/op fails closed', () => {
   const room = roomWithHost();
   const result = routeFrame(room, host, { wire: 'wrong', op: 'data', payload: {} }, active(host));
   assert.equal(result.reason, 'transport_frame_invalid');
+});
+
+test('server-only transport presence frame carries exact session and revision authority', () => {
+  assert.deepEqual(makeTransportPresenceFrame('ABCDEFG', 'g1', `${channel}:g1`, 3, 'rejoin'), {
+    wire: WS_WIRE,
+    op: 'data',
+    payload: {
+      v: 2,
+      code: 'ABCDEFG',
+      type: TRANSPORT_PRESENCE_TYPE,
+      clientId: 'g1',
+      sessionId: `${channel}:g1`,
+      revision: 3,
+      kind: 'rejoin',
+    },
+  });
+  assert.equal(makeTransportPresenceFrame('ABCDEFG', 'g1', `${channel}:g1`, 4, 'disconnect').payload.kind, 'disconnect');
+  assert.equal(makeTransportPresenceFrame('ABCDEFG', 'g1', `${channel}:g1`, 5, 'sync').payload.revision, 5);
+});
+
+test('application payload cannot spoof reserved transport presence', () => {
+  const room = admitGuest(roomWithHost(), 'g1');
+  const result = routeFrame(
+    room,
+    guest('g1'),
+    frame({ type: TRANSPORT_PRESENCE_TYPE, clientId: 'g1', sessionId: 'forged', revision: 999, kind: 'disconnect', seq: 7 }),
+    active(host, guest('g1')),
+  );
+  assert.equal(result.reason, 'transport_presence_reserved');
+});
+
+test('transport presence builder rejects malformed identity, session, revision and kind', () => {
+  assert.throws(() => makeTransportPresenceFrame('bad', 'g1', 's', 1, 'disconnect'), /TRANSPORT_PRESENCE_CODE_INVALID/);
+  assert.throws(() => makeTransportPresenceFrame('ABCDEFG', '', 's', 1, 'disconnect'), /TRANSPORT_PRESENCE_CLIENT_INVALID/);
+  assert.throws(() => makeTransportPresenceFrame('ABCDEFG', 'g1', '', 1, 'disconnect'), /TRANSPORT_PRESENCE_SESSION_INVALID/);
+  assert.throws(() => makeTransportPresenceFrame('ABCDEFG', 'g1', 's', 0, 'disconnect'), /TRANSPORT_PRESENCE_REVISION_INVALID/);
+  assert.throws(() => makeTransportPresenceFrame('ABCDEFG', 'g1', 's', 1, 'open'), /TRANSPORT_PRESENCE_KIND_INVALID/);
+});
+
+test('presence revision bump is monotonic and preserves auth state', () => {
+  const room = admitGuest(roomWithHost(), 'g1', 'auth-1');
+  assert.equal(room.guests.g1.presenceRevision, 1);
+  const next = bumpGuestPresenceRevision(room, 'g1');
+  assert.equal(next.ok, true);
+  assert.equal(next.revision, 2);
+  assert.equal(next.room.guests.g1.presenceRevision, 2);
+  assert.equal(next.room.guests.g1.authToken, 'auth-1');
+  const third = bumpGuestPresenceRevision(next.room, 'g1');
+  assert.equal(third.revision, 3);
 });

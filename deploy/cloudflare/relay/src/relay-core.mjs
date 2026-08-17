@@ -1,10 +1,16 @@
 export const WS_WIRE = 'gameroad.wsrelay.v1';
 export const CHANNEL_PREFIX = 'gameroad.friend.r2.';
 export const MAX_GUESTS = 3;
+export const TRANSPORT_PRESENCE_TYPE = 'transport_presence';
 const CODE_RE = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{7}$/;
+const TRANSPORT_PRESENCE_KINDS = new Set(['disconnect', 'rejoin', 'sync']);
 
 export function emptyRoom() {
   return { hostClientId: '', guests: {} };
+}
+
+function safePresenceRevision(value) {
+  return Number.isSafeInteger(value) && value >= 0 ? value : 0;
 }
 
 export function normalizeRoom(raw) {
@@ -12,7 +18,10 @@ export function normalizeRoom(raw) {
   const guests = {};
   for (const [clientId, value] of Object.entries(room.guests || {})) {
     if (!validClientId(clientId)) continue;
-    guests[clientId] = { authToken: safeToken(value?.authToken) };
+    guests[clientId] = {
+      authToken: safeToken(value?.authToken),
+      presenceRevision: safePresenceRevision(value?.presenceRevision),
+    };
   }
   return { hostClientId: validClientId(room.hostClientId) ? room.hostClientId : '', guests };
 }
@@ -34,6 +43,31 @@ export function safeToken(value) {
   return text.length <= 256 ? text : '';
 }
 
+export function makeTransportPresenceFrame(code, clientId, sessionId, revision, kind) {
+  const safeCode = String(code || '');
+  const safeClientId = String(clientId || '');
+  const safeSessionId = String(sessionId || '');
+  const safeKind = String(kind || '');
+  if (!CODE_RE.test(safeCode)) throw new TypeError('TRANSPORT_PRESENCE_CODE_INVALID');
+  if (!validClientId(safeClientId)) throw new TypeError('TRANSPORT_PRESENCE_CLIENT_INVALID');
+  if (!safeSessionId || safeSessionId.length > 512) throw new TypeError('TRANSPORT_PRESENCE_SESSION_INVALID');
+  if (!Number.isSafeInteger(revision) || revision <= 0) throw new TypeError('TRANSPORT_PRESENCE_REVISION_INVALID');
+  if (!TRANSPORT_PRESENCE_KINDS.has(safeKind)) throw new TypeError('TRANSPORT_PRESENCE_KIND_INVALID');
+  return {
+    wire: WS_WIRE,
+    op: 'data',
+    payload: {
+      v: 2,
+      code: safeCode,
+      type: TRANSPORT_PRESENCE_TYPE,
+      clientId: safeClientId,
+      sessionId: safeSessionId,
+      revision,
+      kind: safeKind,
+    },
+  };
+}
+
 export function admitConnection(roomInput, handshake, active = []) {
   const room = normalizeRoom(roomInput);
   const parsed = parseChannel(handshake?.channel);
@@ -53,14 +87,28 @@ export function admitConnection(roomInput, handshake, active = []) {
   const known = room.guests[clientId];
   if (known?.authToken && authToken !== known.authToken) return reject('transport_auth_mismatch', room);
   if (!known && Object.keys(room.guests).length >= MAX_GUESTS) return reject('room_full', room);
-  room.guests[clientId] = known || { authToken };
+  const presenceRevision = safePresenceRevision(known?.presenceRevision) + 1;
+  room.guests[clientId] = {
+    authToken: known?.authToken || authToken,
+    presenceRevision,
+  };
   const sameActive = active.find((x) => x?.role === 'guest' && x?.clientId === clientId) || null;
   return {
     ok: true,
     room,
     attachment: { channel: parsed.channel, code: parsed.code, role, clientId, authToken: known?.authToken || authToken },
+    presenceRevision,
     replaceClientId: sameActive ? clientId : '',
   };
+}
+
+export function bumpGuestPresenceRevision(roomInput, clientId) {
+  const room = normalizeRoom(roomInput);
+  const safeClientId = String(clientId || '');
+  const guest = room.guests[safeClientId];
+  if (!guest) return { ok: false, reason: 'transport_unknown_guest', room, revision: 0 };
+  guest.presenceRevision = safePresenceRevision(guest.presenceRevision) + 1;
+  return { ok: true, room, revision: guest.presenceRevision };
 }
 
 export function routeFrame(roomInput, sender, frame, active = []) {
@@ -72,6 +120,7 @@ export function routeFrame(roomInput, sender, frame, active = []) {
   }
   const payload = frame.payload;
   if (String(payload.code || '') !== parsed.code) return reject('transport_room_mismatch', room);
+  if (payload.type === TRANSPORT_PRESENCE_TYPE) return reject('transport_presence_reserved', room);
 
   if (sender.role === 'guest') {
     if (String(payload.clientId || '') !== sender.clientId) return reject('transport_client_mismatch', room);

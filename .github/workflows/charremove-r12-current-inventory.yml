@@ -1,64 +1,91 @@
-name: Character Remove R12 Current Inventory
+name: Character Remove R12 Exact Apply
 
 on:
   push:
     branches:
       - work/CHARACTER-REMOVE-R12-FIRSTPLAY-20260817
-  workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  inventory:
+  apply:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
-      - name: Verify exact current Browser identity
+          fetch-depth: 2
+      - name: Recheck exact base and Browser immediately before product write
         shell: bash
         run: |
           set -euo pipefail
-          test -f browser/GAMEROAD.html
+          test "$(git rev-parse HEAD^)" = "550623229e31b863b889ff06e7b3244d81387735"
+          git fetch origin main --depth=1
+          test "$(git rev-parse origin/main)" = "50f37a9ebcf1b4f2e8a7984ff3d84bd774fe6d6e"
           test "$(git hash-object browser/GAMEROAD.html)" = "ef6c6a8712f8d1cf45774716da74b9cf1a87100a"
-          wc -c browser/GAMEROAD.html
-      - name: Build bounded current character inventory
+      - name: Apply minimal roster retirement
         shell: bash
         run: |
           set -euo pipefail
-          node <<'NODE'
-          const fs=require('fs'); const crypto=require('crypto');
-          const path='browser/GAMEROAD.html'; const text=fs.readFileSync(path,'utf8'); const bytes=fs.readFileSync(path);
-          const needles={
-            rem:['レム','partner.creator.rem','4834621143'],
-            celica:['セリカ','partner.creator.celica','1405809866'],
-            paimon:['パイモン','partner.creator.paimon','8117753787'],
-            sinon:['シノン','partner.creator.sinon','166894654'],
-            miku:['初音ミク','partner.creator.miku','6669297625'],
-            fields:['PROD_CHARS','selectedChar','partnerId','characterId','advicePartner']
-          };
-          function all(needle){let out=[],p=0;while((p=text.indexOf(needle,p))>=0){out.push(p);p+=Math.max(1,needle.length);if(out.length>=300)break;}return out;}
-          function ctx(needle,r=450){return all(needle).map(i=>({index:i,context:text.slice(Math.max(0,i-r),Math.min(text.length,i+needle.length+r)).replace(/\s+/g,' ')}));}
-          const inventory={source:{path,bytes:bytes.length,gitBlob:process.env.BLOB||'',sha256:crypto.createHash('sha256').update(bytes).digest('hex')},groups:{}};
-          for(const [g,ns] of Object.entries(needles)){inventory.groups[g]={};for(const n of ns)inventory.groups[g][n]={count:all(n).length,hits:ctx(n)}}
-          function slice(start,end,max=50000){const a=text.indexOf(start);if(a<0)return {error:'start-not-found',startNeedle:start};const z=end?text.indexOf(end,a+start.length):-1;const b=z>=0?Math.min(text.length,z+end.length):Math.min(text.length,a+max);return {start:a,end:b,text:text.slice(a,b)};}
-          inventory.slices={
-            roster:slice('const PROD_CHARS=[','const AUDIO_DEFAULTS',30000),
-            save:slice('function savePack()','function renderHome()',60000),
-            characters:slice('function renderCharacters()','function makePlayer',50000),
-            makePlayer:slice('function makePlayer','function grDeckIdentityDigest',30000)
-          };
-          fs.writeFileSync('charremove-r12-current-inventory.json',JSON.stringify(inventory,null,2));
-          const summary={source:inventory.source,counts:{}};
-          for(const [g,obj] of Object.entries(inventory.groups)){summary.counts[g]={};for(const [n,v] of Object.entries(obj))summary.counts[g][n]=v.count;}
-          console.log('CHARREMOVE_R12_CURRENT_BEGIN'); console.log(JSON.stringify(summary,null,2)); console.log('CHARREMOVE_R12_CURRENT_END');
-          NODE
-        env:
-          BLOB: ef6c6a8712f8d1cf45774716da74b9cf1a87100a
-      - name: Upload current inventory
-        uses: actions/upload-artifact@v4
-        with:
-          name: charremove-r12-current-inventory
-          path: charremove-r12-current-inventory.json
-          if-no-files-found: error
+          python3 <<'PY'
+          from pathlib import Path
+
+          html_path = Path('browser/GAMEROAD.html')
+          html = html_path.read_text()
+          old = " {id:'partner.creator.rem',name:'レム',asset:4834621143},{id:'partner.creator.celica',name:'セリカ',asset:1405809866},{id:'partner.creator.paimon',name:'パイモン',asset:8117753787},{id:'partner.creator.miku',name:'初音ミク',asset:6669297625},{id:'partner.creator.sinon',name:'シノン',asset:166894654}"
+          new = " {id:'partner.creator.miku',name:'初音ミク',asset:6669297625}"
+          if html.count(old) != 1:
+              raise SystemExit(f'exact roster block count must be 1, got {html.count(old)}')
+          html = html.replace(old, new, 1)
+          retired = ['partner.creator.rem','レム','4834621143','partner.creator.celica','セリカ','1405809866','partner.creator.paimon','パイモン','8117753787','partner.creator.sinon','シノン','166894654']
+          leaked = [token for token in retired if token in html]
+          if leaked:
+              raise SystemExit('retired tokens remain: ' + ','.join(leaked))
+          for token in ['partner.creator.miku','初音ミク','6669297625']:
+              if html.count(token) != 1:
+                  raise SystemExit(f'Miku control token count changed: {token}={html.count(token)}')
+          html_path.write_text(html)
+
+          test_path = Path('tests/browser-static-check.mjs')
+          test = test_path.read_text()
+          anchor = "\n  const dedicatedBattleContracts = ["
+          if test.count(anchor) != 1 or 'retiredCharacterTokens' in test:
+              raise SystemExit('browser static-check anchor/state drift')
+          guard = r'''
+  const retiredCharacterTokens = [
+    ['partner.creator.rem', 'retired Rem id remains active'],
+    ['レム', 'retired Rem name remains active'],
+    ['4834621143', 'retired Rem asset remains active'],
+    ['partner.creator.celica', 'retired Celica id remains active'],
+    ['セリカ', 'retired Celica name remains active'],
+    ['1405809866', 'retired Celica asset remains active'],
+    ['partner.creator.paimon', 'retired Paimon id remains active'],
+    ['パイモン', 'retired Paimon name remains active'],
+    ['8117753787', 'retired Paimon asset remains active'],
+    ['partner.creator.sinon', 'retired Sinon id remains active'],
+    ['シノン', 'retired Sinon name remains active'],
+    ['166894654', 'retired Sinon asset remains active'],
+  ];
+  for (const [token, message] of retiredCharacterTokens) {
+    if (html.includes(token)) errors.push(message);
+  }
+  for (const token of ['partner.creator.miku', '初音ミク', '6669297625']) {
+    if (!html.includes(token)) errors.push(`current Miku control token missing: ${token}`);
+  }
+'''
+          test_path.write_text(test.replace(anchor, '\n' + guard + anchor.lstrip('\n'), 1))
+          PY
+          node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+          git diff --check
+      - name: Commit product delta and remove task-private executors
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/charremove-r12-current-inventory.yml .github/workflows/charremove-r12-apply.yml
+          git diff --check
+          git status --short
+          git config user.name "rathersitooo-ux"
+          git config user.email "rathersitooo@gmail.com"
+          git add -A
+          git commit -m "CHARACTER-REMOVE R12: retire four non-current characters"
+          git push origin HEAD:work/CHARACTER-REMOVE-R12-FIRSTPLAY-20260817

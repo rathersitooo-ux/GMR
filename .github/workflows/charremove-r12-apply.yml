@@ -1,0 +1,95 @@
+name: Character Remove R12 Apply
+
+on:
+  push:
+    branches:
+      - work/CHARACTER-REMOVE-R12-FIRSTPLAY-20260817
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Recheck exact base and current Browser immediately before write
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "7385423e64492aa400b179f29e1f3a7d177f52c9"
+          git fetch origin main --depth=1
+          test "$(git rev-parse origin/main)" = "50f37a9ebcf1b4f2e8a7984ff3d84bd774fe6d6e"
+          test "$(git hash-object browser/GAMEROAD.html)" = "ef6c6a8712f8d1cf45774716da74b9cf1a87100a"
+      - name: Apply minimal active-roster retirement and regression guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          html_path = Path('browser/GAMEROAD.html')
+          html = html_path.read_text()
+          old = " {id:'partner.creator.rem',name:'レム',asset:4834621143},{id:'partner.creator.celica',name:'セリカ',asset:1405809866},{id:'partner.creator.paimon',name:'パイモン',asset:8117753787},{id:'partner.creator.miku',name:'初音ミク',asset:6669297625},{id:'partner.creator.sinon',name:'シノン',asset:166894654}"
+          new = " {id:'partner.creator.miku',name:'初音ミク',asset:6669297625}"
+          if html.count(old) != 1:
+              raise SystemExit(f'exact roster block count must be 1, got {html.count(old)}')
+          html = html.replace(old, new, 1)
+          retired = ['partner.creator.rem','レム','4834621143','partner.creator.celica','セリカ','1405809866','partner.creator.paimon','パイモン','8117753787','partner.creator.sinon','シノン','166894654']
+          leaked = [token for token in retired if token in html]
+          if leaked:
+              raise SystemExit('retired active tokens remain: ' + ','.join(leaked))
+          for token in ['partner.creator.miku','初音ミク','6669297625']:
+              if html.count(token) != 1:
+                  raise SystemExit(f'Miku control token count must remain 1: {token}={html.count(token)}')
+          html_path.write_text(html)
+
+          test_path = Path('tests/browser-static-check.mjs')
+          test = test_path.read_text()
+          anchor = "\n  const dedicatedBattleContracts = ["
+          if test.count(anchor) != 1:
+              raise SystemExit('browser static-check anchor drift')
+          guard = r'''
+  const retiredCharacterTokens = [
+    ['partner.creator.rem', 'retired Rem id remains active'],
+    ['レム', 'retired Rem name remains active'],
+    ['4834621143', 'retired Rem asset remains active'],
+    ['partner.creator.celica', 'retired Celica id remains active'],
+    ['セリカ', 'retired Celica name remains active'],
+    ['1405809866', 'retired Celica asset remains active'],
+    ['partner.creator.paimon', 'retired Paimon id remains active'],
+    ['パイモン', 'retired Paimon name remains active'],
+    ['8117753787', 'retired Paimon asset remains active'],
+    ['partner.creator.sinon', 'retired Sinon id remains active'],
+    ['シノン', 'retired Sinon name remains active'],
+    ['166894654', 'retired Sinon asset remains active'],
+  ];
+  for (const [token, message] of retiredCharacterTokens) {
+    if (html.includes(token)) errors.push(message);
+  }
+  for (const token of ['partner.creator.miku', '初音ミク', '6669297625']) {
+    if (!html.includes(token)) errors.push(`current Miku control token missing: ${token}`);
+  }
+'''
+          if 'retiredCharacterTokens' in test:
+              raise SystemExit('character retirement guard unexpectedly already present')
+          test = test.replace(anchor, '\n' + guard + anchor.lstrip('\n'), 1)
+          test_path.write_text(test)
+          PY
+
+          node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+          git diff --check
+      - name: Remove task-private executors and commit product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/charremove-r12-current-inventory.yml .github/workflows/charremove-r12-apply.yml
+          git diff --check
+          git status --short
+          git config user.name "rathersitooo-ux"
+          git config user.email "rathersitooo@gmail.com"
+          git add -A
+          git commit -m "CHARACTER-REMOVE R12: retire four non-current characters"
+          git push origin HEAD:work/CHARACTER-REMOVE-R12-FIRSTPLAY-20260817

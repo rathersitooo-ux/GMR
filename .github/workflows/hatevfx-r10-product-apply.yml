@@ -85,7 +85,7 @@ jobs:
       - name: Re-prove current geometry on 1280x800 844x390 and 390x844
         run: npx playwright test --config=playwright.hatevfx-r8.config.mjs --workers=1
 
-      - name: Enforce and annotate exact geometry conditions
+      - name: Enforce geometry and nonblocking presentation contract
         shell: bash
         run: |
           set -euo pipefail
@@ -122,8 +122,8 @@ jobs:
                   reasons.append('document overflow introduced')
               if not g['partnerVisible']:
                   reasons.append('partner hidden')
-              if pointer == 'none':
-                  reasons.append('HATE dial pointerEvents none')
+              if pointer != 'none':
+                  reasons.append('noninteractive HATE presentation unexpectedly intercepts pointer input')
               if reasons:
                   failed = True
                   print(f'::error file=.github,line=34::{p.name}: {"; ".join(reasons)}')

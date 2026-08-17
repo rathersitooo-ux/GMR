@@ -28,18 +28,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Recheck unchanged main and exact proven control commit
-        shell: bash
-        run: |
-          set -euo pipefail
-          git fetch origin main --quiet
-          test "$(git rev-parse origin/main)" = "${EXPECTED_MAIN_HEAD}"
-          git cat-file -e "${PROVEN_RUN_HEAD}^{commit}"
-          git merge-base --is-ancestor "${PROVEN_RUN_HEAD}" HEAD
-          test "$(git hash-object "$(git rev-parse --show-toplevel)/browser/GAMEROAD.html")" = "${EXPECTED_HTML_BLOB}"
-          echo "controller-verified proof run ${PROVEN_RUN_ID} uses commit ${PROVEN_RUN_HEAD}; steps 3-10 were exact SUCCESS"
-
-      - name: Build exact product-only branch from current main
+      - name: Build exact product-only branch from fetched current main
         shell: bash
         run: |
           set -euo pipefail
@@ -47,7 +36,13 @@ jobs:
             echo "product branch already exists: ${PRODUCT_BRANCH}" >&2
             exit 1
           fi
-          git worktree add -b "${PRODUCT_BRANCH}" /tmp/hate-product origin/main
+          git fetch origin main --quiet
+          MAIN_HEAD="$(git rev-parse FETCH_HEAD)"
+          echo "fetched_main=${MAIN_HEAD}"
+          test "${MAIN_HEAD}" = "${EXPECTED_MAIN_HEAD}"
+          git cat-file -e "${PROVEN_RUN_HEAD}^{commit}"
+          git merge-base --is-ancestor "${PROVEN_RUN_HEAD}" HEAD
+          git worktree add -b "${PRODUCT_BRANCH}" /tmp/hate-product "${MAIN_HEAD}"
           cd /tmp/hate-product
           test "$(git rev-parse HEAD)" = "${EXPECTED_MAIN_HEAD}"
           test "$(git hash-object browser/GAMEROAD.html)" = "${EXPECTED_HTML_BLOB}"

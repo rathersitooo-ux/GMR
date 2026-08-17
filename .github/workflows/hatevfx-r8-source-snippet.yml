@@ -1,0 +1,60 @@
+name: HATEVFX R8 Exact Source Snippet
+
+on:
+  push:
+    branches:
+      - 'work/HATE-EXPLOSION-FORMAL-ASSET-ACCEPT-001-R8-GEOMETRY'
+    paths:
+      - '.github/workflows/hatevfx-r8-source-snippet.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  source-snippet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      EXPECTED_MAIN_HEAD: 632edb85c82eb2f166f42b5a1ea698e58a9a8a11
+      EXPECTED_HTML_BLOB: ad8dc8e7fd13904260ea2ac6abf89f3e9ac724a5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Assert exact unchanged production baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          test "$(git rev-parse origin/main)" = "${EXPECTED_MAIN_HEAD}"
+          test "$(git hash-object browser/GAMEROAD.html)" = "${EXPECTED_HTML_BLOB}"
+          test -z "$(git diff --name-only origin/main -- browser/GAMEROAD.html)"
+      - name: Capture raw HATE source neighborhoods
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p test-results/hatevfx-r8
+          python3 - <<'PY' | tee test-results/hatevfx-r8/source-snippets.txt
+          from pathlib import Path
+          text=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          needles=['hateDial','.battle .hateDial','battleResourceDock']
+          for needle in needles:
+              starts=[]
+              i=0
+              while True:
+                  i=text.find(needle,i)
+                  if i<0: break
+                  starts.append(i); i+=len(needle)
+              print(f'=== {needle!r} count={len(starts)} offsets={starts} ===')
+              for n,pos in enumerate(starts,1):
+                  a=max(0,pos-700); b=min(len(text),pos+1200)
+                  print(f'--- occurrence {n} offset={pos} ---')
+                  print(text[a:b])
+                  print('--- end ---')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hatevfx-r8-source-snippets-${{ github.run_id }}
+          path: test-results/hatevfx-r8/source-snippets.txt
+          if-no-files-found: error
+          retention-days: 14

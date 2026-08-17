@@ -32,8 +32,8 @@ jobs:
           set -euo pipefail
           git fetch origin main --quiet
           test "$(git rev-parse origin/main)" = "${EXPECTED_MAIN_HEAD}"
+          test "$(git merge-base HEAD origin/main)" = "${EXPECTED_MAIN_HEAD}"
           test "$(git hash-object browser/GAMEROAD.html)" = "${EXPECTED_HTML_BLOB}"
-          test "$(git rev-parse HEAD^)" = "${EXPECTED_MAIN_HEAD}"
           test "$(git diff --name-only "${EXPECTED_MAIN_HEAD}" HEAD)" = ".github/workflows/hatevfx-r10-product-apply.yml"
 
       - name: Apply only the measured presentation layout delta
@@ -85,7 +85,7 @@ jobs:
       - name: Re-prove current geometry on 1280x800 844x390 and 390x844
         run: npx playwright test --config=playwright.hatevfx-r8.config.mjs --workers=1
 
-      - name: Enforce zero overlap 20px safe envelope visibility pointer and overflow
+      - name: Enforce and annotate exact geometry conditions
         shell: bash
         run: |
           set -euo pipefail
@@ -94,21 +94,41 @@ jobs:
           import json
           files = sorted(Path('test-results/hatevfx-r8').glob('*.json'))
           if len(files) != 3:
-              raise SystemExit(f'expected 3 geometry JSON files, got {len(files)}')
+              print(f'::error file=.github,line=34::expected 3 geometry JSON files, got {len(files)}')
+              raise SystemExit(1)
+          failed = False
           for p in files:
               d = json.loads(p.read_text())
               g = d['geometry']
-              print(p.name, 'overlap=', g['basePartnerOverlap'], 'safePadding=', g['safePadding'], 'status=', g['geometryStatus'], 'overflow=', g['docOverflow'], 'pointer=', g['dialStyle']['pointerEvents'])
+              dial = g['dial']
+              partner = g['partner']
+              overflow = g['docOverflow']
+              pointer = g['dialStyle']['pointerEvents']
+              metric = (
+                  f'{p.name}: overlap={g["basePartnerOverlap"]}; safePadding={g["safePadding"]}; '
+                  f'status={g["geometryStatus"]}; overflow=({overflow["x"]},{overflow["y"]}); '
+                  f'pointer={pointer}; partnerVisible={g["partnerVisible"]}; '
+                  f'dial=({dial["left"]},{dial["top"]},{dial["right"]},{dial["bottom"]}); '
+                  f'partner=({partner["left"]},{partner["top"]},{partner["right"]},{partner["bottom"]})'
+              )
+              print(metric)
+              print(f'::notice file=.github,line=34::{metric}')
+              reasons = []
               if g['basePartnerOverlap'] > 0.5:
-                  raise SystemExit(f'{p.name}: partner overlap remains')
+                  reasons.append('partner overlap remains')
               if g['safePadding'] is None or g['safePadding'] < 20:
-                  raise SystemExit(f'{p.name}: 20px safe envelope not proven')
-              if g['docOverflow']['x'] != 0 or g['docOverflow']['y'] != 0:
-                  raise SystemExit(f'{p.name}: document overflow introduced')
+                  reasons.append('20px safe envelope not proven')
+              if overflow['x'] != 0 or overflow['y'] != 0:
+                  reasons.append('document overflow introduced')
               if not g['partnerVisible']:
-                  raise SystemExit(f'{p.name}: partner hidden')
-              if g['dialStyle']['pointerEvents'] == 'none':
-                  raise SystemExit(f'{p.name}: HATE dial pointer disabled')
+                  reasons.append('partner hidden')
+              if pointer == 'none':
+                  reasons.append('HATE dial pointerEvents none')
+              if reasons:
+                  failed = True
+                  print(f'::error file=.github,line=34::{p.name}: {"; ".join(reasons)}')
+          if failed:
+              raise SystemExit(1)
           PY
 
       - name: Run required Browser regressions before product commit

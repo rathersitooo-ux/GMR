@@ -43,6 +43,8 @@ jobs:
 
           python3 - <<'PY'
           from pathlib import Path
+          import textwrap
+
           p = Path('/tmp/r14-residual.mjs')
           s = p.read_text()
 
@@ -52,39 +54,14 @@ jobs:
               raise SystemExit(f'expected one storage status assertion, found {s.count(old_status)}')
           s = s.replace(old_status, new_status, 1)
 
-          old_route = '''  const currentEndpoint = (await battle.locator('#endpointText').textContent()) || '';
-          const oneStep = battle.locator('#board .node.reachable[data-move-distance="1"]:visible').first();
-          await expect(oneStep, 'at least one real one-step reachable node after direct Road selection').toBeVisible();
-          const oneStepId = await oneStep.getAttribute('data-pos');
-          expect(oneStepId).toBeTruthy();
-          await oneStep.click();
-          await expect(battle.locator('#endpointText')).toHaveText(oneStepId);
-          expect(oneStepId).not.toBe(currentEndpoint);
-          await attachStateScreenshot(page, testInfo, 'r13-direct-select-node-route-visible');
+          start_token = "  const currentEndpoint = (await battle.locator('#endpointText').textContent()) || '';"
+          end_token = "  await attachStateScreenshot(page, testInfo, 'r13-route-undo-after-real-move-visible');"
+          if s.count(start_token) != 1 or s.count(end_token) != 1:
+              raise SystemExit(f'route markers must be unique: start={s.count(start_token)} end={s.count(end_token)}')
+          start = s.index(start_token)
+          end = s.index(end_token, start) + len(end_token)
 
-          await battle.locator('#clearPath').click();
-          await expect(battle.locator('#endpointText')).toHaveText(currentEndpoint);
-
-          const dragTarget = battle.locator('#board .node.reachable[data-move-distance="1"]:visible').first();
-          await expect(dragTarget).toBeVisible();
-          const targetId = await dragTarget.getAttribute('data-pos');
-          const avatar = battle.locator('#battleRuntime');
-          const avatarBox = await avatar.boundingBox();
-          const targetBox = await dragTarget.boundingBox();
-          expect(avatarBox).not.toBeNull();
-          expect(targetBox).not.toBeNull();
-          await page.mouse.move(avatarBox.x + avatarBox.width / 2, avatarBox.y + avatarBox.height / 2);
-          await page.mouse.down();
-          await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + targetBox.height / 2, { steps: 10 });
-          await page.mouse.up();
-          await expect(battle.locator('#endpointText')).toHaveText(targetId);
-          await attachStateScreenshot(page, testInfo, 'r13-avatar-drag-route-visible');
-
-          await battle.locator('#clearPath').click();
-          await expect(battle.locator('#endpointText')).toHaveText(currentEndpoint);
-          await attachStateScreenshot(page, testInfo, 'r13-route-undo-after-real-move-visible');'''
-
-          new_route = '''  const currentEndpoint = (await battle.locator('#endpointText').textContent()) || '';
+          raw_route = '''const currentEndpoint = (await battle.locator('#endpointText').textContent()) || '';
           const visibleOneSteps = battle.locator('#board .node.reachable[data-move-distance="1"]:visible');
           const visibleOneStepCount = await visibleOneSteps.count();
           if (visibleOneStepCount > 0) {
@@ -100,7 +77,7 @@ jobs:
               const top = document.elementFromPoint(x, y);
               return {
                 direct: top === node || node.contains(top),
-                blocker: top?.closest?.('#battleRuntime') ? 'battleRuntime' : (top?.id || top?.className || top?.tagName || 'unknown'),
+                blocker: top?.closest?.('#battleRuntime') ? 'battleRuntime' : String(top?.id || top?.className || top?.tagName || 'unknown'),
               };
             });
 
@@ -111,7 +88,7 @@ jobs:
               await battle.locator('#clearPath').click();
               await expect(battle.locator('#endpointText')).toHaveText(currentEndpoint);
             } else {
-              testInfo.annotations.push({ type: 'not-human-reachable', description: `A one-step node is visibly rendered but its center hit target is intercepted by ${String(hitTest.blocker)}; direct node click is not force-clicked.` });
+              testInfo.annotations.push({ type: 'not-human-reachable', description: `A one-step node is visibly rendered but its center hit target is intercepted by ${hitTest.blocker}; direct node click is not force-clicked.` });
               await attachStateScreenshot(page, testInfo, 'r13-direct-node-hit-target-boundary');
             }
 
@@ -139,10 +116,8 @@ jobs:
             testInfo.annotations.push({ type: 'not-human-visible', description: 'No one-step reachable board node is human-visible in this viewport after direct Road selection; direct node click and node-targeted avatar drag are excluded rather than force-clicked.' });
             await attachStateScreenshot(page, testInfo, 'r13-reachable-node-not-visible-boundary');
           }'''
-
-          if s.count(old_route) != 1:
-              raise SystemExit(f'expected one direct route block, found {s.count(old_route)}')
-          s = s.replace(old_route, new_route, 1)
+          new_route = textwrap.indent(textwrap.dedent(raw_route), '  ')
+          s = s[:start] + new_route + s[end:]
           p.write_text(s)
           PY
 

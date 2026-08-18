@@ -8,6 +8,7 @@ const repoRoot = path.resolve(here, '../../..');
 const defaultSource = path.join(repoRoot, 'browser/GAMEROAD.html');
 const defaultCoreSource = path.join(repoRoot, 'browser/deck-save-recovery-core.mjs');
 const defaultPresenceCoreSource = path.join(repoRoot, 'browser/hate-peer-presence-core.mjs');
+const defaultNavigationCoreSource = path.join(repoRoot, 'browser/screen-navigation-core.mjs');
 const defaultDist = path.join(repoRoot, 'deploy/cloudflare/dist');
 
 function gitBlobSha1(buffer) {
@@ -33,18 +34,22 @@ export async function buildPackage({
   source = defaultSource,
   coreSource = defaultCoreSource,
   presenceCoreSource = defaultPresenceCoreSource,
+  navigationCoreSource = defaultNavigationCoreSource,
   dist = defaultDist,
   expectedBlob = '',
   expectedCoreBlob = '',
   expectedPresenceCoreBlob = '',
+  expectedNavigationCoreBlob = '',
   sourceCommit = '',
 } = {}) {
   const input = await readFile(source);
   const coreInput = await readFile(coreSource);
   const presenceCoreInput = await readFile(presenceCoreSource);
+  const navigationCoreInput = await readFile(navigationCoreSource);
   const blob = gitBlobSha1(input);
   const coreBlob = gitBlobSha1(coreInput);
   const presenceCoreBlob = gitBlobSha1(presenceCoreInput);
+  const navigationCoreBlob = gitBlobSha1(navigationCoreInput);
   if (expectedBlob && blob !== expectedBlob) {
     throw new Error(`Browser blob mismatch: expected=${expectedBlob} actual=${blob}`);
   }
@@ -53,6 +58,9 @@ export async function buildPackage({
   }
   if (expectedPresenceCoreBlob && presenceCoreBlob !== expectedPresenceCoreBlob) {
     throw new Error(`HATE peer presence core blob mismatch: expected=${expectedPresenceCoreBlob} actual=${presenceCoreBlob}`);
+  }
+  if (expectedNavigationCoreBlob && navigationCoreBlob !== expectedNavigationCoreBlob) {
+    throw new Error(`Screen navigation core blob mismatch: expected=${expectedNavigationCoreBlob} actual=${navigationCoreBlob}`);
   }
 
   await rm(dist, { recursive: true, force: true });
@@ -75,6 +83,13 @@ export async function buildPackage({
   const presenceCoreRoundTrip = await readFile(presenceCoreOutputPath);
   if (!presenceCoreInput.equals(presenceCoreRoundTrip)) {
     throw new Error('dist/hate-peer-presence-core.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const navigationCoreOutputPath = path.join(dist, 'screen-navigation-core.mjs');
+  await writeFile(navigationCoreOutputPath, navigationCoreInput);
+  const navigationCoreRoundTrip = await readFile(navigationCoreOutputPath);
+  if (!navigationCoreInput.equals(navigationCoreRoundTrip)) {
+    throw new Error('dist/screen-navigation-core.mjs is not byte-identical to Browser dependency source');
   }
 
   const headers = [
@@ -112,6 +127,12 @@ export async function buildPackage({
         presenceCoreInput,
         presenceCoreBlob,
       ),
+      screen_navigation_core: provenance(
+        'browser/screen-navigation-core.mjs',
+        'screen-navigation-core.mjs',
+        navigationCoreInput,
+        navigationCoreBlob,
+      ),
     },
   };
   await writeFile(path.join(dist, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
@@ -125,10 +146,12 @@ function parseArgs(argv) {
     if (a === '--source') out.source = path.resolve(argv[++i]);
     else if (a === '--core-source') out.coreSource = path.resolve(argv[++i]);
     else if (a === '--presence-core-source') out.presenceCoreSource = path.resolve(argv[++i]);
+    else if (a === '--navigation-core-source') out.navigationCoreSource = path.resolve(argv[++i]);
     else if (a === '--dist') out.dist = path.resolve(argv[++i]);
     else if (a === '--expected-blob') out.expectedBlob = argv[++i] || '';
     else if (a === '--expected-core-blob') out.expectedCoreBlob = argv[++i] || '';
     else if (a === '--expected-presence-core-blob') out.expectedPresenceCoreBlob = argv[++i] || '';
+    else if (a === '--expected-navigation-core-blob') out.expectedNavigationCoreBlob = argv[++i] || '';
     else if (a === '--source-commit') out.sourceCommit = argv[++i] || '';
     else throw new Error(`Unknown argument: ${a}`);
   }

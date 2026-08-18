@@ -220,6 +220,8 @@ export function projectAcceptedBattleResolution(resolution) {
   const attackerId = maybeString(resolution.attackerId);
   const defenderId = maybeString(resolution.defenderId);
   const lane = maybeString(resolution.lane);
+  const shield = resolution.shield == null ? null : maybeString(resolution.shield);
+  if (resolution.shield != null && !shield) throw new TypeError('RESOLUTION_SHIELD_INVALID');
   if (!mode || !attackerId || !defenderId || !lane) throw new TypeError('RESOLUTION_IDENTITY_INVALID');
   return deepFreeze({
     serial: safeInteger(resolution.serial, 'RESOLUTION_SERIAL', 1),
@@ -228,7 +230,7 @@ export function projectAcceptedBattleResolution(resolution) {
     attackerId,
     defenderId,
     lane,
-    shield: resolution.shield == null ? null : cloneJson(resolution.shield),
+    shield,
     winnerIds: stringArray(resolution.winnerIds, 'RESOLUTION_WINNER_IDS'),
     winningTeam: maybeString(resolution.winningTeam),
     teamTotals: publicTeamTotals(resolution.teamTotals),

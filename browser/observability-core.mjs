@@ -1,7 +1,18 @@
-const SCHEMA = 'GAMEROAD_OBSERVABILITY_ENVELOPE_V1';
+const LEGACY_SCHEMA = 'GAMEROAD_OBSERVABILITY_ENVELOPE_V1';
+const SCHEMA = 'GAMEROAD_OBSERVABILITY_ENVELOPE_V2';
+const SUPPORTED_SCHEMAS = Object.freeze([LEGACY_SCHEMA, SCHEMA]);
 const MEDIA = Object.freeze(['browser', 'roblox', 'unity']);
 const KINDS = Object.freeze(['exception', 'performance']);
-const CONTEXT_KEYS = Object.freeze(['releaseId', 'media', 'surface', 'matchId']);
+const BASE_CONTEXT_KEYS = Object.freeze(['releaseId', 'media', 'surface', 'matchId']);
+const LINEAGE_KEYS = Object.freeze([
+  'releaseVersion',
+  'rulesVersion',
+  'contentVersion',
+  'cardVersion',
+  'stateVersion',
+  'cohortId'
+]);
+const CONTEXT_KEYS = Object.freeze([...BASE_CONTEXT_KEYS, ...LINEAGE_KEYS]);
 const SAFE_ID = /^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,95}$/;
 const SAFE_CODE = /^[A-Z][A-Z0-9_.:-]{0,63}$/;
 
@@ -17,6 +28,12 @@ function normalizeId(value, fallback = 'unknown') {
   if (typeof value !== 'string') return fallback;
   const trimmed = value.trim();
   return SAFE_ID.test(trimmed) ? trimmed : fallback;
+}
+
+function normalizeOptionalId(value) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return SAFE_ID.test(trimmed) ? trimmed : null;
 }
 
 function normalizeCode(value, fallback) {
@@ -39,7 +56,13 @@ function normalizeContext(input) {
     releaseId: normalizeId(safeRead(source, 'releaseId')),
     media: MEDIA.includes(media) ? media : 'unknown',
     surface: normalizeId(safeRead(source, 'surface')),
-    matchId: normalizeId(safeRead(source, 'matchId'))
+    matchId: normalizeId(safeRead(source, 'matchId')),
+    releaseVersion: normalizeOptionalId(safeRead(source, 'releaseVersion')),
+    rulesVersion: normalizeOptionalId(safeRead(source, 'rulesVersion')),
+    contentVersion: normalizeOptionalId(safeRead(source, 'contentVersion')),
+    cardVersion: normalizeOptionalId(safeRead(source, 'cardVersion')),
+    stateVersion: normalizeOptionalId(safeRead(source, 'stateVersion')),
+    cohortId: normalizeOptionalId(safeRead(source, 'cohortId'))
   });
 }
 
@@ -97,7 +120,18 @@ export function createObservabilityEnvelope(input = {}, now = Date.now()) {
       schema: SCHEMA,
       kind: 'exception',
       occurredAtMs: 0,
-      context: { releaseId: 'unknown', media: 'unknown', surface: 'unknown', matchId: 'unknown' },
+      context: {
+        releaseId: 'unknown',
+        media: 'unknown',
+        surface: 'unknown',
+        matchId: 'unknown',
+        releaseVersion: null,
+        rulesVersion: null,
+        contentVersion: null,
+        cardVersion: null,
+        stateVersion: null,
+        cohortId: null
+      },
       diagnostic: { errorName: 'Error', faultCode: 'REPORTER_FAILURE' },
       metric: null,
       fingerprint: fnv1a('REPORTER_FAILURE')
@@ -181,6 +215,10 @@ function isSafeId(value) {
   return typeof value === 'string' && SAFE_ID.test(value);
 }
 
+function isOptionalSafeId(value) {
+  return value === null || isSafeId(value);
+}
+
 function isSafeCode(value) {
   return typeof value === 'string' && SAFE_CODE.test(value);
 }
@@ -189,12 +227,22 @@ function isNonNegativeFinite(value) {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0;
 }
 
-function cloneContext(context) {
-  return Object.freeze({
+function cloneContext(context, schema = SCHEMA) {
+  const base = {
     releaseId: safeRead(context, 'releaseId'),
     media: safeRead(context, 'media'),
     surface: safeRead(context, 'surface'),
     matchId: safeRead(context, 'matchId')
+  };
+  if (schema === LEGACY_SCHEMA) return Object.freeze(base);
+  return Object.freeze({
+    ...base,
+    releaseVersion: safeRead(context, 'releaseVersion'),
+    rulesVersion: safeRead(context, 'rulesVersion'),
+    contentVersion: safeRead(context, 'contentVersion'),
+    cardVersion: safeRead(context, 'cardVersion'),
+    stateVersion: safeRead(context, 'stateVersion'),
+    cohortId: safeRead(context, 'cohortId')
   });
 }
 
@@ -219,18 +267,22 @@ function validateCollectorEntry(input) {
     if (!hasExactKeys(input, ENTRY_KEYS)) return null;
     const envelope = safeRead(input, 'envelope');
     if (!hasExactKeys(envelope, ENVELOPE_KEYS)) return null;
-    if (safeRead(envelope, 'schema') !== SCHEMA) return null;
+
+    const schema = safeRead(envelope, 'schema');
+    if (!SUPPORTED_SCHEMAS.includes(schema)) return null;
 
     const kind = safeRead(envelope, 'kind');
     if (!KINDS.includes(kind)) return null;
 
     const context = safeRead(envelope, 'context');
-    if (!hasExactKeys(context, CONTEXT_KEYS)) return null;
+    const expectedContextKeys = schema === LEGACY_SCHEMA ? BASE_CONTEXT_KEYS : CONTEXT_KEYS;
+    if (!hasExactKeys(context, expectedContextKeys)) return null;
     const releaseId = safeRead(context, 'releaseId');
     const media = safeRead(context, 'media');
     const surface = safeRead(context, 'surface');
     const matchId = safeRead(context, 'matchId');
     if (![releaseId, surface, matchId].every(isSafeId) || !MEDIA.includes(media)) return null;
+    if (schema === SCHEMA && LINEAGE_KEYS.some((key) => !isOptionalSafeId(safeRead(context, key)))) return null;
 
     const diagnostic = safeRead(envelope, 'diagnostic');
     if (!hasExactKeys(diagnostic, DIAGNOSTIC_KEYS)) return null;
@@ -253,7 +305,7 @@ function validateCollectorEntry(input) {
     if (!isNonNegativeFinite(firstSeenAtMs) || !isNonNegativeFinite(lastSeenAtMs)) return null;
     if (occurredAtMs !== firstSeenAtMs || firstSeenAtMs > lastSeenAtMs) return null;
 
-    const safeContext = cloneContext(context);
+    const safeContext = cloneContext(context, schema);
     const safeDiagnostic = cloneDiagnostic(diagnostic);
     const safeMetric = cloneMetric(metric);
     const fingerprint = safeRead(envelope, 'fingerprint');
@@ -262,7 +314,7 @@ function validateCollectorEntry(input) {
 
     return deepFreeze({
       envelope: {
-        schema: SCHEMA,
+        schema,
         kind,
         occurredAtMs,
         context: safeContext,
@@ -367,19 +419,23 @@ export function createObservabilityIncidentCollector({ maxIncidents = 256 } = {}
 
 export const OBSERVABILITY_CORE = Object.freeze({
   schema: SCHEMA,
+  legacySchema: LEGACY_SCHEMA,
+  supportedSchemas: SUPPORTED_SCHEMAS,
   media: MEDIA,
   kinds: KINDS,
   contextKeys: CONTEXT_KEYS,
+  lineageKeys: LINEAGE_KEYS,
   maxQueue: 256,
   diagnosticPolicy: 'NO_RAW_MESSAGE_OR_STACK'
 });
 
-const SEARCH_PROJECTION_SCHEMA = 'GAMEROAD_OBSERVABILITY_SEARCH_PROJECTION_V1';
+const SEARCH_PROJECTION_SCHEMA = 'GAMEROAD_OBSERVABILITY_SEARCH_PROJECTION_V2';
 const SEARCH_QUERY_KEYS = Object.freeze([
   'releaseId',
   'media',
   'surface',
   'matchId',
+  ...LINEAGE_KEYS,
   'eventType',
   'reasonCode',
   'fingerprint'
@@ -414,6 +470,12 @@ function projectSearchIncident(incident) {
       media: safeRead(context, 'media'),
       surface: safeRead(context, 'surface'),
       matchId: safeRead(context, 'matchId'),
+      releaseVersion: safeRead(context, 'releaseVersion') ?? null,
+      rulesVersion: safeRead(context, 'rulesVersion') ?? null,
+      contentVersion: safeRead(context, 'contentVersion') ?? null,
+      cardVersion: safeRead(context, 'cardVersion') ?? null,
+      stateVersion: safeRead(context, 'stateVersion') ?? null,
+      cohortId: safeRead(context, 'cohortId') ?? null,
       eventType: safeRead(envelope, 'kind'),
       reasonCode: safeRead(diagnostic, 'faultCode'),
       fingerprint: safeRead(envelope, 'fingerprint'),
@@ -426,8 +488,18 @@ function projectSearchIncident(incident) {
   }
 }
 
+function compareOptionalId(left, right) {
+  return (left ?? '').localeCompare(right ?? '');
+}
+
 function compareSearchRecords(left, right) {
   return left.releaseId.localeCompare(right.releaseId)
+    || compareOptionalId(left.releaseVersion, right.releaseVersion)
+    || compareOptionalId(left.rulesVersion, right.rulesVersion)
+    || compareOptionalId(left.contentVersion, right.contentVersion)
+    || compareOptionalId(left.cardVersion, right.cardVersion)
+    || compareOptionalId(left.stateVersion, right.stateVersion)
+    || compareOptionalId(left.cohortId, right.cohortId)
     || left.media.localeCompare(right.media)
     || left.matchId.localeCompare(right.matchId)
     || left.surface.localeCompare(right.surface)
@@ -488,6 +560,7 @@ export function createObservabilitySearchProjection({ maxIncidents } = {}) {
 export const OBSERVABILITY_SEARCH_PROJECTION = Object.freeze({
   schema: SEARCH_PROJECTION_SCHEMA,
   sourceSchema: SCHEMA,
+  supportedSourceSchemas: SUPPORTED_SCHEMAS,
   queryKeys: SEARCH_QUERY_KEYS,
   identityAuthority: 'NONE_IN_THIS_PROJECTION',
   retentionAuthority: 'NOT_DEFINED_IN_THIS_PROJECTION',

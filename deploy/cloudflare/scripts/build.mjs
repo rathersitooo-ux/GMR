@@ -77,7 +77,18 @@ export async function buildPackage({
     throw new Error('dist/hate-peer-presence-core.mjs is not byte-identical to Browser dependency source');
   }
 
-  const headers = '/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n';
+  const headers = [
+    '/',
+    '  Cache-Control: no-cache, no-store',
+    '',
+    '/index.html',
+    '  Cache-Control: no-cache, no-store',
+    '',
+    '/*',
+    '  X-Content-Type-Options: nosniff',
+    '  Referrer-Policy: strict-origin-when-cross-origin',
+    '',
+  ].join('\n');
   await writeFile(path.join(dist, '_headers'), headers, 'utf8');
 
   const manifest = {

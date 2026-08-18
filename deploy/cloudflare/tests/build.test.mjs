@@ -6,9 +6,17 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildPackage } from '../scripts/build.mjs';
+import {
+  VERSION_MANIFEST_CHANNEL,
+  VERSION_MANIFEST_FILENAME,
+  VERSION_MANIFEST_RELOAD_POLICY,
+  VERSION_MANIFEST_SCHEMA,
+} from '../scripts/generate-version-manifest.mjs';
 
 const testHere = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(testHere, '../../..');
+const SOURCE_COMMIT = '0123456789abcdef0123456789abcdef01234567';
+const PUBLISHED_AT = '2026-08-19T00:12:00+09:00';
 
 function gitBlobSha1(buffer) {
   return createHash('sha1').update(Buffer.from(`blob ${buffer.length}\0`)).update(buffer).digest('hex');
@@ -89,7 +97,17 @@ const dependencyContract = [
   },
 ];
 
-test('build copies Browser and every packaged runtime dependency byte-identically with deterministic provenance', async () => {
+function expectedVersionManifest() {
+  return {
+    schema: VERSION_MANIFEST_SCHEMA,
+    channel: VERSION_MANIFEST_CHANNEL,
+    build_id: SOURCE_COMMIT,
+    published_at: PUBLISHED_AT,
+    reload_policy: VERSION_MANIFEST_RELOAD_POLICY,
+  };
+}
+
+test('build copies Browser, runtime dependencies, and formal version manifest deterministically', async () => {
   const dir = await mkdtemp(path.join(os.tmpdir(), 'gameroad-public-pack-'));
   const source = path.join(dir, 'GAMEROAD.html');
   const dist = path.join(dir, 'dist');
@@ -100,7 +118,8 @@ test('build copies Browser and every packaged runtime dependency byte-identicall
     source,
     dist,
     expectedBlob: gitBlobSha1(browserBytes),
-    sourceCommit: 'abc123',
+    sourceCommit: SOURCE_COMMIT,
+    publishedAt: PUBLISHED_AT,
   };
   const expected = new Map();
 
@@ -120,28 +139,37 @@ test('build copies Browser and every packaged runtime dependency byte-identicall
     assert.equal(first.artifacts[dep.artifact].git_blob_sha1, options[dep.expectedArg]);
     assert.equal(first.artifacts[dep.artifact].output, dep.file);
   }
+  assert.deepEqual(
+    JSON.parse(await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8')),
+    expectedVersionManifest(),
+  );
   assert.equal(
     await readFile(path.join(dist, '_headers'), 'utf8'),
-    '/\n  Cache-Control: no-cache, no-store\n\n/index.html\n  Cache-Control: no-cache, no-store\n\n/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n',
+    '/\n  Cache-Control: no-cache, no-store\n\n/index.html\n  Cache-Control: no-cache, no-store\n\n/gameroad-version.json\n  Cache-Control: no-store\n\n/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n',
   );
   assert.equal(first.git_blob_sha1, options.expectedBlob);
-  assert.equal(first.source_commit, 'abc123');
+  assert.equal(first.source_commit, SOURCE_COMMIT);
   assert.equal(first.artifacts.index_html.output, 'index.html');
+  assert.equal(first.artifacts.browser_version_manifest.output, VERSION_MANIFEST_FILENAME);
 
-  const manifest1 = await readFile(path.join(dist, 'manifest.json'), 'utf8');
+  const packageManifest1 = await readFile(path.join(dist, 'manifest.json'), 'utf8');
+  const versionManifest1 = await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8');
   await buildPackage(options);
-  const manifest2 = await readFile(path.join(dist, 'manifest.json'), 'utf8');
-  assert.equal(manifest1, manifest2);
+  const packageManifest2 = await readFile(path.join(dist, 'manifest.json'), 'utf8');
+  const versionManifest2 = await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8');
+  assert.equal(packageManifest1, packageManifest2);
+  assert.equal(versionManifest1, versionManifest2);
 });
 
-test('build packages the exact current production Browser dependency set', async () => {
+test('build packages the exact current production Browser dependency set with version identity', async () => {
   const dir = await mkdtemp(path.join(os.tmpdir(), 'gameroad-current-public-pack-'));
   const dist = path.join(dir, 'dist');
   const browserBytes = await readFile(path.join(repoRoot, 'browser/GAMEROAD.html'));
   const options = {
     dist,
     expectedBlob: gitBlobSha1(browserBytes),
-    sourceCommit: 'candidate-current-tree',
+    sourceCommit: SOURCE_COMMIT,
+    publishedAt: PUBLISHED_AT,
   };
   const currentBytes = new Map();
 
@@ -154,8 +182,12 @@ test('build packages the exact current production Browser dependency set', async
 
   const manifest = await buildPackage(options);
   assert.equal((await readFile(path.join(dist, 'index.html'))).equals(browserBytes), true);
-  assert.equal(manifest.source_commit, 'candidate-current-tree');
+  assert.equal(manifest.source_commit, SOURCE_COMMIT);
   assert.equal(manifest.artifacts.index_html.git_blob_sha1, options.expectedBlob);
+  assert.deepEqual(
+    JSON.parse(await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8')),
+    expectedVersionManifest(),
+  );
   for (const dep of dependencyContract) {
     assert.equal((await readFile(path.join(dist, dep.file))).equals(currentBytes.get(dep.file)), true);
     assert.equal(manifest.artifacts[dep.artifact].git_blob_sha1, dep.currentBlob);
@@ -180,9 +212,31 @@ test('build fails closed on stale Browser or packaged dependency blob expectatio
     await assert.rejects(
       () => buildPackage({
         dist: path.join(dir, 'dist'),
+        sourceCommit: SOURCE_COMMIT,
+        publishedAt: PUBLISHED_AT,
         [expectedArg]: '0000000000000000000000000000000000000000',
       }),
       errorPattern,
     );
   }
+});
+
+test('build fails closed before package output for invalid release identity', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'gameroad-public-pack-version-invalid-'));
+  await assert.rejects(
+    () => buildPackage({
+      dist: path.join(dir, 'dist-a'),
+      sourceCommit: 'abc123',
+      publishedAt: PUBLISHED_AT,
+    }),
+    /exact lowercase 40-hex/,
+  );
+  await assert.rejects(
+    () => buildPackage({
+      dist: path.join(dir, 'dist-b'),
+      sourceCommit: SOURCE_COMMIT,
+      publishedAt: '2026-08-19',
+    }),
+    /explicit RFC3339/,
+  );
 });

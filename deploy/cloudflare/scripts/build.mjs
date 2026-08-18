@@ -2,6 +2,10 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import {
+  VERSION_MANIFEST_FILENAME,
+  serializeVersionManifest,
+} from './generate-version-manifest.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, '../../..');
@@ -56,6 +60,7 @@ export async function buildPackage({
   expectedUiStateFeedbackCoreBlob = '',
   expectedUiStateFeedbackReadyPlanAdapterBlob = '',
   sourceCommit = '',
+  publishedAt = '',
 } = {}) {
   const input = await readFile(source);
   const coreInput = await readFile(coreSource);
@@ -107,6 +112,9 @@ export async function buildPackage({
       `UI state feedback ready-plan adapter blob mismatch: expected=${expectedUiStateFeedbackReadyPlanAdapterBlob} actual=${uiStateFeedbackReadyPlanAdapterBlob}`,
     );
   }
+
+  const versionManifestBytes = serializeVersionManifest({ sourceCommit, publishedAt });
+  const versionManifestBuffer = Buffer.from(versionManifestBytes, 'utf8');
 
   await rm(dist, { recursive: true, force: true });
   await mkdir(dist, { recursive: true });
@@ -172,12 +180,22 @@ export async function buildPackage({
     throw new Error('dist/ui-state-feedback-ready-plan-adapter.mjs is not byte-identical to Browser dependency source');
   }
 
+  const versionManifestOutputPath = path.join(dist, VERSION_MANIFEST_FILENAME);
+  await writeFile(versionManifestOutputPath, versionManifestBytes, 'utf8');
+  const versionManifestRoundTrip = await readFile(versionManifestOutputPath, 'utf8');
+  if (versionManifestRoundTrip !== versionManifestBytes) {
+    throw new Error(`dist/${VERSION_MANIFEST_FILENAME} is not byte-identical to generated version manifest`);
+  }
+
   const headers = [
     '/',
     '  Cache-Control: no-cache, no-store',
     '',
     '/index.html',
     '  Cache-Control: no-cache, no-store',
+    '',
+    `/${VERSION_MANIFEST_FILENAME}`,
+    '  Cache-Control: no-store',
     '',
     '/*',
     '  X-Content-Type-Options: nosniff',
@@ -243,6 +261,12 @@ export async function buildPackage({
         uiStateFeedbackReadyPlanAdapterInput,
         uiStateFeedbackReadyPlanAdapterBlob,
       ),
+      browser_version_manifest: {
+        source: 'build-package-release-identity',
+        output: VERSION_MANIFEST_FILENAME,
+        sha256: sha256(versionManifestBuffer),
+        bytes: versionManifestBuffer.length,
+      },
     },
   };
   await writeFile(path.join(dist, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
@@ -273,6 +297,7 @@ function parseArgs(argv) {
     else if (a === '--expected-ui-state-feedback-core-blob') out.expectedUiStateFeedbackCoreBlob = argv[++i] || '';
     else if (a === '--expected-ui-state-feedback-ready-plan-adapter-blob') out.expectedUiStateFeedbackReadyPlanAdapterBlob = argv[++i] || '';
     else if (a === '--source-commit') out.sourceCommit = argv[++i] || '';
+    else if (a === '--published-at') out.publishedAt = argv[++i] || '';
     else throw new Error(`Unknown argument: ${a}`);
   }
   return out;

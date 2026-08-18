@@ -43,6 +43,10 @@ test('build copies Browser and local runtime dependency bytes exactly and emits 
   assert.equal((await readFile(path.join(dist, 'index.html'))).equals(bytes), true);
   assert.equal((await readFile(path.join(dist, 'deck-save-recovery-core.mjs'))).equals(coreBytes), true);
   assert.equal((await readFile(path.join(dist, 'hate-peer-presence-core.mjs'))).equals(presenceCoreBytes), true);
+  assert.equal(
+    await readFile(path.join(dist, '_headers'), 'utf8'),
+    '/\n  Cache-Control: no-cache, no-store\n\n/index.html\n  Cache-Control: no-cache, no-store\n\n/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n',
+  );
   assert.equal(first.git_blob_sha1, blob);
   assert.equal(first.source_commit, 'abc123');
   assert.equal(first.artifacts.index_html.git_blob_sha1, blob);

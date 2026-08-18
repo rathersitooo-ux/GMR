@@ -57,6 +57,7 @@ jobs:
           battle2v2_reconnect=false
           hate_presence=false
           board_facility=false
+          auto_rank=false
           roblox=false
           publichost=false
           unclassified=false
@@ -172,6 +173,10 @@ jobs:
               tests/board-facility-classic-adapter.test.mjs)
                 board_facility=true
                 ;;
+              browser/auto-rank-d06-collision-contract.mjs|\
+              tests/auto-rank-d06-collision-contract.test.mjs)
+                auto_rank=true
+                ;;
               roblox/GAMEROAD.rbxlx)
                 roblox=true
                 ;;
@@ -223,6 +228,7 @@ jobs:
             echo "battle2v2_reconnect=${battle2v2_reconnect}"
             echo "hate_presence=${hate_presence}"
             echo "board_facility=${board_facility}"
+            echo "auto_rank=${auto_rank}"
             echo "roblox=${roblox}"
             echo "publichost=${publichost}"
             echo "unclassified=${unclassified}"
@@ -234,7 +240,7 @@ jobs:
           fi
 
       - name: Set up Node
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true' || steps.classify.outputs.partner_vtuber == 'true' || steps.classify.outputs.partner_humanlike == 'true' || steps.classify.outputs.observability == 'true' || steps.classify.outputs.card_presentation == 'true' || steps.classify.outputs.battle2v2_reconnect == 'true' || steps.classify.outputs.hate_presence == 'true' || steps.classify.outputs.board_facility == 'true' || steps.classify.outputs.publichost == 'true'
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true' || steps.classify.outputs.partner_vtuber == 'true' || steps.classify.outputs.partner_humanlike == 'true' || steps.classify.outputs.observability == 'true' || steps.classify.outputs.card_presentation == 'true' || steps.classify.outputs.battle2v2_reconnect == 'true' || steps.classify.outputs.hate_presence == 'true' || steps.classify.outputs.board_facility == 'true' || steps.classify.outputs.auto_rank == 'true' || steps.classify.outputs.publichost == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -316,6 +322,10 @@ jobs:
       - name: Run Board facility state core tests
         if: steps.classify.outputs.board_facility == 'true'
         run: node --test tests/board-facility-state-core.test.mjs tests/board-facility-classic-adapter.test.mjs
+
+      - name: Run Auto-rank D06 collision contract tests
+        if: steps.classify.outputs.auto_rank == 'true'
+        run: node --test tests/auto-rank-d06-collision-contract.test.mjs
 
       - name: Run PublicHost Cloudflare deploy-prep tests
         if: steps.classify.outputs.publichost == 'true'

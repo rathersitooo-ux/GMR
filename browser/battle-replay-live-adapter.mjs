@@ -461,9 +461,30 @@ export function appendAcceptedMatchEnd(session, { winnerIds, round, mode }) {
 }
 
 export function readLiveReplay(session, { viewer = null } = {}) {
-  assertSession(session);
+  if (!session || typeof session !== 'object' || Array.isArray(session)) {
+    return deepFreeze({ ok: false, status: 'unavailable', reason: 'LOG_INVALID' });
+  }
+  if (session.schema !== LIVE_ADAPTER_SCHEMA) {
+    return deepFreeze({ ok: false, status: 'unavailable', reason: 'SCHEMA_UNKNOWN' });
+  }
+  if (!nonEmptyString(session.matchId)) {
+    return deepFreeze({ ok: false, status: 'unavailable', reason: 'MATCH_ID_INVALID' });
+  }
+
+  const validation = validateReplayLog(session.log);
+  if (!validation.ok) return deepFreeze(validation);
+  if (session.log.matchId !== session.matchId) {
+    return deepFreeze({ ok: false, status: 'unavailable', reason: 'MATCH_ID_INVALID' });
+  }
+
+  let normalizedVersions;
+  try {
+    normalizedVersions = exactVersions(session.versions);
+  } catch {
+    return deepFreeze({ ok: false, status: 'unavailable', reason: 'VERSION_INVALID' });
+  }
   const supportedVersions = Object.fromEntries(
-    VERSION_KEYS.map(key => [key, [session.versions[key]]])
+    VERSION_KEYS.map(key => [key, [normalizedVersions[key]]])
   );
   return readReplay(session.log, { viewer, supportedVersions });
 }

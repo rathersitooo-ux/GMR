@@ -4,12 +4,10 @@ import {
   createObservabilityEnvelope,
   createObservabilityIncidentCollector,
   createObservabilityQueue,
-  OBSERVABILITY_CORE
-} from '../browser/observability-core.mjs';
-import {
   createObservabilitySearchProjection,
+  OBSERVABILITY_CORE,
   OBSERVABILITY_SEARCH_PROJECTION
-} from '../browser/observability-index-core.mjs';
+} from '../browser/observability-core.mjs';
 
 const context = { releaseId: 'r1', media: 'browser', surface: 'battle', matchId: 'm1' };
 

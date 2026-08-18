@@ -15,16 +15,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout exact work branch
+      - name: Checkout latest exact work branch
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
-      - name: Apply bounded FULLREG CardPRES observation patch
+      - name: Reset target to acquired main and apply bounded FULLREG CardPRES observation patch
         shell: bash
         run: |
           set -euo pipefail
+          git checkout 7f0a897bdbbe096ae85b2c125697418a8ca3a557 -- tests/browser-full-interaction.spec.mjs
           python3 - <<'PY'
           from pathlib import Path
           path = Path('tests/browser-full-interaction.spec.mjs')
@@ -41,7 +42,7 @@ jobs:
               ),
               (
                   "    description: `submitted=${roundsSubmitted}, targetConfirms=${targetConfirms}, battleAdvances=${presentationAdvances}, abilityConfirms=${abilityConfirms}, result=${roundsText}`,",
-                  "    description: `submitted=${roundsSubmitted}, targetConfirms=${targetConfirms}, battleAdvances=${presentationAdvances}, abilityConfirms=${abilityConfirms}, cardPresentationFallbacks=${cardPresentationFallbacks}, result=${roundsText}`,”
+                  "    description: `submitted=${roundsSubmitted}, targetConfirms=${targetConfirms}, battleAdvances=${presentationAdvances}, abilityConfirms=${abilityConfirms}, cardPresentationFallbacks=${cardPresentationFallbacks}, result=${roundsText}` ,"
               ),
               (
                   "  return { battle, result, roundsSubmitted, targetConfirms, presentationAdvances, abilityConfirms, roundsText };",
@@ -58,24 +59,24 @@ jobs:
           path.write_text(text, encoding='utf-8')
           PY
 
-      - name: Verify bounded test-only delta
+      - name: Verify bounded test delta and syntax
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git diff --name-only)" = "tests/browser-full-interaction.spec.mjs"
+          test "$(git diff --name-only 7f0a897bdbbe096ae85b2c125697418a8ca3a557 -- tests/browser-full-interaction.spec.mjs)" = "tests/browser-full-interaction.spec.mjs"
           grep -F "cardPresentationFallbacks" tests/browser-full-interaction.spec.mjs >/dev/null
           grep -F "data-card-presentation=\"fallback\"" tests/browser-full-interaction.spec.mjs >/dev/null
+          node --check tests/browser-full-interaction.spec.mjs
 
-      - name: Self-remove transport and commit exact final delta
+      - name: Self-remove transport and commit exact final tree delta
         shell: bash
         run: |
           set -euo pipefail
-          rm .github/workflows/fullreg-r17-cardpres-patch.yml
+          rm -f .github/workflows/fullreg-r17-cardpres-patch.yml
           git config user.name "gameroad-ci"
           git config user.email "actions@users.noreply.github.com"
-          git add tests/browser-full-interaction.spec.mjs .github/workflows/fullreg-r17-cardpres-patch.yml
-          actual="$(git diff --cached --name-only | sort)"
-          expected="$(printf '%s\n%s' '.github/workflows/fullreg-r17-cardpres-patch.yml' 'tests/browser-full-interaction.spec.mjs')"
-          test "$actual" = "$expected"
+          git add -A
+          changed_vs_main="$(git diff --cached --name-only 7f0a897bdbbe096ae85b2c125697418a8ca3a557 | sort)"
+          test "$changed_vs_main" = "tests/browser-full-interaction.spec.mjs"
           git commit -m "FULLREG R17: observe CardPRES fallback in visible result path"
           git push origin HEAD:${GITHUB_REF_NAME}

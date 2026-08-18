@@ -138,7 +138,9 @@ jobs:
                 self_deck=true
                 ;;
               browser/partner-legal-action-adapter.mjs|\
-              tests/partner-legal-action-adapter.test.mjs)
+              tests/partner-legal-action-adapter.test.mjs|\
+              browser/partner-advice-runtime-mount.mjs|\
+              tests/partner-advice-runtime-mount.test.mjs)
                 ai_optimal=true
                 ;;
               browser/partner-vtuber-public-context-core.mjs|\
@@ -302,7 +304,7 @@ jobs:
 
       - name: Run Partner legal action adapter tests
         if: steps.classify.outputs.ai_optimal == 'true'
-        run: node --test tests/partner-legal-action-adapter.test.mjs
+        run: node --test tests/partner-legal-action-adapter.test.mjs tests/partner-advice-runtime-mount.test.mjs
 
       - name: Run Partner VTuber public context boundary tests
         if: steps.classify.outputs.partner_vtuber == 'true'

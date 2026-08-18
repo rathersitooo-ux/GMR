@@ -1011,6 +1011,11 @@ window.GameRoadSlaykiaChaosRuntime=(()=>{'use strict';
 })();
 </script>
 <script src="./deck-save-recovery-core.mjs"></script>
+<script src="./board-facility-state-core.classic.js"></script>
+<script type="module">
+import { mountBoardFacilityRuntime } from "./board-facility-runtime-mount.mjs";
+await mountBoardFacilityRuntime(globalThis);
+</script>
 <script type="module">
 import { resolveScreenNavigation } from "./screen-navigation-core.mjs";
 import { createScreenNavigationRuntimeBridge } from "./screen-navigation-core.mjs";

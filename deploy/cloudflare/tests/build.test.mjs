@@ -128,7 +128,7 @@ test('build packages the current production Browser dependency set exactly', asy
   const expectedBlob = gitBlobSha1(browserBytes);
   const expectedCoreBlob = 'a21514cd3562005066298b2902f46da7c14f3caa';
   const expectedPresenceCoreBlob = '698516da1f89099c4cb15152bb98174473f77534';
-  const expectedNavigationCoreBlob = '6224a1247cacee07986b6fc31850ffdffb50a103';
+  const expectedNavigationCoreBlob = '771798cba911978256976da1275ef3d1e546ce5a';
   const expectedReplayAdapterBlob = '8abccb62f744811f150eb7f732223d50ce3be321';
   const expectedReplayCoreBlob = '48aaf3f2809ee7f9282fa9db68e4e7f79bf8e860';
   const expectedCardPresentationCoreBlob = '5dbd31ce856b412a7572ce213eb9d764c1b547de';

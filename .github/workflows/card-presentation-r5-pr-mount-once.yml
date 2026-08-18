@@ -1,0 +1,141 @@
+name: CARDPRES R5 one-shot PR production mount
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: write
+
+jobs:
+  patch-once:
+    if: github.head_ref == 'work/card-presentation-r5-visres-production-mount'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/card-presentation-r5-visres-production-mount
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact guarded production mount
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git merge-base HEAD origin/main)" = "c53b3ad6bc4336bdb967ea8ce456cdaee4c5af9c"
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html_path = Path('browser/GAMEROAD.html')
+          test_path = Path('tests/card-presentation-core.test.mjs')
+          html = html_path.read_text(encoding='utf-8-sig')
+          tests = test_path.read_text(encoding='utf-8')
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly 1 anchor, found {count}')
+              return text.replace(old, new, 1)
+
+          replay_accept = "function grBattleReplayAcceptResolution(m,resolution){grBattleReplayQueue(m,(api,session)=>api.appendAcceptedBattleResolution(session,resolution))}"
+          replay_accept_new = "function grBattleReplayAcceptResolution(m,resolution){grBattleReplayQueue(m,(api,session)=>api.appendAcceptedBattleResolution(session,resolution));grCardPresentationAcceptResolution(m,resolution)}"
+          html = replace_once(html, replay_accept, replay_accept_new, 'accepted-resolution seam')
+
+          replay_end = "function grBattleReplayEnd(m,winners){grBattleReplayQueue(m,(api,session)=>api.appendAcceptedMatchEnd(session,{winnerIds:[...winners],round:m.round,mode:m.mode}))}"
+          card_runtime = r'''function grBattleReplayEnd(m,winners){grBattleReplayQueue(m,(api,session)=>api.appendAcceptedMatchEnd(session,{winnerIds:[...winners],round:m.round,mode:m.mode}))}
+const grCardPresentationCorePromise=import('./card-presentation-core.mjs');
+let grCardPresentationRuntime=null;
+function grCardPresentationBegin(m){const runtime={matchId:m.id,api:null,session:null,error:null,queue:null,lastPlan:null,lastSerial:null};grCardPresentationRuntime=runtime;runtime.queue=grCardPresentationCorePromise.then(api=>{if(grCardPresentationRuntime!==runtime)return;runtime.api=api;runtime.session=api.createCardPresentationSession({sessionId:m.id})}).catch(e=>{runtime.error=String(e?.message||e)})}
+function grCardPresentationAcceptResolution(m,resolution){const runtime=grCardPresentationRuntime;if(!runtime||runtime.matchId!==m.id||!resolution)return;runtime.queue=Promise.resolve(runtime.queue).then(()=>{if(grCardPresentationRuntime!==runtime||runtime.error||!runtime.api||!runtime.session)return;const result=runtime.api.applyCardPresentationEvent(runtime.session,{sessionId:m.id,eventId:`battle-resolution:${resolution.serial}`,authorized:true,visibility:'public',kind:'vfx',assets:{}},{reducedMotion:!!state.settings?.reduceMotion,lowPerf:!!state.settings?.lowPerf,audioEnabled:false});if(!result.accepted)return;runtime.session=result.state;if(result.duplicate||!result.plan)return;runtime.lastPlan=result.plan;runtime.lastSerial=resolution.serial;if(state.match===m&&state.screen==='battle')renderBattle()}).catch(e=>{runtime.error=String(e?.message||e)})}
+function grCardPresentationSnapshot(m=state.match){const runtime=grCardPresentationRuntime;if(!m||!runtime||runtime.matchId!==m.id)return null;return{matchId:runtime.matchId,lastSerial:runtime.lastSerial,lastPlan:runtime.lastPlan,error:runtime.error,seenEventIds:runtime.session?.seenEventIds?[...runtime.session.seenEventIds]:[]}}'''
+          html = replace_once(html, replay_end, card_runtime, 'card presentation runtime')
+
+          start_anchor = "state.match.selectionLock=grCreateSelectionLock(state.match,'P1');grBattleReplayBegin(state.match);initRoundRuntime(state.match);"
+          start_new = "state.match.selectionLock=grCreateSelectionLock(state.match,'P1');grBattleReplayBegin(state.match);grCardPresentationBegin(state.match);initRoundRuntime(state.match);"
+          html = replace_once(html, start_anchor, start_new, 'match session begin')
+
+          render_anchor = "function renderBattleResolution(){const box=$('#battleResolution'),map=$('#battleMap'),m=state.match,p=m?.battlePresentation,r=m?.lastBattleResolution;if(!box)return;const live=!!p&&m?.phase==='resolve';map?.classList.toggle('resolveMode',live);box.classList.toggle('battlePhaseLive',live);box.classList.toggle('noMotion',!!(state.settings.reduceMotion||state.settings.lowPerf));box.classList.remove('hasAdvance');box.dataset.stage=live?p.stage:'result';"
+          render_new = "function renderBattleResolution(){const box=$('#battleResolution'),map=$('#battleMap'),m=state.match,p=m?.battlePresentation,r=m?.lastBattleResolution;if(!box)return;const live=!!p&&m?.phase==='resolve',runtime=grCardPresentationRuntime,cardPlan=runtime&&runtime.matchId===m?.id&&runtime.lastSerial===r?.serial?runtime.lastPlan:null;map?.classList.toggle('resolveMode',live);box.classList.toggle('battlePhaseLive',live);box.classList.toggle('noMotion',!!(state.settings.reduceMotion||state.settings.lowPerf));box.classList.toggle('cardPresentationMotion',cardPlan?.visual?.motion==='allowed');box.classList.remove('hasAdvance');if(cardPlan?.visual?.source)box.dataset.cardPresentation=cardPlan.visual.source;else delete box.dataset.cardPresentation;box.dataset.stage=live?p.stage:'result';"
+          html = replace_once(html, render_anchor, render_new, 'result render mount')
+
+          css_anchor = "@keyframes grResolutionIn{from{opacity:0;transform:translateY(7px) scale(.995)}to{opacity:1;transform:none}}"
+          css_new = css_anchor + "\n/* CARD-PRESENTATION-RUNTIME-HUMAN-ACCEPT-001 R5: builtin fallback only; no formal asset identity. */\n.battleResolution[data-card-presentation=\"fallback\"] .resolutionWinner{text-shadow:0 0 13px rgba(255,216,126,.42)}\n.battleResolution.cardPresentationMotion[data-card-presentation=\"fallback\"] .resolutionWinner{animation:grCardPresentationFallbackPulse .42s ease-out}\n@keyframes grCardPresentationFallbackPulse{0%{opacity:.5;transform:translateY(2px);text-shadow:0 0 4px rgba(255,216,126,.12)}55%{opacity:1;transform:none;text-shadow:0 0 20px rgba(255,216,126,.72)}100%{opacity:1;transform:none;text-shadow:0 0 13px rgba(255,216,126,.42)}}\n.battleResolution.noMotion.cardPresentationMotion .resolutionWinner,body.low-perf .battleResolution.cardPresentationMotion .resolutionWinner{animation:none!important}\n@media(prefers-reduced-motion:reduce){.battleResolution.cardPresentationMotion .resolutionWinner{animation:none!important}}"
+          html = replace_once(html, css_anchor, css_new, 'fallback visual css')
+
+          hook_anchor = "battlePresentationTimings:()=>({step:BATTLE_PRESENTATION_STEP_MS,read:BATTLE_PRESENTATION_STEP_MS,result:BATTLE_PRESENTATION_RESULT_MS}),publicCardPresentationBuild:"
+          hook_new = "battlePresentationTimings:()=>({step:BATTLE_PRESENTATION_STEP_MS,read:BATTLE_PRESENTATION_STEP_MS,result:BATTLE_PRESENTATION_RESULT_MS}),cardPresentationRuntime:()=>grCardPresentationSnapshot(state.match),publicCardPresentationBuild:"
+          html = replace_once(html, hook_anchor, hook_new, 'runtime test hook')
+
+          import_anchor = "import assert from 'node:assert/strict';\n\nimport {"
+          import_new = "import assert from 'node:assert/strict';\nimport { readFileSync } from 'node:fs';\n\nimport {"
+          tests = replace_once(tests, import_anchor, import_new, 'test fs import')
+
+          integration_test = r'''
+
+test('production Battle accepted-resolution seam mounts fallback-only card presentation once', () => {
+  const html = readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
+  const count = needle => html.split(needle).length - 1;
+  assert.equal(count("import('./card-presentation-core.mjs')"), 1);
+  assert.equal(count('grCardPresentationBegin(state.match)'), 1);
+  assert.equal(count('grCardPresentationAcceptResolution(m,resolution)'), 2);
+  assert.equal(count('eventId:`battle-resolution:${resolution.serial}`'), 1);
+  assert.equal(count("visibility:'public'"), 1);
+  assert.equal(count("kind:'vfx'"), 1);
+  assert.equal(count('audioEnabled:false'), 1);
+  assert.equal(count('assets:{}'), 1);
+  assert.equal(count('cardPresentationRuntime:()=>grCardPresentationSnapshot(state.match)'), 1);
+  assert.equal(count('data-card-presentation'), 4);
+  assert.ok(html.indexOf('appendAcceptedBattleResolution(session,resolution));grCardPresentationAcceptResolution(m,resolution)') >= 0);
+
+  const start = html.indexOf('function grCardPresentationAcceptResolution');
+  const end = html.indexOf('function grCardPresentationSnapshot', start);
+  assert.ok(start >= 0 && end > start, 'production mount function must be present');
+  const mount = html.slice(start, end);
+  for (const required of ['sessionId:m.id','authorized:true',"visibility:'public'","kind:'vfx'",'assets:{}','audioEnabled:false']) {
+    assert.ok(mount.includes(required), `mount must include ${required}`);
+  }
+  for (const forbidden of ['winnerIds', 'target:', 'damage:', 'mana:', 'save(', 'rank:', 'zone:', 'ownerAuthorized']) {
+    assert.equal(mount.includes(forbidden), false, `presentation mount must not own ${forbidden}`);
+  }
+});
+'''
+          marker = "production Battle accepted-resolution seam mounts fallback-only card presentation once"
+          if marker in tests:
+              raise SystemExit('integration test already present')
+          tests = tests.rstrip() + integration_test + '\n'
+
+          html_path.write_text(html, encoding='utf-8-sig')
+          test_path.write_text(tests, encoding='utf-8')
+          PY
+      - name: Verify bounded product diff before commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/card-presentation-core.test.mjs
+          node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+          git diff --check
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' browser/GAMEROAD.html tests/card-presentation-core.test.mjs | sort)"
+          if [[ "${changed}" != "${expected}" ]]; then
+            echo "Unexpected production changes:"
+            printf '%s\n' "${changed}"
+            exit 1
+          fi
+      - name: Commit product delta and remove this runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-orchestrator'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm .github/workflows/card-presentation-r5-pr-mount-once.yml
+          git add browser/GAMEROAD.html tests/card-presentation-core.test.mjs
+          git diff --cached --check
+          git commit -m 'CARDPRES R5: mount presentation on accepted Battle resolution'
+          git push origin HEAD:work/card-presentation-r5-visres-production-mount

@@ -56,6 +56,7 @@ jobs:
           card_presentation=false
           battle2v2_reconnect=false
           hate_presence=false
+          board_facility=false
           roblox=false
           publichost=false
           unclassified=false
@@ -162,6 +163,10 @@ jobs:
               tests/hate-peer-presence-core.test.mjs)
                 hate_presence=true
                 ;;
+              browser/board-facility-state-core.mjs|\
+              tests/board-facility-state-core.test.mjs)
+                board_facility=true
+                ;;
               roblox/GAMEROAD.rbxlx)
                 roblox=true
                 ;;
@@ -212,6 +217,7 @@ jobs:
             echo "card_presentation=${card_presentation}"
             echo "battle2v2_reconnect=${battle2v2_reconnect}"
             echo "hate_presence=${hate_presence}"
+            echo "board_facility=${board_facility}"
             echo "roblox=${roblox}"
             echo "publichost=${publichost}"
             echo "unclassified=${unclassified}"
@@ -223,7 +229,7 @@ jobs:
           fi
 
       - name: Set up Node
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true' || steps.classify.outputs.partner_vtuber == 'true' || steps.classify.outputs.partner_humanlike == 'true' || steps.classify.outputs.observability == 'true' || steps.classify.outputs.card_presentation == 'true' || steps.classify.outputs.battle2v2_reconnect == 'true' || steps.classify.outputs.hate_presence == 'true' || steps.classify.outputs.publichost == 'true'
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true' || steps.classify.outputs.partner_vtuber == 'true' || steps.classify.outputs.partner_humanlike == 'true' || steps.classify.outputs.observability == 'true' || steps.classify.outputs.card_presentation == 'true' || steps.classify.outputs.battle2v2_reconnect == 'true' || steps.classify.outputs.hate_presence == 'true' || steps.classify.outputs.board_facility == 'true' || steps.classify.outputs.publichost == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -299,6 +305,10 @@ jobs:
       - name: Run HATE peer presence core tests
         if: steps.classify.outputs.hate_presence == 'true'
         run: node --test tests/hate-peer-presence-core.test.mjs
+
+      - name: Run Board facility state core tests
+        if: steps.classify.outputs.board_facility == 'true'
+        run: node --test tests/board-facility-state-core.test.mjs
 
       - name: Run PublicHost Cloudflare deploy-prep tests
         if: steps.classify.outputs.publichost == 'true'

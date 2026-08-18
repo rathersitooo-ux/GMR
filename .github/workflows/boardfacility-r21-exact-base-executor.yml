@@ -48,17 +48,8 @@ jobs:
                   raise SystemExit(f'{path}: expected exactly one anchor, found {count}')
               p.write_text(text.replace(old, new, 1), encoding='utf-8')
 
-          html_old = '''<script src="./deck-save-recovery-core.mjs"></script>
-          <script type="module">
-          import { resolveScreenNavigation } from "./screen-navigation-core.mjs";'''
-          html_new = '''<script src="./deck-save-recovery-core.mjs"></script>
-          <script src="./board-facility-state-core.classic.js"></script>
-          <script type="module">
-          import { mountBoardFacilityRuntime } from "./board-facility-runtime-mount.mjs";
-          await mountBoardFacilityRuntime(globalThis);
-          </script>
-          <script type="module">
-          import { resolveScreenNavigation } from "./screen-navigation-core.mjs";'''
+          html_old = '<script src="./deck-save-recovery-core.mjs"></script>\n<script type="module">\nimport { resolveScreenNavigation } from "./screen-navigation-core.mjs";'
+          html_new = '<script src="./deck-save-recovery-core.mjs"></script>\n<script src="./board-facility-state-core.classic.js"></script>\n<script type="module">\nimport { mountBoardFacilityRuntime } from "./board-facility-runtime-mount.mjs";\nawait mountBoardFacilityRuntime(globalThis);\n</script>\n<script type="module">\nimport { resolveScreenNavigation } from "./screen-navigation-core.mjs";'
           replace_once('browser/GAMEROAD.html', html_old, html_new)
 
           build_replacements = [
@@ -106,19 +97,8 @@ jobs:
           for old, new in build_replacements:
               replace_once('deploy/cloudflare/scripts/build.mjs', old, new)
 
-          gate_old = '''              browser/board-facility-state-core.mjs|\\
-              browser/board-facility-state-core.classic.js|\\
-              scripts/build-board-facility-classic.mjs|\\
-              tests/board-facility-state-core.test.mjs|\\
-              tests/board-facility-classic-adapter.test.mjs)'''
-          gate_new = '''              browser/board-facility-state-core.mjs|\\
-              browser/board-facility-state-core.classic.js|\\
-              browser/board-facility-runtime-mount.mjs|\\
-              scripts/build-board-facility-classic.mjs|\\
-              tests/board-facility-state-core.test.mjs|\\
-              tests/board-facility-classic-adapter.test.mjs|\\
-              tests/board-facility-runtime-mount.test.mjs|\\
-              tests/board-facility-production-mount.test.mjs)'''
+          gate_old = '              browser/board-facility-state-core.mjs|\\\\\n              browser/board-facility-state-core.classic.js|\\\\\n              scripts/build-board-facility-classic.mjs|\\\\\n              tests/board-facility-state-core.test.mjs|\\\\\n              tests/board-facility-classic-adapter.test.mjs)'
+          gate_new = '              browser/board-facility-state-core.mjs|\\\\\n              browser/board-facility-state-core.classic.js|\\\\\n              browser/board-facility-runtime-mount.mjs|\\\\\n              scripts/build-board-facility-classic.mjs|\\\\\n              tests/board-facility-state-core.test.mjs|\\\\\n              tests/board-facility-classic-adapter.test.mjs|\\\\\n              tests/board-facility-runtime-mount.test.mjs|\\\\\n              tests/board-facility-production-mount.test.mjs)'
           replace_once('.github/workflows/gameroad-required-gate.yml', gate_old, gate_new)
           replace_once(
               '.github/workflows/gameroad-required-gate.yml',

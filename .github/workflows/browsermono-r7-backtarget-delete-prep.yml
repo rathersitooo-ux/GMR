@@ -32,3 +32,6 @@ jobs:
 
       - name: Run fail-closed deletion executor tests
         run: node --test tests/browsermono-screen-navigation-backtarget-delete.test.mjs
+
+      - name: Check current GAMEROAD HTML anchors without writing
+        run: node scripts/apply-browsermono-screen-navigation-backtarget-delete.mjs --check --input browser/GAMEROAD.html

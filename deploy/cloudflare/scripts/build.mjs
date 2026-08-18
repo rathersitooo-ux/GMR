@@ -16,6 +16,9 @@ const defaultNavigationCoreSource = path.join(repoRoot, 'browser/screen-navigati
 const defaultReplayAdapterSource = path.join(repoRoot, 'browser/battle-replay-live-adapter.mjs');
 const defaultReplayCoreSource = path.join(repoRoot, 'browser/battle-replay-core.mjs');
 const defaultCardPresentationCoreSource = path.join(repoRoot, 'browser/card-presentation-core.mjs');
+const defaultBoardFacilityClassicSource = path.join(repoRoot, 'browser/board-facility-state-core.classic.js');
+const defaultBoardFacilityCoreSource = path.join(repoRoot, 'browser/board-facility-state-core.mjs');
+const defaultBoardFacilityRuntimeMountSource = path.join(repoRoot, 'browser/board-facility-runtime-mount.mjs');
 const defaultUiStateFeedbackCoreSource = path.join(repoRoot, 'browser/ui-state-feedback-core.mjs');
 const defaultUiStateFeedbackReadyPlanAdapterSource = path.join(repoRoot, 'browser/ui-state-feedback-ready-plan-adapter.mjs');
 const defaultDist = path.join(repoRoot, 'deploy/cloudflare/dist');
@@ -47,6 +50,9 @@ export async function buildPackage({
   replayAdapterSource = defaultReplayAdapterSource,
   replayCoreSource = defaultReplayCoreSource,
   cardPresentationCoreSource = defaultCardPresentationCoreSource,
+  boardFacilityClassicSource = defaultBoardFacilityClassicSource,
+  boardFacilityCoreSource = defaultBoardFacilityCoreSource,
+  boardFacilityRuntimeMountSource = defaultBoardFacilityRuntimeMountSource,
   uiStateFeedbackCoreSource = defaultUiStateFeedbackCoreSource,
   uiStateFeedbackReadyPlanAdapterSource = defaultUiStateFeedbackReadyPlanAdapterSource,
   dist = defaultDist,
@@ -57,6 +63,9 @@ export async function buildPackage({
   expectedReplayAdapterBlob = '',
   expectedReplayCoreBlob = '',
   expectedCardPresentationCoreBlob = '',
+  expectedBoardFacilityClassicBlob = '',
+  expectedBoardFacilityCoreBlob = '',
+  expectedBoardFacilityRuntimeMountBlob = '',
   expectedUiStateFeedbackCoreBlob = '',
   expectedUiStateFeedbackReadyPlanAdapterBlob = '',
   sourceCommit = '',
@@ -69,6 +78,9 @@ export async function buildPackage({
   const replayAdapterInput = await readFile(replayAdapterSource);
   const replayCoreInput = await readFile(replayCoreSource);
   const cardPresentationCoreInput = await readFile(cardPresentationCoreSource);
+  const boardFacilityClassicInput = await readFile(boardFacilityClassicSource);
+  const boardFacilityCoreInput = await readFile(boardFacilityCoreSource);
+  const boardFacilityRuntimeMountInput = await readFile(boardFacilityRuntimeMountSource);
   const uiStateFeedbackCoreInput = await readFile(uiStateFeedbackCoreSource);
   const uiStateFeedbackReadyPlanAdapterInput = await readFile(uiStateFeedbackReadyPlanAdapterSource);
   const blob = gitBlobSha1(input);
@@ -78,6 +90,9 @@ export async function buildPackage({
   const replayAdapterBlob = gitBlobSha1(replayAdapterInput);
   const replayCoreBlob = gitBlobSha1(replayCoreInput);
   const cardPresentationCoreBlob = gitBlobSha1(cardPresentationCoreInput);
+  const boardFacilityClassicBlob = gitBlobSha1(boardFacilityClassicInput);
+  const boardFacilityCoreBlob = gitBlobSha1(boardFacilityCoreInput);
+  const boardFacilityRuntimeMountBlob = gitBlobSha1(boardFacilityRuntimeMountInput);
   const uiStateFeedbackCoreBlob = gitBlobSha1(uiStateFeedbackCoreInput);
   const uiStateFeedbackReadyPlanAdapterBlob = gitBlobSha1(uiStateFeedbackReadyPlanAdapterInput);
   if (expectedBlob && blob !== expectedBlob) {
@@ -100,6 +115,15 @@ export async function buildPackage({
   }
   if (expectedCardPresentationCoreBlob && cardPresentationCoreBlob !== expectedCardPresentationCoreBlob) {
     throw new Error(`Card presentation core blob mismatch: expected=${expectedCardPresentationCoreBlob} actual=${cardPresentationCoreBlob}`);
+  }
+  if (expectedBoardFacilityClassicBlob && boardFacilityClassicBlob !== expectedBoardFacilityClassicBlob) {
+    throw new Error(`Board facility classic bridge blob mismatch: expected=${expectedBoardFacilityClassicBlob} actual=${boardFacilityClassicBlob}`);
+  }
+  if (expectedBoardFacilityCoreBlob && boardFacilityCoreBlob !== expectedBoardFacilityCoreBlob) {
+    throw new Error(`Board facility core blob mismatch: expected=${expectedBoardFacilityCoreBlob} actual=${boardFacilityCoreBlob}`);
+  }
+  if (expectedBoardFacilityRuntimeMountBlob && boardFacilityRuntimeMountBlob !== expectedBoardFacilityRuntimeMountBlob) {
+    throw new Error(`Board facility runtime mount blob mismatch: expected=${expectedBoardFacilityRuntimeMountBlob} actual=${boardFacilityRuntimeMountBlob}`);
   }
   if (expectedUiStateFeedbackCoreBlob && uiStateFeedbackCoreBlob !== expectedUiStateFeedbackCoreBlob) {
     throw new Error(`UI state feedback core blob mismatch: expected=${expectedUiStateFeedbackCoreBlob} actual=${uiStateFeedbackCoreBlob}`);
@@ -164,6 +188,27 @@ export async function buildPackage({
   const cardPresentationCoreRoundTrip = await readFile(cardPresentationCoreOutputPath);
   if (!cardPresentationCoreInput.equals(cardPresentationCoreRoundTrip)) {
     throw new Error('dist/card-presentation-core.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const boardFacilityClassicOutputPath = path.join(dist, 'board-facility-state-core.classic.js');
+  await writeFile(boardFacilityClassicOutputPath, boardFacilityClassicInput);
+  const boardFacilityClassicRoundTrip = await readFile(boardFacilityClassicOutputPath);
+  if (!boardFacilityClassicInput.equals(boardFacilityClassicRoundTrip)) {
+    throw new Error('dist/board-facility-state-core.classic.js is not byte-identical to Browser dependency source');
+  }
+
+  const boardFacilityCoreOutputPath = path.join(dist, 'board-facility-state-core.mjs');
+  await writeFile(boardFacilityCoreOutputPath, boardFacilityCoreInput);
+  const boardFacilityCoreRoundTrip = await readFile(boardFacilityCoreOutputPath);
+  if (!boardFacilityCoreInput.equals(boardFacilityCoreRoundTrip)) {
+    throw new Error('dist/board-facility-state-core.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const boardFacilityRuntimeMountOutputPath = path.join(dist, 'board-facility-runtime-mount.mjs');
+  await writeFile(boardFacilityRuntimeMountOutputPath, boardFacilityRuntimeMountInput);
+  const boardFacilityRuntimeMountRoundTrip = await readFile(boardFacilityRuntimeMountOutputPath);
+  if (!boardFacilityRuntimeMountInput.equals(boardFacilityRuntimeMountRoundTrip)) {
+    throw new Error('dist/board-facility-runtime-mount.mjs is not byte-identical to Browser dependency source');
   }
 
   const uiStateFeedbackCoreOutputPath = path.join(dist, 'ui-state-feedback-core.mjs');
@@ -249,6 +294,24 @@ export async function buildPackage({
         cardPresentationCoreInput,
         cardPresentationCoreBlob,
       ),
+      board_facility_classic: provenance(
+        'browser/board-facility-state-core.classic.js',
+        'board-facility-state-core.classic.js',
+        boardFacilityClassicInput,
+        boardFacilityClassicBlob,
+      ),
+      board_facility_core: provenance(
+        'browser/board-facility-state-core.mjs',
+        'board-facility-state-core.mjs',
+        boardFacilityCoreInput,
+        boardFacilityCoreBlob,
+      ),
+      board_facility_runtime_mount: provenance(
+        'browser/board-facility-runtime-mount.mjs',
+        'board-facility-runtime-mount.mjs',
+        boardFacilityRuntimeMountInput,
+        boardFacilityRuntimeMountBlob,
+      ),
       ui_state_feedback_core: provenance(
         'browser/ui-state-feedback-core.mjs',
         'ui-state-feedback-core.mjs',
@@ -284,6 +347,9 @@ function parseArgs(argv) {
     else if (a === '--replay-adapter-source') out.replayAdapterSource = path.resolve(argv[++i]);
     else if (a === '--replay-core-source') out.replayCoreSource = path.resolve(argv[++i]);
     else if (a === '--card-presentation-core-source') out.cardPresentationCoreSource = path.resolve(argv[++i]);
+    else if (a === '--board-facility-classic-source') out.boardFacilityClassicSource = path.resolve(argv[++i]);
+    else if (a === '--board-facility-core-source') out.boardFacilityCoreSource = path.resolve(argv[++i]);
+    else if (a === '--board-facility-runtime-mount-source') out.boardFacilityRuntimeMountSource = path.resolve(argv[++i]);
     else if (a === '--ui-state-feedback-core-source') out.uiStateFeedbackCoreSource = path.resolve(argv[++i]);
     else if (a === '--ui-state-feedback-ready-plan-adapter-source') out.uiStateFeedbackReadyPlanAdapterSource = path.resolve(argv[++i]);
     else if (a === '--dist') out.dist = path.resolve(argv[++i]);
@@ -294,6 +360,9 @@ function parseArgs(argv) {
     else if (a === '--expected-replay-adapter-blob') out.expectedReplayAdapterBlob = argv[++i] || '';
     else if (a === '--expected-replay-core-blob') out.expectedReplayCoreBlob = argv[++i] || '';
     else if (a === '--expected-card-presentation-core-blob') out.expectedCardPresentationCoreBlob = argv[++i] || '';
+    else if (a === '--expected-board-facility-classic-blob') out.expectedBoardFacilityClassicBlob = argv[++i] || '';
+    else if (a === '--expected-board-facility-core-blob') out.expectedBoardFacilityCoreBlob = argv[++i] || '';
+    else if (a === '--expected-board-facility-runtime-mount-blob') out.expectedBoardFacilityRuntimeMountBlob = argv[++i] || '';
     else if (a === '--expected-ui-state-feedback-core-blob') out.expectedUiStateFeedbackCoreBlob = argv[++i] || '';
     else if (a === '--expected-ui-state-feedback-ready-plan-adapter-blob') out.expectedUiStateFeedbackReadyPlanAdapterBlob = argv[++i] || '';
     else if (a === '--source-commit') out.sourceCommit = argv[++i] || '';

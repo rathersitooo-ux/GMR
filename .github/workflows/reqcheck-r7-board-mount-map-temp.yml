@@ -27,31 +27,41 @@ jobs:
           from pathlib import Path
 
           path = Path('.github/workflows/gameroad-required-gate.yml')
-          text = path.read_text(encoding='utf-8')
+          lines = path.read_text(encoding='utf-8').splitlines()
+          out = []
+          classic_insert = 0
+          test_path_insert = 0
+          test_cmd_patch = 0
 
-          old_paths = '''              browser/board-facility-state-core.mjs|\\
-              browser/board-facility-state-core.classic.js|\\
-              scripts/build-board-facility-classic.mjs|\\
-              tests/board-facility-state-core.test.mjs|\\
-              tests/board-facility-classic-adapter.test.mjs)'''
-          new_paths = '''              browser/board-facility-state-core.mjs|\\
-              browser/board-facility-state-core.classic.js|\\
-              browser/board-facility-runtime-mount.mjs|\\
-              scripts/build-board-facility-classic.mjs|\\
-              tests/board-facility-state-core.test.mjs|\\
-              tests/board-facility-classic-adapter.test.mjs|\\
-              tests/board-facility-runtime-mount.test.mjs)'''
+          for line in lines:
+              stripped = line.strip()
+              indent = line[:len(line) - len(line.lstrip())]
 
-          old_test = '        run: node --test tests/board-facility-state-core.test.mjs tests/board-facility-classic-adapter.test.mjs'
-          new_test = '        run: node --test tests/board-facility-state-core.test.mjs tests/board-facility-classic-adapter.test.mjs tests/board-facility-runtime-mount.test.mjs'
+              if stripped == 'browser/board-facility-state-core.classic.js|\\':
+                  out.append(line)
+                  out.append(indent + 'browser/board-facility-runtime-mount.mjs|\\')
+                  classic_insert += 1
+                  continue
 
-          if text.count(old_paths) != 1:
-              raise SystemExit(f'board path anchor count={text.count(old_paths)}; expected 1')
-          if text.count(old_test) != 1:
-              raise SystemExit(f'board test anchor count={text.count(old_test)}; expected 1')
+              if stripped == 'tests/board-facility-classic-adapter.test.mjs)':
+                  out.append(indent + 'tests/board-facility-classic-adapter.test.mjs|\\')
+                  out.append(indent + 'tests/board-facility-runtime-mount.test.mjs)')
+                  test_path_insert += 1
+                  continue
 
-          text = text.replace(old_paths, new_paths, 1).replace(old_test, new_test, 1)
-          path.write_text(text, encoding='utf-8')
+              old_test = 'run: node --test tests/board-facility-state-core.test.mjs tests/board-facility-classic-adapter.test.mjs'
+              if stripped == old_test:
+                  out.append(line + ' tests/board-facility-runtime-mount.test.mjs')
+                  test_cmd_patch += 1
+                  continue
+
+              out.append(line)
+
+          counts = (classic_insert, test_path_insert, test_cmd_patch)
+          if counts != (1, 1, 1):
+              raise SystemExit(f'board mapping anchor counts={counts}; expected (1, 1, 1)')
+
+          path.write_text('\n'.join(out) + '\n', encoding='utf-8')
           PY
 
       - name: Run board-facility focused tests

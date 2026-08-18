@@ -1,4 +1,4 @@
-// Two-phase exact-base executor. This script runs inside GitHub Actions on the acquired work branch.
+// Explicit retrigger after both repaired workflow and classic-to-ESM bridge are present on the acquired branch.
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import path from 'node:path';

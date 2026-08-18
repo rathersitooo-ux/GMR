@@ -7,6 +7,14 @@ on:
     paths:
       - '.github/scripts/browsermono-r4-apply-nav-mount.mjs'
       - '.github/workflows/browsermono-r4-apply-nav-mount.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/scripts/browsermono-r4-apply-nav-mount.mjs'
+      - '.github/workflows/browsermono-r4-apply-nav-mount.yml'
+      - 'browser/screen-navigation-live-adapter.mjs'
+      - 'tests/screen-navigation-live-adapter.test.mjs'
 
 permissions:
   contents: write
@@ -14,11 +22,13 @@ permissions:
 jobs:
   apply-navigation-mount:
     runs-on: ubuntu-latest
+    env:
+      WORK_BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
     steps:
       - name: Checkout exact work branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ env.WORK_BRANCH }}
           fetch-depth: 0
           persist-credentials: true
       - name: Apply exact-base fail-closed navigation mount
@@ -32,8 +42,10 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add -- audit/browsermono-r4-nav-mount.json
-            git commit -m "BROWSERMONO R4: record failed exact-base navigation patch"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
+            if ! git diff --cached --quiet; then
+              git commit -m "BROWSERMONO R4: record failed exact-base navigation patch"
+              git push origin "HEAD:${WORK_BRANCH}"
+            fi
             exit "$code"
           fi
       - name: Run navigation mount unit contracts
@@ -49,4 +61,4 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "BROWSERMONO R4: mount screen navigation core in production HTML"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          git push origin "HEAD:${WORK_BRANCH}"

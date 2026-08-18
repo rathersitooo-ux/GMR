@@ -177,7 +177,9 @@ jobs:
               deploy/cloudflare/wrangler.pages.toml)
                 publichost=true
                 ;;
-              .github/workflows/gameroad-required-gate.yml|README.md|.gitignore|.gitattributes)
+              .github/workflows/gameroad-required-gate.yml|\
+              .github/workflows/gameroad-observability-ci.yml|\
+              README.md|.gitignore|.gitattributes)
                 ;;
               browser/*|roblox/*|unity/*|tools/*|tests/*|.github/workflows/*|\
               playwright*.mjs|*.js|*.mjs|*.ts|*.tsx|*.lua|*.luau|*.html|*.css|\

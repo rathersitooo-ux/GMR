@@ -7,6 +7,13 @@ on:
     paths:
       - scripts/_tmp-browsermono-r8-backtarget-cutover.mjs
       - .github/workflows/_tmp-browsermono-r8-backtarget-cutover.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - browser/GAMEROAD.html
+      - scripts/_tmp-browsermono-r8-backtarget-cutover.mjs
+      - .github/workflows/_tmp-browsermono-r8-backtarget-cutover.yml
   workflow_dispatch:
 
 permissions:
@@ -14,7 +21,7 @@ permissions:
 
 jobs:
   exact-base-html-cutover:
-    if: github.actor != 'github-actions[bot]'
+    if: github.event_name == 'push' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout exact branch head
@@ -56,3 +63,38 @@ jobs:
           test "$(git diff --cached --name-only)" = 'browser/GAMEROAD.html'
           git commit -m 'BROWSERMONO R8: cut over back-target runtime and delete legacy fallback'
           git push origin HEAD:${GITHUB_REF_NAME}
+
+  pr-visible-validation:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Verify acquired main HTML is still the branch preimage
+        run: |
+          git merge-base --is-ancestor 6843a3be8f13396dc8265154618e6335c787cd1f HEAD
+          git diff --exit-code 6843a3be8f13396dc8265154618e6335c787cd1f...HEAD -- browser/GAMEROAD.html
+
+      - name: Validate legacy anchors
+        run: node scripts/_tmp-browsermono-r8-backtarget-cutover.mjs --check --input browser/GAMEROAD.html
+
+      - name: Transform working copy without pushing
+        run: node scripts/_tmp-browsermono-r8-backtarget-cutover.mjs --input browser/GAMEROAD.html --output browser/GAMEROAD.html
+
+      - name: Verify transformed working copy
+        shell: bash
+        run: |
+          ! grep -q 'GAMEROAD_NAV_FALLBACK_PARENT' browser/GAMEROAD.html
+          grep -q 'createScreenNavigationRuntimeBridge' browser/GAMEROAD.html
+          grep -q 'GAMEROAD_SCREEN_NAVIGATION.resolveBackTarget(state.screen,entry)' browser/GAMEROAD.html
+          git diff --check -- browser/GAMEROAD.html
+
+      - name: Run screen navigation core tests
+        run: node --test tests/screen-navigation-core.test.mjs
+
+      - name: Run Browser static checker and self-test
+        run: node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html

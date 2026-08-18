@@ -1,0 +1,107 @@
+name: GAMEROAD Cloudflare Public Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/cloudflare-public-deploy.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gameroad-cloudflare-public-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy public GAMEROAD package
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      PAGES_PROJECT: gameroad-browser-r5
+      RELAY_WORKER: gameroad-friend-relay-r5
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Require Cloudflare credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+            echo "::error::Missing repository secret CLOUDFLARE_API_TOKEN"
+            exit 1
+          fi
+          if [[ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
+            echo "::error::Missing repository secret CLOUDFLARE_ACCOUNT_ID"
+            exit 1
+          fi
+
+      - name: Run public-host finite checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test \
+            deploy/cloudflare/tests/relay-core.test.mjs \
+            deploy/cloudflare/tests/build.test.mjs \
+            deploy/cloudflare/tests/version-manifest.test.mjs
+          node --check deploy/cloudflare/relay/src/relay-worker.mjs
+          node --check deploy/cloudflare/functions/ws.js
+
+      - name: Build exact public package
+        shell: bash
+        run: |
+          set -euo pipefail
+          BROWSER_BLOB="$(git hash-object browser/GAMEROAD.html)"
+          PUBLISHED_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          node deploy/cloudflare/scripts/build.mjs \
+            --expected-blob "$BROWSER_BLOB" \
+            --source-commit "$GITHUB_SHA" \
+            --published-at "$PUBLISHED_AT"
+
+      - name: Deploy friend-room relay Worker and Durable Object
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@4 deploy \
+            --config deploy/cloudflare/relay/wrangler.toml
+
+      - name: Ensure Pages project exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECTS="$(npx --yes wrangler@4 pages project list --json)"
+          if printf '%s' "$PROJECTS" | grep -Eq '"name"[[:space:]]*:[[:space:]]*"gameroad-browser-r5"'; then
+            echo "Pages project ${PAGES_PROJECT} already exists."
+          else
+            npx --yes wrangler@4 pages project create "$PAGES_PROJECT" \
+              --production-branch main
+          fi
+
+      - name: Deploy Pages production package
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@4 pages deploy deploy/cloudflare/dist \
+            --project-name "$PAGES_PROJECT" \
+            --branch main \
+            --commit-hash "$GITHUB_SHA" \
+            --config deploy/cloudflare/wrangler.pages.toml
+
+      - name: Read back production deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@4 pages deployment list \
+            --project-name "$PAGES_PROJECT" \
+            --environment production \
+            --json

@@ -10,10 +10,31 @@ import {
 } from '../browser/observability-core.mjs';
 
 const context = { releaseId: 'r1', media: 'browser', surface: 'battle', matchId: 'm1' };
+const lineage = {
+  releaseVersion: 'release-v1',
+  rulesVersion: 'rules-v3',
+  contentVersion: 'content-v8',
+  cardVersion: 'cards-v5',
+  stateVersion: 'state-v2',
+  cohortId: 'cohort-a'
+};
+const contextKeys = [
+  'releaseId', 'media', 'surface', 'matchId',
+  'releaseVersion', 'rulesVersion', 'contentVersion', 'cardVersion', 'stateVersion', 'cohortId'
+];
 
-test('exports stable media-neutral contract', () => {
-  assert.equal(OBSERVABILITY_CORE.schema, 'GAMEROAD_OBSERVABILITY_ENVELOPE_V1');
+test('exports stable media-neutral contract with explicit lineage schema evolution', () => {
+  assert.equal(OBSERVABILITY_CORE.schema, 'GAMEROAD_OBSERVABILITY_ENVELOPE_V2');
+  assert.equal(OBSERVABILITY_CORE.legacySchema, 'GAMEROAD_OBSERVABILITY_ENVELOPE_V1');
+  assert.deepEqual(OBSERVABILITY_CORE.supportedSchemas, [
+    'GAMEROAD_OBSERVABILITY_ENVELOPE_V1',
+    'GAMEROAD_OBSERVABILITY_ENVELOPE_V2'
+  ]);
   assert.deepEqual(OBSERVABILITY_CORE.media, ['browser', 'roblox', 'unity']);
+  assert.deepEqual(OBSERVABILITY_CORE.contextKeys, contextKeys);
+  assert.deepEqual(OBSERVABILITY_CORE.lineageKeys, [
+    'releaseVersion', 'rulesVersion', 'contentVersion', 'cardVersion', 'stateVersion', 'cohortId'
+  ]);
   assert.equal(OBSERVABILITY_CORE.diagnosticPolicy, 'NO_RAW_MESSAGE_OR_STACK');
 });
 
@@ -21,13 +42,36 @@ test('allowlists only correlation context and drops arbitrary private payload', 
   const envelope = createObservabilityEnvelope({
     error: new Error('boom'),
     faultCode: 'BATTLE_RENDER_FAILED',
-    context: { ...context, privateCard: 'SECRET_CARD', chat: 'free text', email: 'person@example.com' }
+    context: { ...context, ...lineage, privateCard: 'SECRET_CARD', chat: 'free text', email: 'person@example.com' }
   }, 10);
-  assert.deepEqual(Object.keys(envelope.context), ['releaseId', 'media', 'surface', 'matchId']);
+  assert.deepEqual(Object.keys(envelope.context), contextKeys);
+  assert.deepEqual(envelope.context, { ...context, ...lineage });
   const text = JSON.stringify(envelope);
   assert.equal(text.includes('SECRET_CARD'), false);
   assert.equal(text.includes('free text'), false);
   assert.equal(text.includes('person@example.com'), false);
+});
+
+test('missing or invalid lineage remains explicit null rather than an invented version', () => {
+  const envelope = createObservabilityEnvelope({
+    faultCode: 'BATTLE_RENDER_FAILED',
+    context: {
+      ...context,
+      releaseVersion: 'release-v1',
+      rulesVersion: 'rules version with spaces',
+      contentVersion: '',
+      cardVersion: null,
+      stateVersion: undefined,
+      cohortId: 'cohort-a'
+    }
+  }, 10);
+  assert.equal(envelope.context.releaseVersion, 'release-v1');
+  assert.equal(envelope.context.cohortId, 'cohort-a');
+  assert.equal(envelope.context.rulesVersion, null);
+  assert.equal(envelope.context.contentVersion, null);
+  assert.equal(envelope.context.cardVersion, null);
+  assert.equal(envelope.context.stateVersion, null);
+  assert.equal(JSON.stringify(envelope).includes('"unknown"'), false);
 });
 
 test('never stores raw error message or stack even when they contain credentials or PII', () => {
@@ -63,6 +107,21 @@ test('dedupes equal safe fingerprints and records occurrence count', () => {
   assert.equal(entry.count, 2);
   assert.equal(entry.firstSeenAtMs, 20);
   assert.equal(entry.lastSeenAtMs, 21);
+});
+
+test('same fault is not deduped across different version or cohort lineage', () => {
+  const queue = createObservabilityQueue({ maxQueue: 8 });
+  const base = { error: new Error('ignored'), faultCode: 'BATTLE_RENDER_FAILED' };
+  assert.equal(queue.capture({ ...base, context: { ...context, ...lineage } }, 20).duplicate, false);
+  assert.equal(queue.capture({
+    ...base,
+    context: { ...context, ...lineage, rulesVersion: 'rules-v4' }
+  }, 21).duplicate, false);
+  assert.equal(queue.capture({
+    ...base,
+    context: { ...context, ...lineage, cohortId: 'cohort-b' }
+  }, 22).duplicate, false);
+  assert.equal(queue.snapshot().length, 3);
 });
 
 test('queue snapshot round-trips when an older duplicate arrives after a newer one', () => {
@@ -122,15 +181,15 @@ test('hostile message and stack accessors are never read by the reporter', () =>
   assert.deepEqual(envelope.diagnostic, { errorName: 'TypeError', faultCode: 'UNTRUSTED_EXCEPTION' });
 });
 
-function queueBatch({ faultCode = 'BATTLE_RENDER_FAILED', now = 100, count = 1 } = {}) {
+function queueBatch({ faultCode = 'BATTLE_RENDER_FAILED', now = 100, count = 1, scopedContext = context } = {}) {
   const queue = createObservabilityQueue();
   for (let index = 0; index < count; index += 1) {
-    queue.capture({ error: new Error(`private-${index}`), faultCode, context }, now + index);
+    queue.capture({ error: new Error(`private-${index}`), faultCode, context: scopedContext }, now + index);
   }
   return queue.snapshot();
 }
 
-test('collector accepts the exact R7 queue snapshot and stores only the safe envelope', () => {
+test('collector accepts the exact queue snapshot and stores only the safe envelope', () => {
   const collector = createObservabilityIncidentCollector();
   const batch = queueBatch({ count: 2 });
   assert.deepEqual(collector.ingest(batch), { ok: true, accepted: 2, incidents: 1, reason: 'OK' });
@@ -217,17 +276,75 @@ test('collector snapshot round-trips when an older same-fingerprint window arriv
   assert.deepEqual(restored.snapshot(), snapshot);
 });
 
+function fnv1a(text) {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16).padStart(8, '0');
+}
+
+test('collector keeps legacy V1 evidence as V1 and projects missing lineage as null', () => {
+  const [currentEntry] = queueBatch();
+  const { envelope } = currentEntry;
+  const legacyContext = {
+    releaseId: envelope.context.releaseId,
+    media: envelope.context.media,
+    surface: envelope.context.surface,
+    matchId: envelope.context.matchId
+  };
+  const legacyFingerprint = fnv1a(JSON.stringify({
+    kind: envelope.kind,
+    context: legacyContext,
+    diagnostic: envelope.diagnostic,
+    metric: envelope.metric
+  }));
+  const legacyEntry = {
+    ...currentEntry,
+    envelope: {
+      ...envelope,
+      schema: 'GAMEROAD_OBSERVABILITY_ENVELOPE_V1',
+      context: legacyContext,
+      fingerprint: legacyFingerprint
+    }
+  };
+
+  const projection = createObservabilitySearchProjection();
+  assert.deepEqual(projection.ingest([legacyEntry]), { ok: true, accepted: 1, records: 1, reason: 'OK' });
+  const [record] = projection.snapshot();
+  assert.equal(record.sourceSchema, 'GAMEROAD_OBSERVABILITY_ENVELOPE_V1');
+  for (const key of OBSERVABILITY_CORE.lineageKeys) assert.equal(record[key], null, key);
+});
+
 function queueBatchForContext({
   releaseId,
   matchId,
   surface = 'battle',
   media = 'browser',
+  releaseVersion,
+  rulesVersion,
+  contentVersion,
+  cardVersion,
+  stateVersion,
+  cohortId,
   faultCode = 'BATTLE_RENDER_FAILED',
   now = 100,
   count = 1
 }) {
   const queue = createObservabilityQueue();
-  const scopedContext = { releaseId, media, surface, matchId };
+  const scopedContext = {
+    releaseId,
+    media,
+    surface,
+    matchId,
+    releaseVersion,
+    rulesVersion,
+    contentVersion,
+    cardVersion,
+    stateVersion,
+    cohortId
+  };
   for (let index = 0; index < count; index += 1) {
     queue.capture({
       error: new Error(`private-secret-${index}`),
@@ -239,31 +356,42 @@ function queueBatchForContext({
 }
 
 test('search projection declares source authority without inventing identity, retention, or transport authority', () => {
-  assert.equal(OBSERVABILITY_SEARCH_PROJECTION.schema, 'GAMEROAD_OBSERVABILITY_SEARCH_PROJECTION_V1');
+  assert.equal(OBSERVABILITY_SEARCH_PROJECTION.schema, 'GAMEROAD_OBSERVABILITY_SEARCH_PROJECTION_V2');
   assert.equal(OBSERVABILITY_SEARCH_PROJECTION.sourceSchema, OBSERVABILITY_CORE.schema);
+  assert.deepEqual(OBSERVABILITY_SEARCH_PROJECTION.supportedSourceSchemas, OBSERVABILITY_CORE.supportedSchemas);
   assert.deepEqual(OBSERVABILITY_SEARCH_PROJECTION.queryKeys, [
-    'releaseId', 'media', 'surface', 'matchId', 'eventType', 'reasonCode', 'fingerprint'
+    'releaseId', 'media', 'surface', 'matchId',
+    'releaseVersion', 'rulesVersion', 'contentVersion', 'cardVersion', 'stateVersion', 'cohortId',
+    'eventType', 'reasonCode', 'fingerprint'
   ]);
   assert.equal(OBSERVABILITY_SEARCH_PROJECTION.identityAuthority, 'NONE_IN_THIS_PROJECTION');
   assert.equal(OBSERVABILITY_SEARCH_PROJECTION.retentionAuthority, 'NOT_DEFINED_IN_THIS_PROJECTION');
   assert.equal(OBSERVABILITY_SEARCH_PROJECTION.transportAuthority, 'NOT_DEFINED_IN_THIS_PROJECTION');
 });
 
-test('search projection preserves only versioned correlation and reason fields from validated incidents', () => {
+test('search projection preserves caller-supplied version/cohort lineage and reason fields from validated incidents', () => {
   const projection = createObservabilitySearchProjection();
-  const batch = queueBatchForContext({ releaseId: 'release-7', matchId: 'match-9', now: 700, count: 2 });
+  const batch = queueBatchForContext({
+    releaseId: 'release-7',
+    matchId: 'match-9',
+    ...lineage,
+    now: 700,
+    count: 2
+  });
   assert.deepEqual(projection.ingest(batch), { ok: true, accepted: 2, records: 1, reason: 'OK' });
 
   const [record] = projection.snapshot();
   assert.deepEqual(Object.keys(record), [
-    'schema', 'sourceSchema', 'releaseId', 'media', 'surface', 'matchId', 'eventType',
-    'reasonCode', 'fingerprint', 'count', 'firstSeenAtMs', 'lastSeenAtMs'
+    'schema', 'sourceSchema', 'releaseId', 'media', 'surface', 'matchId',
+    'releaseVersion', 'rulesVersion', 'contentVersion', 'cardVersion', 'stateVersion', 'cohortId',
+    'eventType', 'reasonCode', 'fingerprint', 'count', 'firstSeenAtMs', 'lastSeenAtMs'
   ]);
   assert.equal(record.sourceSchema, OBSERVABILITY_CORE.schema);
   assert.equal(record.releaseId, 'release-7');
   assert.equal(record.media, 'browser');
   assert.equal(record.surface, 'battle');
   assert.equal(record.matchId, 'match-9');
+  for (const [key, value] of Object.entries(lineage)) assert.equal(record[key], value, key);
   assert.equal(record.eventType, 'exception');
   assert.equal(record.reasonCode, 'BATTLE_RENDER_FAILED');
   assert.equal(record.count, 2);
@@ -274,6 +402,27 @@ test('search projection preserves only versioned correlation and reason fields f
   for (const forbidden of ['RAW_USER_123', 'private free text', 'private-secret', 'userId', 'chat', 'message', 'stack']) {
     assert.equal(serialized.includes(forbidden), false, forbidden);
   }
+});
+
+test('search projection does not merge same release/match across incompatible version or cohort populations', () => {
+  const projection = createObservabilitySearchProjection();
+  const rulesV3 = queueBatchForContext({
+    releaseId: 'release-a', matchId: 'match-1', ...lineage, now: 100
+  });
+  const rulesV4 = queueBatchForContext({
+    releaseId: 'release-a', matchId: 'match-1', ...lineage, rulesVersion: 'rules-v4', now: 200
+  });
+  const cohortB = queueBatchForContext({
+    releaseId: 'release-a', matchId: 'match-1', ...lineage, cohortId: 'cohort-b', now: 300
+  });
+  assert.equal(projection.ingest(rulesV3).ok, true);
+  assert.equal(projection.ingest(rulesV4).ok, true);
+  assert.equal(projection.ingest(cohortB).ok, true);
+
+  assert.equal(projection.snapshot().length, 3);
+  assert.equal(projection.query({ rulesVersion: 'rules-v3', cohortId: 'cohort-a' }).records.length, 1);
+  assert.equal(projection.query({ rulesVersion: 'rules-v4', cohortId: 'cohort-a' }).records.length, 1);
+  assert.equal(projection.query({ cohortId: 'cohort-b' }).records.length, 1);
 });
 
 test('search projection does not merge different releases or matches into one population', () => {
@@ -299,7 +448,9 @@ test('search projection does not merge different releases or matches into one po
 
 test('search projection keeps collector retransmission idempotency', () => {
   const projection = createObservabilitySearchProjection();
-  const batch = queueBatchForContext({ releaseId: 'release-idem', matchId: 'match-idem', now: 300, count: 2 });
+  const batch = queueBatchForContext({
+    releaseId: 'release-idem', matchId: 'match-idem', ...lineage, now: 300, count: 2
+  });
   assert.equal(projection.ingest(batch).accepted, 2);
   assert.equal(projection.ingest(batch).accepted, 0);
   const [record] = projection.snapshot();
@@ -310,7 +461,7 @@ test('search projection keeps collector retransmission idempotency', () => {
 
 test('search projection rejects malformed evidence and unauthorized query fields fail-closed', () => {
   const projection = createObservabilitySearchProjection();
-  const [entry] = queueBatchForContext({ releaseId: 'release-safe', matchId: 'match-safe' });
+  const [entry] = queueBatchForContext({ releaseId: 'release-safe', matchId: 'match-safe', ...lineage });
   const poisoned = { ...entry, userId: 'RAW_USER_123', message: 'Bearer secret' };
   assert.deepEqual(
     projection.ingest([poisoned]),

@@ -7,6 +7,15 @@ import {
   createBrowserObservabilityHttpSender
 } from '../browser/observability-browser-adapter.mjs';
 
+const lineage = {
+  releaseVersion: 'release-v4',
+  rulesVersion: 'rules-v3',
+  contentVersion: 'content-v8',
+  cardVersion: 'cards-v5',
+  stateVersion: 'state-v2',
+  cohortId: 'cohort-browser-a'
+};
+
 class FakeEventTarget {
   constructor() { this.listeners = new Map(); }
   addEventListener(type, handler) {
@@ -28,7 +37,15 @@ function makeAdapter(overrides = {}) {
   const adapter = createBrowserObservabilityAdapter({
     eventTarget,
     queue,
-    contextProvider: overrides.contextProvider ?? (() => ({ releaseId: 'r4', media: 'unity', surface: 'battle', matchId: 'm4', privateCard: 'SECRET' })),
+    contextProvider: overrides.contextProvider ?? (() => ({
+      releaseId: 'r4',
+      media: 'unity',
+      surface: 'battle',
+      matchId: 'm4',
+      ...lineage,
+      privateCard: 'SECRET',
+      userId: 'RAW_USER_123'
+    })),
     now: overrides.now ?? (() => 100)
   });
   return { eventTarget, queue, adapter };
@@ -64,7 +81,7 @@ test('start is idempotent and stop removes exactly owned listeners', () => {
   assert.equal(eventTarget.count('unhandledrejection'), 0);
 });
 
-test('error capture forces browser media and never persists raw message stack or private context', () => {
+test('error capture forces browser media, preserves caller lineage, and drops raw private context', () => {
   const { eventTarget, adapter } = makeAdapter();
   adapter.start();
   const error = new TypeError('Bearer secret person@example.com');
@@ -76,8 +93,12 @@ test('error capture forces browser media and never persists raw message stack or
   assert.equal(envelope.context.releaseId, 'r4');
   assert.equal(envelope.context.surface, 'battle');
   assert.equal(envelope.context.matchId, 'm4');
+  for (const [key, value] of Object.entries(lineage)) assert.equal(envelope.context[key], value, key);
   assert.deepEqual(envelope.diagnostic, { errorName: 'TypeError', faultCode: 'BROWSER_ERROR' });
-  for (const secret of ['Bearer secret', 'person@example.com', 'token=raw', 'raw browser event text', 'SECRET_EVENT', 'SECRET']) {
+  for (const secret of [
+    'Bearer secret', 'person@example.com', 'token=raw', 'raw browser event text',
+    'SECRET_EVENT', 'SECRET', 'RAW_USER_123'
+  ]) {
     assert.equal(text.includes(secret), false, secret);
   }
 });
@@ -104,13 +125,46 @@ test('object rejection retains only safe name and never touches hostile message 
   assert.deepEqual(adapter.snapshot()[0].envelope.diagnostic, { errorName: 'RangeError', faultCode: 'BROWSER_UNHANDLED_REJECTION' });
 });
 
-test('context provider failure degrades safely while retaining browser media', () => {
+test('context provider failure degrades safely while retaining browser media and explicit unknown lineage', () => {
   const { eventTarget, adapter } = makeAdapter({ contextProvider: () => { throw new Error('context unavailable'); } });
   adapter.start();
   assert.doesNotThrow(() => eventTarget.emit('error', { error: new Error('ignored') }));
   assert.deepEqual(adapter.snapshot()[0].envelope.context, {
-    releaseId: 'unknown', media: 'browser', surface: 'unknown', matchId: 'unknown'
+    releaseId: 'unknown',
+    media: 'browser',
+    surface: 'unknown',
+    matchId: 'unknown',
+    releaseVersion: null,
+    rulesVersion: null,
+    contentVersion: null,
+    cardVersion: null,
+    stateVersion: null,
+    cohortId: null
   });
+});
+
+test('invalid caller lineage is nulled instead of invented or copied as raw free text', () => {
+  const { eventTarget, adapter } = makeAdapter({
+    contextProvider: () => ({
+      releaseId: 'r4',
+      surface: 'battle',
+      matchId: 'm4',
+      releaseVersion: 'release version has spaces',
+      rulesVersion: 'rules-v3',
+      contentVersion: 'content-v8',
+      cardVersion: 'cards-v5',
+      stateVersion: 'state-v2',
+      cohortId: 'cohort-a',
+      userId: 'RAW_USER_123'
+    })
+  });
+  adapter.start();
+  eventTarget.emit('error', { error: new Error('ignored') });
+  const envelope = adapter.snapshot()[0].envelope;
+  assert.equal(envelope.context.releaseVersion, null);
+  assert.equal(envelope.context.rulesVersion, 'rules-v3');
+  assert.equal(JSON.stringify(envelope).includes('release version has spaces'), false);
+  assert.equal(JSON.stringify(envelope).includes('RAW_USER_123'), false);
 });
 
 test('performance capture requires caller values and only records strict threshold exceedance', () => {
@@ -125,6 +179,8 @@ test('performance capture requires caller values and only records strict thresho
   assert.equal(envelope.kind, 'performance');
   assert.deepEqual(envelope.metric, { name: 'frameMs', observed: 17, threshold: 16 });
   assert.equal(envelope.context.media, 'browser');
+  assert.equal(envelope.context.rulesVersion, lineage.rulesVersion);
+  assert.equal(envelope.context.cohortId, lineage.cohortId);
   assert.equal(envelope.diagnostic.faultCode, 'BROWSER_PERFORMANCE_THRESHOLD');
 });
 
@@ -196,7 +252,8 @@ test('HTTP sender performs a real local POST with only the validated safe batch'
   assert.equal(batch.length, 1);
   assert.deepEqual(Object.keys(batch[0]).sort(), ['count', 'envelope', 'firstSeenAtMs', 'lastSeenAtMs']);
   assert.deepEqual(batch[0].envelope.diagnostic, { errorName: 'TypeError', faultCode: 'BROWSER_ERROR' });
-  for (const secret of ['RAW_TOKEN', 'person@example.com', 'RAW_KEY', 'PRIVATE_EVENT_TEXT', 'PRIVATE_PAYLOAD']) {
+  for (const [key, value] of Object.entries(lineage)) assert.equal(batch[0].envelope.context[key], value, key);
+  for (const secret of ['RAW_TOKEN', 'person@example.com', 'RAW_KEY', 'PRIVATE_EVENT_TEXT', 'PRIVATE_PAYLOAD', 'RAW_USER_123']) {
     assert.equal(received.body.includes(secret), false, secret);
   }
 });
@@ -233,7 +290,10 @@ test('HTTP sender rejects malformed batches before network I/O', async () => {
 
 test('HTTP sender omits ambient credentials and rejects credential-bearing endpoint URLs', async () => {
   const queue = createObservabilityQueue();
-  queue.capture({ faultCode: 'NETWORK_FAILURE', context: { releaseId: 'r1', media: 'browser', surface: 'battle', matchId: 'm1' } }, 10);
+  queue.capture({
+    faultCode: 'NETWORK_FAILURE',
+    context: { releaseId: 'r1', media: 'browser', surface: 'battle', matchId: 'm1', ...lineage }
+  }, 10);
   let request = null;
   const sender = createBrowserObservabilityHttpSender({
     endpoint: 'https://collector.example.test/observability',
@@ -261,14 +321,20 @@ test('HTTP sender omits ambient credentials and rejects credential-bearing endpo
     }
   });
   const anotherQueue = createObservabilityQueue();
-  anotherQueue.capture({ faultCode: 'NETWORK_FAILURE', context: { releaseId: 'r1', media: 'browser', surface: 'battle', matchId: 'm1' } }, 11);
+  anotherQueue.capture({
+    faultCode: 'NETWORK_FAILURE',
+    context: { releaseId: 'r1', media: 'browser', surface: 'battle', matchId: 'm1', ...lineage }
+  }, 11);
   assert.deepEqual(await anotherQueue.flush(invalidSender), { ok: false, sent: 0, remaining: 1, reason: 'SEND_REJECTED' });
   assert.equal(rejectedCalls, 0);
 });
 
 test('HTTP sender converts fetch failure to false so queue data is retained', async () => {
   const queue = createObservabilityQueue();
-  queue.capture({ faultCode: 'NETWORK_FAILURE', context: { releaseId: 'r1', media: 'browser', surface: 'battle', matchId: 'm1' } }, 12);
+  queue.capture({
+    faultCode: 'NETWORK_FAILURE',
+    context: { releaseId: 'r1', media: 'browser', surface: 'battle', matchId: 'm1', ...lineage }
+  }, 12);
   const sender = createBrowserObservabilityHttpSender({
     endpoint: 'https://collector.example.test/observability',
     fetchImpl: async () => { throw new Error('offline'); }

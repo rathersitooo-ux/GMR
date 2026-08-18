@@ -1,14 +1,27 @@
-// Explicit retrigger after both repaired workflow and classic-to-ESM bridge are present on the acquired branch.
+// Exact-base HTML-only executor. Keeps the ESM decision core pure and mounts it through minimal inline module glue.
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import path from 'node:path';
 
 const htmlPath = 'browser/GAMEROAD.html';
-const gatePath = '.github/workflows/gameroad-required-gate.yml';
 const auditPath = 'audit/browsermono-r4-nav-mount.json';
 const expectedHtmlBlob = '8ee760535ccf769d7f832d1d70dad4133a7245a4';
-const expectedGateBlob = 'ce2ab3957fc9ab3beb01ec7f6de9ad652f8ef8ac';
-const moduleTag = '<script type="module" src="./screen-navigation-live-adapter.mjs"></script>';
+const bridgeKey = 'GAMEROAD_SCREEN_NAVIGATION';
+const moduleBridge = `<script type="module">
+import { resolveScreenNavigation } from "./screen-navigation-core.mjs";
+const existingScreenNavigationBridge=globalThis.${bridgeKey};
+if(existingScreenNavigationBridge && existingScreenNavigationBridge.resolve!==resolveScreenNavigation){
+  throw new Error("${bridgeKey} is already occupied by an incompatible bridge");
+}
+if(!existingScreenNavigationBridge){
+  Object.defineProperty(globalThis,"${bridgeKey}",{
+    value:Object.freeze({resolve:resolveScreenNavigation}),
+    enumerable:false,
+    configurable:false,
+    writable:false
+  });
+}
+</script>`;
 
 function gitBlobSha(buffer) {
   const header = Buffer.from(`blob ${buffer.length}\0`, 'utf8');
@@ -22,22 +35,14 @@ function fail(reason, details = {}) {
   process.exit(2);
 }
 
-function requireExactBlob(filePath, expectedBlob) {
-  const bytes = fs.readFileSync(filePath);
-  const actualBlob = gitBlobSha(bytes);
-  if (actualBlob !== expectedBlob) {
-    fail('EXACT_BASE_BLOB_MISMATCH', { filePath, expectedBlob, actualBlob, byteLength: bytes.length });
-  }
-  return { bytes, actualBlob };
+const sourceBytes = fs.readFileSync(htmlPath);
+const actualHtmlBlob = gitBlobSha(sourceBytes);
+if (actualHtmlBlob !== expectedHtmlBlob) {
+  fail('EXACT_BASE_BLOB_MISMATCH', { expectedHtmlBlob, actualHtmlBlob, byteLength: sourceBytes.length });
 }
-
-const htmlBase = requireExactBlob(htmlPath, expectedHtmlBlob);
-const gateBase = requireExactBlob(gatePath, expectedGateBlob);
-const source = htmlBase.bytes.toString('utf8');
-const gate = gateBase.bytes.toString('utf8');
-
-if (source.includes(moduleTag)) {
-  fail('NAVIGATION_LIVE_ADAPTER_ALREADY_MOUNTED');
+const source = sourceBytes.toString('utf8');
+if (source.includes(bridgeKey)) {
+  fail('NAVIGATION_BRIDGE_KEY_ALREADY_PRESENT');
 }
 
 const legacyPattern = /function\s+navigateDetail\s*\(\s*target\s*\)\s*\{\s*if\s*\(\s*!target\s*\|\|\s*target\s*===\s*state\.screen\s*\)\s*return\s*;\s*gameroadNav\.stack\.push\s*\(\s*navEntry\s*\(\s*state\.screen\s*\)\s*\)\s*;\s*show\s*\(\s*target\s*\)\s*;\s*\}/g;
@@ -62,64 +67,46 @@ if (/type\s*=\s*["']module["']/i.test(scriptTag)) {
   fail('NAVIGATE_DETAIL_SCRIPT_UNEXPECTEDLY_MODULE', { scriptTag });
 }
 
-const replacement = `function navigateDetail(target){\n  const bridge=globalThis.GAMEROAD_SCREEN_NAVIGATION;\n  if(!bridge || typeof bridge.resolve!=="function") throw new Error("GAMEROAD screen navigation bridge is not ready");\n  const decision=bridge.resolve(state.screen,target);\n  if(!decision.ok) return;\n  gameroadNav.stack.push(navEntry(decision.from));\n  show(decision.to);\n}`;
-let patchedSource = source.replace(legacyPattern, replacement);
-patchedSource = patchedSource.slice(0, scriptOpen) + moduleTag + '\n' + patchedSource.slice(scriptOpen);
+const replacement = `function navigateDetail(target){\n  const bridge=globalThis.${bridgeKey};\n  if(!bridge || typeof bridge.resolve!=="function") throw new Error("GAMEROAD screen navigation bridge is not ready");\n  const decision=bridge.resolve(state.screen,target);\n  if(!decision.ok) return;\n  gameroadNav.stack.push(navEntry(decision.from));\n  show(decision.to);\n}`;
+let patched = source.replace(legacyPattern, replacement);
+patched = patched.slice(0, scriptOpen) + moduleBridge + '\n' + patched.slice(scriptOpen);
 
-if (/function\s+navigateDetail\s*\(\s*target\s*\)\s*\{\s*if\s*\(\s*!target\s*\|\|\s*target\s*===\s*state\.screen\s*\)/.test(patchedSource)) {
+if (/function\s+navigateDetail\s*\(\s*target\s*\)\s*\{\s*if\s*\(\s*!target\s*\|\|\s*target\s*===\s*state\.screen\s*\)/.test(patched)) {
   fail('LEGACY_INLINE_PREDICATE_REMAINS');
 }
-if ((patchedSource.split(moduleTag).length - 1) !== 1) {
-  fail('MODULE_TAG_COUNT_AFTER_PATCH', { actual: patchedSource.split(moduleTag).length - 1 });
+if ((patched.split(`globalThis.${bridgeKey}`).length - 1) < 2) {
+  fail('BRIDGE_MOUNT_MISSING_AFTER_PATCH');
 }
-const mountedNeedle = 'const decision=bridge.resolve(state.screen,target);';
-if ((patchedSource.split(mountedNeedle).length - 1) !== 1) {
-  fail('MOUNTED_RESOLVER_CALL_COUNT', { actual: patchedSource.split(mountedNeedle).length - 1 });
+if ((patched.split('const decision=bridge.resolve(state.screen,target);').length - 1) !== 1) {
+  fail('MOUNTED_RESOLVER_CALL_COUNT', { actual: patched.split('const decision=bridge.resolve(state.screen,target);').length - 1 });
 }
-if (!patchedSource.includes('gameroadNav.stack.push(navEntry(decision.from));') || !patchedSource.includes('show(decision.to);')) {
+if (!patched.includes('gameroadNav.stack.push(navEntry(decision.from));') || !patched.includes('show(decision.to);')) {
   fail('HOST_SIDE_EFFECT_BOUNDARY_MISSING');
 }
-if (!patchedSource.includes('navigateDetail(b.dataset.go)')) {
+if (!patched.includes('navigateDetail(b.dataset.go)')) {
   fail('DATA_GO_NAVIGATION_WIRING_MISSING');
 }
-if (!patchedSource.includes('GAMEROAD_NAV_QA')) {
+if (!patched.includes('GAMEROAD_NAV_QA')) {
   fail('NAVIGATION_QA_SURFACE_MISSING');
 }
-
-const oldGatePaths = '              browser/screen-navigation-core.mjs|\\\n              tests/screen-navigation-core.test.mjs|\\\n';
-const newGatePaths = '              browser/screen-navigation-core.mjs|\\\n              browser/screen-navigation-live-adapter.mjs|\\\n              tests/screen-navigation-core.test.mjs|\\\n              tests/screen-navigation-live-adapter.test.mjs|\\\n';
-const oldGateTest = '          node --test tests/screen-navigation-core.test.mjs\n';
-const newGateTest = '          node --test tests/screen-navigation-core.test.mjs tests/screen-navigation-live-adapter.test.mjs\n';
-
-if ((gate.split(oldGatePaths).length - 1) !== 1) {
-  fail('REQUIRED_GATE_PATH_MAPPING_MATCH_COUNT', { actual: gate.split(oldGatePaths).length - 1 });
-}
-if ((gate.split(oldGateTest).length - 1) !== 1) {
-  fail('REQUIRED_GATE_TEST_COMMAND_MATCH_COUNT', { actual: gate.split(oldGateTest).length - 1 });
-}
-const patchedGate = gate.replace(oldGatePaths, newGatePaths).replace(oldGateTest, newGateTest);
-if (!patchedGate.includes('browser/screen-navigation-live-adapter.mjs') || !patchedGate.includes('tests/screen-navigation-live-adapter.test.mjs')) {
-  fail('REQUIRED_GATE_ADAPTER_MAPPING_MISSING_AFTER_PATCH');
+if ((patched.split('import { resolveScreenNavigation } from "./screen-navigation-core.mjs";').length - 1) !== 1) {
+  fail('CORE_IMPORT_COUNT_AFTER_PATCH', { actual: patched.split('import { resolveScreenNavigation } from "./screen-navigation-core.mjs";').length - 1 });
 }
 
-fs.writeFileSync(htmlPath, patchedSource, 'utf8');
-fs.writeFileSync(gatePath, patchedGate, 'utf8');
-const patchedHtmlBytes = fs.readFileSync(htmlPath);
-const patchedGateBytes = fs.readFileSync(gatePath);
+fs.writeFileSync(htmlPath, patched, 'utf8');
+const patchedBytes = fs.readFileSync(htmlPath);
 fs.mkdirSync(path.dirname(auditPath), { recursive: true });
 fs.writeFileSync(auditPath, JSON.stringify({
   ok: true,
   expectedHtmlBlob,
-  actualHtmlBlob: htmlBase.actualBlob,
-  patchedHtmlBlob: gitBlobSha(patchedHtmlBytes),
-  expectedGateBlob,
-  actualGateBlob: gateBase.actualBlob,
-  patchedGateBlob: gitBlobSha(patchedGateBytes),
-  htmlBytesBefore: htmlBase.bytes.length,
-  htmlBytesAfter: patchedHtmlBytes.length,
+  actualHtmlBlob,
+  patchedHtmlBlob: gitBlobSha(patchedBytes),
+  htmlBytesBefore: sourceBytes.length,
+  htmlBytesAfter: patchedBytes.length,
   legacyPredicateMatchesAfter: 0,
-  mountedResolverCallCountAfter: patchedSource.split(mountedNeedle).length - 1,
-  moduleTagCountAfter: patchedSource.split(moduleTag).length - 1,
-  adapterRequiredGateMapping: true
+  mountedResolverCallCountAfter: patched.split('const decision=bridge.resolve(state.screen,target);').length - 1,
+  coreImportCountAfter: patched.split('import { resolveScreenNavigation } from "./screen-navigation-core.mjs";').length - 1,
+  bridgeMount: 'INLINE_MODULE_GLUE_ONLY',
+  hostShowAndStackOwnershipPreserved: true
 }, null, 2) + '\n');
 console.log(fs.readFileSync(auditPath, 'utf8'));

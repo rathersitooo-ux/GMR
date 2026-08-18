@@ -169,9 +169,11 @@ jobs:
                 ;;
               browser/board-facility-state-core.mjs|\
               browser/board-facility-state-core.classic.js|\
+              browser/board-facility-runtime-mount.mjs|\
               scripts/build-board-facility-classic.mjs|\
               tests/board-facility-state-core.test.mjs|\
-              tests/board-facility-classic-adapter.test.mjs)
+              tests/board-facility-classic-adapter.test.mjs|\
+              tests/board-facility-runtime-mount.test.mjs)
                 board_facility=true
                 ;;
               browser/auto-rank-d06-collision-contract.mjs|\
@@ -327,7 +329,7 @@ jobs:
 
       - name: Run Board facility state core tests
         if: steps.classify.outputs.board_facility == 'true'
-        run: node --test tests/board-facility-state-core.test.mjs tests/board-facility-classic-adapter.test.mjs
+        run: node --test tests/board-facility-state-core.test.mjs tests/board-facility-classic-adapter.test.mjs tests/board-facility-runtime-mount.test.mjs
 
       - name: Run Auto-rank D06 collision contract tests
         if: steps.classify.outputs.auto_rank == 'true'

@@ -1470,8 +1470,8 @@ async function resolveAbilityEntry(entry,phase){const m=state.match,p=m.players.
  renderBattle();return added
 }
 async function resolveAbilityBundle(entries,phase){let addedBundleSeq=0;const queue=[sortAbilityEntries(entries.filter(e=>CARDS[e.cardId]?.effect_type!=='none'),`${phase}:root`)];while(queue.length){const bundle=queue.shift();if(!bundle.length)continue;const newly=[];for(const e of bundle)newly.push(...await resolveAbilityEntry(e,phase));const next=newly.filter(e=>CARDS[e.cardId]?.effect_type!=='none');if(next.length)queue.push(sortAbilityEntries(next,`${phase}:add:${++addedBundleSeq}`))}}
-async function commitPlans(){const m=state.match;if(m.busy)return;const me=m.players[0];updatePlanFromSelect();if(!me.plan?.roadId||!me.plan?.battleId){toast('ロードカードとバトルカードを選択してください');return}if(me.plan.roadId===me.plan.battleId){toast('別の札を選択してください');return}const path=me.plan.path||[me.position];if(path.length-1>normalMoveLimitForRoad(me.plan.roadId)){toast('通常移動可能歩数を超えています');return}for(let i=1;i<path.length;i++){if(!neighbors(path[i-1],me).includes(path[i])||path.slice(0,i).includes(path[i])){toast('経路が連続していません');return}}const quickAcceptedAt=quickNow(m);m.busy=true;try{if(!battleMount)await updateBattleAvatar();const used=new Set([path.at(-1)]);m.players.slice(1).forEach(p=>p.plan=botPlan(p,used));m.players.forEach(p=>{if(!p.hand.includes(p.plan.roadId)||!p.hand.includes(p.plan.battleId))throw Error('reservation-not-owned')});quickAcceptPlan(m,me,quickAcceptedAt);window.GAMEROAD_PARTNER_COMMENT?.emit?.({eventId:`${m.id}:set:${m.round}:road`,kind:'dialogue',speechIntent:'road_set',cardId:me.plan.roadId,loggable:false,ttlMs:9000});window.GAMEROAD_PARTNER_COMMENT?.emit?.({eventId:`${m.id}:set:${m.round}:battle`,kind:'dialogue',speechIntent:'battle_set',cardId:me.plan.battleId,loggable:false,ttlMs:9000});m.lastBattleResolution=null;m.players.forEach(p=>removeHand(p,p.plan.roadId));m.activeId=pickActive(m.players).id;const roadEntries=[];m.players.forEach(p=>roadEntries.push(makeParticipant(p,p.plan.roadId,'road')));m.phase='reveal';log('ロードカードを公開。公開時能力を小さい印刷値順で解決します。');renderBattle();await resolveAbilityBundle(roadEntries,'road');if(m.contentId==='honey_hunt'&&!m.honey.generatedRounds.has(m.round)){spawnHoneyFromRoads();log('公開された1〜6と、列上の同数字ロードカード実体を照合してハニー発生源を更新しました。')}m.phase='move';renderBattle();const order=randomOrderByRoad(m.players);for(const p of order){await animateResolvedPath(p);if(m.contentId!=='honey_hunt'&&CARDS[p.plan.roadId].effect_type==='none'){const before=p.awake;p.awake=Math.min(p.mana.length,p.awake+1);if(p.awake>before)log(`${p.name}：能力なしロードカードの成立でマナを1枚起こした。`)}log(`${p.name}：${cardLabel(p.plan.roadId)} / ${p.plan.path.length-1}歩`)}const act=m.players.find(p=>p.id===m.activeId);m.phase='target';log(`${act.name}が攻撃権を取得。`);m.busy=false;renderBattle();if(!act.human){autoTarget(act);await resolveBattle()}}catch(e){m.busy=false;log(`処理停止：${e.message}`);renderBattle();throw e}}
-$('#readyPlan').onclick=()=>{commitPlans().catch(e=>console.error(e))};
+async function commitPlans(){const m=state.match;if(m.busy)return false;const me=m.players[0];updatePlanFromSelect();if(!me.plan?.roadId||!me.plan?.battleId){toast('ロードカードとバトルカードを選択してください');return false}if(me.plan.roadId===me.plan.battleId){toast('別の札を選択してください');return false}const path=me.plan.path||[me.position];if(path.length-1>normalMoveLimitForRoad(me.plan.roadId)){toast('通常移動可能歩数を超えています');return false}for(let i=1;i<path.length;i++){if(!neighbors(path[i-1],me).includes(path[i])||path.slice(0,i).includes(path[i])){toast('経路が連続していません');return false}}const quickAcceptedAt=quickNow(m);m.busy=true;try{if(!battleMount)await updateBattleAvatar();const used=new Set([path.at(-1)]);m.players.slice(1).forEach(p=>p.plan=botPlan(p,used));m.players.forEach(p=>{if(!p.hand.includes(p.plan.roadId)||!p.hand.includes(p.plan.battleId))throw Error('reservation-not-owned')});quickAcceptPlan(m,me,quickAcceptedAt);window.GAMEROAD_PARTNER_COMMENT?.emit?.({eventId:`${m.id}:set:${m.round}:road`,kind:'dialogue',speechIntent:'road_set',cardId:me.plan.roadId,loggable:false,ttlMs:9000});window.GAMEROAD_PARTNER_COMMENT?.emit?.({eventId:`${m.id}:set:${m.round}:battle`,kind:'dialogue',speechIntent:'battle_set',cardId:me.plan.battleId,loggable:false,ttlMs:9000});m.lastBattleResolution=null;m.players.forEach(p=>removeHand(p,p.plan.roadId));m.activeId=pickActive(m.players).id;const roadEntries=[];m.players.forEach(p=>roadEntries.push(makeParticipant(p,p.plan.roadId,'road')));m.phase='reveal';log('ロードカードを公開。公開時能力を小さい印刷値順で解決します。');renderBattle();await resolveAbilityBundle(roadEntries,'road');if(m.contentId==='honey_hunt'&&!m.honey.generatedRounds.has(m.round)){spawnHoneyFromRoads();log('公開された1〜6と、列上の同数字ロードカード実体を照合してハニー発生源を更新しました。')}m.phase='move';renderBattle();const order=randomOrderByRoad(m.players);for(const p of order){await animateResolvedPath(p);if(m.contentId!=='honey_hunt'&&CARDS[p.plan.roadId].effect_type==='none'){const before=p.awake;p.awake=Math.min(p.mana.length,p.awake+1);if(p.awake>before)log(`${p.name}：能力なしロードカードの成立でマナを1枚起こした。`)}log(`${p.name}：${cardLabel(p.plan.roadId)} / ${p.plan.path.length-1}歩`)}const act=m.players.find(p=>p.id===m.activeId);m.phase='target';log(`${act.name}が攻撃権を取得。`);m.busy=false;renderBattle();if(!act.human){autoTarget(act);await resolveBattle()}return true}catch(e){m.busy=false;log(`処理停止：${e.message}`);renderBattle();throw e}}
+globalThis.GAMEROAD_READY_PLAN_COMMIT=commitPlans;
 function autoTarget(active){const others=legalOpponents(active);if(!others.length){state.match.target=null;throw Error('no-legal-target')}const target=others[rndInt(others.length)];const lane=['L','C','R'][rndInt(3)],shield=['L','C','R'][rndInt(3)];state.match.target={defenderId:target.id,lane,shield}}
 function renderTarget(){const box=$('#targetBox'),act=state.match.players.find(p=>p.id===state.match.activeId),on=state.match.phase==='target'&&act?.human;box.classList.toggle('on',on);$('#battleMap').classList.toggle('targetMode',!!on);if(!on)return;const t=$('#targetPlayer');t.innerHTML='';legalOpponents(act).forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name;t.appendChild(o)})}
 $('#confirmTarget').onclick=async()=>{const act=state.match.players.find(p=>p.id===state.match.activeId);if(!act?.human)return;const defenderId=$('#targetPlayer').value;if(!legalOpponents(act).some(p=>p.id===defenderId)){state.match.target=null;renderBattle();return}state.match.target={defenderId,lane:$('#targetLane').value,shield:$('#targetShield').value};try{await resolveBattle()}catch(e){console.error(e)}}
@@ -3348,4 +3348,59 @@ body.low-perf .battlePhaseBackdrop{background:none!important}.battle.dedicatedBa
 })();
 </script>
 
+
+<script type="module" id="gameroad-ui-feedback-ready-plan-production-r9">
+import { createReadyPlanFeedbackAdapter, bindReadyPlanFeedbackControl } from "./ui-state-feedback-ready-plan-adapter.mjs";
+
+const target = document.getElementById("readyPlan");
+const commit = globalThis.GAMEROAD_READY_PLAN_COMMIT;
+if (!target) throw new Error("UI_FEEDBACK_READY_PLAN_TARGET_MISSING");
+if (typeof commit !== "function") throw new Error("UI_FEEDBACK_READY_PLAN_COMMIT_MISSING");
+
+let operationSequence = 0;
+let binding = null;
+const adapter = createReadyPlanFeedbackAdapter({
+  config: { holdMs: 500, moveCancelDistance: 20, rightSwipeDistance: 45 },
+  commit(command) {
+    Promise.resolve()
+      .then(() => commit())
+      .then((accepted) => binding.acknowledge({
+        operationToken: command.operationToken,
+        accepted: accepted === true,
+        reason: accepted === true ? "ready_plan_commit_applied" : "ready_plan_commit_rejected",
+      }))
+      .catch((error) => {
+        try {
+          binding.acknowledge({
+            operationToken: command.operationToken,
+            accepted: false,
+            reason: "ready_plan_commit_error",
+          });
+        } catch (ackError) {
+          console.error(ackError);
+        }
+        console.error(error);
+      });
+    return command.operationToken;
+  },
+  reducedMotion: Boolean(globalThis.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches),
+  lowPerf: document.body.classList.contains("lowPerf"),
+});
+
+const render = (feedback) => {
+  target.dataset.uiFeedback = feedback.feedback;
+  target.dataset.uiFeedbackReason = feedback.reason;
+  target.setAttribute("aria-busy", feedback.pending ? "true" : "false");
+};
+
+binding = bindReadyPlanFeedbackControl({
+  target,
+  adapter,
+  operationTokenFactory: () => `ready-plan:${++operationSequence}`,
+  render,
+});
+
+globalThis.GAMEROAD_READY_PLAN_FEEDBACK_BINDING = binding;
+globalThis.addEventListener("pagehide", () => binding.destroy(), { once: true });
+</script>
 </body></html>

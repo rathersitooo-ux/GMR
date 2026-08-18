@@ -4,7 +4,19 @@ export const D06_COLLISION_KIND = Object.freeze({
   REVERSE_EDGE: 'REVERSE_EDGE'
 });
 
+export const D06_NORMALIZED_EVENT_KIND = Object.freeze({
+  PATH_CROSSING_NODE: 'PATH_CROSSING_NODE',
+  POSITION_SWAP: 'POSITION_SWAP',
+  REVERSE_EDGE_PASSAGE: 'REVERSE_EDGE_PASSAGE'
+});
+
 const D06_KINDS = new Set(Object.values(D06_COLLISION_KIND));
+
+const D06_NORMALIZED_EVENT_TO_COLLISION_KIND = new Map([
+  [D06_NORMALIZED_EVENT_KIND.PATH_CROSSING_NODE, D06_COLLISION_KIND.CROSSING],
+  [D06_NORMALIZED_EVENT_KIND.POSITION_SWAP, D06_COLLISION_KIND.SWAP],
+  [D06_NORMALIZED_EVENT_KIND.REVERSE_EDGE_PASSAGE, D06_COLLISION_KIND.REVERSE_EDGE]
+]);
 
 const D06_FAILURE_BASE = Object.freeze({
   ruleId: 'D06',
@@ -35,4 +47,18 @@ export function toD06ReservationFailure(collisionKind) {
     ...D06_FAILURE_BASE,
     collisionKind
   });
+}
+
+/**
+ * Accept the normalized H02 detector vocabulary already fixed by CURRENT and
+ * translate it into the existing D06 reservation-failure contract. Labels
+ * outside the three adopted H02 classes fail closed rather than being guessed
+ * into D06.
+ *
+ * @param {string} normalizedEventKind
+ * @returns {Readonly<object>|null}
+ */
+export function toD06ReservationFailureFromNormalizedEvent(normalizedEventKind) {
+  const collisionKind = D06_NORMALIZED_EVENT_TO_COLLISION_KIND.get(normalizedEventKind);
+  return collisionKind ? toD06ReservationFailure(collisionKind) : null;
 }

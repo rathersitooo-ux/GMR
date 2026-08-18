@@ -1,0 +1,27 @@
+name: BrowserMono R7 BackTarget Delete Prep
+
+on:
+  push:
+    branches:
+      - work/browsermono-r7-backtarget-delete-prep-20260818
+    paths:
+      - scripts/apply-browsermono-screen-navigation-backtarget-delete.mjs
+      - tests/browsermono-screen-navigation-backtarget-delete.test.mjs
+      - .github/workflows/browsermono-r7-backtarget-delete-prep.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backtarget-delete-executor-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+
+      - name: Show Node version
+        run: node --version
+
+      - name: Run fail-closed deletion executor tests
+        run: node --test tests/browsermono-screen-navigation-backtarget-delete.test.mjs

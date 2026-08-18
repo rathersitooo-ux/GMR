@@ -201,9 +201,21 @@ async function playVisibleTwoPlayerToResult(page, testInfo, evidencePrefix) {
   let targetConfirms = 0;
   let presentationAdvances = 0;
   let abilityConfirms = 0;
+  let cardPresentationFallbacks = 0;
+  let lastCardPresentationEvent = null;
 
   while (Date.now() < deadline) {
     if (await result.isVisible().catch(() => false)) break;
+
+    const cardPresentation = battle.locator('#battleResolution[data-card-presentation="fallback"]:visible');
+    if ((await cardPresentation.count()) > 0) {
+      const eventId = await cardPresentation.first().getAttribute('data-card-presentation-event');
+      if (eventId && eventId !== lastCardPresentationEvent) {
+        lastCardPresentationEvent = eventId;
+        cardPresentationFallbacks += 1;
+        await attachStateScreenshot(page, testInfo, `${evidencePrefix}-card-presentation-fallback-${cardPresentationFallbacks}`);
+      }
+    }
 
     if (await satisfyVisibleAbilityChoice(page)) {
       abilityConfirms += 1;
@@ -237,6 +249,7 @@ async function playVisibleTwoPlayerToResult(page, testInfo, evidencePrefix) {
   await expect(result, 'visible play reaches Result without direct result/state injection').toBeVisible({ timeout: 2_000 });
   expect(roundsSubmitted, 'at least one visible plan was submitted').toBeGreaterThan(0);
   expect(presentationAdvances, 'at least one visible Battle result advance was used').toBeGreaterThan(0);
+  expect(cardPresentationFallbacks, 'accepted/public Battle resolution mounts the current CardPRES fallback on the visible production resolution surface').toBeGreaterThan(0);
   const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';
   expect(roundsText, 'Result exposes a real round count').toMatch(/\d+ラウンド/);
   await expect(result.locator('#resultRanking .rankLine')).toHaveCount(2);
@@ -244,9 +257,9 @@ async function playVisibleTwoPlayerToResult(page, testInfo, evidencePrefix) {
   await attachStateScreenshot(page, testInfo, `${evidencePrefix}-result-visible`);
   testInfo.annotations.push({
     type: 'visible-result-path',
-    description: `submitted=${roundsSubmitted}, targetConfirms=${targetConfirms}, battleAdvances=${presentationAdvances}, abilityConfirms=${abilityConfirms}, result=${roundsText}`,
+    description: `submitted=${roundsSubmitted}, targetConfirms=${targetConfirms}, battleAdvances=${presentationAdvances}, abilityConfirms=${abilityConfirms}, cardPresentationFallbacks=${cardPresentationFallbacks}, result=${roundsText}` ,
   });
-  return { battle, result, roundsSubmitted, targetConfirms, presentationAdvances, abilityConfirms, roundsText };
+  return { battle, result, roundsSubmitted, targetConfirms, presentationAdvances, abilityConfirms, cardPresentationFallbacks, roundsText };
 }
 
 test('captures success-state screenshots for current pointer navigation', async ({ page }, testInfo) => {

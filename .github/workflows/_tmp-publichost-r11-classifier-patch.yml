@@ -6,12 +6,20 @@ on:
       - work/publichost-r11-github-actions-auth-bridge-20260819
     paths:
       - .github/workflows/_tmp-publichost-r11-classifier-patch.yml
+  pull_request:
+    branches:
+      - main
+    types:
+      - synchronize
+    paths:
+      - .github/workflows/_tmp-publichost-r11-classifier-patch.yml
 
 permissions:
   contents: write
 
 jobs:
   patch:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - name: Checkout exact task branch
@@ -23,14 +31,13 @@ jobs:
       - name: Patch exact PublicHost classifier and self-remove
         shell: bash
         env:
-          EXPECTED_PARENT: 2a205aab6d0ca9efcdd11328f7cb364610b8f91e
           EXPECTED_GATE_BLOB: 74a51bee1b5135192049c76ef49b9c040171f06e
           TARGET_BRANCH: work/publichost-r11-github-actions-auth-bridge-20260819
         run: |
           set -euo pipefail
-          actual_parent="$(git rev-parse HEAD^)"
-          if [[ "$actual_parent" != "$EXPECTED_PARENT" ]]; then
-            echo "::error::Unexpected executor parent: $actual_parent"
+          current_branch="$(git branch --show-current)"
+          if [[ "$current_branch" != "$TARGET_BRANCH" ]]; then
+            echo "::error::Unexpected branch: $current_branch"
             exit 1
           fi
 

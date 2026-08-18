@@ -8,11 +8,12 @@ const LEGACY_BACK_TARGET_PATTERN = /entry\?\.\s*screen\s*\|\|\s*GAMEROAD_NAV_FAL
 const LEGACY_MOUNT_PATTERN = /<script type="module">\s*import\s*\{\s*resolveScreenNavigation\s*\}\s*from\s*(["'])\.\/screen-navigation-core\.mjs\1\s*;\s*const existingScreenNavigationBridge\s*=\s*globalThis\.GAMEROAD_SCREEN_NAVIGATION\s*;\s*if\s*\(\s*existingScreenNavigationBridge\s*&&\s*existingScreenNavigationBridge\.resolve\s*!==\s*resolveScreenNavigation\s*\)\s*\{\s*throw new Error\s*\(\s*(["'])GAMEROAD_SCREEN_NAVIGATION is already occupied by an incompatible bridge\2\s*\)\s*;\s*\}\s*if\s*\(\s*!existingScreenNavigationBridge\s*\)\s*\{\s*Object\.defineProperty\s*\(\s*globalThis\s*,\s*(["'])GAMEROAD_SCREEN_NAVIGATION\3\s*,\s*\{\s*value\s*:\s*Object\.freeze\s*\(\s*\{\s*resolve\s*:\s*resolveScreenNavigation\s*\}\s*\)\s*,\s*enumerable\s*:\s*false\s*,\s*configurable\s*:\s*false\s*,\s*writable\s*:\s*false\s*\}\s*\)\s*;\s*\}\s*<\/script>/g;
 
 const RUNTIME_MOUNT = `<script type="module">
+import { resolveScreenNavigation } from "./screen-navigation-core.mjs";
 import { createScreenNavigationRuntimeBridge } from "./screen-navigation-core.mjs";
 const runtimeScreenNavigationBridge=createScreenNavigationRuntimeBridge();
 const existingScreenNavigationBridge=globalThis.GAMEROAD_SCREEN_NAVIGATION;
 if(existingScreenNavigationBridge && (
-  existingScreenNavigationBridge.resolve!==runtimeScreenNavigationBridge.resolve ||
+  existingScreenNavigationBridge.resolve!==resolveScreenNavigation ||
   existingScreenNavigationBridge.resolveBackTarget!==runtimeScreenNavigationBridge.resolveBackTarget
 )){
   throw new Error("GAMEROAD_SCREEN_NAVIGATION is already occupied by an incompatible bridge");

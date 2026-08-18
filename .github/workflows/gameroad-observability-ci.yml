@@ -1,0 +1,42 @@
+name: GAMEROAD Observability CI
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - browser/observability-core.mjs
+      - browser/observability-browser-adapter.mjs
+      - tests/observability-core.test.mjs
+      - tests/observability-browser-adapter.test.mjs
+      - .github/workflows/gameroad-observability-ci.yml
+  push:
+    branches:
+      - main
+    paths:
+      - browser/observability-core.mjs
+      - browser/observability-browser-adapter.mjs
+      - tests/observability-core.test.mjs
+      - tests/observability-browser-adapter.test.mjs
+      - .github/workflows/gameroad-observability-ci.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  observability:
+    name: GAMEROAD Observability CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run observability core and Browser adapter tests
+        run: node --test tests/observability-core.test.mjs tests/observability-browser-adapter.test.mjs

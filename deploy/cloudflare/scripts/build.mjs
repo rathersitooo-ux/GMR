@@ -12,6 +12,8 @@ const defaultNavigationCoreSource = path.join(repoRoot, 'browser/screen-navigati
 const defaultReplayAdapterSource = path.join(repoRoot, 'browser/battle-replay-live-adapter.mjs');
 const defaultReplayCoreSource = path.join(repoRoot, 'browser/battle-replay-core.mjs');
 const defaultCardPresentationCoreSource = path.join(repoRoot, 'browser/card-presentation-core.mjs');
+const defaultUiStateFeedbackCoreSource = path.join(repoRoot, 'browser/ui-state-feedback-core.mjs');
+const defaultUiStateFeedbackReadyPlanAdapterSource = path.join(repoRoot, 'browser/ui-state-feedback-ready-plan-adapter.mjs');
 const defaultDist = path.join(repoRoot, 'deploy/cloudflare/dist');
 
 function gitBlobSha1(buffer) {
@@ -41,6 +43,8 @@ export async function buildPackage({
   replayAdapterSource = defaultReplayAdapterSource,
   replayCoreSource = defaultReplayCoreSource,
   cardPresentationCoreSource = defaultCardPresentationCoreSource,
+  uiStateFeedbackCoreSource = defaultUiStateFeedbackCoreSource,
+  uiStateFeedbackReadyPlanAdapterSource = defaultUiStateFeedbackReadyPlanAdapterSource,
   dist = defaultDist,
   expectedBlob = '',
   expectedCoreBlob = '',
@@ -49,6 +53,8 @@ export async function buildPackage({
   expectedReplayAdapterBlob = '',
   expectedReplayCoreBlob = '',
   expectedCardPresentationCoreBlob = '',
+  expectedUiStateFeedbackCoreBlob = '',
+  expectedUiStateFeedbackReadyPlanAdapterBlob = '',
   sourceCommit = '',
 } = {}) {
   const input = await readFile(source);
@@ -58,6 +64,8 @@ export async function buildPackage({
   const replayAdapterInput = await readFile(replayAdapterSource);
   const replayCoreInput = await readFile(replayCoreSource);
   const cardPresentationCoreInput = await readFile(cardPresentationCoreSource);
+  const uiStateFeedbackCoreInput = await readFile(uiStateFeedbackCoreSource);
+  const uiStateFeedbackReadyPlanAdapterInput = await readFile(uiStateFeedbackReadyPlanAdapterSource);
   const blob = gitBlobSha1(input);
   const coreBlob = gitBlobSha1(coreInput);
   const presenceCoreBlob = gitBlobSha1(presenceCoreInput);
@@ -65,6 +73,8 @@ export async function buildPackage({
   const replayAdapterBlob = gitBlobSha1(replayAdapterInput);
   const replayCoreBlob = gitBlobSha1(replayCoreInput);
   const cardPresentationCoreBlob = gitBlobSha1(cardPresentationCoreInput);
+  const uiStateFeedbackCoreBlob = gitBlobSha1(uiStateFeedbackCoreInput);
+  const uiStateFeedbackReadyPlanAdapterBlob = gitBlobSha1(uiStateFeedbackReadyPlanAdapterInput);
   if (expectedBlob && blob !== expectedBlob) {
     throw new Error(`Browser blob mismatch: expected=${expectedBlob} actual=${blob}`);
   }
@@ -85,6 +95,17 @@ export async function buildPackage({
   }
   if (expectedCardPresentationCoreBlob && cardPresentationCoreBlob !== expectedCardPresentationCoreBlob) {
     throw new Error(`Card presentation core blob mismatch: expected=${expectedCardPresentationCoreBlob} actual=${cardPresentationCoreBlob}`);
+  }
+  if (expectedUiStateFeedbackCoreBlob && uiStateFeedbackCoreBlob !== expectedUiStateFeedbackCoreBlob) {
+    throw new Error(`UI state feedback core blob mismatch: expected=${expectedUiStateFeedbackCoreBlob} actual=${uiStateFeedbackCoreBlob}`);
+  }
+  if (
+    expectedUiStateFeedbackReadyPlanAdapterBlob
+    && uiStateFeedbackReadyPlanAdapterBlob !== expectedUiStateFeedbackReadyPlanAdapterBlob
+  ) {
+    throw new Error(
+      `UI state feedback ready-plan adapter blob mismatch: expected=${expectedUiStateFeedbackReadyPlanAdapterBlob} actual=${uiStateFeedbackReadyPlanAdapterBlob}`,
+    );
   }
 
   await rm(dist, { recursive: true, force: true });
@@ -135,6 +156,20 @@ export async function buildPackage({
   const cardPresentationCoreRoundTrip = await readFile(cardPresentationCoreOutputPath);
   if (!cardPresentationCoreInput.equals(cardPresentationCoreRoundTrip)) {
     throw new Error('dist/card-presentation-core.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const uiStateFeedbackCoreOutputPath = path.join(dist, 'ui-state-feedback-core.mjs');
+  await writeFile(uiStateFeedbackCoreOutputPath, uiStateFeedbackCoreInput);
+  const uiStateFeedbackCoreRoundTrip = await readFile(uiStateFeedbackCoreOutputPath);
+  if (!uiStateFeedbackCoreInput.equals(uiStateFeedbackCoreRoundTrip)) {
+    throw new Error('dist/ui-state-feedback-core.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const uiStateFeedbackReadyPlanAdapterOutputPath = path.join(dist, 'ui-state-feedback-ready-plan-adapter.mjs');
+  await writeFile(uiStateFeedbackReadyPlanAdapterOutputPath, uiStateFeedbackReadyPlanAdapterInput);
+  const uiStateFeedbackReadyPlanAdapterRoundTrip = await readFile(uiStateFeedbackReadyPlanAdapterOutputPath);
+  if (!uiStateFeedbackReadyPlanAdapterInput.equals(uiStateFeedbackReadyPlanAdapterRoundTrip)) {
+    throw new Error('dist/ui-state-feedback-ready-plan-adapter.mjs is not byte-identical to Browser dependency source');
   }
 
   const headers = [
@@ -196,6 +231,18 @@ export async function buildPackage({
         cardPresentationCoreInput,
         cardPresentationCoreBlob,
       ),
+      ui_state_feedback_core: provenance(
+        'browser/ui-state-feedback-core.mjs',
+        'ui-state-feedback-core.mjs',
+        uiStateFeedbackCoreInput,
+        uiStateFeedbackCoreBlob,
+      ),
+      ui_state_feedback_ready_plan_adapter: provenance(
+        'browser/ui-state-feedback-ready-plan-adapter.mjs',
+        'ui-state-feedback-ready-plan-adapter.mjs',
+        uiStateFeedbackReadyPlanAdapterInput,
+        uiStateFeedbackReadyPlanAdapterBlob,
+      ),
     },
   };
   await writeFile(path.join(dist, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
@@ -213,6 +260,8 @@ function parseArgs(argv) {
     else if (a === '--replay-adapter-source') out.replayAdapterSource = path.resolve(argv[++i]);
     else if (a === '--replay-core-source') out.replayCoreSource = path.resolve(argv[++i]);
     else if (a === '--card-presentation-core-source') out.cardPresentationCoreSource = path.resolve(argv[++i]);
+    else if (a === '--ui-state-feedback-core-source') out.uiStateFeedbackCoreSource = path.resolve(argv[++i]);
+    else if (a === '--ui-state-feedback-ready-plan-adapter-source') out.uiStateFeedbackReadyPlanAdapterSource = path.resolve(argv[++i]);
     else if (a === '--dist') out.dist = path.resolve(argv[++i]);
     else if (a === '--expected-blob') out.expectedBlob = argv[++i] || '';
     else if (a === '--expected-core-blob') out.expectedCoreBlob = argv[++i] || '';
@@ -221,6 +270,8 @@ function parseArgs(argv) {
     else if (a === '--expected-replay-adapter-blob') out.expectedReplayAdapterBlob = argv[++i] || '';
     else if (a === '--expected-replay-core-blob') out.expectedReplayCoreBlob = argv[++i] || '';
     else if (a === '--expected-card-presentation-core-blob') out.expectedCardPresentationCoreBlob = argv[++i] || '';
+    else if (a === '--expected-ui-state-feedback-core-blob') out.expectedUiStateFeedbackCoreBlob = argv[++i] || '';
+    else if (a === '--expected-ui-state-feedback-ready-plan-adapter-blob') out.expectedUiStateFeedbackReadyPlanAdapterBlob = argv[++i] || '';
     else if (a === '--source-commit') out.sourceCommit = argv[++i] || '';
     else throw new Error(`Unknown argument: ${a}`);
   }

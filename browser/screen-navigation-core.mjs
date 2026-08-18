@@ -48,3 +48,14 @@ export function resolveScreenBackTarget(currentScreen, historyEntry) {
     || SCREEN_NAVIGATION_FALLBACK_PARENT[currentScreen]
     || 'home';
 }
+
+export function createScreenNavigationRuntimeBridge() {
+  return Object.freeze({
+    resolve(currentScreen, requestedTarget) {
+      return resolveScreenNavigation(currentScreen, requestedTarget);
+    },
+    resolveBackTarget(currentScreen, historyEntry) {
+      return resolveScreenBackTarget(currentScreen, historyEntry);
+    }
+  });
+}

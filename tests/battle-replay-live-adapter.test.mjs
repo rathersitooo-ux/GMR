@@ -323,6 +323,44 @@ test('presentation failure is fail-soft and cannot roll back an accepted replay 
   assert.equal(next.log.events[0].kind, 'battle_resolution');
 });
 
+test('live replay read fails safe for missing or corrupt input while append remains strict', () => {
+  assert.deepEqual(readLiveReplay(null), {
+    ok: false,
+    status: 'unavailable',
+    reason: 'LOG_INVALID'
+  });
+
+  let session = createLiveReplaySession({ matchId: 'M-CORRUPT', versions });
+  session = appendAcceptedBattleResolution(session, resolution(1));
+
+  const corrupt = JSON.parse(JSON.stringify(session));
+  corrupt.log.events[0] = null;
+  assert.deepEqual(readLiveReplay(corrupt), {
+    ok: false,
+    status: 'partial',
+    reason: 'EVENT_CORRUPT',
+    index: 0
+  });
+
+  const wrongIdentity = JSON.parse(JSON.stringify(session));
+  wrongIdentity.matchId = 'OTHER';
+  assert.deepEqual(readLiveReplay(wrongIdentity), {
+    ok: false,
+    status: 'unavailable',
+    reason: 'MATCH_ID_INVALID'
+  });
+
+  assert.throws(
+    () => appendAcceptedBattleResolution(null, resolution(1)),
+    /LIVE_REPLAY_SESSION_INVALID/
+  );
+
+  const healthy = readLiveReplay(session);
+  assert.equal(healthy.ok, true);
+  assert.equal(healthy.matchId, 'M-CORRUPT');
+  assert.equal(healthy.events.length, 1);
+});
+
 test('production Browser mounts replay at the canonical accepted Battle seam without a guest-side second capture path', () => {
   const html = readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
   const adapter = readFileSync(new URL('../browser/battle-replay-live-adapter.mjs', import.meta.url), 'utf8');

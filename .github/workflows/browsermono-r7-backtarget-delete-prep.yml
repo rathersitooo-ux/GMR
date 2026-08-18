@@ -8,6 +8,13 @@ on:
       - scripts/apply-browsermono-screen-navigation-backtarget-delete.mjs
       - tests/browsermono-screen-navigation-backtarget-delete.test.mjs
       - .github/workflows/browsermono-r7-backtarget-delete-prep.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - scripts/apply-browsermono-screen-navigation-backtarget-delete.mjs
+      - tests/browsermono-screen-navigation-backtarget-delete.test.mjs
+      - .github/workflows/browsermono-r7-backtarget-delete-prep.yml
   workflow_dispatch:
 
 permissions:

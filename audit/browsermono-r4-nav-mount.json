@@ -1,5 +1,7 @@
 {
   "ok": false,
-  "reason": "NAVIGATE_DETAIL_SCRIPT_NOT_MODULE",
-  "scriptTag": "<script>"
+  "reason": "EXACT_BASE_BLOB_MISMATCH",
+  "expectedHtmlBlob": "8ee760535ccf769d7f832d1d70dad4133a7245a4",
+  "actualHtmlBlob": "6eadf2f25bc14eee7541f2e4f92d34a078dece27",
+  "byteLength": 11828509
 }

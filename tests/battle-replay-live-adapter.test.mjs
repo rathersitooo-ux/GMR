@@ -7,10 +7,13 @@ import {
   appendAcceptedMatchEnd,
   battleReplayContentVersion,
   battleReplayRulesVersion,
+  createBattleReplayCardPresentationBridge,
   createBattleReplayVersionAuthority,
   createLiveReplaySession,
   projectAcceptedBattleResolution,
-  readLiveReplay
+  readBattleReplayCardPresentationPreferences,
+  readLiveReplay,
+  renderBattleReplayCardPresentationPlan
 } from '../browser/battle-replay-live-adapter.mjs';
 
 const versions = Object.freeze({
@@ -46,6 +49,40 @@ function resolution(serial = 1) {
     maxLaneProgress: [{ id: 'P1', before: 2, after: 4 }],
     secretFutureState: { opponentHand: ['NO'] }
   };
+}
+
+class FakeClassList {
+  constructor() { this.values = new Set(); }
+  add(...names) { names.forEach(name => this.values.add(name)); }
+  remove(...names) { names.forEach(name => this.values.delete(name)); }
+  toggle(name, force) {
+    if (force === true) { this.values.add(name); return true; }
+    if (force === false) { this.values.delete(name); return false; }
+    if (this.values.has(name)) { this.values.delete(name); return false; }
+    this.values.add(name); return true;
+  }
+  contains(name) { return this.values.has(name); }
+}
+
+function fakePresentationDocument({ reduceMotion = false, lowPerf = false } = {}) {
+  const styles = new Map();
+  const box = { dataset: {}, classList: new FakeClassList() };
+  const elements = new Map([
+    ['battleResolution', box],
+    ['reduceMotion', { textContent: reduceMotion ? 'ON' : 'OFF' }],
+    ['lowPerf', { textContent: lowPerf ? 'ON' : 'OFF' }]
+  ]);
+  const document = {
+    head: {
+      appendChild(node) {
+        styles.set(node.id, node);
+        elements.set(node.id, node);
+      }
+    },
+    createElement(tag) { return { tagName: tag.toUpperCase(), id: '', textContent: '' }; },
+    getElementById(id) { return elements.get(id) || null; }
+  };
+  return { document, box, styles };
 }
 
 test('production session still requires all exact version authorities; capture never invents them', () => {
@@ -169,11 +206,106 @@ test('rematch uses a new isolated session and never carries prior replay events'
   assert.equal(second.ended, false);
 });
 
+test('accepted public replay event feeds fallback-only presentation with no gameplay payload or audio', () => {
+  const plans = [];
+  const bridge = createBattleReplayCardPresentationBridge({
+    document: null,
+    matchMedia: () => ({ matches: false }),
+    renderPlan: plan => plans.push(plan)
+  });
+  bridge.begin('M-PRESENT');
+  const first = bridge.acceptAcceptedResolution({ matchId: 'M-PRESENT', serial: 1 });
+  const duplicate = bridge.acceptAcceptedResolution({ matchId: 'M-PRESENT', serial: 1 });
+  assert.equal(first.accepted, true);
+  assert.equal(first.duplicate, false);
+  assert.equal(first.plan.presentationOnly, true);
+  assert.equal(first.plan.eventId, 'battle-resolution:1');
+  assert.equal(first.plan.kind, 'vfx');
+  assert.equal(first.plan.visibility, 'public');
+  assert.deepEqual(first.plan.visual, { source: 'fallback', motion: 'allowed' });
+  assert.deepEqual(first.plan.audio, { source: 'silent' });
+  assert.equal(duplicate.accepted, true);
+  assert.equal(duplicate.duplicate, true);
+  assert.equal(plans.length, 1);
+  assert.deepEqual(bridge.snapshot('M-PRESENT').seenEventIds, ['battle-resolution:1']);
+  assert.deepEqual(BATTLE_REPLAY_LIVE_ADAPTER.cardPresentation, {
+    source: 'accepted_public_battle_resolution',
+    kind: 'vfx',
+    assetAuthority: 'fallback_only',
+    audio: 'silent'
+  });
+});
+
+test('presentation preferences fail to static-only for user/system motion reduction and low performance', () => {
+  const reduced = fakePresentationDocument({ reduceMotion: true });
+  assert.deepEqual(
+    readBattleReplayCardPresentationPreferences({
+      document: reduced.document,
+      matchMedia: () => ({ matches: false })
+    }),
+    { reducedMotion: true, lowPerf: false, audioEnabled: false }
+  );
+  const low = fakePresentationDocument({ lowPerf: true });
+  const bridge = createBattleReplayCardPresentationBridge({
+    document: low.document,
+    matchMedia: () => ({ matches: false }),
+    setTimeout: () => 1
+  });
+  bridge.begin('M-LOW');
+  const result = bridge.acceptAcceptedResolution({ matchId: 'M-LOW', serial: 1 });
+  assert.equal(result.plan.visual.motion, 'static_only');
+  assert.equal(low.box.classList.contains('grCardPresentationFallback'), true);
+  assert.equal(low.box.classList.contains('grCardPresentationMotion'), false);
+});
+
+test('fallback renderer adds one transient non-semantic accent and cleans only its own event', () => {
+  const fake = fakePresentationDocument();
+  const timers = [];
+  const plan = Object.freeze({
+    presentationOnly: true,
+    eventId: 'battle-resolution:7',
+    visual: Object.freeze({ source: 'fallback', motion: 'allowed' })
+  });
+  assert.equal(renderBattleReplayCardPresentationPlan(plan, {
+    document: fake.document,
+    setTimeout: callback => { timers.push(callback); return 1; }
+  }), true);
+  assert.equal(fake.styles.size, 1);
+  assert.equal(fake.box.dataset.cardPresentation, 'fallback');
+  assert.equal(fake.box.dataset.cardPresentationEvent, 'battle-resolution:7');
+  assert.equal(fake.box.classList.contains('grCardPresentationFallback'), true);
+  assert.equal(fake.box.classList.contains('grCardPresentationMotion'), true);
+  timers[0]();
+  assert.equal(fake.box.classList.contains('grCardPresentationFallback'), false);
+  assert.equal(fake.box.classList.contains('grCardPresentationMotion'), false);
+  assert.equal('cardPresentationEvent' in fake.box.dataset, false);
+});
+
+test('presentation failure is fail-soft and cannot roll back an accepted replay event', () => {
+  const throwingBridge = {
+    begin() { throw new Error('visual begin unavailable'); },
+    acceptAcceptedResolution() { throw new Error('visual render unavailable'); }
+  };
+  const initial = createLiveReplaySession(
+    { matchId: 'M-FAILSOFT', versions },
+    { presentationBridge: throwingBridge }
+  );
+  const next = appendAcceptedBattleResolution(
+    initial,
+    resolution(1),
+    { presentationBridge: throwingBridge }
+  );
+  assert.equal(next.lastResolutionSerial, 1);
+  assert.equal(next.log.events.length, 1);
+  assert.equal(next.log.events[0].kind, 'battle_resolution');
+});
 
 test('production Browser mounts replay at the canonical accepted Battle seam without a guest-side second capture path', () => {
   const html = readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
+  const adapter = readFileSync(new URL('../browser/battle-replay-live-adapter.mjs', import.meta.url), 'utf8');
   const count = (needle) => html.split(needle).length - 1;
   assert.equal(count("import('./battle-replay-live-adapter.mjs')"), 1);
+  assert.equal(count("import('./card-presentation-core.mjs')"), 0);
   assert.equal(count('grBattleReplayBegin(state.match)'), 1);
   assert.equal(count('grBattleReplayAcceptResolution(m,m.lastBattleResolution)'), 1);
   assert.equal(count('grBattleReplayEnd(m,winners);return endMatch(winners)'), 1);
@@ -185,4 +317,8 @@ test('production Browser mounts replay at the canonical accepted Battle seam wit
   assert.match(html, /createBattleReplayVersionAuthority\(\{deckRule:DECK_RULE,cardData:window\.__CARD_DATA__\}\)/);
   assert.match(html, /appendAcceptedBattleResolution\(session,resolution\)/);
   assert.match(html, /appendAcceptedMatchEnd\(session,\{winnerIds:\[\.\.\.winners\],round:m\.round,mode:m\.mode\}\)/);
+  assert.match(adapter, /from '\.\/card-presentation-core\.mjs';/);
+  const replayAppend = adapter.indexOf("kind: 'battle_resolution'");
+  const presentationAccept = adapter.indexOf('presentationBridge?.acceptAcceptedResolution?.({');
+  assert.ok(replayAppend >= 0 && presentationAccept > replayAppend);
 });

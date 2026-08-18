@@ -88,7 +88,20 @@ jobs:
         run: |
           set -euo pipefail
           PROJECTS="$(npx --yes wrangler@4 pages project list --json)"
-          if printf '%s' "$PROJECTS" | grep -Eq '"name"[[:space:]]*:[[:space:]]*"gameroad-browser-r5"'; then
+          PROJECT_EXISTS="$(
+            printf '%s' "$PROJECTS" | node -e '
+              const fs = require("node:fs");
+              const projects = JSON.parse(fs.readFileSync(0, "utf8"));
+              if (!Array.isArray(projects)) {
+                throw new Error("Expected Pages project list JSON array.");
+              }
+              const found = projects.some(
+                (project) => project?.["Project Name"] === process.env.PAGES_PROJECT
+              );
+              process.stdout.write(found ? "yes" : "no");
+            '
+          )"
+          if [[ "$PROJECT_EXISTS" == "yes" ]]; then
             echo "Pages project ${PAGES_PROJECT} already exists."
           else
             npx --yes wrangler@4 pages project create "$PAGES_PROJECT" \

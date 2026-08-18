@@ -1,4 +1,4 @@
-name: TEMP UI Feedback R9 Diagnose
+name: TEMP UI Feedback R9 Wrapper Repair
 
 on:
   pull_request:
@@ -6,38 +6,72 @@ on:
     types: [synchronize]
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: ui-feedback-r9-wrapper-repair
+  cancel-in-progress: false
 
 jobs:
-  inspect:
+  repair:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
+    env:
+      BRANCH: work/ui-feedback-r9-readyplan-production-20260819
+      HTML: browser/GAMEROAD.html
+      EXPECTED_BRANCH_HTML: aaa0dc7f34ddcf47dae015a25d8cebb6bb3e92f5
+      EXPECTED_MAIN_HTML: f5c42b4ceb1d89b4aee9ad2adc17fa524d90ef66
+      WORKFLOW: .github/workflows/_tmp-ui-feedback-r9-diagnose.yml
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect ready-plan and first-cycle cue responsibility
+        with:
+          ref: ${{ env.BRANCH }}
+          fetch-depth: 0
+      - name: Fail closed on current HTML ownership drift
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --no-tags
+          branch_blob="$(git hash-object "$HTML")"
+          main_blob="$(git rev-parse origin/main:"$HTML")"
+          test "$branch_blob" = "$EXPECTED_BRANCH_HTML"
+          test "$main_blob" = "$EXPECTED_MAIN_HTML"
+      - name: Repair dynamic delegation through existing wrappers
         run: |
           node <<'NODE'
           const fs = require('fs');
-          const s = fs.readFileSync('browser/GAMEROAD.html','utf8');
-          const terms = [
-            'first10Cue',
-            'ロード決定 → 公開 → 次の行動まで確認 ✓',
-            '次の行動へ進みます',
-            "$('#readyPlan')",
-            'commitPlans',
-            'GAMEROAD_READY_PLAN_COMMIT',
-            'gameroad-ui-feedback-ready-plan-production-r9'
-          ];
-          for (const term of terms) {
-            console.log(`\n===== ${term} =====`);
-            let pos = 0, n = 0;
-            while ((pos = s.indexOf(term, pos)) !== -1 && n < 20) {
-              n++;
-              const a = Math.max(0, pos - 900), b = Math.min(s.length, pos + term.length + 1400);
-              console.log(`-- occurrence ${n} @ ${pos} --`);
-              console.log(s.slice(a,b).replace(/\r/g,''));
-              pos += term.length;
-            }
-            console.log(`count=${n}${s.indexOf(term,pos)!==-1?'+' : ''}`);
-          }
+          const path = 'browser/GAMEROAD.html';
+          let s = fs.readFileSync(path, 'utf8');
+          const stale = 'globalThis.GAMEROAD_READY_PLAN_COMMIT=commitPlans;';
+          const fixed = 'globalThis.GAMEROAD_READY_PLAN_COMMIT=(...args)=>commitPlans(...args);';
+          const count = s.split(stale).length - 1;
+          if (count !== 1) throw new Error(`expected exactly one stale delegate, got ${count}`);
+          if ((s.split(fixed).length - 1) !== 0) throw new Error('fixed delegate already present');
+          const first10Wrapper = 'const __grFirst10CommitPlans=commitPlans;\ncommitPlans=async function(){';
+          const contextWrapper = 'const __ctxBaseCommitPlans=commitPlans;commitPlans=async function(){';
+          if (!s.includes(first10Wrapper)) throw new Error('FIRST10 commit wrapper missing');
+          if (!s.includes(contextWrapper)) throw new Error('context commit wrapper missing');
+          s = s.replace(stale, fixed);
+          if ((s.split(fixed).length - 1) !== 1) throw new Error('dynamic delegate postcondition failed');
+          fs.writeFileSync(path, s);
           NODE
+          node tests/browser-static-check.mjs --self-test "$HTML"
+      - name: Persist repaired HTML-only product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm "$WORKFLOW"
+          base="$(git merge-base HEAD origin/main)"
+          mapfile -t changed < <(git diff --name-only "$base")
+          printf 'Final changed paths:\n%s\n' "${changed[*]}"
+          if [[ "${#changed[@]}" -ne 1 || "${changed[0]}" != "$HTML" ]]; then
+            echo 'Final diff escaped HTML-only scope'
+            exit 1
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m 'UI-FEEDBACK R9: preserve existing ready-plan wrapper chain'
+          git push origin "HEAD:$BRANCH"

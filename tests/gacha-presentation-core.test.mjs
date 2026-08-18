@@ -192,6 +192,22 @@ test('duplicate events are idempotent while stale, gap, presentation, and result
   assert.equal(duplicate, started);
 
   assert.throws(() => applyGachaPresentationEvent(state, {
+    presentationId: 'different-presentation',
+    resultIdentity: state.resultIdentity,
+    eventId: 'e1',
+    sequence: 1,
+    type: 'START',
+  }), /presentationId mismatch/);
+
+  assert.throws(() => applyGachaPresentationEvent(state, {
+    presentationId: state.presentationId,
+    resultIdentity: 'different-result',
+    eventId: 'e1',
+    sequence: 1,
+    type: 'START',
+  }), /resultIdentity mismatch/);
+
+  assert.throws(() => applyGachaPresentationEvent(state, {
     presentationId: state.presentationId,
     resultIdentity: state.resultIdentity,
     eventId: 'stale',

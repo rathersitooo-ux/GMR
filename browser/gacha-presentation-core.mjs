@@ -164,9 +164,9 @@ export function createGachaPresentation({
 export function applyGachaPresentationEvent(state, event = {}) {
   assertState(state);
   requireNonEmptyString(event.eventId, 'eventId');
-  if (state.seenEventIds.includes(event.eventId)) return state;
   if (event.presentationId !== state.presentationId) throw new Error('presentationId mismatch');
   if (event.resultIdentity !== state.resultIdentity) throw new Error('resultIdentity mismatch');
+  if (state.seenEventIds.includes(event.eventId)) return state;
   assertInteger(event.sequence, 'event sequence', { min: 1 });
   const expected = state.sequence + 1;
   if (event.sequence !== expected) {

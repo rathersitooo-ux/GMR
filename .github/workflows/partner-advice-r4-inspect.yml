@@ -1,0 +1,55 @@
+name: Partner Advice R4 Inspect
+on:
+  push:
+    branches:
+      - work/PARTNER-GOODMOVE-ADVICE-RUNTIME-INTEGRATION-001-R4-DIRECT-MOUNT
+    paths:
+      - .github/workflows/partner-advice-r4-inspect.yml
+permissions:
+  contents: write
+jobs:
+  inspect:
+    if: github.actor == 'rathersitooo-ux'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Inspect exact production partner callsites
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const crypto = require('crypto');
+          const p = 'browser/GAMEROAD.html';
+          const s = fs.readFileSync(p, 'utf8');
+          const needles = ['function replayFor', 'replayFor(', 'partnerAdviceNow', 'partnerReplay', 'partner-legal-action-adapter', 'selectPartnerManifestOrRuleCandidate'];
+          const out = [];
+          out.push(`html_bytes=${Buffer.byteLength(s)}`);
+          out.push(`html_sha256=${crypto.createHash('sha256').update(s).digest('hex')}`);
+          for (const needle of needles) {
+            let from = 0, n = 0;
+            out.push(`\n=== ${needle} ===`);
+            while (true) {
+              const i = s.indexOf(needle, from);
+              if (i < 0) break;
+              n++;
+              out.push(`-- hit ${n} index=${i} --`);
+              out.push(s.slice(Math.max(0, i - 900), Math.min(s.length, i + needle.length + 1600)));
+              from = i + needle.length;
+              if (n >= 20) { out.push('-- capped at 20 hits --'); break; }
+            }
+            out.push(`count_shown=${n}`);
+          }
+          fs.mkdirSync('artifacts', { recursive: true });
+          fs.writeFileSync('artifacts/partner-advice-r4-inspect.txt', out.join('\n'));
+          NODE
+      - name: Commit inspection evidence
+        run: |
+          git config user.name 'gameroad-actions'
+          git config user.email 'actions@users.noreply.github.com'
+          git add artifacts/partner-advice-r4-inspect.txt
+          git commit -m 'chore(partner): record R4 production callsite evidence'
+          git push

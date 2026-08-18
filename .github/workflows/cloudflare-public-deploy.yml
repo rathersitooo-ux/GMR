@@ -98,14 +98,16 @@ jobs:
       - name: Deploy Pages production package
         id: pages
         shell: bash
+        working-directory: deploy/cloudflare
         run: |
           set -euo pipefail
+          cp wrangler.pages.toml wrangler.toml
+          trap 'rm -f wrangler.toml' EXIT
           set +e
-          OUTPUT="$(npx --yes wrangler@4 pages deploy deploy/cloudflare/dist \
+          OUTPUT="$(npx --yes wrangler@4 pages deploy dist \
             --project-name "$PAGES_PROJECT" \
             --branch main \
-            --commit-hash "$GITHUB_SHA" \
-            --config deploy/cloudflare/wrangler.pages.toml 2>&1)"
+            --commit-hash "$GITHUB_SHA" 2>&1)"
           STATUS=$?
           set -e
           printf '%s\n' "$OUTPUT"

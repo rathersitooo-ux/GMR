@@ -9,6 +9,9 @@ const defaultSource = path.join(repoRoot, 'browser/GAMEROAD.html');
 const defaultCoreSource = path.join(repoRoot, 'browser/deck-save-recovery-core.mjs');
 const defaultPresenceCoreSource = path.join(repoRoot, 'browser/hate-peer-presence-core.mjs');
 const defaultNavigationCoreSource = path.join(repoRoot, 'browser/screen-navigation-core.mjs');
+const defaultReplayAdapterSource = path.join(repoRoot, 'browser/battle-replay-live-adapter.mjs');
+const defaultReplayCoreSource = path.join(repoRoot, 'browser/battle-replay-core.mjs');
+const defaultCardPresentationCoreSource = path.join(repoRoot, 'browser/card-presentation-core.mjs');
 const defaultDist = path.join(repoRoot, 'deploy/cloudflare/dist');
 
 function gitBlobSha1(buffer) {
@@ -35,21 +38,33 @@ export async function buildPackage({
   coreSource = defaultCoreSource,
   presenceCoreSource = defaultPresenceCoreSource,
   navigationCoreSource = defaultNavigationCoreSource,
+  replayAdapterSource = defaultReplayAdapterSource,
+  replayCoreSource = defaultReplayCoreSource,
+  cardPresentationCoreSource = defaultCardPresentationCoreSource,
   dist = defaultDist,
   expectedBlob = '',
   expectedCoreBlob = '',
   expectedPresenceCoreBlob = '',
   expectedNavigationCoreBlob = '',
+  expectedReplayAdapterBlob = '',
+  expectedReplayCoreBlob = '',
+  expectedCardPresentationCoreBlob = '',
   sourceCommit = '',
 } = {}) {
   const input = await readFile(source);
   const coreInput = await readFile(coreSource);
   const presenceCoreInput = await readFile(presenceCoreSource);
   const navigationCoreInput = await readFile(navigationCoreSource);
+  const replayAdapterInput = await readFile(replayAdapterSource);
+  const replayCoreInput = await readFile(replayCoreSource);
+  const cardPresentationCoreInput = await readFile(cardPresentationCoreSource);
   const blob = gitBlobSha1(input);
   const coreBlob = gitBlobSha1(coreInput);
   const presenceCoreBlob = gitBlobSha1(presenceCoreInput);
   const navigationCoreBlob = gitBlobSha1(navigationCoreInput);
+  const replayAdapterBlob = gitBlobSha1(replayAdapterInput);
+  const replayCoreBlob = gitBlobSha1(replayCoreInput);
+  const cardPresentationCoreBlob = gitBlobSha1(cardPresentationCoreInput);
   if (expectedBlob && blob !== expectedBlob) {
     throw new Error(`Browser blob mismatch: expected=${expectedBlob} actual=${blob}`);
   }
@@ -61,6 +76,15 @@ export async function buildPackage({
   }
   if (expectedNavigationCoreBlob && navigationCoreBlob !== expectedNavigationCoreBlob) {
     throw new Error(`Screen navigation core blob mismatch: expected=${expectedNavigationCoreBlob} actual=${navigationCoreBlob}`);
+  }
+  if (expectedReplayAdapterBlob && replayAdapterBlob !== expectedReplayAdapterBlob) {
+    throw new Error(`Battle replay live adapter blob mismatch: expected=${expectedReplayAdapterBlob} actual=${replayAdapterBlob}`);
+  }
+  if (expectedReplayCoreBlob && replayCoreBlob !== expectedReplayCoreBlob) {
+    throw new Error(`Battle replay core blob mismatch: expected=${expectedReplayCoreBlob} actual=${replayCoreBlob}`);
+  }
+  if (expectedCardPresentationCoreBlob && cardPresentationCoreBlob !== expectedCardPresentationCoreBlob) {
+    throw new Error(`Card presentation core blob mismatch: expected=${expectedCardPresentationCoreBlob} actual=${cardPresentationCoreBlob}`);
   }
 
   await rm(dist, { recursive: true, force: true });
@@ -90,6 +114,27 @@ export async function buildPackage({
   const navigationCoreRoundTrip = await readFile(navigationCoreOutputPath);
   if (!navigationCoreInput.equals(navigationCoreRoundTrip)) {
     throw new Error('dist/screen-navigation-core.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const replayAdapterOutputPath = path.join(dist, 'battle-replay-live-adapter.mjs');
+  await writeFile(replayAdapterOutputPath, replayAdapterInput);
+  const replayAdapterRoundTrip = await readFile(replayAdapterOutputPath);
+  if (!replayAdapterInput.equals(replayAdapterRoundTrip)) {
+    throw new Error('dist/battle-replay-live-adapter.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const replayCoreOutputPath = path.join(dist, 'battle-replay-core.mjs');
+  await writeFile(replayCoreOutputPath, replayCoreInput);
+  const replayCoreRoundTrip = await readFile(replayCoreOutputPath);
+  if (!replayCoreInput.equals(replayCoreRoundTrip)) {
+    throw new Error('dist/battle-replay-core.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const cardPresentationCoreOutputPath = path.join(dist, 'card-presentation-core.mjs');
+  await writeFile(cardPresentationCoreOutputPath, cardPresentationCoreInput);
+  const cardPresentationCoreRoundTrip = await readFile(cardPresentationCoreOutputPath);
+  if (!cardPresentationCoreInput.equals(cardPresentationCoreRoundTrip)) {
+    throw new Error('dist/card-presentation-core.mjs is not byte-identical to Browser dependency source');
   }
 
   const headers = [
@@ -133,6 +178,24 @@ export async function buildPackage({
         navigationCoreInput,
         navigationCoreBlob,
       ),
+      battle_replay_live_adapter: provenance(
+        'browser/battle-replay-live-adapter.mjs',
+        'battle-replay-live-adapter.mjs',
+        replayAdapterInput,
+        replayAdapterBlob,
+      ),
+      battle_replay_core: provenance(
+        'browser/battle-replay-core.mjs',
+        'battle-replay-core.mjs',
+        replayCoreInput,
+        replayCoreBlob,
+      ),
+      card_presentation_core: provenance(
+        'browser/card-presentation-core.mjs',
+        'card-presentation-core.mjs',
+        cardPresentationCoreInput,
+        cardPresentationCoreBlob,
+      ),
     },
   };
   await writeFile(path.join(dist, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
@@ -147,11 +210,17 @@ function parseArgs(argv) {
     else if (a === '--core-source') out.coreSource = path.resolve(argv[++i]);
     else if (a === '--presence-core-source') out.presenceCoreSource = path.resolve(argv[++i]);
     else if (a === '--navigation-core-source') out.navigationCoreSource = path.resolve(argv[++i]);
+    else if (a === '--replay-adapter-source') out.replayAdapterSource = path.resolve(argv[++i]);
+    else if (a === '--replay-core-source') out.replayCoreSource = path.resolve(argv[++i]);
+    else if (a === '--card-presentation-core-source') out.cardPresentationCoreSource = path.resolve(argv[++i]);
     else if (a === '--dist') out.dist = path.resolve(argv[++i]);
     else if (a === '--expected-blob') out.expectedBlob = argv[++i] || '';
     else if (a === '--expected-core-blob') out.expectedCoreBlob = argv[++i] || '';
     else if (a === '--expected-presence-core-blob') out.expectedPresenceCoreBlob = argv[++i] || '';
     else if (a === '--expected-navigation-core-blob') out.expectedNavigationCoreBlob = argv[++i] || '';
+    else if (a === '--expected-replay-adapter-blob') out.expectedReplayAdapterBlob = argv[++i] || '';
+    else if (a === '--expected-replay-core-blob') out.expectedReplayCoreBlob = argv[++i] || '';
+    else if (a === '--expected-card-presentation-core-blob') out.expectedCardPresentationCoreBlob = argv[++i] || '';
     else if (a === '--source-commit') out.sourceCommit = argv[++i] || '';
     else throw new Error(`Unknown argument: ${a}`);
   }

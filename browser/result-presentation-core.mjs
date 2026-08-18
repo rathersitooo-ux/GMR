@@ -104,6 +104,18 @@ export function applyResultPresentationEvent(state, event) {
   return deepFreeze({ accepted: true, duplicate: false, reason: 'OK', state: next });
 }
 
+export function applyResultPresentationInput(state, input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return applyResultPresentationEvent(state, input);
+  }
+  return applyResultPresentationEvent(state, {
+    presentationId: state?.presentationId,
+    sequence: Number.isSafeInteger(state?.sequence) ? state.sequence + 1 : null,
+    eventId: input.eventId,
+    type: input.type
+  });
+}
+
 export function projectResultPresentation(state) {
   if (!state || state.schema !== SCHEMA || !STAGES.includes(state.stage)) {
     return deepFreeze({ ok: false, reason: 'STATE_INVALID' });

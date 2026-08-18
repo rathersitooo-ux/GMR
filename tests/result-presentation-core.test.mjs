@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   RESULT_PRESENTATION_CORE,
   applyResultPresentationEvent,
+  applyResultPresentationInput,
   createResultPresentation,
   projectResultPresentation
 } from '../browser/result-presentation-core.mjs';
@@ -114,4 +115,52 @@ test('module treats ranking/reward payload as opaque finalized upstream truth', 
   assert.deepEqual(projected.finalizedResult, weird);
   assert.notEqual(projected.finalizedResult, weird);
   assert.equal(JSON.stringify(weird), JSON.stringify(projected.finalizedResult));
+});
+
+test('live input owns presentation identity and sequencing while caller supplies only presentation action', () => {
+  let state = makeState();
+  const sourceBefore = JSON.stringify(finalizedResult);
+  const reveal = applyResultPresentationInput(state, {
+    type: 'REVEAL',
+    eventId: 'live-reveal',
+    presentationId: 'FORGED',
+    sequence: 999
+  });
+  assert.equal(reveal.accepted, true);
+  assert.equal(reveal.state.presentationId, 'RESULT-1');
+  assert.equal(reveal.state.sequence, 1);
+  assert.equal(reveal.state.stage, 'reveal');
+  state = reveal.state;
+
+  const settle = applyResultPresentationInput(state, { type: 'SETTLE', eventId: 'live-settle' });
+  assert.equal(settle.accepted, true);
+  assert.equal(settle.state.sequence, 2);
+  assert.equal(settle.state.stage, 'settled');
+  assert.equal(JSON.stringify(finalizedResult), sourceBefore);
+  assert.deepEqual(projectResultPresentation(settle.state).finalizedResult, finalizedResult);
+});
+
+test('live input preserves event-id idempotency without allowing a duplicate to consume sequence', () => {
+  const initial = makeState();
+  const first = applyResultPresentationInput(initial, { type: 'REVEAL', eventId: 'live-dup' });
+  const duplicate = applyResultPresentationInput(first.state, { type: 'SETTLE', eventId: 'live-dup' });
+  assert.equal(duplicate.accepted, true);
+  assert.equal(duplicate.duplicate, true);
+  assert.equal(duplicate.state, first.state);
+  assert.equal(duplicate.state.sequence, 1);
+  assert.equal(duplicate.state.stage, 'reveal');
+});
+
+test('live input fails closed for invalid input and illegal stage transitions without mutating state', () => {
+  const state = makeState();
+  const invalid = applyResultPresentationInput(state, null);
+  assert.equal(invalid.accepted, false);
+  assert.equal(invalid.reason, 'EVENT_INVALID');
+  assert.equal(invalid.state, state);
+
+  const illegal = applyResultPresentationInput(state, { type: 'EXIT', eventId: 'too-early' });
+  assert.equal(illegal.accepted, false);
+  assert.equal(illegal.reason, 'STAGE_MISMATCH');
+  assert.equal(illegal.state, state);
+  assert.deepEqual(projectResultPresentation(state).finalizedResult, finalizedResult);
 });

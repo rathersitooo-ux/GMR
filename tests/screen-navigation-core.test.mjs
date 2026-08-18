@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  SCREEN_NAVIGATION_FALLBACK_PARENT,
   SCREEN_NAVIGATION_REASON,
+  resolveScreenBackTarget,
   resolveScreenNavigation
 } from '../browser/screen-navigation-core.mjs';
 
@@ -52,4 +54,28 @@ test('target comparison uses strict equality and does not coerce values', () => 
     to: 1,
     reason: SCREEN_NAVIGATION_REASON.NAVIGATE
   });
+});
+
+test('back target prefers the popped history entry over fallback parents', () => {
+  assert.equal(resolveScreenBackTarget('gacha', { screen: 'battle' }), 'battle');
+  assert.equal(resolveScreenBackTarget('cards', { screen: 'shop' }), 'shop');
+});
+
+test('gacha falls back to shop when no usable history entry exists', () => {
+  for (const entry of [undefined, null, {}, { screen: '' }, { screen: false }, { screen: 0 }]) {
+    assert.equal(resolveScreenBackTarget('gacha', entry), 'shop');
+  }
+});
+
+test('known detail screens fall back to home exactly as the legacy host map does', () => {
+  for (const screen of ['cards', 'characters', 'setup', 'missions', 'profile', 'shop', 'records', 'settings']) {
+    assert.equal(SCREEN_NAVIGATION_FALLBACK_PARENT[screen], 'home');
+    assert.equal(resolveScreenBackTarget(screen, undefined), 'home');
+  }
+});
+
+test('unknown or root screens fall back to home', () => {
+  for (const screen of ['home', 'battle', 'result', 'future-screen', undefined, null]) {
+    assert.equal(resolveScreenBackTarget(screen, undefined), 'home');
+  }
 });

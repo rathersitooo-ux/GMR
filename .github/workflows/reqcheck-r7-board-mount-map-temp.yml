@@ -1,9 +1,9 @@
 name: REQCHECK R7 Board Facility Gate Mapper
 
 on:
-  push:
+  pull_request:
     branches:
-      - work/reqcheck-r7-board-mount-map-20260819
+      - main
 
 permissions:
   contents: write

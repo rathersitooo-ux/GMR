@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 const LEGACY_ONCLICK = "$('#readyPlan').onclick=()=>{commitPlans().catch(e=>console.error(e))};";
 const COMMIT_EXPORT = 'globalThis.GAMEROAD_READY_PLAN_COMMIT=commitPlans;';
 const MODULE_ID = 'gameroad-ui-feedback-ready-plan-production-r9';
+const COMMIT_SUCCESS_ANCHOR = 'if(!act.human){autoTarget(act);await resolveBattle()}return true}catch(e){';
 
 const exactReplacements = [
   [
@@ -28,7 +29,7 @@ const exactReplacements = [
   ],
   [
     'if(!act.human){autoTarget(act);await resolveBattle()}}catch(e){',
-    'if(!act.human){autoTarget(act);await resolveBattle()}return true}catch(e){',
+    COMMIT_SUCCESS_ANCHOR,
   ],
 ];
 
@@ -123,7 +124,7 @@ export function transformReadyPlanProductionHtml(source) {
   requireCount(next, MODULE_ID, 1, 'module-marker-post');
   requireCount(next, 'bindReadyPlanFeedbackControl({', 1, 'binder-mount-post');
   requireCount(next, 'accepted: accepted === true,', 1, 'ack-settle-post');
-  requireCount(next, 'return true}catch(e){', 1, 'commit-success-result-post');
+  requireCount(next, COMMIT_SUCCESS_ANCHOR, 1, 'commit-success-result-post');
   return next;
 }
 

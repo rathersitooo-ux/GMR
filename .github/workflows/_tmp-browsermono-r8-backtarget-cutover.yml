@@ -1,0 +1,58 @@
+name: BrowserMono R8 BackTarget Production Cutover
+
+on:
+  push:
+    branches:
+      - work/browsermono-r8-backtarget-cutover-20260818
+    paths:
+      - scripts/_tmp-browsermono-r8-backtarget-cutover.mjs
+      - .github/workflows/_tmp-browsermono-r8-backtarget-cutover.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  exact-base-html-cutover:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify acquired main HTML is still the branch preimage
+        run: |
+          git merge-base --is-ancestor 6843a3be8f13396dc8265154618e6335c787cd1f HEAD
+          git diff --exit-code 6843a3be8f13396dc8265154618e6335c787cd1f...HEAD -- browser/GAMEROAD.html
+
+      - name: Fail closed on legacy anchor drift
+        run: node scripts/_tmp-browsermono-r8-backtarget-cutover.mjs --check --input browser/GAMEROAD.html
+
+      - name: Delete legacy back-target responsibility in-place
+        run: node scripts/_tmp-browsermono-r8-backtarget-cutover.mjs --input browser/GAMEROAD.html --output browser/GAMEROAD.html
+
+      - name: Verify cutover postconditions
+        shell: bash
+        run: |
+          ! grep -q 'GAMEROAD_NAV_FALLBACK_PARENT' browser/GAMEROAD.html
+          grep -q 'createScreenNavigationRuntimeBridge' browser/GAMEROAD.html
+          grep -q 'GAMEROAD_SCREEN_NAVIGATION.resolveBackTarget(state.screen,entry)' browser/GAMEROAD.html
+          git diff --check -- browser/GAMEROAD.html
+
+      - name: Run screen navigation core tests
+        run: node --test tests/screen-navigation-core.test.mjs
+
+      - name: Run Browser static checker and self-test
+        run: node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+
+      - name: Commit only the production HTML delta
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/GAMEROAD.html
+          test "$(git diff --cached --name-only)" = 'browser/GAMEROAD.html'
+          git commit -m 'BROWSERMONO R8: cut over back-target runtime and delete legacy fallback'
+          git push origin HEAD:${GITHUB_REF_NAME}

@@ -142,6 +142,7 @@ jobs:
           cat > "$RUNNER_TEMP/publichost-r12-evidence.txt" <<EOF
           PUBLICHOST_R12_DEPLOY_EVIDENCE
           sha=${GITHUB_SHA}
+          run_id=${GITHUB_RUN_ID}
           credentials=${CREDENTIALS_OUTCOME}
           checks=${CHECKS_OUTCOME}
           build=${BUILD_OUTCOME}

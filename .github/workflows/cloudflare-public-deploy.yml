@@ -140,6 +140,34 @@ jobs:
             --environment production \
             --json
 
+      - name: Probe public Pages URL
+        id: probe
+        shell: bash
+        env:
+          PAGES_URL: ${{ steps.pages.outputs.url }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${PAGES_URL:-}" ]]; then
+            echo "::error::Pages deployment did not expose a public URL"
+            exit 1
+          fi
+          PROBE_BODY="$RUNNER_TEMP/gameroad-public-probe.html"
+          curl --fail --silent --show-error --location \
+            --header 'Accept-Encoding: identity' \
+            --retry 4 --retry-delay 2 --retry-connrefused \
+            --max-time 30 \
+            --output "$PROBE_BODY" \
+            "${PAGES_URL}/"
+          if [[ ! -s "$PROBE_BODY" ]]; then
+            echo "::error::Public Pages probe returned an empty body"
+            exit 1
+          fi
+          if ! cmp --silent deploy/cloudflare/dist/index.html "$PROBE_BODY"; then
+            echo "::error::Public Pages body does not match the exact deployed index.html"
+            exit 1
+          fi
+          echo "External HTTP exact-byte probe succeeded for ${PAGES_URL}/"
+
       - name: Report sanitized deployment outcome
         if: always()
         shell: bash
@@ -152,6 +180,7 @@ jobs:
           PROJECT_OUTCOME: ${{ steps.project.outcome }}
           PAGES_OUTCOME: ${{ steps.pages.outcome }}
           READBACK_OUTCOME: ${{ steps.readback.outcome }}
+          PROBE_OUTCOME: ${{ steps.probe.outcome }}
           PAGES_URL: ${{ steps.pages.outputs.url }}
         run: |
           set -euo pipefail
@@ -166,6 +195,7 @@ jobs:
           project=${PROJECT_OUTCOME}
           pages=${PAGES_OUTCOME}
           readback=${READBACK_OUTCOME}
+          probe=${PROBE_OUTCOME}
           url=${PAGES_URL:-}
           EOF
           gh issue comment "$EVIDENCE_ISSUE" --body-file "$RUNNER_TEMP/publichost-r12-evidence.txt"

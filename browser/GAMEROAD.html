@@ -1013,13 +1013,18 @@ window.GameRoadSlaykiaChaosRuntime=(()=>{'use strict';
 <script src="./deck-save-recovery-core.mjs"></script>
 <script type="module">
 import { resolveScreenNavigation } from "./screen-navigation-core.mjs";
+import { createScreenNavigationRuntimeBridge } from "./screen-navigation-core.mjs";
+const runtimeScreenNavigationBridge=createScreenNavigationRuntimeBridge();
 const existingScreenNavigationBridge=globalThis.GAMEROAD_SCREEN_NAVIGATION;
-if(existingScreenNavigationBridge && existingScreenNavigationBridge.resolve!==resolveScreenNavigation){
+if(existingScreenNavigationBridge && (
+  existingScreenNavigationBridge.resolve!==resolveScreenNavigation ||
+  existingScreenNavigationBridge.resolveBackTarget!==runtimeScreenNavigationBridge.resolveBackTarget
+)){
   throw new Error("GAMEROAD_SCREEN_NAVIGATION is already occupied by an incompatible bridge");
 }
 if(!existingScreenNavigationBridge){
   Object.defineProperty(globalThis,"GAMEROAD_SCREEN_NAVIGATION",{
-    value:Object.freeze({resolve:resolveScreenNavigation}),
+    value:runtimeScreenNavigationBridge,
     enumerable:false,
     configurable:false,
     writable:false
@@ -1094,7 +1099,6 @@ function save(){const pack=savePack(),read=readStorage(localStorage,SAVE_KEY);if
 function load(){const read=readStorage(localStorage,SAVE_KEY);if(read.status!=='read'){markStorageReadFailure(read.reason);state.deckDraft={main:[...state.savedDeck.main],ex:[...state.savedDeck.ex]};recoverDeckDraftSession();return saveRecoveryRuntime.classification}state.storage='localStorage';memorySave=read.rawValue;const inspection=inspectRawSave(read.rawValue),classification=classifySave(inspection);if((classification.status==='current'||classification.status==='recognized_legacy')&&inspection.parsed)applyParsedSave(inspection.parsed);normalizeAudioSettings();state.partnerProfiles=normalizePartnerProfiles(state.partnerProfiles);state.progression=state.progression&&typeof state.progression==='object'?state.progression:{battlePoints:0};recoverDeckDraftSession();if(classification.status!=='current')state.storage='memory';return classification}
 window.__GAMEROAD_SAVE_RECOVERY__={snapshot:()=>JSON.parse(JSON.stringify(saveRecoveryRuntime)),authority:{...SAVE_AUTHORITY}};
 function show(name){const previous=state.screen;const staleToast=$('#toast');if(staleToast?.classList.contains('on')&&staleToast.dataset.toastScreen&&staleToast.dataset.toastScreen!==name){staleToast.classList.remove('on');clearTimeout(toastTimer);delete staleToast.dataset.toastScreen}state.screen=name;document.documentElement.classList.toggle('grCodexHomeActive',name==='home');$$('.screen').forEach(s=>s.classList.toggle('active',s.dataset.screen===name));$('#topMode').textContent=({home:'ホーム',cards:'カード',characters:'パートナー',setup:'バトル準備',battle:'バトル',result:'結果',records:'記録',settings:'設定',missions:'任務',profile:'プロフィール',shop:'ショップ',gacha:'パック'})[name]||name;if(name!=='battle'&&typeof ctxClear==='function')ctxClear();if(name==='home')renderHome();if(name==='cards')renderCards();if(name==='characters')renderCharacters();if(name==='records')renderRecords();if(name==='settings')renderSettings();if(name==='missions')renderMissions();if(name==='profile')renderProfile();if(name==='shop')renderShop();if(name==='gacha')renderGacha();if(name==='setup'){renderSetupDeckStatus();renderSetupShell()}audioOnScreenTransition(previous,name);crossScreenMotionOnShow(previous,name)}
-const GAMEROAD_NAV_FALLBACK_PARENT=Object.freeze({cards:'home',characters:'home',setup:'home',missions:'home',profile:'home',shop:'home',gacha:'shop',records:'home',settings:'home'});
 const gameroadNav={stack:[]};
 function navEntry(screen){return{screen}}
 function navigateDetail(target){
@@ -1111,7 +1115,7 @@ function navigateRoot(target){
 }
 function navigateBack(){
   const entry=gameroadNav.stack.pop();
-  const target=entry?.screen||GAMEROAD_NAV_FALLBACK_PARENT[state.screen]||'home';
+  const target=globalThis.GAMEROAD_SCREEN_NAVIGATION.resolveBackTarget(state.screen,entry);
   show(target);
 }
 $$('[data-go]').forEach(b=>b.addEventListener('click',()=>navigateDetail(b.dataset.go)));

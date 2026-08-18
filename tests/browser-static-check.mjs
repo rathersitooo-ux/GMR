@@ -141,6 +141,80 @@ async function validateHtml(html) {
   return [...collectStaticErrors(html), ...(await syntaxErrors(html))];
 }
 
+const SCREEN_NAVIGATION_BACK_CUTOVER = Object.freeze({
+  bridgeBefore: `import { resolveScreenNavigation } from "./screen-navigation-core.mjs";
+const existingScreenNavigationBridge=globalThis.GAMEROAD_SCREEN_NAVIGATION;
+if(existingScreenNavigationBridge && existingScreenNavigationBridge.resolve!==resolveScreenNavigation){
+  throw new Error("GAMEROAD_SCREEN_NAVIGATION is already occupied by an incompatible bridge");
+}
+if(!existingScreenNavigationBridge){
+  Object.defineProperty(globalThis,"GAMEROAD_SCREEN_NAVIGATION",{
+    value:Object.freeze({resolve:resolveScreenNavigation}),
+    enumerable:false,
+    configurable:false,
+    writable:false
+  });
+}`,
+  bridgeAfter: `import { createScreenNavigationRuntimeBridge } from "./screen-navigation-core.mjs";
+const existingScreenNavigationBridge=globalThis.GAMEROAD_SCREEN_NAVIGATION;
+if(existingScreenNavigationBridge){
+  if(typeof existingScreenNavigationBridge.resolve!=="function" || typeof existingScreenNavigationBridge.resolveBackTarget!=="function"){
+    throw new Error("GAMEROAD_SCREEN_NAVIGATION is already occupied by an incompatible bridge");
+  }
+}else{
+  Object.defineProperty(globalThis,"GAMEROAD_SCREEN_NAVIGATION",{
+    value:createScreenNavigationRuntimeBridge(),
+    enumerable:false,
+    configurable:false,
+    writable:false
+  });
+}`,
+  fallbackBefore: `const GAMEROAD_NAV_FALLBACK_PARENT=Object.freeze({cards:'home',characters:'home',setup:'home',missions:'home',profile:'home',shop:'home',gacha:'shop',records:'home',settings:'home'});\n`,
+  backBefore: `function navigateBack(){
+  const entry=gameroadNav.stack.pop();
+  const target=entry?.screen||GAMEROAD_NAV_FALLBACK_PARENT[state.screen]||'home';
+  show(target);
+}`,
+  backAfter: `function navigateBack(){
+  const bridge=globalThis.GAMEROAD_SCREEN_NAVIGATION;
+  if(!bridge || typeof bridge.resolveBackTarget!=="function") throw new Error("GAMEROAD screen navigation bridge is not ready");
+  const entry=gameroadNav.stack.pop();
+  const target=bridge.resolveBackTarget(state.screen,entry);
+  show(target);
+}`,
+});
+
+function replaceExactlyOnce(source, before, after, label) {
+  const first = source.indexOf(before);
+  if (first < 0) throw new Error(`screen navigation cutover preimage missing: ${label}`);
+  const second = source.indexOf(before, first + before.length);
+  if (second >= 0) throw new Error(`screen navigation cutover preimage duplicated: ${label}`);
+  return source.slice(0, first) + after + source.slice(first + before.length);
+}
+
+function prepareScreenNavigationBackCutover(html) {
+  let next = html;
+  next = replaceExactlyOnce(
+    next,
+    SCREEN_NAVIGATION_BACK_CUTOVER.bridgeBefore,
+    SCREEN_NAVIGATION_BACK_CUTOVER.bridgeAfter,
+    'runtime bridge mount',
+  );
+  next = replaceExactlyOnce(
+    next,
+    SCREEN_NAVIGATION_BACK_CUTOVER.fallbackBefore,
+    '',
+    'legacy fallback parent map',
+  );
+  next = replaceExactlyOnce(
+    next,
+    SCREEN_NAVIGATION_BACK_CUTOVER.backBefore,
+    SCREEN_NAVIGATION_BACK_CUTOVER.backAfter,
+    'legacy navigateBack target resolution',
+  );
+  return next;
+}
+
 async function runSelfTest() {
   const brokenSyntax = `<!doctype html><section data-screen="home"></section>${CORE_SCREENS.slice(1)
     .map((x) => `<section data-screen="${x}"></section>`)
@@ -174,14 +248,54 @@ async function runSelfTest() {
     throw new Error('self-test failed: checker did not detect missing screen-navigation core mount');
   }
 
+  const cutoverInput = [
+    SCREEN_NAVIGATION_BACK_CUTOVER.bridgeBefore,
+    SCREEN_NAVIGATION_BACK_CUTOVER.fallbackBefore,
+    SCREEN_NAVIGATION_BACK_CUTOVER.backBefore,
+  ].join('\n');
+  const cutoverOutput = prepareScreenNavigationBackCutover(cutoverInput);
+  if (!cutoverOutput.includes('createScreenNavigationRuntimeBridge()')) {
+    throw new Error('self-test failed: cutover did not mount the R6 runtime bridge');
+  }
+  if (!cutoverOutput.includes('bridge.resolveBackTarget(state.screen,entry)')) {
+    throw new Error('self-test failed: cutover did not delegate back-target resolution');
+  }
+  if (cutoverOutput.includes('GAMEROAD_NAV_FALLBACK_PARENT')) {
+    throw new Error('self-test failed: cutover retained the legacy fallback parent map');
+  }
+  if (cutoverOutput.includes("entry?.screen||")) {
+    throw new Error('self-test failed: cutover retained legacy inline back-target resolution');
+  }
+  for (const [label, broken] of [
+    ['missing', cutoverInput.replace(SCREEN_NAVIGATION_BACK_CUTOVER.backBefore, 'function navigateBack(){}')],
+    ['duplicate', `${cutoverInput}\n${SCREEN_NAVIGATION_BACK_CUTOVER.fallbackBefore}`],
+  ]) {
+    let failedClosed = false;
+    try {
+      prepareScreenNavigationBackCutover(broken);
+    } catch {
+      failedClosed = true;
+    }
+    if (!failedClosed) throw new Error(`self-test failed: cutover did not fail closed on ${label} preimage`);
+  }
+
   console.log('SELF_TEST_PASS');
 }
 
 const args = process.argv.slice(2);
 const selfTest = args.includes('--self-test');
-const target = args.find((arg) => arg !== '--self-test') ?? 'browser/GAMEROAD.html';
+const prepareBackCutover = args.includes('--prepare-screen-navigation-back-cutover');
+const target = args.find((arg) => !arg.startsWith('--')) ?? 'browser/GAMEROAD.html';
 
 if (selfTest) await runSelfTest();
+
+if (prepareBackCutover) {
+  const html = await readFile(target, 'utf8');
+  const next = prepareScreenNavigationBackCutover(html);
+  await writeFile(target, next, 'utf8');
+  console.log(`SCREEN_NAVIGATION_BACK_CUTOVER_PREPARED target=${target}`);
+  process.exit(0);
+}
 
 const html = await readFile(target, 'utf8');
 const errors = await validateHtml(html);

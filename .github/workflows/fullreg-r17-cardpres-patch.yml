@@ -1,0 +1,81 @@
+name: FULLREG R17 CardPRES Test Patch Transport
+
+on:
+  push:
+    branches:
+      - work/BROWSER-FULLREG-R17-CARDPRES-20260818
+    paths:
+      - .github/workflows/fullreg-r17-cardpres-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact work branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Apply bounded FULLREG CardPRES observation patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tests/browser-full-interaction.spec.mjs')
+          text = path.read_text(encoding='utf-8')
+
+          replacements = [
+              (
+                  "  let abilityConfirms = 0;\n\n  while (Date.now() < deadline) {\n    if (await result.isVisible().catch(() => false)) break;\n\n    if (await satisfyVisibleAbilityChoice(page)) {",
+                  "  let abilityConfirms = 0;\n  let cardPresentationFallbacks = 0;\n  let lastCardPresentationEvent = null;\n\n  while (Date.now() < deadline) {\n    if (await result.isVisible().catch(() => false)) break;\n\n    const cardPresentation = battle.locator('#battleResolution[data-card-presentation=\"fallback\"]:visible');\n    if ((await cardPresentation.count()) > 0) {\n      const eventId = await cardPresentation.first().getAttribute('data-card-presentation-event');\n      if (eventId && eventId !== lastCardPresentationEvent) {\n        lastCardPresentationEvent = eventId;\n        cardPresentationFallbacks += 1;\n        await attachStateScreenshot(page, testInfo, `${evidencePrefix}-card-presentation-fallback-${cardPresentationFallbacks}`);\n      }\n    }\n\n    if (await satisfyVisibleAbilityChoice(page)) {"
+              ),
+              (
+                  "  expect(presentationAdvances, 'at least one visible Battle result advance was used').toBeGreaterThan(0);\n  const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';",
+                  "  expect(presentationAdvances, 'at least one visible Battle result advance was used').toBeGreaterThan(0);\n  expect(cardPresentationFallbacks, 'accepted/public Battle resolution mounts the current CardPRES fallback on the visible production resolution surface').toBeGreaterThan(0);\n  const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';"
+              ),
+              (
+                  "    description: `submitted=${roundsSubmitted}, targetConfirms=${targetConfirms}, battleAdvances=${presentationAdvances}, abilityConfirms=${abilityConfirms}, result=${roundsText}`,",
+                  "    description: `submitted=${roundsSubmitted}, targetConfirms=${targetConfirms}, battleAdvances=${presentationAdvances}, abilityConfirms=${abilityConfirms}, cardPresentationFallbacks=${cardPresentationFallbacks}, result=${roundsText}`,”
+              ),
+              (
+                  "  return { battle, result, roundsSubmitted, targetConfirms, presentationAdvances, abilityConfirms, roundsText };",
+                  "  return { battle, result, roundsSubmitted, targetConfirms, presentationAdvances, abilityConfirms, cardPresentationFallbacks, roundsText };"
+              ),
+          ]
+
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'expected exactly one patch anchor, found {count}: {old[:80]!r}')
+              text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Verify bounded test-only delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git diff --name-only)" = "tests/browser-full-interaction.spec.mjs"
+          grep -F "cardPresentationFallbacks" tests/browser-full-interaction.spec.mjs >/dev/null
+          grep -F "data-card-presentation=\"fallback\"" tests/browser-full-interaction.spec.mjs >/dev/null
+
+      - name: Self-remove transport and commit exact final delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/fullreg-r17-cardpres-patch.yml
+          git config user.name "gameroad-ci"
+          git config user.email "actions@users.noreply.github.com"
+          git add tests/browser-full-interaction.spec.mjs .github/workflows/fullreg-r17-cardpres-patch.yml
+          actual="$(git diff --cached --name-only | sort)"
+          expected="$(printf '%s\n%s' '.github/workflows/fullreg-r17-cardpres-patch.yml' 'tests/browser-full-interaction.spec.mjs')"
+          test "$actual" = "$expected"
+          git commit -m "FULLREG R17: observe CardPRES fallback in visible result path"
+          git push origin HEAD:${GITHUB_REF_NAME}

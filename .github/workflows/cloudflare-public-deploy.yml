@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - .github/workflows/cloudflare-public-deploy.yml
+      - deploy/cloudflare/relay/wrangler.toml
   workflow_dispatch:
 
 permissions:

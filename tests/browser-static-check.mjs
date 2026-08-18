@@ -40,6 +40,24 @@ function collectStaticErrors(html) {
     errors.push('data-go navigation wiring is missing');
   }
 
+  const screenNavigationContracts = [
+    [
+      /import\s*\{\s*resolveScreenNavigation\s*\}\s*from\s*["']\.\/screen-navigation-core\.mjs["']\s*;/,
+      'screen navigation core is not production-mounted',
+    ],
+    [/globalThis\.GAMEROAD_SCREEN_NAVIGATION/, 'screen navigation bridge is missing'],
+    [
+      /bridge\.resolve\(state\.screen\s*,\s*target\)/,
+      'navigateDetail does not delegate navigation decision to the screen navigation core',
+    ],
+  ];
+  for (const [pattern, message] of screenNavigationContracts) {
+    if (!pattern.test(html)) errors.push(message);
+  }
+  if (/if\s*\(\s*!target\s*\|\|\s*target\s*===\s*state\.screen\s*\)\s*return\s*;/.test(html)) {
+    errors.push('legacy inline screen navigation decision responsibility is present');
+  }
+
   const hatePresenceContracts = [
     [/import\(['"]\.\/hate-peer-presence-core\.mjs['"]\)/, 'HATE peer presence core is not mounted in production Browser'],
     [/FRIEND_TRANSPORT_PRESENCE_TYPE=['"]transport_presence['"]/, 'reserved transport presence type is missing'],
@@ -138,6 +156,22 @@ async function runSelfTest() {
   const screenResult = await validateHtml(missingScreen);
   if (!screenResult.includes('missing core screen: battle')) {
     throw new Error('self-test failed: checker did not detect missing battle screen');
+  }
+
+  const legacyNavigation = `<!doctype html>${CORE_SCREENS
+    .map((x) => `<section data-screen="${x}"></section>`)
+    .join('')}<button data-go="setup"></button><script>const state={screen:'home'};function navigateDetail(target){if(!target||target===state.screen)return;}const x={dataset:{go:'setup'}};navigateDetail(x.dataset.go);</script>`;
+  const legacyNavigationResult = await validateHtml(legacyNavigation);
+  if (!legacyNavigationResult.includes('legacy inline screen navigation decision responsibility is present')) {
+    throw new Error('self-test failed: checker did not detect restored inline navigation responsibility');
+  }
+
+  const missingNavigationMount = `<!doctype html>${CORE_SCREENS
+    .map((x) => `<section data-screen="${x}"></section>`)
+    .join('')}<button data-go="setup"></button><script>const state={screen:'home'};function navigateDetail(target){const bridge={resolve(){return{ok:false}}};bridge.resolve(state.screen,target);}const x={dataset:{go:'setup'}};navigateDetail(x.dataset.go);</script>`;
+  const missingNavigationMountResult = await validateHtml(missingNavigationMount);
+  if (!missingNavigationMountResult.includes('screen navigation core is not production-mounted')) {
+    throw new Error('self-test failed: checker did not detect missing screen-navigation core mount');
   }
 
   console.log('SELF_TEST_PASS');

@@ -41,6 +41,116 @@ jobs:
       - name: Install Chromium and OS dependencies
         run: npx playwright install --with-deps chromium
 
+      - name: Append Highlander reload-to-match-start regression
+        shell: bash
+        run: |
+          cat >> tests/browser-runtime-smoke.spec.mjs <<'EOF'
+
+          test('Highlander remains enforced after durable reload and invalid match start does not mutate the save', async ({ page }) => {
+            const storageKey = 'gameroad.browser.v10.core.1';
+            const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
+            expect(response, 'main HTML response').not.toBeNull();
+            expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
+            await page.waitForTimeout(500);
+
+            const setup = await installLegalBattleDeck(page);
+            expect(setup.main).toHaveLength(40);
+            expect(setup.committed, 'legal 40-card deck committed before reload').toBeTruthy();
+            expect(setup.savedValidation.ok, `saved deck validation: ${JSON.stringify(setup.savedValidation)}`).toBeTruthy();
+
+            const durableBeforeReload = await page.evaluate((key) => localStorage.getItem(key), storageKey);
+            expect(durableBeforeReload, 'explicit deck commit materializes durable browser save').not.toBeNull();
+            const savedMainBeforeReload = await page.evaluate(() => [...window.__GAMEROAD_TEST__.state.savedDeck.main]);
+
+            await page.reload({ waitUntil: 'domcontentloaded' });
+            await page.waitForTimeout(800);
+
+            const reloaded = await page.evaluate((key) => {
+              const t = window.__GAMEROAD_TEST__;
+              if (!t) throw new Error('GAMEROAD runtime test hook is unavailable after reload');
+              return {
+                raw: localStorage.getItem(key),
+                savedMain: [...t.state.savedDeck.main],
+                validation: t.deckValidate(t.state.savedDeck, { forBattle: true }),
+              };
+            }, storageKey);
+            expect(reloaded.raw, 'durable save survives reload byte-for-byte').toBe(durableBeforeReload);
+            expect(reloaded.savedMain, 'saved deck identity survives reload').toEqual(savedMainBeforeReload);
+            expect(reloaded.savedMain).toHaveLength(40);
+            expect(reloaded.validation.ok, `reloaded deck validation: ${JSON.stringify(reloaded.validation)}`).toBeTruthy();
+
+            const evidence = await page.evaluate(() => {
+              const t = window.__GAMEROAD_TEST__;
+              const cardData = window.__CARD_DATA__;
+              if (!t || !Array.isArray(cardData)) throw new Error('deck validation test hooks are unavailable');
+              const main = [...t.state.savedDeck.main];
+              const aliasId = main[0];
+              const targetId = main[1];
+              if (!aliasId || !targetId || aliasId === targetId) throw new Error('two distinct saved deck IDs are required');
+
+              const aliasCard = cardData.find((card) => card.id === aliasId);
+              const targetCard = cardData.find((card) => card.id === targetId);
+              if (!aliasCard || !targetCard) throw new Error('saved deck cards are missing from current card data');
+              const targetCanonicalName = targetCard.canonical_name
+                || targetCard.base_card_name
+                || targetCard.display_name
+                || targetCard.id;
+              const hadCanonicalName = Object.prototype.hasOwnProperty.call(aliasCard, 'canonical_name');
+              const originalCanonicalName = aliasCard.canonical_name;
+              const savedBefore = JSON.stringify(t.state.savedDeck);
+              const matchBefore = Boolean(t.state.match);
+              let invalidValidation = null;
+              let startReturned = null;
+              let startThrew = false;
+              let savedAfterAttempt = null;
+              let matchAfterAttempt = null;
+              let restoredValidation = null;
+
+              try {
+                aliasCard.canonical_name = targetCanonicalName;
+                invalidValidation = t.deckValidate(t.state.savedDeck, { forBattle: true });
+                try {
+                  startReturned = t.start('4p', 'road_shield');
+                } catch {
+                  startThrew = true;
+                }
+                savedAfterAttempt = JSON.stringify(t.state.savedDeck);
+                matchAfterAttempt = Boolean(t.state.match);
+              } finally {
+                if (hadCanonicalName) aliasCard.canonical_name = originalCanonicalName;
+                else delete aliasCard.canonical_name;
+                restoredValidation = t.deckValidate(t.state.savedDeck, { forBattle: true });
+              }
+
+              return {
+                aliasId,
+                targetId,
+                targetCanonicalName,
+                invalidValidation,
+                startReturned: Boolean(startReturned),
+                startThrew,
+                savedBefore,
+                savedAfterAttempt,
+                matchBefore,
+                matchAfterAttempt,
+                restoredValidation,
+              };
+            });
+
+            expect(evidence.aliasId).not.toBe(evidence.targetId);
+            expect(evidence.invalidValidation?.ok, `aliased validation: ${JSON.stringify(evidence.invalidValidation)}`).toBeFalsy();
+            expect(JSON.stringify(evidence.invalidValidation)).toContain('同名1枚まで');
+            expect(evidence.matchBefore, 'test starts without an active match').toBeFalsy();
+            expect(evidence.startReturned, 'invalid Highlander deck must not return a started match').toBeFalsy();
+            expect(evidence.matchAfterAttempt, 'invalid Highlander deck must not install an active match').toBeFalsy();
+            expect(evidence.savedAfterAttempt, 'rejected match start must not rewrite saved deck state').toBe(evidence.savedBefore);
+            expect(evidence.restoredValidation?.ok, `restored validation: ${JSON.stringify(evidence.restoredValidation)}`).toBeTruthy();
+
+            const durableAfterAttempt = await page.evaluate((key) => localStorage.getItem(key), storageKey);
+            expect(durableAfterAttempt, 'rejected match start must not rewrite durable save').toBe(durableBeforeReload);
+          });
+          EOF
+
       - name: Run GAMEROAD runtime smoke
         run: npx playwright test --config=playwright.config.mjs --workers=1
 

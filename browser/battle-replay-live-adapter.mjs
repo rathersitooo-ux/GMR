@@ -4,6 +4,10 @@ import {
   readReplay,
   validateReplayLog
 } from './battle-replay-core.mjs';
+import {
+  applyCardPresentationEvent,
+  createCardPresentationSession
+} from './card-presentation-core.mjs';
 
 const LIVE_ADAPTER_SCHEMA = 'GAMEROAD_BATTLE_REPLAY_LIVE_ADAPTER_V1';
 const VERSION_KEYS = Object.freeze(['rules', 'content', 'state']);
@@ -11,6 +15,8 @@ const CONTENT_VERSION_PREFIX = 'GAMEROAD_CARD_CONTENT_FNV1A64';
 const FNV_OFFSET = 0xcbf29ce484222325n;
 const FNV_PRIME = 0x100000001b3n;
 const FNV_MASK = 0xffffffffffffffffn;
+const CARD_PRESENTATION_STYLE_ID = 'gameroad-card-presentation-runtime-r6-style';
+const CARD_PRESENTATION_HOLD_MS = 520;
 
 function cloneJson(value) {
   const text = JSON.stringify(value);
@@ -232,6 +238,142 @@ export function projectAcceptedBattleResolution(resolution) {
   });
 }
 
+function browserGlobal(name) {
+  return typeof globalThis === 'object' ? globalThis[name] : undefined;
+}
+
+function environmentValue(environment, name) {
+  return Object.prototype.hasOwnProperty.call(environment, name)
+    ? environment[name]
+    : browserGlobal(name);
+}
+
+function settingToggleOn(documentRef, id) {
+  const text = documentRef?.getElementById?.(id)?.textContent;
+  return typeof text === 'string' && /\bON\b/i.test(text);
+}
+
+export function readBattleReplayCardPresentationPreferences(environment = {}) {
+  const documentRef = environmentValue(environment, 'document');
+  const matchMediaRef = environmentValue(environment, 'matchMedia');
+  let systemReducedMotion = false;
+  try {
+    systemReducedMotion = typeof matchMediaRef === 'function' &&
+      matchMediaRef('(prefers-reduced-motion: reduce)')?.matches === true;
+  } catch {
+    systemReducedMotion = false;
+  }
+  return deepFreeze({
+    reducedMotion: systemReducedMotion || settingToggleOn(documentRef, 'reduceMotion'),
+    lowPerf: settingToggleOn(documentRef, 'lowPerf'),
+    audioEnabled: false
+  });
+}
+
+function ensureBattleReplayCardPresentationStyle(documentRef) {
+  if (!documentRef?.head || typeof documentRef.createElement !== 'function') return false;
+  if (documentRef.getElementById?.(CARD_PRESENTATION_STYLE_ID)) return true;
+  const style = documentRef.createElement('style');
+  style.id = CARD_PRESENTATION_STYLE_ID;
+  style.textContent = `
+#battleResolution.grCardPresentationFallback .resolutionWinner{filter:brightness(1.08);text-shadow:0 0 14px rgba(255,218,126,.48)}
+#battleResolution.grCardPresentationFallback.grCardPresentationMotion .resolutionWinner{animation:grCardPresentationFallbackPulse .42s ease-out}
+@keyframes grCardPresentationFallbackPulse{0%{opacity:.62;transform:translateY(2px);text-shadow:0 0 4px rgba(255,218,126,.14)}55%{opacity:1;transform:none;text-shadow:0 0 22px rgba(255,218,126,.76)}100%{opacity:1;transform:none;text-shadow:0 0 14px rgba(255,218,126,.48)}}
+#battleResolution.noMotion.grCardPresentationFallback .resolutionWinner,body.low-perf #battleResolution.grCardPresentationFallback .resolutionWinner{animation:none!important;transform:none!important;filter:none!important}
+@media(prefers-reduced-motion:reduce){#battleResolution.grCardPresentationFallback .resolutionWinner{animation:none!important;transform:none!important}}
+`;
+  documentRef.head.appendChild(style);
+  return true;
+}
+
+export function renderBattleReplayCardPresentationPlan(plan, environment = {}) {
+  if (!plan || plan.presentationOnly !== true || plan.visual?.source !== 'fallback') return false;
+  const documentRef = environmentValue(environment, 'document');
+  const box = documentRef?.getElementById?.('battleResolution');
+  if (!box?.classList || !box.dataset) return false;
+  ensureBattleReplayCardPresentationStyle(documentRef);
+
+  box.dataset.cardPresentation = 'fallback';
+  box.dataset.cardPresentationEvent = plan.eventId;
+  box.dataset.cardPresentationMotion = plan.visual.motion;
+  box.classList.add('grCardPresentationFallback');
+  box.classList.toggle('grCardPresentationMotion', plan.visual.motion === 'allowed');
+
+  const setTimeoutRef = environmentValue(environment, 'setTimeout');
+  if (typeof setTimeoutRef === 'function') {
+    setTimeoutRef(() => {
+      if (box.dataset.cardPresentationEvent !== plan.eventId) return;
+      box.classList.remove('grCardPresentationFallback', 'grCardPresentationMotion');
+      delete box.dataset.cardPresentation;
+      delete box.dataset.cardPresentationEvent;
+      delete box.dataset.cardPresentationMotion;
+    }, CARD_PRESENTATION_HOLD_MS);
+  }
+  return true;
+}
+
+export function createBattleReplayCardPresentationBridge(environment = {}) {
+  const sessions = new Map();
+  const renderPlan = typeof environment.renderPlan === 'function'
+    ? environment.renderPlan
+    : plan => renderBattleReplayCardPresentationPlan(plan, environment);
+
+  function begin(matchId) {
+    if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
+    const runtime = {
+      state: createCardPresentationSession({ sessionId: matchId }),
+      lastPlan: null
+    };
+    sessions.set(matchId, runtime);
+    return runtime.state;
+  }
+
+  function acceptAcceptedResolution({ matchId, serial }) {
+    if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
+    safeInteger(serial, 'RESOLUTION_SERIAL', 1);
+    const current = sessions.get(matchId) || {
+      state: createCardPresentationSession({ sessionId: matchId }),
+      lastPlan: null
+    };
+    const result = applyCardPresentationEvent(current.state, {
+      sessionId: matchId,
+      eventId: `battle-resolution:${serial}`,
+      authorized: true,
+      visibility: 'public',
+      kind: 'vfx',
+      assets: {}
+    }, readBattleReplayCardPresentationPreferences(environment));
+
+    if (!result.accepted) return result;
+    sessions.set(matchId, {
+      state: result.state,
+      lastPlan: result.duplicate ? current.lastPlan : result.plan
+    });
+    if (!result.duplicate && result.plan) {
+      try {
+        renderPlan(result.plan);
+      } catch {
+        // Presentation is strictly fail-soft and never owns replay/gameplay success.
+      }
+    }
+    return result;
+  }
+
+  function snapshot(matchId) {
+    const runtime = sessions.get(matchId);
+    if (!runtime) return null;
+    return deepFreeze(cloneJson({
+      matchId,
+      seenEventIds: runtime.state.seenEventIds,
+      lastPlan: runtime.lastPlan
+    }));
+  }
+
+  return Object.freeze({ begin, acceptAcceptedResolution, snapshot });
+}
+
+const liveCardPresentationBridge = createBattleReplayCardPresentationBridge();
+
 function assertSession(session) {
   if (!session || session.schema !== LIVE_ADAPTER_SCHEMA || !nonEmptyString(session.matchId)) {
     throw new TypeError('LIVE_REPLAY_SESSION_INVALID');
@@ -243,10 +385,13 @@ function assertSession(session) {
   return session;
 }
 
-export function createLiveReplaySession({ matchId, versions }) {
+export function createLiveReplaySession(
+  { matchId, versions },
+  { presentationBridge = liveCardPresentationBridge } = {}
+) {
   if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
   const normalizedVersions = exactVersions(versions);
-  return deepFreeze({
+  const session = deepFreeze({
     schema: LIVE_ADAPTER_SCHEMA,
     matchId,
     versions: normalizedVersions,
@@ -254,9 +399,19 @@ export function createLiveReplaySession({ matchId, versions }) {
     ended: false,
     log: createReplayLog({ matchId, versions: normalizedVersions })
   });
+  try {
+    presentationBridge?.begin?.(matchId);
+  } catch {
+    // Replay session creation must survive presentation-only failures.
+  }
+  return session;
 }
 
-export function appendAcceptedBattleResolution(session, resolution) {
+export function appendAcceptedBattleResolution(
+  session,
+  resolution,
+  { presentationBridge = liveCardPresentationBridge } = {}
+) {
   assertSession(session);
   if (session.ended) throw new TypeError('LIVE_REPLAY_ALREADY_ENDED');
   const projected = projectAcceptedBattleResolution(resolution);
@@ -267,11 +422,20 @@ export function appendAcceptedBattleResolution(session, resolution) {
     kind: 'battle_resolution',
     publicData: projected
   });
-  return deepFreeze({
+  const next = deepFreeze({
     ...cloneJson(session),
     lastResolutionSerial: projected.serial,
     log
   });
+  try {
+    presentationBridge?.acceptAcceptedResolution?.({
+      matchId: session.matchId,
+      serial: projected.serial
+    });
+  } catch {
+    // Accepted replay/gameplay state is authoritative; presentation never blocks it.
+  }
+  return next;
 }
 
 export function appendAcceptedMatchEnd(session, { winnerIds, round, mode }) {
@@ -310,5 +474,11 @@ export const BATTLE_REPLAY_LIVE_ADAPTER = Object.freeze({
     rules: 'DECK_RULE.id+revision',
     content: 'window.__CARD_DATA__ canonical JSON fingerprint',
     state: 'LIVE_ADAPTER_SCHEMA'
+  }),
+  cardPresentation: Object.freeze({
+    source: 'accepted_public_battle_resolution',
+    kind: 'vfx',
+    assetAuthority: 'fallback_only',
+    audio: 'silent'
   })
 });

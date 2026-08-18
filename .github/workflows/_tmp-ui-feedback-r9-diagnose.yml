@@ -1,0 +1,43 @@
+name: TEMP UI Feedback R9 Diagnose
+
+on:
+  pull_request:
+    branches: [main]
+    types: [synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect ready-plan and first-cycle cue responsibility
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const s = fs.readFileSync('browser/GAMEROAD.html','utf8');
+          const terms = [
+            'first10Cue',
+            'ロード決定 → 公開 → 次の行動まで確認 ✓',
+            '次の行動へ進みます',
+            "$('#readyPlan')",
+            'commitPlans',
+            'GAMEROAD_READY_PLAN_COMMIT',
+            'gameroad-ui-feedback-ready-plan-production-r9'
+          ];
+          for (const term of terms) {
+            console.log(`\n===== ${term} =====`);
+            let pos = 0, n = 0;
+            while ((pos = s.indexOf(term, pos)) !== -1 && n < 20) {
+              n++;
+              const a = Math.max(0, pos - 900), b = Math.min(s.length, pos + term.length + 1400);
+              console.log(`-- occurrence ${n} @ ${pos} --`);
+              console.log(s.slice(a,b).replace(/\r/g,''));
+              pos += term.length;
+            }
+            console.log(`count=${n}${s.indexOf(term,pos)!==-1?'+' : ''}`);
+          }
+          NODE

@@ -28,7 +28,7 @@ jobs:
           node .github/scripts/browsermono-r4-apply-nav-mount.mjs
           code=$?
           if [ "$code" -ne 0 ]; then
-            git checkout -- browser/GAMEROAD.html
+            git checkout -- browser/GAMEROAD.html .github/workflows/gameroad-required-gate.yml
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add -- audit/browsermono-r4-nav-mount.json
@@ -36,16 +36,16 @@ jobs:
             git push origin "HEAD:${GITHUB_REF_NAME}"
             exit "$code"
           fi
-      - name: Run navigation core unit contract
-        run: node --test tests/screen-navigation-core.test.mjs
+      - name: Run navigation mount unit contracts
+        run: node --test tests/screen-navigation-core.test.mjs tests/screen-navigation-live-adapter.test.mjs
       - name: Run current Browser static gate
         run: node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
-      - name: Commit production HTML only
+      - name: Commit production mount and required-gate mapping only
         shell: bash
         run: |
           set -euo pipefail
-          git add -- browser/GAMEROAD.html
-          test "$(git diff --cached --name-only)" = "browser/GAMEROAD.html"
+          git add -- browser/GAMEROAD.html .github/workflows/gameroad-required-gate.yml
+          test "$(git diff --cached --name-only)" = $'.github/workflows/gameroad-required-gate.yml\nbrowser/GAMEROAD.html'
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "BROWSERMONO R4: mount screen navigation core in production HTML"

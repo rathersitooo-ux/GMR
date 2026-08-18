@@ -1011,6 +1011,21 @@ window.GameRoadSlaykiaChaosRuntime=(()=>{'use strict';
 })();
 </script>
 <script src="./deck-save-recovery-core.mjs"></script>
+<script type="module">
+import { resolveScreenNavigation } from "./screen-navigation-core.mjs";
+const existingScreenNavigationBridge=globalThis.GAMEROAD_SCREEN_NAVIGATION;
+if(existingScreenNavigationBridge && existingScreenNavigationBridge.resolve!==resolveScreenNavigation){
+  throw new Error("GAMEROAD_SCREEN_NAVIGATION is already occupied by an incompatible bridge");
+}
+if(!existingScreenNavigationBridge){
+  Object.defineProperty(globalThis,"GAMEROAD_SCREEN_NAVIGATION",{
+    value:Object.freeze({resolve:resolveScreenNavigation}),
+    enumerable:false,
+    configurable:false,
+    writable:false
+  });
+}
+</script>
 <script>
 (()=>{'use strict';
 const { inspectRawSave, classifyDeckProjection, prepareExplicitDeckCommit, readStorage, writePreparedSaveVerified, resetExplicitSaveKeys } = globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE;
@@ -1083,9 +1098,12 @@ const GAMEROAD_NAV_FALLBACK_PARENT=Object.freeze({cards:'home',characters:'home'
 const gameroadNav={stack:[]};
 function navEntry(screen){return{screen}}
 function navigateDetail(target){
-  if(!target||target===state.screen)return;
-  gameroadNav.stack.push(navEntry(state.screen));
-  show(target);
+  const bridge=globalThis.GAMEROAD_SCREEN_NAVIGATION;
+  if(!bridge || typeof bridge.resolve!=="function") throw new Error("GAMEROAD screen navigation bridge is not ready");
+  const decision=bridge.resolve(state.screen,target);
+  if(!decision.ok) return;
+  gameroadNav.stack.push(navEntry(decision.from));
+  show(decision.to);
 }
 function navigateRoot(target){
   gameroadNav.stack.length=0;

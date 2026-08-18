@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - work/boardfacility-r21-production-mount-20260818
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write

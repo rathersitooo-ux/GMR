@@ -36,6 +36,12 @@ jobs:
           echo "actual_main=${actual}"
           test "${actual}" = "${EXPECTED_BASE_SHA}"
 
+      - name: Repair stale PublicHost navigation blob expectation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/boardfacility-r21-buildtest-fix.py
+
       - name: Apply bounded production mount patches
         shell: bash
         run: |
@@ -47,6 +53,7 @@ jobs:
         run: |
           rm .github/workflows/boardfacility-r21-exact-base-executor.yml
           rm .github/boardfacility-r21-patch.py
+          rm .github/boardfacility-r21-buildtest-fix.py
 
       - name: Run bounded regression checks
         shell: bash
@@ -64,7 +71,7 @@ jobs:
           set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -A browser/GAMEROAD.html browser/board-facility-runtime-mount.mjs deploy/cloudflare/scripts/build.mjs tests/board-facility-runtime-mount.test.mjs tests/board-facility-production-mount.test.mjs .github/workflows/gameroad-required-gate.yml .github/workflows/boardfacility-r21-exact-base-executor.yml .github/boardfacility-r21-patch.py
+          git add -A browser/GAMEROAD.html browser/board-facility-runtime-mount.mjs deploy/cloudflare/scripts/build.mjs deploy/cloudflare/tests/build.test.mjs tests/board-facility-runtime-mount.test.mjs tests/board-facility-production-mount.test.mjs .github/workflows/gameroad-required-gate.yml .github/workflows/boardfacility-r21-exact-base-executor.yml .github/boardfacility-r21-patch.py .github/boardfacility-r21-buildtest-fix.py
           git status --short
           git commit -m "BOARD-FACILITY R21: mount production facility runtime"
           git push origin HEAD:${BRANCH_NAME}

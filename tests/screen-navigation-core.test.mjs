@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   SCREEN_NAVIGATION_FALLBACK_PARENT,
   SCREEN_NAVIGATION_REASON,
+  createScreenNavigationRuntimeBridge,
   resolveScreenBackTarget,
   resolveScreenNavigation
 } from '../browser/screen-navigation-core.mjs';
@@ -78,4 +79,20 @@ test('unknown or root screens fall back to home', () => {
   for (const screen of ['home', 'battle', 'result', 'future-screen', undefined, null]) {
     assert.equal(resolveScreenBackTarget(screen, undefined), 'home');
   }
+});
+
+test('runtime bridge is frozen and delegates forward navigation without semantic drift', () => {
+  const bridge = createScreenNavigationRuntimeBridge();
+  assert.equal(Object.isFrozen(bridge), true);
+  assert.deepEqual(bridge.resolve('home', ''), resolveScreenNavigation('home', ''));
+  assert.deepEqual(bridge.resolve('home', 'future-screen'), resolveScreenNavigation('home', 'future-screen'));
+});
+
+test('runtime bridge delegates back-target resolution without mutating history input', () => {
+  const bridge = createScreenNavigationRuntimeBridge();
+  const historyEntry = { screen: 'battle', marker: 7 };
+  const before = structuredClone(historyEntry);
+  assert.equal(bridge.resolveBackTarget('gacha', historyEntry), resolveScreenBackTarget('gacha', historyEntry));
+  assert.deepEqual(historyEntry, before);
+  assert.equal(bridge.resolveBackTarget('gacha', undefined), 'shop');
 });

@@ -4,6 +4,18 @@ export const SCREEN_NAVIGATION_REASON = Object.freeze({
   NAVIGATE: 'NAVIGATE'
 });
 
+export const SCREEN_NAVIGATION_FALLBACK_PARENT = Object.freeze({
+  cards: 'home',
+  characters: 'home',
+  setup: 'home',
+  missions: 'home',
+  profile: 'home',
+  shop: 'home',
+  gacha: 'shop',
+  records: 'home',
+  settings: 'home'
+});
+
 export function resolveScreenNavigation(currentScreen, requestedTarget) {
   if (!requestedTarget) {
     return {
@@ -29,4 +41,10 @@ export function resolveScreenNavigation(currentScreen, requestedTarget) {
     to: requestedTarget,
     reason: SCREEN_NAVIGATION_REASON.NAVIGATE
   };
+}
+
+export function resolveScreenBackTarget(currentScreen, historyEntry) {
+  return historyEntry?.screen
+    || SCREEN_NAVIGATION_FALLBACK_PARENT[currentScreen]
+    || 'home';
 }

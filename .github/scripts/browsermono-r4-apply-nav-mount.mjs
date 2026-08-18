@@ -1,3 +1,4 @@
+// Two-phase trigger: workflow already exists on this branch before this matching push.
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import path from 'node:path';

@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 concurrency:
   group: gameroad-cloudflare-public-deploy
@@ -24,6 +25,7 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       PAGES_PROJECT: gameroad-browser-r5
       RELAY_WORKER: gameroad-friend-relay-r5
+      EVIDENCE_ISSUE: '158'
     steps:
       - name: Checkout exact source
         uses: actions/checkout@v4
@@ -34,6 +36,7 @@ jobs:
           node-version: '22'
 
       - name: Require Cloudflare credentials
+        id: credentials
         shell: bash
         run: |
           set -euo pipefail
@@ -47,6 +50,7 @@ jobs:
           fi
 
       - name: Run public-host finite checks
+        id: checks
         shell: bash
         run: |
           set -euo pipefail
@@ -58,6 +62,7 @@ jobs:
           node --check deploy/cloudflare/functions/ws.js
 
       - name: Build exact public package
+        id: build
         shell: bash
         run: |
           set -euo pipefail
@@ -69,6 +74,7 @@ jobs:
             --published-at "$PUBLISHED_AT"
 
       - name: Deploy friend-room relay Worker and Durable Object
+        id: relay
         shell: bash
         run: |
           set -euo pipefail
@@ -76,6 +82,7 @@ jobs:
             --config deploy/cloudflare/relay/wrangler.toml
 
       - name: Ensure Pages project exists
+        id: project
         shell: bash
         run: |
           set -euo pipefail
@@ -88,16 +95,27 @@ jobs:
           fi
 
       - name: Deploy Pages production package
+        id: pages
         shell: bash
         run: |
           set -euo pipefail
-          npx --yes wrangler@4 pages deploy deploy/cloudflare/dist \
+          set +e
+          OUTPUT="$(npx --yes wrangler@4 pages deploy deploy/cloudflare/dist \
             --project-name "$PAGES_PROJECT" \
             --branch main \
             --commit-hash "$GITHUB_SHA" \
-            --config deploy/cloudflare/wrangler.pages.toml
+            --config deploy/cloudflare/wrangler.pages.toml 2>&1)"
+          STATUS=$?
+          set -e
+          printf '%s\n' "$OUTPUT"
+          if [[ "$STATUS" -ne 0 ]]; then
+            exit "$STATUS"
+          fi
+          URL="$(printf '%s\n' "$OUTPUT" | grep -Eo 'https://[^[:space:]]+\.pages\.dev' | tail -n 1 || true)"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
 
       - name: Read back production deployment
+        id: readback
         shell: bash
         run: |
           set -euo pipefail
@@ -105,3 +123,32 @@ jobs:
             --project-name "$PAGES_PROJECT" \
             --environment production \
             --json
+
+      - name: Report sanitized deployment outcome
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CREDENTIALS_OUTCOME: ${{ steps.credentials.outcome }}
+          CHECKS_OUTCOME: ${{ steps.checks.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+          RELAY_OUTCOME: ${{ steps.relay.outcome }}
+          PROJECT_OUTCOME: ${{ steps.project.outcome }}
+          PAGES_OUTCOME: ${{ steps.pages.outcome }}
+          READBACK_OUTCOME: ${{ steps.readback.outcome }}
+          PAGES_URL: ${{ steps.pages.outputs.url }}
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/publichost-r12-evidence.txt" <<EOF
+          PUBLICHOST_R12_DEPLOY_EVIDENCE
+          sha=${GITHUB_SHA}
+          credentials=${CREDENTIALS_OUTCOME}
+          checks=${CHECKS_OUTCOME}
+          build=${BUILD_OUTCOME}
+          relay=${RELAY_OUTCOME}
+          project=${PROJECT_OUTCOME}
+          pages=${PAGES_OUTCOME}
+          readback=${READBACK_OUTCOME}
+          url=${PAGES_URL:-}
+          EOF
+          gh issue comment "$EVIDENCE_ISSUE" --body-file "$RUNNER_TEMP/publichost-r12-evidence.txt"

@@ -66,6 +66,8 @@ jobs:
             [[ -z "${path}" ]] && continue
             case "${path}" in
               browser/GAMEROAD.html|\
+              browser/screen-navigation-core.mjs|\
+              tests/screen-navigation-core.test.mjs|\
               tests/browser-static-check.mjs|\
               tests/browser-runtime-smoke.spec.mjs|\
               tests/browser-full-interaction.spec.mjs|\
@@ -236,7 +238,9 @@ jobs:
 
       - name: Run Browser static check
         if: steps.classify.outputs.browser == 'true'
-        run: node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+        run: |
+          node --test tests/screen-navigation-core.test.mjs
+          node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
 
       - name: Run Advice offline evaluator tests
         if: steps.classify.outputs.advice == 'true'

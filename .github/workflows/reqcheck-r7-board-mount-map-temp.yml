@@ -84,6 +84,6 @@ jobs:
           set -euo pipefail
           git config user.name 'gameroad-orchestrator'
           git config user.email 'actions@users.noreply.github.com'
-          git add .github/workflows/gameroad-required-gate.yml .github/workflows/reqcheck-r7-board-mount-map-temp.yml
+          git add .github/workflows/gameroad-required-gate.yml
           git commit -m 'REQCHECK R7: classify board runtime mount'
           git push origin HEAD:work/reqcheck-r7-board-mount-map-20260819

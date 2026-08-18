@@ -6,9 +6,15 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildPackage } from '../scripts/build.mjs';
+import {
+  VERSION_MANIFEST_FILENAME,
+  serializeVersionManifest,
+} from '../scripts/generate-version-manifest.mjs';
 
 const testHere = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(testHere, '../../..');
+const SOURCE_COMMIT = '0123456789abcdef0123456789abcdef01234567';
+const PUBLISHED_AT = '2026-08-19T00:12:00+09:00';
 
 function gitBlobSha1(buffer) {
   return createHash('sha1').update(Buffer.from(`blob ${buffer.length}\0`)).update(buffer).digest('hex');
@@ -89,7 +95,7 @@ const dependencyContract = [
   },
 ];
 
-test('build copies Browser and every packaged runtime dependency byte-identically with deterministic provenance', async () => {
+test('build copies Browser and every packaged runtime dependency byte-identically and emits the formal version artifact', async () => {
   const dir = await mkdtemp(path.join(os.tmpdir(), 'gameroad-public-pack-'));
   const source = path.join(dir, 'GAMEROAD.html');
   const dist = path.join(dir, 'dist');
@@ -100,7 +106,8 @@ test('build copies Browser and every packaged runtime dependency byte-identicall
     source,
     dist,
     expectedBlob: gitBlobSha1(browserBytes),
-    sourceCommit: 'abc123',
+    sourceCommit: SOURCE_COMMIT,
+    publishedAt: PUBLISHED_AT,
   };
   const expected = new Map();
 
@@ -121,27 +128,35 @@ test('build copies Browser and every packaged runtime dependency byte-identicall
     assert.equal(first.artifacts[dep.artifact].output, dep.file);
   }
   assert.equal(
+    await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8'),
+    serializeVersionManifest({ sourceCommit: SOURCE_COMMIT, publishedAt: PUBLISHED_AT }),
+  );
+  assert.equal(
     await readFile(path.join(dist, '_headers'), 'utf8'),
-    '/\n  Cache-Control: no-cache, no-store\n\n/index.html\n  Cache-Control: no-cache, no-store\n\n/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n',
+    '/\n  Cache-Control: no-cache, no-store\n\n/index.html\n  Cache-Control: no-cache, no-store\n\n/gameroad-version.json\n  Cache-Control: no-store\n\n/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n',
   );
   assert.equal(first.git_blob_sha1, options.expectedBlob);
-  assert.equal(first.source_commit, 'abc123');
+  assert.equal(first.source_commit, SOURCE_COMMIT);
   assert.equal(first.artifacts.index_html.output, 'index.html');
 
   const manifest1 = await readFile(path.join(dist, 'manifest.json'), 'utf8');
+  const version1 = await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8');
   await buildPackage(options);
   const manifest2 = await readFile(path.join(dist, 'manifest.json'), 'utf8');
+  const version2 = await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8');
   assert.equal(manifest1, manifest2);
+  assert.equal(version1, version2);
 });
 
-test('build packages the exact current production Browser dependency set', async () => {
+test('build packages the exact current production Browser dependency set with explicit release identity', async () => {
   const dir = await mkdtemp(path.join(os.tmpdir(), 'gameroad-current-public-pack-'));
   const dist = path.join(dir, 'dist');
   const browserBytes = await readFile(path.join(repoRoot, 'browser/GAMEROAD.html'));
   const options = {
     dist,
     expectedBlob: gitBlobSha1(browserBytes),
-    sourceCommit: 'candidate-current-tree',
+    sourceCommit: SOURCE_COMMIT,
+    publishedAt: PUBLISHED_AT,
   };
   const currentBytes = new Map();
 
@@ -154,8 +169,12 @@ test('build packages the exact current production Browser dependency set', async
 
   const manifest = await buildPackage(options);
   assert.equal((await readFile(path.join(dist, 'index.html'))).equals(browserBytes), true);
-  assert.equal(manifest.source_commit, 'candidate-current-tree');
+  assert.equal(manifest.source_commit, SOURCE_COMMIT);
   assert.equal(manifest.artifacts.index_html.git_blob_sha1, options.expectedBlob);
+  assert.equal(
+    await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8'),
+    serializeVersionManifest({ sourceCommit: SOURCE_COMMIT, publishedAt: PUBLISHED_AT }),
+  );
   for (const dep of dependencyContract) {
     assert.equal((await readFile(path.join(dist, dep.file))).equals(currentBytes.get(dep.file)), true);
     assert.equal(manifest.artifacts[dep.artifact].git_blob_sha1, dep.currentBlob);
@@ -180,8 +199,27 @@ test('build fails closed on stale Browser or packaged dependency blob expectatio
     await assert.rejects(
       () => buildPackage({
         dist: path.join(dir, 'dist'),
+        sourceCommit: SOURCE_COMMIT,
+        publishedAt: PUBLISHED_AT,
         [expectedArg]: '0000000000000000000000000000000000000000',
       }),
+      errorPattern,
+    );
+  }
+});
+
+test('build requires exact release identity before writing the public package', async () => {
+  const cases = [
+    [{ publishedAt: PUBLISHED_AT }, /exact lowercase 40-hex/],
+    [{ sourceCommit: SOURCE_COMMIT }, /explicit RFC3339/],
+    [{ sourceCommit: SOURCE_COMMIT.toUpperCase(), publishedAt: PUBLISHED_AT }, /exact lowercase 40-hex/],
+    [{ sourceCommit: SOURCE_COMMIT, publishedAt: '2026-08-19' }, /explicit RFC3339/],
+  ];
+
+  for (const [identity, errorPattern] of cases) {
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'gameroad-public-pack-identity-'));
+    await assert.rejects(
+      () => buildPackage({ dist: path.join(dir, 'dist'), ...identity }),
       errorPattern,
     );
   }

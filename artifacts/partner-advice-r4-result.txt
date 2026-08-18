@@ -1,0 +1,161 @@
+base_html_sha256=ae0aeb66374cbaf2e5f7c3edb58aff8cb43651e6cfb437cd3ab8e13a845a99e0
+result_html_sha256=fe1125f2a4bb61a769250ef12381e20433f3b5f2728fe5ad8070ab60dadd6f9a
+old_replay_token_count=1
+r4_marker_count=1
+runtime_module=browser/partner-advice-runtime-mount.mjs
+production_behavior_without_formal_versions=legacy-fallback
+formal_manifest_requires_explicit_versions=true
+TAP version 13
+# Subtest: missing formal version tuple keeps the exact legacy production path
+ok 1 - missing formal version tuple keeps the exact legacy production path
+  ---
+  duration_ms: 1.396714
+  type: 'test'
+  ...
+# Subtest: formal versions activate shared legal-action core without changing deterministic rule choice
+ok 2 - formal versions activate shared legal-action core without changing deterministic rule choice
+  ---
+  duration_ms: 2.461222
+  type: 'test'
+  ...
+# Subtest: approved manifest can override the rule only inside current legal public candidates
+ok 3 - approved manifest can override the rule only inside current legal public candidates
+  ---
+  duration_ms: 1.362142
+  type: 'test'
+  ...
+# Subtest: runtime control rejects invented/partial versions and exposes activation status
+ok 4 - runtime control rejects invented/partial versions and exposes activation status
+  ---
+  duration_ms: 0.432295
+  type: 'test'
+  ...
+# Subtest: left/right use explicit position and ties are candidate-id deterministic
+ok 5 - left/right use explicit position and ties are candidate-id deterministic
+  ---
+  duration_ms: 3.254094
+  type: 'test'
+  ...
+# Subtest: max/min use explicit comparison and deterministic id tie break
+ok 6 - max/min use explicit comparison and deterministic id tie break
+  ---
+  duration_ms: 0.433747
+  type: 'test'
+  ...
+# Subtest: permutation does not change a decision when explicit public facts are unchanged
+ok 7 - permutation does not change a decision when explicit public facts are unchanged
+  ---
+  duration_ms: 1.688589
+  type: 'test'
+  ...
+# Subtest: illegal candidates cannot win and all-illegal returns no selection
+ok 8 - illegal candidates cannot win and all-illegal returns no selection
+  ---
+  duration_ms: 0.360117
+  type: 'test'
+  ...
+# Subtest: duplicate/missing id, hidden scope and asset action fail closed
+ok 9 - duplicate/missing id, hidden scope and asset action fail closed
+  ---
+  duration_ms: 0.250514
+  type: 'test'
+  ...
+# Subtest: invalid positions/comparisons and unknown rule fail closed
+ok 10 - invalid positions/comparisons and unknown rule fail closed
+  ---
+  duration_ms: 0.151025
+  type: 'test'
+  ...
+# Subtest: missing or stale version tuples fail before selection
+ok 11 - missing or stale version tuples fail before selection
+  ---
+  duration_ms: 0.206228
+  type: 'test'
+  ...
+# Subtest: private payload never leaves the adapter and input is unchanged
+ok 12 - private payload never leaves the adapter and input is unchanged
+  ---
+  duration_ms: 0.655799
+  type: 'test'
+  ...
+# Subtest: execution-time revalidation returns the exact previously selected legal candidate
+ok 13 - execution-time revalidation returns the exact previously selected legal candidate
+  ---
+  duration_ms: 0.506886
+  type: 'test'
+  ...
+# Subtest: execution-time revalidation never substitutes a different now-preferred legal candidate
+ok 14 - execution-time revalidation never substitutes a different now-preferred legal candidate
+  ---
+  duration_ms: 0.459816
+  type: 'test'
+  ...
+# Subtest: execution-time revalidation rejects version drift before examining a replacement candidate
+ok 15 - execution-time revalidation rejects version drift before examining a replacement candidate
+  ---
+  duration_ms: 0.208902
+  type: 'test'
+  ...
+# Subtest: execution-time revalidation rejects absent and now-illegal selected ids without substitution
+ok 16 - execution-time revalidation rejects absent and now-illegal selected ids without substitution
+  ---
+  duration_ms: 0.163114
+  type: 'test'
+  ...
+# Subtest: execution-time revalidation preserves hidden, asset and duplicate fail-closed boundaries
+ok 17 - execution-time revalidation preserves hidden, asset and duplicate fail-closed boundaries
+  ---
+  duration_ms: 0.114801
+  type: 'test'
+  ...
+# Subtest: execution-time revalidation rejects malformed current candidates
+ok 18 - execution-time revalidation rejects malformed current candidates
+  ---
+  duration_ms: 0.155803
+  type: 'test'
+  ...
+# Subtest: execution-time revalidation emits no private payload and does not mutate fresh inputs
+ok 19 - execution-time revalidation emits no private payload and does not mutate fresh inputs
+  ---
+  duration_ms: 0.197745
+  type: 'test'
+  ...
+# Subtest: approved runtime manifest may replace the heuristic only with a currently legal public candidate
+ok 20 - approved runtime manifest may replace the heuristic only with a currently legal public candidate
+  ---
+  duration_ms: 0.675237
+  type: 'test'
+  ...
+# Subtest: stale manifest version preserves the exact existing rule heuristic
+ok 21 - stale manifest version preserves the exact existing rule heuristic
+  ---
+  duration_ms: 0.550311
+  type: 'test'
+  ...
+# Subtest: private/raw-event manifests preserve the existing heuristic and never expose private payloads
+ok 22 - private/raw-event manifests preserve the existing heuristic and never expose private payloads
+  ---
+  duration_ms: 0.260228
+  type: 'test'
+  ...
+# Subtest: manifest action outside the current legal set cannot execute and falls back to the rule heuristic
+ok 23 - manifest action outside the current legal set cannot execute and falls back to the rule heuristic
+  ---
+  duration_ms: 0.257194
+  type: 'test'
+  ...
+# Subtest: when no legal heuristic exists, rejected manifest does not invent an action
+ok 24 - when no legal heuristic exists, rejected manifest does not invent an action
+  ---
+  duration_ms: 0.161802
+  type: 'test'
+  ...
+1..24
+# tests 24
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 99.615259

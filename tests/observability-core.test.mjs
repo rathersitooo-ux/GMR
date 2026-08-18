@@ -6,6 +6,10 @@ import {
   createObservabilityQueue,
   OBSERVABILITY_CORE
 } from '../browser/observability-core.mjs';
+import {
+  createObservabilitySearchProjection,
+  OBSERVABILITY_SEARCH_PROJECTION
+} from '../browser/observability-index-core.mjs';
 
 const context = { releaseId: 'r1', media: 'browser', surface: 'battle', matchId: 'm1' };
 
@@ -213,4 +217,110 @@ test('collector snapshot round-trips when an older same-fingerprint window arriv
   const restored = createObservabilityIncidentCollector();
   assert.deepEqual(restored.ingest(snapshot), { ok: true, accepted: 5, incidents: 1, reason: 'OK' });
   assert.deepEqual(restored.snapshot(), snapshot);
+});
+
+function queueBatchForContext({
+  releaseId,
+  matchId,
+  surface = 'battle',
+  media = 'browser',
+  faultCode = 'BATTLE_RENDER_FAILED',
+  now = 100,
+  count = 1
+}) {
+  const queue = createObservabilityQueue();
+  const scopedContext = { releaseId, media, surface, matchId };
+  for (let index = 0; index < count; index += 1) {
+    queue.capture({
+      error: new Error(`private-secret-${index}`),
+      faultCode,
+      context: { ...scopedContext, userId: 'RAW_USER_123', chat: 'private free text' }
+    }, now + index);
+  }
+  return queue.snapshot();
+}
+
+test('search projection declares source authority without inventing identity, retention, or transport authority', () => {
+  assert.equal(OBSERVABILITY_SEARCH_PROJECTION.schema, 'GAMEROAD_OBSERVABILITY_SEARCH_PROJECTION_V1');
+  assert.equal(OBSERVABILITY_SEARCH_PROJECTION.sourceSchema, OBSERVABILITY_CORE.schema);
+  assert.deepEqual(OBSERVABILITY_SEARCH_PROJECTION.queryKeys, [
+    'releaseId', 'media', 'surface', 'matchId', 'eventType', 'reasonCode', 'fingerprint'
+  ]);
+  assert.equal(OBSERVABILITY_SEARCH_PROJECTION.identityAuthority, 'NONE_IN_THIS_PROJECTION');
+  assert.equal(OBSERVABILITY_SEARCH_PROJECTION.retentionAuthority, 'NOT_DEFINED_IN_THIS_PROJECTION');
+  assert.equal(OBSERVABILITY_SEARCH_PROJECTION.transportAuthority, 'NOT_DEFINED_IN_THIS_PROJECTION');
+});
+
+test('search projection preserves only versioned correlation and reason fields from validated incidents', () => {
+  const projection = createObservabilitySearchProjection();
+  const batch = queueBatchForContext({ releaseId: 'release-7', matchId: 'match-9', now: 700, count: 2 });
+  assert.deepEqual(projection.ingest(batch), { ok: true, accepted: 2, records: 1, reason: 'OK' });
+
+  const [record] = projection.snapshot();
+  assert.deepEqual(Object.keys(record), [
+    'schema', 'sourceSchema', 'releaseId', 'media', 'surface', 'matchId', 'eventType',
+    'reasonCode', 'fingerprint', 'count', 'firstSeenAtMs', 'lastSeenAtMs'
+  ]);
+  assert.equal(record.sourceSchema, OBSERVABILITY_CORE.schema);
+  assert.equal(record.releaseId, 'release-7');
+  assert.equal(record.media, 'browser');
+  assert.equal(record.surface, 'battle');
+  assert.equal(record.matchId, 'match-9');
+  assert.equal(record.eventType, 'exception');
+  assert.equal(record.reasonCode, 'BATTLE_RENDER_FAILED');
+  assert.equal(record.count, 2);
+  assert.equal(record.firstSeenAtMs, 700);
+  assert.equal(record.lastSeenAtMs, 701);
+
+  const serialized = JSON.stringify(record);
+  for (const forbidden of ['RAW_USER_123', 'private free text', 'private-secret', 'userId', 'chat', 'message', 'stack']) {
+    assert.equal(serialized.includes(forbidden), false, forbidden);
+  }
+});
+
+test('search projection does not merge different releases or matches into one population', () => {
+  const projection = createObservabilitySearchProjection();
+  const later = queueBatchForContext({ releaseId: 'release-b', matchId: 'match-2', now: 200 });
+  const earlier = queueBatchForContext({ releaseId: 'release-a', matchId: 'match-1', now: 100 });
+  assert.equal(projection.ingest(later).ok, true);
+  assert.equal(projection.ingest(earlier).ok, true);
+
+  assert.deepEqual(
+    projection.snapshot().map((record) => [record.releaseId, record.matchId]),
+    [['release-a', 'match-1'], ['release-b', 'match-2']]
+  );
+  assert.deepEqual(
+    projection.query({ releaseId: 'release-a' }).records.map((record) => record.matchId),
+    ['match-1']
+  );
+  assert.deepEqual(
+    projection.query({ matchId: 'match-2' }).records.map((record) => record.releaseId),
+    ['release-b']
+  );
+});
+
+test('search projection keeps collector retransmission idempotency', () => {
+  const projection = createObservabilitySearchProjection();
+  const batch = queueBatchForContext({ releaseId: 'release-idem', matchId: 'match-idem', now: 300, count: 2 });
+  assert.equal(projection.ingest(batch).accepted, 2);
+  assert.equal(projection.ingest(batch).accepted, 0);
+  const [record] = projection.snapshot();
+  assert.equal(record.count, 2);
+  assert.equal(record.firstSeenAtMs, 300);
+  assert.equal(record.lastSeenAtMs, 301);
+});
+
+test('search projection rejects malformed evidence and unauthorized query fields fail-closed', () => {
+  const projection = createObservabilitySearchProjection();
+  const [entry] = queueBatchForContext({ releaseId: 'release-safe', matchId: 'match-safe' });
+  const poisoned = { ...entry, userId: 'RAW_USER_123', message: 'Bearer secret' };
+  assert.deepEqual(
+    projection.ingest([poisoned]),
+    { ok: false, accepted: 0, records: 0, reason: 'INVALID_ENTRY' }
+  );
+  assert.deepEqual(projection.snapshot(), []);
+  assert.deepEqual(
+    projection.query({ userId: 'RAW_USER_123' }),
+    { ok: false, records: [], reason: 'INVALID_QUERY' }
+  );
 });

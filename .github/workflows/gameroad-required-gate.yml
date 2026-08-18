@@ -58,6 +58,7 @@ jobs:
           hate_presence=false
           board_facility=false
           auto_rank=false
+          version_manifest=false
           roblox=false
           publichost=false
           unclassified=false
@@ -177,6 +178,10 @@ jobs:
               tests/auto-rank-d06-collision-contract.test.mjs)
                 auto_rank=true
                 ;;
+              deploy/cloudflare/scripts/generate-version-manifest.mjs|\
+              deploy/cloudflare/tests/version-manifest.test.mjs)
+                version_manifest=true
+                ;;
               roblox/GAMEROAD.rbxlx)
                 roblox=true
                 ;;
@@ -229,6 +234,7 @@ jobs:
             echo "hate_presence=${hate_presence}"
             echo "board_facility=${board_facility}"
             echo "auto_rank=${auto_rank}"
+            echo "version_manifest=${version_manifest}"
             echo "roblox=${roblox}"
             echo "publichost=${publichost}"
             echo "unclassified=${unclassified}"
@@ -240,7 +246,7 @@ jobs:
           fi
 
       - name: Set up Node
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true' || steps.classify.outputs.partner_vtuber == 'true' || steps.classify.outputs.partner_humanlike == 'true' || steps.classify.outputs.observability == 'true' || steps.classify.outputs.card_presentation == 'true' || steps.classify.outputs.battle2v2_reconnect == 'true' || steps.classify.outputs.hate_presence == 'true' || steps.classify.outputs.board_facility == 'true' || steps.classify.outputs.auto_rank == 'true' || steps.classify.outputs.publichost == 'true'
+        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true' || steps.classify.outputs.partner_vtuber == 'true' || steps.classify.outputs.partner_humanlike == 'true' || steps.classify.outputs.observability == 'true' || steps.classify.outputs.card_presentation == 'true' || steps.classify.outputs.battle2v2_reconnect == 'true' || steps.classify.outputs.hate_presence == 'true' || steps.classify.outputs.board_facility == 'true' || steps.classify.outputs.auto_rank == 'true' || steps.classify.outputs.version_manifest == 'true' || steps.classify.outputs.publichost == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -326,6 +332,14 @@ jobs:
       - name: Run Auto-rank D06 collision contract tests
         if: steps.classify.outputs.auto_rank == 'true'
         run: node --test tests/auto-rank-d06-collision-contract.test.mjs
+
+      - name: Run Browser version manifest contract tests
+        if: steps.classify.outputs.version_manifest == 'true'
+        run: node --test deploy/cloudflare/tests/version-manifest.test.mjs
+
+      - name: Run Browser version manifest syntax check
+        if: steps.classify.outputs.version_manifest == 'true'
+        run: node --check deploy/cloudflare/scripts/generate-version-manifest.mjs
 
       - name: Run PublicHost Cloudflare deploy-prep tests
         if: steps.classify.outputs.publichost == 'true'

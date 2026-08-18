@@ -8,6 +8,7 @@ on:
       - 'work/**'
     paths:
       - 'browser/GAMEROAD.html'
+      - 'browser/**/*.mjs'
       - 'tests/browser-full-interaction.spec.mjs'
       - 'playwright.full-interaction.config.mjs'
       - '.github/workflows/browser-full-interaction.yml'
@@ -16,6 +17,7 @@ on:
       - main
     paths:
       - 'browser/GAMEROAD.html'
+      - 'browser/**/*.mjs'
       - 'tests/browser-full-interaction.spec.mjs'
       - 'playwright.full-interaction.config.mjs'
       - '.github/workflows/browser-full-interaction.yml'

@@ -196,7 +196,8 @@ jobs:
               deploy/cloudflare/scripts/build.mjs|\
               deploy/cloudflare/tests/build.test.mjs|\
               deploy/cloudflare/tests/relay-core.test.mjs|\
-              deploy/cloudflare/wrangler.pages.toml)
+              deploy/cloudflare/wrangler.pages.toml|\
+              .github/workflows/cloudflare-public-deploy.yml)
                 publichost=true
                 ;;
               .github/workflows/gameroad-required-gate.yml|\

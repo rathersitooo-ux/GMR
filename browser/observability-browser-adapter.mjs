@@ -33,7 +33,13 @@ function safeContext(contextProvider) {
     releaseId: safeRead(source, 'releaseId'),
     media: 'browser',
     surface: safeRead(source, 'surface'),
-    matchId: safeRead(source, 'matchId')
+    matchId: safeRead(source, 'matchId'),
+    releaseVersion: safeRead(source, 'releaseVersion'),
+    rulesVersion: safeRead(source, 'rulesVersion'),
+    contentVersion: safeRead(source, 'contentVersion'),
+    cardVersion: safeRead(source, 'cardVersion'),
+    stateVersion: safeRead(source, 'stateVersion'),
+    cohortId: safeRead(source, 'cohortId')
   };
 }
 

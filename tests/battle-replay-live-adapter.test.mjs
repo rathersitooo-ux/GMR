@@ -30,7 +30,7 @@ function resolution(serial = 1) {
     attackerId: 'P1',
     defenderId: 'P3',
     lane: 'C',
-    shield: 1,
+    shield: 'C',
     winnerIds: ['P1', 'P2'],
     winningTeam: 'A',
     teamTotals: { A: 21, B: 18 },
@@ -143,6 +143,29 @@ test('accepted battle projection is a strict public allowlist and strips unrelat
   assert.equal('secretFutureState' in projected, false);
   assert.equal('hand' in projected.players[0], false);
   assert.equal('hiddenDeckOrder' in projected.players[0].cards[0], false);
+  assert.equal(projected.shield, 'C');
+});
+
+test('public shield projection preserves current string/null values and rejects wider secret-bearing shapes', () => {
+  const nullable = resolution();
+  nullable.shield = null;
+  assert.equal(projectAcceptedBattleResolution(nullable).shield, null);
+
+  for (const shield of [
+    { position: 'C', hiddenCardId: 'SECRET_SHIELD' },
+    ['C'],
+    '',
+    '   ',
+    1,
+    true
+  ]) {
+    const input = resolution();
+    input.shield = shield;
+    assert.throws(
+      () => projectAcceptedBattleResolution(input),
+      /RESOLUTION_SHIELD_INVALID/
+    );
+  }
 });
 
 test('resolution serial is enforced as the accepted Battle order and gap/reorder fails closed', () => {

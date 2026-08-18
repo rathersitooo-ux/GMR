@@ -6,6 +6,7 @@ import {
 } from './ui-state-feedback-core.mjs';
 
 export const READY_PLAN_FEEDBACK_ADAPTER_SCHEMA = 'gameroad.ui-state-feedback.ready-plan-adapter.v1';
+export const READY_PLAN_FEEDBACK_BINDING_SCHEMA = 'gameroad.ui-state-feedback.ready-plan-binding.v1';
 
 const INTERACTION_EVENTS = new Set(['POINTER_DOWN', 'POINTER_MOVE', 'POINTER_UP', 'TICK', 'SECONDARY', 'KEY_ACTIVATE']);
 
@@ -15,11 +16,17 @@ function requireEvent(event) {
   return event;
 }
 
-function requireOperationToken(event) {
-  if (typeof event.operationToken !== 'string' || event.operationToken.trim() === '') {
+function validateOperationToken(token) {
+  if (typeof token !== 'string' || token.trim() === '') {
     throw new Error('operationToken is required for ready-plan commit');
   }
-  return event.operationToken;
+  return token;
+}
+
+function requireOperationToken(event) {
+  if (typeof event.operationToken === 'string') return validateOperationToken(event.operationToken);
+  if (typeof event.operationTokenFactory === 'function') return validateOperationToken(event.operationTokenFactory());
+  throw new Error('operationToken is required for ready-plan commit');
 }
 
 function result(state, intent = null, command = null, commitResult = undefined) {
@@ -102,5 +109,158 @@ export function createReadyPlanFeedbackAdapter({
     dispatch,
     getState,
     getFeedback,
+  });
+}
+
+function requireBindingTarget(target) {
+  if (!target || typeof target.addEventListener !== 'function' || typeof target.removeEventListener !== 'function') {
+    throw new Error('target must support addEventListener/removeEventListener');
+  }
+  return target;
+}
+
+function requireBindingAdapter(adapter) {
+  if (!adapter || typeof adapter.dispatch !== 'function' || typeof adapter.getFeedback !== 'function') {
+    throw new Error('adapter must expose dispatch/getFeedback');
+  }
+  return adapter;
+}
+
+function pointerIdOf(event) {
+  return Number.isInteger(event?.pointerId) ? event.pointerId : 0;
+}
+
+function pointerCoordinate(event, key) {
+  const value = event?.[key];
+  if (typeof value !== 'number' || !Number.isFinite(value)) throw new Error(`${key} must be finite`);
+  return value;
+}
+
+export function bindReadyPlanFeedbackControl({
+  target,
+  adapter,
+  operationTokenFactory,
+  render = () => {},
+  now = () => Date.now(),
+  tickMs = 50,
+  schedule = (fn, ms) => setInterval(fn, ms),
+  cancelSchedule = (handle) => clearInterval(handle),
+} = {}) {
+  requireBindingTarget(target);
+  requireBindingAdapter(adapter);
+  if (typeof operationTokenFactory !== 'function') throw new Error('operationTokenFactory is required');
+  if (typeof render !== 'function') throw new Error('render must be a function');
+  if (typeof now !== 'function') throw new Error('now must be a function');
+  if (typeof schedule !== 'function' || typeof cancelSchedule !== 'function') throw new Error('schedule/cancelSchedule must be functions');
+  if (typeof tickMs !== 'number' || !Number.isFinite(tickMs) || tickMs <= 0) throw new Error('tickMs must be a positive finite number');
+
+  let activePointerId = null;
+  let tickHandle = null;
+  let destroyed = false;
+
+  const publish = (out) => {
+    render(out.feedback, out);
+    return out;
+  };
+  const dispatch = (event) => publish(adapter.dispatch(event));
+  const stopTick = () => {
+    if (tickHandle === null) return;
+    cancelSchedule(tickHandle);
+    tickHandle = null;
+  };
+  const startTick = () => {
+    stopTick();
+    tickHandle = schedule(() => {
+      if (destroyed || activePointerId === null) return;
+      const out = dispatch({type: 'TICK', atMs: now()});
+      if (out.intent === 'detail') stopTick();
+    }, tickMs);
+  };
+  const matchesActivePointer = (event) => activePointerId !== null && pointerIdOf(event) === activePointerId;
+
+  const onPointerDown = (event) => {
+    if (destroyed || activePointerId !== null) return;
+    activePointerId = pointerIdOf(event);
+    dispatch({
+      type: 'POINTER_DOWN',
+      x: pointerCoordinate(event, 'clientX'),
+      y: pointerCoordinate(event, 'clientY'),
+      atMs: now(),
+    });
+    startTick();
+  };
+  const onPointerMove = (event) => {
+    if (destroyed || !matchesActivePointer(event)) return;
+    const out = dispatch({
+      type: 'POINTER_MOVE',
+      x: pointerCoordinate(event, 'clientX'),
+      y: pointerCoordinate(event, 'clientY'),
+    });
+    if (out.intent === 'swipe_right') stopTick();
+  };
+  const onPointerUp = (event) => {
+    if (destroyed || !matchesActivePointer(event)) return;
+    activePointerId = null;
+    stopTick();
+    dispatch({type: 'POINTER_UP', operationTokenFactory});
+  };
+  const onPointerCancel = (event) => {
+    if (destroyed || !matchesActivePointer(event)) return;
+    activePointerId = null;
+    stopTick();
+    dispatch({type: 'BLUR', reason: 'pointer_cancelled'});
+  };
+  const onKeyDown = (event) => {
+    if (destroyed || (event?.key !== 'Enter' && event?.key !== ' ')) return;
+    if (typeof event.preventDefault === 'function') event.preventDefault();
+    dispatch({type: 'KEY_ACTIVATE', operationTokenFactory});
+  };
+  const onContextMenu = (event) => {
+    if (destroyed) return;
+    if (typeof event.preventDefault === 'function') event.preventDefault();
+    dispatch({type: 'SECONDARY'});
+  };
+  const onBlur = () => {
+    if (destroyed) return;
+    activePointerId = null;
+    stopTick();
+    dispatch({type: 'BLUR', reason: 'control_blur'});
+  };
+
+  const listeners = [
+    ['pointerdown', onPointerDown],
+    ['pointermove', onPointerMove],
+    ['pointerup', onPointerUp],
+    ['pointercancel', onPointerCancel],
+    ['keydown', onKeyDown],
+    ['contextmenu', onContextMenu],
+    ['blur', onBlur],
+  ];
+  for (const [type, handler] of listeners) target.addEventListener(type, handler);
+  render(adapter.getFeedback(), null);
+
+  const acknowledge = ({operationToken, accepted, reason} = {}) => {
+    if (destroyed) throw new Error('binding is destroyed');
+    if (typeof accepted !== 'boolean') throw new Error('accepted must be boolean');
+    return dispatch({
+      type: accepted ? 'ACK_CONFIRMED' : 'ACK_FAILED',
+      token: validateOperationToken(operationToken),
+      reason,
+    });
+  };
+
+  const destroy = () => {
+    if (destroyed) return false;
+    destroyed = true;
+    activePointerId = null;
+    stopTick();
+    for (const [type, handler] of listeners) target.removeEventListener(type, handler);
+    return true;
+  };
+
+  return Object.freeze({
+    schema: READY_PLAN_FEEDBACK_BINDING_SCHEMA,
+    acknowledge,
+    destroy,
   });
 }

@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createReadyPlanFeedbackAdapter} from '../browser/ui-state-feedback-ready-plan-adapter.mjs';
+import {
+  bindReadyPlanFeedbackControl,
+  createReadyPlanFeedbackAdapter,
+} from '../browser/ui-state-feedback-ready-plan-adapter.mjs';
 
 const cfg = {holdMs:500, moveCancelDistance:20, rightSwipeDistance:45};
 const make = (options={}) => {
@@ -19,6 +22,20 @@ test('primary release commits once and enters pending until matching ack',()=>{
   assert.deepEqual(calls,[{type:'commit',operationToken:'p1',source:'pointer_release'}]);
   const ack=adapter.dispatch({type:'ACK_CONFIRMED',token:'p1',reason:'server_ack'});
   assert.equal(ack.feedback.feedback,'confirmed');
+});
+
+test('operation token factory is invoked only when a commit is actually emitted',()=>{
+  const {adapter,calls}=make();
+  let tokenCalls=0;
+  const operationTokenFactory=()=>`op-${++tokenCalls}`;
+  adapter.dispatch({type:'POINTER_DOWN',x:0,y:0,atMs:0});
+  adapter.dispatch({type:'POINTER_MOVE',x:0,y:21});
+  const cancelled=adapter.dispatch({type:'POINTER_UP',operationTokenFactory});
+  assert.equal(cancelled.intent,null);
+  assert.equal(tokenCalls,0);
+  adapter.dispatch({type:'KEY_ACTIVATE',operationTokenFactory});
+  assert.equal(tokenCalls,1);
+  assert.equal(calls[0].operationToken,'op-1');
 });
 
 test('keyboard activation is primary and uses caller token',()=>{
@@ -118,4 +135,105 @@ test('missing thresholds or operation token fail closed before commit',()=>{
   assert.throws(()=>adapter.dispatch({type:'POINTER_UP'}),/operationToken/);
   assert.equal(calls.length,0);
   assert.notEqual(adapter.getFeedback().feedback,'pending');
+});
+
+class FakeTarget {
+  constructor(){ this.listeners=new Map(); }
+  addEventListener(type,handler){
+    const set=this.listeners.get(type) || new Set();
+    set.add(handler); this.listeners.set(type,set);
+  }
+  removeEventListener(type,handler){ this.listeners.get(type)?.delete(handler); }
+  emit(type,event={}){ for (const handler of this.listeners.get(type) || []) handler(event); }
+}
+
+function makeBinding({holdMs=500}={}){
+  const target=new FakeTarget();
+  const calls=[];
+  const renders=[];
+  const timers=[];
+  let nowMs=0;
+  let tokenCounter=0;
+  const adapter=createReadyPlanFeedbackAdapter({
+    config:{...cfg,holdMs},
+    commit:(command)=>{calls.push(command); return `sent:${command.operationToken}`;},
+  });
+  const binding=bindReadyPlanFeedbackControl({
+    target,
+    adapter,
+    operationTokenFactory:()=>`bind-${++tokenCounter}`,
+    render:(feedback)=>renders.push(feedback.feedback),
+    now:()=>nowMs,
+    schedule:(fn,ms)=>{const timer={fn,ms,cancelled:false};timers.push(timer);return timer;},
+    cancelSchedule:(timer)=>{timer.cancelled=true;},
+  });
+  return {
+    target,adapter,binding,calls,renders,timers,
+    get tokenCounter(){return tokenCounter;},
+    setNow(value){nowMs=value;},
+  };
+}
+
+test('binding wires pointer commit, emits one token, and settles matching server ack',()=>{
+  const h=makeBinding();
+  h.target.emit('pointerdown',{pointerId:7,clientX:10,clientY:20});
+  h.target.emit('pointerup',{pointerId:7,clientX:10,clientY:20});
+  assert.equal(h.tokenCounter,1);
+  assert.deepEqual(h.calls,[{type:'commit',operationToken:'bind-1',source:'pointer_release'}]);
+  assert.equal(h.adapter.getFeedback().feedback,'pending');
+  const ack=h.binding.acknowledge({operationToken:'bind-1',accepted:true,reason:'server_ack'});
+  assert.equal(ack.feedback.feedback,'confirmed');
+  assert.equal(h.renders.at(-1),'confirmed');
+});
+
+test('binding cancellation and secondary input do not allocate operation tokens',()=>{
+  const h=makeBinding();
+  h.target.emit('pointerdown',{pointerId:1,clientX:0,clientY:0});
+  h.target.emit('pointermove',{pointerId:1,clientX:0,clientY:21});
+  h.target.emit('pointerup',{pointerId:1,clientX:0,clientY:21});
+  const context={prevented:false,preventDefault(){this.prevented=true;}};
+  h.target.emit('contextmenu',context);
+  assert.equal(context.prevented,true);
+  assert.equal(h.tokenCounter,0);
+  assert.equal(h.calls.length,0);
+});
+
+test('binding hold tick emits detail without commit and stops its active timer',()=>{
+  const h=makeBinding({holdMs:100});
+  h.target.emit('pointerdown',{pointerId:2,clientX:1,clientY:1});
+  h.setNow(100);
+  h.timers[0].fn();
+  assert.equal(h.adapter.getFeedback().feedback,'detail');
+  assert.equal(h.calls.length,0);
+  assert.equal(h.timers[0].cancelled,true);
+  h.target.emit('pointerup',{pointerId:2,clientX:1,clientY:1});
+  assert.equal(h.tokenCounter,0);
+});
+
+test('binding suppresses duplicate keyboard activation while pending and destroys listeners',()=>{
+  const h=makeBinding();
+  const first={key:'Enter',prevented:false,preventDefault(){this.prevented=true;}};
+  const second={key:' ',prevented:false,preventDefault(){this.prevented=true;}};
+  h.target.emit('keydown',first);
+  h.target.emit('keydown',second);
+  assert.equal(first.prevented,true);
+  assert.equal(second.prevented,true);
+  assert.equal(h.tokenCounter,1);
+  assert.equal(h.calls.length,1);
+  assert.equal(h.binding.destroy(),true);
+  assert.equal(h.binding.destroy(),false);
+  h.target.emit('keydown',{key:'Enter',preventDefault(){}});
+  assert.equal(h.calls.length,1);
+  assert.throws(()=>h.binding.acknowledge({operationToken:'bind-1',accepted:false,reason:'late'}),/destroyed/);
+});
+
+test('binding ignores non-active pointers and fails closed on stale ack',()=>{
+  const h=makeBinding();
+  h.target.emit('pointerdown',{pointerId:3,clientX:5,clientY:5});
+  h.target.emit('pointerup',{pointerId:4,clientX:5,clientY:5});
+  assert.equal(h.calls.length,0);
+  h.target.emit('pointerup',{pointerId:3,clientX:5,clientY:5});
+  assert.equal(h.calls.length,1);
+  assert.throws(()=>h.binding.acknowledge({operationToken:'old',accepted:true,reason:'server_ack'}),/stale|mismatched/);
+  assert.equal(h.adapter.getFeedback().feedback,'pending');
 });

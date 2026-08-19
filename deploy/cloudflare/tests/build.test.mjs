@@ -78,6 +78,15 @@ const dependencyContract = [
     currentBlob: '5dbd31ce856b412a7572ce213eb9d764c1b547de',
   },
   {
+    file: 'battle-conveyor-presentation-core.mjs',
+    source: 'browser/battle-conveyor-presentation-core.mjs',
+    sourceArg: 'battleConveyorCoreSource',
+    expectedArg: 'expectedBattleConveyorCoreBlob',
+    artifact: 'battle_conveyor_presentation_core',
+    fixture: 'export const BATTLE_CONVEYOR_PRESENTATION_CORE = Object.freeze({});\n',
+    currentBlob: '70a6a7e354ad96d4297acab3ba2d9c4caa584af2',
+  },
+  {
     file: 'board-facility-state-core.classic.js',
     source: 'browser/board-facility-state-core.classic.js',
     sourceArg: 'boardFacilityClassicSource',
@@ -239,6 +248,7 @@ test('build fails closed on stale Browser or packaged dependency blob expectatio
     ['expectedReplayAdapterBlob', /Battle replay live adapter blob mismatch/],
     ['expectedReplayCoreBlob', /Battle replay core blob mismatch/],
     ['expectedCardPresentationCoreBlob', /Card presentation core blob mismatch/],
+    ['expectedBattleConveyorCoreBlob', /Battle conveyor presentation core blob mismatch/],
     ['expectedBoardFacilityClassicBlob', /Board facility classic bridge blob mismatch/],
     ['expectedBoardFacilityCoreBlob', /Board facility core blob mismatch/],
     ['expectedBoardFacilityRuntimeMountBlob', /Board facility runtime mount blob mismatch/],

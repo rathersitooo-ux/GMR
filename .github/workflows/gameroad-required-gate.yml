@@ -56,6 +56,7 @@ jobs:
           observability=false
           card_presentation=false
           base52_face=false
+          battle_conveyor=false
           battle2v2_reconnect=false
           hate_presence=false
           board_facility=false
@@ -175,6 +176,10 @@ jobs:
               tests/base52-face-layout-candidate.test.mjs)
                 base52_face=true
                 ;;
+              browser/battle-conveyor-presentation-core.mjs|\
+              tests/battle-conveyor-presentation-core.test.mjs)
+                battle_conveyor=true
+                ;;
               browser/battle-2v2-reconnect-core.mjs|\
               tests/battle-2v2-reconnect-core.test.mjs)
                 battle2v2_reconnect=true
@@ -253,6 +258,7 @@ jobs:
             echo "observability=${observability}"
             echo "card_presentation=${card_presentation}"
             echo "base52_face=${base52_face}"
+            echo "battle_conveyor=${battle_conveyor}"
             echo "battle2v2_reconnect=${battle2v2_reconnect}"
             echo "hate_presence=${hate_presence}"
             echo "board_facility=${board_facility}"
@@ -286,6 +292,12 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Set up Node for Battle Conveyor
+        if: steps.classify.outputs.battle_conveyor == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Run Browser static check
         if: steps.classify.outputs.browser == 'true'
         run: |
@@ -299,6 +311,10 @@ jobs:
       - name: Run BASE52 face layout candidate tests
         if: steps.classify.outputs.base52_face == 'true'
         run: node --test tests/base52-face-layout-candidate.test.mjs
+
+      - name: Run Battle conveyor presentation core tests
+        if: steps.classify.outputs.battle_conveyor == 'true'
+        run: node --test tests/battle-conveyor-presentation-core.test.mjs
 
       - name: Run Advice offline evaluator tests
         if: steps.classify.outputs.advice == 'true'

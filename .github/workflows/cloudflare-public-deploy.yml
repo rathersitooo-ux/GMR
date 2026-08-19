@@ -359,7 +359,17 @@ jobs:
             echo "::error::Pages deployment did not expose a public URL for WebSocket probe"
             exit 1
           fi
-          node --test deploy/cloudflare/tests/relay-core.test.mjs
+          for attempt in 1 2 3 4 5; do
+            echo "Public friend-room WebSocket probe attempt ${attempt}/5"
+            if node --test deploy/cloudflare/tests/relay-core.test.mjs; then
+              exit 0
+            fi
+            if [[ "$attempt" -eq 5 ]]; then
+              echo "::error::Public friend-room WebSocket probe failed after 5 bounded attempts"
+              exit 1
+            fi
+            sleep 20
+          done
 
       - name: Report sanitized deployment outcome
         if: always()

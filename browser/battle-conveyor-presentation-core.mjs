@@ -175,15 +175,35 @@ export function auditMotionContinuity(timeline) {
     return freeze({ ok: false, reason: 'AMBIENT_TRACK_GAP' });
   }
   const defects = [];
+  let deadGapMs = 0;
+  let handoffOverlapMs = 0;
+  let handoffPairs = 0;
   for (let i = 0; i < timeline.plans.length; i += 1) {
     const p = timeline.plans[i];
     if (p.presentationOnly !== true || p.authorityBoundary !== 'accepted_public_event_only') defects.push(`${p.eventId}:AUTHORITY`);
     if (!p.ambientMotionRequired) defects.push(`${p.eventId}:AMBIENT_FALSE`);
     const next = timeline.plans[i + 1];
-    if (next && ['attack','ability','finisher'].includes(p.kind) && next.timing.start > p.timing.recoveryEnd) defects.push(`${p.eventId}:DEAD_GAP`);
-    if (next && ['attack','ability','finisher'].includes(p.kind) && next.timing.start !== p.timing.handoffAt) defects.push(`${p.eventId}:NO_HANDOFF_PREROLL`);
+    if (next && ['attack','ability','finisher'].includes(p.kind)) {
+      const gap = Math.max(0, next.timing.start - p.timing.recoveryEnd);
+      const overlap = Math.max(0, p.timing.recoveryEnd - next.timing.start);
+      deadGapMs += gap;
+      handoffOverlapMs += overlap;
+      handoffPairs += 1;
+      if (gap > 0) defects.push(`${p.eventId}:DEAD_GAP`);
+      if (next.timing.start !== p.timing.handoffAt) defects.push(`${p.eventId}:NO_HANDOFF_PREROLL`);
+    }
   }
-  return freeze({ ok: defects.length === 0, reason: defects.length ? 'DEFECTS' : 'OK', defects, motionCoverage: timeline.timelineEnd === 0 ? 1 : 1 });
+  const ambientSpan = Math.max(0, Math.min(timeline.timelineEnd, timeline.ambientTrack.end) - Math.max(0, timeline.ambientTrack.start));
+  const declaredAmbientCoverage = timeline.timelineEnd === 0 ? 1 : ambientSpan / timeline.timelineEnd;
+  return freeze({
+    ok: defects.length === 0,
+    reason: defects.length ? 'DEFECTS' : 'OK',
+    defects,
+    declaredAmbientCoverage,
+    deadGapMs,
+    handoffOverlapMs,
+    handoffPairs
+  });
 }
 
 export const BATTLE_CONVEYOR_PRESENTATION_CORE = freeze({

@@ -38,6 +38,7 @@ jobs:
           cat /tmp/gameroad-changed.txt
 
           browser=false
+          browser_full_interaction=false
           dino=false
           fossil=false
           learning=false
@@ -70,12 +71,14 @@ jobs:
           while IFS= read -r path; do
             [[ -z "${path}" ]] && continue
             case "${path}" in
+              tests/browser-full-interaction.spec.mjs)
+                browser_full_interaction=true
+                ;;
               browser/GAMEROAD.html|\
               browser/screen-navigation-core.mjs|\
               tests/screen-navigation-core.test.mjs|\
               tests/browser-static-check.mjs|\
               tests/browser-runtime-smoke.spec.mjs|\
-              tests/browser-full-interaction.spec.mjs|\
               playwright.config.mjs|\
               playwright.full-interaction.config.mjs|\
               .github/workflows/browser-node-ci.yml|\
@@ -243,6 +246,7 @@ jobs:
 
           {
             echo "browser=${browser}"
+            echo "browser_full_interaction=${browser_full_interaction}"
             echo "dino=${dino}"
             echo "fossil=${fossil}"
             echo "learning=${learning}"
@@ -276,6 +280,10 @@ jobs:
             echo "Unclassified executable/CI paths:"
             cat /tmp/gameroad-unclassified.txt
           fi
+
+      - name: Verify Browser full interaction delegated evidence lane
+        if: steps.classify.outputs.browser_full_interaction == 'true'
+        run: echo "tests/browser-full-interaction.spec.mjs execution is delegated to Browser Full Interaction Evidence."
 
       - name: Set up Node
         if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true' || steps.classify.outputs.partner_vtuber == 'true' || steps.classify.outputs.partner_humanlike == 'true' || steps.classify.outputs.observability == 'true' || steps.classify.outputs.card_presentation == 'true' || steps.classify.outputs.battle2v2_reconnect == 'true' || steps.classify.outputs.hate_presence == 'true' || steps.classify.outputs.board_facility == 'true' || steps.classify.outputs.auto_rank == 'true' || steps.classify.outputs.version_manifest == 'true' || steps.classify.outputs.publichost == 'true'

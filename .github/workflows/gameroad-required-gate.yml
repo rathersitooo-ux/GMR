@@ -55,6 +55,7 @@ jobs:
           partner_humanlike=false
           observability=false
           card_presentation=false
+          base52_face=false
           battle2v2_reconnect=false
           hate_presence=false
           board_facility=false
@@ -170,6 +171,10 @@ jobs:
               tests/card-presentation-core.test.mjs)
                 card_presentation=true
                 ;;
+              browser/base52-face-layout-candidate.mjs|\
+              tests/base52-face-layout-candidate.test.mjs)
+                base52_face=true
+                ;;
               browser/battle-2v2-reconnect-core.mjs|\
               tests/battle-2v2-reconnect-core.test.mjs)
                 battle2v2_reconnect=true
@@ -247,6 +252,7 @@ jobs:
             echo "partner_humanlike=${partner_humanlike}"
             echo "observability=${observability}"
             echo "card_presentation=${card_presentation}"
+            echo "base52_face=${base52_face}"
             echo "battle2v2_reconnect=${battle2v2_reconnect}"
             echo "hate_presence=${hate_presence}"
             echo "board_facility=${board_facility}"
@@ -274,6 +280,12 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Set up Node for BASE52
+        if: steps.classify.outputs.base52_face == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Run Browser static check
         if: steps.classify.outputs.browser == 'true'
         run: |
@@ -283,6 +295,10 @@ jobs:
       - name: Run Fossil excavation state core tests
         if: steps.classify.outputs.fossil == 'true'
         run: node --test tests/fossil-excavation-state-core.test.mjs
+
+      - name: Run BASE52 face layout candidate tests
+        if: steps.classify.outputs.base52_face == 'true'
+        run: node --test tests/base52-face-layout-candidate.test.mjs
 
       - name: Run Advice offline evaluator tests
         if: steps.classify.outputs.advice == 'true'
@@ -396,7 +412,7 @@ jobs:
           actual_sha256="$(sha256sum "${target}" | awk '{print $1}')"
           if [[ "${actual_sha256}" != "${expected_sha256}" ]]; then
             echo "Roblox placement SHA-256 mismatch."
-            echo "expected=${expected_sha256}"
+            echo "expected=${expected_sha256"
             echo "actual=${actual_sha256}"
             exit 1
           fi

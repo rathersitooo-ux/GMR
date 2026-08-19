@@ -3,8 +3,12 @@ import assert from 'node:assert/strict';
 import {
   BATTLE_REPLAY_CORE,
   appendAcceptedEvent,
+  createReplayBroadcastDirectorState,
   createReplayLog,
+  createReplayShotCandidate,
+  decideReplayBroadcastShot,
   readReplay,
+  scoreReplayShotCandidate,
   validateReplayLog
 } from '../browser/battle-replay-core.mjs';
 
@@ -154,4 +158,228 @@ test('post-match does not automatically expand secrets', () => {
   });
   assert.equal(afterMatchSpectator.ok, true);
   assert.equal('privateData' in afterMatchSpectator.events[0], false);
+});
+
+const directorPolicy = Object.freeze({
+  weights: Object.freeze({
+    mandatoryConsequence: 4,
+    urgency: 3,
+    dramaDelta: 2,
+    rarity: 1,
+    continuity: 1,
+    readiness: 2,
+    repeat: 3,
+    cutThrash: 3,
+    load: 1
+  }),
+  holdMs: 100,
+  hysteresisDelta: 2,
+  cooldownMs: 500
+});
+
+function directorEvidence(overrides = {}) {
+  return {
+    privacySafe: true,
+    privacyRisk: 0,
+    mandatoryConsequence: 1,
+    urgency: 1,
+    dramaDelta: 1,
+    rarity: 1,
+    continuity: 1,
+    readiness: 1,
+    repeat: 0,
+    cutThrash: 0,
+    load: 0,
+    starvationMs: 0,
+    ...overrides
+  };
+}
+
+function publicDirectorEvent(sequence, kind = 'round_resolved') {
+  return { sequence, kind, publicData: { round: sequence } };
+}
+
+function directorCandidate(sequence, surfaceId, overrides = {}) {
+  return createReplayShotCandidate({
+    matchId: 'M-DIRECTOR',
+    event: publicDirectorEvent(sequence),
+    surfaceId,
+    evidence: directorEvidence(overrides)
+  });
+}
+
+test('broadcast director accepts public projection only and keeps candidates/decisions secret-free', () => {
+  const log = sampleLog();
+  const spectator = readReplay(log, {
+    viewer: { id: 'SPECTATOR', authenticated: true },
+    supportedVersions
+  });
+  const p1 = readReplay(log, {
+    viewer: { id: 'P1', authenticated: true },
+    supportedVersions
+  });
+
+  const candidate = createReplayShotCandidate({
+    matchId: spectator.matchId,
+    event: spectator.events[0],
+    surfaceId: 'BOARD',
+    evidence: directorEvidence()
+  });
+  assert.equal(candidate.presentationOnly, true);
+  assert.equal('publicData' in candidate, false);
+  assert.equal('privateData' in candidate, false);
+  assert.equal(Object.isFrozen(candidate), true);
+  assert.throws(() => createReplayShotCandidate({
+    matchId: p1.matchId,
+    event: p1.events[0],
+    surfaceId: 'BOARD',
+    evidence: directorEvidence()
+  }), /DIRECTOR_EVENT_NOT_PUBLIC_ONLY/);
+  assert.throws(() => createReplayShotCandidate({
+    matchId: spectator.matchId,
+    event: spectator.events[0],
+    surfaceId: 'BOARD',
+    evidence: directorEvidence({ privacyRisk: 1 })
+  }), /DIRECTOR_PRIVACY_EVIDENCE_REJECTED/);
+
+  const first = decideReplayBroadcastShot(
+    createReplayBroadcastDirectorState(),
+    { candidates: [candidate], policy: directorPolicy, nowMs: 0 }
+  );
+  assert.equal(first.decision.presentationOnly, true);
+  assert.equal('publicData' in first.decision, false);
+  assert.equal('privateData' in first.decision, false);
+  assert.equal('authorityOnly' in first.decision, false);
+  assert.equal(Object.isFrozen(first.decision), true);
+});
+
+test('broadcast director requires explicit policy values instead of inventing score thresholds', () => {
+  const candidate = directorCandidate(1, 'BOARD');
+  assert.equal(scoreReplayShotCandidate(candidate, directorPolicy), 13);
+  assert.throws(() => scoreReplayShotCandidate(candidate, {
+    ...directorPolicy,
+    holdMs: undefined
+  }), /DIRECTOR_HOLD_MS_INVALID/);
+  assert.throws(() => scoreReplayShotCandidate(candidate, {
+    ...directorPolicy,
+    weights: { ...directorPolicy.weights, urgency: undefined }
+  }), /DIRECTOR_WEIGHT_urgency_INVALID/);
+});
+
+test('broadcast director holds the active shot before switching to a materially stronger public candidate', () => {
+  const board = directorCandidate(1, 'BOARD');
+  const animation = directorCandidate(2, 'ANIMATION', {
+    mandatoryConsequence: 2,
+    urgency: 2
+  });
+  let state = createReplayBroadcastDirectorState();
+  const initial = decideReplayBroadcastShot(
+    state,
+    { candidates: [board], policy: directorPolicy, nowMs: 0 }
+  );
+  state = initial.state;
+  assert.equal(initial.decision.reason, 'INITIAL');
+  assert.equal(initial.decision.selectedCandidateId, board.candidateId);
+
+  const held = decideReplayBroadcastShot(
+    state,
+    { candidates: [board, animation], policy: directorPolicy, nowMs: 50 }
+  );
+  assert.equal(held.decision.reason, 'HOLD');
+  assert.equal(held.decision.selectedCandidateId, board.candidateId);
+
+  const switched = decideReplayBroadcastShot(
+    held.state,
+    { candidates: [board, animation], policy: directorPolicy, nowMs: 100 }
+  );
+  assert.equal(switched.decision.reason, 'VALUE_SWITCH');
+  assert.equal(switched.decision.selectedCandidateId, animation.candidateId);
+});
+
+test('broadcast director uses deterministic starvation rescue only inside equal score value', () => {
+  const current = directorCandidate(1, 'BOARD', { starvationMs: 20 });
+  const rescued = directorCandidate(2, 'ANIMATION', { starvationMs: 80 });
+  const state = decideReplayBroadcastShot(
+    createReplayBroadcastDirectorState(),
+    { candidates: [current], policy: directorPolicy, nowMs: 0 }
+  ).state;
+
+  const result = decideReplayBroadcastShot(
+    state,
+    { candidates: [current, rescued], policy: directorPolicy, nowMs: 100 }
+  );
+  assert.equal(result.decision.reason, 'STARVATION_RESCUE');
+  assert.equal(result.decision.selectedCandidateId, rescued.candidateId);
+});
+
+test('broadcast director cooldown blocks immediate cut-back to a released shot', () => {
+  const a = directorCandidate(1, 'BOARD');
+  const b = directorCandidate(2, 'ANIMATION', {
+    mandatoryConsequence: 2,
+    urgency: 2
+  });
+  let state = decideReplayBroadcastShot(
+    createReplayBroadcastDirectorState(),
+    { candidates: [a], policy: directorPolicy, nowMs: 0 }
+  ).state;
+  state = decideReplayBroadcastShot(
+    state,
+    { candidates: [a, b], policy: directorPolicy, nowMs: 100 }
+  ).state;
+
+  const immediate = decideReplayBroadcastShot(
+    state,
+    {
+      candidates: [
+        directorCandidate(1, 'BOARD', {
+          mandatoryConsequence: 4,
+          urgency: 4
+        }),
+        b
+      ],
+      policy: directorPolicy,
+      nowMs: 200
+    }
+  );
+  assert.equal(immediate.decision.reason, 'CONTINUE');
+  assert.equal(immediate.decision.selectedCandidateId, b.candidateId);
+  assert.equal(
+    immediate.decision.considered.find(row => row.candidateId === a.candidateId)
+      .cooldownBlocked,
+    true
+  );
+
+  const afterCooldown = decideReplayBroadcastShot(
+    immediate.state,
+    {
+      candidates: [
+        directorCandidate(1, 'BOARD', {
+          mandatoryConsequence: 4,
+          urgency: 4
+        }),
+        b
+      ],
+      policy: directorPolicy,
+      nowMs: 600
+    }
+  );
+  assert.equal(afterCooldown.decision.reason, 'VALUE_SWITCH');
+  assert.equal(afterCooldown.decision.selectedCandidateId, a.candidateId);
+});
+
+test('broadcast director clears a missing active shot without synthesizing replay state', () => {
+  const a = directorCandidate(1, 'BOARD');
+  const initial = decideReplayBroadcastShot(
+    createReplayBroadcastDirectorState(),
+    { candidates: [a], policy: directorPolicy, nowMs: 0 }
+  );
+  const cleared = decideReplayBroadcastShot(
+    initial.state,
+    { candidates: [], policy: directorPolicy, nowMs: 100 }
+  );
+  assert.equal(cleared.decision.reason, 'NO_CANDIDATE');
+  assert.equal(cleared.decision.selectedCandidateId, null);
+  assert.equal(cleared.state.activeCandidateId, null);
+  assert.equal(cleared.state.activeSelectedAtMs, null);
+  assert.equal(cleared.state.lastReleasedAtByCandidate[a.candidateId], 100);
 });

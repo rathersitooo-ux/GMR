@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   PARTNER_BATTLE_EVENT_PROJECTION,
+  createPartnerBattleEventLogConsumerAdapter,
   projectPartnerBattleEventLog
 } from '../browser/partner-battle-event-log-projection.mjs';
 
@@ -92,4 +93,93 @@ test('projection contract declares no storage authority and preserves replay ver
   assert.equal(PARTNER_BATTLE_EVENT_PROJECTION.identityPolicy, 'DROP_PLAYER_IDS_AND_NAMES');
   assert.equal(PARTNER_BATTLE_EVENT_PROJECTION.privateDataPolicy, 'NEVER_PROJECT_PRIVATE_DATA');
   assert.equal(PARTNER_BATTLE_EVENT_PROJECTION.provenancePolicy, 'PRESERVE_EXACT_REPLAY_VERSIONS');
+});
+
+test('consumer adapter delivers exactly one frozen sanitized projection and no caller context', () => {
+  const callerOnlyContext = { viewerId: 'raw-viewer-id', authToken: 'must-never-forward' };
+  const delivered = [];
+  const adapter = createPartnerBattleEventLogConsumerAdapter({
+    readReplay: () => replay([{
+      sequence: 1,
+      kind: 'future_event',
+      publicData: { viewerId: callerOnlyContext.viewerId, arbitrary: 'drop-this' },
+      privateData: { authToken: callerOnlyContext.authToken }
+    }]),
+    consumeProjection(...args) {
+      assert.equal(args.length, 1);
+      delivered.push(args[0]);
+    }
+  });
+
+  const result = adapter();
+
+  assert.deepEqual(result, {
+    ok: true,
+    consumed: true,
+    schema: 'GAMEROAD_PARTNER_BATTLE_EVENT_PROJECTION_V1',
+    matchId: 'match-evidence-1',
+    versions: { rules: 'rule@7', content: 'cards:v4', state: 'runtime:v2' },
+    eventCount: 1
+  });
+  assert.equal(delivered.length, 1);
+  assert.equal(Object.isFrozen(delivered[0]), true);
+  assert.equal(Object.isFrozen(delivered[0].versions), true);
+  assert.deepEqual(delivered[0].events[0], { sequence: 1, kind: 'future_event' });
+  const serialized = JSON.stringify(delivered[0]);
+  assert.equal(serialized.includes(callerOnlyContext.viewerId), false);
+  assert.equal(serialized.includes(callerOnlyContext.authToken), false);
+  assert.equal(serialized.includes('rulesVersion'), false);
+  assert.equal(serialized.includes('cardVersion'), false);
+  assert.equal(serialized.includes('stateVersion'), false);
+});
+
+test('consumer adapter never invokes consumer for invalid or unready replay authority', () => {
+  let calls = 0;
+  const invalid = createPartnerBattleEventLogConsumerAdapter({
+    readReplay: () => null,
+    consumeProjection: () => { calls += 1; }
+  });
+  const unready = createPartnerBattleEventLogConsumerAdapter({
+    readReplay: () => ({ ok: false, status: 'unavailable' }),
+    consumeProjection: () => { calls += 1; }
+  });
+
+  assert.deepEqual(invalid(), { ok: false, consumed: false, reason: 'REPLAY_READ_INVALID' });
+  assert.deepEqual(unready(), { ok: false, consumed: false, reason: 'REPLAY_NOT_READY' });
+  assert.equal(calls, 0);
+});
+
+test('consumer adapter fails closed when the viewer-authorized replay read throws', () => {
+  let calls = 0;
+  const adapter = createPartnerBattleEventLogConsumerAdapter({
+    readReplay: () => { throw new Error('source unavailable'); },
+    consumeProjection: () => { calls += 1; }
+  });
+
+  assert.deepEqual(adapter(), { ok: false, consumed: false, reason: 'REPLAY_READ_FAILED' });
+  assert.equal(calls, 0);
+});
+
+test('consumer adapter fails closed when downstream consumer throws without exposing replay payload', () => {
+  let captured = null;
+  const adapter = createPartnerBattleEventLogConsumerAdapter({
+    readReplay: () => replay([{ sequence: 1, kind: 'match_ended', publicData: { winnerIds: ['secret-user'], round: 6, mode: '2v2' } }]),
+    consumeProjection: (projection) => {
+      captured = projection;
+      throw new Error('downstream unavailable');
+    }
+  });
+
+  const result = adapter();
+  assert.deepEqual(result, { ok: false, consumed: false, reason: 'PARTNER_CONSUMER_FAILED' });
+  assert.equal(JSON.stringify(result).includes('secret-user'), false);
+  assert.equal(JSON.stringify(captured).includes('secret-user'), false);
+});
+
+test('consumer adapter requires explicit read and consumer functions', () => {
+  assert.throws(() => createPartnerBattleEventLogConsumerAdapter(), /readReplay must be a function/);
+  assert.throws(
+    () => createPartnerBattleEventLogConsumerAdapter({ readReplay: () => replay([]) }),
+    /consumeProjection must be a function/
+  );
 });

@@ -124,7 +124,9 @@ jobs:
               browser/ui-state-feedback-core.mjs|\
               tests/ui-state-feedback-core.test.mjs|\
               browser/ui-state-feedback-ready-plan-adapter.mjs|\
-              tests/ui-state-feedback-ready-plan-adapter.test.mjs)
+              tests/ui-state-feedback-ready-plan-adapter.test.mjs|\
+              browser/shop-transaction-presentation-adapter.mjs|\
+              tests/shop-transaction-presentation-adapter.test.mjs)
                 ui_feedback=true
                 ;;
               browser/deck-save-ack-core.mjs|\
@@ -288,7 +290,7 @@ jobs:
 
       - name: Run UI state feedback core tests
         if: steps.classify.outputs.ui_feedback == 'true'
-        run: node --test tests/ui-state-feedback-core.test.mjs tests/ui-state-feedback-ready-plan-adapter.test.mjs
+        run: node --test tests/ui-state-feedback-core.test.mjs tests/ui-state-feedback-ready-plan-adapter.test.mjs tests/shop-transaction-presentation-adapter.test.mjs
 
       - name: Run Deck save ACK core tests
         if: steps.classify.outputs.deck_ack == 'true'

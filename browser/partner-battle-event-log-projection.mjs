@@ -171,6 +171,43 @@ export function projectPartnerBattleEventLog(replayRead) {
   });
 }
 
+export function createPartnerBattleEventLogConsumerAdapter({
+  readReplay,
+  consumeProjection
+} = {}) {
+  if (typeof readReplay !== 'function') throw new TypeError('readReplay must be a function');
+  if (typeof consumeProjection !== 'function') throw new TypeError('consumeProjection must be a function');
+
+  return function consumePartnerBattleEventLog() {
+    let replayRead;
+    try {
+      replayRead = readReplay();
+    } catch {
+      return deepFreeze({ ok: false, consumed: false, reason: 'REPLAY_READ_FAILED' });
+    }
+
+    const projection = projectPartnerBattleEventLog(replayRead);
+    if (!projection.ok) {
+      return deepFreeze({ ok: false, consumed: false, reason: projection.reason });
+    }
+
+    try {
+      consumeProjection(projection);
+    } catch {
+      return deepFreeze({ ok: false, consumed: false, reason: 'PARTNER_CONSUMER_FAILED' });
+    }
+
+    return deepFreeze({
+      ok: true,
+      consumed: true,
+      schema: projection.schema,
+      matchId: projection.matchId,
+      versions: projection.versions,
+      eventCount: projection.eventCount
+    });
+  };
+}
+
 export const PARTNER_BATTLE_EVENT_PROJECTION = Object.freeze({
   schema: PROJECTION_SCHEMA,
   sourceSchema: REPLAY_SCHEMA,

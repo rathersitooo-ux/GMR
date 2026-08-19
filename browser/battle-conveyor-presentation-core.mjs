@@ -1,5 +1,6 @@
 const SCHEMA = 'gameroad.battle-conveyor-presentation.v2';
 const BATTLE_START_SCHEMA = 'gameroad.battle-start-handoff.v1';
+const BATTLE_START_LIVE_SCHEMA = 'gameroad.battle-start-live-handoff.v1';
 
 const EVENT_KINDS = Object.freeze([
   'partner_cutin', 'reveal', 'attack', 'ability', 'compare4', 'finisher', 'settle'
@@ -38,6 +39,10 @@ function str(value, label) {
 }
 function nonNegativeMs(value, label) {
   if (!Number.isFinite(value) || value < 0) throw new TypeError(`${label}_INVALID`);
+  return value;
+}
+function positiveMs(value, label) {
+  if (!Number.isFinite(value) || value <= 0) throw new TypeError(`${label}_INVALID`);
   return value;
 }
 function normalizeAcceptedEvent(raw) {
@@ -166,7 +171,6 @@ export function planBattleConveyor(events, { reducedMotion = false, lowPerf = fa
       publicData: clone(data)
     }));
 
-    // The next event may start before the previous recovery finishes. This is the conveyor pre-roll.
     cursor = isAction ? handoffAt : recoveryEnd;
     stage = nextStage;
   }
@@ -185,8 +189,8 @@ export function planBattleStartHandoff({
 } = {}) {
   const prewarmStart = nonNegativeMs(prewarmStartMs, 'PREWARM_START_MS');
   const readyBarrier = nonNegativeMs(readyBarrierMs, 'READY_BARRIER_MS');
-  const titleDuration = nonNegativeMs(titleDurationMs, 'TITLE_DURATION_MS');
-  const entryDuration = nonNegativeMs(entryDurationMs, 'ENTRY_DURATION_MS');
+  const titleDuration = positiveMs(titleDurationMs, 'TITLE_DURATION_MS');
+  const entryDuration = positiveMs(entryDurationMs, 'ENTRY_DURATION_MS');
   const movieReadyAt = nonNegativeMs(movieReadyAtMs, 'MOVIE_READY_AT_MS');
   if (prewarmStart > readyBarrier) throw new TypeError('PREWARM_AFTER_READY_BARRIER');
 
@@ -203,38 +207,12 @@ export function planBattleStartHandoff({
     gameplayAuthority: false,
     gameStateWrite: false,
     loadingBlocksGameplay: false,
-    preload: {
-      start: prewarmStart,
-      readyBarrier,
-      movieReadyAt,
-      mayRunDuringBoardChain: true
-    },
+    preload: { start: prewarmStart, readyBarrier, movieReadyAt, mayRunDuringBoardChain: true },
     sequence: [
-      {
-        kind: 'BATTLE_START_TITLE',
-        headlineKey: 'BATTLE_START',
-        layoutIntent: 'dominant_fullscreen_headline',
-        start: titleStart,
-        end: titleEnd
-      },
-      {
-        kind: 'BATTLE_START_ENTRY',
-        layoutIntent: 'seamless_entry_animation',
-        start: entryStart,
-        end: entryEnd
-      },
-      ...(bridgeWaitMs > 0 ? [{
-        kind: 'MOVIE_READY_BRIDGE',
-        layoutIntent: 'continuity_filler_only',
-        start: entryEnd,
-        end: handoffAt
-      }] : []),
-      {
-        kind: 'BATTLE_MOVIE_HANDOFF',
-        layoutIntent: 'handoff_point',
-        start: handoffAt,
-        end: handoffAt
-      }
+      { kind: 'BATTLE_START_TITLE', headlineKey: 'BATTLE_START', layoutIntent: 'dominant_fullscreen_headline', start: titleStart, end: titleEnd },
+      { kind: 'BATTLE_START_ENTRY', layoutIntent: 'seamless_entry_animation', start: entryStart, end: entryEnd },
+      ...(bridgeWaitMs > 0 ? [{ kind: 'MOVIE_READY_BRIDGE', layoutIntent: 'continuity_filler_only', start: entryEnd, end: handoffAt }] : []),
+      { kind: 'BATTLE_MOVIE_HANDOFF', layoutIntent: 'handoff_point', start: handoffAt, end: handoffAt }
     ],
     handoffAt,
     bridgeWaitMs,
@@ -256,29 +234,102 @@ export function auditBattleStartHandoff(plan) {
   const handoff = plan.sequence.find(x => x.kind === 'BATTLE_MOVIE_HANDOFF');
   if (!title || !entry || !handoff) defects.push('REQUIRED_SEGMENT_MISSING');
   if (title && title.start !== plan.preload.readyBarrier) defects.push('TITLE_NOT_AT_READY_BARRIER');
+  if (title && title.end <= title.start) defects.push('TITLE_NONPOSITIVE');
   if (title && entry && entry.start !== title.end) defects.push('TITLE_ENTRY_GAP');
+  if (entry && entry.end <= entry.start) defects.push('ENTRY_NONPOSITIVE');
   if (entry && handoff && handoff.start < entry.end) defects.push('HANDOFF_BEFORE_ENTRY_END');
   if (handoff && handoff.start < plan.preload.movieReadyAt) defects.push('HANDOFF_BEFORE_MOVIE_READY');
   if (bridge) {
     if (!entry || bridge.start !== entry.end || bridge.end !== handoff.start) defects.push('BRIDGE_GAP');
     if (bridge.end <= bridge.start) defects.push('BRIDGE_NONPOSITIVE');
-  } else if (entry && handoff && handoff.start !== entry.end) {
-    defects.push('UNDECLARED_WAIT_GAP');
-  }
+  } else if (entry && handoff && handoff.start !== entry.end) defects.push('UNDECLARED_WAIT_GAP');
+  return freeze({ ok: defects.length === 0, reason: defects.length ? 'DEFECTS' : 'OK', defects, bridgeWaitMs: plan.bridgeWaitMs, handoffAt: plan.handoffAt });
+}
+
+function phaseAt(state, nowMs) {
+  if (['HANDOFF','FALLBACK_REQUIRED','CANCELLED'].includes(state.phase)) return state.phase;
+  if (nowMs < state.timing.readyBarrier) return 'PREWARM';
+  if (nowMs < state.timing.titleEnd) return 'TITLE';
+  if (nowMs < state.timing.entryEnd) return 'ENTRY';
+  if (state.movieReady === true) return 'HANDOFF';
+  if (nowMs >= state.timing.fallbackAt) return 'FALLBACK_REQUIRED';
+  return 'BRIDGE';
+}
+
+export function createBattleStartLiveHandoff({ generationId, prewarmStartMs, readyBarrierMs, titleDurationMs, entryDurationMs, maxBridgeMs, reducedMotion = false, lowPerf = false } = {}) {
+  const generation = str(generationId, 'GENERATION_ID');
+  const prewarmStart = nonNegativeMs(prewarmStartMs, 'PREWARM_START_MS');
+  const readyBarrier = nonNegativeMs(readyBarrierMs, 'READY_BARRIER_MS');
+  const titleDuration = positiveMs(titleDurationMs, 'TITLE_DURATION_MS');
+  const entryDuration = positiveMs(entryDurationMs, 'ENTRY_DURATION_MS');
+  const maxBridge = nonNegativeMs(maxBridgeMs, 'MAX_BRIDGE_MS');
+  if (prewarmStart > readyBarrier) throw new TypeError('PREWARM_AFTER_READY_BARRIER');
+  const titleEnd = readyBarrier + titleDuration;
+  const entryEnd = titleEnd + entryDuration;
   return freeze({
-    ok: defects.length === 0,
-    reason: defects.length ? 'DEFECTS' : 'OK',
-    defects,
-    bridgeWaitMs: plan.bridgeWaitMs,
-    handoffAt: plan.handoffAt
+    schema: BATTLE_START_LIVE_SCHEMA,
+    generationId: generation,
+    presentationOnly: true,
+    gameplayAuthority: false,
+    gameStateWrite: false,
+    loadingBlocksGameplay: false,
+    phase: 'PREWARM',
+    movieReady: false,
+    nowMs: prewarmStart,
+    timing: { prewarmStart, readyBarrier, titleEnd, entryEnd, fallbackAt: entryEnd + maxBridge },
+    lastEventDisposition: 'CREATED',
+    reducedMotion: reducedMotion === true,
+    lowPerf: lowPerf === true,
+    timingAuthority: 'caller_supplied_candidate_not_formal'
   });
+}
+
+export function reduceBattleStartLiveHandoff(state, rawEvent) {
+  if (!state || state.schema !== BATTLE_START_LIVE_SCHEMA) throw new TypeError('LIVE_HANDOFF_STATE_INVALID');
+  if (!rawEvent || typeof rawEvent !== 'object' || Array.isArray(rawEvent)) throw new TypeError('LIVE_HANDOFF_EVENT_REQUIRED');
+  const eventGeneration = str(rawEvent.generationId, 'GENERATION_ID');
+  if (eventGeneration !== state.generationId) return freeze({ ...clone(state), lastEventDisposition: 'IGNORED_STALE_GENERATION' });
+  if (['HANDOFF','FALLBACK_REQUIRED','CANCELLED'].includes(state.phase)) return freeze({ ...clone(state), lastEventDisposition: 'IGNORED_TERMINAL' });
+  if (rawEvent.type === 'CANCEL') return freeze({ ...clone(state), phase: 'CANCELLED', lastEventDisposition: 'CANCELLED' });
+  if (rawEvent.type === 'MOVIE_READY') {
+    if (state.movieReady === true) return freeze({ ...clone(state), lastEventDisposition: 'IGNORED_DUPLICATE_READY' });
+    const next = clone(state);
+    next.movieReady = true;
+    next.phase = phaseAt(next, next.nowMs);
+    next.lastEventDisposition = next.phase === 'HANDOFF' ? 'READY_AND_HANDOFF' : 'READY_ACCEPTED';
+    return freeze(next);
+  }
+  if (rawEvent.type === 'ADVANCE') {
+    const nowMs = nonNegativeMs(rawEvent.nowMs, 'NOW_MS');
+    if (nowMs < state.nowMs) return freeze({ ...clone(state), lastEventDisposition: 'IGNORED_CLOCK_REWIND' });
+    const next = clone(state);
+    next.nowMs = nowMs;
+    next.phase = phaseAt(next, nowMs);
+    next.lastEventDisposition = next.phase === 'HANDOFF' ? 'HANDOFF_READY' : next.phase === 'FALLBACK_REQUIRED' ? 'FALLBACK_REQUIRED' : 'ADVANCED';
+    return freeze(next);
+  }
+  throw new TypeError(`UNSUPPORTED_LIVE_HANDOFF_EVENT:${rawEvent.type}`);
+}
+
+export function auditBattleStartLiveHandoff(state) {
+  if (!state || state.schema !== BATTLE_START_LIVE_SCHEMA) throw new TypeError('LIVE_HANDOFF_STATE_INVALID');
+  const defects = [];
+  if (state.presentationOnly !== true || state.gameplayAuthority !== false || state.gameStateWrite !== false) defects.push('AUTHORITY');
+  if (state.loadingBlocksGameplay !== false) defects.push('LOADING_BLOCKS_GAMEPLAY');
+  if (!state.generationId) defects.push('GENERATION_ID');
+  if (state.timing.prewarmStart > state.timing.readyBarrier) defects.push('PREWARM_ORDER');
+  if (state.timing.titleEnd <= state.timing.readyBarrier) defects.push('TITLE_NONPOSITIVE');
+  if (state.timing.entryEnd <= state.timing.titleEnd) defects.push('ENTRY_NONPOSITIVE');
+  if (state.timing.fallbackAt < state.timing.entryEnd) defects.push('FALLBACK_BEFORE_ENTRY_END');
+  if (state.phase === 'HANDOFF' && state.movieReady !== true) defects.push('HANDOFF_WITHOUT_READY');
+  if (state.phase === 'HANDOFF' && state.nowMs < state.timing.entryEnd) defects.push('HANDOFF_BEFORE_ENTRY_END');
+  if (state.phase === 'FALLBACK_REQUIRED' && state.nowMs < state.timing.fallbackAt) defects.push('EARLY_FALLBACK');
+  return freeze({ ok: defects.length === 0, reason: defects.length ? 'DEFECTS' : 'OK', defects });
 }
 
 export function auditMotionContinuity(timeline) {
   if (!timeline || timeline.schema !== SCHEMA || timeline.presentationOnly !== true) throw new TypeError('TIMELINE_INVALID');
-  if (!timeline.ambientTrack || timeline.ambientTrack.start !== 0 || timeline.ambientTrack.end < timeline.timelineEnd) {
-    return freeze({ ok: false, reason: 'AMBIENT_TRACK_GAP' });
-  }
+  if (!timeline.ambientTrack || timeline.ambientTrack.start !== 0 || timeline.ambientTrack.end < timeline.timelineEnd) return freeze({ ok: false, reason: 'AMBIENT_TRACK_GAP' });
   const defects = [];
   let deadGapMs = 0;
   let handoffOverlapMs = 0;
@@ -300,20 +351,13 @@ export function auditMotionContinuity(timeline) {
   }
   const ambientSpan = Math.max(0, Math.min(timeline.timelineEnd, timeline.ambientTrack.end) - Math.max(0, timeline.ambientTrack.start));
   const declaredAmbientCoverage = timeline.timelineEnd === 0 ? 1 : ambientSpan / timeline.timelineEnd;
-  return freeze({
-    ok: defects.length === 0,
-    reason: defects.length ? 'DEFECTS' : 'OK',
-    defects,
-    declaredAmbientCoverage,
-    deadGapMs,
-    handoffOverlapMs,
-    handoffPairs
-  });
+  return freeze({ ok: defects.length === 0, reason: defects.length ? 'DEFECTS' : 'OK', defects, declaredAmbientCoverage, deadGapMs, handoffOverlapMs, handoffPairs });
 }
 
 export const BATTLE_CONVEYOR_PRESENTATION_CORE = freeze({
   schema: SCHEMA,
   battleStartSchema: BATTLE_START_SCHEMA,
+  battleStartLiveSchema: BATTLE_START_LIVE_SCHEMA,
   eventKinds: EVENT_KINDS,
   transitions: TRANSITIONS,
   emphasis: EMPHASIS

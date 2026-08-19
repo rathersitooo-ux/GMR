@@ -1,8 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  HATE1000_PRESENTATION_MOTION_CORE,
   HATE_PEER_PRESENCE_CORE,
+  applyHate1000PresentationEvent,
   applyHatePeerPresenceEvent,
+  createHate1000PresentationSession,
   createHatePeerPresenceState,
   projectHateHumanWaitSourceEligibility
 } from '../browser/hate-peer-presence-core.mjs';
@@ -166,6 +169,107 @@ test('technical presence outputs contain no timer, outcome, takeover, reward, or
   for (const forbidden of [
     'hateTime', 'remainingTime', 'quick', 'grace', 'winner', 'forfeit',
     'temporary_partner', 'permanent_partner', 'reward', 'rating', 'save', 'cardId'
+  ]) {
+    assert.equal(encoded.toLowerCase().includes(forbidden.toLowerCase()), false, forbidden);
+  }
+});
+
+function hate1000Event(overrides = {}) {
+  return {
+    sessionId: 'presentation-session',
+    eventId: 'hate1000-event-1',
+    kind: 'hate1000_explosion',
+    authorized: true,
+    ...overrides
+  };
+}
+
+test('HATE1000 motion plan stays inside the R7 finite timing window and primary-read budget', () => {
+  const state = createHate1000PresentationSession({ sessionId: 'presentation-session' });
+  const result = applyHate1000PresentationEvent(state, hate1000Event());
+  assert.equal(result.accepted, true);
+  assert.equal(result.duplicate, false);
+  assert.equal(result.plan.mode, 'motion');
+  assert.equal(result.plan.presentationOnly, true);
+  assert.equal(result.plan.oneShot, true);
+  assert.equal(result.plan.layoutAuthority, false);
+  assert.equal(result.plan.assetAuthority, 'unbound_candidate');
+
+  const timing = result.plan.motion;
+  assert.equal(timing.durationMs >= 420 && timing.durationMs <= 520, true);
+  assert.equal(timing.primaryReadDeadlineMs <= timing.durationMs * 0.25, true);
+  assert.deepEqual(timing.markers, {
+    onsetMs: 0,
+    peakMs: 60,
+    ringBurstEndMs: 120,
+    decayEndMs: 260,
+    tailEndMs: 480
+  });
+  assert.equal(timing.markers.onsetMs <= timing.markers.peakMs, true);
+  assert.equal(timing.markers.peakMs <= timing.markers.ringBurstEndMs, true);
+  assert.equal(timing.markers.ringBurstEndMs <= timing.markers.decayEndMs, true);
+  assert.equal(timing.markers.decayEndMs <= timing.markers.tailEndMs, true);
+  assert.equal(timing.markers.tailEndMs, timing.durationMs);
+  assert.equal(timing.singlePeak, true);
+  assert.equal(timing.monotonicAfterPeak, true);
+});
+
+test('reduced-motion, low-performance, and disabled-animation modes preserve a static meaning-bearing plan', () => {
+  for (const preferences of [
+    { reducedMotion: true },
+    { lowPerf: true },
+    { animationEnabled: false }
+  ]) {
+    const state = createHate1000PresentationSession({ sessionId: 'presentation-session' });
+    const result = applyHate1000PresentationEvent(state, hate1000Event(), preferences);
+    assert.equal(result.accepted, true);
+    assert.equal(result.plan.mode, 'static');
+    assert.equal(result.plan.motion, null);
+    assert.equal(result.plan.static.retainMeaning, true);
+  }
+});
+
+test('duplicate HATE1000 presentation events are idempotent and never replay', () => {
+  const state = createHate1000PresentationSession({ sessionId: 'presentation-session' });
+  const first = applyHate1000PresentationEvent(state, hate1000Event());
+  const duplicate = applyHate1000PresentationEvent(first.state, hate1000Event());
+  assert.equal(first.accepted, true);
+  assert.equal(duplicate.accepted, true);
+  assert.equal(duplicate.duplicate, true);
+  assert.equal(duplicate.reason, 'HATE1000_DUPLICATE_EVENT');
+  assert.equal(duplicate.plan, null);
+  assert.equal(duplicate.state, first.state);
+});
+
+test('HATE1000 presentation input fails closed on malformed, mismatched, unauthorized, or wrong-kind events', () => {
+  const state = createHate1000PresentationSession({ sessionId: 'presentation-session' });
+  const cases = [
+    [{ ...hate1000Event(), extra: true }, 'HATE1000_EVENT_SHAPE_INVALID'],
+    [hate1000Event({ sessionId: 'other-session' }), 'HATE1000_SESSION_MISMATCH'],
+    [hate1000Event({ authorized: false }), 'HATE1000_NOT_AUTHORIZED'],
+    [hate1000Event({ kind: 'other' }), 'HATE1000_KIND_INVALID']
+  ];
+  for (const [candidate, expected] of cases) {
+    const result = applyHate1000PresentationEvent(state, candidate);
+    assert.equal(result.accepted, false);
+    assert.equal(result.reason, expected);
+    assert.equal(result.state, state);
+  }
+});
+
+test('HATE1000 presentation namespace remains deeply frozen and contains no gameplay authority fields', () => {
+  const state = createHate1000PresentationSession({ sessionId: 'presentation-session' });
+  const result = applyHate1000PresentationEvent(state, hate1000Event());
+  assert.equal(Object.isFrozen(HATE1000_PRESENTATION_MOTION_CORE), true);
+  assert.equal(Object.isFrozen(HATE1000_PRESENTATION_MOTION_CORE.timing), true);
+  assert.equal(Object.isFrozen(result), true);
+  assert.equal(Object.isFrozen(result.plan), true);
+  assert.equal(Object.isFrozen(result.state), true);
+
+  const encoded = JSON.stringify({ contract: HATE1000_PRESENTATION_MOTION_CORE, result });
+  for (const forbidden of [
+    'hateTime', 'remainingTime', 'quick', 'threshold', 'winner', 'reward',
+    'rating', 'save', 'cardId', 'temporary_partner', 'permanent_partner'
   ]) {
     assert.equal(encoded.toLowerCase().includes(forbidden.toLowerCase()), false, forbidden);
   }

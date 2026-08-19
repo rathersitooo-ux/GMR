@@ -168,6 +168,19 @@ jobs:
           fi
           echo "External HTTP exact-byte probe succeeded for ${PAGES_URL}/"
 
+      - name: Probe public friend-room WebSocket
+        id: ws_probe
+        shell: bash
+        env:
+          GAMEROAD_PUBLIC_WS_PROBE_URL: ${{ steps.pages.outputs.url }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${GAMEROAD_PUBLIC_WS_PROBE_URL:-}" ]]; then
+            echo "::error::Pages deployment did not expose a public URL for WebSocket probe"
+            exit 1
+          fi
+          node --test deploy/cloudflare/tests/relay-core.test.mjs
+
       - name: Report sanitized deployment outcome
         if: always()
         shell: bash
@@ -181,6 +194,7 @@ jobs:
           PAGES_OUTCOME: ${{ steps.pages.outcome }}
           READBACK_OUTCOME: ${{ steps.readback.outcome }}
           PROBE_OUTCOME: ${{ steps.probe.outcome }}
+          WS_PROBE_OUTCOME: ${{ steps.ws_probe.outcome }}
           PAGES_URL: ${{ steps.pages.outputs.url }}
         run: |
           set -euo pipefail
@@ -196,6 +210,7 @@ jobs:
           pages=${PAGES_OUTCOME}
           readback=${READBACK_OUTCOME}
           probe=${PROBE_OUTCOME}
+          ws_probe=${WS_PROBE_OUTCOME}
           url=${PAGES_URL:-}
           EOF
           gh issue comment "$EVIDENCE_ISSUE" --body-file "$RUNNER_TEMP/publichost-r12-evidence.txt"

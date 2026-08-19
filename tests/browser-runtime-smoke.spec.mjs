@@ -356,3 +356,56 @@ test('records build-linked visible Home to Shop P0 evidence', async ({ page }, t
     description: 'P0 HOME-SHOP-BRIDGE visible pointer transition with attached runtime screenshot on this exact GitHub revision.',
   });
 });
+
+test('records build-linked visible Home to Partner and Home return P0 evidence', async ({ page }, testInfo) => {
+  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
+  expect(response, 'main HTML response').not.toBeNull();
+  expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
+  await page.waitForTimeout(500);
+
+  const home = page.locator('section[data-screen="home"]');
+  await expect(home).toBeVisible();
+
+  const charactersControl = page
+    .locator('[data-go="characters"]:visible, [data-home-target="characters"]:visible, [data-root-go="characters"]:visible')
+    .first();
+  await expect(charactersControl, 'visible Home-to-Characters pointer control').toBeVisible();
+  await charactersControl.click();
+
+  const characters = page.locator('section[data-screen="characters"]');
+  await expect(characters, 'Characters target reached through visible pointer navigation').toBeVisible();
+  await characters.locator('[data-role="partner"]').click();
+
+  const candidate = characters.locator('.charCard[aria-pressed="false"]:visible').first();
+  await expect(candidate, 'real visible Partner candidate').toBeVisible();
+  const candidateName = ((await candidate.locator('.charCardCopy b').textContent()) || '').trim();
+  expect(candidateName, 'Partner candidate has visible identity').not.toBe('');
+  await candidate.click();
+
+  const selected = characters.locator('.charCard[aria-pressed="true"]:visible');
+  await expect(selected, 'Partner selection state').toHaveCount(1);
+  await expect(selected.locator('.charCardCopy b')).toHaveText(candidateName);
+  await expect(characters.locator('#charRoleLabel')).toHaveText('パートナー');
+  await expect(characters.locator('#charName')).toHaveText(candidateName);
+
+  const partnerPng = await page.screenshot({ fullPage: true, animations: 'disabled' });
+  await testInfo.attach('p0-home-partner-visible.png', {
+    body: partnerPng,
+    contentType: 'image/png',
+  });
+
+  const backControl = characters.locator('[data-back]:visible').first();
+  await expect(backControl, 'visible Characters-to-Home back control').toBeVisible();
+  await backControl.click();
+  await expect(home, 'Home visible after Partner round trip').toBeVisible();
+
+  const homeReturnPng = await page.screenshot({ fullPage: true, animations: 'disabled' });
+  await testInfo.attach('p0-home-partner-home-return.png', {
+    body: homeReturnPng,
+    contentType: 'image/png',
+  });
+  testInfo.annotations.push({
+    type: 'minor-mode-playtest-evidence',
+    description: `P0 HOME-PARTNER-BRIDGE visible pointer round trip selected Partner ${candidateName} and returned Home with both runtime screenshots attached on this exact GitHub revision.`,
+  });
+});

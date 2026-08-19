@@ -21,6 +21,7 @@ const defaultBoardFacilityCoreSource = path.join(repoRoot, 'browser/board-facili
 const defaultBoardFacilityRuntimeMountSource = path.join(repoRoot, 'browser/board-facility-runtime-mount.mjs');
 const defaultUiStateFeedbackCoreSource = path.join(repoRoot, 'browser/ui-state-feedback-core.mjs');
 const defaultUiStateFeedbackReadyPlanAdapterSource = path.join(repoRoot, 'browser/ui-state-feedback-ready-plan-adapter.mjs');
+const defaultFieldMusicPolicyCoreSource = path.join(repoRoot, 'browser/field-music-policy-core.mjs');
 const defaultDist = path.join(repoRoot, 'deploy/cloudflare/dist');
 
 function gitBlobSha1(buffer) {
@@ -55,6 +56,7 @@ export async function buildPackage({
   boardFacilityRuntimeMountSource = defaultBoardFacilityRuntimeMountSource,
   uiStateFeedbackCoreSource = defaultUiStateFeedbackCoreSource,
   uiStateFeedbackReadyPlanAdapterSource = defaultUiStateFeedbackReadyPlanAdapterSource,
+  fieldMusicPolicyCoreSource = defaultFieldMusicPolicyCoreSource,
   dist = defaultDist,
   expectedBlob = '',
   expectedCoreBlob = '',
@@ -68,6 +70,7 @@ export async function buildPackage({
   expectedBoardFacilityRuntimeMountBlob = '',
   expectedUiStateFeedbackCoreBlob = '',
   expectedUiStateFeedbackReadyPlanAdapterBlob = '',
+  expectedFieldMusicPolicyCoreBlob = '',
   sourceCommit = '',
   publishedAt = '',
 } = {}) {
@@ -83,6 +86,7 @@ export async function buildPackage({
   const boardFacilityRuntimeMountInput = await readFile(boardFacilityRuntimeMountSource);
   const uiStateFeedbackCoreInput = await readFile(uiStateFeedbackCoreSource);
   const uiStateFeedbackReadyPlanAdapterInput = await readFile(uiStateFeedbackReadyPlanAdapterSource);
+  const fieldMusicPolicyCoreInput = await readFile(fieldMusicPolicyCoreSource);
   const blob = gitBlobSha1(input);
   const coreBlob = gitBlobSha1(coreInput);
   const presenceCoreBlob = gitBlobSha1(presenceCoreInput);
@@ -95,6 +99,7 @@ export async function buildPackage({
   const boardFacilityRuntimeMountBlob = gitBlobSha1(boardFacilityRuntimeMountInput);
   const uiStateFeedbackCoreBlob = gitBlobSha1(uiStateFeedbackCoreInput);
   const uiStateFeedbackReadyPlanAdapterBlob = gitBlobSha1(uiStateFeedbackReadyPlanAdapterInput);
+  const fieldMusicPolicyCoreBlob = gitBlobSha1(fieldMusicPolicyCoreInput);
   if (expectedBlob && blob !== expectedBlob) {
     throw new Error(`Browser blob mismatch: expected=${expectedBlob} actual=${blob}`);
   }
@@ -134,6 +139,11 @@ export async function buildPackage({
   ) {
     throw new Error(
       `UI state feedback ready-plan adapter blob mismatch: expected=${expectedUiStateFeedbackReadyPlanAdapterBlob} actual=${uiStateFeedbackReadyPlanAdapterBlob}`,
+    );
+  }
+  if (expectedFieldMusicPolicyCoreBlob && fieldMusicPolicyCoreBlob !== expectedFieldMusicPolicyCoreBlob) {
+    throw new Error(
+      `Field music policy core blob mismatch: expected=${expectedFieldMusicPolicyCoreBlob} actual=${fieldMusicPolicyCoreBlob}`,
     );
   }
 
@@ -223,6 +233,13 @@ export async function buildPackage({
   const uiStateFeedbackReadyPlanAdapterRoundTrip = await readFile(uiStateFeedbackReadyPlanAdapterOutputPath);
   if (!uiStateFeedbackReadyPlanAdapterInput.equals(uiStateFeedbackReadyPlanAdapterRoundTrip)) {
     throw new Error('dist/ui-state-feedback-ready-plan-adapter.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const fieldMusicPolicyCoreOutputPath = path.join(dist, 'field-music-policy-core.mjs');
+  await writeFile(fieldMusicPolicyCoreOutputPath, fieldMusicPolicyCoreInput);
+  const fieldMusicPolicyCoreRoundTrip = await readFile(fieldMusicPolicyCoreOutputPath);
+  if (!fieldMusicPolicyCoreInput.equals(fieldMusicPolicyCoreRoundTrip)) {
+    throw new Error('dist/field-music-policy-core.mjs is not byte-identical to Browser dependency source');
   }
 
   const versionManifestOutputPath = path.join(dist, VERSION_MANIFEST_FILENAME);
@@ -324,6 +341,12 @@ export async function buildPackage({
         uiStateFeedbackReadyPlanAdapterInput,
         uiStateFeedbackReadyPlanAdapterBlob,
       ),
+      field_music_policy_core: provenance(
+        'browser/field-music-policy-core.mjs',
+        'field-music-policy-core.mjs',
+        fieldMusicPolicyCoreInput,
+        fieldMusicPolicyCoreBlob,
+      ),
       browser_version_manifest: {
         source: 'build-package-release-identity',
         output: VERSION_MANIFEST_FILENAME,
@@ -352,6 +375,7 @@ function parseArgs(argv) {
     else if (a === '--board-facility-runtime-mount-source') out.boardFacilityRuntimeMountSource = path.resolve(argv[++i]);
     else if (a === '--ui-state-feedback-core-source') out.uiStateFeedbackCoreSource = path.resolve(argv[++i]);
     else if (a === '--ui-state-feedback-ready-plan-adapter-source') out.uiStateFeedbackReadyPlanAdapterSource = path.resolve(argv[++i]);
+    else if (a === '--field-music-policy-core-source') out.fieldMusicPolicyCoreSource = path.resolve(argv[++i]);
     else if (a === '--dist') out.dist = path.resolve(argv[++i]);
     else if (a === '--expected-blob') out.expectedBlob = argv[++i] || '';
     else if (a === '--expected-core-blob') out.expectedCoreBlob = argv[++i] || '';
@@ -365,6 +389,7 @@ function parseArgs(argv) {
     else if (a === '--expected-board-facility-runtime-mount-blob') out.expectedBoardFacilityRuntimeMountBlob = argv[++i] || '';
     else if (a === '--expected-ui-state-feedback-core-blob') out.expectedUiStateFeedbackCoreBlob = argv[++i] || '';
     else if (a === '--expected-ui-state-feedback-ready-plan-adapter-blob') out.expectedUiStateFeedbackReadyPlanAdapterBlob = argv[++i] || '';
+    else if (a === '--expected-field-music-policy-core-blob') out.expectedFieldMusicPolicyCoreBlob = argv[++i] || '';
     else if (a === '--source-commit') out.sourceCommit = argv[++i] || '';
     else if (a === '--published-at') out.publishedAt = argv[++i] || '';
     else throw new Error(`Unknown argument: ${a}`);

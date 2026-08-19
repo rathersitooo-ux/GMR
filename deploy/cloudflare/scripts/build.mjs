@@ -16,6 +16,7 @@ const defaultNavigationCoreSource = path.join(repoRoot, 'browser/screen-navigati
 const defaultReplayAdapterSource = path.join(repoRoot, 'browser/battle-replay-live-adapter.mjs');
 const defaultReplayCoreSource = path.join(repoRoot, 'browser/battle-replay-core.mjs');
 const defaultCardPresentationCoreSource = path.join(repoRoot, 'browser/card-presentation-core.mjs');
+const defaultBattleConveyorCoreSource = path.join(repoRoot, 'browser/battle-conveyor-presentation-core.mjs');
 const defaultBoardFacilityClassicSource = path.join(repoRoot, 'browser/board-facility-state-core.classic.js');
 const defaultBoardFacilityCoreSource = path.join(repoRoot, 'browser/board-facility-state-core.mjs');
 const defaultBoardFacilityRuntimeMountSource = path.join(repoRoot, 'browser/board-facility-runtime-mount.mjs');
@@ -51,6 +52,7 @@ export async function buildPackage({
   replayAdapterSource = defaultReplayAdapterSource,
   replayCoreSource = defaultReplayCoreSource,
   cardPresentationCoreSource = defaultCardPresentationCoreSource,
+  battleConveyorCoreSource = defaultBattleConveyorCoreSource,
   boardFacilityClassicSource = defaultBoardFacilityClassicSource,
   boardFacilityCoreSource = defaultBoardFacilityCoreSource,
   boardFacilityRuntimeMountSource = defaultBoardFacilityRuntimeMountSource,
@@ -65,6 +67,7 @@ export async function buildPackage({
   expectedReplayAdapterBlob = '',
   expectedReplayCoreBlob = '',
   expectedCardPresentationCoreBlob = '',
+  expectedBattleConveyorCoreBlob = '',
   expectedBoardFacilityClassicBlob = '',
   expectedBoardFacilityCoreBlob = '',
   expectedBoardFacilityRuntimeMountBlob = '',
@@ -81,6 +84,7 @@ export async function buildPackage({
   const replayAdapterInput = await readFile(replayAdapterSource);
   const replayCoreInput = await readFile(replayCoreSource);
   const cardPresentationCoreInput = await readFile(cardPresentationCoreSource);
+  const battleConveyorCoreInput = await readFile(battleConveyorCoreSource);
   const boardFacilityClassicInput = await readFile(boardFacilityClassicSource);
   const boardFacilityCoreInput = await readFile(boardFacilityCoreSource);
   const boardFacilityRuntimeMountInput = await readFile(boardFacilityRuntimeMountSource);
@@ -94,6 +98,7 @@ export async function buildPackage({
   const replayAdapterBlob = gitBlobSha1(replayAdapterInput);
   const replayCoreBlob = gitBlobSha1(replayCoreInput);
   const cardPresentationCoreBlob = gitBlobSha1(cardPresentationCoreInput);
+  const battleConveyorCoreBlob = gitBlobSha1(battleConveyorCoreInput);
   const boardFacilityClassicBlob = gitBlobSha1(boardFacilityClassicInput);
   const boardFacilityCoreBlob = gitBlobSha1(boardFacilityCoreInput);
   const boardFacilityRuntimeMountBlob = gitBlobSha1(boardFacilityRuntimeMountInput);
@@ -120,6 +125,9 @@ export async function buildPackage({
   }
   if (expectedCardPresentationCoreBlob && cardPresentationCoreBlob !== expectedCardPresentationCoreBlob) {
     throw new Error(`Card presentation core blob mismatch: expected=${expectedCardPresentationCoreBlob} actual=${cardPresentationCoreBlob}`);
+  }
+  if (expectedBattleConveyorCoreBlob && battleConveyorCoreBlob !== expectedBattleConveyorCoreBlob) {
+    throw new Error(`Battle conveyor presentation core blob mismatch: expected=${expectedBattleConveyorCoreBlob} actual=${battleConveyorCoreBlob}`);
   }
   if (expectedBoardFacilityClassicBlob && boardFacilityClassicBlob !== expectedBoardFacilityClassicBlob) {
     throw new Error(`Board facility classic bridge blob mismatch: expected=${expectedBoardFacilityClassicBlob} actual=${boardFacilityClassicBlob}`);
@@ -198,6 +206,13 @@ export async function buildPackage({
   const cardPresentationCoreRoundTrip = await readFile(cardPresentationCoreOutputPath);
   if (!cardPresentationCoreInput.equals(cardPresentationCoreRoundTrip)) {
     throw new Error('dist/card-presentation-core.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const battleConveyorCoreOutputPath = path.join(dist, 'battle-conveyor-presentation-core.mjs');
+  await writeFile(battleConveyorCoreOutputPath, battleConveyorCoreInput);
+  const battleConveyorCoreRoundTrip = await readFile(battleConveyorCoreOutputPath);
+  if (!battleConveyorCoreInput.equals(battleConveyorCoreRoundTrip)) {
+    throw new Error('dist/battle-conveyor-presentation-core.mjs is not byte-identical to Browser dependency source');
   }
 
   const boardFacilityClassicOutputPath = path.join(dist, 'board-facility-state-core.classic.js');
@@ -311,6 +326,12 @@ export async function buildPackage({
         cardPresentationCoreInput,
         cardPresentationCoreBlob,
       ),
+      battle_conveyor_presentation_core: provenance(
+        'browser/battle-conveyor-presentation-core.mjs',
+        'battle-conveyor-presentation-core.mjs',
+        battleConveyorCoreInput,
+        battleConveyorCoreBlob,
+      ),
       board_facility_classic: provenance(
         'browser/board-facility-state-core.classic.js',
         'board-facility-state-core.classic.js',
@@ -370,6 +391,7 @@ function parseArgs(argv) {
     else if (a === '--replay-adapter-source') out.replayAdapterSource = path.resolve(argv[++i]);
     else if (a === '--replay-core-source') out.replayCoreSource = path.resolve(argv[++i]);
     else if (a === '--card-presentation-core-source') out.cardPresentationCoreSource = path.resolve(argv[++i]);
+    else if (a === '--battle-conveyor-core-source') out.battleConveyorCoreSource = path.resolve(argv[++i]);
     else if (a === '--board-facility-classic-source') out.boardFacilityClassicSource = path.resolve(argv[++i]);
     else if (a === '--board-facility-core-source') out.boardFacilityCoreSource = path.resolve(argv[++i]);
     else if (a === '--board-facility-runtime-mount-source') out.boardFacilityRuntimeMountSource = path.resolve(argv[++i]);
@@ -384,6 +406,7 @@ function parseArgs(argv) {
     else if (a === '--expected-replay-adapter-blob') out.expectedReplayAdapterBlob = argv[++i] || '';
     else if (a === '--expected-replay-core-blob') out.expectedReplayCoreBlob = argv[++i] || '';
     else if (a === '--expected-card-presentation-core-blob') out.expectedCardPresentationCoreBlob = argv[++i] || '';
+    else if (a === '--expected-battle-conveyor-core-blob') out.expectedBattleConveyorCoreBlob = argv[++i] || '';
     else if (a === '--expected-board-facility-classic-blob') out.expectedBoardFacilityClassicBlob = argv[++i] || '';
     else if (a === '--expected-board-facility-core-blob') out.expectedBoardFacilityCoreBlob = argv[++i] || '';
     else if (a === '--expected-board-facility-runtime-mount-blob') out.expectedBoardFacilityRuntimeMountBlob = argv[++i] || '';

@@ -2,7 +2,7 @@ name: PARTNER-GOODMOVE R8 orphan production mount executor
 
 on:
   pull_request:
-    types: [opened, reopened]
+    types: [opened, reopened, synchronize]
     branches: [main]
 
 permissions:
@@ -24,7 +24,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "9065041e2f67e264791fb57d12257b2dcead7104"
+          git merge-base --is-ancestor 9065041e2f67e264791fb57d12257b2dcead7104 HEAD
+          test "$(git diff --name-only 9065041e2f67e264791fb57d12257b2dcead7104...HEAD | sort | tr '\n' ' ')" = ".github/workflows/partnergood-r8-orphan-prodhtml-executor.yml "
           actual_blob="$(git hash-object browser/GAMEROAD.html)"
           test "$actual_blob" = "4485af3c1aabd7fdf2001a9e2586afbf7443ff53"
           test "$(git hash-object browser/partner-advice-runtime-mount.mjs)" = "5e82bdb28fc43f0851a5be27e0b7bade8d32ad53"

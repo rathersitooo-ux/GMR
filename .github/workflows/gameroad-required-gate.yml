@@ -243,6 +243,13 @@ jobs:
               *)
                 ;;
             esac
+
+            if [[ "${path}" == browser/* ]]; then
+              if grep -Fq "path.join(repoRoot, '${path}')" deploy/cloudflare/scripts/build.mjs || \
+                 grep -Fq "path.join(repoRoot, \"${path}\")" deploy/cloudflare/scripts/build.mjs; then
+                publichost=true
+              fi
+            fi
           done < /tmp/gameroad-changed.txt
 
           {

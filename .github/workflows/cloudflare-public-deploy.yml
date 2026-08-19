@@ -7,6 +7,7 @@ on:
     paths:
       - .github/workflows/cloudflare-public-deploy.yml
       - deploy/cloudflare/relay/wrangler.toml
+      - deploy/cloudflare/release-comms-source.json
   workflow_dispatch:
 
 permissions:
@@ -73,6 +74,57 @@ jobs:
             --expected-blob "$BROWSER_BLOB" \
             --source-commit "$GITHUB_SHA" \
             --published-at "$PUBLISHED_AT"
+          PUBLISHED_AT="$PUBLISHED_AT" node <<'NODE'
+          const fs = require('node:fs');
+          const sourcePath = 'deploy/cloudflare/release-comms-source.json';
+          const outputPath = 'deploy/cloudflare/dist/gameroad-release-comms.json';
+          const source = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
+
+          if (source.schema !== 'gameroad.release-comms.source.v1') {
+            throw new Error(`Unexpected release comms source schema: ${source.schema}`);
+          }
+          if (source.channel !== 'public') {
+            throw new Error(`Unexpected release comms channel: ${source.channel}`);
+          }
+
+          const expectedStates = {
+            calendar: 'UNPUBLISHED',
+            roadmap: 'UNPUBLISHED',
+            release_notes: 'UNPUBLISHED',
+            known_issues: 'NOT_ASSERTED',
+            service_status: 'NOT_ASSERTED',
+          };
+          for (const [key, expectedState] of Object.entries(expectedStates)) {
+            const section = source[key];
+            if (!section || section.state !== expectedState || !Array.isArray(section.items)) {
+              throw new Error(`Release comms ${key} must be ${expectedState} with an items array`);
+            }
+          }
+
+          const manifest = {
+            schema: 'gameroad.release-comms.v1',
+            channel: source.channel,
+            build_id: process.env.GITHUB_SHA,
+            published_at: process.env.PUBLISHED_AT,
+            calendar: source.calendar,
+            roadmap: source.roadmap,
+            release_notes: source.release_notes,
+            known_issues: source.known_issues,
+            service_status: source.service_status,
+          };
+          fs.writeFileSync(outputPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+
+          const headersPath = 'deploy/cloudflare/dist/_headers';
+          const headers = fs.readFileSync(headersPath, 'utf8');
+          const stanza = '/gameroad-release-comms.json\n  Cache-Control: no-store\n\n';
+          if (!headers.includes('/gameroad-release-comms.json')) {
+            const marker = '\n/*\n';
+            if (!headers.includes(marker)) {
+              throw new Error('dist/_headers generic marker is missing');
+            }
+            fs.writeFileSync(headersPath, headers.replace(marker, `\n${stanza}/*\n`), 'utf8');
+          }
+          NODE
 
       - name: Deploy friend-room relay Worker and Durable Object
         id: relay
@@ -220,6 +272,82 @@ jobs:
           NODE
           echo "External version-manifest exact-byte/cache/build probe succeeded for ${PAGES_URL}/gameroad-version.json"
 
+      - name: Probe public release communications manifest
+        id: release_comms_probe
+        shell: bash
+        env:
+          PAGES_URL: ${{ steps.pages.outputs.url }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${PAGES_URL:-}" ]]; then
+            echo "::error::Pages deployment did not expose a public URL for release communications probe"
+            exit 1
+          fi
+          COMMS_BODY="$RUNNER_TEMP/gameroad-release-comms.json"
+          COMMS_HEADERS="$RUNNER_TEMP/gameroad-release-comms.headers"
+          HTTP_CODE="$(curl --fail --silent --show-error --location \
+            --header 'Accept-Encoding: identity' \
+            --retry 4 --retry-delay 2 --retry-connrefused \
+            --max-time 30 \
+            --dump-header "$COMMS_HEADERS" \
+            --output "$COMMS_BODY" \
+            --write-out '%{http_code}' \
+            "${PAGES_URL}/gameroad-release-comms.json")"
+          if [[ "$HTTP_CODE" != "200" ]]; then
+            echo "::error::Public release communications manifest returned HTTP ${HTTP_CODE}, expected 200"
+            exit 1
+          fi
+          if [[ ! -s "$COMMS_BODY" ]]; then
+            echo "::error::Public release communications manifest probe returned an empty body"
+            exit 1
+          fi
+          if ! cmp --silent deploy/cloudflare/dist/gameroad-release-comms.json "$COMMS_BODY"; then
+            echo "::error::Public release communications manifest does not match the exact deployed file"
+            exit 1
+          fi
+          if ! grep -qi '^cache-control:.*no-store' "$COMMS_HEADERS"; then
+            echo "::error::Public release communications manifest is missing Cache-Control: no-store"
+            exit 1
+          fi
+          COMMS_BODY="$COMMS_BODY" node <<'NODE'
+          const fs = require('node:fs');
+          const manifest = JSON.parse(fs.readFileSync(process.env.COMMS_BODY, 'utf8'));
+          const expected = JSON.parse(fs.readFileSync('deploy/cloudflare/dist/gameroad-release-comms.json', 'utf8'));
+          if (manifest.build_id !== process.env.GITHUB_SHA) {
+            throw new Error(`Public release communications build_id ${manifest.build_id} does not equal GITHUB_SHA ${process.env.GITHUB_SHA}`);
+          }
+          if (!Number.isFinite(Date.parse(manifest.published_at))) {
+            throw new Error(`Public release communications published_at is invalid: ${manifest.published_at}`);
+          }
+          for (const key of [
+            'schema',
+            'channel',
+            'published_at',
+            'calendar',
+            'roadmap',
+            'release_notes',
+            'known_issues',
+            'service_status',
+          ]) {
+            if (JSON.stringify(manifest[key]) !== JSON.stringify(expected[key])) {
+              throw new Error(`Public release communications ${key} does not match generated manifest`);
+            }
+          }
+          const expectedStates = {
+            calendar: 'UNPUBLISHED',
+            roadmap: 'UNPUBLISHED',
+            release_notes: 'UNPUBLISHED',
+            known_issues: 'NOT_ASSERTED',
+            service_status: 'NOT_ASSERTED',
+          };
+          for (const [key, state] of Object.entries(expectedStates)) {
+            if (manifest[key]?.state !== state || !Array.isArray(manifest[key]?.items)) {
+              throw new Error(`Public release communications ${key} is not fail-closed as ${state}`);
+            }
+          }
+          NODE
+          echo "External release-comms exact-byte/cache/build/state probe succeeded for ${PAGES_URL}/gameroad-release-comms.json"
+
       - name: Probe public friend-room WebSocket
         id: ws_probe
         shell: bash
@@ -247,6 +375,7 @@ jobs:
           READBACK_OUTCOME: ${{ steps.readback.outcome }}
           PROBE_OUTCOME: ${{ steps.probe.outcome }}
           MANIFEST_PROBE_OUTCOME: ${{ steps.manifest_probe.outcome }}
+          RELEASE_COMMS_PROBE_OUTCOME: ${{ steps.release_comms_probe.outcome }}
           WS_PROBE_OUTCOME: ${{ steps.ws_probe.outcome }}
           PAGES_URL: ${{ steps.pages.outputs.url }}
         run: |
@@ -264,6 +393,7 @@ jobs:
           readback=${READBACK_OUTCOME}
           probe=${PROBE_OUTCOME}
           manifest_probe=${MANIFEST_PROBE_OUTCOME}
+          release_comms_probe=${RELEASE_COMMS_PROBE_OUTCOME}
           ws_probe=${WS_PROBE_OUTCOME}
           url=${PAGES_URL:-}
           EOF

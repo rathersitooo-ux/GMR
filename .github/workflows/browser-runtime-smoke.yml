@@ -38,8 +38,8 @@ jobs:
       - name: Install Playwright test runner
         run: npm install --no-save --no-package-lock @playwright/test@1.62.0
 
-      - name: Install Chromium and OS dependencies
-        run: npx playwright install --with-deps chromium
+      - name: Install Chromium browser
+        run: npx playwright install chromium
 
       - name: Append Highlander reload-to-match-start regression
         shell: bash

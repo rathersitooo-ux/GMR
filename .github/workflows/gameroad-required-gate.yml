@@ -286,7 +286,6 @@ jobs:
         run: echo "tests/browser-full-interaction.spec.mjs execution is delegated to Browser Full Interaction Evidence."
 
       - name: Set up Node
-        if: steps.classify.outputs.browser == 'true' || steps.classify.outputs.dino == 'true' || steps.classify.outputs.learning == 'true' || steps.classify.outputs.advice == 'true' || steps.classify.outputs.replay == 'true' || steps.classify.outputs.ping == 'true' || steps.classify.outputs.result == 'true' || steps.classify.outputs.gacha == 'true' || steps.classify.outputs.pursuit == 'true' || steps.classify.outputs.ui_feedback == 'true' || steps.classify.outputs.deck_ack == 'true' || steps.classify.outputs.self_deck == 'true' || steps.classify.outputs.ai_optimal == 'true' || steps.classify.outputs.partner_vtuber == 'true' || steps.classify.outputs.partner_humanlike == 'true' || steps.classify.outputs.observability == 'true' || steps.classify.outputs.card_presentation == 'true' || steps.classify.outputs.battle2v2_reconnect == 'true' || steps.classify.outputs.hate_presence == 'true' || steps.classify.outputs.board_facility == 'true' || steps.classify.outputs.auto_rank == 'true' || steps.classify.outputs.version_manifest == 'true' || steps.classify.outputs.publichost == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -308,6 +307,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+
+      - name: Run Public package provenance invariant
+        run: node --test deploy/cloudflare/tests/build.test.mjs
 
       - name: Run Browser static check
         if: steps.classify.outputs.browser == 'true'
@@ -413,7 +415,7 @@ jobs:
 
       - name: Run PublicHost Cloudflare deploy-prep tests
         if: steps.classify.outputs.publichost == 'true'
-        run: node --test tests/field-music-policy-core.test.mjs deploy/cloudflare/tests/relay-core.test.mjs deploy/cloudflare/tests/build.test.mjs
+        run: node --test tests/field-music-policy-core.test.mjs deploy/cloudflare/tests/relay-core.test.mjs
 
       - name: Run PublicHost Cloudflare syntax checks
         if: steps.classify.outputs.publichost == 'true'

@@ -193,6 +193,8 @@ jobs:
               roblox/GAMEROAD.rbxlx)
                 roblox=true
                 ;;
+              browser/field-music-policy-core.mjs|\
+              tests/field-music-policy-core.test.mjs|\
               deploy/cloudflare/.gitignore|\
               deploy/cloudflare/README.md|\
               deploy/cloudflare/functions/ws.js|\
@@ -352,7 +354,7 @@ jobs:
 
       - name: Run PublicHost Cloudflare deploy-prep tests
         if: steps.classify.outputs.publichost == 'true'
-        run: node --test deploy/cloudflare/tests/relay-core.test.mjs deploy/cloudflare/tests/build.test.mjs
+        run: node --test tests/field-music-policy-core.test.mjs deploy/cloudflare/tests/relay-core.test.mjs deploy/cloudflare/tests/build.test.mjs
 
       - name: Run PublicHost Cloudflare syntax checks
         if: steps.classify.outputs.publichost == 'true'

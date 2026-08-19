@@ -66,7 +66,7 @@ const dependencyContract = [
     expectedArg: 'expectedReplayCoreBlob',
     artifact: 'battle_replay_core',
     fixture: 'export const BATTLE_REPLAY_CORE = Object.freeze({});\n',
-    currentBlob: '48aaf3f2809ee7f9282fa9db68e4e7f79bf8e860',
+    currentBlob: 'c2900ee933c6a3db82f0b0337124bc638e40c929',
   },
   {
     file: 'card-presentation-core.mjs',

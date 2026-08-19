@@ -39,6 +39,7 @@ jobs:
 
           browser=false
           dino=false
+          fossil=false
           learning=false
           advice=false
           replay=false
@@ -85,6 +86,10 @@ jobs:
               playwright.dino-dig.config.mjs|\
               .github/workflows/dino-dig-mobile-whitebox.yml)
                 dino=true
+                ;;
+              browser/fossil-excavation-state-core.mjs|\
+              tests/fossil-excavation-state-core.test.mjs)
+                fossil=true
                 ;;
               browser/learning-crossmedia-whitebox.html|\
               tests/learning-crossmedia-whitebox.spec.mjs|\
@@ -226,6 +231,7 @@ jobs:
           {
             echo "browser=${browser}"
             echo "dino=${dino}"
+            echo "fossil=${fossil}"
             echo "learning=${learning}"
             echo "advice=${advice}"
             echo "replay=${replay}"
@@ -262,11 +268,21 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Set up Node for Fossil
+        if: steps.classify.outputs.fossil == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       - name: Run Browser static check
         if: steps.classify.outputs.browser == 'true'
         run: |
           node --test tests/screen-navigation-core.test.mjs
           node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+
+      - name: Run Fossil excavation state core tests
+        if: steps.classify.outputs.fossil == 'true'
+        run: node --test tests/fossil-excavation-state-core.test.mjs
 
       - name: Run Advice offline evaluator tests
         if: steps.classify.outputs.advice == 'true'

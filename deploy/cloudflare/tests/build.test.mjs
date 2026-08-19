@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -20,6 +20,106 @@ const PUBLISHED_AT = '2026-08-19T00:12:00+09:00';
 
 function gitBlobSha1(buffer) {
   return createHash('sha1').update(Buffer.from(`blob ${buffer.length}\0`)).update(buffer).digest('hex');
+}
+
+function sha256(buffer) {
+  return createHash('sha256').update(buffer).digest('hex');
+}
+
+function validateSnapshotOutputName(output) {
+  assert.equal(typeof output, 'string', 'snapshot artifact output must be a string');
+  assert.ok(output.length > 0, 'snapshot artifact output must not be empty');
+  assert.equal(path.isAbsolute(output), false, `snapshot artifact output must be relative: ${output}`);
+  assert.equal(path.basename(output), output, `snapshot artifact output must be top-level only: ${output}`);
+  assert.equal(output.includes('\\'), false, `snapshot artifact output must not contain backslashes: ${output}`);
+  assert.notEqual(output, '.', 'snapshot artifact output must not be dot');
+  assert.notEqual(output, '..', 'snapshot artifact output must not be dot-dot');
+}
+
+async function validateRollbackSnapshot({
+  snapshotDir,
+  expectedSourceCommit,
+  expectedManifestSha256,
+  expectedHeadersSha256,
+}) {
+  const manifestBytes = await readFile(path.join(snapshotDir, 'manifest.json'));
+  assert.equal(
+    sha256(manifestBytes),
+    expectedManifestSha256,
+    'snapshot manifest digest mismatch',
+  );
+  const manifest = JSON.parse(manifestBytes.toString('utf8'));
+  assert.equal(manifest.schema, 'gameroad.public-pack.v1');
+  assert.equal(manifest.source_commit, expectedSourceCommit, 'snapshot source_commit mismatch');
+  assert.ok(manifest.artifacts && typeof manifest.artifacts === 'object');
+
+  const outputs = new Map();
+  for (const artifact of Object.values(manifest.artifacts)) {
+    validateSnapshotOutputName(artifact.output);
+    assert.equal(outputs.has(artifact.output), false, `duplicate snapshot output: ${artifact.output}`);
+    const bytes = await readFile(path.join(snapshotDir, artifact.output));
+    assert.equal(bytes.length, artifact.bytes, `snapshot artifact byte count mismatch: ${artifact.output}`);
+    assert.equal(sha256(bytes), artifact.sha256, `snapshot artifact hash mismatch: ${artifact.output}`);
+    outputs.set(artifact.output, bytes);
+  }
+  assert.ok(outputs.size > 0, 'snapshot must contain declared artifacts');
+  assert.equal(manifest.artifacts.index_html.sha256, manifest.sha256);
+  assert.equal(manifest.artifacts.index_html.bytes, manifest.bytes);
+
+  const headersBytes = await readFile(path.join(snapshotDir, '_headers'));
+  assert.equal(sha256(headersBytes), expectedHeadersSha256, 'snapshot _headers digest mismatch');
+
+  return { manifest, manifestBytes, headersBytes, outputs };
+}
+
+async function restoreRollbackSnapshot({
+  snapshotDir,
+  targetDir,
+  expectedSourceCommit,
+  expectedManifestSha256,
+  expectedHeadersSha256,
+}) {
+  const snapshot = path.resolve(snapshotDir);
+  const target = path.resolve(targetDir);
+  assert.notEqual(snapshot, target, 'snapshot and target directories must differ');
+  assert.notEqual(target, path.parse(target).root, 'rollback target must not be a filesystem root');
+
+  const snapshotToTarget = path.relative(snapshot, target);
+  const targetToSnapshot = path.relative(target, snapshot);
+  assert.ok(
+    snapshotToTarget.startsWith('..') && targetToSnapshot.startsWith('..'),
+    'snapshot and target directories must not be nested',
+  );
+
+  // Fail closed: every snapshot byte is validated and buffered before target mutation.
+  const validated = await validateRollbackSnapshot({
+    snapshotDir: snapshot,
+    expectedSourceCommit,
+    expectedManifestSha256,
+    expectedHeadersSha256,
+  });
+
+  await rm(target, { recursive: true, force: true });
+  await mkdir(target, { recursive: true });
+  for (const [output, bytes] of validated.outputs) {
+    await writeFile(path.join(target, output), bytes);
+  }
+  await writeFile(path.join(target, '_headers'), validated.headersBytes);
+  await writeFile(path.join(target, 'manifest.json'), validated.manifestBytes);
+
+  for (const [output, bytes] of validated.outputs) {
+    assert.equal((await readFile(path.join(target, output))).equals(bytes), true);
+  }
+  assert.equal(
+    (await readFile(path.join(target, '_headers'))).equals(validated.headersBytes),
+    true,
+  );
+  assert.equal(
+    (await readFile(path.join(target, 'manifest.json'))).equals(validated.manifestBytes),
+    true,
+  );
+
+  return validated.manifest;
 }
 
 const dependencyContract = [
@@ -237,6 +337,91 @@ test('build packages the exact current production Browser dependency set with ve
     assert.equal((await readFile(path.join(dist, dep.file))).equals(currentBytes.get(dep.file)), true);
     assert.equal(manifest.artifacts[dep.artifact].git_blob_sha1, dep.currentBlob);
   }
+});
+
+test('isolated rollback drill restores a validated package and rejects corruption before target mutation', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'gameroad-rollback-drill-'));
+  const source = path.join(dir, 'GAMEROAD.html');
+  const snapshot = path.join(dir, 'snapshot');
+  const target = path.join(dir, 'isolated-target');
+  const browserBytes = Buffer.from('<!doctype html>\n<meta charset="utf-8">\n<main>rollback-source</main>\n', 'utf8');
+  await writeFile(source, browserBytes);
+
+  const options = {
+    source,
+    dist: snapshot,
+    expectedBlob: gitBlobSha1(browserBytes),
+    sourceCommit: SOURCE_COMMIT,
+    publishedAt: PUBLISHED_AT,
+  };
+  for (const dep of dependencyContract) {
+    const depPath = path.join(dir, `snapshot-${dep.file}`);
+    const bytes = Buffer.from(dep.fixture, 'utf8');
+    await writeFile(depPath, bytes);
+    options[dep.sourceArg] = depPath;
+    options[dep.expectedArg] = gitBlobSha1(bytes);
+  }
+  await buildPackage(options);
+
+  const trustedManifestBytes = await readFile(path.join(snapshot, 'manifest.json'));
+  const trustedHeadersBytes = await readFile(path.join(snapshot, '_headers'));
+  const expectedManifestSha256 = sha256(trustedManifestBytes);
+  const expectedHeadersSha256 = sha256(trustedHeadersBytes);
+
+  await mkdir(target, { recursive: true });
+  await writeFile(path.join(target, 'index.html'), 'corrupted deployed bytes\n', 'utf8');
+  await writeFile(path.join(target, 'stale-undeclared.txt'), 'remove me\n', 'utf8');
+
+  const restored = await restoreRollbackSnapshot({
+    snapshotDir: snapshot,
+    targetDir: target,
+    expectedSourceCommit: SOURCE_COMMIT,
+    expectedManifestSha256,
+    expectedHeadersSha256,
+  });
+
+  assert.equal(restored.source_commit, SOURCE_COMMIT);
+  for (const artifact of Object.values(restored.artifacts)) {
+    assert.equal(
+      (await readFile(path.join(target, artifact.output))).equals(
+        await readFile(path.join(snapshot, artifact.output)),
+      ),
+      true,
+      `restored artifact must be byte-exact: ${artifact.output}`,
+    );
+  }
+  assert.equal(
+    (await readFile(path.join(target, 'manifest.json'))).equals(trustedManifestBytes),
+    true,
+  );
+  assert.equal(
+    (await readFile(path.join(target, '_headers'))).equals(trustedHeadersBytes),
+    true,
+  );
+  await assert.rejects(() => readFile(path.join(target, 'stale-undeclared.txt')), /ENOENT/);
+
+  await writeFile(path.join(target, 'prevalidation-sentinel.txt'), 'target must remain untouched\n', 'utf8');
+  const originalSnapshotIndex = await readFile(path.join(snapshot, 'index.html'));
+  await writeFile(path.join(snapshot, 'index.html'), Buffer.concat([originalSnapshotIndex, Buffer.from('CORRUPT')]));
+
+  await assert.rejects(
+    () => restoreRollbackSnapshot({
+      snapshotDir: snapshot,
+      targetDir: target,
+      expectedSourceCommit: SOURCE_COMMIT,
+      expectedManifestSha256,
+      expectedHeadersSha256,
+    }),
+    /snapshot artifact (byte count|hash) mismatch: index\.html/,
+  );
+  assert.equal(
+    await readFile(path.join(target, 'prevalidation-sentinel.txt'), 'utf8'),
+    'target must remain untouched\n',
+  );
+  assert.equal(
+    (await readFile(path.join(target, 'index.html'))).equals(browserBytes),
+    true,
+  );
 });
 
 test('build fails closed on stale Browser or packaged dependency blob expectations', async () => {

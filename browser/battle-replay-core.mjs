@@ -539,3 +539,79 @@ export const BATTLE_REPLAY_CORE = Object.freeze({
     penaltyTerms: DIRECTOR_PENALTY_TERMS
   })
 });
+
+const DIRECTOR_PLAYER_PROJECTION_SCHEMA = 'GAMEROAD_REPLAY_PLAYER_PRESENTATION_PROJECTION_V1';
+const DIRECTOR_PLAYER_MODE_LAYOUT = Object.freeze({
+  'BOARD_PRIMARY+ANIM_WIPE': Object.freeze({
+    primarySurface: 'BOARD',
+    wipeSurface: 'ANIMATION',
+    wipeEnabled: true
+  }),
+  'ANIMATION_PRIMARY+BOARD_WIPE': Object.freeze({
+    primarySurface: 'ANIMATION',
+    wipeSurface: 'BOARD',
+    wipeEnabled: true
+  }),
+  'BOARD_ONLY(WIPE_OFF)': Object.freeze({
+    primarySurface: 'BOARD',
+    wipeSurface: null,
+    wipeEnabled: false
+  })
+});
+
+function validateDirectorDecisionForPlayerProjection(decision) {
+  if (!decision ||
+      typeof decision !== 'object' ||
+      Array.isArray(decision) ||
+      decision.schema !== DIRECTOR_DECISION_SCHEMA ||
+      decision.presentationOnly !== true ||
+      !Number.isSafeInteger(decision.serial) ||
+      decision.serial < 1 ||
+      typeof decision.atMs !== 'number' ||
+      !Number.isFinite(decision.atMs) ||
+      decision.atMs < 0 ||
+      !nonEmptyString(decision.reason) ||
+      !Array.isArray(decision.considered)) {
+    throw new TypeError('DIRECTOR_DECISION_INVALID');
+  }
+  if (own(decision, 'publicData') ||
+      own(decision, 'privateData') ||
+      own(decision, 'privateByViewer') ||
+      own(decision, 'authorityOnly')) {
+    throw new TypeError('DIRECTOR_DECISION_NOT_PUBLIC_ONLY');
+  }
+
+  const candidateIsNull = decision.selectedCandidateId === null;
+  const eventIsNull = decision.selectedEventId === null;
+  if (candidateIsNull !== eventIsNull ||
+      (!candidateIsNull && !nonEmptyString(decision.selectedCandidateId)) ||
+      (!eventIsNull && !nonEmptyString(decision.selectedEventId))) {
+    throw new TypeError('DIRECTOR_DECISION_IDENTITY_INVALID');
+  }
+  if (decision.selectedScore !== null &&
+      (typeof decision.selectedScore !== 'number' ||
+       !Number.isFinite(decision.selectedScore))) {
+    throw new TypeError('DIRECTOR_DECISION_SCORE_INVALID');
+  }
+  return decision;
+}
+
+export function projectReplayDirectorDecision(decision, { mode } = {}) {
+  validateDirectorDecisionForPlayerProjection(decision);
+  const layout = DIRECTOR_PLAYER_MODE_LAYOUT[mode];
+  if (!layout) throw new TypeError('DIRECTOR_PLAYER_MODE_INVALID');
+
+  return deepFreeze({
+    schema: DIRECTOR_PLAYER_PROJECTION_SCHEMA,
+    presentationOnly: true,
+    mode,
+    decisionSerial: decision.serial,
+    atMs: decision.atMs,
+    reason: decision.reason,
+    selectedCandidateId: decision.selectedCandidateId,
+    selectedEventId: decision.selectedEventId,
+    primarySurface: layout.primarySurface,
+    wipeSurface: layout.wipeSurface,
+    wipeEnabled: layout.wipeEnabled
+  });
+}

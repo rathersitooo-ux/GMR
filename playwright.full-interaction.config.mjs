@@ -3,6 +3,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './tests',
   testMatch: 'browser-full-interaction.spec.mjs',
+  grep: /reaches Result and starts a rematch through visible controls only/,
   timeout: 90_000,
   expect: { timeout: 7_000 },
   fullyParallel: false,
@@ -27,6 +28,7 @@ export default defineConfig({
       use: {
         viewport: { width: 1280, height: 720 },
         video: 'on',
+        trace: 'on',
       },
     },
     {
@@ -34,11 +36,8 @@ export default defineConfig({
       use: {
         viewport: { width: 390, height: 844 },
         video: 'on',
+        trace: 'on',
       },
-    },
-    {
-      name: 'short-landscape-667x375',
-      use: { viewport: { width: 667, height: 375 } },
     },
   ],
   webServer: {

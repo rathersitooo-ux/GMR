@@ -110,3 +110,125 @@ export const HATE_PEER_PRESENCE_CORE = Object.freeze({
   schema: HATE_PEER_PRESENCE_SCHEMA,
   eventKinds: EVENT_KINDS
 });
+
+const HATE1000_PRESENTATION_SCHEMA = 'GAMEROAD_HATE1000_PRESENTATION_MOTION_V1';
+const HATE1000_PRESENTATION_KIND = 'hate1000_explosion';
+const HATE1000_MOTION_TIMING = deepFreeze({
+  durationMs: 480,
+  primaryReadDeadlineMs: 120,
+  markers: {
+    onsetMs: 0,
+    peakMs: 60,
+    ringBurstEndMs: 120,
+    decayEndMs: 260,
+    tailEndMs: 480
+  },
+  singlePeak: true,
+  monotonicAfterPeak: true
+});
+
+function validateHate1000PresentationState(state) {
+  if (!exactKeys(state, ['schema', 'sessionId', 'seenEventIds'])) return false;
+  if (state.schema !== HATE1000_PRESENTATION_SCHEMA) return false;
+  if (!nonEmptyString(state.sessionId)) return false;
+  if (!Array.isArray(state.seenEventIds)) return false;
+  if (state.seenEventIds.some(id => !nonEmptyString(id))) return false;
+  return new Set(state.seenEventIds).size === state.seenEventIds.length;
+}
+
+function normalizeHate1000MotionPreferences(preferences) {
+  const source = preferences && typeof preferences === 'object' && !Array.isArray(preferences)
+    ? preferences
+    : {};
+  return deepFreeze({
+    reducedMotion: source.reducedMotion === true,
+    lowPerf: source.lowPerf === true,
+    animationEnabled: source.animationEnabled !== false
+  });
+}
+
+function rejectHate1000Presentation(state, reason) {
+  return deepFreeze({ accepted: false, duplicate: false, reason, state });
+}
+
+export function createHate1000PresentationSession({ sessionId } = {}) {
+  if (!nonEmptyString(sessionId)) throw new TypeError('HATE1000_SESSION_ID_REQUIRED');
+  return deepFreeze({
+    schema: HATE1000_PRESENTATION_SCHEMA,
+    sessionId,
+    seenEventIds: []
+  });
+}
+
+export function applyHate1000PresentationEvent(state, event, preferences = {}) {
+  if (!validateHate1000PresentationState(state)) {
+    return rejectHate1000Presentation(state, 'HATE1000_STATE_INVALID');
+  }
+  if (!exactKeys(event, ['sessionId', 'eventId', 'kind', 'authorized'])) {
+    return rejectHate1000Presentation(state, 'HATE1000_EVENT_SHAPE_INVALID');
+  }
+  if (!nonEmptyString(event.sessionId) || event.sessionId !== state.sessionId) {
+    return rejectHate1000Presentation(state, 'HATE1000_SESSION_MISMATCH');
+  }
+  if (!nonEmptyString(event.eventId)) {
+    return rejectHate1000Presentation(state, 'HATE1000_EVENT_ID_REQUIRED');
+  }
+  if (event.kind !== HATE1000_PRESENTATION_KIND) {
+    return rejectHate1000Presentation(state, 'HATE1000_KIND_INVALID');
+  }
+  if (event.authorized !== true) {
+    return rejectHate1000Presentation(state, 'HATE1000_NOT_AUTHORIZED');
+  }
+  if (state.seenEventIds.includes(event.eventId)) {
+    return deepFreeze({
+      accepted: true,
+      duplicate: true,
+      reason: 'HATE1000_DUPLICATE_EVENT',
+      state,
+      plan: null
+    });
+  }
+
+  const prefs = normalizeHate1000MotionPreferences(preferences);
+  const motionAllowed = prefs.animationEnabled && !prefs.reducedMotion && !prefs.lowPerf;
+  const nextState = deepFreeze({
+    schema: HATE1000_PRESENTATION_SCHEMA,
+    sessionId: state.sessionId,
+    seenEventIds: [...state.seenEventIds, event.eventId]
+  });
+
+  const plan = deepFreeze({
+    schema: HATE1000_PRESENTATION_SCHEMA,
+    sessionId: state.sessionId,
+    eventId: event.eventId,
+    kind: HATE1000_PRESENTATION_KIND,
+    presentationOnly: true,
+    oneShot: true,
+    layoutAuthority: false,
+    assetAuthority: 'unbound_candidate',
+    mode: motionAllowed ? 'motion' : 'static',
+    motion: motionAllowed ? HATE1000_MOTION_TIMING : null,
+    static: motionAllowed ? null : {
+      retainMeaning: true,
+      reason: prefs.reducedMotion ? 'reduced_motion' : prefs.lowPerf ? 'low_perf' : 'animation_disabled'
+    },
+    accessibility: {
+      reducedMotion: prefs.reducedMotion,
+      lowPerf: prefs.lowPerf
+    }
+  });
+
+  return deepFreeze({
+    accepted: true,
+    duplicate: false,
+    reason: 'HATE1000_OK',
+    state: nextState,
+    plan
+  });
+}
+
+export const HATE1000_PRESENTATION_MOTION_CORE = deepFreeze({
+  schema: HATE1000_PRESENTATION_SCHEMA,
+  kind: HATE1000_PRESENTATION_KIND,
+  timing: HATE1000_MOTION_TIMING
+});

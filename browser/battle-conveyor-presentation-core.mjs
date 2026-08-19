@@ -1,4 +1,5 @@
 const SCHEMA = 'gameroad.battle-conveyor-presentation.v2';
+const BATTLE_START_SCHEMA = 'gameroad.battle-start-handoff.v1';
 
 const EVENT_KINDS = Object.freeze([
   'partner_cutin', 'reveal', 'attack', 'ability', 'compare4', 'finisher', 'settle'
@@ -33,6 +34,10 @@ function freeze(value) {
 function clone(value) { return JSON.parse(JSON.stringify(value)); }
 function str(value, label) {
   if (typeof value !== 'string' || !value.trim()) throw new TypeError(`${label}_REQUIRED`);
+  return value;
+}
+function nonNegativeMs(value, label) {
+  if (!Number.isFinite(value) || value < 0) throw new TypeError(`${label}_INVALID`);
   return value;
 }
 function normalizeAcceptedEvent(raw) {
@@ -169,6 +174,106 @@ export function planBattleConveyor(events, { reducedMotion = false, lowPerf = fa
   return freeze({ schema: SCHEMA, presentationOnly: true, ambientTrack: { start: 0, end: timelineEnd }, plans, timelineEnd });
 }
 
+export function planBattleStartHandoff({
+  prewarmStartMs,
+  readyBarrierMs,
+  titleDurationMs,
+  entryDurationMs,
+  movieReadyAtMs,
+  reducedMotion = false,
+  lowPerf = false
+} = {}) {
+  const prewarmStart = nonNegativeMs(prewarmStartMs, 'PREWARM_START_MS');
+  const readyBarrier = nonNegativeMs(readyBarrierMs, 'READY_BARRIER_MS');
+  const titleDuration = nonNegativeMs(titleDurationMs, 'TITLE_DURATION_MS');
+  const entryDuration = nonNegativeMs(entryDurationMs, 'ENTRY_DURATION_MS');
+  const movieReadyAt = nonNegativeMs(movieReadyAtMs, 'MOVIE_READY_AT_MS');
+  if (prewarmStart > readyBarrier) throw new TypeError('PREWARM_AFTER_READY_BARRIER');
+
+  const titleStart = readyBarrier;
+  const titleEnd = titleStart + titleDuration;
+  const entryStart = titleEnd;
+  const entryEnd = entryStart + entryDuration;
+  const handoffAt = Math.max(entryEnd, movieReadyAt);
+  const bridgeWaitMs = Math.max(0, movieReadyAt - entryEnd);
+
+  return freeze({
+    schema: BATTLE_START_SCHEMA,
+    presentationOnly: true,
+    gameplayAuthority: false,
+    gameStateWrite: false,
+    loadingBlocksGameplay: false,
+    preload: {
+      start: prewarmStart,
+      readyBarrier,
+      movieReadyAt,
+      mayRunDuringBoardChain: true
+    },
+    sequence: [
+      {
+        kind: 'BATTLE_START_TITLE',
+        headlineKey: 'BATTLE_START',
+        layoutIntent: 'dominant_fullscreen_headline',
+        start: titleStart,
+        end: titleEnd
+      },
+      {
+        kind: 'BATTLE_START_ENTRY',
+        layoutIntent: 'seamless_entry_animation',
+        start: entryStart,
+        end: entryEnd
+      },
+      ...(bridgeWaitMs > 0 ? [{
+        kind: 'MOVIE_READY_BRIDGE',
+        layoutIntent: 'continuity_filler_only',
+        start: entryEnd,
+        end: handoffAt
+      }] : []),
+      {
+        kind: 'BATTLE_MOVIE_HANDOFF',
+        layoutIntent: 'handoff_point',
+        start: handoffAt,
+        end: handoffAt
+      }
+    ],
+    handoffAt,
+    bridgeWaitMs,
+    reducedMotion: reducedMotion === true,
+    lowPerf: lowPerf === true,
+    timingAuthority: 'caller_supplied_candidate_not_formal'
+  });
+}
+
+export function auditBattleStartHandoff(plan) {
+  if (!plan || plan.schema !== BATTLE_START_SCHEMA) throw new TypeError('BATTLE_START_PLAN_INVALID');
+  const defects = [];
+  if (plan.presentationOnly !== true || plan.gameplayAuthority !== false || plan.gameStateWrite !== false) defects.push('AUTHORITY');
+  if (plan.loadingBlocksGameplay !== false) defects.push('LOADING_BLOCKS_GAMEPLAY');
+  if (plan.preload.start > plan.preload.readyBarrier) defects.push('PREWARM_ORDER');
+  const title = plan.sequence.find(x => x.kind === 'BATTLE_START_TITLE');
+  const entry = plan.sequence.find(x => x.kind === 'BATTLE_START_ENTRY');
+  const bridge = plan.sequence.find(x => x.kind === 'MOVIE_READY_BRIDGE');
+  const handoff = plan.sequence.find(x => x.kind === 'BATTLE_MOVIE_HANDOFF');
+  if (!title || !entry || !handoff) defects.push('REQUIRED_SEGMENT_MISSING');
+  if (title && title.start !== plan.preload.readyBarrier) defects.push('TITLE_NOT_AT_READY_BARRIER');
+  if (title && entry && entry.start !== title.end) defects.push('TITLE_ENTRY_GAP');
+  if (entry && handoff && handoff.start < entry.end) defects.push('HANDOFF_BEFORE_ENTRY_END');
+  if (handoff && handoff.start < plan.preload.movieReadyAt) defects.push('HANDOFF_BEFORE_MOVIE_READY');
+  if (bridge) {
+    if (!entry || bridge.start !== entry.end || bridge.end !== handoff.start) defects.push('BRIDGE_GAP');
+    if (bridge.end <= bridge.start) defects.push('BRIDGE_NONPOSITIVE');
+  } else if (entry && handoff && handoff.start !== entry.end) {
+    defects.push('UNDECLARED_WAIT_GAP');
+  }
+  return freeze({
+    ok: defects.length === 0,
+    reason: defects.length ? 'DEFECTS' : 'OK',
+    defects,
+    bridgeWaitMs: plan.bridgeWaitMs,
+    handoffAt: plan.handoffAt
+  });
+}
+
 export function auditMotionContinuity(timeline) {
   if (!timeline || timeline.schema !== SCHEMA || timeline.presentationOnly !== true) throw new TypeError('TIMELINE_INVALID');
   if (!timeline.ambientTrack || timeline.ambientTrack.start !== 0 || timeline.ambientTrack.end < timeline.timelineEnd) {
@@ -208,6 +313,7 @@ export function auditMotionContinuity(timeline) {
 
 export const BATTLE_CONVEYOR_PRESENTATION_CORE = freeze({
   schema: SCHEMA,
+  battleStartSchema: BATTLE_START_SCHEMA,
   eventKinds: EVENT_KINDS,
   transitions: TRANSITIONS,
   emphasis: EMPHASIS

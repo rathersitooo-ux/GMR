@@ -1,0 +1,24 @@
+{
+  "schema": "gameroad.release-comms.source.v1",
+  "channel": "public",
+  "calendar": {
+    "state": "UNPUBLISHED",
+    "items": []
+  },
+  "roadmap": {
+    "state": "UNPUBLISHED",
+    "items": []
+  },
+  "release_notes": {
+    "state": "UNPUBLISHED",
+    "items": []
+  },
+  "known_issues": {
+    "state": "NOT_ASSERTED",
+    "items": []
+  },
+  "service_status": {
+    "state": "NOT_ASSERTED",
+    "items": []
+  }
+}

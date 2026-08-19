@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - .github/workflows/cloudflare-public-deploy.yml
+      - deploy/cloudflare/release-comms-source.json
       - deploy/cloudflare/relay/wrangler.toml
   workflow_dispatch:
 
@@ -73,6 +74,58 @@ jobs:
             --expected-blob "$BROWSER_BLOB" \
             --source-commit "$GITHUB_SHA" \
             --published-at "$PUBLISHED_AT"
+
+          PUBLISHED_AT="$PUBLISHED_AT" node <<'NODE'
+          const fs = require('node:fs');
+          const sourcePath = 'deploy/cloudflare/release-comms-source.json';
+          const outputPath = 'deploy/cloudflare/dist/gameroad-release-comms.json';
+          const headersPath = 'deploy/cloudflare/dist/_headers';
+          const source = JSON.parse(fs.readFileSync(sourcePath, 'utf8'));
+          if (source.schema !== 'GAMEROAD_RELEASE_COMMS_SOURCE_V1') {
+            throw new Error(`Unexpected release communications source schema: ${source.schema}`);
+          }
+          const requiredStates = {
+            calendar: 'UNPUBLISHED',
+            roadmap: 'UNPUBLISHED',
+            release_notes: 'UNPUBLISHED',
+            known_issues: 'NOT_ASSERTED',
+            service_status: 'NOT_ASSERTED',
+          };
+          for (const [section, state] of Object.entries(requiredStates)) {
+            if (source?.[section]?.state !== state) {
+              throw new Error(`release communications ${section}.state must remain ${state} until formal input exists`);
+            }
+          }
+          for (const section of ['calendar', 'roadmap', 'release_notes', 'known_issues']) {
+            if (!Array.isArray(source[section].items) || source[section].items.length !== 0) {
+              throw new Error(`release communications ${section}.items must remain empty in fail-closed R1`);
+            }
+          }
+          if (source.service_status.message !== null) {
+            throw new Error('release communications service_status.message must remain null in fail-closed R1');
+          }
+          if (!/^[0-9a-f]{40}$/.test(process.env.GITHUB_SHA || '')) {
+            throw new Error('GITHUB_SHA must be an exact lowercase 40-hex commit');
+          }
+          if (!process.env.PUBLISHED_AT || !Number.isFinite(Date.parse(process.env.PUBLISHED_AT))) {
+            throw new Error('PUBLISHED_AT must be an explicit parseable timestamp');
+          }
+          const output = {
+            schema: 'GAMEROAD_RELEASE_COMMS_V1',
+            channel: 'current',
+            build_id: process.env.GITHUB_SHA,
+            published_at: process.env.PUBLISHED_AT,
+            communications: {
+              calendar: source.calendar,
+              roadmap: source.roadmap,
+              release_notes: source.release_notes,
+              known_issues: source.known_issues,
+              service_status: source.service_status,
+            },
+          };
+          fs.writeFileSync(outputPath, `${JSON.stringify(output, null, 2)}\n`, 'utf8');
+          fs.appendFileSync(headersPath, '\n/gameroad-release-comms.json\n  Cache-Control: no-store\n', 'utf8');
+          NODE
 
       - name: Deploy friend-room relay Worker and Durable Object
         id: relay
@@ -220,6 +273,75 @@ jobs:
           NODE
           echo "External version-manifest exact-byte/cache/build probe succeeded for ${PAGES_URL}/gameroad-version.json"
 
+      - name: Probe public release communications
+        id: release_comms_probe
+        shell: bash
+        env:
+          PAGES_URL: ${{ steps.pages.outputs.url }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${PAGES_URL:-}" ]]; then
+            echo "::error::Pages deployment did not expose a public URL for release communications probe"
+            exit 1
+          fi
+          RELEASE_COMMS_BODY="$RUNNER_TEMP/gameroad-release-comms.json"
+          RELEASE_COMMS_HEADERS="$RUNNER_TEMP/gameroad-release-comms.headers"
+          HTTP_CODE="$(curl --fail --silent --show-error --location \
+            --header 'Accept-Encoding: identity' \
+            --retry 4 --retry-delay 2 --retry-connrefused \
+            --max-time 30 \
+            --dump-header "$RELEASE_COMMS_HEADERS" \
+            --output "$RELEASE_COMMS_BODY" \
+            --write-out '%{http_code}' \
+            "${PAGES_URL}/gameroad-release-comms.json")"
+          if [[ "$HTTP_CODE" != "200" ]]; then
+            echo "::error::Public release communications returned HTTP ${HTTP_CODE}, expected 200"
+            exit 1
+          fi
+          if [[ ! -s "$RELEASE_COMMS_BODY" ]]; then
+            echo "::error::Public release communications probe returned an empty body"
+            exit 1
+          fi
+          if ! cmp --silent deploy/cloudflare/dist/gameroad-release-comms.json "$RELEASE_COMMS_BODY"; then
+            echo "::error::Public release communications does not match exact deployed artifact"
+            exit 1
+          fi
+          if ! grep -qi '^cache-control:.*no-store' "$RELEASE_COMMS_HEADERS"; then
+            echo "::error::Public release communications is missing Cache-Control: no-store"
+            exit 1
+          fi
+          RELEASE_COMMS_BODY="$RELEASE_COMMS_BODY" node <<'NODE'
+          const fs = require('node:fs');
+          const manifest = JSON.parse(fs.readFileSync(process.env.RELEASE_COMMS_BODY, 'utf8'));
+          const version = JSON.parse(fs.readFileSync('deploy/cloudflare/dist/gameroad-version.json', 'utf8'));
+          if (manifest.schema !== 'GAMEROAD_RELEASE_COMMS_V1') throw new Error('Unexpected release communications schema');
+          if (manifest.channel !== 'current') throw new Error('Release communications channel must be current');
+          if (manifest.build_id !== process.env.GITHUB_SHA) throw new Error('Release communications build_id must equal GITHUB_SHA');
+          if (manifest.build_id !== version.build_id) throw new Error('Release communications build_id must equal version manifest build_id');
+          if (manifest.published_at !== version.published_at) throw new Error('Release communications published_at must equal version manifest published_at');
+          const requiredStates = {
+            calendar: 'UNPUBLISHED',
+            roadmap: 'UNPUBLISHED',
+            release_notes: 'UNPUBLISHED',
+            known_issues: 'NOT_ASSERTED',
+            service_status: 'NOT_ASSERTED',
+          };
+          for (const [section, state] of Object.entries(requiredStates)) {
+            if (manifest?.communications?.[section]?.state !== state) {
+              throw new Error(`Public release communications ${section}.state must be ${state}`);
+            }
+          }
+          for (const section of ['calendar', 'roadmap', 'release_notes', 'known_issues']) {
+            if (!Array.isArray(manifest.communications[section].items) || manifest.communications[section].items.length !== 0) {
+              throw new Error(`Public release communications ${section}.items must remain empty in fail-closed R1`);
+            }
+          }
+          if (manifest.communications.service_status.message !== null) {
+            throw new Error('Public release communications service_status.message must remain null in fail-closed R1');
+          }
+          NODE
+          echo "External release-communications exact-byte/cache/version probe succeeded for ${PAGES_URL}/gameroad-release-comms.json"
+
       - name: Probe public friend-room WebSocket
         id: ws_probe
         shell: bash
@@ -247,6 +369,7 @@ jobs:
           READBACK_OUTCOME: ${{ steps.readback.outcome }}
           PROBE_OUTCOME: ${{ steps.probe.outcome }}
           MANIFEST_PROBE_OUTCOME: ${{ steps.manifest_probe.outcome }}
+          RELEASE_COMMS_PROBE_OUTCOME: ${{ steps.release_comms_probe.outcome }}
           WS_PROBE_OUTCOME: ${{ steps.ws_probe.outcome }}
           PAGES_URL: ${{ steps.pages.outputs.url }}
         run: |
@@ -264,6 +387,7 @@ jobs:
           readback=${READBACK_OUTCOME}
           probe=${PROBE_OUTCOME}
           manifest_probe=${MANIFEST_PROBE_OUTCOME}
+          release_comms_probe=${RELEASE_COMMS_PROBE_OUTCOME}
           ws_probe=${WS_PROBE_OUTCOME}
           url=${PAGES_URL:-}
           EOF

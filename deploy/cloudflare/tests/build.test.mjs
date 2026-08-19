@@ -57,7 +57,7 @@ const dependencyContract = [
     expectedArg: 'expectedReplayAdapterBlob',
     artifact: 'battle_replay_live_adapter',
     fixture: "import './battle-replay-core.mjs';\nimport './card-presentation-core.mjs';\n",
-    currentBlob: '0d7f4601d5641f6ac4bf4a080ddda980d6c068db',
+    currentBlob: '9242bea61cbb7c2e4c3cc6b17e3a11e27e86ec31',
   },
   {
     file: 'battle-replay-core.mjs',
@@ -84,7 +84,7 @@ const dependencyContract = [
     expectedArg: 'expectedBattleConveyorCoreBlob',
     artifact: 'battle_conveyor_presentation_core',
     fixture: 'export const BATTLE_CONVEYOR_PRESENTATION_CORE = Object.freeze({});\n',
-    currentBlob: '70a6a7e354ad96d4297acab3ba2d9c4caa584af2',
+    currentBlob: '26cf32c74867c7dd84a6210a6ec5ccc0910096ae',
   },
   {
     file: 'board-facility-state-core.classic.js',

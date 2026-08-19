@@ -338,7 +338,7 @@ test('records build-linked visible Home to Shop P0 evidence', async ({ page }, t
   const home = page.locator('section[data-screen="home"]');
   await expect(home).toBeVisible();
 
-  const shopControl = page.locator('[data-go="shop"]:visible').first();
+  const shopControl = page.getByRole('button', { name: 'ショップへ', exact: true });
   await expect(shopControl, 'visible Home-to-Shop pointer control').toBeVisible();
   await shopControl.click();
 

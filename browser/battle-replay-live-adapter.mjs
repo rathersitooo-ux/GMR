@@ -559,3 +559,162 @@ export const BATTLE_REPLAY_LIVE_ADAPTER = Object.freeze({
     audio: 'silent'
   })
 });
+
+const BATTLE_MOVIE_SURFACE_SCHEMA = 'GAMEROAD_BATTLE_MOVIE_SURFACE_BINDING_V1';
+const BATTLE_START_LIVE_SCHEMA = 'gameroad.battle-start-live-handoff.v1';
+const PLAYER_PROJECTION_SCHEMA = 'GAMEROAD_REPLAY_PLAYER_PRESENTATION_PROJECTION_V1';
+const BATTLE_MOVIE_PHASES = new Set([
+  'PREWARM', 'TITLE', 'ENTRY', 'BRIDGE', 'HANDOFF', 'FALLBACK_REQUIRED', 'CANCELLED'
+]);
+const BATTLE_MOVIE_PLAYER_MODES = Object.freeze({
+  'BOARD_PRIMARY+ANIM_WIPE': Object.freeze({
+    primarySurface: 'BOARD', wipeSurface: 'ANIMATION', wipeEnabled: true
+  }),
+  'ANIMATION_PRIMARY+BOARD_WIPE': Object.freeze({
+    primarySurface: 'ANIMATION', wipeSurface: 'BOARD', wipeEnabled: true
+  }),
+  'BOARD_ONLY(WIPE_OFF)': Object.freeze({
+    primarySurface: 'BOARD', wipeSurface: null, wipeEnabled: false
+  })
+});
+
+function owns(value, key) {
+  return Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function validateBattleMovieSurfaceInputs(liveState, playerProjection, viewerRole) {
+  if (!liveState ||
+      liveState.schema !== BATTLE_START_LIVE_SCHEMA ||
+      liveState.presentationOnly !== true ||
+      liveState.gameplayAuthority !== false ||
+      liveState.gameStateWrite !== false ||
+      liveState.loadingBlocksGameplay !== false ||
+      !nonEmptyString(liveState.generationId) ||
+      !BATTLE_MOVIE_PHASES.has(liveState.phase)) {
+    throw new TypeError('BATTLE_MOVIE_LIVE_STATE_INVALID');
+  }
+  if (!playerProjection ||
+      playerProjection.schema !== PLAYER_PROJECTION_SCHEMA ||
+      playerProjection.presentationOnly !== true) {
+    throw new TypeError('BATTLE_MOVIE_PLAYER_PROJECTION_INVALID');
+  }
+  for (const key of [
+    'publicData', 'privateData', 'privateByViewer', 'authorityOnly', 'selectedScore', 'considered'
+  ]) {
+    if (owns(playerProjection, key)) {
+      throw new TypeError('BATTLE_MOVIE_PLAYER_PROJECTION_NOT_PUBLIC_MINIMAL');
+    }
+  }
+  const layout = BATTLE_MOVIE_PLAYER_MODES[playerProjection.mode];
+  if (!layout ||
+      playerProjection.primarySurface !== layout.primarySurface ||
+      playerProjection.wipeSurface !== layout.wipeSurface ||
+      playerProjection.wipeEnabled !== layout.wipeEnabled) {
+    throw new TypeError('BATTLE_MOVIE_PLAYER_PROJECTION_LAYOUT_INVALID');
+  }
+  if (viewerRole !== 'player' && viewerRole !== 'spectator') {
+    throw new TypeError('BATTLE_MOVIE_VIEWER_ROLE_INVALID');
+  }
+  if (viewerRole === 'spectator' &&
+      playerProjection.mode !== 'ANIMATION_PRIMARY+BOARD_WIPE') {
+    throw new TypeError('BATTLE_MOVIE_SPECTATOR_MODE_INVALID');
+  }
+  return layout;
+}
+
+export function projectBattleMovieSurface({
+  liveState,
+  playerProjection,
+  viewerRole
+} = {}) {
+  const layout = validateBattleMovieSurfaceInputs(liveState, playerProjection, viewerRole);
+  const movieHandoff = liveState.phase === 'HANDOFF';
+  const fallbackToBoard = liveState.phase === 'FALLBACK_REQUIRED' || liveState.phase === 'CANCELLED';
+  const overlayKind = liveState.phase === 'TITLE'
+    ? 'BATTLE_START_TITLE'
+    : liveState.phase === 'ENTRY'
+      ? 'BATTLE_START_ENTRY'
+      : liveState.phase === 'BRIDGE'
+        ? 'MOVIE_READY_BRIDGE'
+        : null;
+
+  return deepFreeze({
+    schema: BATTLE_MOVIE_SURFACE_SCHEMA,
+    presentationOnly: true,
+    gameplayAuthority: false,
+    gameStateWrite: false,
+    loadingBlocksGameplay: false,
+    generationId: liveState.generationId,
+    phase: liveState.phase,
+    viewerRole,
+    mode: playerProjection.mode,
+    decisionSerial: playerProjection.decisionSerial,
+    selectedEventId: playerProjection.selectedEventId,
+    overlayKind,
+    movieHandoff,
+    fallbackToBoard,
+    primarySurface: movieHandoff ? layout.primarySurface : 'BOARD',
+    wipeSurface: movieHandoff ? layout.wipeSurface : null,
+    wipeEnabled: movieHandoff ? layout.wipeEnabled : false,
+    motion: liveState.reducedMotion === true || liveState.lowPerf === true
+      ? 'static_only'
+      : 'allowed'
+  });
+}
+
+export function renderBattleMovieSurfacePlan(plan, environment = {}) {
+  if (!plan ||
+      plan.schema !== BATTLE_MOVIE_SURFACE_SCHEMA ||
+      plan.presentationOnly !== true ||
+      plan.gameplayAuthority !== false ||
+      plan.gameStateWrite !== false) {
+    return false;
+  }
+  const documentRef = environmentValue(environment, 'document');
+  const box = documentRef?.getElementById?.('battleResolution');
+  if (!box?.classList || !box.dataset) return false;
+
+  box.dataset.battleMoviePhase = plan.phase;
+  box.dataset.battleMovieViewerRole = plan.viewerRole;
+  box.dataset.battleMovieMode = plan.mode;
+  box.dataset.battleMoviePrimary = plan.primarySurface;
+  box.dataset.battleMovieWipe = plan.wipeSurface || 'OFF';
+  box.dataset.battleMovieMotion = plan.motion;
+  if (plan.overlayKind) box.dataset.battleMovieOverlay = plan.overlayKind;
+  else delete box.dataset.battleMovieOverlay;
+  box.classList.toggle('grBattleMovieHandoff', plan.movieHandoff === true);
+  box.classList.toggle('grBattleMovieFallback', plan.fallbackToBoard === true);
+  return true;
+}
+
+export function createBattleMovieSurfaceBridge(environment = {}) {
+  let lastPlan = null;
+
+  function accept(input) {
+    const plan = projectBattleMovieSurface(input);
+    let rendered = false;
+    try {
+      rendered = renderBattleMovieSurfacePlan(plan, environment);
+    } catch {
+      rendered = false;
+    }
+    lastPlan = plan;
+    return deepFreeze({ plan, rendered });
+  }
+
+  function snapshot() {
+    return lastPlan ? deepFreeze(cloneJson(lastPlan)) : null;
+  }
+
+  return Object.freeze({ accept, snapshot });
+}
+
+export const BATTLE_MOVIE_SURFACE_BINDING = Object.freeze({
+  schema: BATTLE_MOVIE_SURFACE_SCHEMA,
+  liveStateSchema: BATTLE_START_LIVE_SCHEMA,
+  playerProjectionSchema: PLAYER_PROJECTION_SCHEMA,
+  viewerRoles: Object.freeze(['player', 'spectator']),
+  spectatorMode: 'ANIMATION_PRIMARY+BOARD_WIPE',
+  authority: 'presentation_only_no_game_state_write',
+  actualDomSurface: 'battleResolution'
+});

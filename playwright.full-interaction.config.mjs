@@ -24,11 +24,17 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop-1280x720',
-      use: { viewport: { width: 1280, height: 720 } },
+      use: {
+        viewport: { width: 1280, height: 720 },
+        video: 'on',
+      },
     },
     {
       name: 'phone-390x844',
-      use: { viewport: { width: 390, height: 844 } },
+      use: {
+        viewport: { width: 390, height: 844 },
+        video: 'on',
+      },
     },
     {
       name: 'short-landscape-667x375',

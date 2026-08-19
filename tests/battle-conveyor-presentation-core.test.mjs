@@ -3,7 +3,10 @@ import {
   planBattleConveyor,
   auditMotionContinuity,
   planBattleStartHandoff,
-  auditBattleStartHandoff
+  auditBattleStartHandoff,
+  createBattleStartLiveHandoff,
+  reduceBattleStartLiveHandoff,
+  auditBattleStartLiveHandoff
 } from '../browser/battle-conveyor-presentation-core.mjs';
 
 const demo = [
@@ -26,86 +29,113 @@ assert.equal(t.plans[4].transition, 'MULTI_TARGET_SPREAD');
 assert.equal(t.plans[5].transition, 'PAIR_SWAP_RIGHT');
 assert.equal(t.plans[7].transition, 'FINISHER_GATHER');
 assert.deepEqual(t.plans[7].groupTargets, ['P1','P2','P3']);
-assert.ok(t.plans[7].emphasis.impact > t.plans[2].emphasis.impact, 'finisher must be more exaggerated than normal attack');
-assert.ok(t.plans[3].emphasis.impact > t.plans[2].emphasis.impact, 'strong ability must be more exaggerated than normal attack');
-assert.equal(t.plans[2].timing.handoffAt < t.plans[2].timing.recoveryEnd, true, 'next view starts before recovery ends');
+assert.ok(t.plans[7].emphasis.impact > t.plans[2].emphasis.impact);
+assert.ok(t.plans[3].emphasis.impact > t.plans[2].emphasis.impact);
+assert.equal(t.plans[2].timing.handoffAt < t.plans[2].timing.recoveryEnd, true);
 const continuity = auditMotionContinuity(t);
 assert.equal(continuity.ok, true);
 assert.equal(continuity.deadGapMs, 0);
-assert.ok(continuity.handoffOverlapMs > 0, 'handoff evidence must be measured, not inferred from a flag');
+assert.ok(continuity.handoffOverlapMs > 0);
 assert.equal(continuity.declaredAmbientCoverage, 1);
-assert.equal('motionCoverage' in continuity, false, 'do not expose a fake visual-motion coverage metric');
+assert.equal('motionCoverage' in continuity, false);
 
 const reduced = planBattleConveyor(demo, {reducedMotion:true});
 assert.equal(reduced.plans.map(p => p.kind).join(','), t.plans.map(p => p.kind).join(','));
 assert.equal(reduced.plans[7].groupTargets.length, 3);
 assert.equal(auditMotionContinuity(reduced).ok, true);
-assert.ok(reduced.timelineEnd < t.timelineEnd, 'reduced motion shortens movement without changing event meaning');
+assert.ok(reduced.timelineEnd < t.timelineEnd);
 
 assert.throws(() => planBattleConveyor([{accepted:false,eventId:'x',kind:'attack',publicData:{sourceId:'P1',targetIds:['P2']}}]), /EVENT_NOT_ACCEPTED/);
 assert.throws(() => planBattleConveyor([{accepted:true,eventId:'x',kind:'finisher',publicData:{winnerId:'P1',loserIds:['P1','P2','P3']}}]), /FINISHER_WINNER_IN_LOSERS/);
 
-const earlyReady = planBattleStartHandoff({
-  prewarmStartMs: 1200,
-  readyBarrierMs: 4000,
-  titleDurationMs: 700,
-  entryDurationMs: 900,
-  movieReadyAtMs: 3500
-});
+const earlyReady = planBattleStartHandoff({prewarmStartMs:1200,readyBarrierMs:4000,titleDurationMs:700,entryDurationMs:900,movieReadyAtMs:3500});
 assert.equal(earlyReady.presentationOnly, true);
 assert.equal(earlyReady.gameplayAuthority, false);
 assert.equal(earlyReady.loadingBlocksGameplay, false);
 assert.equal(earlyReady.preload.mayRunDuringBoardChain, true);
 assert.deepEqual(earlyReady.sequence.map(x => x.kind), ['BATTLE_START_TITLE','BATTLE_START_ENTRY','BATTLE_MOVIE_HANDOFF']);
-assert.equal(earlyReady.sequence[0].start, 4000, 'large title begins at the all-ready presentation barrier');
-assert.equal(earlyReady.sequence[1].start, earlyReady.sequence[0].end, 'entry follows the title without a blank gap');
-assert.equal(earlyReady.handoffAt, earlyReady.sequence[1].end, 'early movie readiness never skips the title or entry animation');
+assert.equal(earlyReady.sequence[0].start, 4000);
+assert.equal(earlyReady.sequence[1].start, earlyReady.sequence[0].end);
+assert.equal(earlyReady.handoffAt, earlyReady.sequence[1].end);
 assert.equal(auditBattleStartHandoff(earlyReady).ok, true);
 
-const lateReady = planBattleStartHandoff({
-  prewarmStartMs: 1000,
-  readyBarrierMs: 3000,
-  titleDurationMs: 600,
-  entryDurationMs: 800,
-  movieReadyAtMs: 5200,
-  lowPerf: true
-});
+const lateReady = planBattleStartHandoff({prewarmStartMs:1000,readyBarrierMs:3000,titleDurationMs:600,entryDurationMs:800,movieReadyAtMs:5200,lowPerf:true});
 assert.deepEqual(lateReady.sequence.map(x => x.kind), ['BATTLE_START_TITLE','BATTLE_START_ENTRY','MOVIE_READY_BRIDGE','BATTLE_MOVIE_HANDOFF']);
 assert.equal(lateReady.bridgeWaitMs, 800);
-assert.equal(lateReady.sequence[2].start, lateReady.sequence[1].end, 'late load is covered by a presentation-only continuity bridge');
+assert.equal(lateReady.sequence[2].start, lateReady.sequence[1].end);
 assert.equal(lateReady.sequence[2].end, lateReady.handoffAt);
 assert.equal(lateReady.handoffAt, 5200);
 assert.equal(auditBattleStartHandoff(lateReady).ok, true);
 assert.equal(lateReady.timingAuthority, 'caller_supplied_candidate_not_formal');
 
-const reducedStart = planBattleStartHandoff({
-  prewarmStartMs: 0,
-  readyBarrierMs: 100,
-  titleDurationMs: 80,
-  entryDurationMs: 90,
-  movieReadyAtMs: 250,
-  reducedMotion: true
-});
+const reducedStart = planBattleStartHandoff({prewarmStartMs:0,readyBarrierMs:100,titleDurationMs:80,entryDurationMs:90,movieReadyAtMs:250,reducedMotion:true});
 assert.equal(reducedStart.reducedMotion, true);
-assert.equal(auditBattleStartHandoff(reducedStart).ok, true, 'reduced motion preserves title→entry→handoff meaning order');
+assert.equal(auditBattleStartHandoff(reducedStart).ok, true);
 
-assert.throws(() => planBattleStartHandoff({
-  prewarmStartMs: 500,
-  readyBarrierMs: 400,
-  titleDurationMs: 100,
-  entryDurationMs: 100,
-  movieReadyAtMs: 600
-}), /PREWARM_AFTER_READY_BARRIER/);
+assert.throws(() => planBattleStartHandoff({prewarmStartMs:500,readyBarrierMs:400,titleDurationMs:100,entryDurationMs:100,movieReadyAtMs:600}), /PREWARM_AFTER_READY_BARRIER/);
+assert.throws(() => planBattleStartHandoff({prewarmStartMs:0,readyBarrierMs:100,titleDurationMs:0,entryDurationMs:100,movieReadyAtMs:100}), /TITLE_DURATION_MS_INVALID/);
+assert.throws(() => planBattleStartHandoff({prewarmStartMs:0,readyBarrierMs:100,titleDurationMs:100,entryDurationMs:0,movieReadyAtMs:100}), /ENTRY_DURATION_MS_INVALID/);
+
+let live = createBattleStartLiveHandoff({generationId:'match-1-round-3-battle-2',prewarmStartMs:1000,readyBarrierMs:3000,titleDurationMs:600,entryDurationMs:800,maxBridgeMs:1500});
+assert.equal(live.phase, 'PREWARM');
+assert.equal(live.movieReady, false);
+assert.equal(auditBattleStartLiveHandoff(live).ok, true);
+live = reduceBattleStartLiveHandoff(live, {type:'MOVIE_READY', generationId:'old-battle'});
+assert.equal(live.movieReady, false);
+assert.equal(live.lastEventDisposition, 'IGNORED_STALE_GENERATION');
+live = reduceBattleStartLiveHandoff(live, {type:'MOVIE_READY', generationId:'match-1-round-3-battle-2'});
+assert.equal(live.movieReady, true);
+assert.equal(live.phase, 'PREWARM');
+assert.equal(live.lastEventDisposition, 'READY_ACCEPTED');
+live = reduceBattleStartLiveHandoff(live, {type:'MOVIE_READY', generationId:'match-1-round-3-battle-2'});
+assert.equal(live.lastEventDisposition, 'IGNORED_DUPLICATE_READY');
+live = reduceBattleStartLiveHandoff(live, {type:'ADVANCE', generationId:'match-1-round-3-battle-2', nowMs:3000});
+assert.equal(live.phase, 'TITLE');
+live = reduceBattleStartLiveHandoff(live, {type:'ADVANCE', generationId:'match-1-round-3-battle-2', nowMs:3600});
+assert.equal(live.phase, 'ENTRY');
+live = reduceBattleStartLiveHandoff(live, {type:'ADVANCE', generationId:'match-1-round-3-battle-2', nowMs:4400});
+assert.equal(live.phase, 'HANDOFF');
+assert.equal(live.lastEventDisposition, 'HANDOFF_READY');
+assert.equal(auditBattleStartLiveHandoff(live).ok, true);
+
+let lateLive = createBattleStartLiveHandoff({generationId:'battle-late',prewarmStartMs:0,readyBarrierMs:100,titleDurationMs:100,entryDurationMs:100,maxBridgeMs:700});
+lateLive = reduceBattleStartLiveHandoff(lateLive, {type:'ADVANCE', generationId:'battle-late', nowMs:300});
+assert.equal(lateLive.phase, 'BRIDGE');
+lateLive = reduceBattleStartLiveHandoff(lateLive, {type:'MOVIE_READY', generationId:'battle-late'});
+assert.equal(lateLive.phase, 'HANDOFF');
+assert.equal(lateLive.lastEventDisposition, 'READY_AND_HANDOFF');
+
+let missing = createBattleStartLiveHandoff({generationId:'battle-missing',prewarmStartMs:0,readyBarrierMs:100,titleDurationMs:100,entryDurationMs:100,maxBridgeMs:400});
+missing = reduceBattleStartLiveHandoff(missing, {type:'ADVANCE', generationId:'battle-missing', nowMs:699});
+assert.equal(missing.phase, 'BRIDGE');
+missing = reduceBattleStartLiveHandoff(missing, {type:'ADVANCE', generationId:'battle-missing', nowMs:700});
+assert.equal(missing.phase, 'FALLBACK_REQUIRED');
+assert.equal(missing.loadingBlocksGameplay, false);
+assert.equal(auditBattleStartLiveHandoff(missing).ok, true);
+
+let cancelled = createBattleStartLiveHandoff({generationId:'battle-cancel',prewarmStartMs:100,readyBarrierMs:200,titleDurationMs:100,entryDurationMs:100,maxBridgeMs:500});
+cancelled = reduceBattleStartLiveHandoff(cancelled, {type:'ADVANCE', generationId:'battle-cancel', nowMs:250});
+const beforeRewind = cancelled.nowMs;
+cancelled = reduceBattleStartLiveHandoff(cancelled, {type:'ADVANCE', generationId:'battle-cancel', nowMs:200});
+assert.equal(cancelled.nowMs, beforeRewind);
+assert.equal(cancelled.lastEventDisposition, 'IGNORED_CLOCK_REWIND');
+cancelled = reduceBattleStartLiveHandoff(cancelled, {type:'CANCEL', generationId:'battle-cancel'});
+assert.equal(cancelled.phase, 'CANCELLED');
+assert.equal(cancelled.gameStateWrite, false);
+
+assert.throws(() => createBattleStartLiveHandoff({generationId:'bad-title',prewarmStartMs:0,readyBarrierMs:100,titleDurationMs:0,entryDurationMs:100,maxBridgeMs:100}), /TITLE_DURATION_MS_INVALID/);
 
 console.log(JSON.stringify({
   ok:true,
-  tests:34,
+  tests:62,
   timelineEnd:t.timelineEnd,
   reducedTimelineEnd:reduced.timelineEnd,
   transitions:t.plans.map(p=>[p.eventId,p.transition]),
   continuity,
   battleStart:{
     earlyReady:{handoffAt:earlyReady.handoffAt,bridgeWaitMs:earlyReady.bridgeWaitMs},
-    lateReady:{handoffAt:lateReady.handoffAt,bridgeWaitMs:lateReady.bridgeWaitMs}
+    lateReady:{handoffAt:lateReady.handoffAt,bridgeWaitMs:lateReady.bridgeWaitMs},
+    live:{phase:live.phase,lastEventDisposition:live.lastEventDisposition},
+    missing:{phase:missing.phase,lastEventDisposition:missing.lastEventDisposition}
   }
 }, null, 2));

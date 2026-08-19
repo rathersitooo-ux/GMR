@@ -193,7 +193,349 @@ export function readReplay(log, { viewer = null, supportedVersions = null } = {}
   });
 }
 
+const DIRECTOR_CANDIDATE_SCHEMA = 'GAMEROAD_REPLAY_SHOT_CANDIDATE_V1';
+const DIRECTOR_STATE_SCHEMA = 'GAMEROAD_REPLAY_BROADCAST_DIRECTOR_STATE_V1';
+const DIRECTOR_DECISION_SCHEMA = 'GAMEROAD_REPLAY_DIRECTOR_DECISION_V1';
+const DIRECTOR_POSITIVE_TERMS = Object.freeze([
+  'mandatoryConsequence',
+  'urgency',
+  'dramaDelta',
+  'rarity',
+  'continuity',
+  'readiness'
+]);
+const DIRECTOR_PENALTY_TERMS = Object.freeze(['repeat', 'cutThrash', 'load']);
+const DIRECTOR_SCORE_TERMS = Object.freeze([
+  ...DIRECTOR_POSITIVE_TERMS,
+  ...DIRECTOR_PENALTY_TERMS
+]);
+
+function own(value, key) {
+  return Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function finiteNonNegative(value, label) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+    throw new TypeError(`${label}_INVALID`);
+  }
+  return value;
+}
+
+function normalizedDirectorEvent(matchId, event) {
+  if (!nonEmptyString(matchId)) throw new TypeError('DIRECTOR_MATCH_ID_REQUIRED');
+  if (!event || typeof event !== 'object' || Array.isArray(event)) {
+    throw new TypeError('DIRECTOR_EVENT_REQUIRED');
+  }
+  if (own(event, 'privateData') ||
+      own(event, 'authorityOnly') ||
+      own(event, 'privateByViewer')) {
+    throw new TypeError('DIRECTOR_EVENT_NOT_PUBLIC_ONLY');
+  }
+  if (!Number.isSafeInteger(event.sequence) ||
+      event.sequence < 1 ||
+      !nonEmptyString(event.kind) ||
+      !own(event, 'publicData')) {
+    throw new TypeError('DIRECTOR_EVENT_IDENTITY_INVALID');
+  }
+  return { matchId, sequence: event.sequence, kind: event.kind };
+}
+
+function normalizedShotEvidence(evidence) {
+  if (!evidence || typeof evidence !== 'object' || Array.isArray(evidence)) {
+    throw new TypeError('DIRECTOR_EVIDENCE_REQUIRED');
+  }
+  if (own(evidence, 'privateData') ||
+      own(evidence, 'authorityOnly') ||
+      own(evidence, 'privateByViewer')) {
+    throw new TypeError('DIRECTOR_EVIDENCE_NOT_PUBLIC_ONLY');
+  }
+  if (evidence.privacySafe !== true ||
+      finiteNonNegative(evidence.privacyRisk, 'DIRECTOR_PRIVACY_RISK') !== 0) {
+    throw new TypeError('DIRECTOR_PRIVACY_EVIDENCE_REJECTED');
+  }
+  const terms = {};
+  for (const key of DIRECTOR_SCORE_TERMS) {
+    terms[key] = finiteNonNegative(evidence[key], `DIRECTOR_TERM_${key}`);
+  }
+  return deepFreeze({
+    terms,
+    starvationMs: finiteNonNegative(evidence.starvationMs, 'DIRECTOR_STARVATION_MS')
+  });
+}
+
+export function createReplayShotCandidate({ matchId, event, surfaceId, evidence }) {
+  if (!nonEmptyString(surfaceId)) throw new TypeError('DIRECTOR_SURFACE_ID_REQUIRED');
+  const source = normalizedDirectorEvent(matchId, event);
+  const normalizedEvidence = normalizedShotEvidence(evidence);
+  const eventId = `${source.matchId}:${source.sequence}`;
+  return deepFreeze({
+    schema: DIRECTOR_CANDIDATE_SCHEMA,
+    candidateId: `${eventId}:${surfaceId}`,
+    eventId,
+    presentationOnly: true,
+    surfaceId,
+    source,
+    terms: cloneJson(normalizedEvidence.terms),
+    starvationMs: normalizedEvidence.starvationMs
+  });
+}
+
+function normalizedDirectorPolicy(policy) {
+  if (!policy ||
+      typeof policy !== 'object' ||
+      Array.isArray(policy) ||
+      !policy.weights ||
+      typeof policy.weights !== 'object' ||
+      Array.isArray(policy.weights)) {
+    throw new TypeError('DIRECTOR_POLICY_REQUIRED');
+  }
+  const weights = {};
+  for (const key of DIRECTOR_SCORE_TERMS) {
+    weights[key] = finiteNonNegative(policy.weights[key], `DIRECTOR_WEIGHT_${key}`);
+  }
+  return deepFreeze({
+    weights,
+    holdMs: finiteNonNegative(policy.holdMs, 'DIRECTOR_HOLD_MS'),
+    hysteresisDelta: finiteNonNegative(
+      policy.hysteresisDelta,
+      'DIRECTOR_HYSTERESIS_DELTA'
+    ),
+    cooldownMs: finiteNonNegative(policy.cooldownMs, 'DIRECTOR_COOLDOWN_MS')
+  });
+}
+
+function validateShotCandidate(candidate) {
+  if (!candidate ||
+      typeof candidate !== 'object' ||
+      candidate.schema !== DIRECTOR_CANDIDATE_SCHEMA ||
+      candidate.presentationOnly !== true ||
+      !nonEmptyString(candidate.candidateId) ||
+      !nonEmptyString(candidate.eventId) ||
+      !nonEmptyString(candidate.surfaceId) ||
+      !candidate.source ||
+      typeof candidate.source !== 'object' ||
+      Array.isArray(candidate.source) ||
+      own(candidate, 'publicData') ||
+      own(candidate, 'privateData') ||
+      own(candidate, 'authorityOnly') ||
+      own(candidate, 'privateByViewer')) {
+    throw new TypeError('DIRECTOR_CANDIDATE_INVALID');
+  }
+  if (!nonEmptyString(candidate.source.matchId) ||
+      !Number.isSafeInteger(candidate.source.sequence) ||
+      candidate.source.sequence < 1 ||
+      !nonEmptyString(candidate.source.kind)) {
+    throw new TypeError('DIRECTOR_CANDIDATE_SOURCE_INVALID');
+  }
+  const expectedEventId = `${candidate.source.matchId}:${candidate.source.sequence}`;
+  if (candidate.eventId !== expectedEventId ||
+      candidate.candidateId !== `${expectedEventId}:${candidate.surfaceId}`) {
+    throw new TypeError('DIRECTOR_CANDIDATE_IDENTITY_MISMATCH');
+  }
+  if (!candidate.terms ||
+      typeof candidate.terms !== 'object' ||
+      Array.isArray(candidate.terms)) {
+    throw new TypeError('DIRECTOR_CANDIDATE_TERMS_INVALID');
+  }
+  for (const key of DIRECTOR_SCORE_TERMS) {
+    finiteNonNegative(candidate.terms[key], `DIRECTOR_TERM_${key}`);
+  }
+  finiteNonNegative(candidate.starvationMs, 'DIRECTOR_STARVATION_MS');
+  return candidate;
+}
+
+function scoreWithPolicy(candidate, policy) {
+  let score = 0;
+  for (const key of DIRECTOR_POSITIVE_TERMS) {
+    score += candidate.terms[key] * policy.weights[key];
+  }
+  for (const key of DIRECTOR_PENALTY_TERMS) {
+    score -= candidate.terms[key] * policy.weights[key];
+  }
+  return score;
+}
+
+export function scoreReplayShotCandidate(candidate, policy) {
+  validateShotCandidate(candidate);
+  return scoreWithPolicy(candidate, normalizedDirectorPolicy(policy));
+}
+
+export function createReplayBroadcastDirectorState() {
+  return deepFreeze({
+    schema: DIRECTOR_STATE_SCHEMA,
+    activeCandidateId: null,
+    activeSelectedAtMs: null,
+    lastReleasedAtByCandidate: {},
+    decisionSerial: 0
+  });
+}
+
+function validateDirectorState(state) {
+  if (!state ||
+      typeof state !== 'object' ||
+      state.schema !== DIRECTOR_STATE_SCHEMA ||
+      !Number.isSafeInteger(state.decisionSerial) ||
+      state.decisionSerial < 0 ||
+      !state.lastReleasedAtByCandidate ||
+      typeof state.lastReleasedAtByCandidate !== 'object' ||
+      Array.isArray(state.lastReleasedAtByCandidate)) {
+    throw new TypeError('DIRECTOR_STATE_INVALID');
+  }
+  if (state.activeCandidateId !== null &&
+      !nonEmptyString(state.activeCandidateId)) {
+    throw new TypeError('DIRECTOR_STATE_ACTIVE_INVALID');
+  }
+  if (state.activeCandidateId === null && state.activeSelectedAtMs !== null) {
+    throw new TypeError('DIRECTOR_STATE_ACTIVE_TIME_INVALID');
+  }
+  if (state.activeCandidateId !== null) {
+    finiteNonNegative(
+      state.activeSelectedAtMs,
+      'DIRECTOR_ACTIVE_SELECTED_AT_MS'
+    );
+  }
+  for (const [id, atMs] of Object.entries(state.lastReleasedAtByCandidate)) {
+    if (!nonEmptyString(id)) {
+      throw new TypeError('DIRECTOR_STATE_HISTORY_ID_INVALID');
+    }
+    finiteNonNegative(atMs, 'DIRECTOR_STATE_HISTORY_TIME');
+  }
+}
+
+function rankedShotRows(candidates, policy, state, nowMs) {
+  if (!Array.isArray(candidates)) {
+    throw new TypeError('DIRECTOR_CANDIDATES_REQUIRED');
+  }
+  const seen = new Set();
+  const rows = candidates.map(candidate => {
+    validateShotCandidate(candidate);
+    if (seen.has(candidate.candidateId)) {
+      throw new TypeError('DIRECTOR_CANDIDATE_DUPLICATE');
+    }
+    seen.add(candidate.candidateId);
+    const releasedAt = state.lastReleasedAtByCandidate[candidate.candidateId];
+    const cooldownBlocked =
+      candidate.candidateId !== state.activeCandidateId &&
+      releasedAt !== undefined &&
+      nowMs - releasedAt < policy.cooldownMs;
+    return {
+      candidate,
+      score: scoreWithPolicy(candidate, policy),
+      cooldownBlocked
+    };
+  });
+  return rows.sort((a, b) =>
+    b.score - a.score ||
+    b.candidate.starvationMs - a.candidate.starvationMs ||
+    a.candidate.candidateId.localeCompare(b.candidate.candidateId)
+  );
+}
+
+export function decideReplayBroadcastShot(
+  state,
+  { candidates, policy, nowMs }
+) {
+  validateDirectorState(state);
+  const normalizedPolicy = normalizedDirectorPolicy(policy);
+  const clock = finiteNonNegative(nowMs, 'DIRECTOR_NOW_MS');
+  const rows = rankedShotRows(
+    candidates,
+    normalizedPolicy,
+    state,
+    clock
+  );
+  const activeRow =
+    rows.find(row => row.candidate.candidateId === state.activeCandidateId) ||
+    null;
+  const eligible = rows.filter(row => !row.cooldownBlocked);
+  let selected = activeRow;
+  let reason = 'NO_CANDIDATE';
+  let switchToNew = false;
+
+  if (activeRow &&
+      clock - state.activeSelectedAtMs < normalizedPolicy.holdMs) {
+    reason = 'HOLD';
+  } else {
+    const best = eligible[0] || null;
+    if (!activeRow) {
+      selected = best;
+      reason = best ? 'INITIAL' : 'NO_CANDIDATE';
+      switchToNew = Boolean(best);
+    } else if (!best ||
+               best.candidate.candidateId === activeRow.candidate.candidateId) {
+      selected = activeRow;
+      reason = 'CONTINUE';
+    } else if (best.score === activeRow.score &&
+               best.candidate.starvationMs >
+                 activeRow.candidate.starvationMs) {
+      selected = best;
+      reason = 'STARVATION_RESCUE';
+      switchToNew = true;
+    } else if (best.score >=
+               activeRow.score + normalizedPolicy.hysteresisDelta) {
+      selected = best;
+      reason = 'VALUE_SWITCH';
+      switchToNew = true;
+    } else {
+      selected = activeRow;
+      reason = 'HYSTERESIS';
+    }
+  }
+
+  const serial = state.decisionSerial + 1;
+  const nextReleased = cloneJson(state.lastReleasedAtByCandidate);
+  let nextActiveId = state.activeCandidateId;
+  let nextSelectedAt = state.activeSelectedAtMs;
+  const oldActiveMissing =
+    state.activeCandidateId !== null && activeRow === null;
+
+  if ((switchToNew || oldActiveMissing) &&
+      state.activeCandidateId !== null) {
+    nextReleased[state.activeCandidateId] = clock;
+  }
+  if (switchToNew && selected) {
+    nextActiveId = selected.candidate.candidateId;
+    nextSelectedAt = clock;
+  } else if (oldActiveMissing && !selected) {
+    nextActiveId = null;
+    nextSelectedAt = null;
+  }
+
+  const nextState = deepFreeze({
+    schema: DIRECTOR_STATE_SCHEMA,
+    activeCandidateId: nextActiveId,
+    activeSelectedAtMs: nextSelectedAt,
+    lastReleasedAtByCandidate: nextReleased,
+    decisionSerial: serial
+  });
+  const decision = deepFreeze({
+    schema: DIRECTOR_DECISION_SCHEMA,
+    serial,
+    presentationOnly: true,
+    atMs: clock,
+    reason,
+    selectedCandidateId: selected?.candidate.candidateId ?? null,
+    selectedEventId: selected?.candidate.eventId ?? null,
+    selectedScore: selected?.score ?? null,
+    considered: rows.map(row => ({
+      candidateId: row.candidate.candidateId,
+      eventId: row.candidate.eventId,
+      score: row.score,
+      starvationMs: row.candidate.starvationMs,
+      cooldownBlocked: row.cooldownBlocked
+    }))
+  });
+  return deepFreeze({ state: nextState, decision });
+}
+
 export const BATTLE_REPLAY_CORE = Object.freeze({
   schema: REPLAY_SCHEMA,
-  requiredVersionKeys: REQUIRED_VERSION_KEYS
+  requiredVersionKeys: REQUIRED_VERSION_KEYS,
+  director: Object.freeze({
+    candidateSchema: DIRECTOR_CANDIDATE_SCHEMA,
+    stateSchema: DIRECTOR_STATE_SCHEMA,
+    decisionSchema: DIRECTOR_DECISION_SCHEMA,
+    positiveTerms: DIRECTOR_POSITIVE_TERMS,
+    penaltyTerms: DIRECTOR_PENALTY_TERMS
+  })
 });

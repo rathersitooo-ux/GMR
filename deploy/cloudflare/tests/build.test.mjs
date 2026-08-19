@@ -57,7 +57,7 @@ const dependencyContract = [
     expectedArg: 'expectedReplayAdapterBlob',
     artifact: 'battle_replay_live_adapter',
     fixture: "import './battle-replay-core.mjs';\nimport './card-presentation-core.mjs';\n",
-    currentBlob: '2e0338b1f311670250cbaffaeb834a19ba1a9aa0',
+    currentBlob: '0d7f4601d5641f6ac4bf4a080ddda980d6c068db',
   },
   {
     file: 'battle-replay-core.mjs',
@@ -110,7 +110,7 @@ const dependencyContract = [
     sourceArg: 'uiStateFeedbackCoreSource',
     expectedArg: 'expectedUiStateFeedbackCoreBlob',
     artifact: 'ui_state_feedback_core',
-    fixture: "export const UI_STATE_FEEDBACK_CORE = Object.freeze({ schema: 'fixture' });\n",
+    fixture: "export const GAMEROAD_UI_STATE_FEEDBACK_CORE = Object.freeze({});\n",
     currentBlob: 'bcc5e8b9313b441ed81614a56c24700f5aa7fdc8',
   },
   {

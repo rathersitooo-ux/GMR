@@ -24,7 +24,12 @@ assert.deepEqual(t.plans[7].groupTargets, ['P1','P2','P3']);
 assert.ok(t.plans[7].emphasis.impact > t.plans[2].emphasis.impact, 'finisher must be more exaggerated than normal attack');
 assert.ok(t.plans[3].emphasis.impact > t.plans[2].emphasis.impact, 'strong ability must be more exaggerated than normal attack');
 assert.equal(t.plans[2].timing.handoffAt < t.plans[2].timing.recoveryEnd, true, 'next view starts before recovery ends');
-assert.equal(auditMotionContinuity(t).ok, true);
+const continuity = auditMotionContinuity(t);
+assert.equal(continuity.ok, true);
+assert.equal(continuity.deadGapMs, 0);
+assert.ok(continuity.handoffOverlapMs > 0, 'handoff evidence must be measured, not inferred from a flag');
+assert.equal(continuity.declaredAmbientCoverage, 1);
+assert.equal('motionCoverage' in continuity, false, 'do not expose a fake visual-motion coverage metric');
 
 const reduced = planBattleConveyor(demo, {reducedMotion:true});
 assert.equal(reduced.plans.map(p => p.kind).join(','), t.plans.map(p => p.kind).join(','));
@@ -37,9 +42,9 @@ assert.throws(() => planBattleConveyor([{accepted:true,eventId:'x',kind:'finishe
 
 console.log(JSON.stringify({
   ok:true,
-  tests:13,
+  tests:17,
   timelineEnd:t.timelineEnd,
   reducedTimelineEnd:reduced.timelineEnd,
   transitions:t.plans.map(p=>[p.eventId,p.transition]),
-  continuity:auditMotionContinuity(t)
+  continuity
 }, null, 2));

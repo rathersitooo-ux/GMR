@@ -168,6 +168,58 @@ jobs:
           fi
           echo "External HTTP exact-byte probe succeeded for ${PAGES_URL}/"
 
+      - name: Probe public version manifest
+        id: manifest_probe
+        shell: bash
+        env:
+          PAGES_URL: ${{ steps.pages.outputs.url }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${PAGES_URL:-}" ]]; then
+            echo "::error::Pages deployment did not expose a public URL for version manifest probe"
+            exit 1
+          fi
+          MANIFEST_BODY="$RUNNER_TEMP/gameroad-version.json"
+          MANIFEST_HEADERS="$RUNNER_TEMP/gameroad-version.headers"
+          HTTP_CODE="$(curl --fail --silent --show-error --location \
+            --header 'Accept-Encoding: identity' \
+            --retry 4 --retry-delay 2 --retry-connrefused \
+            --max-time 30 \
+            --dump-header "$MANIFEST_HEADERS" \
+            --output "$MANIFEST_BODY" \
+            --write-out '%{http_code}' \
+            "${PAGES_URL}/gameroad-version.json")"
+          if [[ "$HTTP_CODE" != "200" ]]; then
+            echo "::error::Public version manifest returned HTTP ${HTTP_CODE}, expected 200"
+            exit 1
+          fi
+          if [[ ! -s "$MANIFEST_BODY" ]]; then
+            echo "::error::Public version manifest probe returned an empty body"
+            exit 1
+          fi
+          if ! cmp --silent deploy/cloudflare/dist/gameroad-version.json "$MANIFEST_BODY"; then
+            echo "::error::Public version manifest does not match the exact deployed gameroad-version.json"
+            exit 1
+          fi
+          if ! grep -qi '^cache-control:.*no-store' "$MANIFEST_HEADERS"; then
+            echo "::error::Public version manifest is missing Cache-Control: no-store"
+            exit 1
+          fi
+          MANIFEST_BODY="$MANIFEST_BODY" node <<'NODE'
+          const fs = require('node:fs');
+          const manifest = JSON.parse(fs.readFileSync(process.env.MANIFEST_BODY, 'utf8'));
+          const expected = JSON.parse(fs.readFileSync('deploy/cloudflare/dist/gameroad-version.json', 'utf8'));
+          if (manifest.build_id !== process.env.GITHUB_SHA) {
+            throw new Error(`Public version manifest build_id ${manifest.build_id} does not equal GITHUB_SHA ${process.env.GITHUB_SHA}`);
+          }
+          for (const key of ['schema', 'channel', 'reload_policy']) {
+            if (JSON.stringify(manifest[key]) !== JSON.stringify(expected[key])) {
+              throw new Error(`Public version manifest ${key} does not match generated manifest`);
+            }
+          }
+          NODE
+          echo "External version-manifest exact-byte/cache/build probe succeeded for ${PAGES_URL}/gameroad-version.json"
+
       - name: Probe public friend-room WebSocket
         id: ws_probe
         shell: bash
@@ -194,6 +246,7 @@ jobs:
           PAGES_OUTCOME: ${{ steps.pages.outcome }}
           READBACK_OUTCOME: ${{ steps.readback.outcome }}
           PROBE_OUTCOME: ${{ steps.probe.outcome }}
+          MANIFEST_PROBE_OUTCOME: ${{ steps.manifest_probe.outcome }}
           WS_PROBE_OUTCOME: ${{ steps.ws_probe.outcome }}
           PAGES_URL: ${{ steps.pages.outputs.url }}
         run: |
@@ -210,6 +263,7 @@ jobs:
           pages=${PAGES_OUTCOME}
           readback=${READBACK_OUTCOME}
           probe=${PROBE_OUTCOME}
+          manifest_probe=${MANIFEST_PROBE_OUTCOME}
           ws_probe=${WS_PROBE_OUTCOME}
           url=${PAGES_URL:-}
           EOF

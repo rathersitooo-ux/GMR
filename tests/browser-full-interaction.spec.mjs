@@ -1353,3 +1353,101 @@ test('R13 covers direct plan selectors, reachable-node click, avatar drag, real 
   }
   runtime.assertClean(testInfo);
 });
+
+// FULLREG R19 visible four-player Honey Hunt route
+test('R19 reaches Result from visible four-player Honey Hunt and returns Home', async ({ page }, testInfo) => {
+  test.setTimeout(240_000);
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+  const deck = await installLegalBattleDeck(page);
+  expect(deck.main).toHaveLength(40);
+  expect(deck.committed).toBeTruthy();
+  expect(deck.savedValidation.ok).toBeTruthy();
+  testInfo.annotations.push({ type: 'deterministic-precondition', description: 'A legal 40-card deck is installed only to unlock current visible Setup controls. Match mode/content and all match progression use visible controls.' });
+
+  const setupGo = visibleOperationGo(page, 'setup');
+  await expect(setupGo).toBeVisible();
+  await setupGo.click();
+  const setup = page.locator('section[data-screen="setup"]');
+  await expect(setup).toBeVisible();
+  const honey = setup.locator('[data-content="honey_hunt"]');
+  const fourPlayer = setup.locator('[data-mode="4p"]');
+  await expect(honey).toBeVisible();
+  await expect(fourPlayer).toBeVisible();
+  await honey.click();
+  await fourPlayer.click();
+  await expect(honey).toHaveClass(/on/);
+  await expect(fourPlayer).toHaveClass(/on/);
+  await attachStateScreenshot(page, testInfo, 'r19-honey-four-player-setup-visible');
+
+  const startMatch = setup.locator('#startMatch');
+  await expect(startMatch).toBeVisible();
+  await expect(startMatch).toBeEnabled();
+  await startMatch.click();
+  const battle = page.locator('section[data-screen="battle"]');
+  const result = page.locator('section[data-screen="result"]');
+  await expect(battle).toBeVisible();
+  await expect(battle.locator('#honeyMeter')).toBeVisible();
+  await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(4);
+  await attachStateScreenshot(page, testInfo, 'r19-honey-four-player-battle-visible');
+
+  const deadline = Date.now() + 210_000;
+  let roundsSubmitted = 0;
+  let targetConfirms = 0;
+  let presentationAdvances = 0;
+  let abilityConfirms = 0;
+
+  while (Date.now() < deadline) {
+    if (await result.isVisible().catch(() => false)) break;
+    if (await satisfyVisibleAbilityChoice(page)) {
+      abilityConfirms += 1;
+      continue;
+    }
+    const advance = battle.locator('#battleResolution .resolutionAdvance:visible');
+    if ((await advance.count()) > 0) {
+      await advance.first().click();
+      presentationAdvances += 1;
+      continue;
+    }
+    const targetConfirm = battle.locator('#targetBox.on #confirmTarget:visible');
+    if ((await targetConfirm.count()) > 0) {
+      if (!(await targetConfirm.isEnabled())) {
+        for (const selector of ['#targetPlayer', '#targetLane', '#targetShield']) {
+          const select = battle.locator(`${selector}:visible`);
+          if ((await select.count()) === 0 || !(await select.isEnabled())) continue;
+          if (await select.inputValue()) continue;
+          const firstLegal = await select.locator('option:not([disabled])').evaluateAll((nodes) => nodes.map((node) => node.value).find(Boolean) ?? '');
+          if (firstLegal) await select.selectOption(firstLegal);
+        }
+      }
+      await expect(targetConfirm).toBeEnabled();
+      await targetConfirm.click();
+      targetConfirms += 1;
+      continue;
+    }
+    const roadSelect = battle.locator('#roadSelect:visible');
+    if ((await roadSelect.count()) > 0 && (await roadSelect.isEnabled())) {
+      await submitVisiblePlan(battle);
+      roundsSubmitted += 1;
+      continue;
+    }
+    await page.waitForTimeout(80);
+  }
+
+  await expect(result, 'visible four-player Honey Hunt reaches Result without direct match/result injection').toBeVisible({ timeout: 2_000 });
+  expect(roundsSubmitted).toBeGreaterThan(0);
+  expect(presentationAdvances).toBeGreaterThan(0);
+  await expect(result.locator('#resultRanking .rankLine')).toHaveCount(4);
+  const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';
+  expect(roundsText).toMatch(/\d+ラウンド/);
+  await attachStateScreenshot(page, testInfo, 'r19-honey-four-player-result-visible');
+
+  const home = result.locator('[data-root-go="home"]');
+  await expect(home).toBeVisible();
+  await expect(home).toBeEnabled();
+  await home.click();
+  await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+  await attachStateScreenshot(page, testInfo, 'r19-honey-four-player-home-returned');
+  testInfo.annotations.push({ type: 'visible-4p-honey-result-path', description: `submitted=${roundsSubmitted}, targetConfirms=${targetConfirms}, battleAdvances=${presentationAdvances}, abilityConfirms=${abilityConfirms}, result=${roundsText}` });
+  runtime.assertClean(testInfo);
+});

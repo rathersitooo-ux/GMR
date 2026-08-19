@@ -328,3 +328,31 @@ test('2v2 starts four seats with canonical P1/P2 vs P3/P4 team assignment', asyn
     { id: 'P4', team: 'B' },
   ]);
 });
+
+test('records build-linked visible Home to Shop P0 evidence', async ({ page }, testInfo) => {
+  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
+  expect(response, 'main HTML response').not.toBeNull();
+  expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
+  await page.waitForTimeout(500);
+
+  const home = page.locator('section[data-screen="home"]');
+  await expect(home).toBeVisible();
+
+  const shopControl = page.getByRole('button', { name: 'ショップへ', exact: true });
+  await expect(shopControl, 'visible Home-to-Shop pointer control').toBeVisible();
+  await shopControl.click();
+
+  const shop = page.locator('section[data-screen="shop"]');
+  await expect(shop, 'Shop target reached through visible pointer navigation').toBeVisible();
+  await page.waitForTimeout(120);
+
+  const png = await page.screenshot({ fullPage: true, animations: 'disabled' });
+  await testInfo.attach('p0-home-shop-visible.png', {
+    body: png,
+    contentType: 'image/png',
+  });
+  testInfo.annotations.push({
+    type: 'minor-mode-playtest-evidence',
+    description: 'P0 HOME-SHOP-BRIDGE visible pointer transition with attached runtime screenshot on this exact GitHub revision.',
+  });
+});

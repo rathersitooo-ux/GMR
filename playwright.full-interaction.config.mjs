@@ -12,6 +12,7 @@ export default defineConfig({
   reporter: [
     ['line'],
     ['html', { outputFolder: 'playwright-report-full-interaction', open: 'never' }],
+    ['json', { outputFile: 'test-results/full-interaction/unattended-playtest-report.json' }],
   ],
   use: {
     baseURL: 'http://127.0.0.1:4173',

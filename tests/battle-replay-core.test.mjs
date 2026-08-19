@@ -7,6 +7,7 @@ import {
   createReplayLog,
   createReplayShotCandidate,
   decideReplayBroadcastShot,
+  projectReplayDirectorDecision,
   readReplay,
   scoreReplayShotCandidate,
   validateReplayLog
@@ -382,4 +383,90 @@ test('broadcast director clears a missing active shot without synthesizing repla
   assert.equal(cleared.state.activeCandidateId, null);
   assert.equal(cleared.state.activeSelectedAtMs, null);
   assert.equal(cleared.state.lastReleasedAtByCandidate[a.candidateId], 100);
+});
+
+function initialDirectorDecision() {
+  const candidate = directorCandidate(1, 'BOARD');
+  return decideReplayBroadcastShot(
+    createReplayBroadcastDirectorState(),
+    { candidates: [candidate], policy: directorPolicy, nowMs: 25 }
+  ).decision;
+}
+
+test('player presentation projection maps the exact three authorized modes deterministically', () => {
+  const decision = initialDirectorDecision();
+  const expected = {
+    'BOARD_PRIMARY+ANIM_WIPE': {
+      primarySurface: 'BOARD',
+      wipeSurface: 'ANIMATION',
+      wipeEnabled: true
+    },
+    'ANIMATION_PRIMARY+BOARD_WIPE': {
+      primarySurface: 'ANIMATION',
+      wipeSurface: 'BOARD',
+      wipeEnabled: true
+    },
+    'BOARD_ONLY(WIPE_OFF)': {
+      primarySurface: 'BOARD',
+      wipeSurface: null,
+      wipeEnabled: false
+    }
+  };
+
+  for (const [mode, layout] of Object.entries(expected)) {
+    const first = projectReplayDirectorDecision(decision, { mode });
+    const second = projectReplayDirectorDecision(decision, { mode });
+    assert.deepEqual(first, second);
+    assert.equal(first.schema, 'GAMEROAD_REPLAY_PLAYER_PRESENTATION_PROJECTION_V1');
+    assert.equal(first.presentationOnly, true);
+    assert.equal(first.mode, mode);
+    assert.equal(first.decisionSerial, decision.serial);
+    assert.equal(first.atMs, decision.atMs);
+    assert.equal(first.reason, decision.reason);
+    assert.equal(first.selectedCandidateId, decision.selectedCandidateId);
+    assert.equal(first.selectedEventId, decision.selectedEventId);
+    assert.equal(first.primarySurface, layout.primarySurface);
+    assert.equal(first.wipeSurface, layout.wipeSurface);
+    assert.equal(first.wipeEnabled, layout.wipeEnabled);
+    assert.equal('selectedScore' in first, false);
+    assert.equal('considered' in first, false);
+    assert.equal('publicData' in first, false);
+    assert.equal('privateData' in first, false);
+    assert.equal('privateByViewer' in first, false);
+    assert.equal('authorityOnly' in first, false);
+    assert.equal(Object.isFrozen(first), true);
+  }
+});
+
+test('player presentation projection fails closed for unknown or missing modes', () => {
+  const decision = initialDirectorDecision();
+  assert.throws(
+    () => projectReplayDirectorDecision(decision),
+    /DIRECTOR_PLAYER_MODE_INVALID/
+  );
+  assert.throws(
+    () => projectReplayDirectorDecision(decision, { mode: 'AUTO' }),
+    /DIRECTOR_PLAYER_MODE_INVALID/
+  );
+});
+
+test('player presentation projection rejects invalid, secret-bearing, or identity-broken decisions', () => {
+  const decision = initialDirectorDecision();
+  const mode = 'BOARD_PRIMARY+ANIM_WIPE';
+  assert.throws(
+    () => projectReplayDirectorDecision({ ...decision, privateData: { secret: true } }, { mode }),
+    /DIRECTOR_DECISION_NOT_PUBLIC_ONLY/
+  );
+  assert.throws(
+    () => projectReplayDirectorDecision({ ...decision, presentationOnly: false }, { mode }),
+    /DIRECTOR_DECISION_INVALID/
+  );
+  assert.throws(
+    () => projectReplayDirectorDecision({ ...decision, selectedEventId: null }, { mode }),
+    /DIRECTOR_DECISION_IDENTITY_INVALID/
+  );
+  assert.throws(
+    () => projectReplayDirectorDecision({ ...decision, selectedScore: Infinity }, { mode }),
+    /DIRECTOR_DECISION_SCORE_INVALID/
+  );
 });

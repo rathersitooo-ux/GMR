@@ -110,7 +110,7 @@ const dependencyContract = [
     sourceArg: 'uiStateFeedbackCoreSource',
     expectedArg: 'expectedUiStateFeedbackCoreBlob',
     artifact: 'ui_state_feedback_core',
-    fixture: "export const GAMEROAD_UI_STATE_FEEDBACK_CORE = Object.freeze({});\n",
+    fixture: "export const UI_STATE_FEEDBACK_CORE = Object.freeze({ schema: 'fixture' });\n",
     currentBlob: 'bcc5e8b9313b441ed81614a56c24700f5aa7fdc8',
   },
   {

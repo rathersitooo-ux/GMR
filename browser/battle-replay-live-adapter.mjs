@@ -15,8 +15,8 @@ const CONTENT_VERSION_PREFIX = 'GAMEROAD_CARD_CONTENT_FNV1A64';
 const FNV_OFFSET = 0xcbf29ce484222325n;
 const FNV_PRIME = 0x100000001b3n;
 const FNV_MASK = 0xffffffffffffffffn;
-const CARD_PRESENTATION_STYLE_ID = 'gameroad-card-presentation-runtime-r6-style';
-const CARD_PRESENTATION_HOLD_MS = 520;
+const CARD_PRESENTATION_STYLE_ID = 'gameroad-card-presentation-runtime-r7-style';
+const CARD_PRESENTATION_HOLD_MS = 400;
 
 function cloneJson(value) {
   const text = JSON.stringify(value);
@@ -325,8 +325,8 @@ function ensureBattleReplayCardPresentationStyle(documentRef) {
   style.id = CARD_PRESENTATION_STYLE_ID;
   style.textContent = `
 #battleResolution.grCardPresentationFallback .resolutionWinner{filter:brightness(1.08);text-shadow:0 0 14px rgba(255,218,126,.48)}
-#battleResolution.grCardPresentationFallback.grCardPresentationMotion .resolutionWinner{animation:grCardPresentationFallbackPulse .42s ease-out}
-@keyframes grCardPresentationFallbackPulse{0%{opacity:.62;transform:translateY(2px);text-shadow:0 0 4px rgba(255,218,126,.14)}55%{opacity:1;transform:none;text-shadow:0 0 22px rgba(255,218,126,.76)}100%{opacity:1;transform:none;text-shadow:0 0 14px rgba(255,218,126,.48)}}
+#battleResolution.grCardPresentationFallback.grCardPresentationMotion .resolutionWinner{animation:grCardPresentationFallbackPulse .35s ease-out}
+@keyframes grCardPresentationFallbackPulse{0%{opacity:1;text-shadow:0 0 14px rgba(255,218,126,.48)}36%{opacity:1;text-shadow:0 0 22px rgba(255,218,126,.76)}100%{opacity:1;text-shadow:0 0 14px rgba(255,218,126,.48)}}
 #battleResolution.noMotion.grCardPresentationFallback .resolutionWinner,body.low-perf #battleResolution.grCardPresentationFallback .resolutionWinner{animation:none!important;transform:none!important;filter:none!important}
 @media(prefers-reduced-motion:reduce){#battleResolution.grCardPresentationFallback .resolutionWinner{animation:none!important;transform:none!important}}
 `;

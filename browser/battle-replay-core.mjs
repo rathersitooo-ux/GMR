@@ -615,3 +615,68 @@ export function projectReplayDirectorDecision(decision, { mode } = {}) {
     wipeEnabled: layout.wipeEnabled
   });
 }
+
+const REPLAY_CONVEYOR_ROUTE_SCHEMA = 'GAMEROAD_REPLAY_PLAYER_CONVEYOR_ROUTE_V1';
+const BATTLE_CONVEYOR_PRESENTATION_SCHEMA = 'gameroad.battle-conveyor-presentation.v2';
+
+function validateExistingBattleConveyorPlan(plan) {
+  if (!plan ||
+      typeof plan !== 'object' ||
+      Array.isArray(plan) ||
+      plan.schema !== BATTLE_CONVEYOR_PRESENTATION_SCHEMA ||
+      plan.presentationOnly !== true ||
+      !Array.isArray(plan.plans) ||
+      own(plan, 'privateData') ||
+      own(plan, 'privateByViewer') ||
+      own(plan, 'authorityOnly')) {
+    throw new TypeError('REPLAY_CONVEYOR_PLAN_INVALID');
+  }
+  for (const item of plan.plans) {
+    if (!item ||
+        typeof item !== 'object' ||
+        Array.isArray(item) ||
+        item.schema !== BATTLE_CONVEYOR_PRESENTATION_SCHEMA ||
+        item.presentationOnly !== true ||
+        item.authorityBoundary !== 'accepted_public_event_only' ||
+        !nonEmptyString(item.eventId) ||
+        own(item, 'privateData') ||
+        own(item, 'privateByViewer') ||
+        own(item, 'authorityOnly')) {
+      throw new TypeError('REPLAY_CONVEYOR_PLAN_INVALID');
+    }
+  }
+  return plan;
+}
+
+function roleForSurface(projection, surface) {
+  if (projection.primarySurface === surface) return 'PRIMARY';
+  if (projection.wipeSurface === surface) return 'WIPE';
+  return 'OFF';
+}
+
+export function routeReplayPlayerProjectionToBattleConveyor(
+  decision,
+  conveyorPlan,
+  { mode } = {}
+) {
+  const projection = projectReplayDirectorDecision(decision, { mode });
+  const conveyor = validateExistingBattleConveyorPlan(conveyorPlan);
+  const animationRole = roleForSurface(projection, 'ANIMATION');
+
+  return deepFreeze({
+    schema: REPLAY_CONVEYOR_ROUTE_SCHEMA,
+    presentationOnly: true,
+    gameplayAuthority: false,
+    gameStateWrite: false,
+    mode: projection.mode,
+    decisionSerial: projection.decisionSerial,
+    selectedCandidateId: projection.selectedCandidateId,
+    selectedEventId: projection.selectedEventId,
+    boardRole: roleForSurface(projection, 'BOARD'),
+    animationRole,
+    conveyor: {
+      schema: conveyor.schema,
+      consumeExistingPlan: animationRole !== 'OFF'
+    }
+  });
+}

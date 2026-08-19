@@ -470,3 +470,100 @@ test('player presentation projection rejects invalid, secret-bearing, or identit
     /DIRECTOR_DECISION_SCORE_INVALID/
   );
 });
+
+const {
+  routeReplayPlayerProjectionToBattleConveyor
+} = await import('../browser/battle-replay-core.mjs');
+const {
+  planBattleConveyor
+} = await import('../browser/battle-conveyor-presentation-core.mjs');
+
+function actualConveyorPlan() {
+  return planBattleConveyor([
+    {
+      accepted: true,
+      eventId: 'replay-motion-1',
+      kind: 'reveal',
+      publicData: { playerIds: ['P1', 'P2', 'P3', 'P4'] }
+    }
+  ]);
+}
+
+test('player projection routes the existing Battle Conveyor plan to exact primary/wipe/off roles', () => {
+  const decision = initialDirectorDecision();
+  const conveyor = actualConveyorPlan();
+  const expected = {
+    'BOARD_PRIMARY+ANIM_WIPE': { boardRole: 'PRIMARY', animationRole: 'WIPE', consume: true },
+    'ANIMATION_PRIMARY+BOARD_WIPE': { boardRole: 'WIPE', animationRole: 'PRIMARY', consume: true },
+    'BOARD_ONLY(WIPE_OFF)': { boardRole: 'PRIMARY', animationRole: 'OFF', consume: false }
+  };
+
+  for (const [mode, roles] of Object.entries(expected)) {
+    const route = routeReplayPlayerProjectionToBattleConveyor(decision, conveyor, { mode });
+    assert.equal(route.schema, 'GAMEROAD_REPLAY_PLAYER_CONVEYOR_ROUTE_V1');
+    assert.equal(route.presentationOnly, true);
+    assert.equal(route.gameplayAuthority, false);
+    assert.equal(route.gameStateWrite, false);
+    assert.equal(route.mode, mode);
+    assert.equal(route.decisionSerial, decision.serial);
+    assert.equal(route.selectedCandidateId, decision.selectedCandidateId);
+    assert.equal(route.selectedEventId, decision.selectedEventId);
+    assert.equal(route.boardRole, roles.boardRole);
+    assert.equal(route.animationRole, roles.animationRole);
+    assert.equal(route.conveyor.schema, 'gameroad.battle-conveyor-presentation.v2');
+    assert.equal(route.conveyor.consumeExistingPlan, roles.consume);
+    assert.equal('publicData' in route, false);
+    assert.equal('privateData' in route, false);
+    assert.equal('privateByViewer' in route, false);
+    assert.equal('authorityOnly' in route, false);
+    assert.equal('plans' in route.conveyor, false);
+    assert.equal('timelineEnd' in route.conveyor, false);
+    assert.equal(Object.isFrozen(route), true);
+    assert.equal(Object.isFrozen(route.conveyor), true);
+  }
+});
+
+test('conveyor routing fails closed for non-current, non-public-only, or secret-bearing conveyor plans', () => {
+  const decision = initialDirectorDecision();
+  const conveyor = actualConveyorPlan();
+  const mode = 'BOARD_PRIMARY+ANIM_WIPE';
+
+  assert.throws(
+    () => routeReplayPlayerProjectionToBattleConveyor(
+      decision,
+      { ...conveyor, schema: 'future.conveyor.v9' },
+      { mode }
+    ),
+    /REPLAY_CONVEYOR_PLAN_INVALID/
+  );
+  assert.throws(
+    () => routeReplayPlayerProjectionToBattleConveyor(
+      decision,
+      { ...conveyor, privateData: { secret: true } },
+      { mode }
+    ),
+    /REPLAY_CONVEYOR_PLAN_INVALID/
+  );
+  assert.throws(
+    () => routeReplayPlayerProjectionToBattleConveyor(
+      decision,
+      {
+        ...conveyor,
+        plans: [{ ...conveyor.plans[0], authorityBoundary: 'recalculated_game_state' }]
+      },
+      { mode }
+    ),
+    /REPLAY_CONVEYOR_PLAN_INVALID/
+  );
+  assert.throws(
+    () => routeReplayPlayerProjectionToBattleConveyor(
+      decision,
+      {
+        ...conveyor,
+        plans: [{ ...conveyor.plans[0], authorityOnly: { hidden: true } }]
+      },
+      { mode }
+    ),
+    /REPLAY_CONVEYOR_PLAN_INVALID/
+  );
+});

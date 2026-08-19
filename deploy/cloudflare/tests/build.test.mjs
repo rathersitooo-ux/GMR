@@ -39,7 +39,7 @@ const dependencyContract = [
     expectedArg: 'expectedPresenceCoreBlob',
     artifact: 'hate_peer_presence_core',
     fixture: 'export const HATE_PEER_PRESENCE_CORE = Object.freeze({});\n',
-    currentBlob: '698516da1f89099c4cb15152bb98174473f77534',
+    currentBlob: '522c6132e4b49c0a0df15690927da511c1e40f43',
   },
   {
     file: 'screen-navigation-core.mjs',
@@ -66,7 +66,7 @@ const dependencyContract = [
     expectedArg: 'expectedReplayCoreBlob',
     artifact: 'battle_replay_core',
     fixture: 'export const BATTLE_REPLAY_CORE = Object.freeze({});\n',
-    currentBlob: '48aaf3f2809ee7f9282fa9db68e4e7f79bf8e860',
+    currentBlob: 'c2900ee933c6a3db82f0b0337124bc638e40c929',
   },
   {
     file: 'card-presentation-core.mjs',
@@ -76,6 +76,15 @@ const dependencyContract = [
     artifact: 'card_presentation_core',
     fixture: 'export const CARD_PRESENTATION_CORE = Object.freeze({});\n',
     currentBlob: '5dbd31ce856b412a7572ce213eb9d764c1b547de',
+  },
+  {
+    file: 'battle-conveyor-presentation-core.mjs',
+    source: 'browser/battle-conveyor-presentation-core.mjs',
+    sourceArg: 'battleConveyorCoreSource',
+    expectedArg: 'expectedBattleConveyorCoreBlob',
+    artifact: 'battle_conveyor_presentation_core',
+    fixture: 'export const BATTLE_CONVEYOR_PRESENTATION_CORE = Object.freeze({});\n',
+    currentBlob: '70a6a7e354ad96d4297acab3ba2d9c4caa584af2',
   },
   {
     file: 'board-facility-state-core.classic.js',
@@ -239,6 +248,7 @@ test('build fails closed on stale Browser or packaged dependency blob expectatio
     ['expectedReplayAdapterBlob', /Battle replay live adapter blob mismatch/],
     ['expectedReplayCoreBlob', /Battle replay core blob mismatch/],
     ['expectedCardPresentationCoreBlob', /Card presentation core blob mismatch/],
+    ['expectedBattleConveyorCoreBlob', /Battle conveyor presentation core blob mismatch/],
     ['expectedBoardFacilityClassicBlob', /Board facility classic bridge blob mismatch/],
     ['expectedBoardFacilityCoreBlob', /Board facility core blob mismatch/],
     ['expectedBoardFacilityRuntimeMountBlob', /Board facility runtime mount blob mismatch/],

@@ -62,7 +62,7 @@ jobs:
           test "$(grep -c 'const bridge=__grPartnerAdviceRuntimeMount.bridge' browser/GAMEROAD.html)" = "1"
       - name: Focused runtime safety tests
         run: node --test tests/partner-advice-runtime-mount.test.mjs tests/partner-legal-action-adapter.test.mjs
-      - name: Commit only production HTML and self-clean executor
+      - name: Commit product and prove helper is absent from final diff
         shell: bash
         run: |
           set -euo pipefail
@@ -70,6 +70,7 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git rm .github/workflows/partnergood-r8-orphan-prodhtml-executor.yml
           git add browser/GAMEROAD.html
-          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = "browser/GAMEROAD.html "
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = ".github/workflows/partnergood-r8-orphan-prodhtml-executor.yml browser/GAMEROAD.html "
           git commit -m "PARTNER-GOODMOVE R8: mount approved advice runtime in production HTML"
+          test "$(git diff --name-only 9065041e2f67e264791fb57d12257b2dcead7104...HEAD | sort | tr '\n' ' ')" = "browser/GAMEROAD.html "
           git push origin HEAD:work/partnergood-r8-orphan-prodhtml-20260819

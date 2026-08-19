@@ -107,7 +107,9 @@ jobs:
               .github/workflows/advice-collective-eval.yml|\
               tools/partner-advice-decision-product.mjs|\
               tests/partner-advice-decision-product.test.mjs|\
-              .github/workflows/partner-advice-decision-product.yml)
+              .github/workflows/partner-advice-decision-product.yml|\
+              tools/external-creative-submission.mjs|\
+              tests/external-creative-submission.test.mjs)
                 advice=true
                 ;;
               browser/battle-replay-core.mjs|\
@@ -331,7 +333,7 @@ jobs:
 
       - name: Run Advice offline evaluator tests
         if: steps.classify.outputs.advice == 'true'
-        run: node --test tests/advice-collective-eval.test.mjs tests/partner-advice-decision-product.test.mjs
+        run: node --test tests/advice-collective-eval.test.mjs tests/partner-advice-decision-product.test.mjs tests/external-creative-submission.test.mjs
 
       - name: Run Battle replay core tests
         if: steps.classify.outputs.replay == 'true'

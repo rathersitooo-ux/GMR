@@ -151,6 +151,107 @@ jobs:
           });
           EOF
 
+      - name: Append keyboard-only visible navigation playtest
+        shell: bash
+        run: |
+          cat >> tests/browser-runtime-smoke.spec.mjs <<'EOF'
+
+          test('keyboard-only navigation reaches Cards and returns Home through visible controls', async ({ page }, testInfo) => {
+            const pageErrors = [];
+            const consoleErrors = [];
+            const unexpectedHttpErrors = [];
+            let versionManifest404Count = 0;
+
+            page.on('pageerror', (error) => pageErrors.push(error.message));
+            page.on('console', (message) => {
+              if (message.type() === 'error') consoleErrors.push(message.text());
+            });
+            page.on('response', (response) => {
+              if (response.status() < 400) return;
+              const url = new URL(response.url());
+              if (response.status() === 404 && url.pathname.endsWith('/browser/gameroad-version.json')) {
+                versionManifest404Count += 1;
+                return;
+              }
+              unexpectedHttpErrors.push(`${response.status()} ${url.pathname}`);
+            });
+
+            const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
+            expect(response, 'main HTML response').not.toBeNull();
+            expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
+            await page.waitForTimeout(800);
+            await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+
+            const tabToTarget = async (target, maxTabs = 200) => {
+              for (let i = 0; i < maxTabs; i += 1) {
+                await page.keyboard.press('Tab');
+                const focused = await page.evaluate(() => {
+                  const el = document.activeElement;
+                  if (!(el instanceof HTMLElement)) return null;
+                  const rect = el.getBoundingClientRect();
+                  const style = getComputedStyle(el);
+                  return {
+                    key: el.dataset.go ?? el.dataset.homeTarget ?? el.dataset.rootGo ?? null,
+                    tag: el.tagName,
+                    text: (el.textContent || '').trim().slice(0, 80),
+                    visible: rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none',
+                  };
+                });
+                if (focused?.visible && focused.key === target) return { ...focused, tabs: i + 1 };
+              }
+              throw new Error(`keyboard Tab traversal did not reach visible navigation target: ${target}`);
+            };
+
+            const cardsFocus = await tabToTarget('cards');
+            expect(cardsFocus.tabs).toBeGreaterThan(0);
+            await testInfo.attach('keyboard-home-cards-focused.png', {
+              body: await page.screenshot({ fullPage: true, animations: 'disabled' }),
+              contentType: 'image/png',
+            });
+            await page.keyboard.press('Enter');
+            await expect(page.locator('section[data-screen="cards"]'), 'Enter on keyboard-focused Cards control').toBeVisible();
+            await testInfo.attach('keyboard-cards-visible.png', {
+              body: await page.screenshot({ fullPage: true, animations: 'disabled' }),
+              contentType: 'image/png',
+            });
+
+            const homeFocus = await tabToTarget('home');
+            expect(homeFocus.tabs).toBeGreaterThan(0);
+            await testInfo.attach('keyboard-cards-home-focused.png', {
+              body: await page.screenshot({ fullPage: true, animations: 'disabled' }),
+              contentType: 'image/png',
+            });
+            await page.keyboard.press('Enter');
+            await expect(page.locator('section[data-screen="home"]'), 'Enter on keyboard-focused Home control').toBeVisible();
+            await testInfo.attach('keyboard-home-returned.png', {
+              body: await page.screenshot({ fullPage: true, animations: 'disabled' }),
+              contentType: 'image/png',
+            });
+
+            const remainingConsoleErrors = [...consoleErrors];
+            for (let i = 0; i < versionManifest404Count; i += 1) {
+              const index = remainingConsoleErrors.findIndex((message) =>
+                message.includes('Failed to load resource') && message.includes('404'),
+              );
+              if (index >= 0) remainingConsoleErrors.splice(index, 1);
+            }
+            if (versionManifest404Count > 0) {
+              testInfo.annotations.push({
+                type: 'known-deployment-gap',
+                description: `gameroad-version.json returned 404 ${versionManifest404Count} time(s); tracked separately from keyboard playability evidence`,
+              });
+            }
+
+            testInfo.annotations.push({
+              type: 'keyboard-visible-route',
+              description: `Home→Cards tabs=${cardsFocus.tabs}; Cards→Home tabs=${homeFocus.tabs}; activation=Enter; direct focus/click/state injection=0`,
+            });
+            expect(unexpectedHttpErrors, `unexpected HTTP errors:\n${unexpectedHttpErrors.join('\n')}`).toEqual([]);
+            expect(pageErrors, `page errors:\n${pageErrors.join('\n')}`).toEqual([]);
+            expect(remainingConsoleErrors, `console errors:\n${remainingConsoleErrors.join('\n')}`).toEqual([]);
+          });
+          EOF
+
       - name: Run GAMEROAD runtime smoke
         run: npx playwright test --config=playwright.config.mjs --workers=1
 

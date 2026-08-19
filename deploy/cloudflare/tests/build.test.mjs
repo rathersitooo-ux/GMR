@@ -122,6 +122,15 @@ const dependencyContract = [
     fixture: "import './ui-state-feedback-core.mjs';\nexport const READY_PLAN_ADAPTER = Object.freeze({});\n",
     currentBlob: '1a3315ec07774dc2f9bd2d316e7a7e4d71f9b7a2',
   },
+  {
+    file: 'field-music-policy-core.mjs',
+    source: 'browser/field-music-policy-core.mjs',
+    sourceArg: 'fieldMusicPolicyCoreSource',
+    expectedArg: 'expectedFieldMusicPolicyCoreBlob',
+    artifact: 'field_music_policy_core',
+    fixture: "export const FIELD_MUSIC_POLICY_CORE = Object.freeze({ schema: 'fixture' });\n",
+    currentBlob: 'a8a5c96fe29da363e731eb7c552bbc10fcb7fa84',
+  },
 ];
 
 function expectedVersionManifest() {
@@ -235,6 +244,7 @@ test('build fails closed on stale Browser or packaged dependency blob expectatio
     ['expectedBoardFacilityRuntimeMountBlob', /Board facility runtime mount blob mismatch/],
     ['expectedUiStateFeedbackCoreBlob', /UI state feedback core blob mismatch/],
     ['expectedUiStateFeedbackReadyPlanAdapterBlob', /UI state feedback ready-plan adapter blob mismatch/],
+    ['expectedFieldMusicPolicyCoreBlob', /Field music policy core blob mismatch/],
   ];
 
   for (const [expectedArg, errorPattern] of staleCases) {

@@ -383,3 +383,130 @@ test('production Browser mounts replay at the canonical accepted Battle seam wit
   const presentationAccept = adapter.indexOf('presentationBridge?.acceptAcceptedResolution?.({');
   assert.ok(replayAppend >= 0 && presentationAccept > replayAppend);
 });
+
+function replayMatchEndPublicData(matchId, command) {
+  const session = appendAcceptedMatchEnd(
+    createLiveReplaySession({ matchId, versions }),
+    command
+  );
+  const replay = readLiveReplay(session);
+  assert.equal(replay.ok, true);
+  assert.equal(replay.events.length, 1);
+  assert.equal(replay.events[0].kind, 'match_ended');
+  return replay.events[0].publicData;
+}
+
+test('Free4P replay preserves caller-authoritative single-winner formal ranking and strips extra fields', () => {
+  const formalRanking = [
+    { id: 'P4', rank: 4, maxColumn: 2, hidden: 'NO' },
+    { id: 'P1', rank: 1, maxColumn: 7, hidden: 'NO' },
+    { id: 'P3', rank: 3, maxColumn: 4, hidden: 'NO' },
+    { id: 'P2', rank: 2, maxColumn: 6, hidden: 'NO' }
+  ];
+  const before = JSON.stringify(formalRanking);
+  const publicData = replayMatchEndPublicData('M-4P-SINGLE', {
+    winnerIds: ['P1'], round: 8, mode: '4p', formalRanking
+  });
+  assert.equal(JSON.stringify(formalRanking), before);
+  assert.deepEqual(publicData, {
+    winnerIds: ['P1'],
+    round: 8,
+    mode: '4p',
+    formalRanking: [
+      { id: 'P4', rank: 4, maxColumn: 2 },
+      { id: 'P1', rank: 1, maxColumn: 7 },
+      { id: 'P3', rank: 3, maxColumn: 4 },
+      { id: 'P2', rank: 2, maxColumn: 6 }
+    ]
+  });
+  assert.equal('hidden' in publicData.formalRanking[0], false);
+});
+
+test('Free4P replay accepts simultaneous seven-card co-winners and competition-ranking loser ties', () => {
+  const publicData = replayMatchEndPublicData('M-4P-COWIN', {
+    winnerIds: ['OMEGA', 'ALPHA'],
+    round: 12,
+    mode: '4p',
+    formalRanking: [
+      { id: 'LOSER-B', rank: 3, maxColumn: 5 },
+      { id: 'OMEGA', rank: 1, maxColumn: 7 },
+      { id: 'LOSER-A', rank: 3, maxColumn: 5 },
+      { id: 'ALPHA', rank: 1, maxColumn: 7 }
+    ]
+  });
+  assert.deepEqual(new Map(publicData.formalRanking.map(row => [row.id, row.rank])), new Map([
+    ['LOSER-B', 3], ['OMEGA', 1], ['LOSER-A', 3], ['ALPHA', 1]
+  ]));
+});
+
+test('Free4P replay competition ranking skips after a loser tie and is independent of input or id order', () => {
+  const first = replayMatchEndPublicData('M-4P-ORDER-A', {
+    winnerIds: ['ZETA'], round: 9, mode: '4p',
+    formalRanking: [
+      { id: 'MID-B', rank: 2, maxColumn: 6 },
+      { id: 'LAST', rank: 4, maxColumn: 3 },
+      { id: 'ZETA', rank: 1, maxColumn: 7 },
+      { id: 'MID-A', rank: 2, maxColumn: 6 }
+    ]
+  });
+  const second = replayMatchEndPublicData('M-4P-ORDER-B', {
+    winnerIds: ['ZETA'], round: 9, mode: '4p',
+    formalRanking: [
+      { id: 'ZETA', rank: 1, maxColumn: 7 },
+      { id: 'MID-A', rank: 2, maxColumn: 6 },
+      { id: 'LAST', rank: 4, maxColumn: 3 },
+      { id: 'MID-B', rank: 2, maxColumn: 6 }
+    ]
+  });
+  const byId = rows => Object.fromEntries(rows.map(row => [row.id, [row.rank, row.maxColumn]]));
+  assert.deepEqual(byId(first.formalRanking), byId(second.formalRanking));
+  assert.deepEqual(byId(first.formalRanking), {
+    'MID-B': [2, 6], LAST: [4, 3], ZETA: [1, 7], 'MID-A': [2, 6]
+  });
+});
+
+test('Free4P formal ranking fails closed on rank, winner, duplicate-id, range, and mode mismatches', () => {
+  const base = [
+    { id: 'P1', rank: 1, maxColumn: 7 },
+    { id: 'P2', rank: 2, maxColumn: 6 },
+    { id: 'P3', rank: 3, maxColumn: 5 },
+    { id: 'P4', rank: 4, maxColumn: 4 }
+  ];
+  const initial = () => createLiveReplaySession({ matchId: `M-BAD-${Math.random()}`, versions });
+
+  assert.throws(() => appendAcceptedMatchEnd(initial(), {
+    winnerIds: ['P1'], round: 1, mode: '4p',
+    formalRanking: base.map(row => row.id === 'P3' ? { ...row, rank: 4 } : row)
+  }), /MATCH_END_FORMAL_RANK_MISMATCH/);
+
+  assert.throws(() => appendAcceptedMatchEnd(initial(), {
+    winnerIds: ['P1'], round: 1, mode: '4p',
+    formalRanking: base.map(row => row.id === 'P2' ? { ...row, maxColumn: 7, rank: 1 } : row)
+  }), /MATCH_END_FORMAL_WINNER_MISMATCH/);
+
+  assert.throws(() => appendAcceptedMatchEnd(initial(), {
+    winnerIds: ['P1'], round: 1, mode: '4p',
+    formalRanking: base.map((row, index) => index === 3 ? { ...row, id: 'P3' } : row)
+  }), /MATCH_END_FORMAL_RANKING_DUPLICATE_ID/);
+
+  assert.throws(() => appendAcceptedMatchEnd(initial(), {
+    winnerIds: ['P1'], round: 1, mode: '4p',
+    formalRanking: base.map(row => row.id === 'P4' ? { ...row, maxColumn: 8 } : row)
+  }), /MATCH_END_FORMAL_MAX_COLUMN_INVALID/);
+
+  assert.throws(() => appendAcceptedMatchEnd(initial(), {
+    winnerIds: ['P1'], round: 1, mode: '2v2', formalRanking: base
+  }), /MATCH_END_FORMAL_RANKING_MODE_INVALID/);
+});
+
+test('2v2 match-end replay remains backward-compatible and does not invent a formal ranking', () => {
+  const publicData = replayMatchEndPublicData('M-2V2-REGRESSION', {
+    winnerIds: ['P1', 'P2'], round: 3, mode: '2v2'
+  });
+  assert.deepEqual(publicData, {
+    winnerIds: ['P1', 'P2'],
+    round: 3,
+    mode: '2v2'
+  });
+  assert.equal('formalRanking' in publicData, false);
+});

@@ -124,6 +124,52 @@ function stringArray(value, label) {
   return out;
 }
 
+function publicFree4pFormalRanking(value, winnerIds) {
+  if (!Array.isArray(value) || value.length !== 4) {
+    throw new TypeError('MATCH_END_FORMAL_RANKING_INVALID');
+  }
+  const rows = value.map(row => {
+    if (!row || typeof row !== 'object' || Array.isArray(row)) {
+      throw new TypeError('MATCH_END_FORMAL_RANKING_ROW_INVALID');
+    }
+    const id = maybeString(row.id);
+    if (!id) throw new TypeError('MATCH_END_FORMAL_RANKING_ID_INVALID');
+    const rank = safeInteger(row.rank, 'MATCH_END_FORMAL_RANK', 1);
+    const maxColumn = safeInteger(row.maxColumn, 'MATCH_END_FORMAL_MAX_COLUMN');
+    if (maxColumn > 7) throw new TypeError('MATCH_END_FORMAL_MAX_COLUMN_INVALID');
+    return { id, rank, maxColumn };
+  });
+
+  const ids = rows.map(row => row.id);
+  if (new Set(ids).size !== ids.length) {
+    throw new TypeError('MATCH_END_FORMAL_RANKING_DUPLICATE_ID');
+  }
+  if (!Array.isArray(winnerIds) || winnerIds.length === 0 || new Set(winnerIds).size !== winnerIds.length) {
+    throw new TypeError('MATCH_END_FORMAL_WINNER_IDS_INVALID');
+  }
+  const idSet = new Set(ids);
+  if (winnerIds.some(id => !idSet.has(id))) {
+    throw new TypeError('MATCH_END_FORMAL_WINNER_UNKNOWN');
+  }
+
+  const winnerSet = new Set(winnerIds);
+  const reachedSeven = rows.filter(row => row.maxColumn === 7).map(row => row.id);
+  if (reachedSeven.length !== winnerSet.size || reachedSeven.some(id => !winnerSet.has(id))) {
+    throw new TypeError('MATCH_END_FORMAL_WINNER_MISMATCH');
+  }
+
+  for (const row of rows) {
+    const expectedRank = 1 + rows.reduce(
+      (count, other) => count + (other.maxColumn > row.maxColumn ? 1 : 0),
+      0
+    );
+    if (row.rank !== expectedRank) {
+      throw new TypeError(`MATCH_END_FORMAL_RANK_MISMATCH:${row.id}`);
+    }
+  }
+  return deepFreeze(rows);
+}
+
 function finiteNumber(value, label) {
   const number = Number(value);
   if (!Number.isFinite(number)) throw new TypeError(`${label}_INVALID`);
@@ -440,18 +486,26 @@ export function appendAcceptedBattleResolution(
   return next;
 }
 
-export function appendAcceptedMatchEnd(session, { winnerIds, round, mode }) {
+export function appendAcceptedMatchEnd(session, { winnerIds, round, mode, formalRanking = null }) {
   assertSession(session);
   if (session.ended) throw new TypeError('LIVE_REPLAY_ALREADY_ENDED');
-  const publicData = deepFreeze({
-    winnerIds: stringArray(winnerIds, 'MATCH_END_WINNER_IDS'),
+  const normalizedWinnerIds = stringArray(winnerIds, 'MATCH_END_WINNER_IDS');
+  const normalizedMode = maybeString(mode);
+  if (!normalizedMode) throw new TypeError('MATCH_END_MODE_INVALID');
+  if (formalRanking != null && normalizedMode !== '4p') {
+    throw new TypeError('MATCH_END_FORMAL_RANKING_MODE_INVALID');
+  }
+  const publicData = {
+    winnerIds: normalizedWinnerIds,
     round: safeInteger(round, 'MATCH_END_ROUND', 1),
-    mode: maybeString(mode)
-  });
-  if (!publicData.mode) throw new TypeError('MATCH_END_MODE_INVALID');
+    mode: normalizedMode
+  };
+  if (formalRanking != null) {
+    publicData.formalRanking = publicFree4pFormalRanking(formalRanking, normalizedWinnerIds);
+  }
   const log = appendAcceptedEvent(session.log, {
     kind: 'match_ended',
-    publicData
+    publicData: deepFreeze(publicData)
   });
   return deepFreeze({
     ...cloneJson(session),

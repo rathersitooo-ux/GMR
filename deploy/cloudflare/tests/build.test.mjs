@@ -39,7 +39,7 @@ const dependencyContract = [
     expectedArg: 'expectedPresenceCoreBlob',
     artifact: 'hate_peer_presence_core',
     fixture: 'export const HATE_PEER_PRESENCE_CORE = Object.freeze({});\n',
-    currentBlob: '698516da1f89099c4cb15152bb98174473f77534',
+    currentBlob: '522c6132e4b49c0a0df15690927da511c1e40f43',
   },
   {
     file: 'screen-navigation-core.mjs',

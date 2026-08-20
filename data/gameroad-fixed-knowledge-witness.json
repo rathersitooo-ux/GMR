@@ -1,0 +1,32 @@
+{
+  "$schema": "./gameroad-fixed-knowledge-witness.schema.json",
+  "schema_version": 1,
+  "mode": "MIRROR_ONLY",
+  "purpose": "Machine-readable witness of the GAMEROAD fixed-knowledge contract. Google Drive remains canonical; this file carries no USER_RAW or individual fixed-value payloads.",
+  "canonical": {
+    "system": "google_drive",
+    "ops_rules_document_id": "1za9b6DOzyLaNZQfWVAJFmAxTetraYrHnkpJ33vEkBwE",
+    "common_entry_document_id": "17xKynlDewWeYHK1xsObex70VoR7YPh6Kn06y57HZV_s",
+    "user_provenance_task_id": "OPS-USER-RULE-PROVENANCE-GATE-001",
+    "knowledge_compiler_file_id": "1ITrvIhGlC0eN8QrZ3onNJXKO7UFrqLYC"
+  },
+  "fixed_knowledge_contract": {
+    "version": 1,
+    "lock_classes": [
+      "USER_LOCK",
+      "ARTIFACT_LOCK",
+      "VERIFIED_LOCK"
+    ],
+    "user_lock_creation_authority": "USER_EXPLICIT_ONLY",
+    "unknown_or_invalid_lock": "FAIL_CLOSED_REVERIFY",
+    "user_lock_drift": "USER_DECISION_REQUIRED",
+    "artifact_or_verified_drift": "REVERIFY_REQUIRED"
+  },
+  "policy": {
+    "drive_is_canonical": true,
+    "github_is_witness_only": true,
+    "no_dual_canonical": true,
+    "user_raw_values_mirrored": false,
+    "ai_may_mint_user_lock": false
+  }
+}

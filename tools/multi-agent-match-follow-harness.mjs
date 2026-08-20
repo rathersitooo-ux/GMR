@@ -2,6 +2,7 @@ const TURN_SCHEMA = 'gameroad.multi-agent-match-follow.turn.v1';
 const INTENT_SCHEMA = 'gameroad.multi-agent-match-follow.intent.v1';
 const OBSERVER_SCHEMA = 'gameroad.multi-agent-match-follow.observer.v1';
 const EXECUTOR_SCHEMA = 'gameroad.multi-agent-match-follow.executor-result.v1';
+const OPENAI_CLI_SCHEMA = 'gameroad.multi-agent-match-follow.openai-cli-result.v1';
 const OPENAI_RESPONSES_ENDPOINT = 'https://api.openai.com/v1/responses';
 const OPENAI_CHOICE_SCHEMA_NAME = 'gameroad_agent_legal_action_choice';
 const PLAYER_COUNT = 4;
@@ -33,9 +34,7 @@ function cloneJson(value, field = 'value') {
   if (Array.isArray(value)) return value.map((item, index) => cloneJson(item, `${field}[${index}]`));
   if (!isPlainObject(value)) throw new TypeError(`${field}-non-json-value`);
   const out = {};
-  for (const [key, child] of Object.entries(value)) {
-    out[key] = cloneJson(child, `${field}.${key}`);
-  }
+  for (const [key, child] of Object.entries(value)) out[key] = cloneJson(child, `${field}.${key}`);
   return out;
 }
 
@@ -75,7 +74,6 @@ export function createFourAgentTurn(input) {
   if (!Array.isArray(input.players) || input.players.length !== PLAYER_COUNT) {
     throw new TypeError(`players-must-equal-${PLAYER_COUNT}`);
   }
-
   const playerIds = new Set();
   const players = input.players.map((player, index) => {
     if (!isPlainObject(player)) throw new TypeError(`player-invalid:${index}`);
@@ -88,7 +86,6 @@ export function createFourAgentTurn(input) {
       legalActions: normalizeLegalActions(player.legalActions, playerId),
     };
   });
-
   return deepFreeze({
     schema: TURN_SCHEMA,
     ...identity,
@@ -168,37 +165,22 @@ export function submitAgentIntent(turn, rawIntent) {
   if (intent.matchId !== turn.matchId) throw new TypeError('intent-stale-match');
   if (intent.stateVersion !== turn.stateVersion) throw new TypeError('intent-stale-stateVersion');
   if (intent.eventCursor !== turn.eventCursor) throw new TypeError('intent-stale-eventCursor');
-
   const player = turn.players.find((item) => item.playerId === intent.playerId);
   if (!player) throw new TypeError('intent-player-not-in-turn');
   if (intent.abstain === (intent.actionId !== null)) throw new TypeError('intent-must-select-action-xor-abstain');
   if (intent.actionId !== null && !player.legalActions.some((action) => action.actionId === intent.actionId)) {
     throw new TypeError('intent-action-not-legal');
   }
-
   const sameIntentId = turn.submissions.find((item) => item.intentId === intent.intentId);
   if (sameIntentId) {
-    const same = JSON.stringify(sameIntentId) === JSON.stringify(intent);
-    if (!same) throw new TypeError('intentId-conflicting-duplicate');
+    if (JSON.stringify(sameIntentId) !== JSON.stringify(intent)) throw new TypeError('intentId-conflicting-duplicate');
     return turn;
   }
-  if (turn.submissions.some((item) => item.playerId === intent.playerId)) {
-    throw new TypeError('player-already-submitted');
-  }
-
-  const submissions = [...turn.submissions, intent]
-    .sort((left, right) => left.playerId.localeCompare(right.playerId));
+  if (turn.submissions.some((item) => item.playerId === intent.playerId)) throw new TypeError('player-already-submitted');
+  const submissions = [...turn.submissions, intent].sort((left, right) => left.playerId.localeCompare(right.playerId));
   const submitted = new Set(submissions.map((item) => item.playerId));
-  const missingPlayerIds = turn.players
-    .map((item) => item.playerId)
-    .filter((id) => !submitted.has(id));
-
-  return deepFreeze({
-    ...turn,
-    submissions,
-    complete: missingPlayerIds.length === 0,
-    missingPlayerIds,
-  });
+  const missingPlayerIds = turn.players.map((item) => item.playerId).filter((id) => !submitted.has(id));
+  return deepFreeze({ ...turn, submissions, complete: missingPlayerIds.length === 0, missingPlayerIds });
 }
 
 export function buildAuthoritySubmissionBatch(turn) {
@@ -228,9 +210,7 @@ function validateWorkers(turn, workers) {
   if (actual.length !== expected.length || actual.some((playerId, index) => playerId !== expected[index])) {
     throw new TypeError('workers-must-match-turn-players-exactly');
   }
-  for (const playerId of expected) {
-    if (typeof workers[playerId] !== 'function') throw new TypeError(`worker-invalid:${playerId}`);
-  }
+  for (const playerId of expected) if (typeof workers[playerId] !== 'function') throw new TypeError(`worker-invalid:${playerId}`);
 }
 
 function executorFailure(playerId, status, reason) {
@@ -240,21 +220,11 @@ function executorFailure(playerId, status, reason) {
 function safeIntentFailureReason(error) {
   if (!(error instanceof TypeError)) return 'INTENT_REJECTED';
   const allowed = new Set([
-    'intent-invalid',
-    'intent-actionId-invalid',
-    'intentId-invalid',
-    'intent-matchId-invalid',
-    'intent-stateVersion-invalid',
-    'intent-eventCursor-invalid',
-    'intent-playerId-invalid',
-    'intent-stale-match',
-    'intent-stale-stateVersion',
-    'intent-stale-eventCursor',
-    'intent-player-not-in-turn',
-    'intent-must-select-action-xor-abstain',
-    'intent-action-not-legal',
-    'intentId-conflicting-duplicate',
-    'player-already-submitted',
+    'intent-invalid', 'intent-actionId-invalid', 'intentId-invalid', 'intent-matchId-invalid',
+    'intent-stateVersion-invalid', 'intent-eventCursor-invalid', 'intent-playerId-invalid',
+    'intent-stale-match', 'intent-stale-stateVersion', 'intent-stale-eventCursor',
+    'intent-player-not-in-turn', 'intent-must-select-action-xor-abstain', 'intent-action-not-legal',
+    'intentId-conflicting-duplicate', 'player-already-submitted',
   ]);
   return allowed.has(error.message) ? error.message : 'INTENT_REJECTED';
 }
@@ -263,17 +233,14 @@ export async function runFourAgentWorkers(turn, workers) {
   validateTurn(turn);
   if (turn.submissions.length !== 0) throw new TypeError('executor-turn-must-be-unsubmitted');
   validateWorkers(turn, workers);
-
   const settled = await Promise.all(turn.players.map(async (player) => {
     const packet = createAgentPacket(turn, player.playerId);
     try {
-      const rawIntent = await workers[player.playerId](packet);
-      return { playerId: player.playerId, fulfilled: true, rawIntent };
+      return { playerId: player.playerId, fulfilled: true, rawIntent: await workers[player.playerId](packet) };
     } catch {
       return { playerId: player.playerId, fulfilled: false, rawIntent: null };
     }
   }));
-
   let nextTurn = turn;
   const results = [];
   for (const entry of settled) {
@@ -293,13 +260,11 @@ export async function runFourAgentWorkers(turn, workers) {
       results.push(executorFailure(entry.playerId, 'INVALID_INTENT', safeIntentFailureReason(error)));
     }
   }
-
-  const authorityBatch = nextTurn.complete ? buildAuthoritySubmissionBatch(nextTurn) : null;
   return deepFreeze({
     schema: EXECUTOR_SCHEMA,
     turn: nextTurn,
     results,
-    authorityBatch,
+    authorityBatch: nextTurn.complete ? buildAuthoritySubmissionBatch(nextTurn) : null,
     automaticRetryAllowed: false,
     automaticTimeoutMoveAllowed: false,
     providerAuthority: 'NONE',
@@ -314,24 +279,20 @@ function validateAgentPacket(packet) {
   contextIdentity(packet);
   const playerId = token(packet.playerId, 'agent-packet-playerId');
   cloneJson(packet.authorizedProjection, 'agent-packet-authorizedProjection');
-  const legalActions = normalizeLegalActions(packet.legalActions, playerId);
-  return { playerId, legalActions };
+  return { playerId, legalActions: normalizeLegalActions(packet.legalActions, playerId) };
 }
 
 function extractOpenAIOutputText(payload) {
   if (!isPlainObject(payload)) throw new TypeError('openai-response-invalid');
   if (payload.status !== 'completed') throw new TypeError('openai-response-not-completed');
   if (!Array.isArray(payload.output)) throw new TypeError('openai-response-output-invalid');
-
   const texts = [];
   for (const item of payload.output) {
     if (!isPlainObject(item) || item.type !== 'message' || !Array.isArray(item.content)) continue;
     for (const content of item.content) {
       if (!isPlainObject(content)) continue;
       if (content.type === 'refusal') throw new TypeError('openai-response-refusal');
-      if (content.type === 'output_text' && typeof content.text === 'string' && content.text.trim() !== '') {
-        texts.push(content.text);
-      }
+      if (content.type === 'output_text' && typeof content.text === 'string' && content.text.trim() !== '') texts.push(content.text);
     }
   }
   if (texts.length !== 1) throw new TypeError('openai-response-output-text-invalid');
@@ -340,8 +301,7 @@ function extractOpenAIOutputText(payload) {
 
 function normalizeProviderChoice(value) {
   if (!isPlainObject(value)) throw new TypeError('openai-choice-invalid');
-  const keys = Object.keys(value).sort();
-  if (JSON.stringify(keys) !== JSON.stringify(['abstain', 'actionId', 'intentId'])) {
+  if (JSON.stringify(Object.keys(value).sort()) !== JSON.stringify(['abstain', 'actionId', 'intentId'])) {
     throw new TypeError('openai-choice-fields-invalid');
   }
   const intentId = token(value.intentId, 'openai-choice-intentId');
@@ -368,7 +328,6 @@ export function createOpenAIResponsesAgentWorker({ apiKey, model, fetchImpl = gl
   const normalizedApiKey = credential(apiKey, 'openai-apiKey');
   const normalizedModel = token(model, 'openai-model');
   if (typeof fetchImpl !== 'function') throw new TypeError('openai-fetch-invalid');
-
   return async function openAIResponsesAgentWorker(packet) {
     const { playerId, legalActions } = validateAgentPacket(packet);
     const providerInput = {
@@ -376,43 +335,27 @@ export function createOpenAIResponsesAgentWorker({ apiKey, model, fetchImpl = gl
       authorizedProjection: cloneJson(packet.authorizedProjection, 'provider-authorizedProjection'),
       legalActions: legalActions.map((action) => ({ ...action })),
     };
-
     let response;
     try {
       response = await fetchImpl(OPENAI_RESPONSES_ENDPOINT, {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${normalizedApiKey}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { Authorization: `Bearer ${normalizedApiKey}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: normalizedModel,
           input: JSON.stringify(providerInput),
-          text: {
-            format: {
-              type: 'json_schema',
-              name: OPENAI_CHOICE_SCHEMA_NAME,
-              strict: true,
-              schema: openAIChoiceSchema(),
-            },
-          },
+          text: { format: { type: 'json_schema', name: OPENAI_CHOICE_SCHEMA_NAME, strict: true, schema: openAIChoiceSchema() } },
         }),
       });
     } catch {
       throw new TypeError('openai-response-request-failed');
     }
-
-    if (!response || response.ok !== true || typeof response.json !== 'function') {
-      throw new TypeError('openai-response-http-failed');
-    }
-
+    if (!response || response.ok !== true || typeof response.json !== 'function') throw new TypeError('openai-response-http-failed');
     let payload;
     try {
       payload = await response.json();
     } catch {
       throw new TypeError('openai-response-json-invalid');
     }
-
     const outputText = extractOpenAIOutputText(payload);
     let rawChoice;
     try {
@@ -421,7 +364,6 @@ export function createOpenAIResponsesAgentWorker({ apiKey, model, fetchImpl = gl
       throw new TypeError('openai-choice-json-invalid');
     }
     const choice = normalizeProviderChoice(rawChoice);
-
     return deepFreeze({
       intentId: choice.intentId,
       matchId: packet.matchId,
@@ -434,9 +376,71 @@ export function createOpenAIResponsesAgentWorker({ apiKey, model, fetchImpl = gl
   };
 }
 
+function parseCliInput(inputText) {
+  if (typeof inputText !== 'string' || inputText.trim() === '') throw new TypeError('openai-cli-input-invalid');
+  try {
+    return JSON.parse(inputText);
+  } catch {
+    throw new TypeError('openai-cli-json-invalid');
+  }
+}
+
+export async function runOpenAIFourAgentCli({ inputText, env = {}, fetchImpl = globalThis.fetch } = {}) {
+  if (!isPlainObject(env)) throw new TypeError('openai-cli-env-invalid');
+  const turn = createFourAgentTurn(parseCliInput(inputText));
+  const apiKey = credential(env.OPENAI_API_KEY, 'openai-cli-apiKey');
+  const model = token(env.OPENAI_MODEL, 'openai-cli-model');
+  const workers = Object.fromEntries(turn.players.map((player) => [
+    player.playerId,
+    createOpenAIResponsesAgentWorker({ apiKey, model, fetchImpl }),
+  ]));
+  const result = await runFourAgentWorkers(turn, workers);
+  return deepFreeze({
+    schema: OPENAI_CLI_SCHEMA,
+    matchId: turn.matchId,
+    stateVersion: turn.stateVersion,
+    eventCursor: turn.eventCursor,
+    results: result.results.map((entry) => ({ ...entry })),
+    missingPlayerIds: [...result.turn.missingPlayerIds],
+    authorityBatch: result.authorityBatch == null ? null : cloneJson(result.authorityBatch, 'cli-authorityBatch'),
+    automaticRetryAllowed: false,
+    automaticTimeoutMoveAllowed: false,
+    providerAuthority: 'NONE',
+    resolutionAuthority: 'CALLER_MATCH_AUTHORITY',
+  });
+}
+
+async function readStdin(stream) {
+  let text = '';
+  for await (const chunk of stream) text += typeof chunk === 'string' ? chunk : chunk.toString('utf8');
+  return text;
+}
+
+function isDirectInvocation() {
+  if (typeof process === 'undefined' || !process.argv?.[1]) return false;
+  try {
+    const modulePath = decodeURIComponent(new URL(import.meta.url).pathname);
+    const argvPath = process.argv[1].replaceAll('\\', '/');
+    return modulePath === argvPath || modulePath === `/${argvPath}`;
+  } catch {
+    return false;
+  }
+}
+
+if (isDirectInvocation()) {
+  try {
+    const inputText = await readStdin(process.stdin);
+    const result = await runOpenAIFourAgentCli({ inputText, env: process.env });
+    process.stdout.write(`${JSON.stringify(result)}\n`);
+  } catch {
+    process.stderr.write(`${JSON.stringify({ schema: 'gameroad.multi-agent-match-follow.openai-cli-error.v1', error: 'CLI_FAILED' })}\n`);
+    process.exitCode = 1;
+  }
+}
+
 export const MULTI_AGENT_MATCH_FOLLOW_CONTRACT = deepFreeze({
   playerCount: PLAYER_COUNT,
-  schemas: { turn: TURN_SCHEMA, intent: INTENT_SCHEMA, observer: OBSERVER_SCHEMA, executor: EXECUTOR_SCHEMA },
+  schemas: { turn: TURN_SCHEMA, intent: INTENT_SCHEMA, observer: OBSERVER_SCHEMA, executor: EXECUTOR_SCHEMA, openAICommand: OPENAI_CLI_SCHEMA },
   storageAuthority: 'NONE',
   legalityAuthority: 'CALLER_SUPPLIED_LEGAL_ACTIONS',
   stateVersionAuthority: 'CALLER_OPAQUE_IDENTITY',
@@ -454,5 +458,15 @@ export const MULTI_AGENT_MATCH_FOLLOW_CONTRACT = deepFreeze({
     structuredOutputFields: ['intentId', 'actionId', 'abstain'],
     automaticRetryAllowed: false,
     automaticTimeoutAllowed: false,
+  },
+  openAIFourAgentCli: {
+    inputAuthority: 'CALLER_SUPPLIED_TURN_JSON',
+    credentialSource: 'OPENAI_API_KEY_ENV_ONLY',
+    modelSource: 'OPENAI_MODEL_ENV_ONLY',
+    outputPrivateProjectionAllowed: false,
+    credentialStorageAuthority: 'NONE',
+    stateVersionGenerationAuthority: 'NONE',
+    legalActionGenerationAuthority: 'NONE',
+    resolutionAuthority: 'CALLER_MATCH_AUTHORITY',
   },
 });

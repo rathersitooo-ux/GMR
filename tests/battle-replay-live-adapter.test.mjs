@@ -110,7 +110,7 @@ test('version authority derives rules only from current DECK_RULE identity and r
 test('content version is deterministic over canonical card content and changes when content changes', () => {
   const left = [{ id: 'A', power: 3, nested: { b: 2, a: 1 } }];
   const reordered = [{ nested: { a: 1, b: 2 }, power: 3, id: 'A' }];
-  const changed = [{ id: 'A', power: 4, nested: { a: 1, b: 2 } }];
+  const changed = [{ id: 'A', power: 4, nested: { b: 2, a: 1 } }];
   assert.equal(battleReplayContentVersion(left), battleReplayContentVersion(reordered));
   assert.notEqual(battleReplayContentVersion(left), battleReplayContentVersion(changed));
 });
@@ -379,6 +379,7 @@ test('production Browser mounts replay at the canonical accepted Battle seam wit
   assert.match(html, /appendAcceptedBattleResolution\(session,resolution\)/);
   assert.match(html, /appendAcceptedMatchEnd\(session,\{winnerIds:\[\.\.\.winners\],round:m\.round,mode:m\.mode\}\)/);
   assert.match(adapter, /from '\.\/card-presentation-core\.mjs';/);
+  assert.match(adapter, /from '\.\/battle-conveyor-presentation-core\.mjs';/);
   const replayAppend = adapter.indexOf("kind: 'battle_resolution'");
   const presentationAccept = adapter.indexOf('presentationBridge?.acceptAcceptedResolution?.({');
   assert.ok(replayAppend >= 0 && presentationAccept > replayAppend);
@@ -509,4 +510,113 @@ test('2v2 match-end replay remains backward-compatible and does not invent a for
     mode: '2v2'
   });
   assert.equal('formalRanking' in publicData, false);
+});
+
+test('Free4P single-winner match end mounts existing FINISHER_GATHER planner with exactly three ranking-derived losers', () => {
+  const rendered = [];
+  const bridge = createBattleReplayCardPresentationBridge({
+    document: null,
+    matchMedia: () => ({ matches: false }),
+    renderPlan: plan => rendered.push(plan)
+  });
+  let session = createLiveReplaySession(
+    { matchId: 'M-FINISHER', versions },
+    { presentationBridge: bridge }
+  );
+  session = appendAcceptedMatchEnd(session, {
+    winnerIds: ['P1'],
+    round: 8,
+    mode: '4p',
+    formalRanking: [
+      { id: 'P4', rank: 4, maxColumn: 2 },
+      { id: 'P1', rank: 1, maxColumn: 7 },
+      { id: 'P3', rank: 3, maxColumn: 4 },
+      { id: 'P2', rank: 2, maxColumn: 6 }
+    ]
+  }, { presentationBridge: bridge });
+
+  assert.equal(session.ended, true);
+  assert.equal(readLiveReplay(session).events[0].kind, 'match_ended');
+  assert.equal(rendered.length, 1);
+  const plan = rendered[0];
+  assert.equal(plan.presentationOnly, true);
+  assert.equal(plan.kind, 'finisher');
+  assert.equal(plan.transition, 'FINISHER_GATHER');
+  assert.equal(plan.publicData.winnerId, 'P1');
+  assert.deepEqual(plan.groupTargets, ['P4', 'P3', 'P2']);
+  assert.deepEqual(plan.publicData.loserIds, ['P4', 'P3', 'P2']);
+  assert.equal(plan.timing.markers.anticipation, 520);
+  assert.equal(plan.timing.markers.handoffLead, 330);
+  assert.equal(bridge.snapshot('M-FINISHER').lastFinisherPlan.transition, 'FINISHER_GATHER');
+  assert.deepEqual(BATTLE_REPLAY_LIVE_ADAPTER.matchEndFinisher, {
+    source: 'accepted_free4p_single_winner_formal_ranking',
+    kind: 'finisher',
+    transition: 'FINISHER_GATHER',
+    authority: 'presentation_only_no_game_state_write'
+  });
+});
+
+test('co-winner Free4P and non-4p match end never emit a false finisher', () => {
+  const rendered = [];
+  const bridge = createBattleReplayCardPresentationBridge({
+    document: null,
+    renderPlan: plan => rendered.push(plan)
+  });
+
+  const coWinner = createLiveReplaySession(
+    { matchId: 'M-FINISHER-COWIN', versions },
+    { presentationBridge: bridge }
+  );
+  const coWinnerEnded = appendAcceptedMatchEnd(coWinner, {
+    winnerIds: ['P1', 'P2'],
+    round: 4,
+    mode: '4p',
+    formalRanking: [
+      { id: 'P1', rank: 1, maxColumn: 7 },
+      { id: 'P2', rank: 1, maxColumn: 7 },
+      { id: 'P3', rank: 3, maxColumn: 5 },
+      { id: 'P4', rank: 4, maxColumn: 4 }
+    ]
+  }, { presentationBridge: bridge });
+  assert.equal(coWinnerEnded.ended, true);
+  assert.equal(bridge.snapshot('M-FINISHER-COWIN').lastFinisherPlan, null);
+
+  const team = createLiveReplaySession(
+    { matchId: 'M-FINISHER-2V2', versions },
+    { presentationBridge: bridge }
+  );
+  const teamEnded = appendAcceptedMatchEnd(team, {
+    winnerIds: ['P1', 'P2'], round: 5, mode: '2v2'
+  }, { presentationBridge: bridge });
+  assert.equal(teamEnded.ended, true);
+  assert.equal(bridge.snapshot('M-FINISHER-2V2').lastFinisherPlan, null);
+  assert.equal(rendered.length, 0);
+});
+
+test('match-end finisher presentation failure is fail-soft after accepted replay truth commits', () => {
+  const throwingBridge = {
+    begin() {},
+    acceptAcceptedMatchEnd() { throw new Error('finisher renderer unavailable'); }
+  };
+  const initial = createLiveReplaySession(
+    { matchId: 'M-FINISHER-FAILSOFT', versions },
+    { presentationBridge: throwingBridge }
+  );
+  const ended = appendAcceptedMatchEnd(initial, {
+    winnerIds: ['P1'],
+    round: 6,
+    mode: '4p',
+    formalRanking: [
+      { id: 'P1', rank: 1, maxColumn: 7 },
+      { id: 'P2', rank: 2, maxColumn: 6 },
+      { id: 'P3', rank: 3, maxColumn: 5 },
+      { id: 'P4', rank: 4, maxColumn: 4 }
+    ]
+  }, { presentationBridge: throwingBridge });
+  const replay = readLiveReplay(ended);
+  assert.equal(ended.ended, true);
+  assert.equal(replay.ok, true);
+  assert.equal(replay.events.length, 1);
+  assert.equal(replay.events[0].kind, 'match_ended');
+  assert.deepEqual(replay.events[0].publicData.winnerIds, ['P1']);
 });

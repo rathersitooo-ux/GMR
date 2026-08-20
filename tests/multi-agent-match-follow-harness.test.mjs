@@ -5,6 +5,7 @@ import {
   buildAuthoritySubmissionBatch,
   createAgentPacket,
   createFourAgentTurn,
+  createOpenAIResponsesAgentWorker,
   createPublicObserverPacket,
   runFourAgentWorkers,
   submitAgentIntent,
@@ -63,6 +64,16 @@ function validWorkers(observe = () => {}) {
     observe(playerId, packet);
     return intentFromPacket(packet);
   }]));
+}
+
+function openAICompleted(choice) {
+  return {
+    status: 'completed',
+    output: [{
+      type: 'message',
+      content: [{ type: 'output_text', text: JSON.stringify(choice) }],
+    }],
+  };
 }
 
 test('builds exactly four isolated agent packets without cross-player private projection', () => {
@@ -217,6 +228,7 @@ test('executor invokes four isolated workers exactly once and returns only an au
     ['P1', 'ACCEPTED'], ['P2', 'ACCEPTED'], ['P3', 'ACCEPTED'], ['P4', 'ACCEPTED'],
   ]);
   assert.equal(result.turn.complete, true);
+  assert.deepEqual(result.missingPlayerIds, undefined);
   assert.deepEqual(result.turn.missingPlayerIds, []);
   assert.ok(result.authorityBatch);
   assert.equal(result.authorityBatch.containsResolution, false);
@@ -331,4 +343,132 @@ test('executor refuses implicit reruns of a partially submitted turn', async () 
   assert.equal(MULTI_AGENT_MATCH_FOLLOW_CONTRACT.workerProviderAuthority, 'NONE');
   assert.equal(MULTI_AGENT_MATCH_FOLLOW_CONTRACT.stateVersionAuthority, 'CALLER_OPAQUE_IDENTITY');
   assert.equal(MULTI_AGENT_MATCH_FOLLOW_CONTRACT.legalityAuthority, 'CALLER_SUPPLIED_LEGAL_ACTIONS');
+});
+
+test('OpenAI Responses adapter sends strict structured choice request and rebinds caller authority identity', async () => {
+  const turn = createFourAgentTurn(turnInput());
+  const packet = createAgentPacket(turn, 'P1');
+  const calls = [];
+  const worker = createOpenAIResponsesAgentWorker({
+    apiKey: 'sk-test-secret-key',
+    model: 'test-model-current',
+    fetchImpl: async (url, options) => {
+      calls.push({ url, options });
+      return {
+        ok: true,
+        async json() {
+          return openAICompleted({ intentId: 'provider-choice-P1', actionId: 'guard', abstain: false });
+        },
+      };
+    },
+  });
+
+  const result = await worker(packet);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, 'https://api.openai.com/v1/responses');
+  assert.equal(calls[0].options.method, 'POST');
+  assert.equal(calls[0].options.headers.Authorization, 'Bearer sk-test-secret-key');
+  const body = JSON.parse(calls[0].options.body);
+  assert.equal(body.model, 'test-model-current');
+  assert.equal(body.text.format.type, 'json_schema');
+  assert.equal(body.text.format.strict, true);
+  assert.deepEqual(body.text.format.schema.required, ['intentId', 'actionId', 'abstain']);
+  assert.equal(body.text.format.schema.additionalProperties, false);
+  assert.doesNotMatch(calls[0].options.body, /sk-test-secret-key/);
+  assert.match(calls[0].options.body, /P1-SECRET/);
+  assert.doesNotMatch(calls[0].options.body, /P2-SECRET|P3-SECRET|P4-SECRET/);
+  assert.deepEqual(result, {
+    intentId: 'provider-choice-P1',
+    matchId: 'match-001',
+    stateVersion: 'opaque-state-v17',
+    eventCursor: 'event-0042',
+    playerId: 'P1',
+    actionId: 'guard',
+    abstain: false,
+  });
+});
+
+test('OpenAI adapter model cannot override match identity and downstream validator still owns legality', async () => {
+  const turn = createFourAgentTurn(turnInput());
+  let calls = 0;
+  const workers = Object.fromEntries(turn.players.map((playerEntry) => [playerEntry.playerId,
+    createOpenAIResponsesAgentWorker({
+      apiKey: 'sk-test-shared',
+      model: 'test-model-current',
+      fetchImpl: async () => {
+        calls += 1;
+        const actionId = playerEntry.playerId === 'P3' ? 'invented-action' : 'attack';
+        return {
+          ok: true,
+          async json() {
+            return openAICompleted({ intentId: `provider-${playerEntry.playerId}`, actionId, abstain: false });
+          },
+        };
+      },
+    }),
+  ]));
+
+  const result = await runFourAgentWorkers(turn, workers);
+  assert.equal(calls, 4);
+  assert.deepEqual(result.results.map((entry) => [entry.playerId, entry.status, entry.reason]), [
+    ['P1', 'ACCEPTED', null],
+    ['P2', 'ACCEPTED', null],
+    ['P3', 'INVALID_INTENT', 'intent-action-not-legal'],
+    ['P4', 'ACCEPTED', null],
+  ]);
+  assert.deepEqual(result.turn.missingPlayerIds, ['P3']);
+  assert.equal(result.authorityBatch, null);
+});
+
+test('OpenAI adapter sanitizes provider failures and never retries automatically', async () => {
+  const turn = createFourAgentTurn(turnInput());
+  const packet = createAgentPacket(turn, 'P1');
+  const cases = [
+    { name: 'http', response: { ok: false, async json() { throw new Error('body-secret-http'); } } },
+    { name: 'incomplete', response: { ok: true, async json() { return { status: 'incomplete', output: [] }; } } },
+    { name: 'refusal', response: { ok: true, async json() { return { status: 'completed', output: [{ type: 'message', content: [{ type: 'refusal', refusal: 'provider-secret-refusal' }] }] }; } } },
+    { name: 'malformed', response: { ok: true, async json() { return openAICompleted({ not: 'json-string-choice' }); } } },
+  ];
+
+  for (const testCase of cases) {
+    let calls = 0;
+    const worker = createOpenAIResponsesAgentWorker({
+      apiKey: 'sk-test-hidden',
+      model: 'test-model-current',
+      fetchImpl: async () => {
+        calls += 1;
+        return testCase.response;
+      },
+    });
+    await assert.rejects(worker(packet), (error) => {
+      assert.equal(error instanceof TypeError, true);
+      assert.doesNotMatch(error.message, /sk-test-hidden|provider-secret|body-secret/);
+      return true;
+    }, testCase.name);
+    assert.equal(calls, 1, `${testCase.name} must not auto-retry`);
+  }
+});
+
+test('OpenAI adapter handles abstention and validates caller-supplied adapter configuration', async () => {
+  assert.throws(() => createOpenAIResponsesAgentWorker({ apiKey: '', model: 'm', fetchImpl: async () => {} }), /openai-apiKey-invalid/);
+  assert.throws(() => createOpenAIResponsesAgentWorker({ apiKey: 'k', model: '', fetchImpl: async () => {} }), /openai-model-invalid/);
+  assert.throws(() => createOpenAIResponsesAgentWorker({ apiKey: 'k', model: 'm', fetchImpl: null }), /openai-fetch-invalid/);
+
+  const turn = createFourAgentTurn(turnInput());
+  const packet = createAgentPacket(turn, 'P4');
+  const worker = createOpenAIResponsesAgentWorker({
+    apiKey: 'k',
+    model: 'm',
+    fetchImpl: async () => ({
+      ok: true,
+      async json() { return openAICompleted({ intentId: 'abstain-P4', actionId: null, abstain: true }); },
+    }),
+  });
+  const result = await worker(packet);
+  assert.equal(result.playerId, 'P4');
+  assert.equal(result.actionId, null);
+  assert.equal(result.abstain, true);
+  assert.equal(MULTI_AGENT_MATCH_FOLLOW_CONTRACT.openAIResponsesAdapter.credentialStorageAuthority, 'NONE');
+  assert.equal(MULTI_AGENT_MATCH_FOLLOW_CONTRACT.openAIResponsesAdapter.modelAuthority, 'CALLER_SUPPLIED');
+  assert.equal(MULTI_AGENT_MATCH_FOLLOW_CONTRACT.openAIResponsesAdapter.automaticRetryAllowed, false);
 });

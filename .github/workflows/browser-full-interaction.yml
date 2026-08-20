@@ -12,6 +12,7 @@ on:
       - 'browser/GAMEROAD.html'
       - 'browser/**/*.mjs'
       - 'tests/browser-full-interaction.spec.mjs'
+      - 'tests/browser-full-interaction-state-sequence.spec.mjs'
       - 'playwright.full-interaction.config.mjs'
       - '.github/workflows/browser-full-interaction.yml'
   pull_request:
@@ -21,6 +22,7 @@ on:
       - 'browser/GAMEROAD.html'
       - 'browser/**/*.mjs'
       - 'tests/browser-full-interaction.spec.mjs'
+      - 'tests/browser-full-interaction-state-sequence.spec.mjs'
       - 'playwright.full-interaction.config.mjs'
       - '.github/workflows/browser-full-interaction.yml'
 

@@ -1,0 +1,97 @@
+{
+  "$schema": "./gameroad-authority-manifest.schema.json",
+  "schema_version": 1,
+  "mode": "MIRROR_ONLY",
+  "purpose": "Machine-checkable staging map of current GAMEROAD authority locations. It does not transfer canonical authority in this revision.",
+  "policy": {
+    "no_dual_canonical": true,
+    "drive_authority_transfer_in_this_revision": false,
+    "generated_views_are_authority": false,
+    "unknown_authority_fails_closed": true,
+    "secret_values_forbidden": true
+  },
+  "authorities": {
+    "ops.routing": {
+      "canonical_system": "google_drive",
+      "canonical_locator": {
+        "kind": "google_doc",
+        "id": "14CYoFblBecfUqrnFKfdWayHsi8cnAbsrfFzNxZ0OvkY"
+      },
+      "status": "ACTIVE",
+      "authority_resolution": "CURRENT_ROUTING",
+      "write_policy": "CURRENT_ROUTING_CONTROLLED",
+      "drift_policy": "STOP_AND_RECONCILE"
+    },
+    "ops.rules": {
+      "canonical_system": "google_drive",
+      "canonical_locator": {
+        "kind": "google_doc",
+        "id": "1za9b6DOzyLaNZQfWVAJFmAxTetraYrHnkpJ33vEkBwE"
+      },
+      "status": "ACTIVE",
+      "authority_resolution": "CURRENT_ROUTING",
+      "write_policy": "CURRENT_ROUTING_CONTROLLED",
+      "drift_policy": "STOP_AND_RECONCILE"
+    },
+    "ops.acquisition": {
+      "canonical_system": "google_drive",
+      "canonical_locator": {
+        "kind": "google_doc",
+        "id": "1yojAWxoypD4gCenDya4pujYfLwFs4DK-B5NiLNJ3ju4"
+      },
+      "status": "ACTIVE",
+      "authority_resolution": "CURRENT_ROUTING",
+      "sync_owner_task_id": "OPS-STATE-SYNC-001",
+      "write_policy": "CURRENT_LEDGER_CAS",
+      "drift_policy": "STOP_AND_RECONCILE"
+    },
+    "ops.task_index": {
+      "canonical_system": "google_drive",
+      "canonical_locator": {
+        "kind": "google_sheet",
+        "id": "1QKCll_T9ej6K96fRkRUESCAIYVGbsCYZILGIWMUdm2Y",
+        "sheet": "GAMEROAD 全作業一覧"
+      },
+      "status": "ACTIVE",
+      "authority_resolution": "CURRENT_ROUTING",
+      "sync_owner_task_id": "OPS-STATE-SYNC-001",
+      "write_policy": "PARENT_SUMMARY_ONLY",
+      "drift_policy": "STOP_AND_RECONCILE"
+    },
+    "ops.outcome_materiality": {
+      "canonical_system": "google_drive",
+      "canonical_locator": {
+        "kind": "google_sheet",
+        "id": "1npDIOyzQ_f2iRkENwua_8I2LZeyq3MXhlXm0y4nU_RQ",
+        "sheet": "判定記録"
+      },
+      "status": "ACTIVE",
+      "authority_resolution": "CURRENT_ROUTING",
+      "sync_owner_task_id": "OPS-STATE-SYNC-001",
+      "write_policy": "OUTCOME_MATERIALITY_SYNC",
+      "drift_policy": "STOP_AND_RECONCILE"
+    },
+    "code.formal_repository": {
+      "canonical_system": "github",
+      "canonical_locator": {
+        "kind": "github_repository",
+        "repository": "rathersitooo-ux/GMR",
+        "branch": "main"
+      },
+      "status": "ACTIVE",
+      "authority_resolution": "CURRENT_ROUTING_THEN_FRESH_GITHUB",
+      "write_policy": "TASK_BRANCH_PR_TO_MAIN",
+      "drift_policy": "FRESH_HEAD_DIFF_CHECKS_REQUIRED"
+    }
+  },
+  "known_hardening_residuals": [
+    {
+      "owner_task_id": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+      "residual": "GitHub main branch protection/ruleset enforcement remains disabled; this manifest must not be treated as protected canonical root until that existing residual is closed."
+    },
+    {
+      "owner_task_id": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+      "residual": "Automatic Required Gate validation/classification for this authority manifest/schema is not added in this WorkUnit."
+    }
+  ]
+}

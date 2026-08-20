@@ -620,3 +620,64 @@ test('match-end finisher presentation failure is fail-soft after accepted replay
   assert.equal(replay.events[0].kind, 'match_ended');
   assert.deepEqual(replay.events[0].publicData.winnerIds, ['P1']);
 });
+
+test('Free4P omitted formalRanking derives single-winner competition ranking from latest accepted maxLaneProgress', () => {
+  const input = resolution(1);
+  input.mode = '4p';
+  input.winnerIds = ['P1'];
+  input.maxLaneProgress = [
+    { id: 'P1', before: 6, after: 7 },
+    { id: 'P2', before: 5, after: 5 },
+    { id: 'P3', before: 4, after: 5 },
+    { id: 'P4', before: 2, after: 2 }
+  ];
+  let session = createLiveReplaySession({ matchId: 'M-4P-DERIVE-SINGLE', versions });
+  session = appendAcceptedBattleResolution(session, input);
+  session = appendAcceptedMatchEnd(session, { winnerIds: ['P1'], round: 1, mode: '4p' });
+  const publicData = readLiveReplay(session).events[1].publicData;
+  assert.deepEqual(publicData.formalRanking, [
+    { id: 'P1', rank: 1, maxColumn: 7 },
+    { id: 'P2', rank: 2, maxColumn: 5 },
+    { id: 'P3', rank: 2, maxColumn: 5 },
+    { id: 'P4', rank: 4, maxColumn: 2 }
+  ]);
+});
+
+test('Free4P omitted formalRanking derives simultaneous co-winners and skips following competition rank', () => {
+  const input = resolution(1);
+  input.mode = '4p';
+  input.winnerIds = ['P1', 'P2'];
+  input.maxLaneProgress = [
+    { id: 'P1', before: 6, after: 7 },
+    { id: 'P2', before: 6, after: 7 },
+    { id: 'P3', before: 4, after: 4 },
+    { id: 'P4', before: 1, after: 1 }
+  ];
+  let session = createLiveReplaySession({ matchId: 'M-4P-DERIVE-COWIN', versions });
+  session = appendAcceptedBattleResolution(session, input);
+  session = appendAcceptedMatchEnd(session, {
+    winnerIds: ['P1', 'P2'], round: 1, mode: '4p'
+  });
+  assert.deepEqual(readLiveReplay(session).events[1].publicData.formalRanking, [
+    { id: 'P1', rank: 1, maxColumn: 7 },
+    { id: 'P2', rank: 1, maxColumn: 7 },
+    { id: 'P3', rank: 3, maxColumn: 4 },
+    { id: 'P4', rank: 4, maxColumn: 1 }
+  ]);
+});
+
+test('Free4P omitted formalRanking stays backward-compatible when accepted progress is insufficient', () => {
+  const input = resolution(1);
+  input.mode = '4p';
+  input.winnerIds = ['P1'];
+  input.maxLaneProgress = [
+    { id: 'P1', before: 6, after: 7 },
+    { id: 'P2', before: 5, after: 5 },
+    { id: 'P3', before: 4, after: 4 }
+  ];
+  let session = createLiveReplaySession({ matchId: 'M-4P-DERIVE-FALLBACK', versions });
+  session = appendAcceptedBattleResolution(session, input);
+  session = appendAcceptedMatchEnd(session, { winnerIds: ['P1'], round: 1, mode: '4p' });
+  const publicData = readLiveReplay(session).events[1].publicData;
+  assert.equal('formalRanking' in publicData, false);
+});

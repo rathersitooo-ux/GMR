@@ -1,6 +1,7 @@
 const TURN_SCHEMA = 'gameroad.multi-agent-match-follow.turn.v1';
 const INTENT_SCHEMA = 'gameroad.multi-agent-match-follow.intent.v1';
 const OBSERVER_SCHEMA = 'gameroad.multi-agent-match-follow.observer.v1';
+const EXECUTOR_SCHEMA = 'gameroad.multi-agent-match-follow.executor-result.v1';
 const PLAYER_COUNT = 4;
 
 function token(value, field) {
@@ -213,14 +214,102 @@ export function buildAuthoritySubmissionBatch(turn) {
   });
 }
 
+function validateWorkers(turn, workers) {
+  if (!isPlainObject(workers)) throw new TypeError('workers-invalid');
+  const expected = turn.players.map((player) => player.playerId).sort();
+  const actual = Object.keys(workers).sort();
+  if (actual.length !== expected.length || actual.some((playerId, index) => playerId !== expected[index])) {
+    throw new TypeError('workers-must-match-turn-players-exactly');
+  }
+  for (const playerId of expected) {
+    if (typeof workers[playerId] !== 'function') throw new TypeError(`worker-invalid:${playerId}`);
+  }
+}
+
+function executorFailure(playerId, status, reason) {
+  return deepFreeze({ playerId, status, reason });
+}
+
+function safeIntentFailureReason(error) {
+  if (!(error instanceof TypeError)) return 'INTENT_REJECTED';
+  const allowed = new Set([
+    'intent-invalid',
+    'intent-actionId-invalid',
+    'intentId-invalid',
+    'intent-matchId-invalid',
+    'intent-stateVersion-invalid',
+    'intent-eventCursor-invalid',
+    'intent-playerId-invalid',
+    'intent-stale-match',
+    'intent-stale-stateVersion',
+    'intent-stale-eventCursor',
+    'intent-player-not-in-turn',
+    'intent-must-select-action-xor-abstain',
+    'intent-action-not-legal',
+    'intentId-conflicting-duplicate',
+    'player-already-submitted',
+  ]);
+  return allowed.has(error.message) ? error.message : 'INTENT_REJECTED';
+}
+
+export async function runFourAgentWorkers(turn, workers) {
+  validateTurn(turn);
+  if (turn.submissions.length !== 0) throw new TypeError('executor-turn-must-be-unsubmitted');
+  validateWorkers(turn, workers);
+
+  const settled = await Promise.all(turn.players.map(async (player) => {
+    const packet = createAgentPacket(turn, player.playerId);
+    try {
+      const rawIntent = await workers[player.playerId](packet);
+      return { playerId: player.playerId, fulfilled: true, rawIntent };
+    } catch {
+      return { playerId: player.playerId, fulfilled: false, rawIntent: null };
+    }
+  }));
+
+  let nextTurn = turn;
+  const results = [];
+  for (const entry of settled) {
+    if (!entry.fulfilled) {
+      results.push(executorFailure(entry.playerId, 'WORKER_FAILED', 'WORKER_REJECTED_OR_THROWN'));
+      continue;
+    }
+    if (isPlainObject(entry.rawIntent) && typeof entry.rawIntent.playerId === 'string'
+      && entry.rawIntent.playerId.trim() !== entry.playerId) {
+      results.push(executorFailure(entry.playerId, 'WORKER_PLAYER_MISMATCH', 'WORKER_RETURNED_OTHER_PLAYER'));
+      continue;
+    }
+    try {
+      nextTurn = submitAgentIntent(nextTurn, entry.rawIntent);
+      results.push(deepFreeze({ playerId: entry.playerId, status: 'ACCEPTED', reason: null }));
+    } catch (error) {
+      results.push(executorFailure(entry.playerId, 'INVALID_INTENT', safeIntentFailureReason(error)));
+    }
+  }
+
+  const authorityBatch = nextTurn.complete ? buildAuthoritySubmissionBatch(nextTurn) : null;
+  return deepFreeze({
+    schema: EXECUTOR_SCHEMA,
+    turn: nextTurn,
+    results,
+    authorityBatch,
+    automaticRetryAllowed: false,
+    automaticTimeoutMoveAllowed: false,
+    providerAuthority: 'NONE',
+    resolutionAuthority: 'CALLER_MATCH_AUTHORITY',
+  });
+}
+
 export const MULTI_AGENT_MATCH_FOLLOW_CONTRACT = deepFreeze({
   playerCount: PLAYER_COUNT,
-  schemas: { turn: TURN_SCHEMA, intent: INTENT_SCHEMA, observer: OBSERVER_SCHEMA },
+  schemas: { turn: TURN_SCHEMA, intent: INTENT_SCHEMA, observer: OBSERVER_SCHEMA, executor: EXECUTOR_SCHEMA },
   storageAuthority: 'NONE',
   legalityAuthority: 'CALLER_SUPPLIED_LEGAL_ACTIONS',
   stateVersionAuthority: 'CALLER_OPAQUE_IDENTITY',
   resolutionAuthority: 'CALLER_MATCH_AUTHORITY',
+  workerProviderAuthority: 'NONE',
   timeoutPolicy: 'NO_AUTOMOVE',
+  workerRetryPolicy: 'CALLER_CONTROLLED_NO_AUTORETRY',
   privateDataPolicy: 'PER_PLAYER_CALLER_AUTHORIZED_PROJECTION_ONLY',
   observerPolicy: 'CALLER_AUTHORIZED_PUBLIC_PROJECTION_ONLY',
 });

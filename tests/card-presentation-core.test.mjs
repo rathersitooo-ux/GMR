@@ -4,7 +4,9 @@ import assert from 'node:assert/strict';
 import {
   CARD_PRESENTATION_CORE,
   applyCardPresentationEvent,
+  applyOutfitFusionPresentation,
   createCardPresentationSession,
+  deriveOutfitFusionState,
 } from '../browser/card-presentation-core.mjs';
 
 function event(overrides = {}) {
@@ -18,6 +20,18 @@ function event(overrides = {}) {
       visual: { status: 'formal', assetId: 'formal-visual-1' },
       audio: { status: 'formal', assetId: 'formal-audio-1' },
     },
+    ...overrides,
+  };
+}
+
+function outfitSet(overrides = {}) {
+  return {
+    setId: 'outfit-set-a',
+    pieces: [
+      { cardId: 'shoe-a', slotType: 'shoes' },
+      { cardId: 'coord-a', slotType: 'coord' },
+      { cardId: 'accessory-a', slotType: 'accessory' },
+    ],
     ...overrides,
   };
 }
@@ -159,8 +173,156 @@ test('does not mutate caller state, event, or preference inputs', () => {
   assert.deepEqual(result.state.seenEventIds, ['event-1']);
 });
 
+test('derives three-piece outfit completion from caller-owned cards without creating a fourth card', () => {
+  const set = outfitSet();
+  const ownedCardIds = ['shoe-a', 'coord-a', 'accessory-a', 'unrelated-card'];
+  const beforeSet = structuredClone(set);
+  const beforeOwned = structuredClone(ownedCardIds);
+
+  const fusion = deriveOutfitFusionState({ set, ownedCardIds });
+
+  assert.deepEqual(fusion, {
+    valid: true,
+    reason: 'OK',
+    setId: 'outfit-set-a',
+    componentCardIds: ['shoe-a', 'coord-a', 'accessory-a'],
+    ownedPieceCardIds: ['shoe-a', 'coord-a', 'accessory-a'],
+    ownedSlots: ['shoes', 'coord', 'accessory'],
+    missingSlots: [],
+    complete: true,
+  });
+  assert.equal('fusionCardId' in fusion, false);
+  assert.equal('ownedCardIds' in fusion, false);
+  assert.deepEqual(set, beforeSet);
+  assert.deepEqual(ownedCardIds, beforeOwned);
+  assert.ok(Object.isFrozen(fusion));
+});
+
+test('keeps incomplete outfit fusion incomplete and does not consume presentation event identity', () => {
+  const state = createCardPresentationSession({ sessionId: 'session-a' });
+  const input = {
+    eventId: 'fusion-event-1',
+    authorized: true,
+    ownerAuthorized: true,
+    set: outfitSet(),
+    ownedCardIds: ['shoe-a', 'accessory-a'],
+  };
+
+  const fusion = deriveOutfitFusionState({ set: input.set, ownedCardIds: input.ownedCardIds });
+  assert.equal(fusion.complete, false);
+  assert.deepEqual(fusion.ownedSlots, ['shoes', 'accessory']);
+  assert.deepEqual(fusion.missingSlots, ['coord']);
+
+  const result = applyOutfitFusionPresentation(state, input);
+  assert.equal(result.accepted, false);
+  assert.equal(result.reason, 'FUSION_INCOMPLETE');
+  assert.equal(result.presentation, null);
+  assert.deepEqual(result.state.seenEventIds, []);
+  assert.equal(result.fusion.complete, false);
+});
+
+test('fails closed on malformed fusion metadata or ownership and never lets duplicates fake completion', () => {
+  const duplicateCardSet = outfitSet({
+    pieces: [
+      { cardId: 'same-card', slotType: 'shoes' },
+      { cardId: 'same-card', slotType: 'coord' },
+      { cardId: 'accessory-a', slotType: 'accessory' },
+    ],
+  });
+  assert.deepEqual(
+    deriveOutfitFusionState({ set: duplicateCardSet, ownedCardIds: ['same-card', 'accessory-a'] }),
+    { valid: false, reason: 'FUSION_SET_INVALID' },
+  );
+
+  const duplicateSlotSet = outfitSet({
+    pieces: [
+      { cardId: 'shoe-a', slotType: 'shoes' },
+      { cardId: 'coord-a', slotType: 'shoes' },
+      { cardId: 'accessory-a', slotType: 'accessory' },
+    ],
+  });
+  assert.equal(deriveOutfitFusionState({
+    set: duplicateSlotSet,
+    ownedCardIds: ['shoe-a', 'coord-a', 'accessory-a'],
+  }).reason, 'FUSION_SET_INVALID');
+
+  assert.equal(deriveOutfitFusionState({
+    set: outfitSet(),
+    ownedCardIds: ['shoe-a', null, 'accessory-a'],
+  }).reason, 'OWNERSHIP_INVALID');
+
+  const duplicateOwnership = deriveOutfitFusionState({
+    set: outfitSet(),
+    ownedCardIds: ['shoe-a', 'shoe-a', 'coord-a'],
+  });
+  assert.equal(duplicateOwnership.complete, false);
+  assert.deepEqual(duplicateOwnership.missingSlots, ['accessory']);
+});
+
+test('presents completed fusion through the existing presentation boundary with formal/fallback and accessibility rules', () => {
+  const state = createCardPresentationSession({ sessionId: 'session-a' });
+  const input = {
+    eventId: 'fusion-event-2',
+    authorized: true,
+    ownerAuthorized: true,
+    set: outfitSet(),
+    ownedCardIds: ['shoe-a', 'coord-a', 'accessory-a'],
+    assets: {
+      visual: { status: 'formal', assetId: 'formal-fusion-visual' },
+      audio: { status: 'candidate', assetId: 'candidate-audio-must-not-escape' },
+    },
+  };
+  const beforeInput = structuredClone(input);
+
+  const result = applyOutfitFusionPresentation(state, input, { reducedMotion: true });
+
+  assert.equal(result.accepted, true);
+  assert.equal(result.reason, 'OK');
+  assert.equal(result.fusion.complete, true);
+  assert.equal(result.presentation.kind, 'fusion');
+  assert.equal(result.presentation.visibility, 'owner');
+  assert.equal(result.presentation.presentationOnly, true);
+  assert.deepEqual(result.presentation.visual, {
+    source: 'formal',
+    assetId: 'formal-fusion-visual',
+    motion: 'static_only',
+  });
+  assert.deepEqual(result.presentation.audio, { source: 'silent' });
+  assert.equal(JSON.stringify(result.presentation).includes('candidate-audio-must-not-escape'), false);
+  assert.deepEqual(result.state.seenEventIds, ['fusion-event-2']);
+  assert.deepEqual(input, beforeInput);
+});
+
+test('fusion presentation preserves generic authorization, visibility, and duplicate-event gates', () => {
+  const baseInput = {
+    eventId: 'fusion-event-3',
+    authorized: true,
+    ownerAuthorized: true,
+    set: outfitSet(),
+    ownedCardIds: ['shoe-a', 'coord-a', 'accessory-a'],
+  };
+  const state = createCardPresentationSession({ sessionId: 'session-a' });
+
+  assert.equal(applyOutfitFusionPresentation(state, { ...baseInput, authorized: false }).reason, 'NOT_AUTHORIZED');
+  assert.deepEqual(state.seenEventIds, []);
+
+  assert.equal(applyOutfitFusionPresentation(state, {
+    ...baseInput,
+    visibility: 'owner',
+    ownerAuthorized: false,
+  }).reason, 'OWNER_SCOPE_NOT_AUTHORIZED');
+
+  const first = applyOutfitFusionPresentation(state, baseInput);
+  assert.equal(first.accepted, true);
+  const duplicate = applyOutfitFusionPresentation(first.state, baseInput);
+  assert.equal(duplicate.accepted, true);
+  assert.equal(duplicate.duplicate, true);
+  assert.equal(duplicate.presentation, null);
+});
+
 test('supports only the presentation kinds owned by this isolated card-presentation task', () => {
-  assert.deepEqual(CARD_PRESENTATION_CORE.presentationKinds, ['scan', 'summon', 'finisher', 'vfx', 'sfx']);
+  assert.deepEqual(CARD_PRESENTATION_CORE.presentationKinds, ['scan', 'summon', 'finisher', 'vfx', 'sfx', 'fusion']);
+  assert.deepEqual(CARD_PRESENTATION_CORE.outfitFusionSlots, ['shoes', 'coord', 'accessory']);
 
   for (const [index, kind] of CARD_PRESENTATION_CORE.presentationKinds.entries()) {
     const state = createCardPresentationSession({ sessionId: `session-${index}` });

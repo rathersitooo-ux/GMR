@@ -6,6 +6,11 @@ on:
       - work/playtest-r32-result-ranking-fix
     paths:
       - .github/workflows/playtest-r32-bounded-html-patch.yml
+  pull_request:
+    types: [synchronize]
+    branches: [main]
+    paths:
+      - .github/workflows/playtest-r32-bounded-html-patch.yml
 
 permissions:
   contents: write

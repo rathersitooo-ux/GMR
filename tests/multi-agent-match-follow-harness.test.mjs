@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 import {
   MULTI_AGENT_MATCH_FOLLOW_CONTRACT,
@@ -8,6 +9,7 @@ import {
   createOpenAIResponsesAgentWorker,
   createPublicObserverPacket,
   runFourAgentWorkers,
+  runOpenAIFourAgentCli,
   submitAgentIntent,
 } from '../tools/multi-agent-match-follow-harness.mjs';
 
@@ -106,18 +108,9 @@ test('rejects any player count other than four and duplicate player identities',
 test('rejects illegal and stale intents before they can enter authority batch', () => {
   const turn = createFourAgentTurn(turnInput());
   assert.throws(() => submitAgentIntent(turn, intent('P1', 'invented-card')), /intent-action-not-legal/);
-  assert.throws(
-    () => submitAgentIntent(turn, intent('P1', 'attack', { stateVersion: 'model-invented-version' })),
-    /intent-stale-stateVersion/,
-  );
-  assert.throws(
-    () => submitAgentIntent(turn, intent('P1', 'attack', { eventCursor: 'old-event' })),
-    /intent-stale-eventCursor/,
-  );
-  assert.throws(
-    () => submitAgentIntent(turn, intent('P1', 'attack', { matchId: 'other-match' })),
-    /intent-stale-match/,
-  );
+  assert.throws(() => submitAgentIntent(turn, intent('P1', 'attack', { stateVersion: 'model-invented-version' })), /intent-stale-stateVersion/);
+  assert.throws(() => submitAgentIntent(turn, intent('P1', 'attack', { eventCursor: 'old-event' })), /intent-stale-eventCursor/);
+  assert.throws(() => submitAgentIntent(turn, intent('P1', 'attack', { matchId: 'other-match' })), /intent-stale-match/);
 });
 
 test('supports explicit abstention but never fabricates a timeout move', () => {
@@ -137,24 +130,16 @@ test('same intentId and content is idempotent while conflicting duplicate fails 
   const once = submitAgentIntent(base, firstIntent);
   const twice = submitAgentIntent(once, firstIntent);
   assert.strictEqual(twice, once);
-  assert.throws(
-    () => submitAgentIntent(once, { ...firstIntent, actionId: 'guard' }),
-    /intentId-conflicting-duplicate/,
-  );
-  assert.throws(
-    () => submitAgentIntent(once, intent('P1', 'guard', { intentId: 'second-intent-P1' })),
-    /player-already-submitted/,
-  );
+  assert.throws(() => submitAgentIntent(once, { ...firstIntent, actionId: 'guard' }), /intentId-conflicting-duplicate/);
+  assert.throws(() => submitAgentIntent(once, intent('P1', 'guard', { intentId: 'second-intent-P1' })), /player-already-submitted/);
 });
 
 test('collects four independent submissions in deterministic player order without resolving game state', () => {
   let turn = createFourAgentTurn(turnInput());
   for (const playerId of ['P3', 'P1', 'P4', 'P2']) turn = submitAgentIntent(turn, intent(playerId));
-
   assert.equal(turn.complete, true);
   assert.deepEqual(turn.missingPlayerIds, []);
   assert.deepEqual(turn.submissions.map((entry) => entry.playerId), ['P1', 'P2', 'P3', 'P4']);
-
   const batch = buildAuthoritySubmissionBatch(turn);
   assert.equal(batch.containsResolution, false);
   assert.equal(batch.resolutionRequestedFrom, 'CALLER_MATCH_AUTHORITY');
@@ -169,12 +154,7 @@ test('public observer packet receives only caller-provided public projection', (
     matchId: 'match-001',
     stateVersion: 'opaque-state-v17',
     eventCursor: 'event-0042',
-    publicProjection: {
-      eventType: 'ATTACK_DECLARED',
-      actor: 'P3',
-      target: 'P1',
-      laneCount: 6,
-    },
+    publicProjection: { eventType: 'ATTACK_DECLARED', actor: 'P3', target: 'P1', laneCount: 6 },
   });
   const serialized = JSON.stringify(observer);
   assert.match(serialized, /ATTACK_DECLARED/);
@@ -187,16 +167,9 @@ test('rejects non-JSON projections instead of carrying executable or hidden runt
   const input = turnInput();
   input.players[0].authorizedProjection = { callback() {} };
   assert.throws(() => createFourAgentTurn(input), /non-json-value/);
-
-  assert.throws(
-    () => createPublicObserverPacket({
-      matchId: 'match-001',
-      stateVersion: 'opaque-state-v17',
-      eventCursor: 'event-0042',
-      publicProjection: { score: Number.NaN },
-    }),
-    /non-json-number/,
-  );
+  assert.throws(() => createPublicObserverPacket({
+    matchId: 'match-001', stateVersion: 'opaque-state-v17', eventCursor: 'event-0042', publicProjection: { score: Number.NaN },
+  }), /non-json-number/);
 });
 
 test('caller input is not frozen or mutated as a side effect', () => {
@@ -217,11 +190,8 @@ test('executor invokes four isolated workers exactly once and returns only an au
     assert.equal(Object.isFrozen(packet.authorizedProjection), true);
     const serialized = JSON.stringify(packet);
     assert.match(serialized, new RegExp(`${playerId}-SECRET`));
-    for (const other of ['P1', 'P2', 'P3', 'P4'].filter((id) => id !== playerId)) {
-      assert.doesNotMatch(serialized, new RegExp(`${other}-SECRET`));
-    }
+    for (const other of ['P1', 'P2', 'P3', 'P4'].filter((id) => id !== playerId)) assert.doesNotMatch(serialized, new RegExp(`${other}-SECRET`));
   });
-
   const result = await runFourAgentWorkers(turn, workers);
   assert.deepEqual([...callCounts.entries()], [['P1', 1], ['P2', 1], ['P3', 1], ['P4', 1]]);
   assert.deepEqual(result.results.map((entry) => [entry.playerId, entry.status]), [
@@ -248,13 +218,9 @@ test('executor reports results in turn order even when worker promises settle ou
     calls.push(playerId);
     return new Promise((resolve) => { resolvers[playerId] = () => resolve(intentFromPacket(packet)); });
   }]));
-
   const running = runFourAgentWorkers(turn, workers);
   assert.deepEqual(calls, ['P1', 'P2', 'P3', 'P4']);
-  resolvers.P4();
-  resolvers.P2();
-  resolvers.P3();
-  resolvers.P1();
+  resolvers.P4(); resolvers.P2(); resolvers.P3(); resolvers.P1();
   const result = await running;
   assert.deepEqual(result.results.map((entry) => entry.playerId), ['P1', 'P2', 'P3', 'P4']);
   assert.deepEqual(result.turn.submissions.map((entry) => entry.playerId), ['P1', 'P2', 'P3', 'P4']);
@@ -264,22 +230,14 @@ test('executor preserves valid partial submissions when one worker fails and nev
   const turn = createFourAgentTurn(turnInput());
   const callCounts = { P1: 0, P2: 0, P3: 0, P4: 0 };
   const workers = validWorkers((playerId) => { callCounts[playerId] += 1; });
-  workers.P2 = async () => {
-    callCounts.P2 += 1;
-    throw new Error('provider-secret-detail-must-not-escape');
-  };
-
+  workers.P2 = async () => { callCounts.P2 += 1; throw new Error('provider-secret-detail-must-not-escape'); };
   const result = await runFourAgentWorkers(turn, workers);
   assert.deepEqual(callCounts, { P1: 1, P2: 1, P3: 1, P4: 1 });
   assert.equal(result.turn.complete, false);
   assert.deepEqual(result.turn.missingPlayerIds, ['P2']);
   assert.deepEqual(result.turn.submissions.map((entry) => entry.playerId), ['P1', 'P3', 'P4']);
   assert.equal(result.authorityBatch, null);
-  assert.deepEqual(result.results[1], {
-    playerId: 'P2',
-    status: 'WORKER_FAILED',
-    reason: 'WORKER_REJECTED_OR_THROWN',
-  });
+  assert.deepEqual(result.results[1], { playerId: 'P2', status: 'WORKER_FAILED', reason: 'WORKER_REJECTED_OR_THROWN' });
   assert.doesNotMatch(JSON.stringify(result), /provider-secret-detail/);
 });
 
@@ -288,13 +246,10 @@ test('executor routes illegal and stale worker intents through the existing auth
   const workers = validWorkers();
   workers.P1 = async (packet) => intentFromPacket(packet, 'invented-card');
   workers.P3 = async (packet) => intentFromPacket(packet, 'attack', { stateVersion: 'worker-invented-version' });
-
   const result = await runFourAgentWorkers(turn, workers);
   assert.deepEqual(result.results.map((entry) => [entry.playerId, entry.status, entry.reason]), [
-    ['P1', 'INVALID_INTENT', 'intent-action-not-legal'],
-    ['P2', 'ACCEPTED', null],
-    ['P3', 'INVALID_INTENT', 'intent-stale-stateVersion'],
-    ['P4', 'ACCEPTED', null],
+    ['P1', 'INVALID_INTENT', 'intent-action-not-legal'], ['P2', 'ACCEPTED', null],
+    ['P3', 'INVALID_INTENT', 'intent-stale-stateVersion'], ['P4', 'ACCEPTED', null],
   ]);
   assert.deepEqual(result.turn.missingPlayerIds, ['P1', 'P3']);
   assert.equal(result.authorityBatch, null);
@@ -307,7 +262,6 @@ test('executor rejects worker maps that do not exactly match the four turn playe
   delete missing.P4;
   await assert.rejects(() => runFourAgentWorkers(turn, missing), /workers-must-match-turn-players-exactly/);
   assert.equal(calls, 0);
-
   const extra = validWorkers(() => { calls += 1; });
   extra.PX = async () => intent('PX');
   await assert.rejects(() => runFourAgentWorkers(turn, extra), /workers-must-match-turn-players-exactly/);
@@ -318,13 +272,8 @@ test('executor prevents a worker from claiming another player slot', async () =>
   const turn = createFourAgentTurn(turnInput());
   const workers = validWorkers();
   workers.P1 = async (packet) => intentFromPacket(packet, 'attack', { playerId: 'P2', intentId: 'stolen-P2' });
-
   const result = await runFourAgentWorkers(turn, workers);
-  assert.deepEqual(result.results[0], {
-    playerId: 'P1',
-    status: 'WORKER_PLAYER_MISMATCH',
-    reason: 'WORKER_RETURNED_OTHER_PLAYER',
-  });
+  assert.deepEqual(result.results[0], { playerId: 'P1', status: 'WORKER_PLAYER_MISMATCH', reason: 'WORKER_RETURNED_OTHER_PLAYER' });
   assert.deepEqual(result.turn.missingPlayerIds, ['P1']);
   assert.deepEqual(result.turn.submissions.map((entry) => entry.playerId), ['P2', 'P3', 'P4']);
   assert.equal(result.authorityBatch, null);
@@ -334,10 +283,7 @@ test('executor refuses implicit reruns of a partially submitted turn', async () 
   const base = createFourAgentTurn(turnInput());
   const partial = submitAgentIntent(base, intent('P1'));
   let calls = 0;
-  await assert.rejects(
-    () => runFourAgentWorkers(partial, validWorkers(() => { calls += 1; })),
-    /executor-turn-must-be-unsubmitted/,
-  );
+  await assert.rejects(() => runFourAgentWorkers(partial, validWorkers(() => { calls += 1; })), /executor-turn-must-be-unsubmitted/);
   assert.equal(calls, 0);
   assert.equal(MULTI_AGENT_MATCH_FOLLOW_CONTRACT.workerRetryPolicy, 'CALLER_CONTROLLED_NO_AUTORETRY');
   assert.equal(MULTI_AGENT_MATCH_FOLLOW_CONTRACT.workerProviderAuthority, 'NONE');
@@ -350,19 +296,12 @@ test('OpenAI Responses adapter sends strict structured choice request and rebind
   const packet = createAgentPacket(turn, 'P1');
   const calls = [];
   const worker = createOpenAIResponsesAgentWorker({
-    apiKey: 'sk-test-secret-key',
-    model: 'test-model-current',
+    apiKey: 'sk-test-secret-key', model: 'test-model-current',
     fetchImpl: async (url, options) => {
       calls.push({ url, options });
-      return {
-        ok: true,
-        async json() {
-          return openAICompleted({ intentId: 'provider-choice-P1', actionId: 'guard', abstain: false });
-        },
-      };
+      return { ok: true, async json() { return openAICompleted({ intentId: 'provider-choice-P1', actionId: 'guard', abstain: false }); } };
     },
   });
-
   const result = await worker(packet);
   assert.equal(calls.length, 1);
   assert.equal(calls[0].url, 'https://api.openai.com/v1/responses');
@@ -378,43 +317,26 @@ test('OpenAI Responses adapter sends strict structured choice request and rebind
   assert.match(calls[0].options.body, /P1-SECRET/);
   assert.doesNotMatch(calls[0].options.body, /P2-SECRET|P3-SECRET|P4-SECRET/);
   assert.deepEqual(result, {
-    intentId: 'provider-choice-P1',
-    matchId: 'match-001',
-    stateVersion: 'opaque-state-v17',
-    eventCursor: 'event-0042',
-    playerId: 'P1',
-    actionId: 'guard',
-    abstain: false,
+    intentId: 'provider-choice-P1', matchId: 'match-001', stateVersion: 'opaque-state-v17', eventCursor: 'event-0042',
+    playerId: 'P1', actionId: 'guard', abstain: false,
   });
 });
 
 test('OpenAI adapter model cannot override match identity and downstream validator still owns legality', async () => {
   const turn = createFourAgentTurn(turnInput());
   let calls = 0;
-  const workers = Object.fromEntries(turn.players.map((playerEntry) => [playerEntry.playerId,
-    createOpenAIResponsesAgentWorker({
-      apiKey: 'sk-test-shared',
-      model: 'test-model-current',
-      fetchImpl: async () => {
-        calls += 1;
-        const actionId = playerEntry.playerId === 'P3' ? 'invented-action' : 'attack';
-        return {
-          ok: true,
-          async json() {
-            return openAICompleted({ intentId: `provider-${playerEntry.playerId}`, actionId, abstain: false });
-          },
-        };
-      },
-    }),
-  ]));
-
+  const workers = Object.fromEntries(turn.players.map((playerEntry) => [playerEntry.playerId, createOpenAIResponsesAgentWorker({
+    apiKey: 'sk-test-shared', model: 'test-model-current',
+    fetchImpl: async () => {
+      calls += 1;
+      const actionId = playerEntry.playerId === 'P3' ? 'invented-action' : 'attack';
+      return { ok: true, async json() { return openAICompleted({ intentId: `provider-${playerEntry.playerId}`, actionId, abstain: false }); } };
+    },
+  })]));
   const result = await runFourAgentWorkers(turn, workers);
   assert.equal(calls, 4);
   assert.deepEqual(result.results.map((entry) => [entry.playerId, entry.status, entry.reason]), [
-    ['P1', 'ACCEPTED', null],
-    ['P2', 'ACCEPTED', null],
-    ['P3', 'INVALID_INTENT', 'intent-action-not-legal'],
-    ['P4', 'ACCEPTED', null],
+    ['P1', 'ACCEPTED', null], ['P2', 'ACCEPTED', null], ['P3', 'INVALID_INTENT', 'intent-action-not-legal'], ['P4', 'ACCEPTED', null],
   ]);
   assert.deepEqual(result.turn.missingPlayerIds, ['P3']);
   assert.equal(result.authorityBatch, null);
@@ -429,16 +351,11 @@ test('OpenAI adapter sanitizes provider failures and never retries automatically
     { name: 'refusal', response: { ok: true, async json() { return { status: 'completed', output: [{ type: 'message', content: [{ type: 'refusal', refusal: 'provider-secret-refusal' }] }] }; } } },
     { name: 'malformed', response: { ok: true, async json() { return openAICompleted({ not: 'json-string-choice' }); } } },
   ];
-
   for (const testCase of cases) {
     let calls = 0;
     const worker = createOpenAIResponsesAgentWorker({
-      apiKey: 'sk-test-hidden',
-      model: 'test-model-current',
-      fetchImpl: async () => {
-        calls += 1;
-        return testCase.response;
-      },
+      apiKey: 'sk-test-hidden', model: 'test-model-current',
+      fetchImpl: async () => { calls += 1; return testCase.response; },
     });
     await assert.rejects(worker(packet), (error) => {
       assert.equal(error instanceof TypeError, true);
@@ -453,16 +370,11 @@ test('OpenAI adapter handles abstention and validates caller-supplied adapter co
   assert.throws(() => createOpenAIResponsesAgentWorker({ apiKey: '', model: 'm', fetchImpl: async () => {} }), /openai-apiKey-invalid/);
   assert.throws(() => createOpenAIResponsesAgentWorker({ apiKey: 'k', model: '', fetchImpl: async () => {} }), /openai-model-invalid/);
   assert.throws(() => createOpenAIResponsesAgentWorker({ apiKey: 'k', model: 'm', fetchImpl: null }), /openai-fetch-invalid/);
-
   const turn = createFourAgentTurn(turnInput());
   const packet = createAgentPacket(turn, 'P4');
   const worker = createOpenAIResponsesAgentWorker({
-    apiKey: 'k',
-    model: 'm',
-    fetchImpl: async () => ({
-      ok: true,
-      async json() { return openAICompleted({ intentId: 'abstain-P4', actionId: null, abstain: true }); },
-    }),
+    apiKey: 'k', model: 'm',
+    fetchImpl: async () => ({ ok: true, async json() { return openAICompleted({ intentId: 'abstain-P4', actionId: null, abstain: true }); } }),
   });
   const result = await worker(packet);
   assert.equal(result.playerId, 'P4');
@@ -471,4 +383,66 @@ test('OpenAI adapter handles abstention and validates caller-supplied adapter co
   assert.equal(MULTI_AGENT_MATCH_FOLLOW_CONTRACT.openAIResponsesAdapter.credentialStorageAuthority, 'NONE');
   assert.equal(MULTI_AGENT_MATCH_FOLLOW_CONTRACT.openAIResponsesAdapter.modelAuthority, 'CALLER_SUPPLIED');
   assert.equal(MULTI_AGENT_MATCH_FOLLOW_CONTRACT.openAIResponsesAdapter.automaticRetryAllowed, false);
+});
+
+test('OpenAI four-agent CLI wires exactly four provider calls and emits no private projections or credential', async () => {
+  let calls = 0;
+  const result = await runOpenAIFourAgentCli({
+    inputText: JSON.stringify(turnInput()),
+    env: { OPENAI_API_KEY: 'sk-cli-secret', OPENAI_MODEL: 'cli-model-current' },
+    fetchImpl: async (_url, options) => {
+      calls += 1;
+      assert.equal(options.headers.Authorization, 'Bearer sk-cli-secret');
+      const body = JSON.parse(options.body);
+      assert.equal(body.model, 'cli-model-current');
+      return { ok: true, async json() { return openAICompleted({ intentId: `cli-intent-${calls}`, actionId: 'attack', abstain: false }); } };
+    },
+  });
+  assert.equal(calls, 4);
+  assert.deepEqual(result.results.map((entry) => entry.status), ['ACCEPTED', 'ACCEPTED', 'ACCEPTED', 'ACCEPTED']);
+  assert.deepEqual(result.missingPlayerIds, []);
+  assert.ok(result.authorityBatch);
+  assert.equal(result.authorityBatch.containsResolution, false);
+  const serialized = JSON.stringify(result);
+  assert.doesNotMatch(serialized, /P1-SECRET|P2-SECRET|P3-SECRET|P4-SECRET|privateHand|authorizedProjection|sk-cli-secret/);
+  assert.equal(MULTI_AGENT_MATCH_FOLLOW_CONTRACT.openAIFourAgentCli.outputPrivateProjectionAllowed, false);
+  assert.equal(MULTI_AGENT_MATCH_FOLLOW_CONTRACT.openAIFourAgentCli.stateVersionGenerationAuthority, 'NONE');
+});
+
+test('OpenAI four-agent CLI keeps illegal provider choice out of authority batch and does not invent a move', async () => {
+  let calls = 0;
+  const result = await runOpenAIFourAgentCli({
+    inputText: JSON.stringify(turnInput()),
+    env: { OPENAI_API_KEY: 'sk-cli-hidden', OPENAI_MODEL: 'cli-model-current' },
+    fetchImpl: async () => {
+      calls += 1;
+      const actionId = calls === 3 ? 'invented-action' : 'guard';
+      return { ok: true, async json() { return openAICompleted({ intentId: `cli-choice-${calls}`, actionId, abstain: false }); } };
+    },
+  });
+  assert.equal(calls, 4);
+  assert.deepEqual(result.results.map((entry) => [entry.playerId, entry.status, entry.reason]), [
+    ['P1', 'ACCEPTED', null], ['P2', 'ACCEPTED', null], ['P3', 'INVALID_INTENT', 'intent-action-not-legal'], ['P4', 'ACCEPTED', null],
+  ]);
+  assert.deepEqual(result.missingPlayerIds, ['P3']);
+  assert.equal(result.authorityBatch, null);
+  assert.equal(result.automaticRetryAllowed, false);
+  assert.equal(result.automaticTimeoutMoveAllowed, false);
+});
+
+test('OpenAI four-agent CLI validates stdin/env without exposing caller secrets', async () => {
+  await assert.rejects(() => runOpenAIFourAgentCli({ inputText: '', env: {} }), /openai-cli-input-invalid/);
+  await assert.rejects(() => runOpenAIFourAgentCli({ inputText: '{bad', env: {} }), /openai-cli-json-invalid/);
+  await assert.rejects(() => runOpenAIFourAgentCli({ inputText: JSON.stringify(turnInput()), env: { OPENAI_API_KEY: '', OPENAI_MODEL: 'm' } }), /openai-cli-apiKey-invalid/);
+  await assert.rejects(() => runOpenAIFourAgentCli({ inputText: JSON.stringify(turnInput()), env: { OPENAI_API_KEY: 'k', OPENAI_MODEL: '' } }), /openai-cli-model-invalid/);
+
+  const child = spawnSync(process.execPath, ['tools/multi-agent-match-follow-harness.mjs'], {
+    input: JSON.stringify(turnInput()),
+    encoding: 'utf8',
+    env: { ...process.env, OPENAI_API_KEY: '', OPENAI_MODEL: 'm' },
+  });
+  assert.notEqual(child.status, 0);
+  assert.equal(child.stdout, '');
+  assert.match(child.stderr, /"error":"CLI_FAILED"/);
+  assert.doesNotMatch(child.stderr, /P1-SECRET|P2-SECRET|P3-SECRET|P4-SECRET|privateHand|OPENAI_API_KEY/);
 });

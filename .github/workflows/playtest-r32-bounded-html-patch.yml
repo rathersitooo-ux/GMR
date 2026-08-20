@@ -1,0 +1,89 @@
+name: Playtest R32C persist phone Result repair
+
+on:
+  push:
+    branches:
+      - work/playtest-r32-result-ranking-fix
+    paths:
+      - .github/workflows/playtest-r32-bounded-html-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair-retest-persist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/playtest-r32-result-ranking-fix
+          fetch-depth: 0
+      - name: Verify exact current base and persist portrait Result repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "a92cb7822069624e9557c719afbc6573e9285cf2"
+          test "$(git hash-object browser/GAMEROAD.html)" = "4a3dfbb9fee26089fd790a69791fc7b3326e5917"
+          grep -Fq 'grid-template-rows:auto auto auto minmax(0,1fr);gap:10px;overflow:hidden' browser/GAMEROAD.html
+          grep -Fq '#resultRanking{min-height:0;overflow:auto}' browser/GAMEROAD.html
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('browser/GAMEROAD.html')
+          data=p.read_bytes()
+          old=b'.result.active .resultBody{left:3%;right:3%;top:53%;bottom:14%;padding:8px 9px;gap:5px}'
+          new=b'.result.active .resultBody{left:3%;right:3%;top:48%;bottom:12%;padding:8px 9px;gap:5px}'
+          if data.count(old) != 1:
+              raise SystemExit(f'portrait Result body anchor count={data.count(old)}, expected 1')
+          data=data.replace(old,new,1)
+          if data.count(new) != 1:
+              raise SystemExit('portrait Result body post-invariant failed')
+          p.write_bytes(data)
+          PY
+          git diff --check
+          test "$(git diff --name-only)" = "browser/GAMEROAD.html"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+      - run: npx playwright install --with-deps chromium
+      - name: Strengthen existing R19 visible loop for full-row readability
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tests/browser-full-interaction.spec.mjs')
+          s=p.read_text()
+          old="""  await expect(result.locator('#resultRanking .rankLine')).toHaveCount(4);\n  const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';\n  expect(roundsText).toMatch(/\\d+ラウンド/);\n  await attachStateScreenshot(page, testInfo, 'r19-honey-four-player-result-visible');\n"""
+          new="""  await expect(result.locator('#resultRanking .rankLine')).toHaveCount(4);\n  const ranking = result.locator('#resultRanking');\n  const rankRows = ranking.locator('.rankLine');\n  const rankingBox = await ranking.boundingBox();\n  expect(rankingBox, 'Result ranking has a rendered viewport').not.toBeNull();\n  expect(rankingBox.height, 'Result ranking can display at least one full ranking row').toBeGreaterThanOrEqual(32);\n  await ranking.evaluate((node) => { node.scrollTop = 0; });\n  await attachStateScreenshot(page, testInfo, 'r32c-honey-four-player-result-ranking-top');\n  const reachability = [];\n  for (let i = 0; i < 4; i += 1) {\n    const row = rankRows.nth(i);\n    await row.scrollIntoViewIfNeeded();\n    await expect(row, `ranking row ${i + 1} is visible after scrolling`).toBeVisible();\n    const geometry = await page.evaluate((index) => {\n      const host = document.querySelector('#resultRanking');\n      const row = host?.querySelectorAll('.rankLine')?.[index];\n      if (!host || !row) return { ok: false };\n      const h = host.getBoundingClientRect(), r = row.getBoundingClientRect();\n      return {\n        ok: r.top >= h.top - 1 && r.bottom <= h.bottom + 1 && r.top >= 0 && r.bottom <= innerHeight,\n        row: { top: r.top, bottom: r.bottom, height: r.height },\n        host: { top: h.top, bottom: h.bottom, clientHeight: host.clientHeight, scrollHeight: host.scrollHeight, scrollTop: host.scrollTop },\n      };\n    }, i);\n    reachability.push(geometry);\n    expect(geometry.ok, `ranking row ${i + 1} fits fully inside the usable Result ranking viewport after visible scrolling`).toBeTruthy();\n  }\n  await attachStateScreenshot(page, testInfo, 'r32c-honey-four-player-result-ranking-bottom');\n  testInfo.annotations.push({ type: 'r32c-result-ranking-full-row-readability', description: JSON.stringify(reachability) });\n  const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';\n  expect(roundsText).toMatch(/\\d+ラウンド/);\n  await attachStateScreenshot(page, testInfo, 'r19-honey-four-player-result-visible');\n"""
+          if s.count(old) != 1:
+              raise SystemExit(f'R19 assertion anchor count={s.count(old)}, expected 1')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Run same visible 4P Honey loop across current three visual projects
+        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 --grep "R19 reaches Result from visible four-player Honey Hunt and returns Home" --project=desktop-1280x720 --project=phone-390x844 --project=short-landscape-667x375
+      - name: Upload fresh readable Result evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playtest-r32c-result-${{ github.run_id }}
+          path: |
+            playwright-report-full-interaction/
+            test-results/full-interaction/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Commit only persisted product repair and remove temporary executor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout -- tests/browser-full-interaction.spec.mjs
+          git rm .github/workflows/playtest-r32-bounded-html-patch.yml
+          git diff --check HEAD
+          test "$(git diff --name-only HEAD)" = $'.github/workflows/playtest-r32-bounded-html-patch.yml\nbrowser/GAMEROAD.html'
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add browser/GAMEROAD.html
+          git commit -m "PLAYTEST R32: persist readable phone Result ranking"
+          git push origin HEAD:work/playtest-r32-result-ranking-fix

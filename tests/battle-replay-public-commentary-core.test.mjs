@@ -1,0 +1,216 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {
+  BATTLE_REPLAY_PUBLIC_COMMENTARY_CONTRACT,
+  createPublicCommentaryGenerationRequest,
+  createPublicSpeechArbiterState,
+  createPublicSpeechCandidate,
+  dispatchNextPublicSpeech,
+  offerPublicSpeechCandidate,
+  settlePublicSpeechDispatch,
+} from '../browser/battle-replay-public-commentary-core.mjs';
+
+function director(overrides = {}) {
+  return {
+    presentationOnly: true,
+    decisionSerial: 17,
+    selectedCandidateId: 'shot-event-42',
+    selectedEventId: 'event-42',
+    ...overrides,
+  };
+}
+
+function event(overrides = {}) {
+  return {
+    eventId: 'event-42',
+    kind: 'BATTLE_RESOLVED',
+    publicData: {
+      actor: 'P3',
+      target: 'P1',
+      laneCount: 6,
+    },
+    ...overrides,
+  };
+}
+
+function request(overrides = {}) {
+  return createPublicCommentaryGenerationRequest({
+    requestId: 'req-17-mc',
+    directorDecision: director(),
+    selectedEvent: event(),
+    speakerClass: 'PUBLIC_MC',
+    ...overrides,
+  });
+}
+
+function candidate(candidateId, priority, overrides = {}) {
+  return createPublicSpeechCandidate({
+    candidateId,
+    request: request(),
+    text: `speech:${candidateId}`,
+    priority,
+    ...overrides,
+  });
+}
+
+test('binds commentary generation to the already-selected public replay event without reranking it', () => {
+  const value = request();
+  assert.equal(value.eventSelectionAuthority, 'BATTLE_REPLAY_DIRECTOR_DECISION');
+  assert.equal(value.decisionSerial, 17);
+  assert.equal(value.selectedEventId, 'event-42');
+  assert.equal(value.publicEvent.publicData.actor, 'P3');
+  assert.equal(value.personaApprovalClaimed, false);
+  assert.equal(value.automaticPublishAllowed, false);
+  assert.equal(value.automaticGameMutationAllowed, false);
+  assert.equal('score' in value, false);
+  assert.equal('winner' in value, false);
+});
+
+test('fails closed when the selected public event does not match the replay director decision', () => {
+  assert.throws(
+    () => request({ selectedEvent: event({ eventId: 'event-99' }) }),
+    /DIRECTOR_EVENT_MISMATCH/,
+  );
+  assert.throws(
+    () => request({ directorDecision: director({ presentationOnly: false }) }),
+    /DIRECTOR_PROJECTION_INVALID/,
+  );
+});
+
+test('rejects private, secret, and authority-only fields recursively from public commentary input', () => {
+  for (const selectedEvent of [
+    event({ privateData: { hand: ['secret-card'] } }),
+    event({ publicData: { nested: { privateByViewer: { P1: 'secret-card' } } } }),
+    event({ publicData: { secretHand: ['secret-card'] } }),
+    event({ publicData: { nested: { authorityOnly: { seed: 7 } } } }),
+  ]) {
+    assert.throws(
+      () => request({ selectedEvent }),
+      /PUBLIC_PROJECTION_FORBIDDEN_KEY/,
+    );
+  }
+});
+
+test('only public MC and public guest speaker classes can enter this seam', () => {
+  assert.equal(request().speakerClass, 'PUBLIC_MC');
+  assert.equal(request({ speakerClass: 'PUBLIC_GUEST' }).speakerClass, 'PUBLIC_GUEST');
+  for (const speakerClass of ['PERSONAL_PARTNER', 'PLAYER_AI', 'PRIVATE_GUEST']) {
+    assert.throws(() => request({ speakerClass }), /SPEAKER_CLASS_NOT_PUBLIC/);
+  }
+});
+
+test('speech candidates preserve exact public request identity without claiming persona approval or publishing', () => {
+  const value = candidate('candidate-a', 20);
+  assert.equal(value.requestId, 'req-17-mc');
+  assert.equal(value.decisionSerial, 17);
+  assert.equal(value.selectedEventId, 'event-42');
+  assert.equal(value.speakerClass, 'PUBLIC_MC');
+  assert.equal(value.text, 'speech:candidate-a');
+  assert.equal(value.personaApprovalClaimed, false);
+  assert.equal(value.automaticPublishAllowed, false);
+  assert.equal(value.automaticGameMutationAllowed, false);
+});
+
+test('arbitrates multiple public voices deterministically and permits only one in-flight dispatch', () => {
+  let state = createPublicSpeechArbiterState({ maxPending: 4 });
+  state = offerPublicSpeechCandidate(state, candidate('low', 10));
+  state = offerPublicSpeechCandidate(state, candidate('high-b', 50));
+  state = offerPublicSpeechCandidate(state, candidate('high-a', 50));
+
+  assert.deepEqual(state.pending.map((item) => item.candidateId), ['high-a', 'high-b', 'low']);
+
+  const first = dispatchNextPublicSpeech(state, { channelIdle: true, dispatchId: 'dispatch-1' });
+  assert.equal(first.dispatch.candidateId, 'high-a');
+  assert.equal(first.state.inFlight.dispatchId, 'dispatch-1');
+  assert.deepEqual(first.state.pending.map((item) => item.candidateId), ['high-b', 'low']);
+
+  const blocked = dispatchNextPublicSpeech(first.state, { channelIdle: true, dispatchId: 'dispatch-2' });
+  assert.equal(blocked.dispatch, null);
+  assert.strictEqual(blocked.state, first.state);
+});
+
+test('does not dispatch when the caller says the speech channel is busy', () => {
+  let state = createPublicSpeechArbiterState({ maxPending: 2 });
+  state = offerPublicSpeechCandidate(state, candidate('waiting', 1));
+  const result = dispatchNextPublicSpeech(state, { channelIdle: false, dispatchId: 'unused-id' });
+  assert.equal(result.dispatch, null);
+  assert.strictEqual(result.state, state);
+  assert.equal(state.pending.length, 1);
+});
+
+test('candidate identity is idempotent only for exact duplicates and queue capacity fails closed', () => {
+  const original = candidate('same', 5);
+  let state = createPublicSpeechArbiterState({ maxPending: 1 });
+  state = offerPublicSpeechCandidate(state, original);
+  assert.strictEqual(offerPublicSpeechCandidate(state, original), state);
+
+  assert.throws(
+    () => offerPublicSpeechCandidate(state, { ...original, text: 'different speech' }),
+    /CANDIDATE_ID_CONFLICT/,
+  );
+  assert.throws(
+    () => offerPublicSpeechCandidate(state, candidate('overflow', 6)),
+    /SPEECH_QUEUE_FULL/,
+  );
+});
+
+test('settlement is caller-explicit: completed and drop clear, retry requeues, with no automatic retry', () => {
+  let completedState = createPublicSpeechArbiterState({ maxPending: 2 });
+  completedState = offerPublicSpeechCandidate(completedState, candidate('complete-me', 9));
+  completedState = dispatchNextPublicSpeech(completedState, { channelIdle: true, dispatchId: 'dispatch-complete' }).state;
+  completedState = settlePublicSpeechDispatch(completedState, { dispatchId: 'dispatch-complete', outcome: 'COMPLETED' });
+  assert.equal(completedState.inFlight, null);
+  assert.deepEqual(completedState.pending, []);
+
+  let retryState = createPublicSpeechArbiterState({ maxPending: 2 });
+  retryState = offerPublicSpeechCandidate(retryState, candidate('retry-me', 7));
+  retryState = dispatchNextPublicSpeech(retryState, { channelIdle: true, dispatchId: 'dispatch-retry' }).state;
+  retryState = settlePublicSpeechDispatch(retryState, { dispatchId: 'dispatch-retry', outcome: 'RETRY' });
+  assert.equal(retryState.inFlight, null);
+  assert.deepEqual(retryState.pending.map((item) => item.candidateId), ['retry-me']);
+  assert.equal(retryState.automaticRetryAllowed, false);
+
+  let dropState = createPublicSpeechArbiterState({ maxPending: 2 });
+  dropState = offerPublicSpeechCandidate(dropState, candidate('drop-me', 3));
+  dropState = dispatchNextPublicSpeech(dropState, { channelIdle: true, dispatchId: 'dispatch-drop' }).state;
+  dropState = settlePublicSpeechDispatch(dropState, { dispatchId: 'dispatch-drop', outcome: 'DROP' });
+  assert.deepEqual(dropState.pending, []);
+  assert.throws(
+    () => settlePublicSpeechDispatch(dropState, { dispatchId: 'dispatch-drop', outcome: 'COMPLETED' }),
+    /DISPATCH_NOT_IN_FLIGHT/,
+  );
+});
+
+test('dispatch remains presentation-only and contains no source private payload or game mutation authority', () => {
+  let state = createPublicSpeechArbiterState({ maxPending: 1 });
+  state = offerPublicSpeechCandidate(state, candidate('public-only', 12));
+  const { dispatch } = dispatchNextPublicSpeech(state, { channelIdle: true, dispatchId: 'dispatch-public' });
+  const serialized = JSON.stringify(dispatch);
+  assert.doesNotMatch(serialized, /private|secret|authorityOnly/i);
+  assert.equal(dispatch.presentationOnly, true);
+  assert.equal(dispatch.automaticPublishAllowed, false);
+  assert.equal(dispatch.automaticGameMutationAllowed, false);
+});
+
+test('caller-owned objects are cloned for public request and not frozen or mutated', () => {
+  const selectedEvent = event();
+  const directorDecision = director();
+  const value = request({ selectedEvent, directorDecision });
+
+  assert.equal(Object.isFrozen(selectedEvent), false);
+  assert.equal(Object.isFrozen(directorDecision), false);
+  selectedEvent.publicData.actor = 'MUTATED-LATER';
+  assert.equal(value.publicEvent.publicData.actor, 'P3');
+});
+
+test('contract explicitly leaves model, TTS, avatar, OAuth, storage and game authority outside this core', () => {
+  assert.equal(BATTLE_REPLAY_PUBLIC_COMMENTARY_CONTRACT.gameStateAuthority, 'NONE');
+  assert.equal(BATTLE_REPLAY_PUBLIC_COMMENTARY_CONTRACT.storageAuthority, 'NONE');
+  assert.equal(BATTLE_REPLAY_PUBLIC_COMMENTARY_CONTRACT.privateDataAllowed, false);
+  assert.equal(BATTLE_REPLAY_PUBLIC_COMMENTARY_CONTRACT.personalPartnerPrivateMemoryAllowed, false);
+  assert.equal(BATTLE_REPLAY_PUBLIC_COMMENTARY_CONTRACT.oauthHandled, false);
+  assert.equal(BATTLE_REPLAY_PUBLIC_COMMENTARY_CONTRACT.ttsHandled, false);
+  assert.equal(BATTLE_REPLAY_PUBLIC_COMMENTARY_CONTRACT.avatarHandled, false);
+  assert.equal(BATTLE_REPLAY_PUBLIC_COMMENTARY_CONTRACT.automaticPublishAllowed, false);
+  assert.equal(BATTLE_REPLAY_PUBLIC_COMMENTARY_CONTRACT.automaticRetryAllowed, false);
+});

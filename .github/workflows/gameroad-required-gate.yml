@@ -129,7 +129,9 @@ jobs:
               browser/battle-replay-live-adapter.mjs|\
               tests/battle-replay-live-adapter.test.mjs|\
               browser/partner-battle-event-log-projection.mjs|\
-              tests/partner-battle-event-log-projection.test.mjs)
+              tests/partner-battle-event-log-projection.test.mjs|\
+              browser/battle-replay-public-commentary-core.mjs|\
+              tests/battle-replay-public-commentary-core.test.mjs)
                 replay=true
                 ;;
               browser/battle-team-ping-core.mjs|\
@@ -371,7 +373,7 @@ jobs:
 
       - name: Run Battle replay core tests
         if: steps.classify.outputs.replay == 'true'
-        run: node --test tests/battle-replay-core.test.mjs tests/battle-replay-live-adapter.test.mjs tests/partner-battle-event-log-projection.test.mjs
+        run: node --test tests/battle-replay-core.test.mjs tests/battle-replay-live-adapter.test.mjs tests/partner-battle-event-log-projection.test.mjs tests/battle-replay-public-commentary-core.test.mjs
 
       - name: Run Battle team ping core tests
         if: steps.classify.outputs.ping == 'true'

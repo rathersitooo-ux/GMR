@@ -1,9 +1,14 @@
 const SCHEMA = 'gameroad.card-presentation.v1';
-const PRESENTATION_KINDS = Object.freeze(['scan', 'summon', 'finisher', 'vfx', 'sfx']);
+const PRESENTATION_KINDS = Object.freeze(['scan', 'summon', 'finisher', 'vfx', 'sfx', 'fusion']);
 const VISIBILITY_SCOPES = Object.freeze(['public', 'owner']);
+const OUTFIT_FUSION_SLOTS = Object.freeze(['shoes', 'coord', 'accessory']);
 
 function nonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
+}
+
+function plainObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value);
 }
 
 function cloneJson(value) {
@@ -53,12 +58,83 @@ function reject(state, reason) {
   return deepFreeze({ accepted: false, duplicate: false, reason, state });
 }
 
+function normalizeOutfitFusionSet(set) {
+  if (!plainObject(set) || !nonEmptyString(set.setId) || !Array.isArray(set.pieces) || set.pieces.length !== 3) {
+    return null;
+  }
+
+  const pieces = [];
+  for (const piece of set.pieces) {
+    if (!plainObject(piece) || !nonEmptyString(piece.cardId) || !OUTFIT_FUSION_SLOTS.includes(piece.slotType)) {
+      return null;
+    }
+    pieces.push({ cardId: piece.cardId, slotType: piece.slotType });
+  }
+
+  if (new Set(pieces.map(piece => piece.cardId)).size !== 3) return null;
+  if (new Set(pieces.map(piece => piece.slotType)).size !== 3) return null;
+
+  const bySlot = new Map(pieces.map(piece => [piece.slotType, piece]));
+  return deepFreeze({
+    setId: set.setId,
+    pieces: OUTFIT_FUSION_SLOTS.map(slotType => ({
+      cardId: bySlot.get(slotType).cardId,
+      slotType,
+    })),
+  });
+}
+
+function normalizeOwnedCardIds(ownedCardIds) {
+  if (!Array.isArray(ownedCardIds) || ownedCardIds.some(id => !nonEmptyString(id))) return null;
+  return [...new Set(ownedCardIds)];
+}
+
+function fusionReject(state, reason, fusion = null) {
+  return deepFreeze({
+    accepted: false,
+    duplicate: false,
+    reason,
+    state,
+    fusion,
+    presentation: null,
+  });
+}
+
 export function createCardPresentationSession({ sessionId } = {}) {
   if (!nonEmptyString(sessionId)) throw new TypeError('SESSION_ID_REQUIRED');
   return deepFreeze({
     schema: SCHEMA,
     sessionId,
     seenEventIds: [],
+  });
+}
+
+export function deriveOutfitFusionState({ set, ownedCardIds } = {}) {
+  const normalizedSet = normalizeOutfitFusionSet(set);
+  if (!normalizedSet) {
+    return deepFreeze({ valid: false, reason: 'FUSION_SET_INVALID' });
+  }
+
+  const normalizedOwnedCardIds = normalizeOwnedCardIds(ownedCardIds);
+  if (!normalizedOwnedCardIds) {
+    return deepFreeze({ valid: false, reason: 'OWNERSHIP_INVALID' });
+  }
+
+  const owned = new Set(normalizedOwnedCardIds);
+  const ownedPieces = normalizedSet.pieces.filter(piece => owned.has(piece.cardId));
+  const ownedPieceCardIds = ownedPieces.map(piece => piece.cardId);
+  const ownedSlots = ownedPieces.map(piece => piece.slotType);
+  const missingSlots = OUTFIT_FUSION_SLOTS.filter(slotType => !ownedSlots.includes(slotType));
+
+  return deepFreeze({
+    valid: true,
+    reason: 'OK',
+    setId: normalizedSet.setId,
+    componentCardIds: normalizedSet.pieces.map(piece => piece.cardId),
+    ownedPieceCardIds,
+    ownedSlots,
+    missingSlots,
+    complete: missingSlots.length === 0,
   });
 }
 
@@ -117,8 +193,41 @@ export function applyCardPresentationEvent(state, event, preferences = {}) {
   return deepFreeze({ accepted: true, duplicate: false, reason: 'OK', state: nextState, plan });
 }
 
+export function applyOutfitFusionPresentation(state, input = {}, preferences = {}) {
+  if (!assertState(state)) return fusionReject(state, 'STATE_INVALID');
+  if (!plainObject(input)) return fusionReject(state, 'EVENT_INVALID');
+  if (!nonEmptyString(input.eventId)) return fusionReject(state, 'EVENT_ID_REQUIRED');
+
+  const fusion = deriveOutfitFusionState({
+    set: input.set,
+    ownedCardIds: input.ownedCardIds,
+  });
+  if (!fusion.valid) return fusionReject(state, fusion.reason);
+  if (!fusion.complete) return fusionReject(state, 'FUSION_INCOMPLETE', fusion);
+
+  const presentation = applyCardPresentationEvent(state, {
+    sessionId: state.sessionId,
+    eventId: input.eventId,
+    authorized: input.authorized === true,
+    visibility: input.visibility ?? 'owner',
+    ownerAuthorized: input.ownerAuthorized === true,
+    kind: 'fusion',
+    assets: input.assets,
+  }, preferences);
+
+  return deepFreeze({
+    accepted: presentation.accepted,
+    duplicate: presentation.duplicate,
+    reason: presentation.reason,
+    state: presentation.state,
+    fusion,
+    presentation: presentation.plan,
+  });
+}
+
 export const CARD_PRESENTATION_CORE = Object.freeze({
   schema: SCHEMA,
   presentationKinds: PRESENTATION_KINDS,
   visibilityScopes: VISIBILITY_SCOPES,
+  outfitFusionSlots: OUTFIT_FUSION_SLOTS,
 });

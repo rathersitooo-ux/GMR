@@ -260,7 +260,7 @@ test('R19R2 mounts accepted replay rows on the production Result surface', async
   const rowCount = await replayRows.count();
   expect(rowCount, 'accepted replay contains at least one battle resolution plus match end').toBeGreaterThan(1);
   const replayText = (await replayRows.allTextContents()).join('\n');
-  expect(replayText, 'accepted replay contains a battle-resolution row').toMatch(/第\d+巡/);
+  expect(replayText, 'accepted replay contains a battle-resolution row').toMatch(/第\d+ラウンド/);
   expect(replayText, 'accepted replay contains the match-end row').toContain('対戦終了');
 
   const summary = replay.locator('summary');

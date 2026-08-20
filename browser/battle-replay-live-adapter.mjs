@@ -8,6 +8,7 @@ import {
   applyCardPresentationEvent,
   createCardPresentationSession
 } from './card-presentation-core.mjs';
+import { planBattleConveyor } from './battle-conveyor-presentation-core.mjs';
 
 const LIVE_ADAPTER_SCHEMA = 'GAMEROAD_BATTLE_REPLAY_LIVE_ADAPTER_V1';
 const VERSION_KEYS = Object.freeze(['rules', 'content', 'state']);
@@ -370,7 +371,8 @@ export function createBattleReplayCardPresentationBridge(environment = {}) {
     if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
     const runtime = {
       state: createCardPresentationSession({ sessionId: matchId }),
-      lastPlan: null
+      lastPlan: null,
+      lastFinisherPlan: null
     };
     sessions.set(matchId, runtime);
     return runtime.state;
@@ -381,7 +383,8 @@ export function createBattleReplayCardPresentationBridge(environment = {}) {
     safeInteger(serial, 'RESOLUTION_SERIAL', 1);
     const current = sessions.get(matchId) || {
       state: createCardPresentationSession({ sessionId: matchId }),
-      lastPlan: null
+      lastPlan: null,
+      lastFinisherPlan: null
     };
     const result = applyCardPresentationEvent(current.state, {
       sessionId: matchId,
@@ -395,7 +398,8 @@ export function createBattleReplayCardPresentationBridge(environment = {}) {
     if (!result.accepted) return result;
     sessions.set(matchId, {
       state: result.state,
-      lastPlan: result.duplicate ? current.lastPlan : result.plan
+      lastPlan: result.duplicate ? current.lastPlan : result.plan,
+      lastFinisherPlan: current.lastFinisherPlan
     });
     if (!result.duplicate && result.plan) {
       try {
@@ -407,17 +411,61 @@ export function createBattleReplayCardPresentationBridge(environment = {}) {
     return result;
   }
 
+  function acceptAcceptedMatchEnd({ matchId, winnerId, loserIds }) {
+    if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
+    if (!nonEmptyString(winnerId)) throw new TypeError('FINISHER_WINNER_ID_REQUIRED');
+    const normalizedLoserIds = stringArray(loserIds, 'FINISHER_LOSER_IDS');
+    if (normalizedLoserIds.length !== 3 ||
+        new Set(normalizedLoserIds).size !== 3 ||
+        normalizedLoserIds.includes(winnerId)) {
+      throw new TypeError('FINISHER_LOSER_IDS_INVALID');
+    }
+    const current = sessions.get(matchId) || {
+      state: createCardPresentationSession({ sessionId: matchId }),
+      lastPlan: null,
+      lastFinisherPlan: null
+    };
+    const preferences = readBattleReplayCardPresentationPreferences(environment);
+    const timeline = planBattleConveyor([{
+      accepted: true,
+      eventId: `match-end-finisher:${matchId}`,
+      kind: 'finisher',
+      publicData: {
+        winnerId,
+        loserIds: normalizedLoserIds
+      }
+    }], {
+      reducedMotion: preferences.reducedMotion,
+      lowPerf: preferences.lowPerf
+    });
+    const plan = timeline.plans[0] || null;
+    sessions.set(matchId, {
+      state: current.state,
+      lastPlan: current.lastPlan,
+      lastFinisherPlan: plan
+    });
+    if (plan) {
+      try {
+        renderPlan(plan);
+      } catch {
+        // Presentation is strictly fail-soft and never owns replay/gameplay success.
+      }
+    }
+    return deepFreeze({ accepted: plan != null, plan });
+  }
+
   function snapshot(matchId) {
     const runtime = sessions.get(matchId);
     if (!runtime) return null;
     return deepFreeze(cloneJson({
       matchId,
       seenEventIds: runtime.state.seenEventIds,
-      lastPlan: runtime.lastPlan
+      lastPlan: runtime.lastPlan,
+      lastFinisherPlan: runtime.lastFinisherPlan
     }));
   }
 
-  return Object.freeze({ begin, acceptAcceptedResolution, snapshot });
+  return Object.freeze({ begin, acceptAcceptedResolution, acceptAcceptedMatchEnd, snapshot });
 }
 
 const liveCardPresentationBridge = createBattleReplayCardPresentationBridge();
@@ -486,7 +534,11 @@ export function appendAcceptedBattleResolution(
   return next;
 }
 
-export function appendAcceptedMatchEnd(session, { winnerIds, round, mode, formalRanking = null }) {
+export function appendAcceptedMatchEnd(
+  session,
+  { winnerIds, round, mode, formalRanking = null },
+  { presentationBridge = liveCardPresentationBridge } = {}
+) {
   assertSession(session);
   if (session.ended) throw new TypeError('LIVE_REPLAY_ALREADY_ENDED');
   const normalizedWinnerIds = stringArray(winnerIds, 'MATCH_END_WINNER_IDS');
@@ -507,11 +559,32 @@ export function appendAcceptedMatchEnd(session, { winnerIds, round, mode, formal
     kind: 'match_ended',
     publicData: deepFreeze(publicData)
   });
-  return deepFreeze({
+  const next = deepFreeze({
     ...cloneJson(session),
     ended: true,
     log
   });
+  if (normalizedMode === '4p' &&
+      normalizedWinnerIds.length === 1 &&
+      Array.isArray(publicData.formalRanking) &&
+      publicData.formalRanking.length === 4) {
+    const winnerId = normalizedWinnerIds[0];
+    const loserIds = publicData.formalRanking
+      .map(row => row.id)
+      .filter(id => id !== winnerId);
+    if (loserIds.length === 3) {
+      try {
+        presentationBridge?.acceptAcceptedMatchEnd?.({
+          matchId: session.matchId,
+          winnerId,
+          loserIds
+        });
+      } catch {
+        // Accepted replay/gameplay state is authoritative; presentation never blocks it.
+      }
+    }
+  }
+  return next;
 }
 
 export function readLiveReplay(session, { viewer = null } = {}) {
@@ -557,6 +630,12 @@ export const BATTLE_REPLAY_LIVE_ADAPTER = Object.freeze({
     kind: 'vfx',
     assetAuthority: 'fallback_only',
     audio: 'silent'
+  }),
+  matchEndFinisher: Object.freeze({
+    source: 'accepted_free4p_single_winner_formal_ranking',
+    kind: 'finisher',
+    transition: 'FINISHER_GATHER',
+    authority: 'presentation_only_no_game_state_write'
   })
 });
 

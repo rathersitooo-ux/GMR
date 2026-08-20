@@ -2,6 +2,8 @@ const TURN_SCHEMA = 'gameroad.multi-agent-match-follow.turn.v1';
 const INTENT_SCHEMA = 'gameroad.multi-agent-match-follow.intent.v1';
 const OBSERVER_SCHEMA = 'gameroad.multi-agent-match-follow.observer.v1';
 const EXECUTOR_SCHEMA = 'gameroad.multi-agent-match-follow.executor-result.v1';
+const OPENAI_RESPONSES_ENDPOINT = 'https://api.openai.com/v1/responses';
+const OPENAI_CHOICE_SCHEMA_NAME = 'gameroad_agent_legal_action_choice';
 const PLAYER_COUNT = 4;
 
 function token(value, field) {
@@ -9,6 +11,11 @@ function token(value, field) {
   const normalized = value.trim();
   if (!normalized || normalized.length > 160) throw new TypeError(`${field}-invalid`);
   return normalized;
+}
+
+function credential(value, field) {
+  if (typeof value !== 'string' || value.trim() === '') throw new TypeError(`${field}-invalid`);
+  return value.trim();
 }
 
 function isPlainObject(value) {
@@ -300,6 +307,133 @@ export async function runFourAgentWorkers(turn, workers) {
   });
 }
 
+function validateAgentPacket(packet) {
+  if (!isPlainObject(packet) || packet.schema !== 'gameroad.multi-agent-match-follow.agent-packet.v1') {
+    throw new TypeError('agent-packet-invalid');
+  }
+  contextIdentity(packet);
+  const playerId = token(packet.playerId, 'agent-packet-playerId');
+  cloneJson(packet.authorizedProjection, 'agent-packet-authorizedProjection');
+  const legalActions = normalizeLegalActions(packet.legalActions, playerId);
+  return { playerId, legalActions };
+}
+
+function extractOpenAIOutputText(payload) {
+  if (!isPlainObject(payload)) throw new TypeError('openai-response-invalid');
+  if (payload.status !== 'completed') throw new TypeError('openai-response-not-completed');
+  if (!Array.isArray(payload.output)) throw new TypeError('openai-response-output-invalid');
+
+  const texts = [];
+  for (const item of payload.output) {
+    if (!isPlainObject(item) || item.type !== 'message' || !Array.isArray(item.content)) continue;
+    for (const content of item.content) {
+      if (!isPlainObject(content)) continue;
+      if (content.type === 'refusal') throw new TypeError('openai-response-refusal');
+      if (content.type === 'output_text' && typeof content.text === 'string' && content.text.trim() !== '') {
+        texts.push(content.text);
+      }
+    }
+  }
+  if (texts.length !== 1) throw new TypeError('openai-response-output-text-invalid');
+  return texts[0];
+}
+
+function normalizeProviderChoice(value) {
+  if (!isPlainObject(value)) throw new TypeError('openai-choice-invalid');
+  const keys = Object.keys(value).sort();
+  if (JSON.stringify(keys) !== JSON.stringify(['abstain', 'actionId', 'intentId'])) {
+    throw new TypeError('openai-choice-fields-invalid');
+  }
+  const intentId = token(value.intentId, 'openai-choice-intentId');
+  const actionId = value.actionId == null ? null : token(value.actionId, 'openai-choice-actionId');
+  if (typeof value.abstain !== 'boolean') throw new TypeError('openai-choice-abstain-invalid');
+  if (value.abstain === (actionId !== null)) throw new TypeError('openai-choice-xor-invalid');
+  return { intentId, actionId, abstain: value.abstain };
+}
+
+function openAIChoiceSchema() {
+  return {
+    type: 'object',
+    additionalProperties: false,
+    properties: {
+      intentId: { type: 'string', minLength: 1, maxLength: 160 },
+      actionId: { type: ['string', 'null'] },
+      abstain: { type: 'boolean' },
+    },
+    required: ['intentId', 'actionId', 'abstain'],
+  };
+}
+
+export function createOpenAIResponsesAgentWorker({ apiKey, model, fetchImpl = globalThis.fetch } = {}) {
+  const normalizedApiKey = credential(apiKey, 'openai-apiKey');
+  const normalizedModel = token(model, 'openai-model');
+  if (typeof fetchImpl !== 'function') throw new TypeError('openai-fetch-invalid');
+
+  return async function openAIResponsesAgentWorker(packet) {
+    const { playerId, legalActions } = validateAgentPacket(packet);
+    const providerInput = {
+      instruction: 'Choose exactly one caller-supplied legal actionId, or abstain. Never invent match identity, legality, or game resolution.',
+      authorizedProjection: cloneJson(packet.authorizedProjection, 'provider-authorizedProjection'),
+      legalActions: legalActions.map((action) => ({ ...action })),
+    };
+
+    let response;
+    try {
+      response = await fetchImpl(OPENAI_RESPONSES_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${normalizedApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: normalizedModel,
+          input: JSON.stringify(providerInput),
+          text: {
+            format: {
+              type: 'json_schema',
+              name: OPENAI_CHOICE_SCHEMA_NAME,
+              strict: true,
+              schema: openAIChoiceSchema(),
+            },
+          },
+        }),
+      });
+    } catch {
+      throw new TypeError('openai-response-request-failed');
+    }
+
+    if (!response || response.ok !== true || typeof response.json !== 'function') {
+      throw new TypeError('openai-response-http-failed');
+    }
+
+    let payload;
+    try {
+      payload = await response.json();
+    } catch {
+      throw new TypeError('openai-response-json-invalid');
+    }
+
+    const outputText = extractOpenAIOutputText(payload);
+    let rawChoice;
+    try {
+      rawChoice = JSON.parse(outputText);
+    } catch {
+      throw new TypeError('openai-choice-json-invalid');
+    }
+    const choice = normalizeProviderChoice(rawChoice);
+
+    return deepFreeze({
+      intentId: choice.intentId,
+      matchId: packet.matchId,
+      stateVersion: packet.stateVersion,
+      eventCursor: packet.eventCursor,
+      playerId,
+      actionId: choice.actionId,
+      abstain: choice.abstain,
+    });
+  };
+}
+
 export const MULTI_AGENT_MATCH_FOLLOW_CONTRACT = deepFreeze({
   playerCount: PLAYER_COUNT,
   schemas: { turn: TURN_SCHEMA, intent: INTENT_SCHEMA, observer: OBSERVER_SCHEMA, executor: EXECUTOR_SCHEMA },
@@ -312,4 +446,13 @@ export const MULTI_AGENT_MATCH_FOLLOW_CONTRACT = deepFreeze({
   workerRetryPolicy: 'CALLER_CONTROLLED_NO_AUTORETRY',
   privateDataPolicy: 'PER_PLAYER_CALLER_AUTHORIZED_PROJECTION_ONLY',
   observerPolicy: 'CALLER_AUTHORIZED_PUBLIC_PROJECTION_ONLY',
+  openAIResponsesAdapter: {
+    endpoint: OPENAI_RESPONSES_ENDPOINT,
+    credentialStorageAuthority: 'NONE',
+    modelAuthority: 'CALLER_SUPPLIED',
+    authorityIdentitySource: 'AGENT_PACKET_CALLER_FIELDS',
+    structuredOutputFields: ['intentId', 'actionId', 'abstain'],
+    automaticRetryAllowed: false,
+    automaticTimeoutAllowed: false,
+  },
 });

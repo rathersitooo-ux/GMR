@@ -157,7 +157,7 @@ const dependencyContract = [
     expectedArg: 'expectedReplayAdapterBlob',
     artifact: 'battle_replay_live_adapter',
     fixture: "import './battle-replay-core.mjs';\nimport './card-presentation-core.mjs';\nimport './battle-conveyor-presentation-core.mjs';\n",
-    currentBlob: '892d0d45b9773836e0ad0242ac334629f8379040',
+    currentBlob: 'd91f0473679fc08c3009108a6b9caaec8507da94',
   },
   {
     file: 'battle-replay-core.mjs',

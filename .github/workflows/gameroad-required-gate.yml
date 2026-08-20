@@ -5,6 +5,15 @@ on:
     branches:
       - main
   merge_group:
+  push:
+    branches:
+      - main
+    paths:
+      - 'data/gameroad-fixed-knowledge-witness.json'
+      - 'data/gameroad-fixed-knowledge-witness.schema.json'
+      - 'tools/fixed-knowledge-witness-validator.mjs'
+      - 'tests/fixed-knowledge-witness-validator.test.mjs'
+      - '.github/workflows/gameroad-required-gate.yml'
 
 permissions:
   contents: read
@@ -24,7 +33,7 @@ jobs:
         id: classify
         shell: bash
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
         run: |
           set -euo pipefail

@@ -211,3 +211,69 @@ test('R29 @mobile-touch drives a visible Home to Cards transition with real touc
     description: `touch maxTouchPoints=${touchCapabilities.maxTouchPoints}; visible Home→Cards transition completed with locator.tap()`,
   });
 });
+
+test('R19R2 mounts accepted replay rows on the production Result surface', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280x720', 'single-project replay mount evidence');
+  test.setTimeout(120_000);
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+
+  const driven = await page.evaluate(async () => {
+    const t = window.__GAMEROAD_TEST__;
+    const publicMain = new Set(t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
+    const standard = window.__CARD_DATA__
+      .filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)))
+      .map((card) => card.id);
+    const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
+    const nonRoyal = standard.filter((id) => !t.isRoyalCard(id));
+    const main = [...nonRoyal.slice(0, 37), ...royalIds];
+    const setValidation = t.deckSetDraft(main, []);
+    const draftValidation = t.deckValidate(t.state.deckDraft, { forBattle: true });
+    const committed = draftValidation.ok ? t.deckCommit() : false;
+    if (!committed) {
+      return { reached: false, reason: 'LEGAL_DECK_COMMIT_FAILED', setValidation, draftValidation };
+    }
+
+    t.battlePresentationFast(true);
+    const match = t.start('2p', 'road_shield');
+    window.__V105_ABILITY_TEST__?.setAutoChoices?.(true);
+    const reached = await t.autoToResult(30);
+    return {
+      reached,
+      screen: t.state.screen,
+      matchId: match?.id ?? null,
+      rounds: match?.round ?? null,
+      historyLength: t.state.history?.length ?? 0,
+    };
+  });
+
+  expect(driven.reached, JSON.stringify(driven)).toBeTruthy();
+  expect(driven.screen).toBe('result');
+  expect(driven.matchId).not.toBeNull();
+  expect(driven.historyLength).toBeGreaterThan(0);
+
+  const result = page.locator('section[data-screen="result"]');
+  await expect(result).toBeVisible();
+  const replay = result.locator('#resultReplay');
+  await expect(replay, 'production Result exposes the accepted replay projection').toBeVisible({ timeout: 5_000 });
+  const replayRows = replay.locator('#resultReplayEvents .rankLine');
+  const rowCount = await replayRows.count();
+  expect(rowCount, 'accepted replay contains at least one battle resolution plus match end').toBeGreaterThan(1);
+  const replayText = (await replayRows.allTextContents()).join('\n');
+  expect(replayText, 'accepted replay contains a battle-resolution row').toMatch(/第\d+巡/);
+  expect(replayText, 'accepted replay contains the match-end row').toContain('対戦終了');
+
+  const summary = replay.locator('summary');
+  await expect(summary).toBeVisible();
+  await summary.click();
+  await expect(replay).toHaveAttribute('open', '');
+  await expect(replayRows.first()).toBeVisible();
+  const replayPng = await page.screenshot({ fullPage: true, animations: 'disabled' });
+  await testInfo.attach(`${testInfo.project.name}-r19r2-result-replay-open.png`, { body: replayPng, contentType: 'image/png' });
+  testInfo.annotations.push({
+    type: 'result-replay-runtime-evidence',
+    description: `match=${driven.matchId}; rounds=${driven.rounds}; replayRows=${rowCount}; production Result replay opened after current runtime accepted-event projection`,
+  });
+
+  runtime.assertClean(testInfo);
+});

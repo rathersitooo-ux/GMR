@@ -35,6 +35,15 @@ export default defineConfig({
       name: 'short-landscape-667x375',
       use: { viewport: { width: 667, height: 375 } },
     },
+    {
+      name: 'phone-touch-390x844',
+      testMatch: ['browser-full-interaction-touch.spec.mjs'],
+      use: {
+        viewport: { width: 390, height: 844 },
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
   ],
   webServer: {
     command: 'python3 -m http.server 4173 --bind 127.0.0.1',

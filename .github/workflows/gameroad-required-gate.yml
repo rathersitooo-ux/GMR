@@ -71,7 +71,8 @@ jobs:
           while IFS= read -r path; do
             [[ -z "${path}" ]] && continue
             case "${path}" in
-              tests/browser-full-interaction.spec.mjs)
+              tests/browser-full-interaction.spec.mjs|\
+              tests/browser-full-interaction-state-sequence.spec.mjs)
                 browser_full_interaction=true
                 ;;
               browser/GAMEROAD.html|\

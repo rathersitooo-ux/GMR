@@ -67,8 +67,10 @@ class FakeClassList {
 function fakePresentationDocument({ reduceMotion = false, lowPerf = false } = {}) {
   const styles = new Map();
   const box = { dataset: {}, classList: new FakeClassList() };
+  const resultHeadline = { dataset: {}, classList: new FakeClassList() };
   const elements = new Map([
     ['battleResolution', box],
+    ['resultHeadline', resultHeadline],
     ['reduceMotion', { textContent: reduceMotion ? 'ON' : 'OFF' }],
     ['lowPerf', { textContent: lowPerf ? 'ON' : 'OFF' }]
   ]);
@@ -82,7 +84,7 @@ function fakePresentationDocument({ reduceMotion = false, lowPerf = false } = {}
     createElement(tag) { return { tagName: tag.toUpperCase(), id: '', textContent: '' }; },
     getElementById(id) { return elements.get(id) || null; }
   };
-  return { document, box, styles };
+  return { document, box, resultHeadline, styles };
 }
 
 test('production session still requires all exact version authorities; capture never invents them', () => {
@@ -372,6 +374,7 @@ test('production Browser mounts replay at the canonical accepted Battle seam wit
   assert.equal(count('grBattleReplayEnd(m,winners);return endMatch(winners)'), 1);
   assert.equal(count('id="resultReplay"'), 1);
   assert.equal(count('id="resultReplayEvents"'), 1);
+  assert.equal(count('id="resultHeadline"'), 1);
   assert.ok(html.indexOf('m.lastBattleResolution={serial:++m.resolutionSeq') < html.indexOf('grBattleReplayAcceptResolution(m,m.lastBattleResolution)'));
   assert.ok(html.indexOf('grBattleReplayAcceptResolution(m,m.lastBattleResolution)') < html.indexOf('const slaykiaAttackEnd=grSlaykiaAttackEndHook(m)'));
   assert.ok(html.indexOf('grBattleReplayEnd(m,winners);return endMatch(winners)') < html.indexOf('return endMatch(winners)}nextRound()'));
@@ -554,6 +557,64 @@ test('Free4P single-winner match end mounts existing FINISHER_GATHER planner wit
     transition: 'FINISHER_GATHER',
     authority: 'presentation_only_no_game_state_write'
   });
+});
+
+test('default match-end finisher consumer reaches current Result winner surface and cleans on planner duration', () => {
+  const fake = fakePresentationDocument();
+  const timers = [];
+  const bridge = createBattleReplayCardPresentationBridge({
+    document: fake.document,
+    matchMedia: () => ({ matches: false }),
+    setTimeout: (callback, delay) => { timers.push({ callback, delay }); return 1; }
+  });
+  let session = createLiveReplaySession(
+    { matchId: 'M-FINISHER-RESULT', versions },
+    { presentationBridge: bridge }
+  );
+  session = appendAcceptedMatchEnd(session, {
+    winnerIds: ['P1'], round: 8, mode: '4p',
+    formalRanking: [
+      { id: 'P4', rank: 4, maxColumn: 2 },
+      { id: 'P1', rank: 1, maxColumn: 7 },
+      { id: 'P3', rank: 3, maxColumn: 4 },
+      { id: 'P2', rank: 2, maxColumn: 6 }
+    ]
+  }, { presentationBridge: bridge });
+
+  const plan = bridge.snapshot('M-FINISHER-RESULT').lastFinisherPlan;
+  assert.equal(session.ended, true);
+  assert.equal(plan.transition, 'FINISHER_GATHER');
+  assert.equal(fake.resultHeadline.dataset.matchEndFinisher, 'FINISHER_GATHER');
+  assert.equal(fake.resultHeadline.dataset.matchEndFinisherEvent, 'match-end-finisher:M-FINISHER-RESULT');
+  assert.equal(fake.resultHeadline.dataset.matchEndFinisherWinner, 'P1');
+  assert.equal(fake.resultHeadline.dataset.matchEndFinisherMotion, 'allowed');
+  assert.equal(fake.resultHeadline.classList.contains('grMatchEndFinisher'), true);
+  assert.equal(fake.resultHeadline.classList.contains('grMatchEndFinisherMotion'), true);
+  assert.equal(timers.length, 1);
+  assert.equal(timers[0].delay, plan.timing.duration);
+  timers[0].callback();
+  assert.equal(fake.resultHeadline.classList.contains('grMatchEndFinisher'), false);
+  assert.equal('matchEndFinisherEvent' in fake.resultHeadline.dataset, false);
+});
+
+test('default finisher consumer preserves a static Result marker when motion is reduced', () => {
+  const fake = fakePresentationDocument({ reduceMotion: true });
+  const bridge = createBattleReplayCardPresentationBridge({
+    document: fake.document,
+    matchMedia: () => ({ matches: false }),
+    setTimeout: () => 1
+  });
+  const result = bridge.acceptAcceptedMatchEnd({
+    matchId: 'M-FINISHER-STATIC',
+    winnerId: 'P1',
+    loserIds: ['P2', 'P3', 'P4']
+  });
+  assert.equal(result.accepted, true);
+  assert.equal(result.plan.reducedMotion, true);
+  assert.equal(fake.resultHeadline.dataset.matchEndFinisher, 'FINISHER_GATHER');
+  assert.equal(fake.resultHeadline.dataset.matchEndFinisherMotion, 'static_only');
+  assert.equal(fake.resultHeadline.classList.contains('grMatchEndFinisher'), true);
+  assert.equal(fake.resultHeadline.classList.contains('grMatchEndFinisherMotion'), false);
 });
 
 test('co-winner Free4P and non-4p match end never emit a false finisher', () => {

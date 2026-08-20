@@ -360,17 +360,63 @@ function ensureBattleReplayCardPresentationStyle(documentRef) {
 @keyframes grCardPresentationFallbackPulse{0%{opacity:1;text-shadow:0 0 14px rgba(255,218,126,.48)}36%{opacity:1;text-shadow:0 0 22px rgba(255,218,126,.76)}100%{opacity:1;text-shadow:0 0 14px rgba(255,218,126,.48)}}
 #battleResolution.noMotion.grCardPresentationFallback .resolutionWinner,body.low-perf #battleResolution.grCardPresentationFallback .resolutionWinner{animation:none!important;transform:none!important;filter:none!important}
 @media(prefers-reduced-motion:reduce){#battleResolution.grCardPresentationFallback .resolutionWinner{animation:none!important;transform:none!important}}
+#resultHeadline.grMatchEndFinisher{filter:brightness(1.08);text-shadow:0 0 18px rgba(255,218,126,.62)}
+#resultHeadline.grMatchEndFinisher.grMatchEndFinisherMotion{animation:grMatchEndFinisherPulse .72s ease-out}
+@keyframes grMatchEndFinisherPulse{0%{transform:scale(1);text-shadow:0 0 18px rgba(255,218,126,.62)}38%{transform:scale(1.045);text-shadow:0 0 34px rgba(255,218,126,.86)}100%{transform:scale(1);text-shadow:0 0 18px rgba(255,218,126,.62)}}
+body.low-perf #resultHeadline.grMatchEndFinisher{animation:none!important;transform:none!important}
+@media(prefers-reduced-motion:reduce){#resultHeadline.grMatchEndFinisher{animation:none!important;transform:none!important}}
 `;
   documentRef.head.appendChild(style);
   return true;
 }
 
 export function renderBattleReplayCardPresentationPlan(plan, environment = {}) {
-  if (!plan || plan.presentationOnly !== true || plan.visual?.source !== 'fallback') return false;
+  if (!plan || plan.presentationOnly !== true) return false;
   const documentRef = environmentValue(environment, 'document');
+  ensureBattleReplayCardPresentationStyle(documentRef);
+
+  if (plan.kind === 'finisher' &&
+      plan.transition === 'FINISHER_GATHER' &&
+      plan.authorityBoundary === 'accepted_public_event_only') {
+    const winnerId = maybeString(plan.publicData?.winnerId);
+    const loserIds = Array.isArray(plan.publicData?.loserIds) ? plan.publicData.loserIds : null;
+    const holdMs = Number.isFinite(plan.timing?.duration) && plan.timing.duration > 0
+      ? plan.timing.duration
+      : null;
+    if (!winnerId ||
+        !loserIds || loserIds.length !== 3 ||
+        loserIds.some(id => !nonEmptyString(id)) ||
+        new Set(loserIds).size !== 3 || loserIds.includes(winnerId) ||
+        holdMs == null) {
+      return false;
+    }
+    const resultHeadline = documentRef?.getElementById?.('resultHeadline');
+    if (!resultHeadline?.classList || !resultHeadline.dataset) return false;
+    const motionAllowed = plan.reducedMotion !== true && plan.lowPerf !== true;
+    resultHeadline.dataset.matchEndFinisher = 'FINISHER_GATHER';
+    resultHeadline.dataset.matchEndFinisherEvent = plan.eventId;
+    resultHeadline.dataset.matchEndFinisherWinner = winnerId;
+    resultHeadline.dataset.matchEndFinisherMotion = motionAllowed ? 'allowed' : 'static_only';
+    resultHeadline.classList.add('grMatchEndFinisher');
+    resultHeadline.classList.toggle('grMatchEndFinisherMotion', motionAllowed);
+
+    const setTimeoutRef = environmentValue(environment, 'setTimeout');
+    if (typeof setTimeoutRef === 'function') {
+      setTimeoutRef(() => {
+        if (resultHeadline.dataset.matchEndFinisherEvent !== plan.eventId) return;
+        resultHeadline.classList.remove('grMatchEndFinisher', 'grMatchEndFinisherMotion');
+        delete resultHeadline.dataset.matchEndFinisher;
+        delete resultHeadline.dataset.matchEndFinisherEvent;
+        delete resultHeadline.dataset.matchEndFinisherWinner;
+        delete resultHeadline.dataset.matchEndFinisherMotion;
+      }, holdMs);
+    }
+    return true;
+  }
+
+  if (plan.visual?.source !== 'fallback') return false;
   const box = documentRef?.getElementById?.('battleResolution');
   if (!box?.classList || !box.dataset) return false;
-  ensureBattleReplayCardPresentationStyle(documentRef);
 
   box.dataset.cardPresentation = 'fallback';
   box.dataset.cardPresentationEvent = plan.eventId;

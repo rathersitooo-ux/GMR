@@ -176,3 +176,38 @@ test('R26 explores deterministic legal navigation sequences with replayable seed
 
   runtime.assertClean(testInfo);
 });
+
+test('R29 @mobile-touch drives a visible Home to Cards transition with real touch input', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'phone-touch-390x844', 'touch-only evidence project');
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+
+  const touchCapabilities = await page.evaluate(() => ({
+    maxTouchPoints: navigator.maxTouchPoints,
+    hasTouchEvent: 'ontouchstart' in window,
+  }));
+  expect(touchCapabilities.maxTouchPoints, 'emulated browser exposes touch points').toBeGreaterThan(0);
+  expect(touchCapabilities.hasTouchEvent, 'emulated browser exposes touch events').toBeTruthy();
+
+  const home = page.locator('section[data-screen="home"]');
+  const cards = page.locator('section[data-screen="cards"]');
+  await expect(home).toBeVisible();
+  await expect(cards).toBeHidden();
+  const beforePng = await page.screenshot({ fullPage: true, animations: 'disabled' });
+  await testInfo.attach(`${testInfo.project.name}-touch-home-before-tap.png`, { body: beforePng, contentType: 'image/png' });
+
+  const cardsControl = rootGo(page, 'cards');
+  await expect(cardsControl).toBeVisible();
+  await cardsControl.tap();
+
+  await expect(cards).toBeVisible();
+  await expect(home).toBeHidden();
+  const afterPng = await page.screenshot({ fullPage: true, animations: 'disabled' });
+  await testInfo.attach(`${testInfo.project.name}-touch-cards-after-tap.png`, { body: afterPng, contentType: 'image/png' });
+
+  runtime.assertClean(testInfo);
+  testInfo.annotations.push({
+    type: 'input-modality-evidence',
+    description: `touch maxTouchPoints=${touchCapabilities.maxTouchPoints}; visible Home→Cards transition completed with locator.tap()`,
+  });
+});

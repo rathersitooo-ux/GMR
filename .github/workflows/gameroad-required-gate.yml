@@ -75,6 +75,7 @@ jobs:
           roblox=false
           publichost=false
           fixed_knowledge_witness=false
+          multi_agent_match_follow=false
           unclassified=false
           : > /tmp/gameroad-unclassified.txt
 
@@ -248,6 +249,10 @@ jobs:
               tests/fixed-knowledge-witness-validator.test.mjs)
                 fixed_knowledge_witness=true
                 ;;
+              tools/multi-agent-match-follow-harness.mjs|\
+              tests/multi-agent-match-follow-harness.test.mjs)
+                multi_agent_match_follow=true
+                ;;
               .github/workflows/gameroad-required-gate.yml|\
               .github/workflows/gameroad-observability-ci.yml|\
               README.md|.gitignore|.gitattributes)
@@ -293,6 +298,7 @@ jobs:
             echo "roblox=${roblox}"
             echo "publichost=${publichost}"
             echo "fixed_knowledge_witness=${fixed_knowledge_witness}"
+            echo "multi_agent_match_follow=${multi_agent_match_follow}"
             echo "unclassified=${unclassified}"
           } >> "${GITHUB_OUTPUT}"
 
@@ -336,6 +342,10 @@ jobs:
         run: |
           node --test tests/fixed-knowledge-witness-validator.test.mjs
           node tools/fixed-knowledge-witness-validator.mjs data/gameroad-fixed-knowledge-witness.json data/gameroad-fixed-knowledge-witness.schema.json
+
+      - name: Run Four-agent match follow harness tests
+        if: steps.classify.outputs.multi_agent_match_follow == 'true'
+        run: node --test tests/multi-agent-match-follow-harness.test.mjs
 
       - name: Run Browser static check
         if: steps.classify.outputs.browser == 'true'

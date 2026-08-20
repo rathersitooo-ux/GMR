@@ -6,6 +6,7 @@ import {
   createAgentPacket,
   createFourAgentTurn,
   createPublicObserverPacket,
+  runFourAgentWorkers,
   submitAgentIntent,
 } from '../tools/multi-agent-match-follow-harness.mjs';
 
@@ -42,6 +43,26 @@ function intent(playerId, actionId = 'attack', overrides = {}) {
     abstain: false,
     ...overrides,
   };
+}
+
+function intentFromPacket(packet, actionId = 'attack', overrides = {}) {
+  return {
+    intentId: `worker-intent-${packet.playerId}`,
+    matchId: packet.matchId,
+    stateVersion: packet.stateVersion,
+    eventCursor: packet.eventCursor,
+    playerId: packet.playerId,
+    actionId,
+    abstain: false,
+    ...overrides,
+  };
+}
+
+function validWorkers(observe = () => {}) {
+  return Object.fromEntries(['P1', 'P2', 'P3', 'P4'].map((playerId) => [playerId, async (packet) => {
+    observe(playerId, packet);
+    return intentFromPacket(packet);
+  }]));
 }
 
 test('builds exactly four isolated agent packets without cross-player private projection', () => {
@@ -174,4 +195,140 @@ test('caller input is not frozen or mutated as a side effect', () => {
   assert.equal(Object.isFrozen(source.players[0]), false);
   source.players[0].legalActions.push({ actionId: 'new-after-build', kind: 'TEST_ACTION' });
   assert.equal(source.players[0].legalActions.length, 3);
+});
+
+test('executor invokes four isolated workers exactly once and returns only an authority request batch', async () => {
+  const turn = createFourAgentTurn(turnInput());
+  const callCounts = new Map();
+  const workers = validWorkers((playerId, packet) => {
+    callCounts.set(playerId, (callCounts.get(playerId) ?? 0) + 1);
+    assert.equal(Object.isFrozen(packet), true);
+    assert.equal(Object.isFrozen(packet.authorizedProjection), true);
+    const serialized = JSON.stringify(packet);
+    assert.match(serialized, new RegExp(`${playerId}-SECRET`));
+    for (const other of ['P1', 'P2', 'P3', 'P4'].filter((id) => id !== playerId)) {
+      assert.doesNotMatch(serialized, new RegExp(`${other}-SECRET`));
+    }
+  });
+
+  const result = await runFourAgentWorkers(turn, workers);
+  assert.deepEqual([...callCounts.entries()], [['P1', 1], ['P2', 1], ['P3', 1], ['P4', 1]]);
+  assert.deepEqual(result.results.map((entry) => [entry.playerId, entry.status]), [
+    ['P1', 'ACCEPTED'], ['P2', 'ACCEPTED'], ['P3', 'ACCEPTED'], ['P4', 'ACCEPTED'],
+  ]);
+  assert.equal(result.turn.complete, true);
+  assert.deepEqual(result.turn.missingPlayerIds, []);
+  assert.ok(result.authorityBatch);
+  assert.equal(result.authorityBatch.containsResolution, false);
+  assert.equal(result.authorityBatch.resolutionRequestedFrom, 'CALLER_MATCH_AUTHORITY');
+  assert.equal('winner' in result.authorityBatch, false);
+  assert.equal('nextStateVersion' in result.authorityBatch, false);
+  assert.equal(result.automaticRetryAllowed, false);
+  assert.equal(result.automaticTimeoutMoveAllowed, false);
+  assert.equal(result.providerAuthority, 'NONE');
+});
+
+test('executor reports results in turn order even when worker promises settle out of order', async () => {
+  const turn = createFourAgentTurn(turnInput());
+  const resolvers = {};
+  const calls = [];
+  const workers = Object.fromEntries(['P1', 'P2', 'P3', 'P4'].map((playerId) => [playerId, (packet) => {
+    calls.push(playerId);
+    return new Promise((resolve) => { resolvers[playerId] = () => resolve(intentFromPacket(packet)); });
+  }]));
+
+  const running = runFourAgentWorkers(turn, workers);
+  assert.deepEqual(calls, ['P1', 'P2', 'P3', 'P4']);
+  resolvers.P4();
+  resolvers.P2();
+  resolvers.P3();
+  resolvers.P1();
+  const result = await running;
+  assert.deepEqual(result.results.map((entry) => entry.playerId), ['P1', 'P2', 'P3', 'P4']);
+  assert.deepEqual(result.turn.submissions.map((entry) => entry.playerId), ['P1', 'P2', 'P3', 'P4']);
+});
+
+test('executor preserves valid partial submissions when one worker fails and never retries it', async () => {
+  const turn = createFourAgentTurn(turnInput());
+  const callCounts = { P1: 0, P2: 0, P3: 0, P4: 0 };
+  const workers = validWorkers((playerId) => { callCounts[playerId] += 1; });
+  workers.P2 = async () => {
+    callCounts.P2 += 1;
+    throw new Error('provider-secret-detail-must-not-escape');
+  };
+
+  const result = await runFourAgentWorkers(turn, workers);
+  assert.deepEqual(callCounts, { P1: 1, P2: 1, P3: 1, P4: 1 });
+  assert.equal(result.turn.complete, false);
+  assert.deepEqual(result.turn.missingPlayerIds, ['P2']);
+  assert.deepEqual(result.turn.submissions.map((entry) => entry.playerId), ['P1', 'P3', 'P4']);
+  assert.equal(result.authorityBatch, null);
+  assert.deepEqual(result.results[1], {
+    playerId: 'P2',
+    status: 'WORKER_FAILED',
+    reason: 'WORKER_REJECTED_OR_THROWN',
+  });
+  assert.doesNotMatch(JSON.stringify(result), /provider-secret-detail/);
+});
+
+test('executor routes illegal and stale worker intents through the existing authority validator', async () => {
+  const turn = createFourAgentTurn(turnInput());
+  const workers = validWorkers();
+  workers.P1 = async (packet) => intentFromPacket(packet, 'invented-card');
+  workers.P3 = async (packet) => intentFromPacket(packet, 'attack', { stateVersion: 'worker-invented-version' });
+
+  const result = await runFourAgentWorkers(turn, workers);
+  assert.deepEqual(result.results.map((entry) => [entry.playerId, entry.status, entry.reason]), [
+    ['P1', 'INVALID_INTENT', 'intent-action-not-legal'],
+    ['P2', 'ACCEPTED', null],
+    ['P3', 'INVALID_INTENT', 'intent-stale-stateVersion'],
+    ['P4', 'ACCEPTED', null],
+  ]);
+  assert.deepEqual(result.turn.missingPlayerIds, ['P1', 'P3']);
+  assert.equal(result.authorityBatch, null);
+});
+
+test('executor rejects worker maps that do not exactly match the four turn players before invocation', async () => {
+  const turn = createFourAgentTurn(turnInput());
+  let calls = 0;
+  const missing = validWorkers(() => { calls += 1; });
+  delete missing.P4;
+  await assert.rejects(() => runFourAgentWorkers(turn, missing), /workers-must-match-turn-players-exactly/);
+  assert.equal(calls, 0);
+
+  const extra = validWorkers(() => { calls += 1; });
+  extra.PX = async () => intent('PX');
+  await assert.rejects(() => runFourAgentWorkers(turn, extra), /workers-must-match-turn-players-exactly/);
+  assert.equal(calls, 0);
+});
+
+test('executor prevents a worker from claiming another player slot', async () => {
+  const turn = createFourAgentTurn(turnInput());
+  const workers = validWorkers();
+  workers.P1 = async (packet) => intentFromPacket(packet, 'attack', { playerId: 'P2', intentId: 'stolen-P2' });
+
+  const result = await runFourAgentWorkers(turn, workers);
+  assert.deepEqual(result.results[0], {
+    playerId: 'P1',
+    status: 'WORKER_PLAYER_MISMATCH',
+    reason: 'WORKER_RETURNED_OTHER_PLAYER',
+  });
+  assert.deepEqual(result.turn.missingPlayerIds, ['P1']);
+  assert.deepEqual(result.turn.submissions.map((entry) => entry.playerId), ['P2', 'P3', 'P4']);
+  assert.equal(result.authorityBatch, null);
+});
+
+test('executor refuses implicit reruns of a partially submitted turn', async () => {
+  const base = createFourAgentTurn(turnInput());
+  const partial = submitAgentIntent(base, intent('P1'));
+  let calls = 0;
+  await assert.rejects(
+    () => runFourAgentWorkers(partial, validWorkers(() => { calls += 1; })),
+    /executor-turn-must-be-unsubmitted/,
+  );
+  assert.equal(calls, 0);
+  assert.equal(MULTI_AGENT_MATCH_FOLLOW_CONTRACT.workerRetryPolicy, 'CALLER_CONTROLLED_NO_AUTORETRY');
+  assert.equal(MULTI_AGENT_MATCH_FOLLOW_CONTRACT.workerProviderAuthority, 'NONE');
+  assert.equal(MULTI_AGENT_MATCH_FOLLOW_CONTRACT.stateVersionAuthority, 'CALLER_OPAQUE_IDENTITY');
+  assert.equal(MULTI_AGENT_MATCH_FOLLOW_CONTRACT.legalityAuthority, 'CALLER_SUPPLIED_LEGAL_ACTIONS');
 });

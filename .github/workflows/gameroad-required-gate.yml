@@ -386,7 +386,7 @@ jobs:
 
       - name: Run Observability core and Browser adapter tests
         if: steps.classify.outputs.observability == 'true'
-        run: node --test tests/observability-core.test.test.mjs tests/observability-browser-adapter.test.mjs
+        run: node --test tests/observability-core.test.mjs tests/observability-browser-adapter.test.mjs
 
       - name: Run Card presentation core tests
         if: steps.classify.outputs.card_presentation == 'true'

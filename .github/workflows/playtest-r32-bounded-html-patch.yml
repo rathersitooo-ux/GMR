@@ -6,6 +6,11 @@ on:
       - work/playtest-r32-result-ranking-fix
     paths:
       - .github/workflows/playtest-r32-bounded-html-patch.yml
+  pull_request:
+    types: [opened]
+    branches: [main]
+    paths:
+      - .github/workflows/playtest-r32-bounded-html-patch.yml
 
 permissions:
   contents: write
@@ -22,7 +27,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "a92cb7822069624e9557c719afbc6573e9285cf2"
+          git fetch --no-tags --depth=1 origin main
+          test "$(git rev-parse origin/main)" = "a92cb7822069624e9557c719afbc6573e9285cf2"
           test "$(git hash-object browser/GAMEROAD.html)" = "4485af3c1aabd7fdf2001a9e2586afbf7443ff53"
           python3 - <<'PY'
           from pathlib import Path
@@ -45,12 +51,6 @@ jobs:
           test "$(git diff --name-only)" = "browser/GAMEROAD.html"
           grep -Fq 'grid-template-rows:auto auto auto minmax(0,1fr);gap:10px;overflow:hidden' browser/GAMEROAD.html
           grep -Fq '#resultRanking{min-height:0;overflow:auto}' browser/GAMEROAD.html
-          {
-            echo "base_head=a92cb7822069624e9557c719afbc6573e9285cf2"
-            echo "base_blob=4485af3c1aabd7fdf2001a9e2586afbf7443ff53"
-            echo "patched_blob=$(git hash-object browser/GAMEROAD.html)"
-            git diff --stat
-          } > /tmp/playtest-r32-patch-report.txt
       - name: Commit bounded patch
         shell: bash
         run: |

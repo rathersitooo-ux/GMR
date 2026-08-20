@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gameroad.local/schema/gameroad-authority-manifest.schema.json",
+  "title": "GAMEROAD Authority Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "mode",
+    "purpose",
+    "policy",
+    "authorities",
+    "known_hardening_residuals"
+  ],
+  "properties": {
+    "$schema": { "const": "./gameroad-authority-manifest.schema.json" },
+    "schema_version": { "const": 1 },
+    "mode": { "const": "MIRROR_ONLY" },
+    "purpose": { "type": "string", "minLength": 1 },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "no_dual_canonical",
+        "drive_authority_transfer_in_this_revision",
+        "generated_views_are_authority",
+        "unknown_authority_fails_closed",
+        "secret_values_forbidden"
+      ],
+      "properties": {
+        "no_dual_canonical": { "const": true },
+        "drive_authority_transfer_in_this_revision": { "const": false },
+        "generated_views_are_authority": { "const": false },
+        "unknown_authority_fails_closed": { "const": true },
+        "secret_values_forbidden": { "const": true }
+      }
+    },
+    "authorities": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[a-z0-9_.-]+$" },
+      "additionalProperties": { "$ref": "#/$defs/authority" }
+    },
+    "known_hardening_residuals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["owner_task_id", "residual"],
+        "properties": {
+          "owner_task_id": { "type": "string", "pattern": "^[A-Z0-9-]+$" },
+          "residual": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_system",
+        "canonical_locator",
+        "status",
+        "authority_resolution",
+        "write_policy",
+        "drift_policy"
+      ],
+      "properties": {
+        "canonical_system": { "enum": ["google_drive", "github"] },
+        "canonical_locator": {
+          "oneOf": [
+            { "$ref": "#/$defs/google_doc" },
+            { "$ref": "#/$defs/google_sheet" },
+            { "$ref": "#/$defs/github_repository" }
+          ]
+        },
+        "status": { "const": "ACTIVE" },
+        "authority_resolution": { "type": "string", "minLength": 1 },
+        "sync_owner_task_id": { "type": "string", "pattern": "^[A-Z0-9-]+$" },
+        "write_policy": { "type": "string", "minLength": 1 },
+        "drift_policy": { "type": "string", "minLength": 1 }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "canonical_system": { "const": "google_drive" } }, "required": ["canonical_system"] },
+          "then": { "properties": { "canonical_locator": { "oneOf": [{ "$ref": "#/$defs/google_doc" }, { "$ref": "#/$defs/google_sheet" }] } } }
+        },
+        {
+          "if": { "properties": { "canonical_system": { "const": "github" } }, "required": ["canonical_system"] },
+          "then": { "properties": { "canonical_locator": { "$ref": "#/$defs/github_repository" } } }
+        }
+      ]
+    },
+    "google_doc": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": { "const": "google_doc" },
+        "id": { "type": "string", "minLength": 10 }
+      }
+    },
+    "google_sheet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id"],
+      "properties": {
+        "kind": { "const": "google_sheet" },
+        "id": { "type": "string", "minLength": 10 },
+        "sheet": { "type": "string", "minLength": 1 }
+      }
+    },
+    "github_repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "repository", "branch"],
+      "properties": {
+        "kind": { "const": "github_repository" },
+        "repository": { "type": "string", "pattern": "^[^/]+/[^/]+$" },
+        "branch": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

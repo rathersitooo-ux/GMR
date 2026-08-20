@@ -265,15 +265,16 @@ test('R19R2 mounts accepted replay rows on the production Result surface', async
 
   const summary = replay.locator('summary');
   await expect(summary).toBeVisible();
-  await summary.evaluate((node) => node.scrollIntoView({ block: 'center', inline: 'nearest' }));
-  await summary.click();
+  await summary.focus();
+  await expect(summary).toBeFocused();
+  await summary.press('Enter');
   await expect(replay).toHaveAttribute('open', '');
   await expect(replayRows.first()).toBeVisible();
   const replayPng = await page.screenshot({ fullPage: true, animations: 'disabled' });
   await testInfo.attach(`${testInfo.project.name}-r19r2-result-replay-open.png`, { body: replayPng, contentType: 'image/png' });
   testInfo.annotations.push({
     type: 'result-replay-runtime-evidence',
-    description: `match=${driven.matchId}; rounds=${driven.rounds}; replayRows=${rowCount}; production Result replay opened after current runtime accepted-event projection`,
+    description: `match=${driven.matchId}; rounds=${driven.rounds}; replayRows=${rowCount}; production Result replay opened with native summary keyboard activation after current runtime accepted-event projection`,
   });
 
   runtime.assertClean(testInfo);

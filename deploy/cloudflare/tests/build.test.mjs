@@ -175,7 +175,7 @@ const dependencyContract = [
     expectedArg: 'expectedCardPresentationCoreBlob',
     artifact: 'card_presentation_core',
     fixture: 'export const CARD_PRESENTATION_CORE = Object.freeze({});\n',
-    currentBlob: '5dbd31ce856b412a7572ce213eb9d764c1b547de',
+    currentBlob: 'a98d982e3686425edec3d8122d61aff73d2eeec8',
   },
   {
     file: 'battle-conveyor-presentation-core.mjs',

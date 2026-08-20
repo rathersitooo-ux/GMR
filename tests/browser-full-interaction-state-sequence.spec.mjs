@@ -265,6 +265,7 @@ test('R19R2 mounts accepted replay rows on the production Result surface', async
 
   const summary = replay.locator('summary');
   await expect(summary).toBeVisible();
+  await summary.evaluate((node) => node.scrollIntoView({ block: 'center', inline: 'nearest' }));
   await summary.click();
   await expect(replay).toHaveAttribute('open', '');
   await expect(replayRows.first()).toBeVisible();

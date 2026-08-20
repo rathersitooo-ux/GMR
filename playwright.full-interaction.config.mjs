@@ -37,7 +37,8 @@ export default defineConfig({
     },
     {
       name: 'phone-touch-390x844',
-      testMatch: ['browser-full-interaction-touch.spec.mjs'],
+      testMatch: ['browser-full-interaction-state-sequence.spec.mjs'],
+      grep: /@mobile-touch/,
       use: {
         viewport: { width: 390, height: 844 },
         isMobile: true,

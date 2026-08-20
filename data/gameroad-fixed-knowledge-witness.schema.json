@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gameroad.local/schema/gameroad-fixed-knowledge-witness.schema.json",
+  "title": "GAMEROAD Fixed Knowledge Witness",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "mode",
+    "purpose",
+    "canonical",
+    "fixed_knowledge_contract",
+    "policy"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "./gameroad-fixed-knowledge-witness.schema.json"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "mode": {
+      "const": "MIRROR_ONLY"
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "canonical": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "system",
+        "ops_rules_document_id",
+        "common_entry_document_id",
+        "user_provenance_task_id",
+        "knowledge_compiler_file_id"
+      ],
+      "properties": {
+        "system": {
+          "const": "google_drive"
+        },
+        "ops_rules_document_id": {
+          "const": "1za9b6DOzyLaNZQfWVAJFmAxTetraYrHnkpJ33vEkBwE"
+        },
+        "common_entry_document_id": {
+          "const": "17xKynlDewWeYHK1xsObex70VoR7YPh6Kn06y57HZV_s"
+        },
+        "user_provenance_task_id": {
+          "const": "OPS-USER-RULE-PROVENANCE-GATE-001"
+        },
+        "knowledge_compiler_file_id": {
+          "const": "1ITrvIhGlC0eN8QrZ3onNJXKO7UFrqLYC"
+        }
+      }
+    },
+    "fixed_knowledge_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "lock_classes",
+        "user_lock_creation_authority",
+        "unknown_or_invalid_lock",
+        "user_lock_drift",
+        "artifact_or_verified_drift"
+      ],
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "lock_classes": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": "USER_LOCK"
+            },
+            {
+              "const": "ARTIFACT_LOCK"
+            },
+            {
+              "const": "VERIFIED_LOCK"
+            }
+          ],
+          "items": false,
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "user_lock_creation_authority": {
+          "const": "USER_EXPLICIT_ONLY"
+        },
+        "unknown_or_invalid_lock": {
+          "const": "FAIL_CLOSED_REVERIFY"
+        },
+        "user_lock_drift": {
+          "const": "USER_DECISION_REQUIRED"
+        },
+        "artifact_or_verified_drift": {
+          "const": "REVERIFY_REQUIRED"
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "drive_is_canonical",
+        "github_is_witness_only",
+        "no_dual_canonical",
+        "user_raw_values_mirrored",
+        "ai_may_mint_user_lock"
+      ],
+      "properties": {
+        "drive_is_canonical": {
+          "const": true
+        },
+        "github_is_witness_only": {
+          "const": true
+        },
+        "no_dual_canonical": {
+          "const": true
+        },
+        "user_raw_values_mirrored": {
+          "const": false
+        },
+        "ai_may_mint_user_lock": {
+          "const": false
+        }
+      }
+    }
+  }
+}

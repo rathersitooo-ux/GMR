@@ -5,6 +5,15 @@ on:
     branches:
       - main
   merge_group:
+  push:
+    branches:
+      - main
+    paths:
+      - 'data/gameroad-fixed-knowledge-witness.json'
+      - 'data/gameroad-fixed-knowledge-witness.schema.json'
+      - 'tools/fixed-knowledge-witness-validator.mjs'
+      - 'tests/fixed-knowledge-witness-validator.test.mjs'
+      - '.github/workflows/gameroad-required-gate.yml'
 
 permissions:
   contents: read
@@ -24,7 +33,7 @@ jobs:
         id: classify
         shell: bash
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
         run: |
           set -euo pipefail
@@ -65,6 +74,7 @@ jobs:
           version_manifest=false
           roblox=false
           publichost=false
+          fixed_knowledge_witness=false
           unclassified=false
           : > /tmp/gameroad-unclassified.txt
 
@@ -232,6 +242,12 @@ jobs:
               .github/workflows/cloudflare-public-deploy.yml)
                 publichost=true
                 ;;
+              data/gameroad-fixed-knowledge-witness.json|\
+              data/gameroad-fixed-knowledge-witness.schema.json|\
+              tools/fixed-knowledge-witness-validator.mjs|\
+              tests/fixed-knowledge-witness-validator.test.mjs)
+                fixed_knowledge_witness=true
+                ;;
               .github/workflows/gameroad-required-gate.yml|\
               .github/workflows/gameroad-observability-ci.yml|\
               README.md|.gitignore|.gitattributes)
@@ -276,6 +292,7 @@ jobs:
             echo "version_manifest=${version_manifest}"
             echo "roblox=${roblox}"
             echo "publichost=${publichost}"
+            echo "fixed_knowledge_witness=${fixed_knowledge_witness}"
             echo "unclassified=${unclassified}"
           } >> "${GITHUB_OUTPUT}"
 
@@ -313,6 +330,12 @@ jobs:
 
       - name: Run Public package provenance invariant
         run: node --test deploy/cloudflare/tests/build.test.mjs
+
+      - name: Validate fixed knowledge witness
+        if: steps.classify.outputs.fixed_knowledge_witness == 'true'
+        run: |
+          node --test tests/fixed-knowledge-witness-validator.test.mjs
+          node tools/fixed-knowledge-witness-validator.mjs data/gameroad-fixed-knowledge-witness.json data/gameroad-fixed-knowledge-witness.schema.json
 
       - name: Run Browser static check
         if: steps.classify.outputs.browser == 'true'

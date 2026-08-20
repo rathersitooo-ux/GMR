@@ -409,3 +409,140 @@ test('records build-linked visible Home to Partner and Home return P0 evidence',
     description: `P0 HOME-PARTNER-BRIDGE visible pointer round trip selected Partner ${candidateName} and returned Home with both runtime screenshots attached on this exact GitHub revision.`,
   });
 });
+
+test('Desktop Cards pointer targets satisfy current AA size-or-spacing and keyboard-focus audit', async ({ page }, testInfo) => {
+  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
+  expect(response, 'main HTML response').not.toBeNull();
+  expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
+  await page.waitForTimeout(500);
+
+  const cardsControl = page
+    .locator('[data-go="cards"]:visible, [data-home-target="cards"]:visible, [data-root-go="cards"]:visible')
+    .first();
+  await expect(cardsControl, 'visible Home-to-Cards pointer control').toBeVisible();
+  await cardsControl.click();
+
+  const cards = page.locator('section[data-screen="cards"]');
+  await expect(cards, 'Cards screen reached through visible pointer navigation').toBeVisible();
+  await page.waitForTimeout(250);
+
+  const audit = await cards.evaluate((root) => {
+    const isSemantic = (element) => {
+      if (!(element instanceof HTMLElement)) return false;
+      if (element.matches('button, a[href], select, textarea')) return true;
+      if (element.matches('input:not([type="hidden"])')) return true;
+      if (element.matches('[role="button"], [role="link"], [role="checkbox"], [role="radio"], [role="tab"]')) return true;
+      return element.hasAttribute('tabindex');
+    };
+    const isVisible = (element) => {
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return style.display !== 'none'
+        && style.visibility !== 'hidden'
+        && Number(style.opacity || 1) > 0
+        && rect.width > 0
+        && rect.height > 0;
+    };
+    const isPointerCandidate = (element) => {
+      if (!(element instanceof HTMLElement) || !isVisible(element)) return false;
+      if (element.matches(':disabled, [aria-disabled="true"]')) return false;
+      return isSemantic(element)
+        || element.hasAttribute('onclick')
+        || getComputedStyle(element).cursor === 'pointer';
+    };
+    const hasCandidateAncestor = (element) => {
+      let parent = element.parentElement;
+      while (parent && parent !== root) {
+        if (isPointerCandidate(parent)) return true;
+        parent = parent.parentElement;
+      }
+      return false;
+    };
+    const describe = (element) => {
+      const text = String(element.getAttribute('aria-label') || element.textContent || '').replace(/\s+/g, ' ').trim();
+      const dataKey = [...element.attributes]
+        .find((attribute) => /^data-(go|back|role|action|card|deck|tab|filter|sort)/.test(attribute.name));
+      return element.id
+        || (dataKey ? `${dataKey.name}=${dataKey.value}` : '')
+        || text.slice(0, 80)
+        || `${element.tagName.toLowerCase()}${element.className ? `.${String(element.className).trim().replace(/\s+/g, '.')}` : ''}`;
+    };
+    const nativeKeyboard = (element) => element.matches('button, a[href], select, textarea, input:not([type="hidden"])');
+    const candidates = [...root.querySelectorAll('*')]
+      .filter((element) => isPointerCandidate(element))
+      .filter((element) => isSemantic(element) || !hasCandidateAncestor(element));
+    const targets = candidates.map((element, index) => {
+      const rect = element.getBoundingClientRect();
+      return {
+        index,
+        element,
+        label: describe(element),
+        tag: element.tagName.toLowerCase(),
+        role: element.getAttribute('role'),
+        tabIndex: element.tabIndex,
+        width: Number(rect.width.toFixed(2)),
+        height: Number(rect.height.toFixed(2)),
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        centerX: rect.left + rect.width / 2,
+        centerY: rect.top + rect.height / 2,
+        keyboardReachable: nativeKeyboard(element) || element.tabIndex >= 0,
+      };
+    });
+    const pointToRectDistance = (x, y, other) => {
+      const dx = Math.max(other.left - x, 0, x - other.right);
+      const dy = Math.max(other.top - y, 0, y - other.bottom);
+      return Math.hypot(dx, dy);
+    };
+    const report = targets.map((target) => {
+      const sizePass = target.width >= 24 && target.height >= 24;
+      const neighborDistances = targets
+        .filter((other) => other.index !== target.index)
+        .map((other) => {
+          const otherSizePass = other.width >= 24 && other.height >= 24;
+          return otherSizePass
+            ? pointToRectDistance(target.centerX, target.centerY, other)
+            : Math.hypot(target.centerX - other.centerX, target.centerY - other.centerY) / 2;
+        });
+      const nearestClearance = neighborDistances.length ? Math.min(...neighborDistances) : Infinity;
+      const spacingPass = sizePass || nearestClearance >= 12;
+      return {
+        label: target.label,
+        tag: target.tag,
+        role: target.role,
+        tabIndex: target.tabIndex,
+        width: target.width,
+        height: target.height,
+        sizePass,
+        nearestClearance: Number.isFinite(nearestClearance) ? Number(nearestClearance.toFixed(2)) : null,
+        spacingPass,
+        keyboardReachable: target.keyboardReachable,
+      };
+    });
+    return {
+      viewport: { width: innerWidth, height: innerHeight },
+      targetCount: report.length,
+      targets: report,
+    };
+  });
+
+  await testInfo.attach('desktop-cards-target-audit.json', {
+    body: Buffer.from(`${JSON.stringify(audit, null, 2)}\n`, 'utf8'),
+    contentType: 'application/json',
+  });
+  console.log(`GAMEROAD_CARDS_TARGET_AUDIT ${JSON.stringify(audit)}`);
+
+  const unresolvedSizeOrSpacing = audit.targets.filter((target) => !target.sizePass && !target.spacingPass);
+  const keyboardMisses = audit.targets.filter((target) => !target.keyboardReachable);
+  expect(audit.targetCount, 'at least one current Cards interactive pointer target is audited').toBeGreaterThan(0);
+  expect(
+    unresolvedSizeOrSpacing,
+    `Cards targets below the 24px size-or-spacing path:\n${JSON.stringify(unresolvedSizeOrSpacing, null, 2)}`,
+  ).toEqual([]);
+  expect(
+    keyboardMisses,
+    `Cards pointer targets missing keyboard focus reachability:\n${JSON.stringify(keyboardMisses, null, 2)}`,
+  ).toEqual([]);
+});

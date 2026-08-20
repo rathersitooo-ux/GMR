@@ -171,6 +171,36 @@ function publicFree4pFormalRanking(value, winnerIds) {
   return deepFreeze(rows);
 }
 
+function deriveFree4pFormalRankingFromAcceptedReplay(log, winnerIds) {
+  if (!log || !Array.isArray(log.events)) return null;
+  for (let index = log.events.length - 1; index >= 0; index -= 1) {
+    const event = log.events[index];
+    if (event?.kind !== 'battle_resolution') continue;
+    if (event.publicData?.mode !== '4p') return null;
+    const progress = event.publicData?.maxLaneProgress;
+    if (!Array.isArray(progress) || progress.length !== 4) return null;
+    try {
+      const rows = progress.map(row => ({
+        id: maybeString(row?.id),
+        maxColumn: safeInteger(row?.after, 'MATCH_END_DERIVED_MAX_COLUMN')
+      }));
+      if (rows.some(row => !row.id) || new Set(rows.map(row => row.id)).size !== 4) return null;
+      const candidate = rows.map(row => ({
+        id: row.id,
+        rank: 1 + rows.reduce(
+          (count, other) => count + (other.maxColumn > row.maxColumn ? 1 : 0),
+          0
+        ),
+        maxColumn: row.maxColumn
+      }));
+      return publicFree4pFormalRanking(candidate, winnerIds);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 function finiteNumber(value, label) {
   const number = Number(value);
   if (!Number.isFinite(number)) throw new TypeError(`${label}_INVALID`);
@@ -554,6 +584,9 @@ export function appendAcceptedMatchEnd(
   };
   if (formalRanking != null) {
     publicData.formalRanking = publicFree4pFormalRanking(formalRanking, normalizedWinnerIds);
+  } else if (normalizedMode === '4p') {
+    const derivedRanking = deriveFree4pFormalRankingFromAcceptedReplay(session.log, normalizedWinnerIds);
+    if (derivedRanking) publicData.formalRanking = derivedRanking;
   }
   const log = appendAcceptedEvent(session.log, {
     kind: 'match_ended',

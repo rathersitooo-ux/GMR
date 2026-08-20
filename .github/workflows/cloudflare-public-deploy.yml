@@ -6,8 +6,8 @@ on:
       - main
     paths:
       - .github/workflows/cloudflare-public-deploy.yml
-      - deploy/cloudflare/relay/wrangler.toml
-      - deploy/cloudflare/release-comms-source.json
+      - browser/**
+      - deploy/cloudflare/**
   workflow_dispatch:
 
 permissions:

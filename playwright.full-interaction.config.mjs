@@ -1,8 +1,13 @@
 import { defineConfig } from '@playwright/test';
 
+const POINTER_FULL_INTERACTION = [
+  'browser-full-interaction.spec.mjs',
+  'browser-full-interaction-state-sequence.spec.mjs',
+];
+
 export default defineConfig({
   testDir: './tests',
-  testMatch: ['browser-full-interaction.spec.mjs', 'browser-full-interaction-state-sequence.spec.mjs'],
+  testMatch: [...POINTER_FULL_INTERACTION, 'browser-full-interaction-touch.spec.mjs'],
   timeout: 90_000,
   expect: { timeout: 7_000 },
   fullyParallel: false,
@@ -25,15 +30,27 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop-1280x720',
+      testMatch: POINTER_FULL_INTERACTION,
       use: { viewport: { width: 1280, height: 720 } },
     },
     {
       name: 'phone-390x844',
+      testMatch: POINTER_FULL_INTERACTION,
       use: { viewport: { width: 390, height: 844 } },
     },
     {
       name: 'short-landscape-667x375',
+      testMatch: POINTER_FULL_INTERACTION,
       use: { viewport: { width: 667, height: 375 } },
+    },
+    {
+      name: 'phone-touch-390x844',
+      testMatch: 'browser-full-interaction-touch.spec.mjs',
+      use: {
+        viewport: { width: 390, height: 844 },
+        hasTouch: true,
+        isMobile: true,
+      },
     },
   ],
   webServer: {

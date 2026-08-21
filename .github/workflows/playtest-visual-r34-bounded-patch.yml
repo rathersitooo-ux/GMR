@@ -1,0 +1,106 @@
+name: PLAYTEST VISUAL R34 bounded Result and update repair
+
+on:
+  push:
+    branches:
+      - work/visual-r34-result-update-banner
+    paths:
+      - .github/workflows/playtest-visual-r34-bounded-patch.yml
+
+permissions:
+  contents: write
+
+env:
+  EXACT_BASE: b5524d8ef0b1ae050d4a64f54d3cc6a69c86f3e6
+  EXACT_HTML_BLOB: 477325641fa328ecd55cdc15a11a5d0ea90759f1
+  EXACT_TEST_BLOB: 5386451be827ac75554f8f99c7d0d4586a5a07c2
+
+jobs:
+  patch-test-and-persist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/visual-r34-result-update-banner
+          fetch-depth: 0
+
+      - name: Verify exact base and patch only owned Browser/Test targets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$EXACT_BASE"
+          test "$(git hash-object browser/GAMEROAD.html)" = "$EXACT_HTML_BLOB"
+          test "$(git hash-object tests/browser-full-interaction.spec.mjs)" = "$EXACT_TEST_BLOB"
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html = Path('browser/GAMEROAD.html')
+          data = html.read_text(encoding='utf-8-sig')
+
+          old_css = ".result.active .resultBtns{left:3%;right:3%;bottom:2%;display:grid;grid-template-columns:1fr 1.5fr}.result.active .resultBtns .btn, .result.active .resultBtns .primary{min-width:0;min-height:52px}"
+          new_css = ".result.active .resultBtns{left:3%;right:3%;bottom:2%;display:grid;grid-template-columns:1fr 1fr 1.5fr}.result.active .resultBtns .btn, .result.active .resultBtns .primary{min-width:0;min-height:52px}"
+          if data.count(old_css) != 1:
+              raise SystemExit(f'portrait Result action-grid anchor count={data.count(old_css)}, expected 1')
+          data = data.replace(old_css, new_css, 1)
+
+          old_update = "if(j.build_id!==BUILD_ID){R.update.pending={buildId:j.build_id,publishedAt:j.published_at||null,source:url.href};renderUpdateBanner();return true}R.update.pending=null;R.update.deferred=false;renderUpdateBanner();return false"
+          new_update = "if(!R.update.currentBuildId){R.update.currentBuildId=j.build_id;R.update.pending=null;R.update.deferred=false;renderUpdateBanner();return false}if(j.build_id!==R.update.currentBuildId){R.update.pending={buildId:j.build_id,publishedAt:j.published_at||null,source:url.href};renderUpdateBanner();return true}R.update.pending=null;R.update.deferred=false;renderUpdateBanner();return false"
+          if data.count(old_update) != 1:
+              raise SystemExit(f'update identity anchor count={data.count(old_update)}, expected 1')
+          data = data.replace(old_update, new_update, 1)
+          html.write_text(data, encoding='utf-8')
+
+          spec = Path('tests/browser-full-interaction.spec.mjs')
+          s = spec.read_text(encoding='utf-8')
+          old_result = """  await expect(result.locator('#resultRanking .rankLine')).toHaveCount(4);\n  const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';\n"""
+          new_result = """  await expect(result.locator('#resultRanking .rankLine')).toHaveCount(4);\n  const resultLayout = await page.evaluate(() => {\n    const host = document.querySelector('#resultRanking');\n    const rows = [...(host?.querySelectorAll('.rankLine') ?? [])];\n    const buttons = [...document.querySelectorAll('.screen.result .resultBtns .btn')].filter((node) => {\n      const style = getComputedStyle(node);\n      return style.display !== 'none' && style.visibility !== 'hidden';\n    });\n    const rect = (node) => { const r = node.getBoundingClientRect(); return { left:r.left, right:r.right, top:r.top, bottom:r.bottom, width:r.width, height:r.height, id:node.id || node.textContent?.trim() || '' }; };\n    const hostRect = host ? rect(host) : null;\n    const rowRects = rows.map(rect);\n    const buttonRects = buttons.map(rect);\n    const overlaps = [];\n    for (const row of rowRects) for (const button of buttonRects) {\n      const hit = row.left < button.right - 1 && row.right > button.left + 1 && row.top < button.bottom - 1 && row.bottom > button.top + 1;\n      if (hit) overlaps.push({ row, button });\n    }\n    const allRowsInsideHost = !!hostRect && rowRects.every((row) => row.top >= hostRect.top - 1 && row.bottom <= hostRect.bottom + 1 && row.top >= 0 && row.bottom <= innerHeight);\n    const rematch = buttonRects.find((button) => button.id === 'rematch');\n    const aux = buttonRects.filter((button) => button.id !== 'rematch');\n    return { hostRect, rowRects, buttonRects, overlaps, allRowsInsideHost, rematchWidth:rematch?.width ?? 0, auxMaxWidth:Math.max(0, ...aux.map((button) => button.width)) };\n  });\n  expect(resultLayout.buttonRects, 'Result exposes Home, Partner Log and Rematch as visible actions').toHaveLength(3);\n  expect(resultLayout.allRowsInsideHost, `all four Result ranking rows stay fully readable inside their host: ${JSON.stringify(resultLayout)}`).toBeTruthy();\n  expect(resultLayout.overlaps, `Result actions must not cover ranking rows: ${JSON.stringify(resultLayout)}`).toEqual([]);\n  expect(resultLayout.buttonRects.every((button) => button.height >= 44), `Result action touch heights remain >=44px: ${JSON.stringify(resultLayout.buttonRects)}`).toBeTruthy();\n  expect(resultLayout.rematchWidth, 'Rematch remains visually primary by width').toBeGreaterThan(resultLayout.auxMaxWidth);\n  testInfo.annotations.push({ type: 'r34-result-ranking-action-non-overlap', description: JSON.stringify(resultLayout) });\n  const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';\n"""
+          if s.count(old_result) != 1:
+              raise SystemExit(f'R19 Result assertion anchor count={s.count(old_result)}, expected 1')
+          s = s.replace(old_result, new_result, 1)
+
+          marker = "// PLAYTEST VISUAL R34 current-manifest baseline regression"
+          if marker in s:
+              raise SystemExit('R34 baseline regression marker already exists unexpectedly')
+          s += r'''\n\n// PLAYTEST VISUAL R34 current-manifest baseline regression\ntest('R34 first valid version manifest establishes the loaded-session baseline without blocking current controls', async ({ page }, testInfo) => {\n  const runtime = observeRuntimeErrors(page);\n  let manifestRequests = 0;\n  const firstObservedBuild = '1111111111111111111111111111111111111111';\n  await page.route('**/gameroad-version.json*', async (route) => {\n    manifestRequests += 1;\n    await route.fulfill({\n      status: 200,\n      contentType: 'application/json',\n      headers: { 'cache-control': 'no-store' },\n      body: JSON.stringify({ schema:'GAMEROAD_BROWSER_VERSION_V1', channel:'current', build_id:firstObservedBuild, published_at:'2026-08-21T04:00:00Z', reload_policy:'never-force-during-match' }),\n    });\n  });\n\n  await bootCurrentBrowser(page);\n  await expect.poll(() => manifestRequests, { message: 'startup performs the current version-manifest check' }).toBeGreaterThan(0);\n  const banner = page.locator('#gameroadUpdateBanner');\n  await expect(banner, 'the first valid manifest describes the release loaded for this session and must not be announced as newer').not.toHaveClass(/on/);\n  const update = await page.evaluate(() => window.GAMEROAD_PARTNER_COMMENT?.snapshot?.().update ?? null);\n  expect(update).not.toBeNull();\n  expect(update.pending).toBeNull();\n\n  const setup = visibleOperationGo(page, 'setup');\n  await expect(setup, 'current-build update state does not block the visible Setup control').toBeVisible();\n  await setup.click();\n  await expect(page.locator('section[data-screen="setup"]')).toBeVisible();\n  await expect(banner).not.toHaveClass(/on/);\n  await attachStateScreenshot(page, testInfo, 'r34-current-manifest-no-false-update-banner');\n  runtime.assertClean(testInfo);\n});\n'''
+          spec.write_text(s, encoding='utf-8')
+          PY
+          git diff --check
+          test "$(git diff --name-only)" = $'browser/GAMEROAD.html\ntests/browser-full-interaction.spec.mjs'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+      - run: npx playwright install --with-deps chromium
+
+      - name: Run current visual/use-state regressions across all three formal viewports
+        run: >-
+          npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
+          --grep "R19 reaches Result from visible four-player Honey Hunt and returns Home|R34 first valid version manifest establishes the loaded-session baseline without blocking current controls"
+          --project=desktop-1280x720 --project=phone-390x844 --project=short-landscape-667x375
+
+      - name: Upload same-state R34 evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playtest-visual-r34-${{ github.run_id }}
+          path: |
+            playwright-report-full-interaction/
+            test-results/full-interaction/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Persist only product/test repair and remove temporary executor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/playtest-visual-r34-bounded-patch.yml
+          git diff --check
+          test "$(git diff --name-only)" = $'.github/workflows/playtest-visual-r34-bounded-patch.yml\nbrowser/GAMEROAD.html\ntests/browser-full-interaction.spec.mjs'
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
+          git commit -m "PLAYTEST VISUAL R34: clear Result actions and update banner"
+          git push origin HEAD:work/visual-r34-result-update-banner

@@ -1,5 +1,5 @@
-# R43 expired-owner recovery retrigger 2026-08-21T21:01+09:00
-name: PLAYTEST R42 persist update banner product slice
+# R43 observable recovery executor 2026-08-21T21:11+09:00
+name: PLAYTEST R43 observable update banner recovery
 
 on:
   push:
@@ -25,10 +25,12 @@ jobs:
         with:
           ref: work/visual-r34-result-update-banner
           fetch-depth: 0
+
       - name: Verify exact current product and apply bounded product/test delta
         shell: bash
         run: |
           set -euo pipefail
+          echo 'R43_STAGE=exact-base-and-patch' >> "$GITHUB_ENV"
           git fetch --no-tags origin main
           test "$(git rev-parse origin/main)" = "$EXACT_BASE"
           git checkout origin/main -- browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
@@ -175,21 +177,39 @@ test('update manifest baseline is session-local and pending banner is Home-only'
           PY
           git diff --check
           test "$(git diff --name-only)" = $'browser/GAMEROAD.html\ntests/browser-full-interaction.spec.mjs'
-      - uses: actions/setup-node@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm install --no-save --no-package-lock @playwright/test@1.62.0
-      - run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright package
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'R43_STAGE=npm-install-playwright' >> "$GITHUB_ENV"
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'R43_STAGE=playwright-install-chromium' >> "$GITHUB_ENV"
+          npx playwright install --with-deps chromium
+
       - name: Run update vertical slice on all formal viewports
         shell: bash
         run: |
           set -euo pipefail
+          echo 'R43_STAGE=three-viewport-update-regression' >> "$GITHUB_ENV"
           npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 --grep "update manifest baseline is session-local and pending banner is Home-only" --project=desktop-1280x720 --project=phone-390x844 --project=short-landscape-667x375
+
       - name: Persist only product and existing-lane regression
         shell: bash
         run: |
           set -euo pipefail
-          git rm -f --ignore-unmatch .github/workflows/playtest-visual-r34-bounded-patch.yml .tmp-deck-selection-diagnostic.txt .tmp-update-banner-source.txt .tmp-deck-selection-eval.txt
+          echo 'R43_STAGE=persist-product-test' >> "$GITHUB_ENV"
+          git rm -f --ignore-unmatch .github/workflows/playtest-visual-r34-bounded-patch.yml .tmp-deck-selection-diagnostic.txt .tmp-update-banner-source.txt .tmp-deck-selection-eval.txt .tmp-r43-executor-result.txt
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           test -n "$(git status --porcelain)"
@@ -197,3 +217,16 @@ test('update manifest baseline is session-local and pending banner is Home-only'
           git diff --cached --check
           git commit -m "PLAYTEST R42: make update prompt session-aware and Home-only"
           git push origin HEAD:work/visual-r34-result-update-banner
+
+      - name: Persist exact failure stage without product mutation
+        if: failure()
+        shell: bash
+        run: |
+          set -u
+          git reset --hard "$GITHUB_SHA"
+          printf 'R43 observable executor failed\nstage=%s\nworkflow_sha=%s\nbase=%s\ntime_utc=%s\n' "${R43_STAGE:-unknown}" "$GITHUB_SHA" "$EXACT_BASE" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > .tmp-r43-executor-result.txt
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .tmp-r43-executor-result.txt
+          git commit -m "PLAYTEST R43: persist bounded executor failure stage" || true
+          git push origin HEAD:work/visual-r34-result-update-banner || true

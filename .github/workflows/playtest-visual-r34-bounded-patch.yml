@@ -6,12 +6,17 @@ on:
       - work/visual-r34-result-update-banner
     paths:
       - .github/workflows/playtest-visual-r34-bounded-patch.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/playtest-visual-r34-bounded-patch.yml
 
 permissions:
   contents: write
 
 env:
-  EXACT_BASE: b5524d8ef0b1ae050d4a64f54d3cc6a69c86f3e6
+  EXACT_BASE: 42123f66e722f841a56f2172441f43120df907a9
   EXACT_HTML_BLOB: 477325641fa328ecd55cdc15a11a5d0ea90759f1
   EXACT_TEST_BLOB: 5386451be827ac75554f8f99c7d0d4586a5a07c2
 

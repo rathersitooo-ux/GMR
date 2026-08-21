@@ -1,0 +1,153 @@
+name: Browser Public Interaction Evidence
+
+on:
+  workflow_run:
+    workflows:
+      - GAMEROAD Cloudflare Public Deploy
+    types:
+      - completed
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/browser-public-interaction.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/browser-public-interaction.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: browser-public-interaction-${{ github.event.workflow_run.head_sha || github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  chromium-public-origin:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GAMEROAD_PUBLIC_BASE_URL: https://gameroad-browser-r5.pages.dev
+      EXPECTED_BUILD_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
+    steps:
+      - name: Checkout source under evidence
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Bind canonical public origin to deployed build
+        id: public_manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public-origin-metadata
+          MANIFEST='public-origin-metadata/gameroad-version.json'
+          curl --fail --silent --show-error --location \
+            --header 'Accept-Encoding: identity' \
+            --retry 4 --retry-delay 2 --retry-connrefused \
+            --max-time 30 \
+            --output "$MANIFEST" \
+            "${GAMEROAD_PUBLIC_BASE_URL}/gameroad-version.json"
+          OBSERVED_BUILD_ID="$(MANIFEST="$MANIFEST" node -e "const fs=require('node:fs');const m=JSON.parse(fs.readFileSync(process.env.MANIFEST,'utf8'));if(!m.build_id)process.exit(2);process.stdout.write(String(m.build_id));")"
+          echo "Public GAMEROAD build_id=${OBSERVED_BUILD_ID}"
+          echo "observed_build_id=${OBSERVED_BUILD_ID}" >> "$GITHUB_OUTPUT"
+          if [[ -n "${EXPECTED_BUILD_ID:-}" && "$OBSERVED_BUILD_ID" != "$EXPECTED_BUILD_ID" ]]; then
+            echo "::error::Public build mismatch: expected=${EXPECTED_BUILD_ID} observed=${OBSERVED_BUILD_ID}"
+            exit 1
+          fi
+          printf 'event=%s\nexpected_build_id=%s\nobserved_build_id=%s\npublic_origin=%s\n' \
+            "$GITHUB_EVENT_NAME" "${EXPECTED_BUILD_ID:-}" "$OBSERVED_BUILD_ID" "$GAMEROAD_PUBLIC_BASE_URL" \
+            > public-origin-metadata/binding.txt
+
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Prepare bounded public-origin R19 runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .r36-public
+          SOURCE='tests/browser-full-interaction.spec.mjs'
+          TARGET='.r36-public/browser-full-interaction.spec.mjs'
+          BEFORE="$(grep -oF "'/browser/GAMEROAD.html'" "$SOURCE" | wc -l | tr -d ' ')"
+          if [[ "$BEFORE" -lt 1 ]]; then
+            echo '::error::Expected current local Browser entry path was not found in full-interaction spec'
+            exit 1
+          fi
+          sed "s#'/browser/GAMEROAD.html'#'/'#g" "$SOURCE" > "$TARGET"
+          if grep -Fq "'/browser/GAMEROAD.html'" "$TARGET"; then
+            echo '::error::Temporary public-origin spec still contains the local Browser entry path'
+            exit 1
+          fi
+          cat > .r36-public/playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          import baseConfig from '../playwright.full-interaction.config.mjs';
+
+          const publicProjects = (baseConfig.projects ?? [])
+            .filter((project) => !project.grep)
+            .map((project) => ({ name: project.name, use: project.use }));
+
+          export default defineConfig({
+            testDir: '.',
+            testMatch: 'browser-full-interaction.spec.mjs',
+            grep: /R19 reaches Result from visible four-player Honey Hunt and returns Home/,
+            timeout: 240_000,
+            expect: { timeout: 7_000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            outputDir: '../test-results/public-origin',
+            reporter: [
+              ['line'],
+              ['html', { outputFolder: '../playwright-report-public-origin', open: 'never' }],
+              ['json', { outputFile: '../test-results/public-origin/public-origin-report.json' }],
+            ],
+            use: {
+              ...baseConfig.use,
+              baseURL: process.env.GAMEROAD_PUBLIC_BASE_URL,
+              trace: 'retain-on-failure',
+              screenshot: 'only-on-failure',
+              video: 'off',
+            },
+            projects: publicProjects,
+          });
+          EOF
+
+      - name: Run visible four-player Honey Hunt on public origin
+        run: npx playwright test --config=.r36-public/playwright.config.mjs --workers=1
+
+      - name: Record public-origin evidence binding
+        if: always()
+        shell: bash
+        env:
+          OBSERVED_BUILD_ID: ${{ steps.public_manifest.outputs.observed_build_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p public-origin-metadata
+          printf 'event=%s\nrun_id=%s\nsource_sha=%s\nexpected_build_id=%s\nobserved_build_id=%s\npublic_origin=%s\n' \
+            "$GITHUB_EVENT_NAME" "$GITHUB_RUN_ID" "$GITHUB_SHA" "${EXPECTED_BUILD_ID:-}" "${OBSERVED_BUILD_ID:-}" "$GAMEROAD_PUBLIC_BASE_URL" \
+            > public-origin-metadata/run-binding.txt
+
+      - name: Upload public interaction evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-public-interaction-${{ github.run_id }}
+          path: |
+            playwright-report-public-origin/
+            test-results/public-origin/
+            public-origin-metadata/
+          if-no-files-found: error
+          retention-days: 14

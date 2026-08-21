@@ -61,3 +61,187 @@ jobs:
             test-results/full-interaction/
           if-no-files-found: error
           retention-days: 14
+
+  r42-staged-update-repair:
+    if: ${{ github.event_name == 'pull_request' && github.head_ref == 'work/playtest-r42-update-banner' }}
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      EXACT_BASE: aa77a5799da2de6bea9d28640df46e4328c2046e
+      EXACT_HTML_BLOB: 477325641fa328ecd55cdc15a11a5d0ea90759f1
+      EXACT_TEST_BLOB: 5386451be827ac75554f8f99c7d0d4586a5a07c2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/playtest-r42-update-banner
+          fetch-depth: 0
+
+      - name: Verify exact current base and persist repair candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$EXACT_BASE"
+          test "$(git hash-object browser/GAMEROAD.html)" = "$EXACT_HTML_BLOB"
+          test "$(git hash-object tests/browser-full-interaction.spec.mjs)" = "$EXACT_TEST_BLOB"
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html = Path('browser/GAMEROAD.html')
+          data = html.read_text(encoding='utf-8-sig')
+          replacements = [
+            ("update:{status:'idle',pending:null,lastCheck:0,deferred:false,error:null}", "update:{status:'idle',baselineBuildId:null,pending:null,lastCheck:0,deferred:false,error:null}"),
+            ("if(j.build_id!==BUILD_ID){R.update.pending={buildId:j.build_id,publishedAt:j.published_at||null,source:url.href};renderUpdateBanner();return true}R.update.pending=null;R.update.deferred=false;renderUpdateBanner();return false", "if(R.update.baselineBuildId===null){R.update.baselineBuildId=j.build_id;R.update.pending=null;R.update.deferred=false;renderUpdateBanner();return false}if(j.build_id!==R.update.baselineBuildId){R.update.pending={buildId:j.build_id,publishedAt:j.published_at||null,source:url.href};renderUpdateBanner();return true}R.update.pending=null;R.update.deferred=false;renderUpdateBanner();return false"),
+            ("bar.dataset.screen=screen||'';bar.classList.toggle('on',!!pending);if(!pending)return;if(screen==='battle'&&state.match){btn.textContent=R.update.deferred?'対戦後に更新':'対戦後に更新';btn.disabled=false;copy.textContent='新版を検知。対局中は現在版を維持します。'}else{btn.textContent='今すぐ更新';btn.disabled=false;copy.textContent=`固定URLの新版 ${clampText(pending.buildId,34)} を読み込みます。`}", "bar.dataset.screen=screen||'';bar.classList.toggle('on',!!pending&&screen==='home');if(!pending||screen!=='home')return;btn.textContent='今すぐ更新';btn.disabled=false;copy.textContent=`固定URLの新版 ${clampText(pending.buildId,34)} を読み込みます。`"),
+            ("update:{status:R.update.status,pending:R.update.pending?{...R.update.pending}:null,deferred:R.update.deferred,error:R.update.error}", "update:{status:R.update.status,baselineBuildId:R.update.baselineBuildId,pending:R.update.pending?{...R.update.pending}:null,deferred:R.update.deferred,error:R.update.error}"),
+          ]
+          for old, new in replacements:
+              count = data.count(old)
+              if count != 1:
+                  raise SystemExit(f'HTML anchor count={count}, expected 1: {old[:180]!r}')
+              data = data.replace(old, new, 1)
+          html.write_text(data, encoding='utf-8')
+
+          spec = Path('tests/browser-full-interaction.spec.mjs')
+          s = spec.read_text(encoding='utf-8')
+          marker = '// UPDATE-MANIFEST-HOME-ONLY-REGRESSION R42'
+          if marker in s:
+              raise SystemExit('R42 regression marker already exists before candidate patch')
+          s += r'''
+
+// UPDATE-MANIFEST-HOME-ONLY-REGRESSION R42
+test('current release baseline stays silent and a later update remains Home-only', async ({ page }, testInfo) => {
+  test.setTimeout(60_000);
+  const runtime = observeRuntimeErrors(page);
+  let manifestBuild = 'r42-current-release';
+  await page.route('**/gameroad-version.json*', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ schema: 'gameroad.version.v1', channel: 'public', build_id: manifestBuild, published_at: '2026-08-21T10:00:00Z' }),
+    });
+  });
+
+  await bootCurrentBrowser(page);
+  await expect.poll(async () => page.evaluate(() => window.GAMEROAD_PARTNER_COMMENT?.snapshot().update.status ?? null)).toBe('ok');
+  let update = await page.evaluate(() => window.GAMEROAD_PARTNER_COMMENT.snapshot().update);
+  expect(update.baselineBuildId).toBe('r42-current-release');
+  expect(update.pending).toBeNull();
+  const banner = page.locator('#gameroadUpdateBanner');
+  await expect(banner, 'first valid current manifest does not prompt').not.toHaveClass(/on/);
+
+  manifestBuild = 'r42-later-release';
+  const detected = await page.evaluate(() => window.GAMEROAD_PARTNER_COMMENT.checkUpdate());
+  expect(detected, 'a later valid release is detected').toBeTruthy();
+  update = await page.evaluate(() => window.GAMEROAD_PARTNER_COMMENT.snapshot().update);
+  expect(update.pending?.buildId).toBe('r42-later-release');
+  await expect(banner, 'real pending release is visible on Home').toHaveClass(/on/);
+  await attachStateScreenshot(page, testInfo, 'r42-update-pending-home-visible');
+
+  const setupGo = visibleHomeControl(page, 'setup');
+  await expect(setupGo).toBeVisible();
+  await setupGo.click();
+  const setup = page.locator('section[data-screen="setup"]');
+  await expect(setup).toBeVisible();
+  await expect(banner, 'pending release is hidden off Home').not.toHaveClass(/on/);
+  const honey = setup.locator('[data-content="honey_hunt"]');
+  await expect(honey, 'Setup remains pointer-usable while update is pending').toBeVisible();
+  await honey.click();
+  await expect(honey).toHaveClass(/on/);
+  update = await page.evaluate(() => window.GAMEROAD_PARTNER_COMMENT.snapshot().update);
+  expect(update.pending?.buildId, 'pending release survives away from Home').toBe('r42-later-release');
+  await attachStateScreenshot(page, testInfo, 'r42-update-pending-setup-hidden');
+
+  await backOperationVisible(page);
+  await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+  await expect(banner, 'same pending release surfaces again only after visible return Home').toHaveClass(/on/);
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(500);
+  await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+  await expect.poll(async () => page.evaluate(() => window.GAMEROAD_PARTNER_COMMENT?.snapshot().update.status ?? null)).toBe('ok');
+  update = await page.evaluate(() => window.GAMEROAD_PARTNER_COMMENT.snapshot().update);
+  expect(update.baselineBuildId, 'new session adopts the now-current release as baseline').toBe('r42-later-release');
+  expect(update.pending).toBeNull();
+  await expect(page.locator('#gameroadUpdateBanner'), 'new session does not re-prompt for its baseline release').not.toHaveClass(/on/);
+  await attachStateScreenshot(page, testInfo, 'r42-new-session-current-release-silent');
+  runtime.assertClean(testInfo);
+});
+'''
+          spec.write_text(s, encoding='utf-8')
+          PY
+          rm -f .tmp-r42-update-diagnostic.txt
+          git rm .github/workflows/playtest-r42-update-diagnostic.yml
+          printf 'PATCHED_PENDING_TEST\nbase=%s\nhtml_before=%s\ntest_before=%s\n' "$EXACT_BASE" "$EXACT_HTML_BLOB" "$EXACT_TEST_BLOB" > .r42-update-status.txt
+          git diff --check
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$EXACT_BASE"
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs .tmp-r42-update-diagnostic.txt .r42-update-status.txt .github/workflows/playtest-r42-update-diagnostic.yml
+          git commit -m "PLAYTEST R42: persist update banner repair candidate"
+          git push origin HEAD:work/playtest-r42-update-banner
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+      - run: npx playwright install --with-deps chromium
+
+      - name: Narrow update baseline and Home-only regression
+        shell: bash
+        run: |
+          set +e
+          npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 \
+            --grep "current release baseline stays silent and a later update remains Home-only" \
+            --project=desktop-1280x720 --project=phone-390x844 --project=short-landscape-667x375 \
+            > .r42-test.log 2>&1
+          code=$?
+          cat .r42-test.log
+          if [ "$code" -ne 0 ]; then
+            { echo 'FAIL_NARROW_UPDATE_REGRESSION'; tail -n 180 .r42-test.log; } > .r42-update-status.txt
+            git add .r42-update-status.txt
+            git commit -m "PLAYTEST R42: record narrow regression failure"
+            git push origin HEAD:work/playtest-r42-update-banner
+            exit "$code"
+          fi
+          printf 'PASS_NARROW_UPDATE_REGRESSION\n' > .r42-update-status.txt
+          git add .r42-update-status.txt
+          git commit -m "PLAYTEST R42: record narrow regression pass"
+          git push origin HEAD:work/playtest-r42-update-banner
+
+      - name: Original visible four-player Honey Hunt loop regression
+        shell: bash
+        run: |
+          set +e
+          npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 \
+            --grep "R19 reaches Result from visible four-player Honey Hunt and returns Home" \
+            --project=desktop-1280x720 --project=phone-390x844 --project=short-landscape-667x375 \
+            > .r42-test.log 2>&1
+          code=$?
+          cat .r42-test.log
+          if [ "$code" -ne 0 ]; then
+            { echo 'FAIL_ORIGINAL_R19_LOOP'; tail -n 180 .r42-test.log; } > .r42-update-status.txt
+            git add .r42-update-status.txt
+            git commit -m "PLAYTEST R42: record original loop regression failure"
+            git push origin HEAD:work/playtest-r42-update-banner
+            exit "$code"
+          fi
+          printf 'PASS_ORIGINAL_R19_LOOP\n' > .r42-update-status.txt
+          git add .r42-update-status.txt
+          git commit -m "PLAYTEST R42: record original loop pass"
+          git push origin HEAD:work/playtest-r42-update-banner
+
+      - name: Restore existing Browser workflow after both regressions pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$EXACT_BASE"
+          git checkout origin/main -- .github/workflows/browser-full-interaction.yml
+          git rm .r42-update-status.txt
+          git diff --check
+          git commit -m "PLAYTEST R42: remove temporary repair executor"
+          git push origin HEAD:work/playtest-r42-update-banner

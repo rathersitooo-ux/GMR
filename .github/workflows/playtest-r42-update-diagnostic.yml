@@ -1,0 +1,63 @@
+name: PLAYTEST R42 update banner diagnostic
+
+on:
+  push:
+    branches:
+      - work/playtest-r42-update-banner
+    paths:
+      - .github/workflows/playtest-r42-update-diagnostic.yml
+
+permissions:
+  contents: write
+
+env:
+  EXACT_BASE: aa77a5799da2de6bea9d28640df46e4328c2046e
+  EXACT_HTML_BLOB: 477325641fa328ecd55cdc15a11a5d0ea90759f1
+
+jobs:
+  inspect-current-update-banner:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/playtest-r42-update-banner
+          fetch-depth: 0
+      - name: Verify exact current product and persist bounded source contexts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$EXACT_BASE"
+          test "$(git hash-object browser/GAMEROAD.html)" = "$EXACT_HTML_BLOB"
+          python3 - <<'PY'
+          from pathlib import Path
+          data = Path('browser/GAMEROAD.html').read_text(encoding='utf-8-sig')
+          patterns = [
+              'gameroadUpdateBanner', 'checkUpdate', 'renderUpdateBanner',
+              'pendingUpdate', 'updatePending', 'gameroad-version.json',
+              'BUILD_ID', 'data-screen', 'showScreen(', 'currentScreen'
+          ]
+          out = []
+          for pattern in patterns:
+              out.append(f'\n===== PATTERN {pattern!r} =====\n')
+              start = 0
+              found = 0
+              while found < 20:
+                  idx = data.find(pattern, start)
+                  if idx < 0:
+                      break
+                  found += 1
+                  lo = max(0, idx - 2200)
+                  hi = min(len(data), idx + len(pattern) + 3400)
+                  out.append(f'--- occurrence {found} char={idx} ---\n')
+                  out.append(data[lo:hi].replace('\r','') + '\n')
+                  start = idx + len(pattern)
+              out.append(f'COUNT_SHOWN={found}\n')
+          Path('.tmp-r42-update-diagnostic.txt').write_text(''.join(out), encoding='utf-8')
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .tmp-r42-update-diagnostic.txt
+          git commit -m "PLAYTEST R42: capture update banner diagnostic"
+          git push origin HEAD:work/playtest-r42-update-banner

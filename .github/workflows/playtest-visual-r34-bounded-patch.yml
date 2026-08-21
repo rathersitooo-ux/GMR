@@ -8,7 +8,7 @@ on:
       - .github/workflows/playtest-visual-r34-bounded-patch.yml
 
 permissions:
-  contents: read
+  contents: write
 
 env:
   EXACT_BASE: aa77a5799da2de6bea9d28640df46e4328c2046e
@@ -24,7 +24,7 @@ jobs:
         with:
           ref: work/visual-r34-result-update-banner
           fetch-depth: 0
-      - name: Verify exact current product and emit bounded source contexts
+      - name: Verify exact current product and persist bounded source contexts
         shell: bash
         run: |
           set -euo pipefail
@@ -36,23 +36,14 @@ jobs:
           from pathlib import Path
           data = Path('browser/GAMEROAD.html').read_text(encoding='utf-8-sig')
           patterns = [
-              '選択カードをデッキへ追加',
-              'collection-card',
-              'deckEditor',
-              'deck-editor',
-              'selectedCard',
-              "classList.add('selected'",
-              'classList.add("selected"',
-              "classList.toggle('selected'",
-              'classList.toggle("selected"',
-              ':focus-visible',
-              ':focus-within',
-              '.selected',
-              'outline:',
-              'r4PreviewClose',
+              '選択カードをデッキへ追加', 'collection-card', 'deckEditor', 'deck-editor',
+              'selectedCard', "classList.add('selected'", 'classList.add("selected"',
+              "classList.toggle('selected'", 'classList.toggle("selected"',
+              ':focus-visible', ':focus-within', '.selected', 'outline:', 'r4PreviewClose',
           ]
+          out = []
           for pattern in patterns:
-              print(f'\n===== PATTERN {pattern!r} =====')
+              out.append(f'\n===== PATTERN {pattern!r} =====\n')
               start = 0
               found = 0
               while found < 20:
@@ -62,8 +53,14 @@ jobs:
                   found += 1
                   lo = max(0, idx - 1400)
                   hi = min(len(data), idx + len(pattern) + 2200)
-                  print(f'--- occurrence {found} char={idx} ---')
-                  print(data[lo:hi].replace('\r',''))
+                  out.append(f'--- occurrence {found} char={idx} ---\n')
+                  out.append(data[lo:hi].replace('\r','') + '\n')
                   start = idx + len(pattern)
-              print(f'COUNT_SHOWN={found}')
+              out.append(f'COUNT_SHOWN={found}\n')
+          Path('.tmp-deck-selection-diagnostic.txt').write_text(''.join(out), encoding='utf-8')
           PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .tmp-deck-selection-diagnostic.txt
+          git commit -m "PLAYTEST: capture deck selection diagnostic"
+          git push origin HEAD:work/visual-r34-result-update-banner

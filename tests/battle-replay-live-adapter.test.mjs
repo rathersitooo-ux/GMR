@@ -426,14 +426,14 @@ test('Free4P replay preserves caller-authoritative single-winner formal ranking 
   assert.equal('hidden' in publicData.formalRanking[0], false);
 });
 
-test('Free4P replay accepts simultaneous seven-card co-winners and competition-ranking loser ties', () => {
+test('Free4P replay accepts at-or-above-seven atomic co-winners and competition-ranking loser ties', () => {
   const publicData = replayMatchEndPublicData('M-4P-COWIN', {
     winnerIds: ['OMEGA', 'ALPHA'],
     round: 12,
     mode: '4p',
     formalRanking: [
       { id: 'LOSER-B', rank: 3, maxColumn: 5 },
-      { id: 'OMEGA', rank: 1, maxColumn: 7 },
+      { id: 'OMEGA', rank: 1, maxColumn: 8 },
       { id: 'LOSER-A', rank: 3, maxColumn: 5 },
       { id: 'ALPHA', rank: 1, maxColumn: 7 }
     ]
@@ -495,7 +495,7 @@ test('Free4P formal ranking fails closed on rank, winner, duplicate-id, range, a
 
   assert.throws(() => appendAcceptedMatchEnd(initial(), {
     winnerIds: ['P1'], round: 1, mode: '4p',
-    formalRanking: base.map(row => row.id === 'P4' ? { ...row, maxColumn: 8 } : row)
+    formalRanking: base.map(row => row.id === 'P4' ? { ...row, maxColumn: -1 } : row)
   }), /MATCH_END_FORMAL_MAX_COLUMN_INVALID/);
 
   assert.throws(() => appendAcceptedMatchEnd(initial(), {
@@ -724,6 +724,29 @@ test('Free4P omitted formalRanking derives simultaneous co-winners and skips fol
     { id: 'P2', rank: 1, maxColumn: 7 },
     { id: 'P3', rank: 3, maxColumn: 4 },
     { id: 'P4', rank: 4, maxColumn: 1 }
+  ]);
+});
+
+test('Free4P omitted formalRanking preserves unequal-depth atomic co-winners from accepted maxLaneProgress', () => {
+  const input = resolution(1);
+  input.mode = '4p';
+  input.winnerIds = ['P1', 'P2'];
+  input.maxLaneProgress = [
+    { id: 'P1', before: 6, after: 8 },
+    { id: 'P2', before: 6, after: 7 },
+    { id: 'P3', before: 5, after: 5 },
+    { id: 'P4', before: 5, after: 5 }
+  ];
+  let session = createLiveReplaySession({ matchId: 'M-4P-DERIVE-COWIN-OVER7', versions });
+  session = appendAcceptedBattleResolution(session, input);
+  session = appendAcceptedMatchEnd(session, {
+    winnerIds: ['P1', 'P2'], round: 1, mode: '4p'
+  });
+  assert.deepEqual(readLiveReplay(session).events[1].publicData.formalRanking, [
+    { id: 'P1', rank: 1, maxColumn: 8 },
+    { id: 'P2', rank: 1, maxColumn: 7 },
+    { id: 'P3', rank: 3, maxColumn: 5 },
+    { id: 'P4', rank: 3, maxColumn: 5 }
   ]);
 });
 

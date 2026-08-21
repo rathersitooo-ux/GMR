@@ -137,7 +137,6 @@ function publicFree4pFormalRanking(value, winnerIds) {
     if (!id) throw new TypeError('MATCH_END_FORMAL_RANKING_ID_INVALID');
     const rank = safeInteger(row.rank, 'MATCH_END_FORMAL_RANK', 1);
     const maxColumn = safeInteger(row.maxColumn, 'MATCH_END_FORMAL_MAX_COLUMN');
-    if (maxColumn > 7) throw new TypeError('MATCH_END_FORMAL_MAX_COLUMN_INVALID');
     return { id, rank, maxColumn };
   });
 
@@ -154,16 +153,18 @@ function publicFree4pFormalRanking(value, winnerIds) {
   }
 
   const winnerSet = new Set(winnerIds);
-  const reachedSeven = rows.filter(row => row.maxColumn === 7).map(row => row.id);
+  const reachedSeven = rows.filter(row => row.maxColumn >= 7).map(row => row.id);
   if (reachedSeven.length !== winnerSet.size || reachedSeven.some(id => !winnerSet.has(id))) {
     throw new TypeError('MATCH_END_FORMAL_WINNER_MISMATCH');
   }
 
   for (const row of rows) {
-    const expectedRank = 1 + rows.reduce(
-      (count, other) => count + (other.maxColumn > row.maxColumn ? 1 : 0),
-      0
-    );
+    const expectedRank = winnerSet.has(row.id)
+      ? 1
+      : 1 + winnerSet.size + rows.reduce(
+        (count, other) => count + (!winnerSet.has(other.id) && other.maxColumn > row.maxColumn ? 1 : 0),
+        0
+      );
     if (row.rank !== expectedRank) {
       throw new TypeError(`MATCH_END_FORMAL_RANK_MISMATCH:${row.id}`);
     }
@@ -185,12 +186,15 @@ function deriveFree4pFormalRankingFromAcceptedReplay(log, winnerIds) {
         maxColumn: safeInteger(row?.after, 'MATCH_END_DERIVED_MAX_COLUMN')
       }));
       if (rows.some(row => !row.id) || new Set(rows.map(row => row.id)).size !== 4) return null;
+      const winnerSet = new Set(winnerIds);
       const candidate = rows.map(row => ({
         id: row.id,
-        rank: 1 + rows.reduce(
-          (count, other) => count + (other.maxColumn > row.maxColumn ? 1 : 0),
-          0
-        ),
+        rank: winnerSet.has(row.id)
+          ? 1
+          : 1 + winnerSet.size + rows.reduce(
+            (count, other) => count + (!winnerSet.has(other.id) && other.maxColumn > row.maxColumn ? 1 : 0),
+            0
+          ),
         maxColumn: row.maxColumn
       }));
       return publicFree4pFormalRanking(candidate, winnerIds);

@@ -1,0 +1,224 @@
+name: PLAYTEST R44 update banner product recovery
+
+on:
+  push:
+    branches:
+      - work/visual-r34-result-update-banner
+    paths:
+      - .github/workflows/playtest-r44-update-banner-recovery.yml
+
+permissions:
+  contents: write
+
+env:
+  EXACT_BASE: aa77a5799da2de6bea9d28640df46e4328c2046e
+  EXACT_HTML_BLOB: 477325641fa328ecd55cdc15a11a5d0ea90759f1
+  EXACT_TEST_BLOB: 5386451be827ac75554f8f99c7d0d4586a5a07c2
+
+jobs:
+  persist-update-banner-slice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/visual-r34-result-update-banner
+          fetch-depth: 0
+
+      - name: Verify exact current product and apply bounded product test delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'R44_STAGE=exact-base-and-patch' >> "$GITHUB_ENV"
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$EXACT_BASE"
+          git checkout origin/main -- browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
+          test "$(git hash-object browser/GAMEROAD.html)" = "$EXACT_HTML_BLOB"
+          test "$(git hash-object tests/browser-full-interaction.spec.mjs)" = "$EXACT_TEST_BLOB"
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html = Path('browser/GAMEROAD.html')
+          data = html.read_text(encoding='utf-8-sig')
+          init_old = "R.update = { ...R.update, BUILD_ID:GM.config.BUILD_ID, updatePending:null };"
+          init_new = "R.update = { ...R.update, BUILD_ID:GM.config.BUILD_ID, updateBaselineId:null, updatePending:null };"
+          if data.count(init_old) != 1:
+              raise SystemExit(f'update init anchor count={data.count(init_old)}, expected 1')
+          data = data.replace(init_old, init_new, 1)
+
+          block_old = '''async checkUpdate(){
+            try{
+              const manifest = await fetch('./gameroad-version.json', { cache: 'no-store' }).then(res => {
+                if(!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.json();
+              });
+              const nextId = String(manifest?.build_id || '').trim();
+              if(!nextId || nextId === this.BUILD_ID){ this.updatePending = null; this.renderUpdateBanner(); return; }
+              this.updatePending = { build_id:nextId, published_at:String(manifest?.published_at || ''), reload_hint:String(manifest?.reload_hint || '') };
+              this.renderUpdateBanner();
+            }catch(_e){}
+          },
+          renderUpdateBanner(){
+            const el=$('gameroadUpdateBanner');
+            if(!el) return;
+            const has=!!this.updatePending;
+            el.classList.toggle('on',has);
+            el.setAttribute('aria-hidden',has?'false':'true');
+          },'''
+          block_new = '''async checkUpdate(){
+            try{
+              const manifest = await fetch('./gameroad-version.json', { cache: 'no-store' }).then(res => {
+                if(!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.json();
+              });
+              const nextId = String(manifest?.build_id || '').trim();
+              if(!nextId) return;
+              if(!this.updateBaselineId){
+                this.updateBaselineId = nextId;
+                this.updatePending = null;
+                this.renderUpdateBanner();
+                return;
+              }
+              if(nextId === this.updateBaselineId){
+                this.updatePending = null;
+                this.renderUpdateBanner();
+                return;
+              }
+              this.updatePending = { build_id:nextId, published_at:String(manifest?.published_at || ''), reload_hint:String(manifest?.reload_hint || '') };
+              this.renderUpdateBanner();
+            }catch(_e){}
+          },
+          renderUpdateBanner(){
+            const el=$('gameroadUpdateBanner');
+            if(!el) return;
+            const has=!!this.updatePending&&GM.state.screen==='home';
+            el.classList.toggle('on',has);
+            el.setAttribute('aria-hidden',has?'false':'true');
+          },'''
+          if data.count(block_old) != 1:
+              raise SystemExit(f'update block anchor count={data.count(block_old)}, expected 1')
+          data = data.replace(block_old, block_new, 1)
+          html.write_text(data, encoding='utf-8')
+
+          spec = Path('tests/browser-full-interaction.spec.mjs')
+          s = spec.read_text(encoding='utf-8')
+          marker = '// UPDATE-MANIFEST-BASELINE-HOME-ONLY-REGRESSION R1'
+          if marker in s:
+              raise SystemExit('update regression marker already exists')
+          s += r'''
+
+          // UPDATE-MANIFEST-BASELINE-HOME-ONLY-REGRESSION R1
+          test('update manifest baseline is session-local and pending banner is Home-only', async ({ page, browser }, testInfo) => {
+            const runtime = observeRuntimeErrors(page);
+            let manifest = { build_id: 'r44-baseline-a', published_at: '2026-08-21T00:00:00Z', reload_hint: '' };
+            await page.route('**/browser/gameroad-version.json', async (route) => {
+              await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(manifest) });
+            });
+            await bootCurrentBrowser(page);
+            const banner = page.locator('#gameroadUpdateBanner');
+            await expect(banner, 'first valid manifest establishes baseline without prompting').toBeHidden();
+            await expect(banner).toHaveAttribute('aria-hidden', 'true');
+            await page.evaluate(() => window.__GAMEROAD_TEST__.update());
+            await expect(banner, 'same baseline manifest remains silent').toBeHidden();
+
+            manifest = { build_id: 'r44-release-b', published_at: '2026-08-21T00:01:00Z', reload_hint: 'reload' };
+            await page.evaluate(() => window.__GAMEROAD_TEST__.update());
+            await expect(banner, 'later different valid manifest is surfaced on Home').toBeVisible();
+            await expect(banner).toHaveAttribute('aria-hidden', 'false');
+
+            const setupGo = visibleHomeControl(page, 'setup');
+            await expect(setupGo).toBeVisible();
+            await setupGo.click();
+            const setup = page.locator('section[data-screen="setup"]');
+            await expect(setup).toBeVisible();
+            await expect(banner, 'pending update is hidden away from Home').toBeHidden();
+            await expect(banner).toHaveAttribute('aria-hidden', 'true');
+            await expect(banner).toHaveCSS('display', 'none');
+
+            const honey = setup.locator('[data-content="honey_hunt"]');
+            await expect(honey, 'Setup/Honey control is not occluded').toBeVisible();
+            await honey.click();
+            await expect(honey).toHaveClass(/on/);
+
+            manifest = { build_id: 'r44-release-c', published_at: '2026-08-21T00:02:00Z', reload_hint: 'reload' };
+            await page.evaluate(() => window.__GAMEROAD_TEST__.update());
+            await expect(banner, 'update detected off Home stays silent off Home').toBeHidden();
+
+            const back = setup.locator('[data-back]:visible').first();
+            await expect(back).toBeVisible();
+            await back.click();
+            await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+            await expect(banner, 'pending update resurfaces on Home').toBeVisible();
+
+            const currentUrl = page.url();
+            const freshContext = await browser.newContext({ viewport: testInfo.project.use.viewport });
+            const freshPage = await freshContext.newPage();
+            await freshPage.route('**/browser/gameroad-version.json', async (route) => {
+              await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(manifest) });
+            });
+            await freshPage.goto(currentUrl, { waitUntil: 'domcontentloaded' });
+            await freshPage.waitForTimeout(1_000);
+            const freshBanner = freshPage.locator('#gameroadUpdateBanner');
+            await expect(freshBanner, 'new session treats first valid newer manifest as baseline').toBeHidden();
+            await expect(freshBanner).toHaveAttribute('aria-hidden', 'true');
+            await freshContext.close();
+            await attachStateScreenshot(page, testInfo, 'update-pending-home-only-visible');
+            runtime.assertClean(testInfo);
+          });
+          '''
+          spec.write_text(s, encoding='utf-8')
+          PY
+          git diff --check
+          test "$(git diff --name-only)" = $'browser/GAMEROAD.html\ntests/browser-full-interaction.spec.mjs'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright package
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'R44_STAGE=npm-install-playwright' >> "$GITHUB_ENV"
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'R44_STAGE=playwright-install-chromium' >> "$GITHUB_ENV"
+          npx playwright install --with-deps chromium
+
+      - name: Run update vertical slice on all formal viewports
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'R44_STAGE=three-viewport-update-regression' >> "$GITHUB_ENV"
+          npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 --grep "update manifest baseline is session-local and pending banner is Home-only" --project=desktop-1280x720 --project=phone-390x844 --project=short-landscape-667x375
+
+      - name: Persist only product and existing-lane regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo 'R44_STAGE=persist-product-test' >> "$GITHUB_ENV"
+          git rm -f --ignore-unmatch .github/workflows/playtest-r44-update-banner-recovery.yml .github/workflows/playtest-visual-r34-bounded-patch.yml .tmp-deck-selection-diagnostic.txt .tmp-update-banner-source.txt .tmp-deck-selection-eval.txt .tmp-r43-executor-result.txt .tmp-r44-executor-result.txt
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
+          git diff --cached --check
+          git commit -m "PLAYTEST R44: make update prompt session-aware and Home-only"
+          git push origin HEAD:work/visual-r34-result-update-banner
+
+      - name: Persist exact failure stage without product mutation
+        if: failure()
+        shell: bash
+        run: |
+          set -u
+          git reset --hard "$GITHUB_SHA"
+          printf 'R44 bounded executor failed\nstage=%s\nworkflow_sha=%s\nbase=%s\ntime_utc=%s\n' "${R44_STAGE:-unknown}" "$GITHUB_SHA" "$EXACT_BASE" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > .tmp-r44-executor-result.txt
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .tmp-r44-executor-result.txt
+          git commit -m "PLAYTEST R44: persist bounded executor failure stage" || true
+          git push origin HEAD:work/visual-r34-result-update-banner || true

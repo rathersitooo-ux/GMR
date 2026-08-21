@@ -1,0 +1,230 @@
+name: FREE4P R10 bounded atomic co-winner patch
+
+on:
+  push:
+    branches:
+      - work/free4p-r10-cowinner-over7
+    paths:
+      - .github/workflows/free4p-r10-cowinner-bounded-patch.yml
+
+permissions:
+  contents: write
+
+env:
+  EXACT_BASE: aa77a5799da2de6bea9d28640df46e4328c2046e
+  EXACT_ADAPTER_BLOB: d91f0473679fc08c3009108a6b9caaec8507da94
+  EXACT_TEST_BLOB: 6c6f5858ba0899eebb0d7671439c9c6ba43b935d
+  EXACT_BUILD_TEST_BLOB: 46720c14769e587709e1ded5eab88d3ae764b11c
+
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/free4p-r10-cowinner-over7
+          fetch-depth: 0
+      - name: Verify exact base and exact owned inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$EXACT_BASE"
+          test "$(git hash-object browser/battle-replay-live-adapter.mjs)" = "$EXACT_ADAPTER_BLOB"
+          test "$(git hash-object tests/battle-replay-live-adapter.test.mjs)" = "$EXACT_TEST_BLOB"
+          test "$(git hash-object deploy/cloudflare/tests/build.test.mjs)" = "$EXACT_BUILD_TEST_BLOB"
+
+      - name: Apply bounded R5 co-winner repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: anchor count={count}, expected 1')
+              return text.replace(old, new, 1)
+
+          adapter_path = Path('browser/battle-replay-live-adapter.mjs')
+          data = adapter_path.read_text(encoding='utf-8')
+          start_marker = 'function publicFree4pFormalRanking(value, winnerIds) {'
+          end_marker = '\nfunction deriveFree4pFormalRankingFromAcceptedReplay(log, winnerIds) {'
+          if data.count(start_marker) != 1 or data.count(end_marker) != 1:
+              raise SystemExit('formal ranking function boundary anchor mismatch')
+          start = data.index(start_marker)
+          end = data.index(end_marker, start)
+          new_validator = '''function publicFree4pFormalRanking(value, winnerIds) {
+            if (!Array.isArray(value) || value.length !== 4) {
+              throw new TypeError('MATCH_END_FORMAL_RANKING_INVALID');
+            }
+            const rows = value.map(row => {
+              if (!row || typeof row !== 'object' || Array.isArray(row)) {
+                throw new TypeError('MATCH_END_FORMAL_RANKING_ROW_INVALID');
+              }
+              const id = maybeString(row.id);
+              if (!id) throw new TypeError('MATCH_END_FORMAL_RANKING_ID_INVALID');
+              const rank = safeInteger(row.rank, 'MATCH_END_FORMAL_RANK', 1);
+              const maxColumn = safeInteger(row.maxColumn, 'MATCH_END_FORMAL_MAX_COLUMN');
+              return { id, rank, maxColumn };
+            });
+
+            const ids = rows.map(row => row.id);
+            if (new Set(ids).size !== ids.length) {
+              throw new TypeError('MATCH_END_FORMAL_RANKING_DUPLICATE_ID');
+            }
+            if (!Array.isArray(winnerIds) || winnerIds.length === 0 || new Set(winnerIds).size !== winnerIds.length) {
+              throw new TypeError('MATCH_END_FORMAL_WINNER_IDS_INVALID');
+            }
+            const idSet = new Set(ids);
+            if (winnerIds.some(id => !idSet.has(id))) {
+              throw new TypeError('MATCH_END_FORMAL_WINNER_UNKNOWN');
+            }
+
+            const winnerSet = new Set(winnerIds);
+            const reachedSeven = rows.filter(row => row.maxColumn >= 7).map(row => row.id);
+            if (reachedSeven.length !== winnerSet.size || reachedSeven.some(id => !winnerSet.has(id))) {
+              throw new TypeError('MATCH_END_FORMAL_WINNER_MISMATCH');
+            }
+
+            for (const row of rows) {
+              const expectedRank = winnerSet.has(row.id)
+                ? 1
+                : 1 + winnerSet.size + rows.reduce(
+                  (count, other) => count + (!winnerSet.has(other.id) && other.maxColumn > row.maxColumn ? 1 : 0),
+                  0
+                );
+              if (row.rank !== expectedRank) {
+                throw new TypeError(`MATCH_END_FORMAL_RANK_MISMATCH:${row.id}`);
+              }
+            }
+            return deepFreeze(rows);
+          }
+          '''
+          data = data[:start] + new_validator + data[end:]
+
+          old_candidate = '''      const candidate = rows.map(row => ({
+                id: row.id,
+                rank: 1 + rows.reduce(
+                  (count, other) => count + (other.maxColumn > row.maxColumn ? 1 : 0),
+                  0
+                ),
+                maxColumn: row.maxColumn
+              }));'''
+          new_candidate = '''      const winnerSet = new Set(winnerIds);
+              const candidate = rows.map(row => ({
+                id: row.id,
+                rank: winnerSet.has(row.id)
+                  ? 1
+                  : 1 + winnerSet.size + rows.reduce(
+                    (count, other) => count + (!winnerSet.has(other.id) && other.maxColumn > row.maxColumn ? 1 : 0),
+                    0
+                  ),
+                maxColumn: row.maxColumn
+              }));'''
+          data = replace_once(data, old_candidate, new_candidate, 'derived ranking candidate')
+          adapter_path.write_text(data, encoding='utf-8')
+
+          test_path = Path('tests/battle-replay-live-adapter.test.mjs')
+          tests = test_path.read_text(encoding='utf-8')
+          co_start = "test('Free4P replay accepts simultaneous seven-card co-winners and competition-ranking loser ties', () => {"
+          co_end = "\ntest('Free4P replay competition ranking skips after a loser tie and is independent of input or id order', () => {"
+          if tests.count(co_start) != 1 or tests.count(co_end) != 1:
+              raise SystemExit('explicit co-winner test boundary mismatch')
+          a = tests.index(co_start)
+          b = tests.index(co_end, a)
+          section = tests[a:b]
+          section = replace_once(
+              section,
+              co_start,
+              "test('Free4P replay accepts at-or-above-seven atomic co-winners and competition-ranking loser ties', () => {",
+              'explicit co-winner title'
+          )
+          section = replace_once(
+              section,
+              "{ id: 'OMEGA', rank: 1, maxColumn: 7 },",
+              "{ id: 'OMEGA', rank: 1, maxColumn: 8 },",
+              'explicit over-seven winner'
+          )
+          tests = tests[:a] + section + tests[b:]
+
+          tests = replace_once(
+              tests,
+              "base.map(row => row.id === 'P4' ? { ...row, maxColumn: 8 } : row)",
+              "base.map(row => row.id === 'P4' ? { ...row, maxColumn: -1 } : row)",
+              'negative max-column fail-close regression'
+          )
+
+          fallback_marker = "test('Free4P omitted formalRanking stays backward-compatible when accepted progress is insufficient', () => {"
+          if tests.count(fallback_marker) != 1:
+              raise SystemExit('omitted-ranking fallback insertion anchor mismatch')
+          new_regression = '''test('Free4P omitted formalRanking preserves unequal-depth atomic co-winners from accepted maxLaneProgress', () => {
+            const input = resolution(1);
+            input.mode = '4p';
+            input.winnerIds = ['P1', 'P2'];
+            input.maxLaneProgress = [
+              { id: 'P1', before: 6, after: 8 },
+              { id: 'P2', before: 6, after: 7 },
+              { id: 'P3', before: 5, after: 5 },
+              { id: 'P4', before: 5, after: 5 }
+            ];
+            let session = createLiveReplaySession({ matchId: 'M-4P-DERIVE-COWIN-OVER7', versions });
+            session = appendAcceptedBattleResolution(session, input);
+            session = appendAcceptedMatchEnd(session, {
+              winnerIds: ['P1', 'P2'], round: 1, mode: '4p'
+            });
+            assert.deepEqual(readLiveReplay(session).events[1].publicData.formalRanking, [
+              { id: 'P1', rank: 1, maxColumn: 8 },
+              { id: 'P2', rank: 1, maxColumn: 7 },
+              { id: 'P3', rank: 3, maxColumn: 5 },
+              { id: 'P4', rank: 3, maxColumn: 5 }
+            ]);
+          });
+
+          '''
+          tests = tests.replace(fallback_marker, new_regression + fallback_marker, 1)
+          test_path.write_text(tests, encoding='utf-8')
+
+          build_path = Path('deploy/cloudflare/tests/build.test.mjs')
+          build = build_path.read_text(encoding='utf-8')
+          old_pin = "currentBlob: 'd91f0473679fc08c3009108a6b9caaec8507da94',"
+          if build.count(old_pin) != 1:
+              raise SystemExit(f'replay provenance pin count={build.count(old_pin)}, expected 1')
+          # Git blob SHA of the patched adapter, exactly as the package invariant consumes it.
+          import hashlib
+          adapter_bytes = adapter_path.read_bytes()
+          new_blob = hashlib.sha1(b'blob ' + str(len(adapter_bytes)).encode() + b'\\0' + adapter_bytes).hexdigest()
+          build = build.replace(old_pin, f"currentBlob: '{new_blob}',", 1)
+          build_path.write_text(build, encoding='utf-8')
+          print(f'new_adapter_blob={new_blob}')
+          PY
+
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' browser/battle-replay-live-adapter.mjs deploy/cloudflare/tests/build.test.mjs tests/battle-replay-live-adapter.test.mjs | sort)"
+          test "$actual" = "$expected"
+
+      - name: Run focused replay and package tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/battle-replay-live-adapter.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+
+      - name: Persist only exact3 product and provenance delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$EXACT_BASE"
+          git rm .github/workflows/free4p-r10-cowinner-bounded-patch.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add browser/battle-replay-live-adapter.mjs tests/battle-replay-live-adapter.test.mjs deploy/cloudflare/tests/build.test.mjs
+          git commit -m "FREE4P R10: preserve unequal-depth atomic co-winner ranking"
+          expected="$(printf '%s\n' browser/battle-replay-live-adapter.mjs deploy/cloudflare/tests/build.test.mjs tests/battle-replay-live-adapter.test.mjs | sort)"
+          actual="$(git diff --name-only origin/main...HEAD | sort)"
+          test "$actual" = "$expected"
+          git push origin HEAD:work/free4p-r10-cowinner-over7

@@ -1451,3 +1451,58 @@ test('R19 reaches Result from visible four-player Honey Hunt and returns Home', 
   testInfo.annotations.push({ type: 'visible-4p-honey-result-path', description: `submitted=${roundsSubmitted}, targetConfirms=${targetConfirms}, battleAdvances=${presentationAdvances}, abilityConfirms=${abilityConfirms}, result=${roundsText}` });
   runtime.assertClean(testInfo);
 });
+
+
+// UPDATE-MANIFEST-BASELINE-HOME-ONLY-REGRESSION R45
+test('update manifest baseline is session-local and pending banner is Home-only', async ({ page, browser }, testInfo) => {
+  const runtime=observeRuntimeErrors(page);
+  let build='r45-base';
+  await page.route('**/browser/gameroad-version.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({build_id:build})}));
+  await bootCurrentBrowser(page);
+  await page.waitForFunction(()=>!!window.GAMEROAD_PARTNER_COMMENT);
+  const banner=page.locator('#gameroadUpdateBanner');
+  await page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());
+  await expect(banner).toBeHidden();
+  await expect(banner).toHaveAttribute('aria-hidden','true');
+  await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending)).toBe(null);
+
+  build='r45-next';
+  await page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());
+  await expect(banner).toBeVisible();
+  await expect(banner).toHaveAttribute('aria-hidden','false');
+
+  const setupGo=visibleHomeControl(page,'setup');
+  await setupGo.click();
+  const setup=page.locator('section[data-screen="setup"]');
+  await expect(setup).toBeVisible();
+  await expect(banner).toBeHidden();
+  await expect(banner).toHaveAttribute('aria-hidden','true');
+  const honey=setup.locator('[data-content="honey_hunt"]');
+  await honey.click();
+  await expect(honey).toHaveClass(/on/);
+  await testInfo.attach('setup-pending-update-hidden.png',{body:await page.screenshot({fullPage:false}),contentType:'image/png'});
+
+  build='r45-next2';
+  await page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());
+  await expect(banner).toBeHidden();
+  await expect(banner).toHaveAttribute('aria-hidden','true');
+  await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending?.buildId||null)).toBe('r45-next2');
+
+  const back=setup.locator('[data-back]:visible').first();
+  await back.click();
+  await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+  await expect(banner).toBeVisible();
+  await expect(banner).toHaveAttribute('aria-hidden','false');
+
+  const fresh=await browser.newContext({viewport:testInfo.project.use.viewport});
+  const q=await fresh.newPage();
+  await q.route('**/browser/gameroad-version.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({build_id:build})}));
+  await q.goto(page.url(),{waitUntil:'domcontentloaded'});
+  await q.waitForFunction(()=>!!window.GAMEROAD_PARTNER_COMMENT);
+  await q.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());
+  await expect(q.locator('#gameroadUpdateBanner')).toBeHidden();
+  await expect(q.locator('#gameroadUpdateBanner')).toHaveAttribute('aria-hidden','true');
+  await expect.poll(()=>q.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending)).toBe(null);
+  await fresh.close();
+  runtime.assertClean(testInfo);
+});

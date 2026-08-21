@@ -1,9 +1,9 @@
 name: PLAYTEST R42 staged update banner repair
 
 on:
-  push:
+  pull_request:
     branches:
-      - work/playtest-r42-update-banner
+      - main
     paths:
       - .github/workflows/playtest-r42-update-diagnostic.yml
 

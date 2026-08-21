@@ -223,3 +223,5 @@ test('current release baseline stays silent and a later update remains Home-only
           git diff --check
           git commit -m "PLAYTEST R42: remove temporary repair executor"
           git push origin HEAD:work/playtest-r42-update-banner
+
+# R42 formal reacquire trigger PLAYTEST-R42-UPDHOME-CONT-20260821T2058-SOL-Q7M4N2K8V5PX

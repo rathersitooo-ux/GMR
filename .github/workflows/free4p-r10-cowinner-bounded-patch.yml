@@ -115,26 +115,18 @@ jobs:
           '''
           data = data[:start] + new_validator + data[end:]
 
-          old_candidate = '''      const candidate = rows.map(row => ({
-                id: row.id,
-                rank: 1 + rows.reduce(
-                  (count, other) => count + (other.maxColumn > row.maxColumn ? 1 : 0),
-                  0
-                ),
-                maxColumn: row.maxColumn
-              }));'''
-          new_candidate = '''      const winnerSet = new Set(winnerIds);
-              const candidate = rows.map(row => ({
-                id: row.id,
-                rank: winnerSet.has(row.id)
-                  ? 1
-                  : 1 + winnerSet.size + rows.reduce(
-                    (count, other) => count + (!winnerSet.has(other.id) && other.maxColumn > row.maxColumn ? 1 : 0),
-                    0
-                  ),
-                maxColumn: row.maxColumn
-              }));'''
-          data = replace_once(data, old_candidate, new_candidate, 'derived ranking candidate')
+          data = replace_once(
+              data,
+              "      const candidate = rows.map(row => ({",
+              "      const winnerSet = new Set(winnerIds);\n      const candidate = rows.map(row => ({",
+              'derived ranking winner-set anchor'
+          )
+          data = replace_once(
+              data,
+              "        rank: 1 + rows.reduce(\n          (count, other) => count + (other.maxColumn > row.maxColumn ? 1 : 0),\n          0\n        ),",
+              "        rank: winnerSet.has(row.id)\n          ? 1\n          : 1 + winnerSet.size + rows.reduce(\n            (count, other) => count + (!winnerSet.has(other.id) && other.maxColumn > row.maxColumn ? 1 : 0),\n            0\n          ),",
+              'derived ranking rank-expression anchor'
+          )
           adapter_path.write_text(data, encoding='utf-8')
 
           test_path = Path('tests/battle-replay-live-adapter.test.mjs')

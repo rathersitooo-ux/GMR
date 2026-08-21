@@ -127,3 +127,152 @@ export function projectUIFeedback(state) {
 }
 
 export const UI_STATE_FEEDBACK_SCHEMA = SCHEMA;
+
+export const TRANSITION_PHASES = Object.freeze({
+  IDLE:'IDLE',
+  PREPARE:'PREPARE',
+  EXIT:'EXIT',
+  SWAP:'SWAP',
+  ENTER:'ENTER',
+  SETTLE:'SETTLE',
+});
+
+function transitionResult(status, active, extra={}) {
+  return Object.freeze({
+    status,
+    revision:active.revision,
+    from:active.from,
+    to:active.to,
+    swapped:active.swapped,
+    ...extra,
+  });
+}
+
+function transitionFailure(error, phase) {
+  return Object.freeze({
+    phase,
+    errorName:error instanceof Error ? error.name : 'Error',
+    message:error instanceof Error ? error.message : String(error),
+  });
+}
+
+function validateTransitionRequest(request) {
+  if (!request || typeof request !== 'object') throw new Error('transition request is required');
+  const to=nonEmpty(request.to,'transition.to');
+  const from=request.from == null ? null : nonEmpty(request.from,'transition.from');
+  if (typeof request.applySwap !== 'function') throw new Error('transition.applySwap must be a function');
+  return Object.freeze({
+    from,
+    to,
+    applySwap:request.applySwap,
+    reducedMotion:Boolean(request.reducedMotion),
+    lowPerf:Boolean(request.lowPerf),
+    reason:request.reason == null ? 'navigation' : nonEmpty(request.reason,'transition.reason'),
+  });
+}
+
+export function createTransitionDirector({runPhase=async()=>{}}={}) {
+  if (typeof runPhase !== 'function') throw new Error('runPhase must be a function');
+
+  let revision=0;
+  let phase=TRANSITION_PHASES.IDLE;
+  let active=null;
+
+  const current=(candidate)=>active !== null && active === candidate && revision === candidate.revision && !candidate.controller.signal.aborted;
+
+  const snapshot=()=>Object.freeze({
+    phase,
+    revision,
+    activeRevision:active?.revision ?? null,
+    from:active?.from ?? null,
+    to:active?.to ?? null,
+    swapped:active?.swapped ?? false,
+  });
+
+  const setPhase=(candidate,nextPhase)=>{
+    if (!current(candidate)) return false;
+    phase=nextPhase;
+    return true;
+  };
+
+  const phaseContext=(candidate,nextPhase)=>Object.freeze({
+    phase:nextPhase,
+    revision:candidate.revision,
+    from:candidate.from,
+    to:candidate.to,
+    reason:candidate.reason,
+    reducedMotion:candidate.reducedMotion,
+    lowPerf:candidate.lowPerf,
+    signal:candidate.controller.signal,
+  });
+
+  const runDriver=async(candidate,nextPhase)=>{
+    if (!setPhase(candidate,nextPhase)) return false;
+    await runPhase(nextPhase,phaseContext(candidate,nextPhase));
+    return current(candidate);
+  };
+
+  const supersedeActive=({bumpRevision=false}={})=>{
+    if (!active) return;
+    const stale=active;
+    active=null;
+    if (bumpRevision) revision+=1;
+    phase=TRANSITION_PHASES.IDLE;
+    stale.controller.abort();
+  };
+
+  const cancel=()=>{
+    if (!active) return false;
+    supersedeActive({bumpRevision:true});
+    return true;
+  };
+
+  const start=async(request)=>{
+    const input=validateTransitionRequest(request);
+    if (active) supersedeActive();
+    const candidate={
+      revision:revision+1,
+      from:input.from,
+      to:input.to,
+      applySwap:input.applySwap,
+      reducedMotion:input.reducedMotion,
+      lowPerf:input.lowPerf,
+      reason:input.reason,
+      controller:new AbortController(),
+      swapped:false,
+    };
+    revision=candidate.revision;
+    active=candidate;
+
+    try {
+      if (!await runDriver(candidate,TRANSITION_PHASES.PREPARE)) return transitionResult('superseded',candidate);
+      if (!await runDriver(candidate,TRANSITION_PHASES.EXIT)) return transitionResult('superseded',candidate);
+      if (!setPhase(candidate,TRANSITION_PHASES.SWAP)) return transitionResult('superseded',candidate);
+      const swapReturn=candidate.applySwap(phaseContext(candidate,TRANSITION_PHASES.SWAP));
+      if (swapReturn && typeof swapReturn.then === 'function') throw new Error('transition.applySwap must be synchronous');
+      candidate.swapped=true;
+      if (!current(candidate)) return transitionResult('superseded',candidate);
+      if (!await runDriver(candidate,TRANSITION_PHASES.SWAP)) return transitionResult('superseded',candidate);
+      if (!await runDriver(candidate,TRANSITION_PHASES.ENTER)) return transitionResult('superseded',candidate);
+      if (!await runDriver(candidate,TRANSITION_PHASES.SETTLE)) return transitionResult('superseded',candidate);
+      if (!current(candidate)) return transitionResult('superseded',candidate);
+      active=null;
+      phase=TRANSITION_PHASES.IDLE;
+      return transitionResult('completed',candidate);
+    } catch (error) {
+      if (!current(candidate) || candidate.controller.signal.aborted) {
+        return transitionResult('superseded',candidate);
+      }
+      const failedPhase=phase;
+      active=null;
+      phase=TRANSITION_PHASES.IDLE;
+      return transitionResult('failed',candidate,transitionFailure(error,failedPhase));
+    }
+  };
+
+  return Object.freeze({
+    start,
+    cancel,
+    getState:snapshot,
+  });
+}

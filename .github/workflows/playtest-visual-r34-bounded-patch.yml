@@ -1,4 +1,4 @@
-name: PLAYTEST DECK transient selection isolated eval
+name: PLAYTEST R42 update banner source diagnostic
 
 on:
   push:
@@ -16,140 +16,65 @@ env:
   EXACT_TEST_BLOB: 5386451be827ac75554f8f99c7d0d4586a5a07c2
 
 jobs:
-  isolated-deck-selection-eval:
+  extract-current-anchors:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           ref: work/visual-r34-result-update-banner
           fetch-depth: 0
-      - name: Verify exact current product and apply candidate only in runner
+      - name: Verify exact current product and extract bounded source contexts
         shell: bash
         run: |
           set -euo pipefail
           git fetch --no-tags origin main
           test "$(git rev-parse origin/main)" = "$EXACT_BASE"
+          git checkout origin/main -- browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
           test "$(git hash-object browser/GAMEROAD.html)" = "$EXACT_HTML_BLOB"
           test "$(git hash-object tests/browser-full-interaction.spec.mjs)" = "$EXACT_TEST_BLOB"
           python3 - <<'PY'
           from pathlib import Path
-          html = Path('browser/GAMEROAD.html')
-          data = html.read_text(encoding='utf-8-sig')
-          replacements = [
-            ('.screen.cards .collectionGrid .cardFace.pick{outline:3px solid #f6d47f;outline-offset:-3px}', ''),
-            ('.screen.cards .cardFace.recentAdd{animation:r4Recent 1.1s ease 1}@keyframes r4Recent{0%,40%{box-shadow:0 0 0 4px #f3cf70,0 10px 26px rgba(0,0,0,.42)}100%{}}', '.screen.cards .cardFace.recentAdd{animation:r4Recent 1.1s ease 1}@keyframes r4Recent{0%,40%{box-shadow:0 0 0 4px #6fe39a,0 10px 26px rgba(0,0,0,.42)}100%{}}'),
-            ("let deckUiView='collection',recentDeckCardId=null,r4SuitFilter='ALL';", "let deckUiView='collection',recentDeckCardId=null,recentDeckCardTimer=null,r4SuitFilter='ALL';"),
-            ("e.className='slot live cardFace'+(id===recentDeckCardId?' recentAdd':'');", "e.className='slot live cardFace';"),
-            ("e.onclick=()=>{removeDeckCard(slot,i);recentDeckCardId=null;renderCards()}", "e.onclick=()=>{clearRecentDeckFeedback();removeDeckCard(slot,i);renderCards()}"),
-            ("e.onclick=()=>{state.selectedCardId=c.id;r4SetInspector(true);renderCards()}", "e.onclick=()=>{clearRecentDeckFeedback();state.selectedCardId=c.id;r4SetInspector(true);renderCards()}"),
-            ('''function focusRecentDeckCard(){if(!recentDeckCardId)return;requestAnimationFrame(()=>{const e=$(`#deckSlots [data-id="${recentDeckCardId}"]`)||$(`#exDeckSlots [data-id="${recentDeckCardId}"]`);if(e)e.scrollIntoView({block:'nearest',behavior:'instant'})})}''', '''function clearRecentDeckFeedback(){clearTimeout(recentDeckCardTimer);recentDeckCardTimer=null;recentDeckCardId=null;$$('.screen.cards .deckBoard .cardFace.recentAdd').forEach(e=>e.classList.remove('recentAdd'))}\nfunction showRecentDeckFeedback(id){clearRecentDeckFeedback();recentDeckCardId=id;requestAnimationFrame(()=>{const e=$(`#deckSlots [data-id="${id}"]`)||$(`#exDeckSlots [data-id="${id}"]`);if(!e){recentDeckCardId=null;return}e.classList.add('recentAdd');e.scrollIntoView({block:'nearest',behavior:'instant'});recentDeckCardTimer=setTimeout(clearRecentDeckFeedback,1100)})}'''),
-            ("$('#addSelectedCard').addEventListener('click',()=>{const id=state.selectedCardId,r=addDeckCard(id);if(!r.ok){toast(r.error);return renderCards()}recentDeckCardId=id;r4SetInspector(false);renderCards();focusRecentDeckCard()});", "$('#addSelectedCard').addEventListener('click',()=>{const id=state.selectedCardId,r=addDeckCard(id);if(!r.ok){toast(r.error);return renderCards()}r4SetInspector(false);renderCards();showRecentDeckFeedback(id)});"),
-            ("$('#saveDeck').addEventListener('click',()=>{recentDeckCardId=null;commitDeck()});$('#restoreDeck').addEventListener('click',()=>{recentDeckCardId=null;restoreDeck()});$('#defaultDeck').addEventListener('click',()=>{recentDeckCardId=null;defaultDeckDraft()});", "$('#saveDeck').addEventListener('click',()=>{clearRecentDeckFeedback();commitDeck()});$('#restoreDeck').addEventListener('click',()=>{clearRecentDeckFeedback();restoreDeck()});$('#defaultDeck').addEventListener('click',()=>{clearRecentDeckFeedback();defaultDeckDraft()});"),
+          data = Path('browser/GAMEROAD.html').read_text(encoding='utf-8-sig')
+          tokens = [
+              'async checkUpdate(){',
+              'renderUpdateBanner(){',
+              'renderUpdateBanner()',
+              "state.screen='home'",
+              'state.screen="home"',
+              'state.screen=',
+              'data-screen="home"',
+              'function showScreen',
+              'showScreen(',
+              'function show(',
+              'show(screen',
+              "screen==='home'",
+              "screen === 'home'",
           ]
-          for old,new in replacements:
-              n=data.count(old)
-              if n != 1:
-                  raise SystemExit(f'HTML anchor count={n}, expected 1: {old[:120]!r}')
-              data=data.replace(old,new,1)
-          html.write_text(data,encoding='utf-8')
-
-          spec=Path('tests/browser-full-interaction.spec.mjs')
-          s=spec.read_text(encoding='utf-8')
-          marker='// DECK-TRANSIENT-SELECTION-REGRESSION R1'
-          if marker in s:
-              raise SystemExit('deck transient regression marker already exists')
-          s += r'''
-
-// DECK-TRANSIENT-SELECTION-REGRESSION R1
-test('Deck Main add feedback is transient and unrelated card detail clicks never replay selection framing', async ({ page }, testInfo) => {
-  const runtime = observeRuntimeErrors(page);
-  await bootCurrentBrowser(page);
-  const cards = await enterCardsFromHome(page);
-
-  const trayToggle = cards.locator('#r4DeckTrayToggle:visible');
-  if ((await trayToggle.count()) > 0) {
-    const deckCardVisible = cards.locator('#deckSlots button.slot.live.cardFace[data-id]:visible');
-    if ((await deckCardVisible.count()) === 0) await trayToggle.click();
-  }
-
-  const existing = cards.locator('#deckSlots button.slot.live.cardFace[data-id]:visible').first();
-  await expect(existing, 'a visible Main card can be removed before the add regression').toBeVisible();
-  const mainId = await existing.getAttribute('data-id');
-  expect(mainId).toBeTruthy();
-  await existing.click();
-
-  const source = cards.locator(`#collectionGrid button.slot.live.cardFace[data-id="${mainId}"]:visible`).first();
-  await expect(source, 'the removed Main card returns to the visible collection').toBeVisible();
-  await source.click();
-  await expect(cards.locator('.cardPreview')).toBeVisible();
-  const add = cards.locator('#addSelectedCard');
-  await expect(add).toBeVisible();
-  await expect(add).toBeEnabled();
-  await expect(add).toContainText('メインへ追加');
-  await add.click();
-
-  await expect(cards).toHaveAttribute('data-inspector', 'closed');
-  const added = cards.locator(`#deckSlots button.slot.live.cardFace[data-id="${mainId}"]`).first();
-  await expect(added, 'the successful Main add emits one transient feedback class').toHaveClass(/recentAdd/);
-  const semanticPick = cards.locator(`#collectionGrid button.slot.live.cardFace.pick[data-id="${mainId}"]`).first();
-  await expect(semanticPick, 'detail/vote target may remain semantic without becoming a persistent visual frame').toHaveCount(1);
-  const initialOutline = await semanticPick.evaluate((node) => {
-    const style = getComputedStyle(node);
-    return { width: style.outlineWidth, style: style.outlineStyle };
-  });
-  expect(Number.parseFloat(initialOutline.width) || 0, `semantic pick must not draw the old persistent outline: ${JSON.stringify(initialOutline)}`).toBe(0);
-
-  await page.waitForTimeout(1_250);
-  await expect(added, 'successful-add feedback clears itself instead of leaving sticky state').not.toHaveClass(/recentAdd/);
-
-  const unrelated = cards.locator(`#collectionGrid button.slot.live.cardFace[data-id]:visible:not([data-id="${mainId}"])`).first();
-  await expect(unrelated).toBeVisible();
-  const unrelatedId = await unrelated.getAttribute('data-id');
-  expect(unrelatedId).toBeTruthy();
-  await unrelated.click();
-  await expect(cards.locator('.cardPreview')).toBeVisible();
-  const unrelatedPick = cards.locator(`#collectionGrid button.slot.live.cardFace.pick[data-id="${unrelatedId}"]`).first();
-  await expect(unrelatedPick, 'the newly opened detail target remains semantic only').toHaveCount(1);
-  const unrelatedOutline = await unrelatedPick.evaluate((node) => {
-    const style = getComputedStyle(node);
-    return { width: style.outlineWidth, style: style.outlineStyle };
-  });
-  expect(Number.parseFloat(unrelatedOutline.width) || 0, `unrelated pointer click must not create a persistent selection frame: ${JSON.stringify(unrelatedOutline)}`).toBe(0);
-  await expect(added, 'an unrelated card interaction must not replay the prior successful-add frame').not.toHaveClass(/recentAdd/);
-  await attachStateScreenshot(page, testInfo, 'deck-transient-add-feedback-cleared');
-  runtime.assertClean(testInfo);
-});
-'''
-          spec.write_text(s,encoding='utf-8')
+          out=[]
+          seen=set()
+          for token in tokens:
+              start=0
+              hit=0
+              while True:
+                  i=data.find(token,start)
+                  if i < 0: break
+                  key=(max(0,i-1200),min(len(data),i+2200))
+                  if key not in seen:
+                      seen.add(key)
+                      hit+=1
+                      out.append(f'===== TOKEN {token!r} HIT {hit} @ {i} =====\n')
+                      out.append(data[key[0]:key[1]])
+                      out.append('\n\n')
+                  start=i+len(token)
+                  if hit >= 8: break
+          if not any('async checkUpdate(){' in x for x in out):
+              raise SystemExit('checkUpdate anchor not found')
+          Path('.tmp-update-banner-source.txt').write_text(''.join(out),encoding='utf-8')
           PY
-          git diff --check
-          test "$(git diff --name-only)" = $'browser/GAMEROAD.html\ntests/browser-full-interaction.spec.mjs'
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - run: npm install --no-save --no-package-lock @playwright/test@1.62.0
-      - run: npx playwright install --with-deps chromium
-      - name: Run isolated current regression across formal viewports without persisting product bytes
-        shell: bash
-        run: |
-          set +e
-          npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 --grep "Deck Main add feedback is transient and unrelated card detail clicks never replay selection framing" --project=desktop-1280x720 --project=phone-390x844 --project=short-landscape-667x375 2>&1 | tee /tmp/deck-eval.log
-          status=${PIPESTATUS[0]}
-          set -e
           git checkout -- browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
-          {
-            echo "candidate_status=$status"
-            echo "base=$EXACT_BASE"
-            echo "html_blob=$EXACT_HTML_BLOB"
-            echo "test_blob=$EXACT_TEST_BLOB"
-            echo "product_persisted=0"
-            echo "--- tail ---"
-            tail -n 120 /tmp/deck-eval.log
-          } > .tmp-deck-selection-eval.txt
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add .tmp-deck-selection-eval.txt
-          git commit -m "PLAYTEST: record isolated deck selection eval"
+          git add .tmp-update-banner-source.txt
+          git commit -m "PLAYTEST R42: record current update banner anchors"
           git push origin HEAD:work/visual-r34-result-update-banner
-          exit "$status"

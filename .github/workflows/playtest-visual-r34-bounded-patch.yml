@@ -1,4 +1,5 @@
 name: PLAYTEST VISUAL R34 bounded Result and update repair
+# R38 retrigger 2026-08-21T14:34+09:00 after exact current-head/lease readback
 
 on:
   push:

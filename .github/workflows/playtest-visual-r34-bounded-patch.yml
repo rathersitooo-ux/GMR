@@ -16,7 +16,7 @@ permissions:
   contents: write
 
 env:
-  EXACT_BASE: 42123f66e722f841a56f2172441f43120df907a9
+  EXACT_BASE: aa77a5799da2de6bea9d28640df46e4328c2046e
   EXACT_HTML_BLOB: 477325641fa328ecd55cdc15a11a5d0ea90759f1
   EXACT_TEST_BLOB: 5386451be827ac75554f8f99c7d0d4586a5a07c2
 
@@ -60,7 +60,7 @@ jobs:
           spec = Path('tests/browser-full-interaction.spec.mjs')
           s = spec.read_text(encoding='utf-8')
           old_result = """  await expect(result.locator('#resultRanking .rankLine')).toHaveCount(4);\n  const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';\n"""
-          new_result = """  await expect(result.locator('#resultRanking .rankLine')).toHaveCount(4);\n  const resultLayout = await page.evaluate(() => {\n    const host = document.querySelector('#resultRanking');\n    const rows = [...(host?.querySelectorAll('.rankLine') ?? [])];\n    const buttons = [...document.querySelectorAll('.screen.result .resultBtns .btn')].filter((node) => {\n      const style = getComputedStyle(node);\n      return style.display !== 'none' && style.visibility !== 'hidden';\n    });\n    const rect = (node) => { const r = node.getBoundingClientRect(); return { left:r.left, right:r.right, top:r.top, bottom:r.bottom, width:r.width, height:r.height, id:node.id || node.textContent?.trim() || '' }; };\n    const hostRect = host ? rect(host) : null;\n    const rowRects = rows.map(rect);\n    const buttonRects = buttons.map(rect);\n    const overlaps = [];\n    for (const row of rowRects) for (const button of buttonRects) {\n      const hit = row.left < button.right - 1 && row.right > button.left + 1 && row.top < button.bottom - 1 && row.bottom > button.top + 1;\n      if (hit) overlaps.push({ row, button });\n    }\n    const allRowsInsideHost = !!hostRect && rowRects.every((row) => row.top >= hostRect.top - 1 && row.bottom <= hostRect.bottom + 1 && row.top >= 0 && row.bottom <= innerHeight);\n    const rematch = buttonRects.find((button) => button.id === 'rematch');\n    const aux = buttonRects.filter((button) => button.id !== 'rematch');\n    return { hostRect, rowRects, buttonRects, overlaps, allRowsInsideHost, rematchWidth:rematch?.width ?? 0, auxMaxWidth:Math.max(0, ...aux.map((button) => button.width)) };\n  });\n  expect(resultLayout.buttonRects, 'Result exposes Home, Partner Log and Rematch as visible actions').toHaveLength(3);\n  expect(resultLayout.allRowsInsideHost, `all four Result ranking rows stay fully readable inside their host: ${JSON.stringify(resultLayout)}`).toBeTruthy();\n  expect(resultLayout.overlaps, `Result actions must not cover ranking rows: ${JSON.stringify(resultLayout)}`).toEqual([]);\n  expect(resultLayout.buttonRects.every((button) => button.height >= 44), `Result action touch heights remain >=44px: ${JSON.stringify(resultLayout.buttonRects)}`).toBeTruthy();\n  expect(resultLayout.rematchWidth, 'Rematch remains visually primary by width').toBeGreaterThan(resultLayout.auxMaxWidth);\n  testInfo.annotations.push({ type: 'r34-result-ranking-action-non-overlap', description: JSON.stringify(resultLayout) });\n  const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';\n"""
+          new_result = """  await expect(result.locator('#resultRanking .rankLine')).toHaveCount(4);\n  const ranking = result.locator('#resultRanking');\n  const rankRows = ranking.locator('.rankLine');\n  const actionLayout = await page.evaluate(() => {\n    const host = document.querySelector('#resultRanking');\n    const buttons = [...document.querySelectorAll('.screen.result .resultBtns .btn')].filter((node) => {\n      const style = getComputedStyle(node);\n      return style.display !== 'none' && style.visibility !== 'hidden';\n    });\n    const rect = (node) => { const r = node.getBoundingClientRect(); return { left:r.left, right:r.right, top:r.top, bottom:r.bottom, width:r.width, height:r.height, id:node.id || node.textContent?.trim() || '' }; };\n    const hostRect = host ? rect(host) : null;\n    const buttonRects = buttons.map(rect);\n    const hostButtonOverlaps = !hostRect ? [] : buttonRects.filter((button) => hostRect.left < button.right - 1 && hostRect.right > button.left + 1 && hostRect.top < button.bottom - 1 && hostRect.bottom > button.top + 1);\n    const rematch = buttonRects.find((button) => button.id === 'rematch');\n    const aux = buttonRects.filter((button) => button.id !== 'rematch');\n    return { hostRect, buttonRects, hostButtonOverlaps, rematchWidth:rematch?.width ?? 0, auxMaxWidth:Math.max(0, ...aux.map((button) => button.width)) };\n  });\n  expect(actionLayout.buttonRects, 'Result exposes Home, Partner Log and Rematch as visible actions').toHaveLength(3);\n  expect(actionLayout.hostRect?.height ?? 0, `Result ranking keeps at least one complete-row viewport: ${JSON.stringify(actionLayout)}`).toBeGreaterThanOrEqual(36);\n  expect(actionLayout.hostButtonOverlaps, `Result actions must not cover the ranking viewport: ${JSON.stringify(actionLayout)}`).toEqual([]);\n  expect(actionLayout.buttonRects.every((button) => button.height >= 44), `Result action touch heights remain >=44px: ${JSON.stringify(actionLayout.buttonRects)}`).toBeTruthy();\n  expect(actionLayout.rematchWidth, 'Rematch remains visually primary by width').toBeGreaterThan(actionLayout.auxMaxWidth);\n  const readableRows = [];\n  for (let i = 0; i < 4; i += 1) {\n    const row = rankRows.nth(i);\n    await row.scrollIntoViewIfNeeded();\n    const readable = await page.evaluate((index) => {\n      const host = document.querySelector('#resultRanking');\n      const row = host?.querySelectorAll('.rankLine')?.[index];\n      const buttons = [...document.querySelectorAll('.screen.result .resultBtns .btn')].filter((node) => {\n        const style = getComputedStyle(node);\n        return style.display !== 'none' && style.visibility !== 'hidden';\n      });\n      if (!host || !row) return { fullRowInsideHost:false, buttonOverlaps:['missing'] };\n      const h = host.getBoundingClientRect(), r = row.getBoundingClientRect();\n      const buttonOverlaps = buttons.filter((button) => {\n        const b = button.getBoundingClientRect();\n        return r.left < b.right - 1 && r.right > b.left + 1 && r.top < b.bottom - 1 && r.bottom > b.top + 1;\n      }).map((button) => button.id || button.textContent?.trim() || 'button');\n      return { fullRowInsideHost:r.top >= h.top - 1 && r.bottom <= h.bottom + 1 && r.top >= 0 && r.bottom <= innerHeight, buttonOverlaps, host:{top:h.top,bottom:h.bottom,height:h.height}, row:{top:r.top,bottom:r.bottom,height:r.height} };\n    }, i);\n    readableRows.push(readable);\n    expect(readable.fullRowInsideHost, `ranking row ${i + 1} must become fully readable inside the Result scroller: ${JSON.stringify(readable)}`).toBeTruthy();\n    expect(readable.buttonOverlaps, `ranking row ${i + 1} must not be covered by Result actions: ${JSON.stringify(readable)}`).toEqual([]);\n  }\n  testInfo.annotations.push({ type: 'r34-result-ranking-action-non-overlap', description: JSON.stringify({ actionLayout, readableRows }) });\n  const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';\n"""
           if s.count(old_result) != 1:
               raise SystemExit(f'R19 Result assertion anchor count={s.count(old_result)}, expected 1')
           s = s.replace(old_result, new_result, 1)
@@ -68,7 +68,44 @@ jobs:
           marker = "// PLAYTEST VISUAL R34 current-manifest baseline regression"
           if marker in s:
               raise SystemExit('R34 baseline regression marker already exists unexpectedly')
-          s += r'''\n\n// PLAYTEST VISUAL R34 current-manifest baseline regression\ntest('R34 first valid version manifest establishes the loaded-session baseline without blocking current controls', async ({ page }, testInfo) => {\n  const runtime = observeRuntimeErrors(page);\n  let manifestRequests = 0;\n  const firstObservedBuild = '1111111111111111111111111111111111111111';\n  await page.route('**/gameroad-version.json*', async (route) => {\n    manifestRequests += 1;\n    await route.fulfill({\n      status: 200,\n      contentType: 'application/json',\n      headers: { 'cache-control': 'no-store' },\n      body: JSON.stringify({ schema:'GAMEROAD_BROWSER_VERSION_V1', channel:'current', build_id:firstObservedBuild, published_at:'2026-08-21T04:00:00Z', reload_policy:'never-force-during-match' }),\n    });\n  });\n\n  await bootCurrentBrowser(page);\n  await expect.poll(() => manifestRequests, { message: 'startup performs the current version-manifest check' }).toBeGreaterThan(0);\n  const banner = page.locator('#gameroadUpdateBanner');\n  await expect(banner, 'the first valid manifest describes the release loaded for this session and must not be announced as newer').not.toHaveClass(/on/);\n  const update = await page.evaluate(() => window.GAMEROAD_PARTNER_COMMENT?.snapshot?.().update ?? null);\n  expect(update).not.toBeNull();\n  expect(update.pending).toBeNull();\n\n  const setup = visibleOperationGo(page, 'setup');\n  await expect(setup, 'current-build update state does not block the visible Setup control').toBeVisible();\n  await setup.click();\n  await expect(page.locator('section[data-screen="setup"]')).toBeVisible();\n  await expect(banner).not.toHaveClass(/on/);\n  await attachStateScreenshot(page, testInfo, 'r34-current-manifest-no-false-update-banner');\n  runtime.assertClean(testInfo);\n});\n'''
+          s += r'''
+
+// PLAYTEST VISUAL R34 current-manifest baseline regression
+test('R34 first valid version manifest establishes the loaded-session baseline without blocking current controls', async ({ page }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  let manifestRequests = 0;
+  const firstObservedBuild = '1111111111111111111111111111111111111111';
+  await page.route('**/gameroad-version.json*', async (route) => {
+    manifestRequests += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      headers: { 'cache-control': 'no-store' },
+      body: JSON.stringify({ schema:'GAMEROAD_BROWSER_VERSION_V1', channel:'current', build_id:firstObservedBuild, published_at:'2026-08-21T04:00:00Z', reload_policy:'never-force-during-match' }),
+    });
+  });
+
+  await bootCurrentBrowser(page);
+  await expect.poll(() => manifestRequests, { message: 'startup performs the current version-manifest check' }).toBeGreaterThan(0);
+  const banner = page.locator('#gameroadUpdateBanner');
+  await expect(banner, 'the first valid manifest describes the release loaded for this session and must not be announced as newer').not.toHaveClass(/on/);
+  const update = await page.evaluate(() => window.GAMEROAD_PARTNER_COMMENT?.snapshot?.().update ?? null);
+  expect(update).not.toBeNull();
+  expect(update.pending).toBeNull();
+
+  const setup = visibleOperationGo(page, 'setup');
+  await expect(setup, 'current-build update state does not block the visible Setup control').toBeVisible();
+  await setup.click();
+  const setupScreen = page.locator('section[data-screen="setup"]');
+  await expect(setupScreen).toBeVisible();
+  const honey = setupScreen.locator('[data-content="honey_hunt"]');
+  await expect(honey).toBeVisible();
+  await honey.click();
+  await expect(banner).not.toHaveClass(/on/);
+  await attachStateScreenshot(page, testInfo, 'r34-current-manifest-no-false-update-banner');
+  runtime.assertClean(testInfo);
+});
+'''
           spec.write_text(s, encoding='utf-8')
           PY
           git diff --check
@@ -103,7 +140,7 @@ jobs:
           set -euo pipefail
           git rm .github/workflows/playtest-visual-r34-bounded-patch.yml
           git diff --check
-          test "$(git diff --name-only)" = $'.github/workflows/playtest-visual-r34-bounded-patch.yml\nbrowser/GAMEROAD.html\ntests/browser-full-interaction.spec.mjs'
+          test "$(git diff --name-only HEAD)" = $'.github/workflows/playtest-visual-r34-bounded-patch.yml\nbrowser/GAMEROAD.html\ntests/browser-full-interaction.spec.mjs'
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs

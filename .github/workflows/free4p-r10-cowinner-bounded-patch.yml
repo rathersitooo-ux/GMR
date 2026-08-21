@@ -1,3 +1,4 @@
+# R11 recovery trigger 2026-08-21T21:15+09:00
 name: FREE4P R10 bounded atomic co-winner patch
 
 on:
@@ -195,7 +196,7 @@ jobs:
           # Git blob SHA of the patched adapter, exactly as the package invariant consumes it.
           import hashlib
           adapter_bytes = adapter_path.read_bytes()
-          new_blob = hashlib.sha1(b'blob ' + str(len(adapter_bytes)).encode() + b'\\0' + adapter_bytes).hexdigest()
+          new_blob = hashlib.sha1(b'blob ' + str(len(adapter_bytes)).encode() + b'\0' + adapter_bytes).hexdigest()
           build = build.replace(old_pin, f"currentBlob: '{new_blob}',", 1)
           build_path.write_text(build, encoding='utf-8')
           print(f'new_adapter_blob={new_blob}')

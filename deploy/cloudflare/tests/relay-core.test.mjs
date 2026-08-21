@@ -440,11 +440,7 @@ test('live public Pages four-player presence is compatible with HATE disconnect 
     const droppedGuestId = guestIds[0];
     const droppedSocket = guestPeers[0].ws;
     const droppedState = presenceStates.get(droppedGuestId);
-    const closed = waitForClose(droppedSocket, 'four-player dropped guest');
-    droppedSocket.close(4001, 'hate presence acceptance drop');
-    await closed;
-
-    const disconnectPresence = await hostPeer.inbox.waitFor(
+    const disconnectPresencePromise = hostPeer.inbox.waitFor(
       (value) => value?.wire === WS_WIRE
         && value?.payload?.type === TRANSPORT_PRESENCE_TYPE
         && value.payload.clientId === droppedGuestId
@@ -452,6 +448,8 @@ test('live public Pages four-player presence is compatible with HATE disconnect 
         && value.payload.revision > droppedState.revision,
       'authoritative disconnect presence',
     );
+    droppedSocket.close(4001, 'hate presence acceptance drop');
+    const disconnectPresence = await disconnectPresencePromise;
     assert.equal(disconnectPresence.payload.sessionId, droppedState.sessionId);
     const disconnected = applyPresence(droppedState, disconnectPresence.payload);
     assert.equal(disconnected.ok, true);

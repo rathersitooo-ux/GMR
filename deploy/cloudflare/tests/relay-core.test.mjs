@@ -10,6 +10,11 @@ import {
   makeTransportPresenceFrame,
   routeFrame,
 } from '../relay/src/relay-core.mjs';
+import {
+  applyHatePeerPresenceEvent,
+  createHatePeerPresenceState,
+  projectHateHumanWaitSourceEligibility,
+} from '../../../browser/hate-peer-presence-core.mjs';
 
 const channel = 'gameroad.friend.r2.ABCDEFG';
 const host = { channel, code: 'ABCDEFG', role: 'host', clientId: 'host-1', authToken: '' };
@@ -348,6 +353,142 @@ test('live public Pages friend-room WebSocket routes and reconnects', { skip: !p
     assert.equal(afterReconnect.payload.authToken, authToken);
   } finally {
     for (const socket of [reconnectedSocket, guestSocket, hostSocket]) {
+      if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+        try { socket.close(1000, 'probe complete'); } catch {}
+      }
+    }
+  }
+});
+
+test('live public Pages four-player presence is compatible with HATE disconnect and rejoin contract', { skip: !process.env.GAMEROAD_PUBLIC_WS_PROBE_URL }, async () => {
+  const pagesUrl = process.env.GAMEROAD_PUBLIC_WS_PROBE_URL;
+  const runIdentity = `${process.env.GITHUB_RUN_ID || 'probe'}:${process.env.GITHUB_RUN_ATTEMPT || '1'}:${process.env.GITHUB_SHA || ''}:hate-4p`;
+  const code = probeRoomCode(runIdentity);
+  const publicChannel = `gameroad.friend.r2.${code}`;
+  const suffix = String(process.env.GITHUB_RUN_ID || Date.now());
+  const hostId = `hate-host-${suffix}`;
+  const guestIds = [1, 2, 3].map((index) => `hate-g${index}-${suffix}`);
+  const authTokens = guestIds.map((guestId, index) => `hate-auth-${index + 1}-${guestId}-${code}`);
+  const baseHandshake = { channel: publicChannel };
+  const guestPeers = [];
+  const presenceStates = new Map();
+  let hostSocket;
+  let reconnectedSocket;
+
+  const applyPresence = (state, payload) => applyHatePeerPresenceEvent(state, {
+    kind: payload.kind,
+    peerId: payload.clientId,
+    sessionId: payload.sessionId,
+    revision: payload.revision,
+  });
+
+  try {
+    const hostPeer = await openProbeSocket(
+      pagesUrl,
+      { ...baseHandshake, role: 'host', clientId: hostId, authToken: '' },
+      'four-player HATE host',
+    );
+    hostSocket = hostPeer.ws;
+
+    for (let index = 0; index < guestIds.length; index += 1) {
+      const guestId = guestIds[index];
+      const authToken = authTokens[index];
+      const peer = await openProbeSocket(
+        pagesUrl,
+        { ...baseHandshake, role: 'guest', clientId: guestId, authToken: '' },
+        `four-player guest ${index + 1}`,
+      );
+      guestPeers.push(peer);
+
+      const presence = await hostPeer.inbox.waitFor(
+        (value) => value?.wire === WS_WIRE
+          && value?.payload?.type === TRANSPORT_PRESENCE_TYPE
+          && value.payload.clientId === guestId
+          && value.payload.kind === 'rejoin',
+        `initial presence for ${guestId}`,
+      );
+      assert.equal(presence.payload.code, code);
+      assert.equal(presence.payload.revision >= 1, true);
+      const initialState = createHatePeerPresenceState({
+        peerId: guestId,
+        sessionId: presence.payload.sessionId,
+        revision: 0,
+        connected: false,
+      });
+      const joined = applyPresence(initialState, presence.payload);
+      assert.equal(joined.ok, true);
+      assert.equal(projectHateHumanWaitSourceEligibility(joined.state).eligible, true);
+      presenceStates.set(guestId, joined.state);
+
+      hostSocket.send(JSON.stringify({
+        wire: WS_WIRE,
+        op: 'data',
+        payload: { code, type: 'accept', to: guestId, authToken, probe: `hate-accept-${index + 1}` },
+      }));
+      const accept = await peer.inbox.waitFor(
+        (value) => value?.wire === WS_WIRE && value?.payload?.type === 'accept' && value.payload.to === guestId,
+        `accept for ${guestId}`,
+      );
+      assert.equal(accept.payload.authToken, authToken);
+    }
+
+    assert.equal(guestPeers.length, 3);
+    for (const guestId of guestIds) {
+      assert.equal(projectHateHumanWaitSourceEligibility(presenceStates.get(guestId)).eligible, true);
+    }
+
+    const droppedGuestId = guestIds[0];
+    const droppedSocket = guestPeers[0].ws;
+    const droppedState = presenceStates.get(droppedGuestId);
+    const closed = waitForClose(droppedSocket, 'four-player dropped guest');
+    droppedSocket.close(4001, 'hate presence acceptance drop');
+    await closed;
+
+    const disconnectPresence = await hostPeer.inbox.waitFor(
+      (value) => value?.wire === WS_WIRE
+        && value?.payload?.type === TRANSPORT_PRESENCE_TYPE
+        && value.payload.clientId === droppedGuestId
+        && value.payload.kind === 'disconnect'
+        && value.payload.revision > droppedState.revision,
+      'authoritative disconnect presence',
+    );
+    assert.equal(disconnectPresence.payload.sessionId, droppedState.sessionId);
+    const disconnected = applyPresence(droppedState, disconnectPresence.payload);
+    assert.equal(disconnected.ok, true);
+    assert.equal(projectHateHumanWaitSourceEligibility(disconnected.state).eligible, false);
+
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    assert.equal(projectHateHumanWaitSourceEligibility(disconnected.state).eligible, false);
+
+    const duplicateDisconnect = applyPresence(disconnected.state, disconnectPresence.payload);
+    assert.equal(duplicateDisconnect.ok, false);
+    assert.equal(duplicateDisconnect.reason, 'EVENT_STALE_OR_DUPLICATE');
+    assert.equal(projectHateHumanWaitSourceEligibility(duplicateDisconnect.state).eligible, false);
+
+    const reconnectedPeer = await openProbeSocket(
+      pagesUrl,
+      { ...baseHandshake, role: 'guest', clientId: droppedGuestId, authToken: authTokens[0] },
+      'four-player authenticated HATE rejoin',
+    );
+    reconnectedSocket = reconnectedPeer.ws;
+    const rejoinPresence = await hostPeer.inbox.waitFor(
+      (value) => value?.wire === WS_WIRE
+        && value?.payload?.type === TRANSPORT_PRESENCE_TYPE
+        && value.payload.clientId === droppedGuestId
+        && value.payload.kind === 'rejoin'
+        && value.payload.revision > disconnectPresence.payload.revision,
+      'authoritative rejoin presence',
+    );
+    assert.equal(rejoinPresence.payload.sessionId, disconnected.state.sessionId);
+    const rejoined = applyPresence(disconnected.state, rejoinPresence.payload);
+    assert.equal(rejoined.ok, true);
+    assert.equal(projectHateHumanWaitSourceEligibility(rejoined.state).eligible, true);
+
+    for (const guestId of guestIds.slice(1)) {
+      assert.equal(projectHateHumanWaitSourceEligibility(presenceStates.get(guestId)).eligible, true);
+    }
+  } finally {
+    for (const socket of [reconnectedSocket, ...guestPeers.map((peer) => peer.ws), hostSocket]) {
       if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
         try { socket.close(1000, 'probe complete'); } catch {}
       }

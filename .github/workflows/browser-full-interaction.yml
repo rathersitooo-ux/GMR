@@ -63,7 +63,7 @@ jobs:
           retention-days: 14
 
   r42-staged-update-repair:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/work/playtest-r42-update-banner' }}
+    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/work/playtest-r42-update-banner') || (github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'work/playtest-r42-update-banner') }}
     permissions:
       contents: write
     runs-on: ubuntu-latest

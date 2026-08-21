@@ -1,4 +1,4 @@
-name: PLAYTEST R42 update banner source diagnostic
+name: PLAYTEST R42 persist update banner product slice
 
 on:
   push:
@@ -16,15 +16,15 @@ env:
   EXACT_TEST_BLOB: 5386451be827ac75554f8f99c7d0d4586a5a07c2
 
 jobs:
-  extract-current-anchors:
+  persist-update-banner-slice:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
           ref: work/visual-r34-result-update-banner
           fetch-depth: 0
-      - name: Verify exact current product and extract bounded source contexts
+      - name: Verify exact current product and apply bounded product/test delta
         shell: bash
         run: |
           set -euo pipefail
@@ -35,46 +35,164 @@ jobs:
           test "$(git hash-object tests/browser-full-interaction.spec.mjs)" = "$EXACT_TEST_BLOB"
           python3 - <<'PY'
           from pathlib import Path
-          data = Path('browser/GAMEROAD.html').read_text(encoding='utf-8-sig')
-          tokens = [
-              'async checkUpdate(){',
-              'renderUpdateBanner(){',
-              'renderUpdateBanner()',
-              "state.screen='home'",
-              'state.screen="home"',
-              'state.screen=',
-              'data-screen="home"',
-              'function showScreen',
-              'showScreen(',
-              'function show(',
-              'show(screen',
-              "screen==='home'",
-              "screen === 'home'",
-          ]
-          out=[]
-          seen=set()
-          for token in tokens:
-              start=0
-              hit=0
-              while True:
-                  i=data.find(token,start)
-                  if i < 0: break
-                  key=(max(0,i-1200),min(len(data),i+2200))
-                  if key not in seen:
-                      seen.add(key)
-                      hit+=1
-                      out.append(f'===== TOKEN {token!r} HIT {hit} @ {i} =====\n')
-                      out.append(data[key[0]:key[1]])
-                      out.append('\n\n')
-                  start=i+len(token)
-                  if hit >= 8: break
-          if not any('async checkUpdate(){' in x for x in out):
-              raise SystemExit('checkUpdate anchor not found')
-          Path('.tmp-update-banner-source.txt').write_text(''.join(out),encoding='utf-8')
+
+          html = Path('browser/GAMEROAD.html')
+          data = html.read_text(encoding='utf-8-sig')
+
+          init_old = "R.update = { ...R.update, BUILD_ID:GM.config.BUILD_ID, updatePending:null };"
+          init_new = "R.update = { ...R.update, BUILD_ID:GM.config.BUILD_ID, updateBaselineId:null, updatePending:null };"
+          if data.count(init_old) != 1:
+              raise SystemExit(f'update init anchor count={data.count(init_old)}, expected 1')
+          data = data.replace(init_old, init_new, 1)
+
+          block_old = '''async checkUpdate(){
+  try{
+    const manifest = await fetch('./gameroad-version.json', { cache: 'no-store' }).then(res => {
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    });
+    const nextId = String(manifest?.build_id || '').trim();
+    if(!nextId || nextId === this.BUILD_ID){ this.updatePending = null; this.renderUpdateBanner(); return; }
+    this.updatePending = { build_id:nextId, published_at:String(manifest?.published_at || ''), reload_hint:String(manifest?.reload_hint || '') };
+    this.renderUpdateBanner();
+  }catch(_e){}
+},
+renderUpdateBanner(){
+  const el=$('gameroadUpdateBanner');
+  if(!el) return;
+  const has=!!this.updatePending;
+  el.classList.toggle('on',has);
+  el.setAttribute('aria-hidden',has?'false':'true');
+},'''
+          block_new = '''async checkUpdate(){
+  try{
+    const manifest = await fetch('./gameroad-version.json', { cache: 'no-store' }).then(res => {
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    });
+    const nextId = String(manifest?.build_id || '').trim();
+    if(!nextId) return;
+    if(!this.updateBaselineId){
+      this.updateBaselineId = nextId;
+      this.updatePending = null;
+      this.renderUpdateBanner();
+      return;
+    }
+    if(nextId === this.updateBaselineId){
+      this.updatePending = null;
+      this.renderUpdateBanner();
+      return;
+    }
+    this.updatePending = { build_id:nextId, published_at:String(manifest?.published_at || ''), reload_hint:String(manifest?.reload_hint || '') };
+    this.renderUpdateBanner();
+  }catch(_e){}
+},
+renderUpdateBanner(){
+  const el=$('gameroadUpdateBanner');
+  if(!el) return;
+  const has=!!this.updatePending&&GM.state.screen==='home';
+  el.classList.toggle('on',has);
+  el.setAttribute('aria-hidden',has?'false':'true');
+},'''
+          if data.count(block_old) != 1:
+              raise SystemExit(f'update block anchor count={data.count(block_old)}, expected 1')
+          data = data.replace(block_old, block_new, 1)
+          html.write_text(data, encoding='utf-8')
+
+          spec = Path('tests/browser-full-interaction.spec.mjs')
+          s = spec.read_text(encoding='utf-8')
+          marker = '// UPDATE-MANIFEST-BASELINE-HOME-ONLY-REGRESSION R1'
+          if marker in s:
+              raise SystemExit('update regression marker already exists')
+          s += r'''
+
+// UPDATE-MANIFEST-BASELINE-HOME-ONLY-REGRESSION R1
+// First valid manifest is session baseline; only a later different valid build is pending.
+// The pending banner is Home-only and must never intercept Setup/Battle/Result input.
+test('update manifest baseline is session-local and pending banner is Home-only', async ({ page, browser }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  let manifest = { build_id: 'r42-baseline-a', published_at: '2026-08-21T00:00:00Z', reload_hint: '' };
+  await page.route('**/browser/gameroad-version.json', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(manifest) });
+  });
+
+  await bootCurrentBrowser(page);
+  const banner = page.locator('#gameroadUpdateBanner');
+  await expect(banner, 'first valid manifest establishes baseline without prompting').toBeHidden();
+  await expect(banner).toHaveAttribute('aria-hidden', 'true');
+
+  await page.evaluate(() => window.__GAMEROAD_TEST__.update());
+  await expect(banner, 'same baseline manifest remains silent').toBeHidden();
+
+  manifest = { build_id: 'r42-release-b', published_at: '2026-08-21T00:01:00Z', reload_hint: 'reload' };
+  await page.evaluate(() => window.__GAMEROAD_TEST__.update());
+  await expect(banner, 'later different valid manifest is surfaced on Home').toBeVisible();
+  await expect(banner).toHaveAttribute('aria-hidden', 'false');
+
+  const setupGo = visibleHomeControl(page, 'setup');
+  await expect(setupGo, 'real Home Setup control remains usable before leaving Home').toBeVisible();
+  await setupGo.click();
+  const setup = page.locator('section[data-screen="setup"]');
+  await expect(setup).toBeVisible();
+  await expect(banner, 'pending update is hidden away from Home').toBeHidden();
+  await expect(banner).toHaveAttribute('aria-hidden', 'true');
+  await expect(banner).toHaveCSS('display', 'none');
+
+  const honey = setup.locator('[data-content="honey_hunt"]');
+  await expect(honey, 'visible Setup/Honey control is not occluded by pending update UI').toBeVisible();
+  await honey.click();
+  await expect(honey).toHaveClass(/on/);
+
+  manifest = { build_id: 'r42-release-c', published_at: '2026-08-21T00:02:00Z', reload_hint: 'reload' };
+  await page.evaluate(() => window.__GAMEROAD_TEST__.update());
+  await expect(banner, 'an update detected off Home stays silent off Home').toBeHidden();
+
+  const back = setup.locator('[data-back]:visible').first();
+  await expect(back, 'visible Setup Back control remains usable while update is pending').toBeVisible();
+  await back.click();
+  await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+  await expect(banner, 'same pending update resurfaces when production navigation returns Home').toBeVisible();
+
+  const currentUrl = page.url();
+  const freshContext = await browser.newContext({ viewport: testInfo.project.use.viewport });
+  const freshPage = await freshContext.newPage();
+  await freshPage.route('**/browser/gameroad-version.json', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(manifest) });
+  });
+  await freshPage.goto(currentUrl, { waitUntil: 'domcontentloaded' });
+  await freshPage.waitForTimeout(1_000);
+  const freshBanner = freshPage.locator('#gameroadUpdateBanner');
+  await expect(freshBanner, 'new session treats its first valid newer manifest as baseline, not a new prompt').toBeHidden();
+  await expect(freshBanner).toHaveAttribute('aria-hidden', 'true');
+  await freshContext.close();
+
+  await attachStateScreenshot(page, testInfo, 'update-pending-home-only-visible');
+  runtime.assertClean(testInfo);
+});
+'''
+          spec.write_text(s, encoding='utf-8')
           PY
-          git checkout -- browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
+          git diff --check
+          test "$(git diff --name-only)" = $'browser/GAMEROAD.html\ntests/browser-full-interaction.spec.mjs'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+      - run: npx playwright install --with-deps chromium
+      - name: Run update vertical slice on all formal viewports
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 --grep "update manifest baseline is session-local and pending banner is Home-only" --project=desktop-1280x720 --project=phone-390x844 --project=short-landscape-667x375
+      - name: Persist only product and existing-lane regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -f --ignore-unmatch .github/workflows/playtest-visual-r34-bounded-patch.yml .tmp-deck-selection-diagnostic.txt .tmp-update-banner-source.txt .tmp-deck-selection-eval.txt
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add .tmp-update-banner-source.txt
-          git commit -m "PLAYTEST R42: record current update banner anchors"
+          test -n "$(git status --porcelain)"
+          git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
+          git diff --cached --check
+          git commit -m "PLAYTEST R42: make update prompt session-aware and Home-only"
           git push origin HEAD:work/visual-r34-result-update-banner

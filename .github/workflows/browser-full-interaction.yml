@@ -117,13 +117,8 @@ test('current release baseline stays silent and a later update remains Home-only
   const runtime = observeRuntimeErrors(page);
   let manifestBuild = 'r42-current-release';
   await page.route('**/gameroad-version.json*', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ schema: 'gameroad.version.v1', channel: 'public', build_id: manifestBuild, published_at: '2026-08-21T10:00:00Z' }),
-    });
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ schema: 'gameroad.version.v1', channel: 'public', build_id: manifestBuild, published_at: '2026-08-21T10:00:00Z' }) });
   });
-
   await bootCurrentBrowser(page);
   await expect.poll(async () => page.evaluate(() => window.GAMEROAD_PARTNER_COMMENT?.snapshot().update.status ?? null)).toBe('ok');
   let update = await page.evaluate(() => window.GAMEROAD_PARTNER_COMMENT.snapshot().update);
@@ -131,7 +126,6 @@ test('current release baseline stays silent and a later update remains Home-only
   expect(update.pending).toBeNull();
   const banner = page.locator('#gameroadUpdateBanner');
   await expect(banner, 'first valid current manifest does not prompt').not.toHaveClass(/on/);
-
   manifestBuild = 'r42-later-release';
   const detected = await page.evaluate(() => window.GAMEROAD_PARTNER_COMMENT.checkUpdate());
   expect(detected, 'a later valid release is detected').toBeTruthy();
@@ -139,7 +133,6 @@ test('current release baseline stays silent and a later update remains Home-only
   expect(update.pending?.buildId).toBe('r42-later-release');
   await expect(banner, 'real pending release is visible on Home').toHaveClass(/on/);
   await attachStateScreenshot(page, testInfo, 'r42-update-pending-home-visible');
-
   const setupGo = visibleHomeControl(page, 'setup');
   await expect(setupGo).toBeVisible();
   await setupGo.click();
@@ -153,11 +146,9 @@ test('current release baseline stays silent and a later update remains Home-only
   update = await page.evaluate(() => window.GAMEROAD_PARTNER_COMMENT.snapshot().update);
   expect(update.pending?.buildId, 'pending release survives away from Home').toBe('r42-later-release');
   await attachStateScreenshot(page, testInfo, 'r42-update-pending-setup-hidden');
-
   await backOperationVisible(page);
   await expect(page.locator('section[data-screen="home"]')).toBeVisible();
   await expect(banner, 'same pending release surfaces again only after visible return Home').toHaveClass(/on/);
-
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(500);
   await expect(page.locator('section[data-screen="home"]')).toBeVisible();
@@ -180,7 +171,8 @@ test('current release baseline stays silent and a later update remains Home-only
           test "$(git rev-parse origin/main)" = "$EXACT_BASE"
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs .tmp-r42-update-diagnostic.txt .r42-update-status.txt .github/workflows/playtest-r42-update-diagnostic.yml
+          git add -u
+          git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs .r42-update-status.txt
           git commit -m "PLAYTEST R42: persist update banner repair candidate"
           git push origin HEAD:work/playtest-r42-update-banner
 
@@ -194,45 +186,31 @@ test('current release baseline stays silent and a later update remains Home-only
         shell: bash
         run: |
           set +e
-          npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 \
-            --grep "current release baseline stays silent and a later update remains Home-only" \
-            --project=desktop-1280x720 --project=phone-390x844 --project=short-landscape-667x375 \
-            > .r42-test.log 2>&1
+          npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 --grep "current release baseline stays silent and a later update remains Home-only" --project=desktop-1280x720 --project=phone-390x844 --project=short-landscape-667x375 > .r42-test.log 2>&1
           code=$?
           cat .r42-test.log
           if [ "$code" -ne 0 ]; then
             { echo 'FAIL_NARROW_UPDATE_REGRESSION'; tail -n 180 .r42-test.log; } > .r42-update-status.txt
-            git add .r42-update-status.txt
-            git commit -m "PLAYTEST R42: record narrow regression failure"
-            git push origin HEAD:work/playtest-r42-update-banner
+            git add .r42-update-status.txt && git commit -m "PLAYTEST R42: record narrow regression failure" && git push origin HEAD:work/playtest-r42-update-banner
             exit "$code"
           fi
           printf 'PASS_NARROW_UPDATE_REGRESSION\n' > .r42-update-status.txt
-          git add .r42-update-status.txt
-          git commit -m "PLAYTEST R42: record narrow regression pass"
-          git push origin HEAD:work/playtest-r42-update-banner
+          git add .r42-update-status.txt && git commit -m "PLAYTEST R42: record narrow regression pass" && git push origin HEAD:work/playtest-r42-update-banner
 
       - name: Original visible four-player Honey Hunt loop regression
         shell: bash
         run: |
           set +e
-          npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 \
-            --grep "R19 reaches Result from visible four-player Honey Hunt and returns Home" \
-            --project=desktop-1280x720 --project=phone-390x844 --project=short-landscape-667x375 \
-            > .r42-test.log 2>&1
+          npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 --grep "R19 reaches Result from visible four-player Honey Hunt and returns Home" --project=desktop-1280x720 --project=phone-390x844 --project=short-landscape-667x375 > .r42-test.log 2>&1
           code=$?
           cat .r42-test.log
           if [ "$code" -ne 0 ]; then
             { echo 'FAIL_ORIGINAL_R19_LOOP'; tail -n 180 .r42-test.log; } > .r42-update-status.txt
-            git add .r42-update-status.txt
-            git commit -m "PLAYTEST R42: record original loop regression failure"
-            git push origin HEAD:work/playtest-r42-update-banner
+            git add .r42-update-status.txt && git commit -m "PLAYTEST R42: record original loop regression failure" && git push origin HEAD:work/playtest-r42-update-banner
             exit "$code"
           fi
           printf 'PASS_ORIGINAL_R19_LOOP\n' > .r42-update-status.txt
-          git add .r42-update-status.txt
-          git commit -m "PLAYTEST R42: record original loop pass"
-          git push origin HEAD:work/playtest-r42-update-banner
+          git add .r42-update-status.txt && git commit -m "PLAYTEST R42: record original loop pass" && git push origin HEAD:work/playtest-r42-update-banner
 
       - name: Restore existing Browser workflow after both regressions pass
         shell: bash

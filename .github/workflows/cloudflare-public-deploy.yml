@@ -371,6 +371,104 @@ jobs:
             sleep 20
           done
 
+      - name: Verify and self-heal fixed stable URL
+        id: canonical_probe
+        shell: bash
+        env:
+          CANONICAL_URL: https://gameroad-browser-r5.pages.dev
+          EXACT_USER_ENTRY: https://gameroad-browser-r5.pages.dev/?utm_source=chatgpt.com
+        run: |
+          set -euo pipefail
+
+          verify_canonical() {
+            local phase="$1"
+            local root_body="$RUNNER_TEMP/gameroad-canonical-root.html"
+            local root_headers="$RUNNER_TEMP/gameroad-canonical-root.headers"
+            local utm_body="$RUNNER_TEMP/gameroad-canonical-utm.html"
+            local utm_headers="$RUNNER_TEMP/gameroad-canonical-utm.headers"
+            local manifest_body="$RUNNER_TEMP/gameroad-canonical-version.json"
+            local manifest_headers="$RUNNER_TEMP/gameroad-canonical-version.headers"
+
+            for attempt in 1 2 3 4 5; do
+              echo "Stable canonical ${phase} probe ${attempt}/5"
+              rm -f "$root_body" "$root_headers" "$utm_body" "$utm_headers" "$manifest_body" "$manifest_headers"
+
+              root_code="$(curl --silent --show-error --location \
+                --header 'Accept-Encoding: identity' \
+                --header 'Cache-Control: no-cache' \
+                --connect-timeout 10 --max-time 30 \
+                --dump-header "$root_headers" \
+                --output "$root_body" \
+                --write-out '%{http_code}' \
+                "${CANONICAL_URL}/" || true)"
+              utm_code="$(curl --silent --show-error --location \
+                --header 'Accept-Encoding: identity' \
+                --header 'Cache-Control: no-cache' \
+                --connect-timeout 10 --max-time 30 \
+                --dump-header "$utm_headers" \
+                --output "$utm_body" \
+                --write-out '%{http_code}' \
+                "$EXACT_USER_ENTRY" || true)"
+              manifest_code="$(curl --silent --show-error --location \
+                --header 'Accept-Encoding: identity' \
+                --header 'Cache-Control: no-cache' \
+                --connect-timeout 10 --max-time 30 \
+                --dump-header "$manifest_headers" \
+                --output "$manifest_body" \
+                --write-out '%{http_code}' \
+                "${CANONICAL_URL}/gameroad-version.json" || true)"
+
+              build_id=""
+              if [[ -s "$manifest_body" ]]; then
+                build_id="$(node -e 'const fs=require("node:fs"); try { const m=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); process.stdout.write(m.build_id || ""); } catch {}' "$manifest_body")"
+              fi
+
+              if [[ "$root_code" == "200" ]] \
+                && [[ "$utm_code" == "200" ]] \
+                && [[ "$manifest_code" == "200" ]] \
+                && cmp --silent deploy/cloudflare/dist/index.html "$root_body" \
+                && cmp --silent deploy/cloudflare/dist/index.html "$utm_body" \
+                && cmp --silent deploy/cloudflare/dist/gameroad-version.json "$manifest_body" \
+                && [[ "$build_id" == "$GITHUB_SHA" ]] \
+                && grep -qi '^cache-control:.*no-store' "$root_headers" \
+                && grep -qi '^cache-control:.*no-store' "$utm_headers" \
+                && grep -qi '^cache-control:.*no-store' "$manifest_headers"; then
+                echo "Stable canonical exact root/UTM/cache/build verification succeeded for ${GITHUB_SHA}."
+                return 0
+              fi
+
+              echo "canonical mismatch: phase=${phase} root_http=${root_code:-none} utm_http=${utm_code:-none} manifest_http=${manifest_code:-none} build_id=${build_id:-none} expected=${GITHUB_SHA}"
+              if [[ "$attempt" -lt 5 ]]; then
+                sleep 20
+              fi
+            done
+            return 1
+          }
+
+          if verify_canonical initial; then
+            echo 'recovery=not_needed' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Stable canonical did not converge. Re-deploying the exact already-built production package once."
+          (
+            cd deploy/cloudflare
+            cp wrangler.pages.toml wrangler.toml
+            trap 'rm -f wrangler.toml' EXIT
+            npx --yes wrangler@4 pages deploy dist \
+              --project-name "$PAGES_PROJECT" \
+              --branch main \
+              --commit-hash "$GITHUB_SHA"
+          )
+
+          if verify_canonical recovery; then
+            echo 'recovery=redeployed_once' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "::error::Fixed stable URL remained stale after one bounded recovery deployment."
+          exit 1
+
       - name: Report sanitized deployment outcome
         if: always()
         shell: bash
@@ -387,6 +485,8 @@ jobs:
           MANIFEST_PROBE_OUTCOME: ${{ steps.manifest_probe.outcome }}
           RELEASE_COMMS_PROBE_OUTCOME: ${{ steps.release_comms_probe.outcome }}
           WS_PROBE_OUTCOME: ${{ steps.ws_probe.outcome }}
+          CANONICAL_PROBE_OUTCOME: ${{ steps.canonical_probe.outcome }}
+          CANONICAL_RECOVERY: ${{ steps.canonical_probe.outputs.recovery }}
           PAGES_URL: ${{ steps.pages.outputs.url }}
         run: |
           set -euo pipefail
@@ -405,6 +505,10 @@ jobs:
           manifest_probe=${MANIFEST_PROBE_OUTCOME}
           release_comms_probe=${RELEASE_COMMS_PROBE_OUTCOME}
           ws_probe=${WS_PROBE_OUTCOME}
+          canonical_probe=${CANONICAL_PROBE_OUTCOME}
+          canonical_recovery=${CANONICAL_RECOVERY:-unknown}
+          canonical_url=https://gameroad-browser-r5.pages.dev/
+          exact_user_entry=https://gameroad-browser-r5.pages.dev/?utm_source=chatgpt.com
           url=${PAGES_URL:-}
           EOF
           gh issue comment "$EVIDENCE_ISSUE" --body-file "$RUNNER_TEMP/publichost-r12-evidence.txt"

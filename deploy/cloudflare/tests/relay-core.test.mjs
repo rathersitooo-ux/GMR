@@ -475,9 +475,9 @@ test('live public Pages survives host-close-before-reconnect without ejecting th
     assert.equal(accept.payload.authToken, authToken);
 
     const hostClosed = waitForClose(hostSocket, 'drop-first old host');
-    hostSocket.close(1001, 'simulate host transport going away');
+    hostSocket.close(4001, 'simulate host transport going away');
     const dropped = await hostClosed;
-    assert.equal(dropped.code, 1001);
+    assert.equal(dropped.code, 4001);
     await new Promise((resolve) => setTimeout(resolve, 150));
     assert.equal(guestSocket.readyState, WebSocket.OPEN);
 

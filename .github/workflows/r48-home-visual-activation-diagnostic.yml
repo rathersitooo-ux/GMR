@@ -6,6 +6,11 @@ on:
       - work/BROWSERUI-R48-ACTIVATION-RECOVER-R1
     paths:
       - '.github/workflows/r48-home-visual-activation-diagnostic.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/r48-home-visual-activation-diagnostic.yml'
   workflow_dispatch:
 
 permissions:

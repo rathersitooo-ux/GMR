@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - work/free4p-r14-result-visibility-r4-20260822
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write

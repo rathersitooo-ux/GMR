@@ -83,7 +83,7 @@ jobs:
             if curl -fsS http://127.0.0.1:4173/browser/GAMEROAD.html >/dev/null; then break; fi
             sleep 1
           done
-          cat > /tmp/r48-inspect.mjs <<'EOF'
+          cat > r48-inspect.mjs <<'EOF'
           import { chromium } from '@playwright/test';
           import fs from 'node:fs';
           const browser = await chromium.launch({headless:true});
@@ -122,7 +122,7 @@ jobs:
           console.log(JSON.stringify(result,null,2));
           await browser.close();
           EOF
-          node /tmp/r48-inspect.mjs
+          node r48-inspect.mjs
 
       - name: Upload diagnostic evidence
         if: ${{ !cancelled() }}

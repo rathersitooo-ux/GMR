@@ -1,0 +1,182 @@
+name: GAMEROAD Stable Canonical Guard
+
+on:
+  workflow_run:
+    workflows:
+      - GAMEROAD Cloudflare Public Deploy
+    types:
+      - completed
+
+permissions:
+  contents: read
+  actions: write
+  issues: write
+
+concurrency:
+  group: gameroad-stable-canonical-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}
+  cancel-in-progress: false
+
+jobs:
+  verify-stable-canonical:
+    name: Verify fixed latest-playable URL
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    env:
+      CANONICAL_URL: https://gameroad-browser-r5.pages.dev
+      EXACT_USER_ENTRY: https://gameroad-browser-r5.pages.dev/?utm_source=chatgpt.com
+      EVIDENCE_ISSUE: '158'
+      SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+      SOURCE_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+      EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Checkout exact deployed source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Verify stable canonical root, ChatGPT entry, cache, and build
+        id: canonical
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT_BODY="$RUNNER_TEMP/gameroad-stable-root.html"
+          ROOT_HEADERS="$RUNNER_TEMP/gameroad-stable-root.headers"
+          UTM_BODY="$RUNNER_TEMP/gameroad-stable-utm.html"
+          UTM_HEADERS="$RUNNER_TEMP/gameroad-stable-utm.headers"
+          MANIFEST_BODY="$RUNNER_TEMP/gameroad-stable-version.json"
+          MANIFEST_HEADERS="$RUNNER_TEMP/gameroad-stable-version.headers"
+
+          fetch_exact() {
+            local url="$1"
+            local body="$2"
+            local headers="$3"
+            curl --fail --silent --show-error \
+              --header 'Accept-Encoding: identity' \
+              --header 'Cache-Control: no-cache' \
+              --connect-timeout 10 \
+              --max-time 30 \
+              --dump-header "$headers" \
+              --output "$body" \
+              --write-out '%{http_code}' \
+              "$url"
+          }
+
+          canonical_ok=no
+          for attempt in 1 2 3 4 5; do
+            echo "Stable canonical convergence probe ${attempt}/5"
+            rm -f "$ROOT_BODY" "$ROOT_HEADERS" "$UTM_BODY" "$UTM_HEADERS" "$MANIFEST_BODY" "$MANIFEST_HEADERS"
+
+            ROOT_CODE="$(fetch_exact "${CANONICAL_URL}/" "$ROOT_BODY" "$ROOT_HEADERS" || true)"
+            UTM_CODE="$(fetch_exact "$EXACT_USER_ENTRY" "$UTM_BODY" "$UTM_HEADERS" || true)"
+            MANIFEST_CODE="$(fetch_exact "${CANONICAL_URL}/gameroad-version.json" "$MANIFEST_BODY" "$MANIFEST_HEADERS" || true)"
+
+            BUILD_ID=""
+            if [[ -s "$MANIFEST_BODY" ]]; then
+              BUILD_ID="$(jq -r '.build_id // empty' "$MANIFEST_BODY" 2>/dev/null || true)"
+            fi
+
+            if [[ "$ROOT_CODE" == "200" ]] \
+              && [[ "$UTM_CODE" == "200" ]] \
+              && [[ "$MANIFEST_CODE" == "200" ]] \
+              && cmp --silent browser/GAMEROAD.html "$ROOT_BODY" \
+              && cmp --silent browser/GAMEROAD.html "$UTM_BODY" \
+              && [[ "$BUILD_ID" == "$EXPECTED_SHA" ]] \
+              && grep -qi '^cache-control:.*no-store' "$ROOT_HEADERS" \
+              && grep -qi '^cache-control:.*no-store' "$UTM_HEADERS" \
+              && grep -qi '^cache-control:.*no-store' "$MANIFEST_HEADERS"; then
+              canonical_ok=yes
+              break
+            fi
+
+            echo "canonical mismatch: root_http=${ROOT_CODE:-none} utm_http=${UTM_CODE:-none} manifest_http=${MANIFEST_CODE:-none} build_id=${BUILD_ID:-none} expected=${EXPECTED_SHA}"
+            if [[ "$attempt" -lt 5 ]]; then
+              sleep 20
+            fi
+          done
+
+          if [[ "$canonical_ok" == "yes" ]]; then
+            echo 'ok=true' >> "$GITHUB_OUTPUT"
+            echo "Stable canonical exact-root/UTM/cache/build verification succeeded for ${EXPECTED_SHA}."
+          else
+            echo 'ok=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Record stable canonical success
+        if: steps.canonical.outputs.ok == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/stable-canonical-success.txt" <<EOF
+          PUBLICHOST_STABLE_CANONICAL_GUARD
+          source_run_id=${SOURCE_RUN_ID}
+          source_run_attempt=${SOURCE_RUN_ATTEMPT}
+          expected_sha=${EXPECTED_SHA}
+          canonical_url=${CANONICAL_URL}/
+          exact_user_entry=${EXACT_USER_ENTRY}
+          root_exact_bytes=success
+          utm_exact_bytes=success
+          root_cache_no_store=success
+          utm_cache_no_store=success
+          manifest_build_id=success
+          manifest_cache_no_store=success
+          automatic_recovery=not_needed
+          EOF
+          gh issue comment "$EVIDENCE_ISSUE" --body-file "$RUNNER_TEMP/stable-canonical-success.txt"
+
+      - name: Re-run the exact existing deploy job once when stable canonical is stale
+        if: steps.canonical.outputs.ok != 'true' && github.event.workflow_run.run_attempt == 1
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          JOBS_JSON="$RUNNER_TEMP/source-deploy-jobs.json"
+          gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${GITHUB_REPOSITORY}/actions/runs/${SOURCE_RUN_ID}/jobs?filter=latest&per_page=100" \
+            > "$JOBS_JSON"
+          DEPLOY_JOB_ID="$(jq -r '.jobs[] | select(.name == "Deploy public GAMEROAD package") | .id' "$JOBS_JSON" | head -n 1)"
+          if [[ -z "$DEPLOY_JOB_ID" || "$DEPLOY_JOB_ID" == "null" ]]; then
+            echo "::error::Could not resolve the existing deploy job for run ${SOURCE_RUN_ID}"
+            exit 1
+          fi
+          gh api \
+            --method POST \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${GITHUB_REPOSITORY}/actions/jobs/${DEPLOY_JOB_ID}/rerun"
+          cat > "$RUNNER_TEMP/stable-canonical-recovery.txt" <<EOF
+          PUBLICHOST_STABLE_CANONICAL_RECOVERY_TRIGGERED
+          source_run_id=${SOURCE_RUN_ID}
+          source_run_attempt=${SOURCE_RUN_ATTEMPT}
+          expected_sha=${EXPECTED_SHA}
+          canonical_url=${CANONICAL_URL}/
+          exact_user_entry=${EXACT_USER_ENTRY}
+          action=rerun_exact_existing_deploy_job_once
+          next_acceptance=second workflow_run attempt must pass fixed canonical exact-root/UTM/cache/build verification
+          EOF
+          gh issue comment "$EVIDENCE_ISSUE" --body-file "$RUNNER_TEMP/stable-canonical-recovery.txt"
+          echo "::error::Stable canonical was stale; exact existing deploy job was re-run. This guard remains failed until the rerun produces a fresh successful guard."
+          exit 1
+
+      - name: Fail closed when stable canonical is still stale after recovery
+        if: steps.canonical.outputs.ok != 'true' && github.event.workflow_run.run_attempt != 1
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/stable-canonical-failed.txt" <<EOF
+          PUBLICHOST_STABLE_CANONICAL_GUARD_FAILED
+          source_run_id=${SOURCE_RUN_ID}
+          source_run_attempt=${SOURCE_RUN_ATTEMPT}
+          expected_sha=${EXPECTED_SHA}
+          canonical_url=${CANONICAL_URL}/
+          exact_user_entry=${EXACT_USER_ENTRY}
+          automatic_recovery=exhausted
+          state=FAILED_CLOSED
+          EOF
+          gh issue comment "$EVIDENCE_ISSUE" --body-file "$RUNNER_TEMP/stable-canonical-failed.txt"
+          echo "::error::Stable canonical did not converge after the one automatic existing-deploy rerun."
+          exit 1

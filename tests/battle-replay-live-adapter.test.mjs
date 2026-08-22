@@ -765,3 +765,27 @@ test('Free4P omitted formalRanking stays backward-compatible when accepted progr
   const publicData = readLiveReplay(session).events[1].publicData;
   assert.equal('formalRanking' in publicData, false);
 });
+
+test('Free4P match-end winner set fails closed even when formal ranking cannot be derived', () => {
+  for (const [matchId, winnerIds] of [
+    ['M-4P-WINNER-EMPTY', []],
+    ['M-4P-WINNER-DUP', ['P1', 'P1']]
+  ]) {
+    const input = resolution(1);
+    input.mode = '4p';
+    input.winnerIds = winnerIds;
+    input.maxLaneProgress = [
+      { id: 'P1', before: 6, after: 7 },
+      { id: 'P2', before: 5, after: 5 },
+      { id: 'P3', before: 4, after: 4 }
+    ];
+    let session = createLiveReplaySession({ matchId, versions });
+    session = appendAcceptedBattleResolution(session, input);
+    assert.throws(
+      () => appendAcceptedMatchEnd(session, { winnerIds, round: 1, mode: '4p' }),
+      /MATCH_END_FORMAL_WINNER_IDS_INVALID/
+    );
+    assert.equal(session.ended, false);
+    assert.equal(readLiveReplay(session).events.length, 1);
+  }
+});

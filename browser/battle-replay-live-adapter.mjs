@@ -624,6 +624,10 @@ export function appendAcceptedMatchEnd(
   const normalizedWinnerIds = stringArray(winnerIds, 'MATCH_END_WINNER_IDS');
   const normalizedMode = maybeString(mode);
   if (!normalizedMode) throw new TypeError('MATCH_END_MODE_INVALID');
+  if (normalizedMode === '4p' &&
+      (normalizedWinnerIds.length === 0 || new Set(normalizedWinnerIds).size !== normalizedWinnerIds.length)) {
+    throw new TypeError('MATCH_END_FORMAL_WINNER_IDS_INVALID');
+  }
   if (formalRanking != null && normalizedMode !== '4p') {
     throw new TypeError('MATCH_END_FORMAL_RANKING_MODE_INVALID');
   }

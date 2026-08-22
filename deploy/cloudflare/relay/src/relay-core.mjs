@@ -80,8 +80,16 @@ export function admitConnection(roomInput, handshake, active = []) {
 
   if (role === 'host') {
     if (room.hostClientId && room.hostClientId !== clientId) return reject('host_exists', room);
+    const sameActiveHost = active.find(
+      (x) => x?.role === 'host' && x?.clientId === clientId && x?.presenceClosed !== true
+    ) || null;
     room.hostClientId = clientId;
-    return { ok: true, room, attachment: { channel: parsed.channel, code: parsed.code, role, clientId, authToken: '' } };
+    return {
+      ok: true,
+      room,
+      attachment: { channel: parsed.channel, code: parsed.code, role, clientId, authToken: '' },
+      replaceHostClientId: sameActiveHost ? clientId : '',
+    };
   }
 
   const known = room.guests[clientId];
@@ -92,7 +100,9 @@ export function admitConnection(roomInput, handshake, active = []) {
     authToken: known?.authToken || authToken,
     presenceRevision,
   };
-  const sameActive = active.find((x) => x?.role === 'guest' && x?.clientId === clientId) || null;
+  const sameActive = active.find(
+    (x) => x?.role === 'guest' && x?.clientId === clientId && x?.presenceClosed !== true
+  ) || null;
   return {
     ok: true,
     room,
@@ -130,7 +140,9 @@ export function routeFrame(roomInput, sender, frame, active = []) {
     const payloadAuth = safeToken(payload.authToken);
     if (known.authToken && payloadAuth !== known.authToken) return reject('transport_auth_mismatch', room);
     if (known.authToken && sender.authToken && sender.authToken !== known.authToken) return reject('transport_auth_mismatch', room);
-    const host = active.find((x) => x?.role === 'host' && x?.clientId === room.hostClientId);
+    const host = active.find(
+      (x) => x?.role === 'host' && x?.clientId === room.hostClientId && x?.presenceClosed !== true
+    );
     if (!host) return reject('host_unavailable', room);
     return {
       ok: true,
@@ -148,7 +160,9 @@ export function routeFrame(roomInput, sender, frame, active = []) {
     if (!to) return reject('host_target_required', room);
     const guest = room.guests[to];
     if (!guest) return reject('transport_target_unknown', room);
-    const target = active.find((x) => x?.role === 'guest' && x?.clientId === to);
+    const target = active.find(
+      (x) => x?.role === 'guest' && x?.clientId === to && x?.presenceClosed !== true
+    );
     if (!target) return reject('transport_target_unavailable', room);
     let bindAuthToken = '';
     if (payload.type === 'accept') {

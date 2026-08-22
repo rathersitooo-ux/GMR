@@ -136,6 +136,29 @@ function pointerCoordinate(event, key) {
   return value;
 }
 
+function capturePointerIfSupported(target, pointerId) {
+  if (typeof target.setPointerCapture !== 'function') return false;
+  try {
+    target.setPointerCapture(pointerId);
+    return true;
+  } catch (error) {
+    if (error?.name === 'NotFoundError') return false;
+    throw error;
+  }
+}
+
+function releasePointerCaptureIfHeld(target, pointerId) {
+  if (pointerId === null || typeof target.releasePointerCapture !== 'function') return false;
+  if (typeof target.hasPointerCapture === 'function' && !target.hasPointerCapture(pointerId)) return false;
+  try {
+    target.releasePointerCapture(pointerId);
+    return true;
+  } catch (error) {
+    if (error?.name === 'NotFoundError') return false;
+    throw error;
+  }
+}
+
 export function bindReadyPlanFeedbackControl({
   target,
   adapter,
@@ -181,7 +204,9 @@ export function bindReadyPlanFeedbackControl({
   const onPointerDown = (event) => {
     if (destroyed || activePointerId !== null) return;
     if (typeof event?.button === 'number' && event.button !== 0) return;
-    activePointerId = pointerIdOf(event);
+    const pointerId = pointerIdOf(event);
+    capturePointerIfSupported(target, pointerId);
+    activePointerId = pointerId;
     dispatch({
       type: 'POINTER_DOWN',
       x: pointerCoordinate(event, 'clientX'),
@@ -201,15 +226,31 @@ export function bindReadyPlanFeedbackControl({
   };
   const onPointerUp = (event) => {
     if (destroyed || !matchesActivePointer(event)) return;
+    const pointerId = activePointerId;
     activePointerId = null;
     stopTick();
-    dispatch({type: 'POINTER_UP', operationTokenFactory});
+    try {
+      dispatch({type: 'POINTER_UP', operationTokenFactory});
+    } finally {
+      releasePointerCaptureIfHeld(target, pointerId);
+    }
   };
   const onPointerCancel = (event) => {
     if (destroyed || !matchesActivePointer(event)) return;
+    const pointerId = activePointerId;
     activePointerId = null;
     stopTick();
-    dispatch({type: 'BLUR', reason: 'pointer_cancelled'});
+    try {
+      dispatch({type: 'BLUR', reason: 'pointer_cancelled'});
+    } finally {
+      releasePointerCaptureIfHeld(target, pointerId);
+    }
+  };
+  const onLostPointerCapture = (event) => {
+    if (destroyed || !matchesActivePointer(event)) return;
+    activePointerId = null;
+    stopTick();
+    dispatch({type: 'BLUR', reason: 'pointer_capture_lost'});
   };
   const onKeyDown = (event) => {
     if (destroyed || (event?.key !== 'Enter' && event?.key !== ' ')) return;
@@ -224,9 +265,14 @@ export function bindReadyPlanFeedbackControl({
   };
   const onBlur = () => {
     if (destroyed) return;
+    const pointerId = activePointerId;
     activePointerId = null;
     stopTick();
-    dispatch({type: 'BLUR', reason: 'control_blur'});
+    try {
+      dispatch({type: 'BLUR', reason: 'control_blur'});
+    } finally {
+      releasePointerCaptureIfHeld(target, pointerId);
+    }
   };
 
   const listeners = [
@@ -234,6 +280,7 @@ export function bindReadyPlanFeedbackControl({
     ['pointermove', onPointerMove],
     ['pointerup', onPointerUp],
     ['pointercancel', onPointerCancel],
+    ['lostpointercapture', onLostPointerCapture],
     ['keydown', onKeyDown],
     ['contextmenu', onContextMenu],
     ['blur', onBlur],
@@ -253,9 +300,11 @@ export function bindReadyPlanFeedbackControl({
 
   const destroy = () => {
     if (destroyed) return false;
+    const pointerId = activePointerId;
     destroyed = true;
     activePointerId = null;
     stopTick();
+    releasePointerCaptureIfHeld(target, pointerId);
     for (const [type, handler] of listeners) target.removeEventListener(type, handler);
     return true;
   };

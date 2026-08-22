@@ -1,0 +1,141 @@
+name: R48 Home Visual Activation Diagnostic
+
+on:
+  push:
+    branches:
+      - work/BROWSERUI-R48-ACTIVATION-RECOVER-R1
+    paths:
+      - '.github/workflows/r48-home-visual-activation-diagnostic.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/r48-home-visual-activation-diagnostic.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-home-selector:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Record source-level R48 activation evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p r48-activation-evidence
+          python3 - <<'PY'
+          from pathlib import Path
+          import json, re
+          p=Path('browser/GAMEROAD.html')
+          s=p.read_text(encoding='utf-8')
+          token='grCodexHomeActive'
+          hits=[]
+          pos=0
+          while True:
+              i=s.find(token,pos)
+              if i < 0: break
+              hits.append({'index':i,'context':s[max(0,i-220):min(len(s),i+260)].replace('\n','\\n')})
+              pos=i+len(token)
+          mutation_patterns={
+              'classList_add': r'classList\.add\([^)]*grCodexHomeActive',
+              'classList_toggle': r'classList\.toggle\([^)]*grCodexHomeActive',
+              'classList_remove': r'classList\.remove\([^)]*grCodexHomeActive',
+              'className_assignment': r'className\s*=.{0,180}grCodexHomeActive',
+          }
+          report={
+              'source_sha': '${{ github.sha }}',
+              'token_occurrences': len(hits),
+              'token_contexts': hits,
+              'mutation_matches': {k: len(re.findall(v,s,re.S)) for k,v in mutation_patterns.items()},
+              'homeScene_occurrences': s.count('homeScene'),
+              'homeCmd_occurrences': s.count('homeCmd'),
+              'codexHome_occurrences': s.count('codexHome'),
+          }
+          Path('r48-activation-evidence/source.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps(report,ensure_ascii=False,indent=2))
+          PY
+
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Inspect live local Home DOM and computed styles
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 >/tmp/r48-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/browser/GAMEROAD.html >/dev/null; then break; fi
+            sleep 1
+          done
+          cat > r48-inspect.mjs <<'EOF'
+          import { chromium } from '@playwright/test';
+          import fs from 'node:fs';
+          const browser = await chromium.launch({headless:true});
+          const page = await browser.newPage({viewport:{width:1280,height:720}});
+          const errors=[];
+          page.on('pageerror', e => errors.push(String(e)));
+          await page.goto('http://127.0.0.1:4173/browser/GAMEROAD.html',{waitUntil:'domcontentloaded'});
+          await page.waitForTimeout(1200);
+          const result = await page.evaluate(() => {
+            const one = (sel) => document.querySelector(sel);
+            const snap = (sel) => {
+              const el=one(sel); if(!el) return null;
+              const c=getComputedStyle(el); const r=el.getBoundingClientRect();
+              return {selector:sel, classes:el.className, display:c.display, visibility:c.visibility, opacity:c.opacity, color:c.color, background:c.background, boxShadow:c.boxShadow, outline:c.outline, border:c.border, rect:{x:r.x,y:r.y,width:r.width,height:r.height}};
+            };
+            const visibleElements=[...document.querySelectorAll('body *')].map((el) => {
+              const c=getComputedStyle(el); const r=el.getBoundingClientRect();
+              if(c.display==='none'||c.visibility==='hidden'||Number(c.opacity)===0||r.width<1||r.height<1) return null;
+              return {tag:el.tagName.toLowerCase(),id:el.id||'',classes:typeof el.className==='string'?el.className:'',text:(el.innerText||el.textContent||'').trim().replace(/\s+/g,' ').slice(0,180),rect:{x:Math.round(r.x),y:Math.round(r.y),width:Math.round(r.width),height:Math.round(r.height)}};
+            }).filter(Boolean).slice(0,300);
+            return {
+              url: location.href,
+              htmlClass: document.documentElement.className,
+              bodyClass: document.body.className,
+              homeSceneCount: document.querySelectorAll('.homeScene').length,
+              gatedHomeSceneCount: document.querySelectorAll('html.grCodexHomeActive .homeScene').length,
+              homeCopyCount: document.querySelectorAll('.homeCopy').length,
+              homeCmdCount: document.querySelectorAll('.homeCmd').length,
+              mainHomeCmdCount: document.querySelectorAll('.homeCmd.main').length,
+              codexHomeCount: document.querySelectorAll('#codexHome').length,
+              codexHome: snap('#codexHome'),
+              homeScene: snap('.homeScene'),
+              homeCopy: snap('.homeCopy'),
+              homeCmdMain: snap('.homeCmd.main'),
+              htmlHasGate: document.documentElement.classList.contains('grCodexHomeActive'),
+              visibleElements,
+            };
+          });
+          result.pageErrors=errors;
+          fs.writeFileSync('r48-activation-evidence/runtime.json', JSON.stringify(result,null,2));
+          fs.writeFileSync('r48-activation-evidence/dom.html', await page.content());
+          await page.screenshot({path:'r48-activation-evidence/home-1280x720.png',fullPage:true});
+          console.log(JSON.stringify(result,null,2));
+          await browser.close();
+          EOF
+          node r48-inspect.mjs
+
+      - name: Upload diagnostic evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: r48-home-activation-${{ github.run_id }}
+          path: r48-activation-evidence/
+          if-no-files-found: error
+          retention-days: 14

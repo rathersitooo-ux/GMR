@@ -1495,6 +1495,19 @@ test('update manifest is strictly validated, rollback-safe in wording, session-l
   await expect(title).not.toContainText('新版');
   await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending?.buildId||null)).toBe(ROLLBACK);
 
+  // If production is rolled back/reverted to the build this session already loaded,
+  // the previously advertised target is no longer current and must be withdrawn.
+  manifest=formal(BASE,'2026-08-22T00:00:00Z');
+  await page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());
+  await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending)).toBe(null);
+  await expect(banner).toBeHidden();
+
+  // A later target can become pending again after the withdrawal.
+  manifest=formal(ROLLBACK,'2026-08-21T00:00:00Z');
+  await page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());
+  await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending?.buildId||null)).toBe(ROLLBACK);
+  await expect(banner).toBeVisible();
+
   const setupGo=visibleHomeControl(page,'setup');
   await setupGo.click();
   const setup=page.locator('section[data-screen="setup"]');

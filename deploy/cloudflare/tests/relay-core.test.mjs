@@ -35,6 +35,18 @@ test('admits one host and rejects a second host identity', () => {
   assert.equal(admitConnection(room, { ...host, clientId: 'host-2' }).reason, 'host_exists');
 });
 
+test('same host identity reconnect requests replacement without permitting host takeover', () => {
+  const room = roomWithHost();
+  const replacement = admitConnection(room, host, active(host));
+  assert.equal(replacement.ok, true);
+  assert.equal(replacement.replaceHostClientId, 'host-1');
+  assert.equal(replacement.room.hostClientId, 'host-1');
+  assert.equal(
+    admitConnection(room, { ...host, clientId: 'host-2' }, active(host)).reason,
+    'host_exists',
+  );
+});
+
 test('caps transport at three guest identities for four total players', () => {
   let room = roomWithHost();
   room = admitGuest(room, 'g1');
@@ -93,6 +105,20 @@ test('correct reconnect may replace the old socket only after auth validation an
   assert.equal(ok.replaceClientId, 'g1');
   assert.equal(ok.presenceRevision, 2);
   assert.equal(ok.room.guests.g1.presenceRevision, 2);
+});
+
+test('routing ignores presence-closed peers while a same-identity replacement settles', () => {
+  const room = admitGuest(roomWithHost(), 'g1');
+  const staleHost = { ...host, presenceClosed: true };
+  const liveHost = { ...host, presenceClosed: false };
+  const guestFrame = frame({ type: 'join', clientId: 'g1', authToken: '', seq: 1 });
+  assert.equal(routeFrame(room, guest('g1'), guestFrame, active(staleHost)).reason, 'host_unavailable');
+  assert.equal(routeFrame(room, guest('g1'), guestFrame, active(staleHost, liveHost)).ok, true);
+  const staleGuest = { ...guest('g1'), presenceClosed: true };
+  assert.equal(
+    routeFrame(room, host, frame({ type: 'lobby', to: 'g1' }), active(liveHost, staleGuest)).reason,
+    'transport_target_unavailable',
+  );
 });
 
 test('guest auth must match the token bound by host accept', () => {
@@ -279,6 +305,7 @@ test('live public Pages friend-room WebSocket routes and reconnects', { skip: !p
   let hostSocket;
   let guestSocket;
   let reconnectedSocket;
+  let reconnectedHostSocket;
   try {
     const hostPeer = await openProbeSocket(pagesUrl, { ...baseHandshake, role: 'host', clientId: hostId, authToken: '' }, 'host');
     hostSocket = hostPeer.ws;
@@ -351,8 +378,40 @@ test('live public Pages friend-room WebSocket routes and reconnects', { skip: !p
       'authenticated reconnect frame',
     );
     assert.equal(afterReconnect.payload.authToken, authToken);
+
+    const oldHostClosed = waitForClose(hostSocket, 'replaced host');
+    const reconnectedHostPeer = await openProbeSocket(
+      pagesUrl,
+      { ...baseHandshake, role: 'host', clientId: hostId, authToken: '' },
+      'same-id host reconnect',
+    );
+    reconnectedHostSocket = reconnectedHostPeer.ws;
+    const hostReplaced = await oldHostClosed;
+    assert.equal(hostReplaced.code, 1012);
+
+    reconnectedSocket.send(JSON.stringify({
+      wire: WS_WIRE,
+      op: 'data',
+      payload: { code, type: 'join', clientId: guestId, authToken, seq: 3, probe: 'guest-after-host-reconnect' },
+    }));
+    const guestAfterHostReconnect = await reconnectedHostPeer.inbox.waitFor(
+      (value) => value?.wire === WS_WIRE && value?.payload?.type === 'join' && value.payload.probe === 'guest-after-host-reconnect',
+      'guest frame after host reconnect',
+    );
+    assert.equal(guestAfterHostReconnect.payload.clientId, guestId);
+
+    reconnectedHostSocket.send(JSON.stringify({
+      wire: WS_WIRE,
+      op: 'data',
+      payload: { code, type: 'lobby', to: guestId, probe: 'reconnected-host-to-guest' },
+    }));
+    const hostAfterReconnect = await reconnectedPeer.inbox.waitFor(
+      (value) => value?.wire === WS_WIRE && value?.payload?.type === 'lobby' && value.payload.probe === 'reconnected-host-to-guest',
+      'reconnected host to surviving guest frame',
+    );
+    assert.equal(hostAfterReconnect.payload.to, guestId);
   } finally {
-    for (const socket of [reconnectedSocket, guestSocket, hostSocket]) {
+    for (const socket of [reconnectedHostSocket, reconnectedSocket, guestSocket, hostSocket]) {
       if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
         try { socket.close(1000, 'probe complete'); } catch {}
       }

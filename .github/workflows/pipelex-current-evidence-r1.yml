@@ -7,6 +7,12 @@ on:
     paths:
       - experiments/pipelex/**
       - .github/workflows/pipelex-current-evidence-r1.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - experiments/pipelex/**
+      - .github/workflows/pipelex-current-evidence-r1.yml
 
 permissions:
   contents: read

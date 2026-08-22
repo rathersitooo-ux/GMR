@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - gr/ui-feedback-r11-homefocus
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read

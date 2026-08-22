@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - work/ui-feedback-r23-readyplan-controller-20260823
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -14,18 +17,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
-      - name: Exact current-base guard
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - name: Exact current-base and product-byte guard
         shell: bash
         run: |
           set -euo pipefail
-          expected_parent='4c30486c3a39433da2b2c31a0d549cb1bda3b888'
+          expected_base='4c30486c3a39433da2b2c31a0d549cb1bda3b888'
           expected_html_blob='12839c58646f849f0ad4470695c391bfb07b1174'
-          actual_parent="$(git rev-parse HEAD^)"
+          git merge-base --is-ancestor "$expected_base" HEAD
           actual_html_blob="$(git hash-object browser/GAMEROAD.html)"
-          printf 'R23_PARENT=%s\nR23_HTML_BLOB=%s\n' "$actual_parent" "$actual_html_blob"
-          test "$actual_parent" = "$expected_parent"
+          diff_names="$(git diff --name-only "$expected_base"...HEAD)"
+          printf 'R23_HEAD=%s\nR23_BASE=%s\nR23_HTML_BLOB=%s\nR23_DIFF=%s\n' "$(git rev-parse HEAD)" "$expected_base" "$actual_html_blob" "$diff_names"
           test "$actual_html_blob" = "$expected_html_blob"
+          test "$diff_names" = '.github/workflows/ui-feedback-r23-readyplan-controller-inspect.yml'
       - name: Bounded controller and ReadyPlan source evidence
         shell: python
         run: |

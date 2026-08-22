@@ -1452,24 +1452,48 @@ test('R19 reaches Result from visible four-player Honey Hunt and returns Home', 
   runtime.assertClean(testInfo);
 });
 
-
-// UPDATE-MANIFEST-BASELINE-HOME-ONLY-REGRESSION R45
-test('update manifest baseline is session-local and pending banner is Home-only', async ({ page, browser }, testInfo) => {
+// UPDATE-MANIFEST-FUTURE-SAFE-REGRESSION R9
+test('update manifest is strictly validated, rollback-safe in wording, session-local, and Home-only', async ({ page, browser }, testInfo) => {
   const runtime=observeRuntimeErrors(page);
-  let build='r45-base';
-  await page.route('**/browser/gameroad-version.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({build_id:build})}));
+  const BASE='1111111111111111111111111111111111111111';
+  const ROLLBACK='2222222222222222222222222222222222222222';
+  const NEXT='3333333333333333333333333333333333333333';
+  const formal=(buildId,publishedAt='2026-08-22T00:00:00Z',overrides={})=>({schema:'GAMEROAD_BROWSER_VERSION_V1',channel:'current',build_id:buildId,published_at:publishedAt,reload_policy:'never-force-during-match',...overrides});
+  let manifest=formal(BASE);
+  await page.route('**/browser/gameroad-version.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(manifest)}));
   await bootCurrentBrowser(page);
   await page.waitForFunction(()=>!!window.GAMEROAD_PARTNER_COMMENT);
   const banner=page.locator('#gameroadUpdateBanner');
+  const title=page.locator('#gameroadUpdateTitle');
   await page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());
   await expect(banner).toBeHidden();
   await expect(banner).toHaveAttribute('aria-hidden','true');
   await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending)).toBe(null);
 
-  build='r45-next';
+  const invalidManifests=[
+    formal(ROLLBACK,'2026-08-21T00:00:00Z',{schema:'BROKEN_SCHEMA'}),
+    formal(ROLLBACK,'2026-08-21T00:00:00Z',{channel:'preview'}),
+    formal(ROLLBACK,'2026-08-21T00:00:00Z',{reload_policy:'force-now'}),
+    formal('not-a-build-id','2026-08-21T00:00:00Z'),
+    formal(ROLLBACK,'not-a-time'),
+  ];
+  for(const invalid of invalidManifests){
+    manifest=invalid;
+    await page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());
+    await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending)).toBe(null);
+    await expect(banner).toBeHidden();
+    await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.status)).toBe('unavailable');
+  }
+
+  // An older successful production deployment can become the desired target during rollback.
+  // Treat it as a valid target change without claiming it is a "newer" version.
+  manifest=formal(ROLLBACK,'2026-08-21T00:00:00Z');
   await page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());
   await expect(banner).toBeVisible();
   await expect(banner).toHaveAttribute('aria-hidden','false');
+  await expect(title).toHaveText('利用できる版が変わりました');
+  await expect(title).not.toContainText('新版');
+  await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending?.buildId||null)).toBe(ROLLBACK);
 
   const setupGo=visibleHomeControl(page,'setup');
   await setupGo.click();
@@ -1480,23 +1504,22 @@ test('update manifest baseline is session-local and pending banner is Home-only'
   const honey=setup.locator('[data-content="honey_hunt"]');
   await honey.click();
   await expect(honey).toHaveClass(/on/);
-  await testInfo.attach('setup-pending-update-hidden.png',{body:await page.screenshot({fullPage:false}),contentType:'image/png'});
+  await testInfo.attach('setup-pending-target-hidden.png',{body:await page.screenshot({fullPage:false}),contentType:'image/png'});
 
-  build='r45-next2';
+  manifest=formal(NEXT,'2026-08-22T01:00:00Z');
   await page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());
   await expect(banner).toBeHidden();
-  await expect(banner).toHaveAttribute('aria-hidden','true');
-  await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending?.buildId||null)).toBe('r45-next2');
+  await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending?.buildId||null)).toBe(NEXT);
 
   const back=setup.locator('[data-back]:visible').first();
   await back.click();
   await expect(page.locator('section[data-screen="home"]')).toBeVisible();
   await expect(banner).toBeVisible();
-  await expect(banner).toHaveAttribute('aria-hidden','false');
+  await expect(title).toHaveText('利用できる版が変わりました');
 
   const fresh=await browser.newContext({viewport:testInfo.project.use.viewport});
   const q=await fresh.newPage();
-  await q.route('**/browser/gameroad-version.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({build_id:build})}));
+  await q.route('**/browser/gameroad-version.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(formal(NEXT,'2026-08-22T01:00:00Z'))}));
   await q.goto(page.url(),{waitUntil:'domcontentloaded'});
   await q.waitForFunction(()=>!!window.GAMEROAD_PARTNER_COMMENT);
   await q.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());

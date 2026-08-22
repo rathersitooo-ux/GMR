@@ -9,6 +9,7 @@ import {
   createCardPresentationSession
 } from './card-presentation-core.mjs';
 import { planBattleConveyor } from './battle-conveyor-presentation-core.mjs';
+import { createPartnerBattleEventLogLiveMount } from './partner-battle-event-log-live-mount.mjs';
 
 const LIVE_ADAPTER_SCHEMA = 'GAMEROAD_BATTLE_REPLAY_LIVE_ADAPTER_V1';
 const VERSION_KEYS = Object.freeze(['rules', 'content', 'state']);
@@ -549,6 +550,9 @@ export function createBattleReplayCardPresentationBridge(environment = {}) {
 }
 
 const liveCardPresentationBridge = createBattleReplayCardPresentationBridge();
+const livePartnerBattleEventLogMount = createPartnerBattleEventLogLiveMount({
+  readReplay: session => readLiveReplay(session)
+});
 
 function assertSession(session) {
   if (!session || session.schema !== LIVE_ADAPTER_SCHEMA || !nonEmptyString(session.matchId)) {
@@ -586,7 +590,10 @@ export function createLiveReplaySession(
 export function appendAcceptedBattleResolution(
   session,
   resolution,
-  { presentationBridge = liveCardPresentationBridge } = {}
+  {
+    presentationBridge = liveCardPresentationBridge,
+    partnerBattleEventLogMount = livePartnerBattleEventLogMount
+  } = {}
 ) {
   assertSession(session);
   if (session.ended) throw new TypeError('LIVE_REPLAY_ALREADY_ENDED');
@@ -611,13 +618,21 @@ export function appendAcceptedBattleResolution(
   } catch {
     // Accepted replay/gameplay state is authoritative; presentation never blocks it.
   }
+  try {
+    partnerBattleEventLogMount?.sync?.(next);
+  } catch {
+    // Partner reflection is read-only presentation and never owns replay/gameplay success.
+  }
   return next;
 }
 
 export function appendAcceptedMatchEnd(
   session,
   { winnerIds, round, mode, formalRanking = null },
-  { presentationBridge = liveCardPresentationBridge } = {}
+  {
+    presentationBridge = liveCardPresentationBridge,
+    partnerBattleEventLogMount = livePartnerBattleEventLogMount
+  } = {}
 ) {
   assertSession(session);
   if (session.ended) throw new TypeError('LIVE_REPLAY_ALREADY_ENDED');
@@ -671,6 +686,11 @@ export function appendAcceptedMatchEnd(
       }
     }
   }
+  try {
+    partnerBattleEventLogMount?.sync?.(next);
+  } catch {
+    // Partner reflection is read-only presentation and never owns replay/gameplay success.
+  }
   return next;
 }
 
@@ -722,6 +742,12 @@ export const BATTLE_REPLAY_LIVE_ADAPTER = Object.freeze({
     source: 'accepted_free4p_single_winner_formal_ranking',
     kind: 'finisher',
     transition: 'FINISHER_GATHER',
+    authority: 'presentation_only_no_game_state_write'
+  }),
+  partnerBattleEventLog: Object.freeze({
+    source: 'accepted_public_replay_projection',
+    projectionSchema: 'GAMEROAD_PARTNER_BATTLE_EVENT_PROJECTION_V1',
+    domSurface: 'battleLog',
     authority: 'presentation_only_no_game_state_write'
   })
 });

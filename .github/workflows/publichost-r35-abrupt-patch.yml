@@ -1,6 +1,8 @@
 name: PublicHost R35 abrupt-drop patch executor
 
 on:
+  push:
+    branches: [work/publichost-r35-abrupt-drop-probe]
   workflow_dispatch:
 
 permissions:
@@ -18,115 +20,13 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-
-          path = Path('deploy/cloudflare/tests/relay-core.test.mjs')
-          text = path.read_text()
-
-          import_needle = "import assert from 'node:assert/strict';\n"
-          assert text.count(import_needle) == 1
-          text = text.replace(import_needle, import_needle + "import { spawn } from 'node:child_process';\n", 1)
-
-          open_probe = """async function openProbeSocket(pagesUrl, handshake, label) {
-            if (typeof WebSocket !== 'function') throw new Error('Node runtime does not expose WebSocket');
-            const ws = new WebSocket(publicSocketUrl(pagesUrl, handshake));
-            const inbox = socketInbox(ws);
-            await waitForOpen(ws, label);
-            return { ws, inbox };
-          }"""
-          assert text.count(open_probe) == 1
-
-          helpers = r'''
-          function waitForChildLine(stream, expected, label, timeoutMs = 10000) {
-            return new Promise((resolve, reject) => {
-              let buffer = '';
-              const cleanup = () => {
-                clearTimeout(timer);
-                stream.off('data', onData);
-                stream.off('error', onError);
-                stream.off('end', onEnd);
-              };
-              const finish = (fn, value) => {
-                cleanup();
-                fn(value);
-              };
-              const onData = (chunk) => {
-                buffer += String(chunk);
-                const lines = buffer.split(/\r?\n/);
-                buffer = lines.pop() || '';
-                if (lines.some((line) => line.trim() === expected)) finish(resolve, expected);
-              };
-              const onError = (error) => finish(reject, error);
-              const onEnd = () => finish(reject, new Error(`child stdout ended before ${label}`));
-              const timer = setTimeout(() => finish(reject, new Error(`timeout waiting for ${label}`)), timeoutMs);
-              stream.on('data', onData);
-              stream.once('error', onError);
-              stream.once('end', onEnd);
-            });
-          }
-
-          function waitForChildExit(child, label, timeoutMs = 10000) {
-            return new Promise((resolve, reject) => {
-              const timer = setTimeout(() => reject(new Error(`timeout waiting for ${label}`)), timeoutMs);
-              child.once('exit', (code, signal) => {
-                clearTimeout(timer);
-                resolve({ code, signal });
-              });
-              child.once('error', (error) => {
-                clearTimeout(timer);
-                reject(error);
-              });
-            });
-          }
-
-          function spawnAbruptHost(pagesUrl, handshake, guestId, authToken, code) {
-            const socketUrl = String(publicSocketUrl(pagesUrl, handshake));
-            const script = `
-              const socketUrl = process.env.GAMEROAD_ABRUPT_SOCKET_URL;
-              const guestId = process.env.GAMEROAD_ABRUPT_GUEST_ID;
-              const authToken = process.env.GAMEROAD_ABRUPT_AUTH_TOKEN;
-              const code = process.env.GAMEROAD_ABRUPT_CODE;
-              const wire = process.env.GAMEROAD_ABRUPT_WIRE;
-              const presenceType = process.env.GAMEROAD_ABRUPT_PRESENCE;
-              const ws = new WebSocket(socketUrl);
-              ws.addEventListener('open', () => process.stdout.write('HOST_OPEN\\n'));
-              ws.addEventListener('message', (event) => {
-                let value;
-                try { value = JSON.parse(String(event.data)); } catch { return; }
-                if (value?.wire !== wire
-                    || value?.payload?.type !== presenceType
-                    || value.payload.clientId !== guestId
-                    || value.payload.kind !== 'rejoin') return;
-                ws.send(JSON.stringify({
-                  wire,
-                  op: 'data',
-                  payload: { code, type: 'accept', to: guestId, authToken, probe: 'drop-first-accept' },
-                }));
-                process.stdout.write('ACCEPT_SENT\\n');
-              });
-              ws.addEventListener('error', () => process.stderr.write('HOST_SOCKET_ERROR\\n'));
-              setInterval(() => {}, 1000);
-            `;
-            return spawn(process.execPath, ['--input-type=module', '-e', script], {
-              stdio: ['ignore', 'pipe', 'pipe'],
-              env: {
-                ...process.env,
-                GAMEROAD_ABRUPT_SOCKET_URL: socketUrl,
-                GAMEROAD_ABRUPT_GUEST_ID: guestId,
-                GAMEROAD_ABRUPT_AUTH_TOKEN: authToken,
-                GAMEROAD_ABRUPT_CODE: code,
-                GAMEROAD_ABRUPT_WIRE: WS_WIRE,
-                GAMEROAD_ABRUPT_PRESENCE: TRANSPORT_PRESENCE_TYPE,
-              },
-            });
-          }'''
-          helpers = '\n'.join(line[10:] if line.startswith('          ') else line for line in helpers.splitlines()).strip('\n')
-          text = text.replace(open_probe, open_probe + '\n\n' + helpers, 1)
-
-          start_marker = "test('live public Pages survives host-close-before-reconnect without ejecting the guest'"
-          end_marker = "test('live public Pages four-player presence is compatible with HATE disconnect and rejoin contract'"
-          start = text.index(start_marker)
-          end = text.index(end_marker, start)
-
+          p = Path('deploy/cloudflare/tests/relay-core.test.mjs')
+          s = p.read_text()
+          imp = "import assert from 'node:assert/strict';\n"
+          assert s.count(imp) == 1
+          s = s.replace(imp, imp + "import { spawn } from 'node:child_process';\n", 1)
+          start = s.index("test('live public Pages survives host-close-before-reconnect without ejecting the guest'")
+          end = s.index("test('live public Pages four-player presence is compatible with HATE disconnect and rejoin contract'", start)
           replacement = r'''test('live public Pages survives abrupt host process loss before reconnect without ejecting the guest', { skip: !process.env.GAMEROAD_PUBLIC_WS_PROBE_URL }, async () => {
             const pagesUrl = process.env.GAMEROAD_PUBLIC_WS_PROBE_URL;
             const runIdentity = `${process.env.GITHUB_RUN_ID || 'probe'}:${process.env.GITHUB_RUN_ATTEMPT || '1'}:${process.env.GITHUB_SHA || ''}:host-drop-first`;
@@ -137,20 +37,78 @@ jobs:
             const guestId = `drop-guest-${suffix}`;
             const authToken = `drop-auth-${suffix}-${code}`;
             const baseHandshake = { channel: publicChannel };
-
             let hostProcess;
             let guestSocket;
             let reconnectedHostSocket;
+
+            const waitLine = (stream, expected, label, timeoutMs = 10000) => new Promise((resolve, reject) => {
+              let buffer = '';
+              const timer = setTimeout(() => reject(new Error(`timeout waiting for ${label}`)), timeoutMs);
+              const onData = (chunk) => {
+                buffer += String(chunk);
+                const lines = buffer.split(/\r?\n/);
+                buffer = lines.pop() || '';
+                if (!lines.some((line) => line.trim() === expected)) return;
+                clearTimeout(timer);
+                stream.off('data', onData);
+                resolve(expected);
+              };
+              stream.on('data', onData);
+            });
+            const waitExit = (child, label, timeoutMs = 10000) => new Promise((resolve, reject) => {
+              const timer = setTimeout(() => reject(new Error(`timeout waiting for ${label}`)), timeoutMs);
+              child.once('exit', (exitCode, signal) => {
+                clearTimeout(timer);
+                resolve({ exitCode, signal });
+              });
+              child.once('error', (error) => {
+                clearTimeout(timer);
+                reject(error);
+              });
+            });
+
             try {
-              hostProcess = spawnAbruptHost(
-                pagesUrl,
-                { ...baseHandshake, role: 'host', clientId: hostId, authToken: '' },
-                guestId,
-                authToken,
-                code,
-              );
-              const hostOpened = waitForChildLine(hostProcess.stdout, 'HOST_OPEN', 'abrupt host open');
-              const acceptSent = waitForChildLine(hostProcess.stdout, 'ACCEPT_SENT', 'abrupt host accept');
+              const hostUrl = String(publicSocketUrl(pagesUrl, { ...baseHandshake, role: 'host', clientId: hostId, authToken: '' }));
+              const childScript = `
+                const ws = new WebSocket(process.env.GR_HOST_URL);
+                ws.addEventListener('open', () => process.stdout.write('HOST_OPEN\\n'));
+                ws.addEventListener('message', (event) => {
+                  let value;
+                  try { value = JSON.parse(String(event.data)); } catch { return; }
+                  if (value?.wire !== process.env.GR_WIRE
+                      || value?.payload?.type !== process.env.GR_PRESENCE
+                      || value.payload.clientId !== process.env.GR_GUEST_ID
+                      || value.payload.kind !== 'rejoin') return;
+                  ws.send(JSON.stringify({
+                    wire: process.env.GR_WIRE,
+                    op: 'data',
+                    payload: {
+                      code: process.env.GR_CODE,
+                      type: 'accept',
+                      to: process.env.GR_GUEST_ID,
+                      authToken: process.env.GR_AUTH,
+                      probe: 'drop-first-accept',
+                    },
+                  }));
+                  process.stdout.write('ACCEPT_SENT\\n');
+                });
+                ws.addEventListener('error', () => process.stderr.write('HOST_SOCKET_ERROR\\n'));
+                setInterval(() => {}, 1000);
+              `;
+              hostProcess = spawn(process.execPath, ['--input-type=module', '-e', childScript], {
+                stdio: ['ignore', 'pipe', 'pipe'],
+                env: {
+                  ...process.env,
+                  GR_HOST_URL: hostUrl,
+                  GR_WIRE: WS_WIRE,
+                  GR_PRESENCE: TRANSPORT_PRESENCE_TYPE,
+                  GR_GUEST_ID: guestId,
+                  GR_CODE: code,
+                  GR_AUTH: authToken,
+                },
+              });
+              const hostOpened = waitLine(hostProcess.stdout, 'HOST_OPEN', 'abrupt host open');
+              const acceptSent = waitLine(hostProcess.stdout, 'ACCEPT_SENT', 'abrupt host accept');
               await hostOpened;
 
               const guestPeer = await openProbeSocket(
@@ -159,7 +117,6 @@ jobs:
                 'drop-first guest',
               );
               guestSocket = guestPeer.ws;
-
               const accept = await guestPeer.inbox.waitFor(
                 (value) => value?.wire === WS_WIRE && value?.payload?.type === 'accept' && value.payload.to === guestId,
                 'drop-first accept',
@@ -167,9 +124,9 @@ jobs:
               await acceptSent;
               assert.equal(accept.payload.authToken, authToken);
 
-              const hostExit = waitForChildExit(hostProcess, 'abrupt host exit');
+              const exited = waitExit(hostProcess, 'abrupt host exit');
               assert.equal(hostProcess.kill('SIGKILL'), true);
-              const killed = await hostExit;
+              const killed = await exited;
               assert.equal(killed.signal, 'SIGKILL');
               await new Promise((resolve) => setTimeout(resolve, 500));
               assert.equal(guestSocket.readyState, WebSocket.OPEN);
@@ -180,16 +137,13 @@ jobs:
                 'drop-first same-id host reconnect',
               );
               reconnectedHostSocket = replacementHost.ws;
-
               guestSocket.send(JSON.stringify({
                 wire: WS_WIRE,
                 op: 'data',
                 payload: { code, type: 'join', clientId: guestId, authToken, seq: 1, probe: 'guest-after-drop-first-host' },
               }));
               const guestAfterReconnect = await replacementHost.inbox.waitFor(
-                (value) => value?.wire === WS_WIRE
-                  && value?.payload?.type === 'join'
-                  && value.payload.probe === 'guest-after-drop-first-host',
+                (value) => value?.wire === WS_WIRE && value?.payload?.type === 'join' && value.payload.probe === 'guest-after-drop-first-host',
                 'guest route after drop-first host reconnect',
               );
               assert.equal(guestAfterReconnect.payload.clientId, guestId);
@@ -201,9 +155,7 @@ jobs:
                 payload: { code, type: 'lobby', to: guestId, probe: 'host-after-drop-first-reconnect' },
               }));
               const hostAfterReconnect = await guestPeer.inbox.waitFor(
-                (value) => value?.wire === WS_WIRE
-                  && value?.payload?.type === 'lobby'
-                  && value.payload.probe === 'host-after-drop-first-reconnect',
+                (value) => value?.wire === WS_WIRE && value?.payload?.type === 'lobby' && value.payload.probe === 'host-after-drop-first-reconnect',
                 'host route to surviving guest after drop-first reconnect',
               );
               assert.equal(hostAfterReconnect.payload.to, guestId);
@@ -221,18 +173,16 @@ jobs:
 
           '''
           replacement = '\n'.join(line[10:] if line.startswith('          ') else line for line in replacement.splitlines())
-          text = text[:start] + replacement + text[end:]
-          path.write_text(text)
-
-          workflow = Path('.github/workflows/publichost-r35-abrupt-patch.yml')
-          workflow.unlink()
+          s = s[:start] + replacement + s[end:]
+          p.write_text(s)
+          Path('.github/workflows/publichost-r35-abrupt-patch.yml').unlink()
       - name: Focused finite relay tests
         run: node --test deploy/cloudflare/tests/relay-core.test.mjs
       - name: Commit durable test-only fix
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add deploy/cloudflare/tests/relay-core.test.mjs .github/workflows/publichost-r35-abrupt-patch.yml
+          git add -A
           git diff --cached --check
           git commit -m "PublicHost R35: prove abrupt host process loss"
           git push origin HEAD:work/publichost-r35-abrupt-drop-probe

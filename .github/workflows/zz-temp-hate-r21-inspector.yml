@@ -1,74 +1,155 @@
-name: TEMP R21 HATE1000 bounded source inspector
+name: TEMP R22 HATE1000 bounded presentation mount
 
 on:
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  inspect-hate1000-source:
+  mount-hate1000-presentation:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
           ref: work/hate-r21-actual-mount-20260822
           fetch-depth: 2
-      - name: Exact-base and blob guard
+      - name: Exact current-main and branch-scope guard
         shell: bash
         env:
-          EXPECTED_BASE: 52b134547c043c9c70af16ee8eed9ad395a56f6f
-          EXPECTED_HTML_BLOB: 659fe7ab32af2ffa254be176561aa652dfe174c8
+          EXPECTED_MAIN: 4c30486c3a39433da2b2c31a0d549cb1bda3b888
+          EXPECTED_HTML_BLOB: 12839c58646f849f0ad4470695c391bfb07b1174
         run: |
           set -euo pipefail
+          BRANCH_HEAD="$(git rev-parse HEAD)"
+          echo "BRANCH_HEAD=$BRANCH_HEAD" >> "$GITHUB_ENV"
           git fetch origin main --depth=1
-          test "$(git rev-parse origin/main)" = "$EXPECTED_BASE"
-          test "$(git hash-object browser/GAMEROAD.html)" = "$EXPECTED_HTML_BLOB"
-      - name: Extract bounded HATE anchors
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          test "$(git rev-parse HEAD:browser/GAMEROAD.html)" != "" 
+          test "$(git rev-parse origin/main:browser/GAMEROAD.html)" = "$EXPECTED_HTML_BLOB"
+          mapfile -t changed < <(git diff --name-only origin/main...HEAD)
+          for path in "${changed[@]}"; do
+            case "$path" in
+              .github/workflows/zz-temp-hate-r21-inspector.yml|.tmp-r21-hate-source.json) ;;
+              *) echo "unexpected stale-branch path: $path" >&2; exit 1 ;;
+            esac
+          done
+      - name: Rebase stale artifact to exact current main
         shell: bash
         run: |
+          set -euo pipefail
+          git reset --hard origin/main
+          test "$(git hash-object browser/GAMEROAD.html)" = '12839c58646f849f0ad4470695c391bfb07b1174'
+      - name: Mount existing HATE1000 presentation core at authoritative producer
+        shell: bash
+        run: |
+          set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          import json
-          p=Path('browser/GAMEROAD.html')
-          s=p.read_text(encoding='utf-8')
-          needles=[
-            'friendTickHate',
-            'friendExplode',
-            'friendForcedDecision',
-            'hate-peer-presence-core',
-            'applyHate1000PresentationEvent',
-            'createHate1000PresentationSession',
-            'HATE1000_PRESENTATION'
-          ]
-          out={'htmlBlob':'659fe7ab32af2ffa254be176561aa652dfe174c8','length':len(s),'anchors':{}}
-          for needle in needles:
-            positions=[]
-            start=0
-            while True:
-              i=s.find(needle,start)
-              if i<0: break
-              positions.append(i)
-              start=i+len(needle)
-            snippets=[]
-            for i in positions[:8]:
-              a=max(0,i-2200); b=min(len(s),i+3200)
-              snippets.append({'index':i,'text':s[a:b]})
-            out['anchors'][needle]={'count':len(positions),'positions':positions[:20],'snippets':snippets}
-          Path('.tmp-r21-hate-source.json').write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf-8')
+          p = Path('browser/GAMEROAD.html')
+          s = p.read_text(encoding='utf-8')
+          state_anchor = "const FRIEND_PRESENCE={states:new Map(),corePromise:null,core:null};"
+          call_anchor = "queueMicrotask(()=>friendForcedDecision(p.id,'hate-explosion').catch(e=>{FR.hateBlockers[p.id]=String(e?.message||e);broadcastSnapshots()}));return true}"
+          if s.count(state_anchor) != 1:
+              raise SystemExit(f'FRIEND_PRESENCE anchor drift: {s.count(state_anchor)}')
+          if s.count(call_anchor) != 1:
+              raise SystemExit(f'friendExplode call anchor drift: {s.count(call_anchor)}')
+          presentation = r'''
+const FRIEND_HATE1000_PRESENTATION={sessionId:null,state:null,timer:null};
+function friendHate1000Root(){
+  let root=document.getElementById('hate1000Presentation');
+  if(root)return root;
+  if(!document.getElementById('hate1000PresentationStyle')){
+    const style=document.createElement('style');
+    style.id='hate1000PresentationStyle';
+    style.textContent=`
+#hate1000Presentation{position:fixed;inset:0;z-index:84;display:grid;place-items:center;pointer-events:none;contain:layout style paint}
+#hate1000Presentation[hidden]{display:none}
+#hate1000Presentation .hate1000Burst{position:absolute;width:9rem;height:9rem;border:2px solid rgba(255,112,112,.9);border-radius:50%;box-shadow:0 0 1.8rem rgba(255,78,78,.45),inset 0 0 1.2rem rgba(255,180,112,.18);opacity:.82}
+#hate1000Presentation .hate1000Card{position:relative;min-width:10.5rem;padding:.72rem 1rem .68rem;border:1px solid rgba(255,176,132,.74);border-radius:1rem;background:rgba(31,9,14,.88);box-shadow:0 .8rem 2.2rem rgba(0,0,0,.34),0 0 1.2rem rgba(255,84,84,.24);text-align:center;color:#fff7ef;letter-spacing:.06em}
+#hate1000Presentation .hate1000Kicker{display:block;font-size:.72rem;font-weight:800;color:#ffb098}
+#hate1000Presentation .hate1000Value{display:block;margin-top:.08rem;font-size:1.42rem;font-weight:950;line-height:1}
+#hate1000Presentation .hate1000Meaning{display:block;margin-top:.28rem;font-size:.76rem;font-weight:750;color:#ffe5cf}
+#hate1000Presentation.play .hate1000Burst{animation:hate1000Burst var(--hate1000-duration,480ms) ease-out both}
+#hate1000Presentation.play .hate1000Card{animation:hate1000Card var(--hate1000-duration,480ms) ease-out both}
+#hate1000Presentation.static .hate1000Burst,#hate1000Presentation.static .hate1000Card{animation:none;opacity:1;transform:none}
+@keyframes hate1000Burst{0%{opacity:0;transform:scale(.72)}12.5%{opacity:1;transform:scale(.96)}25%{opacity:.72;transform:scale(1.08)}54%{opacity:.34;transform:scale(1.18)}100%{opacity:0;transform:scale(1.28)}}
+@keyframes hate1000Card{0%{opacity:0;transform:translateY(.5rem) scale(.96)}12.5%{opacity:1;transform:translateY(0) scale(1)}25%{opacity:.96;transform:translateY(0) scale(1)}54%{opacity:.72;transform:translateY(-.06rem) scale(.995)}100%{opacity:0;transform:translateY(-.16rem) scale(.985)}}`;
+    document.head.appendChild(style);
+  }
+  root=document.createElement('div');
+  root.id='hate1000Presentation';
+  root.hidden=true;
+  root.setAttribute('role','status');
+  root.setAttribute('aria-live','polite');
+  root.setAttribute('aria-atomic','true');
+  root.innerHTML='<div class="hate1000Burst" aria-hidden="true"></div><div class="hate1000Card"><span class="hate1000Kicker">HATE LIMIT</span><strong class="hate1000Value">HATE 1000</strong><span class="hate1000Meaning">強制委任</span></div>';
+  (document.getElementById('battle')||document.body).appendChild(root);
+  return root;
+}
+function friendHate1000Preferences(){
+  const reduced=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return{reducedMotion:!!reduced,animationEnabled:true};
+}
+async function friendPresentHate1000(p){
+  const sessionId=String(state.match?.id||'');
+  if(!p||!sessionId)return false;
+  const core=await friendPresenceCore();
+  if(FRIEND_HATE1000_PRESENTATION.sessionId!==sessionId||!FRIEND_HATE1000_PRESENTATION.state){
+    FRIEND_HATE1000_PRESENTATION.sessionId=sessionId;
+    FRIEND_HATE1000_PRESENTATION.state=core.createHate1000PresentationSession({sessionId});
+  }
+  const eventId=`${sessionId}:${String(p.id||'unknown')}:hate1000`;
+  const applied=core.applyHate1000PresentationEvent(FRIEND_HATE1000_PRESENTATION.state,{sessionId,eventId,kind:core.HATE1000_PRESENTATION_MOTION_CORE.kind,authorized:p.hateExploded===true&&Number(p.hateTime)>=1000},friendHate1000Preferences());
+  if(applied?.state)FRIEND_HATE1000_PRESENTATION.state=applied.state;
+  if(!applied?.accepted||applied.duplicate||!applied.plan)return false;
+  const root=friendHate1000Root();
+  clearTimeout(FRIEND_HATE1000_PRESENTATION.timer);
+  root.hidden=false;
+  root.classList.remove('play','static');
+  const duration=Number(applied.plan.motion?.durationMs||core.HATE1000_PRESENTATION_MOTION_CORE.timing.durationMs)||480;
+  root.style.setProperty('--hate1000-duration',`${duration}ms`);
+  void root.offsetWidth;
+  root.classList.add(applied.plan.mode==='motion'?'play':'static');
+  FRIEND_HATE1000_PRESENTATION.timer=setTimeout(()=>{root.hidden=true;root.classList.remove('play','static')},duration);
+  return true;
+}
+'''.strip('\n')
+          s = s.replace(state_anchor, state_anchor + '\n' + presentation, 1)
+          s = s.replace(call_anchor, "queueMicrotask(()=>friendPresentHate1000(p).catch(()=>{}));" + call_anchor, 1)
+          p.write_text(s, encoding='utf-8')
+          out = p.read_text(encoding='utf-8')
+          checks = {
+            'presentation_state': 'const FRIEND_HATE1000_PRESENTATION=' in out,
+            'core_session': 'createHate1000PresentationSession({sessionId})' in out,
+            'core_apply': 'applyHate1000PresentationEvent' in out,
+            'producer_mount': "friendPresentHate1000(p).catch(()=>{})" in out,
+            'threshold_preserved': 'if(before<1000&&p.hateTime===1000)changed=friendExplode(p)||changed' in out,
+            'delegation_preserved': "friendForcedDecision(p.id,'hate-explosion')" in out,
+            'reduced_motion': "prefers-reduced-motion: reduce" in out,
+            'one_mount': out.count('async function friendPresentHate1000(p)') == 1,
+          }
+          bad=[k for k,v in checks.items() if not v]
+          if bad: raise SystemExit('contract check failed: '+','.join(bad))
           PY
-      - name: Commit bounded diagnostic once
+      - name: Existing HATE core regression and bounded diff
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- .tmp-r21-hate-source.json && git ls-files --error-unmatch .tmp-r21-hate-source.json >/dev/null 2>&1; then
-            exit 0
-          fi
-          git config user.name 'gameroad-r21-executor'
+          node --test tests/hate-peer-presence-core.test.mjs
+          test "$(git diff --name-only)" = 'browser/GAMEROAD.html'
+          git diff --check
+          git diff --stat
+      - name: Commit durable product delta and remove temporary executor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-r22-executor'
           git config user.email 'actions@users.noreply.github.com'
-          git add .tmp-r21-hate-source.json
-          test "$(git diff --cached --name-only)" = '.tmp-r21-hate-source.json'
-          git commit -m 'HATE R21: capture bounded current source anchors'
-          git push origin HEAD:work/hate-r21-actual-mount-20260822
+          git add browser/GAMEROAD.html
+          test "$(git diff --cached --name-only)" = 'browser/GAMEROAD.html'
+          git commit -m 'HATE R22: mount one-shot HATE1000 Battle presentation'
+          git push --force-with-lease=refs/heads/work/hate-r21-actual-mount-20260822:$BRANCH_HEAD origin HEAD:work/hate-r21-actual-mount-20260822

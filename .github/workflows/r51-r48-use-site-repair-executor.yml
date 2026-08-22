@@ -1,0 +1,205 @@
+name: R51 R48 Current Home Use-Site Repair Executor
+
+on:
+  push:
+    branches:
+      - work/BROWSERUI-R51-R48-USESITE-REPAIR
+    paths:
+      - '.github/workflows/r51-r48-use-site-repair-executor.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply-verify-clean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: work/BROWSERUI-R51-R48-USESITE-REPAIR
+          fetch-depth: 0
+
+      - name: Guard exact baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "4c30486c3a39433da2b2c31a0d549cb1bda3b888" || {
+            echo "Unexpected baseline parent" >&2
+            git log --oneline -3
+            exit 1
+          }
+          test "$(git diff --name-only HEAD^ HEAD)" = ".github/workflows/r51-r48-use-site-repair-executor.yml" || {
+            echo "Unexpected pre-executor delta" >&2
+            git diff --name-only HEAD^ HEAD
+            exit 1
+          }
+
+      - name: Apply R48 presentation intent to current Home use-site
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp browser/GAMEROAD.html browser/GAMEROAD.r51-baseline.html
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('browser/GAMEROAD.html')
+          s=p.read_text(encoding='utf-8')
+          if 'UI_PRO_MAX_R51_CURRENT_USE_SITE_BEGIN' in s:
+              raise SystemExit('R51 marker already present')
+          marker='</style>\n<!-- UI_PRO_MAX_R48_END -->'
+          if s.count(marker) != 1:
+              raise SystemExit(f'expected exactly one R48 close marker, got {s.count(marker)}')
+          css=r'''
+/* UI_PRO_MAX_R51_CURRENT_USE_SITE_BEGIN
+   R48 presentation-only hierarchy mapped to the current codexHome DOM.
+   No layout ownership, destinations, state, save/network, game rules or hit targets. */
+html.grCodexHomeActive .home.codexHome{
+  background:
+    radial-gradient(ellipse at 24% 22%,rgba(67,180,137,.22) 0,rgba(67,180,137,0) 42%),
+    radial-gradient(ellipse at 76% 15%,rgba(116,224,204,.10) 0,rgba(116,224,204,0) 36%),
+    linear-gradient(138deg,#061712 0%,#0a2a21 44%,#05110e 100%);
+}
+html.grCodexHomeActive .codexHomeCenterStage{
+  border-color:rgba(185,240,220,.34);
+  background:linear-gradient(156deg,#10352b,#0a241e 48%,#061713);
+  box-shadow:inset 0 1px rgba(224,255,244,.08),0 20px 60px rgba(0,0,0,.32);
+}
+html.grCodexHomeActive .codexCenterEyebrow{
+  color:#aef6df;
+  letter-spacing:.16em;
+}
+html.grCodexHomeActive .codexCenterTitle{
+  color:#ffe3a2;
+  text-shadow:0 5px 24px rgba(0,0,0,.42);
+}
+html.grCodexHomeActive .codexCenterSub{color:#c5ded5;}
+html.grCodexHomeActive .codexHomeVisualLayer{
+  background:
+    radial-gradient(circle at 28% 20%,rgba(166,239,214,.14),transparent 36%),
+    linear-gradient(155deg,rgba(39,101,81,.46),rgba(18,58,48,.66) 48%,rgba(7,27,23,.90));
+  box-shadow:inset 0 0 0 1px rgba(171,236,214,.16),inset 0 -38px 70px rgba(0,0,0,.16);
+}
+html.grCodexHomeActive .codexHaloOuter{background:#5ac19f;opacity:.12;}
+html.grCodexHomeActive .codexHaloInner{background:#d0ab64;opacity:.09;}
+html.grCodexHomeActive .codexWireCard{
+  border-color:rgba(185,240,220,.26);
+  box-shadow:inset 3px 0 rgba(137,227,197,.14),0 10px 28px rgba(0,0,0,.22);
+}
+html.grCodexHomeActive .codexSeasonCard{
+  background:linear-gradient(145deg,#315d4e,#132b24);
+}
+html.grCodexHomeActive .codexMissionCard{
+  background:linear-gradient(145deg,#275f50,#102923);
+}
+html.grCodexHomeActive .codexHomeSettings{
+  border:1px solid rgba(181,235,215,.25);
+  background:linear-gradient(100deg,#1e5f50,#123b32);
+  box-shadow:0 8px 20px rgba(0,0,0,.16);
+}
+html.grCodexHomeActive .codexBattleCrest{
+  background:linear-gradient(156deg,#496c58,#243a30);
+  color:#eefbf6;
+  box-shadow:inset 0 0 0 1px rgba(239,210,145,.24),0 12px 28px rgba(0,0,0,.18);
+}
+html.grCodexHomeActive .codexBattleCrest strong{color:#ffe3a2;}
+html.grCodexHomeActive .codexPartnerChip{
+  border:1px solid rgba(173,231,211,.30);
+  background:linear-gradient(105deg,#235b4c,#173c33);
+  box-shadow:0 10px 24px rgba(0,0,0,.20);
+}
+html.grCodexHomeActive .codexBattleCta{
+  color:#fff9e8;
+  border-color:rgba(236,205,137,.72);
+  background:linear-gradient(105deg,#1c5c48,#0a2e25);
+  box-shadow:inset 4px 0 rgba(237,206,139,.66),0 14px 30px rgba(0,0,0,.28);
+}
+html.grCodexHomeActive .codexPartnerChip:hover,
+html.grCodexHomeActive .codexPartnerChip:focus-visible,
+html.grCodexHomeActive .codexBattleCta:hover,
+html.grCodexHomeActive .codexBattleCta:focus-visible,
+html.grCodexHomeActive .codexHomeSettings:hover,
+html.grCodexHomeActive .codexHomeSettings:focus-visible{
+  outline:3px solid #d5fff1;
+  outline-offset:3px;
+}
+/* UI_PRO_MAX_R51_CURRENT_USE_SITE_END */
+'''
+          s=s.replace(marker,css+'\n'+marker)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git diff --check -- browser/GAMEROAD.html
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install focused visual verifier
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+
+      - name: Verify current Home visual delta across target viewports
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 >/tmp/r51-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID || true' EXIT
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:4173/browser/GAMEROAD.html >/dev/null && break
+            sleep 1
+          done
+          cat > r51-visual-check.mjs <<'EOF'
+          import { chromium } from '@playwright/test';
+          import crypto from 'node:crypto';
+          import fs from 'node:fs';
+          const cases=[
+            {name:'desktop',w:1280,h:720},
+            {name:'phone',w:390,h:844},
+            {name:'short-landscape',w:667,h:375},
+          ];
+          const browser=await chromium.launch({headless:true});
+          const out=[];
+          for(const c of cases){
+            const page=await browser.newPage({viewport:{width:c.w,height:c.h}});
+            const errors=[]; page.on('pageerror',e=>errors.push(String(e)));
+            const baseUrl='http://127.0.0.1:4173/browser/GAMEROAD.r51-baseline.html';
+            const patchUrl='http://127.0.0.1:4173/browser/GAMEROAD.html';
+            await page.goto(baseUrl,{waitUntil:'domcontentloaded'}); await page.waitForTimeout(700);
+            const before=await page.screenshot();
+            await page.goto(patchUrl,{waitUntil:'domcontentloaded'}); await page.waitForTimeout(700);
+            const after=await page.screenshot({path:`r51-${c.name}.png`});
+            const snap=await page.evaluate(()=>{
+              const get=(sel)=>{const e=document.querySelector(sel);if(!e)return null;const s=getComputedStyle(e),r=e.getBoundingClientRect();return{background:s.background,color:s.color,border:s.border,boxShadow:s.boxShadow,rect:{x:r.x,y:r.y,w:r.width,h:r.height}}};
+              return {gate:document.documentElement.classList.contains('grCodexHomeActive'),stage:get('.codexHomeCenterStage'),title:get('.codexCenterTitle'),cta:get('.codexBattleCta'),screen:document.querySelector('.screen.home.codexHome.active')?.className||null};
+            });
+            const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+            const item={...c,beforeSha:sha(before),afterSha:sha(after),different:!before.equals(after),errors,snap};
+            console.log(JSON.stringify(item)); out.push(item);
+            await page.close();
+          }
+          fs.writeFileSync('r51-visual-evidence.json',JSON.stringify(out,null,2));
+          await browser.close();
+          if(out.some(x=>!x.different||x.errors.length||!x.snap.gate||!x.snap.stage||!x.snap.title)) process.exit(1);
+          EOF
+          node r51-visual-check.mjs
+
+      - name: Commit only product HTML and remove temporary executor
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f browser/GAMEROAD.r51-baseline.html r51-visual-check.mjs r51-*.png r51-visual-evidence.json
+          git rm .github/workflows/r51-r48-use-site-repair-executor.yml
+          test "$(git diff --name-only)" = $'.github/workflows/r51-r48-use-site-repair-executor.yml\nbrowser/GAMEROAD.html' || {
+            echo "Unexpected final delta" >&2
+            git diff --name-only
+            exit 1
+          }
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/GAMEROAD.html
+          git commit -m 'R51: map R48 visual hierarchy to current Home use-site'
+          git push origin HEAD:work/BROWSERUI-R51-R48-USESITE-REPAIR

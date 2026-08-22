@@ -74,7 +74,7 @@ jobs:
     timeout-minutes: 30
     env:
       GAMEROAD_PUBLIC_BASE_URL: https://gameroad-browser-r5.pages.dev
-      EXPECTED_BUILD_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
+      EXPECTED_BUILD_ID: aaae02cdd2d285032c54dd92ed4f37e09cc39847
     steps:
       - name: Checkout source under evidence
         uses: actions/checkout@v4
@@ -116,7 +116,7 @@ jobs:
       - name: Install Chromium and OS dependencies
         run: npx playwright install --with-deps chromium
 
-      - name: Prepare bounded public-origin R19 runner
+      - name: Prepare bounded public-origin R39 runner
         shell: bash
         run: |
           set -euo pipefail
@@ -144,7 +144,7 @@ jobs:
           export default defineConfig({
             testDir: '.',
             testMatch: 'browser-full-interaction.spec.mjs',
-            grep: /R19 reaches Result from visible four-player Honey Hunt and returns Home/,
+            grep: /persists a legal 40-card deck across save and page reload through visible UI/,
             timeout: 240_000,
             expect: { timeout: 7_000 },
             fullyParallel: false,
@@ -167,7 +167,7 @@ jobs:
           });
           EOF
 
-      - name: Run visible four-player Honey Hunt on public origin
+      - name: Run visible Deck save and reload on public origin
         run: npx playwright test --config=.r37-public/playwright.config.mjs --workers=1
 
       - name: Record public-origin evidence binding

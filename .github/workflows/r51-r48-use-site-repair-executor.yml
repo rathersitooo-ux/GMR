@@ -6,7 +6,16 @@ on:
       - work/BROWSERUI-R51-R48-USESITE-REPAIR
     paths:
       - '.github/workflows/r51-r48-use-site-repair-executor.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/r51-r48-use-site-repair-executor.yml'
   workflow_dispatch:
+
+concurrency:
+  group: r51-r48-current-home-use-site-repair
+  cancel-in-progress: true
 
 permissions:
   contents: write
@@ -66,14 +75,8 @@ html.grCodexHomeActive .codexHomeCenterStage{
   background:linear-gradient(156deg,#10352b,#0a241e 48%,#061713);
   box-shadow:inset 0 1px rgba(224,255,244,.08),0 20px 60px rgba(0,0,0,.32);
 }
-html.grCodexHomeActive .codexCenterEyebrow{
-  color:#aef6df;
-  letter-spacing:.16em;
-}
-html.grCodexHomeActive .codexCenterTitle{
-  color:#ffe3a2;
-  text-shadow:0 5px 24px rgba(0,0,0,.42);
-}
+html.grCodexHomeActive .codexCenterEyebrow{color:#aef6df;letter-spacing:.16em;}
+html.grCodexHomeActive .codexCenterTitle{color:#ffe3a2;text-shadow:0 5px 24px rgba(0,0,0,.42);}
 html.grCodexHomeActive .codexCenterSub{color:#c5ded5;}
 html.grCodexHomeActive .codexHomeVisualLayer{
   background:
@@ -83,47 +86,20 @@ html.grCodexHomeActive .codexHomeVisualLayer{
 }
 html.grCodexHomeActive .codexHaloOuter{background:#5ac19f;opacity:.12;}
 html.grCodexHomeActive .codexHaloInner{background:#d0ab64;opacity:.09;}
-html.grCodexHomeActive .codexWireCard{
-  border-color:rgba(185,240,220,.26);
-  box-shadow:inset 3px 0 rgba(137,227,197,.14),0 10px 28px rgba(0,0,0,.22);
-}
-html.grCodexHomeActive .codexSeasonCard{
-  background:linear-gradient(145deg,#315d4e,#132b24);
-}
-html.grCodexHomeActive .codexMissionCard{
-  background:linear-gradient(145deg,#275f50,#102923);
-}
-html.grCodexHomeActive .codexHomeSettings{
-  border:1px solid rgba(181,235,215,.25);
-  background:linear-gradient(100deg,#1e5f50,#123b32);
-  box-shadow:0 8px 20px rgba(0,0,0,.16);
-}
-html.grCodexHomeActive .codexBattleCrest{
-  background:linear-gradient(156deg,#496c58,#243a30);
-  color:#eefbf6;
-  box-shadow:inset 0 0 0 1px rgba(239,210,145,.24),0 12px 28px rgba(0,0,0,.18);
-}
+html.grCodexHomeActive .codexWireCard{border-color:rgba(185,240,220,.26);box-shadow:inset 3px 0 rgba(137,227,197,.14),0 10px 28px rgba(0,0,0,.22);}
+html.grCodexHomeActive .codexSeasonCard{background:linear-gradient(145deg,#315d4e,#132b24);}
+html.grCodexHomeActive .codexMissionCard{background:linear-gradient(145deg,#275f50,#102923);}
+html.grCodexHomeActive .codexHomeSettings{border:1px solid rgba(181,235,215,.25);background:linear-gradient(100deg,#1e5f50,#123b32);box-shadow:0 8px 20px rgba(0,0,0,.16);}
+html.grCodexHomeActive .codexBattleCrest{background:linear-gradient(156deg,#496c58,#243a30);color:#eefbf6;box-shadow:inset 0 0 0 1px rgba(239,210,145,.24),0 12px 28px rgba(0,0,0,.18);}
 html.grCodexHomeActive .codexBattleCrest strong{color:#ffe3a2;}
-html.grCodexHomeActive .codexPartnerChip{
-  border:1px solid rgba(173,231,211,.30);
-  background:linear-gradient(105deg,#235b4c,#173c33);
-  box-shadow:0 10px 24px rgba(0,0,0,.20);
-}
-html.grCodexHomeActive .codexBattleCta{
-  color:#fff9e8;
-  border-color:rgba(236,205,137,.72);
-  background:linear-gradient(105deg,#1c5c48,#0a2e25);
-  box-shadow:inset 4px 0 rgba(237,206,139,.66),0 14px 30px rgba(0,0,0,.28);
-}
+html.grCodexHomeActive .codexPartnerChip{border:1px solid rgba(173,231,211,.30);background:linear-gradient(105deg,#235b4c,#173c33);box-shadow:0 10px 24px rgba(0,0,0,.20);}
+html.grCodexHomeActive .codexBattleCta{color:#fff9e8;border-color:rgba(236,205,137,.72);background:linear-gradient(105deg,#1c5c48,#0a2e25);box-shadow:inset 4px 0 rgba(237,206,139,.66),0 14px 30px rgba(0,0,0,.28);}
 html.grCodexHomeActive .codexPartnerChip:hover,
 html.grCodexHomeActive .codexPartnerChip:focus-visible,
 html.grCodexHomeActive .codexBattleCta:hover,
 html.grCodexHomeActive .codexBattleCta:focus-visible,
 html.grCodexHomeActive .codexHomeSettings:hover,
-html.grCodexHomeActive .codexHomeSettings:focus-visible{
-  outline:3px solid #d5fff1;
-  outline-offset:3px;
-}
+html.grCodexHomeActive .codexHomeSettings:focus-visible{outline:3px solid #d5fff1;outline-offset:3px;}
 /* UI_PRO_MAX_R51_CURRENT_USE_SITE_END */
 '''
           s=s.replace(marker,css+'\n'+marker)
@@ -156,34 +132,16 @@ html.grCodexHomeActive .codexHomeSettings:focus-visible{
           import { chromium } from '@playwright/test';
           import crypto from 'node:crypto';
           import fs from 'node:fs';
-          const cases=[
-            {name:'desktop',w:1280,h:720},
-            {name:'phone',w:390,h:844},
-            {name:'short-landscape',w:667,h:375},
-          ];
-          const browser=await chromium.launch({headless:true});
-          const out=[];
+          const cases=[{name:'desktop',w:1280,h:720},{name:'phone',w:390,h:844},{name:'short-landscape',w:667,h:375}];
+          const browser=await chromium.launch({headless:true}); const out=[];
           for(const c of cases){
-            const page=await browser.newPage({viewport:{width:c.w,height:c.h}});
-            const errors=[]; page.on('pageerror',e=>errors.push(String(e)));
-            const baseUrl='http://127.0.0.1:4173/browser/GAMEROAD.r51-baseline.html';
-            const patchUrl='http://127.0.0.1:4173/browser/GAMEROAD.html';
-            await page.goto(baseUrl,{waitUntil:'domcontentloaded'}); await page.waitForTimeout(700);
-            const before=await page.screenshot();
-            await page.goto(patchUrl,{waitUntil:'domcontentloaded'}); await page.waitForTimeout(700);
-            const after=await page.screenshot({path:`r51-${c.name}.png`});
-            const snap=await page.evaluate(()=>{
-              const get=(sel)=>{const e=document.querySelector(sel);if(!e)return null;const s=getComputedStyle(e),r=e.getBoundingClientRect();return{background:s.background,color:s.color,border:s.border,boxShadow:s.boxShadow,rect:{x:r.x,y:r.y,w:r.width,h:r.height}}};
-              return {gate:document.documentElement.classList.contains('grCodexHomeActive'),stage:get('.codexHomeCenterStage'),title:get('.codexCenterTitle'),cta:get('.codexBattleCta'),screen:document.querySelector('.screen.home.codexHome.active')?.className||null};
-            });
-            const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
-            const item={...c,beforeSha:sha(before),afterSha:sha(after),different:!before.equals(after),errors,snap};
-            console.log(JSON.stringify(item)); out.push(item);
-            await page.close();
+            const page=await browser.newPage({viewport:{width:c.w,height:c.h}}); const errors=[]; page.on('pageerror',e=>errors.push(String(e)));
+            await page.goto('http://127.0.0.1:4173/browser/GAMEROAD.r51-baseline.html',{waitUntil:'domcontentloaded'}); await page.waitForTimeout(700); const before=await page.screenshot();
+            await page.goto('http://127.0.0.1:4173/browser/GAMEROAD.html',{waitUntil:'domcontentloaded'}); await page.waitForTimeout(700); const after=await page.screenshot({path:`r51-${c.name}.png`});
+            const snap=await page.evaluate(()=>{const get=(sel)=>{const e=document.querySelector(sel);if(!e)return null;const s=getComputedStyle(e),r=e.getBoundingClientRect();return{background:s.background,color:s.color,border:s.border,boxShadow:s.boxShadow,rect:{x:r.x,y:r.y,w:r.width,h:r.height}}};return{gate:document.documentElement.classList.contains('grCodexHomeActive'),stage:get('.codexHomeCenterStage'),title:get('.codexCenterTitle'),cta:get('.codexBattleCta'),screen:document.querySelector('.screen.home.codexHome.active')?.className||null};});
+            const sha=b=>crypto.createHash('sha256').update(b).digest('hex'); const item={...c,beforeSha:sha(before),afterSha:sha(after),different:!before.equals(after),errors,snap}; console.log(JSON.stringify(item)); out.push(item); await page.close();
           }
-          fs.writeFileSync('r51-visual-evidence.json',JSON.stringify(out,null,2));
-          await browser.close();
-          if(out.some(x=>!x.different||x.errors.length||!x.snap.gate||!x.snap.stage||!x.snap.title)) process.exit(1);
+          fs.writeFileSync('r51-visual-evidence.json',JSON.stringify(out,null,2)); await browser.close(); if(out.some(x=>!x.different||x.errors.length||!x.snap.gate||!x.snap.stage||!x.snap.title)) process.exit(1);
           EOF
           node r51-visual-check.mjs
 
@@ -193,11 +151,7 @@ html.grCodexHomeActive .codexHomeSettings:focus-visible{
           set -euo pipefail
           rm -f browser/GAMEROAD.r51-baseline.html r51-visual-check.mjs r51-*.png r51-visual-evidence.json
           git rm .github/workflows/r51-r48-use-site-repair-executor.yml
-          test "$(git diff --name-only)" = $'.github/workflows/r51-r48-use-site-repair-executor.yml\nbrowser/GAMEROAD.html' || {
-            echo "Unexpected final delta" >&2
-            git diff --name-only
-            exit 1
-          }
+          test "$(git diff --name-only)" = $'.github/workflows/r51-r48-use-site-repair-executor.yml\nbrowser/GAMEROAD.html' || { echo "Unexpected final delta" >&2; git diff --name-only; exit 1; }
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add browser/GAMEROAD.html

@@ -99,6 +99,11 @@ jobs:
               const c=getComputedStyle(el); const r=el.getBoundingClientRect();
               return {selector:sel, classes:el.className, display:c.display, visibility:c.visibility, opacity:c.opacity, color:c.color, background:c.background, boxShadow:c.boxShadow, outline:c.outline, border:c.border, rect:{x:r.x,y:r.y,width:r.width,height:r.height}};
             };
+            const visibleElements=[...document.querySelectorAll('body *')].map((el) => {
+              const c=getComputedStyle(el); const r=el.getBoundingClientRect();
+              if(c.display==='none'||c.visibility==='hidden'||Number(c.opacity)===0||r.width<1||r.height<1) return null;
+              return {tag:el.tagName.toLowerCase(),id:el.id||'',classes:typeof el.className==='string'?el.className:'',text:(el.innerText||el.textContent||'').trim().replace(/\s+/g,' ').slice(0,180),rect:{x:Math.round(r.x),y:Math.round(r.y),width:Math.round(r.width),height:Math.round(r.height)}};
+            }).filter(Boolean).slice(0,300);
             return {
               url: location.href,
               htmlClass: document.documentElement.className,
@@ -114,10 +119,12 @@ jobs:
               homeCopy: snap('.homeCopy'),
               homeCmdMain: snap('.homeCmd.main'),
               htmlHasGate: document.documentElement.classList.contains('grCodexHomeActive'),
+              visibleElements,
             };
           });
           result.pageErrors=errors;
           fs.writeFileSync('r48-activation-evidence/runtime.json', JSON.stringify(result,null,2));
+          fs.writeFileSync('r48-activation-evidence/dom.html', await page.content());
           await page.screenshot({path:'r48-activation-evidence/home-1280x720.png',fullPage:true});
           console.log(JSON.stringify(result,null,2));
           await browser.close();

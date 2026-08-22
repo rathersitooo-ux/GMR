@@ -279,3 +279,78 @@ test('R19R2 mounts accepted replay rows on the production Result surface', async
 
   runtime.assertClean(testInfo);
 });
+
+const IMAGEPIPE_STORAGE_KEY = 'gameroad.browser.v10.core.1';
+const IMAGEPIPE_CANDIDATE_MARKER = 'data-r16-art-candidate';
+
+function imagepipeCandidateDataUrl() {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 840"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#111827"/><stop offset="0.5" stop-color="#2563eb"/><stop offset="1" stop-color="#7c3aed"/></linearGradient><pattern id="p" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M0 48L48 0M-12 12L12-12M36 60L60 36" stroke="#ffffff" stroke-opacity="0.18" stroke-width="8"/></pattern></defs><rect width="600" height="840" rx="42" fill="url(#g)"/><rect width="600" height="840" rx="42" fill="url(#p)"/><circle cx="300" cy="330" r="150" fill="none" stroke="#ffffff" stroke-width="22" stroke-opacity="0.85"/><path d="M300 170L355 305L500 330L390 425L420 575L300 505L180 575L210 425L100 330L245 305Z" fill="#ffffff" fill-opacity="0.8"/><text x="300" y="690" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="62" font-weight="700">R16</text><text x="300" y="752" text-anchor="middle" fill="#ffffff" font-family="sans-serif" font-size="32">CANDIDATE ART</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+async function attachImagepipeScreenshot(page, testInfo, name) {
+  const png = await page.screenshot({ fullPage: true, animations: 'disabled' });
+  await testInfo.attach(`${testInfo.project.name}-${name}.png`, { body: png, contentType: 'image/png' });
+}
+
+async function enterCardsFromHome(page) {
+  const cardsControl = rootGo(page, 'cards');
+  await expect(cardsControl).toBeVisible();
+  await cardsControl.click();
+  const cards = page.locator('section[data-screen="cards"]');
+  await expect(cards).toBeVisible();
+  await page.waitForTimeout(250);
+  return cards;
+}
+
+test('R16 practices a preformal art candidate in the actual Cards use-site without persistence', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'phone-touch-390x844', 'covered by the three formal non-touch viewports');
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+  let cards = await enterCardsFromHome(page);
+  const target = cards.locator('#collectionGrid button.slot.live.cardFace[data-id]:visible').first();
+  await expect(target, 'actual current Cards use-site contains a visible card').toBeVisible();
+  const targetCardId = await target.getAttribute('data-id');
+  expect(targetCardId, 'candidate injection target has canonical card id').toBeTruthy();
+
+  await attachImagepipeScreenshot(page, testInfo, 'imagepipe-baseline-cards');
+  const storedBefore = await page.evaluate((key) => localStorage.getItem(key), IMAGEPIPE_STORAGE_KEY);
+
+  const injected = await target.evaluate((node, payload) => {
+    if (getComputedStyle(node).position === 'static') node.style.position = 'relative';
+    const img = document.createElement('img');
+    img.setAttribute(payload.marker, 'true');
+    img.setAttribute('aria-hidden', 'true');
+    img.alt = '';
+    img.src = payload.dataUrl;
+    Object.assign(img.style, {
+      position: 'absolute', inset: '0', width: '100%', height: '100%', objectFit: 'cover',
+      borderRadius: 'inherit', zIndex: '50', pointerEvents: 'none',
+    });
+    node.appendChild(img);
+    return { cardId: node.getAttribute('data-id'), marker: img.getAttribute(payload.marker), source: img.src.slice(0, 64) };
+  }, { marker: IMAGEPIPE_CANDIDATE_MARKER, dataUrl: imagepipeCandidateDataUrl() });
+
+  expect(injected.cardId).toBe(targetCardId);
+  expect(injected.marker).toBe('true');
+  expect(injected.source).toContain('data:image/svg+xml');
+  await expect(target.locator(`[${IMAGEPIPE_CANDIDATE_MARKER}="true"]`)).toBeVisible();
+  await attachImagepipeScreenshot(page, testInfo, 'imagepipe-candidate-cards');
+
+  const storedAfter = await page.evaluate((key) => localStorage.getItem(key), IMAGEPIPE_STORAGE_KEY);
+  expect(storedAfter, 'candidate-only visual injection must not change saved game state').toBe(storedBefore);
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(800);
+  await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+  await expect(page.locator(`[${IMAGEPIPE_CANDIDATE_MARKER}="true"]`), 'candidate overlay disappears after reload').toHaveCount(0);
+  cards = await enterCardsFromHome(page);
+  await expect(cards.locator(`[${IMAGEPIPE_CANDIDATE_MARKER}="true"]`), 'candidate never becomes current/formal art').toHaveCount(0);
+  await attachImagepipeScreenshot(page, testInfo, 'imagepipe-reloaded-clean-cards');
+
+  runtime.assertClean(testInfo);
+  testInfo.annotations.push({
+    type: 'preformal-use-site-practice',
+    description: `card=${targetCardId}; viewport=${testInfo.project.name}; baseline→candidate→reload-clean; saved-state unchanged`,
+  });
+});

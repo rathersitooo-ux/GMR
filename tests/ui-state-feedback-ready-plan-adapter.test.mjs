@@ -138,13 +138,32 @@ test('missing thresholds or operation token fail closed before commit',()=>{
 });
 
 class FakeTarget {
-  constructor(){ this.listeners=new Map(); }
+  constructor(){
+    this.listeners=new Map();
+    this.capturedPointers=new Set();
+  }
   addEventListener(type,handler){
     const set=this.listeners.get(type) || new Set();
     set.add(handler); this.listeners.set(type,set);
   }
   removeEventListener(type,handler){ this.listeners.get(type)?.delete(handler); }
   emit(type,event={}){ for (const handler of this.listeners.get(type) || []) handler(event); }
+  setPointerCapture(pointerId){ this.capturedPointers.add(pointerId); }
+  hasPointerCapture(pointerId){ return this.capturedPointers.has(pointerId); }
+  releasePointerCapture(pointerId){
+    if (!this.capturedPointers.delete(pointerId)) return;
+    this.emit('lostpointercapture',{pointerId});
+  }
+  emitOutside(type,event={}){
+    if (!this.capturedPointers.has(event.pointerId)) return false;
+    this.emit(type,event);
+    return true;
+  }
+  losePointerCapture(pointerId){
+    if (!this.capturedPointers.delete(pointerId)) return false;
+    this.emit('lostpointercapture',{pointerId});
+    return true;
+  }
 }
 
 function makeBinding({holdMs=500}={}){
@@ -184,6 +203,32 @@ test('binding wires pointer commit, emits one token, and settles matching server
   const ack=h.binding.acknowledge({operationToken:'bind-1',accepted:true,reason:'server_ack'});
   assert.equal(ack.feedback.feedback,'confirmed');
   assert.equal(h.renders.at(-1),'confirmed');
+});
+
+test('binding captures the primary pointer so an outside release still settles exactly once',()=>{
+  const h=makeBinding();
+  h.target.emit('pointerdown',{pointerId:11,button:0,clientX:10,clientY:20});
+  assert.equal(h.target.hasPointerCapture(11),true);
+  assert.equal(h.adapter.getFeedback().feedback,'pressed');
+  assert.equal(h.target.emitOutside('pointerup',{pointerId:11,button:0,clientX:40,clientY:20}),true);
+  assert.equal(h.target.hasPointerCapture(11),false);
+  assert.equal(h.tokenCounter,1);
+  assert.deepEqual(h.calls,[{type:'commit',operationToken:'bind-1',source:'pointer_release'}]);
+  assert.equal(h.adapter.getFeedback().feedback,'pending');
+});
+
+test('binding cancels a pressed pointer when capture is lost before release',()=>{
+  const h=makeBinding();
+  h.target.emit('pointerdown',{pointerId:12,button:0,clientX:10,clientY:20});
+  assert.equal(h.target.hasPointerCapture(12),true);
+  assert.equal(h.adapter.getFeedback().feedback,'pressed');
+  assert.equal(h.target.losePointerCapture(12),true);
+  assert.equal(h.target.hasPointerCapture(12),false);
+  assert.equal(h.adapter.getFeedback().feedback,'normal');
+  assert.equal(h.tokenCounter,0);
+  assert.equal(h.calls.length,0);
+  assert.equal(h.target.emitOutside('pointerup',{pointerId:12,button:0,clientX:10,clientY:20}),false);
+  assert.equal(h.calls.length,0);
 });
 
 test('binding cancellation and secondary input do not allocate operation tokens',()=>{

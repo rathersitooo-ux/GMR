@@ -2,8 +2,7 @@ name: TEMP R11 Home pressed snap executor
 
 on:
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 permissions:
   contents: write
@@ -50,7 +49,6 @@ jobs:
           import { chromium } from '@playwright/test';
           import fs from 'node:fs/promises';
           import path from 'node:path';
-
           const phase=process.env.R11_PHASE;
           const browser=await chromium.launch({headless:true});
           const context=await browser.newContext({viewport:{width:390,height:844}});
@@ -60,7 +58,6 @@ jobs:
           await control.waitFor({state:'visible',timeout:15000});
           const sample=()=>control.evaluate((el)=>{const art=el.querySelector('.codexPadArt');const cs=getComputedStyle(el);return {transform:cs.transform,transition:cs.transition,artFilter:art?getComputedStyle(art).filter:null};});
           const series={phase,normalPath:{},focusedPath:{}};
-
           await page.evaluate(()=>document.activeElement instanceof HTMLElement&&document.activeElement.blur());
           await page.waitForTimeout(200);
           await control.evaluate(el=>el.classList.add('pressed'));
@@ -71,7 +68,6 @@ jobs:
           await page.waitForTimeout(100); series.normalPath.t180=await sample();
           await control.evaluate(el=>el.classList.remove('pressed'));
           await page.waitForTimeout(200);
-
           await control.focus();
           await page.waitForTimeout(200);
           series.focusedPath.before=await sample();
@@ -81,16 +77,15 @@ jobs:
           await page.screenshot({path:path.resolve(`.r11-press/evidence/${phase}-focuspath-t20.png`)});
           await page.waitForTimeout(60); series.focusedPath.t80=await sample();
           await control.evaluate(el=>el.classList.remove('pressed'));
-
           if(phase==='after'){
             for(const [route,states] of Object.entries({normalPath:series.normalPath,focusedPath:series.focusedPath})){
               for(const key of ['t0','t20']){
                 const raw=states[key].transform;
                 const m=raw.match(/^matrix\(([^,]+),[^,]+,[^,]+,([^,]+),[^,]+,([^\)]+)\)$/);
                 if(!m) throw new Error(`${route}/${key}: unexpected transform ${raw}`);
-                const sx=Number(m[1]), sy=Number(m[2]), ty=Number(m[3]);
+                const sx=Number(m[1]),sy=Number(m[2]),ty=Number(m[3]);
                 if(sx>.99||sy>.99||ty<.8) throw new Error(`${route}/${key}: press is not immediately depressed: ${raw}`);
-                if(states[key].transition!=='all 0s ease 0s' && states[key].transition!=='none 0s ease 0s') throw new Error(`${route}/${key}: pressed transition still delays feedback: ${states[key].transition}`);
+                if(states[key].transition!=='none') throw new Error(`${route}/${key}: pressed transition still delays feedback: ${states[key].transition}`);
                 if(!String(states[key].artFilter).includes('brightness(0.92)')) throw new Error(`${route}/${key}: pressed art feedback missing`);
               }
             }
@@ -108,8 +103,7 @@ jobs:
           exit 1
       - name: Capture pre-snap time series
         if: steps.guard.outputs.already != 'true'
-        env:
-          R11_PHASE: before
+        env: { R11_PHASE: before }
         run: node .r11-press/probe.mjs
       - name: Apply immediate pressed-state transform
         if: steps.guard.outputs.already != 'true'
@@ -125,8 +119,7 @@ jobs:
           PY
       - name: Capture and assert post-snap time series
         if: steps.guard.outputs.already != 'true'
-        env:
-          R11_PHASE: after
+        env: { R11_PHASE: after }
         run: node .r11-press/probe.mjs
       - name: Commit pressed-start repair
         if: steps.guard.outputs.already != 'true'

@@ -1,0 +1,74 @@
+name: TEMP R21 HATE1000 bounded source inspector
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  inspect-hate1000-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/hate-r21-actual-mount-20260822
+          fetch-depth: 2
+      - name: Exact-base and blob guard
+        shell: bash
+        env:
+          EXPECTED_BASE: 52b134547c043c9c70af16ee8eed9ad395a56f6f
+          EXPECTED_HTML_BLOB: 659fe7ab32af2ffa254be176561aa652dfe174c8
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          test "$(git rev-parse origin/main)" = "$EXPECTED_BASE"
+          test "$(git hash-object browser/GAMEROAD.html)" = "$EXPECTED_HTML_BLOB"
+      - name: Extract bounded HATE anchors
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          p=Path('browser/GAMEROAD.html')
+          s=p.read_text(encoding='utf-8')
+          needles=[
+            'friendTickHate',
+            'friendExplode',
+            'friendForcedDecision',
+            'hate-peer-presence-core',
+            'applyHate1000PresentationEvent',
+            'createHate1000PresentationSession',
+            'HATE1000_PRESENTATION'
+          ]
+          out={'htmlBlob':'659fe7ab32af2ffa254be176561aa652dfe174c8','length':len(s),'anchors':{}}
+          for needle in needles:
+            positions=[]
+            start=0
+            while True:
+              i=s.find(needle,start)
+              if i<0: break
+              positions.append(i)
+              start=i+len(needle)
+            snippets=[]
+            for i in positions[:8]:
+              a=max(0,i-2200); b=min(len(s),i+3200)
+              snippets.append({'index':i,'text':s[a:b]})
+            out['anchors'][needle]={'count':len(positions),'positions':positions[:20],'snippets':snippets}
+          Path('.tmp-r21-hate-source.json').write_text(json.dumps(out,ensure_ascii=False,indent=2),encoding='utf-8')
+          PY
+      - name: Commit bounded diagnostic once
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- .tmp-r21-hate-source.json && git ls-files --error-unmatch .tmp-r21-hate-source.json >/dev/null 2>&1; then
+            exit 0
+          fi
+          git config user.name 'gameroad-r21-executor'
+          git config user.email 'actions@users.noreply.github.com'
+          git add .tmp-r21-hate-source.json
+          test "$(git diff --cached --name-only)" = '.tmp-r21-hate-source.json'
+          git commit -m 'HATE R21: capture bounded current source anchors'
+          git push origin HEAD:work/hate-r21-actual-mount-20260822

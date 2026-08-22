@@ -1,1 +1,0 @@
-R23 CI retrigger only; product HTML already persisted and executor core regression passed 18/18. Remove immediately so final PR tree contains only the bounded HATE1000 product delta.

@@ -1,0 +1,174 @@
+name: VERSIONMANIFEST R9 bounded actual-update hardening
+
+on:
+  push:
+    branches:
+      - work/versionmanifest-r9-future-update-hardening
+    paths:
+      - .github/workflows/versionmanifest-r9-bounded-hardening.yml
+
+permissions:
+  contents: write
+
+env:
+  EXACT_BASE: 983077c492ff48bf4b2a752ce93ac8beac41f2f8
+  EXACT_HTML_BLOB: ea4f22e1e0bd6c1eeee0aec2b3f9d539bb88327d
+  EXACT_TEST_BLOB: 2be5744428c9f34a0b12f6f0bc8b750be07a4469
+
+jobs:
+  patch-test-persist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/versionmanifest-r9-future-update-hardening
+          fetch-depth: 0
+
+      - name: Verify exact current base and patch owned update slice
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$EXACT_BASE"
+          test "$(git hash-object browser/GAMEROAD.html)" = "$EXACT_HTML_BLOB"
+          test "$(git hash-object tests/browser-full-interaction.spec.mjs)" = "$EXACT_TEST_BLOB"
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html = Path('browser/GAMEROAD.html')
+          data = html.read_text(encoding='utf-8-sig')
+
+          old_validate = "if(!j||typeof j.build_id!=='string')throw Error('INVALID_VERSION_MANIFEST');R.update.status='ok';R.update.error=null;const nextId=j.build_id;"
+          new_validate = "const validBuild=typeof j?.build_id==='string'&&/^[0-9a-f]{40}$/.test(j.build_id),validPublished=typeof j?.published_at==='string'&&/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$/.test(j.published_at)&&Number.isFinite(Date.parse(j.published_at));if(!j||j.schema!=='GAMEROAD_BROWSER_VERSION_V1'||j.channel!=='current'||j.reload_policy!=='never-force-during-match'||!validBuild||!validPublished)throw Error('INVALID_VERSION_MANIFEST');R.update.status='ok';R.update.error=null;const nextId=j.build_id;"
+          if data.count(old_validate) != 1:
+              raise SystemExit(f'update manifest validation anchor count={data.count(old_validate)}, expected 1')
+          data = data.replace(old_validate, new_validate, 1)
+
+          old_title = '<b id="gameroadUpdateTitle">新版があります</b>'
+          new_title = '<b id="gameroadUpdateTitle">利用できる版が変わりました</b>'
+          if data.count(old_title) != 1:
+              raise SystemExit(f'update title anchor count={data.count(old_title)}, expected 1')
+          data = data.replace(old_title, new_title, 1)
+
+          old_copy = "copy.textContent=`固定URLの新版 ${clampText(pending.buildId,34)} を読み込みます。`"
+          new_copy = "copy.textContent=`配布版 ${clampText(pending.buildId,34)} へ切り替えます。`"
+          if data.count(old_copy) != 1:
+              raise SystemExit(f'update copy anchor count={data.count(old_copy)}, expected 1')
+          data = data.replace(old_copy, new_copy, 1)
+          html.write_text(data, encoding='utf-8')
+
+          spec = Path('tests/browser-full-interaction.spec.mjs')
+          s = spec.read_text(encoding='utf-8')
+          marker = '// UPDATE-MANIFEST-BASELINE-HOME-ONLY-REGRESSION R45'
+          if s.count(marker) != 1:
+              raise SystemExit(f'update regression marker count={s.count(marker)}, expected 1')
+          prefix = s.split(marker, 1)[0].rstrip() + '\n\n'
+          block = r'''// UPDATE-MANIFEST-FUTURE-SAFE-REGRESSION R9
+          test('update manifest is strictly validated, rollback-safe in wording, session-local, and Home-only', async ({ page, browser }, testInfo) => {
+            const runtime=observeRuntimeErrors(page);
+            const BASE='1111111111111111111111111111111111111111';
+            const ROLLBACK='2222222222222222222222222222222222222222';
+            const NEXT='3333333333333333333333333333333333333333';
+            const formal=(buildId,publishedAt='2026-08-22T00:00:00Z',overrides={})=>({schema:'GAMEROAD_BROWSER_VERSION_V1',channel:'current',build_id:buildId,published_at:publishedAt,reload_policy:'never-force-during-match',...overrides});
+            let manifest=formal(BASE);
+            await page.route('**/browser/gameroad-version.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(manifest)}));
+            await bootCurrentBrowser(page);
+            await page.waitForFunction(()=>!!window.GAMEROAD_PARTNER_COMMENT);
+            const banner=page.locator('#gameroadUpdateBanner');
+            const title=page.locator('#gameroadUpdateTitle');
+            await page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());
+            await expect(banner).toBeHidden();
+            await expect(banner).toHaveAttribute('aria-hidden','true');
+            await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending)).toBe(null);
+
+            const invalidManifests=[
+              formal(ROLLBACK,'2026-08-21T00:00:00Z',{schema:'BROKEN_SCHEMA'}),
+              formal(ROLLBACK,'2026-08-21T00:00:00Z',{channel:'preview'}),
+              formal(ROLLBACK,'2026-08-21T00:00:00Z',{reload_policy:'force-now'}),
+              formal('not-a-build-id','2026-08-21T00:00:00Z'),
+              formal(ROLLBACK,'not-a-time'),
+            ];
+            for(const invalid of invalidManifests){
+              manifest=invalid;
+              await page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());
+              await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending)).toBe(null);
+              await expect(banner).toBeHidden();
+              await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.status)).toBe('unavailable');
+            }
+
+            // An older successful production deployment can become the desired target during rollback.
+            // Treat it as a valid target change without claiming it is a "newer" version.
+            manifest=formal(ROLLBACK,'2026-08-21T00:00:00Z');
+            await page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());
+            await expect(banner).toBeVisible();
+            await expect(banner).toHaveAttribute('aria-hidden','false');
+            await expect(title).toHaveText('利用できる版が変わりました');
+            await expect(title).not.toContainText('新版');
+            await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending?.buildId||null)).toBe(ROLLBACK);
+
+            const setupGo=visibleHomeControl(page,'setup');
+            await setupGo.click();
+            const setup=page.locator('section[data-screen="setup"]');
+            await expect(setup).toBeVisible();
+            await expect(banner).toBeHidden();
+            await expect(banner).toHaveAttribute('aria-hidden','true');
+            const honey=setup.locator('[data-content="honey_hunt"]');
+            await honey.click();
+            await expect(honey).toHaveClass(/on/);
+            await testInfo.attach('setup-pending-target-hidden.png',{body:await page.screenshot({fullPage:false}),contentType:'image/png'});
+
+            manifest=formal(NEXT,'2026-08-22T01:00:00Z');
+            await page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());
+            await expect(banner).toBeHidden();
+            await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending?.buildId||null)).toBe(NEXT);
+
+            const back=setup.locator('[data-back]:visible').first();
+            await back.click();
+            await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+            await expect(banner).toBeVisible();
+            await expect(title).toHaveText('利用できる版が変わりました');
+
+            const fresh=await browser.newContext({viewport:testInfo.project.use.viewport});
+            const q=await fresh.newPage();
+            await q.route('**/browser/gameroad-version.json*',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(formal(NEXT,'2026-08-22T01:00:00Z'))}));
+            await q.goto(page.url(),{waitUntil:'domcontentloaded'});
+            await q.waitForFunction(()=>!!window.GAMEROAD_PARTNER_COMMENT);
+            await q.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());
+            await expect(q.locator('#gameroadUpdateBanner')).toBeHidden();
+            await expect(q.locator('#gameroadUpdateBanner')).toHaveAttribute('aria-hidden','true');
+            await expect.poll(()=>q.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending)).toBe(null);
+            await fresh.close();
+            runtime.assertClean(testInfo);
+          });
+          '''
+          # Remove indentation introduced by the workflow heredoc source.
+          import textwrap
+          spec.write_text(prefix + textwrap.dedent(block), encoding='utf-8')
+          PY
+          git diff --check
+          test "$(git diff --name-only)" = $'browser/GAMEROAD.html\ntests/browser-full-interaction.spec.mjs'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+      - run: npx playwright install --with-deps chromium
+      - name: Run future-safe update regression in all formal viewports
+        run: >-
+          npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
+          --grep "update manifest is strictly validated, rollback-safe in wording, session-local, and Home-only"
+          --project=desktop-1280x720 --project=phone-390x844 --project=short-landscape-667x375
+
+      - name: Persist product and existing-lane regression only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/versionmanifest-r9-bounded-hardening.yml
+          git diff --check
+          test "$(git diff --name-only HEAD)" = $'.github/workflows/versionmanifest-r9-bounded-hardening.yml\nbrowser/GAMEROAD.html\ntests/browser-full-interaction.spec.mjs'
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
+          git commit -m "VERSIONMANIFEST R9: harden actual update target handling"
+          git push origin HEAD:work/versionmanifest-r9-future-update-hardening

@@ -15,6 +15,8 @@ const defaultPresenceCoreSource = path.join(repoRoot, 'browser/hate-peer-presenc
 const defaultNavigationCoreSource = path.join(repoRoot, 'browser/screen-navigation-core.mjs');
 const defaultReplayAdapterSource = path.join(repoRoot, 'browser/battle-replay-live-adapter.mjs');
 const defaultReplayCoreSource = path.join(repoRoot, 'browser/battle-replay-core.mjs');
+const defaultPartnerBattleEventLogProjectionSource = path.join(repoRoot, 'browser/partner-battle-event-log-projection.mjs');
+const defaultPartnerBattleEventLogLiveMountSource = path.join(repoRoot, 'browser/partner-battle-event-log-live-mount.mjs');
 const defaultCardPresentationCoreSource = path.join(repoRoot, 'browser/card-presentation-core.mjs');
 const defaultBattleConveyorCoreSource = path.join(repoRoot, 'browser/battle-conveyor-presentation-core.mjs');
 const defaultBoardFacilityClassicSource = path.join(repoRoot, 'browser/board-facility-state-core.classic.js');
@@ -51,6 +53,8 @@ export async function buildPackage({
   navigationCoreSource = defaultNavigationCoreSource,
   replayAdapterSource = defaultReplayAdapterSource,
   replayCoreSource = defaultReplayCoreSource,
+  partnerBattleEventLogProjectionSource = defaultPartnerBattleEventLogProjectionSource,
+  partnerBattleEventLogLiveMountSource = defaultPartnerBattleEventLogLiveMountSource,
   cardPresentationCoreSource = defaultCardPresentationCoreSource,
   battleConveyorCoreSource = defaultBattleConveyorCoreSource,
   boardFacilityClassicSource = defaultBoardFacilityClassicSource,
@@ -66,6 +70,8 @@ export async function buildPackage({
   expectedNavigationCoreBlob = '',
   expectedReplayAdapterBlob = '',
   expectedReplayCoreBlob = '',
+  expectedPartnerBattleEventLogProjectionBlob = '',
+  expectedPartnerBattleEventLogLiveMountBlob = '',
   expectedCardPresentationCoreBlob = '',
   expectedBattleConveyorCoreBlob = '',
   expectedBoardFacilityClassicBlob = '',
@@ -83,6 +89,8 @@ export async function buildPackage({
   const navigationCoreInput = await readFile(navigationCoreSource);
   const replayAdapterInput = await readFile(replayAdapterSource);
   const replayCoreInput = await readFile(replayCoreSource);
+  const partnerBattleEventLogProjectionInput = await readFile(partnerBattleEventLogProjectionSource);
+  const partnerBattleEventLogLiveMountInput = await readFile(partnerBattleEventLogLiveMountSource);
   const cardPresentationCoreInput = await readFile(cardPresentationCoreSource);
   const battleConveyorCoreInput = await readFile(battleConveyorCoreSource);
   const boardFacilityClassicInput = await readFile(boardFacilityClassicSource);
@@ -97,6 +105,8 @@ export async function buildPackage({
   const navigationCoreBlob = gitBlobSha1(navigationCoreInput);
   const replayAdapterBlob = gitBlobSha1(replayAdapterInput);
   const replayCoreBlob = gitBlobSha1(replayCoreInput);
+  const partnerBattleEventLogProjectionBlob = gitBlobSha1(partnerBattleEventLogProjectionInput);
+  const partnerBattleEventLogLiveMountBlob = gitBlobSha1(partnerBattleEventLogLiveMountInput);
   const cardPresentationCoreBlob = gitBlobSha1(cardPresentationCoreInput);
   const battleConveyorCoreBlob = gitBlobSha1(battleConveyorCoreInput);
   const boardFacilityClassicBlob = gitBlobSha1(boardFacilityClassicInput);
@@ -122,6 +132,22 @@ export async function buildPackage({
   }
   if (expectedReplayCoreBlob && replayCoreBlob !== expectedReplayCoreBlob) {
     throw new Error(`Battle replay core blob mismatch: expected=${expectedReplayCoreBlob} actual=${replayCoreBlob}`);
+  }
+  if (
+    expectedPartnerBattleEventLogProjectionBlob
+    && partnerBattleEventLogProjectionBlob !== expectedPartnerBattleEventLogProjectionBlob
+  ) {
+    throw new Error(
+      `Partner battle event log projection blob mismatch: expected=${expectedPartnerBattleEventLogProjectionBlob} actual=${partnerBattleEventLogProjectionBlob}`,
+    );
+  }
+  if (
+    expectedPartnerBattleEventLogLiveMountBlob
+    && partnerBattleEventLogLiveMountBlob !== expectedPartnerBattleEventLogLiveMountBlob
+  ) {
+    throw new Error(
+      `Partner battle event log live mount blob mismatch: expected=${expectedPartnerBattleEventLogLiveMountBlob} actual=${partnerBattleEventLogLiveMountBlob}`,
+    );
   }
   if (expectedCardPresentationCoreBlob && cardPresentationCoreBlob !== expectedCardPresentationCoreBlob) {
     throw new Error(`Card presentation core blob mismatch: expected=${expectedCardPresentationCoreBlob} actual=${cardPresentationCoreBlob}`);
@@ -199,6 +225,20 @@ export async function buildPackage({
   const replayCoreRoundTrip = await readFile(replayCoreOutputPath);
   if (!replayCoreInput.equals(replayCoreRoundTrip)) {
     throw new Error('dist/battle-replay-core.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const partnerBattleEventLogProjectionOutputPath = path.join(dist, 'partner-battle-event-log-projection.mjs');
+  await writeFile(partnerBattleEventLogProjectionOutputPath, partnerBattleEventLogProjectionInput);
+  const partnerBattleEventLogProjectionRoundTrip = await readFile(partnerBattleEventLogProjectionOutputPath);
+  if (!partnerBattleEventLogProjectionInput.equals(partnerBattleEventLogProjectionRoundTrip)) {
+    throw new Error('dist/partner-battle-event-log-projection.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const partnerBattleEventLogLiveMountOutputPath = path.join(dist, 'partner-battle-event-log-live-mount.mjs');
+  await writeFile(partnerBattleEventLogLiveMountOutputPath, partnerBattleEventLogLiveMountInput);
+  const partnerBattleEventLogLiveMountRoundTrip = await readFile(partnerBattleEventLogLiveMountOutputPath);
+  if (!partnerBattleEventLogLiveMountInput.equals(partnerBattleEventLogLiveMountRoundTrip)) {
+    throw new Error('dist/partner-battle-event-log-live-mount.mjs is not byte-identical to Browser dependency source');
   }
 
   const cardPresentationCoreOutputPath = path.join(dist, 'card-presentation-core.mjs');
@@ -320,6 +360,18 @@ export async function buildPackage({
         replayCoreInput,
         replayCoreBlob,
       ),
+      partner_battle_event_log_projection: provenance(
+        'browser/partner-battle-event-log-projection.mjs',
+        'partner-battle-event-log-projection.mjs',
+        partnerBattleEventLogProjectionInput,
+        partnerBattleEventLogProjectionBlob,
+      ),
+      partner_battle_event_log_live_mount: provenance(
+        'browser/partner-battle-event-log-live-mount.mjs',
+        'partner-battle-event-log-live-mount.mjs',
+        partnerBattleEventLogLiveMountInput,
+        partnerBattleEventLogLiveMountBlob,
+      ),
       card_presentation_core: provenance(
         'browser/card-presentation-core.mjs',
         'card-presentation-core.mjs',
@@ -390,6 +442,8 @@ function parseArgs(argv) {
     else if (a === '--navigation-core-source') out.navigationCoreSource = path.resolve(argv[++i]);
     else if (a === '--replay-adapter-source') out.replayAdapterSource = path.resolve(argv[++i]);
     else if (a === '--replay-core-source') out.replayCoreSource = path.resolve(argv[++i]);
+    else if (a === '--partner-battle-event-log-projection-source') out.partnerBattleEventLogProjectionSource = path.resolve(argv[++i]);
+    else if (a === '--partner-battle-event-log-live-mount-source') out.partnerBattleEventLogLiveMountSource = path.resolve(argv[++i]);
     else if (a === '--card-presentation-core-source') out.cardPresentationCoreSource = path.resolve(argv[++i]);
     else if (a === '--battle-conveyor-core-source') out.battleConveyorCoreSource = path.resolve(argv[++i]);
     else if (a === '--board-facility-classic-source') out.boardFacilityClassicSource = path.resolve(argv[++i]);
@@ -405,6 +459,8 @@ function parseArgs(argv) {
     else if (a === '--expected-navigation-core-blob') out.expectedNavigationCoreBlob = argv[++i] || '';
     else if (a === '--expected-replay-adapter-blob') out.expectedReplayAdapterBlob = argv[++i] || '';
     else if (a === '--expected-replay-core-blob') out.expectedReplayCoreBlob = argv[++i] || '';
+    else if (a === '--expected-partner-battle-event-log-projection-blob') out.expectedPartnerBattleEventLogProjectionBlob = argv[++i] || '';
+    else if (a === '--expected-partner-battle-event-log-live-mount-blob') out.expectedPartnerBattleEventLogLiveMountBlob = argv[++i] || '';
     else if (a === '--expected-card-presentation-core-blob') out.expectedCardPresentationCoreBlob = argv[++i] || '';
     else if (a === '--expected-battle-conveyor-core-blob') out.expectedBattleConveyorCoreBlob = argv[++i] || '';
     else if (a === '--expected-board-facility-classic-blob') out.expectedBoardFacilityClassicBlob = argv[++i] || '';

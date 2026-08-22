@@ -6,6 +6,13 @@ on:
       - work/free4p-r14-visible-result-ranking
     paths:
       - .github/workflows/free4p-r14-resultverify-bounded.yml
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: free4p-r14-resultverify
+  cancel-in-progress: true
 
 permissions:
   contents: write

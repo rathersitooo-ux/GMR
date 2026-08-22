@@ -1,0 +1,76 @@
+name: VERSIONMANIFEST R9 rollback cancellation hardening
+
+on:
+  push:
+    branches:
+      - work/versionmanifest-r9-future-update-hardening
+    paths:
+      - .github/workflows/versionmanifest-r9-rollback-cancel.yml
+
+permissions:
+  contents: write
+
+env:
+  EXACT_MAIN: 983077c492ff48bf4b2a752ce93ac8beac41f2f8
+  EXACT_HTML_BLOB: 4feb9ccbaf0a1bc9ce0ed1c03ede2a0050c4228c
+  EXACT_TEST_BLOB: f1e93d9b578099f7c0020262b143affe5b8342af
+
+jobs:
+  patch-test-persist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/versionmanifest-r9-future-update-hardening
+          fetch-depth: 0
+      - name: Patch stale pending cancellation when production returns to session baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$EXACT_MAIN"
+          test "$(git hash-object browser/GAMEROAD.html)" = "$EXACT_HTML_BLOB"
+          test "$(git hash-object tests/browser-full-interaction.spec.mjs)" = "$EXACT_TEST_BLOB"
+          python3 - <<'PY'
+          from pathlib import Path
+          html=Path('browser/GAMEROAD.html')
+          data=html.read_text(encoding='utf-8')
+          old="if(nextId===R.update.baselineId){renderUpdateBanner();return !!R.update.pending}"
+          new="if(nextId===R.update.baselineId){R.update.pending=null;R.update.deferred=false;renderUpdateBanner();return false}"
+          if data.count(old)!=1: raise SystemExit(f'baseline-return anchor count={data.count(old)}, expected 1')
+          data=data.replace(old,new,1)
+          html.write_text(data,encoding='utf-8')
+
+          spec=Path('tests/browser-full-interaction.spec.mjs')
+          s=spec.read_text(encoding='utf-8')
+          anchor="  await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending?.buildId||null)).toBe(ROLLBACK);\n\n  const setupGo=visibleHomeControl(page,'setup');"
+          replacement="""  await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending?.buildId||null)).toBe(ROLLBACK);\n\n  // If production is rolled back/reverted to the build this session already loaded,\n  // the previously advertised target is no longer current and must be withdrawn.\n  manifest=formal(BASE,'2026-08-22T00:00:00Z');\n  await page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());\n  await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending)).toBe(null);\n  await expect(banner).toBeHidden();\n\n  // A later target can become pending again after the withdrawal.\n  manifest=formal(ROLLBACK,'2026-08-21T00:00:00Z');\n  await page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.checkUpdate());\n  await expect.poll(()=>page.evaluate(()=>window.GAMEROAD_PARTNER_COMMENT.snapshot().update.pending?.buildId||null)).toBe(ROLLBACK);\n  await expect(banner).toBeVisible();\n\n  const setupGo=visibleHomeControl(page,'setup');"""
+          if s.count(anchor)!=1: raise SystemExit(f'rollback cancellation test anchor count={s.count(anchor)}, expected 1')
+          s=s.replace(anchor,replacement,1)
+          spec.write_text(s,encoding='utf-8')
+          PY
+          git diff --check
+          test "$(git diff --name-only)" = $'browser/GAMEROAD.html\ntests/browser-full-interaction.spec.mjs'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+      - run: npx playwright install --with-deps chromium
+      - name: Run exact update regression on all formal viewports
+        run: >-
+          npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
+          --grep "update manifest is strictly validated, rollback-safe in wording, session-local, and Home-only"
+          --project=desktop-1280x720 --project=phone-390x844 --project=short-landscape-667x375
+      - name: Persist only final product and existing regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/versionmanifest-r9-rollback-cancel.yml
+          git diff --check
+          test "$(git diff --name-only HEAD)" = $'.github/workflows/versionmanifest-r9-rollback-cancel.yml\nbrowser/GAMEROAD.html\ntests/browser-full-interaction.spec.mjs'
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
+          git commit -m "VERSIONMANIFEST R9: cancel stale pending target on rollback"
+          git push origin HEAD:work/versionmanifest-r9-future-update-hardening

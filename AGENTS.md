@@ -1,7 +1,7 @@
 # GAMEROAD コーデックス固定入口
 
 ## 2026-08-22 Codex委譲・Drive往復ハードゲート
-- この `AGENTS.md` は固定の起動門であり、現在状態そのものではない。GAMEROADでCodexを使うたび、実project stateを変える前に `GAMEROAD_CODEX_HANDOFF_CURRENT.md` の最上段HEAD packetと、Drive上の `GAMEROAD_Drive総合目次・記録ルーティング_CURRENT` から再解決した現役authority／AcquireKey／ExactMutableResources／受理条件を照合する。
+- この `AGENTS.md` は固定の起動門であり、現在状態そのものではない。GAMEROADでCodexを使うたび、実project stateを変える前に `CODEX_HANDOFF_CURRENT.md` の最上段HEAD packetと、Drive上の `GAMEROAD_Drive総合目次・記録ルーティング_CURRENT` から再解決した現役authority／AcquireKey／ExactMutableResources／受理条件を照合する。
 - Driveを読めない、HEAD packetが無い／stale、取得鍵が失効、authorityが矛盾する場合は、推測して書込み・build・save・deployを行わず、既存 `HEAD_BLOCKER_PROTOCOL` の `BLOCKED_HEAD` でHEADへ返す。
 - Codexへ渡すのは `CODEX_ONLY_REASON` が具体化できる repository/file-system/terminal/editor/build/Unity 等の実行残差だけ。ChatGPTで可能なCURRENT読込、調査、仕様整理、比較、素材準備、受理試験設計は `AI_PREWORK_COMPLETE` として先に閉じる。Codexの厳しい実行枠を再調査・再整理へ使わない。
 - 受渡しと返却は必ず既存Drive経路（01依頼包→Codex実行→02返却包／`CODEX_LIVE_EVENT`→ChatGPT監査）を通す。会話記憶だけの引継ぎは禁止。
@@ -13,7 +13,7 @@
 - 過去会話、古い候補、「最新版」という名前、番号の大きさ、ローカル記憶だけで実装対象を選ばない。
 
 ## 毎回最初に読む順番
-1. `GAMEROAD_CODEX_HANDOFF_CURRENT.md`
+1. `CODEX_HANDOFF_CURRENT.md`（Drive source: `GAMEROAD_CODEX_HANDOFF_CURRENT.md`）
 2. `05_GAMEROAD_理由駆動実装・知見取得門_CURRENT_20260728`
    - ドライブ識別子: `1KlxeBos3EFTTkWX7PdFR-beu_8qpStY0GBCX7YOePgE`
 3. `GAMEROAD_全作業取得・空き状況表_CURRENT_20260721`

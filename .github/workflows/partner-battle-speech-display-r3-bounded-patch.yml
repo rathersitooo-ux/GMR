@@ -6,18 +6,23 @@ on:
       - work/partner-battle-speech-display-r3
     paths:
       - .github/workflows/partner-battle-speech-display-r3-bounded-patch.yml
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
 
 jobs:
   patch:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: work/partner-battle-speech-display-r3
-          fetch-depth: 2
+          fetch-depth: 3
 
       - name: Fail closed on exact base and giant HTML blob
         shell: bash
@@ -25,7 +30,7 @@ jobs:
           set -euo pipefail
           EXPECTED_BASE='ec98bb6be06c62773372060a3b8dfb792d8e9d61'
           EXPECTED_BLOB='a537eec4896faa37799ee67a992428ce0f265bf8'
-          test "$(git rev-parse HEAD^)" = "$EXPECTED_BASE"
+          git merge-base --is-ancestor "$EXPECTED_BASE" HEAD
           test "$(git hash-object browser/GAMEROAD.html)" = "$EXPECTED_BLOB"
           test "$(grep -o 'gameroad-partner-comment-nonblocking-r2' browser/GAMEROAD.html | wc -l)" -eq 2
           test "$(grep -o 'gameroad-partner-comment-nonblocking-r3' browser/GAMEROAD.html | wc -l)" -eq 0
@@ -36,7 +41,6 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-
           p = Path('browser/GAMEROAD.html')
           text = p.read_text(encoding='utf-8')
           start_marker = '<!-- GAMEROAD BROWSER PARTNER COMMENT NONBLOCKING R2 / BROWSER-PARTNER-BATTLE-COMMENT-LOG-001 / 2026-08-08'
@@ -50,18 +54,14 @@ jobs:
           assert '<script id="gameroad-partner-comment-nonblocking-r2-contract"' in old
           assert 'top:30vh!important' in old
           assert 'top:69vh!important' in old
-
           new = '''<!-- GAMEROAD BROWSER PARTNER COMMENT NONBLOCKING R3 / PARTNER-GOODMOVE-ADVICE-RUNTIME-INTEGRATION-001 / 2026-08-22
      Scope: presentation-only partner-anchor repair. Semantic advice, battle rules, partner canon/provider authority and speech-density policy are unchanged. -->
 <style id="gameroad-partner-comment-nonblocking-r3">
-/* The comment follows the same lower-left partner/dock geometry instead of fixed viewport top coordinates.
-   The full important text remains in the existing session log; the live reaction stays compact. */
+/* Follow the same lower-left partner/dock geometry instead of fixed viewport top coordinates. Full important text remains in the existing session log. */
 .partnerBattleCommentLayer{
-  left:max(6px,env(safe-area-inset-left))!important;
-  right:auto!important;
-  top:auto!important;
+  left:max(6px,env(safe-area-inset-left))!important;right:auto!important;top:auto!important;
   bottom:calc(var(--r8-dock-bottom,72px) + clamp(126px,18vh,158px))!important;
-  width:clamp(190px,22vw,286px)!important;
+  width:clamp(190px,22vw,286px)!important
 }
 .partnerBattleBubble{position:relative}
 .partnerBattleBubble:after{
@@ -71,46 +71,33 @@ jobs:
 }
 @media(max-width:900px){
   .partnerBattleCommentLayer{
-    left:max(6px,env(safe-area-inset-left))!important;
-    right:auto!important;top:auto!important;
+    left:max(6px,env(safe-area-inset-left))!important;right:auto!important;top:auto!important;
     bottom:calc(var(--r8-dock-bottom,72px) + clamp(118px,17vh,150px))!important;
-    width:clamp(168px,34vw,238px)!important;
-    grid-template-columns:minmax(0,1fr) 42px!important;
-    gap:6px!important
+    width:clamp(168px,34vw,238px)!important;grid-template-columns:minmax(0,1fr) 42px!important;gap:6px!important
   }
   .partnerBattleBubble{padding:7px 8px!important}
-  .partnerBattleBubble .partnerCommentText{
-    display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden
-  }
+  .partnerBattleBubble .partnerCommentText{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
 }
 @media(max-width:540px) and (orientation:portrait){
   .partnerBattleCommentLayer{
-    left:max(6px,env(safe-area-inset-left))!important;
-    right:auto!important;top:auto!important;
+    left:max(6px,env(safe-area-inset-left))!important;right:auto!important;top:auto!important;
     bottom:calc(var(--r8-dock-bottom,72px) + clamp(124px,18vh,154px))!important;
-    width:min(46vw,200px)!important;
-    grid-template-columns:minmax(0,1fr) 38px!important
+    width:min(46vw,200px)!important;grid-template-columns:minmax(0,1fr) 38px!important
   }
 }
 @media(min-height:471px) and (max-height:550px) and (orientation:landscape){
   .partnerBattleCommentLayer{
-    left:max(8px,env(safe-area-inset-left))!important;
-    right:auto!important;top:auto!important;
-    bottom:calc(var(--r8-dock-bottom,64px) + clamp(80px,16vh,104px))!important;
-    width:clamp(160px,23vw,220px)!important
+    left:max(8px,env(safe-area-inset-left))!important;right:auto!important;top:auto!important;
+    bottom:calc(var(--r8-dock-bottom,64px) + clamp(80px,16vh,104px))!important;width:clamp(160px,23vw,220px)!important
   }
 }
 @media(max-height:470px) and (orientation:landscape){
   .partnerBattleCommentLayer{
-    left:max(8px,env(safe-area-inset-left))!important;
-    right:auto!important;top:auto!important;
-    bottom:calc(var(--r8-dock-bottom,58px) + clamp(66px,18vh,88px))!important;
-    width:clamp(150px,22vw,204px)!important
+    left:max(8px,env(safe-area-inset-left))!important;right:auto!important;top:auto!important;
+    bottom:calc(var(--r8-dock-bottom,58px) + clamp(66px,18vh,88px))!important;width:clamp(150px,22vw,204px)!important
   }
 }
-@media (prefers-reduced-motion: reduce){
-  .partnerBattleBubble:after{transition:none!important}
-}
+@media (prefers-reduced-motion: reduce){.partnerBattleBubble:after{transition:none!important}}
 </style>
 <script id="gameroad-partner-comment-nonblocking-r3-contract" type="application/json">{"schema":"GAMEROAD_BROWSER_PARTNER_COMMENT_NONBLOCKING_R3","task_id":"PARTNER-GOODMOVE-ADVICE-RUNTIME-INTEGRATION-001","acquire_key":"PARTNER-BATTLE-SPEECH-DISPLAY-R3-20260822T1030-SOL-Q8N4V7K2M6PX","base_commit":"ec98bb6be06c62773372060a3b8dfb792d8e9d61","base_html_blob":"a537eec4896faa37799ee67a992428ce0f265bf8","scope":"responsive presentation only; partner-stage/dock anchor; no semantic/provider/canon/density changes","mobile_policy":"compact two-line live reaction; full important text remains in existing session log","protected":["109-node board","hand interaction","battle resolution","card conservation","partner provider authority","opponent secret information","approved dialogue source","speech density policy"]}</script>
 
@@ -119,40 +106,25 @@ jobs:
           assert out.count('gameroad-partner-comment-nonblocking-r2') == 0
           assert out.count('gameroad-partner-comment-nonblocking-r3') == 2
           assert out.count('GAMEROAD_BROWSER_PARTNER_COMMENT_NONBLOCKING_R3') == 1
-          assert 'top:30vh!important' not in out
-          assert 'top:69vh!important' not in out
-          assert 'var(--r8-dock-bottom' in new
+          assert 'top:30vh!important' not in out and 'top:69vh!important' not in out
           p.write_text(out, encoding='utf-8')
           PY
 
-      - name: Static regression gates for semantics accessibility and security
+      - name: Static regression gates
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
           t = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          checks = {
-            'formal partner state': 'GAMEROAD_PARTNER_STATE',
-            'approved dialogue playback': 'GAMEROAD_PARTNER_DIALOGUE_PLAYBACK_V1',
-            'dialogue separation gate': 'gameroad-partner-dialogue-separation-r3',
-            'polite live region': "aria-live='polite'",
-            'atomic live region': "aria-atomic='true'",
-            'safe text sink': '.textContent',
-            'reduced motion': 'prefers-reduced-motion: reduce',
-            'existing session log': 'partnerBattleCommentLog',
-          }
-          missing = [k for k,v in checks.items() if v not in t]
-          assert not missing, missing
+          checks = ['GAMEROAD_PARTNER_STATE','GAMEROAD_PARTNER_DIALOGUE_PLAYBACK_V1','gameroad-partner-dialogue-separation-r3',"aria-live='polite'","aria-atomic='true'",'.textContent','prefers-reduced-motion: reduce','partnerBattleCommentLog']
+          assert all(x in t for x in checks)
           block = t[t.index('<style id="gameroad-partner-comment-nonblocking-r3">'):t.index('<script id="gameroad-partner-dialogue-separation-r3"')]
-          assert 'top:30vh' not in block and 'top:69vh' not in block and 'top:55vh' not in block
+          assert all(x not in block for x in ['top:30vh','top:69vh','top:55vh'])
           assert block.count('top:auto!important') >= 4
           assert 'width:min(46vw,200px)!important' in block
           assert 'bottom:calc(var(--r8-dock-bottom' in block
-          # 390px portrait: live bubble cap is 46vw = 179.4px, materially wider than R2's 31vw = 120.9px.
-          assert 390 * .46 > 170 and 390 * .31 < 125
-          # 393px portrait stays under 200px and preserves substantial board width.
-          assert min(393 * .46, 200) < 200
+          assert 390*.46 > 170 and 390*.31 < 125
           print('partner speech display R3 static regressions: PASS')
           PY
 

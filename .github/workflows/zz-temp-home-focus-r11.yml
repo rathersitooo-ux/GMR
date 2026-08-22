@@ -20,7 +20,7 @@ jobs:
         id: guard
         shell: bash
         env:
-          EXPECTED_BASE: 1ce7e81a3849bc1ed5774375663d0a6aa9457c18
+          EXPECTED_BASE: cb34bf4d6c205493fa78b6997186df257fc7b899
         run: |
           set -euo pipefail
           git fetch origin main --depth=1

@@ -2,10 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  GACHA_PRESENTATION_QUALITY_SCHEMA,
   GACHA_PRESENTATION_SCHEMA,
   applyGachaPresentationEvent,
   createGachaPresentation,
   projectGachaPresentation,
+  projectGachaPresentationQuality,
   restoreGachaPresentation,
   snapshotGachaPresentation,
 } from '../browser/gacha-presentation-core.mjs';
@@ -16,11 +18,37 @@ const makeBundle = () => [
   { slot: 3, kind: 'ticket', ticketId: 'TICKET_C' },
 ];
 
+const makeCurrentSevenResultBundle = () => [
+  { slot: 1, label: 'Mana Wake', rank: '4', rarity: '希少' },
+  { slot: 2, label: 'スペード6', rank: '6', rarity: '通常' },
+  { slot: 3, label: 'クラブ3', rank: '3', rarity: '通常' },
+  { slot: 4, label: 'クラブ5', rank: '5', rarity: '通常' },
+  { slot: 5, label: 'ハート10', rank: '10', rarity: '通常' },
+  { slot: 6, label: 'スペードK', rank: 'K', rarity: '通常' },
+  { slot: 7, label: 'フローズン', rank: '1', rarity: '希少' },
+];
+
+const QUALITY_VIEWPORTS = [
+  { name: 'desktop-1280x720', width: 1280, height: 720, expectedClass: 'wide' },
+  { name: 'phone-390x844', width: 390, height: 844, expectedClass: 'portrait' },
+  { name: 'short-landscape-667x375', width: 667, height: 375, expectedClass: 'short_landscape' },
+];
+
 function create(overrides = {}) {
   return createGachaPresentation({
     presentationId: 'presentation-001',
     resultIdentity: 'server-confirmed-result-001',
     resultBundle: makeBundle(),
+    assets: { character: 'formal', video: 'formal' },
+    ...overrides,
+  });
+}
+
+function createCurrentSeven(overrides = {}) {
+  return createGachaPresentation({
+    presentationId: 'presentation-current-seven',
+    resultIdentity: 'server-confirmed-current-seven',
+    resultBundle: makeCurrentSevenResultBundle(),
     assets: { character: 'formal', video: 'formal' },
     ...overrides,
   });
@@ -35,6 +63,11 @@ function event(state, eventId, type, extra = {}) {
     type,
     ...extra,
   });
+}
+
+function completeBySkip(state) {
+  state = event(state, 'quality-start', 'START');
+  return event(state, 'quality-skip', 'SKIP');
 }
 
 function bundleJson(state) {
@@ -280,4 +313,102 @@ test('invalid state transitions fail closed instead of silently skipping require
 
   state = event(state, 'e2', 'REVEAL_NEXT');
   assert.throws(() => event(state, 'e3', 'COMPLETE'), /requires the final result item/);
+});
+
+test('result-review quality projection promotes visible confirmed results above repeat-purchase context on all representative viewports', () => {
+  const confirmed = makeCurrentSevenResultBundle();
+  let state = createCurrentSeven();
+  state = completeBySkip(state);
+
+  for (const viewport of QUALITY_VIEWPORTS) {
+    const quality = projectGachaPresentationQuality(state, { viewport });
+
+    assert.equal(quality.schema, GACHA_PRESENTATION_QUALITY_SCHEMA, viewport.name);
+    assert.equal(quality.viewport.class, viewport.expectedClass, viewport.name);
+    assert.equal(quality.reviewingResults, true, viewport.name);
+    assert.equal(quality.hierarchy.priorityOrder[0], 'selected_result', viewport.name);
+    assert.equal(quality.hierarchy.confirmedResultCollection, 'secondary', viewport.name);
+    assert.equal(quality.hierarchy.openAgain, 'secondary_action', viewport.name);
+    assert.equal(quality.hierarchy.packOdds, 'collapsed_support', viewport.name);
+    assert.deepEqual(quality.visibleResults, confirmed, viewport.name);
+    assert.deepEqual(quality.selectedResult, confirmed[6], viewport.name);
+    assert.equal(quality.invariants.resultTruthMutable, false, viewport.name);
+    assert.equal(quality.invariants.resultOrderMutable, false, viewport.name);
+    assert.equal(quality.invariants.inventedResultSignalsAllowed, false, viewport.name);
+    assert.equal(quality.invariants.unrevealedResultsExposed, false, viewport.name);
+  }
+});
+
+test('quality projection exposes only already-revealed results during anticipation', () => {
+  const confirmed = makeCurrentSevenResultBundle();
+  let state = createCurrentSeven();
+  state = event(state, 'quality-reveal-start', 'START');
+
+  let preShot = projectGachaPresentationQuality(state, { viewport: QUALITY_VIEWPORTS[1] });
+  assert.deepEqual(preShot.visibleResults, []);
+  assert.equal(preShot.selectedResult, null);
+  assert.equal('resultBundle' in preShot, false);
+
+  state = event(state, 'quality-reveal-first', 'REVEAL_NEXT');
+  const firstReveal = projectGachaPresentationQuality(state, { viewport: QUALITY_VIEWPORTS[1] });
+  assert.deepEqual(firstReveal.visibleResults, [confirmed[0]]);
+  assert.deepEqual(firstReveal.selectedResult, confirmed[0]);
+  assert.equal(firstReveal.resultCount, 7);
+  assert.equal(firstReveal.invariants.unrevealedResultsExposed, false);
+});
+
+test('result selection and rarity stay readable through redundant non-color channels', () => {
+  let state = createCurrentSeven();
+  state = completeBySkip(state);
+  const quality = projectGachaPresentationQuality(state, { viewport: QUALITY_VIEWPORTS[1] });
+
+  assert.deepEqual(quality.channels.selection, ['outline', 'position', 'label']);
+  assert.deepEqual(quality.channels.rarity, ['text', 'frame_weight']);
+  assert.equal(quality.accessibility.selectionMeaningPreservedWithoutColor, true);
+  assert.equal(quality.accessibility.rarityMeaningPreservedWithoutColor, true);
+});
+
+test('reduced-motion and low-performance result review retain hierarchy, selection, and result truth', () => {
+  for (const accessibility of [
+    { reducedMotion: true, expectedTransition: 'none' },
+    { lowPerf: true, expectedTransition: 'short_fade' },
+  ]) {
+    let state = createCurrentSeven(accessibility);
+    state = completeBySkip(state);
+
+    for (const viewport of QUALITY_VIEWPORTS) {
+      const quality = projectGachaPresentationQuality(state, { viewport });
+      assert.equal(quality.motion.transition, accessibility.expectedTransition, viewport.name);
+      assert.deepEqual(quality.motion.semanticFeedback, ['outline', 'position', 'label'], viewport.name);
+      assert.equal(quality.accessibility.resultMeaningPreservedWithoutMotion, true, viewport.name);
+      assert.equal(quality.hierarchy.packOdds, 'collapsed_support', viewport.name);
+      assert.equal(quality.hierarchy.openAgain, 'secondary_action', viewport.name);
+      assert.deepEqual(quality.visibleResults, makeCurrentSevenResultBundle(), viewport.name);
+    }
+  }
+});
+
+test('pre-shot quality projection does not expose result items and keeps open-pack ahead of odds', () => {
+  let state = createCurrentSeven();
+  state = event(state, 'pre-shot-start', 'START');
+  const quality = projectGachaPresentationQuality(state, { viewport: QUALITY_VIEWPORTS[1] });
+
+  assert.equal(quality.reviewingResults, false);
+  assert.equal(quality.selectedResult, null);
+  assert.deepEqual(quality.visibleResults, []);
+  assert.equal('resultBundle' in quality, false);
+  assert.deepEqual(quality.hierarchy.priorityOrder, ['pack_preview', 'open_pack', 'pack_odds']);
+  assert.equal(quality.hierarchy.selectedResult, 'hidden');
+  assert.equal(quality.layout.packMeta, 'primary');
+});
+
+test('quality projection fails closed for invalid viewport without mutating presentation state', () => {
+  let state = createCurrentSeven();
+  state = completeBySkip(state);
+  const before = snapshotGachaPresentation(state);
+
+  assert.throws(() => projectGachaPresentationQuality(state, {
+    viewport: { width: 0, height: 844 },
+  }), /viewport/);
+  assert.deepEqual(snapshotGachaPresentation(state), before);
 });

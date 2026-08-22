@@ -27,7 +27,9 @@ function presenceSessionId(sender) {
 
 function sendGuestPresence(ctx, room, sender, kind, revision) {
   const host = activeEntries(ctx).find(
-    (entry) => entry.role === 'host' && entry.clientId === room.hostClientId
+    (entry) => entry.role === 'host'
+      && entry.clientId === room.hostClientId
+      && entry.presenceClosed !== true
   );
   if (!host) return false;
   try {
@@ -87,6 +89,22 @@ export class GAMEROADFriendRoomRelay extends DurableObject {
       sendGuestPresence(this.ctx, admitted.room, admitted.attachment, 'rejoin', admitted.presenceRevision);
     }
 
+    if (admitted.replaceHostClientId) {
+      for (const entry of active) {
+        if (entry.role !== 'host'
+          || entry.clientId !== admitted.replaceHostClientId
+          || entry.presenceClosed === true) continue;
+        const prior = attachmentOf(entry.ws);
+        if (!prior) continue;
+        try {
+          entry.ws.serializeAttachment({ ...prior, presenceClosed: true });
+        } catch {
+          continue;
+        }
+        try { entry.ws.close(1012, 'connection replaced'); } catch {}
+      }
+    }
+
     if (admitted.replaceClientId) {
       for (const entry of active) {
         if (entry.role === 'guest' && entry.clientId === admitted.replaceClientId) {
@@ -111,7 +129,7 @@ export class GAMEROADFriendRoomRelay extends DurableObject {
     }
 
     let room = normalizeRoom(await this.ctx.storage.get(ROOM_KEY));
-    const active = activeEntries(this.ctx);
+    const active = activeEntries(this.ctx).filter((entry) => entry.presenceClosed !== true);
     const routed = routeFrame(room, sender, frame, active);
     if (!routed.ok) {
       ws.send(JSON.stringify(transportReject(routed.reason)));

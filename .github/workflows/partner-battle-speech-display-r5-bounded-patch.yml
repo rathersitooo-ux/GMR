@@ -1,0 +1,157 @@
+name: Partner Battle Speech Display R5 Bounded Patch
+
+on:
+  push:
+    branches:
+      - work/partner-battle-speech-display-r5
+    paths:
+      - .github/workflows/partner-battle-speech-display-r5-bounded-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-retest-persist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/partner-battle-speech-display-r5
+          fetch-depth: 0
+
+      - name: Verify exact current base and production preimage
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_BASE='4c30486c3a39433da2b2c31a0d549cb1bda3b888'
+          EXPECTED_BLOB='12839c58646f849f0ad4470695c391bfb07b1174'
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_BASE"
+          git fetch --no-tags origin main
+          test "$(git rev-parse origin/main)" = "$EXPECTED_BASE"
+          test "$(git hash-object browser/GAMEROAD.html)" = "$EXPECTED_BLOB"
+          test "$(grep -o 'gameroad-partner-comment-nonblocking-r2' browser/GAMEROAD.html | wc -l)" -eq 2
+          test "$(grep -o 'gameroad-partner-comment-nonblocking-r3' browser/GAMEROAD.html | wc -l)" -eq 0
+
+      - name: Replace only partner comment presentation hunk
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('browser/GAMEROAD.html')
+          text = p.read_text(encoding='utf-8')
+          start_marker = '<!-- GAMEROAD BROWSER PARTNER COMMENT NONBLOCKING R2 / BROWSER-PARTNER-BATTLE-COMMENT-LOG-001 / 2026-08-08'
+          end_marker = '<script id="gameroad-partner-dialogue-separation-r3"'
+          if text.count(start_marker) != 1 or text.count(end_marker) != 1:
+              raise SystemExit('partner presentation anchors drifted')
+          start = text.index(start_marker)
+          end = text.index(end_marker, start)
+          old = text[start:end]
+          for token in ('<style id="gameroad-partner-comment-nonblocking-r2">', '<script id="gameroad-partner-comment-nonblocking-r2-contract"', 'top:30vh!important', 'top:69vh!important'):
+              if token not in old: raise SystemExit(f'preimage token missing: {token}')
+          new = '''<!-- GAMEROAD BROWSER PARTNER COMMENT NONBLOCKING R3 / PARTNER-GOODMOVE-ADVICE-RUNTIME-INTEGRATION-001 / 2026-08-23
+     Scope: presentation-only partner-anchor repair. Semantic advice, battle rules, partner canon/provider authority and speech-density policy are unchanged. -->
+<style id="gameroad-partner-comment-nonblocking-r3">
+.partnerBattleCommentLayer{
+  left:max(6px,env(safe-area-inset-left))!important;right:auto!important;top:auto!important;
+  bottom:calc(var(--r8-dock-bottom,72px) + clamp(126px,18vh,158px))!important;
+  width:clamp(190px,22vw,286px)!important
+}
+.partnerBattleBubble{position:relative}
+.partnerBattleBubble:after{
+  content:"";position:absolute;left:20px;bottom:-8px;width:14px;height:14px;
+  border-right:1px solid rgba(197,246,228,.34);border-bottom:1px solid rgba(197,246,228,.34);
+  background:inherit;transform:rotate(45deg);pointer-events:none
+}
+@media(max-width:900px){
+  .partnerBattleCommentLayer{
+    left:max(6px,env(safe-area-inset-left))!important;right:auto!important;top:auto!important;
+    bottom:calc(var(--r8-dock-bottom,72px) + clamp(118px,17vh,150px))!important;
+    width:clamp(168px,34vw,238px)!important;grid-template-columns:minmax(0,1fr) 42px!important;gap:6px!important
+  }
+  .partnerBattleBubble{padding:7px 8px!important}
+  .partnerBattleBubble .partnerCommentText{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+}
+@media(max-width:540px) and (orientation:portrait){
+  .partnerBattleCommentLayer{
+    left:max(6px,env(safe-area-inset-left))!important;right:auto!important;top:auto!important;
+    bottom:calc(var(--r8-dock-bottom,72px) + clamp(124px,18vh,154px))!important;
+    width:min(46vw,200px)!important;grid-template-columns:minmax(0,1fr) 38px!important
+  }
+}
+@media(min-height:471px) and (max-height:550px) and (orientation:landscape){
+  .partnerBattleCommentLayer{
+    left:max(8px,env(safe-area-inset-left))!important;right:auto!important;top:auto!important;
+    bottom:calc(var(--r8-dock-bottom,64px) + clamp(80px,16vh,104px))!important;width:clamp(160px,23vw,220px)!important
+  }
+}
+@media(max-height:470px) and (orientation:landscape){
+  .partnerBattleCommentLayer{
+    left:max(8px,env(safe-area-inset-left))!important;right:auto!important;top:auto!important;
+    bottom:calc(var(--r8-dock-bottom,58px) + clamp(66px,18vh,88px))!important;width:clamp(150px,22vw,204px)!important
+  }
+}
+@media (prefers-reduced-motion: reduce){.partnerBattleBubble:after{transition:none!important}}
+</style>
+<script id="gameroad-partner-comment-nonblocking-r3-contract" type="application/json">{"schema":"GAMEROAD_BROWSER_PARTNER_COMMENT_NONBLOCKING_R3","task_id":"PARTNER-GOODMOVE-ADVICE-RUNTIME-INTEGRATION-001","acquire_key":"PARTNER-BATTLE-SPEECH-DISPLAY-R5-20260823T0138-SOL-Q7N4V8K2M6PX","base_commit":"4c30486c3a39433da2b2c31a0d549cb1bda3b888","base_html_blob":"12839c58646f849f0ad4470695c391bfb07b1174","scope":"responsive presentation only; partner-stage/dock anchor; no semantic/provider/canon/density changes","mobile_policy":"compact two-line live reaction; full important text remains in existing session log","protected":["109-node board","hand interaction","battle resolution","card conservation","partner provider authority","opponent secret information","approved dialogue source","speech density policy"]}</script>
+
+'''
+          out = text[:start] + new + text[end:]
+          assert out.count('gameroad-partner-comment-nonblocking-r2') == 0
+          assert out.count('gameroad-partner-comment-nonblocking-r3') == 2
+          assert out.count('GAMEROAD_BROWSER_PARTNER_COMMENT_NONBLOCKING_R3') == 1
+          p.write_text(out, encoding='utf-8')
+          PY
+          git diff --check
+          test "$(git diff --name-only)" = 'browser/GAMEROAD.html'
+
+      - name: Static contract regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          t = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          checks = ['GAMEROAD_PARTNER_STATE','GAMEROAD_PARTNER_DIALOGUE_PLAYBACK_V1','gameroad-partner-dialogue-separation-r3',"aria-live='polite'","aria-atomic='true'",'.textContent','prefers-reduced-motion: reduce','partnerBattleCommentLog']
+          assert all(x in t for x in checks)
+          block = t[t.index('<style id="gameroad-partner-comment-nonblocking-r3">'):t.index('<script id="gameroad-partner-dialogue-separation-r3"')]
+          assert all(x not in block for x in ['top:30vh','top:69vh','top:55vh'])
+          assert block.count('top:auto!important') >= 4
+          assert 'width:min(46vw,200px)!important' in block
+          assert 'bottom:calc(var(--r8-dock-bottom' in block
+          print('PARTNER R5 static contract: PASS')
+          PY
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+      - run: npx playwright install --with-deps chromium
+
+      - name: Run actual Battle partner-advice path on current visual projects
+        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 --grep "covers visible 2v2 Battle shell, info/log drawer, range, partner advice, undo and exit" --project=desktop-1280x720 --project=phone-390x844 --project=short-landscape-667x375
+
+      - name: Run same Battle path at 393x873
+        shell: bash
+        run: |
+          cat > playwright.partner-r5.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          import baseConfig from './playwright.full-interaction.config.mjs';
+          export default defineConfig({ ...baseConfig, projects: [{ name: 'phone-393x873', use: { viewport: { width: 393, height: 873 } } }] });
+          EOF
+          npx playwright test --config=playwright.partner-r5.config.mjs --workers=1 --grep "covers visible 2v2 Battle shell, info/log drawer, range, partner advice, undo and exit"
+          rm playwright.partner-r5.config.mjs
+
+      - name: Commit only persisted product repair and remove temporary executor
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/partner-battle-speech-display-r5-bounded-patch.yml
+          git diff --check HEAD
+          test "$(git diff --name-only HEAD)" = $'.github/workflows/partner-battle-speech-display-r5-bounded-patch.yml\nbrowser/GAMEROAD.html'
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add browser/GAMEROAD.html
+          git commit -m 'PARTNER R5: anchor battle speech to partner stage'
+          git push origin HEAD:work/partner-battle-speech-display-r5

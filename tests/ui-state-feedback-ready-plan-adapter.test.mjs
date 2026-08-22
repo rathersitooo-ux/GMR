@@ -254,3 +254,23 @@ test('binding ignores non-active pointers and fails closed on stale ack',()=>{
   assert.throws(()=>h.binding.acknowledge({operationToken:'old',accepted:true,reason:'server_ack'}),/stale|mismatched/);
   assert.equal(h.adapter.getFeedback().feedback,'pending');
 });
+
+test('binding routes secondary mouse through contextmenu without primary commit',()=>{
+  const h=makeBinding();
+  h.target.emit('pointerdown',{pointerId:9,button:2,clientX:10,clientY:20});
+  h.target.emit('pointerup',{pointerId:9,button:2,clientX:10,clientY:20});
+  const context={prevented:false,preventDefault(){this.prevented=true;}};
+  h.target.emit('contextmenu',context);
+  assert.equal(context.prevented,true);
+  assert.equal(h.tokenCounter,0);
+  assert.equal(h.calls.length,0);
+  assert.equal(h.adapter.getFeedback().feedback,'normal');
+});
+
+test('binding keeps primary mouse commit behavior with explicit button zero',()=>{
+  const h=makeBinding();
+  h.target.emit('pointerdown',{pointerId:10,button:0,clientX:10,clientY:20});
+  h.target.emit('pointerup',{pointerId:10,button:0,clientX:10,clientY:20});
+  assert.equal(h.tokenCounter,1);
+  assert.deepEqual(h.calls,[{type:'commit',operationToken:'bind-1',source:'pointer_release'}]);
+});

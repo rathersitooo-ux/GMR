@@ -5,6 +5,12 @@ import {
   formatPartnerBattleEventLogProjection,
   renderPartnerBattleEventLogProjection
 } from '../browser/partner-battle-event-log-live-mount.mjs';
+import {
+  appendAcceptedBattleResolution,
+  appendAcceptedMatchEnd,
+  createLiveReplaySession,
+  readLiveReplay
+} from '../browser/battle-replay-live-adapter.mjs';
 
 function replayRead() {
   return {
@@ -45,6 +51,33 @@ function replayRead() {
         kind: 'match_ended',
         publicData: { round: 1, mode: '4p', winnerIds: ['PLAYER_SECRET_A'] }
       }
+    ]
+  };
+}
+
+function acceptedResolution() {
+  return {
+    serial: 1,
+    round: 1,
+    mode: '2p',
+    attackerId: 'p1',
+    defenderId: 'p2',
+    lane: 'CENTER',
+    shield: null,
+    winnerIds: ['p1'],
+    winningTeam: 'A',
+    teamTotals: { A: 8, B: 5 },
+    players: [
+      { id: 'p1', name: 'P1', team: 'A', score: 8, winner: true, cards: [{ cardId: 'c1', label: 'C1', value: 8, origin: 'hand' }] },
+      { id: 'p2', name: 'P2', team: 'B', score: 5, winner: false, cards: [{ cardId: 'c2', label: 'C2', value: 5, origin: 'hand' }] }
+    ],
+    laneGains: [
+      { id: 'p1', lane: 'CENTER', before: 0, after: 1, added: 1 },
+      { id: 'p2', lane: 'LEFT', before: 0, after: 0, added: 0 }
+    ],
+    maxLaneProgress: [
+      { id: 'p1', before: 0, after: 1 },
+      { id: 'p2', before: 0, after: 0 }
     ]
   };
 }
@@ -108,6 +141,50 @@ test('live mount renders only sanitized factual Partner replay projection into d
   for (const secret of ['PLAYER_SECRET_A', 'PLAYER_SECRET_B', 'Alice Secret', 'Bob Secret', 'secret-match-id', 'Private Label', 'do-not-render']) {
     assert.equal(target.textContent.includes(secret), false, `must not render identity/private source: ${secret}`);
   }
+});
+
+test('accepted replay production callsite syncs Partner log after resolution and match end', () => {
+  const synced = [];
+  const partnerBattleEventLogMount = { sync(session) { synced.push(session); } };
+  let session = createLiveReplaySession({
+    matchId: 'm-callsite',
+    versions: { rules: 'rules@1', content: 'content@1', state: 'state@1' }
+  }, { presentationBridge: null });
+
+  session = appendAcceptedBattleResolution(session, acceptedResolution(), {
+    presentationBridge: null,
+    partnerBattleEventLogMount
+  });
+  assert.equal(synced.length, 1);
+  assert.equal(synced[0], session);
+  assert.equal(readLiveReplay(session).events.length, 1);
+
+  session = appendAcceptedMatchEnd(session, {
+    winnerIds: ['p1'],
+    round: 1,
+    mode: '2p'
+  }, {
+    presentationBridge: null,
+    partnerBattleEventLogMount
+  });
+  assert.equal(synced.length, 2);
+  assert.equal(synced[1], session);
+  assert.equal(readLiveReplay(session).events.length, 2);
+});
+
+test('Partner live sync failure cannot roll back accepted replay state', () => {
+  const throwingMount = { sync() { throw new Error('presentation unavailable'); } };
+  const session = createLiveReplaySession({
+    matchId: 'm-fail-soft',
+    versions: { rules: 'rules@1', content: 'content@1', state: 'state@1' }
+  }, { presentationBridge: null });
+  const next = appendAcceptedBattleResolution(session, acceptedResolution(), {
+    presentationBridge: null,
+    partnerBattleEventLogMount: throwingMount
+  });
+  const replay = readLiveReplay(next);
+  assert.equal(replay.ok, true);
+  assert.equal(replay.events.length, 1);
 });
 
 test('live mount updates the same dedicated child and remains fail-soft when DOM is unavailable', () => {

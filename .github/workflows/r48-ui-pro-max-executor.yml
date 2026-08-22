@@ -1,0 +1,71 @@
+name: R48 UI Pro Max Live Home Inspector
+
+on:
+  push:
+    branches:
+      - work/ui-pro-max-first-slice-r1
+    paths:
+      - '.github/workflows/r48-ui-pro-max-executor.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  inspect-live-home:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Guard and inspect live Home selectors
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED_PARENT='875df5c27583d66753252815e444501b8b400517'
+          PARENT="$(git rev-parse HEAD^)"
+          if [[ "$PARENT" != "$EXPECTED_PARENT" ]]; then
+            echo "::error::Unexpected inspector parent: $PARENT"
+            exit 1
+          fi
+          python - <<'PY'
+          from pathlib import Path
+          import re, json
+          text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          print('HTML_SHA256_CONTEXT_LEN', len(text))
+          print('R48_MARKERS', text.count('UI_PRO_MAX_R48_BEGIN'), text.count('UI_PRO_MAX_R48_END'))
+          # Exact current Home opening tag and compact class vocabulary near it.
+          needle='class="screen home codexHome"'
+          pos=text.find(needle)
+          print('CODEX_HOME_POS', pos)
+          if pos < 0: raise SystemExit('live codexHome surface not found')
+          window=text[max(0,pos-12000):pos+50000]
+          classes=[]
+          for m in re.finditer(r'class="([^"]+)"', window):
+            for c in m.group(1).split():
+              if c not in classes: classes.append(c)
+          print('HOME_WINDOW_CLASSES', json.dumps(classes[:160], ensure_ascii=False))
+          # CSS selectors materially tied to codex/Home/slide-pad terms.
+          selectors=[]
+          for m in re.finditer(r'([^{}]{0,220})\{', text):
+            s=' '.join(m.group(1).split())
+            low=s.lower()
+            if any(k in low for k in ('codexhome','codex-home','codex','slidepad','slide-pad','homehub','home-hub','homeworld','home-world')):
+              if s and s not in selectors: selectors.append(s)
+          print('LIVE_HOME_SELECTORS', json.dumps(selectors[-140:], ensure_ascii=False))
+          # Element ids in immediate current Home section window.
+          ids=[]
+          for i in re.findall(r'id="([^"]+)"', window):
+            if i not in ids: ids.append(i)
+          print('HOME_WINDOW_IDS', json.dumps(ids[:120], ensure_ascii=False))
+          PY
+      - name: Self-remove inspector
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm .github/workflows/r48-ui-pro-max-executor.yml
+          git add .github/workflows/r48-ui-pro-max-executor.yml
+          git commit -m 'R48: remove live Home inspector'
+          git push origin HEAD:work/ui-pro-max-first-slice-r1

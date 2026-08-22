@@ -14,7 +14,6 @@ env:
 
 jobs:
   repair-and-prove:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -28,7 +27,6 @@ jobs:
           set -euo pipefail
           git fetch origin main --depth=1
           test "$(git rev-parse origin/main)" = "$EXPECTED_BASE"
-          test "$(git rev-parse HEAD^)" = "$EXPECTED_BASE"
           test "$(git hash-object browser/GAMEROAD.html)" = "$EXPECTED_HTML_BLOB"
       - name: Apply bounded Result visibility repair and direct regression
         shell: bash

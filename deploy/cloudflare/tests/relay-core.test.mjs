@@ -9,6 +9,7 @@ import {
   emptyRoom,
   makeTransportPresenceFrame,
   routeFrame,
+  shouldPreserveRoomAfterHostClose,
 } from '../relay/src/relay-core.mjs';
 import {
   applyHatePeerPresenceEvent,
@@ -45,6 +46,13 @@ test('same host identity reconnect requests replacement without permitting host 
     admitConnection(room, { ...host, clientId: 'host-2' }, active(host)).reason,
     'host_exists',
   );
+});
+
+test('host close policy preserves reconnectable drops but tears down an intentional normal close', () => {
+  assert.equal(shouldPreserveRoomAfterHostClose(1000), false);
+  assert.equal(shouldPreserveRoomAfterHostClose(1001), true);
+  assert.equal(shouldPreserveRoomAfterHostClose(1006), true);
+  assert.equal(shouldPreserveRoomAfterHostClose(undefined), true);
 });
 
 test('caps transport at three guest identities for four total players', () => {
@@ -412,6 +420,102 @@ test('live public Pages friend-room WebSocket routes and reconnects', { skip: !p
     assert.equal(hostAfterReconnect.payload.to, guestId);
   } finally {
     for (const socket of [reconnectedHostSocket, reconnectedSocket, guestSocket, hostSocket]) {
+      if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
+        try { socket.close(1000, 'probe complete'); } catch {}
+      }
+    }
+  }
+});
+
+test('live public Pages survives host-close-before-reconnect without ejecting the guest', { skip: !process.env.GAMEROAD_PUBLIC_WS_PROBE_URL }, async () => {
+  const pagesUrl = process.env.GAMEROAD_PUBLIC_WS_PROBE_URL;
+  const runIdentity = `${process.env.GITHUB_RUN_ID || 'probe'}:${process.env.GITHUB_RUN_ATTEMPT || '1'}:${process.env.GITHUB_SHA || ''}:host-drop-first`;
+  const code = probeRoomCode(runIdentity);
+  const publicChannel = `gameroad.friend.r2.${code}`;
+  const suffix = String(process.env.GITHUB_RUN_ID || Date.now());
+  const hostId = `drop-host-${suffix}`;
+  const guestId = `drop-guest-${suffix}`;
+  const authToken = `drop-auth-${suffix}-${code}`;
+  const baseHandshake = { channel: publicChannel };
+
+  let hostSocket;
+  let guestSocket;
+  let reconnectedHostSocket;
+  try {
+    const hostPeer = await openProbeSocket(
+      pagesUrl,
+      { ...baseHandshake, role: 'host', clientId: hostId, authToken: '' },
+      'drop-first host',
+    );
+    hostSocket = hostPeer.ws;
+    const guestPeer = await openProbeSocket(
+      pagesUrl,
+      { ...baseHandshake, role: 'guest', clientId: guestId, authToken: '' },
+      'drop-first guest',
+    );
+    guestSocket = guestPeer.ws;
+
+    await hostPeer.inbox.waitFor(
+      (value) => value?.wire === WS_WIRE
+        && value?.payload?.type === TRANSPORT_PRESENCE_TYPE
+        && value.payload.clientId === guestId
+        && value.payload.kind === 'rejoin',
+      'drop-first guest initial presence',
+    );
+
+    hostSocket.send(JSON.stringify({
+      wire: WS_WIRE,
+      op: 'data',
+      payload: { code, type: 'accept', to: guestId, authToken, probe: 'drop-first-accept' },
+    }));
+    const accept = await guestPeer.inbox.waitFor(
+      (value) => value?.wire === WS_WIRE && value?.payload?.type === 'accept' && value.payload.to === guestId,
+      'drop-first accept',
+    );
+    assert.equal(accept.payload.authToken, authToken);
+
+    const hostClosed = waitForClose(hostSocket, 'drop-first old host');
+    hostSocket.close(1001, 'simulate host transport going away');
+    const dropped = await hostClosed;
+    assert.equal(dropped.code, 1001);
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    assert.equal(guestSocket.readyState, WebSocket.OPEN);
+
+    const replacement = await openProbeSocket(
+      pagesUrl,
+      { ...baseHandshake, role: 'host', clientId: hostId, authToken: '' },
+      'drop-first same-id host reconnect',
+    );
+    reconnectedHostSocket = replacement.ws;
+
+    guestSocket.send(JSON.stringify({
+      wire: WS_WIRE,
+      op: 'data',
+      payload: { code, type: 'join', clientId: guestId, authToken, seq: 1, probe: 'guest-after-drop-first-host' },
+    }));
+    const guestAfterReconnect = await replacement.inbox.waitFor(
+      (value) => value?.wire === WS_WIRE
+        && value?.payload?.type === 'join'
+        && value.payload.probe === 'guest-after-drop-first-host',
+      'guest route after drop-first host reconnect',
+    );
+    assert.equal(guestAfterReconnect.payload.clientId, guestId);
+    assert.equal(guestAfterReconnect.payload.authToken, authToken);
+
+    reconnectedHostSocket.send(JSON.stringify({
+      wire: WS_WIRE,
+      op: 'data',
+      payload: { code, type: 'lobby', to: guestId, probe: 'host-after-drop-first-reconnect' },
+    }));
+    const hostAfterReconnect = await guestPeer.inbox.waitFor(
+      (value) => value?.wire === WS_WIRE
+        && value?.payload?.type === 'lobby'
+        && value.payload.probe === 'host-after-drop-first-reconnect',
+      'host route to surviving guest after drop-first reconnect',
+    );
+    assert.equal(hostAfterReconnect.payload.to, guestId);
+  } finally {
+    for (const socket of [reconnectedHostSocket, guestSocket, hostSocket]) {
       if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
         try { socket.close(1000, 'probe complete'); } catch {}
       }

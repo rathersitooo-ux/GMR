@@ -9,6 +9,7 @@ import {
   routeFrame,
   transportReject,
   makeTransportPresenceFrame,
+  shouldPreserveRoomAfterHostClose,
 } from './relay-core.mjs';
 
 const ROOM_KEY = 'room.v1';
@@ -175,7 +176,7 @@ export class GAMEROADFriendRoomRelay extends DurableObject {
     await this.ctx.storage.put(ROOM_KEY, room);
   }
 
-  async webSocketClose(ws) {
+  async webSocketClose(ws, code) {
     const sender = attachmentOf(ws);
     if (!sender || sender.role === 'rejected' || sender.presenceClosed) return;
     const room = normalizeRoom(await this.ctx.storage.get(ROOM_KEY));
@@ -192,8 +193,10 @@ export class GAMEROADFriendRoomRelay extends DurableObject {
       return;
     }
     if (sender.role === 'host' && room.hostClientId === sender.clientId) {
+      ws.serializeAttachment({ ...sender, presenceClosed: true });
+      if (shouldPreserveRoomAfterHostClose(code)) return;
       for (const entry of activeEntries(this.ctx)) {
-        if (entry.ws === ws || entry.role !== 'guest') continue;
+        if (entry.ws === ws || entry.role !== 'guest' || entry.presenceClosed === true) continue;
         try { entry.ws.close(1012, 'host disconnected'); } catch {}
       }
       await this.ctx.storage.put(ROOM_KEY, emptyRoom());
@@ -201,7 +204,7 @@ export class GAMEROADFriendRoomRelay extends DurableObject {
   }
 
   async webSocketError(ws) {
-    await this.webSocketClose(ws);
+    await this.webSocketClose(ws, 1006);
   }
 }
 

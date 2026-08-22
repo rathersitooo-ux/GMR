@@ -9,6 +9,11 @@ export function emptyRoom() {
   return { hostClientId: '', guests: {} };
 }
 
+export function shouldPreserveRoomAfterHostClose(code) {
+  const closeCode = Number(code);
+  return !Number.isInteger(closeCode) || closeCode !== 1000;
+}
+
 function safePresenceRevision(value) {
   return Number.isSafeInteger(value) && value >= 0 ? value : 0;
 }

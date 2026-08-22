@@ -25,6 +25,13 @@ jobs:
       - name: Checkout exact probe source
         uses: actions/checkout@v4
 
+      - name: Inspect current deck producer without mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== DEFAULT/INITIAL DECK SOURCE ==='
+          grep -n -C 5 -E 'DEFAULT_DECK|savedDeck|deckDraft|40枚|40 cards|deck.{0,24}40|26枚' browser/GAMEROAD.html | head -n 360 || true
+
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
@@ -56,12 +63,7 @@ jobs:
           const base = process.env.GAMEROAD_PUBLIC_BASE_URL;
           const out = 'northstar-evidence';
           const browser = await chromium.launch({ headless: true });
-          const context = await browser.newContext({
-            viewport: { width: 390, height: 844 },
-            isMobile: true,
-            hasTouch: true,
-            deviceScaleFactor: 2,
-          });
+          const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
           const page = await context.newPage();
           const consoleErrors = [];
           const pageErrors = [];
@@ -74,6 +76,7 @@ jobs:
           const snapshots = [];
           async function snap(label) {
             const data = await page.evaluate(() => {
+              document.querySelectorAll('[data-northstar-probe-id]').forEach((el) => el.removeAttribute('data-northstar-probe-id'));
               const els = [...document.querySelectorAll('button,a,[role="button"],[data-go],input,select,[tabindex]')];
               let serial = 0;
               const controls = [];
@@ -82,24 +85,11 @@ jobs:
                 const r = el.getBoundingClientRect();
                 const visible = style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity || 1) > 0 && r.width >= 8 && r.height >= 8 && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth;
                 if (!visible) continue;
-                const id = `probe-${serial++}`;
+                const id = `${label}-${serial++}`;
                 el.setAttribute('data-northstar-probe-id', id);
-                controls.push({
-                  id,
-                  tag: el.tagName,
-                  text: String(el.innerText || el.value || '').replace(/\s+/g, ' ').trim().slice(0, 180),
-                  aria: String(el.getAttribute('aria-label') || '').trim().slice(0, 180),
-                  title: String(el.getAttribute('title') || '').trim().slice(0, 180),
-                  disabled: Boolean(el.disabled) || el.getAttribute('aria-disabled') === 'true',
-                  rect: { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) },
-                });
+                controls.push({ id, tag: el.tagName, text: String(el.innerText || el.value || '').replace(/\s+/g, ' ').trim().slice(0,180), aria: String(el.getAttribute('aria-label') || '').trim().slice(0,180), title: String(el.getAttribute('title') || '').trim().slice(0,180), disabled: Boolean(el.disabled) || el.getAttribute('aria-disabled') === 'true', rect: { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) } });
               }
-              return {
-                url: location.href,
-                title: document.title,
-                body: String(document.body?.innerText || '').replace(/\n{3,}/g, '\n\n').trim().slice(0, 6000),
-                controls,
-              };
+              return { url: location.href, title: document.title, body: String(document.body?.innerText || '').replace(/\n{3,}/g,'\n\n').trim().slice(0,8000), controls };
             });
             data.label = label;
             snapshots.push(data);
@@ -108,15 +98,19 @@ jobs:
             return data;
           }
 
-          function score(c) {
+          function score(c, body) {
             const t = `${c.text} ${c.aria} ${c.title}`.toLowerCase();
             if (c.disabled) return -999;
             let s = 0;
-            const add = (re, n) => { if (re.test(t)) s += n; };
+            const add = (re,n) => { if (re.test(t)) s += n; };
             add(/バトル|対戦|battle/, 120);
-            add(/遊ぶ|あそぶ|play|開始|はじめ|start/, 100);
+            add(/遊ぶ|あそぶ|play|開始|はじめ|start|盤面へ/, 100);
             add(/ハニー|honey|蜜/, 90);
-            add(/4\s*人|4p|four|4-player/, 80);
+            add(/四人|4\s*人|4p|four|4-player/, 80);
+            add(/デッキ|deck/, body.includes('デッキを修正') ? 170 : 20);
+            add(/自動|おすすめ|推奨|一括|auto|recommend/, 70);
+            add(/追加|add/, 30);
+            add(/保存|決定|確定|完了|save|done|confirm/, 35);
             add(/次へ|next|ok|わかった|了解/, 25);
             add(/戻る|back|閉じる|close|設定|settings?|ショップ|shop|更新|update|通知|news/, -70);
             return s;
@@ -124,17 +118,23 @@ jobs:
 
           let current = await snap('entry');
           const actions = [];
-          for (let step = 1; step <= 6; step++) {
-            const ranked = current.controls.map(c => ({...c, score: score(c)})).sort((a,b) => b.score - a.score);
+          for (let step = 1; step <= 8; step++) {
+            const ranked = current.controls.map(c => ({...c, score: score(c, current.body)})).sort((a,b) => b.score - a.score);
             const best = ranked[0];
             if (!best || best.score < 20) {
-              actions.push({ step, stop: 'no-obvious-positive-action', top: ranked.slice(0,8) });
+              actions.push({ step, stop: 'no-obvious-positive-action', top: ranked.slice(0,12) });
               break;
             }
-            actions.push({ step, chosen: best, alternatives: ranked.slice(1,6) });
+            actions.push({ step, chosen: best, alternatives: ranked.slice(1,8) });
             console.log(`NORTHSTAR_ACTION step=${step} score=${best.score} text=${JSON.stringify(best.text || best.aria || best.title)}`);
-            await page.locator(`[data-northstar-probe-id="${best.id}"]`).click({ timeout: 10_000 });
-            await page.waitForTimeout(1000);
+            const loc = page.locator(`[data-northstar-probe-id="${best.id}"]`).filter({ visible: true }).first();
+            try {
+              await loc.click({ timeout: 10_000 });
+            } catch (error) {
+              actions.push({ step, stop: 'click-failed', error: String(error), chosen: best });
+              break;
+            }
+            await page.waitForTimeout(900);
             current = await snap(`after-${step}`);
           }
 
@@ -145,6 +145,7 @@ jobs:
           NODE
 
       - name: Run existing visible 4-player Honey journey on same public origin
+        if: ${{ !cancelled() }}
         shell: bash
         run: |
           set -euo pipefail
@@ -154,20 +155,7 @@ jobs:
           import { defineConfig } from '@playwright/test';
           import baseConfig from '../playwright.full-interaction.config.mjs';
           const publicProjects = (baseConfig.projects ?? []).filter((p) => !p.grep).map((p) => ({ name: p.name, use: p.use }));
-          export default defineConfig({
-            testDir: '.',
-            testMatch: 'browser-full-interaction.spec.mjs',
-            grep: /R19 reaches Result from visible four-player Honey Hunt and returns Home/,
-            timeout: 240_000,
-            expect: { timeout: 7_000 },
-            fullyParallel: false,
-            workers: 1,
-            retries: 0,
-            outputDir: '../northstar-evidence/full-path-results',
-            reporter: [['line'], ['json', { outputFile: '../northstar-evidence/full-path-report.json' }]],
-            use: { ...baseConfig.use, baseURL: process.env.GAMEROAD_PUBLIC_BASE_URL, trace: 'retain-on-failure', screenshot: 'only-on-failure', video: 'off' },
-            projects: publicProjects,
-          });
+          export default defineConfig({ testDir: '.', testMatch: 'browser-full-interaction.spec.mjs', grep: /R19 reaches Result from visible four-player Honey Hunt and returns Home/, timeout: 240_000, expect: { timeout: 7_000 }, fullyParallel: false, workers: 1, retries: 0, outputDir: '../northstar-evidence/full-path-results', reporter: [['line'], ['json', { outputFile: '../northstar-evidence/full-path-report.json' }]], use: { ...baseConfig.use, baseURL: process.env.GAMEROAD_PUBLIC_BASE_URL, trace: 'retain-on-failure', screenshot: 'only-on-failure', video: 'off' }, projects: publicProjects });
           EOF
           npx playwright test --config=.northstar-public/playwright.config.mjs --workers=1
 

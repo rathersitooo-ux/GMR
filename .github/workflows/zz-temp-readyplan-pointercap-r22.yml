@@ -1,0 +1,45 @@
+name: R22 ReadyPlan one-shot provenance patch
+
+on:
+  push:
+    branches:
+      - work/readyplan-pointer-capture-r22
+    paths:
+      - .github/workflows/zz-temp-readyplan-pointercap-r22.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-self-delete:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/readyplan-pointer-capture-r22
+          fetch-depth: 0
+      - name: Replace exactly one ReadyPlan provenance blob
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('deploy/cloudflare/tests/build.test.mjs')
+          old = '948521a07ba32e1ff7e9e32fb9c8af27656bb3ae'
+          new = 'e0a7557c32c21c8ba0912a9bcd986d0a0843af3f'
+          text = path.read_text(encoding='utf-8')
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'expected exactly one old ReadyPlan blob, found {count}')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+      - name: Run focused ReadyPlan regression
+        run: node --test tests/ui-state-feedback-ready-plan-adapter.test.mjs
+      - name: Commit provenance patch and remove temporary executor
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/zz-temp-readyplan-pointercap-r22.yml
+          git add deploy/cloudflare/tests/build.test.mjs
+          git commit -m 'ReadyPlan: sync pointer-capture package provenance'
+          git push origin HEAD:work/readyplan-pointer-capture-r22

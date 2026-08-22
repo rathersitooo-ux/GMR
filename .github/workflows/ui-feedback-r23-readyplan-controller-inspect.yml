@@ -36,6 +36,7 @@ jobs:
         run: |
           from pathlib import Path
 
+          # R23 read-only source extraction. Product bytes are never written here.
           path = Path('browser/GAMEROAD.html')
           text = path.read_text(encoding='utf-8')
           patterns = [

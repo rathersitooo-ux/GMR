@@ -1,0 +1,152 @@
+name: TEMP R15 current result visibility executor
+
+on:
+  push:
+    branches:
+      - work/free4p-r15-resultvis-current-recovery-20260823
+
+permissions:
+  contents: write
+
+env:
+  EXPECTED_BASE: 4c30486c3a39433da2b2c31a0d549cb1bda3b888
+  EXPECTED_HTML_BLOB: 12839c58646f849f0ad4470695c391bfb07b1174
+
+jobs:
+  repair-and-prove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/free4p-r15-resultvis-current-recovery-20260823
+          fetch-depth: 2
+      - name: Exact current-base and giant HTML guard
+        id: guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          test "$(git rev-parse origin/main)" = "$EXPECTED_BASE"
+          test "$(git hash-object browser/GAMEROAD.html)" = "$EXPECTED_HTML_BLOB"
+      - name: Apply bounded Result visibility repair and direct regression
+        id: patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html_path = Path('browser/GAMEROAD.html')
+          html = html_path.read_text(encoding='utf-8')
+          style_id = 'gameroad-r15-result-ranking-visibility-r1'
+          if style_id in html:
+              raise SystemExit('R15 result visibility style already exists')
+          if html.count('</head>') != 1:
+              raise SystemExit(f'unexpected </head> count: {html.count("</head>")}')
+          css = r'''<style id="gameroad-r15-result-ranking-visibility-r1">
+/* R15: all four final ranks must be readable in the initial Result viewport.
+   Presentation only: ranking order, scores, battle outcome and actions are unchanged. */
+.result.active #resultRanking{
+  display:grid;
+  grid-template-rows:repeat(4,minmax(0,1fr));
+  gap:5px;
+  overflow:hidden;
+}
+.result.active #resultRanking .rankLine{
+  min-height:0;
+  margin-bottom:0;
+}
+@media (max-height:500px) and (orientation:landscape){
+  .result.active #resultRanking{gap:2px}
+  .result.active #resultRanking .rankLine{min-height:0;margin-bottom:0;padding:2px 6px}
+}
+@media (max-width:540px) and (orientation:portrait){
+  .result.active #resultRanking{gap:2px}
+  .result.active #resultRanking .rankLine{min-height:0;margin-bottom:0;padding:3px 7px}
+  .result.active .resultBtns{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+</style>
+'''
+          html_path.write_text(html.replace('</head>', css + '</head>', 1), encoding='utf-8')
+
+          test_path = Path('tests/browser-full-interaction.spec.mjs')
+          test_src = test_path.read_text(encoding='utf-8')
+          anchor = "await expect(result.locator('#resultRanking .rankLine')).toHaveCount(4);"
+          if test_src.count(anchor) != 1:
+              raise SystemExit(f'unexpected R19 ranking count anchor count: {test_src.count(anchor)}')
+          regression = r'''
+    const rankingViewport = await result.locator('#resultRanking').boundingBox();
+    expect(rankingViewport, 'R19 result ranking viewport must have geometry').not.toBeNull();
+    const rankingRows = await result.locator('#resultRanking .rankLine').evaluateAll((rows) => rows.map((row) => {
+      const rect = row.getBoundingClientRect();
+      return { top: rect.top, bottom: rect.bottom, height: rect.height };
+    }));
+    expect(rankingRows).toHaveLength(4);
+    for (const [index, row] of rankingRows.entries()) {
+      expect(row.height, `R19 rank row ${index + 1} must have positive visible height`).toBeGreaterThan(0);
+      expect(row.top, `R19 rank row ${index + 1} must start inside ranking viewport`).toBeGreaterThanOrEqual(rankingViewport.y - 1);
+      expect(row.bottom, `R19 rank row ${index + 1} must end inside ranking viewport`).toBeLessThanOrEqual(rankingViewport.y + rankingViewport.height + 1);
+    }
+    const resultButtonsBox = await result.locator('.resultBtns').boundingBox();
+    expect(resultButtonsBox, 'R19 result actions must have geometry').not.toBeNull();
+    expect(rankingRows.at(-1).bottom, 'R19 fourth rank row must not be covered by Result actions').toBeLessThanOrEqual(resultButtonsBox.y + 1);
+'''
+          test_path.write_text(test_src.replace(anchor, anchor + regression, 1), encoding='utf-8')
+          PY
+          test "$(git hash-object browser/GAMEROAD.html)" != "$EXPECTED_HTML_BLOB"
+          git diff --check
+      - name: Install Browser interaction test runner
+        id: install
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Run focused visible four-player Result regression
+        id: focused
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx playwright test tests/browser-full-interaction.spec.mjs --config=playwright.full-interaction.config.mjs --grep "R19 reaches Result from visible four-player Honey Hunt and returns Home" --reporter=line
+      - name: Upload focused evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r15-result-visibility-candidate-${{ github.run_id }}
+          if-no-files-found: ignore
+          path: |
+            test-results/**
+            playwright-report/**
+      - name: Commit only durable product and direct regression
+        id: persist
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/r15-result-visibility-executor.yml
+          rm -f .tmp-r15-executor-result.txt
+          git config user.name 'gameroad-r15-executor'
+          git config user.email 'actions@users.noreply.github.com'
+          git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs .github/workflows/r15-result-visibility-executor.yml
+          test "$(git diff --cached --name-only | sort)" = $'.github/workflows/r15-result-visibility-executor.yml\nbrowser/GAMEROAD.html\ntests/browser-full-interaction.spec.mjs'
+          git diff --cached --check
+          git commit -m 'R15: keep all four Result ranks visible'
+          git push origin HEAD:work/free4p-r15-resultvis-current-recovery-20260823
+      - name: Persist observable failure stage
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git reset --hard HEAD
+          printf '%s\n' \
+            "guard=${{ steps.guard.outcome }}" \
+            "patch=${{ steps.patch.outcome }}" \
+            "install=${{ steps.install.outcome }}" \
+            "focused=${{ steps.focused.outcome }}" \
+            "persist=${{ steps.persist.outcome }}" \
+            "run_id=${{ github.run_id }}" > .tmp-r15-executor-result.txt
+          git config user.name 'gameroad-r15-executor'
+          git config user.email 'actions@users.noreply.github.com'
+          git add .tmp-r15-executor-result.txt
+          git commit -m 'R15 diagnostic: persist executor failure stage' || exit 0
+          git push origin HEAD:work/free4p-r15-resultvis-current-recovery-20260823

@@ -213,6 +213,7 @@ export function bindReadyPlanFeedbackControl({
   const onKeyDown = (event) => {
     if (destroyed || (event?.key !== 'Enter' && event?.key !== ' ')) return;
     if (typeof event.preventDefault === 'function') event.preventDefault();
+    if (event?.repeat === true) return;
     dispatch({type: 'KEY_ACTIVATE', operationTokenFactory});
   };
   const onContextMenu = (event) => {

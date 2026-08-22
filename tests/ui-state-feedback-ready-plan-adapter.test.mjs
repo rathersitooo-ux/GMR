@@ -264,7 +264,7 @@ test('binding routes secondary mouse through contextmenu without primary commit'
   assert.equal(context.prevented,true);
   assert.equal(h.tokenCounter,0);
   assert.equal(h.calls.length,0);
-  assert.equal(h.adapter.getFeedback().feedback,'normal');
+  assert.equal(h.adapter.getFeedback().feedback,'detail');
 });
 
 test('binding keeps primary mouse commit behavior with explicit button zero',()=>{

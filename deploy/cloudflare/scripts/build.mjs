@@ -110,189 +110,62 @@ export async function buildPackage({
   const uiStateFeedbackCoreBlob = gitBlobSha1(uiStateFeedbackCoreInput);
   const uiStateFeedbackReadyPlanAdapterBlob = gitBlobSha1(uiStateFeedbackReadyPlanAdapterInput);
   const fieldMusicPolicyCoreBlob = gitBlobSha1(fieldMusicPolicyCoreInput);
-  if (expectedBlob && blob !== expectedBlob) {
-    throw new Error(`Browser blob mismatch: expected=${expectedBlob} actual=${blob}`);
-  }
-  if (expectedCoreBlob && coreBlob !== expectedCoreBlob) {
-    throw new Error(`Deck save recovery core blob mismatch: expected=${expectedCoreBlob} actual=${coreBlob}`);
-  }
-  if (expectedPresenceCoreBlob && presenceCoreBlob !== expectedPresenceCoreBlob) {
-    throw new Error(`HATE peer presence core blob mismatch: expected=${expectedPresenceCoreBlob} actual=${presenceCoreBlob}`);
-  }
-  if (expectedNavigationCoreBlob && navigationCoreBlob !== expectedNavigationCoreBlob) {
-    throw new Error(`Screen navigation core blob mismatch: expected=${expectedNavigationCoreBlob} actual=${navigationCoreBlob}`);
-  }
-  if (expectedReplayAdapterBlob && replayAdapterBlob !== expectedReplayAdapterBlob) {
-    throw new Error(`Battle replay live adapter blob mismatch: expected=${expectedReplayAdapterBlob} actual=${replayAdapterBlob}`);
-  }
-  if (expectedPartnerBattleEventProjectionBlob && partnerBattleEventProjectionBlob !== expectedPartnerBattleEventProjectionBlob) {
-    throw new Error(`Partner battle event projection blob mismatch: expected=${expectedPartnerBattleEventProjectionBlob} actual=${partnerBattleEventProjectionBlob}`);
-  }
-  if (expectedReplayCoreBlob && replayCoreBlob !== expectedReplayCoreBlob) {
-    throw new Error(`Battle replay core blob mismatch: expected=${expectedReplayCoreBlob} actual=${replayCoreBlob}`);
-  }
-  if (expectedCardPresentationCoreBlob && cardPresentationCoreBlob !== expectedCardPresentationCoreBlob) {
-    throw new Error(`Card presentation core blob mismatch: expected=${expectedCardPresentationCoreBlob} actual=${cardPresentationCoreBlob}`);
-  }
-  if (expectedBattleConveyorCoreBlob && battleConveyorCoreBlob !== expectedBattleConveyorCoreBlob) {
-    throw new Error(`Battle conveyor presentation core blob mismatch: expected=${expectedBattleConveyorCoreBlob} actual=${battleConveyorCoreBlob}`);
-  }
-  if (expectedBoardFacilityClassicBlob && boardFacilityClassicBlob !== expectedBoardFacilityClassicBlob) {
-    throw new Error(`Board facility classic bridge blob mismatch: expected=${expectedBoardFacilityClassicBlob} actual=${boardFacilityClassicBlob}`);
-  }
-  if (expectedBoardFacilityCoreBlob && boardFacilityCoreBlob !== expectedBoardFacilityCoreBlob) {
-    throw new Error(`Board facility core blob mismatch: expected=${expectedBoardFacilityCoreBlob} actual=${boardFacilityCoreBlob}`);
-  }
-  if (expectedBoardFacilityRuntimeMountBlob && boardFacilityRuntimeMountBlob !== expectedBoardFacilityRuntimeMountBlob) {
-    throw new Error(`Board facility runtime mount blob mismatch: expected=${expectedBoardFacilityRuntimeMountBlob} actual=${boardFacilityRuntimeMountBlob}`);
-  }
-  if (expectedUiStateFeedbackCoreBlob && uiStateFeedbackCoreBlob !== expectedUiStateFeedbackCoreBlob) {
-    throw new Error(`UI state feedback core blob mismatch: expected=${expectedUiStateFeedbackCoreBlob} actual=${uiStateFeedbackCoreBlob}`);
-  }
-  if (
-    expectedUiStateFeedbackReadyPlanAdapterBlob
-    && uiStateFeedbackReadyPlanAdapterBlob !== expectedUiStateFeedbackReadyPlanAdapterBlob
-  ) {
-    throw new Error(
-      `UI state feedback ready-plan adapter blob mismatch: expected=${expectedUiStateFeedbackReadyPlanAdapterBlob} actual=${uiStateFeedbackReadyPlanAdapterBlob}`,
-    );
-  }
-  if (expectedFieldMusicPolicyCoreBlob && fieldMusicPolicyCoreBlob !== expectedFieldMusicPolicyCoreBlob) {
-    throw new Error(
-      `Field music policy core blob mismatch: expected=${expectedFieldMusicPolicyCoreBlob} actual=${fieldMusicPolicyCoreBlob}`,
-    );
-  }
+  if (expectedBlob && blob !== expectedBlob) throw new Error(`Browser blob mismatch: expected=${expectedBlob} actual=${blob}`);
+  if (expectedCoreBlob && coreBlob !== expectedCoreBlob) throw new Error(`Deck save recovery core blob mismatch: expected=${expectedCoreBlob} actual=${coreBlob}`);
+  if (expectedPresenceCoreBlob && presenceCoreBlob !== expectedPresenceCoreBlob) throw new Error(`HATE peer presence core blob mismatch: expected=${expectedPresenceCoreBlob} actual=${presenceCoreBlob}`);
+  if (expectedNavigationCoreBlob && navigationCoreBlob !== expectedNavigationCoreBlob) throw new Error(`Screen navigation core blob mismatch: expected=${expectedNavigationCoreBlob} actual=${navigationCoreBlob}`);
+  if (expectedReplayAdapterBlob && replayAdapterBlob !== expectedReplayAdapterBlob) throw new Error(`Battle replay live adapter blob mismatch: expected=${expectedReplayAdapterBlob} actual=${replayAdapterBlob}`);
+  if (expectedPartnerBattleEventProjectionBlob && partnerBattleEventProjectionBlob !== expectedPartnerBattleEventProjectionBlob) throw new Error(`Partner battle event projection blob mismatch: expected=${expectedPartnerBattleEventProjectionBlob} actual=${partnerBattleEventProjectionBlob}`);
+  if (expectedReplayCoreBlob && replayCoreBlob !== expectedReplayCoreBlob) throw new Error(`Battle replay core blob mismatch: expected=${expectedReplayCoreBlob} actual=${replayCoreBlob}`);
+  if (expectedCardPresentationCoreBlob && cardPresentationCoreBlob !== expectedCardPresentationCoreBlob) throw new Error(`Card presentation core blob mismatch: expected=${expectedCardPresentationCoreBlob} actual=${cardPresentationCoreBlob}`);
+  if (expectedBattleConveyorCoreBlob && battleConveyorCoreBlob !== expectedBattleConveyorCoreBlob) throw new Error(`Battle conveyor presentation core blob mismatch: expected=${expectedBattleConveyorCoreBlob} actual=${battleConveyorCoreBlob}`);
+  if (expectedBoardFacilityClassicBlob && boardFacilityClassicBlob !== expectedBoardFacilityClassicBlob) throw new Error(`Board facility classic bridge blob mismatch: expected=${expectedBoardFacilityClassicBlob} actual=${boardFacilityClassicBlob}`);
+  if (expectedBoardFacilityCoreBlob && boardFacilityCoreBlob !== expectedBoardFacilityCoreBlob) throw new Error(`Board facility core blob mismatch: expected=${expectedBoardFacilityCoreBlob} actual=${boardFacilityCoreBlob}`);
+  if (expectedBoardFacilityRuntimeMountBlob && boardFacilityRuntimeMountBlob !== expectedBoardFacilityRuntimeMountBlob) throw new Error(`Board facility runtime mount blob mismatch: expected=${expectedBoardFacilityRuntimeMountBlob} actual=${boardFacilityRuntimeMountBlob}`);
+  if (expectedUiStateFeedbackCoreBlob && uiStateFeedbackCoreBlob !== expectedUiStateFeedbackCoreBlob) throw new Error(`UI state feedback core blob mismatch: expected=${expectedUiStateFeedbackCoreBlob} actual=${uiStateFeedbackCoreBlob}`);
+  if (expectedUiStateFeedbackReadyPlanAdapterBlob && uiStateFeedbackReadyPlanAdapterBlob !== expectedUiStateFeedbackReadyPlanAdapterBlob) throw new Error(`UI state feedback ready-plan adapter blob mismatch: expected=${expectedUiStateFeedbackReadyPlanAdapterBlob} actual=${uiStateFeedbackReadyPlanAdapterBlob}`);
+  if (expectedFieldMusicPolicyCoreBlob && fieldMusicPolicyCoreBlob !== expectedFieldMusicPolicyCoreBlob) throw new Error(`Field music policy core blob mismatch: expected=${expectedFieldMusicPolicyCoreBlob} actual=${fieldMusicPolicyCoreBlob}`);
 
   const versionManifestBytes = serializeVersionManifest({ sourceCommit, publishedAt });
   const versionManifestBuffer = Buffer.from(versionManifestBytes, 'utf8');
-
   await rm(dist, { recursive: true, force: true });
   await mkdir(dist, { recursive: true });
 
-  const outputPath = path.join(dist, 'index.html');
-  await writeFile(outputPath, input);
-  const roundTrip = await readFile(outputPath);
-  if (!input.equals(roundTrip)) throw new Error('dist/index.html is not byte-identical to Browser source');
-
-  const coreOutputPath = path.join(dist, 'deck-save-recovery-core.mjs');
-  await writeFile(coreOutputPath, coreInput);
-  const coreRoundTrip = await readFile(coreOutputPath);
-  if (!coreInput.equals(coreRoundTrip)) {
-    throw new Error('dist/deck-save-recovery-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const presenceCoreOutputPath = path.join(dist, 'hate-peer-presence-core.mjs');
-  await writeFile(presenceCoreOutputPath, presenceCoreInput);
-  const presenceCoreRoundTrip = await readFile(presenceCoreOutputPath);
-  if (!presenceCoreInput.equals(presenceCoreRoundTrip)) {
-    throw new Error('dist/hate-peer-presence-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const navigationCoreOutputPath = path.join(dist, 'screen-navigation-core.mjs');
-  await writeFile(navigationCoreOutputPath, navigationCoreInput);
-  const navigationCoreRoundTrip = await readFile(navigationCoreOutputPath);
-  if (!navigationCoreInput.equals(navigationRoundTrip)) {
-    throw new Error('dist/screen-navigation-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const replayAdapterOutputPath = path.join(dist, 'battle-replay-live-adapter.mjs');
-  await writeFile(replayAdapterOutputPath, replayAdapterInput);
-  const replayAdapterRoundTrip = await readFile(replayAdapterOutputPath);
-  if (!replayAdapterInput.equals(replayAdapterRoundTrip)) {
-    throw new Error('dist/battle-replay-live-adapter.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const partnerBattleEventProjectionOutputPath = path.join(dist, 'partner-battle-event-log-projection.mjs');
-  await writeFile(partnerBattleEventProjectionOutputPath, partnerBattleEventProjectionInput);
-  const partnerBattleEventProjectionRoundTrip = await readFile(partnerBattleEventProjectionOutputPath);
-  if (!partnerBattleEventProjectionInput.equals(partnerBattleEventProjectionRoundTrip)) {
-    throw new Error('dist/partner-battle-event-log-projection.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const replayCoreOutputPath = path.join(dist, 'battle-replay-core.mjs');
-  await writeFile(replayCoreOutputPath, replayCoreInput);
-  const replayCoreRoundTrip = await readFile(replayCoreOutputPath);
-  if (!replayCoreInput.equals(replayCoreRoundTrip)) {
-    throw new Error('dist/battle-replay-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const cardPresentationCoreOutputPath = path.join(dist, 'card-presentation-core.mjs');
-  await writeFile(cardPresentationCoreOutputPath, cardPresentationCoreInput);
-  const cardPresentationCoreRoundTrip = await readFile(cardPresentationCoreOutputPath);
-  if (!cardPresentationCoreInput.equals(cardPresentationCoreRoundTrip)) {
-    throw new Error('dist/card-presentation-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const battleConveyorCoreOutputPath = path.join(dist, 'battle-conveyor-presentation-core.mjs');
-  await writeFile(battleConveyorCoreOutputPath, battleConveyorCoreInput);
-  const battleConveyorCoreRoundTrip = await readFile(battleConveyorCoreOutputPath);
-  if (!battleConveyorCoreInput.equals(battleConveyorCoreRoundTrip)) {
-    throw new Error('dist/battle-conveyor-presentation-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const boardFacilityClassicOutputPath = path.join(dist, 'board-facility-state-core.classic.js');
-  await writeFile(boardFacilityClassicOutputPath, boardFacilityClassicInput);
-  const boardFacilityClassicRoundTrip = await readFile(boardFacilityClassicOutputPath);
-  if (!boardFacilityClassicInput.equals(boardFacilityClassicRoundTrip)) {
-    throw new Error('dist/board-facility-state-core.classic.js is not byte-identical to Browser dependency source');
-  }
-
-  const boardFacilityCoreOutputPath = path.join(dist, 'board-facility-state-core.mjs');
-  await writeFile(boardFacilityCoreOutputPath, boardFacilityCoreInput);
-  const boardFacilityCoreRoundTrip = await readFile(boardFacilityCoreOutputPath);
-  if (!boardFacilityCoreInput.equals(boardFacilityCoreRoundTrip)) {
-    throw new Error('dist/board-facility-state-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const boardFacilityRuntimeMountOutputPath = path.join(dist, 'board-facility-runtime-mount.mjs');
-  await writeFile(boardFacilityRuntimeMountOutputPath, boardFacilityRuntimeMountInput);
-  const boardFacilityRuntimeMountRoundTrip = await readFile(boardFacilityRuntimeMountOutputPath);
-  if (!boardFacilityRuntimeMountInput.equals(boardFacilityRuntimeMountRoundTrip)) {
-    throw new Error('dist/board-facility-runtime-mount.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const uiStateFeedbackCoreOutputPath = path.join(dist, 'ui-state-feedback-core.mjs');
-  await writeFile(uiStateFeedbackCoreOutputPath, uiStateFeedbackCoreInput);
-  const uiStateFeedbackCoreRoundTrip = await readFile(uiStateFeedbackCoreOutputPath);
-  if (!uiStateFeedbackCoreInput.equals(uiStateFeedbackCoreRoundTrip)) {
-    throw new Error('dist/ui-state-feedback-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const uiStateFeedbackReadyPlanAdapterOutputPath = path.join(dist, 'ui-state-feedback-ready-plan-adapter.mjs');
-  await writeFile(uiStateFeedbackReadyPlanAdapterOutputPath, uiStateFeedbackReadyPlanAdapterInput);
-  const uiStateFeedbackReadyPlanAdapterRoundTrip = await readFile(uiStateFeedbackReadyPlanAdapterOutputPath);
-  if (!uiStateFeedbackReadyPlanAdapterInput.equals(uiStateFeedbackReadyPlanAdapterRoundTrip)) {
-    throw new Error('dist/ui-state-feedback-ready-plan-adapter.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const fieldMusicPolicyCoreOutputPath = path.join(dist, 'field-music-policy-core.mjs');
-  await writeFile(fieldMusicPolicyCoreOutputPath, fieldMusicPolicyCoreInput);
-  const fieldMusicPolicyCoreRoundTrip = await readFile(fieldMusicPolicyCoreOutputPath);
-  if (!fieldMusicPolicyCoreInput.equals(fieldMusicPolicyCoreRoundTrip)) {
-    throw new Error('dist/field-music-policy-core.mjs is not byte-identical to Browser dependency source');
+  const copies = [
+    ['index.html', input, 'Browser'],
+    ['deck-save-recovery-core.mjs', coreInput, 'Deck save recovery core'],
+    ['hate-peer-presence-core.mjs', presenceCoreInput, 'HATE peer presence core'],
+    ['screen-navigation-core.mjs', navigationCoreInput, 'Screen navigation core'],
+    ['battle-replay-live-adapter.mjs', replayAdapterInput, 'Battle replay live adapter'],
+    ['partner-battle-event-log-projection.mjs', partnerBattleEventProjectionInput, 'Partner battle event projection'],
+    ['battle-replay-core.mjs', replayCoreInput, 'Battle replay core'],
+    ['card-presentation-core.mjs', cardPresentationCoreInput, 'Card presentation core'],
+    ['battle-conveyor-presentation-core.mjs', battleConveyorCoreInput, 'Battle conveyor presentation core'],
+    ['board-facility-state-core.classic.js', boardFacilityClassicInput, 'Board facility classic bridge'],
+    ['board-facility-state-core.mjs', boardFacilityCoreInput, 'Board facility core'],
+    ['board-facility-runtime-mount.mjs', boardFacilityRuntimeMountInput, 'Board facility runtime mount'],
+    ['ui-state-feedback-core.mjs', uiStateFeedbackCoreInput, 'UI state feedback core'],
+    ['ui-state-feedback-ready-plan-adapter.mjs', uiStateFeedbackReadyPlanAdapterInput, 'UI state feedback ready-plan adapter'],
+    ['field-music-policy-core.mjs', fieldMusicPolicyCoreInput, 'Field music policy core'],
+  ];
+  for (const [output, bytes, label] of copies) {
+    const outputPath = path.join(dist, output);
+    await writeFile(outputPath, bytes);
+    const roundTrip = await readFile(outputPath);
+    if (!bytes.equals(roundTrip)) throw new Error(`dist/${output} is not byte-identical to ${label} source`);
   }
 
   const versionManifestOutputPath = path.join(dist, VERSION_MANIFEST_FILENAME);
   await writeFile(versionManifestOutputPath, versionManifestBytes, 'utf8');
-  const versionManifestRoundTrip = await readFile(versionManifestOutputPath, 'utf8');
-  if (versionManifestRoundTrip !== versionManifestBytes) {
+  if (await readFile(versionManifestOutputPath, 'utf8') !== versionManifestBytes) {
     throw new Error(`dist/${VERSION_MANIFEST_FILENAME} is not byte-identical to generated version manifest`);
   }
 
   const headers = [
-    '/',
-    '  Cache-Control: no-cache, no-store',
-    '',
-    '/index.html',
-    '  Cache-Control: no-cache, no-store',
-    '',
-    `/${VERSION_MANIFEST_FILENAME}`,
-    '  Cache-Control: no-store',
-    '',
-    '/*',
-    '  X-Content-Type-Options: nosniff',
-    '  Referrer-Policy: strict-origin-when-cross-origin',
-    '',
+    '/', '  Cache-Control: no-cache, no-store', '',
+    '/index.html', '  Cache-Control: no-cache, no-store', '',
+    `/${VERSION_MANIFEST_FILENAME}`, '  Cache-Control: no-store', '',
+    '/*', '  X-Content-Type-Options: nosniff', '  Referrer-Policy: strict-origin-when-cross-origin', '',
   ].join('\n');
   await writeFile(path.join(dist, '_headers'), headers, 'utf8');
 
@@ -305,90 +178,20 @@ export async function buildPackage({
     bytes: input.length,
     artifacts: {
       index_html: provenance('browser/GAMEROAD.html', 'index.html', input, blob),
-      deck_save_recovery_core: provenance(
-        'browser/deck-save-recovery-core.mjs',
-        'deck-save-recovery-core.mjs',
-        coreInput,
-        coreBlob,
-      ),
-      hate_peer_presence_core: provenance(
-        'browser/hate-peer-presence-core.mjs',
-        'hate-peer-presence-core.mjs',
-        presenceCoreInput,
-        presenceCoreBlob,
-      ),
-      screen_navigation_core: provenance(
-        'browser/screen-navigation-core.mjs',
-        'screen-navigation-core.mjs',
-        navigationCoreInput,
-        navigationCoreBlob,
-      ),
-      battle_replay_live_adapter: provenance(
-        'browser/battle-replay-live-adapter.mjs',
-        'battle-replay-live-adapter.mjs',
-        replayAdapterInput,
-        replayAdapterBlob,
-      ),
-      partner_battle_event_log_projection: provenance(
-        'browser/partner-battle-event-log-projection.mjs',
-        'partner-battle-event-log-projection.mjs',
-        partnerBattleEventProjectionInput,
-        partnerBattleEventProjectionBlob,
-      ),
-      battle_replay_core: provenance(
-        'browser/battle-replay-core.mjs',
-        'battle-replay-core.mjs',
-        replayCoreInput,
-        replayCoreBlob,
-      ),
-      card_presentation_core: provenance(
-        'browser/card-presentation-core.mjs',
-        'card-presentation-core.mjs',
-        cardPresentationCoreInput,
-        cardPresentationCoreBlob,
-      ),
-      battle_conveyor_presentation_core: provenance(
-        'browser/battle-conveyor-presentation-core.mjs',
-        'battle-conveyor-presentation-core.mjs',
-        battleConveyorCoreInput,
-        battleConveyorCoreBlob,
-      ),
-      board_facility_classic: provenance(
-        'browser/board-facility-state-core.classic.js',
-        'board-facility-state-core.classic.js',
-        boardFacilityClassicInput,
-        boardFacilityClassicBlob,
-      ),
-      board_facility_core: provenance(
-        'browser/board-facility-state-core.mjs',
-        'board-facility-state-core.mjs',
-        boardFacilityCoreInput,
-        boardFacilityCoreBlob,
-      ),
-      board_facility_runtime_mount: provenance(
-        'browser/board-facility-runtime-mount.mjs',
-        'board-facility-runtime-mount.mjs',
-        boardFacilityRuntimeMountInput,
-        boardFacilityRuntimeMountBlob,
-      ),
-      ui_state_feedback_core: provenance(
-        'browser/ui-state-feedback-core.mjs',
-        'ui-state-feedback-core.mjs',
-        uiStateFeedbackCoreInput,
-        uiStateFeedbackCoreBlob,
-      ),
-      ui_state_feedback_ready_plan_adapter: provenance(
-        'browser/ui-state-feedback-ready-plan-adapter.mjs',
-        'ui-state-feedback-ready-plan-adapter.mjs',
-        uiStateFeedbackReadyPlanAdapterInput,
-        uiStateFeedbackReadyPlanAdapterBlob,
-      ),
-      field_music_policy_core: provenance(
-        'browser/field-music-policy-core.mjs',
-        'field-music-policy-core.mjs',
-        fieldMusicPolicyCoreInput,
-        fieldMusicPolicyCoreBlob,
-      ),
+      deck_save_recovery_core: provenance('browser/deck-save-recovery-core.mjs', 'deck-save-recovery-core.mjs', coreInput, coreBlob),
+      hate_peer_presence_core: provenance('browser/hate-peer-presence-core.mjs', 'hate-peer-presence-core.mjs', presenceCoreInput, presenceCoreBlob),
+      screen_navigation_core: provenance('browser/screen-navigation-core.mjs', 'screen-navigation-core.mjs', navigationCoreInput, navigationCoreBlob),
+      battle_replay_live_adapter: provenance('browser/battle-replay-live-adapter.mjs', 'battle-replay-live-adapter.mjs', replayAdapterInput, replayAdapterBlob),
+      partner_battle_event_log_projection: provenance('browser/partner-battle-event-log-projection.mjs', 'partner-battle-event-log-projection.mjs', partnerBattleEventProjectionInput, partnerBattleEventProjectionBlob),
+      battle_replay_core: provenance('browser/battle-replay-core.mjs', 'battle-replay-core.mjs', replayCoreInput, replayCoreBlob),
+      card_presentation_core: provenance('browser/card-presentation-core.mjs', 'card-presentation-core.mjs', cardPresentationCoreInput, cardPresentationCoreBlob),
+      battle_conveyor_presentation_core: provenance('browser/battle-conveyor-presentation-core.mjs', 'battle-conveyor-presentation-core.mjs', battleConveyorCoreInput, battleConveyorCoreBlob),
+      board_facility_classic: provenance('browser/board-facility-state-core.classic.js', 'board-facility-state-core.classic.js', boardFacilityClassicInput, boardFacilityClassicBlob),
+      board_facility_core: provenance('browser/board-facility-state-core.mjs', 'board-facility-state-core.mjs', boardFacilityCoreInput, boardFacilityCoreBlob),
+      board_facility_runtime_mount: provenance('browser/board-facility-runtime-mount.mjs', 'board-facility-runtime-mount.mjs', boardFacilityRuntimeMountInput, boardFacilityRuntimeMountBlob),
+      ui_state_feedback_core: provenance('browser/ui-state-feedback-core.mjs', 'ui-state-feedback-core.mjs', uiStateFeedbackCoreInput, uiStateFeedbackCoreBlob),
+      ui_state_feedback_ready_plan_adapter: provenance('browser/ui-state-feedback-ready-plan-adapter.mjs', 'ui-state-feedback-ready-plan-adapter.mjs', uiStateFeedbackReadyPlanAdapterInput, uiStateFeedbackReadyPlanAdapterBlob),
+      field_music_policy_core: provenance('browser/field-music-policy-core.mjs', 'field-music-policy-core.mjs', fieldMusicPolicyCoreInput, fieldMusicPolicyCoreBlob),
       browser_version_manifest: {
         source: 'build-package-release-identity',
         output: VERSION_MANIFEST_FILENAME,

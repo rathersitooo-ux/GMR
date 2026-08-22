@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import {
   WS_WIRE,
@@ -427,7 +428,7 @@ test('live public Pages friend-room WebSocket routes and reconnects', { skip: !p
   }
 });
 
-test('live public Pages survives host-close-before-reconnect without ejecting the guest', { skip: !process.env.GAMEROAD_PUBLIC_WS_PROBE_URL }, async () => {
+test('live public Pages survives abrupt host process loss before reconnect without ejecting the guest', { skip: !process.env.GAMEROAD_PUBLIC_WS_PROBE_URL }, async () => {
   const pagesUrl = process.env.GAMEROAD_PUBLIC_WS_PROBE_URL;
   const runIdentity = `${process.env.GITHUB_RUN_ID || 'probe'}:${process.env.GITHUB_RUN_ATTEMPT || '1'}:${process.env.GITHUB_SHA || ''}:host-drop-first`;
   const code = probeRoomCode(runIdentity);
@@ -437,66 +438,113 @@ test('live public Pages survives host-close-before-reconnect without ejecting th
   const guestId = `drop-guest-${suffix}`;
   const authToken = `drop-auth-${suffix}-${code}`;
   const baseHandshake = { channel: publicChannel };
-
-  let hostSocket;
+  let hostProcess;
   let guestSocket;
   let reconnectedHostSocket;
+
+  const waitLine = (stream, expected, label, timeoutMs = 10000) => new Promise((resolve, reject) => {
+    let buffer = '';
+    const timer = setTimeout(() => reject(new Error(`timeout waiting for ${label}`)), timeoutMs);
+    const onData = (chunk) => {
+      buffer += String(chunk);
+      const lines = buffer.split(/\r?\n/);
+      buffer = lines.pop() || '';
+      if (!lines.some((line) => line.trim() === expected)) return;
+      clearTimeout(timer);
+      stream.off('data', onData);
+      resolve(expected);
+    };
+    stream.on('data', onData);
+  });
+  const waitExit = (child, label, timeoutMs = 10000) => new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`timeout waiting for ${label}`)), timeoutMs);
+    child.once('exit', (exitCode, signal) => {
+      clearTimeout(timer);
+      resolve({ exitCode, signal });
+    });
+    child.once('error', (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+  });
+
   try {
-    const hostPeer = await openProbeSocket(
-      pagesUrl,
-      { ...baseHandshake, role: 'host', clientId: hostId, authToken: '' },
-      'drop-first host',
-    );
-    hostSocket = hostPeer.ws;
+    const hostUrl = String(publicSocketUrl(pagesUrl, { ...baseHandshake, role: 'host', clientId: hostId, authToken: '' }));
+    const childScript = `
+      const ws = new WebSocket(process.env.GR_HOST_URL);
+      ws.addEventListener('open', () => process.stdout.write('HOST_OPEN\\n'));
+      ws.addEventListener('message', (event) => {
+        let value;
+        try { value = JSON.parse(String(event.data)); } catch { return; }
+        if (value?.wire !== process.env.GR_WIRE
+  || value?.payload?.type !== process.env.GR_PRESENCE
+  || value.payload.clientId !== process.env.GR_GUEST_ID
+  || value.payload.kind !== 'rejoin') return;
+        ws.send(JSON.stringify({
+wire: process.env.GR_WIRE,
+op: 'data',
+payload: {
+  code: process.env.GR_CODE,
+  type: 'accept',
+  to: process.env.GR_GUEST_ID,
+  authToken: process.env.GR_AUTH,
+  probe: 'drop-first-accept',
+},
+        }));
+        process.stdout.write('ACCEPT_SENT\\n');
+      });
+      ws.addEventListener('error', () => process.stderr.write('HOST_SOCKET_ERROR\\n'));
+      setInterval(() => {}, 1000);
+    `;
+    hostProcess = spawn(process.execPath, ['--input-type=module', '-e', childScript], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: {
+        ...process.env,
+        GR_HOST_URL: hostUrl,
+        GR_WIRE: WS_WIRE,
+        GR_PRESENCE: TRANSPORT_PRESENCE_TYPE,
+        GR_GUEST_ID: guestId,
+        GR_CODE: code,
+        GR_AUTH: authToken,
+      },
+    });
+    const hostOpened = waitLine(hostProcess.stdout, 'HOST_OPEN', 'abrupt host open');
+    const acceptSent = waitLine(hostProcess.stdout, 'ACCEPT_SENT', 'abrupt host accept');
+    await hostOpened;
+
     const guestPeer = await openProbeSocket(
       pagesUrl,
       { ...baseHandshake, role: 'guest', clientId: guestId, authToken: '' },
       'drop-first guest',
     );
     guestSocket = guestPeer.ws;
-
-    await hostPeer.inbox.waitFor(
-      (value) => value?.wire === WS_WIRE
-        && value?.payload?.type === TRANSPORT_PRESENCE_TYPE
-        && value.payload.clientId === guestId
-        && value.payload.kind === 'rejoin',
-      'drop-first guest initial presence',
-    );
-
-    hostSocket.send(JSON.stringify({
-      wire: WS_WIRE,
-      op: 'data',
-      payload: { code, type: 'accept', to: guestId, authToken, probe: 'drop-first-accept' },
-    }));
     const accept = await guestPeer.inbox.waitFor(
       (value) => value?.wire === WS_WIRE && value?.payload?.type === 'accept' && value.payload.to === guestId,
       'drop-first accept',
     );
+    await acceptSent;
     assert.equal(accept.payload.authToken, authToken);
 
-    const hostClosed = waitForClose(hostSocket, 'drop-first old host');
-    hostSocket.close(4001, 'simulate host transport going away');
-    const dropped = await hostClosed;
-    assert.equal(dropped.code, 4001);
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    const exited = waitExit(hostProcess, 'abrupt host exit');
+    assert.equal(hostProcess.kill('SIGKILL'), true);
+    const killed = await exited;
+    assert.equal(killed.signal, 'SIGKILL');
+    await new Promise((resolve) => setTimeout(resolve, 500));
     assert.equal(guestSocket.readyState, WebSocket.OPEN);
 
-    const replacement = await openProbeSocket(
+    const replacementHost = await openProbeSocket(
       pagesUrl,
       { ...baseHandshake, role: 'host', clientId: hostId, authToken: '' },
       'drop-first same-id host reconnect',
     );
-    reconnectedHostSocket = replacement.ws;
-
+    reconnectedHostSocket = replacementHost.ws;
     guestSocket.send(JSON.stringify({
       wire: WS_WIRE,
       op: 'data',
       payload: { code, type: 'join', clientId: guestId, authToken, seq: 1, probe: 'guest-after-drop-first-host' },
     }));
-    const guestAfterReconnect = await replacement.inbox.waitFor(
-      (value) => value?.wire === WS_WIRE
-        && value?.payload?.type === 'join'
-        && value.payload.probe === 'guest-after-drop-first-host',
+    const guestAfterReconnect = await replacementHost.inbox.waitFor(
+      (value) => value?.wire === WS_WIRE && value?.payload?.type === 'join' && value.payload.probe === 'guest-after-drop-first-host',
       'guest route after drop-first host reconnect',
     );
     assert.equal(guestAfterReconnect.payload.clientId, guestId);
@@ -508,21 +556,21 @@ test('live public Pages survives host-close-before-reconnect without ejecting th
       payload: { code, type: 'lobby', to: guestId, probe: 'host-after-drop-first-reconnect' },
     }));
     const hostAfterReconnect = await guestPeer.inbox.waitFor(
-      (value) => value?.wire === WS_WIRE
-        && value?.payload?.type === 'lobby'
-        && value.payload.probe === 'host-after-drop-first-reconnect',
+      (value) => value?.wire === WS_WIRE && value?.payload?.type === 'lobby' && value.payload.probe === 'host-after-drop-first-reconnect',
       'host route to surviving guest after drop-first reconnect',
     );
     assert.equal(hostAfterReconnect.payload.to, guestId);
   } finally {
-    for (const socket of [reconnectedHostSocket, guestSocket, hostSocket]) {
+    if (hostProcess && hostProcess.exitCode === null && hostProcess.signalCode === null) {
+      try { hostProcess.kill('SIGKILL'); } catch {}
+    }
+    for (const socket of [reconnectedHostSocket, guestSocket]) {
       if (socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)) {
         try { socket.close(1000, 'probe complete'); } catch {}
       }
     }
   }
 });
-
 test('live public Pages four-player presence is compatible with HATE disconnect and rejoin contract', { skip: !process.env.GAMEROAD_PUBLIC_WS_PROBE_URL }, async () => {
   const pagesUrl = process.env.GAMEROAD_PUBLIC_WS_PROBE_URL;
   const runIdentity = `${process.env.GITHUB_RUN_ID || 'probe'}:${process.env.GITHUB_RUN_ATTEMPT || '1'}:${process.env.GITHUB_SHA || ''}:hate-4p`;

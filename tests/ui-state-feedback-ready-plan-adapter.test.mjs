@@ -227,6 +227,23 @@ test('binding suppresses duplicate keyboard activation while pending and destroy
   assert.throws(()=>h.binding.acknowledge({operationToken:'bind-1',accepted:false,reason:'late'}),/destroyed/);
 });
 
+test('binding ignores repeated keyboard keydown even after a fast ack settles',()=>{
+  const h=makeBinding();
+  const first={key:'Enter',repeat:false,prevented:false,preventDefault(){this.prevented=true;}};
+  h.target.emit('keydown',first);
+  assert.equal(first.prevented,true);
+  assert.equal(h.tokenCounter,1);
+  assert.equal(h.calls.length,1);
+  h.binding.acknowledge({operationToken:'bind-1',accepted:true,reason:'fast_ack'});
+  assert.equal(h.adapter.getFeedback().feedback,'confirmed');
+  const repeated={key:'Enter',repeat:true,prevented:false,preventDefault(){this.prevented=true;}};
+  h.target.emit('keydown',repeated);
+  assert.equal(repeated.prevented,true);
+  assert.equal(h.tokenCounter,1);
+  assert.equal(h.calls.length,1);
+  assert.equal(h.adapter.getFeedback().feedback,'confirmed');
+});
+
 test('binding ignores non-active pointers and fails closed on stale ack',()=>{
   const h=makeBinding();
   h.target.emit('pointerdown',{pointerId:3,clientX:5,clientY:5});

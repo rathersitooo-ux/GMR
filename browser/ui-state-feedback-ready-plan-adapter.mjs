@@ -180,6 +180,7 @@ export function bindReadyPlanFeedbackControl({
 
   const onPointerDown = (event) => {
     if (destroyed || activePointerId !== null) return;
+    if (typeof event?.button === 'number' && event.button !== 0) return;
     activePointerId = pointerIdOf(event);
     dispatch({
       type: 'POINTER_DOWN',

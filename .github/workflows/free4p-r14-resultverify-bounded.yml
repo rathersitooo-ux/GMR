@@ -1,0 +1,108 @@
+name: TEMP FREE4P R14 Result Verification Executor
+
+on:
+  push:
+    branches:
+      - work/free4p-r14-visible-result-ranking
+    paths:
+      - .github/workflows/free4p-r14-resultverify-bounded.yml
+
+permissions:
+  contents: write
+
+jobs:
+  observe-result-oracle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/free4p-r14-visible-result-ranking
+          fetch-depth: 2
+      - name: Exact-base and stage guard
+        id: guard
+        shell: bash
+        env:
+          EXPECTED_BASE: 1ce7e81a3849bc1ed5774375663d0a6aa9457c18
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          test "$(git rev-parse origin/main)" = "$EXPECTED_BASE"
+          if test -f .tmp-r14-result-diagnostic.json; then
+            echo 'done=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'done=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Set up Node
+        if: steps.guard.outputs.done != 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        if: steps.guard.outputs.done != 'true'
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Inject read-only Result diagnostic locally
+        if: steps.guard.outputs.done != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tests/browser-full-interaction.spec.mjs')
+          s=p.read_text(encoding='utf-8')
+          needle="  await expect(result, 'visible four-player Honey Hunt reaches Result without direct match/result injection').toBeVisible({ timeout: 2_000 });\n"
+          if s.count(needle)!=1:
+              raise SystemExit(f'R19 Result needle count={s.count(needle)}')
+          insert=r'''  const r14Diagnostic = await page.evaluate(() => {
+    const describeOwn = (value) => {
+      if (value == null || (typeof value !== 'object' && typeof value !== 'function')) return { type: typeof value, keys: [] };
+      const descriptors = Object.getOwnPropertyDescriptors(value);
+      return {
+        type: typeof value,
+        keys: Object.entries(descriptors).slice(0, 160).map(([key, desc]) => ({ key, kind: Object.prototype.hasOwnProperty.call(desc, 'value') ? typeof desc.value : 'accessor' })),
+      };
+    };
+    const globals = {};
+    for (const name of Object.getOwnPropertyNames(window).filter((name) => /gameroad|battle|match|result/i.test(name)).slice(0, 240)) {
+      const desc = Object.getOwnPropertyDescriptor(window, name);
+      if (!desc || !Object.prototype.hasOwnProperty.call(desc, 'value')) continue;
+      globals[name] = describeOwn(desc.value);
+    }
+    return {
+      globals,
+      localStorageKeys: Object.keys(localStorage),
+      sessionStorageKeys: Object.keys(sessionStorage),
+      resultLines: Array.from(document.querySelectorAll('#resultRanking .rankLine')).map((el) => ({
+        text: (el.textContent || '').trim(),
+        attrs: Object.fromEntries(Array.from(el.attributes).map((a) => [a.name, a.value])),
+      })),
+      resultRounds: (document.querySelector('#resultRounds')?.textContent || '').trim(),
+    };
+  });
+  console.log('FREE4P_R14_RESULT_DIAGNOSTIC=' + JSON.stringify(r14Diagnostic));
+'''
+          p.write_text(s.replace(needle, needle+insert, 1), encoding='utf-8')
+          PY
+      - name: Run genuine visible four-player Honey Result path
+        if: steps.guard.outputs.done != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 --project=desktop-1280x720 --grep 'R19 reaches Result from visible four-player Honey Hunt and returns Home' 2>&1 | tee .r14-stage1.log
+          grep -F 'FREE4P_R14_RESULT_DIAGNOSTIC=' .r14-stage1.log | tail -n 1 | sed 's/^.*FREE4P_R14_RESULT_DIAGNOSTIC=//' > .tmp-r14-result-diagnostic.json
+          node -e "const fs=require('fs'); const p='.tmp-r14-result-diagnostic.json'; const x=JSON.parse(fs.readFileSync(p,'utf8')); if(!Array.isArray(x.resultLines)||x.resultLines.length!==4) process.exit(2); console.log(JSON.stringify(x));"
+      - name: Restore harness and persist diagnostic checkpoint only
+        if: steps.guard.outputs.done != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git restore tests/browser-full-interaction.spec.mjs
+          rm -f .r14-stage1.log
+          git config user.name 'gameroad-free4p-r14-executor'
+          git config user.email 'actions@users.noreply.github.com'
+          git add .tmp-r14-result-diagnostic.json
+          test "$(git diff --cached --name-only)" = '.tmp-r14-result-diagnostic.json'
+          git commit -m 'FREE4P R14: checkpoint visible Result oracle surface'
+          git push origin HEAD:work/free4p-r14-visible-result-ranking

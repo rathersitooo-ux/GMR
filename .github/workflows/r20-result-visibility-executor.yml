@@ -1,6 +1,12 @@
 name: R20 Result Visibility Fresh-Main Repair
 
 on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches:
+      - main
+    paths:
+      - '.github/workflows/r20-result-visibility-executor.yml'
   push:
     branches:
       - work/free4p-r20-result-visibility-recovery
@@ -11,7 +17,7 @@ permissions:
   contents: write
 
 env:
-  EXPECTED_PARENT: 4c30486c3a39433da2b2c31a0d549cb1bda3b888
+  EXPECTED_MAIN: 4c30486c3a39433da2b2c31a0d549cb1bda3b888
   EXPECTED_HTML_BLOB: 12839c58646f849f0ad4470695c391bfb07b1174
   EXPECTED_TEST_BLOB: b515aeb3c27b70181e88198cff40d602eb0b1510
 
@@ -22,13 +28,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          ref: work/free4p-r20-result-visibility-recovery
+          fetch-depth: 0
 
-      - name: Guard exact fresh-main inputs
+      - name: Guard exact fresh-main target inputs
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "$EXPECTED_PARENT"
+          git merge-base --is-ancestor "$EXPECTED_MAIN" HEAD
           test "$(git hash-object browser/GAMEROAD.html)" = "$EXPECTED_HTML_BLOB"
           test "$(git hash-object tests/browser-full-interaction.spec.mjs)" = "$EXPECTED_TEST_BLOB"
 

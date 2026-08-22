@@ -807,6 +807,131 @@ html.r10LowPerf .setup.active .setupRuntime .grtc-image, html.r10Reduced .setup.
 @media(prefers-reduced-motion:reduce){#hand .handCard{transition:none!important}}
 body.low-perf #hand .handCard{transition:none!important}
 </style>
+<!-- UI_PRO_MAX_R48_BEGIN -->
+<style id="gr-ui-pro-max-r48">
+/*
+  GAMEROAD Home presentation-only visual pass.
+  ui-ux-pro-max input: gaming immersion + motion-driven hierarchy,
+  constrained by GAMEROAD's existing emerald/teal/stone/gold visual canon.
+  No destinations, state, game rules, save/network, or layout ownership live here.
+*/
+html.grCodexHomeActive .homeScene{
+  background:
+    radial-gradient(ellipse at 24% 24%,rgba(67,180,137,.26) 0,rgba(67,180,137,0) 42%),
+    radial-gradient(ellipse at 76% 14%,rgba(116,224,204,.12) 0,rgba(116,224,204,0) 35%),
+    linear-gradient(138deg,#061712 0%,#0a2a21 44%,#05110e 100%);
+  box-shadow:
+    inset -1px 0 rgba(180,244,220,.18),
+    inset 0 -42px 80px rgba(0,0,0,.28);
+}
+html.grCodexHomeActive .homeScene:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:
+    linear-gradient(108deg,transparent 0 58%,rgba(155,238,211,.06) 58.2% 58.7%,transparent 59% 100%),
+    radial-gradient(circle at 18% 76%,rgba(214,170,84,.13) 0 1px,transparent 2px),
+    radial-gradient(circle at 66% 36%,rgba(183,245,223,.12) 0 1px,transparent 2px);
+  background-size:auto,46px 46px,64px 64px;
+  opacity:.72;
+  mix-blend-mode:screen;
+}
+html.grCodexHomeActive .homeScene:after{
+  opacity:.62;
+  filter:saturate(.9) contrast(1.08);
+}
+html.grCodexHomeActive .heroRuntime .grtc-image{
+  filter:
+    drop-shadow(0 24px 24px rgba(0,0,0,.42))
+    drop-shadow(0 0 20px rgba(132,225,195,.10));
+}
+html.grCodexHomeActive .homeCopy{
+  text-shadow:0 3px 18px rgba(0,0,0,.42);
+}
+html.grCodexHomeActive .homeCopy .k{
+  color:#aef6df;
+  letter-spacing:.22em;
+}
+html.grCodexHomeActive .homeCopy .h{
+  letter-spacing:-.035em;
+  text-wrap:balance;
+  text-shadow:0 5px 28px rgba(0,0,0,.46);
+}
+html.grCodexHomeActive .homeCopy .sub{
+  color:#c5ded5;
+  max-width:38ch;
+}
+html.grCodexHomeActive .homeCmd{
+  isolation:isolate;
+  overflow:hidden;
+  border-color:rgba(185,240,220,.26);
+  background:
+    linear-gradient(100deg,rgba(13,48,39,.94),rgba(6,24,20,.82) 72%,rgba(6,24,20,.58));
+  box-shadow:
+    inset 3px 0 rgba(137,227,197,.20),
+    0 8px 22px rgba(0,0,0,.18);
+  color:#effbf6;
+  text-shadow:0 2px 10px rgba(0,0,0,.48);
+  transition:transform 150ms ease-out,border-color 150ms ease-out,background-color 150ms ease-out,box-shadow 150ms ease-out;
+}
+html.grCodexHomeActive .homeCmd:before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:4px;
+  background:linear-gradient(#a9f0d8,#5aa98f);
+  box-shadow:0 0 16px rgba(160,239,213,.30);
+  pointer-events:none;
+}
+html.grCodexHomeActive .homeCmd:hover{
+  border-color:rgba(190,248,226,.52);
+  box-shadow:
+    inset 4px 0 rgba(164,241,214,.38),
+    0 10px 26px rgba(0,0,0,.24);
+}
+html.grCodexHomeActive .homeCmd:focus-visible{
+  outline:3px solid #d5fff1;
+  outline-offset:3px;
+  border-color:#9fe8cf;
+  box-shadow:
+    0 0 0 2px rgba(5,20,16,.92),
+    0 0 0 5px rgba(168,243,217,.28),
+    0 12px 28px rgba(0,0,0,.28);
+}
+html.grCodexHomeActive .homeCmd.main{
+  color:#fff9e8;
+  border-color:rgba(236,205,137,.70);
+  background:
+    radial-gradient(circle at 18% 20%,rgba(180,245,220,.16),transparent 34%),
+    linear-gradient(105deg,rgba(28,92,72,.98),rgba(10,46,37,.95) 58%,rgba(34,69,55,.88));
+  box-shadow:
+    inset 5px 0 rgba(237,206,139,.72),
+    inset 0 1px rgba(224,255,244,.12),
+    0 16px 36px rgba(0,0,0,.30);
+}
+html.grCodexHomeActive .homeCmd.main:before{
+  background:linear-gradient(#ffe2a3,#b99853);
+  box-shadow:0 0 18px rgba(255,216,139,.28);
+}
+html.grCodexHomeActive .homeCmd small{
+  color:#a9c9be;
+  letter-spacing:.08em;
+}
+html.grCodexHomeActive .homeFoot{
+  padding:7px 11px;
+  border:1px solid rgba(184,239,219,.16);
+  background:rgba(4,18,15,.78);
+  box-shadow:0 8px 20px rgba(0,0,0,.18);
+}
+html.grCodexHomeActive #home button:focus-visible{
+  outline-color:#d5fff1;
+}
+@media (prefers-reduced-motion: reduce){
+  html.grCodexHomeActive .homeCmd{transition:none;}
+}
+</style>
+<!-- UI_PRO_MAX_R48_END -->
 </head><body><div class="app" id="app"><header class="top"><div class="brand">GAMEROAD</div><div class="topRight"><div class="pill" id="saveState">保存済み</div><div class="pill" id="topMode">ホーム</div></div></header>
 <div id="screenMotionBridge" aria-hidden="true"></div>
 <section class="screen home codexHome active" data-screen="home" data-home-state="HOME_EXPANDED" data-home-preview="" data-codex-home-source="HomeMainMenuSlidePad-R2-shell+formal-clean-crops">

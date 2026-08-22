@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GAMEROAD 音響・未決4用途 一括試聴</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;color-scheme:dark}
+body{margin:0;background:#101416;color:#eef4f2}
+main{max-width:920px;margin:auto;padding:20px 14px 110px}
+h1{font-size:1.45rem;margin:.2rem 0 .5rem}.lead{color:#bdcbc6;line-height:1.6;margin:0 0 14px}
+.locked{border:1px solid #31413c;background:#141c19;border-radius:12px;padding:12px;margin:14px 0}.locked b{color:#bfe9d7}
+section{border:1px solid #34433f;border-radius:16px;padding:14px;margin:14px 0;background:#151b1a}h2{font-size:1.15rem;margin:0 0 4px}.use{color:#b7c5c0;font-size:.92rem;margin:0 0 12px}
+.card{border:1px solid #3b4b47;border-radius:12px;padding:12px;margin:9px 0;background:#111716}.card.recommended{border-width:2px}.rank{font-weight:800;font-size:.88rem}.name{font-size:1.05rem;font-weight:700;margin:.2rem 0}.reason{color:#b7c5c0;font-size:.9rem;line-height:1.45;margin:.25rem 0 .7rem}.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{font:inherit;border:1px solid #60736c;background:#1b2522;color:#f3f7f5;padding:9px 13px;border-radius:10px}button:active{transform:translateY(1px)}.choice{display:inline-flex;align-items:center;gap:5px;border:1px solid #60736c;border-radius:10px;padding:8px 11px;cursor:pointer}.none{border-style:dashed}.status{font-size:.82rem;color:#aebdb7}
+footer{color:#9aaba5;font-size:.82rem;line-height:1.55;margin-top:18px}#summary{position:fixed;left:0;right:0;bottom:0;background:#09100eeb;border-top:1px solid #44534f;padding:11px 12px;backdrop-filter:blur(8px)}#summary .inner{max-width:920px;margin:auto}#result{font-weight:800;line-height:1.5}.small{font-size:.8rem;color:#9fb0aa;margin-top:3px}
+</style>
+</head>
+<body>
+<main>
+<h1>GAMEROAD 音響・未決4用途 一括試聴</h1>
+<p class="lead">ファイル取得・解凍は不要です。この1ページで未決4用途をまとめて聴き、各用途を <b>1 / 2 / ×</b> で選べます。候補はAI側で用途・権利・既存証拠を先に絞り、推奨順に並べています。</p>
+<div class="locked"><b>すでに採用済み（再質問しません）</b><br>ボタン押下＝B ／ カード選択＝B ／ カード提出＝A</div>
+<section><h2>1. 決定・確定</h2><p class="use">購入・提出・確定など、「押した」ではなく「決定が成立した」瞬間。</p>
+<div class="card recommended"><div class="rank">推奨 1位</div><div class="name">Accept UI Menu</div><div class="reason">用途名そのものが Accept。CC0。前回×だったKenney confirmation_001/002とは別素材。</div><div class="controls"><button data-direct="https://opengameart.org/sites/default/files/Accept%20UI%20Menu.flac">▶ 聴く</button><label class="choice"><input type="radio" name="決定" value="1">1を選ぶ</label></div></div>
+<div class="card"><div class="rank">推奨 2位</div><div class="name">Menu Choice</div><div class="reason">menu / click / confirm が明示されたCC0。1位より少し演出的なので次点。</div><div class="controls"><button data-direct="https://opengameart.org/sites/default/files/Menu%20Choice.mp3">▶ 聴く</button><label class="choice"><input type="radio" name="決定" value="2">2を選ぶ</label></div></div>
+<label class="choice none"><input type="radio" name="決定" value="×">どちらも違う</label></section>
+<section><h2>2. 相手発見</h2><p class="use">マッチ成立時の短い合図。ここではまだ対戦開始音を鳴らさない。</p>
+<div class="card recommended"><div class="rank">推奨 1位</div><div class="name">相棒の返事</div><div class="reason">旧仮選定で、短い「発見した」返答として最も直接的。正式採用ではなかったため今回あらためてHuman判断。</div><div class="controls"><button data-b64="audio/MF-P05.b64">▶ 聴く</button><label class="choice"><input type="radio" name="相手発見" value="1">1を選ぶ</label><span class="status"></span></div></div>
+<div class="card"><div class="rank">推奨 2位</div><div class="name">蜜滴の合図</div><div class="reason">「合図」という役割が用途に素直に一致。1位よりキャラクター性が薄い比較候補。</div><div class="controls"><button data-b64="audio/MF-P04.b64">▶ 聴く</button><label class="choice"><input type="radio" name="相手発見" value="2">2を選ぶ</label><span class="status"></span></div></div>
+<label class="choice none"><input type="radio" name="相手発見" value="×">どちらも違う</label></section>
+<section><h2>3. 対戦開始</h2><p class="use">対戦画面と開始データが成立し、「ここから対局開始」と分かる一回の合図。</p>
+<div class="card recommended"><div class="rank">推奨 1位</div><div class="name">札戦の号令</div><div class="reason">旧仮選定で、開始の「号令」という意味が明確。相手発見とは別音にする前提。</div><div class="controls"><button data-b64="audio/BS-P04.b64">▶ 聴く</button><label class="choice"><input type="radio" name="対戦開始" value="1">1を選ぶ</label><span class="status"></span></div></div>
+<div class="card"><div class="rank">推奨 2位</div><div class="name">軽快な対局開始</div><div class="reason">名称・役割がそのまま対局開始に一致し、1位より軽快な比較軸。</div><div class="controls"><button data-b64="audio/BS-P06.b64">▶ 聴く</button><label class="choice"><input type="radio" name="対戦開始" value="2">2を選ぶ</label><span class="status"></span></div></div>
+<label class="choice none"><input type="radio" name="対戦開始" value="×">どちらも違う</label></section>
+<section><h2>4. 全員共通の対局完了</h2><p class="use">勝者・非勝者の全員へ返す、明るい一区切り。標準の敗北専用音は使わない。</p>
+<div class="card recommended"><div class="rank">推奨 1位</div><div class="name">対局完了の印</div><div class="reason">旧仮選定で、「対局完了」という用途が最も直接的。</div><div class="controls"><button data-b64="audio/CP-P04.b64">▶ 聴く</button><label class="choice"><input type="radio" name="完了" value="1">1を選ぶ</label><span class="status"></span></div></div>
+<div class="card"><div class="rank">推奨 2位</div><div class="name">やさしい達成</div><div class="reason">全員へ返しても敗北感を強めにくい、明るく穏当な達成合図として次点。</div><div class="controls"><button data-b64="audio/CP-P05.b64">▶ 聴く</button><label class="choice"><input type="radio" name="完了" value="2">2を選ぶ</label><span class="status"></span></div></div>
+<label class="choice none"><input type="radio" name="完了" value="×">どちらも違う</label></section>
+<footer>R1の試聴音は元WAVを変更せず、ブラウザ再生専用のMP3 proxyを使用しています。採用結果が指す正式identityは元WAVです。下位候補は今回のHuman提示からAIが外しただけで、Human不採用にはしていません。AI順位は権利・用途一致・既存証拠による事前選別で、最終的な聴感採否を代替しません。</footer>
+</main>
+<div id="summary"><div class="inner"><div id="result">決定=? ／ 相手発見=? ／ 対戦開始=? ／ 完了=?</div><div class="small">4つ決めたら、この1行をそのままChatGPTへ返せば終了。</div></div></div>
+<audio id="player" preload="none"></audio>
+<script>
+const player=document.getElementById('player');let currentButton=null;
+function setStatus(btn,msg){const s=btn.parentElement.querySelector('.status');if(s)s.textContent=msg}
+async function playButton(btn){try{if(currentButton&&currentButton!==btn)currentButton.textContent='▶ 聴く';currentButton=btn;btn.textContent='読み込み中…';let src=btn.dataset.direct;if(btn.dataset.b64){if(!btn.dataset.cached){const r=await fetch(btn.dataset.b64,{cache:'force-cache'});if(!r.ok)throw new Error('audio source '+r.status);const b64=(await r.text()).trim();btn.dataset.cached='data:audio/mpeg;base64,'+b64}src=btn.dataset.cached}player.pause();player.currentTime=0;player.src=src;await player.play();btn.textContent='■ 再生中';setStatus(btn,'')}catch(e){btn.textContent='▶ 再試行';setStatus(btn,'この音だけ読み込めませんでした')}}
+document.querySelectorAll('button[data-b64],button[data-direct]').forEach(btn=>btn.addEventListener('click',()=>playButton(btn)));player.addEventListener('ended',()=>{if(currentButton)currentButton.textContent='▶ もう一度聴く'});
+const order=['決定','相手発見','対戦開始','完了'];function update(){const parts=order.map(n=>`${n}=${document.querySelector(`input[name="${n}"]:checked`)?.value||'?'}`);document.getElementById('result').textContent=parts.join(' ／ ')}document.querySelectorAll('input[type=radio]').forEach(x=>x.addEventListener('change',update));
+</script>
+</body></html>

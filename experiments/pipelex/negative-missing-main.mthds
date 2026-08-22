@@ -1,0 +1,11 @@
+domain      = "gameroad_pipelex_negative"
+description = "Negative fixture that must fail validation because main_pipe does not exist"
+main_pipe   = "this_pipe_does_not_exist"
+
+[pipe]
+
+[pipe.actual_pipe]
+type = "PipeLLM"
+description = "A pipe that is deliberately not referenced by main_pipe"
+output = "Text"
+prompt = "Return a short placeholder."

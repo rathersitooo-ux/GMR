@@ -1,0 +1,50 @@
+domain      = "gameroad_current_evidence"
+description = "Isolated experiment for turning current authority and actual evidence into a typed decision packet"
+main_pipe   = "build_evidence_packet"
+
+[concept]
+
+[concept.EvidencePacket]
+description = "A compact decision packet grounded in current authority, direct actual evidence, counterevidence, and unresolved material"
+
+[concept.EvidencePacket.structure]
+decision_question          = { type = "text", description = "The single decision question being resolved", required = true }
+user_end_state             = { type = "text", description = "The user's actual desired end state", required = true }
+real_output_target         = { type = "text", description = "The concrete artifact or state that should change", required = true }
+current_authority_summary  = { type = "text", description = "Only the current authority facts relevant to the decision", required = true }
+direct_actual_summary      = { type = "text", description = "Directly observed runtime, code, file, or state evidence", required = true }
+counterevidence_summary    = { type = "text", description = "Material evidence that could overturn or constrain the proposed action", required = true }
+unresolved_material        = { type = "text", description = "Material unknowns that remain unresolved; NONE if there are none", required = true }
+current_disposition        = { type = "text", description = "Proceed, hold, reject, or narrow, with the reason", required = true }
+acceptance_evidence        = { type = "text", description = "Evidence required to claim the target has actually been achieved", required = true }
+
+[pipe]
+
+[pipe.build_evidence_packet]
+type = "PipeLLM"
+description = "Build a minimal grounded evidence packet without inventing current state"
+inputs = { request = "Text", current_authority = "Text", direct_actual = "Text", counterevidence = "Text" }
+output = "EvidencePacket"
+prompt = """
+Build the smallest sufficient decision packet for the request below.
+
+Rules:
+- Treat CURRENT_AUTHORITY as authoritative only for the facts it explicitly states.
+- Treat DIRECT_ACTUAL as observed evidence, not as broader completion proof.
+- Preserve COUNTEREVIDENCE even when the conclusion does not change.
+- Do not turn missing evidence into a positive claim.
+- Set unresolved_material to NONE only when no material unresolved item remains.
+- acceptance_evidence must describe what would prove the real output target actually worked.
+
+REQUEST:
+$request
+
+CURRENT_AUTHORITY:
+$current_authority
+
+DIRECT_ACTUAL:
+$direct_actual
+
+COUNTEREVIDENCE:
+$counterevidence
+"""

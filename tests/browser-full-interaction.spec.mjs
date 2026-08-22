@@ -1438,6 +1438,22 @@ test('R19 reaches Result from visible four-player Honey Hunt and returns Home', 
   expect(roundsSubmitted).toBeGreaterThan(0);
   expect(presentationAdvances).toBeGreaterThan(0);
   await expect(result.locator('#resultRanking .rankLine')).toHaveCount(4);
+  const rankingViewport = await result.locator('#resultRanking').boundingBox();
+  expect(rankingViewport, 'R20 result ranking viewport must have geometry').not.toBeNull();
+  const rankingRows = await result.locator('#resultRanking .rankLine').evaluateAll((rows) => rows.map((row) => {
+    const rect = row.getBoundingClientRect();
+    return { top: rect.top, bottom: rect.bottom, height: rect.height };
+  }));
+  expect(rankingRows).toHaveLength(4);
+  for (const [index, row] of rankingRows.entries()) {
+    expect(row.height, `R20 rank row ${index + 1} must have positive visible height`).toBeGreaterThan(0);
+    expect(row.top, `R20 rank row ${index + 1} must start inside ranking viewport`).toBeGreaterThanOrEqual(rankingViewport.y - 1);
+    expect(row.bottom, `R20 rank row ${index + 1} must end inside ranking viewport`).toBeLessThanOrEqual(rankingViewport.y + rankingViewport.height + 1);
+  }
+  const resultButtonsBox = await result.locator('.resultBtns').boundingBox();
+  expect(resultButtonsBox, 'R20 result actions must have geometry').not.toBeNull();
+  expect(rankingRows.at(-1).bottom, 'R20 fourth rank row must not be covered by Result actions').toBeLessThanOrEqual(resultButtonsBox.y + 1);
+
   const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';
   expect(roundsText).toMatch(/\d+ラウンド/);
   await attachStateScreenshot(page, testInfo, 'r19-honey-four-player-result-visible');

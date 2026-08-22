@@ -1,0 +1,62 @@
+name: UI Feedback R23 ReadyPlan Controller Inspect
+
+on:
+  push:
+    branches:
+      - work/ui-feedback-r23-readyplan-controller-20260823
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Exact current-base guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_parent='4c30486c3a39433da2b2c31a0d549cb1bda3b888'
+          expected_html_blob='12839c58646f849f0ad4470695c391bfb07b1174'
+          actual_parent="$(git rev-parse HEAD^)"
+          actual_html_blob="$(git hash-object browser/GAMEROAD.html)"
+          printf 'R23_PARENT=%s\nR23_HTML_BLOB=%s\n' "$actual_parent" "$actual_html_blob"
+          test "$actual_parent" = "$expected_parent"
+          test "$actual_html_blob" = "$expected_html_blob"
+      - name: Bounded controller and ReadyPlan source evidence
+        shell: python
+        run: |
+          from pathlib import Path
+
+          path = Path('browser/GAMEROAD.html')
+          text = path.read_text(encoding='utf-8')
+          patterns = [
+              'navigator.getGamepads',
+              'getGamepads',
+              'gamepad',
+              'Gamepad',
+              'buttons[0]',
+              'readyPlan',
+              ".click()",
+              '.pressed',
+          ]
+          print(f'R23_SOURCE_BYTES={len(text.encode("utf-8"))}')
+          for pattern in patterns:
+              print(f'=== PATTERN {pattern!r} ===')
+              start = 0
+              found = 0
+              while found < 12:
+                  idx = text.find(pattern, start)
+                  if idx < 0:
+                      break
+                  found += 1
+                  left = max(0, idx - 900)
+                  right = min(len(text), idx + len(pattern) + 1200)
+                  snippet = text[left:right]
+                  print(f'--- occurrence={found} char_index={idx} ---')
+                  print(snippet)
+                  start = idx + max(1, len(pattern))
+              print(f'COUNT_SHOWN={found}')

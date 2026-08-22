@@ -9,6 +9,10 @@ import {
   createCardPresentationSession
 } from './card-presentation-core.mjs';
 import { planBattleConveyor } from './battle-conveyor-presentation-core.mjs';
+import {
+  PARTNER_BATTLE_EVENT_PROJECTION,
+  createPartnerBattleEventLogConsumerAdapter
+} from './partner-battle-event-log-projection.mjs';
 
 const LIVE_ADAPTER_SCHEMA = 'GAMEROAD_BATTLE_REPLAY_LIVE_ADAPTER_V1';
 const VERSION_KEYS = Object.freeze(['rules', 'content', 'state']);
@@ -18,6 +22,7 @@ const FNV_PRIME = 0x100000001b3n;
 const FNV_MASK = 0xffffffffffffffffn;
 const CARD_PRESENTATION_STYLE_ID = 'gameroad-card-presentation-runtime-r7-style';
 const CARD_PRESENTATION_HOLD_MS = 400;
+const PARTNER_BATTLE_LOG_HOST_ATTR = 'data-partner-battle-event-log';
 
 function cloneJson(value) {
   const text = JSON.stringify(value);
@@ -548,7 +553,87 @@ export function createBattleReplayCardPresentationBridge(environment = {}) {
   return Object.freeze({ begin, acceptAcceptedResolution, acceptAcceptedMatchEnd, snapshot });
 }
 
+function formatPartnerBattleEventLogRow(event) {
+  if (!event || typeof event !== 'object') return null;
+  if (event.kind === 'battle_resolution') {
+    const data = event.data;
+    if (!data || !Number.isSafeInteger(data.round) || !nonEmptyString(data.lane)) return null;
+    const totals = data.teamTotals && Number.isFinite(data.teamTotals.A) && Number.isFinite(data.teamTotals.B)
+      ? `・A ${data.teamTotals.A} / B ${data.teamTotals.B}`
+      : '';
+    return `第${data.round}ラウンド・${data.lane}列${totals}・勝者${Number(data.winnerCount) || 0}人`;
+  }
+  if (event.kind === 'match_ended') {
+    const data = event.data;
+    if (!data || !Number.isSafeInteger(data.round)) return null;
+    return `対戦終了・第${data.round}ラウンド・勝者${Number(data.winnerCount) || 0}人`;
+  }
+  return Number.isSafeInteger(event.sequence) ? `対戦イベント ${event.sequence}` : null;
+}
+
+function ensurePartnerBattleEventLogHost(environment = {}) {
+  const documentRef = environmentValue(environment, 'document');
+  const shell = documentRef?.getElementById?.('battleLog');
+  if (!shell || typeof documentRef?.createElement !== 'function') return null;
+  let host = typeof shell.querySelector === 'function'
+    ? shell.querySelector(`[${PARTNER_BATTLE_LOG_HOST_ATTR}]`)
+    : null;
+  if (!host) {
+    host = documentRef.createElement('div');
+    if (!host || typeof host.setAttribute !== 'function' || typeof shell.appendChild !== 'function') return null;
+    host.setAttribute(PARTNER_BATTLE_LOG_HOST_ATTR, '');
+    host.setAttribute('role', 'log');
+    host.setAttribute('aria-live', 'polite');
+    host.setAttribute('aria-atomic', 'false');
+    host.setAttribute('aria-relevant', 'additions text');
+    host.setAttribute('aria-label', '対戦ログ');
+    if (host.style) host.style.whiteSpace = 'pre-line';
+    shell.appendChild(host);
+  }
+  return host;
+}
+
+export function renderPartnerBattleEventLogProjection(projection, environment = {}) {
+  if (!projection ||
+      projection.ok !== true ||
+      projection.schema !== PARTNER_BATTLE_EVENT_PROJECTION.schema ||
+      !Array.isArray(projection.events)) {
+    return false;
+  }
+  const rows = projection.events.map(formatPartnerBattleEventLogRow);
+  if (rows.some(row => row == null)) return false;
+  const host = ensurePartnerBattleEventLogHost(environment);
+  if (!host?.dataset) return false;
+  host.textContent = rows.join('\n');
+  host.dataset.partnerBattleEventCount = String(rows.length);
+  return true;
+}
+
+export function createPartnerBattleEventLogPresentationBridge(environment = {}) {
+  function begin() {
+    const host = ensurePartnerBattleEventLogHost(environment);
+    if (!host?.dataset) return false;
+    host.textContent = '';
+    host.dataset.partnerBattleEventCount = '0';
+    return true;
+  }
+
+  function acceptSession(session) {
+    return createPartnerBattleEventLogConsumerAdapter({
+      readReplay: () => readLiveReplay(session),
+      consumeProjection(projection) {
+        if (!renderPartnerBattleEventLogProjection(projection, environment)) {
+          throw new Error('PARTNER_BATTLE_LOG_SURFACE_UNAVAILABLE');
+        }
+      }
+    })();
+  }
+
+  return Object.freeze({ begin, acceptSession });
+}
+
 const liveCardPresentationBridge = createBattleReplayCardPresentationBridge();
+const livePartnerBattleEventLogBridge = createPartnerBattleEventLogPresentationBridge();
 
 function assertSession(session) {
   if (!session || session.schema !== LIVE_ADAPTER_SCHEMA || !nonEmptyString(session.matchId)) {
@@ -563,7 +648,10 @@ function assertSession(session) {
 
 export function createLiveReplaySession(
   { matchId, versions },
-  { presentationBridge = liveCardPresentationBridge } = {}
+  {
+    presentationBridge = liveCardPresentationBridge,
+    partnerBattleEventLogBridge = livePartnerBattleEventLogBridge
+  } = {}
 ) {
   if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
   const normalizedVersions = exactVersions(versions);
@@ -580,13 +668,21 @@ export function createLiveReplaySession(
   } catch {
     // Replay session creation must survive presentation-only failures.
   }
+  try {
+    partnerBattleEventLogBridge?.begin?.(matchId);
+  } catch {
+    // Partner log is presentation-only and never owns replay/gameplay success.
+  }
   return session;
 }
 
 export function appendAcceptedBattleResolution(
   session,
   resolution,
-  { presentationBridge = liveCardPresentationBridge } = {}
+  {
+    presentationBridge = liveCardPresentationBridge,
+    partnerBattleEventLogBridge = livePartnerBattleEventLogBridge
+  } = {}
 ) {
   assertSession(session);
   if (session.ended) throw new TypeError('LIVE_REPLAY_ALREADY_ENDED');
@@ -611,13 +707,21 @@ export function appendAcceptedBattleResolution(
   } catch {
     // Accepted replay/gameplay state is authoritative; presentation never blocks it.
   }
+  try {
+    partnerBattleEventLogBridge?.acceptSession?.(next);
+  } catch {
+    // Accepted replay/gameplay state is authoritative; Partner log never blocks it.
+  }
   return next;
 }
 
 export function appendAcceptedMatchEnd(
   session,
   { winnerIds, round, mode, formalRanking = null },
-  { presentationBridge = liveCardPresentationBridge } = {}
+  {
+    presentationBridge = liveCardPresentationBridge,
+    partnerBattleEventLogBridge = livePartnerBattleEventLogBridge
+  } = {}
 ) {
   assertSession(session);
   if (session.ended) throw new TypeError('LIVE_REPLAY_ALREADY_ENDED');
@@ -671,6 +775,11 @@ export function appendAcceptedMatchEnd(
       }
     }
   }
+  try {
+    partnerBattleEventLogBridge?.acceptSession?.(next);
+  } catch {
+    // Accepted replay/gameplay state is authoritative; Partner log never blocks it.
+  }
   return next;
 }
 
@@ -722,6 +831,14 @@ export const BATTLE_REPLAY_LIVE_ADAPTER = Object.freeze({
     source: 'accepted_free4p_single_winner_formal_ranking',
     kind: 'finisher',
     transition: 'FINISHER_GATHER',
+    authority: 'presentation_only_no_game_state_write'
+  }),
+  partnerBattleEventLog: Object.freeze({
+    source: 'viewer_authorized_public_replay_read',
+    projectionSchema: PARTNER_BATTLE_EVENT_PROJECTION.schema,
+    actualDomSurface: 'battleLog',
+    identityPolicy: PARTNER_BATTLE_EVENT_PROJECTION.identityPolicy,
+    privateDataPolicy: PARTNER_BATTLE_EVENT_PROJECTION.privateDataPolicy,
     authority: 'presentation_only_no_game_state_write'
   })
 });

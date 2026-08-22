@@ -1,4 +1,4 @@
-name: TEMP R11 Home focus repair executor
+name: TEMP R11 Home pressed snap executor
 
 on:
   pull_request:
@@ -9,15 +9,15 @@ permissions:
   contents: write
 
 jobs:
-  repair-and-prove-home-feedback:
+  repair-and-prove-pressed-start:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
           ref: gr/ui-feedback-r11-homefocus
           fetch-depth: 2
-      - name: Exact-base and already-applied guard
+      - name: Exact-base and state guard
         id: guard
         shell: bash
         env:
@@ -26,14 +26,14 @@ jobs:
           set -euo pipefail
           git fetch origin main --depth=1
           test "$(git rev-parse origin/main)" = "$EXPECTED_BASE"
-          if grep -Fq 'brightness(1.08) drop-shadow(0 0 2px rgba(255,255,255,.98))' browser/GAMEROAD.html; then
+          grep -Fq 'brightness(1.08) drop-shadow(0 0 2px rgba(255,255,255,.98))' browser/GAMEROAD.html
+          if grep -Fq '.homePadChoice:active,.homePadChoice.pressed{transform:translateY(1px) scale(.985);transition:none}' browser/GAMEROAD.html; then
             echo 'already=true' >> "$GITHUB_OUTPUT"
           else
             echo 'already=false' >> "$GITHUB_OUTPUT"
           fi
-      - name: Set up Node
+      - uses: actions/setup-node@v4
         if: steps.guard.outputs.already != 'true'
-        uses: actions/setup-node@v4
         with:
           node-version: '22'
       - name: Install Playwright
@@ -41,149 +41,94 @@ jobs:
         run: |
           npm install --no-save --no-package-lock @playwright/test@1.62.0
           npx playwright install --with-deps chromium
-      - name: Prepare same-state visual probe
+      - name: Prepare time-series probe
         if: steps.guard.outputs.already != 'true'
         shell: bash
         run: |
-          set -euo pipefail
-          mkdir -p .r11-probe/evidence
-          cat > .r11-probe/probe.mjs <<'EOF'
+          mkdir -p .r11-press/evidence
+          cat > .r11-press/probe.mjs <<'EOF'
           import { chromium } from '@playwright/test';
           import fs from 'node:fs/promises';
           import path from 'node:path';
 
-          const phase = process.env.R11_PHASE;
-          const outDir = path.resolve('.r11-probe/evidence', phase);
-          await fs.mkdir(outDir, { recursive: true });
-          const browser = await chromium.launch({ headless: true });
-          const viewports = [
-            ['desktop-1280x720', { width: 1280, height: 720 }],
-            ['phone-390x844', { width: 390, height: 844 }],
-            ['short-667x375', { width: 667, height: 375 }],
-          ];
-          const result = { phase, viewports: {} };
-          for (const [name, viewport] of viewports) {
-            const context = await browser.newContext({ viewport });
-            const page = await context.newPage();
-            await page.goto('http://127.0.0.1:4173/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
-            const control = page.locator('.home.codexHome [data-home-target="cards"]:visible').first();
-            await control.waitFor({ state: 'visible', timeout: 15000 });
-            const art = control.locator('.codexPadArt').first();
-            await art.waitFor({ state: 'attached', timeout: 5000 });
-            await page.screenshot({ path: path.join(outDir, `${name}-normal.png`) });
+          const phase=process.env.R11_PHASE;
+          const browser=await chromium.launch({headless:true});
+          const context=await browser.newContext({viewport:{width:390,height:844}});
+          const page=await context.newPage();
+          await page.goto('http://127.0.0.1:4173/browser/GAMEROAD.html',{waitUntil:'domcontentloaded'});
+          const control=page.locator('.home.codexHome [data-home-target="cards"]:visible').first();
+          await control.waitFor({state:'visible',timeout:15000});
+          const sample=()=>control.evaluate((el)=>{const art=el.querySelector('.codexPadArt');const cs=getComputedStyle(el);return {transform:cs.transform,transition:cs.transition,artFilter:art?getComputedStyle(art).filter:null};});
+          const series={phase,normalPath:{},focusedPath:{}};
 
-            await control.focus();
-            await page.waitForTimeout(80);
-            const focus = await control.evaluate((el) => {
-              const art = el.querySelector('.codexPadArt');
-              const cs = getComputedStyle(el);
-              const acs = art ? getComputedStyle(art) : null;
-              return {
-                focusVisible: el.matches(':focus-visible'),
-                outlineStyle: cs.outlineStyle,
-                outlineWidth: cs.outlineWidth,
-                outlineColor: cs.outlineColor,
-                artFilter: acs?.filter ?? null,
-                artTransition: acs?.transition ?? null,
-              };
-            });
-            await page.screenshot({ path: path.join(outDir, `${name}-focus.png`) });
+          await page.evaluate(()=>document.activeElement instanceof HTMLElement&&document.activeElement.blur());
+          await page.waitForTimeout(200);
+          await control.evaluate(el=>el.classList.add('pressed'));
+          series.normalPath.t0=await sample();
+          await page.waitForTimeout(20); series.normalPath.t20=await sample();
+          await page.screenshot({path:path.resolve(`.r11-press/evidence/${phase}-normalpath-t20.png`)});
+          await page.waitForTimeout(60); series.normalPath.t80=await sample();
+          await page.waitForTimeout(100); series.normalPath.t180=await sample();
+          await control.evaluate(el=>el.classList.remove('pressed'));
+          await page.waitForTimeout(200);
 
-            await page.evaluate(() => document.activeElement instanceof HTMLElement && document.activeElement.blur());
-            await control.evaluate((el) => el.classList.add('pressed'));
-            await page.waitForTimeout(20);
-            const pressed = await control.evaluate((el) => {
-              const art = el.querySelector('.codexPadArt');
-              return {
-                transform: getComputedStyle(el).transform,
-                artFilter: art ? getComputedStyle(art).filter : null,
-              };
-            });
-            await page.screenshot({ path: path.join(outDir, `${name}-pressed.png`) });
-            await control.evaluate((el) => el.classList.remove('pressed'));
-            result.viewports[name] = { focus, pressed };
-            await context.close();
-          }
+          await control.focus();
+          await page.waitForTimeout(200);
+          series.focusedPath.before=await sample();
+          await control.evaluate(el=>el.classList.add('pressed'));
+          series.focusedPath.t0=await sample();
+          await page.waitForTimeout(20); series.focusedPath.t20=await sample();
+          await page.screenshot({path:path.resolve(`.r11-press/evidence/${phase}-focuspath-t20.png`)});
+          await page.waitForTimeout(60); series.focusedPath.t80=await sample();
+          await control.evaluate(el=>el.classList.remove('pressed'));
 
-          if (phase === 'after') {
-            for (const [name, state] of Object.entries(result.viewports)) {
-              if (!state.focus.focusVisible) throw new Error(`${name}: Deck control did not enter :focus-visible`);
-              if (state.focus.outlineStyle !== 'none') throw new Error(`${name}: wrapper focus outline remains ${state.focus.outlineStyle}`);
-              if (!String(state.focus.artFilter).includes('brightness(1.08)')) throw new Error(`${name}: alpha-aware focus filter missing: ${state.focus.artFilter}`);
-              if ((String(state.focus.artFilter).match(/drop-shadow/g) || []).length < 3) throw new Error(`${name}: focus boundary does not have layered alpha-aware shadow: ${state.focus.artFilter}`);
-              if (state.pressed.transform === 'none') throw new Error(`${name}: pressed transform missing`);
-              if (!String(state.pressed.artFilter).includes('brightness(0.92)')) throw new Error(`${name}: distinct pressed filter missing: ${state.pressed.artFilter}`);
+          if(phase==='after'){
+            for(const [route,states] of Object.entries({normalPath:series.normalPath,focusedPath:series.focusedPath})){
+              for(const key of ['t0','t20']){
+                const raw=states[key].transform;
+                const m=raw.match(/^matrix\(([^,]+),[^,]+,[^,]+,([^,]+),[^,]+,([^\)]+)\)$/);
+                if(!m) throw new Error(`${route}/${key}: unexpected transform ${raw}`);
+                const sx=Number(m[1]), sy=Number(m[2]), ty=Number(m[3]);
+                if(sx>.99||sy>.99||ty<.8) throw new Error(`${route}/${key}: press is not immediately depressed: ${raw}`);
+                if(states[key].transition!=='all 0s ease 0s' && states[key].transition!=='none 0s ease 0s') throw new Error(`${route}/${key}: pressed transition still delays feedback: ${states[key].transition}`);
+                if(!String(states[key].artFilter).includes('brightness(0.92)')) throw new Error(`${route}/${key}: pressed art feedback missing`);
+              }
             }
-            const reduced = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
-            const page = await reduced.newPage();
-            await page.goto('http://127.0.0.1:4173/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
-            const control = page.locator('.home.codexHome [data-home-target="cards"]:visible').first();
-            await control.waitFor({ state: 'visible', timeout: 15000 });
-            await control.focus();
-            await page.waitForTimeout(20);
-            const reducedState = await control.evaluate((el) => {
-              const art = el.querySelector('.codexPadArt');
-              return { outlineStyle: getComputedStyle(el).outlineStyle, artFilter: art ? getComputedStyle(art).filter : null, artTransition: art ? getComputedStyle(art).transition : null };
-            });
-            result.reducedMotionPhone = reducedState;
-            if (reducedState.outlineStyle !== 'none' || !String(reducedState.artFilter).includes('brightness(1.08)')) throw new Error(`reduced-motion focus meaning lost: ${JSON.stringify(reducedState)}`);
-            await page.screenshot({ path: path.join(outDir, 'phone-390x844-reduced-focus.png') });
-            await reduced.close();
           }
-          await fs.writeFile(path.join(outDir, 'probe.json'), JSON.stringify(result, null, 2));
+          await fs.writeFile(path.resolve(`.r11-press/evidence/${phase}-series.json`),JSON.stringify(series,null,2));
           await browser.close();
           EOF
-      - name: Start local Browser server
+      - name: Start Browser server
         if: steps.guard.outputs.already != 'true'
         shell: bash
         run: |
-          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/r11-http.log 2>&1 &
-          echo $! > /tmp/r11-http.pid
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/r11-press-http.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/browser/GAMEROAD.html >/dev/null && exit 0; sleep 1; done
-          cat /tmp/r11-http.log
+          cat /tmp/r11-press-http.log
           exit 1
-      - name: Capture exact-base before state
+      - name: Capture pre-snap time series
         if: steps.guard.outputs.already != 'true'
         env:
           R11_PHASE: before
-        run: node .r11-probe/probe.mjs
-      - name: Apply bounded semantic focus/pressed repair
+        run: node .r11-press/probe.mjs
+      - name: Apply immediate pressed-state transform
         if: steps.guard.outputs.already != 'true'
         shell: bash
         run: |
-          set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          p=Path('browser/GAMEROAD.html')
-          s=p.read_text(encoding='utf-8')
-          old_art='.codexPadArt{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;opacity:.96;filter:drop-shadow(0 4px 7px rgba(2,5,18,.34));transition:opacity 90ms linear,filter 90ms linear}.homePadChoice:hover .codexPadArt,.homePadChoice:focus-visible .codexPadArt,.homePadChoice.preview .codexPadArt,.homePadChoice.pressed .codexPadArt{opacity:1;filter:brightness(1.05) drop-shadow(0 4px 7px rgba(2,5,18,.38))}'
-          new_art='.codexPadArt{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;opacity:.96;filter:drop-shadow(0 4px 7px rgba(2,5,18,.34));transition:opacity 90ms linear,filter 90ms linear}.homePadChoice:hover .codexPadArt{opacity:1;filter:brightness(1.05) drop-shadow(0 4px 7px rgba(2,5,18,.38))}.homePadChoice:focus-visible .codexPadArt,.homePadCenter:focus-visible .codexPadArt,.homePadChoice.preview .codexPadArt{opacity:1;filter:brightness(1.08) drop-shadow(0 0 2px rgba(255,255,255,.98)) drop-shadow(0 0 7px rgba(160,239,213,.9)) drop-shadow(0 4px 7px rgba(2,5,18,.38))}.homePadChoice:active .codexPadArt,.homePadChoice.pressed .codexPadArt{opacity:1;filter:brightness(.92) saturate(1.06) drop-shadow(0 2px 4px rgba(2,5,18,.42))}'
-          old_outline='.home.codexHome .homePadChoice:focus-visible,.home.codexHome .homePadCenter:focus-visible,.home.codexHome .homePadChoice.preview,.home.codexHome .homePadChoice.pressed{outline:2px solid rgba(255,255,255,.9)!important;outline-offset:1px!important}'
-          new_outline='.home.codexHome .homePadChoice:focus-visible,.home.codexHome .homePadCenter:focus-visible,.home.codexHome .homePadChoice.preview,.home.codexHome .homePadChoice.pressed{outline:none!important;outline-offset:0!important}.home.codexHome .homeSlidePad.codexAtlasFailed .homePadChoice:focus-visible,.home.codexHome .homeSlidePad.codexAtlasFailed .homePadCenter:focus-visible{outline:2px solid rgba(255,255,255,.9)!important;outline-offset:1px!important}'
-          if s.count(old_art)!=1: raise SystemExit(f'old_art count={s.count(old_art)}')
-          if s.count(old_outline)!=1: raise SystemExit(f'old_outline count={s.count(old_outline)}')
-          s=s.replace(old_art,new_art,1).replace(old_outline,new_outline,1)
-          p.write_text(s,encoding='utf-8')
+          p=Path('browser/GAMEROAD.html'); s=p.read_text(encoding='utf-8')
+          old='.homePadChoice:active,.homePadChoice.pressed{transform:translateY(1px) scale(.985)}'
+          new='.homePadChoice:active,.homePadChoice.pressed{transform:translateY(1px) scale(.985);transition:none}'
+          if s.count(old)!=1: raise SystemExit(f'pressed rule count={s.count(old)}')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
           PY
-      - name: Capture and assert after state
+      - name: Capture and assert post-snap time series
         if: steps.guard.outputs.already != 'true'
         env:
           R11_PHASE: after
-        run: node .r11-probe/probe.mjs
-      - name: Record before/after delta
-        if: steps.guard.outputs.already != 'true'
-        shell: bash
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          before=json.loads(Path('.r11-probe/evidence/before/probe.json').read_text())
-          after=json.loads(Path('.r11-probe/evidence/after/probe.json').read_text())
-          delta={'before':before,'after':after}
-          Path('.r11-probe/evidence/before-after.json').write_text(json.dumps(delta,ensure_ascii=False,indent=2))
-          print(json.dumps(delta,ensure_ascii=False))
-          PY
-      - name: Commit bounded product repair to PR branch
+        run: node .r11-press/probe.mjs
+      - name: Commit pressed-start repair
         if: steps.guard.outputs.already != 'true'
         shell: bash
         run: |
@@ -192,12 +137,12 @@ jobs:
           git config user.email 'actions@users.noreply.github.com'
           git add browser/GAMEROAD.html
           test "$(git diff --cached --name-only)" = 'browser/GAMEROAD.html'
-          git commit -m 'UI feedback R11: bind Home focus to visible art'
+          git commit -m 'UI feedback R11: make Home press feedback immediate'
           git push origin HEAD:gr/ui-feedback-r11-homefocus
       - uses: actions/upload-artifact@v4
         if: steps.guard.outputs.already != 'true' && always()
         with:
-          name: r11-home-focus-before-after
-          path: .r11-probe/evidence/
+          name: r11-home-pressed-timeseries
+          path: .r11-press/evidence/
           if-no-files-found: error
           retention-days: 14

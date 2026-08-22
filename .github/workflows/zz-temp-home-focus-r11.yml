@@ -1,0 +1,56 @@
+name: TEMP R11 Home focus source inspector
+
+on:
+  push:
+    branches:
+      - gr/ui-feedback-r11-homefocus
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-home-feedback-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Exact-base and bounded source inspection
+        shell: bash
+        env:
+          EXPECTED_BASE: 1ce7e81a3849bc1ed5774375663d0a6aa9457c18
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          test "$(git rev-parse origin/main)" = "$EXPECTED_BASE"
+          python - <<'PY'
+          from pathlib import Path
+          import re, json
+          src = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          needles = [
+              r'data-home-target', r'data-go=', r':active', r':focus-visible',
+              r':focus', r'translateY\(-1px\)', r'prefers-reduced-motion',
+              r'home', r'nav'
+          ]
+          out=[]
+          for needle in needles:
+              hits=list(re.finditer(needle, src, re.I))
+              out.append(f'=== {needle} count={len(hits)} ===')
+              for i,m in enumerate(hits[:80],1):
+                  lo=max(0,m.start()-700); hi=min(len(src),m.end()+900)
+                  context=src[lo:hi].replace('\r','')
+                  out.append(f'--- hit {i} at {m.start()} ---\n{context}')
+          Path('r11-source-inspection.txt').write_text('\n'.join(out), encoding='utf-8')
+          summary={needle: len(list(re.finditer(needle, src, re.I))) for needle in needles}
+          Path('r11-source-counts.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2),encoding='utf-8')
+          print(json.dumps(summary,ensure_ascii=False))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r11-home-source-inspection
+          path: |
+            r11-source-inspection.txt
+            r11-source-counts.json
+          if-no-files-found: error
+          retention-days: 2

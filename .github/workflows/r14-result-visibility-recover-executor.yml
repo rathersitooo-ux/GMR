@@ -1,0 +1,147 @@
+name: R14 Result Visibility Recovery Executor
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - work/free4p-r14-result-visibility-recover-20260823
+
+permissions:
+  contents: write
+
+jobs:
+  recover-current-result-visibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Guard exact current base and target blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "4c30486c3a39433da2b2c31a0d549cb1bda3b888"
+          test "$(git hash-object browser/GAMEROAD.html)" = "12839c58646f849f0ad4470695c391bfb07b1174"
+          test "$(git hash-object tests/browser-full-interaction.spec.mjs)" = "b515aeb3c27b70181e88198cff40d602eb0b1510"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Apply bounded Result visibility repair and regression oracle
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          html_path = Path('browser/GAMEROAD.html')
+          test_path = Path('tests/browser-full-interaction.spec.mjs')
+          html = html_path.read_text(encoding='utf-8')
+          spec = test_path.read_text(encoding='utf-8')
+
+          style_id = 'gameroad-r14-result-ranking-visibility-r2'
+          if style_id not in html:
+              if html.count('</head>') != 1:
+                  raise SystemExit(f'expected exactly one </head>, got {html.count("</head>")}')
+              css = '''<style id="gameroad-r14-result-ranking-visibility-r2">
+          /* R14: keep every four-player Result rank inside the first visible Result viewport. */
+          .result.active #resultRanking{
+            display:grid;
+            grid-template-rows:repeat(4,minmax(0,1fr));
+            gap:5px;
+            overflow:hidden;
+          }
+          .result.active #resultRanking .rankLine{
+            min-height:0;
+            margin-bottom:0;
+          }
+          @media (max-height:500px) and (orientation:landscape){
+            .result.active #resultRanking{gap:2px}
+            .result.active #resultRanking .rankLine{min-height:0;margin-bottom:0;padding:2px 6px}
+          }
+          @media (max-width:540px) and (orientation:portrait){
+            .result.active #resultRanking{gap:2px}
+            .result.active #resultRanking .rankLine{min-height:0;margin-bottom:0;padding:3px 7px}
+            .result.active .resultBtns{grid-template-columns:repeat(3,minmax(0,1fr))}
+          }
+          </style>
+          '''
+              html = html.replace('</head>', css + '</head>')
+
+          marker = "R14 result ranking geometry regression"
+          if marker not in spec:
+              anchor = "  await expect(result.locator('#resultRanking .rankLine')).toHaveCount(4);\n"
+              if spec.count(anchor) != 1:
+                  raise SystemExit(f'expected one R19 four-rank anchor, got {spec.count(anchor)}')
+              geometry = '''  // R14 result ranking geometry regression: DOM count alone must not accept clipped final ranks.
+          const rankingViewport = await result.locator('#resultRanking').boundingBox();
+          expect(rankingViewport, 'four-player Result ranking viewport').not.toBeNull();
+          const rankingRows = await result.locator('#resultRanking .rankLine').evaluateAll((rows) => rows.map((row) => {
+            const box = row.getBoundingClientRect();
+            return {
+              top: box.top,
+              bottom: box.bottom,
+              height: box.height,
+              clientHeight: row.clientHeight,
+              scrollHeight: row.scrollHeight,
+            };
+          }));
+          expect(rankingRows).toHaveLength(4);
+          for (const [index, row] of rankingRows.entries()) {
+            expect(row.height, `rank ${index + 1} has visible height`).toBeGreaterThan(0);
+            expect(row.top, `rank ${index + 1} begins inside ranking viewport`).toBeGreaterThanOrEqual(rankingViewport.y - 1);
+            expect(row.bottom, `rank ${index + 1} ends inside ranking viewport`).toBeLessThanOrEqual(rankingViewport.y + rankingViewport.height + 1);
+            expect(row.scrollHeight, `rank ${index + 1} text is not vertically clipped`).toBeLessThanOrEqual(row.clientHeight + 1);
+          }
+          const resultButtonsBox = await result.locator('.resultBtns').boundingBox();
+          expect(resultButtonsBox, 'Result actions geometry').not.toBeNull();
+          expect(rankingRows.at(-1).bottom, 'fourth rank stays above Result actions').toBeLessThanOrEqual(resultButtonsBox.y + 1);
+          '''
+              spec = spec.replace(anchor, anchor + geometry)
+
+          html_path.write_text(html, encoding='utf-8')
+          test_path.write_text(spec, encoding='utf-8')
+          PY
+          git diff --check
+          git diff -- browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
+
+      - name: Focused R19 visible four-player Result regression
+        run: >-
+          npx playwright test tests/browser-full-interaction.spec.mjs
+          -c playwright.full-interaction.config.mjs
+          --grep "R19 reaches Result from visible four-player Honey Hunt and returns Home"
+
+      - name: Upload focused runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r14-result-visibility-current-evidence
+          path: |
+            test-results/**
+            playwright-report/**
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Commit durable product and regression delta, retire executor
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/r14-result-visibility-recover-executor.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs .github/workflows/r14-result-visibility-recover-executor.yml
+          git diff --cached --check
+          git commit -m "R14: keep all four Result ranks visible on current main"
+          git push origin HEAD:work/free4p-r14-result-visibility-recover-20260823

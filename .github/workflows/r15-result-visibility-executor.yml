@@ -22,6 +22,7 @@ jobs:
           ref: work/free4p-r15-resultvis-current-recovery-20260823
           fetch-depth: 2
       - name: Exact current-base and giant HTML guard
+        id: guard
         shell: bash
         run: |
           set -euo pipefail
@@ -29,6 +30,7 @@ jobs:
           test "$(git rev-parse origin/main)" = "$EXPECTED_BASE"
           test "$(git hash-object browser/GAMEROAD.html)" = "$EXPECTED_HTML_BLOB"
       - name: Apply bounded Result visibility repair and direct regression
+        id: patch
         shell: bash
         run: |
           set -euo pipefail
@@ -95,12 +97,14 @@ jobs:
           test "$(git hash-object browser/GAMEROAD.html)" != "$EXPECTED_HTML_BLOB"
           git diff --check
       - name: Install Browser interaction test runner
+        id: install
         shell: bash
         run: |
           set -euo pipefail
           npm ci
           npx playwright install --with-deps chromium
       - name: Run focused visible four-player Result regression
+        id: focused
         shell: bash
         run: |
           set -euo pipefail
@@ -115,14 +119,34 @@ jobs:
             test-results/**
             playwright-report/**
       - name: Commit only durable product and direct regression
+        id: persist
         shell: bash
         run: |
           set -euo pipefail
           rm .github/workflows/r15-result-visibility-executor.yml
+          rm -f .tmp-r15-executor-result.txt
           git config user.name 'gameroad-r15-executor'
           git config user.email 'actions@users.noreply.github.com'
           git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs .github/workflows/r15-result-visibility-executor.yml
           test "$(git diff --cached --name-only | sort)" = $'.github/workflows/r15-result-visibility-executor.yml\nbrowser/GAMEROAD.html\ntests/browser-full-interaction.spec.mjs'
           git diff --cached --check
           git commit -m 'R15: keep all four Result ranks visible'
+          git push origin HEAD:work/free4p-r15-resultvis-current-recovery-20260823
+      - name: Persist observable failure stage
+        if: failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git reset --hard HEAD
+          printf '%s\n' \
+            "guard=${{ steps.guard.outcome }}" \
+            "patch=${{ steps.patch.outcome }}" \
+            "install=${{ steps.install.outcome }}" \
+            "focused=${{ steps.focused.outcome }}" \
+            "persist=${{ steps.persist.outcome }}" \
+            "run_id=${{ github.run_id }}" > .tmp-r15-executor-result.txt
+          git config user.name 'gameroad-r15-executor'
+          git config user.email 'actions@users.noreply.github.com'
+          git add .tmp-r15-executor-result.txt
+          git commit -m 'R15 diagnostic: persist executor failure stage' || exit 0
           git push origin HEAD:work/free4p-r15-resultvis-current-recovery-20260823

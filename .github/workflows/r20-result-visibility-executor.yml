@@ -110,18 +110,22 @@ jobs:
           git diff --check
           test "$(git diff --name-only | sort)" = $'browser/GAMEROAD.html\ntests/browser-full-interaction.spec.mjs'
 
-      - name: Install Browser interaction test runner
-        shell: bash
-        run: |
-          set -euo pipefail
-          npm ci
-          npx playwright install --with-deps chromium
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
 
       - name: Run focused visible four-player Result regression
         shell: bash
         run: |
           set -euo pipefail
-          npx playwright test tests/browser-full-interaction.spec.mjs --config=playwright.full-interaction.config.mjs --grep "R19 reaches Result from visible four-player Honey Hunt and returns Home" --reporter=line
+          npx playwright test tests/browser-full-interaction.spec.mjs --config=playwright.full-interaction.config.mjs --grep "R19 reaches Result from visible four-player Honey Hunt and returns Home" --workers=1 --reporter=line
 
       - name: Upload focused evidence
         if: always()

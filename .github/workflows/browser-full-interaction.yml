@@ -170,6 +170,56 @@ jobs:
       - name: Run visible four-player Honey Hunt on public origin
         run: npx playwright test --config=.r37-public/playwright.config.mjs --workers=1
 
+      - name: Inject read-only R14 Result oracle diagnostic into temporary public runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.r37-public/browser-full-interaction.spec.mjs')
+          s=p.read_text(encoding='utf-8')
+          needle="  await expect(result, 'visible four-player Honey Hunt reaches Result without direct match/result injection').toBeVisible({ timeout: 2_000 });\n"
+          if s.count(needle)!=1:
+              raise SystemExit(f'R19 Result needle count={s.count(needle)}')
+          insert=r'''  const r14Diagnostic = await page.evaluate(() => {
+            const describeOwn = (value) => {
+              if (value == null || (typeof value !== 'object' && typeof value !== 'function')) return { type: typeof value, keys: [] };
+              const descriptors = Object.getOwnPropertyDescriptors(value);
+              return {
+                type: typeof value,
+                keys: Object.entries(descriptors).slice(0, 180).map(([key, desc]) => ({ key, kind: Object.prototype.hasOwnProperty.call(desc, 'value') ? typeof desc.value : 'accessor' })),
+              };
+            };
+            const globals = {};
+            for (const name of Object.getOwnPropertyNames(window).filter((name) => /gameroad|battle|match|result/i.test(name)).slice(0, 260)) {
+              const desc = Object.getOwnPropertyDescriptor(window, name);
+              if (!desc || !Object.prototype.hasOwnProperty.call(desc, 'value')) continue;
+              globals[name] = describeOwn(desc.value);
+            }
+            return {
+              globals,
+              localStorageKeys: Object.keys(localStorage),
+              sessionStorageKeys: Object.keys(sessionStorage),
+              resultLines: Array.from(document.querySelectorAll('#resultRanking .rankLine')).map((el) => ({
+                text: (el.textContent || '').trim(),
+                attrs: Object.fromEntries(Array.from(el.attributes).map((a) => [a.name, a.value])),
+              })),
+              resultRounds: (document.querySelector('#resultRounds')?.textContent || '').trim(),
+            };
+          });
+          console.log('FREE4P_R14_RESULT_DIAGNOSTIC=' + JSON.stringify(r14Diagnostic));
+'''
+          p.write_text(s.replace(needle, needle+insert, 1), encoding='utf-8')
+          PY
+
+      - name: Re-run genuine public R19 with R14 read-only oracle observation
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx playwright test --config=.r37-public/playwright.config.mjs --workers=1 2>&1 | tee public-origin-metadata/r14-oracle.log
+          grep -F 'FREE4P_R14_RESULT_DIAGNOSTIC=' public-origin-metadata/r14-oracle.log | tail -n 1 | sed 's/^.*FREE4P_R14_RESULT_DIAGNOSTIC=//' > public-origin-metadata/r14-result-diagnostic.json
+          node -e "const fs=require('fs'); const x=JSON.parse(fs.readFileSync('public-origin-metadata/r14-result-diagnostic.json','utf8')); if(!Array.isArray(x.resultLines)||x.resultLines.length!==4) process.exit(2); console.log(JSON.stringify(x));"
+
       - name: Record public-origin evidence binding
         if: always()
         shell: bash

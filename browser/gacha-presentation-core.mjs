@@ -1,7 +1,9 @@
 const SCHEMA = 'gameroad.gacha-presentation.v1';
+const QUALITY_SCHEMA = 'gameroad.gacha-presentation-quality.v1';
 
 const STAGES = Object.freeze(['idle', 'pre_shot', 'reveal', 'paused', 'completed']);
 const VIEW_SOURCES = Object.freeze(['tap', 'swipe']);
+const RESULT_REVIEW_STAGES = Object.freeze(['reveal', 'paused', 'completed']);
 
 function requireNonEmptyString(value, label) {
   if (typeof value !== 'string' || value.trim() === '') {
@@ -61,6 +63,67 @@ function normalizeAssets(assets = {}) {
   return Object.freeze({
     character: assets.character === 'formal' ? 'formal' : 'fallback',
     video: assets.video === 'formal' ? 'formal' : 'fallback',
+  });
+}
+
+function normalizeViewport(viewport = {}) {
+  const width = Number(viewport.width);
+  const height = Number(viewport.height);
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    throw new Error('viewport width/height must be positive finite numbers');
+  }
+  return { width, height };
+}
+
+function presentationViewportClass({ width, height }) {
+  if (height <= 400 && width > height) return 'short_landscape';
+  if (width < height) return 'portrait';
+  return 'wide';
+}
+
+function qualityLayout(viewportClass, reviewingResults) {
+  if (!reviewingResults) {
+    return Object.freeze({
+      composition: viewportClass === 'portrait' ? 'preview_over_pack' : 'preview_beside_pack',
+      resultsRegion: 'inactive',
+      packMeta: 'primary',
+    });
+  }
+  if (viewportClass === 'portrait') {
+    return Object.freeze({
+      composition: 'result_focus_then_collection_then_controls',
+      resultsRegion: 'dominant_vertical',
+      packMeta: 'collapsed_support',
+    });
+  }
+  if (viewportClass === 'short_landscape') {
+    return Object.freeze({
+      composition: 'result_focus_left_collection_right_controls_edge',
+      resultsRegion: 'dominant_horizontal',
+      packMeta: 'collapsed_support',
+    });
+  }
+  return Object.freeze({
+    composition: 'result_focus_center_collection_adjacent_controls_below',
+    resultsRegion: 'dominant_wide',
+    packMeta: 'collapsed_support',
+  });
+}
+
+function qualityMotion(state, reviewingResults) {
+  if (!reviewingResults) {
+    return Object.freeze({
+      transition: state.accessibility.reducedMotion
+        ? 'none'
+        : state.accessibility.lowPerf ? 'short_fade' : 'preview_idle',
+      semanticFeedback: Object.freeze(['focus', 'label']),
+    });
+  }
+  return Object.freeze({
+    transition: state.accessibility.reducedMotion
+      ? 'none'
+      : state.accessibility.lowPerf ? 'short_fade' : 'focus_shift',
+    semanticFeedback: Object.freeze(['outline', 'position', 'label']),
   });
 }
 
@@ -260,6 +323,66 @@ export function projectGachaPresentation(state) {
   });
 }
 
+export function projectGachaPresentationQuality(state, { viewport } = {}) {
+  assertState(state);
+  const vp = normalizeViewport(viewport);
+  const viewportClass = presentationViewportClass(vp);
+  const reviewingResults = RESULT_REVIEW_STAGES.includes(state.stage);
+  const selectedResult = reviewingResults && state.viewIndex >= 0
+    ? cloneJson(state.resultBundle[state.viewIndex])
+    : null;
+  const visibleResults = state.revealIndex >= 0
+    ? cloneJson(state.resultBundle.slice(0, state.revealIndex + 1))
+    : [];
+  const priorityOrder = reviewingResults
+    ? ['selected_result', 'confirmed_result_collection', 'result_navigation', 'open_again', 'pack_odds']
+    : ['pack_preview', 'open_pack', 'pack_odds'];
+
+  return deepFreeze({
+    schema: QUALITY_SCHEMA,
+    presentationSchema: state.schema,
+    presentationId: state.presentationId,
+    resultIdentity: state.resultIdentity,
+    stage: state.stage,
+    reviewingResults,
+    viewport: { ...vp, class: viewportClass },
+    resultCount: state.resultBundle.length,
+    visibleResults,
+    viewIndex: state.viewIndex,
+    selectedResult,
+    hierarchy: {
+      priorityOrder,
+      selectedResult: reviewingResults ? 'primary' : 'hidden',
+      confirmedResultCollection: reviewingResults ? 'secondary' : 'hidden',
+      resultNavigation: reviewingResults ? 'tertiary' : 'hidden',
+      openAgain: reviewingResults ? 'secondary_action' : 'primary_action',
+      packOdds: reviewingResults ? 'collapsed_support' : 'support',
+    },
+    channels: {
+      selection: reviewingResults ? ['outline', 'position', 'label'] : [],
+      rarity: reviewingResults ? ['text', 'frame_weight'] : [],
+      disabled: ['opacity', 'label_state'],
+    },
+    layout: qualityLayout(viewportClass, reviewingResults),
+    motion: qualityMotion(state, reviewingResults),
+    accessibility: {
+      ...cloneJson(state.accessibility),
+      resultMeaningPreservedWithoutMotion: true,
+      selectionMeaningPreservedWithoutColor: true,
+      rarityMeaningPreservedWithoutColor: true,
+    },
+    invariants: {
+      resultTruthMutable: false,
+      resultOrderMutable: false,
+      rngAuthority: 'upstream_only',
+      saveAuthority: 'upstream_only',
+      identityAuthority: 'upstream_only',
+      inventedResultSignalsAllowed: false,
+      unrevealedResultsExposed: false,
+    },
+  });
+}
+
 export function snapshotGachaPresentation(state) {
   assertState(state);
   return deepFreeze(cloneJson(state));
@@ -285,4 +408,5 @@ export function restoreGachaPresentation(snapshot, {
 }
 
 export const GACHA_PRESENTATION_SCHEMA = SCHEMA;
+export const GACHA_PRESENTATION_QUALITY_SCHEMA = QUALITY_SCHEMA;
 export const GACHA_PRESENTATION_STAGES = STAGES;

@@ -28,15 +28,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          OLD_BASE=5f0fb6a789740446697c7271afef92f9ee4a87a7
-          OLD_HEAD=9961328c19541b788c5501608e3d43c688ac3968
-          git fetch --no-tags origin "$OLD_BASE" "$OLD_HEAD"
-          git diff --binary "$OLD_BASE" "$OLD_HEAD" -- \
-            .github/workflows/gameroad-required-gate.yml \
-            browser/GAMEROAD.html \
-            browser/post-match-autoqueue-core.mjs \
-            tests/browser-runtime-smoke.spec.mjs \
-            tests/post-match-autoqueue-core.test.mjs > /tmp/r5.patch
+          curl -fsSL https://github.com/rathersitooo-ux/GMR/pull/330.diff -o /tmp/r5.patch
           test -s /tmp/r5.patch
           git apply --3way --index /tmp/r5.patch
           mapfile -t durable < <(git diff --cached --name-only | sort)

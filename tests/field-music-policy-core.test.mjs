@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import '../deploy/cloudflare/tests/normal-match-r3.test.mjs';
 import {
   FIELD_MUSIC_ROLE,
   resolveEffectiveMusicVolume,

@@ -156,6 +156,12 @@ export function createScreenTransitionRuntimeAdapter({
     const from = getCurrentScreen();
     const decision = navigationBridge.resolve(from, requestedTarget);
     if (!decision.ok) {
+      if (
+        decision.reason === SCREEN_NAVIGATION_REASON.CURRENT_SCREEN
+        && director.getState().activeRevision !== null
+      ) {
+        director.cancel();
+      }
       return freezeTransitionResult({
         status: 'ignored',
         revision: director.getState().revision,

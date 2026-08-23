@@ -134,3 +134,18 @@ test('ineligible result never starts normal matchmaking', async () => {
   assert.equal(creates, 0);
   assert.equal(c.snapshot().status, S.INELIGIBLE);
 });
+
+test('duplicate authoritative Result stays single-ticket even after MATCHED', async () => {
+  let creates = 0;
+  const c = createPostMatchAutoQueueController({
+    createTicket: async () => ({ ticketId: `T${++creates}` }),
+    cancelTicket: async () => {},
+  });
+  const input = { resultId: 'R8', queueSignature: { mode: '4p', contentId: 'road_shield' } };
+  await c.onResult(input);
+  c.handleTicketUpdate({ ticketId: 'T1', status: 'matched', matchId: 'M8' });
+  await c.onResult(input);
+  assert.equal(creates, 1);
+  assert.equal(c.snapshot().status, S.MATCHED);
+  assert.equal(c.snapshot().matchId, 'M8');
+});

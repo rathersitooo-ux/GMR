@@ -16,6 +16,37 @@ export const SCREEN_NAVIGATION_FALLBACK_PARENT = Object.freeze({
   settings: 'home'
 });
 
+export const SCREEN_NAVIGATION_COMMON_BUTTON_SFX = Object.freeze({
+  filename: 'click_002.ogg',
+  formalRole: 'shared-button',
+  playbackAuthority: 'HUMAN_ACCEPTED_FORMAL_ASSET'
+});
+
+function commonButtonSfxUrl() {
+  const moduleUrl = new URL(import.meta.url);
+  const sourceBrowserModule = /\/browser\/screen-navigation-core\.mjs$/.test(moduleUrl.pathname);
+  return new URL(
+    sourceBrowserModule
+      ? '../assets/audio/sfx/click_002.ogg'
+      : './click_002.ogg',
+    moduleUrl
+  ).href;
+}
+
+function playAcceptedNavigationSfx() {
+  const AudioCtor = globalThis.Audio;
+  if (typeof AudioCtor !== 'function') return false;
+
+  try {
+    const audio = new AudioCtor(commonButtonSfxUrl());
+    const playback = audio?.play?.();
+    if (playback && typeof playback.catch === 'function') playback.catch(() => {});
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function resolveScreenNavigation(currentScreen, requestedTarget) {
   if (!requestedTarget) {
     return {
@@ -35,12 +66,14 @@ export function resolveScreenNavigation(currentScreen, requestedTarget) {
     };
   }
 
-  return {
+  const decision = {
     ok: true,
     from: currentScreen,
     to: requestedTarget,
     reason: SCREEN_NAVIGATION_REASON.NAVIGATE
   };
+  playAcceptedNavigationSfx();
+  return decision;
 }
 
 export function resolveScreenBackTarget(currentScreen, historyEntry) {

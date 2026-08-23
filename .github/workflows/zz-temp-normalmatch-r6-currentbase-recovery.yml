@@ -6,18 +6,24 @@ on:
       - work/normalmatch-r6-currentbase-recovery
     paths:
       - .github/workflows/zz-temp-normalmatch-r6-currentbase-recovery.yml
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize]
 
 permissions:
   contents: write
 
 jobs:
   recover:
+    if: github.head_ref == 'work/normalmatch-r6-currentbase-recovery' || github.ref_name == 'work/normalmatch-r6-currentbase-recovery'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: work/normalmatch-r6-currentbase-recovery
       - name: Reapply exact R5 intent onto current-base branch
         shell: bash
         run: |

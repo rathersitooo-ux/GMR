@@ -1,0 +1,165 @@
+name: TEMP Crossscreen R35 Infinite Conveyor
+
+on:
+  push:
+    branches:
+      - work/crossscreen-r35-infinite-conveyor-environment
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/crossscreen-r35-infinite-conveyor-environment
+          fetch-depth: 0
+      - name: Exact patch core and focused regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object browser/battle-conveyor-presentation-core.mjs)" = "70a6a7e354ad96d4297acab3ba2d9c4caa584af2"
+          test "$(git hash-object tests/battle-conveyor-presentation-core.test.mjs)" = "af7ef5ca7d15aa6005416f136f751ff4e44c0b0f"
+          python3 - <<'PY'
+          from pathlib import Path
+
+          core_path = Path('browser/battle-conveyor-presentation-core.mjs')
+          core = core_path.read_text()
+          anchor = "export function planBattleConveyor(events, { reducedMotion = false, lowPerf = false } = {}) {"
+          if core.count(anchor) != 1:
+              raise SystemExit('CORE_ANCHOR_MISMATCH')
+          block = r'''const ENVIRONMENT_PHASES = Object.freeze({
+            IDLE_READ: 'IDLE_READ',
+            CARD_SELECT: 'CARD_SELECT',
+            TARGET_LOCK: 'TARGET_LOCK',
+            RESOLVE: 'RESOLVE',
+            SETTLE_AFTERMATH: 'SETTLE_AFTERMATH'
+          });
+          const ENVIRONMENT_MOTION_INTENT = Object.freeze({
+            IDLE_READ: 'AMBIENT_OPTIONAL',
+            CARD_SELECT: 'AMBIENT_MINIMAL',
+            TARGET_LOCK: 'HOLD',
+            RESOLVE: 'BURST',
+            SETTLE_AFTERMATH: 'SETTLE'
+          });
+          function loopUnit(value) { return ((value % 1) + 1) % 1; }
+          function environmentDepthCurve(depth) { return depth * depth * (3 - 2 * depth); }
+
+          export function planBattleConveyorEnvironmentFrame({
+            segmentCount,
+            travel,
+            phase,
+            reducedMotion = false,
+            lowPerf = false
+          } = {}) {
+            if (!Number.isSafeInteger(segmentCount) || segmentCount < 3 || segmentCount > 64) {
+              throw new TypeError('ENVIRONMENT_SEGMENT_COUNT_INVALID');
+            }
+            if (!Number.isFinite(travel) || travel < 0) throw new TypeError('ENVIRONMENT_TRAVEL_INVALID');
+            if (!Object.prototype.hasOwnProperty.call(ENVIRONMENT_PHASES, phase)) {
+              throw new TypeError(`ENVIRONMENT_PHASE_INVALID:${phase}`);
+            }
+            const motionSuppressed = reducedMotion === true || lowPerf === true;
+            const effectiveTravel = motionSuppressed ? 0 : travel;
+            const segments = [];
+            for (let index = 0; index < segmentCount; index += 1) {
+              const baseDepth = index / segmentCount;
+              const rawDepth = baseDepth + effectiveTravel;
+              const normalizedDepth = loopUnit(rawDepth);
+              const perspectiveDepth = environmentDepthCurve(normalizedDepth);
+              segments.push(freeze({
+                segmentId: `visual-segment-${index}`,
+                normalizedDepth,
+                recycleCycle: Math.floor(rawDepth),
+                screenY: 0.12 + (0.60 * perspectiveDepth),
+                scale: 0.18 + (0.82 * perspectiveDepth),
+                opacity: 0.18 + (0.82 * perspectiveDepth),
+                recycleOnly: true
+              }));
+            }
+            return freeze({
+              schema: 'gameroad.battle-conveyor-environment.v1',
+              presentationOnly: true,
+              environmentAuthority: 'decorative_visual_loop_only',
+              gameStateWrite: false,
+              position109Write: false,
+              targetWrite: false,
+              orderWrite: false,
+              formalArt: false,
+              phase: ENVIRONMENT_PHASES[phase],
+              motionIntent: ENVIRONMENT_MOTION_INTENT[phase],
+              motionSuppressed,
+              reducedMotion: reducedMotion === true,
+              lowPerf: lowPerf === true,
+              requestedTravel: travel,
+              effectiveTravel,
+              worldLayerScope: ['floor', 'path', 'side_scenery'],
+              screenSpaceAnchors: ['hand', 'target_feedback', 'status', 'winner_afterstate'],
+              seamPolicy: 'recycle_only_outside_decision_surface_or_behind_vanishing_mask',
+              segments
+            });
+          }
+
+          '''
+          core_path.write_text(core.replace(anchor, block + anchor))
+
+          test_path = Path('tests/battle-conveyor-presentation-core.test.mjs')
+          test = test_path.read_text()
+          import_anchor = "import {\n  planBattleConveyor,"
+          if test.count(import_anchor) != 1:
+              raise SystemExit('TEST_IMPORT_ANCHOR_MISMATCH')
+          test = test.replace(import_anchor, "import {\n  planBattleConveyorEnvironmentFrame,\n  planBattleConveyor,", 1)
+          test_anchor = "];\n\nconst t = planBattleConveyor(demo);"
+          if test.count(test_anchor) != 1:
+              raise SystemExit('TEST_BODY_ANCHOR_MISMATCH')
+          checks = r'''];
+
+          const envBase = planBattleConveyorEnvironmentFrame({segmentCount:8,travel:0,phase:'IDLE_READ'});
+          const envLoop = planBattleConveyorEnvironmentFrame({segmentCount:8,travel:1,phase:'IDLE_READ'});
+          assert.equal(envBase.presentationOnly, true);
+          assert.equal(envBase.environmentAuthority, 'decorative_visual_loop_only');
+          assert.equal(envBase.gameStateWrite, false);
+          assert.equal(envBase.position109Write, false);
+          assert.equal(envBase.targetWrite, false);
+          assert.equal(envBase.orderWrite, false);
+          assert.equal(envBase.formalArt, false);
+          assert.deepEqual(envBase.screenSpaceAnchors, ['hand','target_feedback','status','winner_afterstate']);
+          assert.deepEqual(envBase.worldLayerScope, ['floor','path','side_scenery']);
+          assert.deepEqual(envLoop.segments.map(x=>x.segmentId), envBase.segments.map(x=>x.segmentId));
+          assert.deepEqual(envLoop.segments.map(x=>x.normalizedDepth.toFixed(8)), envBase.segments.map(x=>x.normalizedDepth.toFixed(8)));
+          assert.deepEqual(envLoop.segments.map(x=>x.recycleCycle), envBase.segments.map(x=>x.recycleCycle + 1));
+          const depthOrdered = [...envBase.segments].sort((a,b)=>a.normalizedDepth-b.normalizedDepth);
+          for (let i=1;i<depthOrdered.length;i+=1) {
+            assert.ok(depthOrdered[i].screenY > depthOrdered[i-1].screenY);
+            assert.ok(depthOrdered[i].scale > depthOrdered[i-1].scale);
+            assert.ok(depthOrdered[i].opacity > depthOrdered[i-1].opacity);
+          }
+          const envQuarter = planBattleConveyorEnvironmentFrame({segmentCount:8,travel:.25,phase:'RESOLVE'});
+          assert.equal(envQuarter.motionIntent, 'BURST');
+          assert.notDeepEqual(envQuarter.segments.map(x=>x.normalizedDepth.toFixed(8)), envBase.segments.map(x=>x.normalizedDepth.toFixed(8)));
+          const envReduced = planBattleConveyorEnvironmentFrame({segmentCount:8,travel:.73,phase:'RESOLVE',reducedMotion:true});
+          const envLowPerf = planBattleConveyorEnvironmentFrame({segmentCount:8,travel:.73,phase:'RESOLVE',lowPerf:true});
+          assert.equal(envReduced.motionSuppressed, true);
+          assert.equal(envReduced.effectiveTravel, 0);
+          assert.equal(envLowPerf.motionSuppressed, true);
+          assert.deepEqual(envReduced.segments.map(x=>x.normalizedDepth), envBase.segments.map(x=>x.normalizedDepth));
+          assert.deepEqual(envLowPerf.segments.map(x=>x.normalizedDepth), envBase.segments.map(x=>x.normalizedDepth));
+          assert.equal(planBattleConveyorEnvironmentFrame({segmentCount:8,travel:.2,phase:'TARGET_LOCK'}).motionIntent, 'HOLD');
+          assert.throws(() => planBattleConveyorEnvironmentFrame({segmentCount:2,travel:0,phase:'IDLE_READ'}), /SEGMENT_COUNT_INVALID/);
+          assert.throws(() => planBattleConveyorEnvironmentFrame({segmentCount:8,travel:-1,phase:'IDLE_READ'}), /TRAVEL_INVALID/);
+          assert.throws(() => planBattleConveyorEnvironmentFrame({segmentCount:8,travel:0,phase:'UNKNOWN'}), /PHASE_INVALID/);
+
+          const t = planBattleConveyor(demo);'''
+          test_path.write_text(test.replace(test_anchor, checks, 1))
+          PY
+          node --check browser/battle-conveyor-presentation-core.mjs
+          node tests/battle-conveyor-presentation-core.test.mjs
+          git diff --check
+          rm .github/workflows/zz-temp-crossscreen-r35-infinite-conveyor.yml
+          git config user.name "gameroad-r35-executor"
+          git config user.email "actions@users.noreply.github.com"
+          git add browser/battle-conveyor-presentation-core.mjs tests/battle-conveyor-presentation-core.test.mjs .github/workflows/zz-temp-crossscreen-r35-infinite-conveyor.yml
+          git commit -m "CROSSSCREEN R35: plan infinite conveyor environment loop"
+          git push origin HEAD:work/crossscreen-r35-infinite-conveyor-environment

@@ -2145,7 +2145,7 @@ function friendHate1000Root(){
 }
 function friendHate1000Preferences(){
   const reduced=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-  return{reducedMotion:!!reduced,animationEnabled:true};
+  return{reducedMotion:!!reduced,lowPerf:!!state.settings?.lowPerf,animationEnabled:true};
 }
 async function friendPresentHate1000(p){
   const sessionId=String(state.match?.id||'');

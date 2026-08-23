@@ -10,7 +10,7 @@ permissions:
 jobs:
   repair:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,7 +33,7 @@ jobs:
         run: |
           npm install --no-save --no-package-lock @playwright/test@1.62.0
           npx playwright install chromium
-      - name: Patch exact Home polling function and fold pinned temporal regression
+      - name: Patch Home polling with busy-safe edge retention and fold pinned regression
         shell: bash
         run: |
           set -euo pipefail
@@ -49,7 +49,7 @@ jobs:
           old=s[a:b]
           assert old.count('pad.buttons?.[0]?.pressed')==1 and old.count('pad.buttons?.[1]?.pressed')==1
           new="""let homeMotionGamepadConfirmHeld=false,homeMotionGamepadCancelHeld=false;
-          function homeMotionGamepadPoll(){const pads=navigator.getGamepads?.()||[],pad=[...pads].find(Boolean),confirmPressed=!!pad?.buttons?.[0]?.pressed,cancelPressed=!!pad?.buttons?.[1]?.pressed,confirmEdge=confirmPressed&&!homeMotionGamepadConfirmHeld,cancelEdge=cancelPressed&&!homeMotionGamepadCancelHeld;homeMotionGamepadConfirmHeld=confirmPressed;homeMotionGamepadCancelHeld=cancelPressed;if(state.screen==='home'&&!homeMotionRuntime.busy&&pad){const now=performance.now(),cool=now-homeMotionRuntime.gamepadStamp>230,ax=pad.axes?.[0]||0,ay=pad.axes?.[1]||0;if(confirmEdge){const t=document.activeElement?.dataset?.homeTarget;if(t)homeMotionNavigate(t);else homeMotionToggle()}else if(cancelEdge){homeMotionToggle()}else if(cool){let dir='';if(ay<-.58&&Math.abs(ax)<.42)dir='up';else if(ax>.58&&Math.abs(ay)<.5)dir='right';else if(ax<-.48&&ay<-.22)dir='up-left';else if(ax<-.48&&ay>.22)dir='down-left';if(dir){homeMotionRuntime.gamepadStamp=now;homeMotionFocusDirection(dir)}}}requestAnimationFrame(homeMotionGamepadPoll)}"""
+          function homeMotionGamepadPoll(){const pads=navigator.getGamepads?.()||[],pad=[...pads].find(Boolean),confirmPressed=!!pad?.buttons?.[0]?.pressed,cancelPressed=!!pad?.buttons?.[1]?.pressed;if(state.screen!=='home'||!pad){homeMotionGamepadConfirmHeld=confirmPressed;homeMotionGamepadCancelHeld=cancelPressed}else if(homeMotionRuntime.busy){if(!confirmPressed)homeMotionGamepadConfirmHeld=false;if(!cancelPressed)homeMotionGamepadCancelHeld=false}else{const confirmEdge=confirmPressed&&!homeMotionGamepadConfirmHeld,cancelEdge=cancelPressed&&!homeMotionGamepadCancelHeld;homeMotionGamepadConfirmHeld=confirmPressed;homeMotionGamepadCancelHeld=cancelPressed;const now=performance.now(),cool=now-homeMotionRuntime.gamepadStamp>230,ax=pad.axes?.[0]||0,ay=pad.axes?.[1]||0;if(confirmEdge){const t=document.activeElement?.dataset?.homeTarget;if(t)homeMotionNavigate(t);else homeMotionToggle()}else if(cancelEdge){homeMotionToggle()}else if(cool){let dir='';if(ay<-.58&&Math.abs(ax)<.42)dir='up';else if(ax>.58&&Math.abs(ay)<.5)dir='right';else if(ax<-.48&&ay<-.22)dir='up-left';else if(ax<-.48&&ay>.22)dir='down-left';if(dir){homeMotionRuntime.gamepadStamp=now;homeMotionFocusDirection(dir)}}}requestAnimationFrame(homeMotionGamepadPoll)}"""
           hp.write_text(s[:a]+new+s[b:],encoding='utf-8')
           sp=Path('tests/browser-runtime-smoke.spec.mjs'); smoke=sp.read_text(encoding='utf-8')
           marker='// UI R30: Home gamepad rising-edge temporal regression'
@@ -57,13 +57,15 @@ jobs:
           src=Path('/tmp/r30-temporal.spec.mjs').read_text(encoding='utf-8')
           first,sep,body=src.partition('\n'); assert sep and first.strip()=="import { test, expect } from '@playwright/test';"
           sp.write_text(smoke.rstrip()+'\n\n'+marker+'\n'+body.lstrip(),encoding='utf-8')
-          print('R30_PATCH_APPLIED',len(old),len(new))
+          print('R30_PATCH_V2_APPLIED',len(old),len(new))
           PY
           node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
           git diff --check
           test "$(git diff --name-only | sort | tr '\n' ' ')" = 'browser/GAMEROAD.html tests/browser-runtime-smoke.spec.mjs '
       - name: Run focused temporal regression
         run: npx playwright test --config=playwright.config.mjs --workers=1 --grep 'Home gamepad confirm and cancel are edge-triggered under held input'
+      - name: Run canonical Browser runtime smoke
+        run: npx playwright test --config=playwright.config.mjs --workers=1
       - name: Commit product candidate
         shell: bash
         run: |

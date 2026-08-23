@@ -31,14 +31,17 @@ jobs:
       - name: Guard exact current scope
         shell: bash
         env:
-          EXPECTED_MAIN: d71a40bc8fc4d8e01a4e81dec7da3cb303c5c4a5
+          EXPECTED_MAIN: 15375f4da44b2b78e7d943d107e48aac0b1b7013
         run: |
           set -euo pipefail
           BRANCH_HEAD="$(git rev-parse HEAD)"
           echo "BRANCH_HEAD=$BRANCH_HEAD" >> "$GITHUB_ENV"
           git fetch origin main --depth=1
-          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          ACTUAL_MAIN="$(git rev-parse origin/main)"
+          echo "expected-main=$EXPECTED_MAIN actual-main=$ACTUAL_MAIN"
+          test "$ACTUAL_MAIN" = "$EXPECTED_MAIN"
           mapfile -t changed < <(git diff --name-only origin/main...HEAD)
+          printf 'branch-delta=%s\n' "${changed[*]}"
           for path in "${changed[@]}"; do
             case "$path" in
               browser/GAMEROAD.html|.github/workflows/zz-temp-hate-r21-inspector.yml) ;;
@@ -46,7 +49,9 @@ jobs:
             esac
           done
           grep -Fq 'async function friendPresentHate1000(p)' browser/GAMEROAD.html
-          test "$(grep -oF 'return{reducedMotion:!!reduced,animationEnabled:true};' browser/GAMEROAD.html | wc -l | tr -d ' ')" = '1'
+          OLD_COUNT="$(grep -oF 'return{reducedMotion:!!reduced,animationEnabled:true};' browser/GAMEROAD.html | wc -l | tr -d ' ')"
+          echo "old-preference-count=$OLD_COUNT"
+          test "$OLD_COUNT" = '1'
 
       - name: Bind current low-performance preference
         shell: bash

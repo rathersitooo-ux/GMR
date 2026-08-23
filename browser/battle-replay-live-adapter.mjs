@@ -23,6 +23,7 @@ const FNV_MASK = 0xffffffffffffffffn;
 const CARD_PRESENTATION_STYLE_ID = 'gameroad-card-presentation-runtime-r7-style';
 const CARD_PRESENTATION_HOLD_MS = 400;
 const PARTNER_BATTLE_LOG_HOST_ATTR = 'data-partner-battle-event-log';
+const PARTNER_BATTLE_LOG_ROW_ATTR = 'data-partner-battle-event-log-row';
 
 function cloneJson(value) {
   const text = JSON.stringify(value);
@@ -593,6 +594,19 @@ function ensurePartnerBattleEventLogHost(environment = {}) {
   return host;
 }
 
+function partnerBattleEventLogChildren(host) {
+  if (!host?.children || typeof host.children.length !== 'number') return null;
+  return Array.from(host.children);
+}
+
+function resetPartnerBattleEventLogHost(host) {
+  if (!host?.dataset) return false;
+  if (typeof host.replaceChildren === 'function') host.replaceChildren();
+  else host.textContent = '';
+  host.dataset.partnerBattleEventCount = '0';
+  return true;
+}
+
 export function renderPartnerBattleEventLogProjection(projection, environment = {}) {
   if (!projection ||
       projection.ok !== true ||
@@ -603,8 +617,36 @@ export function renderPartnerBattleEventLogProjection(projection, environment = 
   const rows = projection.events.map(formatPartnerBattleEventLogRow);
   if (rows.some(row => row == null)) return false;
   const host = ensurePartnerBattleEventLogHost(environment);
-  if (!host?.dataset) return false;
-  host.textContent = rows.join('\n');
+  const documentRef = environmentValue(environment, 'document');
+  const children = partnerBattleEventLogChildren(host);
+  if (!host?.dataset || !children || typeof host.appendChild !== 'function' ||
+      typeof documentRef?.createElement !== 'function') {
+    return false;
+  }
+
+  const acceptedCount = Number(host.dataset.partnerBattleEventCount ?? 0);
+  if (!Number.isSafeInteger(acceptedCount) || acceptedCount < 0 ||
+      acceptedCount !== children.length || acceptedCount > rows.length) {
+    return false;
+  }
+  for (let index = 0; index < acceptedCount; index += 1) {
+    const child = children[index];
+    if (!child ||
+        child.getAttribute?.(PARTNER_BATTLE_LOG_ROW_ATTR) !== String(index + 1) ||
+        child.textContent !== rows[index]) {
+      return false;
+    }
+  }
+
+  const additions = [];
+  for (let index = acceptedCount; index < rows.length; index += 1) {
+    const row = documentRef.createElement('div');
+    if (!row || typeof row.setAttribute !== 'function') return false;
+    row.setAttribute(PARTNER_BATTLE_LOG_ROW_ATTR, String(index + 1));
+    row.textContent = rows[index];
+    additions.push(row);
+  }
+  for (const row of additions) host.appendChild(row);
   host.dataset.partnerBattleEventCount = String(rows.length);
   return true;
 }
@@ -612,10 +654,7 @@ export function renderPartnerBattleEventLogProjection(projection, environment = 
 export function createPartnerBattleEventLogPresentationBridge(environment = {}) {
   function begin() {
     const host = ensurePartnerBattleEventLogHost(environment);
-    if (!host?.dataset) return false;
-    host.textContent = '';
-    host.dataset.partnerBattleEventCount = '0';
-    return true;
+    return resetPartnerBattleEventLogHost(host);
   }
 
   function acceptSession(session) {

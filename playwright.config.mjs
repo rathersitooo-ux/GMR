@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
-  testMatch: 'browser-runtime-smoke.spec.mjs',
+  testMatch: ['browser-runtime-smoke.spec.mjs', 'home-gamepad-temporal.spec.mjs'],
   timeout: 45_000,
   expect: { timeout: 5_000 },
   fullyParallel: false,

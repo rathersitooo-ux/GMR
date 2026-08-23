@@ -668,3 +668,104 @@ test('Home gamepad confirm and cancel are edge-triggered under held input', asyn
     description: JSON.stringify({ trace, bEvidence }),
   });
 });
+
+test('normal Result autoqueue binds live create/status/cancel once and rejects duplicate or stale updates', async function normalResultAutoqueueTest({ page }) {
+  let createCalls = 0;
+  let cancelCalls = 0;
+  let statusCalls = 0;
+  let matched = false;
+  await page.route('**/ws?**', async (route) => {
+    const request = route.request();
+    const url = new URL(request.url());
+    const op = url.searchParams.get('matchOp');
+    if (!op) return route.continue();
+    const body = JSON.parse(request.postData() || '{}');
+    const ticketId = body.ticketId || `t-${createCalls + 1}`;
+    if (op === 'create') {
+      createCalls += 1;
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          idempotent: false,
+          ticket: { ticketId: `t-${createCalls}`, status: 'WAITING' },
+          secret: `0123456789abcdef0123456789abcdef${String(createCalls).padStart(8, '0')}`,
+          formedMatchId: null,
+        }),
+      });
+    }
+    if (op === 'cancel') {
+      cancelCalls += 1;
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ok: true,
+          cancelled: true,
+          terminal: 'CANCELLED',
+          ticket: { ticketId, status: 'CANCELLED' },
+        }),
+      });
+    }
+    statusCalls += 1;
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(matched ? {
+        ok: true,
+        ticket: { ticketId, status: 'MATCHED', matchId: 'm-live-1' },
+        session: { sessionId: 'm-live-1', matchId: 'm-live-1', slot: 0, size: 4 },
+      } : {
+        ok: true,
+        ticket: { ticketId, status: 'WAITING' },
+        session: null,
+      }),
+    });
+  });
+
+  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
+  expect(response?.ok()).toBeTruthy();
+  await page.waitForLoadState('load');
+  await page.waitForFunction(() => !!window.GAMEROAD_POST_MATCH_AUTOQUEUE_R5);
+  const deck = await installLegalBattleDeck(page);
+  expect(deck.committed).toBeTruthy();
+
+  await page.evaluate(() => {
+    const core = window.__GAMEROAD_TEST__;
+    core.start('4p', 'road_shield');
+    window.GAMEROAD_FRIEND_ROOM_R2.qaForceEnd('P1');
+  });
+  await page.waitForFunction(() => window.GAMEROAD_POST_MATCH_AUTOQUEUE_R5.snapshot().status === 'searching');
+  expect(createCalls).toBe(1);
+  expect(await page.locator('.screen.result').evaluate((el) => el.classList.contains('active'))).toBeTruthy();
+  expect(await page.locator('#postMatchAutoQueueEnabled').isChecked()).toBeTruthy();
+  expect(await page.locator('#rematch').isDisabled()).toBeTruthy();
+
+  await page.evaluate(() => window.GAMEROAD_POST_MATCH_AUTOQUEUE_R5.onResultCurrent());
+  expect(createCalls).toBe(1);
+
+  await page.locator('#postMatchAutoQueueEnabled').uncheck();
+  await page.waitForFunction(() => window.GAMEROAD_POST_MATCH_AUTOQUEUE_R5.snapshot().status === 'cancelled');
+  expect(cancelCalls).toBe(1);
+
+  await page.locator('#postMatchAutoQueueEnabled').check();
+  await page.waitForFunction(() => window.GAMEROAD_POST_MATCH_AUTOQUEUE_R5.snapshot().ticketId === 't-2');
+  expect(createCalls).toBe(2);
+  const stale = await page.evaluate(() => {
+    window.GAMEROAD_POST_MATCH_AUTOQUEUE_R5.injectTicketUpdate({ ticketId: 't-1', status: 'matched', matchId: 'stale' });
+    return window.GAMEROAD_POST_MATCH_AUTOQUEUE_R5.snapshot();
+  });
+  expect(stale.ticketId).toBe('t-2');
+  expect(stale.status).toBe('searching');
+  expect(stale.matchId).toBeNull();
+
+  matched = true;
+  await page.evaluate(() => window.GAMEROAD_POST_MATCH_AUTOQUEUE_R5.pollNow());
+  await page.waitForFunction(() => window.GAMEROAD_POST_MATCH_AUTOQUEUE_R5.snapshot().status === 'matched');
+  const final = await page.evaluate(() => window.GAMEROAD_POST_MATCH_AUTOQUEUE_R5.snapshot());
+  expect(final.matchId).toBe('m-live-1');
+  expect(final.matchedSession).toEqual({ sessionId: 'm-live-1', matchId: 'm-live-1', slot: 0, size: 4 });
+  expect(statusCalls).toBeGreaterThan(0);
+  expect(await page.locator('#postMatchAutoQueueStatus').textContent()).toContain('マッチ成立');
+});

@@ -87,6 +87,8 @@ jobs:
                 browser_full_interaction=true
                 ;;
               browser/GAMEROAD.html|\
+              browser/post-match-autoqueue-core.mjs|\
+              tests/post-match-autoqueue-core.test.mjs|\
               browser/screen-navigation-core.mjs|\
               tests/screen-navigation-core.test.mjs|\
               tests/browser-static-check.mjs|\
@@ -361,6 +363,7 @@ jobs:
         if: steps.classify.outputs.browser == 'true'
         run: |
           node --test tests/screen-navigation-core.test.mjs
+          node --test tests/post-match-autoqueue-core.test.mjs
           node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
 
       - name: Run Fossil excavation state core tests

@@ -1,0 +1,161 @@
+name: TEMP FREE4P R18 terminal-round projection executor
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-and-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/free4p-r18-terminal-round-projection
+          fetch-depth: 2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Exact target-state guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object browser/battle-replay-live-adapter.mjs)" = "56987ad3c5f820eba08b2aadf7cc0c0b3a89d041"
+          test "$(git hash-object tests/battle-replay-live-adapter.test.mjs)" = "9f4cbc16282d090bb09ec53e2f0b1bf9025081f8"
+          python3 - <<'PY'
+          from pathlib import Path
+          a=Path('browser/battle-replay-live-adapter.mjs').read_text(encoding='utf-8')
+          t=Path('tests/battle-replay-live-adapter.test.mjs').read_text(encoding='utf-8')
+          assert a.count('function deriveFree4pFormalRankingFromAcceptedReplay(log, winnerIds) {') == 1
+          assert a.count('deriveFree4pFormalRankingFromAcceptedReplay(session.log, normalizedWinnerIds);') == 1
+          assert 'FREE4P R18: terminal round projection integrity' not in t
+          print('R18_SOURCE_GUARD_PASS')
+          PY
+
+      - name: Reproduce current stale-round projection defect (RED)
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import {
+            appendAcceptedBattleResolution,
+            appendAcceptedMatchEnd,
+            createLiveReplaySession,
+            readLiveReplay
+          } from './browser/battle-replay-live-adapter.mjs';
+          const versions={rules:'R18_RULES',content:'R18_CONTENT',state:'R18_STATE'};
+          const resolution={
+            serial:1,round:1,mode:'4p',attackerId:'P1',defenderId:'P2',lane:'C',shield:null,
+            winnerIds:['P1'],winningTeam:null,teamTotals:null,players:[],laneGains:[],
+            maxLaneProgress:[
+              {id:'P1',before:6,after:7},{id:'P2',before:5,after:5},
+              {id:'P3',before:4,after:4},{id:'P4',before:2,after:2}
+            ]
+          };
+          let session=createLiveReplaySession({matchId:'R18-RED',versions});
+          session=appendAcceptedBattleResolution(session,resolution);
+          session=appendAcceptedMatchEnd(session,{winnerIds:['P1'],round:2,mode:'4p'});
+          const end=readLiveReplay(session).events.at(-1).publicData;
+          if (!Array.isArray(end.formalRanking) || end.formalRanking.length !== 4) {
+            throw new Error('R18_RED_NOT_REPRODUCED');
+          }
+          console.log('R18_RED_REPRODUCED: stale round 1 progress fabricated round 2 formalRanking');
+          NODE
+
+      - name: Apply minimal exact patch and regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          adapter=Path('browser/battle-replay-live-adapter.mjs')
+          s=adapter.read_text(encoding='utf-8')
+          old_sig='function deriveFree4pFormalRankingFromAcceptedReplay(log, winnerIds) {'
+          new_sig='function deriveFree4pFormalRankingFromAcceptedReplay(log, winnerIds, terminalRound) {'
+          old_mode="    if (event.publicData?.mode !== '4p') return null;\n    const progress = event.publicData?.maxLaneProgress;"
+          new_mode="    if (event.publicData?.mode !== '4p') return null;\n    if (event.publicData?.round !== terminalRound) return null;\n    const progress = event.publicData?.maxLaneProgress;"
+          old_call='    const derivedRanking = deriveFree4pFormalRankingFromAcceptedReplay(session.log, normalizedWinnerIds);'
+          new_call='    const derivedRanking = deriveFree4pFormalRankingFromAcceptedReplay(session.log, normalizedWinnerIds, publicData.round);'
+          for old in (old_sig, old_mode, old_call):
+              if s.count(old) != 1:
+                  raise SystemExit(f'R18_REPLACE_GUARD_FAILED: {old[:70]!r} count={s.count(old)}')
+          s=s.replace(old_sig,new_sig,1).replace(old_mode,new_mode,1).replace(old_call,new_call,1)
+          adapter.write_text(s,encoding='utf-8')
+
+          test_path=Path('tests/battle-replay-live-adapter.test.mjs')
+          t=test_path.read_text(encoding='utf-8').rstrip()
+          marker='FREE4P R18: terminal round projection integrity'
+          if marker in t:
+              raise SystemExit('R18_TEST_MARKER_ALREADY_PRESENT')
+          t += r'''
+
+// FREE4P R18: terminal round projection integrity
+test('Free4P omitted formalRanking never derives from accepted progress belonging to a different terminal round', () => {
+  const input = resolution(1);
+  input.mode = '4p';
+  input.winnerIds = ['P1'];
+  input.maxLaneProgress = [
+    { id: 'P1', before: 6, after: 7 },
+    { id: 'P2', before: 5, after: 5 },
+    { id: 'P3', before: 4, after: 4 },
+    { id: 'P4', before: 2, after: 2 }
+  ];
+  let session = createLiveReplaySession({ matchId: 'M-4P-DERIVE-ROUND-MISMATCH', versions });
+  session = appendAcceptedBattleResolution(session, input);
+  session = appendAcceptedMatchEnd(session, { winnerIds: ['P1'], round: 2, mode: '4p' });
+  const publicData = readLiveReplay(session).events[1].publicData;
+  assert.equal(publicData.round, 2);
+  assert.equal('formalRanking' in publicData, false);
+});
+'''
+          test_path.write_text(t+'\n',encoding='utf-8')
+          PY
+          git diff --check
+          git diff -- browser/battle-replay-live-adapter.mjs tests/battle-replay-live-adapter.test.mjs
+
+      - name: Run focused replay adapter regression
+        run: node --test tests/battle-replay-live-adapter.test.mjs
+
+      - name: Post-patch proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import {
+            appendAcceptedBattleResolution,
+            appendAcceptedMatchEnd,
+            createLiveReplaySession,
+            readLiveReplay
+          } from './browser/battle-replay-live-adapter.mjs';
+          const versions={rules:'R18_RULES',content:'R18_CONTENT',state:'R18_STATE'};
+          const resolution={
+            serial:1,round:1,mode:'4p',attackerId:'P1',defenderId:'P2',lane:'C',shield:null,
+            winnerIds:['P1'],winningTeam:null,teamTotals:null,players:[],laneGains:[],
+            maxLaneProgress:[
+              {id:'P1',before:6,after:7},{id:'P2',before:5,after:5},
+              {id:'P3',before:4,after:4},{id:'P4',before:2,after:2}
+            ]
+          };
+          let session=createLiveReplaySession({matchId:'R18-GREEN',versions});
+          session=appendAcceptedBattleResolution(session,resolution);
+          session=appendAcceptedMatchEnd(session,{winnerIds:['P1'],round:2,mode:'4p'});
+          const end=readLiveReplay(session).events.at(-1).publicData;
+          if ('formalRanking' in end) throw new Error('R18_GREEN_FAILED_STALE_RANKING_PRESENT');
+          console.log('R18_GREEN_PASS: mismatched terminal round cannot derive stale formalRanking');
+          NODE
+
+      - name: Commit only bounded product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-free4p-r18-executor'
+          git config user.email 'actions@users.noreply.github.com'
+          git add browser/battle-replay-live-adapter.mjs tests/battle-replay-live-adapter.test.mjs
+          test "$(git diff --cached --name-only | tr '\n' ' ')" = 'browser/battle-replay-live-adapter.mjs tests/battle-replay-live-adapter.test.mjs '
+          git commit -m 'FIX(FREE4P R18): bind derived ranking to terminal round'
+          git push origin HEAD:work/free4p-r18-terminal-round-projection

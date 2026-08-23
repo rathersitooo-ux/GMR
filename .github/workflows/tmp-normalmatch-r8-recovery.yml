@@ -26,16 +26,20 @@ jobs:
           ref: work/normalmatch-r8-currentmain-resultgeometry
           fetch-depth: 0
 
-      - name: Reapply validated candidate onto fresh main and tighten Result geometry
+      - name: Reapply current PR335 candidate onto fresh main and fix Result geometry
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git fetch origin pull/335/head:refs/remotes/origin/pr335-r8
-          git cat-file -e 2808a505a8f0c888079872885a77cc060b53f33b^{commit}
-          git cat-file -e 183329e780f0c8dc0ba51add26b7d3e4a9fa5113^{commit}
-          git diff --binary 2808a505a8f0c888079872885a77cc060b53f33b 183329e780f0c8dc0ba51add26b7d3e4a9fa5113 -- \
+          git fetch origin main pull/335/head:refs/remotes/origin/pr335-r8
+          BASE="$(git merge-base origin/main refs/remotes/origin/pr335-r8)"
+          CURRENT_MAIN="$(git rev-parse origin/main)"
+          if [[ "$BASE" != "$CURRENT_MAIN" ]]; then
+            echo "::error::PR335 is not based on current main: merge_base=$BASE main=$CURRENT_MAIN"
+            exit 1
+          fi
+          git diff --binary "$BASE" refs/remotes/origin/pr335-r8 -- \
             .github/workflows/gameroad-required-gate.yml \
             browser/GAMEROAD.html \
             browser/post-match-autoqueue-core.mjs \
@@ -48,33 +52,15 @@ jobs:
           from pathlib import Path
           p = Path('browser/GAMEROAD.html')
           s = p.read_text()
-          old = '''      #postMatchAutoQueue{
-                margin:0;
-                padding:5px 4px;
-                min-width:0;
-              }
-              #postMatchAutoQueue label{
-                gap:4px;
-              }'''
-          new = '''      #postMatchAutoQueue{
-                margin:0;
-                padding:0 4px;
-                min-width:0;
-                min-height:0;
-                line-height:1;
-              }
-              #postMatchAutoQueue label{
-                gap:4px;
-              }
-              #postMatchAutoQueue input{
-                width:14px;
-                height:14px;
-              }'''
-          if old not in s:
-              raise SystemExit('expected R6 mobile autoqueue CSS block not found after apply')
-          if s.count(old) != 1:
-              raise SystemExit(f'expected one R6 mobile CSS block, found {s.count(old)}')
-          s = s.replace(old, new, 1)
+          old_root = '#postMatchAutoQueue{grid-column:auto;min-width:0;gap:3px;flex-wrap:nowrap;padding:5px 4px;font-size:9px;justify-content:center}'
+          new_root = '#postMatchAutoQueue{grid-column:auto;min-width:0;min-height:0;gap:3px;flex-wrap:nowrap;padding:0 3px;font-size:9px;line-height:1;justify-content:center}'
+          old_input = '#postMatchAutoQueue input{width:16px;height:16px;flex:0 0 auto}'
+          new_input = '#postMatchAutoQueue input{width:14px;height:14px;flex:0 0 auto}'
+          if s.count(old_root) != 1:
+              raise SystemExit(f'expected one compact autoqueue root rule, found {s.count(old_root)}')
+          if s.count(old_input) != 1:
+              raise SystemExit(f'expected one compact autoqueue input rule, found {s.count(old_input)}')
+          s = s.replace(old_root, new_root, 1).replace(old_input, new_input, 1)
           p.write_text(s)
           PY
 

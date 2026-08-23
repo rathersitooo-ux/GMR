@@ -2134,6 +2134,65 @@ const now=()=>Date.now();
 const FR={role:null,code:'',channel:null,clientId:'',authToken:'',assignedPid:null,playerCount:2,contentId:'road_shield',slots:{},participants:[],roomState:'idle',hostReady:false,guestReady:false,snapshot:null,seq:0,lastReject:'',planValues:{},choiceWait:new Map(),choiceSeq:0,choiceActorPid:null,partnerRules:{},localPartnerRule:null,hateClocks:{},hateBlockers:{},hateLastTick:0,lastMembershipChange:0,matchNo:0,baseProgression:null,baseHistoryLength:null,transport:'broadcastchannel_local_r2'};
 const FRIEND_TRANSPORT_PRESENCE_TYPE='transport_presence';
 const FRIEND_PRESENCE={states:new Map(),corePromise:null,core:null};
+const FRIEND_HATE1000_PRESENTATION={sessionId:null,state:null,timer:null};
+function friendHate1000Root(){
+  let root=document.getElementById('hate1000Presentation');
+  if(root)return root;
+  if(!document.getElementById('hate1000PresentationStyle')){
+    const style=document.createElement('style');
+    style.id='hate1000PresentationStyle';
+    style.textContent=`
+#hate1000Presentation{position:fixed;inset:0;z-index:84;display:grid;place-items:center;pointer-events:none;contain:layout style paint}
+#hate1000Presentation[hidden]{display:none}
+#hate1000Presentation .hate1000Burst{position:absolute;width:9rem;height:9rem;border:2px solid rgba(255,112,112,.9);border-radius:50%;box-shadow:0 0 1.8rem rgba(255,78,78,.45),inset 0 0 1.2rem rgba(255,180,112,.18);opacity:.82}
+#hate1000Presentation .hate1000Card{position:relative;min-width:10.5rem;padding:.72rem 1rem .68rem;border:1px solid rgba(255,176,132,.74);border-radius:1rem;background:rgba(31,9,14,.88);box-shadow:0 .8rem 2.2rem rgba(0,0,0,.34),0 0 1.2rem rgba(255,84,84,.24);text-align:center;color:#fff7ef;letter-spacing:.06em}
+#hate1000Presentation .hate1000Kicker{display:block;font-size:.72rem;font-weight:800;color:#ffb098}
+#hate1000Presentation .hate1000Value{display:block;margin-top:.08rem;font-size:1.42rem;font-weight:950;line-height:1}
+#hate1000Presentation .hate1000Meaning{display:block;margin-top:.28rem;font-size:.76rem;font-weight:750;color:#ffe5cf}
+#hate1000Presentation.play .hate1000Burst{animation:hate1000Burst var(--hate1000-duration,480ms) ease-out both}
+#hate1000Presentation.play .hate1000Card{animation:hate1000Card var(--hate1000-duration,480ms) ease-out both}
+#hate1000Presentation.static .hate1000Burst,#hate1000Presentation.static .hate1000Card{animation:none;opacity:1;transform:none}
+@keyframes hate1000Burst{0%{opacity:0;transform:scale(.72)}12.5%{opacity:1;transform:scale(.96)}25%{opacity:.72;transform:scale(1.08)}54%{opacity:.34;transform:scale(1.18)}100%{opacity:0;transform:scale(1.28)}}
+@keyframes hate1000Card{0%{opacity:0;transform:translateY(.5rem) scale(.96)}12.5%{opacity:1;transform:translateY(0) scale(1)}25%{opacity:.96;transform:translateY(0) scale(1)}54%{opacity:.72;transform:translateY(-.06rem) scale(.995)}100%{opacity:0;transform:translateY(-.16rem) scale(.985)}}`;
+    document.head.appendChild(style);
+  }
+  root=document.createElement('div');
+  root.id='hate1000Presentation';
+  root.hidden=true;
+  root.setAttribute('role','status');
+  root.setAttribute('aria-live','polite');
+  root.setAttribute('aria-atomic','true');
+  root.innerHTML='<div class="hate1000Burst" aria-hidden="true"></div><div class="hate1000Card"><span class="hate1000Kicker">HATE LIMIT</span><strong class="hate1000Value">HATE 1000</strong><span class="hate1000Meaning">強制委任</span></div>';
+  (document.getElementById('battle')||document.body).appendChild(root);
+  return root;
+}
+function friendHate1000Preferences(){
+  const reduced=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  return{reducedMotion:!!reduced,lowPerf:!!state.settings?.lowPerf,animationEnabled:true};
+}
+async function friendPresentHate1000(p){
+  const sessionId=String(state.match?.id||'');
+  if(!p||!sessionId)return false;
+  const core=await friendPresenceCore();
+  if(FRIEND_HATE1000_PRESENTATION.sessionId!==sessionId||!FRIEND_HATE1000_PRESENTATION.state){
+    FRIEND_HATE1000_PRESENTATION.sessionId=sessionId;
+    FRIEND_HATE1000_PRESENTATION.state=core.createHate1000PresentationSession({sessionId});
+  }
+  const eventId=`${sessionId}:${String(p.id||'unknown')}:hate1000`;
+  const applied=core.applyHate1000PresentationEvent(FRIEND_HATE1000_PRESENTATION.state,{sessionId,eventId,kind:core.HATE1000_PRESENTATION_MOTION_CORE.kind,authorized:p.hateExploded===true&&Number(p.hateTime)>=1000},friendHate1000Preferences());
+  if(applied?.state)FRIEND_HATE1000_PRESENTATION.state=applied.state;
+  if(!applied?.accepted||applied.duplicate||!applied.plan)return false;
+  const root=friendHate1000Root();
+  clearTimeout(FRIEND_HATE1000_PRESENTATION.timer);
+  root.hidden=false;
+  root.classList.remove('play','static');
+  const duration=Number(applied.plan.motion?.durationMs||core.HATE1000_PRESENTATION_MOTION_CORE.timing.durationMs)||480;
+  root.style.setProperty('--hate1000-duration',`${duration}ms`);
+  void root.offsetWidth;
+  root.classList.add(applied.plan.mode==='motion'?'play':'static');
+  FRIEND_HATE1000_PRESENTATION.timer=setTimeout(()=>{root.hidden=true;root.classList.remove('play','static')},duration);
+  return true;
+}
 async function friendPresenceCore(){
   if(!FRIEND_PRESENCE.corePromise)FRIEND_PRESENCE.corePromise=import('./hate-peer-presence-core.mjs');
   const core=await FRIEND_PRESENCE.corePromise;FRIEND_PRESENCE.core=core;return core
@@ -2216,7 +2275,7 @@ function friendTargetCandidatesFor(p){const all=state.match?.players||[],legal=l
 function friendReplay(candidates,rule){if(!rule)return{ok:false,error:'PARTNER_RULE_NOT_SELECTED'};return partnerReplay({rule,candidates})}
 function friendForcedChoiceIndices(wait,rule){if(!wait)return{ok:false,error:'CHOICE_NOT_FOUND'};if(Number(wait.min)!==Number(wait.max))return{ok:false,error:'VARIABLE_COUNT_UNRESOLVED'};let remain=makeAbilityPartnerCandidates(wait.items),picked=[];for(let n=0;n<Number(wait.min);n++){const r=friendReplay(remain,rule);if(!r.ok||!r.selected)return{ok:false,error:r.error||'NO_CANDIDATE'};picked.push(Number(r.selected.positionOrder));remain=remain.filter(c=>c.candidateId!==r.selected.candidateId)}return{ok:true,indices:picked}}
 async function friendForcedDecision(pid,reason='hate-forced'){const m=state.match,p=m?.players?.find(x=>x.id===pid);if(FR.role!=='host'||!m?.friendRoom||!p?.roomHuman||!p.hateExploded)return false;const rule=friendRule(pid);if(!rule){FR.hateBlockers[pid]='PARTNER_RULE_NOT_SELECTED';if(pid==='P1'){const pd=ensurePartnerRuntime(m);pd.blocker='作戦規則の初期値が未裁定です';renderPartnerRuntime()}broadcastSnapshots();return false}delete FR.hateBlockers[pid];if(m.phase==='plan'&&!m.busy&&!FR.planValues[pid]){const road=friendReplay(friendPlanCandidatesFor(p,'road'),rule);if(!road.ok||!road.selected)throw Error('forced-road:'+(road.error||'NO_LEGAL_CANDIDATE'));const battle=friendReplay(friendPlanCandidatesFor(p,'battle').filter(c=>c.candidateId!==road.selected.candidateId),rule);if(!battle.ok||!battle.selected)throw Error('forced-battle:'+(battle.error||'NO_LEGAL_CANDIDATE'));const q=legalPlan(p,{roadId:road.selected.candidateId,battleId:battle.selected.candidateId,path:[p.position]});if(!q.ok)throw Error('forced-plan:'+q.reason);FR.planValues[pid]=q.plan;broadcastSnapshots();await maybeResolvePlans();return true}if(m.phase==='target'&&!m.busy&&m.activeId===pid){const t=friendReplay(friendTargetCandidatesFor(p),rule);if(!t.ok||!t.selected){FR.hateBlockers[pid]='TARGET_'+String(t.error||'NO_LEGAL_CANDIDATE');broadcastSnapshots();return false}if(rule==='max'||rule==='min'){FR.hateBlockers[pid]='TARGET_COMPARISON_UNRESOLVED';broadcastSnapshots();return false}const lane=friendReplay(fixedLaneCandidates('lane'),rule),shield=friendReplay(fixedLaneCandidates('shield'),rule);if(!lane.ok||!shield.ok||!lane.selected||!shield.selected)throw Error('forced-target-fixed:'+String(lane.error||shield.error||'NO_LEGAL_CANDIDATE'));m.target={defenderId:t.selected.candidateId,lane:lane.selected.candidateId,shield:shield.selected.candidateId};await resolveBattle();broadcastSnapshots();return true}for(const [id,w] of FR.choiceWait){if(w.pid!==pid)continue;const r=friendForcedChoiceIndices(w,rule);if(!r.ok){FR.hateBlockers[pid]='CHOICE_'+r.error;broadcastSnapshots();return false}w.resolve(r.indices);return true}if(pid==='P1'&&m.partnerDecision?.ability){const pd=ensurePartnerRuntime(m);pd.rule=rule;const ok=await pd.ability.autoResolve?.(reason);if(!ok)FR.hateBlockers[pid]=pd.blocker||'LOCAL_ABILITY_UNRESOLVED';return !!ok}return false}
-function friendExplode(p){if(!p||p.hateExploded)return false;p.hateExploded=true;p.hateExplosionCount=Math.max(0,Number(p.hateExplosionCount)||0)+1;p.hateTime=1000;if(p.id==='P1'){const pd=ensurePartnerRuntime(state.match);pd.forced=true;pd.voluntary=false;pd.blocker=null;renderPartnerRuntime()}queueMicrotask(()=>friendForcedDecision(p.id,'hate-explosion').catch(e=>{FR.hateBlockers[p.id]=String(e?.message||e);broadcastSnapshots()}));return true}
+function friendExplode(p){if(!p||p.hateExploded)return false;p.hateExploded=true;p.hateExplosionCount=Math.max(0,Number(p.hateExplosionCount)||0)+1;p.hateTime=1000;if(p.id==='P1'){const pd=ensurePartnerRuntime(state.match);pd.forced=true;pd.voluntary=false;pd.blocker=null;renderPartnerRuntime()}queueMicrotask(()=>friendPresentHate1000(p).catch(()=>{}));queueMicrotask(()=>friendForcedDecision(p.id,'hate-explosion').catch(e=>{FR.hateBlockers[p.id]=String(e?.message||e);broadcastSnapshots()}));return true}
 function friendTickHate(at=performance.now()){const m=state.match;if(FR.role!=='host'||FR.roomState!=='playing'||!m?.friendRoom)return false;let changed=false;for(const p of m.players){if(!p.roomHuman)continue;const sig=friendHateSignature(p.id),c=FR.hateClocks[p.id]||(FR.hateClocks[p.id]={signature:sig,lastTick:at,remainderMs:0});if(c.signature!==sig){c.signature=sig;c.lastTick=at;c.remainderMs=0;continue}if(!sig){c.lastTick=at;c.remainderMs=0;continue}const delta=Math.max(0,Math.min(5000,at-c.lastTick));c.lastTick=at;c.remainderMs+=delta;const sec=Math.floor(c.remainderMs/1000);if(sec<=0)continue;c.remainderMs-=sec*1000;const before=Math.max(0,Number(p.hateTime)||0);p.hateTime=Math.min(1000,before+sec);if(p.hateTime!==before)changed=true;if(before<1000&&p.hateTime===1000)changed=friendExplode(p)||changed}FR.hateLastTick=at;if(changed)broadcastSnapshots();return changed}
 const friendHateTimer=setInterval(()=>friendTickHate(performance.now()),250);
 function syncFriendPartnerRule(explicit=false){let rule=FRIEND_PARTNER_RULES.has(currentPartnerRule())?currentPartnerRule():null;if(FR.role==='guest'){if(explicit)FR.localPartnerRule=rule;else if(!rule&&FRIEND_PARTNER_RULES.has(FR.localPartnerRule)){rule=FR.localPartnerRule;const pd=ensurePartnerRuntime(state.match);if(pd)pd.rule=rule}else if(rule)FR.localPartnerRule=rule}if(FR.role==='host'){FR.partnerRules.P1=rule;if(state.match?.players?.find(p=>p.id==='P1')?.hateExploded)queueMicrotask(()=>friendForcedDecision('P1','rule-update').catch(e=>{FR.hateBlockers.P1=String(e?.message||e)}));return true}if(FR.role==='guest'&&FR.assignedPid){send({type:'partner_rule',rule});renderPartnerRuntime();return true}return false}

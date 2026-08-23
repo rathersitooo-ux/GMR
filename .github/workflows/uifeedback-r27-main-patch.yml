@@ -1,0 +1,41 @@
+name: TEMP UI R27 Home Gamepad Inspector
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/uifeedback-r27-main-patch.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/uifeedback-r26-motion-temporal
+          fetch-depth: 0
+      - name: Print bounded current Home gamepad source context
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('browser/GAMEROAD.html')
+          s=p.read_text(encoding='utf-8')
+          needles=['getGamepads','buttons[0]','buttons[1]','homeGpLastButtonAt']
+          print('HTML_BYTES',len(s.encode('utf-8')))
+          for needle in needles:
+              hits=[]
+              start=0
+              while True:
+                  i=s.find(needle,start)
+                  if i<0: break
+                  hits.append(i); start=i+1
+              print('NEEDLE',needle,'COUNT',len(hits),'OFFSETS',hits)
+              for i in hits:
+                  lo=max(0,i-900); hi=min(len(s),i+1600)
+                  print(f'--- {needle} @{i} ---')
+                  print(s[lo:hi])
+                  print('--- END ---')
+          PY

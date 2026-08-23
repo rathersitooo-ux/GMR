@@ -12,7 +12,8 @@ import {
   appendAcceptedMatchEnd,
   createLiveReplaySession,
   createPartnerBattleEventLogPresentationBridge,
-  readLiveReplay
+  readLiveReplay,
+  renderPartnerBattleEventLogProjection
 } from '../browser/battle-replay-live-adapter.mjs';
 
 function replay(events) {
@@ -242,6 +243,41 @@ function liveResolution(serial = 1) {
 }
 
 function fakeBattleLogDocument() {
+  function createNode(tag) {
+    const children = [];
+    let ownTextContent = '';
+    return {
+      tagName: String(tag).toUpperCase(),
+      attributes: {},
+      dataset: {},
+      style: {},
+      children,
+      set textContent(value) {
+        ownTextContent = String(value);
+        children.length = 0;
+      },
+      get textContent() {
+        return children.length > 0
+          ? children.map(child => child.textContent).join('\n')
+          : ownTextContent;
+      },
+      setAttribute(name, value) {
+        this.attributes[name] = String(value);
+      },
+      getAttribute(name) {
+        return Object.prototype.hasOwnProperty.call(this.attributes, name) ? this.attributes[name] : null;
+      },
+      appendChild(node) {
+        children.push(node);
+        return node;
+      },
+      replaceChildren(...nodes) {
+        children.splice(0, children.length, ...nodes);
+        ownTextContent = '';
+      }
+    };
+  }
+
   const children = [];
   const shell = {
     children,
@@ -259,25 +295,13 @@ function fakeBattleLogDocument() {
       return id === 'battleLog' ? shell : null;
     },
     createElement(tag) {
-      return {
-        tagName: String(tag).toUpperCase(),
-        attributes: {},
-        dataset: {},
-        style: {},
-        textContent: '',
-        setAttribute(name, value) {
-          this.attributes[name] = String(value);
-        },
-        getAttribute(name) {
-          return Object.prototype.hasOwnProperty.call(this.attributes, name) ? this.attributes[name] : null;
-        }
-      };
+      return createNode(tag);
     }
   };
   return { document, shell, children };
 }
 
-test('current live replay feeds the existing Battle log surface through the sanitized Partner projection', () => {
+test('current live replay feeds the existing Battle log surface through incremental sanitized Partner additions', () => {
   const fake = fakeBattleLogDocument();
   const partnerBridge = createPartnerBattleEventLogPresentationBridge({ document: fake.document });
   let session = createLiveReplaySession(
@@ -298,10 +322,21 @@ test('current live replay feeds the existing Battle log surface through the sani
   assert.equal(host.getAttribute('aria-relevant'), 'additions text');
   assert.equal(host.getAttribute('aria-label'), '対戦ログ');
   assert.equal(host.dataset.partnerBattleEventCount, '1');
+  assert.equal(host.children.length, 1);
+  assert.equal(host.children[0].getAttribute('data-partner-battle-event-log-row'), '1');
   assert.match(host.textContent, /第1ラウンド/);
   assert.match(host.textContent, /C列/);
   assert.match(host.textContent, /A 21 \/ B 18/);
   assert.match(host.textContent, /勝者2人/);
+
+  const firstRow = host.children[0];
+  const firstRowText = firstRow.textContent;
+  const duplicateProjection = partnerBridge.acceptSession(session);
+  assert.equal(duplicateProjection.ok, true);
+  assert.equal(duplicateProjection.consumed, true);
+  assert.equal(host.children.length, 1);
+  assert.equal(host.children[0], firstRow);
+  assert.equal(host.children[0].textContent, firstRowText);
 
   const serialized = host.textContent;
   for (const secret of [
@@ -317,8 +352,49 @@ test('current live replay feeds the existing Battle log surface through the sani
     { partnerBattleEventLogBridge: partnerBridge }
   );
   assert.equal(host.dataset.partnerBattleEventCount, '2');
+  assert.equal(host.children.length, 2);
+  assert.equal(host.children[0], firstRow);
+  assert.equal(host.children[1].getAttribute('data-partner-battle-event-log-row'), '2');
   assert.match(host.textContent, /対戦終了・第1ラウンド・勝者2人/);
   assert.equal(readLiveReplay(session).events.length, 2);
+});
+
+test('Partner Battle log projection fails closed on prefix divergence or count regression without mutating accepted rows', () => {
+  const fake = fakeBattleLogDocument();
+  const base = {
+    ok: true,
+    schema: PARTNER_BATTLE_EVENT_PROJECTION.schema,
+    events: [{
+      sequence: 1,
+      kind: 'match_ended',
+      data: { round: 1, mode: '2v2', winnerCount: 2 }
+    }]
+  };
+
+  assert.equal(renderPartnerBattleEventLogProjection(base, { document: fake.document }), true);
+  const host = fake.children[0];
+  const firstRow = host.children[0];
+  const acceptedText = host.textContent;
+
+  const divergent = {
+    ...base,
+    events: [{
+      sequence: 1,
+      kind: 'match_ended',
+      data: { round: 2, mode: '2v2', winnerCount: 2 }
+    }]
+  };
+  assert.equal(renderPartnerBattleEventLogProjection(divergent, { document: fake.document }), false);
+  assert.equal(host.children.length, 1);
+  assert.equal(host.children[0], firstRow);
+  assert.equal(host.textContent, acceptedText);
+  assert.equal(host.dataset.partnerBattleEventCount, '1');
+
+  assert.equal(renderPartnerBattleEventLogProjection({ ...base, events: [] }, { document: fake.document }), false);
+  assert.equal(host.children.length, 1);
+  assert.equal(host.children[0], firstRow);
+  assert.equal(host.textContent, acceptedText);
+  assert.equal(host.dataset.partnerBattleEventCount, '1');
 });
 
 test('Partner Battle log rendering is fail-soft and cannot roll back accepted replay truth', () => {

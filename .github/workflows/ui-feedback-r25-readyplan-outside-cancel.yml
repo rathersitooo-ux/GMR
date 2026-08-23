@@ -1,0 +1,238 @@
+name: UI Feedback R25 ReadyPlan Outside Cancel Executor
+
+on:
+  push:
+    branches:
+      - work/ui-feedback-r25-readyplan-outside-cancel
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-clean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify base and apply exact bounded patch
+        shell: bash
+        env:
+          BASE_SHA: 15375f4da44b2b78e7d943d107e48aac0b1b7013
+          EXPECTED_ADAPTER_BLOB: e0a7557c32c21c8ba0912a9bcd986d0a0843af3f
+          EXPECTED_TEST_BLOB: 9e2b978acced76d4c7b1e71abd3d16236fb06775
+          EXPECTED_BUILD_TEST_BLOB: bf2b53f4e1a3c6cdcf135610d3e60f43c2075f26
+        run: |
+          set -euo pipefail
+          test "$(git merge-base HEAD "${BASE_SHA}")" = "${BASE_SHA}"
+          test "$(git hash-object browser/ui-state-feedback-ready-plan-adapter.mjs)" = "${EXPECTED_ADAPTER_BLOB}"
+          test "$(git hash-object tests/ui-state-feedback-ready-plan-adapter.test.mjs)" = "${EXPECTED_TEST_BLOB}"
+          test "$(git hash-object deploy/cloudflare/tests/build.test.mjs)" = "${EXPECTED_BUILD_TEST_BLOB}"
+          python3 <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one anchor, got {count}')
+              return text.replace(old, new, 1)
+
+          adapter_path = Path('browser/ui-state-feedback-ready-plan-adapter.mjs')
+          adapter = adapter_path.read_text()
+          adapter = replace_once(adapter, '''function pointerCoordinate(event, key) {
+            const value = event?.[key];
+            if (typeof value !== 'number' || !Number.isFinite(value)) throw new Error(`${key} must be finite`);
+            return value;
+          }
+''', '''function pointerCoordinate(event, key) {
+            const value = event?.[key];
+            if (typeof value !== 'number' || !Number.isFinite(value)) throw new Error(`${key} must be finite`);
+            return value;
+          }
+
+          function pointerPointInsideTarget(target, event) {
+            const x = pointerCoordinate(event, 'clientX');
+            const y = pointerCoordinate(event, 'clientY');
+            if (typeof target.getBoundingClientRect !== 'function') return true;
+            const rect = target.getBoundingClientRect();
+            const edges = [rect?.left, rect?.top, rect?.right, rect?.bottom];
+            if (!edges.every((value) => typeof value === 'number' && Number.isFinite(value))) return false;
+            return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+          }
+''', 'adapter geometry helper')
+          adapter = replace_once(adapter, '''  const matchesActivePointer = (event) => activePointerId !== null && pointerIdOf(event) === activePointerId;
+
+          const onPointerDown = (event) => {
+''', '''  const matchesActivePointer = (event) => activePointerId !== null && pointerIdOf(event) === activePointerId;
+          const cancelActivePointer = (reason) => {
+            if (activePointerId === null) return false;
+            const pointerId = activePointerId;
+            activePointerId = null;
+            stopTick();
+            try {
+              dispatch({type: 'BLUR', reason});
+            } finally {
+              releasePointerCaptureIfHeld(target, pointerId);
+            }
+            return true;
+          };
+
+          const onPointerDown = (event) => {
+''', 'adapter cancel helper')
+          adapter = replace_once(adapter, '''  const onPointerMove = (event) => {
+            if (destroyed || !matchesActivePointer(event)) return;
+            const out = dispatch({
+              type: 'POINTER_MOVE',
+              x: pointerCoordinate(event, 'clientX'),
+              y: pointerCoordinate(event, 'clientY'),
+            });
+            if (out.intent === 'swipe_right') stopTick();
+          };
+''', '''  const onPointerMove = (event) => {
+            if (destroyed || !matchesActivePointer(event)) return;
+            if (!pointerPointInsideTarget(target, event)) {
+              cancelActivePointer('pointer_left_target');
+              return;
+            }
+            const out = dispatch({
+              type: 'POINTER_MOVE',
+              x: pointerCoordinate(event, 'clientX'),
+              y: pointerCoordinate(event, 'clientY'),
+            });
+            if (out.intent === 'swipe_right') stopTick();
+          };
+''', 'adapter move-out cancel')
+          adapter = replace_once(adapter, '''  const onPointerUp = (event) => {
+            if (destroyed || !matchesActivePointer(event)) return;
+            const pointerId = activePointerId;
+            activePointerId = null;
+            stopTick();
+            try {
+              dispatch({type: 'POINTER_UP', operationTokenFactory});
+            } finally {
+              releasePointerCaptureIfHeld(target, pointerId);
+            }
+          };
+''', '''  const onPointerUp = (event) => {
+            if (destroyed || !matchesActivePointer(event)) return;
+            if (!pointerPointInsideTarget(target, event)) {
+              cancelActivePointer('pointer_release_outside');
+              return;
+            }
+            const pointerId = activePointerId;
+            activePointerId = null;
+            stopTick();
+            try {
+              dispatch({type: 'POINTER_UP', operationTokenFactory});
+            } finally {
+              releasePointerCaptureIfHeld(target, pointerId);
+            }
+          };
+''', 'adapter outside release cancel')
+          adapter_path.write_text(adapter)
+
+          test_path = Path('tests/ui-state-feedback-ready-plan-adapter.test.mjs')
+          test_text = test_path.read_text()
+          test_text = replace_once(test_text, '''  constructor(){
+            this.listeners=new Map();
+            this.capturedPointers=new Set();
+          }
+''', '''  constructor(){
+            this.listeners=new Map();
+            this.capturedPointers=new Set();
+            this.rect={left:-10000,top:-10000,right:10000,bottom:10000};
+          }
+''', 'fake target rect')
+          test_text = replace_once(test_text, '''  removeEventListener(type,handler){ this.listeners.get(type)?.delete(handler); }
+            emit(type,event={}){ for (const handler of this.listeners.get(type) || []) handler(event); }
+''', '''  removeEventListener(type,handler){ this.listeners.get(type)?.delete(handler); }
+            getBoundingClientRect(){ return {...this.rect}; }
+            emit(type,event={}){ for (const handler of this.listeners.get(type) || []) handler(event); }
+''', 'fake target bounds')
+          test_text = replace_once(test_text, '''test('binding captures the primary pointer so an outside release still settles exactly once',()=>{
+            const h=makeBinding();
+            h.target.emit('pointerdown',{pointerId:11,button:0,clientX:10,clientY:20});
+            assert.equal(h.target.hasPointerCapture(11),true);
+            assert.equal(h.adapter.getFeedback().feedback,'pressed');
+            assert.equal(h.target.emitOutside('pointerup',{pointerId:11,button:0,clientX:40,clientY:20}),true);
+            assert.equal(h.target.hasPointerCapture(11),false);
+            assert.equal(h.tokenCounter,1);
+            assert.deepEqual(h.calls,[{type:'commit',operationToken:'bind-1',source:'pointer_release'}]);
+            assert.equal(h.adapter.getFeedback().feedback,'pending');
+          });
+''', '''test('binding cancels a captured release outside the target without allocating a token',()=>{
+            const h=makeBinding();
+            h.target.rect={left:0,top:0,right:20,bottom:40};
+            h.target.emit('pointerdown',{pointerId:11,button:0,clientX:10,clientY:20});
+            assert.equal(h.target.hasPointerCapture(11),true);
+            assert.equal(h.adapter.getFeedback().feedback,'pressed');
+            assert.equal(h.target.emitOutside('pointerup',{pointerId:11,button:0,clientX:21,clientY:20}),true);
+            assert.equal(h.target.hasPointerCapture(11),false);
+            assert.equal(h.tokenCounter,0);
+            assert.equal(h.calls.length,0);
+            assert.equal(h.adapter.getFeedback().feedback,'normal');
+            assert.equal(h.adapter.getFeedback().reason,'pointer_release_outside');
+          });
+
+          test('binding cancels on move-out even before movement distance cancellation',()=>{
+            const h=makeBinding();
+            h.target.rect={left:0,top:0,right:20,bottom:40};
+            h.target.emit('pointerdown',{pointerId:13,button:0,clientX:10,clientY:20});
+            h.target.emit('pointermove',{pointerId:13,button:0,clientX:21,clientY:20});
+            assert.equal(h.target.hasPointerCapture(13),false);
+            assert.equal(h.tokenCounter,0);
+            assert.equal(h.calls.length,0);
+            assert.equal(h.adapter.getFeedback().feedback,'normal');
+            assert.equal(h.adapter.getFeedback().reason,'pointer_left_target');
+            assert.equal(h.target.emitOutside('pointerup',{pointerId:13,button:0,clientX:21,clientY:20}),false);
+          });
+''', 'outside release regression')
+          test_path.write_text(test_text)
+
+          new_adapter_blob = subprocess.check_output(['git','hash-object',str(adapter_path)], text=True).strip()
+          build_path = Path('deploy/cloudflare/tests/build.test.mjs')
+          build_text = build_path.read_text()
+          build_text = replace_once(
+              build_text,
+              "currentBlob: 'e0a7557c32c21c8ba0912a9bcd986d0a0843af3f',",
+              f"currentBlob: '{new_adapter_blob}',",
+              'public package adapter provenance pin',
+          )
+          build_path.write_text(build_text)
+          print(f'R25_NEW_ADAPTER_BLOB={new_adapter_blob}')
+          PY
+      - name: Run focused and packaging regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check browser/ui-state-feedback-ready-plan-adapter.mjs
+          node --test tests/ui-state-feedback-core.test.mjs tests/ui-state-feedback-ready-plan-adapter.test.mjs tests/shop-transaction-presentation-adapter.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+          node --test tests/field-music-policy-core.test.mjs deploy/cloudflare/tests/relay-core.test.mjs
+          node --check deploy/cloudflare/functions/ws.js
+          node --check deploy/cloudflare/relay/src/relay-core.mjs
+          node --check deploy/cloudflare/relay/src/relay-worker.mjs
+          node --check deploy/cloudflare/scripts/build.mjs
+      - name: Commit durable exact-three delta and remove executor
+        shell: bash
+        env:
+          BASE_SHA: 15375f4da44b2b78e7d943d107e48aac0b1b7013
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/ui-feedback-r25-readyplan-outside-cancel.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m 'UI feedback R25: cancel ReadyPlan release outside target'
+          mapfile -t paths < <(git diff --name-only "${BASE_SHA}"...HEAD)
+          printf 'Durable paths:\n%s\n' "${paths[*]}"
+          test "${#paths[@]}" -eq 3
+          printf '%s\n' "${paths[@]}" | grep -Fx 'browser/ui-state-feedback-ready-plan-adapter.mjs'
+          printf '%s\n' "${paths[@]}" | grep -Fx 'tests/ui-state-feedback-ready-plan-adapter.test.mjs'
+          printf '%s\n' "${paths[@]}" | grep -Fx 'deploy/cloudflare/tests/build.test.mjs'
+          git push origin "HEAD:${GITHUB_REF_NAME}"

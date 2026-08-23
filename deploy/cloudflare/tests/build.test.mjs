@@ -404,7 +404,7 @@ test('isolated rollback drill restores a validated package and rejects corruptio
     true,
   );
   assert.equal(
-    (await readFile(path.join(target, '_headers'))).equals(validated.headersBytes),
+    (await readFile(path.join(target, '_headers'))).equals(trustedHeadersBytes),
     true,
   );
   await assert.rejects(() => readFile(path.join(target, 'stale-undeclared.txt')), /ENOENT/);

@@ -1,5 +1,4 @@
 name: Browser Node CI
-# FREE4P R18 exact-head gate retrigger only; remove in next commit.
 
 on:
   push:

@@ -1,0 +1,482 @@
+name: TEMP CROSSSCREEN R36 Mount
+
+on:
+  push:
+    branches:
+      - work/crossscreen-r36-infinite-conveyor-mount
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/crossscreen-r36-infinite-conveyor-mount
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact-check and mount finite conveyor environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "d2dd12329f7e0ec635535509102f4dad8e58574b" || true
+          test "$(git hash-object browser/battle-replay-live-adapter.mjs)" = "3e02fd3f14ef16287bc9d93f0cbd6e1018b83dd8"
+          test "$(git hash-object tests/battle-replay-live-adapter.test.mjs)" = "0820826fa1d4da20342a69bee170132f6ce4633d"
+          test "$(git hash-object tests/browser-full-interaction.spec.mjs)" = "93a3f53a7dbd0e13640acac752779eb79ec137ce"
+          test "$(git hash-object deploy/cloudflare/tests/build.test.mjs)" = "80c72cbcdb2a618fe4d7ee78c2097d4dab86c308"
+          python - <<'PY'
+          from pathlib import Path
+
+          adapter_path = Path('browser/battle-replay-live-adapter.mjs')
+          text = adapter_path.read_text()
+          old_import = "import { planBattleConveyor } from './battle-conveyor-presentation-core.mjs';"
+          new_import = "import {\n  planBattleConveyor,\n  planBattleConveyorEnvironmentFrame\n} from './battle-conveyor-presentation-core.mjs';"
+          assert old_import in text
+          text = text.replace(old_import, new_import, 1)
+
+          anchor = "const CARD_PRESENTATION_HOLD_MS = 400;\n"
+          constants = """const CARD_PRESENTATION_HOLD_MS = 400;
+const BATTLE_CONVEYOR_ENV_STYLE_ID = 'gameroad-battle-conveyor-environment-r36-style';
+const BATTLE_CONVEYOR_ENV_HOST_ATTR = 'data-battle-conveyor-environment';
+const BATTLE_CONVEYOR_ENV_SEGMENT_ATTR = 'data-battle-conveyor-segment';
+const BATTLE_CONVEYOR_ENV_SEGMENT_COUNT = 8;
+const BATTLE_CONVEYOR_ENV_TRAVEL_STEP = 0.16;
+const BATTLE_CONVEYOR_ENV_SETTLE_MS = 260;
+"""
+          assert text.count(anchor) == 1
+          text = text.replace(anchor, constants, 1)
+
+          style_anchor = "function ensureBattleReplayCardPresentationStyle(documentRef) {"
+          environment_impl = r"""
+function ensureBattleReplayConveyorEnvironmentStyle(documentRef) {
+  if (!documentRef?.head || typeof documentRef.createElement !== 'function') return false;
+  if (documentRef.getElementById?.(BATTLE_CONVEYOR_ENV_STYLE_ID)) return true;
+  const style = documentRef.createElement('style');
+  style.id = BATTLE_CONVEYOR_ENV_STYLE_ID;
+  style.textContent = `
+#battlePhaseSurface{isolation:isolate}
+#battlePhaseSurface [data-battle-conveyor-environment]{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:-1;opacity:.86}
+#battlePhaseSurface [data-battle-conveyor-environment]::before{content:"";position:absolute;inset:5% 0 0;background:radial-gradient(ellipse at 50% 11%,rgba(176,255,233,.18) 0,rgba(55,128,112,.07) 17%,transparent 38%),linear-gradient(180deg,transparent 8%,rgba(16,54,49,.12) 52%,rgba(5,20,18,.38) 100%)}
+#battlePhaseSurface [data-battle-conveyor-segment]{position:absolute;left:50%;height:clamp(8px,2.4vh,22px);transform:translate(-50%,-50%);border-radius:50%;background:linear-gradient(90deg,transparent 0%,rgba(63,139,117,.12) 16%,rgba(163,244,213,.23) 50%,rgba(63,139,117,.12) 84%,transparent 100%);box-shadow:0 1px 0 rgba(200,255,236,.08),0 8px 18px rgba(3,16,13,.14);transition:top 220ms cubic-bezier(.2,.7,.2,1),width 220ms cubic-bezier(.2,.7,.2,1),opacity 180ms ease}
+#battlePhaseSurface [data-battle-conveyor-segment]::before,#battlePhaseSurface [data-battle-conveyor-segment]::after{content:"";position:absolute;top:-140%;width:14%;height:380%;border-radius:50%;background:radial-gradient(ellipse,rgba(46,112,83,.27),rgba(14,48,39,.08) 58%,transparent 72%);filter:blur(1px)}
+#battlePhaseSurface [data-battle-conveyor-segment]::before{left:-3%}
+#battlePhaseSurface [data-battle-conveyor-segment]::after{right:-3%}
+#battlePhaseSurface [data-battle-conveyor-environment][data-motion-suppressed="true"] [data-battle-conveyor-segment]{transition:none!important}
+@media(prefers-reduced-motion:reduce){#battlePhaseSurface [data-battle-conveyor-segment]{transition:none!important}}
+`;
+  documentRef.head.appendChild(style);
+  return true;
+}
+
+function battleReplayConveyorEnvironmentSegments(host) {
+  if (!host || typeof host.querySelectorAll !== 'function') return [];
+  return Array.from(host.querySelectorAll(`[${BATTLE_CONVEYOR_ENV_SEGMENT_ATTR}]`));
+}
+
+function ensureBattleReplayConveyorEnvironmentHost(documentRef, segmentCount) {
+  const surface = documentRef?.getElementById?.('battlePhaseSurface');
+  if (!surface || typeof documentRef?.createElement !== 'function') return null;
+  ensureBattleReplayConveyorEnvironmentStyle(documentRef);
+  let host = typeof surface.querySelector === 'function'
+    ? surface.querySelector(`[${BATTLE_CONVEYOR_ENV_HOST_ATTR}]`)
+    : null;
+  if (!host) {
+    host = documentRef.createElement('div');
+    if (!host || typeof host.setAttribute !== 'function') return null;
+    host.setAttribute(BATTLE_CONVEYOR_ENV_HOST_ATTR, '');
+    host.setAttribute('aria-hidden', 'true');
+    if (typeof surface.insertBefore === 'function') surface.insertBefore(host, surface.firstChild || null);
+    else if (typeof surface.appendChild === 'function') surface.appendChild(host);
+    else return null;
+  }
+  let segments = battleReplayConveyorEnvironmentSegments(host);
+  if (segments.length !== segmentCount) {
+    if (typeof host.replaceChildren === 'function') host.replaceChildren();
+    else host.textContent = '';
+    segments = [];
+    for (let index = 0; index < segmentCount; index += 1) {
+      const segment = documentRef.createElement('i');
+      if (!segment || typeof segment.setAttribute !== 'function') return null;
+      segment.setAttribute(BATTLE_CONVEYOR_ENV_SEGMENT_ATTR, `visual-segment-${index}`);
+      segment.setAttribute('aria-hidden', 'true');
+      if (typeof host.appendChild !== 'function') return null;
+      host.appendChild(segment);
+      segments.push(segment);
+    }
+  }
+  return { surface, host, segments };
+}
+
+export function renderBattleReplayConveyorEnvironmentFrame(frame, environment = {}, eventId = null) {
+  if (!frame || frame.presentationOnly !== true ||
+      frame.schema !== 'gameroad.battle-conveyor-environment.v1' ||
+      frame.environmentAuthority !== 'decorative_visual_loop_only' ||
+      frame.gameStateWrite !== false || frame.position109Write !== false ||
+      frame.targetWrite !== false || frame.orderWrite !== false ||
+      !Array.isArray(frame.segments)) return false;
+  const documentRef = environmentValue(environment, 'document');
+  const mounted = ensureBattleReplayConveyorEnvironmentHost(documentRef, frame.segments.length);
+  if (!mounted?.host?.dataset || mounted.segments.length !== frame.segments.length) return false;
+  const { host, segments } = mounted;
+  host.dataset.battleConveyorAuthority = frame.environmentAuthority;
+  host.dataset.battleConveyorPhase = frame.phase;
+  host.dataset.battleConveyorMotion = frame.motionIntent;
+  host.dataset.motionSuppressed = frame.motionSuppressed ? 'true' : 'false';
+  host.dataset.battleConveyorTravel = String(frame.effectiveTravel);
+  if (nonEmptyString(eventId)) host.dataset.battleConveyorEvent = eventId;
+  for (let index = 0; index < segments.length; index += 1) {
+    const node = segments[index];
+    const segment = frame.segments[index];
+    if (!node?.dataset || !node.style || !segment || segment.segmentId !== `visual-segment-${index}`) return false;
+    node.dataset.battleConveyorSegment = segment.segmentId;
+    node.dataset.recycleCycle = String(segment.recycleCycle);
+    node.dataset.normalizedDepth = segment.normalizedDepth.toFixed(6);
+    node.style.top = `${(segment.screenY * 100).toFixed(3)}%`;
+    node.style.width = `${(22 + (76 * segment.scale)).toFixed(3)}%`;
+    node.style.opacity = segment.opacity.toFixed(4);
+  }
+  return true;
+}
+
+"""
+          assert text.count(style_anchor) == 1
+          text = text.replace(style_anchor, environment_impl + style_anchor, 1)
+
+          bridge_start = text.index("export function createBattleReplayCardPresentationBridge(environment = {}) {")
+          bridge_end = text.index("\nfunction formatPartnerBattleEventLogRow(event) {", bridge_start)
+          new_bridge = r"""export function createBattleReplayCardPresentationBridge(environment = {}) {
+  const sessions = new Map();
+  const renderPlan = typeof environment.renderPlan === 'function'
+    ? environment.renderPlan
+    : plan => renderBattleReplayCardPresentationPlan(plan, environment);
+  const renderEnvironment = typeof environment.renderEnvironment === 'function'
+    ? environment.renderEnvironment
+    : (frame, eventId) => renderBattleReplayConveyorEnvironmentFrame(frame, environment, eventId);
+
+  function environmentFrame(travel, phase, preferences = readBattleReplayCardPresentationPreferences(environment)) {
+    return planBattleConveyorEnvironmentFrame({
+      segmentCount: BATTLE_CONVEYOR_ENV_SEGMENT_COUNT,
+      travel,
+      phase,
+      reducedMotion: preferences.reducedMotion,
+      lowPerf: preferences.lowPerf
+    });
+  }
+
+  function renderEnvironmentFailSoft(frame, eventId) {
+    try {
+      renderEnvironment(frame, eventId);
+    } catch {
+      // Decorative environment is presentation-only and never owns replay/gameplay success.
+    }
+  }
+
+  function createRuntime(matchId) {
+    const frame = environmentFrame(0, 'IDLE_READ');
+    return {
+      state: createCardPresentationSession({ sessionId: matchId }),
+      lastPlan: null,
+      lastFinisherPlan: null,
+      environmentTravel: 0,
+      environmentEventId: null,
+      lastEnvironmentFrame: frame
+    };
+  }
+
+  function begin(matchId) {
+    if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
+    const runtime = createRuntime(matchId);
+    sessions.set(matchId, runtime);
+    renderEnvironmentFailSoft(runtime.lastEnvironmentFrame, `battle-environment:${matchId}:idle`);
+    return runtime.state;
+  }
+
+  function acceptAcceptedResolution({ matchId, serial }) {
+    if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
+    safeInteger(serial, 'RESOLUTION_SERIAL', 1);
+    const current = sessions.get(matchId) || createRuntime(matchId);
+    const preferences = readBattleReplayCardPresentationPreferences(environment);
+    const result = applyCardPresentationEvent(current.state, {
+      sessionId: matchId,
+      eventId: `battle-resolution:${serial}`,
+      authorized: true,
+      visibility: 'public',
+      kind: 'vfx',
+      assets: {}
+    }, preferences);
+
+    if (!result.accepted) return result;
+    const motionSuppressed = preferences.reducedMotion || preferences.lowPerf;
+    const nextTravel = result.duplicate
+      ? current.environmentTravel
+      : current.environmentTravel + (motionSuppressed ? 0 : BATTLE_CONVEYOR_ENV_TRAVEL_STEP);
+    const nextEnvironmentFrame = result.duplicate
+      ? current.lastEnvironmentFrame
+      : environmentFrame(nextTravel, 'RESOLVE', preferences);
+    const nextEnvironmentEventId = result.duplicate
+      ? current.environmentEventId
+      : result.plan?.eventId || `battle-resolution:${serial}`;
+    sessions.set(matchId, {
+      ...current,
+      state: result.state,
+      lastPlan: result.duplicate ? current.lastPlan : result.plan,
+      environmentTravel: nextTravel,
+      environmentEventId: nextEnvironmentEventId,
+      lastEnvironmentFrame: nextEnvironmentFrame
+    });
+    if (!result.duplicate && result.plan) {
+      try {
+        renderPlan(result.plan);
+      } catch {
+        // Presentation is strictly fail-soft and never owns replay/gameplay success.
+      }
+      renderEnvironmentFailSoft(nextEnvironmentFrame, nextEnvironmentEventId);
+      const setTimeoutRef = environmentValue(environment, 'setTimeout');
+      if (typeof setTimeoutRef === 'function') {
+        setTimeoutRef(() => {
+          const latest = sessions.get(matchId);
+          if (!latest || latest.environmentEventId !== nextEnvironmentEventId) return;
+          const settleFrame = environmentFrame(latest.environmentTravel, 'SETTLE_AFTERMATH');
+          sessions.set(matchId, { ...latest, lastEnvironmentFrame: settleFrame });
+          renderEnvironmentFailSoft(settleFrame, nextEnvironmentEventId);
+        }, BATTLE_CONVEYOR_ENV_SETTLE_MS);
+      }
+    }
+    return result;
+  }
+
+  function acceptAcceptedMatchEnd({ matchId, winnerId, loserIds }) {
+    if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
+    if (!nonEmptyString(winnerId)) throw new TypeError('FINISHER_WINNER_ID_REQUIRED');
+    const normalizedLoserIds = stringArray(loserIds, 'FINISHER_LOSER_IDS');
+    if (normalizedLoserIds.length !== 3 ||
+        new Set(normalizedLoserIds).size !== 3 ||
+        normalizedLoserIds.includes(winnerId)) {
+      throw new TypeError('FINISHER_LOSER_IDS_INVALID');
+    }
+    const current = sessions.get(matchId) || createRuntime(matchId);
+    const preferences = readBattleReplayCardPresentationPreferences(environment);
+    const timeline = planBattleConveyor([{
+      accepted: true,
+      eventId: `match-end-finisher:${matchId}`,
+      kind: 'finisher',
+      publicData: {
+        winnerId,
+        loserIds: normalizedLoserIds
+      }
+    }], {
+      reducedMotion: preferences.reducedMotion,
+      lowPerf: preferences.lowPerf
+    });
+    const plan = timeline.plans[0] || null;
+    sessions.set(matchId, {
+      ...current,
+      lastFinisherPlan: plan
+    });
+    if (plan) {
+      try {
+        renderPlan(plan);
+      } catch {
+        // Presentation is strictly fail-soft and never owns replay/gameplay success.
+      }
+    }
+    return deepFreeze({ accepted: plan != null, plan });
+  }
+
+  function snapshot(matchId) {
+    const runtime = sessions.get(matchId);
+    if (!runtime) return null;
+    return deepFreeze(cloneJson({
+      matchId,
+      seenEventIds: runtime.state.seenEventIds,
+      lastPlan: runtime.lastPlan,
+      lastFinisherPlan: runtime.lastFinisherPlan,
+      environmentTravel: runtime.environmentTravel,
+      environmentEventId: runtime.environmentEventId,
+      lastEnvironmentFrame: runtime.lastEnvironmentFrame
+    }));
+  }
+
+  return Object.freeze({ begin, acceptAcceptedResolution, acceptAcceptedMatchEnd, snapshot });
+}
+"""
+          text = text[:bridge_start] + new_bridge + text[bridge_end:]
+
+          metadata_anchor = "  matchEndFinisher: Object.freeze({\n"
+          metadata = """  battleConveyorEnvironment: Object.freeze({
+    source: 'accepted_public_battle_resolution',
+    actualDomSurface: 'battlePhaseSurface',
+    segmentCount: BATTLE_CONVEYOR_ENV_SEGMENT_COUNT,
+    authority: 'presentation_only_no_game_state_write'
+  }),
+  matchEndFinisher: Object.freeze({
+"""
+          assert text.count(metadata_anchor) == 1
+          text = text.replace(metadata_anchor, metadata, 1)
+          adapter_path.write_text(text)
+
+          test_path = Path('tests/battle-replay-live-adapter.test.mjs')
+          tests = test_path.read_text()
+          addition = r"""
+
+test('accepted Battle resolution advances one finite decorative conveyor pool and duplicates do not', () => {
+  const environmentFrames = [];
+  const timers = [];
+  const bridge = createBattleReplayCardPresentationBridge({
+    document: null,
+    matchMedia: () => ({ matches: false }),
+    renderPlan: () => true,
+    renderEnvironment: (frame, eventId) => environmentFrames.push({ frame, eventId }),
+    setTimeout: callback => { timers.push(callback); return timers.length; }
+  });
+  bridge.begin('M-CONVEYOR');
+  assert.equal(environmentFrames.length, 1);
+  assert.equal(environmentFrames[0].frame.phase, 'IDLE_READ');
+  assert.equal(environmentFrames[0].frame.segments.length, 8);
+  assert.equal(environmentFrames[0].frame.gameStateWrite, false);
+  assert.equal(environmentFrames[0].frame.position109Write, false);
+  assert.equal(environmentFrames[0].frame.targetWrite, false);
+  assert.equal(environmentFrames[0].frame.orderWrite, false);
+
+  const first = bridge.acceptAcceptedResolution({ matchId: 'M-CONVEYOR', serial: 1 });
+  const duplicate = bridge.acceptAcceptedResolution({ matchId: 'M-CONVEYOR', serial: 1 });
+  assert.equal(first.accepted, true);
+  assert.equal(first.duplicate, false);
+  assert.equal(duplicate.duplicate, true);
+  assert.equal(environmentFrames.length, 2);
+  assert.equal(environmentFrames[1].eventId, 'battle-resolution:1');
+  assert.equal(environmentFrames[1].frame.phase, 'RESOLVE');
+  assert.equal(environmentFrames[1].frame.motionIntent, 'BURST');
+  assert.equal(environmentFrames[1].frame.environmentAuthority, 'decorative_visual_loop_only');
+  assert.deepEqual(environmentFrames[1].frame.worldLayerScope, ['floor', 'path', 'side_scenery']);
+  assert.deepEqual(environmentFrames[1].frame.screenSpaceAnchors, ['hand', 'target_feedback', 'status', 'winner_afterstate']);
+  assert.ok(environmentFrames[1].frame.effectiveTravel > 0);
+  assert.equal(timers.length, 1);
+
+  timers[0]();
+  assert.equal(environmentFrames.length, 3);
+  assert.equal(environmentFrames[2].frame.phase, 'SETTLE_AFTERMATH');
+  assert.equal(environmentFrames[2].eventId, 'battle-resolution:1');
+  const snapshot = bridge.snapshot('M-CONVEYOR');
+  assert.equal(snapshot.environmentEventId, 'battle-resolution:1');
+  assert.equal(snapshot.lastEnvironmentFrame.phase, 'SETTLE_AFTERMATH');
+  assert.ok(snapshot.environmentTravel > 0);
+  assert.deepEqual(BATTLE_REPLAY_LIVE_ADAPTER.battleConveyorEnvironment, {
+    source: 'accepted_public_battle_resolution',
+    actualDomSurface: 'battlePhaseSurface',
+    segmentCount: 8,
+    authority: 'presentation_only_no_game_state_write'
+  });
+});
+
+test('reduced motion keeps the same finite conveyor depth skeleton without environment travel', () => {
+  const fake = fakePresentationDocument({ reduceMotion: true });
+  const environmentFrames = [];
+  const bridge = createBattleReplayCardPresentationBridge({
+    document: fake.document,
+    matchMedia: () => ({ matches: false }),
+    renderPlan: () => true,
+    renderEnvironment: (frame, eventId) => environmentFrames.push({ frame, eventId }),
+    setTimeout: () => 1
+  });
+  bridge.begin('M-CONVEYOR-REDUCED');
+  bridge.acceptAcceptedResolution({ matchId: 'M-CONVEYOR-REDUCED', serial: 1 });
+  assert.equal(environmentFrames.length, 2);
+  assert.equal(environmentFrames[1].frame.phase, 'RESOLVE');
+  assert.equal(environmentFrames[1].frame.motionSuppressed, true);
+  assert.equal(environmentFrames[1].frame.effectiveTravel, 0);
+  assert.equal(environmentFrames[1].frame.segments.length, 8);
+  assert.deepEqual(
+    environmentFrames[0].frame.segments.map(segment => segment.screenY),
+    environmentFrames[1].frame.segments.map(segment => segment.screenY)
+  );
+});
+"""
+          assert "accepted Battle resolution advances one finite decorative conveyor pool" not in tests
+          test_path.write_text(tests + addition)
+
+          browser_path = Path('tests/browser-full-interaction.spec.mjs')
+          browser = browser_path.read_text()
+          old_vars = """  let cardPresentationFallbacks = 0;
+  let lastCardPresentationEvent = null;
+"""
+          new_vars = """  let cardPresentationFallbacks = 0;
+  let conveyorEnvironmentFrames = 0;
+  let lastCardPresentationEvent = null;
+"""
+          assert browser.count(old_vars) == 1
+          browser = browser.replace(old_vars, new_vars, 1)
+
+          old_capture = """        lastCardPresentationEvent = eventId;
+        cardPresentationFallbacks += 1;
+        await attachStateScreenshot(page, testInfo, `${evidencePrefix}-card-presentation-fallback-${cardPresentationFallbacks}`);
+"""
+          new_capture = """        lastCardPresentationEvent = eventId;
+        cardPresentationFallbacks += 1;
+        const conveyor = battle.locator('#battlePhaseSurface [data-battle-conveyor-environment]');
+        await expect(conveyor, 'accepted Battle resolution mounts one presentation-only conveyor environment').toHaveCount(1);
+        const conveyorSegments = conveyor.locator('[data-battle-conveyor-segment]');
+        await expect(conveyorSegments, 'conveyor keeps one finite reusable eight-segment pool').toHaveCount(8);
+        const conveyorEvent = await conveyor.getAttribute('data-battle-conveyor-event');
+        expect(conveyorEvent, 'environment is driven by the same accepted public resolution event').toBe(eventId);
+        expect(await conveyor.getAttribute('data-battle-conveyor-authority')).toBe('decorative_visual_loop_only');
+        const segmentIds = await conveyorSegments.evaluateAll(nodes => nodes.map(node => node.getAttribute('data-battle-conveyor-segment')));
+        expect(new Set(segmentIds).size, 'visual segment identities remain stable and unique').toBe(8);
+        conveyorEnvironmentFrames += 1;
+        await attachStateScreenshot(page, testInfo, `${evidencePrefix}-conveyor-environment-${conveyorEnvironmentFrames}`);
+        await attachStateScreenshot(page, testInfo, `${evidencePrefix}-card-presentation-fallback-${cardPresentationFallbacks}`);
+"""
+          assert browser.count(old_capture) == 1
+          browser = browser.replace(old_capture, new_capture, 1)
+
+          old_expect = """  expect(cardPresentationFallbacks, 'accepted/public Battle resolution mounts the current CardPRES fallback on the visible production resolution surface').toBeGreaterThan(0);
+"""
+          new_expect = old_expect + "  expect(conveyorEnvironmentFrames, 'accepted/public Battle resolution advances the finite production conveyor environment').toBeGreaterThan(0);\n"
+          assert browser.count(old_expect) == 1
+          browser = browser.replace(old_expect, new_expect, 1)
+
+          old_annotation = """    description: `submitted=${roundsSubmitted}, targetConfirms=${targetConfirms}, battleAdvances=${presentationAdvances}, abilityConfirms=${abilityConfirms}, cardPresentationFallbacks=${cardPresentationFallbacks}, result=${roundsText}` ,
+"""
+          new_annotation = """    description: `submitted=${roundsSubmitted}, targetConfirms=${targetConfirms}, battleAdvances=${presentationAdvances}, abilityConfirms=${abilityConfirms}, cardPresentationFallbacks=${cardPresentationFallbacks}, conveyorEnvironmentFrames=${conveyorEnvironmentFrames}, result=${roundsText}` ,
+"""
+          assert browser.count(old_annotation) == 1
+          browser = browser.replace(old_annotation, new_annotation, 1)
+
+          old_return = """  return { battle, result, roundsSubmitted, targetConfirms, presentationAdvances, abilityConfirms, cardPresentationFallbacks, roundsText };
+"""
+          new_return = """  return { battle, result, roundsSubmitted, targetConfirms, presentationAdvances, abilityConfirms, cardPresentationFallbacks, conveyorEnvironmentFrames, roundsText };
+"""
+          assert browser.count(old_return) == 1
+          browser = browser.replace(old_return, new_return, 1)
+          browser_path.write_text(browser)
+
+          build_path = Path('deploy/cloudflare/tests/build.test.mjs')
+          build = build_path.read_text()
+          old_pin = "currentBlob: '3e02fd3f14ef16287bc9d93f0cbd6e1018b83dd8',"
+          new_blob = __import__('subprocess').check_output(['git', 'hash-object', str(adapter_path)], text=True).strip()
+          assert build.count(old_pin) == 1
+          build = build.replace(old_pin, f"currentBlob: '{new_blob}',", 1)
+          build_path.write_text(build)
+          print('R36 replay adapter blob', new_blob)
+          PY
+          node --check browser/battle-replay-live-adapter.mjs
+          node --check tests/battle-replay-live-adapter.test.mjs
+          node --check tests/browser-full-interaction.spec.mjs
+          node --test tests/battle-conveyor-presentation-core.test.mjs tests/battle-replay-live-adapter.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+          git diff --check
+          git diff -- browser/battle-replay-live-adapter.mjs tests/battle-replay-live-adapter.test.mjs tests/browser-full-interaction.spec.mjs deploy/cloudflare/tests/build.test.mjs
+      - name: Commit durable R36 mount
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add browser/battle-replay-live-adapter.mjs tests/battle-replay-live-adapter.test.mjs tests/browser-full-interaction.spec.mjs deploy/cloudflare/tests/build.test.mjs
+          git commit -m "CROSSSCREEN R36: mount finite conveyor on Battle Phase"
+          git push origin HEAD:work/crossscreen-r36-infinite-conveyor-mount

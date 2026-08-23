@@ -195,3 +195,5 @@ jobs:
           git diff --cached --check
           git commit -m 'UI R26: enforce Home gamepad edge semantics and temporal regression'
           git push origin HEAD:work/uifeedback-r26-motion-temporal
+
+# retrigger-after-workflow-exists

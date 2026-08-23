@@ -6,17 +6,24 @@ on:
       - work/normalmatch-r8-currentmain-resultgeometry
     paths:
       - .github/workflows/tmp-normalmatch-r8-recovery.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/tmp-normalmatch-r8-recovery.yml
 
 permissions:
   contents: write
 
 jobs:
   recover-current-main:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: work/normalmatch-r8-currentmain-resultgeometry
           fetch-depth: 0
 
       - name: Reapply validated candidate onto fresh main and tighten Result geometry

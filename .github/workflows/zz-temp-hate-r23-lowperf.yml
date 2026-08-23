@@ -1,0 +1,65 @@
+name: TEMP R23 HATE lowPerf binding
+
+on:
+  push:
+    branches:
+      - work/hate-r21-actual-mount-20260822
+    paths:
+      - '.github/workflows/zz-temp-hate-r23-lowperf.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  bind-lowperf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/hate-r21-actual-mount-20260822
+          fetch-depth: 0
+
+      - name: Guard exact current scope
+        shell: bash
+        env:
+          EXPECTED_MAIN: d71a40bc8fc4d8e01a4e81dec7da3cb303c5c4a5
+        run: |
+          set -euo pipefail
+          BRANCH_HEAD="$(git rev-parse HEAD)"
+          echo "BRANCH_HEAD=$BRANCH_HEAD" >> "$GITHUB_ENV"
+          git fetch origin main --depth=1
+          test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
+          mapfile -t changed < <(git diff --name-only origin/main...HEAD)
+          for path in "${changed[@]}"; do
+            case "$path" in
+              browser/GAMEROAD.html|.github/workflows/zz-temp-hate-r23-lowperf.yml) ;;
+              *) echo "unexpected branch path: $path" >&2; exit 1 ;;
+            esac
+          done
+          grep -Fq 'async function friendPresentHate1000(p)' browser/GAMEROAD.html
+          test "$(grep -oF 'return{reducedMotion:!!reduced,animationEnabled:true};' browser/GAMEROAD.html | wc -l | tr -d ' ')" = '1'
+
+      - name: Bind current low-performance preference
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -c "from pathlib import Path; p=Path('browser/GAMEROAD.html'); s=p.read_text(encoding='utf-8'); old='return{reducedMotion:!!reduced,animationEnabled:true};'; new='return{reducedMotion:!!reduced,lowPerf:!!state.settings?.lowPerf,animationEnabled:true};'; assert s.count(old)==1; assert new not in s; p.write_text(s.replace(old,new,1),encoding='utf-8')"
+          grep -Fq 'return{reducedMotion:!!reduced,lowPerf:!!state.settings?.lowPerf,animationEnabled:true};' browser/GAMEROAD.html
+          node --test tests/hate-peer-presence-core.test.mjs
+          git diff --check
+
+      - name: Persist only product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-r23-executor'
+          git config user.email 'actions@users.noreply.github.com'
+          git rm .github/workflows/zz-temp-hate-r23-lowperf.yml
+          git add browser/GAMEROAD.html
+          mapfile -t staged < <(git diff --cached --name-only)
+          printf '%s\n' "${staged[@]}"
+          test "${#staged[@]}" = '2'
+          git commit -m 'HATE R23: honor low-performance presentation fallback'
+          git push --force-with-lease=refs/heads/work/hate-r21-actual-mount-20260822:$BRANCH_HEAD origin HEAD:work/hate-r21-actual-mount-20260822

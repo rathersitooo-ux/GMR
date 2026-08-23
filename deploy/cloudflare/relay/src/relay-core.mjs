@@ -195,3 +195,221 @@ export function transportReject(reason) {
 function reject(reason, room) {
   return { ok: false, reason, room };
 }
+
+export const MATCH_QUEUE_SCHEMA = 'gameroad.normalmatch.queue.v1';
+export const MATCH_TICKET_WAITING = 'WAITING';
+export const MATCH_TICKET_MATCHED = 'MATCHED';
+export const MATCH_TICKET_CANCELLED = 'CANCELLED';
+export const MATCH_SIZE = 4;
+export const MAX_WAITING_TICKETS = 128;
+
+const MATCH_ID_RE = /^[A-Za-z0-9._:-]{1,160}$/;
+const MATCH_KEY_RE = /^[A-Za-z0-9._:-]{8,192}$/;
+const MATCH_TOKEN_RE = /^[A-Za-z0-9_-]{24,256}$/;
+
+export function emptyMatchQueue() {
+  return {
+    schema: MATCH_QUEUE_SCHEMA,
+    nextSequence: 1,
+    tickets: {},
+    idempotency: {},
+    matches: {},
+  };
+}
+
+export function validMatchClientId(value) { return MATCH_ID_RE.test(String(value || '')); }
+export function validMatchIdempotencyKey(value) { return MATCH_KEY_RE.test(String(value || '')); }
+export function validMatchTicketId(value) { return MATCH_ID_RE.test(String(value || '')); }
+export function validMatchId(value) { return MATCH_ID_RE.test(String(value || '')); }
+export function validMatchSecret(value) { return MATCH_TOKEN_RE.test(String(value || '')); }
+
+export function normalizeMatchQueue(raw) {
+  const src = raw && typeof raw === 'object' ? raw : {};
+  const out = emptyMatchQueue();
+  out.nextSequence = Number.isSafeInteger(src.nextSequence) && src.nextSequence > 0 ? src.nextSequence : 1;
+
+  for (const [ticketId, ticket] of Object.entries(src.tickets || {})) {
+    if (!validMatchTicketId(ticketId) || !ticket || typeof ticket !== 'object') continue;
+    const status = [MATCH_TICKET_WAITING, MATCH_TICKET_MATCHED, MATCH_TICKET_CANCELLED].includes(ticket.status)
+      ? ticket.status
+      : '';
+    if (!status || !validMatchClientId(ticket.clientId) || !validMatchSecret(ticket.secret)) continue;
+    const sequence = Number.isSafeInteger(ticket.sequence) && ticket.sequence > 0 ? ticket.sequence : 0;
+    const matchId = status === MATCH_TICKET_MATCHED && validMatchId(ticket.matchId) ? ticket.matchId : '';
+    out.tickets[ticketId] = {
+      clientId: ticket.clientId,
+      secret: ticket.secret,
+      status,
+      sequence,
+      matchId,
+    };
+  }
+
+  for (const [key, ticketId] of Object.entries(src.idempotency || {})) {
+    if (validMatchIdempotencyKey(key) && validMatchTicketId(ticketId) && out.tickets[ticketId]) {
+      out.idempotency[key] = ticketId;
+    }
+  }
+
+  for (const [matchId, match] of Object.entries(src.matches || {})) {
+    if (!validMatchId(matchId) || !match || typeof match !== 'object' || !Array.isArray(match.ticketIds)) continue;
+    const ticketIds = match.ticketIds.filter(
+      (ticketId) => validMatchTicketId(ticketId) && out.tickets[ticketId]?.matchId === matchId,
+    );
+    if (ticketIds.length === MATCH_SIZE) out.matches[matchId] = { ticketIds };
+  }
+  return out;
+}
+
+function rejectMatch(reason, queue) {
+  return { ok: false, reason, queue };
+}
+
+function publicMatchTicket(ticketId, ticket) {
+  return {
+    ticketId,
+    clientId: ticket.clientId,
+    status: ticket.status,
+    matchId: ticket.matchId || '',
+  };
+}
+
+function waitingMatchTicketIds(queue) {
+  return Object.entries(queue.tickets)
+    .filter(([, ticket]) => ticket.status === MATCH_TICKET_WAITING)
+    .sort((a, b) => a[1].sequence - b[1].sequence || a[0].localeCompare(b[0]))
+    .map(([ticketId]) => ticketId);
+}
+
+function clientAlreadyWaiting(queue, clientId) {
+  return Object.values(queue.tickets).some(
+    (ticket) => ticket.clientId === clientId && ticket.status === MATCH_TICKET_WAITING,
+  );
+}
+
+function maybeFormMatch(queue, generatedMatchId) {
+  const waiting = waitingMatchTicketIds(queue);
+  if (waiting.length < MATCH_SIZE) return { queue, matchId: '' };
+  if (!validMatchId(generatedMatchId)) throw new TypeError('generated_match_id_invalid');
+  if (queue.matches[generatedMatchId]) throw new TypeError('generated_match_id_collision');
+  const selected = waiting.slice(0, MATCH_SIZE);
+  for (const ticketId of selected) {
+    queue.tickets[ticketId] = {
+      ...queue.tickets[ticketId],
+      status: MATCH_TICKET_MATCHED,
+      matchId: generatedMatchId,
+    };
+  }
+  queue.matches[generatedMatchId] = { ticketIds: selected };
+  return { queue, matchId: generatedMatchId };
+}
+
+export function createMatchTicket(queueInput, input, generated) {
+  const queue = normalizeMatchQueue(queueInput);
+  const clientId = String(input?.clientId || '');
+  const idempotencyKey = String(input?.idempotencyKey || '');
+  if (!validMatchClientId(clientId)) return rejectMatch('match_client_invalid', queue);
+  if (!validMatchIdempotencyKey(idempotencyKey)) return rejectMatch('match_idempotency_invalid', queue);
+
+  const priorTicketId = queue.idempotency[idempotencyKey];
+  if (priorTicketId) {
+    const prior = queue.tickets[priorTicketId];
+    if (!prior || prior.clientId !== clientId) return rejectMatch('match_idempotency_conflict', queue);
+    return {
+      ok: true,
+      queue,
+      idempotent: true,
+      ticket: publicMatchTicket(priorTicketId, prior),
+      secret: prior.secret,
+      formedMatchId: '',
+    };
+  }
+
+  if (clientAlreadyWaiting(queue, clientId)) return rejectMatch('match_client_already_waiting', queue);
+  if (waitingMatchTicketIds(queue).length >= MAX_WAITING_TICKETS) return rejectMatch('match_queue_full', queue);
+
+  const ticketId = String(generated?.ticketId || '');
+  const secret = String(generated?.secret || '');
+  if (!validMatchTicketId(ticketId)) throw new TypeError('generated_ticket_id_invalid');
+  if (!validMatchSecret(secret)) throw new TypeError('generated_ticket_secret_invalid');
+  if (queue.tickets[ticketId]) throw new TypeError('generated_ticket_id_collision');
+
+  queue.tickets[ticketId] = {
+    clientId,
+    secret,
+    status: MATCH_TICKET_WAITING,
+    sequence: queue.nextSequence++,
+    matchId: '',
+  };
+  queue.idempotency[idempotencyKey] = ticketId;
+  const matched = maybeFormMatch(queue, String(generated?.matchId || ''));
+  const ticket = matched.queue.tickets[ticketId];
+  return {
+    ok: true,
+    queue: matched.queue,
+    idempotent: false,
+    ticket: publicMatchTicket(ticketId, ticket),
+    secret,
+    formedMatchId: matched.matchId,
+  };
+}
+
+function authorizeMatchTicket(queue, input) {
+  const ticketId = String(input?.ticketId || '');
+  const secret = String(input?.secret || '');
+  if (!validMatchTicketId(ticketId) || !validMatchSecret(secret)) {
+    return { ok: false, reason: 'match_ticket_auth_invalid' };
+  }
+  const ticket = queue.tickets[ticketId];
+  if (!ticket || ticket.secret !== secret) return { ok: false, reason: 'match_ticket_auth_invalid' };
+  return { ok: true, ticketId, ticket };
+}
+
+export function matchTicketStatus(queueInput, input) {
+  const queue = normalizeMatchQueue(queueInput);
+  const auth = authorizeMatchTicket(queue, input);
+  if (!auth.ok) return rejectMatch(auth.reason, queue);
+  const match = auth.ticket.matchId ? queue.matches[auth.ticket.matchId] || null : null;
+  return {
+    ok: true,
+    queue,
+    ticket: publicMatchTicket(auth.ticketId, auth.ticket),
+    match: match ? { matchId: auth.ticket.matchId, ticketIds: [...match.ticketIds] } : null,
+  };
+}
+
+export function cancelMatchTicket(queueInput, input) {
+  const queue = normalizeMatchQueue(queueInput);
+  const auth = authorizeMatchTicket(queue, input);
+  if (!auth.ok) return rejectMatch(auth.reason, queue);
+  if (auth.ticket.status === MATCH_TICKET_MATCHED) {
+    return {
+      ok: true,
+      queue,
+      cancelled: false,
+      terminal: MATCH_TICKET_MATCHED,
+      ticket: publicMatchTicket(auth.ticketId, auth.ticket),
+    };
+  }
+  if (auth.ticket.status === MATCH_TICKET_CANCELLED) {
+    return {
+      ok: true,
+      queue,
+      cancelled: true,
+      terminal: MATCH_TICKET_CANCELLED,
+      ticket: publicMatchTicket(auth.ticketId, auth.ticket),
+    };
+  }
+  queue.tickets[auth.ticketId] = {
+    ...auth.ticket,
+    status: MATCH_TICKET_CANCELLED,
+    matchId: '',
+  };
+  return {
+    ok: true,
+    queue,
+    cancelled: true,
+    terminal: MATCH_TICKET_CANCELLED,
+    ticket: publicMatchTicket(auth.ticketId, queue.tickets[auth.ticketId]),
+  };
+}

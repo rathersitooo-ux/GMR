@@ -39,24 +39,32 @@ jobs:
           from pathlib import Path
 
           path = Path('.github/workflows/gameroad-required-gate.yml')
-          text = path.read_text()
+          lines = path.read_text().splitlines()
 
-          old_classifier = """              tools/kimodo-bvh-output-probe.mjs|\\
-              tests/kimodo-bvh-output-probe.test.mjs)"""
-          new_classifier = """              tools/kimodo-bvh-output-probe.mjs|\\
-              tests/kimodo-bvh-output-probe.test.mjs|\\
-              tools/motion-artifact-evaluator.mjs|\\
-              tests/motion-artifact-evaluator.test.mjs)"""
-          if text.count(old_classifier) != 1:
-              raise SystemExit(f'R9 classifier anchor cardinality != 1: {text.count(old_classifier)}')
-          text = text.replace(old_classifier, new_classifier, 1)
+          tool_anchor = 'tools/kimodo-bvh-output-probe.mjs|\\'
+          test_anchor = 'tests/kimodo-bvh-output-probe.test.mjs)'
+          classifier_hits = [
+              i for i in range(len(lines) - 1)
+              if lines[i].strip() == tool_anchor and lines[i + 1].strip() == test_anchor
+          ]
+          if len(classifier_hits) != 1:
+              raise SystemExit(f'R9 classifier anchor cardinality != 1: {len(classifier_hits)}')
+          i = classifier_hits[0]
+          indent = lines[i + 1][:-len(lines[i + 1].lstrip())]
+          lines[i + 1:i + 2] = [
+              f'{indent}tests/kimodo-bvh-output-probe.test.mjs|\\',
+              f'{indent}tools/motion-artifact-evaluator.mjs|\\',
+              f'{indent}tests/motion-artifact-evaluator.test.mjs)',
+          ]
 
-          old_command = "run: node --test tests/partner-vtuber-public-context-core.test.mjs tests/partner-body-intent-core.test.mjs tests/kimodo-bvh-output-probe.test.mjs"
-          new_command = old_command + " tests/motion-artifact-evaluator.test.mjs"
-          if text.count(old_command) != 1:
-              raise SystemExit(f'R9 test-command anchor cardinality != 1: {text.count(old_command)}')
-          text = text.replace(old_command, new_command, 1)
+          command_anchor = 'run: node --test tests/partner-vtuber-public-context-core.test.mjs tests/partner-body-intent-core.test.mjs tests/kimodo-bvh-output-probe.test.mjs'
+          command_hits = [i for i, line in enumerate(lines) if line.strip() == command_anchor]
+          if len(command_hits) != 1:
+              raise SystemExit(f'R9 test-command anchor cardinality != 1: {len(command_hits)}')
+          i = command_hits[0]
+          lines[i] = lines[i] + ' tests/motion-artifact-evaluator.test.mjs'
 
+          text = '\n'.join(lines) + '\n'
           if text.count('tools/motion-artifact-evaluator.mjs') != 1:
               raise SystemExit('R9 tool classification cardinality invalid')
           if text.count('tests/motion-artifact-evaluator.test.mjs') != 2:

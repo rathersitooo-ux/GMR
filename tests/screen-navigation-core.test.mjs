@@ -291,6 +291,40 @@ test('screen transition runtime ignores same-screen requests without visual phas
   assert.equal(swaps, 0);
 });
 
+test('same-screen intent cancels an active pre-swap transition so stale work cannot move away later', async () => {
+  let screen = 'home';
+  const swaps = [];
+  const gate = deferred();
+  const runtime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => screen,
+    applyScreen: (next) => { swaps.push(next); screen = next; },
+    runVisualPhase: async (phase, context) => {
+      if (context.to === 'cards' && phase === 'EXIT') await gate.promise;
+    }
+  });
+
+  const first = runtime.navigate('cards');
+  await turn();
+  assert.equal(runtime.getState().phase, 'EXIT');
+  assert.equal(runtime.getState().activeRevision !== null, true);
+
+  const stayResult = await runtime.navigate('home');
+  assert.equal(stayResult.status, 'ignored');
+  assert.equal(stayResult.reason, SCREEN_NAVIGATION_REASON.CURRENT_SCREEN);
+  assert.equal(stayResult.swapped, false);
+  assert.equal(screen, 'home');
+  assert.deepEqual(swaps, []);
+  assert.equal(runtime.getState().phase, 'IDLE');
+  assert.equal(runtime.getState().activeRevision, null);
+
+  gate.resolve();
+  const firstResult = await first;
+  assert.equal(firstResult.status, 'superseded');
+  assert.equal(firstResult.swapped, false);
+  assert.equal(screen, 'home');
+  assert.deepEqual(swaps, []);
+});
+
 test('rapid A to B supersedes stale pre-swap transition and stale work cannot roll back current screen', async () => {
   let screen = 'home';
   const swaps = [];

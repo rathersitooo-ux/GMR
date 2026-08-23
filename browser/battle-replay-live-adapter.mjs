@@ -8,7 +8,10 @@ import {
   applyCardPresentationEvent,
   createCardPresentationSession
 } from './card-presentation-core.mjs';
-import { planBattleConveyor } from './battle-conveyor-presentation-core.mjs';
+import {
+  planBattleConveyor,
+  planBattleConveyorEnvironmentFrame
+} from './battle-conveyor-presentation-core.mjs';
 import {
   PARTNER_BATTLE_EVENT_PROJECTION,
   createPartnerBattleEventLogConsumerAdapter
@@ -22,6 +25,12 @@ const FNV_PRIME = 0x100000001b3n;
 const FNV_MASK = 0xffffffffffffffffn;
 const CARD_PRESENTATION_STYLE_ID = 'gameroad-card-presentation-runtime-r7-style';
 const CARD_PRESENTATION_HOLD_MS = 400;
+const BATTLE_CONVEYOR_ENV_STYLE_ID = 'gameroad-battle-conveyor-environment-r37-style';
+const BATTLE_CONVEYOR_ENV_HOST_ATTR = 'data-battle-conveyor-environment';
+const BATTLE_CONVEYOR_ENV_SEGMENT_ATTR = 'data-battle-conveyor-segment';
+const BATTLE_CONVEYOR_ENV_SEGMENT_COUNT = 8;
+const BATTLE_CONVEYOR_ENV_TRAVEL_STEP = 0.16;
+const BATTLE_CONVEYOR_ENV_SETTLE_MS = 260;
 const PARTNER_BATTLE_LOG_HOST_ATTR = 'data-partner-battle-event-log';
 const PARTNER_BATTLE_LOG_ROW_ATTR = 'data-partner-battle-event-log-row';
 
@@ -360,6 +369,96 @@ export function readBattleReplayCardPresentationPreferences(environment = {}) {
   });
 }
 
+function ensureBattleReplayConveyorEnvironmentStyle(documentRef) {
+  if (!documentRef?.head || typeof documentRef.createElement !== 'function') return false;
+  if (documentRef.getElementById?.(BATTLE_CONVEYOR_ENV_STYLE_ID)) return true;
+  const style = documentRef.createElement('style');
+  style.id = BATTLE_CONVEYOR_ENV_STYLE_ID;
+  style.textContent = `
+#battlePhaseSurface{isolation:isolate}
+#battlePhaseSurface [data-battle-conveyor-environment]{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:-1;opacity:.86}
+#battlePhaseSurface [data-battle-conveyor-environment]::before{content:"";position:absolute;inset:5% 0 0;background:radial-gradient(ellipse at 50% 11%,rgba(176,255,233,.18) 0,rgba(55,128,112,.07) 17%,transparent 38%),linear-gradient(180deg,transparent 8%,rgba(16,54,49,.12) 52%,rgba(5,20,18,.38) 100%)}
+#battlePhaseSurface [data-battle-conveyor-segment]{position:absolute;left:50%;height:clamp(8px,2.4vh,22px);transform:translate(-50%,-50%);border-radius:50%;background:linear-gradient(90deg,transparent 0%,rgba(63,139,117,.12) 16%,rgba(163,244,213,.23) 50%,rgba(63,139,117,.12) 84%,transparent 100%);box-shadow:0 1px 0 rgba(200,255,236,.08),0 8px 18px rgba(3,16,13,.14);transition:top 220ms cubic-bezier(.2,.7,.2,1),width 220ms cubic-bezier(.2,.7,.2,1),opacity 180ms ease}
+#battlePhaseSurface [data-battle-conveyor-segment]::before,#battlePhaseSurface [data-battle-conveyor-segment]::after{content:"";position:absolute;top:-140%;width:14%;height:380%;border-radius:50%;background:radial-gradient(ellipse,rgba(46,112,83,.27),rgba(14,48,39,.08) 58%,transparent 72%);filter:blur(1px)}
+#battlePhaseSurface [data-battle-conveyor-segment]::before{left:-3%}
+#battlePhaseSurface [data-battle-conveyor-segment]::after{right:-3%}
+#battlePhaseSurface [data-battle-conveyor-environment][data-motion-suppressed="true"] [data-battle-conveyor-segment]{transition:none!important}
+@media(prefers-reduced-motion:reduce){#battlePhaseSurface [data-battle-conveyor-segment]{transition:none!important}}
+`;
+  documentRef.head.appendChild(style);
+  return true;
+}
+
+function battleReplayConveyorEnvironmentSegments(host) {
+  if (!host || typeof host.querySelectorAll !== 'function') return [];
+  return Array.from(host.querySelectorAll(`[${BATTLE_CONVEYOR_ENV_SEGMENT_ATTR}]`));
+}
+
+function ensureBattleReplayConveyorEnvironmentHost(documentRef, segmentCount) {
+  const surface = documentRef?.getElementById?.('battlePhaseSurface');
+  if (!surface || typeof documentRef?.createElement !== 'function') return null;
+  ensureBattleReplayConveyorEnvironmentStyle(documentRef);
+  let host = typeof surface.querySelector === 'function'
+    ? surface.querySelector(`[${BATTLE_CONVEYOR_ENV_HOST_ATTR}]`)
+    : null;
+  if (!host) {
+    host = documentRef.createElement('div');
+    if (!host || typeof host.setAttribute !== 'function') return null;
+    host.setAttribute(BATTLE_CONVEYOR_ENV_HOST_ATTR, '');
+    host.setAttribute('aria-hidden', 'true');
+    if (typeof surface.insertBefore === 'function') surface.insertBefore(host, surface.firstChild || null);
+    else if (typeof surface.appendChild === 'function') surface.appendChild(host);
+    else return null;
+  }
+  let segments = battleReplayConveyorEnvironmentSegments(host);
+  if (segments.length !== segmentCount) {
+    if (typeof host.replaceChildren === 'function') host.replaceChildren();
+    else host.textContent = '';
+    segments = [];
+    for (let index = 0; index < segmentCount; index += 1) {
+      const segment = documentRef.createElement('i');
+      if (!segment || typeof segment.setAttribute !== 'function') return null;
+      segment.setAttribute(BATTLE_CONVEYOR_ENV_SEGMENT_ATTR, `visual-segment-${index}`);
+      segment.setAttribute('aria-hidden', 'true');
+      if (typeof host.appendChild !== 'function') return null;
+      host.appendChild(segment);
+      segments.push(segment);
+    }
+  }
+  return { surface, host, segments };
+}
+
+export function renderBattleReplayConveyorEnvironmentFrame(frame, environment = {}, eventId = null) {
+  if (!frame || frame.presentationOnly !== true ||
+      frame.schema !== 'gameroad.battle-conveyor-environment.v1' ||
+      frame.environmentAuthority !== 'decorative_visual_loop_only' ||
+      frame.gameStateWrite !== false || frame.position109Write !== false ||
+      frame.targetWrite !== false || frame.orderWrite !== false ||
+      !Array.isArray(frame.segments)) return false;
+  const documentRef = environmentValue(environment, 'document');
+  const mounted = ensureBattleReplayConveyorEnvironmentHost(documentRef, frame.segments.length);
+  if (!mounted?.host?.dataset || mounted.segments.length !== frame.segments.length) return false;
+  const { host, segments } = mounted;
+  host.dataset.battleConveyorAuthority = frame.environmentAuthority;
+  host.dataset.battleConveyorPhase = frame.phase;
+  host.dataset.battleConveyorMotion = frame.motionIntent;
+  host.dataset.motionSuppressed = frame.motionSuppressed ? 'true' : 'false';
+  host.dataset.battleConveyorTravel = String(frame.effectiveTravel);
+  if (nonEmptyString(eventId)) host.dataset.battleConveyorEvent = eventId;
+  for (let index = 0; index < segments.length; index += 1) {
+    const node = segments[index];
+    const segment = frame.segments[index];
+    if (!node?.dataset || !node.style || !segment || segment.segmentId !== `visual-segment-${index}`) return false;
+    node.dataset.battleConveyorSegment = segment.segmentId;
+    node.dataset.recycleCycle = String(segment.recycleCycle);
+    node.dataset.normalizedDepth = segment.normalizedDepth.toFixed(6);
+    node.style.top = `${(segment.screenY * 100).toFixed(3)}%`;
+    node.style.width = `${(22 + (76 * segment.scale)).toFixed(3)}%`;
+    node.style.opacity = segment.opacity.toFixed(4);
+  }
+  return true;
+}
+
 function ensureBattleReplayCardPresentationStyle(documentRef) {
   if (!documentRef?.head || typeof documentRef.createElement !== 'function') return false;
   if (documentRef.getElementById?.(CARD_PRESENTATION_STYLE_ID)) return true;
@@ -453,26 +552,53 @@ export function createBattleReplayCardPresentationBridge(environment = {}) {
   const renderPlan = typeof environment.renderPlan === 'function'
     ? environment.renderPlan
     : plan => renderBattleReplayCardPresentationPlan(plan, environment);
+  const renderEnvironment = typeof environment.renderEnvironment === 'function'
+    ? environment.renderEnvironment
+    : (frame, eventId) => renderBattleReplayConveyorEnvironmentFrame(frame, environment, eventId);
+
+  function environmentFrame(travel, phase, preferences = readBattleReplayCardPresentationPreferences(environment)) {
+    return planBattleConveyorEnvironmentFrame({
+      segmentCount: BATTLE_CONVEYOR_ENV_SEGMENT_COUNT,
+      travel,
+      phase,
+      reducedMotion: preferences.reducedMotion,
+      lowPerf: preferences.lowPerf
+    });
+  }
+
+  function renderEnvironmentFailSoft(frame, eventId) {
+    try {
+      renderEnvironment(frame, eventId);
+    } catch {
+      // Decorative environment is presentation-only and never owns replay/gameplay success.
+    }
+  }
+
+  function createRuntime(matchId, preferences = readBattleReplayCardPresentationPreferences(environment)) {
+    const frame = environmentFrame(0, 'IDLE_READ', preferences);
+    return {
+      state: createCardPresentationSession({ sessionId: matchId }),
+      lastPlan: null,
+      lastFinisherPlan: null,
+      environmentTravel: 0,
+      environmentEventId: `battle-environment:${matchId}:idle`,
+      lastEnvironmentFrame: frame
+    };
+  }
 
   function begin(matchId) {
     if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
-    const runtime = {
-      state: createCardPresentationSession({ sessionId: matchId }),
-      lastPlan: null,
-      lastFinisherPlan: null
-    };
+    const runtime = createRuntime(matchId);
     sessions.set(matchId, runtime);
+    renderEnvironmentFailSoft(runtime.lastEnvironmentFrame, runtime.environmentEventId);
     return runtime.state;
   }
 
   function acceptAcceptedResolution({ matchId, serial }) {
     if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
     safeInteger(serial, 'RESOLUTION_SERIAL', 1);
-    const current = sessions.get(matchId) || {
-      state: createCardPresentationSession({ sessionId: matchId }),
-      lastPlan: null,
-      lastFinisherPlan: null
-    };
+    const preferences = readBattleReplayCardPresentationPreferences(environment);
+    const current = sessions.get(matchId) || createRuntime(matchId, preferences);
     const result = applyCardPresentationEvent(current.state, {
       sessionId: matchId,
       eventId: `battle-resolution:${serial}`,
@@ -480,19 +606,46 @@ export function createBattleReplayCardPresentationBridge(environment = {}) {
       visibility: 'public',
       kind: 'vfx',
       assets: {}
-    }, readBattleReplayCardPresentationPreferences(environment));
+    }, preferences);
 
     if (!result.accepted) return result;
+    const nextTravel = result.duplicate
+      ? current.environmentTravel
+      : current.environmentTravel + ((preferences.reducedMotion || preferences.lowPerf) ? 0 : BATTLE_CONVEYOR_ENV_TRAVEL_STEP);
+    const nextEnvironmentFrame = result.duplicate
+      ? current.lastEnvironmentFrame
+      : environmentFrame(nextTravel, 'RESOLVE', preferences);
+    const nextEnvironmentEventId = result.duplicate
+      ? current.environmentEventId
+      : result.plan?.eventId || `battle-resolution:${serial}`;
     sessions.set(matchId, {
+      ...current,
       state: result.state,
       lastPlan: result.duplicate ? current.lastPlan : result.plan,
-      lastFinisherPlan: current.lastFinisherPlan
+      environmentTravel: nextTravel,
+      environmentEventId: nextEnvironmentEventId,
+      lastEnvironmentFrame: nextEnvironmentFrame
     });
     if (!result.duplicate && result.plan) {
       try {
         renderPlan(result.plan);
       } catch {
         // Presentation is strictly fail-soft and never owns replay/gameplay success.
+      }
+      renderEnvironmentFailSoft(nextEnvironmentFrame, nextEnvironmentEventId);
+      const setTimeoutRef = environmentValue(environment, 'setTimeout');
+      if (typeof setTimeoutRef === 'function') {
+        setTimeoutRef(() => {
+const latest = sessions.get(matchId);
+if (!latest || latest.environmentEventId !== nextEnvironmentEventId) return;
+const settleFrame = environmentFrame(
+  latest.environmentTravel,
+  'SETTLE_AFTERMATH',
+  readBattleReplayCardPresentationPreferences(environment)
+);
+sessions.set(matchId, { ...latest, lastEnvironmentFrame: settleFrame });
+renderEnvironmentFailSoft(settleFrame, nextEnvironmentEventId);
+        }, BATTLE_CONVEYOR_ENV_SETTLE_MS);
       }
     }
     return result;
@@ -507,11 +660,7 @@ export function createBattleReplayCardPresentationBridge(environment = {}) {
         normalizedLoserIds.includes(winnerId)) {
       throw new TypeError('FINISHER_LOSER_IDS_INVALID');
     }
-    const current = sessions.get(matchId) || {
-      state: createCardPresentationSession({ sessionId: matchId }),
-      lastPlan: null,
-      lastFinisherPlan: null
-    };
+    const current = sessions.get(matchId) || createRuntime(matchId);
     const preferences = readBattleReplayCardPresentationPreferences(environment);
     const timeline = planBattleConveyor([{
       accepted: true,
@@ -527,8 +676,7 @@ export function createBattleReplayCardPresentationBridge(environment = {}) {
     });
     const plan = timeline.plans[0] || null;
     sessions.set(matchId, {
-      state: current.state,
-      lastPlan: current.lastPlan,
+      ...current,
       lastFinisherPlan: plan
     });
     if (plan) {
@@ -548,13 +696,15 @@ export function createBattleReplayCardPresentationBridge(environment = {}) {
       matchId,
       seenEventIds: runtime.state.seenEventIds,
       lastPlan: runtime.lastPlan,
-      lastFinisherPlan: runtime.lastFinisherPlan
+      lastFinisherPlan: runtime.lastFinisherPlan,
+      environmentTravel: runtime.environmentTravel,
+      environmentEventId: runtime.environmentEventId,
+      lastEnvironmentFrame: runtime.lastEnvironmentFrame
     }));
   }
 
   return Object.freeze({ begin, acceptAcceptedResolution, acceptAcceptedMatchEnd, snapshot });
 }
-
 function formatPartnerBattleEventLogRow(event) {
   if (!event || typeof event !== 'object') return null;
   if (event.kind === 'battle_resolution') {
@@ -867,8 +1017,13 @@ export const BATTLE_REPLAY_LIVE_ADAPTER = Object.freeze({
     assetAuthority: 'fallback_only',
     audio: 'silent'
   }),
-  matchEndFinisher: Object.freeze({
-    source: 'accepted_free4p_single_winner_formal_ranking',
+  battleConveyorEnvironment: Object.freeze({
+  source: 'accepted_public_battle_resolution',
+  actualDomSurface: 'battlePhaseSurface',
+  segmentCount: BATTLE_CONVEYOR_ENV_SEGMENT_COUNT,
+  authority: 'presentation_only_no_game_state_write'
+}),
+  matchEndFinisher: Object.freeze({    source: 'accepted_free4p_single_winner_formal_ranking',
     kind: 'finisher',
     transition: 'FINISHER_GATHER',
     authority: 'presentation_only_no_game_state_write'

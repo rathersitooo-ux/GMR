@@ -24,6 +24,9 @@ const CARD_PRESENTATION_STYLE_ID = 'gameroad-card-presentation-runtime-r7-style'
 const CARD_PRESENTATION_HOLD_MS = 400;
 const PARTNER_BATTLE_LOG_HOST_ATTR = 'data-partner-battle-event-log';
 const PARTNER_BATTLE_LOG_ROW_ATTR = 'data-partner-battle-event-log-row';
+const BATTLE_CONVEYOR_RESOLUTION_TRANSITIONS = new Set([
+  'ENTRY', 'CONTINUE', 'IMPACT_CARRY_RIGHT', 'IMPACT_CARRY_LEFT', 'PAIR_SWAP_RIGHT'
+]);
 
 function cloneJson(value) {
   const text = JSON.stringify(value);
@@ -371,6 +374,11 @@ function ensureBattleReplayCardPresentationStyle(documentRef) {
 @keyframes grCardPresentationFallbackPulse{0%{opacity:1;text-shadow:0 0 14px rgba(255,218,126,.48)}36%{opacity:1;text-shadow:0 0 22px rgba(255,218,126,.76)}100%{opacity:1;text-shadow:0 0 14px rgba(255,218,126,.48)}}
 #battleResolution.noMotion.grCardPresentationFallback .resolutionWinner,body.low-perf #battleResolution.grCardPresentationFallback .resolutionWinner{animation:none!important;transform:none!important;filter:none!important}
 @media(prefers-reduced-motion:reduce){#battleResolution.grCardPresentationFallback .resolutionWinner{animation:none!important;transform:none!important}}
+#battleResolution.grBattleConveyorResolution .resolutionWinner{filter:brightness(1.1);text-shadow:0 0 18px rgba(255,218,126,.58)}
+#battleResolution.grBattleConveyorResolution.grBattleConveyorMotion .resolutionWinner{animation:grBattleConveyorResolutionCarry .56s cubic-bezier(.2,.8,.2,1)}
+@keyframes grBattleConveyorResolutionCarry{0%{transform:translate3d(-10px,0,0) scale(.985);opacity:.88}44%{transform:translate3d(7px,0,0) scale(1.035);opacity:1}100%{transform:translate3d(0,0,0) scale(1);opacity:1}}
+#battleResolution.noMotion.grBattleConveyorResolution .resolutionWinner,body.low-perf #battleResolution.grBattleConveyorResolution .resolutionWinner{animation:none!important;transform:none!important;filter:none!important}
+@media(prefers-reduced-motion:reduce){#battleResolution.grBattleConveyorResolution .resolutionWinner{animation:none!important;transform:none!important}}
 #resultHeadline.grMatchEndFinisher{filter:brightness(1.08);text-shadow:0 0 18px rgba(255,218,126,.62)}
 #resultHeadline.grMatchEndFinisher.grMatchEndFinisherMotion{animation:grMatchEndFinisherPulse .72s ease-out}
 @keyframes grMatchEndFinisherPulse{0%{transform:scale(1);text-shadow:0 0 18px rgba(255,218,126,.62)}38%{transform:scale(1.045);text-shadow:0 0 34px rgba(255,218,126,.86)}100%{transform:scale(1);text-shadow:0 0 18px rgba(255,218,126,.62)}}
@@ -425,6 +433,47 @@ export function renderBattleReplayCardPresentationPlan(plan, environment = {}) {
     return true;
   }
 
+  if (plan.kind === 'attack' &&
+      plan.authorityBoundary === 'accepted_public_event_only') {
+    const sourceId = maybeString(plan.publicData?.sourceId);
+    const targetIds = Array.isArray(plan.publicData?.targetIds) ? plan.publicData.targetIds : null;
+    const targetId = targetIds?.length === 1 ? maybeString(targetIds[0]) : null;
+    const transition = maybeString(plan.transition);
+    const holdMs = Number.isFinite(plan.timing?.duration) && plan.timing.duration > 0
+      ? plan.timing.duration
+      : null;
+    if (!sourceId || !targetId || sourceId === targetId ||
+        !transition || !BATTLE_CONVEYOR_RESOLUTION_TRANSITIONS.has(transition) || holdMs == null) {
+      return false;
+    }
+    const box = documentRef?.getElementById?.('battleResolution');
+    if (!box?.classList || !box.dataset) return false;
+    const motionAllowed = plan.reducedMotion !== true && plan.lowPerf !== true;
+    box.dataset.battleConveyor = 'attack';
+    box.dataset.battleConveyorEvent = plan.eventId;
+    box.dataset.battleConveyorSource = sourceId;
+    box.dataset.battleConveyorTarget = targetId;
+    box.dataset.battleConveyorTransition = transition;
+    box.dataset.battleConveyorMotion = motionAllowed ? 'allowed' : 'static_only';
+    box.classList.add('grBattleConveyorResolution');
+    box.classList.toggle('grBattleConveyorMotion', motionAllowed);
+
+    const setTimeoutRef = environmentValue(environment, 'setTimeout');
+    if (typeof setTimeoutRef === 'function') {
+      setTimeoutRef(() => {
+        if (box.dataset.battleConveyorEvent !== plan.eventId) return;
+        box.classList.remove('grBattleConveyorResolution', 'grBattleConveyorMotion');
+        delete box.dataset.battleConveyor;
+        delete box.dataset.battleConveyorEvent;
+        delete box.dataset.battleConveyorSource;
+        delete box.dataset.battleConveyorTarget;
+        delete box.dataset.battleConveyorTransition;
+        delete box.dataset.battleConveyorMotion;
+      }, holdMs);
+    }
+    return true;
+  }
+
   if (plan.visual?.source !== 'fallback') return false;
   const box = documentRef?.getElementById?.('battleResolution');
   if (!box?.classList || !box.dataset) return false;
@@ -459,20 +508,23 @@ export function createBattleReplayCardPresentationBridge(environment = {}) {
     const runtime = {
       state: createCardPresentationSession({ sessionId: matchId }),
       lastPlan: null,
-      lastFinisherPlan: null
+      lastFinisherPlan: null,
+      conveyorEvents: []
     };
     sessions.set(matchId, runtime);
     return runtime.state;
   }
 
-  function acceptAcceptedResolution({ matchId, serial }) {
+  function acceptAcceptedResolution({ matchId, serial, attackerId = null, defenderId = null }) {
     if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
     safeInteger(serial, 'RESOLUTION_SERIAL', 1);
     const current = sessions.get(matchId) || {
       state: createCardPresentationSession({ sessionId: matchId }),
       lastPlan: null,
-      lastFinisherPlan: null
+      lastFinisherPlan: null,
+      conveyorEvents: []
     };
+    const preferences = readBattleReplayCardPresentationPreferences(environment);
     const result = applyCardPresentationEvent(current.state, {
       sessionId: matchId,
       eventId: `battle-resolution:${serial}`,
@@ -480,17 +532,48 @@ export function createBattleReplayCardPresentationBridge(environment = {}) {
       visibility: 'public',
       kind: 'vfx',
       assets: {}
-    }, readBattleReplayCardPresentationPreferences(environment));
+    }, preferences);
 
     if (!result.accepted) return result;
+    let conveyorEvents = Array.isArray(current.conveyorEvents) ? current.conveyorEvents : [];
+    let presentationPlan = result.duplicate ? current.lastPlan : result.plan;
+    if (!result.duplicate) {
+      const sourceId = maybeString(attackerId);
+      const targetId = maybeString(defenderId);
+      if (sourceId && targetId && sourceId !== targetId) {
+        try {
+          const nextEvents = [
+            ...conveyorEvents,
+            {
+              accepted: true,
+              eventId: `battle-resolution:${serial}`,
+              kind: 'attack',
+              publicData: { sourceId, targetIds: [targetId] }
+            }
+          ];
+          const timeline = planBattleConveyor(nextEvents, {
+            reducedMotion: preferences.reducedMotion,
+            lowPerf: preferences.lowPerf
+          });
+          const conveyorPlan = timeline.plans[timeline.plans.length - 1] || null;
+          if (conveyorPlan) {
+            conveyorEvents = nextEvents;
+            presentationPlan = conveyorPlan;
+          }
+        } catch {
+          // Invalid presentation-only planning falls back without touching replay/gameplay truth.
+        }
+      }
+    }
     sessions.set(matchId, {
       state: result.state,
-      lastPlan: result.duplicate ? current.lastPlan : result.plan,
-      lastFinisherPlan: current.lastFinisherPlan
+      lastPlan: result.duplicate ? current.lastPlan : presentationPlan,
+      lastFinisherPlan: current.lastFinisherPlan,
+      conveyorEvents
     });
-    if (!result.duplicate && result.plan) {
+    if (!result.duplicate && presentationPlan) {
       try {
-        renderPlan(result.plan);
+        renderPlan(presentationPlan);
       } catch {
         // Presentation is strictly fail-soft and never owns replay/gameplay success.
       }
@@ -510,7 +593,8 @@ export function createBattleReplayCardPresentationBridge(environment = {}) {
     const current = sessions.get(matchId) || {
       state: createCardPresentationSession({ sessionId: matchId }),
       lastPlan: null,
-      lastFinisherPlan: null
+      lastFinisherPlan: null,
+      conveyorEvents: []
     };
     const preferences = readBattleReplayCardPresentationPreferences(environment);
     const timeline = planBattleConveyor([{
@@ -529,7 +613,8 @@ export function createBattleReplayCardPresentationBridge(environment = {}) {
     sessions.set(matchId, {
       state: current.state,
       lastPlan: current.lastPlan,
-      lastFinisherPlan: plan
+      lastFinisherPlan: plan,
+      conveyorEvents: current.conveyorEvents
     });
     if (plan) {
       try {
@@ -742,7 +827,9 @@ export function appendAcceptedBattleResolution(
   try {
     presentationBridge?.acceptAcceptedResolution?.({
       matchId: session.matchId,
-      serial: projected.serial
+      serial: projected.serial,
+      attackerId: projected.attackerId,
+      defenderId: projected.defenderId
     });
   } catch {
     // Accepted replay/gameplay state is authoritative; presentation never blocks it.
@@ -866,6 +953,12 @@ export const BATTLE_REPLAY_LIVE_ADAPTER = Object.freeze({
     kind: 'vfx',
     assetAuthority: 'fallback_only',
     audio: 'silent'
+  }),
+  battleConveyorResolution: Object.freeze({
+    source: 'accepted_public_battle_resolution.attackerId+defenderId',
+    kind: 'attack',
+    authority: 'presentation_only_no_game_state_write',
+    fallback: 'cardPresentation'
   }),
   matchEndFinisher: Object.freeze({
     source: 'accepted_free4p_single_winner_formal_ranking',

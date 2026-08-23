@@ -1558,3 +1558,67 @@ test('update manifest is strictly validated, rollback-safe in wording, session-l
   await fresh.close();
   runtime.assertClean(testInfo);
 });
+
+
+test('R52 keeps invalid 26/40 Setup recovery readable across required viewports and preserves valid Setup', async ({ page }, testInfo) => {
+  const requiredProjects = new Set(['desktop-1280x720', 'phone-390x844', 'short-landscape-667x375']);
+  test.skip(!requiredProjects.has(testInfo.project.name), 'R52 acceptance contract covers the three required visual viewports');
+
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+  const setupControl = visibleHomeControl(page, 'setup');
+  await expect(setupControl).toBeVisible();
+  await setupControl.click();
+  const setup = page.locator('section[data-screen="setup"]');
+  await expect(setup).toBeVisible();
+
+  const recovery = setup.locator('.setupDeckRecovery');
+  const note = setup.locator('#setupDeckNote');
+  const fix = setup.locator('#fixDeckFromSetup');
+  const start = setup.locator('#startMatch');
+  await expect(recovery).toBeVisible();
+  await expect(note).toContainText('札組を修正してください');
+  await expect(note).toContainText('メインデッキは40枚ちょうどです（現在26枚）');
+  await expect(fix).toBeVisible();
+  await expect(fix).toHaveText('デッキへ');
+  await expect(start).toBeDisabled();
+
+  const geometry = await recovery.evaluate((node) => {
+    const box = node.parentElement;
+    const br = box.getBoundingClientRect();
+    const wr = node.getBoundingClientRect();
+    const bs = getComputedStyle(box);
+    const ws = getComputedStyle(node);
+    const contentWidth = br.width - parseFloat(bs.paddingLeft) - parseFloat(bs.paddingRight);
+    return {
+      gridColumnStart: ws.gridColumnStart,
+      gridColumnEnd: ws.gridColumnEnd,
+      widthRatio: wr.width / contentWidth,
+    };
+  });
+  expect(geometry.gridColumnStart, 'recovery wrapper starts at first Setup grid column').toBe('1');
+  expect(geometry.gridColumnEnd, 'recovery wrapper ends at final Setup grid column').toBe('-1');
+  expect(geometry.widthRatio, 'recovery reason + CTA use the full Setup content width').toBeGreaterThanOrEqual(0.92);
+  await attachStateScreenshot(page, testInfo, 'r52-invalid-26of40-setup-recovery');
+
+  await fix.click();
+  await expect(page.locator('section[data-screen="cards"]')).toBeVisible();
+
+  const legal = await installLegalBattleDeck(page);
+  expect(legal.main).toHaveLength(40);
+  expect(legal.committed).toBeTruthy();
+  expect(legal.savedValidation.ok).toBeTruthy();
+
+  await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(500);
+  const setupControlValid = visibleHomeControl(page, 'setup');
+  await expect(setupControlValid).toBeVisible();
+  await setupControlValid.click();
+  const validSetup = page.locator('section[data-screen="setup"]');
+  await expect(validSetup).toBeVisible();
+  await expect(validSetup.locator('#setupDeckNote')).toContainText('札組｜メイン40・EX0');
+  await expect(validSetup.locator('#fixDeckFromSetup')).toBeHidden();
+  await expect(validSetup.locator('#startMatch')).toBeEnabled();
+  await attachStateScreenshot(page, testInfo, 'r52-valid-40-setup-nearby');
+  runtime.assertClean(testInfo);
+});

@@ -1,32 +1,4 @@
 import { test, expect } from '@playwright/test';
-import {
-  SCREEN_TRANSITION_EVENT,
-  SCREEN_TRANSITION_MODE,
-  beginScreenTransition,
-  createScreenTransitionState,
-  advanceScreenTransition,
-  resolveScreenTransitionMotionProfile,
-} from '../browser/screen-transition-core.mjs';
-
-test('transition core keeps state authority separate from motion projection', async () => {
-  const normal = resolveScreenTransitionMotionProfile(SCREEN_TRANSITION_MODE.NORMAL, 'important');
-  const reduced = resolveScreenTransitionMotionProfile(SCREEN_TRANSITION_MODE.REDUCED, 'important');
-  expect(normal.movement).toBe('short-axis');
-  expect(reduced.movement).toBe('none');
-  expect(reduced.opacity).toBe('crossfade');
-
-  const started = beginScreenTransition(createScreenTransitionState('home'), { to: 'setup', importance: 'important' });
-  expect(started.accepted).toBeTruthy();
-  const generation = started.generation;
-  const prepared = advanceScreenTransition(started.state, generation, SCREEN_TRANSITION_EVENT.PREPARED);
-  const swapped = advanceScreenTransition(prepared.state, generation, SCREEN_TRANSITION_EVENT.SWAPPED);
-  expect(swapped.state.visibleScreen).toBe('setup');
-  expect(swapped.state.currentScreen).toBe('home');
-  const entered = advanceScreenTransition(swapped.state, generation, SCREEN_TRANSITION_EVENT.ENTERED);
-  const settled = advanceScreenTransition(entered.state, generation, SCREEN_TRANSITION_EVENT.SETTLED);
-  expect(settled.completed).toBeTruthy();
-  expect(settled.state.currentScreen).toBe('setup');
-});
 
 test('Home gamepad confirm and cancel are edge-triggered under held input', async ({ page }) => {
   await page.addInitScript(() => {

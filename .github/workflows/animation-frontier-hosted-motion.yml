@@ -1,0 +1,71 @@
+name: Animation Frontier Hosted Motion Evidence
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/animation-frontier-hosted-motion.yml'
+      - 'tools/hymotion-hosted-motion-probe.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hosted-motion-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install hosted-client dependencies
+        run: python -m pip install --upgrade gradio_client numpy
+
+      - name: Generate and extract hosted skeletal motion
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p artifacts/hymotion-r8
+          python tools/hymotion-hosted-motion-probe.py \
+            --out artifacts/hymotion-r8 \
+            --seed 42 \
+            --duration 2.5 \
+            --cfg 5.0 \
+            2>&1 | tee artifacts/hymotion-r8/execution.log
+
+      - name: Verify binary and provenance readback
+        shell: bash
+        run: |
+          test -s artifacts/hymotion-r8/motion-smpl.npz
+          test -s artifacts/hymotion-r8/provenance.json
+          test -s artifacts/hymotion-r8/metrics.json
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          import numpy as np
+
+          root = Path('artifacts/hymotion-r8')
+          provenance = json.loads((root / 'provenance.json').read_text())
+          metrics = json.loads((root / 'metrics.json').read_text())
+          digest = hashlib.sha256((root / 'motion-smpl.npz').read_bytes()).hexdigest()
+          assert digest == provenance['npzSha256']
+          with np.load(root / 'motion-smpl.npz', allow_pickle=False) as data:
+              assert data['poses'].shape[0] == metrics['frames']
+              assert data['trans'].shape[0] == metrics['frames']
+              assert float(data['fps'][0]) == 30.0
+          print(json.dumps({'npzSha256': digest, 'metrics': metrics}, indent=2))
+          PY
+
+      - name: Upload hosted motion evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hymotion-r8-hosted-motion-evidence
+          path: artifacts/hymotion-r8/
+          if-no-files-found: error
+          retention-days: 7

@@ -1,0 +1,63 @@
+name: TEMP AUDIO R6 Bounded Mount Inspector
+
+on:
+  push:
+    branches:
+      - work/audiobgm-r5-field-runtime-core
+    paths:
+      - '.github/workflows/audiobgm-r6-inspect.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Verify FIELD_MUSIC runtime tests
+        run: node --test tests/field-music-runtime-core.test.mjs
+      - name: Print bounded production mount anchors
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, re
+
+          path = Path('browser/GAMEROAD.html')
+          raw = path.read_bytes()
+          text = raw.decode('utf-8')
+          print('HTML_BYTES', len(raw))
+          print('HTML_SHA256', hashlib.sha256(raw).hexdigest())
+
+          tokens = [
+              'screen-navigation-core.mjs',
+              'resolveScreenNavigation',
+              'currentScreen',
+              'showScreen(',
+              'setScreen(',
+              'switchScreen(',
+              'visibilitychange',
+              'document.hidden',
+              'userActivation',
+              'AudioContext',
+          ]
+          for token in tokens:
+              offsets = [m.start() for m in re.finditer(re.escape(token), text)]
+              print('TOKEN', repr(token), 'COUNT', len(offsets), 'OFFSETS', offsets[:12])
+              for offset in offsets[:6]:
+                  lo = max(0, offset - 500)
+                  hi = min(len(text), offset + 900)
+                  chunk = text[lo:hi].replace('\r', '')
+                  print(f'--- {token} @{offset} ---')
+                  print(chunk)
+                  print('--- END ---')
+
+          module_refs = sorted(set(re.findall(r"[\"']([^\"']+\.mjs(?:\?[^\"']*)?)[\"']", text)))
+          print('MODULE_REFS_COUNT', len(module_refs))
+          for ref in module_refs[:120]:
+              print('MODULE_REF', ref)
+          PY

@@ -242,11 +242,13 @@ jobs:
               deploy/cloudflare/README.md|\
               deploy/cloudflare/functions/ws.js|\
               deploy/cloudflare/relay/src/relay-core.mjs|\
+              deploy/cloudflare/relay/src/match-store.mjs|\
               deploy/cloudflare/relay/src/relay-worker.mjs|\
               deploy/cloudflare/relay/wrangler.toml|\
               deploy/cloudflare/scripts/build.mjs|\
               deploy/cloudflare/tests/build.test.mjs|\
               deploy/cloudflare/tests/relay-core.test.mjs|\
+              deploy/cloudflare/tests/normal-match-r3.test.mjs|\
               deploy/cloudflare/wrangler.pages.toml|\
               .github/workflows/cloudflare-public-deploy.yml)
                 publichost=true

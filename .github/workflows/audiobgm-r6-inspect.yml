@@ -6,6 +6,13 @@ on:
       - work/audiobgm-r5-field-runtime-core
     paths:
       - '.github/workflows/audiobgm-r6-inspect.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/audiobgm-r6-inspect.yml'
+      - 'browser/field-music-runtime-core.mjs'
+      - 'tests/field-music-runtime-core.test.mjs'
 
 permissions:
   contents: read

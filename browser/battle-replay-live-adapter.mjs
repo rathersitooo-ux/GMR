@@ -178,12 +178,13 @@ function publicFree4pFormalRanking(value, winnerIds) {
   return deepFreeze(rows);
 }
 
-function deriveFree4pFormalRankingFromAcceptedReplay(log, winnerIds) {
+function deriveFree4pFormalRankingFromAcceptedReplay(log, winnerIds, terminalRound) {
   if (!log || !Array.isArray(log.events)) return null;
   for (let index = log.events.length - 1; index >= 0; index -= 1) {
     const event = log.events[index];
     if (event?.kind !== 'battle_resolution') continue;
     if (event.publicData?.mode !== '4p') return null;
+    if (event.publicData?.round !== terminalRound) return null;
     const progress = event.publicData?.maxLaneProgress;
     if (!Array.isArray(progress) || progress.length !== 4) return null;
     try {
@@ -782,7 +783,7 @@ export function appendAcceptedMatchEnd(
   if (formalRanking != null) {
     publicData.formalRanking = publicFree4pFormalRanking(formalRanking, normalizedWinnerIds);
   } else if (normalizedMode === '4p') {
-    const derivedRanking = deriveFree4pFormalRankingFromAcceptedReplay(session.log, normalizedWinnerIds);
+    const derivedRanking = deriveFree4pFormalRankingFromAcceptedReplay(session.log, normalizedWinnerIds, publicData.round);
     if (derivedRanking) publicData.formalRanking = derivedRanking;
   }
   const log = appendAcceptedEvent(session.log, {

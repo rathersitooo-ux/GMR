@@ -789,3 +789,21 @@ test('Free4P match-end winner set fails closed even when formal ranking cannot b
     assert.equal(readLiveReplay(session).events.length, 1);
   }
 });
+
+test('Free4P omitted formalRanking cannot derive from accepted progress belonging to a different terminal round', () => {
+  const input = resolution(1);
+  input.mode = '4p';
+  input.winnerIds = ['P1'];
+  input.maxLaneProgress = [
+    { id: 'P1', before: 6, after: 7 },
+    { id: 'P2', before: 5, after: 5 },
+    { id: 'P3', before: 4, after: 4 },
+    { id: 'P4', before: 2, after: 2 }
+  ];
+  let session = createLiveReplaySession({ matchId: 'M-4P-R18-ROUND-MISMATCH', versions });
+  session = appendAcceptedBattleResolution(session, input);
+  session = appendAcceptedMatchEnd(session, { winnerIds: ['P1'], round: 2, mode: '4p' });
+  const publicData = readLiveReplay(session).events[1].publicData;
+  assert.equal(publicData.round, 2);
+  assert.equal('formalRanking' in publicData, false);
+});

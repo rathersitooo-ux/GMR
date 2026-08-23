@@ -3,21 +3,21 @@ import {
   WS_WIRE,
   admitConnection,
   bumpGuestPresenceRevision,
-  cancelMatchTicket,
-  createMatchTicket,
   emptyRoom,
   makeTransportPresenceFrame,
-  matchTicketStatus,
-  normalizeMatchQueue,
   normalizeRoom,
   parseChannel,
   routeFrame,
   shouldPreserveRoomAfterHostClose,
   transportReject,
 } from './relay-core.mjs';
+import {
+  cancelStoredMatchTicket,
+  createStoredMatchTicket,
+  storedMatchTicketStatus,
+} from './match-store.mjs';
 
 const ROOM_KEY = 'room.v1';
-const MATCH_QUEUE_KEY = 'match-queue.v1';
 
 function attachmentOf(ws) {
   try { return ws.deserializeAttachment() || null; } catch { return null; }
@@ -119,15 +119,13 @@ async function handleMatchRequest(ctx, request, url) {
     return matchJson({ ok: false, reason: 'match_request_invalid' }, 400);
   }
 
-  const stored = normalizeMatchQueue(await ctx.storage.get(MATCH_QUEUE_KEY));
   if (op === 'create') {
-    const result = createMatchTicket(stored, body, {
+    const result = await createStoredMatchTicket(ctx.storage, body, {
       ticketId: `t-${crypto.randomUUID()}`,
       secret: randomMatchSecret(),
       matchId: `m-${crypto.randomUUID()}`,
     });
     if (!result.ok) return matchJson({ ok: false, reason: result.reason }, matchErrorStatus(result.reason));
-    await ctx.storage.put(MATCH_QUEUE_KEY, result.queue);
     return matchJson({
       ok: true,
       idempotent: result.idempotent,
@@ -138,14 +136,13 @@ async function handleMatchRequest(ctx, request, url) {
   }
 
   if (op === 'status') {
-    const result = matchTicketStatus(stored, body);
+    const result = await storedMatchTicketStatus(ctx.storage, body);
     if (!result.ok) return matchJson({ ok: false, reason: result.reason }, matchErrorStatus(result.reason));
     return matchJson({ ok: true, ticket: result.ticket, session: publicMatchSession(result) });
   }
 
-  const result = cancelMatchTicket(stored, body);
+  const result = await cancelStoredMatchTicket(ctx.storage, body);
   if (!result.ok) return matchJson({ ok: false, reason: result.reason }, matchErrorStatus(result.reason));
-  await ctx.storage.put(MATCH_QUEUE_KEY, result.queue);
   return matchJson({
     ok: true,
     cancelled: result.cancelled,

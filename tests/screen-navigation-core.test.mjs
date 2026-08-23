@@ -9,6 +9,18 @@ import {
   resolveScreenNavigation
 } from '../browser/screen-navigation-core.mjs';
 
+function setUserActivation(isActive) {
+  const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  Object.defineProperty(globalThis, 'navigator', {
+    value: { userActivation: { isActive } },
+    configurable: true
+  });
+  return () => {
+    if (originalNavigator) Object.defineProperty(globalThis, 'navigator', originalNavigator);
+    else delete globalThis.navigator;
+  };
+}
+
 test('falsy requested targets preserve the current screen as a no-op', () => {
   for (const target of [undefined, null, '', 0, false, Number.NaN]) {
     assert.deepEqual(resolveScreenNavigation('home', target), {
@@ -58,8 +70,9 @@ test('target comparison uses strict equality and does not coerce values', () => 
   });
 });
 
-test('accepted forward navigation attempts the exact formal common-button sound once', async () => {
+test('accepted forward navigation with active user gesture attempts the exact formal common-button sound once', async () => {
   const originalAudio = globalThis.Audio;
+  const restoreNavigator = setUserActivation(true);
   const created = [];
   globalThis.Audio = class FakeAudio {
     constructor(src) {
@@ -85,6 +98,7 @@ test('accepted forward navigation attempts the exact formal common-button sound 
       playbackAuthority: 'HUMAN_ACCEPTED_FORMAL_ASSET'
     });
   } finally {
+    restoreNavigator();
     if (originalAudio === undefined) delete globalThis.Audio;
     else globalThis.Audio = originalAudio;
   }
@@ -92,16 +106,12 @@ test('accepted forward navigation attempts the exact formal common-button sound 
 
 test('accepted programmatic navigation without active user gesture stays silent', () => {
   const originalAudio = globalThis.Audio;
-  const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  const restoreNavigator = setUserActivation(false);
   let constructed = 0;
   globalThis.Audio = class FakeAudio {
     constructor() { constructed += 1; }
     play() { return Promise.resolve(); }
   };
-  Object.defineProperty(globalThis, 'navigator', {
-    value: { userActivation: { isActive: false } },
-    configurable: true
-  });
 
   try {
     assert.deepEqual(resolveScreenNavigation('home', 'setup'), {
@@ -112,8 +122,27 @@ test('accepted programmatic navigation without active user gesture stays silent'
     });
     assert.equal(constructed, 0);
   } finally {
+    restoreNavigator();
+    if (originalAudio === undefined) delete globalThis.Audio;
+    else globalThis.Audio = originalAudio;
+  }
+});
+
+test('accepted navigation stays silent when user-activation API is unavailable', () => {
+  const originalAudio = globalThis.Audio;
+  const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  delete globalThis.navigator;
+  let constructed = 0;
+  globalThis.Audio = class FakeAudio {
+    constructor() { constructed += 1; }
+    play() { return Promise.resolve(); }
+  };
+
+  try {
+    assert.equal(resolveScreenNavigation('home', 'shop').ok, true);
+    assert.equal(constructed, 0);
+  } finally {
     if (originalNavigator) Object.defineProperty(globalThis, 'navigator', originalNavigator);
-    else delete globalThis.navigator;
     if (originalAudio === undefined) delete globalThis.Audio;
     else globalThis.Audio = originalAudio;
   }
@@ -121,6 +150,7 @@ test('accepted programmatic navigation without active user gesture stays silent'
 
 test('rejected navigation decisions never attempt common-button playback', () => {
   const originalAudio = globalThis.Audio;
+  const restoreNavigator = setUserActivation(true);
   let constructed = 0;
   globalThis.Audio = class FakeAudio {
     constructor() { constructed += 1; }
@@ -132,6 +162,7 @@ test('rejected navigation decisions never attempt common-button playback', () =>
     assert.equal(resolveScreenNavigation('home', 'home').ok, false);
     assert.equal(constructed, 0);
   } finally {
+    restoreNavigator();
     if (originalAudio === undefined) delete globalThis.Audio;
     else globalThis.Audio = originalAudio;
   }
@@ -139,6 +170,7 @@ test('rejected navigation decisions never attempt common-button playback', () =>
 
 test('audio constructor failure is fail-soft and cannot block accepted navigation', () => {
   const originalAudio = globalThis.Audio;
+  const restoreNavigator = setUserActivation(true);
   globalThis.Audio = class BrokenAudio {
     constructor() { throw new Error('AUDIO_UNAVAILABLE'); }
   };
@@ -151,6 +183,7 @@ test('audio constructor failure is fail-soft and cannot block accepted navigatio
       reason: SCREEN_NAVIGATION_REASON.NAVIGATE
     });
   } finally {
+    restoreNavigator();
     if (originalAudio === undefined) delete globalThis.Audio;
     else globalThis.Audio = originalAudio;
   }
@@ -158,6 +191,7 @@ test('audio constructor failure is fail-soft and cannot block accepted navigatio
 
 test('audio play rejection is absorbed without changing the navigation result', async () => {
   const originalAudio = globalThis.Audio;
+  const restoreNavigator = setUserActivation(true);
   globalThis.Audio = class RejectingAudio {
     play() { return Promise.reject(new Error('AUTOPLAY_BLOCKED')); }
   };
@@ -167,6 +201,7 @@ test('audio play rejection is absorbed without changing the navigation result', 
     assert.equal(decision.ok, true);
     await new Promise((resolve) => setImmediate(resolve));
   } finally {
+    restoreNavigator();
     if (originalAudio === undefined) delete globalThis.Audio;
     else globalThis.Audio = originalAudio;
   }

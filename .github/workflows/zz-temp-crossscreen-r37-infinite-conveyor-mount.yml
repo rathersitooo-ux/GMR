@@ -1,9 +1,13 @@
 name: TEMP CROSSSCREEN R37 Executor Recovery
 
 on:
-  push:
+  pull_request:
     branches:
-      - work/crossscreen-r37-infinite-conveyor-mount-recovery
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 permissions:
   contents: write
@@ -27,8 +31,8 @@ jobs:
           BASE=1bab3183c7cfefed209a9ea5465924d3223d6bd0
           PRIOR=f74637c956d4a43e1ea4086c06d965cb63e2ad35
           TEMP=.github/workflows/zz-temp-crossscreen-r37-infinite-conveyor-mount.yml
-          test "$(git rev-parse HEAD^)" = "$PRIOR"
-          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git merge-base origin/main HEAD)" = "$BASE"
+          git merge-base --is-ancestor "$PRIOR" HEAD
           test "$(git hash-object browser/battle-replay-live-adapter.mjs)" = "3e02fd3f14ef16287bc9d93f0cbd6e1018b83dd8"
           test "$(git hash-object tests/battle-replay-live-adapter.test.mjs)" = "0820826fa1d4da20342a69bee170132f6ce4633d"
           test "$(git hash-object tests/browser-full-interaction.spec.mjs)" = "93a3f53a7dbd0e13640acac752779eb79ec137ce"

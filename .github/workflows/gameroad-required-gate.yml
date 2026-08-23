@@ -179,7 +179,9 @@ jobs:
               browser/partner-vtuber-public-context-core.mjs|\
               tests/partner-vtuber-public-context-core.test.mjs|\
               browser/partner-body-intent-core.mjs|\
-              tests/partner-body-intent-core.test.mjs)
+              tests/partner-body-intent-core.test.mjs|\
+              tools/kimodo-bvh-output-probe.mjs|\
+              tests/kimodo-bvh-output-probe.test.mjs)
                 partner_vtuber=true
                 ;;
               browser/partner-humanlike-repair-evaluator.mjs|\
@@ -415,7 +417,7 @@ jobs:
 
       - name: Run Partner VTuber public-context and BodyIntent boundary tests
         if: steps.classify.outputs.partner_vtuber == 'true'
-        run: node --test tests/partner-vtuber-public-context-core.test.mjs tests/partner-body-intent-core.test.mjs
+        run: node --test tests/partner-vtuber-public-context-core.test.mjs tests/partner-body-intent-core.test.mjs tests/kimodo-bvh-output-probe.test.mjs
 
       - name: Run Partner humanlike repair evaluator tests
         if: steps.classify.outputs.partner_humanlike == 'true'

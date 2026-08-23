@@ -1,10 +1,16 @@
-# activation update: workflow already exists on branch before this push
+# activation update: same-repo pull_request synchronize is the proven executor trigger
 name: TEMP R23 HATE lowPerf recovery
 
 on:
   push:
     branches:
       - work/hate-r21-actual-mount-20260822
+    paths:
+      - '.github/workflows/zz-temp-hate-r21-inspector.yml'
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches:
+      - main
     paths:
       - '.github/workflows/zz-temp-hate-r21-inspector.yml'
   workflow_dispatch:

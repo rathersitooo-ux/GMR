@@ -1,0 +1,111 @@
+name: TEMP R27 Home gamepad edge executor
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-prove-home-gamepad-edge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/uifeedback-r26-motion-temporal
+          fetch-depth: 2
+      - name: Exact-base and source-state guard
+        id: guard
+        shell: bash
+        env:
+          EXPECTED_BASE: 21e4faca44f7f427b47f09a7fd8b3a2d7989943c
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          test "$(git rev-parse origin/main)" = "$EXPECTED_BASE"
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          old="""function homeMotionGamepadPoll(){if(state.screen==='home'&&!homeMotionRuntime.busy){const pads=navigator.getGamepads?.()||[],pad=[...pads].find(Boolean);if(pad){const now=performance.now(),cool=now-homeMotionRuntime.gamepadStamp>230,ax=pad.axes?.[0]||0,ay=pad.axes?.[1]||0;if(cool){let dir='';if(ay<-.58&&Math.abs(ax)<.42)dir='up';else if(ax>.58&&Math.abs(ay)<.5)dir='right';else if(ax<-.48&&ay<-.22)dir='up-left';else if(ax<-.48&&ay>.22)dir='down-left';if(dir){homeMotionRuntime.gamepadStamp=now;homeMotionFocusDirection(dir)}else if(pad.buttons?.[0]?.pressed){homeMotionRuntime.gamepadStamp=now;const t=document.activeElement?.dataset?.homeTarget;if(t)homeMotionNavigate(t);else homeMotionToggle()}else if(pad.buttons?.[1]?.pressed){homeMotionRuntime.gamepadStamp=now;homeMotionToggle()}}}}requestAnimationFrame(homeMotionGamepadPoll)}"""
+          new_marker='let homeMotionGamepadConfirmHeld=false,homeMotionGamepadCancelHeld=false;'
+          count=s.count(old)
+          if count==1:
+              print('R27_SOURCE_GUARD old_count=1')
+          elif count==0 and new_marker in s:
+              print('R27_ALREADY_PATCHED')
+          else:
+              raise SystemExit(f'R27_SOURCE_GUARD_FAILED old_count={count} new_marker={new_marker in s}')
+          PY
+          if grep -Fq 'let homeMotionGamepadConfirmHeld=false,homeMotionGamepadCancelHeld=false;' browser/GAMEROAD.html; then
+            echo 'already=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'already=false' >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.guard.outputs.already != 'true'
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        if: steps.guard.outputs.already != 'true'
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install chromium
+      - name: Apply exact product patch and fold regression
+        if: steps.guard.outputs.already != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          html_path=Path('browser/GAMEROAD.html')
+          html=html_path.read_text(encoding='utf-8')
+          old="""function homeMotionGamepadPoll(){if(state.screen==='home'&&!homeMotionRuntime.busy){const pads=navigator.getGamepads?.()||[],pad=[...pads].find(Boolean);if(pad){const now=performance.now(),cool=now-homeMotionRuntime.gamepadStamp>230,ax=pad.axes?.[0]||0,ay=pad.axes?.[1]||0;if(cool){let dir='';if(ay<-.58&&Math.abs(ax)<.42)dir='up';else if(ax>.58&&Math.abs(ay)<.5)dir='right';else if(ax<-.48&&ay<-.22)dir='up-left';else if(ax<-.48&&ay>.22)dir='down-left';if(dir){homeMotionRuntime.gamepadStamp=now;homeMotionFocusDirection(dir)}else if(pad.buttons?.[0]?.pressed){homeMotionRuntime.gamepadStamp=now;const t=document.activeElement?.dataset?.homeTarget;if(t)homeMotionNavigate(t);else homeMotionToggle()}else if(pad.buttons?.[1]?.pressed){homeMotionRuntime.gamepadStamp=now;homeMotionToggle()}}}}requestAnimationFrame(homeMotionGamepadPoll)}"""
+          new="""let homeMotionGamepadConfirmHeld=false,homeMotionGamepadCancelHeld=false;
+          function homeMotionGamepadPoll(){const pads=navigator.getGamepads?.()||[],pad=[...pads].find(Boolean),confirmPressed=!!pad?.buttons?.[0]?.pressed,cancelPressed=!!pad?.buttons?.[1]?.pressed,confirmEdge=confirmPressed&&!homeMotionGamepadConfirmHeld,cancelEdge=cancelPressed&&!homeMotionGamepadCancelHeld;homeMotionGamepadConfirmHeld=confirmPressed;homeMotionGamepadCancelHeld=cancelPressed;if(state.screen==='home'&&!homeMotionRuntime.busy&&pad){const now=performance.now(),cool=now-homeMotionRuntime.gamepadStamp>230,ax=pad.axes?.[0]||0,ay=pad.axes?.[1]||0;if(confirmEdge){const t=document.activeElement?.dataset?.homeTarget;if(t)homeMotionNavigate(t);else homeMotionToggle()}else if(cancelEdge){homeMotionToggle()}else if(cool){let dir='';if(ay<-.58&&Math.abs(ax)<.42)dir='up';else if(ax>.58&&Math.abs(ay)<.5)dir='right';else if(ax<-.48&&ay<-.22)dir='up-left';else if(ax<-.48&&ay>.22)dir='down-left';if(dir){homeMotionRuntime.gamepadStamp=now;homeMotionFocusDirection(dir)}}}requestAnimationFrame(homeMotionGamepadPoll)}"""
+          if html.count(old)!=1: raise SystemExit(f'R27_REPLACE_GUARD_FAILED count={html.count(old)}')
+          html_path.write_text(html.replace(old,new,1),encoding='utf-8')
+
+          standalone=Path('tests/home-gamepad-temporal.spec.mjs')
+          smoke=Path('tests/browser-runtime-smoke.spec.mjs')
+          marker='// UI R27: Home gamepad rising-edge temporal regression'
+          smoke_text=smoke.read_text(encoding='utf-8')
+          if marker not in smoke_text:
+              src=standalone.read_text(encoding='utf-8')
+              first,sep,body=src.partition('\n')
+              if first.strip() != "import { test, expect } from '@playwright/test';" or not sep:
+                  raise SystemExit('R27_TEMPORAL_IMPORT_GUARD_FAILED')
+              smoke.write_text(smoke_text.rstrip()+f'\n\n{marker}\n'+body.lstrip(),encoding='utf-8')
+          standalone.unlink()
+          PY
+          git show origin/main:playwright.config.mjs > playwright.config.mjs
+          node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+          git diff --check
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          smoke=Path('tests/browser-runtime-smoke.spec.mjs').read_text(encoding='utf-8')
+          assert s.count('let homeMotionGamepadConfirmHeld=false,homeMotionGamepadCancelHeld=false;') == 1
+          assert 'confirmEdge=confirmPressed&&!homeMotionGamepadConfirmHeld' in s
+          assert 'cancelEdge=cancelPressed&&!homeMotionGamepadCancelHeld' in s
+          assert "else if(cool){let dir=''" in s
+          assert '// UI R27: Home gamepad rising-edge temporal regression' in smoke
+          assert not Path('tests/home-gamepad-temporal.spec.mjs').exists()
+          print('R27_BOUNDED_ASSERTIONS_PASS')
+          PY
+      - name: Run repaired Home temporal regression
+        if: steps.guard.outputs.already != 'true'
+        run: npx playwright test --config=playwright.config.mjs --workers=1 --grep 'Home gamepad confirm and cancel are edge-triggered under held input'
+      - name: Commit product repair
+        if: steps.guard.outputs.already != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-r27-executor'
+          git config user.email 'actions@users.noreply.github.com'
+          git add browser/GAMEROAD.html tests/browser-runtime-smoke.spec.mjs playwright.config.mjs
+          git add -u tests/home-gamepad-temporal.spec.mjs
+          test "$(git diff --cached --name-only | tr '\n' ' ')" = 'browser/GAMEROAD.html playwright.config.mjs tests/browser-runtime-smoke.spec.mjs tests/home-gamepad-temporal.spec.mjs '
+          git commit -m 'FIX(UI R27): edge-trigger Home gamepad confirm cancel'
+          git push origin HEAD:work/uifeedback-r26-motion-temporal

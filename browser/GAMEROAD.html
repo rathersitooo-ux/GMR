@@ -932,6 +932,29 @@ html.grCodexHomeActive #home button:focus-visible{
 }
 </style>
 <!-- UI_PRO_MAX_R48_END -->
+<style id="gameroad-r20-result-ranking-visibility-r1">
+/* R20: presentation-only. Keep all four final Free4P ranks readable in
+   the initial Result viewport; ranking/order/outcome/actions remain unchanged. */
+.result.active #resultRanking{
+  display:grid;
+  grid-template-rows:repeat(4,minmax(0,1fr));
+  gap:5px;
+  overflow:hidden;
+}
+.result.active #resultRanking .rankLine{
+  min-height:0;
+  margin-bottom:0;
+}
+@media (max-height:500px) and (orientation:landscape){
+  .result.active #resultRanking{gap:2px}
+  .result.active #resultRanking .rankLine{min-height:0;margin-bottom:0;padding:2px 6px}
+}
+@media (max-width:540px) and (orientation:portrait){
+  .result.active #resultRanking{gap:2px}
+  .result.active #resultRanking .rankLine{min-height:0;margin-bottom:0;padding:3px 7px}
+  .result.active .resultBtns{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+</style>
 </head><body><div class="app" id="app"><header class="top"><div class="brand">GAMEROAD</div><div class="topRight"><div class="pill" id="saveState">保存済み</div><div class="pill" id="topMode">ホーム</div></div></header>
 <div id="screenMotionBridge" aria-hidden="true"></div>
 <section class="screen home codexHome active" data-screen="home" data-home-state="HOME_EXPANDED" data-home-preview="" data-codex-home-source="HomeMainMenuSlidePad-R2-shell+formal-clean-crops">

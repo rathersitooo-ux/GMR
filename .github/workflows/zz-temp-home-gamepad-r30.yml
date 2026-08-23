@@ -1,8 +1,8 @@
 name: TEMP R30 Home gamepad edge current-main recovery
 
 on:
-  push:
-    branches: [work/uifeedback-r30-home-gamepad-edge-currentmain]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -30,7 +30,7 @@ jobs:
           test "$(git rev-parse origin/main)" = "$EXPECTED_MAIN"
           test "$(git hash-object browser/GAMEROAD.html)" = "$EXPECTED_HTML_BLOB"
           test "$(git hash-object tests/browser-runtime-smoke.spec.mjs)" = "$EXPECTED_SMOKE_BLOB"
-          test "$(git rev-parse HEAD^)" = "$EXPECTED_MAIN"
+          test "$(git merge-base HEAD origin/main)" = "$EXPECTED_MAIN"
           echo "R30_CURRENT_MAIN_GUARD_PASS main=$EXPECTED_MAIN html=$EXPECTED_HTML_BLOB smoke=$EXPECTED_SMOKE_BLOB"
 
       - uses: actions/setup-node@v4

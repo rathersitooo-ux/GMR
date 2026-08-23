@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {
+  planBattleConveyorEnvironmentFrame,
   planBattleConveyor,
   auditMotionContinuity,
   planBattleStartHandoff,
@@ -19,6 +20,41 @@ const demo = [
   {accepted:true,eventId:'p6',kind:'compare4',publicData:{playerIds:['P1','P2','P3','P4'],winnerIds:['P4']}},
   {accepted:true,eventId:'p7',kind:'finisher',publicData:{winnerId:'P4',loserIds:['P1','P2','P3']}}
 ];
+
+const envBase = planBattleConveyorEnvironmentFrame({segmentCount:8,travel:0,phase:'IDLE_READ'});
+const envLoop = planBattleConveyorEnvironmentFrame({segmentCount:8,travel:1,phase:'IDLE_READ'});
+assert.equal(envBase.presentationOnly, true);
+assert.equal(envBase.environmentAuthority, 'decorative_visual_loop_only');
+assert.equal(envBase.gameStateWrite, false);
+assert.equal(envBase.position109Write, false);
+assert.equal(envBase.targetWrite, false);
+assert.equal(envBase.orderWrite, false);
+assert.equal(envBase.formalArt, false);
+assert.deepEqual(envBase.screenSpaceAnchors, ['hand','target_feedback','status','winner_afterstate']);
+assert.deepEqual(envBase.worldLayerScope, ['floor','path','side_scenery']);
+assert.deepEqual(envLoop.segments.map(x=>x.segmentId), envBase.segments.map(x=>x.segmentId));
+assert.deepEqual(envLoop.segments.map(x=>x.normalizedDepth.toFixed(8)), envBase.segments.map(x=>x.normalizedDepth.toFixed(8)));
+assert.deepEqual(envLoop.segments.map(x=>x.recycleCycle), envBase.segments.map(x=>x.recycleCycle + 1));
+const depthOrdered = [...envBase.segments].sort((a,b)=>a.normalizedDepth-b.normalizedDepth);
+for (let i=1;i<depthOrdered.length;i+=1) {
+  assert.ok(depthOrdered[i].screenY > depthOrdered[i-1].screenY);
+  assert.ok(depthOrdered[i].scale > depthOrdered[i-1].scale);
+  assert.ok(depthOrdered[i].opacity > depthOrdered[i-1].opacity);
+}
+const envQuarter = planBattleConveyorEnvironmentFrame({segmentCount:8,travel:.25,phase:'RESOLVE'});
+assert.equal(envQuarter.motionIntent, 'BURST');
+assert.notDeepEqual(envQuarter.segments.map(x=>x.normalizedDepth.toFixed(8)), envBase.segments.map(x=>x.normalizedDepth.toFixed(8)));
+const envReduced = planBattleConveyorEnvironmentFrame({segmentCount:8,travel:.73,phase:'RESOLVE',reducedMotion:true});
+const envLowPerf = planBattleConveyorEnvironmentFrame({segmentCount:8,travel:.73,phase:'RESOLVE',lowPerf:true});
+assert.equal(envReduced.motionSuppressed, true);
+assert.equal(envReduced.effectiveTravel, 0);
+assert.equal(envLowPerf.motionSuppressed, true);
+assert.deepEqual(envReduced.segments.map(x=>x.normalizedDepth), envBase.segments.map(x=>x.normalizedDepth));
+assert.deepEqual(envLowPerf.segments.map(x=>x.normalizedDepth), envBase.segments.map(x=>x.normalizedDepth));
+assert.equal(planBattleConveyorEnvironmentFrame({segmentCount:8,travel:.2,phase:'TARGET_LOCK'}).motionIntent, 'HOLD');
+assert.throws(() => planBattleConveyorEnvironmentFrame({segmentCount:2,travel:0,phase:'IDLE_READ'}), /SEGMENT_COUNT_INVALID/);
+assert.throws(() => planBattleConveyorEnvironmentFrame({segmentCount:8,travel:-1,phase:'IDLE_READ'}), /TRAVEL_INVALID/);
+assert.throws(() => planBattleConveyorEnvironmentFrame({segmentCount:8,travel:0,phase:'UNKNOWN'}), /PHASE_INVALID/);
 
 const t = planBattleConveyor(demo);
 assert.equal(t.presentationOnly, true);

@@ -95,6 +95,78 @@ function motionMarkers(kind, importance, reducedMotion = false) {
   return freeze(base);
 }
 
+const ENVIRONMENT_PHASES = Object.freeze({
+  IDLE_READ: 'IDLE_READ',
+  CARD_SELECT: 'CARD_SELECT',
+  TARGET_LOCK: 'TARGET_LOCK',
+  RESOLVE: 'RESOLVE',
+  SETTLE_AFTERMATH: 'SETTLE_AFTERMATH'
+});
+const ENVIRONMENT_MOTION_INTENT = Object.freeze({
+  IDLE_READ: 'AMBIENT_OPTIONAL',
+  CARD_SELECT: 'AMBIENT_MINIMAL',
+  TARGET_LOCK: 'HOLD',
+  RESOLVE: 'BURST',
+  SETTLE_AFTERMATH: 'SETTLE'
+});
+function loopUnit(value) { return ((value % 1) + 1) % 1; }
+function environmentDepthCurve(depth) { return depth * depth * (3 - 2 * depth); }
+
+export function planBattleConveyorEnvironmentFrame({
+  segmentCount,
+  travel,
+  phase,
+  reducedMotion = false,
+  lowPerf = false
+} = {}) {
+  if (!Number.isSafeInteger(segmentCount) || segmentCount < 3 || segmentCount > 64) {
+    throw new TypeError('ENVIRONMENT_SEGMENT_COUNT_INVALID');
+  }
+  if (!Number.isFinite(travel) || travel < 0) throw new TypeError('ENVIRONMENT_TRAVEL_INVALID');
+  if (!Object.prototype.hasOwnProperty.call(ENVIRONMENT_PHASES, phase)) {
+    throw new TypeError(`ENVIRONMENT_PHASE_INVALID:${phase}`);
+  }
+  const motionSuppressed = reducedMotion === true || lowPerf === true;
+  const effectiveTravel = motionSuppressed ? 0 : travel;
+  const segments = [];
+  for (let index = 0; index < segmentCount; index += 1) {
+    const baseDepth = index / segmentCount;
+    const rawDepth = baseDepth + effectiveTravel;
+    const normalizedDepth = loopUnit(rawDepth);
+    const perspectiveDepth = environmentDepthCurve(normalizedDepth);
+    segments.push(freeze({
+      segmentId: `visual-segment-${index}`,
+      normalizedDepth,
+      recycleCycle: Math.floor(rawDepth),
+      screenY: 0.12 + (0.60 * perspectiveDepth),
+      scale: 0.18 + (0.82 * perspectiveDepth),
+      opacity: 0.18 + (0.82 * perspectiveDepth),
+      recycleOnly: true
+    }));
+  }
+  return freeze({
+    schema: 'gameroad.battle-conveyor-environment.v1',
+    presentationOnly: true,
+    environmentAuthority: 'decorative_visual_loop_only',
+    gameStateWrite: false,
+    position109Write: false,
+    targetWrite: false,
+    orderWrite: false,
+    formalArt: false,
+    phase: ENVIRONMENT_PHASES[phase],
+    motionIntent: ENVIRONMENT_MOTION_INTENT[phase],
+    motionSuppressed,
+    reducedMotion: reducedMotion === true,
+    lowPerf: lowPerf === true,
+    requestedTravel: travel,
+    effectiveTravel,
+    worldLayerScope: ['floor', 'path', 'side_scenery'],
+    screenSpaceAnchors: ['hand', 'target_feedback', 'status', 'winner_afterstate'],
+    seamPolicy: 'recycle_only_outside_decision_surface_or_behind_vanishing_mask',
+    segments
+  });
+}
+
 export function planBattleConveyor(events, { reducedMotion = false, lowPerf = false } = {}) {
   if (!Array.isArray(events)) throw new TypeError('EVENTS_REQUIRED');
   let stage = null;

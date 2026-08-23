@@ -24,6 +24,14 @@ const defaultBoardFacilityRuntimeMountSource = path.join(repoRoot, 'browser/boar
 const defaultUiStateFeedbackCoreSource = path.join(repoRoot, 'browser/ui-state-feedback-core.mjs');
 const defaultUiStateFeedbackReadyPlanAdapterSource = path.join(repoRoot, 'browser/ui-state-feedback-ready-plan-adapter.mjs');
 const defaultFieldMusicPolicyCoreSource = path.join(repoRoot, 'browser/field-music-policy-core.mjs');
+const defaultClickSfxSource = path.join(repoRoot, 'assets/audio/sfx/click_002.ogg');
+const defaultCardSlideSfxSource = path.join(repoRoot, 'assets/audio/sfx/cardSlide6.ogg');
+const defaultCardPlaceSfxSource = path.join(repoRoot, 'assets/audio/sfx/cardPlace1.ogg');
+const FORMAL_SELECTED3_SFX_BLOBS = Object.freeze({
+  click: '4564b888c25143eaed79c384a5ce02054813a41c',
+  cardSlide: 'b0090036bd9c0d48c3f6d79fd77eaf30901b6a05',
+  cardPlace: '42bbfa8ea2daaadd237c48287388c7c931cc817e',
+});
 const defaultDist = path.join(repoRoot, 'deploy/cloudflare/dist');
 
 function gitBlobSha1(buffer) {
@@ -61,6 +69,9 @@ export async function buildPackage({
   uiStateFeedbackCoreSource = defaultUiStateFeedbackCoreSource,
   uiStateFeedbackReadyPlanAdapterSource = defaultUiStateFeedbackReadyPlanAdapterSource,
   fieldMusicPolicyCoreSource = defaultFieldMusicPolicyCoreSource,
+  clickSfxSource = defaultClickSfxSource,
+  cardSlideSfxSource = defaultCardSlideSfxSource,
+  cardPlaceSfxSource = defaultCardPlaceSfxSource,
   dist = defaultDist,
   expectedBlob = '',
   expectedCoreBlob = '',
@@ -95,6 +106,9 @@ export async function buildPackage({
   const uiStateFeedbackCoreInput = await readFile(uiStateFeedbackCoreSource);
   const uiStateFeedbackReadyPlanAdapterInput = await readFile(uiStateFeedbackReadyPlanAdapterSource);
   const fieldMusicPolicyCoreInput = await readFile(fieldMusicPolicyCoreSource);
+  const clickSfxInput = await readFile(clickSfxSource);
+  const cardSlideSfxInput = await readFile(cardSlideSfxSource);
+  const cardPlaceSfxInput = await readFile(cardPlaceSfxSource);
   const blob = gitBlobSha1(input);
   const coreBlob = gitBlobSha1(coreInput);
   const presenceCoreBlob = gitBlobSha1(presenceCoreInput);
@@ -110,6 +124,18 @@ export async function buildPackage({
   const uiStateFeedbackCoreBlob = gitBlobSha1(uiStateFeedbackCoreInput);
   const uiStateFeedbackReadyPlanAdapterBlob = gitBlobSha1(uiStateFeedbackReadyPlanAdapterInput);
   const fieldMusicPolicyCoreBlob = gitBlobSha1(fieldMusicPolicyCoreInput);
+  const clickSfxBlob = gitBlobSha1(clickSfxInput);
+  const cardSlideSfxBlob = gitBlobSha1(cardSlideSfxInput);
+  const cardPlaceSfxBlob = gitBlobSha1(cardPlaceSfxInput);
+  if (clickSfxBlob !== FORMAL_SELECTED3_SFX_BLOBS.click) {
+    throw new Error(`Formal click SFX blob mismatch: expected=${FORMAL_SELECTED3_SFX_BLOBS.click} actual=${clickSfxBlob}`);
+  }
+  if (cardSlideSfxBlob !== FORMAL_SELECTED3_SFX_BLOBS.cardSlide) {
+    throw new Error(`Formal card-slide SFX blob mismatch: expected=${FORMAL_SELECTED3_SFX_BLOBS.cardSlide} actual=${cardSlideSfxBlob}`);
+  }
+  if (cardPlaceSfxBlob !== FORMAL_SELECTED3_SFX_BLOBS.cardPlace) {
+    throw new Error(`Formal card-place SFX blob mismatch: expected=${FORMAL_SELECTED3_SFX_BLOBS.cardPlace} actual=${cardPlaceSfxBlob}`);
+  }
   if (expectedBlob && blob !== expectedBlob) {
     throw new Error(`Browser blob mismatch: expected=${expectedBlob} actual=${blob}`);
   }
@@ -272,6 +298,19 @@ export async function buildPackage({
     throw new Error('dist/field-music-policy-core.mjs is not byte-identical to Browser dependency source');
   }
 
+  for (const [outputName, sourceInput] of [
+    ['click_002.ogg', clickSfxInput],
+    ['cardSlide6.ogg', cardSlideSfxInput],
+    ['cardPlace1.ogg', cardPlaceSfxInput],
+  ]) {
+    const sfxOutputPath = path.join(dist, outputName);
+    await writeFile(sfxOutputPath, sourceInput);
+    const sfxRoundTrip = await readFile(sfxOutputPath);
+    if (!sourceInput.equals(sfxRoundTrip)) {
+      throw new Error(`dist/${outputName} is not byte-identical to formal selected SFX source`);
+    }
+  }
+
   const versionManifestOutputPath = path.join(dist, VERSION_MANIFEST_FILENAME);
   await writeFile(versionManifestOutputPath, versionManifestBytes, 'utf8');
   const versionManifestRoundTrip = await readFile(versionManifestOutputPath, 'utf8');
@@ -388,6 +427,24 @@ export async function buildPackage({
         'field-music-policy-core.mjs',
         fieldMusicPolicyCoreInput,
         fieldMusicPolicyCoreBlob,
+      ),
+      sfx_click_002: provenance(
+        'assets/audio/sfx/click_002.ogg',
+        'click_002.ogg',
+        clickSfxInput,
+        clickSfxBlob,
+      ),
+      sfx_card_slide_6: provenance(
+        'assets/audio/sfx/cardSlide6.ogg',
+        'cardSlide6.ogg',
+        cardSlideSfxInput,
+        cardSlideSfxBlob,
+      ),
+      sfx_card_place_1: provenance(
+        'assets/audio/sfx/cardPlace1.ogg',
+        'cardPlace1.ogg',
+        cardPlaceSfxInput,
+        cardPlaceSfxBlob,
       ),
       browser_version_manifest: {
         source: 'build-package-release-identity',

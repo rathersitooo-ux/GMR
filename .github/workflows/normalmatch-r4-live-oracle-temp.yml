@@ -1,0 +1,135 @@
+name: TEMP R4 Public Normal Match Live Oracle
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/normalmatch-r4-live-oracle-temp.yml
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe fixed canonical normal-match HTTP
+        id: live_probe
+        shell: bash
+        env:
+          BASE_URL: https://gameroad-browser-r5.pages.dev/ws
+        run: |
+          set -euo pipefail
+          qcancel="r4live-cancel-${GITHUB_RUN_ID}"
+          qmatch="r4live-match-${GITHUB_RUN_ID}"
+          tmp="${RUNNER_TEMP}/normalmatch-r4"
+          mkdir -p "$tmp"
+
+          post_json() {
+            local op="$1" queue="$2" body="$3" out="$4" headers="$5"
+            curl --silent --show-error --location \
+              --request POST \
+              --header 'Content-Type: application/json' \
+              --header 'Accept: application/json' \
+              --dump-header "$headers" \
+              --output "$out" \
+              --write-out '%{http_code}' \
+              "${BASE_URL}?matchOp=${op}&queue=${queue}" \
+              --data "$body"
+          }
+
+          assert_json() {
+            local file="$1" expr="$2"
+            node - "$file" "$expr" <<'NODE'
+          const fs = require('node:fs');
+          const [file, expr] = process.argv.slice(2);
+          const value = JSON.parse(fs.readFileSync(file, 'utf8'));
+          const ok = Function('v', `return (${expr});`)(value);
+          if (!ok) throw new Error(`assertion failed: ${expr}`);
+          NODE
+          }
+
+          body="{\"clientId\":\"r4-cancel-${GITHUB_RUN_ID}\",\"idempotencyKey\":\"r4-cancel-idem-${GITHUB_RUN_ID}\"}"
+          code="$(post_json create "$qcancel" "$body" "$tmp/cancel-create.json" "$tmp/cancel-create.headers")"
+          [[ "$code" == 200 ]]
+          grep -qi '^cache-control:.*no-store' "$tmp/cancel-create.headers"
+          assert_json "$tmp/cancel-create.json" "v.ok === true && v.ticket.status === 'WAITING' && typeof v.ticket.ticketId === 'string' && typeof v.secret === 'string'"
+          ticket="$(node -e 'const v=require(process.argv[1]);process.stdout.write(v.ticket.ticketId)' "$tmp/cancel-create.json")"
+          secret="$(node -e 'const v=require(process.argv[1]);process.stdout.write(v.secret)' "$tmp/cancel-create.json")"
+
+          code="$(post_json status "$qcancel" "{\"ticketId\":\"${ticket}\",\"secret\":\"${secret}\"}" "$tmp/cancel-status.json" "$tmp/cancel-status.headers")"
+          [[ "$code" == 200 ]]
+          grep -qi '^cache-control:.*no-store' "$tmp/cancel-status.headers"
+          assert_json "$tmp/cancel-status.json" "v.ok === true && v.ticket.status === 'WAITING' && v.session === null"
+
+          badsecret="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+          code="$(post_json status "$qcancel" "{\"ticketId\":\"${ticket}\",\"secret\":\"${badsecret}\"}" "$tmp/bad-auth.json" "$tmp/bad-auth.headers")"
+          [[ "$code" == 403 ]]
+          assert_json "$tmp/bad-auth.json" "v.ok === false && v.reason === 'match_ticket_auth_invalid'"
+
+          code="$(post_json cancel "$qcancel" "{\"ticketId\":\"${ticket}\",\"secret\":\"${secret}\"}" "$tmp/cancel.json" "$tmp/cancel.headers")"
+          [[ "$code" == 200 ]]
+          assert_json "$tmp/cancel.json" "v.ok === true && v.cancelled === true && v.terminal === 'CANCELLED' && v.ticket.status === 'CANCELLED'"
+
+          code="$(post_json status "$qcancel" "{\"ticketId\":\"${ticket}\",\"secret\":\"${secret}\"}" "$tmp/cancelled-status.json" "$tmp/cancelled-status.headers")"
+          [[ "$code" == 200 ]]
+          assert_json "$tmp/cancelled-status.json" "v.ok === true && v.ticket.status === 'CANCELLED' && v.session === null"
+
+          tickets=()
+          secrets=()
+          for i in 1 2 3 4; do
+            body="{\"clientId\":\"r4-match-${GITHUB_RUN_ID}-${i}\",\"idempotencyKey\":\"r4-match-idem-${GITHUB_RUN_ID}-${i}\"}"
+            code="$(post_json create "$qmatch" "$body" "$tmp/create-${i}.json" "$tmp/create-${i}.headers")"
+            [[ "$code" == 200 ]]
+            grep -qi '^cache-control:.*no-store' "$tmp/create-${i}.headers"
+            assert_json "$tmp/create-${i}.json" "v.ok === true && typeof v.ticket.ticketId === 'string' && typeof v.secret === 'string'"
+            tickets+=("$(node -e 'const v=require(process.argv[1]);process.stdout.write(v.ticket.ticketId)' "$tmp/create-${i}.json")")
+            secrets+=("$(node -e 'const v=require(process.argv[1]);process.stdout.write(v.secret)' "$tmp/create-${i}.json")")
+          done
+          assert_json "$tmp/create-4.json" "v.ticket.status === 'MATCHED' && typeof v.formedMatchId === 'string' && v.formedMatchId.length > 0"
+
+          session=""
+          slots=""
+          for idx in 0 1 2 3; do
+            code="$(post_json status "$qmatch" "{\"ticketId\":\"${tickets[$idx]}\",\"secret\":\"${secrets[$idx]}\"}" "$tmp/matched-${idx}.json" "$tmp/matched-${idx}.headers")"
+            [[ "$code" == 200 ]]
+            read -r sid size slot < <(node - "$tmp/matched-${idx}.json" <<'NODE'
+          const fs=require('node:fs');
+          const v=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+          if (!(v.ok === true && v.ticket.status === 'MATCHED' && v.session && v.session.size === 4)) throw new Error('matched status invalid');
+          process.stdout.write(`${v.session.sessionId} ${v.session.size} ${v.session.slot}\n`);
+          NODE
+          )
+            [[ "$size" == 4 ]]
+            if [[ -z "$session" ]]; then session="$sid"; else [[ "$session" == "$sid" ]]; fi
+            slots+="${slot}"
+          done
+          [[ "$(printf '%s' "$slots" | grep -o . | sort | tr -d '\n')" == 0123 ]]
+
+          code="$(post_json cancel "$qmatch" "{\"ticketId\":\"${tickets[0]}\",\"secret\":\"${secrets[0]}\"}" "$tmp/matched-cancel.json" "$tmp/matched-cancel.headers")"
+          [[ "$code" == 200 ]]
+          assert_json "$tmp/matched-cancel.json" "v.ok === true && v.cancelled === false && v.terminal === 'MATCHED' && v.ticket.status === 'MATCHED'"
+
+          echo 'Live normal-match oracle passed: WAITING/status/auth/CANCELLED + 4-ticket MATCHED/session/slot + matched-cancel truth.'
+
+      - name: Report sanitized evidence
+        if: always()
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LIVE_OUTCOME: ${{ steps.live_probe.outcome }}
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/r4-live-evidence.txt" <<EOF
+          NORMALMATCH_R4_LIVE_ORACLE_EVIDENCE
+          deployed_sha=b6165bdd0f20831c07974ffa0834ab8431afcbcf
+          run_id=${GITHUB_RUN_ID}
+          workflow_commit=${GITHUB_SHA}
+          canonical=https://gameroad-browser-r5.pages.dev
+          live_probe=${LIVE_OUTCOME}
+          cases=WAITING_STATUS_AUTH_CANCELLED_AND_4TICKET_MATCHED_SESSION_SLOT_MATCHED_CANCEL_TRUTH
+          secrets_logged=false
+          EOF
+          gh issue comment 158 --body-file "$RUNNER_TEMP/r4-live-evidence.txt"

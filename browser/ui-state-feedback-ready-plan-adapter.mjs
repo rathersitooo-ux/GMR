@@ -136,6 +136,16 @@ function pointerCoordinate(event, key) {
   return value;
 }
 
+function pointerPointInsideTarget(target, event) {
+  const x = pointerCoordinate(event, 'clientX');
+  const y = pointerCoordinate(event, 'clientY');
+  if (typeof target.getBoundingClientRect !== 'function') return true;
+  const rect = target.getBoundingClientRect();
+  const edges = [rect?.left, rect?.top, rect?.right, rect?.bottom];
+  if (!edges.every((value) => typeof value === 'number' && Number.isFinite(value))) return false;
+  return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+}
+
 function capturePointerIfSupported(target, pointerId) {
   if (typeof target.setPointerCapture !== 'function') return false;
   try {
@@ -200,6 +210,18 @@ export function bindReadyPlanFeedbackControl({
     }, tickMs);
   };
   const matchesActivePointer = (event) => activePointerId !== null && pointerIdOf(event) === activePointerId;
+  const cancelActivePointer = (reason) => {
+    if (activePointerId === null) return false;
+    const pointerId = activePointerId;
+    activePointerId = null;
+    stopTick();
+    try {
+      dispatch({type: 'BLUR', reason});
+    } finally {
+      releasePointerCaptureIfHeld(target, pointerId);
+    }
+    return true;
+  };
 
   const onPointerDown = (event) => {
     if (destroyed || activePointerId !== null) return;
@@ -222,10 +244,20 @@ export function bindReadyPlanFeedbackControl({
       x: pointerCoordinate(event, 'clientX'),
       y: pointerCoordinate(event, 'clientY'),
     });
-    if (out.intent === 'swipe_right') stopTick();
+    if (out.intent === 'swipe_right') {
+      stopTick();
+      return;
+    }
+    if (!pointerPointInsideTarget(target, event)) {
+      cancelActivePointer('pointer_left_target');
+    }
   };
   const onPointerUp = (event) => {
     if (destroyed || !matchesActivePointer(event)) return;
+    if (!pointerPointInsideTarget(target, event)) {
+      cancelActivePointer('pointer_release_outside');
+      return;
+    }
     const pointerId = activePointerId;
     activePointerId = null;
     stopTick();

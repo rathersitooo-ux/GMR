@@ -6,6 +6,10 @@ on:
       - work/normalmatch-r6-currentbase-recovery
     paths:
       - '.github/workflows/zz-temp-normalmatch-r8-result-geometry.yml'
+  pull_request:
+    branches:
+      - work/normalmatch-r6-currentbase-recovery
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read

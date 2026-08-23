@@ -141,12 +141,14 @@ class FakeTarget {
   constructor(){
     this.listeners=new Map();
     this.capturedPointers=new Set();
+    this.rect={left:-10000,top:-10000,right:10000,bottom:10000};
   }
   addEventListener(type,handler){
     const set=this.listeners.get(type) || new Set();
     set.add(handler); this.listeners.set(type,set);
   }
   removeEventListener(type,handler){ this.listeners.get(type)?.delete(handler); }
+  getBoundingClientRect(){ return {...this.rect}; }
   emit(type,event={}){ for (const handler of this.listeners.get(type) || []) handler(event); }
   setPointerCapture(pointerId){ this.capturedPointers.add(pointerId); }
   hasPointerCapture(pointerId){ return this.capturedPointers.has(pointerId); }
@@ -205,16 +207,31 @@ test('binding wires pointer commit, emits one token, and settles matching server
   assert.equal(h.renders.at(-1),'confirmed');
 });
 
-test('binding captures the primary pointer so an outside release still settles exactly once',()=>{
+test('binding cancels a captured release outside the target without allocating a token',()=>{
   const h=makeBinding();
+  h.target.rect={left:0,top:0,right:20,bottom:40};
   h.target.emit('pointerdown',{pointerId:11,button:0,clientX:10,clientY:20});
   assert.equal(h.target.hasPointerCapture(11),true);
   assert.equal(h.adapter.getFeedback().feedback,'pressed');
-  assert.equal(h.target.emitOutside('pointerup',{pointerId:11,button:0,clientX:40,clientY:20}),true);
+  assert.equal(h.target.emitOutside('pointerup',{pointerId:11,button:0,clientX:21,clientY:20}),true);
   assert.equal(h.target.hasPointerCapture(11),false);
-  assert.equal(h.tokenCounter,1);
-  assert.deepEqual(h.calls,[{type:'commit',operationToken:'bind-1',source:'pointer_release'}]);
-  assert.equal(h.adapter.getFeedback().feedback,'pending');
+  assert.equal(h.tokenCounter,0);
+  assert.equal(h.calls.length,0);
+  assert.equal(h.adapter.getFeedback().feedback,'normal');
+  assert.equal(h.adapter.getFeedback().reason,'pointer_release_outside');
+});
+
+test('binding cancels on move-out even before movement distance cancellation',()=>{
+  const h=makeBinding();
+  h.target.rect={left:0,top:0,right:20,bottom:40};
+  h.target.emit('pointerdown',{pointerId:13,button:0,clientX:10,clientY:20});
+  h.target.emit('pointermove',{pointerId:13,button:0,clientX:21,clientY:20});
+  assert.equal(h.target.hasPointerCapture(13),false);
+  assert.equal(h.tokenCounter,0);
+  assert.equal(h.calls.length,0);
+  assert.equal(h.adapter.getFeedback().feedback,'normal');
+  assert.equal(h.adapter.getFeedback().reason,'pointer_left_target');
+  assert.equal(h.target.emitOutside('pointerup',{pointerId:13,button:0,clientX:21,clientY:20}),false);
 });
 
 test('binding cancels a pressed pointer when capture is lost before release',()=>{

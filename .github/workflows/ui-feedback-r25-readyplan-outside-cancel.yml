@@ -1,9 +1,9 @@
 name: UI Feedback R25 ReadyPlan Outside Cancel Executor
 
 on:
-  push:
+  pull_request:
     branches:
-      - work/ui-feedback-r25-readyplan-outside-cancel
+      - main
 
 permissions:
   contents: write
@@ -15,6 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
@@ -222,6 +223,7 @@ jobs:
         shell: bash
         env:
           BASE_SHA: 15375f4da44b2b78e7d943d107e48aac0b1b7013
+          PUSH_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: |
           set -euo pipefail
           rm -f .github/workflows/ui-feedback-r25-readyplan-outside-cancel.yml
@@ -235,4 +237,4 @@ jobs:
           printf '%s\n' "${paths[@]}" | grep -Fx 'browser/ui-state-feedback-ready-plan-adapter.mjs'
           printf '%s\n' "${paths[@]}" | grep -Fx 'tests/ui-state-feedback-ready-plan-adapter.test.mjs'
           printf '%s\n' "${paths[@]}" | grep -Fx 'deploy/cloudflare/tests/build.test.mjs'
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          git push origin "HEAD:${PUSH_BRANCH}"

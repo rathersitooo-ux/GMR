@@ -26,6 +26,7 @@ jobs:
           test "$(git hash-object tests/browser-runtime-smoke.spec.mjs)" = a458f4e785a38ad8b64b9a57f267f7113776d39d
           test "$(git merge-base HEAD origin/main)" = d8bc961cff3ffd1484486a513cf3571bfb94695d
           echo R30_GUARD_PASS
+          echo R30_EDGE_POLICY=busy-pending_offscreen-latched
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

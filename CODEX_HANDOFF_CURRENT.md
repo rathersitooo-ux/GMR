@@ -20,15 +20,31 @@ Codexへ渡すのは repository / filesystem / terminal / build / editor / Unity
 - acceptance evidence / test contract
 - material unresolved / ResumeCondition
 
-stable evidence pointer は必要なものだけ付ける。01 template、02 template、`CODEX_LIVE_EVENT`、local mirror は transport/evidence source であり、すべてを毎回通る固定hopではない。
+player-visible UI、game flow、操作、画面遷移、入力系、表示中の機能を変更するTaskでは、上記に `GAME_SURFACE_CONTEXT` を追加する。これはDrive全仕様の複製ではなく、今回のuse-siteに必要なJIT契約だけを含む:
+- current canon / evidence pointer と、そのcurrent性を判断した根拠
+- surface / state / player route と current consumer/use-site
+- その場面で成立必須の機能・player action
+- required controls / buttons / focus target。名称・数・配置をcurrent資料で確認できない時は発明せず `UNKNOWN/BLOCKED_HEAD` とする
+- entry / back / cancel / failure return / selection restore のうち今回materialなもの
+- touch / gamepad / keyboard、safe-area、reduced-motion、low-perf等のうち今回materialな入力・accessibility制約
+- temporary / debug / playtest controlを正式player UIへ混ぜない等、対象scopeの禁止事項
+
+非player-visible・非UI Taskへ無関係なbutton inventoryを強制しない。stable evidence pointer は必要なものだけ付ける。01 template、02 template、`CODEX_LIVE_EVENT`、local mirror は transport/evidence source であり、すべてを毎回通る固定hopではない。
 
 ## Mutation gate
-project state mutation 直前に、repo側で実際に消費される current execution input と Drive の current Task / AcquireKey / ExactMutableResources / acceptance を照合する。source/mirror不一致、stale、owner conflict、identity不明など material な矛盾があれば推測補完せず既存 `BLOCKED_HEAD` へ返す。
+project state mutation 直前に、repo側で実際に消費される current execution input と Drive の current Task / AcquireKey / ExactMutableResources / acceptance を照合する。`GAME_SURFACE_CONTEXT` が必要なTaskでは、対象surface/state/player route・required action/control・current pointerも照合する。source/mirror不一致、stale、owner conflict、identity不明、player-visible契約不明など material な矛盾があれば推測補完せず既存 `BLOCKED_HEAD` へ返す。
 
 ## Return / adoption
 返却の核は current input/version、実変更diff/artifact、実行testとstatus、failure/unresolved、evidence pointer、rollback または ResumeCondition。未実行・skipped・pending・unknownをPASSにしない。root cause、恒久対策、全回帰、全size/hash、全screenshotは実failureまたはTask acceptance/riskが要求する時だけ追加する。
 
-HEADは返却後にcurrent authorityとactual outputをreadbackして採否する。commit / PR / merge / green CI / Codex自己申告だけをproduct/game完成証拠にしない。
+`GAME_SURFACE_CONTEXT` を受けたTaskは `GAME_SURFACE_RETURN` も返す:
+- actual surface / state / player route で何が変わったか、または NO_CHANGE
+- actual controls/actionsの追加・削除・移動・意味変更の有無
+- current Drive契約とactual code/runtimeの mismatch / missing / ambiguity
+- 実行した player-route/runtime/DOM/screenshot/input test と status。未実行証拠を実行済みにしない
+- HEAD判断が必要な unresolved / ResumeCondition
+
+Codexは検出したspec gapやactual mismatchを自己判断でDrive canonical specへ昇格・書換えしない。同じTask/AcquireKeyのreturn evidenceとしてHEADへ返す。HEADは返却後にcurrent authorityとactual outputをreadbackして採否し、採用する事実・証拠・状態だけを既存のcurrent Drive sinkへ反映してreadbackする。commit / PR / merge / green CI / Codex自己申告だけをproduct/game完成証拠にしない。
 
 ## Current AI boundary
 Roblox専用工程のAI対象可否は、その時点のCURRENT user rulingを正とし、このhandoffへdated file ID・size・SHA・Studio手順・old resume pointを固定しない。Browser / Unity / repository 等のlaneも current Task から解決する。

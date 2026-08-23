@@ -51,7 +51,14 @@ function safeTrackKey(value) {
 }
 
 export class FieldMusicRuntimeCore {
-  constructor({ tracks = [], musicVolume = 0.55, fadeMs = 220, loadTimeoutMs = 6000, environment, onEvent = () => {} } = {}) {
+  constructor({
+    tracks = [],
+    musicVolume = 0.55,
+    fadeMs = 220,
+    loadTimeoutMs = 6000,
+    environment,
+    onEvent = () => {},
+  } = {}) {
     this.tracks = Array.isArray(tracks) ? tracks.slice() : [];
     this.musicVolume = clamp01(musicVolume);
     this.musicMuted = false;
@@ -59,6 +66,7 @@ export class FieldMusicRuntimeCore {
     this.loadTimeoutMs = Math.max(0, Number(loadTimeoutMs) || 0);
     this.environment = normalizeEnvironment(environment);
     this.onEvent = typeof onEvent === 'function' ? onEvent : () => {};
+
     this.context = null;
     this.masterBus = null;
     this.musicBus = null;
@@ -86,6 +94,7 @@ export class FieldMusicRuntimeCore {
     this.musicBus = this.context.createGain();
     this.musicBus.connect(this.masterBus);
     this.masterBus.connect(this.context.destination);
+
     this.decks = [0, 1].map((index) => {
       const audio = this.environment.createAudioElement();
       audio.preload = 'auto';
@@ -109,14 +118,20 @@ export class FieldMusicRuntimeCore {
 
   async unlockFromUserGesture() {
     this.ensureGraph();
-    if (this.context.state === 'suspended' && typeof this.context.resume === 'function') await this.context.resume();
+    if (this.context.state === 'suspended' && typeof this.context.resume === 'function') {
+      await this.context.resume();
+    }
     this.userUnlocked = this.context.state === 'running';
     this.emit('user_unlock', { state: this.context.state, ok: this.userUnlocked });
     return this.userUnlocked;
   }
 
   targetGain(baseVolume = 1) {
-    return resolveEffectiveMusicVolume({ baseVolume, musicVolume: this.musicVolume, musicMuted: this.musicMuted });
+    return resolveEffectiveMusicVolume({
+      baseVolume,
+      musicVolume: this.musicVolume,
+      musicMuted: this.musicMuted,
+    });
   }
 
   applyBusGain(rampMs = 80) {
@@ -172,6 +187,7 @@ export class FieldMusicRuntimeCore {
     if (!this.userUnlocked) throw new Error('USER_GESTURE_UNLOCK_REQUIRED');
     if (!track?.url) throw new Error(`TRACK_URL_MISSING:${safeTrackKey(track?.key) || 'unknown'}`);
     this.ensureGraph();
+
     const nextIndex = this.activeDeckIndex === 0 ? 1 : 0;
     const next = this.decks[nextIndex];
     const previous = this.activeDeckIndex >= 0 ? this.decks[this.activeDeckIndex] : null;
@@ -182,15 +198,19 @@ export class FieldMusicRuntimeCore {
     next.audio.src = track.url;
     next.audio.loop = track.loopMode !== 'none';
     try { next.audio.currentTime = 0; } catch {}
+
     const now = Number(this.context.currentTime) || 0;
     next.gain.gain.cancelScheduledValues?.(now);
     next.gain.gain.setValueAtTime?.(0, now);
     if (typeof next.gain.gain.setValueAtTime !== 'function') next.gain.gain.value = 0;
+
     await this.waitUntilPlayable(next.audio);
     await next.audio.play();
+
     const fadeSeconds = Math.max(0, Number(fadeMs) || 0) / 1000;
     next.gain.gain.linearRampToValueAtTime?.(1, now + fadeSeconds);
     if (typeof next.gain.gain.linearRampToValueAtTime !== 'function') next.gain.gain.value = 1;
+
     if (previous) {
       previous.gain.gain.cancelScheduledValues?.(now);
       previous.gain.gain.setValueAtTime?.(Number(previous.gain.gain.value) || 0, now);
@@ -198,22 +218,34 @@ export class FieldMusicRuntimeCore {
       if (typeof previous.gain.gain.linearRampToValueAtTime !== 'function') previous.gain.gain.value = 0;
       this.scheduleStop(previous, Math.max(0, Number(fadeMs) || 0) + 40);
     }
+
     this.activeDeckIndex = nextIndex;
     this.applyBusGain(0);
     this.emit('track_started', {
-      trackKey: safeTrackKey(track.key), reason, loopMode: track.loopMode || 'whole_file',
-      targetEffectiveGain: this.targetGain(track.baseVolume ?? 1), fadeMs: Math.max(0, Number(fadeMs) || 0),
+      trackKey: safeTrackKey(track.key),
+      reason,
+      loopMode: track.loopMode || 'whole_file',
+      targetEffectiveGain: this.targetGain(track.baseVolume ?? 1),
+      fadeMs: Math.max(0, Number(fadeMs) || 0),
     });
     return track;
   }
 
   async enterField({ fieldId, sessionId, random = Math.random, tracks = this.tracks } = {}) {
     if (!this.userUnlocked) throw new Error('USER_GESTURE_UNLOCK_REQUIRED');
-    const selection = resolveFieldMusicSelection({ role: FIELD_MUSIC_ROLE, fieldId, sessionId, tracks, previousSelection: this.selection, random });
+    const selection = resolveFieldMusicSelection({
+      role: FIELD_MUSIC_ROLE,
+      fieldId,
+      sessionId,
+      tracks,
+      previousSelection: this.selection,
+      random,
+    });
     if (selection.kind !== 'selected') {
       this.emit('selection_silent', selection);
       return selection;
     }
+
     this.selection = selection;
     this.applyBusGain(0);
     const selectedTrack = this.trackByKey(selection.trackKey, tracks);
@@ -223,9 +255,13 @@ export class FieldMusicRuntimeCore {
     } catch (error) {
       this.emit('play_failed', { trackKey: selection.trackKey, error: String(error?.message || error) });
     }
+
     const fallback = resolveOneShotFallback({
-      role: FIELD_MUSIC_ROLE, failedTrackKey: selection.trackKey, tracks,
-      attemptedTrackKeys: [selection.trackKey], random,
+      role: FIELD_MUSIC_ROLE,
+      failedTrackKey: selection.trackKey,
+      tracks,
+      attemptedTrackKeys: [selection.trackKey],
+      random,
     });
     if (!fallback) {
       this.selection = null;
@@ -233,8 +269,14 @@ export class FieldMusicRuntimeCore {
       this.emit('fallback_unavailable', { failedTrackKey: selection.trackKey });
       return Object.freeze({ kind: 'silent', reason: 'playback_failed_no_fallback', trackKey: null });
     }
+
     const fallbackTrack = this.trackByKey(fallback.trackKey, tracks);
-    this.selection = Object.freeze({ ...selection, trackKey: fallback.trackKey, baseVolume: fallback.baseVolume, reason: fallback.reason });
+    this.selection = Object.freeze({
+      ...selection,
+      trackKey: fallback.trackKey,
+      baseVolume: fallback.baseVolume,
+      reason: fallback.reason,
+    });
     this.applyBusGain(0);
     this.emit('fallback_selected', { failedTrackKey: selection.trackKey, trackKey: fallback.trackKey });
     try {
@@ -270,7 +312,9 @@ export class FieldMusicRuntimeCore {
       this.emit('background_suspend', { wasPlaying: this.wasPlayingBeforeSuspend, state: this.context.state });
       return this.snapshot();
     }
-    if (this.userUnlocked && this.wasPlayingBeforeSuspend && this.context.state === 'suspended' && typeof this.context.resume === 'function') await this.context.resume();
+    if (this.userUnlocked && this.wasPlayingBeforeSuspend && this.context.state === 'suspended' && typeof this.context.resume === 'function') {
+      await this.context.resume();
+    }
     this.emit('foreground_resume', { state: this.context.state });
     return this.snapshot();
   }
@@ -322,12 +366,18 @@ export class FieldMusicRuntimeCore {
   snapshot() {
     const active = this.activeDeckIndex >= 0 ? this.decks[this.activeDeckIndex] : null;
     return Object.freeze({
-      contextState: this.context?.state ?? 'uninitialized', userUnlocked: this.userUnlocked,
-      activeDeckIndex: this.activeDeckIndex, trackKey: active?.audio?.dataset?.trackKey || null,
-      paused: active?.audio?.paused ?? true, mediaLoop: active?.audio?.loop ?? false,
-      musicMuted: this.musicMuted, musicVolume: this.musicVolume,
-      effectiveGain: this.targetGain(this.selection?.baseVolume ?? 1), selection: this.selection,
-      eventCount: this.events.length, events: this.events.slice(-24),
+      contextState: this.context?.state ?? 'uninitialized',
+      userUnlocked: this.userUnlocked,
+      activeDeckIndex: this.activeDeckIndex,
+      trackKey: active?.audio?.dataset?.trackKey || null,
+      paused: active?.audio?.paused ?? true,
+      mediaLoop: active?.audio?.loop ?? false,
+      musicMuted: this.musicMuted,
+      musicVolume: this.musicVolume,
+      effectiveGain: this.targetGain(this.selection?.baseVolume ?? 1),
+      selection: this.selection,
+      eventCount: this.events.length,
+      events: this.events.slice(-24),
     });
   }
 }

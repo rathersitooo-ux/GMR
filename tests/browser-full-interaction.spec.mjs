@@ -203,6 +203,8 @@ async function playVisibleTwoPlayerToResult(page, testInfo, evidencePrefix) {
   let abilityConfirms = 0;
   let cardPresentationFallbacks = 0;
   let lastCardPresentationEvent = null;
+  let conveyorObserved = false;
+  let conveyorMaxTravel = 0;
 
   while (Date.now() < deadline) {
     if (await result.isVisible().catch(() => false)) break;
@@ -217,6 +219,12 @@ async function playVisibleTwoPlayerToResult(page, testInfo, evidencePrefix) {
       }
     }
 
+    const conveyorEnvironment = battle.locator('#battlePhaseSurface [data-battle-conveyor-environment]').first();
+  if ((await conveyorEnvironment.count()) > 0) {
+    conveyorObserved = true;
+    const travel = Number(await conveyorEnvironment.getAttribute('data-battle-conveyor-travel'));
+    if (Number.isFinite(travel)) conveyorMaxTravel = Math.max(conveyorMaxTravel, travel);
+  }
     if (await satisfyVisibleAbilityChoice(page)) {
       abilityConfirms += 1;
       continue;
@@ -250,6 +258,15 @@ async function playVisibleTwoPlayerToResult(page, testInfo, evidencePrefix) {
   expect(roundsSubmitted, 'at least one visible plan was submitted').toBeGreaterThan(0);
   expect(presentationAdvances, 'at least one visible Battle result advance was used').toBeGreaterThan(0);
   expect(cardPresentationFallbacks, 'accepted/public Battle resolution mounts the current CardPRES fallback on the visible production resolution surface').toBeGreaterThan(0);
+  const finalConveyorEnvironment = battle.locator('#battlePhaseSurface [data-battle-conveyor-environment]').first();
+  expect(conveyorObserved, 'accepted Battle resolution mounted the finite conveyor environment').toBeTruthy();
+  await expect(finalConveyorEnvironment).toHaveAttribute('aria-hidden', 'true');
+  await expect(finalConveyorEnvironment).toHaveAttribute('data-battle-conveyor-authority', 'decorative_visual_loop_only');
+  expect(await finalConveyorEnvironment.locator('[data-battle-conveyor-segment]').count(), 'finite recycled environment segment pool').toBe(8);
+  expect(await finalConveyorEnvironment.evaluate((node) => getComputedStyle(node).pointerEvents), 'decorative environment cannot intercept input').toBe('none');
+  expect(conveyorMaxTravel, 'normal-motion accepted Battle resolution advances environment travel').toBeGreaterThan(0);
+  expect(await battle.locator('#readyPlan').count(), 'existing screen-space decision control remains singular').toBe(1);
+  expect(await finalConveyorEnvironment.locator('#readyPlan').count(), 'decision control is never moved inside the decorative environment').toBe(0);
   const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';
   expect(roundsText, 'Result exposes a real round count').toMatch(/\d+ラウンド/);
   await expect(result.locator('#resultRanking .rankLine')).toHaveCount(2);

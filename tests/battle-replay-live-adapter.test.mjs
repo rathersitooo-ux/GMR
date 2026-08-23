@@ -807,3 +807,57 @@ test('Free4P omitted formalRanking cannot derive from accepted progress belongin
   assert.equal(publicData.round, 2);
   assert.equal('formalRanking' in publicData, false);
 });
+
+test('Battle conveyor environment advances only on accepted non-duplicate resolution and suppresses travel for reduced/lowPerf', () => {
+  const frames = [];
+  const bridge = createBattleReplayCardPresentationBridge({
+    document: null,
+    matchMedia: () => ({ matches: false }),
+    renderPlan: () => {},
+    renderEnvironment: (frame, eventId) => frames.push({ frame, eventId })
+  });
+  bridge.begin('M-CONVEYOR-R37');
+  const initial = bridge.snapshot('M-CONVEYOR-R37');
+  assert.equal(initial.environmentTravel, 0);
+  assert.equal(initial.lastEnvironmentFrame.phase, 'IDLE_READ');
+  assert.equal(initial.lastEnvironmentFrame.segments.length, 8);
+  assert.equal(frames.length, 1);
+
+  const first = bridge.acceptAcceptedResolution({ matchId: 'M-CONVEYOR-R37', serial: 1 });
+  assert.equal(first.accepted, true);
+  assert.equal(first.duplicate, false);
+  const afterFirst = bridge.snapshot('M-CONVEYOR-R37');
+  assert.equal(afterFirst.environmentTravel, 0.16);
+  assert.equal(afterFirst.lastEnvironmentFrame.phase, 'RESOLVE');
+  assert.equal(afterFirst.lastEnvironmentFrame.environmentAuthority, 'decorative_visual_loop_only');
+  assert.equal(afterFirst.lastEnvironmentFrame.gameStateWrite, false);
+  assert.equal(afterFirst.lastEnvironmentFrame.position109Write, false);
+  assert.equal(frames.length, 2);
+
+  const duplicate = bridge.acceptAcceptedResolution({ matchId: 'M-CONVEYOR-R37', serial: 1 });
+  assert.equal(duplicate.accepted, true);
+  assert.equal(duplicate.duplicate, true);
+  assert.equal(bridge.snapshot('M-CONVEYOR-R37').environmentTravel, 0.16);
+  assert.equal(frames.length, 2);
+
+  for (const profile of [
+    { reduceMotion: true, lowPerf: false, id: 'REDUCED' },
+    { reduceMotion: false, lowPerf: true, id: 'LOWPERF' }
+  ]) {
+    const profileFrames = [];
+    const fake = fakePresentationDocument(profile);
+    const profileBridge = createBattleReplayCardPresentationBridge({
+      document: fake.document,
+      matchMedia: () => ({ matches: false }),
+      renderPlan: () => {},
+      renderEnvironment: (frame) => profileFrames.push(frame)
+    });
+    profileBridge.begin(`M-CONVEYOR-${profile.id}`);
+    profileBridge.acceptAcceptedResolution({ matchId: `M-CONVEYOR-${profile.id}`, serial: 1 });
+    const snapshot = profileBridge.snapshot(`M-CONVEYOR-${profile.id}`);
+    assert.equal(snapshot.environmentTravel, 0);
+    assert.equal(snapshot.lastEnvironmentFrame.motionSuppressed, true);
+    assert.equal(snapshot.lastEnvironmentFrame.effectiveTravel, 0);
+    assert.equal(profileFrames.at(-1).segments.length, 8);
+  }
+});

@@ -1,16 +1,15 @@
 name: TEMP UI R27 Home Gamepad Product Patch
 
 on:
-  pull_request:
+  push:
     branches: [main]
-    types: [opened, reopened, synchronize]
+    paths: ['.github/workflows/uifeedback-r27-main-patch.yml']
 
 permissions:
   contents: write
 
 jobs:
   patch:
-    if: github.event.pull_request.head.ref == 'work/uifeedback-r26-motion-temporal'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

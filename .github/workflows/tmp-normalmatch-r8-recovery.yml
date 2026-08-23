@@ -1,0 +1,82 @@
+name: TEMP NormalMatch R8 current-main recovery
+
+on:
+  push:
+    branches:
+      - work/normalmatch-r8-currentmain-resultgeometry
+    paths:
+      - .github/workflows/tmp-normalmatch-r8-recovery.yml
+
+permissions:
+  contents: write
+
+jobs:
+  recover-current-main:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reapply validated candidate onto fresh main and tighten Result geometry
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin pull/335/head:refs/remotes/origin/pr335-r8
+          git cat-file -e 2808a505a8f0c888079872885a77cc060b53f33b^{commit}
+          git cat-file -e 183329e780f0c8dc0ba51add26b7d3e4a9fa5113^{commit}
+          git diff --binary 2808a505a8f0c888079872885a77cc060b53f33b 183329e780f0c8dc0ba51add26b7d3e4a9fa5113 -- \
+            .github/workflows/gameroad-required-gate.yml \
+            browser/GAMEROAD.html \
+            browser/post-match-autoqueue-core.mjs \
+            tests/browser-runtime-smoke.spec.mjs \
+            tests/post-match-autoqueue-core.test.mjs > /tmp/normal-r6.patch
+          test -s /tmp/normal-r6.patch
+          git apply --3way /tmp/normal-r6.patch
+
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('browser/GAMEROAD.html')
+          s = p.read_text()
+          old = '''      #postMatchAutoQueue{
+                margin:0;
+                padding:5px 4px;
+                min-width:0;
+              }
+              #postMatchAutoQueue label{
+                gap:4px;
+              }'''
+          new = '''      #postMatchAutoQueue{
+                margin:0;
+                padding:0 4px;
+                min-width:0;
+                min-height:0;
+                line-height:1;
+              }
+              #postMatchAutoQueue label{
+                gap:4px;
+              }
+              #postMatchAutoQueue input{
+                width:14px;
+                height:14px;
+              }'''
+          if old not in s:
+              raise SystemExit('expected R6 mobile autoqueue CSS block not found after apply')
+          if s.count(old) != 1:
+              raise SystemExit(f'expected one R6 mobile CSS block, found {s.count(old)}')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+
+          node --test tests/post-match-autoqueue-core.test.mjs
+          node --check browser/post-match-autoqueue-core.mjs
+
+          rm .github/workflows/tmp-normalmatch-r8-recovery.yml
+          git add .github/workflows/gameroad-required-gate.yml browser/GAMEROAD.html browser/post-match-autoqueue-core.mjs tests/browser-runtime-smoke.spec.mjs tests/post-match-autoqueue-core.test.mjs .github/workflows/tmp-normalmatch-r8-recovery.yml
+          git diff --cached --check
+          git diff --cached --quiet && { echo '::error::No durable R8 product delta'; exit 1; }
+          git commit -m 'Normal R8: recover autoqueue and fix Result geometry'
+          git push origin HEAD:work/normalmatch-r8-currentmain-resultgeometry

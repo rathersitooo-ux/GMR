@@ -40,10 +40,12 @@ test('Home gamepad confirm and cancel are edge-triggered under held input', asyn
       t: Number(performance.now().toFixed(1)),
       nav: window.GAMEROAD_NAV_QA?.snapshot?.() ?? null,
       motion: window.GAMEROAD_HOME_MOTION_QA?.snapshot?.() ?? null,
+      expanded: document.getElementById('homePadCenter')?.getAttribute('aria-expanded') ?? null,
       activeTarget: document.activeElement?.dataset?.homeTarget ?? null,
     }), label));
   };
   const setPad = async (patch) => page.evaluate((next) => Object.assign(globalThis.__GAMEROAD_QA_PAD__, next), patch);
+  const expanded = async () => page.evaluate(() => document.getElementById('homePadCenter')?.getAttribute('aria-expanded'));
   const focusSetup = async () => page.evaluate(() => {
     window.GAMEROAD_NAV_QA.root('home');
     window.GAMEROAD_HOME_MOTION_QA.expand();
@@ -83,29 +85,35 @@ test('Home gamepad confirm and cancel are edge-triggered under held input', asyn
   await page.evaluate(() => {
     window.GAMEROAD_NAV_QA.root('home');
     window.GAMEROAD_HOME_MOTION_QA.expand();
-    const center = document.getElementById('homePadCenter');
-    if (!center) throw new Error('Home motion center missing');
-    globalThis.__GAMEROAD_QA_B_MUTATIONS__ = 0;
-    new MutationObserver((records) => {
-      for (const record of records) {
-        if (record.attributeName === 'aria-expanded') globalThis.__GAMEROAD_QA_B_MUTATIONS__ += 1;
-      }
-    }).observe(center, { attributes: true, attributeFilter: ['aria-expanded'] });
   });
+  await page.waitForTimeout(120);
+  await snap('B-before-edge');
+  expect(await expanded()).toBe('true');
 
   await setPad({ b: true });
-  await page.waitForTimeout(720);
+  await page.waitForTimeout(360);
+  await snap('B-after-edge');
+  expect(await page.evaluate(() => window.GAMEROAD_NAV_QA.snapshot().screen)).toBe('home');
+  expect(await expanded()).toBe('false');
+
+  await page.waitForTimeout(620);
   await snap('B-held');
-  const bEvidence = await page.evaluate(() => ({
-    mutations: globalThis.__GAMEROAD_QA_B_MUTATIONS__,
-    expanded: document.getElementById('homePadCenter')?.getAttribute('aria-expanded'),
-    screen: window.GAMEROAD_NAV_QA.snapshot().screen,
-  }));
-  expect(bEvidence.screen).toBe('home');
-  expect(bEvidence.mutations).toBe(1);
-  expect(bEvidence.expanded).toBe('false');
+  expect(await expanded()).toBe('false');
 
   await setPad({ b: false });
+  await page.waitForTimeout(80);
+  await setPad({ b: true });
+  await page.waitForTimeout(360);
+  await snap('B-repress');
+  expect(await expanded()).toBe('true');
+
+  await setPad({ b: false });
+  const bEvidence = {
+    before: trace.find((x) => x.label === 'B-before-edge')?.expanded,
+    afterEdge: trace.find((x) => x.label === 'B-after-edge')?.expanded,
+    held: trace.find((x) => x.label === 'B-held')?.expanded,
+    repress: trace.find((x) => x.label === 'B-repress')?.expanded,
+  };
   console.log(`GAMEROAD_HOME_GAMEPAD_TEMPORAL ${JSON.stringify({ trace, bEvidence })}`);
   test.info().annotations.push({
     type: 'home-gamepad-temporal',

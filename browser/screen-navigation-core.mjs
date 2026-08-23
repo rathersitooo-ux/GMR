@@ -33,7 +33,13 @@ function commonButtonSfxUrl() {
   ).href;
 }
 
+function hasActiveUserGesture() {
+  const activation = globalThis.navigator?.userActivation;
+  return activation == null || activation.isActive === true;
+}
+
 function playAcceptedNavigationSfx() {
+  if (!hasActiveUserGesture()) return false;
   const AudioCtor = globalThis.Audio;
   if (typeof AudioCtor !== 'function') return false;
 

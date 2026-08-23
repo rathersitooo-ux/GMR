@@ -13,23 +13,20 @@ jobs:
         with:
           ref: work/uifeedback-r30-home-gamepad-edge-currentmain
           fetch-depth: 0
-      - name: Guard exact current source and print expansion writers
+      - name: Verify unchanged current product blobs and print expansion writers
         shell: bash
         run: |
           set -euo pipefail
           git fetch origin main
-          test "$(git rev-parse origin/main)" = d8bc961cff3ffd1484486a513cf3571bfb94695d
+          test "$(git rev-parse origin/main)" = e67b2afff43430d345cf6afaad2573b4e031d61e
           test "$(git hash-object browser/GAMEROAD.html)" = ad49944a780a8e2c0bb576cf160880cdc725081c
+          test "$(git hash-object tests/browser-runtime-smoke.spec.mjs)" = a458f4e785a38ad8b64b9a57f267f7113776d39d
+          test "$(git rev-parse origin/main:browser/GAMEROAD.html)" = ad49944a780a8e2c0bb576cf160880cdc725081c
+          test "$(git rev-parse origin/main:tests/browser-runtime-smoke.spec.mjs)" = a458f4e785a38ad8b64b9a57f267f7113776d39d
           python3 - <<'PY'
           from pathlib import Path
           s=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          needles=[
-            'homeMotionSetState(HOME_MOTION_STATES.EXPANDED)',
-            'homeMotionOnRender',
-            'returnTimer',
-            'homeMotionRuntime.returnTimer',
-            'HOME_MOTION_STATES.RECOVERING',
-          ]
+          needles=['homeMotionSetState(HOME_MOTION_STATES.EXPANDED)','homeMotionOnRender','returnTimer','homeMotionRuntime.returnTimer','HOME_MOTION_STATES.RECOVERING']
           for needle in needles:
             hits=[]; p=0
             while True:
@@ -38,7 +35,7 @@ jobs:
               hits.append(i); p=i+1
             print(f'R30_WRITER_NEEDLE {needle!r} hits={hits}')
             for n,i in enumerate(hits,1):
-              a=max(0,i-1300); b=min(len(s),i+2600)
+              a=max(0,i-1600); b=min(len(s),i+3200)
               print(f'R30_WRITER_BEGIN needle={needle!r} occurrence={n} index={i}')
               print(s[a:b].replace('\r',''))
               print('R30_WRITER_END')

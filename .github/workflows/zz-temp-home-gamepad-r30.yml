@@ -1,4 +1,4 @@
-name: TEMP R30 Home gamepad source diagnosis
+name: TEMP R30 Home gamepad B-edge diagnosis
 
 on:
   pull_request:
@@ -7,45 +7,50 @@ on:
 jobs:
   diagnose:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
           ref: work/uifeedback-r30-home-gamepad-edge-currentmain
           fetch-depth: 0
-      - name: Guard exact current main source
-        shell: bash
+      - name: Guard exact source
         run: |
-          set -euo pipefail
           git fetch origin main
           test "$(git rev-parse origin/main)" = d8bc961cff3ffd1484486a513cf3571bfb94695d
           test "$(git hash-object browser/GAMEROAD.html)" = ad49944a780a8e2c0bb576cf160880cdc725081c
-          test "$(git merge-base HEAD origin/main)" = d8bc961cff3ffd1484486a513cf3571bfb94695d
-          echo R30_DIAG_GUARD_PASS
-      - name: Print bounded Home motion source neighborhoods
+          test "$(git hash-object tests/browser-runtime-smoke.spec.mjs)" = a458f4e785a38ad8b64b9a57f267f7113776d39d
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install chromium
+      - name: Build instrumented candidate and diagnostic copy of pinned regression
         shell: bash
         run: |
+          set -euo pipefail
+          git fetch origin b752adefce25ad2a8d3f929d773e3cd4c4cb0c56 --depth=1
+          git show b752adefce25ad2a8d3f929d773e3cd4c4cb0c56:tests/home-gamepad-temporal.spec.mjs > /tmp/r30.spec.mjs
+          test "$(git hash-object /tmp/r30.spec.mjs)" = 11ed4640f0717fce14591c8e4232215ddfaa9983
           python3 - <<'PY'
           from pathlib import Path
-          s=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          needles=[
-            'function homeMotionToggle',
-            'homeMotionRuntime=',
-            'GAMEROAD_HOME_MOTION_QA',
-            'function homeMotionGamepadPoll',
-            'homePadCenter',
-          ]
-          for needle in needles:
-            hits=[]; pos=0
-            while True:
-              i=s.find(needle,pos)
-              if i<0: break
-              hits.append(i); pos=i+1
-            print(f'R30_SOURCE_NEEDLE {needle!r} hits={hits}')
-            for n,i in enumerate(hits[:3],1):
-              a=max(0,i-900); b=min(len(s),i+1800)
-              chunk=s[a:b].replace('\r','')
-              print(f'R30_SOURCE_BEGIN needle={needle!r} occurrence={n} index={i}')
-              print(chunk)
-              print('R30_SOURCE_END')
+          hp=Path('browser/GAMEROAD.html'); s=hp.read_text(encoding='utf-8')
+          start='function homeMotionGamepadPoll(){'; tail='requestAnimationFrame(homeMotionGamepadPoll)}'
+          a=s.index(start); b=s.index(tail,a)+len(tail)
+          old=s[a:b]; assert old.count('pad.buttons?.[1]?.pressed')==1
+          new="""let homeMotionGamepadConfirmHeld=false,homeMotionGamepadCancelHeld=false;globalThis.__R30_GP_DIAG__=[];
+          function homeMotionGamepadPoll(){const pads=navigator.getGamepads?.()||[],pad=[...pads].find(Boolean),confirmPressed=!!pad?.buttons?.[0]?.pressed,cancelPressed=!!pad?.buttons?.[1]?.pressed;const diag=(phase,edge=false)=>{if(cancelPressed||edge){globalThis.__R30_GP_DIAG__.push({phase,t:Number(performance.now().toFixed(1)),screen:state.screen,busy:homeMotionRuntime.busy,state:homeMotionRuntime.state,confirmPressed,cancelPressed,confirmHeld:homeMotionGamepadConfirmHeld,cancelHeld:homeMotionGamepadCancelHeld,edge,expanded:document.getElementById('homePadCenter')?.getAttribute('aria-expanded')});if(globalThis.__R30_GP_DIAG__.length>80)globalThis.__R30_GP_DIAG__.shift()}};if(state.screen!=='home'||!pad){diag('offscreen');homeMotionGamepadConfirmHeld=confirmPressed;homeMotionGamepadCancelHeld=cancelPressed}else if(homeMotionRuntime.busy){diag('busy');if(!confirmPressed)homeMotionGamepadConfirmHeld=false;if(!cancelPressed)homeMotionGamepadCancelHeld=false}else{const confirmEdge=confirmPressed&&!homeMotionGamepadConfirmHeld,cancelEdge=cancelPressed&&!homeMotionGamepadCancelHeld;diag('eligible-before',cancelEdge);homeMotionGamepadConfirmHeld=confirmPressed;homeMotionGamepadCancelHeld=cancelPressed;const now=performance.now(),cool=now-homeMotionRuntime.gamepadStamp>230,ax=pad.axes?.[0]||0,ay=pad.axes?.[1]||0;if(confirmEdge){const t=document.activeElement?.dataset?.homeTarget;if(t)homeMotionNavigate(t);else homeMotionToggle()}else if(cancelEdge){diag('cancel-before-toggle',true);homeMotionToggle();diag('cancel-after-toggle',true)}else if(cool){let dir='';if(ay<-.58&&Math.abs(ax)<.42)dir='up';else if(ax>.58&&Math.abs(ay)<.5)dir='right';else if(ax<-.48&&ay<-.22)dir='up-left';else if(ax<-.48&&ay>.22)dir='down-left';if(dir){homeMotionRuntime.gamepadStamp=now;homeMotionFocusDirection(dir)}}}requestAnimationFrame(homeMotionGamepadPoll)}"""
+          hp.write_text(s[:a]+new+s[b:],encoding='utf-8')
+          smoke=Path('tests/browser-runtime-smoke.spec.mjs').read_text(encoding='utf-8')
+          src=Path('/tmp/r30.spec.mjs').read_text(encoding='utf-8')
+          first,_,body=src.partition('\n'); assert first.strip()=="import { test, expect } from '@playwright/test';"
+          needle="  await snap('B-after-edge');\n"
+          insert="  await snap('B-after-edge');\n  console.log('R30_B_EDGE_DIAG '+JSON.stringify(await page.evaluate(() => ({ gp: globalThis.__R30_GP_DIAG__, motion: window.GAMEROAD_HOME_MOTION_QA.snapshot(), activeTarget: document.activeElement?.dataset?.homeTarget ?? null }))));\n"
+          assert body.count(needle)==1
+          body=body.replace(needle,insert,1)
+          Path('tests/browser-runtime-smoke.spec.mjs').write_text(smoke.rstrip()+'\n\n// R30 DIAGNOSTIC ONLY\n'+body.lstrip(),encoding='utf-8')
           PY
+          node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+      - name: Run unchanged assertions with B-edge diagnostics
+        run: npx playwright test --config=playwright.config.mjs --workers=1 --grep 'Home gamepad confirm and cancel are edge-triggered under held input'

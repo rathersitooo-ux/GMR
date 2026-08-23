@@ -1,16 +1,16 @@
-# R27 active-trigger sentinel 2026-08-23T15:26+09:00
 name: TEMP UI R27 Home Gamepad Product Patch
 
 on:
-  push:
+  pull_request_target:
     branches: [main]
-    paths: ['.github/workflows/uifeedback-r27-main-patch.yml']
+    types: [opened, reopened, synchronize]
 
 permissions:
   contents: write
 
 jobs:
   patch:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'work/uifeedback-r26-motion-temporal'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

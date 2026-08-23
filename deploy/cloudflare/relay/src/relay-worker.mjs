@@ -3,16 +3,21 @@ import {
   WS_WIRE,
   admitConnection,
   bumpGuestPresenceRevision,
+  cancelMatchTicket,
+  createMatchTicket,
   emptyRoom,
+  makeTransportPresenceFrame,
+  matchTicketStatus,
+  normalizeMatchQueue,
   normalizeRoom,
   parseChannel,
   routeFrame,
-  transportReject,
-  makeTransportPresenceFrame,
   shouldPreserveRoomAfterHostClose,
+  transportReject,
 } from './relay-core.mjs';
 
 const ROOM_KEY = 'room.v1';
+const MATCH_QUEUE_KEY = 'match-queue.v1';
 
 function attachmentOf(ws) {
   try { return ws.deserializeAttachment() || null; } catch { return null; }
@@ -57,6 +62,98 @@ function rejectSocket(ctx, reason) {
   return new Response(null, { status: 101, webSocket: client });
 }
 
+function matchJson(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+    },
+  });
+}
+
+function matchErrorStatus(reason) {
+  if (reason === 'match_ticket_auth_invalid') return 403;
+  if (reason === 'match_queue_full') return 429;
+  if (reason === 'match_client_already_waiting' || reason === 'match_idempotency_conflict') return 409;
+  return 400;
+}
+
+async function readMatchJson(request) {
+  const contentLength = Number(request.headers.get('content-length') || 0);
+  if (Number.isFinite(contentLength) && contentLength > 4096) throw new Error('match_request_too_large');
+  const text = await request.text();
+  if (text.length > 4096) throw new Error('match_request_too_large');
+  return JSON.parse(text || '{}');
+}
+
+function randomMatchSecret() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function publicMatchSession(status) {
+  if (!status.match) return null;
+  const slot = status.match.ticketIds.indexOf(status.ticket.ticketId);
+  if (slot < 0) return null;
+  return {
+    sessionId: status.match.matchId,
+    matchId: status.match.matchId,
+    slot,
+    size: status.match.ticketIds.length,
+  };
+}
+
+async function handleMatchRequest(ctx, request, url) {
+  if (request.method !== 'POST') return matchJson({ ok: false, reason: 'match_method_invalid' }, 405);
+  const op = url.searchParams.get('matchOp') || '';
+  if (op !== 'create' && op !== 'status' && op !== 'cancel') {
+    return matchJson({ ok: false, reason: 'match_op_invalid' }, 404);
+  }
+
+  let body;
+  try {
+    body = await readMatchJson(request);
+  } catch {
+    return matchJson({ ok: false, reason: 'match_request_invalid' }, 400);
+  }
+
+  const stored = normalizeMatchQueue(await ctx.storage.get(MATCH_QUEUE_KEY));
+  if (op === 'create') {
+    const result = createMatchTicket(stored, body, {
+      ticketId: `t-${crypto.randomUUID()}`,
+      secret: randomMatchSecret(),
+      matchId: `m-${crypto.randomUUID()}`,
+    });
+    if (!result.ok) return matchJson({ ok: false, reason: result.reason }, matchErrorStatus(result.reason));
+    await ctx.storage.put(MATCH_QUEUE_KEY, result.queue);
+    return matchJson({
+      ok: true,
+      idempotent: result.idempotent,
+      ticket: result.ticket,
+      secret: result.secret,
+      formedMatchId: result.formedMatchId,
+    });
+  }
+
+  if (op === 'status') {
+    const result = matchTicketStatus(stored, body);
+    if (!result.ok) return matchJson({ ok: false, reason: result.reason }, matchErrorStatus(result.reason));
+    return matchJson({ ok: true, ticket: result.ticket, session: publicMatchSession(result) });
+  }
+
+  const result = cancelMatchTicket(stored, body);
+  if (!result.ok) return matchJson({ ok: false, reason: result.reason }, matchErrorStatus(result.reason));
+  await ctx.storage.put(MATCH_QUEUE_KEY, result.queue);
+  return matchJson({
+    ok: true,
+    cancelled: result.cancelled,
+    terminal: result.terminal,
+    ticket: result.ticket,
+  });
+}
+
 export class GAMEROADFriendRoomRelay extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
@@ -64,10 +161,11 @@ export class GAMEROADFriendRoomRelay extends DurableObject {
   }
 
   async fetch(request) {
+    const url = new URL(request.url);
     if (request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') {
+      if (url.searchParams.has('matchOp')) return handleMatchRequest(this.ctx, request, url);
       return new Response('WebSocket upgrade required', { status: 426, headers: { Upgrade: 'websocket' } });
     }
-    const url = new URL(request.url);
     const handshake = {
       channel: url.searchParams.get('channel') || '',
       role: url.searchParams.get('role') || '',

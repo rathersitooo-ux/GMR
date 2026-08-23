@@ -34,8 +34,7 @@ function commonButtonSfxUrl() {
 }
 
 function hasActiveUserGesture() {
-  const activation = globalThis.navigator?.userActivation;
-  return activation == null || activation.isActive === true;
+  return globalThis.navigator?.userActivation?.isActive === true;
 }
 
 function playAcceptedNavigationSfx() {

@@ -1,0 +1,85 @@
+name: TEMP RIG R9 Motion Artifact Patch
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'tools/motion-artifact-evaluator.mjs'
+      - 'tests/motion-artifact-evaluator.test.mjs'
+      - '.github/workflows/zz-temp-rig-r9-motion-artifact-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'work/rig-r9-motion-artifact-evaluator-r20'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout R9 branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify focused evaluator before gate mutation
+        run: node --test tests/motion-artifact-evaluator.test.mjs
+
+      - name: Apply exact Required Gate mapping
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/gameroad-required-gate.yml')
+          text = path.read_text()
+
+          old_classifier = """              tools/kimodo-bvh-output-probe.mjs|\\
+              tests/kimodo-bvh-output-probe.test.mjs)"""
+          new_classifier = """              tools/kimodo-bvh-output-probe.mjs|\\
+              tests/kimodo-bvh-output-probe.test.mjs|\\
+              tools/motion-artifact-evaluator.mjs|\\
+              tests/motion-artifact-evaluator.test.mjs)"""
+          if text.count(old_classifier) != 1:
+              raise SystemExit(f'R9 classifier anchor cardinality != 1: {text.count(old_classifier)}')
+          text = text.replace(old_classifier, new_classifier, 1)
+
+          old_command = "run: node --test tests/partner-vtuber-public-context-core.test.mjs tests/partner-body-intent-core.test.mjs tests/kimodo-bvh-output-probe.test.mjs"
+          new_command = old_command + " tests/motion-artifact-evaluator.test.mjs"
+          if text.count(old_command) != 1:
+              raise SystemExit(f'R9 test-command anchor cardinality != 1: {text.count(old_command)}')
+          text = text.replace(old_command, new_command, 1)
+
+          if text.count('tools/motion-artifact-evaluator.mjs') != 1:
+              raise SystemExit('R9 tool classification cardinality invalid')
+          if text.count('tests/motion-artifact-evaluator.test.mjs') != 2:
+              raise SystemExit('R9 test classification/command cardinality invalid')
+          path.write_text(text)
+          PY
+
+      - name: Re-run focused evaluator after gate mutation
+        run: node --test tests/motion-artifact-evaluator.test.mjs
+
+      - name: Verify patch scope, self-remove, and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t changed < <(git diff --name-only)
+          if [[ "${#changed[@]}" -ne 1 || "${changed[0]}" != ".github/workflows/gameroad-required-gate.yml" ]]; then
+            printf 'Unexpected pre-commit patch paths:\n'
+            printf '%s\n' "${changed[@]}"
+            exit 1
+          fi
+          rm .github/workflows/zz-temp-rig-r9-motion-artifact-patch.yml
+          git config user.name 'gameroad-rig-r9-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add .github/workflows/gameroad-required-gate.yml .github/workflows/zz-temp-rig-r9-motion-artifact-patch.yml
+          git commit -m 'RIG R9: classify motion artifact evaluator'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}

@@ -24,53 +24,28 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify acquired preimage and execute reviewed patch
+      - name: Verify acquired preimages and apply direct patcher
         shell: bash
         run: |
           set -euo pipefail
           BASE=1bab3183c7cfefed209a9ea5465924d3223d6bd0
-          PATCH_SOURCE=5ed0532e6a017f2f8e0c43847e5b714ac698dee8
-          PATCH_FILE=.github/workflows/zz-temp-crossscreen-r38-infinite-conveyor-direct-recovery.yml
           git merge-base --is-ancestor "$BASE" HEAD
-          git merge-base --is-ancestor "$PATCH_SOURCE" HEAD
           test "$(git hash-object browser/battle-replay-live-adapter.mjs)" = "3e02fd3f14ef16287bc9d93f0cbd6e1018b83dd8"
           test "$(git hash-object tests/battle-replay-live-adapter.test.mjs)" = "0820826fa1d4da20342a69bee170132f6ce4633d"
           test "$(git hash-object tests/browser-full-interaction.spec.mjs)" = "93a3f53a7dbd0e13640acac752779eb79ec137ce"
           test "$(git hash-object deploy/cloudflare/tests/build.test.mjs)" = "80c72cbcdb2a618fe4d7ee78c2097d4dab86c308"
-          git show "$PATCH_SOURCE:$PATCH_FILE" > /tmp/r38-reviewed.yml
-          python - <<'PY'
-          from pathlib import Path
-          import subprocess
-
-          lines = Path('/tmp/r38-reviewed.yml').read_text().splitlines()
-          blocks = []
-          i = 0
-          while i < len(lines):
-              line = lines[i]
-              if line.strip() == 'run: |':
-                  indent = len(line) - len(line.lstrip())
-                  body = []
-                  i += 1
-                  while i < len(lines):
-                      raw = lines[i]
-                      if not raw.strip():
-                          body.append('')
-                          i += 1
-                          continue
-                      current = len(raw) - len(raw.lstrip())
-                      if current <= indent:
-                          break
-                      body.append(raw[min(len(raw), indent + 2):])
-                      i += 1
-                  blocks.append('\n'.join(body) + '\n')
-                  continue
-              i += 1
-          if len(blocks) != 4:
-              raise SystemExit(f'EXPECTED_4_REVIEWED_RUN_BLOCKS_GOT_{len(blocks)}')
-          for index in (1, 2):
-              subprocess.run(['bash', '-lc', blocks[index]], check=True)
-          PY
-      - name: Restore workflow bytes, commit exact four durable files, push
+          python -m py_compile .github/r38-infinite-conveyor-apply.py
+          python .github/r38-infinite-conveyor-apply.py
+      - name: Run focused semantic and package regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check browser/battle-replay-live-adapter.mjs
+          node --test tests/battle-replay-live-adapter.test.mjs
+          node tests/battle-conveyor-presentation-core.test.mjs
+          node --check tests/browser-full-interaction.spec.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Restore temporary executor files and push exact durable delta
         shell: bash
         run: |
           set -euo pipefail
@@ -78,6 +53,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout "$BASE" -- .github/workflows/gameroad-required-gate.yml .github/workflows/browser-node-ci.yml
+          git rm .github/r38-infinite-conveyor-apply.py
           git add .github/workflows/gameroad-required-gate.yml .github/workflows/browser-node-ci.yml browser/battle-replay-live-adapter.mjs tests/battle-replay-live-adapter.test.mjs tests/browser-full-interaction.spec.mjs deploy/cloudflare/tests/build.test.mjs
           git commit -m "CROSSSCREEN R38: mount recycled environment in live Battle presentation"
           mapfile -t changed < <(git diff --name-only "$BASE"...HEAD | sort)

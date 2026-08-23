@@ -67,6 +67,11 @@ jobs:
               i += 1
           if len(blocks) != 4:
               raise SystemExit(f'EXPECTED_4_RUN_BLOCKS_GOT_{len(blocks)}')
+          stale = "assert full.count(final_anchor) == 1"
+          current = "assert full.count(final_anchor) >= 1"
+          if blocks[1].count(stale) != 1:
+              raise SystemExit(f'EXPECTED_ONE_STALE_FINAL_ANCHOR_ASSERT_GOT_{blocks[1].count(stale)}')
+          blocks[1] = blocks[1].replace(stale, current, 1)
           for index in (1, 2):
               subprocess.run(['bash', '-lc', blocks[index]], check=True)
           PY

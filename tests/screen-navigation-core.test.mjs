@@ -90,6 +90,35 @@ test('accepted forward navigation attempts the exact formal common-button sound 
   }
 });
 
+test('accepted programmatic navigation without active user gesture stays silent', () => {
+  const originalAudio = globalThis.Audio;
+  const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+  let constructed = 0;
+  globalThis.Audio = class FakeAudio {
+    constructor() { constructed += 1; }
+    play() { return Promise.resolve(); }
+  };
+  Object.defineProperty(globalThis, 'navigator', {
+    value: { userActivation: { isActive: false } },
+    configurable: true
+  });
+
+  try {
+    assert.deepEqual(resolveScreenNavigation('home', 'setup'), {
+      ok: true,
+      from: 'home',
+      to: 'setup',
+      reason: SCREEN_NAVIGATION_REASON.NAVIGATE
+    });
+    assert.equal(constructed, 0);
+  } finally {
+    if (originalNavigator) Object.defineProperty(globalThis, 'navigator', originalNavigator);
+    else delete globalThis.navigator;
+    if (originalAudio === undefined) delete globalThis.Audio;
+    else globalThis.Audio = originalAudio;
+  }
+});
+
 test('rejected navigation decisions never attempt common-button playback', () => {
   const originalAudio = globalThis.Audio;
   let constructed = 0;

@@ -1178,24 +1178,32 @@ import { mountBoardFacilityRuntime } from "./board-facility-runtime-mount.mjs";
 await mountBoardFacilityRuntime(globalThis);
 </script>
 <script type="module">
-import { resolveScreenNavigation } from "./screen-navigation-core.mjs";
-import { createScreenNavigationRuntimeBridge } from "./screen-navigation-core.mjs";
+import { resolveScreenNavigation, createScreenNavigationRuntimeBridge, createScreenTransitionRuntimeAdapter } from "./screen-navigation-core.mjs";
+import { createOrientationProjectionAdapter, ORIENTATION_PROJECTIONS } from "./ui-state-feedback-core.mjs";
 const runtimeScreenNavigationBridge=createScreenNavigationRuntimeBridge();
 const existingScreenNavigationBridge=globalThis.GAMEROAD_SCREEN_NAVIGATION;
-if(existingScreenNavigationBridge && (
-  existingScreenNavigationBridge.resolve!==resolveScreenNavigation ||
-  existingScreenNavigationBridge.resolveBackTarget!==runtimeScreenNavigationBridge.resolveBackTarget
-)){
-  throw new Error("GAMEROAD_SCREEN_NAVIGATION is already occupied by an incompatible bridge");
-}
-if(!existingScreenNavigationBridge){
-  Object.defineProperty(globalThis,"GAMEROAD_SCREEN_NAVIGATION",{
-    value:runtimeScreenNavigationBridge,
-    enumerable:false,
-    configurable:false,
-    writable:false
-  });
-}
+if(existingScreenNavigationBridge && (existingScreenNavigationBridge.resolve!==resolveScreenNavigation || existingScreenNavigationBridge.resolveBackTarget!==runtimeScreenNavigationBridge.resolveBackTarget))throw new Error("GAMEROAD_SCREEN_NAVIGATION is already occupied by an incompatible bridge");
+if(!existingScreenNavigationBridge)Object.defineProperty(globalThis,"GAMEROAD_SCREEN_NAVIGATION",{value:runtimeScreenNavigationBridge,enumerable:false,configurable:false,writable:false});
+const navigationBridge=existingScreenNavigationBridge||runtimeScreenNavigationBridge;
+const readUiMode=()=>globalThis.GAMEROAD_READ_UI_MODE?.()||{reducedMotion:false,lowPerf:false};
+const screenTransitionRuntime=createScreenTransitionRuntimeAdapter({getCurrentScreen:()=>globalThis.GAMEROAD_GET_CURRENT_SCREEN(),applyScreen:(target,meta)=>globalThis.GAMEROAD_APPLY_SCREEN_TRANSITION(target,meta),runVisualPhase:(phase,context)=>globalThis.GAMEROAD_RUN_SCREEN_TRANSITION_PHASE(phase,context),navigationBridge,reducedMotion:()=>readUiMode().reducedMotion,lowPerf:()=>readUiMode().lowPerf});
+const existingScreenTransitionRuntime=globalThis.GAMEROAD_SCREEN_TRANSITION;
+if(existingScreenTransitionRuntime && (typeof existingScreenTransitionRuntime.navigate!=="function"||typeof existingScreenTransitionRuntime.back!=="function"))throw new Error("GAMEROAD_SCREEN_TRANSITION is already occupied by an incompatible runtime");
+if(!existingScreenTransitionRuntime)Object.defineProperty(globalThis,"GAMEROAD_SCREEN_TRANSITION",{value:screenTransitionRuntime,enumerable:false,configurable:false,writable:false});
+let orientationProjection=window.innerWidth===window.innerHeight?(document.documentElement.dataset.orientationProjection||ORIENTATION_PROJECTIONS.LANDSCAPE):(window.innerWidth>window.innerHeight?ORIENTATION_PROJECTIONS.LANDSCAPE:ORIENTATION_PROJECTIONS.PORTRAIT);
+document.documentElement.dataset.orientationProjection=orientationProjection;
+const orientationRuntime=createOrientationProjectionAdapter({getCurrentProjection:()=>orientationProjection,applyProjection:(projection,context)=>{orientationProjection=projection;document.documentElement.dataset.orientationProjection=projection;document.documentElement.dataset.orientationRevision=String(context.revision)},runVisualPhase:(phase,context)=>globalThis.GAMEROAD_RUN_ORIENTATION_TRANSITION_PHASE(phase,context),reducedMotion:()=>readUiMode().reducedMotion,lowPerf:()=>readUiMode().lowPerf});
+const existingOrientationRuntime=globalThis.GAMEROAD_ORIENTATION_TRANSITION;
+if(existingOrientationRuntime && typeof existingOrientationRuntime.requestViewport!=="function")throw new Error("GAMEROAD_ORIENTATION_TRANSITION is already occupied by an incompatible runtime");
+if(!existingOrientationRuntime)Object.defineProperty(globalThis,"GAMEROAD_ORIENTATION_TRANSITION",{value:orientationRuntime,enumerable:false,configurable:false,writable:false});
+const activeOrientationRuntime=existingOrientationRuntime||orientationRuntime;
+let orientationRequestSerial=0;
+const requestOrientationProjection=()=>{const width=window.innerWidth,height=window.innerHeight;if(!(width>0&&height>0))return;const serial=++orientationRequestSerial;void Promise.resolve().then(()=>activeOrientationRuntime.requestViewport({width,height},{semanticSnapshot:{screen:globalThis.GAMEROAD_GET_CURRENT_SCREEN()}})).then(result=>{if(serial===orientationRequestSerial)document.documentElement.dataset.orientationTransitionStatus=result.status}).catch(error=>{if(serial===orientationRequestSerial)document.documentElement.dataset.orientationTransitionStatus=`failed:${String(error?.message||error)}`})};
+globalThis.GAMEROAD_ORIENTATION_REQUEST=requestOrientationProjection;
+screen.orientation?.addEventListener?.('change',requestOrientationProjection);
+window.visualViewport?.addEventListener?.('resize',requestOrientationProjection);
+window.addEventListener('resize',requestOrientationProjection);
+requestOrientationProjection();
 </script>
 <script>
 (()=>{'use strict';
@@ -1264,29 +1272,19 @@ function prepareCurrentPackCommit(inspection,classification,pack){const nextProj
 function save(){const pack=savePack(),read=readStorage(localStorage,SAVE_KEY);if(read.status!=='read'){memorySave=JSON.stringify(pack);markStorageReadFailure(read.reason);return false}const inspection=inspectRawSave(read.rawValue),classification=classifySave(inspection);if(classification.status!=='current'){memorySave=JSON.stringify(pack);state.storage='memory';saveRecoveryRuntime.write={status:'blocked',reason:classification.reason};$('#storageStatus')&&($('#storageStatus').textContent='この起動中に保存');return false}if(state.savedDeckRule?.id!==DECK_RULE.id||state.savedDeckRule?.revision!==DECK_RULE.revision||!validateDeck(state.savedDeck).ok){state.storage='memory';saveRecoveryRuntime.write={status:'blocked',reason:'CURRENT_RUNTIME_DECK_NOT_LEGAL'};return false}const prepared=prepareCurrentPackCommit(inspection,classification,pack);if(prepared.status!=='prepared'){state.storage='memory';saveRecoveryRuntime.write=prepared;return false}const latest=readStorage(localStorage,SAVE_KEY);if(latest.status!=='read'||latest.rawValue!==read.rawValue){state.storage='memory';saveRecoveryRuntime.write={status:'failed',reason:latest.status==='read'?'SAVE_CHANGED_DURING_WRITE':latest.reason};return false}const written=writePreparedSaveVerified(localStorage,SAVE_KEY,prepared);saveRecoveryRuntime.write=written;if(written.status!=='saved'){memorySave=prepared.serialized;state.storage='memory';$('#storageStatus')&&($('#storageStatus').textContent='この起動中に保存');return false}memorySave=prepared.serialized;state.storage='localStorage';$('#saveState')&&($('#saveState').textContent='保存済み');$('#storageStatus')&&($('#storageStatus').textContent='端末保存');return true}
 function load(){const read=readStorage(localStorage,SAVE_KEY);if(read.status!=='read'){markStorageReadFailure(read.reason);state.deckDraft={main:[...state.savedDeck.main],ex:[...state.savedDeck.ex]};recoverDeckDraftSession();return saveRecoveryRuntime.classification}state.storage='localStorage';memorySave=read.rawValue;const inspection=inspectRawSave(read.rawValue),classification=classifySave(inspection);if((classification.status==='current'||classification.status==='recognized_legacy')&&inspection.parsed)applyParsedSave(inspection.parsed);normalizeAudioSettings();state.partnerProfiles=normalizePartnerProfiles(state.partnerProfiles);state.progression=state.progression&&typeof state.progression==='object'?state.progression:{battlePoints:0};recoverDeckDraftSession();if(classification.status!=='current')state.storage='memory';return classification}
 window.__GAMEROAD_SAVE_RECOVERY__={snapshot:()=>JSON.parse(JSON.stringify(saveRecoveryRuntime)),authority:{...SAVE_AUTHORITY}};
-function show(name){const previous=state.screen;const staleToast=$('#toast');if(staleToast?.classList.contains('on')&&staleToast.dataset.toastScreen&&staleToast.dataset.toastScreen!==name){staleToast.classList.remove('on');clearTimeout(toastTimer);delete staleToast.dataset.toastScreen}state.screen=name;document.documentElement.classList.toggle('grCodexHomeActive',name==='home');$$('.screen').forEach(s=>s.classList.toggle('active',s.dataset.screen===name));$('#topMode').textContent=({home:'ホーム',cards:'カード',characters:'パートナー',setup:'バトル準備',battle:'バトル',result:'結果',records:'記録',settings:'設定',missions:'任務',profile:'プロフィール',shop:'ショップ',gacha:'パック'})[name]||name;if(name!=='battle'&&typeof ctxClear==='function')ctxClear();if(name==='home')renderHome();if(name==='cards')renderCards();if(name==='characters')renderCharacters();if(name==='records')renderRecords();if(name==='settings')renderSettings();if(name==='missions')renderMissions();if(name==='profile')renderProfile();if(name==='shop')renderShop();if(name==='gacha')renderGacha();if(name==='setup'){renderSetupDeckStatus();renderSetupShell()}audioOnScreenTransition(previous,name);crossScreenMotionOnShow(previous,name)}
+function show(name,{skipCrossScreenMotion=false}={}){const previous=state.screen;const staleToast=$('#toast');if(staleToast?.classList.contains('on')&&staleToast.dataset.toastScreen&&staleToast.dataset.toastScreen!==name){staleToast.classList.remove('on');clearTimeout(toastTimer);delete staleToast.dataset.toastScreen}state.screen=name;document.documentElement.classList.toggle('grCodexHomeActive',name==='home');$$('.screen').forEach(s=>s.classList.toggle('active',s.dataset.screen===name));$('#topMode').textContent=({home:'ホーム',cards:'カード',characters:'パートナー',setup:'バトル準備',battle:'バトル',result:'結果',records:'記録',settings:'設定',missions:'任務',profile:'プロフィール',shop:'ショップ',gacha:'パック'})[name]||name;if(name!=='battle'&&typeof ctxClear==='function')ctxClear();if(name==='home')renderHome();if(name==='cards')renderCards();if(name==='characters')renderCharacters();if(name==='records')renderRecords();if(name==='settings')renderSettings();if(name==='missions')renderMissions();if(name==='profile')renderProfile();if(name==='shop')renderShop();if(name==='gacha')renderGacha();if(name==='setup'){renderSetupDeckStatus();renderSetupShell()}audioOnScreenTransition(previous,name);if(!skipCrossScreenMotion)crossScreenMotionOnShow(previous,name)}
 const gameroadNav={stack:[]};
 function navEntry(screen){return{screen}}
-function navigateDetail(target){
-  const bridge=globalThis.GAMEROAD_SCREEN_NAVIGATION;
-  if(!bridge || typeof bridge.resolve!=="function") throw new Error("GAMEROAD screen navigation bridge is not ready");
-  const decision=bridge.resolve(state.screen,target);
-  if(!decision.ok) return;
-  gameroadNav.stack.push(navEntry(decision.from));
-  show(decision.to);
-}
-function navigateRoot(target){
-  gameroadNav.stack.length=0;
-  show(target);
-}
-function navigateBack(){
-  const entry=gameroadNav.stack.pop();
-  const target=globalThis.GAMEROAD_SCREEN_NAVIGATION.resolveBackTarget(state.screen,entry);
-  show(target);
-}
+function currentScreenTransitionRuntime(){const runtime=globalThis.GAMEROAD_SCREEN_TRANSITION;if(!runtime||typeof runtime.navigate!=="function"||typeof runtime.back!=="function")throw new Error("GAMEROAD screen transition runtime is not ready");return runtime}
+globalThis.GAMEROAD_GET_CURRENT_SCREEN=()=>state.screen;
+globalThis.GAMEROAD_APPLY_SCREEN_TRANSITION=(target,meta={})=>{if(meta.reason==='detail')gameroadNav.stack.push(navEntry(meta.from));else if(meta.reason==='root')gameroadNav.stack.length=0;else if(meta.reason==='back'&&gameroadNav.stack.length)gameroadNav.stack.pop();show(target,{skipCrossScreenMotion:true})};
+function navigateDetail(target){return currentScreenTransitionRuntime().navigate(target,{reason:'detail'})}
+function navigateRoot(target){return currentScreenTransitionRuntime().navigate(target,{reason:'root'})}
+function navigateBack(){const entry=gameroadNav.stack[gameroadNav.stack.length-1];return currentScreenTransitionRuntime().back(entry,{reason:'back'})}
 $$('[data-go]').forEach(b=>b.addEventListener('click',()=>navigateDetail(b.dataset.go)));
 $$('[data-root-go]').forEach(b=>b.addEventListener('click',()=>navigateRoot(b.dataset.rootGo)));
 $$('[data-back]').forEach(b=>b.addEventListener('click',()=>navigateBack()));
+/* GAMEROAD_R42_TRANSITION_CONSUMER */
 
 /* CROSSSCREEN-MOTION-PRODUCTION-COVERAGE-001 R1 / native Home motion owner */
 const HOME_MOTION_DESTINATIONS=Object.freeze({setup:{dir:'up'},shop:{dir:'right'},characters:{dir:'up-left'},cards:{dir:'down-left'}});
@@ -1298,9 +1296,17 @@ function homeMotionSetState(next){const root=homeMotionRoot(),center=document.ge
 function homeMotionPreview(target=''){const root=homeMotionRoot();homeMotionRuntime.preview=HOME_MOTION_DESTINATIONS[target]?target:'';if(root)root.dataset.homePreview=homeMotionRuntime.preview;document.querySelectorAll('.homePadChoice').forEach(b=>b.classList.toggle('preview',b.dataset.homeTarget===homeMotionRuntime.preview))}
 function homeMotionToggle(){if(homeMotionRuntime.busy)return;homeMotionPreview('');homeMotionSetState(homeMotionRuntime.state===HOME_MOTION_STATES.COLLAPSED?HOME_MOTION_STATES.EXPANDED:HOME_MOTION_STATES.COLLAPSED)}
 function crossScreenBridge(direction=''){const bridge=document.getElementById('screenMotionBridge');if(!bridge||homeMotionReduced())return;clearTimeout(homeMotionRuntime.bridgeTimer);bridge.dataset.direction=direction||'neutral';bridge.classList.remove('active');void bridge.offsetWidth;bridge.classList.add('active');homeMotionRuntime.bridgeTimer=setTimeout(()=>bridge.classList.remove('active'),Math.max(240,Number.parseInt(getComputedStyle(document.documentElement).getPropertyValue('--home-motion-ms'))||260)+60)}
-function homeMotionNavigate(target){const meta=HOME_MOTION_DESTINATIONS[target];if(!meta||homeMotionRuntime.busy||state.screen!=='home')return false;if(homeMotionRuntime.state===HOME_MOTION_STATES.COLLAPSED){homeMotionSetState(HOME_MOTION_STATES.EXPANDED);return false}homeMotionRuntime.busy=true;homeMotionRuntime.lastDirection=meta.dir;homeMotionPreview(target);homeMotionSetState(HOME_MOTION_STATES.PRESSED);const button=document.querySelector(`.homePadChoice[data-home-target="${target}"]`);button?.classList.add('pressed');crossScreenBridge(meta.dir);const delay=homeMotionReduced()?0:150;setTimeout(()=>{button?.classList.remove('pressed');navigateDetail(target);homeMotionRuntime.busy=false},delay);return true}
+function homeMotionNavigate(target){const meta=HOME_MOTION_DESTINATIONS[target];if(!meta||homeMotionRuntime.busy||state.screen!=='home')return false;if(homeMotionRuntime.state===HOME_MOTION_STATES.COLLAPSED){homeMotionSetState(HOME_MOTION_STATES.EXPANDED);return false}homeMotionRuntime.busy=true;homeMotionRuntime.lastDirection=meta.dir;homeMotionPreview(target);homeMotionSetState(HOME_MOTION_STATES.PRESSED);const button=document.querySelector(`.homePadChoice[data-home-target="${target}"]`);button?.classList.add('pressed');void Promise.resolve().then(()=>navigateDetail(target)).finally(()=>{button?.classList.remove('pressed');homeMotionRuntime.busy=false});return true}
 function homeMotionOnRender(){const root=homeMotionRoot();if(!root)return;document.documentElement.classList.toggle('r10LowPerf',!!state.settings?.lowPerf);document.documentElement.classList.toggle('r10Reduced',!!state.settings?.reduceMotion);if(homeMotionRuntime.state===HOME_MOTION_STATES.PRESSED)homeMotionSetState(HOME_MOTION_STATES.EXPANDED);root.dataset.homePreview=homeMotionRuntime.preview||''}
 function crossScreenMotionOnShow(previous,name){if(previous===name)return;if(previous==='home'){const d=Object.entries(HOME_MOTION_DESTINATIONS).find(([k])=>k===name)?.[1]?.dir||'neutral';crossScreenBridge(d)}else if(name==='home'){clearTimeout(homeMotionRuntime.returnTimer);homeMotionRuntime.busy=false;homeMotionPreview('');homeMotionSetState(HOME_MOTION_STATES.RECOVERING);crossScreenBridge('return');homeMotionRuntime.returnTimer=setTimeout(()=>homeMotionSetState(HOME_MOTION_STATES.EXPANDED),homeMotionReduced()?0:230)}else{crossScreenBridge('neutral')}}
+function r42TransitionDelay(ms,signal){if(!(ms>0)||signal?.aborted)return Promise.resolve();return new Promise(resolve=>{let settled=false,timer=0;const finish=()=>{if(settled)return;settled=true;if(timer)clearTimeout(timer);signal?.removeEventListener?.('abort',finish);resolve()};timer=setTimeout(finish,ms);signal?.addEventListener?.('abort',finish,{once:true})})}
+function r42TransitionDuration(motionProfile){if(motionProfile==='none')return 0;const raw=Math.max(1,Number.parseInt(getComputedStyle(document.documentElement).getPropertyValue('--home-motion-ms'))||260);return motionProfile==='reduced'?Math.min(45,Math.max(24,Math.round(raw*.16))):Math.min(90,Math.max(48,Math.round(raw*.25)))}
+function r42ScreenDirection(context){if(context.reason==='back'||context.to==='home')return'return';if(context.from==='home')return HOME_MOTION_DESTINATIONS[context.to]?.dir||'neutral';return'neutral'}
+function r42ScreenTransitionVisualPhase(phase,context){const root=document.documentElement,revision=String(context.revision);root.dataset.screenTransitionPhase=String(phase).toLowerCase();root.dataset.screenTransitionRevision=revision;const cleanup=()=>{if(root.dataset.screenTransitionRevision===revision){delete root.dataset.screenTransitionPhase;delete root.dataset.screenTransitionRevision}};context.signal?.addEventListener?.('abort',cleanup,{once:true});if(phase==='EXIT'||phase==='ENTER'){crossScreenBridge(r42ScreenDirection(context));return r42TransitionDelay(r42TransitionDuration(context.motionProfile),context.signal)}if(phase==='SETTLE')cleanup();return Promise.resolve()}
+function r42OrientationTransitionVisualPhase(phase,context){const root=document.documentElement,revision=String(context.revision);root.dataset.orientationTransitionPhase=String(phase).toLowerCase();root.dataset.orientationTransitionRevision=revision;const cleanup=()=>{if(root.dataset.orientationTransitionRevision===revision){delete root.dataset.orientationTransitionPhase;delete root.dataset.orientationTransitionRevision}};context.signal?.addEventListener?.('abort',cleanup,{once:true});if(phase==='EXIT'){crossScreenBridge('neutral');return r42TransitionDelay(r42TransitionDuration(context.motionProfile),context.signal)}if(phase==='SETTLE')cleanup();return Promise.resolve()}
+globalThis.GAMEROAD_RUN_SCREEN_TRANSITION_PHASE=r42ScreenTransitionVisualPhase;
+globalThis.GAMEROAD_RUN_ORIENTATION_TRANSITION_PHASE=r42OrientationTransitionVisualPhase;
+globalThis.GAMEROAD_READ_UI_MODE=()=>({reducedMotion:!!(state?.settings?.reduceMotion||window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches),lowPerf:!!state?.settings?.lowPerf});
 function homeMotionFocusDirection(dir){const btn=document.querySelector(`.homePadChoice[data-home-direction="${dir}"]`);if(btn){if(homeMotionRuntime.state===HOME_MOTION_STATES.COLLAPSED)homeMotionSetState(HOME_MOTION_STATES.EXPANDED);btn.focus();homeMotionPreview(btn.dataset.homeTarget);return true}return false}
 function homeMotionWire(){const center=document.getElementById('homePadCenter');if(!center||center.dataset.motionWired)return;center.dataset.motionWired='1';center.addEventListener('click',homeMotionToggle);document.querySelectorAll('.homePadChoice').forEach(btn=>{btn.addEventListener('pointerenter',()=>homeMotionPreview(btn.dataset.homeTarget));btn.addEventListener('focus',()=>homeMotionPreview(btn.dataset.homeTarget));btn.addEventListener('pointerleave',()=>{if(document.activeElement!==btn)homeMotionPreview('')});btn.addEventListener('blur',()=>{if(!document.querySelector('.homePadChoice:hover'))homeMotionPreview('')});btn.addEventListener('click',()=>homeMotionNavigate(btn.dataset.homeTarget))});document.addEventListener('keydown',ev=>{if(state.screen!=='home'||ev.altKey||ev.ctrlKey||ev.metaKey)return;const map={ArrowUp:'up',ArrowRight:'right',ArrowLeft:'up-left',ArrowDown:'down-left'};if(map[ev.key]){ev.preventDefault();homeMotionFocusDirection(map[ev.key])}else if(ev.key==='Escape'){ev.preventDefault();homeMotionToggle()}else if(ev.key==='Enter'&&document.activeElement===center){ev.preventDefault();homeMotionToggle()}});homeMotionOnRender()}
 let homeMotionGamepadConfirmHeld=false,homeMotionGamepadCancelHeld=false;

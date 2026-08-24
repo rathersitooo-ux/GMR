@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - work/partneradvice-r21-visible-battle-mount
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write

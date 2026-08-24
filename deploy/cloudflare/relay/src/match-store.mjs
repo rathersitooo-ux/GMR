@@ -200,6 +200,42 @@ async function formTimedOutMatch(txn, tickets, nowMs, generatedMatchId) {
   return { match, matchedTickets };
 }
 
+function nextStoredMatchAlarmAt(tickets) {
+  const waiting = orderedWaitingEntries(tickets);
+  if (waiting.length < 2 || waiting.length > 3) return null;
+  const oldestAt = safeStoredAtMs(waiting[0][1].enqueuedAtMs, 0);
+  return oldestAt + MATCH_HUMAN_PRIORITY_MS;
+}
+
+export async function serviceStoredMatchTimeout(storage, runtime = {}) {
+  const nowMs = safeNowMs(runtime?.nowMs);
+  const generatedMatchId = String(runtime?.generatedMatchId || '');
+
+  return storage.transaction(async (txn) => {
+    const snapshot = await waitingSnapshot(txn);
+    if (!snapshot.ok) return reject(snapshot.reason);
+    for (const staleKey of snapshot.staleKeys) txn.delete(staleKey);
+    await stampMissingWaitingTimes(txn, snapshot, nowMs);
+
+    const timeout = await formTimedOutMatch(txn, snapshot.queue.tickets, nowMs, generatedMatchId);
+    if (timeout) {
+      return {
+        ok: true,
+        formedMatchId: timeout.match.matchId,
+        match: publicStoredMatch(timeout.match.matchId, timeout.match),
+        nextAlarmAt: null,
+      };
+    }
+
+    return {
+      ok: true,
+      formedMatchId: '',
+      match: null,
+      nextAlarmAt: nextStoredMatchAlarmAt(snapshot.queue.tickets),
+    };
+  });
+}
+
 export async function createStoredMatchTicket(storage, input, generated) {
   const clientId = String(input?.clientId || '');
   const idem = String(input?.idempotencyKey || '');

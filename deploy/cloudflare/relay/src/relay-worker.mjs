@@ -14,6 +14,7 @@ import {
 import {
   cancelStoredMatchTicket,
   createStoredMatchTicket,
+  serviceStoredMatchTimeout,
   storedMatchTicketStatus,
 } from './match-store.mjs';
 
@@ -93,6 +94,23 @@ function randomMatchSecret() {
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
+async function refreshMatchAlarm(ctx, nowMs = Date.now()) {
+  const service = await serviceStoredMatchTimeout(ctx.storage, {
+    nowMs,
+    generatedMatchId: `m-${crypto.randomUUID()}`,
+  });
+  if (!service.ok) throw new Error(service.reason || 'match_alarm_service_failed');
+
+  const nextAlarmAt = Number.isSafeInteger(service.nextAlarmAt) ? service.nextAlarmAt : null;
+  const scheduledAlarmAt = await ctx.storage.getAlarm();
+  if (nextAlarmAt === null) {
+    if (scheduledAlarmAt !== null) await ctx.storage.deleteAlarm();
+  } else if (scheduledAlarmAt !== nextAlarmAt) {
+    await ctx.storage.setAlarm(nextAlarmAt);
+  }
+  return service;
+}
+
 function publicMatchSession(status) {
   if (!status.match) return null;
   const seat = Array.isArray(status.match.seats)
@@ -128,13 +146,15 @@ async function handleMatchRequest(ctx, request, url) {
   }
 
   if (op === 'create') {
+    const nowMs = Date.now();
     const result = await createStoredMatchTicket(ctx.storage, body, {
       ticketId: `t-${crypto.randomUUID()}`,
       secret: randomMatchSecret(),
       matchId: `m-${crypto.randomUUID()}`,
-      nowMs: Date.now(),
+      nowMs,
     });
     if (!result.ok) return matchJson({ ok: false, reason: result.reason }, matchErrorStatus(result.reason));
+    await refreshMatchAlarm(ctx, nowMs);
     return matchJson({
       ok: true,
       idempotent: result.idempotent,
@@ -145,16 +165,19 @@ async function handleMatchRequest(ctx, request, url) {
   }
 
   if (op === 'status') {
+    const nowMs = Date.now();
     const result = await storedMatchTicketStatus(ctx.storage, body, {
-      nowMs: Date.now(),
+      nowMs,
       generatedMatchId: `m-${crypto.randomUUID()}`,
     });
     if (!result.ok) return matchJson({ ok: false, reason: result.reason }, matchErrorStatus(result.reason));
+    await refreshMatchAlarm(ctx, nowMs);
     return matchJson({ ok: true, ticket: result.ticket, session: publicMatchSession(result) });
   }
 
   const result = await cancelStoredMatchTicket(ctx.storage, body);
   if (!result.ok) return matchJson({ ok: false, reason: result.reason }, matchErrorStatus(result.reason));
+  await refreshMatchAlarm(ctx);
   return matchJson({
     ok: true,
     cancelled: result.cancelled,
@@ -222,6 +245,10 @@ export class GAMEROADFriendRoomRelay extends DurableObject {
     }
 
     return new Response(null, { status: 101, webSocket: client });
+  }
+
+  async alarm() {
+    await refreshMatchAlarm(this.ctx, Date.now());
   }
 
   async webSocketMessage(ws, message) {

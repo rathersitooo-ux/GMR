@@ -13,6 +13,7 @@ const defaultSource = path.join(repoRoot, 'browser/GAMEROAD.html');
 const defaultCoreSource = path.join(repoRoot, 'browser/deck-save-recovery-core.mjs');
 const defaultPresenceCoreSource = path.join(repoRoot, 'browser/hate-peer-presence-core.mjs');
 const defaultNavigationCoreSource = path.join(repoRoot, 'browser/screen-navigation-core.mjs');
+const defaultPostMatchAutoqueueCoreSource = path.join(repoRoot, 'browser/post-match-autoqueue-core.mjs');
 const defaultReplayAdapterSource = path.join(repoRoot, 'browser/battle-replay-live-adapter.mjs');
 const defaultPartnerBattleEventProjectionSource = path.join(repoRoot, 'browser/partner-battle-event-log-projection.mjs');
 const defaultReplayCoreSource = path.join(repoRoot, 'browser/battle-replay-core.mjs');
@@ -53,11 +54,39 @@ function provenance(source, output, input, blob) {
   };
 }
 
+export async function assertBrowserRuntimeDependencyCompleteness(browserInput, dist) {
+  const html = Buffer.isBuffer(browserInput) ? browserInput.toString('utf8') : String(browserInput ?? '');
+  const refs = new Set();
+  const patterns = [
+    /\bimport\s*\(\s*(['"])(\.\/[^'"?#]+\.(?:mjs|js))(?:[?#][^'"]*)?\1\s*\)/g,
+    /<script\b[^>]*\bsrc\s*=\s*(['"])(\.\/[^'"?#]+\.(?:mjs|js))(?:[?#][^'"]*)?\1[^>]*>/gi,
+  ];
+  for (const pattern of patterns) {
+    for (const match of html.matchAll(pattern)) refs.add(match[2]);
+  }
+  for (const ref of refs) {
+    const output = ref.slice(2);
+    if (!output || output.includes('/') || output.includes('\\') || output === '.' || output === '..') {
+      throw new Error(`Unsupported Browser runtime dependency path in public package: ${ref}`);
+    }
+    try {
+      await readFile(path.join(dist, output));
+    } catch (error) {
+      if (error?.code === 'ENOENT') {
+        throw new Error(`Public package missing Browser runtime dependency: ${ref}`);
+      }
+      throw error;
+    }
+  }
+  return [...refs].sort();
+}
+
 export async function buildPackage({
   source = defaultSource,
   coreSource = defaultCoreSource,
   presenceCoreSource = defaultPresenceCoreSource,
   navigationCoreSource = defaultNavigationCoreSource,
+  postMatchAutoqueueCoreSource = defaultPostMatchAutoqueueCoreSource,
   replayAdapterSource = defaultReplayAdapterSource,
   partnerBattleEventProjectionSource = defaultPartnerBattleEventProjectionSource,
   replayCoreSource = defaultReplayCoreSource,
@@ -77,6 +106,7 @@ export async function buildPackage({
   expectedCoreBlob = '',
   expectedPresenceCoreBlob = '',
   expectedNavigationCoreBlob = '',
+  expectedPostMatchAutoqueueCoreBlob = '',
   expectedReplayAdapterBlob = '',
   expectedPartnerBattleEventProjectionBlob = '',
   expectedReplayCoreBlob = '',
@@ -95,6 +125,7 @@ export async function buildPackage({
   const coreInput = await readFile(coreSource);
   const presenceCoreInput = await readFile(presenceCoreSource);
   const navigationCoreInput = await readFile(navigationCoreSource);
+  const postMatchAutoqueueCoreInput = await readFile(postMatchAutoqueueCoreSource);
   const replayAdapterInput = await readFile(replayAdapterSource);
   const partnerBattleEventProjectionInput = await readFile(partnerBattleEventProjectionSource);
   const replayCoreInput = await readFile(replayCoreSource);
@@ -113,6 +144,7 @@ export async function buildPackage({
   const coreBlob = gitBlobSha1(coreInput);
   const presenceCoreBlob = gitBlobSha1(presenceCoreInput);
   const navigationCoreBlob = gitBlobSha1(navigationCoreInput);
+  const postMatchAutoqueueCoreBlob = gitBlobSha1(postMatchAutoqueueCoreInput);
   const replayAdapterBlob = gitBlobSha1(replayAdapterInput);
   const partnerBattleEventProjectionBlob = gitBlobSha1(partnerBattleEventProjectionInput);
   const replayCoreBlob = gitBlobSha1(replayCoreInput);
@@ -147,6 +179,9 @@ export async function buildPackage({
   }
   if (expectedNavigationCoreBlob && navigationCoreBlob !== expectedNavigationCoreBlob) {
     throw new Error(`Screen navigation core blob mismatch: expected=${expectedNavigationCoreBlob} actual=${navigationCoreBlob}`);
+  }
+  if (expectedPostMatchAutoqueueCoreBlob && postMatchAutoqueueCoreBlob !== expectedPostMatchAutoqueueCoreBlob) {
+    throw new Error(`Post-match autoqueue core blob mismatch: expected=${expectedPostMatchAutoqueueCoreBlob} actual=${postMatchAutoqueueCoreBlob}`);
   }
   if (expectedReplayAdapterBlob && replayAdapterBlob !== expectedReplayAdapterBlob) {
     throw new Error(`Battle replay live adapter blob mismatch: expected=${expectedReplayAdapterBlob} actual=${replayAdapterBlob}`);
@@ -219,6 +254,13 @@ export async function buildPackage({
   const navigationCoreRoundTrip = await readFile(navigationCoreOutputPath);
   if (!navigationCoreInput.equals(navigationCoreRoundTrip)) {
     throw new Error('dist/screen-navigation-core.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const postMatchAutoqueueCoreOutputPath = path.join(dist, 'post-match-autoqueue-core.mjs');
+  await writeFile(postMatchAutoqueueCoreOutputPath, postMatchAutoqueueCoreInput);
+  const postMatchAutoqueueCoreRoundTrip = await readFile(postMatchAutoqueueCoreOutputPath);
+  if (!postMatchAutoqueueCoreInput.equals(postMatchAutoqueueCoreRoundTrip)) {
+    throw new Error('dist/post-match-autoqueue-core.mjs is not byte-identical to Browser dependency source');
   }
 
   const replayAdapterOutputPath = path.join(dist, 'battle-replay-live-adapter.mjs');
@@ -298,6 +340,8 @@ export async function buildPackage({
     throw new Error('dist/field-music-policy-core.mjs is not byte-identical to Browser dependency source');
   }
 
+  await assertBrowserRuntimeDependencyCompleteness(input, dist);
+
   for (const [outputName, sourceInput] of [
     ['click_002.ogg', clickSfxInput],
     ['cardSlide6.ogg', cardSlideSfxInput],
@@ -361,6 +405,12 @@ export async function buildPackage({
         'screen-navigation-core.mjs',
         navigationCoreInput,
         navigationCoreBlob,
+      ),
+      post_match_autoqueue_core: provenance(
+        'browser/post-match-autoqueue-core.mjs',
+        'post-match-autoqueue-core.mjs',
+        postMatchAutoqueueCoreInput,
+        postMatchAutoqueueCoreBlob,
       ),
       battle_replay_live_adapter: provenance(
         'browser/battle-replay-live-adapter.mjs',
@@ -466,6 +516,7 @@ function parseArgs(argv) {
     else if (a === '--core-source') out.coreSource = path.resolve(argv[++i]);
     else if (a === '--presence-core-source') out.presenceCoreSource = path.resolve(argv[++i]);
     else if (a === '--navigation-core-source') out.navigationCoreSource = path.resolve(argv[++i]);
+    else if (a === '--post-match-autoqueue-core-source') out.postMatchAutoqueueCoreSource = path.resolve(argv[++i]);
     else if (a === '--replay-adapter-source') out.replayAdapterSource = path.resolve(argv[++i]);
     else if (a === '--partner-battle-event-projection-source') out.partnerBattleEventProjectionSource = path.resolve(argv[++i]);
     else if (a === '--replay-core-source') out.replayCoreSource = path.resolve(argv[++i]);
@@ -482,6 +533,7 @@ function parseArgs(argv) {
     else if (a === '--expected-core-blob') out.expectedCoreBlob = argv[++i] || '';
     else if (a === '--expected-presence-core-blob') out.expectedPresenceCoreBlob = argv[++i] || '';
     else if (a === '--expected-navigation-core-blob') out.expectedNavigationCoreBlob = argv[++i] || '';
+    else if (a === '--expected-post-match-autoqueue-core-blob') out.expectedPostMatchAutoqueueCoreBlob = argv[++i] || '';
     else if (a === '--expected-replay-adapter-blob') out.expectedReplayAdapterBlob = argv[++i] || '';
     else if (a === '--expected-partner-battle-event-projection-blob') out.expectedPartnerBattleEventProjectionBlob = argv[++i] || '';
     else if (a === '--expected-replay-core-blob') out.expectedReplayCoreBlob = argv[++i] || '';

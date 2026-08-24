@@ -12,6 +12,8 @@ const deferred = () => {
   return { promise, resolve, reject };
 };
 
+const nextTurn = () => new Promise(resolve => setImmediate(resolve));
+
 test('setting defaults ON and explicit false stays OFF', () => {
   assert.equal(normalizePostMatchAutoQueueSetting(undefined), true);
   assert.equal(normalizePostMatchAutoQueueSetting(null), true);
@@ -148,4 +150,119 @@ test('duplicate authoritative Result stays single-ticket even after MATCHED', as
   assert.equal(creates, 1);
   assert.equal(c.snapshot().status, S.MATCHED);
   assert.equal(c.snapshot().matchId, 'M8');
+});
+
+test('re-enable before cancel acknowledgement restarts exactly once after provider confirms cancelled', async () => {
+  const creates = [];
+  const c = createPostMatchAutoQueueController({
+    createTicket: async payload => {
+      creates.push(payload);
+      return { ticketId: `T${creates.length}` };
+    },
+    cancelTicket: async () => {},
+  });
+  const signature = { regulationId: 'FIRST', mode: '4p', contentId: 'road_shield' };
+  await c.onResult({ resultId: 'R9', queueSignature: signature });
+  await c.setEnabled(false);
+  assert.equal(c.snapshot().status, S.CANCEL_REQUESTED);
+  await c.setEnabled(true);
+  assert.equal(c.snapshot().enabled, true);
+  assert.equal(c.snapshot().status, S.CANCEL_REQUESTED);
+  assert.equal(creates.length, 1);
+
+  c.handleTicketUpdate({ ticketId: 'T1', status: 'cancelled' });
+  await nextTurn();
+  assert.equal(creates.length, 2);
+  assert.equal(creates[1].attempt, 2);
+  assert.deepEqual(creates[1].queueSignature, signature);
+  assert.equal(c.snapshot().ticketId, 'T2');
+  assert.equal(c.snapshot().status, S.SEARCHING);
+
+  c.handleTicketUpdate({ ticketId: 'T1', status: 'cancelled' });
+  await nextTurn();
+  assert.equal(creates.length, 2);
+  assert.equal(c.snapshot().ticketId, 'T2');
+});
+
+test('authoritative waiting after re-enable resumes searching without duplicate while later cancel can restart', async () => {
+  const creates = [];
+  const c = createPostMatchAutoQueueController({
+    createTicket: async payload => {
+      creates.push(payload);
+      return { ticketId: `T${creates.length}` };
+    },
+    cancelTicket: async () => {},
+  });
+  await c.onResult({ resultId: 'R10', queueSignature: { mode: '2v2' } });
+  await c.setEnabled(false);
+  await c.setEnabled(true);
+  c.handleTicketUpdate({ ticketId: 'T1', status: 'waiting' });
+  assert.equal(c.snapshot().status, S.SEARCHING);
+  assert.equal(creates.length, 1);
+
+  c.handleTicketUpdate({ ticketId: 'T1', status: 'cancelled' });
+  await nextTurn();
+  assert.equal(creates.length, 2);
+  assert.equal(c.snapshot().ticketId, 'T2');
+  assert.equal(c.snapshot().status, S.SEARCHING);
+});
+
+test('turning OFF again while cancellation is pending clears the re-enable restart intent', async () => {
+  let creates = 0;
+  let cancels = 0;
+  const c = createPostMatchAutoQueueController({
+    createTicket: async () => ({ ticketId: `T${++creates}` }),
+    cancelTicket: async () => { cancels++; },
+  });
+  await c.onResult({ resultId: 'R11' });
+  await c.setEnabled(false);
+  await c.setEnabled(true);
+  await c.setEnabled(false);
+  assert.equal(c.snapshot().status, S.CANCEL_REQUESTED);
+  assert.equal(cancels, 1);
+
+  c.handleTicketUpdate({ ticketId: 'T1', status: 'cancelled' });
+  await nextTurn();
+  assert.equal(creates, 1);
+  assert.equal(c.snapshot().enabled, false);
+  assert.equal(c.snapshot().status, S.CANCELLED);
+});
+
+test('re-enable before in-flight ticket creation resolves resumes original attempt without cancelling it', async () => {
+  const create = deferred();
+  const cancels = [];
+  const c = createPostMatchAutoQueueController({
+    createTicket: () => create.promise,
+    cancelTicket: async payload => { cancels.push(payload); },
+  });
+  const starting = c.onResult({ resultId: 'R12', queueSignature: { mode: '4p' } });
+  await c.setEnabled(false);
+  assert.equal(c.snapshot().status, S.CANCEL_REQUESTED);
+  await c.setEnabled(true);
+  assert.equal(c.snapshot().status, S.STARTING);
+
+  create.resolve({ ticketId: 'T12' });
+  await starting;
+  assert.equal(cancels.length, 0);
+  assert.equal(c.snapshot().enabled, true);
+  assert.equal(c.snapshot().ticketId, 'T12');
+  assert.equal(c.snapshot().status, S.SEARCHING);
+});
+
+test('match winning the cancel race after re-enable is accepted without replacement or cancel-too-late feedback', async () => {
+  let creates = 0;
+  const c = createPostMatchAutoQueueController({
+    createTicket: async () => ({ ticketId: `T${++creates}` }),
+    cancelTicket: async () => {},
+  });
+  await c.onResult({ resultId: 'R13' });
+  await c.setEnabled(false);
+  await c.setEnabled(true);
+  c.handleTicketUpdate({ ticketId: 'T1', status: 'matched', matchId: 'M13' });
+  await nextTurn();
+  assert.equal(creates, 1);
+  assert.equal(c.snapshot().enabled, true);
+  assert.equal(c.snapshot().status, S.MATCHED);
+  assert.equal(c.snapshot().matchId, 'M13');
+  assert.equal(c.snapshot().cancelTooLate, false);
 });

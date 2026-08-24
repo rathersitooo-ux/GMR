@@ -193,7 +193,7 @@ const dependencyContract = [
     expectedArg: 'expectedBattleConveyorCoreBlob',
     artifact: 'battle_conveyor_presentation_core',
     fixture: 'export const BATTLE_CONVEYOR_PRESENTATION_CORE = Object.freeze({});\n',
-    currentBlob: '068f1b4998bff455e5f312668f777c1619948622',
+    currentBlob: '1d84e253a0a4c88c9c9969407c95c6155fe057ec',
   },
   {
     file: 'board-facility-state-core.classic.js',

@@ -30,7 +30,7 @@ assert.equal(envBase.position109Write, false);
 assert.equal(envBase.targetWrite, false);
 assert.equal(envBase.orderWrite, false);
 assert.equal(envBase.formalArt, false);
-assert.deepEqual(envBase.screenSpaceAnchors, ['hand','target_feedback','status','winner_afterstate']);
+assert.deepEqual(envBase.screenSpaceAnchors, ['target_feedback','status','winner_afterstate']);
 assert.deepEqual(envBase.worldLayerScope, ['floor','path','side_scenery']);
 assert.deepEqual(envLoop.segments.map(x=>x.segmentId), envBase.segments.map(x=>x.segmentId));
 assert.deepEqual(envLoop.segments.map(x=>x.normalizedDepth.toFixed(8)), envBase.segments.map(x=>x.normalizedDepth.toFixed(8)));
@@ -51,7 +51,8 @@ assert.equal(envReduced.effectiveTravel, 0);
 assert.equal(envLowPerf.motionSuppressed, true);
 assert.deepEqual(envReduced.segments.map(x=>x.normalizedDepth), envBase.segments.map(x=>x.normalizedDepth));
 assert.deepEqual(envLowPerf.segments.map(x=>x.normalizedDepth), envBase.segments.map(x=>x.normalizedDepth));
-assert.equal(planBattleConveyorEnvironmentFrame({segmentCount:8,travel:.2,phase:'TARGET_LOCK'}).motionIntent, 'HOLD');
+assert.throws(() => planBattleConveyorEnvironmentFrame({segmentCount:8,travel:.2,phase:'TARGET_LOCK'}), /PHASE_INVALID/);
+assert.throws(() => planBattleConveyorEnvironmentFrame({segmentCount:8,travel:.2,phase:'CARD_SELECT'}), /PHASE_INVALID/);
 assert.throws(() => planBattleConveyorEnvironmentFrame({segmentCount:2,travel:0,phase:'IDLE_READ'}), /SEGMENT_COUNT_INVALID/);
 assert.throws(() => planBattleConveyorEnvironmentFrame({segmentCount:8,travel:-1,phase:'IDLE_READ'}), /TRAVEL_INVALID/);
 assert.throws(() => planBattleConveyorEnvironmentFrame({segmentCount:8,travel:0,phase:'UNKNOWN'}), /PHASE_INVALID/);
@@ -163,7 +164,7 @@ assert.throws(() => createBattleStartLiveHandoff({generationId:'bad-title',prewa
 
 console.log(JSON.stringify({
   ok:true,
-  tests:62,
+  tests:63,
   timelineEnd:t.timelineEnd,
   reducedTimelineEnd:reduced.timelineEnd,
   transitions:t.plans.map(p=>[p.eventId,p.transition]),

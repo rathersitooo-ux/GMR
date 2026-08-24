@@ -321,3 +321,118 @@ test('server-owned timeout forms 2H same-team vs AI2 and solo/cancel cannot be r
   const cancelAStatus = await storedMatchTicketStatus(cancelStorage, { ticketId: cancelA.ticket.ticketId, secret: cancelA.secret });
   assert.equal(cancelAStatus.ticket.status, 'WAITING');
 });
+
+const liveAlarmUrl = String(process.env.GAMEROAD_NORMAL_MATCH_URL || '').trim();
+
+test('public normal-match alarm advances 2H/3H after a zero-request window while 1H never self-fills', {
+  skip: !liveAlarmUrl,
+  timeout: 180_000,
+}, async () => {
+  const expectedBuildSha = String(process.env.GAMEROAD_EXPECTED_BUILD_SHA || '').trim();
+  const waitMs = Number(process.env.GAMEROAD_ALARM_PROBE_WAIT_MS || 125_000);
+  const rawRunKey = String(process.env.GAMEROAD_ALARM_PROBE_RUN_KEY || process.env.GITHUB_RUN_ID || Date.now());
+  assert.equal(Number.isSafeInteger(waitMs) && waitMs >= 60_000 && waitMs <= 180_000, true);
+  if (expectedBuildSha) assert.match(expectedBuildSha, /^[0-9a-f]{40}$/i);
+
+  const base = new URL(liveAlarmUrl);
+  assert.equal(base.protocol, 'https:');
+  const runKey = rawRunKey.replace(/[^A-Za-z0-9._:-]/g, '-').slice(0, 48) || 'manual';
+
+  async function verifyBuild(phase) {
+    const response = await fetch(new URL('/gameroad-version.json', base.origin), {
+      headers: { Accept: 'application/json', 'Cache-Control': 'no-cache' },
+      redirect: 'follow',
+    });
+    assert.equal(response.status, 200, `${phase}: version manifest HTTP`);
+    assert.match(String(response.headers.get('cache-control') || ''), /no-store/i);
+    const manifest = await response.json();
+    const buildId = String(manifest?.build_id || '');
+    assert.match(buildId, /^[0-9a-f]{40}$/i);
+    if (expectedBuildSha) assert.equal(buildId, expectedBuildSha, `${phase}: deployed SHA`);
+    return buildId;
+  }
+
+  async function postJson(op, queue, body) {
+    const url = new URL(base);
+    url.searchParams.set('matchOp', op);
+    url.searchParams.set('queue', queue);
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(body),
+      redirect: 'follow',
+    });
+    assert.equal(response.status, 200, `${op}: HTTP`);
+    assert.match(String(response.headers.get('cache-control') || ''), /no-store/i);
+    const value = await response.json();
+    assert.equal(value?.ok, true, `${op}: ok`);
+    return value;
+  }
+
+  async function setup(kind, count) {
+    const queue = `alarm-${kind}-${runKey}`;
+    const humans = [];
+    for (let index = 1; index <= count; index += 1) {
+      const created = await postJson('create', queue, {
+        clientId: `alarm-${kind}-${index}-${runKey}`,
+        idempotencyKey: `alarm-idem-${kind}-${index}-${runKey}`,
+      });
+      assert.equal(created.ticket?.status, 'WAITING');
+      assert.equal(created.formedMatchId, '');
+      assert.equal(typeof created.ticket?.ticketId, 'string');
+      assert.equal(typeof created.secret, 'string');
+      humans.push({ ticketId: created.ticket.ticketId, secret: created.secret });
+    }
+    return { queue, humans };
+  }
+
+  const beforeBuildId = await verifyBuild('before');
+  const [solo, duo, trio] = await Promise.all([
+    setup('solo', 1),
+    setup('duo', 2),
+    setup('trio', 3),
+  ]);
+
+  console.log(`Prepared isolated 1H/2H/3H queues; entering ${waitMs}ms zero-request window.`);
+  await new Promise((resolve) => setTimeout(resolve, waitMs));
+
+  // cancel is deliberately the first post-wait queue request: unlike status,
+  // it does not service the timeout, so MATCHED here proves background progress.
+  const [duoCancel, trioCancel, soloCancel] = await Promise.all([
+    postJson('cancel', duo.queue, duo.humans[0]),
+    postJson('cancel', trio.queue, trio.humans[0]),
+    postJson('cancel', solo.queue, solo.humans[0]),
+  ]);
+  for (const [label, value] of [['2H', duoCancel], ['3H', trioCancel]]) {
+    assert.equal(value.cancelled, false, `${label}: first cancel must see MATCHED`);
+    assert.equal(value.terminal, 'MATCHED');
+    assert.equal(value.ticket?.status, 'MATCHED');
+  }
+  assert.equal(soloCancel.cancelled, true);
+  assert.equal(soloCancel.terminal, 'CANCELLED');
+  assert.equal(soloCancel.ticket?.status, 'CANCELLED');
+
+  async function statusGroup(group, format, aiSeatCount) {
+    const statuses = await Promise.all(group.humans.map((human) => postJson('status', group.queue, human)));
+    const sessionIds = new Set();
+    const slots = new Set();
+    for (const value of statuses) {
+      assert.equal(value.ticket?.status, 'MATCHED');
+      assert.equal(value.session?.size, 4);
+      assert.equal(value.session?.format, format);
+      assert.equal(value.session?.aiSeatCount, aiSeatCount);
+      assert.equal(typeof value.session?.sessionId, 'string');
+      assert.equal(Number.isInteger(value.session?.slot), true);
+      sessionIds.add(value.session.sessionId);
+      slots.add(value.session.slot);
+    }
+    assert.equal(sessionIds.size, 1);
+    assert.equal(slots.size, group.humans.length);
+  }
+
+  await statusGroup(duo, 'TEAM2V2', 2);
+  await statusGroup(trio, 'FREE4P', 1);
+  const afterBuildId = await verifyBuild('after');
+  assert.equal(afterBuildId, beforeBuildId, 'public build changed during zero-request verification');
+  console.log('Public normal-match alarm probe passed: stable build, zero-request wakeup, 2H+AI2, 3H+AI1, solo no-self-fill.');
+});

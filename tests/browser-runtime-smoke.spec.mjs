@@ -614,10 +614,16 @@ test('Home gamepad confirm and cancel are edge-triggered under held input', asyn
 
   await page.evaluate(() => {
     window.GAMEROAD_NAV_QA.root('home');
+  });
+  await page.waitForFunction(() => (
+    window.GAMEROAD_NAV_QA.snapshot().screen === 'home'
+    && window.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase === 'IDLE'
+  ));
+  await page.evaluate(() => {
     window.GAMEROAD_HOME_MOTION_QA.expand();
     document.querySelector('.homePadChoice[data-home-target="setup"]')?.focus();
   });
-  await page.waitForTimeout(620);
+  await page.waitForTimeout(80);
   await snap('A-held-after-return-home');
   expect(await page.evaluate(() => window.GAMEROAD_NAV_QA.snapshot().screen)).toBe('home');
 
@@ -768,4 +774,77 @@ test('normal Result autoqueue binds live create/status/cancel once and rejects d
   expect(final.matchedSession).toEqual({ sessionId: 'm-live-1', matchId: 'm-live-1', slot: 0, size: 4 });
   expect(statusCalls).toBeGreaterThan(0);
   expect(await page.locator('#postMatchAutoQueueStatus').textContent()).toContain('マッチ成立');
+});
+
+
+test('R42 actual menu transition and orientation consumer mount is temporal and latest-wins', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'load' });
+  expect(response, 'main HTML response').not.toBeNull();
+  expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
+  await page.waitForFunction(() => Boolean(globalThis.GAMEROAD_SCREEN_TRANSITION && globalThis.GAMEROAD_ORIENTATION_TRANSITION));
+  await expect(page.locator('.screen[data-screen="home"]')).toHaveClass(/active/);
+
+  const mounted = await page.evaluate(() => ({
+    screen: globalThis.GAMEROAD_GET_CURRENT_SCREEN?.(),
+    screenPhase: globalThis.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase,
+    orientationPhase: globalThis.GAMEROAD_ORIENTATION_TRANSITION?.getState?.().phase,
+    projection: document.documentElement.dataset.orientationProjection,
+    hasOrientationRequest: typeof globalThis.GAMEROAD_ORIENTATION_REQUEST === 'function',
+  }));
+  expect(mounted).toMatchObject({ screen: 'home', screenPhase: 'IDLE', orientationPhase: 'IDLE', projection: 'landscape', hasOrientationRequest: true });
+
+  const cards = page.locator('.homePadChoice[data-home-target="cards"]:visible').first();
+  await expect(cards).toBeVisible();
+  await cards.click();
+  await expect(page.locator('.screen[data-screen="cards"]')).toHaveClass(/active/);
+  await page.waitForFunction(() => globalThis.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase === 'IDLE');
+  expect(await page.evaluate(() => globalThis.GAMEROAD_GET_CURRENT_SCREEN())).toBe('cards');
+  expect(await page.evaluate(() => document.documentElement.dataset.screenTransitionPhase ?? null)).toBeNull();
+
+  const back = page.locator('[data-back]:visible').first();
+  await expect(back).toBeVisible();
+  await back.click();
+  await expect(page.locator('.screen[data-screen="home"]')).toHaveClass(/active/);
+  await page.waitForFunction(() => globalThis.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase === 'IDLE');
+
+  const cancelled = await page.evaluate(async () => {
+    const runtime = globalThis.GAMEROAD_SCREEN_TRANSITION;
+    const before = globalThis.GAMEROAD_GET_CURRENT_SCREEN();
+    const pending = runtime.navigate('cards', { reason: 'detail' });
+    const cancelReturned = runtime.cancel();
+    const result = await pending;
+    return { before, after: globalThis.GAMEROAD_GET_CURRENT_SCREEN(), cancelReturned, result, state: runtime.getState() };
+  });
+  expect(cancelled.cancelReturned).toBe(true);
+  expect(cancelled.result.status).toBe('superseded');
+  expect(cancelled.after).toBe(cancelled.before);
+  expect(cancelled.state.phase).toBe('IDLE');
+
+  const rapid = await page.evaluate(async () => {
+    const runtime = globalThis.GAMEROAD_SCREEN_TRANSITION;
+    const first = runtime.navigate('cards', { reason: 'detail' });
+    const second = runtime.navigate('profile', { reason: 'detail' });
+    const [a, b] = await Promise.all([first, second]);
+    return { a, b, screen: globalThis.GAMEROAD_GET_CURRENT_SCREEN(), state: runtime.getState(), residue: document.documentElement.dataset.screenTransitionPhase ?? null };
+  });
+  expect(rapid.a.status).toBe('superseded');
+  expect(rapid.b.status).toBe('completed');
+  expect(rapid.screen).toBe('profile');
+  expect(rapid.state.phase).toBe('IDLE');
+  expect(rapid.residue).toBeNull();
+  await expect(page.locator('.screen[data-screen="profile"]')).toHaveClass(/active/);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForFunction(() => document.documentElement.dataset.orientationProjection === 'portrait');
+  await page.waitForFunction(() => globalThis.GAMEROAD_ORIENTATION_TRANSITION?.getState?.().phase === 'IDLE');
+  const portrait = await page.evaluate(() => ({ screen: globalThis.GAMEROAD_GET_CURRENT_SCREEN(), projection: document.documentElement.dataset.orientationProjection, residue: document.documentElement.dataset.orientationTransitionPhase ?? null }));
+  expect(portrait).toEqual({ screen: 'profile', projection: 'portrait', residue: null });
+
+  await page.setViewportSize({ width: 667, height: 375 });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForFunction(() => document.documentElement.dataset.orientationProjection === 'portrait');
+  await page.waitForFunction(() => globalThis.GAMEROAD_ORIENTATION_TRANSITION?.getState?.().phase === 'IDLE');
+  const final = await page.evaluate(() => ({ screen: globalThis.GAMEROAD_GET_CURRENT_SCREEN(), projection: document.documentElement.dataset.orientationProjection, screenResidue: document.documentElement.dataset.screenTransitionPhase ?? null, orientationResidue: document.documentElement.dataset.orientationTransitionPhase ?? null }));
+  expect(final).toEqual({ screen: 'profile', projection: 'portrait', screenResidue: null, orientationResidue: null });
 });

@@ -42,13 +42,13 @@ function collectStaticErrors(html) {
 
   const screenNavigationContracts = [
     [
-      /import\s*\{\s*resolveScreenNavigation\s*\}\s*from\s*["']\.\/screen-navigation-core\.mjs["']\s*;/,
+      /import\s*\{[^}]*\bresolveScreenNavigation\b[^}]*\bcreateScreenTransitionRuntimeAdapter\b[^}]*\}\s*from\s*["']\.\/screen-navigation-core\.mjs["']\s*;/,
       'screen navigation core is not production-mounted',
     ],
     [/globalThis\.GAMEROAD_SCREEN_NAVIGATION/, 'screen navigation bridge is missing'],
     [
-      /bridge\.resolve\(state\.screen\s*,\s*target\)/,
-      'navigateDetail does not delegate navigation decision to the screen navigation core',
+      /currentScreenTransitionRuntime\(\)\.navigate\(target\s*,\s*\{\s*reason\s*:\s*["']detail["']\s*\}\s*\)/,
+      'navigateDetail does not delegate navigation through the transition runtime',
     ],
   ];
   for (const [pattern, message] of screenNavigationContracts) {

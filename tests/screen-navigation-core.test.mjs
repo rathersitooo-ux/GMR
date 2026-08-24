@@ -1,10 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  MENU_TRANSITION_MOTION_PROFILE,
   SCREEN_NAVIGATION_COMMON_BUTTON_SFX,
   SCREEN_NAVIGATION_FALLBACK_PARENT,
   SCREEN_NAVIGATION_REASON,
   createScreenNavigationRuntimeBridge,
+  createScreenTransitionRuntimeAdapter,
   resolveScreenBackTarget,
   resolveScreenNavigation
 } from '../browser/screen-navigation-core.mjs';
@@ -245,4 +247,148 @@ test('runtime bridge delegates back-target resolution without mutating history i
   assert.equal(bridge.resolveBackTarget('gacha', historyEntry), resolveScreenBackTarget('gacha', historyEntry));
   assert.deepEqual(historyEntry, before);
   assert.equal(bridge.resolveBackTarget('gacha', undefined), 'shop');
+});
+
+const deferred = () => {
+  let resolve;
+  const promise = new Promise((res) => { resolve = res; });
+  return {promise, resolve};
+};
+const turn = () => new Promise((resolve) => setImmediate(resolve));
+
+test('screen transition runtime delegates PREPARE/EXIT/SWAP/ENTER/SETTLE and swaps exactly once', async () => {
+  let screen = 'home';
+  let swaps = 0;
+  const phases = [];
+  const runtime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => screen,
+    applyScreen: (next) => { swaps += 1; screen = next; },
+    runVisualPhase: async (phase, context) => phases.push([phase, context.from, context.to, context.motionProfile])
+  });
+
+  const result = await runtime.navigate('cards');
+  assert.equal(result.status, 'completed');
+  assert.equal(result.swapped, true);
+  assert.equal(swaps, 1);
+  assert.equal(screen, 'cards');
+  assert.deepEqual(phases.map(([phase]) => phase), ['PREPARE', 'EXIT', 'SWAP', 'ENTER', 'SETTLE']);
+  assert.ok(phases.every(([, from, to, profile]) => from === 'home' && to === 'cards' && profile === MENU_TRANSITION_MOTION_PROFILE.NORMAL));
+});
+
+test('screen transition runtime ignores same-screen requests without visual phases or mutation', async () => {
+  let phases = 0;
+  let swaps = 0;
+  const runtime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => 'home',
+    applyScreen: () => { swaps += 1; },
+    runVisualPhase: async () => { phases += 1; }
+  });
+
+  const result = await runtime.navigate('home');
+  assert.equal(result.status, 'ignored');
+  assert.equal(result.swapped, false);
+  assert.equal(phases, 0);
+  assert.equal(swaps, 0);
+});
+
+test('same-screen intent cancels an active pre-swap transition so stale work cannot move away later', async () => {
+  let screen = 'home';
+  const swaps = [];
+  const gate = deferred();
+  const runtime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => screen,
+    applyScreen: (next) => { swaps.push(next); screen = next; },
+    runVisualPhase: async (phase, context) => {
+      if (context.to === 'cards' && phase === 'EXIT') await gate.promise;
+    }
+  });
+
+  const first = runtime.navigate('cards');
+  await turn();
+  assert.equal(runtime.getState().phase, 'EXIT');
+  assert.equal(runtime.getState().activeRevision !== null, true);
+
+  const stayResult = await runtime.navigate('home');
+  assert.equal(stayResult.status, 'ignored');
+  assert.equal(stayResult.reason, SCREEN_NAVIGATION_REASON.CURRENT_SCREEN);
+  assert.equal(stayResult.swapped, false);
+  assert.equal(screen, 'home');
+  assert.deepEqual(swaps, []);
+  assert.equal(runtime.getState().phase, 'IDLE');
+  assert.equal(runtime.getState().activeRevision, null);
+
+  gate.resolve();
+  const firstResult = await first;
+  assert.equal(firstResult.status, 'superseded');
+  assert.equal(firstResult.swapped, false);
+  assert.equal(screen, 'home');
+  assert.deepEqual(swaps, []);
+});
+
+test('rapid A to B supersedes stale pre-swap transition and stale work cannot roll back current screen', async () => {
+  let screen = 'home';
+  const swaps = [];
+  const gate = deferred();
+  const runtime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => screen,
+    applyScreen: (next) => { swaps.push(next); screen = next; },
+    runVisualPhase: async (phase, context) => {
+      if (context.to === 'cards' && phase === 'EXIT') await gate.promise;
+    }
+  });
+
+  const first = runtime.navigate('cards');
+  await turn();
+  assert.equal(runtime.getState().phase, 'EXIT');
+  const secondResult = await runtime.navigate('shop');
+  assert.equal(secondResult.status, 'completed');
+  assert.equal(screen, 'shop');
+  assert.deepEqual(swaps, ['shop']);
+
+  gate.resolve();
+  const firstResult = await first;
+  assert.equal(firstResult.status, 'superseded');
+  assert.equal(firstResult.swapped, false);
+  assert.equal(screen, 'shop');
+  assert.deepEqual(swaps, ['shop']);
+});
+
+test('reduced-motion and low-perf change effect profile without changing semantic phase lifecycle', async () => {
+  let screen = 'home';
+  let reduce = true;
+  let low = true;
+  const phases = [];
+  const profiles = [];
+  const runtime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => screen,
+    applyScreen: (next) => { screen = next; },
+    reducedMotion: () => reduce,
+    lowPerf: () => low,
+    runVisualPhase: async (phase, context) => { phases.push(phase); profiles.push(context.motionProfile); }
+  });
+
+  assert.equal((await runtime.navigate('cards')).status, 'completed');
+  assert.deepEqual(phases, ['PREPARE', 'EXIT', 'SWAP', 'ENTER', 'SETTLE']);
+  assert.ok(profiles.every((profile) => profile === MENU_TRANSITION_MOTION_PROFILE.NONE));
+
+  phases.length = 0;
+  profiles.length = 0;
+  reduce = false;
+  assert.equal((await runtime.navigate('home')).status, 'completed');
+  assert.deepEqual(phases, ['PREPARE', 'EXIT', 'SWAP', 'ENTER', 'SETTLE']);
+  assert.ok(profiles.every((profile) => profile === MENU_TRANSITION_MOTION_PROFILE.REDUCED));
+});
+
+test('screen transition back path uses the existing navigation fallback and commits once', async () => {
+  let screen = 'missions';
+  let swaps = 0;
+  const runtime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => screen,
+    applyScreen: (next) => { swaps += 1; screen = next; }
+  });
+
+  const result = await runtime.back(null);
+  assert.equal(result.status, 'completed');
+  assert.equal(screen, 'home');
+  assert.equal(swaps, 1);
 });

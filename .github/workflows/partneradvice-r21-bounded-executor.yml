@@ -1,0 +1,54 @@
+name: TEMP PartnerAdvice R21 bounded executor
+
+on:
+  push:
+    branches:
+      - work/partneradvice-r21-visible-battle-mount
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: work/partneradvice-r21-visible-battle-mount
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify PRE_ACTION manifest is first branch commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=6ba21e392697b46aa347e966301b6a2ae8fe8aca
+          FIRST=$(git rev-list --reverse "${BASE}..HEAD" | head -n1)
+          test "$(git rev-parse "${FIRST}^")" = "$BASE"
+          test "$(git diff-tree --no-commit-id --name-only -r "$FIRST" | wc -l)" -eq 1
+          git diff-tree --no-commit-id --name-only -r "$FIRST" | grep -Fx 'data/preaction-authorizations/VWORK-PARTNERADVICE-R21-VISIBLE-BATTLE-PREACTION-20260825T0113.json'
+      - name: Probe bounded Battle advice anchors
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('browser/GAMEROAD.html')
+          s=p.read_text()
+          markers=['partnerAdviceBtn','__GAMEROAD_HATE_PARTNER_TEST__','adviceEnvelope','dangerBtn','showRange','battleMap']
+          for marker in markers:
+              positions=[]
+              start=0
+              while True:
+                  i=s.find(marker,start)
+                  if i<0: break
+                  positions.append(i)
+                  start=i+len(marker)
+              print(f'=== {marker} count={len(positions)} positions={positions[:12]}')
+              for i in positions[:6]:
+                  lo=max(0,i-1400); hi=min(len(s),i+2400)
+                  print(f'--- CONTEXT {marker}@{i} ---')
+                  print(s[lo:hi])
+          PY

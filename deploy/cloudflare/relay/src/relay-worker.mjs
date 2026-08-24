@@ -95,13 +95,21 @@ function randomMatchSecret() {
 
 function publicMatchSession(status) {
   if (!status.match) return null;
-  const slot = status.match.ticketIds.indexOf(status.ticket.ticketId);
-  if (slot < 0) return null;
+  const seat = Array.isArray(status.match.seats)
+    ? status.match.seats.find((candidate) => candidate?.kind === 'HUMAN' && candidate.ticketId === status.ticket.ticketId)
+    : null;
+  const slot = seat ? Number(seat.slot) : status.match.ticketIds.indexOf(status.ticket.ticketId);
+  if (!Number.isInteger(slot) || slot < 0) return null;
+  const size = Array.isArray(status.match.seats) && status.match.seats.length
+    ? status.match.seats.length
+    : status.match.ticketIds.length;
   return {
     sessionId: status.match.matchId,
     matchId: status.match.matchId,
     slot,
-    size: status.match.ticketIds.length,
+    size,
+    format: status.match.format || '',
+    aiSeatCount: Array.isArray(status.match.aiSeats) ? status.match.aiSeats.length : 0,
   };
 }
 
@@ -124,6 +132,7 @@ async function handleMatchRequest(ctx, request, url) {
       ticketId: `t-${crypto.randomUUID()}`,
       secret: randomMatchSecret(),
       matchId: `m-${crypto.randomUUID()}`,
+      nowMs: Date.now(),
     });
     if (!result.ok) return matchJson({ ok: false, reason: result.reason }, matchErrorStatus(result.reason));
     return matchJson({
@@ -136,7 +145,10 @@ async function handleMatchRequest(ctx, request, url) {
   }
 
   if (op === 'status') {
-    const result = await storedMatchTicketStatus(ctx.storage, body);
+    const result = await storedMatchTicketStatus(ctx.storage, body, {
+      nowMs: Date.now(),
+      generatedMatchId: `m-${crypto.randomUUID()}`,
+    });
     if (!result.ok) return matchJson({ ok: false, reason: result.reason }, matchErrorStatus(result.reason));
     return matchJson({ ok: true, ticket: result.ticket, session: publicMatchSession(result) });
   }

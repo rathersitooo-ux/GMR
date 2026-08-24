@@ -1,3 +1,4 @@
+# PR synchronize trigger after the executor workflow exists on the prior head.
 from pathlib import Path
 
 p = Path('deploy/cloudflare/scripts/build.mjs')

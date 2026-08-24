@@ -955,6 +955,19 @@ html.grCodexHomeActive #home button:focus-visible{
   .result.active .resultBtns{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 </style>
+<style id="gameroad-playglobal-r53-short-landscape">
+/* Short-landscape composition only: keep the Codex pad's internal overlap while reducing central intrusion, and reserve Profile identity space below the partner visual. */
+@media (max-height:470px) and (orientation:landscape){
+  .home.codexHome .homeSlidePad{scale:.78;transform-origin:right bottom}
+  [data-screen="profile"] .profileStage #profileRuntime{inset:3% 6% 43%}
+  [data-screen="profile"] .profileStage #profileRuntime .grtc-root,
+  [data-screen="profile"] .profileStage #profileRuntime .grtc-facing,
+  [data-screen="profile"] .profileStage #profileRuntime .grtc-primary-motion,
+  [data-screen="profile"] .profileStage #profileRuntime .grtc-secondary-motion{height:100%;max-height:100%;min-height:0}
+  [data-screen="profile"] .profileStage #profileRuntime .grtc-image{height:100%;max-height:100%;width:auto;object-fit:contain}
+  [data-screen="profile"] .profileStage .profileName{z-index:2}
+}
+</style>
 </head><body><div class="app" id="app"><header class="top"><div class="brand">GAMEROAD</div><div class="topRight"><div class="pill" id="saveState">保存済み</div><div class="pill" id="topMode">ホーム</div></div></header>
 <div id="screenMotionBridge" aria-hidden="true"></div>
 <section class="screen home codexHome active" data-screen="home" data-home-state="HOME_EXPANDED" data-home-preview="" data-codex-home-source="HomeMainMenuSlidePad-R2-shell+formal-clean-crops">

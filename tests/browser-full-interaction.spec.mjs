@@ -284,6 +284,52 @@ test('captures success-state screenshots for current pointer navigation', async 
   await bootCurrentBrowser(page);
   await attachStateScreenshot(page, testInfo, 'home');
 
+
+// R53 short-landscape Home/Profile geometry regression.
+// Exact pre-repair Home pad union: 305 CSS px wide at 667x375.
+if (testInfo.project.name === 'short-landscape-667x375') {
+  const padLocators = [
+    page.locator('[data-home-target="setup"]:visible').first(),
+    page.locator('.codexPadShop:visible').first(),
+    page.locator('.codexPadPartner:visible').first(),
+    page.locator('.codexPadDeck:visible').first(),
+    page.locator('#homePadCenter:visible').first(),
+  ];
+  const padBoxes = [];
+  for (const control of padLocators) {
+    await expect(control).toBeVisible();
+    const box = await control.boundingBox();
+    expect(box, 'short-landscape Home pad control has geometry').not.toBeNull();
+    padBoxes.push(box);
+  }
+  const viewportWidth = page.viewportSize().width;
+  const padLeft = Math.min(...padBoxes.map((box) => box.x));
+  const padRight = Math.max(...padBoxes.map((box) => box.x + box.width));
+  const padUnionWidth = padRight - padLeft;
+  const minPadTarget = Math.min(...padBoxes.flatMap((box) => [box.width, box.height]));
+  expect(padUnionWidth, 'short-landscape Home pad is narrower than the reproduced 305px pre-repair union').toBeLessThan(305);
+  expect(padRight, 'short-landscape Home pad stays inside the viewport').toBeLessThanOrEqual(viewportWidth);
+  expect(minPadTarget, 'short-landscape Home controls retain WCAG minimum target size').toBeGreaterThanOrEqual(24);
+
+  const profileButton = page.locator('button.homeUtilityBtn[data-go="profile"]:visible').first();
+  await expect(profileButton).toBeVisible();
+  await profileButton.click();
+  const profile = page.locator('section[data-screen="profile"]');
+  await expect(profile).toBeVisible();
+  const name = profile.locator('#profileCharName');
+  const partnerImage = profile.locator('#profileRuntime .grtc-image:visible').first();
+  await expect(name).toBeVisible();
+  await expect(partnerImage).toBeVisible();
+  const nameBox = await name.boundingBox();
+  const imageBox = await partnerImage.boundingBox();
+  expect(nameBox, 'short-landscape Profile name has geometry').not.toBeNull();
+  expect(imageBox, 'short-landscape Profile partner image has geometry').not.toBeNull();
+  const overlapWidth = Math.max(0, Math.min(nameBox.x + nameBox.width, imageBox.x + imageBox.width) - Math.max(nameBox.x, imageBox.x));
+  const overlapHeight = Math.max(0, Math.min(nameBox.y + nameBox.height, imageBox.y + imageBox.height) - Math.max(nameBox.y, imageBox.y));
+  expect(overlapWidth * overlapHeight, 'short-landscape Profile partner image does not cover the displayed name').toBe(0);
+  await attachStateScreenshot(page, testInfo, 'profile-short-landscape-readable');
+}
+
   let pointerTransitions = 0;
   const unreachableTargets = [];
 

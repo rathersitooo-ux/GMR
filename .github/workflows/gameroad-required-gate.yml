@@ -270,6 +270,8 @@ jobs:
                 ;;
               .github/workflows/gameroad-required-gate.yml|\
               .github/workflows/gameroad-observability-ci.yml|\
+              tools/preaction-authorization-validator.mjs|\
+              tests/preaction-authorization-validator.test.mjs|\
               README.md|.gitignore|.gitattributes)
                 ;;
               browser/*|roblox/*|unity/*|tools/*|tests/*|.github/workflows/*|\
@@ -330,6 +332,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+
+      - name: Enforce PRE_ACTION authorization before material PR merge
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          node --test tests/preaction-authorization-validator.test.mjs
+          node tools/preaction-authorization-validator.mjs --base "${BASE_SHA}" --head "${HEAD_SHA}" --changed /tmp/gameroad-changed.txt
 
       - name: Set up Node for Fossil
         if: steps.classify.outputs.fossil == 'true'

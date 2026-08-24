@@ -1,0 +1,82 @@
+name: TEMP R17 PRE_ACTION patch executor
+
+on:
+  push:
+    branches:
+      - work/reqcheck-r17-preaction-merge-gate
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: work/reqcheck-r17-preaction-merge-gate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch exact Required Gate anchors and self-clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/gameroad-required-gate.yml')
+          s = p.read_text()
+          old_case = """              .github/workflows/gameroad-required-gate.yml|\\
+              .github/workflows/gameroad-observability-ci.yml|\\
+              README.md|.gitignore|.gitattributes)
+"""
+          new_case = """              .github/workflows/gameroad-required-gate.yml|\\
+              .github/workflows/gameroad-observability-ci.yml|\\
+              tools/preaction-authorization-validator.mjs|\\
+              tests/preaction-authorization-validator.test.mjs|\\
+              README.md|.gitignore|.gitattributes)
+"""
+          old_node = """      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+"""
+          new_node = old_node + """
+      - name: Enforce PRE_ACTION authorization before material PR merge
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          node --test tests/preaction-authorization-validator.test.mjs
+          node tools/preaction-authorization-validator.mjs --base \"${BASE_SHA}\" --head \"${HEAD_SHA}\" --changed /tmp/gameroad-changed.txt
+"""
+          if s.count(old_case) != 1:
+              raise SystemExit(f'case anchor count={s.count(old_case)}')
+          if s.count(old_node) != 1:
+              raise SystemExit(f'node anchor count={s.count(old_node)}')
+          s = s.replace(old_case, new_case).replace(old_node, new_node)
+          if s.count('Enforce PRE_ACTION authorization before material PR merge') != 1:
+              raise SystemExit('preaction step count mismatch')
+          p.write_text(s)
+          PY
+          node --test tests/preaction-authorization-validator.test.mjs
+          git rm data/preaction-authorizations/VWORK-REQCHECK-R17-PREACTION-MERGE-GATE-20260825T0054.json
+          git rm .github/workflows/tmp-r17-preaction-patch.yml
+          git add .github/workflows/gameroad-required-gate.yml
+          git config user.name 'gameroad-r17-bounded-executor'
+          git config user.email 'actions@users.noreply.github.com'
+          git commit -m 'REQCHECK R17: enforce preaction authorization before merge'
+          BASE=05608db978826b9daa4d3e1fc0606909e495ca31
+          HEAD=$(git rev-parse HEAD)
+          git diff --name-only "$BASE" "$HEAD" > /tmp/gameroad-changed.txt
+          echo 'Final changed paths:'
+          cat /tmp/gameroad-changed.txt
+          test "$(wc -l < /tmp/gameroad-changed.txt)" -eq 3
+          grep -Fx '.github/workflows/gameroad-required-gate.yml' /tmp/gameroad-changed.txt
+          grep -Fx 'tools/preaction-authorization-validator.mjs' /tmp/gameroad-changed.txt
+          grep -Fx 'tests/preaction-authorization-validator.test.mjs' /tmp/gameroad-changed.txt
+          node tools/preaction-authorization-validator.mjs --base "$BASE" --head "$HEAD" --changed /tmp/gameroad-changed.txt
+          git push origin HEAD:work/reqcheck-r17-preaction-merge-gate

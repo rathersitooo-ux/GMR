@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-PARTNERADVICE-R21B-VISIBLE-BATTLE-PREACTION-20260825T0120",
+  "taskId": "PARTNER-GOODMOVE-ADVICE-RUNTIME-INTEGRATION-001",
+  "workUnitKey": "PARTNERADVICE-R21-VISIBLE-BATTLE-BOARD-MOUNT",
+  "acquireKey": "PARTNERADVICE-R21-VISIBLE-BATTLE-BOARD-MOUNT-20260825T0112-SOL-Q8N4V7K2M6PX",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PARTNERADVICE-R21B-PRED-20260825T0120",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PARTNERADVICE-R21B-ALTORACLE-20260825T0120",
+  "proceedToken": "PROCEED|VWORK-PARTNERADVICE-R21B-VISIBLE-BATTLE-PREACTION-20260825T0120|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|PARTNERADVICE-R21B-PRED-20260825T0120: TOP_FAILURE=live public advice is projected onto the wrong semantic object or survives state change, and Partner recommendation is visually/semantically confused with rules-derived range/threat; additional current-main lane=collective Decision Product lineage must not bypass current legal/public/version/currentness gates.|PARTNERADVICE-R21B-ALTORACLE-20260825T0120: fresh main f57173b keeps partner-advice-runtime-mount blob 0e9f92f6 unchanged while PR#362 changes Decision Product runtime-lineage tooling/tests only; bounded current HTML probe proves PLAN recommendations are road+battle cards and TARGET recommendation is a player, so consumer mapping must highlight those actual objects rather than invent a 109 node. Existing negative tests + R11 + Chess.com suggestion-vs-threat separation remain alternate oracle. First material commit must be auth-manifest-only from f57173b.",
+  "authorizationBaseSha": "f57173b295a6487b15d6b2c037fafe598026f324",
+  "issuedAt": "2026-08-25T01:20:00+09:00",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/partneradvice-r21b-bounded-executor.yml"
+  ],
+  "notes": "Fresh machine ProceedToken was read back after main advanced through Partner collective runtime-lineage. PLAN maps to current hand cards; TARGET maps to current player token. Manifest/executor are temporary and must be deleted before merge."
+}

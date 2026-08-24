@@ -4,6 +4,7 @@ import {
 } from './partner-legal-action-adapter.mjs';
 
 const VERSION_KEYS = Object.freeze(['rulesVersion', 'cardVersion', 'stateVersion']);
+const BOARD_PROJECTION_SCHEMA = 'gameroad.partner-advice-board-projection.v1';
 
 function exactVersionTuple(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -16,6 +17,28 @@ function exactVersionTuple(value) {
   return Object.freeze(out);
 }
 
+function exactPresentationToken(value) {
+  if (typeof value !== 'string') return null;
+  const token = value.trim();
+  if (!token || token !== value || token.length > 160) return null;
+  return token;
+}
+
+function inactiveBoardProjection(reason) {
+  return Object.freeze({
+    schema: BOARD_PROJECTION_SCHEMA,
+    active: false,
+    clear: true,
+    reason,
+    candidateId: null,
+    targetId: null,
+    alternativeCandidateId: null,
+    source: null,
+    presentationRole: 'partner-recommendation',
+    autoExecute: false,
+  });
+}
+
 function preservePublicPayload(result, candidates) {
   if (!result?.ok || !result.selected) return result;
   const id = String(result.selected.candidateId || '');
@@ -26,6 +49,53 @@ function preservePublicPayload(result, candidates) {
   return Object.freeze({
     ...result,
     selected: Object.freeze({ ...result.selected, payload: raw.payload }),
+  });
+}
+
+export function projectPartnerAdviceBoardEmphasis({
+  adviceResult,
+  isCurrent,
+  resolveTarget,
+} = {}) {
+  if (!adviceResult?.ok) return inactiveBoardProjection('ADVICE_UNAVAILABLE');
+  if (adviceResult.containsPrivate !== false) return inactiveBoardProjection('PUBLIC_SCOPE_UNVERIFIED');
+
+  const candidateId = exactPresentationToken(adviceResult.selected?.candidateId);
+  if (!candidateId) return inactiveBoardProjection('NO_SELECTED_CANDIDATE');
+  if (typeof isCurrent !== 'function' || typeof resolveTarget !== 'function') {
+    return inactiveBoardProjection('PROJECTION_GATE_REQUIRED');
+  }
+
+  try {
+    if (isCurrent(adviceResult) !== true) return inactiveBoardProjection('STALE_ADVICE');
+  } catch {
+    return inactiveBoardProjection('CURRENTNESS_CHECK_FAILED');
+  }
+
+  let resolvedTarget;
+  try {
+    resolvedTarget = resolveTarget(candidateId);
+  } catch {
+    return inactiveBoardProjection('TARGET_RESOLUTION_FAILED');
+  }
+
+  const targetId = exactPresentationToken(
+    typeof resolvedTarget === 'string' ? resolvedTarget : resolvedTarget?.targetId,
+  );
+  if (!targetId) return inactiveBoardProjection('TARGET_UNMAPPED');
+
+  const next = exactPresentationToken(adviceResult.next);
+  return Object.freeze({
+    schema: BOARD_PROJECTION_SCHEMA,
+    active: true,
+    clear: false,
+    reason: null,
+    candidateId,
+    targetId,
+    alternativeCandidateId: next && next !== candidateId ? next : null,
+    source: exactPresentationToken(adviceResult.source),
+    presentationRole: 'partner-recommendation',
+    autoExecute: false,
   });
 }
 

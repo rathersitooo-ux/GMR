@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-REQCHECK-R17-PREACTION-MERGE-GATE-20260825T0054",
+  "taskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "workUnitKey": "REQCHECK-R17-PREACTION-MERGE-AUTHORIZATION",
+  "acquireKey": "REQCHECK-R17-PREACTION-MERGE-GATE-20260825T0054-SOL-Q8N4V7K2M6PX",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "REQCHECK-R17-PRED-20260825T0054",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REQCHECK-R17-SEQ-ORACLE-20260825T0054",
+  "proceedToken": "PROCEED|VWORK-REQCHECK-R17-PREACTION-MERGE-GATE-20260825T0054|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|REQCHECK-R17-PRED-20260825T0054: sequence ordering/material classifier/schema+token/base ancestry/bootstrap self-hosting/merge-rebase/stale-missing/nearby-normal/tamper-overfire|REQCHECK-R17-SEQ-ORACLE-20260825T0054: 7/7 expected outcomes; missing/posthoc/mixed/bad-token RED; auth-before-material/doc-only/alt-oracle GREEN",
+  "authorizationBaseSha": "05608db978826b9daa4d3e1fc0606909e495ca31",
+  "issuedAt": "2026-08-25T00:57:00+09:00",
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml",
+    "tools/preaction-authorization-validator.mjs",
+    "tests/preaction-authorization-validator.test.mjs"
+  ],
+  "notes": "Machine ProceedToken was fresh-read from GAMEROAD outcome verifier before branch creation. This manifest commit must precede every material R17 commit."
+}

@@ -91,6 +91,9 @@ jobs:
               tests/post-match-autoqueue-core.test.mjs|\
               browser/screen-navigation-core.mjs|\
               tests/screen-navigation-core.test.mjs|\
+              browser/slaykia-voice-preview.html|\
+              browser/slaykia-voice-preview.mjs|\
+              tests/slaykia-voice-preview.test.mjs|\
               tests/browser-static-check.mjs|\
               tests/browser-runtime-smoke.spec.mjs|\
               playwright.config.mjs|\
@@ -364,6 +367,7 @@ jobs:
         run: |
           node --test tests/screen-navigation-core.test.mjs
           node --test tests/post-match-autoqueue-core.test.mjs
+          node --test tests/slaykia-voice-preview.test.mjs
           node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
 
       - name: Run Fossil excavation state core tests

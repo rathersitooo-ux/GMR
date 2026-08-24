@@ -1,15 +1,19 @@
 name: TEMP PublicHost R38 Package Repair
 
 on:
-  push:
-    branches: [work/publichost-r38-postmatch-sidecar-package]
-    paths: ['.github/workflows/zz-temp-publichost-r38-package-repair.yml']
+  pull_request:
+    branches: [main]
+    types: [synchronize]
+    paths:
+      - .github/workflows/zz-temp-publichost-r38-package-repair.yml
+      - tools/zz-temp-publichost-r38-patch.py
 
 permissions:
   contents: write
 
 jobs:
   verified-package-repair:
+    if: github.event.pull_request.head.ref == 'work/publichost-r38-postmatch-sidecar-package' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -29,102 +33,14 @@ jobs:
           test "$(git hash-object browser/post-match-autoqueue-core.mjs)" = "c527c034119c27808993a0aede1ca04a77c68d98"
           test "$(git hash-object browser/GAMEROAD.html)" = "83ba1a68574249f66459dd785a73db29e1373a4f"
 
-      - name: Apply minimal package closure and generic fail-closed dependency gate
+      - name: Apply durable package repair candidate
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('deploy/cloudflare/scripts/build.mjs')
-          text = p.read_text(encoding='utf-8')
-
-          def rep(old, new):
-              global text
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f'fail closed: expected one anchor, got {count}: {old[:90]!r}')
-              text = text.replace(old, new, 1)
-
-          rep(
-              "const defaultNavigationCoreSource = path.join(repoRoot, 'browser/screen-navigation-core.mjs');\n",
-              "const defaultNavigationCoreSource = path.join(repoRoot, 'browser/screen-navigation-core.mjs');\nconst defaultPostMatchAutoqueueCoreSource = path.join(repoRoot, 'browser/post-match-autoqueue-core.mjs');\n",
-          )
-
-          helper = r'''
-          export async function assertBrowserRuntimeDependencyCompleteness(browserInput, dist) {
-            const html = Buffer.isBuffer(browserInput) ? browserInput.toString('utf8') : String(browserInput ?? '');
-            const refs = new Set();
-            const patterns = [
-              /\bimport\s*\(\s*(['"])(\.\/[^'"?#]+\.(?:mjs|js))(?:[?#][^'"]*)?\1\s*\)/g,
-              /<script\b[^>]*\bsrc\s*=\s*(['"])(\.\/[^'"?#]+\.(?:mjs|js))(?:[?#][^'"]*)?\1[^>]*>/gi,
-            ];
-            for (const pattern of patterns) {
-              for (const match of html.matchAll(pattern)) refs.add(match[2]);
-            }
-            for (const ref of refs) {
-              const output = ref.slice(2);
-              if (!output || output.includes('/') || output.includes('\\') || output === '.' || output === '..') {
-                throw new Error(`Unsupported Browser runtime dependency path in public package: ${ref}`);
-              }
-              try {
-                await readFile(path.join(dist, output));
-              } catch (error) {
-                if (error?.code === 'ENOENT') {
-                  throw new Error(`Public package missing Browser runtime dependency: ${ref}`);
-                }
-                throw error;
-              }
-            }
-            return [...refs].sort();
-          }
-
-          '''
-          rep('export async function buildPackage({\n', helper + 'export async function buildPackage({\n')
-          rep(
-              '  navigationCoreSource = defaultNavigationCoreSource,\n',
-              '  navigationCoreSource = defaultNavigationCoreSource,\n  postMatchAutoqueueCoreSource = defaultPostMatchAutoqueueCoreSource,\n',
-          )
-          rep(
-              "  expectedNavigationCoreBlob = '',\n",
-              "  expectedNavigationCoreBlob = '',\n  expectedPostMatchAutoqueueCoreBlob = '',\n",
-          )
-          rep(
-              '  const navigationCoreInput = await readFile(navigationCoreSource);\n',
-              '  const navigationCoreInput = await readFile(navigationCoreSource);\n  const postMatchAutoqueueCoreInput = await readFile(postMatchAutoqueueCoreSource);\n',
-          )
-          rep(
-              '  const navigationCoreBlob = gitBlobSha1(navigationCoreInput);\n',
-              '  const navigationCoreBlob = gitBlobSha1(navigationCoreInput);\n  const postMatchAutoqueueCoreBlob = gitBlobSha1(postMatchAutoqueueCoreInput);\n',
-          )
-          rep(
-              "  if (expectedReplayAdapterBlob && replayAdapterBlob !== expectedReplayAdapterBlob) {\n",
-              "  if (expectedPostMatchAutoqueueCoreBlob && postMatchAutoqueueCoreBlob !== expectedPostMatchAutoqueueCoreBlob) {\n    throw new Error(`Post-match autoqueue core blob mismatch: expected=${expectedPostMatchAutoqueueCoreBlob} actual=${postMatchAutoqueueCoreBlob}`);\n  }\n  if (expectedReplayAdapterBlob && replayAdapterBlob !== expectedReplayAdapterBlob) {\n",
-          )
-          rep(
-              "  const replayAdapterOutputPath = path.join(dist, 'battle-replay-live-adapter.mjs');\n",
-              "  const postMatchAutoqueueCoreOutputPath = path.join(dist, 'post-match-autoqueue-core.mjs');\n  await writeFile(postMatchAutoqueueCoreOutputPath, postMatchAutoqueueCoreInput);\n  const postMatchAutoqueueCoreRoundTrip = await readFile(postMatchAutoqueueCoreOutputPath);\n  if (!postMatchAutoqueueCoreInput.equals(postMatchAutoqueueCoreRoundTrip)) {\n    throw new Error('dist/post-match-autoqueue-core.mjs is not byte-identical to Browser dependency source');\n  }\n\n  const replayAdapterOutputPath = path.join(dist, 'battle-replay-live-adapter.mjs');\n",
-          )
-          rep(
-              '  for (const [outputName, sourceInput] of [\n',
-              '  await assertBrowserRuntimeDependencyCompleteness(input, dist);\n\n  for (const [outputName, sourceInput] of [\n',
-          )
-          rep(
-              "      battle_replay_live_adapter: provenance(\n",
-              "      post_match_autoqueue_core: provenance(\n        'browser/post-match-autoqueue-core.mjs',\n        'post-match-autoqueue-core.mjs',\n        postMatchAutoqueueCoreInput,\n        postMatchAutoqueueCoreBlob,\n      ),\n      battle_replay_live_adapter: provenance(\n",
-          )
-          rep(
-              "    else if (a === '--replay-adapter-source') out.replayAdapterSource = path.resolve(argv[++i]);\n",
-              "    else if (a === '--post-match-autoqueue-core-source') out.postMatchAutoqueueCoreSource = path.resolve(argv[++i]);\n    else if (a === '--replay-adapter-source') out.replayAdapterSource = path.resolve(argv[++i]);\n",
-          )
-          rep(
-              "    else if (a === '--expected-replay-adapter-blob') out.expectedReplayAdapterBlob = argv[++i] || '';\n",
-              "    else if (a === '--expected-post-match-autoqueue-core-blob') out.expectedPostMatchAutoqueueCoreBlob = argv[++i] || '';\n    else if (a === '--expected-replay-adapter-blob') out.expectedReplayAdapterBlob = argv[++i] || '';\n",
-          )
-          p.write_text(text, encoding='utf-8')
-          PY
+          python3 tools/zz-temp-publichost-r38-patch.py
           node --check deploy/cloudflare/scripts/build.mjs
 
-      - name: Prove missing-sidecar sensitivity and repaired package
+      - name: Prove known-bad RED and repaired/nearby GREEN
         shell: bash
         run: |
           set -euo pipefail
@@ -147,7 +63,6 @@ jobs:
             await rm(dir, { recursive: true, force: true });
           }
           NODE
-
           node --test deploy/cloudflare/tests/build.test.mjs deploy/cloudflare/tests/version-manifest.test.mjs
           BROWSER_BLOB="$(git hash-object browser/GAMEROAD.html)"
           POSTMATCH_BLOB="$(git hash-object browser/post-match-autoqueue-core.mjs)"
@@ -155,28 +70,29 @@ jobs:
             --expected-blob "$BROWSER_BLOB" \
             --expected-post-match-autoqueue-core-blob "$POSTMATCH_BLOB" \
             --source-commit "$(git rev-parse HEAD)" \
-            --published-at '2026-08-24T03:23:00Z' \
+            --published-at '2026-08-24T03:28:00Z' \
             > /tmp/r38-manifest.json
           cmp --silent browser/post-match-autoqueue-core.mjs deploy/cloudflare/dist/post-match-autoqueue-core.mjs
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           const manifest = JSON.parse(fs.readFileSync('deploy/cloudflare/dist/manifest.json', 'utf8'));
           const artifact = manifest.artifacts?.post_match_autoqueue_core;
-          if (!artifact || artifact.output !== 'post-match-autoqueue-core.mjs') throw new Error('post-match artifact missing from public package manifest');
-          if (artifact.source !== 'browser/post-match-autoqueue-core.mjs') throw new Error('post-match artifact provenance source mismatch');
+          if (!artifact || artifact.output !== 'post-match-autoqueue-core.mjs') throw new Error('post-match artifact missing from package manifest');
+          if (artifact.source !== 'browser/post-match-autoqueue-core.mjs') throw new Error('post-match provenance mismatch');
           console.log('R38_REPAIRED_PACKAGE_GREEN=PASS');
           NODE
 
-      - name: Remove temporary executor and commit durable repair only
+      - name: Remove temporary executor and commit only durable repair
         shell: bash
         run: |
           set -euo pipefail
-          git rm .github/workflows/zz-temp-publichost-r38-package-repair.yml
           git checkout -- deploy/cloudflare/dist || true
+          git clean -fd deploy/cloudflare/dist || true
+          git rm .github/workflows/zz-temp-publichost-r38-package-repair.yml tools/zz-temp-publichost-r38-patch.py
           python3 - <<'PY'
           import subprocess
           paths=set(subprocess.check_output(['git','diff','HEAD','--name-only'],text=True).splitlines())
-          expected={'.github/workflows/zz-temp-publichost-r38-package-repair.yml','deploy/cloudflare/scripts/build.mjs'}
+          expected={'.github/workflows/zz-temp-publichost-r38-package-repair.yml','tools/zz-temp-publichost-r38-patch.py','deploy/cloudflare/scripts/build.mjs'}
           if paths != expected:
               raise SystemExit(f'fail closed: unexpected durable scope {sorted(paths)}')
           PY

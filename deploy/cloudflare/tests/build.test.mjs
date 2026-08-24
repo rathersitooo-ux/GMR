@@ -148,7 +148,7 @@ const dependencyContract = [
     expectedArg: 'expectedNavigationCoreBlob',
     artifact: 'screen_navigation_core',
     fixture: 'export function resolveScreenNavigation(){ return { ok: true }; }\n',
-    currentBlob: '0c3954e0ff614522d7dc2417ab102872ad446523',
+    currentBlob: 'eb81770f33f8eaa75ea75ef002bf6bc9dc7bc1b4',
   },
   {
     file: 'battle-replay-live-adapter.mjs',
@@ -229,7 +229,7 @@ const dependencyContract = [
     expectedArg: 'expectedUiStateFeedbackCoreBlob',
     artifact: 'ui_state_feedback_core',
     fixture: "export const UI_STATE_FEEDBACK_CORE = Object.freeze({ schema: 'fixture' });\n",
-    currentBlob: '05c45acee19fc7a8770e84f270f9436229621bca',
+    currentBlob: '8a14c06884fb476aebb074952bb71b72dffc90f7',
   },
   {
     file: 'ui-state-feedback-ready-plan-adapter.mjs',

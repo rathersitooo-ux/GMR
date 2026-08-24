@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  MATCH_HUMAN_PRIORITY_MS,
   MATCH_STORAGE_META_KEY,
   MATCH_WAITING_PREFIX,
   createStoredMatchTicket,
@@ -36,17 +37,22 @@ class FakeStorage {
 }
 
 let sequence = 0;
-function generated() {
+function generated(nowMs = undefined) {
   sequence += 1;
   return {
     ticketId: `t-${String(sequence).padStart(6, '0')}`,
     secret: `0123456789abcdef0123456789abcdef${String(sequence).padStart(8, '0')}`,
     matchId: `m-${String(Math.ceil(sequence / 4)).padStart(6, '0')}`,
+    ...(Number.isSafeInteger(nowMs) ? { nowMs } : {}),
   };
 }
 function idem(n) { return `idem-key-${String(n).padStart(8, '0')}`; }
-async function create(storage, n, client = `c-${n}`) {
-  return createStoredMatchTicket(storage, { clientId: client, idempotencyKey: idem(n) }, generated());
+async function create(storage, n, client = `c-${n}`, nowMs = undefined) {
+  return createStoredMatchTicket(storage, { clientId: client, idempotencyKey: idem(n) }, generated(nowMs));
+}
+
+function statusRuntime(nowMs, suffix) {
+  return { nowMs, generatedMatchId: `m-runtime-${suffix}` };
 }
 
 test('per-record storage preserves idempotent create and one WAITING membership per client', async () => {
@@ -63,10 +69,11 @@ test('per-record storage preserves idempotent create and one WAITING membership 
   assert.equal(secondKey.reason, 'match_client_already_waiting');
 });
 
-test('four tickets form one atomic match and remove all WAITING index membership', async () => {
+test('four humans form one immediate atomic match and remove all WAITING index membership', async () => {
   const storage = new FakeStorage();
+  const startedAt = 10_000;
   const results = [];
-  for (let i = 1; i <= 4; i += 1) results.push(await create(storage, i));
+  for (let i = 1; i <= 4; i += 1) results.push(await create(storage, i, `human-${i}`, startedAt + i));
   assert.equal(results[3].formedMatchId.startsWith('m-'), true);
   assert.equal((await storage.list({ prefix: MATCH_WAITING_PREFIX })).size, 0);
   for (const result of results) {
@@ -74,7 +81,95 @@ test('four tickets form one atomic match and remove all WAITING index membership
     assert.equal(status.ok, true);
     assert.equal(status.ticket.status, 'MATCHED');
     assert.equal(status.match.ticketIds.length, 4);
+    assert.equal(status.match.seats.length, 4);
+    assert.equal(status.match.aiSeats.length, 0);
+    assert.equal(status.match.fillReason, 'HUMAN_QUORUM');
   }
+});
+
+test('formal 60s human priority keeps three humans waiting before the boundary then fills exactly one AI seat', async () => {
+  const storage = new FakeStorage();
+  const startedAt = 100_000;
+  const humans = [];
+  for (let i = 0; i < 3; i += 1) humans.push(await create(storage, 8000 + i, `timeout3-${i}`, startedAt + i * 100));
+
+  const before = await storedMatchTicketStatus(
+    storage,
+    { ticketId: humans[0].ticket.ticketId, secret: humans[0].secret },
+    statusRuntime(startedAt + MATCH_HUMAN_PRIORITY_MS - 1, 'timeout3-before'),
+  );
+  assert.equal(before.ticket.status, 'WAITING');
+  assert.equal(before.match, null);
+
+  const due = await storedMatchTicketStatus(
+    storage,
+    { ticketId: humans[0].ticket.ticketId, secret: humans[0].secret },
+    statusRuntime(startedAt + MATCH_HUMAN_PRIORITY_MS, 'timeout3-due'),
+  );
+  assert.equal(due.ticket.status, 'MATCHED');
+  assert.equal(due.match.ticketIds.length, 3);
+  assert.equal(due.match.aiSeats.length, 1);
+  assert.equal(due.match.format, 'FREE4P');
+  assert.equal(due.match.fillReason, 'HUMAN_PRIORITY_TIMEOUT');
+  assert.equal(due.match.seats.length, 4);
+  assert.equal(due.match.seats.filter((seat) => seat.kind === 'HUMAN').length, 3);
+  assert.equal(due.match.seats.filter((seat) => seat.kind === 'AI').length, 1);
+});
+
+test('formal timeout makes two humans one team against two AI and freezes all four seats', async () => {
+  const storage = new FakeStorage();
+  const startedAt = 200_000;
+  const first = await create(storage, 8100, 'duo-a', startedAt);
+  const second = await create(storage, 8101, 'duo-b', startedAt + 500);
+  assert.equal(second.ticket.status, 'WAITING');
+
+  const due = await storedMatchTicketStatus(
+    storage,
+    { ticketId: first.ticket.ticketId, secret: first.secret },
+    statusRuntime(startedAt + MATCH_HUMAN_PRIORITY_MS, 'timeout2-due'),
+  );
+  assert.equal(due.ticket.status, 'MATCHED');
+  assert.equal(due.match.ticketIds.length, 2);
+  assert.equal(due.match.aiSeats.length, 2);
+  assert.equal(due.match.format, 'TEAM2V2');
+  assert.deepEqual(due.match.seats.map((seat) => seat.team), [0, 0, 1, 1]);
+  const frozenSeats = structuredClone(due.match.seats);
+
+  const late = await create(storage, 8102, 'late-human', startedAt + MATCH_HUMAN_PRIORITY_MS + 1);
+  assert.equal(late.ticket.status, 'WAITING');
+  const frozen = await storedMatchTicketStatus(
+    storage,
+    { ticketId: first.ticket.ticketId, secret: first.secret },
+    statusRuntime(startedAt + MATCH_HUMAN_PRIORITY_MS * 2, 'must-not-rewrite'),
+  );
+  assert.deepEqual(frozen.match.seats, frozenSeats);
+  assert.equal(frozen.match.aiSeats.length, 2);
+});
+
+test('one human never self-fills; a second arrival after 60s forms the formal 2v2 immediately', async () => {
+  const storage = new FakeStorage();
+  const startedAt = 300_000;
+  const first = await create(storage, 8200, 'solo-waiter', startedAt);
+  const stillWaiting = await storedMatchTicketStatus(
+    storage,
+    { ticketId: first.ticket.ticketId, secret: first.secret },
+    statusRuntime(startedAt + MATCH_HUMAN_PRIORITY_MS, 'solo-must-not-start'),
+  );
+  assert.equal(stillWaiting.ticket.status, 'WAITING');
+  assert.equal(stillWaiting.match, null);
+
+  const second = await create(storage, 8201, 'late-partner', startedAt + MATCH_HUMAN_PRIORITY_MS + 10_000);
+  assert.equal(second.ticket.status, 'MATCHED');
+  assert.equal(second.formedMatchId.length > 0, true);
+  const firstAfter = await storedMatchTicketStatus(
+    storage,
+    { ticketId: first.ticket.ticketId, secret: first.secret },
+    statusRuntime(startedAt + MATCH_HUMAN_PRIORITY_MS + 10_001, 'unused'),
+  );
+  assert.equal(firstAfter.ticket.status, 'MATCHED');
+  assert.equal(firstAfter.match.format, 'TEAM2V2');
+  assert.equal(firstAfter.match.aiSeats.length, 2);
+  assert.deepEqual(firstAfter.match.seats.map((seat) => seat.team), [0, 0, 1, 1]);
 });
 
 test('cancel is truthful, removes WAITING indexes, and matched ticket cannot be cancelled', async () => {

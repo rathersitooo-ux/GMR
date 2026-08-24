@@ -1,0 +1,95 @@
+name: UIFeedback R41 bounded executor
+
+on:
+  push:
+    branches:
+      - work/uifeedback-r41-crossrun-consumer
+
+permissions:
+  contents: write
+
+jobs:
+  recover-and-probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: work/uifeedback-r41-crossrun-consumer
+      - name: Recover proven cores, exact provenance, and persist bounded HTML probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin refs/pull/342/head refs/pull/349/head
+          git cat-file -e c112c8c04182edadbd99dd729fb0cdd18d499364^{commit}
+          git cat-file -e f36eda42ada5c5d198f0f76034760bfca2709a3f^{commit}
+          git show c112c8c04182edadbd99dd729fb0cdd18d499364:browser/screen-navigation-core.mjs > browser/screen-navigation-core.mjs
+          git show c112c8c04182edadbd99dd729fb0cdd18d499364:tests/screen-navigation-core.test.mjs > tests/screen-navigation-core.test.mjs
+          git show f36eda42ada5c5d198f0f76034760bfca2709a3f:browser/ui-state-feedback-core.mjs > browser/ui-state-feedback-core.mjs
+          git show f36eda42ada5c5d198f0f76034760bfca2709a3f:tests/ui-state-feedback-core.test.mjs > tests/ui-state-feedback-core.test.mjs
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+
+          build = Path('deploy/cloudflare/tests/build.test.mjs')
+          text = build.read_text(encoding='utf-8')
+          replacements = {
+              '0c3954e0ff614522d7dc2417ab102872ad446523': 'eb81770f33f8eaa75ea75ef002bf6bc9dc7bc1b4',
+              '05c45acee19fc7a8770e84f270f9436229621bca': '8a14c06884fb476aebb074952bb71b72dffc90f7',
+          }
+          for old, new in replacements.items():
+              old_count = text.count(old)
+              new_count = text.count(new)
+              if old_count == 1 and new_count == 0:
+                  text = text.replace(old, new)
+              elif old_count == 0 and new_count == 1:
+                  pass
+              else:
+                  raise SystemExit(f'PROVENANCE_ANCHOR_STATE_FAIL old={old} old_count={old_count} new={new} new_count={new_count}')
+          build.write_text(text, encoding='utf-8')
+
+          html_path = Path('browser/GAMEROAD.html')
+          html = html_path.read_text(encoding='utf-8')
+          anchors = [
+              'function showScreen',
+              'const showScreen',
+              'let showScreen',
+              'crossScreenMotionOnShow',
+              'navigateDetail',
+              'popNavigation',
+              'screen-navigation-core.mjs',
+              'ui-state-feedback-core.mjs',
+              'screen.orientation',
+              'visualViewport',
+              'matchMedia(\'(prefers-reduced-motion: reduce)\')',
+          ]
+          out = [
+              f'HTML_BYTES={len(html.encode("utf-8"))}',
+              f'HTML_SHA256={hashlib.sha256(html.encode("utf-8")).hexdigest()}',
+          ]
+          for anchor in anchors:
+              positions=[]
+              start=0
+              while True:
+                  i=html.find(anchor,start)
+                  if i < 0: break
+                  positions.append(i)
+                  start=i+1
+              out.append(f'ANCHOR {anchor!r} count={len(positions)} positions={positions[:8]}')
+              for i in positions[:2]:
+                  lo=max(0,i-900); hi=min(len(html),i+1800)
+                  snippet=html[lo:hi].replace('\r','').replace('\n','\\n')
+                  out.append(f'SNIPPET {anchor!r} @{i}: {snippet}')
+          Path('tmp').mkdir(exist_ok=True)
+          Path('tmp/ui-r41-html-probe.txt').write_text('\n'.join(out)+'\n', encoding='utf-8')
+          PY
+          node --test tests/screen-navigation-core.test.mjs tests/ui-state-feedback-core.test.mjs deploy/cloudflare/tests/build.test.mjs
+          if git diff --quiet -- browser/screen-navigation-core.mjs tests/screen-navigation-core.test.mjs browser/ui-state-feedback-core.mjs tests/ui-state-feedback-core.test.mjs deploy/cloudflare/tests/build.test.mjs tmp/ui-r41-html-probe.txt; then
+            echo 'NO_EXECUTOR_DIFF'
+            exit 0
+          fi
+          git config user.name 'gameroad-r41-bounded-executor'
+          git config user.email 'actions@users.noreply.github.com'
+          git add browser/screen-navigation-core.mjs tests/screen-navigation-core.test.mjs browser/ui-state-feedback-core.mjs tests/ui-state-feedback-core.test.mjs deploy/cloudflare/tests/build.test.mjs tmp/ui-r41-html-probe.txt
+          git commit -m 'TEMP UIFeedback R41: persist bounded current HTML anchors'
+          git push origin HEAD:work/uifeedback-r41-crossrun-consumer

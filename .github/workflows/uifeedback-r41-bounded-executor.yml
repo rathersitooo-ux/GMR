@@ -1,4 +1,4 @@
-name: UIFeedback R41 bounded executor
+name: UIFeedback R43 bounded consumer mount
 
 on:
   push:
@@ -9,87 +9,270 @@ permissions:
   contents: write
 
 jobs:
-  recover-and-probe:
+  mount-and-clean:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: work/uifeedback-r41-crossrun-consumer
-      - name: Recover proven cores, exact provenance, and persist bounded HTML probe
+      - name: Verify fresh main and proven core lineage
         shell: bash
         run: |
           set -euo pipefail
-          git fetch --no-tags origin refs/pull/342/head refs/pull/349/head
-          git cat-file -e c112c8c04182edadbd99dd729fb0cdd18d499364^{commit}
-          git cat-file -e f36eda42ada5c5d198f0f76034760bfca2709a3f^{commit}
-          git show c112c8c04182edadbd99dd729fb0cdd18d499364:browser/screen-navigation-core.mjs > browser/screen-navigation-core.mjs
-          git show c112c8c04182edadbd99dd729fb0cdd18d499364:tests/screen-navigation-core.test.mjs > tests/screen-navigation-core.test.mjs
-          git show f36eda42ada5c5d198f0f76034760bfca2709a3f:browser/ui-state-feedback-core.mjs > browser/ui-state-feedback-core.mjs
-          git show f36eda42ada5c5d198f0f76034760bfca2709a3f:tests/ui-state-feedback-core.test.mjs > tests/ui-state-feedback-core.test.mjs
+          git fetch --no-tags origin main
+          expected_main='0fb8631a102474cf8ed5ca96ab5de070b838bc08'
+          actual_main="$(git rev-parse origin/main)"
+          test "$actual_main" = "$expected_main" || { echo "STALE_MAIN expected=$expected_main actual=$actual_main"; exit 1; }
+          test "$(git hash-object browser/screen-navigation-core.mjs)" = 'eb81770f33f8eaa75ea75ef002bf6bc9dc7bc1b4'
+          test "$(git hash-object browser/ui-state-feedback-core.mjs)" = '8a14c06884fb476aebb074952bb71b72dffc90f7'
+      - name: Mount current consumers and add classified temporal regression
+        shell: bash
+        run: |
+          set -euo pipefail
           python - <<'PY'
           from pathlib import Path
           import hashlib
 
-          build = Path('deploy/cloudflare/tests/build.test.mjs')
-          text = build.read_text(encoding='utf-8')
-          replacements = {
-              '0c3954e0ff614522d7dc2417ab102872ad446523': 'eb81770f33f8eaa75ea75ef002bf6bc9dc7bc1b4',
-              '05c45acee19fc7a8770e84f270f9436229621bca': '8a14c06884fb476aebb074952bb71b72dffc90f7',
-          }
-          for old, new in replacements.items():
-              old_count = text.count(old)
-              new_count = text.count(new)
-              if old_count == 1 and new_count == 0:
-                  text = text.replace(old, new)
-              elif old_count == 0 and new_count == 1:
-                  pass
-              else:
-                  raise SystemExit(f'PROVENANCE_ANCHOR_STATE_FAIL old={old} old_count={old_count} new={new} new_count={new_count}')
-          build.write_text(text, encoding='utf-8')
-
           html_path = Path('browser/GAMEROAD.html')
           html = html_path.read_text(encoding='utf-8')
-          anchors = [
-              'function showScreen',
-              'const showScreen',
-              'let showScreen',
-              'crossScreenMotionOnShow',
-              'navigateDetail',
-              'popNavigation',
-              'screen-navigation-core.mjs',
-              'ui-state-feedback-core.mjs',
-              'screen.orientation',
-              'visualViewport',
-              'matchMedia(\'(prefers-reduced-motion: reduce)\')',
-          ]
-          out = [
-              f'HTML_BYTES={len(html.encode("utf-8"))}',
-              f'HTML_SHA256={hashlib.sha256(html.encode("utf-8")).hexdigest()}',
-          ]
-          for anchor in anchors:
-              positions=[]
-              start=0
-              while True:
-                  i=html.find(anchor,start)
-                  if i < 0: break
-                  positions.append(i)
-                  start=i+1
-              out.append(f'ANCHOR {anchor!r} count={len(positions)} positions={positions[:8]}')
-              for i in positions[:2]:
-                  lo=max(0,i-900); hi=min(len(html),i+1800)
-                  snippet=html[lo:hi].replace('\r','').replace('\n','\\n')
-                  out.append(f'SNIPPET {anchor!r} @{i}: {snippet}')
-          Path('tmp').mkdir(exist_ok=True)
-          Path('tmp/ui-r41-html-probe.txt').write_text('\n'.join(out)+'\n', encoding='utf-8')
+          expected_sha = 'c959737c3d550809f63af2d09cb059f51deb74d445f058afd7a51e6815ce418e'
+          actual_sha = hashlib.sha256(html.encode('utf-8')).hexdigest()
+          if actual_sha != expected_sha:
+              raise SystemExit(f'HTML_BASE_SHA_FAIL expected={expected_sha} actual={actual_sha}')
+
+          start_anchor = 'const gameroadNav={stack:[]};'
+          end_anchor = "$$('[data-back]').forEach(b=>b.addEventListener('click',()=>navigateBack()));"
+          if html.count(start_anchor) != 1 or html.count(end_anchor) != 1:
+              raise SystemExit(f'NAV_ANCHOR_COUNT_FAIL start={html.count(start_anchor)} end={html.count(end_anchor)}')
+          start = html.index(start_anchor)
+          end = html.index(end_anchor, start) + len(end_anchor)
+
+          block = r'''const gameroadNav={stack:[]};
+function navEntry(screen){return{screen}}
+const GAMEROAD_MENU_TRANSITION_STYLE_ID='gameroad-menu-orientation-transition-r43-style';
+function gameroadEnsureTransitionVisuals(){
+  if(!document.getElementById(GAMEROAD_MENU_TRANSITION_STYLE_ID)){
+    const style=document.createElement('style');
+    style.id=GAMEROAD_MENU_TRANSITION_STYLE_ID;
+    style.textContent=`
+#gameroadTransitionVeil{position:fixed;inset:-8%;z-index:2147483000;pointer-events:none;opacity:0;transform:translateX(-115%) skewX(-10deg);background:linear-gradient(105deg,transparent 15%,rgba(125,250,224,.08) 37%,rgba(238,255,250,.22) 50%,rgba(125,250,224,.08) 63%,transparent 85%);will-change:transform,opacity}
+html[data-gameroad-menu-motion="normal"][data-gameroad-menu-phase="exit"] #gameroadTransitionVeil{opacity:.8;transform:translateX(-18%) skewX(-10deg);transition:transform 105ms cubic-bezier(.3,.7,.2,1),opacity 105ms linear}
+html[data-gameroad-menu-motion="normal"][data-gameroad-menu-phase="swap"] #gameroadTransitionVeil{opacity:.9;transform:translateX(8%) skewX(-10deg)}
+html[data-gameroad-menu-motion="normal"][data-gameroad-menu-phase="enter"] #gameroadTransitionVeil{opacity:0;transform:translateX(115%) skewX(-10deg);transition:transform 115ms cubic-bezier(.2,.75,.25,1),opacity 115ms linear}
+html[data-gameroad-menu-motion="reduced"][data-gameroad-menu-phase="exit"] #gameroadTransitionVeil{opacity:.28;transform:translateX(-4%) skewX(-8deg);transition:transform 55ms linear,opacity 55ms linear}
+html[data-gameroad-menu-motion="reduced"][data-gameroad-menu-phase="enter"] #gameroadTransitionVeil{opacity:0;transform:translateX(20%) skewX(-8deg);transition:transform 55ms linear,opacity 55ms linear}
+html[data-gameroad-menu-motion="none"] #gameroadTransitionVeil{opacity:0!important;transition:none!important;transform:none!important}
+html[data-gameroad-orientation-motion="normal"][data-gameroad-orientation-phase="exit"] .screen.active{opacity:.94;transition:opacity 70ms linear}
+html[data-gameroad-orientation-motion="normal"][data-gameroad-orientation-phase="enter"] .screen.active{opacity:1;transition:opacity 90ms linear}
+html[data-gameroad-orientation-motion="reduced"] .screen.active,html[data-gameroad-orientation-motion="none"] .screen.active{opacity:1;transition:none}
+`;
+    document.head.appendChild(style);
+  }
+  let veil=document.getElementById('gameroadTransitionVeil');
+  if(!veil){veil=document.createElement('div');veil.id='gameroadTransitionVeil';veil.setAttribute('aria-hidden','true');document.body.appendChild(veil)}
+  return veil;
+}
+function gameroadTransitionWait(ms,signal){
+  if(!ms||signal?.aborted)return Promise.resolve();
+  return new Promise(resolve=>{const timer=setTimeout(resolve,ms);signal?.addEventListener('abort',()=>{clearTimeout(timer);resolve()},{once:true})});
+}
+function gameroadTransitionCleanup(kind){
+  const root=document.documentElement;
+  delete root.dataset[kind==='menu'?'gameroadMenuPhase':'gameroadOrientationPhase'];
+  delete root.dataset[kind==='menu'?'gameroadMenuMotion':'gameroadOrientationMotion'];
+}
+function gameroadCreateVisualPhaseRunner(kind){
+  return async(phase,context)=>{
+    gameroadEnsureTransitionVisuals();
+    const root=document.documentElement;
+    const phaseKey=kind==='menu'?'gameroadMenuPhase':'gameroadOrientationPhase';
+    const motionKey=kind==='menu'?'gameroadMenuMotion':'gameroadOrientationMotion';
+    root.dataset[phaseKey]=String(phase).toLowerCase();
+    root.dataset[motionKey]=context.motionProfile;
+    context.signal?.addEventListener('abort',()=>gameroadTransitionCleanup(kind),{once:true});
+    const normal=context.motionProfile==='normal';
+    const reduced=context.motionProfile==='reduced';
+    const delay=phase==='EXIT'?(normal?(kind==='menu'?105:70):reduced?45:0):phase==='ENTER'?(normal?(kind==='menu'?115:90):reduced?45:0):phase==='SETTLE'?(normal?25:0):0;
+    if(phase==='SWAP')await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    await gameroadTransitionWait(delay,context.signal);
+    if(phase==='SETTLE'&&!context.signal?.aborted)gameroadTransitionCleanup(kind);
+  };
+}
+let gameroadOrientationProjection=window.innerWidth>=window.innerHeight?'landscape':'portrait';
+let gameroadOrientationFrame=0;
+const gameroadTransitionRuntimePromise=Promise.all([
+  import('./screen-navigation-core.mjs'),
+  import('./ui-state-feedback-core.mjs')
+]).then(([navigationApi,feedbackApi])=>{
+  gameroadEnsureTransitionVisuals();
+  const reducedMotion=()=>!!(state?.settings?.reduceMotion||window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
+  const lowPerf=()=>!!state?.settings?.lowPerf;
+  const screen=navigationApi.createScreenTransitionRuntimeAdapter({
+    getCurrentScreen:()=>state.screen,
+    applyScreen:(target)=>show(target),
+    runVisualPhase:gameroadCreateVisualPhaseRunner('menu'),
+    navigationBridge:globalThis.GAMEROAD_SCREEN_NAVIGATION,
+    reducedMotion,
+    lowPerf
+  });
+  gameroadOrientationProjection=feedbackApi.resolveOrientationProjection({width:window.innerWidth,height:window.innerHeight,currentProjection:gameroadOrientationProjection});
+  document.documentElement.dataset.gameroadOrientationProjection=gameroadOrientationProjection;
+  const orientation=feedbackApi.createOrientationProjectionAdapter({
+    getCurrentProjection:()=>gameroadOrientationProjection,
+    applyProjection:(target)=>{gameroadOrientationProjection=target;document.documentElement.dataset.gameroadOrientationProjection=target},
+    runVisualPhase:gameroadCreateVisualPhaseRunner('orientation'),
+    reducedMotion,
+    lowPerf
+  });
+  const requestViewport=()=>orientation.requestViewport({width:window.visualViewport?.width||window.innerWidth,height:window.visualViewport?.height||window.innerHeight},{semanticSnapshot:{screen:state.screen,homeThemeId:document.documentElement.dataset.homeThemeId||null}}).catch(error=>console.warn('gameroad-orientation-transition',error));
+  const scheduleViewport=()=>{cancelAnimationFrame(gameroadOrientationFrame);gameroadOrientationFrame=requestAnimationFrame(()=>{gameroadOrientationFrame=0;void requestViewport()})};
+  globalThis.screen?.orientation?.addEventListener?.('change',scheduleViewport);
+  window.addEventListener('resize',scheduleViewport,{passive:true});
+  window.visualViewport?.addEventListener?.('resize',scheduleViewport,{passive:true});
+  return Object.freeze({screen,orientation,requestViewport});
+});
+async function navigateDetail(target){
+  const runtime=await gameroadTransitionRuntimePromise;
+  const from=state.screen;
+  const result=await runtime.screen.navigate(target,{reason:'detail'});
+  if(result.swapped)gameroadNav.stack.push(navEntry(from));
+  return result;
+}
+async function navigateRoot(target){
+  const runtime=await gameroadTransitionRuntimePromise;
+  if(target===state.screen)gameroadNav.stack.length=0;
+  const result=await runtime.screen.navigate(target,{reason:'root'});
+  if(result.swapped)gameroadNav.stack.length=0;
+  return result;
+}
+async function navigateBack(){
+  const runtime=await gameroadTransitionRuntimePromise;
+  const entry=gameroadNav.stack.at(-1);
+  const result=await runtime.screen.back(entry,{reason:'back'});
+  if(result.swapped&&entry)gameroadNav.stack.pop();
+  return result;
+}
+$$('[data-go]').forEach(b=>b.addEventListener('click',()=>{void navigateDetail(b.dataset.go)}));
+$$('[data-root-go]').forEach(b=>b.addEventListener('click',()=>{void navigateRoot(b.dataset.rootGo)}));
+$$('[data-back]').forEach(b=>b.addEventListener('click',()=>{void navigateBack()}));
+Object.defineProperty(globalThis,'__GAMEROAD_UI_TRANSITION_CONSUMER__',{value:Object.freeze({
+  navigateDetail,
+  navigateRoot,
+  navigateBack,
+  requestViewport:async()=>{const runtime=await gameroadTransitionRuntimePromise;return runtime.requestViewport()},
+  getScreenState:async()=>{const runtime=await gameroadTransitionRuntimePromise;return runtime.screen.getState()},
+  getOrientationState:async()=>{const runtime=await gameroadTransitionRuntimePromise;return runtime.orientation.getState()}
+}),enumerable:false,configurable:false,writable:false});'''
+
+          html = html[:start] + block + html[end:]
+          if html.count('__GAMEROAD_UI_TRANSITION_CONSUMER__') != 1:
+              raise SystemExit('CONSUMER_MOUNT_COUNT_FAIL')
+          if html.count("addEventListener?.('change',scheduleViewport)") != 1:
+              raise SystemExit('SCREEN_ORIENTATION_SIGNAL_COUNT_FAIL')
+          if "window.addEventListener('orientationchange'" in html:
+              raise SystemExit('DEPRECATED_ORIENTATIONCHANGE_INTRODUCED')
+          html_path.write_text(html, encoding='utf-8')
+
+          test_path = Path('tests/browser-runtime-smoke.spec.mjs')
+          tests = test_path.read_text(encoding='utf-8')
+          marker = "test('menu transition and orientation consumer is latest-wins without semantic rollback'"
+          if marker not in tests:
+              tests += r'''
+
+test('menu transition and orientation consumer is latest-wins without semantic rollback', async ({ page }) => {
+  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
+  expect(response, 'main HTML response').not.toBeNull();
+  expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
+  await page.waitForFunction(() => Boolean(window.__GAMEROAD_UI_TRANSITION_CONSUMER__));
+  await page.waitForFunction(() => document.documentElement.dataset.gameroadOrientationProjection === 'landscape');
+
+  await page.evaluate(() => {
+    window.__gameroadUiR43Trace = [];
+    const root = document.documentElement;
+    const record = () => window.__gameroadUiR43Trace.push({
+      menu: root.dataset.gameroadMenuPhase || null,
+      menuMotion: root.dataset.gameroadMenuMotion || null,
+      orientation: root.dataset.gameroadOrientationPhase || null,
+      projection: root.dataset.gameroadOrientationProjection || null,
+      screen: document.querySelector('.screen.active')?.dataset.screen || null,
+    });
+    const observer = new MutationObserver(record);
+    observer.observe(root, { attributes: true, attributeFilter: [
+      'data-gameroad-menu-phase',
+      'data-gameroad-menu-motion',
+      'data-gameroad-orientation-phase',
+      'data-gameroad-orientation-projection',
+    ] });
+    window.__gameroadUiR43Observer = observer;
+    record();
+  });
+
+  const cardsControl = page.locator('[data-go="cards"]:visible').first();
+  await cardsControl.click();
+  await page.waitForFunction(() => document.querySelector('.screen.active')?.dataset.screen === 'cards');
+  await page.waitForTimeout(180);
+  const firstTrace = await page.evaluate(() => window.__gameroadUiR43Trace);
+  const menuPhases = firstTrace.map((row) => row.menu).filter(Boolean);
+  expect(menuPhases).toContain('exit');
+  expect(menuPhases).toContain('swap');
+  expect(menuPhases).toContain('enter');
+  expect(menuPhases).toContain('settle');
+
+  const rapid = await page.evaluate(async () => {
+    const ui = window.__GAMEROAD_UI_TRANSITION_CONSUMER__;
+    const results = await Promise.all([
+      ui.navigateRoot('home'),
+      ui.navigateDetail('cards'),
+      ui.navigateDetail('profile'),
+    ]);
+    await new Promise((resolve) => setTimeout(resolve, 180));
+    return {
+      results,
+      activeScreen: document.querySelector('.screen.active')?.dataset.screen || null,
+      screenState: await ui.getScreenState(),
+      veilCount: document.querySelectorAll('#gameroadTransitionVeil').length,
+      mountedConsumerCount: document.querySelectorAll('#gameroadTransitionVeil').length,
+    };
+  });
+  expect(rapid.activeScreen).toBe('profile');
+  expect(rapid.screenState.activeRevision).toBeNull();
+  expect(rapid.veilCount).toBe(1);
+  expect(rapid.results.some((result) => result.status === 'superseded' || result.status === 'ignored')).toBeTruthy();
+
+  const screenBeforeRotate = await page.evaluate(() => document.querySelector('.screen.active')?.dataset.screen || null);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForFunction(() => document.documentElement.dataset.gameroadOrientationProjection === 'portrait');
+  expect(await page.evaluate(() => document.querySelector('.screen.active')?.dataset.screen || null)).toBe(screenBeforeRotate);
+  await page.setViewportSize({ width: 667, height: 375 });
+  await page.waitForFunction(() => document.documentElement.dataset.gameroadOrientationProjection === 'landscape');
+  await page.waitForTimeout(160);
+  expect(await page.evaluate(() => document.querySelector('.screen.active')?.dataset.screen || null)).toBe(screenBeforeRotate);
+  expect(await page.evaluate(() => window.__GAMEROAD_UI_TRANSITION_CONSUMER__.getOrientationState())).resolves;
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.evaluate(() => window.__GAMEROAD_UI_TRANSITION_CONSUMER__.navigateRoot('home'));
+  await page.waitForFunction(() => document.querySelector('.screen.active')?.dataset.screen === 'home');
+  await page.waitForTimeout(40);
+  const reducedTrace = await page.evaluate(() => window.__gameroadUiR43Trace);
+  expect(reducedTrace.some((row) => row.menuMotion === 'none')).toBeTruthy();
+  expect(await page.locator('#gameroadTransitionVeil').count()).toBe(1);
+  expect(await page.evaluate(() => document.documentElement.dataset.gameroadMenuPhase || null)).toBeNull();
+  expect(await page.evaluate(() => document.documentElement.dataset.gameroadOrientationPhase || null)).toBeNull();
+});
+'''
+              test_path.write_text(tests, encoding='utf-8')
           PY
           node --test tests/screen-navigation-core.test.mjs tests/ui-state-feedback-core.test.mjs deploy/cloudflare/tests/build.test.mjs
-          if git diff --quiet -- browser/screen-navigation-core.mjs tests/screen-navigation-core.test.mjs browser/ui-state-feedback-core.mjs tests/ui-state-feedback-core.test.mjs deploy/cloudflare/tests/build.test.mjs tmp/ui-r41-html-probe.txt; then
-            echo 'NO_EXECUTOR_DIFF'
-            exit 0
-          fi
-          git config user.name 'gameroad-r41-bounded-executor'
+      - name: Remove temporary recovery scaffolding and commit product slice
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm -f --ignore-unmatch .github/workflows/uifeedback-r41-bounded-executor.yml tmp/ui-r41-trigger.txt tmp/ui-r41-html-probe.txt
+          git config user.name 'gameroad-r43-bounded-executor'
           git config user.email 'actions@users.noreply.github.com'
-          git add browser/screen-navigation-core.mjs tests/screen-navigation-core.test.mjs browser/ui-state-feedback-core.mjs tests/ui-state-feedback-core.test.mjs deploy/cloudflare/tests/build.test.mjs tmp/ui-r41-html-probe.txt
-          git commit -m 'TEMP UIFeedback R41: persist bounded current HTML anchors'
+          git add browser/GAMEROAD.html tests/browser-runtime-smoke.spec.mjs browser/screen-navigation-core.mjs tests/screen-navigation-core.test.mjs browser/ui-state-feedback-core.mjs tests/ui-state-feedback-core.test.mjs deploy/cloudflare/tests/build.test.mjs
+          git diff --cached --check
+          git diff --cached --quiet && { echo 'NO_PRODUCT_DIFF'; exit 1; }
+          git commit -m 'UI R43: mount interruptible menu and orientation consumers'
           git push origin HEAD:work/uifeedback-r41-crossrun-consumer

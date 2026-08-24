@@ -45,8 +45,12 @@ function generated() {
   };
 }
 function idem(n) { return `idem-key-${String(n).padStart(8, '0')}`; }
-async function create(storage, n, client = `c-${n}`) {
-  return createStoredMatchTicket(storage, { clientId: client, idempotencyKey: idem(n) }, generated());
+async function create(storage, n, client = `c-${n}`, enqueuedAtMs = undefined) {
+  return createStoredMatchTicket(
+    storage,
+    { clientId: client, idempotencyKey: idem(n), enqueuedAtMs },
+    generated(),
+  );
 }
 
 test('per-record storage preserves idempotent create and one WAITING membership per client', async () => {
@@ -131,4 +135,84 @@ test('failed generated-id collision rolls back all writes', async () => {
   );
   const after = JSON.stringify([...storage.map.entries()].sort(([a], [b]) => a.localeCompare(b)));
   assert.equal(after, before);
+});
+
+test('formal 60s human-priority timeout turns three waiting humans into Free4P with exactly one AI seat', async () => {
+  const storage = new FakeStorage();
+  const startedAt = 100_000;
+  const humans = [];
+  for (let i = 0; i < 3; i += 1) humans.push(await create(storage, 8000 + i, `timeout3-${i}`, startedAt));
+
+  const before = await storedMatchTicketStatus(
+    storage,
+    { ticketId: humans[0].ticket.ticketId, secret: humans[0].secret },
+    { nowMs: startedAt + 59_999, generatedMatchId: 'm-timeout3-before' },
+  );
+  assert.equal(before.ticket.status, 'WAITING');
+
+  const due = await storedMatchTicketStatus(
+    storage,
+    { ticketId: humans[0].ticket.ticketId, secret: humans[0].secret },
+    { nowMs: startedAt + 60_000, generatedMatchId: 'm-timeout3-due' },
+  );
+  assert.equal(due.ticket.status, 'MATCHED');
+  assert.equal(due.match.ticketIds.length, 3);
+  assert.equal(due.match.aiSeats.length, 1);
+  assert.equal(due.match.format, 'FREE4P');
+  assert.equal(due.match.fillReason, 'HUMAN_PRIORITY_TIMEOUT');
+  assert.equal(due.match.seats.length, 4);
+});
+
+test('formal timeout makes two humans one team against two AI and freezes the four seats', async () => {
+  const storage = new FakeStorage();
+  const startedAt = 200_000;
+  const first = await create(storage, 8100, 'duo-a', startedAt);
+  const second = await create(storage, 8101, 'duo-b', startedAt + 500);
+  const due = await storedMatchTicketStatus(
+    storage,
+    { ticketId: first.ticket.ticketId, secret: first.secret },
+    { nowMs: startedAt + 60_000, generatedMatchId: 'm-timeout2-due' },
+  );
+  assert.equal(due.ticket.status, 'MATCHED');
+  assert.equal(due.match.ticketIds.length, 2);
+  assert.equal(due.match.aiSeats.length, 2);
+  assert.equal(due.match.format, 'TEAM2V2');
+  assert.deepEqual(due.match.seats.map((seat) => seat.team), [0, 0, 1, 1]);
+
+  const late = await create(storage, 8102, 'late-human', startedAt + 60_001);
+  assert.equal(late.ticket.status, 'WAITING');
+  const frozen = await storedMatchTicketStatus(
+    storage,
+    { ticketId: first.ticket.ticketId, secret: first.secret },
+    { nowMs: startedAt + 120_000, generatedMatchId: 'm-should-not-rewrite' },
+  );
+  assert.deepEqual(frozen.match.seats, due.match.seats);
+});
+
+test('one human never self-fills, but a second human arriving after the 60s threshold starts the formal 2v2', async () => {
+  const storage = new FakeStorage();
+  const startedAt = 300_000;
+  const first = await create(storage, 8200, 'solo-waiter', startedAt);
+  const stillWaiting = await storedMatchTicketStatus(
+    storage,
+    { ticketId: first.ticket.ticketId, secret: first.secret },
+    { nowMs: startedAt + 60_000, generatedMatchId: 'm-solo-must-not-start' },
+  );
+  assert.equal(stillWaiting.ticket.status, 'WAITING');
+  assert.equal(stillWaiting.match, null);
+
+  const second = await createStoredMatchTicket(
+    storage,
+    { clientId: 'late-partner', idempotencyKey: idem(8201), enqueuedAtMs: startedAt + 70_000 },
+    { ...generated(), matchId: 'm-late-duo' },
+  );
+  assert.equal(second.ticket.status, 'MATCHED');
+  const firstAfter = await storedMatchTicketStatus(
+    storage,
+    { ticketId: first.ticket.ticketId, secret: first.secret },
+    { nowMs: startedAt + 70_000, generatedMatchId: 'm-unused' },
+  );
+  assert.equal(firstAfter.ticket.status, 'MATCHED');
+  assert.equal(firstAfter.match.format, 'TEAM2V2');
+  assert.equal(firstAfter.match.aiSeats.length, 2);
 });

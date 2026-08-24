@@ -4,7 +4,6 @@ import {
   MAX_WAITING_TICKETS,
   createMatchTicket,
   emptyMatchQueue,
-  matchTicketStatus,
   cancelMatchTicket,
   validMatchClientId,
   validMatchIdempotencyKey,
@@ -20,6 +19,7 @@ export const MATCH_IDEMPOTENCY_PREFIX = 'match/idempotency/';
 export const MATCH_WAITING_PREFIX = 'match/waiting/';
 export const MATCH_CLIENT_WAITING_PREFIX = 'match/client-waiting/';
 export const MATCH_RECORD_PREFIX = 'match/record/';
+export const MATCH_HUMAN_PRIORITY_MS = 60_000;
 
 function enc(value) { return encodeURIComponent(String(value)); }
 function ticketKey(ticketId) { return `${MATCH_TICKET_PREFIX}${enc(ticketId)}`; }
@@ -39,6 +39,14 @@ function safeMeta(raw) {
     schema: MATCH_STORAGE_SCHEMA,
     nextSequence: Number.isSafeInteger(raw?.nextSequence) && raw.nextSequence > 0 ? raw.nextSequence : 1,
   };
+}
+function safeNowMs(value) {
+  const n = Number(value);
+  return Number.isSafeInteger(n) && n >= 0 ? n : Date.now();
+}
+function safeStoredAtMs(value, fallback) {
+  const n = Number(value);
+  return Number.isSafeInteger(n) && n >= 0 ? n : fallback;
 }
 
 async function getMany(txn, keys) {
@@ -82,7 +90,114 @@ function ensureGenerated(generated) {
   if (!validMatchTicketId(ticketId)) throw new TypeError('generated_ticket_id_invalid');
   if (!validMatchSecret(secret)) throw new TypeError('generated_ticket_secret_invalid');
   if (matchId && !validMatchId(matchId)) throw new TypeError('generated_match_id_invalid');
-  return { ticketId, secret, matchId };
+  return { ticketId, secret, matchId, nowMs: safeNowMs(generated?.nowMs) };
+}
+
+function orderedWaitingEntries(tickets) {
+  return Object.entries(tickets || {})
+    .filter(([, ticket]) => ticket?.status === MATCH_TICKET_WAITING)
+    .sort((a, b) => Number(a[1].sequence || 0) - Number(b[1].sequence || 0) || a[0].localeCompare(b[0]));
+}
+
+function seatRecord(ticketIds, tickets, aiCount, format) {
+  const seats = ticketIds.map((ticketId, slot) => ({
+    slot,
+    kind: 'HUMAN',
+    ticketId,
+    clientId: String(tickets[ticketId]?.clientId || ''),
+    team: format === 'TEAM2V2' ? 0 : null,
+  }));
+  const aiSeats = [];
+  for (let i = 0; i < aiCount; i += 1) {
+    const slot = seats.length;
+    aiSeats.push(slot);
+    seats.push({
+      slot,
+      kind: 'AI',
+      aiId: `AI${i + 1}`,
+      team: format === 'TEAM2V2' ? 1 : null,
+    });
+  }
+  return { seats, aiSeats };
+}
+
+function buildMatchRecord(matchId, ticketIds, tickets, aiCount, format, fillReason, startedAtMs) {
+  const seatData = seatRecord(ticketIds, tickets, aiCount, format);
+  return {
+    matchId,
+    ticketIds: [...ticketIds],
+    aiSeats: seatData.aiSeats,
+    seats: seatData.seats,
+    format,
+    fillReason,
+    startedAtMs,
+  };
+}
+
+function publicStoredMatch(matchId, raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const ticketIds = Array.isArray(raw.ticketIds) ? raw.ticketIds.filter(validMatchTicketId) : [];
+  if (!ticketIds.length) return null;
+  const aiSeats = Array.isArray(raw.aiSeats)
+    ? raw.aiSeats.filter((slot) => Number.isInteger(slot) && slot >= 0 && slot < 4)
+    : [];
+  const seats = Array.isArray(raw.seats) && raw.seats.length === 4
+    ? raw.seats.map((seat, slot) => ({ ...seat, slot }))
+    : ticketIds.map((ticketId, slot) => ({ slot, kind: 'HUMAN', ticketId, team: null }));
+  return {
+    matchId,
+    ticketIds,
+    aiSeats,
+    seats,
+    format: String(raw.format || (ticketIds.length === 4 ? 'FREE4P' : '')),
+    fillReason: String(raw.fillReason || (ticketIds.length === 4 ? 'HUMAN_QUORUM' : '')),
+    startedAtMs: Number.isSafeInteger(raw.startedAtMs) ? raw.startedAtMs : 0,
+  };
+}
+
+async function stampMissingWaitingTimes(txn, snapshot, nowMs) {
+  for (const [ticketId, ticket] of Object.entries(snapshot.queue.tickets)) {
+    if (Number.isSafeInteger(ticket.enqueuedAtMs) && ticket.enqueuedAtMs >= 0) continue;
+    const stamped = { ...ticket, enqueuedAtMs: nowMs };
+    snapshot.queue.tickets[ticketId] = stamped;
+    txn.put(ticketKey(ticketId), stamped);
+  }
+}
+
+async function formTimedOutMatch(txn, tickets, nowMs, generatedMatchId) {
+  const waiting = orderedWaitingEntries(tickets);
+  if (waiting.length < 2 || waiting.length > 3) return null;
+  const oldestAt = safeStoredAtMs(waiting[0][1].enqueuedAtMs, nowMs);
+  if (nowMs - oldestAt < MATCH_HUMAN_PRIORITY_MS) return null;
+  if (!validMatchId(generatedMatchId)) return null;
+  if (await txn.get(matchKey(generatedMatchId)) !== undefined) throw new TypeError('generated_match_id_collision');
+
+  const ticketIds = waiting.map(([ticketId]) => ticketId);
+  const format = ticketIds.length === 2 ? 'TEAM2V2' : 'FREE4P';
+  const aiCount = 4 - ticketIds.length;
+  const matchedTickets = { ...tickets };
+  for (const ticketId of ticketIds) {
+    const ticket = {
+      ...matchedTickets[ticketId],
+      status: MATCH_TICKET_MATCHED,
+      matchId: generatedMatchId,
+    };
+    matchedTickets[ticketId] = ticket;
+    txn.put(ticketKey(ticketId), ticket);
+    txn.delete(waitingKey(ticket.sequence, ticketId));
+    txn.delete(clientWaitingKey(ticket.clientId));
+  }
+  const match = buildMatchRecord(
+    generatedMatchId,
+    ticketIds,
+    matchedTickets,
+    aiCount,
+    format,
+    'HUMAN_PRIORITY_TIMEOUT',
+    nowMs,
+  );
+  txn.put(matchKey(generatedMatchId), match);
+  return { match, matchedTickets };
 }
 
 export async function createStoredMatchTicket(storage, input, generated) {
@@ -114,6 +229,7 @@ export async function createStoredMatchTicket(storage, input, generated) {
     const snapshot = await waitingSnapshot(txn);
     if (!snapshot.ok) return reject(snapshot.reason);
     for (const staleKey of snapshot.staleKeys) txn.delete(staleKey);
+    await stampMissingWaitingTimes(txn, snapshot, ids.nowMs);
     if (Object.keys(snapshot.queue.tickets).length >= MAX_WAITING_TICKETS) return reject('match_queue_full');
 
     const meta = safeMeta(await txn.get(MATCH_STORAGE_META_KEY));
@@ -126,58 +242,98 @@ export async function createStoredMatchTicket(storage, input, generated) {
     if (!result.ok) return reject(result.reason);
 
     const newTicketId = result.ticket.ticketId;
-    const newTicket = result.queue.tickets[newTicketId];
+    const newTicket = { ...result.queue.tickets[newTicketId], enqueuedAtMs: ids.nowMs };
     txn.put(MATCH_STORAGE_META_KEY, { schema: MATCH_STORAGE_SCHEMA, nextSequence: result.queue.nextSequence });
     txn.put(idempotencyKey(idem), newTicketId);
 
     if (!result.formedMatchId) {
-      txn.put(ticketKey(newTicketId), newTicket);
-      txn.put(waitingKey(newTicket.sequence, newTicketId), newTicketId);
-      txn.put(clientWaitingKey(newTicket.clientId), newTicketId);
-    } else {
-      const selected = result.queue.matches[result.formedMatchId].ticketIds;
-      for (const ticketId of selected) {
-        const ticket = result.queue.tickets[ticketId];
-        txn.put(ticketKey(ticketId), ticket);
-        txn.delete(waitingKey(ticket.sequence, ticketId));
-        txn.delete(clientWaitingKey(ticket.clientId));
+      const waitingTickets = { ...snapshot.queue.tickets, [newTicketId]: newTicket };
+      const timeout = await formTimedOutMatch(txn, waitingTickets, ids.nowMs, ids.matchId);
+      if (!timeout) {
+        txn.put(ticketKey(newTicketId), newTicket);
+        txn.put(waitingKey(newTicket.sequence, newTicketId), newTicketId);
+        txn.put(clientWaitingKey(newTicket.clientId), newTicketId);
+        return {
+          ok: true,
+          idempotent: false,
+          ticket: publicTicket(newTicketId, newTicket),
+          secret: result.secret,
+          formedMatchId: '',
+        };
       }
-      txn.put(matchKey(result.formedMatchId), { ticketIds: [...selected] });
+      const matchedNew = timeout.matchedTickets[newTicketId];
+      return {
+        ok: true,
+        idempotent: false,
+        ticket: publicTicket(newTicketId, matchedNew),
+        secret: result.secret,
+        formedMatchId: timeout.match.matchId,
+      };
     }
+
+    const selected = result.queue.matches[result.formedMatchId].ticketIds;
+    const persisted = {};
+    for (const ticketId of selected) {
+      const ticket = {
+        ...(snapshot.queue.tickets[ticketId] || {}),
+        ...result.queue.tickets[ticketId],
+        enqueuedAtMs: safeStoredAtMs(
+          snapshot.queue.tickets[ticketId]?.enqueuedAtMs,
+          ticketId === newTicketId ? ids.nowMs : ids.nowMs,
+        ),
+      };
+      persisted[ticketId] = ticket;
+      txn.put(ticketKey(ticketId), ticket);
+      txn.delete(waitingKey(ticket.sequence, ticketId));
+      txn.delete(clientWaitingKey(ticket.clientId));
+    }
+    txn.put(matchKey(result.formedMatchId), buildMatchRecord(
+      result.formedMatchId,
+      selected,
+      persisted,
+      0,
+      'FREE4P',
+      'HUMAN_QUORUM',
+      ids.nowMs,
+    ));
 
     return {
       ok: true,
       idempotent: false,
-      ticket: result.ticket,
+      ticket: publicTicket(newTicketId, persisted[newTicketId]),
       secret: result.secret,
       formedMatchId: result.formedMatchId,
     };
   });
 }
 
-export async function storedMatchTicketStatus(storage, input) {
+export async function storedMatchTicketStatus(storage, input, runtime = {}) {
   const ticketId = String(input?.ticketId || '');
   const secret = String(input?.secret || '');
   if (!validMatchTicketId(ticketId) || !validMatchSecret(secret)) return reject('match_ticket_auth_invalid');
-  const ticket = await storage.get(ticketKey(ticketId));
-  if (!ticket) return reject('match_ticket_auth_invalid');
-  const queue = emptyMatchQueue();
-  queue.tickets[ticketId] = ticket;
-  if (ticket.status === MATCH_TICKET_MATCHED && validMatchId(ticket.matchId)) {
-    const match = await storage.get(matchKey(ticket.matchId));
-    if (match?.ticketIds?.length) {
-      const peerKeys = match.ticketIds.filter(validMatchTicketId).map(ticketKey);
-      const peers = await getMany(storage, peerKeys);
-      for (const peerId of match.ticketIds) {
-        const peer = peers.get(ticketKey(peerId));
-        if (peer) queue.tickets[peerId] = peer;
-      }
-      queue.matches[ticket.matchId] = match;
+  const nowMs = safeNowMs(runtime?.nowMs);
+  const generatedMatchId = String(runtime?.generatedMatchId || '');
+
+  return storage.transaction(async (txn) => {
+    let ticket = await txn.get(ticketKey(ticketId));
+    if (!ticket || ticket.secret !== secret) return reject('match_ticket_auth_invalid');
+
+    if (ticket.status === MATCH_TICKET_WAITING) {
+      const snapshot = await waitingSnapshot(txn);
+      if (!snapshot.ok) return reject(snapshot.reason);
+      for (const staleKey of snapshot.staleKeys) txn.delete(staleKey);
+      await stampMissingWaitingTimes(txn, snapshot, nowMs);
+      const timeout = await formTimedOutMatch(txn, snapshot.queue.tickets, nowMs, generatedMatchId);
+      if (timeout?.matchedTickets[ticketId]) ticket = timeout.matchedTickets[ticketId];
+      else ticket = snapshot.queue.tickets[ticketId] || ticket;
     }
-  }
-  const result = matchTicketStatus(queue, input);
-  if (!result.ok) return reject(result.reason);
-  return { ok: true, ticket: result.ticket, match: result.match };
+
+    let match = null;
+    if (ticket.status === MATCH_TICKET_MATCHED && validMatchId(ticket.matchId)) {
+      match = publicStoredMatch(ticket.matchId, await txn.get(matchKey(ticket.matchId)));
+    }
+    return { ok: true, ticket: publicTicket(ticketId, ticket), match };
+  });
 }
 
 export async function cancelStoredMatchTicket(storage, input) {

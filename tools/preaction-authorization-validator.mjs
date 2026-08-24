@@ -88,18 +88,21 @@ export function validateRepositoryAuthorization({ baseSha, headSha, changedPaths
     return { ok: false, reason: 'invalid_base_or_head_sha' };
   }
   const changedPaths = fs.readFileSync(changedPathsFile, 'utf8').split(/\r?\n/).filter(Boolean);
-
   const branchCommits = git(['rev-list', '--reverse', '--first-parent', `${baseSha}..${headSha}`]).split(/\r?\n/).filter(Boolean);
   if (branchCommits.length === 0) {
-    if (!changedPaths.some(isMaterialPath)) return { ok: true, reason: 'nonmaterial_pr' };
-    return { ok: false, reason: 'no_branch_commits' };
+    return changedPaths.some(isMaterialPath)
+      ? { ok: false, reason: 'no_branch_commits' }
+      : { ok: true, reason: 'nonmaterial_pr' };
   }
-  const firstCommit = branchCommits[0];
-  const parentSha = git(['rev-parse', `${firstCommit}^`]);
-  const firstPaths = git(['diff-tree', '--no-commit-id', '--name-only', '-r', firstCommit]).split(/\r?\n/).filter(Boolean);
   const historyPaths = branchCommits.flatMap((commitSha) =>
     git(['diff-tree', '--no-commit-id', '--name-only', '-r', commitSha]).split(/\r?\n/).filter(Boolean),
   );
+  const allObservedPaths = [...new Set([...changedPaths, ...historyPaths])];
+  if (!allObservedPaths.some(isMaterialPath)) return { ok: true, reason: 'nonmaterial_pr' };
+
+  const firstCommit = branchCommits[0];
+  const parentSha = git(['rev-parse', `${firstCommit}^`]);
+  const firstPaths = git(['diff-tree', '--no-commit-id', '--name-only', '-r', firstCommit]).split(/\r?\n/).filter(Boolean);
   const manifestPaths = firstPaths.filter(isAuthorizationPath);
   if (manifestPaths.length !== 1 || firstPaths.length !== 1) {
     return { ok: false, reason: 'first_commit_not_manifest_only' };

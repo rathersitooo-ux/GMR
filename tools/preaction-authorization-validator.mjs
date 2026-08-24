@@ -60,10 +60,18 @@ export function validateManifest(manifest, manifestPath) {
   return { ok: true, reason: 'manifest_valid' };
 }
 
-export function evaluateAuthorization({ commits, manifest, manifestPath, changedPaths, manifestPresentAtHead = false }) {
+export function evaluateAuthorization({
+  commits,
+  manifest,
+  manifestPath,
+  changedPaths,
+  historyPaths = changedPaths,
+  manifestPresentAtHead = false,
+}) {
   const manifestCheck = validateManifest(manifest, manifestPath);
   if (!manifestCheck.ok) return manifestCheck;
-  const materialChanged = changedPaths.filter(isMaterialPath);
+  const allObservedPaths = [...new Set([...(changedPaths || []), ...(historyPaths || [])])];
+  const materialChanged = allObservedPaths.filter(isMaterialPath);
   if (materialChanged.length === 0) return { ok: true, reason: 'nonmaterial_pr' };
   if (!Array.isArray(commits) || commits.length === 0) return { ok: false, reason: 'no_branch_commits' };
   const first = commits[0];
@@ -80,13 +88,18 @@ export function validateRepositoryAuthorization({ baseSha, headSha, changedPaths
     return { ok: false, reason: 'invalid_base_or_head_sha' };
   }
   const changedPaths = fs.readFileSync(changedPathsFile, 'utf8').split(/\r?\n/).filter(Boolean);
-  if (!changedPaths.some(isMaterialPath)) return { ok: true, reason: 'nonmaterial_pr' };
 
-  const firstParent = git(['rev-list', '--reverse', '--first-parent', `${baseSha}..${headSha}`]).split(/\r?\n/).filter(Boolean);
-  if (firstParent.length === 0) return { ok: false, reason: 'no_branch_commits' };
-  const firstCommit = firstParent[0];
+  const branchCommits = git(['rev-list', '--reverse', '--first-parent', `${baseSha}..${headSha}`]).split(/\r?\n/).filter(Boolean);
+  if (branchCommits.length === 0) {
+    if (!changedPaths.some(isMaterialPath)) return { ok: true, reason: 'nonmaterial_pr' };
+    return { ok: false, reason: 'no_branch_commits' };
+  }
+  const firstCommit = branchCommits[0];
   const parentSha = git(['rev-parse', `${firstCommit}^`]);
   const firstPaths = git(['diff-tree', '--no-commit-id', '--name-only', '-r', firstCommit]).split(/\r?\n/).filter(Boolean);
+  const historyPaths = branchCommits.flatMap((commitSha) =>
+    git(['diff-tree', '--no-commit-id', '--name-only', '-r', commitSha]).split(/\r?\n/).filter(Boolean),
+  );
   const manifestPaths = firstPaths.filter(isAuthorizationPath);
   if (manifestPaths.length !== 1 || firstPaths.length !== 1) {
     return { ok: false, reason: 'first_commit_not_manifest_only' };
@@ -109,6 +122,7 @@ export function validateRepositoryAuthorization({ baseSha, headSha, changedPaths
     manifest,
     manifestPath,
     changedPaths,
+    historyPaths,
     manifestPresentAtHead: present,
   });
 }

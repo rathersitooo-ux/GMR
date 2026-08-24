@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: work/uifeedback-r41-crossrun-consumer
-      - name: Recover proven cores and exact provenance
+      - name: Recover proven cores, exact provenance, and persist bounded HTML probe
         shell: bash
         run: |
           set -euo pipefail
@@ -38,15 +38,18 @@ jobs:
               '05c45acee19fc7a8770e84f270f9436229621bca': '8a14c06884fb476aebb074952bb71b72dffc90f7',
           }
           for old, new in replacements.items():
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f'PROVENANCE_ANCHOR_COUNT_FAIL {old} count={count}')
-              text = text.replace(old, new)
+              old_count = text.count(old)
+              new_count = text.count(new)
+              if old_count == 1 and new_count == 0:
+                  text = text.replace(old, new)
+              elif old_count == 0 and new_count == 1:
+                  pass
+              else:
+                  raise SystemExit(f'PROVENANCE_ANCHOR_STATE_FAIL old={old} old_count={old_count} new={new} new_count={new_count}')
           build.write_text(text, encoding='utf-8')
 
-          html = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          print('HTML_BYTES', len(html.encode('utf-8')))
-          print('HTML_SHA256', hashlib.sha256(html.encode('utf-8')).hexdigest())
+          html_path = Path('browser/GAMEROAD.html')
+          html = html_path.read_text(encoding='utf-8')
           anchors = [
               'function showScreen',
               'const showScreen',
@@ -58,6 +61,11 @@ jobs:
               'ui-state-feedback-core.mjs',
               'screen.orientation',
               'visualViewport',
+              'matchMedia(\'(prefers-reduced-motion: reduce)\')',
+          ]
+          out = [
+              f'HTML_BYTES={len(html.encode("utf-8"))}',
+              f'HTML_SHA256={hashlib.sha256(html.encode("utf-8")).hexdigest()}',
           ]
           for anchor in anchors:
               positions=[]
@@ -67,19 +75,21 @@ jobs:
                   if i < 0: break
                   positions.append(i)
                   start=i+1
-              print(f'ANCHOR {anchor!r} count={len(positions)} positions={positions[:8]}')
+              out.append(f'ANCHOR {anchor!r} count={len(positions)} positions={positions[:8]}')
               for i in positions[:2]:
-                  lo=max(0,i-450); hi=min(len(html),i+900)
-                  snippet=html[lo:hi].replace('\n','\\n')
-                  print(f'SNIPPET {anchor!r} @{i}: {snippet}')
+                  lo=max(0,i-900); hi=min(len(html),i+1800)
+                  snippet=html[lo:hi].replace('\r','').replace('\n','\\n')
+                  out.append(f'SNIPPET {anchor!r} @{i}: {snippet}')
+          Path('tmp').mkdir(exist_ok=True)
+          Path('tmp/ui-r41-html-probe.txt').write_text('\n'.join(out)+'\n', encoding='utf-8')
           PY
           node --test tests/screen-navigation-core.test.mjs tests/ui-state-feedback-core.test.mjs deploy/cloudflare/tests/build.test.mjs
-          if git diff --quiet -- browser/screen-navigation-core.mjs tests/screen-navigation-core.test.mjs browser/ui-state-feedback-core.mjs tests/ui-state-feedback-core.test.mjs deploy/cloudflare/tests/build.test.mjs; then
-            echo 'NO_RECOVERY_DIFF'
+          if git diff --quiet -- browser/screen-navigation-core.mjs tests/screen-navigation-core.test.mjs browser/ui-state-feedback-core.mjs tests/ui-state-feedback-core.test.mjs deploy/cloudflare/tests/build.test.mjs tmp/ui-r41-html-probe.txt; then
+            echo 'NO_EXECUTOR_DIFF'
             exit 0
           fi
           git config user.name 'gameroad-r41-bounded-executor'
           git config user.email 'actions@users.noreply.github.com'
-          git add browser/screen-navigation-core.mjs tests/screen-navigation-core.test.mjs browser/ui-state-feedback-core.mjs tests/ui-state-feedback-core.test.mjs deploy/cloudflare/tests/build.test.mjs
-          git commit -m 'UIFEEDBACK R41: recover transition and orientation cores on current main'
+          git add browser/screen-navigation-core.mjs tests/screen-navigation-core.test.mjs browser/ui-state-feedback-core.mjs tests/ui-state-feedback-core.test.mjs deploy/cloudflare/tests/build.test.mjs tmp/ui-r41-html-probe.txt
+          git commit -m 'TEMP UIFeedback R41: persist bounded current HTML anchors'
           git push origin HEAD:work/uifeedback-r41-crossrun-consumer

@@ -143,7 +143,7 @@ jobs:
           PROJECTS="$(npx --yes wrangler@4 pages project list --json)"
           PROJECT_EXISTS="$(
             printf '%s' "$PROJECTS" | node -e '
-              const fs = require("fs");
+              const fs = require("node:fs");
               const projects = JSON.parse(fs.readFileSync(0, "utf8"));
               if (!Array.isArray(projects)) {
                 throw new Error("Expected Pages project list JSON array.");

@@ -227,3 +227,97 @@ test('failed generated-id collision rolls back all writes', async () => {
   const after = JSON.stringify([...storage.map.entries()].sort(([a], [b]) => a.localeCompare(b)));
   assert.equal(after, before);
 });
+
+async function serviceTimeout(storage, runtime) {
+  const mod = await import('../relay/src/match-store.mjs');
+  assert.equal(
+    typeof mod.serviceStoredMatchTimeout,
+    'function',
+    'server-owned timeout service must exist so 60s fill does not depend on create/status polling',
+  );
+  return mod.serviceStoredMatchTimeout(storage, runtime);
+}
+
+test('server-owned timeout forms 3H+AI1 at 60s without any foreground create/status request', async () => {
+  const storage = new FakeStorage();
+  const startedAt = 500_000;
+  const humans = [];
+  for (let i = 0; i < 3; i += 1) humans.push(await create(storage, 9100 + i, `alarm3-${i}`, startedAt + i * 100));
+
+  const before = await serviceTimeout(storage, {
+    nowMs: startedAt + MATCH_HUMAN_PRIORITY_MS - 1,
+    generatedMatchId: 'm-alarm3-before',
+  });
+  assert.equal(before.ok, true);
+  assert.equal(before.formedMatchId, '');
+  assert.equal(before.nextAlarmAt, startedAt + MATCH_HUMAN_PRIORITY_MS);
+
+  const due = await serviceTimeout(storage, {
+    nowMs: startedAt + MATCH_HUMAN_PRIORITY_MS,
+    generatedMatchId: 'm-alarm3-due',
+  });
+  assert.equal(due.ok, true);
+  assert.equal(due.formedMatchId, 'm-alarm3-due');
+  assert.equal(due.match.format, 'FREE4P');
+  assert.equal(due.match.aiSeats.length, 1);
+  assert.equal(due.nextAlarmAt, null);
+
+  const persisted = await storedMatchTicketStatus(storage, {
+    ticketId: humans[0].ticket.ticketId,
+    secret: humans[0].secret,
+  });
+  assert.equal(persisted.ticket.status, 'MATCHED');
+  const frozen = structuredClone(persisted.match.seats);
+
+  const retry = await serviceTimeout(storage, {
+    nowMs: startedAt + MATCH_HUMAN_PRIORITY_MS + 1,
+    generatedMatchId: 'm-alarm3-retry',
+  });
+  assert.equal(retry.formedMatchId, '');
+  assert.equal(retry.nextAlarmAt, null);
+  const afterRetry = await storedMatchTicketStatus(storage, {
+    ticketId: humans[0].ticket.ticketId,
+    secret: humans[0].secret,
+  });
+  assert.deepEqual(afterRetry.match.seats, frozen);
+});
+
+test('server-owned timeout forms 2H same-team vs AI2 and solo/cancel cannot be resurrected', async () => {
+  const storage = new FakeStorage();
+  const startedAt = 600_000;
+  const first = await create(storage, 9200, 'alarm2-a', startedAt);
+  await create(storage, 9201, 'alarm2-b', startedAt + 500);
+  const due = await serviceTimeout(storage, {
+    nowMs: startedAt + MATCH_HUMAN_PRIORITY_MS,
+    generatedMatchId: 'm-alarm2-due',
+  });
+  assert.equal(due.match.format, 'TEAM2V2');
+  assert.equal(due.match.aiSeats.length, 2);
+  assert.deepEqual(due.match.seats.map((seat) => seat.team), [0, 0, 1, 1]);
+  const firstStatus = await storedMatchTicketStatus(storage, { ticketId: first.ticket.ticketId, secret: first.secret });
+  assert.equal(firstStatus.ticket.status, 'MATCHED');
+
+  const soloStorage = new FakeStorage();
+  const solo = await create(soloStorage, 9300, 'alarm-solo', 700_000);
+  const soloService = await serviceTimeout(soloStorage, {
+    nowMs: 700_000 + MATCH_HUMAN_PRIORITY_MS * 3,
+    generatedMatchId: 'm-alarm-solo-must-not-form',
+  });
+  assert.equal(soloService.formedMatchId, '');
+  assert.equal(soloService.nextAlarmAt, null);
+  const soloStatus = await storedMatchTicketStatus(soloStorage, { ticketId: solo.ticket.ticketId, secret: solo.secret });
+  assert.equal(soloStatus.ticket.status, 'WAITING');
+
+  const cancelStorage = new FakeStorage();
+  const cancelA = await create(cancelStorage, 9400, 'alarm-cancel-a', 800_000);
+  const cancelB = await create(cancelStorage, 9401, 'alarm-cancel-b', 800_100);
+  await cancelStoredMatchTicket(cancelStorage, { ticketId: cancelB.ticket.ticketId, secret: cancelB.secret });
+  const cancelService = await serviceTimeout(cancelStorage, {
+    nowMs: 800_000 + MATCH_HUMAN_PRIORITY_MS,
+    generatedMatchId: 'm-alarm-cancel-must-not-form',
+  });
+  assert.equal(cancelService.formedMatchId, '');
+  assert.equal(cancelService.nextAlarmAt, null);
+  const cancelAStatus = await storedMatchTicketStatus(cancelStorage, { ticketId: cancelA.ticket.ticketId, secret: cancelA.secret });
+  assert.equal(cancelAStatus.ticket.status, 'WAITING');
+});

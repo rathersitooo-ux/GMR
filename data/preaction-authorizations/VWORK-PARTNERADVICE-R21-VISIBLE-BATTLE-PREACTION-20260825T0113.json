@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-PARTNERADVICE-R21-VISIBLE-BATTLE-PREACTION-20260825T0113",
+  "taskId": "PARTNER-GOODMOVE-ADVICE-RUNTIME-INTEGRATION-001",
+  "workUnitKey": "PARTNERADVICE-R21-VISIBLE-BATTLE-BOARD-MOUNT",
+  "acquireKey": "PARTNERADVICE-R21-VISIBLE-BATTLE-BOARD-MOUNT-20260825T0112-SOL-Q8N4V7K2M6PX",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PARTNERADVICE-R21-PRED-20260825T0113",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PARTNERADVICE-R21-ALTORACLE-20260825T0113",
+  "proceedToken": "PROCEED|VWORK-PARTNERADVICE-R21-VISIBLE-BATTLE-PREACTION-20260825T0113|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|PARTNERADVICE-R21-PRED-20260825T0113: TOP_FAILURE=internal-green-but-player-sees-stale/private/wrong-target recommendation or confuses Partner recommendation with rules-derived threat/forecast; fault lanes=semantic-authority,identity,currentness,e2e producer→projection→board consumer,non-color-only distinction,viewport/reduced-motion,overfire,concurrent same-HTML ownership|PARTNERADVICE-R21-ALTORACLE-20260825T0113: current-main partner-advice-runtime-mount blob 0e9f92f6... + existing focused negative tests + R11 claim calibration + current Chess.com independent suggestion-vs-threat board projection. Expected rehearsal oracle: private/stale/unmapped=>clear; recommendation role!=threat role; autoExecute=false; resolver owns target; general danger/showRange remains separate; no 109/legal/persona/secret mutation. First HTML commit prohibited until machine ProceedToken readback.",
+  "authorizationBaseSha": "6ba21e392697b46aa347e966301b6a2ae8fe8aca",
+  "issuedAt": "2026-08-25T01:13:00+09:00",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/browser-runtime-smoke.spec.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/partneradvice-r21-bounded-executor.yml"
+  ],
+  "notes": "Fresh machine ProceedToken was read back before branch material mutation. This manifest-only commit is first from current main 6ba21e392697b46aa347e966301b6a2ae8fe8aca. Temporary manifest/executor must be deleted before merge."
+}

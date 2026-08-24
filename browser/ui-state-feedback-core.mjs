@@ -276,3 +276,164 @@ export function createTransitionDirector({runPhase=async()=>{}}={}) {
     getState:snapshot,
   });
 }
+
+export const ORIENTATION_PROJECTIONS = Object.freeze({
+  LANDSCAPE:'landscape',
+  PORTRAIT:'portrait',
+});
+
+export const ORIENTATION_TRANSITION_CAUSE = 'ORIENTATION_CHANGE';
+export const ORIENTATION_MOTION_PROFILE = Object.freeze({
+  NORMAL:'normal',
+  REDUCED:'reduced',
+  NONE:'none',
+});
+
+const ORIENTATION_VALUES = new Set(Object.values(ORIENTATION_PROJECTIONS));
+
+function positiveFinite(v,label) {
+  if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) throw new Error(`${label} must be a finite positive number`);
+  return v;
+}
+
+function orientationValue(v,label='orientation projection') {
+  if (!ORIENTATION_VALUES.has(v)) throw new Error(`${label} must be landscape or portrait`);
+  return v;
+}
+
+function requiredFunction(v,label) {
+  if (typeof v !== 'function') throw new Error(`${label} must be a function`);
+  return v;
+}
+
+function readFlag(source) {
+  return Boolean(typeof source === 'function' ? source() : source);
+}
+
+function cloneFrozenData(value,label='semanticSnapshot') {
+  if (value === null || value === undefined || typeof value === 'string' || typeof value === 'boolean') return value;
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) throw new Error(`${label} numbers must be finite`);
+    return value;
+  }
+  if (Array.isArray(value)) return Object.freeze(value.map((item,index)=>cloneFrozenData(item,`${label}[${index}]`)));
+  if (typeof value === 'object') {
+    const proto=Object.getPrototypeOf(value);
+    if (proto !== Object.prototype && proto !== null) throw new Error(`${label} must contain plain data only`);
+    const result={};
+    for (const [key,item] of Object.entries(value)) result[key]=cloneFrozenData(item,`${label}.${key}`);
+    return Object.freeze(result);
+  }
+  throw new Error(`${label} must contain plain data only`);
+}
+
+function orientationMotionProfile(reducedMotion,lowPerf) {
+  if (reducedMotion) return ORIENTATION_MOTION_PROFILE.NONE;
+  if (lowPerf) return ORIENTATION_MOTION_PROFILE.REDUCED;
+  return ORIENTATION_MOTION_PROFILE.NORMAL;
+}
+
+export function resolveOrientationProjection({width,height,currentProjection=null}={}) {
+  const w=positiveFinite(width,'width');
+  const h=positiveFinite(height,'height');
+  if (w > h) return ORIENTATION_PROJECTIONS.LANDSCAPE;
+  if (h > w) return ORIENTATION_PROJECTIONS.PORTRAIT;
+  if (currentProjection !== null) return orientationValue(currentProjection,'currentProjection');
+  throw new Error('square viewport requires currentProjection');
+}
+
+/**
+ * Projects one stable game/screen state into landscape or portrait through the
+ * existing TransitionDirector. It never owns navigation, gameplay, save, or
+ * business state. The caller performs only a synchronous presentation swap at
+ * SWAP; resize/safe-area stabilization belongs in runVisualPhase(SETTLE).
+ */
+export function createOrientationProjectionAdapter({
+  getCurrentProjection,
+  applyProjection,
+  runVisualPhase=async()=>{},
+  reducedMotion=false,
+  lowPerf=false,
+}={}) {
+  requiredFunction(getCurrentProjection,'getCurrentProjection');
+  requiredFunction(applyProjection,'applyProjection');
+  requiredFunction(runVisualPhase,'runVisualPhase');
+
+  const metadataByRevision=new Map();
+  const director=createTransitionDirector({
+    runPhase:async(phase,context)=>{
+      const metadata=metadataByRevision.get(context.revision);
+      const profile=orientationMotionProfile(context.reducedMotion,context.lowPerf);
+      await runVisualPhase(phase,Object.freeze({
+        ...context,
+        motionProfile:profile,
+        semanticSnapshot:metadata?.semanticSnapshot ?? null,
+      }));
+    },
+  });
+
+  const ignored=(status,from,to,reason)=>Object.freeze({
+    status,
+    revision:director.getState().revision,
+    from,
+    to,
+    swapped:false,
+    reason,
+  });
+
+  async function requestProjection(targetProjection,{semanticSnapshot=null,cause=ORIENTATION_TRANSITION_CAUSE}={}) {
+    const target=orientationValue(targetProjection,'targetProjection');
+    const current=orientationValue(getCurrentProjection(),'getCurrentProjection result');
+    const state=director.getState();
+
+    if (state.activeRevision !== null && state.to === target) {
+      return ignored('ignored',current,target,'already_targeting_projection');
+    }
+
+    if (target === current) {
+      if (state.activeRevision !== null) {
+        director.cancel();
+        return ignored('retained',current,current,'latest_projection_matches_current');
+      }
+      return ignored('ignored',current,current,'current_projection');
+    }
+
+    const expectedRevision=state.revision+1;
+    const frozenSnapshot=cloneFrozenData(semanticSnapshot);
+    metadataByRevision.set(expectedRevision,Object.freeze({semanticSnapshot:frozenSnapshot}));
+
+    const result=await director.start({
+      from:current,
+      to:target,
+      reason:nonEmpty(cause,'orientation cause'),
+      reducedMotion:readFlag(reducedMotion),
+      lowPerf:readFlag(lowPerf),
+      applySwap:(context)=>{
+        const applied=applyProjection(target,Object.freeze({
+          from:current,
+          to:target,
+          cause,
+          revision:context.revision,
+          semanticSnapshot:frozenSnapshot,
+        }));
+        if (applied && typeof applied.then === 'function') throw new Error('applyProjection must be synchronous');
+      },
+    });
+
+    metadataByRevision.delete(expectedRevision);
+    return Object.freeze({...result,cause});
+  }
+
+  function requestViewport(viewport,options={}) {
+    const current=orientationValue(getCurrentProjection(),'getCurrentProjection result');
+    const target=resolveOrientationProjection({...viewport,currentProjection:current});
+    return requestProjection(target,options);
+  }
+
+  return Object.freeze({
+    requestProjection,
+    requestViewport,
+    cancel:director.cancel,
+    getState:director.getState,
+  });
+}

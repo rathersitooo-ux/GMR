@@ -1,6 +1,10 @@
-import { validateCollectiveImprovementProposal } from './advice-collective-eval.mjs';
+import {
+  compileRuntimeAdviceManifest,
+  validateCollectiveImprovementProposal,
+} from './advice-collective-eval.mjs';
 
 const DECISION_PRODUCT_SCHEMA = 'gameroad.partner-advice-decision-product.v1';
+const RUNTIME_LINEAGE_SCHEMA = 'gameroad.partner-advice-runtime-lineage.v1';
 const EXPECTED_CONSUMER = 'PARTNER-COLLECTIVE-ADVICE-OFFLINE-EVAL-001';
 const TRANSFER_SCOPES = new Set(['POPULATION', 'PERSONAL']);
 
@@ -227,5 +231,171 @@ export function buildPartnerAdviceDecisionProduct(input) {
     formalPromotionEligible: projection.formalPromotionEligible,
     authoritativeReuseEligible: projection.authoritativeReuseEligible,
     automaticMutationAllowed: false,
+  });
+}
+
+function runtimeLineageReject(reason) {
+  return deepFreeze({ ok: false, reason, manifest: null });
+}
+
+function runtimeVersionTuple(versions) {
+  const out = {};
+  for (const key of ['rulesVersion', 'cardVersion', 'stateVersion']) {
+    const value = safeToken(versions?.[key]);
+    if (!value) return null;
+    out[key] = value;
+  }
+  return out;
+}
+
+function sameRuntimeVersions(a, b) {
+  return ['rulesVersion', 'cardVersion', 'stateVersion'].every((key) => a?.[key] === b?.[key]);
+}
+
+function safeAxisRefs(axes) {
+  if (!Array.isArray(axes) || axes.length === 0 || axes.length > 12) return null;
+  const refs = [];
+  const seen = new Set();
+  for (const axis of axes) {
+    const ref = safeToken(axis?.axisRef);
+    if (!ref || axis?.predeclared !== true || seen.has(ref)) return null;
+    seen.add(ref);
+    refs.push(ref);
+  }
+  return refs;
+}
+
+/**
+ * Bridges a validated collective Decision Product into the existing Human-gated runtime manifest
+ * without making collective evidence, popularity, or Partner presentation authoritative game state.
+ */
+export function compileRuntimeAdviceManifestFromDecisionProduct({
+  decisionProductResult,
+  memory,
+  promotionDecision,
+  approval,
+  runtimeUseSiteRef,
+  options = {},
+} = {}) {
+  const result = decisionProductResult;
+  const projection = result?.projection;
+  if (result?.ok !== true || result?.ready !== true || result?.abstain !== false || !projection) {
+    return runtimeLineageReject('decision-product-not-ready');
+  }
+  if (projection.schema !== DECISION_PRODUCT_SCHEMA || result.sourceProposalValid !== true) {
+    return runtimeLineageReject('decision-product-schema-invalid');
+  }
+  if (projection.formalPromotionEligible !== true || result.formalPromotionEligible !== true) {
+    return runtimeLineageReject('decision-product-not-formal-promotion-eligible');
+  }
+  if (
+    projection.automaticMutationAllowed !== false
+    || projection.personaMutationAllowed !== false
+    || projection.relationshipMutationAllowed !== false
+    || projection.containsRawEvents !== false
+    || projection.containsPrivate !== false
+  ) {
+    return runtimeLineageReject('decision-product-authority-boundary-invalid');
+  }
+
+  const source = projection.sourceProposal;
+  if (source?.kind !== 'CHANGE' || !safeToken(source?.changeRef)) {
+    return runtimeLineageReject('decision-product-no-runtime-change');
+  }
+  if (source.counterEvidenceState === 'UNKNOWN') return runtimeLineageReject('counter-evidence-unknown');
+
+  const useSite = safeToken(runtimeUseSiteRef);
+  if (!useSite || useSite !== projection.consumerUseSiteRef) return runtimeLineageReject('runtime-use-site-mismatch');
+
+  const memoryVersions = runtimeVersionTuple(memory?.targetVersions);
+  const sourceVersions = runtimeVersionTuple(source?.versions);
+  if (!memoryVersions || !sourceVersions || !sameRuntimeVersions(memoryVersions, sourceVersions)) {
+    return runtimeLineageReject('decision-product-version-mismatch');
+  }
+
+  const transfer = projection.decisionContext?.transfer;
+  const sourceScope = safeToken(transfer?.sourceScope);
+  const targetScope = safeToken(transfer?.targetScope);
+  const personalAuthorityRef = transfer?.personalAuthorityRef == null ? null : safeToken(transfer.personalAuthorityRef);
+  if (!TRANSFER_SCOPES.has(sourceScope) || !TRANSFER_SCOPES.has(targetScope)) {
+    return runtimeLineageReject('transfer-scope-invalid');
+  }
+  if (sourceScope === 'PERSONAL' && targetScope === 'POPULATION') {
+    return runtimeLineageReject('personal-to-population-transfer-forbidden');
+  }
+  if (sourceScope === 'POPULATION' && targetScope === 'PERSONAL' && !personalAuthorityRef) {
+    return runtimeLineageReject('population-to-personal-transfer-unapproved');
+  }
+
+  const environment = projection.decisionContext?.environment;
+  if (environment?.driftState !== 'CURRENT') return runtimeLineageReject('decision-product-environment-not-current');
+  const axisRefs = safeAxisRefs(projection.decisionContext?.comparison?.axes);
+  if (!axisRefs) return runtimeLineageReject('comparison-lineage-invalid');
+
+  const lineage = {
+    schema: RUNTIME_LINEAGE_SCHEMA,
+    decisionProductId: safeToken(projection.decisionProductId),
+    decisionProductVersion: safeToken(projection.decisionProductVersion),
+    proposalId: safeToken(source.proposalId),
+    proposalVersion: safeToken(source.proposalVersion),
+    cohortId: safeToken(source.cohortId),
+    consumerUseSiteRef: safeToken(projection.consumerUseSiteRef),
+    affectedOwnerId: safeToken(source.affectedOwnerId),
+    changeRef: safeToken(source.changeRef),
+    transfer: {
+      sourceScope,
+      targetScope,
+      personalAuthorityRef,
+    },
+    environment: {
+      environmentRef: safeToken(environment.environmentRef),
+      expiryRef: safeToken(environment.expiryRef),
+    },
+    proxy: {
+      limitationRef: safeToken(projection.decisionContext?.proxy?.limitationRef),
+      primaryOutcomeRef: safeToken(projection.decisionContext?.proxy?.primaryOutcomeRef),
+    },
+    comparison: {
+      axisRefs,
+      strongestAlternativeRef: safeToken(projection.decisionContext?.comparison?.strongestAlternativeRef),
+      noChangeRef: safeToken(projection.decisionContext?.comparison?.noChangeRef),
+    },
+    counterEvidenceState: safeToken(source.counterEvidenceState),
+    authoritativeReuseEligible: projection.authoritativeReuseEligible === true,
+    automaticMutationAllowed: false,
+    personaMutationAllowed: false,
+    relationshipMutationAllowed: false,
+    containsRawEvents: false,
+    containsPrivate: false,
+  };
+
+  const requiredLineageTokens = [
+    lineage.decisionProductId,
+    lineage.decisionProductVersion,
+    lineage.proposalId,
+    lineage.proposalVersion,
+    lineage.cohortId,
+    lineage.consumerUseSiteRef,
+    lineage.affectedOwnerId,
+    lineage.changeRef,
+    lineage.environment.environmentRef,
+    lineage.environment.expiryRef,
+    lineage.proxy.limitationRef,
+    lineage.proxy.primaryOutcomeRef,
+    lineage.comparison.strongestAlternativeRef,
+    lineage.comparison.noChangeRef,
+    lineage.counterEvidenceState,
+  ];
+  if (requiredLineageTokens.some((value) => !value)) return runtimeLineageReject('decision-product-lineage-incomplete');
+
+  const compiled = compileRuntimeAdviceManifest(memory, promotionDecision, approval, options);
+  if (compiled?.ok !== true || !compiled.manifest) return deepFreeze(compiled ?? runtimeLineageReject('runtime-manifest-compile-failed'));
+
+  return deepFreeze({
+    ...compiled,
+    manifest: {
+      ...compiled.manifest,
+      collectiveDecisionLineage: lineage,
+    },
   });
 }

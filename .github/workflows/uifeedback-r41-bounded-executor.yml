@@ -1,5 +1,6 @@
 name: UIFeedback R42 repair executor
 
+# R44 one-shot recovery trigger; delete this workflow before merge.
 on:
   push:
     branches:

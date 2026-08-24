@@ -71,6 +71,7 @@ export function createPostMatchAutoQueueController({
       ticketId: null,
       matchId: null,
       cancelAfterStart: false,
+      restartAfterCancel: false,
       cancelTooLate: false,
       error: null,
     };
@@ -130,6 +131,7 @@ export function createPostMatchAutoQueueController({
     } catch (error) {
       if (cycle !== current) return snapshot();
       cycle.status = POST_MATCH_AUTOQUEUE_STATUS.FAILED;
+      cycle.restartAfterCancel = false;
       cycle.error = defaultError(error);
       return emit();
     }
@@ -148,6 +150,7 @@ export function createPostMatchAutoQueueController({
     if (!cycle) return emit();
 
     if (!enabled) {
+      cycle.restartAfterCancel = false;
       if (cycle.status === POST_MATCH_AUTOQUEUE_STATUS.STARTING) {
         cycle.cancelAfterStart = true;
         cycle.status = POST_MATCH_AUTOQUEUE_STATUS.CANCEL_REQUESTED;
@@ -167,6 +170,22 @@ export function createPostMatchAutoQueueController({
           cycle.status === POST_MATCH_AUTOQUEUE_STATUS.FAILED) {
         cycle.status = POST_MATCH_AUTOQUEUE_STATUS.DISABLED;
       }
+      return emit();
+    }
+
+    if (cycle.status === POST_MATCH_AUTOQUEUE_STATUS.CANCEL_REQUESTED) {
+      // If OFF was reversed before ticket creation completed, no cancellation has been sent yet.
+      // Resume the original attempt instead of cancelling and manufacturing a replacement.
+      if (!cycle.ticketId) {
+        cycle.cancelAfterStart = false;
+        cycle.restartAfterCancel = false;
+        cycle.status = POST_MATCH_AUTOQUEUE_STATUS.STARTING;
+        return emit();
+      }
+      // A cancellation for this ticket may already be authoritative-in-flight. Remember the
+      // renewed ON intent until the provider tells us whether the ticket survived or cancelled.
+      cycle.cancelAfterStart = false;
+      cycle.restartAfterCancel = true;
       return emit();
     }
 
@@ -190,27 +209,46 @@ export function createPostMatchAutoQueueController({
     const status = String(update.status ?? '').toLowerCase();
 
     if (status === 'waiting' || status === 'matching' || status === 'searching') {
-      if (cycle.status !== POST_MATCH_AUTOQUEUE_STATUS.CANCEL_REQUESTED) {
+      if (cycle.status !== POST_MATCH_AUTOQUEUE_STATUS.CANCEL_REQUESTED ||
+          (enabled && cycle.restartAfterCancel)) {
         cycle.status = POST_MATCH_AUTOQUEUE_STATUS.SEARCHING;
       }
     } else if (status === 'cancelled' || status === 'canceled') {
+      const shouldRestart = enabled && cycle.restartAfterCancel;
+      const restartInput = shouldRestart ? {
+        resultId: cycle.resultId,
+        eligible: cycle.eligible,
+        queueSignature: cycle.queueSignature,
+        attempt: cycle.attempt + 1,
+      } : null;
       cycle.status = POST_MATCH_AUTOQUEUE_STATUS.CANCELLED;
+      cycle.cancelAfterStart = false;
+      cycle.restartAfterCancel = false;
       cycle.cancelTooLate = false;
       cycle.error = null;
+      if (restartInput) {
+        const replacement = makeCycle(restartInput);
+        void startCycle(replacement);
+        return snapshot();
+      }
     } else if (status === 'matched') {
       cycle.status = POST_MATCH_AUTOQUEUE_STATUS.MATCHED;
       cycle.matchId = update.matchId == null ? null : String(update.matchId);
-      cycle.cancelTooLate = !enabled || cycle.cancelAfterStart || cycle.status === POST_MATCH_AUTOQUEUE_STATUS.CANCEL_REQUESTED;
-      // Any explicit OFF before this authoritative update means cancellation lost the race.
-      if (!enabled || cycle.cancelAfterStart) cycle.cancelTooLate = true;
+      cycle.cancelTooLate = !enabled || cycle.cancelAfterStart;
+      cycle.cancelAfterStart = false;
+      cycle.restartAfterCancel = false;
       cycle.error = null;
     } else if (status === 'connecting') {
       cycle.status = POST_MATCH_AUTOQUEUE_STATUS.CONNECTING;
       cycle.matchId = update.matchId == null ? cycle.matchId : String(update.matchId);
       if (!enabled || cycle.cancelAfterStart) cycle.cancelTooLate = true;
+      cycle.cancelAfterStart = false;
+      cycle.restartAfterCancel = false;
       cycle.error = null;
     } else if (status === 'failed' || status === 'expired') {
       cycle.status = POST_MATCH_AUTOQUEUE_STATUS.FAILED;
+      cycle.cancelAfterStart = false;
+      cycle.restartAfterCancel = false;
       cycle.error = update.error == null ? status : String(update.error);
     }
     return emit();

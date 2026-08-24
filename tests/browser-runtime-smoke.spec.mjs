@@ -614,10 +614,16 @@ test('Home gamepad confirm and cancel are edge-triggered under held input', asyn
 
   await page.evaluate(() => {
     window.GAMEROAD_NAV_QA.root('home');
+  });
+  await page.waitForFunction(() => (
+    window.GAMEROAD_NAV_QA.snapshot().screen === 'home'
+    && window.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase === 'IDLE'
+  ));
+  await page.evaluate(() => {
     window.GAMEROAD_HOME_MOTION_QA.expand();
     document.querySelector('.homePadChoice[data-home-target="setup"]')?.focus();
   });
-  await page.waitForTimeout(620);
+  await page.waitForTimeout(80);
   await snap('A-held-after-return-home');
   expect(await page.evaluate(() => window.GAMEROAD_NAV_QA.snapshot().screen)).toBe('home');
 
@@ -788,7 +794,7 @@ test('R42 actual menu transition and orientation consumer mount is temporal and 
   }));
   expect(mounted).toMatchObject({ screen: 'home', screenPhase: 'IDLE', orientationPhase: 'IDLE', projection: 'landscape', hasOrientationRequest: true });
 
-  const cards = page.locator('[data-go="cards"]:visible').first();
+  const cards = page.locator('.homePadChoice[data-home-target="cards"]:visible').first();
   await expect(cards).toBeVisible();
   await cards.click();
   await expect(page.locator('.screen[data-screen="cards"]')).toHaveClass(/active/);

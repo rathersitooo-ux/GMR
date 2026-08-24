@@ -25,7 +25,7 @@ export function presentationDurations(profile = 'full') {
 
 export function computeHeroGeometry(sourceRect, viewport) {
   const width = Math.max(1, Number(sourceRect?.width) || 1);
-  const height = Math.max(1, Number(sourceRect?.height) || 1);
+  const height = Math.max(1, Number(sourceRect?.height) || 1;
   const left = Number(sourceRect?.left) || 0;
   const top = Number(sourceRect?.top) || 0;
   const vw = Math.max(1, Number(viewport?.width) || 1);
@@ -246,10 +246,15 @@ export async function runHomeCardsPresentationPhase(phase, context = {}) {
   if (!isHomeCardsForward(context)) return;
   const profile = motionProfile(context);
   runtime.lastPhase = String(phase || 'UNKNOWN');
-  runtime.lastProfile = profile;
+  runtime.lastProfile = profile === 'none' && context.reducedMotion ? 'reduced' : profile;
   runtime.lastRoute = `${context.from}->${context.to}`;
   if (profile === 'none') {
-    runtime.bypassedCount += phase === 'PREPARE' ? 1 : 0;
+    if (phase === 'PREPARE') runtime.bypassedCount += 1;
+    if (phase === 'SETTLE') {
+      cleanupActive();
+      runtime.completedCount += 1;
+      runtime.lastPhase = 'IDLE';
+    }
     return;
   }
   if (phase === 'PREPARE') {

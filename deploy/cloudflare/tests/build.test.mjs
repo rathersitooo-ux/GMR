@@ -148,7 +148,7 @@ const dependencyContract = [
     expectedArg: 'expectedNavigationCoreBlob',
     artifact: 'screen_navigation_core',
     fixture: 'export function resolveScreenNavigation(){ return { ok: true }; }\n',
-    currentBlob: '0c3954e0ff614522d7dc2417ab102872ad446523',
+    currentBlob: 'eb81770f33f8eaa75ea75ef002bf6bc9dc7bc1b4',
   },
   {
     file: 'battle-replay-live-adapter.mjs',

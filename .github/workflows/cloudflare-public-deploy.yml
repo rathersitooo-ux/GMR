@@ -58,6 +58,7 @@ jobs:
           set -euo pipefail
           node --test \
             deploy/cloudflare/tests/relay-core.test.mjs \
+            deploy/cloudflare/tests/normal-match-r3.test.mjs \
             deploy/cloudflare/tests/build.test.mjs \
             deploy/cloudflare/tests/version-manifest.test.mjs
           node --check deploy/cloudflare/relay/src/relay-worker.mjs
@@ -469,6 +470,20 @@ jobs:
           echo "::error::Fixed stable URL remained stale after one bounded recovery deployment."
           exit 1
 
+      - name: Probe public normal-match server-owned alarm
+        id: normal_match_alarm_probe
+        shell: bash
+        env:
+          GAMEROAD_NORMAL_MATCH_URL: https://gameroad-browser-r5.pages.dev/ws
+          GAMEROAD_ALARM_PROBE_WAIT_MS: '125000'
+          GAMEROAD_ALARM_PROBE_RUN_KEY: ${{ github.run_id }}
+          GAMEROAD_EXPECTED_BUILD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          node --test \
+            --test-name-pattern='public normal-match alarm advances' \
+            deploy/cloudflare/tests/normal-match-r3.test.mjs
+
       - name: Report sanitized deployment outcome
         if: always()
         shell: bash
@@ -486,6 +501,7 @@ jobs:
           RELEASE_COMMS_PROBE_OUTCOME: ${{ steps.release_comms_probe.outcome }}
           WS_PROBE_OUTCOME: ${{ steps.ws_probe.outcome }}
           CANONICAL_PROBE_OUTCOME: ${{ steps.canonical_probe.outcome }}
+          NORMAL_MATCH_ALARM_PROBE_OUTCOME: ${{ steps.normal_match_alarm_probe.outcome }}
           CANONICAL_RECOVERY: ${{ steps.canonical_probe.outputs.recovery }}
           PAGES_URL: ${{ steps.pages.outputs.url }}
         run: |
@@ -506,6 +522,7 @@ jobs:
           release_comms_probe=${RELEASE_COMMS_PROBE_OUTCOME}
           ws_probe=${WS_PROBE_OUTCOME}
           canonical_probe=${CANONICAL_PROBE_OUTCOME}
+          normal_match_alarm_probe=${NORMAL_MATCH_ALARM_PROBE_OUTCOME}
           canonical_recovery=${CANONICAL_RECOVERY:-unknown}
           canonical_url=https://gameroad-browser-r5.pages.dev/
           exact_user_entry=https://gameroad-browser-r5.pages.dev/?utm_source=chatgpt.com

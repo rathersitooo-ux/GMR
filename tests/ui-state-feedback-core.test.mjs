@@ -147,3 +147,150 @@ test('transition director validates route and synchronous swap contract',async()
   assert.equal(r.phase,'SWAP');
   assert.match(r.message,/synchronous/);
 });
+
+const {
+  resolveOrientationProjection,
+  createOrientationProjectionAdapter,
+  ORIENTATION_PROJECTIONS,
+  ORIENTATION_MOTION_PROFILE,
+}=await import('../browser/ui-state-feedback-core.mjs');
+
+test('orientation projection resolves viewport geometry without inventing a square tie-break',()=>{
+  assert.equal(resolveOrientationProjection({width:1280,height:720}),ORIENTATION_PROJECTIONS.LANDSCAPE);
+  assert.equal(resolveOrientationProjection({width:390,height:844}),ORIENTATION_PROJECTIONS.PORTRAIT);
+  assert.equal(resolveOrientationProjection({width:500,height:500,currentProjection:'portrait'}),ORIENTATION_PROJECTIONS.PORTRAIT);
+  assert.throws(()=>resolveOrientationProjection({width:500,height:500}),/square viewport/);
+  assert.throws(()=>resolveOrientationProjection({width:0,height:720}),/width/);
+});
+
+test('orientation adapter preserves semantic snapshot and swaps presentation exactly once',async()=>{
+  let projection='landscape';
+  let swaps=0;
+  let appliedSnapshot=null;
+  const phases=[];
+  const sourceSnapshot={route:'home',themeId:'HOME_INITIAL_DEFAULT',business:{selectedPartnerId:'p1'}};
+  const adapter=createOrientationProjectionAdapter({
+    getCurrentProjection:()=>projection,
+    applyProjection:(next,context)=>{swaps+=1; projection=next; appliedSnapshot=context.semanticSnapshot;},
+    runVisualPhase:async(phase,context)=>phases.push([phase,context.motionProfile,context.semanticSnapshot]),
+  });
+
+  const result=await adapter.requestViewport({width:390,height:844},{semanticSnapshot:sourceSnapshot});
+  assert.equal(result.status,'completed');
+  assert.equal(result.swapped,true);
+  assert.equal(projection,'portrait');
+  assert.equal(swaps,1);
+  assert.deepEqual(phases.map(([phase])=>phase),['PREPARE','EXIT','SWAP','ENTER','SETTLE']);
+  assert.ok(phases.every(([,profile])=>profile==='normal'));
+  assert.notEqual(appliedSnapshot,sourceSnapshot);
+  assert.notEqual(appliedSnapshot.business,sourceSnapshot.business);
+  assert.ok(Object.isFrozen(appliedSnapshot));
+  assert.ok(Object.isFrozen(appliedSnapshot.business));
+  sourceSnapshot.business.selectedPartnerId='changed-after-request';
+  assert.equal(appliedSnapshot.business.selectedPartnerId,'p1');
+});
+
+test('orientation same-projection request is a no-op without animation or duplicate shell mutation',async()=>{
+  let phases=0;
+  let swaps=0;
+  const adapter=createOrientationProjectionAdapter({
+    getCurrentProjection:()=>ORIENTATION_PROJECTIONS.LANDSCAPE,
+    applyProjection:()=>{swaps+=1;},
+    runVisualPhase:async()=>{phases+=1;},
+  });
+  const result=await adapter.requestViewport({width:1280,height:720});
+  assert.equal(result.status,'ignored');
+  assert.equal(result.reason,'current_projection');
+  assert.equal(result.swapped,false);
+  assert.equal(phases,0);
+  assert.equal(swaps,0);
+});
+
+test('rapid landscape to portrait to landscape before swap cancels stale portrait without any swap',async()=>{
+  let projection='landscape';
+  let swaps=0;
+  const gate=deferred();
+  const adapter=createOrientationProjectionAdapter({
+    getCurrentProjection:()=>projection,
+    applyProjection:(next)=>{swaps+=1; projection=next;},
+    runVisualPhase:async(phase,context)=>{
+      if (context.to==='portrait' && phase===TRANSITION_PHASES.EXIT) await gate.promise;
+    },
+  });
+
+  const portrait=adapter.requestProjection('portrait');
+  await turn();
+  assert.equal(adapter.getState().phase,TRANSITION_PHASES.EXIT);
+  const back=await adapter.requestProjection('landscape');
+  assert.equal(back.status,'retained');
+  assert.equal(back.reason,'latest_projection_matches_current');
+  assert.equal(projection,'landscape');
+  assert.equal(swaps,0);
+  gate.resolve();
+  const stale=await portrait;
+  assert.equal(stale.status,'superseded');
+  assert.equal(stale.swapped,false);
+  assert.equal(projection,'landscape');
+  assert.equal(swaps,0);
+});
+
+test('rapid reversal after swap uses a new revision and latest projection wins',async()=>{
+  let projection='landscape';
+  const swaps=[];
+  const enterGate=deferred();
+  const adapter=createOrientationProjectionAdapter({
+    getCurrentProjection:()=>projection,
+    applyProjection:(next)=>{swaps.push(next); projection=next;},
+    runVisualPhase:async(phase,context)=>{
+      if (context.to==='portrait' && phase===TRANSITION_PHASES.ENTER) await enterGate.promise;
+    },
+  });
+
+  const portrait=adapter.requestProjection('portrait');
+  await turn();
+  assert.equal(projection,'portrait');
+  assert.equal(adapter.getState().phase,TRANSITION_PHASES.ENTER);
+  const landscape=await adapter.requestProjection('landscape');
+  assert.equal(landscape.status,'completed');
+  assert.equal(projection,'landscape');
+  assert.deepEqual(swaps,['portrait','landscape']);
+  enterGate.resolve();
+  const stale=await portrait;
+  assert.equal(stale.status,'superseded');
+  assert.equal(stale.swapped,true);
+  assert.equal(projection,'landscape');
+});
+
+test('orientation reduced-motion and low-perf profiles change effects only',async()=>{
+  let projection='landscape';
+  let reduce=true;
+  let low=true;
+  const profiles=[];
+  const adapter=createOrientationProjectionAdapter({
+    getCurrentProjection:()=>projection,
+    applyProjection:(next)=>{projection=next;},
+    reducedMotion:()=>reduce,
+    lowPerf:()=>low,
+    runVisualPhase:async(_phase,context)=>profiles.push(context.motionProfile),
+  });
+
+  assert.equal((await adapter.requestProjection('portrait')).status,'completed');
+  assert.ok(profiles.every((profile)=>profile===ORIENTATION_MOTION_PROFILE.NONE));
+  profiles.length=0;
+  reduce=false;
+  assert.equal((await adapter.requestProjection('landscape')).status,'completed');
+  assert.ok(profiles.every((profile)=>profile===ORIENTATION_MOTION_PROFILE.REDUCED));
+});
+
+test('orientation adapter fails closed when projection mutation is asynchronous',async()=>{
+  let projection='landscape';
+  const adapter=createOrientationProjectionAdapter({
+    getCurrentProjection:()=>projection,
+    applyProjection:()=>Promise.resolve(),
+  });
+  const result=await adapter.requestProjection('portrait');
+  assert.equal(result.status,'failed');
+  assert.equal(result.phase,TRANSITION_PHASES.SWAP);
+  assert.match(result.message,/applyProjection must be synchronous/);
+  assert.equal(projection,'landscape');
+});

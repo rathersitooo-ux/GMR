@@ -36,6 +36,7 @@ function check(overrides = {}) {
     manifest,
     manifestPath,
     changedPaths: ['tools/preaction-authorization-validator.mjs'],
+    historyPaths: ['tools/preaction-authorization-validator.mjs'],
     manifestPresentAtHead: false,
     ...overrides,
   });
@@ -70,8 +71,16 @@ test('authorization commit may contain only its manifest', () => {
 });
 
 test('material path outside preauthorized scope is rejected', () => {
-  const result = check({ changedPaths: ['browser/GAMEROAD.html'] });
+  const result = check({ changedPaths: ['browser/GAMEROAD.html'], historyPaths: ['browser/GAMEROAD.html'] });
   assert.match(result.reason, /^material_path_out_of_scope:/);
+});
+
+test('transient material path cannot be hidden by deleting it before final diff', () => {
+  const result = check({
+    changedPaths: ['tools/preaction-authorization-validator.mjs'],
+    historyPaths: ['tools/preaction-authorization-validator.mjs', '.github/workflows/tmp-hidden-executor.yml'],
+  });
+  assert.match(result.reason, /^material_path_out_of_scope:.*tmp-hidden-executor/);
 });
 
 test('authorization manifest must be cleanup-deleted before merge', () => {
@@ -84,7 +93,7 @@ test('manifest-first scoped material change passes after cleanup', () => {
 });
 
 test('documentation-only PR is not overblocked', () => {
-  const result = check({ changedPaths: ['README.md'], manifestPresentAtHead: true });
+  const result = check({ changedPaths: ['README.md'], historyPaths: ['README.md'], manifestPresentAtHead: true });
   assert.deepEqual(result, { ok: true, reason: 'nonmaterial_pr' });
 });
 

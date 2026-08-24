@@ -5,12 +5,16 @@ on:
   push:
     branches:
       - work/uifeedback-r42-consumer-recovery
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
 
 jobs:
   repair-current-reds:
+    if: github.head_ref == 'work/uifeedback-r42-consumer-recovery' || github.ref == 'refs/heads/work/uifeedback-r42-consumer-recovery'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

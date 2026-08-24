@@ -97,15 +97,11 @@ function motionMarkers(kind, importance, reducedMotion = false) {
 
 const ENVIRONMENT_PHASES = Object.freeze({
   IDLE_READ: 'IDLE_READ',
-  CARD_SELECT: 'CARD_SELECT',
-  TARGET_LOCK: 'TARGET_LOCK',
   RESOLVE: 'RESOLVE',
   SETTLE_AFTERMATH: 'SETTLE_AFTERMATH'
 });
 const ENVIRONMENT_MOTION_INTENT = Object.freeze({
   IDLE_READ: 'AMBIENT_OPTIONAL',
-  CARD_SELECT: 'AMBIENT_MINIMAL',
-  TARGET_LOCK: 'HOLD',
   RESOLVE: 'BURST',
   SETTLE_AFTERMATH: 'SETTLE'
 });
@@ -161,7 +157,7 @@ export function planBattleConveyorEnvironmentFrame({
     requestedTravel: travel,
     effectiveTravel,
     worldLayerScope: ['floor', 'path', 'side_scenery'],
-    screenSpaceAnchors: ['hand', 'target_feedback', 'status', 'winner_afterstate'],
+    screenSpaceAnchors: ['target_feedback', 'status', 'winner_afterstate'],
     seamPolicy: 'recycle_only_outside_decision_surface_or_behind_vanishing_mask',
     segments
   });

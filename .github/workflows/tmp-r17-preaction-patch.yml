@@ -4,13 +4,16 @@ on:
   push:
     branches:
       - work/reqcheck-r17-preaction-merge-gate
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
 
 jobs:
   patch:
-    if: github.actor != 'github-actions[bot]'
+    if: github.actor != 'github-actions[bot]' && (github.event_name == 'push' || github.head_ref == 'work/reqcheck-r17-preaction-merge-gate')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -25,7 +25,7 @@ export function presentationDurations(profile = 'full') {
 
 export function computeHeroGeometry(sourceRect, viewport) {
   const width = Math.max(1, Number(sourceRect?.width) || 1);
-  const height = Math.max(1, Number(sourceRect?.height) || 1;
+  const height = Math.max(1, Number(sourceRect?.height) || 1);
   const left = Number(sourceRect?.left) || 0;
   const top = Number(sourceRect?.top) || 0;
   const vw = Math.max(1, Number(viewport?.width) || 1);

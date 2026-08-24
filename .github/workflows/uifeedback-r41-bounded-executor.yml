@@ -9,89 +9,217 @@ permissions:
   contents: write
 
 jobs:
-  recover-and-probe:
+  patch-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: work/uifeedback-r42-consumer-recovery
-      - name: Recover proven cores, exact provenance, and persist bounded HTML probe
+      - name: Verify recovered core provenance
         shell: bash
         run: |
           set -euo pipefail
-          git fetch --no-tags origin refs/pull/342/head refs/pull/349/head
-          git cat-file -e c112c8c04182edadbd99dd729fb0cdd18d499364^{commit}
-          git cat-file -e f36eda42ada5c5d198f0f76034760bfca2709a3f^{commit}
-          git show c112c8c04182edadbd99dd729fb0cdd18d499364:browser/screen-navigation-core.mjs > browser/screen-navigation-core.mjs
-          git show c112c8c04182edadbd99dd729fb0cdd18d499364:tests/screen-navigation-core.test.mjs > tests/screen-navigation-core.test.mjs
-          git show f36eda42ada5c5d198f0f76034760bfca2709a3f:browser/ui-state-feedback-core.mjs > browser/ui-state-feedback-core.mjs
-          git show f36eda42ada5c5d198f0f76034760bfca2709a3f:tests/ui-state-feedback-core.test.mjs > tests/ui-state-feedback-core.test.mjs
+          test "$(git hash-object browser/screen-navigation-core.mjs)" = "eb81770f33f8eaa75ea75ef002bf6bc9dc7bc1b4"
+          test "$(git hash-object browser/ui-state-feedback-core.mjs)" = "8a14c06884fb476aebb074952bb71b72dffc90f7"
+      - name: Mount the bounded current consumer and temporal regression
+        shell: bash
+        run: |
+          set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          import hashlib
-
-          build = Path('deploy/cloudflare/tests/build.test.mjs')
-          text = build.read_text(encoding='utf-8')
-          replacements = {
-              '0c3954e0ff614522d7dc2417ab102872ad446523': 'eb81770f33f8eaa75ea75ef002bf6bc9dc7bc1b4',
-              '05c45acee19fc7a8770e84f270f9436229621bca': '8a14c06884fb476aebb074952bb71b72dffc90f7',
-          }
-          for old, new in replacements.items():
-              old_count = text.count(old)
-              new_count = text.count(new)
-              if old_count == 1 and new_count == 0:
-                  text = text.replace(old, new)
-              elif old_count == 0 and new_count == 1:
-                  pass
-              else:
-                  raise SystemExit(f'PROVENANCE_ANCHOR_STATE_FAIL old={old} old_count={old_count} new={new} new_count={new_count}')
-          build.write_text(text, encoding='utf-8')
 
           html_path = Path('browser/GAMEROAD.html')
+          test_path = Path('tests/browser-runtime-smoke.spec.mjs')
           html = html_path.read_text(encoding='utf-8')
-          anchors = [
-              'function showScreen',
-              'const showScreen',
-              'let showScreen',
-              'crossScreenMotionOnShow',
-              'navigateDetail',
-              'popNavigation',
-              'screen-navigation-core.mjs',
-              'ui-state-feedback-core.mjs',
-              'screen.orientation',
-              'visualViewport',
-              "matchMedia('(prefers-reduced-motion: reduce)')",
-              'homeMotionApplyState',
-              'data-go',
-          ]
-          out = [
-              f'HTML_BYTES={len(html.encode("utf-8"))}',
-              f'HTML_SHA256={hashlib.sha256(html.encode("utf-8")).hexdigest()}',
-          ]
-          for anchor in anchors:
-              positions=[]
-              start=0
-              while True:
-                  i=html.find(anchor,start)
-                  if i < 0: break
-                  positions.append(i)
-                  start=i+1
-              out.append(f'ANCHOR {anchor!r} count={len(positions)} positions={positions[:12]}')
-              for i in positions[:3]:
-                  lo=max(0,i-1400); hi=min(len(html),i+3200)
-                  snippet=html[lo:hi].replace('\r','').replace('\n','\\n')
-                  out.append(f'SNIPPET {anchor!r} @{i}: {snippet}')
-          Path('tmp').mkdir(exist_ok=True)
-          Path('tmp/ui-r41-html-probe.txt').write_text('\n'.join(out)+'\n', encoding='utf-8')
+          marker = 'GAMEROAD_R42_TRANSITION_CONSUMER'
+
+          if marker not in html:
+              show_anchor = 'function show(name){'
+              show_tail = 'audioOnScreenTransition(previous,name);crossScreenMotionOnShow(previous,name)}'
+              if html.count(show_anchor) != 1 or html.count(show_tail) != 1:
+                  raise SystemExit(f'SHOW_ANCHOR_FAIL show={html.count(show_anchor)} tail={html.count(show_tail)}')
+              html = html.replace(show_anchor, 'function show(name,{skipCrossScreenMotion=false}={}){', 1)
+              html = html.replace(
+                  show_tail,
+                  'audioOnScreenTransition(previous,name);if(!skipCrossScreenMotion)crossScreenMotionOnShow(previous,name)}',
+                  1,
+              )
+
+              nav_start_anchor = 'const gameroadNav={stack:[]};'
+              nav_end_anchor = '\n\n/* CROSSSCREEN-MOTION-PRODUCTION-COVERAGE-001 R1 / native Home motion owner */'
+              if html.count(nav_start_anchor) != 1 or html.count(nav_end_anchor) != 1:
+                  raise SystemExit(f'NAV_ANCHOR_FAIL start={html.count(nav_start_anchor)} end={html.count(nav_end_anchor)}')
+              nav_start = html.index(nav_start_anchor)
+              nav_end = html.index(nav_end_anchor, nav_start)
+              nav = r'''const gameroadNav={stack:[]};
+          function navEntry(screen){return{screen}}
+          function currentScreenTransitionRuntime(){const runtime=globalThis.GAMEROAD_SCREEN_TRANSITION;if(!runtime||typeof runtime.navigate!=="function"||typeof runtime.back!=="function")throw new Error("GAMEROAD screen transition runtime is not ready");return runtime}
+          globalThis.GAMEROAD_GET_CURRENT_SCREEN=()=>state.screen;
+          globalThis.GAMEROAD_APPLY_SCREEN_TRANSITION=(target,meta={})=>{if(meta.reason==='detail')gameroadNav.stack.push(navEntry(meta.from));else if(meta.reason==='root')gameroadNav.stack.length=0;else if(meta.reason==='back'&&gameroadNav.stack.length)gameroadNav.stack.pop();show(target,{skipCrossScreenMotion:true})};
+          function navigateDetail(target){return currentScreenTransitionRuntime().navigate(target,{reason:'detail'})}
+          function navigateRoot(target){return currentScreenTransitionRuntime().navigate(target,{reason:'root'})}
+          function navigateBack(){const entry=gameroadNav.stack[gameroadNav.stack.length-1];return currentScreenTransitionRuntime().back(entry,{reason:'back'})}
+          $$('[data-go]').forEach(b=>b.addEventListener('click',()=>navigateDetail(b.dataset.go)));
+          $$('[data-root-go]').forEach(b=>b.addEventListener('click',()=>navigateRoot(b.dataset.rootGo)));
+          $$('[data-back]').forEach(b=>b.addEventListener('click',()=>navigateBack()));
+          /* GAMEROAD_R42_TRANSITION_CONSUMER */'''
+              html = html[:nav_start] + nav + html[nav_end:]
+
+              home_start_anchor = 'function homeMotionNavigate(target){'
+              home_end_anchor = '\nfunction homeMotionOnRender()'
+              if html.count(home_start_anchor) != 1:
+                  raise SystemExit(f'HOME_NAV_ANCHOR_FAIL count={html.count(home_start_anchor)}')
+              home_start = html.index(home_start_anchor)
+              home_end = html.index(home_end_anchor, home_start)
+              old_home = html[home_start:home_end]
+              if 'crossScreenBridge(meta.dir)' not in old_home or 'navigateDetail(target)' not in old_home:
+                  raise SystemExit('HOME_NAV_SHAPE_FAIL')
+              new_home = r'''function homeMotionNavigate(target){const meta=HOME_MOTION_DESTINATIONS[target];if(!meta||homeMotionRuntime.busy||state.screen!=='home')return false;if(homeMotionRuntime.state===HOME_MOTION_STATES.COLLAPSED){homeMotionSetState(HOME_MOTION_STATES.EXPANDED);return false}homeMotionRuntime.busy=true;homeMotionRuntime.lastDirection=meta.dir;homeMotionPreview(target);homeMotionSetState(HOME_MOTION_STATES.PRESSED);const button=document.querySelector(`.homePadChoice[data-home-target="${target}"]`);button?.classList.add('pressed');void Promise.resolve().then(()=>navigateDetail(target)).finally(()=>{button?.classList.remove('pressed');homeMotionRuntime.busy=false});return true}'''
+              html = html[:home_start] + new_home + html[home_end:]
+
+              helper_anchor = 'function homeMotionFocusDirection(dir){'
+              if html.count(helper_anchor) != 1:
+                  raise SystemExit(f'HELPER_ANCHOR_FAIL count={html.count(helper_anchor)}')
+              helper_index = html.index(helper_anchor)
+              helper = r'''function r42TransitionDelay(ms,signal){if(!(ms>0)||signal?.aborted)return Promise.resolve();return new Promise(resolve=>{let settled=false,timer=0;const finish=()=>{if(settled)return;settled=true;if(timer)clearTimeout(timer);signal?.removeEventListener?.('abort',finish);resolve()};timer=setTimeout(finish,ms);signal?.addEventListener?.('abort',finish,{once:true})})}
+          function r42TransitionDuration(motionProfile){if(motionProfile==='none')return 0;const raw=Math.max(1,Number.parseInt(getComputedStyle(document.documentElement).getPropertyValue('--home-motion-ms'))||260);return motionProfile==='reduced'?Math.min(45,Math.max(24,Math.round(raw*.16))):Math.min(90,Math.max(48,Math.round(raw*.25)))}
+          function r42ScreenDirection(context){if(context.reason==='back'||context.to==='home')return'return';if(context.from==='home')return HOME_MOTION_DESTINATIONS[context.to]?.dir||'neutral';return'neutral'}
+          function r42ScreenTransitionVisualPhase(phase,context){const root=document.documentElement,revision=String(context.revision);root.dataset.screenTransitionPhase=String(phase).toLowerCase();root.dataset.screenTransitionRevision=revision;const cleanup=()=>{if(root.dataset.screenTransitionRevision===revision){delete root.dataset.screenTransitionPhase;delete root.dataset.screenTransitionRevision}};context.signal?.addEventListener?.('abort',cleanup,{once:true});if(phase==='EXIT'||phase==='ENTER'){crossScreenBridge(r42ScreenDirection(context));return r42TransitionDelay(r42TransitionDuration(context.motionProfile),context.signal)}if(phase==='SETTLE')cleanup();return Promise.resolve()}
+          function r42OrientationTransitionVisualPhase(phase,context){const root=document.documentElement,revision=String(context.revision);root.dataset.orientationTransitionPhase=String(phase).toLowerCase();root.dataset.orientationTransitionRevision=revision;const cleanup=()=>{if(root.dataset.orientationTransitionRevision===revision){delete root.dataset.orientationTransitionPhase;delete root.dataset.orientationTransitionRevision}};context.signal?.addEventListener?.('abort',cleanup,{once:true});if(phase==='EXIT'){crossScreenBridge('neutral');return r42TransitionDelay(r42TransitionDuration(context.motionProfile),context.signal)}if(phase==='SETTLE')cleanup();return Promise.resolve()}
+          globalThis.GAMEROAD_RUN_SCREEN_TRANSITION_PHASE=r42ScreenTransitionVisualPhase;
+          globalThis.GAMEROAD_RUN_ORIENTATION_TRANSITION_PHASE=r42OrientationTransitionVisualPhase;
+          globalThis.GAMEROAD_READ_UI_MODE=()=>({reducedMotion:!!(state?.settings?.reduceMotion||window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches),lowPerf:!!state?.settings?.lowPerf});
+          '''
+              html = html[:helper_index] + helper + html[helper_index:]
+
+              module_anchor = '<script type="module">\nimport { resolveScreenNavigation } from "./screen-navigation-core.mjs";'
+              if html.count(module_anchor) != 1:
+                  raise SystemExit(f'MODULE_ANCHOR_FAIL count={html.count(module_anchor)}')
+              module_start = html.index(module_anchor)
+              module_end = html.index('</script>', module_start) + len('</script>')
+              module = r'''<script type="module">
+          import { resolveScreenNavigation, createScreenNavigationRuntimeBridge, createScreenTransitionRuntimeAdapter } from "./screen-navigation-core.mjs";
+          import { createOrientationProjectionAdapter, ORIENTATION_PROJECTIONS } from "./ui-state-feedback-core.mjs";
+          const runtimeScreenNavigationBridge=createScreenNavigationRuntimeBridge();
+          const existingScreenNavigationBridge=globalThis.GAMEROAD_SCREEN_NAVIGATION;
+          if(existingScreenNavigationBridge && (existingScreenNavigationBridge.resolve!==resolveScreenNavigation || existingScreenNavigationBridge.resolveBackTarget!==runtimeScreenNavigationBridge.resolveBackTarget))throw new Error("GAMEROAD_SCREEN_NAVIGATION is already occupied by an incompatible bridge");
+          if(!existingScreenNavigationBridge)Object.defineProperty(globalThis,"GAMEROAD_SCREEN_NAVIGATION",{value:runtimeScreenNavigationBridge,enumerable:false,configurable:false,writable:false});
+          const navigationBridge=existingScreenNavigationBridge||runtimeScreenNavigationBridge;
+          const readUiMode=()=>globalThis.GAMEROAD_READ_UI_MODE?.()||{reducedMotion:false,lowPerf:false};
+          const screenTransitionRuntime=createScreenTransitionRuntimeAdapter({getCurrentScreen:()=>globalThis.GAMEROAD_GET_CURRENT_SCREEN(),applyScreen:(target,meta)=>globalThis.GAMEROAD_APPLY_SCREEN_TRANSITION(target,meta),runVisualPhase:(phase,context)=>globalThis.GAMEROAD_RUN_SCREEN_TRANSITION_PHASE(phase,context),navigationBridge,reducedMotion:()=>readUiMode().reducedMotion,lowPerf:()=>readUiMode().lowPerf});
+          const existingScreenTransitionRuntime=globalThis.GAMEROAD_SCREEN_TRANSITION;
+          if(existingScreenTransitionRuntime && (typeof existingScreenTransitionRuntime.navigate!=="function"||typeof existingScreenTransitionRuntime.back!=="function"))throw new Error("GAMEROAD_SCREEN_TRANSITION is already occupied by an incompatible runtime");
+          if(!existingScreenTransitionRuntime)Object.defineProperty(globalThis,"GAMEROAD_SCREEN_TRANSITION",{value:screenTransitionRuntime,enumerable:false,configurable:false,writable:false});
+          let orientationProjection=window.innerWidth===window.innerHeight?(document.documentElement.dataset.orientationProjection||ORIENTATION_PROJECTIONS.LANDSCAPE):(window.innerWidth>window.innerHeight?ORIENTATION_PROJECTIONS.LANDSCAPE:ORIENTATION_PROJECTIONS.PORTRAIT);
+          document.documentElement.dataset.orientationProjection=orientationProjection;
+          const orientationRuntime=createOrientationProjectionAdapter({getCurrentProjection:()=>orientationProjection,applyProjection:(projection,context)=>{orientationProjection=projection;document.documentElement.dataset.orientationProjection=projection;document.documentElement.dataset.orientationRevision=String(context.revision)},runVisualPhase:(phase,context)=>globalThis.GAMEROAD_RUN_ORIENTATION_TRANSITION_PHASE(phase,context),reducedMotion:()=>readUiMode().reducedMotion,lowPerf:()=>readUiMode().lowPerf});
+          const existingOrientationRuntime=globalThis.GAMEROAD_ORIENTATION_TRANSITION;
+          if(existingOrientationRuntime && typeof existingOrientationRuntime.requestViewport!=="function")throw new Error("GAMEROAD_ORIENTATION_TRANSITION is already occupied by an incompatible runtime");
+          if(!existingOrientationRuntime)Object.defineProperty(globalThis,"GAMEROAD_ORIENTATION_TRANSITION",{value:orientationRuntime,enumerable:false,configurable:false,writable:false});
+          const activeOrientationRuntime=existingOrientationRuntime||orientationRuntime;
+          let orientationRequestSerial=0;
+          const requestOrientationProjection=()=>{const width=window.innerWidth,height=window.innerHeight;if(!(width>0&&height>0))return;const serial=++orientationRequestSerial;void Promise.resolve().then(()=>activeOrientationRuntime.requestViewport({width,height},{semanticSnapshot:{screen:globalThis.GAMEROAD_GET_CURRENT_SCREEN()}})).then(result=>{if(serial===orientationRequestSerial)document.documentElement.dataset.orientationTransitionStatus=result.status}).catch(error=>{if(serial===orientationRequestSerial)document.documentElement.dataset.orientationTransitionStatus=`failed:${String(error?.message||error)}`})};
+          globalThis.GAMEROAD_ORIENTATION_REQUEST=requestOrientationProjection;
+          screen.orientation?.addEventListener?.('change',requestOrientationProjection);
+          window.visualViewport?.addEventListener?.('resize',requestOrientationProjection);
+          window.addEventListener('resize',requestOrientationProjection);
+          requestOrientationProjection();
+          </script>'''
+              html = html[:module_start] + module + html[module_end:]
+              html_path.write_text(html, encoding='utf-8')
+
+          tests = test_path.read_text(encoding='utf-8')
+          test_marker = "R42 actual menu transition and orientation consumer mount is temporal and latest-wins"
+          if test_marker not in tests:
+              tests += r'''
+
+          test('R42 actual menu transition and orientation consumer mount is temporal and latest-wins', async ({ page }) => {
+            await page.setViewportSize({ width: 1280, height: 720 });
+            const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'load' });
+            expect(response, 'main HTML response').not.toBeNull();
+            expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
+            await page.waitForFunction(() => Boolean(globalThis.GAMEROAD_SCREEN_TRANSITION && globalThis.GAMEROAD_ORIENTATION_TRANSITION));
+            await expect(page.locator('.screen[data-screen="home"]')).toHaveClass(/active/);
+
+            const mounted = await page.evaluate(() => ({
+              screen: globalThis.GAMEROAD_GET_CURRENT_SCREEN?.(),
+              screenPhase: globalThis.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase,
+              orientationPhase: globalThis.GAMEROAD_ORIENTATION_TRANSITION?.getState?.().phase,
+              projection: document.documentElement.dataset.orientationProjection,
+              hasOrientationRequest: typeof globalThis.GAMEROAD_ORIENTATION_REQUEST === 'function',
+            }));
+            expect(mounted).toMatchObject({ screen: 'home', screenPhase: 'IDLE', orientationPhase: 'IDLE', projection: 'landscape', hasOrientationRequest: true });
+
+            const cards = page.locator('[data-go="cards"]:visible').first();
+            await expect(cards).toBeVisible();
+            await cards.click();
+            await expect(page.locator('.screen[data-screen="cards"]')).toHaveClass(/active/);
+            await page.waitForFunction(() => globalThis.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase === 'IDLE');
+            expect(await page.evaluate(() => globalThis.GAMEROAD_GET_CURRENT_SCREEN())).toBe('cards');
+            expect(await page.evaluate(() => document.documentElement.dataset.screenTransitionPhase ?? null)).toBeNull();
+
+            const back = page.locator('[data-back]:visible').first();
+            await expect(back).toBeVisible();
+            await back.click();
+            await expect(page.locator('.screen[data-screen="home"]')).toHaveClass(/active/);
+            await page.waitForFunction(() => globalThis.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase === 'IDLE');
+
+            const cancelled = await page.evaluate(async () => {
+              const runtime = globalThis.GAMEROAD_SCREEN_TRANSITION;
+              const before = globalThis.GAMEROAD_GET_CURRENT_SCREEN();
+              const pending = runtime.navigate('cards', { reason: 'detail' });
+              const cancelReturned = runtime.cancel();
+              const result = await pending;
+              return { before, after: globalThis.GAMEROAD_GET_CURRENT_SCREEN(), cancelReturned, result, state: runtime.getState() };
+            });
+            expect(cancelled.cancelReturned).toBe(true);
+            expect(cancelled.result.status).toBe('superseded');
+            expect(cancelled.after).toBe(cancelled.before);
+            expect(cancelled.state.phase).toBe('IDLE');
+
+            const rapid = await page.evaluate(async () => {
+              const runtime = globalThis.GAMEROAD_SCREEN_TRANSITION;
+              const first = runtime.navigate('cards', { reason: 'detail' });
+              const second = runtime.navigate('profile', { reason: 'detail' });
+              const [a, b] = await Promise.all([first, second]);
+              return { a, b, screen: globalThis.GAMEROAD_GET_CURRENT_SCREEN(), state: runtime.getState(), residue: document.documentElement.dataset.screenTransitionPhase ?? null };
+            });
+            expect(rapid.a.status).toBe('superseded');
+            expect(rapid.b.status).toBe('completed');
+            expect(rapid.screen).toBe('profile');
+            expect(rapid.state.phase).toBe('IDLE');
+            expect(rapid.residue).toBeNull();
+            await expect(page.locator('.screen[data-screen="profile"]')).toHaveClass(/active/);
+
+            await page.setViewportSize({ width: 390, height: 844 });
+            await page.waitForFunction(() => document.documentElement.dataset.orientationProjection === 'portrait');
+            await page.waitForFunction(() => globalThis.GAMEROAD_ORIENTATION_TRANSITION?.getState?.().phase === 'IDLE');
+            const portrait = await page.evaluate(() => ({ screen: globalThis.GAMEROAD_GET_CURRENT_SCREEN(), projection: document.documentElement.dataset.orientationProjection, residue: document.documentElement.dataset.orientationTransitionPhase ?? null }));
+            expect(portrait).toEqual({ screen: 'profile', projection: 'portrait', residue: null });
+
+            await page.setViewportSize({ width: 667, height: 375 });
+            await page.setViewportSize({ width: 390, height: 844 });
+            await page.waitForFunction(() => document.documentElement.dataset.orientationProjection === 'portrait');
+            await page.waitForFunction(() => globalThis.GAMEROAD_ORIENTATION_TRANSITION?.getState?.().phase === 'IDLE');
+            const final = await page.evaluate(() => ({ screen: globalThis.GAMEROAD_GET_CURRENT_SCREEN(), projection: document.documentElement.dataset.orientationProjection, screenResidue: document.documentElement.dataset.screenTransitionPhase ?? null, orientationResidue: document.documentElement.dataset.orientationTransitionPhase ?? null }));
+            expect(final).toEqual({ screen: 'profile', projection: 'portrait', screenResidue: null, orientationResidue: null });
+          });
+          '''
+              test_path.write_text(tests, encoding='utf-8')
           PY
-          node --test tests/screen-navigation-core.test.mjs tests/ui-state-feedback-core.test.mjs deploy/cloudflare/tests/build.test.mjs
-          if git diff --quiet -- browser/screen-navigation-core.mjs tests/screen-navigation-core.test.mjs browser/ui-state-feedback-core.mjs tests/ui-state-feedback-core.test.mjs deploy/cloudflare/tests/build.test.mjs tmp/ui-r41-html-probe.txt; then
-            echo 'NO_EXECUTOR_DIFF'
+      - name: Run recovered core and provenance tests
+        run: node --test tests/screen-navigation-core.test.mjs tests/ui-state-feedback-core.test.mjs deploy/cloudflare/tests/build.test.mjs
+      - name: Persist bounded product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- browser/GAMEROAD.html tests/browser-runtime-smoke.spec.mjs; then
+            echo 'NO_R42_PRODUCT_DIFF'
             exit 0
           fi
           git config user.name 'gameroad-r42-bounded-executor'
           git config user.email 'actions@users.noreply.github.com'
-          git add browser/screen-navigation-core.mjs tests/screen-navigation-core.test.mjs browser/ui-state-feedback-core.mjs tests/ui-state-feedback-core.test.mjs deploy/cloudflare/tests/build.test.mjs tmp/ui-r41-html-probe.txt
-          git commit -m 'TEMP UIFeedback R42: persist bounded current HTML anchors'
+          git add browser/GAMEROAD.html tests/browser-runtime-smoke.spec.mjs
+          git commit -m 'UI R42: mount menu and orientation transition consumer'
           git push origin HEAD:work/uifeedback-r42-consumer-recovery

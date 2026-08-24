@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildPartnerAdviceDecisionProduct } from '../tools/partner-advice-decision-product.mjs';
+import {
+  buildPartnerAdviceDecisionProduct,
+  compileRuntimeAdviceManifestFromDecisionProduct,
+} from '../tools/partner-advice-decision-product.mjs';
 
 const VERSIONS = {
   releaseVersion: 'release-r2',
@@ -307,4 +310,165 @@ test('strict allowlists reject raw/private/free-text additions without echoing p
   assert.equal(result.projection, null);
   assert.ok(result.reasons.includes('top-unexpected-field:rawTranscript'));
   assert.equal(JSON.stringify(result).includes(secret), false);
+});
+
+function runtimeReadyProduct({ contextOverrides = {}, proposalOverrides = {}, productOverrides = {} } = {}) {
+  const releaseProposal = proposal({
+    supportingEvidence: [evidence('server-support-runtime', { provenance: 'server_verified', authorityLevel: 'L4' })],
+    decision: { state: 'APPROVED', authority: 'human', evidenceRef: 'human-decision-runtime-1' },
+    releaseLink: { releaseId: 'release-runtime-1', resultRecordId: 'result-runtime-1' },
+    ...proposalOverrides,
+  });
+  return buildPartnerAdviceDecisionProduct(product({
+    proposal: releaseProposal,
+    decisionContext: decisionContext(contextOverrides),
+    ...productOverrides,
+  }));
+}
+
+function runtimeMemory(overrides = {}) {
+  const runtimeVersions = { rulesVersion: VERSIONS.rulesVersion, cardVersion: VERSIONS.cardVersion, stateVersion: VERSIONS.stateVersion };
+  const fingerprint = 'rules=rules-r1|cards=cards-r1|state=state-r1|phase=battle|turnBand=mid|pressureBand=high|manaBand=two-plus|handBand=three';
+  return {
+    targetVersions: runtimeVersions,
+    contexts: new Map([[fingerprint, new Map([['guard', { count: 12, rewardSum: 11, regretSum: 0 }]])]]),
+    global: new Map([['guard', { count: 12, rewardSum: 11, regretSum: 0 }]]),
+    regretPenalty: 0.35,
+    ...overrides,
+  };
+}
+
+function runtimePromotionDecision() {
+  return { promotion: true, formalPromotionRequiresHumanGate: true };
+}
+
+function runtimeApproval(overrides = {}) {
+  return {
+    gateId: 'HUMAN-HOLDOUT-ACCEPTANCE',
+    approvalId: 'runtime-human-approval-1',
+    humanGate: 'approved',
+    privacyScope: 'shared',
+    containsPrivate: false,
+    rulesVersion: VERSIONS.rulesVersion,
+    cardVersion: VERSIONS.cardVersion,
+    stateVersion: VERSIONS.stateVersion,
+    ...overrides,
+  };
+}
+
+test('formal collective Decision Product compiles a privacy-minimized runtime manifest with safe lineage', () => {
+  const decisionProductResult = runtimeReadyProduct();
+  assert.equal(decisionProductResult.formalPromotionEligible, true);
+  const compiled = compileRuntimeAdviceManifestFromDecisionProduct({
+    decisionProductResult,
+    memory: runtimeMemory(),
+    promotionDecision: runtimePromotionDecision(),
+    approval: runtimeApproval(),
+    runtimeUseSiteRef: 'use-site-advice-selection',
+  });
+
+  assert.equal(compiled.ok, true);
+  assert.equal(compiled.manifest.schema, 'gameroad.partner-advice-runtime-manifest.v1');
+  const lineage = compiled.manifest.collectiveDecisionLineage;
+  assert.equal(lineage.schema, 'gameroad.partner-advice-runtime-lineage.v1');
+  assert.equal(lineage.decisionProductId, 'partner-advice-dp-r2-001');
+  assert.equal(lineage.proposalId, 'proposal-partner-r2-001');
+  assert.equal(lineage.cohortId, 'cohort-a');
+  assert.equal(lineage.consumerUseSiteRef, 'use-site-advice-selection');
+  assert.deepEqual(lineage.transfer, { sourceScope: 'POPULATION', targetScope: 'POPULATION', personalAuthorityRef: null });
+  assert.deepEqual(lineage.comparison.axisRefs, ['axis-regret', 'axis-clarity']);
+  assert.equal(lineage.comparison.noChangeRef, 'control-no-change-current-advice');
+  assert.equal(lineage.automaticMutationAllowed, false);
+  assert.equal(lineage.personaMutationAllowed, false);
+  assert.equal(lineage.relationshipMutationAllowed, false);
+  assert.equal(lineage.containsRawEvents, false);
+  assert.equal(lineage.containsPrivate, false);
+  assert.equal(Object.isFrozen(compiled), true);
+  assert.equal(Object.isFrozen(compiled.manifest), true);
+
+  const serialized = JSON.stringify(compiled.manifest);
+  assert.equal(serialized.includes('sha256-server-support-runtime'), false);
+  assert.equal(serialized.includes('summary-server-support-runtime'), false);
+  assert.equal(serialized.includes('rawTranscript'), false);
+});
+
+test('runtime lineage bridge rejects offline-only Decision Product instead of treating research volume as promotion', () => {
+  const offlineOnly = buildPartnerAdviceDecisionProduct(product());
+  const compiled = compileRuntimeAdviceManifestFromDecisionProduct({
+    decisionProductResult: offlineOnly,
+    memory: runtimeMemory(),
+    promotionDecision: runtimePromotionDecision(),
+    approval: runtimeApproval(),
+    runtimeUseSiteRef: 'use-site-advice-selection',
+  });
+  assert.equal(compiled.ok, false);
+  assert.equal(compiled.reason, 'decision-product-not-formal-promotion-eligible');
+});
+
+test('NO_CHANGE Decision Product cannot silently become a runtime behavior change', () => {
+  const noChange = runtimeReadyProduct({
+    proposalOverrides: {
+      proposalId: 'proposal-runtime-no-change',
+      kind: 'NO_CHANGE',
+      changeRef: null,
+    },
+    productOverrides: { decisionProductId: 'partner-advice-dp-runtime-no-change' },
+  });
+  assert.equal(noChange.formalPromotionEligible, true);
+  const compiled = compileRuntimeAdviceManifestFromDecisionProduct({
+    decisionProductResult: noChange,
+    memory: runtimeMemory(),
+    promotionDecision: runtimePromotionDecision(),
+    approval: runtimeApproval(),
+    runtimeUseSiteRef: 'use-site-advice-selection',
+  });
+  assert.equal(compiled.ok, false);
+  assert.equal(compiled.reason, 'decision-product-no-runtime-change');
+});
+
+test('population to personal runtime lineage requires and preserves explicit personal authority', () => {
+  const authorized = runtimeReadyProduct({
+    contextOverrides: {
+      transfer: {
+        sourceScope: 'POPULATION',
+        targetScope: 'PERSONAL',
+        personalAuthorityRef: 'explicit-user-preference-version-7',
+      },
+    },
+    productOverrides: { decisionProductId: 'partner-advice-dp-runtime-personal' },
+  });
+  const compiled = compileRuntimeAdviceManifestFromDecisionProduct({
+    decisionProductResult: authorized,
+    memory: runtimeMemory(),
+    promotionDecision: runtimePromotionDecision(),
+    approval: runtimeApproval(),
+    runtimeUseSiteRef: 'use-site-advice-selection',
+  });
+  assert.equal(compiled.ok, true);
+  assert.equal(compiled.manifest.collectiveDecisionLineage.transfer.targetScope, 'PERSONAL');
+  assert.equal(compiled.manifest.collectiveDecisionLineage.transfer.personalAuthorityRef, 'explicit-user-preference-version-7');
+});
+
+test('runtime lineage bridge fails closed on wrong use-site or version drift', () => {
+  const ready = runtimeReadyProduct();
+  const wrongUseSite = compileRuntimeAdviceManifestFromDecisionProduct({
+    decisionProductResult: ready,
+    memory: runtimeMemory(),
+    promotionDecision: runtimePromotionDecision(),
+    approval: runtimeApproval(),
+    runtimeUseSiteRef: 'other-use-site',
+  });
+  assert.equal(wrongUseSite.reason, 'runtime-use-site-mismatch');
+
+  const staleMemory = runtimeMemory({
+    targetVersions: { rulesVersion: 'rules-r1', cardVersion: 'cards-r0', stateVersion: 'state-r1' },
+  });
+  const stale = compileRuntimeAdviceManifestFromDecisionProduct({
+    decisionProductResult: ready,
+    memory: staleMemory,
+    promotionDecision: runtimePromotionDecision(),
+    approval: runtimeApproval({ cardVersion: 'cards-r0' }),
+    runtimeUseSiteRef: 'use-site-advice-selection',
+  });
+  assert.equal(stale.reason, 'decision-product-version-mismatch');
 });

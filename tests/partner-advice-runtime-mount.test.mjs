@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   createPartnerAdviceReplayBridge,
   createPartnerAdviceRuntimeControl,
+  projectPartnerAdviceBoardEmphasis,
 } from '../browser/partner-advice-runtime-mount.mjs';
 
 const V = Object.freeze({ rulesVersion: 'rules-r1', cardVersion: 'cards-r1', stateVersion: 'state-r1' });
@@ -81,4 +82,111 @@ test('runtime control rejects invented/partial versions and exposes activation s
   assert.equal(control.status().mode, 'manifest-or-rule');
   control.clearManifest();
   assert.equal(control.status().mode, 'shared-rule');
+});
+
+test('current public advice projects one caller-resolved board target without owning board semantics', () => {
+  let resolverCalls = 0;
+  const projection = projectPartnerAdviceBoardEmphasis({
+    adviceResult: {
+      ok: true,
+      containsPrivate: false,
+      selected: { candidateId: 'card-a' },
+      next: 'card-b',
+      source: 'shared-legal-action-core',
+    },
+    isCurrent: () => true,
+    resolveTarget: (candidateId) => {
+      resolverCalls += 1;
+      assert.equal(candidateId, 'card-a');
+      return { targetId: 'battle-target-07' };
+    },
+  });
+
+  assert.equal(resolverCalls, 1);
+  assert.deepEqual(projection, {
+    schema: 'gameroad.partner-advice-board-projection.v1',
+    active: true,
+    clear: false,
+    reason: null,
+    candidateId: 'card-a',
+    targetId: 'battle-target-07',
+    alternativeCandidateId: 'card-b',
+    source: 'shared-legal-action-core',
+    presentationRole: 'partner-recommendation',
+    autoExecute: false,
+  });
+  assert.equal(Object.isFrozen(projection), true);
+});
+
+test('private, missing, or failed advice never reaches the board target resolver', () => {
+  let resolverCalls = 0;
+  const resolveTarget = () => { resolverCalls += 1; return 'should-not-run'; };
+  const isCurrent = () => true;
+
+  for (const adviceResult of [
+    { ok: false, containsPrivate: false, selected: { candidateId: 'a' } },
+    { ok: true, containsPrivate: true, selected: { candidateId: 'a' } },
+    { ok: true, selected: { candidateId: 'a' } },
+    { ok: true, containsPrivate: false, selected: null },
+  ]) {
+    const projection = projectPartnerAdviceBoardEmphasis({ adviceResult, isCurrent, resolveTarget });
+    assert.equal(projection.active, false);
+    assert.equal(projection.clear, true);
+    assert.equal(projection.targetId, null);
+  }
+  assert.equal(resolverCalls, 0);
+});
+
+test('stale advice clears presentation before any target resolution', () => {
+  let resolverCalls = 0;
+  const projection = projectPartnerAdviceBoardEmphasis({
+    adviceResult: { ok: true, containsPrivate: false, selected: { candidateId: 'card-a' } },
+    isCurrent: () => false,
+    resolveTarget: () => { resolverCalls += 1; return 'battle-target-07'; },
+  });
+
+  assert.equal(resolverCalls, 0);
+  assert.equal(projection.active, false);
+  assert.equal(projection.clear, true);
+  assert.equal(projection.reason, 'STALE_ADVICE');
+});
+
+test('currentness and target resolver failures fail closed with no lingering active target', () => {
+  const result = { ok: true, containsPrivate: false, selected: { candidateId: 'card-a' } };
+
+  const currentnessFailure = projectPartnerAdviceBoardEmphasis({
+    adviceResult: result,
+    isCurrent: () => { throw new Error('stale state provider'); },
+    resolveTarget: () => 'battle-target-07',
+  });
+  assert.equal(currentnessFailure.active, false);
+  assert.equal(currentnessFailure.clear, true);
+  assert.equal(currentnessFailure.reason, 'CURRENTNESS_CHECK_FAILED');
+
+  const resolverFailure = projectPartnerAdviceBoardEmphasis({
+    adviceResult: result,
+    isCurrent: () => true,
+    resolveTarget: () => { throw new Error('board unavailable'); },
+  });
+  assert.equal(resolverFailure.active, false);
+  assert.equal(resolverFailure.clear, true);
+  assert.equal(resolverFailure.reason, 'TARGET_RESOLUTION_FAILED');
+
+  const unmapped = projectPartnerAdviceBoardEmphasis({
+    adviceResult: result,
+    isCurrent: () => true,
+    resolveTarget: () => null,
+  });
+  assert.equal(unmapped.active, false);
+  assert.equal(unmapped.clear, true);
+  assert.equal(unmapped.reason, 'TARGET_UNMAPPED');
+});
+
+test('projection gate is mandatory and never implies automatic execution', () => {
+  const result = { ok: true, containsPrivate: false, selected: { candidateId: 'card-a' } };
+  const projection = projectPartnerAdviceBoardEmphasis({ adviceResult: result });
+  assert.equal(projection.active, false);
+  assert.equal(projection.clear, true);
+  assert.equal(projection.reason, 'PROJECTION_GATE_REQUIRED');
+  assert.equal(projection.autoExecute, false);
 });

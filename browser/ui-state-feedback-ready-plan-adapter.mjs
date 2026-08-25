@@ -3,12 +3,146 @@ import {
   applyUIFeedbackEvent,
   consumeUIIntent,
   projectUIFeedback,
+  MATERIAL_FEEDBACK_MATERIALS,
+  MATERIAL_FEEDBACK_PHASES,
+  projectMaterialFeedback,
+  materialFeedbackCssVars,
 } from './ui-state-feedback-core.mjs';
 
 export const READY_PLAN_FEEDBACK_ADAPTER_SCHEMA = 'gameroad.ui-state-feedback.ready-plan-adapter.v1';
 export const READY_PLAN_FEEDBACK_BINDING_SCHEMA = 'gameroad.ui-state-feedback.ready-plan-binding.v1';
 
 const INTERACTION_EVENTS = new Set(['POINTER_DOWN', 'POINTER_MOVE', 'POINTER_UP', 'TICK', 'SECONDARY', 'KEY_ACTIVATE']);
+
+const READY_PLAN_MATERIAL = MATERIAL_FEEDBACK_MATERIALS.GUMMY;
+const MATERIAL_CANCEL_REASONS = new Set([
+  'pointer_left_target',
+  'pointer_release_outside',
+  'pointer_cancelled',
+  'pointer_capture_lost',
+  'control_blur',
+]);
+
+function clamp01(value) {
+  return Math.min(1, Math.max(0, Number(value)));
+}
+
+function materialPhaseForFeedback(feedback) {
+  if (feedback.feedback === 'pressed') return MATERIAL_FEEDBACK_PHASES.PRESSED;
+  if (feedback.feedback === 'detail') return MATERIAL_FEEDBACK_PHASES.HOLD;
+  if (feedback.feedback === 'pending') return MATERIAL_FEEDBACK_PHASES.COMMITTED;
+  if (feedback.feedback === 'confirmed') return MATERIAL_FEEDBACK_PHASES.SETTLED;
+  if (feedback.feedback === 'failed') return MATERIAL_FEEDBACK_PHASES.CANCELLED;
+  if (feedback.feedback === 'disabled') return MATERIAL_FEEDBACK_PHASES.DISABLED;
+  if (feedback.feedback === 'focus') return MATERIAL_FEEDBACK_PHASES.FOCUSED;
+  if (MATERIAL_CANCEL_REASONS.has(feedback.reason)) return MATERIAL_FEEDBACK_PHASES.CANCELLED;
+  return MATERIAL_FEEDBACK_PHASES.NORMAL;
+}
+
+function materialContactForEvent(target, event) {
+  if (typeof target.getBoundingClientRect !== 'function') return Object.freeze({x:.5,y:.5});
+  const rect = target.getBoundingClientRect();
+  const width = Number.isFinite(rect?.width) && rect.width > 0 ? rect.width : Number(rect?.right) - Number(rect?.left);
+  const height = Number.isFinite(rect?.height) && rect.height > 0 ? rect.height : Number(rect?.bottom) - Number(rect?.top);
+  if (!(width > 0) || !(height > 0)) return Object.freeze({x:.5,y:.5});
+  return Object.freeze({
+    x: clamp01((pointerCoordinate(event, 'clientX') - Number(rect.left)) / width),
+    y: clamp01((pointerCoordinate(event, 'clientY') - Number(rect.top)) / height),
+  });
+}
+
+function createReadyPlanMaterialPainter(target) {
+  const style = target?.style;
+  const dataset = target?.dataset;
+  if (!style || typeof style.setProperty !== 'function' || !dataset) {
+    return Object.freeze({apply:()=>null,destroy:()=>false});
+  }
+
+  const paintKeys = ['filter','boxShadow','outlineColor','outlineStyle','outlineWidth','transitionProperty','transitionDuration','transitionTimingFunction'];
+  const baselinePaint = Object.fromEntries(paintKeys.map((key)=>[key, style[key] ?? '']));
+  const baselineDataset = {phase: dataset.gmrMaterialPhase, material: dataset.gmrMaterial};
+  const baselineVars = new Map();
+  let revision = 0;
+  let settleHandle = null;
+
+  const restorePaint = () => { for (const key of paintKeys) style[key] = baselinePaint[key]; };
+  const restoreDataset = () => {
+    if (baselineDataset.phase === undefined) delete dataset.gmrMaterialPhase;
+    else dataset.gmrMaterialPhase = baselineDataset.phase;
+    if (baselineDataset.material === undefined) delete dataset.gmrMaterial;
+    else dataset.gmrMaterial = baselineDataset.material;
+  };
+  const restoreVars = () => {
+    for (const [name, value] of baselineVars) {
+      if (value) style.setProperty(name, value);
+      else style.removeProperty(name);
+    }
+  };
+  const cancelSettle = () => {
+    if (settleHandle === null) return;
+    clearTimeout(settleHandle);
+    settleHandle = null;
+  };
+  const applyProjection = (projection) => {
+    const vars = materialFeedbackCssVars(projection);
+    for (const [name, value] of Object.entries(vars)) {
+      if (!baselineVars.has(name)) baselineVars.set(name, style.getPropertyValue(name));
+      style.setProperty(name, value);
+    }
+    dataset.gmrMaterialPhase = projection.phase;
+    dataset.gmrMaterial = projection.material;
+    if (projection.phase === MATERIAL_FEEDBACK_PHASES.NORMAL || projection.phase === MATERIAL_FEEDBACK_PHASES.DISABLED) {
+      restorePaint();
+      return;
+    }
+    const compression = projection.surface.shadowCompression;
+    const rim = projection.surface.rimTension;
+    const refraction = projection.surface.refraction;
+    const brightness = Math.max(.82, 1 - compression * .12 + refraction * .025);
+    const saturation = Math.max(.72, 1 - compression * .18 + refraction * .04);
+    const contrast = 1 + rim * .12;
+    const inset = Math.max(1, Math.round(1 + compression * 5));
+    const rimAlpha = Math.min(.72, .08 + rim * .5 + refraction * .12);
+    style.filter = `brightness(${brightness.toFixed(3)}) saturate(${saturation.toFixed(3)}) contrast(${contrast.toFixed(3)})`;
+    style.boxShadow = `inset 0 ${inset}px ${Math.max(2, inset + 2)}px rgba(0,0,0,${Math.min(.46,.1 + compression * .34).toFixed(3)}), 0 0 ${Math.max(2, Math.round(2 + rim * 8))}px rgba(255,255,255,${rimAlpha.toFixed(3)})`;
+    style.outlineStyle = 'solid';
+    style.outlineWidth = '1px';
+    style.outlineColor = `rgba(255,255,255,${rimAlpha.toFixed(3)})`;
+    style.transitionProperty = 'filter, box-shadow, outline-color';
+    style.transitionDuration = `${projection.motion.durationMs}ms`;
+    style.transitionTimingFunction = projection.motion.easing;
+  };
+
+  const apply = (feedback, contact={x:.5,y:.5}) => {
+    cancelSettle();
+    const ownRevision = ++revision;
+    const phase = materialPhaseForFeedback(feedback);
+    const reducedMotion = feedback.motion === 'none';
+    const lowPerf = feedback.motion === 'reduced';
+    const projection = projectMaterialFeedback({material:READY_PLAN_MATERIAL,phase,localX:contact.x,localY:contact.y,reducedMotion,lowPerf});
+    applyProjection(projection);
+    if (phase === MATERIAL_FEEDBACK_PHASES.CANCELLED || phase === MATERIAL_FEEDBACK_PHASES.SETTLED) {
+      const settleAfterMs = reducedMotion ? 90 : Math.max(90, projection.motion.durationMs);
+      settleHandle = setTimeout(() => {
+        if (revision !== ownRevision) return;
+        applyProjection(projectMaterialFeedback({material:READY_PLAN_MATERIAL,phase:MATERIAL_FEEDBACK_PHASES.NORMAL,localX:contact.x,localY:contact.y,reducedMotion,lowPerf}));
+        settleHandle = null;
+      }, settleAfterMs);
+      settleHandle?.unref?.();
+    }
+    return projection;
+  };
+
+  const destroy = () => {
+    cancelSettle();
+    revision += 1;
+    restorePaint();
+    restoreVars();
+    restoreDataset();
+    return true;
+  };
+  return Object.freeze({apply,destroy});
+}
 
 function requireEvent(event) {
   if (!event || typeof event !== 'object' || Array.isArray(event)) throw new Error('event must be an object');
@@ -191,8 +325,11 @@ export function bindReadyPlanFeedbackControl({
   let tickHandle = null;
   let destroyed = false;
 
+  const materialPainter = createReadyPlanMaterialPainter(target);
+  let materialContact = Object.freeze({x:.5,y:.5});
   const publish = (out) => {
     render(out.feedback, out);
+    materialPainter.apply(out.feedback, materialContact);
     return out;
   };
   const dispatch = (event) => publish(adapter.dispatch(event));
@@ -229,6 +366,7 @@ export function bindReadyPlanFeedbackControl({
     const pointerId = pointerIdOf(event);
     capturePointerIfSupported(target, pointerId);
     activePointerId = pointerId;
+    materialContact = materialContactForEvent(target, event);
     dispatch({
       type: 'POINTER_DOWN',
       x: pointerCoordinate(event, 'clientX'),
@@ -239,6 +377,7 @@ export function bindReadyPlanFeedbackControl({
   };
   const onPointerMove = (event) => {
     if (destroyed || !matchesActivePointer(event)) return;
+    materialContact = materialContactForEvent(target, event);
     const out = dispatch({
       type: 'POINTER_MOVE',
       x: pointerCoordinate(event, 'clientX'),
@@ -259,6 +398,7 @@ export function bindReadyPlanFeedbackControl({
       return;
     }
     const pointerId = activePointerId;
+    materialContact = materialContactForEvent(target, event);
     activePointerId = null;
     stopTick();
     try {
@@ -318,7 +458,9 @@ export function bindReadyPlanFeedbackControl({
     ['blur', onBlur],
   ];
   for (const [type, handler] of listeners) target.addEventListener(type, handler);
-  render(adapter.getFeedback(), null);
+  const initialFeedback = adapter.getFeedback();
+  render(initialFeedback, null);
+  materialPainter.apply(initialFeedback, materialContact);
 
   const acknowledge = ({operationToken, accepted, reason} = {}) => {
     if (destroyed) throw new Error('binding is destroyed');
@@ -338,6 +480,7 @@ export function bindReadyPlanFeedbackControl({
     stopTick();
     releasePointerCaptureIfHeld(target, pointerId);
     for (const [type, handler] of listeners) target.removeEventListener(type, handler);
+    materialPainter.destroy();
     return true;
   };
 

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-BOARD109-R18-PUBLICPACKAGE-CLOSURE-20260826T0018-SOL",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "R18_R17_STALE_RECOVERY_VISIBLE_PROJECTION_PUBLIC_PACKAGE_CLOSURE",
+  "acquireKey": "BOARD109-R18-R17STALE-PUBLICPACKAGE-20260826T0009-SOL-P9Q4V7K2M6RX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BOARD109-R18-R21-PUBLICPACKAGE-GRAPH-20260826T0018",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BOARD109-R17-TESTONLY-RED-ORACLE-20260825T2257",
+  "proceedToken": "PROCEED|VWORK-BOARD109-R18-PUBLICPACKAGE-CLOSURE-20260826T0018-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction=preserve the proven Partner/BOARD109 visible Battle projection while closing the exact Cloudflare package graph for runtime mount, legal adapter, and collective-eval leaf with byte provenance and safe nested rollback semantics; no game-rule or decision-authority change.|rehearsal=R17 same-main test-only RED proved the visible-projection detector fails before implementation; R17 exact-head local GREEN then isolated the remaining blocker to public-package provenance, so R18 must make that package closure pass without weakening completeness or mutating the old PR.",
+  "authorizationBaseSha": "e909300c8ad9ef7de4c7fd697556c8bec0aaf3ea",
+  "issuedAt": "2026-08-26T00:18:00+09:00",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "notes": "Drive R18 acquisition plus corrected RESOLUTION_PREP were strict-CAS persisted and read back before this first R18 remote mutation. The temporary authorization file must be deleted before final PR head. Public package closure is exactly index -> partner-advice-runtime-mount -> partner-legal-action-adapter -> tools/advice-collective-eval; do not ship only a prefix of that graph, do not weaken dependency completeness, and do not change 109 legality, game rules, save/economy, Partner decision authority, persona, or formal-asset semantics."
+}

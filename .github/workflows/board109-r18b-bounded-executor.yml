@@ -6,9 +6,56 @@ on:
 permissions:
   contents: write
 jobs:
-  diagnostic:
+  patch:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
-      - name: Confirm workflow parser and branch trigger
-        run: echo R18B_WORKFLOW_PARSER_OK
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: work/board109-r18b-publicpackage-closure-20260826
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify first authorization and exact product preimages
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=e909300c8ad9ef7de4c7fd697556c8bec0aaf3ea
+          MANIFEST=data/preaction-authorizations/VWORK-BOARD109-R18B-PUBLICPACKAGE-CLOSURE-20260826T0022-SOL.json
+          FIRST=$(git rev-list --reverse "${BASE}..HEAD" | head -n1)
+          test "$(git rev-parse "${FIRST}^")" = "$BASE"
+          test "$(git diff-tree --no-commit-id --name-only -r "$FIRST" | wc -l)" -eq 1
+          git diff-tree --no-commit-id --name-only -r "$FIRST" | grep -Fx "$MANIFEST"
+          test "$(git hash-object browser/GAMEROAD.html)" = "6a49aa324d0c40ed342e9e9b0cafc0683d64cdc1"
+          test "$(git hash-object tests/browser-full-interaction.spec.mjs)" = "15fdd63a799bcbf896575a18702b28cddebc7237"
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('data/preaction-authorizations/VWORK-BOARD109-R18B-PUBLICPACKAGE-CLOSURE-20260826T0022-SOL.json','utf8'));
+          const want=['browser/GAMEROAD.html','tests/browser-full-interaction.spec.mjs','deploy/cloudflare/scripts/build.mjs','deploy/cloudflare/tests/build.test.mjs','.github/workflows/board109-r18b-bounded-executor.yml'].sort();
+          if(m.authorizationBaseSha!=='e909300c8ad9ef7de4c7fd697556c8bec0aaf3ea') throw Error('stale base');
+          if(m.acquireKey!=='BOARD109-R18-R17STALE-PUBLICPACKAGE-20260826T0009-SOL-P9Q4V7K2M6RX') throw Error('bad acquire');
+          if(JSON.stringify([...(m.scope||[])].sort())!==JSON.stringify(want)) throw Error('bad scope');
+          NODE
+      - name: Copy exact R17 proven projection bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          DONOR_BRANCH=work/board109-r17-refresh-resume-projection-20260825
+          DONOR_SHA=217910726daf28990549fc60620b14e092f8a3c6
+          git fetch origin "$DONOR_BRANCH:refs/remotes/origin/r17-donor"
+          test "$(git rev-parse refs/remotes/origin/r17-donor)" = "$DONOR_SHA"
+          git show "$DONOR_SHA:browser/GAMEROAD.html" > browser/GAMEROAD.html
+          git show "$DONOR_SHA:tests/browser-full-interaction.spec.mjs" > tests/browser-full-interaction.spec.mjs
+          test "$(git hash-object browser/GAMEROAD.html)" = "84e470b4f0c6c571e984223fbb4ccdee76ca7206"
+          test "$(git hash-object tests/browser-full-interaction.spec.mjs)" = "134846879dcc83dfb2689bc0f87c19fd9ea8189f"
+          node --test tests/partner-advice-runtime-mount.test.mjs tests/partner-legal-action-adapter.test.mjs tests/advice-collective-eval.test.mjs
+          git diff --check
+          test "$(git diff --name-only | wc -l)" -eq 2
+          git diff --name-only | grep -Fx 'browser/GAMEROAD.html'
+          git diff --name-only | grep -Fx 'tests/browser-full-interaction.spec.mjs'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
+          git commit -m 'BOARD109 R18B: carry proven visible Partner projection'
+          git push origin HEAD:work/board109-r18b-publicpackage-closure-20260826

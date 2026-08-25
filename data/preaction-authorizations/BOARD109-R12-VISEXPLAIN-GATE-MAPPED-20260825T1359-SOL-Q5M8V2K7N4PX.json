@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "BOARD109-R12-VISEXPLAIN-GATE-MAPPED-20260825T1359-SOL-Q5M8V2K7N4PX",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "VISUAL_EXPLANATION_CORE_GATE_MAPPED_RECOVERY",
+  "acquireKey": "BOARD109-R12-VISEXPLAIN-GATE-MAPPED-RECOVERY-20260825T1359-SOL-Q5M8V2K7N4PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R12_TOP_FAILURE_REQUIRED_GATE_FALSE_GREEN_OR_MAIN_DRIFT",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR369_STRUCTURAL_RED_AND_R10_NAIVE_8_OF_10_FAIL_CANDIDATE_10_OF_10_PASS",
+  "proceedToken": "PROCEED|BOARD109-R12-VISEXPLAIN-GATE-MAPPED-20260825T1359-SOL-Q5M8V2K7N4PX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|R12",
+  "authorizationBaseSha": "723688820c768626b1698bf28230633789a21fab",
+  "scope": [
+    "browser/battle-board-visual-explanation-core.mjs",
+    "tests/battle-board-visual-explanation-core.test.mjs",
+    ".github/workflows/gameroad-required-gate.yml"
+  ]
+}

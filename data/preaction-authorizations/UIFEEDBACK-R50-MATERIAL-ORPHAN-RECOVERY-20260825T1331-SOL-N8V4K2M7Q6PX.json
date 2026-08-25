@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "UIFEEDBACK-R50-MATERIAL-ORPHAN-RECOVERY-20260825T1331-SOL-N8V4K2M7Q6PX",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "R50_MATERIAL_APPROVED_LANE_ORPHAN_RECOVERY",
+  "acquireKey": "UIFEEDBACK-R50-MATERIAL-ORPHAN-RECOVERY-20260825T1331-SOL-N8V4K2M7Q6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R50-PREIMPLEMENT-COLLISION-BLOB-AND-PROVENANCE-READBACK-20260825T1351",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOCAL-R48-MATERIAL-SENSITIVITY-20260825T1134",
+  "proceedToken": "PROCEED|UIFEEDBACK-R50-MATERIAL-ORPHAN-RECOVERY-20260825T1331-SOL-N8V4K2M7Q6PX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXACT_THREE_FILE_CLASSIFIED_LANE_WITH_PROVENANCE",
+  "authorizationBaseSha": "723688820c768626b1698bf28230633789a21fab",
+  "scope": [
+    "browser/ui-state-feedback-core.mjs",
+    "tests/ui-state-feedback-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

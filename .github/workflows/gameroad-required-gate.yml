@@ -76,6 +76,7 @@ jobs:
           publichost=false
           fixed_knowledge_witness=false
           multi_agent_match_follow=false
+          board_visual=false
           unclassified=false
           : > /tmp/gameroad-unclassified.txt
 
@@ -270,6 +271,10 @@ jobs:
               tests/multi-agent-match-follow-harness.test.mjs)
                 multi_agent_match_follow=true
                 ;;
+              browser/battle-board-visual-explanation-core.mjs|\
+              tests/battle-board-visual-explanation-core.test.mjs)
+                board_visual=true
+                ;;
               .github/workflows/gameroad-required-gate.yml|\
               .github/workflows/gameroad-observability-ci.yml|\
               tools/preaction-authorization-validator.mjs|\
@@ -318,6 +323,7 @@ jobs:
             echo "publichost=${publichost}"
             echo "fixed_knowledge_witness=${fixed_knowledge_witness}"
             echo "multi_agent_match_follow=${multi_agent_match_follow}"
+            echo "board_visual=${board_visual}"
             echo "unclassified=${unclassified}"
           } >> "${GITHUB_OUTPUT}"
 
@@ -466,6 +472,10 @@ jobs:
       - name: Run Board facility state core tests
         if: steps.classify.outputs.board_facility == 'true'
         run: node --test tests/board-facility-state-core.test.mjs tests/board-facility-classic-adapter.test.mjs tests/board-facility-runtime-mount.test.mjs
+
+      - name: Run Battle board visual explanation core tests
+        if: steps.classify.outputs.board_visual == 'true'
+        run: node --test tests/battle-board-visual-explanation-core.test.mjs
 
       - name: Run Auto-rank D06 collision contract tests
         if: steps.classify.outputs.auto_rank == 'true'

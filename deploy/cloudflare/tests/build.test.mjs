@@ -229,7 +229,7 @@ const dependencyContract = [
     expectedArg: 'expectedUiStateFeedbackCoreBlob',
     artifact: 'ui_state_feedback_core',
     fixture: "export const UI_STATE_FEEDBACK_CORE = Object.freeze({ schema: 'fixture' });\n",
-    currentBlob: '8a14c06884fb476aebb074952bb71b72dffc90f7',
+    currentBlob: '32d6d73b8c849a92af8458e9bdf7a22793fd03e4',
   },
   {
     file: 'ui-state-feedback-ready-plan-adapter.mjs',

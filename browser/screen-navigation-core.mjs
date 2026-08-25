@@ -275,10 +275,23 @@ export function createScreenMotionPresentationDriver({
       return;
     }
 
-    const animation = target.animate(
-      presentationFrames(kind, spec, shortAxis(), context.reason === 'back' || context.to === 'home'),
-      {duration, easing: spec.easing, fill: 'none'}
-    );
+    let animation;
+    try {
+      animation = target.animate(
+        presentationFrames(kind, spec, shortAxis(), context.reason === 'back' || context.to === 'home'),
+        {duration, easing: spec.easing, fill: 'none'}
+      );
+    } catch (error) {
+      record({
+        revision: context.revision,
+        phase: context.phase,
+        kind,
+        status: 'failed_soft',
+        profile: context.motionProfile,
+        errorName: error instanceof Error ? error.name : 'Error'
+      });
+      return;
+    }
     session.animations.add(animation);
     const cancel = () => animation.cancel?.();
     context.signal?.addEventListener?.('abort', cancel, {once: true});
@@ -308,7 +321,7 @@ export function createScreenMotionPresentationDriver({
     try {
       if (phase === 'PREPARE') {
         mark(session.outgoing, context, phase);
-        await animate(session, session.pressedControl, 'press', phaseContext);
+        void animate(session, session.pressedControl, 'press', phaseContext);
       } else if (phase === 'EXIT') {
         mark(session.outgoing, context, phase);
         await animate(session, session.outgoing, 'exit', phaseContext);

@@ -347,6 +347,32 @@ test('presentation driver animates the actual outgoing and incoming screen surfa
   assert.ok(runtime.getPresentationState().events.some((event) => event.kind === 'surface_swap_observed' && event.status === 'completed'));
 });
 
+test('press feedback never delays the screen swap or the next actionable surface', async () => {
+  const documentSource = fakeMotionDocument();
+  const pressGate = deferred();
+  let pressCancelled = false;
+  documentSource.controls.home.animate = function animate(frames, options) {
+    const animation = {
+      finished: pressGate.promise,
+      cancel() { pressCancelled = true; pressGate.resolve(); }
+    };
+    this.animations.push({frames, options, animation});
+    return animation;
+  };
+  let screen = 'home';
+  const runtime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => screen,
+    applyScreen: (next) => { screen = next; },
+    presentationDriver: createScreenMotionPresentationDriver({document: documentSource})
+  });
+
+  const result = await runtime.navigate('cards');
+  assert.equal(result.status, 'completed');
+  assert.equal(screen, 'cards');
+  assert.equal(pressCancelled, true);
+  assert.deepEqual(runtime.getPresentationState().activeRevisions, []);
+});
+
 test('reduced-motion makes screen presentation effect-free while low-perf uses opacity-only timing', async () => {
   const reducedDocument = fakeMotionDocument();
   let reducedScreen = 'home';

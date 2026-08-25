@@ -238,7 +238,7 @@ const dependencyContract = [
     expectedArg: 'expectedUiStateFeedbackReadyPlanAdapterBlob',
     artifact: 'ui_state_feedback_ready_plan_adapter',
     fixture: "import './ui-state-feedback-core.mjs';\nexport const READY_PLAN_ADAPTER = Object.freeze({});\n",
-    currentBlob: '39ea233efb0d8a8f56fa2fd4b6de7e7de3fa8f15',
+    currentBlob: '0b738b269c6197680409a247f5704bfa96eacc9b',
   },
   {
     file: 'field-music-policy-core.mjs',

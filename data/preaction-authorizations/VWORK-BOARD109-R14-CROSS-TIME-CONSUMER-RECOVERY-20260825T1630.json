@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-BOARD109-R14-CROSS-TIME-CONSUMER-RECOVERY-20260825T1630",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "BOARD109-R14-BATTLE-VISUAL-EXPLANATION-CONSUMER-RECOVERY",
+  "acquireKey": "BOARD109-R14-BATTLE-VISUAL-EXPLANATION-CONSUMER-RECOVERY-20260825T1626-SOL-K7Q3M9V4",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BOARD109-R14-PRED-20260825T1630",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "BOARD109-R14-ALTORACLE-20260825T1630",
+  "proceedToken": "PROCEED|VWORK-BOARD109-R14-CROSS-TIME-CONSUMER-RECOVERY-20260825T1630|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|BOARD109-R14-PRED-20260825T1630: TOP_FAILURE=stale/private/invalid Partner advice decorates the wrong current Battle object or survives state change, recommendation is confused with rules-derived range/threat, or mobile clutter hides the decision surface.|BOARD109-R14-ALTORACLE-20260825T1630: current main 562b6cf keeps partner-advice-runtime-mount blob 0e9f92f6 unchanged from stopped R21B; current browser-full-interaction keeps the exact Partner advice anchor; R21B already encoded public/currentness/target-resolution fail-close, dashed+text+ARIA separation, reduced-motion behavior, and stale-clear oracle. Reuse the bounded product patch rather than redesigning it; general range remains rules-derived and no autoExecute is permitted.",
+  "authorizationBaseSha": "562b6cf535aa74ec4d791483ed2c8abfa0ff7905",
+  "issuedAt": "2026-08-25T16:30:00+09:00",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/board109-r14-cross-time-bounded-executor.yml"
+  ],
+  "notes": "Cross-time recovery of the stopped R21B visible Battle-object projection on fresh current main. Manifest/executor are temporary and must be deleted before merge. No 109 legality/game-rule/save/economy/persona/secret semantics change."
+}

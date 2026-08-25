@@ -25,6 +25,7 @@ const defaultBoardFacilityRuntimeMountSource = path.join(repoRoot, 'browser/boar
 const defaultUiStateFeedbackCoreSource = path.join(repoRoot, 'browser/ui-state-feedback-core.mjs');
 const defaultUiStateFeedbackReadyPlanAdapterSource = path.join(repoRoot, 'browser/ui-state-feedback-ready-plan-adapter.mjs');
 const defaultFieldMusicPolicyCoreSource = path.join(repoRoot, 'browser/field-music-policy-core.mjs');
+const defaultHomeCards2p5dPresentationSource = path.join(repoRoot, 'browser/home-cards-2p5d-presentation.mjs');
 const defaultClickSfxSource = path.join(repoRoot, 'assets/audio/sfx/click_002.ogg');
 const defaultCardSlideSfxSource = path.join(repoRoot, 'assets/audio/sfx/cardSlide6.ogg');
 const defaultCardPlaceSfxSource = path.join(repoRoot, 'assets/audio/sfx/cardPlace1.ogg');
@@ -98,6 +99,7 @@ export async function buildPackage({
   uiStateFeedbackCoreSource = defaultUiStateFeedbackCoreSource,
   uiStateFeedbackReadyPlanAdapterSource = defaultUiStateFeedbackReadyPlanAdapterSource,
   fieldMusicPolicyCoreSource = defaultFieldMusicPolicyCoreSource,
+  homeCards2p5dPresentationSource = defaultHomeCards2p5dPresentationSource,
   clickSfxSource = defaultClickSfxSource,
   cardSlideSfxSource = defaultCardSlideSfxSource,
   cardPlaceSfxSource = defaultCardPlaceSfxSource,
@@ -137,6 +139,7 @@ export async function buildPackage({
   const uiStateFeedbackCoreInput = await readFile(uiStateFeedbackCoreSource);
   const uiStateFeedbackReadyPlanAdapterInput = await readFile(uiStateFeedbackReadyPlanAdapterSource);
   const fieldMusicPolicyCoreInput = await readFile(fieldMusicPolicyCoreSource);
+  const homeCards2p5dPresentationInput = await readFile(homeCards2p5dPresentationSource);
   const clickSfxInput = await readFile(clickSfxSource);
   const cardSlideSfxInput = await readFile(cardSlideSfxSource);
   const cardPlaceSfxInput = await readFile(cardPlaceSfxSource);
@@ -156,6 +159,7 @@ export async function buildPackage({
   const uiStateFeedbackCoreBlob = gitBlobSha1(uiStateFeedbackCoreInput);
   const uiStateFeedbackReadyPlanAdapterBlob = gitBlobSha1(uiStateFeedbackReadyPlanAdapterInput);
   const fieldMusicPolicyCoreBlob = gitBlobSha1(fieldMusicPolicyCoreInput);
+  const homeCards2p5dPresentationBlob = gitBlobSha1(homeCards2p5dPresentationInput);
   const clickSfxBlob = gitBlobSha1(clickSfxInput);
   const cardSlideSfxBlob = gitBlobSha1(cardSlideSfxInput);
   const cardPlaceSfxBlob = gitBlobSha1(cardPlaceSfxInput);
@@ -340,6 +344,13 @@ export async function buildPackage({
     throw new Error('dist/field-music-policy-core.mjs is not byte-identical to Browser dependency source');
   }
 
+  const homeCards2p5dPresentationOutputPath = path.join(dist, 'home-cards-2p5d-presentation.mjs');
+  await writeFile(homeCards2p5dPresentationOutputPath, homeCards2p5dPresentationInput);
+  const homeCards2p5dPresentationRoundTrip = await readFile(homeCards2p5dPresentationOutputPath);
+  if (!homeCards2p5dPresentationInput.equals(homeCards2p5dPresentationRoundTrip)) {
+    throw new Error('dist/home-cards-2p5d-presentation.mjs is not byte-identical to Browser dependency source');
+  }
+
   await assertBrowserRuntimeDependencyCompleteness(input, dist);
 
   for (const [outputName, sourceInput] of [
@@ -478,6 +489,12 @@ export async function buildPackage({
         fieldMusicPolicyCoreInput,
         fieldMusicPolicyCoreBlob,
       ),
+      home_cards_2p5d_presentation: provenance(
+        'browser/home-cards-2p5d-presentation.mjs',
+        'home-cards-2p5d-presentation.mjs',
+        homeCards2p5dPresentationInput,
+        homeCards2p5dPresentationBlob,
+      ),
       sfx_click_002: provenance(
         'assets/audio/sfx/click_002.ogg',
         'click_002.ogg',
@@ -528,6 +545,7 @@ function parseArgs(argv) {
     else if (a === '--ui-state-feedback-core-source') out.uiStateFeedbackCoreSource = path.resolve(argv[++i]);
     else if (a === '--ui-state-feedback-ready-plan-adapter-source') out.uiStateFeedbackReadyPlanAdapterSource = path.resolve(argv[++i]);
     else if (a === '--field-music-policy-core-source') out.fieldMusicPolicyCoreSource = path.resolve(argv[++i]);
+    else if (a === '--home-cards-2p5d-presentation-source') out.homeCards2p5dPresentationSource = path.resolve(argv[++i]);
     else if (a === '--dist') out.dist = path.resolve(argv[++i]);
     else if (a === '--expected-blob') out.expectedBlob = argv[++i] || '';
     else if (a === '--expected-core-blob') out.expectedCoreBlob = argv[++i] || '';

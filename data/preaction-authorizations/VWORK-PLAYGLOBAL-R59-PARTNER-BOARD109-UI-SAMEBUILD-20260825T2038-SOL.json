@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-PLAYGLOBAL-R59-PARTNER-BOARD109-UI-SAMEBUILD-20260825T2038-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "R57_PARTNER_BOARD109_UI_THREE_VISIBLE_CONSUMERS_SAME_PUBLIC_BUILD",
+  "acquireKey": "PLAYGLOBAL-R59-PARTNER-BOARD109-UI-SAMEBUILD-20260825T2038-SOL-K7N4V2M8",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PLAYGLOBAL-R59-PRED-20260825T2038",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PLAYGLOBAL-R59-PRODUCER-ORACLE-20260825T2038",
+  "proceedToken": "PROCEED|VWORK-PLAYGLOBAL-R59-PARTNER-BOARD109-UI-SAMEBUILD-20260825T2038-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|PLAYGLOBAL-R59-PRED-20260825T2038: TOP_FAILURE=fresh-main recovery could overwrite newer Home/ReadyPlan work, reintroduce stale authority mixing, or omit runtime package dependencies. Guards: exact authorization base 3864f62e7cfb43534310916fcab6510a64e64249; compare 562b6cf..3864f62 shows none of the three R59 durable paths changed on newer main; final durable scope only browser/GAMEROAD.html, deploy/cloudflare/scripts/build.mjs, tests/browser-full-interaction.spec.mjs; reuse exact producer blobs b68e6b6aee2a1945ed23bf1f62ac5c7cbad7b621 / 828cb6d337eb2ce0225ebb4af4ad109d74f20439 / d83451039f6f8217b6c5af02414f826c019f3b61; ReadyPlan/Home/Required-Gate files remain read-only; Partner recommendation remains partner-heuristic/non-color-only while BOARD109 remains rules-derived; manifest removed before PR; exact-head gates before merge.|PLAYGLOBAL-R59-PRODUCER-ORACLE-20260825T2038: prior closed PR#379 final producer tree 4d8d5f323fd9919481989e2da0b221a52597affc contains exactly the three authorized product changes from base 562b6cf; old exact-head evidence and current compare establish that newer main changed only Home theme/orientation and ReadyPlan files, not the R59 durable targets. Current main 3864f62 includes ReadyPlan PR#381.",
+  "authorizationBaseSha": "3864f62e7cfb43534310916fcab6510a64e64249",
+  "issuedAt": "2026-08-25T20:39:00+09:00",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "notes": "Fresh-main same-build closure. Prior producer history is read-only evidence only. This manifest is the first branch commit, authorizes only the three durable paths, and must be absent from final PR head. Current integrated ReadyPlan/Home files remain untouched."
+}

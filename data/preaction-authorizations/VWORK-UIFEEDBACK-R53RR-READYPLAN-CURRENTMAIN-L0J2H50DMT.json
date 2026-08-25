@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-UIFEEDBACK-R53RR-READYPLAN-CURRENTMAIN-L0J2H50DMT",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "R53RR_READYPLAN_MATERIAL_CURRENTMAIN_RECOVERY",
+  "acquireKey": "UIFEEDBACK-R53RR-READYPLAN-CURRENTMAIN-RECOVERY-SOL-L0J2H50DMT",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "UIFEEDBACK-R53RR-PRED-L0J2H50DMT",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "UIFEEDBACK-R53RR-ALTORACLE-L0J2H50DMT",
+  "proceedToken": "PROCEED|VWORK-UIFEEDBACK-R53RR-READYPLAN-CURRENTMAIN-L0J2H50DMT|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|UIFEEDBACK-R53RR-PRED-L0J2H50DMT: TOP_FAILURE=merging green PR378 directly would reuse stale authorization base 562b6cf after main advanced. Guards: rebuild from exact current main 589e0a818bcce6d8765d458a89696035444e7cba; new isolated branch; manifest basename equals recordId; final durable diff exactly three authorized files; copy donor content byte-identically; no GAMEROAD.html or R58 mutation; exact-head Required Gate and Browser Full Interaction before expected-head merge.|UIFEEDBACK-R53RR-ALTORACLE-L0J2H50DMT: PR378 head 1309010e069f964beb99ee6b1c85626f79c90fff has Required Gate run32828753001 SUCCESS and Browser Full Interaction run32828752904 SUCCESS, but base 562b6cf is stale after PR380 advanced main to 589e0a8. R57R used the fail-closed recovery pattern for the same main advance. Active R58 owns browser/GAMEROAD.html only conditionally and explicitly excludes UI-feedback mutation, so the three R53RR files are nonconflicting.",
+  "authorizationBaseSha": "589e0a818bcce6d8765d458a89696035444e7cba",
+  "issuedAt": "2026-08-25T19:15:00+09:00",
+  "scope": [
+    "browser/ui-state-feedback-ready-plan-adapter.mjs",
+    "tests/ui-state-feedback-ready-plan-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "notes": "Fresh current-main recovery of released/expired R53R. PR378 and its branch are read-only donor/oracle only. This manifest is the first authorization-only commit and must be absent from the final PR head. Durable product bytes will be copied exactly from donor head 1309010e069f964beb99ee6b1c85626f79c90fff without importing stale history."
+}

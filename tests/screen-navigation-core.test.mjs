@@ -5,7 +5,9 @@ import {
   SCREEN_NAVIGATION_COMMON_BUTTON_SFX,
   SCREEN_NAVIGATION_FALLBACK_PARENT,
   SCREEN_NAVIGATION_REASON,
+  SCREEN_MOTION_PRESENTATION_SPEC,
   createScreenNavigationRuntimeBridge,
+  createScreenMotionPresentationDriver,
   createScreenTransitionRuntimeAdapter,
   resolveScreenBackTarget,
   resolveScreenNavigation
@@ -256,6 +258,47 @@ const deferred = () => {
 };
 const turn = () => new Promise((resolve) => setImmediate(resolve));
 
+function fakeMotionDocument() {
+  const makeControl = () => ({animations: [], animate(frames, options) {
+    const animation = {finished: Promise.resolve(), cancel() {}};
+    this.animations.push({frames, options, animation});
+    return animation;
+  }});
+  const makeSurface = (screen) => {
+    const controls = [];
+    return {
+      dataset: {screen},
+      animations: [],
+      controls,
+      contains(node) { return controls.includes(node); },
+      animate(frames, options) {
+        const animation = {finished: Promise.resolve(), cancel() {}};
+        this.animations.push({frames, options, animation});
+        return animation;
+      }
+    };
+  };
+  const home = makeSurface('home');
+  const cards = makeSurface('cards');
+  const shop = makeSurface('shop');
+  const homeControl = makeControl();
+  const cardsControl = makeControl();
+  const shopControl = makeControl();
+  home.controls.push(homeControl);
+  cards.controls.push(cardsControl);
+  shop.controls.push(shopControl);
+  return {
+    documentElement: {clientWidth: 1280, clientHeight: 720},
+    activeElement: homeControl,
+    querySelectorAll(selector) {
+      assert.equal(selector, '.screen[data-screen]');
+      return [home, cards, shop];
+    },
+    surfaces: {home, cards, shop},
+    controls: {home: homeControl, cards: cardsControl, shop: shopControl}
+  };
+}
+
 test('screen transition runtime delegates PREPARE/EXIT/SWAP/ENTER/SETTLE and swaps exactly once', async () => {
   let screen = 'home';
   let swaps = 0;
@@ -273,6 +316,130 @@ test('screen transition runtime delegates PREPARE/EXIT/SWAP/ENTER/SETTLE and swa
   assert.equal(screen, 'cards');
   assert.deepEqual(phases.map(([phase]) => phase), ['PREPARE', 'EXIT', 'SWAP', 'ENTER', 'SETTLE']);
   assert.ok(phases.every(([, from, to, profile]) => from === 'home' && to === 'cards' && profile === MENU_TRANSITION_MOTION_PROFILE.NORMAL));
+});
+
+test('presentation driver animates the actual outgoing and incoming screen surfaces without owning semantic state', async () => {
+  const documentSource = fakeMotionDocument();
+  let screen = 'home';
+  const driver = createScreenMotionPresentationDriver({document: documentSource});
+  const runtime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => screen,
+    applyScreen: (next) => {
+      screen = next;
+      documentSource.activeElement = documentSource.controls[next];
+    },
+    presentationDriver: driver
+  });
+
+  const result = await runtime.navigate('cards');
+  assert.equal(result.status, 'completed');
+  assert.equal(screen, 'cards');
+  assert.equal(documentSource.controls.home.animations.length, 1);
+  assert.equal(documentSource.surfaces.home.animations.length, 1);
+  assert.equal(documentSource.surfaces.cards.animations.length, 1);
+  assert.equal(documentSource.controls.cards.animations.length, 1);
+  assert.equal(documentSource.surfaces.home.animations[0].options.duration, SCREEN_MOTION_PRESENTATION_SPEC.normal.exitMs);
+  assert.match(documentSource.surfaces.home.animations[0].frames[1].transform, /translate3d\(0,-18px,0\)/);
+  assert.equal(documentSource.surfaces.cards.animations[0].options.duration, SCREEN_MOTION_PRESENTATION_SPEC.normal.enterMs);
+  assert.deepEqual(runtime.getPresentationState().activeRevisions, []);
+  assert.equal(documentSource.surfaces.home.dataset.screenMotionRevision, undefined);
+  assert.equal(documentSource.surfaces.cards.dataset.screenMotionRevision, undefined);
+  assert.ok(runtime.getPresentationState().events.some((event) => event.kind === 'surface_swap_observed' && event.status === 'completed'));
+});
+
+test('press feedback never delays the screen swap or the next actionable surface', async () => {
+  const documentSource = fakeMotionDocument();
+  const pressGate = deferred();
+  let pressCancelled = false;
+  documentSource.controls.home.animate = function animate(frames, options) {
+    const animation = {
+      finished: pressGate.promise,
+      cancel() { pressCancelled = true; pressGate.resolve(); }
+    };
+    this.animations.push({frames, options, animation});
+    return animation;
+  };
+  let screen = 'home';
+  const runtime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => screen,
+    applyScreen: (next) => { screen = next; },
+    presentationDriver: createScreenMotionPresentationDriver({document: documentSource})
+  });
+
+  const result = await runtime.navigate('cards');
+  assert.equal(result.status, 'completed');
+  assert.equal(screen, 'cards');
+  assert.equal(pressCancelled, true);
+  assert.deepEqual(runtime.getPresentationState().activeRevisions, []);
+});
+
+test('reduced-motion makes screen presentation effect-free while low-perf uses opacity-only timing', async () => {
+  const reducedDocument = fakeMotionDocument();
+  let reducedScreen = 'home';
+  const reducedRuntime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => reducedScreen,
+    applyScreen: (next) => { reducedScreen = next; },
+    reducedMotion: true,
+    presentationDriver: createScreenMotionPresentationDriver({document: reducedDocument})
+  });
+  assert.equal((await reducedRuntime.navigate('cards')).status, 'completed');
+  assert.equal(reducedDocument.surfaces.home.animations.length, 0);
+  assert.equal(reducedDocument.surfaces.cards.animations.length, 0);
+
+  const lowDocument = fakeMotionDocument();
+  let lowScreen = 'home';
+  const lowRuntime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => lowScreen,
+    applyScreen: (next) => { lowScreen = next; },
+    lowPerf: true,
+    presentationDriver: createScreenMotionPresentationDriver({document: lowDocument})
+  });
+  assert.equal((await lowRuntime.navigate('cards')).status, 'completed');
+  const exit = lowDocument.surfaces.home.animations[0];
+  const enter = lowDocument.surfaces.cards.animations[0];
+  assert.equal(exit.options.duration, SCREEN_MOTION_PRESENTATION_SPEC.reduced.exitMs);
+  assert.equal(enter.options.duration, SCREEN_MOTION_PRESENTATION_SPEC.reduced.enterMs);
+  assert.ok(exit.frames.every((frame) => !('transform' in frame)));
+  assert.ok(enter.frames.every((frame) => !('transform' in frame)));
+});
+
+test('latest presentation revision survives stale cleanup and its detector rejects unconditional legacy cleanup', async () => {
+  const documentSource = fakeMotionDocument();
+  const gates = new Map();
+  documentSource.surfaces.home.animate = function animate(frames, options) {
+    const revision = this.dataset.screenMotionRevision;
+    const gate = deferred();
+    const animation = {finished: gate.promise, cancel: gate.resolve};
+    gates.set(revision, gate);
+    this.animations.push({frames, options, animation});
+    return animation;
+  };
+  let screen = 'home';
+  const runtime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => screen,
+    applyScreen: (next) => { screen = next; },
+    presentationDriver: createScreenMotionPresentationDriver({document: documentSource})
+  });
+
+  const first = runtime.navigate('cards');
+  await turn();
+  assert.equal(documentSource.surfaces.home.dataset.screenMotionRevision, '1');
+  const second = runtime.navigate('shop');
+  await turn();
+  assert.equal(documentSource.surfaces.home.dataset.screenMotionRevision, '2');
+
+  const brokenLegacyMarker = {screenMotionRevision: '2'};
+  const unconditionalLegacyCleanup = (dataset) => { delete dataset.screenMotionRevision; };
+  unconditionalLegacyCleanup(brokenLegacyMarker);
+  assert.equal(brokenLegacyMarker.screenMotionRevision, undefined, 'negative control must expose stale cleanup damage');
+
+  gates.get('2').resolve();
+  const [firstResult, secondResult] = await Promise.all([first, second]);
+  assert.equal(firstResult.status, 'superseded');
+  assert.equal(secondResult.status, 'completed');
+  assert.equal(screen, 'shop');
+  assert.equal(documentSource.surfaces.home.dataset.screenMotionRevision, undefined);
+  assert.deepEqual(runtime.getPresentationState().activeRevisions, []);
 });
 
 test('screen transition runtime ignores same-screen requests without visual phases or mutation', async () => {

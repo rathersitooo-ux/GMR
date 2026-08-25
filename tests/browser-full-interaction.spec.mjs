@@ -1016,6 +1016,31 @@ test('covers visible 2v2 Battle shell, info/log drawer, range, partner advice, u
   expect(advice.status).toBe('ready');
   await attachStateScreenshot(page, testInfo, 'battle-partner-advice-visible');
 
+  await expect.poll(async () => battle.locator('[data-partner-advice-role="partner-recommendation"]').count()).toBe(2);
+  const adviceProjection = await page.evaluate(() => window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__?.snapshot?.() ?? null);
+  expect(adviceProjection).not.toBeNull();
+  expect(adviceProjection.activeCount).toBe(2);
+  expect(adviceProjection.rangeVisible, 'Partner recommendation does not replace the general range/threat surface').toBe(true);
+  expect(adviceProjection.markers.map((marker) => marker.kind).sort()).toEqual(['battle', 'road']);
+  for (const marker of adviceProjection.markers) {
+    expect(marker.glyph).toContain('相棒推奨');
+    expect(marker.aria).toContain('相棒推奨');
+    expect(marker.outlineStyle).toBe('dashed');
+  }
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(battle.locator('[data-partner-advice-role="partner-recommendation"]')).toHaveCount(2);
+  expect((await page.evaluate(() => window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__?.snapshot?.()))?.activeCount).toBe(2);
+  const staleProjection = await page.evaluate(async () => {
+    const stale = window.__GAMEROAD_PARTNER_ADVICE_STALE__?.() ?? { status: 'blocked', kind: 'stale', error: 'STALE_STATE' };
+    return window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__?.render?.(stale) ?? null;
+  });
+  expect(staleProjection?.activeCount).toBe(0);
+  await expect(battle.locator('[data-partner-advice-role="partner-recommendation"]')).toHaveCount(0);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await battle.locator('#partnerAdviceBtn').click();
+  await expect.poll(async () => battle.locator('[data-partner-advice-role="partner-recommendation"]').count()).toBe(2);
+  await attachStateScreenshot(page, testInfo, 'battle-partner-advice-object-projection-visible');
+
   await battle.locator('#clearPath').click();
   await battle.locator('#leaveMatch').click();
   await expect(page.locator('section[data-screen="home"]')).toBeVisible();

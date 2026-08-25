@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-PLAYGLOBAL-R57R-PARTNER-BOARD109-UI-SAMEBUILD-RECOVERY-20260825T1808-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "R57_PARTNER_BOARD109_UI_THREE_VISIBLE_CONSUMERS_SAME_PUBLIC_BUILD",
+  "acquireKey": "PLAYGLOBAL-R57R-PARTNER-BOARD109-UI-SAMEBUILD-RECOVERY-20260825T1802-SOL-X7K3N6",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PLAYGLOBAL-R57R-PRED-20260825T1808",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PLAYGLOBAL-R57R-PRODUCER-ORACLE-20260825T1808",
+  "proceedToken": "PROCEED|VWORK-PLAYGLOBAL-R57R-PARTNER-BOARD109-UI-SAMEBUILD-RECOVERY-20260825T1808-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|PLAYGLOBAL-R57R-PRED-20260825T1808: TOP_FAILURE=recovery could import stale R57 history, collide with active R53R ReadyPlan files, weaken Partner-vs-rules authority separation, or omit required public package dependencies. Guards: exact current main 562b6cf535aa74ec4d791483ed2c8abfa0ff7905; fresh isolated recovery branch; final durable scope limited to GAMEROAD.html, browser-full-interaction.spec.mjs, and Cloudflare build.mjs; copy exact bytes only from cleaned producer branch 22fec85ce45f3c318a03ab387c321cdba7e11f21; R53R-owned adapter/test/build.test remain read-only; Partner recommendation stays partner-heuristic/non-color-only and BOARD109 stays rules-derived; package provenance remains fail-closed; final manifest deleted before PR; Required Gate and Browser Full Interaction required before merge.|PLAYGLOBAL-R57R-PRODUCER-ORACLE-20260825T1808: cleaned producer branch 22fec85ce45f3c318a03ab387c321cdba7e11f21 compares to main as exactly the three authorized durable paths after temporary workflow/patcher/old manifest cleanup; producer product commit mounted Partner plus BOARD109 and its bounded executor ran focused syntax/core/build checks before cleanup; current validator source requires manifest-only first commit and current R53R exact mutable paths are non-overlapping.",
+  "authorizationBaseSha": "562b6cf535aa74ec4d791483ed2c8abfa0ff7905",
+  "issuedAt": "2026-08-25T18:10:00+09:00",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "notes": "Stale-work recovery. The cleaned old R57 branch is read-only producer evidence only; its 14-commit history is not imported. This manifest must be the first and only authorization-only commit from exact base main and must be absent from final PR head. R53R ReadyPlan-owned files remain excluded until that owner terminalizes or current main legitimately contains them."
+}

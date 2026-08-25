@@ -2,8 +2,6 @@ name: TEMP BOARD109 R14 cross-time bounded executor
 on:
   push:
     branches: [work/board109-r14-cross-time-consumer-recovery]
-  pull_request:
-    branches: [main]
 permissions:
   contents: write
 jobs:
@@ -40,80 +38,83 @@ jobs:
               if x not in h: raise SystemExit('missing anchor '+x)
           if h.count('</body>')!=1: raise SystemExit('unexpected body close count')
           mount=r'''
-<!-- GAMEROAD PARTNER ADVICE OBJECT PROJECTION R21B / recovered by BOARD109 R14 -->
-<style id="gameroad-partner-advice-object-projection-r21b-style">
-[data-partner-advice-role="partner-recommendation"]{position:relative!important;outline:3px dashed rgba(255,238,157,.96)!important;outline-offset:3px;box-shadow:0 0 0 1px rgba(8,18,15,.92),0 0 18px rgba(255,229,132,.42)!important;z-index:18!important}
-[data-partner-advice-role="partner-recommendation"]::after{content:attr(data-partner-advice-glyph);position:absolute;left:50%;bottom:calc(100% + 5px);transform:translateX(-50%);min-width:max-content;padding:3px 6px;border:1px dashed rgba(255,242,180,.95);border-radius:999px;background:rgba(5,20,17,.96);color:#fff4bb;font:900 8px/1.15 system-ui,sans-serif;white-space:nowrap;pointer-events:none;box-shadow:0 3px 12px rgba(0,0,0,.48)}
-.boardPlayerToken[data-partner-advice-role="partner-recommendation"]::after{bottom:auto;top:calc(100% + 4px)}
-@media(max-width:540px) and (orientation:portrait){[data-partner-advice-role="partner-recommendation"]::after{font-size:7px;padding:2px 4px}}
-@media(prefers-reduced-motion:reduce){[data-partner-advice-role="partner-recommendation"],[data-partner-advice-role="partner-recommendation"]::after{animation:none!important;transition:none!important}}
-</style>
-<script id="gameroad-partner-advice-object-projection-r21b">
-(()=>{'use strict';
-const ROLE='partner-recommendation',SEL='[data-partner-advice-role="'+ROLE+'"]';let modP=null,scheduled=false;
-const api=()=>window.__GAMEROAD_HATE_PARTNER_TEST__||null;
-const mod=()=>modP||(modP=import('./partner-advice-runtime-mount.mjs').catch(e=>(console.warn('partner-advice-r21b-import',e),null)));
-function clear(){document.querySelectorAll(SEL).forEach(el=>{el.removeAttribute('data-partner-advice-role');el.removeAttribute('data-partner-advice-kind');el.removeAttribute('data-partner-advice-candidate');el.removeAttribute('data-partner-advice-glyph');if(el.dataset.partnerAdviceBaseAriaCaptured){const old=el.dataset.partnerAdviceBaseAria||'';old?el.setAttribute('aria-label',old):el.removeAttribute('aria-label');delete el.dataset.partnerAdviceBaseAria;delete el.dataset.partnerAdviceBaseAriaCaptured}})}
-const id=v=>{const s=String(v??'').trim();return s&&s.length<=160?s:null};
-const publicIn=(list,x)=>Array.isArray(list)&&list.some(r=>id(r?.candidateId)===x&&r?.publicScope===true);
-function elFor(kind,x){if(kind==='road'||kind==='battle')return document.querySelector('#hand .handCard[data-card-id="'+CSS.escape(x)+'"]');if(kind==='target')return document.querySelector('#boardPlayers .boardPlayerToken[data-player="'+CSS.escape(x)+'"]');return null}
-const glyph=k=>k==='road'?'★ 相棒推奨・ロード':k==='battle'?'★ 相棒推奨・バトル':'★ 相棒推奨・攻撃先';
-function mark(el,kind,x){if(!el)return;el.dataset.partnerAdviceBaseAriaCaptured='1';el.dataset.partnerAdviceBaseAria=el.getAttribute('aria-label')||'';const g=glyph(kind);el.dataset.partnerAdviceRole=ROLE;el.dataset.partnerAdviceKind=kind;el.dataset.partnerAdviceCandidate=x;el.dataset.partnerAdviceGlyph=g;el.setAttribute('aria-label',(el.dataset.partnerAdviceBaseAria?el.dataset.partnerAdviceBaseAria+' / ':'')+g)}
-function adapted(c,alts,evidence){const x=id(c?.candidateId);if(!x||c?.publicScope!==true||!publicIn(evidence,x))return null;const next=(Array.isArray(alts)?alts:[]).map(a=>id(a?.candidateId)).find(a=>a&&a!==x&&publicIn(evidence,a))||null;return{ok:true,containsPrivate:false,selected:{candidateId:x},next,source:'live-partner-advice-envelope'}}
-function current(env){try{return api()?.validateAdviceEnvelope?.(env)?.ok===true}catch{return false}}
-async function one(m,env,kind,c,alts,evidence){const a=adapted(c,alts,evidence);if(!a)return null;const x=a.selected.candidateId,r=m.projectPartnerAdviceBoardEmphasis({adviceResult:a,isCurrent:()=>current(env),resolveTarget:y=>elFor(kind,y)?{targetId:kind+':'+y}:null});if(r?.active===true&&r.presentationRole===ROLE&&r.autoExecute===false)mark(elFor(kind,x),kind,x);return r||null}
-function snapshot(){const markers=[...document.querySelectorAll(SEL)].map(el=>({kind:el.dataset.partnerAdviceKind||null,candidateId:el.dataset.partnerAdviceCandidate||null,glyph:el.dataset.partnerAdviceGlyph||null,aria:el.getAttribute('aria-label')||'',outlineStyle:getComputedStyle(el).outlineStyle}));return Object.freeze({activeCount:markers.length,markers,rangeVisible:document.getElementById('battleMap')?.classList.contains('showRange')||false})}
-async function render(explicit){clear();const env=explicit===undefined?api()?.adviceEnvelope?.():explicit;if(!env||env.status!=='ready'||!current(env))return snapshot();const m=await mod();if(!m?.projectPartnerAdviceBoardEmphasis)return snapshot();if(env.kind==='plan'){await one(m,env,'road',env.recommendation?.road,env.alternatives?.road,env.publicEvidence?.roadCandidates);await one(m,env,'battle',env.recommendation?.battle,env.alternatives?.battle,env.publicEvidence?.battleCandidates)}else if(env.kind==='target')await one(m,env,'target',env.recommendation,env.alternatives,env.publicEvidence?.targetCandidates);return snapshot()}
-function schedule(){if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;render().catch(e=>(clear(),console.warn('partner-advice-r21b-render',e)))})}
-function install(){document.addEventListener('click',e=>{if(e.target?.closest?.('[data-screen="battle"],#partnerAdviceBtn'))schedule()});document.addEventListener('change',e=>{if(e.target?.closest?.('[data-screen="battle"]'))schedule()});for(const n of ['phaseTitle','hand','boardPlayers','targetBox','partnerDecisionStatus']){const e=document.getElementById(n);if(e)new MutationObserver(schedule).observe(e,{childList:true,subtree:n==='phaseTitle'||n==='partnerDecisionStatus',characterData:n==='phaseTitle'||n==='partnerDecisionStatus',attributes:n==='targetBox',attributeFilter:n==='targetBox'?['class']:undefined})}const b=document.querySelector('section[data-screen="battle"]');if(b)new MutationObserver(schedule).observe(b,{attributes:true,attributeFilter:['class','hidden','aria-hidden']});schedule()}
-window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__=Object.freeze({render,clear,snapshot});document.readyState==='loading'?document.addEventListener('DOMContentLoaded',install,{once:true}):install();
-})();
-</script>
-'''
+          <!-- GAMEROAD PARTNER ADVICE OBJECT PROJECTION R21B / recovered by BOARD109 R14 -->
+          <style id="gameroad-partner-advice-object-projection-r21b-style">
+          [data-partner-advice-role="partner-recommendation"]{position:relative!important;outline:3px dashed rgba(255,238,157,.96)!important;outline-offset:3px;box-shadow:0 0 0 1px rgba(8,18,15,.92),0 0 18px rgba(255,229,132,.42)!important;z-index:18!important}
+          [data-partner-advice-role="partner-recommendation"]::after{content:attr(data-partner-advice-glyph);position:absolute;left:50%;bottom:calc(100% + 5px);transform:translateX(-50%);min-width:max-content;padding:3px 6px;border:1px dashed rgba(255,242,180,.95);border-radius:999px;background:rgba(5,20,17,.96);color:#fff4bb;font:900 8px/1.15 system-ui,sans-serif;white-space:nowrap;pointer-events:none;box-shadow:0 3px 12px rgba(0,0,0,.48)}
+          .boardPlayerToken[data-partner-advice-role="partner-recommendation"]::after{bottom:auto;top:calc(100% + 4px)}
+          @media(max-width:540px) and (orientation:portrait){[data-partner-advice-role="partner-recommendation"]::after{font-size:7px;padding:2px 4px}}
+          @media(prefers-reduced-motion:reduce){[data-partner-advice-role="partner-recommendation"],[data-partner-advice-role="partner-recommendation"]::after{animation:none!important;transition:none!important}}
+          </style>
+          <script id="gameroad-partner-advice-object-projection-r21b">
+          (()=>{'use strict';
+          const ROLE='partner-recommendation',SEL='[data-partner-advice-role="'+ROLE+'"]';let modP=null,scheduled=false;
+          const api=()=>window.__GAMEROAD_HATE_PARTNER_TEST__||null;
+          const mod=()=>modP||(modP=import('./partner-advice-runtime-mount.mjs').catch(e=>(console.warn('partner-advice-r21b-import',e),null)));
+          function clear(){document.querySelectorAll(SEL).forEach(el=>{el.removeAttribute('data-partner-advice-role');el.removeAttribute('data-partner-advice-kind');el.removeAttribute('data-partner-advice-candidate');el.removeAttribute('data-partner-advice-glyph');if(el.dataset.partnerAdviceBaseAriaCaptured){const old=el.dataset.partnerAdviceBaseAria||'';old?el.setAttribute('aria-label',old):el.removeAttribute('aria-label');delete el.dataset.partnerAdviceBaseAria;delete el.dataset.partnerAdviceBaseAriaCaptured}})}
+          const id=v=>{const s=String(v??'').trim();return s&&s.length<=160?s:null};
+          const publicIn=(list,x)=>Array.isArray(list)&&list.some(r=>id(r?.candidateId)===x&&r?.publicScope===true);
+          function elFor(kind,x){if(kind==='road'||kind==='battle')return document.querySelector('#hand .handCard[data-card-id="'+CSS.escape(x)+'"]');if(kind==='target')return document.querySelector('#boardPlayers .boardPlayerToken[data-player="'+CSS.escape(x)+'"]');return null}
+          const glyph=k=>k==='road'?'★ 相棒推奨・ロード':k==='battle'?'★ 相棒推奨・バトル':'★ 相棒推奨・攻撃先';
+          function mark(el,kind,x){if(!el)return;el.dataset.partnerAdviceBaseAriaCaptured='1';el.dataset.partnerAdviceBaseAria=el.getAttribute('aria-label')||'';const g=glyph(kind);el.dataset.partnerAdviceRole=ROLE;el.dataset.partnerAdviceKind=kind;el.dataset.partnerAdviceCandidate=x;el.dataset.partnerAdviceGlyph=g;el.setAttribute('aria-label',(el.dataset.partnerAdviceBaseAria?el.dataset.partnerAdviceBaseAria+' / ':'')+g)}
+          function adapted(c,alts,evidence){const x=id(c?.candidateId);if(!x||c?.publicScope!==true||!publicIn(evidence,x))return null;const next=(Array.isArray(alts)?alts:[]).map(a=>id(a?.candidateId)).find(a=>a&&a!==x&&publicIn(evidence,a))||null;return{ok:true,containsPrivate:false,selected:{candidateId:x},next,source:'live-partner-advice-envelope'}}
+          function current(env){try{return api()?.validateAdviceEnvelope?.(env)?.ok===true}catch{return false}}
+          async function one(m,env,kind,c,alts,evidence){const a=adapted(c,alts,evidence);if(!a)return null;const x=a.selected.candidateId,r=m.projectPartnerAdviceBoardEmphasis({adviceResult:a,isCurrent:()=>current(env),resolveTarget:y=>elFor(kind,y)?{targetId:kind+':'+y}:null});if(r?.active===true&&r.presentationRole===ROLE&&r.autoExecute===false)mark(elFor(kind,x),kind,x);return r||null}
+          function snapshot(){const markers=[...document.querySelectorAll(SEL)].map(el=>({kind:el.dataset.partnerAdviceKind||null,candidateId:el.dataset.partnerAdviceCandidate||null,glyph:el.dataset.partnerAdviceGlyph||null,aria:el.getAttribute('aria-label')||'',outlineStyle:getComputedStyle(el).outlineStyle}));return Object.freeze({activeCount:markers.length,markers,rangeVisible:document.getElementById('battleMap')?.classList.contains('showRange')||false})}
+          async function render(explicit){clear();const env=explicit===undefined?api()?.adviceEnvelope?.():explicit;if(!env||env.status!=='ready'||!current(env))return snapshot();const m=await mod();if(!m?.projectPartnerAdviceBoardEmphasis)return snapshot();if(env.kind==='plan'){await one(m,env,'road',env.recommendation?.road,env.alternatives?.road,env.publicEvidence?.roadCandidates);await one(m,env,'battle',env.recommendation?.battle,env.alternatives?.battle,env.publicEvidence?.battleCandidates)}else if(env.kind==='target')await one(m,env,'target',env.recommendation,env.alternatives,env.publicEvidence?.targetCandidates);return snapshot()}
+          function schedule(){if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;render().catch(e=>(clear(),console.warn('partner-advice-r21b-render',e)))})}
+          function install(){document.addEventListener('click',e=>{if(e.target?.closest?.('[data-screen="battle"],#partnerAdviceBtn'))schedule()});document.addEventListener('change',e=>{if(e.target?.closest?.('[data-screen="battle"]'))schedule()});for(const n of ['phaseTitle','hand','boardPlayers','targetBox','partnerDecisionStatus']){const e=document.getElementById(n);if(e)new MutationObserver(schedule).observe(e,{childList:true,subtree:n==='phaseTitle'||n==='partnerDecisionStatus',characterData:n==='phaseTitle'||n==='partnerDecisionStatus',attributes:n==='targetBox',attributeFilter:n==='targetBox'?['class']:undefined})}const b=document.querySelector('section[data-screen="battle"]');if(b)new MutationObserver(schedule).observe(b,{attributes:true,attributeFilter:['class','hidden','aria-hidden']});schedule()}
+          window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__=Object.freeze({render,clear,snapshot});document.readyState==='loading'?document.addEventListener('DOMContentLoaded',install,{once:true}):install();
+          })();
+          </script>
+          '''
+          mount='\n'.join(line[10:] if line.startswith('          ') else line for line in mount.splitlines())
           hp.write_text(h.replace('</body>',mount+'\n</body>',1))
           tp=Path('tests/browser-full-interaction.spec.mjs'); t=tp.read_text()
           old="""  await battle.locator('#partnerAdviceBtn').click();
-  const advice = await page.evaluate(() => window.__GAMEROAD_HATE_PARTNER_TEST__?.adviceEnvelope?.() ?? null);
-  expect(advice).not.toBeNull();
-  expect(advice.kind).toBe('plan');
-  expect(advice.status).toBe('ready');
-  await attachStateScreenshot(page, testInfo, 'battle-partner-advice-visible');"""
+          const advice = await page.evaluate(() => window.__GAMEROAD_HATE_PARTNER_TEST__?.adviceEnvelope?.() ?? null);
+          expect(advice).not.toBeNull();
+          expect(advice.kind).toBe('plan');
+          expect(advice.status).toBe('ready');
+          await attachStateScreenshot(page, testInfo, 'battle-partner-advice-visible');"""
           if t.count(old)!=1: raise SystemExit('unexpected test anchor '+str(t.count(old)))
           extra="""
-
-  await expect.poll(async () => battle.locator('[data-partner-advice-role="partner-recommendation"]').count()).toBe(2);
-  const adviceProjection = await page.evaluate(() => window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__?.snapshot?.() ?? null);
-  expect(adviceProjection).not.toBeNull();
-  expect(adviceProjection.activeCount).toBe(2);
-  expect(adviceProjection.rangeVisible, 'Partner recommendation does not replace the general range/threat surface').toBe(true);
-  expect(adviceProjection.markers.map((marker) => marker.kind).sort()).toEqual(['battle', 'road']);
-  for (const marker of adviceProjection.markers) {
-    expect(marker.glyph).toContain('相棒推奨');
-    expect(marker.aria).toContain('相棒推奨');
-    expect(marker.outlineStyle).toBe('dashed');
-  }
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await expect(battle.locator('[data-partner-advice-role="partner-recommendation"]')).toHaveCount(2);
-  expect((await page.evaluate(() => window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__?.snapshot?.()))?.activeCount).toBe(2);
-  const staleProjection = await page.evaluate(async () => {
-    const stale = window.__GAMEROAD_PARTNER_ADVICE_STALE__?.() ?? { status: 'blocked', kind: 'stale', error: 'STALE_STATE' };
-    return window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__?.render?.(stale) ?? null;
-  });
-  expect(staleProjection?.activeCount).toBe(0);
-  await expect(battle.locator('[data-partner-advice-role="partner-recommendation"]')).toHaveCount(0);
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await battle.locator('#partnerAdviceBtn').click();
-  await expect.poll(async () => battle.locator('[data-partner-advice-role="partner-recommendation"]').count()).toBe(2);
-  await attachStateScreenshot(page, testInfo, 'battle-partner-advice-object-projection-visible');"""
+          
+            await expect.poll(async () => battle.locator('[data-partner-advice-role="partner-recommendation"]').count()).toBe(2);
+            const adviceProjection = await page.evaluate(() => window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__?.snapshot?.() ?? null);
+            expect(adviceProjection).not.toBeNull();
+            expect(adviceProjection.activeCount).toBe(2);
+            expect(adviceProjection.rangeVisible, 'Partner recommendation does not replace the general range/threat surface').toBe(true);
+            expect(adviceProjection.markers.map((marker) => marker.kind).sort()).toEqual(['battle', 'road']);
+            for (const marker of adviceProjection.markers) {
+              expect(marker.glyph).toContain('相棒推奨');
+              expect(marker.aria).toContain('相棒推奨');
+              expect(marker.outlineStyle).toBe('dashed');
+            }
+            await page.emulateMedia({ reducedMotion: 'reduce' });
+            await expect(battle.locator('[data-partner-advice-role="partner-recommendation"]')).toHaveCount(2);
+            expect((await page.evaluate(() => window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__?.snapshot?.()))?.activeCount).toBe(2);
+            const staleProjection = await page.evaluate(async () => {
+              const stale = window.__GAMEROAD_PARTNER_ADVICE_STALE__?.() ?? { status: 'blocked', kind: 'stale', error: 'STALE_STATE' };
+              return window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__?.render?.(stale) ?? null;
+            });
+            expect(staleProjection?.activeCount).toBe(0);
+            await expect(battle.locator('[data-partner-advice-role="partner-recommendation"]')).toHaveCount(0);
+            await page.emulateMedia({ reducedMotion: 'no-preference' });
+            await battle.locator('#partnerAdviceBtn').click();
+            await expect.poll(async () => battle.locator('[data-partner-advice-role="partner-recommendation"]').count()).toBe(2);
+            await attachStateScreenshot(page, testInfo, 'battle-partner-advice-object-projection-visible');"""
+          extra='\n'.join(line[10:] if line.startswith('          ') else line for line in extra.splitlines())
           tp.write_text(t.replace(old,old+extra,1))
-          # Structural fault-oracle: a deliberate broken marker must be caught before committing.
+          # Deliberate broken current anchor must be distinguishable from the known-good input.
           bad=h.replace('partnerAdviceBtn','partnerAdviceBtn_BROKEN',1)
-          if 'partnerAdviceBtn_BROKEN' not in bad or 'partnerAdviceBtn' not in h: raise SystemExit('fault oracle did not trip')
+          if bad==h or 'partnerAdviceBtn_BROKEN' not in bad: raise SystemExit('fault oracle did not trip')
           PY
           git diff --check
           git diff --name-only | diff -u <(printf '%s\n' browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs) -
           node --test tests/partner-advice-runtime-mount.test.mjs
-          git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
           git commit -m 'BOARD109 R14: recover Partner advice on visible Battle objects'
           git push origin HEAD:work/board109-r14-cross-time-consumer-recovery

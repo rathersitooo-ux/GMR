@@ -71,13 +71,8 @@ jobs:
           mount='\n'.join(line[10:] if line.startswith('          ') else line for line in mount.splitlines())
           hp.write_text(h.replace('</body>',mount+'\n</body>',1))
           tp=Path('tests/browser-full-interaction.spec.mjs'); t=tp.read_text()
-          old="""  await battle.locator('#partnerAdviceBtn').click();
-          const advice = await page.evaluate(() => window.__GAMEROAD_HATE_PARTNER_TEST__?.adviceEnvelope?.() ?? null);
-          expect(advice).not.toBeNull();
-          expect(advice.kind).toBe('plan');
-          expect(advice.status).toBe('ready');
-          await attachStateScreenshot(page, testInfo, 'battle-partner-advice-visible');"""
-          if t.count(old)!=1: raise SystemExit('unexpected test anchor '+str(t.count(old)))
+          anchor="  await attachStateScreenshot(page, testInfo, 'battle-partner-advice-visible');"
+          if t.count(anchor)!=1: raise SystemExit('unexpected test anchor '+str(t.count(anchor)))
           extra="""
           
             await expect.poll(async () => battle.locator('[data-partner-advice-role="partner-recommendation"]').count()).toBe(2);
@@ -105,8 +100,7 @@ jobs:
             await expect.poll(async () => battle.locator('[data-partner-advice-role="partner-recommendation"]').count()).toBe(2);
             await attachStateScreenshot(page, testInfo, 'battle-partner-advice-object-projection-visible');"""
           extra='\n'.join(line[10:] if line.startswith('          ') else line for line in extra.splitlines())
-          tp.write_text(t.replace(old,old+extra,1))
-          # Deliberate broken current anchor must be distinguishable from the known-good input.
+          tp.write_text(t.replace(anchor,anchor+extra,1))
           bad=h.replace('partnerAdviceBtn','partnerAdviceBtn_BROKEN',1)
           if bad==h or 'partnerAdviceBtn_BROKEN' not in bad: raise SystemExit('fault oracle did not trip')
           PY

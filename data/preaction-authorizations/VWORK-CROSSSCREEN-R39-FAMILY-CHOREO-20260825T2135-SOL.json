@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-CROSSSCREEN-R39-FAMILY-CHOREO-20260825T2135-SOL",
+  "taskId": "CROSSSCREEN-MOTION-ASSET-PRODUCTION-REMAINDER-001",
+  "workUnitKey": "R39_SCREEN_FAMILY_MOTION_CHOREOGRAPHY",
+  "acquireKey": "CROSSSCREEN-MOTION-ASSET-PRODUCTION-REMAINDER-001:R39:SCREEN-FAMILY-MOTION-CHOREOGRAPHY:20260825T2112JST",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CROSSSCREEN-R39-SCREEN-FAMILY-PREDICTION-20260825T2135",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CROSSSCREEN-R39-R38-LATESTWINS-REDUCED-LOWPERF-ORACLE-20260825T2135",
+  "proceedToken": "PROCEED|VWORK-CROSSSCREEN-R39-FAMILY-CHOREO-20260825T2135-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction=screen-family child choreography must remain presentation-only; TransitionDirector owns semantic SWAP; focus/hitboxes/game state must not drift; latest-wins abort must cancel stale layers; reducedMotion removes spatial motion and lowPerf remains bounded opacity-only; package identity must follow the changed navigation blob.|rehearsal=merged R38 exact-head gates prove the existing real-surface director/cancellation baseline; R39 focused family mapping and negative controls will extend the already-classified screen-navigation test lane without changing semantic navigation.",
+  "authorizationBaseSha": "e909300c8ad9ef7de4c7fd697556c8bec0aaf3ea",
+  "issuedAt": "2026-08-25T21:35:00+09:00",
+  "scope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "notes": "Drive R39 acquisition and process-defect recovery packet preceded replacement mutation. Persona/ZZZ is only a quality reference; no external trade dress is copied. Browser HTML, gameplay, save, network, formal assets, Unity, and Roblox are outside scope. Temporary manifest must be deleted before replacement PR head."
+}

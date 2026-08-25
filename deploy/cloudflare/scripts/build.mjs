@@ -16,6 +16,8 @@ const defaultNavigationCoreSource = path.join(repoRoot, 'browser/screen-navigati
 const defaultPostMatchAutoqueueCoreSource = path.join(repoRoot, 'browser/post-match-autoqueue-core.mjs');
 const defaultReplayAdapterSource = path.join(repoRoot, 'browser/battle-replay-live-adapter.mjs');
 const defaultPartnerBattleEventProjectionSource = path.join(repoRoot, 'browser/partner-battle-event-log-projection.mjs');
+const defaultPartnerAdviceRuntimeMountSource = path.join(repoRoot, 'browser/partner-advice-runtime-mount.mjs');
+const defaultBattleBoardVisualExplanationCoreSource = path.join(repoRoot, 'browser/battle-board-visual-explanation-core.mjs');
 const defaultReplayCoreSource = path.join(repoRoot, 'browser/battle-replay-core.mjs');
 const defaultCardPresentationCoreSource = path.join(repoRoot, 'browser/card-presentation-core.mjs');
 const defaultBattleConveyorCoreSource = path.join(repoRoot, 'browser/battle-conveyor-presentation-core.mjs');
@@ -90,6 +92,8 @@ export async function buildPackage({
   postMatchAutoqueueCoreSource = defaultPostMatchAutoqueueCoreSource,
   replayAdapterSource = defaultReplayAdapterSource,
   partnerBattleEventProjectionSource = defaultPartnerBattleEventProjectionSource,
+  partnerAdviceRuntimeMountSource = defaultPartnerAdviceRuntimeMountSource,
+  battleBoardVisualExplanationCoreSource = defaultBattleBoardVisualExplanationCoreSource,
   replayCoreSource = defaultReplayCoreSource,
   cardPresentationCoreSource = defaultCardPresentationCoreSource,
   battleConveyorCoreSource = defaultBattleConveyorCoreSource,
@@ -130,6 +134,8 @@ export async function buildPackage({
   const postMatchAutoqueueCoreInput = await readFile(postMatchAutoqueueCoreSource);
   const replayAdapterInput = await readFile(replayAdapterSource);
   const partnerBattleEventProjectionInput = await readFile(partnerBattleEventProjectionSource);
+  const partnerAdviceRuntimeMountInput = await readFile(partnerAdviceRuntimeMountSource);
+  const battleBoardVisualExplanationCoreInput = await readFile(battleBoardVisualExplanationCoreSource);
   const replayCoreInput = await readFile(replayCoreSource);
   const cardPresentationCoreInput = await readFile(cardPresentationCoreSource);
   const battleConveyorCoreInput = await readFile(battleConveyorCoreSource);
@@ -150,6 +156,8 @@ export async function buildPackage({
   const postMatchAutoqueueCoreBlob = gitBlobSha1(postMatchAutoqueueCoreInput);
   const replayAdapterBlob = gitBlobSha1(replayAdapterInput);
   const partnerBattleEventProjectionBlob = gitBlobSha1(partnerBattleEventProjectionInput);
+  const partnerAdviceRuntimeMountBlob = gitBlobSha1(partnerAdviceRuntimeMountInput);
+  const battleBoardVisualExplanationCoreBlob = gitBlobSha1(battleBoardVisualExplanationCoreInput);
   const replayCoreBlob = gitBlobSha1(replayCoreInput);
   const cardPresentationCoreBlob = gitBlobSha1(cardPresentationCoreInput);
   const battleConveyorCoreBlob = gitBlobSha1(battleConveyorCoreInput);
@@ -279,6 +287,20 @@ export async function buildPackage({
   const partnerBattleEventProjectionRoundTrip = await readFile(partnerBattleEventProjectionOutputPath);
   if (!partnerBattleEventProjectionInput.equals(partnerBattleEventProjectionRoundTrip)) {
     throw new Error('dist/partner-battle-event-log-projection.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const partnerAdviceRuntimeMountOutputPath = path.join(dist, 'partner-advice-runtime-mount.mjs');
+  await writeFile(partnerAdviceRuntimeMountOutputPath, partnerAdviceRuntimeMountInput);
+  const partnerAdviceRuntimeMountRoundTrip = await readFile(partnerAdviceRuntimeMountOutputPath);
+  if (!partnerAdviceRuntimeMountInput.equals(partnerAdviceRuntimeMountRoundTrip)) {
+    throw new Error('dist/partner-advice-runtime-mount.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const battleBoardVisualExplanationCoreOutputPath = path.join(dist, 'battle-board-visual-explanation-core.mjs');
+  await writeFile(battleBoardVisualExplanationCoreOutputPath, battleBoardVisualExplanationCoreInput);
+  const battleBoardVisualExplanationCoreRoundTrip = await readFile(battleBoardVisualExplanationCoreOutputPath);
+  if (!battleBoardVisualExplanationCoreInput.equals(battleBoardVisualExplanationCoreRoundTrip)) {
+    throw new Error('dist/battle-board-visual-explanation-core.mjs is not byte-identical to Browser dependency source');
   }
 
   const replayCoreOutputPath = path.join(dist, 'battle-replay-core.mjs');
@@ -434,6 +456,18 @@ export async function buildPackage({
         'partner-battle-event-log-projection.mjs',
         partnerBattleEventProjectionInput,
         partnerBattleEventProjectionBlob,
+      ),
+      partner_advice_runtime_mount: provenance(
+        'browser/partner-advice-runtime-mount.mjs',
+        'partner-advice-runtime-mount.mjs',
+        partnerAdviceRuntimeMountInput,
+        partnerAdviceRuntimeMountBlob,
+      ),
+      battle_board_visual_explanation_core: provenance(
+        'browser/battle-board-visual-explanation-core.mjs',
+        'battle-board-visual-explanation-core.mjs',
+        battleBoardVisualExplanationCoreInput,
+        battleBoardVisualExplanationCoreBlob,
       ),
       battle_replay_core: provenance(
         'browser/battle-replay-core.mjs',

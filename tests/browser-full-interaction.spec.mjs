@@ -1016,6 +1016,49 @@ test('covers visible 2v2 Battle shell, info/log drawer, range, partner advice, u
   expect(advice.status).toBe('ready');
   await attachStateScreenshot(page, testInfo, 'battle-partner-advice-visible');
 
+  await expect.poll(async () => battle.locator('[data-partner-advice-role="partner-recommendation"]').count()).toBe(2);
+  const adviceProjection = await page.evaluate(() => window.__GAMEROAD_PARTNER_ADVICE_BOARD_R24__?.snapshot?.() ?? null);
+  expect(adviceProjection).not.toBeNull();
+  expect(adviceProjection.activeCount).toBe(2);
+  expect(adviceProjection.rangeVisible, 'Partner recommendation does not replace the general range/threat surface').toBe(true);
+  expect(adviceProjection.markers.map((marker) => marker.kind).sort()).toEqual(['battle', 'road']);
+  for (const marker of adviceProjection.markers) {
+    expect(marker.glyph).toContain('相棒推奨');
+    expect(marker.aria).toContain('相棒推奨');
+    expect(marker.outlineStyle).toBe('dashed');
+  }
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(battle.locator('[data-partner-advice-role="partner-recommendation"]')).toHaveCount(2);
+  expect((await page.evaluate(() => window.__GAMEROAD_PARTNER_ADVICE_BOARD_R24__?.snapshot?.()))?.activeCount).toBe(2);
+  const staleProjection = await page.evaluate(async () => {
+    const stale = window.__GAMEROAD_PARTNER_ADVICE_STALE__?.() ?? { status: 'blocked', kind: 'stale', error: 'STALE_STATE' };
+    return window.__GAMEROAD_PARTNER_ADVICE_BOARD_R24__?.render?.(stale) ?? null;
+  });
+  expect(staleProjection?.activeCount).toBe(0);
+  await expect(battle.locator('[data-partner-advice-role="partner-recommendation"]')).toHaveCount(0);
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await battle.locator('#partnerAdviceBtn').click();
+  await expect.poll(async () => battle.locator('[data-partner-advice-role="partner-recommendation"]').count()).toBe(2);
+  await attachStateScreenshot(page, testInfo, 'battle-partner-advice-object-projection-visible');
+  await expect.poll(async () => page.evaluate(() => window.__GAMEROAD_BOARD109_VISIBLE_R57__?.snapshot?.()?.validCount ?? 0)).toBe(109);
+  await battle.locator('#roadSelect').selectOption({ index: 1 });
+  await expect.poll(async () => battle.locator('#board .node.reachable.nextStep').count()).toBeGreaterThan(0);
+  await battle.locator('#board .node.reachable.nextStep').first().click();
+  await expect.poll(async () => page.evaluate(() => window.__GAMEROAD_BOARD109_VISIBLE_R57__?.snapshot?.()?.ok ?? false)).toBe(true);
+  const board109Snapshot = await page.evaluate(() => window.__GAMEROAD_BOARD109_VISIBLE_R57__?.snapshot?.() ?? null);
+  expect(board109Snapshot.validCount).toBe(109);
+  expect(board109Snapshot.counts.current).toBe(1);
+  expect(board109Snapshot.counts.reachable).toBeGreaterThan(0);
+  expect(board109Snapshot.counts.path).toBeGreaterThan(1);
+  expect(board109Snapshot.counts.selected).toBe(1);
+  expect(board109Snapshot.authorityByRole.current).toBe('rules-derived');
+  expect(board109Snapshot.authorityByRole['partner-recommendation']).toBe('partner-heuristic');
+  expect(board109Snapshot.legend).toContain('盤面説明');
+  await expect(battle.locator('#board109SemanticLegend')).toContainText('相棒推奨は別表示');
+  await expect(battle.locator('#board .node[data-board109-roles~="current"]')).toHaveCount(1);
+  await expect(battle.locator('#board .node[data-board109-roles~="selected"]')).toHaveCount(1);
+  await attachStateScreenshot(page, testInfo, 'battle-board109-visible-r57');
+
   await battle.locator('#clearPath').click();
   await battle.locator('#leaveMatch').click();
   await expect(page.locator('section[data-screen="home"]')).toBeVisible();

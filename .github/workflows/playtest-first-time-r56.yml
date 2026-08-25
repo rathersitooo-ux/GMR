@@ -1,0 +1,222 @@
+name: Playtest R56 First-Time Clean Public
+
+on:
+  push:
+    branches:
+      - work/playglobal-r56-firsttime-cleanpublic
+    paths:
+      - '.github/workflows/playtest-first-time-r56.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  first-time-clean-public:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GAMEROAD_PUBLIC_BASE_URL: https://gameroad-browser-r5.pages.dev
+    steps:
+      - name: Checkout isolated executor branch
+        uses: actions/checkout@v4
+
+      - name: Bind current public manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p playtest-r56
+          curl --fail --silent --show-error --location \
+            --header 'Accept-Encoding: identity' \
+            --retry 4 --retry-delay 2 --retry-connrefused \
+            --max-time 30 \
+            --output playtest-r56/gameroad-version.json \
+            "${GAMEROAD_PUBLIC_BASE_URL}/gameroad-version.json"
+          cat playtest-r56/gameroad-version.json
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.62.0
+          npx playwright install --with-deps chromium
+
+      - name: Play as a clean first-time short-landscape user
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const { chromium } = require('playwright');
+
+          const OUT = 'playtest-r56';
+          const BASE = process.env.GAMEROAD_PUBLIC_BASE_URL;
+          const journey = [];
+          const pageErrors = [];
+          const consoleErrors = [];
+          const httpErrors = [];
+
+          const normalize = (s) => String(s ?? '').replace(/\s+/g, ' ').trim();
+
+          async function visibleControls(page) {
+            const selector = 'button, a, [role="button"], input, select, [onclick]';
+            const loc = page.locator(selector);
+            const count = await loc.count();
+            const out = [];
+            for (let i = 0; i < count; i += 1) {
+              const el = loc.nth(i);
+              if (!(await el.isVisible().catch(() => false))) continue;
+              const info = await el.evaluate((node) => {
+                const r = node.getBoundingClientRect();
+                const style = getComputedStyle(node);
+                const label = [
+                  node.innerText,
+                  node.getAttribute('aria-label'),
+                  node.getAttribute('title'),
+                  node.getAttribute('value'),
+                  node.getAttribute('alt'),
+                ].filter(Boolean).join(' | ').replace(/\s+/g, ' ').trim();
+                return {
+                  tag: node.tagName.toLowerCase(),
+                  label,
+                  disabled: Boolean(node.disabled || node.getAttribute('aria-disabled') === 'true'),
+                  x: Math.round(r.x), y: Math.round(r.y),
+                  w: Math.round(r.width), h: Math.round(r.height),
+                  opacity: style.opacity,
+                };
+              });
+              if (info.w > 0 && info.h > 0) out.push({ index: i, ...info });
+            }
+            return out;
+          }
+
+          async function snapshot(page, name) {
+            const controls = await visibleControls(page);
+            const bodyText = normalize(await page.locator('body').innerText().catch(() => '')).slice(0, 5000);
+            const activeHeading = await page.locator('h1:visible, h2:visible, h3:visible, [role="heading"]:visible').allInnerTexts().catch(() => []);
+            const state = {
+              name,
+              url: page.url(),
+              headings: activeHeading.map(normalize).filter(Boolean).slice(0, 20),
+              bodyText,
+              controls,
+            };
+            journey.push({ type: 'snapshot', ...state });
+            fs.writeFileSync(`${OUT}/${name}.json`, JSON.stringify(state, null, 2));
+            await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: true, animations: 'disabled' });
+            console.log(`\n=== SNAPSHOT ${name} ===`);
+            console.log('HEADINGS', JSON.stringify(state.headings));
+            console.log('VISIBLE_TEXT', state.bodyText);
+            console.log('CONTROLS', JSON.stringify(controls));
+            return state;
+          }
+
+          async function naturalClick(page, label, regexes) {
+            const selector = 'button, a, [role="button"], input, [onclick]';
+            const loc = page.locator(selector);
+            const count = await loc.count();
+            for (const rx of regexes) {
+              for (let i = 0; i < count; i += 1) {
+                const el = loc.nth(i);
+                if (!(await el.isVisible().catch(() => false))) continue;
+                if (!(await el.isEnabled().catch(() => true))) continue;
+                const text = normalize(await el.evaluate((node) => [node.innerText, node.getAttribute('aria-label'), node.getAttribute('title'), node.getAttribute('value')].filter(Boolean).join(' | ')).catch(() => ''));
+                if (!text || !rx.test(text)) continue;
+                const box = await el.boundingBox();
+                journey.push({ type: 'action', label, matched: text, regex: String(rx), box });
+                console.log(`ACTION ${label}: ${text}`);
+                await el.click({ timeout: 5000 });
+                await page.waitForTimeout(800);
+                return { ok: true, text };
+              }
+            }
+            journey.push({ type: 'action-miss', label, regexes: regexes.map(String) });
+            console.log(`ACTION_MISS ${label}`);
+            return { ok: false };
+          }
+
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const context = await browser.newContext({
+              viewport: { width: 667, height: 375 },
+              hasTouch: true,
+              isMobile: true,
+              deviceScaleFactor: 1,
+            });
+            const page = await context.newPage();
+            page.on('pageerror', (e) => pageErrors.push(e.message));
+            page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text()); });
+            page.on('response', (r) => { if (r.status() >= 400) httpErrors.push(`${r.status()} ${r.url()}`); });
+
+            const response = await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            journey.push({ type: 'entry', status: response?.status() ?? null, url: page.url() });
+            await page.waitForTimeout(1500);
+            await snapshot(page, '00-entry-home');
+
+            // First attempt: choose the most obvious play/battle control by what a player can read.
+            await naturalClick(page, 'choose-primary-play', [/(^|\b)BATTLE(\b|$)/i, /対戦|バトル/, /PLAY|START|あそぶ|遊ぶ/i]);
+            let s = await snapshot(page, '01-after-primary-play');
+
+            // On a setup/orientation screen, choose an explicit mode/content only if its visible label is clear.
+            await naturalClick(page, 'choose-content', [/Honey Hunt|ハニー/i, /Road Shield|ロード/i, /通常対戦|Normal Match/i]);
+            await naturalClick(page, 'choose-player-count', [/1P|1人|ソロ/i, /2P|2人/i, /4P|4人/i]);
+            s = await snapshot(page, '02-setup-after-natural-choices');
+
+            // Try the visible start/confirm action. If unavailable, collect what the screen itself tells the player.
+            const start = await naturalClick(page, 'start-game', [/対戦開始|ゲーム開始|開始する|はじめる|START MATCH|START GAME|START/i, /決定|次へ|NEXT|CONFIRM/i]);
+            s = await snapshot(page, start.ok ? '03-after-start-attempt' : '03-no-readable-start');
+
+            const battleLike = /行動を計画|Battle|バトル|Round|ターン|Turn/i.test(s.bodyText);
+            let terminal = battleLike ? 'BATTLE_REACHED' : 'NOT_YET_BATTLE';
+
+            if (!battleLike) {
+              // Follow only explicit deck/card recovery affordances visible to the player.
+              const recover = await naturalClick(page, 'follow-deck-recovery', [/デッキ|DECK/i, /カード|CARDS?/i, /編成|構築|おすすめ|おまかせ|AUTO/i]);
+              if (recover.ok) {
+                await snapshot(page, '04-deck-recovery-destination');
+                await naturalClick(page, 'auto-or-starter-deck', [/おすすめ|おまかせ|AUTO|STARTER|初期デッキ|スターター/i]);
+                await naturalClick(page, 'save-deck', [/保存|SAVE|確定|COMMIT|決定/i]);
+                await snapshot(page, '05-after-visible-deck-actions');
+                await naturalClick(page, 'return-to-play', [/(^|\b)BATTLE(\b|$)/i, /対戦|バトル/, /戻る|BACK|HOME/i]);
+                await snapshot(page, '06-after-recovery-return');
+                await naturalClick(page, 'retry-start', [/対戦開始|ゲーム開始|開始する|はじめる|START MATCH|START GAME|START/i]);
+                s = await snapshot(page, '07-after-retry-start');
+                if (/行動を計画|Battle|バトル|Round|ターン|Turn/i.test(s.bodyText)) terminal = 'BATTLE_REACHED_AFTER_VISIBLE_RECOVERY';
+                else terminal = 'STOPPED_AFTER_VISIBLE_RECOVERY';
+              } else {
+                terminal = 'STOPPED_NO_VISIBLE_RECOVERY';
+              }
+            }
+
+            const result = {
+              terminal,
+              pageErrors,
+              consoleErrors,
+              httpErrors,
+              finalUrl: page.url(),
+              viewport: { width: 667, height: 375, touch: true, mobile: true },
+              internalGameApiUsed: false,
+              hiddenGameSelectorUsedForDecision: false,
+              journey,
+            };
+            fs.writeFileSync(`${OUT}/journey.json`, JSON.stringify(result, null, 2));
+            console.log('\n=== R56 RESULT ===');
+            console.log(JSON.stringify(result, null, 2));
+            await browser.close();
+            if (pageErrors.length || consoleErrors.length || httpErrors.some((x) => !x.includes('favicon'))) process.exitCode = 2;
+          })().catch((error) => {
+            fs.writeFileSync(`${OUT}/fatal.txt`, String(error?.stack || error));
+            console.error(error);
+            process.exitCode = 3;
+          });
+          NODE
+
+      - name: Upload first-time play evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playtest-r56-firsttime-clean-public-${{ github.run_id }}
+          path: playtest-r56/
+          if-no-files-found: error
+          retention-days: 14

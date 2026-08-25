@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-BOARD109-R18B-PUBLICPACKAGE-CLOSURE-20260826T0022-SOL",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "R18_R17_STALE_RECOVERY_VISIBLE_PROJECTION_PUBLIC_PACKAGE_CLOSURE",
+  "acquireKey": "BOARD109-R18-R17STALE-PUBLICPACKAGE-20260826T0009-SOL-P9Q4V7K2M6RX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BOARD109-R18B-R21-PUBLICPACKAGE-GRAPH-BOUNDED-EXECUTOR-20260826T0022",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BOARD109-R17-TESTONLY-RED-ORACLE-20260825T2257",
+  "proceedToken": "PROCEED|VWORK-BOARD109-R18B-PUBLICPACKAGE-CLOSURE-20260826T0022-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction=use an exact-preimage bounded executor to preserve the already-proven R17 Partner/BOARD109 projection while packaging the complete three-module public import graph with byte provenance and safe nested rollback behavior; final PR history may include the temporary executor but final diff must not.|rehearsal=R17 same-main RED proved detector sensitivity and exact-head local GREEN isolated Required Gate failure to the missing public module package; R18B executor must fail closed on any preimage, donor, anchor, or test mismatch before product commit.",
+  "authorizationBaseSha": "e909300c8ad9ef7de4c7fd697556c8bec0aaf3ea",
+  "issuedAt": "2026-08-26T00:22:00+09:00",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/board109-r18b-bounded-executor.yml"
+  ],
+  "notes": "Drive R18 acquisition, public-module graph correction, and executor-path correction were strict-CAS persisted/read back before this branch. R18 first branch was manifest-only and abandoned. This authorization is first from exact current main on R18B. Temporary workflow and this manifest must both be deleted before final PR head. No source dependency bytes, 109 legality/game rules, save/economy, Partner decision authority, persona, or formal-asset semantics are mutable."
+}

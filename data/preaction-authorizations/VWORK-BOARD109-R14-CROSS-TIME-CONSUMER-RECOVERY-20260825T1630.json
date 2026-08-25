@@ -17,5 +17,5 @@
     "tests/browser-full-interaction.spec.mjs",
     ".github/workflows/board109-r14-cross-time-bounded-executor.yml"
   ],
-  "notes": "Cross-time recovery of the stopped R21B visible Battle-object projection on fresh current main. Manifest/executor are temporary and must be deleted before merge. No 109 legality/game-rule/save/economy/persona/secret semantics change."
+  "notes": "Cross-time recovery of the stopped R21B visible Battle-object projection on fresh current main. Manifest/executor are temporary and must be deleted before merge. No 109 legality/game-rule/save/economy/persona/secret semantics change. Retry note: first executable syntax issue was repaired; second run proved the exact multi-line historical test anchor had drifted while the semantic screenshot anchor remained singular, so the executor now binds to that current anchor."
 }

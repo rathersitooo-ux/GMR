@@ -87,6 +87,8 @@ jobs:
                 browser_full_interaction=true
                 ;;
               browser/GAMEROAD.html|\
+              browser/home-cards-2p5d-presentation.mjs|\
+              tests/home-cards-2p5d-runtime.spec.mjs|\
               browser/post-match-autoqueue-core.mjs|\
               tests/post-match-autoqueue-core.test.mjs|\
               browser/screen-navigation-core.mjs|\

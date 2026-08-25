@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "UIFEEDBACK-R52-HOME-THEME-ORIENTATION-20260825T1633-SOL-Q4N7V2K8M5PX",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "R52_R38_HOME_THEME_ORIENTATION_PR348_CURRENTMAIN_RECOVERY",
+  "acquireKey": "UIFEEDBACK-R52-R38-PR348-RECOVERY-20260825T1626-SOL-Q4N7V2K8M5PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R52_PR373_FAIL_PLUS_R38_BLOB_EQ_CURRENT_DEPENDENCY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR348_R38_FOCUSED_CONTRACT_PLUS_CURRENT_TRANSITION_DEPENDENCY_EQUIVALENCE",
+  "proceedToken": "PROCEED|UIFEEDBACK-R52-HOME-THEME-ORIENTATION-20260825T1633-SOL-Q4N7V2K8M5PX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXACT_R38_BLOBS+CURRENT_TRANSITIONDIRECTOR_EQ+FAILCLOSED_GATE_REPAIR",
+  "authorizationBaseSha": "562b6cf535aa74ec4d791483ed2c8abfa0ff7905",
+  "scope": [
+    "browser/home-theme-orientation-core.mjs",
+    "tests/home-theme-orientation-core.test.mjs",
+    ".github/workflows/gameroad-required-gate.yml"
+  ]
+}

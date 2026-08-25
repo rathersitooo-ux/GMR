@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-BOARD109-R16-VISIBLE-PROJECTION-20260825T2217-SOL",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "R16_R15_STALE_RECOVERY_CURRENTMAIN_VISIBLE_PARTNER_BOARD_PROJECTION",
+  "acquireKey": "BOARD109-R16-R15STALE-CURRENTMAIN-PROJECTION-20260825T2217-SOL-M8Q4N7V2K6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BOARD109-R16-R21-FAILUREMODEL-20260825T2217",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BOARD109-R16-TESTONLY-RED-ORACLE-20260825T2217",
+  "proceedToken": "PROCEED|VWORK-BOARD109-R16-VISIBLE-PROJECTION-20260825T2217-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction=player-visible Partner recommendation must map only to intended Road/Battle/target objects, remain distinct from rules-derived range/threat, fail-clear when stale, and preserve semantic cues under reduced motion without changing game authority.|rehearsal=test-only RED against unchanged current HTML is required before candidate GREEN; stale PRs are never merged and exact main/public build identity is rechecked before completion.",
+  "authorizationBaseSha": "e909300c8ad9ef7de4c7fd697556c8bec0aaf3ea",
+  "issuedAt": "2026-08-25T22:28:00+09:00",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "notes": "Drive R16 acquisition, failure model, rollback, idempotency and RESOLUTION_PREP checkpoint preceded this first remote commit. Manifest is temporary and must be deleted before PR head. No 109 legality, game-rule, save, economy, Partner decision-authority, persona, or formal-asset semantics are in scope."
+}

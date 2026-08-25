@@ -1040,6 +1040,24 @@ test('covers visible 2v2 Battle shell, info/log drawer, range, partner advice, u
   await battle.locator('#partnerAdviceBtn').click();
   await expect.poll(async () => battle.locator('[data-partner-advice-role="partner-recommendation"]').count()).toBe(2);
   await attachStateScreenshot(page, testInfo, 'battle-partner-advice-object-projection-visible');
+  await expect.poll(async () => page.evaluate(() => window.__GAMEROAD_BOARD109_VISIBLE_R57__?.snapshot?.()?.validCount ?? 0)).toBe(109);
+  await battle.locator('#roadSelect').selectOption({ index: 1 });
+  await expect.poll(async () => battle.locator('#board .node.reachable.nextStep').count()).toBeGreaterThan(0);
+  await battle.locator('#board .node.reachable.nextStep').first().click();
+  await expect.poll(async () => page.evaluate(() => window.__GAMEROAD_BOARD109_VISIBLE_R57__?.snapshot?.()?.ok ?? false)).toBe(true);
+  const board109Snapshot = await page.evaluate(() => window.__GAMEROAD_BOARD109_VISIBLE_R57__?.snapshot?.() ?? null);
+  expect(board109Snapshot.validCount).toBe(109);
+  expect(board109Snapshot.counts.current).toBe(1);
+  expect(board109Snapshot.counts.reachable).toBeGreaterThan(0);
+  expect(board109Snapshot.counts.path).toBeGreaterThan(1);
+  expect(board109Snapshot.counts.selected).toBe(1);
+  expect(board109Snapshot.authorityByRole.current).toBe('rules-derived');
+  expect(board109Snapshot.authorityByRole['partner-recommendation']).toBe('partner-heuristic');
+  expect(board109Snapshot.legend).toContain('盤面説明');
+  await expect(battle.locator('#board109SemanticLegend')).toContainText('相棒推奨は別表示');
+  await expect(battle.locator('#board .node[data-board109-roles~="current"]')).toHaveCount(1);
+  await expect(battle.locator('#board .node[data-board109-roles~="selected"]')).toHaveCount(1);
+  await attachStateScreenshot(page, testInfo, 'battle-board109-visible-r57');
 
   await battle.locator('#clearPath').click();
   await battle.locator('#leaveMatch').click();

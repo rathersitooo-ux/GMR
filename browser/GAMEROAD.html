@@ -3930,4 +3930,27 @@ window.__GAMEROAD_PARTNER_ADVICE_BOARD_R24__=Object.freeze({render,clear,snapsho
 })();
 </script>
 
+<!-- GAMEROAD BOARD109 VISIBLE EXPLANATION R57 -->
+<style id="gameroad-board109-visible-r57-style">
+#board109SemanticLegend{position:absolute;left:50%;bottom:5px;transform:translateX(-50%);z-index:16;max-width:92%;padding:4px 8px;border:1px solid rgba(197,246,228,.42);background:rgba(4,17,14,.9);color:#effff8;font:800 8px/1.25 system-ui,sans-serif;letter-spacing:.02em;white-space:nowrap;pointer-events:none}
+#board .node[data-board109-glyph]::before{content:attr(data-board109-glyph);position:absolute;left:50%;top:-13px;transform:translateX(-50%);z-index:15;min-width:max-content;padding:1px 3px;border:1px solid currentColor;border-radius:3px;background:rgba(3,17,14,.94);color:#f4fff9;font:900 7px/1.1 system-ui,sans-serif;pointer-events:none}
+#board .node[data-board109-roles~="current"]{outline:2px double rgba(255,244,190,.96);outline-offset:2px}
+#board .node[data-board109-roles~="selected"]{outline:3px solid rgba(255,210,126,.96);outline-offset:3px}
+#board .node[data-board109-roles~="path"]{box-shadow:0 0 0 2px rgba(255,226,145,.32) inset}
+#board .node[data-board109-roles~="reachable"]:not([data-board109-roles~="current"]):not([data-board109-roles~="path"]){border-style:dashed}
+@media(prefers-reduced-motion:reduce){#board109SemanticLegend,#board .node[data-board109-glyph]::before{transition:none!important;animation:none!important}}
+</style>
+<script id="gameroad-board109-visible-r57">
+(()=>{'use strict';let modP=null,scheduled=false,last=null;const nodes=()=>[...document.querySelectorAll('#board .node[data-pos]')];
+const mod=()=>modP||(modP=import('./battle-board-visual-explanation-core.mjs').catch(e=>(console.warn('board109-r57-import',e),null)));
+function clear(){for(const el of nodes()){if(el.dataset.board109BaseAriaCaptured==='1'){const old=el.dataset.board109BaseAria||'';old?el.setAttribute('aria-label',old):el.removeAttribute('aria-label')}delete el.dataset.board109BaseAria;delete el.dataset.board109BaseAriaCaptured;delete el.dataset.board109Roles;delete el.dataset.board109Authority;delete el.dataset.board109Glyph}}
+const labels=Object.freeze({current:'現在',selected:'予約先',reachable:'移動可',path:'経路',threat:'危険',forecast:'予測'});
+function mark(el,roles){if(!el||!roles?.length)return;el.dataset.board109BaseAriaCaptured='1';el.dataset.board109BaseAria=el.getAttribute('aria-label')||'';el.dataset.board109Roles=roles.join(' ');el.dataset.board109Authority='rules-derived';const glyph=roles.includes('selected')?'◆ 予約先':roles.includes('current')?'◎ 現在':roles.includes('path')?'→ 経路':roles.includes('reachable')?'○ 移動可':roles.includes('threat')?'! 危険':roles.includes('forecast')?'? 予測':'';if(glyph)el.dataset.board109Glyph=glyph;const semantic=roles.filter(x=>labels[x]).map(x=>labels[x]).join('・');if(semantic)el.setAttribute('aria-label',(el.dataset.board109BaseAria?el.dataset.board109BaseAria+' / ':'')+'盤面説明 '+semantic)}
+function legend(){let el=document.getElementById('board109SemanticLegend');if(!el){el=document.createElement('div');el.id='board109SemanticLegend';el.setAttribute('aria-live','polite');document.getElementById('battleMap')?.appendChild(el)}if(el)el.textContent='盤面説明｜◎ 現在　○ 移動可　→ 経路　◆ 予約先　／ 相棒推奨は別表示';return el}
+async function render(){clear();const all=nodes(),valid=all.map(e=>e.dataset.pos).filter(Boolean);if(!valid.length){last=Object.freeze({ok:false,validCount:0});return last}const m=await mod();if(!m?.projectBattleBoardVisualExplanation){last=Object.freeze({ok:false,validCount:valid.length,reason:'MODULE_UNAVAILABLE'});return last}const pathEls=all.filter(e=>e.classList.contains('pathStep')).sort((a,b)=>(Number(a.dataset.pathIndex)||0)-(Number(b.dataset.pathIndex)||0));const result=m.projectBattleBoardVisualExplanation({validPositionIds:valid,currentPositionId:all.find(e=>e.classList.contains('currentPosition'))?.dataset.pos||null,selectedPositionId:all.find(e=>e.classList.contains('pathEnd'))?.dataset.pos||null,reachablePositionIds:all.filter(e=>e.classList.contains('reachable')).map(e=>e.dataset.pos),pathPositionIds:pathEls.map(e=>e.dataset.pos),threatPositionIds:[],forecastPositionIds:[]});if(result?.ok){for(const el of all)mark(el,result.rolesByPosition?.[el.dataset.pos]||[]);legend()}const counts=Object.fromEntries(['current','selected','reachable','path','threat','forecast'].map(role=>[role,result?.channels?.[role]?.length||0]));last=Object.freeze({ok:result?.ok===true,reason:result?.reason||null,validCount:valid.length,counts,authorityByRole:result?.authorityByRole||null,legend:document.getElementById('board109SemanticLegend')?.textContent||''});return last}
+function schedule(){if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;render().catch(e=>(clear(),console.warn('board109-r57-render',e)))})}
+function install(){const board=document.getElementById('board');if(board)new MutationObserver(schedule).observe(board,{childList:true});document.addEventListener('click',e=>{if(e.target?.closest?.('[data-screen="battle"]'))schedule()});document.addEventListener('change',e=>{if(e.target?.closest?.('[data-screen="battle"]'))schedule()});schedule()}
+window.__GAMEROAD_BOARD109_VISIBLE_R57__=Object.freeze({render,snapshot:()=>last,clear});document.readyState==='loading'?document.addEventListener('DOMContentLoaded',install,{once:true}):install();})();
+</script>
+
 </body></html>

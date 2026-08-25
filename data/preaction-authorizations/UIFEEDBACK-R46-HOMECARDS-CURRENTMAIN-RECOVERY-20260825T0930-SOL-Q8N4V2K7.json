@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "UIFEEDBACK-R46-HOMECARDS-CURRENTMAIN-RECOVERY-20260825T0930-SOL-Q8N4V2K7",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "R46-HOMECARDS-CURRENTMAIN-RECOVERY",
+  "acquireKey": "UIFEEDBACK-R46-HOMECARDS-CURRENTMAIN-RECOVERY-20260825T0930-SOL-Q8N4V2K7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "drive-r20-r46-acquire-20260825t0930-jst",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "pr364-homecards-dedicated-tests-and-package-build-pass",
+  "proceedToken": "PROCEED|UIFEEDBACK-R46-HOMECARDS-CURRENTMAIN-RECOVERY-20260825T0930-SOL-Q8N4V2K7|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENTMAIN_RECOVERY",
+  "authorizationBaseSha": "d3c954a4c27d8728e79166ffaeae68c1bf0f8cb4",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "browser/home-cards-2p5d-presentation.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "playwright.config.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs",
+    ".github/workflows/gameroad-required-gate.yml"
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "schema": "gameroad.preaction.v1",
+  "acquireKey": "PLAYGLOBAL-R57-PARTNER-BOARD109-UI-SAMEBUILD-20260825T1646-SOL-Q6N9V4K2M8PX",
+  "authorizationBaseSha": "562b6cf535aa74ec4d791483ed2c8abfa0ff7905",
+  "riskClass": "MATERIAL_STANDARD",
+  "decision": "PROCEED",
+  "prediction": "Transplanting the already-tested Partner R24 visible object projection onto unchanged current HTML, mounting BOARD109 as a semantic overlay without changing legality, and adding the omitted Partner runtime module to the existing fail-closed Cloudflare package should preserve current Battle behavior while making both visible slices package-complete. UI R53-owned adapter/test bytes remain read-only and must be composed only after its terminal state.",
+  "counterevidence": [
+    "R24 Required Gate failed because ./partner-advice-runtime-mount.mjs was absent from dist; do not remove the import or weaken dependency-completeness checks.",
+    "Partner recommendation must remain partner-heuristic and visually/non-color-only distinct from rules-derived BOARD109 current/selected/reachable/path/threat/forecast.",
+    "Unknown/stale/private/unmapped Partner advice must clear recommendation only; it must not clear or redefine rules-derived BOARD109 channels.",
+    "UIFEEDBACK R53 currently owns ui-state-feedback-ready-plan-adapter.mjs, its test, and deploy/cloudflare/tests/build.test.mjs; R57 must not mutate those paths while the lease is active.",
+    "Fresh main and HTML/BFI/build.mjs preimages must match before product mutation; abort on anchor drift or duplicate injected block."
+  ],
+  "authorizedScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/playglobal-r57-bounded-executor.yml"
+  ],
+  "explicitExclusions": [
+    "browser/ui-state-feedback-ready-plan-adapter.mjs",
+    "tests/ui-state-feedback-ready-plan-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/gameroad-required-gate.yml"
+  ]
+}

@@ -294,3 +294,94 @@ test('orientation adapter fails closed when projection mutation is asynchronous'
   assert.match(result.message,/applyProjection must be synchronous/);
   assert.equal(projection,'landscape');
 });
+
+const {
+  MATERIAL_FEEDBACK_MATERIALS:MATERIALS,
+  MATERIAL_FEEDBACK_PHASES:MATERIAL_PHASES,
+  projectMaterialFeedback,
+  materialFeedbackCssVars,
+}=await import('../browser/ui-state-feedback-core.mjs');
+const materialProject=(material,phase,extra={})=>projectMaterialFeedback({material,phase,...extra});
+
+test('gummy press reads as compression rather than generic hover scale',()=>{
+  const x=materialProject(MATERIALS.GUMMY,MATERIAL_PHASES.PRESSED,{localX:.8,localY:.65});
+  assert.ok(x.transform.scaleX>1);
+  assert.ok(x.transform.scaleY<1);
+  assert.ok(x.transform.translateYEm>0);
+  assert.ok(x.surface.shadowCompression>.5);
+  assert.ok(x.surface.rimTension>.5);
+  assert.ok(x.transform.translateXEm>0);
+  assert.equal(x.invariants.mutatesActionState,false);
+});
+
+test('droplet has stronger volume and refraction response than gummy',()=>{
+  const d=materialProject(MATERIALS.DROPLET,MATERIAL_PHASES.PRESSED);
+  const g=materialProject(MATERIALS.GUMMY,MATERIAL_PHASES.PRESSED);
+  assert.ok(d.transform.scaleX>g.transform.scaleX);
+  assert.ok(d.transform.scaleY<g.transform.scaleY);
+  assert.ok(d.surface.refraction>0);
+  assert.ok(d.surface.meniscus>g.surface.meniscus);
+});
+
+test('hold persists material strain while release phases are distinguishable',()=>{
+  const hold=materialProject(MATERIALS.GUMMY,MATERIAL_PHASES.HOLD);
+  const cancel=materialProject(MATERIALS.GUMMY,MATERIAL_PHASES.CANCELLED);
+  const commit=materialProject(MATERIALS.GUMMY,MATERIAL_PHASES.COMMITTED);
+  assert.ok(hold.transform.scaleY<1);
+  assert.ok(hold.surface.shadowCompression>.5);
+  assert.equal(cancel.channels.audioIntent,'release_cancel');
+  assert.equal(commit.channels.audioIntent,'release_confirm');
+  assert.ok(commit.motion.wobble>cancel.motion.wobble);
+  assert.notEqual(commit.channels.hapticIntent,cancel.channels.hapticIntent);
+});
+
+test('pointer-local contact changes deformation direction without changing hitbox authority',()=>{
+  const left=materialProject(MATERIALS.DROPLET,MATERIAL_PHASES.PRESSED,{localX:.1,localY:.5});
+  const right=materialProject(MATERIALS.DROPLET,MATERIAL_PHASES.PRESSED,{localX:.9,localY:.5});
+  assert.ok(left.transform.translateXEm<0);
+  assert.ok(right.transform.translateXEm>0);
+  assert.equal(left.invariants.requiresStableHitbox,true);
+  assert.equal(right.invariants.requiresStableHitbox,true);
+});
+
+test('reduced motion removes oscillation but preserves pressed-state identity',()=>{
+  const x=materialProject(MATERIALS.DROPLET,MATERIAL_PHASES.PRESSED,{reducedMotion:true});
+  assert.equal(x.motion.durationMs,0);
+  assert.equal(x.motion.wobble,0);
+  assert.equal(x.motion.overshoot,0);
+  assert.equal(x.motion.particleStrength,0);
+  assert.notEqual(x.transform.scaleY,1);
+  assert.ok(x.surface.shadowCompression>0);
+});
+
+test('low performance disables expensive liquid channels but keeps deformation',()=>{
+  const x=materialProject(MATERIALS.DROPLET,MATERIAL_PHASES.COMMITTED,{lowPerf:true});
+  assert.equal(x.surface.refraction,0);
+  assert.equal(x.motion.particleStrength,0);
+  assert.ok(x.motion.durationMs<=120);
+  assert.notEqual(x.transform.scaleY,1);
+});
+
+test('material projections are immutable deterministic render tokens',()=>{
+  const a=materialProject(MATERIALS.GUMMY,MATERIAL_PHASES.PRESSED,{localX:.2,localY:.7});
+  const b=materialProject(MATERIALS.GUMMY,MATERIAL_PHASES.PRESSED,{localX:.2,localY:.7});
+  assert.deepEqual(a,b);
+  assert.ok(Object.isFrozen(a));
+  assert.ok(Object.isFrozen(a.transform));
+  assert.throws(()=>{a.transform.scaleX=99;},TypeError);
+});
+
+test('css variables expose contact and material channels without action callback',()=>{
+  const projection=materialProject(MATERIALS.DROPLET,MATERIAL_PHASES.HOLD,{localX:.25,localY:.75});
+  const vars=materialFeedbackCssVars(projection);
+  assert.equal(vars['--mf-contact-x'],'25%');
+  assert.equal(vars['--mf-contact-y'],'75%');
+  assert.match(vars['--mf-duration'],/ms$/);
+  assert.equal('action' in vars,false);
+});
+
+test('invalid material inputs fail closed',()=>{
+  assert.throws(()=>projectMaterialFeedback({material:'slime',phase:MATERIAL_PHASES.PRESSED}),/unsupported material/);
+  assert.throws(()=>projectMaterialFeedback({material:MATERIALS.GUMMY,phase:'explode'}),/unsupported phase/);
+  assert.throws(()=>projectMaterialFeedback({material:MATERIALS.GUMMY,phase:MATERIAL_PHASES.PRESSED,localX:Infinity}),/finite/);
+});

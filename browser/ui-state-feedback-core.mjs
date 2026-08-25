@@ -437,3 +437,59 @@ export function createOrientationProjectionAdapter({
     getState:director.getState,
   });
 }
+
+const materialClamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, Number(value)));
+
+export const MATERIAL_FEEDBACK_MATERIALS = Object.freeze({GUMMY:'gummy',DROPLET:'droplet',HARD:'hard',FLAT:'flat'});
+export const MATERIAL_FEEDBACK_PHASES = Object.freeze({NORMAL:'normal',FOCUSED:'focused',PRESSED:'pressed',HOLD:'hold',CANCELLED:'cancelled',COMMITTED:'committed',SETTLED:'settled',DISABLED:'disabled'});
+
+const MATERIAL_BASE = Object.freeze({scaleX:1,scaleY:1,translateXEm:0,translateYEm:0,rotateDeg:0,shadowCompression:0,rimTension:0,refraction:0,meniscus:0,specularLag:0,wobble:0,overshoot:0,durationMs:0,easing:'linear',particleStrength:0});
+const MATERIAL_PROFILES = freeze({
+  gummy:{
+    normal:{}, focused:{rimTension:.16,durationMs:90,easing:'ease-out'},
+    pressed:{scaleX:1.045,scaleY:.91,translateYEm:.045,shadowCompression:.72,rimTension:.68,specularLag:.18,durationMs:70,easing:'cubic-bezier(.2,.8,.25,1)'},
+    hold:{scaleX:1.055,scaleY:.895,translateYEm:.052,shadowCompression:.8,rimTension:.82,specularLag:.24,wobble:.08,durationMs:110,easing:'ease-out'},
+    cancelled:{scaleX:.992,scaleY:1.018,translateYEm:-.008,shadowCompression:.08,rimTension:.25,specularLag:.08,wobble:.18,overshoot:.28,durationMs:170,easing:'cubic-bezier(.2,.9,.25,1.2)'},
+    committed:{scaleX:.98,scaleY:1.04,translateYEm:-.018,shadowCompression:.05,rimTension:.34,specularLag:.12,wobble:.42,overshoot:.55,durationMs:210,easing:'cubic-bezier(.15,.9,.25,1.25)'},
+    settled:{rimTension:.08,durationMs:130,easing:'ease-out'}, disabled:{shadowCompression:.12,rimTension:.03}
+  },
+  droplet:{
+    normal:{refraction:.22,meniscus:.28}, focused:{refraction:.27,meniscus:.34,rimTension:.12,durationMs:100,easing:'ease-out'},
+    pressed:{scaleX:1.085,scaleY:.855,translateYEm:.055,shadowCompression:.78,rimTension:.76,refraction:.5,meniscus:.74,specularLag:.36,wobble:.06,durationMs:85,easing:'cubic-bezier(.18,.82,.22,1)'},
+    hold:{scaleX:1.1,scaleY:.84,translateYEm:.06,shadowCompression:.84,rimTension:.86,refraction:.56,meniscus:.82,specularLag:.46,wobble:.16,durationMs:130,easing:'ease-out'},
+    cancelled:{scaleX:.985,scaleY:1.025,translateYEm:-.012,shadowCompression:.08,rimTension:.38,refraction:.31,meniscus:.42,specularLag:.25,wobble:.38,overshoot:.36,durationMs:210,easing:'cubic-bezier(.17,.9,.22,1.22)'},
+    committed:{scaleX:.955,scaleY:1.085,translateYEm:-.028,shadowCompression:.03,rimTension:.48,refraction:.4,meniscus:.5,specularLag:.34,wobble:.7,overshoot:.72,durationMs:280,easing:'cubic-bezier(.12,.92,.2,1.28)',particleStrength:.18},
+    settled:{refraction:.24,meniscus:.3,rimTension:.08,durationMs:150,easing:'ease-out'}, disabled:{refraction:.08,meniscus:.12,shadowCompression:.1}
+  },
+  hard:{
+    normal:{}, focused:{rimTension:.1,durationMs:70,easing:'ease-out'}, pressed:{scaleX:.992,scaleY:.965,translateYEm:.03,shadowCompression:.7,durationMs:55,easing:'ease-out'}, hold:{scaleX:.992,scaleY:.96,translateYEm:.034,shadowCompression:.76,durationMs:80,easing:'ease-out'}, cancelled:{overshoot:.08,durationMs:100,easing:'ease-out'}, committed:{scaleX:1.008,scaleY:1.008,overshoot:.12,durationMs:115,easing:'ease-out'}, settled:{durationMs:90,easing:'ease-out'}, disabled:{}
+  },
+  flat:{normal:{},focused:{rimTension:.06},pressed:{scaleX:.99,scaleY:.98,shadowCompression:.28,durationMs:50,easing:'ease-out'},hold:{scaleX:.99,scaleY:.98,shadowCompression:.32,durationMs:70,easing:'ease-out'},cancelled:{durationMs:70,easing:'ease-out'},committed:{durationMs:80,easing:'ease-out'},settled:{durationMs:70,easing:'ease-out'},disabled:{}}
+});
+
+function materialEnum(value, allowed, label) { if (!allowed.includes(value)) throw new Error(`unsupported ${label}: ${String(value)}`); }
+
+export function projectMaterialFeedback({material=MATERIAL_FEEDBACK_MATERIALS.FLAT,phase=MATERIAL_FEEDBACK_PHASES.NORMAL,localX=.5,localY=.5,reducedMotion=false,lowPerf=false}={}) {
+  materialEnum(material,Object.values(MATERIAL_FEEDBACK_MATERIALS),'material');
+  materialEnum(phase,Object.values(MATERIAL_FEEDBACK_PHASES),'phase');
+  if (!Number.isFinite(Number(localX)) || !Number.isFinite(Number(localY))) throw new Error('localX/localY must be finite');
+  const x=materialClamp(localX), y=materialClamp(localY), impactX=(x-.5)*2, impactY=(y-.5)*2;
+  const profile={...MATERIAL_BASE,...(MATERIAL_PROFILES[material][phase]||{})};
+  const isContact=phase==='pressed'||phase==='hold', isRelease=phase==='cancelled'||phase==='committed';
+  let durationMs=profile.durationMs,wobble=profile.wobble,overshoot=profile.overshoot,particleStrength=profile.particleStrength,refraction=profile.refraction,specularLag=profile.specularLag;
+  if(reducedMotion){durationMs=0;wobble=0;overshoot=0;particleStrength=0;specularLag=0;}
+  else if(lowPerf){durationMs=Math.min(durationMs,120);wobble*=.35;overshoot*=.5;particleStrength=0;refraction=0;specularLag*=.4;}
+  const lateralYield=material==='droplet'?.032:material==='gummy'?.018:.006;
+  const contactBias=isContact?1:isRelease?.35:0;
+  const translateXEm=profile.translateXEm+impactX*lateralYield*contactBias;
+  const rotateDeg=(material==='droplet'?impactX*1.4:material==='gummy'?impactX*.7:0)*contactBias;
+  const highlightX=materialClamp(x-impactX*specularLag*.18), highlightY=materialClamp(y-impactY*specularLag*.14);
+  const hapticIntent=phase==='pressed'?(material==='gummy'||material==='droplet'?'soft_press':'crisp_press'):phase==='committed'?(material==='droplet'?'liquid_release':material==='gummy'?'elastic_release':'confirm'):null;
+  return freeze({material,phase,contact:{x,y},transform:{scaleX:profile.scaleX,scaleY:profile.scaleY,translateXEm,translateYEm:profile.translateYEm,rotateDeg},surface:{shadowCompression:profile.shadowCompression,rimTension:profile.rimTension,refraction,meniscus:profile.meniscus,specularLag,highlightX,highlightY},motion:{durationMs,easing:reducedMotion?'linear':profile.easing,wobble,overshoot,particleStrength},channels:{hapticIntent,audioIntent:phase==='pressed'?'press':phase==='committed'?'release_confirm':phase==='cancelled'?'release_cancel':null},invariants:{mutatesActionState:false,requiresStableHitbox:true,reducedMotion:Boolean(reducedMotion),lowPerf:Boolean(lowPerf)}});
+}
+
+export function materialFeedbackCssVars(projection) {
+  if (!projection || projection.invariants?.mutatesActionState!==false) throw new Error('invalid material projection');
+  const {transform,surface,motion,contact}=projection;
+  return freeze({'--mf-scale-x':String(transform.scaleX),'--mf-scale-y':String(transform.scaleY),'--mf-translate-x':`${transform.translateXEm}em`,'--mf-translate-y':`${transform.translateYEm}em`,'--mf-rotate':`${transform.rotateDeg}deg`,'--mf-contact-x':`${contact.x*100}%`,'--mf-contact-y':`${contact.y*100}%`,'--mf-highlight-x':`${surface.highlightX*100}%`,'--mf-highlight-y':`${surface.highlightY*100}%`,'--mf-shadow-compression':String(surface.shadowCompression),'--mf-rim-tension':String(surface.rimTension),'--mf-refraction':String(surface.refraction),'--mf-meniscus':String(surface.meniscus),'--mf-wobble':String(motion.wobble),'--mf-overshoot':String(motion.overshoot),'--mf-duration':`${motion.durationMs}ms`,'--mf-easing':motion.easing});
+}

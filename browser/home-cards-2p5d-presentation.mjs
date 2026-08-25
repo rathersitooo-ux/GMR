@@ -157,17 +157,24 @@ function makeStage(context) {
 
 function animate(active, element, frames, options) {
   if (!element || !active) return Promise.resolve();
-  const duration = Math.max(0, Number(options?.duration) || 0);
+  const { clearAfter = false, ...animationOptions } = options || {};
+  const duration = Math.max(0, Number(animationOptions.duration) || 0);
   if (!element.animate || duration === 0) {
+    if (clearAfter) return Promise.resolve();
     const finalFrame = frames.at(-1) || {};
     for (const [key, value] of Object.entries(finalFrame)) {
       if (key !== 'offset' && key !== 'easing') element.style[key] = value;
     }
     return Promise.resolve();
   }
-  const animation = element.animate(frames, { ...options, fill: 'forwards' });
+  const animation = element.animate(frames, { ...animationOptions, fill: 'forwards' });
   active.animations.add(animation);
-  return animation.finished.catch(() => undefined).finally(() => active.animations.delete(animation));
+  return animation.finished.catch(() => undefined).finally(() => {
+    active.animations.delete(animation);
+    if (clearAfter) {
+      try { animation.cancel(); } catch {}
+    }
+  });
 }
 
 async function runExit(context) {
@@ -226,7 +233,7 @@ async function runEnter(context) {
     animate(active, cardsScreen, [
       { transform: profile === 'reduced' ? 'translate3d(0,6px,0)' : 'translate3d(3.5vw,1.4vh,0) scale(.982)', opacity: profile === 'reduced' ? '.88' : '.58' },
       { transform: 'translate3d(0,0,0) scale(1)', opacity: '1' },
-    ], { duration: enter, easing: 'cubic-bezier(.16,.82,.18,1)' }),
+    ], { duration: enter, easing: 'cubic-bezier(.16,.82,.18,1)', clearAfter: true }),
     animate(active, active.stage.querySelector('.gr2p5dSlashA'), [
       { opacity: profile === 'reduced' ? '.45' : '.92', transform: 'translate3d(-2%,0,80px) rotate(-4deg)' },
       { opacity: '0', transform: 'translate3d(24%,-7%,80px) rotate(-4deg)' },

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-BOARD109-R11-VISCORE-RECOVERY-20260825T1353",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "BOARD109-R11-VISUAL-CORE-RECOVERY",
+  "acquireKey": "BOARD109-R11-VISCORE-RECOVERY-20260825T1353-SOL-Q4N8V2K7M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BOARD109-R11-PRED-20260825T1353",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BOARD109-R11-ALT-20260825T1353",
+  "proceedToken": "PROCEED|VWORK-BOARD109-R11-VISCORE-RECOVERY-20260825T1353|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|BOARD109-R11-PRED-20260825T1353:stale-base+duplicate+authority+failclose+e2e challenged|BOARD109-R11-ALT-20260825T1353:R10 known-bad 8/10 RED candidate 10/10 GREEN + current producer schema exact-read",
+  "authorizationBaseSha": "723688820c768626b1698bf28230633789a21fab",
+  "issuedAt": "2026-08-25T13:53:26+09:00",
+  "scope": [
+    "browser/battle-board-visual-explanation-core.mjs",
+    "tests/battle-board-visual-explanation-core.test.mjs"
+  ],
+  "notes": "Fresh Drive AcquireKey and ProceedToken were read back before GitHub mutation. Recovery is exact2 implementation-only; HTML/UI-core/game-state/formal/Human/public completion remains out of scope."
+}

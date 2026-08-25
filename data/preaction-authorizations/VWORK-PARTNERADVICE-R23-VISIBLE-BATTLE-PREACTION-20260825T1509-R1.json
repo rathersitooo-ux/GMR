@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-PARTNERADVICE-R23-VISIBLE-BATTLE-PREACTION-20260825T1509-R1",
+  "taskId": "PARTNER-GOODMOVE-ADVICE-RUNTIME-INTEGRATION-001",
+  "workUnitKey": "R23_CURRENT_MAIN_VISIBLE_BATTLE_CONSUMER_MOUNT",
+  "acquireKey": "PARTNERADVICE-R23-VISIBLE-BATTLE-MOUNT-CURRENTMAIN-20260825T1509-SOL-Q6N8V4K2M7PX",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PARTNERADVICE-R23-PRED-R1-20260825T1514",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PARTNERADVICE-R23-ALT-R1-20260825T1514",
+  "proceedToken": "PROCEED|VWORK-PARTNERADVICE-R23-VISIBLE-BATTLE-PREACTION-20260825T1509-R1|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|PARTNERADVICE-R23-PRED-R1-20260825T1514:exact-anchor/preimage guard+wrong-object/stale/authority-distinction+branch-main-drift challenged|PARTNERADVICE-R23-ALT-R1-20260825T1514:CURRENT repeated one-shot exact-patch success+current HTML unchanged after BOARD R13+old R21B negative oracle; abort-before-write on missing/duplicate anchor",
+  "authorizationBaseSha": "562b6cf535aa74ec4d791483ed2c8abfa0ff7905",
+  "issuedAt": "2026-08-25T15:14:00+09:00",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/partneradvice-r23-bounded-executor.yml"
+  ],
+  "notes": "Manifest-first R23. Temporary executor is branch-local, push-triggered, exact-preimage guarded, bot-recursion suppressed, and must be removed with this manifest before final PR head. Required Gate is read-only."
+}

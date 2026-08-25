@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-UIFEEDBACK-R53-READYPLAN-MATERIAL-VISIBLE-20260825T1644",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "R53_READYPLAN_MATERIAL_VISIBLE_CONSUMER_CURRENTMAIN",
+  "acquireKey": "UIFEEDBACK-R53-READYPLAN-MATERIAL-VISIBLE-20260825T1644-SOL",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "UIFEEDBACK-R53-PRED-20260825T1644",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "UIFEEDBACK-R53-ALTORACLE-20260825T1644",
+  "proceedToken": "PROCEED|VWORK-UIFEEDBACK-R53-READYPLAN-MATERIAL-VISIBLE-20260825T1644|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|UIFEEDBACK-R53-PRED-20260825T1644: TOP_FAILURE=visual deformation accidentally changes the readyPlan hitbox or duplicates the existing R9 semantic binder. Guards: mutate adapter/test/public provenance only; preserve existing pointer capture, move-out/pointercancel, key-repeat suppression and commit token path; use paint-only filter/shadow plus CSS variables, never target transform/geometry; restore baseline inline paint on settle/destroy; reducedMotion keeps visible press identity with zero transition duration; lowPerf keeps deformation identity while core removes expensive liquid channels.|UIFEEDBACK-R53-ALTORACLE-20260825T1644: current main already contains R9 production #readyPlan binder and R51 material projection core. Therefore the smallest real consumer delta is to project the existing semantic feedback through the already-mounted adapter instead of editing GAMEROAD.html or creating another listener/action authority. Existing adapter tests are the regression oracle for exactly-once/cancel semantics and deploy build.test is the public-package provenance oracle.",
+  "authorizationBaseSha": "562b6cf535aa74ec4d791483ed2c8abfa0ff7905",
+  "issuedAt": "2026-08-25T16:44:00+09:00",
+  "scope": [
+    "browser/ui-state-feedback-ready-plan-adapter.mjs",
+    "tests/ui-state-feedback-ready-plan-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/uifeedback-r53-bounded-executor.yml"
+  ],
+  "notes": "Manifest-first R53 consumer mount. browser/GAMEROAD.html, tests/browser-full-interaction.spec.mjs, browser/ui-state-feedback-core.mjs, and gameroad-required-gate.yml are read-only. Temporary executor and this manifest must be removed before final PR head."
+}

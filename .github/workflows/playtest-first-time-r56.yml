@@ -6,6 +6,11 @@ on:
       - work/playglobal-r56-firsttime-cleanpublic
     paths:
       - '.github/workflows/playtest-first-time-r56.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/playtest-first-time-r56.yml'
 
 permissions:
   contents: read
@@ -154,16 +159,13 @@ jobs:
             await page.waitForTimeout(1500);
             await snapshot(page, '00-entry-home');
 
-            // First attempt: choose the most obvious play/battle control by what a player can read.
             await naturalClick(page, 'choose-primary-play', [/(^|\b)BATTLE(\b|$)/i, /対戦|バトル/, /PLAY|START|あそぶ|遊ぶ/i]);
             let s = await snapshot(page, '01-after-primary-play');
 
-            // On a setup/orientation screen, choose an explicit mode/content only if its visible label is clear.
             await naturalClick(page, 'choose-content', [/Honey Hunt|ハニー/i, /Road Shield|ロード/i, /通常対戦|Normal Match/i]);
             await naturalClick(page, 'choose-player-count', [/1P|1人|ソロ/i, /2P|2人/i, /4P|4人/i]);
             s = await snapshot(page, '02-setup-after-natural-choices');
 
-            // Try the visible start/confirm action. If unavailable, collect what the screen itself tells the player.
             const start = await naturalClick(page, 'start-game', [/対戦開始|ゲーム開始|開始する|はじめる|START MATCH|START GAME|START/i, /決定|次へ|NEXT|CONFIRM/i]);
             s = await snapshot(page, start.ok ? '03-after-start-attempt' : '03-no-readable-start');
 
@@ -171,7 +173,6 @@ jobs:
             let terminal = battleLike ? 'BATTLE_REACHED' : 'NOT_YET_BATTLE';
 
             if (!battleLike) {
-              // Follow only explicit deck/card recovery affordances visible to the player.
               const recover = await naturalClick(page, 'follow-deck-recovery', [/デッキ|DECK/i, /カード|CARDS?/i, /編成|構築|おすすめ|おまかせ|AUTO/i]);
               if (recover.ok) {
                 await snapshot(page, '04-deck-recovery-destination');

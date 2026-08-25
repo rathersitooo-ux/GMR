@@ -1,0 +1,135 @@
+from pathlib import Path
+
+
+def replace1(text, old, new, label):
+    n = text.count(old)
+    if n != 1:
+        raise SystemExit(f'{label}: expected exactly 1 anchor, got {n}')
+    return text.replace(old, new, 1)
+
+
+html_path = Path('browser/GAMEROAD.html')
+html = html_path.read_text()
+if 'GAMEROAD PARTNER ADVICE OBJECT PROJECTION R24' not in html:
+    raise SystemExit('missing Partner R24 donor marker')
+if 'GAMEROAD BOARD109 VISIBLE EXPLANATION R57' in html:
+    raise SystemExit('BOARD109 R57 already present')
+board_block = r'''
+<!-- GAMEROAD BOARD109 VISIBLE EXPLANATION R57 -->
+<style id="gameroad-board109-visible-r57-style">
+#board109SemanticLegend{position:absolute;left:50%;bottom:5px;transform:translateX(-50%);z-index:16;max-width:92%;padding:4px 8px;border:1px solid rgba(197,246,228,.42);background:rgba(4,17,14,.9);color:#effff8;font:800 8px/1.25 system-ui,sans-serif;letter-spacing:.02em;white-space:nowrap;pointer-events:none}
+#board .node[data-board109-glyph]::before{content:attr(data-board109-glyph);position:absolute;left:50%;top:-13px;transform:translateX(-50%);z-index:15;min-width:max-content;padding:1px 3px;border:1px solid currentColor;border-radius:3px;background:rgba(3,17,14,.94);color:#f4fff9;font:900 7px/1.1 system-ui,sans-serif;pointer-events:none}
+#board .node[data-board109-roles~="current"]{outline:2px double rgba(255,244,190,.96);outline-offset:2px}
+#board .node[data-board109-roles~="selected"]{outline:3px solid rgba(255,210,126,.96);outline-offset:3px}
+#board .node[data-board109-roles~="path"]{box-shadow:0 0 0 2px rgba(255,226,145,.32) inset}
+#board .node[data-board109-roles~="reachable"]:not([data-board109-roles~="current"]):not([data-board109-roles~="path"]){border-style:dashed}
+@media(prefers-reduced-motion:reduce){#board109SemanticLegend,#board .node[data-board109-glyph]::before{transition:none!important;animation:none!important}}
+</style>
+<script id="gameroad-board109-visible-r57">
+(()=>{'use strict';let modP=null,scheduled=false,last=null;const nodes=()=>[...document.querySelectorAll('#board .node[data-pos]')];
+const mod=()=>modP||(modP=import('./battle-board-visual-explanation-core.mjs').catch(e=>(console.warn('board109-r57-import',e),null)));
+function clear(){for(const el of nodes()){if(el.dataset.board109BaseAriaCaptured==='1'){const old=el.dataset.board109BaseAria||'';old?el.setAttribute('aria-label',old):el.removeAttribute('aria-label')}delete el.dataset.board109BaseAria;delete el.dataset.board109BaseAriaCaptured;delete el.dataset.board109Roles;delete el.dataset.board109Authority;delete el.dataset.board109Glyph}}
+const labels=Object.freeze({current:'現在',selected:'予約先',reachable:'移動可',path:'経路',threat:'危険',forecast:'予測'});
+function mark(el,roles){if(!el||!roles?.length)return;el.dataset.board109BaseAriaCaptured='1';el.dataset.board109BaseAria=el.getAttribute('aria-label')||'';el.dataset.board109Roles=roles.join(' ');el.dataset.board109Authority='rules-derived';const glyph=roles.includes('selected')?'◆ 予約先':roles.includes('current')?'◎ 現在':roles.includes('path')?'→ 経路':roles.includes('reachable')?'○ 移動可':roles.includes('threat')?'! 危険':roles.includes('forecast')?'? 予測':'';if(glyph)el.dataset.board109Glyph=glyph;const semantic=roles.filter(x=>labels[x]).map(x=>labels[x]).join('・');if(semantic)el.setAttribute('aria-label',(el.dataset.board109BaseAria?el.dataset.board109BaseAria+' / ':'')+'盤面説明 '+semantic)}
+function legend(){let el=document.getElementById('board109SemanticLegend');if(!el){el=document.createElement('div');el.id='board109SemanticLegend';el.setAttribute('aria-live','polite');document.getElementById('battleMap')?.appendChild(el)}if(el)el.textContent='盤面説明｜◎ 現在　○ 移動可　→ 経路　◆ 予約先　／ 相棒推奨は別表示';return el}
+async function render(){clear();const all=nodes(),valid=all.map(e=>e.dataset.pos).filter(Boolean);if(!valid.length){last=Object.freeze({ok:false,validCount:0});return last}const m=await mod();if(!m?.projectBattleBoardVisualExplanation){last=Object.freeze({ok:false,validCount:valid.length,reason:'MODULE_UNAVAILABLE'});return last}const pathEls=all.filter(e=>e.classList.contains('pathStep')).sort((a,b)=>(Number(a.dataset.pathIndex)||0)-(Number(b.dataset.pathIndex)||0));const result=m.projectBattleBoardVisualExplanation({validPositionIds:valid,currentPositionId:all.find(e=>e.classList.contains('currentPosition'))?.dataset.pos||null,selectedPositionId:all.find(e=>e.classList.contains('pathEnd'))?.dataset.pos||null,reachablePositionIds:all.filter(e=>e.classList.contains('reachable')).map(e=>e.dataset.pos),pathPositionIds:pathEls.map(e=>e.dataset.pos),threatPositionIds:[],forecastPositionIds:[]});if(result?.ok){for(const el of all)mark(el,result.rolesByPosition?.[el.dataset.pos]||[]);legend()}const counts=Object.fromEntries(['current','selected','reachable','path','threat','forecast'].map(role=>[role,result?.channels?.[role]?.length||0]));last=Object.freeze({ok:result?.ok===true,reason:result?.reason||null,validCount:valid.length,counts,authorityByRole:result?.authorityByRole||null,legend:document.getElementById('board109SemanticLegend')?.textContent||''});return last}
+function schedule(){if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;render().catch(e=>(clear(),console.warn('board109-r57-render',e)))})}
+function install(){const board=document.getElementById('board');if(board)new MutationObserver(schedule).observe(board,{childList:true});document.addEventListener('click',e=>{if(e.target?.closest?.('[data-screen="battle"]'))schedule()});document.addEventListener('change',e=>{if(e.target?.closest?.('[data-screen="battle"]'))schedule()});schedule()}
+window.__GAMEROAD_BOARD109_VISIBLE_R57__=Object.freeze({render,snapshot:()=>last,clear});document.readyState==='loading'?document.addEventListener('DOMContentLoaded',install,{once:true}):install();})();
+</script>
+'''
+html = replace1(html, '\n</body></html>', board_block + '\n</body></html>', 'html-close')
+html_path.write_text(html)
+
+bfi_path = Path('tests/browser-full-interaction.spec.mjs')
+bfi = bfi_path.read_text()
+if 'battle-partner-advice-object-projection-visible' not in bfi:
+    raise SystemExit('missing Partner R24 BFI donor marker')
+if 'battle-board109-visible-r57' in bfi:
+    raise SystemExit('BOARD109 R57 BFI already present')
+anchor = "  await attachStateScreenshot(page, testInfo, 'battle-partner-advice-object-projection-visible');\n"
+extra = r'''  await expect.poll(async () => page.evaluate(() => window.__GAMEROAD_BOARD109_VISIBLE_R57__?.snapshot?.()?.validCount ?? 0)).toBe(109);
+  await battle.locator('#roadSelect').selectOption({ index: 1 });
+  await expect.poll(async () => battle.locator('#board .node.reachable.nextStep').count()).toBeGreaterThan(0);
+  await battle.locator('#board .node.reachable.nextStep').first().click();
+  await expect.poll(async () => page.evaluate(() => window.__GAMEROAD_BOARD109_VISIBLE_R57__?.snapshot?.()?.ok ?? false)).toBe(true);
+  const board109Snapshot = await page.evaluate(() => window.__GAMEROAD_BOARD109_VISIBLE_R57__?.snapshot?.() ?? null);
+  expect(board109Snapshot.validCount).toBe(109);
+  expect(board109Snapshot.counts.current).toBe(1);
+  expect(board109Snapshot.counts.reachable).toBeGreaterThan(0);
+  expect(board109Snapshot.counts.path).toBeGreaterThan(1);
+  expect(board109Snapshot.counts.selected).toBe(1);
+  expect(board109Snapshot.authorityByRole.current).toBe('rules-derived');
+  expect(board109Snapshot.authorityByRole['partner-recommendation']).toBe('partner-heuristic');
+  expect(board109Snapshot.legend).toContain('盤面説明');
+  await expect(battle.locator('#board109SemanticLegend')).toContainText('相棒推奨は別表示');
+  await expect(battle.locator('#board .node[data-board109-roles~="current"]')).toHaveCount(1);
+  await expect(battle.locator('#board .node[data-board109-roles~="selected"]')).toHaveCount(1);
+  await attachStateScreenshot(page, testInfo, 'battle-board109-visible-r57');
+'''
+bfi = replace1(bfi, anchor, anchor + extra, 'bfi-partner-visible')
+bfi_path.write_text(bfi)
+
+build_path = Path('deploy/cloudflare/scripts/build.mjs')
+build = build_path.read_text()
+build = replace1(build,
+    "const defaultPartnerBattleEventProjectionSource = path.join(repoRoot, 'browser/partner-battle-event-log-projection.mjs');\n",
+    "const defaultPartnerBattleEventProjectionSource = path.join(repoRoot, 'browser/partner-battle-event-log-projection.mjs');\nconst defaultPartnerAdviceRuntimeMountSource = path.join(repoRoot, 'browser/partner-advice-runtime-mount.mjs');\nconst defaultBattleBoardVisualExplanationCoreSource = path.join(repoRoot, 'browser/battle-board-visual-explanation-core.mjs');\n",
+    'build-default-sources')
+build = replace1(build,
+    "  partnerBattleEventProjectionSource = defaultPartnerBattleEventProjectionSource,\n",
+    "  partnerBattleEventProjectionSource = defaultPartnerBattleEventProjectionSource,\n  partnerAdviceRuntimeMountSource = defaultPartnerAdviceRuntimeMountSource,\n  battleBoardVisualExplanationCoreSource = defaultBattleBoardVisualExplanationCoreSource,\n",
+    'build-args')
+build = replace1(build,
+    "  const partnerBattleEventProjectionInput = await readFile(partnerBattleEventProjectionSource);\n",
+    "  const partnerBattleEventProjectionInput = await readFile(partnerBattleEventProjectionSource);\n  const partnerAdviceRuntimeMountInput = await readFile(partnerAdviceRuntimeMountSource);\n  const battleBoardVisualExplanationCoreInput = await readFile(battleBoardVisualExplanationCoreSource);\n",
+    'build-inputs')
+build = replace1(build,
+    "  const partnerBattleEventProjectionBlob = gitBlobSha1(partnerBattleEventProjectionInput);\n",
+    "  const partnerBattleEventProjectionBlob = gitBlobSha1(partnerBattleEventProjectionInput);\n  const partnerAdviceRuntimeMountBlob = gitBlobSha1(partnerAdviceRuntimeMountInput);\n  const battleBoardVisualExplanationCoreBlob = gitBlobSha1(battleBoardVisualExplanationCoreInput);\n",
+    'build-blobs')
+write_anchor = """  const partnerBattleEventProjectionOutputPath = path.join(dist, 'partner-battle-event-log-projection.mjs');
+  await writeFile(partnerBattleEventProjectionOutputPath, partnerBattleEventProjectionInput);
+  const partnerBattleEventProjectionRoundTrip = await readFile(partnerBattleEventProjectionOutputPath);
+  if (!partnerBattleEventProjectionInput.equals(partnerBattleEventProjectionRoundTrip)) {
+    throw new Error('dist/partner-battle-event-log-projection.mjs is not byte-identical to Browser dependency source');
+  }
+"""
+write_extra = write_anchor + """
+  const partnerAdviceRuntimeMountOutputPath = path.join(dist, 'partner-advice-runtime-mount.mjs');
+  await writeFile(partnerAdviceRuntimeMountOutputPath, partnerAdviceRuntimeMountInput);
+  const partnerAdviceRuntimeMountRoundTrip = await readFile(partnerAdviceRuntimeMountOutputPath);
+  if (!partnerAdviceRuntimeMountInput.equals(partnerAdviceRuntimeMountRoundTrip)) {
+    throw new Error('dist/partner-advice-runtime-mount.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const battleBoardVisualExplanationCoreOutputPath = path.join(dist, 'battle-board-visual-explanation-core.mjs');
+  await writeFile(battleBoardVisualExplanationCoreOutputPath, battleBoardVisualExplanationCoreInput);
+  const battleBoardVisualExplanationCoreRoundTrip = await readFile(battleBoardVisualExplanationCoreOutputPath);
+  if (!battleBoardVisualExplanationCoreInput.equals(battleBoardVisualExplanationCoreRoundTrip)) {
+    throw new Error('dist/battle-board-visual-explanation-core.mjs is not byte-identical to Browser dependency source');
+  }
+"""
+build = replace1(build, write_anchor, write_extra, 'build-write')
+prov_anchor = """      partner_battle_event_log_projection: provenance(
+        'browser/partner-battle-event-log-projection.mjs',
+        'partner-battle-event-log-projection.mjs',
+        partnerBattleEventProjectionInput,
+        partnerBattleEventProjectionBlob,
+      ),
+"""
+prov_extra = prov_anchor + """      partner_advice_runtime_mount: provenance(
+        'browser/partner-advice-runtime-mount.mjs',
+        'partner-advice-runtime-mount.mjs',
+        partnerAdviceRuntimeMountInput,
+        partnerAdviceRuntimeMountBlob,
+      ),
+      battle_board_visual_explanation_core: provenance(
+        'browser/battle-board-visual-explanation-core.mjs',
+        'battle-board-visual-explanation-core.mjs',
+        battleBoardVisualExplanationCoreInput,
+        battleBoardVisualExplanationCoreBlob,
+      ),
+"""
+build = replace1(build, prov_anchor, prov_extra, 'build-provenance')
+build_path.write_text(build)

@@ -137,11 +137,20 @@ test('missing thresholds or operation token fail closed before commit',()=>{
   assert.notEqual(adapter.getFeedback().feedback,'pending');
 });
 
+class FakeStyle {
+  constructor(){ this.custom=new Map(); }
+  setProperty(name,value){ this.custom.set(name,String(value)); }
+  getPropertyValue(name){ return this.custom.get(name) || ''; }
+  removeProperty(name){ const old=this.getPropertyValue(name); this.custom.delete(name); return old; }
+}
+
 class FakeTarget {
   constructor(){
     this.listeners=new Map();
     this.capturedPointers=new Set();
     this.rect={left:-10000,top:-10000,right:10000,bottom:10000};
+    this.dataset={};
+    this.style=new FakeStyle();
   }
   addEventListener(type,handler){
     const set=this.listeners.get(type) || new Set();
@@ -168,7 +177,7 @@ class FakeTarget {
   }
 }
 
-function makeBinding({holdMs=500}={}){
+function makeBinding({holdMs=500,reducedMotion=false,lowPerf=false}={}){
   const target=new FakeTarget();
   const calls=[];
   const renders=[];
@@ -178,6 +187,8 @@ function makeBinding({holdMs=500}={}){
   const adapter=createReadyPlanFeedbackAdapter({
     config:{...cfg,holdMs},
     commit:(command)=>{calls.push(command); return `sent:${command.operationToken}`;},
+    reducedMotion,
+    lowPerf,
   });
   const binding=bindReadyPlanFeedbackControl({
     target,
@@ -335,4 +346,76 @@ test('binding keeps primary mouse commit behavior with explicit button zero',()=
   h.target.emit('pointerup',{pointerId:10,button:0,clientX:10,clientY:20});
   assert.equal(h.tokenCounter,1);
   assert.deepEqual(h.calls,[{type:'commit',operationToken:'bind-1',source:'pointer_release'}]);
+});
+
+
+test('binding projects visible paint-only material feedback without changing target geometry',()=>{
+  const h=makeBinding();
+  h.target.rect={left:0,top:0,right:100,bottom:50};
+  const geometryBefore={...h.target.rect};
+  h.target.emit('pointerdown',{pointerId:21,button:0,clientX:75,clientY:25});
+  assert.equal(h.target.dataset.gmrMaterialPhase,'pressed');
+  assert.equal(h.target.dataset.gmrMaterial,'gummy');
+  assert.match(h.target.style.filter,/brightness\(/);
+  assert.match(h.target.style.boxShadow,/inset/);
+  assert.equal(h.target.style.transform ?? '','');
+  assert.equal(h.target.style.getPropertyValue('--mf-contact-x'),'75%');
+  assert.deepEqual(h.target.rect,geometryBefore);
+  assert.equal(h.calls.length,0);
+});
+
+test('material phase follows hold cancel commit and ack while semantic commit remains exactly once',()=>{
+  const h=makeBinding({holdMs:100});
+  h.target.rect={left:0,top:0,right:100,bottom:50};
+  h.target.emit('pointerdown',{pointerId:22,button:0,clientX:25,clientY:20});
+  h.setNow(100);
+  h.timers[0].fn();
+  assert.equal(h.target.dataset.gmrMaterialPhase,'hold');
+  h.target.emit('pointerup',{pointerId:22,button:0,clientX:25,clientY:20});
+  assert.equal(h.calls.length,0);
+  h.target.emit('pointerdown',{pointerId:23,button:0,clientX:30,clientY:20});
+  h.target.emit('pointercancel',{pointerId:23,clientX:30,clientY:20});
+  assert.equal(h.target.dataset.gmrMaterialPhase,'cancelled');
+  assert.equal(h.calls.length,0);
+  h.target.emit('pointerdown',{pointerId:24,button:0,clientX:50,clientY:20});
+  h.target.emit('pointerup',{pointerId:24,button:0,clientX:50,clientY:20});
+  assert.equal(h.target.dataset.gmrMaterialPhase,'committed');
+  assert.equal(h.calls.length,1);
+  h.binding.acknowledge({operationToken:'bind-1',accepted:true,reason:'server_ack'});
+  assert.equal(h.target.dataset.gmrMaterialPhase,'settled');
+  assert.equal(h.calls.length,1);
+});
+
+test('reduced motion removes transition motion but keeps a visible pressed material cue',()=>{
+  const h=makeBinding({reducedMotion:true});
+  h.target.rect={left:0,top:0,right:100,bottom:50};
+  h.target.emit('pointerdown',{pointerId:25,button:0,clientX:50,clientY:25});
+  assert.equal(h.target.dataset.gmrMaterialPhase,'pressed');
+  assert.equal(h.target.style.transitionDuration,'0ms');
+  assert.match(h.target.style.filter,/brightness\(/);
+  assert.notEqual(h.target.style.boxShadow,'');
+});
+
+test('low performance material projection drops refraction while preserving pressed paint cue',()=>{
+  const h=makeBinding({lowPerf:true});
+  h.target.rect={left:0,top:0,right:100,bottom:50};
+  h.target.emit('pointerdown',{pointerId:26,button:0,clientX:50,clientY:25});
+  assert.equal(h.target.dataset.gmrMaterialPhase,'pressed');
+  assert.equal(h.target.style.getPropertyValue('--mf-refraction'),'0');
+  assert.match(h.target.style.filter,/brightness\(/);
+});
+
+test('destroy restores pre-existing inline paint and removes material ownership markers',()=>{
+  const target=new FakeTarget();
+  target.style.filter='contrast(1.1)';
+  target.style.boxShadow='0 1px 2px black';
+  const adapter=createReadyPlanFeedbackAdapter({config:cfg,commit:()=>{}});
+  const binding=bindReadyPlanFeedbackControl({target,adapter,operationTokenFactory:()=> 'restore-1'});
+  target.emit('pointerdown',{pointerId:27,button:0,clientX:0,clientY:0});
+  assert.notEqual(target.style.filter,'contrast(1.1)');
+  binding.destroy();
+  assert.equal(target.style.filter,'contrast(1.1)');
+  assert.equal(target.style.boxShadow,'0 1px 2px black');
+  assert.equal(target.dataset.gmrMaterialPhase,undefined);
+  assert.equal(target.dataset.gmrMaterial,undefined);
 });

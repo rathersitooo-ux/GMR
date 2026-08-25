@@ -16,7 +16,9 @@
     "browser/ui-state-feedback-ready-plan-adapter.mjs",
     "tests/ui-state-feedback-ready-plan-adapter.test.mjs",
     "deploy/cloudflare/tests/build.test.mjs",
-    ".github/workflows/uifeedback-r53-bounded-executor.yml"
+    ".github/scripts/uifeedback-r53-patch.py",
+    ".github/workflows/uifeedback-r53-bounded-executor.yml",
+    ".github/workflows/uifeedback-r53-executor-v2.yml"
   ],
-  "notes": "Manifest-first R53 consumer mount. browser/GAMEROAD.html, tests/browser-full-interaction.spec.mjs, browser/ui-state-feedback-core.mjs, and gameroad-required-gate.yml are read-only. Temporary executor and this manifest must be removed before final PR head."
+  "notes": "Manifest-first R53 consumer mount. First embedded executor failed before job creation, so v2 moves patch logic into a temporary script and keeps workflow YAML minimal. browser/GAMEROAD.html, tests/browser-full-interaction.spec.mjs, browser/ui-state-feedback-core.mjs, and gameroad-required-gate.yml are read-only. All temporary executor files and this manifest must be removed before final PR head."
 }

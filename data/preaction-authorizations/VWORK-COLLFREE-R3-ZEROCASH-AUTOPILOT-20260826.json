@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-COLLFREE-R3-ZEROCASH-AUTOPILOT-20260826",
+  "taskId": "COLLECTIVE-INTELLIGENCE-FREE-TIER-CAPACITY-AUDIT-001",
+  "workUnitKey": "COLLFREE-R3-ZEROCASH-AUTOPILOT",
+  "acquireKey": "COLLFREE-R3-ZEROCASH-AUTOPILOT-20260826-SOL-Q9M4V7K2P6RX",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "COLLFREE-R3-PRED-20260826-PR399",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "COLLFREE-R3-ALTORACLE-PR399-RUN32981453577",
+  "proceedToken": "PROCEED|VWORK-COLLFREE-R3-ZEROCASH-AUTOPILOT-20260826|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|PR399 zero-cash actual-checkout audit passed with errors=0 and exposed only external billing holds; R3 reduces permanent moving parts by absorbing the audit into the already-current Observability CI. Expected oracle: manifest-only first commit from 3685d2bf, final manifest absent, Required Gate success, Observability CI success, zero-cash report errors=0; any mismatch=>no merge.",
+  "authorizationBaseSha": "3685d2bf996c6c123c22dcbdc515f1a978ab5be8",
+  "issuedAt": "2026-08-26T23:40:00+09:00",
+  "scope": [
+    ".github/workflows/gameroad-observability-ci.yml",
+    "config/zero-cash-runtime-policy.json"
+  ],
+  "notes": "Permanent design minimizes toil: one policy file plus the existing observability workflow; no standalone zero-cash workflow/tool/test files. Billing uncertainty remains fail-closed as external HOLD rather than automatic paid fallback."
+}

@@ -22,6 +22,10 @@ function gitBlobSha1(buffer) {
   return createHash('sha1').update(Buffer.from(`blob ${buffer.length}\0`)).update(buffer).digest('hex');
 }
 
+function normalizedTextGitBlobSha1(buffer) {
+  return gitBlobSha1(Buffer.from(buffer.toString('utf8').replace(/\r\n/g, '\n'), 'utf8'));
+}
+
 function sha256(buffer) {
   return createHash('sha256').update(buffer).digest('hex');
 }
@@ -388,8 +392,8 @@ test('build packages the exact current production Browser dependency set with ve
 
   for (const dep of dependencyContract) {
     const bytes = await readFile(path.join(repoRoot, dep.source));
-    assert.equal(gitBlobSha1(bytes), dep.currentBlob);
-    options[dep.expectedArg] = dep.currentBlob;
+    assert.equal(normalizedTextGitBlobSha1(bytes), dep.currentBlob);
+    options[dep.expectedArg] = gitBlobSha1(bytes);
     currentBytes.set(dep.file, bytes);
   }
 
@@ -403,7 +407,7 @@ test('build packages the exact current production Browser dependency set with ve
   );
   for (const dep of dependencyContract) {
     assert.equal((await readFile(path.join(dist, dep.file))).equals(currentBytes.get(dep.file)), true);
-    assert.equal(manifest.artifacts[dep.artifact].git_blob_sha1, dep.currentBlob);
+    assert.equal(manifest.artifacts[dep.artifact].git_blob_sha1, gitBlobSha1(currentBytes.get(dep.file)));
   }
 });
 

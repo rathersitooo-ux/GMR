@@ -23,13 +23,14 @@ async function fixture(mutator = async () => {}) {
 
 const run = (root, opts = {}) => auditZeroCash({ root, policyPath: path.join(root, 'config/zero-cash-runtime-policy.json'), repositoryVisibility: 'public', now: new Date('2026-08-26T14:20:00Z'), ...opts });
 
-test('current-like public/free fixture passes repository guard but retains external Cloudflare-plan hold', async () => {
+test('current-like public/free fixture passes repository guard but retains external billing holds', async () => {
   const root = await fixture(); const r = await run(root);
   assert.equal(r.status, 'PASS_WITH_EXTERNAL_HOLD');
   assert.equal(r.zeroCashDefaultPath, true);
   assert.equal(r.literalZeroCashVerified, false);
   assert.equal(r.counts.errors, 0);
   assert.ok(r.findings.some((f) => f.code === 'CLOUDFLARE_ACCOUNT_PLAN_EXTERNAL'));
+  assert.ok(r.findings.some((f) => f.code === 'GITHUB_ACTIONS_BILLING_GUARD_EXTERNAL'));
 });
 
 test('automatic paid fallback is rejected', async () => {
@@ -50,6 +51,11 @@ test('unknown or paid runner is rejected', async () => {
 test('unbounded artifact retention is rejected', async () => {
   const root = await fixture(async (root) => { await writeFile(path.join(root,'.github/workflows/ci.yml'), `jobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/upload-artifact@v4\n        with:\n          name: x\n          path: x\n`); });
   const r = await run(root); assert.equal(r.status, 'FAIL'); assert.ok(r.findings.some((f) => f.code === 'ARTIFACT_RETENTION_UNBOUNDED_BY_WORKFLOW'));
+});
+
+test('artifact retention beyond zero-cash policy maximum is rejected', async () => {
+  const root = await fixture(async (root) => { await writeFile(path.join(root,'.github/workflows/ci.yml'), `jobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/upload-artifact@v4\n        with:\n          name: x\n          path: x\n          retention-days: 15\n`); });
+  const r = await run(root); assert.equal(r.status, 'FAIL'); assert.ok(r.findings.some((f) => f.code === 'ARTIFACT_RETENTION_TOO_LONG'));
 });
 
 test('paid-only Durable Object backend is rejected', async () => {

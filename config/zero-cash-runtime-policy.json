@@ -1,6 +1,7 @@
 {
   "schema": "gameroad.zero-cash-runtime-policy.v1",
   "policyVersion": "R3-20260826",
+  "automationMode": "ZERO_TOUCH_FAIL_CLOSED",
   "cashSpendAllowed": false,
   "automaticPaidFallbackAllowed": false,
   "quotaExhaustionBehavior": "DEGRADE_PAUSE_OR_FAIL_CLOSED",

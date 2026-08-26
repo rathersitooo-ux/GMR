@@ -16,12 +16,15 @@ on:
       - 'browser/GAMEROAD.html'
       - 'tests/browser-static-check.mjs'
       - '.github/workflows/browser-node-ci.yml'
+  schedule:
+    - cron: '17 3 * * 2'
 
 permissions:
   contents: read
 
 jobs:
   browser-static:
+    if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -32,3 +35,25 @@ jobs:
 
       - name: Run checker self-test and current Browser check
         run: node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+
+  codeql-javascript:
+    name: CodeQL JavaScript
+    if: github.event_name == 'schedule' || github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: '/language:javascript-typescript'

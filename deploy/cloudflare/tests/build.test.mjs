@@ -5,7 +5,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildPackage } from '../scripts/build.mjs';
+import { assertBrowserRuntimeDependencyCompleteness, buildPackage } from '../scripts/build.mjs';
 import {
   VERSION_MANIFEST_CHANNEL,
   VERSION_MANIFEST_FILENAME,
@@ -30,10 +30,12 @@ function validateSnapshotOutputName(output) {
   assert.equal(typeof output, 'string', 'snapshot artifact output must be a string');
   assert.ok(output.length > 0, 'snapshot artifact output must not be empty');
   assert.equal(path.isAbsolute(output), false, `snapshot artifact output must be relative: ${output}`);
-  assert.equal(path.basename(output), output, `snapshot artifact output must be top-level only: ${output}`);
   assert.equal(output.includes('\\'), false, `snapshot artifact output must not contain backslashes: ${output}`);
-  assert.notEqual(output, '.', 'snapshot artifact output must not be dot');
-  assert.notEqual(output, '..', 'snapshot artifact output must not be dot-dot');
+  assert.equal(path.posix.normalize(output), output, `snapshot artifact output must be normalized: ${output}`);
+  assert.ok(
+    output.split('/').every((segment) => segment && segment !== '.' && segment !== '..'),
+    `snapshot artifact output must not contain empty/dot traversal segments: ${output}`,
+  );
 }
 
 async function validateRollbackSnapshot({
@@ -102,7 +104,9 @@ async function restoreRollbackSnapshot({
   await rm(target, { recursive: true, force: true });
   await mkdir(target, { recursive: true });
   for (const [output, bytes] of validated.outputs) {
-    await writeFile(path.join(target, output), bytes);
+    const outputPath = path.join(target, output);
+    await mkdir(path.dirname(outputPath), { recursive: true });
+    await writeFile(outputPath, bytes);
   }
   await writeFile(path.join(target, '_headers'), validated.headersBytes);
   await writeFile(path.join(target, 'manifest.json'), validated.manifestBytes);
@@ -249,6 +253,33 @@ const dependencyContract = [
     fixture: "export const FIELD_MUSIC_POLICY_CORE = Object.freeze({ schema: 'fixture' });\n",
     currentBlob: 'a8a5c96fe29da363e731eb7c552bbc10fcb7fa84',
   },
+  {
+    file: 'partner-advice-runtime-mount.mjs',
+    source: 'browser/partner-advice-runtime-mount.mjs',
+    sourceArg: 'partnerAdviceRuntimeMountSource',
+    expectedArg: 'expectedPartnerAdviceRuntimeMountBlob',
+    artifact: 'partner_advice_runtime_mount',
+    fixture: "import './partner-legal-action-adapter.mjs';\nexport const PARTNER_ADVICE_RUNTIME = Object.freeze({});\n",
+    currentBlob: '0e9f92f6dcf4c2833523bc0fbd721f16a4b9cb08',
+  },
+  {
+    file: 'partner-legal-action-adapter.mjs',
+    source: 'browser/partner-legal-action-adapter.mjs',
+    sourceArg: 'partnerLegalActionAdapterSource',
+    expectedArg: 'expectedPartnerLegalActionAdapterBlob',
+    artifact: 'partner_legal_action_adapter',
+    fixture: "import '../tools/advice-collective-eval.mjs';\nexport const PARTNER_LEGAL_ACTION_ADAPTER = Object.freeze({});\n",
+    currentBlob: 'f32b3dbcba54d1ab0538fc43a8b935353510f990',
+  },
+  {
+    file: 'tools/advice-collective-eval.mjs',
+    source: 'tools/advice-collective-eval.mjs',
+    sourceArg: 'adviceCollectiveEvalSource',
+    expectedArg: 'expectedAdviceCollectiveEvalBlob',
+    artifact: 'advice_collective_eval',
+    fixture: 'export const ADVICE_COLLECTIVE_EVAL = Object.freeze({});\n',
+    currentBlob: '3cc7eb964493eb1e7cc022c420f7d49fad1be420',
+  },
 ];
 
 function expectedVersionManifest() {
@@ -280,6 +311,7 @@ test('build copies Browser, runtime dependencies, and formal version manifest de
   for (const dep of dependencyContract) {
     const depPath = path.join(dir, dep.file);
     const bytes = Buffer.from(dep.fixture, 'utf8');
+    await mkdir(path.dirname(depPath), { recursive: true });
     await writeFile(depPath, bytes);
     options[dep.sourceArg] = depPath;
     options[dep.expectedArg] = gitBlobSha1(bytes);
@@ -313,6 +345,33 @@ test('build copies Browser, runtime dependencies, and formal version manifest de
   const versionManifest2 = await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8');
   assert.equal(packageManifest1, packageManifest2);
   assert.equal(versionManifest1, versionManifest2);
+});
+
+test('recursive dependency verifier follows Partner advice imports and fails closed on missing nested output', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'gameroad-public-pack-transitive-'));
+  const dist = path.join(dir, 'dist');
+  await mkdir(path.join(dist, 'tools'), { recursive: true });
+  const browserBytes = Buffer.from('<script type="module">import("./partner-advice-runtime-mount.mjs")</script>\n', 'utf8');
+  await writeFile(
+    path.join(dist, 'partner-advice-runtime-mount.mjs'),
+    "import './partner-legal-action-adapter.mjs';\n",
+  );
+  await writeFile(
+    path.join(dist, 'partner-legal-action-adapter.mjs'),
+    "import '../tools/advice-collective-eval.mjs';\n",
+  );
+  await writeFile(path.join(dist, 'tools/advice-collective-eval.mjs'), 'export const ready = true;\n');
+
+  assert.deepEqual(
+    await assertBrowserRuntimeDependencyCompleteness(browserBytes, dist),
+    ['partner-advice-runtime-mount.mjs', 'partner-legal-action-adapter.mjs', 'tools/advice-collective-eval.mjs'],
+  );
+
+  await rm(path.join(dist, 'tools/advice-collective-eval.mjs'));
+  await assert.rejects(
+    () => assertBrowserRuntimeDependencyCompleteness(browserBytes, dist),
+    /Public package missing Browser runtime dependency: \.\/tools\/advice-collective-eval\.mjs/,
+  );
 });
 
 test('build packages the exact current production Browser dependency set with version identity', async () => {
@@ -366,6 +425,7 @@ test('isolated rollback drill restores a validated package and rejects corruptio
   for (const dep of dependencyContract) {
     const depPath = path.join(dir, `snapshot-${dep.file}`);
     const bytes = Buffer.from(dep.fixture, 'utf8');
+    await mkdir(path.dirname(depPath), { recursive: true });
     await writeFile(depPath, bytes);
     options[dep.sourceArg] = depPath;
     options[dep.expectedArg] = gitBlobSha1(bytes);
@@ -450,6 +510,9 @@ test('build fails closed on stale Browser or packaged dependency blob expectatio
     ['expectedUiStateFeedbackCoreBlob', /UI state feedback core blob mismatch/],
     ['expectedUiStateFeedbackReadyPlanAdapterBlob', /UI state feedback ready-plan adapter blob mismatch/],
     ['expectedFieldMusicPolicyCoreBlob', /Field music policy core blob mismatch/],
+    ['expectedPartnerAdviceRuntimeMountBlob', /Partner advice runtime mount blob mismatch/],
+    ['expectedPartnerLegalActionAdapterBlob', /Partner legal action adapter blob mismatch/],
+    ['expectedAdviceCollectiveEvalBlob', /Advice collective evaluator blob mismatch/],
   ];
 
   for (const [expectedArg, errorPattern] of staleCases) {

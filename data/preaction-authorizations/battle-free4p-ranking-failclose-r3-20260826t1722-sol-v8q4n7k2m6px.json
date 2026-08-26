@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "battle-free4p-ranking-failclose-r3-20260826t1722-sol-v8q4n7k2m6px",
+  "taskId": "BATTLE-FREE4P-RANKING-FAILCLOSE-R3",
+  "workUnitKey": "FREE4P_MATCH_END_FORMAL_RANKING_FAILCLOSE",
+  "acquireKey": "BATTLE-FREE4P-RANKING-FAILCLOSE-R3-20260826T1722-SOL-V8Q4N7K2M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "DRIVE-R21-R3-ACTIVE+GH-MAIN-b9ba0bb4+GH-PR390-RECOVERY-DIFF+PROVENANCE-FAIL-ISOLATED",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "GH-PR390-BROWSER-FULL-INTERACTION-RUN-32939410619-SUCCESS",
+  "proceedToken": "PROCEED|battle-free4p-ranking-failclose-r3-20260826t1722-sol-v8q4n7k2m6px|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|FREE4P_FORMAL_RANKING_FAILCLOSE",
+  "authorizationBaseSha": "b9ba0bb402e9fc759beea79cf1781362fe002514",
+  "scope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

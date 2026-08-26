@@ -3,12 +3,29 @@ import assert from 'node:assert/strict';
 import {
   FANART_SHOP_CATALOG_SCHEMA,
   SHOP_TRANSACTION_PRESENTATION_ADAPTER_SCHEMA,
+  SHOP_VERIFIED_COMMERCE_EVENT_BOUNDARY_SCHEMA,
   projectApprovedFanArtShopCatalog,
   projectShopTransactionPresentation,
+  projectVerifiedCommerceEventBoundary,
 } from '../browser/shop-transaction-presentation-adapter.mjs';
 
 const config = Object.freeze({holdMs: 420, moveCancelDistance: 18, rightSwipeDistance: 72});
 const project = (phase, extra = {}) => projectShopTransactionPresentation({config, phase, ...extra});
+const commerce = (eventOverrides = {}, extra = {}) => projectVerifiedCommerceEventBoundary({
+  config,
+  currentRequestId:'shop:req:commerce:1',
+  expectedGameProductKey:'GMR.DETERMINISTIC.TEST.001',
+  event:{
+    eventId:'commerce:event:1',
+    requestId:'shop:req:commerce:1',
+    gameProductKey:'GMR.DETERMINISTIC.TEST.001',
+    verificationState:'VERIFIED_BY_SERVER_AUTHORITY',
+    verificationEvidenceId:'verify:evidence:1',
+    state:'PAID_OR_FINALIZED',
+    ...eventOverrides,
+  },
+  ...extra,
+});
 
 function approvedFanArt(overrides = {}) {
   return {
@@ -150,4 +167,101 @@ test('fan-art catalog cannot smuggle gameplay/card ability changes', () => {
   const out = projectApprovedFanArtShopCatalog({works:[approvedFanArt({ability:'draw 9'})]});
   assert.equal(out.visible, false);
   assert.ok(out.reasons.some((reason)=>reason.includes('gameplay-field-forbidden:ability')));
+});
+
+test('verified PAID_OR_FINALIZED stays pending and never becomes entitlement success', () => {
+  const out = commerce();
+  assert.equal(out.schema, SHOP_VERIFIED_COMMERCE_EVENT_BOUNDARY_SCHEMA);
+  assert.equal(out.commerceState, 'PAID_OR_FINALIZED');
+  assert.equal(out.presentation.phase, 'PENDING_OR_UNKNOWN');
+  assert.equal(out.presentation.feedback.feedback, 'pending');
+  assert.notEqual(out.presentation.feedback.feedback, 'confirmed');
+  assert.equal(out.grantAuthority, false);
+  assert.equal(out.ownershipMutationAllowed, false);
+  assert.equal(out.saveMutationAllowed, false);
+});
+
+test('GRANTED requires both entitlement and durable-save evidence before success projection', () => {
+  assert.throws(
+    () => commerce({state:'GRANTED'}),
+    /event.entitlementEvidenceId must be a non-empty string/,
+  );
+  assert.throws(
+    () => commerce({state:'GRANTED', entitlementEvidenceId:'entitlement:evidence:1'}),
+    /event.durableSaveEvidenceId must be a non-empty string/,
+  );
+});
+
+test('fully evidenced GRANTED can project confirmed UI but still cannot mutate ownership or save', () => {
+  const out = commerce({
+    state:'GRANTED',
+    entitlementEvidenceId:'entitlement:evidence:1',
+    durableSaveEvidenceId:'save:evidence:1',
+  });
+  assert.equal(out.presentation.phase, 'SUCCESS');
+  assert.equal(out.presentation.feedback.feedback, 'confirmed');
+  assert.equal(out.entitlementEvidenceId, 'entitlement:evidence:1');
+  assert.equal(out.durableSaveEvidenceId, 'save:evidence:1');
+  assert.equal(out.grantAuthority, false);
+  assert.equal(out.ownershipMutationAllowed, false);
+  assert.equal(out.saveMutationAllowed, false);
+});
+
+test('unverified or evidence-less commerce callbacks fail closed', () => {
+  assert.throws(
+    () => commerce({verificationState:'CLIENT_CALLBACK_ONLY'}),
+    /commerce event is not verified by server authority/,
+  );
+  assert.throws(
+    () => commerce({verificationEvidenceId:''}),
+    /event.verificationEvidenceId must be a non-empty string/,
+  );
+});
+
+test('commerce boundary rejects stale request and GAME_PRODUCT_KEY mismatch', () => {
+  assert.throws(
+    () => commerce({requestId:'shop:req:stale'}),
+    /stale or mismatched Shop request identity/,
+  );
+  assert.throws(
+    () => commerce({gameProductKey:'GMR.OTHER.PRODUCT'}),
+    /stale or mismatched GAME_PRODUCT_KEY/,
+  );
+});
+
+test('commerce boundary rejects duplicate event identity without pretending to prove grant idempotency', () => {
+  assert.throws(
+    () => commerce({}, {processedEventIds:['commerce:event:1']}),
+    /duplicate commerce event identity/,
+  );
+  assert.throws(
+    () => commerce({}, {processedEventIds:new Set(['commerce:event:1'])}),
+    /duplicate commerce event identity/,
+  );
+});
+
+test('REVERSED requires formal reversal policy and never auto-revokes', () => {
+  const out = commerce({state:'REVERSED'});
+  assert.equal(out.presentation, null);
+  assert.equal(out.reversalPolicyRequired, true);
+  assert.equal(out.reversalMutationAllowed, false);
+  assert.equal(out.ownershipMutationAllowed, false);
+  assert.equal(out.saveMutationAllowed, false);
+});
+
+test('commerce boundary does not expose provider SKU, price, currency, rewards, or ownership fields', () => {
+  const out = commerce({
+    providerSku:'provider:sku:secret',
+    price:999,
+    currency:'JPY',
+    reward:{coins:999999},
+    ownership:true,
+  });
+  for (const forbidden of ['providerSku', 'price', 'currency', 'reward', 'ownership']) {
+    assert.equal(Object.hasOwn(out, forbidden), false);
+  }
+});
+
+test('unsupported commerce state fails closed', () => {
+  assert.throws(() => commerce({state:'PURCHASED'}), /unsupported commerce state: PURCHASED/);
 });

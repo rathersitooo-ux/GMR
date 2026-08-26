@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "BATTLESELF-R8-BROWSER-LIVE-MOUNT-20260827T0317-SOL-Q7N4V8",
+  "taskId": "BATTLE-SELF-REMAINING-DECK-INSPECT-001",
+  "workUnitKey": "VWORK-BATTLESELF-R8-BROWSER-LIVE-MOUNT-20260827T0317-JST",
+  "acquireKey": "BATTLESELF-R8-BROWSER-LIVE-MOUNT-20260827T0317-SOL-Q7N4V8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "current-main-0a8503a+battle-player-deck-producer+privacy-core-ae8488+external-disclosure-a11y",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing-core-negative-tests+read-only-current-checkout-probe-before-implementation",
+  "proceedToken": "PROCEED|BATTLESELF-R8-BROWSER-LIVE-MOUNT-20260827T0317-SOL-Q7N4V8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-user-explicit-continue",
+  "authorizationBaseSha": "0a8503a0280ae28621cc7a69ec1f69dfd7c178c4",
+  "scope": [
+    ".github/workflows/battleself-r8-current-html-executor.yml",
+    "browser/GAMEROAD.html",
+    "browser/battle-self-deck-inspect-runtime-mount.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "tests/battle-self-deck-inspect-runtime-mount.test.mjs",
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

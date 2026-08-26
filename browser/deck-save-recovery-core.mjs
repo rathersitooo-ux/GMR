@@ -263,19 +263,29 @@ function writePreparedSaveVerified(storage, key, preparedCommit, options = {}) {
   }
   if (!nonEmptyString(key)) throw new TypeError('STORAGE_KEY_REQUIRED');
 
+  const hasPreviousRawValue = Object.prototype.hasOwnProperty.call(options, 'previousRawValue');
   let previousRawValue;
-  if (Object.prototype.hasOwnProperty.call(options, 'previousRawValue')) {
+  if (hasPreviousRawValue) {
     previousRawValue = options.previousRawValue;
     if (previousRawValue !== null && typeof previousRawValue !== 'string') {
       return decision('failed', 'PREVIOUS_RAW_INVALID');
     }
-  } else {
-    try {
-      previousRawValue = storage.getItem(key);
-    } catch {
-      return decision('failed', 'STORAGE_READ_FAILED');
-    }
   }
+
+  let currentRawValue;
+  try {
+    currentRawValue = storage.getItem(key);
+  } catch {
+    return decision('failed', 'STORAGE_READ_FAILED');
+  }
+
+  if (hasPreviousRawValue && currentRawValue !== previousRawValue) {
+    return decision('failed', 'PREVIOUS_RAW_STALE', {
+      originalPreserved: true,
+      rolledBack: false,
+    });
+  }
+  previousRawValue = currentRawValue;
 
   let writeFailed = false;
   try {

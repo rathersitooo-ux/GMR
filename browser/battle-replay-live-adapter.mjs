@@ -934,7 +934,8 @@ export function appendAcceptedMatchEnd(
     publicData.formalRanking = publicFree4pFormalRanking(formalRanking, normalizedWinnerIds);
   } else if (normalizedMode === '4p') {
     const derivedRanking = deriveFree4pFormalRankingFromAcceptedReplay(session.log, normalizedWinnerIds, publicData.round);
-    if (derivedRanking) publicData.formalRanking = derivedRanking;
+    if (!derivedRanking) throw new TypeError('MATCH_END_FORMAL_RANKING_UNAVAILABLE');
+    publicData.formalRanking = derivedRanking;
   }
   const log = appendAcceptedEvent(session.log, {
     kind: 'match_ended',

@@ -750,7 +750,7 @@ test('Free4P omitted formalRanking preserves unequal-depth atomic co-winners fro
   ]);
 });
 
-test('Free4P omitted formalRanking stays backward-compatible when accepted progress is insufficient', () => {
+test('Free4P omitted formalRanking fails closed when accepted progress is insufficient', () => {
   const input = resolution(1);
   input.mode = '4p';
   input.winnerIds = ['P1'];
@@ -761,9 +761,12 @@ test('Free4P omitted formalRanking stays backward-compatible when accepted progr
   ];
   let session = createLiveReplaySession({ matchId: 'M-4P-DERIVE-FALLBACK', versions });
   session = appendAcceptedBattleResolution(session, input);
-  session = appendAcceptedMatchEnd(session, { winnerIds: ['P1'], round: 1, mode: '4p' });
-  const publicData = readLiveReplay(session).events[1].publicData;
-  assert.equal('formalRanking' in publicData, false);
+  assert.throws(
+    () => appendAcceptedMatchEnd(session, { winnerIds: ['P1'], round: 1, mode: '4p' }),
+    /MATCH_END_FORMAL_RANKING_UNAVAILABLE/
+  );
+  assert.equal(session.ended, false);
+  assert.equal(readLiveReplay(session).events.length, 1);
 });
 
 test('Free4P match-end winner set fails closed even when formal ranking cannot be derived', () => {
@@ -790,7 +793,7 @@ test('Free4P match-end winner set fails closed even when formal ranking cannot b
   }
 });
 
-test('Free4P omitted formalRanking cannot derive from accepted progress belonging to a different terminal round', () => {
+test('Free4P omitted formalRanking fails closed on accepted progress from a different terminal round', () => {
   const input = resolution(1);
   input.mode = '4p';
   input.winnerIds = ['P1'];
@@ -802,10 +805,12 @@ test('Free4P omitted formalRanking cannot derive from accepted progress belongin
   ];
   let session = createLiveReplaySession({ matchId: 'M-4P-R18-ROUND-MISMATCH', versions });
   session = appendAcceptedBattleResolution(session, input);
-  session = appendAcceptedMatchEnd(session, { winnerIds: ['P1'], round: 2, mode: '4p' });
-  const publicData = readLiveReplay(session).events[1].publicData;
-  assert.equal(publicData.round, 2);
-  assert.equal('formalRanking' in publicData, false);
+  assert.throws(
+    () => appendAcceptedMatchEnd(session, { winnerIds: ['P1'], round: 2, mode: '4p' }),
+    /MATCH_END_FORMAL_RANKING_UNAVAILABLE/
+  );
+  assert.equal(session.ended, false);
+  assert.equal(readLiveReplay(session).events.length, 1);
 });
 
 test('Battle conveyor environment advances only on accepted non-duplicate resolution and suppresses travel for reduced/lowPerf', () => {

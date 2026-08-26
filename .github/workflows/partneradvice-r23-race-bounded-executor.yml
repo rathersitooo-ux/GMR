@@ -87,27 +87,28 @@ jobs:
           if t.count(anchor)!=1: raise SystemExit(f'test anchor count={t.count(anchor)}')
           regression=r'''
 
-  const overlapProjection = await page.evaluate(async () => {
-    const board = window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__;
-    const partner = window.__GAMEROAD_HATE_PARTNER_TEST__;
-    const ready = partner?.adviceEnvelope?.() ?? null;
-    const stale = window.__GAMEROAD_PARTNER_ADVICE_STALE__?.() ?? { status: 'blocked', kind: 'stale', error: 'STALE_STATE' };
-    const oldReady = board?.render?.(ready);
-    const staleResult = await board?.render?.(stale);
-    const oldResult = await oldReady;
-    return {
-      readyStatus: ready?.status ?? null,
-      staleActiveCount: staleResult?.activeCount ?? null,
-      oldActiveCount: oldResult?.activeCount ?? null,
-      final: board?.snapshot?.() ?? null,
-    };
-  });
-  expect(overlapProjection.readyStatus, 'race oracle starts from a real ready advice envelope').toBe('ready');
-  expect(overlapProjection.staleActiveCount, 'newer stale render clears immediately').toBe(0);
-  expect(overlapProjection.oldActiveCount, 'superseded ready render cannot resurrect recommendation markers').toBe(0);
-  expect(overlapProjection.final?.activeCount, 'latest stale state remains authoritative after old render resumes').toBe(0);
-  await expect(battle.locator('[data-partner-advice-role="partner-recommendation"]')).toHaveCount(0);
-'''
+            const overlapProjection = await page.evaluate(async () => {
+              const board = window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__;
+              const partner = window.__GAMEROAD_HATE_PARTNER_TEST__;
+              const ready = partner?.adviceEnvelope?.() ?? null;
+              const stale = window.__GAMEROAD_PARTNER_ADVICE_STALE__?.() ?? { status: 'blocked', kind: 'stale', error: 'STALE_STATE' };
+              const oldReady = board?.render?.(ready);
+              const staleResult = await board?.render?.(stale);
+              const oldResult = await oldReady;
+              return {
+                readyStatus: ready?.status ?? null,
+                staleActiveCount: staleResult?.activeCount ?? null,
+                oldActiveCount: oldResult?.activeCount ?? null,
+                final: board?.snapshot?.() ?? null,
+              };
+            });
+            expect(overlapProjection.readyStatus, 'race oracle starts from a real ready advice envelope').toBe('ready');
+            expect(overlapProjection.staleActiveCount, 'newer stale render clears immediately').toBe(0);
+            expect(overlapProjection.oldActiveCount, 'superseded ready render cannot resurrect recommendation markers').toBe(0);
+            expect(overlapProjection.final?.activeCount, 'latest stale state remains authoritative after old render resumes').toBe(0);
+            await expect(battle.locator('[data-partner-advice-role="partner-recommendation"]')).toHaveCount(0);
+          '''
+          regression='\n'.join(line[10:] if line.startswith('          ') else line for line in regression.splitlines())
           t=t.replace(anchor,anchor+regression,1)
           if t.count('latest stale state remains authoritative after old render resumes')!=1:
               raise SystemExit('deterministic overlap regression not installed')
@@ -118,13 +119,10 @@ jobs:
           diff -u <(printf '%s\n' browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs) <(git diff --name-only | sort)
           node --test tests/partner-advice-runtime-mount.test.mjs
 
-          # The temporary authorization and executor must not survive in the PR head.
           git rm "$AUTH" "$SELF"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
           git commit -m 'PARTNERADVICE R23: fence stale async Battle recommendations'
-
-          # Final branch delta against the authorized base must be exactly the two product/test files.
           diff -u <(printf '%s\n' browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs) <(git diff --name-only "$BASE...HEAD" | sort)
           git push origin HEAD:work/partneradvice-r23-async-race-20260827

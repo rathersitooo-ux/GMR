@@ -6,6 +6,7 @@ import {
 
 export const SHOP_TRANSACTION_PRESENTATION_ADAPTER_SCHEMA = 'gameroad.shop-transaction-presentation-adapter.v1';
 export const FANART_SHOP_CATALOG_SCHEMA = 'gameroad.fanart-shop-catalog.v1';
+export const SHOP_VERIFIED_COMMERCE_EVENT_BOUNDARY_SCHEMA = 'gameroad.shop-verified-commerce-event-boundary.v1';
 
 const PHASES = new Set([
   'SELECTED',
@@ -16,6 +17,25 @@ const PHASES = new Set([
   'RETURN',
 ]);
 const TRANSACTION_PHASES = new Set(['PENDING_OR_UNKNOWN', 'SUCCESS', 'FAILURE']);
+const VERIFIED_COMMERCE_STATE = 'VERIFIED_BY_SERVER_AUTHORITY';
+const COMMERCE_STATES = new Set([
+  'CREATED',
+  'USER_CONFIRMATION_REQUIRED',
+  'PENDING_OR_UNKNOWN',
+  'AUTHORIZED',
+  'PAID_OR_FINALIZED',
+  'GRANT_PENDING',
+  'GRANTED',
+  'FAILED',
+  'REVERSED',
+]);
+const COMMERCE_PENDING_STATES = new Set([
+  'CREATED',
+  'PENDING_OR_UNKNOWN',
+  'AUTHORIZED',
+  'PAID_OR_FINALIZED',
+  'GRANT_PENDING',
+]);
 const FORBIDDEN_FANART_GAMEPLAY_FIELDS = new Set([
   'ability', 'abilities', 'effect', 'effects', 'power', 'cost', 'number', 'suit', 'trigger', 'activationCondition',
 ]);
@@ -249,5 +269,109 @@ export function projectShopTransactionPresentation({
     phase: checkedPhase,
     requestId: matchedRequestId,
     feedback: projectUIFeedback(state),
+  });
+}
+
+function commerceEventAlreadyProcessed(processedEventIds, eventId) {
+  if (processedEventIds == null) return false;
+  if (processedEventIds instanceof Set) return processedEventIds.has(eventId);
+  if (Array.isArray(processedEventIds)) return processedEventIds.includes(eventId);
+  throw new Error('processedEventIds must be an array, Set, or null');
+}
+
+function commerceProjectionForState(state) {
+  if (state === 'USER_CONFIRMATION_REQUIRED') {
+    return { phase:'CONFIRM_OPEN', reason:'shop_user_confirmation_required' };
+  }
+  if (COMMERCE_PENDING_STATES.has(state)) {
+    return { phase:'PENDING_OR_UNKNOWN', reason:`shop_commerce_${state.toLowerCase()}` };
+  }
+  if (state === 'GRANTED') return { phase:'SUCCESS', reason:'shop_grant_confirmed_by_authority' };
+  if (state === 'FAILED') return { phase:'FAILURE', reason:'shop_failure_confirmed_by_authority' };
+  if (state === 'REVERSED') return { phase:null, reason:'shop_reversal_requires_formal_policy' };
+  throw new Error(`unsupported commerce state: ${state}`);
+}
+
+/**
+ * Consumes an already server-authority-verified commerce event and projects only Shop UI state.
+ *
+ * Boundary invariants:
+ * - this function does not verify provider signatures or choose a payment provider;
+ * - it does not decide price/SKU/currency, grant or revoke entitlement, mutate ownership, or save state;
+ * - PAID_OR_FINALIZED is still pending because payment completion is not entitlement durability;
+ * - GRANTED may project SUCCESS only when caller-authoritative entitlement and durable-save evidence both exist;
+ * - REVERSED never invents a revocation policy;
+ * - processedEventIds is presentation-side replay suppression only, not proof of authoritative grant idempotency.
+ *
+ * The authoritative backend remains responsible for signature verification, transaction identity,
+ * idempotent grant/reversal, ownership, and durable save before constructing an accepted event.
+ */
+export function projectVerifiedCommerceEventBoundary({
+  config,
+  event,
+  currentRequestId,
+  expectedGameProductKey,
+  processedEventIds = null,
+  role = 'shop_purchase',
+  reducedMotion = false,
+  lowPerf = false,
+} = {}) {
+  if (!event || typeof event !== 'object' || Array.isArray(event)) throw new Error('event must be an object');
+
+  const eventId = nonEmpty(event.eventId, 'event.eventId').trim();
+  const requestId = nonEmpty(event.requestId, 'event.requestId').trim();
+  const authorityRequestId = nonEmpty(currentRequestId, 'currentRequestId').trim();
+  const gameProductKey = nonEmpty(event.gameProductKey, 'event.gameProductKey').trim();
+  const expectedProductKey = nonEmpty(expectedGameProductKey, 'expectedGameProductKey').trim();
+  const verificationEvidenceId = nonEmpty(event.verificationEvidenceId, 'event.verificationEvidenceId').trim();
+  const state = nonEmpty(event.state, 'event.state').trim();
+
+  if (requestId !== authorityRequestId) throw new Error('stale or mismatched Shop request identity');
+  if (gameProductKey !== expectedProductKey) throw new Error('stale or mismatched GAME_PRODUCT_KEY');
+  if (event.verificationState !== VERIFIED_COMMERCE_STATE) {
+    throw new Error('commerce event is not verified by server authority');
+  }
+  if (!COMMERCE_STATES.has(state)) throw new Error(`unsupported commerce state: ${state}`);
+  if (commerceEventAlreadyProcessed(processedEventIds, eventId)) {
+    throw new Error('duplicate commerce event identity');
+  }
+
+  let entitlementEvidenceId = null;
+  let durableSaveEvidenceId = null;
+  if (state === 'GRANTED') {
+    entitlementEvidenceId = nonEmpty(event.entitlementEvidenceId, 'event.entitlementEvidenceId').trim();
+    durableSaveEvidenceId = nonEmpty(event.durableSaveEvidenceId, 'event.durableSaveEvidenceId').trim();
+  }
+
+  const projection = commerceProjectionForState(state);
+  const presentation = projection.phase == null
+    ? null
+    : projectShopTransactionPresentation({
+      config,
+      phase: projection.phase,
+      requestId,
+      currentRequestId: authorityRequestId,
+      role,
+      reason: projection.reason,
+      reducedMotion,
+      lowPerf,
+    });
+
+  return Object.freeze({
+    schema:SHOP_VERIFIED_COMMERCE_EVENT_BOUNDARY_SCHEMA,
+    eventId,
+    requestId,
+    gameProductKey,
+    commerceState:state,
+    verificationEvidenceId,
+    entitlementEvidenceId,
+    durableSaveEvidenceId,
+    presentation,
+    providerVerifiedExternally:true,
+    grantAuthority:false,
+    ownershipMutationAllowed:false,
+    saveMutationAllowed:false,
+    reversalMutationAllowed:false,
+    reversalPolicyRequired:state === 'REVERSED',
   });
 }

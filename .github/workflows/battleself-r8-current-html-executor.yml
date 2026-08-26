@@ -16,14 +16,25 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Prove Battle deck producer and revision sequence from exact checkout
+      - name: Prove owner-private friend projection and Battle DOM anchors
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
           text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          needles = ['resolutionSeq', 'function refill(p)', 'deck.shift()', 'lastBattleResolution', 'round++', 'round +=', 'renderBattle()']
+          needles = [
+              'function publicPlayer(',
+              'function project(viewer)',
+              'function projectionToMatch(pr)',
+              'function applyProjection(pr)',
+              'FR.assignedPid',
+              'private:{pid:viewer',
+              '<section class="screen battle',
+              'id="battlePhaseSurface"',
+              'function renderBattle(){',
+              'window.__GAMEROAD_TEST__={state',
+          ]
           print('BATTLESELF_PROBE_HTML_BYTES', len(text.encode('utf-8')))
           for needle in needles:
               print(f'=== NEEDLE {needle} ===')
@@ -33,11 +44,10 @@ jobs:
                   i = text.find(needle, start)
                   if i < 0: break
                   count += 1
-                  a = max(0, i - 700)
-                  b = min(len(text), i + len(needle) + 900)
-                  snippet = text[a:b].replace('\r', '')
+                  a = max(0, i - 1200)
+                  b = min(len(text), i + len(needle) + 1800)
                   print(f'--- OCCURRENCE {count} offset={i} ---')
-                  print(snippet)
+                  print(text[a:b].replace('\r', ''))
                   start = i + len(needle)
               print(f'COUNT {count}')
           PY

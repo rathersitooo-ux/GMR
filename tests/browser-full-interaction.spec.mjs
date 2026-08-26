@@ -771,6 +771,97 @@ test('covers Home collapse/expand plus auxiliary Settings navigation without cla
   runtime.assertClean(testInfo);
 });
 
+test('R62R proves Home illustration orientation transitions through temporal Browser evidence', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280x720', 'The bounded orientation matrix runs once on the desktop evidence project.');
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+
+  const home = page.locator('section[data-screen="home"]');
+  await expect(home).toBeVisible();
+  await expect(home).toHaveAttribute('data-codex-home-source', 'provided-illustration-drive-source');
+  await expect(home).toHaveAttribute('data-home-art-source-id', /1t-viE1VSuatsJd6rC1yuc2ctncguwOVx/);
+  await expect(home.locator('.codexHomeArtPlate[data-home-art-orientation="landscape"]')).toHaveJSProperty('naturalWidth', 1536);
+  await expect(home.locator('.codexHomeArtPlate[data-home-art-orientation="portrait"]')).toHaveJSProperty('naturalWidth', 853);
+
+  const matrix = [
+    { name: 'landscape-1280x720', width: 1280, height: 720 },
+    { name: 'portrait-390x844', width: 390, height: 844 },
+    { name: 'landscape-844x390', width: 844, height: 390 },
+    { name: 'landscape-667x375', width: 667, height: 375 },
+  ];
+  const expectedPhases = ['PREPARE', 'EXIT', 'SWAP', 'ENTER', 'SETTLE'];
+  let previousOrientation = 'landscape';
+
+  for (const size of matrix) {
+    const expectedOrientation = size.width >= size.height ? 'landscape' : 'portrait';
+    const transitionExpected = expectedOrientation !== previousOrientation;
+    const beforeLogLength = await page.evaluate(() => window.__GAMEROAD_HOME_ORIENTATION_LOG__?.length ?? 0);
+    await page.setViewportSize({ width: size.width, height: size.height });
+    await page.waitForTimeout(45);
+    await testInfo.attach(`${testInfo.project.name}-${size.name}-bridge.png`, {
+      body: await page.screenshot({ fullPage: false }),
+      contentType: 'image/png',
+    });
+    await page.waitForTimeout(130);
+    await testInfo.attach(`${testInfo.project.name}-${size.name}-enter.png`, {
+      body: await page.screenshot({ fullPage: false }),
+      contentType: 'image/png',
+    });
+    await page.waitForFunction((orientation) => {
+      const root = document.querySelector('.codexHome');
+      return root?.dataset.homeOrientation === orientation
+        && document.documentElement.dataset.orientationProjection === orientation
+        && root?.dataset.homeTransitionPhase === undefined;
+    }, expectedOrientation);
+    await testInfo.attach(`${testInfo.project.name}-${size.name}-settled.png`, {
+      body: await page.screenshot({ fullPage: false }),
+      contentType: 'image/png',
+    });
+
+    const evidence = await page.evaluate(({ expectedOrientation, beforeLogLength }) => {
+      const root = document.querySelector('.codexHome');
+      const log = window.__GAMEROAD_HOME_ORIENTATION_LOG__ ?? [];
+      const recent = log.slice(beforeLogLength);
+      return {
+        viewport: { width: innerWidth, height: innerHeight },
+        screen: document.querySelector('.screen.active')?.dataset.screen ?? null,
+        orientation: root?.dataset.homeOrientation ?? null,
+        projection: root?.dataset.homeProjection ?? null,
+        revision: root?.dataset.homeProjectionRevision ?? null,
+        transitionPhase: root?.dataset.homeTransitionPhase ?? null,
+        artState: root?.dataset.homeArtState ?? null,
+        sourceId: root?.dataset.homeArtSourceId ?? null,
+        artReady: [...root?.querySelectorAll('.codexHomeArtPlate') ?? []].map((image) => ({
+          orientation: image.dataset.homeArtOrientation,
+          naturalWidth: image.naturalWidth,
+          naturalHeight: image.naturalHeight,
+        })),
+        phases: recent.filter((entry) => entry.revision !== null).map((entry) => entry.phase),
+        latest: recent.at(-1) ?? null,
+        expectedOrientation,
+      };
+    }, { expectedOrientation, beforeLogLength });
+
+    expect(evidence.screen, `${size.name} remains on Home`).toBe('home');
+    expect(evidence.orientation, `${size.name} orientation`).toBe(expectedOrientation);
+    expect(evidence.projection).toBe(`Home:HOME_INITIAL_DEFAULT:${expectedOrientation}`);
+    expect(evidence.transitionPhase).toBeNull();
+    expect(evidence.artState).toBe('ready');
+    expect(evidence.sourceId).toContain('1t-viE1VSuatsJd6rC1yuc2ctncguwOVx');
+    expect(evidence.sourceId).toContain('1nzw0J6yRLTxxZm9An4L4abI7_rUwUKfx');
+    expect(evidence.artReady.every((image) => image.naturalWidth > 0 && image.naturalHeight > 0)).toBeTruthy();
+    if (transitionExpected) {
+      expect(evidence.phases).toEqual(expectedPhases);
+      expect(evidence.latest?.settle).toBe(true);
+      expect(evidence.latest?.superseded).toBe(false);
+      expect(evidence.latest?.viewport).toEqual({ width: size.width, height: size.height });
+    }
+    previousOrientation = expectedOrientation;
+  }
+
+  runtime.assertClean(testInfo);
+});
+
 test('covers Cards search, suit filtering, detail open/close, mobile tray, and restore', async ({ page }, testInfo) => {
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);

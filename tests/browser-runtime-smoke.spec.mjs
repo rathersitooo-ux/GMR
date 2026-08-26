@@ -89,13 +89,15 @@ test('GAMEROAD boots and core navigation runs without JS errors', async ({ page 
 
   let pointerClicks = 0;
   for (const target of NAV_TARGETS) {
-    const control = page.locator(`[data-go="${target}"]:visible`).first();
+    const activeScreens = page.locator('section.screen.active:visible');
+    expect(await activeScreens.count(), `one active screen before ${target}`).toBe(1);
+    const control = activeScreens.first().locator(`[data-go="${target}"]:visible`).first();
     if (await control.count()) {
+      await expect(control, `active-screen control ${target}`).toBeVisible();
       await control.click({ timeout: 5_000 });
       pointerClicks += 1;
-      await page.waitForTimeout(120);
-      const targetCount = await page.locator(`section[data-screen="${target}"]`).count();
-      expect(targetCount, `navigation target ${target}`).toBeGreaterThan(0);
+      const targetScreen = page.locator(`section[data-screen="${target}"].screen.active:visible`).first();
+      await expect(targetScreen, `navigation target ${target} becomes active`).toBeVisible({ timeout: 5_000 });
     }
   }
 

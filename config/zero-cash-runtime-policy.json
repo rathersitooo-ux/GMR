@@ -38,8 +38,11 @@
       "macos-26",
       "macos-26-intel"
     ],
-    "maxArtifactRetentionDays": 3,
-    "actionsUsageScope": "REPOSITORY_DEVELOPMENT_TEST_DEPLOY_PUBLICATION_ONLY"
+    "maxArtifactRetentionDays": 14,
+    "actionsUsageScope": "REPOSITORY_DEVELOPMENT_TEST_DEPLOY_PUBLICATION_ONLY",
+    "artifactStorageIncludedMB": 500,
+    "billingGuardVerification": "EXTERNAL_BUDGET_OR_NO_PAYMENT_METHOD_READ_REQUIRED",
+    "quotaExhaustionBehavior": "BLOCK_OR_STOP_NOT_CHARGE"
   },
   "cloudflare": {
     "requiredWorkersPlan": "free",
@@ -82,6 +85,7 @@
   ],
   "externalHumanResiduals": [
     "Cloudflare account must actually remain on Workers Free plan; repository files alone cannot prove account billing state.",
+    "GitHub account must have no active paid-overage path or a zero-dollar Actions budget configured to stop usage; repository files alone cannot prove billing settings.",
     "Any domain registration, store fee, taxes, payment processing, legal review, or hardware/electricity cost is outside this repository guard and must be separately classified before claiming literal total cash cost = 0."
   ]
 }

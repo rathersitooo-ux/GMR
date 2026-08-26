@@ -40,3 +40,58 @@ jobs:
 
       - name: Run observability core and Browser adapter tests
         run: node --test tests/observability-core.test.mjs tests/observability-browser-adapter.test.mjs
+
+  needs-ai-triage:
+    name: Deterministic AI triage evidence
+    if: ${{ always() }}
+    needs:
+      - observability
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Build deterministic triage packet
+        env:
+          OBSERVABILITY_RESULT: ${{ needs.observability.result }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+
+          result = os.environ["OBSERVABILITY_RESULT"]
+          is_success = result == "success"
+          packet = {
+              "schema": "gameroad-needs-ai/v1",
+              "authority": "derived-only",
+              "do_not_use_as_current": True,
+              "repository": os.environ["GITHUB_REPOSITORY"],
+              "sha": os.environ["GITHUB_SHA"],
+              "ref": os.environ["GITHUB_REF"],
+              "event": os.environ["GITHUB_EVENT_NAME"],
+              "workflow": os.environ["GITHUB_WORKFLOW"],
+              "run_id": os.environ["GITHUB_RUN_ID"],
+              "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+              "observability_result": result,
+              "state": "NO_ACTION" if is_success else "NEEDS_AI",
+              "next_executor": "NONE" if is_success else "AI_REVIEW",
+              "reason": "observability_ci_success" if is_success else "observability_ci_non_success",
+          }
+          rendered = json.dumps(packet, ensure_ascii=False, indent=2) + "\n"
+          with open("gameroad-needs-ai.json", "w", encoding="utf-8") as handle:
+              handle.write(rendered)
+          print(rendered, end="")
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+              summary.write("### GAMEROAD deterministic triage\n\n")
+              summary.write(f"- state: `{packet['state']}`\n")
+              summary.write(f"- observability_result: `{result}`\n")
+              summary.write("- authority: `derived-only`\n")
+          PY
+
+      - name: Upload triage packet
+        uses: actions/upload-artifact@v4
+        with:
+          name: gameroad-needs-ai-${{ github.run_id }}
+          path: gameroad-needs-ai.json
+          if-no-files-found: error
+          retention-days: 7

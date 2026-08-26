@@ -1,13 +1,13 @@
 {
   "schema": "gameroad.zero-cash-runtime-policy.v1",
-  "policyVersion": "R3-20260826",
+  "policyVersion": "R4-20260827",
   "automationMode": "ZERO_TOUCH_FAIL_CLOSED",
   "cashSpendAllowed": false,
   "automaticPaidFallbackAllowed": false,
   "quotaExhaustionBehavior": "DEGRADE_PAUSE_OR_FAIL_CLOSED",
   "unknownBillingStateBehavior": "HOLD",
   "providerEvidence": {
-    "lastVerified": "2026-08-26",
+    "lastVerified": "2026-08-27",
     "maxAgeDays": 45,
     "sources": [
       "https://developers.cloudflare.com/workers/platform/limits/",

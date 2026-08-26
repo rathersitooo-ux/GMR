@@ -1,0 +1,85 @@
+name: UIFeedback R63 Runtime Smoke Active Screen Patch
+
+on:
+  push:
+    branches:
+      - work/uifeedback-r63-runtime-smoke-active-screen-20260826
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify exact authorized preimage
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:tests/browser-runtime-smoke.spec.mjs)" = "fcb09a4573b67e856939c7d8bf092b798576193a"
+          git merge-base --is-ancestor de0f4356821a542a5159e805d7cfb88d0387bc84 HEAD
+          test -f data/preaction-authorizations/UIFEEDBACK-R63-PR393-RUNTIMESMOKE-20260826T2014-SOL-Q7N4V8K2M6PX.json
+      - name: Patch active-screen navigation exactly once
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/browser-runtime-smoke.spec.mjs')
+          text = path.read_text(encoding='utf-8')
+          old = '''  let pointerClicks = 0;
+          for (const target of NAV_TARGETS) {
+            const control = page.locator(`[data-go="${target}"]:visible`).first();
+            if (await control.count()) {
+              await control.click({ timeout: 5_000 });
+              pointerClicks += 1;
+              await page.waitForTimeout(120);
+              const targetCount = await page.locator(`section[data-screen="${target}"]`).count();
+              expect(targetCount, `navigation target ${target}`).toBeGreaterThan(0);
+            }
+          }
+          '''
+          new = '''  let pointerClicks = 0;
+          for (const target of NAV_TARGETS) {
+            const activeScreens = page.locator('section.screen.active:visible');
+            expect(await activeScreens.count(), `one active screen before ${target}`).toBe(1);
+            const control = activeScreens.first().locator(`[data-go="${target}"]:visible`).first();
+            if (await control.count()) {
+              await expect(control, `active-screen control ${target}`).toBeVisible();
+              await control.click({ timeout: 5_000 });
+              pointerClicks += 1;
+              const targetScreen = page.locator(`section[data-screen="${target}"].screen.active:visible`).first();
+              await expect(targetScreen, `navigation target ${target} becomes active`).toBeVisible({ timeout: 5_000 });
+            }
+          }
+          '''
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'exact replacement count must be 1, got {count}')
+          path.write_text(text.replace(old, new), encoding='utf-8', newline='')
+          PY
+          node --check tests/browser-runtime-smoke.spec.mjs
+          git diff --check
+      - name: Remove temporary authorization and executor then prove bounded diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm data/preaction-authorizations/UIFEEDBACK-R63-PR393-RUNTIMESMOKE-20260826T2014-SOL-Q7N4V8K2M6PX.json
+          rm .github/workflows/uifeedback-r63-runtime-smoke-active-screen-patch.yml
+          mapfile -t changed < <(git diff --name-only de0f4356821a542a5159e805d7cfb88d0387bc84)
+          test "${#changed[@]}" -eq 1
+          test "${changed[0]}" = "tests/browser-runtime-smoke.spec.mjs"
+          git diff --check
+      - name: Commit bounded repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Test: sync runtime smoke navigation to active screen"
+          git push origin HEAD:work/uifeedback-r63-runtime-smoke-active-screen-20260826

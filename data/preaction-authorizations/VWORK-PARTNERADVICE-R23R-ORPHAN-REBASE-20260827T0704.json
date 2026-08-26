@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-PARTNERADVICE-R23R-ORPHAN-REBASE-20260827T0704",
+  "taskId": "PARTNER-GOODMOVE-ADVICE-RUNTIME-INTEGRATION-001",
+  "workUnitKey": "PARTNERADVICE_R23R_ORPHAN_REBASE_EXACT2",
+  "acquireKey": "PARTNERADVICE-R23R-ORPHAN-REBASE-20260827T0704-SOL-K7M4Q9V2N6PX",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PARTNERADVICE-R23R-PRED-20260827T0704",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PARTNERADVICE-R23R-DRIFT-20260827T0704",
+  "proceedToken": "PROCEED|VWORK-PARTNERADVICE-R23R-ORPHAN-REBASE-20260827T0704|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|PARTNERADVICE-R23R-PRED-20260827T0704: TOP_FAILURE=an older ready Partner Advice render resumes after a newer stale/clear/leave operation and re-adds obsolete visible recommendation markers.|PARTNERADVICE-R23R-DRIFT-20260827T0704: PR408 exact2 product diff is preserved; fresh compare from old base 0a8503a to current main 370a2708 changes only CodeQL workflow, Deck ACK core/test, and Shop adapter/test, with zero overlap on browser/GAMEROAD.html or tests/browser-full-interaction.spec.mjs. Recovery must preserve exact2 semantics and rerun exact-head interaction/required gates.",
+  "authorizationBaseSha": "370a27086de5b4a3358844b640101dc7585ac9ba",
+  "issuedAt": "2026-08-27T07:04:00+09:00",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    "data/preaction-authorizations/VWORK-PARTNERADVICE-R23R-ORPHAN-REBASE-20260827T0704.json"
+  ],
+  "notes": "Orphan recovery only. Rebase the existing PR#408 exact2 generation-fence fix onto current main without changing advice ranking/legal/109/save/economy/persona/secret semantics. Authorization manifest is temporary and must be deleted before final PR acceptance."
+}

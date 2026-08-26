@@ -81,6 +81,15 @@ test('different local-neighbor pair at a shared interior node emits PATH_CROSSIN
   assert.deepEqual(actual.normalizedEvents, [D06_NORMALIZED_EVENT_KIND.PATH_CROSSING_NODE]);
 });
 
+test('same local-neighbor pair at a shared interior node is not a crossing', () => {
+  const actual = classifyH02PathHistory(
+    ['A', 'X', 'B', 'C'],
+    ['D', 'A', 'X', 'B', 'E']
+  );
+  assert.equal(actual.rawFacets.pathCrossingNodes.length, 0);
+  assert.deepEqual(actual.normalizedEvents, []);
+});
+
 test('same-start and shared endpoint stay outside H02 normalization', () => {
   assert.deepEqual(classifyH02PathHistory(['S', 'A', 'B'], ['S', 'C', 'D']).normalizedEvents, []);
   assert.deepEqual(classifyH02PathHistory(['A', 'B'], ['C', 'B']).normalizedEvents, []);

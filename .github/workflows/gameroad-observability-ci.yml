@@ -9,7 +9,9 @@ on:
       - browser/observability-browser-adapter.mjs
       - tests/observability-core.test.mjs
       - tests/observability-browser-adapter.test.mjs
-      - .github/workflows/gameroad-observability-ci.yml
+      - '.github/workflows/**'
+      - 'deploy/cloudflare/**'
+      - config/zero-cash-runtime-policy.json
   push:
     branches:
       - main
@@ -18,7 +20,9 @@ on:
       - browser/observability-browser-adapter.mjs
       - tests/observability-core.test.mjs
       - tests/observability-browser-adapter.test.mjs
-      - .github/workflows/gameroad-observability-ci.yml
+      - '.github/workflows/**'
+      - 'deploy/cloudflare/**'
+      - config/zero-cash-runtime-policy.json
   workflow_dispatch:
 
 permissions:
@@ -40,6 +44,161 @@ jobs:
 
       - name: Run observability core and Browser adapter tests
         run: node --test tests/observability-core.test.mjs tests/observability-browser-adapter.test.mjs
+
+      - name: Audit zero-cash default path
+        env:
+          REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import datetime as dt
+          import json
+          import os
+          import pathlib
+          import re
+
+          root = pathlib.Path('.')
+          policy_path = root / 'config/zero-cash-runtime-policy.json'
+          errors = []
+          holds = []
+
+          def error(code, detail, file=None):
+              item = {'level': 'ERROR', 'code': code, 'detail': detail}
+              if file:
+                  item['file'] = file
+              errors.append(item)
+
+          def hold(code, detail):
+              holds.append({'level': 'HOLD', 'code': code, 'detail': detail})
+
+          try:
+              policy = json.loads(policy_path.read_text(encoding='utf-8'))
+          except Exception as exc:
+              error('POLICY_UNREADABLE', str(exc), str(policy_path))
+              policy = {}
+
+          if policy.get('schema') != 'gameroad.zero-cash-runtime-policy.v1':
+              error('POLICY_SCHEMA_INVALID', str(policy.get('schema')))
+          if policy.get('cashSpendAllowed') is not False:
+              error('CASH_SPEND_NOT_DISABLED', 'cashSpendAllowed must be false')
+          if policy.get('automaticPaidFallbackAllowed') is not False:
+              error('AUTO_PAID_FALLBACK_NOT_DISABLED', 'automaticPaidFallbackAllowed must be false')
+          if policy.get('quotaExhaustionBehavior') != 'DEGRADE_PAUSE_OR_FAIL_CLOSED':
+              error('QUOTA_BEHAVIOR_NOT_ZERO_CASH', str(policy.get('quotaExhaustionBehavior')))
+          if policy.get('unknownBillingStateBehavior') != 'HOLD':
+              error('UNKNOWN_BILLING_MUST_HOLD', str(policy.get('unknownBillingStateBehavior')))
+
+          evidence = policy.get('providerEvidence') or {}
+          try:
+              verified = dt.date.fromisoformat(evidence['lastVerified'])
+              max_age = int(evidence['maxAgeDays'])
+              if (dt.date.today() - verified).days > max_age:
+                  error('PROVIDER_EVIDENCE_STALE', f'provider evidence older than {max_age} days')
+          except Exception as exc:
+              error('PROVIDER_EVIDENCE_DATE_INVALID', str(exc))
+
+          joined_sources = '\n'.join(evidence.get('sources') or [])
+          for source in (
+              'developers.cloudflare.com/workers/platform/limits',
+              'developers.cloudflare.com/durable-objects/platform/pricing',
+              'docs.github.com/en/actions/concepts/billing-and-usage',
+              'docs.github.com/en/site-policy/github-terms',
+          ):
+              if source not in joined_sources:
+                  error('PRIMARY_SOURCE_MISSING', source)
+
+          github_policy = policy.get('github') or {}
+          if github_policy.get('requiredVisibility') != 'public':
+              error('GITHUB_VISIBILITY_POLICY_NOT_PUBLIC', str(github_policy.get('requiredVisibility')))
+          if os.environ.get('REPOSITORY_PRIVATE') != 'false':
+              error('REPOSITORY_NOT_PUBLIC', f"private={os.environ.get('REPOSITORY_PRIVATE')}")
+          if github_policy.get('billingGuardVerification') != 'EXTERNAL_BUDGET_OR_NO_PAYMENT_METHOD_READ_REQUIRED':
+              error('GITHUB_BILLING_GUARD_WEAK', str(github_policy.get('billingGuardVerification')))
+
+          for required in policy.get('currentRequiredFiles') or []:
+              if not (root / required).exists():
+                  error('REQUIRED_CURRENT_FILE_MISSING', required, required)
+
+          allowed_runners = set(github_policy.get('allowedStandardRunnerLabels') or [])
+          max_retention = int(github_policy.get('maxArtifactRetentionDays') or 14)
+          paid_tokens = ('OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'RUNPOD_API_KEY', 'REPLICATE_API_TOKEN', 'TOGETHER_API_KEY')
+          automatic_trigger = re.compile(r'^\s{0,4}(?:push|pull_request|schedule|repository_dispatch):', re.M)
+          runner_re = re.compile(r'^\s*runs-on:\s*(.+?)\s*(?:#.*)?$', re.M)
+          retention_re = re.compile(r'retention-days:\s*[\'\"]?(\d+)[\'\"]?', re.I)
+
+          for workflow in sorted((root / '.github/workflows').glob('*.y*ml')):
+              text = workflow.read_text(encoding='utf-8')
+              name = workflow.as_posix()
+              for raw in runner_re.findall(text):
+                  runner = raw.strip().strip('\'\"')
+                  if '${{' in runner:
+                      error('DYNAMIC_RUNNER_UNVERIFIED', runner, name)
+                  elif runner not in allowed_runners:
+                      error('NON_FREE_OR_UNKNOWN_RUNNER', runner, name)
+              lines = text.splitlines()
+              for index, line in enumerate(lines):
+                  if not re.search(r'uses:\s*actions/upload-artifact@', line, re.I):
+                      continue
+                  block = '\n'.join(lines[index:index + 18])
+                  match = retention_re.search(block)
+                  if not match:
+                      error('ARTIFACT_RETENTION_UNBOUNDED_BY_WORKFLOW', 'upload-artifact must declare retention-days', name)
+                  elif int(match.group(1)) > max_retention:
+                      error('ARTIFACT_RETENTION_TOO_LONG', f'{match.group(1)} days', name)
+              present_paid = [token for token in paid_tokens if token in text]
+              if present_paid and automatic_trigger.search(text):
+                  error('AUTOMATIC_PAID_API_CAPABLE_WORKFLOW', ','.join(present_paid), name)
+
+          wrangler = root / 'deploy/cloudflare/relay/wrangler.toml'
+          if wrangler.exists():
+              text = wrangler.read_text(encoding='utf-8')
+              if not re.search(r'^\s*storage\s*=\s*[\'\"]sqlite[\'\"]\s*$', text, re.M):
+                  error('DURABLE_OBJECT_NOT_SQLITE_FREE_BACKEND', 'Free plan requires SQLite-backed Durable Objects', wrangler.as_posix())
+
+          relay = root / 'deploy/cloudflare/relay/src/relay-worker.mjs'
+          if relay.exists():
+              text = relay.read_text(encoding='utf-8')
+              if 'acceptWebSocket(' not in text or 'getWebSockets(' not in text:
+                  error('DURABLE_OBJECT_HIBERNATION_API_REQUIRED', 'relay must use Durable Objects WebSocket hibernation API', relay.as_posix())
+
+          deploy = root / '.github/workflows/cloudflare-public-deploy.yml'
+          if deploy.exists():
+              text = deploy.read_text(encoding='utf-8')
+              for required in ('wrangler@4 deploy', 'pages deploy dist'):
+                  if required not in text:
+                      error('CURRENT_DEPLOY_ROUTE_UNRECOGNIZED', required, deploy.as_posix())
+              if re.search(r'\b(?:--paid|workers_paid|standard_usage|paid_plan)\b', text, re.I):
+                  error('EXPLICIT_PAID_CLOUDFLARE_MODE', 'paid mode token found', deploy.as_posix())
+
+          cloudflare_policy = policy.get('cloudflare') or {}
+          if cloudflare_policy.get('requiredWorkersPlan') != 'free':
+              error('CLOUDFLARE_PLAN_POLICY_NOT_FREE', str(cloudflare_policy.get('requiredWorkersPlan')))
+          if cloudflare_policy.get('accountPlanVerification') != 'EXTERNAL_BILLING_READ_REQUIRED':
+              error('CLOUDFLARE_ACCOUNT_PLAN_GATE_WEAK', str(cloudflare_policy.get('accountPlanVerification')))
+
+          hold('CLOUDFLARE_ACCOUNT_PLAN_EXTERNAL', 'Verify the live Cloudflare account remains on Workers Free before claiming literal zero cash.')
+          hold('GITHUB_ACTIONS_BILLING_GUARD_EXTERNAL', 'Verify no paid-overage path or a zero-dollar Actions budget that stops usage before claiming literal zero cash.')
+
+          report = {
+              'schema': 'gameroad.zero-cash-audit.v1',
+              'status': 'FAIL' if errors else 'PASS_WITH_EXTERNAL_HOLD',
+              'zeroCashDefaultPath': not errors,
+              'literalZeroCashVerified': not errors and not holds,
+              'counts': {'errors': len(errors), 'holds': len(holds)},
+              'findings': [*errors, *holds],
+          }
+          rendered = json.dumps(report, ensure_ascii=False, indent=2) + '\n'
+          pathlib.Path('zero-cash-audit.json').write_text(rendered, encoding='utf-8')
+          print(rendered, end='')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:
+              summary.write('### Zero-cash default path\n\n')
+              summary.write(f"- status: `{report['status']}`\n")
+              summary.write(f"- errors: `{len(errors)}`\n")
+              summary.write(f"- external holds: `{len(holds)}`\n")
+          if errors:
+              raise SystemExit(1)
+          PY
 
   needs-ai-triage:
     name: Deterministic AI triage evidence

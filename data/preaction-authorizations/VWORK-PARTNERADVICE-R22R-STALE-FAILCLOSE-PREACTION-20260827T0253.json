@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-PARTNERADVICE-R22R-STALE-FAILCLOSE-PREACTION-20260827T0253",
+  "taskId": "PARTNER-GOODMOVE-ADVICE-RUNTIME-INTEGRATION-001",
+  "workUnitKey": "R22R_STALE_FAILCLOSE_ASYNC_RACE_REPAIR",
+  "acquireKey": "PARTNERADVICE-R22R-STALE-FAILCLOSE-RACE-20260827T0253-SOL-M7Q4V9K2P6RX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R22R-PRED-20260827T0253: TOP_FAILURE=explicit stale/private/unmapped fail-close can be asynchronously undone by pre-existing queued or in-flight ready render, restoring Partner recommendation markers. Current main 0a8503 html blob d11e8843 equals failed head aa777 html blob; failed BFI run32983640229 artifact9612743881 digest52a523b3 shows expected0 received2.",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R22R-REHEARSAL-20260827T0253: deliberate isolated lifecycle fault injection 5/5 PASS: current queued resurrection RED reproduced; candidate queued invalidation GREEN; current in-flight overwrite RED reproduced; candidate epoch guard GREEN; nearby-normal later ready schedule GREEN. Harness SHA256 d5a12b71064d5b69af80baf426f1d0f1bf5233963a3000a3439fda2d15312dfb; TAP SHA256 c390c0a59b0c0d0c5235c8261ba5e820d01aff797cf18b4c5c8cffb551b4721f.",
+  "proceedToken": "PROCEED|VWORK-PARTNERADVICE-R22R-STALE-FAILCLOSE-PREACTION-20260827T0253|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|R22R-PRED-20260827T0253: TOP_FAILURE=explicit stale/private/unmapped fail-close can be asynchronously undone by pre-existing queued or in-flight ready render, restoring Partner recommendation markers. Current main 0a8503 html blob d11e8843 equals failed head aa777 html blob; failed BFI run32983640229 artifact9612743881 digest52a523b3 shows expected0 received2.|R22R-REHEARSAL-20260827T0253: deliberate isolated lifecycle fault injection 5/5 PASS: current queued resurrection RED reproduced; candidate queued invalidation GREEN; current in-flight overwrite RED reproduced; candidate epoch guard GREEN; nearby-normal later ready schedule GREEN. Harness SHA256 d5a12b71064d5b69af80baf426f1d0f1bf5233963a3000a3439fda2d15312dfb; TAP SHA256 c390c0a59b0c0d0c5235c8261ba5e820d01aff797cf18b4c5c8cffb551b4721f.",
+  "authorizationBaseSha": "0a8503a0280ae28621cc7a69ec1f69dfd7c178c4",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

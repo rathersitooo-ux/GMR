@@ -1,0 +1,130 @@
+name: TEMP PARTNERADVICE R23 async race bounded executor
+on:
+  push:
+    branches: [work/partneradvice-r23-async-race-20260827]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: work/partneradvice-r23-async-race-20260827
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify PRE_ACTION, patch latest-wins race, and self-clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=0a8503a0280ae28621cc7a69ec1f69dfd7c178c4
+          AUTH=data/preaction-authorizations/VWORK-PARTNERADVICE-R23-ASYNC-RACE-20260827T0318.json
+          SELF=.github/workflows/partneradvice-r23-race-bounded-executor.yml
+          EXPECT_HTML=d11e8843ce85e766c82c1ef4a110bdfa7380f65f
+          EXPECT_TEST=61963654d9eb47a825148f61766ec0137e2114c9
+
+          test "$(git merge-base HEAD "$BASE")" = "$BASE"
+          FIRST=$(git rev-list --reverse "${BASE}..HEAD" | head -n1)
+          test "$(git rev-parse "${FIRST}^")" = "$BASE"
+          test "$(git diff-tree --no-commit-id --name-only -r "$FIRST" | wc -l)" -eq 1
+          git diff-tree --no-commit-id --name-only -r "$FIRST" | grep -Fx "$AUTH"
+          test "$(git hash-object browser/GAMEROAD.html)" = "$EXPECT_HTML"
+          test "$(git hash-object tests/browser-full-interaction.spec.mjs)" = "$EXPECT_TEST"
+
+          node - <<'NODE'
+          const fs=require('fs');
+          const p='data/preaction-authorizations/VWORK-PARTNERADVICE-R23-ASYNC-RACE-20260827T0318.json';
+          const m=JSON.parse(fs.readFileSync(p,'utf8'));
+          if(m.schemaVersion!=='gameroad-preaction-v1') throw Error('bad schema');
+          if(m.authorizationBaseSha!=='0a8503a0280ae28621cc7a69ec1f69dfd7c178c4') throw Error('stale authorization base');
+          if(m.acquireKey!=='PARTNERADVICE-R23-ASYNC-RACE-CLOSURE-20260827T0318-SOL-Q8N5V3K7M2PX') throw Error('wrong acquire key');
+          if(!String(m.proceedToken||'').startsWith('PROCEED|VWORK-PARTNERADVICE-R23-ASYNC-RACE-20260827T0318|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|')) throw Error('missing proceed token');
+          NODE
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          hp=Path('browser/GAMEROAD.html')
+          h=hp.read_text(encoding='utf-8')
+
+          old_decl="const ROLE='partner-recommendation',SEL='[data-partner-advice-role=\"'+ROLE+'\"]';let modP=null,scheduled=false;"
+          new_decl="const ROLE='partner-recommendation',SEL='[data-partner-advice-role=\"'+ROLE+'\"]';let modP=null,scheduled=false,generation=0;"
+
+          old_clear="function clear(){document.querySelectorAll(SEL).forEach(el=>{el.removeAttribute('data-partner-advice-role');el.removeAttribute('data-partner-advice-kind');el.removeAttribute('data-partner-advice-candidate');el.removeAttribute('data-partner-advice-glyph');if(el.dataset.partnerAdviceBaseAriaCaptured){const old=el.dataset.partnerAdviceBaseAria||'';old?el.setAttribute('aria-label',old):el.removeAttribute('aria-label');delete el.dataset.partnerAdviceBaseAria;delete el.dataset.partnerAdviceBaseAriaCaptured}})}"
+          new_clear="function clearMarkers(){document.querySelectorAll(SEL).forEach(el=>{el.removeAttribute('data-partner-advice-role');el.removeAttribute('data-partner-advice-kind');el.removeAttribute('data-partner-advice-candidate');el.removeAttribute('data-partner-advice-glyph');if(el.dataset.partnerAdviceBaseAriaCaptured){const old=el.dataset.partnerAdviceBaseAria||'';old?el.setAttribute('aria-label',old):el.removeAttribute('aria-label');delete el.dataset.partnerAdviceBaseAria;delete el.dataset.partnerAdviceBaseAriaCaptured}})}\nfunction clear(){generation+=1;clearMarkers()}"
+
+          old_one="async function one(m,env,kind,c,alts,evidence){const a=adapted(c,alts,evidence);if(!a)return null;const x=a.selected.candidateId,r=m.projectPartnerAdviceBoardEmphasis({adviceResult:a,isCurrent:()=>current(env),resolveTarget:y=>elFor(kind,y)?{targetId:kind+':'+y}:null});if(r?.active===true&&r.presentationRole===ROLE&&r.autoExecute===false)mark(elFor(kind,x),kind,x);return r||null}"
+          new_one="async function one(m,env,kind,c,alts,evidence,mine){const a=adapted(c,alts,evidence);if(!a||mine!==generation)return null;const x=a.selected.candidateId,r=m.projectPartnerAdviceBoardEmphasis({adviceResult:a,isCurrent:()=>current(env),resolveTarget:y=>elFor(kind,y)?{targetId:kind+':'+y}:null});if(mine!==generation)return r||null;if(r?.active===true&&r.presentationRole===ROLE&&r.autoExecute===false)mark(elFor(kind,x),kind,x);return r||null}"
+
+          old_render="async function render(explicit){clear();const env=explicit===undefined?api()?.adviceEnvelope?.():explicit;if(!env||env.status!=='ready'||!current(env))return snapshot();const m=await mod();if(!m?.projectPartnerAdviceBoardEmphasis)return snapshot();if(env.kind==='plan'){await one(m,env,'road',env.recommendation?.road,env.alternatives?.road,env.publicEvidence?.roadCandidates);await one(m,env,'battle',env.recommendation?.battle,env.alternatives?.battle,env.publicEvidence?.battleCandidates)}else if(env.kind==='target')await one(m,env,'target',env.recommendation,env.alternatives,env.publicEvidence?.targetCandidates);return snapshot()}"
+          new_render="async function render(explicit){const mine=++generation;clearMarkers();try{const env=explicit===undefined?api()?.adviceEnvelope?.():explicit;if(!env||env.status!=='ready'||!current(env))return snapshot();const m=await mod();if(mine!==generation||!m?.projectPartnerAdviceBoardEmphasis)return snapshot();if(env.kind==='plan'){await one(m,env,'road',env.recommendation?.road,env.alternatives?.road,env.publicEvidence?.roadCandidates,mine);if(mine!==generation)return snapshot();await one(m,env,'battle',env.recommendation?.battle,env.alternatives?.battle,env.publicEvidence?.battleCandidates,mine)}else if(env.kind==='target')await one(m,env,'target',env.recommendation,env.alternatives,env.publicEvidence?.targetCandidates,mine);return snapshot()}catch(e){if(mine===generation)clearMarkers();throw e}}"
+
+          old_schedule="function schedule(){if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;render().catch(e=>(clear(),console.warn('partner-advice-r21b-render',e)))})}"
+          new_schedule="function schedule(){if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;render().catch(e=>console.warn('partner-advice-r21b-render',e))})}"
+
+          replacements=[
+              (old_decl,new_decl,'declaration'),
+              (old_clear,new_clear,'clear'),
+              (old_one,new_one,'one'),
+              (old_render,new_render,'render'),
+              (old_schedule,new_schedule,'schedule'),
+          ]
+          for old,new,label in replacements:
+              count=h.count(old)
+              if count!=1: raise SystemExit(f'{label} anchor count={count}')
+              h=h.replace(old,new,1)
+
+          if h.count('generation=0')!=1 or h.count('mine!==generation')<3:
+              raise SystemExit('generation fence oracle failed')
+          hp.write_text(h,encoding='utf-8')
+
+          tp=Path('tests/browser-full-interaction.spec.mjs')
+          t=tp.read_text(encoding='utf-8')
+          anchor="  await attachStateScreenshot(page, testInfo, 'battle-partner-advice-object-projection-visible');"
+          if t.count(anchor)!=1: raise SystemExit(f'test anchor count={t.count(anchor)}')
+          regression=r'''
+
+  const overlapProjection = await page.evaluate(async () => {
+    const board = window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__;
+    const partner = window.__GAMEROAD_HATE_PARTNER_TEST__;
+    const ready = partner?.adviceEnvelope?.() ?? null;
+    const stale = window.__GAMEROAD_PARTNER_ADVICE_STALE__?.() ?? { status: 'blocked', kind: 'stale', error: 'STALE_STATE' };
+    const oldReady = board?.render?.(ready);
+    const staleResult = await board?.render?.(stale);
+    const oldResult = await oldReady;
+    return {
+      readyStatus: ready?.status ?? null,
+      staleActiveCount: staleResult?.activeCount ?? null,
+      oldActiveCount: oldResult?.activeCount ?? null,
+      final: board?.snapshot?.() ?? null,
+    };
+  });
+  expect(overlapProjection.readyStatus, 'race oracle starts from a real ready advice envelope').toBe('ready');
+  expect(overlapProjection.staleActiveCount, 'newer stale render clears immediately').toBe(0);
+  expect(overlapProjection.oldActiveCount, 'superseded ready render cannot resurrect recommendation markers').toBe(0);
+  expect(overlapProjection.final?.activeCount, 'latest stale state remains authoritative after old render resumes').toBe(0);
+  await expect(battle.locator('[data-partner-advice-role="partner-recommendation"]')).toHaveCount(0);
+'''
+          t=t.replace(anchor,anchor+regression,1)
+          if t.count('latest stale state remains authoritative after old render resumes')!=1:
+              raise SystemExit('deterministic overlap regression not installed')
+          tp.write_text(t,encoding='utf-8')
+          PY
+
+          git diff --check
+          diff -u <(printf '%s\n' browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs) <(git diff --name-only | sort)
+          node --test tests/partner-advice-runtime-mount.test.mjs
+
+          # The temporary authorization and executor must not survive in the PR head.
+          git rm "$AUTH" "$SELF"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
+          git commit -m 'PARTNERADVICE R23: fence stale async Battle recommendations'
+
+          # Final branch delta against the authorized base must be exactly the two product/test files.
+          diff -u <(printf '%s\n' browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs) <(git diff --name-only "$BASE...HEAD" | sort)
+          git push origin HEAD:work/partneradvice-r23-async-race-20260827

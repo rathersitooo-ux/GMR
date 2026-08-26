@@ -22,10 +22,6 @@ function gitBlobSha1(buffer) {
   return createHash('sha1').update(Buffer.from(`blob ${buffer.length}\0`)).update(buffer).digest('hex');
 }
 
-function normalizedTextGitBlobSha1(buffer) {
-  return gitBlobSha1(Buffer.from(buffer.toString('utf8').replace(/\r\n/g, '\n'), 'utf8'));
-}
-
 function sha256(buffer) {
   return createHash('sha256').update(buffer).digest('hex');
 }
@@ -165,7 +161,7 @@ const dependencyContract = [
     expectedArg: 'expectedReplayAdapterBlob',
     artifact: 'battle_replay_live_adapter',
     fixture: "import './battle-replay-core.mjs';\nimport './card-presentation-core.mjs';\nimport './battle-conveyor-presentation-core.mjs';\nimport './partner-battle-event-log-projection.mjs';\n",
-    currentBlob: '7fabf8c551d05b119f11209307ad891152715d35',
+    currentBlob: 'cb3ba74e38a59b951dc6e38bfcaeea724b188bba',
   },
   {
     file: 'partner-battle-event-log-projection.mjs',
@@ -392,8 +388,8 @@ test('build packages the exact current production Browser dependency set with ve
 
   for (const dep of dependencyContract) {
     const bytes = await readFile(path.join(repoRoot, dep.source));
-    assert.equal(normalizedTextGitBlobSha1(bytes), dep.currentBlob);
-    options[dep.expectedArg] = gitBlobSha1(bytes);
+    assert.equal(gitBlobSha1(bytes), dep.currentBlob);
+    options[dep.expectedArg] = dep.currentBlob;
     currentBytes.set(dep.file, bytes);
   }
 
@@ -407,7 +403,7 @@ test('build packages the exact current production Browser dependency set with ve
   );
   for (const dep of dependencyContract) {
     assert.equal((await readFile(path.join(dist, dep.file))).equals(currentBytes.get(dep.file)), true);
-    assert.equal(manifest.artifacts[dep.artifact].git_blob_sha1, gitBlobSha1(currentBytes.get(dep.file)));
+    assert.equal(manifest.artifacts[dep.artifact].git_blob_sha1, dep.currentBlob);
   }
 });
 

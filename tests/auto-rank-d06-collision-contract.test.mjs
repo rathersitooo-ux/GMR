@@ -115,3 +115,36 @@ test('two-path detector feeds only the frozen D06 failure contract', () => {
   assert.deepEqual(actual.failures, [{ ...expectedBase, collisionKind: D06_COLLISION_KIND.REVERSE_EDGE }]);
   assert.equal(Object.isFrozen(actual.failures[0]), true);
 });
+
+test('H02 collision classification and D06 failure are invariant under seat/path operand order', () => {
+  const cases = [
+    [
+      ['A', 'B'],
+      ['B', 'A']
+    ],
+    [
+      ['A', 'X', 'Y', 'C'],
+      ['D', 'Z', 'Y', 'X', 'E']
+    ],
+    [
+      ['S:P2:L', 'C:-1:1', 'C:0:1', 'C:1:1', 'S:P2:R'],
+      ['S:P2:R', 'C:-1:1', 'C:-1:0', 'C:-1:-1']
+    ]
+  ];
+
+  for (const [firstPath, secondPath] of cases) {
+    const forward = evaluateH02PathHistoryForD06(firstPath, secondPath);
+    const reversed = evaluateH02PathHistoryForD06(secondPath, firstPath);
+
+    assert.equal(forward.valid, true);
+    assert.equal(reversed.valid, true);
+    assert.deepEqual(
+      [...forward.classification.normalizedEvents].sort(),
+      [...reversed.classification.normalizedEvents].sort()
+    );
+    assert.deepEqual(
+      forward.failures.map(({ collisionKind }) => collisionKind).sort(),
+      reversed.failures.map(({ collisionKind }) => collisionKind).sort()
+    );
+  }
+});

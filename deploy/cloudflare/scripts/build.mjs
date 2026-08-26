@@ -32,6 +32,9 @@ const defaultAdviceCollectiveEvalSource = path.join(repoRoot, 'tools/advice-coll
 const defaultClickSfxSource = path.join(repoRoot, 'assets/audio/sfx/click_002.ogg');
 const defaultCardSlideSfxSource = path.join(repoRoot, 'assets/audio/sfx/cardSlide6.ogg');
 const defaultCardPlaceSfxSource = path.join(repoRoot, 'assets/audio/sfx/cardPlace1.ogg');
+const defaultHomeThemeOrientationSource = path.join(repoRoot, 'browser/home-theme-orientation-core.mjs');
+const defaultHomeLandscapeAssetSource = path.join(repoRoot, 'assets/visual/home/home-illustration-landscape.webp');
+const defaultHomePortraitAssetSource = path.join(repoRoot, 'assets/visual/home/home-illustration-portrait.webp');
 const FORMAL_SELECTED3_SFX_BLOBS = Object.freeze({
   click: '4564b888c25143eaed79c384a5ce02054813a41c',
   cardSlide: 'b0090036bd9c0d48c3f6d79fd77eaf30901b6a05',
@@ -149,6 +152,9 @@ export async function buildPackage({
   clickSfxSource = defaultClickSfxSource,
   cardSlideSfxSource = defaultCardSlideSfxSource,
   cardPlaceSfxSource = defaultCardPlaceSfxSource,
+  homeThemeOrientationSource = defaultHomeThemeOrientationSource,
+  homeLandscapeAssetSource = defaultHomeLandscapeAssetSource,
+  homePortraitAssetSource = defaultHomePortraitAssetSource,
   dist = defaultDist,
   expectedBlob = '',
   expectedCoreBlob = '',
@@ -169,6 +175,7 @@ export async function buildPackage({
   expectedPartnerAdviceRuntimeMountBlob = '',
   expectedPartnerLegalActionAdapterBlob = '',
   expectedAdviceCollectiveEvalBlob = '',
+  expectedHomeThemeOrientationBlob = '',
   sourceCommit = '',
   publishedAt = '',
 } = {}) {
@@ -195,6 +202,9 @@ export async function buildPackage({
   const clickSfxInput = await readFile(clickSfxSource);
   const cardSlideSfxInput = await readFile(cardSlideSfxSource);
   const cardPlaceSfxInput = await readFile(cardPlaceSfxSource);
+  const homeThemeOrientationInput = await readFile(homeThemeOrientationSource);
+  const homeLandscapeAssetInput = await readFile(homeLandscapeAssetSource);
+  const homePortraitAssetInput = await readFile(homePortraitAssetSource);
   const blob = gitBlobSha1(input);
   const coreBlob = gitBlobSha1(coreInput);
   const presenceCoreBlob = gitBlobSha1(presenceCoreInput);
@@ -218,6 +228,7 @@ export async function buildPackage({
   const clickSfxBlob = gitBlobSha1(clickSfxInput);
   const cardSlideSfxBlob = gitBlobSha1(cardSlideSfxInput);
   const cardPlaceSfxBlob = gitBlobSha1(cardPlaceSfxInput);
+  const homeThemeOrientationBlob = gitBlobSha1(homeThemeOrientationInput);
   if (clickSfxBlob !== FORMAL_SELECTED3_SFX_BLOBS.click) {
     throw new Error(`Formal click SFX blob mismatch: expected=${FORMAL_SELECTED3_SFX_BLOBS.click} actual=${clickSfxBlob}`);
   }
@@ -226,6 +237,9 @@ export async function buildPackage({
   }
   if (cardPlaceSfxBlob !== FORMAL_SELECTED3_SFX_BLOBS.cardPlace) {
     throw new Error(`Formal card-place SFX blob mismatch: expected=${FORMAL_SELECTED3_SFX_BLOBS.cardPlace} actual=${cardPlaceSfxBlob}`);
+  }
+  if (expectedHomeThemeOrientationBlob && homeThemeOrientationBlob !== expectedHomeThemeOrientationBlob) {
+    throw new Error(`Home theme/orientation core blob mismatch: expected=${expectedHomeThemeOrientationBlob} actual=${homeThemeOrientationBlob}`);
   }
   if (expectedBlob && blob !== expectedBlob) {
     throw new Error(`Browser blob mismatch: expected=${expectedBlob} actual=${blob}`);
@@ -452,6 +466,26 @@ export async function buildPackage({
     }
   }
 
+  const homeThemeOrientationOutputPath = path.join(dist, 'home-theme-orientation-core.mjs');
+  await writeFile(homeThemeOrientationOutputPath, homeThemeOrientationInput);
+  const homeThemeOrientationRoundTrip = await readFile(homeThemeOrientationOutputPath);
+  if (!homeThemeOrientationInput.equals(homeThemeOrientationRoundTrip)) {
+    throw new Error('dist/home-theme-orientation-core.mjs is not byte-identical to Home theme/orientation source');
+  }
+
+  for (const [outputName, sourceInput] of [
+    ['assets/visual/home/home-illustration-landscape.webp', homeLandscapeAssetInput],
+    ['assets/visual/home/home-illustration-portrait.webp', homePortraitAssetInput],
+  ]) {
+    const assetOutputPath = path.join(dist, outputName);
+    await mkdir(path.dirname(assetOutputPath), { recursive: true });
+    await writeFile(assetOutputPath, sourceInput);
+    const assetRoundTrip = await readFile(assetOutputPath);
+    if (!sourceInput.equals(assetRoundTrip)) {
+      throw new Error(`dist/${outputName} is not byte-identical to Home visual source`);
+    }
+  }
+
   const versionManifestOutputPath = path.join(dist, VERSION_MANIFEST_FILENAME);
   await writeFile(versionManifestOutputPath, versionManifestBytes, 'utf8');
   const versionManifestRoundTrip = await readFile(versionManifestOutputPath, 'utf8');
@@ -580,6 +614,24 @@ export async function buildPackage({
         'home-cards-2p5d-presentation.mjs',
         homeCards2p5dPresentationInput,
         homeCards2p5dPresentationBlob,
+      ),
+      home_theme_orientation_core: provenance(
+        'browser/home-theme-orientation-core.mjs',
+        'home-theme-orientation-core.mjs',
+        homeThemeOrientationInput,
+        homeThemeOrientationBlob,
+      ),
+      home_illustration_landscape: provenance(
+        'assets/visual/home/home-illustration-landscape.webp',
+        'assets/visual/home/home-illustration-landscape.webp',
+        homeLandscapeAssetInput,
+        gitBlobSha1(homeLandscapeAssetInput),
+      ),
+      home_illustration_portrait: provenance(
+        'assets/visual/home/home-illustration-portrait.webp',
+        'assets/visual/home/home-illustration-portrait.webp',
+        homePortraitAssetInput,
+        gitBlobSha1(homePortraitAssetInput),
       ),
       partner_advice_runtime_mount: provenance(
         'browser/partner-advice-runtime-mount.mjs',

@@ -1,0 +1,51 @@
+name: GAMEROAD Zero Cash Guard
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - 'deploy/**'
+      - 'tools/zero-cash-runtime-audit.mjs'
+      - 'tests/zero-cash-runtime-audit.test.mjs'
+      - 'config/zero-cash-runtime-policy.json'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+      - 'deploy/**'
+      - 'tools/zero-cash-runtime-audit.mjs'
+      - 'tests/zero-cash-runtime-audit.test.mjs'
+      - 'config/zero-cash-runtime-policy.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zero-cash-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require public repository for free standard runners
+        env:
+          REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
+        run: |
+          set -euo pipefail
+          if [[ "$REPOSITORY_PRIVATE" != "false" ]]; then
+            echo "::error::Zero-cash development requires this repository to remain public for standard GitHub-hosted runners."
+            exit 1
+          fi
+      - name: Unit/regression tests
+        run: node --test tests/zero-cash-runtime-audit.test.mjs
+      - name: Audit actual checkout
+        run: |
+          node tools/zero-cash-runtime-audit.mjs \
+            --root . \
+            --repository-visibility public \
+            --output zero-cash-audit.json
+      - name: Show result without paid artifact storage
+        run: cat zero-cash-audit.json

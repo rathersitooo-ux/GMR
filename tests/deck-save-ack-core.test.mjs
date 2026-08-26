@@ -4,6 +4,7 @@ import {
   DECK_SAVE_ACK_CORE,
   applyDeckEdit,
   beginDeckSave,
+  createDeckMatchStartSnapshot,
   createDeckSaveAckState,
   receiveDeckSaveAck,
   timeoutDeckSave,
@@ -206,4 +207,79 @@ test('revision matching is exact and never inferred by the core', () => {
     revision: 'rev-0007',
   }));
   assert.equal(exact.status, 'accepted');
+});
+
+function validMatchSelection() {
+  return {
+    savedDeck: { main: ['SP_A', 'HT_2'], ex: ['EX_1'] },
+    savedDeckRule: { id: 'FIRST_REGULATION', revision: 3 },
+    setupMode: '2p',
+    setupContent: 'road_shield',
+    playerCharacterId: 'partner.naki',
+    selectedPartnerId: 'partner.naki',
+  };
+}
+
+test('match-start snapshot captures current deck/setup/selection and is mutation-isolated', () => {
+  const state = validMatchSelection();
+  const seen = [];
+  const snapshot = createDeckMatchStartSnapshot(state, {
+    validateDeck: (deck, options) => {
+      seen.push({ deck, options });
+      return { ok: true };
+    },
+  });
+
+  assert.deepEqual(seen, [{
+    deck: { main: ['SP_A', 'HT_2'], ex: ['EX_1'] },
+    options: { forBattle: true },
+  }]);
+  state.savedDeck.main[0] = 'MUTATED';
+  state.savedDeck.ex.push('EX_2');
+  state.setupMode = '4p';
+  state.selectedPartnerId = 'partner.other';
+
+  assert.deepEqual(snapshot, {
+    schema: 'gameroad.browser.match-start-snapshot.v1',
+    deck: {
+      main: ['SP_A', 'HT_2'],
+      ex: ['EX_1'],
+      ruleId: 'FIRST_REGULATION',
+      ruleRevision: 3,
+    },
+    setup: { mode: '2p', content: 'road_shield' },
+    selection: {
+      playerCharacterId: 'partner.naki',
+      selectedPartnerId: 'partner.naki',
+    },
+  });
+  assert.equal(Object.isFrozen(snapshot), true);
+  assert.equal(Object.isFrozen(snapshot.deck.main), true);
+  assert.throws(() => snapshot.deck.main.push('SP_K'), TypeError);
+});
+
+test('same current match selection produces deterministic snapshot without time/random fields', () => {
+  const validateDeck = () => ({ ok: true });
+  assert.deepEqual(
+    createDeckMatchStartSnapshot(validMatchSelection(), { validateDeck }),
+    createDeckMatchStartSnapshot(validMatchSelection(), { validateDeck }),
+  );
+});
+
+test('invalid current deck fails closed before a match-start snapshot exists', () => {
+  assert.throws(
+    () => createDeckMatchStartSnapshot(validMatchSelection(), {
+      validateDeck: () => ({ ok: false, errors: ['ROYAL_COUNT_INVALID'] }),
+    }),
+    /MATCH_START_DECK_INVALID:ROYAL_COUNT_INVALID/,
+  );
+});
+
+test('missing setup selection fails closed', () => {
+  const state = validMatchSelection();
+  state.setupContent = '';
+  assert.throws(
+    () => createDeckMatchStartSnapshot(state, { validateDeck: () => ({ ok: true }) }),
+    /MATCH_START_SETUP_CONTENT_REQUIRED/,
+  );
 });

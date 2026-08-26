@@ -1,4 +1,4 @@
-name: BattleSelf R8 Current HTML Probe
+name: BattleSelf R8 Browser Live Mount Executor
 
 on:
   push:
@@ -8,46 +8,279 @@ on:
       - '.github/workflows/battleself-r8-current-html-executor.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  current-html-probe:
+  implement-and-verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Prove owner-private friend projection and Battle DOM anchors
+        with:
+          fetch-depth: 0
+      - name: Patch exact current Browser, public package, and interaction coverage
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          needles = [
-              'function publicPlayer(',
-              'function project(viewer)',
-              'function projectionToMatch(pr)',
-              'function applyProjection(pr)',
-              'FR.assignedPid',
-              'private:{pid:viewer',
-              '<section class="screen battle',
-              'id="battlePhaseSurface"',
-              'function renderBattle(){',
-              'window.__GAMEROAD_TEST__={state',
-          ]
-          print('BATTLESELF_PROBE_HTML_BYTES', len(text.encode('utf-8')))
-          for needle in needles:
-              print(f'=== NEEDLE {needle} ===')
-              start = 0
-              count = 0
-              while True:
-                  i = text.find(needle, start)
-                  if i < 0: break
-                  count += 1
-                  a = max(0, i - 1200)
-                  b = min(len(text), i + len(needle) + 1800)
-                  print(f'--- OCCURRENCE {count} offset={i} ---')
-                  print(text[a:b].replace('\r', ''))
-                  start = i + len(needle)
-              print(f'COUNT {count}')
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'ANCHOR_FAIL {label} count={count}')
+              return text.replace(old, new, 1)
+
+          build_path = Path('deploy/cloudflare/scripts/build.mjs')
+          build = build_path.read_text(encoding='utf-8')
+          build = replace_once(build,
+              "const defaultReplayAdapterSource = path.join(repoRoot, 'browser/battle-replay-live-adapter.mjs');\n",
+              "const defaultReplayAdapterSource = path.join(repoRoot, 'browser/battle-replay-live-adapter.mjs');\nconst defaultBattleSelfDeckInspectCoreSource = path.join(repoRoot, 'browser/battle-self-deck-inspect-core.mjs');\nconst defaultBattleSelfDeckInspectRuntimeMountSource = path.join(repoRoot, 'browser/battle-self-deck-inspect-runtime-mount.mjs');\n",
+              'build-default-sources')
+          build = replace_once(build,
+              "  replayAdapterSource = defaultReplayAdapterSource,\n",
+              "  replayAdapterSource = defaultReplayAdapterSource,\n  battleSelfDeckInspectCoreSource = defaultBattleSelfDeckInspectCoreSource,\n  battleSelfDeckInspectRuntimeMountSource = defaultBattleSelfDeckInspectRuntimeMountSource,\n",
+              'build-source-args')
+          build = replace_once(build,
+              "  expectedReplayAdapterBlob = '',\n",
+              "  expectedReplayAdapterBlob = '',\n  expectedBattleSelfDeckInspectCoreBlob = '',\n  expectedBattleSelfDeckInspectRuntimeMountBlob = '',\n",
+              'build-expected-args')
+          build = replace_once(build,
+              "  const replayAdapterInput = await readFile(replayAdapterSource);\n",
+              "  const replayAdapterInput = await readFile(replayAdapterSource);\n  const battleSelfDeckInspectCoreInput = await readFile(battleSelfDeckInspectCoreSource);\n  const battleSelfDeckInspectRuntimeMountInput = await readFile(battleSelfDeckInspectRuntimeMountSource);\n",
+              'build-inputs')
+          build = replace_once(build,
+              "  const replayAdapterBlob = gitBlobSha1(replayAdapterInput);\n",
+              "  const replayAdapterBlob = gitBlobSha1(replayAdapterInput);\n  const battleSelfDeckInspectCoreBlob = gitBlobSha1(battleSelfDeckInspectCoreInput);\n  const battleSelfDeckInspectRuntimeMountBlob = gitBlobSha1(battleSelfDeckInspectRuntimeMountInput);\n",
+              'build-blobs')
+          validation = """  if (expectedReplayAdapterBlob && replayAdapterBlob !== expectedReplayAdapterBlob) {
+    throw new Error(`Battle replay live adapter blob mismatch: expected=${expectedReplayAdapterBlob} actual=${replayAdapterBlob}`);
+  }
+"""
+          build = replace_once(build, validation, validation + """  if (expectedBattleSelfDeckInspectCoreBlob && battleSelfDeckInspectCoreBlob !== expectedBattleSelfDeckInspectCoreBlob) {
+    throw new Error(`Battle self-deck inspect core blob mismatch: expected=${expectedBattleSelfDeckInspectCoreBlob} actual=${battleSelfDeckInspectCoreBlob}`);
+  }
+  if (expectedBattleSelfDeckInspectRuntimeMountBlob && battleSelfDeckInspectRuntimeMountBlob !== expectedBattleSelfDeckInspectRuntimeMountBlob) {
+    throw new Error(`Battle self-deck inspect runtime mount blob mismatch: expected=${expectedBattleSelfDeckInspectRuntimeMountBlob} actual=${battleSelfDeckInspectRuntimeMountBlob}`);
+  }
+""", 'build-validation')
+          replay_output = """  const replayAdapterOutputPath = path.join(dist, 'battle-replay-live-adapter.mjs');
+  await writeFile(replayAdapterOutputPath, replayAdapterInput);
+  const replayAdapterRoundTrip = await readFile(replayAdapterOutputPath);
+  if (!replayAdapterInput.equals(replayAdapterRoundTrip)) {
+    throw new Error('dist/battle-replay-live-adapter.mjs is not byte-identical to Browser dependency source');
+  }
+
+"""
+          build = replace_once(build, replay_output, replay_output + """  const battleSelfDeckInspectCoreOutputPath = path.join(dist, 'battle-self-deck-inspect-core.mjs');
+  await writeFile(battleSelfDeckInspectCoreOutputPath, battleSelfDeckInspectCoreInput);
+  const battleSelfDeckInspectCoreRoundTrip = await readFile(battleSelfDeckInspectCoreOutputPath);
+  if (!battleSelfDeckInspectCoreInput.equals(battleSelfDeckInspectCoreRoundTrip)) {
+    throw new Error('dist/battle-self-deck-inspect-core.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const battleSelfDeckInspectRuntimeMountOutputPath = path.join(dist, 'battle-self-deck-inspect-runtime-mount.mjs');
+  await writeFile(battleSelfDeckInspectRuntimeMountOutputPath, battleSelfDeckInspectRuntimeMountInput);
+  const battleSelfDeckInspectRuntimeMountRoundTrip = await readFile(battleSelfDeckInspectRuntimeMountOutputPath);
+  if (!battleSelfDeckInspectRuntimeMountInput.equals(battleSelfDeckInspectRuntimeMountRoundTrip)) {
+    throw new Error('dist/battle-self-deck-inspect-runtime-mount.mjs is not byte-identical to Browser dependency source');
+  }
+
+""", 'build-output')
+          replay_provenance = """      battle_replay_live_adapter: provenance(
+        'browser/battle-replay-live-adapter.mjs',
+        'battle-replay-live-adapter.mjs',
+        replayAdapterInput,
+        replayAdapterBlob,
+      ),
+"""
+          build = replace_once(build, replay_provenance, replay_provenance + """      battle_self_deck_inspect_core: provenance(
+        'browser/battle-self-deck-inspect-core.mjs',
+        'battle-self-deck-inspect-core.mjs',
+        battleSelfDeckInspectCoreInput,
+        battleSelfDeckInspectCoreBlob,
+      ),
+      battle_self_deck_inspect_runtime_mount: provenance(
+        'browser/battle-self-deck-inspect-runtime-mount.mjs',
+        'battle-self-deck-inspect-runtime-mount.mjs',
+        battleSelfDeckInspectRuntimeMountInput,
+        battleSelfDeckInspectRuntimeMountBlob,
+      ),
+""", 'build-provenance')
+          build_path.write_text(build, encoding='utf-8')
+
+          build_test_path = Path('deploy/cloudflare/tests/build.test.mjs')
+          build_test = build_test_path.read_text(encoding='utf-8')
+          navigation_contract = """  {
+    file: 'screen-navigation-core.mjs',
+    source: 'browser/screen-navigation-core.mjs',
+    sourceArg: 'navigationCoreSource',
+    expectedArg: 'expectedNavigationCoreBlob',
+    artifact: 'screen_navigation_core',
+    fixture: 'export function resolveScreenNavigation(){ return { ok: true }; }\\n',
+    currentBlob: '91c7e790483fab24a921efe821d0a5102d6505ac',
+  },
+"""
+          build_test = replace_once(build_test, navigation_contract, navigation_contract + """  {
+    file: 'battle-self-deck-inspect-core.mjs',
+    source: 'browser/battle-self-deck-inspect-core.mjs',
+    sourceArg: 'battleSelfDeckInspectCoreSource',
+    expectedArg: 'expectedBattleSelfDeckInspectCoreBlob',
+    artifact: 'battle_self_deck_inspect_core',
+    fixture: 'export function createAuthoritativeRemainingDeckSnapshot(){return {}}; export function projectRemainingDeckForViewer(){return {}}; export function validateAuthoritativeRemainingDeckSnapshot(){return {ok:true}};\\n',
+    currentBlob: 'ae8488df0ef5eb4530c350d2f2ab8fa65a4f0f5e',
+  },
+  {
+    file: 'battle-self-deck-inspect-runtime-mount.mjs',
+    source: 'browser/battle-self-deck-inspect-runtime-mount.mjs',
+    sourceArg: 'battleSelfDeckInspectRuntimeMountSource',
+    expectedArg: 'expectedBattleSelfDeckInspectRuntimeMountBlob',
+    artifact: 'battle_self_deck_inspect_runtime_mount',
+    fixture: "import './battle-self-deck-inspect-core.mjs';\\nexport const BATTLE_SELF_DECK_INSPECT_RUNTIME_SCHEMA = 'fixture';\\n",
+    currentBlob: 'a458a410e01e0e4f84b1b66f82a3a9167ea6f419',
+  },
+""", 'build-test-contract')
+          build_test_path.write_text(build_test, encoding='utf-8')
+
+          html_path = Path('browser/GAMEROAD.html')
+          html = html_path.read_text(encoding='utf-8')
+          old_render = "function renderBattle(){if(!state.match)return;renderPhase();renderPlayers();renderHand();renderTarget();renderBoard();renderBattleResolution();updateBattleAvatar();setupBattleDetails();const plan=state.match.phase==='plan'&&!state.match.busy;$('#readyPlan').disabled=!plan;$('#roadSelect').disabled=!plan;$('#battleSelect').disabled=!plan;$('#clearPath').disabled=!plan}"
+          new_render = old_render[:-1] + ";globalThis.GAMEROAD_SELF_DECK_INSPECT_RUNTIME?.refresh?.()}"
+          html = replace_once(html, old_render, new_render, 'html-render-refresh')
+
+          source_bridge = """
+/* BATTLESELF R8: read-only owner deck source. No gameplay/save authority is created here. */
+globalThis.GAMEROAD_SELF_DECK_INSPECT_SOURCE=Object.freeze({
+ read:()=>{const m=state.match;if(!m||state.screen!=='battle')return null;if(m.friendRoom&&!m.friendRoom.host){const snapshot=window.GAMEROAD_FRIEND_ROOM_R2?.selfDeckSnapshot?.(),viewerId=String(m.friendRoom.localPid||'');return snapshot&&viewerId?{authoritativeSnapshot:snapshot,viewer:{id:viewerId,authenticated:true}}:null}const viewerId=String(m.friendRoom?.localPid||m.players.find(p=>p.human)?.id||m.players[0]?.id||''),p=m.players.find(x=>x.id===viewerId);if(!viewerId||!p||!Array.isArray(p.deck))return null;return{snapshotInput:{matchId:String(m.id),ownerPlayerId:viewerId,revision:Number(m.resolutionSeq)||0,remainingCardIds:[...p.deck]},viewer:{id:viewerId,authenticated:true}}},
+ cardLabel:(id)=>cardLabel(id)
+});
+"""
+          html = replace_once(html, 'window.__GAMEROAD_AUDIO_TEST__=', source_bridge + 'window.__GAMEROAD_AUDIO_TEST__=', 'html-source-bridge')
+          ordered_anchor = "const ordered=[p,...m.players.filter(x=>x.id!==viewer)].map(x=>publicPlayer(x,viewer));return{"
+          ordered_new = "const ordered=[p,...m.players.filter(x=>x.id!==viewer)].map(x=>publicPlayer(x,viewer));let remainingDeckSnapshot=null;try{remainingDeckSnapshot=globalThis.GAMEROAD_SELF_DECK_INSPECT_CORE_BRIDGE?.createSnapshot?.({matchId:String(m.id),ownerPlayerId:String(viewer),revision:Number(m.resolutionSeq)||0,remainingCardIds:[...p.deck]})||null}catch{}return{"
+          html = replace_once(html, ordered_anchor, ordered_new, 'html-friend-owner-snapshot')
+          private_anchor = "private:{pid:viewer,planSubmitted:!!FR.planValues[viewer],hateTime:Number(p.hateTime)||0,hateExploded:!!p.hateExploded,hateExplosionCount:Number(p.hateExplosionCount)||0}}}"
+          private_new = "private:{pid:viewer,planSubmitted:!!FR.planValues[viewer],hateTime:Number(p.hateTime)||0,hateExploded:!!p.hateExploded,hateExplosionCount:Number(p.hateExplosionCount)||0,remainingDeckSnapshot:clone(remainingDeckSnapshot)}}}"
+          html = replace_once(html, private_anchor, private_new, 'html-friend-private-payload')
+          html = replace_once(html,
+              'window.GAMEROAD_FRIEND_ROOM_R2={BUILD,create:createRoom',
+              'window.GAMEROAD_FRIEND_ROOM_R2={BUILD,selfDeckSnapshot:()=>clone(FR.snapshot?.private?.remainingDeckSnapshot||null),create:createRoom',
+              'html-friend-private-reader')
+          module_script = """<script type="module" id="gameroad-battle-self-deck-inspect-runtime">
+import './battle-self-deck-inspect-runtime-mount.mjs';
+</script>
+"""
+          html = replace_once(html, '</body></html>', module_script + '</body></html>', 'html-module-mount')
+          html_path.write_text(html, encoding='utf-8')
+
+          spec_path = Path('tests/browser-full-interaction.spec.mjs')
+          spec = spec_path.read_text(encoding='utf-8')
+          marker = "R8 exposes only the current player's remaining-deck multiset"
+          if marker in spec:
+              raise SystemExit('ANCHOR_FAIL browser-test-already-present')
+          spec += r'''
+
+test('R8 exposes only the current player\'s remaining-deck multiset with light-dismiss behavior', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280x720', 'bounded owner-deck disclosure evidence runs once');
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+
+  const setupControl = rootGo(page, 'setup');
+  await expect(setupControl).toBeVisible();
+  await setupControl.click();
+  const setup = page.locator('section[data-screen="setup"]');
+  await expect(setup).toBeVisible();
+  await setup.locator('[data-content="road_shield"]').click();
+  await setup.locator('[data-mode="2p"]').click();
+  await setup.locator('#startMatch').click();
+
+  const battle = page.locator('section[data-screen="battle"]');
+  await expect(battle).toBeVisible();
+  const button = battle.locator('#selfDeckInspectButton');
+  const panel = battle.locator('#selfDeckInspectPanel');
+  await expect(button).toBeVisible();
+
+  const expected = await page.evaluate(() => {
+    const m = window.__GAMEROAD_TEST__.state.match;
+    const p = m.players.find((x) => x.human) || m.players[0];
+    const counts = new Map();
+    for (const id of p.deck) counts.set(id, (counts.get(id) || 0) + 1);
+    return {
+      ownerPlayerId: p.id,
+      revision: Number(m.resolutionSeq) || 0,
+      total: p.deck.length,
+      rows: [...counts.entries()].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([cardId, count]) => ({ cardId, count })),
+    };
+  });
+  await expect(button).toHaveText(`残札 ${expected.total}`);
+  await expect(button).toHaveAttribute('data-owner-player-id', expected.ownerPlayerId);
+  await expect(button).toHaveAttribute('data-revision', String(expected.revision));
+
+  await button.click();
+  await expect(panel).toBeVisible();
+  await expect(button).toHaveAttribute('aria-expanded', 'true');
+  const rows = await panel.locator('.selfDeckInspectList li[data-card-id]').evaluateAll((nodes) => nodes.map((node) => ({
+    cardId: node.dataset.cardId,
+    count: Number(node.querySelector('b')?.textContent?.replace(/\D/g, '') || 0),
+    orderLeak: node.hasAttribute('data-order') || node.hasAttribute('data-index') || node.hasAttribute('data-position'),
+  })));
+  expect(rows.map(({ cardId, count }) => ({ cardId, count }))).toEqual(expected.rows);
+  expect(rows.every((row) => row.orderLeak === false)).toBe(true);
+  await expect(panel).not.toContainText('__HIDDEN__');
+
+  await battle.locator('#phaseBar').click();
+  await expect(panel).toBeHidden();
+  await expect(button).toHaveAttribute('aria-expanded', 'false');
+  await button.click();
+  await expect(panel).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(panel).toBeHidden();
+  await expect(button).toBeFocused();
+
+  const after = await page.evaluate(() => {
+    const m = window.__GAMEROAD_TEST__.state.match;
+    const p = m.players.find((x) => x.human) || m.players[0];
+    p.deck.pop();
+    window.__GAMEROAD_TEST__.battlePresentationRender();
+    return { total: p.deck.length, revision: Number(m.resolutionSeq) || 0 };
+  });
+  await expect(button).toHaveText(`残札 ${after.total}`);
+  await expect(button).toHaveAttribute('data-revision', String(after.revision));
+  runtime.assertClean(testInfo);
+});
+'''
+          spec_path.write_text(spec, encoding='utf-8')
+
+          print('PATCHED', html_path.stat().st_size, build_path.stat().st_size, build_test_path.stat().st_size, spec_path.stat().st_size)
           PY
+
+      - name: Focused Node verification
+        run: |
+          set -euo pipefail
+          node --test \
+            tests/battle-self-deck-inspect-core.test.mjs \
+            tests/battle-self-deck-inspect-runtime-mount.test.mjs \
+            deploy/cloudflare/tests/build.test.mjs
+          git diff --check
+
+      - name: Commit only authorized product delta and validate PRE_ACTION
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-battleself-r8'
+          git config user.email 'actions@users.noreply.github.com'
+          git add \
+            browser/GAMEROAD.html \
+            browser/battle-self-deck-inspect-runtime-mount.mjs \
+            deploy/cloudflare/scripts/build.mjs \
+            deploy/cloudflare/tests/build.test.mjs \
+            tests/battle-self-deck-inspect-runtime-mount.test.mjs \
+            tests/browser-full-interaction.spec.mjs
+          git commit -m 'BATTLESELF R8: mount owner-only remaining deck inspector'
+          git diff --name-only 0a8503a0280ae28621cc7a69ec1f69dfd7c178c4...HEAD > /tmp/battleself-changed.txt
+          cat /tmp/battleself-changed.txt
+          node tools/preaction-authorization-validator.mjs \
+            --base 0a8503a0280ae28621cc7a69ec1f69dfd7c178c4 \
+            --head HEAD \
+            --changed /tmp/battleself-changed.txt
+          git push origin HEAD:work/battleself-r8-browser-live-mount-20260827

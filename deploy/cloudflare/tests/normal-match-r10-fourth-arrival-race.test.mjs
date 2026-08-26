@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   MATCH_HUMAN_PRIORITY_MS,
-  createStoredMatchTicket,
   storedMatchTicketStatus,
 } from '../relay/src/match-store.mjs';
+import { createStoredMatchTicketWithExpiredCohortGate } from '../relay/src/match-create-with-timeout.mjs';
 
 class FakeStorage {
   constructor() { this.map = new Map(); }
@@ -44,7 +44,7 @@ function generated(nowMs) {
 }
 
 async function create(storage, n, nowMs) {
-  return createStoredMatchTicket(
+  return createStoredMatchTicketWithExpiredCohortGate(
     storage,
     { clientId: `r10-human-${n}`, idempotencyKey: `r10-idem-${String(n).padStart(8, '0')}` },
     generated(nowMs),
@@ -60,7 +60,7 @@ test('expired 3H cohort is frozen as 3H+AI1 before a fourth late Human is admitt
   old.push(await create(storage, 3, startedAt + 200));
   for (const item of old) assert.equal(item.ticket.status, 'WAITING');
 
-  // Simulate a delayed/missed alarm: no status/alarm service occurs before the late fourth create.
+  // Simulate a delayed/missed alarm: no foreground status/alarm service occurs before the late fourth create.
   const late = await create(storage, 4, startedAt + MATCH_HUMAN_PRIORITY_MS + 1);
 
   assert.equal(late.ok, true);
@@ -78,4 +78,24 @@ test('expired 3H cohort is frozen as 3H+AI1 before a fourth late Human is admitt
   assert.equal(first.match.aiSeats.length, 1);
   assert.equal(first.match.seats.filter((seat) => seat.kind === 'HUMAN').length, 3);
   assert.equal(first.match.seats.filter((seat) => seat.kind === 'AI').length, 1);
+});
+
+test('one waiting Human still needs a second Human; late second keeps established 2H+AI2 behavior', async () => {
+  const storage = new FakeStorage();
+  const startedAt = 2_000_000;
+  const first = await create(storage, 10, startedAt);
+  assert.equal(first.ticket.status, 'WAITING');
+
+  const second = await create(storage, 11, startedAt + MATCH_HUMAN_PRIORITY_MS + 1);
+  assert.equal(second.ticket.status, 'MATCHED');
+  assert.equal(second.formedMatchId.length > 0, true);
+
+  const firstStatus = await storedMatchTicketStatus(storage, {
+    ticketId: first.ticket.ticketId,
+    secret: first.secret,
+  });
+  assert.equal(firstStatus.match.fillReason, 'HUMAN_PRIORITY_TIMEOUT');
+  assert.equal(firstStatus.match.format, 'TEAM2V2');
+  assert.equal(firstStatus.match.ticketIds.length, 2);
+  assert.equal(firstStatus.match.aiSeats.length, 2);
 });

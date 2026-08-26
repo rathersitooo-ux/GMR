@@ -126,13 +126,14 @@ jobs:
           automatic_trigger = re.compile(r'^\s{0,4}(?:push|pull_request|schedule|repository_dispatch):', re.M)
           runner_re = re.compile(r'^\s*runs-on:\s*(.+?)\s*(?:#.*)?$', re.M)
           retention_re = re.compile(r'retention-days:\s*[\'\"]?(\d+)[\'\"]?', re.I)
+          dynamic_expression_marker = '$' + '{{'
 
           for workflow in sorted((root / '.github/workflows').glob('*.y*ml')):
               text = workflow.read_text(encoding='utf-8')
               name = workflow.as_posix()
               for raw in runner_re.findall(text):
                   runner = raw.strip().strip('\'\"')
-                  if '${{' in runner:
+                  if dynamic_expression_marker in runner:
                       error('DYNAMIC_RUNNER_UNVERIFIED', runner, name)
                   elif runner not in allowed_runners:
                       error('NON_FREE_OR_UNKNOWN_RUNNER', runner, name)

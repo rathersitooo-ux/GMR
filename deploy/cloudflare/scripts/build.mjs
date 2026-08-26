@@ -26,6 +26,9 @@ const defaultUiStateFeedbackCoreSource = path.join(repoRoot, 'browser/ui-state-f
 const defaultUiStateFeedbackReadyPlanAdapterSource = path.join(repoRoot, 'browser/ui-state-feedback-ready-plan-adapter.mjs');
 const defaultFieldMusicPolicyCoreSource = path.join(repoRoot, 'browser/field-music-policy-core.mjs');
 const defaultHomeCards2p5dPresentationSource = path.join(repoRoot, 'browser/home-cards-2p5d-presentation.mjs');
+const defaultPartnerAdviceRuntimeMountSource = path.join(repoRoot, 'browser/partner-advice-runtime-mount.mjs');
+const defaultPartnerLegalActionAdapterSource = path.join(repoRoot, 'browser/partner-legal-action-adapter.mjs');
+const defaultAdviceCollectiveEvalSource = path.join(repoRoot, 'tools/advice-collective-eval.mjs');
 const defaultClickSfxSource = path.join(repoRoot, 'assets/audio/sfx/click_002.ogg');
 const defaultCardSlideSfxSource = path.join(repoRoot, 'assets/audio/sfx/cardSlide6.ogg');
 const defaultCardPlaceSfxSource = path.join(repoRoot, 'assets/audio/sfx/cardPlace1.ogg');
@@ -55,6 +58,28 @@ function provenance(source, output, input, blob) {
   };
 }
 
+function localModuleRefs(sourceText) {
+  const refs = new Set();
+  const patterns = [
+    /\b(?:import|export)\s+(?:[^'\"]*?\s+from\s*)?(['\"])(\.{1,2}\/[^'\"?#]+\.(?:mjs|js))(?:[?#][^'\"]*)?\1/g,
+    /\bimport\s*\(\s*(['\"])(\.{1,2}\/[^'\"?#]+\.(?:mjs|js))(?:[?#][^'\"]*)?\1\s*\)/g,
+  ];
+  for (const pattern of patterns) {
+    for (const match of sourceText.matchAll(pattern)) refs.add(match[2]);
+  }
+  return [...refs].sort();
+}
+
+function resolvePublicModuleOutput(parentOutput, ref) {
+  const parentDir = path.posix.dirname(`/${String(parentOutput || '')}`);
+  const resolved = path.posix.normalize(path.posix.join(parentDir, ref));
+  const output = resolved.replace(/^\/+/, '');
+  if (!output || output.includes('\\') || output === '.' || output === '..') {
+    throw new Error(`Unsupported Browser runtime dependency path in public package: ${ref}`);
+  }
+  return output;
+}
+
 export async function assertBrowserRuntimeDependencyCompleteness(browserInput, dist) {
   const html = Buffer.isBuffer(browserInput) ? browserInput.toString('utf8') : String(browserInput ?? '');
   const refs = new Set();
@@ -65,21 +90,39 @@ export async function assertBrowserRuntimeDependencyCompleteness(browserInput, d
   for (const pattern of patterns) {
     for (const match of html.matchAll(pattern)) refs.add(match[2]);
   }
+
+  const pending = [];
   for (const ref of refs) {
     const output = ref.slice(2);
     if (!output || output.includes('/') || output.includes('\\') || output === '.' || output === '..') {
       throw new Error(`Unsupported Browser runtime dependency path in public package: ${ref}`);
     }
+    pending.push(output);
+  }
+
+  const visited = new Set();
+  while (pending.length > 0) {
+    const output = pending.shift();
+    if (visited.has(output)) continue;
+    visited.add(output);
+
+    let bytes;
     try {
-      await readFile(path.join(dist, output));
+      bytes = await readFile(path.join(dist, output));
     } catch (error) {
       if (error?.code === 'ENOENT') {
-        throw new Error(`Public package missing Browser runtime dependency: ${ref}`);
+        throw new Error(`Public package missing Browser runtime dependency: ./${output}`);
       }
       throw error;
     }
+
+    if (!/\.(?:mjs|js)$/i.test(output)) continue;
+    for (const ref of localModuleRefs(bytes.toString('utf8'))) {
+      const dependencyOutput = resolvePublicModuleOutput(output, ref);
+      if (!visited.has(dependencyOutput)) pending.push(dependencyOutput);
+    }
   }
-  return [...refs].sort();
+  return [...visited].sort();
 }
 
 export async function buildPackage({
@@ -100,6 +143,9 @@ export async function buildPackage({
   uiStateFeedbackReadyPlanAdapterSource = defaultUiStateFeedbackReadyPlanAdapterSource,
   fieldMusicPolicyCoreSource = defaultFieldMusicPolicyCoreSource,
   homeCards2p5dPresentationSource = defaultHomeCards2p5dPresentationSource,
+  partnerAdviceRuntimeMountSource = defaultPartnerAdviceRuntimeMountSource,
+  partnerLegalActionAdapterSource = defaultPartnerLegalActionAdapterSource,
+  adviceCollectiveEvalSource = defaultAdviceCollectiveEvalSource,
   clickSfxSource = defaultClickSfxSource,
   cardSlideSfxSource = defaultCardSlideSfxSource,
   cardPlaceSfxSource = defaultCardPlaceSfxSource,
@@ -120,6 +166,9 @@ export async function buildPackage({
   expectedUiStateFeedbackCoreBlob = '',
   expectedUiStateFeedbackReadyPlanAdapterBlob = '',
   expectedFieldMusicPolicyCoreBlob = '',
+  expectedPartnerAdviceRuntimeMountBlob = '',
+  expectedPartnerLegalActionAdapterBlob = '',
+  expectedAdviceCollectiveEvalBlob = '',
   sourceCommit = '',
   publishedAt = '',
 } = {}) {
@@ -140,6 +189,9 @@ export async function buildPackage({
   const uiStateFeedbackReadyPlanAdapterInput = await readFile(uiStateFeedbackReadyPlanAdapterSource);
   const fieldMusicPolicyCoreInput = await readFile(fieldMusicPolicyCoreSource);
   const homeCards2p5dPresentationInput = await readFile(homeCards2p5dPresentationSource);
+  const partnerAdviceRuntimeMountInput = await readFile(partnerAdviceRuntimeMountSource);
+  const partnerLegalActionAdapterInput = await readFile(partnerLegalActionAdapterSource);
+  const adviceCollectiveEvalInput = await readFile(adviceCollectiveEvalSource);
   const clickSfxInput = await readFile(clickSfxSource);
   const cardSlideSfxInput = await readFile(cardSlideSfxSource);
   const cardPlaceSfxInput = await readFile(cardPlaceSfxSource);
@@ -160,6 +212,9 @@ export async function buildPackage({
   const uiStateFeedbackReadyPlanAdapterBlob = gitBlobSha1(uiStateFeedbackReadyPlanAdapterInput);
   const fieldMusicPolicyCoreBlob = gitBlobSha1(fieldMusicPolicyCoreInput);
   const homeCards2p5dPresentationBlob = gitBlobSha1(homeCards2p5dPresentationInput);
+  const partnerAdviceRuntimeMountBlob = gitBlobSha1(partnerAdviceRuntimeMountInput);
+  const partnerLegalActionAdapterBlob = gitBlobSha1(partnerLegalActionAdapterInput);
+  const adviceCollectiveEvalBlob = gitBlobSha1(adviceCollectiveEvalInput);
   const clickSfxBlob = gitBlobSha1(clickSfxInput);
   const cardSlideSfxBlob = gitBlobSha1(cardSlideSfxInput);
   const cardPlaceSfxBlob = gitBlobSha1(cardPlaceSfxInput);
@@ -226,6 +281,15 @@ export async function buildPackage({
     throw new Error(
       `Field music policy core blob mismatch: expected=${expectedFieldMusicPolicyCoreBlob} actual=${fieldMusicPolicyCoreBlob}`,
     );
+  }
+  if (expectedPartnerAdviceRuntimeMountBlob && partnerAdviceRuntimeMountBlob !== expectedPartnerAdviceRuntimeMountBlob) {
+    throw new Error(`Partner advice runtime mount blob mismatch: expected=${expectedPartnerAdviceRuntimeMountBlob} actual=${partnerAdviceRuntimeMountBlob}`);
+  }
+  if (expectedPartnerLegalActionAdapterBlob && partnerLegalActionAdapterBlob !== expectedPartnerLegalActionAdapterBlob) {
+    throw new Error(`Partner legal action adapter blob mismatch: expected=${expectedPartnerLegalActionAdapterBlob} actual=${partnerLegalActionAdapterBlob}`);
+  }
+  if (expectedAdviceCollectiveEvalBlob && adviceCollectiveEvalBlob !== expectedAdviceCollectiveEvalBlob) {
+    throw new Error(`Advice collective evaluator blob mismatch: expected=${expectedAdviceCollectiveEvalBlob} actual=${adviceCollectiveEvalBlob}`);
   }
 
   const versionManifestBytes = serializeVersionManifest({ sourceCommit, publishedAt });
@@ -349,6 +413,28 @@ export async function buildPackage({
   const homeCards2p5dPresentationRoundTrip = await readFile(homeCards2p5dPresentationOutputPath);
   if (!homeCards2p5dPresentationInput.equals(homeCards2p5dPresentationRoundTrip)) {
     throw new Error('dist/home-cards-2p5d-presentation.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const partnerAdviceRuntimeMountOutputPath = path.join(dist, 'partner-advice-runtime-mount.mjs');
+  await writeFile(partnerAdviceRuntimeMountOutputPath, partnerAdviceRuntimeMountInput);
+  const partnerAdviceRuntimeMountRoundTrip = await readFile(partnerAdviceRuntimeMountOutputPath);
+  if (!partnerAdviceRuntimeMountInput.equals(partnerAdviceRuntimeMountRoundTrip)) {
+    throw new Error('dist/partner-advice-runtime-mount.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const partnerLegalActionAdapterOutputPath = path.join(dist, 'partner-legal-action-adapter.mjs');
+  await writeFile(partnerLegalActionAdapterOutputPath, partnerLegalActionAdapterInput);
+  const partnerLegalActionAdapterRoundTrip = await readFile(partnerLegalActionAdapterOutputPath);
+  if (!partnerLegalActionAdapterInput.equals(partnerLegalActionAdapterRoundTrip)) {
+    throw new Error('dist/partner-legal-action-adapter.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const adviceCollectiveEvalOutputPath = path.join(dist, 'tools/advice-collective-eval.mjs');
+  await mkdir(path.dirname(adviceCollectiveEvalOutputPath), { recursive: true });
+  await writeFile(adviceCollectiveEvalOutputPath, adviceCollectiveEvalInput);
+  const adviceCollectiveEvalRoundTrip = await readFile(adviceCollectiveEvalOutputPath);
+  if (!adviceCollectiveEvalInput.equals(adviceCollectiveEvalRoundTrip)) {
+    throw new Error('dist/tools/advice-collective-eval.mjs is not byte-identical to Browser dependency source');
   }
 
   await assertBrowserRuntimeDependencyCompleteness(input, dist);
@@ -495,6 +581,24 @@ export async function buildPackage({
         homeCards2p5dPresentationInput,
         homeCards2p5dPresentationBlob,
       ),
+      partner_advice_runtime_mount: provenance(
+        'browser/partner-advice-runtime-mount.mjs',
+        'partner-advice-runtime-mount.mjs',
+        partnerAdviceRuntimeMountInput,
+        partnerAdviceRuntimeMountBlob,
+      ),
+      partner_legal_action_adapter: provenance(
+        'browser/partner-legal-action-adapter.mjs',
+        'partner-legal-action-adapter.mjs',
+        partnerLegalActionAdapterInput,
+        partnerLegalActionAdapterBlob,
+      ),
+      advice_collective_eval: provenance(
+        'tools/advice-collective-eval.mjs',
+        'tools/advice-collective-eval.mjs',
+        adviceCollectiveEvalInput,
+        adviceCollectiveEvalBlob,
+      ),
       sfx_click_002: provenance(
         'assets/audio/sfx/click_002.ogg',
         'click_002.ogg',
@@ -546,6 +650,9 @@ function parseArgs(argv) {
     else if (a === '--ui-state-feedback-ready-plan-adapter-source') out.uiStateFeedbackReadyPlanAdapterSource = path.resolve(argv[++i]);
     else if (a === '--field-music-policy-core-source') out.fieldMusicPolicyCoreSource = path.resolve(argv[++i]);
     else if (a === '--home-cards-2p5d-presentation-source') out.homeCards2p5dPresentationSource = path.resolve(argv[++i]);
+    else if (a === '--partner-advice-runtime-mount-source') out.partnerAdviceRuntimeMountSource = path.resolve(argv[++i]);
+    else if (a === '--partner-legal-action-adapter-source') out.partnerLegalActionAdapterSource = path.resolve(argv[++i]);
+    else if (a === '--advice-collective-eval-source') out.adviceCollectiveEvalSource = path.resolve(argv[++i]);
     else if (a === '--dist') out.dist = path.resolve(argv[++i]);
     else if (a === '--expected-blob') out.expectedBlob = argv[++i] || '';
     else if (a === '--expected-core-blob') out.expectedCoreBlob = argv[++i] || '';
@@ -563,6 +670,9 @@ function parseArgs(argv) {
     else if (a === '--expected-ui-state-feedback-core-blob') out.expectedUiStateFeedbackCoreBlob = argv[++i] || '';
     else if (a === '--expected-ui-state-feedback-ready-plan-adapter-blob') out.expectedUiStateFeedbackReadyPlanAdapterBlob = argv[++i] || '';
     else if (a === '--expected-field-music-policy-core-blob') out.expectedFieldMusicPolicyCoreBlob = argv[++i] || '';
+    else if (a === '--expected-partner-advice-runtime-mount-blob') out.expectedPartnerAdviceRuntimeMountBlob = argv[++i] || '';
+    else if (a === '--expected-partner-legal-action-adapter-blob') out.expectedPartnerLegalActionAdapterBlob = argv[++i] || '';
+    else if (a === '--expected-advice-collective-eval-blob') out.expectedAdviceCollectiveEvalBlob = argv[++i] || '';
     else if (a === '--source-commit') out.sourceCommit = argv[++i] || '';
     else if (a === '--published-at') out.publishedAt = argv[++i] || '';
     else throw new Error(`Unknown argument: ${a}`);

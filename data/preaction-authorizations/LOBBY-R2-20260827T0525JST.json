@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "recordType": "PRE_ACTION_AUTHORIZATION",
+  "recordId": "LOBBY-R2-20260827T0525JST",
+  "targetBranch": "main",
+  "authorizationBaseSha": "0a8503a0280ae28621cc7a69ec1f69dfd7c178c4",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "Drive:R21:CHATGPT-PRIMARY-20260827T0510JST-R1:RESOLUTION_PREP_R2",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "required-gate-validator-source-readback+focused-node-test-4of4",
+  "riskClass": "MATERIAL_STANDARD",
+  "proceedToken": "PREACTION_PROCEED_ALLOWED|MATERIAL|LOBBY-R2|CHATGPT-PRIMARY-20260827T0510JST-R1",
+  "scopePaths": [
+    ".github/workflows/gameroad-required-gate.yml",
+    "browser/lobby-deck-battle-connection-core.mjs",
+    "tests/lobby-deck-battle-connection-core.test.mjs"
+  ]
+}

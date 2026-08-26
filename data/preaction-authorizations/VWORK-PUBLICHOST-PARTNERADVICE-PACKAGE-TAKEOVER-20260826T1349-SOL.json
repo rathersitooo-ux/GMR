@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-PUBLICHOST-PARTNERADVICE-PACKAGE-TAKEOVER-20260826T1349-SOL",
+  "taskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "workUnitKey": "PARTNER_ADVICE_TRANSITIVE_PUBLIC_PACKAGE_CLOSURE_TAKEOVER",
+  "acquireKey": "PUBLICHOST-PARTNERADVICE-PACKAGE-TAKEOVER-20260826T1349-SOL-Q6N4V8K2M7PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLICHOST-PARTNERADVICE-TRANSITIVE-FAILUREMODEL-20260826T1349",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR387-REQUIRED-GATE-32858445961-PUBLIC-PACKAGE-PROVENANCE-FAIL",
+  "proceedToken": "PROCEED|VWORK-PUBLICHOST-PARTNERADVICE-PACKAGE-TAKEOVER-20260826T1349-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction=shipping only the direct Partner advice module or flattening its transitive URLs can false-green package checks while public runtime still fails; nested rollback must not introduce path traversal or broken restore.|rehearsal=current PR387 Required Gate exact-head failure proves the direct dependency is absent from dist; source graph independently proves runtime mount -> legal adapter -> tools/advice-collective-eval closure and current deploy serves nested dist paths.",
+  "authorizationBaseSha": "e909300c8ad9ef7de4c7fd697556c8bec0aaf3ea",
+  "issuedAt": "2026-08-26T13:54:00+09:00",
+  "scope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "notes": "Drive R21 takeover acquisition was fresh-read and remains active through 2026-08-26 14:49 JST. Scope is PublicHost packaging/provenance/rollback only. Do not mutate browser/GAMEROAD.html, PR#387, Partner semantics, rules, save/economy, or formal assets. This manifest is temporary and must be deleted before final PR head."
+}

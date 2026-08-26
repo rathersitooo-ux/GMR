@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "rigpipe-r33-bodyzone-interaction-core-20260827",
+  "taskId": "RIG-ANIMATION-PIPELINE-FORMAL-EXPORT-001",
+  "workUnitKey": "R33-PARTNER-BODY-ZONE-INTERACTION-CORE",
+  "acquireKey": "RIGPIPE-R33-BODYZONE-INTERACTION-CORE-20260827T0045-SOL-Q8N4V7K2M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R33-PREDICT-BODYZONE-CORE-20260827T0108-JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R33-LOCAL-NODE-11-OF-11-PASS",
+  "proceedToken": "PROCEED|rigpipe-r33-bodyzone-interaction-core-20260827|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|R33-20260827T0108-JST",
+  "authorizationBaseSha": "3685d2bf996c6c123c22dcbdc515f1a978ab5be8",
+  "scope": [
+    "browser/partner-body-interaction-core.mjs",
+    "tests/partner-body-interaction-core.test.mjs",
+    ".github/workflows/gameroad-required-gate.yml"
+  ]
+}

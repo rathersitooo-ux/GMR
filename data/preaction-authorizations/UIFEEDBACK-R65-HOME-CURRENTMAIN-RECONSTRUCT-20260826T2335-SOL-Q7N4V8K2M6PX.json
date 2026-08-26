@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "UIFEEDBACK-R65-HOME-CURRENTMAIN-RECONSTRUCT-20260826T2335-SOL-Q7N4V8K2M6PX",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "UIFEEDBACK_HOME_CURRENTMAIN_RECONSTRUCT_PUBLIC_CLOSURE_R65",
+  "acquireKey": "UIFEEDBACK-R65-HOME-CURRENTMAIN-RECONSTRUCT-20260826T2335-SOL-Q7N4V8K2M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R64_EXPIRED_NO_MUTATION_PLUS_MAIN_NONOVERLAP_AND_PR393_SEVEN_PATH_DONOR",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR393_RUNTIME_EVIDENCE_PLUS_R63_ACTIVE_SCREEN_SMOKE_REPAIR",
+  "proceedToken": "PROCEED|UIFEEDBACK-R65-HOME-CURRENTMAIN-RECONSTRUCT-20260826T2335-SOL-Q7N4V8K2M6PX|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_MAIN_RECONSTRUCT",
+  "authorizationBaseSha": "3685d2bf996c6c123c22dcbdc515f1a978ab5be8",
+  "scope": [
+    "assets/visual/home/home-illustration-landscape.webp",
+    "assets/visual/home/home-illustration-portrait.webp",
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/browser-runtime-smoke.spec.mjs"
+  ]
+}

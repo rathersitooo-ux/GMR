@@ -122,6 +122,7 @@ jobs:
 
           allowed_runners = set(github_policy.get('allowedStandardRunnerLabels') or [])
           max_retention = int(github_policy.get('maxArtifactRetentionDays') or 14)
+          # Split credential markers so this scanner never matches its own source text.
           paid_tokens = (
               'OPENAI' + '_API_KEY',
               'ANTHROPIC' + '_API_KEY',

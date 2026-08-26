@@ -1,0 +1,87 @@
+{
+  "schema": "gameroad.zero-cash-runtime-policy.v1",
+  "policyVersion": "R2-20260826",
+  "cashSpendAllowed": false,
+  "automaticPaidFallbackAllowed": false,
+  "quotaExhaustionBehavior": "DEGRADE_PAUSE_OR_FAIL_CLOSED",
+  "unknownBillingStateBehavior": "HOLD",
+  "providerEvidence": {
+    "lastVerified": "2026-08-26",
+    "maxAgeDays": 45,
+    "sources": [
+      "https://developers.cloudflare.com/workers/platform/limits/",
+      "https://developers.cloudflare.com/durable-objects/platform/pricing/",
+      "https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/",
+      "https://developers.cloudflare.com/pages/platform/limits/",
+      "https://docs.github.com/en/actions/concepts/billing-and-usage",
+      "https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features"
+    ]
+  },
+  "github": {
+    "requiredVisibility": "public",
+    "allowedStandardRunnerLabels": [
+      "ubuntu-latest",
+      "ubuntu-24.04",
+      "ubuntu-22.04",
+      "ubuntu-26.04",
+      "ubuntu-slim",
+      "windows-latest",
+      "windows-2025",
+      "windows-2025-vs2026",
+      "windows-2022",
+      "windows-11-arm",
+      "windows-11-vs2026-arm",
+      "macos-latest",
+      "macos-14",
+      "macos-15",
+      "macos-15-intel",
+      "macos-26",
+      "macos-26-intel"
+    ],
+    "maxArtifactRetentionDays": 3,
+    "actionsUsageScope": "REPOSITORY_DEVELOPMENT_TEST_DEPLOY_PUBLICATION_ONLY"
+  },
+  "cloudflare": {
+    "requiredWorkersPlan": "free",
+    "accountPlanVerification": "EXTERNAL_BILLING_READ_REQUIRED",
+    "workers": {
+      "requestsPerDay": 100000,
+      "cpuMsPerHttpRequest": 10,
+      "memoryMB": 128,
+      "onExhaustion": "PLATFORM_ERROR_NO_PAID_FALLBACK"
+    },
+    "durableObjects": {
+      "backendRequired": "sqlite",
+      "requestsPerDay": 100000,
+      "durationGbSecondsPerDay": 13000,
+      "rowsReadPerDay": 5000000,
+      "rowsWrittenPerDay": 100000,
+      "storageGBTotal": 5,
+      "onExhaustion": "PLATFORM_ERROR_NO_PAID_FALLBACK"
+    },
+    "pages": {
+      "buildsPerMonth": 500
+    },
+    "staticAssets": {
+      "requests": "FREE_UNLIMITED"
+    }
+  },
+  "currentRequiredFiles": [
+    ".github/workflows/cloudflare-public-deploy.yml",
+    "deploy/cloudflare/relay/wrangler.toml",
+    "deploy/cloudflare/relay/src/relay-worker.mjs"
+  ],
+  "forbiddenDefaultRuntimeClasses": [
+    "PAID_LLM_API",
+    "PAID_GPU_RUNNER",
+    "PAID_SERVER",
+    "PAID_DATABASE",
+    "PAID_STORAGE",
+    "UNAUTHORIZED_COMPUTE",
+    "AUTOMATIC_PAID_OVERAGE"
+  ],
+  "externalHumanResiduals": [
+    "Cloudflare account must actually remain on Workers Free plan; repository files alone cannot prove account billing state.",
+    "Any domain registration, store fee, taxes, payment processing, legal review, or hardware/electricity cost is outside this repository guard and must be separately classified before claiming literal total cash cost = 0."
+  ]
+}

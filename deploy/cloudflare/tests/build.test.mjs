@@ -93,7 +93,6 @@ async function restoreRollbackSnapshot({
     'snapshot and target directories must not be nested',
   );
 
-  // Fail closed: every snapshot byte is validated and buffered before target mutation.
   const validated = await validateRollbackSnapshot({
     snapshotDir: snapshot,
     expectedSourceCommit,
@@ -114,14 +113,8 @@ async function restoreRollbackSnapshot({
   for (const [output, bytes] of validated.outputs) {
     assert.equal((await readFile(path.join(target, output))).equals(bytes), true);
   }
-  assert.equal(
-    (await readFile(path.join(target, '_headers'))).equals(validated.headersBytes),
-    true,
-  );
-  assert.equal(
-    (await readFile(path.join(target, 'manifest.json'))).equals(validated.manifestBytes),
-    true,
-  );
+  assert.equal((await readFile(path.join(target, '_headers'))).equals(validated.headersBytes), true);
+  assert.equal((await readFile(path.join(target, 'manifest.json'))).equals(validated.manifestBytes), true);
 
   return validated.manifest;
 }
@@ -134,7 +127,7 @@ const dependencyContract = [
     expectedArg: 'expectedCoreBlob',
     artifact: 'deck_save_recovery_core',
     fixture: 'globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE = Object.freeze({});\n',
-    currentBlob: 'a21514cd3562005066298b2902f46da7c14f3caa',
+    currentBlob: 'd29fde280b3eb7c5f760b162987e04bda3446258',
   },
   {
     file: 'hate-peer-presence-core.mjs',
@@ -195,8 +188,8 @@ const dependencyContract = [
     source: 'browser/battle-conveyor-presentation-core.mjs',
     sourceArg: 'battleConveyorCoreSource',
     expectedArg: 'expectedBattleConveyorCoreBlob',
-    artifact: 'battle_conveyor_presentation_core',
-    fixture: 'export const BATTLE_CONVEYOR_PRESENTATION_CORE = Object.freeze({});\n',
+    artifact: 'battle_conveyor_core',
+    fixture: 'export const BATTLE_CONVEYOR_CORE = Object.freeze({});\n',
     currentBlob: '1d84e253a0a4c88c9c9969407c95c6155fe057ec',
   },
   {
@@ -325,10 +318,7 @@ test('build copies Browser, runtime dependencies, and formal version manifest de
     assert.equal(first.artifacts[dep.artifact].git_blob_sha1, options[dep.expectedArg]);
     assert.equal(first.artifacts[dep.artifact].output, dep.file);
   }
-  assert.deepEqual(
-    JSON.parse(await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8')),
-    expectedVersionManifest(),
-  );
+  assert.deepEqual(JSON.parse(await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8')), expectedVersionManifest());
   assert.equal(
     await readFile(path.join(dist, '_headers'), 'utf8'),
     '/\n  Cache-Control: no-cache, no-store\n\n/index.html\n  Cache-Control: no-cache, no-store\n\n/gameroad-version.json\n  Cache-Control: no-store\n\n/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n',
@@ -352,14 +342,8 @@ test('recursive dependency verifier follows Partner advice imports and fails clo
   const dist = path.join(dir, 'dist');
   await mkdir(path.join(dist, 'tools'), { recursive: true });
   const browserBytes = Buffer.from('<script type="module">import("./partner-advice-runtime-mount.mjs")</script>\n', 'utf8');
-  await writeFile(
-    path.join(dist, 'partner-advice-runtime-mount.mjs'),
-    "import './partner-legal-action-adapter.mjs';\n",
-  );
-  await writeFile(
-    path.join(dist, 'partner-legal-action-adapter.mjs'),
-    "import '../tools/advice-collective-eval.mjs';\n",
-  );
+  await writeFile(path.join(dist, 'partner-advice-runtime-mount.mjs'), "import './partner-legal-action-adapter.mjs';\n");
+  await writeFile(path.join(dist, 'partner-legal-action-adapter.mjs'), "import '../tools/advice-collective-eval.mjs';\n");
   await writeFile(path.join(dist, 'tools/advice-collective-eval.mjs'), 'export const ready = true;\n');
 
   assert.deepEqual(
@@ -397,10 +381,7 @@ test('build packages the exact current production Browser dependency set with ve
   assert.equal((await readFile(path.join(dist, 'index.html'))).equals(browserBytes), true);
   assert.equal(manifest.source_commit, SOURCE_COMMIT);
   assert.equal(manifest.artifacts.index_html.git_blob_sha1, options.expectedBlob);
-  assert.deepEqual(
-    JSON.parse(await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8')),
-    expectedVersionManifest(),
-  );
+  assert.deepEqual(JSON.parse(await readFile(path.join(dist, VERSION_MANIFEST_FILENAME), 'utf8')), expectedVersionManifest());
   for (const dep of dependencyContract) {
     assert.equal((await readFile(path.join(dist, dep.file))).equals(currentBytes.get(dep.file)), true);
     assert.equal(manifest.artifacts[dep.artifact].git_blob_sha1, dep.currentBlob);
@@ -451,22 +432,10 @@ test('isolated rollback drill restores a validated package and rejects corruptio
 
   assert.equal(restored.source_commit, SOURCE_COMMIT);
   for (const artifact of Object.values(restored.artifacts)) {
-    assert.equal(
-      (await readFile(path.join(target, artifact.output))).equals(
-        await readFile(path.join(snapshot, artifact.output)),
-      ),
-      true,
-      `restored artifact must be byte-exact: ${artifact.output}`,
-    );
+    assert.equal((await readFile(path.join(target, artifact.output))).equals(await readFile(path.join(snapshot, artifact.output))), true);
   }
-  assert.equal(
-    (await readFile(path.join(target, 'manifest.json'))).equals(trustedManifestBytes),
-    true,
-  );
-  assert.equal(
-    (await readFile(path.join(target, '_headers'))).equals(trustedHeadersBytes),
-    true,
-  );
+  assert.equal((await readFile(path.join(target, 'manifest.json'))).equals(trustedManifestBytes), true);
+  assert.equal((await readFile(path.join(target, '_headers'))).equals(trustedHeadersBytes), true);
   await assert.rejects(() => readFile(path.join(target, 'stale-undeclared.txt')), /ENOENT/);
 
   await writeFile(path.join(target, 'prevalidation-sentinel.txt'), 'target must remain untouched\n', 'utf8');
@@ -483,14 +452,8 @@ test('isolated rollback drill restores a validated package and rejects corruptio
     }),
     /snapshot artifact (byte count|hash) mismatch: index\.html/,
   );
-  assert.equal(
-    await readFile(path.join(target, 'prevalidation-sentinel.txt'), 'utf8'),
-    'target must remain untouched\n',
-  );
-  assert.equal(
-    (await readFile(path.join(target, 'index.html'))).equals(browserBytes),
-    true,
-  );
+  assert.equal(await readFile(path.join(target, 'prevalidation-sentinel.txt'), 'utf8'), 'target must remain untouched\n');
+  assert.equal((await readFile(path.join(target, 'index.html'))).equals(browserBytes), true);
 });
 
 test('build fails closed on stale Browser or packaged dependency blob expectations', async () => {
@@ -532,19 +495,11 @@ test('build fails closed on stale Browser or packaged dependency blob expectatio
 test('build fails closed before package output for invalid release identity', async () => {
   const dir = await mkdtemp(path.join(os.tmpdir(), 'gameroad-public-pack-version-invalid-'));
   await assert.rejects(
-    () => buildPackage({
-      dist: path.join(dir, 'dist-a'),
-      sourceCommit: 'abc123',
-      publishedAt: PUBLISHED_AT,
-    }),
+    () => buildPackage({ dist: path.join(dir, 'dist-a'), sourceCommit: 'abc123', publishedAt: PUBLISHED_AT }),
     /exact lowercase 40-hex/,
   );
   await assert.rejects(
-    () => buildPackage({
-      dist: path.join(dir, 'dist-b'),
-      sourceCommit: SOURCE_COMMIT,
-      publishedAt: '2026-08-19',
-    }),
+    () => buildPackage({ dist: path.join(dir, 'dist-b'), sourceCommit: SOURCE_COMMIT, publishedAt: '2026-08-19' }),
     /explicit RFC3339/,
   );
 });

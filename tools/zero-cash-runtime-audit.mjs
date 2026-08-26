@@ -117,7 +117,7 @@ export async function auditZeroCash({ root, policyPath, repositoryVisibility = n
     for (const block of artifactUploadBlocks(text)) {
       const days = retentionDays(block);
       if (days === null) findings.push(result('ERROR', 'ARTIFACT_RETENTION_UNBOUNDED_BY_WORKFLOW', 'upload-artifact must declare retention-days', name));
-      else if (days > Number(policy.github?.maxArtifactRetentionDays ?? 3)) findings.push(result('ERROR', 'ARTIFACT_RETENTION_TOO_LONG', `${days} days`, name));
+      else if (days > Number(policy.github?.maxArtifactRetentionDays ?? 14)) findings.push(result('ERROR', 'ARTIFACT_RETENTION_TOO_LONG', `${days} days`, name));
     }
 
     const paidTokens = ['OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'RUNPOD_API_KEY', 'REPLICATE_API_TOKEN', 'TOGETHER_API_KEY'];
@@ -150,6 +150,8 @@ export async function auditZeroCash({ root, policyPath, repositoryVisibility = n
   if (policy.cloudflare?.requiredWorkersPlan !== 'free') findings.push(result('ERROR', 'CLOUDFLARE_PLAN_POLICY_NOT_FREE', String(policy.cloudflare?.requiredWorkersPlan)));
   if (policy.cloudflare?.accountPlanVerification !== 'EXTERNAL_BILLING_READ_REQUIRED') findings.push(result('ERROR', 'CLOUDFLARE_ACCOUNT_PLAN_GATE_WEAK', String(policy.cloudflare?.accountPlanVerification)));
   findings.push(result('HOLD', 'CLOUDFLARE_ACCOUNT_PLAN_EXTERNAL', 'Repository guard cannot prove the live Cloudflare account is on Workers Free. Verify with Cloudflare Billing Read or dashboard before claiming literal zero cash.'));
+  if (policy.github?.billingGuardVerification !== 'EXTERNAL_BUDGET_OR_NO_PAYMENT_METHOD_READ_REQUIRED') findings.push(result('ERROR', 'GITHUB_BILLING_GUARD_WEAK', String(policy.github?.billingGuardVerification)));
+  findings.push(result('HOLD', 'GITHUB_ACTIONS_BILLING_GUARD_EXTERNAL', 'Repository guard cannot prove the GitHub account has no payment method or a zero-dollar Actions budget configured to stop usage. Verify account billing settings before claiming literal zero cash.'));
 
   const errors = findings.filter((f) => f.level === 'ERROR');
   const holds = findings.filter((f) => f.level === 'HOLD');

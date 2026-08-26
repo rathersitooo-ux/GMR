@@ -1,4 +1,5 @@
 const SCHEMA = 'gameroad.deck-save-ack.v1';
+const MATCH_START_SCHEMA = 'gameroad.browser.match-start-snapshot.v1';
 
 function nonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
@@ -190,4 +191,51 @@ export function timeoutDeckSave(state, { requestId } = {}) {
   return decision(next, 'timed_out', 'SAVE_TIMEOUT');
 }
 
+export function createDeckMatchStartSnapshot(selection, { validateDeck } = {}) {
+  if (!selection || typeof selection !== 'object' || Array.isArray(selection)) {
+    throw new TypeError('MATCH_START_SELECTION_REQUIRED');
+  }
+  if (typeof validateDeck !== 'function') {
+    throw new TypeError('MATCH_START_VALIDATE_DECK_REQUIRED');
+  }
+
+  const savedDeck = selection.savedDeck && typeof selection.savedDeck === 'object'
+    ? selection.savedDeck
+    : {};
+  const deck = {
+    main: Array.isArray(savedDeck.main) ? [...savedDeck.main] : [],
+    ex: Array.isArray(savedDeck.ex) ? [...savedDeck.ex] : [],
+  };
+  const validation = validateDeck(deck, { forBattle: true });
+  if (!validation || validation.ok !== true) {
+    const reason = validation?.reason ?? validation?.errors?.[0] ?? 'INVALID_DECK';
+    throw new Error(`MATCH_START_DECK_INVALID:${reason}`);
+  }
+
+  requireNonEmptyString(selection.setupMode, 'match_start_setup_mode');
+  requireNonEmptyString(selection.setupContent, 'match_start_setup_content');
+  const rule = selection.savedDeckRule && typeof selection.savedDeckRule === 'object'
+    ? selection.savedDeckRule
+    : {};
+
+  return deepFreeze({
+    schema: MATCH_START_SCHEMA,
+    deck: {
+      main: deck.main,
+      ex: deck.ex,
+      ruleId: rule.id ?? null,
+      ruleRevision: rule.revision ?? null,
+    },
+    setup: {
+      mode: selection.setupMode,
+      content: selection.setupContent,
+    },
+    selection: {
+      playerCharacterId: selection.playerCharacterId ?? null,
+      selectedPartnerId: selection.selectedPartnerId ?? null,
+    },
+  });
+}
+
 export const DECK_SAVE_ACK_CORE = Object.freeze({ schema: SCHEMA });
+export const DECK_MATCH_START_SNAPSHOT = Object.freeze({ schema: MATCH_START_SCHEMA });

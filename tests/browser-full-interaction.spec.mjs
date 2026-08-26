@@ -1132,6 +1132,27 @@ test('covers visible 2v2 Battle shell, info/log drawer, range, partner advice, u
   await expect.poll(async () => battle.locator('[data-partner-advice-role="partner-recommendation"]').count()).toBe(2);
   await attachStateScreenshot(page, testInfo, 'battle-partner-advice-object-projection-visible');
 
+  const overlapProjection = await page.evaluate(async () => {
+    const board = window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__;
+    const partner = window.__GAMEROAD_HATE_PARTNER_TEST__;
+    const ready = partner?.adviceEnvelope?.() ?? null;
+    const stale = window.__GAMEROAD_PARTNER_ADVICE_STALE__?.() ?? { status: 'blocked', kind: 'stale', error: 'STALE_STATE' };
+    const oldReady = board?.render?.(ready);
+    const staleResult = await board?.render?.(stale);
+    const oldResult = await oldReady;
+    return {
+      readyStatus: ready?.status ?? null,
+      staleActiveCount: staleResult?.activeCount ?? null,
+      oldActiveCount: oldResult?.activeCount ?? null,
+      final: board?.snapshot?.() ?? null,
+    };
+  });
+  expect(overlapProjection.readyStatus, 'race oracle starts from a real ready advice envelope').toBe('ready');
+  expect(overlapProjection.staleActiveCount, 'newer stale render clears immediately').toBe(0);
+  expect(overlapProjection.oldActiveCount, 'superseded ready render cannot resurrect recommendation markers').toBe(0);
+  expect(overlapProjection.final?.activeCount, 'latest stale state remains authoritative after old render resumes').toBe(0);
+  await expect(battle.locator('[data-partner-advice-role="partner-recommendation"]')).toHaveCount(0);
+
   await battle.locator('#clearPath').click();
   await battle.locator('#leaveMatch').click();
   await expect(page.locator('section[data-screen="home"]')).toBeVisible();

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import {
   MATCH_HUMAN_PRIORITY_MS,
   MATCH_STORAGE_META_KEY,
@@ -237,6 +238,65 @@ async function serviceTimeout(storage, runtime) {
   );
   return mod.serviceStoredMatchTimeout(storage, runtime);
 }
+
+async function createThroughProductionGate(storage, n, client, nowMs) {
+  const ids = generated(nowMs);
+  const preCreateTimeout = await serviceTimeout(storage, { nowMs, generatedMatchId: ids.matchId });
+  if (!preCreateTimeout.ok) return preCreateTimeout;
+  return createStoredMatchTicket(storage, { clientId: client, idempotencyKey: idem(n) }, ids);
+}
+
+test('production create gate freezes an expired 3H cohort before a late fourth Human is admitted', async () => {
+  const workerSource = await readFile(new URL('../relay/src/relay-worker.mjs', import.meta.url), 'utf8');
+  const gateIndex = workerSource.indexOf('const preCreateTimeout = await serviceStoredMatchTimeout(ctx.storage');
+  const createIndex = workerSource.indexOf('const result = await createStoredMatchTicket(ctx.storage, body, generated);');
+  assert.equal(gateIndex >= 0, true, 'production create path must service timeout before admitting a new Human');
+  assert.equal(createIndex > gateIndex, true, 'production create path must admit only after timeout service');
+
+  const storage = new FakeStorage();
+  const startedAt = 450_000;
+  const old = [];
+  old.push(await create(storage, 9500, 'race-old-1', startedAt));
+  old.push(await create(storage, 9501, 'race-old-2', startedAt + 100));
+  old.push(await create(storage, 9502, 'race-old-3', startedAt + 200));
+  for (const item of old) assert.equal(item.ticket.status, 'WAITING');
+
+  const late = await createThroughProductionGate(
+    storage,
+    9503,
+    'race-late-4',
+    startedAt + MATCH_HUMAN_PRIORITY_MS + 1,
+  );
+  assert.equal(late.ok, true);
+  assert.equal(late.ticket.status, 'WAITING');
+  assert.equal(late.formedMatchId, '');
+
+  const frozen = await storedMatchTicketStatus(storage, {
+    ticketId: old[0].ticket.ticketId,
+    secret: old[0].secret,
+  });
+  assert.equal(frozen.ticket.status, 'MATCHED');
+  assert.equal(frozen.match.fillReason, 'HUMAN_PRIORITY_TIMEOUT');
+  assert.equal(frozen.match.ticketIds.length, 3);
+  assert.equal(frozen.match.aiSeats.length, 1);
+  assert.equal(frozen.match.seats.filter((seat) => seat.kind === 'HUMAN').length, 3);
+
+  const soloStorage = new FakeStorage();
+  const solo = await create(soloStorage, 9510, 'race-solo', 460_000);
+  const lateSecond = await createThroughProductionGate(
+    soloStorage,
+    9511,
+    'race-late-second',
+    460_000 + MATCH_HUMAN_PRIORITY_MS + 1,
+  );
+  assert.equal(lateSecond.ticket.status, 'MATCHED');
+  const soloAfter = await storedMatchTicketStatus(soloStorage, {
+    ticketId: solo.ticket.ticketId,
+    secret: solo.secret,
+  });
+  assert.equal(soloAfter.match.format, 'TEAM2V2');
+  assert.equal(soloAfter.match.aiSeats.length, 2);
+});
 
 test('server-owned timeout forms 3H+AI1 at 60s without any foreground create/status request', async () => {
   const storage = new FakeStorage();

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   DECK_SAVE_ACK_CORE,
   applyDeckEdit,
@@ -282,4 +283,21 @@ test('missing setup selection fails closed', () => {
     () => createDeckMatchStartSnapshot(state, { validateDeck: () => ({ ok: true }) }),
     /MATCH_START_SETUP_CONTENT_REQUIRED/,
   );
+});
+
+test('Browser startMatch consumes the immutable snapshot authority instead of mutable savedDeck/setup state', () => {
+  const html = readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
+  assert.match(html, /GAMEROAD_LOBBYDECK_R4_MATCHSTART_SNAPSHOT/);
+  assert.match(html, /import \{ createDeckMatchStartSnapshot \} from "\.\/deck-save-ack-core\.mjs"/);
+  const hit = html.match(/function startMatch\(\)\{.*?return state\.match\}/s);
+  assert.ok(hit, 'startMatch function must be uniquely discoverable');
+  const body = hit[0];
+  assert.match(body, /GAMEROAD_CREATE_DECK_MATCH_START_SNAPSHOT/);
+  assert.match(body, /deckStartSnapshot:snapshot/);
+  assert.match(body, /snapshot\.setup\.mode/);
+  assert.match(body, /snapshot\.setup\.content/);
+  assert.match(body, /snapshot\.deck\.main/);
+  assert.match(body, /snapshot\.deck\.ruleId/);
+  assert.doesNotMatch(body, /validateDeck\(state\.savedDeck/);
+  assert.doesNotMatch(body, /makePlayer\([^)]*state\.savedDeck\.main/);
 });

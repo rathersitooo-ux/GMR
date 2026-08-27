@@ -866,3 +866,156 @@ test('Battle conveyor environment advances only on accepted non-duplicate resolu
     assert.equal(profileFrames.at(-1).segments.length, 8);
   }
 });
+
+test('continuous spectator follow crosses authorized matches without carrying replay events', async () => {
+  const {
+    BATTLE_REPLAY_CONTINUOUS_FOLLOW,
+    advanceContinuousSpectatorFollow,
+    createContinuousSpectatorFollow,
+    createFollowedLiveReplaySession
+  } = await import('../browser/battle-replay-live-adapter.mjs');
+
+  let follow = createContinuousSpectatorFollow({ targetUserId: 'STREAMER-TARGET' });
+  assert.equal(follow.status, 'WAITING');
+  assert.equal(follow.presentationOnly, true);
+  assert.equal(follow.gameplayAuthority, false);
+  assert.equal(follow.gameStateWrite, false);
+  assert.equal(Object.isFrozen(follow), true);
+
+  follow = advanceContinuousSpectatorFollow(follow, {
+    kind: 'MATCH_DISCOVERED',
+    targetUserId: 'STREAMER-TARGET',
+    viewerAuthorized: true,
+    spectatable: true,
+    matchId: 'MATCH-A'
+  });
+  assert.equal(follow.status, 'ATTACHED');
+  assert.equal(follow.currentMatchId, 'MATCH-A');
+  assert.equal(follow.attachSerial, 1);
+
+  let firstSession = createFollowedLiveReplaySession(follow, { versions });
+  firstSession = appendAcceptedBattleResolution(firstSession, resolution(1));
+  assert.equal(readLiveReplay(firstSession).events.length, 1);
+
+  follow = advanceContinuousSpectatorFollow(follow, {
+    kind: 'MATCH_ENDED',
+    targetUserId: 'STREAMER-TARGET',
+    matchId: 'MATCH-A'
+  });
+  assert.equal(follow.status, 'WAITING');
+  assert.equal(follow.targetUserId, 'STREAMER-TARGET');
+  assert.equal(follow.currentMatchId, null);
+  assert.equal(follow.lastCompletedMatchId, 'MATCH-A');
+  assert.equal(follow.waitingReason, 'WAIT_NEXT_ALLOWED_MATCH');
+
+  follow = advanceContinuousSpectatorFollow(follow, {
+    kind: 'MATCH_DISCOVERED',
+    targetUserId: 'STREAMER-TARGET',
+    viewerAuthorized: true,
+    spectatable: true,
+    matchId: 'MATCH-B'
+  });
+  const secondSession = createFollowedLiveReplaySession(follow, { versions });
+  assert.equal(follow.attachSerial, 2);
+  assert.equal(secondSession.matchId, 'MATCH-B');
+  assert.equal(readLiveReplay(secondSession).events.length, 0);
+  assert.equal(readLiveReplay(firstSession).events.length, 1);
+  assert.equal(BATTLE_REPLAY_CONTINUOUS_FOLLOW.replaySessionPolicy, 'fresh_per_match_no_event_carry');
+});
+
+test('continuous follow never stores a denied or private candidate match identity', async () => {
+  const {
+    advanceContinuousSpectatorFollow,
+    createContinuousSpectatorFollow
+  } = await import('../browser/battle-replay-live-adapter.mjs');
+  let follow = createContinuousSpectatorFollow({ targetUserId: 'TARGET' });
+  follow = advanceContinuousSpectatorFollow(follow, {
+    kind: 'MATCH_DISCOVERED',
+    targetUserId: 'TARGET',
+    viewerAuthorized: false,
+    spectatable: false,
+    matchId: 'PRIVATE-MATCH-SECRET',
+    privateData: { hand: ['SECRET_CARD'] },
+    authorityOnly: { roomKey: 'SECRET_ROOM_KEY' }
+  });
+  const serialized = JSON.stringify(follow);
+  assert.equal(follow.status, 'DENIED');
+  assert.equal(follow.currentMatchId, null);
+  assert.equal(follow.waitingReason, 'MATCH_NOT_AUTHORIZED');
+  assert.equal(serialized.includes('PRIVATE-MATCH-SECRET'), false);
+  assert.equal(serialized.includes('SECRET_CARD'), false);
+  assert.equal(serialized.includes('SECRET_ROOM_KEY'), false);
+});
+
+test('continuous follow is idempotent for duplicate discovery and completed-match end', async () => {
+  const {
+    advanceContinuousSpectatorFollow,
+    createContinuousSpectatorFollow
+  } = await import('../browser/battle-replay-live-adapter.mjs');
+  let follow = createContinuousSpectatorFollow({ targetUserId: 'TARGET' });
+  follow = advanceContinuousSpectatorFollow(follow, {
+    kind: 'MATCH_DISCOVERED', targetUserId: 'TARGET', viewerAuthorized: true, spectatable: true, matchId: 'M1'
+  });
+  const duplicateAttach = advanceContinuousSpectatorFollow(follow, {
+    kind: 'MATCH_DISCOVERED', targetUserId: 'TARGET', viewerAuthorized: true, spectatable: true, matchId: 'M1'
+  });
+  assert.strictEqual(duplicateAttach, follow);
+  assert.equal(duplicateAttach.attachSerial, 1);
+
+  follow = advanceContinuousSpectatorFollow(follow, {
+    kind: 'MATCH_ENDED', targetUserId: 'TARGET', matchId: 'M1'
+  });
+  const duplicateEnd = advanceContinuousSpectatorFollow(follow, {
+    kind: 'MATCH_ENDED', targetUserId: 'TARGET', matchId: 'M1'
+  });
+  assert.strictEqual(duplicateEnd, follow);
+  assert.throws(() => advanceContinuousSpectatorFollow(follow, {
+    kind: 'MATCH_ENDED', targetUserId: 'TARGET', matchId: 'OTHER'
+  }), /CONTINUOUS_FOLLOW_MATCH_END_IDENTITY_MISMATCH/);
+});
+
+test('continuous follow exposes explicit offline/denied states and target change or stop is local-only', async () => {
+  const {
+    advanceContinuousSpectatorFollow,
+    createContinuousSpectatorFollow,
+    retargetContinuousSpectatorFollow,
+    stopContinuousSpectatorFollow
+  } = await import('../browser/battle-replay-live-adapter.mjs');
+  let follow = createContinuousSpectatorFollow({ targetUserId: 'A' });
+  follow = advanceContinuousSpectatorFollow(follow, { kind: 'OFFLINE', targetUserId: 'A' });
+  assert.equal(follow.status, 'OFFLINE');
+  assert.equal(follow.waitingReason, 'TARGET_OFFLINE');
+  follow = advanceContinuousSpectatorFollow(follow, { kind: 'DENIED', targetUserId: 'A' });
+  assert.equal(follow.status, 'DENIED');
+  assert.equal(follow.waitingReason, 'SPECTATE_DENIED');
+
+  follow = retargetContinuousSpectatorFollow(follow, { targetUserId: 'B' });
+  assert.equal(follow.targetUserId, 'B');
+  assert.equal(follow.status, 'WAITING');
+  assert.equal(follow.attachSerial, 0);
+  assert.equal(follow.currentMatchId, null);
+
+  follow = stopContinuousSpectatorFollow(follow);
+  assert.equal(follow.status, 'STOPPED');
+  assert.equal(follow.targetUserId, null);
+  assert.equal(follow.currentMatchId, null);
+  assert.equal(follow.stopped, true);
+  assert.equal(follow.gameStateWrite, false);
+});
+
+test('continuous follow rejects cross-target discovery before using candidate match identity', async () => {
+  const {
+    advanceContinuousSpectatorFollow,
+    createContinuousSpectatorFollow
+  } = await import('../browser/battle-replay-live-adapter.mjs');
+  const follow = createContinuousSpectatorFollow({ targetUserId: 'TARGET-A' });
+  assert.throws(() => advanceContinuousSpectatorFollow(follow, {
+    kind: 'MATCH_DISCOVERED',
+    targetUserId: 'TARGET-B',
+    viewerAuthorized: true,
+    spectatable: true,
+    matchId: 'WRONG-TARGET-MATCH'
+  }), /CONTINUOUS_FOLLOW_SIGNAL_TARGET_MISMATCH/);
+  assert.equal(follow.status, 'WAITING');
+  assert.equal(follow.currentMatchId, null);
+});

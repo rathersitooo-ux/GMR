@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-HOME-BOOT-BRANCH1-R60-20260827T2224",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_BOOT_ISOLATED_PRESENTATION_R60",
+  "acquireKey": "UIFEEDBACK-HOMEBOOT-R60-20260827T2224-SOL-B1-Q7N4V8K2M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R22-HOMEBOOT-R60-RESOLUTION-PREP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PREACTION-V3-NODE-TESTS-CHANGED-PATH-READBACK",
+  "proceedToken": "PROCEED|VWORK-HOME-BOOT-BRANCH1-R60-20260827T2224|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "2bc5463b3d0ca967f68c04f3b2fad3abb152d356",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_BOOT_ISOLATED_PRESENTATION_R60",
+  "leaseAcquireKey": "UIFEEDBACK-HOMEBOOT-R60-20260827T2224-SOL-B1-Q7N4V8K2M6PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-27 22:27 JST",
+  "leaseUntilJst": "2026-08-27 23:24 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A191:L191",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch work/home-boot-presentation-r60-20260827 only: NEW browser/home-shell-presentation-core.mjs; NEW browser/boot-loading-presentation-core.mjs; NEW tests/home-boot-presentation.test.mjs; NEW docs/ui-branch1-home-boot-integration.md; transient data/preaction-authorizations/VWORK-HOME-BOOT-BRANCH1-R60-20260827T2224.json create-first/delete-before-final-head only; one bounded draft PR to main metadata/head only with NO MERGE; CURRENT_ACTIVE_LEASES own exact AcquireKey tuple only; R22 own acquire/checkpoint/terminal records only. browser/GAMEROAD.html, shared navigation/foundation, existing Home cores, formal Home background authority, main merge/deploy are read-only.",
+  "scope": [
+    "browser/home-shell-presentation-core.mjs",
+    "browser/boot-loading-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "docs/ui-branch1-home-boot-integration.md"
+  ],
+  "leaseScope": [
+    "browser/home-shell-presentation-core.mjs",
+    "browser/boot-loading-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "docs/ui-branch1-home-boot-integration.md"
+  ]
+}

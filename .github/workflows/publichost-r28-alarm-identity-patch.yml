@@ -1,0 +1,48 @@
+name: PublicHost R28 bounded alarm identity patch
+on:
+  push:
+    branches:
+      - work/publichost-r28-alarm-attempt-identity
+    paths:
+      - .github/workflows/publichost-r28-alarm-identity-patch.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/publichost-r28-alarm-attempt-identity
+          fetch-depth: 2
+      - name: Verify exact base and patch attempt identity only
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "861fca0972e5dc3f611ba444424aa701808a5399"
+          test "$(git hash-object .github/workflows/cloudflare-public-deploy.yml)" = "96b80cdbdb8d5db6a77e6665671679f6a196e2e2"
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/cloudflare-public-deploy.yml')
+          s = p.read_text()
+          old = 'GAMEROAD_ALARM_PROBE_RUN_KEY: ${{ github.run_id }}'
+          new = 'GAMEROAD_ALARM_PROBE_RUN_KEY: ${{ github.run_id }}-${{ github.run_attempt }}'
+          if s.count(old) != 1:
+              raise SystemExit(f'old run-key occurrence count={s.count(old)}, expected 1')
+          s = s.replace(old, new, 1)
+          if s.count(new) != 1:
+              raise SystemExit('post-patch run-key invariant failed')
+          p.write_text(s)
+          PY
+          git diff --check
+          test "$(git diff --name-only)" = ".github/workflows/cloudflare-public-deploy.yml"
+          grep -Fq 'GAMEROAD_ALARM_PROBE_RUN_KEY: ${{ github.run_id }}-${{ github.run_attempt }}' .github/workflows/cloudflare-public-deploy.yml
+      - name: Commit bounded repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/workflows/cloudflare-public-deploy.yml
+          git commit -m "PUBLICHOST R28: make alarm probe identity unique per attempt"
+          git push origin HEAD:work/publichost-r28-alarm-attempt-identity

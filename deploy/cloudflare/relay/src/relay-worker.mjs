@@ -147,12 +147,20 @@ async function handleMatchRequest(ctx, request, url) {
 
   if (op === 'create') {
     const nowMs = Date.now();
-    const result = await createStoredMatchTicket(ctx.storage, body, {
+    const generated = {
       ticketId: `t-${crypto.randomUUID()}`,
       secret: randomMatchSecret(),
       matchId: `m-${crypto.randomUUID()}`,
       nowMs,
+    };
+    const preCreateTimeout = await serviceStoredMatchTimeout(ctx.storage, {
+      nowMs,
+      generatedMatchId: generated.matchId,
     });
+    if (!preCreateTimeout.ok) {
+      return matchJson({ ok: false, reason: preCreateTimeout.reason }, matchErrorStatus(preCreateTimeout.reason));
+    }
+    const result = await createStoredMatchTicket(ctx.storage, body, generated);
     if (!result.ok) return matchJson({ ok: false, reason: result.reason }, matchErrorStatus(result.reason));
     await refreshMatchAlarm(ctx, nowMs);
     return matchJson({

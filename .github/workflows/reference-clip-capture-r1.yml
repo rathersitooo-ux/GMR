@@ -1,4 +1,4 @@
-name: Reference Clip Capture R2 Browser Recording
+name: Reference Clip Capture R3 Alternate Host
 
 on:
   push:
@@ -16,97 +16,65 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install browser recorder
+      - name: Install media tools
         run: |
-          npm init -y >/dev/null 2>&1
-          npm install playwright@latest
-          npx playwright install --with-deps chromium
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg >/dev/null
+          python -m pip install --upgrade yt-dlp
+          ffmpeg -version | head -n 1
+          yt-dlp --version
 
-      - name: Record public embedded playback
+      - name: Acquire role-matched public gameplay clips
         shell: bash
         run: |
-          mkdir -p captured screenshots metadata
-          cat > capture.mjs <<'EOF'
-          import { chromium } from 'playwright';
-          import fs from 'node:fs';
-          import path from 'node:path';
-
-          const refs = [
-            ['A0','MakeS_PV','4Bw5i-7WmqQ'],
-            ['A0','MakeS_short','cjgf0l0vw_E'],
-            ['A2','AzurLane_Home','6kG8ZoN_-_Q'],
-            ['A1','LoveAndDeepspace_Home','bpxF_JKdOgE'],
-          ];
-          const browser = await chromium.launch({headless:true, args:['--autoplay-policy=no-user-gesture-required']});
-          const log = [];
-          for (const [role,label,id] of refs) {
-            const context = await browser.newContext({
-              viewport:{width:1280,height:720},
-              recordVideo:{dir:'captured_tmp', size:{width:1280,height:720}},
-              locale:'en-US',
-            });
-            const page = await context.newPage();
-            const url = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&controls=1&rel=0&playsinline=1`;
-            let status = null;
-            let error = null;
-            try {
-              const response = await page.goto(url,{waitUntil:'domcontentloaded',timeout:45000});
-              status = response?.status() ?? null;
-              await page.waitForTimeout(3500);
-              await page.mouse.click(640,360).catch(()=>{});
-              await page.keyboard.press('Space').catch(()=>{});
-              await page.waitForTimeout(4500);
-              await page.screenshot({path:`screenshots/${label}_08s.png`});
-              await page.waitForTimeout(8000);
-              await page.screenshot({path:`screenshots/${label}_16s.png`});
-            } catch (e) {
-              error = String(e);
-              await page.screenshot({path:`screenshots/${label}_error.png`}).catch(()=>{});
-            }
-            const bodyText = await page.locator('body').innerText().catch(()=> '');
-            const video = page.video();
-            await page.close().catch(()=>{});
-            await context.close();
-            let videoPath = null;
-            if (video) {
-              try {
-                videoPath = await video.path();
-                if (videoPath && fs.existsSync(videoPath)) {
-                  const dest = path.resolve(`captured/${label}.webm`);
-                  fs.renameSync(videoPath,dest);
-                  videoPath = dest;
-                }
-              } catch (e) { error = `${error ?? ''} video:${e}`; }
-            }
-            log.push({role,label,id,url,http_status:status,error,body_text:bodyText.slice(0,1000),video_path:videoPath});
-          }
-          await browser.close();
-          fs.writeFileSync('metadata/capture.json',JSON.stringify(log,null,2));
+          set -u
+          mkdir -p clips metadata
+          cat > metadata/sources.tsv <<'EOF'
+          role	label	url	note
+          R_TOUCH_ACKNOWLEDGE	MakeS_touch_hand	https://www.bilibili.com/video/BV1Kt411V7xm/	actual phone screen recording; repeated hand touch
+          R_IDLE_PRESENCE	AzurLane_home_loop	https://www.bilibili.com/video/BV1cRgp6cEyd/	2026 home-screen loop/L2D real-use footage
+          R_TOUCH_ACKNOWLEDGE	AzurLane_interaction	https://www.bilibili.com/video/BV1hV41197w8/	L2D interaction state demonstration
+          R_CHARACTER_VARIATION	BanGDream_special_motion	https://www.bilibili.com/video/BV1CW4LzKE9m/	official Chinese account special Live2D motion
           EOF
-          node capture.mjs
-          find captured screenshots metadata -maxdepth 2 -type f -printf '%p\t%s bytes\n' | sort | tee metadata/files.txt
+          : > metadata/acquire.log
+          while IFS=$'\t' read -r role label url note; do
+            [ "$role" = "role" ] && continue
+            echo "=== $role $label $url ===" | tee -a metadata/acquire.log
+            yt-dlp \
+              --no-playlist \
+              --ignore-errors \
+              --download-sections "*0-90" \
+              --force-keyframes-at-cuts \
+              --write-info-json \
+              -f "bv*[height<=480]+ba/b[height<=480]/best[height<=480]/best" \
+              --merge-output-format mp4 \
+              -o "clips/${label}.%(ext)s" \
+              "$url" 2>&1 | tee -a metadata/acquire.log || true
+          done < metadata/sources.tsv
+          find clips -maxdepth 1 -type f -printf '%f\t%s bytes\n' | sort | tee metadata/files.txt
 
-      - name: Validate recordings contain temporal change
+      - name: Probe and hash actual media
         shell: bash
         run: |
-          python - <<'PY'
-          import json, subprocess, glob, os
-          out=[]
-          for f in sorted(glob.glob('captured/*.webm')):
-              p=subprocess.run(['python','-c','pass'])
-              out.append({'file':f,'bytes':os.path.getsize(f)})
-          open('metadata/recordings.json','w').write(json.dumps(out,indent=2))
-          print(json.dumps(out,indent=2))
-          PY
+          set -u
+          shopt -s nullglob
+          : > metadata/probe.txt
+          : > metadata/sha256.txt
+          for f in clips/*.mp4 clips/*.webm clips/*.mkv clips/*.m4s; do
+            echo "=== $f ===" >> metadata/probe.txt
+            ffprobe -v error -show_entries format=duration,size:stream=index,codec_type,codec_name,width,height,r_frame_rate -of default=noprint_wrappers=1 "$f" >> metadata/probe.txt 2>&1 || true
+            sha256sum "$f" >> metadata/sha256.txt
+          done
+          cat metadata/probe.txt
+          cat metadata/sha256.txt
 
-      - name: Upload browser recordings
+      - name: Upload acquired reference media
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: gameroad-reference-screen-recordings-r2
+          name: gameroad-reference-real-media-r3
           path: |
-            captured/
-            screenshots/
+            clips/
             metadata/
           if-no-files-found: error
           retention-days: 3

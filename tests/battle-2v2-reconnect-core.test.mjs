@@ -273,3 +273,40 @@ test('state and projections are deeply frozen and contain no timer, outcome, par
   assert.equal(controlBySeat(state, 'P1').controllerPlayerId, null);
   assert.equal(controlBySeat(state, 'P2').controllerPlayerId, 'H2');
 });
+
+test('canonical reconnect identities reject surrounding whitespace at seat definition boundaries', () => {
+  for (const [field, value] of [
+    ['seatId', ' P1'],
+    ['playerId', 'H1 '],
+    ['teamId', ' A']
+  ]) {
+    const invalidSeats = seats.map(seat => ({ ...seat }));
+    invalidSeats[0][field] = value;
+    assert.throws(
+      () => create2v2ReconnectState({ seats: invalidSeats }),
+      new RegExp(`${field.toUpperCase()}_INVALID`)
+    );
+  }
+});
+
+test('player lookup rejects non-canonical player identities without mutating reconnect authority', () => {
+  const state = freshState();
+  for (const operation of [disconnect2v2Player, reconnect2v2Player, expire2v2ReconnectGrace]) {
+    for (const playerId of [' H1', 'H1 ']) {
+      const result = operation(state, playerId);
+      assert.equal(result.ok, false);
+      assert.equal(result.reason, 'PLAYER_INVALID');
+      assert.equal(result.changed, false);
+      assert.equal(result.state, state);
+    }
+  }
+  assert.equal(state.revision, 0);
+});
+
+test('current-envelope guard rejects non-canonical seat identities', () => {
+  const state = freshState();
+  const valid = envelope(state, 'P1');
+  assert.equal(isCurrent2v2ControlEnvelope(state, { ...valid, seatId: ' P1' }), false);
+  assert.equal(isCurrent2v2ControlEnvelope(state, { ...valid, seatId: 'P1 ' }), false);
+  assert.equal(isCurrent2v2ControlEnvelope(state, valid), true);
+});

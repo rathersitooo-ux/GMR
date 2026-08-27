@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-PUBLICHOST-R41-PREACTION-20260828T0146",
+  "taskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "workUnitKey": "PUBLICHOST_PACKAGE_INPUT_DEPLOY_TRIGGER_COVERAGE_R41",
+  "acquireKey": "PUBLICHOST-R41-PACKAGE-TRIGGER-COVERAGE-20260828T0146-SOL-Q7N4V8K2M6PX",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R41-FRESH-TRIGGER-VS-BUILD-INPUT-READBACK",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R41-STATIC-SOURCE-AND-EXISTING-BUILD-CONTRACT",
+  "proceedToken": "PROCEED|VWORK-PUBLICHOST-R41-PREACTION-20260828T0146|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|fresh-current-trigger-vs-build-input-readback",
+  "authorizationBaseSha": "4053286e58bc7a8c061fe418bca32074c3649eae",
+  "scope": [
+    ".github/workflows/cloudflare-public-deploy.yml",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "leaseWorkUnitKey": "PUBLICHOST_PACKAGE_INPUT_DEPLOY_TRIGGER_COVERAGE_R41",
+  "leaseAcquireKey": "PUBLICHOST-R41-PACKAGE-TRIGGER-COVERAGE-20260828T0146-SOL-Q7N4V8K2M6PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-28 01:47 JST",
+  "leaseUntilJst": "2026-08-28 02:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A206:L206",
+  "leaseScope": [
+    ".github/workflows/cloudflare-public-deploy.yml",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR branch work/publichost-r41-package-trigger-coverage-20260828: .github/workflows/cloudflare-public-deploy.yml; deploy/cloudflare/tests/build.test.mjs; transient data/preaction-authorizations/VWORK-PUBLICHOST-R41-PREACTION-20260828T0146.json create-first/delete-before-final-head; one bounded PR to main + expected-head merge + automatic Cloudflare deploy/readback; Spreadsheet 1QKCll_T9ej6K96fRkRUESCAIYVGbsCYZILGIWMUdm2Y / 全域監査実行・所見台帳 G104:L104 and G112:L112; GAMEROAD 全作業一覧 G130:N130,T130,Y130:AB130 excluding O:S; CURRENT_ACTIVE_LEASES own exact tuple only; R22 own acquire/txn/checkpoint/terminal/release records only."
+}

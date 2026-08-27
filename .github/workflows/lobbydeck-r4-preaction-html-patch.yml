@@ -1,0 +1,94 @@
+name: LobbyDeck R4 preauthorized bounded patch
+
+on:
+  push:
+    branches:
+      - work/lobbydeck-r4-preaction-matchstart
+    paths:
+      - .github/workflows/lobbydeck-r4-preaction-html-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/lobbydeck-r4-preaction-matchstart
+          fetch-depth: 8
+      - name: Guard current base, prove RED, mount existing snapshot, prove GREEN
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=800cbffd2fd513d488df1d78dc6f72c17a300a0d
+          HTML_BLOB=f73eef258ae88cea34bb14685e6f31a28ecbc2b8
+          test "$(git merge-base HEAD "$BASE")" = "$BASE"
+          test "$(git hash-object browser/GAMEROAD.html)" = "$HTML_BLOB"
+
+          if node --test tests/deck-save-ack-core.test.mjs >/tmp/lobbydeck-pre.log 2>&1; then
+            echo 'Expected Browser mount detector to be RED before product patch'
+            cat /tmp/lobbydeck-pre.log
+            exit 1
+          fi
+          grep -Fq 'Browser startMatch consumes the immutable snapshot authority' /tmp/lobbydeck-pre.log
+          echo 'EXPECTED_BROWSER_MOUNT_RED_OK'
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          path=Path('browser/GAMEROAD.html')
+          text=path.read_text(encoding='utf-8')
+          anchor='<script src="./deck-save-recovery-core.mjs"></script>'
+          if text.count(anchor)!=1: raise SystemExit(f'anchor count={text.count(anchor)}')
+          marker='GAMEROAD_LOBBYDECK_R4_MATCHSTART_SNAPSHOT'
+          if marker in text: raise SystemExit('marker already present')
+          mount='''<!-- GAMEROAD_LOBBYDECK_R4_MATCHSTART_SNAPSHOT -->
+          <script type="module" id="gameroad-lobbydeck-r4-matchstart-snapshot">
+          import { createDeckMatchStartSnapshot } from "./deck-save-ack-core.mjs";
+          const existingDeckMatchStartSnapshot=globalThis.GAMEROAD_CREATE_DECK_MATCH_START_SNAPSHOT;
+          if(existingDeckMatchStartSnapshot&&existingDeckMatchStartSnapshot!==createDeckMatchStartSnapshot)throw new Error("GAMEROAD_DECK_MATCH_START_SNAPSHOT_CONFLICT");
+          if(!existingDeckMatchStartSnapshot)Object.defineProperty(globalThis,"GAMEROAD_CREATE_DECK_MATCH_START_SNAPSHOT",{value:createDeckMatchStartSnapshot,enumerable:false,configurable:false,writable:false});
+          </script>'''
+          text=text.replace(anchor,anchor+'\n'+mount,1)
+          pat=re.compile(r'function startMatch\(\)\{.*?return state\.match\}',re.S)
+          hits=list(pat.finditer(text))
+          if len(hits)!=1: raise SystemExit(f'startMatch count={len(hits)}')
+          fn=hits[0].group(0)
+          old="const valid=validateDeck(state.savedDeck,{forBattle:true});if(!valid.ok){toast('札組を修正: '+valid.errors[0]);show('setup');renderSetupDeckStatus();return null}"
+          if fn.count(old)!=1: raise SystemExit('old validation gate not unique')
+          new="const snapshotFactory=globalThis.GAMEROAD_CREATE_DECK_MATCH_START_SNAPSHOT;let snapshot;try{if(typeof snapshotFactory!=='function')throw new Error('MATCH_START_SNAPSHOT_RUNTIME_UNAVAILABLE');snapshot=snapshotFactory({savedDeck:state.savedDeck,savedDeckRule:state.savedDeckRule,setupMode:state.setupMode,setupContent:state.setupContent,playerCharacterId:state.playerCharacterId,selectedPartnerId:state.selectedPartnerId},{validateDeck})}catch(e){const message=String(e?.message||e),prefix='MATCH_START_DECK_INVALID:';toast(message.startsWith(prefix)?'札組を修正: '+message.slice(prefix.length):'対戦開始状態を確認できません');show('setup');renderSetupDeckStatus();return null}"
+          fn=fn.replace(old,new,1)
+          pairs=[
+            ("const n=playerCount(state.setupMode),ps=[],diagnosticCpuDeck=[...state.savedDeck.main];for(let i=0;i<n;i++)ps.push(makePlayer(i,i===0,i===0?state.savedDeck.main:diagnosticCpuDeck));if(state.setupMode==='2v2')","const n=playerCount(snapshot.setup.mode),ps=[],diagnosticCpuDeck=[...snapshot.deck.main];for(let i=0;i<n;i++)ps.push(makePlayer(i,i===0,i===0?[...snapshot.deck.main]:diagnosticCpuDeck));if(snapshot.setup.mode==='2v2')"),
+            ("mode:state.setupMode,contentId:state.setupContent","mode:snapshot.setup.mode,contentId:snapshot.setup.content"),
+            ("busy:false,honey:","busy:false,deckStartSnapshot:snapshot,honey:"),
+            ("playerDeckRule:{id:DECK_RULE.id,revision:DECK_RULE.revision,mainCount:state.savedDeck.main.length,exCount:state.savedDeck.ex.length}","playerDeckRule:{id:snapshot.deck.ruleId,revision:snapshot.deck.ruleRevision,mainCount:snapshot.deck.main.length,exCount:snapshot.deck.ex.length}"),
+            ("log(state.setupContent==='honey_hunt'?","log(snapshot.setup.content==='honey_hunt'?")]
+          for oldfrag,newfrag in pairs:
+            if fn.count(oldfrag)!=1: raise SystemExit(f'fragment count {fn.count(oldfrag)} for {oldfrag[:60]}')
+            fn=fn.replace(oldfrag,newfrag,1)
+          if 'validateDeck(state.savedDeck' in fn or 'makePlayer(i,i===0,i===0?state.savedDeck.main' in fn:
+            raise SystemExit('mutable direct consumer remained')
+          text=text[:hits[0].start()]+fn+text[hits[0].end():]
+          path.write_text(text,encoding='utf-8')
+          Path('/tmp/startmatch.mjs').write_text(fn+'\n',encoding='utf-8')
+          mh=re.search(r'<script type="module" id="gameroad-lobbydeck-r4-matchstart-snapshot">(.*?)</script>',text,re.S)
+          if not mh: raise SystemExit('mount extraction failed')
+          Path('/tmp/mount.mjs').write_text(mh.group(1).strip()+'\n',encoding='utf-8')
+          PY
+
+          git diff --check
+          test "$(git diff --name-only | tr '\n' ' ')" = "browser/GAMEROAD.html "
+          node --check /tmp/startmatch.mjs
+          node --check /tmp/mount.mjs
+          node --check browser/deck-save-ack-core.mjs
+          node --test tests/deck-save-ack-core.test.mjs tests/deck-save-recovery-core.test.mjs
+          echo 'LOBBYDECK_R4_PREACTION_GREEN_OK'
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/GAMEROAD.html
+          git commit -m 'Browser: mount immutable selected deck at match start'
+          git push origin HEAD:work/lobbydeck-r4-preaction-matchstart

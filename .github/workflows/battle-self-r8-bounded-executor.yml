@@ -29,7 +29,7 @@ jobs:
           git merge-base --is-ancestor "$BASE" HEAD
           test "$(git hash-object browser/battle-replay-live-adapter.mjs)" = "cb3ba74e38a59b951dc6e38bfcaeea724b188bba"
           test "$(git hash-object deploy/cloudflare/scripts/build.mjs)" = "1c9208c001cb2612ab360daf7acce8265323e489"
-          test "$(git hash-object deploy/cloudflare/tests/build.test.mjs)" = "a5bf7658a1206b4418711979ca442e9ae6a413cf"
+          test "$(git hash-object deploy/cloudflare/tests/build.test.mjs)" = "03355153c6e5b6f1b38b8b3968765cbc275ebc44"
           test "$(git hash-object browser/battle-self-deck-inspect-core.mjs)" = "ae8488df0ef5eb4530c350d2f2ab8fa65a4f0f5e"
           test -s browser/battle-self-deck-inspect-runtime-mount.mjs
           test -s tests/battle-self-deck-inspect-runtime-mount.test.mjs
@@ -83,7 +83,7 @@ jobs:
           marker = "  const partnerBattleEventProjectionOutputPath = path.join(dist, 'partner-battle-event-log-projection.mjs');\n"
           copy_block = """  const selfDeckInspectCoreOutputPath = path.join(dist, 'battle-self-deck-inspect-core.mjs');\n  await writeFile(selfDeckInspectCoreOutputPath, selfDeckInspectCoreInput);\n  const selfDeckInspectCoreRoundTrip = await readFile(selfDeckInspectCoreOutputPath);\n  if (!selfDeckInspectCoreInput.equals(selfDeckInspectCoreRoundTrip)) {\n    throw new Error('dist/battle-self-deck-inspect-core.mjs is not byte-identical to Browser dependency source');\n  }\n\n  const selfDeckInspectRuntimeMountOutputPath = path.join(dist, 'battle-self-deck-inspect-runtime-mount.mjs');\n  await writeFile(selfDeckInspectRuntimeMountOutputPath, selfDeckInspectRuntimeMountInput);\n  const selfDeckInspectRuntimeMountRoundTrip = await readFile(selfDeckInspectRuntimeMountOutputPath);\n  if (!selfDeckInspectRuntimeMountInput.equals(selfDeckInspectRuntimeMountRoundTrip)) {\n    throw new Error('dist/battle-self-deck-inspect-runtime-mount.mjs is not byte-identical to Browser dependency source');\n  }\n\n"""
           build = replace_once(build, marker, copy_block + marker, 'build copies')
-          manifest_marker = """      partner_battle_event_log_projection: provenance(\n"""
+          manifest_marker = "      partner_battle_event_log_projection: provenance(\n"
           manifest_block = """      battle_self_deck_inspect_core: provenance(\n        'browser/battle-self-deck-inspect-core.mjs',\n        'battle-self-deck-inspect-core.mjs',\n        selfDeckInspectCoreInput,\n        selfDeckInspectCoreBlob,\n      ),\n      battle_self_deck_inspect_runtime_mount: provenance(\n        'browser/battle-self-deck-inspect-runtime-mount.mjs',\n        'battle-self-deck-inspect-runtime-mount.mjs',\n        selfDeckInspectRuntimeMountInput,\n        selfDeckInspectRuntimeMountBlob,\n      ),\n"""
           build = replace_once(build, manifest_marker, manifest_block + manifest_marker, 'build manifest')
           build = replace_once(build,

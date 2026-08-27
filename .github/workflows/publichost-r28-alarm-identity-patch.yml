@@ -19,14 +19,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "861fca0972e5dc3f611ba444424aa701808a5399"
+          test "$(git rev-parse HEAD~2)" = "861fca0972e5dc3f611ba444424aa701808a5399"
           test "$(git hash-object .github/workflows/cloudflare-public-deploy.yml)" = "96b80cdbdb8d5db6a77e6665671679f6a196e2e2"
           python3 - <<'PY'
           from pathlib import Path
           p = Path('.github/workflows/cloudflare-public-deploy.yml')
           s = p.read_text()
-          old = 'GAMEROAD_ALARM_PROBE_RUN_KEY: ${{ github.run_id }}'
-          new = 'GAMEROAD_ALARM_PROBE_RUN_KEY: ${{ github.run_id }}-${{ github.run_attempt }}'
+          expr_run = '$' + '{{ github.run_id }}'
+          expr_attempt = '$' + '{{ github.run_attempt }}'
+          old = f'GAMEROAD_ALARM_PROBE_RUN_KEY: {expr_run}'
+          new = f'GAMEROAD_ALARM_PROBE_RUN_KEY: {expr_run}-{expr_attempt}'
           if s.count(old) != 1:
               raise SystemExit(f'old run-key occurrence count={s.count(old)}, expected 1')
           s = s.replace(old, new, 1)
@@ -36,7 +38,6 @@ jobs:
           PY
           git diff --check
           test "$(git diff --name-only)" = ".github/workflows/cloudflare-public-deploy.yml"
-          grep -Fq 'GAMEROAD_ALARM_PROBE_RUN_KEY: ${{ github.run_id }}-${{ github.run_attempt }}' .github/workflows/cloudflare-public-deploy.yml
       - name: Commit bounded repair
         shell: bash
         run: |

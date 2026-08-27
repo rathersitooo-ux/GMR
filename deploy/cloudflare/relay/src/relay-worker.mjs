@@ -13,10 +13,10 @@ import {
 } from './relay-core.mjs';
 import {
   cancelStoredMatchTicket,
-  createStoredMatchTicket,
   serviceStoredMatchTimeout,
   storedMatchTicketStatus,
 } from './match-store.mjs';
+import { createStoredMatchTicketWithExpiredCohortGate } from './match-create-with-timeout.mjs';
 
 const ROOM_KEY = 'room.v1';
 
@@ -147,7 +147,7 @@ async function handleMatchRequest(ctx, request, url) {
 
   if (op === 'create') {
     const nowMs = Date.now();
-    const result = await createStoredMatchTicket(ctx.storage, body, {
+    const result = await createStoredMatchTicketWithExpiredCohortGate(ctx.storage, body, {
       ticketId: `t-${crypto.randomUUID()}`,
       secret: randomMatchSecret(),
       matchId: `m-${crypto.randomUUID()}`,

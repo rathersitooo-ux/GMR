@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import {
   MATCH_HUMAN_PRIORITY_MS,
   storedMatchTicketStatus,
@@ -50,6 +51,16 @@ async function create(storage, n, nowMs) {
     generated(nowMs),
   );
 }
+
+test('production relay create path mounts the expired-cohort gate', async () => {
+  const workerSource = await readFile(new URL('../relay/src/relay-worker.mjs', import.meta.url), 'utf8');
+  assert.match(
+    workerSource,
+    /import \{ createStoredMatchTicketWithExpiredCohortGate \} from '\.\/match-create-with-timeout\.mjs';/,
+  );
+  assert.match(workerSource, /const result = await createStoredMatchTicketWithExpiredCohortGate\(ctx\.storage, body,/);
+  assert.doesNotMatch(workerSource, /const result = await createStoredMatchTicket\(ctx\.storage, body,/);
+});
 
 test('expired 3H cohort is frozen as 3H+AI1 before a fourth late Human is admitted', async () => {
   const storage = new FakeStorage();

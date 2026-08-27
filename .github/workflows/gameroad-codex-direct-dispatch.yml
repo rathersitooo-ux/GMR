@@ -18,11 +18,14 @@ jobs:
   dispatch-shell:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    outputs:
+      paid_external_invoke: ${{ steps.packet.outputs.paid_external_invoke }}
     steps:
       - name: Checkout owned probe branch
         uses: actions/checkout@v5
 
       - name: Validate transport packet without external AI spend
+        id: packet
         shell: bash
         run: |
           set -euo pipefail
@@ -30,11 +33,16 @@ jobs:
           test -f "$packet"
           grep -Fq 'AcquireKey=AICAP-R23-CODEXTRANSPORT-20260827T1641-SOL-N7Q4V8K2M6PX' "$packet"
           grep -Fq 'ExpectedSentinel=GAMEROAD_CODEX_TRANSPORT_PROBE_OK' "$packet"
+          if grep -Fq 'PaidExternalInvoke=ALLOW_R23_EXPLICIT' "$packet"; then
+            echo 'paid_external_invoke=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'paid_external_invoke=false' >> "$GITHUB_OUTPUT"
+          fi
           echo 'GAMEROAD_CODEX_DISPATCH_SHELL_OK'
 
   codex-transport-probe:
     needs: dispatch-shell
-    if: ${{ vars.GAMEROAD_CODEX_DIRECT_ENABLED == 'true' }}
+    if: ${{ needs.dispatch-shell.outputs.paid_external_invoke == 'true' && vars.GAMEROAD_CODEX_DIRECT_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

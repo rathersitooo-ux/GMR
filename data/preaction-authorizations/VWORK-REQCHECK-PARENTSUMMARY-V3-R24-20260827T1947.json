@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-REQCHECK-PARENTSUMMARY-V3-R24-20260827T1947",
+  "taskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "workUnitKey": "PARENTTASK_OS_EXACTMUTABLE_PREACTION_V3_R24",
+  "acquireKey": "REQCHECK-PARENTSUMMARY-V3-R24-20260827T1947-SOL-Q8N4V7K2M6PX",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R24-PREDICT-EXACTMUTABLE-WITNESS-GAP-20260827T1947",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R21-STRICT-DATAVALIDATION-API-LITERAL-BYPASS",
+  "proceedToken": "PROCEED|VWORK-REQCHECK-PARENTSUMMARY-V3-R24-20260827T1947|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|exactmutable|parent-summary",
+  "authorizationBaseSha": "a4d7b147c549f093d9b5ea24e6cb6a2c702a801c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "leaseWorkUnitKey": "PARENTTASK_OS_EXACTMUTABLE_PREACTION_V3_R24",
+  "leaseAcquireKey": "REQCHECK-PARENTSUMMARY-V3-R24-20260827T1947-SOL-Q8N4V7K2M6PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-27 19:47 JST",
+  "leaseUntilJst": "2026-08-27 20:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A183:L183",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch work/requiredgate-parent-summary-v3-20260827 only: tools/preaction-authorization-validator.mjs; tests/preaction-authorization-validator.test.mjs; transient data/preaction-authorizations/VWORK-REQCHECK-PARENTSUMMARY-V3-R24-20260827T1947.json create-first/delete-before-merge only; one bounded PR to main and expected-head merge after gates; CURRENT_ACTIVE_LEASES own AcquireKey row only; R22 own acquire/checkpoint/terminal records only. .github/workflows/gameroad-required-gate.yml read-only.",
+  "scope": [
+    "tools/preaction-authorization-validator.mjs",
+    "tests/preaction-authorization-validator.test.mjs"
+  ],
+  "leaseScope": [
+    "tools/preaction-authorization-validator.mjs",
+    "tests/preaction-authorization-validator.test.mjs"
+  ]
+}

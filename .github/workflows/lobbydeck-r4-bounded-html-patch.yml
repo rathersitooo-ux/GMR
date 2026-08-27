@@ -17,12 +17,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: work/lobbydeck-r4-bounded-matchstart
-          fetch-depth: 2
+          fetch-depth: 3
       - name: Verify exact base and expose bounded preimage
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "800cbffd2fd513d488df1d78dc6f72c17a300a0d"
+          test "$(git rev-parse HEAD^^)" = "800cbffd2fd513d488df1d78dc6f72c17a300a0d"
           test "$(git hash-object browser/GAMEROAD.html)" = "f73eef258ae88cea34bb14685e6f31a28ecbc2b8"
           python3 - <<'PY'
           from pathlib import Path

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "PUBLICHOST-R29-PACKAGE-DEPS-20260827T1339-SOL",
+  "taskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "workUnitKey": "R29_CURRENT_PUBLIC_STATIC_MODULE_PACKAGE_REPAIR",
+  "acquireKey": "PUBLICHOST-R29-PACKAGE-DEPS-20260827T1339-SOL-Q7M4V8K2N6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLICHOST-R29-BFI-33038817739-PACKAGE-DEFECT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PUBLICHOST-R29-STATIC-IMPORT-RED-GREEN",
+  "proceedToken": "PROCEED|PUBLICHOST-R29-PACKAGE-DEPS-20260827T1339-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction=exact-main Browser public package must include deck-save-ack-core.mjs imported by current GAMEROAD.html and provenance-bind it; no game semantics change.|rehearsal=focused package test must fail on missing static import dependency before repair and pass after repair, then relevant exact-head gates and exact-build public-origin evidence must verify closure.",
+  "authorizationBaseSha": "95df1ced27b09cf9c64d0f0c0b659fee460d717e",
+  "issuedAt": "2026-08-27T13:43:00+09:00",
+  "scope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/publichost-r29-static-module-package.yml",
+    "data/preaction-authorizations/PUBLICHOST-R29-PACKAGE-DEPS-20260827T1339-SOL.json"
+  ],
+  "notes": "Drive R29 acquisition and scope extension were strict-CAS persisted and read back before this first remote commit. First branch commit is manifest-only. Temporary manifest/workflow must be removed before PR head. No Browser HTML, Lobby/Battle/game-rule/save/economy semantics are mutable in this work unit."
+}

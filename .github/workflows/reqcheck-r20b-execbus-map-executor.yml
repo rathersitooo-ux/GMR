@@ -4,17 +4,22 @@ on:
   push:
     branches:
       - work/required-gate-executor-bus-map-r20b-20260827
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
 
 jobs:
   patch-and-self-remove:
+    if: github.event_name == 'push' || github.head_ref == 'work/required-gate-executor-bus-map-r20b-20260827'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: work/required-gate-executor-bus-map-r20b-20260827
       - name: Verify exact base target and apply bounded mapping
         shell: bash
         run: |

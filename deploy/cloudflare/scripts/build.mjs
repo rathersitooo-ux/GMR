@@ -467,8 +467,6 @@ export async function buildPackage({
     throw new Error('dist/tools/advice-collective-eval.mjs is not byte-identical to Browser dependency source');
   }
 
-  await assertBrowserRuntimeDependencyCompleteness(input, dist);
-
   for (const [outputName, sourceInput] of [
     ['click_002.ogg', clickSfxInput],
     ['cardSlide6.ogg', cardSlideSfxInput],
@@ -488,6 +486,8 @@ export async function buildPackage({
   if (!homeThemeOrientationInput.equals(homeThemeOrientationRoundTrip)) {
     throw new Error('dist/home-theme-orientation-core.mjs is not byte-identical to Home theme/orientation source');
   }
+
+  await assertBrowserRuntimeDependencyCompleteness(input, dist);
 
   for (const [outputName, sourceInput] of [
     ['assets/visual/home/home-illustration-landscape.webp', homeLandscapeAssetInput],

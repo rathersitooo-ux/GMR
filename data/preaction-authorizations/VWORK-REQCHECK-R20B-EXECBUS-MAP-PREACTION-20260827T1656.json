@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-REQCHECK-R20B-EXECBUS-MAP-PREACTION-20260827T1656",
+  "taskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "workUnitKey": "R20B-EXECUTOR-BUS-CLASSIFICATION-MAP",
+  "acquireKey": "REQCHECK-R20B-EXECBUS-MAP-20260827T1656-SOL-N7Q4V8K2M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PRED-REQCHECK-R20B-EXACT-ANCHOR-PATCH-SELF-REMOVE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-REQCHECK-R20B-EXACT-BLOB-ANCHOR-GUARDS",
+  "proceedToken": "PROCEED|VWORK-REQCHECK-R20B-EXECBUS-MAP-PREACTION-20260827T1656|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|REQCHECK-R20B-EXECBUS-MAP-20260827T1656-SOL-N7Q4V8K2M6PX",
+  "authorizationBaseSha": "95df1ced27b09cf9c64d0f0c0b659fee460d717e",
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml",
+    ".github/workflows/reqcheck-r20b-execbus-map-executor.yml"
+  ]
+}

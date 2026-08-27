@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-BATTLE-PRESENTATION-BRANCH5-R2-20260827T2257",
+  "taskId": "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PRESENTATION_RESULT_BRANCH5_R2",
+  "acquireKey": "BATTLEPRES-BRANCH5-R2-20260827T2257-SOL-Q7N4V8K2M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BATTLEPRES-R2-SCOPE-REPAIR-20260827T2310",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BATTLEPRES-R2-CURRENT-ROUTER-AND-DIFF-ORACLE-20260827T2310",
+  "proceedToken": "PROCEED|VWORK-BATTLE-PRESENTATION-BRANCH5-R2-20260827T2257|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260827T2310JST",
+  "authorizationBaseSha": "cc08fa2e94fb083543f83e82dffd63938208662c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PRESENTATION_RESULT_BRANCH5_R2",
+  "leaseAcquireKey": "BATTLEPRES-BRANCH5-R2-20260827T2257-SOL-Q7N4V8K2M6PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-27 23:10 JST",
+  "leaseUntilJst": "2026-08-27 23:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A192:L192",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch work/battle-presentation-result-r1-20260827 only: browser/battle-result-presentation-bridge-core.mjs; tests/battle-result-presentation-bridge-core.test.mjs; transient data/preaction-authorizations/VWORK-BATTLE-PRESENTATION-BRANCH5-R2-20260827T2257.json create-first/delete-before-final-head only; PR #445 metadata/head only with NO MERGE; CURRENT_ACTIVE_LEASES own exact tuple only; R22 own acquire/checkpoint/terminal/release records only. Battle Core, browser/GAMEROAD.html, Foundation, HATE1000 semantics, existing battle/result/autoqueue/card semantic cores, Required Gate workflow, main merge/deploy/assets are read-only.",
+  "scope": [
+    "browser/battle-result-presentation-bridge-core.mjs",
+    "tests/battle-result-presentation-bridge-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-result-presentation-bridge-core.mjs",
+    "tests/battle-result-presentation-bridge-core.test.mjs"
+  ]
+}

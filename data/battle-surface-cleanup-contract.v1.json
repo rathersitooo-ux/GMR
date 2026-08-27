@@ -1,0 +1,99 @@
+{
+  "schema": "gameroad.battle-surface-cleanup.v1",
+  "authority": "presentation-read-only",
+  "purpose": "Remove development/fossil chrome from visible Battle gameplay without deleting authoritative gameplay information, while giving later non-conflicting branches stable presentation hosts.",
+  "branding": {
+    "visibleGameplayLogo": "omit",
+    "visibleGameplayWordmark": "omit",
+    "visibleBrandHeader": "omit",
+    "policy": "hard-zero-visible-battle-branding"
+  },
+  "retire": [
+    "visible-gameplay-logo",
+    "visible-gameplay-wordmark",
+    "giant-battle-brand-header",
+    "match-info-dev-panel",
+    "debug-coordinate-overlay",
+    "debug-position-id-overlay",
+    "full-109-cell-debug-grid",
+    "fossil-same-field-battle-overlay",
+    "raw-state-json-panel"
+  ],
+  "preserve": [
+    "round",
+    "phase",
+    "quick-time",
+    "hate",
+    "mana",
+    "hand-count",
+    "deck-count",
+    "shield",
+    "lane-progress",
+    "commit-state",
+    "actor-target-relation",
+    "participant-status",
+    "honey",
+    "graveyard-count",
+    "exile-count",
+    "chip",
+    "ex"
+  ],
+  "layers": {
+    "WORLD": {
+      "role": "field-and-public-world-state",
+      "owner": "battle-world-presentation"
+    },
+    "STATUS": {
+      "role": "persistent-battle-status-host",
+      "owner": "branch-2-plan-hud-hand"
+    },
+    "DECISION": {
+      "role": "planning-and-targeting-host",
+      "owner": "branch-2-and-3"
+    },
+    "CAUSAL": {
+      "role": "effect-chain-response-host",
+      "owner": "branch-4-effect-chain-response"
+    },
+    "DRAWER": {
+      "role": "detail-history-zone-host",
+      "owner": "branch-5-zone-detail-history"
+    }
+  },
+  "screenModes": {
+    "PLAN": {
+      "active": ["WORLD", "STATUS", "DECISION"],
+      "dormant": ["CAUSAL", "DRAWER"]
+    },
+    "BATTLE_PHASE": {
+      "active": ["WORLD", "STATUS", "CAUSAL"],
+      "dormant": ["DECISION", "DRAWER"]
+    },
+    "RESULT": {
+      "active": ["STATUS", "DRAWER"],
+      "dormant": ["WORLD", "DECISION", "CAUSAL"]
+    }
+  },
+  "causalContract": {
+    "hostReserved": true,
+    "effectSemanticsOwnedHere": false,
+    "responseRulesOwnedHere": false,
+    "priorityRulesOwnedHere": false,
+    "consumer": "branch-4-effect-chain-response"
+  },
+  "integration": {
+    "requiresHtmlMount": true,
+    "ownedHere": false,
+    "htmlPath": "browser/GAMEROAD.html",
+    "htmlOwner": "branch-9-integration"
+  },
+  "invariants": [
+    "VISIBLE_GAMEPLAY_BRANDING_ZERO",
+    "PRESERVE_GAMEPLAY_INFORMATION",
+    "NO_GAME_RULE_CALCULATION",
+    "NO_STATE_MUTATION",
+    "NO_LEGALITY_INFERENCE",
+    "NO_SECRET_FIELD_PASSTHROUGH",
+    "NO_HTML_OWNERSHIP"
+  ]
+}

@@ -1,0 +1,92 @@
+name: PublicHost R29 Static Module Package Repair
+on:
+  push:
+    branches:
+      - work/publichost-r29-static-module-package-20260827
+    paths:
+      - .github/workflows/publichost-r29-static-module-package.yml
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify authorization and exact preimages
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD~2)" = "95df1ced27b09cf9c64d0f0c0b659fee460d717e"
+          test "$(git diff --name-only HEAD~2..HEAD~1)" = "data/preaction-authorizations/PUBLICHOST-R29-PACKAGE-DEPS-20260827T1339-SOL.json"
+          node tools/preaction-authorization-validator.mjs data/preaction-authorizations/PUBLICHOST-R29-PACKAGE-DEPS-20260827T1339-SOL.json
+          test "$(git hash-object deploy/cloudflare/scripts/build.mjs)" = "1c9208c001cb2612ab360daf7acce8265323e489"
+          test "$(git hash-object deploy/cloudflare/tests/build.test.mjs)" = "03355153c6e5b6f1b38b8b3968765cbc275ebc44"
+          test "$(git hash-object browser/deck-save-ack-core.mjs)" = "e62c901c2cf78d8459dd3474072c5b735ac9c449"
+      - name: Patch acquired package files
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('deploy/cloudflare/scripts/build.mjs')
+          s = p.read_text()
+          def one(old, new):
+              global s
+              assert s.count(old) == 1, (old, s.count(old))
+              s = s.replace(old, new, 1)
+          one("const defaultCoreSource = path.join(repoRoot, 'browser/deck-save-recovery-core.mjs');\n", "const defaultCoreSource = path.join(repoRoot, 'browser/deck-save-recovery-core.mjs');\nconst defaultDeckSaveAckCoreSource = path.join(repoRoot, 'browser/deck-save-ack-core.mjs');\n")
+          one("  const patterns = [\n    /\\bimport\\s*\\(\\s*(['\"])(\\.\\/[^'\"?#]+\\.(?:mjs|js))(?:[?#][^'\"]*)?\\1\\s*\\)/g,\n", "  const patterns = [\n    /\\b(?:import|export)\\s+(?:[^'\"]*?\\s+from\\s*)?(['\"])(\\.\\/[^'\"?#]+\\.(?:mjs|js))(?:[?#][^'\"]*)?\\1/g,\n    /\\bimport\\s*\\(\\s*(['\"])(\\.\\/[^'\"?#]+\\.(?:mjs|js))(?:[?#][^'\"]*)?\\1\\s*\\)/g,\n")
+          one("  coreSource = defaultCoreSource,\n", "  coreSource = defaultCoreSource,\n  deckSaveAckCoreSource = defaultDeckSaveAckCoreSource,\n")
+          one("  expectedCoreBlob = '',\n", "  expectedCoreBlob = '',\n  expectedDeckSaveAckCoreBlob = '',\n")
+          one("  const coreInput = await readFile(coreSource);\n", "  const coreInput = await readFile(coreSource);\n  const deckSaveAckCoreInput = await readFile(deckSaveAckCoreSource);\n")
+          one("  const coreBlob = gitBlobSha1(coreInput);\n", "  const coreBlob = gitBlobSha1(coreInput);\n  const deckSaveAckCoreBlob = gitBlobSha1(deckSaveAckCoreInput);\n")
+          one("  if (expectedCoreBlob && coreBlob !== expectedCoreBlob) {\n    throw new Error(`Deck save recovery core blob mismatch: expected=${expectedCoreBlob} actual=${coreBlob}`);\n  }\n", "  if (expectedCoreBlob && coreBlob !== expectedCoreBlob) {\n    throw new Error(`Deck save recovery core blob mismatch: expected=${expectedCoreBlob} actual=${coreBlob}`);\n  }\n  if (expectedDeckSaveAckCoreBlob && deckSaveAckCoreBlob !== expectedDeckSaveAckCoreBlob) {\n    throw new Error(`Deck save ack core blob mismatch: expected=${expectedDeckSaveAckCoreBlob} actual=${deckSaveAckCoreBlob}`);\n  }\n")
+          one("  const presenceCoreOutputPath = path.join(dist, 'hate-peer-presence-core.mjs');\n", "  const deckSaveAckCoreOutputPath = path.join(dist, 'deck-save-ack-core.mjs');\n  await writeFile(deckSaveAckCoreOutputPath, deckSaveAckCoreInput);\n  const deckSaveAckCoreRoundTrip = await readFile(deckSaveAckCoreOutputPath);\n  if (!deckSaveAckCoreInput.equals(deckSaveAckCoreRoundTrip)) {\n    throw new Error('dist/deck-save-ack-core.mjs is not byte-identical to Browser dependency source');\n  }\n\n  const presenceCoreOutputPath = path.join(dist, 'hate-peer-presence-core.mjs');\n")
+          one("      hate_peer_presence_core: provenance(\n", "      deck_save_ack_core: provenance(\n        'browser/deck-save-ack-core.mjs',\n        'deck-save-ack-core.mjs',\n        deckSaveAckCoreInput,\n        deckSaveAckCoreBlob,\n      ),\n      hate_peer_presence_core: provenance(\n")
+          one("    else if (a === '--core-source') out.coreSource = path.resolve(argv[++i]);\n", "    else if (a === '--core-source') out.coreSource = path.resolve(argv[++i]);\n    else if (a === '--deck-save-ack-core-source') out.deckSaveAckCoreSource = path.resolve(argv[++i]);\n")
+          one("    else if (a === '--expected-core-blob') out.expectedCoreBlob = argv[++i] || '';\n", "    else if (a === '--expected-core-blob') out.expectedCoreBlob = argv[++i] || '';\n    else if (a === '--expected-deck-save-ack-core-blob') out.expectedDeckSaveAckCoreBlob = argv[++i] || '';\n")
+          p.write_text(s)
+
+          p = Path('deploy/cloudflare/tests/build.test.mjs')
+          t = p.read_text()
+          anchor = "  { file: 'deck-save-recovery-core.mjs', source: 'browser/deck-save-recovery-core.mjs', sourceArg: 'coreSource', expectedArg: 'expectedCoreBlob', artifact: 'deck_save_recovery_core', fixture: 'globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE = Object.freeze({});\\n', currentBlob: 'd29fde280b3eb7c5f760b162987e04bda3446258' },\n"
+          assert t.count(anchor) == 1
+          t = t.replace(anchor, anchor + "  { file: 'deck-save-ack-core.mjs', source: 'browser/deck-save-ack-core.mjs', sourceArg: 'deckSaveAckCoreSource', expectedArg: 'expectedDeckSaveAckCoreBlob', artifact: 'deck_save_ack_core', fixture: 'export function createDeckMatchStartSnapshot(){ return Object.freeze({}); }\\n', currentBlob: 'e62c901c2cf78d8459dd3474072c5b735ac9c449' },\n", 1)
+          marker = "function expectedVersionManifest() { return { schema: VERSION_MANIFEST_SCHEMA, channel: VERSION_MANIFEST_CHANNEL, build_id: SOURCE_COMMIT, published_at: PUBLISHED_AT, reload_policy: VERSION_MANIFEST_RELOAD_POLICY }; }\n"
+          assert t.count(marker) == 1
+          test_block = r'''test('dependency verifier detects top-level static module imports', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'gameroad-public-pack-static-import-'));
+  const dist = path.join(dir, 'dist');
+  await mkdir(dist, { recursive: true });
+  const browserBytes = Buffer.from('<script type="module">import { createDeckMatchStartSnapshot } from "./deck-save-ack-core.mjs";</script>\n', 'utf8');
+  await assert.rejects(
+    () => assertBrowserRuntimeDependencyCompleteness(browserBytes, dist),
+    /Public package missing Browser runtime dependency: \.\/deck-save-ack-core\.mjs/,
+  );
+  await writeFile(path.join(dist, 'deck-save-ack-core.mjs'), 'export function createDeckMatchStartSnapshot(){}\n');
+  assert.deepEqual(await assertBrowserRuntimeDependencyCompleteness(browserBytes, dist), ['deck-save-ack-core.mjs']);
+});
+
+'''
+          t = t.replace(marker, test_block + marker, 1)
+          p.write_text(t)
+      - name: Focused RED/GREEN and package regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test deploy/cloudflare/tests/build.test.mjs
+          node --test tests/deck-save-ack-core.test.mjs
+      - name: Remove temporary authorization and executor
+        shell: bash
+        run: |
+          rm data/preaction-authorizations/PUBLICHOST-R29-PACKAGE-DEPS-20260827T1339-SOL.json
+          rm .github/workflows/publichost-r29-static-module-package.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add deploy/cloudflare/scripts/build.mjs deploy/cloudflare/tests/build.test.mjs data/preaction-authorizations/PUBLICHOST-R29-PACKAGE-DEPS-20260827T1339-SOL.json .github/workflows/publichost-r29-static-module-package.yml
+          git diff --cached --name-only
+          git commit -m "PublicHost: package current static Browser modules"
+          git push origin HEAD:work/publichost-r29-static-module-package-20260827

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-PUBLICHOST-DEPLOY-ADMISSION-R40-20260827T2034",
+  "taskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "workUnitKey": "CLOUDFLARE_DEPLOY_ADMISSION_HARD_GATE_R40",
+  "acquireKey": "PUBLICHOST-DEPLOY-ADMISSION-R40-20260827T2034-SOL-Q8N4V7K2M6PX",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R40_DIRECT_MAIN_PUSH_TO_PUBLIC_DEPLOY_TOPOLOGY_20260827",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R40_FAIL_CLOSED_ASSOCIATED_PR_EXACT_HEAD_ORACLE_20260827",
+  "proceedToken": "PROCEED|VWORK-PUBLICHOST-DEPLOY-ADMISSION-R40-20260827T2034|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|Q8N4V7K2M6PX",
+  "authorizationBaseSha": "cb15bc15b4916e7c6b49608655a5e2606fb321a5",
+  "scope": [
+    ".github/workflows/cloudflare-public-deploy.yml",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "deploy/cloudflare/tests/version-manifest.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "leaseWorkUnitKey": "CLOUDFLARE_DEPLOY_ADMISSION_HARD_GATE_R40",
+  "leaseAcquireKey": "PUBLICHOST-DEPLOY-ADMISSION-R40-20260827T2034-SOL-Q8N4V7K2M6PX",
+  "leaseScope": [
+    ".github/workflows/cloudflare-public-deploy.yml",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "deploy/cloudflare/tests/version-manifest.test.mjs"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-08-27 20:39 JST",
+  "leaseUntilJst": "2026-08-27 21:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A184:L184",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch work/cloudflare-deploy-admission-r40-20260827 only: data/preaction-authorizations/VWORK-PUBLICHOST-DEPLOY-ADMISSION-R40-20260827T2034.json create-first/delete-before-merge only; .github/workflows/cloudflare-public-deploy.yml; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; deploy/cloudflare/tests/version-manifest.test.mjs; one bounded PR to main and expected-head merge after gates; central row130 Y:AB; row1351 Y:AB; own CURRENT_ACTIVE_LEASES row; own R22 records."
+}

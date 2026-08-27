@@ -1,0 +1,92 @@
+name: PublicHost R29 Static Module Package Repair V2
+on:
+  push:
+    branches:
+      - work/publichost-r29-static-module-package-20260827
+    paths:
+      - .github/workflows/publichost-r29-static-module-package-v2.yml
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify authorization and exact preimages
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=95df1ced27b09cf9c64d0f0c0b659fee460d717e
+          FIRST="$(git rev-list --reverse --first-parent "$BASE"..HEAD | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          test "$(git diff-tree --no-commit-id --name-only -r "$FIRST")" = "data/preaction-authorizations/PUBLICHOST-R29-PACKAGE-DEPS-20260827T1339-SOL.json"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { validateManifest } from './tools/preaction-authorization-validator.mjs';
+          const path = 'data/preaction-authorizations/PUBLICHOST-R29-PACKAGE-DEPS-20260827T1339-SOL.json';
+          const result = validateManifest(JSON.parse(fs.readFileSync(path, 'utf8')), path);
+          console.log(`PREACTION_MANIFEST ${result.ok ? 'PASS' : 'FAIL'} ${result.reason}`);
+          if (!result.ok) process.exit(1);
+          NODE
+          test "$(git hash-object deploy/cloudflare/scripts/build.mjs)" = "1c9208c001cb2612ab360daf7acce8265323e489"
+          test "$(git hash-object deploy/cloudflare/tests/build.test.mjs)" = "03355153c6e5b6f1b38b8b3968765cbc275ebc44"
+          test "$(git hash-object browser/deck-save-ack-core.mjs)" = "e62c901c2cf78d8459dd3474072c5b735ac9c449"
+      - name: Patch acquired package files
+        shell: bash
+        run: |
+          set -euo pipefail
+          python <<'PY'
+          from pathlib import Path
+          p = Path('deploy/cloudflare/scripts/build.mjs')
+          s = p.read_text()
+          def one(old, new):
+              global s
+              assert s.count(old) == 1, (old, s.count(old))
+              s = s.replace(old, new, 1)
+          one("const defaultCoreSource = path.join(repoRoot, 'browser/deck-save-recovery-core.mjs');\n", "const defaultCoreSource = path.join(repoRoot, 'browser/deck-save-recovery-core.mjs');\nconst defaultDeckSaveAckCoreSource = path.join(repoRoot, 'browser/deck-save-ack-core.mjs');\n")
+          one("  coreSource = defaultCoreSource,\n", "  coreSource = defaultCoreSource,\n  deckSaveAckCoreSource = defaultDeckSaveAckCoreSource,\n")
+          one("  expectedCoreBlob = '',\n", "  expectedCoreBlob = '',\n  expectedDeckSaveAckCoreBlob = '',\n")
+          one("  const coreInput = await readFile(coreSource);\n", "  const coreInput = await readFile(coreSource);\n  const deckSaveAckCoreInput = await readFile(deckSaveAckCoreSource);\n")
+          one("  const coreBlob = gitBlobSha1(coreInput);\n", "  const coreBlob = gitBlobSha1(coreInput);\n  const deckSaveAckCoreBlob = gitBlobSha1(deckSaveAckCoreInput);\n")
+          one("  if (expectedCoreBlob && coreBlob !== expectedCoreBlob) {\n    throw new Error(`Deck save recovery core blob mismatch: expected=${expectedCoreBlob} actual=${coreBlob}`);\n  }\n", "  if (expectedCoreBlob && coreBlob !== expectedCoreBlob) {\n    throw new Error(`Deck save recovery core blob mismatch: expected=${expectedCoreBlob} actual=${coreBlob}`);\n  }\n  if (expectedDeckSaveAckCoreBlob && deckSaveAckCoreBlob !== expectedDeckSaveAckCoreBlob) {\n    throw new Error(`Deck save ack core blob mismatch: expected=${expectedDeckSaveAckCoreBlob} actual=${deckSaveAckCoreBlob}`);\n  }\n")
+          one("  const presenceCoreOutputPath = path.join(dist, 'hate-peer-presence-core.mjs');\n", "  const deckSaveAckCoreOutputPath = path.join(dist, 'deck-save-ack-core.mjs');\n  await writeFile(deckSaveAckCoreOutputPath, deckSaveAckCoreInput);\n  const deckSaveAckCoreRoundTrip = await readFile(deckSaveAckCoreOutputPath);\n  if (!deckSaveAckCoreInput.equals(deckSaveAckCoreRoundTrip)) {\n    throw new Error('dist/deck-save-ack-core.mjs is not byte-identical to Browser dependency source');\n  }\n\n  const presenceCoreOutputPath = path.join(dist, 'hate-peer-presence-core.mjs');\n")
+          one("\n  await assertBrowserRuntimeDependencyCompleteness(input, dist);\n\n  for (const [outputName, sourceInput] of [\n", "\n  for (const [outputName, sourceInput] of [\n")
+          one("  const versionManifestOutputPath = path.join(dist, VERSION_MANIFEST_FILENAME);\n", "  await assertBrowserRuntimeDependencyCompleteness(input, dist);\n\n  const versionManifestOutputPath = path.join(dist, VERSION_MANIFEST_FILENAME);\n")
+          one("      hate_peer_presence_core: provenance(\n", "      deck_save_ack_core: provenance(\n        'browser/deck-save-ack-core.mjs',\n        'deck-save-ack-core.mjs',\n        deckSaveAckCoreInput,\n        deckSaveAckCoreBlob,\n      ),\n      hate_peer_presence_core: provenance(\n")
+          one("    else if (a === '--core-source') out.coreSource = path.resolve(argv[++i]);\n", "    else if (a === '--core-source') out.coreSource = path.resolve(argv[++i]);\n    else if (a === '--deck-save-ack-core-source') out.deckSaveAckCoreSource = path.resolve(argv[++i]);\n")
+          one("    else if (a === '--expected-core-blob') out.expectedCoreBlob = argv[++i] || '';\n", "    else if (a === '--expected-core-blob') out.expectedCoreBlob = argv[++i] || '';\n    else if (a === '--expected-deck-save-ack-core-blob') out.expectedDeckSaveAckCoreBlob = argv[++i] || '';\n")
+          p.write_text(s)
+
+          p = Path('deploy/cloudflare/tests/build.test.mjs')
+          t = p.read_text()
+          anchor = "  { file: 'deck-save-recovery-core.mjs', source: 'browser/deck-save-recovery-core.mjs', sourceArg: 'coreSource', expectedArg: 'expectedCoreBlob', artifact: 'deck_save_recovery_core', fixture: 'globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE = Object.freeze({});\\n', currentBlob: 'd29fde280b3eb7c5f760b162987e04bda3446258' },\n"
+          assert t.count(anchor) == 1
+          t = t.replace(anchor, anchor + "  { file: 'deck-save-ack-core.mjs', source: 'browser/deck-save-ack-core.mjs', sourceArg: 'deckSaveAckCoreSource', expectedArg: 'expectedDeckSaveAckCoreBlob', artifact: 'deck_save_ack_core', fixture: 'export function createDeckMatchStartSnapshot(){ return Object.freeze({}); }\\n', currentBlob: 'e62c901c2cf78d8459dd3474072c5b735ac9c449' },\n", 1)
+          p.write_text(t)
+          PY
+      - name: Focused package regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test deploy/cloudflare/tests/build.test.mjs
+          node --test tests/deck-save-ack-core.test.mjs
+      - name: Commit, validate final authorization, and push
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=95df1ced27b09cf9c64d0f0c0b659fee460d717e
+          rm data/preaction-authorizations/PUBLICHOST-R29-PACKAGE-DEPS-20260827T1339-SOL.json
+          rm .github/workflows/publichost-r29-static-module-package.yml
+          rm .github/workflows/publichost-r29-static-module-package-v2.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add deploy/cloudflare/scripts/build.mjs deploy/cloudflare/tests/build.test.mjs data/preaction-authorizations/PUBLICHOST-R29-PACKAGE-DEPS-20260827T1339-SOL.json .github/workflows/publichost-r29-static-module-package.yml .github/workflows/publichost-r29-static-module-package-v2.yml
+          git commit -m "PublicHost: package current deck match-start module"
+          git diff --name-only "$BASE"..HEAD > /tmp/r29-changed.txt
+          node tools/preaction-authorization-validator.mjs --base "$BASE" --head HEAD --changed /tmp/r29-changed.txt
+          git push origin HEAD:work/publichost-r29-static-module-package-20260827

@@ -1,0 +1,76 @@
+name: Reference Clip Capture R1
+
+on:
+  push:
+    branches:
+      - research/refclip-capture-20260827-r1
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install capture tools
+        run: |
+          python -m pip install --upgrade yt-dlp
+          ffmpeg -version | head -n 1
+          yt-dlp --version
+
+      - name: Acquire public reference media
+        shell: bash
+        run: |
+          set -u
+          mkdir -p raw processed metadata
+          cat > metadata/sources.tsv <<'EOF'
+          role	label	url
+          A0	MakeS_PV	https://www.youtube.com/watch?v=4Bw5i-7WmqQ
+          A0	MakeS_short	https://www.youtube.com/watch?v=cjgf0l0vw_E
+          A2	AzurLane_Home	https://www.youtube.com/watch?v=6kG8ZoN_-_Q
+          A1	LoveAndDeepspace_Home	https://www.youtube.com/watch?v=bpxF_JKdOgE
+          EOF
+          : > metadata/acquire.log
+          while IFS=$'\t' read -r role label url; do
+            [ "$role" = "role" ] && continue
+            echo "=== $role $label $url ===" | tee -a metadata/acquire.log
+            yt-dlp \
+              --no-playlist \
+              --ignore-errors \
+              --write-info-json \
+              -f "bv*[height<=480]+ba/b[height<=480]/best[height<=480]/best" \
+              --merge-output-format mp4 \
+              -o "raw/${label}.%(ext)s" \
+              "$url" 2>&1 | tee -a metadata/acquire.log || true
+          done < metadata/sources.tsv
+          find raw -maxdepth 1 -type f -printf '%f\t%s bytes\n' | sort | tee metadata/files.txt
+
+      - name: Normalize playable review copies and probe
+        shell: bash
+        run: |
+          set -u
+          shopt -s nullglob
+          : > metadata/probe.txt
+          for f in raw/*.mp4 raw/*.webm raw/*.mkv; do
+            base="$(basename "${f%.*}")"
+            echo "=== $f ===" >> metadata/probe.txt
+            ffprobe -v error -show_entries format=duration,size:stream=index,codec_type,codec_name,width,height,r_frame_rate -of default=noprint_wrappers=1 "$f" >> metadata/probe.txt 2>&1 || true
+            ffmpeg -y -i "$f" -vf "scale=-2:360" -c:v libx264 -preset veryfast -crf 28 -c:a aac -b:a 64k -movflags +faststart "processed/${base}_360p.mp4" >/tmp/ffmpeg_${base}.log 2>&1 || cp "$f" "processed/${base}.$(echo "${f##*.}")"
+          done
+          find processed -maxdepth 1 -type f -printf '%f\t%s bytes\n' | sort | tee metadata/processed-files.txt
+
+      - name: Upload reference acquisition artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gameroad-reference-media-r1
+          path: |
+            processed/
+            metadata/
+            raw/*.info.json
+          if-no-files-found: warn
+          retention-days: 3

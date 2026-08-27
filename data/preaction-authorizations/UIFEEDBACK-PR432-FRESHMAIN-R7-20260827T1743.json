@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "gameroad-preaction-v2",
+  "recordId": "UIFEEDBACK-PR432-FRESHMAIN-R7-20260827T1743",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "PR432_FRESH_MAIN_REPAIR_R7",
+  "acquireKey": "UIFEEDBACK-PR432-FRESHMAIN-R7-20260827T1743-SOL-Q6N4V8K2M7PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R22:PR432_FRESH_MAIN_REPAIR_R7:RESOLUTION_PREP:2026-08-27T1747JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR432_OLDHEAD_8c3482c_PLUS_CURRENT_MAIN_BLOB_IDENTITY",
+  "proceedToken": "PROCEED|UIFEEDBACK-PR432-FRESHMAIN-R7-20260827T1743|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|R22_ACTIVE_LEASE_CURRENT_MAIN_RECONSTRUCTION",
+  "authorizationBaseSha": "c680cfcbc5774c31e8ee7f51b82dbb2ce4475487",
+  "scope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "PR432_FRESH_MAIN_REPAIR_R7",
+  "leaseAcquireKey": "UIFEEDBACK-PR432-FRESHMAIN-R7-20260827T1743-SOL-Q6N4V8K2M7PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-27 17:47 JST",
+  "leaseUntilJst": "2026-08-27 18:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A180:L180",
+  "leaseScope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

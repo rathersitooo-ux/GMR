@@ -6,36 +6,42 @@ import {
   validateManifest,
 } from '../tools/preaction-authorization-validator.mjs';
 
-const recordId = 'VWORK-REQCHECK-R21-LEASEWITNESS-20260827T1733';
+const recordId = 'VWORK-REQCHECK-R24-EXACTMUTABLE-20260827T1947';
 const manifestPath = `data/preaction-authorizations/${recordId}.json`;
-const baseSha = '097660354fb867735eeb3a7649c7fdc8fd79a7c7';
-const nowMs = Date.parse('2026-08-27T08:40:00Z'); // 17:40 JST
+const baseSha = 'a4d7b147c549f093d9b5ea24e6cb6a2c702a801c';
+const nowMs = Date.parse('2026-08-27T10:50:00Z'); // 19:50 JST
 const scope = [
   'tools/preaction-authorization-validator.mjs',
   'tests/preaction-authorization-validator.test.mjs',
 ];
+const benignExactMutableResources = [
+  'GITHUB:rathersitooo-ux/GMR branch work/requiredgate-parent-summary-v3-20260827 only: tools/preaction-authorization-validator.mjs',
+  'tests/preaction-authorization-validator.test.mjs',
+  'CURRENT_ACTIVE_LEASES own AcquireKey row only',
+].join('; ');
 const manifest = {
-  schemaVersion: 'gameroad-preaction-v2',
+  schemaVersion: 'gameroad-preaction-v3',
   recordId,
   taskId: 'GITHUB-REQUIRED-CHECKS-POLICY-001',
-  workUnitKey: 'LEGACY-WRITER-SNAPSHOT-GATE-BYPASS-HARDENING-R21',
-  acquireKey: 'REQCHECK-R21-LEASEWITNESS-20260827T1733-SOL-Q7N4V8K2M6PX',
+  workUnitKey: 'PARENTTASK_OS_EXACTMUTABLE_PREACTION_V3_R24',
+  acquireKey: 'REQCHECK-PARENTSUMMARY-V3-R24-20260827T1947-SOL-Q8N4V7K2M6PX',
   riskClass: 'HIGH_CONSEQUENCE',
   predictionStatus: 'PASS',
-  predictionEvidenceId: 'REQCHECK-R21-KNOWNFAIL-R20B-20260827T1733',
+  predictionEvidenceId: 'REQCHECK-R24-EXACTMUTABLE-GAP',
   rehearsalStatus: 'N_A_ALT_ORACLE',
-  rehearsalEvidenceId: 'REQCHECK-R21-LEGACY-V1-FAILCLOSE-20260827T1733',
+  rehearsalEvidenceId: 'REQCHECK-R21-DATAVALIDATION-BYPASS',
   proceedToken: `PROCEED|${recordId}|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|prediction|lease-snapshot`,
   authorizationBaseSha: baseSha,
   stateModelVersion: 'STATE_MODEL_V1',
   leaseAuthority: 'CURRENT_ACTIVE_LEASES',
   leaseState: 'ACTIVE',
   leaseTaskId: 'GITHUB-REQUIRED-CHECKS-POLICY-001',
-  leaseWorkUnitKey: 'LEGACY-WRITER-SNAPSHOT-GATE-BYPASS-HARDENING-R21',
-  leaseAcquireKey: 'REQCHECK-R21-LEASEWITNESS-20260827T1733-SOL-Q7N4V8K2M6PX',
-  leaseSnapshotReadbackAtJst: '2026-08-27 17:34 JST',
-  leaseUntilJst: '2026-08-27 18:20 JST',
-  leaseSnapshotReadbackRef: 'CURRENT_ACTIVE_LEASES!A23:L23',
+  leaseWorkUnitKey: 'PARENTTASK_OS_EXACTMUTABLE_PREACTION_V3_R24',
+  leaseAcquireKey: 'REQCHECK-PARENTSUMMARY-V3-R24-20260827T1947-SOL-Q8N4V7K2M6PX',
+  leaseSnapshotReadbackAtJst: '2026-08-27 19:47 JST',
+  leaseUntilJst: '2026-08-27 20:30 JST',
+  leaseSnapshotReadbackRef: 'CURRENT_ACTIVE_LEASES!A183:L183',
+  leaseExactMutableResources: benignExactMutableResources,
   scope,
   leaseScope: [...scope],
 };
@@ -58,6 +64,20 @@ function validate(candidate = manifest, at = nowMs) {
   return validateManifest(candidate, manifestPath, { nowMs: at });
 }
 
+function parentSummaryManifest(overrides = {}) {
+  const taskId = overrides.taskId ?? 'GITHUB-REQUIRED-CHECKS-POLICY-001';
+  const workUnitKey = overrides.workUnitKey ?? manifest.workUnitKey;
+  return {
+    ...manifest,
+    taskId,
+    leaseTaskId: taskId,
+    workUnitKey,
+    leaseWorkUnitKey: workUnitKey,
+    leaseExactMutableResources: `${benignExactMutableResources}; GAMEROAD 全作業一覧 O2:S1372 literal values`,
+    ...overrides,
+  };
+}
+
 test('material paths are fail-closed while documentation-only paths are nearby-normal', () => {
   assert.equal(isMaterialPath('browser/GAMEROAD.html'), true);
   assert.equal(isMaterialPath('.github/workflows/gameroad-required-gate.yml'), true);
@@ -67,8 +87,12 @@ test('material paths are fail-closed while documentation-only paths are nearby-n
   assert.equal(isMaterialPath(manifestPath), false);
 });
 
-test('valid v2 manifest with matching active snapshot witness passes', () => {
-  assert.deepEqual(validate(), { ok: true, reason: 'lease_witness_valid' });
+test('valid v3 manifest with matching active snapshot and exact mutable resource witness passes', () => {
+  assert.deepEqual(validate(), { ok: true, reason: 'lease_exact_mutable_resources_valid' });
+});
+
+test('legacy v2 manifest is rejected after exact-mutable cutover', () => {
+  assert.deepEqual(validate({ ...manifest, schemaVersion: 'gameroad-preaction-v2' }), { ok: false, reason: 'manifest_schema' });
 });
 
 test('legacy v1 event-only style manifest is rejected', () => {
@@ -82,6 +106,7 @@ test('legacy v1 event-only style manifest is rejected', () => {
   delete legacy.leaseSnapshotReadbackAtJst;
   delete legacy.leaseUntilJst;
   delete legacy.leaseSnapshotReadbackRef;
+  delete legacy.leaseExactMutableResources;
   delete legacy.leaseScope;
   assert.equal(validate(legacy).ok, false);
 });
@@ -90,6 +115,12 @@ test('missing snapshot witness is rejected', () => {
   const bad = { ...manifest };
   delete bad.leaseSnapshotReadbackRef;
   assert.deepEqual(validate(bad), { ok: false, reason: 'manifest_missing_leaseSnapshotReadbackRef' });
+});
+
+test('missing exact mutable resource witness is rejected', () => {
+  const bad = { ...manifest };
+  delete bad.leaseExactMutableResources;
+  assert.deepEqual(validate(bad), { ok: false, reason: 'manifest_missing_leaseExactMutableResources' });
 });
 
 test('lease acquire identity must match preaction acquire identity', () => {
@@ -107,18 +138,78 @@ test('lease scope must exactly cover the preauthorized material scope', () => {
   assert.deepEqual(validate(bad), { ok: false, reason: 'lease_scope_mismatch' });
 });
 
+test('every preauthorized repo path must appear in lease ExactMutableResources', () => {
+  const bad = {
+    ...manifest,
+    leaseExactMutableResources: 'GITHUB:rathersitooo-ux/GMR only: tools/preaction-authorization-validator.mjs',
+  };
+  assert.deepEqual(validate(bad), {
+    ok: false,
+    reason: 'lease_exact_mutable_scope_mismatch:tests/preaction-authorization-validator.test.mjs',
+  });
+});
+
+test('ParentTask O:S is rejected for ordinary tasks', () => {
+  assert.deepEqual(validate(parentSummaryManifest()), {
+    ok: false,
+    reason: 'parenttask_summary_mutation_forbidden:task',
+  });
+});
+
+test('central ParentTask O:S shorthand is also rejected for ordinary tasks', () => {
+  const bad = parentSummaryManifest({
+    leaseExactMutableResources: `${benignExactMutableResources}; central ParentTask O:S value paste`,
+  });
+  assert.deepEqual(validate(bad), {
+    ok: false,
+    reason: 'parenttask_summary_mutation_forbidden:task',
+  });
+});
+
+test('OPS-STATE-SYNC alone does not authorize ParentTask O:S mutation', () => {
+  const bad = parentSummaryManifest({ taskId: 'OPS-STATE-SYNC-001' });
+  assert.deepEqual(validate(bad), {
+    ok: false,
+    reason: 'parenttask_summary_mutation_forbidden:workunit',
+  });
+});
+
+test('formula-repair work-unit still fails when O:S resource is not formula-repair-only', () => {
+  const workUnitKey = 'PARENTTASK_OS_FORMULA_REPAIR_R25';
+  const bad = parentSummaryManifest({
+    taskId: 'OPS-STATE-SYNC-001',
+    workUnitKey,
+    leaseWorkUnitKey: workUnitKey,
+  });
+  assert.deepEqual(validate(bad), {
+    ok: false,
+    reason: 'parenttask_summary_mutation_forbidden:not_formula_repair_only',
+  });
+});
+
+test('OPS-STATE-SYNC exact O:S formula-repair-only resource is permitted', () => {
+  const workUnitKey = 'PARENTTASK_OS_FORMULA_REPAIR_R25';
+  const good = parentSummaryManifest({
+    taskId: 'OPS-STATE-SYNC-001',
+    workUnitKey,
+    leaseWorkUnitKey: workUnitKey,
+    leaseExactMutableResources: `${benignExactMutableResources}; GAMEROAD 全作業一覧 O2:S1372 formula-repair only`,
+  });
+  assert.deepEqual(validate(good), { ok: true, reason: 'parenttask_summary_formula_repair_authorized' });
+});
+
 test('expired snapshot witness is rejected at validation time', () => {
-  const afterExpiry = Date.parse('2026-08-27T09:21:00Z'); // 18:21 JST
+  const afterExpiry = Date.parse('2026-08-27T11:31:00Z'); // 20:31 JST
   assert.deepEqual(validate(manifest, afterExpiry), { ok: false, reason: 'lease_expired_at_validation' });
 });
 
 test('lease witness cannot claim more than the one-hour current lease window', () => {
-  const bad = { ...manifest, leaseUntilJst: '2026-08-27 18:35 JST' };
+  const bad = { ...manifest, leaseUntilJst: '2026-08-27 20:48 JST' };
   assert.deepEqual(validate(bad), { ok: false, reason: 'lease_window_over_one_hour' });
 });
 
 test('future-dated snapshot readback beyond clock skew is rejected', () => {
-  const bad = { ...manifest, leaseSnapshotReadbackAtJst: '2026-08-27 17:50 JST' };
+  const bad = { ...manifest, leaseSnapshotReadbackAtJst: '2026-08-27 19:56 JST' };
   assert.deepEqual(validate(bad), { ok: false, reason: 'lease_snapshot_readback_in_future' });
 });
 

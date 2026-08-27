@@ -1,0 +1,34 @@
+name: LobbyDeck R4 restore nearby assertion
+on:
+  push:
+    branches: [work/lobbydeck-r4-preaction-matchstart]
+    paths: [.github/workflows/lobbydeck-r4-preaction-html-patch.yml]
+permissions:
+  contents: write
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/lobbydeck-r4-preaction-matchstart
+      - shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object tests/deck-save-ack-core.test.mjs)" = "7e3c671cf2a50937fb8a2b533bdc65e336aa50f1"
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tests/deck-save-ack-core.test.mjs')
+          s=p.read_text()
+          old="  const timedOut = timeoutDeckSave(pending, { requestId: 'req-1' });\n  assert.equal(timedOut.state.pending, null);"
+          new="  const timedOut = timeoutDeckSave(pending, { requestId: 'req-1' });\n  assert.equal(timedOut.status, 'timed_out');\n  assert.equal(timedOut.state.pending, null);"
+          if s.count(old)!=1: raise SystemExit(f'guard count={s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          PY
+          git diff --check
+          node --test tests/deck-save-ack-core.test.mjs tests/deck-save-recovery-core.test.mjs
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/deck-save-ack-core.test.mjs
+          git commit -m 'Tests: preserve deck-save timeout assertion'
+          git push origin HEAD:work/lobbydeck-r4-preaction-matchstart

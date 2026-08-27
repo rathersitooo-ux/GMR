@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-LOBBYDECK-R5-PREACTION-20260827T1205",
+  "taskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "workUnitKey": "R5_CURRENTMAIN_BROWSER_MATCHSTART_RECOVERY",
+  "acquireKey": "LOBBYDECK-R5-CURRENTMAIN-MATCHSTART-20260827T1205-SOL-N7Q4V9K2M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "LOBBYDECK-R5-PRED-20260827T1205: TOP_FAILURE=stale-base evidence or hidden Browser drift could make the prior donor unsafe. Guards: exact current main=861fca0972e5dc3f611ba444424aa701808a5399 tree=795adc8b94433b011480b05f40c3806644cb44d9; current browser/GAMEROAD.html blob=f73eef258ae88cea34bb14685e6f31a28ecbc2b8 equals the known pre-mount donor base; current tests/deck-save-ack-core.test.mjs blob=3977ad0dff926cce2be29da0221ab3141129ed46; existing createDeckMatchStartSnapshot authority only; final diff bounded to the two mapped paths.",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOBBYDECK-R5-REHEARSAL-20260827T1205: fresh current-main RED oracle has zero createDeckMatchStartSnapshot Browser consumer hits; exact PR#422 patch was re-read and is a two-path additive/consumer replacement over the same current HTML/test bases. Prior workflow greens are donor history only and are not accepted as current R5 green evidence; R5 requires fresh exact-final-head gates after mutation.",
+  "proceedToken": "PROCEED|VWORK-LOBBYDECK-R5-PREACTION-20260827T1205|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|LOBBYDECK-R5-PRED-20260827T1205: exact current base/blob guards, existing snapshot authority only, bounded two-path diff.|LOBBYDECK-R5-REHEARSAL-20260827T1205: fresh current RED oracle plus exact donor patch re-read; stale greens excluded from R5 acceptance.",
+  "authorizationBaseSha": "861fca0972e5dc3f611ba444424aa701808a5399",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/deck-save-ack-core.test.mjs"
+  ]
+}

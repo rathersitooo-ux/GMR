@@ -21,9 +21,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD~3)" = "95df1ced27b09cf9c64d0f0c0b659fee460d717e"
-          test "$(git diff --name-only HEAD~3..HEAD~2)" = "data/preaction-authorizations/PUBLICHOST-R29-PACKAGE-DEPS-20260827T1339-SOL.json"
-          node tools/preaction-authorization-validator.mjs data/preaction-authorizations/PUBLICHOST-R29-PACKAGE-DEPS-20260827T1339-SOL.json
+          BASE=95df1ced27b09cf9c64d0f0c0b659fee460d717e
+          FIRST="$(git rev-list --reverse --first-parent "$BASE"..HEAD | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          test "$(git diff-tree --no-commit-id --name-only -r "$FIRST")" = "data/preaction-authorizations/PUBLICHOST-R29-PACKAGE-DEPS-20260827T1339-SOL.json"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { validateManifest } from './tools/preaction-authorization-validator.mjs';
+          const path = 'data/preaction-authorizations/PUBLICHOST-R29-PACKAGE-DEPS-20260827T1339-SOL.json';
+          const result = validateManifest(JSON.parse(fs.readFileSync(path, 'utf8')), path);
+          console.log(`PREACTION_MANIFEST ${result.ok ? 'PASS' : 'FAIL'} ${result.reason}`);
+          if (!result.ok) process.exit(1);
+          NODE
           test "$(git hash-object deploy/cloudflare/scripts/build.mjs)" = "1c9208c001cb2612ab360daf7acce8265323e489"
           test "$(git hash-object deploy/cloudflare/tests/build.test.mjs)" = "03355153c6e5b6f1b38b8b3968765cbc275ebc44"
           test "$(git hash-object browser/deck-save-ack-core.mjs)" = "e62c901c2cf78d8459dd3474072c5b735ac9c449"
@@ -69,15 +78,17 @@ jobs:
           set -euo pipefail
           node --test deploy/cloudflare/tests/build.test.mjs
           node --test tests/deck-save-ack-core.test.mjs
-      - name: Remove temporary authorization and executor
+      - name: Commit, validate final authorization, and push
         shell: bash
         run: |
           set -euo pipefail
+          BASE=95df1ced27b09cf9c64d0f0c0b659fee460d717e
           rm data/preaction-authorizations/PUBLICHOST-R29-PACKAGE-DEPS-20260827T1339-SOL.json
           rm .github/workflows/publichost-r29-static-module-package.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add deploy/cloudflare/scripts/build.mjs deploy/cloudflare/tests/build.test.mjs data/preaction-authorizations/PUBLICHOST-R29-PACKAGE-DEPS-20260827T1339-SOL.json .github/workflows/publichost-r29-static-module-package.yml
-          git diff --cached --name-only
           git commit -m "PublicHost: package current static Browser modules"
+          git diff --name-only "$BASE"..HEAD > /tmp/r29-changed.txt
+          node tools/preaction-authorization-validator.mjs --base "$BASE" --head HEAD --changed /tmp/r29-changed.txt
           git push origin HEAD:work/publichost-r29-static-module-package-20260827

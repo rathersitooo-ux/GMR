@@ -1,4 +1,4 @@
-name: Reference Clip Capture R3 Alternate Host
+name: Reference Clip Capture R4 Bilibili API
 
 on:
   push:
@@ -20,47 +20,79 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y ffmpeg >/dev/null
-          python -m pip install --upgrade yt-dlp
-          ffmpeg -version | head -n 1
-          yt-dlp --version
+          python -m pip install requests
 
-      - name: Acquire role-matched public gameplay clips
+      - name: Resolve public playback API and download
         shell: bash
         run: |
-          set -u
-          mkdir -p clips metadata
-          cat > metadata/sources.tsv <<'EOF'
-          role	label	url	note
-          R_TOUCH_ACKNOWLEDGE	MakeS_touch_hand	https://www.bilibili.com/video/BV1Kt411V7xm/	actual phone screen recording; repeated hand touch
-          R_IDLE_PRESENCE	AzurLane_home_loop	https://www.bilibili.com/video/BV1cRgp6cEyd/	2026 home-screen loop/L2D real-use footage
-          R_TOUCH_ACKNOWLEDGE	AzurLane_interaction	https://www.bilibili.com/video/BV1hV41197w8/	L2D interaction state demonstration
-          R_CHARACTER_VARIATION	BanGDream_special_motion	https://www.bilibili.com/video/BV1CW4LzKE9m/	official Chinese account special Live2D motion
-          EOF
-          : > metadata/acquire.log
-          while IFS=$'\t' read -r role label url note; do
-            [ "$role" = "role" ] && continue
-            echo "=== $role $label $url ===" | tee -a metadata/acquire.log
-            yt-dlp \
-              --no-playlist \
-              --ignore-errors \
-              --download-sections "*0-90" \
-              --force-keyframes-at-cuts \
-              --write-info-json \
-              -f "bv*[height<=480]+ba/b[height<=480]/best[height<=480]/best" \
-              --merge-output-format mp4 \
-              -o "clips/${label}.%(ext)s" \
-              "$url" 2>&1 | tee -a metadata/acquire.log || true
-          done < metadata/sources.tsv
-          find clips -maxdepth 1 -type f -printf '%f\t%s bytes\n' | sort | tee metadata/files.txt
+          mkdir -p raw clips metadata
+          cat > acquire.py <<'PY'
+          import json, os, subprocess, hashlib, requests
+          refs = [
+            ('R_TOUCH_ACKNOWLEDGE','MakeS_touch_hand','BV1Kt411V7xm'),
+            ('R_IDLE_PRESENCE','AzurLane_home_loop','BV1cRgp6cEyd'),
+            ('R_TOUCH_ACKNOWLEDGE','AzurLane_interaction','BV1hV41197w8'),
+            ('R_CHARACTER_VARIATION','BanGDream_special_motion','BV1CW4LzKE9m'),
+          ]
+          H={'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36','Referer':'https://www.bilibili.com/','Origin':'https://www.bilibili.com'}
+          log=[]
+          for role,label,bvid in refs:
+            rec={'role':role,'label':label,'bvid':bvid}
+            try:
+              vr=requests.get('https://api.bilibili.com/x/web-interface/view',params={'bvid':bvid},headers=H,timeout=30)
+              rec['view_http']=vr.status_code
+              view=vr.json(); rec['view_code']=view.get('code')
+              data=view.get('data') or {}; pages=data.get('pages') or []
+              if not pages: raise RuntimeError(f'no pages: {view}')
+              cid=pages[0]['cid']; rec['cid']=cid; rec['title']=data.get('title')
+              pr=requests.get('https://api.bilibili.com/x/player/playurl',params={'bvid':bvid,'cid':cid,'qn':32,'fnval':0,'platform':'html5','high_quality':1},headers=H,timeout=30)
+              rec['play_http']=pr.status_code
+              play=pr.json(); rec['play_code']=play.get('code')
+              pdata=play.get('data') or {}
+              urls=[]
+              for d in pdata.get('durl') or []:
+                if d.get('url'): urls.append(d['url'])
+              if not urls and pdata.get('dash'):
+                vids=pdata['dash'].get('video') or []
+                vids=sorted(vids,key=lambda x:(x.get('height',0)>480,x.get('height',0)),reverse=True)
+                if vids:
+                  urls.append(vids[0].get('baseUrl') or vids[0].get('base_url'))
+              rec['resolved_url_count']=len([u for u in urls if u])
+              if not urls or not urls[0]: raise RuntimeError(f'no playable URL: {play}')
+              rr=requests.get(urls[0],headers=H,timeout=60,stream=True)
+              rec['media_http']=rr.status_code; rr.raise_for_status()
+              raw=f'raw/{label}.bin'
+              with open(raw,'wb') as f:
+                for chunk in rr.iter_content(1024*1024):
+                  if chunk: f.write(chunk)
+              rec['raw_bytes']=os.path.getsize(raw)
+              # Remux/trim first 90 seconds. ffmpeg detects container regardless of extension.
+              out=f'clips/{label}.mp4'
+              cp=subprocess.run(['ffmpeg','-y','-i',raw,'-t','90','-map','0:v:0','-c:v','copy',out],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+              if cp.returncode != 0:
+                cp=subprocess.run(['ffmpeg','-y','-i',raw,'-t','90','-map','0:v:0','-vf','scale=-2:480','-c:v','libx264','-crf','26','-preset','veryfast',out],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+              rec['ffmpeg_returncode']=cp.returncode
+              if os.path.exists(out):
+                rec['clip_bytes']=os.path.getsize(out)
+                rec['sha256']=hashlib.sha256(open(out,'rb').read()).hexdigest()
+              else:
+                rec['ffmpeg_tail']=cp.stderr[-1500:]
+            except Exception as e:
+              rec['error']=repr(e)
+            log.append(rec)
+            print(json.dumps(rec,ensure_ascii=False))
+          open('metadata/acquire.json','w',encoding='utf-8').write(json.dumps(log,ensure_ascii=False,indent=2))
+          PY
+          python acquire.py
+          find raw clips metadata -maxdepth 1 -type f -printf '%p\t%s bytes\n' | sort | tee metadata/files.txt
 
-      - name: Probe and hash actual media
+      - name: Probe and hash actual clips
         shell: bash
         run: |
-          set -u
           shopt -s nullglob
           : > metadata/probe.txt
           : > metadata/sha256.txt
-          for f in clips/*.mp4 clips/*.webm clips/*.mkv clips/*.m4s; do
+          for f in clips/*.mp4; do
             echo "=== $f ===" >> metadata/probe.txt
             ffprobe -v error -show_entries format=duration,size:stream=index,codec_type,codec_name,width,height,r_frame_rate -of default=noprint_wrappers=1 "$f" >> metadata/probe.txt 2>&1 || true
             sha256sum "$f" >> metadata/sha256.txt
@@ -72,7 +104,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: gameroad-reference-real-media-r3
+          name: gameroad-reference-real-media-r4
           path: |
             clips/
             metadata/

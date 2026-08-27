@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-GACHA-SHOP-PRESENTATION-BRANCH7-R1-20260827T2353",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "GACHA_SHOP_ISOLATED_PRESENTATION_BRANCH7_R1",
+  "acquireKey": "UIBRANCH7-GACHASHOP-R1-20260827T2353-SOL-B7-Q7N4V8K2M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "GACHASHOP-B7-SCOPE-AUTHORITY-20260828T0001",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "GACHASHOP-B7-EXISTING-GACHA-SHOP-CORES-MAIN-CC08FA2E-20260828",
+  "proceedToken": "PROCEED|VWORK-GACHA-SHOP-PRESENTATION-BRANCH7-R1-20260827T2353|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260828T0001JST",
+  "authorizationBaseSha": "cc08fa2e94fb083543f83e82dffd63938208662c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "GACHA_SHOP_ISOLATED_PRESENTATION_BRANCH7_R1",
+  "leaseAcquireKey": "UIBRANCH7-GACHASHOP-R1-20260827T2353-SOL-B7-Q7N4V8K2M6PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-28 00:01 JST",
+  "leaseUntilJst": "2026-08-28 00:43 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A202:L202",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch work/gacha-shop-presentation-r1-20260827 only: NEW browser/gacha-shop-presentation-shell.mjs; NEW tests/gacha-shop-presentation-shell.test.mjs; transient data/preaction-authorizations/VWORK-GACHA-SHOP-PRESENTATION-BRANCH7-R1-20260827T2353.json create-first/delete-before-final-head only if current repository gate requires existing PRE_ACTION transport; one bounded draft PR to main metadata/head only with NO MERGE; CURRENT_ACTIVE_LEASES own exact AcquireKey tuple only; R22 own acquire/checkpoint/terminal/release records only. browser/GAMEROAD.html, browser/gacha-presentation-core.mjs, browser/shop-transaction-presentation-adapter.mjs, existing tests, workflows, main merge/deploy, gameplay/card/save/network/economy/receipt/ownership authority and formal assets are read-only.",
+  "scope": [
+    "browser/gacha-shop-presentation-shell.mjs",
+    "tests/gacha-shop-presentation-shell.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/gacha-shop-presentation-shell.mjs",
+    "tests/gacha-shop-presentation-shell.test.mjs"
+  ]
+}

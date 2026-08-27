@@ -83,6 +83,18 @@ test('battle mode consumes the existing authenticated-owner projection and stays
   assert.equal('remainingCardIds' in value, false);
 });
 
+test('battle adapter accepts the exact canonical string ordering emitted by the existing Battle core', () => {
+  const owner = ownerBattleProjection(['a', 'B', 'a']);
+  assert.deepEqual(owner.cardCounts, [
+    { cardId: 'B', count: 1 },
+    { cardId: 'a', count: 2 },
+  ]);
+
+  const value = projectBattleQuickDeck(owner);
+  assert.equal(value.ok, true);
+  assert.deepEqual(value.cards, owner.cardCounts);
+});
+
 test('public, opponent, spectator, or unauthenticated projections cannot be upgraded into hidden counts', () => {
   const projections = [
     publicBattleProjection(),

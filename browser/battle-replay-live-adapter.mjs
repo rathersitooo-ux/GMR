@@ -1,3 +1,4 @@
+import './battle-self-deck-inspect-runtime-mount.mjs';
 import {
   appendAcceptedEvent,
   createReplayLog,

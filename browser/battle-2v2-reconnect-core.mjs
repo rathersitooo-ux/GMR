@@ -13,6 +13,10 @@ function nonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
+function canonicalIdentity(value) {
+  return nonEmptyString(value) && value === value.trim();
+}
+
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
   Object.freeze(value);
@@ -34,7 +38,7 @@ function validateSeatShape(seats) {
       throw new TypeError('SEAT_INVALID');
     }
     for (const key of ['seatId', 'playerId', 'teamId']) {
-      if (!nonEmptyString(seat[key])) throw new TypeError(`${key.toUpperCase()}_INVALID`);
+      if (!canonicalIdentity(seat[key])) throw new TypeError(`${key.toUpperCase()}_INVALID`);
     }
     if (seatIds.has(seat.seatId)) throw new TypeError('SEAT_ID_DUPLICATE');
     if (playerIds.has(seat.playerId)) throw new TypeError('PLAYER_ID_DUPLICATE');
@@ -105,7 +109,7 @@ export function create2v2ReconnectState({ seats } = {}) {
 
 function findPlayerSeat(state, playerId) {
   validateState(state);
-  if (!nonEmptyString(playerId)) {
+  if (!canonicalIdentity(playerId)) {
     return { ok: false, reason: 'PLAYER_INVALID' };
   }
 
@@ -248,7 +252,7 @@ export function isCurrent2v2ControlEnvelope(state, envelope) {
   if (!envelope || typeof envelope !== 'object' || Array.isArray(envelope)) return false;
 
   const { seatId, controlMode, controlGeneration } = envelope;
-  if (!nonEmptyString(seatId)
+  if (!canonicalIdentity(seatId)
       || !VALID_CONTROL_MODES.has(controlMode)
       || !Number.isSafeInteger(controlGeneration)
       || controlGeneration < 0

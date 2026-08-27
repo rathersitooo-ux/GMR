@@ -86,7 +86,12 @@ function unknownSource() {
 
 function normalizeSource(entry, viewerScope) {
   if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return unknownSource();
-  if (entry.status !== 'known' || !nonEmptyString(entry.sourceId) || !hasOwn(entry, 'value')) {
+  if (
+    entry.status !== 'known' ||
+    !nonEmptyString(entry.sourceId) ||
+    !hasOwn(entry, 'value') ||
+    entry.value === undefined
+  ) {
     return unknownSource();
   }
 

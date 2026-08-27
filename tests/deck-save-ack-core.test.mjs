@@ -145,6 +145,7 @@ test('timeout ends only the matching request and a late ACK cannot clean the dec
   assert.equal(wrongTimeout.state, pending);
 
   const timedOut = timeoutDeckSave(pending, { requestId: 'req-1' });
+  assert.equal(timedOut.status, 'timed_out');
   assert.equal(timedOut.state.pending, null);
   assert.equal(timedOut.state.dirty, true);
 

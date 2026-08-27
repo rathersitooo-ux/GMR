@@ -203,7 +203,7 @@ export function createBattleSelfDeckInspectRuntimeMount({
   };
 
   const bindSurface = () => {
-    if (host?.isConnected !== false) return host;
+    if (host && host.isConnected !== false) return host;
     host = createSurface(documentRef);
     if (!host) return null;
     const { button } = surfaceParts(host);
@@ -296,8 +296,10 @@ function autoMountBrowserRuntime() {
   };
   if (globalThis.document.readyState === 'loading') {
     globalThis.document.addEventListener('DOMContentLoaded', start, { once: true });
+  } else if (typeof globalThis.queueMicrotask === 'function') {
+    globalThis.queueMicrotask(start);
   } else {
-    globalThis.queueMicrotask?.(start) ?? Promise.resolve().then(start);
+    Promise.resolve().then(start);
   }
 }
 

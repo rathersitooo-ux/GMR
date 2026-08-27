@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "ui-feedback-reinput-r3-20260827",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "UI-STATE-FEEDBACK-RUNTIME-001::playability-repeat-navigation-skip-to-arrival::browser/screen-navigation-core.mjs,tests/screen-navigation-core.test.mjs::v2-currentbase-recovery",
+  "acquireKey": "UIFEEDBACK-R3-REINPUT-20260827T1122-SOL-Q7N4V8K2M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "drive-ledger-currentbase-recovery-UIFEEDBACK-R3-REINPUT-20260827T1122-SOL-Q7N4V8K2M6PX",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "donor-pr416-red-before-green-after-plus-current-screen-navigation-regressions",
+  "proceedToken": "PROCEED|ui-feedback-reinput-r3-20260827|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|UIFEEDBACK-R3-REINPUT-20260827T1122-SOL-Q7N4V8K2M6PX",
+  "authorizationBaseSha": "758af65d66aaa30eb578768e34e90b5383f0add0",
+  "scope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs"
+  ]
+}

@@ -11,6 +11,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, '../../..');
 const defaultSource = path.join(repoRoot, 'browser/GAMEROAD.html');
 const defaultCoreSource = path.join(repoRoot, 'browser/deck-save-recovery-core.mjs');
+const defaultDeckSaveAckCoreSource = path.join(repoRoot, 'browser/deck-save-ack-core.mjs');
 const defaultPresenceCoreSource = path.join(repoRoot, 'browser/hate-peer-presence-core.mjs');
 const defaultNavigationCoreSource = path.join(repoRoot, 'browser/screen-navigation-core.mjs');
 const defaultPostMatchAutoqueueCoreSource = path.join(repoRoot, 'browser/post-match-autoqueue-core.mjs');
@@ -87,6 +88,7 @@ export async function assertBrowserRuntimeDependencyCompleteness(browserInput, d
   const html = Buffer.isBuffer(browserInput) ? browserInput.toString('utf8') : String(browserInput ?? '');
   const refs = new Set();
   const patterns = [
+    /\b(?:import|export)\s+(?:[^'\"]*?\s+from\s*)?(['\"])(\.\/[^'\"?#]+\.(?:mjs|js))(?:[?#][^'\"]*)?\1/g,
     /\bimport\s*\(\s*(['"])(\.\/[^'"?#]+\.(?:mjs|js))(?:[?#][^'"]*)?\1\s*\)/g,
     /<script\b[^>]*\bsrc\s*=\s*(['"])(\.\/[^'"?#]+\.(?:mjs|js))(?:[?#][^'"]*)?\1[^>]*>/gi,
   ];
@@ -131,6 +133,7 @@ export async function assertBrowserRuntimeDependencyCompleteness(browserInput, d
 export async function buildPackage({
   source = defaultSource,
   coreSource = defaultCoreSource,
+  deckSaveAckCoreSource = defaultDeckSaveAckCoreSource,
   presenceCoreSource = defaultPresenceCoreSource,
   navigationCoreSource = defaultNavigationCoreSource,
   postMatchAutoqueueCoreSource = defaultPostMatchAutoqueueCoreSource,
@@ -158,6 +161,7 @@ export async function buildPackage({
   dist = defaultDist,
   expectedBlob = '',
   expectedCoreBlob = '',
+  expectedDeckSaveAckCoreBlob = '',
   expectedPresenceCoreBlob = '',
   expectedNavigationCoreBlob = '',
   expectedPostMatchAutoqueueCoreBlob = '',
@@ -181,6 +185,7 @@ export async function buildPackage({
 } = {}) {
   const input = await readFile(source);
   const coreInput = await readFile(coreSource);
+  const deckSaveAckCoreInput = await readFile(deckSaveAckCoreSource);
   const presenceCoreInput = await readFile(presenceCoreSource);
   const navigationCoreInput = await readFile(navigationCoreSource);
   const postMatchAutoqueueCoreInput = await readFile(postMatchAutoqueueCoreSource);
@@ -207,6 +212,7 @@ export async function buildPackage({
   const homePortraitAssetInput = await readFile(homePortraitAssetSource);
   const blob = gitBlobSha1(input);
   const coreBlob = gitBlobSha1(coreInput);
+  const deckSaveAckCoreBlob = gitBlobSha1(deckSaveAckCoreInput);
   const presenceCoreBlob = gitBlobSha1(presenceCoreInput);
   const navigationCoreBlob = gitBlobSha1(navigationCoreInput);
   const postMatchAutoqueueCoreBlob = gitBlobSha1(postMatchAutoqueueCoreInput);
@@ -246,6 +252,9 @@ export async function buildPackage({
   }
   if (expectedCoreBlob && coreBlob !== expectedCoreBlob) {
     throw new Error(`Deck save recovery core blob mismatch: expected=${expectedCoreBlob} actual=${coreBlob}`);
+  }
+  if (expectedDeckSaveAckCoreBlob && deckSaveAckCoreBlob !== expectedDeckSaveAckCoreBlob) {
+    throw new Error(`Deck save ACK core blob mismatch: expected=${expectedDeckSaveAckCoreBlob} actual=${deckSaveAckCoreBlob}`);
   }
   if (expectedPresenceCoreBlob && presenceCoreBlob !== expectedPresenceCoreBlob) {
     throw new Error(`HATE peer presence core blob mismatch: expected=${expectedPresenceCoreBlob} actual=${presenceCoreBlob}`);
@@ -322,6 +331,13 @@ export async function buildPackage({
   const coreRoundTrip = await readFile(coreOutputPath);
   if (!coreInput.equals(coreRoundTrip)) {
     throw new Error('dist/deck-save-recovery-core.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const deckSaveAckCoreOutputPath = path.join(dist, 'deck-save-ack-core.mjs');
+  await writeFile(deckSaveAckCoreOutputPath, deckSaveAckCoreInput);
+  const deckSaveAckCoreRoundTrip = await readFile(deckSaveAckCoreOutputPath);
+  if (!deckSaveAckCoreInput.equals(deckSaveAckCoreRoundTrip)) {
+    throw new Error('dist/deck-save-ack-core.mjs is not byte-identical to Browser dependency source');
   }
 
   const presenceCoreOutputPath = path.join(dist, 'hate-peer-presence-core.mjs');
@@ -451,8 +467,6 @@ export async function buildPackage({
     throw new Error('dist/tools/advice-collective-eval.mjs is not byte-identical to Browser dependency source');
   }
 
-  await assertBrowserRuntimeDependencyCompleteness(input, dist);
-
   for (const [outputName, sourceInput] of [
     ['click_002.ogg', clickSfxInput],
     ['cardSlide6.ogg', cardSlideSfxInput],
@@ -472,6 +486,8 @@ export async function buildPackage({
   if (!homeThemeOrientationInput.equals(homeThemeOrientationRoundTrip)) {
     throw new Error('dist/home-theme-orientation-core.mjs is not byte-identical to Home theme/orientation source');
   }
+
+  await assertBrowserRuntimeDependencyCompleteness(input, dist);
 
   for (const [outputName, sourceInput] of [
     ['assets/visual/home/home-illustration-landscape.webp', homeLandscapeAssetInput],
@@ -524,6 +540,12 @@ export async function buildPackage({
         'deck-save-recovery-core.mjs',
         coreInput,
         coreBlob,
+      ),
+      deck_save_ack_core: provenance(
+        'browser/deck-save-ack-core.mjs',
+        'deck-save-ack-core.mjs',
+        deckSaveAckCoreInput,
+        deckSaveAckCoreBlob,
       ),
       hate_peer_presence_core: provenance(
         'browser/hate-peer-presence-core.mjs',
@@ -687,6 +709,7 @@ function parseArgs(argv) {
     const a = argv[i];
     if (a === '--source') out.source = path.resolve(argv[++i]);
     else if (a === '--core-source') out.coreSource = path.resolve(argv[++i]);
+    else if (a === '--deck-save-ack-core-source') out.deckSaveAckCoreSource = path.resolve(argv[++i]);
     else if (a === '--presence-core-source') out.presenceCoreSource = path.resolve(argv[++i]);
     else if (a === '--navigation-core-source') out.navigationCoreSource = path.resolve(argv[++i]);
     else if (a === '--post-match-autoqueue-core-source') out.postMatchAutoqueueCoreSource = path.resolve(argv[++i]);
@@ -708,6 +731,7 @@ function parseArgs(argv) {
     else if (a === '--dist') out.dist = path.resolve(argv[++i]);
     else if (a === '--expected-blob') out.expectedBlob = argv[++i] || '';
     else if (a === '--expected-core-blob') out.expectedCoreBlob = argv[++i] || '';
+    else if (a === '--expected-deck-save-ack-core-blob') out.expectedDeckSaveAckCoreBlob = argv[++i] || '';
     else if (a === '--expected-presence-core-blob') out.expectedPresenceCoreBlob = argv[++i] || '';
     else if (a === '--expected-navigation-core-blob') out.expectedNavigationCoreBlob = argv[++i] || '';
     else if (a === '--expected-post-match-autoqueue-core-blob') out.expectedPostMatchAutoqueueCoreBlob = argv[++i] || '';

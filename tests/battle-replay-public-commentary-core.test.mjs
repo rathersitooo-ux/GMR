@@ -77,18 +77,39 @@ test('fails closed when the selected public event does not match the replay dire
   );
 });
 
-test('rejects private, secret, and authority-only fields recursively from public commentary input', () => {
+test('rejects private, secret, authority-only, and hidden gameplay fields recursively from public commentary input', () => {
   for (const selectedEvent of [
     event({ privateData: { hand: ['secret-card'] } }),
     event({ publicData: { nested: { privateByViewer: { P1: 'secret-card' } } } }),
     event({ publicData: { secretHand: ['secret-card'] } }),
     event({ publicData: { nested: { authorityOnly: { seed: 7 } } } }),
+    event({ publicData: { hand: ['secret-card'] } }),
+    event({ publicData: { deck: ['secret-card'] } }),
+    event({ publicData: { deckOrder: ['secret-card'] } }),
+    event({ publicData: { nested: { hiddenCardId: 'secret-card' } } }),
+    event({ publicData: { drawPile: ['secret-card'] } }),
   ]) {
     assert.throws(
       () => request({ selectedEvent }),
       /PUBLIC_PROJECTION_FORBIDDEN_KEY/,
     );
   }
+});
+
+test('public commentary privacy guard is semantic-key specific rather than a blanket hand/deck substring ban', () => {
+  const value = request({
+    selectedEvent: event({
+      publicData: {
+        actor: 'P3',
+        target: 'P1',
+        laneCount: 6,
+        handSize: 3,
+        deckName: 'PUBLIC_ARCHETYPE_LABEL',
+      },
+    }),
+  });
+  assert.equal(value.publicEvent.publicData.handSize, 3);
+  assert.equal(value.publicEvent.publicData.deckName, 'PUBLIC_ARCHETYPE_LABEL');
 });
 
 test('only public MC and public guest speaker classes can enter this seam', () => {

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-LOBBYDECK-R4-PREACTION-20260827T1111",
+  "taskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "workUnitKey": "LOBBYDECK-R4-PREACTION-RECOVERY",
+  "acquireKey": "LOBBYDECK-R4-BOUNDED-MATCHSTART-20260827T1101-SOL-P7N4V9K2M6QX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "LOBBYDECK-R4-PRED-20260827T1111: TOP_FAILURE=clean recovery branch silently reintroduces direct mutable state.savedDeck/setup consumption or changes deck authority. Guards: exact current main/base readback; existing createDeckMatchStartSnapshot only; invalid/missing snapshot fail-close; scope limited to HTML + existing mapped deck-save regression + authorized transient manifest/executor; final diff exact two mapped product/test paths.",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOBBYDECK-R4-REHEARSAL-20260827T1111: exact-base bounded rehearsal run33032307840 deliberately proved focused detector RED on current HTML preimage, then mounted existing snapshot authority and passed 52/52 deck/save/recovery tests, syntax checks and diff guard; product HTML patch was +8/-1. PR419 Required Gate later failed only branch-history PREACTION/unclassified-new-test path, not product tests.",
+  "proceedToken": "PROCEED|VWORK-LOBBYDECK-R4-PREACTION-20260827T1111|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|LOBBYDECK-R4-PRED-20260827T1111: TOP_FAILURE=clean recovery branch silently reintroduces direct mutable state.savedDeck/setup consumption or changes deck authority. Guards: exact current main/base readback; existing createDeckMatchStartSnapshot only; invalid/missing snapshot fail-close; scope limited to HTML + existing mapped deck-save regression + authorized transient manifest/executor; final diff exact two mapped product/test paths.|LOBBYDECK-R4-REHEARSAL-20260827T1111: exact-base bounded rehearsal run33032307840 deliberately proved focused detector RED on current HTML preimage, then mounted existing snapshot authority and passed 52/52 deck/save/recovery tests, syntax checks and diff guard; product HTML patch was +8/-1. PR419 Required Gate later failed only branch-history PREACTION/unclassified-new-test path, not product tests.",
+  "authorizationBaseSha": "800cbffd2fd513d488df1d78dc6f72c17a300a0d",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/deck-save-ack-core.test.mjs",
+    ".github/workflows/lobbydeck-r4-preaction-html-patch.yml"
+  ]
+}

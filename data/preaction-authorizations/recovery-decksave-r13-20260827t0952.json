@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "recovery-decksave-r13-20260827t0952",
+  "taskId": "BROWSER-DECK-SAVE-RECOVERY-NONDESTRUCTIVE-001",
+  "workUnitKey": "RECOVER_PR413_STALE_ROLLBACK_TO_CURRENT_MAIN",
+  "acquireKey": "a13fddec-7800-47a0-b159-1af4e221602d",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "fresh-main-compare-no-concurrent-target-change",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "required-gate-run-33012452644-deck-recovery-red",
+  "proceedToken": "PROCEED|recovery-decksave-r13-20260827t0952|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|RECOVERY-DECKSAVE-R13",
+  "authorizationBaseSha": "8aaca56ad54d5916e42187b5186aa7f644dbf631",
+  "scope": [
+    "browser/deck-save-recovery-core.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

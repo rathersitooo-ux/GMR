@@ -135,24 +135,25 @@ jobs:
             deploy/cloudflare/tests/build.test.mjs
           git diff --check
 
-      - name: Finalize exact product diff and self-delete executor
+      - name: Finalize exact product tree and self-delete executor
         shell: bash
         run: |
           set -euo pipefail
           BASE=800cbffd2fd513d488df1d78dc6f72c17a300a0d
           rm .github/workflows/battle-self-r8-bounded-executor.yml
           git diff --check
-          actual="$(git diff --name-only "$BASE"...HEAD; git diff --name-only)"
-          actual="$(printf '%s\n' "$actual" | sed '/^$/d' | sort -u)"
+          git config user.name gameroad-battle-self-r8
+          git config user.email actions@users.noreply.github.com
+          git add -A
+          git commit -m "BATTLESELF R8: mount owner remaining deck inspect"
+          actual="$(git diff --name-only "$BASE"..HEAD | sed '/^$/d' | sort -u)"
           expected="$(printf '%s\n' \
             browser/battle-replay-live-adapter.mjs \
             browser/battle-self-deck-inspect-runtime-mount.mjs \
             deploy/cloudflare/scripts/build.mjs \
             deploy/cloudflare/tests/build.test.mjs \
             tests/battle-self-deck-inspect-runtime-mount.test.mjs | sort)"
+          printf 'FINAL_DIFF\n%s\n' "$actual"
           test "$actual" = "$expected"
-          git config user.name gameroad-battle-self-r8
-          git config user.email actions@users.noreply.github.com
-          git add -A
-          git commit -m "BATTLESELF R8: mount owner remaining deck inspect"
+          test ! -e .github/workflows/battle-self-r8-bounded-executor.yml
           git push origin HEAD:work/BATTLE-SELF-REMAINING-DECK-INSPECT-001-R8-BROWSER-MOUNT

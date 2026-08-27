@@ -13,6 +13,10 @@ const RISK_CLASSES = new Set([
   'IRREVERSIBLE_OR_EXTERNAL',
 ]);
 const REHEARSAL_STATUSES = new Set(['PASS', 'N_A_ALT_ORACLE']);
+const STATE_MODEL_VERSION = 'STATE_MODEL_V1';
+const LEASE_AUTHORITY = 'CURRENT_ACTIVE_LEASES';
+const MAX_LEASE_MS = 60 * 60 * 1000;
+const MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
 
 function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
@@ -33,17 +37,72 @@ function requiredString(manifest, key) {
   return typeof manifest[key] === 'string' && manifest[key].trim().length > 0;
 }
 
-export function validateManifest(manifest, manifestPath) {
+function validateStringList(value, key) {
+  if (!Array.isArray(value) || value.length === 0 || value.some((p) => typeof p !== 'string' || !p)) {
+    return { ok: false, reason: `${key}_invalid` };
+  }
+  if (new Set(value).size !== value.length) return { ok: false, reason: `${key}_duplicate` };
+  return { ok: true };
+}
+
+function sameStringSet(left, right) {
+  if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
+  const a = [...left].sort();
+  const b = [...right].sort();
+  return a.every((value, index) => value === b[index]);
+}
+
+function parseJstMinute(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}) JST$/.exec(value);
+  if (!match) return NaN;
+  const [, year, month, day, hour, minute] = match;
+  const ms = Date.parse(`${year}-${month}-${day}T${hour}:${minute}:00+09:00`);
+  if (!Number.isFinite(ms)) return NaN;
+  const normalized = new Date(ms + (9 * 60 * 60 * 1000)).toISOString().slice(0, 16).replace('T', ' ');
+  if (normalized !== `${year}-${month}-${day} ${hour}:${minute}`) return NaN;
+  return ms;
+}
+
+function validateLeaseWitness(manifest, nowMs) {
+  if (manifest.stateModelVersion !== STATE_MODEL_VERSION) return { ok: false, reason: 'lease_state_model_version' };
+  if (manifest.leaseAuthority !== LEASE_AUTHORITY) return { ok: false, reason: 'lease_authority' };
+  if (manifest.leaseState !== 'ACTIVE') return { ok: false, reason: 'lease_state_not_active' };
+  if (manifest.leaseTaskId !== manifest.taskId) return { ok: false, reason: 'lease_identity_mismatch:taskId' };
+  if (manifest.leaseWorkUnitKey !== manifest.workUnitKey) return { ok: false, reason: 'lease_identity_mismatch:workUnitKey' };
+  if (manifest.leaseAcquireKey !== manifest.acquireKey) return { ok: false, reason: 'lease_identity_mismatch:acquireKey' };
+  if (!/^CURRENT_ACTIVE_LEASES!A\d+:L\d+$/.test(manifest.leaseSnapshotReadbackRef)) {
+    return { ok: false, reason: 'lease_snapshot_readback_ref' };
+  }
+
+  const scopeCheck = validateStringList(manifest.leaseScope, 'lease_scope');
+  if (!scopeCheck.ok) return scopeCheck;
+  if (!sameStringSet(manifest.scope, manifest.leaseScope)) return { ok: false, reason: 'lease_scope_mismatch' };
+
+  const readbackMs = parseJstMinute(manifest.leaseSnapshotReadbackAtJst);
+  const untilMs = parseJstMinute(manifest.leaseUntilJst);
+  if (!Number.isFinite(readbackMs)) return { ok: false, reason: 'lease_snapshot_readback_time' };
+  if (!Number.isFinite(untilMs)) return { ok: false, reason: 'lease_until_time' };
+  if (readbackMs > nowMs + MAX_CLOCK_SKEW_MS) return { ok: false, reason: 'lease_snapshot_readback_in_future' };
+  if (untilMs <= readbackMs) return { ok: false, reason: 'lease_window_nonpositive' };
+  if (untilMs - readbackMs > MAX_LEASE_MS) return { ok: false, reason: 'lease_window_over_one_hour' };
+  if (untilMs <= nowMs) return { ok: false, reason: 'lease_expired_at_validation' };
+
+  return { ok: true, reason: 'lease_witness_valid' };
+}
+
+export function validateManifest(manifest, manifestPath, { nowMs = Date.now() } = {}) {
   const required = [
     'schemaVersion', 'recordId', 'taskId', 'workUnitKey', 'acquireKey',
     'riskClass', 'predictionStatus', 'predictionEvidenceId',
     'rehearsalStatus', 'rehearsalEvidenceId', 'proceedToken',
-    'authorizationBaseSha',
+    'authorizationBaseSha', 'stateModelVersion', 'leaseAuthority', 'leaseState',
+    'leaseTaskId', 'leaseWorkUnitKey', 'leaseAcquireKey',
+    'leaseSnapshotReadbackAtJst', 'leaseUntilJst', 'leaseSnapshotReadbackRef',
   ];
   for (const key of required) {
     if (!requiredString(manifest, key)) return { ok: false, reason: `manifest_missing_${key}` };
   }
-  if (manifest.schemaVersion !== 'gameroad-preaction-v1') return { ok: false, reason: 'manifest_schema' };
+  if (manifest.schemaVersion !== 'gameroad-preaction-v2') return { ok: false, reason: 'manifest_schema' };
   if (!RISK_CLASSES.has(manifest.riskClass)) return { ok: false, reason: 'manifest_risk_class' };
   if (manifest.riskClass === 'LOW_REVERSIBLE') return { ok: false, reason: 'material_pr_cannot_use_low_reversible' };
   if (manifest.predictionStatus !== 'PASS') return { ok: false, reason: 'prediction_not_pass' };
@@ -53,11 +112,11 @@ export function validateManifest(manifest, manifestPath) {
   if (manifestPath !== expectedPath) return { ok: false, reason: 'record_path_mismatch' };
   const prefix = `PROCEED|${manifest.recordId}|PREACTION_PROCEED_ALLOWED|${manifest.riskClass}|`;
   if (!manifest.proceedToken.startsWith(prefix)) return { ok: false, reason: 'proceed_token_shape' };
-  if (!Array.isArray(manifest.scope) || manifest.scope.length === 0 || manifest.scope.some((p) => typeof p !== 'string' || !p)) {
-    return { ok: false, reason: 'manifest_scope' };
-  }
-  if (new Set(manifest.scope).size !== manifest.scope.length) return { ok: false, reason: 'manifest_scope_duplicate' };
-  return { ok: true, reason: 'manifest_valid' };
+
+  const scopeCheck = validateStringList(manifest.scope, 'manifest_scope');
+  if (!scopeCheck.ok) return scopeCheck;
+
+  return validateLeaseWitness(manifest, nowMs);
 }
 
 export function evaluateAuthorization({
@@ -67,8 +126,9 @@ export function evaluateAuthorization({
   changedPaths,
   historyPaths = changedPaths,
   manifestPresentAtHead = false,
+  nowMs = Date.now(),
 }) {
-  const manifestCheck = validateManifest(manifest, manifestPath);
+  const manifestCheck = validateManifest(manifest, manifestPath, { nowMs });
   if (!manifestCheck.ok) return manifestCheck;
   const allObservedPaths = [...new Set([...(changedPaths || []), ...(historyPaths || [])])];
   const materialChanged = allObservedPaths.filter(isMaterialPath);

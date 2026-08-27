@@ -1,4 +1,4 @@
-name: Reference Clip Capture R4 Bilibili API
+name: Reference Clip Capture R5 Cleaner Candidates
 
 on:
   push:
@@ -29,62 +29,49 @@ jobs:
           cat > acquire.py <<'PY'
           import json, os, subprocess, hashlib, requests
           refs = [
-            ('R_TOUCH_ACKNOWLEDGE','MakeS_touch_hand','BV1Kt411V7xm'),
-            ('R_IDLE_PRESENCE','AzurLane_home_loop','BV1cRgp6cEyd'),
-            ('R_TOUCH_ACKNOWLEDGE','AzurLane_interaction','BV1hV41197w8'),
-            ('R_CHARACTER_VARIATION','BanGDream_special_motion','BV1CW4LzKE9m'),
+            ('R_TOUCH_ACKNOWLEDGE','AzurLane_Explorer_interaction','BV14xw6zyE5a',55),
+            ('R_TOUCH_ACKNOWLEDGE','AzurLane_Hakuho_interaction','BV1fjpGzzE4e',45),
+            ('R_TOUCH_ACKNOWLEDGE','AzurLane_Rino_L2D','BV1XQ4y127SS',70),
+            ('R_CHARACTER_VARIATION','BlueArchive_Shokuho_actions_L2D','BV18c411o7R4',90),
           ]
           H={'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36','Referer':'https://www.bilibili.com/','Origin':'https://www.bilibili.com'}
           log=[]
-          for role,label,bvid in refs:
+          for role,label,bvid,maxdur in refs:
             rec={'role':role,'label':label,'bvid':bvid}
             try:
               vr=requests.get('https://api.bilibili.com/x/web-interface/view',params={'bvid':bvid},headers=H,timeout=30)
-              rec['view_http']=vr.status_code
-              view=vr.json(); rec['view_code']=view.get('code')
+              rec['view_http']=vr.status_code; view=vr.json(); rec['view_code']=view.get('code')
               data=view.get('data') or {}; pages=data.get('pages') or []
               if not pages: raise RuntimeError(f'no pages: {view}')
-              cid=pages[0]['cid']; rec['cid']=cid; rec['title']=data.get('title')
+              cid=pages[0]['cid']; rec['cid']=cid; rec['title']=data.get('title'); rec['source_duration']=data.get('duration')
               pr=requests.get('https://api.bilibili.com/x/player/playurl',params={'bvid':bvid,'cid':cid,'qn':32,'fnval':0,'platform':'html5','high_quality':1},headers=H,timeout=30)
-              rec['play_http']=pr.status_code
-              play=pr.json(); rec['play_code']=play.get('code')
-              pdata=play.get('data') or {}
-              urls=[]
-              for d in pdata.get('durl') or []:
-                if d.get('url'): urls.append(d['url'])
+              rec['play_http']=pr.status_code; play=pr.json(); rec['play_code']=play.get('code')
+              pdata=play.get('data') or {}; urls=[d.get('url') for d in (pdata.get('durl') or []) if d.get('url')]
               if not urls and pdata.get('dash'):
                 vids=pdata['dash'].get('video') or []
-                vids=sorted(vids,key=lambda x:(x.get('height',0)>480,x.get('height',0)),reverse=True)
-                if vids:
-                  urls.append(vids[0].get('baseUrl') or vids[0].get('base_url'))
-              rec['resolved_url_count']=len([u for u in urls if u])
+                vids=[v for v in vids if (v.get('height') or 0)<=480] or vids
+                vids=sorted(vids,key=lambda x:x.get('height',0),reverse=True)
+                if vids: urls=[vids[0].get('baseUrl') or vids[0].get('base_url')]
               if not urls or not urls[0]: raise RuntimeError(f'no playable URL: {play}')
-              rr=requests.get(urls[0],headers=H,timeout=60,stream=True)
-              rec['media_http']=rr.status_code; rr.raise_for_status()
+              rr=requests.get(urls[0],headers=H,timeout=75,stream=True); rec['media_http']=rr.status_code; rr.raise_for_status()
               raw=f'raw/{label}.bin'
               with open(raw,'wb') as f:
                 for chunk in rr.iter_content(1024*1024):
                   if chunk: f.write(chunk)
               rec['raw_bytes']=os.path.getsize(raw)
-              # Remux/trim first 90 seconds. ffmpeg detects container regardless of extension.
               out=f'clips/{label}.mp4'
-              cp=subprocess.run(['ffmpeg','-y','-i',raw,'-t','90','-map','0:v:0','-c:v','copy',out],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+              cp=subprocess.run(['ffmpeg','-y','-i',raw,'-t',str(maxdur),'-map','0:v:0','-c:v','copy',out],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
               if cp.returncode != 0:
-                cp=subprocess.run(['ffmpeg','-y','-i',raw,'-t','90','-map','0:v:0','-vf','scale=-2:480','-c:v','libx264','-crf','26','-preset','veryfast',out],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+                cp=subprocess.run(['ffmpeg','-y','-i',raw,'-t',str(maxdur),'-map','0:v:0','-vf','scale=-2:480','-c:v','libx264','-crf','26','-preset','veryfast',out],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
               rec['ffmpeg_returncode']=cp.returncode
               if os.path.exists(out):
-                rec['clip_bytes']=os.path.getsize(out)
-                rec['sha256']=hashlib.sha256(open(out,'rb').read()).hexdigest()
-              else:
-                rec['ffmpeg_tail']=cp.stderr[-1500:]
-            except Exception as e:
-              rec['error']=repr(e)
-            log.append(rec)
-            print(json.dumps(rec,ensure_ascii=False))
+                rec['clip_bytes']=os.path.getsize(out); rec['sha256']=hashlib.sha256(open(out,'rb').read()).hexdigest()
+              else: rec['ffmpeg_tail']=cp.stderr[-1500:]
+            except Exception as e: rec['error']=repr(e)
+            log.append(rec); print(json.dumps(rec,ensure_ascii=False))
           open('metadata/acquire.json','w',encoding='utf-8').write(json.dumps(log,ensure_ascii=False,indent=2))
           PY
           python acquire.py
-          find raw clips metadata -maxdepth 1 -type f -printf '%p\t%s bytes\n' | sort | tee metadata/files.txt
 
       - name: Probe and hash actual clips
         shell: bash
@@ -104,7 +91,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: gameroad-reference-real-media-r4
+          name: gameroad-reference-cleaner-media-r5
           path: |
             clips/
             metadata/

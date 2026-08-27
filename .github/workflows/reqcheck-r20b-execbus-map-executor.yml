@@ -1,0 +1,72 @@
+name: REQCHECK R20B Executor Bus Gate Mapper
+
+on:
+  push:
+    branches:
+      - work/required-gate-executor-bus-map-r20b-20260827
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-self-remove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify exact base target and apply bounded mapping
+        shell: bash
+        run: |
+          set -euo pipefail
+          target=.github/workflows/gameroad-required-gate.yml
+          expected_blob=ec08a35d2a5dbc0ca98235ce0dbd9b37952047ab
+          actual_blob="$(git hash-object "$target")"
+          test "$actual_blob" = "$expected_blob"
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/gameroad-required-gate.yml')
+          text = path.read_text()
+          replacements = [
+              (
+                  "          board_visual=false\n          unclassified=false\n",
+                  "          board_visual=false\n          executor_bus=false\n          unclassified=false\n",
+              ),
+              (
+                  "              .github/workflows/gameroad-required-gate.yml|\\\n",
+                  "              .github/workflows/gameroad-executor-bus.yml|\\\n              tools/executor-bus-packet.mjs|\\\n              tests/executor-bus-packet.test.mjs)\n                executor_bus=true\n                ;;\n              .github/workflows/gameroad-required-gate.yml|\\\n",
+              ),
+              (
+                  "            echo \"board_visual=${board_visual}\"\n            echo \"unclassified=${unclassified}\"\n",
+                  "            echo \"board_visual=${board_visual}\"\n            echo \"executor_bus=${executor_bus}\"\n            echo \"unclassified=${unclassified}\"\n",
+              ),
+              (
+                  "      - name: Run Four-agent match follow harness tests\n        if: steps.classify.outputs.multi_agent_match_follow == 'true'\n        run: node --test tests/multi-agent-match-follow-harness.test.mjs\n\n      - name: Run Browser static check\n",
+                  "      - name: Run Four-agent match follow harness tests\n        if: steps.classify.outputs.multi_agent_match_follow == 'true'\n        run: node --test tests/multi-agent-match-follow-harness.test.mjs\n\n      - name: Run Executor bus packet tests\n        if: steps.classify.outputs.executor_bus == 'true'\n        run: node --test tests/executor-bus-packet.test.mjs\n\n      - name: Run Browser static check\n",
+              ),
+          ]
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'exact anchor count must be 1, got {count}: {old[:80]!r}')
+              text = text.replace(old, new, 1)
+          path.write_text(text)
+          PY
+          git diff --check -- "$target"
+          grep -F 'executor_bus=false' "$target"
+          grep -F '.github/workflows/gameroad-executor-bus.yml' "$target"
+          grep -F 'echo "executor_bus=${executor_bus}"' "$target"
+          grep -F 'Run Executor bus packet tests' "$target"
+      - name: Remove transient authorization and executor, then commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/reqcheck-r20b-execbus-map-executor.yml
+          git rm data/preaction-authorizations/VWORK-REQCHECK-R20B-EXECBUS-MAP-PREACTION-20260827T1656.json
+          git add .github/workflows/gameroad-required-gate.yml
+          git diff --cached --check
+          git config user.name 'gameroad-executor-bot'
+          git config user.email 'gameroad-executor-bot@users.noreply.github.com'
+          git commit -m 'REQCHECK R20B: classify executor bus evidence lane'
+          git push origin HEAD:work/required-gate-executor-bus-map-r20b-20260827

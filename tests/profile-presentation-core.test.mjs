@@ -58,6 +58,23 @@ test('missing or unauthoritative profile sources stay unknown instead of becomin
   }
 });
 
+test('known source with undefined payload fails closed instead of claiming valuePresent', () => {
+  const state = make({
+    sources: {
+      records: { status: 'known', sourceId: 'RESULT-OWNER', value: undefined }
+    }
+  });
+  assert.deepEqual(state.sources.records, {
+    status: 'unknown',
+    visible: false,
+    valuePresent: false,
+    sourceId: null,
+    reason: 'SOURCE_UNAVAILABLE'
+  });
+  assert.equal('value' in state.sources.records, false);
+  assert.deepEqual(projectProfilePresentation(state).sources.records, state.sources.records);
+});
+
 test('an authoritative numeric zero is preserved as real upstream data', () => {
   const state = make();
   assert.equal(state.sources.records.status, 'known');

@@ -6,27 +6,38 @@ import {
   validateManifest,
 } from '../tools/preaction-authorization-validator.mjs';
 
-const recordId = 'VWORK-REQCHECK-R18-CURRENTMAIN-PREACTION-GATE-20260825T0158';
+const recordId = 'VWORK-REQCHECK-R21-LEASEWITNESS-20260827T1733';
 const manifestPath = `data/preaction-authorizations/${recordId}.json`;
-const baseSha = 'f57173b295a6487b15d6b2c037fafe598026f324';
+const baseSha = '097660354fb867735eeb3a7649c7fdc8fd79a7c7';
+const nowMs = Date.parse('2026-08-27T08:40:00Z'); // 17:40 JST
+const scope = [
+  'tools/preaction-authorization-validator.mjs',
+  'tests/preaction-authorization-validator.test.mjs',
+];
 const manifest = {
-  schemaVersion: 'gameroad-preaction-v1',
+  schemaVersion: 'gameroad-preaction-v2',
   recordId,
   taskId: 'GITHUB-REQUIRED-CHECKS-POLICY-001',
-  workUnitKey: 'REQCHECK-R18-CURRENTMAIN-PREACTION-GATE',
-  acquireKey: 'REQCHECK-R18-CURRENTMAIN-PREACTION-GATE-20260825T0158-SOL-Q6N8V4K2M7PX',
+  workUnitKey: 'LEGACY-WRITER-SNAPSHOT-GATE-BYPASS-HARDENING-R21',
+  acquireKey: 'REQCHECK-R21-LEASEWITNESS-20260827T1733-SOL-Q7N4V8K2M6PX',
   riskClass: 'HIGH_CONSEQUENCE',
   predictionStatus: 'PASS',
-  predictionEvidenceId: 'REQCHECK-R18-PRED-20260825T0158',
+  predictionEvidenceId: 'REQCHECK-R21-KNOWNFAIL-R20B-20260827T1733',
   rehearsalStatus: 'N_A_ALT_ORACLE',
-  rehearsalEvidenceId: 'REQCHECK-R18-ALTORACLE-20260825T0158',
-  proceedToken: `PROCEED|${recordId}|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|prediction|rehearsal`,
+  rehearsalEvidenceId: 'REQCHECK-R21-LEGACY-V1-FAILCLOSE-20260827T1733',
+  proceedToken: `PROCEED|${recordId}|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|prediction|lease-snapshot`,
   authorizationBaseSha: baseSha,
-  scope: [
-    '.github/workflows/gameroad-required-gate.yml',
-    'tools/preaction-authorization-validator.mjs',
-    'tests/preaction-authorization-validator.test.mjs',
-  ],
+  stateModelVersion: 'STATE_MODEL_V1',
+  leaseAuthority: 'CURRENT_ACTIVE_LEASES',
+  leaseState: 'ACTIVE',
+  leaseTaskId: 'GITHUB-REQUIRED-CHECKS-POLICY-001',
+  leaseWorkUnitKey: 'LEGACY-WRITER-SNAPSHOT-GATE-BYPASS-HARDENING-R21',
+  leaseAcquireKey: 'REQCHECK-R21-LEASEWITNESS-20260827T1733-SOL-Q7N4V8K2M6PX',
+  leaseSnapshotReadbackAtJst: '2026-08-27 17:34 JST',
+  leaseUntilJst: '2026-08-27 18:20 JST',
+  leaseSnapshotReadbackRef: 'CURRENT_ACTIVE_LEASES!A23:L23',
+  scope,
+  leaseScope: [...scope],
 };
 const firstCommit = { sha: '1'.repeat(40), parentSha: baseSha, paths: [manifestPath] };
 
@@ -38,8 +49,13 @@ function check(overrides = {}) {
     changedPaths: ['tools/preaction-authorization-validator.mjs'],
     historyPaths: ['tools/preaction-authorization-validator.mjs'],
     manifestPresentAtHead: false,
+    nowMs,
     ...overrides,
   });
+}
+
+function validate(candidate = manifest, at = nowMs) {
+  return validateManifest(candidate, manifestPath, { nowMs: at });
 }
 
 test('material paths are fail-closed while documentation-only paths are nearby-normal', () => {
@@ -51,13 +67,64 @@ test('material paths are fail-closed while documentation-only paths are nearby-n
   assert.equal(isMaterialPath(manifestPath), false);
 });
 
-test('valid manifest shape passes', () => {
-  assert.deepEqual(validateManifest(manifest, manifestPath), { ok: true, reason: 'manifest_valid' });
+test('valid v2 manifest with matching active snapshot witness passes', () => {
+  assert.deepEqual(validate(), { ok: true, reason: 'lease_witness_valid' });
+});
+
+test('legacy v1 event-only style manifest is rejected', () => {
+  const legacy = { ...manifest, schemaVersion: 'gameroad-preaction-v1' };
+  delete legacy.stateModelVersion;
+  delete legacy.leaseAuthority;
+  delete legacy.leaseState;
+  delete legacy.leaseTaskId;
+  delete legacy.leaseWorkUnitKey;
+  delete legacy.leaseAcquireKey;
+  delete legacy.leaseSnapshotReadbackAtJst;
+  delete legacy.leaseUntilJst;
+  delete legacy.leaseSnapshotReadbackRef;
+  delete legacy.leaseScope;
+  assert.equal(validate(legacy).ok, false);
+});
+
+test('missing snapshot witness is rejected', () => {
+  const bad = { ...manifest };
+  delete bad.leaseSnapshotReadbackRef;
+  assert.deepEqual(validate(bad), { ok: false, reason: 'manifest_missing_leaseSnapshotReadbackRef' });
+});
+
+test('lease acquire identity must match preaction acquire identity', () => {
+  const bad = { ...manifest, leaseAcquireKey: 'REQCHECK-OTHER' };
+  assert.deepEqual(validate(bad), { ok: false, reason: 'lease_identity_mismatch:acquireKey' });
+});
+
+test('lease task and work-unit identities must match', () => {
+  assert.deepEqual(validate({ ...manifest, leaseTaskId: 'OTHER' }), { ok: false, reason: 'lease_identity_mismatch:taskId' });
+  assert.deepEqual(validate({ ...manifest, leaseWorkUnitKey: 'OTHER' }), { ok: false, reason: 'lease_identity_mismatch:workUnitKey' });
+});
+
+test('lease scope must exactly cover the preauthorized material scope', () => {
+  const bad = { ...manifest, leaseScope: ['tools/preaction-authorization-validator.mjs'] };
+  assert.deepEqual(validate(bad), { ok: false, reason: 'lease_scope_mismatch' });
+});
+
+test('expired snapshot witness is rejected at validation time', () => {
+  const afterExpiry = Date.parse('2026-08-27T09:21:00Z'); // 18:21 JST
+  assert.deepEqual(validate(manifest, afterExpiry), { ok: false, reason: 'lease_expired_at_validation' });
+});
+
+test('lease witness cannot claim more than the one-hour current lease window', () => {
+  const bad = { ...manifest, leaseUntilJst: '2026-08-27 18:35 JST' };
+  assert.deepEqual(validate(bad), { ok: false, reason: 'lease_window_over_one_hour' });
+});
+
+test('future-dated snapshot readback beyond clock skew is rejected', () => {
+  const bad = { ...manifest, leaseSnapshotReadbackAtJst: '2026-08-27 17:50 JST' };
+  assert.deepEqual(validate(bad), { ok: false, reason: 'lease_snapshot_readback_in_future' });
 });
 
 test('missing or malformed ProceedToken is rejected', () => {
   const bad = { ...manifest, proceedToken: 'PROCEED|FAKE' };
-  assert.equal(validateManifest(bad, manifestPath).ok, false);
+  assert.equal(validate(bad).ok, false);
 });
 
 test('authorization must be the first commit from its recorded base', () => {
@@ -98,7 +165,11 @@ test('documentation-only PR is not overblocked', () => {
 });
 
 test('LOW_REVERSIBLE cannot authorize a material PR', () => {
-  const low = { ...manifest, riskClass: 'LOW_REVERSIBLE', proceedToken: `PROCEED|${recordId}|PREACTION_PROCEED_ALLOWED|LOW_REVERSIBLE|prediction|rehearsal` };
+  const low = {
+    ...manifest,
+    riskClass: 'LOW_REVERSIBLE',
+    proceedToken: `PROCEED|${recordId}|PREACTION_PROCEED_ALLOWED|LOW_REVERSIBLE|prediction|lease-snapshot`,
+  };
   const result = check({ manifest: low });
   assert.deepEqual(result, { ok: false, reason: 'material_pr_cannot_use_low_reversible' });
 });

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-RECORDS-PRESENTATION-BRANCH8-R1-20260827T2301",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "RECORDS_ISOLATED_PRESENTATION_BRANCH8_R1",
+  "acquireKey": "RECORDSPRES-BRANCH8-R1-20260827T2301-SOL-B8-Q7N4V8K2M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "RECORDS-R1-DISJOINT-NEW-PATHS-MAIN-2bc5463",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "RECORDS-EMPTY-FIRST-OPAQUE-UPSTREAM-PROJECTION",
+  "proceedToken": "PROCEED|VWORK-RECORDS-PRESENTATION-BRANCH8-R1-20260827T2301|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "2bc5463b3d0ca967f68c04f3b2fad3abb152d356",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "RECORDS_ISOLATED_PRESENTATION_BRANCH8_R1",
+  "leaseAcquireKey": "RECORDSPRES-BRANCH8-R1-20260827T2301-SOL-B8-Q7N4V8K2M6PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-27 23:03 JST",
+  "leaseUntilJst": "2026-08-27 23:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A197:N197",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch work/records-presentation-r1-20260827 only: NEW browser/records-presentation-core.mjs; NEW tests/records-presentation-core.test.mjs; transient data/preaction-authorizations/VWORK-RECORDS-PRESENTATION-BRANCH8-R1-20260827T2301.json create-first/delete-before-final-head only; one bounded draft PR to main metadata/head only with NO MERGE; CURRENT_ACTIVE_LEASES own exact AcquireKey tuple only; R22 own acquire/resolution/checkpoint/terminal/release records only. browser/GAMEROAD.html, battle replay/result/state semantics, existing Browser/Foundation/Branch0/other Branch8 files, Required Gate workflow, main merge/deploy/assets are read-only.",
+  "scope": [
+    "browser/records-presentation-core.mjs",
+    "tests/records-presentation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/records-presentation-core.mjs",
+    "tests/records-presentation-core.test.mjs"
+  ]
+}

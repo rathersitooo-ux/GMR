@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-REQGATE-CARDSDECK-R26-20260827T2352",
+  "taskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "workUnitKey": "REQUIRED_GATE_CARDSDECK_CLASSIFICATION_R26",
+  "acquireKey": "REQGATE-CARDSDECK-R26-20260827T2352-SOL-Q7N4V8K2M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PRED-REQGATE-CARDSDECK-R26-20260827T2352",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-R25-CLASSIFIER-PATTERN-PLUS-PR453-UNCLASSIFIED-DIAGNOSIS",
+  "proceedToken": "PROCEED|VWORK-REQGATE-CARDSDECK-R26-20260827T2352|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CARDSDECK_EXACT_PATH_CLASSIFICATION",
+  "authorizationBaseSha": "cc08fa2e94fb083543f83e82dffd63938208662c",
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "leaseWorkUnitKey": "REQUIRED_GATE_CARDSDECK_CLASSIFICATION_R26",
+  "leaseAcquireKey": "REQGATE-CARDSDECK-R26-20260827T2352-SOL-Q7N4V8K2M6PX",
+  "leaseScope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-08-27 23:53 JST",
+  "leaseUntilJst": "2026-08-28 00:42 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1:N202",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch work/required-gate-cardsdeck-r26-20260827 only: .github/workflows/gameroad-required-gate.yml; transient data/preaction-authorizations/VWORK-REQGATE-CARDSDECK-R26-20260827T2352.json create-first/delete-before-final-head only; one bounded PR to main plus expected-head squash merge after exact-head Required Gate and current lease checks; CURRENT_ACTIVE_LEASES own exact AcquireKey tuple only; R22 own acquire/checkpoint/terminal/release records only. Cards/QuickDeck product files, browser/GAMEROAD.html, all other workflows/product/game/assets are read-only."
+}

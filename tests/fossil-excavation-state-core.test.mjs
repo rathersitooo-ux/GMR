@@ -8,6 +8,8 @@ import {
   issueFossilsFromExcavation,
   listAvailableFossils,
   loadFossilExcavationState,
+  projectFossilExcavationPresentation,
+  projectFossilRestorationPresentation,
   sampleFossilCount,
   sampleRestorationValue,
   serializeFossilExcavationState,
@@ -263,4 +265,122 @@ test('restoration replay remains duplicate after JSON reload and cannot consume 
   assert.strictEqual(replay.state, loaded);
   assert.equal(replay.state.restorations.length, 1);
   assert.deepEqual(listAvailableFossils(replay.state), []);
+});
+
+test('excavation presentation is owner-scoped, immutable, and preserves source state bytes', () => {
+  let state = stateWithValues([1, 2], 'p1');
+  state = issue(state, {
+    excavationId: 'p2-exc',
+    stratumId: 'p2-stratum',
+    ownerId: 'p2',
+    round: 8,
+    countRoll: 0.10,
+    valueRolls: [0.95],
+  }).state;
+  const before = JSON.stringify(serializeFossilExcavationState(state));
+  const projection = projectFossilExcavationPresentation(state, { ownerId: 'p1' });
+
+  assert.equal(projection.schema, 'gameroad.fossil-presentation.v1');
+  assert.equal(projection.view, 'FOSSIL_EXCAVATION');
+  assert.equal(projection.ownerId, 'p1');
+  assert.equal(projection.excavationCount, 2);
+  assert.equal(projection.latestExcavation.stratumId, 'stratum-2');
+  assert.equal(projection.inventory.availableCount, 2);
+  assert.deepEqual(projection.inventory.restorationValueCounts, [
+    { value: 1, count: 1 },
+    { value: 2, count: 1 },
+    { value: 3, count: 0 },
+  ]);
+  assert.ok(projection.inventory.fossils.every(fossil => fossil.ownerId === 'p1'));
+  assert.ok(projection.latestExcavation.fossilIds.every(id => !id.includes('p2-exc')));
+  assert.equal(projection.authority.presentationOnly, true);
+  assert.equal(projection.authority.ownsDinosaurEvidenceClassification, false);
+  assert.equal(Object.isFrozen(projection), true);
+  assert.equal(Object.isFrozen(projection.inventory.fossils[0]), true);
+  assert.equal(JSON.stringify(serializeFossilExcavationState(state)), before);
+});
+
+test('restoration presentation never invents a target and only exposes caller-targeted value matches', () => {
+  const state = stateWithValues([1, 2, 3], 'p1');
+  const before = JSON.stringify(serializeFossilExcavationState(state));
+  const noTarget = projectFossilRestorationPresentation(state, { ownerId: 'p1' });
+  assert.equal(noTarget.requestedTargetValue, null);
+  assert.equal(noTarget.targetSource, 'not-provided');
+  assert.deepEqual(noTarget.valueMatchChoices, []);
+
+  const target3 = projectFossilRestorationPresentation(state, { ownerId: 'p1', targetValue: 3 });
+  const target4 = projectFossilRestorationPresentation(state, { ownerId: 'p1', targetValue: 4 });
+  assert.equal(target3.targetSource, 'caller');
+  assert.ok(target3.valueMatchChoices.length > 0);
+  assert.ok(target4.valueMatchChoices.length > 0);
+  assert.ok(target3.valueMatchChoices.every(choice => choice.totalValue === 3));
+  assert.ok(target4.valueMatchChoices.every(choice => choice.totalValue === 4));
+  assert.notDeepEqual(target3.valueMatchChoices, target4.valueMatchChoices);
+  assert.equal(JSON.stringify(serializeFossilExcavationState(state)), before);
+});
+
+test('restoration presentation cannot leak another owner fossils, choices, or committed history', () => {
+  let state = stateWithValues([1, 2], 'p1');
+  state = issue(state, {
+    excavationId: 'p2-exc',
+    stratumId: 'p2-stratum',
+    ownerId: 'p2',
+    round: 7,
+    countRoll: 0.10,
+    valueRolls: [0.10],
+  }).state;
+
+  const p1Ids = listAvailableFossils(state, { ownerId: 'p1' }).map(fossil => fossil.id);
+  state = consumeFossilsForRestoration(state, {
+    restorationId: 'p1-restore',
+    ownerId: 'p1',
+    dinosaurCardId: 'dino-p1',
+    dinosaurSource: 'hand',
+    round: 8,
+    phase: 'caller-authoritative-phase',
+    sequence: 1,
+    targetValue: 3,
+    fossilIds: p1Ids,
+    restorationAuthorized: true,
+  }).state;
+
+  const p2Id = listAvailableFossils(state, { ownerId: 'p2' })[0].id;
+  state = consumeFossilsForRestoration(state, {
+    restorationId: 'p2-restore',
+    ownerId: 'p2',
+    dinosaurCardId: 'dino-p2',
+    dinosaurSource: 'graveyard',
+    round: 9,
+    phase: 'caller-authoritative-phase',
+    sequence: 2,
+    targetValue: 1,
+    fossilIds: [p2Id],
+    restorationAuthorized: true,
+  }).state;
+
+  const projection = projectFossilRestorationPresentation(state, { ownerId: 'p1', targetValue: 3 });
+  assert.deepEqual(projection.inventory.fossils, []);
+  assert.deepEqual(projection.valueMatchChoices, []);
+  assert.equal(projection.history.length, 1);
+  assert.equal(projection.history[0].restorationId, 'p1-restore');
+  assert.equal(projection.history[0].dinosaurCardId, 'dino-p1');
+  assert.ok(projection.history[0].fossils.every(fossil => fossil.ownerId === 'p1'));
+  assert.equal(JSON.stringify(projection).includes('p2-restore'), false);
+  assert.equal(JSON.stringify(projection).includes('dino-p2'), false);
+});
+
+test('presentation projection fails closed for missing owner and invalid caller target without mutating state', () => {
+  const state = stateWithValues([1, 2], 'p1');
+  const before = JSON.stringify(serializeFossilExcavationState(state));
+  assert.throws(() => projectFossilExcavationPresentation(state), /OWNERID_REQUIRED/);
+  assert.throws(() => projectFossilRestorationPresentation(state, { ownerId: '' }), /OWNERID_REQUIRED/);
+  assert.throws(() => projectFossilRestorationPresentation(state, { ownerId: 'p1', targetValue: 0 }), /TARGETVALUE_INVALID/);
+  assert.equal(JSON.stringify(serializeFossilExcavationState(state)), before);
+});
+
+test('presentation capability metadata explicitly refuses rule, persistence, evidence, and asset authority', () => {
+  assert.equal(FOSSIL_EXCAVATION_STATE_CORE.presentationSchema, 'gameroad.fossil-presentation.v1');
+  assert.equal(FOSSIL_EXCAVATION_STATE_CORE.ownsRestorationAuthorization, false);
+  assert.equal(FOSSIL_EXCAVATION_STATE_CORE.ownsDinosaurEvidenceClassification, false);
+  assert.equal(FOSSIL_EXCAVATION_STATE_CORE.ownsFormalAssets, false);
 });

@@ -1,4 +1,5 @@
 const SCHEMA = 'gameroad.fossil-excavation-state.v1';
+const PRESENTATION_SCHEMA = 'gameroad.fossil-presentation.v1';
 
 const COUNT_THRESHOLDS = Object.freeze([
   Object.freeze({ upperExclusive: 0.75, value: 1 }),
@@ -428,8 +429,105 @@ export function consumeFossilsForRestoration(state, {
   });
 }
 
+
+function compareFossilsForPresentation(a, b) {
+  return a.excavatedRound - b.excavatedRound || a.id.localeCompare(b.id);
+}
+
+function presentationAuthority() {
+  return {
+    presentationOnly: true,
+    ownsBoardStopAuthority: false,
+    ownsRandomness: false,
+    ownsPersistenceTransport: false,
+    ownsRestorationAuthorization: false,
+    ownsDinosaurEvidenceClassification: false,
+    ownsFormalAssets: false,
+  };
+}
+
+export function projectFossilExcavationPresentation(state, { ownerId } = {}) {
+  assertState(state);
+  requireString(ownerId, 'ownerId');
+
+  const ownedExcavations = state.excavations
+    .filter(entry => entry.ownerId === ownerId)
+    .slice()
+    .sort((a, b) => a.round - b.round || a.excavationId.localeCompare(b.excavationId));
+  const fossils = availableFossils(state)
+    .filter(fossil => fossil.ownerId === ownerId)
+    .slice()
+    .sort(compareFossilsForPresentation)
+    .map(cloneFossil);
+  const latest = ownedExcavations.at(-1) || null;
+  const restorationValueCounts = [1, 2, 3].map(value => ({
+    value,
+    count: fossils.filter(fossil => fossil.restorationValue === value).length,
+  }));
+
+  return deepFreeze({
+    schema: PRESENTATION_SCHEMA,
+    view: 'FOSSIL_EXCAVATION',
+    stateSchema: SCHEMA,
+    matchId: state.matchId,
+    ownerId,
+    excavationCount: ownedExcavations.length,
+    latestExcavation: latest ? {
+      excavationId: latest.excavationId,
+      stratumId: latest.stratumId,
+      round: latest.round,
+      fossilCount: latest.fossils.length,
+      fossilIds: latest.fossils.map(fossil => fossil.id),
+    } : null,
+    inventory: {
+      availableCount: fossils.length,
+      fossils,
+      restorationValueCounts,
+    },
+    authority: presentationAuthority(),
+  });
+}
+
+export function projectFossilRestorationPresentation(state, { ownerId, targetValue = null } = {}) {
+  assertState(state);
+  requireString(ownerId, 'ownerId');
+  if (targetValue !== null) requireSafeInteger(targetValue, 'targetValue', { min: 1 });
+
+  const fossils = availableFossils(state)
+    .filter(fossil => fossil.ownerId === ownerId)
+    .slice()
+    .sort(compareFossilsForPresentation)
+    .map(cloneFossil);
+  const valueMatchChoices = targetValue === null
+    ? []
+    : findRestorationChoices(state, { ownerId, targetValue }).map(deepClone);
+  const history = state.restorations
+    .filter(entry => entry.ownerId === ownerId)
+    .slice()
+    .sort((a, b) => a.round - b.round || a.sequence - b.sequence || a.restorationId.localeCompare(b.restorationId))
+    .map(cloneRestoration);
+
+  return deepFreeze({
+    schema: PRESENTATION_SCHEMA,
+    view: 'FOSSIL_RESTORE',
+    stateSchema: SCHEMA,
+    matchId: state.matchId,
+    ownerId,
+    inventory: {
+      availableCount: fossils.length,
+      fossils,
+    },
+    requestedTargetValue: targetValue,
+    targetSource: targetValue === null ? 'not-provided' : 'caller',
+    valueMatchChoices,
+    history,
+    authority: presentationAuthority(),
+  });
+}
+
 export const FOSSIL_EXCAVATION_STATE_CORE = deepFreeze({
   schema: SCHEMA,
+  presentationSchema: PRESENTATION_SCHEMA,
   fossilCountDistribution: [
     { value: 1, probability: 0.75 },
     { value: 2, probability: 0.18 },
@@ -446,4 +544,7 @@ export const FOSSIL_EXCAVATION_STATE_CORE = deepFreeze({
   ownsRandomness: false,
   ownsBoardStopAuthority: false,
   ownsPersistenceTransport: false,
+  ownsRestorationAuthorization: false,
+  ownsDinosaurEvidenceClassification: false,
+  ownsFormalAssets: false,
 });

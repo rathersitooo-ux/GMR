@@ -4,6 +4,18 @@ const ARBITER_SCHEMA = 'GAMEROAD_REPLAY_PUBLIC_SPEECH_ARBITER_V1';
 const DISPATCH_SCHEMA = 'GAMEROAD_REPLAY_PUBLIC_SPEECH_DISPATCH_V1';
 const ALLOWED_SPEAKER_CLASSES = new Set(['PUBLIC_MC', 'PUBLIC_GUEST']);
 const SETTLE_OUTCOMES = new Set(['COMPLETED', 'DROP', 'RETRY']);
+const FORBIDDEN_PUBLIC_STATE_KEYS = new Set([
+  'hand',
+  'hands',
+  'deck',
+  'decks',
+  'deckorder',
+  'deckorders',
+  'drawpile',
+  'drawpiles',
+  'draworder',
+  'draworders',
+]);
 
 function own(value, key) {
   return Object.prototype.hasOwnProperty.call(value, key);
@@ -37,7 +49,13 @@ function clonePublicJson(value, path = 'public') {
   const out = {};
   for (const [key, child] of Object.entries(value)) {
     const lower = key.toLowerCase();
-    if (lower.includes('private') || lower.includes('secret') || lower === 'authorityonly') {
+    if (
+      lower.includes('private') ||
+      lower.includes('secret') ||
+      lower.includes('hidden') ||
+      lower === 'authorityonly' ||
+      FORBIDDEN_PUBLIC_STATE_KEYS.has(lower)
+    ) {
       throw new TypeError(`PUBLIC_PROJECTION_FORBIDDEN_KEY:${path}.${key}`);
     }
     out[key] = clonePublicJson(child, `${path}.${key}`);

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-REQGATE-CARDSDECK-R27-20260828T0122",
+  "taskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "workUnitKey": "REQUIRED_GATE_CARDSDECK_CLASSIFICATION_R27",
+  "acquireKey": "REQGATE-CARDSDECK-R27-20260828T0122-SOL-Q7N4V8K2M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PRED-REQGATE-CARDSDECK-R27-20260828T0122",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-HOMEBOOT-EXACT-PATH-R27",
+  "proceedToken": "PROCEED|VWORK-REQGATE-CARDSDECK-R27-20260828T0122|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CARDSDECK_EXACT_PATH_CLASSIFICATION",
+  "authorizationBaseSha": "5c41b542eaf4c1b88b2b5006b5629af5976d4bde",
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "leaseWorkUnitKey": "REQUIRED_GATE_CARDSDECK_CLASSIFICATION_R27",
+  "leaseAcquireKey": "REQGATE-CARDSDECK-R27-20260828T0122-SOL-Q7N4V8K2M6PX",
+  "leaseScope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-08-28 01:24 JST",
+  "leaseUntilJst": "2026-08-28 02:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1:L204",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR new branch work/required-gate-cardsdeck-r27-20260828 only: .github/workflows/gameroad-required-gate.yml; transient data/preaction-authorizations/VWORK-REQGATE-CARDSDECK-R27-20260828T0122.json create-first/delete-before-final-head only; one bounded PR to main plus expected-head merge; CURRENT_ACTIVE_LEASES own exact AcquireKey tuple only; R22 own acquire/checkpoint/terminal/release records only. Browser/Cards/QuickDeck product files are read-only in this WorkUnit."
+}

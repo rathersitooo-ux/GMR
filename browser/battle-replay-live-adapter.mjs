@@ -1197,3 +1197,195 @@ export const BATTLE_MOVIE_SURFACE_BINDING = Object.freeze({
   authority: 'presentation_only_no_game_state_write',
   actualDomSurface: 'battleResolution'
 });
+
+const CONTINUOUS_FOLLOW_SCHEMA = 'GAMEROAD_BATTLE_REPLAY_CONTINUOUS_FOLLOW_V1';
+const CONTINUOUS_FOLLOW_STATUSES = new Set(['WAITING', 'ATTACHED', 'DENIED', 'OFFLINE', 'STOPPED']);
+
+function assertContinuousSpectatorFollow(state) {
+  if (!state || state.schema !== CONTINUOUS_FOLLOW_SCHEMA ||
+      state.presentationOnly !== true || state.gameplayAuthority !== false ||
+      state.gameStateWrite !== false || !CONTINUOUS_FOLLOW_STATUSES.has(state.status) ||
+      !Number.isSafeInteger(state.attachSerial) || state.attachSerial < 0) {
+    throw new TypeError('CONTINUOUS_FOLLOW_STATE_INVALID');
+  }
+  if (state.status === 'STOPPED') {
+    if (state.targetUserId !== null || state.currentMatchId !== null || state.stopped !== true) {
+      throw new TypeError('CONTINUOUS_FOLLOW_STOPPED_STATE_INVALID');
+    }
+  } else if (!nonEmptyString(state.targetUserId) || state.stopped !== false) {
+    throw new TypeError('CONTINUOUS_FOLLOW_TARGET_INVALID');
+  }
+  if (state.status === 'ATTACHED' && !nonEmptyString(state.currentMatchId)) {
+    throw new TypeError('CONTINUOUS_FOLLOW_MATCH_INVALID');
+  }
+  if (state.status !== 'ATTACHED' && state.currentMatchId !== null) {
+    throw new TypeError('CONTINUOUS_FOLLOW_NONATTACHED_MATCH_INVALID');
+  }
+  if (state.lastCompletedMatchId !== null && !nonEmptyString(state.lastCompletedMatchId)) {
+    throw new TypeError('CONTINUOUS_FOLLOW_COMPLETED_MATCH_INVALID');
+  }
+  return state;
+}
+
+function continuousFollowState({
+  targetUserId,
+  status,
+  currentMatchId = null,
+  lastCompletedMatchId = null,
+  attachSerial = 0,
+  waitingReason = null,
+  stopped = false
+}) {
+  return deepFreeze({
+    schema: CONTINUOUS_FOLLOW_SCHEMA,
+    presentationOnly: true,
+    gameplayAuthority: false,
+    gameStateWrite: false,
+    targetUserId,
+    status,
+    currentMatchId,
+    lastCompletedMatchId,
+    attachSerial,
+    waitingReason,
+    stopped
+  });
+}
+
+export function createContinuousSpectatorFollow({ targetUserId } = {}) {
+  const normalizedTarget = maybeString(targetUserId);
+  if (!normalizedTarget) throw new TypeError('CONTINUOUS_FOLLOW_TARGET_REQUIRED');
+  return continuousFollowState({
+    targetUserId: normalizedTarget,
+    status: 'WAITING',
+    waitingReason: 'AWAITING_AUTHORIZED_MATCH'
+  });
+}
+
+function assertFollowSignalTarget(state, signal) {
+  const signalTarget = maybeString(signal?.targetUserId);
+  if (!signalTarget || signalTarget !== state.targetUserId) {
+    throw new TypeError('CONTINUOUS_FOLLOW_SIGNAL_TARGET_MISMATCH');
+  }
+}
+
+export function advanceContinuousSpectatorFollow(state, signal = {}) {
+  assertContinuousSpectatorFollow(state);
+  if (state.status === 'STOPPED') return state;
+  if (!signal || typeof signal !== 'object' || Array.isArray(signal)) {
+    throw new TypeError('CONTINUOUS_FOLLOW_SIGNAL_INVALID');
+  }
+  assertFollowSignalTarget(state, signal);
+
+  switch (signal.kind) {
+    case 'MATCH_DISCOVERED': {
+      if (signal.viewerAuthorized !== true || signal.spectatable !== true) {
+        return continuousFollowState({
+          targetUserId: state.targetUserId,
+          status: 'DENIED',
+          lastCompletedMatchId: state.lastCompletedMatchId,
+          attachSerial: state.attachSerial,
+          waitingReason: 'MATCH_NOT_AUTHORIZED'
+        });
+      }
+      const matchId = maybeString(signal.matchId);
+      if (!matchId) throw new TypeError('CONTINUOUS_FOLLOW_MATCH_ID_REQUIRED');
+      if (state.status === 'ATTACHED' && state.currentMatchId === matchId) return state;
+      return continuousFollowState({
+        targetUserId: state.targetUserId,
+        status: 'ATTACHED',
+        currentMatchId: matchId,
+        lastCompletedMatchId: state.lastCompletedMatchId,
+        attachSerial: state.attachSerial + 1,
+        waitingReason: null
+      });
+    }
+    case 'MATCH_ENDED': {
+      const matchId = maybeString(signal.matchId);
+      if (!matchId) throw new TypeError('CONTINUOUS_FOLLOW_MATCH_ID_REQUIRED');
+      if (matchId === state.lastCompletedMatchId && state.status !== 'ATTACHED') return state;
+      if (state.status !== 'ATTACHED' || state.currentMatchId !== matchId) {
+        throw new TypeError('CONTINUOUS_FOLLOW_MATCH_END_IDENTITY_MISMATCH');
+      }
+      return continuousFollowState({
+        targetUserId: state.targetUserId,
+        status: 'WAITING',
+        lastCompletedMatchId: matchId,
+        attachSerial: state.attachSerial,
+        waitingReason: 'WAIT_NEXT_ALLOWED_MATCH'
+      });
+    }
+    case 'OFFLINE':
+      return continuousFollowState({
+        targetUserId: state.targetUserId,
+        status: 'OFFLINE',
+        lastCompletedMatchId: state.lastCompletedMatchId,
+        attachSerial: state.attachSerial,
+        waitingReason: 'TARGET_OFFLINE'
+      });
+    case 'DENIED':
+      return continuousFollowState({
+        targetUserId: state.targetUserId,
+        status: 'DENIED',
+        lastCompletedMatchId: state.lastCompletedMatchId,
+        attachSerial: state.attachSerial,
+        waitingReason: 'SPECTATE_DENIED'
+      });
+    case 'WAITING':
+      return continuousFollowState({
+        targetUserId: state.targetUserId,
+        status: 'WAITING',
+        lastCompletedMatchId: state.lastCompletedMatchId,
+        attachSerial: state.attachSerial,
+        waitingReason: 'AWAITING_AUTHORIZED_MATCH'
+      });
+    default:
+      throw new TypeError('CONTINUOUS_FOLLOW_SIGNAL_KIND_INVALID');
+  }
+}
+
+export function retargetContinuousSpectatorFollow(state, { targetUserId } = {}) {
+  assertContinuousSpectatorFollow(state);
+  const normalizedTarget = maybeString(targetUserId);
+  if (!normalizedTarget) throw new TypeError('CONTINUOUS_FOLLOW_TARGET_REQUIRED');
+  if (state.status !== 'STOPPED' && state.targetUserId === normalizedTarget) return state;
+  return createContinuousSpectatorFollow({ targetUserId: normalizedTarget });
+}
+
+export function stopContinuousSpectatorFollow(state) {
+  assertContinuousSpectatorFollow(state);
+  if (state.status === 'STOPPED') return state;
+  return continuousFollowState({
+    targetUserId: null,
+    status: 'STOPPED',
+    currentMatchId: null,
+    lastCompletedMatchId: null,
+    attachSerial: state.attachSerial,
+    waitingReason: null,
+    stopped: true
+  });
+}
+
+export function createFollowedLiveReplaySession(
+  followState,
+  { versions },
+  options = {}
+) {
+  assertContinuousSpectatorFollow(followState);
+  if (followState.status !== 'ATTACHED' || !nonEmptyString(followState.currentMatchId)) {
+    throw new TypeError('CONTINUOUS_FOLLOW_NOT_ATTACHED');
+  }
+  return createLiveReplaySession(
+    { matchId: followState.currentMatchId, versions },
+    options
+  );
+}
+
+export const BATTLE_REPLAY_CONTINUOUS_FOLLOW = Object.freeze({
+  schema: CONTINUOUS_FOLLOW_SCHEMA,
+  authority: 'viewer_authorized_match_identity_only',
+  crossMatchState: 'target_and_attachment_metadata_only',
+  replaySessionPolicy: 'fresh_per_match_no_event_carry',
+  privateMatchIdentityPolicy: 'never_store_when_not_authorized',
+  gameplayAuthority: false,
+  gameStateWrite: false
+});

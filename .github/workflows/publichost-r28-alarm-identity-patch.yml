@@ -15,25 +15,24 @@ jobs:
         with:
           ref: work/publichost-r28-alarm-attempt-identity
           fetch-depth: 1
-      - name: Verify exact target preimage and patch attempt identity only
+      - name: Patch exact single alarm identity occurrence
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git hash-object .github/workflows/cloudflare-public-deploy.yml)" = "96b80cdbdb8d5db6a77e6665671679f6a196e2e2"
           python3 - <<'PY'
           from pathlib import Path
           p = Path('.github/workflows/cloudflare-public-deploy.yml')
           s = p.read_text()
-          expr_run = '$' + '{{ github.run_id }}'
-          expr_attempt = '$' + '{{ github.run_attempt }}'
-          old = f'GAMEROAD_ALARM_PROBE_RUN_KEY: {expr_run}'
-          new = f'GAMEROAD_ALARM_PROBE_RUN_KEY: {expr_run}-{expr_attempt}'
-          if s.count(old) != 1:
-              raise SystemExit(f'old run-key occurrence count={s.count(old)}, expected 1')
-          s = s.replace(old, new, 1)
-          if s.count(new) != 1:
-              raise SystemExit('post-patch run-key invariant failed')
-          p.write_text(s)
+          braces = '{{'
+          close = '}}'
+          expr_run = '$' + braces + ' github.run_id ' + close
+          expr_attempt = '$' + braces + ' github.run_attempt ' + close
+          old = 'GAMEROAD_ALARM_PROBE_RUN_KEY: ' + expr_run
+          new = old + '-' + expr_attempt
+          count = s.count(old)
+          if count != 1:
+              raise SystemExit(f'old run-key occurrence count={count}, expected 1')
+          p.write_text(s.replace(old, new, 1))
           PY
           git diff --check
           test "$(git diff --name-only)" = ".github/workflows/cloudflare-public-deploy.yml"

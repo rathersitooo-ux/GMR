@@ -243,7 +243,7 @@ async function createThroughProductionGate(storage, n, client, nowMs) {
   const ids = generated(nowMs);
   const preCreateTimeout = await serviceTimeout(storage, { nowMs, generatedMatchId: ids.matchId });
   if (!preCreateTimeout.ok) return preCreateTimeout;
-  return createStoredMatchTicket(storage, { clientId, idempotencyKey: idem(n) }, ids);
+  return createStoredMatchTicket(storage, { clientId: client, idempotencyKey: idem(n) }, ids);
 }
 
 test('production create gate freezes an expired 3H cohort before a late fourth Human is admitted', async () => {

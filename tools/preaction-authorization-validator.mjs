@@ -17,6 +17,9 @@ const STATE_MODEL_VERSION = 'STATE_MODEL_V1';
 const LEASE_AUTHORITY = 'CURRENT_ACTIVE_LEASES';
 const MAX_LEASE_MS = 60 * 60 * 1000;
 const MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
+const PARENT_TASK_SUMMARY_RANGE = /\bO(?:\d+)?:S(?:\d+)?\b/i;
+const PARENT_TASK_SUMMARY_CONTEXT = /(GAMEROAD\s*全作業一覧|全作業一覧|ParentTask|parent[-_\s]*summary|central)/i;
+const FORMULA_REPAIR_MARKER = /formula[-_\s]*repair/i;
 
 function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
@@ -63,6 +66,41 @@ function parseJstMinute(value) {
   return ms;
 }
 
+function targetsParentTaskSummary(exactMutableResources) {
+  return exactMutableResources
+    .split(/[;\n]/)
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .some((segment) => PARENT_TASK_SUMMARY_CONTEXT.test(segment) && PARENT_TASK_SUMMARY_RANGE.test(segment));
+}
+
+function validateExactMutableResources(manifest) {
+  for (const path of manifest.scope) {
+    if (!manifest.leaseExactMutableResources.includes(path)) {
+      return { ok: false, reason: `lease_exact_mutable_scope_mismatch:${path}` };
+    }
+  }
+
+  if (!targetsParentTaskSummary(manifest.leaseExactMutableResources)) {
+    return { ok: true, reason: 'lease_exact_mutable_resources_valid' };
+  }
+
+  if (manifest.taskId !== 'OPS-STATE-SYNC-001') {
+    return { ok: false, reason: 'parenttask_summary_mutation_forbidden:task' };
+  }
+  if (!FORMULA_REPAIR_MARKER.test(manifest.workUnitKey)) {
+    return { ok: false, reason: 'parenttask_summary_mutation_forbidden:workunit' };
+  }
+  const targetSegments = manifest.leaseExactMutableResources
+    .split(/[;\n]/)
+    .map((segment) => segment.trim())
+    .filter((segment) => PARENT_TASK_SUMMARY_CONTEXT.test(segment) && PARENT_TASK_SUMMARY_RANGE.test(segment));
+  if (targetSegments.some((segment) => !FORMULA_REPAIR_MARKER.test(segment))) {
+    return { ok: false, reason: 'parenttask_summary_mutation_forbidden:not_formula_repair_only' };
+  }
+  return { ok: true, reason: 'parenttask_summary_formula_repair_authorized' };
+}
+
 function validateLeaseWitness(manifest, nowMs) {
   if (manifest.stateModelVersion !== STATE_MODEL_VERSION) return { ok: false, reason: 'lease_state_model_version' };
   if (manifest.leaseAuthority !== LEASE_AUTHORITY) return { ok: false, reason: 'lease_authority' };
@@ -78,6 +116,9 @@ function validateLeaseWitness(manifest, nowMs) {
   if (!scopeCheck.ok) return scopeCheck;
   if (!sameStringSet(manifest.scope, manifest.leaseScope)) return { ok: false, reason: 'lease_scope_mismatch' };
 
+  const exactMutableCheck = validateExactMutableResources(manifest);
+  if (!exactMutableCheck.ok) return exactMutableCheck;
+
   const readbackMs = parseJstMinute(manifest.leaseSnapshotReadbackAtJst);
   const untilMs = parseJstMinute(manifest.leaseUntilJst);
   if (!Number.isFinite(readbackMs)) return { ok: false, reason: 'lease_snapshot_readback_time' };
@@ -87,7 +128,7 @@ function validateLeaseWitness(manifest, nowMs) {
   if (untilMs - readbackMs > MAX_LEASE_MS) return { ok: false, reason: 'lease_window_over_one_hour' };
   if (untilMs <= nowMs) return { ok: false, reason: 'lease_expired_at_validation' };
 
-  return { ok: true, reason: 'lease_witness_valid' };
+  return { ok: true, reason: exactMutableCheck.reason };
 }
 
 export function validateManifest(manifest, manifestPath, { nowMs = Date.now() } = {}) {
@@ -98,11 +139,12 @@ export function validateManifest(manifest, manifestPath, { nowMs = Date.now() } 
     'authorizationBaseSha', 'stateModelVersion', 'leaseAuthority', 'leaseState',
     'leaseTaskId', 'leaseWorkUnitKey', 'leaseAcquireKey',
     'leaseSnapshotReadbackAtJst', 'leaseUntilJst', 'leaseSnapshotReadbackRef',
+    'leaseExactMutableResources',
   ];
   for (const key of required) {
     if (!requiredString(manifest, key)) return { ok: false, reason: `manifest_missing_${key}` };
   }
-  if (manifest.schemaVersion !== 'gameroad-preaction-v2') return { ok: false, reason: 'manifest_schema' };
+  if (manifest.schemaVersion !== 'gameroad-preaction-v3') return { ok: false, reason: 'manifest_schema' };
   if (!RISK_CLASSES.has(manifest.riskClass)) return { ok: false, reason: 'manifest_risk_class' };
   if (manifest.riskClass === 'LOW_REVERSIBLE') return { ok: false, reason: 'material_pr_cannot_use_low_reversible' };
   if (manifest.predictionStatus !== 'PASS') return { ok: false, reason: 'prediction_not_pass' };

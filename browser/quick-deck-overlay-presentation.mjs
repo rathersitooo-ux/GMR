@@ -29,6 +29,11 @@ function unavailable(mode, reason) {
   });
 }
 
+function compareCardIds(left, right) {
+  if (left === right) return 0;
+  return left < right ? -1 : 1;
+}
+
 function normalizeCounts(cardIds) {
   if (!Array.isArray(cardIds)) return null;
   const counts = new Map();
@@ -37,7 +42,7 @@ function normalizeCounts(cardIds) {
     counts.set(cardId, (counts.get(cardId) ?? 0) + 1);
   }
   return [...counts.entries()]
-    .sort(([left], [right]) => left.localeCompare(right))
+    .sort(([left], [right]) => compareCardIds(left, right))
     .map(([cardId, count]) => ({ cardId, count }));
 }
 
@@ -119,7 +124,7 @@ export function projectBattleQuickDeck(ownerProjection) {
     if (!nonEmptyString(entry.cardId) || !Number.isSafeInteger(entry.count) || entry.count < 1) {
       return unavailable('battle_remaining', 'CARD_COUNT_INVALID');
     }
-    if (previousCardId !== null && previousCardId.localeCompare(entry.cardId) >= 0) {
+    if (previousCardId !== null && compareCardIds(previousCardId, entry.cardId) >= 0) {
       return unavailable('battle_remaining', 'CARD_COUNTS_NOT_CANONICAL');
     }
     previousCardId = entry.cardId;

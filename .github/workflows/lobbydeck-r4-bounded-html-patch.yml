@@ -11,39 +11,32 @@ permissions:
   contents: write
 
 jobs:
-  inspect-match-start:
+  inspect-module-mount:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: work/lobbydeck-r4-bounded-matchstart
-          fetch-depth: 3
-      - name: Verify exact base and expose bounded preimage
+          fetch-depth: 4
+      - name: Verify exact product preimage and expose import pattern
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^^)" = "800cbffd2fd513d488df1d78dc6f72c17a300a0d"
+          git cat-file -e 800cbffd2fd513d488df1d78dc6f72c17a300a0d^{commit}
+          test "$(git merge-base HEAD 800cbffd2fd513d488df1d78dc6f72c17a300a0d)" = "800cbffd2fd513d488df1d78dc6f72c17a300a0d"
           test "$(git hash-object browser/GAMEROAD.html)" = "f73eef258ae88cea34bb14685e6f31a28ecbc2b8"
           python3 - <<'PY'
           from pathlib import Path
           import re
           text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          needles = [
-              'function startMatch',
-              'async function startMatch',
-              'const startMatch',
-              'createDeckMatchStartSnapshot',
-              'deck-save-ack-core.mjs',
-              'validateDeck(',
-          ]
+          needles = ["<script type=\"module\"", "<script type='module'", "import ", " from './", "import('./", "deck-save-recovery-core.mjs", "deck-save-ack-core.mjs"]
           for needle in needles:
               hits = [m.start() for m in re.finditer(re.escape(needle), text)]
               print(f'NEEDLE {needle!r} COUNT={len(hits)}')
-              for i, pos in enumerate(hits[:4], 1):
-                  lo = max(0, pos - 900)
-                  hi = min(len(text), pos + 5000)
+              for i, pos in enumerate(hits[:10], 1):
+                  lo=max(0,pos-500); hi=min(len(text),pos+1800)
                   print(f'--- {needle} HIT {i} @{pos} ---')
                   print(text[lo:hi])
                   print(f'--- END {needle} HIT {i} ---')
-          raise SystemExit('EXPECTED_RED_INSPECTION_ONLY')
+          raise SystemExit('EXPECTED_RED_IMPORT_INSPECTION_ONLY')
           PY

@@ -1,0 +1,177 @@
+name: GAMEROAD Executor Bus
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/gameroad-executor-bus.yml'
+      - 'tools/executor-bus-packet.mjs'
+      - 'tests/executor-bus-packet.test.mjs'
+      - 'docs/executor-bus.md'
+  workflow_dispatch:
+  issues:
+    types: [opened, edited, reopened]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: executor-bus-${{ github.event.issue.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  self-test:
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run executor bus packet tests
+        run: node --test tests/executor-bus-packet.test.mjs
+
+  queue-packet:
+    if: github.event_name == 'issues' && startsWith(github.event.issue.title, '[EXECUTOR]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Persist event body without shell interpolation
+        uses: actions/github-script@v7
+        env:
+          BODY_FILE: ${{ runner.temp }}/executor-queue-body.txt
+        with:
+          script: |
+            const fs = require('fs');
+            fs.writeFileSync(process.env.BODY_FILE, context.payload.issue.body || '', 'utf8');
+      - name: Validate and normalize queue packet
+        id: queue_validate
+        continue-on-error: true
+        env:
+          BODY_FILE: ${{ runner.temp }}/executor-queue-body.txt
+          PACKET_FILE: ${{ runner.temp }}/executor-queue.json
+          STATUS_FILE: ${{ runner.temp }}/executor-queue-status.json
+        run: >-
+          node tools/executor-bus-packet.mjs queue
+          --body-file "$BODY_FILE"
+          --out "$PACKET_FILE"
+          --status "$STATUS_FILE"
+      - name: Upload queue validation status
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: executor-bus-queue-status-${{ github.event.issue.number }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/executor-queue-status.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload accepted queue packet
+        if: steps.queue_validate.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: executor-bus-queue-${{ github.event.issue.number }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/executor-queue.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publish queue transport status
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          STATUS_FILE: ${{ runner.temp }}/executor-queue-status.json
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- gameroad-executor-bus:queue -->';
+            const status = JSON.parse(fs.readFileSync(process.env.STATUS_FILE, 'utf8'));
+            const state = status.ok ? 'BUS_PACKET_ACCEPTED' : 'BUS_PACKET_REJECTED';
+            const body = `${marker}\n${state}: ${status.reason}\n\nTransport acceptance only. This does not authorize mutation or prove product/game success. HEAD must still verify current authority, owner/lease, actual output, and acceptance evidence.`;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body && comment.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+      - name: Fail rejected queue event
+        if: steps.queue_validate.outcome != 'success'
+        run: exit 1
+
+  result-packet:
+    if: github.event_name == 'issue_comment' && startsWith(github.event.issue.title, '[EXECUTOR]') && contains(github.event.comment.body, '```executor-result')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Persist queue and result bodies without shell interpolation
+        uses: actions/github-script@v7
+        env:
+          QUEUE_BODY_FILE: ${{ runner.temp }}/executor-queue-body.txt
+          RESULT_BODY_FILE: ${{ runner.temp }}/executor-result-body.txt
+        with:
+          script: |
+            const fs = require('fs');
+            fs.writeFileSync(process.env.QUEUE_BODY_FILE, context.payload.issue.body || '', 'utf8');
+            fs.writeFileSync(process.env.RESULT_BODY_FILE, context.payload.comment.body || '', 'utf8');
+      - name: Validate result against queue identity
+        id: result_validate
+        continue-on-error: true
+        env:
+          QUEUE_BODY_FILE: ${{ runner.temp }}/executor-queue-body.txt
+          RESULT_BODY_FILE: ${{ runner.temp }}/executor-result-body.txt
+          RESULT_FILE: ${{ runner.temp }}/executor-result.json
+          STATUS_FILE: ${{ runner.temp }}/executor-result-status.json
+        run: >-
+          node tools/executor-bus-packet.mjs result
+          --queue-body-file "$QUEUE_BODY_FILE"
+          --result-body-file "$RESULT_BODY_FILE"
+          --out "$RESULT_FILE"
+          --status "$STATUS_FILE"
+      - name: Upload result validation status
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: executor-bus-result-status-${{ github.event.issue.number }}-${{ github.event.comment.id }}
+          path: ${{ runner.temp }}/executor-result-status.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload accepted result packet
+        if: steps.result_validate.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: executor-bus-result-${{ github.event.issue.number }}-${{ github.event.comment.id }}
+          path: ${{ runner.temp }}/executor-result.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Publish result transport status
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          STATUS_FILE: ${{ runner.temp }}/executor-result-status.json
+        with:
+          script: |
+            const fs = require('fs');
+            const status = JSON.parse(fs.readFileSync(process.env.STATUS_FILE, 'utf8'));
+            const state = status.ok ? 'BUS_RESULT_ACCEPTED' : 'BUS_RESULT_REJECTED';
+            const marker = `<!-- gameroad-executor-bus:result:${context.payload.comment.id} -->`;
+            const body = `${marker}\n${state}: ${status.reason}\n\nTransport acceptance only. HEAD must fresh-read current authority and actual outputs before adoption or any success claim.`;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+      - name: Fail rejected result event
+        if: steps.result_validate.outcome != 'success'
+        run: exit 1

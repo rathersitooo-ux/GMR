@@ -83,7 +83,7 @@ test('different local-neighbor pair at a shared interior node emits PATH_CROSSIN
 
 test('same local-neighbor pair at a shared interior node is not a crossing', () => {
   const actual = classifyH02PathHistory(
-    ['A', 'X', 'B', 'C'],
+    ['A', 'X', 'B'],
     ['D', 'A', 'X', 'B', 'E']
   );
   assert.equal(actual.rawFacets.pathCrossingNodes.length, 0);

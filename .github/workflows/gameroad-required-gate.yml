@@ -77,6 +77,7 @@ jobs:
           fixed_knowledge_witness=false
           multi_agent_match_follow=false
           board_visual=false
+          executor_bus=false
           unclassified=false
           : > /tmp/gameroad-unclassified.txt
 
@@ -277,6 +278,11 @@ jobs:
               tests/battle-board-visual-explanation-core.test.mjs)
                 board_visual=true
                 ;;
+              .github/workflows/gameroad-executor-bus.yml|\
+              tools/executor-bus-packet.mjs|\
+              tests/executor-bus-packet.test.mjs)
+                executor_bus=true
+                ;;
               .github/workflows/gameroad-required-gate.yml|\
               .github/workflows/gameroad-observability-ci.yml|\
               tools/preaction-authorization-validator.mjs|\
@@ -326,6 +332,7 @@ jobs:
             echo "fixed_knowledge_witness=${fixed_knowledge_witness}"
             echo "multi_agent_match_follow=${multi_agent_match_follow}"
             echo "board_visual=${board_visual}"
+            echo "executor_bus=${executor_bus}"
             echo "unclassified=${unclassified}"
           } >> "${GITHUB_OUTPUT}"
 
@@ -382,6 +389,10 @@ jobs:
       - name: Run Four-agent match follow harness tests
         if: steps.classify.outputs.multi_agent_match_follow == 'true'
         run: node --test tests/multi-agent-match-follow-harness.test.mjs
+
+      - name: Run Executor bus packet tests
+        if: steps.classify.outputs.executor_bus == 'true'
+        run: node --test tests/executor-bus-packet.test.mjs
 
       - name: Run Browser static check
         if: steps.classify.outputs.browser == 'true'

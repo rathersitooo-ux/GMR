@@ -1,0 +1,56 @@
+name: GAMEROAD Codex Direct Transport Probe
+
+on:
+  push:
+    branches:
+      - work/codex-direct-transport-r23-20260827
+    paths:
+      - .gameroad/codex-dispatch/**
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gameroad-codex-direct-transport-probe
+  cancel-in-progress: false
+
+jobs:
+  codex-transport-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout owned probe branch
+        uses: actions/checkout@v5
+
+      - name: Resolve and validate probe packet
+        id: packet
+        shell: bash
+        run: |
+          set -euo pipefail
+          packet='.gameroad/codex-dispatch/R23_TRANSPORT_PROBE.md'
+          test -f "$packet"
+          grep -Fq 'AcquireKey=AICAP-R23-CODEXTRANSPORT-20260827T1641-SOL-N7Q4V8K2M6PX' "$packet"
+          grep -Fq 'ExpectedSentinel=GAMEROAD_CODEX_TRANSPORT_PROBE_OK' "$packet"
+          echo "path=$packet" >> "$GITHUB_OUTPUT"
+
+      - name: Run Codex read-only transport probe
+        id: codex
+        uses: openai/codex-action@86365089eb2b84e0a8fb0717b304f8bdcb13b20e
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: ${{ steps.packet.outputs.path }}
+          permission-profile: ':read-only'
+          safety-strategy: drop-sudo
+          output-file: ${{ runner.temp }}/gameroad-codex-final.txt
+
+      - name: Expose transport sentinel for HEAD audit
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          if [[ -f "${RUNNER_TEMP}/gameroad-codex-final.txt" ]]; then
+            echo '--- GAMEROAD CODEX FINAL MESSAGE ---'
+            cat "${RUNNER_TEMP}/gameroad-codex-final.txt"
+            echo '--- END GAMEROAD CODEX FINAL MESSAGE ---'
+          else
+            echo 'GAMEROAD_CODEX_TRANSPORT_NO_FINAL_MESSAGE'
+          fi

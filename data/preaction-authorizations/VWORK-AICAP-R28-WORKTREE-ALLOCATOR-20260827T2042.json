@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-AICAP-R28-WORKTREE-ALLOCATOR-20260827T2042",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "R28_ACQUIRE_GATED_WORKTREE_ALLOCATION",
+  "acquireKey": "AICAP-R28-WORKTREE-ALLOCATOR-20260827T2042-SOL-Q7N5V3K8M2PX",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R22_RESOLUTION_PREP_AICAP_R28_WORKTREE_ALLOCATOR_20260827T2045",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXECUTOR_BUS_UNIT_TESTS_AND_BRANCH_ONLY_NO_PR",
+  "proceedToken": "PROCEED|VWORK-AICAP-R28-WORKTREE-ALLOCATOR-20260827T2042|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|prediction|lease-snapshot",
+  "authorizationBaseSha": "cb15bc15b4916e7c6b49608655a5e2606fb321a5",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "R28_ACQUIRE_GATED_WORKTREE_ALLOCATION",
+  "leaseAcquireKey": "AICAP-R28-WORKTREE-ALLOCATOR-20260827T2042-SOL-Q7N5V3K8M2PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-27 20:42 JST",
+  "leaseUntilJst": "2026-08-27 21:27 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES:AICAP-R28-WORKTREE-ALLOCATOR-20260827T2042-SOL-Q7N5V3K8M2PX:exactly-once:PASS0",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch work/codex-worktree-allocator-r28-20260827 only: tools/executor-bus-packet.mjs; tests/executor-bus-packet.test.mjs; transient data/preaction-authorizations/VWORK-AICAP-R28-WORKTREE-ALLOCATOR-20260827T2042.json first-commit/delete-before-final-head only; own CURRENT_ACTIVE_LEASES exact AcquireKey tuple; own R22 acquire/checkpoint/terminal records. main/PR/merge/workflows/GMR other files/Drive worker artifacts excluded.",
+  "scope": [
+    "tools/executor-bus-packet.mjs",
+    "tests/executor-bus-packet.test.mjs"
+  ],
+  "leaseScope": [
+    "tools/executor-bus-packet.mjs",
+    "tests/executor-bus-packet.test.mjs"
+  ]
+}

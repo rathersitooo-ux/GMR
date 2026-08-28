@@ -250,7 +250,9 @@ jobs:
               browser/auto-rank-d06-collision-contract.mjs|\
               tests/auto-rank-d06-collision-contract.test.mjs|\
               browser/auto-rank-season-registration-core.mjs|\
-              tests/auto-rank-season-registration-core.test.mjs)
+              tests/auto-rank-season-registration-core.test.mjs|\
+              browser/auto-rank-result-receipt-ledger-core.mjs|\
+              tests/auto-rank-result-receipt-ledger-core.test.mjs)
                 auto_rank=true
                 ;;
               deploy/cloudflare/scripts/generate-version-manifest.mjs|\
@@ -540,9 +542,9 @@ jobs:
         if: steps.classify.outputs.board_visual == 'true'
         run: node --test tests/battle-board-visual-explanation-core.test.mjs
 
-      - name: Run Auto-rank D06 collision and season registration tests
+      - name: Run Auto-rank D06 collision, season registration, and result receipt ledger tests
         if: steps.classify.outputs.auto_rank == 'true'
-        run: node --test tests/auto-rank-d06-collision-contract.test.mjs tests/auto-rank-season-registration-core.test.mjs
+        run: node --test tests/auto-rank-d06-collision-contract.test.mjs tests/auto-rank-season-registration-core.test.mjs tests/auto-rank-result-receipt-ledger-core.test.mjs
 
       - name: Run Browser version manifest contract tests
         if: steps.classify.outputs.version_manifest == 'true'

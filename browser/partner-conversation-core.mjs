@@ -8,8 +8,18 @@ import {
 
 const CORE_ID = 'gameroad.partner-conversation-core.v1';
 const COLLECTIVE_CONTEXT_SCHEMA = 'gameroad.partner-conversation-collective-context.v1';
+const KNOWLEDGE_CONTEXT_SCHEMA = 'gameroad.partner-knowledge-context.v1';
 const SOURCE_USE_SITE = 'partner-conversation';
 const ENTRY_SCREEN_ID = 'partner-conversation';
+const KNOWLEDGE_TOP_LEVEL_KEYS = new Set([
+  'schemaVersion', 'partnerId', 'useSite', 'safeForPrompt', 'containsPrivate', 'containsRawUserText', 'items', 'lineage',
+]);
+const KNOWLEDGE_ITEM_KEYS = new Set(['evidenceId', 'summary', 'confidence']);
+const KNOWLEDGE_LINEAGE_KEYS = new Set([
+  'evidenceId', 'sourceId', 'sourceVersion', 'provenance', 'authorityRef', 'observedAt', 'freshness',
+]);
+const KNOWLEDGE_PROVENANCE = new Set(['internal_authority', 'external_primary']);
+const KNOWLEDGE_FRESHNESS = new Set(['current', 'stable_verified']);
 
 function freezeDeep(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -29,6 +39,10 @@ function userMessage(value) {
   return text;
 }
 
+function hasOnlyKeys(value, allowed) {
+  return Object.keys(value).every((key) => allowed.has(key));
+}
+
 function validCollectiveContext(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   if (value.schemaVersion !== COLLECTIVE_CONTEXT_SCHEMA) return null;
@@ -36,6 +50,57 @@ function validCollectiveContext(value) {
   if (value.safeForPrompt !== true || value.containsPrivate === true || value.containsRawUserText === true) return null;
   if (!Array.isArray(value.items) || !Array.isArray(value.lineage)) return null;
   return value;
+}
+
+function validKnowledgeContext(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || !hasOnlyKeys(value, KNOWLEDGE_TOP_LEVEL_KEYS)) return null;
+  if (value.schemaVersion !== KNOWLEDGE_CONTEXT_SCHEMA) return null;
+  if (value.partnerId !== SAASUNA_PARTNER_ID || value.useSite !== SOURCE_USE_SITE) return null;
+  if (value.safeForPrompt !== true || value.containsPrivate !== false || value.containsRawUserText !== false) return null;
+  if (!Array.isArray(value.items) || !Array.isArray(value.lineage) || value.items.length !== value.lineage.length) return null;
+  if (value.items.length > 12) return null;
+
+  const lineageById = new Map();
+  for (const item of value.lineage) {
+    if (!item || typeof item !== 'object' || Array.isArray(item) || !hasOnlyKeys(item, KNOWLEDGE_LINEAGE_KEYS)) return null;
+    const evidenceId = exactToken(item.evidenceId);
+    const sourceId = exactToken(item.sourceId);
+    const sourceVersion = exactToken(item.sourceVersion);
+    const provenance = exactToken(item.provenance);
+    const authorityRef = exactToken(item.authorityRef, 240);
+    const observedAt = exactToken(item.observedAt, 80);
+    const freshness = exactToken(item.freshness);
+    if (!evidenceId || !sourceId || !sourceVersion || !authorityRef || !observedAt) return null;
+    if (!KNOWLEDGE_PROVENANCE.has(provenance) || !KNOWLEDGE_FRESHNESS.has(freshness) || lineageById.has(evidenceId)) return null;
+    lineageById.set(evidenceId, freezeDeep({ evidenceId, sourceId, sourceVersion, provenance, authorityRef, observedAt, freshness }));
+  }
+
+  const items = [];
+  const lineage = [];
+  for (const item of value.items) {
+    if (!item || typeof item !== 'object' || Array.isArray(item) || !hasOnlyKeys(item, KNOWLEDGE_ITEM_KEYS)) return null;
+    const evidenceId = exactToken(item.evidenceId);
+    const summary = typeof item.summary === 'string' ? item.summary.trim() : '';
+    const confidence = item.confidence === undefined ? null : exactToken(item.confidence);
+    if (!evidenceId || !summary || summary.length > 600 || (item.confidence !== undefined && !confidence)) return null;
+    const source = lineageById.get(evidenceId);
+    if (!source) return null;
+    items.push(freezeDeep({ evidenceId, summary, ...(confidence ? { confidence } : {}) }));
+    lineage.push(source);
+    lineageById.delete(evidenceId);
+  }
+  if (lineageById.size !== 0) return null;
+
+  return freezeDeep({
+    schemaVersion: KNOWLEDGE_CONTEXT_SCHEMA,
+    partnerId: SAASUNA_PARTNER_ID,
+    useSite: SOURCE_USE_SITE,
+    safeForPrompt: true,
+    containsPrivate: false,
+    containsRawUserText: false,
+    items,
+    lineage,
+  });
 }
 
 function safeProviderUtterance(result) {
@@ -122,6 +187,7 @@ export async function runSaasunaConversationTurn(input = {}, deps = {}) {
   if (!source) return fail('SOURCE_NOT_CURRENT');
 
   const collectiveContext = validCollectiveContext(input.collectiveContext);
+  const knowledgeContext = validKnowledgeContext(input.knowledgeContext);
   const provider = deps.provider;
   let providerAttempted = false;
 
@@ -143,6 +209,11 @@ export async function runSaasunaConversationTurn(input = {}, deps = {}) {
           schemaVersion: collectiveContext.schemaVersion,
           items: collectiveContext.items,
           lineage: collectiveContext.lineage,
+        } : null,
+        knowledgeContext: knowledgeContext ? {
+          schemaVersion: knowledgeContext.schemaVersion,
+          items: knowledgeContext.items,
+          lineage: knowledgeContext.lineage,
         } : null,
       }));
       const candidate = safeProviderUtterance(providerResult);
@@ -192,13 +263,14 @@ export function createSaasunaConversationEntry({ provider = null, createSessionI
     providerReady: provider !== null,
   });
 
-  async function send(message) {
+  async function send(message, { knowledgeContext = null } = {}) {
     const turnId = `turn-${++turnSequence}`;
     const turn = await runSaasunaConversationTurn({
       partnerId: SAASUNA_PARTNER_ID,
       sessionId,
       turnId,
       userMessage: message,
+      knowledgeContext,
     }, { provider });
     return freezeDeep({ ...entryState(), turn });
   }

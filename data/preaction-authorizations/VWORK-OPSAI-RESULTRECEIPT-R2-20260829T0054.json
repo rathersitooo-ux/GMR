@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-OPSAI-RESULTRECEIPT-R2-20260829T0054",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "EXECUTOR_RESULT_PROVIDER_RECEIPT_R1",
+  "acquireKey": "OPSAI-RESULTRECEIPT-R1-20260829T0047-SOL-Q5N8V3K4M7PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "POST_EXECUTION_RETURNED_REF_EXISTENCE_GAP_READBACK_R1",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_EXECUTOR_BUS_PROVIDER_PERMISSIONS_AND_FLOW_READBACK_R1",
+  "proceedToken": "PROCEED|VWORK-OPSAI-RESULTRECEIPT-R2-20260829T0054|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|RESULT_PROVIDER_RECEIPT_R1",
+  "authorizationBaseSha": "19821ddf692c04eeb05d36e98d6402a7deb909bb",
+  "scope": [
+    ".github/workflows/gameroad-executor-bus.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "EXECUTOR_RESULT_PROVIDER_RECEIPT_R1",
+  "leaseAcquireKey": "OPSAI-RESULTRECEIPT-R1-20260829T0047-SOL-Q5N8V3K4M7PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 00:47 JST",
+  "leaseUntilJst": "2026-08-29 01:31 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A23:L23",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR successor branch work/ops-ai-executor-result-provider-receipt-r2-20260829 from exact current main only: transient data/preaction-authorizations/VWORK-OPSAI-RESULTRECEIPT-R2-20260829T0054.json create-first/delete-before-final-head; .github/workflows/gameroad-executor-bus.yml only for post-result provider-backed reference verification and pull-request self-test; predecessor r1 branch is frozen/non-release after base drift; branch/PR state+merge only after exact-head required checks; CURRENT_ACTIVE_LEASES own exact AcquireKey row only; R22 own checkpoint/terminal/release records only. tools/executor-bus-packet.mjs, tests/executor-bus-packet.test.mjs, tools/chatgpt-luna-contract.mjs, Luna/Sol reasoning/router/integration/claim-gate files, .github/workflows/gameroad-required-gate.yml, JIT files, browser/product/deploy/game/assets/rules/save/network/economy and other owners' resources are read-only/excluded.",
+  "leaseScope": [
+    ".github/workflows/gameroad-executor-bus.yml"
+  ]
+}

@@ -45,6 +45,17 @@ When preflight succeeds, the bridge returns `BROWSER_ACTION_REQUIRED` with:
 - a serializable correlation bundle needed by Phase B;
 - the browser evidence that must be captured.
 
+### CLI runner
+
+Codex can use the file-oriented runner instead of importing the module directly:
+
+```text
+node tools/luna-sol-codex-browser-bridge-runner.mjs prepare --input codex-sol-input.json --output codex-sol-prepared.json
+node tools/luna-sol-codex-browser-bridge-runner.mjs resume --bundle codex-sol-bundle.json --evidence codex-sol-evidence.json --output codex-sol-result.json
+```
+
+The runner only reads/writes bridge JSON. It does not control the browser and does not mutate product files. When the prepare result is `BROWSER_ACTION_REQUIRED`, persist the returned `bundle` unchanged for the resume phase and use only the returned `browserAction.message` for the single browser submit.
+
 ## Phase B: Codex browser action
 
 Codex performs exactly one send into the approved ChatGPT conversation and waits for a completed assistant response.

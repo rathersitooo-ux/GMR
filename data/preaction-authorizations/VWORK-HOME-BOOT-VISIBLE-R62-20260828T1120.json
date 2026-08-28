@@ -3,7 +3,7 @@
   "recordId": "VWORK-HOME-BOOT-VISIBLE-R62-20260828T1120",
   "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
   "workUnitKey": "HOME_BOOT_VISIBLE_INTEGRATION_R62",
-  "acquireKey": "UIVISIBLE-HOMEBOOT-R62-20260828T1120-SOL-Q7N4V8K2M6PX",
+  "acquireKey": "UIVISIBLE-HOMEBOOT-R62R1-20260828T1734-SOL-Q7N4V8K2M6PX",
   "riskClass": "MATERIAL_STANDARD",
   "predictionStatus": "PASS",
   "predictionEvidenceId": "r29-main-optional-homeboot-package-gate-plus-pr452-r61-exact-core-oracle-20260828",
@@ -16,10 +16,10 @@
   "leaseState": "ACTIVE",
   "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
   "leaseWorkUnitKey": "HOME_BOOT_VISIBLE_INTEGRATION_R62",
-  "leaseAcquireKey": "UIVISIBLE-HOMEBOOT-R62-20260828T1120-SOL-Q7N4V8K2M6PX",
-  "leaseSnapshotReadbackAtJst": "2026-08-28 11:20 JST",
-  "leaseUntilJst": "2026-08-28 12:10 JST",
-  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:N10",
+  "leaseAcquireKey": "UIVISIBLE-HOMEBOOT-R62R1-20260828T1734-SOL-Q7N4V8K2M6PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-28 17:38 JST",
+  "leaseUntilJst": "2026-08-28 18:24 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:N5",
   "scope": [
     "browser/home-shell-presentation-core.mjs",
     "browser/boot-loading-presentation-core.mjs",
@@ -38,5 +38,5 @@
     "tests/home-boot-runtime.spec.mjs",
     "browser/home-cards-2p5d-presentation.mjs"
   ],
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/home-boot-visible-integration-r62-20260828 only: transient data/preaction-authorizations/VWORK-HOME-BOOT-VISIBLE-R62-20260828T1120.json create-first/delete-before-final-head only; restore exact predecessor bytes browser/home-shell-presentation-core.mjs, browser/boot-loading-presentation-core.mjs, tests/home-boot-presentation.test.mjs, docs/ui-branch1-home-boot-integration.md; NEW browser/home-boot-runtime-mount.mjs; NEW tests/home-boot-runtime.spec.mjs; browser/home-cards-2p5d-presentation.mjs bootstrap import only plus no unrelated behavior changes; successor PR state and merge for this branch only; predecessor PR #452 close-state only after successor exact-head merge; CURRENT_ACTIVE_LEASES own exact AcquireKey row only; R22 own acquire/checkpoint/terminal/release records only. browser/GAMEROAD.html, .github/workflows/**, Battle files, shared navigation/foundation/Transition Director, home-theme-orientation-core.mjs, formal Home art/background/character assets, Result/Gacha/Partner, game rules/save/network/economy and deploy configuration are read-only/excluded."
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/home-boot-visible-integration-r62-20260828 only: existing transient data/preaction-authorizations/VWORK-HOME-BOOT-VISIBLE-R62-20260828T1120.json update-to-current-acquire/delete-before-final-head; browser/home-shell-presentation-core.mjs; browser/boot-loading-presentation-core.mjs; tests/home-boot-presentation.test.mjs; docs/ui-branch1-home-boot-integration.md; browser/home-boot-runtime-mount.mjs; tests/home-boot-runtime.spec.mjs; browser/home-cards-2p5d-presentation.mjs bootstrap import only plus no unrelated behavior changes; successor PR state and merge for this branch only; predecessor PR #452 close-state only after successor exact-head merge; CURRENT_ACTIVE_LEASES own exact AcquireKey row only; R22 own acquire/checkpoint/terminal/release records only. browser/GAMEROAD.html, .github/workflows/**, Battle files, shared navigation/foundation/Transition Director, home-theme-orientation-core.mjs, formal Home art/background/character assets, Result/Gacha/Partner, game rules/save/network/economy and deploy configuration are read-only/excluded."
 }

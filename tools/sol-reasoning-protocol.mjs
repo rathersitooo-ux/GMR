@@ -268,8 +268,8 @@ export function validateEvidenceClaims(input = {}, context = []) {
 
     const mutatingPlan = disposition === 'PLAN' && Array.isArray(input.filesToChange) && input.filesToChange.length > 0;
     if (mutatingPlan) {
-      if (!(hasRefType(decisionBasisRefs, 'user') || hasRefType(decisionBasisRefs, 'authority'))) {
-        throw new Error('mutating_plan_user_or_authority_basis_required');
+      if (!hasRefType(decisionBasisRefs, 'authority')) {
+        throw new Error('mutating_plan_authority_basis_required');
       }
       if (!(hasRefType(decisionBasisRefs, 'actual') || hasRefType(decisionBasisRefs, 'test'))) {
         throw new Error('mutating_plan_actual_or_test_basis_required');
@@ -284,7 +284,8 @@ export function validateEvidenceClaims(input = {}, context = []) {
       if (selectedCause.kind !== CLAIM_KIND.ROOT_CAUSE) throw new Error('selected_cause_must_be_root_cause');
     }
 
-    if (mode === 'ROOT_CAUSE' && disposition === 'PLAN') {
+    const causalRepairMode = mode === 'ROOT_CAUSE' || mode === 'FAILURE_RECOVERY';
+    if (causalRepairMode && mutatingPlan) {
       if (!selectedCause) throw new Error('root_cause_plan_selected_cause_required');
       if (selectedCause.status !== CLAIM_STATUS.ESTABLISHED) throw new Error('root_cause_plan_established_cause_required');
     }
@@ -521,8 +522,8 @@ export function buildSolPrompt(reasoningPacket, options = {}) {
     'Do not expand mutable scope. Do not emit shell commands, secrets, credentials, or a second task identity.',
     'Treat prose explanations and cause text as non-authoritative. Executable decisions must cite frozen context IDs.',
     'Evidence IDs are typed by prefix: user:, authority:, actual:, test:, counter:. Never invent an ID that is absent from the packet.',
-    'A mutating PLAN needs user: or authority: basis plus actual: or test: basis.',
-    'In ROOT_CAUSE mode, PLAN requires one selected ROOT_CAUSE claim with status ESTABLISHED, actual evidence, counterevidence, and a discriminating test result. A plausible story is not an established cause.',
+    'A mutating PLAN requires an authority: basis plus actual: or test: evidence. User intent or target writability alone never authorizes a repair surface.',
+    'In ROOT_CAUSE or FAILURE_RECOVERY mode, a mutating PLAN requires one selected ROOT_CAUSE claim with status ESTABLISHED, actual evidence, counterevidence, and a discriminating test result. A plausible story is not an established cause.',
     'If causal alternatives have not been discriminated, return NEEDS_EVIDENCE, keep the cause as HYPOTHESIS/UNKNOWN, and name the next discriminator.',
     'Writable or convenient state is not evidence that it is the correct repair surface.',
     'Cover every acceptance clause. Return exactly one fenced JSON block named sol-reasoning-response and no second response block.',

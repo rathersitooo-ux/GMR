@@ -1,6 +1,7 @@
 const BOARD_SCHEMA = 'gameroad.battle-board-visual-explanation.v1';
 const PARTNER_SCHEMA = 'gameroad.partner-advice-board-projection.v1';
 const POSITION_KINDS = Object.freeze(['central', 'road', 'shield', 'corner']);
+const TARGET_KINDS = Object.freeze(['attack', 'lane', 'shield']);
 const RULE_ROLES = Object.freeze([
   'current',
   'selected',
@@ -60,6 +61,7 @@ function emptyAnnotations() {
   return Object.freeze({
     positionKindByPosition: Object.freeze({}),
     invalidReasonByPosition: Object.freeze({}),
+    targetKindByPosition: Object.freeze({}),
   });
 }
 
@@ -169,6 +171,21 @@ function positionKinds(raw, validPositions, validSet) {
   );
 }
 
+function targetKinds(raw, validPositions, validSet, targetPositionSet) {
+  const allowed = new Set(TARGET_KINDS);
+  const out = canonicalAnnotationMap(
+    raw,
+    validPositions,
+    validSet,
+    (value) => (typeof value === 'string' && allowed.has(value) ? value : null),
+    'INVALID_TARGET_KIND',
+  );
+  for (const id of Object.keys(out)) {
+    if (!targetPositionSet.has(id)) throw new Error('TARGET_KIND_WITHOUT_TARGET_ROLE');
+  }
+  return out;
+}
+
 function invalidReasons(raw, validPositions, validSet, invalidPositionSet) {
   const out = canonicalAnnotationMap(
     raw,
@@ -234,6 +251,7 @@ function buildRolesByPosition(validPositions, channels, recommendation) {
  *   this module never guesses kind from the id string.
  * - `invalidReasonByPosition` is caller-supplied reason metadata and may annotate only positions
  *   already present in `invalidPositionIds`.
+ * - `targetKindByPosition` may classify already-targeted board positions as `attack|lane|shield`.
  */
 export function projectBattleBoardVisualExplanation({
   validPositionIds,
@@ -251,6 +269,7 @@ export function projectBattleBoardVisualExplanation({
   invalidPositionIds = [],
   positionKindByPosition = null,
   invalidReasonByPosition = null,
+  targetKindByPosition = null,
   partnerProjection = null,
   revisionToken = null,
   currentRevisionToken = null,
@@ -286,9 +305,11 @@ export function projectBattleBoardVisualExplanation({
     });
 
     const invalidSet = new Set(channels.invalid);
+    const targetSet = new Set(channels.target);
     annotations = Object.freeze({
       positionKindByPosition: positionKinds(positionKindByPosition, validPositions, validSet),
       invalidReasonByPosition: invalidReasons(invalidReasonByPosition, validPositions, validSet, invalidSet),
+      targetKindByPosition: targetKinds(targetKindByPosition, validPositions, validSet, targetSet),
     });
   } catch (error) {
     const knownReasons = new Set([
@@ -297,6 +318,8 @@ export function projectBattleBoardVisualExplanation({
       'INVALID_POSITION_KIND',
       'INVALID_INVALID_REASON',
       'INVALID_REASON_WITHOUT_INVALID_ROLE',
+      'INVALID_TARGET_KIND',
+      'TARGET_KIND_WITHOUT_TARGET_ROLE',
     ]);
     return failed(knownReasons.has(error?.message) ? error.message : 'UNKNOWN_POSITION_ID');
   }

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-REQGATE-PARTNER-CONV-R1-20260829T0226",
+  "taskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "workUnitKey": "PARTNER_CONVERSATION_REQUIRED_GATE_CLASSIFICATION_R1",
+  "acquireKey": "REQGATE-PARTNER-CONV-R1-20260829T0226-SOL-Q8N4V6K2M7PX",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PARTNER_CONVERSATION_EXACT_PATH_MAPPING_PRESERVES_UNKNOWN_FAIL_CLOSE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOCAL_CLASSIFIER_REHEARSAL_5_OF_5_PASS_20260829T0226JST",
+  "proceedToken": "PROCEED|VWORK-REQGATE-PARTNER-CONV-R1-20260829T0226|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|partner-conversation|required-gate",
+  "authorizationBaseSha": "dc0379c01d33301ce919dd6fe5159f406568867d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "leaseWorkUnitKey": "PARTNER_CONVERSATION_REQUIRED_GATE_CLASSIFICATION_R1",
+  "leaseAcquireKey": "REQGATE-PARTNER-CONV-R1-20260829T0226-SOL-Q8N4V6K2M7PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 02:26 JST",
+  "leaseUntilJst": "2026-08-29 03:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:L9",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh base dc0379c01d33301ce919dd6fe5159f406568867d; new branch work/required-gate-partner-conversation-r1-20260829; transient data/preaction-authorizations/VWORK-REQGATE-PARTNER-CONV-R1-20260829T0226.json create-first/delete-before-final-head; .github/workflows/gameroad-required-gate.yml only for explicit Partner-conversation classifier/output/focused Node test lane covering PR#526/#527 paths; PR state+merge only after exact-head Required Gate; GAMEROAD 全作業一覧 row41 Y:AB only; CURRENT_ACTIVE_LEASES own row9; R22 own records. tools/preaction-authorization-validator.mjs and tests/preaction-authorization-validator.test.mjs are read-only; browser/GAMEROAD.html and all product/browser source/test files are excluded/read-only.",
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "solutionSignature": "Reuse the existing exact-path Required Gate lane pattern to classify the five Partner-conversation A/B executable paths and execute their focused Node suites while preserving generic unknown-executable fail-close.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "GMR:required-gate-current|GMR:PR521-hate-lane|GMR:PR484-hate-lane|GMR:PR477-auto-rank-lane",
+  "solutionSearchEvidence": [
+    "https://github.com/rathersitooo-ux/GMR/pull/521",
+    "https://github.com/rathersitooo-ux/GMR/pull/484",
+    "https://github.com/rathersitooo-ux/GMR/pull/477"
+  ]
+}

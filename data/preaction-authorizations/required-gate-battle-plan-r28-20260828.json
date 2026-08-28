@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "required-gate-battle-plan-r28-20260828",
+  "taskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "workUnitKey": "BATTLE_PLAN_HUD_REQUIRED_GATE_R28",
+  "acquireKey": "REQCHECK-BATTLE-PLAN-HUD-R28-20260828T1000-SOL-Q7N4V8K2M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "battle-plan-hud-required-gate-r28-preflight-20260828",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "current-required-gate-exact-path-pattern-and-pr459-failure-oracle-20260828",
+  "proceedToken": "PROCEED|required-gate-battle-plan-r28-20260828|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|exact-two-path-classification-no-failclose-relaxation",
+  "authorizationBaseSha": "8b6213f555aafbb5fc173d6c97b0e2c51cd8ffc0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "leaseWorkUnitKey": "BATTLE_PLAN_HUD_REQUIRED_GATE_R28",
+  "leaseAcquireKey": "REQCHECK-BATTLE-PLAN-HUD-R28-20260828T1000-SOL-Q7N4V8K2M6PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-28 10:00 JST",
+  "leaseUntilJst": "2026-08-28 10:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/required-gate-battle-plan-r28-20260828 only: data/preaction-authorizations/required-gate-battle-plan-r28-20260828.json; .github/workflows/gameroad-required-gate.yml; draft/merge PR state for this branch only; stale superseded PR #455 close-state only; CURRENT_ACTIVE_LEASES own AcquireKey row only; R22 own acquire/checkpoint/terminal records only. Battle product/code/HTML files read-only."
+}

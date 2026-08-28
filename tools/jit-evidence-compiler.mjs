@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
 export const JIT_EVIDENCE_SCHEMA_VERSION = 'gameroad-jit-evidence-v1';
+export const JIT_EVIDENCE_CONTEXT_ENVELOPE_VERSION = 'gameroad-evidence-context-v1';
+export const JIT_EVIDENCE_CONTEXT_MARKER = '[[GAMEROAD_EVIDENCE_CONTEXT_V1]]';
+export const JIT_EVIDENCE_CONTEXT_END_MARKER = '[[/GAMEROAD_EVIDENCE_CONTEXT_V1]]';
 
 export const EVIDENCE_TIERS = Object.freeze(['HOT', 'WARM', 'COLD', 'QUARANTINE']);
 export const EVIDENCE_STATES = Object.freeze([
@@ -187,8 +190,29 @@ function contextBytes(items) {
   return Buffer.byteLength(JSON.stringify(items), 'utf8');
 }
 
+export function encodeEvidenceContextText(item) {
+  const metadata = {
+    schemaVersion: JIT_EVIDENCE_CONTEXT_ENVELOPE_VERSION,
+    id: item.id,
+    tier: item.tier,
+    state: item.state,
+    role: item.role,
+    claimMode: item.claimMode,
+    authorityClass: item.authorityClass,
+    version: item.version,
+    provenance: item.provenance,
+    freshness: item.freshness,
+  };
+  return `${JIT_EVIDENCE_CONTEXT_MARKER}\n${JSON.stringify(metadata)}\n${JIT_EVIDENCE_CONTEXT_END_MARKER}\n${item.text}`;
+}
+
 function contextItem(item) {
-  return { id: item.id, text: item.text, priority: item.priority, required: item.required };
+  return {
+    id: item.id,
+    text: encodeEvidenceContextText(item),
+    priority: item.priority,
+    required: item.required,
+  };
 }
 
 function evidenceOrder(a, b) {

@@ -1,0 +1,20 @@
+{
+  "schema": "PRE_ACTION_AUTHORIZATION_V1",
+  "acquireKey": "CHARSELECT-NAKI-REGRESSION-R2-20260828T2135-SOL-Q3N4V8K2M6PX",
+  "taskId": "CHARACTER-BOARD-RUNTIME-SELECT-CUTIN-001",
+  "workUnitKey": "CHARACTER_NAKI_ONLY_FULLPATH_REGRESSION_R2",
+  "owner": "ChatGPT / GPT-5.6 Sol / current conversation",
+  "authorizedAtJST": "2026-08-28 21:35 JST",
+  "leaseUntilJST": "2026-08-28 22:15 JST",
+  "baseSha": "fc9eb2ed3b10a255213d61d76488970b8f3a3e05",
+  "mutableResources": [
+    "tests/character-naki-fullpath.spec.mjs",
+    "playwright.character-naki.config.mjs"
+  ],
+  "excludedResources": [
+    "browser/**",
+    ".github/workflows/**",
+    "deploy/**",
+    "rules/save/network/economy"
+  ]
+}

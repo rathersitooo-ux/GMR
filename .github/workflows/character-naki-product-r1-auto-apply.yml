@@ -1,0 +1,165 @@
+name: Character Naki Product R1 Auto Apply
+
+on:
+  push:
+    branches:
+      - work/character-naki-product-r1-20260828
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Recheck exact base and mutable resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          test "$(git rev-parse origin/main)" = "fc9eb2ed3b10a255213d61d76488970b8f3a3e05"
+          test "$(git merge-base HEAD origin/main)" = "fc9eb2ed3b10a255213d61d76488970b8f3a3e05"
+          test "$(git hash-object browser/GAMEROAD.html)" = "6fd855d0a60032e878375b3ba35e444f45537bf3"
+          test "$(git hash-object tests/browser-full-interaction.spec.mjs)" = "1fa64a4509b659ca72723344c12b17fb9da9e109"
+
+      - name: Apply Naki-only playable-player repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          html_path = Path('browser/GAMEROAD.html')
+          html = html_path.read_text()
+
+          if 'partner.naki' not in html:
+              raise SystemExit('Naki character id is missing from current catalog')
+          if 'PLAYABLE_PLAYER_CHARACTER_IDS' in html:
+              raise SystemExit('playable-player availability helper already exists unexpectedly')
+
+          def sub_once(text, pattern, replacement, label, flags=0):
+              out, count = re.subn(pattern, replacement, text, count=1, flags=flags)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, got {count}')
+              return out
+
+          char_map_pattern = r'(const\s+CHAR_MAP\s*=\s*Object\.fromEntries\(\s*PROD_CHARS\.map\(\s*c\s*=>\s*\[\s*c\.id\s*,\s*c\s*\]\s*\)\s*\)\s*;)'
+          helper = '''\\1
+          const DEFAULT_PLAYABLE_PLAYER_CHARACTER_ID="partner.naki";
+          const PLAYABLE_PLAYER_CHARACTER_IDS=new Set([DEFAULT_PLAYABLE_PLAYER_CHARACTER_ID]);
+          function normalizedPlayablePlayerCharacterId(id){
+            return PLAYABLE_PLAYER_CHARACTER_IDS.has(id)?id:DEFAULT_PLAYABLE_PLAYER_CHARACTER_ID;
+          }'''
+          html = sub_once(html, char_map_pattern, helper, 'CHAR_MAP/playable helper')
+
+          active_pattern = r'const\s+activeId\s*=\s*state\.characterSelectionRole\s*===\s*["\']player["\']\s*\?\s*state\.selectedCharacter\s*:\s*state\.selectedPartner\s*;'
+          active_replacement = '''const activeId=state.characterSelectionRole==="player"?normalizedPlayablePlayerCharacterId(state.selectedCharacter):state.selectedPartner;
+              if(state.characterSelectionRole==="player"&&state.selectedCharacter!==activeId){
+                state.selectedCharacter=activeId;
+                save();
+              }'''
+          html = sub_once(html, active_pattern, active_replacement, 'player activeId normalization')
+
+          pressed_pattern = r'b\.setAttribute\(\s*["\']aria-pressed["\']\s*,\s*String\(\s*c\.id\s*===\s*activeId\s*\)\s*\)\s*;'
+          pressed_replacement = '''b.setAttribute("aria-pressed", String(c.id===activeId));
+              const playerSelectable=state.characterSelectionRole!=="player"||PLAYABLE_PLAYER_CHARACTER_IDS.has(c.id);
+              b.disabled=!playerSelectable;
+              b.setAttribute("aria-disabled",String(!playerSelectable));'''
+          html = sub_once(html, pressed_pattern, pressed_replacement, 'player card availability')
+
+          click_pattern = r'b\.onclick\s*=\s*\(\)\s*=>\s*\{\s*const\s+role\s*=\s*state\.characterSelectionRole\s*===\s*["\']player["\']\s*\?\s*["\']player["\']\s*:\s*["\']partner["\']\s*;'
+          click_replacement = '''b.onclick=()=>{
+                if(!playerSelectable)return;
+                const role=state.characterSelectionRole==="player"?"player":"partner";'''
+          html = sub_once(html, click_pattern, click_replacement, 'player click guard')
+
+          cpu_pattern = r'const\s+cpuChars\s*=\s*PROD_CHARS\.filter\(\s*c\s*=>\s*c\.id\s*!==\s*state\.selectedCharacter\s*\)\s*;'
+          cpu_replacement = '''const selectedPlayable=normalizedPlayablePlayerCharacterId(state.selectedCharacter);
+              if(state.selectedCharacter!==selectedPlayable){
+                state.selectedCharacter=selectedPlayable;
+                save();
+              }'''
+          html = sub_once(html, cpu_pattern, cpu_replacement, 'CPU character distribution removal')
+
+          chosen_pattern = r'const\s+chosenChar\s*=\s*i\s*===\s*0\s*\?\s*state\.selectedCharacter\s*:\s*\(\s*cpuChars\[\s*\(\s*i\s*-\s*1\s*\)\s*%\s*cpuChars\.length\s*\]\?\.id\s*\|\|\s*PROD_CHARS\[\s*i\s*%\s*PROD_CHARS\.length\s*\]\?\.id\s*\|\|\s*PROD_CHARS\[\s*0\s*\]\.id\s*\)\s*;'
+          html = sub_once(html, chosen_pattern, 'const chosenChar=selectedPlayable;', 'all seats use selected playable character')
+
+          if 'const cpuChars=PROD_CHARS.filter' in html:
+              raise SystemExit('old CPU character distribution remains')
+          if html.count('const DEFAULT_PLAYABLE_PLAYER_CHARACTER_ID="partner.naki";') != 1:
+              raise SystemExit('playable player default helper count drift')
+          if html.count('b.disabled=!playerSelectable;') != 1:
+              raise SystemExit('player availability guard count drift')
+          html_path.write_text(html)
+
+          test_path = Path('tests/browser-full-interaction.spec.mjs')
+          test = test_path.read_text()
+          old_test = '''  await characters.locator('[data-role="player"]').click();
+            const unselected = characters.locator('.charCard[aria-pressed="false"]').first();
+            await expect(unselected).toBeVisible();
+            const targetText = (await unselected.textContent())?.trim() || '';
+            const targetName = targetText.replace(/操作人物にする|選択中/g, '').trim();
+            expect(targetName).not.toBe('');
+            await unselected.click();
+            const selected = characters.locator('.charCard[aria-pressed="true"]');
+            await expect(selected).toHaveCount(1);
+            await expect(selected).toContainText(targetName);
+            await attachStateScreenshot(page, testInfo, 'player-character-selection-visible');'''
+          if old_test not in test:
+              # Preserve fail-closed behavior while tolerating the current file's two-space indentation.
+              old_test = '''  await characters.locator('[data-role="player"]').click();
+          const unselected = characters.locator('.charCard[aria-pressed="false"]').first();
+          await expect(unselected).toBeVisible();
+          const targetText = (await unselected.textContent())?.trim() || '';
+          const targetName = targetText.replace(/操作人物にする|選択中/g, '').trim();
+          expect(targetName).not.toBe('');
+          await unselected.click();
+          const selected = characters.locator('.charCard[aria-pressed="true"]');
+          await expect(selected).toHaveCount(1);
+          await expect(selected).toContainText(targetName);
+          await attachStateScreenshot(page, testInfo, 'player-character-selection-visible');'''
+          if test.count(old_test) != 1:
+              raise SystemExit(f'obsolete player selection test block count must be 1, got {test.count(old_test)}')
+
+          new_test = '''  await characters.locator('[data-role="player"]').click();
+          const playerCards = characters.locator('.charCard:visible');
+          expect(await playerCards.count(), 'player roster exposes the implemented character').toBeGreaterThan(0);
+          const naki = playerCards.filter({ hasText: 'ナキ' });
+          await expect(naki, 'Naki appears exactly once in the player roster').toHaveCount(1);
+          await expect(naki).toBeEnabled();
+          await naki.click();
+          await expect(naki).toHaveAttribute('aria-pressed', 'true');
+          for (let i = 0; i < await playerCards.count(); i += 1) {
+            const card = playerCards.nth(i);
+            if (((await card.textContent()) || '').includes('ナキ')) continue;
+            await expect(card, 'unimplemented player character is not selectable').toBeDisabled();
+            await expect(card).toHaveAttribute('aria-disabled', 'true');
+          }
+          await expect(characters.locator('.charCard[aria-pressed="true"]:visible')).toHaveCount(1);
+          await expect(characters.locator('#charName')).toContainText('ナキ');
+          await attachStateScreenshot(page, testInfo, 'player-character-selection-visible');'''
+          test = test.replace(old_test, new_test, 1)
+          test_path.write_text(test)
+          PY
+
+          node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+          git diff --check
+
+      - name: Commit product delta and remove task-private executor
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/character-naki-product-r1-auto-apply.yml
+          rm -f data/preaction-authorizations/character-naki-product-r1-20260828.json
+          git diff --check
+          test -n "$(git status --porcelain browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs)"
+          git config user.name "rathersitooo-ux"
+          git config user.email "rathersitooo@gmail.com"
+          git add -A
+          git commit -m "Character: restrict current player roster to Naki"
+          git push origin HEAD:work/character-naki-product-r1-20260828

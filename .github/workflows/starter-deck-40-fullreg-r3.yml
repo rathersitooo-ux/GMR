@@ -1,0 +1,33 @@
+name: starter-deck-40-fullreg-r3
+
+on:
+  push:
+    branches:
+      - work/starter-deck-40-product-r3-20260829
+    paths:
+      - .github/workflows/starter-deck-40-fullreg-r3.yml
+
+permissions:
+  contents: write
+
+jobs:
+  inspect-current-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect exact current deck/save anchors
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          needles=['__DEFAULT_DECK__','DEFAULT_DECK','savedDeck:{','function loadSave','function resetSave','function defaultDeckDraft','function makePlayer','deckIds||','classification.status','for(const r of ROYAL_RANKS)','id="defaultDeck"']
+          for needle in needles:
+              print('\n===',needle,'count=',s.count(needle),'===')
+              start=0
+              for i in range(min(s.count(needle),8)):
+                  p=s.find(needle,start)
+                  if p<0: break
+                  print(repr(s[max(0,p-360):p+900]))
+                  start=p+len(needle)
+          PY

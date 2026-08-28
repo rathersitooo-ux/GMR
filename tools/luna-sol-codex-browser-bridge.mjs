@@ -10,6 +10,7 @@ export const CODEX_BROWSER_BRIDGE_STATUS = Object.freeze({
   HOLD: 'HOLD',
   PACKET_REJECTED: 'PACKET_REJECTED',
   PROMPT_REJECTED: 'PROMPT_REJECTED',
+  TRANSPORT_REQUEST_REJECTED: 'TRANSPORT_REQUEST_REJECTED',
   BROWSER_PREFLIGHT_REQUIRED: 'BROWSER_PREFLIGHT_REQUIRED',
   BROWSER_ACTION_REQUIRED: 'BROWSER_ACTION_REQUIRED',
   BROWSER_EVIDENCE_REJECTED: 'BROWSER_EVIDENCE_REJECTED',
@@ -177,11 +178,20 @@ export function prepareLunaSolCodexDispatch(input = {}) {
   } catch (error) {
     return fail(CODEX_BROWSER_BRIDGE_STATUS.BROWSER_PREFLIGHT_REQUIRED, routeDecision, error.message ?? String(error));
   }
-  const expectedConversationId = cleanString(
-    input.sol?.expectedConversationId ?? '',
-    'expectedConversationId',
-    { optional: true, max: 500 },
-  );
+
+  let expectedConversationId;
+  try {
+    expectedConversationId = cleanString(
+      input.sol?.expectedConversationId ?? '',
+      'expectedConversationId',
+      { optional: true, max: 500 },
+    );
+  } catch (error) {
+    return fail(CODEX_BROWSER_BRIDGE_STATUS.BROWSER_PREFLIGHT_REQUIRED, routeDecision, error.message ?? String(error), {
+      executorAction: 'REPAIR_SOL_BROWSER_PREFLIGHT_INPUT_AND_RETRY_PREPARE',
+    });
+  }
+
   const preflightIssue = preflightProblem(browserContext, expectedConversationId);
   if (preflightIssue) {
     return fail(CODEX_BROWSER_BRIDGE_STATUS.BROWSER_PREFLIGHT_REQUIRED, routeDecision, preflightIssue, {
@@ -216,17 +226,25 @@ export function prepareLunaSolCodexDispatch(input = {}) {
   }
 
   const { packetId, correlationId } = identityFromPrompt(promptBuilt);
-  const transportRequest = normalizeTransportRequest({
-    taskId: promptBuilt.request.taskId,
-    workUnitKey: promptBuilt.request.workUnitKey,
-    acquireKey: promptBuilt.request.acquireKey,
-    packetId,
-    correlationId,
-    prompt: promptBuilt.prompt,
-    expectedConversationId: browserContext.conversationId,
-    timeoutMs: input.sol?.timeoutMs,
-    idempotencyKey: input.sol?.idempotencyKey,
-  });
+  let transportRequest;
+  try {
+    transportRequest = normalizeTransportRequest({
+      taskId: promptBuilt.request.taskId,
+      workUnitKey: promptBuilt.request.workUnitKey,
+      acquireKey: promptBuilt.request.acquireKey,
+      packetId,
+      correlationId,
+      prompt: promptBuilt.prompt,
+      expectedConversationId: browserContext.conversationId,
+      timeoutMs: input.sol?.timeoutMs,
+      idempotencyKey: input.sol?.idempotencyKey,
+    });
+  } catch (error) {
+    return fail(CODEX_BROWSER_BRIDGE_STATUS.TRANSPORT_REQUEST_REJECTED, routeDecision, error.message ?? String(error), {
+      packetMetrics: packed.metrics,
+      executorAction: 'REPAIR_TRANSPORT_REQUEST_INPUT_AND_RETRY_PREPARE',
+    });
+  }
 
   const bundle = {
     schemaVersion: CODEX_BROWSER_BRIDGE_SCHEMA_VERSION,

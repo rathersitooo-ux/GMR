@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-OPSINPUT-TARGETPROXY-GATE-R1-20260829T0028",
+  "taskId": "OPS-USER-INPUT-WORK-ROUTING-001",
+  "workUnitKey": "INTENT_TARGET_PROXY_EXECUTION_GATE_R1",
+  "acquireKey": "OPSINPUT-TARGETPROXY-GATE-R1-20260829T0028-SOL-Q6N8V3K5M2PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "TARGET_PROXY_KNOWN_FAILURE_AND_NEARBY_NORMAL_DESIGN_R1",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOCAL_NODE_EXECUTOR_BUS_TARGET_GATE_23_OF_23_PASS",
+  "proceedToken": "PROCEED|VWORK-OPSINPUT-TARGETPROXY-GATE-R1-20260829T0028|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|TARGET_PROXY_GATE_R1",
+  "authorizationBaseSha": "60cb6ca671af0c1e2d2de94b97768dfcddcda3da",
+  "scope": [
+    "tools/executor-bus-packet.mjs",
+    "tests/executor-bus-packet.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-USER-INPUT-WORK-ROUTING-001",
+  "leaseWorkUnitKey": "INTENT_TARGET_PROXY_EXECUTION_GATE_R1",
+  "leaseAcquireKey": "OPSINPUT-TARGETPROXY-GATE-R1-20260829T0028-SOL-Q6N8V3K5M2PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 00:42 JST",
+  "leaseUntilJst": "2026-08-29 01:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A15:L15",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/ops-user-input-target-proxy-gate-r1-20260829 from exact main 60cb6ca671af0c1e2d2de94b97768dfcddcda3da only: data/preaction-authorizations/VWORK-OPSINPUT-TARGETPROXY-GATE-R1-20260829T0028.json transient create-first/delete-before-final-head; tools/executor-bus-packet.mjs; tests/executor-bus-packet.test.mjs; docs/executor-bus.md producer-contract documentation only; branch/PR state only; CURRENT_ACTIVE_LEASES own exact AcquireKey row only; R22 own records.",
+  "leaseScope": [
+    "tools/executor-bus-packet.mjs",
+    "tests/executor-bus-packet.test.mjs"
+  ]
+}

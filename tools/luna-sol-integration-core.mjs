@@ -1,8 +1,8 @@
 import { normalizeQueuePacket } from './executor-bus-packet.mjs';
-import { packReasoningPacket } from './executor-bus-packet-compressor.mjs';
+import { packReasoningPacket, unpackReasoningPacket } from './executor-bus-packet-compressor.mjs';
 import { createChatGptBrowserTransport } from './chatgpt-browser-transport-core.mjs';
 import { ROUTES, routeLunaSol } from './luna-sol-router-core.mjs';
-import { buildSolPrompt, parseSolResponse } from './sol-reasoning-protocol.mjs';
+import { buildSolPrompt, parseSolResponse, validateEvidenceClaims } from './sol-reasoning-protocol.mjs';
 
 export const INTEGRATION_STATUS = Object.freeze({
   LOCAL_EXECUTE: 'LOCAL_EXECUTE',
@@ -69,6 +69,54 @@ function validateMutationQueue(queuePacket) {
   return checked;
 }
 
+function freezeEvidence(queuePacket, context, maxWireBytes) {
+  const packed = packReasoningPacket(queuePacket, context ?? [], { maxWireBytes });
+  if (!packed.ok) return packed;
+  const unpacked = unpackReasoningPacket(packed.packet);
+  if (!unpacked.ok) return { ok: false, reason: `unpack_${unpacked.reason}`, metrics: packed.metrics };
+  return {
+    ok: true,
+    packet: packed.packet,
+    metrics: packed.metrics,
+    fingerprint: unpacked.fingerprint,
+    context: unpacked.context,
+  };
+}
+
+function localEvidenceMode(routeDecision) {
+  return routeDecision.reasonCodes.includes('KNOWN_LOCAL_REPAIR') ? 'ROOT_CAUSE' : 'DESIGN_DECISION';
+}
+
+function validateLocalMutationEvidence(input, queuePacket, routeDecision) {
+  const frozen = freezeEvidence(queuePacket, input.context ?? [], input.maxWireBytes ?? 3000);
+  if (!frozen.ok) return { ok: false, reason: `local_evidence_packet_${frozen.reason}`, metrics: frozen.metrics ?? null };
+  if (!input.localEvidence || typeof input.localEvidence !== 'object' || Array.isArray(input.localEvidence)) {
+    return { ok: false, reason: 'local_evidence_required', metrics: frozen.metrics, fingerprint: frozen.fingerprint };
+  }
+  const checked = validateEvidenceClaims({
+    mode: localEvidenceMode(routeDecision),
+    disposition: 'PLAN',
+    filesToChange: queuePacket.exactMutableResources,
+    claims: input.localEvidence.claims ?? [],
+    selectedCauseClaimId: input.localEvidence.selectedCauseClaimId ?? '',
+    decisionBasisRefs: input.localEvidence.decisionBasisRefs ?? [],
+  }, frozen.context);
+  if (!checked.ok) {
+    return {
+      ok: false,
+      reason: `local_evidence_${checked.reason}`,
+      metrics: frozen.metrics,
+      fingerprint: frozen.fingerprint,
+    };
+  }
+  return {
+    ok: true,
+    evidence: checked,
+    metrics: frozen.metrics,
+    fingerprint: frozen.fingerprint,
+  };
+}
+
 export async function runLunaSolDecision(input = {}, options = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw new TypeError('integration_input_must_be_object');
@@ -87,12 +135,22 @@ export async function runLunaSolDecision(input = {}, options = {}) {
     if (!queueChecked.ok) {
       return fail(INTEGRATION_STATUS.PACKET_REJECTED, routeDecision, queueChecked.reason);
     }
+    const evidenceChecked = validateLocalMutationEvidence(input, queueChecked.packet, routeDecision);
+    if (!evidenceChecked.ok) {
+      return fail(INTEGRATION_STATUS.PACKET_REJECTED, routeDecision, evidenceChecked.reason, {
+        packetMetrics: evidenceChecked.metrics ?? null,
+        reasoningPacketFingerprint: evidenceChecked.fingerprint ?? null,
+      });
+    }
     return {
       ok: true,
       status: INTEGRATION_STATUS.LOCAL_EXECUTE,
       mayMutate: true,
       routeDecision,
       queuePacket: queueChecked.packet,
+      packetMetrics: evidenceChecked.metrics,
+      reasoningPacketFingerprint: evidenceChecked.fingerprint,
+      evidence: evidenceChecked.evidence,
       executorAction: 'LOCAL_ACCEPTANCE_BOUNDED_EXECUTION',
     };
   }

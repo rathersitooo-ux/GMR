@@ -1,4 +1,4 @@
-export const ROUTER_SCHEMA_VERSION = 'gameroad-luna-sol-router-v1';
+export const ROUTER_SCHEMA_VERSION = 'gameroad-luna-sol-router-v2';
 
 export const ROUTES = Object.freeze({
   LOCAL_EXECUTE: 'LOCAL_EXECUTE',
@@ -80,7 +80,9 @@ function decision(input, route, reasonCodes, nextAction, extras = {}) {
     route,
     needsSol,
     needsPacket,
-    mayMutate: route === ROUTES.LOCAL_EXECUTE,
+    // Routing is eligibility only. Mutation authority is granted downstream only
+    // after the queue and frozen evidence basis pass deterministic validation.
+    mayMutate: false,
     reasonCodes: [...reasonCodes],
     nextAction,
     facts: {
@@ -160,7 +162,7 @@ export function routeLunaSol(rawInput = {}) {
         input,
         ROUTES.LOCAL_EXECUTE,
         ['KNOWN_LOCAL_REPAIR'],
-        'Apply the bounded local repair and run the known acceptance check.',
+        'Local execution is eligible only after the frozen evidence basis independently validates the known repair.',
       );
     }
 
@@ -208,6 +210,6 @@ export function routeLunaSol(rawInput = {}) {
     input,
     ROUTES.LOCAL_EXECUTE,
     ['LOCAL_DECISION_SUFFICIENT'],
-    'Execute locally, run acceptance, and only escalate if evidence creates a material unknown or failure.',
+    'Local execution is eligible; validate the frozen evidence basis before granting mutation authority.',
   );
 }

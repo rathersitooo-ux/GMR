@@ -22,6 +22,41 @@ function queue(overrides = {}) {
   };
 }
 
+function evidenceContext() {
+  return [
+    { id: 'user:directive', text: 'User requested the bounded change.', required: true },
+    { id: 'authority:current', text: 'Current authority allows tools/example.mjs.', required: true },
+    { id: 'actual:state', text: 'Current actual directly exhibits the target condition.', required: true },
+    { id: 'test:discriminator', text: 'A/B discriminator isolates factor X.', priority: 10 },
+    { id: 'counter:alternative', text: 'Alternative Y is explicit counterevidence.', priority: 10 },
+  ];
+}
+
+function localEvidence() {
+  return {
+    claims: [],
+    selectedCauseClaimId: '',
+    decisionBasisRefs: ['authority:current', 'actual:state'],
+  };
+}
+
+function establishedLocalRepairEvidence() {
+  return {
+    claims: [{
+      id: 'root-x',
+      kind: 'ROOT_CAUSE',
+      statement: 'Factor X causes the bounded failure.',
+      status: 'ESTABLISHED',
+      evidenceRefs: ['actual:state', 'test:discriminator'],
+      counterEvidenceRefs: ['counter:alternative'],
+      discriminatingTestRefs: ['test:discriminator'],
+      nextDiscriminator: '',
+    }],
+    selectedCauseClaimId: 'root-x',
+    decisionBasisRefs: ['authority:current', 'actual:state', 'test:discriminator'],
+  };
+}
+
 function parseRequest(submittedText) {
   const match = submittedText.match(/REQUEST:\n(\{[^\n]+\})/);
   assert.ok(match, 'request JSON should be present in submitted transport message');
@@ -41,7 +76,10 @@ function responseFor(submittedText, overrides = {}) {
     acquireKey: request.acquireKey,
     reasoningPacketFingerprint: request.reasoningPacketFingerprint,
     disposition: 'PLAN',
-    cause: ['bounded evidence indicates a single scoped change'],
+    cause: ['Plain-language explanation only.'],
+    claims: [],
+    selectedCauseClaimId: '',
+    decisionBasisRefs: ['authority:current', 'actual:state'],
     decision: 'Change only the scoped example file after executor review.',
     filesToChange: ['tools/example.mjs'],
     doNotTouch: ['protected/**'],
@@ -52,7 +90,7 @@ function responseFor(submittedText, overrides = {}) {
     evidenceRequests: [],
     acceptanceCoverage: [
       { acceptance: 'scope is preserved', coveredBy: ['filesToChange and doNotTouch validation'] },
-      { acceptance: 'decision is evidence-backed', coveredBy: ['cause and tests'] },
+      { acceptance: 'decision is evidence-backed', coveredBy: ['frozen decisionBasisRefs'] },
     ],
     ...overrides,
   };
@@ -91,10 +129,12 @@ function fakeDriver({ responseMutator } = {}) {
   };
 }
 
-test('local decision validates and returns the bounded mutation queue without browser transport', async () => {
+test('local decision grants mutation only after frozen evidence validation', async () => {
   const source = queue();
   const result = await runLunaSolDecision({
     queuePacket: source,
+    context: evidenceContext(),
+    localEvidence: localEvidence(),
     routerInput: {
       acceptanceKnown: true,
       rootCauseKnown: true,
@@ -107,10 +147,29 @@ test('local decision validates and returns the bounded mutation queue without br
   assert.equal(result.mayMutate, true);
   assert.equal(result.queuePacket.acquireKey, source.acquireKey);
   assert.deepEqual(result.queuePacket.exactMutableResources, source.exactMutableResources);
+  assert.ok(result.reasoningPacketFingerprint);
+});
+
+test('local route without evidence cannot grant mutation permission', async () => {
+  const result = await runLunaSolDecision({
+    queuePacket: queue(),
+    routerInput: {
+      acceptanceKnown: true,
+      rootCauseKnown: true,
+      implementationRisk: 'LOW',
+      reversibility: 'EASY',
+    },
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.status, INTEGRATION_STATUS.PACKET_REJECTED);
+  assert.equal(result.reason, 'local_evidence_required');
+  assert.equal(result.mayMutate, false);
 });
 
 test('local decision without a queue cannot grant mutation permission', async () => {
   const result = await runLunaSolDecision({
+    context: evidenceContext(),
+    localEvidence: localEvidence(),
     routerInput: {
       acceptanceKnown: true,
       rootCauseKnown: true,
@@ -127,6 +186,8 @@ test('local decision without a queue cannot grant mutation permission', async ()
 test('malformed local mutation queue fails closed before mutation permission', async () => {
   const result = await runLunaSolDecision({
     queuePacket: queue({ exactMutableResources: [] }),
+    context: evidenceContext(),
+    localEvidence: localEvidence(),
     routerInput: {
       acceptanceKnown: true,
       rootCauseKnown: true,
@@ -138,6 +199,43 @@ test('malformed local mutation queue fails closed before mutation permission', a
   assert.equal(result.status, INTEGRATION_STATUS.PACKET_REJECTED);
   assert.match(result.reason, /^queue_/);
   assert.equal(result.mayMutate, false);
+});
+
+test('known local failure repair requires an established discriminated root cause', async () => {
+  const accepted = await runLunaSolDecision({
+    queuePacket: queue(),
+    context: evidenceContext(),
+    localEvidence: establishedLocalRepairEvidence(),
+    routerInput: {
+      failureCount: 1,
+      acceptanceKnown: true,
+      rootCauseKnown: true,
+      implementationRisk: 'LOW',
+      reversibility: 'EASY',
+    },
+  });
+  assert.equal(accepted.ok, true);
+  assert.equal(accepted.mayMutate, true);
+
+  const hypothesis = establishedLocalRepairEvidence();
+  hypothesis.claims[0].status = 'HYPOTHESIS';
+  hypothesis.claims[0].discriminatingTestRefs = [];
+  hypothesis.claims[0].nextDiscriminator = 'Run the missing A/B test.';
+  const rejected = await runLunaSolDecision({
+    queuePacket: queue(),
+    context: evidenceContext(),
+    localEvidence: hypothesis,
+    routerInput: {
+      failureCount: 1,
+      acceptanceKnown: true,
+      rootCauseKnown: true,
+      implementationRisk: 'LOW',
+      reversibility: 'EASY',
+    },
+  });
+  assert.equal(rejected.ok, false);
+  assert.equal(rejected.reason, 'local_evidence_root_cause_plan_established_cause_required');
+  assert.equal(rejected.mayMutate, false);
 });
 
 test('Sol-required decision without a driver fails closed as HOLD', async () => {
@@ -156,7 +254,7 @@ test('validated Sol PLAN returns a proposal but never mutation permission', asyn
   const result = await runLunaSolDecision({
     routerInput: { forceSol: true },
     queuePacket: queue(),
-    context: [{ id: 'failure', text: 'A prior approach failed safely.', priority: 20, required: true }],
+    context: evidenceContext(),
   }, { driver });
   assert.equal(result.ok, true);
   assert.equal(result.status, INTEGRATION_STATUS.SOL_RESPONSE_VALIDATED);
@@ -164,6 +262,27 @@ test('validated Sol PLAN returns a proposal but never mutation permission', asyn
   assert.equal(result.mayMutate, false);
   assert.equal(result.executorAction, 'REVIEW_SOL_DECISION_BEFORE_ANY_MUTATION');
   assert.equal(driver.state.submits, 1);
+});
+
+test('Sol PLAN inventing evidence after the packet is rejected', async () => {
+  const driver = fakeDriver({
+    responseMutator(base) {
+      const marker = base.split('\n')[0];
+      const fenced = base.match(/```sol-reasoning-response\n([\s\S]*?)\n```/);
+      const response = JSON.parse(fenced[1]);
+      response.decisionBasisRefs = ['authority:current', 'actual:invented-after-answer'];
+      return `${marker}\n\`\`\`sol-reasoning-response\n${JSON.stringify(response)}\n\`\`\``;
+    },
+  });
+  const result = await runLunaSolDecision({
+    routerInput: { forceSol: true },
+    queuePacket: queue(),
+    context: evidenceContext(),
+  }, { driver });
+  assert.equal(result.ok, false);
+  assert.equal(result.status, INTEGRATION_STATUS.RESPONSE_REJECTED);
+  assert.match(result.reason, /unknown_ref:actual:invented-after-answer/);
+  assert.equal(result.mayMutate, false);
 });
 
 test('NO_CHANGE remains non-mutating and is surfaced distinctly to executor review', async () => {
@@ -181,6 +300,9 @@ test('NO_CHANGE remains non-mutating and is surfaced distinctly to executor revi
         reasoningPacketFingerprint: request.reasoningPacketFingerprint,
         disposition: 'NO_CHANGE',
         cause: ['current evidence already satisfies the bounded requirement'],
+        claims: [],
+        selectedCauseClaimId: '',
+        decisionBasisRefs: [],
         decision: 'Do not mutate the target.',
         filesToChange: [],
         doNotTouch: ['protected/**'],
@@ -197,7 +319,11 @@ test('NO_CHANGE remains non-mutating and is surfaced distinctly to executor revi
       return `${marker}\n\`\`\`sol-reasoning-response\n${JSON.stringify(response)}\n\`\`\``;
     },
   });
-  const result = await runLunaSolDecision({ routerInput: { forceSol: true }, queuePacket: queue() }, { driver });
+  const result = await runLunaSolDecision({
+    routerInput: { forceSol: true },
+    queuePacket: queue(),
+    context: evidenceContext(),
+  }, { driver });
   assert.equal(result.ok, true);
   assert.equal(result.response.disposition, 'NO_CHANGE');
   assert.equal(result.mayMutate, false);
@@ -210,7 +336,11 @@ test('missing transport correlation marker is rejected before protocol adoption'
       return base.split('\n').slice(1).join('\n');
     },
   });
-  const result = await runLunaSolDecision({ routerInput: { forceSol: true }, queuePacket: queue() }, { driver });
+  const result = await runLunaSolDecision({
+    routerInput: { forceSol: true },
+    queuePacket: queue(),
+    context: evidenceContext(),
+  }, { driver });
   assert.equal(result.ok, false);
   assert.equal(result.status, INTEGRATION_STATUS.TRANSPORT_FAILED);
   assert.equal(result.reason, 'CORRELATION_MISMATCH');
@@ -227,7 +357,11 @@ test('out-of-scope Sol file proposal is rejected by protocol validation', async 
       return `${marker}\n\`\`\`sol-reasoning-response\n${JSON.stringify(response)}\n\`\`\``;
     },
   });
-  const result = await runLunaSolDecision({ routerInput: { forceSol: true }, queuePacket: queue() }, { driver });
+  const result = await runLunaSolDecision({
+    routerInput: { forceSol: true },
+    queuePacket: queue(),
+    context: evidenceContext(),
+  }, { driver });
   assert.equal(result.ok, false);
   assert.equal(result.status, INTEGRATION_STATUS.RESPONSE_REJECTED);
   assert.match(result.reason, /file_outside_mutable_scope/);
@@ -240,7 +374,7 @@ test('required context that cannot fit the packet budget fails before browser su
     routerInput: { forceSol: true },
     queuePacket: queue(),
     maxWireBytes: 900,
-    context: [{ id: 'required-large', text: 'x'.repeat(600), required: true }],
+    context: [{ id: 'actual:required-large', text: 'x'.repeat(600), required: true }],
   }, { driver });
   assert.equal(result.ok, false);
   assert.equal(result.status, INTEGRATION_STATUS.PACKET_REJECTED);

@@ -3,8 +3,23 @@ import { createHash } from 'node:crypto';
 
 import { unpackReasoningPacket } from './executor-bus-packet-compressor.mjs';
 
-export const SOL_REASONING_PROTOCOL_VERSION = 'gameroad-sol-reasoning-v1';
-export const SOL_REASONING_RESPONSE_SCHEMA = 'sol-plan-v1';
+export const SOL_REASONING_PROTOCOL_VERSION = 'gameroad-sol-reasoning-v2';
+export const SOL_REASONING_RESPONSE_SCHEMA = 'sol-plan-v2';
+
+export const CLAIM_KIND = Object.freeze({
+  OBSERVATION: 'OBSERVATION',
+  HYPOTHESIS: 'HYPOTHESIS',
+  ROOT_CAUSE: 'ROOT_CAUSE',
+  CONSTRAINT: 'CONSTRAINT',
+});
+
+export const CLAIM_STATUS = Object.freeze({
+  OBSERVED: 'OBSERVED',
+  SUPPORTED: 'SUPPORTED',
+  HYPOTHESIS: 'HYPOTHESIS',
+  ESTABLISHED: 'ESTABLISHED',
+  UNKNOWN: 'UNKNOWN',
+});
 
 const REQUEST_KIND = 'request';
 const RESPONSE_KIND = 'response';
@@ -16,6 +31,9 @@ const MODES = new Set([
   'REVIEW',
 ]);
 const DISPOSITIONS = new Set(['PLAN', 'NEEDS_EVIDENCE', 'BLOCKED', 'NO_CHANGE']);
+const CLAIM_KINDS = new Set(Object.values(CLAIM_KIND));
+const CLAIM_STATUSES = new Set(Object.values(CLAIM_STATUS));
+const EVIDENCE_REF_CLASSES = new Set(['user', 'authority', 'actual', 'test', 'counter']);
 const REQUEST_KEYS = new Set([
   'protocolVersion',
   'kind',
@@ -38,6 +56,9 @@ const RESPONSE_KEYS = new Set([
   'reasoningPacketFingerprint',
   'disposition',
   'cause',
+  'claims',
+  'selectedCauseClaimId',
+  'decisionBasisRefs',
   'decision',
   'filesToChange',
   'doNotTouch',
@@ -147,6 +168,145 @@ function normalizeAcceptanceCoverage(value, queuePacket) {
   return normalized;
 }
 
+function evidenceIndex(context) {
+  if (!Array.isArray(context)) throw new Error('context_must_be_array');
+  const index = new Map();
+  for (let i = 0; i < context.length; i += 1) {
+    const item = context[i];
+    if (!item || typeof item !== 'object' || Array.isArray(item)) throw new Error(`context_${i}_must_be_object`);
+    const id = cleanString(item.id, `context_${i}_id`, { max: 240 });
+    if (index.has(id)) throw new Error(`context_duplicate_id:${id}`);
+    index.set(id, item);
+  }
+  return index;
+}
+
+function refClass(ref) {
+  const colon = ref.indexOf(':');
+  return colon > 0 ? ref.slice(0, colon) : '';
+}
+
+function validateEvidenceRef(ref, index, name) {
+  if (!index.has(ref)) throw new Error(`${name}_unknown_ref:${ref}`);
+  const type = refClass(ref);
+  if (!EVIDENCE_REF_CLASSES.has(type)) throw new Error(`${name}_untyped_ref:${ref}`);
+  return type;
+}
+
+function normalizeClaim(raw, index, knownEvidence) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error(`claim_${index}_must_be_object`);
+  const allowed = new Set([
+    'id', 'kind', 'statement', 'status', 'evidenceRefs', 'counterEvidenceRefs',
+    'discriminatingTestRefs', 'nextDiscriminator',
+  ]);
+  rejectUnknownKeys(raw, allowed, `claim_${index}`);
+  const claim = {
+    id: cleanString(raw.id, `claim_${index}_id`, { max: 120 }),
+    kind: cleanString(raw.kind, `claim_${index}_kind`, { max: 40 }),
+    statement: cleanString(raw.statement, `claim_${index}_statement`, { max: 4000 }),
+    status: cleanString(raw.status, `claim_${index}_status`, { max: 40 }),
+    evidenceRefs: cleanStringList(raw.evidenceRefs ?? [], `claim_${index}_evidenceRefs`, { maxItems: 64 }),
+    counterEvidenceRefs: cleanStringList(raw.counterEvidenceRefs ?? [], `claim_${index}_counterEvidenceRefs`, { maxItems: 64 }),
+    discriminatingTestRefs: cleanStringList(raw.discriminatingTestRefs ?? [], `claim_${index}_discriminatingTestRefs`, { maxItems: 64 }),
+    nextDiscriminator: cleanString(raw.nextDiscriminator, `claim_${index}_nextDiscriminator`, { max: 2000, optional: true }),
+  };
+  if (!CLAIM_KINDS.has(claim.kind)) throw new Error(`claim_${index}_kind_invalid`);
+  if (!CLAIM_STATUSES.has(claim.status)) throw new Error(`claim_${index}_status_invalid`);
+
+  for (const ref of claim.evidenceRefs) validateEvidenceRef(ref, knownEvidence, `claim_${index}_evidenceRefs`);
+  for (const ref of claim.counterEvidenceRefs) {
+    const type = validateEvidenceRef(ref, knownEvidence, `claim_${index}_counterEvidenceRefs`);
+    if (type !== 'counter') throw new Error(`claim_${index}_counterEvidenceRefs_wrong_type:${ref}`);
+  }
+  for (const ref of claim.discriminatingTestRefs) {
+    const type = validateEvidenceRef(ref, knownEvidence, `claim_${index}_discriminatingTestRefs`);
+    if (type !== 'test') throw new Error(`claim_${index}_discriminatingTestRefs_wrong_type:${ref}`);
+  }
+
+  const evidenceTypes = new Set(claim.evidenceRefs.map(refClass));
+  if (claim.kind === CLAIM_KIND.ROOT_CAUSE && claim.status === CLAIM_STATUS.ESTABLISHED) {
+    if (!evidenceTypes.has('actual')) throw new Error(`claim_${index}_root_cause_actual_required`);
+    if (claim.counterEvidenceRefs.length === 0) throw new Error(`claim_${index}_root_cause_counter_required`);
+    if (claim.discriminatingTestRefs.length === 0) throw new Error(`claim_${index}_root_cause_discriminating_test_required`);
+  }
+  if (claim.kind === CLAIM_KIND.ROOT_CAUSE && claim.status !== CLAIM_STATUS.ESTABLISHED && !claim.nextDiscriminator) {
+    throw new Error(`claim_${index}_root_cause_next_discriminator_required`);
+  }
+  return claim;
+}
+
+function normalizeClaims(value, knownEvidence) {
+  if (!Array.isArray(value)) throw new Error('claims_must_be_array');
+  if (value.length > 64) throw new Error('claims_too_many');
+  const claims = value.map((claim, index) => normalizeClaim(claim, index, knownEvidence));
+  const seen = new Set();
+  for (const claim of claims) {
+    if (seen.has(claim.id)) throw new Error(`claim_duplicate_id:${claim.id}`);
+    seen.add(claim.id);
+  }
+  return claims;
+}
+
+function hasRefType(refs, type) {
+  return refs.some((ref) => refClass(ref) === type);
+}
+
+export function validateEvidenceClaims(input = {}, context = []) {
+  try {
+    if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('evidence_claim_input_must_be_object');
+    const knownEvidence = evidenceIndex(context);
+    const mode = cleanString(input.mode ?? 'DESIGN_DECISION', 'evidence_mode', { max: 80 });
+    const disposition = cleanString(input.disposition, 'evidence_disposition', { max: 40 });
+    const claims = normalizeClaims(input.claims ?? [], knownEvidence);
+    const selectedCauseClaimId = cleanString(
+      input.selectedCauseClaimId,
+      'selectedCauseClaimId',
+      { max: 120, optional: true },
+    );
+    const decisionBasisRefs = cleanStringList(input.decisionBasisRefs ?? [], 'decisionBasisRefs', { maxItems: 64 });
+    for (const ref of decisionBasisRefs) validateEvidenceRef(ref, knownEvidence, 'decisionBasisRefs');
+
+    const mutatingPlan = disposition === 'PLAN' && Array.isArray(input.filesToChange) && input.filesToChange.length > 0;
+    if (mutatingPlan) {
+      if (!hasRefType(decisionBasisRefs, 'authority')) {
+        throw new Error('mutating_plan_authority_basis_required');
+      }
+      if (!(hasRefType(decisionBasisRefs, 'actual') || hasRefType(decisionBasisRefs, 'test'))) {
+        throw new Error('mutating_plan_actual_or_test_basis_required');
+      }
+    }
+
+    const claimById = new Map(claims.map((claim) => [claim.id, claim]));
+    let selectedCause = null;
+    if (selectedCauseClaimId) {
+      selectedCause = claimById.get(selectedCauseClaimId) ?? null;
+      if (!selectedCause) throw new Error(`selected_cause_unknown:${selectedCauseClaimId}`);
+      if (selectedCause.kind !== CLAIM_KIND.ROOT_CAUSE) throw new Error('selected_cause_must_be_root_cause');
+    }
+
+    const causalRepairMode = mode === 'ROOT_CAUSE' || mode === 'FAILURE_RECOVERY';
+    if (causalRepairMode && mutatingPlan) {
+      if (!selectedCause) throw new Error('root_cause_plan_selected_cause_required');
+      if (selectedCause.status !== CLAIM_STATUS.ESTABLISHED) throw new Error('root_cause_plan_established_cause_required');
+    }
+
+    if (selectedCause && selectedCause.status === CLAIM_STATUS.ESTABLISHED && mutatingPlan) {
+      const selectedRefs = new Set([
+        ...selectedCause.evidenceRefs,
+        ...selectedCause.counterEvidenceRefs,
+        ...selectedCause.discriminatingTestRefs,
+      ]);
+      if (!decisionBasisRefs.some((ref) => selectedRefs.has(ref))) {
+        throw new Error('mutating_plan_selected_cause_basis_not_bound');
+      }
+    }
+
+    return { ok: true, claims, selectedCauseClaimId, decisionBasisRefs };
+  } catch (error) {
+    return fail(error.message);
+  }
+}
+
 export function buildSolRequest(reasoningPacket, options = {}) {
   const unpacked = unpackReasoningPacket(reasoningPacket);
   if (!unpacked.ok) return fail(`reasoning_packet_${unpacked.reason}`);
@@ -220,10 +380,20 @@ export function validateSolRequest(input, reasoningPacket) {
 export function validateSolResponse(input, requestInput, reasoningPacket) {
   const requestChecked = validateSolRequest(requestInput, reasoningPacket);
   if (!requestChecked.ok) return fail(`request_${requestChecked.reason}`);
-  const { request, queuePacket } = requestChecked;
+  const { request, queuePacket, context } = requestChecked;
 
   try {
     rejectUnknownKeys(input, RESPONSE_KEYS, 'response');
+    const evidenceChecked = validateEvidenceClaims({
+      mode: request.mode,
+      disposition: input.disposition,
+      filesToChange: input.filesToChange,
+      claims: input.claims,
+      selectedCauseClaimId: input.selectedCauseClaimId,
+      decisionBasisRefs: input.decisionBasisRefs,
+    }, context);
+    if (!evidenceChecked.ok) throw new Error(`evidence_${evidenceChecked.reason}`);
+
     const response = {
       protocolVersion: cleanString(input.protocolVersion, 'protocolVersion', { max: 120 }),
       kind: cleanString(input.kind, 'kind', { max: 40 }),
@@ -238,6 +408,9 @@ export function validateSolResponse(input, requestInput, reasoningPacket) {
       ),
       disposition: cleanString(input.disposition, 'disposition', { max: 40 }),
       cause: cleanStringList(input.cause, 'cause', { required: true }),
+      claims: evidenceChecked.claims,
+      selectedCauseClaimId: evidenceChecked.selectedCauseClaimId,
+      decisionBasisRefs: evidenceChecked.decisionBasisRefs,
       decision: cleanString(input.decision, 'decision'),
       filesToChange: cleanStringList(input.filesToChange, 'filesToChange'),
       doNotTouch: cleanStringList(input.doNotTouch, 'doNotTouch'),
@@ -282,7 +455,7 @@ export function validateSolResponse(input, requestInput, reasoningPacket) {
       if (response.implementationOrder.length > 0) throw new Error('no_change_implementation_forbidden');
     }
 
-    return { ok: true, response, queuePacket };
+    return { ok: true, response, queuePacket, context };
   } catch (error) {
     return fail(error.message);
   }
@@ -318,7 +491,10 @@ function responseTemplate(request, queuePacket) {
     acquireKey: request.acquireKey,
     reasoningPacketFingerprint: request.reasoningPacketFingerprint,
     disposition: 'PLAN',
-    cause: ['root cause or governing reason'],
+    cause: ['plain-language explanation; non-authoritative'],
+    claims: [],
+    selectedCauseClaimId: '',
+    decisionBasisRefs: [],
     decision: 'single bounded decision',
     filesToChange: [],
     doNotTouch: queuePacket.doNotChange,
@@ -344,7 +520,12 @@ export function buildSolPrompt(reasoningPacket, options = {}) {
     'Act only as the reasoning/decision side of a split executor loop.',
     'Do not claim execution, file mutation, tests run, deployment, or product success.',
     'Do not expand mutable scope. Do not emit shell commands, secrets, credentials, or a second task identity.',
-    'Use the bounded reasoning packet as evidence. If evidence is insufficient, use NEEDS_EVIDENCE and request exactly what is missing.',
+    'Treat prose explanations and cause text as non-authoritative. Executable decisions must cite frozen context IDs.',
+    'Evidence IDs are typed by prefix: user:, authority:, actual:, test:, counter:. Never invent an ID that is absent from the packet.',
+    'A mutating PLAN requires an authority: basis plus actual: or test: evidence. User intent or target writability alone never authorizes a repair surface.',
+    'In ROOT_CAUSE or FAILURE_RECOVERY mode, a mutating PLAN requires one selected ROOT_CAUSE claim with status ESTABLISHED, actual evidence, counterevidence, and a discriminating test result. A plausible story is not an established cause.',
+    'If causal alternatives have not been discriminated, return NEEDS_EVIDENCE, keep the cause as HYPOTHESIS/UNKNOWN, and name the next discriminator.',
+    'Writable or convenient state is not evidence that it is the correct repair surface.',
     'Cover every acceptance clause. Return exactly one fenced JSON block named sol-reasoning-response and no second response block.',
     '',
     'REQUEST:',

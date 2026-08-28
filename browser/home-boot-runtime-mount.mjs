@@ -16,6 +16,7 @@ const runtime = {
   resizeHandler: null,
   media: null,
   mediaHandler: null,
+  refreshScheduled: false,
   active: false,
   enterCount: 0,
   renderCount: 0,
@@ -173,8 +174,14 @@ export function refreshHomeBootPresentation() {
 }
 
 function scheduleRefresh() {
-  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => refreshHomeBootPresentation());
-  else queueMicrotask(() => refreshHomeBootPresentation());
+  if (runtime.refreshScheduled) return;
+  runtime.refreshScheduled = true;
+  const run = () => {
+    runtime.refreshScheduled = false;
+    refreshHomeBootPresentation();
+  };
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run);
+  else queueMicrotask(run);
 }
 
 export function mountHomeBootPresentation() {
@@ -190,7 +197,7 @@ export function mountHomeBootPresentation() {
     subtree: true,
     childList: true,
     attributes: true,
-    attributeFilter: ['class', 'hidden', 'style', 'aria-current', 'aria-pressed', 'data-home-target'],
+    attributeFilter: ['class', 'hidden', 'aria-current', 'aria-pressed', 'data-home-target'],
   });
   runtime.mounted = true;
   refreshHomeBootPresentation();
@@ -205,6 +212,7 @@ export function unmountHomeBootPresentation() {
   unmarkHome(runtime.home);
   runtime.mounted = false;
   runtime.active = false;
+  runtime.refreshScheduled = false;
   runtime.observer = null;
   runtime.home = null;
   return snapshot();

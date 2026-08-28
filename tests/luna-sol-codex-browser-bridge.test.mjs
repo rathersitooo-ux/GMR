@@ -102,6 +102,7 @@ test('local route remains local and does not require browser evidence', () => {
       implementationRisk: 'LOW',
       reversibility: 'EASY',
     },
+    queuePacket: queue(),
   });
   assert.equal(result.ok, true);
   assert.equal(result.status, CODEX_BROWSER_BRIDGE_STATUS.LOCAL_EXECUTE);

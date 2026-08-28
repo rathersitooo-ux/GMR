@@ -1,0 +1,76 @@
+name: starter-deck-40-fullreg-r3
+
+on:
+  push:
+    branches:
+      - work/starter-deck-40-product-r3-20260829
+    paths:
+      - .github/workflows/starter-deck-40-fullreg-r3.yml
+
+permissions:
+  contents: write
+
+jobs:
+  full-interaction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Align existing full-interaction assertions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tests/browser-full-interaction.spec.mjs')
+          s=p.read_text(encoding='utf-8')
+          def rep(old,new,label,n=1):
+              global s
+              c=s.count(old)
+              if c!=n: raise SystemExit(f'{label}: expected {n}, got {c}')
+              s=s.replace(old,new,n)
+
+          rep(
+          """test('deck recovery preserves blocked raw saves, repairs legacy only on explicit legal commit, rolls back failures, and resets without reseeding', async ({ page }, testInfo) => {\n""",
+          """test('deck recovery preserves blocked raw saves, repairs generic legacy only on explicit legal commit, rolls back failures, and resets to the registered starter', async ({ page }, testInfo) => {\n""",
+          'test title')
+          rep(
+          """  const initialRaw = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);\n  expect(initialRaw, 'missing save is not implicitly materialized on boot').toBeNull();\n  const defaultDeck = await page.evaluate(() => [...window.__DEFAULT_DECK__]);\n  expect(defaultDeck).toHaveLength(26);\n""",
+          """  const initial = await page.evaluate((key) => ({ raw: localStorage.getItem(key), starterDeck: [...window.__STARTER_DECK__], savedDeck: [...window.__GAMEROAD_TEST__.state.savedDeck.main], rule: { ...window.__GAMEROAD_TEST__.state.savedDeckRule } }), STORAGE_KEY);\n  expect(initial.raw, 'fresh boot registers the starter through the normal durable save path').not.toBeNull();\n  expect(initial.starterDeck).toHaveLength(40);\n  expect(initial.savedDeck).toEqual(initial.starterDeck);\n  expect(initial.rule).toEqual({ id: 'FIRST_REGULATION', revision: 3 });\n  const starterDeck = initial.starterDeck;\n  const legacyFixtureDeck = starterDeck.slice(0, 39);\n  expect(legacyFixtureDeck, 'generic legacy recovery fixture is not the starter/default deck').toHaveLength(39);\n""",
+          'fresh boot')
+          rep('deck: { main: defaultDeck, ex: [], ruleId:', 'deck: { main: starterDeck, ex: [], ruleId:', 'all old default fixture references',3)
+          rep("deck: { main: starterDeck, ex: [], ruleId: 'FIRST_REGULATION', ruleRevision: 2 }", "deck: { main: legacyFixtureDeck, ex: [], ruleId: 'FIRST_REGULATION', ruleRevision: 2 }", 'generic legacy fixture')
+          rep('  expect(observed.savedDeck).toHaveLength(26);', '  expect(observed.savedDeck).toHaveLength(39);', 'legacy observed size')
+          rep(
+          """  expect(afterReset.raw, 'explicit reset does not resurrect the transient starter as a durable save').toBeNull();\n  expect(afterReset.savedCount).toBe(26);\n  expect(afterReset.rule.id).toBeNull();\n""",
+          """  expect(afterReset.raw, 'explicit reset clears the durable save until the next normal boot registration').toBeNull();\n  expect(afterReset.savedCount).toBe(40);\n  expect(afterReset.rule).toEqual({ id: 'FIRST_REGULATION', revision: 3 });\n\n  await page.reload({ waitUntil: 'domcontentloaded' });\n  await page.waitForTimeout(800);\n  const afterResetReload = await page.evaluate((key) => ({ raw: localStorage.getItem(key), starterDeck: [...window.__STARTER_DECK__], savedDeck: [...window.__GAMEROAD_TEST__.state.savedDeck.main], rule: { ...window.__GAMEROAD_TEST__.state.savedDeckRule } }), STORAGE_KEY);\n  expect(afterResetReload.raw, 'reload re-registers the starter through the ordinary save path').not.toBeNull();\n  expect(afterResetReload.savedDeck).toEqual(afterResetReload.starterDeck);\n  expect(afterResetReload.savedDeck).toHaveLength(40);\n  expect(afterResetReload.rule).toEqual({ id: 'FIRST_REGULATION', revision: 3 });\n\n  await page.evaluate((key) => localStorage.removeItem(key), STORAGE_KEY);\n  await page.reload({ waitUntil: 'domcontentloaded' });\n  await page.waitForTimeout(800);\n  await page.evaluate((key) => localStorage.removeItem(key), STORAGE_KEY);\n""",
+          'reset expectations')
+          rep('  expect(writeFailure.savedCount).toBe(26);', '  expect(writeFailure.savedCount).toBe(40);', 'write failure starter preservation')
+          if '__DEFAULT_DECK__' in s or 'toHaveLength(26)' in s or 'savedCount).toBe(26)' in s:
+              raise SystemExit('starter/default 26 assertion remains in full interaction spec')
+          p.write_text(s,encoding='utf-8')
+          PY
+          git diff --check
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Focused starter contract
+        run: node --test tests/starter-deck-40-contract.spec.mjs
+      - name: Starter recovery browser regression
+        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 --grep 'deck recovery preserves blocked raw saves'
+      - name: Full browser interaction
+        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
+      - name: Commit full-interaction assertion repair
+        run: |
+          set -euo pipefail
+          test "$(git diff --name-only)" = "tests/browser-full-interaction.spec.mjs"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/browser-full-interaction.spec.mjs
+          git commit -m 'test(deck): align full interaction with registered starter'
+          git push origin HEAD:work/starter-deck-40-product-r3-20260829

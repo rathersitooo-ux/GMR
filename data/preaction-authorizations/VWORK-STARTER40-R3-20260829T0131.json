@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-STARTER40-R3-20260829T0131",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "STARTER_DECK_40_REGISTERED_NORMAL_DECK_R3",
+  "acquireKey": "STARTER40-PRODUCT-R3-20260829T0108-SOL-Q5N8V3K7M2PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "STARTER40-PR515-MINIMAL-PRODUCT-DIFF-PLUS-CURRENTMAIN-NONOVERLAP",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR515-BROWSER-NODE-CI-SUCCESS-AND-EXACT-LEGACY26-MIGRATION-CONTRACT",
+  "proceedToken": "PROCEED|VWORK-STARTER40-R3-20260829T0131|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|minimal-starter40-recovery-on-current-main",
+  "authorizationBaseSha": "482821bb7cc3b704dc94ae44cce32a794057f400",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tools/starter-deck-40-product-r3-apply.py",
+    ".github/workflows/starter-deck-40-product-r3-auto-apply.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "STARTER_DECK_40_REGISTERED_NORMAL_DECK_R3",
+  "leaseAcquireKey": "STARTER40-PRODUCT-R3-20260829T0108-SOL-Q5N8V3K7M2PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 01:31 JST",
+  "leaseUntilJst": "2026-08-29 01:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A25:N25",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tools/starter-deck-40-product-r3-apply.py",
+    ".github/workflows/starter-deck-40-product-r3-auto-apply.yml"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/starter-deck-40-product-r3-20260829 from exact current main 482821bb7cc3b704dc94ae44cce32a794057f400 only; transient data/preaction-authorizations/VWORK-STARTER40-R3-20260829T0131.json create-first/delete-before-final-head; browser/GAMEROAD.html sole product mutation: fixed 40-card starter SP/DI/CL A..K + HT_A, remove fabricated global royal-rank blocker, correct visible 40/40 counts, and safely recognize only the exact fabricated legacy 26-card starter for in-memory correction; arbitrary user decks untouched; task-private temporary patch script/workflow allowed only for bounded apply/test and deleted before final head. No save schema/card values/Battle/network/economy/Home sidecar mutation."
+}

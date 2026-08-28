@@ -8,6 +8,7 @@ import {
   buildSolPrompt,
   buildSolRequest,
   parseSolResponse,
+  validateEvidenceClaims,
   validateSolRequest,
   validateSolResponse,
 } from '../tools/sol-reasoning-protocol.mjs';
@@ -31,13 +32,44 @@ function queue(overrides = {}) {
   };
 }
 
+function evidenceContext() {
+  return [
+    { id: 'user:directive', text: 'User requested the bounded implementation outcome.', required: true },
+    { id: 'authority:current', text: 'Current authority permits src/a.mjs and tests only.', required: true },
+    { id: 'actual:observed', text: 'Observed behavior is X.', required: true },
+    { id: 'test:focused', text: 'Focused discriminator shows X changes when factor A changes.', priority: 10 },
+    { id: 'counter:failed', text: 'Alternative explanation B remains counterevidence unless discriminated.', priority: 10 },
+  ];
+}
+
 function packet(source = queue()) {
-  const packed = packReasoningPacket(source, [
-    { id: 'observed', text: 'Observed behavior is X.', required: true },
-    { id: 'failed', text: 'Previous attempt Y failed.', priority: 10 },
-  ]);
+  const packed = packReasoningPacket(source, evidenceContext());
   assert.equal(packed.ok, true);
   return packed.packet;
+}
+
+function rootCauseFields(request) {
+  if (request.mode !== 'ROOT_CAUSE') {
+    return {
+      claims: [],
+      selectedCauseClaimId: '',
+      decisionBasisRefs: ['authority:current', 'actual:observed'],
+    };
+  }
+  return {
+    claims: [{
+      id: 'root-a',
+      kind: 'ROOT_CAUSE',
+      statement: 'Factor A causes the observed bounded failure.',
+      status: 'ESTABLISHED',
+      evidenceRefs: ['actual:observed', 'test:focused'],
+      counterEvidenceRefs: ['counter:failed'],
+      discriminatingTestRefs: ['test:focused'],
+      nextDiscriminator: '',
+    }],
+    selectedCauseClaimId: 'root-a',
+    decisionBasisRefs: ['authority:current', 'actual:observed', 'test:focused'],
+  };
 }
 
 function goodResponse(request, source = queue(), overrides = {}) {
@@ -50,7 +82,8 @@ function goodResponse(request, source = queue(), overrides = {}) {
     acquireKey: request.acquireKey,
     reasoningPacketFingerprint: request.reasoningPacketFingerprint,
     disposition: 'PLAN',
-    cause: ['The observed state points to one bounded cause.'],
+    cause: ['Plain-language explanation only; evidence bindings are authoritative.'],
+    ...rootCauseFields(request),
     decision: 'Change only the authorized module and add focused verification.',
     filesToChange: ['src/a.mjs', 'tests/focused.test.mjs'],
     doNotTouch: source.doNotChange,
@@ -88,13 +121,14 @@ test('rejects a tampered request even when task identity still looks valid', () 
   assert.equal(checked.reason, 'request_id_mismatch');
 });
 
-test('accepts a fully correlated bounded plan', () => {
+test('accepts a fully correlated bounded plan with frozen evidence refs', () => {
   const source = queue();
   const reasoning = packet(source);
   const built = buildSolRequest(reasoning, { question: 'Choose the bounded repair.' });
   const checked = validateSolResponse(goodResponse(built.request, source), built.request, reasoning);
   assert.equal(checked.ok, true);
   assert.equal(checked.response.disposition, 'PLAN');
+  assert.deepEqual(checked.response.decisionBasisRefs, ['authority:current', 'actual:observed']);
 });
 
 test('rejects a response crossing acquire identity', () => {
@@ -201,6 +235,9 @@ test('NEEDS_EVIDENCE must request missing evidence', () => {
       implementationOrder: [],
       tests: [],
       rollback: [],
+      claims: [],
+      selectedCauseClaimId: '',
+      decisionBasisRefs: [],
       evidenceRequests: [],
     }),
     built.request,
@@ -218,6 +255,9 @@ test('NO_CHANGE cannot smuggle implementation work', () => {
     goodResponse(built.request, source, {
       disposition: 'NO_CHANGE',
       filesToChange: [],
+      claims: [],
+      selectedCauseClaimId: '',
+      decisionBasisRefs: [],
       implementationOrder: ['edit anyway'],
     }),
     built.request,
@@ -225,6 +265,73 @@ test('NO_CHANGE cannot smuggle implementation work', () => {
   );
   assert.equal(checked.ok, false);
   assert.equal(checked.reason, 'no_change_implementation_forbidden');
+});
+
+test('ROOT_CAUSE PLAN rejects a plausible hypothesis without discriminator', () => {
+  const source = queue();
+  const reasoning = packet(source);
+  const built = buildSolRequest(reasoning, { mode: 'ROOT_CAUSE', question: 'Find the actual cause.' });
+  const response = goodResponse(built.request, source);
+  response.claims = [{
+    id: 'guess-a',
+    kind: 'ROOT_CAUSE',
+    statement: 'A is plausible.',
+    status: 'HYPOTHESIS',
+    evidenceRefs: ['actual:observed'],
+    counterEvidenceRefs: ['counter:failed'],
+    discriminatingTestRefs: [],
+    nextDiscriminator: 'Run A/B.',
+  }];
+  response.selectedCauseClaimId = 'guess-a';
+  response.decisionBasisRefs = ['authority:current', 'actual:observed'];
+  const checked = validateSolResponse(response, built.request, reasoning);
+  assert.equal(checked.ok, false);
+  assert.equal(checked.reason, 'evidence_root_cause_plan_established_cause_required');
+});
+
+test('ROOT_CAUSE PLAN rejects established label without discriminating test evidence', () => {
+  const source = queue();
+  const reasoning = packet(source);
+  const built = buildSolRequest(reasoning, { mode: 'ROOT_CAUSE', question: 'Find the actual cause.' });
+  const response = goodResponse(built.request, source);
+  response.claims[0].discriminatingTestRefs = [];
+  const checked = validateSolResponse(response, built.request, reasoning);
+  assert.equal(checked.ok, false);
+  assert.equal(checked.reason, 'evidence_claim_0_root_cause_discriminating_test_required');
+});
+
+test('mutating plan rejects invented evidence ids absent from frozen packet', () => {
+  const source = queue();
+  const reasoning = packet(source);
+  const built = buildSolRequest(reasoning, { question: 'Choose the repair.' });
+  const response = goodResponse(built.request, source, {
+    decisionBasisRefs: ['authority:current', 'actual:invented-after-answer'],
+  });
+  const checked = validateSolResponse(response, built.request, reasoning);
+  assert.equal(checked.ok, false);
+  assert.equal(checked.reason, 'evidence_decisionBasisRefs_unknown_ref:actual:invented-after-answer');
+});
+
+test('regression: writable project state cannot establish global behavior root cause', () => {
+  const checked = validateEvidenceClaims({
+    mode: 'ROOT_CAUSE',
+    disposition: 'PLAN',
+    filesToChange: ['project/ops-rule'],
+    claims: [{
+      id: 'drive-is-root',
+      kind: 'ROOT_CAUSE',
+      statement: 'Writable project Drive is the correct global repair surface.',
+      status: 'ESTABLISHED',
+      evidenceRefs: ['actual:observed'],
+      counterEvidenceRefs: ['counter:failed'],
+      discriminatingTestRefs: [],
+      nextDiscriminator: '',
+    }],
+    selectedCauseClaimId: 'drive-is-root',
+    decisionBasisRefs: ['user:directive', 'actual:observed'],
+  }, evidenceContext());
+  assert.equal(checked.ok, false);
+  assert.equal(checked.reason, 'claim_0_root_cause_discriminating_test_required');
 });
 
 test('parser requires exactly one fenced Sol response', () => {
@@ -243,12 +350,14 @@ test('parser requires exactly one fenced Sol response', () => {
   assert.equal(double.reason, 'multiple_fences:sol-reasoning-response');
 });
 
-test('prompt is deterministic and explicitly forbids execution claims', () => {
+test('prompt is deterministic and makes prose causes non-authoritative', () => {
   const reasoning = packet();
   const first = buildSolPrompt(reasoning, { mode: 'REVIEW', question: 'Review the decision.' });
   const second = buildSolPrompt(reasoning, { mode: 'REVIEW', question: 'Review the decision.' });
   assert.equal(first.ok, true);
   assert.equal(first.prompt, second.prompt);
   assert.match(first.prompt, /Do not claim execution/);
+  assert.match(first.prompt, /non-authoritative/);
+  assert.match(first.prompt, /A plausible story is not an established cause/);
   assert.match(first.prompt, /sol-reasoning-response/);
 });

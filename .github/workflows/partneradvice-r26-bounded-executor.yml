@@ -60,24 +60,24 @@ jobs:
           tp=Path('tests/browser-full-interaction.spec.mjs')
           t=tp.read_text(encoding='utf-8')
           anchor="  await expect(battle.locator('[data-partner-advice-role=\"partner-recommendation\"]')).toHaveCount(0);\n  await page.emulateMedia({ reducedMotion: 'no-preference' });"
-          regression=r'''  await expect(battle.locator('[data-partner-advice-role="partner-recommendation"]')).toHaveCount(0);
-
-  const queuedScheduleFence = await page.evaluate(async () => {
-    const board = window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__;
-    const stale = window.__GAMEROAD_PARTNER_ADVICE_STALE__?.() ?? { status: 'blocked', kind: 'stale', error: 'STALE_STATE' };
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    document.querySelector('section[data-screen="battle"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    const staleResult = await board?.render?.(stale);
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    return {
-      staleActiveCount: staleResult?.activeCount ?? null,
-      finalActiveCount: board?.snapshot?.().activeCount ?? null,
-    };
-  });
-  expect(queuedScheduleFence.staleActiveCount).toBe(0);
-  expect(queuedScheduleFence.finalActiveCount, 'a queued auto-render cannot revive recommendations after a newer stale render').toBe(0);
-
-  await page.emulateMedia({ reducedMotion: 'no-preference' });'''
+          regression=(
+              "  await expect(battle.locator('[data-partner-advice-role=\"partner-recommendation\"]')).toHaveCount(0);\n\n"
+              "  const queuedScheduleFence = await page.evaluate(async () => {\n"
+              "    const board = window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__;\n"
+              "    const stale = window.__GAMEROAD_PARTNER_ADVICE_STALE__?.() ?? { status: 'blocked', kind: 'stale', error: 'STALE_STATE' };\n"
+              "    await new Promise((resolve) => setTimeout(resolve, 0));\n"
+              "    document.querySelector('section[data-screen=\"battle\"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));\n"
+              "    const staleResult = await board?.render?.(stale);\n"
+              "    await new Promise((resolve) => setTimeout(resolve, 0));\n"
+              "    return {\n"
+              "      staleActiveCount: staleResult?.activeCount ?? null,\n"
+              "      finalActiveCount: board?.snapshot?.().activeCount ?? null,\n"
+              "    };\n"
+              "  });\n"
+              "  expect(queuedScheduleFence.staleActiveCount).toBe(0);\n"
+              "  expect(queuedScheduleFence.finalActiveCount, 'a queued auto-render cannot revive recommendations after a newer stale render').toBe(0);\n\n"
+              "  await page.emulateMedia({ reducedMotion: 'no-preference' });"
+          )
           count=t.count(anchor)
           if count!=1: raise SystemExit(f'test anchor count={count}')
           t=t.replace(anchor,regression,1)

@@ -74,3 +74,5 @@ jobs:
           git add tests/browser-full-interaction.spec.mjs
           git commit -m 'test(deck): align full interaction with registered starter'
           git push origin HEAD:work/starter-deck-40-product-r3-20260829
+
+# rerun after verified product import

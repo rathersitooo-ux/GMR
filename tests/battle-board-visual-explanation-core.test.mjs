@@ -32,6 +32,10 @@ function base(overrides = {}) {
     invalidReasonByPosition: {
       'L:3:0': 'TARGET_BLOCKED',
     },
+    targetKindByPosition: {
+      'L:2:0': 'shield',
+      'R:1:0': 'attack',
+    },
     revisionToken: 'state-17',
     currentRevisionToken: 'state-17',
     partnerProjection: {
@@ -157,11 +161,42 @@ test('invalid reasons annotate only already-invalid positions', () => {
   assert.deepEqual(dangling.annotations.invalidReasonByPosition, {});
 });
 
+test('classifies only already-targeted positions by target kind', () => {
+  const out = projectBattleBoardVisualExplanation(base({
+    targetPositionIds: ['L:2:0', 'R:1:0'],
+    targetKindByPosition: {
+      'L:2:0': 'shield',
+      'R:1:0': 'attack',
+    },
+  }));
+  assert.deepEqual(out.annotations.targetKindByPosition, {
+    'L:2:0': 'shield',
+    'R:1:0': 'attack',
+  });
+
+  const lane = projectBattleBoardVisualExplanation(base({
+    targetPositionIds: ['L:3:0'],
+    targetKindByPosition: { 'L:3:0': 'lane' },
+  }));
+  assert.deepEqual(lane.annotations.targetKindByPosition, { 'L:3:0': 'lane' });
+
+  for (const targetKindByPosition of [
+    { 'L:1:0': 'attack' },
+    { 'L:2:0': 'not-a-target-kind' },
+    { 'NOT:A:POSITION': 'attack' },
+  ]) {
+    const failed = projectBattleBoardVisualExplanation(base({ targetKindByPosition }));
+    assert.equal(failed.ok, false);
+    assert.deepEqual(failed.annotations.targetKindByPosition, {});
+  }
+});
+
 test('partner recommendation never becomes selected state, path, or rules target', () => {
   const out = projectBattleBoardVisualExplanation(base({
     selectedPositionId: 'L:1:0',
     pathPositionIds: ['C:0:0', 'L:1:0'],
     targetPositionIds: ['L:3:0'],
+    targetKindByPosition: { 'L:3:0': 'attack' },
     partnerProjection: {
       ...base().partnerProjection,
       targetId: 'R:1:0',
@@ -250,6 +285,7 @@ test('stale board revision clears all presentation state', () => {
   assert.deepEqual(out.channels.invalid, []);
   assert.deepEqual(out.annotations.positionKindByPosition, {});
   assert.deepEqual(out.annotations.invalidReasonByPosition, {});
+  assert.deepEqual(out.annotations.targetKindByPosition, {});
   assert.equal(out.recommendation.active, false);
 });
 

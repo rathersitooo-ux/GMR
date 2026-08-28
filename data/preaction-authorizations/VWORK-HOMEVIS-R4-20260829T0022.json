@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-HOMEVIS-R4-20260829T0022",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_VISUAL_AUTHORITY_DECLUTTER_R4_CURRENTMAIN_REBASE",
+  "acquireKey": "HOMEVIS-AUTHORITY-R4-20260829T0022-SOL-Q8N5V2K4M7PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "HOMEVIS-R4-CURRENTMAIN-NONOVERLAP-AND-SCREENSHOT-DECLUTTER-REVIEW",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "HOMEVIS-R3-SEVEN-FILE-REVIEWED-BLOBS-PLUS-R4-CURRENTMAIN-DIFF-AUDIT",
+  "proceedToken": "PROCEED|VWORK-HOMEVIS-R4-20260829T0022|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-main-exact-seven-file-home-visual-authority-r4",
+  "authorizationBaseSha": "60cb6ca671af0c1e2d2de94b97768dfcddcda3da",
+  "scope": [
+    "browser/home-shell-presentation-core.mjs",
+    "browser/boot-loading-presentation-core.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "browser/home-cards-2p5d-presentation.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "docs/ui-branch1-home-boot-integration.md"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_VISUAL_AUTHORITY_DECLUTTER_R4_CURRENTMAIN_REBASE",
+  "leaseAcquireKey": "HOMEVIS-AUTHORITY-R4-20260829T0022-SOL-Q8N5V2K4M7PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 00:22 JST",
+  "leaseUntilJst": "2026-08-29 01:22 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A15:L15",
+  "leaseScope": [
+    "browser/home-shell-presentation-core.mjs",
+    "browser/boot-loading-presentation-core.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "browser/home-cards-2p5d-presentation.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "docs/ui-branch1-home-boot-integration.md"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/home-visual-authority-r4-20260829 from exact current main 60cb6ca671af0c1e2d2de94b97768dfcddcda3da only: transient data/preaction-authorizations/VWORK-HOMEVIS-R4-20260829T0022.json create-first/delete-before-final-head; browser/home-shell-presentation-core.mjs; browser/boot-loading-presentation-core.mjs; browser/home-boot-runtime-mount.mjs; browser/home-cards-2p5d-presentation.mjs bootstrap import only; deploy/cloudflare/scripts/build.mjs HomeBoot package/provenance only; tests/home-boot-presentation.test.mjs; docs/ui-branch1-home-boot-integration.md; successor PR state+merge only after exact-head gates; predecessor PR #493 close-state only after successor acceptance; CURRENT_ACTIVE_LEASES own exact row15 only; R22 own acquire/checkpoint/terminal/release records only. browser/GAMEROAD.html; tests/browser-full-interaction.spec.mjs; tests/browser-runtime-smoke.spec.mjs; .github/workflows/**; Character/Battle/Partner/rules/save/network/economy/assets; other deploy configuration and other owners' resources are excluded/read-only."
+}

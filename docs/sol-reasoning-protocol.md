@@ -10,6 +10,36 @@ It is a **decision protocol**, not a browser driver and not an execution engine.
 
 R1 deliberately keeps transport outside this module. The same request/response contract can be carried by a browser session, a native model handoff, or another approved transport later without changing task identity or mutation authority.
 
+## Outcome-routing contract
+
+R1 is intentionally a small executable boundary rather than a second copy of the full GAMEROAD operating rules.
+
+The queue/reasoning packet already carries the high-value invariants that Sol needs for one bounded decision:
+
+- `userEndState`: the user-facing state the work is supposed to move toward;
+- `realOutputTarget`: the concrete output expected from the executor path;
+- `acceptance`: clauses that must be explicitly covered;
+- `exactMutableResources`: the mutation boundary;
+- `doNotChange`: protected resources and adjacent owner boundaries;
+- `resumeCondition`: where control returns after this bounded decision;
+- bounded context items: the JIT evidence packet used for this decision.
+
+The protocol must not silently replace `userEndState` with research, planning, task creation, checkpointing, CI, or PR creation. Those can be intermediate executor actions, but a Sol response is only a bounded decision about how to reach the packet's real output.
+
+The context packet is evidence, not authority expansion. It should contain the smallest decision-sufficient set selected by the upstream CURRENT/evidence router. Source discovery, CURRENT freshness checks, Web retrieval, relation expansion, HOT/WARM/COLD/QUARANTINE classification, and context-budget policy stay upstream. Baking those changing retrieval mechanics into this RPC would duplicate authority and make the protocol harder to retire or replace later.
+
+When material evidence is missing, Sol must return `NEEDS_EVIDENCE` with the missing evidence named. It must not compensate by widening scope, inventing current state, or turning uncertainty into a plan. Counterevidence and failure evidence should be included as bounded context items by the upstream router; Sol is expected to account for them in `cause`, `decision`, `uncertainties`, and `evidenceRequests` rather than ignoring contrary context.
+
+A valid `PLAN` is not completion evidence. Execution, mutation, runtime verification, readback, downstream use, and final outcome classification remain executor responsibilities. This separation is deliberate: it prevents a reasoning model from converting a plausible plan into a fake implementation or product-success claim.
+
+## Minimality and self-compression
+
+Do not add a new protocol field merely because a long-lived operating prompt has a named concept for it. Add structure only when an observed failure cannot be reliably prevented with the existing queue identity, bounded evidence, acceptance coverage, scope checks, and dispositions.
+
+Candidate additions should first be evaluated against representative failures and nearby normal cases. Prefer the smaller contract when it preserves correctness. Retrieval policy, transport details, model-selection details, browser selectors, scheduler mechanics, and provider-specific behavior belong in their owning layers, not here.
+
+This keeps R1 composable and allows obsolete prompt rules or transport workarounds to be removed without changing the reasoning contract.
+
 ## Request
 
 `buildSolRequest(reasoningPacket, { mode, question })` validates the packed reasoning packet and binds the request to:

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-REQGATE-HOMEBOOT-R30-20260828T1812",
+  "taskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "workUnitKey": "HOMEBOOT_RUNTIME_PATH_CLASSIFICATION_R30",
+  "acquireKey": "REQGATE-HOMEBOOT-R30-20260828T1812-SOL-Q7N4V8K2M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "required-gate-run33158051509-unclassified-homeboot-runtime-path-20260828",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "current-required-gate-browser-lane-existing-homeboot-presentation-paths-plus-exact-failure-20260828",
+  "proceedToken": "PROCEED|VWORK-REQGATE-HOMEBOOT-R30-20260828T1812|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|homeboot-runtime-path-classification",
+  "authorizationBaseSha": "058ec511b0745fb850713ea75b1b48eb3a4c3ddb",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "leaseWorkUnitKey": "HOMEBOOT_RUNTIME_PATH_CLASSIFICATION_R30",
+  "leaseAcquireKey": "REQGATE-HOMEBOOT-R30-20260828T1812-SOL-Q7N4V8K2M6PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-28 18:12 JST",
+  "leaseUntilJst": "2026-08-28 18:57 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/required-gate-homeboot-runtime-r30-20260828 only: data/preaction-authorizations/VWORK-REQGATE-HOMEBOOT-R30-20260828T1812.json transient create/delete; .github/workflows/gameroad-required-gate.yml only to classify browser/home-boot-runtime-mount.mjs and tests/home-boot-runtime.spec.mjs into the existing Browser lane, with no unrelated workflow semantic change; successor PR state+merge for this branch only; CURRENT_ACTIVE_LEASES own exact AcquireKey row only; R22 own acquire/checkpoint/terminal/release records only. Product files, browser/GAMEROAD.html, Home runtime files, other workflows, deploy, rules/save/network/economy are read-only/excluded."
+}

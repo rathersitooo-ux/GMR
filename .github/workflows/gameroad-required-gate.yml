@@ -69,6 +69,7 @@ jobs:
           battle_conveyor=false
           battle2v2_reconnect=false
           hate_presence=false
+          hate_forced_delegation=false
           board_facility=false
           auto_rank=false
           version_manifest=false
@@ -238,6 +239,10 @@ jobs:
               tests/hate-peer-presence-core.test.mjs)
                 hate_presence=true
                 ;;
+              browser/hate-forced-delegation-core.mjs|\
+              tests/hate-forced-delegation-core.test.mjs)
+                hate_forced_delegation=true
+                ;;
               browser/board-facility-state-core.mjs|\
               browser/board-facility-state-core.classic.js|\
               browser/board-facility-runtime-mount.mjs|\
@@ -339,6 +344,7 @@ jobs:
             echo "battle_conveyor=${battle_conveyor}"
             echo "battle2v2_reconnect=${battle2v2_reconnect}"
             echo "hate_presence=${hate_presence}"
+            echo "hate_forced_delegation=${hate_forced_delegation}"
             echo "board_facility=${board_facility}"
             echo "auto_rank=${auto_rank}"
             echo "version_manifest=${version_manifest}"
@@ -533,6 +539,10 @@ jobs:
       - name: Run HATE peer presence core tests
         if: steps.classify.outputs.hate_presence == 'true'
         run: node --test tests/hate-peer-presence-core.test.mjs
+
+      - name: Run HATE forced delegation core tests
+        if: steps.classify.outputs.hate_forced_delegation == 'true'
+        run: node --test tests/hate-forced-delegation-core.test.mjs
 
       - name: Run Board facility state core tests
         if: steps.classify.outputs.board_facility == 'true'

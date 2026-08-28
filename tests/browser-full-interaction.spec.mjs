@@ -919,15 +919,21 @@ test('covers partner/player role tabs and a real visible character selection', a
   await expect(characters).toBeVisible();
 
   await characters.locator('[data-role="player"]').click();
-  const unselected = characters.locator('.charCard[aria-pressed="false"]').first();
-  await expect(unselected).toBeVisible();
-  const targetText = (await unselected.textContent())?.trim() || '';
-  const targetName = targetText.replace(/操作人物にする|選択中/g, '').trim();
-  expect(targetName).not.toBe('');
-  await unselected.click();
-  const selected = characters.locator('.charCard[aria-pressed="true"]');
-  await expect(selected).toHaveCount(1);
-  await expect(selected).toContainText(targetName);
+  const playerCards = characters.locator('.charCard:visible');
+  expect(await playerCards.count(), 'player roster exposes the implemented character').toBeGreaterThan(0);
+  const naki = playerCards.filter({ hasText: 'ナキ' });
+  await expect(naki, 'Naki appears exactly once in the player roster').toHaveCount(1);
+  await expect(naki).toBeEnabled();
+  await naki.click();
+  await expect(naki).toHaveAttribute('aria-pressed', 'true');
+  for (let i = 0; i < await playerCards.count(); i += 1) {
+    const card = playerCards.nth(i);
+    if (((await card.textContent()) || '').includes('ナキ')) continue;
+    await expect(card, 'unimplemented player character is not selectable').toBeDisabled();
+    await expect(card).toHaveAttribute('aria-disabled', 'true');
+  }
+  await expect(characters.locator('.charCard[aria-pressed="true"]:visible')).toHaveCount(1);
+  await expect(characters.locator('#charName')).toContainText('ナキ');
   await attachStateScreenshot(page, testInfo, 'player-character-selection-visible');
 
   await characters.locator('[data-role="partner"]').click();

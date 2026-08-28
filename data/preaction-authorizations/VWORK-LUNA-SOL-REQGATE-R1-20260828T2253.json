@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-LUNA-SOL-REQGATE-R1-20260828T2253",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "LUNA_SOL_REQUIRED_GATE_MAPPING_R1",
+  "acquireKey": "OPS-AI-LUNA-SOL-REQGATE-R1-20260828T2253-SOL-Q6N4V8K2M7PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "REQGATE-LUNA-SOL-PATH-MAPPING-R1-20260828",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT-REQUIRED-GATE-FAIL-CLOSED-CLASSIFIER-READBACK-20260828",
+  "proceedToken": "PROCEED|VWORK-LUNA-SOL-REQGATE-R1-20260828T2253|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|workflow-classification-only",
+  "authorizationBaseSha": "964a1aafeb73176a3c57f92fa7a58df22fb131c0",
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "LUNA_SOL_REQUIRED_GATE_MAPPING_R1",
+  "leaseAcquireKey": "OPS-AI-LUNA-SOL-REQGATE-R1-20260828T2253-SOL-Q6N4V8K2M7PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-28 22:54 JST",
+  "leaseUntilJst": "2026-08-28 23:38 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A17:L17",
+  "leaseScope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/ops-ai-luna-sol-reqgate-r1-20260828 only; .github/workflows/gameroad-required-gate.yml only; CURRENT_ACTIVE_LEASES own row17 only; R22 own acquire/checkpoint/terminal/release records only."
+}

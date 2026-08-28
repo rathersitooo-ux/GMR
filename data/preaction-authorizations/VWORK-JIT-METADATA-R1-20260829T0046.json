@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-JIT-METADATA-R1-20260829T0046",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "JIT_EVIDENCE_METADATA_PRESERVATION_R1",
+  "acquireKey": "OPS-AI-JIT-EVIDENCE-METADATA-R1-20260829T0046-SOL-Q5N8V3K7M2PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "JIT-METADATA-LOSS-DIRECT-MAIN-READBACK-20260829",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "MAIN-JIT-SELECTED-EVIDENCE-RETAINS-METADATA-WHILE-CONTEXT-ITEM-DROPS-IT",
+  "proceedToken": "PROCEED|VWORK-JIT-METADATA-R1-20260829T0046|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|jit-evidence-metadata-preservation-r1",
+  "authorizationBaseSha": "85b29ea0c176ff561842fc50b2f9fd96007b1127",
+  "scope": [
+    "docs/jit-evidence-compiler.md",
+    "tests/jit-evidence-compiler.test.mjs",
+    "tools/jit-evidence-compiler.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "JIT_EVIDENCE_METADATA_PRESERVATION_R1",
+  "leaseAcquireKey": "OPS-AI-JIT-EVIDENCE-METADATA-R1-20260829T0046-SOL-Q5N8V3K7M2PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 00:46 JST",
+  "leaseUntilJst": "2026-08-29 01:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A12:L12",
+  "leaseScope": [
+    "docs/jit-evidence-compiler.md",
+    "tests/jit-evidence-compiler.test.mjs",
+    "tools/jit-evidence-compiler.mjs"
+  ],
+  "leaseExactMutableResources": "data/preaction-authorizations/VWORK-JIT-METADATA-R1-20260829T0046.json transient create-first/delete-before-final-head; docs/jit-evidence-compiler.md; tests/jit-evidence-compiler.test.mjs; tools/jit-evidence-compiler.mjs; branch work/ops-ai-jit-metadata-preservation-r1-20260829; successor PR state+merge only after exact-head Required Gate; CURRENT_ACTIVE_LEASES row12; R22 own acquire/checkpoint/terminal/release records; tools/executor-bus-packet-compressor.mjs, tools/sol-reasoning-protocol.mjs, tools/luna-sol-integration-core.mjs, tools/luna-sol-router-core.mjs, sol-evidence claim-gate files, workflows, browser/product/deploy/game/save/network/economy/assets and all other owners excluded"
+}

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-PARTNER-KNOWLEDGE-GROUNDING-R1-REBUILD-20260829T0320",
+  "taskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "workUnitKey": "SAASUNA_PARTNER_KNOWLEDGE_GROUNDING_R1",
+  "acquireKey": "PARTNER-KNOWLEDGE-GROUNDING-R1-20260829T0309-SOL-K5G1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "EXISTING_SAASUNA_CORE_ADAPT_ONLY_NO_NEW_INFRASTRUCTURE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PARTNER_CONVERSATION_FOCUSED_LOCAL_18_OF_18_PASS",
+  "proceedToken": "PROCEED|VWORK-PARTNER-KNOWLEDGE-GROUNDING-R1-REBUILD-20260829T0320|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-knowledge-grounding|minimal-adapt",
+  "authorizationBaseSha": "4e782fd9b5b8d06bd447cddbecd45f19a5deb7b7",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "leaseWorkUnitKey": "SAASUNA_PARTNER_KNOWLEDGE_GROUNDING_R1",
+  "leaseAcquireKey": "PARTNER-KNOWLEDGE-GROUNDING-R1-20260829T0309-SOL-K5G1",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 03:12 JST",
+  "leaseUntilJst": "2026-08-29 04:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "browser/partner-conversation-core.mjs;tests/partner-conversation-core.test.mjs",
+  "scope": [
+    "browser/partner-conversation-core.mjs",
+    "tests/partner-conversation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-conversation-core.mjs",
+    "tests/partner-conversation-core.test.mjs"
+  ],
+  "solutionSignature": "Pass already-retrieved source-bound current facts into the existing Saasuna conversation provider without creating a second knowledge system.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_CONVERSATION_CORE_PLUS_OFFICIAL_RAG_GROUNDING_PATTERN",
+  "solutionSearchEvidence": [
+    "GMR_CURRENT_PARTNER_CONVERSATION_CORE",
+    "GOOGLE_CLOUD_CURRENT_RAG_GROUNDING_DOCS",
+    "MICROSOFT_FOUNDRY_CURRENT_RAG_DOCS"
+  ]
+}

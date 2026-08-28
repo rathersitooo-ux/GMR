@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 
+import { normalizeQueuePacket } from './executor-bus-packet.mjs';
 import { packReasoningPacket } from './executor-bus-packet-compressor.mjs';
 import { buildTransportMessage, normalizeTransportRequest } from './chatgpt-browser-transport-core.mjs';
 import { ROUTES, routeLunaSol } from './luna-sol-router-core.mjs';
@@ -93,6 +94,13 @@ function identityFromPrompt(promptBuilt) {
 
 function hashText(value) {
   return createHash('sha256').update(value, 'utf8').digest('hex');
+}
+
+function validateMutationQueue(queuePacket) {
+  if (!queuePacket) return { ok: false, reason: 'local_mutation_queue_required' };
+  const checked = normalizeQueuePacket(queuePacket);
+  if (!checked.ok) return { ok: false, reason: `queue_${checked.reason}` };
+  return checked;
 }
 
 function normalizeBrowserContext(input = {}) {
@@ -234,11 +242,16 @@ export function prepareLunaSolCodexDispatch(input = {}) {
   });
 
   if (routeDecision.route === ROUTES.LOCAL_EXECUTE) {
+    const queueChecked = validateMutationQueue(queuePacket);
+    if (!queueChecked.ok) {
+      return fail(CODEX_BROWSER_BRIDGE_STATUS.PACKET_REJECTED, routeDecision, queueChecked.reason);
+    }
     return {
       ok: true,
       status: CODEX_BROWSER_BRIDGE_STATUS.LOCAL_EXECUTE,
       mayMutate: true,
       routeDecision,
+      queuePacket: queueChecked.packet,
       executorAction: 'LOCAL_ACCEPTANCE_BOUNDED_EXECUTION',
     };
   }

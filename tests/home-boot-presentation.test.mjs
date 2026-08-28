@@ -83,18 +83,26 @@ test('Home reduced/lowPerf profiles preserve semantic state rather than invent r
   assert.equal(normal.selectedRouteId, lowPerf.selectedRouteId);
 });
 
-test('Home visual authority is subtractive only when the canonical slidepad exists', () => {
+test('Home visual authority removes duplicate dashboard chrome only when the canonical slidepad exists', () => {
   assert.equal(resolveHomePrimaryAuthority({ hasSlidePad: true }), HOME_VISUAL_AUTHORITY.canonical);
   assert.equal(resolveHomePrimaryAuthority({ hasSlidePad: false }), HOME_VISUAL_AUTHORITY.fallback);
   assert.equal(resolveHomePrimaryAuthority(), HOME_VISUAL_AUTHORITY.fallback);
   assert.ok(HOME_VISUAL_AUTHORITY.suppressedSelectors.includes('#codexHomeVisualLayer'));
   assert.ok(HOME_VISUAL_AUTHORITY.suppressedSelectors.includes('.codexPartnerChip'));
   assert.ok(HOME_VISUAL_AUTHORITY.suppressedSelectors.includes('.codexBattleCta'));
+  assert.ok(HOME_VISUAL_AUTHORITY.chromeSelectors.includes('.codexHomeCenterStage'));
+  assert.ok(HOME_VISUAL_AUTHORITY.chromeSelectors.includes('.codexHomeLeftRail'));
+  assert.ok(HOME_VISUAL_AUTHORITY.chromeSelectors.includes('.codexHomeRightRail'));
   const css = createHomeVisualAuthorityCss();
   assert.match(css, /data-home-primary-authority="slidepad"/);
   assert.match(css, /#codexHomeVisualLayer/);
   assert.match(css, /\.codexPartnerChip/);
   assert.match(css, /\.codexBattleCta/);
+  assert.match(css, /\.codexHomeCenterStage/);
+  assert.match(css, /\.codexHomeLeftRail/);
+  assert.match(css, /\.codexHomeRightRail/);
+  assert.match(css, /background:transparent!important/);
+  assert.match(css, /min-height:44px!important/);
   assert.match(css, /data-home-shell-variant="portrait"/);
   assert.match(css, /grid-template-columns:1fr!important/);
   assert.match(css, /data-home-shell-variant="short-landscape"/);

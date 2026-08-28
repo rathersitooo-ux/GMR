@@ -295,7 +295,26 @@ jobs:
                 ;;
               .github/workflows/gameroad-executor-bus.yml|\
               tools/executor-bus-packet.mjs|\
-              tests/executor-bus-packet.test.mjs)
+              tests/executor-bus-packet.test.mjs|\
+              tools/executor-bus-packet-compressor.mjs|\
+              tests/executor-bus-packet-compressor.test.mjs|\
+              tools/chatgpt-browser-transport-core.mjs|\
+              tools/chatgpt-browser-transport-runner.mjs|\
+              tests/chatgpt-browser-transport-core.test.mjs|\
+              tools/luna-sol-router-core.mjs|\
+              tools/luna-sol-router-runner.mjs|\
+              tests/luna-sol-router-core.test.mjs|\
+              tools/sol_bridge/evaluation/completion-ab-evaluator.mjs|\
+              tools/sol_bridge/evaluation/completion-ab-evaluator-runner.mjs|\
+              tests/sol_bridge/evaluation/completion-ab-evaluator.test.mjs|\
+              tools/sol-reasoning-protocol.mjs|\
+              tests/sol-reasoning-protocol.test.mjs|\
+              tools/luna-sol-integration-core.mjs|\
+              tests/luna-sol-integration-core.test.mjs|\
+              tools/luna-sol-codex-browser-bridge.mjs|\
+              tools/luna-sol-codex-browser-bridge-runner.mjs|\
+              tests/luna-sol-codex-browser-bridge.test.mjs|\
+              tests/luna-sol-codex-browser-bridge-local-queue-gate.test.mjs)
                 executor_bus=true
                 ;;
               .github/workflows/gameroad-required-gate.yml|\
@@ -405,9 +424,26 @@ jobs:
         if: steps.classify.outputs.multi_agent_match_follow == 'true'
         run: node --test tests/multi-agent-match-follow-harness.test.mjs
 
-      - name: Run Executor bus packet tests
+      - name: Run Executor bus and Luna Sol integration tests
         if: steps.classify.outputs.executor_bus == 'true'
-        run: node --test tests/executor-bus-packet.test.mjs
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/executor-bus-packet.test.mjs
+          node --test tests/executor-bus-packet-compressor.test.mjs
+          node --test tests/chatgpt-browser-transport-core.test.mjs
+          node --test tests/luna-sol-router-core.test.mjs
+          node --test tests/sol_bridge/evaluation/completion-ab-evaluator.test.mjs
+          node --test tests/sol-reasoning-protocol.test.mjs
+          node --test tests/luna-sol-integration-core.test.mjs
+          if grep -Eq '^(tools/luna-sol-codex-browser-bridge(-runner)?\.mjs|tests/luna-sol-codex-browser-bridge(-local-queue-gate)?\.test\.mjs)$' /tmp/gameroad-changed.txt; then
+            if [[ -f tests/luna-sol-codex-browser-bridge.test.mjs ]]; then
+              node --test tests/luna-sol-codex-browser-bridge.test.mjs
+            fi
+            if [[ -f tests/luna-sol-codex-browser-bridge-local-queue-gate.test.mjs ]]; then
+              node --test tests/luna-sol-codex-browser-bridge-local-queue-gate.test.mjs
+            fi
+          fi
 
       - name: Run Browser static check
         if: steps.classify.outputs.browser == 'true'

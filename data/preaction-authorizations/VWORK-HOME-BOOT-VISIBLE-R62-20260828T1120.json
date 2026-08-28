@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-HOME-BOOT-VISIBLE-R62-20260828T1120",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_BOOT_VISIBLE_INTEGRATION_R62",
+  "acquireKey": "UIVISIBLE-HOMEBOOT-R62-20260828T1120-SOL-Q7N4V8K2M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "r29-main-optional-homeboot-package-gate-plus-pr452-r61-exact-core-oracle-20260828",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "pr452-homeboot-r61-unit-contracts-plus-live-homecards-bootstrap-seam-20260828",
+  "proceedToken": "PROCEED|VWORK-HOME-BOOT-VISIBLE-R62-20260828T1120|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|homeboot-r61-successor-live-home-mount",
+  "authorizationBaseSha": "058ec511b0745fb850713ea75b1b48eb3a4c3ddb",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_BOOT_VISIBLE_INTEGRATION_R62",
+  "leaseAcquireKey": "UIVISIBLE-HOMEBOOT-R62-20260828T1120-SOL-Q7N4V8K2M6PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-28 11:20 JST",
+  "leaseUntilJst": "2026-08-28 12:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:N10",
+  "scope": [
+    "browser/home-shell-presentation-core.mjs",
+    "browser/boot-loading-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "docs/ui-branch1-home-boot-integration.md",
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-runtime.spec.mjs",
+    "browser/home-cards-2p5d-presentation.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-shell-presentation-core.mjs",
+    "browser/boot-loading-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "docs/ui-branch1-home-boot-integration.md",
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-runtime.spec.mjs",
+    "browser/home-cards-2p5d-presentation.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/home-boot-visible-integration-r62-20260828 only: transient data/preaction-authorizations/VWORK-HOME-BOOT-VISIBLE-R62-20260828T1120.json create-first/delete-before-final-head only; restore exact predecessor bytes browser/home-shell-presentation-core.mjs, browser/boot-loading-presentation-core.mjs, tests/home-boot-presentation.test.mjs, docs/ui-branch1-home-boot-integration.md; NEW browser/home-boot-runtime-mount.mjs; NEW tests/home-boot-runtime.spec.mjs; browser/home-cards-2p5d-presentation.mjs bootstrap import only plus no unrelated behavior changes; successor PR state and merge for this branch only; predecessor PR #452 close-state only after successor exact-head merge; CURRENT_ACTIVE_LEASES own exact AcquireKey row only; R22 own acquire/checkpoint/terminal/release records only. browser/GAMEROAD.html, .github/workflows/**, Battle files, shared navigation/foundation/Transition Director, home-theme-orientation-core.mjs, formal Home art/background/character assets, Result/Gacha/Partner, game rules/save/network/economy and deploy configuration are read-only/excluded."
+}

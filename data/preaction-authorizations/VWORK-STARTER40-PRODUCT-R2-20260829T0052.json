@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-STARTER40-PRODUCT-R2-20260829T0052",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "STARTER_DECK_REGISTRATION_ROOT_REPAIR_R2_CURRENTMAIN",
+  "acquireKey": "STARTER40-PRODUCT-R2-20260829T0052-SOL-Q6N4V8K2M7PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_AUTHORITY_NO_INVENTED_40_AND_PLAYER_DEFAULT26_DE_SPECIALIZATION",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "STATIC_ROOT_CONTRACT_EMPTY_FRESH_RESET_NO_DEFAULT_CARDLIST_LEGACY_PRESERVED",
+  "proceedToken": "PROCEED|VWORK-STARTER40-PRODUCT-R2-20260829T0052|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|STARTER_REGISTRATION_ROOT_R2",
+  "authorizationBaseSha": "ad3e87c7cf5ed1cf9a9c322519225b885bb86b36",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "STARTER_DECK_REGISTRATION_ROOT_REPAIR_R2_CURRENTMAIN",
+  "leaseAcquireKey": "STARTER40-PRODUCT-R2-20260829T0052-SOL-Q6N4V8K2M7PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 00:59 JST",
+  "leaseUntilJst": "2026-08-29 01:37 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A24:N24",
+  "authorityCorrection": "The prior deterministic-40 premise was rejected. CURRENT requires the old default-26 recovery path to be removed and forbids AI invention of the formal 40-card composition. A 24/26/39-card save is legacy data only, never a starter/default identity.",
+  "leaseExactMutableResources": "browser/GAMEROAD.html only to remove player-facing DEFAULT_DECK card-list seeding, make fresh/reset player deck state ordinary and empty until explicitly edited/saved, preserve recognized legacy contents without auto-fill, and remove implicit deck fallback from makePlayer; tests/starter-deck-40-contract.spec.mjs focused root contract; tests/browser-full-interaction.spec.mjs only if runtime regression coverage is needed; task-private temporary tools/starter-deck-40-product-r2-apply.py and .github/workflows/starter-deck-40-product-r2-auto-apply.yml may be created only for bounded patch application and must be deleted before final head. No invented 40-card composition, no 26-card starter identity, no card/rule/save-schema/network/economy/deploy changes.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/starter-deck-40-contract.spec.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "tools/starter-deck-40-product-r2-apply.py",
+    ".github/workflows/starter-deck-40-product-r2-auto-apply.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/starter-deck-40-contract.spec.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "tools/starter-deck-40-product-r2-apply.py",
+    ".github/workflows/starter-deck-40-product-r2-auto-apply.yml"
+  ]
+}

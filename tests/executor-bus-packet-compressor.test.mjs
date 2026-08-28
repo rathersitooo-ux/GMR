@@ -7,6 +7,8 @@ import {
   compressQueuePacket,
   decompressQueuePacket,
   measureQueuePacketCompression,
+  packReasoningPacket,
+  unpackReasoningPacket,
 } from '../tools/executor-bus-packet-compressor.mjs';
 
 function queue(overrides = {}) {
@@ -142,4 +144,49 @@ test('measurement API returns the same metrics as compression', () => {
   const measured = measureQueuePacketCompression(queue());
   assert.equal(measured.ok, true);
   assert.deepEqual(measured.metrics, compressed.metrics);
+});
+
+test('reasoning packet stays inside a 3K byte budget and selects higher priority context first', () => {
+  const context = [
+    { id: 'low', text: 'L'.repeat(900), priority: 1 },
+    { id: 'high', text: 'H'.repeat(900), priority: 100 },
+    { id: 'mid', text: 'M'.repeat(900), priority: 50 },
+  ];
+  const packed = packReasoningPacket(queue(), context, { maxWireBytes: 3000 });
+  assert.equal(packed.ok, true);
+  assert.ok(packed.metrics.wireBytes <= 3000);
+  assert.equal(packed.metrics.includedContextIds[0], 'high');
+  assert.ok(packed.metrics.omittedContextCount >= 1);
+  const restored = unpackReasoningPacket(packed.wire);
+  assert.equal(restored.ok, true);
+  assert.equal(restored.context[0].id, 'high');
+});
+
+test('required reasoning context fails closed when it cannot fit', () => {
+  const packed = packReasoningPacket(
+    queue(),
+    [{ id: 'must-have', text: 'R'.repeat(5000), required: true }],
+    { maxWireBytes: 3000 },
+  );
+  assert.equal(packed.ok, false);
+  assert.equal(packed.reason, 'required_context_budget_exceeded:must-have');
+});
+
+test('reasoning packet detects context tampering', () => {
+  const packed = packReasoningPacket(queue(), [{ id: 'fact', text: 'original fact', priority: 10 }]);
+  assert.equal(packed.ok, true);
+  const tampered = structuredClone(packed.packet);
+  tampered.c[0][1] = 'changed fact';
+  const restored = unpackReasoningPacket(tampered);
+  assert.equal(restored.ok, false);
+  assert.equal(restored.reason, 'reasoning_fingerprint_mismatch');
+});
+
+test('required context is packed before optional context regardless of priority', () => {
+  const packed = packReasoningPacket(queue(), [
+    { id: 'optional-high', text: 'optional', priority: 1000 },
+    { id: 'required-low', text: 'required', priority: -1000, required: true },
+  ]);
+  assert.equal(packed.ok, true);
+  assert.deepEqual(packed.metrics.includedContextIds.slice(0, 2), ['required-low', 'optional-high']);
 });

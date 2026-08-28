@@ -5,6 +5,7 @@ import process from 'node:process';
 import {
   prepareLunaSolCodexDispatch,
   resumeLunaSolCodexDispatch,
+  verifyLunaSolCodexRoundTripReceipt,
 } from './luna-sol-codex-browser-bridge.mjs';
 
 function usage() {
@@ -12,6 +13,7 @@ function usage() {
     'Usage:',
     '  node tools/luna-sol-codex-browser-bridge-runner.mjs prepare --input <json> [--output <json>]',
     '  node tools/luna-sol-codex-browser-bridge-runner.mjs resume --bundle <json> --evidence <json> [--output <json>]',
+    '  node tools/luna-sol-codex-browser-bridge-runner.mjs verify-receipt --receipt <json> --bundle <json> --evidence <json> [--output <json>]',
     '',
     'The runner never controls the browser itself and never mutates product files.',
   ].join('\n');
@@ -19,7 +21,9 @@ function usage() {
 
 function parseArgs(argv) {
   const [command, ...rest] = argv;
-  if (!command || !['prepare', 'resume'].includes(command)) throw new Error('command_must_be_prepare_or_resume');
+  if (!command || !['prepare', 'resume', 'verify-receipt'].includes(command)) {
+    throw new Error('command_must_be_prepare_resume_or_verify-receipt');
+  }
   const flags = {};
   for (let index = 0; index < rest.length; index += 1) {
     const token = rest[index];
@@ -62,10 +66,15 @@ async function main() {
   if (command === 'prepare') {
     const input = await readJson(flags.input, 'input');
     result = prepareLunaSolCodexDispatch(input);
-  } else {
+  } else if (command === 'resume') {
     const bundle = await readJson(flags.bundle, 'bundle');
     const evidence = await readJson(flags.evidence, 'evidence');
     result = resumeLunaSolCodexDispatch(bundle, evidence);
+  } else {
+    const receipt = await readJson(flags.receipt, 'receipt');
+    const bundle = await readJson(flags.bundle, 'bundle');
+    const evidence = await readJson(flags.evidence, 'evidence');
+    result = verifyLunaSolCodexRoundTripReceipt(receipt, bundle, evidence);
   }
   await emit(result, flags.output);
   process.exitCode = result.ok === false ? 2 : 0;

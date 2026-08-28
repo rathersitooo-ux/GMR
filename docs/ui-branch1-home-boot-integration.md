@@ -48,10 +48,19 @@ The repair is intentionally subtractive rather than another redesign layer:
 - only under that authority it suppresses the obsolete `codexHomeVisualLayer` and the legacy rectangular Partner/Battle CTAs that duplicate the slidepad;
 - when the canonical slidepad is absent, those legacy controls are not suppressed, so navigation does not disappear during partial/fallback states;
 - portrait keeps Mission/Pack/Record/Profile/Settings reachable as a narrow secondary rail instead of a five-button bar across the character art;
-- short-landscape narrows the center stage so title/status content does not invade the slidepad command area;
 - `browser/GAMEROAD.html` remains untouched because current product work can own that monolith independently.
 
-The invariant is **one primary visual/navigation authority at a time**. A future visual revision should replace or restyle this authority, not stack another complete Home control system on top of it.
+### Runtime visual authority R2 — narration-free Home
+
+Post-merge browser screenshots showed that duplicate primary controls were gone, but historical dashboard chrome still competed with the character art and the slidepad. R2 therefore removes presentation-only chrome instead of repositioning it again:
+
+- `.codexHomeCenterStage` is suppressed under slidepad authority, removing redundant `HOME VISUAL`, Home title/subtitle, rank label and Battle crest presentation as one non-interactive group;
+- `.codexHomeLeftRail` and `.codexHomeRightRail` are suppressed under slidepad authority because they duplicate secondary destinations or status presentation already reachable elsewhere;
+- Mission/Pack/Record/Profile/Settings stay reachable through `.codexHomeUtilities`, but their dark glass cards become frameless text affordances with 44 px hit areas and explicit keyboard focus outlines;
+- portrait keeps those utilities in a narrow left rail; short-landscape keeps a bounded two-column edge cluster; the slidepad remains untouched;
+- all of these removals are authority-conditional. If the slidepad is absent, legacy/fallback DOM is left visible.
+
+The invariant is **one primary visual/navigation authority at a time**. A future visual revision should replace or restyle this authority, not stack another complete Home control system or explanatory dashboard over the character art.
 
 ### Missing portrait art
 
@@ -105,7 +114,9 @@ For every supported semantic state:
 - optional art failure uses the existing fallback contract;
 - missing required formal art remains an explicit gate rather than a fabricated substitute;
 - supplied illustration + slidepad is the only primary Home authority when the slidepad exists;
-- old hero/Partner/Battle surfaces do not remain visibly stacked behind or above that authority.
+- old hero/Partner/Battle surfaces do not remain visibly stacked behind or above that authority;
+- dashboard/narration chrome does not cover the character art when canonical slidepad authority is active;
+- secondary utilities remain operable without persistent translucent card backgrounds.
 
 ## Tests
 

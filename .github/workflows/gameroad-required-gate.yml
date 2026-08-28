@@ -449,7 +449,7 @@ jobs:
 
       - name: Run Pursuit triad core and durable store tests
         if: steps.classify.outputs.pursuit == 'true'
-        run: node --test tests/pursuit-triad-core.test.mjs tests/pursuit-triad-durable-store.test.test.mjs
+        run: node --test tests/pursuit-triad-core.test.mjs tests/pursuit-triad-durable-store.test.mjs
 
       - name: Run UI state feedback core tests
         if: steps.classify.outputs.ui_feedback == 'true'

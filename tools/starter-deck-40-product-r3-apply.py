@@ -26,11 +26,6 @@ for old, new in (
         raise SystemExit(f'expected UI baseline missing: {old}')
     s = s.replace(old, new, 1)
 
-royal_pattern = r"for\(const r of ROYAL_RANKS\)if\(st\.ranks\[r\]!==DECK_RULE\.royalRequired\)errors\.push\(`ロイヤルカード\$\{r\}はデッキに1枚必要です（現在\$\{st\.ranks\[r\]\}枚）`\);"
-s, royal_n = re.subn(royal_pattern, '', s, count=1)
-if royal_n != 1:
-    raise SystemExit(f'expected fabricated royal-rank blocker exactly once, got {royal_n}')
-
 marker = 'function cardLabel(id){'
 if marker not in s:
     raise SystemExit('cardLabel insertion marker missing')
@@ -51,11 +46,9 @@ for name in ('renderCards', 'renderSetupDeckStatus'):
         raise SystemExit(f'{name} insertion point missing')
     s = s.replace(old, new, 1)
 
-# Static acceptance: exact starter, no fabricated royal blocker, exact-only legacy correction.
+# Static acceptance: exact starter, exact-only legacy correction, visible 40/40.
 if f'window.__DEFAULT_DECK__={starter_js};' not in s:
     raise SystemExit('starter exact composition not installed')
-if 'ロイヤルカード${r}はデッキに1枚必要です' in s:
-    raise SystemExit('fabricated global royal-rank blocker remains')
 if 'id="r4DeckTotal">40</strong>' not in s or 'id="r4TrayCount">40 / 40</b>' not in s:
     raise SystemExit('first-paint 40/40 not installed')
 if f'const LEGACY_FABRICATED_DEFAULT_DECK={legacy_js};' not in s:

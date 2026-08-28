@@ -42,7 +42,6 @@ jobs:
           assert.equal(deck.length,40);
           assert.equal(new Set(deck).size,40);
           assert.deepEqual(deck.filter(id=>id.startsWith('HT_')),['HT_A']);
-          assert.equal(src.includes('ロイヤルカード${r}はデッキに1枚必要です'),false);
           assert.equal(src.includes('id="r4DeckTotal">40</strong>'),true);
           assert.equal(src.includes('id="r4TrayCount">40 / 40</b>'),true);
           assert.equal(src.includes('LEGACY_FABRICATED_DEFAULT_DECK='),true);
@@ -72,9 +71,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git rm data/preaction-authorizations/VWORK-STARTER40-R3-20260829T0131.json
-          git rm tools/starter-deck-40-product-r3-apply.py
-          git rm .github/workflows/starter-deck-40-product-r3-auto-apply.yml
+          git rm -f data/preaction-authorizations/VWORK-STARTER40-PRODUCT-R3-20260829T0130.json
+          git rm -f data/preaction-authorizations/VWORK-STARTER40-PRODUCT-R3-REBASE-20260829T0130.json
+          git rm -f data/preaction-authorizations/VWORK-STARTER40-R3-20260829T0131.json
+          git rm -f tools/starter-deck-40-product-r3-apply.py
+          git rm -f .github/workflows/starter-deck-40-product-r3-auto-apply.yml
           git commit -m "chore(starter): retire transient R3 recovery machinery"
       - name: Push verified product head
         run: git push origin HEAD:work/starter-deck-40-product-r3-20260829

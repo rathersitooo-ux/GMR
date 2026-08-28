@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-STARTER40-R4-20260829T0205",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "STARTER_DECK_40_EXACT_USER_COMPOSITION_R4",
+  "acquireKey": "STARTER40-PRODUCT-R3-20260829T0108-SOL-Q5N8V3K7M2PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_EXPLICIT_USER_STARTER_COMPOSITION_20260829",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "OLD_R3_WRONG_COMPOSITION_REJECTED_PR519",
+  "proceedToken": "PROCEED|VWORK-STARTER40-R4-20260829T0205|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|exact-user-composition|lease-snapshot",
+  "authorizationBaseSha": "135ae16f7361f1b00bfc895e1847cf3fcadebf9a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "STARTER_DECK_40_EXACT_USER_COMPOSITION_R4",
+  "leaseAcquireKey": "STARTER40-PRODUCT-R3-20260829T0108-SOL-Q5N8V3K7M2PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 02:04 JST",
+  "leaseUntilJst": "2026-08-29 03:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A24:L24",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR new branch work/starter-deck-40-product-r4-20260829 from exact current main 135ae16f7361f1b00bfc895e1847cf3fcadebf9a only; browser/GAMEROAD.html sole product mutation; tests/starter-deck-40-contract.spec.mjs only; all other repo paths excluded/read-only.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/starter-deck-40-contract.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/starter-deck-40-contract.spec.mjs"
+  ]
+}

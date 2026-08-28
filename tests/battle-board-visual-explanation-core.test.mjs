@@ -15,11 +15,23 @@ function base(overrides = {}) {
     selectedPositionId: 'L:2:0',
     reachablePositionIds: ['L:1:0', 'L:2:0', 'R:1:0'],
     pathPositionIds: ['C:0:0', 'L:1:0', 'L:2:0'],
+    undoPositionId: 'L:1:0',
     threatPositionIds: ['L:2:0', 'L:3:0'],
     forecastPositionIds: ['L:3:0'],
     honeyPositionIds: ['L:1:0', 'L:3:0'],
+    honeyCollectablePositionIds: ['L:3:0'],
     targetPositionIds: ['L:2:0', 'R:1:0'],
+    winFrontierPositionIds: ['R:1:0'],
     invalidPositionIds: ['L:3:0'],
+    positionKindByPosition: {
+      'C:0:0': 'central',
+      'L:1:0': 'road',
+      'L:2:0': 'shield',
+      'L:3:0': 'corner',
+    },
+    invalidReasonByPosition: {
+      'L:3:0': 'TARGET_BLOCKED',
+    },
     revisionToken: 'state-17',
     currentRevisionToken: 'state-17',
     partnerProjection: {
@@ -42,10 +54,13 @@ test('projects only canonical ids and keeps semantic channels distinct', () => {
   assert.deepEqual(out.channels.selected, ['L:2:0']);
   assert.deepEqual(out.channels.reachable, ['L:1:0', 'L:2:0', 'R:1:0']);
   assert.deepEqual(out.channels.path, ['C:0:0', 'L:1:0', 'L:2:0']);
+  assert.deepEqual(out.channels.undo, ['L:1:0']);
   assert.deepEqual(out.channels.threat, ['L:2:0', 'L:3:0']);
   assert.deepEqual(out.channels.forecast, ['L:3:0']);
   assert.deepEqual(out.channels.honey, ['L:1:0', 'L:3:0']);
+  assert.deepEqual(out.channels['honey-collectable'], ['L:3:0']);
   assert.deepEqual(out.channels.target, ['L:2:0', 'R:1:0']);
+  assert.deepEqual(out.channels['win-frontier'], ['R:1:0']);
   assert.deepEqual(out.channels.invalid, ['L:3:0']);
   assert.equal(out.recommendation.targetId, 'L:2:0');
   for (const ids of Object.values(out.channels)) {
@@ -68,8 +83,78 @@ test('preserves overlap instead of destructive precedence', () => {
     'threat',
     'forecast',
     'honey',
+    'honey-collectable',
     'invalid',
   ]);
+  assert.deepEqual(out.rolesByPosition['R:1:0'], [
+    'reachable',
+    'target',
+    'win-frontier',
+  ]);
+});
+
+test('projects caller-supplied board topology without parsing position ids', () => {
+  const out = projectBattleBoardVisualExplanation(base());
+  assert.deepEqual(out.annotations.positionKindByPosition, {
+    'C:0:0': 'central',
+    'L:1:0': 'road',
+    'L:2:0': 'shield',
+    'L:3:0': 'corner',
+  });
+  assert.equal(out.authorityByRole['position-kind'], 'rules-derived');
+
+  const noKinds = projectBattleBoardVisualExplanation(base({ positionKindByPosition: null }));
+  assert.deepEqual(noKinds.annotations.positionKindByPosition, {});
+});
+
+test('rejects invalid or unmapped board topology metadata', () => {
+  for (const positionKindByPosition of [
+    { 'L:1:0': 'not-a-kind' },
+    { 'NOT:A:POSITION': 'road' },
+    ['road'],
+  ]) {
+    const out = projectBattleBoardVisualExplanation(base({ positionKindByPosition }));
+    assert.equal(out.ok, false);
+    assert.deepEqual(out.annotations.positionKindByPosition, {});
+  }
+});
+
+test('keeps honey presence distinct from currently collectable honey', () => {
+  const out = projectBattleBoardVisualExplanation(base({
+    honeyPositionIds: ['L:3:0', 'L:1:0'],
+    honeyCollectablePositionIds: ['L:3:0'],
+  }));
+  assert.deepEqual(out.channels.honey, ['L:1:0', 'L:3:0']);
+  assert.deepEqual(out.channels['honey-collectable'], ['L:3:0']);
+  assert.equal(out.authorityByRole['honey-collectable'], 'rules-derived');
+});
+
+test('projects one-step undo and victory frontier as rules-derived roles only', () => {
+  const out = projectBattleBoardVisualExplanation(base({
+    undoPositionId: 'L:1:0',
+    winFrontierPositionIds: ['R:1:0', 'R:1:0'],
+  }));
+  assert.deepEqual(out.channels.undo, ['L:1:0']);
+  assert.deepEqual(out.channels['win-frontier'], ['R:1:0']);
+  assert.equal(out.authorityByRole.undo, 'rules-derived');
+  assert.equal(out.authorityByRole['win-frontier'], 'rules-derived');
+});
+
+test('invalid reasons annotate only already-invalid positions', () => {
+  const out = projectBattleBoardVisualExplanation(base({
+    invalidPositionIds: ['L:3:0'],
+    invalidReasonByPosition: { 'L:3:0': 'TARGET_BLOCKED' },
+  }));
+  assert.deepEqual(out.annotations.invalidReasonByPosition, { 'L:3:0': 'TARGET_BLOCKED' });
+  assert.equal(out.authorityByRole['invalid-reason'], 'rules-derived');
+
+  const dangling = projectBattleBoardVisualExplanation(base({
+    invalidPositionIds: [],
+    invalidReasonByPosition: { 'L:3:0': 'TARGET_BLOCKED' },
+  }));
+  assert.equal(dangling.ok, false);
+  assert.equal(dangling.reason, 'INVALID_REASON_WITHOUT_INVALID_ROLE');
+  assert.deepEqual(dangling.annotations.invalidReasonByPosition, {});
 });
 
 test('partner recommendation never becomes selected state, path, or rules target', () => {
@@ -101,6 +186,7 @@ test('invalid rules-derived id fails the whole rules projection closed', () => {
   assert.deepEqual(out.channels.reachable, []);
   assert.deepEqual(out.channels.honey, []);
   assert.deepEqual(out.channels.target, []);
+  assert.deepEqual(out.annotations.positionKindByPosition, {});
   assert.equal(out.recommendation.active, false);
 });
 
@@ -156,9 +242,14 @@ test('stale board revision clears all presentation state', () => {
   assert.equal(out.reason, 'STALE_BOARD_STATE');
   assert.deepEqual(out.channels.current, []);
   assert.deepEqual(out.channels.path, []);
+  assert.deepEqual(out.channels.undo, []);
   assert.deepEqual(out.channels.honey, []);
+  assert.deepEqual(out.channels['honey-collectable'], []);
   assert.deepEqual(out.channels.target, []);
+  assert.deepEqual(out.channels['win-frontier'], []);
   assert.deepEqual(out.channels.invalid, []);
+  assert.deepEqual(out.annotations.positionKindByPosition, {});
+  assert.deepEqual(out.annotations.invalidReasonByPosition, {});
   assert.equal(out.recommendation.active, false);
 });
 
@@ -167,22 +258,28 @@ test('dedupes set-like channels deterministically while preserving path order', 
     reachablePositionIds: ['R:1:0', 'L:1:0', 'R:1:0', 'L:2:0'],
     threatPositionIds: ['L:3:0', 'L:2:0', 'L:3:0'],
     pathPositionIds: ['C:0:0', 'L:1:0', 'L:2:0', 'L:2:0'],
+    honeyCollectablePositionIds: ['L:3:0', 'L:3:0'],
+    winFrontierPositionIds: ['R:1:0', 'R:1:0'],
   }));
   assert.deepEqual(out.channels.reachable, ['L:1:0', 'L:2:0', 'R:1:0']);
   assert.deepEqual(out.channels.threat, ['L:2:0', 'L:3:0']);
   assert.deepEqual(out.channels.path, ['C:0:0', 'L:1:0', 'L:2:0']);
+  assert.deepEqual(out.channels['honey-collectable'], ['L:3:0']);
+  assert.deepEqual(out.channels['win-frontier'], ['R:1:0']);
 });
 
-test('does not bake visual skin tokens into semantic output', () => {
+test('does not bake visual skin tokens or infer topology into semantic output', () => {
   const out = projectBattleBoardVisualExplanation(base());
   const text = JSON.stringify(out);
   for (const forbidden of ['className', 'style', 'background', 'borderColor', 'fontFamily', 'px', '#fff', '#000']) {
     assert.equal(text.includes(forbidden), false, `forbidden presentation skin token: ${forbidden}`);
   }
+  assert.equal(out.annotations.positionKindByPosition['R:1:0'], undefined);
 });
 
 test('empty canonical position set fails closed', () => {
   const out = projectBattleBoardVisualExplanation(base({ validPositionIds: [] }));
   assert.equal(out.ok, false);
   assert.equal(out.reason, 'NO_VALID_POSITIONS');
+  assert.deepEqual(out.annotations.positionKindByPosition, {});
 });

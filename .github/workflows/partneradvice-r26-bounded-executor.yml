@@ -1,0 +1,99 @@
+name: TEMP PARTNERADVICE R26 scheduled generation fence
+on:
+  push:
+    branches: [work/partneradvice-r26-scheduled-generation-fence-20260828]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: work/partneradvice-r26-scheduled-generation-fence-20260828
+      - name: Verify PRE_ACTION, patch queued-render fence, validate and self-clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=964a1aafeb73176a3c57f92fa7a58df22fb131c0
+          AUTH=data/preaction-authorizations/VWORK-PARTNERADVICE-R26-SCHEDULED-GENERATION-FENCE-20260828T2242.json
+          SELF=.github/workflows/partneradvice-r26-bounded-executor.yml
+          EXPECT_HTML=6fd855d0a60032e878375b3ba35e444f45537bf3
+          EXPECT_TEST=1fa64a4509b659ca72723344c12b17fb9da9e109
+
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git hash-object browser/GAMEROAD.html)" = "$EXPECT_HTML"
+          test "$(git hash-object tests/browser-full-interaction.spec.mjs)" = "$EXPECT_TEST"
+          test -f "$AUTH"
+
+          node - <<'NODE'
+          const fs=require('fs');
+          const p='data/preaction-authorizations/VWORK-PARTNERADVICE-R26-SCHEDULED-GENERATION-FENCE-20260828T2242.json';
+          const m=JSON.parse(fs.readFileSync(p,'utf8'));
+          if(m.schemaVersion!=='gameroad-preaction-v1') throw Error('bad schema');
+          if(m.authorizationBaseSha!=='964a1aafeb73176a3c57f92fa7a58df22fb131c0') throw Error('stale authorization base');
+          if(!String(m.proceedToken||'').startsWith('PROCEED|VWORK-PARTNERADVICE-R26-SCHEDULED-GENERATION-FENCE-20260828T2242|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|')) throw Error('missing proceed token');
+          NODE
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          hp=Path('browser/GAMEROAD.html')
+          h=hp.read_text(encoding='utf-8')
+
+          old_decl="const ROLE='partner-recommendation',SEL='[data-partner-advice-role=\"'+ROLE+'\"]';let modP=null,scheduled=false,generation=0;"
+          new_decl="const ROLE='partner-recommendation',SEL='[data-partner-advice-role=\"'+ROLE+'\"]';let modP=null,scheduled=false,scheduledGeneration=0,generation=0;"
+          old_schedule="function schedule(){if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;render().catch(e=>console.warn('partner-advice-r21b-render',e))})}"
+          new_schedule="function schedule(){scheduledGeneration=generation;if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;if(scheduledGeneration!==generation)return;render().catch(e=>console.warn('partner-advice-r21b-render',e))})}"
+
+          for old,new,label in [(old_decl,new_decl,'declaration'),(old_schedule,new_schedule,'schedule')]:
+              count=h.count(old)
+              if count!=1: raise SystemExit(f'{label} anchor count={count}')
+              h=h.replace(old,new,1)
+
+          if h.count('scheduledGeneration=generation')!=1 or h.count('scheduledGeneration!==generation')!=1:
+              raise SystemExit('scheduled generation fence oracle failed')
+          hp.write_text(h,encoding='utf-8')
+
+          tp=Path('tests/browser-full-interaction.spec.mjs')
+          t=tp.read_text(encoding='utf-8')
+          anchor="  await expect(battle.locator('[data-partner-advice-role=\"partner-recommendation\"]')).toHaveCount(0);\n  await page.emulateMedia({ reducedMotion: 'no-preference' });"
+          regression=r'''  await expect(battle.locator('[data-partner-advice-role="partner-recommendation"]')).toHaveCount(0);
+
+  const queuedScheduleFence = await page.evaluate(async () => {
+    const board = window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__;
+    const stale = window.__GAMEROAD_PARTNER_ADVICE_STALE__?.() ?? { status: 'blocked', kind: 'stale', error: 'STALE_STATE' };
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    document.querySelector('section[data-screen="battle"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const staleResult = await board?.render?.(stale);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return {
+      staleActiveCount: staleResult?.activeCount ?? null,
+      finalActiveCount: board?.snapshot?.().activeCount ?? null,
+    };
+  });
+  expect(queuedScheduleFence.staleActiveCount).toBe(0);
+  expect(queuedScheduleFence.finalActiveCount, 'a queued auto-render cannot revive recommendations after a newer stale render').toBe(0);
+
+  await page.emulateMedia({ reducedMotion: 'no-preference' });'''
+          count=t.count(anchor)
+          if count!=1: raise SystemExit(f'test anchor count={count}')
+          t=t.replace(anchor,regression,1)
+          if t.count('queuedScheduleFence')!=3:
+              raise SystemExit('queued scheduler regression oracle failed')
+          tp.write_text(t,encoding='utf-8')
+          PY
+
+          node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+          git diff --check
+          grep -F "scheduledGeneration!==generation" browser/GAMEROAD.html
+          grep -F "a queued auto-render cannot revive recommendations after a newer stale render" tests/browser-full-interaction.spec.mjs
+
+          rm -f "$AUTH" "$SELF"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'PARTNERADVICE R26: fence queued stale auto-render revival'
+          git push origin HEAD:work/partneradvice-r26-scheduled-generation-fence-20260828

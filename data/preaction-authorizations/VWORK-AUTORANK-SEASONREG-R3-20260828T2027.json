@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-AUTORANK-SEASONREG-R3-20260828T2027",
+  "taskId": "AUTO-RANK-ASYNCHRONOUS-PRODUCT-LOOP-001",
+  "workUnitKey": "SEASON_DECK_RESERVATION_CORE_R1",
+  "acquireKey": "AUTORANK-SEASONREG-R1-20260828T2009-SOL-Q7N4V8K2M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "pr474-run33167049359-readback-ref-only-failure-plus-r2-three-file-diff-20260828",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "validator-source-regex-current-active-leases-a-row-l-row-and-r2-gate-classification-success-20260828",
+  "proceedToken": "PROCEED|VWORK-AUTORANK-SEASONREG-R3-20260828T2027|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|seasonreg-readback-ref-corrected",
+  "authorizationBaseSha": "704d9a8d40ae7bd21460de876121bb36b63bf526",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "AUTO-RANK-ASYNCHRONOUS-PRODUCT-LOOP-001",
+  "leaseWorkUnitKey": "SEASON_DECK_RESERVATION_CORE_R1",
+  "leaseAcquireKey": "AUTORANK-SEASONREG-R1-20260828T2009-SOL-Q7N4V8K2M6PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-28 20:27 JST",
+  "leaseUntilJst": "2026-08-28 20:59 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:L10",
+  "scope": [
+    "browser/auto-rank-season-registration-core.mjs",
+    "tests/auto-rank-season-registration-core.test.mjs",
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseScope": [
+    "browser/auto-rank-season-registration-core.mjs",
+    "tests/auto-rank-season-registration-core.test.mjs",
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR successor branch work/auto-rank-season-registration-r3-20260828 from exact current main 704d9a8d40ae7bd21460de876121bb36b63bf526 only: transient data/preaction-authorizations/VWORK-AUTORANK-SEASONREG-R3-20260828T2027.json create-first/delete-before-final-head; new browser/auto-rank-season-registration-core.mjs; new tests/auto-rank-season-registration-core.test.mjs; .github/workflows/gameroad-required-gate.yml only to classify those two exact Auto-Rank paths into existing auto_rank lane and run the focused season-registration test, with no unrelated workflow semantic change; successor PR state and merge for this branch only; predecessor PR #473 and #474 close-state only after successor exact-head merge; CURRENT_ACTIVE_LEASES own exact AcquireKey row only; R22 own checkpoint/terminal/release records only. browser/GAMEROAD.html, existing browser/auto-rank-d06-collision-contract.mjs, browser/deck-save-ack-core.mjs, tournament pairing/round engine, async queue, persistence backend, AI evaluator/data pipeline, Result/reward/economy, UI, rules/save/network, Home/Battle/Partner and other owners' resources are read-only/excluded."
+}

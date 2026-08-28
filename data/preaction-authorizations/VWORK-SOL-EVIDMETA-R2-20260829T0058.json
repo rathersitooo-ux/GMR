@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-SOL-EVIDMETA-R2-20260829T0058",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "SOL_EVIDENCE_CONTEXT_METADATA_TRUST_R2",
+  "acquireKey": "OPS-AI-EVIDENCE-METATRUST-R2-20260829T0058-SOL-Q6N3V8K4M7PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R2_MAIN_CAUSAL_GATE_PLUS_JIT_METADATA_READONLY_AUDIT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "METADATA_TRUST_REGRESSION_DESIGN_FAIL_CLOSED",
+  "proceedToken": "PROCEED|VWORK-SOL-EVIDMETA-R2-20260829T0058|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|SOL_EVIDENCE_METADATA_TRUST_R2",
+  "authorizationBaseSha": "19821ddf692c04eeb05d36e98d6402a7deb909bb",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "SOL_EVIDENCE_CONTEXT_METADATA_TRUST_R2",
+  "leaseAcquireKey": "OPS-AI-EVIDENCE-METATRUST-R2-20260829T0058-SOL-Q6N3V8K4M7PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 00:58 JST",
+  "leaseUntilJst": "2026-08-29 01:43 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A20:L20",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR new branch work/ops-ai-sol-evidence-metatrust-r2-20260829 from exact current main 19821ddf692c04eeb05d36e98d6402a7deb909bb only: transient data/preaction-authorizations/VWORK-SOL-EVIDMETA-R2-20260829T0058.json create-first/delete-before-final-head; tools/sol-reasoning-protocol.mjs; tests/sol-reasoning-protocol.test.mjs; tests/luna-sol-integration-core.test.mjs only to update frozen-context fixtures/regressions for metadata trust; docs/sol-reasoning-protocol.md; branch/PR state+merge only after exact-head Required Gate; GAMEROAD 全作業一覧 row1364 Y:AB only; CURRENT_ACTIVE_LEASES own row20 only; R22 own acquire/checkpoint/terminal/release records only. tools/jit-evidence-compiler.mjs and tests/docs are owned by OPS-AI-JIT-EVIDENCE-METADATA-R1 and read-only; executor-bus packet/compressor, luna-sol-integration-core.mjs, router, workflows, browser/product/deploy/game/assets/rules/save/network/economy and all other owners are excluded/read-only.",
+  "scope": [
+    "tools/sol-reasoning-protocol.mjs",
+    "tests/sol-reasoning-protocol.test.mjs",
+    "tests/luna-sol-integration-core.test.mjs",
+    "docs/sol-reasoning-protocol.md"
+  ],
+  "leaseScope": [
+    "tools/sol-reasoning-protocol.mjs",
+    "tests/sol-reasoning-protocol.test.mjs",
+    "tests/luna-sol-integration-core.test.mjs",
+    "docs/sol-reasoning-protocol.md"
+  ]
+}

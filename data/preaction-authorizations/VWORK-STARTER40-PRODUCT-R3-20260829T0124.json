@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-STARTER40-PRODUCT-R3-20260829T0124",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "STARTER_DECK_40_REGISTERED_NORMAL_DECK_R3",
+  "acquireKey": "STARTER40-PRODUCT-R3-20260829T0108-SOL-Q5N8V3K7M2PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "STARTER40-R3-EXACT-COMPOSITION-AND-FOCUSED-CONTRACT-READBACK-20260829",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "STARTER40-R3-BOUND-PATCH-4-OF-5-THEN-EXECUTABLE-BLOCKER-CONTRACT-CORRECTION",
+  "proceedToken": "PROCEED|VWORK-STARTER40-PRODUCT-R3-20260829T0124|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|starter40-product-r3",
+  "authorizationBaseSha": "bc015dd97ac733f16eb3f7df4e0eccf25cec6048",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/starter-deck-40-contract.spec.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "STARTER_DECK_40_REGISTERED_NORMAL_DECK_R3",
+  "leaseAcquireKey": "STARTER40-PRODUCT-R3-20260829T0108-SOL-Q5N8V3K7M2PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 01:24 JST",
+  "leaseUntilJst": "2026-08-29 01:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A25:N25",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/starter-deck-40-contract.spec.mjs"
+  ],
+  "leaseExactMutableResources": "data/preaction-authorizations/VWORK-STARTER40-PRODUCT-R3-20260829T0124.json transient create-first/delete-before-final-head; browser/GAMEROAD.html exact bounded starter/default registration mutation only; tests/starter-deck-40-contract.spec.mjs focused starter contract only; branch work/starter-deck-40-product-r3-20260829; PR state+merge only after exact-head Required Gate; CURRENT_ACTIVE_LEASES row25; all other files and owners excluded"
+}

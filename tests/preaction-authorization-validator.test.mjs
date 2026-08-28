@@ -78,6 +78,21 @@ function parentSummaryManifest(overrides = {}) {
   };
 }
 
+function novelReuseManifest(overrides = {}) {
+  const riskClass = 'MATERIAL_NOVEL';
+  return {
+    ...manifest,
+    riskClass,
+    proceedToken: `PROCEED|${recordId}|PREACTION_PROCEED_ALLOWED|${riskClass}|reuse-test`,
+    solutionSignature: 'Need a bounded implementation with the same user-visible outcome and acceptance contract.',
+    reuseDisposition: 'ADAPT',
+    solutionSearchStatus: 'PASS',
+    reuseDecisionEvidenceId: 'reuse-decision:test-fixture',
+    solutionSearchEvidence: ['external:known-implementation'],
+    ...overrides,
+  };
+}
+
 test('material paths are fail-closed while documentation-only paths are nearby-normal', () => {
   assert.equal(isMaterialPath('browser/GAMEROAD.html'), true);
   assert.equal(isMaterialPath('.github/workflows/gameroad-required-gate.yml'), true);
@@ -263,4 +278,113 @@ test('LOW_REVERSIBLE cannot authorize a material PR', () => {
   };
   const result = check({ manifest: low });
   assert.deepEqual(result, { ok: false, reason: 'material_pr_cannot_use_low_reversible' });
+});
+
+test('novel construction cannot proceed when solution-existence evidence was skipped', () => {
+  const candidate = novelReuseManifest();
+  delete candidate.solutionSignature;
+  delete candidate.reuseDisposition;
+  delete candidate.solutionSearchStatus;
+  delete candidate.reuseDecisionEvidenceId;
+  delete candidate.solutionSearchEvidence;
+  const result = check({
+    manifest: candidate,
+    enforceReuseDiscovery: true,
+  });
+  assert.deepEqual(result, { ok: false, reason: 'reuse_gate_missing_solutionSignature' });
+});
+
+test('novel ADAPT path passes when reuse decision and search evidence are explicit', () => {
+  const result = check({
+    manifest: novelReuseManifest(),
+    enforceReuseDiscovery: true,
+  });
+  assert.deepEqual(result, { ok: true, reason: 'preaction_authorized' });
+});
+
+test('BUILD is residual and requires an explicit remaining-gap reason', () => {
+  const candidate = novelReuseManifest({ reuseDisposition: 'BUILD' });
+  const result = check({
+    manifest: candidate,
+    enforceReuseDiscovery: true,
+  });
+  assert.deepEqual(result, { ok: false, reason: 'reuse_gate_build_residual_reason_required' });
+});
+
+test('BUILD remains available after discovery when the residual gap is explicit', () => {
+  const candidate = novelReuseManifest({
+    reuseDisposition: 'BUILD',
+    buildResidualReason: 'Available implementations cannot satisfy the bounded acceptance contract without replacing their core.',
+  });
+  const result = check({
+    manifest: candidate,
+    enforceReuseDiscovery: true,
+  });
+  assert.deepEqual(result, { ok: true, reason: 'preaction_authorized' });
+});
+
+test('novel work cannot bypass discovery by claiming NOT_APPLICABLE', () => {
+  const candidate = novelReuseManifest({
+    reuseDisposition: 'NOT_APPLICABLE',
+    solutionSearchStatus: 'NOT_APPLICABLE',
+    reuseNotApplicableReason: 'claimed local-only change',
+  });
+  const result = check({
+    manifest: candidate,
+    enforceReuseDiscovery: true,
+  });
+  assert.deepEqual(result, { ok: false, reason: 'reuse_gate_novel_cannot_be_not_applicable' });
+});
+
+test('nearby standard edit is not forced through reuse discovery', () => {
+  const result = check({
+    enforceReuseDiscovery: true,
+    newMaterialPaths: [],
+  });
+  assert.deepEqual(result, { ok: true, reason: 'preaction_authorized' });
+});
+
+test('standard newly-created implementation may use NOT_APPLICABLE only with an explicit reason', () => {
+  const noReason = check({
+    manifest: {
+      ...manifest,
+      solutionSignature: 'Add a bounded repository-local implementation file.',
+      reuseDisposition: 'NOT_APPLICABLE',
+      solutionSearchStatus: 'NOT_APPLICABLE',
+      reuseDecisionEvidenceId: 'reuse-decision:standard-na',
+    },
+    enforceReuseDiscovery: true,
+    newMaterialPaths: ['tools/new-local-adapter.mjs'],
+  });
+  assert.deepEqual(noReason, { ok: false, reason: 'reuse_gate_missing_reuseNotApplicableReason' });
+
+  const withReason = check({
+    manifest: {
+      ...manifest,
+      solutionSignature: 'Add a bounded repository-local implementation file.',
+      reuseDisposition: 'NOT_APPLICABLE',
+      solutionSearchStatus: 'NOT_APPLICABLE',
+      reuseDecisionEvidenceId: 'reuse-decision:standard-na',
+      reuseNotApplicableReason: 'The file only binds an already-selected local interface and has no standalone solution surface.',
+    },
+    enforceReuseDiscovery: true,
+    newMaterialPaths: ['tools/new-local-adapter.mjs'],
+  });
+  assert.deepEqual(withReason, { ok: true, reason: 'preaction_authorized' });
+});
+
+test('DEFER cannot be converted into mutation authority', () => {
+  const result = check({
+    manifest: novelReuseManifest({ reuseDisposition: 'DEFER' }),
+    enforceReuseDiscovery: true,
+  });
+  assert.deepEqual(result, { ok: false, reason: 'reuse_gate_defer_cannot_authorize_mutation' });
+});
+
+test('reuse disposition needs concrete solution-search evidence, not a bare label', () => {
+  const result = check({
+    manifest: novelReuseManifest({ solutionSearchEvidence: [] }),
+    enforceReuseDiscovery: true,
+  });
+  assert.deepEqual(result, { ok: false, reason: 'reuse_gate_solution_search_evidence_invalid' });
 });

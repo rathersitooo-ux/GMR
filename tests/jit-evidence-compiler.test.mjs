@@ -42,6 +42,36 @@ test('fails closed when required HOT evidence is stale or non-current', () => {
   assert.equal(result.reason, 'required_hot_not_current:authority');
 });
 
+test('rejects non-current evidence classified as HOT even when optional', () => {
+  const input = base();
+  input.evidence.push({
+    id: 'stale-hot', tier: 'HOT', state: 'CANDIDATE', claimMode: 'REFERENCE',
+    text: 'candidate should not be in HOT', required: false,
+  });
+  const result = compileJitEvidencePacket(input);
+  assert.equal(result.ok, false);
+  assert.equal(result.reason, 'hot_not_current:stale-hot');
+});
+
+test('defers COLD while an unavailable WARM candidate still needs retrieval', () => {
+  const input = base({
+    issues: [{ id: 'cause', material: true }],
+    relations: [
+      { fromIssue: 'cause', toEvidence: 'warm-missing', material: true },
+      { fromIssue: 'cause', toEvidence: 'cold-history', material: true },
+    ],
+  });
+  input.evidence.push(
+    { id: 'warm-missing', tier: 'WARM', state: 'CURRENT_EXECUTION_EVIDENCE', available: false, text: '', resolves: ['cause'] },
+    { id: 'cold-history', tier: 'COLD', state: 'HISTORICAL', text: 'historical fallback', resolves: ['cause'] },
+  );
+  const result = compileJitEvidencePacket(input);
+  assert.equal(result.status, 'NEEDS_EVIDENCE');
+  assert.equal(result.coldDeferredForWarm, true);
+  assert.deepEqual(result.nextRetrievalIds, ['warm-missing']);
+  assert.deepEqual(result.includedByTier.COLD, []);
+});
+
 test('never auto-includes QUARANTINE evidence even when it is high priority and material', () => {
   const input = base({
     issues: [{ id: 'risk', material: true }],

@@ -405,14 +405,47 @@ jobs:
 
       - name: Run Browser static check
         if: steps.classify.outputs.browser == 'true'
+        shell: bash
         run: |
+          set -euo pipefail
+
+          run_optional_package_test() {
+            local test_path="$1"
+            shift
+
+            if [[ -f "${test_path}" ]]; then
+              node --test "${test_path}"
+              return
+            fi
+
+            local package_path
+            for package_path in "$@"; do
+              if grep -Fxq "${package_path}" /tmp/gameroad-changed.txt; then
+                echo "Required Browser package test is missing: ${test_path}"
+                echo "Changed package path requires this test: ${package_path}"
+                exit 1
+              fi
+            done
+
+            echo "Optional Browser baseline absent and package untouched: ${test_path}"
+          }
+
           node --test tests/screen-navigation-core.test.mjs
           node --test tests/post-match-autoqueue-core.test.mjs
           node --test tests/slaykia-voice-preview.test.mjs
-          node --test tests/home-boot-presentation.test.mjs
-          node --test tests/cards-deck-presentation.test.mjs
-          node --test tests/quick-deck-overlay-presentation.test.mjs
-          node --test tests/battle-plan-hud-presentation-core.test.mjs
+          run_optional_package_test tests/home-boot-presentation.test.mjs \
+            browser/home-shell-presentation-core.mjs \
+            browser/boot-loading-presentation-core.mjs \
+            tests/home-boot-presentation.test.mjs
+          run_optional_package_test tests/cards-deck-presentation.test.mjs \
+            browser/cards-deck-presentation.mjs \
+            tests/cards-deck-presentation.test.mjs
+          run_optional_package_test tests/quick-deck-overlay-presentation.test.mjs \
+            browser/quick-deck-overlay-presentation.mjs \
+            tests/quick-deck-overlay-presentation.test.mjs
+          run_optional_package_test tests/battle-plan-hud-presentation-core.test.mjs \
+            browser/battle-plan-hud-presentation-core.mjs \
+            tests/battle-plan-hud-presentation-core.test.mjs
           node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
 
       - name: Run Fossil excavation state core tests

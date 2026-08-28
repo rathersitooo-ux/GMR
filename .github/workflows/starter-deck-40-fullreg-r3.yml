@@ -43,15 +43,17 @@ jobs:
           pattern=re.compile(r'<<<<<<<[^\n]*\n(.*?)=======\n(.*?)>>>>>>>[^\n]*\n',re.S)
           blocks=pattern.findall(s)
           if len(blocks)!=3: raise SystemExit(f'expected exactly 3 known deck-only conflicts, got {len(blocks)}')
-          required=[
-            (0,'id="defaultDeck"','id="defaultDeck"'),
-            (1,'window.__DEFAULT_DECK__','window.__STARTER_DECK__'),
-            (2,"$('#defaultDeck').addEventListener",'function renderSetupDeckStatus(){const e=')
-          ]
-          for idx,current_marker,r3_marker in required:
-              cur,r3=blocks[idx]
-              if current_marker not in cur: raise SystemExit(f'conflict {idx+1} current marker mismatch')
-              if r3_marker not in r3: raise SystemExit(f'conflict {idx+1} R3 marker mismatch')
+          cur1,r31=blocks[0]
+          cur2,r32=blocks[1]
+          cur3,r33=blocks[2]
+          if 'id="defaultDeck"' not in cur1 or 'id="defaultDeck"' in r31:
+              raise SystemExit('conflict 1 hidden default button shape mismatch')
+          if 'window.__DEFAULT_DECK__' not in cur2 or 'window.__STARTER_DECK__' not in r32:
+              raise SystemExit('conflict 2 starter symbol shape mismatch')
+          if "$('#defaultDeck').addEventListener" not in cur3 or 'migrateLegacyFabricatedDefaultDeckInMemory' not in cur3:
+              raise SystemExit('conflict 3 current legacy handler shape mismatch')
+          if "$('#defaultDeck').addEventListener" in r33 or 'migrateLegacyFabricatedDefaultDeckInMemory' in r33 or 'function renderSetupDeckStatus(){const e=' not in r33:
+              raise SystemExit('conflict 3 R3 cleanup shape mismatch')
           s,n=pattern.subn(lambda m:m.group(2),s)
           if n!=3: raise SystemExit(f'resolved {n} conflicts')
           if '<<<<<<<' in s or '>>>>>>>' in s or '\n=======\n' in s: raise SystemExit('conflict marker remains')

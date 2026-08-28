@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "match-start-naki-all-seats-r1-20260828",
+  "taskId": "CHARACTER-BOARD-RUNTIME-SELECT-CUTIN-001",
+  "workUnitKey": "MATCH_START_NAKI_ALL_SEATS_R1",
+  "acquireKey": "CHARMATCH-NAKI-ALLSEATS-R1-20260828T2130-SOL-Q5N8V2K4M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "current-main-makePlayer-cpu-character-rotation-confirmed-20260828",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "current-main-match-start-snapshot-hook-plus-naki-runtime-20260828",
+  "proceedToken": "PROCEED|match-start-naki-all-seats-r1-20260828|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|match-start-naki-all-seats",
+  "authorizationBaseSha": "fc9eb2ed3b10a255213d61d76488970b8f3a3e05",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "CHARACTER-BOARD-RUNTIME-SELECT-CUTIN-001",
+  "leaseWorkUnitKey": "MATCH_START_NAKI_ALL_SEATS_R1",
+  "leaseAcquireKey": "CHARMATCH-NAKI-ALLSEATS-R1-20260828T2130-SOL-Q5N8V2K4M6PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-28 21:46 JST",
+  "leaseUntilJst": "2026-08-28 22:15 JST",
+  "leaseSnapshotReadbackRef": "R22 acquire CHARMATCH-NAKI-ALLSEATS-R1 plus fresh CURRENT_ACTIVE_LEASES conflict scan",
+  "scope": [
+    "browser/deck-save-ack-core.mjs"
+  ],
+  "leaseScope": [
+    "browser/deck-save-ack-core.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/match-start-naki-all-seats-r1-20260828 only: transient data/preaction-authorizations/match-start-naki-all-seats-r1-20260828.json create-first/delete-before-final-head; browser/deck-save-ack-core.mjs only for match-start all-seat partner.naki normalization. browser/GAMEROAD.html, character-selection UI, tests, workflows, deploy, game rules, save/network/economy and unrelated product files are read-only/excluded."
+}

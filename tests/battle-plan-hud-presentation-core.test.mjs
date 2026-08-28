@@ -193,17 +193,18 @@ test('opponents expose only explicitly typed public summary and are ordered by s
 });
 
 test('known opponent private hand or reservation fields fail closed', () => {
+  const privateSentinel = 'PRIVATE-CARD-SENTINEL';
   for (const secretPatch of [
-    { hand: [{ cardId: 'SECRET' }] },
-    { reservations: { battle: 'SECRET' } },
-    { privateState: { selectedCardId: 'SECRET' } },
-    { secret: { cardId: 'SECRET' } }
+    { hand: [{ cardId: privateSentinel }] },
+    { reservations: { battle: privateSentinel } },
+    { privateState: { selectedCardId: privateSentinel } },
+    { secret: { cardId: privateSentinel } }
   ]) {
     const input = makeInput();
     Object.assign(input.opponents[0], secretPatch);
     const view = projectBattlePlanHudPresentation(input);
     expectFail(view, 'OPPONENT_SECRET_FIELD_FORBIDDEN');
-    assert.equal(JSON.stringify(view).includes('SECRET'), false);
+    assert.equal(JSON.stringify(view).includes(privateSentinel), false);
   }
 });
 

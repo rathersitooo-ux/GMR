@@ -1,0 +1,80 @@
+name: starter-deck-40-product-r3-recovery
+
+on:
+  push:
+    branches:
+      - work/starter-deck-40-product-r3-20260829
+
+permissions:
+  contents: write
+
+jobs:
+  apply-test-clean:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify authorized base ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 482821bb7cc3b704dc94ae44cce32a794057f400 HEAD
+      - name: Apply bounded starter repair
+        run: python3 tools/starter-deck-40-product-r3-apply.py
+      - name: Verify exact starter, legacy-only correction, and UI counts
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const assert=require('assert/strict');
+          const src=fs.readFileSync('browser/GAMEROAD.html','utf8');
+          const m=src.match(/window\.__DEFAULT_DECK__=(\[[^\]]*\]);/);
+          assert.ok(m);
+          const deck=JSON.parse(m[1]);
+          const ranks=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+          const expected=['SP','DI','CL'].flatMap(s=>ranks.map(r=>`${s}_${r}`)).concat('HT_A');
+          assert.deepEqual(deck,expected);
+          assert.equal(deck.length,40);
+          assert.equal(new Set(deck).size,40);
+          assert.deepEqual(deck.filter(id=>id.startsWith('HT_')),['HT_A']);
+          assert.equal(src.includes('ロイヤルカード${r}はデッキに1枚必要です'),false);
+          assert.equal(src.includes('id="r4DeckTotal">40</strong>'),true);
+          assert.equal(src.includes('id="r4TrayCount">40 / 40</b>'),true);
+          assert.equal(src.includes('LEGACY_FABRICATED_DEFAULT_DECK='),true);
+          assert.equal(src.includes('function renderCards(){migrateLegacyFabricatedDefaultDeckInMemory();'),true);
+          assert.equal(src.includes('function renderSetupDeckStatus(){migrateLegacyFabricatedDefaultDeckInMemory();'),true);
+          console.log('starter40 bounded contract: PASS');
+          NODE
+      - name: Preserve existing save recovery contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in browser/save-recovery-contract.mjs browser/browser-save-recovery-contract.mjs; do
+            if [ -f "$f" ]; then node "$f"; fi
+          done
+      - name: Commit product repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only)"
+          printf '%s\n' "$changed"
+          test "$changed" = "browser/GAMEROAD.html"
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add browser/GAMEROAD.html
+          git commit -m "fix(deck): restore exact 40-card starter with legacy-only correction"
+      - name: Remove transient authorization and applicator
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm data/preaction-authorizations/VWORK-STARTER40-R3-20260829T0131.json
+          git rm tools/starter-deck-40-product-r3-apply.py
+          git rm .github/workflows/starter-deck-40-product-r3-auto-apply.yml
+          git commit -m "chore(starter): retire transient R3 recovery machinery"
+      - name: Push verified product head
+        run: git push origin HEAD:work/starter-deck-40-product-r3-20260829

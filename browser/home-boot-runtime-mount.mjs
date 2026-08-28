@@ -23,6 +23,11 @@ export const HOME_VISUAL_AUTHORITY = Object.freeze({
     '#codexHomeBattleCta',
     '.codexBattleCta',
   ]),
+  chromeSelectors: Object.freeze([
+    '.codexHomeCenterStage',
+    '.codexHomeLeftRail',
+    '.codexHomeRightRail',
+  ]),
 });
 
 export function resolveHomePrimaryAuthority({ hasSlidePad = false } = {}) {
@@ -34,11 +39,15 @@ export function createHomeVisualAuthorityCss() {
   const suppressed = HOME_VISUAL_AUTHORITY.suppressedSelectors
     .map((selector) => `${authority} ${selector}`)
     .join(',\n');
+  const chrome = HOME_VISUAL_AUTHORITY.chromeSelectors
+    .map((selector) => `${authority} ${selector}`)
+    .join(',\n');
   return `
-/* Home R1 visual authority: the supplied illustration + slidepad is the primary
-   surface. Legacy layers are suppressed only when that canonical control exists,
-   so a missing slidepad falls back without losing navigation. */
-${suppressed}{
+/* Home R2 visual authority: one interactive command surface plus low-profile
+   secondary utilities. Historical dashboard/narration chrome is removed only
+   while the canonical slidepad exists; fallback mode keeps the legacy DOM. */
+${suppressed},
+${chrome}{
   display:none!important;
   visibility:hidden!important;
   pointer-events:none!important;
@@ -47,6 +56,20 @@ ${authority} ${HOME_VISUAL_AUTHORITY.primarySelector}{
   display:grid!important;
   visibility:visible!important;
   pointer-events:auto!important;
+}
+${authority} ${HOME_VISUAL_AUTHORITY.secondarySelector} ${HOME_VISUAL_AUTHORITY.secondaryButtonSelector}{
+  min-height:${HOME_TOUCH_TARGET_MIN_PX}px!important;
+  height:${HOME_TOUCH_TARGET_MIN_PX}px!important;
+  border-color:transparent!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  color:#f7fbff!important;
+  text-shadow:0 2px 7px rgba(0,0,0,.92)!important;
+}
+${authority} ${HOME_VISUAL_AUTHORITY.secondarySelector} ${HOME_VISUAL_AUTHORITY.secondaryButtonSelector}:focus-visible{
+  outline:2px solid rgba(255,255,255,.9)!important;
+  outline-offset:2px!important;
 }
 ${HOME_SELECTOR}[data-home-shell-variant="portrait"][data-home-primary-authority="slidepad"] ${HOME_VISUAL_AUTHORITY.secondarySelector}{
   position:fixed!important;
@@ -67,14 +90,8 @@ ${HOME_SELECTOR}[data-home-shell-variant="portrait"][data-home-primary-authority
 ${HOME_SELECTOR}[data-home-shell-variant="portrait"][data-home-primary-authority="slidepad"] ${HOME_VISUAL_AUTHORITY.secondarySelector} ${HOME_VISUAL_AUTHORITY.secondaryButtonSelector}{
   width:100%!important;
   min-width:0!important;
-  min-height:${HOME_TOUCH_TARGET_MIN_PX}px!important;
-  height:${HOME_TOUCH_TARGET_MIN_PX}px!important;
   padding:0 8px!important;
-  border-radius:12px!important;
-  border-color:rgba(187,219,255,.28)!important;
-  background:rgba(8,17,45,.68)!important;
-  box-shadow:0 6px 18px rgba(0,0,24,.22)!important;
-  backdrop-filter:blur(8px)!important;
+  border-radius:0!important;
   font-size:11px!important;
   opacity:.88;
 }
@@ -82,10 +99,14 @@ ${HOME_SELECTOR}[data-home-shell-variant="portrait"][data-home-primary-authority
 ${HOME_SELECTOR}[data-home-shell-variant="portrait"][data-home-primary-authority="slidepad"] ${HOME_VISUAL_AUTHORITY.secondarySelector} ${HOME_VISUAL_AUTHORITY.secondaryButtonSelector}:hover{
   opacity:1;
 }
-${HOME_SELECTOR}[data-home-shell-variant="short-landscape"][data-home-primary-authority="slidepad"] .codexHomeCenterStage{
-  left:24%!important;
+${HOME_SELECTOR}[data-home-shell-variant="short-landscape"][data-home-primary-authority="slidepad"] ${HOME_VISUAL_AUTHORITY.secondarySelector}{
+  left:max(8px,env(safe-area-inset-left))!important;
   right:auto!important;
-  width:45%!important;
+  top:clamp(74px,20vh,92px)!important;
+  width:min(172px,26vw)!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:2px!important;
+  background:transparent!important;
 }
 `;
 }

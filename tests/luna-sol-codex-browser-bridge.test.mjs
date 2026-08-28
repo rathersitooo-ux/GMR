@@ -130,6 +130,26 @@ test('Sol route requires stable browser preflight identity before message constr
   assert.equal(result.mayMutate, false);
 });
 
+test('malformed expected conversation input returns a structured preflight rejection', () => {
+  const result = prepareSol({
+    sol: { expectedConversationId: 42 },
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.status, CODEX_BROWSER_BRIDGE_STATUS.BROWSER_PREFLIGHT_REQUIRED);
+  assert.equal(result.reason, 'expectedConversationId_must_be_string');
+  assert.equal(result.mayMutate, false);
+});
+
+test('malformed transport timeout returns a structured transport rejection', () => {
+  const result = prepareSol({
+    sol: { timeoutMs: -1 },
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.status, CODEX_BROWSER_BRIDGE_STATUS.TRANSPORT_REQUEST_REJECTED);
+  assert.equal(result.reason, 'timeoutMs_must_be_positive_integer');
+  assert.equal(result.mayMutate, false);
+});
+
 test('prepared Sol route emits one bounded browser action and serializable correlation bundle', () => {
   const result = prepareSol();
   assert.equal(result.ok, true);

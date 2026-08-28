@@ -9,6 +9,7 @@
   "baseSha": "fc9eb2ed3b10a255213d61d76488970b8f3a3e05",
   "mutableResources": [
     "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
     ".github/workflows/character-naki-product-r1-auto-apply.yml"
   ],
   "excludedResources": [

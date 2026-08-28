@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-STARTER40-PRODUCT-R1-20260828T2315",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "STARTER_DECK_40_PRODUCT_REPAIR_R1",
+  "acquireKey": "STARTER40-PRODUCT-R1-20260828T2315-SOL-Q4N7V2K8M5PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "current-main-da8b9-plus-expired-pr479-two-file-owner-and-stale-26-regression-contract-direct-read-20260828",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing-full-interaction-legal40-install-helper-plus-deck-rule-requiredMain40-and-new-focused-starter40-contract-20260828",
+  "proceedToken": "PROCEED|VWORK-STARTER40-PRODUCT-R1-20260828T2315|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|starter-deck-40-product-repair-r1",
+  "authorizationBaseSha": "da8b9ee56fe0b7c84460db21a8982dd03293eb63",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "STARTER_DECK_40_PRODUCT_REPAIR_R1",
+  "leaseAcquireKey": "STARTER40-PRODUCT-R1-20260828T2315-SOL-Q4N7V2K8M5PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-28 23:15 JST",
+  "leaseUntilJst": "2026-08-28 23:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:L9",
+  "scope": [
+    "data/preaction-authorizations/VWORK-STARTER40-PRODUCT-R1-20260828T2315.json",
+    "tools/starter-deck-40-product-r1-apply.py",
+    ".github/workflows/starter-deck-40-product-r1-auto-apply.yml",
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/starter-deck-40-contract.spec.mjs"
+  ],
+  "leaseScope": [
+    "data/preaction-authorizations/VWORK-STARTER40-PRODUCT-R1-20260828T2315.json",
+    "tools/starter-deck-40-product-r1-apply.py",
+    ".github/workflows/starter-deck-40-product-r1-auto-apply.yml",
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/starter-deck-40-contract.spec.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/starter-deck-40-product-r1-20260828 from exact current main da8b9ee56fe0b7c84460db21a8982dd03293eb63 only: transient data/preaction-authorizations/VWORK-STARTER40-PRODUCT-R1-20260828T2315.json create-first/delete-before-final-head; temporary tools/starter-deck-40-product-r1-apply.py create/delete-before-final-head; temporary .github/workflows/starter-deck-40-product-r1-auto-apply.yml create/delete-before-final-head; browser/GAMEROAD.html only for deterministic legal 40-card starter/default runtime, non-destructive recognized-legacy 26 runtime fallback, reset/fresh starter seeding, and exact reviewed Naki player-character delta carried from expired-owner PR#479 without unrelated behavior change; tests/browser-full-interaction.spec.mjs only for stale 26/default-fill assertions, legacy fixture separation, starter/reset/write-failure expectations, and exact reviewed Naki regression delta carried from PR#479; tests/starter-deck-40-contract.spec.mjs focused starter contract; branch/PR state only; CURRENT_ACTIVE_LEASES own row9 only; R22 own acquire/checkpoint/terminal/release records only. Other browser modules, Battle rules/card values, deck legality/Highlander rules, save schema, network/economy, deploy, permanent workflows, assets and other owners' resources are excluded/read-only."
+}

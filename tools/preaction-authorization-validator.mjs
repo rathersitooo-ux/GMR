@@ -20,6 +20,16 @@ const MAX_CLOCK_SKEW_MS = 5 * 60 * 1000;
 const PARENT_TASK_SUMMARY_RANGE = /\bO(?:\d+)?:S(?:\d+)?\b/i;
 const PARENT_TASK_SUMMARY_CONTEXT = /(GAMEROAD\s*全作業一覧|全作業一覧|ParentTask|parent[-_\s]*summary|central)/i;
 const FORMULA_REPAIR_MARKER = /formula[-_\s]*repair/i;
+const REUSE_DISCOVERY_GATE_VERSION = 'R1';
+const REUSE_DISPOSITIONS = new Set([
+  'REUSE_AS_IS',
+  'ADAPT',
+  'COMPOSE',
+  'BUILD',
+  'DEFER',
+  'NOT_APPLICABLE',
+]);
+const SOLUTION_SEARCH_STATUSES = new Set(['PASS', 'NOT_APPLICABLE']);
 
 function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
@@ -33,6 +43,13 @@ export function isMaterialPath(path) {
   if (isAuthorizationPath(path)) return false;
   if (path === 'README.md' || path.startsWith('docs/')) return false;
   if (path === 'AGENTS.md' || path === 'CODEX_HANDOFF_CURRENT.md' || path === 'CODEX_4WINDOW_LAUNCH_CURRENT.md') return true;
+  return true;
+}
+
+function isConstructionCandidatePath(path) {
+  if (!isMaterialPath(path)) return false;
+  if (path.startsWith('tests/') || path.startsWith('data/')) return false;
+  if (path === 'AGENTS.md' || path === 'CODEX_HANDOFF_CURRENT.md' || path === 'CODEX_4WINDOW_LAUNCH_CURRENT.md') return false;
   return true;
 }
 
@@ -131,6 +148,45 @@ function validateLeaseWitness(manifest, nowMs) {
   return { ok: true, reason: exactMutableCheck.reason };
 }
 
+function validateReuseDiscovery(manifest, { newMaterialPaths = [] } = {}) {
+  const novel = manifest.riskClass === 'MATERIAL_NOVEL';
+  const newConstruction = newMaterialPaths.some(isConstructionCandidatePath);
+  if (!novel && !newConstruction) return { ok: true, reason: 'reuse_discovery_not_required' };
+
+  for (const key of ['solutionSignature', 'reuseDisposition', 'solutionSearchStatus', 'reuseDecisionEvidenceId']) {
+    if (!requiredString(manifest, key)) return { ok: false, reason: `reuse_gate_missing_${key}` };
+  }
+  if (!REUSE_DISPOSITIONS.has(manifest.reuseDisposition)) {
+    return { ok: false, reason: 'reuse_gate_disposition' };
+  }
+  if (!SOLUTION_SEARCH_STATUSES.has(manifest.solutionSearchStatus)) {
+    return { ok: false, reason: 'reuse_gate_search_status' };
+  }
+  if (manifest.reuseDisposition === 'DEFER') {
+    return { ok: false, reason: 'reuse_gate_defer_cannot_authorize_mutation' };
+  }
+  if (manifest.reuseDisposition === 'NOT_APPLICABLE') {
+    if (novel) return { ok: false, reason: 'reuse_gate_novel_cannot_be_not_applicable' };
+    if (manifest.solutionSearchStatus !== 'NOT_APPLICABLE') {
+      return { ok: false, reason: 'reuse_gate_not_applicable_status' };
+    }
+    if (!requiredString(manifest, 'reuseNotApplicableReason')) {
+      return { ok: false, reason: 'reuse_gate_missing_reuseNotApplicableReason' };
+    }
+    return { ok: true, reason: 'reuse_discovery_not_applicable_with_reason' };
+  }
+
+  if (manifest.solutionSearchStatus !== 'PASS') {
+    return { ok: false, reason: 'reuse_gate_search_not_pass' };
+  }
+  const evidenceCheck = validateStringList(manifest.solutionSearchEvidence, 'solution_search_evidence');
+  if (!evidenceCheck.ok) return { ok: false, reason: `reuse_gate_${evidenceCheck.reason}` };
+  if (manifest.reuseDisposition === 'BUILD' && !requiredString(manifest, 'buildResidualReason')) {
+    return { ok: false, reason: 'reuse_gate_build_residual_reason_required' };
+  }
+  return { ok: true, reason: `reuse_discovery_${manifest.reuseDisposition.toLowerCase()}` };
+}
+
 export function validateManifest(manifest, manifestPath, { nowMs = Date.now() } = {}) {
   const required = [
     'schemaVersion', 'recordId', 'taskId', 'workUnitKey', 'acquireKey',
@@ -167,7 +223,9 @@ export function evaluateAuthorization({
   manifestPath,
   changedPaths,
   historyPaths = changedPaths,
+  newMaterialPaths = [],
   manifestPresentAtHead = false,
+  enforceReuseDiscovery = false,
   nowMs = Date.now(),
 }) {
   const manifestCheck = validateManifest(manifest, manifestPath, { nowMs });
@@ -175,6 +233,12 @@ export function evaluateAuthorization({
   const allObservedPaths = [...new Set([...(changedPaths || []), ...(historyPaths || [])])];
   const materialChanged = allObservedPaths.filter(isMaterialPath);
   if (materialChanged.length === 0) return { ok: true, reason: 'nonmaterial_pr' };
+
+  if (enforceReuseDiscovery) {
+    const reuseCheck = validateReuseDiscovery(manifest, { newMaterialPaths });
+    if (!reuseCheck.ok) return reuseCheck;
+  }
+
   if (!Array.isArray(commits) || commits.length === 0) return { ok: false, reason: 'no_branch_commits' };
   const first = commits[0];
   if (first.parentSha !== manifest.authorizationBaseSha) return { ok: false, reason: 'authorization_not_first_from_base' };
@@ -183,6 +247,15 @@ export function evaluateAuthorization({
   if (outOfScope.length) return { ok: false, reason: `material_path_out_of_scope:${outOfScope.join(',')}` };
   if (manifestPresentAtHead) return { ok: false, reason: 'authorization_manifest_must_be_cleanup_deleted_before_merge' };
   return { ok: true, reason: 'preaction_authorized' };
+}
+
+function baseHasReuseDiscoveryGate(baseSha) {
+  try {
+    const source = git(['show', `${baseSha}:tools/preaction-authorization-validator.mjs`]);
+    return source.includes(`const REUSE_DISCOVERY_GATE_VERSION = '${REUSE_DISCOVERY_GATE_VERSION}';`);
+  } catch {
+    return false;
+  }
 }
 
 export function validateRepositoryAuthorization({ baseSha, headSha, changedPathsFile }) {
@@ -222,13 +295,22 @@ export function validateRepositoryAuthorization({ baseSha, headSha, changedPaths
   } catch {
     present = false;
   }
+
+  const newMaterialPaths = git(['diff', '--diff-filter=A', '--name-only', baseSha, headSha])
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .filter(isMaterialPath);
+  const enforceReuseDiscovery = baseHasReuseDiscoveryGate(baseSha);
+
   return evaluateAuthorization({
     commits: [{ sha: firstCommit, parentSha, paths: firstPaths }],
     manifest,
     manifestPath,
     changedPaths,
     historyPaths,
+    newMaterialPaths,
     manifestPresentAtHead: present,
+    enforceReuseDiscovery,
   });
 }
 

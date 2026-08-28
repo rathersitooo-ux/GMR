@@ -6,7 +6,7 @@
   "intent": "Mount right-swipe on collection cards to the existing addDeckCard(id) path without changing deck legality, starter/default composition, save schema, card values, or unrelated UI.",
   "mutable_resources": [
     "browser/GAMEROAD.html",
-    "tests/deck-swipe-add-product.spec.mjs",
+    "tests/browser-runtime-smoke.spec.mjs",
     "tools/deck-swipe-add-product-r1-apply.py",
     ".github/workflows/deck-swipe-add-product-r1-auto-apply.yml"
   ],
@@ -15,6 +15,6 @@
     "vertical and left gestures do not add",
     "tap keeps inspector behavior",
     "existing addDeckCard legality and limits remain authoritative",
-    "mobile viewport regression"
+    "390x844 mobile viewport regression"
   ]
 }

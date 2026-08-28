@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "battlephase-causal-4lane-r1-20260828",
+  "taskId": "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PHASE_CAUSAL_4LANE_PRODUCT_R1",
+  "acquireKey": "BATTLEPHASE-4LANE-PRESENTATION-R1-20260828T1858-SOL-Q8N4V2K7M6PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BATTLEAUTH-CURRENT-PLUS-BFI-33135079326-CARDGRID-FOSSIL",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BFI-33135079326-4P-BATTLEPHASE-CARDGRID-FOSSIL",
+  "proceedToken": "PROCEED|battlephase-causal-4lane-r1-20260828|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|Q8N4V2K7",
+  "authorizationBaseSha": "058ec511b0745fb850713ea75b1b48eb3a4c3ddb",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PHASE_CAUSAL_4LANE_PRODUCT_R1",
+  "leaseAcquireKey": "BATTLEPHASE-4LANE-PRESENTATION-R1-20260828T1858-SOL-Q8N4V2K7M6PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-28 18:58 JST",
+  "leaseUntilJst": "2026-08-28 19:38 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/battlephase-causal-4lane-r1-20260828 only: transient data/preaction-authorizations/battlephase-causal-4lane-r1-20260828.json create-first/delete-before-final-head; browser/battle-replay-live-adapter.mjs; tests/browser-battle-replay-live-adapter.test.mjs; tests/browser-full-interaction.spec.mjs; deploy/cloudflare/tests/build.test.mjs only for matching adapter package/provenance pin; successor PR state and merge for this branch only; CURRENT_ACTIVE_LEASES own exact AcquireKey row only; R22 own acquire/checkpoint/terminal/release records only. browser/GAMEROAD.html; Battle rules/core/state; .github/workflows/**; unrelated Home/UI; other deploy configuration; assets; other owners' paths are excluded/read-only.",
+  "scope": [
+    "data/preaction-authorizations/battlephase-causal-4lane-r1-20260828.json",
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/browser-battle-replay-live-adapter.test.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "data/preaction-authorizations/battlephase-causal-4lane-r1-20260828.json",
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/browser-battle-replay-live-adapter.test.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

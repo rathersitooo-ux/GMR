@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "gameroad-preaction-v1",
+  "recordId": "VWORK-PARTNERADVICE-R26-SCHEDULED-GENERATION-FENCE-20260828T2242",
+  "taskId": "PARTNER-GOODMOVE-ADVICE-RUNTIME-INTEGRATION-001",
+  "workUnitKey": "PARTNERADVICE_R26_SCHEDULED_GENERATION_FENCE",
+  "acquireKey": "PARTNERADVICE-R26-SCHEDULED-GENERATION-FENCE-20260828T2242-SOL-Q7M4N9V2K6PX",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PARTNERADVICE-R26-PRED-20260828T2242",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PARTNERADVICE-R26-DRIFT-20260828T2242",
+  "proceedToken": "PROCEED|VWORK-PARTNERADVICE-R26-SCHEDULED-GENERATION-FENCE-20260828T2242|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|PARTNERADVICE-R26-PRED-20260828T2242: TOP_FAILURE=a queued auto-render created before an explicit stale/clear operation runs afterward and restores obsolete Partner Advice DOM markers even though the explicit stale snapshot is inactive.|PARTNERADVICE-R26-DRIFT-20260828T2242: Existing R23 generation fencing protects overlapping async render bodies but not a previously queued schedule() microtask. Repair only the scheduler generation fence and add a deterministic same-task stale regression; do not change advice ranking/legal/private/public semantics.",
+  "authorizationBaseSha": "964a1aafeb73176a3c57f92fa7a58df22fb131c0",
+  "issuedAt": "2026-08-28T22:42:00+09:00",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/partneradvice-r26-bounded-executor.yml",
+    "data/preaction-authorizations/VWORK-PARTNERADVICE-R26-SCHEDULED-GENERATION-FENCE-20260828T2242.json"
+  ],
+  "notes": "Repair the shared Partner Advice DOM scheduler race before retrying the unrelated Naki player-character PR. The authorization and bounded executor are temporary and must be removed from the final diff."
+}

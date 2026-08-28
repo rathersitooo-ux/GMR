@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-REQGATE-HOMEPRIMARY-SMOKE-R1-20260828T2248",
+  "taskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "workUnitKey": "HOME_PRIMARY_NAV_RUNTIME_SMOKE_R1",
+  "acquireKey": "REQGATE-HOMEPRIMARY-SMOKE-R1-20260828T2248-SOL-Q5N8V2K4M7PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "pr483-exact-head-required-gate-run33174632812-runtime-smoke-zero-visible-data-go-plus-full-interaction-green-20260828",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "main-browser-runtime-smoke-source-readback-plus-pr483-home-primary-authority-contract-20260828",
+  "proceedToken": "PROCEED|VWORK-REQGATE-HOMEPRIMARY-SMOKE-R1-20260828T2248|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|home-primary-route-smoke-contract",
+  "authorizationBaseSha": "964a1aafeb73176a3c57f92fa7a58df22fb131c0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "leaseWorkUnitKey": "HOME_PRIMARY_NAV_RUNTIME_SMOKE_R1",
+  "leaseAcquireKey": "REQGATE-HOMEPRIMARY-SMOKE-R1-20260828T2248-SOL-Q5N8V2K4M7PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-28 22:48 JST",
+  "leaseUntilJst": "2026-08-28 23:32 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A13:L13",
+  "scope": [
+    "tests/browser-runtime-smoke.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-runtime-smoke.spec.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/home-primary-nav-runtime-smoke-r1-20260828 from exact current main only: transient gameroad-preaction-v3 manifest create-first/delete-before-final-head; tests/browser-runtime-smoke.spec.mjs only; successor PR state+merge only; CURRENT_ACTIVE_LEASES own exact AcquireKey row; R22 own acquire/checkpoint/terminal/release records only. browser/GAMEROAD.html, browser/home-boot-runtime-mount.mjs, all Home product files, .github/workflows/**, tests/browser-full-interaction.spec.mjs, Character/Battle/rules/save/network/economy/deploy and other owners' resources are read-only/excluded."
+}

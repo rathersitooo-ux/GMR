@@ -1,0 +1,41 @@
+# GAMEROAD C2C visibility policy
+#
+# The authoritative ChatGPT <-> Codex transport for new work is the upstream
+# XiaoDuoYa/codex-with-chatgpt Skill + read-only MCP bridge. The files below
+# are retained temporarily only because existing repository CI/history may
+# still reference them. They are frozen legacy implementation, not planning
+# input for ChatGPT and not a foundation for new feature work.
+
+# Retired local transport / bridge / protocol implementation
+tools/chatgpt-browser-transport-core.mjs
+tools/chatgpt-browser-transport-runner.mjs
+tools/executor-bus-packet-compressor.mjs
+tools/luna-sol-codex-browser-bridge.mjs
+tools/luna-sol-codex-browser-bridge-runner.mjs
+tools/luna-sol-integration-core.mjs
+tools/luna-sol-router-core.mjs
+tools/luna-sol-router-runner.mjs
+tools/sol-reasoning-protocol.mjs
+
+# Retired local transport / bridge / protocol documentation
+docs/chatgpt-browser-transport.md
+docs/executor-bus-packet-compressor.md
+docs/luna-sol-codex-browser-bridge-local-queue-gate.md
+docs/luna-sol-codex-browser-bridge.md
+docs/luna-sol-integration.md
+docs/luna-sol-router.md
+docs/sol-reasoning-protocol.md
+
+# Retired local transport / bridge / protocol regression tests
+tests/chatgpt-browser-transport-core.test.mjs
+tests/executor-bus-packet-compressor.test.mjs
+tests/luna-sol-codex-browser-bridge-local-queue-gate.test.mjs
+tests/luna-sol-codex-browser-bridge.test.mjs
+tests/luna-sol-integration-core.test.mjs
+tests/luna-sol-router-core.test.mjs
+tests/sol-reasoning-protocol.test.mjs
+
+# Intentionally NOT ignored:
+# - tools/executor-bus-packet.mjs and pre-action/lease safety machinery
+# - CURRENT / handoff authority files
+# - tools/sol_bridge/evaluation/** (kept for outcome measurement until replaced)

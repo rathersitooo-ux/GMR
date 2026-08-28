@@ -5,6 +5,9 @@ import { unpackReasoningPacket } from './executor-bus-packet-compressor.mjs';
 
 export const SOL_REASONING_PROTOCOL_VERSION = 'gameroad-sol-reasoning-v2';
 export const SOL_REASONING_RESPONSE_SCHEMA = 'sol-plan-v2';
+export const SOL_EVIDENCE_CONTEXT_ENVELOPE_VERSION = 'gameroad-evidence-context-v1';
+export const SOL_EVIDENCE_CONTEXT_MARKER = '[[GAMEROAD_EVIDENCE_CONTEXT_V1]]';
+export const SOL_EVIDENCE_CONTEXT_END_MARKER = '[[/GAMEROAD_EVIDENCE_CONTEXT_V1]]';
 
 export const CLAIM_KIND = Object.freeze({
   OBSERVATION: 'OBSERVATION',
@@ -33,41 +36,30 @@ const MODES = new Set([
 const DISPOSITIONS = new Set(['PLAN', 'NEEDS_EVIDENCE', 'BLOCKED', 'NO_CHANGE']);
 const CLAIM_KINDS = new Set(Object.values(CLAIM_KIND));
 const CLAIM_STATUSES = new Set(Object.values(CLAIM_STATUS));
-const EVIDENCE_REF_CLASSES = new Set(['user', 'authority', 'actual', 'test', 'counter']);
+const CURRENT_EVIDENCE_STATES = new Set([
+  'CURRENT_AUTHORITY',
+  'CURRENT_ARTIFACT',
+  'CURRENT_EXECUTION_EVIDENCE',
+]);
+const AUTHORITY_ROLES = new Set(['AUTHORITY']);
+const USER_ROLES = new Set(['USER', 'USER_INTENT', 'USER_REQUEST']);
+const ACTUAL_ROLES = new Set(['ACTUAL', 'DIRECT_ACTUAL', 'CURRENT_ACTUAL', 'EXECUTION_EVIDENCE', 'FAILURE_EVIDENCE']);
+const TEST_ROLES = new Set(['TEST', 'DISCRIMINATING_TEST', 'ACCEPTANCE_TEST', 'VERIFICATION_TEST', 'TEST_RESULT']);
+const COUNTER_ROLES = new Set(['COUNTER', 'COUNTEREVIDENCE', 'COUNTER_EVIDENCE', 'CONTRARY_EVIDENCE']);
+const ENVELOPE_KEYS = new Set([
+  'schemaVersion', 'id', 'tier', 'state', 'role', 'claimMode',
+  'authorityClass', 'version', 'provenance', 'freshness',
+]);
 const REQUEST_KEYS = new Set([
-  'protocolVersion',
-  'kind',
-  'requestId',
-  'taskId',
-  'workUnitKey',
-  'acquireKey',
-  'reasoningPacketFingerprint',
-  'mode',
-  'question',
-  'returnSchema',
+  'protocolVersion', 'kind', 'requestId', 'taskId', 'workUnitKey', 'acquireKey',
+  'reasoningPacketFingerprint', 'mode', 'question', 'returnSchema',
 ]);
 const RESPONSE_KEYS = new Set([
-  'protocolVersion',
-  'kind',
-  'requestId',
-  'taskId',
-  'workUnitKey',
-  'acquireKey',
-  'reasoningPacketFingerprint',
-  'disposition',
-  'cause',
-  'claims',
-  'selectedCauseClaimId',
-  'decisionBasisRefs',
-  'decision',
-  'filesToChange',
-  'doNotTouch',
-  'implementationOrder',
-  'tests',
-  'rollback',
-  'uncertainties',
-  'evidenceRequests',
-  'acceptanceCoverage',
+  'protocolVersion', 'kind', 'requestId', 'taskId', 'workUnitKey', 'acquireKey',
+  'reasoningPacketFingerprint', 'disposition', 'cause', 'claims',
+  'selectedCauseClaimId', 'decisionBasisRefs', 'decision', 'filesToChange',
+  'doNotTouch', 'implementationOrder', 'tests', 'rollback', 'uncertainties',
+  'evidenceRequests', 'acceptanceCoverage',
 ]);
 
 function fail(reason, extras = {}) {
@@ -152,11 +144,10 @@ function normalizeAcceptanceCoverage(value, queuePacket) {
       throw new Error(`acceptanceCoverage_${index}_shape`);
     }
     const acceptance = cleanString(item.acceptance, `acceptanceCoverage_${index}_acceptance`, { max: 1200 });
-    const coveredBy = cleanStringList(
-      item.coveredBy,
-      `acceptanceCoverage_${index}_coveredBy`,
-      { required: true, maxItems: 16 },
-    );
+    const coveredBy = cleanStringList(item.coveredBy, `acceptanceCoverage_${index}_coveredBy`, {
+      required: true,
+      maxItems: 16,
+    });
     if (!queuePacket.acceptance.includes(acceptance)) throw new Error(`acceptanceCoverage_unknown:${acceptance}`);
     if (seen.has(acceptance)) throw new Error(`acceptanceCoverage_duplicate:${acceptance}`);
     seen.add(acceptance);
@@ -168,6 +159,61 @@ function normalizeAcceptanceCoverage(value, queuePacket) {
   return normalized;
 }
 
+function parseCanonicalEvidenceEnvelope(item, index) {
+  const text = cleanString(item.text, `context_${index}_text`, { max: 20_000 });
+  if (!text.startsWith(`${SOL_EVIDENCE_CONTEXT_MARKER}\n`)) return null;
+  const lines = text.split('\n');
+  if (lines.length < 4 || lines[0] !== SOL_EVIDENCE_CONTEXT_MARKER || lines[2] !== SOL_EVIDENCE_CONTEXT_END_MARKER) {
+    throw new Error(`context_${index}_evidence_envelope_shape`);
+  }
+  let metadata;
+  try {
+    metadata = JSON.parse(lines[1]);
+  } catch (error) {
+    throw new Error(`context_${index}_evidence_envelope_json:${error.message}`);
+  }
+  rejectUnknownKeys(metadata, ENVELOPE_KEYS, `context_${index}_evidence_metadata`);
+  const requiredKeys = ['schemaVersion', 'id', 'tier', 'state', 'role', 'claimMode'];
+  for (const key of requiredKeys) {
+    if (!Object.prototype.hasOwnProperty.call(metadata, key)) {
+      throw new Error(`context_${index}_evidence_metadata_missing:${key}`);
+    }
+  }
+  const normalized = {
+    schemaVersion: cleanString(metadata.schemaVersion, `context_${index}_metadata_schemaVersion`, { max: 120 }),
+    id: cleanString(metadata.id, `context_${index}_metadata_id`, { max: 240 }),
+    tier: cleanString(metadata.tier, `context_${index}_metadata_tier`, { max: 20 }),
+    state: cleanString(metadata.state, `context_${index}_metadata_state`, { max: 40 }),
+    role: cleanString(metadata.role, `context_${index}_metadata_role`, { max: 80 }).toUpperCase(),
+    claimMode: cleanString(metadata.claimMode, `context_${index}_metadata_claimMode`, { max: 20 }),
+    authorityClass: cleanString(metadata.authorityClass ?? '', `context_${index}_metadata_authorityClass`, { max: 120, optional: true }),
+    version: cleanString(metadata.version ?? '', `context_${index}_metadata_version`, { max: 240, optional: true }),
+    provenance: cleanString(metadata.provenance ?? '', `context_${index}_metadata_provenance`, { max: 1000, optional: true }),
+    freshness: cleanString(metadata.freshness ?? '', `context_${index}_metadata_freshness`, { max: 240, optional: true }),
+  };
+  if (normalized.schemaVersion !== SOL_EVIDENCE_CONTEXT_ENVELOPE_VERSION) {
+    throw new Error(`context_${index}_evidence_metadata_schema`);
+  }
+  if (normalized.id !== item.id) throw new Error(`context_${index}_evidence_metadata_id_mismatch`);
+  return normalized;
+}
+
+function trustedEvidenceClass(metadata) {
+  if (!metadata) return '';
+  if (metadata.tier !== 'HOT' || metadata.claimMode !== 'CURRENT' || !CURRENT_EVIDENCE_STATES.has(metadata.state)) {
+    return '';
+  }
+  if (metadata.state === 'CURRENT_AUTHORITY' && AUTHORITY_ROLES.has(metadata.role)) return 'authority';
+  if (metadata.state === 'CURRENT_AUTHORITY' && USER_ROLES.has(metadata.role)) return 'user';
+  if (metadata.state === 'CURRENT_EXECUTION_EVIDENCE' && TEST_ROLES.has(metadata.role)) return 'test';
+  if (metadata.state === 'CURRENT_EXECUTION_EVIDENCE' && COUNTER_ROLES.has(metadata.role)) return 'counter';
+  if (
+    (metadata.state === 'CURRENT_ARTIFACT' || metadata.state === 'CURRENT_EXECUTION_EVIDENCE')
+    && ACTUAL_ROLES.has(metadata.role)
+  ) return 'actual';
+  return '';
+}
+
 function evidenceIndex(context) {
   if (!Array.isArray(context)) throw new Error('context_must_be_array');
   const index = new Map();
@@ -176,21 +222,24 @@ function evidenceIndex(context) {
     if (!item || typeof item !== 'object' || Array.isArray(item)) throw new Error(`context_${i}_must_be_object`);
     const id = cleanString(item.id, `context_${i}_id`, { max: 240 });
     if (index.has(id)) throw new Error(`context_duplicate_id:${id}`);
-    index.set(id, item);
+    const metadata = parseCanonicalEvidenceEnvelope(item, i);
+    index.set(id, {
+      item,
+      metadata,
+      trustedClass: trustedEvidenceClass(metadata),
+    });
   }
   return index;
 }
 
-function refClass(ref) {
-  const colon = ref.indexOf(':');
-  return colon > 0 ? ref.slice(0, colon) : '';
-}
-
-function validateEvidenceRef(ref, index, name) {
-  if (!index.has(ref)) throw new Error(`${name}_unknown_ref:${ref}`);
-  const type = refClass(ref);
-  if (!EVIDENCE_REF_CLASSES.has(type)) throw new Error(`${name}_untyped_ref:${ref}`);
-  return type;
+function validateEvidenceRef(ref, index, name, expectedTrustedType = '') {
+  const entry = index.get(ref);
+  if (!entry) throw new Error(`${name}_unknown_ref:${ref}`);
+  if (expectedTrustedType && entry.trustedClass !== expectedTrustedType) {
+    if (!entry.trustedClass) throw new Error(`${name}_untrusted_ref:${ref}`);
+    throw new Error(`${name}_wrong_type:${ref}`);
+  }
+  return entry.trustedClass;
 }
 
 function normalizeClaim(raw, index, knownEvidence) {
@@ -215,15 +264,15 @@ function normalizeClaim(raw, index, knownEvidence) {
 
   for (const ref of claim.evidenceRefs) validateEvidenceRef(ref, knownEvidence, `claim_${index}_evidenceRefs`);
   for (const ref of claim.counterEvidenceRefs) {
-    const type = validateEvidenceRef(ref, knownEvidence, `claim_${index}_counterEvidenceRefs`);
-    if (type !== 'counter') throw new Error(`claim_${index}_counterEvidenceRefs_wrong_type:${ref}`);
+    validateEvidenceRef(ref, knownEvidence, `claim_${index}_counterEvidenceRefs`, 'counter');
   }
   for (const ref of claim.discriminatingTestRefs) {
-    const type = validateEvidenceRef(ref, knownEvidence, `claim_${index}_discriminatingTestRefs`);
-    if (type !== 'test') throw new Error(`claim_${index}_discriminatingTestRefs_wrong_type:${ref}`);
+    validateEvidenceRef(ref, knownEvidence, `claim_${index}_discriminatingTestRefs`, 'test');
   }
 
-  const evidenceTypes = new Set(claim.evidenceRefs.map(refClass));
+  const evidenceTypes = new Set(
+    claim.evidenceRefs.map((ref) => knownEvidence.get(ref).trustedClass).filter(Boolean),
+  );
   if (claim.kind === CLAIM_KIND.ROOT_CAUSE && claim.status === CLAIM_STATUS.ESTABLISHED) {
     if (!evidenceTypes.has('actual')) throw new Error(`claim_${index}_root_cause_actual_required`);
     if (claim.counterEvidenceRefs.length === 0) throw new Error(`claim_${index}_root_cause_counter_required`);
@@ -247,8 +296,8 @@ function normalizeClaims(value, knownEvidence) {
   return claims;
 }
 
-function hasRefType(refs, type) {
-  return refs.some((ref) => refClass(ref) === type);
+function hasTrustedRefType(refs, type, knownEvidence) {
+  return refs.some((ref) => knownEvidence.get(ref)?.trustedClass === type);
 }
 
 export function validateEvidenceClaims(input = {}, context = []) {
@@ -258,20 +307,22 @@ export function validateEvidenceClaims(input = {}, context = []) {
     const mode = cleanString(input.mode ?? 'DESIGN_DECISION', 'evidence_mode', { max: 80 });
     const disposition = cleanString(input.disposition, 'evidence_disposition', { max: 40 });
     const claims = normalizeClaims(input.claims ?? [], knownEvidence);
-    const selectedCauseClaimId = cleanString(
-      input.selectedCauseClaimId,
-      'selectedCauseClaimId',
-      { max: 120, optional: true },
-    );
+    const selectedCauseClaimId = cleanString(input.selectedCauseClaimId, 'selectedCauseClaimId', {
+      max: 120,
+      optional: true,
+    });
     const decisionBasisRefs = cleanStringList(input.decisionBasisRefs ?? [], 'decisionBasisRefs', { maxItems: 64 });
     for (const ref of decisionBasisRefs) validateEvidenceRef(ref, knownEvidence, 'decisionBasisRefs');
 
     const mutatingPlan = disposition === 'PLAN' && Array.isArray(input.filesToChange) && input.filesToChange.length > 0;
     if (mutatingPlan) {
-      if (!hasRefType(decisionBasisRefs, 'authority')) {
+      if (!hasTrustedRefType(decisionBasisRefs, 'authority', knownEvidence)) {
         throw new Error('mutating_plan_authority_basis_required');
       }
-      if (!(hasRefType(decisionBasisRefs, 'actual') || hasRefType(decisionBasisRefs, 'test'))) {
+      if (!(
+        hasTrustedRefType(decisionBasisRefs, 'actual', knownEvidence)
+        || hasTrustedRefType(decisionBasisRefs, 'test', knownEvidence)
+      )) {
         throw new Error('mutating_plan_actual_or_test_basis_required');
       }
     }
@@ -310,7 +361,6 @@ export function validateEvidenceClaims(input = {}, context = []) {
 export function buildSolRequest(reasoningPacket, options = {}) {
   const unpacked = unpackReasoningPacket(reasoningPacket);
   if (!unpacked.ok) return fail(`reasoning_packet_${unpacked.reason}`);
-
   try {
     const mode = cleanString(options.mode ?? 'DESIGN_DECISION', 'mode', { max: 80 });
     if (!MODES.has(mode)) throw new Error('mode_not_allowed');
@@ -328,12 +378,7 @@ export function buildSolRequest(reasoningPacket, options = {}) {
       returnSchema: SOL_REASONING_RESPONSE_SCHEMA,
     };
     request.requestId = deriveRequestId(request);
-    return {
-      ok: true,
-      request,
-      queuePacket: unpacked.queuePacket,
-      context: unpacked.context,
-    };
+    return { ok: true, request, queuePacket: unpacked.queuePacket, context: unpacked.context };
   } catch (error) {
     return fail(error.message);
   }
@@ -351,11 +396,7 @@ export function validateSolRequest(input, reasoningPacket) {
       taskId: cleanString(input.taskId, 'taskId', { max: 240 }),
       workUnitKey: cleanString(input.workUnitKey, 'workUnitKey', { max: 240 }),
       acquireKey: cleanString(input.acquireKey, 'acquireKey', { max: 300 }),
-      reasoningPacketFingerprint: cleanString(
-        input.reasoningPacketFingerprint,
-        'reasoningPacketFingerprint',
-        { max: 120 },
-      ),
+      reasoningPacketFingerprint: cleanString(input.reasoningPacketFingerprint, 'reasoningPacketFingerprint', { max: 120 }),
       mode: cleanString(input.mode, 'mode', { max: 80 }),
       question: cleanString(input.question, 'question'),
       returnSchema: cleanString(input.returnSchema, 'returnSchema', { max: 120 }),
@@ -367,9 +408,7 @@ export function validateSolRequest(input, reasoningPacket) {
     for (const key of ['taskId', 'workUnitKey', 'acquireKey']) {
       if (request[key] !== unpacked.queuePacket[key]) throw new Error(`request_identity_mismatch:${key}`);
     }
-    if (request.reasoningPacketFingerprint !== unpacked.fingerprint) {
-      throw new Error('request_reasoning_fingerprint_mismatch');
-    }
+    if (request.reasoningPacketFingerprint !== unpacked.fingerprint) throw new Error('request_reasoning_fingerprint_mismatch');
     if (request.requestId !== deriveRequestId(request)) throw new Error('request_id_mismatch');
     return { ok: true, request, queuePacket: unpacked.queuePacket, context: unpacked.context };
   } catch (error) {
@@ -381,7 +420,6 @@ export function validateSolResponse(input, requestInput, reasoningPacket) {
   const requestChecked = validateSolRequest(requestInput, reasoningPacket);
   if (!requestChecked.ok) return fail(`request_${requestChecked.reason}`);
   const { request, queuePacket, context } = requestChecked;
-
   try {
     rejectUnknownKeys(input, RESPONSE_KEYS, 'response');
     const evidenceChecked = validateEvidenceClaims({
@@ -401,11 +439,7 @@ export function validateSolResponse(input, requestInput, reasoningPacket) {
       taskId: cleanString(input.taskId, 'taskId', { max: 240 }),
       workUnitKey: cleanString(input.workUnitKey, 'workUnitKey', { max: 240 }),
       acquireKey: cleanString(input.acquireKey, 'acquireKey', { max: 300 }),
-      reasoningPacketFingerprint: cleanString(
-        input.reasoningPacketFingerprint,
-        'reasoningPacketFingerprint',
-        { max: 120 },
-      ),
+      reasoningPacketFingerprint: cleanString(input.reasoningPacketFingerprint, 'reasoningPacketFingerprint', { max: 120 }),
       disposition: cleanString(input.disposition, 'disposition', { max: 40 }),
       cause: cleanStringList(input.cause, 'cause', { required: true }),
       claims: evidenceChecked.claims,
@@ -428,7 +462,6 @@ export function validateSolResponse(input, requestInput, reasoningPacket) {
     for (const key of ['requestId', 'taskId', 'workUnitKey', 'acquireKey', 'reasoningPacketFingerprint']) {
       if (response[key] !== request[key]) throw new Error(`response_correlation_mismatch:${key}`);
     }
-
     for (const path of response.filesToChange) {
       if (!isWithinMutableScope(path, queuePacket)) throw new Error(`file_outside_mutable_scope:${path}`);
       if (isProtected(path, queuePacket)) throw new Error(`file_protected:${path}`);
@@ -437,11 +470,8 @@ export function validateSolResponse(input, requestInput, reasoningPacket) {
       }
     }
     for (const protectedEntry of queuePacket.doNotChange) {
-      if (!response.doNotTouch.includes(protectedEntry)) {
-        throw new Error(`missing_do_not_touch:${protectedEntry}`);
-      }
+      if (!response.doNotTouch.includes(protectedEntry)) throw new Error(`missing_do_not_touch:${protectedEntry}`);
     }
-
     if (response.disposition === 'PLAN' && response.filesToChange.length > 0) {
       if (response.implementationOrder.length === 0) throw new Error('plan_implementation_order_required');
       if (response.tests.length === 0) throw new Error('plan_tests_required');
@@ -454,7 +484,6 @@ export function validateSolResponse(input, requestInput, reasoningPacket) {
       if (response.filesToChange.length > 0) throw new Error('no_change_files_forbidden');
       if (response.implementationOrder.length > 0) throw new Error('no_change_implementation_forbidden');
     }
-
     return { ok: true, response, queuePacket, context };
   } catch (error) {
     return fail(error.message);
@@ -521,11 +550,13 @@ export function buildSolPrompt(reasoningPacket, options = {}) {
     'Do not claim execution, file mutation, tests run, deployment, or product success.',
     'Do not expand mutable scope. Do not emit shell commands, secrets, credentials, or a second task identity.',
     'Treat prose explanations and cause text as non-authoritative. Executable decisions must cite frozen context IDs.',
-    'Evidence IDs are typed by prefix: user:, authority:, actual:, test:, counter:. Never invent an ID that is absent from the packet.',
-    'A mutating PLAN requires an authority: basis plus actual: or test: evidence. User intent or target writability alone never authorizes a repair surface.',
-    'In ROOT_CAUSE or FAILURE_RECOVERY mode, a mutating PLAN requires one selected ROOT_CAUSE claim with status ESTABLISHED, actual evidence, counterevidence, and a discriminating test result. A plausible story is not an established cause.',
+    'Evidence IDs are opaque identifiers, not evidence types. Never infer authority, actual, test, counter, or user class from an ID name or prefix.',
+    `Only the outer ${SOL_EVIDENCE_CONTEXT_MARKER} metadata envelope can satisfy trusted mutation or causal evidence gates. Plain context may inform a hypothesis but cannot satisfy authority/actual/test/counter gates.`,
+    'A mutating PLAN requires canonical CURRENT/HOT authority metadata plus canonical CURRENT/HOT actual or test evidence. User intent or target writability alone never authorizes a repair surface.',
+    'In ROOT_CAUSE or FAILURE_RECOVERY mode, a mutating PLAN requires one selected ROOT_CAUSE claim with status ESTABLISHED, canonical actual evidence, canonical counterevidence, and a canonical discriminating test result. A plausible story is not an established cause.',
     'If causal alternatives have not been discriminated, return NEEDS_EVIDENCE, keep the cause as HYPOTHESIS/UNKNOWN, and name the next discriminator.',
     'Writable or convenient state is not evidence that it is the correct repair surface.',
+    'Canonical evidence class does not by itself prove semantic relevance to the selected issue; do not claim relevance that is absent from the packet.',
     'Cover every acceptance clause. Return exactly one fenced JSON block named sol-reasoning-response and no second response block.',
     '',
     'REQUEST:',

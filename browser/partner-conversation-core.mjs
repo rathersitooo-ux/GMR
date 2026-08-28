@@ -9,6 +9,7 @@ import {
 const CORE_ID = 'gameroad.partner-conversation-core.v1';
 const COLLECTIVE_CONTEXT_SCHEMA = 'gameroad.partner-conversation-collective-context.v1';
 const SOURCE_USE_SITE = 'partner-conversation';
+const ENTRY_SCREEN_ID = 'partner-conversation';
 
 function freezeDeep(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -170,5 +171,45 @@ export async function runSaasunaConversationTurn(input = {}, deps = {}) {
   });
 }
 
+function createDefaultSessionId() {
+  const uuid = globalThis.crypto?.randomUUID?.();
+  return exactToken(uuid) ?? `session-${Date.now().toString(36)}`;
+}
+
+export function createSaasunaConversationEntry({ provider = null, createSessionId = createDefaultSessionId } = {}) {
+  if (provider !== null && typeof provider?.sendMessage !== 'function') throw new TypeError('PROVIDER_INVALID');
+  if (typeof createSessionId !== 'function') throw new TypeError('CREATE_SESSION_ID_REQUIRED');
+  const sessionId = exactToken(createSessionId());
+  if (!sessionId) throw new TypeError('SESSION_ID_INVALID');
+  let turnSequence = 0;
+
+  const entryState = () => freezeDeep({
+    screenId: ENTRY_SCREEN_ID,
+    partnerId: SAASUNA_PARTNER_ID,
+    title: 'サースナーと会話',
+    pickerRequired: false,
+    switchPartnerAllowedHere: false,
+    providerReady: provider !== null,
+  });
+
+  async function send(message) {
+    const turnId = `turn-${++turnSequence}`;
+    const turn = await runSaasunaConversationTurn({
+      partnerId: SAASUNA_PARTNER_ID,
+      sessionId,
+      turnId,
+      userMessage: message,
+    }, { provider });
+    return freezeDeep({ ...entryState(), turn });
+  }
+
+  return freezeDeep({
+    open: entryState,
+    send,
+    status: () => freezeDeep({ ...entryState(), sessionId, turnSequence }),
+  });
+}
+
 export const PARTNER_CONVERSATION_CORE_ID = CORE_ID;
 export const PARTNER_CONVERSATION_USE_SITE = SOURCE_USE_SITE;
+export const PARTNER_CONVERSATION_ENTRY_SCREEN_ID = ENTRY_SCREEN_ID;

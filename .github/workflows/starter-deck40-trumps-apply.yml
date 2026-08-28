@@ -1,0 +1,123 @@
+name: starter-deck40-trumps-apply
+
+on:
+  push:
+    branches:
+      - work/starter-deck40-trumps-20260829
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-gate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply fixed starter deck root repair
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+
+          path = Path('browser/GAMEROAD.html')
+          s = path.read_text(encoding='utf-8')
+
+          ranks = ['A','2','3','4','5','6','7','8','9','10','J','Q','K']
+          starter = [f'{suit}_{rank}' for suit in ('SP','DI','CL') for rank in ranks] + ['HT_A']
+          legacy = ['SP_A','SP_2','SP_3','SP_4','SP_5','SP_6','HT_A','HT_2','HT_3','HT_4','HT_5','HT_6','DI_A','DI_2','DI_3','DI_4','DI_5','DI_6','CL_A','CL_2','CL_3','CL_4','CL_5','CL_6','SP_7','HT_7']
+          assert len(starter) == 40 and len(set(starter)) == 40
+          assert starter[-1] == 'HT_A'
+
+          starter_js = json.dumps(starter, ensure_ascii=False, separators=(',', ':'))
+          legacy_js = json.dumps(legacy, ensure_ascii=False, separators=(',', ':'))
+
+          s, n = re.subn(r'window\.__DEFAULT_DECK__=\[[^\]]*\];', f'window.__DEFAULT_DECK__={starter_js};', s, count=1)
+          if n != 1:
+              raise SystemExit(f'expected one __DEFAULT_DECK__, got {n}')
+
+          s = s.replace('id="r4DeckTotal">26</strong>', 'id="r4DeckTotal">40</strong>')
+          s = s.replace('id="r4TrayCount">26 / 40</b>', 'id="r4TrayCount">40 / 40</b>')
+
+          royal_pattern = r"for\(const r of ROYAL_RANKS\)if\(st\.ranks\[r\]!==DECK_RULE\.royalRequired\)errors\.push\(`ロイヤルカード\$\{r\}はデッキに1枚必要です（現在\$\{st\.ranks\[r\]\}枚）`\);"
+          s, royal_n = re.subn(royal_pattern, '', s, count=1)
+          if royal_n != 1:
+              raise SystemExit(f'expected one fabricated royal-rank blocker, got {royal_n}')
+
+          marker = 'function cardLabel(id){'
+          if marker not in s:
+              raise SystemExit('cardLabel insertion marker missing')
+          helper = (
+              f"const LEGACY_FABRICATED_DEFAULT_DECK={legacy_js};\n"
+              "function isLegacyFabricatedDefaultDeck(deck){return !!deck&&Array.isArray(deck.main)&&Array.isArray(deck.ex)&&deck.ex.length===0&&deck.main.length===LEGACY_FABRICATED_DEFAULT_DECK.length&&deck.main.every((id,i)=>id===LEGACY_FABRICATED_DEFAULT_DECK[i])}\n"
+              "function migrateLegacyFabricatedDefaultDeckInMemory(){const next=()=>({main:[...window.__DEFAULT_DECK__],ex:[]});if(isLegacyFabricatedDefaultDeck(state.savedDeck))state.savedDeck=next();if(isLegacyFabricatedDefaultDeck(state.deckDraft))state.deckDraft=next()}\n"
+          )
+          if 'LEGACY_FABRICATED_DEFAULT_DECK=' not in s:
+              s = s.replace(marker, helper + marker, 1)
+
+          s, render_cards_n = re.subn(r'function renderCards\(\)\{(?!migrateLegacyFabricatedDefaultDeckInMemory\(\);)', 'function renderCards(){migrateLegacyFabricatedDefaultDeckInMemory();', s, count=1)
+          if render_cards_n != 1 and 'function renderCards(){migrateLegacyFabricatedDefaultDeckInMemory();' not in s:
+              raise SystemExit('renderCards migration hook missing')
+
+          s, setup_n = re.subn(r'function renderSetupDeckStatus\(\)\{(?!migrateLegacyFabricatedDefaultDeckInMemory\(\);)', 'function renderSetupDeckStatus(){migrateLegacyFabricatedDefaultDeckInMemory();', s, count=1)
+          if setup_n != 1 and 'function renderSetupDeckStatus(){migrateLegacyFabricatedDefaultDeckInMemory();' not in s:
+              raise SystemExit('renderSetupDeckStatus migration hook missing')
+
+          path.write_text(s, encoding='utf-8')
+
+          test = Path('browser/starter-deck40-trumps-contract.mjs')
+          test.write_text(r'''import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+
+          const src = fs.readFileSync(new URL('./GAMEROAD.html', import.meta.url), 'utf8');
+          const m = src.match(/window\.__DEFAULT_DECK__=(\[[^\]]*\]);/);
+          assert.ok(m, 'starter deck definition missing');
+          const deck = JSON.parse(m[1]);
+          const ranks = ['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+          const expected = ['SP','DI','CL'].flatMap(suit => ranks.map(rank => `${suit}_${rank}`)).concat('HT_A');
+          assert.deepEqual(deck, expected);
+          assert.equal(deck.length, 40);
+          assert.equal(new Set(deck).size, 40);
+          assert.equal(deck.filter(id => id.startsWith('HT_')).length, 1);
+          assert.equal(deck.includes('HT_A'), true);
+          assert.equal(/id="r4DeckTotal">26</.test(src), false);
+          assert.equal(/id="r4TrayCount">26 \/ 40</.test(src), false);
+          assert.equal(src.includes('LEGACY_FABRICATED_DEFAULT_DECK='), true);
+          assert.equal(src.includes('function renderCards(){migrateLegacyFabricatedDefaultDeckInMemory();'), true);
+          assert.equal(src.includes('function renderSetupDeckStatus(){migrateLegacyFabricatedDefaultDeckInMemory();'), true);
+          assert.equal(src.includes('ロイヤルカード${r}はデッキに1枚必要です'), false);
+          console.log('starter-deck40-trumps-contract: PASS');
+          ''', encoding='utf-8')
+          PY
+      - name: Starter deck contract
+        run: node browser/starter-deck40-trumps-contract.mjs
+      - name: Existing focused contracts
+        shell: bash
+        run: |
+          set -e
+          for f in browser/save-recovery-contract.mjs browser/browser-save-recovery-contract.mjs; do
+            if [ -f "$f" ]; then node "$f"; fi
+          done
+      - name: Diff guard
+        shell: bash
+        run: |
+          set -e
+          changed="$(git diff --name-only)"
+          echo "$changed"
+          test -n "$changed"
+          bad="$(printf '%s\n' "$changed" | grep -vE '^(browser/GAMEROAD\.html|browser/starter-deck40-trumps-contract\.mjs)$' || true)"
+          test -z "$bad"
+      - name: Commit product repair
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add browser/GAMEROAD.html browser/starter-deck40-trumps-contract.mjs
+          git commit -m "Fix starter deck to specified 40 trumps"
+          git push origin HEAD:work/starter-deck40-trumps-20260829

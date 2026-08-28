@@ -37,10 +37,10 @@ function queuePacket() {
   };
 }
 
-test('safe bounded work stays local', () => {
+test('safe bounded work stays locally eligible but router grants no mutation authority', () => {
   const out = routeLunaSol(SAFE);
   assert.equal(out.route, ROUTES.LOCAL_EXECUTE);
-  assert.equal(out.mayMutate, true);
+  assert.equal(out.mayMutate, false);
   assert.equal(out.needsSol, false);
 });
 
@@ -48,6 +48,7 @@ test('spec conflict routes to Sol precheck', () => {
   const out = routeLunaSol({ ...SAFE, specConflict: true });
   assert.equal(out.route, ROUTES.SOL_PRECHECK);
   assert.ok(out.reasonCodes.includes('SPEC_CONFLICT'));
+  assert.equal(out.mayMutate, false);
 });
 
 test('cross-cutting unresolved work routes to Sol precheck', () => {
@@ -67,10 +68,18 @@ test('first uncertain failure routes to Sol failure requery', () => {
   assert.equal(out.route, ROUTES.SOL_FAILURE_REQUERY);
 });
 
-test('first known low-risk local repair stays local', () => {
+test('first known low-risk local repair is only eligible until evidence gate passes', () => {
   const out = routeLunaSol({ ...SAFE, failureCount: 1, rootCauseKnown: true });
   assert.equal(out.route, ROUTES.LOCAL_EXECUTE);
+  assert.equal(out.mayMutate, false);
   assert.deepEqual(out.reasonCodes, ['KNOWN_LOCAL_REPAIR']);
+});
+
+test('low-risk unknown-cause work cannot gain mutation authority from routing alone', () => {
+  const out = routeLunaSol({ ...SAFE, rootCauseKnown: false });
+  assert.equal(out.route, ROUTES.LOCAL_EXECUTE);
+  assert.equal(out.mayMutate, false);
+  assert.deepEqual(out.reasonCodes, ['LOCAL_DECISION_SUFFICIENT']);
 });
 
 test('repeated same-class failures escalate to Sol', () => {
@@ -112,9 +121,10 @@ test('Sol-required decision holds when packet is not ready', () => {
   assert.deepEqual(out.reasonCodes, ['SOL_REQUIRED_PACKET_NOT_READY']);
 });
 
-test('transport unavailable does not block pure local work', () => {
+test('transport unavailable does not block pure local eligibility', () => {
   const out = routeLunaSol({ ...SAFE, transportAvailable: false });
   assert.equal(out.route, ROUTES.LOCAL_EXECUTE);
+  assert.equal(out.mayMutate, false);
 });
 
 test('normalization rejects invalid enums and failure counts', () => {
@@ -122,13 +132,14 @@ test('normalization rejects invalid enums and failure counts', () => {
   assert.throws(() => normalizeRouterInput({ failureCount: -1 }), /failureCount_must_be_nonnegative_integer/);
 });
 
-test('executor-bus seam preserves queue identity and returns decision', () => {
+test('executor-bus seam preserves queue identity but does not mint mutation authority', () => {
   const out = routeExecutorQueue({ action: 'luna-sol-route', queuePacket: queuePacket(), signals: SAFE });
   assert.equal(out.ok, true);
   assert.equal(out.taskId, queuePacket().taskId);
   assert.equal(out.workUnitKey, queuePacket().workUnitKey);
   assert.equal(out.acquireKey, queuePacket().acquireKey);
   assert.equal(out.decision.route, ROUTES.LOCAL_EXECUTE);
+  assert.equal(out.decision.mayMutate, false);
 });
 
 test('executor-bus seam rejects unsupported action', () => {

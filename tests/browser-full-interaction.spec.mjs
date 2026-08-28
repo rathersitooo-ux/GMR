@@ -1127,6 +1127,22 @@ test('covers visible 2v2 Battle shell, info/log drawer, range, partner advice, u
   });
   expect(staleProjection?.activeCount).toBe(0);
   await expect(battle.locator('[data-partner-advice-role="partner-recommendation"]')).toHaveCount(0);
+
+  const queuedScheduleFence = await page.evaluate(async () => {
+    const board = window.__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__;
+    const stale = window.__GAMEROAD_PARTNER_ADVICE_STALE__?.() ?? { status: 'blocked', kind: 'stale', error: 'STALE_STATE' };
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    document.querySelector('section[data-screen="battle"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    const staleResult = await board?.render?.(stale);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return {
+      staleActiveCount: staleResult?.activeCount ?? null,
+      finalActiveCount: board?.snapshot?.().activeCount ?? null,
+    };
+  });
+  expect(queuedScheduleFence.staleActiveCount).toBe(0);
+  expect(queuedScheduleFence.finalActiveCount, 'a queued auto-render cannot revive recommendations after a newer stale render').toBe(0);
+
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await battle.locator('#partnerAdviceBtn').click();
   await expect.poll(async () => battle.locator('[data-partner-advice-role="partner-recommendation"]').count()).toBe(2);

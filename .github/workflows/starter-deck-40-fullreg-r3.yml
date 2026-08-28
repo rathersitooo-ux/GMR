@@ -1,0 +1,40 @@
+name: starter-deck-40-fullreg-r3
+
+on:
+  push:
+    branches:
+      - work/starter-deck-40-product-r3-20260829
+    paths:
+      - .github/workflows/starter-deck-40-fullreg-r3.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-conflicts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Print bounded three-way conflict sides
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show 632c03ec5c1be7facb6b1a0aff95d50bfa61bac9:browser/GAMEROAD.html > /tmp/base.html
+          git show 5ca7793f6a8472583c471f8306d0e50309ebdf75:browser/GAMEROAD.html > /tmp/r3.html
+          cp browser/GAMEROAD.html /tmp/current.html
+          git merge-file -p /tmp/current.html /tmp/base.html /tmp/r3.html > /tmp/merged.html || true
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          s=Path('/tmp/merged.html').read_text(encoding='utf-8')
+          blocks=re.findall(r'<<<<<<<[^\n]*\n(.*?)=======\n(.*?)>>>>>>>[^\n]*\n',s,re.S)
+          print('CONFLICT_COUNT',len(blocks))
+          for i,(cur,r3) in enumerate(blocks,1):
+              print(f'\n=== CONFLICT {i} CURRENT len={len(cur)} ===')
+              print(repr(cur[:2200])); print('...TAIL...',repr(cur[-2200:]))
+              print(f'=== CONFLICT {i} R3 len={len(r3)} ===')
+              print(repr(r3[:2200])); print('...TAIL...',repr(r3[-2200:]))
+          if len(blocks)!=3: raise SystemExit(f'expected 3 conflicts, got {len(blocks)}')
+          PY

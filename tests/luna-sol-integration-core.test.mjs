@@ -91,8 +91,10 @@ function fakeDriver({ responseMutator } = {}) {
   };
 }
 
-test('local decision does not require or invoke browser transport', async () => {
+test('local decision validates and returns the bounded mutation queue without browser transport', async () => {
+  const source = queue();
   const result = await runLunaSolDecision({
+    queuePacket: source,
     routerInput: {
       acceptanceKnown: true,
       rootCauseKnown: true,
@@ -103,6 +105,39 @@ test('local decision does not require or invoke browser transport', async () => 
   assert.equal(result.ok, true);
   assert.equal(result.status, INTEGRATION_STATUS.LOCAL_EXECUTE);
   assert.equal(result.mayMutate, true);
+  assert.equal(result.queuePacket.acquireKey, source.acquireKey);
+  assert.deepEqual(result.queuePacket.exactMutableResources, source.exactMutableResources);
+});
+
+test('local decision without a queue cannot grant mutation permission', async () => {
+  const result = await runLunaSolDecision({
+    routerInput: {
+      acceptanceKnown: true,
+      rootCauseKnown: true,
+      implementationRisk: 'LOW',
+      reversibility: 'EASY',
+    },
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.status, INTEGRATION_STATUS.PACKET_REJECTED);
+  assert.equal(result.reason, 'local_mutation_queue_required');
+  assert.equal(result.mayMutate, false);
+});
+
+test('malformed local mutation queue fails closed before mutation permission', async () => {
+  const result = await runLunaSolDecision({
+    queuePacket: queue({ exactMutableResources: [] }),
+    routerInput: {
+      acceptanceKnown: true,
+      rootCauseKnown: true,
+      implementationRisk: 'LOW',
+      reversibility: 'EASY',
+    },
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.status, INTEGRATION_STATUS.PACKET_REJECTED);
+  assert.match(result.reason, /^queue_/);
+  assert.equal(result.mayMutate, false);
 });
 
 test('Sol-required decision without a driver fails closed as HOLD', async () => {

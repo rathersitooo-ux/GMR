@@ -9,6 +9,8 @@ import {
 const CORE_ID = 'gameroad.partner-conversation-core.v1';
 const COLLECTIVE_CONTEXT_SCHEMA = 'gameroad.partner-conversation-collective-context.v1';
 const KNOWLEDGE_CONTEXT_SCHEMA = 'gameroad.partner-knowledge-context.v1';
+const SESSION_CONTEXT_SCHEMA = 'gameroad.partner-conversation-session-context.v1';
+const SESSION_CONTEXT_MAX_TURNS = 4;
 const SOURCE_USE_SITE = 'partner-conversation';
 const ENTRY_SCREEN_ID = 'partner-conversation';
 const KNOWLEDGE_TOP_LEVEL_KEYS = new Set([
@@ -247,12 +249,31 @@ function createDefaultSessionId() {
   return exactToken(uuid) ?? `session-${Date.now().toString(36)}`;
 }
 
+function createSessionContext(sessionId, turns) {
+  if (!Array.isArray(turns) || turns.length === 0) return null;
+  return freezeDeep({
+    schemaVersion: SESSION_CONTEXT_SCHEMA,
+    partnerId: SAASUNA_PARTNER_ID,
+    useSite: SOURCE_USE_SITE,
+    sessionId,
+    transientOnly: true,
+    persistenceAllowed: false,
+    turns: turns.slice(-SESSION_CONTEXT_MAX_TURNS).map((turn) => freezeDeep({
+      turnId: turn.turnId,
+      userMessage: turn.userMessage,
+      assistantUtterance: turn.assistantUtterance,
+      responseOrigin: turn.responseOrigin,
+    })),
+  });
+}
+
 export function createSaasunaConversationEntry({ provider = null, createSessionId = createDefaultSessionId } = {}) {
   if (provider !== null && typeof provider?.sendMessage !== 'function') throw new TypeError('PROVIDER_INVALID');
   if (typeof createSessionId !== 'function') throw new TypeError('CREATE_SESSION_ID_REQUIRED');
   const sessionId = exactToken(createSessionId());
   if (!sessionId) throw new TypeError('SESSION_ID_INVALID');
   let turnSequence = 0;
+  const sessionTurns = [];
 
   const entryState = () => freezeDeep({
     screenId: ENTRY_SCREEN_ID,
@@ -265,13 +286,31 @@ export function createSaasunaConversationEntry({ provider = null, createSessionI
 
   async function send(message, { knowledgeContext = null } = {}) {
     const turnId = `turn-${++turnSequence}`;
+    const text = userMessage(message);
+    const sessionContext = createSessionContext(sessionId, sessionTurns);
+    const scopedProvider = provider ? {
+      async sendMessage(request) {
+        return provider.sendMessage(freezeDeep({ ...request, sessionContext }));
+      },
+    } : null;
     const turn = await runSaasunaConversationTurn({
       partnerId: SAASUNA_PARTNER_ID,
       sessionId,
       turnId,
       userMessage: message,
       knowledgeContext,
-    }, { provider });
+    }, { provider: scopedProvider });
+    if (turn.ok && text) {
+      sessionTurns.push(freezeDeep({
+        turnId,
+        userMessage: text,
+        assistantUtterance: turn.utterance,
+        responseOrigin: turn.responseOrigin,
+      }));
+      if (sessionTurns.length > SESSION_CONTEXT_MAX_TURNS) {
+        sessionTurns.splice(0, sessionTurns.length - SESSION_CONTEXT_MAX_TURNS);
+      }
+    }
     return freezeDeep({ ...entryState(), turn });
   }
 

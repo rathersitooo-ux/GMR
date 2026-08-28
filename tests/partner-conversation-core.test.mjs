@@ -422,3 +422,127 @@ test('entry can pass one turn of source-bound knowledge into the existing conver
   });
   assert.equal(seen.items[0].evidenceId, 'k-entry');
 });
+
+test('entry session context starts empty and carries only completed prior turns', async () => {
+  const seen = [];
+  const entry = createSaasunaConversationEntry({
+    createSessionId: () => 'session-context',
+    provider: {
+      async sendMessage(request) {
+        seen.push(request);
+        return {
+          kind: 'utterance_candidate',
+          partnerId: request.partnerId,
+          dialogueVersion: request.dialogueVersion,
+          sourceId: request.sourceId,
+          text: `返答${seen.length}`,
+        };
+      },
+    },
+  });
+  await entry.send('最初の話');
+  await entry.send('その続き');
+  assert.equal(seen[0].sessionContext, null);
+  assert.equal(seen[1].sessionContext.schemaVersion, 'gameroad.partner-conversation-session-context.v1');
+  assert.equal(seen[1].sessionContext.sessionId, 'session-context');
+  assert.equal(seen[1].sessionContext.transientOnly, true);
+  assert.equal(seen[1].sessionContext.persistenceAllowed, false);
+  assert.deepEqual(seen[1].sessionContext.turns, [{
+    turnId: 'turn-1',
+    userMessage: '最初の話',
+    assistantUtterance: '返答1',
+    responseOrigin: 'provider_candidate',
+  }]);
+});
+
+test('entry session context is bounded to the four most recent completed turns', async () => {
+  const seen = [];
+  const entry = createSaasunaConversationEntry({
+    createSessionId: () => 'session-bounded',
+    provider: {
+      async sendMessage(request) {
+        seen.push(request);
+        return {
+          kind: 'utterance_candidate',
+          partnerId: request.partnerId,
+          dialogueVersion: request.dialogueVersion,
+          sourceId: request.sourceId,
+          text: `r${seen.length}`,
+        };
+      },
+    },
+  });
+  for (let index = 1; index <= 6; index += 1) await entry.send(`u${index}`);
+  assert.equal(seen[5].sessionContext.turns.length, 4);
+  assert.deepEqual(seen[5].sessionContext.turns.map((turn) => turn.turnId), ['turn-2', 'turn-3', 'turn-4', 'turn-5']);
+  assert.deepEqual(seen[5].sessionContext.turns.map((turn) => turn.userMessage), ['u2', 'u3', 'u4', 'u5']);
+});
+
+test('session context does not persist across entries or leak through returned state', async () => {
+  const firstSeen = [];
+  const first = createSaasunaConversationEntry({
+    createSessionId: () => 'session-a',
+    provider: {
+      async sendMessage(request) {
+        firstSeen.push(request);
+        return {
+          kind: 'utterance_candidate',
+          partnerId: request.partnerId,
+          dialogueVersion: request.dialogueVersion,
+          sourceId: request.sourceId,
+          text: '一つ目の返答',
+        };
+      },
+    },
+  });
+  const secret = 'SESSION ONLY SECRET';
+  const returned = await first.send(secret);
+  assert.equal(JSON.stringify(returned).includes(secret), false);
+  assert.equal(JSON.stringify(first.status()).includes(secret), false);
+
+  const secondSeen = [];
+  const second = createSaasunaConversationEntry({
+    createSessionId: () => 'session-b',
+    provider: {
+      async sendMessage(request) {
+        secondSeen.push(request);
+        return {
+          kind: 'utterance_candidate',
+          partnerId: request.partnerId,
+          dialogueVersion: request.dialogueVersion,
+          sourceId: request.sourceId,
+          text: '別セッション',
+        };
+      },
+    },
+  });
+  await second.send('新規');
+  assert.equal(secondSeen[0].sessionContext, null);
+});
+
+test('approved fallback remains usable as ephemeral context on the next turn', async () => {
+  const seen = [];
+  let calls = 0;
+  const entry = createSaasunaConversationEntry({
+    createSessionId: () => 'session-fallback-context',
+    provider: {
+      async sendMessage(request) {
+        seen.push(request);
+        calls += 1;
+        if (calls === 1) throw new Error('provider temporarily unavailable');
+        return {
+          kind: 'utterance_candidate',
+          partnerId: request.partnerId,
+          dialogueVersion: request.dialogueVersion,
+          sourceId: request.sourceId,
+          text: '復帰しました。',
+        };
+      },
+    },
+  });
+  const first = await entry.send('一つ目');
+  assert.equal(first.turn.responseOrigin, 'approved_fallback');
+  await entry.send('二つ目');
+  assert.equal(seen[1].sessionContext.turns[0].assistantUtterance, first.turn.utterance);
+  assert.equal(seen[1].sessionContext.turns[0].responseOrigin, 'approved_fallback');
+});

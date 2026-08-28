@@ -1,6 +1,16 @@
 const BOARD_SCHEMA = 'gameroad.battle-board-visual-explanation.v1';
 const PARTNER_SCHEMA = 'gameroad.partner-advice-board-projection.v1';
-const RULE_ROLES = Object.freeze(['current', 'selected', 'reachable', 'path', 'threat', 'forecast']);
+const RULE_ROLES = Object.freeze([
+  'current',
+  'selected',
+  'reachable',
+  'path',
+  'threat',
+  'forecast',
+  'honey',
+  'target',
+  'invalid',
+]);
 const AUTHORITY = Object.freeze({
   current: 'rules-derived',
   selected: 'rules-derived',
@@ -8,6 +18,9 @@ const AUTHORITY = Object.freeze({
   path: 'rules-derived',
   threat: 'rules-derived',
   forecast: 'rules-derived',
+  honey: 'rules-derived',
+  target: 'rules-derived',
+  invalid: 'rules-derived',
   'partner-recommendation': 'partner-heuristic',
 });
 
@@ -25,6 +38,9 @@ function emptyChannels() {
     path: Object.freeze([]),
     threat: Object.freeze([]),
     forecast: Object.freeze([]),
+    honey: Object.freeze([]),
+    target: Object.freeze([]),
+    invalid: Object.freeze([]),
   });
 }
 
@@ -143,7 +159,10 @@ function buildRolesByPosition(validPositions, channels, recommendation) {
 
 /**
  * Produces semantic presentation roles only. It does not infer legality, mutate game state,
- * choose a move, or encode any particular game's visual skin.
+ * choose a move, decide where honey may be collected, or encode any visual skin.
+ *
+ * `honeyPositionIds`, `targetPositionIds`, and `invalidPositionIds` must therefore come from
+ * authoritative game state/rules. This module only validates and projects those meanings.
  */
 export function projectBattleBoardVisualExplanation({
   validPositionIds,
@@ -153,6 +172,9 @@ export function projectBattleBoardVisualExplanation({
   pathPositionIds = [],
   threatPositionIds = [],
   forecastPositionIds = [],
+  honeyPositionIds = [],
+  targetPositionIds = [],
+  invalidPositionIds = [],
   partnerProjection = null,
   revisionToken = null,
   currentRevisionToken = null,
@@ -178,6 +200,9 @@ export function projectBattleBoardVisualExplanation({
       path: orderedPath(pathPositionIds, validSet),
       threat: canonicalSetList(threatPositionIds, validSet, canonicalIndex),
       forecast: canonicalSetList(forecastPositionIds, validSet, canonicalIndex),
+      honey: canonicalSetList(honeyPositionIds, validSet, canonicalIndex),
+      target: canonicalSetList(targetPositionIds, validSet, canonicalIndex),
+      invalid: canonicalSetList(invalidPositionIds, validSet, canonicalIndex),
     });
   } catch (error) {
     return failed(error?.message === 'INVALID_POSITION_LIST' ? 'INVALID_POSITION_LIST' : 'UNKNOWN_POSITION_ID');

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-BIGDATA-PARTNER-CONVERSATION-R1-20260829T0146",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "PARTNER_CONVERSATION_COLLECTIVE_CONTEXT_R1",
+  "acquireKey": "BIGDATA-PARTNER-CONVERSATION-R1-20260829T0146-SOL-Q6N3V9K4M7PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PRED-BIGDATA-PARTNER-CONTEXT-R1-CURRENT-NONCONFLICT-20260829T0156JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOCAL-NODE-BIGDATA-PARTNER-CONTEXT-7OF7-20260829T0157JST",
+  "proceedToken": "PROCEED|VWORK-BIGDATA-PARTNER-CONVERSATION-R1-20260829T0146|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_LEASE_AND_LOCAL_TEST_PASS",
+  "authorizationBaseSha": "1d956f6537c65c1a9f84aa4e82ade054293afce3",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "PARTNER_CONVERSATION_COLLECTIVE_CONTEXT_R1",
+  "leaseAcquireKey": "BIGDATA-PARTNER-CONVERSATION-R1-20260829T0146-SOL-Q6N3V9K4M7PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 01:56 JST",
+  "leaseUntilJst": "2026-08-29 02:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh base 1d956f6537c65c1a9f84aa4e82ade054293afce3; branch work/bigdata-partner-conversation-r1-20260829; transient data/preaction-authorizations/VWORK-BIGDATA-PARTNER-CONVERSATION-R1-20260829T0146.json create-first/delete-before-final-head; browser/partner-conversation-collective-context.mjs; tests/partner-conversation-collective-context.test.mjs; row1358 Y:AB; own lease row8; R22 records. browser/GAMEROAD.html/existing collective evaluators/workflows/telemetry/persona/save/game/economy excluded.",
+  "scope": [
+    "browser/partner-conversation-collective-context.mjs",
+    "tests/partner-conversation-collective-context.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-conversation-collective-context.mjs",
+    "tests/partner-conversation-collective-context.test.mjs"
+  ]
+}

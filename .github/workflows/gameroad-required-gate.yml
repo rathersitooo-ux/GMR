@@ -98,6 +98,8 @@ jobs:
               browser/quick-deck-overlay-presentation.mjs|\
               tests/cards-deck-presentation.test.mjs|\
               tests/quick-deck-overlay-presentation.test.mjs|\
+              browser/battle-plan-hud-presentation-core.mjs|\
+              tests/battle-plan-hud-presentation-core.test.mjs|\
               browser/post-match-autoqueue-core.mjs|\
               tests/post-match-autoqueue-core.test.mjs|\
               browser/screen-navigation-core.mjs|\
@@ -410,6 +412,7 @@ jobs:
           node --test tests/home-boot-presentation.test.mjs
           node --test tests/cards-deck-presentation.test.mjs
           node --test tests/quick-deck-overlay-presentation.test.mjs
+          node --test tests/battle-plan-hud-presentation-core.test.mjs
           node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
 
       - name: Run Fossil excavation state core tests

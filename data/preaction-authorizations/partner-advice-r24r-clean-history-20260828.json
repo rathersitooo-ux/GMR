@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "partner-advice-r24r-clean-history-20260828",
+  "taskId": "PARTNER-GOODMOVE-ADVICE-RUNTIME-INTEGRATION-001",
+  "workUnitKey": "PARTNER_ADVICE_STALE_LATEST_WINS_R24",
+  "acquireKey": "PARTNER-ADVICE-R24-20260828T2247-SOL-Q6N3V8K4M7PX",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PARTNER-ADVICE-R24R-PRED-STALE-SUPPRESSION-RECOVERY",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PARTNER-ADVICE-R24-NODE-RUNTIME-PASS-AND-DETERMINISTIC-STALE-REGRESSION",
+  "proceedToken": "PROCEED|partner-advice-r24r-clean-history-20260828|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|Q6N3V8K4",
+  "authorizationBaseSha": "b48c3e1fd30df1335b48431381e64487cc45ae5b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-GOODMOVE-ADVICE-RUNTIME-INTEGRATION-001",
+  "leaseWorkUnitKey": "PARTNER_ADVICE_STALE_LATEST_WINS_R24",
+  "leaseAcquireKey": "PARTNER-ADVICE-R24-20260828T2247-SOL-Q6N3V8K4M7PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-28 22:52 JST",
+  "leaseUntilJst": "2026-08-28 23:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A12:L12",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR Partner Advice R24 active lease only: data/preaction-authorizations/partner-advice-r24r-clean-history-20260828.json transient authorization create/delete; browser/GAMEROAD.html only for stale-suppression/latest-wins Partner Advice projection scheduling; tests/browser-full-interaction.spec.mjs only for deterministic stale queued-render regression and explicit user refresh recovery. No Battle rules, save/network/economy, deploy, permanent workflow, asset, Home/Character, or other owner resource mutation.",
+  "scope": [
+    "data/preaction-authorizations/partner-advice-r24r-clean-history-20260828.json",
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "data/preaction-authorizations/partner-advice-r24r-clean-history-20260828.json",
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

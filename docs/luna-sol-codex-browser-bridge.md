@@ -1,0 +1,132 @@
+# Codex browser bridge for Luna + Sol R1
+
+This branch adds the missing executor-facing bridge between the static Luna/Sol integration and the browser that Codex can operate in the ChatGPT desktop app.
+
+It deliberately does **not** pretend that a Node process can directly invoke Codex's private browser tool. Instead it uses a two-phase agent protocol:
+
+1. repository code prepares a bounded Sol packet and a browser action;
+2. Codex performs the browser action with its approved browser capability;
+3. Codex returns durable browser evidence to repository code;
+4. repository code validates correlation, freshness, completeness, scope, and the Sol response schema before the proposal can be reviewed.
+
+A validated Sol response is still a proposal. It never grants mutation permission automatically.
+
+## Why this shape
+
+Codex can use the ChatGPT desktop app's in-app browser on Windows. OpenAI also documents a Developer mode option that gives Codex controlled Chrome DevTools Protocol access for deeper page-state inspection. The repository should consume that capability through Codex, rather than inventing an undocumented localhost CDP endpoint or embedding brittle external browser automation.
+
+Official product references:
+
+- https://help.openai.com/en/articles/20001277-using-the-built-in-browser-in-the-chatgpt-desktop-app
+- https://help.openai.com/en/articles/11369540-using-codex-with-your-chatgpt-plan
+
+The bridge does not require full CDP when Codex can already provide stable conversation and assistant-turn identity. If those identities are not observable, enable Browser Developer mode / full CDP access only after the required user approval and use it to capture stable page-state evidence.
+
+## Phase A: prepare
+
+Call `prepareLunaSolCodexDispatch(...)` from `tools/luna-sol-codex-browser-bridge.mjs`.
+
+For a local decision it returns `LOCAL_EXECUTE` and does not touch the browser path.
+
+For a Sol-required decision the caller must first confirm that the Codex browser capability is actually available and provide a browser preflight snapshot:
+
+- page is ready and not loading;
+- composer is ready;
+- stable `conversationId` for the current ChatGPT conversation;
+- stable `lastAssistantTurnId` captured before submit.
+
+If any of these are absent the bridge returns `BROWSER_PREFLIGHT_REQUIRED` and remains non-mutating.
+
+When preflight succeeds, the bridge returns `BROWSER_ACTION_REQUIRED` with:
+
+- the exact message to submit once;
+- expected conversation identity;
+- baseline assistant-turn identity;
+- a serializable correlation bundle needed by Phase B;
+- the browser evidence that must be captured.
+
+### CLI runner
+
+Codex can use the file-oriented runner instead of importing the module directly:
+
+```text
+node tools/luna-sol-codex-browser-bridge-runner.mjs prepare --input codex-sol-input.json --output codex-sol-prepared.json
+node tools/luna-sol-codex-browser-bridge-runner.mjs resume --bundle codex-sol-bundle.json --evidence codex-sol-evidence.json --output codex-sol-result.json
+node tools/luna-sol-codex-browser-bridge-runner.mjs verify-receipt --receipt codex-sol-receipt.json --bundle codex-sol-bundle.json --evidence codex-sol-evidence.json --output codex-sol-receipt-verified.json
+```
+
+The runner only reads/writes bridge JSON. It does not control the browser and does not mutate product files. When the prepare result is `BROWSER_ACTION_REQUIRED`, persist the returned `bundle` unchanged for the resume phase and use only the returned `browserAction.message` for the single browser submit.
+
+## Phase B: Codex browser action
+
+Codex performs exactly one send into the approved ChatGPT conversation and waits for a completed assistant response.
+
+Required evidence:
+
+- submit accepted exactly once;
+- same conversation as preflight;
+- new assistant turn different from the baseline turn;
+- completed state;
+- response not truncated;
+- full response text including the exact GAMEROAD packet/correlation marker.
+
+If submit was confirmed but response collection becomes uncertain, do **not** resend immediately. Inspect the same conversation first. This prevents duplicate Sol requests caused by collector uncertainty.
+
+## Phase C: resume, validate, and record
+
+Call `resumeLunaSolCodexDispatch(preparedBundle, browserEvidence)`.
+
+The bridge rejects:
+
+- stale turns;
+- wrong conversations;
+- incomplete or truncated responses;
+- missing correlation markers;
+- malformed Sol response envelopes;
+- mismatched task/work-unit/acquire identity;
+- out-of-scope files;
+- protected-file overlap;
+- incomplete acceptance coverage.
+
+Successful validation returns `SOL_RESPONSE_VALIDATED` with `mayMutate: false` and a deterministic `roundTripReceipt`.
+
+The receipt binds the validated run to:
+
+- task/work-unit/acquire/request identity;
+- reasoning-packet fingerprint;
+- packet/correlation/response marker;
+- conversation identity;
+- baseline and new assistant-turn identity;
+- SHA-256 of the complete captured assistant response;
+- validated Sol disposition;
+- the invariant `mayMutate: false`.
+
+Persist `roundTripReceipt` separately from the full browser evidence. `verifyLunaSolCodexRoundTripReceipt(...)` or the `verify-receipt` CLI command regenerates the receipt from the original bundle and browser evidence and rejects any mismatch. The receipt is a durable correlation record, not a substitute for preserving the source browser evidence.
+
+The executor must still review the proposal, preserve the active WorkUnit/AcquireKey, perform any actual mutation itself, run acceptance tests, collect use-site/runtime evidence, sync CURRENT, read back the saved state, and release/checkpoint according to the normal GAMEROAD workflow.
+
+## Windows/Codex operating sequence
+
+1. Open the GAMEROAD project in Codex on Windows.
+2. Open the ChatGPT desktop in-app browser from Codex/Work (Ctrl+Shift+B is the documented Windows shortcut).
+3. Sign in inside the browser itself. Do not copy credentials into task packets or chat prompts.
+4. Keep one dedicated ChatGPT conversation for the active Sol request.
+5. Capture the preflight conversation/assistant-turn identity.
+6. Run Phase A and obtain the bounded browser action.
+7. Submit the generated message once using Codex browser use.
+8. Wait for the completed assistant turn and capture the required evidence.
+9. Run Phase C and save the returned `roundTripReceipt`.
+10. Run `verify-receipt` against the saved receipt, original bundle, and original evidence.
+11. Only after validated review may the executor decide whether a bounded implementation attempt is authorized by the existing GAMEROAD execution rules.
+
+## Status boundary
+
+Repository/unit validation and a synthetic transport driver do not prove a real browser round trip.
+
+Use these status meanings:
+
+- `PRE_BLACKBOX`: no real Windows/Codex browser round trip has been captured yet.
+- `BROWSER_BLACKBOX_VALIDATED`: a real Windows/Codex run produced browser evidence, `SOL_RESPONSE_VALIDATED`, and a round-trip receipt that verifies against the original bundle/evidence.
+- `END_TO_END_ACCEPTANCE_VALIDATED`: after browser validation, the executor also completed the bounded downstream work and its normal acceptance/runtime/readback evidence.
+
+Until a real Windows/Codex run records preflight identity, exactly one actual submit, one new completed ChatGPT assistant turn, the exact correlation marker, validated Sol response, and a verified durable round-trip receipt, the browser path remains `PRE_BLACKBOX`.

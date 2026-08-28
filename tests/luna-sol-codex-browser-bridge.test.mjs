@@ -3,8 +3,10 @@ import test from 'node:test';
 
 import {
   CODEX_BROWSER_BRIDGE_STATUS,
+  CODEX_BROWSER_ROUNDTRIP_RECEIPT_SCHEMA_VERSION,
   prepareLunaSolCodexDispatch,
   resumeLunaSolCodexDispatch,
+  verifyLunaSolCodexRoundTripReceipt,
 } from '../tools/luna-sol-codex-browser-bridge.mjs';
 
 function queue(overrides = {}) {
@@ -195,14 +197,22 @@ test('resume rejects response missing exact transport correlation marker', () =>
   assert.equal(result.reason, 'browser_response_correlation_marker_missing');
 });
 
-test('validated Sol PLAN remains a reviewed proposal and never grants mutation', () => {
+test('validated Sol PLAN remains a reviewed proposal and emits a deterministic round-trip receipt', () => {
   const prepared = prepareSol();
-  const result = resumeLunaSolCodexDispatch(prepared.bundle, evidenceFor(prepared));
-  assert.equal(result.ok, true);
-  assert.equal(result.status, CODEX_BROWSER_BRIDGE_STATUS.SOL_RESPONSE_VALIDATED);
-  assert.equal(result.response.disposition, 'PLAN');
-  assert.equal(result.mayMutate, false);
-  assert.equal(result.executorAction, 'REVIEW_SOL_DECISION_BEFORE_ANY_MUTATION');
+  const evidence = evidenceFor(prepared);
+  const first = resumeLunaSolCodexDispatch(prepared.bundle, evidence);
+  const second = resumeLunaSolCodexDispatch(prepared.bundle, evidence);
+  assert.equal(first.ok, true);
+  assert.equal(first.status, CODEX_BROWSER_BRIDGE_STATUS.SOL_RESPONSE_VALIDATED);
+  assert.equal(first.response.disposition, 'PLAN');
+  assert.equal(first.mayMutate, false);
+  assert.equal(first.executorAction, 'REVIEW_SOL_DECISION_BEFORE_ANY_MUTATION');
+  assert.deepEqual(first.roundTripReceipt, second.roundTripReceipt);
+  assert.equal(first.roundTripReceipt.schemaVersion, CODEX_BROWSER_ROUNDTRIP_RECEIPT_SCHEMA_VERSION);
+  assert.equal(first.roundTripReceipt.baselineAssistantTurnId, 'assistant-0');
+  assert.equal(first.roundTripReceipt.assistantTurnId, 'assistant-1');
+  assert.equal(first.roundTripReceipt.mayMutate, false);
+  assert.match(first.roundTripReceipt.responseSha256, /^[a-f0-9]{64}$/);
 });
 
 test('validated NO_CHANGE remains non-mutating and surfaces acceptance verification', () => {
@@ -221,6 +231,33 @@ test('validated NO_CHANGE remains non-mutating and surfaces acceptance verificat
   );
   assert.equal(result.ok, true);
   assert.equal(result.response.disposition, 'NO_CHANGE');
+  assert.equal(result.roundTripReceipt.disposition, 'NO_CHANGE');
   assert.equal(result.mayMutate, false);
   assert.equal(result.executorAction, 'REVIEW_NO_CHANGE_AND_VERIFY_ACCEPTANCE');
+});
+
+test('round-trip receipt verifies against the original bundle and browser evidence', () => {
+  const prepared = prepareSol();
+  const evidence = evidenceFor(prepared);
+  const resumed = resumeLunaSolCodexDispatch(prepared.bundle, evidence);
+  const verified = verifyLunaSolCodexRoundTripReceipt(resumed.roundTripReceipt, prepared.bundle, evidence);
+  assert.equal(verified.ok, true);
+  assert.equal(verified.status, CODEX_BROWSER_BRIDGE_STATUS.ROUNDTRIP_RECEIPT_VERIFIED);
+  assert.equal(verified.mayMutate, false);
+  assert.deepEqual(verified.receipt, resumed.roundTripReceipt);
+});
+
+test('tampered round-trip receipt is rejected even when source browser evidence remains valid', () => {
+  const prepared = prepareSol();
+  const evidence = evidenceFor(prepared);
+  const resumed = resumeLunaSolCodexDispatch(prepared.bundle, evidence);
+  const tampered = {
+    ...resumed.roundTripReceipt,
+    assistantTurnId: 'assistant-forged',
+  };
+  const verified = verifyLunaSolCodexRoundTripReceipt(tampered, prepared.bundle, evidence);
+  assert.equal(verified.ok, false);
+  assert.equal(verified.status, CODEX_BROWSER_BRIDGE_STATUS.ROUNDTRIP_RECEIPT_REJECTED);
+  assert.equal(verified.reason, 'roundtrip_receipt_mismatch');
+  assert.equal(verified.mayMutate, false);
 });

@@ -52,6 +52,7 @@ Codex can use the file-oriented runner instead of importing the module directly:
 ```text
 node tools/luna-sol-codex-browser-bridge-runner.mjs prepare --input codex-sol-input.json --output codex-sol-prepared.json
 node tools/luna-sol-codex-browser-bridge-runner.mjs resume --bundle codex-sol-bundle.json --evidence codex-sol-evidence.json --output codex-sol-result.json
+node tools/luna-sol-codex-browser-bridge-runner.mjs verify-receipt --receipt codex-sol-receipt.json --bundle codex-sol-bundle.json --evidence codex-sol-evidence.json --output codex-sol-receipt-verified.json
 ```
 
 The runner only reads/writes bridge JSON. It does not control the browser and does not mutate product files. When the prepare result is `BROWSER_ACTION_REQUIRED`, persist the returned `bundle` unchanged for the resume phase and use only the returned `browserAction.message` for the single browser submit.
@@ -71,7 +72,7 @@ Required evidence:
 
 If submit was confirmed but response collection becomes uncertain, do **not** resend immediately. Inspect the same conversation first. This prevents duplicate Sol requests caused by collector uncertainty.
 
-## Phase C: resume and validate
+## Phase C: resume, validate, and record
 
 Call `resumeLunaSolCodexDispatch(preparedBundle, browserEvidence)`.
 
@@ -87,9 +88,22 @@ The bridge rejects:
 - protected-file overlap;
 - incomplete acceptance coverage.
 
-Successful validation returns `SOL_RESPONSE_VALIDATED` with `mayMutate: false`.
+Successful validation returns `SOL_RESPONSE_VALIDATED` with `mayMutate: false` and a deterministic `roundTripReceipt`.
 
-The executor must still review the proposal, preserve the active WorkUnit/AcquireKey, perform the actual mutation itself, run acceptance tests, collect use-site/runtime evidence, sync CURRENT, read back the saved state, and release/checkpoint according to the normal GAMEROAD workflow.
+The receipt binds the validated run to:
+
+- task/work-unit/acquire/request identity;
+- reasoning-packet fingerprint;
+- packet/correlation/response marker;
+- conversation identity;
+- baseline and new assistant-turn identity;
+- SHA-256 of the complete captured assistant response;
+- validated Sol disposition;
+- the invariant `mayMutate: false`.
+
+Persist `roundTripReceipt` separately from the full browser evidence. `verifyLunaSolCodexRoundTripReceipt(...)` or the `verify-receipt` CLI command regenerates the receipt from the original bundle and browser evidence and rejects any mismatch. The receipt is a durable correlation record, not a substitute for preserving the source browser evidence.
+
+The executor must still review the proposal, preserve the active WorkUnit/AcquireKey, perform any actual mutation itself, run acceptance tests, collect use-site/runtime evidence, sync CURRENT, read back the saved state, and release/checkpoint according to the normal GAMEROAD workflow.
 
 ## Windows/Codex operating sequence
 
@@ -101,11 +115,18 @@ The executor must still review the proposal, preserve the active WorkUnit/Acquir
 6. Run Phase A and obtain the bounded browser action.
 7. Submit the generated message once using Codex browser use.
 8. Wait for the completed assistant turn and capture the required evidence.
-9. Run Phase C.
-10. Only after validated review may the executor decide whether a bounded implementation attempt is authorized by the existing GAMEROAD execution rules.
+9. Run Phase C and save the returned `roundTripReceipt`.
+10. Run `verify-receipt` against the saved receipt, original bundle, and original evidence.
+11. Only after validated review may the executor decide whether a bounded implementation attempt is authorized by the existing GAMEROAD execution rules.
 
 ## Status boundary
 
-The static bridge can be unit-tested in the repository, but that is not proof of a real black-box browser round trip.
+Repository/unit validation and a synthetic transport driver do not prove a real browser round trip.
 
-Until a Windows/Codex run records real preflight identity, one actual submit, one new completed ChatGPT assistant turn, the exact correlation marker, validated Sol response, and downstream acceptance evidence, the end-to-end system remains `PRE_BLACKBOX`.
+Use these status meanings:
+
+- `PRE_BLACKBOX`: no real Windows/Codex browser round trip has been captured yet.
+- `BROWSER_BLACKBOX_VALIDATED`: a real Windows/Codex run produced browser evidence, `SOL_RESPONSE_VALIDATED`, and a round-trip receipt that verifies against the original bundle/evidence.
+- `END_TO_END_ACCEPTANCE_VALIDATED`: after browser validation, the executor also completed the bounded downstream work and its normal acceptance/runtime/readback evidence.
+
+Until a real Windows/Codex run records preflight identity, exactly one actual submit, one new completed ChatGPT assistant turn, the exact correlation marker, validated Sol response, and a verified durable round-trip receipt, the browser path remains `PRE_BLACKBOX`.

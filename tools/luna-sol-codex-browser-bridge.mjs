@@ -1,9 +1,12 @@
+import { createHash } from 'node:crypto';
+
 import { packReasoningPacket } from './executor-bus-packet-compressor.mjs';
 import { buildTransportMessage, normalizeTransportRequest } from './chatgpt-browser-transport-core.mjs';
 import { ROUTES, routeLunaSol } from './luna-sol-router-core.mjs';
 import { buildSolPrompt, parseSolResponse } from './sol-reasoning-protocol.mjs';
 
 export const CODEX_BROWSER_BRIDGE_SCHEMA_VERSION = 'gameroad-codex-browser-bridge-v1';
+export const CODEX_BROWSER_ROUNDTRIP_RECEIPT_SCHEMA_VERSION = 'gameroad-codex-browser-roundtrip-receipt-v1';
 
 export const CODEX_BROWSER_BRIDGE_STATUS = Object.freeze({
   LOCAL_EXECUTE: 'LOCAL_EXECUTE',
@@ -16,12 +19,34 @@ export const CODEX_BROWSER_BRIDGE_STATUS = Object.freeze({
   BROWSER_EVIDENCE_REJECTED: 'BROWSER_EVIDENCE_REJECTED',
   RESPONSE_REJECTED: 'RESPONSE_REJECTED',
   SOL_RESPONSE_VALIDATED: 'SOL_RESPONSE_VALIDATED',
+  ROUNDTRIP_RECEIPT_REJECTED: 'ROUNDTRIP_RECEIPT_REJECTED',
+  ROUNDTRIP_RECEIPT_VERIFIED: 'ROUNDTRIP_RECEIPT_VERIFIED',
 });
 
 const SOL_ROUTES = new Set([
   ROUTES.SOL_PRECHECK,
   ROUTES.SOL_FAILURE_REQUERY,
   ROUTES.SOL_ESCALATE,
+]);
+
+const ROUNDTRIP_RECEIPT_KEYS = new Set([
+  'schemaVersion',
+  'kind',
+  'taskId',
+  'workUnitKey',
+  'acquireKey',
+  'requestId',
+  'reasoningPacketFingerprint',
+  'packetId',
+  'transportCorrelationId',
+  'transportResponseMarker',
+  'conversationId',
+  'baselineAssistantTurnId',
+  'assistantTurnId',
+  'responseSha256',
+  'disposition',
+  'validatedStatus',
+  'mayMutate',
 ]);
 
 function cleanString(value, name, { optional = false, max = 4096 } = {}) {
@@ -64,6 +89,10 @@ function identityFromPrompt(promptBuilt) {
     packetId: `grp1:${promptBuilt.request.reasoningPacketFingerprint}`,
     correlationId: `sol:${promptBuilt.request.requestId}`,
   };
+}
+
+function hashText(value) {
+  return createHash('sha256').update(value, 'utf8').digest('hex');
 }
 
 function normalizeBrowserContext(input = {}) {
@@ -131,6 +160,64 @@ function validateBrowserEvidence(bundle, evidence) {
   if (!evidence.responseText) return 'browser_response_empty';
   if (!evidence.responseText.includes(bundle.transportRequest.responseMarker)) return 'browser_response_correlation_marker_missing';
   return '';
+}
+
+function buildRoundTripReceipt(bundle, evidence, parsed) {
+  return {
+    schemaVersion: CODEX_BROWSER_ROUNDTRIP_RECEIPT_SCHEMA_VERSION,
+    kind: 'codex-sol-browser-roundtrip',
+    taskId: bundle.solRequest.taskId,
+    workUnitKey: bundle.solRequest.workUnitKey,
+    acquireKey: bundle.solRequest.acquireKey,
+    requestId: bundle.solRequest.requestId,
+    reasoningPacketFingerprint: bundle.solRequest.reasoningPacketFingerprint,
+    packetId: bundle.transportRequest.packetId,
+    transportCorrelationId: bundle.transportRequest.correlationId,
+    transportResponseMarker: bundle.transportRequest.responseMarker,
+    conversationId: evidence.conversationId,
+    baselineAssistantTurnId: bundle.browserContext.lastAssistantTurnId,
+    assistantTurnId: evidence.assistantTurnId,
+    responseSha256: hashText(evidence.responseText),
+    disposition: parsed.response.disposition,
+    validatedStatus: CODEX_BROWSER_BRIDGE_STATUS.SOL_RESPONSE_VALIDATED,
+    mayMutate: false,
+  };
+}
+
+function normalizeRoundTripReceipt(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('roundtrip_receipt_must_be_object');
+  for (const key of Object.keys(input)) {
+    if (!ROUNDTRIP_RECEIPT_KEYS.has(key)) throw new Error(`roundtrip_receipt_unknown_key:${key}`);
+  }
+  for (const key of ROUNDTRIP_RECEIPT_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(input, key)) throw new Error(`roundtrip_receipt_missing_key:${key}`);
+  }
+  const receipt = {
+    schemaVersion: cleanString(input.schemaVersion, 'roundtrip_receipt_schemaVersion', { max: 120 }),
+    kind: cleanString(input.kind, 'roundtrip_receipt_kind', { max: 80 }),
+    taskId: cleanString(input.taskId, 'roundtrip_receipt_taskId', { max: 240 }),
+    workUnitKey: cleanString(input.workUnitKey, 'roundtrip_receipt_workUnitKey', { max: 240 }),
+    acquireKey: cleanString(input.acquireKey, 'roundtrip_receipt_acquireKey', { max: 300 }),
+    requestId: cleanString(input.requestId, 'roundtrip_receipt_requestId', { max: 120 }),
+    reasoningPacketFingerprint: cleanString(input.reasoningPacketFingerprint, 'roundtrip_receipt_reasoningPacketFingerprint', { max: 120 }),
+    packetId: cleanString(input.packetId, 'roundtrip_receipt_packetId', { max: 300 }),
+    transportCorrelationId: cleanString(input.transportCorrelationId, 'roundtrip_receipt_transportCorrelationId', { max: 300 }),
+    transportResponseMarker: cleanString(input.transportResponseMarker, 'roundtrip_receipt_transportResponseMarker', { max: 500 }),
+    conversationId: cleanString(input.conversationId, 'roundtrip_receipt_conversationId', { max: 500 }),
+    baselineAssistantTurnId: cleanString(input.baselineAssistantTurnId, 'roundtrip_receipt_baselineAssistantTurnId', { max: 500 }),
+    assistantTurnId: cleanString(input.assistantTurnId, 'roundtrip_receipt_assistantTurnId', { max: 500 }),
+    responseSha256: cleanString(input.responseSha256, 'roundtrip_receipt_responseSha256', { max: 64 }),
+    disposition: cleanString(input.disposition, 'roundtrip_receipt_disposition', { max: 40 }),
+    validatedStatus: cleanString(input.validatedStatus, 'roundtrip_receipt_validatedStatus', { max: 80 }),
+    mayMutate: input.mayMutate,
+  };
+  if (receipt.schemaVersion !== CODEX_BROWSER_ROUNDTRIP_RECEIPT_SCHEMA_VERSION) throw new Error('roundtrip_receipt_schema_version');
+  if (receipt.kind !== 'codex-sol-browser-roundtrip') throw new Error('roundtrip_receipt_kind');
+  if (!/^[a-f0-9]{64}$/.test(receipt.responseSha256)) throw new Error('roundtrip_receipt_response_sha256');
+  if (receipt.validatedStatus !== CODEX_BROWSER_BRIDGE_STATUS.SOL_RESPONSE_VALIDATED) throw new Error('roundtrip_receipt_validated_status');
+  if (receipt.mayMutate !== false) throw new Error('roundtrip_receipt_may_mutate_false_required');
+  if (receipt.assistantTurnId === receipt.baselineAssistantTurnId) throw new Error('roundtrip_receipt_stale_turn');
+  return receipt;
 }
 
 export function prepareLunaSolCodexDispatch(input = {}) {
@@ -319,8 +406,37 @@ export function resumeLunaSolCodexDispatch(preparedBundle, browserEvidence) {
       complete: evidence.complete,
       truncated: evidence.truncated,
     },
+    roundTripReceipt: buildRoundTripReceipt(bundle, evidence, parsed),
     executorAction: parsed.response.disposition === 'NO_CHANGE'
       ? 'REVIEW_NO_CHANGE_AND_VERIFY_ACCEPTANCE'
       : 'REVIEW_SOL_DECISION_BEFORE_ANY_MUTATION',
+  };
+}
+
+export function verifyLunaSolCodexRoundTripReceipt(receiptInput, preparedBundle, browserEvidence) {
+  let receipt;
+  try {
+    receipt = normalizeRoundTripReceipt(receiptInput);
+  } catch (error) {
+    return fail(CODEX_BROWSER_BRIDGE_STATUS.ROUNDTRIP_RECEIPT_REJECTED, null, error.message ?? String(error));
+  }
+
+  const resumed = resumeLunaSolCodexDispatch(preparedBundle, browserEvidence);
+  if (!resumed.ok) {
+    return fail(CODEX_BROWSER_BRIDGE_STATUS.ROUNDTRIP_RECEIPT_REJECTED, resumed.routeDecision ?? null, `roundtrip_source_${resumed.reason ?? resumed.status}`);
+  }
+
+  const expected = resumed.roundTripReceipt;
+  if (JSON.stringify(receipt) !== JSON.stringify(expected)) {
+    return fail(CODEX_BROWSER_BRIDGE_STATUS.ROUNDTRIP_RECEIPT_REJECTED, resumed.routeDecision, 'roundtrip_receipt_mismatch');
+  }
+
+  return {
+    ok: true,
+    status: CODEX_BROWSER_BRIDGE_STATUS.ROUNDTRIP_RECEIPT_VERIFIED,
+    mayMutate: false,
+    routeDecision: resumed.routeDecision,
+    receipt,
+    executorAction: 'ARCHIVE_ROUNDTRIP_RECEIPT_WITH_BROWSER_EVIDENCE',
   };
 }

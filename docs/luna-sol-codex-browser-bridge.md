@@ -26,7 +26,7 @@ The bridge does not require full CDP when Codex can already provide stable conve
 
 Call `prepareLunaSolCodexDispatch(...)` from `tools/luna-sol-codex-browser-bridge.mjs`.
 
-For a local decision it returns `LOCAL_EXECUTE` and does not touch the browser path.
+For a local decision it returns `LOCAL_EXECUTE` only after the supplied executor queue packet passes the canonical queue validator. Missing or malformed task/work/acquire identity or mutable scope fails closed as `PACKET_REJECTED`; a local route never grants mutation permission from routing confidence alone.
 
 For a Sol-required decision the caller must first confirm that the Codex browser capability is actually available and provide a browser preflight snapshot:
 

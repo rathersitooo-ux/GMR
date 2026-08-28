@@ -45,7 +45,9 @@ test('GAMEROAD boots and core navigation runs without JS errors', async ({ page 
   expect(response, 'main HTML response').not.toBeNull();
   expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
 
-  const firstVisibleControl = page.locator('[data-go]:visible').first();
+  const firstVisibleControl = page
+    .locator('[data-go]:visible, [data-screen="home"] .homePadChoice[data-home-target]:visible')
+    .first();
   await firstVisibleControl.waitFor({ state: 'visible', timeout: 5_000 });
   const firstVisibleControlWallMs = Date.now() - navigationWallStart;
 
@@ -91,7 +93,10 @@ test('GAMEROAD boots and core navigation runs without JS errors', async ({ page 
   for (const target of NAV_TARGETS) {
     const activeScreens = page.locator('section.screen.active:visible');
     expect(await activeScreens.count(), `one active screen before ${target}`).toBe(1);
-    const control = activeScreens.first().locator(`[data-go="${target}"]:visible`).first();
+    const control = activeScreens
+      .first()
+      .locator(`[data-go="${target}"]:visible, .homePadChoice[data-home-target="${target}"]:visible`)
+      .first();
     if (await control.count()) {
       await expect(control, `active-screen control ${target}`).toBeVisible();
       await control.click({ timeout: 5_000 });
@@ -118,7 +123,7 @@ test('GAMEROAD boots and core navigation runs without JS errors', async ({ page 
     });
   }
 
-  expect(pointerClicks, 'at least one real visible data-go control was clicked').toBeGreaterThan(0);
+  expect(pointerClicks, 'at least one real visible route control was clicked').toBeGreaterThan(0);
   expect(unexpectedHttpErrors, `unexpected HTTP errors:\n${unexpectedHttpErrors.join('\n')}`).toEqual([]);
   expect(pageErrors, `page errors:\n${pageErrors.join('\n')}`).toEqual([]);
   expect(remainingConsoleErrors, `console errors:\n${remainingConsoleErrors.join('\n')}`).toEqual([]);

@@ -311,6 +311,8 @@ jobs:
               tests/sol-reasoning-protocol.test.mjs|\
               tools/luna-sol-integration-core.mjs|\
               tests/luna-sol-integration-core.test.mjs|\
+              tools/jit-evidence-compiler.mjs|\
+              tests/jit-evidence-compiler.test.mjs|\
               tools/luna-sol-codex-browser-bridge.mjs|\
               tools/luna-sol-codex-browser-bridge-runner.mjs|\
               tests/luna-sol-codex-browser-bridge.test.mjs|\
@@ -436,6 +438,13 @@ jobs:
           node --test tests/sol_bridge/evaluation/completion-ab-evaluator.test.mjs
           node --test tests/sol-reasoning-protocol.test.mjs
           node --test tests/luna-sol-integration-core.test.mjs
+          if grep -Eq '^(tools/jit-evidence-compiler\.mjs|tests/jit-evidence-compiler\.test\.mjs)$' /tmp/gameroad-changed.txt; then
+            if [[ ! -f tests/jit-evidence-compiler.test.mjs ]]; then
+              echo "Required JIT compiler test is missing: tests/jit-evidence-compiler.test.mjs"
+              exit 1
+            fi
+            node --test tests/jit-evidence-compiler.test.mjs
+          fi
           if grep -Eq '^(tools/luna-sol-codex-browser-bridge(-runner)?\.mjs|tests/luna-sol-codex-browser-bridge(-local-queue-gate)?\.test\.mjs)$' /tmp/gameroad-changed.txt; then
             if [[ -f tests/luna-sol-codex-browser-bridge.test.mjs ]]; then
               node --test tests/luna-sol-codex-browser-bridge.test.mjs

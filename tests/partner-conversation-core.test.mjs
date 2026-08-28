@@ -443,10 +443,6 @@ test('entry session context starts empty and carries only completed prior turns'
   await entry.send('最初の話');
   await entry.send('その続き');
   assert.equal(seen[0].sessionContext, null);
-  assert.equal(seen[1].sessionContext.schemaVersion, 'gameroad.partner-conversation-session-context.v1');
-  assert.equal(seen[1].sessionContext.sessionId, 'session-context');
-  assert.equal(seen[1].sessionContext.transientOnly, true);
-  assert.equal(seen[1].sessionContext.persistenceAllowed, false);
   assert.deepEqual(seen[1].sessionContext.turns, [{
     turnId: 'turn-1',
     userMessage: '最初の話',

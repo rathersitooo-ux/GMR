@@ -94,6 +94,9 @@ function normalizeEvidence(raw, index, requiredIds) {
   if (required && (claimMode !== 'CURRENT' || !CURRENT_STATES.has(state))) {
     throw new Error(`required_hot_not_current:${id}`);
   }
+  if (tier === 'HOT' && (claimMode !== 'CURRENT' || !CURRENT_STATES.has(state))) {
+    throw new Error(`hot_not_current:${id}`);
+  }
   const available = raw.available !== false;
   const text = available
     ? asString(raw.text, `evidence_${index}_text`, { max: MAX_TEXT })
@@ -287,9 +290,24 @@ export function compileJitEvidencePacket(input, options = {}) {
     }
   }
 
+  function pendingReachedTier(tier) {
+    const pending = new Map();
+    for (const issue of materialUnresolved(issueState)) {
+      for (const relation of relationsByIssue.get(issue.id) ?? []) {
+        if (!relation.material) continue;
+        const item = evidenceById.get(relation.toEvidence);
+        if (!item || item.tier !== tier || selectedIds.has(item.id) || quarantined.has(item.id)) continue;
+        pending.set(item.id, item);
+      }
+    }
+    return [...pending.values()].sort(evidenceOrder);
+  }
+
   expandTier('WARM');
   const unresolvedAfterWarm = materialUnresolved(issueState);
-  if (unresolvedAfterWarm.length) expandTier('COLD');
+  const pendingWarm = pendingReachedTier('WARM');
+  const coldDeferredForWarm = unresolvedAfterWarm.length > 0 && pendingWarm.length > 0;
+  if (unresolvedAfterWarm.length && !coldDeferredForWarm) expandTier('COLD');
 
   for (const item of normalized.evidence) {
     if (item.tier === 'QUARANTINE' || HARD_QUARANTINE_STATES.has(item.state)) quarantined.add(item.id);
@@ -351,6 +369,7 @@ export function compileJitEvidencePacket(input, options = {}) {
       notReached: notReached.sort(),
     },
     materialFixpoint: true,
+    coldDeferredForWarm,
     metrics: {
       maxContextBytes: normalized.maxContextBytes,
       contextBytes: contextByteCount,
@@ -358,6 +377,7 @@ export function compileJitEvidencePacket(input, options = {}) {
       totalEvidenceCount: normalized.evidence.length,
       materialIssueCount: normalized.issues.filter((issue) => issue.material).length,
       unresolvedMaterialIssueCount: unresolvedIssues.length,
+      pendingWarmCount: pendingWarm.length,
       frontierRounds,
     },
   };

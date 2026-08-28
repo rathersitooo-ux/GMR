@@ -93,7 +93,9 @@ jobs:
               tests/home-cards-2p5d-runtime.spec.mjs|\
               browser/home-shell-presentation-core.mjs|\
               browser/boot-loading-presentation-core.mjs|\
+              browser/home-boot-runtime-mount.mjs|\
               tests/home-boot-presentation.test.mjs|\
+              tests/home-boot-runtime.spec.mjs|\
               browser/cards-deck-presentation.mjs|\
               browser/quick-deck-overlay-presentation.mjs|\
               tests/cards-deck-presentation.test.mjs|\

@@ -16,5 +16,6 @@
     "tap keeps inspector behavior",
     "existing addDeckCard legality and limits remain authoritative",
     "390x844 mobile viewport regression"
-  ]
+  ],
+  "executor_trigger": "second push after task-private workflow exists"
 }

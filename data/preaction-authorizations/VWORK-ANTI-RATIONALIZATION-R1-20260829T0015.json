@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "SOL_EVIDENCE_CAUSAL_GATE_R1",
+  "acquireKey": "OPS-AI-ANTI-RATIONALIZATION-R1-20260829T0015-SOL-Q7N4V8K2M6PX",
+  "baseRef": "60cb6ca671af0c1e2d2de94b97768dfcddcda3da",
+  "intent": "Prevent post-hoc causal/routing rationalization from becoming executable authority by requiring machine-verifiable evidence references and discriminating tests.",
+  "leaseScope": [
+    "tools/sol-evidence-claim-gate.mjs",
+    "tests/sol-evidence-claim-gate.test.mjs",
+    "tools/sol-reasoning-protocol.mjs",
+    "tests/sol-reasoning-protocol.test.mjs",
+    "tools/luna-sol-integration-core.mjs",
+    "tests/luna-sol-integration-core.test.mjs",
+    "docs/sol-reasoning-protocol.md"
+  ],
+  "doNotChange": [
+    "browser/**",
+    "deploy/**",
+    ".github/workflows/**",
+    "game rules/save/network/economy/assets"
+  ]
+}

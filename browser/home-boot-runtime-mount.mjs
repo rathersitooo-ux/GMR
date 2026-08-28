@@ -9,6 +9,87 @@ const STYLE_ID = 'gameroad-home-shell-runtime-style';
 const HOME_SELECTOR = 'section[data-screen="home"]';
 const ROUTE_SELECTOR = '.homePadChoice[data-home-target]';
 
+export const HOME_VISUAL_AUTHORITY = Object.freeze({
+  canonical: 'slidepad',
+  fallback: 'legacy',
+  primarySelector: '#homeMainMenuSlidePad, .homeSlidePad',
+  secondarySelector: '.codexHomeUtilities',
+  secondaryButtonSelector: '.homeUtilityBtn',
+  suppressedSelectors: Object.freeze([
+    '#codexHomeVisualLayer',
+    '.codexHomeVisualLayer',
+    '#codexHomePartnerChip',
+    '.codexPartnerChip',
+    '#codexHomeBattleCta',
+    '.codexBattleCta',
+  ]),
+});
+
+export function resolveHomePrimaryAuthority({ hasSlidePad = false } = {}) {
+  return hasSlidePad ? HOME_VISUAL_AUTHORITY.canonical : HOME_VISUAL_AUTHORITY.fallback;
+}
+
+export function createHomeVisualAuthorityCss() {
+  const authority = `${HOME_SELECTOR}[data-home-primary-authority="${HOME_VISUAL_AUTHORITY.canonical}"]`;
+  const suppressed = HOME_VISUAL_AUTHORITY.suppressedSelectors
+    .map((selector) => `${authority} ${selector}`)
+    .join(',\n');
+  return `
+/* Home R1 visual authority: the supplied illustration + slidepad is the primary
+   surface. Legacy layers are suppressed only when that canonical control exists,
+   so a missing slidepad falls back without losing navigation. */
+${suppressed}{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
+}
+${authority} ${HOME_VISUAL_AUTHORITY.primarySelector}{
+  display:grid!important;
+  visibility:visible!important;
+  pointer-events:auto!important;
+}
+${HOME_SELECTOR}[data-home-shell-variant="portrait"][data-home-primary-authority="slidepad"] ${HOME_VISUAL_AUTHORITY.secondarySelector}{
+  position:fixed!important;
+  z-index:23!important;
+  left:max(8px,env(safe-area-inset-left))!important;
+  right:auto!important;
+  top:clamp(146px,22vh,196px)!important;
+  bottom:auto!important;
+  width:min(92px,24vw)!important;
+  max-width:92px!important;
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  gap:6px!important;
+  transform:none!important;
+  background:transparent!important;
+  pointer-events:auto!important;
+}
+${HOME_SELECTOR}[data-home-shell-variant="portrait"][data-home-primary-authority="slidepad"] ${HOME_VISUAL_AUTHORITY.secondarySelector} ${HOME_VISUAL_AUTHORITY.secondaryButtonSelector}{
+  width:100%!important;
+  min-width:0!important;
+  min-height:${HOME_TOUCH_TARGET_MIN_PX}px!important;
+  height:${HOME_TOUCH_TARGET_MIN_PX}px!important;
+  padding:0 8px!important;
+  border-radius:12px!important;
+  border-color:rgba(187,219,255,.28)!important;
+  background:rgba(8,17,45,.68)!important;
+  box-shadow:0 6px 18px rgba(0,0,24,.22)!important;
+  backdrop-filter:blur(8px)!important;
+  font-size:11px!important;
+  opacity:.88;
+}
+${HOME_SELECTOR}[data-home-shell-variant="portrait"][data-home-primary-authority="slidepad"] ${HOME_VISUAL_AUTHORITY.secondarySelector} ${HOME_VISUAL_AUTHORITY.secondaryButtonSelector}:focus-visible,
+${HOME_SELECTOR}[data-home-shell-variant="portrait"][data-home-primary-authority="slidepad"] ${HOME_VISUAL_AUTHORITY.secondarySelector} ${HOME_VISUAL_AUTHORITY.secondaryButtonSelector}:hover{
+  opacity:1;
+}
+${HOME_SELECTOR}[data-home-shell-variant="short-landscape"][data-home-primary-authority="slidepad"] .codexHomeCenterStage{
+  left:24%!important;
+  right:auto!important;
+  width:45%!important;
+}
+`;
+}
+
 const runtime = {
   mounted: false,
   home: null,
@@ -24,6 +105,7 @@ const runtime = {
   lastProfile: null,
   lastRouteIds: [],
   lastSelectedRouteId: null,
+  lastPrimaryAuthority: null,
   lastError: null,
   animations: new Set(),
 };
@@ -42,6 +124,7 @@ ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}:focus-visible
   outline:2px solid currentColor;
   outline-offset:3px;
 }
+${createHomeVisualAuthorityCss()}
 @media (prefers-reduced-motion:reduce){
   ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}{
     scroll-behavior:auto;
@@ -107,11 +190,15 @@ function runEntrance(buttons) {
   });
 }
 
-function markHome(home, { variant, profile, routeIds, selectedRouteId: selected }) {
+function markHome(home, { variant, profile, routeIds, selectedRouteId: selected, primaryAuthority }) {
   home.dataset.homeShellMounted = 'true';
   home.dataset.homeShellVariant = variant;
   home.dataset.homeShellProfile = profile;
   home.dataset.homeShellRouteCount = String(routeIds.length);
+  home.dataset.homePrimaryAuthority = primaryAuthority;
+  home.dataset.homeVisualAuthority = primaryAuthority === HOME_VISUAL_AUTHORITY.canonical
+    ? 'single-surface-r1'
+    : 'legacy-fallback';
   if (selected) home.dataset.homeShellSelectedRoute = selected;
   else delete home.dataset.homeShellSelectedRoute;
   home.style.setProperty('--gameroad-home-shell-touch-min', `${HOME_TOUCH_TARGET_MIN_PX}px`);
@@ -124,6 +211,8 @@ function unmarkHome(home) {
   delete home.dataset.homeShellProfile;
   delete home.dataset.homeShellRouteCount;
   delete home.dataset.homeShellSelectedRoute;
+  delete home.dataset.homePrimaryAuthority;
+  delete home.dataset.homeVisualAuthority;
   home.style.removeProperty('--gameroad-home-shell-touch-min');
 }
 
@@ -151,11 +240,15 @@ export function refreshHomeBootPresentation() {
   const variant = classifyHomeViewport({ width: innerWidth, height: innerHeight });
   const profile = reducedMotion() ? 'reduced' : 'full';
   const active = isHomeActive(home);
+  const primaryAuthority = resolveHomePrimaryAuthority({
+    hasSlidePad: Boolean(home.querySelector(HOME_VISUAL_AUTHORITY.primarySelector)),
+  });
   markHome(home, {
     variant,
     profile,
     routeIds: state.routeIds,
     selectedRouteId: state.selectedRouteId,
+    primaryAuthority,
   });
 
   const entering = active && !runtime.active;
@@ -164,6 +257,7 @@ export function refreshHomeBootPresentation() {
   runtime.lastProfile = profile;
   runtime.lastRouteIds = [...state.routeIds];
   runtime.lastSelectedRouteId = state.selectedRouteId;
+  runtime.lastPrimaryAuthority = primaryAuthority;
   runtime.lastError = null;
   runtime.renderCount += 1;
   if (entering) {
@@ -215,6 +309,7 @@ export function unmountHomeBootPresentation() {
   runtime.refreshScheduled = false;
   runtime.observer = null;
   runtime.home = null;
+  runtime.lastPrimaryAuthority = null;
   return snapshot();
 }
 
@@ -228,6 +323,10 @@ export function snapshot() {
     presentationProfile: runtime.lastProfile,
     routeIds: Object.freeze([...runtime.lastRouteIds]),
     selectedRouteId: runtime.lastSelectedRouteId,
+    primaryAuthority: runtime.lastPrimaryAuthority,
+    visualAuthority: runtime.lastPrimaryAuthority === HOME_VISUAL_AUTHORITY.canonical
+      ? 'single-surface-r1'
+      : 'legacy-fallback',
     touchTargetMinPx: HOME_TOUCH_TARGET_MIN_PX,
     projectionStatus: 'scene-authority-not-mounted-here',
     lastError: runtime.lastError,

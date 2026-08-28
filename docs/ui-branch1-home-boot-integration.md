@@ -38,6 +38,21 @@ This is intentional so Cards/Deck, Setup/Match/Social, Battle and Foundation wor
 
 Route identities and the currently selected route remain caller-owned live data. The module will not invent a route or silently substitute a selected route.
 
+### Runtime visual authority R1
+
+The actual Home DOM contains more than one historical presentation system. The supplied illustration shell and the droplet slidepad are now treated as one canonical primary surface by `home-boot-runtime-mount.mjs`.
+
+The repair is intentionally subtractive rather than another redesign layer:
+
+- when `#homeMainMenuSlidePad` / `.homeSlidePad` exists, the runtime marks `data-home-primary-authority="slidepad"`;
+- only under that authority it suppresses the obsolete `codexHomeVisualLayer` and the legacy rectangular Partner/Battle CTAs that duplicate the slidepad;
+- when the canonical slidepad is absent, those legacy controls are not suppressed, so navigation does not disappear during partial/fallback states;
+- portrait keeps Mission/Pack/Record/Profile/Settings reachable as a narrow secondary rail instead of a five-button bar across the character art;
+- short-landscape narrows the center stage so title/status content does not invade the slidepad command area;
+- `browser/GAMEROAD.html` remains untouched because current product work can own that monolith independently.
+
+The invariant is **one primary visual/navigation authority at a time**. A future visual revision should replace or restyle this authority, not stack another complete Home control system on top of it.
+
 ### Missing portrait art
 
 If the existing Home projection reports `missing_portrait_asset`, Branch 1 propagates the exact `sceneAsset`, `fallbackSceneAsset` and `fallbackPolicy`. It never silently crops a landscape source or fabricates a portrait source. Formal portrait/background completion remains a separate asset gate.
@@ -88,7 +103,9 @@ For every supported semantic state:
 - no horizontal overflow hides a primary action;
 - text/data remain runtime-rendered;
 - optional art failure uses the existing fallback contract;
-- missing required formal art remains an explicit gate rather than a fabricated substitute.
+- missing required formal art remains an explicit gate rather than a fabricated substitute;
+- supplied illustration + slidepad is the only primary Home authority when the slidepad exists;
+- old hero/Partner/Battle surfaces do not remain visibly stacked behind or above that authority.
 
 ## Tests
 

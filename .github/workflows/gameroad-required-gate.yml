@@ -218,7 +218,9 @@ jobs:
               browser/partner-conversation-core.mjs|\
               tests/partner-conversation-core.test.mjs|\
               browser/partner-conversation-collective-context.mjs|\
-              tests/partner-conversation-collective-context.test.mjs)
+              tests/partner-conversation-collective-context.test.mjs|\
+              browser/partner-tea-quick-choice-core.mjs|\
+              tests/partner-tea-quick-choice-core.test.mjs)
                 partner_conversation=true
                 ;;
               browser/observability-core.mjs|\
@@ -601,6 +603,13 @@ jobs:
               exit 1
             fi
             node --test tests/partner-conversation-collective-context.test.mjs
+          fi
+          if grep -Eq '^(browser/partner-tea-quick-choice-core\.mjs|tests/partner-tea-quick-choice-core\.test\.mjs)$' /tmp/gameroad-changed.txt; then
+            if [[ ! -f tests/partner-tea-quick-choice-core.test.mjs ]]; then
+              echo "Required Partner Tea quick-choice test is missing: tests/partner-tea-quick-choice-core.test.mjs"
+              exit 1
+            fi
+            node --test tests/partner-tea-quick-choice-core.test.mjs
           fi
 
       - name: Run Observability core and Browser adapter tests

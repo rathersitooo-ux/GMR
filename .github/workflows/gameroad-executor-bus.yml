@@ -16,6 +16,8 @@ on:
 permissions:
   contents: read
   issues: write
+  pull-requests: read
+  actions: read
 
 concurrency:
   group: executor-bus-${{ github.event.issue.number || github.run_id }}
@@ -29,6 +31,59 @@ jobs:
       - uses: actions/checkout@v4
       - name: Run executor bus packet tests
         run: node --test tests/executor-bus-packet.test.mjs
+      - name: Verify provider-backed receipt lookups
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const headSha = context.payload.pull_request.head.sha;
+            const prNumber = context.payload.pull_request.number;
+            const runId = context.runId;
+
+            const commit = await github.rest.repos.getCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: headSha,
+            });
+            if (commit.data.sha !== headSha) {
+              core.setFailed(`commit readback mismatch: expected ${headSha}, got ${commit.data.sha}`);
+              return;
+            }
+
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+            if (pr.data.number !== prNumber) {
+              core.setFailed(`pull request readback mismatch: expected ${prNumber}, got ${pr.data.number}`);
+              return;
+            }
+
+            const run = await github.rest.actions.getWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: runId,
+            });
+            if (Number(run.data.id) !== Number(runId)) {
+              core.setFailed(`workflow run readback mismatch: expected ${runId}, got ${run.data.id}`);
+              return;
+            }
+
+            let missingRejected = false;
+            try {
+              await github.rest.repos.getCommit({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: '0000000000000000000000000000000000000000',
+              });
+            } catch (error) {
+              if (error.status === 404 || error.status === 422) missingRejected = true;
+              else throw error;
+            }
+            if (!missingRejected) {
+              core.setFailed('provider unexpectedly accepted a known-missing commit reference');
+            }
 
   queue-packet:
     if: github.event_name == 'issues' && startsWith(github.event.issue.title, '[EXECUTOR]')
@@ -138,6 +193,143 @@ jobs:
           --result-body-file "$RESULT_BODY_FILE"
           --out "$RESULT_FILE"
           --status "$STATUS_FILE"
+      - name: Verify returned references against provider state
+        id: result_verify
+        if: steps.result_validate.outcome == 'success'
+        continue-on-error: true
+        uses: actions/github-script@v7
+        env:
+          RESULT_FILE: ${{ runner.temp }}/executor-result.json
+          VERIFICATION_FILE: ${{ runner.temp }}/executor-result-verification.json
+        with:
+          script: |
+            const fs = require('fs');
+            const result = JSON.parse(fs.readFileSync(process.env.RESULT_FILE, 'utf8'));
+            const refs = Array.isArray(result.producedRefs) ? result.producedRefs : [];
+            const verifiedRefs = [];
+            const pendingExternalRefs = [];
+            const invalidRefs = [];
+            const lookupErrors = [];
+
+            async function verifyRef(ref) {
+              let match = ref.match(/^commit:([0-9a-fA-F]{40})$/);
+              if (match) {
+                try {
+                  const response = await github.rest.repos.getCommit({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    ref: match[1],
+                  });
+                  verifiedRefs.push({
+                    ref,
+                    kind: 'commit',
+                    actual: {
+                      sha: response.data.sha,
+                      url: response.data.html_url,
+                    },
+                  });
+                } catch (error) {
+                  if (error.status === 404 || error.status === 422) invalidRefs.push(ref);
+                  else lookupErrors.push({ ref, status: error.status || null, message: error.message });
+                }
+                return;
+              }
+              if (ref.startsWith('commit:')) {
+                invalidRefs.push(ref);
+                return;
+              }
+
+              match = ref.match(/^pr:([1-9][0-9]*)$/);
+              if (match) {
+                try {
+                  const response = await github.rest.pulls.get({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    pull_number: Number(match[1]),
+                  });
+                  verifiedRefs.push({
+                    ref,
+                    kind: 'pull_request',
+                    actual: {
+                      number: response.data.number,
+                      state: response.data.state,
+                      merged: Boolean(response.data.merged),
+                      headSha: response.data.head.sha,
+                      baseSha: response.data.base.sha,
+                      url: response.data.html_url,
+                    },
+                  });
+                } catch (error) {
+                  if (error.status === 404 || error.status === 422) invalidRefs.push(ref);
+                  else lookupErrors.push({ ref, status: error.status || null, message: error.message });
+                }
+                return;
+              }
+              if (ref.startsWith('pr:')) {
+                invalidRefs.push(ref);
+                return;
+              }
+
+              match = ref.match(/^workflow-run:([1-9][0-9]*)$/);
+              if (match) {
+                try {
+                  const response = await github.rest.actions.getWorkflowRun({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    run_id: Number(match[1]),
+                  });
+                  verifiedRefs.push({
+                    ref,
+                    kind: 'workflow_run',
+                    actual: {
+                      id: response.data.id,
+                      status: response.data.status,
+                      conclusion: response.data.conclusion,
+                      headSha: response.data.head_sha,
+                      url: response.data.html_url,
+                    },
+                  });
+                } catch (error) {
+                  if (error.status === 404 || error.status === 422) invalidRefs.push(ref);
+                  else lookupErrors.push({ ref, status: error.status || null, message: error.message });
+                }
+                return;
+              }
+              if (ref.startsWith('workflow-run:')) {
+                invalidRefs.push(ref);
+                return;
+              }
+
+              pendingExternalRefs.push(ref);
+            }
+
+            for (const ref of refs) await verifyRef(ref);
+
+            let verificationStatus = 'NO_PROVIDER_REF_PRESENT';
+            if (lookupErrors.length) verificationStatus = 'PROVIDER_LOOKUP_ERROR';
+            else if (invalidRefs.length) verificationStatus = 'INVALID_PROVIDER_REF';
+            else if (verifiedRefs.length && pendingExternalRefs.length) verificationStatus = 'PARTIALLY_VERIFIED';
+            else if (verifiedRefs.length) verificationStatus = 'VERIFIED_PROVIDER_REFS';
+            else if (pendingExternalRefs.length) verificationStatus = 'ACTUAL_RESULT_UNVERIFIED_EXTERNAL';
+
+            const providerCheckOk = invalidRefs.length === 0 && lookupErrors.length === 0;
+            const receipt = {
+              schemaVersion: 'gameroad-executor-result-verification-v1',
+              resultStatus: result.status,
+              providerCheckOk,
+              verificationStatus,
+              verifiedRefs,
+              pendingExternalRefs,
+              invalidRefs,
+              lookupErrors,
+              note: 'Provider verification proves only the existence/current provider state of supported references. It does not by itself prove product or game success.',
+            };
+            fs.writeFileSync(process.env.VERIFICATION_FILE, JSON.stringify(receipt, null, 2) + '\n', 'utf8');
+            core.setOutput('verification_status', verificationStatus);
+            core.setOutput('provider_check_ok', providerCheckOk ? 'true' : 'false');
+            if (!providerCheckOk) {
+              core.setFailed(`returned reference verification failed: ${verificationStatus}`);
+            }
       - name: Upload result validation status
         if: always()
         uses: actions/upload-artifact@v4
@@ -146,12 +338,14 @@ jobs:
           path: ${{ runner.temp }}/executor-result-status.json
           if-no-files-found: error
           retention-days: 14
-      - name: Upload accepted result packet
+      - name: Upload result packet and provider verification
         if: steps.result_validate.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: executor-bus-result-${{ github.event.issue.number }}-${{ github.event.comment.id }}
-          path: ${{ runner.temp }}/executor-result.json
+          path: |
+            ${{ runner.temp }}/executor-result.json
+            ${{ runner.temp }}/executor-result-verification.json
           if-no-files-found: error
           retention-days: 14
       - name: Publish result transport status
@@ -159,13 +353,20 @@ jobs:
         uses: actions/github-script@v7
         env:
           STATUS_FILE: ${{ runner.temp }}/executor-result-status.json
+          VERIFICATION_FILE: ${{ runner.temp }}/executor-result-verification.json
         with:
           script: |
             const fs = require('fs');
             const status = JSON.parse(fs.readFileSync(process.env.STATUS_FILE, 'utf8'));
-            const state = status.ok ? 'BUS_RESULT_ACCEPTED' : 'BUS_RESULT_REJECTED';
+            let verification = null;
+            if (fs.existsSync(process.env.VERIFICATION_FILE)) {
+              verification = JSON.parse(fs.readFileSync(process.env.VERIFICATION_FILE, 'utf8'));
+            }
+            const providerCheckOk = !verification || verification.providerCheckOk === true;
+            const state = status.ok && providerCheckOk ? 'BUS_RESULT_ACCEPTED' : 'BUS_RESULT_REJECTED';
+            const verificationStatus = verification ? verification.verificationStatus : 'NOT_RUN';
             const marker = `<!-- gameroad-executor-bus:result:${context.payload.comment.id} -->`;
-            const body = `${marker}\n${state}: ${status.reason}\n\nTransport acceptance only. HEAD must fresh-read current authority and actual outputs before adoption or any success claim.`;
+            const body = `${marker}\n${state}: ${status.reason}\nACTUAL_REFERENCE_VERIFICATION: ${verificationStatus}\n\nTransport acceptance is separate from actual-result verification. Supported GitHub references are provider-read above; external-only references remain unverified until HEAD performs a fresh external read. Neither state alone proves product/game success.`;
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -173,5 +374,5 @@ jobs:
               body,
             });
       - name: Fail rejected result event
-        if: steps.result_validate.outcome != 'success'
+        if: steps.result_validate.outcome != 'success' || steps.result_verify.outcome == 'failure'
         run: exit 1

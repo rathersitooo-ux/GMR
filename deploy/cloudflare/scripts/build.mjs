@@ -27,6 +27,8 @@ const defaultUiStateFeedbackCoreSource = path.join(repoRoot, 'browser/ui-state-f
 const defaultUiStateFeedbackReadyPlanAdapterSource = path.join(repoRoot, 'browser/ui-state-feedback-ready-plan-adapter.mjs');
 const defaultFieldMusicPolicyCoreSource = path.join(repoRoot, 'browser/field-music-policy-core.mjs');
 const defaultHomeCards2p5dPresentationSource = path.join(repoRoot, 'browser/home-cards-2p5d-presentation.mjs');
+const defaultHomeBootRuntimeMountSource = path.join(repoRoot, 'browser/home-boot-runtime-mount.mjs');
+const defaultHomeShellPresentationCoreSource = path.join(repoRoot, 'browser/home-shell-presentation-core.mjs');
 const defaultPartnerAdviceRuntimeMountSource = path.join(repoRoot, 'browser/partner-advice-runtime-mount.mjs');
 const defaultPartnerLegalActionAdapterSource = path.join(repoRoot, 'browser/partner-legal-action-adapter.mjs');
 const defaultAdviceCollectiveEvalSource = path.join(repoRoot, 'tools/advice-collective-eval.mjs');
@@ -149,6 +151,8 @@ export async function buildPackage({
   uiStateFeedbackReadyPlanAdapterSource = defaultUiStateFeedbackReadyPlanAdapterSource,
   fieldMusicPolicyCoreSource = defaultFieldMusicPolicyCoreSource,
   homeCards2p5dPresentationSource = defaultHomeCards2p5dPresentationSource,
+  homeBootRuntimeMountSource = defaultHomeBootRuntimeMountSource,
+  homeShellPresentationCoreSource = defaultHomeShellPresentationCoreSource,
   partnerAdviceRuntimeMountSource = defaultPartnerAdviceRuntimeMountSource,
   partnerLegalActionAdapterSource = defaultPartnerLegalActionAdapterSource,
   adviceCollectiveEvalSource = defaultAdviceCollectiveEvalSource,
@@ -176,6 +180,8 @@ export async function buildPackage({
   expectedUiStateFeedbackCoreBlob = '',
   expectedUiStateFeedbackReadyPlanAdapterBlob = '',
   expectedFieldMusicPolicyCoreBlob = '',
+  expectedHomeBootRuntimeMountBlob = '',
+  expectedHomeShellPresentationCoreBlob = '',
   expectedPartnerAdviceRuntimeMountBlob = '',
   expectedPartnerLegalActionAdapterBlob = '',
   expectedAdviceCollectiveEvalBlob = '',
@@ -201,6 +207,8 @@ export async function buildPackage({
   const uiStateFeedbackReadyPlanAdapterInput = await readFile(uiStateFeedbackReadyPlanAdapterSource);
   const fieldMusicPolicyCoreInput = await readFile(fieldMusicPolicyCoreSource);
   const homeCards2p5dPresentationInput = await readFile(homeCards2p5dPresentationSource);
+  const homeBootRuntimeMountInput = await readFile(homeBootRuntimeMountSource);
+  const homeShellPresentationCoreInput = await readFile(homeShellPresentationCoreSource);
   const partnerAdviceRuntimeMountInput = await readFile(partnerAdviceRuntimeMountSource);
   const partnerLegalActionAdapterInput = await readFile(partnerLegalActionAdapterSource);
   const adviceCollectiveEvalInput = await readFile(adviceCollectiveEvalSource);
@@ -228,6 +236,8 @@ export async function buildPackage({
   const uiStateFeedbackReadyPlanAdapterBlob = gitBlobSha1(uiStateFeedbackReadyPlanAdapterInput);
   const fieldMusicPolicyCoreBlob = gitBlobSha1(fieldMusicPolicyCoreInput);
   const homeCards2p5dPresentationBlob = gitBlobSha1(homeCards2p5dPresentationInput);
+  const homeBootRuntimeMountBlob = gitBlobSha1(homeBootRuntimeMountInput);
+  const homeShellPresentationCoreBlob = gitBlobSha1(homeShellPresentationCoreInput);
   const partnerAdviceRuntimeMountBlob = gitBlobSha1(partnerAdviceRuntimeMountInput);
   const partnerLegalActionAdapterBlob = gitBlobSha1(partnerLegalActionAdapterInput);
   const adviceCollectiveEvalBlob = gitBlobSha1(adviceCollectiveEvalInput);
@@ -304,6 +314,12 @@ export async function buildPackage({
     throw new Error(
       `Field music policy core blob mismatch: expected=${expectedFieldMusicPolicyCoreBlob} actual=${fieldMusicPolicyCoreBlob}`,
     );
+  }
+  if (expectedHomeBootRuntimeMountBlob && homeBootRuntimeMountBlob !== expectedHomeBootRuntimeMountBlob) {
+    throw new Error(`Home Boot runtime mount blob mismatch: expected=${expectedHomeBootRuntimeMountBlob} actual=${homeBootRuntimeMountBlob}`);
+  }
+  if (expectedHomeShellPresentationCoreBlob && homeShellPresentationCoreBlob !== expectedHomeShellPresentationCoreBlob) {
+    throw new Error(`Home shell presentation core blob mismatch: expected=${expectedHomeShellPresentationCoreBlob} actual=${homeShellPresentationCoreBlob}`);
   }
   if (expectedPartnerAdviceRuntimeMountBlob && partnerAdviceRuntimeMountBlob !== expectedPartnerAdviceRuntimeMountBlob) {
     throw new Error(`Partner advice runtime mount blob mismatch: expected=${expectedPartnerAdviceRuntimeMountBlob} actual=${partnerAdviceRuntimeMountBlob}`);
@@ -443,6 +459,20 @@ export async function buildPackage({
   const homeCards2p5dPresentationRoundTrip = await readFile(homeCards2p5dPresentationOutputPath);
   if (!homeCards2p5dPresentationInput.equals(homeCards2p5dPresentationRoundTrip)) {
     throw new Error('dist/home-cards-2p5d-presentation.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const homeBootRuntimeMountOutputPath = path.join(dist, 'home-boot-runtime-mount.mjs');
+  await writeFile(homeBootRuntimeMountOutputPath, homeBootRuntimeMountInput);
+  const homeBootRuntimeMountRoundTrip = await readFile(homeBootRuntimeMountOutputPath);
+  if (!homeBootRuntimeMountInput.equals(homeBootRuntimeMountRoundTrip)) {
+    throw new Error('dist/home-boot-runtime-mount.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const homeShellPresentationCoreOutputPath = path.join(dist, 'home-shell-presentation-core.mjs');
+  await writeFile(homeShellPresentationCoreOutputPath, homeShellPresentationCoreInput);
+  const homeShellPresentationCoreRoundTrip = await readFile(homeShellPresentationCoreOutputPath);
+  if (!homeShellPresentationCoreInput.equals(homeShellPresentationCoreRoundTrip)) {
+    throw new Error('dist/home-shell-presentation-core.mjs is not byte-identical to Browser dependency source');
   }
 
   const partnerAdviceRuntimeMountOutputPath = path.join(dist, 'partner-advice-runtime-mount.mjs');
@@ -637,6 +667,18 @@ export async function buildPackage({
         homeCards2p5dPresentationInput,
         homeCards2p5dPresentationBlob,
       ),
+      home_boot_runtime_mount: provenance(
+        'browser/home-boot-runtime-mount.mjs',
+        'home-boot-runtime-mount.mjs',
+        homeBootRuntimeMountInput,
+        homeBootRuntimeMountBlob,
+      ),
+      home_shell_presentation_core: provenance(
+        'browser/home-shell-presentation-core.mjs',
+        'home-shell-presentation-core.mjs',
+        homeShellPresentationCoreInput,
+        homeShellPresentationCoreBlob,
+      ),
       home_theme_orientation_core: provenance(
         'browser/home-theme-orientation-core.mjs',
         'home-theme-orientation-core.mjs',
@@ -725,6 +767,8 @@ function parseArgs(argv) {
     else if (a === '--ui-state-feedback-ready-plan-adapter-source') out.uiStateFeedbackReadyPlanAdapterSource = path.resolve(argv[++i]);
     else if (a === '--field-music-policy-core-source') out.fieldMusicPolicyCoreSource = path.resolve(argv[++i]);
     else if (a === '--home-cards-2p5d-presentation-source') out.homeCards2p5dPresentationSource = path.resolve(argv[++i]);
+    else if (a === '--home-boot-runtime-mount-source') out.homeBootRuntimeMountSource = path.resolve(argv[++i]);
+    else if (a === '--home-shell-presentation-core-source') out.homeShellPresentationCoreSource = path.resolve(argv[++i]);
     else if (a === '--partner-advice-runtime-mount-source') out.partnerAdviceRuntimeMountSource = path.resolve(argv[++i]);
     else if (a === '--partner-legal-action-adapter-source') out.partnerLegalActionAdapterSource = path.resolve(argv[++i]);
     else if (a === '--advice-collective-eval-source') out.adviceCollectiveEvalSource = path.resolve(argv[++i]);
@@ -746,6 +790,8 @@ function parseArgs(argv) {
     else if (a === '--expected-ui-state-feedback-core-blob') out.expectedUiStateFeedbackCoreBlob = argv[++i] || '';
     else if (a === '--expected-ui-state-feedback-ready-plan-adapter-blob') out.expectedUiStateFeedbackReadyPlanAdapterBlob = argv[++i] || '';
     else if (a === '--expected-field-music-policy-core-blob') out.expectedFieldMusicPolicyCoreBlob = argv[++i] || '';
+    else if (a === '--expected-home-boot-runtime-mount-blob') out.expectedHomeBootRuntimeMountBlob = argv[++i] || '';
+    else if (a === '--expected-home-shell-presentation-core-blob') out.expectedHomeShellPresentationCoreBlob = argv[++i] || '';
     else if (a === '--expected-partner-advice-runtime-mount-blob') out.expectedPartnerAdviceRuntimeMountBlob = argv[++i] || '';
     else if (a === '--expected-partner-legal-action-adapter-blob') out.expectedPartnerLegalActionAdapterBlob = argv[++i] || '';
     else if (a === '--expected-advice-collective-eval-blob') out.expectedAdviceCollectiveEvalBlob = argv[++i] || '';

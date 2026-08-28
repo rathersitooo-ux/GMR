@@ -171,6 +171,140 @@ test('unsafe collective context is silently excluded from provider request and e
   assert.equal(JSON.stringify(output).includes('SECRET'), false);
 });
 
+test('source-bound knowledge context reaches the provider without becoming Partner memory', async () => {
+  let seen = null;
+  const knowledgeContext = {
+    schemaVersion: 'gameroad.partner-knowledge-context.v1',
+    partnerId: SAASUNA_PARTNER_ID,
+    useSite: 'partner-conversation',
+    safeForPrompt: true,
+    containsPrivate: false,
+    containsRawUserText: false,
+    items: [{ evidenceId: 'k-1', summary: 'カードXの現行説明は公式仕様A。', confidence: 'bounded' }],
+    lineage: [{
+      evidenceId: 'k-1',
+      sourceId: 'official-card-spec',
+      sourceVersion: '2026-08-29',
+      provenance: 'internal_authority',
+      authorityRef: 'GAMEROAD_CURRENT_CARD_SPEC',
+      observedAt: '2026-08-29T03:00:00+09:00',
+      freshness: 'current',
+    }],
+  };
+  const output = await runSaasunaConversationTurn(base({ knowledgeContext }), {
+    provider: {
+      async sendMessage(request) {
+        seen = request.knowledgeContext;
+        return {
+          kind: 'utterance_candidate',
+          partnerId: request.partnerId,
+          dialogueVersion: request.dialogueVersion,
+          sourceId: request.sourceId,
+          text: '根拠は確認できています。',
+        };
+      },
+    },
+  });
+  assert.equal(output.ok, true);
+  assert.equal(seen.schemaVersion, knowledgeContext.schemaVersion);
+  assert.deepEqual(seen.items, knowledgeContext.items);
+  assert.deepEqual(seen.lineage, knowledgeContext.lineage);
+  assert.equal(JSON.stringify(output).includes('カードXの現行説明'), false);
+});
+
+test('stale, unknown-authority or unsupported-provenance knowledge is excluded', async () => {
+  for (const lineageOverride of [
+    { freshness: 'stale' },
+    { authorityRef: '' },
+    { provenance: 'persona_memory' },
+  ]) {
+    let seen = 'not-called';
+    const output = await runSaasunaConversationTurn(base({
+      knowledgeContext: {
+        schemaVersion: 'gameroad.partner-knowledge-context.v1',
+        partnerId: SAASUNA_PARTNER_ID,
+        useSite: 'partner-conversation',
+        safeForPrompt: true,
+        containsPrivate: false,
+        containsRawUserText: false,
+        items: [{ evidenceId: 'k-1', summary: '候補知識' }],
+        lineage: [{
+          evidenceId: 'k-1',
+          sourceId: 'source-1',
+          sourceVersion: 'v1',
+          provenance: 'external_primary',
+          authorityRef: 'source:official',
+          observedAt: '2026-08-29T03:00:00+09:00',
+          freshness: 'current',
+          ...lineageOverride,
+        }],
+      },
+    }), {
+      provider: {
+        async sendMessage(request) {
+          seen = request.knowledgeContext;
+          return {
+            kind: 'utterance_candidate',
+            partnerId: request.partnerId,
+            dialogueVersion: request.dialogueVersion,
+            sourceId: request.sourceId,
+            text: '通常返答',
+          };
+        },
+      },
+    });
+    assert.equal(output.ok, true);
+    assert.equal(seen, null);
+  }
+});
+
+test('private, raw, persona or relationship fields cannot enter factual grounding', async () => {
+  for (const forbidden of [
+    { rawUserText: 'SECRET RAW' },
+    { privateMemory: 'SECRET PRIVATE' },
+    { personaMemory: 'SECRET PERSONA' },
+    { relationshipMemory: 'SECRET RELATIONSHIP' },
+  ]) {
+    let seen = 'not-called';
+    const output = await runSaasunaConversationTurn(base({
+      knowledgeContext: {
+        schemaVersion: 'gameroad.partner-knowledge-context.v1',
+        partnerId: SAASUNA_PARTNER_ID,
+        useSite: 'partner-conversation',
+        safeForPrompt: true,
+        containsPrivate: false,
+        containsRawUserText: false,
+        items: [{ evidenceId: 'k-1', summary: '安全な要約', ...forbidden }],
+        lineage: [{
+          evidenceId: 'k-1',
+          sourceId: 'source-1',
+          sourceVersion: 'v1',
+          provenance: 'external_primary',
+          authorityRef: 'source:official',
+          observedAt: '2026-08-29T03:00:00+09:00',
+          freshness: 'current',
+        }],
+      },
+    }), {
+      provider: {
+        async sendMessage(request) {
+          seen = request.knowledgeContext;
+          return {
+            kind: 'utterance_candidate',
+            partnerId: request.partnerId,
+            dialogueVersion: request.dialogueVersion,
+            sourceId: request.sourceId,
+            text: '通常返答',
+          };
+        },
+      },
+    });
+    assert.equal(output.ok, true);
+    assert.equal(seen, null);
+    assert.equal(JSON.stringify(output).includes('SECRET'), false);
+  }
+});
+
 test('output is deterministic/frozen at the boundary and does not mutate input', async () => {
   const input = base({ userMessage: '同じ質問' });
   const before = structuredClone(input);
@@ -247,4 +381,44 @@ test('entry wrapper does not duplicate raw user message', async () => {
   const output = await entry.send(secret);
   assert.equal(JSON.stringify(output).includes(secret), false);
   assert.equal(output.turn.evidence.rawUserTextStored, false);
+});
+
+test('entry can pass one turn of source-bound knowledge into the existing conversation core', async () => {
+  let seen = null;
+  const entry = createSaasunaConversationEntry({
+    createSessionId: () => 'session-entry',
+    provider: {
+      async sendMessage(request) {
+        seen = request.knowledgeContext;
+        return {
+          kind: 'utterance_candidate',
+          partnerId: request.partnerId,
+          dialogueVersion: request.dialogueVersion,
+          sourceId: request.sourceId,
+          text: '確認済みの根拠を使います。',
+        };
+      },
+    },
+  });
+  await entry.send('現行仕様は？', {
+    knowledgeContext: {
+      schemaVersion: 'gameroad.partner-knowledge-context.v1',
+      partnerId: SAASUNA_PARTNER_ID,
+      useSite: 'partner-conversation',
+      safeForPrompt: true,
+      containsPrivate: false,
+      containsRawUserText: false,
+      items: [{ evidenceId: 'k-entry', summary: '現行仕様の確認済み要約。' }],
+      lineage: [{
+        evidenceId: 'k-entry',
+        sourceId: 'current-spec',
+        sourceVersion: 'v1',
+        provenance: 'internal_authority',
+        authorityRef: 'CURRENT',
+        observedAt: '2026-08-29T03:00:00+09:00',
+        freshness: 'current',
+      }],
+    },
+  });
+  assert.equal(seen.items[0].evidenceId, 'k-entry');
 });

@@ -1,3 +1,4 @@
+import { normalizeQueuePacket } from './executor-bus-packet.mjs';
 import { packReasoningPacket } from './executor-bus-packet-compressor.mjs';
 import { createChatGptBrowserTransport } from './chatgpt-browser-transport-core.mjs';
 import { ROUTES, routeLunaSol } from './luna-sol-router-core.mjs';
@@ -61,6 +62,13 @@ function transportReady(driver) {
   );
 }
 
+function validateMutationQueue(queuePacket) {
+  if (!queuePacket) return { ok: false, reason: 'local_mutation_queue_required' };
+  const checked = normalizeQueuePacket(queuePacket);
+  if (!checked.ok) return { ok: false, reason: `queue_${checked.reason}` };
+  return checked;
+}
+
 export async function runLunaSolDecision(input = {}, options = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw new TypeError('integration_input_must_be_object');
@@ -75,11 +83,16 @@ export async function runLunaSolDecision(input = {}, options = {}) {
   });
 
   if (routeDecision.route === ROUTES.LOCAL_EXECUTE) {
+    const queueChecked = validateMutationQueue(queuePacket);
+    if (!queueChecked.ok) {
+      return fail(INTEGRATION_STATUS.PACKET_REJECTED, routeDecision, queueChecked.reason);
+    }
     return {
       ok: true,
       status: INTEGRATION_STATUS.LOCAL_EXECUTE,
       mayMutate: true,
       routeDecision,
+      queuePacket: queueChecked.packet,
       executorAction: 'LOCAL_ACCEPTANCE_BOUNDED_EXECUTION',
     };
   }

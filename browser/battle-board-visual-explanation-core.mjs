@@ -1,14 +1,18 @@
 const BOARD_SCHEMA = 'gameroad.battle-board-visual-explanation.v1';
 const PARTNER_SCHEMA = 'gameroad.partner-advice-board-projection.v1';
+const POSITION_KINDS = Object.freeze(['central', 'road', 'shield', 'corner']);
 const RULE_ROLES = Object.freeze([
   'current',
   'selected',
   'reachable',
   'path',
+  'undo',
   'threat',
   'forecast',
   'honey',
+  'honey-collectable',
   'target',
+  'win-frontier',
   'invalid',
 ]);
 const AUTHORITY = Object.freeze({
@@ -16,11 +20,16 @@ const AUTHORITY = Object.freeze({
   selected: 'rules-derived',
   reachable: 'rules-derived',
   path: 'rules-derived',
+  undo: 'rules-derived',
   threat: 'rules-derived',
   forecast: 'rules-derived',
   honey: 'rules-derived',
+  'honey-collectable': 'rules-derived',
   target: 'rules-derived',
+  'win-frontier': 'rules-derived',
   invalid: 'rules-derived',
+  'position-kind': 'rules-derived',
+  'invalid-reason': 'rules-derived',
   'partner-recommendation': 'partner-heuristic',
 });
 
@@ -36,11 +45,21 @@ function emptyChannels() {
     selected: Object.freeze([]),
     reachable: Object.freeze([]),
     path: Object.freeze([]),
+    undo: Object.freeze([]),
     threat: Object.freeze([]),
     forecast: Object.freeze([]),
     honey: Object.freeze([]),
+    'honey-collectable': Object.freeze([]),
     target: Object.freeze([]),
+    'win-frontier': Object.freeze([]),
     invalid: Object.freeze([]),
+  });
+}
+
+function emptyAnnotations() {
+  return Object.freeze({
+    positionKindByPosition: Object.freeze({}),
+    invalidReasonByPosition: Object.freeze({}),
   });
 }
 
@@ -64,6 +83,7 @@ function failed(reason) {
     clear: true,
     reason,
     channels: emptyChannels(),
+    annotations: emptyAnnotations(),
     recommendation: inactiveRecommendation(reason),
     rolesByPosition: Object.freeze({}),
     authorityByRole: AUTHORITY,
@@ -120,6 +140,49 @@ function singleton(raw, validSet) {
   return Object.freeze([id]);
 }
 
+function canonicalAnnotationMap(raw, validPositions, validSet, validateValue, invalidReason) {
+  if (raw == null) return Object.freeze({});
+  if (typeof raw !== 'object' || Array.isArray(raw)) throw new Error(invalidReason);
+  const out = {};
+  for (const id of validPositions) {
+    if (!Object.prototype.hasOwnProperty.call(raw, id)) continue;
+    if (!validSet.has(id)) throw new Error('UNKNOWN_POSITION_ID');
+    const value = validateValue(raw[id]);
+    if (value == null) throw new Error(invalidReason);
+    out[id] = value;
+  }
+  for (const rawId of Object.keys(raw)) {
+    const id = exactToken(rawId);
+    if (!id || !validSet.has(id)) throw new Error('UNKNOWN_POSITION_ID');
+  }
+  return Object.freeze(out);
+}
+
+function positionKinds(raw, validPositions, validSet) {
+  const allowed = new Set(POSITION_KINDS);
+  return canonicalAnnotationMap(
+    raw,
+    validPositions,
+    validSet,
+    (value) => (typeof value === 'string' && allowed.has(value) ? value : null),
+    'INVALID_POSITION_KIND',
+  );
+}
+
+function invalidReasons(raw, validPositions, validSet, invalidPositionSet) {
+  const out = canonicalAnnotationMap(
+    raw,
+    validPositions,
+    validSet,
+    (value) => exactToken(value),
+    'INVALID_INVALID_REASON',
+  );
+  for (const id of Object.keys(out)) {
+    if (!invalidPositionSet.has(id)) throw new Error('INVALID_REASON_WITHOUT_INVALID_ROLE');
+  }
+  return out;
+}
+
 function recommendationFromPartner(partnerProjection, validSet) {
   if (!partnerProjection || typeof partnerProjection !== 'object' || Array.isArray(partnerProjection)) {
     return inactiveRecommendation('RECOMMENDATION_UNAVAILABLE');
@@ -159,10 +222,18 @@ function buildRolesByPosition(validPositions, channels, recommendation) {
 
 /**
  * Produces semantic presentation roles only. It does not infer legality, mutate game state,
- * choose a move, decide where honey may be collected, or encode any visual skin.
+ * choose a move, decide where honey may be collected, decide what constitutes a winning lane,
+ * parse position ids into board topology, or encode any visual skin.
  *
- * `honeyPositionIds`, `targetPositionIds`, and `invalidPositionIds` must therefore come from
- * authoritative game state/rules. This module only validates and projects those meanings.
+ * All rules-derived inputs must therefore come from authoritative game state/rules. In particular:
+ * - `honeyPositionIds` means honey is present.
+ * - `honeyCollectablePositionIds` means honey can be collected at the current decision point.
+ * - `undoPositionId` identifies the authoritative one-step-back destination, if any.
+ * - `winFrontierPositionIds` identifies authoritative victory-frontier positions.
+ * - `positionKindByPosition` is caller-supplied topology metadata (`central|road|shield|corner`);
+ *   this module never guesses kind from the id string.
+ * - `invalidReasonByPosition` is caller-supplied reason metadata and may annotate only positions
+ *   already present in `invalidPositionIds`.
  */
 export function projectBattleBoardVisualExplanation({
   validPositionIds,
@@ -170,11 +241,16 @@ export function projectBattleBoardVisualExplanation({
   selectedPositionId = null,
   reachablePositionIds = [],
   pathPositionIds = [],
+  undoPositionId = null,
   threatPositionIds = [],
   forecastPositionIds = [],
   honeyPositionIds = [],
+  honeyCollectablePositionIds = [],
   targetPositionIds = [],
+  winFrontierPositionIds = [],
   invalidPositionIds = [],
+  positionKindByPosition = null,
+  invalidReasonByPosition = null,
   partnerProjection = null,
   revisionToken = null,
   currentRevisionToken = null,
@@ -192,20 +268,37 @@ export function projectBattleBoardVisualExplanation({
   const canonicalIndex = new Map(validPositions.map((id, index) => [id, index]));
 
   let channels;
+  let annotations;
   try {
     channels = Object.freeze({
       current: singleton(currentPositionId, validSet),
       selected: singleton(selectedPositionId, validSet),
       reachable: canonicalSetList(reachablePositionIds, validSet, canonicalIndex),
       path: orderedPath(pathPositionIds, validSet),
+      undo: singleton(undoPositionId, validSet),
       threat: canonicalSetList(threatPositionIds, validSet, canonicalIndex),
       forecast: canonicalSetList(forecastPositionIds, validSet, canonicalIndex),
       honey: canonicalSetList(honeyPositionIds, validSet, canonicalIndex),
+      'honey-collectable': canonicalSetList(honeyCollectablePositionIds, validSet, canonicalIndex),
       target: canonicalSetList(targetPositionIds, validSet, canonicalIndex),
+      'win-frontier': canonicalSetList(winFrontierPositionIds, validSet, canonicalIndex),
       invalid: canonicalSetList(invalidPositionIds, validSet, canonicalIndex),
     });
+
+    const invalidSet = new Set(channels.invalid);
+    annotations = Object.freeze({
+      positionKindByPosition: positionKinds(positionKindByPosition, validPositions, validSet),
+      invalidReasonByPosition: invalidReasons(invalidReasonByPosition, validPositions, validSet, invalidSet),
+    });
   } catch (error) {
-    return failed(error?.message === 'INVALID_POSITION_LIST' ? 'INVALID_POSITION_LIST' : 'UNKNOWN_POSITION_ID');
+    const knownReasons = new Set([
+      'INVALID_POSITION_LIST',
+      'UNKNOWN_POSITION_ID',
+      'INVALID_POSITION_KIND',
+      'INVALID_INVALID_REASON',
+      'INVALID_REASON_WITHOUT_INVALID_ROLE',
+    ]);
+    return failed(knownReasons.has(error?.message) ? error.message : 'UNKNOWN_POSITION_ID');
   }
 
   const recommendation = recommendationFromPartner(partnerProjection, validSet);
@@ -217,6 +310,7 @@ export function projectBattleBoardVisualExplanation({
     clear: false,
     reason: null,
     channels,
+    annotations,
     recommendation,
     rolesByPosition,
     authorityByRole: AUTHORITY,

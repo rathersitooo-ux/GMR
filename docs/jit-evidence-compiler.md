@@ -8,7 +8,7 @@ The compiler accepts already-discovered evidence identities and material relatio
 
 1. **HOT**: current authority, direct actual, named consumer/use-site, acceptance/test, and other required current evidence.
 2. **WARM**: only evidence reached from a still-unresolved **material** issue. Expansion continues until no new material evidence is emitted.
-3. **COLD**: considered only after the WARM frontier reaches a fixpoint while material issues remain unresolved.
+3. **COLD**: considered only after the WARM frontier reaches a fixpoint while material issues remain unresolved. If a reached WARM item is still unavailable or budget-blocked, COLD is deferred instead of bypassing the unresolved WARM evidence.
 4. **QUARANTINE**: never auto-included. `RETIRED` and `INPUT_PROHIBITED` are hard-quarantine states.
 
 No fixed document count, source quota, or hop count is used as a quality target. The frontier is finite because it can only select declared evidence identities, and it stops when another pass selects nothing.

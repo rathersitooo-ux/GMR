@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-HATE1000-R1-20260828T1833",
+  "taskId": "HATE_TIMER-02",
+  "workUnitKey": "HATE1000_FORCED_DELEGATION_CORE_R1",
+  "acquireKey": "HATE1000-FORCED-DELEGATION-R1-20260828T1833-SOL-Q7N4V8K2M6PX",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "HATE1000-R1-ISOLATED-CORE-NO-PRODUCT-MOUNT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "HATE1000-R1-PURE-STATE-MACHINE-TESTS",
+  "proceedToken": "PROCEED|VWORK-HATE1000-R1-20260828T1833|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|prediction|lease-snapshot",
+  "authorizationBaseSha": "058ec511b0745fb850713ea75b1b48eb3a4c3ddb",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "HATE_TIMER-02",
+  "leaseWorkUnitKey": "HATE1000_FORCED_DELEGATION_CORE_R1",
+  "leaseAcquireKey": "HATE1000-FORCED-DELEGATION-R1-20260828T1833-SOL-Q7N4V8K2M6PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-28 18:33 JST",
+  "leaseUntilJst": "2026-08-28 19:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/hate1000-forced-delegation-r1-20260828 only: data/preaction-authorizations/VWORK-HATE1000-R1-20260828T1833.json transient create/delete; browser/hate-forced-delegation-core.mjs; tests/hate-forced-delegation-core.test.mjs; one bounded PR to main and expected-head merge after gates; central HATE_TIMER-02 row Y:AB only if current meaning materially changes; CURRENT_ACTIVE_LEASES own exact AcquireKey row only; R22 own acquire/checkpoint/terminal/release records only. browser/GAMEROAD.html, Home files, .github/workflows/**, deploy/**, game rules/economy/save, formal VFX/SFX, Roblox, Unity are read-only/excluded.",
+  "scope": [
+    "browser/hate-forced-delegation-core.mjs",
+    "tests/hate-forced-delegation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/hate-forced-delegation-core.mjs",
+    "tests/hate-forced-delegation-core.test.mjs"
+  ]
+}

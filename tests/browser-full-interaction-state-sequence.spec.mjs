@@ -279,3 +279,215 @@ test('R19R2 mounts accepted replay rows on the production Result surface', async
 
   runtime.assertClean(testInfo);
 });
+
+async function r43VisibleInternalSnapshot(page, label) {
+  const snapshot = await page.evaluate((snapshotLabel) => {
+    const visible = (element) => {
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+    };
+    const active = [...document.querySelectorAll('section.screen.active')].filter(visible);
+    return {
+      label: snapshotLabel,
+      now: Date.now(),
+      performanceNow: performance.now(),
+      visibleActiveCount: active.length,
+      visibleScreen: active[0]?.dataset.screen ?? null,
+      internalScreen: window.__GAMEROAD_TEST__?.state?.screen ?? null,
+      activeText: active[0]?.innerText?.slice(0, 240) ?? '',
+    };
+  }, label);
+
+  expect(snapshot.visibleActiveCount, `${label}: exactly one visible active screen`).toBe(1);
+  expect(snapshot.internalScreen, `${label}: internal current screen is exposed`).toBeTruthy();
+  expect(snapshot.visibleScreen, `${label}: visible and internal screen agree at the same sample`).toBe(snapshot.internalScreen);
+  return snapshot;
+}
+
+async function r43WebQualitySnapshot(page) {
+  return page.evaluate(() => {
+    const visible = (element) => {
+      const style = getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+    };
+    const accessibleNameProxy = (element) => {
+      const ariaLabel = element.getAttribute('aria-label')?.trim();
+      if (ariaLabel) return ariaLabel;
+      const labelledBy = element.getAttribute('aria-labelledby');
+      if (labelledBy) {
+        const text = labelledBy
+          .split(/\s+/)
+          .map((id) => document.getElementById(id)?.textContent?.trim() ?? '')
+          .filter(Boolean)
+          .join(' ');
+        if (text) return text;
+      }
+      if ('labels' in element && element.labels?.length) {
+        const text = [...element.labels].map((label) => label.textContent?.trim() ?? '').filter(Boolean).join(' ');
+        if (text) return text;
+      }
+      const text = element.textContent?.trim();
+      if (text) return text;
+      return element.getAttribute('title')?.trim() || element.getAttribute('alt')?.trim() || element.getAttribute('value')?.trim() || '';
+    };
+
+    const active = [...document.querySelectorAll('section.screen.active')].find(visible) ?? null;
+    const interactiveSelector = 'button, a[href], input, select, textarea, [role="button"], [tabindex]:not([tabindex="-1"])';
+    const interactives = active ? [...active.querySelectorAll(interactiveSelector)].filter(visible) : [];
+    const unnamedInteractives = interactives
+      .filter((element) => !accessibleNameProxy(element))
+      .slice(0, 30)
+      .map((element) => ({
+        tag: element.tagName.toLowerCase(),
+        id: element.id || null,
+        role: element.getAttribute('role'),
+        type: element.getAttribute('type'),
+        className: String(element.className || '').slice(0, 120) || null,
+      }));
+
+    const ids = active ? [...active.querySelectorAll('[id]')].filter(visible).map((element) => element.id).filter(Boolean) : [];
+    const duplicateVisibleIds = [...new Set(ids.filter((id, index) => ids.indexOf(id) !== index))];
+    const ariaHiddenFocusable = [...document.querySelectorAll('[aria-hidden="true"]')]
+      .flatMap((container) => [...container.querySelectorAll(interactiveSelector)])
+      .filter(visible)
+      .slice(0, 30)
+      .map((element) => element.id || element.tagName.toLowerCase());
+
+    const navigation = performance.getEntriesByType('navigation')[0] ?? null;
+    const resources = performance.getEntriesByType('resource');
+    return {
+      document: {
+        lang: document.documentElement.lang || '',
+        title: document.title || '',
+        viewportMeta: document.querySelector('meta[name="viewport"]')?.getAttribute('content') ?? '',
+      },
+      activeScreen: {
+        visible: active?.dataset.screen ?? null,
+        internal: window.__GAMEROAD_TEST__?.state?.screen ?? null,
+        interactiveCount: interactives.length,
+        unnamedInteractiveCount: unnamedInteractives.length,
+        unnamedInteractives,
+        duplicateVisibleIds,
+        ariaHiddenFocusable,
+      },
+      layout: {
+        viewportWidth: document.documentElement.clientWidth,
+        viewportHeight: document.documentElement.clientHeight,
+        documentWidth: document.documentElement.scrollWidth,
+        documentHeight: document.documentElement.scrollHeight,
+        overflowX: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
+      },
+      performance: {
+        navigation: navigation ? {
+          responseStart: navigation.responseStart,
+          responseEnd: navigation.responseEnd,
+          domContentLoadedEventEnd: navigation.domContentLoadedEventEnd,
+          loadEventEnd: navigation.loadEventEnd,
+          duration: navigation.duration,
+        } : null,
+        resourceCount: resources.length,
+        transferSize: resources.reduce((sum, entry) => sum + (Number(entry.transferSize) || 0), 0),
+        encodedBodySize: resources.reduce((sum, entry) => sum + (Number(entry.encodedBodySize) || 0), 0),
+      },
+    };
+  });
+}
+
+test('R43 controlled browser time keeps visible and internal screen state aligned', async ({ page }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  const fixedTime = new Date('2026-08-28T00:00:00.000Z');
+  await page.clock.install({ time: fixedTime });
+  await bootCurrentBrowser(page);
+  const installedNow = await page.evaluate(() => Date.now());
+  await page.clock.pauseAt(installedNow);
+
+  const timeline = [];
+  timeline.push(await r43VisibleInternalSnapshot(page, 'home-paused'));
+
+  await page.evaluate(() => {
+    document.documentElement.dataset.gameroadTemporalProbe = 'pending';
+    setTimeout(() => {
+      document.documentElement.dataset.gameroadTemporalProbe = 'done';
+    }, 250);
+  });
+  await page.clock.runFor(249);
+  expect(await page.locator('html').getAttribute('data-gameroad-temporal-probe')).toBe('pending');
+  timeline.push(await r43VisibleInternalSnapshot(page, 'home-plus-249ms'));
+  await page.clock.runFor(1);
+  expect(await page.locator('html').getAttribute('data-gameroad-temporal-probe')).toBe('done');
+  timeline.push(await r43VisibleInternalSnapshot(page, 'home-plus-250ms'));
+
+  const cardsControl = rootGo(page, 'cards');
+  await expect(cardsControl, 'Home exposes a visible Cards control').toBeVisible();
+  await cardsControl.click();
+  timeline.push(await r43VisibleInternalSnapshot(page, 'cards-after-input'));
+  await page.clock.runFor(16);
+  timeline.push(await r43VisibleInternalSnapshot(page, 'cards-plus-16ms'));
+  await page.clock.runFor(84);
+  timeline.push(await r43VisibleInternalSnapshot(page, 'cards-plus-100ms'));
+  await page.clock.runFor(150);
+  timeline.push(await r43VisibleInternalSnapshot(page, 'cards-plus-250ms'));
+
+  await attachReplay(testInfo, `${testInfo.project.name}-r43-temporal-state.json`, {
+    method: 'Playwright controlled browser time plus same-moment visible/internal screen readback',
+    fixedTime: fixedTime.toISOString(),
+    timeline,
+    nonClaims: ['CSS animation frame determinism', 'human motion acceptance', 'physical-device feel'],
+  });
+  const screenshot = await page.screenshot({ fullPage: true });
+  await testInfo.attach(`${testInfo.project.name}-r43-temporal-cards.png`, { body: screenshot, contentType: 'image/png' });
+
+  runtime.assertClean(testInfo);
+});
+
+test('R43 records bounded web-quality evidence without inventing performance budgets', async ({ page }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+
+  const home = await r43WebQualitySnapshot(page);
+  expect(home.document.lang, 'document language is declared').toBeTruthy();
+  expect(home.document.title.trim(), 'document title is non-empty').toBeTruthy();
+  expect(home.document.viewportMeta, 'mobile viewport metadata is present').toContain('width=device-width');
+  expect(home.activeScreen.visible, 'Home visible/internal state consistency').toBe(home.activeScreen.internal);
+  expect(home.performance.navigation, 'navigation timing entry exists').not.toBeNull();
+  expect(home.performance.navigation.responseEnd).toBeGreaterThanOrEqual(home.performance.navigation.responseStart);
+  expect(home.performance.navigation.domContentLoadedEventEnd).toBeGreaterThanOrEqual(home.performance.navigation.responseEnd);
+
+  const cardsControl = rootGo(page, 'cards');
+  await expect(cardsControl).toBeVisible();
+  await cardsControl.click();
+  await expect(page.locator('section[data-screen="cards"]')).toBeVisible();
+  const cards = await r43WebQualitySnapshot(page);
+  expect(cards.activeScreen.visible, 'Cards visible/internal state consistency').toBe(cards.activeScreen.internal);
+
+  const debt = {
+    unnamedInteractives: home.activeScreen.unnamedInteractiveCount + cards.activeScreen.unnamedInteractiveCount,
+    duplicateVisibleIds: home.activeScreen.duplicateVisibleIds.length + cards.activeScreen.duplicateVisibleIds.length,
+    ariaHiddenFocusable: home.activeScreen.ariaHiddenFocusable.length + cards.activeScreen.ariaHiddenFocusable.length,
+    overflowX: { home: home.layout.overflowX, cards: cards.layout.overflowX },
+  };
+  if (debt.unnamedInteractives > 0 || debt.duplicateVisibleIds > 0 || debt.ariaHiddenFocusable > 0) {
+    testInfo.annotations.push({
+      type: 'accessibility-debt-evidence',
+      description: `sampled debt: unnamed=${debt.unnamedInteractives}; duplicateVisibleIds=${debt.duplicateVisibleIds}; ariaHiddenFocusable=${debt.ariaHiddenFocusable}`,
+    });
+  }
+  if (debt.overflowX.home > 0 || debt.overflowX.cards > 0) {
+    testInfo.annotations.push({
+      type: 'layout-overflow-evidence',
+      description: `sampled horizontal overflow px: home=${debt.overflowX.home}; cards=${debt.overflowX.cards}`,
+    });
+  }
+
+  await attachReplay(testInfo, `${testInfo.project.name}-r43-web-quality.json`, {
+    method: 'bounded DOM/accessibility/layout/resource/navigation evidence on current Browser build',
+    home,
+    cards,
+    debt,
+    nonClaims: ['Lighthouse score', 'WCAG conformance', 'human visual acceptance', 'physical-device acceptance'],
+  });
+
+  runtime.assertClean(testInfo);
+});

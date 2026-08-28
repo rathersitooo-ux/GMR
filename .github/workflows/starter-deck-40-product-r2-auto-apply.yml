@@ -1,0 +1,43 @@
+name: starter-deck-registration-root-repair-r2
+
+on:
+  push:
+    branches:
+      - work/starter-deck-40-product-r2-20260829
+    paths:
+      - tools/starter-deck-40-product-r2-apply.py
+      - .github/workflows/starter-deck-40-product-r2-auto-apply.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply bounded root repair
+        run: python3 tools/starter-deck-40-product-r2-apply.py
+      - name: Root contract
+        run: node --test tests/starter-deck-40-contract.spec.mjs
+      - name: Save-recovery contract
+        run: node --test tests/deck-save-recovery-core.spec.mjs
+      - name: Diff guard
+        run: |
+          git diff --check
+          git status --short
+          changed="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' browser/GAMEROAD.html tests/starter-deck-40-contract.spec.mjs | sort)"
+          test "$changed" = "$expected"
+      - name: Commit bounded product patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/GAMEROAD.html tests/starter-deck-40-contract.spec.mjs
+          git commit -m 'fix(deck): remove fabricated player default deck'
+          git push origin HEAD:work/starter-deck-40-product-r2-20260829

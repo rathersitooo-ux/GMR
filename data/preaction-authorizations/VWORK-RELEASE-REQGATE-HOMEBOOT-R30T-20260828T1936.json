@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-RELEASE-REQGATE-HOMEBOOT-R30T-20260828T1936",
+  "taskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "workUnitKey": "HOMEBOOT_RUNTIME_PATH_CLASSIFICATION_R30_RELEASE_TAKEOVER",
+  "acquireKey": "RELEASE-REQGATE-HOMEBOOT-R30T-20260828T1936-SOL-Q5N8V4K2M7PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "required-gate-run33158051509-unclassified-homeboot-runtime-path-release-takeover-20260828",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "expired-r30-donor-branch-proves-minimal-browser-lane-classifier-delta-20260828",
+  "proceedToken": "PROCEED|VWORK-RELEASE-REQGATE-HOMEBOOT-R30T-20260828T1936|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|homeboot-runtime-path-classification-release-takeover",
+  "authorizationBaseSha": "058ec511b0745fb850713ea75b1b48eb3a4c3ddb",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "leaseWorkUnitKey": "HOMEBOOT_RUNTIME_PATH_CLASSIFICATION_R30_RELEASE_TAKEOVER",
+  "leaseAcquireKey": "RELEASE-REQGATE-HOMEBOOT-R30T-20260828T1936-SOL-Q5N8V4K2M7PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-28 19:36 JST",
+  "leaseUntilJst": "2026-08-28 20:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR new branch work/release-reqgate-homeboot-r30t-20260828 from exact current main 058ec511b0745fb850713ea75b1b48eb3a4c3ddb only: new transient data/preaction-authorizations/VWORK-RELEASE-REQGATE-HOMEBOOT-R30T-20260828T1936.json create-first/delete-before-final-head; .github/workflows/gameroad-required-gate.yml only to classify browser/home-boot-runtime-mount.mjs and tests/home-boot-runtime.spec.mjs into the existing Browser lane; successor PR state+merge for this branch only; CURRENT_ACTIVE_LEASES own exact AcquireKey row only; R22 own acquire/checkpoint/terminal/release records only. PR #469/Home product files/browser/GAMEROAD.html/deploy/game rules/save/network/economy/other workflows are read-only/excluded."
+}

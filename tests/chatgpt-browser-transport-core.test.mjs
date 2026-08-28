@@ -77,6 +77,40 @@ test('happy path returns only the new correlated completed assistant turn', asyn
   assert.equal(calls.wait, 1);
 });
 
+test('loading page fails before submit', async () => {
+  const { driver, calls } = fakeDriver({
+    async inspectContext() {
+      return { pageReady: false, loading: true, composerReady: false, conversationId: 'conv-1', lastAssistantTurnId: 'a-old' };
+    },
+  });
+  const out = await createChatGptBrowserTransport({ driver }).run(BASE);
+  assert.equal(out.status, TRANSPORT_STATUS.PAGE_NOT_READY);
+  assert.equal(calls.submit, 0);
+});
+
+test('missing composer fails before submit', async () => {
+  const { driver, calls } = fakeDriver({
+    async inspectContext() {
+      return { pageReady: true, loading: false, composerReady: false, conversationId: 'conv-1', lastAssistantTurnId: 'a-old' };
+    },
+  });
+  const out = await createChatGptBrowserTransport({ driver }).run(BASE);
+  assert.equal(out.status, TRANSPORT_STATUS.COMPOSER_UNAVAILABLE);
+  assert.equal(calls.submit, 0);
+});
+
+test('completed retry reuses cached result without another submit or wait', async () => {
+  const { driver, calls } = fakeDriver();
+  const transport = createChatGptBrowserTransport({ driver });
+  const first = await transport.run(BASE);
+  const second = await transport.run(BASE);
+  assert.equal(first.status, TRANSPORT_STATUS.COMPLETED);
+  assert.equal(second.status, TRANSPORT_STATUS.COMPLETED);
+  assert.equal(second.reused, true);
+  assert.equal(calls.submit, 1);
+  assert.equal(calls.wait, 1);
+});
+
 test('stale previous assistant turn is rejected', async () => {
   const { driver } = fakeDriver({
     async waitForAssistantTurn() {

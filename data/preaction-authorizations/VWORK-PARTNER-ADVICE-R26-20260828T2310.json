@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-PARTNER-ADVICE-R26-20260828T2310",
+  "taskId": "PARTNER-GOODMOVE-ADVICE-RUNTIME-INTEGRATION-001",
+  "workUnitKey": "PARTNER_ADVICE_STALE_LATEST_WINS_R26",
+  "acquireKey": "PARTNER-ADVICE-R26-20260828T2310-SOL-Q7N4V2K8M6PX",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R22-PARTNER-R26-STALE-QUEUE-REPRO",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R25-VALIDATOR-SCHEMA-REHEARSAL",
+  "proceedToken": "PROCEED|VWORK-PARTNER-ADVICE-R26-20260828T2310|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|stale-ready-scheduled-render-resurrection|CURRENT_ACTIVE_LEASES!A12:L12",
+  "authorizationBaseSha": "b48c3e1fd30df1335b48431381e64487cc45ae5b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-GOODMOVE-ADVICE-RUNTIME-INTEGRATION-001",
+  "leaseWorkUnitKey": "PARTNER_ADVICE_STALE_LATEST_WINS_R26",
+  "leaseAcquireKey": "PARTNER-ADVICE-R26-20260828T2310-SOL-Q7N4V2K8M6PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-28 23:11 JST",
+  "leaseUntilJst": "2026-08-29 00:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A12:L12",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR new branch work/partner-advice-r26-20260828 from exact current main b48c3e1fd30df1335b48431381e64487cc45ae5b only; transient data/preaction-authorizations/VWORK-PARTNER-ADVICE-R26-20260828T2310.json create-first/delete-before-final-head; browser/GAMEROAD.html exact Partner Advice R21B stale/latest-wins fence only; tests/browser-full-interaction.spec.mjs exact deterministic stale-overlap regression only; successor PR state and merge for this branch only; GAMEROAD 全作業一覧 row1325 H/Y:AB only; CURRENT_ACTIVE_LEASES own row12; R22 own acquire/checkpoint/terminal/release records only. browser/other modules, Battle rules/core/state, HATE, Home/Character, deploy, workflows, assets, save/network/economy and other owners' resources are read-only/excluded."
+}

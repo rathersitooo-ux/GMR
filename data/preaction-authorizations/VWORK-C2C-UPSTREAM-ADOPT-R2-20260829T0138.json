@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-C2C-UPSTREAM-ADOPT-R2-20260829T0138",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "C2C_UPSTREAM_ADOPTION_AND_PC_HANDOFF_R2",
+  "acquireKey": "C2C-UPSTREAM-ADOPT-R2-20260829T0138-SOL-Q7N4V6K2M9PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "UPSTREAM_C2C_READBACK_AND_NONPRODUCT_SCOPE_20260829T0138",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "UPSTREAM_README_SKILL_SECURITY_PLUS_GMR_REQUIRED_GATE_READBACK_20260829T0138",
+  "proceedToken": "PROCEED|VWORK-C2C-UPSTREAM-ADOPT-R2-20260829T0138|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|C2C-UPSTREAM-ADOPT-R2-20260829T0138-SOL-Q7N4V6K2M9PX",
+  "authorizationBaseSha": "482821bb7cc3b704dc94ae44cce32a794057f400",
+  "scope": [
+    ".c2cignore",
+    "CODEX_C2C_PC_HANDOFF_CURRENT.md"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "C2C_UPSTREAM_ADOPTION_AND_PC_HANDOFF_R2",
+  "leaseAcquireKey": "C2C-UPSTREAM-ADOPT-R2-20260829T0138-SOL-Q7N4V6K2M9PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 01:38 JST",
+  "leaseUntilJst": "2026-08-29 02:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A26:L26",
+  "leaseScope": [
+    ".c2cignore",
+    "CODEX_C2C_PC_HANDOFF_CURRENT.md"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR new branch work/c2c-upstream-adoption-r2-20260829 from exact current main 482821bb7cc3b704dc94ae44cce32a794057f400 only: transient data/preaction-authorizations/VWORK-C2C-UPSTREAM-ADOPT-R2-20260829T0138.json create-first/delete-before-final-head; .c2cignore; CODEX_C2C_PC_HANDOFF_CURRENT.md; docs/C2C_UPSTREAM_ADOPTION_CURRENT.md; branch/PR state+merge only after exact-head Required Gate; CURRENT_ACTIVE_LEASES own row26 only; R22 own acquire/checkpoint/terminal/release records only. browser/GAMEROAD.html, .github/workflows/**, AGENTS.md, CODEX_HANDOFF_CURRENT.md, product/game/deploy files, legacy C2C implementation files, and all other owners are excluded/read-only."
+}

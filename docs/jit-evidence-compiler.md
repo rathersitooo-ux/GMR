@@ -32,11 +32,32 @@ No fixed document count, source quota, or hop count is used as a quality target.
 
 This models FAN-IN/FAN-OUT style JIT expansion without making the compiler a source of dependency truth. Upstream authority/retrieval code is responsible for discovering and validating relation candidates.
 
+## Canonical evidence context envelope
+
+R1 now preserves the selected evidence identity inside the existing text-only reasoning context. Every selected `contextItems[].text` starts with a compiler-owned canonical envelope before the original evidence body.
+
+The envelope carries:
+
+- schema version and evidence ID;
+- HOT/WARM/COLD tier;
+- current/reference state and claim mode;
+- role;
+- authority class;
+- source version;
+- provenance;
+- freshness.
+
+The original evidence body follows the closing marker unchanged. Metadata is produced only from normalized structural evidence fields; it is never parsed from the body text. Therefore body text that contains a fake marker or fake metadata cannot overwrite the compiler-owned leading envelope.
+
+The existing reasoning-packet packer remains unchanged: it already transports `contextItems[].text` opaquely. Focused coverage verifies that the canonical envelope survives pack/unpack byte-for-byte through that existing path.
+
+Context budget accounting uses the exact transmitted `contextItems` representation, so metadata overhead is included. Required HOT evidence still fails closed rather than silently losing identity metadata to fit the budget.
+
 ## Output
 
 `compileJitEvidencePacket(...)` returns:
 
-- `contextItems`: `{ id, text, priority, required }[]`, compatible with the current `packReasoningPacket` context input shape;
+- `contextItems`: `{ id, text, priority, required }[]`, compatible with the current `packReasoningPacket` context input shape; `text` contains the canonical metadata envelope plus the original evidence body;
 - `selectedEvidence`: state/provenance metadata for audit/readback;
 - `includedByTier`;
 - `unresolvedIssues`;
@@ -47,4 +68,4 @@ A `READY` result means only that the declared material evidence frontier is reso
 
 ## Integration boundary
 
-R1 intentionally does not edit `executor-bus-packet.mjs`, the active packet compressor, Sol reasoning protocol, Luna/Sol integration, workflows, or product code. Once the current integration owner adopts this compiler, its `contextItems` can feed the existing reasoning-packet packer. Until then, R1 is an isolated implementation artifact with focused tests, not a live runtime integration claim.
+This change intentionally does not edit `executor-bus-packet.mjs`, the packet compressor, Sol reasoning protocol, Luna/Sol integration/router, claim-gate logic, workflows, or product code. The JIT compiler preserves identity metadata inside the existing text field, so active downstream evidence-validation work can consume that identity later without requiring a competing packet format or a second evidence system.

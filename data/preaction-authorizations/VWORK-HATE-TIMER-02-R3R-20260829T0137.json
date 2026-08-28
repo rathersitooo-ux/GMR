@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-HATE-TIMER-02-R3R-20260829T0137",
+  "taskId": "HATE_TIMER-02",
+  "workUnitKey": "HATE_FORCED_DELEGATION_SUCCESSOR_PREP_R3",
+  "acquireKey": "HATE-FORCED-DELEGATION-R3R-20260829T0137-SOL-Q8N5V2K7M4PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "hate-forced-delegation-focused-acceptance-999-1000-1001-resend-reconnect-preserve-selection-r3-20260829",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "prior-r2-required-gate-focused-public-origin-pass-plus-current-task-counterevidence-browser-full-interaction-separated-20260829",
+  "proceedToken": "PROCEED|VWORK-HATE-TIMER-02-R3R-20260829T0137|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|hate-forced-delegation-successor-r3",
+  "authorizationBaseSha": "482821bb7cc3b704dc94ae44cce32a794057f400",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "HATE_TIMER-02",
+  "leaseWorkUnitKey": "HATE_FORCED_DELEGATION_SUCCESSOR_PREP_R3",
+  "leaseAcquireKey": "HATE-FORCED-DELEGATION-R3R-20260829T0137-SOL-Q8N5V2K7M4PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 01:37 JST",
+  "leaseUntilJst": "2026-08-29 02:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "scope": [
+    "browser/hate-forced-delegation-core.mjs",
+    "tests/hate-forced-delegation-core.test.mjs",
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseScope": [
+    "browser/hate-forced-delegation-core.mjs",
+    "tests/hate-forced-delegation-core.test.mjs",
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/hate-timer-02-r3-20260829; browser/hate-forced-delegation-core.mjs; tests/hate-forced-delegation-core.test.mjs; .github/workflows/gameroad-required-gate.yml; transient data/preaction-authorizations/VWORK-HATE-TIMER-02-R3R-20260829T0137.json create-first/delete-before-final-head; successor PR state; CURRENT_ACTIVE_LEASES own exact AcquireKey row; R22 own acquire/checkpoint/terminal/release records. Excluded/read-only: browser/GAMEROAD.html; tests/browser-full-interaction.spec.mjs; deploy/game/rules/save/network/economy/assets and all other owners."
+}

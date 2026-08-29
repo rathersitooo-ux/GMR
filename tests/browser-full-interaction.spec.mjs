@@ -617,7 +617,9 @@ test('deck recovery preserves blocked raw saves, repairs legacy only on explicit
   const initialRaw = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY);
   expect(initialRaw, 'missing save is not implicitly materialized on boot').toBeNull();
   const defaultDeck = await page.evaluate(() => [...window.__DEFAULT_DECK__]);
-  expect(defaultDeck).toHaveLength(26);
+  expect(defaultDeck).toHaveLength(40);
+  const legacyDeck = defaultDeck.slice(0, 26);
+  expect(legacyDeck).toHaveLength(26);
 
   const reloadWithRaw = async (raw) => {
     await page.evaluate(({ key, rawValue }) => localStorage.setItem(key, rawValue), { key: STORAGE_KEY, rawValue: raw });
@@ -642,12 +644,12 @@ test('deck recovery preserves blocked raw saves, repairs legacy only on explicit
   expect(observed.raw).toBe(newerRaw);
   expect(observed.recovery.classification.reason).toBe('SAVE_REVISION_NEWER');
 
-  const legacyRaw = JSON.stringify({ v: 2, selectedCharacter: 'partner.naki', history: [{ keep: 'legacy-history' }], settings: { reduceMotion: true }, progression: { battlePoints: 9 }, setupMode: '4p', setupContent: 'honey_hunt', deck: { main: defaultDeck, ex: [], ruleId: 'FIRST_REGULATION', ruleRevision: 2 }, opaque: { keep: 9 } });
+  const legacyRaw = JSON.stringify({ v: 2, selectedCharacter: 'partner.naki', history: [{ keep: 'legacy-history' }], settings: { reduceMotion: true }, progression: { battlePoints: 9 }, setupMode: '4p', setupContent: 'honey_hunt', deck: { main: legacyDeck, ex: [], ruleId: 'FIRST_REGULATION', ruleRevision: 2 }, opaque: { keep: 9 } });
   observed = await reloadWithRaw(legacyRaw);
   expect(observed.raw).toBe(legacyRaw);
   expect(observed.recovery.classification.status).toBe('recognized_legacy');
-  expect(observed.savedDeck).toHaveLength(26);
-  expect(observed.rule.revision).toBe(2);
+  expect(observed.savedDeck).toHaveLength(40);
+  expect(observed.rule.revision).toBe(3);
   const legal = await installLegalBattleDeck(page);
   expect(legal.committed).toBeTruthy();
   let stored = await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), STORAGE_KEY);
@@ -671,7 +673,7 @@ test('deck recovery preserves blocked raw saves, repairs legacy only on explicit
   const mismatch = await page.evaluate((key) => {
     const t = window.__GAMEROAD_TEST__, proto = Object.getPrototypeOf(localStorage), originalSetItem = proto.setItem;
     let writes = 0;
-    Object.defineProperty(proto, 'setItem', { configurable: true, writable: true, value(k, v) { writes += 1; return originalSetItem.call(this, k, writes === 1 ? `${v}x` : v); } });
+    Object.defineProperty(proto, 'setItem', { configurable: true, writable: true, value(k, v) { if (k === key) { writes += 1; return originalSetItem.call(this, k, writes === 1 ? `${v}x` : v); } return originalSetItem.call(this, k, v); } });
     let committed;
     try { committed = t.deckCommit(); } finally { Object.defineProperty(proto, 'setItem', { configurable: true, writable: true, value: originalSetItem }); }
     return { committed, raw: localStorage.getItem(key), recovery: window.__GAMEROAD_SAVE_RECOVERY__.snapshot() };
@@ -707,7 +709,7 @@ test('deck recovery preserves blocked raw saves, repairs legacy only on explicit
   await page.waitForTimeout(120);
   const afterReset = await page.evaluate((key) => ({ raw: localStorage.getItem(key), savedCount: window.__GAMEROAD_TEST__.state.savedDeck.main.length, rule: { ...window.__GAMEROAD_TEST__.state.savedDeckRule } }), STORAGE_KEY);
   expect(afterReset.raw, 'explicit reset does not resurrect the transient starter as a durable save').toBeNull();
-  expect(afterReset.savedCount).toBe(26);
+  expect(afterReset.savedCount).toBe(40);
   expect(afterReset.rule.id).toBeNull();
 
   const writeFailure = await page.evaluate((key) => {
@@ -719,7 +721,7 @@ test('deck recovery preserves blocked raw saves, repairs legacy only on explicit
     const main = [...nonRoyal.slice(0, 37), ...royalIds];
     const setValidation = t.deckSetDraft(main, []);
     const proto = Object.getPrototypeOf(localStorage), originalSetItem = proto.setItem;
-    Object.defineProperty(proto, 'setItem', { configurable: true, writable: true, value() { throw new Error('forced-storage-write-failure'); } });
+    Object.defineProperty(proto, 'setItem', { configurable: true, writable: true, value(k, v) { if (k === key) throw new Error('forced-storage-write-failure'); return originalSetItem.call(this, k, v); } });
     let committed;
     try { committed = t.deckCommit(); } finally { Object.defineProperty(proto, 'setItem', { configurable: true, writable: true, value: originalSetItem }); }
     return { committed, setValidation, raw: localStorage.getItem(key), recovery: window.__GAMEROAD_SAVE_RECOVERY__.snapshot(), savedCount: t.state.savedDeck.main.length };
@@ -727,7 +729,7 @@ test('deck recovery preserves blocked raw saves, repairs legacy only on explicit
   expect(writeFailure.setValidation.ok).toBeTruthy();
   expect(writeFailure.committed).toBeFalsy();
   expect(writeFailure.raw).toBeNull();
-  expect(writeFailure.savedCount).toBe(26);
+  expect(writeFailure.savedCount).toBe(40);
   expect(writeFailure.recovery.write.status).toBe('failed');
   runtime.assertClean(testInfo);
 });

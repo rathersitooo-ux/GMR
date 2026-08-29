@@ -213,9 +213,20 @@ test('OPS-STATE-SYNC exact O:S formula-repair-only resource is permitted', () =>
   assert.deepEqual(validate(good), { ok: true, reason: 'parenttask_summary_formula_repair_authorized' });
 });
 
-test('expired snapshot witness is rejected at validation time', () => {
+test('expired authorization lease remains a valid frozen witness after the work window closes', () => {
   const afterExpiry = Date.parse('2026-08-27T11:31:00Z'); // 20:31 JST
-  assert.deepEqual(validate(manifest, afterExpiry), { ok: false, reason: 'lease_expired_at_validation' });
+  assert.deepEqual(validate(manifest, afterExpiry), { ok: true, reason: 'lease_exact_mutable_resources_valid' });
+});
+
+test('expired authorization witness plus unrelated base advance remains authorized', () => {
+  const afterExpiry = Date.parse('2026-08-27T11:31:00Z'); // 20:31 JST
+  const result = check({
+    nowMs: afterExpiry,
+    currentBaseSha: 'b'.repeat(40),
+    baseAdvanceIsAncestor: true,
+    baseAdvanceChangedPaths: ['browser/unrelated-feature.mjs'],
+  });
+  assert.deepEqual(result, { ok: true, reason: 'preaction_authorized' });
 });
 
 test('lease witness cannot claim more than the one-hour current lease window', () => {

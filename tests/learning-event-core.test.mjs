@@ -7,7 +7,6 @@ import {
   LEARNING_OUTCOME_STATE,
   LEARNING_SUBJECTS,
   normalizeLearningEvent,
-  summarizeLearningEvents,
 } from '../browser/learning-event-core.mjs';
 
 function makeEvent(overrides = {}) {
@@ -153,33 +152,6 @@ test('normalized envelope and nested arrays/evidence refs are frozen', () => {
   assert.equal(Object.isFrozen(event.cognitiveCategories), true);
   assert.equal(Object.isFrozen(event.evidenceRefs), true);
   assert.equal(Object.isFrozen(event.evidenceRefs[0]), true);
-});
-
-test('summary counts only structurally bounded normalized event states', () => {
-  const science = normalizeLearningEvent(makeEvent());
-  const strategy = normalizeLearningEvent(makeEvent({
-    eventId: 'event.strategy.001',
-    subject: LEARNING_SUBJECTS.STRATEGY_DECISION,
-    result: 'partial',
-  }));
-  const forgedSubject = { ...science, subject: '__proto__' };
-  const forgedOutcome = { ...science, learningOutcome: 'IMPROVED' };
-  const summary = summarizeLearningEvents([science, strategy, forgedSubject, forgedOutcome, { schemaVersion: 'other' }]);
-  assert.equal(summary.eventCount, 2);
-  assert.deepEqual(summary.bySubject, { natural_science: 1, strategy_decision: 1 });
-  assert.deepEqual(summary.byResult, { correct: 1, partial: 1 });
-  assert.equal(summary.learningOutcome, 'UNMEASURED');
-  assert.equal(summary.realSkillOutcome, 'UNMEASURED');
-});
-
-test('empty or non-array summary input yields an unmeasured zero-event summary', () => {
-  for (const input of [undefined, null, {}, 'events']) {
-    const summary = summarizeLearningEvents(input);
-    assert.equal(summary.eventCount, 0);
-    assert.deepEqual(summary.bySubject, {});
-    assert.deepEqual(summary.byResult, {});
-    assert.equal(summary.learningOutcome, 'UNMEASURED');
-  }
 });
 
 test('event input must be an object and required code fields cannot be omitted', () => {

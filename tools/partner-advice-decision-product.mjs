@@ -2,11 +2,17 @@ import {
   compileRuntimeAdviceManifest,
   validateCollectiveImprovementProposal,
 } from './advice-collective-eval.mjs';
+import {
+  COLLECTIVE_EVIDENCE_LINEAGE_SCHEMA,
+  normalizeCollectiveEvidenceLineage,
+} from '../browser/partner-conversation-collective-context.mjs';
 
 const DECISION_PRODUCT_SCHEMA = 'gameroad.partner-advice-decision-product.v1';
 const RUNTIME_LINEAGE_SCHEMA = 'gameroad.partner-advice-runtime-lineage.v1';
 const EXPECTED_CONSUMER = 'PARTNER-COLLECTIVE-ADVICE-OFFLINE-EVAL-001';
 const TRANSFER_SCOPES = new Set(['POPULATION', 'PERSONAL']);
+const ADVICE_EVIDENCE_PROVENANCE = new Set(['fixture', 'synthetic', 'prototype_local', 'server_verified', 'public_production']);
+const ADVICE_VERSION_KEYS = ['releaseVersion', 'rulesVersion', 'contentVersion', 'cardVersion', 'stateVersion'];
 
 function safeToken(value) {
   if (typeof value !== 'string') return null;
@@ -70,6 +76,55 @@ function normalizeAxes(value, reasons) {
     if (axisRef && observationRef && axis.predeclared === true) axes.push({ axisRef, observationRef, predeclared: true });
   }
   return axes;
+}
+
+function adviceEvidenceSourceVersion(item) {
+  const parts = [];
+  for (const key of ADVICE_VERSION_KEYS) {
+    const value = safeToken(item?.versions?.[key]);
+    if (!value) return null;
+    parts.push(`${key}=${value}`);
+  }
+  const cohortId = safeToken(item?.cohortId);
+  if (!cohortId) return null;
+  parts.push(`cohortId=${cohortId}`);
+  return parts.join('|');
+}
+
+export function buildPartnerAdviceEvidenceLineage(item, counterevidenceState) {
+  const ownerId = safeToken(item?.ownerId);
+  const authorityLevel = safeToken(item?.authorityLevel);
+  const sourceVersion = adviceEvidenceSourceVersion(item);
+  if (!ownerId || !authorityLevel || !sourceVersion) return null;
+  return normalizeCollectiveEvidenceLineage({
+    evidenceId: item?.evidenceId,
+    sourceId: ownerId,
+    sourceVersion,
+    provenance: item?.provenance,
+    authorityRef: `evidence-grade:${authorityLevel}`,
+    observedAt: item?.acquiredAt,
+    freshness: 'current_bounded',
+    counterevidenceState,
+  }, { allowedProvenance: ADVICE_EVIDENCE_PROVENANCE });
+}
+
+function buildAdviceEvidenceLineageSet(items, counterevidenceState) {
+  if (!Array.isArray(items)) return null;
+  const projected = [];
+  for (const item of items) {
+    const lineage = buildPartnerAdviceEvidenceLineage(item, counterevidenceState);
+    if (!lineage) return null;
+    projected.push(lineage);
+  }
+  projected.sort((a, b) => a.evidenceId.localeCompare(b.evidenceId));
+  return projected;
+}
+
+function sameRefs(lineage, refs) {
+  if (!Array.isArray(lineage) || !Array.isArray(refs) || lineage.length !== refs.length) return false;
+  const lineageRefs = lineage.map((item) => item.evidenceId).sort();
+  const expected = [...refs].sort();
+  return lineageRefs.every((value, index) => value === expected[index]);
 }
 
 export function buildPartnerAdviceDecisionProduct(input) {
@@ -176,7 +231,18 @@ export function buildPartnerAdviceDecisionProduct(input) {
   const mechanismRef = token(hypothesis?.mechanismRef, 'hypothesis-mechanismRef-invalid', reasons);
   const confidenceRef = token(context?.confidenceRef, 'confidenceRef-invalid', reasons);
 
-  if (reasons.length > 0 || !proposal) return decisionProductReject(reasons.length > 0 ? reasons : ['proposal-invalid'], proposalValidation);
+  const evidenceLineage = proposal
+    ? buildAdviceEvidenceLineageSet(proposal.supportingEvidence, proposal.counterEvidence.state)
+    : null;
+  const counterEvidenceLineage = proposal
+    ? buildAdviceEvidenceLineageSet(proposal.counterEvidence.items, proposal.counterEvidence.state)
+    : null;
+  if (proposal && !evidenceLineage) reasons.push('evidence-lineage-incomplete');
+  if (proposal && !counterEvidenceLineage) reasons.push('counter-evidence-lineage-incomplete');
+
+  if (reasons.length > 0 || !proposal || !evidenceLineage || !counterEvidenceLineage) {
+    return decisionProductReject(reasons.length > 0 ? reasons : ['proposal-invalid'], proposalValidation);
+  }
 
   const evidenceRefs = proposal.supportingEvidence.map((item) => item.evidenceId).sort();
   const counterEvidenceRefs = proposal.counterEvidence.items.map((item) => item.evidenceId).sort();
@@ -195,9 +261,12 @@ export function buildPartnerAdviceDecisionProduct(input) {
       affectedOwnerId: proposal.affectedOwnerId,
       changeRef: proposal.changeRef,
       evidenceRefs,
+      evidenceLineageSchema: COLLECTIVE_EVIDENCE_LINEAGE_SCHEMA,
+      evidenceLineage,
       counterEvidenceState: proposal.counterEvidence.state,
       counterEvidenceSearchRef: proposal.counterEvidence.searchRef,
       counterEvidenceRefs,
+      counterEvidenceLineage,
     },
     decisionContext: {
       decisionInput: { capturedAtDecision: true, contextRef: decisionContextRef },
@@ -265,6 +334,18 @@ function safeAxisRefs(axes) {
   return refs;
 }
 
+function runtimeEvidenceLineage(items, refs, counterevidenceState) {
+  if (!Array.isArray(items) || !Array.isArray(refs)) return null;
+  const projected = [];
+  for (const item of items) {
+    const lineage = normalizeCollectiveEvidenceLineage(item, { allowedProvenance: ADVICE_EVIDENCE_PROVENANCE });
+    if (!lineage || lineage.counterevidenceState !== counterevidenceState) return null;
+    projected.push(lineage);
+  }
+  projected.sort((a, b) => a.evidenceId.localeCompare(b.evidenceId));
+  return sameRefs(projected, refs) ? projected : null;
+}
+
 /**
  * Bridges a validated collective Decision Product into the existing Human-gated runtime manifest
  * without making collective evidence, popularity, or Partner presentation authoritative game state.
@@ -303,6 +384,16 @@ export function compileRuntimeAdviceManifestFromDecisionProduct({
     return runtimeLineageReject('decision-product-no-runtime-change');
   }
   if (source.counterEvidenceState === 'UNKNOWN') return runtimeLineageReject('counter-evidence-unknown');
+  if (source.evidenceLineageSchema !== COLLECTIVE_EVIDENCE_LINEAGE_SCHEMA) {
+    return runtimeLineageReject('decision-product-evidence-lineage-schema-invalid');
+  }
+  const evidenceLineage = runtimeEvidenceLineage(source.evidenceLineage, source.evidenceRefs, source.counterEvidenceState);
+  const counterEvidenceLineage = runtimeEvidenceLineage(
+    source.counterEvidenceLineage,
+    source.counterEvidenceRefs,
+    source.counterEvidenceState,
+  );
+  if (!evidenceLineage || !counterEvidenceLineage) return runtimeLineageReject('decision-product-evidence-lineage-invalid');
 
   const useSite = safeToken(runtimeUseSiteRef);
   if (!useSite || useSite !== projection.consumerUseSiteRef) return runtimeLineageReject('runtime-use-site-mismatch');
@@ -342,6 +433,9 @@ export function compileRuntimeAdviceManifestFromDecisionProduct({
     consumerUseSiteRef: safeToken(projection.consumerUseSiteRef),
     affectedOwnerId: safeToken(source.affectedOwnerId),
     changeRef: safeToken(source.changeRef),
+    evidenceLineageSchema: COLLECTIVE_EVIDENCE_LINEAGE_SCHEMA,
+    evidenceLineage,
+    counterEvidenceLineage,
     transfer: {
       sourceScope,
       targetScope,
@@ -378,6 +472,7 @@ export function compileRuntimeAdviceManifestFromDecisionProduct({
     lineage.consumerUseSiteRef,
     lineage.affectedOwnerId,
     lineage.changeRef,
+    lineage.evidenceLineageSchema,
     lineage.environment.environmentRef,
     lineage.environment.expiryRef,
     lineage.proxy.limitationRef,

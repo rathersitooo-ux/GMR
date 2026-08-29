@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ADVICE-PARTNER-R7-STALECLEAR-20260829T2328",
+  "taskId": "ADVICE-PARTNER-DELEGATION-INTEGRATION-001",
+  "workUnitKey": "PARTNER_ADVICE_STALE_CLEAR_R7",
+  "acquireKey": "ADVICE-PARTNER-R7-STALECLEAR-20260829T2301-SOL-Q8N4V2K6M3PX",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "advice-r7-b530c3-stale-suppression-patch-plus-node-smoke-pass-20260829",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "pr639-head-b530c3-node-ci-33257363832-pass-runtime-smoke-33257363859-pass",
+  "proceedToken": "PROCEED|ADVICE-PARTNER-R7-STALECLEAR-20260829T2328|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|R7_HISTORY_REPLAY",
+  "authorizationBaseSha": "573ef8a747372ef5ff2699d5f2094d38317b8a39",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE-PARTNER-DELEGATION-INTEGRATION-001",
+  "leaseWorkUnitKey": "PARTNER_ADVICE_STALE_CLEAR_R7",
+  "leaseAcquireKey": "ADVICE-PARTNER-R7-STALECLEAR-20260829T2301-SOL-Q8N4V2K6M3PX",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 23:28 JST",
+  "leaseUntilJst": "2026-08-30 00:01 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A204:L204",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/advice-partner-r7-staleclear-20260829; exact current browser/GAMEROAD.html stale advice marker lifecycle only; temporary task-scoped .github/workflows/advice-partner-r7-bounded-html-patch.yml create/remove; tests/browser-full-interaction.spec.mjs only if acceptance repair requires; Central row87 evidence/state only after verified result; own CURRENT_ACTIVE_LEASES row204; own R22 records. EXCLUDE Battle rules/card values/save/economy/assets/Partner persona/formal art/all unrelated files.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

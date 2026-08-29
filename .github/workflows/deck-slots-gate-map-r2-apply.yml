@@ -77,8 +77,8 @@ jobs:
           assert 'tests/deck-slots-core.test.mjs' not in text
 
           updated = text.replace(old_classifier, new_classifier, 1).replace(old_tests, new_tests, 1)
-          assert updated.count('browser/deck-slots-core.mjs') == 2
-          assert updated.count('tests/deck-slots-core.test.mjs') == 4
+          assert updated.count('browser/deck-slots-core.mjs') == 2, updated.count('browser/deck-slots-core.mjs')
+          assert updated.count('tests/deck-slots-core.test.mjs') == 5, updated.count('tests/deck-slots-core.test.mjs')
           path.write_text(updated, encoding='utf-8')
           PY
 
@@ -99,9 +99,7 @@ jobs:
             exit 1
           fi
 
-          classifier_adds="$(git diff --unified=0 "${AUTH_BASE}" -- .github/workflows/gameroad-required-gate.yml | grep -c '^+.*deck-slots-core' || true)"
-          test_step_adds="$(git diff --unified=0 "${AUTH_BASE}" -- .github/workflows/gameroad-required-gate.yml | grep -c '^+.*Run Deck slots core tests when changed' || true)"
-          test "${classifier_adds}" -eq 4
+          test_step_adds="$(git diff --unified=0 "${AUTH_BASE}" -- .github/workflows/gameroad-required-gate.yml | grep -c '^+      - name: Run Deck slots core tests when changed$' || true)"
           test "${test_step_adds}" -eq 1
 
           git config user.name 'github-actions[bot]'

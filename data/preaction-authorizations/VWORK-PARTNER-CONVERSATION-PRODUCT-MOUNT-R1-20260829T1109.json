@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-PARTNER-CONVERSATION-PRODUCT-MOUNT-R1-20260829T1109",
+  "taskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "workUnitKey": "PARTNER_CONVERSATION_PRODUCT_MOUNT_R1",
+  "acquireKey": "PARTNER-CONV-MOUNT-R1-20260829T1109-SOL-H8K4M2Q7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PRED-PARTNER-CONVERSATION-MOUNT-R1-FRESH-30BD130-20260829T1122JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-CURRENT-CONVERSATION-CORE-PLUS-CLASSIFIED-BOOT-SEAM-20260829",
+  "proceedToken": "PROCEED|VWORK-PARTNER-CONVERSATION-PRODUCT-MOUNT-R1-20260829T1109|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_LEASE_TWO_CLASSIFIED_PATHS_BOUNDED",
+  "authorizationBaseSha": "30bd130270e876696cb5fecd37436e0ce8ef0f9a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "leaseWorkUnitKey": "PARTNER_CONVERSATION_PRODUCT_MOUNT_R1",
+  "leaseAcquireKey": "PARTNER-CONV-MOUNT-R1-20260829T1109-SOL-H8K4M2Q7",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 11:22 JST",
+  "leaseUntilJst": "2026-08-29 11:59 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh base 30bd130270e876696cb5fecd37436e0ce8ef0f9a; branch work/partner-conversation-product-mount-r1-20260829; transient PRE_ACTION create-first/delete-before-final-head; browser/board-facility-runtime-mount.mjs; tests/board-facility-runtime-mount.test.mjs; own CURRENT_ACTIVE_LEASES row6 and R22 records. GAMEROAD.html, Required Gate workflow, existing Partner conversation/source/context/session/shell modules, Battle, save, economy, relationship, rig and assets excluded/read-only.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSignature": "PARTNER_CONVERSATION_PRODUCT_MOUNT_R1=EXISTING_CLASSIFIED_BOOT_SEAM+SAASUNA_CONVERSATION_ENTRY+CURRENT_CHARACTER_SCREEN_DOM",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-SAASUNA-CONVERSATION-CORE-AND-CLASSIFIED-BOOT-SEAM-30BD130-20260829T1122",
+  "solutionSearchEvidence": [
+    "Current Saasuna conversation core on fresh main still provides pickerRequired=false, providerReady state, bounded session context, grounding validation, approved fallback, and additive local Good/Bad feedback without changing send().",
+    "Current character screen still renders the Partner picker in #charRoster; product mount replaces that projection only after reusing existing Partner/Saasuna click handlers, not by directly mutating save structure.",
+    "Current board-facility-runtime-mount.mjs and its focused test are unchanged on fresh main and already classified by Required Gate; no new executable path or workflow mutation is needed.",
+    "Fresh main 30bd130 adds non-conflicting Partner Hub shell surface only; conversation core/shell remain read-only to this work unit."
+  ],
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs"
+  ]
+}

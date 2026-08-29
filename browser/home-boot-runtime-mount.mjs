@@ -71,10 +71,10 @@ ${HOME_SELECTOR}[data-home-shell-variant="portrait"][data-home-primary-authority
   height:${HOME_TOUCH_TARGET_MIN_PX}px!important;
   padding:0 8px!important;
   border-radius:12px!important;
-  border-color:rgba(187,219,255,.28)!important;
-  background:rgba(8,17,45,.68)!important;
-  box-shadow:0 6px 18px rgba(0,0,24,.22)!important;
-  backdrop-filter:blur(8px)!important;
+  border-color:transparent!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
   font-size:11px!important;
   opacity:.88;
 }

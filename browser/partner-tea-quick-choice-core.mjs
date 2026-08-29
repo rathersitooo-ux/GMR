@@ -1,3 +1,4 @@
+import { runSaasunaConversationTurn } from './partner-conversation-core.mjs';
 import { SAASUNA_PARTNER_ID } from './partner-saasuna-conversation-source.mjs';
 
 const CORE_ID = 'gameroad.partner-tea-quick-choice.v1';
@@ -8,6 +9,7 @@ const CHOICES = Object.freeze([
 ]);
 
 const CHOICE_IDS = new Set(CHOICES.map((choice) => choice.id));
+const CHOICE_BY_ID = new Map(CHOICES.map((choice) => [choice.id, choice]));
 
 function freezeDeep(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -79,6 +81,41 @@ export function selectTeaQuickChoice(input = {}) {
     intent: choiceId,
     downstreamUseSite: 'partner-conversation',
     freeTalkRoute: 'separate',
+    rawFreeTextAccepted: false,
+    relationshipMutationAllowed: false,
+    rewardMutationAllowed: false,
+    saveMutationAllowed: false,
+  });
+}
+
+export async function runTeaQuickChoiceTurn(input = {}, deps = {}) {
+  const intent = selectTeaQuickChoice(input);
+  if (!intent.ok) return intent;
+
+  const turnId = exactToken(input.turnId);
+  if (!turnId) return fail('TURN_REQUIRED');
+
+  const choice = CHOICE_BY_ID.get(intent.choiceId);
+  const turn = await runSaasunaConversationTurn({
+    partnerId: intent.partnerId,
+    sessionId: intent.sessionId,
+    turnId,
+    userMessage: choice.label,
+  }, { provider: deps.provider ?? null });
+
+  if (!turn.ok) return fail('CONVERSATION_TURN_FAILED');
+
+  return freezeDeep({
+    ok: true,
+    coreId: CORE_ID,
+    kind: 'tea_quick_choice_turn',
+    partnerId: intent.partnerId,
+    sessionId: intent.sessionId,
+    turnId,
+    choiceId: intent.choiceId,
+    intent: intent.intent,
+    downstreamUseSite: intent.downstreamUseSite,
+    turn,
     rawFreeTextAccepted: false,
     relationshipMutationAllowed: false,
     rewardMutationAllowed: false,

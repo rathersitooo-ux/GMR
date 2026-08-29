@@ -11,15 +11,8 @@ function requireObject(value, code) {
   return value;
 }
 
-export function partnerConversationProjectionDecision({
-  screenActive = false,
-  partnerRoleActive = false,
-  saasunaSelected = false,
-} = {}) {
-  if (!screenActive) return 'idle';
-  if (!partnerRoleActive) return 'activate_partner';
-  if (!saasunaSelected) return 'select_saasuna';
-  return 'conversation';
+export function partnerConversationProjectionDecision({ screenActive = false } = {}) {
+  return screenActive ? 'conversation' : 'idle';
 }
 
 function addConversationStyle(document) {
@@ -27,24 +20,25 @@ function addConversationStyle(document) {
   const style = document.createElement('style');
   style.id = PARTNER_CONVERSATION_STYLE_ID;
   style.textContent = `
-.grPartnerConversation{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(150px,1fr) auto;gap:8px;padding:2px}
-.grPartnerConversationHead{padding-bottom:8px;border-bottom:1px solid var(--line)}
-.grPartnerConversationHead b{display:block;font-size:16px}.grPartnerConversationHead small{color:var(--muted);font-size:8px}
-.grPartnerConversationLog{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:7px;padding:4px 2px 8px}
-.grPartnerConversationMessage{max-width:88%;padding:8px 10px;border:1px solid var(--line);background:#0b2721;font-size:11px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
-.grPartnerConversationMessage.user{align-self:flex-end;background:#173f35}.grPartnerConversationMessage.saasuna{align-self:flex-start}
-.grPartnerConversationMessage.system{align-self:stretch;max-width:none;color:var(--muted);font-size:9px}
-.grPartnerConversationComposer{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
-.grPartnerConversationInput{min-height:48px;max-height:120px;resize:vertical;border:1px solid var(--line);background:#071a16;color:var(--ink);padding:10px;font:inherit}
-@media(max-width:540px) and (orientation:portrait){.grPartnerConversationComposer{grid-template-columns:1fr}.grPartnerConversationSend{width:100%}}
+.grPartnerConversation{height:100%;min-height:0;position:relative;display:grid;grid-template-rows:auto minmax(90px,1fr) auto;gap:6px;padding:2px;background:transparent}
+.grPartnerConversationStatus{justify-self:end;align-self:start;max-width:100%;padding:4px 7px;border:1px solid color-mix(in srgb,var(--line) 72%,transparent);background:color-mix(in srgb,#071a16 76%,transparent);backdrop-filter:blur(6px);color:var(--muted);font-size:8px;line-height:1.25}
+.grPartnerConversationLog{min-height:0;overflow:auto;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;padding:4px 2px 6px;mask-image:linear-gradient(to bottom,transparent 0,#000 22px,#000 100%)}
+.grPartnerConversationMessage{max-width:82%;padding:7px 9px;border:1px solid color-mix(in srgb,var(--line) 72%,transparent);background:color-mix(in srgb,#0b2721 82%,transparent);backdrop-filter:blur(6px);font-size:11px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.grPartnerConversationMessage.user{align-self:flex-end;background:color-mix(in srgb,#173f35 86%,transparent)}.grPartnerConversationMessage.saasuna{align-self:flex-start}
+.grPartnerConversationMessage.system{align-self:stretch;max-width:none;color:var(--muted);font-size:9px;background:color-mix(in srgb,#071a16 72%,transparent)}
+.grPartnerConversationComposer{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:end;padding-top:2px}
+.grPartnerConversationInput{min-height:46px;max-height:104px;resize:none;border:1px solid var(--line);background:color-mix(in srgb,#071a16 92%,transparent);backdrop-filter:blur(8px);color:var(--ink);padding:10px;font:inherit}
+.grPartnerConversationSend{min-height:46px}.grPartnerConversation[data-provider-state="fallback"] .grPartnerConversationStatus{opacity:.86}
+@media(max-width:540px) and (orientation:portrait){.grPartnerConversation{grid-template-rows:auto minmax(72px,1fr) auto}.grPartnerConversationMessage{max-width:90%}.grPartnerConversationComposer{grid-template-columns:minmax(0,1fr) auto}.grPartnerConversationInput{min-height:44px}.grPartnerConversationSend{min-width:52px;min-height:44px}}
 `;
   document.head?.appendChild(style);
 }
 
-function appendMessage(document, log, role, text) {
+function appendMessage(document, log, role, text, origin = '') {
   const row = document.createElement('div');
   row.className = `grPartnerConversationMessage ${role}`;
   row.dataset.role = role;
+  if (origin) row.dataset.responseOrigin = origin;
   row.textContent = text;
   log.appendChild(row);
   log.scrollTop = log.scrollHeight;
@@ -55,7 +49,60 @@ function findSaasunaCard(roster) {
     .find((card) => String(card.textContent || '').includes('サースナー')) ?? null;
 }
 
-export function mountSaasunaConversationProductSurface(global = globalThis) {
+function hideRosterUntilConversation(roster) {
+  if (!roster?.style) return () => {};
+  const previousVisibility = roster.style.visibility;
+  roster.style.visibility = 'hidden';
+  return () => {
+    roster.style.visibility = previousVisibility;
+  };
+}
+
+function synchronizeSaasunaStateBeforePaint(document, initialRoster) {
+  let roster = initialRoster;
+  let restoreVisibility = hideRosterUntilConversation(roster);
+  let partnerRoleSynchronized = false;
+  let saasunaSynchronized = false;
+
+  const refreshRoster = () => {
+    const current = document.querySelector('#charRoster');
+    if (!current || current === roster) return;
+    restoreVisibility();
+    roster = current;
+    restoreVisibility = hideRosterUntilConversation(roster);
+  };
+
+  try {
+    const partnerTab = roster.querySelector('[data-role="partner"]');
+    if (partnerTab && !partnerTab.classList.contains('on') && typeof partnerTab.click === 'function') {
+      partnerTab.click();
+      refreshRoster();
+    }
+    const currentPartnerTab = roster.querySelector('[data-role="partner"]');
+    partnerRoleSynchronized = !currentPartnerTab || currentPartnerTab.classList.contains('on');
+
+    const saasunaCard = findSaasunaCard(roster);
+    if (saasunaCard && !saasunaCard.classList.contains('on') && typeof saasunaCard.click === 'function') {
+      saasunaCard.click();
+      refreshRoster();
+    }
+    const currentSaasunaCard = findSaasunaCard(roster);
+    saasunaSynchronized = !currentSaasunaCard || currentSaasunaCard.classList.contains('on');
+  } catch {
+    // The direct chat surface still mounts. Existing selection side effects are best-effort only.
+  }
+
+  return { roster, restoreVisibility, partnerRoleSynchronized, saasunaSynchronized };
+}
+
+function setProviderStatus(surface, status, state) {
+  if (!surface) return;
+  surface.dataset.providerState = state;
+  const node = surface.querySelector('.grPartnerConversationStatus');
+  if (node) node.textContent = status;
+}
+
+export function mountSaasunaConversationProductSurface(global = globalThis, { provider = null } = {}) {
   const document = global?.document;
   const MutationObserverCtor = global?.MutationObserver;
   if (!document?.querySelector || !document?.createElement || typeof MutationObserverCtor !== 'function') return null;
@@ -63,45 +110,33 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
   if (global[PARTNER_CONVERSATION_MOUNT_NAME]) return global[PARTNER_CONVERSATION_MOUNT_NAME];
 
   addConversationStyle(document);
-  const entry = createSaasunaConversationEntry({ provider: null });
-  const queue = typeof global.queueMicrotask === 'function' ? global.queueMicrotask.bind(global) : queueMicrotask;
+  const entry = createSaasunaConversationEntry({ provider });
   let observer = null;
 
   const project = () => {
     const screen = document.querySelector('[data-screen="characters"]');
-    const roster = document.querySelector('#charRoster');
+    let roster = document.querySelector('#charRoster');
     if (!screen || !roster || !screen.classList.contains('active')) return false;
     if (roster.querySelector('[data-gr-partner-conversation="1"]')) return true;
 
-    const partnerTab = roster.querySelector('[data-role="partner"]');
-    const saasunaCard = findSaasunaCard(roster);
-    const decision = partnerConversationProjectionDecision({
-      screenActive: true,
-      partnerRoleActive: !partnerTab || partnerTab.classList.contains('on'),
-      saasunaSelected: !saasunaCard || saasunaCard.classList.contains('on'),
-    });
-
-    if (decision === 'activate_partner' && partnerTab?.click) {
-      partnerTab.click();
-      queue(project);
-      return false;
-    }
-    if (decision === 'select_saasuna' && saasunaCard?.click) {
-      saasunaCard.click();
-      queue(project);
-      return false;
-    }
+    screen.dataset.grPartnerConversationDirectScene = '1';
+    const synchronized = synchronizeSaasunaStateBeforePaint(document, roster);
+    roster = synchronized.roster;
 
     const surface = document.createElement('section');
     surface.className = 'grPartnerConversation';
     surface.dataset.grPartnerConversation = '1';
+    surface.dataset.partnerId = 'partner.saasuna';
+    surface.dataset.entryMode = 'direct_scene';
+    surface.dataset.partnerRoleSynchronized = String(synchronized.partnerRoleSynchronized);
+    surface.dataset.saasunaSynchronized = String(synchronized.saasunaSynchronized);
     surface.setAttribute('aria-label', 'サースナーとの会話');
     surface.innerHTML = `
-      <div class="grPartnerConversationHead"><b>サースナーと会話</b><small>生成AI未接続</small></div>
+      <div class="grPartnerConversationStatus" aria-live="polite">${provider ? '会話AI準備中' : '固定台詞待機'}</div>
       <div class="grPartnerConversationLog" aria-live="polite"></div>
       <form class="grPartnerConversationComposer">
         <textarea class="grPartnerConversationInput" maxlength="4000" rows="2" placeholder="サースナーに話しかける" aria-label="サースナーへのメッセージ"></textarea>
-        <button class="btn primary grPartnerConversationSend" type="submit">送る</button>
+        <button class="btn primary grPartnerConversationSend" type="submit" aria-label="送信">送る</button>
       </form>`;
 
     const log = surface.querySelector('.grPartnerConversationLog');
@@ -116,17 +151,24 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
       input.value = '';
       input.disabled = true;
       send.disabled = true;
+      setProviderStatus(surface, provider ? '会話中…' : '固定台詞待機', provider ? 'pending' : 'fallback');
       try {
         const response = await entry.send(message);
         const turn = response?.turn;
-        appendMessage(
-          document,
-          log,
-          turn?.ok && typeof turn.utterance === 'string' ? 'saasuna' : 'system',
-          turn?.ok && typeof turn.utterance === 'string' ? turn.utterance : '応答できませんでした。',
-        );
+        if (turn?.ok && typeof turn.utterance === 'string') {
+          appendMessage(document, log, 'saasuna', turn.utterance, turn.responseOrigin || '');
+          if (turn.responseOrigin === 'provider_candidate') {
+            setProviderStatus(surface, '会話AI接続', 'connected');
+          } else {
+            setProviderStatus(surface, '固定台詞（AI未応答）', 'fallback');
+          }
+        } else {
+          appendMessage(document, log, 'system', '応答できませんでした。');
+          setProviderStatus(surface, '応答失敗', 'error');
+        }
       } catch {
         appendMessage(document, log, 'system', '応答できませんでした。');
+        setProviderStatus(surface, '応答失敗', 'error');
       } finally {
         input.disabled = false;
         send.disabled = false;
@@ -135,6 +177,7 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
     });
 
     roster.replaceChildren(surface);
+    synchronized.restoreVisibility();
     const charName = document.querySelector('#charName');
     if (charName) charName.textContent = 'サースナー';
     return true;
@@ -148,10 +191,12 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
   project();
 
   const runtime = Object.freeze({
-    version: 'gameroad.partner-conversation-product-mount.v1',
+    version: 'gameroad.partner-conversation-product-mount.v2',
     partnerId: 'partner.saasuna',
+    entryMode: 'direct_scene',
     pickerRequired: false,
-    providerReady: false,
+    intermediateEntryAllowed: false,
+    providerReady: provider !== null,
     persistentTranscript: false,
     project,
     status: () => entry.status(),

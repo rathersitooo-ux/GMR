@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-FIRSTPAINT-ORACLE-R1-20260829T1547",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_FIRST_PAINT_CLEANUP_ORACLE_R1",
+  "acquireKey": "HOME-FIRSTPAINT-ORACLE-R1-20260829T1547-SOL-H5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "MERGED_HOME_BOOT_TEST_ALREADY_CLASSIFIED_AND_PR520_IDENTIFIED_FIRST_FRAME_FLASH_GAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_HOME_BOOT_TEST_BASELINE_PLUS_CLOSED_PR520_FIRST_PAINT_REQUIREMENT",
+  "proceedToken": "PROCEED|HOME-FIRSTPAINT-ORACLE-R1-20260829T1547|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|HOME_FIRST_PAINT_CLEANUP_ORACLE_R1",
+  "authorizationBaseSha": "e825f0135e0b730d1403509becf44a04e13d55f2",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_FIRST_PAINT_CLEANUP_ORACLE_R1",
+  "leaseAcquireKey": "HOME-FIRSTPAINT-ORACLE-R1-20260829T1547-SOL-H5",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 15:47 JST",
+  "leaseUntilJst": "2026-08-29 16:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A200:L200",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main e825f0135e0b730d1403509becf44a04e13d55f2; branch work/home-first-paint-oracle-r1-20260829; tests/home-boot-presentation.test.mjs only; transient PRE_ACTION authorization file first-commit/delete-before-final-head. Strict exclusions: browser/GAMEROAD.html, browser/home-*.mjs, .github/workflows/*, deck integration, Partner, Battle, deploy, assets, all product files.",
+  "scope": [
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "solutionSignature": "adapt existing classified Home boot test into a first-paint source oracle without touching product code",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MERGED_PR506_HOME_BOOT_TEST_AND_CLOSED_PR520_FIRST_PAINT_FINDING",
+  "solutionSearchEvidence": [
+    "tests/home-boot-presentation.test.mjs already exists on main and is the focused Home presentation oracle",
+    "merged PR #506 established the current Home visual-authority baseline and this exact test path",
+    "closed PR #520 explicitly records that post-mount hiding does not solve first-frame flash and requires a first-paint regression oracle",
+    "current Deck runtime integration owns browser/GAMEROAD.html, so a test-only lane avoids mutable-target overlap"
+  ]
+}

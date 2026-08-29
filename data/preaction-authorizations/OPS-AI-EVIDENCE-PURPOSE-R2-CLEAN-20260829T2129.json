@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "OPS-AI-EVIDENCE-PURPOSE-R2-CLEAN-20260829T2129",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "EVIDENCE_PURPOSE_BINDING_R2_RECOVERY",
+  "acquireKey": "OPS-AI-EVIDENCE-PURPOSE-R2-20260829T2116-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ACTIVE_LEASES!A13:L13@2026-08-29T21:29+09:00",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ISOLATED_ACTIONS_PURPOSE_BINDING_FOCUSED_54OF54_AFTER_FIXTURE_BUDGET_CORRECTION",
+  "proceedToken": "PROCEED|OPS-AI-EVIDENCE-PURPOSE-R2-CLEAN-20260829T2129|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-08-29T21:29+09:00",
+  "authorizationBaseSha": "f84383b6b8dc7a72fe0fa0707a43fa06145ec825",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "EVIDENCE_PURPOSE_BINDING_R2_RECOVERY",
+  "leaseAcquireKey": "OPS-AI-EVIDENCE-PURPOSE-R2-20260829T2116-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 21:29 JST",
+  "leaseUntilJst": "2026-08-29 22:06 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A13:L13",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact fresh base 28befd60f0d5433eb38f0184b39590511552855f; new recovery branch from current main; transient PRE_ACTION create-first/delete-before-final-head; tools/jit-evidence-compiler.mjs; tests/jit-evidence-compiler.test.mjs; tools/sol-reasoning-protocol.mjs; tests/sol-reasoning-protocol.test.mjs; tools/luna-sol-integration-core.mjs; tests/luna-sol-integration-core.test.mjs; docs/jit-evidence-compiler.md; docs/sol-reasoning-protocol.md; own CURRENT_ACTIVE_LEASES row13; own R22 records. READ-ONLY old purpose/issue-binding branches and Required Gate. Strict exclusions: browser product, deploy, assets, gameplay/save/economy/network, workflows except transient PRE_ACTION only.",
+  "scope": [
+    "tools/jit-evidence-compiler.mjs",
+    "tests/jit-evidence-compiler.test.mjs",
+    "tools/sol-reasoning-protocol.mjs",
+    "tests/sol-reasoning-protocol.test.mjs",
+    "tools/luna-sol-integration-core.mjs",
+    "tests/luna-sol-integration-core.test.mjs"
+  ],
+  "leaseScope": [
+    "tools/jit-evidence-compiler.mjs",
+    "tests/jit-evidence-compiler.test.mjs",
+    "tools/sol-reasoning-protocol.mjs",
+    "tests/sol-reasoning-protocol.test.mjs",
+    "tools/luna-sol-integration-core.mjs",
+    "tests/luna-sol-integration-core.test.mjs"
+  ]
+}

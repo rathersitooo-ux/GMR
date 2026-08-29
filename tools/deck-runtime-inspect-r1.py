@@ -1,32 +1,27 @@
 from pathlib import Path
 import re
 
-path = Path('browser/GAMEROAD.html')
-lines = path.read_text(encoding='utf-8').splitlines()
+lines = Path('browser/GAMEROAD.html').read_text(encoding='utf-8').splitlines()
 patterns = {
-    'DEFAULT_DECK': r'\bDEFAULT_DECK\b',
-    'READ_SAVED': r'\breadSavedDeck\b',
-    'SAVE_DRAFT': r'\bsaveDraft\b',
-    'LOCAL_SAVED': r"localStorage\.(?:getItem|setItem|removeItem)\([^\n]*['\"]savedDeck['\"]",
-    'RESET_DECK': r'(?:reset[^\n]{0,80}deck|deck[^\n]{0,80}reset)',
-    'DECK_COUNT_UI': r'(?:deck-count|deckCount)',
-    'BATTLE_DECK': r'(?:getBattleDeckIds|__BATTLE_DECK_IDS__|resolveBattleStartDeck)',
-    'START_MATCH': r'(?:startMatch|start[^\n]{0,40}(?:battle|match)|match[^\n]{0,40}start)',
-    'MODULE_SCRIPT': r'<script[^>]*type=["\']module["\']',
-    'MODULE_IMPORT': r'\bimport\s+[^;]+\s+from\s+["\'][^"\']+\.mjs["\']',
+    'STATE_DECK': r'state=\{[^\n]*deckDraft',
+    'DECK_DRAFT': r'\bdeckDraft\b',
+    'VALIDATE_DECK': r'\bvalidateDeck\b',
+    'SAVE_FN': r'function\s+save\s*\(',
+    'LOAD_FN': r'function\s+(?:load|restore)[A-Za-z0-9_]*\s*\(',
+    'SAVE_RECOVERY': r'(?:inspectRawSave|classifyDeckProjection|prepareExplicitDeckCommit|writePreparedSaveVerified|resetExplicitSaveKeys)',
+    'START_CLICK': r"(?:\$\(['\"]#startMatch['\"]\)|getElementById\(['\"]startMatch['\"])[^\n]{0,120}(?:onclick|addEventListener)",
+    'START_ID': r'\bstartMatch\b',
+    'SETUP_DECK_NOTE': r'\bsetupDeckNote\b',
+    'DEFAULT_ASSIGN': r'\bDEFAULT_DECK\b',
 }
-
 print(f'HTML_LINES={len(lines)}')
 for name, pat in patterns.items():
     rx = re.compile(pat, re.I)
-    hits = [i for i, line in enumerate(lines) if rx.search(line)]
+    hits = [i for i,line in enumerate(lines) if rx.search(line)]
     print(f'[{name}] count={len(hits)}')
-    for i in hits[:8]:
-        start = max(0, i - 1)
-        end = min(len(lines), i + 2)
+    for i in hits[:12]:
         print(f'  @{i+1}')
-        for n in range(start, end):
-            s = lines[n].strip().replace('\t', ' ')
-            if len(s) > 260:
-                s = s[:260] + ' …'
+        for n in range(max(0,i-2), min(len(lines),i+3)):
+            s=lines[n].strip().replace('\t',' ')
+            if len(s)>420:s=s[:420]+' …'
             print(f'    {n+1}: {s}')

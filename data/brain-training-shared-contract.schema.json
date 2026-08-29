@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gameroad.local/schema/brain-training-shared-contract-v1.json",
+  "title": "GAMEROAD Brain Training Shared Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "derivedNonAuthority", "adoptionState", "authoritySnapshot", "cognitiveAxes", "subjectAxes", "itemContract", "policies", "invariants", "externalEvidence"],
+  "properties": {
+    "schemaVersion": {"const": "gameroad-brain-training-shared-contract-v1"},
+    "derivedNonAuthority": {"const": true},
+    "adoptionState": {"const": "CANDIDATE"},
+    "authoritySnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capturedAtJst", "currentRootId", "centralSpreadsheetId", "gitBaseSha", "ownerTaskId"],
+      "properties": {
+        "capturedAtJst": {"type": "string", "minLength": 1},
+        "currentRootId": {"type": "string", "minLength": 1},
+        "centralSpreadsheetId": {"type": "string", "minLength": 1},
+        "gitBaseSha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "ownerTaskId": {"const": "LEARNING-CROSSMEDIA-INTRINSIC-CONTRACT-001"}
+      }
+    },
+    "cognitiveAxes": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "uniqueItems": true,
+      "items": {"enum": ["identify", "memorize", "analyze", "compute", "visualize"]}
+    },
+    "subjectAxes": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "uniqueItems": true,
+      "items": {"enum": ["math_logic", "natural_science", "life_science", "language_communication", "strategy_decision", "creative"]}
+    },
+    "itemContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requiredIdentityFields", "stimulusKinds", "responseKinds", "answerAuthority", "difficultyMetadata"],
+      "properties": {
+        "requiredIdentityFields": {
+          "const": ["itemId", "itemVersion", "cognitiveAxis", "subjectAxis", "sourceProvenance", "stimulusKind", "responseKind", "answerAuthority"]
+        },
+        "stimulusKinds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"enum": ["TEXT", "NUMBER", "IMAGE", "SPATIAL", "SEQUENCE", "SYMBOL", "GAME_STATE_SNAPSHOT"]}
+        },
+        "responseKinds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"enum": ["CHOICE", "NUMERIC", "ORDER", "MATCH", "SPATIAL_SELECTION", "CATEGORY"]}
+        },
+        "answerAuthority": {"const": "VERSIONED_DETERMINISTIC_OR_SOURCED_RUBRIC"},
+        "difficultyMetadata": {"const": "ITEM_DECLARED_BOUNDS_ONLY"}
+      }
+    },
+    "policies": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["difficultyAdaptation", "dailySelection", "scoreHistory", "calendar"],
+      "properties": {
+        "difficultyAdaptation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "signals", "fixedThresholds", "diagnosisAllowed", "hiddenAbilityClaimAllowed", "itemBoundsRequired"],
+          "properties": {
+            "status": {"const": "CANDIDATE"},
+            "signals": {"const": ["correctness", "responseTime", "recentAttempts"]},
+            "fixedThresholds": {"const": "UNRESOLVED"},
+            "diagnosisAllowed": {"const": false},
+            "hiddenAbilityClaimAllowed": {"const": false},
+            "itemBoundsRequired": {"const": true}
+          }
+        },
+        "dailySelection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "fixedDailyItemCount", "allCategoriesRequired", "repeatAllowed", "registeredTourOrderAuthority", "firstAttemptRecordPolicy"],
+          "properties": {
+            "status": {"const": "CANDIDATE"},
+            "fixedDailyItemCount": {"const": "UNRESOLVED"},
+            "allCategoriesRequired": {"const": false},
+            "repeatAllowed": {"const": true},
+            "registeredTourOrderAuthority": {"const": "DAILY_TOUR_OWNER"},
+            "firstAttemptRecordPolicy": {"const": "CANDIDATE_ONLY"}
+          }
+        },
+        "scoreHistory": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sessionResult", "dailyFirstAttempt", "bestScore", "realSkillInference", "learningEffectInference"],
+          "properties": {
+            "sessionResult": {"const": "ALLOWED"},
+            "dailyFirstAttempt": {"const": "CANDIDATE_ONLY"},
+            "bestScore": {"const": "OPTIONAL_CANDIDATE"},
+            "realSkillInference": {"const": "NOT_ALLOWED"},
+            "learningEffectInference": {"const": "NOT_ALLOWED"}
+          }
+        },
+        "calendar": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "markerMeaning", "missedDayDebt", "streakReward", "resetAuthority"],
+          "properties": {
+            "status": {"const": "CANDIDATE"},
+            "markerMeaning": {"const": "ACTIVITY_OCCURRED_ONLY"},
+            "missedDayDebt": {"const": false},
+            "streakReward": {"const": "NOT_DEFINED"},
+            "resetAuthority": {"const": "EXTERNAL_PASS_THROUGH_ONLY"}
+          }
+        }
+      }
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cognitiveEffectClaim", "academicEffectClaim", "allActivitiesRequired", "rewardAuthority", "missionAuthority", "rawPersonalDataAllowed", "learningEventAuthority", "battlePowerMutationAllowed"],
+      "properties": {
+        "cognitiveEffectClaim": {"const": "UNMEASURED"},
+        "academicEffectClaim": {"const": "UNMEASURED"},
+        "allActivitiesRequired": {"const": false},
+        "rewardAuthority": {"const": "NOT_DEFINED_BY_CONTRACT"},
+        "missionAuthority": {"const": "NOT_DEFINED_BY_CONTRACT"},
+        "rawPersonalDataAllowed": {"const": false},
+        "learningEventAuthority": {"const": "DELEGATE_TO_LEARNING_EVENT_CORE"},
+        "battlePowerMutationAllowed": {"const": false}
+      }
+    },
+    "externalEvidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source", "evidenceType", "usedFor", "authorityEffect"],
+        "properties": {
+          "source": {"type": "string", "minLength": 1},
+          "evidenceType": {"enum": ["OFFICIAL_PRIMARY", "OFFICIAL_MANUAL", "SPECIFICATION"]},
+          "usedFor": {"type": "string", "minLength": 1},
+          "authorityEffect": {"const": "CANDIDATE_INPUT_ONLY"}
+        }
+      }
+    }
+  }
+}

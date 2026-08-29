@@ -23,6 +23,8 @@ const defaultBattleConveyorCoreSource = path.join(repoRoot, 'browser/battle-conv
 const defaultBoardFacilityClassicSource = path.join(repoRoot, 'browser/board-facility-state-core.classic.js');
 const defaultBoardFacilityCoreSource = path.join(repoRoot, 'browser/board-facility-state-core.mjs');
 const defaultBoardFacilityRuntimeMountSource = path.join(repoRoot, 'browser/board-facility-runtime-mount.mjs');
+const defaultPartnerConversationCoreSource = path.join(repoRoot, 'browser/partner-conversation-core.mjs');
+const defaultPartnerSaasunaConversationSource = path.join(repoRoot, 'browser/partner-saasuna-conversation-source.mjs');
 const defaultUiStateFeedbackCoreSource = path.join(repoRoot, 'browser/ui-state-feedback-core.mjs');
 const defaultUiStateFeedbackReadyPlanAdapterSource = path.join(repoRoot, 'browser/ui-state-feedback-ready-plan-adapter.mjs');
 const defaultFieldMusicPolicyCoreSource = path.join(repoRoot, 'browser/field-music-policy-core.mjs');
@@ -42,6 +44,10 @@ const FORMAL_SELECTED3_SFX_BLOBS = Object.freeze({
   click: '4564b888c25143eaed79c384a5ce02054813a41c',
   cardSlide: 'b0090036bd9c0d48c3f6d79fd77eaf30901b6a05',
   cardPlace: '42bbfa8ea2daaadd237c48287388c7c931cc817e',
+});
+const FORMAL_PARTNER_CONVERSATION_BLOBS = Object.freeze({
+  core: '5db477bcb9747efbab0aff37205614dd304feb8a',
+  saasunaSource: 'f2b1bfda9c9a5d9d2511e735b17059a0d2b6a4cc',
 });
 const defaultDist = path.join(repoRoot, 'deploy/cloudflare/dist');
 
@@ -203,6 +209,8 @@ export async function buildPackage({
   const boardFacilityClassicInput = await readFile(boardFacilityClassicSource);
   const boardFacilityCoreInput = await readFile(boardFacilityCoreSource);
   const boardFacilityRuntimeMountInput = await readFile(boardFacilityRuntimeMountSource);
+  const partnerConversationCoreInput = await readFile(defaultPartnerConversationCoreSource);
+  const partnerSaasunaConversationSourceInput = await readFile(defaultPartnerSaasunaConversationSource);
   const uiStateFeedbackCoreInput = await readFile(uiStateFeedbackCoreSource);
   const uiStateFeedbackReadyPlanAdapterInput = await readFile(uiStateFeedbackReadyPlanAdapterSource);
   const fieldMusicPolicyCoreInput = await readFile(fieldMusicPolicyCoreSource);
@@ -232,6 +240,8 @@ export async function buildPackage({
   const boardFacilityClassicBlob = gitBlobSha1(boardFacilityClassicInput);
   const boardFacilityCoreBlob = gitBlobSha1(boardFacilityCoreInput);
   const boardFacilityRuntimeMountBlob = gitBlobSha1(boardFacilityRuntimeMountInput);
+  const partnerConversationCoreBlob = gitBlobSha1(partnerConversationCoreInput);
+  const partnerSaasunaConversationSourceBlob = gitBlobSha1(partnerSaasunaConversationSourceInput);
   const uiStateFeedbackCoreBlob = gitBlobSha1(uiStateFeedbackCoreInput);
   const uiStateFeedbackReadyPlanAdapterBlob = gitBlobSha1(uiStateFeedbackReadyPlanAdapterInput);
   const fieldMusicPolicyCoreBlob = gitBlobSha1(fieldMusicPolicyCoreInput);
@@ -245,6 +255,12 @@ export async function buildPackage({
   const cardSlideSfxBlob = gitBlobSha1(cardSlideSfxInput);
   const cardPlaceSfxBlob = gitBlobSha1(cardPlaceSfxInput);
   const homeThemeOrientationBlob = gitBlobSha1(homeThemeOrientationInput);
+  if (partnerConversationCoreBlob !== FORMAL_PARTNER_CONVERSATION_BLOBS.core) {
+    throw new Error(`Partner conversation core blob mismatch: expected=${FORMAL_PARTNER_CONVERSATION_BLOBS.core} actual=${partnerConversationCoreBlob}`);
+  }
+  if (partnerSaasunaConversationSourceBlob !== FORMAL_PARTNER_CONVERSATION_BLOBS.saasunaSource) {
+    throw new Error(`Partner Saasuna conversation source blob mismatch: expected=${FORMAL_PARTNER_CONVERSATION_BLOBS.saasunaSource} actual=${partnerSaasunaConversationSourceBlob}`);
+  }
   if (clickSfxBlob !== FORMAL_SELECTED3_SFX_BLOBS.click) {
     throw new Error(`Formal click SFX blob mismatch: expected=${FORMAL_SELECTED3_SFX_BLOBS.click} actual=${clickSfxBlob}`);
   }
@@ -431,6 +447,20 @@ export async function buildPackage({
   const boardFacilityRuntimeMountRoundTrip = await readFile(boardFacilityRuntimeMountOutputPath);
   if (!boardFacilityRuntimeMountInput.equals(boardFacilityRuntimeMountRoundTrip)) {
     throw new Error('dist/board-facility-runtime-mount.mjs is not byte-identical to Browser dependency source');
+  }
+
+  const partnerConversationCoreOutputPath = path.join(dist, 'partner-conversation-core.mjs');
+  await writeFile(partnerConversationCoreOutputPath, partnerConversationCoreInput);
+  const partnerConversationCoreRoundTrip = await readFile(partnerConversationCoreOutputPath);
+  if (!partnerConversationCoreInput.equals(partnerConversationCoreRoundTrip)) {
+    throw new Error('dist/partner-conversation-core.mjs is not byte-identical to formal Partner conversation core source');
+  }
+
+  const partnerSaasunaConversationSourceOutputPath = path.join(dist, 'partner-saasuna-conversation-source.mjs');
+  await writeFile(partnerSaasunaConversationSourceOutputPath, partnerSaasunaConversationSourceInput);
+  const partnerSaasunaConversationSourceRoundTrip = await readFile(partnerSaasunaConversationSourceOutputPath);
+  if (!partnerSaasunaConversationSourceInput.equals(partnerSaasunaConversationSourceRoundTrip)) {
+    throw new Error('dist/partner-saasuna-conversation-source.mjs is not byte-identical to formal Saasuna conversation source');
   }
 
   const uiStateFeedbackCoreOutputPath = path.join(dist, 'ui-state-feedback-core.mjs');
@@ -642,6 +672,18 @@ export async function buildPackage({
         'board-facility-runtime-mount.mjs',
         boardFacilityRuntimeMountInput,
         boardFacilityRuntimeMountBlob,
+      ),
+      partner_conversation_core: provenance(
+        'browser/partner-conversation-core.mjs',
+        'partner-conversation-core.mjs',
+        partnerConversationCoreInput,
+        partnerConversationCoreBlob,
+      ),
+      partner_saasuna_conversation_source: provenance(
+        'browser/partner-saasuna-conversation-source.mjs',
+        'partner-saasuna-conversation-source.mjs',
+        partnerSaasunaConversationSourceInput,
+        partnerSaasunaConversationSourceBlob,
       ),
       ui_state_feedback_core: provenance(
         'browser/ui-state-feedback-core.mjs',

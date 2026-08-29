@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "REQGATE-PARALLEL-R1B-20260829T1858",
+  "taskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "workUnitKey": "REQUIRED_GATE_PARALLELISM_R1",
+  "acquireKey": "REQGATE-PARALLEL-R1-20260829T1843-SOL",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "REQGATE-PARALLEL-R1B-MERGE-BASE-DIFF-AND-CONVENTIONAL-PAIR",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT-REQGATE-PREACTION-TESTS-PLUS-HELDOUT-PR613",
+  "proceedToken": "PROCEED|REQGATE-PARALLEL-R1B-20260829T1858|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|prediction|lease-snapshot",
+  "authorizationBaseSha": "2f1fd1f739dc17a1b6fb63da4109ae600b8bec4d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "leaseWorkUnitKey": "REQUIRED_GATE_PARALLELISM_R1",
+  "leaseAcquireKey": "REQGATE-PARALLEL-R1-20260829T1843-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 18:58 JST",
+  "leaseUntilJst": "2026-08-29 19:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base 2f1fd1f739dc17a1b6fb63da4109ae600b8bec4d; branch work/required-gate-parallelism-r1b-20260829; transient PRE_ACTION data/preaction-authorizations/REQGATE-PARALLEL-R1B-20260829T1858.json create-first/delete-before-final-head; .github/workflows/gameroad-required-gate.yml; tools/preaction-authorization-validator.mjs; tests/preaction-authorization-validator.test.mjs; own CURRENT_ACTIVE_LEASES row5 and own R22 records. READ-ONLY: current Required Gate/PREACTION protocol, PR#613 held-out Daily Tour case, abandoned R1 branch history. Strict exclusions: all product/browser game files, browser/GAMEROAD.html, other workflows, deploy/assets, Partner/Learning/Battle/economy/save, all unrelated files.",
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml",
+    "tools/preaction-authorization-validator.mjs",
+    "tests/preaction-authorization-validator.test.mjs"
+  ],
+  "leaseScope": [
+    ".github/workflows/gameroad-required-gate.yml",
+    "tools/preaction-authorization-validator.mjs",
+    "tests/preaction-authorization-validator.test.mjs"
+  ],
+  "solutionSignature": "required-gate|merge-base-pr-diff|conventional-node-pair|preaction-base-advance-overlap-check",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT-TASK41-AND-GITHUB-ACTIONS-OFFICIAL",
+  "solutionSearchEvidence": [
+    "Reuse the existing single Required Gate rather than adding feature workflows.",
+    "Reuse the existing PRE_ACTION validator and add only base-advance overlap verification.",
+    "Existing OPS-STATE-SYNC remains the stale-lease cleanup owner; no new cleaner is created."
+  ]
+}

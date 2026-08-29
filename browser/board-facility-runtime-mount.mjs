@@ -6,18 +6,6 @@ const RUNTIME_VERSION = 'gameroad.board-facility-runtime-mount.v1';
 const PARTNER_CONVERSATION_MOUNT_NAME = 'GAMEROAD_PARTNER_CONVERSATION_PRODUCT_MOUNT';
 const PARTNER_CONVERSATION_STYLE_ID = 'gameroad-partner-conversation-product-style';
 const PARTNER_EDGE_ENDPOINT = '/ws?partnerOp=conversation';
-const SAASUNA_PROVISIONAL_VISUAL = '/ws?partnerOp=visual';
-
-export const SAASUNA_PROVISIONAL_VISUAL_CONTRACT = Object.freeze({
-  assetRole: 'provisional_visual',
-  partnerId: 'partner.saasuna',
-  static: true,
-  animatable: false,
-  characterProductionOwnedHere: false,
-  rigged: false,
-  lipSyncEnabled: false,
-  sourceKind: 'user_supplied_provisional',
-});
 
 function requireObject(value, code) {
   if (!value || (typeof value !== 'object' && typeof value !== 'function')) throw new Error(code);
@@ -84,15 +72,8 @@ function addConversationStyle(document) {
   const style = document.createElement('style');
   style.id = PARTNER_CONVERSATION_STYLE_ID;
   style.textContent = `
-.grPartnerConversation{height:100%;min-height:0;display:grid;grid-template-columns:minmax(240px,46%) minmax(280px,1fr);overflow:hidden;border:1px solid rgba(191,217,255,.23);border-radius:18px;background:linear-gradient(145deg,#11142b 0%,#171d39 54%,#0e1021 100%);box-shadow:0 18px 60px rgba(0,0,0,.34)}
-.grPartnerHero{position:relative;min-height:0;overflow:hidden;background:#12162d}
-.grPartnerHero img{width:100%;height:100%;display:block;object-fit:cover;object-position:center 42%;user-select:none;pointer-events:none}
-.grPartnerHeroShade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,10,28,.03) 38%,rgba(8,10,28,.82) 100%);pointer-events:none}
-.grPartnerIdentity{position:absolute;left:18px;right:18px;bottom:18px;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.7)}
-.grPartnerIdentity small{display:block;margin-bottom:3px;font-size:9px;letter-spacing:.18em;opacity:.76}
-.grPartnerIdentity b{font-size:24px;letter-spacing:.04em}
-.grPartnerChat{min-width:0;min-height:0;display:grid;grid-template-rows:auto minmax(120px,1fr) auto;background:linear-gradient(180deg,rgba(12,17,39,.94),rgba(9,13,30,.98));color:#f7f8ff}
-.grPartnerConversationHead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 16px 12px;border-bottom:1px solid rgba(196,215,255,.13)}
+.grPartnerConversation{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(120px,1fr) auto;overflow:hidden;border:1px solid rgba(191,217,255,.23);border-radius:14px;background:linear-gradient(180deg,rgba(12,17,39,.94),rgba(9,13,30,.98));color:#f7f8ff}
+.grPartnerConversationHead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px 12px;border-bottom:1px solid rgba(196,215,255,.13)}
 .grPartnerConversationHeadText b{display:block;font-size:15px}.grPartnerConversationHeadText small{display:block;margin-top:2px;color:#aeb7d9;font-size:9px}
 .grPartnerConversationState{flex:0 0 auto;padding:5px 8px;border-radius:999px;border:1px solid rgba(158,188,255,.26);background:rgba(90,113,196,.16);font-size:9px;color:#dce6ff}
 .grPartnerConversationState[data-origin="provider"]{background:rgba(93,141,229,.22);color:#eff5ff}
@@ -105,8 +86,7 @@ function addConversationStyle(document) {
 .grPartnerConversationInput{min-height:50px;max-height:112px;resize:vertical;border:1px solid rgba(184,207,255,.23);border-radius:13px;background:rgba(7,11,27,.76);color:#f7f8ff;padding:11px 12px;font:inherit;outline:none}
 .grPartnerConversationInput:focus{border-color:rgba(159,190,255,.55)}.grPartnerConversationInput::placeholder{color:#7e8aaf}
 .grPartnerConversationSend{min-width:72px;border-radius:13px!important}
-@media(max-width:760px){.grPartnerConversation{grid-template-columns:42% 58%;border-radius:13px}.grPartnerIdentity{left:12px;bottom:12px}.grPartnerIdentity b{font-size:18px}.grPartnerConversationHead{padding:10px 11px 9px}.grPartnerConversationLog{padding:10px}.grPartnerConversationComposer{padding:9px 10px 10px}}
-@media(max-width:540px) and (orientation:portrait){.grPartnerConversation{grid-template-columns:1fr;grid-template-rows:minmax(190px,42vh) minmax(320px,1fr)}.grPartnerHero img{object-position:center 35%}.grPartnerChat{min-height:320px}.grPartnerConversationComposer{grid-template-columns:1fr auto}}
+@media(max-width:540px){.grPartnerConversationHead{padding:10px 11px 9px}.grPartnerConversationLog{padding:10px}.grPartnerConversationComposer{padding:9px 10px 10px}}
 `;
   document.head?.appendChild(style);
 }
@@ -146,27 +126,17 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
     const surface = document.createElement('section');
     surface.className = 'grPartnerConversation';
     surface.dataset.grPartnerConversation = '1';
-    surface.dataset.staticVisual = '1';
-    surface.dataset.animatable = '0';
-    surface.dataset.characterProductionOwnedHere = '0';
     surface.setAttribute('aria-label', 'サースナーとの会話');
     surface.innerHTML = `
-      <div class="grPartnerHero" aria-hidden="true">
-        <img class="grPartnerStaticVisual" src="${SAASUNA_PROVISIONAL_VISUAL}" alt="" draggable="false">
-        <div class="grPartnerHeroShade"></div>
-        <div class="grPartnerIdentity"><small>PARTNER</small><b>サースナー</b></div>
+      <div class="grPartnerConversationHead">
+        <div class="grPartnerConversationHeadText"><b>サースナーと話す</b><small>そのまま話しかけてください</small></div>
+        <span class="grPartnerConversationState" data-origin="neutral">会話できます</span>
       </div>
-      <div class="grPartnerChat">
-        <div class="grPartnerConversationHead">
-          <div class="grPartnerConversationHeadText"><b>サースナーと話す</b><small>そのまま話しかけてください</small></div>
-          <span class="grPartnerConversationState" data-origin="neutral">会話できます</span>
-        </div>
-        <div class="grPartnerConversationLog" aria-live="polite"></div>
-        <form class="grPartnerConversationComposer">
-          <textarea class="grPartnerConversationInput" maxlength="4000" rows="2" placeholder="メッセージを入力" aria-label="サースナーへのメッセージ"></textarea>
-          <button class="btn primary grPartnerConversationSend" type="submit">送る</button>
-        </form>
-      </div>`;
+      <div class="grPartnerConversationLog" aria-live="polite"></div>
+      <form class="grPartnerConversationComposer">
+        <textarea class="grPartnerConversationInput" maxlength="4000" rows="2" placeholder="メッセージを入力" aria-label="サースナーへのメッセージ"></textarea>
+        <button class="btn primary grPartnerConversationSend" type="submit">送る</button>
+      </form>`;
 
     const log = surface.querySelector('.grPartnerConversationLog');
     const form = surface.querySelector('form');
@@ -215,20 +185,14 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
   project();
 
   const runtime = Object.freeze({
-    version: 'gameroad.partner-conversation-product-mount.v2',
+    version: 'gameroad.partner-conversation-product-mount.v3',
     partnerId: 'partner.saasuna',
     pickerRequired: false,
     providerReady: provider !== null,
     persistentTranscript: false,
-    staticVisual: true,
-    animatable: false,
-    characterProductionOwnedHere: false,
-    rigged: false,
-    lipSyncEnabled: false,
     project,
     status: () => Object.freeze({
       ...entry.status(),
-      visual: SAASUNA_PROVISIONAL_VISUAL_CONTRACT,
       provider: provider?.status?.() ?? Object.freeze({ transport: 'fallback_only', providerSessionActive: false, providerSessionStoredInCanon: false }),
     }),
     disconnect: () => observer?.disconnect(),

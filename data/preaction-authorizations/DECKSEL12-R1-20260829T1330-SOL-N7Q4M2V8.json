@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DECKSEL12-R1-20260829T1330-SOL-N7Q4M2V8",
+  "taskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "workUnitKey": "DECK_SELECTION_STATE_12_R1",
+  "acquireKey": "DECKSEL12-R1-20260829T1330-SOL-N7Q4M2V8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_BROWSER_SINGLE26_PLUS_PROVEN_12SLOT_40_CORE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PROVEN_12SLOT_25OF25_PLUS_BROWSER_RUNTIME_SELECTION_MATCH",
+  "proceedToken": "PROCEED|DECKSEL12-R1-20260829T1330-SOL-N7Q4M2V8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260829T1330JST",
+  "authorizationBaseSha": "daa6e88be48201f068bd2f2b7a86a9ac45e92d1d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "leaseWorkUnitKey": "DECK_SELECTION_STATE_12_R1",
+  "leaseAcquireKey": "DECKSEL12-R1-20260829T1330-SOL-N7Q4M2V8",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 13:30 JST",
+  "leaseUntilJst": "2026-08-29 14:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A191:L191",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; tests/browser-runtime-smoke.spec.mjs; tools/deck-12slot-r1-apply.py; .github/workflows/deck-selection-state-12-r1-apply.yml",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-runtime-smoke.spec.mjs",
+    "tools/deck-12slot-r1-apply.py",
+    ".github/workflows/deck-selection-state-12-r1-apply.yml"
+  ],
+  "solutionSignature": "REUSE_PROVEN_12SLOT_STORAGE_WITH_STARTER40_AND_SELECTED_MATCH_BINDING_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "WORK_LOBBYDECK_12SLOT_STORAGE_R1_25_OF_25_TESTS",
+  "solutionSearchEvidence": [
+    "work/lobbydeck-12slot-storage-r1-20260829 applicator and focused tests",
+    "workflow run 33234484824: 25/25 deck storage tests PASS; failure isolated to static-check command typo",
+    "Current safe-save gate requires at least one current legal deck; starter40 is a dependency for persistent selection without bypass"
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-CONV-COLLECTIVE-PRODUCT-R1-20260830T0123",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "PARTNER_CONVERSATION_COLLECTIVE_PRODUCT_WIRING_R1",
+  "acquireKey": "PARTNER-CONV-COLLECTIVE-PRODUCT-R1-20260830T0123-SOL-M6Q4V8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R1-EXISTING-COLLECTIVE-BUILDER-TO-MERGED-CONVAI-PRODUCT-SEAM",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R1-FOCUSED-BOARD-FACILITY-PRODUCT-WIRING-TEST",
+  "proceedToken": "PROCEED|PARTNER-CONV-COLLECTIVE-PRODUCT-R1-20260830T0123|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|product-wiring|lease-snapshot",
+  "authorizationBaseSha": "a95e82488e6623a0571e1867f0aae05acf1c4c09",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "PARTNER_CONVERSATION_COLLECTIVE_PRODUCT_WIRING_R1",
+  "leaseAcquireKey": "PARTNER-CONV-COLLECTIVE-PRODUCT-R1-20260830T0123-SOL-M6Q4V8",
+  "leaseSnapshotReadbackAtJst": "2026-08-30 01:23 JST",
+  "leaseUntilJst": "2026-08-30 02:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact fresh base a95e82488e6623a0571e1867f0aae05acf1c4c09; new branch work/partner-conversation-collective-product-r1-20260830; transient PRE_ACTION data/preaction-authorizations/PARTNER-CONV-COLLECTIVE-PRODUCT-R1-20260830T0123.json create-first/delete-before-final-head; browser/board-facility-runtime-mount.mjs; tests/board-facility-runtime-mount.test.mjs; deploy/cloudflare/tests/build.test.mjs; own CURRENT_ACTIVE_LEASES row11 and own R22 records. READ_ONLY browser/partner-conversation-collective-context.mjs; browser/partner-conversation-core.mjs; deploy/cloudflare/functions/ws.js; deploy/cloudflare/scripts/build.mjs; browser/GAMEROAD.html; Required Gate. EXCLUDE workflows, new DB/recorder/memory/persona/relationship/save/economy/Battle/assets/rig and all other files.",
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "Compose the existing validated Partner collective-context builder with the current Saasuna product mount and already-merged Convai transport through one read-only runtime evidence-source seam; no fake evidence, no second store, and no new provider protocol.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R1-REUSE-COMPOSE-R13-R3-CURRENT-PRODUCT",
+  "solutionSearchEvidence": [
+    "repo:browser/partner-conversation-collective-context.mjs already validates and freezes bounded prompt-safe evidence",
+    "repo:browser/partner-conversation-core.mjs already accepts send(message,{collectiveContext})",
+    "repo:browser/board-facility-runtime-mount.mjs already owns the player-visible Saasuna conversation and merged Convai transport",
+    "repo:deploy/cloudflare/functions/ws.js already owns server-secret Convai getResponse transport and remains read-only",
+    "CURRENT:COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001 explicitly names Saasuna runtime/live-session consumption as the next non-duplicate value proof"
+  ]
+}

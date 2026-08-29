@@ -2,8 +2,11 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   buildPartnerConversationCollectiveContext,
+  COLLECTIVE_EVIDENCE_LINEAGE_SCHEMA,
+  normalizeCollectiveEvidenceLineage,
   PARTNER_CONVERSATION_COLLECTIVE_CONTEXT_SCHEMA,
 } from '../browser/partner-conversation-collective-context.mjs';
+import { buildPartnerAdviceEvidenceLineage } from '../tools/partner-advice-decision-product.mjs';
 
 function evidence(overrides = {}) {
   return {
@@ -29,6 +32,7 @@ test('projects only current authority/provenance-bound evidence for Partner conv
   });
   assert.equal(output.ok, true);
   assert.equal(output.schemaVersion, PARTNER_CONVERSATION_COLLECTIVE_CONTEXT_SCHEMA);
+  assert.equal(output.lineageSchemaVersion, COLLECTIVE_EVIDENCE_LINEAGE_SCHEMA);
   assert.equal(output.useSite, 'partner-conversation');
   assert.equal(output.acceptedCount, 1);
   assert.equal(output.rejectedCount, 0);
@@ -93,6 +97,54 @@ test('lineage preserves exact identity/version/provenance/counterevidence withou
     counterevidenceState: 'PRESENT',
   });
   assert.equal(output.items[0].counterevidenceState, 'PRESENT');
+});
+
+test('shared neutral lineage is reusable by Advice while each consumer keeps its own gate', () => {
+  const versions = {
+    releaseVersion: 'release-r2',
+    rulesVersion: 'rules-r1',
+    contentVersion: 'content-r3',
+    cardVersion: 'cards-r1',
+    stateVersion: 'state-r1',
+  };
+  const adviceEvidence = {
+    evidenceId: 'shared-evidence-1',
+    ownerId: 'owner-advice-eval',
+    digest: 'sha256-private-to-lineage',
+    acquiredAt: '2026-08-29T17:40:00+09:00',
+    authorityLevel: 'L2',
+    provenance: 'synthetic',
+    cohortId: 'cohort-a',
+    versions,
+    summaryRef: 'summary-private-to-lineage',
+  };
+  const adviceLineage = buildPartnerAdviceEvidenceLineage(adviceEvidence, 'NONE_FOUND');
+  assert.deepEqual(adviceLineage, {
+    evidenceId: 'shared-evidence-1',
+    sourceId: 'owner-advice-eval',
+    sourceVersion: 'releaseVersion=release-r2|rulesVersion=rules-r1|contentVersion=content-r3|cardVersion=cards-r1|stateVersion=state-r1|cohortId=cohort-a',
+    provenance: 'synthetic',
+    authorityRef: 'evidence-grade:L2',
+    observedAt: '2026-08-29T17:40:00+09:00',
+    freshness: 'current_bounded',
+    counterevidenceState: 'NONE_FOUND',
+  });
+  assert.equal(JSON.stringify(adviceLineage).includes(adviceEvidence.digest), false);
+  assert.equal(JSON.stringify(adviceLineage).includes(adviceEvidence.summaryRef), false);
+
+  const neutral = normalizeCollectiveEvidenceLineage({
+    ...adviceLineage,
+    rawPrivatePayload: 'must-not-cross-lineage',
+  }, { allowedProvenance: ['synthetic'] });
+  assert.deepEqual(neutral, adviceLineage);
+  assert.equal(JSON.stringify(neutral).includes('must-not-cross-lineage'), false);
+
+  const conversation = buildPartnerConversationCollectiveContext({
+    partnerId: 'partner.saasuna',
+    evidenceItems: [evidence({ evidenceId: 'same-grade', provenance: 'synthetic' })],
+  });
+  assert.equal(conversation.acceptedCount, 0);
+  assert.equal(conversation.rejectedCount, 1);
 });
 
 test('duplicate evidence IDs collapse to one prompt item', () => {

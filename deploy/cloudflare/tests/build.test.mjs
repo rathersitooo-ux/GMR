@@ -98,7 +98,7 @@ const dependencyContract = [
   { file: 'battle-conveyor-presentation-core.mjs', source: 'browser/battle-conveyor-presentation-core.mjs', sourceArg: 'battleConveyorCoreSource', expectedArg: 'expectedBattleConveyorCoreBlob', artifact: 'battle_conveyor_presentation_core', fixture: 'export const BATTLE_CONVEYOR_PRESENTATION_CORE = Object.freeze({});\n', currentBlob: '1d84e253a0a4c88c9c9969407c95c6155fe057ec' },
   { file: 'board-facility-state-core.classic.js', source: 'browser/board-facility-state-core.classic.js', sourceArg: 'boardFacilityClassicSource', expectedArg: 'expectedBoardFacilityClassicBlob', artifact: 'board_facility_classic', fixture: 'globalThis.GAMEROAD_BOARD_FACILITY_STATE_CORE = Object.freeze({});\n', currentBlob: '3227ed18855c39d8205d0aef07889f17f0d45f15' },
   { file: 'board-facility-state-core.mjs', source: 'browser/board-facility-state-core.mjs', sourceArg: 'boardFacilityCoreSource', expectedArg: 'expectedBoardFacilityCoreBlob', artifact: 'board_facility_core', fixture: 'export const BOARD_FACILITY_STATE_CORE = Object.freeze({});\n', currentBlob: '105f16e8dd8df7fd04611723fe8cb2bf089525e0' },
-  { file: 'board-facility-runtime-mount.mjs', source: 'browser/board-facility-runtime-mount.mjs', sourceArg: 'boardFacilityRuntimeMountSource', expectedArg: 'expectedBoardFacilityRuntimeMountBlob', artifact: 'board_facility_runtime_mount', fixture: "import './board-facility-state-core.mjs';\nexport const BOARD_FACILITY_RUNTIME_MOUNT = Object.freeze({});\n", currentBlob: 'f049215a2e9856ee3d112c986ac07d18a94e41cf' },
+  { file: 'board-facility-runtime-mount.mjs', source: 'browser/board-facility-runtime-mount.mjs', sourceArg: 'boardFacilityRuntimeMountSource', expectedArg: 'expectedBoardFacilityRuntimeMountBlob', artifact: 'board_facility_runtime_mount', fixture: "import './board-facility-state-core.mjs';\nexport const BOARD_FACILITY_RUNTIME_MOUNT = Object.freeze({});\n", currentBlob: '9f885c1552638c63d4b30af139997eb5329deb77' },
   { file: 'ui-state-feedback-core.mjs', source: 'browser/ui-state-feedback-core.mjs', sourceArg: 'uiStateFeedbackCoreSource', expectedArg: 'expectedUiStateFeedbackCoreBlob', artifact: 'ui_state_feedback_core', fixture: "export const UI_STATE_FEEDBACK_CORE = Object.freeze({ schema: 'fixture' });\n", currentBlob: '32d6d73b8c849a92af8458e9bdf7a22793fd03e4' },
   { file: 'ui-state-feedback-ready-plan-adapter.mjs', source: 'browser/ui-state-feedback-ready-plan-adapter.mjs', sourceArg: 'uiStateFeedbackReadyPlanAdapterSource', expectedArg: 'expectedUiStateFeedbackReadyPlanAdapterBlob', artifact: 'ui_state_feedback_ready_plan_adapter', fixture: "import './ui-state-feedback-core.mjs';\nexport const READY_PLAN_ADAPTER = Object.freeze({});\n", currentBlob: '0b738b269c6197680409a247f5704bfa96eacc9b' },
   { file: 'field-music-policy-core.mjs', source: 'browser/field-music-policy-core.mjs', sourceArg: 'fieldMusicPolicyCoreSource', expectedArg: 'expectedFieldMusicPolicyCoreBlob', artifact: 'field_music_policy_core', fixture: "export const FIELD_MUSIC_POLICY_CORE = Object.freeze({ schema: 'fixture' });\n", currentBlob: 'a8a5c96fe29da363e731eb7c552bbc10fcb7fa84' },
@@ -176,6 +176,12 @@ test('build packages the exact current production Browser dependency set with ve
   for (const dep of dependencyContract) {
     assert.equal((await readFile(path.join(dist, dep.file))).equals(currentBytes.get(dep.file)), true); assert.equal(manifest.artifacts[dep.artifact].git_blob_sha1, dep.currentBlob);
   }
+  const partnerConversationCoreBytes = await readFile(path.join(repoRoot, 'browser/partner-conversation-core.mjs'));
+  const partnerSaasunaSourceBytes = await readFile(path.join(repoRoot, 'browser/partner-saasuna-conversation-source.mjs'));
+  assert.equal((await readFile(path.join(dist, 'partner-conversation-core.mjs'))).equals(partnerConversationCoreBytes), true);
+  assert.equal((await readFile(path.join(dist, 'partner-saasuna-conversation-source.mjs'))).equals(partnerSaasunaSourceBytes), true);
+  assert.equal(manifest.artifacts.partner_conversation_core.git_blob_sha1, gitBlobSha1(partnerConversationCoreBytes));
+  assert.equal(manifest.artifacts.partner_saasuna_conversation_source.git_blob_sha1, gitBlobSha1(partnerSaasunaSourceBytes));
 });
 
 test('isolated rollback drill restores a validated package and rejects corruption before target mutation', async () => {

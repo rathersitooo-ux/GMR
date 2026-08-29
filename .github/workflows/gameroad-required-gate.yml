@@ -92,6 +92,24 @@ jobs:
           : > /tmp/gameroad-conventional-tests.txt
           : > /tmp/gameroad-unclassified.txt
 
+          safe_conventional_pair_deletion() {
+            local module_path="$1"
+            local test_path="$2"
+            local module_name
+            module_name="$(basename "${module_path}")"
+
+            [[ ! -e "${module_path}" && ! -e "${test_path}" ]] || return 1
+            grep -Fxq "${module_path}" /tmp/gameroad-changed.txt || return 1
+            grep -Fxq "${test_path}" /tmp/gameroad-changed.txt || return 1
+            git cat-file -e "${MERGE_BASE_SHA}:${module_path}" 2>/dev/null || return 1
+            git cat-file -e "${MERGE_BASE_SHA}:${test_path}" 2>/dev/null || return 1
+
+            if git grep -Fq -- "${module_name}" "${HEAD_SHA}" -- browser tools tests 2>/dev/null; then
+              return 1
+            fi
+            return 0
+          }
+
           while IFS= read -r path; do
             [[ -z "${path}" ]] && continue
             case "${path}" in
@@ -363,6 +381,8 @@ jobs:
                 if [[ -f "${test_path}" ]]; then
                   conventional_node=true
                   printf '%s\n' "${test_path}" >> /tmp/gameroad-conventional-tests.txt
+                elif safe_conventional_pair_deletion "${path}" "${test_path}"; then
+                  :
                 else
                   unclassified=true
                   printf '%s\n' "${path}" >> /tmp/gameroad-unclassified.txt
@@ -372,15 +392,24 @@ jobs:
                 rel="${path#tests/}"
                 module_rel="${rel%.test.mjs}.mjs"
                 matches=0
+                deleted_pair=false
                 if [[ -f "browser/${module_rel}" ]]; then
                   matches=$((matches + 1))
                 fi
                 if [[ -f "tools/${module_rel}" ]]; then
                   matches=$((matches + 1))
                 fi
+                for module_path in "browser/${module_rel}" "tools/${module_rel}"; do
+                  if safe_conventional_pair_deletion "${module_path}" "${path}"; then
+                    deleted_pair=true
+                    break
+                  fi
+                done
                 if [[ "${matches}" -eq 1 ]]; then
                   conventional_node=true
                   printf '%s\n' "${path}" >> /tmp/gameroad-conventional-tests.txt
+                elif [[ "${deleted_pair}" == "true" ]]; then
+                  :
                 else
                   unclassified=true
                   printf '%s\n' "${path}" >> /tmp/gameroad-unclassified.txt

@@ -1,0 +1,89 @@
+{
+  "schemaVersion": "gameroad-brain-training-shared-contract-v1",
+  "derivedNonAuthority": true,
+  "adoptionState": "CANDIDATE",
+  "authoritySnapshot": {
+    "capturedAtJst": "2026-08-29 18:10 JST",
+    "currentRootId": "14CYoFblBecfUqrnFKfdWayHsi8cnAbsrfFzNxZ0OvkY",
+    "centralSpreadsheetId": "1QKCll_T9ej6K96fRkRUESCAIYVGbsCYZILGIWMUdm2Y",
+    "gitBaseSha": "2f1fd1f739dc17a1b6fb63da4109ae600b8bec4d",
+    "ownerTaskId": "LEARNING-CROSSMEDIA-INTRINSIC-CONTRACT-001"
+  },
+  "cognitiveAxes": ["identify", "memorize", "analyze", "compute", "visualize"],
+  "subjectAxes": ["math_logic", "natural_science", "life_science", "language_communication", "strategy_decision", "creative"],
+  "itemContract": {
+    "requiredIdentityFields": ["itemId", "itemVersion", "cognitiveAxis", "subjectAxis", "sourceProvenance", "stimulusKind", "responseKind", "answerAuthority"],
+    "stimulusKinds": ["TEXT", "NUMBER", "IMAGE", "SPATIAL", "SEQUENCE", "SYMBOL", "GAME_STATE_SNAPSHOT"],
+    "responseKinds": ["CHOICE", "NUMERIC", "ORDER", "MATCH", "SPATIAL_SELECTION", "CATEGORY"],
+    "answerAuthority": "VERSIONED_DETERMINISTIC_OR_SOURCED_RUBRIC",
+    "difficultyMetadata": "ITEM_DECLARED_BOUNDS_ONLY"
+  },
+  "policies": {
+    "difficultyAdaptation": {
+      "status": "CANDIDATE",
+      "signals": ["correctness", "responseTime", "recentAttempts"],
+      "fixedThresholds": "UNRESOLVED",
+      "diagnosisAllowed": false,
+      "hiddenAbilityClaimAllowed": false,
+      "itemBoundsRequired": true
+    },
+    "dailySelection": {
+      "status": "CANDIDATE",
+      "fixedDailyItemCount": "UNRESOLVED",
+      "allCategoriesRequired": false,
+      "repeatAllowed": true,
+      "registeredTourOrderAuthority": "DAILY_TOUR_OWNER",
+      "firstAttemptRecordPolicy": "CANDIDATE_ONLY"
+    },
+    "scoreHistory": {
+      "sessionResult": "ALLOWED",
+      "dailyFirstAttempt": "CANDIDATE_ONLY",
+      "bestScore": "OPTIONAL_CANDIDATE",
+      "realSkillInference": "NOT_ALLOWED",
+      "learningEffectInference": "NOT_ALLOWED"
+    },
+    "calendar": {
+      "status": "CANDIDATE",
+      "markerMeaning": "ACTIVITY_OCCURRED_ONLY",
+      "missedDayDebt": false,
+      "streakReward": "NOT_DEFINED",
+      "resetAuthority": "EXTERNAL_PASS_THROUGH_ONLY"
+    }
+  },
+  "invariants": {
+    "cognitiveEffectClaim": "UNMEASURED",
+    "academicEffectClaim": "UNMEASURED",
+    "allActivitiesRequired": false,
+    "rewardAuthority": "NOT_DEFINED_BY_CONTRACT",
+    "missionAuthority": "NOT_DEFINED_BY_CONTRACT",
+    "rawPersonalDataAllowed": false,
+    "learningEventAuthority": "DELEGATE_TO_LEARNING_EVENT_CORE",
+    "battlePowerMutationAllowed": false
+  },
+  "externalEvidence": [
+    {
+      "source": "Nintendo Ask the Developer Vol. 3: Big Brain Academy: Brain vs. Brain",
+      "evidenceType": "OFFICIAL_PRIMARY",
+      "usedFor": "Five cognitive axes: Identify, Memorize, Analyze, Compute, Visualize; multiple minigames can share category structure.",
+      "authorityEffect": "CANDIDATE_INPUT_ONLY"
+    },
+    {
+      "source": "Nintendo Brain Age 2 official manual: Starting Training",
+      "evidenceType": "OFFICIAL_MANUAL",
+      "usedFor": "Historical daily-design evidence: one completed training can mark the day; replay remains allowed; first score is the daily recorded score.",
+      "authorityEffect": "CANDIDATE_INPUT_ONLY"
+    },
+    {
+      "source": "Nintendo Brain Age official manual: Daily Training",
+      "evidenceType": "OFFICIAL_MANUAL",
+      "usedFor": "Historical calendar/progress presentation evidence without importing Brain Age claims or numeric rules into GAMEROAD.",
+      "authorityEffect": "CANDIDATE_INPUT_ONLY"
+    },
+    {
+      "source": "JSON Schema Draft 2020-12 official specification",
+      "evidenceType": "SPECIFICATION",
+      "usedFor": "Machine-readable contract dialect and validation structure.",
+      "authorityEffect": "CANDIDATE_INPUT_ONLY"
+    }
+  ]
+}

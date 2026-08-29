@@ -16,14 +16,8 @@
     "tests/luna-sol-integration-core.test.mjs",
     "docs/jit-evidence-compiler.md",
     "docs/sol-reasoning-protocol.md",
+    ".github/workflows/ops-ai-evidence-purpose-binding-r2.yml",
     "data/preaction-authorizations/OPS-AI-EVIDENCE-PURPOSE-R2-20260829T2116.json"
-  ],
-  "strictExclusions": [
-    "browser/**",
-    "deploy/**",
-    "assets/**",
-    "gameplay/save/economy/network",
-    ".github/workflows/**"
   ],
   "acceptance": [
     "Material issue relations are provider-derived and preserved in canonical evidence envelopes.",
@@ -31,7 +25,8 @@
     "Genuine but unrelated evidence is rejected without a second relevance scorer.",
     "Locally predeclared causal refs are promoted before evidence freeze so compression cannot silently drop them.",
     "Generic Sol reasoning context remains priority-based and does not become globally required.",
-    "Focused and existing regression tests pass on the recovery branch before merge."
+    "Focused and existing regression tests pass on the recovery branch before merge.",
+    "Temporary applicator workflow and PRE_ACTION are deleted before final head."
   ],
   "state": "AUTHORIZED_PRE_ACTION"
 }

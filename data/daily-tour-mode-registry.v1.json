@@ -2,10 +2,10 @@
   "schemaVersion": "gameroad-daily-tour-mode-registry-v1",
   "derivedNonAuthority": true,
   "authoritySnapshot": {
-    "capturedAtJst": "2026-08-29 18:03 JST",
+    "capturedAtJst": "2026-08-30 00:18 JST",
     "currentRootId": "14CYoFblBecfUqrnFKfdWayHsi8cnAbsrfFzNxZ0OvkY",
     "centralSpreadsheetId": "1QKCll_T9ej6K96fRkRUESCAIYVGbsCYZILGIWMUdm2Y",
-    "gitBaseSha": "c2901b3db5776e3a26f63d66e9179973849c0f88"
+    "gitBaseSha": "f6eed885b42661314dc6834f2a45be5221d652e4"
   },
   "invariants": {
     "registeredOrderPreserved": true,
@@ -140,13 +140,13 @@
     },
     {
       "modeId": "brain_training",
-      "class": "CANDIDATE_ONLY",
+      "class": "TOUR_ELIGIBLE",
       "dailySemantics": "NONE",
-      "runtimeState": "DESIGN_CANDIDATE",
-      "tourPolicy": {"canAppearInPlan": false, "autoInsert": false, "mandatory": false, "quickStop": false, "skipBlocksProgress": false, "finaleRole": "NONE"},
-      "authorityRefs": ["USER_CURRENT_2026-08-29_EDUCATION_DAILY_REQUEST", "LEARNING-CROSSMEDIA-INTRINSIC-CONTRACT-001"],
-      "education": {"status": "CANDIDATE_ONLY", "candidateTags": ["identify", "memorize", "analyze", "compute", "visualize"]},
-      "notes": "New education candidate from the current user request. It is not represented as an already-implemented or pre-existing Daily mode."
+      "runtimeState": "CURRENT_CORE_CONTENT_V1",
+      "tourPolicy": {"canAppearInPlan": true, "autoInsert": false, "mandatory": false, "quickStop": false, "skipBlocksProgress": false, "finaleRole": "NONE"},
+      "authorityRefs": ["DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001", "LEARNING-CROSSMEDIA-INTRINSIC-CONTRACT-001"],
+      "education": {"status": "CURRENT_CONTENT_V1", "candidateTags": ["identify", "memorize", "analyze", "compute", "visualize"]},
+      "notes": "Current Brain core plus GAMEROAD-authored source-versioned v1 exercise bank are present. Tour eligibility does not make Brain mandatory, grant reward/reset authority, claim learning effects, or imply that the visible product mount is already complete."
     },
     {
       "modeId": "music",

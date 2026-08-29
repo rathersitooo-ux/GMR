@@ -4,7 +4,6 @@ import assert from 'node:assert/strict';
 import {
   COGNITIVE_CATEGORY_CODES,
   LEARNING_EVENT_RESULTS,
-  LEARNING_OUTCOME_STATE,
   LEARNING_SUBJECTS,
   normalizeLearningEvent,
 } from '../browser/learning-event-core.mjs';
@@ -122,8 +121,8 @@ test('normalized event preserves coded identity and provenance but makes no lear
   assert.equal(event.activityId, 'dino.evidence.choice');
   assert.equal(event.evidenceRefs[0].version, '2026-08-29');
   assert.equal(event.evidenceRefs[0].provenance, 'source.registry');
-  assert.equal(event.learningOutcome, LEARNING_OUTCOME_STATE.UNMEASURED);
-  assert.equal(event.realSkillOutcome, LEARNING_OUTCOME_STATE.UNMEASURED);
+  assert.equal(event.learningOutcome, 'UNMEASURED');
+  assert.equal(event.realSkillOutcome, 'UNMEASURED');
   assert.equal(event.privacyBoundary, 'CODED_FIELDS_ONLY');
 });
 

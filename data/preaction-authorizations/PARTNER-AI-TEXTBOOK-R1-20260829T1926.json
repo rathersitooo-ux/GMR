@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-AI-TEXTBOOK-R1-20260829T1926",
+  "taskId": "PARTNER-FUTURE-LLM-DIALOGUE-RESEARCH-001",
+  "workUnitKey": "PARTNER_AI_TEXTBOOK_ARTIFACT_PROJECTION_R1",
+  "acquireKey": "PARTNER-AI-TEXTBOOK-R1-20260829T1926-SOL-P7M4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "current-partner-knowledge-context-plus-user-ai-textbook-goal-20260829",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "pure-projection-focused-tests-before-promotion",
+  "proceedToken": "PROCEED|PARTNER-AI-TEXTBOOK-R1-20260829T1926|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|bounded-prototype",
+  "authorizationBaseSha": "5d5929e05bb58af5f8e966066ddaacfa96e7bcda",
+  "scope": [
+    "browser/partner-learning-artifact-core.mjs",
+    "tests/partner-learning-artifact-core.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-FUTURE-LLM-DIALOGUE-RESEARCH-001",
+  "leaseWorkUnitKey": "PARTNER_AI_TEXTBOOK_ARTIFACT_PROJECTION_R1",
+  "leaseAcquireKey": "PARTNER-AI-TEXTBOOK-R1-20260829T1926-SOL-P7M4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 19:26 JST",
+  "leaseUntilJst": "2026-08-29 20:11 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:L9",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base 5d5929e05bb58af5f8e966066ddaacfa96e7bcda; branch work/partner-learning-artifact-r1-20260829; transient PRE_ACTION data/preaction-authorizations/PARTNER-AI-TEXTBOOK-R1-20260829T1926.json create-first/delete-before-final-head; browser/partner-learning-artifact-core.mjs; tests/partner-learning-artifact-core.test.mjs; own CURRENT_ACTIVE_LEASES row9 and own R22 records.",
+  "leaseScope": [
+    "browser/partner-learning-artifact-core.mjs",
+    "tests/partner-learning-artifact-core.test.mjs"
+  ],
+  "solutionSignature": "project-artifact-to-existing-partner-knowledge-context-plus-visible-reference",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "reuse-existing-partner-knowledge-context-and-authoritative-source-refs-20260829",
+  "solutionSearchEvidence": [
+    "browser/partner-conversation-core.mjs:knowledgeContext",
+    "PARTNER-FUTURE-LLM-DIALOGUE-RESEARCH-001:R2-domain-general-interface",
+    "ACL2026:MMTutorBench-direct-multimodal-tutoring"
+  ]
+}

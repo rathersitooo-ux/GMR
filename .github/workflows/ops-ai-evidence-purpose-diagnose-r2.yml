@@ -4,7 +4,6 @@ on:
     branches:
       - work/ops-ai-evidence-purpose-binding-r2-20260829
 permissions:
-  actions: read
   contents: write
 jobs:
   diagnose:
@@ -12,14 +11,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Capture failed applicator log
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Repair protocol-test packet budget in applicator
         run: |
           set -euo pipefail
-          gh run view 33252335176 --repo rathersitooo-ux/GMR --log-failed > data/preaction-authorizations/OPS-AI-EVIDENCE-PURPOSE-R2-DIAGNOSTIC.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/ops-ai-evidence-purpose-binding-r2.yml')
+          text = p.read_text()
+          marker = "          PY\n\n          cat >> tests/jit-evidence-compiler.test.mjs <<'EOF'"
+          assert text.count(marker) == 1
+          addition = '''          replace_once('tests/sol-reasoning-protocol.test.mjs',\n          "  const packed = packReasoningPacket(source, evidenceContext());",\n          "  const packed = packReasoningPacket(source, evidenceContext(), { maxWireBytes: 5000 });")\n'''
+          p.write_text(text.replace(marker, addition + marker, 1))
+          PY
           git config user.name 'gameroad-evidence-bot'
           git config user.email 'gameroad-evidence-bot@users.noreply.github.com'
-          git add data/preaction-authorizations/OPS-AI-EVIDENCE-PURPOSE-R2-DIAGNOSTIC.txt
-          git commit -m 'chore: capture evidence applicator failure diagnosis'
+          git add .github/workflows/ops-ai-evidence-purpose-binding-r2.yml
+          git commit -m 'fix: keep protocol fixture evidence inside test packet'
           git push origin HEAD:work/ops-ai-evidence-purpose-binding-r2-20260829

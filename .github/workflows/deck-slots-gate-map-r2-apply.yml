@@ -107,3 +107,5 @@ jobs:
           git add .github/workflows/gameroad-required-gate.yml "${SELF_PATH}"
           git commit -m 'ci: classify and test deck slot core'
           git push origin HEAD:work/required-gate-deck-slots-map-r2-20260829
+
+# trigger: measured-path-counts-r3

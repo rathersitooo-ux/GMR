@@ -77,8 +77,8 @@ jobs:
           assert 'tests/deck-slots-core.test.mjs' not in text
 
           updated = text.replace(old_classifier, new_classifier, 1).replace(old_tests, new_tests, 1)
-          assert updated.count('browser/deck-slots-core.mjs') == 2, updated.count('browser/deck-slots-core.mjs')
-          assert updated.count('tests/deck-slots-core.test.mjs') == 5, updated.count('tests/deck-slots-core.test.mjs')
+          assert updated.count('browser/deck-slots-core.mjs') == 1, f"source path count={updated.count('browser/deck-slots-core.mjs')}"
+          assert updated.count('tests/deck-slots-core.test.mjs') == 4, f"test path count={updated.count('tests/deck-slots-core.test.mjs')}"
           path.write_text(updated, encoding='utf-8')
           PY
 

@@ -1,5 +1,10 @@
+import {
+  COGNITIVE_CATEGORY_CODES,
+  LEARNING_SUBJECTS,
+  normalizeLearningEvent,
+} from './learning-event-core.mjs';
+
 export const BRAIN_TRAINING_SCHEMA_VERSION = 'gameroad.brain-training-session.v1';
-export const BRAIN_TRAINING_LEARNING_EVENT_SCHEMA_VERSION = 'gameroad.learning-event.v1';
 
 export const BRAIN_TRAINING_SUBJECTS = Object.freeze([
   'programming',
@@ -10,13 +15,7 @@ export const BRAIN_TRAINING_SUBJECTS = Object.freeze([
   'bug_reporting',
 ]);
 
-export const BRAIN_TRAINING_COGNITIVE_AXES = Object.freeze([
-  'identify',
-  'memorize',
-  'analyze',
-  'compute',
-  'visualize',
-]);
+export const BRAIN_TRAINING_COGNITIVE_AXES = COGNITIVE_CATEGORY_CODES;
 
 export const DEFAULT_BRAIN_TRAINING_SUBJECT_ORDER = Object.freeze([
   'programming',
@@ -28,12 +27,16 @@ export const DEFAULT_BRAIN_TRAINING_SUBJECT_ORDER = Object.freeze([
 ]);
 
 const SUBJECT_SET = new Set(BRAIN_TRAINING_SUBJECTS);
+const LEARNING_SUBJECT_SET = new Set(Object.values(LEARNING_SUBJECTS));
 const AXIS_SET = new Set(BRAIN_TRAINING_COGNITIVE_AXES);
 const ITEM_STATUS = Object.freeze({ PENDING: 'pending', ANSWERED: 'answered', SKIPPED: 'skipped' });
 const OUTCOMES = new Set(['correct', 'incorrect', 'skipped']);
-const EXERCISE_KEYS = new Set(['id', 'subject', 'cognitiveAxis', 'prompt', 'options', 'correctOptionId', 'source']);
+const CODE_RE = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,95}$/;
+const EXERCISE_KEYS = new Set([
+  'id', 'subject', 'learningSubject', 'cognitiveAxis', 'prompt', 'options', 'correctOptionId', 'source',
+]);
 const OPTION_KEYS = new Set(['id', 'label']);
-const SOURCE_KEYS = new Set(['sourceId', 'sourceVersion']);
+const SOURCE_KEYS = new Set(['sourceId', 'sourceVersion', 'provenance']);
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -59,6 +62,13 @@ function exactToken(value, name, max = 180) {
   return value;
 }
 
+function codeToken(value, name) {
+  if (typeof value !== 'string' || !CODE_RE.test(value)) {
+    throw new TypeError(`${name} must be a bounded code identifier`);
+  }
+  return value;
+}
+
 function boundedText(value, name, max) {
   if (typeof value !== 'string') throw new TypeError(`${name} must be a string`);
   const text = value.trim();
@@ -69,8 +79,9 @@ function boundedText(value, name, max) {
 function normalizeSource(value, exerciseId) {
   if (!plainObject(value) || !hasOnlyKeys(value, SOURCE_KEYS)) throw new TypeError(`${exerciseId}.source invalid`);
   return deepFreeze({
-    sourceId: exactToken(value.sourceId, `${exerciseId}.source.sourceId`, 240),
-    sourceVersion: exactToken(value.sourceVersion, `${exerciseId}.source.sourceVersion`, 180),
+    sourceId: codeToken(value.sourceId, `${exerciseId}.source.sourceId`),
+    sourceVersion: codeToken(value.sourceVersion, `${exerciseId}.source.sourceVersion`),
+    provenance: codeToken(value.provenance, `${exerciseId}.source.provenance`),
   });
 }
 
@@ -81,7 +92,7 @@ function normalizeOptions(values, exerciseId) {
   const seen = new Set();
   return values.map((raw, index) => {
     if (!plainObject(raw) || !hasOnlyKeys(raw, OPTION_KEYS)) throw new TypeError(`${exerciseId}.options[${index}] invalid`);
-    const id = exactToken(raw.id, `${exerciseId}.options[${index}].id`, 120);
+    const id = codeToken(raw.id, `${exerciseId}.options[${index}].id`);
     if (seen.has(id)) throw new TypeError(`${exerciseId}.options duplicate id`);
     seen.add(id);
     return deepFreeze({ id, label: boundedText(raw.label, `${exerciseId}.options[${index}].label`, 500) });
@@ -90,17 +101,20 @@ function normalizeOptions(values, exerciseId) {
 
 function normalizeExercise(raw, index) {
   if (!plainObject(raw) || !hasOnlyKeys(raw, EXERCISE_KEYS)) throw new TypeError(`exercises[${index}] invalid`);
-  const id = exactToken(raw.id, `exercises[${index}].id`, 160);
+  const id = codeToken(raw.id, `exercises[${index}].id`);
   const subject = exactToken(raw.subject, `${id}.subject`, 80);
+  const learningSubject = exactToken(raw.learningSubject, `${id}.learningSubject`, 80);
   const cognitiveAxis = exactToken(raw.cognitiveAxis, `${id}.cognitiveAxis`, 80);
   if (!SUBJECT_SET.has(subject)) throw new TypeError(`${id}.subject unsupported`);
+  if (!LEARNING_SUBJECT_SET.has(learningSubject)) throw new TypeError(`${id}.learningSubject unsupported`);
   if (!AXIS_SET.has(cognitiveAxis)) throw new TypeError(`${id}.cognitiveAxis unsupported`);
   const options = normalizeOptions(raw.options, id);
-  const correctOptionId = exactToken(raw.correctOptionId, `${id}.correctOptionId`, 120);
+  const correctOptionId = codeToken(raw.correctOptionId, `${id}.correctOptionId`);
   if (!options.some((option) => option.id === correctOptionId)) throw new TypeError(`${id}.correctOptionId missing from options`);
   return deepFreeze({
     id,
     subject,
+    learningSubject,
     cognitiveAxis,
     prompt: boundedText(raw.prompt, `${id}.prompt`, 2000),
     options,
@@ -156,6 +170,7 @@ function publicItem(exercise) {
   return deepFreeze({
     exerciseId: exercise.id,
     subject: exercise.subject,
+    learningSubject: exercise.learningSubject,
     cognitiveAxis: exercise.cognitiveAxis,
     prompt: exercise.prompt,
     options: exercise.options.map((option) => ({ ...option })),
@@ -205,15 +220,19 @@ function updateItem(session, itemId, updater) {
 
 export function answerBrainTrainingItem(session, exercises, { itemId, optionId } = {}) {
   assertSession(session);
-  const targetId = exactToken(itemId, 'itemId', 160);
-  const selectedOptionId = exactToken(optionId, 'optionId', 120);
+  const targetId = codeToken(itemId, 'itemId');
+  const selectedOptionId = codeToken(optionId, 'optionId');
   const bank = bankById(exercises);
   const exercise = bank.get(targetId);
   if (!exercise) throw new TypeError('itemId missing from exercise bank');
   const sessionItem = session.items.find((item) => item.exerciseId === targetId);
   if (!sessionItem) throw new TypeError('itemId missing from session');
-  if (sessionItem.subject !== exercise.subject || sessionItem.cognitiveAxis !== exercise.cognitiveAxis ||
-      sessionItem.source.sourceId !== exercise.source.sourceId || sessionItem.source.sourceVersion !== exercise.source.sourceVersion) {
+  if (sessionItem.subject !== exercise.subject ||
+      sessionItem.learningSubject !== exercise.learningSubject ||
+      sessionItem.cognitiveAxis !== exercise.cognitiveAxis ||
+      sessionItem.source.sourceId !== exercise.source.sourceId ||
+      sessionItem.source.sourceVersion !== exercise.source.sourceVersion ||
+      sessionItem.source.provenance !== exercise.source.provenance) {
     throw new TypeError('exercise bank does not match session identity');
   }
   if (!exercise.options.some((option) => option.id === selectedOptionId)) throw new TypeError('optionId missing from exercise');
@@ -223,7 +242,7 @@ export function answerBrainTrainingItem(session, exercises, { itemId, optionId }
 
 export function skipBrainTrainingItem(session, { itemId } = {}) {
   assertSession(session);
-  const targetId = exactToken(itemId, 'itemId', 160);
+  const targetId = codeToken(itemId, 'itemId');
   if (!session.items.some((item) => item.exerciseId === targetId)) throw new TypeError('itemId missing from session');
   return updateItem(session, targetId, (item) => ({ ...item, status: ITEM_STATUS.SKIPPED, outcome: 'skipped' }));
 }
@@ -285,22 +304,27 @@ export function summarizeBrainTrainingSession(session) {
   });
 }
 
-export function createBrainTrainingLearningEvent(session, { itemId } = {}) {
+export function createBrainTrainingLearningEvent(session, { itemId, eventId, sessionKey } = {}) {
   assertSession(session);
-  const targetId = exactToken(itemId, 'itemId', 160);
+  const targetId = codeToken(itemId, 'itemId');
   const item = session.items.find((candidate) => candidate.exerciseId === targetId);
   if (!item) throw new TypeError('itemId missing from session');
   if (item.status === ITEM_STATUS.PENDING || !OUTCOMES.has(item.outcome)) throw new TypeError('learning event requires a settled item');
-  return deepFreeze({
-    schemaVersion: BRAIN_TRAINING_LEARNING_EVENT_SCHEMA_VERSION,
-    eventType: 'brain_training_item_result',
-    dayKey: session.dayKey,
-    exerciseId: item.exerciseId,
-    subject: item.subject,
-    cognitiveAxis: item.cognitiveAxis,
-    outcome: item.outcome,
-    source: { ...item.source },
-    privacy: { containsRawUserText: false, containsPrivate: false, answerContentIncluded: false, promptContentIncluded: false },
-    authority: { rewardMutationAllowed: false, relationshipMutationAllowed: false, gameRuleMutationAllowed: false },
+
+  return normalizeLearningEvent({
+    eventId: codeToken(eventId, 'eventId'),
+    sessionKey: codeToken(sessionKey, 'sessionKey'),
+    activityId: `brain:${item.exerciseId}`,
+    subject: item.learningSubject,
+    cognitiveCategories: [item.cognitiveAxis],
+    decisionCode: item.outcome === 'skipped' ? 'skipped' : 'answered',
+    outcomeCode: item.outcome,
+    result: item.outcome === 'skipped' ? 'unscored' : item.outcome,
+    evidenceRefs: [{
+      id: item.source.sourceId,
+      version: item.source.sourceVersion,
+      provenance: item.source.provenance,
+      role: 'used',
+    }],
   });
 }

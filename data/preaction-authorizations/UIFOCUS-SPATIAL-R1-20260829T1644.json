@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UIFOCUS-SPATIAL-R1-20260829T1644",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "FREE_SPATIAL_DECISION_CURSOR_R1",
+  "acquireKey": "UIFOCUS-SPATIAL-R1-20260829T1644-SOL-K8M3Q7V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "UIFOCUS-SPATIAL-R1-current-focus-navigation-plus-spatial-nav",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "local-node-test:ui-spatial-cursor-core:13/13",
+  "proceedToken": "PROCEED|UIFOCUS-SPATIAL-R1-20260829T1644|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|reuse-existing-focus-navigation|local-13-of-13",
+  "authorizationBaseSha": "61dbf7c2f0b4f03fa378bf5a99d509314ff108b8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "FREE_SPATIAL_DECISION_CURSOR_R1",
+  "leaseAcquireKey": "UIFOCUS-SPATIAL-R1-20260829T1644-SOL-K8M3Q7V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 16:44 JST",
+  "leaseUntilJst": "2026-08-29 17:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base 61dbf7c2f0b4f03fa378bf5a99d509314ff108b8; branch work/ui-spatial-cursor-r1-20260829; transient PRE_ACTION data/preaction-authorizations/UIFOCUS-SPATIAL-R1-20260829T1644.json create-first/delete-before-final-head; browser/ui-spatial-cursor-core.mjs; tests/ui-spatial-cursor-core.test.mjs; own CURRENT_ACTIVE_LEASES row6 and own R22 records",
+  "scope": [
+    "browser/ui-spatial-cursor-core.mjs",
+    "tests/ui-spatial-cursor-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/ui-spatial-cursor-core.mjs",
+    "tests/ui-spatial-cursor-core.test.mjs"
+  ],
+  "solutionSignature": "Move one screen-space decision cursor freely, discover current interactive candidates dynamically, reuse existing focus feedback and existing activation/navigation instead of adding a second input system.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "UIFOCUS-SPATIAL-R1-reuse-existing-ui-state-and-screen-navigation",
+  "solutionSearchEvidence": [
+    "repo:browser/ui-state-feedback-core.mjs:FOCUS",
+    "repo:browser/screen-navigation-core.mjs:existing-navigation",
+    "official:Roblox-GuiService-selected-object",
+    "standard:W3C-CSS-Spatial-Navigation"
+  ]
+}

@@ -15,10 +15,7 @@ export const LEARNING_EVENT_RESULTS = Object.freeze([
   'correct', 'incorrect', 'partial', 'unscored',
 ]);
 
-export const LEARNING_OUTCOME_STATE = Object.freeze({
-  UNMEASURED: 'UNMEASURED',
-});
-
+const UNMEASURED = 'UNMEASURED';
 const EVIDENCE_ROLES = new Set(['used', 'missed', 'corrective', 'context']);
 const SUBJECTS = new Set(Object.values(LEARNING_SUBJECTS));
 const COGNITIVE = new Set(COGNITIVE_CATEGORY_CODES);
@@ -93,8 +90,8 @@ export function normalizeLearningEvent(raw = {}) {
     outcomeCode: code(raw.outcomeCode, 'outcomeCode'),
     result,
     evidenceRefs: Object.freeze(evidenceRefs),
-    learningOutcome: LEARNING_OUTCOME_STATE.UNMEASURED,
-    realSkillOutcome: LEARNING_OUTCOME_STATE.UNMEASURED,
+    learningOutcome: UNMEASURED,
+    realSkillOutcome: UNMEASURED,
     privacyBoundary: 'CODED_FIELDS_ONLY',
   });
 }

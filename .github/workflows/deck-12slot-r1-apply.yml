@@ -1,0 +1,44 @@
+name: Deck 12-slot R1 Applicator
+
+on:
+  push:
+    branches:
+      - work/lobbydeck-12slot-storage-r1-20260829
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/lobbydeck-12slot-storage-r1-20260829
+          fetch-depth: 0
+      - name: Guard exact authorization base ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 58e45e191d2efc302b5ee24d8174d1eab2d09f7a HEAD
+      - name: Apply exact 12-slot Browser patch
+        run: python3 tools/deck-12slot-r1-apply.py
+      - name: Run deck storage focused tests
+        run: node --test tests/deck-save-ack-core.test.mjs
+      - name: Run Browser static checker
+        run: node GLOBALs/browser-static-check.mjs --self-GLOBAL browser/GAMEROAD.html
+      - name: Verify bounded product diff and remove transient authorization/applicator files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git add browser/GAMEROAD.html
+          git rm tools/deck-12slot-r1-apply.py
+          git rm .github/workflows/deck-12slot-r1-apply.yml
+          git rm data/preaction-authorizations/VWORK-LOBBYDECK-12SLOT-R1-20260829T1335.json
+          git diff --cached --check
+          git config user.name 'gameroad-actions'
+          git config user.email 'actions@users.noreply.github.com'
+          git commit -m 'feat(deck): mount 12-slot storage in Browser'
+          git push origin HEAD:work/lobbydeck-12slot-storage-r1-20260829

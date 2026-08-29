@@ -1,0 +1,17 @@
+name: Deck Runtime Inspect R1
+
+on:
+  push:
+    branches:
+      - work/deck-runtime-integration-r1-20260829
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect deck runtime anchors
+        run: python tools/deck-runtime-inspect-r1.py

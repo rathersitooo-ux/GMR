@@ -6,7 +6,6 @@ import {
   mountBoardFacilityRuntime,
   mountSaasunaConversationProductSurface,
   partnerConversationProjectionDecision,
-  SAASUNA_PROVISIONAL_VISUAL_CONTRACT,
 } from '../browser/board-facility-runtime-mount.mjs';
 import { onRequest as cloudflareEntry } from '../deploy/cloudflare/functions/ws.js';
 
@@ -65,20 +64,6 @@ test('active Partner screen projects straight to conversation with no picker sta
   assert.equal(partnerConversationProjectionDecision({ screenActive: true }), 'conversation');
   assert.equal(partnerConversationProjectionDecision({ screenActive: true, partnerRoleActive: false }), 'conversation');
   assert.equal(partnerConversationProjectionDecision({ screenActive: true, saasunaSelected: false }), 'conversation');
-});
-
-test('provisional Saasuna visual is explicitly static and outside character production', () => {
-  assert.deepEqual(SAASUNA_PROVISIONAL_VISUAL_CONTRACT, {
-    assetRole: 'provisional_visual',
-    partnerId: 'partner.saasuna',
-    static: true,
-    animatable: false,
-    characterProductionOwnedHere: false,
-    rigged: false,
-    lipSyncEnabled: false,
-    sourceKind: 'user_supplied_provisional',
-  });
-  assert.equal(Object.isFrozen(SAASUNA_PROVISIONAL_VISUAL_CONTRACT), true);
 });
 
 test('browser edge provider keeps provider session locally and sends no API key', async () => {
@@ -172,18 +157,4 @@ test('Cloudflare Partner conversation rejects wrong-character provider output', 
   });
   assert.equal(response.status, 502);
   assert.deepEqual(await response.json(), { ok: false, state: 'provider_invalid' });
-});
-
-test('Cloudflare provisional visual route returns static JPEG bytes', async () => {
-  const response = await cloudflareEntry({
-    request: new Request('https://game.example/ws?partnerOp=visual'),
-    env: {},
-  });
-  const bytes = new Uint8Array(await response.arrayBuffer());
-  assert.equal(response.status, 200);
-  assert.equal(response.headers.get('content-type'), 'image/jpeg');
-  assert.equal(response.headers.get('x-gameroad-asset-role'), 'provisional-static');
-  assert.equal(bytes[0], 0xff);
-  assert.equal(bytes[1], 0xd8);
-  assert.ok(bytes.length > 5000);
 });

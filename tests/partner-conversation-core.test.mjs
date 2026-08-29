@@ -542,3 +542,54 @@ test('approved fallback remains usable as ephemeral context on the next turn', a
   assert.equal(seen[1].sessionContext.turns[0].assistantUtterance, first.turn.utterance);
   assert.equal(seen[1].sessionContext.turns[0].responseOrigin, 'approved_fallback');
 });
+
+test('provider-candidate Good feedback stays local, private, and non-mutating', async () => {
+  const userText = 'PRIVATE FEEDBACK USER TEXT';
+  const assistantText = 'PRIVATE FEEDBACK ASSISTANT TEXT';
+  const entry = createSaasunaConversationEntry({
+    createSessionId: () => 'session-feedback-good',
+    provider: provider(assistantText),
+  });
+  await entry.send(userText);
+  const feedback = entry.feedback('turn-1', 'good');
+  assert.equal(feedback.ok, true);
+  assert.equal(feedback.schemaVersion, 'gameroad.partner-conversation-quality-feedback.v1');
+  assert.equal(feedback.partnerId, SAASUNA_PARTNER_ID);
+  assert.equal(feedback.turnId, 'turn-1');
+  assert.equal(feedback.rating, 'good');
+  assert.equal(feedback.responseOrigin, 'provider_candidate');
+  assert.equal(feedback.canonStatus, 'ephemeral_candidate');
+  assert.equal(feedback.acknowledgement, 'heart');
+  assert.equal(feedback.badDetailDeferred, false);
+  assert.equal(feedback.localOnly, true);
+  assert.equal(feedback.rawTextStored, false);
+  assert.equal(feedback.automaticCanonMutation, false);
+  assert.equal(feedback.automaticRelationshipMutation, false);
+  assert.equal(feedback.automaticRewardMutation, false);
+  assert.equal(feedback.automaticLearning, false);
+  assert.equal(JSON.stringify(feedback).includes(userText), false);
+  assert.equal(JSON.stringify(feedback).includes(assistantText), false);
+});
+
+test('rerating one response replaces the prior local rating instead of double-counting', async () => {
+  const entry = createSaasunaConversationEntry({ createSessionId: () => 'session-feedback-replace' });
+  await entry.send('評価対象');
+  const first = entry.feedback('turn-1', 'good');
+  const second = entry.feedback('turn-1', 'bad');
+  assert.equal(first.replacedPrevious, false);
+  assert.equal(second.ok, true);
+  assert.equal(second.rating, 'bad');
+  assert.equal(second.acknowledgement, 'recorded');
+  assert.equal(second.badDetailDeferred, true);
+  assert.equal(second.replacedPrevious, true);
+});
+
+test('feedback rejects unknown turns, invalid ratings, and cross-session targets', async () => {
+  const first = createSaasunaConversationEntry({ createSessionId: () => 'session-feedback-a' });
+  await first.send('一つ目');
+  assert.deepEqual(first.feedback('turn-999', 'good'), { ok: false, reason: 'FEEDBACK_TARGET_NOT_FOUND' });
+  assert.deepEqual(first.feedback('turn-1', 'love'), { ok: false, reason: 'FEEDBACK_INPUT_INVALID' });
+
+  const second = createSaasunaConversationEntry({ createSessionId: () => 'session-feedback-b' });
+  assert.deepEqual(second.feedback('turn-1', 'good'), { ok: false, reason: 'FEEDBACK_TARGET_NOT_FOUND' });
+});

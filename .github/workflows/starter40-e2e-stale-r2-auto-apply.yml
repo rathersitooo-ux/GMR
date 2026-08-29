@@ -1,0 +1,60 @@
+name: Starter40 E2E Stale Repair R2 Auto Apply
+
+on:
+  push:
+    branches:
+      - work/starter40-e2e-stale-r2-20260830
+
+permissions:
+  contents: write
+
+concurrency:
+  group: starter40-e2e-stale-r2
+  cancel-in-progress: false
+
+jobs:
+  apply-test-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: work/starter40-e2e-stale-r2-20260830
+          fetch-depth: 0
+
+      - name: Apply bounded stale-expectation repair
+        run: python3 tools/starter40-e2e-stale-r2-apply.py
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Run targeted deck recovery regression
+        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 --grep "deck recovery preserves blocked raw saves"
+
+      - name: Remove task-private applicator
+        run: |
+          rm -f tools/starter40-e2e-stale-r2-apply.py
+          rm -f .github/workflows/starter40-e2e-stale-r2-auto-apply.yml
+
+      - name: Commit verified test repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "gameroad-automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A tests/browser-full-interaction.spec.mjs tools/starter40-e2e-stale-r2-apply.py .github/workflows/starter40-e2e-stale-r2-auto-apply.yml
+          if git diff --cached --quiet; then
+            echo "No repair changes to commit"
+            exit 0
+          fi
+          git commit -m "test: align starter40 recovery expectations"
+          git push origin HEAD:work/starter40-e2e-stale-r2-20260830

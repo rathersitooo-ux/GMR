@@ -3,11 +3,20 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   DECK_SAVE_ACK_CORE,
+  DECK_SLOT_COUNT,
+  DECK_SLOT_STORAGE_CORE,
+  GAMEROAD_STARTER_DECK_40,
+  activeDeckSlot,
   applyDeckEdit,
   beginDeckSave,
   createDeckMatchStartSnapshot,
   createDeckSaveAckState,
+  createDeckSlotStorage,
+  projectLegacyDeckToSlots,
   receiveDeckSaveAck,
+  replaceDeckSlot,
+  restoreDeckSlotStorage,
+  selectDeckSlot,
   timeoutDeckSave,
 } from '../browser/deck-save-ack-core.mjs';
 
@@ -300,4 +309,117 @@ test('Browser startMatch consumes the immutable snapshot authority instead of mu
   assert.match(body, /snapshot\.deck\.ruleId/);
   assert.doesNotMatch(body, /validateDeck\(state\.savedDeck/);
   assert.doesNotMatch(body, /makePlayer\([^)]*state\.savedDeck\.main/);
+});
+
+test('fresh 12-slot storage has exactly one 40-card starter deck and eleven empty decks', () => {
+  const storage = createDeckSlotStorage();
+  assert.equal(DECK_SLOT_STORAGE_CORE.schema, 'gameroad.deck-slot-storage.v1');
+  assert.equal(DECK_SLOT_STORAGE_CORE.slotCount, 12);
+  assert.equal(DECK_SLOT_COUNT, 12);
+  assert.equal(storage.decks.length, 12);
+  assert.equal(storage.activeDeckIndex, 0);
+  assert.equal(storage.source, 'fresh_starter');
+  assert.deepEqual(storage.decks[0].main, [...GAMEROAD_STARTER_DECK_40]);
+  assert.equal(storage.decks[0].main.length, 40);
+  assert.deepEqual(storage.decks[0].ex, []);
+  assert.equal(storage.decks[0].ruleId, 'FIRST_REGULATION');
+  assert.equal(storage.decks[0].ruleRevision, 3);
+  for (const slot of storage.decks.slice(1)) {
+    assert.deepEqual(slot, { main: [], ex: [], ruleId: null, ruleRevision: null });
+  }
+});
+
+test('starter 40 is the explicit 13+10+10+7 set and contains no generated fifth-suit cards', () => {
+  const expected = [
+    'SP_A','SP_2','SP_3','SP_4','SP_5','SP_6','SP_7','SP_8','SP_9','SP_10','SP_J','SP_Q','SP_K',
+    'CL_A','CL_2','CL_3','CL_4','CL_5','CL_6','CL_7','CL_8','CL_9','CL_10',
+    'DI_A','DI_2','DI_3','DI_4','DI_5','DI_6','DI_7','DI_8','DI_9','DI_10',
+    'HT_A','HT_2','HT_3','HT_4','HT_5','HT_6','HT_7',
+  ];
+  assert.deepEqual([...GAMEROAD_STARTER_DECK_40], expected);
+  assert.equal(new Set(GAMEROAD_STARTER_DECK_40).size, 40);
+  assert.equal(GAMEROAD_STARTER_DECK_40.filter(id => id.startsWith('SP_')).length, 13);
+  assert.equal(GAMEROAD_STARTER_DECK_40.filter(id => id.startsWith('CL_')).length, 10);
+  assert.equal(GAMEROAD_STARTER_DECK_40.filter(id => id.startsWith('DI_')).length, 10);
+  assert.equal(GAMEROAD_STARTER_DECK_40.filter(id => id.startsWith('HT_')).length, 7);
+  assert.equal(GAMEROAD_STARTER_DECK_40.some(id => id.startsWith('DK_') || id.startsWith('LUNA_')), false);
+});
+
+test('legacy single deck is projected byte-for-value into deck 1 without filling any other slot', () => {
+  const legacyDeck = { main: ['SP_A', 'HT_2', 'CL_3'], ex: ['EX_KEEP'] };
+  const storage = projectLegacyDeckToSlots({
+    legacyDeck,
+    legacyRule: { id: 'FIRST_REGULATION', revision: 2 },
+  });
+  assert.equal(storage.source, 'legacy_single');
+  assert.equal(storage.activeDeckIndex, 0);
+  assert.deepEqual(storage.decks[0], {
+    main: ['SP_A', 'HT_2', 'CL_3'],
+    ex: ['EX_KEEP'],
+    ruleId: 'FIRST_REGULATION',
+    ruleRevision: 2,
+  });
+  for (const slot of storage.decks.slice(1)) assert.equal(slot.main.length + slot.ex.length, 0);
+  legacyDeck.main[0] = 'MUTATED';
+  assert.equal(storage.decks[0].main[0], 'SP_A');
+});
+
+test('persisted 12-slot storage restores the selected index without substituting another deck', () => {
+  let storage = createDeckSlotStorage();
+  storage = replaceDeckSlot(storage, 7, {
+    deck: { main: ['DI_A', 'DI_2'], ex: [] },
+    rule: { id: 'OTHER_REG', revision: 9 },
+  });
+  storage = selectDeckSlot(storage, 7);
+  const restored = restoreDeckSlotStorage({
+    deckList: storage.decks,
+    activeDeckIndex: storage.activeDeckIndex,
+  });
+  assert.equal(restored.activeDeckIndex, 7);
+  assert.deepEqual(activeDeckSlot(restored), {
+    main: ['DI_A', 'DI_2'],
+    ex: [],
+    ruleId: 'OTHER_REG',
+    ruleRevision: 9,
+  });
+  assert.notDeepEqual(activeDeckSlot(restored), restored.decks[0]);
+});
+
+test('selecting or replacing a slot never mutates the previous frozen storage object', () => {
+  const first = createDeckSlotStorage();
+  const selected = selectDeckSlot(first, 11);
+  const replaced = replaceDeckSlot(selected, 11, {
+    deck: { main: ['CL_A'], ex: [] },
+    rule: { id: 'FIRST_REGULATION', revision: 3 },
+  });
+  assert.equal(first.activeDeckIndex, 0);
+  assert.equal(first.decks[11].main.length, 0);
+  assert.equal(selected.activeDeckIndex, 11);
+  assert.equal(selected.decks[11].main.length, 0);
+  assert.deepEqual(replaced.decks[11].main, ['CL_A']);
+  assert.equal(Object.isFrozen(replaced), true);
+  assert.equal(Object.isFrozen(replaced.decks), true);
+});
+
+test('malformed saved slot count or active index fails closed instead of silently repairing', () => {
+  assert.throws(
+    () => restoreDeckSlotStorage({ deckList: Array.from({ length: 11 }, () => ({ main: [], ex: [] })), activeDeckIndex: 0 }),
+    /DECK_LIST_INVALID/,
+  );
+  assert.throws(
+    () => restoreDeckSlotStorage({ deckList: createDeckSlotStorage().decks, activeDeckIndex: 12 }),
+    /ACTIVE_DECK_INDEX_INVALID/,
+  );
+  assert.throws(() => selectDeckSlot(createDeckSlotStorage(), -1), /ACTIVE_DECK_INDEX_INVALID/);
+});
+
+test('fresh initialization is explicit and never treats an arbitrary runtime legacy deck as the starter', () => {
+  const arbitraryLegacy = { main: ['SP_A'], ex: [] };
+  const fresh = restoreDeckSlotStorage({
+    fresh: true,
+    legacyDeck: arbitraryLegacy,
+  });
+  assert.equal(fresh.source, 'fresh_starter');
+  assert.equal(fresh.decks[0].main.length, 40);
+  assert.notDeepEqual(fresh.decks[0].main, arbitraryLegacy.main);
 });

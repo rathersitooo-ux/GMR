@@ -157,9 +157,11 @@ function normalizeInput(input, options = {}) {
     evidenceIds.add(item.id);
   }
   const issueIds = new Set();
+  const materialIssueIds = new Set();
   for (const issue of issues) {
     if (issueIds.has(issue.id)) throw new Error(`issue_duplicate_id:${issue.id}`);
     issueIds.add(issue.id);
+    if (issue.material) materialIssueIds.add(issue.id);
   }
   for (const id of requiredHotIds) {
     if (!evidenceIds.has(id)) throw new Error(`required_hot_missing:${id}`);
@@ -172,6 +174,21 @@ function normalizeInput(input, options = {}) {
   for (const relation of relations) {
     if (!issueIds.has(relation.fromIssue)) throw new Error(`relation_issue_unknown:${relation.fromIssue}`);
     if (!evidenceIds.has(relation.toEvidence)) throw new Error(`relation_evidence_unknown:${relation.toEvidence}`);
+  }
+
+  const scopedPurpose = issues.length > 0 || relations.length > 0;
+  if (scopedPurpose) {
+    const issueIdsByEvidence = new Map(evidence.map((item) => [item.id, new Set()]));
+    for (const relation of relations) {
+      if (!relation.material || !materialIssueIds.has(relation.fromIssue)) continue;
+      issueIdsByEvidence.get(relation.toEvidence).add(relation.fromIssue);
+    }
+    for (const item of evidence) {
+      item.materialIssueIds = [...issueIdsByEvidence.get(item.id)].sort();
+      item.useScope = item.required && item.tier === 'HOT'
+        ? 'TASK'
+        : (item.materialIssueIds.length ? 'ISSUE' : 'REFERENCE');
+    }
   }
 
   const rawBudget = options.maxContextBytes ?? input.maxContextBytes ?? 3000;
@@ -203,6 +220,10 @@ export function encodeEvidenceContextText(item) {
     provenance: item.provenance,
     freshness: item.freshness,
   };
+  if (item.useScope) {
+    metadata.useScope = item.useScope;
+    metadata.materialIssueIds = Array.isArray(item.materialIssueIds) ? [...item.materialIssueIds] : [];
+  }
   return `${JIT_EVIDENCE_CONTEXT_MARKER}\n${JSON.stringify(metadata)}\n${JIT_EVIDENCE_CONTEXT_END_MARKER}\n${item.text}`;
 }
 
@@ -369,6 +390,7 @@ export function compileJitEvidencePacket(input, options = {}) {
     version: item.version,
     provenance: item.provenance,
     freshness: item.freshness,
+    ...(item.useScope ? { useScope: item.useScope, materialIssueIds: [...item.materialIssueIds] } : {}),
   }));
   const contextItems = selected.map(contextItem);
   const contextByteCount = contextBytes(contextItems);

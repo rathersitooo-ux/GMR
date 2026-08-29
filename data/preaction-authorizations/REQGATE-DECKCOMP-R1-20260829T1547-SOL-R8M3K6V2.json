@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "REQGATE-DECKCOMP-R1-20260829T1547-SOL-R8M3K6V2",
+  "taskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "workUnitKey": "DECK_COMPONENTS_GATE_MAPPING_R1",
+  "acquireKey": "REQGATE-DECKCOMP-R1-20260829T1547-SOL-R8M3K6V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "DECK_COMPONENTS_EXISTING_DECK_ACK_EXACT_PATH_CONSOLIDATION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXACT_PATH_CLASSIFICATION_ONLY_NO_PRODUCT_SEMANTICS",
+  "proceedToken": "PROCEED|REQGATE-DECKCOMP-R1-20260829T1547-SOL-R8M3K6V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260829T1547JST",
+  "authorizationBaseSha": "e825f0135e0b730d1403509becf44a04e13d55f2",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "leaseWorkUnitKey": "DECK_COMPONENTS_GATE_MAPPING_R1",
+  "leaseAcquireKey": "REQGATE-DECKCOMP-R1-20260829T1547-SOL-R8M3K6V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 15:47 JST",
+  "leaseUntilJst": "2026-08-29 16:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A198:L198",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base e825f0135e0b730d1403509becf44a04e13d55f2; branch work/required-gate-deck-components-r1-20260829; transient PRE_ACTION first-commit/delete-before-final-head; .github/workflows/gameroad-required-gate.yml only; own CURRENT_ACTIVE_LEASES row198 and own R22 records. Strict exclusions: browser/GAMEROAD.html; all deck component implementation/test files; data/ged-card-definition.json; Battle; Partner; deploy; assets; other workflows; product/game semantics.",
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "solutionSignature": "CONSOLIDATE_REMAINING_DECK_COMPONENT_EXACT_PATHS_IN_EXISTING_DECK_ACK_LANE_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR576_EXISTING_DECK_ACK_MAPPING_PATTERN",
+  "solutionSearchEvidence": [
+    "merged PR #576 maps deck-slots core into existing deck_ack lane without a new CI lane",
+    "task 6 Required Gate failure stopped only at unclassified executable-path fail-closed step",
+    "tasks 2/3/7 are isolated exact-path producer components and can share the same deck_ack classification family"
+  ]
+}

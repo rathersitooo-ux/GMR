@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 
 import {
   mountBoardFacilityRuntime,
@@ -77,17 +78,14 @@ test('conversation product mount is a no-op outside a browser DOM', () => {
   assert.equal(mountSaasunaConversationProductSurface({ document: {} }), null);
 });
 
-test('conversation entry has one direct path: Partner, Saasuna, conversation', () => {
+test('Partner activation has exactly one visible projection: direct conversation', () => {
   assert.equal(partnerConversationProjectionDecision({ screenActive: false }), 'idle');
+  assert.equal(partnerConversationProjectionDecision({ screenActive: true }), 'conversation');
   assert.equal(partnerConversationProjectionDecision({
     screenActive: true,
     partnerRoleActive: false,
-  }), 'activate_partner');
-  assert.equal(partnerConversationProjectionDecision({
-    screenActive: true,
-    partnerRoleActive: true,
     saasunaSelected: false,
-  }), 'select_saasuna');
+  }), 'conversation');
   assert.equal(partnerConversationProjectionDecision({
     screenActive: true,
     partnerRoleActive: true,
@@ -95,10 +93,28 @@ test('conversation entry has one direct path: Partner, Saasuna, conversation', (
   }), 'conversation');
 });
 
-test('conversation entry does not add a player-character bypass', () => {
+test('direct Partner scene does not add a player-character or picker bypass', () => {
   assert.equal(partnerConversationProjectionDecision({
     screenActive: true,
     partnerRoleActive: false,
     playerModeRequested: true,
-  }), 'activate_partner');
+  }), 'conversation');
+});
+
+test('direct scene has no queued visible Partner or Saasuna selection staging', async () => {
+  const source = await readFile(new URL('../browser/board-facility-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /return ['"]activate_partner['"]/);
+  assert.doesNotMatch(source, /return ['"]select_saasuna['"]/);
+  assert.doesNotMatch(source, /queueMicrotask|queue\(project\)/);
+  assert.match(source, /synchronizeSaasunaStateBeforePaint/);
+  assert.match(source, /dataset\.entryMode = ['"]direct_scene['"]/);
+  assert.match(source, /intermediateEntryAllowed: false/);
+});
+
+test('conversation UI distinguishes real provider output from approved fallback', async () => {
+  const source = await readFile(new URL('../browser/board-facility-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /turn\.responseOrigin === ['"]provider_candidate['"]/);
+  assert.match(source, /会話AI接続/);
+  assert.match(source, /固定台詞（AI未応答）/);
+  assert.doesNotMatch(source, /生成AI未接続/);
 });

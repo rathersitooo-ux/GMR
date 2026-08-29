@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-CONVAI-BACKEND-R9-20260829T1154",
+  "taskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "workUnitKey": "PARTNER_DIRECT_SCENE_CONVAI_PROVIDER_R9",
+  "acquireKey": "PARTNER-CONVAI-BACKEND-R9-20260829T1154-SOL-K9M2Q7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R9-CONVAI-OFFICIAL-INTERACTION-API+CURRENT-PROVIDER-CONTRACT",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R9-EXISTING-INJECTED-PROVIDER-FAILSOFT-CONTRACT",
+  "proceedToken": "PROCEED|PARTNER-CONVAI-BACKEND-R9-20260829T1154|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|SERVER_SIDE_CONVAI_ONLY",
+  "authorizationBaseSha": "f6414232cac932584af80705f93c5f8e569b6169",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "leaseWorkUnitKey": "PARTNER_DIRECT_SCENE_CONVAI_PROVIDER_R9",
+  "leaseAcquireKey": "PARTNER-CONVAI-BACKEND-R9-20260829T1154-SOL-K9M2Q7",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 11:54 JST",
+  "leaseUntilJst": "2026-08-29 12:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh base f6414232cac932584af80705f93c5f8e569b6169; branch work/partner-convai-provider-r9-20260829; transient data/preaction-authorizations/PARTNER-CONVAI-BACKEND-R9-20260829T1154.json create-first/delete-before-final-head; deploy/cloudflare/functions/ws.js; browser/partner-conversation-core.mjs; tests/partner-conversation-core.test.mjs; own CURRENT_ACTIVE_LEASES row8 and R22 acquire/checkpoint/terminal/release. browser/GAMEROAD.html explicitly excluded while DECKSAVE row5 is ACTIVE; BigData stores, gameplay/save/economy/Battle/assets/other deploy files/read-only.",
+  "scope": [
+    "deploy/cloudflare/functions/ws.js",
+    "browser/partner-conversation-core.mjs",
+    "tests/partner-conversation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/functions/ws.js",
+    "browser/partner-conversation-core.mjs",
+    "tests/partner-conversation-core.test.mjs"
+  ],
+  "solutionSignature": "external-character-ai-convai-edge-adapter-existing-partner-provider-contract",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R9-REUSE-CONVAI-OFFICIAL-20260829",
+  "solutionSearchEvidence": [
+    "Convai official Interaction API getResponse sessionID contract",
+    "Convai official Web SDK character chat/session/memory surface",
+    "GMR existing createSaasunaConversationEntry injected provider contract"
+  ]
+}

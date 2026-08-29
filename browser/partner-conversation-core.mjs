@@ -5,6 +5,10 @@ import {
   SAASUNA_DIALOGUE_VERSION,
   SAASUNA_DIALOGUE_SOURCE_ID,
 } from './partner-saasuna-conversation-source.mjs';
+import {
+  exactEvidenceToken as exactToken,
+  normalizeEvidenceLineage,
+} from './evidence-lineage-core.mjs';
 
 const CORE_ID = 'gameroad.partner-conversation-core.v1';
 const COLLECTIVE_CONTEXT_SCHEMA = 'gameroad.partner-conversation-collective-context.v1';
@@ -16,9 +20,6 @@ const KNOWLEDGE_TOP_LEVEL_KEYS = new Set([
   'schemaVersion', 'partnerId', 'useSite', 'safeForPrompt', 'containsPrivate', 'containsRawUserText', 'items', 'lineage',
 ]);
 const KNOWLEDGE_ITEM_KEYS = new Set(['evidenceId', 'summary', 'confidence']);
-const KNOWLEDGE_LINEAGE_KEYS = new Set([
-  'evidenceId', 'sourceId', 'sourceVersion', 'provenance', 'authorityRef', 'observedAt', 'freshness',
-]);
 const KNOWLEDGE_PROVENANCE = new Set(['internal_authority', 'external_primary']);
 const KNOWLEDGE_FRESHNESS = new Set(['current', 'stable_verified']);
 
@@ -26,11 +27,6 @@ function freezeDeep(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
   for (const nested of Object.values(value)) freezeDeep(nested);
   return Object.freeze(value);
-}
-
-function exactToken(value, max = 160) {
-  if (typeof value !== 'string' || !value || value.length > max || value.trim() !== value) return null;
-  return value;
 }
 
 function userMessage(value) {
@@ -63,17 +59,12 @@ function validKnowledgeContext(value) {
 
   const lineageById = new Map();
   for (const item of value.lineage) {
-    if (!item || typeof item !== 'object' || Array.isArray(item) || !hasOnlyKeys(item, KNOWLEDGE_LINEAGE_KEYS)) return null;
-    const evidenceId = exactToken(item.evidenceId);
-    const sourceId = exactToken(item.sourceId);
-    const sourceVersion = exactToken(item.sourceVersion);
-    const provenance = exactToken(item.provenance);
-    const authorityRef = exactToken(item.authorityRef, 240);
-    const observedAt = exactToken(item.observedAt, 80);
-    const freshness = exactToken(item.freshness);
-    if (!evidenceId || !sourceId || !sourceVersion || !authorityRef || !observedAt) return null;
-    if (!KNOWLEDGE_PROVENANCE.has(provenance) || !KNOWLEDGE_FRESHNESS.has(freshness) || lineageById.has(evidenceId)) return null;
-    lineageById.set(evidenceId, freezeDeep({ evidenceId, sourceId, sourceVersion, provenance, authorityRef, observedAt, freshness }));
+    const source = normalizeEvidenceLineage(item, {
+      allowedProvenance: KNOWLEDGE_PROVENANCE,
+      allowedFreshness: KNOWLEDGE_FRESHNESS,
+    });
+    if (!source || lineageById.has(source.evidenceId)) return null;
+    lineageById.set(source.evidenceId, source);
   }
 
   const items = [];

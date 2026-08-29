@@ -1,16 +1,16 @@
+import {
+  EVIDENCE_LINEAGE_BASE_KEYS,
+  exactEvidenceToken as exactToken,
+  normalizeEvidenceLineage,
+} from './evidence-lineage-core.mjs';
+
 const SCHEMA_VERSION = 'gameroad.partner-conversation-collective-context.v1';
 const USE_SITE = 'partner-conversation';
 const ALLOWED_PROVENANCE = new Set(['server_verified', 'public_production']);
 const ALLOWED_COUNTER = new Set(['PRESENT', 'NONE_FOUND']);
 const ALLOWED_FRESHNESS = new Set(['current', 'current_bounded']);
 const ALLOWED_FIELDS = new Set([
-  'evidenceId',
-  'sourceId',
-  'sourceVersion',
-  'provenance',
-  'authorityRef',
-  'observedAt',
-  'freshness',
+  ...EVIDENCE_LINEAGE_BASE_KEYS,
   'counterevidenceState',
   'useSite',
   'summary',
@@ -23,11 +23,6 @@ function freezeDeep(value) {
   return Object.freeze(value);
 }
 
-function exactToken(value, max = 180) {
-  if (typeof value !== 'string' || !value || value.length > max || value.trim() !== value) return null;
-  return value;
-}
-
 function safeSummary(value) {
   if (typeof value !== 'string') return null;
   const text = value.trim();
@@ -35,33 +30,33 @@ function safeSummary(value) {
   return text;
 }
 
-function hasUnexpectedFields(item) {
-  return Object.keys(item).some((key) => !ALLOWED_FIELDS.has(key));
-}
-
 function projectItem(item) {
-  if (!item || typeof item !== 'object' || Array.isArray(item) || hasUnexpectedFields(item)) return null;
-  const evidenceId = exactToken(item.evidenceId);
-  const sourceId = exactToken(item.sourceId);
-  const sourceVersion = exactToken(item.sourceVersion);
-  const provenance = exactToken(item.provenance);
-  const authorityRef = exactToken(item.authorityRef, 240);
-  const observedAt = exactToken(item.observedAt, 64);
-  const freshness = exactToken(item.freshness);
-  const counterevidenceState = exactToken(item.counterevidenceState);
-  const useSite = exactToken(item.useSite);
-  const summary = safeSummary(item.summary);
-  const confidence = exactToken(item.confidence ?? 'bounded');
+  const lineage = normalizeEvidenceLineage(item, {
+    allowedKeys: ALLOWED_FIELDS,
+    allowedProvenance: ALLOWED_PROVENANCE,
+    allowedFreshness: ALLOWED_FRESHNESS,
+    tokenMax: 180,
+    authorityMax: 240,
+    observedAtMax: 64,
+  });
+  if (!lineage) return null;
 
-  if (!evidenceId || !sourceId || !sourceVersion || !authorityRef || !observedAt || !summary || !confidence) return null;
-  if (!ALLOWED_PROVENANCE.has(provenance)) return null;
-  if (!ALLOWED_FRESHNESS.has(freshness)) return null;
+  const counterevidenceState = exactToken(item.counterevidenceState, 180);
+  const useSite = exactToken(item.useSite, 180);
+  const summary = safeSummary(item.summary);
+  const confidence = exactToken(item.confidence ?? 'bounded', 180);
+  if (!summary || !confidence) return null;
   if (!ALLOWED_COUNTER.has(counterevidenceState)) return null;
   if (useSite !== USE_SITE) return null;
 
   return freezeDeep({
-    promptItem: { evidenceId, summary, confidence, counterevidenceState },
-    lineage: { evidenceId, sourceId, sourceVersion, provenance, authorityRef, observedAt, freshness, counterevidenceState },
+    promptItem: {
+      evidenceId: lineage.evidenceId,
+      summary,
+      confidence,
+      counterevidenceState,
+    },
+    lineage: { ...lineage, counterevidenceState },
   });
 }
 
@@ -69,7 +64,7 @@ export function buildPartnerConversationCollectiveContext(input = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return freezeDeep({ ok: false, schemaVersion: SCHEMA_VERSION, reason: 'INPUT_REQUIRED', items: [], lineage: [] });
   }
-  const partnerId = exactToken(input.partnerId);
+  const partnerId = exactToken(input.partnerId, 180);
   if (!partnerId) {
     return freezeDeep({ ok: false, schemaVersion: SCHEMA_VERSION, reason: 'PARTNER_ID_REQUIRED', items: [], lineage: [] });
   }

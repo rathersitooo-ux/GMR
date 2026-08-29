@@ -18,7 +18,8 @@ const FORMAL_SELECTED3_SFX_BLOBS = Object.freeze({
   cardPlace: '42bbfa8ea2daaadd237c48287388c7c931cc817e',
 });
 const FORMAL_PARTNER_CONVERSATION_BLOBS = Object.freeze({
-  core: '7ec1af5ffa9f8255a4b64eb5ecc2905d999a59a8',
+  core: '5e34377580742c871220ee0e2e9fbba11c82211f',
+  evidenceLineageCore: '8fc8f86e82a127693c0134ad0e689d6492180381',
   saasunaSource: 'f2b1bfda9c9a5d9d2511e735b17059a0d2b6a4cc',
 });
 
@@ -38,6 +39,7 @@ const ARTIFACT_SPECS = Object.freeze([
   { option: 'boardFacilityCoreSource', expected: 'expectedBoardFacilityCoreBlob', source: 'browser/board-facility-state-core.mjs', output: 'board-facility-state-core.mjs', artifact: 'board_facility_core', label: 'Board facility core', sourceFlag: '--board-facility-core-source', expectedFlag: '--expected-board-facility-core-blob' },
   { option: 'boardFacilityRuntimeMountSource', expected: 'expectedBoardFacilityRuntimeMountBlob', source: 'browser/board-facility-runtime-mount.mjs', output: 'board-facility-runtime-mount.mjs', artifact: 'board_facility_runtime_mount', label: 'Board facility runtime mount', sourceFlag: '--board-facility-runtime-mount-source', expectedFlag: '--expected-board-facility-runtime-mount-blob' },
   { source: 'browser/partner-conversation-core.mjs', output: 'partner-conversation-core.mjs', artifact: 'partner_conversation_core', label: 'Partner conversation core', formalBlob: FORMAL_PARTNER_CONVERSATION_BLOBS.core },
+  { source: 'browser/evidence-lineage-core.mjs', output: 'evidence-lineage-core.mjs', artifact: 'evidence_lineage_core', label: 'Evidence lineage core', formalBlob: FORMAL_PARTNER_CONVERSATION_BLOBS.evidenceLineageCore },
   { source: 'browser/partner-saasuna-conversation-source.mjs', output: 'partner-saasuna-conversation-source.mjs', artifact: 'partner_saasuna_conversation_source', label: 'Partner Saasuna conversation source', formalBlob: FORMAL_PARTNER_CONVERSATION_BLOBS.saasunaSource },
   { option: 'uiStateFeedbackCoreSource', expected: 'expectedUiStateFeedbackCoreBlob', source: 'browser/ui-state-feedback-core.mjs', output: 'ui-state-feedback-core.mjs', artifact: 'ui_state_feedback_core', label: 'UI state feedback core', sourceFlag: '--ui-state-feedback-core-source', expectedFlag: '--expected-ui-state-feedback-core-blob' },
   { option: 'uiStateFeedbackReadyPlanAdapterSource', expected: 'expectedUiStateFeedbackReadyPlanAdapterBlob', source: 'browser/ui-state-feedback-ready-plan-adapter.mjs', output: 'ui-state-feedback-ready-plan-adapter.mjs', artifact: 'ui_state_feedback_ready_plan_adapter', label: 'UI state feedback ready-plan adapter', sourceFlag: '--ui-state-feedback-ready-plan-adapter-source', expectedFlag: '--expected-ui-state-feedback-ready-plan-adapter-blob' },

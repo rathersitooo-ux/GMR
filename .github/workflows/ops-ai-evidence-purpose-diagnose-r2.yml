@@ -11,20 +11,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Repair protocol-test packet budget in applicator
+      - name: Keep protocol fixture evidence inside its test packet
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          p = Path('.github/workflows/ops-ai-evidence-purpose-binding-r2.yml')
+          p = Path('tests/sol-reasoning-protocol.test.mjs')
           text = p.read_text()
-          marker = "          PY\n\n          cat >> tests/jit-evidence-compiler.test.mjs <<'EOF'"
-          assert text.count(marker) == 1
-          addition = '''          replace_once('tests/sol-reasoning-protocol.test.mjs',\n          "  const packed = packReasoningPacket(source, evidenceContext());",\n          "  const packed = packReasoningPacket(source, evidenceContext(), { maxWireBytes: 5000 });")\n'''
-          p.write_text(text.replace(marker, addition + marker, 1))
+          old = "  const packed = packReasoningPacket(source, evidenceContext());"
+          new = "  const packed = packReasoningPacket(source, evidenceContext(), { maxWireBytes: 5000 });"
+          assert text.count(old) == 1
+          p.write_text(text.replace(old, new, 1))
           PY
           git config user.name 'gameroad-evidence-bot'
           git config user.email 'gameroad-evidence-bot@users.noreply.github.com'
-          git add .github/workflows/ops-ai-evidence-purpose-binding-r2.yml
-          git commit -m 'fix: keep protocol fixture evidence inside test packet'
+          git add tests/sol-reasoning-protocol.test.mjs
+          git commit -m 'test: preserve causal refs in protocol fixture packet'
           git push origin HEAD:work/ops-ai-evidence-purpose-binding-r2-20260829

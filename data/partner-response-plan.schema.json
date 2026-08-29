@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gameroad.local/schema/partner-response-plan-v1.json",
+  "title": "GAMEROAD PartnerResponsePlan",
+  "description": "Character-neutral, non-authoritative semantic response plan shared by Advice Partner and character renderers. It intentionally carries no rendered dialogue, raw user text, private memory, or mutation authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "planId",
+    "partnerId",
+    "useSite",
+    "producer",
+    "purpose",
+    "semanticIntent",
+    "semanticArgs",
+    "target",
+    "reasonCode",
+    "confidence",
+    "urgency",
+    "evidenceRefs",
+    "scope",
+    "authority"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "gameroad.partner-response-plan.v1"
+    },
+    "planId": {
+      "$ref": "#/$defs/token180"
+    },
+    "partnerId": {
+      "$ref": "#/$defs/token180"
+    },
+    "useSite": {
+      "$ref": "#/$defs/token120"
+    },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "sourceId", "sourceVersion"],
+      "properties": {
+        "kind": {
+          "enum": ["advice", "conversation", "shared"]
+        },
+        "sourceId": {
+          "$ref": "#/$defs/token220"
+        },
+        "sourceVersion": {
+          "$ref": "#/$defs/token180"
+        }
+      }
+    },
+    "purpose": {
+      "enum": ["advise", "answer", "inform", "acknowledge", "warn", "social", "abstain"]
+    },
+    "semanticIntent": {
+      "$ref": "#/$defs/token120"
+    },
+    "semanticArgs": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "value"],
+        "properties": {
+          "name": {
+            "$ref": "#/$defs/token80"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/token180"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "target": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "id"],
+          "properties": {
+            "kind": {
+              "$ref": "#/$defs/token80"
+            },
+            "id": {
+              "$ref": "#/$defs/token180"
+            }
+          }
+        }
+      ]
+    },
+    "reasonCode": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/token120"
+        }
+      ]
+    },
+    "confidence": {
+      "enum": ["high", "medium", "bounded", "low", "unknown"]
+    },
+    "urgency": {
+      "enum": ["routine", "elevated", "urgent"]
+    },
+    "evidenceRefs": {
+      "type": "array",
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/token220"
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "publicScope",
+        "safeForRenderer",
+        "containsPrivate",
+        "containsRawUserText"
+      ],
+      "properties": {
+        "publicScope": {
+          "const": true
+        },
+        "safeForRenderer": {
+          "const": true
+        },
+        "containsPrivate": {
+          "const": false
+        },
+        "containsRawUserText": {
+          "const": false
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "autoExecute",
+        "automaticCanonMutationAllowed",
+        "automaticRelationshipMutationAllowed",
+        "automaticGameMutationAllowed",
+        "automaticRewardMutationAllowed"
+      ],
+      "properties": {
+        "mode": {
+          "const": "presentation_only"
+        },
+        "autoExecute": {
+          "const": false
+        },
+        "automaticCanonMutationAllowed": {
+          "const": false
+        },
+        "automaticRelationshipMutationAllowed": {
+          "const": false
+        },
+        "automaticGameMutationAllowed": {
+          "const": false
+        },
+        "automaticRewardMutationAllowed": {
+          "const": false
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "purpose": {
+            "enum": ["advise", "warn"]
+          }
+        },
+        "required": ["purpose"]
+      },
+      "then": {
+        "properties": {
+          "reasonCode": {
+            "$ref": "#/$defs/token120"
+          },
+          "evidenceRefs": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "purpose": {
+            "const": "abstain"
+          }
+        },
+        "required": ["purpose"]
+      },
+      "then": {
+        "properties": {
+          "reasonCode": {
+            "$ref": "#/$defs/token120"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "token80": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$"
+    },
+    "token120": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$"
+    },
+    "token180": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 180,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$"
+    },
+    "token220": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 220,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$"
+    }
+  }
+}

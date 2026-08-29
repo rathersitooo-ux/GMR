@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "OPS-AI-EVIDENCE-PURPOSE-R1-20260829T1753",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "EVIDENCE_PURPOSE_BINDING_R1",
+  "acquireKey": "OPS-AI-EVIDENCE-PURPOSE-R1-20260829T1753-SOL-Q7M4N2V8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_JIT_MATERIAL_RELATIONS_PRESENT_BUT_DROPPED_AT_CONTEXT_BOUNDARY",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "ADVERSARIAL_GENUINE_BUT_UNRELATED_ACTUAL_COUNTER_TEST_COMPOSITION_REPRODUCED_BY_CODE_AUDIT",
+  "proceedToken": "PROCEED|OPS-AI-EVIDENCE-PURPOSE-R1-20260829T1753|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-jit-material-graph|causal-purpose-binding",
+  "authorizationBaseSha": "c2901b3db5776e3a26f63d66e9179973849c0f88",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "EVIDENCE_PURPOSE_BINDING_R1",
+  "leaseAcquireKey": "OPS-AI-EVIDENCE-PURPOSE-R1-20260829T1753-SOL-Q7M4N2V8",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 17:53 JST",
+  "leaseUntilJst": "2026-08-29 18:53 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A13:L13",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base c2901b3db5776e3a26f63d66e9179973849c0f88; branch work/ops-ai-evidence-purpose-binding-r1-20260829; transient PRE_ACTION data/preaction-authorizations/OPS-AI-EVIDENCE-PURPOSE-R1-20260829T1753.json create-first/delete-before-final-head; tools/jit-evidence-compiler.mjs; tests/jit-evidence-compiler.test.mjs; tools/sol-reasoning-protocol.mjs; tests/sol-reasoning-protocol.test.mjs; tests/luna-sol-integration-core.test.mjs; docs/jit-evidence-compiler.md; docs/sol-reasoning-protocol.md; own CURRENT_ACTIVE_LEASES row13 and own R22 records; executor-bus workflow, luna-sol browser bridge, Required Gate, browser product, deck, Partner, deploy, assets, gameplay/save/economy/network excluded/read-only.",
+  "scope": [
+    "tools/jit-evidence-compiler.mjs",
+    "tests/jit-evidence-compiler.test.mjs",
+    "tools/sol-reasoning-protocol.mjs",
+    "tests/sol-reasoning-protocol.test.mjs",
+    "tests/luna-sol-integration-core.test.mjs",
+    "docs/jit-evidence-compiler.md",
+    "docs/sol-reasoning-protocol.md"
+  ],
+  "leaseScope": [
+    "tools/jit-evidence-compiler.mjs",
+    "tests/jit-evidence-compiler.test.mjs",
+    "tools/sol-reasoning-protocol.mjs",
+    "tests/sol-reasoning-protocol.test.mjs",
+    "tests/luna-sol-integration-core.test.mjs",
+    "docs/jit-evidence-compiler.md",
+    "docs/sol-reasoning-protocol.md"
+  ],
+  "solutionSignature": "Carry compiler-derived material-issue purpose through the existing canonical evidence envelope and require common issue binding for established causal proof; no second relevance scorer.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE_EXISTING_JIT_ISSUES_RELATIONS_RESOLVES_PLUS_SOL_CANONICAL_TRUST",
+  "solutionSearchEvidence": [
+    "main:tools/jit-evidence-compiler.mjs:issues-relations-resolves",
+    "main:tools/sol-reasoning-protocol.mjs:canonical-evidence-trust-and-root-cause-gate",
+    "historical:proof-carrying-execution-R1:material-issue-binding-design-intent"
+  ]
+}

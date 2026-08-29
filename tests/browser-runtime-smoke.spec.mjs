@@ -855,3 +855,63 @@ test('R42 actual menu transition and orientation consumer mount is temporal and 
   const final = await page.evaluate(() => ({ screen: globalThis.GAMEROAD_GET_CURRENT_SCREEN(), projection: document.documentElement.dataset.orientationProjection, screenResidue: document.documentElement.dataset.screenTransitionPhase ?? null, orientationResidue: document.documentElement.dataset.orientationTransitionPhase ?? null }));
   expect(final).toEqual({ screen: 'profile', projection: 'portrait', screenResidue: null, orientationResidue: null });
 });
+
+
+// DECK_SWIPE_ADD_PRODUCT_R3
+test('deck editor right swipe adds once without stealing vertical, left, or tap gestures', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/browser/GAMEROAD.html', { waitUntil: 'load' });
+  await page.evaluate(() => {
+    const t = window.__GAMEROAD_TEST__;
+    t.deckSetDraft([], []);
+    t.show('cards');
+  });
+
+  const gesture = async (id, dx, dy) => {
+    const card = page.locator(`#collectionGrid .slot[data-id="${id}"]`);
+    await card.scrollIntoViewIfNeeded();
+    const box = await card.boundingBox();
+    expect(box, `${id} card box`).not.toBeNull();
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+    await page.mouse.move(x, y);
+    await page.mouse.down();
+    await page.mouse.move(x + dx, y + dy, { steps: 5 });
+    await page.mouse.up();
+    await page.waitForTimeout(80);
+  };
+
+  await gesture('SP_A', 72, 4);
+  let state = await page.evaluate(() => ({
+    main: [...window.__GAMEROAD_TEST__.state.deckDraft.main],
+    draftSession: sessionStorage.getItem(window.__GAMEROAD_TEST__.deckDraftSessionKey()),
+  }));
+  expect(state.main).toEqual(['SP_A']);
+  expect(state.draftSession).not.toBeNull();
+
+  await page.waitForTimeout(450);
+  await gesture('SP_A', 72, 2);
+  state = await page.evaluate(() => [...window.__GAMEROAD_TEST__.state.deckDraft.main]);
+  expect(state).toEqual(['SP_A']);
+
+  await gesture('SP_2', 3, 78);
+  await gesture('SP_3', -70, 2);
+  state = await page.evaluate(() => [...window.__GAMEROAD_TEST__.state.deckDraft.main]);
+  expect(state).toEqual(['SP_A']);
+
+  await page.waitForTimeout(450);
+  await page.locator('#collectionGrid .slot[data-id="SP_4"]').click();
+  expect(await page.evaluate(() => window.__GAMEROAD_TEST__.state.selectedCardId)).toBe('SP_4');
+
+  const cap = await page.evaluate(() => {
+    const t = window.__GAMEROAD_TEST__;
+    const ids = t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id);
+    if (ids.length < 41) throw new Error('need at least 41 public main cards');
+    t.deckSetDraft(ids.slice(0, 40), []);
+    t.show('cards');
+    return { candidate: ids[40], before: t.state.deckDraft.main.length };
+  });
+  expect(cap.before).toBe(40);
+  await gesture(cap.candidate, 72, 1);
+  expect(await page.evaluate(() => window.__GAMEROAD_TEST__.state.deckDraft.main.length)).toBe(40);
+});

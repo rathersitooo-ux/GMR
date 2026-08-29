@@ -423,6 +423,49 @@ test('entry can pass one turn of source-bound knowledge into the existing conver
   assert.equal(seen.items[0].evidenceId, 'k-entry');
 });
 
+test('entry passes bounded collective context into the existing conversation core', async () => {
+  let seen = null;
+  const entry = createSaasunaConversationEntry({
+    createSessionId: () => 'session-collective-entry',
+    provider: {
+      async sendMessage(request) {
+        seen = request.collectiveContext;
+        return {
+          kind: 'utterance_candidate',
+          partnerId: request.partnerId,
+          dialogueVersion: request.dialogueVersion,
+          sourceId: request.sourceId,
+          text: '集合知は補助情報として扱います。',
+        };
+      },
+    },
+  });
+  const output = await entry.send('みんなの傾向は？', {
+    collectiveContext: {
+      schemaVersion: 'gameroad.partner-conversation-collective-context.v1',
+      partnerId: SAASUNA_PARTNER_ID,
+      useSite: 'partner-conversation',
+      safeForPrompt: true,
+      containsPrivate: false,
+      containsRawUserText: false,
+      items: [{ evidenceId: 'e-entry', summary: '同条件の確認済み集合傾向。', confidence: 'bounded' }],
+      lineage: [{
+        evidenceId: 'e-entry',
+        sourceId: 'collective-current',
+        sourceVersion: 'v1',
+        provenance: 'server_verified',
+        authorityRef: 'COLLECTIVE_CURRENT',
+        observedAt: '2026-08-29T17:40:00+09:00',
+        freshness: 'current',
+        counterevidenceState: 'NONE_FOUND',
+      }],
+    },
+  });
+  assert.equal(seen.items[0].evidenceId, 'e-entry');
+  assert.deepEqual(output.turn.evidence.collectiveEvidenceIds, ['e-entry']);
+  assert.equal(JSON.stringify(output).includes('同条件の確認済み集合傾向'), false);
+});
+
 test('entry session context starts empty and carries only completed prior turns', async () => {
   const seen = [];
   const entry = createSaasunaConversationEntry({

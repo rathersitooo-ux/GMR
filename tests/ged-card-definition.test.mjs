@@ -5,6 +5,7 @@ import { GED_CARD_DEFINITION } from '../browser/ged-card-definition.mjs';
 
 test('G・E・D identity is exactly the user-fixed minimal definition', () => {
   assert.deepEqual(GED_CARD_DEFINITION, {
+    id: 'GED',
     name: 'G・E・D',
     suitId: 'DK',
     suitName: 'ルナ',
@@ -31,5 +32,5 @@ test('definition contains no regulation, ability, art, audio, story, or generate
     'art', 'asset', 'audio', 'sound', 'story', 'lore', 'rarity', 'generatedRanks', 'ranks',
   ];
   for (const key of forbidden) assert.equal(Object.hasOwn(GED_CARD_DEFINITION, key), false, key);
-  assert.deepEqual(Object.keys(GED_CARD_DEFINITION).sort(), ['name', 'rank', 'suitId', 'suitName', 'suitSymbol', 'value'].sort());
+  assert.deepEqual(Object.keys(GED_CARD_DEFINITION).sort(), ['id', 'name', 'rank', 'suitId', 'suitName', 'suitSymbol', 'value'].sort());
 });

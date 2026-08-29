@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "SMOKE-PARTNER-DIRECT-R3-20260829-SOL-P2",
+  "taskId": "MINOR-MODE-PLAYTEST-COVERAGE-001",
+  "workUnitKey": "BROWSER_SMOKE_PARTNER_DIRECT_CURRENT_R1",
+  "acquireKey": "SMOKE-PARTNER-DIRECT-R1-20260829T1549-SOL-P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ACTIVE_LEASES A200:L200 readback confirms ACTIVE exact test-only scope on successor branch",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "Browser Runtime Smoke run 33241143386 succeeded on the exact donor test blob; R2 Required Gate isolated only a proceedToken shape error",
+  "proceedToken": "PROCEED|SMOKE-PARTNER-DIRECT-R3-20260829-SOL-P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|DONOR_BLOB_VERIFIED",
+  "authorizationBaseSha": "61dbf7c2f0b4f03fa378bf5a99d509314ff108b8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "MINOR-MODE-PLAYTEST-COVERAGE-001",
+  "leaseWorkUnitKey": "BROWSER_SMOKE_PARTNER_DIRECT_CURRENT_R1",
+  "leaseAcquireKey": "SMOKE-PARTNER-DIRECT-R1-20260829T1549-SOL-P2",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 16:31 JST",
+  "leaseUntilJst": "2026-08-29 17:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A200:L200",
+  "leaseExactMutableResources": "tests/browser-runtime-smoke.spec.mjs",
+  "scope": [
+    "tests/browser-runtime-smoke.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-runtime-smoke.spec.mjs"
+  ],
+  "solutionSignature": "browser-smoke-direct-saasuna-current-contract-r3",
+  "reuseDisposition": "REUSE_AS_IS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "Reuse the exact donor test blob already proven by Browser Runtime Smoke; no product or workflow change is needed",
+  "solutionSearchEvidence": [
+    "donor patched blob ec28b022a3100aba15b266a1974fb14ee638d9aa",
+    "current main source blob 6601dfbb2f76479797b2dbb5a5c5dd7e6a711239 matches the donor patch base",
+    "Browser Runtime Smoke run 33241143386 SUCCESS"
+  ]
+}

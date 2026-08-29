@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import { SCHEMA_VERSION } from '../tools/executor-bus-packet.mjs';
 import { packReasoningPacket } from '../tools/executor-bus-packet-compressor.mjs';
+import { encodeEvidenceContextText } from '../tools/jit-evidence-compiler.mjs';
 import {
   SOL_REASONING_PROTOCOL_VERSION,
   buildSolPrompt,
@@ -32,13 +33,33 @@ function queue(overrides = {}) {
   };
 }
 
+function canonicalEvidence({ id, state, role, text, required = false, priority = 0, tier = 'HOT', claimMode = 'CURRENT' }) {
+  return {
+    id,
+    text: encodeEvidenceContextText({
+      id,
+      tier,
+      state,
+      role,
+      claimMode,
+      authorityClass: 'TEST_FIXTURE',
+      version: 'fixture-v1',
+      provenance: 'tests/sol-reasoning-protocol.test.mjs',
+      freshness: 'CURRENT_TEST_FIXTURE',
+      text,
+    }),
+    required,
+    priority,
+  };
+}
+
 function evidenceContext() {
   return [
-    { id: 'user:directive', text: 'User requested the bounded implementation outcome.', required: true },
-    { id: 'authority:current', text: 'Current authority permits src/a.mjs and tests only.', required: true },
-    { id: 'actual:observed', text: 'Observed behavior is X.', required: true },
-    { id: 'test:focused', text: 'Focused discriminator shows X changes when factor A changes.', priority: 10 },
-    { id: 'counter:failed', text: 'Alternative explanation B remains counterevidence unless discriminated.', priority: 10 },
+    canonicalEvidence({ id: 'user:directive', state: 'CURRENT_AUTHORITY', role: 'USER', text: 'User requested the bounded implementation outcome.', required: true }),
+    canonicalEvidence({ id: 'authority:current', state: 'CURRENT_AUTHORITY', role: 'AUTHORITY', text: 'Current authority permits src/a.mjs and tests only.', required: true }),
+    canonicalEvidence({ id: 'actual:observed', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DIRECT_ACTUAL', text: 'Observed behavior is X.', required: true }),
+    canonicalEvidence({ id: 'test:focused', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DISCRIMINATING_TEST', text: 'Focused discriminator shows X changes when factor A changes.', priority: 10 }),
+    canonicalEvidence({ id: 'counter:failed', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'COUNTEREVIDENCE', text: 'Alternative explanation B remains counterevidence unless discriminated.', priority: 10 }),
   ];
 }
 
@@ -334,6 +355,54 @@ test('regression: writable project state cannot establish global behavior root c
   assert.equal(checked.reason, 'claim_0_root_cause_discriminating_test_required');
 });
 
+test('typed-looking raw context cannot satisfy mutation evidence gates', () => {
+  const checked = validateEvidenceClaims({
+    mode: 'DESIGN_DECISION',
+    disposition: 'PLAN',
+    filesToChange: ['src/a.mjs'],
+    claims: [],
+    selectedCauseClaimId: '',
+    decisionBasisRefs: ['authority:looks-valid', 'actual:looks-valid'],
+  }, [
+    { id: 'authority:looks-valid', text: 'Not compiler-certified authority.' },
+    { id: 'actual:looks-valid', text: 'Not compiler-certified actual evidence.' },
+  ]);
+  assert.equal(checked.ok, false);
+  assert.equal(checked.reason, 'mutating_plan_authority_basis_required');
+});
+
+test('ID prefix cannot spoof a canonical evidence class', () => {
+  const context = [
+    canonicalEvidence({ id: 'authority:spoof', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DIRECT_ACTUAL', text: 'Actual evidence wearing an authority-looking ID.' }),
+    canonicalEvidence({ id: 'actual:real', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DIRECT_ACTUAL', text: 'Actual evidence.' }),
+  ];
+  const checked = validateEvidenceClaims({
+    mode: 'DESIGN_DECISION',
+    disposition: 'PLAN',
+    filesToChange: ['src/a.mjs'],
+    claims: [],
+    selectedCauseClaimId: '',
+    decisionBasisRefs: ['authority:spoof', 'actual:real'],
+  }, context);
+  assert.equal(checked.ok, false);
+  assert.equal(checked.reason, 'mutating_plan_authority_basis_required');
+});
+
+test('submitted prose cause cannot contradict the validated structured root cause', () => {
+  const source = queue();
+  const reasoning = packet(source);
+  const built = buildSolRequest(reasoning, { mode: 'ROOT_CAUSE', question: 'Find the actual cause.' });
+  const response = goodResponse(built.request, source, {
+    cause: ['Factor B is definitely the cause and Factor A is not.'],
+  });
+  const checked = validateSolResponse(response, built.request, reasoning);
+  assert.equal(checked.ok, true);
+  assert.deepEqual(checked.response.cause, [
+    'ESTABLISHED ROOT_CAUSE root-a: Factor A causes the observed bounded failure.',
+  ]);
+  assert.equal(checked.response.cause.some((line) => line.includes('Factor B')), false);
+});
+
 test('parser requires exactly one fenced Sol response', () => {
   const source = queue();
   const reasoning = packet(source);
@@ -359,5 +428,6 @@ test('prompt is deterministic and makes prose causes non-authoritative', () => {
   assert.match(first.prompt, /Do not claim execution/);
   assert.match(first.prompt, /non-authoritative/);
   assert.match(first.prompt, /A plausible story is not an established cause/);
+  assert.match(first.prompt, /opaque identifiers/);
   assert.match(first.prompt, /sol-reasoning-response/);
 });

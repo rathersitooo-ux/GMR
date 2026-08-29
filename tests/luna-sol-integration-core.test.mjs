@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { encodeEvidenceContextText } from '../tools/jit-evidence-compiler.mjs';
 import { INTEGRATION_STATUS, runLunaSolDecision } from '../tools/luna-sol-integration-core.mjs';
 
 function queue(overrides = {}) {
@@ -22,13 +23,33 @@ function queue(overrides = {}) {
   };
 }
 
+function canonicalEvidence({ id, state, role, text, required = false, priority = 0 }) {
+  return {
+    id,
+    text: encodeEvidenceContextText({
+      id,
+      tier: 'HOT',
+      state,
+      role,
+      claimMode: 'CURRENT',
+      authorityClass: 'TEST_FIXTURE',
+      version: 'fixture-v1',
+      provenance: 'tests/luna-sol-integration-core.test.mjs',
+      freshness: 'CURRENT_TEST_FIXTURE',
+      text,
+    }),
+    required,
+    priority,
+  };
+}
+
 function evidenceContext() {
   return [
-    { id: 'user:directive', text: 'User requested the bounded change.', required: true },
-    { id: 'authority:current', text: 'Current authority allows tools/example.mjs.', required: true },
-    { id: 'actual:state', text: 'Current actual directly exhibits the target condition.', required: true },
-    { id: 'test:discriminator', text: 'A/B discriminator isolates factor X.', priority: 10 },
-    { id: 'counter:alternative', text: 'Alternative Y is explicit counterevidence.', priority: 10 },
+    canonicalEvidence({ id: 'user:directive', state: 'CURRENT_AUTHORITY', role: 'USER', text: 'User requested the bounded change.', required: true }),
+    canonicalEvidence({ id: 'authority:current', state: 'CURRENT_AUTHORITY', role: 'AUTHORITY', text: 'Current authority allows tools/example.mjs.', required: true }),
+    canonicalEvidence({ id: 'actual:state', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DIRECT_ACTUAL', text: 'Current actual directly exhibits the target condition.', required: true }),
+    canonicalEvidence({ id: 'test:discriminator', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DISCRIMINATING_TEST', text: 'A/B discriminator isolates factor X.', priority: 10 }),
+    canonicalEvidence({ id: 'counter:alternative', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'COUNTEREVIDENCE', text: 'Alternative Y is explicit counterevidence.', priority: 10 }),
   ];
 }
 

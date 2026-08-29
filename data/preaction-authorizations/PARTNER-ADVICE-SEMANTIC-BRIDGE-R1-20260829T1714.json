@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-ADVICE-SEMANTIC-BRIDGE-R1-20260829T1714",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_ADVICE_SEMANTIC_PAYLOAD_R1",
+  "acquireKey": "PARTNER-ADVICE-SEMANTIC-BRIDGE-R1-20260829T1714-SOL-P2",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PARTNER-ADVICE-RUNTIME-SEAM-DISJOINT-READBACK",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PARTNER-ADVICE-RUNTIME-MOUNT-EXISTING-TEST-ORACLE",
+  "proceedToken": "PROCEED|PARTNER-ADVICE-SEMANTIC-BRIDGE-R1-20260829T1714|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|prediction|lease-snapshot",
+  "authorizationBaseSha": "726bad370c4d1411de28d98efc29453b29682f28",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_ADVICE_SEMANTIC_PAYLOAD_R1",
+  "leaseAcquireKey": "PARTNER-ADVICE-SEMANTIC-BRIDGE-R1-20260829T1714-SOL-P2",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 17:32 JST",
+  "leaseUntilJst": "2026-08-29 18:14 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A17:L17",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh exact base 726bad370c4d1411de28d98efc29453b29682f28; branch work/partner-advice-semantic-payload-r1-20260829 reconstructed and force-updated from fresh main; transient PRE_ACTION data/preaction-authorizations/PARTNER-ADVICE-SEMANTIC-BRIDGE-R1-20260829T1714.json create-first/delete-before-final-head; browser/partner-advice-runtime-mount.mjs; tests/partner-advice-runtime-mount.test.mjs; own CURRENT_ACTIVE_LEASES row17 and own R22 records.",
+  "scope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs"
+  ],
+  "solutionSignature": "Map viewer-safe Advice recommendation semantics into the shared PartnerResponsePlan v1 contract without copying raw/private payloads or mutating persona, relationship, canon, or game state.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PARTNER-RESPONSE-PLAN-WINDOW1-READONLY",
+  "solutionSearchEvidence": [
+    "github:work/partner-response-plan-r1-20260829:browser/partner-response-plan-core.mjs",
+    "github:main:browser/partner-advice-runtime-mount.mjs",
+    "github:main:browser/partner-legal-action-adapter.mjs"
+  ]
+}

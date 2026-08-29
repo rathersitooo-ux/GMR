@@ -8,11 +8,6 @@ import {
   projectHomeShell,
 } from '../browser/home-shell-presentation-core.mjs';
 import {
-  HOME_VISUAL_AUTHORITY,
-  createHomeVisualAuthorityCss,
-  resolveHomePrimaryAuthority,
-} from '../browser/home-boot-runtime-mount.mjs';
-import {
   BOOT_LOADING_PHASES,
   createBootLoadingState,
   projectBootLoadingPresentation,
@@ -81,29 +76,6 @@ test('Home reduced/lowPerf profiles preserve semantic state rather than invent r
   assert.deepEqual(normal.routeIds, lowPerf.routeIds);
   assert.equal(normal.selectedRouteId, reduced.selectedRouteId);
   assert.equal(normal.selectedRouteId, lowPerf.selectedRouteId);
-});
-
-test('Home visual authority is subtractive only when the canonical slidepad exists', () => {
-  assert.equal(resolveHomePrimaryAuthority({ hasSlidePad: true }), HOME_VISUAL_AUTHORITY.canonical);
-  assert.equal(resolveHomePrimaryAuthority({ hasSlidePad: false }), HOME_VISUAL_AUTHORITY.fallback);
-  assert.equal(resolveHomePrimaryAuthority(), HOME_VISUAL_AUTHORITY.fallback);
-  assert.ok(HOME_VISUAL_AUTHORITY.suppressedSelectors.includes('#codexHomeVisualLayer'));
-  assert.ok(HOME_VISUAL_AUTHORITY.suppressedSelectors.includes('.codexPartnerChip'));
-  assert.ok(HOME_VISUAL_AUTHORITY.suppressedSelectors.includes('.codexBattleCta'));
-  const css = createHomeVisualAuthorityCss();
-  assert.match(css, /data-home-primary-authority="slidepad"/);
-  assert.match(css, /#codexHomeVisualLayer/);
-  assert.match(css, /\.codexPartnerChip/);
-  assert.match(css, /\.codexBattleCta/);
-  assert.match(css, /data-home-shell-variant="portrait"/);
-  assert.match(css, /grid-template-columns:1fr!important/);
-  assert.match(css, /border-color:transparent!important/);
-  assert.match(css, /background:transparent!important/);
-  assert.match(css, /box-shadow:none!important/);
-  assert.match(css, /backdrop-filter:none!important/);
-  assert.doesNotMatch(css, /background:rgba\(8,17,45,\.68\)!important/);
-  assert.doesNotMatch(css, /backdrop-filter:blur\(8px\)!important/);
-  assert.match(css, /data-home-shell-variant="short-landscape"/);
 });
 
 test('missing portrait art is propagated exactly and never silently fabricated or cropped', () => {

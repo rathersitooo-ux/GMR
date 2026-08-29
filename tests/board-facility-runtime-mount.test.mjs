@@ -77,12 +77,11 @@ test('conversation product mount is a no-op outside a browser DOM', () => {
   assert.equal(mountSaasunaConversationProductSurface({ document: {} }), null);
 });
 
-test('conversation entry activates Partner and Saasuna before projecting chat', () => {
+test('conversation entry has one direct path: Partner, Saasuna, conversation', () => {
   assert.equal(partnerConversationProjectionDecision({ screenActive: false }), 'idle');
   assert.equal(partnerConversationProjectionDecision({
     screenActive: true,
     partnerRoleActive: false,
-    playerModeRequested: false,
   }), 'activate_partner');
   assert.equal(partnerConversationProjectionDecision({
     screenActive: true,
@@ -96,10 +95,10 @@ test('conversation entry activates Partner and Saasuna before projecting chat', 
   }), 'conversation');
 });
 
-test('explicit player-character switch is the only bypass from direct Partner conversation', () => {
+test('conversation entry does not add a player-character bypass', () => {
   assert.equal(partnerConversationProjectionDecision({
     screenActive: true,
     partnerRoleActive: false,
     playerModeRequested: true,
-  }), 'player');
+  }), 'activate_partner');
 });

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DAILY-TOUR-CI-HOLDOUT-R5-20260829T1932",
+  "taskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "workUnitKey": "DAILY_TOUR_CI_HELDOUT_R5",
+  "acquireKey": "DAILY-TOUR-CI-HOLDOUT-R5-20260829T1932-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "DAILY-TOUR-R5-EXACT-DONOR-BLOBS-AND-R1-R2-GATE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "DAILY-TOUR-R1B-EXACT-BLOB-16-OF-16",
+  "proceedToken": "PROCEED|DAILY-TOUR-CI-HOLDOUT-R5-20260829T1932|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|heldout|exact-donor",
+  "authorizationBaseSha": "f3ee5626782f58dbc613f380b582561ce1ea1713",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "leaseWorkUnitKey": "DAILY_TOUR_CI_HELDOUT_R5",
+  "leaseAcquireKey": "DAILY-TOUR-CI-HOLDOUT-R5-20260829T1932-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 19:32 JST",
+  "leaseUntilJst": "2026-08-29 20:17 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/daily-tour-core-r5-heldout-20260829 only: browser/daily-tour-core.mjs; tests/daily-tour-core.test.mjs; transient data/preaction-authorizations/DAILY-TOUR-CI-HOLDOUT-R5-20260829T1932.json; CURRENT_ACTIVE_LEASES own row5; R22 own records",
+  "scope": [
+    "browser/daily-tour-core.mjs",
+    "tests/daily-tour-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/daily-tour-core.mjs",
+    "tests/daily-tour-core.test.mjs"
+  ],
+  "solutionSignature": "daily-tour-core|exact-donor-reuse|conventional-node-pair-heldout",
+  "reuseDisposition": "REUSE_AS_IS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR613-EXACT-DONOR-AND-16-OF-16",
+  "solutionSearchEvidence": [
+    "PR#613 donor core blob 99ce8227fc0bbad83cf92bd906e041a1b81b1b20 was already reviewed and tested.",
+    "PR#613 donor test blob 8969aaae1c5625aa98e11d61bb2a54dbfca5e826 covers 16 Daily Tour invariants.",
+    "This work unit changes no behavior and exists only to prove the merged conventional-pair Required Gate path."
+  ]
+}

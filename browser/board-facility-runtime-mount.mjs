@@ -1,5 +1,4 @@
 import { createSaasunaConversationEntry } from './partner-conversation-core.mjs';
-import { buildPartnerConversationCollectiveContext } from './partner-conversation-collective-context.mjs';
 
 const CLASSIC_BRIDGE_NAME = 'GAMEROAD_BOARD_FACILITY_STATE_CORE';
 const RUNTIME_NAME = 'GAMEROAD_BOARD_FACILITY_RUNTIME';
@@ -110,21 +109,23 @@ export async function resolveSaasunaCollectiveContext(global = globalThis) {
   const source = global?.[COLLECTIVE_EVIDENCE_SOURCE_NAME];
   if (typeof source !== 'function') return null;
 
-  let evidenceItems;
+  let context;
   try {
-    evidenceItems = await source(Object.freeze({
+    context = await source(Object.freeze({
       partnerId: 'partner.saasuna',
       useSite: 'partner-conversation',
+      schemaVersion: COLLECTIVE_CONTEXT_SCHEMA,
     }));
   } catch {
     return null;
   }
 
-  const context = buildPartnerConversationCollectiveContext({
-    partnerId: 'partner.saasuna',
-    evidenceItems,
-  });
-  if (context?.ok !== true || context.acceptedCount < 1 || context.items.length > 12) return null;
+  if (!context || typeof context !== 'object' || Array.isArray(context)) return null;
+  if (context.schemaVersion !== COLLECTIVE_CONTEXT_SCHEMA) return null;
+  if (context.partnerId !== 'partner.saasuna' || context.useSite !== 'partner-conversation') return null;
+  if (context.safeForPrompt !== true || context.containsPrivate !== false || context.containsRawUserText !== false) return null;
+  const promptItems = safeCollectivePromptItems(context);
+  if (!promptItems || promptItems.length < 1) return null;
   return context;
 }
 

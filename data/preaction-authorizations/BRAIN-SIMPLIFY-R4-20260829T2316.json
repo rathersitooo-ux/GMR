@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BRAIN-SIMPLIFY-R4-20260829T2316",
+  "taskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "workUnitKey": "BRAIN_TRAINING_DAILY_CORE_R4_V3_AUTH_REPLAY",
+  "acquireKey": "BRAIN-SIMPLIFY-R4-20260829T2316-SOL-V5M2Q7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "brain-r4-r3-exact-tested-bytes-plus-current-shared-learning-taxonomy-20260829",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "brain-r3-exact-bytes-16-of-16-node-pass-core-9efb8697-test-18eff768-20260829",
+  "proceedToken": "PROCEED|BRAIN-SIMPLIFY-R4-20260829T2316|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|V3_EXACT_REPLAY",
+  "authorizationBaseSha": "86c2001cb681ecef892292bdfe03708cfd8b49d5",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "leaseWorkUnitKey": "BRAIN_TRAINING_DAILY_CORE_R4_V3_AUTH_REPLAY",
+  "leaseAcquireKey": "BRAIN-SIMPLIFY-R4-20260829T2316-SOL-V5M2Q7",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 23:16 JST",
+  "leaseUntilJst": "2026-08-30 00:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:L9",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact fresh base 86c2001cb681ecef892292bdfe03708cfd8b49d5; new branch work/daily-brain-training-r4-20260829; transient PRE_ACTION data/preaction-authorizations/BRAIN-SIMPLIFY-R4-20260829T2316.json create-first/delete-before-final-head; browser/brain-training-core.mjs; tests/brain-training-core.test.mjs; replacement PR metadata/checks/expected-head merge; close PR#635 after verified replacement/merge; own CURRENT_ACTIVE_LEASES row9; own R22 records. READ_ONLY current browser/learning-event-core.mjs, current Daily Tour files, PR#635/637, Required Gate, Full Interaction R42 repair. EXCLUDE browser/GAMEROAD.html, learning-event files, Partner/BigData/Battle/reward/save/economy/deploy/assets/workflows/tools/all other files.",
+  "scope": [
+    "browser/brain-training-core.mjs",
+    "tests/brain-training-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/brain-training-core.mjs",
+    "tests/brain-training-core.test.mjs"
+  ],
+  "solutionSignature": "brain-training-r3:shared-learning-taxonomy+source-grounded-practice-session+answer-skip-idempotency",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "brain-r4-compose-current-learning-event-authority-with-r3-tested-donor-20260829",
+  "solutionSearchEvidence": [
+    "current:browser/learning-event-core.mjs:shared-six-subjects-and-five-cognitive-axes",
+    "verified-donor:work/daily-brain-training-r3-20260829:core-blob-9efb8697b9fa539a1a8c5567d0766b3020d22ccc",
+    "verified-donor:work/daily-brain-training-r3-20260829:test-blob-18eff7687ddb817e2c7666edf21d1001497bdb82:16-of-16-pass",
+    "counterexample:PR635:duplicate-subject-taxonomy-daykey-scheduler-learning-event-producer-removed"
+  ]
+}

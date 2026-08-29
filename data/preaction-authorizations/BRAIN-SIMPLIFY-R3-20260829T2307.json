@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "gameroad.preaction.v2",
+  "acquireKey": "BRAIN-SIMPLIFY-R3-20260829T2307-SOL-P6K3N8",
+  "taskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "workUnitKey": "BRAIN_TRAINING_DAILY_CORE_R3_FRESH_MAIN_SUBTRACTIVE",
+  "authorizationBase": "573ef8a747372ef5ff2699d5f2094d38317b8a39",
+  "mutableResources": [
+    "browser/brain-training-core.mjs",
+    "tests/brain-training-core.test.mjs"
+  ],
+  "readOnlyResources": [
+    "browser/learning-event-core.mjs",
+    "tests/learning-event-core.test.mjs"
+  ],
+  "intent": "Replace the overbuilt Brain Training candidate with a smaller source-grounded practice core that reuses shared learning subjects and cognitive axes. No daily reset/quota, independent subject taxonomy, internal scheduler, Learning Event production, or gameplay/effect authority."
+}

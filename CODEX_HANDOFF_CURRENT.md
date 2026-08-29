@@ -5,6 +5,8 @@ ChatGPT HEAD と Codex executor の dynamic restart transport。ゲーム仕様�
 
 このhandoffはCodexへ局所Taskだけを見せてwhole-game contextを省略するためのものではない。fresh Codex session / fresh project contextでは、repo側 `AGENTS.md` の `CODEX_GLOBAL_EPISTEMIC_BOOTSTRAP` が最初の実mutationより先に発火する。このhandoffのTask packetはそのbootstrap後の通常JIT実行を補助するtransportであり、Codex自身のwhole-product world modelを置き換えない。
 
+Codexは有限・従量・共有枠になり得るexecutor候補であり、このhandoffは**Codexを起動すること自体の許可**ではない。初回Codex invocationの前に、Codexプロセス外のcurrent router/wake gateが利用者の現在制約と同等成果の代替経路を評価している必要がある。Codexを既に起動した後で、そのCodex自身に「Codexを使うべきだった」と事後正当化させない。
+
 ## GLOBAL EPISTEMIC BOOTSTRAP transport
 初回bootstrapではHEADが完成像の答えを先に局所packet化して渡さない。Codexはfresh CURRENT、現役運用規約、completion definition / USER_END_STATE、主要current canon/owner boundary、実project/repository topologyをread-only取得し、まず自力でwhole-game completion knowledge surfaceを再帰分解する。
 
@@ -31,13 +33,24 @@ Codex dispatch前後に解決する核は、Drive `GAMEROAD_Drive総合目次・
 
 通常WorkUnitでCodexへ渡す `EXECUTION_RESIDUAL` は、CodexのGLOBAL EPISTEMIC MAPから今回targetに関係するsurface/cross-domain edgeを呼び戻した上で扱う。HEADが知っていることを理由にCodex自身のmaterial knowledge boundaryを空欄にしない。
 
+## Finite-resource dispatch context
+Codexへ新しい実WorkUnitを渡す時は、既存packetの一部として最低限次を解決する。別protocolや第二正本は作らない。
+- `RESOURCE_CONSTRAINT_SOURCE`: current user RAW / current authority pointer。AI要約だけを利用者制約の正本にしない。
+- `CODEX_RESOURCE_STATE`: `KNOWN` または `UNKNOWN`。UNKNOWNを0にも無限にも変換しない。
+- `CODEX_ONLY_REASON`: なぜ同等acceptanceへ到達する低消費/非Codex経路では足りないか。Codex禁止ではないので、妥当なbounded理由があれば使える。
+- `BOUNDED_INVOCATION`: このdispatchで必要なCodex session/worker/cycleの上限。無期限・常駐・再帰的worker増殖を暗黙値にしない。
+- `LOWER_CONSUMPTION_EQUIVALENT`: 同等以上のacceptanceへ届く低消費候補の有無と採否根拠。
+- `RECURRING_AUTHORIZATION`: unattended/recurring/long-running consumptionを現在明示的に許す根拠。単発許可を常駐許可へ拡張しない。
+
+このcontextは、既に起動済みCodex内での追加worker・追加cycleの抑制にも使う。ただしinitial invocationの費用判断は必ず外側で行う。
+
 ## Minimum runnable packet
 通常dispatch packetの核:
 - TaskID / WorkUnitKey / AcquireKey
 - ExactMutableResources と DoNotChange
 - current input/version/HEAD（該当時）
 - USER_END_STATE / REAL_OUTPUT_TARGET
-- CODEX_ONLY_REASON
+- `RESOURCE_CONSTRAINT_SOURCE / CODEX_RESOURCE_STATE / CODEX_ONLY_REASON / BOUNDED_INVOCATION / LOWER_CONSUMPTION_EQUIVALENT / RECURRING_AUTHORIZATION`
 - acceptance evidence / test contract
 - material unresolved / ResumeCondition
 - current `CODEX_WORLD_MODEL_CHECKPOINT` identity/scope
@@ -54,13 +67,17 @@ player-visible UI、game flow、操作、画面遷移、入力系、表示中の
 
 非player-visible・非UI Taskへ無関係なbutton inventoryを強制しない。stable evidence pointer は必要なものだけ付ける。01 template、02 template、`CODEX_LIVE_EVENT`、local mirror は transport/evidence source であり、すべてを毎回通る固定hopではない。
 
-## Mutation gate
+## Mutation and continuation gate
 project state mutation直前に、repo側で実際に消費される current execution input、Drive current Task / AcquireKey / ExactMutableResources / acceptance、`CODEX_WORLD_MODEL_CHECKPOINT` のscope validityを照合する。今回targetにmaterialな新surface、cross-domain edge、unsupported claimが出たらGLOBAL EPISTEMIC MAPへdelta追加し、必要なら既存 `BLOCKED_HEAD` へ返す。
+
+さらに追加worker、追加cycle、recurring continuationの直前には finite-resource dispatch context を再確認する。`CODEX_RESOURCE_STATE=UNKNOWN` のまま unattended multi-worker/recurring escalationを自動許可しない。現在のbounded invocationを使い切ったら、同一理由で無期限に延長せず外側のrouter/HEADへ戻す。
 
 `GAME_SURFACE_CONTEXT` が必要なTaskでは、対象surface/state/player route・required action/control・current pointerも照合する。source/mirror不一致、stale、owner conflict、identity不明、player-visible契約不明、knowledge basis不明などmaterialな矛盾があれば推測補完しない。
 
 ## Return / adoption
-返却の核は current input/version、実変更diff/artifact、実行testとstatus、failure/unresolved、evidence pointer、rollback または ResumeCondition。GLOBAL EPISTEMIC MAPへ新規surface/unknown/counterexampleが増えた場合は、そのdeltaも同じ既存evidence pathへ返す。未実行・skipped・pending・unknownをPASSにしない。
+返却の核は current input/version、実変更diff/artifact、実行testとstatus、failure/unresolved、evidence pointer、rollback または ResumeCondition。GLOBAL EPISTEMIC MAPへ新規surface/unknown/counterexampleが増えた場合は、そのdeltaも同じ既存evidence pathへ返す。
+
+有限resourceを使ったWorkUnitでは、観測可能な範囲で `actual invocation/worker/cycle count` と実成果を返し、次のrouteが推測ではなく実測から縮約できるようにする。取得不能なtoken/credit残量を捏造しない。未実行・skipped・pending・unknownをPASSにしない。
 
 `GAME_SURFACE_CONTEXT` を受けたTaskは `GAME_SURFACE_RETURN` も返す:
 - actual surface / state / player route で何が変わったか、または NO_CHANGE

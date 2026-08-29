@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DECKSWIPE-PRODUCT-R3-20260829T1132",
+  "taskId": "DECK-SWIPE-ADD-001",
+  "workUnitKey": "DECK_SWIPE_ADD_PRODUCT_R3",
+  "acquireKey": "DECKSWIPE-PRODUCT-R3-20260829T1128-SOL-K7M4Q9V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "archive-verified-beacba322f1a7b73281177fd8ab100705d160a93",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "archive-browser-smoke-beacba322f1a7b73281177fd8ab100705d160a93",
+  "proceedToken": "PROCEED|DECKSWIPE-PRODUCT-R3-20260829T1132|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|reuse-verified-right-swipe-patch",
+  "authorizationBaseSha": "30bd130270e876696cb5fecd37436e0ce8ef0f9a",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-runtime-smoke.spec.mjs",
+    "tools/deck-swipe-add-product-r3-apply.py",
+    ".github/workflows/deck-swipe-add-product-r3-auto-apply.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DECK-SWIPE-ADD-001",
+  "leaseWorkUnitKey": "DECK_SWIPE_ADD_PRODUCT_R3",
+  "leaseAcquireKey": "DECKSWIPE-PRODUCT-R3-20260829T1128-SOL-K7M4Q9V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 11:32 JST",
+  "leaseUntilJst": "2026-08-29 12:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-runtime-smoke.spec.mjs",
+    "tools/deck-swipe-add-product-r3-apply.py",
+    ".github/workflows/deck-swipe-add-product-r3-auto-apply.yml"
+  ],
+  "leaseExactMutableResources": "browser/GAMEROAD.html; tests/browser-runtime-smoke.spec.mjs; tools/deck-swipe-add-product-r3-apply.py; .github/workflows/deck-swipe-add-product-r3-auto-apply.yml"
+}

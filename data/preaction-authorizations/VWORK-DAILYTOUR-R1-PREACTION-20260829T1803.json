@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-DAILYTOUR-R1-PREACTION-20260829T1803",
+  "taskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "workUnitKey": "TOUR_MODE_REGISTRY_CONTRACT_R1",
+  "acquireKey": "DAILYTOUR-R1-20260829T1754-SOL-K7N4V2M9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "DAILYTOUR-R1-PREDICT-DERIVED-DATA-NO-RUNTIME",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "DAILYTOUR-R1-ORACLE-CURRENT-INVENTORY-SCHEMA-READBACK",
+  "proceedToken": "PROCEED|VWORK-DAILYTOUR-R1-PREACTION-20260829T1803|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|fresh-main|lease-readback|derived-data-only",
+  "authorizationBaseSha": "c2901b3db5776e3a26f63d66e9179973849c0f88",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "leaseWorkUnitKey": "TOUR_MODE_REGISTRY_CONTRACT_R1",
+  "leaseAcquireKey": "DAILYTOUR-R1-20260829T1754-SOL-K7N4V2M9",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 18:03 JST",
+  "leaseUntilJst": "2026-08-29 18:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A20:L20",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base c2901b3db5776e3a26f63d66e9179973849c0f88; data/daily-tour-mode-registry.v1.json; data/daily-tour-mode-registry.schema.json; transient PRE_ACTION data/preaction-authorizations/VWORK-DAILYTOUR-R1-PREACTION-20260829T1803.json create-first/delete-before-final-head; own branch/PR#609; R22 append-only correction/terminal; CURRENT_ACTIVE_LEASES A20:N20. EXCLUDE browser/GAMEROAD.html, browser/navigation/domain/Partner cores, workflows, reward/economy/save/formal assets.",
+  "scope": [
+    "data/daily-tour-mode-registry.v1.json",
+    "data/daily-tour-mode-registry.schema.json"
+  ],
+  "leaseScope": [
+    "data/daily-tour-mode-registry.v1.json",
+    "data/daily-tour-mode-registry.schema.json"
+  ]
+}

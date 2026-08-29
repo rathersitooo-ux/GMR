@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-OPS-AI-PROOF-CARRYING-R1-20260829T1154",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "PROOF_CARRYING_EXECUTION_R1",
+  "acquireKey": "OPS-AI-PROOF-CARRYING-R1-20260829T1154-SOL-P8N4Q7V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_CAUSAL_GATE_PLUS_JIT_METADATA_AND_UNMERGED_METATRUST_R2_AUDIT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "THREE_ADVERSARIAL_RATIONALIZATION_CASES_REPRODUCED_20260829",
+  "proceedToken": "PROCEED|VWORK-OPS-AI-PROOF-CARRYING-R1-20260829T1154|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|PROOF_CARRYING_EXECUTION_R1",
+  "authorizationBaseSha": "f6414232cac932584af80705f93c5f8e569b6169",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "PROOF_CARRYING_EXECUTION_R1",
+  "leaseAcquireKey": "OPS-AI-PROOF-CARRYING-R1-20260829T1154-SOL-P8N4Q7V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 11:54 JST",
+  "leaseUntilJst": "2026-08-29 12:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/ops-ai-proof-carrying-execution-r1-20260829 from base f6414232cac932584af80705f93c5f8e569b6169; tools/jit-evidence-compiler.mjs; tests/jit-evidence-compiler.test.mjs; docs/jit-evidence-compiler.md; tools/sol-reasoning-protocol.mjs; tests/sol-reasoning-protocol.test.mjs; tests/luna-sol-integration-core.test.mjs; docs/sol-reasoning-protocol.md; transient data/preaction-authorizations/VWORK-OPS-AI-PROOF-CARRYING-R1-20260829T1154.json; central row1364 Y:AB; own CURRENT_ACTIVE_LEASES row5; own R22 records; active browser bridge/workflows/executor-bus/router/browser/product/deploy/game/save/network/economy excluded/read-only.",
+  "scope": [
+    "tools/jit-evidence-compiler.mjs",
+    "tests/jit-evidence-compiler.test.mjs",
+    "docs/jit-evidence-compiler.md",
+    "tools/sol-reasoning-protocol.mjs",
+    "tests/sol-reasoning-protocol.test.mjs",
+    "tests/luna-sol-integration-core.test.mjs",
+    "docs/sol-reasoning-protocol.md"
+  ],
+  "leaseScope": [
+    "tools/jit-evidence-compiler.mjs",
+    "tests/jit-evidence-compiler.test.mjs",
+    "docs/jit-evidence-compiler.md",
+    "tools/sol-reasoning-protocol.mjs",
+    "tests/sol-reasoning-protocol.test.mjs",
+    "tests/luna-sol-integration-core.test.mjs",
+    "docs/sol-reasoning-protocol.md"
+  ],
+  "solutionSignature": "proof-carrying evidence metadata plus material-issue binding for executable Sol decisions",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE_MAIN_CAUSAL_GATE_JIT_METADATA_AND_STALE_METATRUST_R2",
+  "solutionSearchEvidence": [
+    "main:tools/sol-reasoning-protocol.mjs causal claim gate from merged PR #509",
+    "main:tools/jit-evidence-compiler.mjs canonical evidence metadata envelope",
+    "branch:work/ops-ai-sol-evidence-metatrust-r2-20260829 commit 5039b6343f7c5ccef2098bf7743c9ca9c44d26ac"
+  ]
+}

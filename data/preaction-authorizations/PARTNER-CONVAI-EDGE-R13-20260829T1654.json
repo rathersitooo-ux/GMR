@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-CONVAI-EDGE-R13-20260829T1654",
+  "taskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "workUnitKey": "PARTNER_CONVAI_EDGE_MINIMAL_R13",
+  "acquireKey": "PARTNER-CONVAI-EDGE-R13-20260829T1654-SOL-Q7N4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PRED-PARTNER-CONVAI-EDGE-R13-20260829T1654",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR566-FOCUSED-PROVIDER-TESTS-PLUS-MINIMAL-PORT",
+  "proceedToken": "PROCEED|PARTNER-CONVAI-EDGE-R13-20260829T1654|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|minimal-convai-edge-only|lease-row5",
+  "authorizationBaseSha": "28a99b508ba7cc47c6ab25710675f2512a5d6a49",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "leaseWorkUnitKey": "PARTNER_CONVAI_EDGE_MINIMAL_R13",
+  "leaseAcquireKey": "PARTNER-CONVAI-EDGE-R13-20260829T1654-SOL-Q7N4M2",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 17:02 JST",
+  "leaseUntilJst": "2026-08-29 18:24 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base 28a99b508ba7cc47c6ab25710675f2512a5d6a49; branch work/partner-convai-edge-r13-20260829; transient PRE_ACTION data/preaction-authorizations/PARTNER-CONVAI-EDGE-R13-20260829T1654.json create-first/delete-before-final-head; deploy/cloudflare/functions/ws.js; browser/board-facility-runtime-mount.mjs; tests/board-facility-runtime-mount.test.mjs; own CURRENT_ACTIVE_LEASES row5 and own R22 records. Strict exclusions/read-only: deploy/cloudflare/tests/build.test.mjs currently owned by PUBLICPACK-CARDS-DECK-DEPENDENCY-R1 row8; deploy/cloudflare/scripts/build.mjs; browser/GAMEROAD.html; character image/rig/motion/lipsync; Partner core schema/memory/BigData; gameplay/save/economy/Battle; assets/workflows; all other files.",
+  "scope": [
+    "deploy/cloudflare/functions/ws.js",
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/functions/ws.js",
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs"
+  ],
+  "solutionSignature": "Reuse the existing Saasuna provider seam and existing Cloudflare /ws function; add only same-origin Convai text transport, local provider-session continuity, server-side secret isolation, and focused tests. No visual/base64/router/memory layers.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-PR566-PROVIDER-BOUNDARY-WITH-OVERENGINEERING-REMOVED",
+  "solutionSearchEvidence": [
+    "GitHub:browser/partner-conversation-core.mjs existing provider sendMessage seam",
+    "GitHub:PR#566 provider/edge implementation and focused tests",
+    "GitHub:deploy/cloudflare/functions/ws.js existing same-origin edge function"
+  ]
+}

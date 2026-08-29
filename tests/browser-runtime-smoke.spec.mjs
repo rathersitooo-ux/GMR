@@ -381,18 +381,13 @@ test('records build-linked visible Home to Partner and Home return P0 evidence',
 
   const characters = page.locator('section[data-screen="characters"]');
   await expect(characters, 'Characters target reached through visible pointer navigation').toBeVisible();
-  await characters.locator('[data-role="partner"]').click();
-
-  const candidate = characters.locator('.charCard[aria-pressed="false"]:visible').first();
-  await expect(candidate, 'real visible Partner candidate').toBeVisible();
-  const candidateName = ((await candidate.locator('.charCardCopy b').textContent()) || '').trim();
-  expect(candidateName, 'Partner candidate has visible identity').not.toBe('');
-  await candidate.click();
-
-  const selected = characters.locator('.charCard[aria-pressed="true"]:visible');
-  await expect(selected, 'Partner selection state').toHaveCount(1);
-  await expect(selected.locator('.charCardCopy b')).toHaveText(candidateName);
-  await expect(characters.locator('#charRoleLabel')).toHaveText('パートナー');
+  const conversation = characters.locator('[data-gr-partner-conversation="1"]');
+  await expect(conversation, 'direct Saasuna conversation').toBeVisible();
+  await expect(conversation).toHaveAttribute('aria-label', 'サースナーとの会話');
+  await expect(conversation.locator('.grPartnerConversationInput')).toBeVisible();
+  await expect(conversation.locator('.grPartnerConversationInput')).toHaveAttribute('aria-label', 'サースナーへのメッセージ');
+  await expect(conversation.locator('.grPartnerConversationSend')).toBeVisible();
+  const candidateName = 'サースナー';
   await expect(characters.locator('#charName')).toHaveText(candidateName);
 
   const partnerPng = await page.screenshot({ fullPage: true, animations: 'disabled' });

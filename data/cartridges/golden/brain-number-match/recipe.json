@@ -1,0 +1,35 @@
+{
+  "recipeVersion": "gameroad.demo-recipe.v1",
+  "kind": "number-match",
+  "domain": "learning.math",
+  "dailyEligible": true,
+  "title": "Number Match",
+  "rounds": [
+    {
+      "prompt": "2 + 3",
+      "choices": [
+        4,
+        5,
+        6
+      ],
+      "answer": 5
+    },
+    {
+      "prompt": "7 - 2",
+      "choices": [
+        3,
+        5,
+        9
+      ],
+      "answer": 5
+    },
+    {
+      "prompt": "Which is larger?",
+      "choices": [
+        8,
+        6
+      ],
+      "answer": 8
+    }
+  ]
+}

@@ -10,7 +10,29 @@ import {
   resolveSaasunaCollectiveContext,
   SAASUNA_PROVISIONAL_VISUAL_CONTRACT,
 } from '../browser/board-facility-runtime-mount.mjs';
+import { buildPartnerConversationCollectiveContext } from '../browser/partner-conversation-collective-context.mjs';
 import { onRequest as cloudflareEntry } from '../deploy/cloudflare/functions/ws.js';
+
+function collectiveContextFrom(evidenceItems) {
+  return buildPartnerConversationCollectiveContext({ partnerId: 'partner.saasuna', evidenceItems });
+}
+
+function approvedEvidence(overrides = {}) {
+  return {
+    evidenceId: 'E-PROD-1',
+    sourceId: 'SOURCE-PROD-1',
+    sourceVersion: 'v3',
+    provenance: 'public_production',
+    authorityRef: 'AUTH-PROD-1',
+    observedAt: '2026-08-30T01:00:00Z',
+    freshness: 'current_bounded',
+    counterevidenceState: 'NONE_FOUND',
+    useSite: 'partner-conversation',
+    summary: '承認済みの公開情報です。',
+    confidence: 'bounded',
+    ...overrides,
+  };
+}
 
 test('fails closed when the classic bridge is missing', async () => {
   await assert.rejects(() => mountBoardFacilityRuntime({}), /BOARD_FACILITY_CLASSIC_BRIDGE_MISSING/);
@@ -87,28 +109,20 @@ test('collective product resolver stays off when no real runtime evidence source
   assert.equal(await resolveSaasunaCollectiveContext({}), null);
 });
 
-test('collective product resolver revalidates a mounted approved evidence source', async () => {
+test('collective product resolver accepts only a canonical approved context from a mounted source', async () => {
   const calls = [];
   const global = {
     async GAMEROAD_PARTNER_CONVERSATION_COLLECTIVE_EVIDENCE_SOURCE(request) {
       calls.push(request);
-      return [{
-        evidenceId: 'E-PROD-1',
-        sourceId: 'SOURCE-PROD-1',
-        sourceVersion: 'v3',
-        provenance: 'public_production',
-        authorityRef: 'AUTH-PROD-1',
-        observedAt: '2026-08-30T01:00:00Z',
-        freshness: 'current_bounded',
-        counterevidenceState: 'NONE_FOUND',
-        useSite: 'partner-conversation',
-        summary: '承認済みの公開情報です。',
-        confidence: 'bounded',
-      }];
+      return collectiveContextFrom([approvedEvidence()]);
     },
   };
   const context = await resolveSaasunaCollectiveContext(global);
-  assert.deepEqual(calls, [{ partnerId: 'partner.saasuna', useSite: 'partner-conversation' }]);
+  assert.deepEqual(calls, [{
+    partnerId: 'partner.saasuna',
+    useSite: 'partner-conversation',
+    schemaVersion: 'gameroad.partner-conversation-collective-context.v1',
+  }]);
   assert.equal(context?.ok, true);
   assert.equal(context?.acceptedCount, 1);
   assert.equal(context?.safeForPrompt, true);
@@ -119,40 +133,15 @@ test('collective product resolver revalidates a mounted approved evidence source
   assert.equal(Object.isFrozen(context), true);
 });
 
-test('collective product resolver rejects private, fixture-like or malformed runtime evidence', async () => {
+test('collective product resolver rejects source contexts without an approved usable item', async () => {
   const privateContext = await resolveSaasunaCollectiveContext({
     GAMEROAD_PARTNER_CONVERSATION_COLLECTIVE_EVIDENCE_SOURCE() {
-      return [{
-        evidenceId: 'E-PRIVATE-1',
-        sourceId: 'SOURCE-PRIVATE-1',
-        sourceVersion: 'v1',
-        provenance: 'private',
-        authorityRef: 'AUTH-PRIVATE-1',
-        observedAt: '2026-08-30T01:00:00Z',
-        freshness: 'current',
-        counterevidenceState: 'NONE_FOUND',
-        useSite: 'partner-conversation',
-        summary: '送ってはいけない情報',
-        confidence: 'bounded',
-      }];
+      return collectiveContextFrom([approvedEvidence({ provenance: 'private', summary: '送ってはいけない情報' })]);
     },
   });
   const unexpectedContext = await resolveSaasunaCollectiveContext({
     GAMEROAD_PARTNER_CONVERSATION_COLLECTIVE_EVIDENCE_SOURCE() {
-      return [{
-        evidenceId: 'E-FIXTURE-1',
-        sourceId: 'SOURCE-FIXTURE-1',
-        sourceVersion: 'v1',
-        provenance: 'server_verified',
-        authorityRef: 'AUTH-FIXTURE-1',
-        observedAt: '2026-08-30T01:00:00Z',
-        freshness: 'current',
-        counterevidenceState: 'NONE_FOUND',
-        useSite: 'partner-conversation',
-        summary: 'fixtureをproductionへ昇格させない',
-        confidence: 'bounded',
-        fixtureOnly: true,
-      }];
+      return collectiveContextFrom([{ ...approvedEvidence(), fixtureOnly: true }]);
     },
   });
   assert.equal(privateContext, null);
@@ -168,11 +157,11 @@ test('collective product resolver fails soft when the runtime evidence source er
   assert.equal(context, null);
 });
 
-test('approved runtime evidence resolves through the existing Convai userText transport without lineage leakage', async () => {
+test('approved runtime context resolves through the existing Convai userText transport without lineage leakage', async () => {
   const calls = [];
   const global = {
     GAMEROAD_PARTNER_CONVERSATION_COLLECTIVE_EVIDENCE_SOURCE() {
-      return [{
+      return collectiveContextFrom([approvedEvidence({
         evidenceId: 'E-PROD-2',
         sourceId: 'SOURCE-SECRET-LINEAGE',
         sourceVersion: 'v4',
@@ -181,10 +170,8 @@ test('approved runtime evidence resolves through the existing Convai userText tr
         observedAt: '2026-08-30T01:10:00Z',
         freshness: 'current',
         counterevidenceState: 'PRESENT',
-        useSite: 'partner-conversation',
         summary: '反証があるため断定を避けるべき情報です。',
-        confidence: 'bounded',
-      }];
+      })]);
     },
     async fetch(url, options) {
       calls.push({ url, body: JSON.parse(options.body) });

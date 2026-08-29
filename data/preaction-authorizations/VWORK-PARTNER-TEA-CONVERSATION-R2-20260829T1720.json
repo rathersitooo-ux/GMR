@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-PARTNER-TEA-CONVERSATION-R2-20260829T1720",
+  "taskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "workUnitKey": "PARTNER_TEA_QUICK_CHOICE_CONVERSATION_R2",
+  "acquireKey": "PARTNER-TEA-CONV-R2-20260829T1720-SOL-T7K3M9Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PARTNER-TEA-R2-EXISTING-CHOICE-AND-CONVERSATION-SEAM",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PARTNER-TEA-R2-BOUNDED-DESIGN-READBACK",
+  "proceedToken": "PROCEED|VWORK-PARTNER-TEA-CONVERSATION-R2-20260829T1720|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "0c4d19152c72589073e8b5ae16305b88c05f0a7a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "leaseWorkUnitKey": "PARTNER_TEA_QUICK_CHOICE_CONVERSATION_R2",
+  "leaseAcquireKey": "PARTNER-TEA-CONV-R2-20260829T1720-SOL-T7K3M9Q2",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 17:20 JST",
+  "leaseUntilJst": "2026-08-29 18:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "browser/partner-tea-quick-choice-core.mjs; tests/partner-tea-quick-choice-core.test.mjs",
+  "scope": [
+    "browser/partner-tea-quick-choice-core.mjs",
+    "tests/partner-tea-quick-choice-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-tea-quick-choice-core.mjs",
+    "tests/partner-tea-quick-choice-core.test.mjs"
+  ]
+}

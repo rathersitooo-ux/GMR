@@ -9,7 +9,6 @@ import {
 const CORE_ID = 'gameroad.partner-conversation-core.v1';
 const COLLECTIVE_CONTEXT_SCHEMA = 'gameroad.partner-conversation-collective-context.v1';
 const KNOWLEDGE_CONTEXT_SCHEMA = 'gameroad.partner-knowledge-context.v1';
-const SESSION_CONTEXT_SCHEMA = 'gameroad.partner-conversation-session-context.v1';
 const SESSION_CONTEXT_MAX_TURNS = 4;
 const SOURCE_USE_SITE = 'partner-conversation';
 const ENTRY_SCREEN_ID = 'partner-conversation';
@@ -249,15 +248,9 @@ function createDefaultSessionId() {
   return exactToken(uuid) ?? `session-${Date.now().toString(36)}`;
 }
 
-function createSessionContext(sessionId, turns) {
+function createSessionContext(turns) {
   if (!Array.isArray(turns) || turns.length === 0) return null;
   return freezeDeep({
-    schemaVersion: SESSION_CONTEXT_SCHEMA,
-    partnerId: SAASUNA_PARTNER_ID,
-    useSite: SOURCE_USE_SITE,
-    sessionId,
-    transientOnly: true,
-    persistenceAllowed: false,
     turns: turns.slice(-SESSION_CONTEXT_MAX_TURNS).map((turn) => freezeDeep({
       turnId: turn.turnId,
       userMessage: turn.userMessage,
@@ -287,7 +280,7 @@ export function createSaasunaConversationEntry({ provider = null, createSessionI
   async function send(message, { knowledgeContext = null } = {}) {
     const turnId = `turn-${++turnSequence}`;
     const text = userMessage(message);
-    const sessionContext = createSessionContext(sessionId, sessionTurns);
+    const sessionContext = createSessionContext(sessionTurns);
     const scopedProvider = provider ? {
       async sendMessage(request) {
         return provider.sendMessage(freezeDeep({ ...request, sessionContext }));

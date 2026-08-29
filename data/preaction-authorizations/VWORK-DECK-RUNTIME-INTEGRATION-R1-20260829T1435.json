@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-DECK-RUNTIME-INTEGRATION-R1-20260829T1435",
+  "taskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "workUnitKey": "DECK_RUNTIME_INTEGRATION_R1",
+  "acquireKey": "DECKINTEGRATE-R1-20260829T1435-SOL-W9M4Q7V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_TASK9_SOLE_HTML_WRITER_NON_OVERLAP_20260829",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ISOLATED_COMPONENTS_1_TO_7_PLUS_TASK_PRIVATE_HTML_INSPECTION",
+  "proceedToken": "PROCEED|VWORK-DECK-RUNTIME-INTEGRATION-R1-20260829T1435|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|DECK_RUNTIME_INTEGRATION_R1",
+  "authorizationBaseSha": "dc6f31f53cd95b0175a0e3bdedb014a6c32cef6f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "leaseWorkUnitKey": "DECK_RUNTIME_INTEGRATION_R1",
+  "leaseAcquireKey": "DECKINTEGRATE-R1-20260829T1435-SOL-W9M4Q7V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 14:35 JST",
+  "leaseUntilJst": "2026-08-29 16:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A199:L199",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/deck-runtime-integration-r1-20260829 from base dc6f31f53cd95b0175a0e3bdedb014a6c32cef6f; browser/GAMEROAD.html; browser/deck-runtime-integration-core.mjs; tests/deck-runtime-integration-core.test.mjs; task-private transient inspection/applicator script+workflow deleted before final head; component branches 1/2/3/4/5/6/7 read-only inputs; own CURRENT_ACTIVE_LEASES A199:L199; own R22 records. Strict exclusions until separately released/extended: .github/workflows/gameroad-required-gate.yml, Partner, economy, unrelated Battle rules/assets/deploy.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "browser/deck-runtime-integration-core.mjs",
+    "tests/deck-runtime-integration-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "browser/deck-runtime-integration-core.mjs",
+    "tests/deck-runtime-integration-core.test.mjs"
+  ],
+  "solutionSignature": "single Browser integration writer for isolated deck slots selection starter legacy GED regulation eligibility components",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE_ISOLATED_COMPONENT_OUTPUTS_AND_EXISTING_BROWSER_DECK_PATH",
+  "solutionSearchEvidence": [
+    "Drive: numbered work 1-7 split into non-overlapping component files",
+    "GitHub: component branches expose stable APIs without GAMEROAD.html mutation",
+    "User: Deck1 gets starter40, shortage and regulation-blocked are distinct, GED is regulation-banned not intrinsically illegal"
+  ]
+}

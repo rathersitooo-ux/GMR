@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-PARTNER-CONV-MOUNT-R2-20260829T1130",
+  "taskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "workUnitKey": "PARTNER_CONVERSATION_PRODUCT_MOUNT_PUBLIC_R2",
+  "acquireKey": "PARTNER-CONV-MOUNT-R2-20260829T1130-SOL-H8K4M2Q7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PRED-PARTNER-CONV-MOUNT-R2-PUBLIC-DEPS-20260829T1130",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR552-PREACTION-PASS-PUBLIC-PROVENANCE-ONLY-BLOCKER",
+  "proceedToken": "PROCEED|VWORK-PARTNER-CONV-MOUNT-R2-20260829T1130|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|minimal-public-dependency-successor|lease-row6",
+  "authorizationBaseSha": "30bd130270e876696cb5fecd37436e0ce8ef0f9a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "leaseWorkUnitKey": "PARTNER_CONVERSATION_PRODUCT_MOUNT_PUBLIC_R2",
+  "leaseAcquireKey": "PARTNER-CONV-MOUNT-R2-20260829T1130-SOL-H8K4M2Q7",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 11:30 JST",
+  "leaseUntilJst": "2026-08-29 12:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh base 30bd130270e876696cb5fecd37436e0ce8ef0f9a; branch work/partner-conversation-product-mount-r2-20260829; transient data/preaction-authorizations/VWORK-PARTNER-CONV-MOUNT-R2-20260829T1130.json create-first/delete-before-final-head; browser/board-facility-runtime-mount.mjs; tests/board-facility-runtime-mount.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; own CURRENT_ACTIVE_LEASES row6 and R22 records. browser/GAMEROAD.html, partner-conversation-core.mjs, partner-saasuna-conversation-source.mjs, relationship/save/economy/Battle/BigData/rig/assets excluded/read-only.",
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "Mount the already-merged direct Saasuna conversation entry through the existing product runtime seam and make the existing Cloudflare public package include exactly the runtime modules required by that import graph.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-PR552-SIMPLIFIED-MOUNT-AND-EXISTING-PUBLIC-BUILD",
+  "solutionSearchEvidence": [
+    "GitHub:PR552 simplified mount proved PRE_ACTION and isolated the public dependency gap",
+    "GitHub:deploy/cloudflare/scripts/build.mjs existing runtime dependency copier",
+    "GitHub:deploy/cloudflare/tests/build.test.mjs existing provenance/dependency completeness contract"
+  ]
+}

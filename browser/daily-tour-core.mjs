@@ -51,15 +51,21 @@ function normalizeStops(stops, registeredStopIds) {
   return normalized;
 }
 
-function orderedEligibleIds(stops, preferredOrder, { custom = false } = {}) {
+function orderedEligibleIds(stops, preferredOrder, { custom = false, baseOrder = [] } = {}) {
   const eligible = stops.filter((stop) => stop.kind === 'interactive' && stop.registered && stop.eligible);
   const eligibleIds = new Set(eligible.map((stop) => stop.id));
   const preferred = uniqueStrings(preferredOrder).filter((id) => eligibleIds.has(id));
+  const explicitBase = uniqueStrings(baseOrder).filter((id) => eligibleIds.has(id));
+  const baseUsed = new Set(explicitBase);
+  const fallback = [
+    ...explicitBase,
+    ...eligible.map((stop) => stop.id).filter((id) => !baseUsed.has(id)),
+  ];
 
-  if (custom) return preferred.length > 0 ? preferred : eligible.map((stop) => stop.id);
+  if (custom) return preferred.length > 0 ? preferred : fallback;
 
   const used = new Set(preferred);
-  return [...preferred, ...eligible.map((stop) => stop.id).filter((id) => !used.has(id))];
+  return [...preferred, ...fallback.filter((id) => !used.has(id))];
 }
 
 function freezePlan(plan) {
@@ -88,11 +94,15 @@ export function createDailyTourPlan({
   assertNonEmptyString(battleStopId, 'battleStopId');
 
   const normalizedStops = normalizeStops(stops, registeredStopIds);
+  const registeredOrder = Array.isArray(registeredStopIds) ? uniqueStrings(registeredStopIds) : [];
   let routeIds = [];
   if (mode === DAILY_TOUR_MODES.RECOMMENDED) {
-    routeIds = orderedEligibleIds(normalizedStops, recommendationOrder);
+    routeIds = orderedEligibleIds(normalizedStops, recommendationOrder, { baseOrder: registeredOrder });
   } else if (mode === DAILY_TOUR_MODES.CUSTOM) {
-    routeIds = orderedEligibleIds(normalizedStops, customOrder, { custom: true });
+    routeIds = orderedEligibleIds(normalizedStops, customOrder, {
+      custom: true,
+      baseOrder: registeredOrder,
+    });
   }
 
   const battleEnabled = mode === DAILY_TOUR_MODES.BATTLE_ONLY ? true : includeBattleFinale === true;

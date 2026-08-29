@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-DIRECT-CONVAI-R11-20260829T1213",
+  "taskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "workUnitKey": "PARTNER_DIRECT_SCENE_CONVAI_PACKAGE_R11",
+  "acquireKey": "PARTNER-DIRECT-CONVAI-R11-20260829T1213-SOL-N7K4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R11-USER-DIRECT-SCENE+R9-CONVAI+R10-TESTED-PATCH+PR559-PACKER-GREEN",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R11-R9-EDGE-7OF7+R10-DIRECT-8OF8+PACKAGE-FAILURE-ROOT-CAUSE-KNOWN",
+  "proceedToken": "PROCEED|PARTNER-DIRECT-CONVAI-R11-20260829T1213|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CONSOLIDATED_PARTNER_DIRECT_SCENE",
+  "authorizationBaseSha": "58e45e191d2efc302b5ee24d8174d1eab2d09f7a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "leaseWorkUnitKey": "PARTNER_DIRECT_SCENE_CONVAI_PACKAGE_R11",
+  "leaseAcquireKey": "PARTNER-DIRECT-CONVAI-R11-20260829T1213-SOL-N7K4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 12:13 JST",
+  "leaseUntilJst": "2026-08-29 13:03 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh base 58e45e191d2efc302b5ee24d8174d1eab2d09f7a; branch work/partner-direct-convai-r11-20260829; transient data/preaction-authorizations/PARTNER-DIRECT-CONVAI-R11-20260829T1213.json create-first/delete-before-final-head; deploy/cloudflare/functions/ws.js; browser/partner-conversation-core.mjs; tests/partner-conversation-core.test.mjs; browser/board-facility-runtime-mount.mjs; tests/board-facility-runtime-mount.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; own CURRENT_ACTIVE_LEASES row5 and R22 records. browser/GAMEROAD.html read-only/not required; Saasuna source/BigData stores/gameplay/save/economy/Battle/assets/other workflows excluded/read-only.",
+  "scope": [
+    "deploy/cloudflare/functions/ws.js",
+    "browser/partner-conversation-core.mjs",
+    "tests/partner-conversation-core.test.mjs",
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/functions/ws.js",
+    "browser/partner-conversation-core.mjs",
+    "tests/partner-conversation-core.test.mjs",
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "existing-board-mount+existing-conversation-core+convai-interaction-api+cloudflare-edge+existing-public-packer",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R11-REUSE-EXISTING-GMR-BOUNDARIES+CONVAI-OFFICIAL",
+  "solutionSearchEvidence": [
+    "existing board-facility-runtime-mount owns Partner projection and current Saasuna art selection side effects",
+    "existing partner-conversation-core owns identity/source/fallback/privacy/canon boundaries",
+    "Convai Interaction API owns character response generation and session continuity",
+    "existing Cloudflare ws.js owns public edge entry and keeps provider secret server-side",
+    "existing build.mjs owns formal public Partner artifact provenance"
+  ]
+}

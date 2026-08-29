@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DECK-LEGACY-PROJECTOR-R1-20260829T1526",
+  "taskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "workUnitKey": "DECK_LEGACY_PROJECTOR_R1",
+  "acquireKey": "DECK-LEGACY-PROJECTOR-R1-20260829T1526-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "deck-save-recovery:existing-legacy-array-and-record-shapes",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "github:PR570-focused-projector-tests-10of10-plus-current-recovery-core-readback",
+  "proceedToken": "PROCEED|DECK-LEGACY-PROJECTOR-R1-20260829T1526|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|reuse-existing-recovery-core",
+  "authorizationBaseSha": "e825f0135e0b730d1403509becf44a04e13d55f2",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "leaseWorkUnitKey": "DECK_LEGACY_PROJECTOR_R1",
+  "leaseAcquireKey": "DECK-LEGACY-PROJECTOR-R1-20260829T1526-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 15:26 JST",
+  "leaseUntilJst": "2026-08-29 16:26 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base e825f0135e0b730d1403509becf44a04e13d55f2; branch work/deck-legacy-projector-r1-20260829; transient PRE_ACTION first-commit/delete-before-final-head; browser/deck-save-recovery-core.mjs; tests/deck-save-recovery-core.test.mjs; PR #570 metadata/state; own CURRENT_ACTIVE_LEASES row8 and own R22 records. Strict exclusions: browser/GAMEROAD.html, browser/deck-slots-core.mjs, .github/workflows/*, selection state, starter40 content, G・E・D/Luna/OVER97, regulation, Battle, save writer behavior/schema mutation beyond pure projector export, economy, Partner, deploy, assets.",
+  "scope": [
+    "browser/deck-save-recovery-core.mjs",
+    "tests/deck-save-recovery-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/deck-save-recovery-core.mjs",
+    "tests/deck-save-recovery-core.test.mjs"
+  ],
+  "solutionSignature": "Reuse the existing deck-save recovery boundary to project old single-deck save shapes into a Deck1 candidate without writing storage or normalizing card contents.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "reuse:deck-save-recovery-core-and-PR570",
+  "solutionSearchEvidence": [
+    "github:browser/deck-save-recovery-core.mjs@e825f013",
+    "github:PR570:isolated-legacy-array-projector",
+    "github:commit-30ed7be8:legacy-deck-array-and-record-shapes"
+  ]
+}

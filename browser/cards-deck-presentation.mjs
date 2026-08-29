@@ -487,3 +487,102 @@ export function createDeckSwipePresentationController({
 
   return Object.freeze({ playSuccess, playReject, cancelAll, dispose, config: cfg, sfxPlayer: localSfx });
 }
+
+export const DECK_COLLECTION_VIEW_MODES = Object.freeze(['all', 'out', 'in']);
+
+export function nextDeckCollectionViewMode(mode = 'all') {
+  const index = DECK_COLLECTION_VIEW_MODES.indexOf(mode);
+  return DECK_COLLECTION_VIEW_MODES[(index < 0 ? 0 : index + 1) % DECK_COLLECTION_VIEW_MODES.length];
+}
+
+export function deckCollectionModeAllows({ mode = 'all', inDeck = false } = {}) {
+  if (!DECK_COLLECTION_VIEW_MODES.includes(mode)) throw new RangeError('COLLECTION_VIEW_MODE_INVALID');
+  return mode === 'all' || (mode === 'in' ? Boolean(inDeck) : !inDeck);
+}
+
+export function installDeckCollectionQuickFilters(doc = globalThis.document, win = globalThis.window) {
+  const toolbar = doc?.querySelector?.('#r4SuitFilters');
+  const grid = doc?.querySelector?.('#collectionGrid');
+  const search = doc?.querySelector?.('#cardSearch');
+  const count = doc?.querySelector?.('#collectionCount');
+  if (!toolbar || !grid || !search || !count || !doc?.createElement) return null;
+  if (toolbar.__grDeckCollectionQuickFilters) return toolbar.__grDeckCollectionQuickFilters;
+
+  const styleId = 'gameroad-deck-collection-quick-filter-style';
+  if (!doc.getElementById?.(styleId)) {
+    const style = doc.createElement('style');
+    style.id = styleId;
+    style.textContent = '#collectionGrid.gr-collection-out-only .slot.inDeck{display:none!important}#collectionGrid.gr-collection-in-only .slot:not(.inDeck){display:none!important}#r4SuitFilters [data-deck-collection-view].on{border-color:var(--b);background:rgba(255,210,126,.12)}';
+    (doc.head ?? doc.documentElement)?.appendChild?.(style);
+  }
+
+  let mode = 'all';
+  const view = doc.createElement('button');
+  view.type = 'button';
+  view.dataset.deckCollectionView = 'all';
+  view.title = '札組への登録状態で表示を切り替え';
+  const clear = doc.createElement('button');
+  clear.type = 'button';
+  clear.dataset.deckCollectionClear = '1';
+  clear.textContent = '解除';
+  clear.title = '検索・スート・札組表示をすべて解除';
+  toolbar.appendChild(view);
+  toolbar.appendChild(clear);
+
+  const labels = { all: '表示:すべて', out: '表示:札組外', in: '表示:札組内' };
+  const refresh = () => {
+    grid.classList?.toggle?.('gr-collection-out-only', mode === 'out');
+    grid.classList?.toggle?.('gr-collection-in-only', mode === 'in');
+    view.dataset.deckCollectionView = mode;
+    view.textContent = labels[mode];
+    view.classList?.toggle?.('on', mode !== 'all');
+    view.setAttribute?.('aria-pressed', mode === 'all' ? 'false' : 'true');
+    const slots = Array.from(grid.querySelectorAll?.('.slot') ?? []);
+    const shown = slots.filter((slot) => !slot.hidden && deckCollectionModeAllows({
+      mode,
+      inDeck: Boolean(slot.classList?.contains?.('inDeck')),
+    })).length;
+    count.textContent = shown === slots.length ? String(slots.length) : `${shown} / ${slots.length}`;
+    return shown;
+  };
+
+  const onView = () => { mode = nextDeckCollectionViewMode(mode); refresh(); };
+  const onClear = () => {
+    mode = 'all';
+    search.value = '';
+    const allSuit = toolbar.querySelector?.('[data-suit-filter="ALL"]');
+    if (allSuit?.click) allSuit.click();
+    else refresh();
+  };
+  const afterNativeFilter = () => refresh();
+  view.addEventListener?.('click', onView);
+  clear.addEventListener?.('click', onClear);
+  search.addEventListener?.('input', afterNativeFilter);
+  toolbar.addEventListener?.('click', afterNativeFilter);
+
+  const Observer = win?.MutationObserver ?? globalThis.MutationObserver;
+  const observer = typeof Observer === 'function' ? new Observer(() => refresh()) : null;
+  observer?.observe?.(grid, { childList: true });
+  refresh();
+
+  const api = Object.freeze({
+    refresh,
+    clear: onClear,
+    cycle: onView,
+    get mode() { return mode; },
+    dispose() {
+      observer?.disconnect?.();
+      view.removeEventListener?.('click', onView);
+      clear.removeEventListener?.('click', onClear);
+      search.removeEventListener?.('input', afterNativeFilter);
+      toolbar.removeEventListener?.('click', afterNativeFilter);
+      view.remove?.();
+      clear.remove?.();
+      delete toolbar.__grDeckCollectionQuickFilters;
+    },
+  });
+  toolbar.__grDeckCollectionQuickFilters = api;
+  return api;
+}
+
+installDeckCollectionQuickFilters(globalThis.document, globalThis.window);

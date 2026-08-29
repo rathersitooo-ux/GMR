@@ -30,6 +30,11 @@ const REUSE_DISPOSITIONS = new Set([
   'NOT_APPLICABLE',
 ]);
 const SOLUTION_SEARCH_STATUSES = new Set(['PASS', 'NOT_APPLICABLE']);
+const PREACTION_CONTROL_PLANE_PATHS = new Set([
+  '.github/workflows/gameroad-required-gate.yml',
+  'tools/preaction-authorization-validator.mjs',
+  'tests/preaction-authorization-validator.test.mjs',
+]);
 
 function git(args) {
   return execFileSync('git', args, { encoding: 'utf8' }).trim();
@@ -217,6 +222,22 @@ export function validateManifest(manifest, manifestPath, { nowMs = Date.now() } 
   return validateLeaseWitness(manifest, nowMs);
 }
 
+function validateBaseAdvance({ manifest, currentBaseSha, baseAdvanceIsAncestor, baseAdvanceChangedPaths = [] }) {
+  if (!currentBaseSha || currentBaseSha === manifest.authorizationBaseSha) {
+    return { ok: true, reason: 'authorization_base_current' };
+  }
+  if (!baseAdvanceIsAncestor) {
+    return { ok: false, reason: 'authorization_base_not_ancestor_of_current_base' };
+  }
+  const overlap = [...new Set(baseAdvanceChangedPaths)].filter(
+    (path) => manifest.scope.includes(path) || PREACTION_CONTROL_PLANE_PATHS.has(path),
+  );
+  if (overlap.length) {
+    return { ok: false, reason: `authorization_base_advance_overlap:${overlap.join(',')}` };
+  }
+  return { ok: true, reason: 'authorization_base_advance_nonoverlap' };
+}
+
 export function evaluateAuthorization({
   commits,
   manifest,
@@ -226,6 +247,9 @@ export function evaluateAuthorization({
   newMaterialPaths = [],
   manifestPresentAtHead = false,
   enforceReuseDiscovery = false,
+  currentBaseSha = manifest?.authorizationBaseSha,
+  baseAdvanceIsAncestor = true,
+  baseAdvanceChangedPaths = [],
   nowMs = Date.now(),
 }) {
   const manifestCheck = validateManifest(manifest, manifestPath, { nowMs });
@@ -243,6 +267,15 @@ export function evaluateAuthorization({
   const first = commits[0];
   if (first.parentSha !== manifest.authorizationBaseSha) return { ok: false, reason: 'authorization_not_first_from_base' };
   if (first.paths.length !== 1 || first.paths[0] !== manifestPath) return { ok: false, reason: 'first_commit_not_manifest_only' };
+
+  const baseAdvanceCheck = validateBaseAdvance({
+    manifest,
+    currentBaseSha,
+    baseAdvanceIsAncestor,
+    baseAdvanceChangedPaths,
+  });
+  if (!baseAdvanceCheck.ok) return baseAdvanceCheck;
+
   const outOfScope = materialChanged.filter((p) => !manifest.scope.includes(p));
   if (outOfScope.length) return { ok: false, reason: `material_path_out_of_scope:${outOfScope.join(',')}` };
   if (manifestPresentAtHead) return { ok: false, reason: 'authorization_manifest_must_be_cleanup_deleted_before_merge' };
@@ -258,12 +291,22 @@ function baseHasReuseDiscoveryGate(baseSha) {
   }
 }
 
+function isAncestor(ancestorSha, descendantSha) {
+  try {
+    execFileSync('git', ['merge-base', '--is-ancestor', ancestorSha, descendantSha], { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function validateRepositoryAuthorization({ baseSha, headSha, changedPathsFile }) {
   if (!/^[0-9a-f]{40}$/i.test(baseSha) || !/^[0-9a-f]{40}$/i.test(headSha)) {
     return { ok: false, reason: 'invalid_base_or_head_sha' };
   }
   const changedPaths = fs.readFileSync(changedPathsFile, 'utf8').split(/\r?\n/).filter(Boolean);
-  const branchCommits = git(['rev-list', '--reverse', '--first-parent', `${baseSha}..${headSha}`]).split(/\r?\n/).filter(Boolean);
+  const mergeBaseSha = git(['merge-base', baseSha, headSha]);
+  const branchCommits = git(['rev-list', '--reverse', '--first-parent', `${mergeBaseSha}..${headSha}`]).split(/\r?\n/).filter(Boolean);
   if (branchCommits.length === 0) {
     return changedPaths.some(isMaterialPath)
       ? { ok: false, reason: 'no_branch_commits' }
@@ -296,11 +339,15 @@ export function validateRepositoryAuthorization({ baseSha, headSha, changedPaths
     present = false;
   }
 
-  const newMaterialPaths = git(['diff', '--diff-filter=A', '--name-only', baseSha, headSha])
+  const newMaterialPaths = git(['diff', '--diff-filter=A', '--name-only', mergeBaseSha, headSha])
     .split(/\r?\n/)
     .filter(Boolean)
     .filter(isMaterialPath);
   const enforceReuseDiscovery = baseHasReuseDiscoveryGate(baseSha);
+  const baseAdvanceIsAncestor = isAncestor(manifest.authorizationBaseSha, baseSha);
+  const baseAdvanceChangedPaths = baseAdvanceIsAncestor && baseSha !== manifest.authorizationBaseSha
+    ? git(['diff', '--name-only', manifest.authorizationBaseSha, baseSha]).split(/\r?\n/).filter(Boolean)
+    : [];
 
   return evaluateAuthorization({
     commits: [{ sha: firstCommit, parentSha, paths: firstPaths }],
@@ -311,6 +358,9 @@ export function validateRepositoryAuthorization({ baseSha, headSha, changedPaths
     newMaterialPaths,
     manifestPresentAtHead: present,
     enforceReuseDiscovery,
+    currentBaseSha: baseSha,
+    baseAdvanceIsAncestor,
+    baseAdvanceChangedPaths,
   });
 }
 

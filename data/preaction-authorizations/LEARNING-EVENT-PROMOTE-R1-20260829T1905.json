@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "LEARNING-EVENT-PROMOTE-R1-20260829T1905",
+  "taskId": "LEARNING-CROSSMEDIA-INTRINSIC-CONTRACT-001",
+  "workUnitKey": "LEARNING_EVENT_CORE_PROMOTION_R1",
+  "acquireKey": "LEARNING-EVENT-PROMOTE-R1-20260829T1905-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "EXACT-TESTED-BLOBS+FRESH-BRANCH-HISTORY",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REQUIRED-GATE-VALIDATOR-CONTRACT-DIRECT-READ",
+  "proceedToken": "PROCEED|LEARNING-EVENT-PROMOTE-R1-20260829T1905|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|promotion|fresh-branch",
+  "authorizationBaseSha": "5d5929e05bb58af5f8e966066ddaacfa96e7bcda",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "LEARNING-CROSSMEDIA-INTRINSIC-CONTRACT-001",
+  "leaseWorkUnitKey": "LEARNING_EVENT_CORE_PROMOTION_R1",
+  "leaseAcquireKey": "LEARNING-EVENT-PROMOTE-R1-20260829T1905-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 19:08 JST",
+  "leaseUntilJst": "2026-08-29 19:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A200:L200",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact fresh main 5d5929e05bb58af5f8e966066ddaacfa96e7bcda; new replacement branch work/learning-event-core-r2-20260829; transient PRE_ACTION data/preaction-authorizations/LEARNING-EVENT-PROMOTE-R1-20260829T1905.json first commit then delete; browser/learning-event-core.mjs exact tested blob a0b623e40e1e3959d1e20b0b30416edeb17db33f; tests/learning-event-core.test.mjs exact tested blob 4b11898dfc79d0459f6125b705cc58314ac15514; replacement PR metadata/checks/merge; PR#621 close-as-superseded after replacement verified; own lease row/R22. READ-ONLY old branch and Required Gate. EXCLUDE workflow mutation, GAMEROAD.html, Partner, BrainTraining, DailyTour, economy/rewards/Battle/save/deploy/assets/all other files.",
+  "scope": [
+    "browser/learning-event-core.mjs",
+    "tests/learning-event-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/learning-event-core.mjs",
+    "tests/learning-event-core.test.mjs"
+  ],
+  "solutionSignature": "learning-event-core|coded-envelope|versioned-evidence|unmeasured-outcomes",
+  "reuseDisposition": "REUSE_AS_IS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "TESTED-CANDIDATE-BLOB-REUSE",
+  "solutionSearchEvidence": [
+    "Prior tested branch core blob a0b623e40e1e3959d1e20b0b30416edeb17db33f passed exact-blob Node suite 20/20.",
+    "Prior tested branch test blob 4b11898dfc79d0459f6125b705cc58314ac15514 produced intended RED under local evidenceRefs-guard mutation sensitivity check.",
+    "Fresh main contains no browser/learning-event-core.mjs or tests/learning-event-core.test.mjs change in the promotion compare."
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DAILY-BRAIN-R1-20260829T2229",
+  "taskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "workUnitKey": "BRAIN_TRAINING_DAILY_CORE_R1",
+  "acquireKey": "DAILY-BRAIN-R1-20260829T2229-SOL-Q7N4K2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "daily-brain-isolated-core-no-current-product-mount-20260829",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "daily-tour-existing-core-plus-focused-node-tests-20260829",
+  "proceedToken": "PROCEED|DAILY-BRAIN-R1-20260829T2229|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ISOLATED_CORE_ONLY",
+  "authorizationBaseSha": "19a48099ea2d052d91f2241a71467af11ad4a223",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "leaseWorkUnitKey": "BRAIN_TRAINING_DAILY_CORE_R1",
+  "leaseAcquireKey": "DAILY-BRAIN-R1-20260829T2229-SOL-Q7N4K2",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 22:29 JST",
+  "leaseUntilJst": "2026-08-29 23:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A205:L205",
+  "leaseExactMutableResources": "Central:GAMEROAD 全作業一覧 row1237 Y:AB parent-contract current correction only; GitHub:rathersitooo-ux/GMR exact base 19a48099ea2d052d91f2241a71467af11ad4a223; branch work/daily-brain-training-r1-20260829; transient PRE_ACTION data/preaction-authorizations/DAILY-BRAIN-R1-20260829T2229.json create-first/delete-before-final-head; NEW ONLY browser/brain-training-core.mjs; tests/brain-training-core.test.mjs; own CURRENT_ACTIVE_LEASES appended row and own R22 records. READ_ONLY browser/daily-tour-core.mjs; data/daily-tour-mode-registry.v1.json; data/daily-tour-mode-registry.schema.json; LEARNING/PARTNER/BigData current modules. EXCLUDE browser/GAMEROAD.html; existing Daily Tour files; Partner files; BigData/collective files; save/reward/economy/Battle; deploy/assets/workflows/tools/all other files.",
+  "scope": [
+    "browser/brain-training-core.mjs",
+    "tests/brain-training-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/brain-training-core.mjs",
+    "tests/brain-training-core.test.mjs"
+  ],
+  "solutionSignature": "daily-brain-training-v1:source-supplied-exercises+subject-cognitive-axis+session-state+bounded-learning-result",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "reuse-existing-daily-tour-and-learning-authority-no-second-tour-20260829",
+  "solutionSearchEvidence": [
+    "current:browser/daily-tour-core.mjs:route-skip-interrupt-battle-finale",
+    "current:data/daily-tour-mode-registry.v1.json:brain_training-candidate-only",
+    "current:LEARNING-CROSSMEDIA-INTRINSIC-CONTRACT-001:no-unproven-learning-effect-claim",
+    "external:Nintendo-Brain-Training:few-minutes-daily-stop-friendly-pattern",
+    "external:Nintendo-Big-Brain-Academy:identify-memorize-analyze-compute-visualize-taxonomy"
+  ]
+}

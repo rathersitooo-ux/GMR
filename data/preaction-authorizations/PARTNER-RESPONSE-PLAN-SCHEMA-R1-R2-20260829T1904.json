@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-RESPONSE-PLAN-SCHEMA-R1-R2-20260829T1904",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_RESPONSE_PLAN_SHARED_SCHEMA_R1",
+  "acquireKey": "PARTNER-RESPONSE-PLAN-SCHEMA-R1-R2-20260829T1904-SOL-P1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ACTIVE_LEASES!A17:N17@2026-08-29T19:04+09:00",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_PARTNER_CONVERSATION_TEST_LANE_PLUS_JSON_SCHEMA_STRUCTURE_R1",
+  "proceedToken": "PROCEED|PARTNER-RESPONSE-PLAN-SCHEMA-R1-R2-20260829T1904|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-08-29T19:04+09:00",
+  "authorizationBaseSha": "2672245b10afbb445c9537123be80b657b2da985",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_RESPONSE_PLAN_SHARED_SCHEMA_R1",
+  "leaseAcquireKey": "PARTNER-RESPONSE-PLAN-SCHEMA-R1-R2-20260829T1904-SOL-P1",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 19:04 JST",
+  "leaseUntilJst": "2026-08-29 19:59 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A17:L17",
+  "leaseExactMutableResources": "data/partner-response-plan.schema.json; tests/partner-conversation-collective-context.test.mjs",
+  "scope": [
+    "data/partner-response-plan.schema.json",
+    "tests/partner-conversation-collective-context.test.mjs"
+  ],
+  "leaseScope": [
+    "data/partner-response-plan.schema.json",
+    "tests/partner-conversation-collective-context.test.mjs"
+  ],
+  "solutionSignature": "strict character-neutral semantic PartnerResponsePlan JSON Schema reused by Advice and character renderer adapters",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "GMR_PARTNER_BOUNDARY_COMPOSITION_20260829",
+  "solutionSearchEvidence": [
+    "browser/partner-conversation-core.mjs@2672245b10afbb445c9537123be80b657b2da985",
+    "browser/partner-advice-runtime-mount.mjs@2672245b10afbb445c9537123be80b657b2da985",
+    "browser/partner-conversation-collective-context.mjs@2672245b10afbb445c9537123be80b657b2da985"
+  ]
+}

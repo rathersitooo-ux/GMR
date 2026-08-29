@@ -73,13 +73,21 @@ function uniqueResponsePlanTokens(values, maxItems) {
   const seen = new Set();
   for (const value of values) {
     if (value == null) continue;
-    const parsed = responsePlanToken(value, 220);
+    const parsed = responsePlanToken(value, 180);
     if (!parsed || seen.has(parsed)) continue;
     seen.add(parsed);
     out.push(parsed);
     if (out.length > maxItems) return null;
   }
   return out;
+}
+
+function prefixedResponsePlanEvidence(prefix, value) {
+  if (value == null) return { ok: true, value: null };
+  const raw = responsePlanToken(value);
+  if (!raw) return { ok: false, value: null };
+  const combined = responsePlanToken(`${prefix}${raw}`, 180);
+  return combined ? { ok: true, value: combined } : { ok: false, value: null };
 }
 
 function responsePlanSourceVersion(versions) {
@@ -104,10 +112,13 @@ function responsePlanManifestLineage(manifest, versions, sourceUseSite) {
   }
 
   const evidenceIds = [];
-  const approvalId = responsePlanToken(manifest.approval?.approvalId);
-  if (approvalId) evidenceIds.push(`approval:${approvalId}`);
-  const evidenceScope = responsePlanToken(manifest.sourceEvidence);
-  if (evidenceScope) evidenceIds.push(`evidence-scope:${evidenceScope}`);
+  const approvalEvidence = prefixedResponsePlanEvidence('approval:', manifest.approval?.approvalId);
+  if (!approvalEvidence.ok) return { ok: false, reason: 'RUNTIME_MANIFEST_APPROVAL_ID_INVALID' };
+  if (approvalEvidence.value) evidenceIds.push(approvalEvidence.value);
+
+  const scopeEvidence = prefixedResponsePlanEvidence('evidence-scope:', manifest.sourceEvidence);
+  if (!scopeEvidence.ok) return { ok: false, reason: 'RUNTIME_MANIFEST_SOURCE_EVIDENCE_INVALID' };
+  if (scopeEvidence.value) evidenceIds.push(scopeEvidence.value);
 
   const lineage = manifest.collectiveDecisionLineage ?? null;
   if (!lineage) return { ok: true, evidenceIds };
@@ -128,7 +139,7 @@ function responsePlanManifestLineage(manifest, versions, sourceUseSite) {
   if (!useSite || useSite !== sourceUseSite) return { ok: false, reason: 'COLLECTIVE_LINEAGE_USE_SITE_MISMATCH' };
 
   for (const value of [lineage.decisionProductId, lineage.proposalId, lineage.changeRef, lineage.cohortId]) {
-    const parsed = responsePlanToken(value);
+    const parsed = responsePlanToken(value, 180);
     if (!parsed) return { ok: false, reason: 'COLLECTIVE_LINEAGE_SOURCE_ID_INVALID' };
     evidenceIds.push(parsed);
   }

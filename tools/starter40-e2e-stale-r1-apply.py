@@ -20,9 +20,19 @@ replacements = [
         'legacy raw versus current working deck separation',
     ),
     (
+        "    Object.defineProperty(proto, 'setItem', { configurable: true, writable: true, value(k, v) { writes += 1; return originalSetItem.call(this, k, writes === 1 ? `${v}x` : v); } });",
+        "    Object.defineProperty(proto, 'setItem', { configurable: true, writable: true, value(k, v) { if (k === key) { writes += 1; return originalSetItem.call(this, k, writes === 1 ? `${v}x` : v); } return originalSetItem.call(this, k, v); } });",
+        'readback mismatch fault injection targets durable save only',
+    ),
+    (
         "  expect(afterReset.savedCount).toBe(26);",
         "  expect(afterReset.savedCount).toBe(40);",
         'reset starter expectation',
+    ),
+    (
+        "    Object.defineProperty(proto, 'setItem', { configurable: true, writable: true, value() { throw new Error('forced-storage-write-failure'); } });",
+        "    Object.defineProperty(proto, 'setItem', { configurable: true, writable: true, value(k, v) { if (k === key) throw new Error('forced-storage-write-failure'); return originalSetItem.call(this, k, v); } });",
+        'write failure fault injection targets durable save only',
     ),
     (
         "  expect(writeFailure.savedCount).toBe(26);",
@@ -48,7 +58,9 @@ required = [
     "expect(observed.recovery.classification.status).toBe('recognized_legacy');",
     "expect(observed.savedDeck).toHaveLength(40);",
     "expect(observed.rule.revision).toBe(3);",
+    "if (k === key) { writes += 1;",
     "expect(afterReset.savedCount).toBe(40);",
+    "if (k === key) throw new Error('forced-storage-write-failure');",
     "expect(writeFailure.savedCount).toBe(40);",
 ]
 for needle in required:
@@ -60,9 +72,10 @@ for forbidden in [
     "expect(observed.savedDeck).toHaveLength(26);",
     "expect(afterReset.savedCount).toBe(26);",
     "expect(writeFailure.savedCount).toBe(26);",
+    "value() { throw new Error('forced-storage-write-failure'); }",
 ]:
     if forbidden in text:
-        raise SystemExit(f'stale current-working-deck expectation remains: {forbidden}')
+        raise SystemExit(f'stale broad fault or current-working-deck expectation remains: {forbidden}')
 
 SPEC.write_text(text, encoding='utf-8')
-print('starter40 broad-E2E expectations aligned; legacy raw fixture remains explicit 26 cards')
+print('starter40 broad-E2E aligned; legacy raw fixture explicit; save fault injection bounded to SAVE_KEY')

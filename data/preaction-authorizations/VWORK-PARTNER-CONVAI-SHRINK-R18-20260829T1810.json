@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-PARTNER-CONVAI-SHRINK-R18-20260829T1810",
+  "taskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "workUnitKey": "PARTNER_CONVAI_EDGE_OVERENGINEERING_SHRINK_R18",
+  "acquireKey": "PARTNER-CONVAI-SHRINK-R18-20260829T1810-SOL-Q7N4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PRED-PARTNER-CONVAI-SHRINK-R18-20260829T1810JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REHEARSAL-FRESH-MAIN-R18-REMOVE-VISUAL-KEEP-CONVAI",
+  "proceedToken": "PROCEED|VWORK-PARTNER-CONVAI-SHRINK-R18-20260829T1810|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|OVERENGINEERING_SHRINK_ONLY",
+  "authorizationBaseSha": "2f1fd1f739dc17a1b6fb63da4109ae600b8bec4d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "leaseWorkUnitKey": "PARTNER_CONVAI_EDGE_OVERENGINEERING_SHRINK_R18",
+  "leaseAcquireKey": "PARTNER-CONVAI-SHRINK-R18-20260829T1810-SOL-Q7N4M2",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 18:10 JST",
+  "leaseUntilJst": "2026-08-29 19:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base 2f1fd1f739dc17a1b6fb63da4109ae600b8bec4d; branch work/partner-convai-shrink-r18-20260829; transient PRE_ACTION data/preaction-authorizations/VWORK-PARTNER-CONVAI-SHRINK-R18-20260829T1810.json create-first/delete-before-final-head; browser/board-facility-runtime-mount.mjs; tests/board-facility-runtime-mount.test.mjs; deploy/cloudflare/functions/ws.js; deploy/cloudflare/tests/build.test.mjs; own CURRENT_ACTIVE_LEASES row8 and own R22 records. Preserve current Convai conversation edge/session/fallback and current collective-context integration. Remove only provisional JPEG Base64 transport, partnerOp=visual route, visual metadata/hero scene/CSS, visual-only tests; refresh exact runtime package blob witness. Strict exclusions: .github/workflows/**; browser/GAMEROAD.html; browser/partner-conversation-core.mjs; deploy/cloudflare/scripts/build.mjs; BigData stores/memory/persona/canon/relationship/save/economy/Battle; assets/rig/motion/lipsync; all other files.",
+  "reuseDisposition": "ADAPT",
+  "solutionSignature": "PARTNER_CONVAI_R18=FRESH_MAIN_KEEP_EDGE_REMOVE_VISUAL_PAYLOAD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R17-STALE-BASE-STRUCTURAL-RECOVERY-R18",
+  "solutionSearchEvidence": [
+    "R17 became structurally stale only because unrelated daily-tour registry files reached main after authorization.",
+    "The exact four durable blobs are already reviewed; rebuild them from current main rather than widening scope.",
+    "Convai provider/session/fallback and collective-context integration remain intact outside the removed visual payload."
+  ],
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/functions/ws.js",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/functions/ws.js",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

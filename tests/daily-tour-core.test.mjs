@@ -38,13 +38,23 @@ test('ineligible and unregistered stops are excluded fail-closed', () => {
   assert.deepEqual(plan.route.map((stop) => stop.id), ['ok']);
 });
 
-test('explicit registeredStopIds is authoritative', () => {
+test('explicit registeredStopIds preserves user preference order', () => {
   const plan = createDailyTourPlan({
     dayKey: '2026-08-29',
     stops: STOPS,
     registeredStopIds: ['tea', 'brain'],
   });
-  assert.deepEqual(plan.route.map((stop) => stop.id), ['brain', 'tea']);
+  assert.deepEqual(plan.route.map((stop) => stop.id), ['tea', 'brain']);
+});
+
+test('recommendation priority does not destroy remaining registered preference order', () => {
+  const plan = createDailyTourPlan({
+    dayKey: '2026-08-29',
+    stops: STOPS,
+    registeredStopIds: ['tea', 'fossil', 'brain'],
+    recommendationOrder: ['fossil'],
+  });
+  assert.deepEqual(plan.route.map((stop) => stop.id), ['fossil', 'tea', 'brain']);
 });
 
 test('custom route respects explicit user order and ignores unknown entries', () => {
@@ -58,8 +68,13 @@ test('custom route respects explicit user order and ignores unknown entries', ()
 });
 
 test('custom route falls back to registered order when no custom order exists', () => {
-  const plan = createDailyTourPlan({ dayKey: '2026-08-29', mode: 'custom', stops: STOPS });
-  assert.deepEqual(plan.route.map((stop) => stop.id), ['brain', 'fossil', 'tea']);
+  const plan = createDailyTourPlan({
+    dayKey: '2026-08-29',
+    mode: 'custom',
+    stops: STOPS,
+    registeredStopIds: ['tea', 'brain', 'fossil'],
+  });
+  assert.deepEqual(plan.route.map((stop) => stop.id), ['tea', 'brain', 'fossil']);
 });
 
 test('background stops never block the interactive route', () => {

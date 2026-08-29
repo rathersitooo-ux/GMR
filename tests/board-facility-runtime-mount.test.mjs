@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { mountBoardFacilityRuntime } from '../browser/board-facility-runtime-mount.mjs';
+import {
+  mountBoardFacilityRuntime,
+  mountSaasunaConversationProductSurface,
+  partnerConversationProjectionDecision,
+} from '../browser/board-facility-runtime-mount.mjs';
 
 test('fails closed when the classic bridge is missing', async () => {
   await assert.rejects(
@@ -66,4 +70,36 @@ test('rejects an incompatible occupied runtime global', async () => {
     () => mountBoardFacilityRuntime(global),
     /BOARD_FACILITY_RUNTIME_GLOBAL_COLLISION/,
   );
+});
+
+test('conversation product mount is a no-op outside a browser DOM', () => {
+  assert.equal(mountSaasunaConversationProductSurface({}), null);
+  assert.equal(mountSaasunaConversationProductSurface({ document: {} }), null);
+});
+
+test('conversation entry activates Partner and Saasuna before projecting chat', () => {
+  assert.equal(partnerConversationProjectionDecision({ screenActive: false }), 'idle');
+  assert.equal(partnerConversationProjectionDecision({
+    screenActive: true,
+    partnerRoleActive: false,
+    playerModeRequested: false,
+  }), 'activate_partner');
+  assert.equal(partnerConversationProjectionDecision({
+    screenActive: true,
+    partnerRoleActive: true,
+    saasunaSelected: false,
+  }), 'select_saasuna');
+  assert.equal(partnerConversationProjectionDecision({
+    screenActive: true,
+    partnerRoleActive: true,
+    saasunaSelected: true,
+  }), 'conversation');
+});
+
+test('explicit player-character switch is the only bypass from direct Partner conversation', () => {
+  assert.equal(partnerConversationProjectionDecision({
+    screenActive: true,
+    partnerRoleActive: false,
+    playerModeRequested: true,
+  }), 'player');
 });

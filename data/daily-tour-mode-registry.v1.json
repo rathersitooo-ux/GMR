@@ -1,0 +1,172 @@
+{
+  "schemaVersion": "gameroad-daily-tour-mode-registry-v1",
+  "derivedNonAuthority": true,
+  "authoritySnapshot": {
+    "capturedAtJst": "2026-08-29 18:03 JST",
+    "currentRootId": "14CYoFblBecfUqrnFKfdWayHsi8cnAbsrfFzNxZ0OvkY",
+    "centralSpreadsheetId": "1QKCll_T9ej6K96fRkRUESCAIYVGbsCYZILGIWMUdm2Y",
+    "gitBaseSha": "c2901b3db5776e3a26f63d66e9179973849c0f88"
+  },
+  "invariants": {
+    "registeredOrderPreserved": true,
+    "unregisteredAutoInsert": false,
+    "allStopsRequired": false,
+    "skipCreatesDebt": false,
+    "quickStopsMandatory": false,
+    "periodAuthority": "EXTERNAL_PASS_THROUGH_ONLY",
+    "rewardAuthority": "NOT_DEFINED_BY_REGISTRY",
+    "learningEffectClaim": "NOT_DEFINED_BY_REGISTRY"
+  },
+  "entries": [
+    {
+      "modeId": "daily_routine",
+      "class": "WRAPPER",
+      "dailySemantics": "PARTIAL",
+      "runtimeState": "CONTRACT_ONLY",
+      "tourPolicy": {"canAppearInPlan": false, "autoInsert": false, "mandatory": false, "quickStop": false, "skipBlocksProgress": false, "finaleRole": "NONE"},
+      "authorityRefs": ["DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001"],
+      "education": {"status": "NONE", "candidateTags": []},
+      "notes": "Tour wrapper. Registered-mode order, interruption/resume and no-debt autonomy are preserved. Exact original source for a formal free-action count/reset remains unrecovered."
+    },
+    {
+      "modeId": "fossil",
+      "class": "TOUR_ELIGIBLE",
+      "dailySemantics": "NONE",
+      "runtimeState": "CURRENT_CORE_PRESENT",
+      "tourPolicy": {"canAppearInPlan": true, "autoInsert": false, "mandatory": false, "quickStop": false, "skipBlocksProgress": false, "finaleRole": "NONE"},
+      "authorityRefs": ["FOSSIL-EXCAVATION-STATE-RUNTIME-001", "DINO-EXCAVATION-FIELD-LAB-PIPELINE-001"],
+      "education": {"status": "INTRINSIC_CANDIDATE", "candidateTags": ["natural_science", "identify", "analyze"]},
+      "notes": "Eligible for a Tour only as a mode; this registry does not make Fossil itself once-per-day or mandatory."
+    },
+    {
+      "modeId": "dino",
+      "class": "TOUR_ELIGIBLE",
+      "dailySemantics": "NONE",
+      "runtimeState": "PARTIAL",
+      "tourPolicy": {"canAppearInPlan": true, "autoInsert": false, "mandatory": false, "quickStop": false, "skipBlocksProgress": false, "finaleRole": "NONE"},
+      "authorityRefs": ["DINO-EXCAVATION-FIELD-LAB-PIPELINE-001", "DINO-RESTORATION-RUNTIME-001"],
+      "education": {"status": "INTRINSIC_CANDIDATE", "candidateTags": ["natural_science", "analyze", "visualize"]},
+      "notes": "Tour eligibility is separate from incomplete current restoration/runtime acceptance."
+    },
+    {
+      "modeId": "insect_forest",
+      "class": "TOUR_ELIGIBLE",
+      "dailySemantics": "NONE",
+      "runtimeState": "PARTIAL",
+      "tourPolicy": {"canAppearInPlan": true, "autoInsert": false, "mandatory": false, "quickStop": false, "skipBlocksProgress": false, "finaleRole": "NONE"},
+      "authorityRefs": ["FOREST-003", "INSECT-LEARNING-CODEX-GAMEPLAY-001"],
+      "education": {"status": "INTRINSIC_CANDIDATE", "candidateTags": ["natural_science", "identify", "memorize", "analyze"]},
+      "notes": "Forest/Insect work remains bounded by its own runtime and Human gates."
+    },
+    {
+      "modeId": "cook",
+      "class": "TOUR_ELIGIBLE",
+      "dailySemantics": "NONE",
+      "runtimeState": "PARK_INPUT_REQUIRED",
+      "tourPolicy": {"canAppearInPlan": false, "autoInsert": false, "mandatory": false, "quickStop": false, "skipBlocksProgress": false, "finaleRole": "NONE"},
+      "authorityRefs": ["COOK-RECIPE-CARD-RUNTIME-001"],
+      "education": {"status": "INTRINSIC_CANDIDATE", "candidateTags": ["life_science", "memorize", "analyze"]},
+      "notes": "Conceptually Tour-eligible, but not currently plan-insertable until formal recipe/safety/runtime prerequisites are satisfied."
+    },
+    {
+      "modeId": "partner_tea",
+      "class": "TOUR_ELIGIBLE",
+      "dailySemantics": "NONE",
+      "runtimeState": "PARTIAL",
+      "tourPolicy": {"canAppearInPlan": true, "autoInsert": false, "mandatory": false, "quickStop": false, "skipBlocksProgress": false, "finaleRole": "NONE"},
+      "authorityRefs": ["PARTNER-FUTURE-LLM-DIALOGUE-RESEARCH-001", "PARTNER-SIDEPLAY-RETURN-LOOP-001"],
+      "education": {"status": "INTRINSIC_CANDIDATE", "candidateTags": ["language_communication", "analyze"]},
+      "notes": "Partner/Tea may render learning or review through the shared Partner path, but this registry creates no relationship write authority."
+    },
+    {
+      "modeId": "vote",
+      "class": "QUICK_STOP",
+      "dailySemantics": "NATIVE",
+      "runtimeState": "PROVISIONAL",
+      "tourPolicy": {"canAppearInPlan": false, "autoInsert": false, "mandatory": false, "quickStop": true, "skipBlocksProgress": false, "finaleRole": "NONE"},
+      "authorityRefs": ["VOTE-CURRENT-SPEC-100-SUPERSESSION-001", "VOTE-DAILY-CONSTRAINT-RUNTIME-HUMAN-ACCEPT-001"],
+      "education": {"status": "NONE", "candidateTags": []},
+      "notes": "Card-specific once/day plus game-wide one free vote/day are current semantics. Browser implementation is prototype_local and is not production server authority, so Tour must not present it as a confirmed production claimable stop."
+    },
+    {
+      "modeId": "auto_rank_result",
+      "class": "QUICK_STOP",
+      "dailySemantics": "PROVISIONAL",
+      "runtimeState": "PROVISIONAL",
+      "tourPolicy": {"canAppearInPlan": false, "autoInsert": false, "mandatory": false, "quickStop": true, "skipBlocksProgress": false, "finaleRole": "NONE"},
+      "authorityRefs": ["AUTO-RANK-ASYNCHRONOUS-PRODUCT-LOOP-001", "AUTO-RANK-DECKBUILDER-COMPETITION-CONTRACT-001"],
+      "education": {"status": "NONE", "candidateTags": []},
+      "notes": "Daily result viewing is a provisional product-loop concept; the parent persistence/queue/result UI/reward/fairness loop is not complete."
+    },
+    {
+      "modeId": "missions",
+      "class": "BACKGROUND_PROGRESS",
+      "dailySemantics": "NATIVE",
+      "runtimeState": "CONTRACT_ONLY",
+      "tourPolicy": {"canAppearInPlan": false, "autoInsert": false, "mandatory": false, "quickStop": false, "skipBlocksProgress": false, "finaleRole": "NONE"},
+      "authorityRefs": ["MISSION-DAILY-WEEKLY-SEASON-CROSSMODE-CONTRACT-001", "MISSION-RUNTIME-PROVIDER-PERSISTENCE-001"],
+      "education": {"status": "NONE", "candidateTags": []},
+      "notes": "Mission progress stays background-only. It must not reorder the Daily Routine, auto-insert unregistered modes or require all-mode consumption."
+    },
+    {
+      "modeId": "liveops",
+      "class": "BACKGROUND_PROGRESS",
+      "dailySemantics": "PARTIAL",
+      "runtimeState": "CONTRACT_ONLY",
+      "tourPolicy": {"canAppearInPlan": false, "autoInsert": false, "mandatory": false, "quickStop": false, "skipBlocksProgress": false, "finaleRole": "NONE"},
+      "authorityRefs": ["LIVEOPS-RETURN-MOTIVATION-LOOP-001", "MISSION-PROGRESSION-SEASON-CONTRACT-001"],
+      "education": {"status": "NONE", "candidateTags": []},
+      "notes": "Daily/Weekly/Season are connected to the return read-model. Login semantic authority and some schedule/reward values remain unresolved and are not filled by this registry."
+    },
+    {
+      "modeId": "battle",
+      "class": "TOUR_ELIGIBLE",
+      "dailySemantics": "UNRESOLVED",
+      "runtimeState": "CURRENT_CORE_PRESENT",
+      "tourPolicy": {"canAppearInPlan": true, "autoInsert": false, "mandatory": false, "quickStop": false, "skipBlocksProgress": false, "finaleRole": "OPTIONAL_FINALE"},
+      "authorityRefs": ["NORMAL-MATCH-BONUS-REGULATION-001", "MISSION-DAILY-WEEKLY-SEASON-CROSSMODE-CONTRACT-001"],
+      "education": {"status": "INTRINSIC_CANDIDATE", "candidateTags": ["strategy_decision", "analyze", "compute"]},
+      "notes": "Battle is an optional Tour finale, never a forced graduation test. Formal daily-bonus value/meaning remains unresolved. Ranked Match is the only mode allowed to be directly named by Mission under current Human ruling; this entry does not choose the queue automatically."
+    },
+    {
+      "modeId": "gacha_collection",
+      "class": "CANDIDATE_ONLY",
+      "dailySemantics": "UNRESOLVED",
+      "runtimeState": "PARTIAL",
+      "tourPolicy": {"canAppearInPlan": false, "autoInsert": false, "mandatory": false, "quickStop": false, "skipBlocksProgress": false, "finaleRole": "NONE"},
+      "authorityRefs": ["DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001"],
+      "education": {"status": "NONE", "candidateTags": []},
+      "notes": "Existing Gacha/Collection presence does not establish a formal Daily right or Tour station. Kept visible as a candidate rather than silently omitted or dailyified."
+    },
+    {
+      "modeId": "brain_training",
+      "class": "CANDIDATE_ONLY",
+      "dailySemantics": "NONE",
+      "runtimeState": "DESIGN_CANDIDATE",
+      "tourPolicy": {"canAppearInPlan": false, "autoInsert": false, "mandatory": false, "quickStop": false, "skipBlocksProgress": false, "finaleRole": "NONE"},
+      "authorityRefs": ["USER_CURRENT_2026-08-29_EDUCATION_DAILY_REQUEST", "LEARNING-CROSSMEDIA-INTRINSIC-CONTRACT-001"],
+      "education": {"status": "CANDIDATE_ONLY", "candidateTags": ["identify", "memorize", "analyze", "compute", "visualize"]},
+      "notes": "New education candidate from the current user request. It is not represented as an already-implemented or pre-existing Daily mode."
+    },
+    {
+      "modeId": "music",
+      "class": "UNRESOLVED",
+      "dailySemantics": "UNRESOLVED",
+      "runtimeState": "PARK_INPUT_REQUIRED",
+      "tourPolicy": {"canAppearInPlan": false, "autoInsert": false, "mandatory": false, "quickStop": false, "skipBlocksProgress": false, "finaleRole": "NONE"},
+      "authorityRefs": ["VISION-MUSICMODE-ORIGINAL-SOURCE-RECOVERY-001"],
+      "education": {"status": "CANDIDATE_ONLY", "candidateTags": ["creative", "memorize", "identify"]},
+      "notes": "Original user/CURRENT source remains unrecovered. No rhythm/input/song rules may be inferred from this registry."
+    },
+    {
+      "modeId": "adventure",
+      "class": "UNRESOLVED",
+      "dailySemantics": "UNRESOLVED",
+      "runtimeState": "PARK_INPUT_REQUIRED",
+      "tourPolicy": {"canAppearInPlan": false, "autoInsert": false, "mandatory": false, "quickStop": false, "skipBlocksProgress": false, "finaleRole": "NONE"},
+      "authorityRefs": ["VISION-ADVENTURE-ORIGINAL-SOURCE-RECOVERY-001"],
+      "education": {"status": "CANDIDATE_ONLY", "candidateTags": []},
+      "notes": "Original source remains unrecovered; no map/combat/reward/growth specification is invented here."
+    }
+  ]
+}

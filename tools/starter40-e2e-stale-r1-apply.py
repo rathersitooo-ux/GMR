@@ -15,6 +15,11 @@ replacements = [
         'legacy fixture isolation',
     ),
     (
+        "  expect(observed.savedDeck).toHaveLength(26);\n  expect(observed.rule.revision).toBe(2);",
+        "  expect(observed.savedDeck).toHaveLength(40);\n  expect(observed.rule.revision).toBe(3);",
+        'legacy raw versus current working deck separation',
+    ),
+    (
         "  expect(afterReset.savedCount).toBe(26);",
         "  expect(afterReset.savedCount).toBe(40);",
         'reset starter expectation',
@@ -38,8 +43,11 @@ for old, new, label in replacements:
 required = [
     "expect(defaultDeck).toHaveLength(40);",
     "const legacyDeck = defaultDeck.slice(0, 26);",
+    "expect(legacyDeck).toHaveLength(26);",
     "deck: { main: legacyDeck, ex: [], ruleId: 'FIRST_REGULATION', ruleRevision: 2 },",
-    "expect(observed.savedDeck).toHaveLength(26);",
+    "expect(observed.recovery.classification.status).toBe('recognized_legacy');",
+    "expect(observed.savedDeck).toHaveLength(40);",
+    "expect(observed.rule.revision).toBe(3);",
     "expect(afterReset.savedCount).toBe(40);",
     "expect(writeFailure.savedCount).toBe(40);",
 ]
@@ -49,11 +57,12 @@ for needle in required:
 
 for forbidden in [
     "expect(defaultDeck).toHaveLength(26);",
+    "expect(observed.savedDeck).toHaveLength(26);",
     "expect(afterReset.savedCount).toBe(26);",
     "expect(writeFailure.savedCount).toBe(26);",
 ]:
     if forbidden in text:
-        raise SystemExit(f'stale current-starter expectation remains: {forbidden}')
+        raise SystemExit(f'stale current-working-deck expectation remains: {forbidden}')
 
 SPEC.write_text(text, encoding='utf-8')
-print('starter40 broad-E2E stale expectations repaired; explicit legacy 26 fixture preserved')
+print('starter40 broad-E2E expectations aligned; legacy raw fixture remains explicit 26 cards')

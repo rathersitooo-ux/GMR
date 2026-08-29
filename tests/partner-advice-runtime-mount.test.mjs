@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  buildPartnerAdviceResponsePlanInput,
   createPartnerAdviceReplayBridge,
   createPartnerAdviceRuntimeControl,
   projectPartnerAdviceBoardEmphasis,
@@ -23,6 +24,52 @@ function legacyReplay({ rule, candidates }) {
     return a.comparisonValue - b.comparisonValue || a.candidateId.localeCompare(b.candidateId);
   });
   return { ok: true, selected: ordered[0] ?? null, ordered: ordered.map((x) => x.candidateId), source: 'legacy' };
+}
+
+function heuristicAdvice(overrides = {}) {
+  return {
+    ok: true,
+    selected: { candidateId: 'guard', payload: { label: 'public-only' } },
+    ordered: ['guard', 'advance'],
+    next: 'advance',
+    reason: 'LEFTMOST',
+    source: 'shared-legal-action-core',
+    containsPrivate: false,
+    ...overrides,
+  };
+}
+
+function responsePlanRuntimeManifest(overrides = {}) {
+  return {
+    schema: 'gameroad.partner-advice-runtime-manifest.v1',
+    targetVersions: { ...V },
+    approval: {
+      gateId: 'HUMAN-HOLDOUT-ACCEPTANCE',
+      approvalId: 'approval-runtime-7',
+      humanGate: 'approved',
+      privacyScope: 'shared',
+    },
+    promotionSafe: true,
+    defaultActionId: 'guard',
+    minContextSupport: 8,
+    contexts: [],
+    sourceEvidence: 'offline-approved-aggregate-only',
+    containsRawEvents: false,
+    containsPrivate: false,
+    collectiveDecisionLineage: {
+      decisionProductId: 'decision-product-7',
+      proposalId: 'proposal-7',
+      changeRef: 'change-ranking-7',
+      cohortId: 'cohort-7',
+      consumerUseSiteRef: 'use-site-advice-selection',
+      automaticMutationAllowed: false,
+      personaMutationAllowed: false,
+      relationshipMutationAllowed: false,
+      containsRawEvents: false,
+      containsPrivate: false,
+    },
+    ...overrides,
+  };
 }
 
 test('missing formal version tuple keeps the exact legacy production path', () => {
@@ -189,4 +236,169 @@ test('projection gate is mandatory and never implies automatic execution', () =>
   assert.equal(projection.clear, true);
   assert.equal(projection.reason, 'PROJECTION_GATE_REQUIRED');
   assert.equal(projection.autoExecute, false);
+});
+
+test('viewer-safe heuristic Advice becomes current strict PartnerResponsePlan v1 input', () => {
+  const result = buildPartnerAdviceResponsePlanInput({
+    planId: 'advice-plan-1',
+    partnerId: 'saasuna',
+    sourceUseSite: 'use-site-advice-selection',
+    adviceResult: heuristicAdvice(),
+    versions: V,
+  });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.planInput, {
+    schemaVersion: 'gameroad.partner-response-plan.v1',
+    planId: 'advice-plan-1',
+    partnerId: 'saasuna',
+    purpose: 'advice_recommendation',
+    scope: {
+      useSite: 'use-site-advice-selection',
+      publicScope: true,
+      safeForRender: true,
+      containsPrivate: false,
+      containsRawUserText: false,
+    },
+    source: {
+      sourceId: 'shared-legal-action-core',
+      sourceVersion: 'rulesVersion=rules-r1|cardVersion=cards-r1|stateVersion=state-r1',
+      origin: 'derived_projection',
+    },
+    presentation: {
+      kind: 'candidate_emphasis',
+      candidateId: 'guard',
+      targetId: null,
+      alternativeCandidateId: 'advance',
+    },
+    evidence: {
+      evidenceIds: [
+        'advice-source:shared-legal-action-core',
+        'rulesVersion=rules-r1',
+        'cardVersion=cards-r1',
+        'stateVersion=state-r1',
+      ],
+    },
+    authority: {
+      mode: 'presentation_only',
+      autoExecute: false,
+      automaticCanonMutationAllowed: false,
+      automaticRelationshipMutationAllowed: false,
+      automaticGameMutationAllowed: false,
+      automaticRewardMutationAllowed: false,
+    },
+  });
+  assert.equal(Object.isFrozen(result), true);
+  assert.equal(Object.isFrozen(result.planInput.presentation), true);
+  assert.equal(JSON.stringify(result).includes('LEFTMOST'), false);
+});
+
+test('manifest-backed Advice carries aggregate evidence IDs without raw evidence or payload', () => {
+  const secret = 'private-transcript-must-not-cross';
+  const adviceResult = heuristicAdvice({
+    selected: { candidateId: 'guard', payload: { secret } },
+    debugText: secret,
+    reason: 'APPROVED_RUNTIME_MANIFEST',
+    source: 'approved-runtime-manifest',
+    manifestUsed: true,
+  });
+  const result = buildPartnerAdviceResponsePlanInput({
+    planId: 'advice-plan-runtime-1',
+    partnerId: 'saasuna',
+    sourceUseSite: 'use-site-advice-selection',
+    adviceResult,
+    versions: V,
+    runtimeManifest: responsePlanRuntimeManifest(),
+  });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.planInput.source, {
+    sourceId: 'approved-runtime-manifest',
+    sourceVersion: 'rulesVersion=rules-r1|cardVersion=cards-r1|stateVersion=state-r1',
+    origin: 'approved_source',
+  });
+  assert.deepEqual(result.planInput.evidence.evidenceIds, [
+    'advice-source:approved-runtime-manifest',
+    'rulesVersion=rules-r1',
+    'cardVersion=cards-r1',
+    'stateVersion=state-r1',
+    'approval:approval-runtime-7',
+    'evidence-scope:offline-approved-aggregate-only',
+    'decision-product-7',
+    'proposal-7',
+    'change-ranking-7',
+    'cohort-7',
+  ]);
+  assert.equal(JSON.stringify(result).includes(secret), false);
+});
+
+test('manifest-backed Advice fails closed when its manifest carrier is missing', () => {
+  const result = buildPartnerAdviceResponsePlanInput({
+    planId: 'advice-plan-runtime-missing',
+    partnerId: 'saasuna',
+    sourceUseSite: 'use-site-advice-selection',
+    adviceResult: heuristicAdvice({
+      reason: 'APPROVED_RUNTIME_MANIFEST',
+      source: 'approved-runtime-manifest',
+      manifestUsed: true,
+    }),
+    versions: V,
+  });
+  assert.deepEqual(result, { ok: false, reason: 'MANIFEST_LINEAGE_REQUIRED', planInput: null });
+});
+
+test('private, stale-version, wrong-use-site, and authority-leaking Advice fail closed', () => {
+  const manifestAdvice = heuristicAdvice({
+    reason: 'APPROVED_RUNTIME_MANIFEST',
+    source: 'approved-runtime-manifest',
+    manifestUsed: true,
+  });
+  const base = {
+    planId: 'advice-plan-gates',
+    partnerId: 'saasuna',
+    sourceUseSite: 'use-site-advice-selection',
+    adviceResult: manifestAdvice,
+    versions: V,
+  };
+
+  assert.equal(buildPartnerAdviceResponsePlanInput({
+    ...base,
+    adviceResult: heuristicAdvice({ containsPrivate: true }),
+  }).reason, 'ADVICE_PRIVACY_BOUNDARY_INVALID');
+
+  assert.equal(buildPartnerAdviceResponsePlanInput({
+    ...base,
+    runtimeManifest: responsePlanRuntimeManifest({ targetVersions: { ...V, stateVersion: 'state-r2' } }),
+  }).reason, 'RUNTIME_MANIFEST_VERSION_MISMATCH');
+
+  assert.equal(buildPartnerAdviceResponsePlanInput({
+    ...base,
+    runtimeManifest: responsePlanRuntimeManifest({
+      collectiveDecisionLineage: {
+        ...responsePlanRuntimeManifest().collectiveDecisionLineage,
+        consumerUseSiteRef: 'other-use-site',
+      },
+    }),
+  }).reason, 'COLLECTIVE_LINEAGE_USE_SITE_MISMATCH');
+
+  assert.equal(buildPartnerAdviceResponsePlanInput({
+    ...base,
+    runtimeManifest: responsePlanRuntimeManifest({
+      collectiveDecisionLineage: {
+        ...responsePlanRuntimeManifest().collectiveDecisionLineage,
+        relationshipMutationAllowed: true,
+      },
+    }),
+  }).reason, 'COLLECTIVE_LINEAGE_AUTHORITY_BOUNDARY_INVALID');
+});
+
+test('no legal candidate fails closed because the current shared plan schema has no fallback presentation', () => {
+  const result = buildPartnerAdviceResponsePlanInput({
+    planId: 'advice-plan-no-selection',
+    partnerId: 'saasuna',
+    sourceUseSite: 'use-site-advice-selection',
+    adviceResult: heuristicAdvice({ selected: null, next: null, reason: 'NO_LEGAL_CANDIDATE' }),
+    versions: V,
+  });
+  assert.deepEqual(result, { ok: false, reason: 'NO_SELECTED_CANDIDATE', planInput: null });
 });

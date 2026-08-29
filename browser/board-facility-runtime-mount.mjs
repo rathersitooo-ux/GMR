@@ -7,6 +7,7 @@ const PARTNER_CONVERSATION_MOUNT_NAME = 'GAMEROAD_PARTNER_CONVERSATION_PRODUCT_M
 const PARTNER_CONVERSATION_STYLE_ID = 'gameroad-partner-conversation-product-style';
 const PARTNER_EDGE_ENDPOINT = '/ws?partnerOp=conversation';
 const SAASUNA_PROVISIONAL_VISUAL = '/ws?partnerOp=visual';
+const COLLECTIVE_EVIDENCE_SOURCE_NAME = 'GAMEROAD_PARTNER_CONVERSATION_COLLECTIVE_EVIDENCE_SOURCE';
 const COLLECTIVE_CONTEXT_SCHEMA = 'gameroad.partner-conversation-collective-context.v1';
 const PROVIDER_USER_TEXT_MAX = 4000;
 const COLLECTIVE_CONTEXT_MAX_ITEMS = 4;
@@ -102,6 +103,30 @@ export function composeSaasunaProviderUserMessage(request) {
   }
   if (selected.length === 0) return userMessage;
   return `${header}\n${selected.join('\n')}\n${footer}\n\nユーザー:\n${userMessage}`;
+}
+
+export async function resolveSaasunaCollectiveContext(global = globalThis) {
+  const source = global?.[COLLECTIVE_EVIDENCE_SOURCE_NAME];
+  if (typeof source !== 'function') return null;
+
+  let context;
+  try {
+    context = await source(Object.freeze({
+      partnerId: 'partner.saasuna',
+      useSite: 'partner-conversation',
+      schemaVersion: COLLECTIVE_CONTEXT_SCHEMA,
+    }));
+  } catch {
+    return null;
+  }
+
+  if (!context || typeof context !== 'object' || Array.isArray(context)) return null;
+  if (context.schemaVersion !== COLLECTIVE_CONTEXT_SCHEMA) return null;
+  if (context.partnerId !== 'partner.saasuna' || context.useSite !== 'partner-conversation') return null;
+  if (context.safeForPrompt !== true || context.containsPrivate !== false || context.containsRawUserText !== false) return null;
+  const promptItems = safeCollectivePromptItems(context);
+  if (!promptItems || promptItems.length < 1) return null;
+  return context;
 }
 
 export function partnerConversationProjectionDecision({ screenActive = false } = {}) {
@@ -257,7 +282,8 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
       send.disabled = true;
       setConversationState(state, '返事を考えています', 'neutral');
       try {
-        const response = await entry.send(message);
+        const collectiveContext = await resolveSaasunaCollectiveContext(global);
+        const response = await entry.send(message, { collectiveContext });
         const turn = response?.turn;
         const ok = turn?.ok && typeof turn.utterance === 'string';
         appendMessage(document, log, ok ? 'saasuna' : 'system', ok ? turn.utterance : '応答できませんでした。');
@@ -302,6 +328,8 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
     status: () => Object.freeze({
       ...entry.status(),
       visual: SAASUNA_PROVISIONAL_VISUAL_CONTRACT,
+      collectiveEvidenceSourceMounted: typeof global?.[COLLECTIVE_EVIDENCE_SOURCE_NAME] === 'function',
+      collectiveContextPolicy: 'approved_runtime_source_only',
       provider: provider?.status?.() ?? Object.freeze({ transport: 'fallback_only', providerSessionActive: false, providerSessionStoredInCanon: false }),
     }),
     disconnect: () => observer?.disconnect(),

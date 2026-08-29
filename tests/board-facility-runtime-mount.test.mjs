@@ -7,9 +7,32 @@ import {
   mountBoardFacilityRuntime,
   mountSaasunaConversationProductSurface,
   partnerConversationProjectionDecision,
+  resolveSaasunaCollectiveContext,
   SAASUNA_PROVISIONAL_VISUAL_CONTRACT,
 } from '../browser/board-facility-runtime-mount.mjs';
+import { buildPartnerConversationCollectiveContext } from '../browser/partner-conversation-collective-context.mjs';
 import { onRequest as cloudflareEntry } from '../deploy/cloudflare/functions/ws.js';
+
+function collectiveContextFrom(evidenceItems) {
+  return buildPartnerConversationCollectiveContext({ partnerId: 'partner.saasuna', evidenceItems });
+}
+
+function approvedEvidence(overrides = {}) {
+  return {
+    evidenceId: 'E-PROD-1',
+    sourceId: 'SOURCE-PROD-1',
+    sourceVersion: 'v3',
+    provenance: 'public_production',
+    authorityRef: 'AUTH-PROD-1',
+    observedAt: '2026-08-30T01:00:00Z',
+    freshness: 'current_bounded',
+    counterevidenceState: 'NONE_FOUND',
+    useSite: 'partner-conversation',
+    summary: '承認済みの公開情報です。',
+    confidence: 'bounded',
+    ...overrides,
+  };
+}
 
 test('fails closed when the classic bridge is missing', async () => {
   await assert.rejects(() => mountBoardFacilityRuntime({}), /BOARD_FACILITY_CLASSIC_BRIDGE_MISSING/);
@@ -80,6 +103,96 @@ test('provisional Saasuna visual is explicitly static and outside character prod
     sourceKind: 'user_supplied_provisional',
   });
   assert.equal(Object.isFrozen(SAASUNA_PROVISIONAL_VISUAL_CONTRACT), true);
+});
+
+test('collective product resolver stays off when no real runtime evidence source is mounted', async () => {
+  assert.equal(await resolveSaasunaCollectiveContext({}), null);
+});
+
+test('collective product resolver accepts only a canonical approved context from a mounted source', async () => {
+  const calls = [];
+  const global = {
+    async GAMEROAD_PARTNER_CONVERSATION_COLLECTIVE_EVIDENCE_SOURCE(request) {
+      calls.push(request);
+      return collectiveContextFrom([approvedEvidence()]);
+    },
+  };
+  const context = await resolveSaasunaCollectiveContext(global);
+  assert.deepEqual(calls, [{
+    partnerId: 'partner.saasuna',
+    useSite: 'partner-conversation',
+    schemaVersion: 'gameroad.partner-conversation-collective-context.v1',
+  }]);
+  assert.equal(context?.ok, true);
+  assert.equal(context?.acceptedCount, 1);
+  assert.equal(context?.safeForPrompt, true);
+  assert.equal(context?.containsPrivate, false);
+  assert.equal(context?.containsRawUserText, false);
+  assert.equal(context?.items[0]?.summary, '承認済みの公開情報です。');
+  assert.equal(context?.lineage[0]?.sourceId, 'SOURCE-PROD-1');
+  assert.equal(Object.isFrozen(context), true);
+});
+
+test('collective product resolver rejects source contexts without an approved usable item', async () => {
+  const privateContext = await resolveSaasunaCollectiveContext({
+    GAMEROAD_PARTNER_CONVERSATION_COLLECTIVE_EVIDENCE_SOURCE() {
+      return collectiveContextFrom([approvedEvidence({ provenance: 'private', summary: '送ってはいけない情報' })]);
+    },
+  });
+  const unexpectedContext = await resolveSaasunaCollectiveContext({
+    GAMEROAD_PARTNER_CONVERSATION_COLLECTIVE_EVIDENCE_SOURCE() {
+      return collectiveContextFrom([{ ...approvedEvidence(), fixtureOnly: true }]);
+    },
+  });
+  assert.equal(privateContext, null);
+  assert.equal(unexpectedContext, null);
+});
+
+test('collective product resolver fails soft when the runtime evidence source errors', async () => {
+  const context = await resolveSaasunaCollectiveContext({
+    GAMEROAD_PARTNER_CONVERSATION_COLLECTIVE_EVIDENCE_SOURCE() {
+      throw new Error('SOURCE_UNAVAILABLE');
+    },
+  });
+  assert.equal(context, null);
+});
+
+test('approved runtime context resolves through the existing Convai userText transport without lineage leakage', async () => {
+  const calls = [];
+  const global = {
+    GAMEROAD_PARTNER_CONVERSATION_COLLECTIVE_EVIDENCE_SOURCE() {
+      return collectiveContextFrom([approvedEvidence({
+        evidenceId: 'E-PROD-2',
+        sourceId: 'SOURCE-SECRET-LINEAGE',
+        sourceVersion: 'v4',
+        provenance: 'server_verified',
+        authorityRef: 'AUTHORITY-SECRET-LINEAGE',
+        observedAt: '2026-08-30T01:10:00Z',
+        freshness: 'current',
+        counterevidenceState: 'PRESENT',
+        summary: '反証があるため断定を避けるべき情報です。',
+      })]);
+    },
+    async fetch(url, options) {
+      calls.push({ url, body: JSON.parse(options.body) });
+      return new Response(JSON.stringify({ ok: true, text: '確認しながらお答えします。', providerSessionId: 'convai-session-live' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    },
+  };
+  const context = await resolveSaasunaCollectiveContext(global);
+  const provider = createSaasunaEdgeProvider(global);
+  await provider.sendMessage({
+    partnerId: 'partner.saasuna',
+    dialogueVersion: 'saasuna.dialogue.current.r1.20260810',
+    sourceId: 'SOURCE-DIALOGUE-SAASUNA-20260810',
+    userMessage: '教えて',
+    collectiveContext: context,
+  });
+  assert.equal(calls.length, 1);
+  assert.match(calls[0].body.userMessage, /反証があるため断定を避けるべき情報です。/);
+  assert.doesNotMatch(calls[0].body.userMessage, /SOURCE-SECRET-LINEAGE|AUTHORITY-SECRET-LINEAGE/);
 });
 
 test('browser edge provider keeps provider session locally and sends no API key', async () => {

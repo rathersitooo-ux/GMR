@@ -38,7 +38,28 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run targeted deck recovery regression
-        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 --grep "deck recovery preserves blocked raw saves"
+        id: targeted
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 --grep "deck recovery preserves blocked raw saves" 2>&1 | tee starter40-targeted.log
+
+      - name: Upload targeted failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: starter40-targeted-${{ github.run_id }}
+          path: |
+            starter40-targeted.log
+            test-results/full-interaction/
+            playwright-report-full-interaction/
+          if-no-files-found: warn
+          retention-days: 3
+
+      - name: Stop on targeted regression failure
+        if: steps.targeted.outcome != 'success'
+        run: exit 1
 
       - name: Remove task-private applicator
         run: |

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-PARTNER-CONVERSATION-PRODUCT-MOUNT-R3-20260829T1137",
+  "taskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "workUnitKey": "PARTNER_CONVERSATION_PRODUCT_MOUNT_PUBLIC_R3",
+  "acquireKey": "PARTNER-CONV-MOUNT-R3-20260829T1137-SOL-H8K4M2Q7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PRED-PARTNER-CONV-MOUNT-R3-PACKAGE-CLOSURE-20260829T1137JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REQGATE-PR552-PREACTION-PASS-PUBLICPACK-ROOT-BOUNDED-20260829",
+  "proceedToken": "PROCEED|VWORK-PARTNER-CONVERSATION-PRODUCT-MOUNT-R3-20260829T1137|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|FRESH_LEASE_EXACT4_PACKAGE_CLOSURE",
+  "authorizationBaseSha": "30bd130270e876696cb5fecd37436e0ce8ef0f9a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "leaseWorkUnitKey": "PARTNER_CONVERSATION_PRODUCT_MOUNT_PUBLIC_R3",
+  "leaseAcquireKey": "PARTNER-CONV-MOUNT-R3-20260829T1137-SOL-H8K4M2Q7",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 11:37 JST",
+  "leaseUntilJst": "2026-08-29 12:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh base 30bd130270e876696cb5fecd37436e0ce8ef0f9a; branch work/partner-conversation-product-mount-r3-20260829; transient PRE_ACTION create-first/delete-before-final-head; browser/board-facility-runtime-mount.mjs; tests/board-facility-runtime-mount.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; own CURRENT_ACTIVE_LEASES row6 and R22 records. GAMEROAD.html, Required Gate workflow, existing Partner conversation/source/context/session/shell modules, Battle, save, economy, relationship, rig and assets excluded/read-only.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSignature": "PARTNER_CONVERSATION_PRODUCT_MOUNT_R3=REUSE_PR552_EXACT_MOUNT_TEST+FIX_PUBLIC_PACKAGE_DEPENDENCY_CLOSURE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-PR552-EXACT-MOUNT-PLUS-CURRENT-BUILD-PROVENANCE-R3-20260829T1137",
+  "solutionSearchEvidence": [
+    "PR #552 proved the direct Saasuna product mount PRE_ACTION and focused mount semantics; it failed only at the public package provenance invariant.",
+    "The failed package-r2 successor is rejected because its PRE_ACTION references a superseded R1 AcquireKey/WorkUnit, so R3 starts from current main under the fresh R3 lease.",
+    "The public build uses a fixed dependency copy set followed by recursive local-import verification; partner-conversation-core.mjs and partner-saasuna-conversation-source.mjs already exist and must be copied/provenanced rather than duplicated or edited."
+  ],
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

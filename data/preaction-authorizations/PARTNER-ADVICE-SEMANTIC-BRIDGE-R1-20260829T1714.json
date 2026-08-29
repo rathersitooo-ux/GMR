@@ -17,16 +17,20 @@
   "leaseTaskId": "ADVICE_PARTNER-01",
   "leaseWorkUnitKey": "PARTNER_ADVICE_SEMANTIC_PAYLOAD_R1",
   "leaseAcquireKey": "PARTNER-ADVICE-SEMANTIC-BRIDGE-R1-20260829T1714-SOL-P2",
-  "leaseSnapshotReadbackAtJst": "2026-08-29 17:14 JST",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 17:18 JST",
   "leaseUntilJst": "2026-08-29 18:14 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A17:L17",
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base 0c4d19152c72589073e8b5ae16305b88c05f0a7a; branch work/partner-advice-semantic-payload-r1-20260829; transient PRE_ACTION data/preaction-authorizations/PARTNER-ADVICE-SEMANTIC-BRIDGE-R1-20260829T1714.json create-first/delete-before-final-head; tools/partner-advice-decision-product.mjs; tests/partner-advice-decision-product.test.mjs; own CURRENT_ACTIVE_LEASES row17 and own R22 records.",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base 0c4d19152c72589073e8b5ae16305b88c05f0a7a; branch work/partner-advice-semantic-payload-r1-20260829; transient PRE_ACTION data/preaction-authorizations/PARTNER-ADVICE-SEMANTIC-BRIDGE-R1-20260829T1714.json create-first/delete-before-final-head; tools/partner-advice-decision-product.mjs; tests/partner-advice-decision-product.test.mjs; tools/partner-advice-response-plan-adapter.mjs; tests/partner-advice-response-plan-adapter.test.mjs; own CURRENT_ACTIVE_LEASES row17 and own R22 records.",
   "scope": [
     "tools/partner-advice-decision-product.mjs",
-    "tests/partner-advice-decision-product.test.mjs"
+    "tests/partner-advice-decision-product.test.mjs",
+    "tools/partner-advice-response-plan-adapter.mjs",
+    "tests/partner-advice-response-plan-adapter.test.mjs"
   ],
   "leaseScope": [
     "tools/partner-advice-decision-product.mjs",
-    "tests/partner-advice-decision-product.test.mjs"
+    "tests/partner-advice-decision-product.test.mjs",
+    "tools/partner-advice-response-plan-adapter.mjs",
+    "tests/partner-advice-response-plan-adapter.test.mjs"
   ]
 }

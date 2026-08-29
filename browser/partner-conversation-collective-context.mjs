@@ -88,6 +88,7 @@ function hasUnexpectedFields(item) {
 
 function projectItem(item) {
   if (!item || typeof item !== 'object' || Array.isArray(item) || hasUnexpectedFields(item)) return null;
+  if (!exactToken(item.sourceVersion) || !exactToken(item.observedAt, 64)) return null;
   const lineage = normalizeCollectiveEvidenceLineage(item, { allowedProvenance: ALLOWED_PROVENANCE });
   const useSite = exactToken(item.useSite);
   const summary = safeSummary(item.summary);

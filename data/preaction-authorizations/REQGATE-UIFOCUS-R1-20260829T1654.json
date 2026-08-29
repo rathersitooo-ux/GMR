@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "REQGATE-UIFOCUS-R1-20260829T1654",
+  "taskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "workUnitKey": "UI_SPATIAL_CURSOR_GATE_MAP_R1",
+  "acquireKey": "REQGATE-UIFOCUS-R1-20260829T1654-SOL-Q6M2K8V4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR592-run33241886287-step55-unclassified",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "current-workflow-ui-feedback-lane-readback-plus-pr592-failclosed",
+  "proceedToken": "PROCEED|REQGATE-UIFOCUS-R1-20260829T1654|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-ui-feedback-lane|unclassified-proof",
+  "authorizationBaseSha": "61dbf7c2f0b4f03fa378bf5a99d509314ff108b8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-REQUIRED-CHECKS-POLICY-001",
+  "leaseWorkUnitKey": "UI_SPATIAL_CURSOR_GATE_MAP_R1",
+  "leaseAcquireKey": "REQGATE-UIFOCUS-R1-20260829T1654-SOL-Q6M2K8V4",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 16:54 JST",
+  "leaseUntilJst": "2026-08-29 17:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A12:L12",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base 61dbf7c2f0b4f03fa378bf5a99d509314ff108b8; branch work/required-gate-ui-spatial-r1-20260829; transient PRE_ACTION data/preaction-authorizations/REQGATE-UIFOCUS-R1-20260829T1654.json create-first/delete-before-final-head; .github/workflows/gameroad-required-gate.yml mapping-only: classify browser/ui-spatial-cursor-core.mjs + tests/ui-spatial-cursor-core.test.mjs into existing ui_feedback lane and run the focused test; own CURRENT_ACTIVE_LEASES row12 and own R22 records",
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "solutionSignature": "Classify the two spatial cursor executable/test paths in the existing ui_feedback Required Gate lane and run their focused Node test without creating a new lane or workflow.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REQGATE-UIFOCUS-R1-existing-ui-feedback-lane",
+  "solutionSearchEvidence": [
+    "repo:.github/workflows/gameroad-required-gate.yml:ui_feedback",
+    "actions:run33241886287:unclassified-executable-failure"
+  ]
+}

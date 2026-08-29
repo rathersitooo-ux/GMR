@@ -289,3 +289,201 @@ export const BATTLE_REPLAY_PUBLIC_COMMENTARY_CONTRACT = deepFreeze({
   automaticGameMutationAllowed: false,
   automaticRetryAllowed: false,
 });
+
+const CONTINUOUS_FOLLOW_SCHEMA = 'GAMEROAD_REPLAY_PUBLIC_CONTINUOUS_FOLLOW_V1';
+const CONTINUOUS_FOLLOW_STATUS_SCHEMA = 'GAMEROAD_REPLAY_PUBLIC_CONTINUOUS_FOLLOW_STATUS_V1';
+const CONTINUOUS_FOLLOW_STATUSES = new Set(['WAITING', 'ATTACHED', 'DENIED', 'OFFLINE', 'STOPPED']);
+
+function validateContinuousPublicBroadcastFollow(state) {
+  if (
+    !isPlainObject(state) ||
+    state.schema !== CONTINUOUS_FOLLOW_SCHEMA ||
+    state.presentationOnly !== true ||
+    state.gameplayAuthority !== false ||
+    state.gameStateWrite !== false ||
+    !CONTINUOUS_FOLLOW_STATUSES.has(state.status) ||
+    !Number.isSafeInteger(state.attachSerial) ||
+    state.attachSerial < 0
+  ) {
+    throw new TypeError('CONTINUOUS_FOLLOW_STATE_INVALID');
+  }
+
+  if (state.status === 'STOPPED') {
+    if (state.targetUserId !== null || state.currentMatchId !== null || state.stopped !== true) {
+      throw new TypeError('CONTINUOUS_FOLLOW_STOPPED_STATE_INVALID');
+    }
+  } else {
+    nonEmptyString(state.targetUserId, 'CONTINUOUS_FOLLOW_TARGET');
+    if (state.stopped !== false) throw new TypeError('CONTINUOUS_FOLLOW_STOPPED_FLAG_INVALID');
+  }
+
+  if (state.status === 'ATTACHED') {
+    nonEmptyString(state.currentMatchId, 'CONTINUOUS_FOLLOW_CURRENT_MATCH');
+  } else if (state.currentMatchId !== null) {
+    throw new TypeError('CONTINUOUS_FOLLOW_NONATTACHED_MATCH_INVALID');
+  }
+
+  if (state.lastCompletedMatchId !== null) {
+    nonEmptyString(state.lastCompletedMatchId, 'CONTINUOUS_FOLLOW_LAST_COMPLETED_MATCH');
+  }
+  if (state.waitingReason !== null) {
+    nonEmptyString(state.waitingReason, 'CONTINUOUS_FOLLOW_WAITING_REASON');
+  }
+  return state;
+}
+
+function continuousPublicBroadcastFollowState({
+  targetUserId,
+  status,
+  currentMatchId = null,
+  lastCompletedMatchId = null,
+  attachSerial = 0,
+  waitingReason = null,
+  stopped = false,
+}) {
+  return deepFreeze({
+    schema: CONTINUOUS_FOLLOW_SCHEMA,
+    presentationOnly: true,
+    gameplayAuthority: false,
+    gameStateWrite: false,
+    targetUserId,
+    status,
+    currentMatchId,
+    lastCompletedMatchId,
+    attachSerial,
+    waitingReason,
+    stopped,
+  });
+}
+
+export function createContinuousPublicBroadcastFollow({ targetUserId } = {}) {
+  return continuousPublicBroadcastFollowState({
+    targetUserId: nonEmptyString(targetUserId, 'CONTINUOUS_FOLLOW_TARGET'),
+    status: 'WAITING',
+    waitingReason: 'AWAITING_AUTHORIZED_MATCH',
+  });
+}
+
+function assertContinuousFollowSignalTarget(state, signal) {
+  const signalTarget = nonEmptyString(signal?.targetUserId, 'CONTINUOUS_FOLLOW_SIGNAL_TARGET');
+  if (signalTarget !== state.targetUserId) {
+    throw new TypeError('CONTINUOUS_FOLLOW_SIGNAL_TARGET_MISMATCH');
+  }
+}
+
+export function advanceContinuousPublicBroadcastFollow(state, signal = {}) {
+  validateContinuousPublicBroadcastFollow(state);
+  if (state.status === 'STOPPED') return state;
+  if (!isPlainObject(signal)) throw new TypeError('CONTINUOUS_FOLLOW_SIGNAL_INVALID');
+  assertContinuousFollowSignalTarget(state, signal);
+
+  switch (signal.kind) {
+    case 'MATCH_DISCOVERED': {
+      if (signal.viewerAuthorized !== true || signal.spectatable !== true) {
+        return continuousPublicBroadcastFollowState({
+          targetUserId: state.targetUserId,
+          status: 'DENIED',
+          lastCompletedMatchId: state.lastCompletedMatchId,
+          attachSerial: state.attachSerial,
+          waitingReason: 'MATCH_NOT_AUTHORIZED',
+        });
+      }
+      const matchId = nonEmptyString(signal.matchId, 'CONTINUOUS_FOLLOW_MATCH_ID');
+      if (state.status === 'ATTACHED' && state.currentMatchId === matchId) return state;
+      return continuousPublicBroadcastFollowState({
+        targetUserId: state.targetUserId,
+        status: 'ATTACHED',
+        currentMatchId: matchId,
+        lastCompletedMatchId: state.lastCompletedMatchId,
+        attachSerial: state.attachSerial + 1,
+      });
+    }
+    case 'MATCH_ENDED': {
+      const matchId = nonEmptyString(signal.matchId, 'CONTINUOUS_FOLLOW_MATCH_ID');
+      if (state.status !== 'ATTACHED' && state.lastCompletedMatchId === matchId) return state;
+      if (state.status !== 'ATTACHED' || state.currentMatchId !== matchId) {
+        throw new TypeError('CONTINUOUS_FOLLOW_MATCH_END_IDENTITY_MISMATCH');
+      }
+      return continuousPublicBroadcastFollowState({
+        targetUserId: state.targetUserId,
+        status: 'WAITING',
+        lastCompletedMatchId: matchId,
+        attachSerial: state.attachSerial,
+        waitingReason: 'WAIT_NEXT_ALLOWED_MATCH',
+      });
+    }
+    case 'OFFLINE':
+      return continuousPublicBroadcastFollowState({
+        targetUserId: state.targetUserId,
+        status: 'OFFLINE',
+        lastCompletedMatchId: state.lastCompletedMatchId,
+        attachSerial: state.attachSerial,
+        waitingReason: 'TARGET_OFFLINE',
+      });
+    case 'DENIED':
+      return continuousPublicBroadcastFollowState({
+        targetUserId: state.targetUserId,
+        status: 'DENIED',
+        lastCompletedMatchId: state.lastCompletedMatchId,
+        attachSerial: state.attachSerial,
+        waitingReason: 'SPECTATE_DENIED',
+      });
+    case 'WAITING':
+      return continuousPublicBroadcastFollowState({
+        targetUserId: state.targetUserId,
+        status: 'WAITING',
+        lastCompletedMatchId: state.lastCompletedMatchId,
+        attachSerial: state.attachSerial,
+        waitingReason: 'AWAITING_AUTHORIZED_MATCH',
+      });
+    default:
+      throw new TypeError('CONTINUOUS_FOLLOW_SIGNAL_KIND_INVALID');
+  }
+}
+
+export function retargetContinuousPublicBroadcastFollow(state, { targetUserId } = {}) {
+  validateContinuousPublicBroadcastFollow(state);
+  const normalizedTarget = nonEmptyString(targetUserId, 'CONTINUOUS_FOLLOW_TARGET');
+  if (state.status !== 'STOPPED' && state.targetUserId === normalizedTarget) return state;
+  return createContinuousPublicBroadcastFollow({ targetUserId: normalizedTarget });
+}
+
+export function stopContinuousPublicBroadcastFollow(state) {
+  validateContinuousPublicBroadcastFollow(state);
+  if (state.status === 'STOPPED') return state;
+  return continuousPublicBroadcastFollowState({
+    targetUserId: null,
+    status: 'STOPPED',
+    attachSerial: state.attachSerial,
+    stopped: true,
+  });
+}
+
+export function readContinuousPublicBroadcastFollowStatus(state) {
+  validateContinuousPublicBroadcastFollow(state);
+  return deepFreeze({
+    schema: CONTINUOUS_FOLLOW_STATUS_SCHEMA,
+    presentationOnly: true,
+    gameplayAuthority: false,
+    gameStateWrite: false,
+    targetUserId: state.targetUserId,
+    status: state.status,
+    matchId: state.status === 'ATTACHED' ? state.currentMatchId : null,
+    attachSerial: state.attachSerial,
+    waitingReason: state.waitingReason,
+  });
+}
+
+export const BATTLE_REPLAY_PUBLIC_CONTINUOUS_FOLLOW_CONTRACT = deepFreeze({
+  schema: CONTINUOUS_FOLLOW_SCHEMA,
+  statusSchema: CONTINUOUS_FOLLOW_STATUS_SCHEMA,
+  statuses: [...CONTINUOUS_FOLLOW_STATUSES],
+  authority: 'VIEWER_AUTHORIZED_MATCH_IDENTITY_ONLY',
+  crossMatchState: 'TARGET_AND_ATTACHMENT_METADATA_ONLY',
+  deniedMatchIdentityStored: false,
+  replayEventStorage: false,
+  secondSpectatorStateStore: false,
+  gameplayAuthority: false,
+  gameStateWrite: false,
+  automaticPublishAllowed: false,
+});

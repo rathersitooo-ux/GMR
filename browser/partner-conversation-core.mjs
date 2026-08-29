@@ -267,6 +267,7 @@ export function createSaasunaConversationEntry({ provider = null, createSessionI
   if (!sessionId) throw new TypeError('SESSION_ID_INVALID');
   let turnSequence = 0;
   const sessionTurns = [];
+  const feedbackByTurn = new Map();
 
   const entryState = () => freezeDeep({
     screenId: ENTRY_SCREEN_ID,
@@ -276,6 +277,39 @@ export function createSaasunaConversationEntry({ provider = null, createSessionI
     switchPartnerAllowedHere: false,
     providerReady: provider !== null,
   });
+
+  function feedback(turnId, rating) {
+    const targetTurnId = exactToken(turnId);
+    if (!targetTurnId || (rating !== 'good' && rating !== 'bad')) {
+      return freezeDeep({ ok: false, reason: 'FEEDBACK_INPUT_INVALID' });
+    }
+    const target = sessionTurns.find((turn) => turn.turnId === targetTurnId);
+    if (!target) return freezeDeep({ ok: false, reason: 'FEEDBACK_TARGET_NOT_FOUND' });
+
+    const previous = feedbackByTurn.get(targetTurnId) ?? null;
+    feedbackByTurn.set(targetTurnId, rating);
+    return freezeDeep({
+      ok: true,
+      schemaVersion: 'gameroad.partner-conversation-quality-feedback.v1',
+      partnerId: SAASUNA_PARTNER_ID,
+      sessionId,
+      turnId: targetTurnId,
+      dialogueVersion: SAASUNA_DIALOGUE_VERSION,
+      sourceId: SAASUNA_DIALOGUE_SOURCE_ID,
+      rating,
+      responseOrigin: target.responseOrigin,
+      canonStatus: target.responseOrigin === 'provider_candidate' ? 'ephemeral_candidate' : 'approved_source_fallback',
+      acknowledgement: rating === 'good' ? 'heart' : 'recorded',
+      badDetailDeferred: rating === 'bad',
+      replacedPrevious: previous !== null && previous !== rating,
+      localOnly: true,
+      rawTextStored: false,
+      automaticCanonMutation: false,
+      automaticRelationshipMutation: false,
+      automaticRewardMutation: false,
+      automaticLearning: false,
+    });
+  }
 
   async function send(message, { knowledgeContext = null } = {}) {
     const turnId = `turn-${++turnSequence}`;
@@ -310,6 +344,7 @@ export function createSaasunaConversationEntry({ provider = null, createSessionI
   return freezeDeep({
     open: entryState,
     send,
+    feedback,
     status: () => freezeDeep({ ...entryState(), sessionId, turnSequence }),
   });
 }

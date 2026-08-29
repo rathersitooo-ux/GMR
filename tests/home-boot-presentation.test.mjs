@@ -97,6 +97,12 @@ test('Home visual authority is subtractive only when the canonical slidepad exis
   assert.match(css, /\.codexBattleCta/);
   assert.match(css, /data-home-shell-variant="portrait"/);
   assert.match(css, /grid-template-columns:1fr!important/);
+  assert.match(css, /border-color:transparent!important/);
+  assert.match(css, /background:transparent!important/);
+  assert.match(css, /box-shadow:none!important/);
+  assert.match(css, /backdrop-filter:none!important/);
+  assert.doesNotMatch(css, /background:rgba\(8,17,45,\.68\)!important/);
+  assert.doesNotMatch(css, /backdrop-filter:blur\(8px\)!important/);
   assert.match(css, /data-home-shell-variant="short-landscape"/);
 });
 

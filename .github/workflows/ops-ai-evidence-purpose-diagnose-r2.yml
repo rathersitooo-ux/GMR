@@ -1,0 +1,25 @@
+name: OPS AI Evidence Purpose Diagnose R2
+on:
+  push:
+    branches:
+      - work/ops-ai-evidence-purpose-binding-r2-20260829
+permissions:
+  actions: read
+  contents: write
+jobs:
+  diagnose:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture failed applicator log
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh run view 33252335176 --repo rathersitooo-ux/GMR --log-failed > data/preaction-authorizations/OPS-AI-EVIDENCE-PURPOSE-R2-DIAGNOSTIC.txt
+          git config user.name 'gameroad-evidence-bot'
+          git config user.email 'gameroad-evidence-bot@users.noreply.github.com'
+          git add data/preaction-authorizations/OPS-AI-EVIDENCE-PURPOSE-R2-DIAGNOSTIC.txt
+          git commit -m 'chore: capture evidence applicator failure diagnosis'
+          git push origin HEAD:work/ops-ai-evidence-purpose-binding-r2-20260829

@@ -11,43 +11,35 @@ const roster = [
   { partnerId: 'partner.other', displayName: 'Other' },
 ];
 
-const expectedHubIds = [
-  'detail', 'list', 'formation', 'strategy', 'conversation', 'tea', 'intimacy',
-  'reward', 'solo', 'wardrobe', 'advice_history', 'tension', 'vtuber',
-];
+const expectedHubIds = ['detail', 'list', 'formation', 'strategy', 'conversation', 'tea'];
 
-test('hub exposes every current Partner concept entry from one menu', () => {
+test('hub exposes concrete current Partner entries only', () => {
   const view = buildPartnerShellView({ activePartnerId: 'partner.saasuna', roster });
   assert.equal(view.view, 'hub');
   assert.equal(view.activePartner.displayName, 'サースナー');
   assert.deepEqual(view.hubMenuItems.map((item) => item.id), expectedHubIds);
   assert.equal(view.deadButtonAllowed, false);
   assert.equal(view.readOnlyProjection, true);
+  assert.equal('minimumPanel' in view, false);
 });
 
-test('every Partner hub button leaves hub and opens a valid surface', () => {
+test('every visible Partner hub button routes to its concrete surface', () => {
   for (const item of PARTNER_HUB_MENU_ITEMS) {
     const target = nextPartnerShellView('hub', item.action);
     assert.equal(target, item.targetView, `${item.id} did not route to its declared target`);
     assert.notEqual(target, 'hub', `${item.id} is a dead button`);
-    const targetView = buildPartnerShellView({
-      activePartnerId: 'partner.saasuna',
-      roster,
-      view: target,
-    });
+    const targetView = buildPartnerShellView({ activePartnerId: 'partner.saasuna', roster, view: target });
     assert.equal(targetView.view, target);
-    assert.ok(targetView.availableActions.includes('BACK_HUB') || target === 'detail');
+    assert.equal(targetView.availableActions.includes('BACK_HUB') || target === 'detail', true);
   }
 });
 
-test('unfinished feature entries still open a usable minimum panel instead of doing nothing', () => {
-  const minimumViews = ['conversation', 'tea', 'intimacy', 'reward', 'solo', 'wardrobe', 'advice_history', 'tension', 'vtuber'];
-  for (const view of minimumViews) {
-    const output = buildPartnerShellView({ activePartnerId: 'partner.saasuna', roster, view });
-    assert.equal(output.minimumPanel.usable, true);
-    assert.equal(output.minimumPanel.canReturnToHub, true);
-    assert.equal(output.availableActions.includes('BACK_HUB'), true);
+test('placeholder-only concepts are not advertised as usable surfaces', () => {
+  for (const id of ['intimacy', 'reward', 'solo', 'wardrobe', 'advice_history', 'tension', 'vtuber']) {
+    assert.equal(PARTNER_HUB_MENU_ITEMS.some((item) => item.id === id), false);
   }
+  const unknown = buildPartnerShellView({ activePartnerId: 'partner.saasuna', roster, view: 'reward' });
+  assert.equal(unknown.view, 'hub');
 });
 
 test('active Partner detail is directly reachable without opening the roster first', () => {

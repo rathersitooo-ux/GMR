@@ -5,30 +5,16 @@ const MENU_ITEMS = Object.freeze([
   Object.freeze({ id: 'strategy', label: '作戦', action: 'OPEN_STRATEGY', targetView: 'strategy' }),
   Object.freeze({ id: 'conversation', label: '話す', action: 'OPEN_CONVERSATION', targetView: 'conversation' }),
   Object.freeze({ id: 'tea', label: 'お茶会', action: 'OPEN_TEA', targetView: 'tea' }),
-  Object.freeze({ id: 'intimacy', label: '親密度', action: 'OPEN_INTIMACY', targetView: 'intimacy' }),
-  Object.freeze({ id: 'reward', label: '報酬', action: 'OPEN_REWARD', targetView: 'reward' }),
-  Object.freeze({ id: 'solo', label: '一人で遊ぶ', action: 'OPEN_SOLO', targetView: 'solo' }),
-  Object.freeze({ id: 'wardrobe', label: '着せ替え', action: 'OPEN_WARDROBE', targetView: 'wardrobe' }),
-  Object.freeze({ id: 'advice_history', label: '助言履歴', action: 'OPEN_ADVICE_HISTORY', targetView: 'advice_history' }),
-  Object.freeze({ id: 'tension', label: '発話量', action: 'OPEN_TENSION', targetView: 'tension' }),
-  Object.freeze({ id: 'vtuber', label: 'VTuber', action: 'OPEN_VTUBER', targetView: 'vtuber' }),
 ]);
 
 const VIEW_META = Object.freeze({
-  hub: Object.freeze({ title: 'パートナー', surfaceKind: 'hub', minimumSurface: false }),
-  list: Object.freeze({ title: 'パートナー変更', surfaceKind: 'panel', minimumSurface: false }),
-  detail: Object.freeze({ title: '人物詳細', surfaceKind: 'panel', minimumSurface: false }),
-  formation: Object.freeze({ title: '編成', surfaceKind: 'panel', minimumSurface: false }),
-  strategy: Object.freeze({ title: '作戦', surfaceKind: 'panel', minimumSurface: false }),
-  conversation: Object.freeze({ title: '話す', surfaceKind: 'mode_entry', minimumSurface: true }),
-  tea: Object.freeze({ title: 'お茶会', surfaceKind: 'mode_entry', minimumSurface: true }),
-  intimacy: Object.freeze({ title: '親密度', surfaceKind: 'panel', minimumSurface: true }),
-  reward: Object.freeze({ title: '報酬', surfaceKind: 'panel', minimumSurface: true }),
-  solo: Object.freeze({ title: '一人で遊ぶ', surfaceKind: 'mode_entry', minimumSurface: true }),
-  wardrobe: Object.freeze({ title: '着せ替え', surfaceKind: 'panel', minimumSurface: true }),
-  advice_history: Object.freeze({ title: '助言履歴', surfaceKind: 'panel', minimumSurface: true }),
-  tension: Object.freeze({ title: '発話量', surfaceKind: 'control', minimumSurface: true }),
-  vtuber: Object.freeze({ title: 'VTuber', surfaceKind: 'mode_entry', minimumSurface: true }),
+  hub: Object.freeze({ title: 'パートナー', surfaceKind: 'hub' }),
+  list: Object.freeze({ title: 'パートナー変更', surfaceKind: 'panel' }),
+  detail: Object.freeze({ title: '人物詳細', surfaceKind: 'panel' }),
+  formation: Object.freeze({ title: '編成', surfaceKind: 'panel' }),
+  strategy: Object.freeze({ title: '作戦', surfaceKind: 'panel' }),
+  conversation: Object.freeze({ title: '話す', surfaceKind: 'mode_entry' }),
+  tea: Object.freeze({ title: 'お茶会', surfaceKind: 'mode_entry' }),
 });
 
 const VIEWS = new Set(Object.keys(VIEW_META));
@@ -67,17 +53,6 @@ function actionsFor(view) {
   return ['BACK_HUB'];
 }
 
-function minimumPanelFor(view) {
-  const meta = VIEW_META[view];
-  if (!meta || !meta.minimumSurface) return null;
-  return Object.freeze({
-    title: meta.title,
-    surfaceKind: meta.surfaceKind,
-    usable: true,
-    canReturnToHub: true,
-  });
-}
-
 export function buildPartnerShellView(input = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw new TypeError('partner shell input must be an object');
@@ -114,7 +89,6 @@ export function buildPartnerShellView(input = {}) {
     formationPartnerIds,
     strategyId,
     hubMenuItems: view === 'hub' ? MENU_ITEMS : Object.freeze([]),
-    minimumPanel: minimumPanelFor(view),
     availableActions: Object.freeze(actionsFor(view)),
     deadButtonAllowed: false,
     readOnlyProjection: true,

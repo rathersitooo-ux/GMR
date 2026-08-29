@@ -188,7 +188,9 @@ jobs:
               browser/deck-save-ack-core.mjs|\
               tests/deck-save-ack-core.test.mjs|\
               browser/deck-save-recovery-core.mjs|\
-              tests/deck-save-recovery-core.test.mjs)
+              tests/deck-save-recovery-core.test.mjs|\
+              browser/deck-slots-core.mjs|\
+              tests/deck-slots-core.test.mjs)
                 deck_ack=true
                 ;;
               browser/battle-self-deck-inspect-core.mjs|\
@@ -574,6 +576,19 @@ jobs:
       - name: Run Deck save recovery core tests
         if: steps.classify.outputs.deck_ack == 'true'
         run: node --test tests/deck-save-recovery-core.test.mjs
+
+      - name: Run Deck slots core tests when changed
+        if: steps.classify.outputs.deck_ack == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -Eq '^(browser/deck-slots-core\.mjs|tests/deck-slots-core\.test\.mjs)$' /tmp/gameroad-changed.txt; then
+            if [[ ! -f tests/deck-slots-core.test.mjs ]]; then
+              echo "Required deck slots test is missing: tests/deck-slots-core.test.mjs"
+              exit 1
+            fi
+            node --test tests/deck-slots-core.test.mjs
+          fi
 
       - name: Run Battle self remaining deck inspect core tests
         if: steps.classify.outputs.self_deck == 'true'

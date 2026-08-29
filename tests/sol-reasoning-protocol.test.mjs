@@ -388,6 +388,21 @@ test('ID prefix cannot spoof a canonical evidence class', () => {
   assert.equal(checked.reason, 'mutating_plan_authority_basis_required');
 });
 
+test('submitted prose cause cannot contradict the validated structured root cause', () => {
+  const source = queue();
+  const reasoning = packet(source);
+  const built = buildSolRequest(reasoning, { mode: 'ROOT_CAUSE', question: 'Find the actual cause.' });
+  const response = goodResponse(built.request, source, {
+    cause: ['Factor B is definitely the cause and Factor A is not.'],
+  });
+  const checked = validateSolResponse(response, built.request, reasoning);
+  assert.equal(checked.ok, true);
+  assert.deepEqual(checked.response.cause, [
+    'ESTABLISHED ROOT_CAUSE root-a: Factor A causes the observed bounded failure.',
+  ]);
+  assert.equal(checked.response.cause.some((line) => line.includes('Factor B')), false);
+});
+
 test('parser requires exactly one fenced Sol response', () => {
   const source = queue();
   const reasoning = packet(source);

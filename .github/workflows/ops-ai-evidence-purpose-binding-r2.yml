@@ -1,0 +1,156 @@
+name: OPS AI Evidence Purpose Binding R2
+
+on:
+  push:
+    branches:
+      - work/ops-ai-evidence-purpose-binding-r2-20260829
+
+permissions:
+  contents: write
+
+jobs:
+  apply-test-clean:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply bounded evidence-purpose patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f data/preaction-authorizations/OPS-AI-EVIDENCE-PURPOSE-R2-20260829T2116.json
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              n = text.count(old)
+              if n != 1:
+                  raise SystemExit(f'{path}: expected one match, got {n}')
+              p.write_text(text.replace(old, new, 1))
+
+          replace_once('tools/jit-evidence-compiler.mjs',
+          """    freshness: item.freshness,\n  };\n  return `${JIT_EVIDENCE_CONTEXT_MARKER}\\n${JSON.stringify(metadata)}\\n${JIT_EVIDENCE_CONTEXT_END_MARKER}\\n${item.text}`;\n""",
+          """    freshness: item.freshness,\n  };\n  if (Array.isArray(item.issueBindings) && item.issueBindings.length > 0) {\n    metadata.issueBindings = [...item.issueBindings];\n  }\n  return `${JIT_EVIDENCE_CONTEXT_MARKER}\\n${JSON.stringify(metadata)}\\n${JIT_EVIDENCE_CONTEXT_END_MARKER}\\n${item.text}`;\n""")
+          replace_once('tools/jit-evidence-compiler.mjs',
+          """  const relationsByIssue = new Map();\n  for (const relation of normalized.relations) {\n    if (!relationsByIssue.has(relation.fromIssue)) relationsByIssue.set(relation.fromIssue, []);\n    relationsByIssue.get(relation.fromIssue).push(relation);\n  }\n\n  const selected = [];\n""",
+          """  const relationsByIssue = new Map();\n  for (const relation of normalized.relations) {\n    if (!relationsByIssue.has(relation.fromIssue)) relationsByIssue.set(relation.fromIssue, []);\n    relationsByIssue.get(relation.fromIssue).push(relation);\n  }\n\n  // Purpose is provider-derived from the material issue graph. Evidence cannot self-assert it.\n  const issueBindingsByEvidence = new Map();\n  for (const relation of normalized.relations) {\n    if (!relation.material || !issueState.get(relation.fromIssue)?.material) continue;\n    if (!issueBindingsByEvidence.has(relation.toEvidence)) issueBindingsByEvidence.set(relation.toEvidence, new Set());\n    issueBindingsByEvidence.get(relation.toEvidence).add(relation.fromIssue);\n  }\n  for (const item of normalized.evidence) {\n    item.issueBindings = [...(issueBindingsByEvidence.get(item.id) ?? [])].sort();\n  }\n\n  const selected = [];\n""")
+
+          replace_once('tools/sol-reasoning-protocol.mjs',
+          """  'authorityClass', 'version', 'provenance', 'freshness',\n]);\n""",
+          """  'authorityClass', 'version', 'provenance', 'freshness', 'issueBindings',\n]);\n""")
+          replace_once('tools/sol-reasoning-protocol.mjs',
+          """    freshness: cleanString(metadata.freshness ?? '', `context_${index}_metadata_freshness`, { max: 240, optional: true }),\n  };\n""",
+          """    freshness: cleanString(metadata.freshness ?? '', `context_${index}_metadata_freshness`, { max: 240, optional: true }),\n    issueBindings: cleanStringList(metadata.issueBindings ?? [], `context_${index}_metadata_issueBindings`, { maxItems: 64 }),\n  };\n""")
+          replace_once('tools/sol-reasoning-protocol.mjs',
+          """function normalizeClaim(raw, index, knownEvidence) {\n""",
+          """function commonIssueBindings(refs, knownEvidence) {\n  if (refs.length === 0) return [];\n  const lists = refs.map((ref) => knownEvidence.get(ref)?.metadata?.issueBindings ?? []);\n  if (lists.some((bindings) => bindings.length === 0)) return [];\n  const [first, ...rest] = lists;\n  return first.filter((issueId) => rest.every((bindings) => bindings.includes(issueId)));\n}\n\nfunction normalizeClaim(raw, index, knownEvidence) {\n""")
+          replace_once('tools/sol-reasoning-protocol.mjs',
+          """  if (claim.kind === CLAIM_KIND.ROOT_CAUSE && claim.status === CLAIM_STATUS.ESTABLISHED) {\n    if (!evidenceTypes.has('actual')) throw new Error(`claim_${index}_root_cause_actual_required`);\n    if (claim.counterEvidenceRefs.length === 0) throw new Error(`claim_${index}_root_cause_counter_required`);\n    if (claim.discriminatingTestRefs.length === 0) throw new Error(`claim_${index}_root_cause_discriminating_test_required`);\n  }\n""",
+          """  if (claim.kind === CLAIM_KIND.ROOT_CAUSE && claim.status === CLAIM_STATUS.ESTABLISHED) {\n    if (!evidenceTypes.has('actual')) throw new Error(`claim_${index}_root_cause_actual_required`);\n    if (claim.counterEvidenceRefs.length === 0) throw new Error(`claim_${index}_root_cause_counter_required`);\n    if (claim.discriminatingTestRefs.length === 0) throw new Error(`claim_${index}_root_cause_discriminating_test_required`);\n    const actualRefs = claim.evidenceRefs.filter((ref) => knownEvidence.get(ref)?.trustedClass === 'actual');\n    const causalRefs = [...new Set([...actualRefs, ...claim.counterEvidenceRefs, ...claim.discriminatingTestRefs])];\n    if (causalRefs.some((ref) => (knownEvidence.get(ref)?.metadata?.issueBindings ?? []).length === 0)) {\n      throw new Error(`claim_${index}_root_cause_issue_binding_required`);\n    }\n    if (commonIssueBindings(causalRefs, knownEvidence).length === 0) {\n      throw new Error(`claim_${index}_root_cause_issue_binding_mismatch`);\n    }\n  }\n""")
+
+          replace_once('tools/luna-sol-integration-core.mjs',
+          """function localEvidenceMode(routeDecision) {\n""",
+          """function declaredLocalEvidenceRefs(localEvidence) {\n  const refs = new Set(localEvidence?.decisionBasisRefs ?? []);\n  for (const claim of localEvidence?.claims ?? []) {\n    for (const key of ['evidenceRefs', 'counterEvidenceRefs', 'discriminatingTestRefs']) {\n      for (const ref of claim?.[key] ?? []) refs.add(ref);\n    }\n  }\n  return refs;\n}\n\nfunction promoteDeclaredContextRefs(context, localEvidence) {\n  const declaredRefs = declaredLocalEvidenceRefs(localEvidence);\n  return (context ?? []).map((item) => (\n    item && typeof item === 'object' && !Array.isArray(item) && declaredRefs.has(item.id)\n      ? { ...item, required: true }\n      : item\n  ));\n}\n\nfunction localEvidenceMode(routeDecision) {\n""")
+          replace_once('tools/luna-sol-integration-core.mjs',
+          """function validateLocalMutationEvidence(input, queuePacket, routeDecision) {\n  const frozen = freezeEvidence(queuePacket, input.context ?? [], input.maxWireBytes ?? 3000);\n  if (!frozen.ok) return { ok: false, reason: `local_evidence_packet_${frozen.reason}`, metrics: frozen.metrics ?? null };\n  if (!input.localEvidence || typeof input.localEvidence !== 'object' || Array.isArray(input.localEvidence)) {\n    return { ok: false, reason: 'local_evidence_required', metrics: frozen.metrics, fingerprint: frozen.fingerprint };\n  }\n  const checked = validateEvidenceClaims({\n    mode: localEvidenceMode(routeDecision),\n    disposition: 'PLAN',\n    filesToChange: queuePacket.exactMutableResources,\n    claims: input.localEvidence.claims ?? [],\n    selectedCauseClaimId: input.localEvidence.selectedCauseClaimId ?? '',\n    decisionBasisRefs: input.localEvidence.decisionBasisRefs ?? [],\n  }, frozen.context);\n""",
+          """function validateLocalMutationEvidence(input, queuePacket, routeDecision) {\n  const localEvidence = input.localEvidence && typeof input.localEvidence === 'object' && !Array.isArray(input.localEvidence)\n    ? input.localEvidence\n    : null;\n  if (!localEvidence) {\n    return { ok: false, reason: 'local_evidence_required', metrics: null, fingerprint: null };\n  }\n  const frozenContext = promoteDeclaredContextRefs(input.context ?? [], localEvidence);\n  const frozen = freezeEvidence(queuePacket, frozenContext, input.maxWireBytes ?? 3000);\n  if (!frozen.ok) return { ok: false, reason: `local_evidence_packet_${frozen.reason}`, metrics: frozen.metrics ?? null };\n  const checked = validateEvidenceClaims({\n    mode: localEvidenceMode(routeDecision),\n    disposition: 'PLAN',\n    filesToChange: queuePacket.exactMutableResources,\n    claims: localEvidence.claims ?? [],\n    selectedCauseClaimId: localEvidence.selectedCauseClaimId ?? '',\n    decisionBasisRefs: localEvidence.decisionBasisRefs ?? [],\n  }, frozen.context);\n""")
+
+          replace_once('tests/sol-reasoning-protocol.test.mjs',
+          "function canonicalEvidence({ id, state, role, text, required = false, priority = 0, tier = 'HOT', claimMode = 'CURRENT' }) {",
+          "function canonicalEvidence({ id, state, role, text, required = false, priority = 0, tier = 'HOT', claimMode = 'CURRENT', issueBindings = [] }) {")
+          replace_once('tests/sol-reasoning-protocol.test.mjs',
+          """      freshness: 'CURRENT_TEST_FIXTURE',\n      text,\n""",
+          """      freshness: 'CURRENT_TEST_FIXTURE',\n      issueBindings,\n      text,\n""")
+          replace_once('tests/sol-reasoning-protocol.test.mjs',
+          """    canonicalEvidence({ id: 'actual:observed', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DIRECT_ACTUAL', text: 'Observed behavior is X.', required: true }),\n    canonicalEvidence({ id: 'test:focused', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DISCRIMINATING_TEST', text: 'Focused discriminator shows X changes when factor A changes.', priority: 10 }),\n    canonicalEvidence({ id: 'counter:failed', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'COUNTEREVIDENCE', text: 'Alternative explanation B remains counterevidence unless discriminated.', priority: 10 }),\n""",
+          """    canonicalEvidence({ id: 'actual:observed', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DIRECT_ACTUAL', text: 'Observed behavior is X.', required: true, issueBindings: ['issue:target'] }),\n    canonicalEvidence({ id: 'test:focused', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DISCRIMINATING_TEST', text: 'Focused discriminator shows X changes when factor A changes.', priority: 10, issueBindings: ['issue:target'] }),\n    canonicalEvidence({ id: 'counter:failed', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'COUNTEREVIDENCE', text: 'Alternative explanation B remains counterevidence unless discriminated.', priority: 10, issueBindings: ['issue:target'] }),\n""")
+
+          replace_once('tests/luna-sol-integration-core.test.mjs',
+          "function canonicalEvidence({ id, state, role, text, required = false, priority = 0 }) {",
+          "function canonicalEvidence({ id, state, role, text, required = false, priority = 0, issueBindings = [] }) {")
+          replace_once('tests/luna-sol-integration-core.test.mjs',
+          """      freshness: 'CURRENT_TEST_FIXTURE',\n      text,\n""",
+          """      freshness: 'CURRENT_TEST_FIXTURE',\n      issueBindings,\n      text,\n""")
+          replace_once('tests/luna-sol-integration-core.test.mjs',
+          """    canonicalEvidence({ id: 'actual:state', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DIRECT_ACTUAL', text: 'Current actual directly exhibits the target condition.', required: true }),\n    canonicalEvidence({ id: 'test:discriminator', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DISCRIMINATING_TEST', text: 'A/B discriminator isolates factor X.', priority: 10 }),\n    canonicalEvidence({ id: 'counter:alternative', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'COUNTEREVIDENCE', text: 'Alternative Y is explicit counterevidence.', priority: 10 }),\n""",
+          """    canonicalEvidence({ id: 'actual:state', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DIRECT_ACTUAL', text: 'Current actual directly exhibits the target condition.', required: true, issueBindings: ['issue:target'] }),\n    canonicalEvidence({ id: 'test:discriminator', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DISCRIMINATING_TEST', text: 'A/B discriminator isolates factor X.', priority: 10, issueBindings: ['issue:target'] }),\n    canonicalEvidence({ id: 'counter:alternative', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'COUNTEREVIDENCE', text: 'Alternative Y is explicit counterevidence.', priority: 10, issueBindings: ['issue:target'] }),\n""")
+          PY
+
+          cat >> tests/jit-evidence-compiler.test.mjs <<'EOF'
+
+          test('compiler derives issue bindings from material relations rather than evidence self-assertion', () => {
+            const input = base({
+              issues: [{ id: 'failure-a', material: true }],
+              relations: [{ fromIssue: 'failure-a', toEvidence: 'warm-bound', material: true }],
+            });
+            input.evidence.push({
+              id: 'warm-bound', tier: 'WARM', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DISCRIMINATING_TEST',
+              text: 'current discriminator', resolves: ['failure-a'],
+            });
+            const result = compileJitEvidencePacket(input);
+            assert.equal(result.ok, true);
+            const item = result.contextItems.find((entry) => entry.id === 'warm-bound');
+            const envelope = parseEnvelope(item.text);
+            assert.deepEqual(envelope.metadata.issueBindings, ['failure-a']);
+          });
+          EOF
+
+          cat >> tests/sol-reasoning-protocol.test.mjs <<'EOF'
+
+          test('rejects genuine causal evidence when material issue bindings do not intersect', () => {
+            const context = [
+              canonicalEvidence({ id: 'authority:x', state: 'CURRENT_AUTHORITY', role: 'AUTHORITY', text: 'authority', required: true }),
+              canonicalEvidence({ id: 'actual:x', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DIRECT_ACTUAL', text: 'actual', issueBindings: ['issue:a'] }),
+              canonicalEvidence({ id: 'test:x', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DISCRIMINATING_TEST', text: 'test', issueBindings: ['issue:a'] }),
+              canonicalEvidence({ id: 'counter:x', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'COUNTEREVIDENCE', text: 'counter', issueBindings: ['issue:b'] }),
+            ];
+            const checked = validateEvidenceClaims({
+              mode: 'ROOT_CAUSE', disposition: 'PLAN', filesToChange: ['src/a.mjs'],
+              claims: [{ id: 'root-x', kind: 'ROOT_CAUSE', statement: 'A causes X', status: 'ESTABLISHED', evidenceRefs: ['actual:x', 'test:x'], counterEvidenceRefs: ['counter:x'], discriminatingTestRefs: ['test:x'], nextDiscriminator: '' }],
+              selectedCauseClaimId: 'root-x', decisionBasisRefs: ['authority:x', 'actual:x'],
+            }, context);
+            assert.equal(checked.ok, false);
+            assert.equal(checked.reason, 'claim_0_root_cause_issue_binding_mismatch');
+          });
+          EOF
+
+          cat >> tests/luna-sol-integration-core.test.mjs <<'EOF'
+
+          test('local declared causal refs survive evidence freeze even when decoys outrank them', async () => {
+            const context = evidenceContext();
+            context.push(canonicalEvidence({
+              id: 'decoy:high', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'TEST_RESULT',
+              text: 'D'.repeat(900), priority: 1000, issueBindings: ['issue:other'],
+            }));
+            context[3] = { ...context[3], priority: -1000 };
+            context[4] = { ...context[4], priority: -1000 };
+            const result = await runLunaSolDecision({
+              queuePacket: queue(), context, localEvidence: establishedLocalRepairEvidence(),
+              routerInput: { failureCount: 1, acceptanceKnown: true, rootCauseKnown: true, implementationRisk: 'LOW', reversibility: 'EASY' },
+            });
+            assert.equal(result.ok, true);
+            assert.equal(result.mayMutate, true);
+          });
+          EOF
+
+          node --test tests/jit-evidence-compiler.test.mjs tests/sol-reasoning-protocol.test.mjs tests/luna-sol-integration-core.test.mjs
+          git diff --check
+          git status --short
+      - name: Commit material patch and remove temporary controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-evidence-bot'
+          git config user.email 'gameroad-evidence-bot@users.noreply.github.com'
+          git add tools/jit-evidence-compiler.mjs tools/sol-reasoning-protocol.mjs tools/luna-sol-integration-core.mjs tests/jit-evidence-compiler.test.mjs tests/sol-reasoning-protocol.test.mjs tests/luna-sol-integration-core.test.mjs
+          git commit -m 'fix: bind causal evidence to material issue purpose'
+          git rm .github/workflows/ops-ai-evidence-purpose-binding-r2.yml data/preaction-authorizations/OPS-AI-EVIDENCE-PURPOSE-R2-20260829T2116.json
+          git commit -m 'chore: remove temporary evidence binding controls'
+          git push origin HEAD:work/ops-ai-evidence-purpose-binding-r2-20260829

@@ -209,7 +209,7 @@ jobs:
           PROBE_BODY="$RUNNER_TEMP/gameroad-public-probe.html"
           curl --fail --silent --show-error --location \
             --header 'Accept-Encoding: identity' \
-            --retry 4 --retry-delay 2 --retry-connrefused \
+            --retry 10 --retry-delay 2 --retry-all-errors --retry-max-time 40 \
             --max-time 30 \
             --output "$PROBE_BODY" \
             "${PAGES_URL}/"

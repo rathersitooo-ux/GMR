@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CODEX-FINITE-RESOURCE-INNER-R1-20260829T1448",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "CODEX_FINITE_RESOURCE_INNER_ROUTING_R1",
+  "acquireKey": "AICAP-CODEX-INNER-COST-R1-20260829T1448-SOL-Q6N4V8K2",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "current-user-finite-codex-constraint+row1364-cost-hold+current-active-four-worker-default",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "direct-current-file-diff+required-gate-preaction-validator",
+  "proceedToken": "PROCEED|CODEX-FINITE-RESOURCE-INNER-R1-20260829T1448|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|prediction|lease-snapshot",
+  "authorizationBaseSha": "b2128fe80f7cdd7b6e78f541db8e41c8ca7ce656",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "CODEX_FINITE_RESOURCE_INNER_ROUTING_R1",
+  "leaseAcquireKey": "AICAP-CODEX-INNER-COST-R1-20260829T1448-SOL-Q6N4V8K2",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 14:48 JST",
+  "leaseUntilJst": "2026-08-29 15:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A200:L200",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/codex-finite-resource-routing-r1-20260829 from fresh main b2128fe80f7cdd7b6e78f541db8e41c8ca7ce656; transient data/preaction-authorizations/CODEX-FINITE-RESOURCE-INNER-R1-20260829T1448.json first-commit/delete-before-final-head; CODEX_4WINDOW_LAUNCH_CURRENT.md; CODEX_HANDOFF_CURRENT.md; PR/merge state; CURRENT_ACTIVE_LEASES own row; R22 own records. workflows/tools/tests/R40/Windows/product read-only.",
+  "scope": [
+    "CODEX_4WINDOW_LAUNCH_CURRENT.md",
+    "CODEX_HANDOFF_CURRENT.md"
+  ],
+  "leaseScope": [
+    "CODEX_4WINDOW_LAUNCH_CURRENT.md",
+    "CODEX_HANDOFF_CURRENT.md"
+  ]
+}

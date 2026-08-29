@@ -10,36 +10,8 @@ import {
 const here = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(here, '../../..');
 const defaultSource = path.join(repoRoot, 'browser/GAMEROAD.html');
-const defaultCoreSource = path.join(repoRoot, 'browser/deck-save-recovery-core.mjs');
-const defaultDeckSaveAckCoreSource = path.join(repoRoot, 'browser/deck-save-ack-core.mjs');
-const defaultPresenceCoreSource = path.join(repoRoot, 'browser/hate-peer-presence-core.mjs');
-const defaultNavigationCoreSource = path.join(repoRoot, 'browser/screen-navigation-core.mjs');
-const defaultPostMatchAutoqueueCoreSource = path.join(repoRoot, 'browser/post-match-autoqueue-core.mjs');
-const defaultReplayAdapterSource = path.join(repoRoot, 'browser/battle-replay-live-adapter.mjs');
-const defaultPartnerBattleEventProjectionSource = path.join(repoRoot, 'browser/partner-battle-event-log-projection.mjs');
-const defaultReplayCoreSource = path.join(repoRoot, 'browser/battle-replay-core.mjs');
-const defaultCardPresentationCoreSource = path.join(repoRoot, 'browser/card-presentation-core.mjs');
-const defaultBattleConveyorCoreSource = path.join(repoRoot, 'browser/battle-conveyor-presentation-core.mjs');
-const defaultBoardFacilityClassicSource = path.join(repoRoot, 'browser/board-facility-state-core.classic.js');
-const defaultBoardFacilityCoreSource = path.join(repoRoot, 'browser/board-facility-state-core.mjs');
-const defaultBoardFacilityRuntimeMountSource = path.join(repoRoot, 'browser/board-facility-runtime-mount.mjs');
-const defaultPartnerConversationCoreSource = path.join(repoRoot, 'browser/partner-conversation-core.mjs');
-const defaultPartnerSaasunaConversationSource = path.join(repoRoot, 'browser/partner-saasuna-conversation-source.mjs');
-const defaultUiStateFeedbackCoreSource = path.join(repoRoot, 'browser/ui-state-feedback-core.mjs');
-const defaultUiStateFeedbackReadyPlanAdapterSource = path.join(repoRoot, 'browser/ui-state-feedback-ready-plan-adapter.mjs');
-const defaultFieldMusicPolicyCoreSource = path.join(repoRoot, 'browser/field-music-policy-core.mjs');
-const defaultHomeCards2p5dPresentationSource = path.join(repoRoot, 'browser/home-cards-2p5d-presentation.mjs');
-const defaultHomeBootRuntimeMountSource = path.join(repoRoot, 'browser/home-boot-runtime-mount.mjs');
-const defaultHomeShellPresentationCoreSource = path.join(repoRoot, 'browser/home-shell-presentation-core.mjs');
-const defaultPartnerAdviceRuntimeMountSource = path.join(repoRoot, 'browser/partner-advice-runtime-mount.mjs');
-const defaultPartnerLegalActionAdapterSource = path.join(repoRoot, 'browser/partner-legal-action-adapter.mjs');
-const defaultAdviceCollectiveEvalSource = path.join(repoRoot, 'tools/advice-collective-eval.mjs');
-const defaultClickSfxSource = path.join(repoRoot, 'assets/audio/sfx/click_002.ogg');
-const defaultCardSlideSfxSource = path.join(repoRoot, 'assets/audio/sfx/cardSlide6.ogg');
-const defaultCardPlaceSfxSource = path.join(repoRoot, 'assets/audio/sfx/cardPlace1.ogg');
-const defaultHomeThemeOrientationSource = path.join(repoRoot, 'browser/home-theme-orientation-core.mjs');
-const defaultHomeLandscapeAssetSource = path.join(repoRoot, 'assets/visual/home/home-illustration-landscape.webp');
-const defaultHomePortraitAssetSource = path.join(repoRoot, 'assets/visual/home/home-illustration-portrait.webp');
+const defaultDist = path.join(repoRoot, 'deploy/cloudflare/dist');
+
 const FORMAL_SELECTED3_SFX_BLOBS = Object.freeze({
   click: '4564b888c25143eaed79c384a5ce02054813a41c',
   cardSlide: 'b0090036bd9c0d48c3f6d79fd77eaf30901b6a05',
@@ -49,11 +21,42 @@ const FORMAL_PARTNER_CONVERSATION_BLOBS = Object.freeze({
   core: '5db477bcb9747efbab0aff37205614dd304feb8a',
   saasunaSource: 'f2b1bfda9c9a5d9d2511e735b17059a0d2b6a4cc',
 });
-const defaultDist = path.join(repoRoot, 'deploy/cloudflare/dist');
+
+const ARTIFACT_SPECS = Object.freeze([
+  { option: 'coreSource', expected: 'expectedCoreBlob', source: 'browser/deck-save-recovery-core.mjs', output: 'deck-save-recovery-core.mjs', artifact: 'deck_save_recovery_core', label: 'Deck save recovery core', sourceFlag: '--core-source', expectedFlag: '--expected-core-blob' },
+  { option: 'deckSaveAckCoreSource', expected: 'expectedDeckSaveAckCoreBlob', source: 'browser/deck-save-ack-core.mjs', output: 'deck-save-ack-core.mjs', artifact: 'deck_save_ack_core', label: 'Deck save ACK core', sourceFlag: '--deck-save-ack-core-source', expectedFlag: '--expected-deck-save-ack-core-blob' },
+  { option: 'presenceCoreSource', expected: 'expectedPresenceCoreBlob', source: 'browser/hate-peer-presence-core.mjs', output: 'hate-peer-presence-core.mjs', artifact: 'hate_peer_presence_core', label: 'HATE peer presence core', sourceFlag: '--presence-core-source', expectedFlag: '--expected-presence-core-blob' },
+  { option: 'navigationCoreSource', expected: 'expectedNavigationCoreBlob', source: 'browser/screen-navigation-core.mjs', output: 'screen-navigation-core.mjs', artifact: 'screen_navigation_core', label: 'Screen navigation core', sourceFlag: '--navigation-core-source', expectedFlag: '--expected-navigation-core-blob' },
+  { option: 'postMatchAutoqueueCoreSource', expected: 'expectedPostMatchAutoqueueCoreBlob', source: 'browser/post-match-autoqueue-core.mjs', output: 'post-match-autoqueue-core.mjs', artifact: 'post_match_autoqueue_core', label: 'Post-match autoqueue core', sourceFlag: '--post-match-autoqueue-core-source', expectedFlag: '--expected-post-match-autoqueue-core-blob' },
+  { option: 'replayAdapterSource', expected: 'expectedReplayAdapterBlob', source: 'browser/battle-replay-live-adapter.mjs', output: 'battle-replay-live-adapter.mjs', artifact: 'battle_replay_live_adapter', label: 'Battle replay live adapter', sourceFlag: '--replay-adapter-source', expectedFlag: '--expected-replay-adapter-blob' },
+  { option: 'partnerBattleEventProjectionSource', expected: 'expectedPartnerBattleEventProjectionBlob', source: 'browser/partner-battle-event-log-projection.mjs', output: 'partner-battle-event-log-projection.mjs', artifact: 'partner_battle_event_log_projection', label: 'Partner battle event projection', sourceFlag: '--partner-battle-event-projection-source', expectedFlag: '--expected-partner-battle-event-projection-blob' },
+  { option: 'replayCoreSource', expected: 'expectedReplayCoreBlob', source: 'browser/battle-replay-core.mjs', output: 'battle-replay-core.mjs', artifact: 'battle_replay_core', label: 'Battle replay core', sourceFlag: '--replay-core-source', expectedFlag: '--expected-replay-core-blob' },
+  { option: 'cardPresentationCoreSource', expected: 'expectedCardPresentationCoreBlob', source: 'browser/card-presentation-core.mjs', output: 'card-presentation-core.mjs', artifact: 'card_presentation_core', label: 'Card presentation core', sourceFlag: '--card-presentation-core-source', expectedFlag: '--expected-card-presentation-core-blob' },
+  { option: 'battleConveyorCoreSource', expected: 'expectedBattleConveyorCoreBlob', source: 'browser/battle-conveyor-presentation-core.mjs', output: 'battle-conveyor-presentation-core.mjs', artifact: 'battle_conveyor_presentation_core', label: 'Battle conveyor presentation core', sourceFlag: '--battle-conveyor-core-source', expectedFlag: '--expected-battle-conveyor-core-blob' },
+  { option: 'boardFacilityClassicSource', expected: 'expectedBoardFacilityClassicBlob', source: 'browser/board-facility-state-core.classic.js', output: 'board-facility-state-core.classic.js', artifact: 'board_facility_classic', label: 'Board facility classic bridge', sourceFlag: '--board-facility-classic-source', expectedFlag: '--expected-board-facility-classic-blob' },
+  { option: 'boardFacilityCoreSource', expected: 'expectedBoardFacilityCoreBlob', source: 'browser/board-facility-state-core.mjs', output: 'board-facility-state-core.mjs', artifact: 'board_facility_core', label: 'Board facility core', sourceFlag: '--board-facility-core-source', expectedFlag: '--expected-board-facility-core-blob' },
+  { option: 'boardFacilityRuntimeMountSource', expected: 'expectedBoardFacilityRuntimeMountBlob', source: 'browser/board-facility-runtime-mount.mjs', output: 'board-facility-runtime-mount.mjs', artifact: 'board_facility_runtime_mount', label: 'Board facility runtime mount', sourceFlag: '--board-facility-runtime-mount-source', expectedFlag: '--expected-board-facility-runtime-mount-blob' },
+  { source: 'browser/partner-conversation-core.mjs', output: 'partner-conversation-core.mjs', artifact: 'partner_conversation_core', label: 'Partner conversation core', formalBlob: FORMAL_PARTNER_CONVERSATION_BLOBS.core },
+  { source: 'browser/partner-saasuna-conversation-source.mjs', output: 'partner-saasuna-conversation-source.mjs', artifact: 'partner_saasuna_conversation_source', label: 'Partner Saasuna conversation source', formalBlob: FORMAL_PARTNER_CONVERSATION_BLOBS.saasunaSource },
+  { option: 'uiStateFeedbackCoreSource', expected: 'expectedUiStateFeedbackCoreBlob', source: 'browser/ui-state-feedback-core.mjs', output: 'ui-state-feedback-core.mjs', artifact: 'ui_state_feedback_core', label: 'UI state feedback core', sourceFlag: '--ui-state-feedback-core-source', expectedFlag: '--expected-ui-state-feedback-core-blob' },
+  { option: 'uiStateFeedbackReadyPlanAdapterSource', expected: 'expectedUiStateFeedbackReadyPlanAdapterBlob', source: 'browser/ui-state-feedback-ready-plan-adapter.mjs', output: 'ui-state-feedback-ready-plan-adapter.mjs', artifact: 'ui_state_feedback_ready_plan_adapter', label: 'UI state feedback ready-plan adapter', sourceFlag: '--ui-state-feedback-ready-plan-adapter-source', expectedFlag: '--expected-ui-state-feedback-ready-plan-adapter-blob' },
+  { option: 'fieldMusicPolicyCoreSource', expected: 'expectedFieldMusicPolicyCoreBlob', source: 'browser/field-music-policy-core.mjs', output: 'field-music-policy-core.mjs', artifact: 'field_music_policy_core', label: 'Field music policy core', sourceFlag: '--field-music-policy-core-source', expectedFlag: '--expected-field-music-policy-core-blob' },
+  { option: 'homeCards2p5dPresentationSource', source: 'browser/home-cards-2p5d-presentation.mjs', output: 'home-cards-2p5d-presentation.mjs', artifact: 'home_cards_2p5d_presentation', label: 'Home Cards 2.5D presentation', sourceFlag: '--home-cards-2p5d-presentation-source' },
+  { option: 'homeBootRuntimeMountSource', expected: 'expectedHomeBootRuntimeMountBlob', source: 'browser/home-boot-runtime-mount.mjs', output: 'home-boot-runtime-mount.mjs', artifact: 'home_boot_runtime_mount', label: 'Home Boot runtime mount', sourceFlag: '--home-boot-runtime-mount-source', expectedFlag: '--expected-home-boot-runtime-mount-blob' },
+  { option: 'homeShellPresentationCoreSource', expected: 'expectedHomeShellPresentationCoreBlob', source: 'browser/home-shell-presentation-core.mjs', output: 'home-shell-presentation-core.mjs', artifact: 'home_shell_presentation_core', label: 'Home shell presentation core', sourceFlag: '--home-shell-presentation-core-source', expectedFlag: '--expected-home-shell-presentation-core-blob' },
+  { option: 'homeThemeOrientationSource', expected: 'expectedHomeThemeOrientationBlob', source: 'browser/home-theme-orientation-core.mjs', output: 'home-theme-orientation-core.mjs', artifact: 'home_theme_orientation_core', label: 'Home theme/orientation core' },
+  { option: 'homeLandscapeAssetSource', source: 'assets/visual/home/home-illustration-landscape.webp', output: 'assets/visual/home/home-illustration-landscape.webp', artifact: 'home_illustration_landscape', label: 'Home visual' },
+  { option: 'homePortraitAssetSource', source: 'assets/visual/home/home-illustration-portrait.webp', output: 'assets/visual/home/home-illustration-portrait.webp', artifact: 'home_illustration_portrait', label: 'Home visual' },
+  { option: 'partnerAdviceRuntimeMountSource', expected: 'expectedPartnerAdviceRuntimeMountBlob', source: 'browser/partner-advice-runtime-mount.mjs', output: 'partner-advice-runtime-mount.mjs', artifact: 'partner_advice_runtime_mount', label: 'Partner advice runtime mount', sourceFlag: '--partner-advice-runtime-mount-source', expectedFlag: '--expected-partner-advice-runtime-mount-blob' },
+  { option: 'partnerLegalActionAdapterSource', expected: 'expectedPartnerLegalActionAdapterBlob', source: 'browser/partner-legal-action-adapter.mjs', output: 'partner-legal-action-adapter.mjs', artifact: 'partner_legal_action_adapter', label: 'Partner legal action adapter', sourceFlag: '--partner-legal-action-adapter-source', expectedFlag: '--expected-partner-legal-action-adapter-blob' },
+  { option: 'adviceCollectiveEvalSource', expected: 'expectedAdviceCollectiveEvalBlob', source: 'tools/advice-collective-eval.mjs', output: 'tools/advice-collective-eval.mjs', artifact: 'advice_collective_eval', label: 'Advice collective evaluator', sourceFlag: '--advice-collective-eval-source', expectedFlag: '--expected-advice-collective-eval-blob' },
+  { option: 'clickSfxSource', source: 'assets/audio/sfx/click_002.ogg', output: 'click_002.ogg', artifact: 'sfx_click_002', label: 'Formal click SFX', formalBlob: FORMAL_SELECTED3_SFX_BLOBS.click },
+  { option: 'cardSlideSfxSource', source: 'assets/audio/sfx/cardSlide6.ogg', output: 'cardSlide6.ogg', artifact: 'sfx_card_slide_6', label: 'Formal card-slide SFX', formalBlob: FORMAL_SELECTED3_SFX_BLOBS.cardSlide },
+  { option: 'cardPlaceSfxSource', source: 'assets/audio/sfx/cardPlace1.ogg', output: 'cardPlace1.ogg', artifact: 'sfx_card_place_1', label: 'Formal card-place SFX', formalBlob: FORMAL_SELECTED3_SFX_BLOBS.cardPlace },
+]);
 
 function gitBlobSha1(buffer) {
-  const header = Buffer.from(`blob ${buffer.length}\0`);
-  return createHash('sha1').update(header).update(buffer).digest('hex');
+  return createHash('sha1').update(Buffer.from(`blob ${buffer.length}\0`)).update(buffer).digest('hex');
 }
 
 function sha256(buffer) {
@@ -61,13 +64,7 @@ function sha256(buffer) {
 }
 
 function provenance(source, output, input, blob) {
-  return {
-    source,
-    output,
-    git_blob_sha1: blob,
-    sha256: sha256(input),
-    bytes: input.length,
-  };
+  return { source, output, git_blob_sha1: blob, sha256: sha256(input), bytes: input.length };
 }
 
 function localModuleRefs(sourceText) {
@@ -76,9 +73,7 @@ function localModuleRefs(sourceText) {
     /\b(?:import|export)\s+(?:[^'\"]*?\s+from\s*)?(['\"])(\.{1,2}\/[^'\"?#]+\.(?:mjs|js))(?:[?#][^'\"]*)?\1/g,
     /\bimport\s*\(\s*(['\"])(\.{1,2}\/[^'\"?#]+\.(?:mjs|js))(?:[?#][^'\"]*)?\1\s*\)/g,
   ];
-  for (const pattern of patterns) {
-    for (const match of sourceText.matchAll(pattern)) refs.add(match[2]);
-  }
+  for (const pattern of patterns) for (const match of sourceText.matchAll(pattern)) refs.add(match[2]);
   return [...refs].sort();
 }
 
@@ -100,9 +95,7 @@ export async function assertBrowserRuntimeDependencyCompleteness(browserInput, d
     /\bimport\s*\(\s*(['"])(\.\/[^'"?#]+\.(?:mjs|js))(?:[?#][^'"]*)?\1\s*\)/g,
     /<script\b[^>]*\bsrc\s*=\s*(['"])(\.\/[^'"?#]+\.(?:mjs|js))(?:[?#][^'"]*)?\1[^>]*>/gi,
   ];
-  for (const pattern of patterns) {
-    for (const match of html.matchAll(pattern)) refs.add(match[2]);
-  }
+  for (const pattern of patterns) for (const match of html.matchAll(pattern)) refs.add(match[2]);
 
   const pending = [];
   for (const ref of refs) {
@@ -114,21 +107,17 @@ export async function assertBrowserRuntimeDependencyCompleteness(browserInput, d
   }
 
   const visited = new Set();
-  while (pending.length > 0) {
+  while (pending.length) {
     const output = pending.shift();
     if (visited.has(output)) continue;
     visited.add(output);
-
     let bytes;
     try {
       bytes = await readFile(path.join(dist, output));
     } catch (error) {
-      if (error?.code === 'ENOENT') {
-        throw new Error(`Public package missing Browser runtime dependency: ./${output}`);
-      }
+      if (error?.code === 'ENOENT') throw new Error(`Public package missing Browser runtime dependency: ./${output}`);
       throw error;
     }
-
     if (!/\.(?:mjs|js)$/i.test(output)) continue;
     for (const ref of localModuleRefs(bytes.toString('utf8'))) {
       const dependencyOutput = resolvePublicModuleOutput(output, ref);
@@ -138,434 +127,57 @@ export async function assertBrowserRuntimeDependencyCompleteness(browserInput, d
   return [...visited].sort();
 }
 
-export async function buildPackage({
-  source = defaultSource,
-  coreSource = defaultCoreSource,
-  deckSaveAckCoreSource = defaultDeckSaveAckCoreSource,
-  presenceCoreSource = defaultPresenceCoreSource,
-  navigationCoreSource = defaultNavigationCoreSource,
-  postMatchAutoqueueCoreSource = defaultPostMatchAutoqueueCoreSource,
-  replayAdapterSource = defaultReplayAdapterSource,
-  partnerBattleEventProjectionSource = defaultPartnerBattleEventProjectionSource,
-  replayCoreSource = defaultReplayCoreSource,
-  cardPresentationCoreSource = defaultCardPresentationCoreSource,
-  battleConveyorCoreSource = defaultBattleConveyorCoreSource,
-  boardFacilityClassicSource = defaultBoardFacilityClassicSource,
-  boardFacilityCoreSource = defaultBoardFacilityCoreSource,
-  boardFacilityRuntimeMountSource = defaultBoardFacilityRuntimeMountSource,
-  uiStateFeedbackCoreSource = defaultUiStateFeedbackCoreSource,
-  uiStateFeedbackReadyPlanAdapterSource = defaultUiStateFeedbackReadyPlanAdapterSource,
-  fieldMusicPolicyCoreSource = defaultFieldMusicPolicyCoreSource,
-  homeCards2p5dPresentationSource = defaultHomeCards2p5dPresentationSource,
-  homeBootRuntimeMountSource = defaultHomeBootRuntimeMountSource,
-  homeShellPresentationCoreSource = defaultHomeShellPresentationCoreSource,
-  partnerAdviceRuntimeMountSource = defaultPartnerAdviceRuntimeMountSource,
-  partnerLegalActionAdapterSource = defaultPartnerLegalActionAdapterSource,
-  adviceCollectiveEvalSource = defaultAdviceCollectiveEvalSource,
-  clickSfxSource = defaultClickSfxSource,
-  cardSlideSfxSource = defaultCardSlideSfxSource,
-  cardPlaceSfxSource = defaultCardPlaceSfxSource,
-  homeThemeOrientationSource = defaultHomeThemeOrientationSource,
-  homeLandscapeAssetSource = defaultHomeLandscapeAssetSource,
-  homePortraitAssetSource = defaultHomePortraitAssetSource,
-  dist = defaultDist,
-  expectedBlob = '',
-  expectedCoreBlob = '',
-  expectedDeckSaveAckCoreBlob = '',
-  expectedPresenceCoreBlob = '',
-  expectedNavigationCoreBlob = '',
-  expectedPostMatchAutoqueueCoreBlob = '',
-  expectedReplayAdapterBlob = '',
-  expectedPartnerBattleEventProjectionBlob = '',
-  expectedReplayCoreBlob = '',
-  expectedCardPresentationCoreBlob = '',
-  expectedBattleConveyorCoreBlob = '',
-  expectedBoardFacilityClassicBlob = '',
-  expectedBoardFacilityCoreBlob = '',
-  expectedBoardFacilityRuntimeMountBlob = '',
-  expectedUiStateFeedbackCoreBlob = '',
-  expectedUiStateFeedbackReadyPlanAdapterBlob = '',
-  expectedFieldMusicPolicyCoreBlob = '',
-  expectedHomeBootRuntimeMountBlob = '',
-  expectedHomeShellPresentationCoreBlob = '',
-  expectedPartnerAdviceRuntimeMountBlob = '',
-  expectedPartnerLegalActionAdapterBlob = '',
-  expectedAdviceCollectiveEvalBlob = '',
-  expectedHomeThemeOrientationBlob = '',
-  sourceCommit = '',
-  publishedAt = '',
-} = {}) {
-  const input = await readFile(source);
-  const coreInput = await readFile(coreSource);
-  const deckSaveAckCoreInput = await readFile(deckSaveAckCoreSource);
-  const presenceCoreInput = await readFile(presenceCoreSource);
-  const navigationCoreInput = await readFile(navigationCoreSource);
-  const postMatchAutoqueueCoreInput = await readFile(postMatchAutoqueueCoreSource);
-  const replayAdapterInput = await readFile(replayAdapterSource);
-  const partnerBattleEventProjectionInput = await readFile(partnerBattleEventProjectionSource);
-  const replayCoreInput = await readFile(replayCoreSource);
-  const cardPresentationCoreInput = await readFile(cardPresentationCoreSource);
-  const battleConveyorCoreInput = await readFile(battleConveyorCoreSource);
-  const boardFacilityClassicInput = await readFile(boardFacilityClassicSource);
-  const boardFacilityCoreInput = await readFile(boardFacilityCoreSource);
-  const boardFacilityRuntimeMountInput = await readFile(boardFacilityRuntimeMountSource);
-  const partnerConversationCoreInput = await readFile(defaultPartnerConversationCoreSource);
-  const partnerSaasunaConversationSourceInput = await readFile(defaultPartnerSaasunaConversationSource);
-  const uiStateFeedbackCoreInput = await readFile(uiStateFeedbackCoreSource);
-  const uiStateFeedbackReadyPlanAdapterInput = await readFile(uiStateFeedbackReadyPlanAdapterSource);
-  const fieldMusicPolicyCoreInput = await readFile(fieldMusicPolicyCoreSource);
-  const homeCards2p5dPresentationInput = await readFile(homeCards2p5dPresentationSource);
-  const homeBootRuntimeMountInput = await readFile(homeBootRuntimeMountSource);
-  const homeShellPresentationCoreInput = await readFile(homeShellPresentationCoreSource);
-  const partnerAdviceRuntimeMountInput = await readFile(partnerAdviceRuntimeMountSource);
-  const partnerLegalActionAdapterInput = await readFile(partnerLegalActionAdapterSource);
-  const adviceCollectiveEvalInput = await readFile(adviceCollectiveEvalSource);
-  const clickSfxInput = await readFile(clickSfxSource);
-  const cardSlideSfxInput = await readFile(cardSlideSfxSource);
-  const cardPlaceSfxInput = await readFile(cardPlaceSfxSource);
-  const homeThemeOrientationInput = await readFile(homeThemeOrientationSource);
-  const homeLandscapeAssetInput = await readFile(homeLandscapeAssetSource);
-  const homePortraitAssetInput = await readFile(homePortraitAssetSource);
+async function readArtifact(spec, options) {
+  const sourcePath = spec.option && options[spec.option] ? options[spec.option] : path.join(repoRoot, spec.source);
+  const input = await readFile(sourcePath);
   const blob = gitBlobSha1(input);
-  const coreBlob = gitBlobSha1(coreInput);
-  const deckSaveAckCoreBlob = gitBlobSha1(deckSaveAckCoreInput);
-  const presenceCoreBlob = gitBlobSha1(presenceCoreInput);
-  const navigationCoreBlob = gitBlobSha1(navigationCoreInput);
-  const postMatchAutoqueueCoreBlob = gitBlobSha1(postMatchAutoqueueCoreInput);
-  const replayAdapterBlob = gitBlobSha1(replayAdapterInput);
-  const partnerBattleEventProjectionBlob = gitBlobSha1(partnerBattleEventProjectionInput);
-  const replayCoreBlob = gitBlobSha1(replayCoreInput);
-  const cardPresentationCoreBlob = gitBlobSha1(cardPresentationCoreInput);
-  const battleConveyorCoreBlob = gitBlobSha1(battleConveyorCoreInput);
-  const boardFacilityClassicBlob = gitBlobSha1(boardFacilityClassicInput);
-  const boardFacilityCoreBlob = gitBlobSha1(boardFacilityCoreInput);
-  const boardFacilityRuntimeMountBlob = gitBlobSha1(boardFacilityRuntimeMountInput);
-  const partnerConversationCoreBlob = gitBlobSha1(partnerConversationCoreInput);
-  const partnerSaasunaConversationSourceBlob = gitBlobSha1(partnerSaasunaConversationSourceInput);
-  const uiStateFeedbackCoreBlob = gitBlobSha1(uiStateFeedbackCoreInput);
-  const uiStateFeedbackReadyPlanAdapterBlob = gitBlobSha1(uiStateFeedbackReadyPlanAdapterInput);
-  const fieldMusicPolicyCoreBlob = gitBlobSha1(fieldMusicPolicyCoreInput);
-  const homeCards2p5dPresentationBlob = gitBlobSha1(homeCards2p5dPresentationInput);
-  const homeBootRuntimeMountBlob = gitBlobSha1(homeBootRuntimeMountInput);
-  const homeShellPresentationCoreBlob = gitBlobSha1(homeShellPresentationCoreInput);
-  const partnerAdviceRuntimeMountBlob = gitBlobSha1(partnerAdviceRuntimeMountInput);
-  const partnerLegalActionAdapterBlob = gitBlobSha1(partnerLegalActionAdapterInput);
-  const adviceCollectiveEvalBlob = gitBlobSha1(adviceCollectiveEvalInput);
-  const clickSfxBlob = gitBlobSha1(clickSfxInput);
-  const cardSlideSfxBlob = gitBlobSha1(cardSlideSfxInput);
-  const cardPlaceSfxBlob = gitBlobSha1(cardPlaceSfxInput);
-  const homeThemeOrientationBlob = gitBlobSha1(homeThemeOrientationInput);
-  if (partnerConversationCoreBlob !== FORMAL_PARTNER_CONVERSATION_BLOBS.core) {
-    throw new Error(`Partner conversation core blob mismatch: expected=${FORMAL_PARTNER_CONVERSATION_BLOBS.core} actual=${partnerConversationCoreBlob}`);
+  if (spec.formalBlob && blob !== spec.formalBlob) {
+    throw new Error(`${spec.label} blob mismatch: expected=${spec.formalBlob} actual=${blob}`);
   }
-  if (partnerSaasunaConversationSourceBlob !== FORMAL_PARTNER_CONVERSATION_BLOBS.saasunaSource) {
-    throw new Error(`Partner Saasuna conversation source blob mismatch: expected=${FORMAL_PARTNER_CONVERSATION_BLOBS.saasunaSource} actual=${partnerSaasunaConversationSourceBlob}`);
+  if (spec.expected && options[spec.expected] && blob !== options[spec.expected]) {
+    throw new Error(`${spec.label} blob mismatch: expected=${options[spec.expected]} actual=${blob}`);
   }
-  if (clickSfxBlob !== FORMAL_SELECTED3_SFX_BLOBS.click) {
-    throw new Error(`Formal click SFX blob mismatch: expected=${FORMAL_SELECTED3_SFX_BLOBS.click} actual=${clickSfxBlob}`);
-  }
-  if (cardSlideSfxBlob !== FORMAL_SELECTED3_SFX_BLOBS.cardSlide) {
-    throw new Error(`Formal card-slide SFX blob mismatch: expected=${FORMAL_SELECTED3_SFX_BLOBS.cardSlide} actual=${cardSlideSfxBlob}`);
-  }
-  if (cardPlaceSfxBlob !== FORMAL_SELECTED3_SFX_BLOBS.cardPlace) {
-    throw new Error(`Formal card-place SFX blob mismatch: expected=${FORMAL_SELECTED3_SFX_BLOBS.cardPlace} actual=${cardPlaceSfxBlob}`);
-  }
-  if (expectedHomeThemeOrientationBlob && homeThemeOrientationBlob !== expectedHomeThemeOrientationBlob) {
-    throw new Error(`Home theme/orientation core blob mismatch: expected=${expectedHomeThemeOrientationBlob} actual=${homeThemeOrientationBlob}`);
-  }
-  if (expectedBlob && blob !== expectedBlob) {
-    throw new Error(`Browser blob mismatch: expected=${expectedBlob} actual=${blob}`);
-  }
-  if (expectedCoreBlob && coreBlob !== expectedCoreBlob) {
-    throw new Error(`Deck save recovery core blob mismatch: expected=${expectedCoreBlob} actual=${coreBlob}`);
-  }
-  if (expectedDeckSaveAckCoreBlob && deckSaveAckCoreBlob !== expectedDeckSaveAckCoreBlob) {
-    throw new Error(`Deck save ACK core blob mismatch: expected=${expectedDeckSaveAckCoreBlob} actual=${deckSaveAckCoreBlob}`);
-  }
-  if (expectedPresenceCoreBlob && presenceCoreBlob !== expectedPresenceCoreBlob) {
-    throw new Error(`HATE peer presence core blob mismatch: expected=${expectedPresenceCoreBlob} actual=${presenceCoreBlob}`);
-  }
-  if (expectedNavigationCoreBlob && navigationCoreBlob !== expectedNavigationCoreBlob) {
-    throw new Error(`Screen navigation core blob mismatch: expected=${expectedNavigationCoreBlob} actual=${navigationCoreBlob}`);
-  }
-  if (expectedPostMatchAutoqueueCoreBlob && postMatchAutoqueueCoreBlob !== expectedPostMatchAutoqueueCoreBlob) {
-    throw new Error(`Post-match autoqueue core blob mismatch: expected=${expectedPostMatchAutoqueueCoreBlob} actual=${postMatchAutoqueueCoreBlob}`);
-  }
-  if (expectedReplayAdapterBlob && replayAdapterBlob !== expectedReplayAdapterBlob) {
-    throw new Error(`Battle replay live adapter blob mismatch: expected=${expectedReplayAdapterBlob} actual=${replayAdapterBlob}`);
-  }
-  if (expectedPartnerBattleEventProjectionBlob && partnerBattleEventProjectionBlob !== expectedPartnerBattleEventProjectionBlob) {
-    throw new Error(`Partner battle event projection blob mismatch: expected=${expectedPartnerBattleEventProjectionBlob} actual=${partnerBattleEventProjectionBlob}`);
-  }
-  if (expectedReplayCoreBlob && replayCoreBlob !== expectedReplayCoreBlob) {
-    throw new Error(`Battle replay core blob mismatch: expected=${expectedReplayCoreBlob} actual=${replayCoreBlob}`);
-  }
-  if (expectedCardPresentationCoreBlob && cardPresentationCoreBlob !== expectedCardPresentationCoreBlob) {
-    throw new Error(`Card presentation core blob mismatch: expected=${expectedCardPresentationCoreBlob} actual=${cardPresentationCoreBlob}`);
-  }
-  if (expectedBattleConveyorCoreBlob && battleConveyorCoreBlob !== expectedBattleConveyorCoreBlob) {
-    throw new Error(`Battle conveyor presentation core blob mismatch: expected=${expectedBattleConveyorCoreBlob} actual=${battleConveyorCoreBlob}`);
-  }
-  if (expectedBoardFacilityClassicBlob && boardFacilityClassicBlob !== expectedBoardFacilityClassicBlob) {
-    throw new Error(`Board facility classic bridge blob mismatch: expected=${expectedBoardFacilityClassicBlob} actual=${boardFacilityClassicBlob}`);
-  }
-  if (expectedBoardFacilityCoreBlob && boardFacilityCoreBlob !== expectedBoardFacilityCoreBlob) {
-    throw new Error(`Board facility core blob mismatch: expected=${expectedBoardFacilityCoreBlob} actual=${boardFacilityCoreBlob}`);
-  }
-  if (expectedBoardFacilityRuntimeMountBlob && boardFacilityRuntimeMountBlob !== expectedBoardFacilityRuntimeMountBlob) {
-    throw new Error(`Board facility runtime mount blob mismatch: expected=${expectedBoardFacilityRuntimeMountBlob} actual=${boardFacilityRuntimeMountBlob}`);
-  }
-  if (expectedUiStateFeedbackCoreBlob && uiStateFeedbackCoreBlob !== expectedUiStateFeedbackCoreBlob) {
-    throw new Error(`UI state feedback core blob mismatch: expected=${expectedUiStateFeedbackCoreBlob} actual=${uiStateFeedbackCoreBlob}`);
-  }
-  if (
-    expectedUiStateFeedbackReadyPlanAdapterBlob
-    && uiStateFeedbackReadyPlanAdapterBlob !== expectedUiStateFeedbackReadyPlanAdapterBlob
-  ) {
-    throw new Error(
-      `UI state feedback ready-plan adapter blob mismatch: expected=${expectedUiStateFeedbackReadyPlanAdapterBlob} actual=${uiStateFeedbackReadyPlanAdapterBlob}`,
-    );
-  }
-  if (expectedFieldMusicPolicyCoreBlob && fieldMusicPolicyCoreBlob !== expectedFieldMusicPolicyCoreBlob) {
-    throw new Error(
-      `Field music policy core blob mismatch: expected=${expectedFieldMusicPolicyCoreBlob} actual=${fieldMusicPolicyCoreBlob}`,
-    );
-  }
-  if (expectedHomeBootRuntimeMountBlob && homeBootRuntimeMountBlob !== expectedHomeBootRuntimeMountBlob) {
-    throw new Error(`Home Boot runtime mount blob mismatch: expected=${expectedHomeBootRuntimeMountBlob} actual=${homeBootRuntimeMountBlob}`);
-  }
-  if (expectedHomeShellPresentationCoreBlob && homeShellPresentationCoreBlob !== expectedHomeShellPresentationCoreBlob) {
-    throw new Error(`Home shell presentation core blob mismatch: expected=${expectedHomeShellPresentationCoreBlob} actual=${homeShellPresentationCoreBlob}`);
-  }
-  if (expectedPartnerAdviceRuntimeMountBlob && partnerAdviceRuntimeMountBlob !== expectedPartnerAdviceRuntimeMountBlob) {
-    throw new Error(`Partner advice runtime mount blob mismatch: expected=${expectedPartnerAdviceRuntimeMountBlob} actual=${partnerAdviceRuntimeMountBlob}`);
-  }
-  if (expectedPartnerLegalActionAdapterBlob && partnerLegalActionAdapterBlob !== expectedPartnerLegalActionAdapterBlob) {
-    throw new Error(`Partner legal action adapter blob mismatch: expected=${expectedPartnerLegalActionAdapterBlob} actual=${partnerLegalActionAdapterBlob}`);
-  }
-  if (expectedAdviceCollectiveEvalBlob && adviceCollectiveEvalBlob !== expectedAdviceCollectiveEvalBlob) {
-    throw new Error(`Advice collective evaluator blob mismatch: expected=${expectedAdviceCollectiveEvalBlob} actual=${adviceCollectiveEvalBlob}`);
+  return { ...spec, input, blob };
+}
+
+async function writeArtifact(dist, item) {
+  const outputPath = path.join(dist, item.output);
+  await mkdir(path.dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, item.input);
+  const roundTrip = await readFile(outputPath);
+  if (!item.input.equals(roundTrip)) throw new Error(`dist/${item.output} is not byte-identical to ${item.label} source`);
+}
+
+export async function buildPackage(options = {}) {
+  const source = options.source ?? defaultSource;
+  const dist = options.dist ?? defaultDist;
+  const input = await readFile(source);
+  const blob = gitBlobSha1(input);
+  if (options.expectedBlob && blob !== options.expectedBlob) {
+    throw new Error(`Browser blob mismatch: expected=${options.expectedBlob} actual=${blob}`);
   }
 
-  const versionManifestBytes = serializeVersionManifest({ sourceCommit, publishedAt });
+  const artifacts = [];
+  for (const spec of ARTIFACT_SPECS) artifacts.push(await readArtifact(spec, options));
+
+  const versionManifestBytes = serializeVersionManifest({
+    sourceCommit: options.sourceCommit ?? '',
+    publishedAt: options.publishedAt ?? '',
+  });
   const versionManifestBuffer = Buffer.from(versionManifestBytes, 'utf8');
 
   await rm(dist, { recursive: true, force: true });
   await mkdir(dist, { recursive: true });
+  const indexPath = path.join(dist, 'index.html');
+  await writeFile(indexPath, input);
+  if (!input.equals(await readFile(indexPath))) throw new Error('dist/index.html is not byte-identical to Browser source');
 
-  const outputPath = path.join(dist, 'index.html');
-  await writeFile(outputPath, input);
-  const roundTrip = await readFile(outputPath);
-  if (!input.equals(roundTrip)) throw new Error('dist/index.html is not byte-identical to Browser source');
-
-  const coreOutputPath = path.join(dist, 'deck-save-recovery-core.mjs');
-  await writeFile(coreOutputPath, coreInput);
-  const coreRoundTrip = await readFile(coreOutputPath);
-  if (!coreInput.equals(coreRoundTrip)) {
-    throw new Error('dist/deck-save-recovery-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const deckSaveAckCoreOutputPath = path.join(dist, 'deck-save-ack-core.mjs');
-  await writeFile(deckSaveAckCoreOutputPath, deckSaveAckCoreInput);
-  const deckSaveAckCoreRoundTrip = await readFile(deckSaveAckCoreOutputPath);
-  if (!deckSaveAckCoreInput.equals(deckSaveAckCoreRoundTrip)) {
-    throw new Error('dist/deck-save-ack-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const presenceCoreOutputPath = path.join(dist, 'hate-peer-presence-core.mjs');
-  await writeFile(presenceCoreOutputPath, presenceCoreInput);
-  const presenceCoreRoundTrip = await readFile(presenceCoreOutputPath);
-  if (!presenceCoreInput.equals(presenceCoreRoundTrip)) {
-    throw new Error('dist/hate-peer-presence-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const navigationCoreOutputPath = path.join(dist, 'screen-navigation-core.mjs');
-  await writeFile(navigationCoreOutputPath, navigationCoreInput);
-  const navigationCoreRoundTrip = await readFile(navigationCoreOutputPath);
-  if (!navigationCoreInput.equals(navigationCoreRoundTrip)) {
-    throw new Error('dist/screen-navigation-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const postMatchAutoqueueCoreOutputPath = path.join(dist, 'post-match-autoqueue-core.mjs');
-  await writeFile(postMatchAutoqueueCoreOutputPath, postMatchAutoqueueCoreInput);
-  const postMatchAutoqueueCoreRoundTrip = await readFile(postMatchAutoqueueCoreOutputPath);
-  if (!postMatchAutoqueueCoreInput.equals(postMatchAutoqueueCoreRoundTrip)) {
-    throw new Error('dist/post-match-autoqueue-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const replayAdapterOutputPath = path.join(dist, 'battle-replay-live-adapter.mjs');
-  await writeFile(replayAdapterOutputPath, replayAdapterInput);
-  const replayAdapterRoundTrip = await readFile(replayAdapterOutputPath);
-  if (!replayAdapterInput.equals(replayAdapterRoundTrip)) {
-    throw new Error('dist/battle-replay-live-adapter.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const partnerBattleEventProjectionOutputPath = path.join(dist, 'partner-battle-event-log-projection.mjs');
-  await writeFile(partnerBattleEventProjectionOutputPath, partnerBattleEventProjectionInput);
-  const partnerBattleEventProjectionRoundTrip = await readFile(partnerBattleEventProjectionOutputPath);
-  if (!partnerBattleEventProjectionInput.equals(partnerBattleEventProjectionRoundTrip)) {
-    throw new Error('dist/partner-battle-event-log-projection.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const replayCoreOutputPath = path.join(dist, 'battle-replay-core.mjs');
-  await writeFile(replayCoreOutputPath, replayCoreInput);
-  const replayCoreRoundTrip = await readFile(replayCoreOutputPath);
-  if (!replayCoreInput.equals(replayCoreRoundTrip)) {
-    throw new Error('dist/battle-replay-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const cardPresentationCoreOutputPath = path.join(dist, 'card-presentation-core.mjs');
-  await writeFile(cardPresentationCoreOutputPath, cardPresentationCoreInput);
-  const cardPresentationCoreRoundTrip = await readFile(cardPresentationCoreOutputPath);
-  if (!cardPresentationCoreInput.equals(cardPresentationCoreRoundTrip)) {
-    throw new Error('dist/card-presentation-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const battleConveyorCoreOutputPath = path.join(dist, 'battle-conveyor-presentation-core.mjs');
-  await writeFile(battleConveyorCoreOutputPath, battleConveyorCoreInput);
-  const battleConveyorCoreRoundTrip = await readFile(battleConveyorCoreOutputPath);
-  if (!battleConveyorCoreInput.equals(battleConveyorCoreRoundTrip)) {
-    throw new Error('dist/battle-conveyor-presentation-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const boardFacilityClassicOutputPath = path.join(dist, 'board-facility-state-core.classic.js');
-  await writeFile(boardFacilityClassicOutputPath, boardFacilityClassicInput);
-  const boardFacilityClassicRoundTrip = await readFile(boardFacilityClassicOutputPath);
-  if (!boardFacilityClassicInput.equals(boardFacilityClassicRoundTrip)) {
-    throw new Error('dist/board-facility-state-core.classic.js is not byte-identical to Browser dependency source');
-  }
-
-  const boardFacilityCoreOutputPath = path.join(dist, 'board-facility-state-core.mjs');
-  await writeFile(boardFacilityCoreOutputPath, boardFacilityCoreInput);
-  const boardFacilityCoreRoundTrip = await readFile(boardFacilityCoreOutputPath);
-  if (!boardFacilityCoreInput.equals(boardFacilityCoreRoundTrip)) {
-    throw new Error('dist/board-facility-state-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const boardFacilityRuntimeMountOutputPath = path.join(dist, 'board-facility-runtime-mount.mjs');
-  await writeFile(boardFacilityRuntimeMountOutputPath, boardFacilityRuntimeMountInput);
-  const boardFacilityRuntimeMountRoundTrip = await readFile(boardFacilityRuntimeMountOutputPath);
-  if (!boardFacilityRuntimeMountInput.equals(boardFacilityRuntimeMountRoundTrip)) {
-    throw new Error('dist/board-facility-runtime-mount.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const partnerConversationCoreOutputPath = path.join(dist, 'partner-conversation-core.mjs');
-  await writeFile(partnerConversationCoreOutputPath, partnerConversationCoreInput);
-  const partnerConversationCoreRoundTrip = await readFile(partnerConversationCoreOutputPath);
-  if (!partnerConversationCoreInput.equals(partnerConversationCoreRoundTrip)) {
-    throw new Error('dist/partner-conversation-core.mjs is not byte-identical to formal Partner conversation core source');
-  }
-
-  const partnerSaasunaConversationSourceOutputPath = path.join(dist, 'partner-saasuna-conversation-source.mjs');
-  await writeFile(partnerSaasunaConversationSourceOutputPath, partnerSaasunaConversationSourceInput);
-  const partnerSaasunaConversationSourceRoundTrip = await readFile(partnerSaasunaConversationSourceOutputPath);
-  if (!partnerSaasunaConversationSourceInput.equals(partnerSaasunaConversationSourceRoundTrip)) {
-    throw new Error('dist/partner-saasuna-conversation-source.mjs is not byte-identical to formal Saasuna conversation source');
-  }
-
-  const uiStateFeedbackCoreOutputPath = path.join(dist, 'ui-state-feedback-core.mjs');
-  await writeFile(uiStateFeedbackCoreOutputPath, uiStateFeedbackCoreInput);
-  const uiStateFeedbackCoreRoundTrip = await readFile(uiStateFeedbackCoreOutputPath);
-  if (!uiStateFeedbackCoreInput.equals(uiStateFeedbackCoreRoundTrip)) {
-    throw new Error('dist/ui-state-feedback-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const uiStateFeedbackReadyPlanAdapterOutputPath = path.join(dist, 'ui-state-feedback-ready-plan-adapter.mjs');
-  await writeFile(uiStateFeedbackReadyPlanAdapterOutputPath, uiStateFeedbackReadyPlanAdapterInput);
-  const uiStateFeedbackReadyPlanAdapterRoundTrip = await readFile(uiStateFeedbackReadyPlanAdapterOutputPath);
-  if (!uiStateFeedbackReadyPlanAdapterInput.equals(uiStateFeedbackReadyPlanAdapterRoundTrip)) {
-    throw new Error('dist/ui-state-feedback-ready-plan-adapter.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const fieldMusicPolicyCoreOutputPath = path.join(dist, 'field-music-policy-core.mjs');
-  await writeFile(fieldMusicPolicyCoreOutputPath, fieldMusicPolicyCoreInput);
-  const fieldMusicPolicyCoreRoundTrip = await readFile(fieldMusicPolicyCoreOutputPath);
-  if (!fieldMusicPolicyCoreInput.equals(fieldMusicPolicyCoreRoundTrip)) {
-    throw new Error('dist/field-music-policy-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const homeCards2p5dPresentationOutputPath = path.join(dist, 'home-cards-2p5d-presentation.mjs');
-  await writeFile(homeCards2p5dPresentationOutputPath, homeCards2p5dPresentationInput);
-  const homeCards2p5dPresentationRoundTrip = await readFile(homeCards2p5dPresentationOutputPath);
-  if (!homeCards2p5dPresentationInput.equals(homeCards2p5dPresentationRoundTrip)) {
-    throw new Error('dist/home-cards-2p5d-presentation.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const homeBootRuntimeMountOutputPath = path.join(dist, 'home-boot-runtime-mount.mjs');
-  await writeFile(homeBootRuntimeMountOutputPath, homeBootRuntimeMountInput);
-  const homeBootRuntimeMountRoundTrip = await readFile(homeBootRuntimeMountOutputPath);
-  if (!homeBootRuntimeMountInput.equals(homeBootRuntimeMountRoundTrip)) {
-    throw new Error('dist/home-boot-runtime-mount.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const homeShellPresentationCoreOutputPath = path.join(dist, 'home-shell-presentation-core.mjs');
-  await writeFile(homeShellPresentationCoreOutputPath, homeShellPresentationCoreInput);
-  const homeShellPresentationCoreRoundTrip = await readFile(homeShellPresentationCoreOutputPath);
-  if (!homeShellPresentationCoreInput.equals(homeShellPresentationCoreRoundTrip)) {
-    throw new Error('dist/home-shell-presentation-core.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const partnerAdviceRuntimeMountOutputPath = path.join(dist, 'partner-advice-runtime-mount.mjs');
-  await writeFile(partnerAdviceRuntimeMountOutputPath, partnerAdviceRuntimeMountInput);
-  const partnerAdviceRuntimeMountRoundTrip = await readFile(partnerAdviceRuntimeMountOutputPath);
-  if (!partnerAdviceRuntimeMountInput.equals(partnerAdviceRuntimeMountRoundTrip)) {
-    throw new Error('dist/partner-advice-runtime-mount.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const partnerLegalActionAdapterOutputPath = path.join(dist, 'partner-legal-action-adapter.mjs');
-  await writeFile(partnerLegalActionAdapterOutputPath, partnerLegalActionAdapterInput);
-  const partnerLegalActionAdapterRoundTrip = await readFile(partnerLegalActionAdapterOutputPath);
-  if (!partnerLegalActionAdapterInput.equals(partnerLegalActionAdapterRoundTrip)) {
-    throw new Error('dist/partner-legal-action-adapter.mjs is not byte-identical to Browser dependency source');
-  }
-
-  const adviceCollectiveEvalOutputPath = path.join(dist, 'tools/advice-collective-eval.mjs');
-  await mkdir(path.dirname(adviceCollectiveEvalOutputPath), { recursive: true });
-  await writeFile(adviceCollectiveEvalOutputPath, adviceCollectiveEvalInput);
-  const adviceCollectiveEvalRoundTrip = await readFile(adviceCollectiveEvalOutputPath);
-  if (!adviceCollectiveEvalInput.equals(adviceCollectiveEvalRoundTrip)) {
-    throw new Error('dist/tools/advice-collective-eval.mjs is not byte-identical to Browser dependency source');
-  }
-
-  for (const [outputName, sourceInput] of [
-    ['click_002.ogg', clickSfxInput],
-    ['cardSlide6.ogg', cardSlideSfxInput],
-    ['cardPlace1.ogg', cardPlaceSfxInput],
-  ]) {
-    const sfxOutputPath = path.join(dist, outputName);
-    await writeFile(sfxOutputPath, sourceInput);
-    const sfxRoundTrip = await readFile(sfxOutputPath);
-    if (!sourceInput.equals(sfxRoundTrip)) {
-      throw new Error(`dist/${outputName} is not byte-identical to formal selected SFX source`);
-    }
-  }
-
-  const homeThemeOrientationOutputPath = path.join(dist, 'home-theme-orientation-core.mjs');
-  await writeFile(homeThemeOrientationOutputPath, homeThemeOrientationInput);
-  const homeThemeOrientationRoundTrip = await readFile(homeThemeOrientationOutputPath);
-  if (!homeThemeOrientationInput.equals(homeThemeOrientationRoundTrip)) {
-    throw new Error('dist/home-theme-orientation-core.mjs is not byte-identical to Home theme/orientation source');
-  }
-
+  for (const item of artifacts) await writeArtifact(dist, item);
   await assertBrowserRuntimeDependencyCompleteness(input, dist);
 
-  for (const [outputName, sourceInput] of [
-    ['assets/visual/home/home-illustration-landscape.webp', homeLandscapeAssetInput],
-    ['assets/visual/home/home-illustration-portrait.webp', homePortraitAssetInput],
-  ]) {
-    const assetOutputPath = path.join(dist, outputName);
-    await mkdir(path.dirname(assetOutputPath), { recursive: true });
-    await writeFile(assetOutputPath, sourceInput);
-    const assetRoundTrip = await readFile(assetOutputPath);
-    if (!sourceInput.equals(assetRoundTrip)) {
-      throw new Error(`dist/${outputName} is not byte-identical to Home visual source`);
-    }
-  }
-
-  const versionManifestOutputPath = path.join(dist, VERSION_MANIFEST_FILENAME);
-  await writeFile(versionManifestOutputPath, versionManifestBytes, 'utf8');
-  const versionManifestRoundTrip = await readFile(versionManifestOutputPath, 'utf8');
-  if (versionManifestRoundTrip !== versionManifestBytes) {
+  const versionManifestPath = path.join(dist, VERSION_MANIFEST_FILENAME);
+  await writeFile(versionManifestPath, versionManifestBytes, 'utf8');
+  if (await readFile(versionManifestPath, 'utf8') !== versionManifestBytes) {
     throw new Error(`dist/${VERSION_MANIFEST_FILENAME} is not byte-identical to generated version manifest`);
   }
 
@@ -586,260 +198,50 @@ export async function buildPackage({
   ].join('\n');
   await writeFile(path.join(dist, '_headers'), headers, 'utf8');
 
+  const artifactManifest = {
+    index_html: provenance('browser/GAMEROAD.html', 'index.html', input, blob),
+  };
+  for (const item of artifacts) artifactManifest[item.artifact] = provenance(item.source, item.output, item.input, item.blob);
+  artifactManifest.browser_version_manifest = {
+    source: 'build-package-release-identity',
+    output: VERSION_MANIFEST_FILENAME,
+    sha256: sha256(versionManifestBuffer),
+    bytes: versionManifestBuffer.length,
+  };
+
   const manifest = {
     schema: 'gameroad.public-pack.v1',
     source: 'browser/GAMEROAD.html',
-    source_commit: String(sourceCommit || ''),
+    source_commit: String(options.sourceCommit || ''),
     git_blob_sha1: blob,
     sha256: sha256(input),
     bytes: input.length,
-    artifacts: {
-      index_html: provenance('browser/GAMEROAD.html', 'index.html', input, blob),
-      deck_save_recovery_core: provenance(
-        'browser/deck-save-recovery-core.mjs',
-        'deck-save-recovery-core.mjs',
-        coreInput,
-        coreBlob,
-      ),
-      deck_save_ack_core: provenance(
-        'browser/deck-save-ack-core.mjs',
-        'deck-save-ack-core.mjs',
-        deckSaveAckCoreInput,
-        deckSaveAckCoreBlob,
-      ),
-      hate_peer_presence_core: provenance(
-        'browser/hate-peer-presence-core.mjs',
-        'hate-peer-presence-core.mjs',
-        presenceCoreInput,
-        presenceCoreBlob,
-      ),
-      screen_navigation_core: provenance(
-        'browser/screen-navigation-core.mjs',
-        'screen-navigation-core.mjs',
-        navigationCoreInput,
-        navigationCoreBlob,
-      ),
-      post_match_autoqueue_core: provenance(
-        'browser/post-match-autoqueue-core.mjs',
-        'post-match-autoqueue-core.mjs',
-        postMatchAutoqueueCoreInput,
-        postMatchAutoqueueCoreBlob,
-      ),
-      battle_replay_live_adapter: provenance(
-        'browser/battle-replay-live-adapter.mjs',
-        'battle-replay-live-adapter.mjs',
-        replayAdapterInput,
-        replayAdapterBlob,
-      ),
-      partner_battle_event_log_projection: provenance(
-        'browser/partner-battle-event-log-projection.mjs',
-        'partner-battle-event-log-projection.mjs',
-        partnerBattleEventProjectionInput,
-        partnerBattleEventProjectionBlob,
-      ),
-      battle_replay_core: provenance(
-        'browser/battle-replay-core.mjs',
-        'battle-replay-core.mjs',
-        replayCoreInput,
-        replayCoreBlob,
-      ),
-      card_presentation_core: provenance(
-        'browser/card-presentation-core.mjs',
-        'card-presentation-core.mjs',
-        cardPresentationCoreInput,
-        cardPresentationCoreBlob,
-      ),
-      battle_conveyor_presentation_core: provenance(
-        'browser/battle-conveyor-presentation-core.mjs',
-        'battle-conveyor-presentation-core.mjs',
-        battleConveyorCoreInput,
-        battleConveyorCoreBlob,
-      ),
-      board_facility_classic: provenance(
-        'browser/board-facility-state-core.classic.js',
-        'board-facility-state-core.classic.js',
-        boardFacilityClassicInput,
-        boardFacilityClassicBlob,
-      ),
-      board_facility_core: provenance(
-        'browser/board-facility-state-core.mjs',
-        'board-facility-state-core.mjs',
-        boardFacilityCoreInput,
-        boardFacilityCoreBlob,
-      ),
-      board_facility_runtime_mount: provenance(
-        'browser/board-facility-runtime-mount.mjs',
-        'board-facility-runtime-mount.mjs',
-        boardFacilityRuntimeMountInput,
-        boardFacilityRuntimeMountBlob,
-      ),
-      partner_conversation_core: provenance(
-        'browser/partner-conversation-core.mjs',
-        'partner-conversation-core.mjs',
-        partnerConversationCoreInput,
-        partnerConversationCoreBlob,
-      ),
-      partner_saasuna_conversation_source: provenance(
-        'browser/partner-saasuna-conversation-source.mjs',
-        'partner-saasuna-conversation-source.mjs',
-        partnerSaasunaConversationSourceInput,
-        partnerSaasunaConversationSourceBlob,
-      ),
-      ui_state_feedback_core: provenance(
-        'browser/ui-state-feedback-core.mjs',
-        'ui-state-feedback-core.mjs',
-        uiStateFeedbackCoreInput,
-        uiStateFeedbackCoreBlob,
-      ),
-      ui_state_feedback_ready_plan_adapter: provenance(
-        'browser/ui-state-feedback-ready-plan-adapter.mjs',
-        'ui-state-feedback-ready-plan-adapter.mjs',
-        uiStateFeedbackReadyPlanAdapterInput,
-        uiStateFeedbackReadyPlanAdapterBlob,
-      ),
-      field_music_policy_core: provenance(
-        'browser/field-music-policy-core.mjs',
-        'field-music-policy-core.mjs',
-        fieldMusicPolicyCoreInput,
-        fieldMusicPolicyCoreBlob,
-      ),
-      home_cards_2p5d_presentation: provenance(
-        'browser/home-cards-2p5d-presentation.mjs',
-        'home-cards-2p5d-presentation.mjs',
-        homeCards2p5dPresentationInput,
-        homeCards2p5dPresentationBlob,
-      ),
-      home_boot_runtime_mount: provenance(
-        'browser/home-boot-runtime-mount.mjs',
-        'home-boot-runtime-mount.mjs',
-        homeBootRuntimeMountInput,
-        homeBootRuntimeMountBlob,
-      ),
-      home_shell_presentation_core: provenance(
-        'browser/home-shell-presentation-core.mjs',
-        'home-shell-presentation-core.mjs',
-        homeShellPresentationCoreInput,
-        homeShellPresentationCoreBlob,
-      ),
-      home_theme_orientation_core: provenance(
-        'browser/home-theme-orientation-core.mjs',
-        'home-theme-orientation-core.mjs',
-        homeThemeOrientationInput,
-        homeThemeOrientationBlob,
-      ),
-      home_illustration_landscape: provenance(
-        'assets/visual/home/home-illustration-landscape.webp',
-        'assets/visual/home/home-illustration-landscape.webp',
-        homeLandscapeAssetInput,
-        gitBlobSha1(homeLandscapeAssetInput),
-      ),
-      home_illustration_portrait: provenance(
-        'assets/visual/home/home-illustration-portrait.webp',
-        'assets/visual/home/home-illustration-portrait.webp',
-        homePortraitAssetInput,
-        gitBlobSha1(homePortraitAssetInput),
-      ),
-      partner_advice_runtime_mount: provenance(
-        'browser/partner-advice-runtime-mount.mjs',
-        'partner-advice-runtime-mount.mjs',
-        partnerAdviceRuntimeMountInput,
-        partnerAdviceRuntimeMountBlob,
-      ),
-      partner_legal_action_adapter: provenance(
-        'browser/partner-legal-action-adapter.mjs',
-        'partner-legal-action-adapter.mjs',
-        partnerLegalActionAdapterInput,
-        partnerLegalActionAdapterBlob,
-      ),
-      advice_collective_eval: provenance(
-        'tools/advice-collective-eval.mjs',
-        'tools/advice-collective-eval.mjs',
-        adviceCollectiveEvalInput,
-        adviceCollectiveEvalBlob,
-      ),
-      sfx_click_002: provenance(
-        'assets/audio/sfx/click_002.ogg',
-        'click_002.ogg',
-        clickSfxInput,
-        clickSfxBlob,
-      ),
-      sfx_card_slide_6: provenance(
-        'assets/audio/sfx/cardSlide6.ogg',
-        'cardSlide6.ogg',
-        cardSlideSfxInput,
-        cardSlideSfxBlob,
-      ),
-      sfx_card_place_1: provenance(
-        'assets/audio/sfx/cardPlace1.ogg',
-        'cardPlace1.ogg',
-        cardPlaceSfxInput,
-        cardPlaceSfxBlob,
-      ),
-      browser_version_manifest: {
-        source: 'build-package-release-identity',
-        output: VERSION_MANIFEST_FILENAME,
-        sha256: sha256(versionManifestBuffer),
-        bytes: versionManifestBuffer.length,
-      },
-    },
+    artifacts: artifactManifest,
   };
   await writeFile(path.join(dist, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
   return manifest;
 }
 
+const CLI_OPTIONS = new Map([
+  ['--source', ['source', true]],
+  ['--dist', ['dist', true]],
+  ['--expected-blob', ['expectedBlob', false]],
+  ['--source-commit', ['sourceCommit', false]],
+  ['--published-at', ['publishedAt', false]],
+]);
+for (const spec of ARTIFACT_SPECS) {
+  if (spec.sourceFlag) CLI_OPTIONS.set(spec.sourceFlag, [spec.option, true]);
+  if (spec.expectedFlag) CLI_OPTIONS.set(spec.expectedFlag, [spec.expected, false]);
+}
+
 function parseArgs(argv) {
   const out = {};
   for (let i = 0; i < argv.length; i++) {
-    const a = argv[i];
-    if (a === '--source') out.source = path.resolve(argv[++i]);
-    else if (a === '--core-source') out.coreSource = path.resolve(argv[++i]);
-    else if (a === '--deck-save-ack-core-source') out.deckSaveAckCoreSource = path.resolve(argv[++i]);
-    else if (a === '--presence-core-source') out.presenceCoreSource = path.resolve(argv[++i]);
-    else if (a === '--navigation-core-source') out.navigationCoreSource = path.resolve(argv[++i]);
-    else if (a === '--post-match-autoqueue-core-source') out.postMatchAutoqueueCoreSource = path.resolve(argv[++i]);
-    else if (a === '--replay-adapter-source') out.replayAdapterSource = path.resolve(argv[++i]);
-    else if (a === '--partner-battle-event-projection-source') out.partnerBattleEventProjectionSource = path.resolve(argv[++i]);
-    else if (a === '--replay-core-source') out.replayCoreSource = path.resolve(argv[++i]);
-    else if (a === '--card-presentation-core-source') out.cardPresentationCoreSource = path.resolve(argv[++i]);
-    else if (a === '--battle-conveyor-core-source') out.battleConveyorCoreSource = path.resolve(argv[++i]);
-    else if (a === '--board-facility-classic-source') out.boardFacilityClassicSource = path.resolve(argv[++i]);
-    else if (a === '--board-facility-core-source') out.boardFacilityCoreSource = path.resolve(argv[++i]);
-    else if (a === '--board-facility-runtime-mount-source') out.boardFacilityRuntimeMountSource = path.resolve(argv[++i]);
-    else if (a === '--ui-state-feedback-core-source') out.uiStateFeedbackCoreSource = path.resolve(argv[++i]);
-    else if (a === '--ui-state-feedback-ready-plan-adapter-source') out.uiStateFeedbackReadyPlanAdapterSource = path.resolve(argv[++i]);
-    else if (a === '--field-music-policy-core-source') out.fieldMusicPolicyCoreSource = path.resolve(argv[++i]);
-    else if (a === '--home-cards-2p5d-presentation-source') out.homeCards2p5dPresentationSource = path.resolve(argv[++i]);
-    else if (a === '--home-boot-runtime-mount-source') out.homeBootRuntimeMountSource = path.resolve(argv[++i]);
-    else if (a === '--home-shell-presentation-core-source') out.homeShellPresentationCoreSource = path.resolve(argv[++i]);
-    else if (a === '--partner-advice-runtime-mount-source') out.partnerAdviceRuntimeMountSource = path.resolve(argv[++i]);
-    else if (a === '--partner-legal-action-adapter-source') out.partnerLegalActionAdapterSource = path.resolve(argv[++i]);
-    else if (a === '--advice-collective-eval-source') out.adviceCollectiveEvalSource = path.resolve(argv[++i]);
-    else if (a === '--dist') out.dist = path.resolve(argv[++i]);
-    else if (a === '--expected-blob') out.expectedBlob = argv[++i] || '';
-    else if (a === '--expected-core-blob') out.expectedCoreBlob = argv[++i] || '';
-    else if (a === '--expected-deck-save-ack-core-blob') out.expectedDeckSaveAckCoreBlob = argv[++i] || '';
-    else if (a === '--expected-presence-core-blob') out.expectedPresenceCoreBlob = argv[++i] || '';
-    else if (a === '--expected-navigation-core-blob') out.expectedNavigationCoreBlob = argv[++i] || '';
-    else if (a === '--expected-post-match-autoqueue-core-blob') out.expectedPostMatchAutoqueueCoreBlob = argv[++i] || '';
-    else if (a === '--expected-replay-adapter-blob') out.expectedReplayAdapterBlob = argv[++i] || '';
-    else if (a === '--expected-partner-battle-event-projection-blob') out.expectedPartnerBattleEventProjectionBlob = argv[++i] || '';
-    else if (a === '--expected-replay-core-blob') out.expectedReplayCoreBlob = argv[++i] || '';
-    else if (a === '--expected-card-presentation-core-blob') out.expectedCardPresentationCoreBlob = argv[++i] || '';
-    else if (a === '--expected-battle-conveyor-core-blob') out.expectedBattleConveyorCoreBlob = argv[++i] || '';
-    else if (a === '--expected-board-facility-classic-blob') out.expectedBoardFacilityClassicBlob = argv[++i] || '';
-    else if (a === '--expected-board-facility-core-blob') out.expectedBoardFacilityCoreBlob = argv[++i] || '';
-    else if (a === '--expected-board-facility-runtime-mount-blob') out.expectedBoardFacilityRuntimeMountBlob = argv[++i] || '';
-    else if (a === '--expected-ui-state-feedback-core-blob') out.expectedUiStateFeedbackCoreBlob = argv[++i] || '';
-    else if (a === '--expected-ui-state-feedback-ready-plan-adapter-blob') out.expectedUiStateFeedbackReadyPlanAdapterBlob = argv[++i] || '';
-    else if (a === '--expected-field-music-policy-core-blob') out.expectedFieldMusicPolicyCoreBlob = argv[++i] || '';
-    else if (a === '--expected-home-boot-runtime-mount-blob') out.expectedHomeBootRuntimeMountBlob = argv[++i] || '';
-    else if (a === '--expected-home-shell-presentation-core-blob') out.expectedHomeShellPresentationCoreBlob = argv[++i] || '';
-    else if (a === '--expected-partner-advice-runtime-mount-blob') out.expectedPartnerAdviceRuntimeMountBlob = argv[++i] || '';
-    else if (a === '--expected-partner-legal-action-adapter-blob') out.expectedPartnerLegalActionAdapterBlob = argv[++i] || '';
-    else if (a === '--expected-advice-collective-eval-blob') out.expectedAdviceCollectiveEvalBlob = argv[++i] || '';
-    else if (a === '--source-commit') out.sourceCommit = argv[++i] || '';
-    else if (a === '--published-at') out.publishedAt = argv[++i] || '';
-    else throw new Error(`Unknown argument: ${a}`);
+    const entry = CLI_OPTIONS.get(argv[i]);
+    if (!entry) throw new Error(`Unknown argument: ${argv[i]}`);
+    const value = argv[++i];
+    const [key, resolvePath] = entry;
+    out[key] = resolvePath ? path.resolve(value) : (value || '');
   }
   return out;
 }

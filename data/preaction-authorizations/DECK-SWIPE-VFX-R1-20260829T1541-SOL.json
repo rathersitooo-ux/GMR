@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DECK-SWIPE-VFX-R1-20260829T1541-SOL",
+  "taskId": "DECK_SWIPE_ADD_PRESENTATION_R1",
+  "workUnitKey": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "acquireKey": "DECK-SWIPE-VFX-R1-20260829T1541-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ACTIVE_LEASES!A11:L11 conflict-safe scope amendment; right-swipe visual-only presentation does not mutate deck legality, persistence, audio runtime, or GAMEROAD.html",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT_ORACLE: existing browser/ui-state-feedback-core.mjs owns swipe_right intent; uploaded 1000010527.mp4 provides interaction-response timing reference; dedicated pure presentation tests verify flight/landing/reduced contracts",
+  "proceedToken": "PROCEED|DECK-SWIPE-VFX-R1-20260829T1541-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260829T1608JST",
+  "authorizationBaseSha": "a140ed08819dec0dcc14476573da5d3672809096",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DECK_SWIPE_ADD_PRESENTATION_R1",
+  "leaseWorkUnitKey": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseAcquireKey": "DECK-SWIPE-VFX-R1-20260829T1541-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 15:48 JST",
+  "leaseUntilJst": "2026-08-29 16:41 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
+  "leaseExactMutableResources": "browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "solutionSignature": "cards-deck-right-swipe-success-presentation-vfx-contract",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "reuse existing swipe_right intent + existing addDeckCard integration boundary; add only missing visual presentation core",
+  "solutionSearchEvidence": [
+    "browser/ui-state-feedback-core.mjs",
+    "tests/ui-state-feedback-core.test.mjs",
+    ".github/workflows/gameroad-required-gate.yml",
+    "uploaded reference video 1000010527.mp4"
+  ]
+}

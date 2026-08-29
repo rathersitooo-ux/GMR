@@ -3,8 +3,11 @@ import { createHash } from 'node:crypto';
 import { normalizeQueuePacket } from './executor-bus-packet.mjs';
 import { packReasoningPacket } from './executor-bus-packet-compressor.mjs';
 import { buildTransportMessage, normalizeTransportRequest } from './chatgpt-browser-transport-core.mjs';
+import { compileJitEvidencePacket } from './jit-evidence-compiler.mjs';
 import { ROUTES, routeLunaSol } from './luna-sol-router-core.mjs';
-import { buildSolPrompt, parseSolResponse } from './sol-reasoning-protocol.mjs';
+import * as SolReasoningProtocol from './sol-reasoning-protocol.mjs';
+
+const { buildSolPrompt, parseSolResponse } = SolReasoningProtocol;
 
 export const CODEX_BROWSER_BRIDGE_SCHEMA_VERSION = 'gameroad-codex-browser-bridge-v1';
 export const CODEX_BROWSER_ROUNDTRIP_RECEIPT_SCHEMA_VERSION = 'gameroad-codex-browser-roundtrip-receipt-v1';
@@ -12,6 +15,10 @@ export const CODEX_BROWSER_ROUNDTRIP_RECEIPT_SCHEMA_VERSION = 'gameroad-codex-br
 export const CODEX_BROWSER_BRIDGE_STATUS = Object.freeze({
   LOCAL_EXECUTE: 'LOCAL_EXECUTE',
   HOLD: 'HOLD',
+  JIT_EVIDENCE_REQUIRED: 'JIT_EVIDENCE_REQUIRED',
+  JIT_EVIDENCE_REJECTED: 'JIT_EVIDENCE_REJECTED',
+  JIT_EVIDENCE_NEEDED: 'JIT_EVIDENCE_NEEDED',
+  JIT_EVIDENCE_BUDGET_BLOCKED: 'JIT_EVIDENCE_BUDGET_BLOCKED',
   PACKET_REJECTED: 'PACKET_REJECTED',
   PROMPT_REJECTED: 'PROMPT_REJECTED',
   TRANSPORT_REQUEST_REJECTED: 'TRANSPORT_REQUEST_REJECTED',
@@ -49,6 +56,18 @@ const ROUNDTRIP_RECEIPT_KEYS = new Set([
   'validatedStatus',
   'mayMutate',
 ]);
+
+const SOL_CANONICAL_EVIDENCE_ENVELOPE_VERSION = 'gameroad-evidence-context-v1';
+const CURRENT_EVIDENCE_STATES = new Set([
+  'CURRENT_AUTHORITY',
+  'CURRENT_ARTIFACT',
+  'CURRENT_EXECUTION_EVIDENCE',
+]);
+const AUTHORITY_ROLES = new Set(['AUTHORITY']);
+const USER_ROLES = new Set(['USER', 'USER_INTENT', 'USER_REQUEST']);
+const ACTUAL_ROLES = new Set(['ACTUAL', 'DIRECT_ACTUAL', 'CURRENT_ACTUAL', 'EXECUTION_EVIDENCE', 'FAILURE_EVIDENCE']);
+const TEST_ROLES = new Set(['TEST', 'DISCRIMINATING_TEST', 'ACCEPTANCE_TEST', 'VERIFICATION_TEST', 'TEST_RESULT']);
+const COUNTER_ROLES = new Set(['COUNTER', 'COUNTEREVIDENCE', 'COUNTER_EVIDENCE', 'CONTRARY_EVIDENCE']);
 
 function cleanString(value, name, { optional = false, max = 4096 } = {}) {
   if (value == null && optional) return '';
@@ -228,6 +247,68 @@ function normalizeRoundTripReceipt(input) {
   return receipt;
 }
 
+function trustedSolEvidenceClass(item) {
+  if (!item || item.tier !== 'HOT' || item.claimMode !== 'CURRENT' || !CURRENT_EVIDENCE_STATES.has(item.state)) return '';
+  const role = String(item.role ?? '').trim().toUpperCase();
+  if (item.state === 'CURRENT_AUTHORITY' && AUTHORITY_ROLES.has(role)) return 'authority';
+  if (item.state === 'CURRENT_AUTHORITY' && USER_ROLES.has(role)) return 'user';
+  if (item.state === 'CURRENT_EXECUTION_EVIDENCE' && TEST_ROLES.has(role)) return 'test';
+  if (item.state === 'CURRENT_EXECUTION_EVIDENCE' && COUNTER_ROLES.has(role)) return 'counter';
+  if (
+    (item.state === 'CURRENT_ARTIFACT' || item.state === 'CURRENT_EXECUTION_EVIDENCE')
+    && ACTUAL_ROLES.has(role)
+  ) return 'actual';
+  return '';
+}
+
+function legacyTypedEvidenceRef(item, evidenceClass) {
+  const digest = createHash('sha256').update(item.id, 'utf8').digest('base64url').slice(0, 22);
+  return `${evidenceClass}:${digest}`;
+}
+
+function bindJitEvidenceForSol(compiled) {
+  const canonicalMetadataSupported = SolReasoningProtocol.SOL_EVIDENCE_CONTEXT_ENVELOPE_VERSION
+    === SOL_CANONICAL_EVIDENCE_ENVELOPE_VERSION;
+  const metadataById = new Map(compiled.selectedEvidence.map((item) => [item.id, item]));
+  const seenRefs = new Set();
+  const solEvidenceRefs = [];
+  const contextItems = compiled.contextItems.map((contextItem) => {
+    const metadata = metadataById.get(contextItem.id);
+    if (!metadata) throw new Error(`selected_metadata_missing:${contextItem.id}`);
+    const evidenceClass = trustedSolEvidenceClass(metadata);
+    const solRef = !canonicalMetadataSupported && evidenceClass
+      ? legacyTypedEvidenceRef(metadata, evidenceClass)
+      : contextItem.id;
+    if (seenRefs.has(solRef)) throw new Error(`sol_evidence_ref_collision:${solRef}`);
+    seenRefs.add(solRef);
+    solEvidenceRefs.push({
+      id: contextItem.id,
+      solRef,
+      evidenceClass,
+    });
+    return solRef === contextItem.id ? contextItem : { ...contextItem, id: solRef };
+  });
+  return {
+    mode: canonicalMetadataSupported ? 'CANONICAL_METADATA' : 'LEGACY_TYPED_ALIAS',
+    contextItems,
+    solEvidenceRefs,
+  };
+}
+
+function evidenceSelectionSummary(compiled, binding) {
+  return {
+    schemaVersion: compiled.schemaVersion,
+    decisionQuestion: compiled.decisionQuestion,
+    status: compiled.status,
+    selectedEvidence: compiled.selectedEvidence,
+    includedByTier: compiled.includedByTier,
+    unresolvedIssues: compiled.unresolvedIssues,
+    metrics: compiled.metrics,
+    solEvidenceBindingMode: binding.mode,
+    solEvidenceRefs: binding.solEvidenceRefs,
+  };
+}
+
 export function prepareLunaSolCodexDispatch(input = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw new TypeError('codex_bridge_input_must_be_object');
@@ -306,7 +387,58 @@ export function prepareLunaSolCodexDispatch(input = {}) {
     });
   }
 
-  const packed = packReasoningPacket(queuePacket, input.context ?? [], {
+  if (!input.jitEvidence) {
+    return fail(CODEX_BROWSER_BRIDGE_STATUS.JIT_EVIDENCE_REQUIRED, routeDecision, 'jit_evidence_required', {
+      executorAction: 'BUILD_JIT_EVIDENCE_PACKET_AND_RETRY_PREPARE',
+      nextRetrievalIds: [],
+    });
+  }
+
+  const compiled = compileJitEvidencePacket(input.jitEvidence);
+  if (!compiled.ok) {
+    return fail(CODEX_BROWSER_BRIDGE_STATUS.JIT_EVIDENCE_REJECTED, routeDecision, `jit_evidence:${compiled.reason}`, {
+      evidenceStatus: compiled.status ?? null,
+      evidenceMetrics: compiled.metrics ?? null,
+      executorAction: 'REPAIR_JIT_EVIDENCE_PACKET_AND_RETRY_PREPARE',
+    });
+  }
+
+  if (compiled.status === 'NEEDS_EVIDENCE') {
+    return fail(CODEX_BROWSER_BRIDGE_STATUS.JIT_EVIDENCE_NEEDED, routeDecision, 'jit_evidence:needs_evidence', {
+      nextRetrievalIds: compiled.nextRetrievalIds,
+      unresolvedIssues: compiled.unresolvedIssues,
+      evidenceMetrics: compiled.metrics,
+      executorAction: 'RETRIEVE_JIT_EVIDENCE_AND_RETRY_PREPARE',
+    });
+  }
+
+  if (compiled.status === 'BUDGET_BLOCKED') {
+    return fail(CODEX_BROWSER_BRIDGE_STATUS.JIT_EVIDENCE_BUDGET_BLOCKED, routeDecision, 'jit_evidence:budget_blocked', {
+      nextRetrievalIds: compiled.nextRetrievalIds,
+      unresolvedIssues: compiled.unresolvedIssues,
+      evidenceMetrics: compiled.metrics,
+      executorAction: 'REDUCE_OR_REPRIORITIZE_JIT_EVIDENCE_AND_RETRY_PREPARE',
+    });
+  }
+
+  if (compiled.status !== 'READY') {
+    return fail(CODEX_BROWSER_BRIDGE_STATUS.JIT_EVIDENCE_REJECTED, routeDecision, `jit_evidence:unexpected_status:${compiled.status}`, {
+      evidenceMetrics: compiled.metrics ?? null,
+      executorAction: 'REPAIR_JIT_EVIDENCE_PACKET_AND_RETRY_PREPARE',
+    });
+  }
+
+  let solEvidenceBinding;
+  try {
+    solEvidenceBinding = bindJitEvidenceForSol(compiled);
+  } catch (error) {
+    return fail(CODEX_BROWSER_BRIDGE_STATUS.JIT_EVIDENCE_REJECTED, routeDecision, `jit_evidence_binding:${error.message ?? String(error)}`, {
+      evidenceMetrics: compiled.metrics ?? null,
+      executorAction: 'REPAIR_JIT_EVIDENCE_PACKET_AND_RETRY_PREPARE',
+    });
+  }
+
+  const packed = packReasoningPacket(queuePacket, solEvidenceBinding.contextItems, {
     maxWireBytes: input.maxWireBytes ?? 3000,
   });
   if (!packed.ok) {
@@ -353,6 +485,7 @@ export function prepareLunaSolCodexDispatch(input = {}) {
     solRequest: promptBuilt.request,
     transportRequest,
     browserContext,
+    evidenceSelection: evidenceSelectionSummary(compiled, solEvidenceBinding),
   };
 
   return {

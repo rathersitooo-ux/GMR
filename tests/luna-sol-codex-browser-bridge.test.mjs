@@ -39,6 +39,50 @@ function browserContext(overrides = {}) {
   };
 }
 
+function evidenceItem(overrides = {}) {
+  return {
+    id: 'failure-current',
+    tier: 'HOT',
+    state: 'CURRENT_EXECUTION_EVIDENCE',
+    role: 'FAILURE_EVIDENCE',
+    claimMode: 'CURRENT',
+    text: 'A prior bounded attempt failed without mutation leakage.',
+    available: true,
+    required: true,
+    priority: 20,
+    resolves: [],
+    emitsIssues: [],
+    authorityClass: 'bounded-test',
+    version: 'r1',
+    provenance: 'test fixture',
+    freshness: 'current',
+    ...overrides,
+  };
+}
+
+function jitEvidence(overrides = {}) {
+  return {
+    schemaVersion: 'gameroad-jit-evidence-v1',
+    decisionQuestion: 'What bounded decision is required before mutation?',
+    requiredHotIds: ['authority-current', 'failure-current'],
+    evidence: [
+      evidenceItem({
+        id: 'authority-current',
+        state: 'CURRENT_AUTHORITY',
+        role: 'AUTHORITY',
+        text: 'Current authority permits only the bounded example target.',
+        priority: 30,
+        authorityClass: 'CURRENT_AUTHORITY',
+      }),
+      evidenceItem(),
+    ],
+    issues: [],
+    relations: [],
+    maxContextBytes: 3000,
+    ...overrides,
+  };
+}
+
 function prepareSol(overrides = {}) {
   return prepareLunaSolCodexDispatch({
     routerInput: { forceSol: true },
@@ -46,10 +90,23 @@ function prepareSol(overrides = {}) {
     browserCapabilityConfirmed: true,
     browserContext: browserContext(),
     context: [
-      { id: 'failure', text: 'A prior bounded attempt failed without mutation leakage.', priority: 20, required: true },
+      {
+        id: 'raw-bypass',
+        text: 'RAW-CONTEXT-MUST-NOT-REACH-SOL',
+        priority: 999,
+        required: true,
+      },
     ],
+    jitEvidence: jitEvidence(),
     ...overrides,
   });
+}
+
+function selectedSolRef(prepared, evidenceClass) {
+  const match = prepared.bundle.evidenceSelection.solEvidenceRefs
+    .find((item) => item.evidenceClass === evidenceClass);
+  assert.ok(match, `missing ${evidenceClass} evidence binding`);
+  return match.solRef;
 }
 
 function responseFor(prepared, overrides = {}) {
@@ -64,6 +121,12 @@ function responseFor(prepared, overrides = {}) {
     reasoningPacketFingerprint: request.reasoningPacketFingerprint,
     disposition: 'PLAN',
     cause: ['bounded evidence supports one scoped change'],
+    claims: [],
+    selectedCauseClaimId: '',
+    decisionBasisRefs: [
+      selectedSolRef(prepared, 'authority'),
+      selectedSolRef(prepared, 'actual'),
+    ],
     decision: 'Review and change only the scoped example file.',
     filesToChange: ['tools/example.mjs'],
     doNotTouch: ['protected/**'],
@@ -94,7 +157,7 @@ function evidenceFor(prepared, overrides = {}) {
   };
 }
 
-test('local route remains local and does not require browser evidence', () => {
+test('local route remains local and does not require browser or JIT evidence', () => {
   const result = prepareLunaSolCodexDispatch({
     routerInput: {
       acceptanceKnown: true,
@@ -120,7 +183,7 @@ test('Sol route without confirmed Codex browser capability fails closed as HOLD'
   assert.equal(result.routeDecision.reasonCodes[0], 'SOL_REQUIRED_TRANSPORT_UNAVAILABLE');
 });
 
-test('Sol route requires stable browser preflight identity before message construction', () => {
+test('Sol route requires stable browser preflight identity before JIT evidence is evaluated', () => {
   const result = prepareLunaSolCodexDispatch({
     routerInput: { forceSol: true },
     queuePacket: queue(),
@@ -131,6 +194,153 @@ test('Sol route requires stable browser preflight identity before message constr
   assert.equal(result.status, CODEX_BROWSER_BRIDGE_STATUS.BROWSER_PREFLIGHT_REQUIRED);
   assert.equal(result.reason, 'browser_baseline_assistant_turn_id_required');
   assert.equal(result.mayMutate, false);
+});
+
+test('Sol route with valid browser preflight requires JIT evidence before message construction', () => {
+  const result = prepareLunaSolCodexDispatch({
+    routerInput: { forceSol: true },
+    queuePacket: queue(),
+    browserCapabilityConfirmed: true,
+    browserContext: browserContext(),
+    context: [{ id: 'raw', text: 'raw context', required: true }],
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.status, CODEX_BROWSER_BRIDGE_STATUS.JIT_EVIDENCE_REQUIRED);
+  assert.equal(result.reason, 'jit_evidence_required');
+  assert.equal(result.mayMutate, false);
+  assert.equal(result.browserAction, undefined);
+});
+
+test('malformed JIT evidence is rejected before browser action', () => {
+  const result = prepareSol({
+    jitEvidence: { ...jitEvidence(), schemaVersion: 'wrong-schema' },
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.status, CODEX_BROWSER_BRIDGE_STATUS.JIT_EVIDENCE_REJECTED);
+  assert.equal(result.reason, 'jit_evidence:schema_version');
+  assert.equal(result.browserAction, undefined);
+});
+
+test('unresolved material evidence returns retrieval ids instead of a browser action', () => {
+  const packet = jitEvidence();
+  packet.issues = [{ id: 'missing-authority', material: true, resolved: false }];
+  packet.evidence.push(evidenceItem({
+    id: 'authority-missing',
+    tier: 'WARM',
+    state: 'CURRENT_AUTHORITY',
+    role: 'AUTHORITY',
+    text: '',
+    available: false,
+    required: false,
+    priority: 10,
+    resolves: ['missing-authority'],
+    authorityClass: 'current',
+  }));
+  packet.relations = [{
+    fromIssue: 'missing-authority',
+    toEvidence: 'authority-missing',
+    material: true,
+    kind: 'MATERIAL_RELATION',
+  }];
+
+  const result = prepareSol({ jitEvidence: packet });
+  assert.equal(result.ok, false);
+  assert.equal(result.status, CODEX_BROWSER_BRIDGE_STATUS.JIT_EVIDENCE_NEEDED);
+  assert.deepEqual(result.nextRetrievalIds, ['authority-missing']);
+  assert.deepEqual(result.unresolvedIssues, ['missing-authority']);
+  assert.equal(result.browserAction, undefined);
+});
+
+test('evidence budget blockage stops before browser action', () => {
+  const packet = jitEvidence({ maxContextBytes: 1800 });
+  packet.issues = [{ id: 'large-detail', material: true, resolved: false }];
+  packet.evidence.push(evidenceItem({
+    id: 'large-warm',
+    tier: 'WARM',
+    state: 'CURRENT_ARTIFACT',
+    role: 'DETAIL',
+    text: 'x'.repeat(2000),
+    available: true,
+    required: false,
+    priority: 10,
+    resolves: ['large-detail'],
+  }));
+  packet.relations = [{
+    fromIssue: 'large-detail',
+    toEvidence: 'large-warm',
+    material: true,
+    kind: 'MATERIAL_RELATION',
+  }];
+
+  const result = prepareSol({ jitEvidence: packet });
+  assert.equal(result.ok, false);
+  assert.equal(result.status, CODEX_BROWSER_BRIDGE_STATUS.JIT_EVIDENCE_BUDGET_BLOCKED);
+  assert.deepEqual(result.unresolvedIssues, ['large-detail']);
+  assert.equal(result.browserAction, undefined);
+});
+
+test('READY JIT evidence is the only context allowed into the Sol reasoning packet', () => {
+  const packet = jitEvidence();
+  packet.evidence.push(evidenceItem({
+    id: 'quarantined-secret',
+    tier: 'QUARANTINE',
+    state: 'INPUT_PROHIBITED',
+    role: 'HISTORICAL',
+    claimMode: 'REFERENCE',
+    text: 'MUST-NOT-REACH-SOL',
+    available: true,
+    required: false,
+    priority: 1000,
+    authorityClass: 'forbidden',
+    version: 'old',
+    freshness: 'historical',
+  }));
+
+  const result = prepareSol({ jitEvidence: packet });
+  assert.equal(result.ok, true);
+  const wireContext = JSON.stringify(result.bundle.reasoningPacket.c);
+  assert.match(wireContext, /authority-current/);
+  assert.match(wireContext, /failure-current/);
+  assert.match(wireContext, /GAMEROAD_EVIDENCE_CONTEXT_V1/);
+  assert.doesNotMatch(wireContext, /RAW-CONTEXT-MUST-NOT-REACH-SOL/);
+  assert.doesNotMatch(wireContext, /MUST-NOT-REACH-SOL/);
+  assert.equal(result.bundle.evidenceSelection.status, 'READY');
+  assert.deepEqual(
+    result.bundle.evidenceSelection.selectedEvidence.map((item) => item.id),
+    ['authority-current', 'failure-current'],
+  );
+  assert.equal(result.bundle.evidenceSelection.solEvidenceRefs.length, 2);
+  assert.equal(
+    result.bundle.evidenceSelection.solEvidenceRefs.find((item) => item.id === 'authority-current').evidenceClass,
+    'authority',
+  );
+  assert.equal(
+    result.bundle.evidenceSelection.solEvidenceRefs.find((item) => item.id === 'failure-current').evidenceClass,
+    'actual',
+  );
+  assert.ok(['LEGACY_TYPED_ALIAS', 'CANONICAL_METADATA'].includes(
+    result.bundle.evidenceSelection.solEvidenceBindingMode,
+  ));
+});
+
+test('evidence class comes from trusted metadata instead of a spoofable source id prefix', () => {
+  const packet = jitEvidence();
+  packet.requiredHotIds = ['authority-current', 'authority:spoofed-failure'];
+  packet.evidence = packet.evidence.map((item) => item.id === 'failure-current'
+    ? { ...item, id: 'authority:spoofed-failure' }
+    : item);
+
+  const result = prepareSol({ jitEvidence: packet });
+  assert.equal(result.ok, true);
+  const binding = result.bundle.evidenceSelection.solEvidenceRefs
+    .find((item) => item.id === 'authority:spoofed-failure');
+  assert.equal(binding.evidenceClass, 'actual');
+  if (result.bundle.evidenceSelection.solEvidenceBindingMode === 'LEGACY_TYPED_ALIAS') {
+    assert.match(binding.solRef, /^actual:/);
+    assert.notEqual(binding.solRef, 'authority:spoofed-failure');
+  } else {
+    assert.equal(binding.solRef, 'authority:spoofed-failure');
+  }
 });
 
 test('malformed expected conversation input returns a structured preflight rejection', () => {
@@ -163,6 +373,7 @@ test('prepared Sol route emits one bounded browser action and serializable corre
   assert.equal(result.browserAction.baselineAssistantTurnId, 'assistant-0');
   assert.match(result.browserAction.message, /GAMEROAD_SOL_PACKET/);
   assert.ok(result.browserAction.message.includes(result.bundle.transportRequest.responseMarker));
+  assert.equal(result.bundle.evidenceSelection.status, 'READY');
   assert.doesNotThrow(() => JSON.stringify(result.bundle));
 });
 

@@ -7,24 +7,8 @@
   "baseSha": "28befd60f0d5433eb38f0184b39590511552855f",
   "branch": "work/ops-ai-evidence-purpose-binding-r2-20260829",
   "intent": "Preserve compiler-owned material issue bindings through Sol evidence envelopes; reject genuine-but-unrelated causal evidence; preserve locally declared causal refs through evidence freeze without globally requiring generic Sol context.",
-  "mutableResources": [
-    "tools/jit-evidence-compiler.mjs", "tests/jit-evidence-compiler.test.mjs",
-    "tools/sol-reasoning-protocol.mjs", "tests/sol-reasoning-protocol.test.mjs",
-    "tools/luna-sol-integration-core.mjs", "tests/luna-sol-integration-core.test.mjs",
-    "docs/jit-evidence-compiler.md", "docs/sol-reasoning-protocol.md",
-    ".github/workflows/ops-ai-evidence-purpose-binding-r2.yml",
-    ".github/workflows/ops-ai-evidence-purpose-diagnose-r2.yml",
-    "data/preaction-authorizations/OPS-AI-EVIDENCE-PURPOSE-R2-20260829T2116.json",
-    "data/preaction-authorizations/OPS-AI-EVIDENCE-PURPOSE-R2-DIAGNOSTIC.txt"
-  ],
-  "acceptance": [
-    "Material issue relations are provider-derived and preserved in canonical evidence envelopes.",
-    "Established root-cause claims fail closed when actual, counterevidence, and discriminator do not share a material issue binding.",
-    "Genuine but unrelated evidence is rejected without a second relevance scorer.",
-    "Locally predeclared causal refs are promoted before evidence freeze so compression cannot silently drop them.",
-    "Generic Sol reasoning context remains priority-based and does not become globally required.",
-    "Focused and existing regression tests pass on the recovery branch before merge.",
-    "One-shot diagnostic and all temporary controls are deleted before final head."
-  ],
+  "mutableResources": ["tools/jit-evidence-compiler.mjs","tests/jit-evidence-compiler.test.mjs","tools/sol-reasoning-protocol.mjs","tests/sol-reasoning-protocol.test.mjs","tools/luna-sol-integration-core.mjs","tests/luna-sol-integration-core.test.mjs","docs/jit-evidence-compiler.md","docs/sol-reasoning-protocol.md",".github/workflows/ops-ai-evidence-purpose-binding-r2.yml",".github/workflows/ops-ai-evidence-purpose-diagnose-r2.yml","data/preaction-authorizations/OPS-AI-EVIDENCE-PURPOSE-R2-20260829T2116.json","data/preaction-authorizations/OPS-AI-EVIDENCE-PURPOSE-R2-DIAGNOSTIC.txt"],
+  "acceptance": ["Material issue relations are provider-derived and preserved in canonical evidence envelopes.","Established root-cause claims fail closed when actual, counterevidence, and discriminator do not share a material issue binding.","Genuine but unrelated evidence is rejected without a second relevance scorer.","Locally predeclared causal refs are promoted before evidence freeze so compression cannot silently drop them.","Generic Sol reasoning context remains priority-based and does not become globally required.","Focused and existing regression tests pass on the recovery branch before merge.","One-shot diagnostic and all temporary controls are deleted before final head."],
+  "diagnosticTrigger": "2026-08-29T21:25JST",
   "state": "AUTHORIZED_PRE_ACTION"
 }

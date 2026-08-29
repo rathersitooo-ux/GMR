@@ -64,7 +64,7 @@ function evidenceContext() {
 }
 
 function packet(source = queue()) {
-  const packed = packReasoningPacket(source, evidenceContext());
+  const packed = packReasoningPacket(source, evidenceContext(), { maxWireBytes: 5000 });
   assert.equal(packed.ok, true);
   return packed.packet;
 }

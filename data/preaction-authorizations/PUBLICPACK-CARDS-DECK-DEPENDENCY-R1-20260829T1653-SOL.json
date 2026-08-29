@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PUBLICPACK-CARDS-DECK-DEPENDENCY-R1-20260829T1653-SOL",
+  "taskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "workUnitKey": "PUBLIC_PACKAGE_CARDS_DECK_PRESENTATION_DEPENDENCY_R1",
+  "acquireKey": "PUBLICPACK-CARDS-DECK-DEPENDENCY-R1-20260829T1653-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR#591 Required Gate run33241770332 reproduces exact missing package dependency ./cards-deck-presentation.mjs after PRE_ACTION success",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT_ORACLE: deploy/cloudflare build dependency verifier already detects the import and fails closed; repair is bounded to registering/copying the detected runtime dependency",
+  "proceedToken": "PROCEED|PUBLICPACK-CARDS-DECK-DEPENDENCY-R1-20260829T1653-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260829T1653JST",
+  "authorizationBaseSha": "61dbf7c2f0b4f03fa378bf5a99d509314ff108b8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "leaseWorkUnitKey": "PUBLIC_PACKAGE_CARDS_DECK_PRESENTATION_DEPENDENCY_R1",
+  "leaseAcquireKey": "PUBLICPACK-CARDS-DECK-DEPENDENCY-R1-20260829T1653-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 16:53 JST",
+  "leaseUntilJst": "2026-08-29 17:53 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base 61dbf7c2f0b4f03fa378bf5a99d509314ff108b8; branch work/publicpack-cards-deck-dependency-r1-20260829; transient PRE_ACTION data/preaction-authorizations/PUBLICPACK-CARDS-DECK-DEPENDENCY-R1-20260829T1653-SOL.json create-first/delete-before-final-head; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; own CURRENT_ACTIVE_LEASES row8 and own R22 records. READ-ONLY: browser/GAMEROAD.html, browser/cards-deck-presentation.mjs, PR#591. Excludes all other browser product bytes, workflows, assets, gameplay/save/economy/Battle/Partner.",
+  "scope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "public-package-register-existing-cards-deck-presentation-dependency-r1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "Reuse existing ARTIFACT_SPECS packaging path and existing dependency-completeness invariant instead of changing product import architecture",
+  "solutionSearchEvidence": [
+    "deploy/cloudflare/scripts/build.mjs localModuleRefs already recognizes dynamic import()",
+    "assertBrowserRuntimeDependencyCompleteness already fails closed on missing discovered modules",
+    "PublicHost row130 explicitly allows fresh package/module regression re-entry"
+  ]
+}

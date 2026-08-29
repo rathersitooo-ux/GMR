@@ -1,0 +1,25 @@
+{
+  "lease_snapshot_document_id": "1QKCll_T9ej6K96fRkRUESCAIYVGbsCYZILGIWMUdm2Y",
+  "lease_snapshot_row": 196,
+  "lease_snapshot_readback_ref": "CURRENT_ACTIVE_LEASES!A196:L196",
+  "lease_snapshot": {
+    "acquire_key": "REQGATE-DECKSLOTS-MAP-R3-20260829T1521-SOL-T7M2Q9K4",
+    "owner": "ChatGPT",
+    "model": "GPT-5.6 Sol",
+    "conversation": "current conversation",
+    "work_unit": "DECK_SLOTS_GATE_MAPPING_R1",
+    "branch": "work/required-gate-deck-slots-map-r3-20260829",
+    "lease_until": "2026-08-29 16:21 JST",
+    "acquired": "true"
+  },
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "action": "classify browser/deck-slots-core.mjs and tests/deck-slots-core.test.mjs under the existing deck_ack required-gate family and run the focused deck-slot test when that family is touched",
+  "checks": [
+    "node --test tests/deck-slots-core.test.mjs",
+    "existing deck_ack required-gate test set remains unchanged and green"
+  ],
+  "rollback": "revert only the focused gameroad-required-gate.yml deck-slot classification/test-map change; no browser/runtime files are mutated by this branch",
+  "cleanup_temp": true
+}

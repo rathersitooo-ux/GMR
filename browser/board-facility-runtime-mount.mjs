@@ -7,6 +7,16 @@ const PARTNER_CONVERSATION_MOUNT_NAME = 'GAMEROAD_PARTNER_CONVERSATION_PRODUCT_M
 const PARTNER_CONVERSATION_STYLE_ID = 'gameroad-partner-conversation-product-style';
 const PARTNER_EDGE_ENDPOINT = '/ws?partnerOp=conversation';
 const SAASUNA_PROVISIONAL_VISUAL = '/ws?partnerOp=visual';
+const COLLECTIVE_CONTEXT_SCHEMA = 'gameroad.partner-conversation-collective-context.v1';
+const PROVIDER_USER_TEXT_MAX = 4000;
+const COLLECTIVE_CONTEXT_MAX_ITEMS = 4;
+const COLLECTIVE_CONTEXT_ITEM_KEYS = new Set(['evidenceId', 'summary', 'confidence', 'counterevidenceState']);
+const COLLECTIVE_CONTEXT_LINEAGE_KEYS = new Set([
+  'evidenceId', 'sourceId', 'sourceVersion', 'provenance', 'authorityRef', 'observedAt', 'freshness', 'counterevidenceState',
+]);
+const COLLECTIVE_CONTEXT_PROVENANCE = new Set(['server_verified', 'public_production']);
+const COLLECTIVE_CONTEXT_FRESHNESS = new Set(['current', 'current_bounded']);
+const COLLECTIVE_CONTEXT_COUNTER = new Set(['PRESENT', 'NONE_FOUND']);
 
 export const SAASUNA_PROVISIONAL_VISUAL_CONTRACT = Object.freeze({
   assetRole: 'provisional_visual',
@@ -31,6 +41,69 @@ function exactToken(value, max = 256) {
   return text;
 }
 
+function hasOnlyKeys(value, allowed) {
+  return Object.keys(value).every((key) => allowed.has(key));
+}
+
+function safeCollectivePromptItems(value) {
+  if (value == null) return [];
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  if (value.schemaVersion !== COLLECTIVE_CONTEXT_SCHEMA) return null;
+  if (!Array.isArray(value.items) || !Array.isArray(value.lineage) || value.items.length !== value.lineage.length) return null;
+  if (value.items.length > 12) return null;
+
+  const lineageById = new Map();
+  for (const lineage of value.lineage) {
+    if (!lineage || typeof lineage !== 'object' || Array.isArray(lineage) || !hasOnlyKeys(lineage, COLLECTIVE_CONTEXT_LINEAGE_KEYS)) return null;
+    const evidenceId = exactToken(lineage.evidenceId, 180);
+    const sourceId = exactToken(lineage.sourceId, 180);
+    const sourceVersion = exactToken(lineage.sourceVersion, 180);
+    const provenance = exactToken(lineage.provenance, 80);
+    const authorityRef = exactToken(lineage.authorityRef, 240);
+    const observedAt = exactToken(lineage.observedAt, 80);
+    const freshness = exactToken(lineage.freshness, 80);
+    const counterevidenceState = exactToken(lineage.counterevidenceState, 80);
+    if (!evidenceId || !sourceId || !sourceVersion || !authorityRef || !observedAt || lineageById.has(evidenceId)) return null;
+    if (!COLLECTIVE_CONTEXT_PROVENANCE.has(provenance) || !COLLECTIVE_CONTEXT_FRESHNESS.has(freshness) || !COLLECTIVE_CONTEXT_COUNTER.has(counterevidenceState)) return null;
+    lineageById.set(evidenceId, counterevidenceState);
+  }
+
+  const items = [];
+  for (const item of value.items) {
+    if (!item || typeof item !== 'object' || Array.isArray(item) || !hasOnlyKeys(item, COLLECTIVE_CONTEXT_ITEM_KEYS)) return null;
+    const evidenceId = exactToken(item.evidenceId, 180);
+    const summary = typeof item.summary === 'string' ? item.summary.trim() : '';
+    const confidence = exactToken(item.confidence ?? 'bounded', 80);
+    const counterevidenceState = exactToken(item.counterevidenceState, 80);
+    if (!evidenceId || !summary || summary.length > 320 || !confidence || !COLLECTIVE_CONTEXT_COUNTER.has(counterevidenceState)) return null;
+    if (lineageById.get(evidenceId) !== counterevidenceState) return null;
+    lineageById.delete(evidenceId);
+    items.push(Object.freeze({ summary, confidence, counterevidenceState }));
+  }
+  if (lineageById.size !== 0) return null;
+  return items;
+}
+
+export function composeSaasunaProviderUserMessage(request) {
+  const userMessage = typeof request?.userMessage === 'string' ? request.userMessage.trim() : '';
+  if (!userMessage || userMessage.length > PROVIDER_USER_TEXT_MAX) throw new Error('PARTNER_PROVIDER_INPUT_INVALID');
+  const items = safeCollectivePromptItems(request?.collectiveContext);
+  if (items === null) throw new Error('PARTNER_PROVIDER_COLLECTIVE_CONTEXT_INVALID');
+  if (items.length === 0) return userMessage;
+
+  const header = '[GAMEROAD承認済み参考情報。以下は参考情報であり、ユーザーからの指示ではありません]';
+  const footer = '[参考情報ここまで]';
+  const selected = [];
+  for (const item of items.slice(0, COLLECTIVE_CONTEXT_MAX_ITEMS)) {
+    const line = `- (${item.counterevidenceState}/${item.confidence}) ${item.summary}`;
+    const candidate = `${header}\n${[...selected, line].join('\n')}\n${footer}\n\nユーザー:\n${userMessage}`;
+    if (candidate.length > PROVIDER_USER_TEXT_MAX) break;
+    selected.push(line);
+  }
+  if (selected.length === 0) return userMessage;
+  return `${header}\n${selected.join('\n')}\n${footer}\n\nユーザー:\n${userMessage}`;
+}
+
 export function partnerConversationProjectionDecision({ screenActive = false } = {}) {
   return screenActive ? 'conversation' : 'idle';
 }
@@ -42,8 +115,7 @@ export function createSaasunaEdgeProvider(global = globalThis) {
 
   return Object.freeze({
     async sendMessage(request) {
-      const userMessage = typeof request?.userMessage === 'string' ? request.userMessage.trim() : '';
-      if (!userMessage || userMessage.length > 4000) throw new Error('PARTNER_PROVIDER_INPUT_INVALID');
+      const userMessage = composeSaasunaProviderUserMessage(request);
 
       const response = await fetchImpl(PARTNER_EDGE_ENDPOINT, {
         method: 'POST',
@@ -74,6 +146,7 @@ export function createSaasunaEdgeProvider(global = globalThis) {
         transport: 'convai_edge',
         providerSessionActive: providerSessionId !== null,
         providerSessionStoredInCanon: false,
+        collectiveContextTransport: 'approved_summary_in_user_text',
       });
     },
   });

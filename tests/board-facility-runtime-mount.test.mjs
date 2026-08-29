@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  composeSaasunaProviderUserMessage,
   createSaasunaEdgeProvider,
   mountBoardFacilityRuntime,
   mountSaasunaConversationProductSurface,
@@ -107,6 +108,83 @@ test('browser edge provider keeps provider session locally and sends no API key'
   assert.deepEqual(calls[1].body, { userMessage: '続き', providerSessionId: 'convai-session-1' });
   assert.equal(JSON.stringify(calls).includes('CONVAI-API-KEY'), false);
   assert.equal(provider.status().providerSessionStoredInCanon, false);
+});
+
+test('browser edge provider composes only approved collective summaries into Convai userText', async () => {
+  const calls = [];
+  const provider = createSaasunaEdgeProvider({
+    async fetch(url, options) {
+      calls.push({ url, body: JSON.parse(options.body) });
+      return new Response(JSON.stringify({ ok: true, text: '承知しました。', providerSessionId: 'convai-session-ctx' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    },
+  });
+  const collectiveContext = {
+    schemaVersion: 'gameroad.partner-conversation-collective-context.v1',
+    items: [{
+      evidenceId: 'EVIDENCE-CURRENT-1',
+      summary: '承認済みの現在情報です。',
+      confidence: 'bounded',
+      counterevidenceState: 'NONE_FOUND',
+    }],
+    lineage: [{
+      evidenceId: 'EVIDENCE-CURRENT-1',
+      sourceId: 'SOURCE-PRIVATE-TO-TRANSPORT',
+      sourceVersion: 'v1',
+      provenance: 'server_verified',
+      authorityRef: 'AUTHORITY-PRIVATE-TO-TRANSPORT',
+      observedAt: '2026-08-29T12:00:00Z',
+      freshness: 'current',
+      counterevidenceState: 'NONE_FOUND',
+    }],
+  };
+  const composed = composeSaasunaProviderUserMessage({ userMessage: '今日の話を教えて', collectiveContext });
+  assert.match(composed, /GAMEROAD承認済み参考情報/);
+  assert.match(composed, /承認済みの現在情報です。/);
+  assert.match(composed, /今日の話を教えて/);
+  assert.doesNotMatch(composed, /SOURCE-PRIVATE-TO-TRANSPORT|AUTHORITY-PRIVATE-TO-TRANSPORT/);
+  assert.ok(composed.length <= 4000);
+
+  await provider.sendMessage({
+    partnerId: 'partner.saasuna',
+    dialogueVersion: 'saasuna.dialogue.current.r1.20260810',
+    sourceId: 'SOURCE-DIALOGUE-SAASUNA-20260810',
+    userMessage: '今日の話を教えて',
+    collectiveContext,
+  });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].url, '/ws?partnerOp=conversation');
+  assert.equal(calls[0].body.userMessage, composed);
+  assert.equal(calls[0].body.providerSessionId, null);
+  assert.equal(provider.status().collectiveContextTransport, 'approved_summary_in_user_text');
+});
+
+test('browser edge provider fails closed before fetch for unsafe collective context', async () => {
+  let fetchCount = 0;
+  const provider = createSaasunaEdgeProvider({
+    async fetch() {
+      fetchCount += 1;
+      throw new Error('SHOULD_NOT_FETCH');
+    },
+  });
+  const unsafeContext = {
+    schemaVersion: 'gameroad.partner-conversation-collective-context.v1',
+    items: [{ evidenceId: 'E1', summary: 'unsafe', confidence: 'bounded', counterevidenceState: 'PRESENT' }],
+    lineage: [{
+      evidenceId: 'E1',
+      sourceId: 'S1',
+      sourceVersion: 'v1',
+      provenance: 'private',
+      authorityRef: 'A1',
+      observedAt: '2026-08-29T12:00:00Z',
+      freshness: 'current',
+      counterevidenceState: 'PRESENT',
+    }],
+  };
+  await assert.rejects(() => provider.sendMessage({ userMessage: '送らない', collectiveContext: unsafeContext }), /PARTNER_PROVIDER_COLLECTIVE_CONTEXT_INVALID/);
+  assert.equal(fetchCount, 0);
 });
 
 test('browser without fetch has no provider and therefore uses existing fallback lane', () => {

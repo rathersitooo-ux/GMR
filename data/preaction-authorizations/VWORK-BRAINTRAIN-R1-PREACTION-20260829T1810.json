@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-BRAINTRAIN-R1-PREACTION-20260829T1810",
+  "taskId": "LEARNING-CROSSMEDIA-INTRINSIC-CONTRACT-001",
+  "workUnitKey": "BRAIN_TRAINING_SHARED_CONTRACT_R1",
+  "acquireKey": "BRAIN-TRAINING-CONTRACT-R1-20260829T1810-SOL-N8Q4V2K6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BRAINTRAIN-R1-PREDICT-DERIVED-CANDIDATE-NO-RUNTIME",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BRAINTRAIN-R1-ORACLE-NINTENDO-PRIMARY-CURRENT-LEARNING-BOUNDARY",
+  "proceedToken": "PROCEED|VWORK-BRAINTRAIN-R1-PREACTION-20260829T1810|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|fresh-main|lease-readback|derived-data-only",
+  "authorizationBaseSha": "2f1fd1f739dc17a1b6fb63da4109ae600b8bec4d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "LEARNING-CROSSMEDIA-INTRINSIC-CONTRACT-001",
+  "leaseWorkUnitKey": "BRAIN_TRAINING_SHARED_CONTRACT_R1",
+  "leaseAcquireKey": "BRAIN-TRAINING-CONTRACT-R1-20260829T1810-SOL-N8Q4V2K6",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 18:10 JST",
+  "leaseUntilJst": "2026-08-29 18:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A20:L20",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base 2f1fd1f739dc17a1b6fb63da4109ae600b8bec4d; data/brain-training-shared-contract.v1.json; data/brain-training-shared-contract.schema.json; transient PRE_ACTION data/preaction-authorizations/VWORK-BRAINTRAIN-R1-PREACTION-20260829T1810.json create-first/delete-before-final-head; own branch/PR; own CURRENT_ACTIVE_LEASES row20; own R22 records. READ-ONLY: data/daily-tour-mode-registry.v1.json; current LEARNING_EVENT_CORE_R1; learning intrinsic authority. EXCLUDE browser/GAMEROAD.html; browser/learning-event-core.mjs; daily-tour runtime; Partner; Mission; rewards/economy/save; Battle rules/power; workflows/tools/deploy/assets; all other files.",
+  "scope": [
+    "data/brain-training-shared-contract.v1.json",
+    "data/brain-training-shared-contract.schema.json"
+  ],
+  "leaseScope": [
+    "data/brain-training-shared-contract.v1.json",
+    "data/brain-training-shared-contract.schema.json"
+  ]
+}

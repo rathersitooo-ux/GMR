@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BRAIN-SIMPLIFY-R5-20260829T2354",
+  "taskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "workUnitKey": "BRAIN_TRAINING_DAILY_CORE_R5_V3_REPLAY",
+  "acquireKey": "BRAIN-SIMPLIFY-R5-20260829T2354-SOL-R8K3V6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "brain-r5-exact-r3-bytes-on-current-main-20260829",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "brain-r3-exact-bytes-16-of-16-node-pass-core-9efb8697-test-18eff768-20260829",
+  "proceedToken": "PROCEED|BRAIN-SIMPLIFY-R5-20260829T2354|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|V3_EXACT_REPLAY",
+  "authorizationBaseSha": "9da250764cc1eab91dea3e500038f5863e876854",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "leaseWorkUnitKey": "BRAIN_TRAINING_DAILY_CORE_R5_V3_REPLAY",
+  "leaseAcquireKey": "BRAIN-SIMPLIFY-R5-20260829T2354-SOL-R8K3V6",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 23:54 JST",
+  "leaseUntilJst": "2026-08-30 00:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A206:L206",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact fresh base 9da250764cc1eab91dea3e500038f5863e876854; new branch work/daily-brain-training-r5-20260829; transient PRE_ACTION data/preaction-authorizations/BRAIN-SIMPLIFY-R5-20260829T2354.json create-first/delete-before-final-head; browser/brain-training-core.mjs; tests/brain-training-core.test.mjs; replacement PR metadata/checks/expected-head merge; close old PR#635 only after verified replacement merge; own CURRENT_ACTIVE_LEASES exact row and own R22 records. REUSE exact semantic blobs from closed PR#637 core 9efb8697b9fa539a1a8c5567d0766b3020d22ccc and test 18eff7687ddb817e2c7666edf21d1001497bdb82. READ_ONLY browser/learning-event-core.mjs; browser/daily-tour-core.mjs; data/daily-tour-mode-registry.v1.json; PR#637; current PRE_ACTION validator and Required Gate. EXCLUDE browser/GAMEROAD.html; Daily Tour navigation adapter; Partner/BigData/Battle/reward/save/economy/deploy/assets/workflows/tools/all other files.",
+  "scope": [
+    "browser/brain-training-core.mjs",
+    "tests/brain-training-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/brain-training-core.mjs",
+    "tests/brain-training-core.test.mjs"
+  ],
+  "solutionSignature": "brain-training-r3:shared-learning-taxonomy+source-grounded-practice-session+answer-skip-idempotency",
+  "reuseDisposition": "REUSE_AS_IS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "brain-r5-reuse-pr637-semantic-blobs-on-current-learning-event-authority-20260829",
+  "solutionSearchEvidence": [
+    "current-main:browser/learning-event-core.mjs:blob-5f29e9f4db954408e2e91610040bd5f19cb9ad6a:shared-six-subjects-and-five-cognitive-axes",
+    "verified-donor:closed-pr637:core-blob-9efb8697b9fa539a1a8c5567d0766b3020d22ccc",
+    "verified-donor:closed-pr637:test-blob-18eff7687ddb817e2c7666edf21d1001497bdb82:16-of-16-pass",
+    "current-main-drift:86c2001-to-9da2507:cartridge-wave-d-only:brain-scope-overlap-zero",
+    "counterexample:pr635:duplicate-taxonomy-daykey-scheduler-learning-event-producer-removed"
+  ]
+}

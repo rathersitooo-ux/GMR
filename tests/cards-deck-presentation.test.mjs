@@ -262,3 +262,22 @@ test('custom timings remain bounded by semantic contract', () => {
   assert.equal(plan.recentAddMs, 500);
   assert.equal(plan.streakCount, 1);
 });
+
+test('collection quick filter cycles all, out, in, then all', async () => {
+  const { DECK_COLLECTION_VIEW_MODES, nextDeckCollectionViewMode } = await import('../browser/cards-deck-presentation.mjs');
+  assert.deepEqual(DECK_COLLECTION_VIEW_MODES, ['all', 'out', 'in']);
+  assert.equal(nextDeckCollectionViewMode('all'), 'out');
+  assert.equal(nextDeckCollectionViewMode('out'), 'in');
+  assert.equal(nextDeckCollectionViewMode('in'), 'all');
+});
+
+test('collection membership filter composes with native hidden state without changing deck rules', async () => {
+  const { deckCollectionModeAllows } = await import('../browser/cards-deck-presentation.mjs');
+  assert.equal(deckCollectionModeAllows({ mode: 'all', inDeck: false }), true);
+  assert.equal(deckCollectionModeAllows({ mode: 'all', inDeck: true }), true);
+  assert.equal(deckCollectionModeAllows({ mode: 'out', inDeck: false }), true);
+  assert.equal(deckCollectionModeAllows({ mode: 'out', inDeck: true }), false);
+  assert.equal(deckCollectionModeAllows({ mode: 'in', inDeck: false }), false);
+  assert.equal(deckCollectionModeAllows({ mode: 'in', inDeck: true }), true);
+  assert.throws(() => deckCollectionModeAllows({ mode: 'bad', inDeck: false }), /COLLECTION_VIEW_MODE_INVALID/);
+});

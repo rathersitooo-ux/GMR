@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gameroad.local/schema/daily-tour-mode-registry-v1.json",
+  "title": "GAMEROAD Daily Tour Mode Registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "derivedNonAuthority", "authoritySnapshot", "invariants", "entries"],
+  "properties": {
+    "schemaVersion": {"const": "gameroad-daily-tour-mode-registry-v1"},
+    "derivedNonAuthority": {"const": true},
+    "authoritySnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capturedAtJst", "currentRootId", "centralSpreadsheetId", "gitBaseSha"],
+      "properties": {
+        "capturedAtJst": {"type": "string", "minLength": 1},
+        "currentRootId": {"type": "string", "minLength": 1},
+        "centralSpreadsheetId": {"type": "string", "minLength": 1},
+        "gitBaseSha": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+      }
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["registeredOrderPreserved", "unregisteredAutoInsert", "allStopsRequired", "skipCreatesDebt", "quickStopsMandatory", "periodAuthority", "rewardAuthority", "learningEffectClaim"],
+      "properties": {
+        "registeredOrderPreserved": {"const": true},
+        "unregisteredAutoInsert": {"const": false},
+        "allStopsRequired": {"const": false},
+        "skipCreatesDebt": {"const": false},
+        "quickStopsMandatory": {"const": false},
+        "periodAuthority": {"const": "EXTERNAL_PASS_THROUGH_ONLY"},
+        "rewardAuthority": {"const": "NOT_DEFINED_BY_REGISTRY"},
+        "learningEffectClaim": {"const": "NOT_DEFINED_BY_REGISTRY"}
+      }
+    },
+    "entries": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/entry"}}
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["modeId", "class", "dailySemantics", "runtimeState", "tourPolicy", "authorityRefs", "education"],
+      "properties": {
+        "modeId": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+        "class": {"enum": ["WRAPPER", "TOUR_ELIGIBLE", "QUICK_STOP", "BACKGROUND_PROGRESS", "UNRESOLVED", "CANDIDATE_ONLY"]},
+        "dailySemantics": {"enum": ["NATIVE", "NONE", "PARTIAL", "PROVISIONAL", "UNRESOLVED"]},
+        "runtimeState": {"enum": ["CURRENT_CORE_PRESENT", "PARTIAL", "PROVISIONAL", "PARK_INPUT_REQUIRED", "RESEARCH_ONLY", "DESIGN_CANDIDATE", "CONTRACT_ONLY"]},
+        "tourPolicy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["canAppearInPlan", "autoInsert", "mandatory", "quickStop", "skipBlocksProgress", "finaleRole"],
+          "properties": {
+            "canAppearInPlan": {"type": "boolean"},
+            "autoInsert": {"const": false},
+            "mandatory": {"const": false},
+            "quickStop": {"type": "boolean"},
+            "skipBlocksProgress": {"const": false},
+            "finaleRole": {"enum": ["NONE", "OPTIONAL_FINALE"]}
+          }
+        },
+        "authorityRefs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "education": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "candidateTags"],
+          "properties": {
+            "status": {"enum": ["NONE", "INTRINSIC_CANDIDATE", "CANDIDATE_ONLY"]},
+            "candidateTags": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+          }
+        },
+        "notes": {"type": "string"}
+      }
+    }
+  }
+}

@@ -64,6 +64,7 @@ jobs:
           partner_vtuber=false
           partner_humanlike=false
           partner_conversation=false
+          partner_shell=false
           observability=false
           card_presentation=false
           base52_face=false
@@ -223,6 +224,10 @@ jobs:
               tests/partner-tea-quick-choice-core.test.mjs)
                 partner_conversation=true
                 ;;
+              browser/partner-shell-presentation-core.mjs|\
+              tests/partner-shell-presentation-core.test.mjs)
+                partner_shell=true
+                ;;
               browser/observability-core.mjs|\
               tests/observability-core.test.mjs|\
               browser/observability-browser-adapter.mjs|\
@@ -370,6 +375,7 @@ jobs:
             echo "partner_vtuber=${partner_vtuber}"
             echo "partner_humanlike=${partner_humanlike}"
             echo "partner_conversation=${partner_conversation}"
+            echo "partner_shell=${partner_shell}"
             echo "observability=${observability}"
             echo "card_presentation=${card_presentation}"
             echo "base52_face=${base52_face}"
@@ -611,6 +617,10 @@ jobs:
             fi
             node --test tests/partner-tea-quick-choice-core.test.mjs
           fi
+
+      - name: Run Partner presence shell tests
+        if: steps.classify.outputs.partner_shell == 'true'
+        run: node --test tests/partner-shell-presentation-core.test.mjs
 
       - name: Run Observability core and Browser adapter tests
         if: steps.classify.outputs.observability == 'true'

@@ -98,27 +98,3 @@ export function normalizeLearningEvent(raw = {}) {
     privacyBoundary: 'CODED_FIELDS_ONLY',
   });
 }
-
-export function summarizeLearningEvents(events = []) {
-  const valid = (Array.isArray(events) ? events : []).filter((event) => (
-    event?.schemaVersion === 'learning-event-v1'
-    && SUBJECTS.has(event.subject)
-    && RESULTS.has(event.result)
-    && event.learningOutcome === LEARNING_OUTCOME_STATE.UNMEASURED
-    && event.realSkillOutcome === LEARNING_OUTCOME_STATE.UNMEASURED
-  ));
-  const bySubject = {};
-  const byResult = {};
-  for (const event of valid) {
-    bySubject[event.subject] = (bySubject[event.subject] ?? 0) + 1;
-    byResult[event.result] = (byResult[event.result] ?? 0) + 1;
-  }
-  return Object.freeze({
-    schemaVersion: 'learning-event-summary-v1',
-    eventCount: valid.length,
-    bySubject: Object.freeze(bySubject),
-    byResult: Object.freeze(byResult),
-    learningOutcome: LEARNING_OUTCOME_STATE.UNMEASURED,
-    realSkillOutcome: LEARNING_OUTCOME_STATE.UNMEASURED,
-  });
-}

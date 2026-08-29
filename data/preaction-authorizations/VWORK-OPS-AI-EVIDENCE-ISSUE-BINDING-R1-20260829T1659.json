@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-OPS-AI-EVIDENCE-ISSUE-BINDING-R1-20260829T1659",
+  "taskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "workUnitKey": "EVIDENCE_ISSUE_USE_BINDING_R1",
+  "acquireKey": "OPS-AI-EVIDENCE-ISSUE-BINDING-R1-20260829T1659-SOL-N7Q4M8V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_JIT_RELATION_GRAPH_PLUS_SOL_CANONICAL_TRUST_GAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CANONICAL_BUT_WRONG_ISSUE_COUNTEREXAMPLE_MODEL_20260829",
+  "proceedToken": "PROCEED|VWORK-OPS-AI-EVIDENCE-ISSUE-BINDING-R1-20260829T1659|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EVIDENCE_ISSUE_USE_BINDING_R1",
+  "authorizationBaseSha": "8522508acee2702552fb1d3430a1dfdfc88b1f4e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001",
+  "leaseWorkUnitKey": "EVIDENCE_ISSUE_USE_BINDING_R1",
+  "leaseAcquireKey": "OPS-AI-EVIDENCE-ISSUE-BINDING-R1-20260829T1659-SOL-N7Q4M8V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 17:02 JST",
+  "leaseUntilJst": "2026-08-29 17:58 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A14:N14",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base 8522508acee2702552fb1d3430a1dfdfc88b1f4e; branch work/ops-ai-evidence-issue-binding-r1-20260829; tools/jit-evidence-compiler.mjs; tests/jit-evidence-compiler.test.mjs; tools/sol-reasoning-protocol.mjs; tests/sol-reasoning-protocol.test.mjs; tests/luna-sol-integration-core.test.mjs; transient .github/workflows/ops-ai-evidence-issue-binding-r1.yml; transient data/preaction-authorizations/VWORK-OPS-AI-EVIDENCE-ISSUE-BINDING-R1-20260829T1659.json; PR/merge state; own CURRENT_ACTIVE_LEASES row14; own R22 records. All browser/product/deck/Partner/deploy/assets/save/economy/Required-Gate files excluded.",
+  "scope": [
+    "tools/jit-evidence-compiler.mjs",
+    "tests/jit-evidence-compiler.test.mjs",
+    "tools/sol-reasoning-protocol.mjs",
+    "tests/sol-reasoning-protocol.test.mjs",
+    "tests/luna-sol-integration-core.test.mjs"
+  ],
+  "leaseScope": [
+    "tools/jit-evidence-compiler.mjs",
+    "tests/jit-evidence-compiler.test.mjs",
+    "tools/sol-reasoning-protocol.mjs",
+    "tests/sol-reasoning-protocol.test.mjs",
+    "tests/luna-sol-integration-core.test.mjs"
+  ],
+  "solutionSignature": "compiler-issued material issue bindings constrain causal evidence use without a second relevance graph",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE_JIT_RELATIONS_AND_SOL_CANONICAL_METADATA",
+  "solutionSearchEvidence": [
+    "main:tools/jit-evidence-compiler.mjs existing material issue relation graph and canonical envelope",
+    "main:tools/sol-reasoning-protocol.mjs compiler-certified evidence trust gate",
+    "merged PR #564 PRE_ACTION anticipated material-issue binding but did not implement it",
+    "Macaroons contextual caveats as attenuated authorization analogue",
+    "SLSA provenance subject/material binding as provenance analogue"
+  ]
+}

@@ -15,11 +15,20 @@ export const LEARNING_EVENT_RESULTS = Object.freeze([
   'correct', 'incorrect', 'partial', 'unscored',
 ]);
 
+export const LEARNING_OUTCOME_STATE = Object.freeze({
+  UNMEASURED: 'UNMEASURED',
+});
+
 const EVIDENCE_ROLES = new Set(['used', 'missed', 'corrective', 'context']);
 const SUBJECTS = new Set(Object.values(LEARNING_SUBJECTS));
 const COGNITIVE = new Set(COGNITIVE_CATEGORY_CODES);
 const RESULTS = new Set(LEARNING_EVENT_RESULTS);
 const CODE_RE = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,95}$/;
+const EVENT_KEYS = new Set([
+  'eventId', 'sessionKey', 'activityId', 'subject', 'cognitiveCategories',
+  'decisionCode', 'outcomeCode', 'result', 'evidenceRefs',
+]);
+const EVIDENCE_KEYS = new Set(['id', 'version', 'provenance', 'role']);
 
 function code(value, name) {
   if (typeof value !== 'string' || !CODE_RE.test(value)) {
@@ -37,7 +46,7 @@ function onlyKeys(obj, allowed, name) {
 
 function normalizeEvidenceRef(raw, index) {
   const name = `evidenceRefs[${index}]`;
-  onlyKeys(raw, new Set(['id', 'version', 'provenance', 'role']), name);
+  onlyKeys(raw, EVIDENCE_KEYS, name);
   const role = code(raw.role, `${name}.role`);
   if (!EVIDENCE_ROLES.has(role)) throw new TypeError(`${name}.role is unsupported`);
   return Object.freeze({
@@ -49,10 +58,7 @@ function normalizeEvidenceRef(raw, index) {
 }
 
 export function normalizeLearningEvent(raw = {}) {
-  onlyKeys(raw, new Set([
-    'eventId', 'sessionKey', 'activityId', 'subject', 'cognitiveCategories',
-    'decisionCode', 'outcomeCode', 'result', 'evidenceRefs',
-  ]), 'event');
+  onlyKeys(raw, EVENT_KEYS, 'event');
 
   const subject = code(raw.subject, 'subject');
   if (!SUBJECTS.has(subject)) throw new TypeError(`unsupported learning subject: ${subject}`);
@@ -68,6 +74,9 @@ export function normalizeLearningEvent(raw = {}) {
   if (categories.length === 0) throw new TypeError('cognitiveCategories must contain at least one supported category');
 
   const evidenceRefs = (Array.isArray(raw.evidenceRefs) ? raw.evidenceRefs : []).map(normalizeEvidenceRef);
+  if (evidenceRefs.length === 0) {
+    throw new TypeError('evidenceRefs must contain at least one versioned evidence reference');
+  }
   const evidenceKey = (ref) => `${ref.id}\u0000${ref.version}\u0000${ref.provenance}\u0000${ref.role}`;
   if (new Set(evidenceRefs.map(evidenceKey)).size !== evidenceRefs.length) {
     throw new TypeError('duplicate evidenceRefs are not allowed');
@@ -84,15 +93,20 @@ export function normalizeLearningEvent(raw = {}) {
     outcomeCode: code(raw.outcomeCode, 'outcomeCode'),
     result,
     evidenceRefs: Object.freeze(evidenceRefs),
-    learningOutcome: 'UNMEASURED',
-    realSkillOutcome: 'UNMEASURED',
-    containsRawUserText: false,
-    containsPersonalIdentifiers: false,
+    learningOutcome: LEARNING_OUTCOME_STATE.UNMEASURED,
+    realSkillOutcome: LEARNING_OUTCOME_STATE.UNMEASURED,
+    privacyBoundary: 'CODED_FIELDS_ONLY',
   });
 }
 
 export function summarizeLearningEvents(events = []) {
-  const valid = (Array.isArray(events) ? events : []).filter((event) => event?.schemaVersion === 'learning-event-v1');
+  const valid = (Array.isArray(events) ? events : []).filter((event) => (
+    event?.schemaVersion === 'learning-event-v1'
+    && SUBJECTS.has(event.subject)
+    && RESULTS.has(event.result)
+    && event.learningOutcome === LEARNING_OUTCOME_STATE.UNMEASURED
+    && event.realSkillOutcome === LEARNING_OUTCOME_STATE.UNMEASURED
+  ));
   const bySubject = {};
   const byResult = {};
   for (const event of valid) {
@@ -104,7 +118,7 @@ export function summarizeLearningEvents(events = []) {
     eventCount: valid.length,
     bySubject: Object.freeze(bySubject),
     byResult: Object.freeze(byResult),
-    learningOutcome: 'UNMEASURED',
-    realSkillOutcome: 'UNMEASURED',
+    learningOutcome: LEARNING_OUTCOME_STATE.UNMEASURED,
+    realSkillOutcome: LEARNING_OUTCOME_STATE.UNMEASURED,
   });
 }

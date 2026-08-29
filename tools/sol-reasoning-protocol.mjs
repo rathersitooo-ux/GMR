@@ -48,7 +48,7 @@ const TEST_ROLES = new Set(['TEST', 'DISCRIMINATING_TEST', 'ACCEPTANCE_TEST', 'V
 const COUNTER_ROLES = new Set(['COUNTER', 'COUNTEREVIDENCE', 'COUNTER_EVIDENCE', 'CONTRARY_EVIDENCE']);
 const ENVELOPE_KEYS = new Set([
   'schemaVersion', 'id', 'tier', 'state', 'role', 'claimMode',
-  'authorityClass', 'version', 'provenance', 'freshness',
+  'authorityClass', 'version', 'provenance', 'freshness', 'issueBindings',
 ]);
 const REQUEST_KEYS = new Set([
   'protocolVersion', 'kind', 'requestId', 'taskId', 'workUnitKey', 'acquireKey',
@@ -190,6 +190,7 @@ function parseCanonicalEvidenceEnvelope(item, index) {
     version: cleanString(metadata.version ?? '', `context_${index}_metadata_version`, { max: 240, optional: true }),
     provenance: cleanString(metadata.provenance ?? '', `context_${index}_metadata_provenance`, { max: 1000, optional: true }),
     freshness: cleanString(metadata.freshness ?? '', `context_${index}_metadata_freshness`, { max: 240, optional: true }),
+    issueBindings: cleanStringList(metadata.issueBindings ?? [], `context_${index}_metadata_issueBindings`, { maxItems: 64 }),
   };
   if (normalized.schemaVersion !== SOL_EVIDENCE_CONTEXT_ENVELOPE_VERSION) {
     throw new Error(`context_${index}_evidence_metadata_schema`);
@@ -242,6 +243,14 @@ function validateEvidenceRef(ref, index, name, expectedTrustedType = '') {
   return entry.trustedClass;
 }
 
+function commonIssueBindings(refs, knownEvidence) {
+  if (refs.length === 0) return [];
+  const lists = refs.map((ref) => knownEvidence.get(ref)?.metadata?.issueBindings ?? []);
+  if (lists.some((bindings) => bindings.length === 0)) return [];
+  const [first, ...rest] = lists;
+  return first.filter((issueId) => rest.every((bindings) => bindings.includes(issueId)));
+}
+
 function normalizeClaim(raw, index, knownEvidence) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error(`claim_${index}_must_be_object`);
   const allowed = new Set([
@@ -277,6 +286,14 @@ function normalizeClaim(raw, index, knownEvidence) {
     if (!evidenceTypes.has('actual')) throw new Error(`claim_${index}_root_cause_actual_required`);
     if (claim.counterEvidenceRefs.length === 0) throw new Error(`claim_${index}_root_cause_counter_required`);
     if (claim.discriminatingTestRefs.length === 0) throw new Error(`claim_${index}_root_cause_discriminating_test_required`);
+    const actualRefs = claim.evidenceRefs.filter((ref) => knownEvidence.get(ref)?.trustedClass === 'actual');
+    const causalRefs = [...new Set([...actualRefs, ...claim.counterEvidenceRefs, ...claim.discriminatingTestRefs])];
+    if (causalRefs.some((ref) => (knownEvidence.get(ref)?.metadata?.issueBindings ?? []).length === 0)) {
+      throw new Error(`claim_${index}_root_cause_issue_binding_required`);
+    }
+    if (commonIssueBindings(causalRefs, knownEvidence).length === 0) {
+      throw new Error(`claim_${index}_root_cause_issue_binding_mismatch`);
+    }
   }
   if (claim.kind === CLAIM_KIND.ROOT_CAUSE && claim.status !== CLAIM_STATUS.ESTABLISHED && !claim.nextDiscriminator) {
     throw new Error(`claim_${index}_root_cause_next_discriminator_required`);

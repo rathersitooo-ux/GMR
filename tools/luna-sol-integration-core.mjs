@@ -83,23 +83,46 @@ function freezeEvidence(queuePacket, context, maxWireBytes) {
   };
 }
 
+function declaredLocalEvidenceRefs(localEvidence) {
+  const refs = new Set(localEvidence?.decisionBasisRefs ?? []);
+  for (const claim of localEvidence?.claims ?? []) {
+    for (const key of ['evidenceRefs', 'counterEvidenceRefs', 'discriminatingTestRefs']) {
+      for (const ref of claim?.[key] ?? []) refs.add(ref);
+    }
+  }
+  return refs;
+}
+
+function promoteDeclaredContextRefs(context, localEvidence) {
+  const declaredRefs = declaredLocalEvidenceRefs(localEvidence);
+  return (context ?? []).map((item) => (
+    item && typeof item === 'object' && !Array.isArray(item) && declaredRefs.has(item.id)
+      ? { ...item, required: true }
+      : item
+  ));
+}
+
 function localEvidenceMode(routeDecision) {
   return routeDecision.reasonCodes.includes('KNOWN_LOCAL_REPAIR') ? 'ROOT_CAUSE' : 'DESIGN_DECISION';
 }
 
 function validateLocalMutationEvidence(input, queuePacket, routeDecision) {
-  const frozen = freezeEvidence(queuePacket, input.context ?? [], input.maxWireBytes ?? 3000);
-  if (!frozen.ok) return { ok: false, reason: `local_evidence_packet_${frozen.reason}`, metrics: frozen.metrics ?? null };
-  if (!input.localEvidence || typeof input.localEvidence !== 'object' || Array.isArray(input.localEvidence)) {
-    return { ok: false, reason: 'local_evidence_required', metrics: frozen.metrics, fingerprint: frozen.fingerprint };
+  const localEvidence = input.localEvidence && typeof input.localEvidence === 'object' && !Array.isArray(input.localEvidence)
+    ? input.localEvidence
+    : null;
+  if (!localEvidence) {
+    return { ok: false, reason: 'local_evidence_required', metrics: null, fingerprint: null };
   }
+  const frozenContext = promoteDeclaredContextRefs(input.context ?? [], localEvidence);
+  const frozen = freezeEvidence(queuePacket, frozenContext, input.maxWireBytes ?? 3000);
+  if (!frozen.ok) return { ok: false, reason: `local_evidence_packet_${frozen.reason}`, metrics: frozen.metrics ?? null };
   const checked = validateEvidenceClaims({
     mode: localEvidenceMode(routeDecision),
     disposition: 'PLAN',
     filesToChange: queuePacket.exactMutableResources,
-    claims: input.localEvidence.claims ?? [],
-    selectedCauseClaimId: input.localEvidence.selectedCauseClaimId ?? '',
-    decisionBasisRefs: input.localEvidence.decisionBasisRefs ?? [],
+    claims: localEvidence.claims ?? [],
+    selectedCauseClaimId: localEvidence.selectedCauseClaimId ?? '',
+    decisionBasisRefs: localEvidence.decisionBasisRefs ?? [],
   }, frozen.context);
   if (!checked.ok) {
     return {

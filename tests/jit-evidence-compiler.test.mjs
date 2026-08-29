@@ -328,3 +328,19 @@ test('existing reasoning packet transport preserves the canonical metadata envel
     compiled.contextItems.map(({ id, text }) => ({ id, text })),
   );
 });
+
+test('compiler derives issue bindings from material relations rather than evidence self-assertion', () => {
+  const input = base({
+    issues: [{ id: 'failure-a', material: true }],
+    relations: [{ fromIssue: 'failure-a', toEvidence: 'warm-bound', material: true }],
+  });
+  input.evidence.push({
+    id: 'warm-bound', tier: 'WARM', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DISCRIMINATING_TEST',
+    text: 'current discriminator', resolves: ['failure-a'],
+  });
+  const result = compileJitEvidencePacket(input);
+  assert.equal(result.ok, true);
+  const item = result.contextItems.find((entry) => entry.id === 'warm-bound');
+  const envelope = parseEnvelope(item.text);
+  assert.deepEqual(envelope.metadata.issueBindings, ['failure-a']);
+});

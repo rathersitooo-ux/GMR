@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   openTeaQuickChoice,
   selectTeaQuickChoice,
+  runTeaQuickChoiceTurn,
   PARTNER_TEA_QUICK_CHOICES,
 } from '../browser/partner-tea-quick-choice-core.mjs';
 import { SAASUNA_PARTNER_ID } from '../browser/partner-saasuna-conversation-source.mjs';
@@ -68,4 +69,50 @@ test('published choices and outputs are immutable and deterministic', () => {
   assert.equal(Object.isFrozen(first), true);
   assert.equal(Object.isFrozen(first.choices), true);
   assert.equal(Object.isFrozen(PARTNER_TEA_QUICK_CHOICES), true);
+});
+
+test('study quick choice executes through existing Saasuna Conversation Core using only the fixed button label', async () => {
+  let seen = null;
+  const output = await runTeaQuickChoiceTurn(base({ choiceId: 'study', turnId: 'tea-turn-1' }), {
+    provider: {
+      async sendMessage(request) {
+        seen = request;
+        return {
+          kind: 'utterance_candidate',
+          partnerId: request.partnerId,
+          dialogueVersion: request.dialogueVersion,
+          sourceId: request.sourceId,
+          text: '勉強を始めましょう。',
+        };
+      },
+    },
+  });
+  assert.equal(output.ok, true);
+  assert.equal(output.kind, 'tea_quick_choice_turn');
+  assert.equal(output.choiceId, 'study');
+  assert.equal(seen.userMessage, '勉強する');
+  assert.equal(output.turn.responseOrigin, 'provider_candidate');
+  assert.equal(output.turn.utterance, '勉強を始めましょう。');
+  assert.equal(output.relationshipMutationAllowed, false);
+  assert.equal(output.rewardMutationAllowed, false);
+  assert.equal(output.saveMutationAllowed, false);
+  assert.equal('userMessage' in output, false);
+});
+
+test('consult quick choice uses existing approved fallback when provider is absent', async () => {
+  const output = await runTeaQuickChoiceTurn(base({ choiceId: 'consult', turnId: 'tea-turn-2' }));
+  assert.equal(output.ok, true);
+  assert.equal(output.choiceId, 'consult');
+  assert.equal(output.turn.responseOrigin, 'approved_fallback');
+  assert.equal(output.turn.partnerId, SAASUNA_PARTNER_ID);
+});
+
+test('Tea execution still rejects free text and requires an explicit turn boundary', async () => {
+  const raw = await runTeaQuickChoiceTurn(base({ choiceId: 'study', turnId: 'tea-turn-3', freeText: '秘密' }));
+  assert.equal(raw.ok, false);
+  assert.equal(raw.reason, 'RAW_FREE_TEXT_NOT_ACCEPTED');
+
+  const noTurn = await runTeaQuickChoiceTurn(base({ choiceId: 'study' }));
+  assert.equal(noTurn.ok, false);
+  assert.equal(noTurn.reason, 'TURN_REQUIRED');
 });

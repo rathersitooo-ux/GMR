@@ -18,6 +18,8 @@ const SOURCE_COMMIT = '0123456789abcdef0123456789abcdef01234567';
 const PUBLISHED_AT = '2026-08-18T14:04:00Z';
 const REQUIRED_GATE_NAME = 'GAMEROAD Required Gate';
 const REQUIRED_GATE_APP = 'github-actions';
+const LIVE_ADMISSION_RETRY_MS = 5000;
+const LIVE_ADMISSION_MAX_ATTEMPTS = 36;
 
 function exactSha(value) {
   return typeof value === 'string' && /^[0-9a-f]{40}$/.test(value);
@@ -215,11 +217,34 @@ test('live public deploy admission requires merged PR plus exact-head Required G
       .filter((pr) => pr?.state === 'closed' && pr?.merged_at && pr?.base?.ref === 'main' && pr?.merge_commit_sha === pushSha && exactSha(pr?.head?.sha))
       .map((pr) => pr.head.sha),
   )];
-  const checkRunsByHead = {};
-  for (const headSha of candidateHeads) {
-    const payload = await githubPublicJson(`/repos/${repository}/commits/${headSha}/check-runs?per_page=100`);
-    checkRunsByHead[headSha] = payload?.check_runs;
+
+  let evidence = null;
+  let lastReason = 'required_gate_checks_unavailable';
+  for (let attempt = 1; attempt <= LIVE_ADMISSION_MAX_ATTEMPTS; attempt += 1) {
+    const checkRunsByHead = {};
+    for (const headSha of candidateHeads) {
+      const payload = await githubPublicJson(`/repos/${repository}/commits/${headSha}/check-runs?per_page=100`);
+      checkRunsByHead[headSha] = payload?.check_runs;
+    }
+
+    const result = evaluateDeployAdmission({ pushSha, pullRequests, checkRunsByHead });
+    if (result.ok) {
+      evidence = result;
+      break;
+    }
+
+    lastReason = result.reason;
+    const retryable = [
+      'required_gate_checks_unavailable',
+      'required_gate_missing_for_exact_pr_head',
+      'required_gate_not_completed',
+    ].includes(result.reason);
+    if (!retryable || attempt === LIVE_ADMISSION_MAX_ATTEMPTS) {
+      throw new Error(`DEPLOY_ADMISSION_FAIL ${result.reason}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, LIVE_ADMISSION_RETRY_MS));
   }
-  const evidence = assertDeployAdmission({ pushSha, pullRequests, checkRunsByHead });
+
+  if (!evidence) throw new Error(`DEPLOY_ADMISSION_FAIL ${lastReason}`);
   process.stdout.write(`DEPLOY_ADMISSION PASS pr=${evidence.prNumber} pr_head=${evidence.prHeadSha} merge=${evidence.mergeCommitSha} required_gate_check=${evidence.requiredGateCheckRunId}\n`);
 });

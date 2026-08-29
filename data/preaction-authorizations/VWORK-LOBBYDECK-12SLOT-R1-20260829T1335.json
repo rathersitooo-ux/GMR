@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-LOBBYDECK-12SLOT-R1-20260829T1335",
+  "taskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "workUnitKey": "DECK_12_SLOT_STORAGE_R1",
+  "acquireKey": "LOBBYDECK-12SLOT-R1-20260829T1335-SOL-Q6M8V3N2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_SINGLE_DECK_SAVE_PLUS_R14_MULTI_SLOT_PERSISTENCE_GAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PURE_12_SLOT_CORE_NEGATIVE_AND_LEGACY_PROJECTION_TESTS_PLANNED",
+  "proceedToken": "PROCEED|VWORK-LOBBYDECK-12SLOT-R1-20260829T1335|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|DECK_12_SLOT_STORAGE_R1",
+  "authorizationBaseSha": "58e45e191d2efc302b5ee24d8174d1eab2d09f7a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "leaseWorkUnitKey": "DECK_12_SLOT_STORAGE_R1",
+  "leaseAcquireKey": "LOBBYDECK-12SLOT-R1-20260829T1335-SOL-Q6M8V3N2",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 13:35 JST",
+  "leaseUntilJst": "2026-08-29 14:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base 58e45e191d2efc302b5ee24d8174d1eab2d09f7a; branch work/lobbydeck-12slot-storage-r1-20260829; transient data/preaction-authorizations/VWORK-LOBBYDECK-12SLOT-R1-20260829T1335.json; browser/deck-save-ack-core.mjs; tests/deck-save-ack-core.test.mjs; browser/GAMEROAD.html; temporary tools/deck-12slot-r1-apply.py + .github/workflows/deck-12slot-r1-apply.yml self-delete-before-final-head; PR/merge state; own CURRENT_ACTIVE_LEASES row6 and own R22 records. G・E・D/regulation/card definitions/Battle rules/economy/Partner/deploy/assets/other workflows excluded/read-only.",
+  "scope": [
+    "browser/deck-save-ack-core.mjs",
+    "tests/deck-save-ack-core.test.mjs",
+    "browser/GAMEROAD.html",
+    "tools/deck-12slot-r1-apply.py",
+    ".github/workflows/deck-12slot-r1-apply.yml"
+  ],
+  "leaseScope": [
+    "browser/deck-save-ack-core.mjs",
+    "tests/deck-save-ack-core.test.mjs",
+    "browser/GAMEROAD.html",
+    "tools/deck-12slot-r1-apply.py",
+    ".github/workflows/deck-12slot-r1-apply.yml"
+  ],
+  "solutionSignature": "single-authority 12-slot deck persistence over existing Browser save with legacy single deck projected to slot1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE_DECK_SAVE_RECOVERY_AND_MATCH_START_SNAPSHOT",
+  "solutionSearchEvidence": [
+    "main:browser/deck-save-recovery-core.mjs non-destructive existing save authority",
+    "main:browser/deck-save-ack-core.mjs existing deck and match-start snapshot authority",
+    "current task row: multi-slot save creation and ActiveDeckIndex persistence are remaining gaps"
+  ]
+}

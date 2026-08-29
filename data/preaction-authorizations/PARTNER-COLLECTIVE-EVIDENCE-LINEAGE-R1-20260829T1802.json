@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-COLLECTIVE-EVIDENCE-LINEAGE-R1-20260829T1802",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "PARTNER_COLLECTIVE_EVIDENCE_LINEAGE_COMMON_R1",
+  "acquireKey": "PARTNER-COLLECTIVE-EVIDENCE-LINEAGE-R1-20260829T1802-SOL-L3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "COMMON-LINEAGE-REUSE-BOUNDARY-PASS-NO-SECOND-RECORDER",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING-CONVERSATION-LINEAGE-AND-ADVICE-VALIDATION-TESTS",
+  "proceedToken": "PROCEED|PARTNER-COLLECTIVE-EVIDENCE-LINEAGE-R1-20260829T1802|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "c2901b3db5776e3a26f63d66e9179973849c0f88",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "PARTNER_COLLECTIVE_EVIDENCE_LINEAGE_COMMON_R1",
+  "leaseAcquireKey": "PARTNER-COLLECTIVE-EVIDENCE-LINEAGE-R1-20260829T1802-SOL-L3",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 18:04 JST",
+  "leaseUntilJst": "2026-08-29 18:57 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:N7",
+  "leaseExactMutableResources": "browser/partner-conversation-collective-context.mjs;tests/partner-conversation-collective-context.test.mjs;tools/partner-advice-decision-product.mjs;tests/partner-advice-decision-product.test.mjs",
+  "scope": [
+    "browser/partner-conversation-collective-context.mjs",
+    "tests/partner-conversation-collective-context.test.mjs",
+    "tools/partner-advice-decision-product.mjs",
+    "tests/partner-advice-decision-product.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-conversation-collective-context.mjs",
+    "tests/partner-conversation-collective-context.test.mjs",
+    "tools/partner-advice-decision-product.mjs",
+    "tests/partner-advice-decision-product.test.mjs"
+  ]
+}

@@ -33,7 +33,7 @@ function queue(overrides = {}) {
   };
 }
 
-function canonicalEvidence({ id, state, role, text, required = false, priority = 0, tier = 'HOT', claimMode = 'CURRENT' }) {
+function canonicalEvidence({ id, state, role, text, required = false, priority = 0, tier = 'HOT', claimMode = 'CURRENT', issueBindings = [] }) {
   return {
     id,
     text: encodeEvidenceContextText({
@@ -46,6 +46,7 @@ function canonicalEvidence({ id, state, role, text, required = false, priority =
       version: 'fixture-v1',
       provenance: 'tests/sol-reasoning-protocol.test.mjs',
       freshness: 'CURRENT_TEST_FIXTURE',
+      issueBindings,
       text,
     }),
     required,
@@ -57,14 +58,14 @@ function evidenceContext() {
   return [
     canonicalEvidence({ id: 'user:directive', state: 'CURRENT_AUTHORITY', role: 'USER', text: 'User requested the bounded implementation outcome.', required: true }),
     canonicalEvidence({ id: 'authority:current', state: 'CURRENT_AUTHORITY', role: 'AUTHORITY', text: 'Current authority permits src/a.mjs and tests only.', required: true }),
-    canonicalEvidence({ id: 'actual:observed', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DIRECT_ACTUAL', text: 'Observed behavior is X.', required: true }),
-    canonicalEvidence({ id: 'test:focused', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DISCRIMINATING_TEST', text: 'Focused discriminator shows X changes when factor A changes.', priority: 10 }),
-    canonicalEvidence({ id: 'counter:failed', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'COUNTEREVIDENCE', text: 'Alternative explanation B remains counterevidence unless discriminated.', priority: 10 }),
+    canonicalEvidence({ id: 'actual:observed', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DIRECT_ACTUAL', text: 'Observed behavior is X.', required: true, issueBindings: ['issue:target'] }),
+    canonicalEvidence({ id: 'test:focused', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DISCRIMINATING_TEST', text: 'Focused discriminator shows X changes when factor A changes.', priority: 10, issueBindings: ['issue:target'] }),
+    canonicalEvidence({ id: 'counter:failed', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'COUNTEREVIDENCE', text: 'Alternative explanation B remains counterevidence unless discriminated.', priority: 10, issueBindings: ['issue:target'] }),
   ];
 }
 
 function packet(source = queue()) {
-  const packed = packReasoningPacket(source, evidenceContext());
+  const packed = packReasoningPacket(source, evidenceContext(), { maxWireBytes: 5000 });
   assert.equal(packed.ok, true);
   return packed.packet;
 }
@@ -430,4 +431,20 @@ test('prompt is deterministic and makes prose causes non-authoritative', () => {
   assert.match(first.prompt, /A plausible story is not an established cause/);
   assert.match(first.prompt, /opaque identifiers/);
   assert.match(first.prompt, /sol-reasoning-response/);
+});
+
+test('rejects genuine causal evidence when material issue bindings do not intersect', () => {
+  const context = [
+    canonicalEvidence({ id: 'authority:x', state: 'CURRENT_AUTHORITY', role: 'AUTHORITY', text: 'authority', required: true }),
+    canonicalEvidence({ id: 'actual:x', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DIRECT_ACTUAL', text: 'actual', issueBindings: ['issue:a'] }),
+    canonicalEvidence({ id: 'test:x', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DISCRIMINATING_TEST', text: 'test', issueBindings: ['issue:a'] }),
+    canonicalEvidence({ id: 'counter:x', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'COUNTEREVIDENCE', text: 'counter', issueBindings: ['issue:b'] }),
+  ];
+  const checked = validateEvidenceClaims({
+    mode: 'ROOT_CAUSE', disposition: 'PLAN', filesToChange: ['src/a.mjs'],
+    claims: [{ id: 'root-x', kind: 'ROOT_CAUSE', statement: 'A causes X', status: 'ESTABLISHED', evidenceRefs: ['actual:x', 'test:x'], counterEvidenceRefs: ['counter:x'], discriminatingTestRefs: ['test:x'], nextDiscriminator: '' }],
+    selectedCauseClaimId: 'root-x', decisionBasisRefs: ['authority:x', 'actual:x'],
+  }, context);
+  assert.equal(checked.ok, false);
+  assert.equal(checked.reason, 'claim_0_root_cause_issue_binding_mismatch');
 });

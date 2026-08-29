@@ -203,6 +203,9 @@ export function encodeEvidenceContextText(item) {
     provenance: item.provenance,
     freshness: item.freshness,
   };
+  if (Array.isArray(item.issueBindings) && item.issueBindings.length > 0) {
+    metadata.issueBindings = [...item.issueBindings];
+  }
   return `${JIT_EVIDENCE_CONTEXT_MARKER}\n${JSON.stringify(metadata)}\n${JIT_EVIDENCE_CONTEXT_END_MARKER}\n${item.text}`;
 }
 
@@ -239,6 +242,17 @@ export function compileJitEvidencePacket(input, options = {}) {
   for (const relation of normalized.relations) {
     if (!relationsByIssue.has(relation.fromIssue)) relationsByIssue.set(relation.fromIssue, []);
     relationsByIssue.get(relation.fromIssue).push(relation);
+  }
+
+  // Purpose is provider-derived from the material issue graph. Evidence cannot self-assert it.
+  const issueBindingsByEvidence = new Map();
+  for (const relation of normalized.relations) {
+    if (!relation.material || !issueState.get(relation.fromIssue)?.material) continue;
+    if (!issueBindingsByEvidence.has(relation.toEvidence)) issueBindingsByEvidence.set(relation.toEvidence, new Set());
+    issueBindingsByEvidence.get(relation.toEvidence).add(relation.fromIssue);
+  }
+  for (const item of normalized.evidence) {
+    item.issueBindings = [...(issueBindingsByEvidence.get(item.id) ?? [])].sort();
   }
 
   const selected = [];

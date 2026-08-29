@@ -23,7 +23,7 @@ function queue(overrides = {}) {
   };
 }
 
-function canonicalEvidence({ id, state, role, text, required = false, priority = 0 }) {
+function canonicalEvidence({ id, state, role, text, required = false, priority = 0, issueBindings = [] }) {
   return {
     id,
     text: encodeEvidenceContextText({
@@ -36,6 +36,7 @@ function canonicalEvidence({ id, state, role, text, required = false, priority =
       version: 'fixture-v1',
       provenance: 'tests/luna-sol-integration-core.test.mjs',
       freshness: 'CURRENT_TEST_FIXTURE',
+      issueBindings,
       text,
     }),
     required,
@@ -47,9 +48,9 @@ function evidenceContext() {
   return [
     canonicalEvidence({ id: 'user:directive', state: 'CURRENT_AUTHORITY', role: 'USER', text: 'User requested the bounded change.', required: true }),
     canonicalEvidence({ id: 'authority:current', state: 'CURRENT_AUTHORITY', role: 'AUTHORITY', text: 'Current authority allows tools/example.mjs.', required: true }),
-    canonicalEvidence({ id: 'actual:state', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DIRECT_ACTUAL', text: 'Current actual directly exhibits the target condition.', required: true }),
-    canonicalEvidence({ id: 'test:discriminator', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DISCRIMINATING_TEST', text: 'A/B discriminator isolates factor X.', priority: 10 }),
-    canonicalEvidence({ id: 'counter:alternative', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'COUNTEREVIDENCE', text: 'Alternative Y is explicit counterevidence.', priority: 10 }),
+    canonicalEvidence({ id: 'actual:state', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DIRECT_ACTUAL', text: 'Current actual directly exhibits the target condition.', required: true, issueBindings: ['issue:target'] }),
+    canonicalEvidence({ id: 'test:discriminator', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'DISCRIMINATING_TEST', text: 'A/B discriminator isolates factor X.', priority: 10, issueBindings: ['issue:target'] }),
+    canonicalEvidence({ id: 'counter:alternative', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'COUNTEREVIDENCE', text: 'Alternative Y is explicit counterevidence.', priority: 10, issueBindings: ['issue:target'] }),
   ];
 }
 
@@ -414,4 +415,20 @@ test('human-only boundary is HOLD even when a browser driver exists', async () =
   assert.equal(result.routeDecision.reasonCodes[0], 'HUMAN_ONLY_ACTION');
   assert.equal(result.mayMutate, false);
   assert.equal(driver.state.submits, 0);
+});
+
+test('local declared causal refs survive evidence freeze even when decoys outrank them', async () => {
+  const context = evidenceContext();
+  context.push(canonicalEvidence({
+    id: 'decoy:high', state: 'CURRENT_EXECUTION_EVIDENCE', role: 'TEST_RESULT',
+    text: 'D'.repeat(900), priority: 1000, issueBindings: ['issue:other'],
+  }));
+  context[3] = { ...context[3], priority: -1000 };
+  context[4] = { ...context[4], priority: -1000 };
+  const result = await runLunaSolDecision({
+    queuePacket: queue(), context, localEvidence: establishedLocalRepairEvidence(),
+    routerInput: { failureCount: 1, acceptanceKnown: true, rootCauseKnown: true, implementationRisk: 'LOW', reversibility: 'EASY' },
+  });
+  assert.equal(result.ok, true);
+  assert.equal(result.mayMutate, true);
 });

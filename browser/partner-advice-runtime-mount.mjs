@@ -5,6 +5,7 @@ import {
 
 const VERSION_KEYS = Object.freeze(['rulesVersion', 'cardVersion', 'stateVersion']);
 const BOARD_PROJECTION_SCHEMA = 'gameroad.partner-advice-board-projection.v1';
+const RESPONSE_PLAN_SCHEMA = 'gameroad.partner-response-plan.v1';
 
 function exactVersionTuple(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -22,6 +23,17 @@ function exactPresentationToken(value) {
   const token = value.trim();
   if (!token || token !== value || token.length > 160) return null;
   return token;
+}
+
+function responsePlanToken(value, max = 180) {
+  if (typeof value !== 'string' || !value || value.length > max || value.trim() !== value) return null;
+  return value;
+}
+
+function freezeDeep(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
+  for (const child of Object.values(value)) freezeDeep(child);
+  return Object.freeze(value);
 }
 
 function inactiveBoardProjection(reason) {
@@ -50,6 +62,77 @@ function preservePublicPayload(result, candidates) {
     ...result,
     selected: Object.freeze({ ...result.selected, payload: raw.payload }),
   });
+}
+
+function responsePlanFail(reason) {
+  return freezeDeep({ ok: false, reason, planInput: null });
+}
+
+function uniqueResponsePlanTokens(values, maxItems) {
+  const out = [];
+  const seen = new Set();
+  for (const value of values) {
+    if (value == null) continue;
+    const parsed = responsePlanToken(value, 220);
+    if (!parsed || seen.has(parsed)) continue;
+    seen.add(parsed);
+    out.push(parsed);
+    if (out.length > maxItems) return null;
+  }
+  return out;
+}
+
+function responsePlanSourceVersion(versions) {
+  return responsePlanToken(
+    VERSION_KEYS.map((key) => `${key}=${versions[key]}`).join('|'),
+    180,
+  );
+}
+
+function responsePlanManifestLineage(manifest, versions, sourceUseSite) {
+  if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) {
+    return { ok: false, reason: 'RUNTIME_MANIFEST_INVALID' };
+  }
+  if (manifest.containsPrivate !== false || manifest.containsRawEvents !== false) {
+    return { ok: false, reason: 'RUNTIME_MANIFEST_PRIVACY_BOUNDARY_INVALID' };
+  }
+  if (manifest.promotionSafe !== true) return { ok: false, reason: 'RUNTIME_MANIFEST_NOT_PROMOTION_SAFE' };
+
+  const manifestVersions = exactVersionTuple(manifest.targetVersions);
+  if (!manifestVersions || VERSION_KEYS.some((key) => manifestVersions[key] !== versions[key])) {
+    return { ok: false, reason: 'RUNTIME_MANIFEST_VERSION_MISMATCH' };
+  }
+
+  const evidenceIds = [];
+  const approvalId = responsePlanToken(manifest.approval?.approvalId);
+  if (approvalId) evidenceIds.push(`approval:${approvalId}`);
+  const evidenceScope = responsePlanToken(manifest.sourceEvidence);
+  if (evidenceScope) evidenceIds.push(`evidence-scope:${evidenceScope}`);
+
+  const lineage = manifest.collectiveDecisionLineage ?? null;
+  if (!lineage) return { ok: true, evidenceIds };
+  if (!lineage || typeof lineage !== 'object' || Array.isArray(lineage)) {
+    return { ok: false, reason: 'COLLECTIVE_LINEAGE_INVALID' };
+  }
+  if (
+    lineage.automaticMutationAllowed !== false
+    || lineage.personaMutationAllowed !== false
+    || lineage.relationshipMutationAllowed !== false
+    || lineage.containsPrivate !== false
+    || lineage.containsRawEvents !== false
+  ) {
+    return { ok: false, reason: 'COLLECTIVE_LINEAGE_AUTHORITY_BOUNDARY_INVALID' };
+  }
+
+  const useSite = responsePlanToken(lineage.consumerUseSiteRef, 120);
+  if (!useSite || useSite !== sourceUseSite) return { ok: false, reason: 'COLLECTIVE_LINEAGE_USE_SITE_MISMATCH' };
+
+  for (const value of [lineage.decisionProductId, lineage.proposalId, lineage.changeRef, lineage.cohortId]) {
+    const parsed = responsePlanToken(value);
+    if (!parsed) return { ok: false, reason: 'COLLECTIVE_LINEAGE_SOURCE_ID_INVALID' };
+    evidenceIds.push(parsed);
+  }
+  return { ok: true, evidenceIds };
 }
 
 export function projectPartnerAdviceBoardEmphasis({
@@ -97,6 +180,96 @@ export function projectPartnerAdviceBoardEmphasis({
     presentationRole: 'partner-recommendation',
     autoExecute: false,
   });
+}
+
+/**
+ * Converts viewer-safe Advice semantics into the exact input shape consumed by
+ * PartnerResponsePlan v1. The caller may later pass planInput to the shared plan builder.
+ * This seam never writes persona, relationship, canon, reward, or game state and never
+ * copies candidate payloads or raw user text.
+ */
+export function buildPartnerAdviceResponsePlanInput({
+  planId,
+  partnerId,
+  sourceUseSite,
+  adviceResult,
+  versions,
+  runtimeManifest = null,
+} = {}) {
+  const parsedPlanId = responsePlanToken(planId);
+  const parsedPartnerId = responsePlanToken(partnerId);
+  const parsedUseSite = responsePlanToken(sourceUseSite, 120);
+  const parsedVersions = exactVersionTuple(versions);
+  if (!parsedPlanId) return responsePlanFail('PLAN_ID_INVALID');
+  if (!parsedPartnerId) return responsePlanFail('PARTNER_ID_INVALID');
+  if (!parsedUseSite) return responsePlanFail('SOURCE_USE_SITE_INVALID');
+  if (!parsedVersions) return responsePlanFail('VERSIONS_INVALID');
+  if (!adviceResult || typeof adviceResult !== 'object' || adviceResult.ok !== true) return responsePlanFail('ADVICE_NOT_READY');
+  if (adviceResult.containsPrivate !== false) return responsePlanFail('ADVICE_PRIVACY_BOUNDARY_INVALID');
+
+  const selectedId = adviceResult.selected == null ? null : responsePlanToken(adviceResult.selected?.candidateId);
+  if (adviceResult.selected != null && !selectedId) return responsePlanFail('SELECTED_CANDIDATE_INVALID');
+  if (!selectedId) return responsePlanFail('NO_SELECTED_CANDIDATE');
+
+  const alternativeId = adviceResult.next == null ? null : responsePlanToken(adviceResult.next);
+  if (adviceResult.next != null && !alternativeId) return responsePlanFail('ALTERNATIVE_CANDIDATE_INVALID');
+  if (alternativeId && selectedId === alternativeId) return responsePlanFail('ALTERNATIVE_DUPLICATES_TARGET');
+
+  const adviceSource = responsePlanToken(adviceResult.source, 120);
+  if (!adviceSource) return responsePlanFail('ADVICE_SOURCE_INVALID');
+  const sourceVersion = responsePlanSourceVersion(parsedVersions);
+  if (!sourceVersion) return responsePlanFail('SOURCE_VERSION_INVALID');
+
+  let manifestEvidenceIds = [];
+  if (adviceResult.manifestUsed === true) {
+    if (!runtimeManifest) return responsePlanFail('MANIFEST_LINEAGE_REQUIRED');
+    const manifestCheck = responsePlanManifestLineage(runtimeManifest, parsedVersions, parsedUseSite);
+    if (!manifestCheck.ok) return responsePlanFail(manifestCheck.reason);
+    manifestEvidenceIds = manifestCheck.evidenceIds;
+  }
+
+  const evidenceIds = uniqueResponsePlanTokens([
+    `advice-source:${adviceSource}`,
+    ...VERSION_KEYS.map((key) => `${key}=${parsedVersions[key]}`),
+    ...manifestEvidenceIds,
+  ], 16);
+  if (!evidenceIds || evidenceIds.length === 0) return responsePlanFail('EVIDENCE_LINEAGE_INVALID');
+
+  const planInput = {
+    schemaVersion: RESPONSE_PLAN_SCHEMA,
+    planId: parsedPlanId,
+    partnerId: parsedPartnerId,
+    purpose: 'advice_recommendation',
+    scope: {
+      useSite: parsedUseSite,
+      publicScope: true,
+      safeForRender: true,
+      containsPrivate: false,
+      containsRawUserText: false,
+    },
+    source: {
+      sourceId: adviceSource,
+      sourceVersion,
+      origin: adviceResult.manifestUsed === true ? 'approved_source' : 'derived_projection',
+    },
+    presentation: {
+      kind: 'candidate_emphasis',
+      candidateId: selectedId,
+      targetId: null,
+      alternativeCandidateId: alternativeId,
+    },
+    evidence: { evidenceIds },
+    authority: {
+      mode: 'presentation_only',
+      autoExecute: false,
+      automaticCanonMutationAllowed: false,
+      automaticRelationshipMutationAllowed: false,
+      automaticGameMutationAllowed: false,
+      automaticRewardMutationAllowed: false,
+    },
+  };
+
+  return freezeDeep({ ok: true, reason: null, planInput });
 }
 
 export function createPartnerAdviceReplayBridge({

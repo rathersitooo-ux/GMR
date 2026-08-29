@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "gameroad.preaction.v2",
+  "acquireKey": "BRAIN-SIMPLIFY-R2-20260829T2256-SOL-N4K7Q2",
+  "taskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "workUnitKey": "BRAIN_TRAINING_DAILY_CORE_R2_SUBTRACTIVE",
+  "authorizationBase": "19a48099ea2d052d91f2241a71467af11ad4a223",
+  "mutableResources": [
+    "browser/brain-training-core.mjs",
+    "tests/brain-training-core.test.mjs"
+  ],
+  "exclusions": [
+    "browser/GAMEROAD.html",
+    "browser/learning-event-core.mjs",
+    "tests/learning-event-core.test.mjs",
+    "Partner/BigData/Battle/reward/save/economy/deploy/assets/workflows/tools"
+  ],
+  "intent": "Replace the overbuilt Brain Training candidate with a smaller source-grounded exercise/session core. Remove daily reset authority, fixed subject taxonomy, Learning Event production, round-robin scheduling, and claim/authority bookkeeping from this core."
+}

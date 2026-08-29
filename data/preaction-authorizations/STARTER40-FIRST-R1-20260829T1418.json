@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "STARTER40-FIRST-R1-20260829T1418",
+  "taskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "workUnitKey": "STARTER_DECK_FIRST_40_R1",
+  "acquireKey": "STARTER40-R1-20260829T1418-SOL-V3K7M2Q9",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "STARTER40-R1-ISOLATED-DEFINITION-PREDICTION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "STARTER40-R1-CURRENT-CARD-ID-READBACK",
+  "proceedToken": "PROCEED|STARTER40-FIRST-R1-20260829T1418|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|isolated-starter-definition|lease-snapshot",
+  "authorizationBaseSha": "daa6e88be48201f068bd2f2b7a86a9ac45e92d1d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "LOBBY-DECK-SELECTION-BATTLE-CONNECTION-001",
+  "leaseWorkUnitKey": "STARTER_DECK_FIRST_40_R1",
+  "leaseAcquireKey": "STARTER40-R1-20260829T1418-SOL-V3K7M2Q9",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 14:18 JST",
+  "leaseUntilJst": "2026-08-29 15:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A193:L193",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/starter-deck-first-40-r1-20260829 only: browser/starter-deck-first.mjs; tests/starter-deck-first.test.mjs; transient PRE_ACTION first-commit only; CURRENT_ACTIVE_LEASES own A193:L193; own R22 records",
+  "scope": [
+    "browser/starter-deck-first.mjs",
+    "tests/starter-deck-first.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/starter-deck-first.mjs",
+    "tests/starter-deck-first.test.mjs"
+  ],
+  "solutionSignature": "Provide one isolated deterministic first-starter-deck definition with exactly forty canonical base-card IDs and no storage, selection, migration, regulation, battle, or HTML responsibility.",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "STARTER40-R1-REUSE-DECISION",
+  "solutionSearchEvidence": [
+    "github:main browser/GAMEROAD.html current embedded DEFAULT_DECK is 26 cards",
+    "drive:CURRENT_ACTIVE_LEASES work-item decomposition gives starter40 its own exclusive files"
+  ],
+  "buildResidualReason": "Current main has no isolated starter-deck definition module at the authorized path; creating the two scoped files is the smallest non-overlapping reusable artifact."
+}

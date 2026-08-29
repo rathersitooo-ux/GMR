@@ -1,5 +1,13 @@
 const SCHEMA = 'gameroad.deck-save-ack.v1';
 const MATCH_START_SCHEMA = 'gameroad.browser.match-start-snapshot.v1';
+const DECK_SLOT_SCHEMA = 'gameroad.deck-slot-storage.v1';
+export const DECK_SLOT_COUNT = 12;
+export const GAMEROAD_STARTER_DECK_40 = Object.freeze([
+  'SP_A','SP_2','SP_3','SP_4','SP_5','SP_6','SP_7','SP_8','SP_9','SP_10','SP_J','SP_Q','SP_K',
+  'CL_A','CL_2','CL_3','CL_4','CL_5','CL_6','CL_7','CL_8','CL_9','CL_10',
+  'DI_A','DI_2','DI_3','DI_4','DI_5','DI_6','DI_7','DI_8','DI_9','DI_10',
+  'HT_A','HT_2','HT_3','HT_4','HT_5','HT_6','HT_7',
+]);
 
 function nonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
@@ -85,6 +93,135 @@ function exactIdentity(left, right) {
     left.deckId === right.deckId &&
     left.signature === right.signature &&
     Object.is(left.revision, right.revision);
+}
+
+function normalizeDeck(deck, label = 'deck') {
+  if (!deck || typeof deck !== 'object' || Array.isArray(deck) ||
+      !Array.isArray(deck.main) || !Array.isArray(deck.ex)) {
+    throw new TypeError(`${label.toUpperCase()}_INVALID`);
+  }
+  const main = deck.main.map((id) => requireNonEmptyString(id, `${label}_main_card`));
+  const ex = deck.ex.map((id) => requireNonEmptyString(id, `${label}_ex_card`));
+  return { main, ex };
+}
+
+function normalizeRule(rule = {}, label = 'rule') {
+  const id = rule?.id ?? rule?.ruleId ?? null;
+  const revision = rule?.revision ?? rule?.ruleRevision ?? null;
+  const bothMissing = id === null && revision === null;
+  if (bothMissing) return { ruleId: null, ruleRevision: null };
+  if (!nonEmptyString(id) || !Number.isSafeInteger(revision) || revision < 0) {
+    throw new TypeError(`${label.toUpperCase()}_INVALID`);
+  }
+  return { ruleId: id, ruleRevision: revision };
+}
+
+function deckRecord(deck, rule = {}) {
+  const normalizedDeck = normalizeDeck(deck);
+  const normalizedRule = normalizeRule(rule);
+  return {
+    main: normalizedDeck.main,
+    ex: normalizedDeck.ex,
+    ruleId: normalizedRule.ruleId,
+    ruleRevision: normalizedRule.ruleRevision,
+  };
+}
+
+function normalizeDeckRecord(record, index) {
+  if (!record || typeof record !== 'object' || Array.isArray(record)) {
+    throw new TypeError(`DECK_SLOT_${index + 1}_INVALID`);
+  }
+  return deckRecord(record, record);
+}
+
+function emptyDeckRecord() {
+  return { main: [], ex: [], ruleId: null, ruleRevision: null };
+}
+
+function normalizeActiveDeckIndex(value) {
+  if (!Number.isSafeInteger(value) || value < 0 || value >= DECK_SLOT_COUNT) {
+    throw new TypeError('ACTIVE_DECK_INDEX_INVALID');
+  }
+  return value;
+}
+
+function freezeDeckSlotStorage({ decks, activeDeckIndex, source }) {
+  return deepFreeze({
+    schema: DECK_SLOT_SCHEMA,
+    decks: decks.map((entry, index) => normalizeDeckRecord(entry, index)),
+    activeDeckIndex: normalizeActiveDeckIndex(activeDeckIndex),
+    source,
+  });
+}
+
+export function createDeckSlotStorage({
+  starterDeck = { main: GAMEROAD_STARTER_DECK_40, ex: [] },
+  starterRule = { id: 'FIRST_REGULATION', revision: 3 },
+} = {}) {
+  const decks = Array.from({ length: DECK_SLOT_COUNT }, () => emptyDeckRecord());
+  decks[0] = deckRecord(starterDeck, starterRule);
+  return freezeDeckSlotStorage({ decks, activeDeckIndex: 0, source: 'fresh_starter' });
+}
+
+export function projectLegacyDeckToSlots({ legacyDeck, legacyRule = {} } = {}) {
+  const decks = Array.from({ length: DECK_SLOT_COUNT }, () => emptyDeckRecord());
+  decks[0] = deckRecord(legacyDeck, legacyRule);
+  return freezeDeckSlotStorage({ decks, activeDeckIndex: 0, source: 'legacy_single' });
+}
+
+export function restoreDeckSlotStorage({
+  deckList,
+  activeDeckIndex,
+  legacyDeck,
+  legacyRule = {},
+  fresh = false,
+  starterDeck,
+  starterRule,
+} = {}) {
+  if (deckList !== undefined && deckList !== null) {
+    if (!Array.isArray(deckList) || deckList.length !== DECK_SLOT_COUNT) {
+      throw new TypeError('DECK_LIST_INVALID');
+    }
+    return freezeDeckSlotStorage({
+      decks: deckList,
+      activeDeckIndex: normalizeActiveDeckIndex(activeDeckIndex),
+      source: 'saved_slots',
+    });
+  }
+  if (fresh === true) return createDeckSlotStorage({ starterDeck, starterRule });
+  if (legacyDeck !== undefined && legacyDeck !== null) {
+    return projectLegacyDeckToSlots({ legacyDeck, legacyRule });
+  }
+  throw new TypeError('DECK_SLOT_SOURCE_REQUIRED');
+}
+
+export function selectDeckSlot(storage, activeDeckIndex) {
+  if (!storage || storage.schema !== DECK_SLOT_SCHEMA || !Array.isArray(storage.decks) || storage.decks.length !== DECK_SLOT_COUNT) {
+    throw new TypeError('DECK_SLOT_STORAGE_REQUIRED');
+  }
+  return freezeDeckSlotStorage({
+    decks: storage.decks,
+    activeDeckIndex: normalizeActiveDeckIndex(activeDeckIndex),
+    source: storage.source,
+  });
+}
+
+export function replaceDeckSlot(storage, index, { deck, rule = {} } = {}) {
+  if (!storage || storage.schema !== DECK_SLOT_SCHEMA || !Array.isArray(storage.decks) || storage.decks.length !== DECK_SLOT_COUNT) {
+    throw new TypeError('DECK_SLOT_STORAGE_REQUIRED');
+  }
+  const normalizedIndex = normalizeActiveDeckIndex(index);
+  const decks = storage.decks.map((entry) => ({ ...entry, main: [...entry.main], ex: [...entry.ex] }));
+  decks[normalizedIndex] = deckRecord(deck, rule);
+  return freezeDeckSlotStorage({ decks, activeDeckIndex: storage.activeDeckIndex, source: storage.source });
+}
+
+export function activeDeckSlot(storage) {
+  if (!storage || storage.schema !== DECK_SLOT_SCHEMA || !Array.isArray(storage.decks) || storage.decks.length !== DECK_SLOT_COUNT) {
+    throw new TypeError('DECK_SLOT_STORAGE_REQUIRED');
+  }
+  const index = normalizeActiveDeckIndex(storage.activeDeckIndex);
+  return deepFreeze({ ...storage.decks[index], main: [...storage.decks[index].main], ex: [...storage.decks[index].ex] });
 }
 
 export function createDeckSaveAckState({ deckId, baselineSignature } = {}) {
@@ -239,3 +376,4 @@ export function createDeckMatchStartSnapshot(selection, { validateDeck } = {}) {
 
 export const DECK_SAVE_ACK_CORE = Object.freeze({ schema: SCHEMA });
 export const DECK_MATCH_START_SNAPSHOT = Object.freeze({ schema: MATCH_START_SCHEMA });
+export const DECK_SLOT_STORAGE_CORE = Object.freeze({ schema: DECK_SLOT_SCHEMA, slotCount: DECK_SLOT_COUNT });

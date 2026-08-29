@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "gameroad.cartridge-manifest.v1",
+  "id": "golden.card-memory",
+  "version": "1.0.0",
+  "hostApi": "gameroad.cartridge-host.v1",
+  "entry": {
+    "kind": "recipe",
+    "ref": "recipe.json"
+  },
+  "capabilities": [
+    "ui.surface",
+    "input.pointer",
+    "storage.local",
+    "gameroad.activity.report"
+  ],
+  "payloadDigest": "a0e5ccf93e9eca598ffa8fa8cac76502cc0b097a783c3d24cf5b8f17cd525917",
+  "display": {
+    "name": "Card Memory",
+    "description": "A tiny non-educational memory-match cartridge."
+  }
+}

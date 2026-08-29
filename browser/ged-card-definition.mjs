@@ -1,4 +1,5 @@
 export const GED_CARD_DEFINITION = Object.freeze({
+  id: 'GED',
   name: 'G・E・D',
   suitId: 'DK',
   suitName: 'ルナ',

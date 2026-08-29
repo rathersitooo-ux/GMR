@@ -42,7 +42,13 @@ jobs:
             exit 1
           fi
 
-          git diff --name-only "${BASE_SHA}" "${HEAD_SHA}" > /tmp/gameroad-changed.txt
+          MERGE_BASE_SHA="$(git merge-base "${BASE_SHA}" "${HEAD_SHA}")"
+          if [[ -z "${MERGE_BASE_SHA}" ]]; then
+            echo "Unable to resolve merge base."
+            exit 1
+          fi
+
+          git diff --name-only "${MERGE_BASE_SHA}" "${HEAD_SHA}" > /tmp/gameroad-changed.txt
           echo "Changed paths:"
           cat /tmp/gameroad-changed.txt
 
@@ -81,7 +87,9 @@ jobs:
           multi_agent_match_follow=false
           board_visual=false
           executor_bus=false
+          conventional_node=false
           unclassified=false
+          : > /tmp/gameroad-conventional-tests.txt
           : > /tmp/gameroad-unclassified.txt
 
           while IFS= read -r path; do
@@ -349,6 +357,35 @@ jobs:
               tests/jit-evidence-compiler.test.mjs|\
               README.md|.gitignore|.gitattributes)
                 ;;
+              browser/*.mjs|tools/*.mjs)
+                rel="${path#*/}"
+                test_path="tests/${rel%.mjs}.test.mjs"
+                if [[ -f "${test_path}" ]]; then
+                  conventional_node=true
+                  printf '%s\n' "${test_path}" >> /tmp/gameroad-conventional-tests.txt
+                else
+                  unclassified=true
+                  printf '%s\n' "${path}" >> /tmp/gameroad-unclassified.txt
+                fi
+                ;;
+              tests/*.test.mjs)
+                rel="${path#tests/}"
+                module_rel="${rel%.test.mjs}.mjs"
+                matches=0
+                if [[ -f "browser/${module_rel}" ]]; then
+                  matches=$((matches + 1))
+                fi
+                if [[ -f "tools/${module_rel}" ]]; then
+                  matches=$((matches + 1))
+                fi
+                if [[ "${matches}" -eq 1 ]]; then
+                  conventional_node=true
+                  printf '%s\n' "${path}" >> /tmp/gameroad-conventional-tests.txt
+                else
+                  unclassified=true
+                  printf '%s\n' "${path}" >> /tmp/gameroad-unclassified.txt
+                fi
+                ;;
               browser/*|roblox/*|unity/*|tools/*|tests/*|.github/workflows/*|\
               playwright*.mjs|*.js|*.mjs|*.ts|*.tsx|*.lua|*.luau|*.html|*.css|\
               package.json|package-lock.json)
@@ -396,6 +433,7 @@ jobs:
             echo "multi_agent_match_follow=${multi_agent_match_follow}"
             echo "board_visual=${board_visual}"
             echo "executor_bus=${executor_bus}"
+            echo "conventional_node=${conventional_node}"
             echo "unclassified=${unclassified}"
           } >> "${GITHUB_OUTPUT}"
 
@@ -421,6 +459,20 @@ jobs:
         run: |
           node --test tests/preaction-authorization-validator.test.mjs
           node tools/preaction-authorization-validator.mjs --base "${BASE_SHA}" --head "${HEAD_SHA}" --changed /tmp/gameroad-changed.txt
+
+      - name: Run conventional Node module tests
+        if: steps.classify.outputs.conventional_node == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sort -u /tmp/gameroad-conventional-tests.txt | while IFS= read -r test_path; do
+            [[ -z "${test_path}" ]] && continue
+            if [[ ! -f "${test_path}" ]]; then
+              echo "Required conventional Node test is missing: ${test_path}"
+              exit 1
+            fi
+            node --test "${test_path}"
+          done
 
       - name: Set up Node for Fossil
         if: steps.classify.outputs.fossil == 'true'
@@ -707,7 +759,7 @@ jobs:
           actual_sha256="$(sha256sum "${target}" | awk '{print $1}')"
           if [[ "${actual_sha256}" != "${expected_sha256}" ]]; then
             echo "Roblox placement SHA-256 mismatch."
-            echo "expected=${expected_sha256}"
+            echo "expected=${expected_sha256"
             echo "actual=${actual_sha256}"
             exit 1
           fi

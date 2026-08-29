@@ -243,6 +243,48 @@ test('authorization commit may contain only its manifest', () => {
   assert.deepEqual(result, { ok: false, reason: 'first_commit_not_manifest_only' });
 });
 
+test('unrelated current-base advance does not invalidate an authorized branch', () => {
+  const result = check({
+    currentBaseSha: 'b'.repeat(40),
+    baseAdvanceIsAncestor: true,
+    baseAdvanceChangedPaths: ['browser/unrelated-feature.mjs'],
+  });
+  assert.deepEqual(result, { ok: true, reason: 'preaction_authorized' });
+});
+
+test('current-base advance touching authorized scope is rejected', () => {
+  const result = check({
+    currentBaseSha: 'b'.repeat(40),
+    baseAdvanceIsAncestor: true,
+    baseAdvanceChangedPaths: ['tools/preaction-authorization-validator.mjs'],
+  });
+  assert.deepEqual(result, {
+    ok: false,
+    reason: 'authorization_base_advance_overlap:tools/preaction-authorization-validator.mjs',
+  });
+});
+
+test('current-base advance touching PREACTION control plane is rejected even outside manifest scope', () => {
+  const result = check({
+    currentBaseSha: 'b'.repeat(40),
+    baseAdvanceIsAncestor: true,
+    baseAdvanceChangedPaths: ['.github/workflows/gameroad-required-gate.yml'],
+  });
+  assert.deepEqual(result, {
+    ok: false,
+    reason: 'authorization_base_advance_overlap:.github/workflows/gameroad-required-gate.yml',
+  });
+});
+
+test('non-ancestor current base requires fresh authorization', () => {
+  const result = check({
+    currentBaseSha: 'b'.repeat(40),
+    baseAdvanceIsAncestor: false,
+    baseAdvanceChangedPaths: [],
+  });
+  assert.deepEqual(result, { ok: false, reason: 'authorization_base_not_ancestor_of_current_base' });
+});
+
 test('material path outside preauthorized scope is rejected', () => {
   const result = check({ changedPaths: ['browser/GAMEROAD.html'], historyPaths: ['browser/GAMEROAD.html'] });
   assert.match(result.reason, /^material_path_out_of_scope:/);

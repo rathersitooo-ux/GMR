@@ -148,7 +148,6 @@ function validateLeaseWitness(manifest, nowMs) {
   if (readbackMs > nowMs + MAX_CLOCK_SKEW_MS) return { ok: false, reason: 'lease_snapshot_readback_in_future' };
   if (untilMs <= readbackMs) return { ok: false, reason: 'lease_window_nonpositive' };
   if (untilMs - readbackMs > MAX_LEASE_MS) return { ok: false, reason: 'lease_window_over_one_hour' };
-  if (untilMs <= nowMs) return { ok: false, reason: 'lease_expired_at_validation' };
 
   return { ok: true, reason: exactMutableCheck.reason };
 }

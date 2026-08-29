@@ -12,6 +12,9 @@ const KNOWLEDGE_CONTEXT_SCHEMA = 'gameroad.partner-knowledge-context.v1';
 const SESSION_CONTEXT_MAX_TURNS = 4;
 const SOURCE_USE_SITE = 'partner-conversation';
 const ENTRY_SCREEN_ID = 'partner-conversation';
+const CONVAI_EDGE_PROVIDER_ID = 'gameroad.partner-conversation-provider.convai-edge.v1';
+const PROVIDER_GROUNDING_MAX_ITEMS = 6;
+const PROVIDER_GROUNDING_MAX_LENGTH = 300;
 const KNOWLEDGE_TOP_LEVEL_KEYS = new Set([
   'schemaVersion', 'partnerId', 'useSite', 'safeForPrompt', 'containsPrivate', 'containsRawUserText', 'items', 'lineage',
 ]);
@@ -101,6 +104,102 @@ function validKnowledgeContext(value) {
     containsRawUserText: false,
     items,
     lineage,
+  });
+}
+
+function providerEndpoint(value) {
+  if (typeof value !== 'string') return null;
+  const text = value.trim();
+  if (!text || text.length > 500 || text !== value) return null;
+  if (text.startsWith('/') && !text.startsWith('//')) return text;
+  try {
+    const url = new URL(text);
+    return url.protocol === 'https:' ? url.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
+function providerGrounding(request) {
+  const output = [];
+  const seen = new Set();
+  for (const context of [request?.knowledgeContext, request?.collectiveContext]) {
+    if (!context || !Array.isArray(context.items)) continue;
+    for (const item of context.items) {
+      const summary = typeof item?.summary === 'string' ? item.summary.trim() : '';
+      if (!summary || seen.has(summary)) continue;
+      seen.add(summary);
+      output.push(summary.slice(0, PROVIDER_GROUNDING_MAX_LENGTH));
+      if (output.length >= PROVIDER_GROUNDING_MAX_ITEMS) return output;
+    }
+  }
+  return output;
+}
+
+export function createSaasunaConvaiEdgeProvider({
+  endpoint = '/ws?partnerOp=chat',
+  fetchImpl = globalThis.fetch,
+} = {}) {
+  const target = providerEndpoint(endpoint);
+  if (!target) throw new TypeError('CONVAI_EDGE_ENDPOINT_INVALID');
+  if (typeof fetchImpl !== 'function') throw new TypeError('CONVAI_EDGE_FETCH_REQUIRED');
+  let providerSessionId = '-1';
+
+  async function sendMessage(request) {
+    if (
+      !request ||
+      request.kind !== 'partner_conversation_request' ||
+      request.partnerId !== SAASUNA_PARTNER_ID ||
+      request.dialogueVersion !== SAASUNA_DIALOGUE_VERSION ||
+      request.sourceId !== SAASUNA_DIALOGUE_SOURCE_ID
+    ) {
+      throw new Error('CONVAI_EDGE_REQUEST_INVALID');
+    }
+    const message = userMessage(request.userMessage);
+    if (!message) throw new Error('CONVAI_EDGE_REQUEST_INVALID');
+
+    const response = await fetchImpl(target, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        message,
+        sessionId: providerSessionId,
+        grounding: providerGrounding(request),
+      }),
+    });
+    if (!response?.ok) throw new Error('CONVAI_EDGE_UPSTREAM_FAILED');
+
+    const data = await response.json();
+    const text = typeof data?.text === 'string' ? data.text.trim() : '';
+    const nextSessionId = exactToken(data?.sessionId, 200);
+    if (
+      data?.ok !== true ||
+      data?.provider !== 'convai' ||
+      data?.partnerId !== SAASUNA_PARTNER_ID ||
+      !text ||
+      text.length > 800 ||
+      !nextSessionId
+    ) {
+      throw new Error('CONVAI_EDGE_RESPONSE_INVALID');
+    }
+
+    providerSessionId = nextSessionId;
+    return freezeDeep({
+      kind: 'utterance_candidate',
+      partnerId: SAASUNA_PARTNER_ID,
+      dialogueVersion: SAASUNA_DIALOGUE_VERSION,
+      sourceId: SAASUNA_DIALOGUE_SOURCE_ID,
+      text,
+    });
+  }
+
+  return freezeDeep({
+    providerId: CONVAI_EDGE_PROVIDER_ID,
+    sendMessage,
+    status: () => freezeDeep({
+      providerId: CONVAI_EDGE_PROVIDER_ID,
+      sessionReady: providerSessionId !== '-1',
+    }),
   });
 }
 
@@ -311,7 +410,7 @@ export function createSaasunaConversationEntry({ provider = null, createSessionI
     });
   }
 
-  async function send(message, { knowledgeContext = null } = {}) {
+  async function send(message, { knowledgeContext = null, collectiveContext = null } = {}) {
     const turnId = `turn-${++turnSequence}`;
     const text = userMessage(message);
     const sessionContext = createSessionContext(sessionTurns);
@@ -325,6 +424,7 @@ export function createSaasunaConversationEntry({ provider = null, createSessionI
       sessionId,
       turnId,
       userMessage: message,
+      collectiveContext,
       knowledgeContext,
     }, { provider: scopedProvider });
     if (turn.ok && text) {
@@ -352,3 +452,4 @@ export function createSaasunaConversationEntry({ provider = null, createSessionI
 export const PARTNER_CONVERSATION_CORE_ID = CORE_ID;
 export const PARTNER_CONVERSATION_USE_SITE = SOURCE_USE_SITE;
 export const PARTNER_CONVERSATION_ENTRY_SCREEN_ID = ENTRY_SCREEN_ID;
+export const PARTNER_CONVERSATION_CONVAI_EDGE_PROVIDER_ID = CONVAI_EDGE_PROVIDER_ID;

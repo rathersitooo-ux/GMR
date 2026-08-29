@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-DECK-REGULATION-BAN-R1-20260829T1425",
+  "taskId": "DECK-HIGHLANDER-RUNTIME-ENFORCEMENT-001",
+  "workUnitKey": "DECK_REGULATION_BAN_GED_R1",
+  "acquireKey": "DECK-REGULATION-BAN-R1-20260829T1425-SOL-C6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_TASK6_REGULATION_ONLY_NON_OVERLAP_BOUNDARY_20260829",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "REGULATION_BLOCK_ONLY_WITHOUT_CARD_OR_DECK_ELIGIBILITY_MUTATION",
+  "proceedToken": "PROCEED|VWORK-DECK-REGULATION-BAN-R1-20260829T1425|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|DECK_REGULATION_BAN_GED_R1",
+  "authorizationBaseSha": "dc6f31f53cd95b0175a0e3bdedb014a6c32cef6f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DECK-HIGHLANDER-RUNTIME-ENFORCEMENT-001",
+  "leaseWorkUnitKey": "DECK_REGULATION_BAN_GED_R1",
+  "leaseAcquireKey": "DECK-REGULATION-BAN-R1-20260829T1425-SOL-C6",
+  "leaseSnapshotReadbackAtJst": "2026-08-29 14:25 JST",
+  "leaseUntilJst": "2026-08-29 15:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/deck-regulation-ban-r1-20260829 from base dc6f31f53cd95b0175a0e3bdedb014a6c32cef6f; browser/regulation-core.mjs; tests/regulation-core.test.mjs; transient data/preaction-authorizations/VWORK-DECK-REGULATION-BAN-R1-20260829T1425.json; own CURRENT_ACTIVE_LEASES row8; own R22 records. Strict exclusions: browser/GAMEROAD.html, deck slots/selection/starter40/legacy projection, G・E・D card definition/Luna artwork/OVER97 card object, deck eligibility messages, Battle, economy, Partner, deploy, shared Required Gate/workflows.",
+  "scope": [
+    "browser/regulation-core.mjs",
+    "tests/regulation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/regulation-core.mjs",
+    "tests/regulation-core.test.mjs"
+  ],
+  "solutionSignature": "regulation-level blocked card registry and query with GED blocked only by the current regulation",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE_EXISTING_REGULATION_RESPONSIBILITY_WITHOUT_CARD_INTRINSIC_BAN_FLAG",
+  "solutionSearchEvidence": [
+    "Drive: existing DECK-HIGHLANDER-RUNTIME-ENFORCEMENT-001 responsibility",
+    "Drive: fifth-suit Luna concept remains separate from regulation legality",
+    "GitHub main: no standalone generic regulation module currently exists"
+  ]
+}

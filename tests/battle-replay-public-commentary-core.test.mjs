@@ -235,3 +235,183 @@ test('contract explicitly leaves model, TTS, avatar, OAuth, storage and game aut
   assert.equal(BATTLE_REPLAY_PUBLIC_COMMENTARY_CONTRACT.automaticPublishAllowed, false);
   assert.equal(BATTLE_REPLAY_PUBLIC_COMMENTARY_CONTRACT.automaticRetryAllowed, false);
 });
+
+test('continuous public follow crosses authorized matches without carrying replay or commentary payloads', async () => {
+  const {
+    advanceContinuousPublicBroadcastFollow,
+    createContinuousPublicBroadcastFollow,
+    readContinuousPublicBroadcastFollowStatus,
+  } = await import('../browser/battle-replay-public-commentary-core.mjs');
+
+  let follow = createContinuousPublicBroadcastFollow({ targetUserId: 'STREAMER-TARGET' });
+  assert.equal(follow.status, 'WAITING');
+  assert.equal(follow.presentationOnly, true);
+  assert.equal(follow.gameplayAuthority, false);
+  assert.equal(follow.gameStateWrite, false);
+  assert.equal(Object.isFrozen(follow), true);
+
+  follow = advanceContinuousPublicBroadcastFollow(follow, {
+    kind: 'MATCH_DISCOVERED',
+    targetUserId: 'STREAMER-TARGET',
+    viewerAuthorized: true,
+    spectatable: true,
+    matchId: 'MATCH-A',
+  });
+  assert.equal(follow.status, 'ATTACHED');
+  assert.equal(follow.currentMatchId, 'MATCH-A');
+  assert.equal(follow.attachSerial, 1);
+  assert.deepEqual(readContinuousPublicBroadcastFollowStatus(follow), {
+    schema: 'GAMEROAD_REPLAY_PUBLIC_CONTINUOUS_FOLLOW_STATUS_V1',
+    presentationOnly: true,
+    gameplayAuthority: false,
+    gameStateWrite: false,
+    targetUserId: 'STREAMER-TARGET',
+    status: 'ATTACHED',
+    matchId: 'MATCH-A',
+    attachSerial: 1,
+    waitingReason: null,
+  });
+
+  follow = advanceContinuousPublicBroadcastFollow(follow, {
+    kind: 'MATCH_ENDED',
+    targetUserId: 'STREAMER-TARGET',
+    matchId: 'MATCH-A',
+  });
+  assert.equal(follow.status, 'WAITING');
+  assert.equal(follow.currentMatchId, null);
+  assert.equal(follow.lastCompletedMatchId, 'MATCH-A');
+  assert.equal(follow.waitingReason, 'WAIT_NEXT_ALLOWED_MATCH');
+
+  follow = advanceContinuousPublicBroadcastFollow(follow, {
+    kind: 'MATCH_DISCOVERED',
+    targetUserId: 'STREAMER-TARGET',
+    viewerAuthorized: true,
+    spectatable: true,
+    matchId: 'MATCH-B',
+  });
+  assert.equal(follow.status, 'ATTACHED');
+  assert.equal(follow.currentMatchId, 'MATCH-B');
+  assert.equal(follow.attachSerial, 2);
+  const serialized = JSON.stringify(follow);
+  assert.equal(serialized.includes('publicEvent'), false);
+  assert.equal(serialized.includes('text'), false);
+  assert.equal(serialized.includes('events'), false);
+});
+
+test('continuous public follow never stores denied/private candidate match identity or payload', async () => {
+  const {
+    advanceContinuousPublicBroadcastFollow,
+    createContinuousPublicBroadcastFollow,
+    readContinuousPublicBroadcastFollowStatus,
+  } = await import('../browser/battle-replay-public-commentary-core.mjs');
+
+  let follow = createContinuousPublicBroadcastFollow({ targetUserId: 'TARGET' });
+  follow = advanceContinuousPublicBroadcastFollow(follow, {
+    kind: 'MATCH_DISCOVERED',
+    targetUserId: 'TARGET',
+    viewerAuthorized: false,
+    spectatable: false,
+    matchId: 'PRIVATE-MATCH-SECRET',
+    privateData: { hand: ['SECRET_CARD'] },
+    authorityOnly: { roomKey: 'SECRET_ROOM_KEY' },
+  });
+
+  assert.equal(follow.status, 'DENIED');
+  assert.equal(follow.currentMatchId, null);
+  assert.equal(follow.waitingReason, 'MATCH_NOT_AUTHORIZED');
+  const serialized = JSON.stringify(follow);
+  assert.equal(serialized.includes('PRIVATE-MATCH-SECRET'), false);
+  assert.equal(serialized.includes('SECRET_CARD'), false);
+  assert.equal(serialized.includes('SECRET_ROOM_KEY'), false);
+  assert.equal(readContinuousPublicBroadcastFollowStatus(follow).matchId, null);
+});
+
+test('continuous public follow is idempotent for duplicate attach/end and can reconnect after offline', async () => {
+  const {
+    advanceContinuousPublicBroadcastFollow,
+    createContinuousPublicBroadcastFollow,
+  } = await import('../browser/battle-replay-public-commentary-core.mjs');
+
+  let follow = createContinuousPublicBroadcastFollow({ targetUserId: 'TARGET' });
+  follow = advanceContinuousPublicBroadcastFollow(follow, {
+    kind: 'MATCH_DISCOVERED', targetUserId: 'TARGET', viewerAuthorized: true, spectatable: true, matchId: 'M1',
+  });
+  const duplicateAttach = advanceContinuousPublicBroadcastFollow(follow, {
+    kind: 'MATCH_DISCOVERED', targetUserId: 'TARGET', viewerAuthorized: true, spectatable: true, matchId: 'M1',
+  });
+  assert.strictEqual(duplicateAttach, follow);
+  assert.equal(duplicateAttach.attachSerial, 1);
+
+  follow = advanceContinuousPublicBroadcastFollow(follow, {
+    kind: 'MATCH_ENDED', targetUserId: 'TARGET', matchId: 'M1',
+  });
+  const duplicateEnd = advanceContinuousPublicBroadcastFollow(follow, {
+    kind: 'MATCH_ENDED', targetUserId: 'TARGET', matchId: 'M1',
+  });
+  assert.strictEqual(duplicateEnd, follow);
+  assert.throws(
+    () => advanceContinuousPublicBroadcastFollow(follow, {
+      kind: 'MATCH_ENDED', targetUserId: 'TARGET', matchId: 'OTHER',
+    }),
+    /CONTINUOUS_FOLLOW_MATCH_END_IDENTITY_MISMATCH/,
+  );
+
+  follow = advanceContinuousPublicBroadcastFollow(follow, {
+    kind: 'OFFLINE', targetUserId: 'TARGET',
+  });
+  assert.equal(follow.status, 'OFFLINE');
+  follow = advanceContinuousPublicBroadcastFollow(follow, {
+    kind: 'MATCH_DISCOVERED', targetUserId: 'TARGET', viewerAuthorized: true, spectatable: true, matchId: 'M2',
+  });
+  assert.equal(follow.status, 'ATTACHED');
+  assert.equal(follow.currentMatchId, 'M2');
+  assert.equal(follow.attachSerial, 2);
+});
+
+test('continuous public follow supports denied/waiting, target change and explicit stop without game authority', async () => {
+  const {
+    BATTLE_REPLAY_PUBLIC_CONTINUOUS_FOLLOW_CONTRACT,
+    advanceContinuousPublicBroadcastFollow,
+    createContinuousPublicBroadcastFollow,
+    readContinuousPublicBroadcastFollowStatus,
+    retargetContinuousPublicBroadcastFollow,
+    stopContinuousPublicBroadcastFollow,
+  } = await import('../browser/battle-replay-public-commentary-core.mjs');
+
+  let follow = createContinuousPublicBroadcastFollow({ targetUserId: 'TARGET-A' });
+  follow = advanceContinuousPublicBroadcastFollow(follow, {
+    kind: 'DENIED', targetUserId: 'TARGET-A',
+  });
+  assert.equal(follow.status, 'DENIED');
+  assert.equal(follow.currentMatchId, null);
+  follow = advanceContinuousPublicBroadcastFollow(follow, {
+    kind: 'WAITING', targetUserId: 'TARGET-A',
+  });
+  assert.equal(follow.status, 'WAITING');
+
+  follow = retargetContinuousPublicBroadcastFollow(follow, { targetUserId: 'TARGET-B' });
+  assert.equal(follow.targetUserId, 'TARGET-B');
+  assert.equal(follow.status, 'WAITING');
+  assert.equal(follow.attachSerial, 0);
+  assert.throws(
+    () => advanceContinuousPublicBroadcastFollow(follow, {
+      kind: 'OFFLINE', targetUserId: 'TARGET-A',
+    }),
+    /CONTINUOUS_FOLLOW_SIGNAL_TARGET_MISMATCH/,
+  );
+
+  follow = stopContinuousPublicBroadcastFollow(follow);
+  assert.equal(follow.status, 'STOPPED');
+  assert.equal(follow.targetUserId, null);
+  assert.equal(follow.currentMatchId, null);
+  assert.strictEqual(stopContinuousPublicBroadcastFollow(follow), follow);
+  assert.strictEqual(advanceContinuousPublicBroadcastFollow(follow, { nope: true }), follow);
+  assert.equal(readContinuousPublicBroadcastFollowStatus(follow).matchId, null);
+
+  assert.equal(BATTLE_REPLAY_PUBLIC_CONTINUOUS_FOLLOW_CONTRACT.deniedMatchIdentityStored, false);
+  assert.equal(BATTLE_REPLAY_PUBLIC_CONTINUOUS_FOLLOW_CONTRACT.replayEventStorage, false);
+  assert.equal(BATTLE_REPLAY_PUBLIC_CONTINUOUS_FOLLOW_CONTRACT.secondSpectatorStateStore, false);
+  assert.equal(BATTLE_REPLAY_PUBLIC_CONTINUOUS_FOLLOW_CONTRACT.gameplayAuthority, false);
+  assert.equal(BATTLE_REPLAY_PUBLIC_CONTINUOUS_FOLLOW_CONTRACT.gameStateWrite, false);
+  assert.equal(BATTLE_REPLAY_PUBLIC_CONTINUOUS_FOLLOW_CONTRACT.automaticPublishAllowed, false);
+});

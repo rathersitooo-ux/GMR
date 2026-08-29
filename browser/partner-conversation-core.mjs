@@ -311,7 +311,7 @@ export function createSaasunaConversationEntry({ provider = null, createSessionI
     });
   }
 
-  async function send(message, { knowledgeContext = null } = {}) {
+  async function send(message, { knowledgeContext = null, collectiveContext = null } = {}) {
     const turnId = `turn-${++turnSequence}`;
     const text = userMessage(message);
     const sessionContext = createSessionContext(sessionTurns);
@@ -325,6 +325,7 @@ export function createSaasunaConversationEntry({ provider = null, createSessionI
       sessionId,
       turnId,
       userMessage: message,
+      collectiveContext,
       knowledgeContext,
     }, { provider: scopedProvider });
     if (turn.ok && text) {

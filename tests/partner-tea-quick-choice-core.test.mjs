@@ -6,6 +6,7 @@ import {
   runTeaQuickChoiceTurn,
   PARTNER_TEA_QUICK_CHOICES,
 } from '../browser/partner-tea-quick-choice-core.mjs';
+import { buildPartnerConversationCollectiveContext } from '../browser/partner-conversation-collective-context.mjs';
 import { SAASUNA_PARTNER_ID } from '../browser/partner-saasuna-conversation-source.mjs';
 
 const base = (overrides = {}) => ({
@@ -13,6 +14,25 @@ const base = (overrides = {}) => ({
   sessionId: 'tea-session-1',
   ...overrides,
 });
+
+function collectiveContextFixture() {
+  return buildPartnerConversationCollectiveContext({
+    partnerId: SAASUNA_PARTNER_ID,
+    evidenceItems: [{
+      evidenceId: 'collective-evidence-1',
+      sourceId: 'server-match-summary',
+      sourceVersion: 'v1',
+      provenance: 'server_verified',
+      authorityRef: 'gameroad://battle/result/1',
+      observedAt: '2026-08-31T02:00:00+09:00',
+      freshness: 'current',
+      counterevidenceState: 'NONE_FOUND',
+      useSite: 'partner-conversation',
+      summary: '最近は相手の守りを見てから動く選択が安定している。',
+      confidence: 'bounded',
+    }],
+  });
+}
 
 test('opens Saasuna Tea as two-button quick choice without partner picker', () => {
   const output = openTeaQuickChoice(base());
@@ -91,12 +111,75 @@ test('study quick choice executes through existing Saasuna Conversation Core usi
   assert.equal(output.kind, 'tea_quick_choice_turn');
   assert.equal(output.choiceId, 'study');
   assert.equal(seen.userMessage, '勉強する');
+  assert.equal(seen.collectiveContext, null);
+  assert.deepEqual(output.turn.evidence.collectiveEvidenceIds, []);
   assert.equal(output.turn.responseOrigin, 'provider_candidate');
   assert.equal(output.turn.utterance, '勉強を始めましょう。');
   assert.equal(output.relationshipMutationAllowed, false);
   assert.equal(output.rewardMutationAllowed, false);
   assert.equal(output.saveMutationAllowed, false);
   assert.equal('userMessage' in output, false);
+});
+
+test('Tea quick choice passes the existing bounded collective context into the Saasuna provider request', async () => {
+  const collectiveContext = collectiveContextFixture();
+  assert.equal(collectiveContext.ok, true);
+  assert.equal(collectiveContext.acceptedCount, 1);
+
+  let seen = null;
+  const output = await runTeaQuickChoiceTurn(base({ choiceId: 'consult', turnId: 'tea-turn-collective-1' }), {
+    collectiveContext,
+    provider: {
+      async sendMessage(request) {
+        seen = request;
+        return {
+          kind: 'utterance_candidate',
+          partnerId: request.partnerId,
+          dialogueVersion: request.dialogueVersion,
+          sourceId: request.sourceId,
+          text: 'その記録も踏まえて、一緒に作戦を整理しましょう。',
+        };
+      },
+    },
+  });
+
+  assert.equal(output.ok, true);
+  assert.equal(seen.userMessage, '相談する');
+  assert.equal(seen.collectiveContext.schemaVersion, collectiveContext.schemaVersion);
+  assert.deepEqual(seen.collectiveContext.items, collectiveContext.items);
+  assert.deepEqual(seen.collectiveContext.lineage, collectiveContext.lineage);
+  assert.deepEqual(output.turn.evidence.collectiveEvidenceIds, ['collective-evidence-1']);
+  assert.equal(output.turn.responseOrigin, 'provider_candidate');
+  assert.equal(output.relationshipMutationAllowed, false);
+  assert.equal(output.rewardMutationAllowed, false);
+  assert.equal(output.saveMutationAllowed, false);
+});
+
+test('Tea quick choice collective context fails closed before provider prompt use when raw-user-text privacy is unsafe', async () => {
+  const safeContext = collectiveContextFixture();
+  const unsafeContext = { ...safeContext, containsRawUserText: true };
+
+  let seen = null;
+  const output = await runTeaQuickChoiceTurn(base({ choiceId: 'study', turnId: 'tea-turn-collective-unsafe' }), {
+    collectiveContext: unsafeContext,
+    provider: {
+      async sendMessage(request) {
+        seen = request;
+        return {
+          kind: 'utterance_candidate',
+          partnerId: request.partnerId,
+          dialogueVersion: request.dialogueVersion,
+          sourceId: request.sourceId,
+          text: '安全な入力だけで続けます。',
+        };
+      },
+    },
+  });
+
+  assert.equal(output.ok, true);
+  assert.equal(seen.collectiveContext, null);
+  assert.deepEqual(output.turn.evidence.collectiveEvidenceIds, []);
+  assert.equal(output.turn.responseOrigin, 'provider_candidate');
 });
 
 test('consult quick choice uses existing approved fallback when provider is absent', async () => {

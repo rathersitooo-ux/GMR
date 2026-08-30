@@ -87,7 +87,10 @@ function projectKnownReason(reasonCode) {
 }
 
 export function projectPartnerReportStatus(input = {}) {
-  const status = normalizePartnerReportStatus(input?.status);
+  const authoritative = input?.authoritative === true;
+  const status = authoritative
+    ? normalizePartnerReportStatus(input?.status)
+    : PARTNER_REPORT_STATUS.UNKNOWN;
   const presentation = PRESENTATION[status];
   return Object.freeze({
     kind: 'status',
@@ -98,8 +101,8 @@ export function projectPartnerReportStatus(input = {}) {
     role: presentation.role,
     ariaLive: presentation.ariaLive,
     message: presentation.message,
-    detail: projectKnownReason(input?.reasonCode),
+    detail: authoritative ? projectKnownReason(input?.reasonCode) : null,
     nextAction: presentation.nextAction,
-    authoritative: input?.authoritative === true,
+    authoritative,
   });
 }

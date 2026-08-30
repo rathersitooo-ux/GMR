@@ -5,6 +5,35 @@ import {
 
 const VERSION_KEYS = Object.freeze(['rulesVersion', 'cardVersion', 'stateVersion']);
 const BOARD_PROJECTION_SCHEMA = 'gameroad.partner-advice-board-projection.v1';
+const BROWSER_BOARD_KEY = '__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__';
+
+function currentBrowserAdviceReady() {
+  if (typeof window === 'undefined') return false;
+  try {
+    const api = window.__GAMEROAD_HATE_PARTNER_TEST__;
+    const current = api?.adviceEnvelope?.();
+    return current?.status === 'ready' && api?.validateAdviceEnvelope?.(current)?.ok === true;
+  } catch {
+    return false;
+  }
+}
+
+function installBrowserExplicitCurrentnessFence() {
+  if (typeof window === 'undefined') return;
+  const board = window[BROWSER_BOARD_KEY];
+  if (!board || typeof board.render !== 'function' || board.explicitCurrentnessFence === true) return;
+  const originalRender = board.render.bind(board);
+  window[BROWSER_BOARD_KEY] = Object.freeze({
+    ...board,
+    explicitCurrentnessFence: true,
+    render(explicit) {
+      if (explicit !== undefined && explicit?.status === 'ready' && !currentBrowserAdviceReady()) {
+        return originalRender(null);
+      }
+      return originalRender(explicit);
+    },
+  });
+}
 
 function exactVersionTuple(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -179,3 +208,5 @@ export function createPartnerAdviceRuntimeControl({ onChange } = {}) {
     }),
   });
 }
+
+installBrowserExplicitCurrentnessFence();

@@ -1,6 +1,14 @@
+import { projectPartnerReportContribution } from './partner-report-contribution-event-source.mjs';
+import { projectPartnerReportStatus } from './partner-report-status-core.mjs';
+
 const STOP_ID = 'partner_report';
 const CORE_ID = 'gameroad.daily-partner-report-composition.v1';
 const READY = 'READY';
+const ADJUDICATED_STATUS = Object.freeze({
+  accepted_unique: 'accepted',
+  duplicate: 'duplicate',
+  rejected: 'rejected',
+});
 
 function freezeDeep(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -83,17 +91,77 @@ export function composePartnerReportDailyStop({
   });
 }
 
+export function composePartnerReportDailyStopFromAdjudicatedRead({
+  registeredStopIds = [],
+  reportRead,
+} = {}) {
+  const registered = uniqueStrings(registeredStopIds);
+  const registration = composePartnerReportDailyStop({ registeredStopIds: registered });
+  if (registration.disposition === 'UNREGISTERED') {
+    return safetyBoundary({
+      ...registration,
+      providerSource: 'adjudicated_report_read',
+      sourceReason: null,
+      reportStatus: null,
+    });
+  }
+
+  const projection = projectPartnerReportContribution(reportRead);
+  if (!projection.ok) {
+    return safetyBoundary({
+      ...registration,
+      providerSource: 'adjudicated_report_read',
+      sourceReason: projection.reason,
+      reportStatus: null,
+    });
+  }
+
+  const status = projectPartnerReportStatus({
+    authoritative: true,
+    status: ADJUDICATED_STATUS[projection.disposition],
+  });
+  const available = composePartnerReportDailyStop({
+    registeredStopIds: registered,
+    providerState: READY,
+    statusAvailable: true,
+  });
+
+  return safetyBoundary({
+    ...available,
+    providerSource: 'adjudicated_report_read',
+    sourceReason: null,
+    sourceDisposition: projection.disposition,
+    reportStatus: status,
+    handoff: freezeDeep({
+      kind: 'partner_report_status_daily_handoff',
+      downstreamUseSite: 'partner-report-status',
+      action: 'show_report_status',
+      reportProviderRequired: true,
+      statusAvailable: true,
+      reportId: projection.reportId,
+      statusKey: status.key,
+      nextAction: status.nextAction,
+    }),
+  });
+}
+
 export function composeDailyStopsWithPartnerReport({
   stops = [],
   registeredStopIds = [],
   providerState = 'ABSENT',
   statusAvailable = false,
+  adjudicatedReportRead,
 } = {}) {
   const registered = uniqueStrings(registeredStopIds);
   const baseStops = Array.isArray(stops)
     ? stops.filter((stop) => stop && typeof stop === 'object' && stop.id !== STOP_ID)
     : [];
-  const partnerReport = composePartnerReportDailyStop({ registeredStopIds: registered, providerState, statusAvailable });
+  const partnerReport = adjudicatedReportRead !== undefined
+    ? composePartnerReportDailyStopFromAdjudicatedRead({
+        registeredStopIds: registered,
+        reportRead: adjudicatedReportRead,
+      })
+    : composePartnerReportDailyStop({ registeredStopIds: registered, providerState, statusAvailable });
   const composedStops = partnerReport.available ? [...baseStops, partnerReport.stop] : baseStops;
 
   return freezeDeep({

@@ -6,11 +6,17 @@ const RUNTIME_VERSION = 'gameroad.board-facility-runtime-mount.v1';
 const PARTNER_CONVERSATION_MOUNT_NAME = 'GAMEROAD_PARTNER_CONVERSATION_PRODUCT_MOUNT';
 const PARTNER_CONVERSATION_STYLE_ID = 'gameroad-partner-conversation-product-style';
 const PARTNER_EDGE_ENDPOINT = '/ws?partnerOp=conversation';
+const PARTNER_REPORT_ENDPOINT = '/report?reportOp=submit';
+const VERSION_MANIFEST_ENDPOINT = '/gameroad-version.json';
+const VERSION_MANIFEST_SCHEMA = 'GAMEROAD_BROWSER_VERSION_V1';
+const PARTNER_REPORT_AUTHORITY_ID = 'gameroad.partner-report.authority.v1';
+const PARTNER_REPORT_TYPE = 'defect';
 const SAASUNA_PROVISIONAL_VISUAL = '/ws?partnerOp=visual';
 const COLLECTIVE_EVIDENCE_SOURCE_NAME = 'GAMEROAD_PARTNER_CONVERSATION_COLLECTIVE_EVIDENCE_SOURCE';
 const COLLECTIVE_CONTEXT_SCHEMA = 'gameroad.partner-conversation-collective-context.v1';
 const PROVIDER_USER_TEXT_MAX = 4000;
 const COLLECTIVE_CONTEXT_MAX_ITEMS = 4;
+const BUILD_ID = /^[0-9a-f]{40}$/;
 const COLLECTIVE_CONTEXT_ITEM_KEYS = new Set(['evidenceId', 'summary', 'confidence', 'counterevidenceState']);
 const COLLECTIVE_CONTEXT_LINEAGE_KEYS = new Set([
   'evidenceId', 'sourceId', 'sourceVersion', 'provenance', 'authorityRef', 'observedAt', 'freshness', 'counterevidenceState',
@@ -18,6 +24,7 @@ const COLLECTIVE_CONTEXT_LINEAGE_KEYS = new Set([
 const COLLECTIVE_CONTEXT_PROVENANCE = new Set(['server_verified', 'public_production']);
 const COLLECTIVE_CONTEXT_FRESHNESS = new Set(['current', 'current_bounded']);
 const COLLECTIVE_CONTEXT_COUNTER = new Set(['PRESENT', 'NONE_FOUND']);
+const PARTNER_REPORT_DISPOSITIONS = new Set(['accepted_unique', 'duplicate']);
 
 export const SAASUNA_PROVISIONAL_VISUAL_CONTRACT = Object.freeze({
   assetRole: 'provisional_visual',
@@ -40,6 +47,11 @@ function exactToken(value, max = 256) {
   const text = value.trim();
   if (!text || text.length > max || text !== value) return null;
   return text;
+}
+
+function reportToken(value, max) {
+  const token = exactToken(value, max);
+  return token && !/[\u0000-\u001f\u007f]/.test(token) ? token : null;
 }
 
 function hasOnlyKeys(value, allowed) {
@@ -177,6 +189,116 @@ export function createSaasunaEdgeProvider(global = globalThis) {
   });
 }
 
+function reportRequestForTurn(turn, buildId) {
+  const partnerId = reportToken(turn?.partnerId, 160);
+  const sourceUseSite = reportToken(turn?.sourceUseSite, 160);
+  const responseOrigin = reportToken(turn?.responseOrigin, 80);
+  const sessionId = reportToken(turn?.evidence?.sessionId, 160);
+  const turnId = reportToken(turn?.evidence?.turnId, 160);
+  if (
+    turn?.ok !== true
+    || partnerId !== 'partner.saasuna'
+    || sourceUseSite !== 'partner-conversation'
+    || !responseOrigin
+    || turn?.evidence?.partnerId !== partnerId
+    || turn?.evidence?.sourceUseSite !== sourceUseSite
+    || !sessionId
+    || !turnId
+    || !BUILD_ID.test(buildId)
+  ) {
+    throw new Error('PARTNER_REPORT_TURN_INVALID');
+  }
+
+  const idempotencyKey = `partner-conversation:${sessionId}:${turnId}:${PARTNER_REPORT_TYPE}`;
+  const sourceStateIdentity = `partner-conversation:${sessionId}:${turnId}:${responseOrigin}`;
+  if (!reportToken(idempotencyKey, 160) || !reportToken(sourceStateIdentity, 256)) {
+    throw new Error('PARTNER_REPORT_TURN_INVALID');
+  }
+
+  return Object.freeze({
+    idempotencyKey,
+    partnerId,
+    reportType: PARTNER_REPORT_TYPE,
+    sourceUseSite,
+    sourceStateIdentity,
+    versions: Object.freeze({ rules: buildId, content: buildId, state: buildId }),
+  });
+}
+
+async function currentBrowserBuildId(fetchImpl) {
+  const response = await fetchImpl(VERSION_MANIFEST_ENDPOINT, {
+    method: 'GET',
+    headers: { accept: 'application/json' },
+    cache: 'no-store',
+  });
+  if (!response?.ok) throw new Error('PARTNER_REPORT_VERSION_UNAVAILABLE');
+  const payload = await response.json();
+  const buildId = reportToken(payload?.build_id, 96);
+  if (payload?.schema !== VERSION_MANIFEST_SCHEMA || !buildId || !BUILD_ID.test(buildId)) {
+    throw new Error('PARTNER_REPORT_VERSION_INVALID');
+  }
+  return buildId;
+}
+
+function reportReceipt(payload, request) {
+  const reportId = reportToken(payload?.reportId, 160);
+  const disposition = reportToken(payload?.disposition, 40);
+  const versions = payload?.versions;
+  if (
+    payload?.ok !== true
+    || payload?.status !== 'ready'
+    || !reportId
+    || !PARTNER_REPORT_DISPOSITIONS.has(disposition)
+    || payload?.reportType !== PARTNER_REPORT_TYPE
+    || payload?.partnerId !== request.partnerId
+    || payload?.sourceUseSite !== request.sourceUseSite
+    || payload?.sourceStateIdentity !== request.sourceStateIdentity
+    || versions?.rules !== request.versions.rules
+    || versions?.content !== request.versions.content
+    || versions?.state !== request.versions.state
+    || payload?.authority?.verified !== true
+    || payload?.authority?.authorityId !== PARTNER_REPORT_AUTHORITY_ID
+  ) {
+    throw new Error('PARTNER_REPORT_RECEIPT_INVALID');
+  }
+  return Object.freeze({
+    ok: true,
+    reportId,
+    disposition,
+    characterVoice: false,
+    rawTextStored: false,
+  });
+}
+
+export function createPartnerConversationReportClient(global = globalThis) {
+  const fetchImpl = global?.fetch;
+  if (typeof fetchImpl !== 'function') return null;
+
+  return Object.freeze({
+    async submitTurn(turn) {
+      const buildId = await currentBrowserBuildId(fetchImpl);
+      const request = reportRequestForTurn(turn, buildId);
+      const response = await fetchImpl(PARTNER_REPORT_ENDPOINT, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(request),
+      });
+      if (!response?.ok) throw new Error('PARTNER_REPORT_UNAVAILABLE');
+      return reportReceipt(await response.json(), request);
+    },
+    status() {
+      return Object.freeze({
+        transport: 'authoritative_report_receipt',
+        reportType: PARTNER_REPORT_TYPE,
+        rawTextStored: false,
+        automaticRewardMutation: false,
+        automaticRelationshipMutation: false,
+        automaticLearning: false,
+      });
+    },
+  });
+}
+
 function addConversationStyle(document) {
   if (document.getElementById?.(PARTNER_CONVERSATION_STYLE_ID)) return;
   const style = document.createElement('style');
@@ -199,6 +321,9 @@ function addConversationStyle(document) {
 .grPartnerConversationMessage{max-width:86%;padding:10px 12px;border:1px solid rgba(193,212,255,.13);border-radius:14px 14px 14px 4px;background:rgba(33,42,76,.72);font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
 .grPartnerConversationMessage.user{align-self:flex-end;border-radius:14px 14px 4px 14px;background:rgba(60,91,161,.58)}.grPartnerConversationMessage.saasuna{align-self:flex-start}
 .grPartnerConversationMessage.system{align-self:stretch;max-width:none;background:transparent;border-style:dashed;color:#aeb7d9;font-size:10px}
+.grPartnerConversationReportBar{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:7px;border-top:1px solid rgba(193,212,255,.1);white-space:normal}
+.grPartnerConversationReport{min-width:64px;min-height:44px;padding:7px 10px;border:1px solid rgba(181,203,255,.2);border-radius:10px;background:rgba(17,24,52,.72);color:#dfe8ff;font:inherit;font-size:10px;cursor:pointer}
+.grPartnerConversationReport:disabled{cursor:default;opacity:.68}.grPartnerConversationReportStatus{font-size:9px;line-height:1.35;color:#aeb7d9}
 .grPartnerConversationComposer{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:12px 14px 14px;border-top:1px solid rgba(196,215,255,.13)}
 .grPartnerConversationInput{min-height:50px;max-height:112px;resize:vertical;border:1px solid rgba(184,207,255,.23);border-radius:13px;background:rgba(7,11,27,.76);color:#f7f8ff;padding:11px 12px;font:inherit;outline:none}
 .grPartnerConversationInput:focus{border-color:rgba(159,190,255,.55)}.grPartnerConversationInput::placeholder{color:#7e8aaf}
@@ -216,6 +341,43 @@ function appendMessage(document, log, role, text) {
   row.textContent = text;
   log.appendChild(row);
   log.scrollTop = log.scrollHeight;
+  return row;
+}
+
+function attachReportAction(document, row, turn, reportClient) {
+  if (!row || !reportClient || turn?.ok !== true) return;
+  const bar = document.createElement('div');
+  bar.className = 'grPartnerConversationReportBar';
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'grPartnerConversationReport';
+  button.textContent = '報告';
+  button.setAttribute('aria-label', 'この返答を報告');
+  const status = document.createElement('span');
+  status.className = 'grPartnerConversationReportStatus';
+  status.setAttribute('aria-live', 'polite');
+
+  button.addEventListener('click', async () => {
+    if (button.disabled) return;
+    button.disabled = true;
+    button.textContent = '送信中';
+    status.textContent = '';
+    try {
+      const receipt = await reportClient.submitTurn(turn);
+      button.textContent = '報告済み';
+      button.dataset.disposition = receipt.disposition;
+      status.textContent = receipt.disposition === 'duplicate'
+        ? '同じ状態の報告は受け付け済みです'
+        : '報告を受け付けました';
+    } catch {
+      button.disabled = false;
+      button.textContent = '再試行';
+      status.textContent = '報告できませんでした';
+    }
+  });
+
+  bar.append(button, status);
+  row.appendChild(bar);
 }
 
 function setConversationState(node, label, origin) {
@@ -232,6 +394,7 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
 
   addConversationStyle(document);
   const provider = createSaasunaEdgeProvider(global);
+  const reportClient = createPartnerConversationReportClient(global);
   const entry = createSaasunaConversationEntry({ provider });
   let observer = null;
 
@@ -286,7 +449,8 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
         const response = await entry.send(message, { collectiveContext });
         const turn = response?.turn;
         const ok = turn?.ok && typeof turn.utterance === 'string';
-        appendMessage(document, log, ok ? 'saasuna' : 'system', ok ? turn.utterance : '応答できませんでした。');
+        const responseRow = appendMessage(document, log, ok ? 'saasuna' : 'system', ok ? turn.utterance : '応答できませんでした。');
+        if (ok) attachReportAction(document, responseRow, turn, reportClient);
         if (ok && turn.responseOrigin === 'provider_candidate') setConversationState(state, 'AI応答', 'provider');
         else if (ok) setConversationState(state, '仮応答', 'fallback');
         else setConversationState(state, '応答エラー', 'fallback');
@@ -314,10 +478,11 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
   project();
 
   const runtime = Object.freeze({
-    version: 'gameroad.partner-conversation-product-mount.v2',
+    version: 'gameroad.partner-conversation-product-mount.v3',
     partnerId: 'partner.saasuna',
     pickerRequired: false,
     providerReady: provider !== null,
+    reportReady: reportClient !== null,
     persistentTranscript: false,
     staticVisual: true,
     animatable: false,
@@ -331,6 +496,7 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
       collectiveEvidenceSourceMounted: typeof global?.[COLLECTIVE_EVIDENCE_SOURCE_NAME] === 'function',
       collectiveContextPolicy: 'approved_runtime_source_only',
       provider: provider?.status?.() ?? Object.freeze({ transport: 'fallback_only', providerSessionActive: false, providerSessionStoredInCanon: false }),
+      report: reportClient?.status?.() ?? Object.freeze({ transport: 'unavailable', reportType: PARTNER_REPORT_TYPE, rawTextStored: false }),
     }),
     disconnect: () => observer?.disconnect(),
   });

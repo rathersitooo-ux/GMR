@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "GAMEROAD_PRE_ACTION_PRIVATE_V1",
+  "preparedAt": "2026-08-31T02:27:00+09:00",
+  "repository": "rathersitooo-ux/GMR",
+  "baseRef": "main",
+  "branch": "work/partner-report-surface-r6-20260831",
+  "leaseWitness": {
+    "taskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+    "workUnitKey": "PARTNER_REPORT_SURFACE_R6",
+    "acquireKey": "PARTNER-REPORT-SURFACE-R6-20260831T0226-SOL-P8K4N2",
+    "source": "CURRENT_ACTIVE_LEASES!A6:L6"
+  },
+  "intendedChanges": [
+    {
+      "path": "browser/board-facility-runtime-mount.mjs",
+      "purpose": "Expose a visible neutral report action for each rendered Partner partner-message turn and submit only identity/version metadata to the authoritative report provider."
+    },
+    {
+      "path": "tests/board-facility-runtime-mount.test.mjs",
+      "purpose": "Assert report submission payloads, current-owner/version binding, duplicate idempotency, stale/build mismatch handling, and provider failure behavior."
+    },
+    {
+      "path": "deploy/cloudflare/tests/build.test.mjs",
+      "purpose": "Move the public-package dependency contract pin to the reviewed board-facility runtime blob."
+    }
+  ],
+  "behaviorChange": "The existing Partner conversation surface adds a visible report action to partner-message turns. Report submission sends no conversation text and does not alter rewards, affinity, relationship state, learning, or saves; duplicate submission remains neutral and idempotent while receipts stay authoritative-server-owned.",
+  "authorizationIntent": "Use the already-merged authoritative Partner report provider to make reporting player-visible and operable on the current Browser Partner turn surface without changing partner gameplay semantics.",
+  "verificationPlan": [
+    "node --test tests/board-facility-runtime-mount.test.mjs",
+    "node --test deploy/cloudflare/tests/build.test.mjs",
+    "npm test",
+    "npm run test:browser-interaction"
+  ],
+  "rollbackPlan": [
+    "Revert the client report-control and test commits together; the already-merged server report provider remains backwards-compatible.",
+    "Do not touch Partner reward/affinity/save/learning state because report stays out-of-band and receipt-only."
+  ],
+  "createdBy": "current conversation"
+}

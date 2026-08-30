@@ -9,6 +9,7 @@ import {
   battleReplayRulesVersion,
   createBattleReplayCardPresentationBridge,
   createBattleReplayVersionAuthority,
+  createBattleScreenLivePresentationBridge,
   createLiveReplaySession,
   projectAcceptedBattleResolution,
   readBattleReplayCardPresentationPreferences,
@@ -48,6 +49,34 @@ function resolution(serial = 1) {
     laneGains: [{ id: 'P1', lane: 'C', before: 2, after: 4, added: 2 }],
     maxLaneProgress: [{ id: 'P1', before: 2, after: 4 }],
     secretFutureState: { opponentHand: ['NO'] }
+  };
+}
+
+function fourSeatResolution(serial = 1) {
+  return {
+    serial,
+    round: serial,
+    mode: '2v2',
+    attackerId: 'P1',
+    defenderId: 'P3',
+    lane: 'C',
+    shield: 'C',
+    winnerIds: ['P1', 'P2'],
+    winningTeam: 'A',
+    teamTotals: { A: 21, B: 18 },
+    players: [
+      { id: 'P1', name: 'Naki A', team: 'A', score: 11, winner: true, cards: [] },
+      { id: 'P2', name: 'Naki B', team: 'A', score: 10, winner: true, cards: [] },
+      { id: 'P3', name: 'Naki C', team: 'B', score: 9, winner: false, cards: [] },
+      { id: 'P4', name: 'Naki D', team: 'B', score: 9, winner: false, cards: [] }
+    ],
+    laneGains: [{ id: 'P1', lane: 'C', before: 2, after: 4, added: 2 }],
+    maxLaneProgress: [
+      { id: 'P1', before: 2, after: 4 },
+      { id: 'P2', before: 3, after: 5 },
+      { id: 'P3', before: 1, after: 2 },
+      { id: 'P4', before: 0, after: 1 }
+    ]
   };
 }
 
@@ -261,6 +290,132 @@ test('accepted public replay event feeds fallback-only presentation with no game
   });
 });
 
+test('four-lane Battle screen bridge projects accepted public four-seat truth without a second gameplay authority', () => {
+  const rendered = [];
+  const bridge = createBattleScreenLivePresentationBridge({
+    document: null,
+    matchMedia: () => ({ matches: false }),
+    renderModel(model) { rendered.push(model); return true; }
+  });
+  bridge.begin('M-SCREEN-4');
+  const result = bridge.acceptAcceptedResolution({
+    matchId: 'M-SCREEN-4',
+    publicResolution: projectAcceptedBattleResolution(fourSeatResolution(1))
+  });
+  assert.equal(result.accepted, true);
+  assert.equal(result.rendered, true);
+  assert.equal(rendered.length, 1);
+  assert.equal(result.model.presentationOnly, true);
+  assert.equal(result.model.gameplayAuthority, false);
+  assert.equal(result.model.gameStateWrite, false);
+  assert.equal(result.model.winnerCalculation, false);
+  assert.equal(result.model.targetCalculation, false);
+  assert.equal(result.model.screenMode, 'BATTLE_PHASE');
+  assert.equal(result.model.phase, 'compare4');
+  assert.equal(result.model.returnIntent, 'MATCH_PLAN');
+  assert.deepEqual(result.model.lanes.map(row => row.id), ['P1', 'P2', 'P3', 'P4']);
+  assert.deepEqual(result.model.lanes.map(row => row.role), ['winner', 'winner', 'revealed', 'revealed']);
+  assert.deepEqual(result.model.persistentAfterstate.map(row => row.text), ['進行 4/7', '進行 5/7', '進行 2/7', '進行 1/7']);
+  assert.deepEqual(BATTLE_REPLAY_LIVE_ADAPTER.battleScreen, {
+    source: 'accepted_public_battle_resolution_and_match_end',
+    actualDomSurface: 'battlePhaseSurface',
+    laneCount: 4,
+    runtime: 'battle-screen-runtime-mount.mjs',
+    authority: 'presentation_only_no_game_state_write'
+  });
+});
+
+test('four-lane Battle screen keeps accepted afterstate and uses accepted formal winner set for final finisher', () => {
+  const rendered = [];
+  const bridge = createBattleScreenLivePresentationBridge({
+    document: null,
+    renderModel(model) { rendered.push(model); return true; }
+  });
+  bridge.begin('M-SCREEN-FINISH');
+  const input = fourSeatResolution(1);
+  input.mode = '4p';
+  input.winnerIds = ['P4'];
+  input.players = input.players.map(player => ({ ...player, winner: player.id === 'P4' }));
+  input.maxLaneProgress = [
+    { id: 'P1', before: 4, after: 4 },
+    { id: 'P2', before: 5, after: 5 },
+    { id: 'P3', before: 2, after: 3 },
+    { id: 'P4', before: 6, after: 7 }
+  ];
+  bridge.acceptAcceptedResolution({
+    matchId: 'M-SCREEN-FINISH',
+    publicResolution: projectAcceptedBattleResolution(input)
+  });
+  const ended = bridge.acceptAcceptedMatchEnd({
+    matchId: 'M-SCREEN-FINISH',
+    publicMatchEnd: {
+      winnerIds: ['P4'],
+      round: 1,
+      mode: '4p',
+      formalRanking: [
+        { id: 'P4', rank: 1, maxColumn: 7 },
+        { id: 'P2', rank: 2, maxColumn: 5 },
+        { id: 'P1', rank: 3, maxColumn: 4 },
+        { id: 'P3', rank: 4, maxColumn: 3 }
+      ]
+    }
+  });
+  assert.equal(ended.accepted, true);
+  assert.equal(ended.model.phase, 'finisher');
+  assert.equal(ended.model.transition, 'FINISHER_GATHER');
+  assert.equal(ended.model.returnIntent, 'RESULT');
+  assert.deepEqual(ended.model.focus.winnerIds, ['P4']);
+  assert.deepEqual(ended.model.lanes.map(row => row.role), ['loser', 'loser', 'loser', 'winner']);
+  assert.deepEqual(ended.model.persistentAfterstate.map(row => row.text), ['進行 4/7', '進行 5/7', '進行 3/7', '進行 7/7']);
+  assert.equal(rendered.length, 2);
+});
+
+test('live adapter dispatches only committed public Battle truth into the four-lane screen bridge and stays fail-soft', () => {
+  const calls = [];
+  const screenBridge = {
+    begin(matchId) { calls.push(['begin', matchId]); },
+    acceptAcceptedResolution(input) { calls.push(['resolution', input]); },
+    acceptAcceptedMatchEnd(input) { calls.push(['end', input]); }
+  };
+  const options = {
+    presentationBridge: null,
+    battleScreenPresentationBridge: screenBridge,
+    partnerBattleEventLogBridge: null
+  };
+  let session = createLiveReplaySession({ matchId: 'M-SCREEN-LIVE', versions }, options);
+  session = appendAcceptedBattleResolution(session, fourSeatResolution(1), options);
+  session = appendAcceptedMatchEnd(session, {
+    winnerIds: ['P1', 'P2'], round: 1, mode: '2v2'
+  }, options);
+  assert.equal(readLiveReplay(session).events.length, 2);
+  assert.equal(calls[0][0], 'begin');
+  assert.equal(calls[1][0], 'resolution');
+  assert.equal(calls[1][1].publicResolution.players.length, 4);
+  assert.equal('secretFutureState' in calls[1][1].publicResolution, false);
+  assert.deepEqual(calls[2], ['end', {
+    matchId: 'M-SCREEN-LIVE',
+    publicMatchEnd: { winnerIds: ['P1', 'P2'], round: 1, mode: '2v2' }
+  }]);
+
+  const throwingScreen = {
+    begin() { throw new Error('screen unavailable'); },
+    acceptAcceptedResolution() { throw new Error('screen unavailable'); },
+    acceptAcceptedMatchEnd() { throw new Error('screen unavailable'); }
+  };
+  const failSoftOptions = {
+    presentationBridge: null,
+    battleScreenPresentationBridge: throwingScreen,
+    partnerBattleEventLogBridge: null
+  };
+  let failSoft = createLiveReplaySession({ matchId: 'M-SCREEN-FAILSOFT', versions }, failSoftOptions);
+  failSoft = appendAcceptedBattleResolution(failSoft, fourSeatResolution(1), failSoftOptions);
+  failSoft = appendAcceptedMatchEnd(failSoft, {
+    winnerIds: ['P1', 'P2'], round: 1, mode: '2v2'
+  }, failSoftOptions);
+  assert.equal(failSoft.ended, true);
+  assert.deepEqual(readLiveReplay(failSoft).events.map(event => event.kind), ['battle_resolution', 'match_ended']);
+});
+
 test('presentation preferences fail to static-only for user/system motion reduction and low performance', () => {
   const reduced = fakePresentationDocument({ reduceMotion: true });
   assert.deepEqual(
@@ -383,9 +538,12 @@ test('production Browser mounts replay at the canonical accepted Battle seam wit
   assert.match(html, /appendAcceptedMatchEnd\(session,\{winnerIds:\[\.\.\.winners\],round:m\.round,mode:m\.mode\}\)/);
   assert.match(adapter, /from '\.\/card-presentation-core\.mjs';/);
   assert.match(adapter, /from '\.\/battle-conveyor-presentation-core\.mjs';/);
+  assert.match(adapter, /from '\.\/battle-screen-presentation-core\.mjs';/);
+  assert.match(adapter, /from '\.\/battle-screen-runtime-mount\.mjs';/);
   const replayAppend = adapter.indexOf("kind: 'battle_resolution'");
   const presentationAccept = adapter.indexOf('presentationBridge?.acceptAcceptedResolution?.({');
-  assert.ok(replayAppend >= 0 && presentationAccept > replayAppend);
+  const battleScreenAccept = adapter.indexOf('battleScreenPresentationBridge?.acceptAcceptedResolution?.({');
+  assert.ok(replayAppend >= 0 && presentationAccept > replayAppend && battleScreenAccept > replayAppend);
 });
 
 function replayMatchEndPublicData(matchId, command) {

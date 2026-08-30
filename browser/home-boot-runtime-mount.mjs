@@ -3,11 +3,28 @@ import {
   createHomeShellState,
   HOME_TOUCH_TARGET_MIN_PX,
 } from './home-shell-presentation-core.mjs';
+import { projectBootLoadingPresentation } from './boot-loading-presentation-core.mjs';
 
 const GLOBAL_KEY = 'GAMEROAD_HOME_BOOT_PRESENTATION';
 const STYLE_ID = 'gameroad-home-shell-runtime-style';
 const HOME_SELECTOR = 'section[data-screen="home"]';
 const ROUTE_SELECTOR = '.homePadChoice[data-home-target]';
+const BOOT_SURFACE_ID = 'gameroad-boot-loading-runtime';
+
+const BOOT_PHASE_LABELS = Object.freeze({
+  SPLASH: '起動中',
+  LOADING: '読み込み中',
+  READY: '準備完了',
+  RECOVERY: '復旧中',
+  UPDATE_REQUIRED: '更新が必要です',
+  ERROR: '読み込みに失敗しました',
+});
+
+const BOOT_ACTION_LABELS = Object.freeze({
+  CONTINUE: '続ける',
+  RETRY: '再試行',
+  BACK: '戻る',
+});
 
 const runtime = {
   mounted: false,
@@ -26,11 +43,20 @@ const runtime = {
   lastSelectedRouteId: null,
   lastError: null,
   animations: new Set(),
+  bootSurface: null,
+  bootRefs: null,
+  bootRenderCount: 0,
+  lastBootPhase: null,
+  lastBootProfile: null,
+  lastBootSemanticKey: null,
+  lastBootActionIds: [],
+  lastBootError: null,
 };
 
-function ensureStyle() {
-  if (document.getElementById(STYLE_ID)) return;
-  const style = document.createElement('style');
+function ensureStyle(doc = globalThis.document) {
+  if (!doc?.createElement) return null;
+  if (doc.getElementById?.(STYLE_ID)) return doc.getElementById(STYLE_ID);
+  const style = doc.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
 ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}{
@@ -42,13 +68,23 @@ ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}:focus-visible
   outline:2px solid currentColor;
   outline-offset:3px;
 }
+#${BOOT_SURFACE_ID}{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:24px;background:var(--gameroad-boot-bg,rgba(250,250,252,.97));color:var(--gameroad-boot-fg,#15171c)}
+#${BOOT_SURFACE_ID}[hidden]{display:none!important}
+#${BOOT_SURFACE_ID} .grBootPanel{width:min(520px,100%);display:grid;gap:14px;text-align:center}
+#${BOOT_SURFACE_ID} .grBootPhase{font-size:clamp(1.2rem,3.5vw,1.8rem);line-height:1.15}
+#${BOOT_SURFACE_ID} .grBootStatus,#${BOOT_SURFACE_ID} .grBootError{min-height:1.25em;overflow-wrap:anywhere}
+#${BOOT_SURFACE_ID} .grBootError{font-weight:700}
+#${BOOT_SURFACE_ID} .grBootProgress{width:100%;height:10px}
+#${BOOT_SURFACE_ID} .grBootActions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+#${BOOT_SURFACE_ID} .grBootAction{min-width:${HOME_TOUCH_TARGET_MIN_PX}px;min-height:${HOME_TOUCH_TARGET_MIN_PX}px;padding:9px 16px;font:inherit;touch-action:manipulation}
+#${BOOT_SURFACE_ID} .grBootAction:focus-visible{outline:2px solid currentColor;outline-offset:3px}
 @media (prefers-reduced-motion:reduce){
-  ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}{
-    scroll-behavior:auto;
-  }
+  ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}{scroll-behavior:auto}
+  #${BOOT_SURFACE_ID}{scroll-behavior:auto}
 }
 `;
-  document.head.append(style);
+  (doc.head ?? doc.documentElement)?.appendChild?.(style);
+  return style;
 }
 
 function routeButtons(home) {
@@ -70,7 +106,9 @@ function selectedRouteId(buttons) {
 }
 
 function reducedMotion() {
-  return Boolean(runtime.media?.matches);
+  if (runtime.media) return Boolean(runtime.media.matches);
+  try { return Boolean(globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches); }
+  catch { return false; }
 }
 
 function isHomeActive(home) {
@@ -125,6 +163,142 @@ function unmarkHome(home) {
   delete home.dataset.homeShellRouteCount;
   delete home.dataset.homeShellSelectedRoute;
   home.style.removeProperty('--gameroad-home-shell-touch-min');
+}
+
+function makeBootNode(doc, tag, className, slot = null) {
+  const node = doc.createElement(tag);
+  node.className = className;
+  if (slot) node.dataset.bootSlot = slot;
+  return node;
+}
+
+function ensureBootSurface(doc) {
+  if (!doc?.createElement || !doc?.body?.appendChild) throw new Error('BOOT_DOM_UNAVAILABLE');
+  if (runtime.bootSurface?.isConnected !== false && runtime.bootRefs) return runtime.bootSurface;
+
+  let surface = doc.getElementById?.(BOOT_SURFACE_ID) ?? null;
+  if (surface) surface.remove?.();
+  surface = doc.createElement('section');
+  surface.id = BOOT_SURFACE_ID;
+  surface.hidden = true;
+  surface.setAttribute?.('aria-hidden', 'true');
+  surface.setAttribute?.('aria-live', 'polite');
+  surface.setAttribute?.('aria-atomic', 'true');
+
+  const panel = makeBootNode(doc, 'div', 'grBootPanel', 'panel');
+  const phase = makeBootNode(doc, 'strong', 'grBootPhase', 'phase');
+  const status = makeBootNode(doc, 'div', 'grBootStatus', 'status');
+  const progress = makeBootNode(doc, 'progress', 'grBootProgress', 'progress');
+  progress.max = 1;
+  const progressText = makeBootNode(doc, 'div', 'grBootProgressText', 'progressText');
+  const error = makeBootNode(doc, 'div', 'grBootError', 'error');
+  const actions = makeBootNode(doc, 'div', 'grBootActions', 'actions');
+  panel.append?.(phase, status, progress, progressText, error, actions);
+  surface.appendChild?.(panel);
+  doc.body.appendChild(surface);
+
+  runtime.bootSurface = surface;
+  runtime.bootRefs = { phase, status, progress, progressText, error, actions };
+  return surface;
+}
+
+function bootPhaseLabel(phase) {
+  return BOOT_PHASE_LABELS[phase] ?? String(phase || '');
+}
+
+function bootActionLabel(actionId) {
+  return BOOT_ACTION_LABELS[actionId] ?? String(actionId || '');
+}
+
+export function renderBootLoadingPresentation(state, {
+  document: doc = globalThis.document,
+  reducedMotion: explicitReducedMotion,
+  lowPerf = false,
+  actionHandlers = {},
+} = {}) {
+  const projection = projectBootLoadingPresentation({
+    state,
+    reducedMotion: typeof explicitReducedMotion === 'boolean' ? explicitReducedMotion : reducedMotion(),
+    lowPerf: Boolean(lowPerf),
+  });
+  ensureStyle(doc);
+  const surface = ensureBootSurface(doc);
+  const refs = runtime.bootRefs;
+
+  surface.hidden = false;
+  surface.removeAttribute?.('aria-hidden');
+  surface.setAttribute?.('role', projection.actionIds.length ? 'dialog' : 'status');
+  surface.dataset.bootPhase = projection.phase;
+  surface.dataset.bootProfile = projection.presentationProfile;
+  surface.dataset.bootSemanticKey = projection.semanticKey;
+
+  refs.phase.textContent = bootPhaseLabel(projection.phase);
+  refs.status.textContent = projection.statusCode ?? '';
+  refs.status.hidden = projection.statusCode == null;
+  refs.error.textContent = projection.errorCode == null ? '' : `エラー: ${projection.errorCode}`;
+  refs.error.hidden = projection.errorCode == null;
+
+  if (projection.progress == null) {
+    refs.progress.hidden = true;
+    refs.progress.removeAttribute?.('value');
+    refs.progressText.textContent = '';
+    refs.progressText.hidden = true;
+  } else {
+    refs.progress.hidden = false;
+    refs.progress.value = projection.progress;
+    refs.progressText.textContent = `${Math.round(projection.progress * 100)}%`;
+    refs.progressText.hidden = false;
+  }
+
+  refs.actions.replaceChildren?.();
+  for (const actionId of projection.actionIds) {
+    const button = doc.createElement('button');
+    button.type = 'button';
+    button.className = 'grBootAction';
+    button.dataset.bootAction = actionId;
+    button.textContent = bootActionLabel(actionId);
+    const handler = actionHandlers?.[actionId];
+    button.disabled = typeof handler !== 'function';
+    button.onclick = typeof handler === 'function'
+      ? () => handler(Object.freeze({ actionId, state, projection }))
+      : null;
+    refs.actions.appendChild?.(button);
+  }
+
+  runtime.bootRenderCount += 1;
+  runtime.lastBootPhase = projection.phase;
+  runtime.lastBootProfile = projection.presentationProfile;
+  runtime.lastBootSemanticKey = projection.semanticKey;
+  runtime.lastBootActionIds = [...projection.actionIds];
+  runtime.lastBootError = null;
+  return bootSnapshot();
+}
+
+export function clearBootLoadingPresentation({ document: doc = globalThis.document } = {}) {
+  const surface = runtime.bootSurface ?? doc?.getElementById?.(BOOT_SURFACE_ID) ?? null;
+  if (surface) {
+    surface.hidden = true;
+    surface.setAttribute?.('aria-hidden', 'true');
+  }
+  runtime.lastBootPhase = null;
+  runtime.lastBootProfile = null;
+  runtime.lastBootSemanticKey = null;
+  runtime.lastBootActionIds = [];
+  runtime.lastBootError = null;
+  return bootSnapshot();
+}
+
+export function bootSnapshot() {
+  return Object.freeze({
+    rendered: runtime.lastBootSemanticKey != null,
+    renderCount: runtime.bootRenderCount,
+    phase: runtime.lastBootPhase,
+    presentationProfile: runtime.lastBootProfile,
+    semanticKey: runtime.lastBootSemanticKey,
+    actionIds: Object.freeze([...runtime.lastBootActionIds]),
+    source: 'caller-owned-boot-state',
+    lastError: runtime.lastBootError,
+  });
 }
 
 export function refreshHomeBootPresentation() {
@@ -210,6 +384,7 @@ export function unmountHomeBootPresentation() {
   if (runtime.resizeHandler) removeEventListener('resize', runtime.resizeHandler);
   runtime.media?.removeEventListener?.('change', runtime.mediaHandler);
   unmarkHome(runtime.home);
+  clearBootLoadingPresentation();
   runtime.mounted = false;
   runtime.active = false;
   runtime.refreshScheduled = false;
@@ -239,6 +414,9 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     mount: mountHomeBootPresentation,
     refresh: refreshHomeBootPresentation,
     snapshot,
+    renderBoot: renderBootLoadingPresentation,
+    clearBoot: clearBootLoadingPresentation,
+    bootSnapshot,
   });
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => mountHomeBootPresentation(), { once: true });

@@ -1,0 +1,23 @@
+{
+  "task_id": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "work_unit_key": "HOME_BOOT_GHOST_CONSUMER_RECOVERY_R1",
+  "acquire_key": "UI-HOME-BOOT-GHOST-R1-20260830T1608-SOL-H7Q4V2",
+  "authority": "GAMEROAD CURRENT + current Ops + CURRENT_ACTIVE_LEASES row9",
+  "base_sha": "81b726777f379c4637a834bb4c61ee6ec1389898",
+  "mutable_targets": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "read_only_inputs": [
+    "browser/boot-loading-presentation-core.mjs",
+    "browser/home-shell-presentation-core.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "excluded": [
+    "deploy/cloudflare/scripts/build.mjs mutation",
+    "browser/GAMEROAD.html",
+    "Cards/Advice/Battle/save/economy/assets/workflows/unrelated"
+  ],
+  "acceptance": "Existing Home/Boot runtime renders only caller-supplied canonical Boot projection/action IDs; focused regression passes; no fabricated progress/version authority.",
+  "rollback": "Restore exact base blobs or delete successor branch before merge; main is not mutated by this WorkUnit."
+}

@@ -190,13 +190,23 @@ assert.equal(adopted.adoptedResolutionSurface, true);
 assert.equal(adopted.planSlot, null);
 assert.equal(adopted.phaseSurface, existingPhase);
 assert.equal(adopted.resolutionSurface, existingResolution);
+assert.equal(existingShell.getAttribute('data-gr-battle-screen'), null);
+assert.notEqual(adopted.shell, existingShell);
+assert.equal(adopted.shell.parentNode, existingPhase);
+assert.equal(adopted.shell.className, 'grBattleScreenAdoptedOverlay');
+assert.equal(adopted.shell.dataset.owner, 'runtime_overlay');
+assert.equal(adopted.shell.getAttribute('data-gr-battle-screen'), '1');
+assert.equal(adopted.grid.parentNode, adopted.shell);
+assert.equal(walk(existingShell, node => node.className === 'grBattleScreenTop'), null);
 adopted.render(attack);
 assert.equal(existingResolution.textContent, 'KEEP');
 assert.equal(adopted.laneSurfaces.length, 4);
+assert.equal(existingShell.getAttribute('data-gr-battle-screen'), null);
 assert.equal(adopted.destroy(), true);
 assert.equal(adoptedDocument.body.children.includes(existingShell), true);
 assert.equal(existingShell.children.includes(existingPhase), true);
 assert.equal(existingPhase.children.includes(existingResolution), true);
+assert.equal(existingPhase.children.includes(adopted.shell), false);
 
 const mismatchDocument = new FakeDocument();
 const mismatchRoot = mismatchDocument.createElement('div');
@@ -214,12 +224,14 @@ assert.throws(
 
 assert.equal(BATTLE_SCREEN_RUNTIME.authority, 'NONE');
 assert.equal(BATTLE_SCREEN_RUNTIME.laneCount, 4);
+assert.equal(BATTLE_SCREEN_RUNTIME.existingAnchorPolicy, 'EXPLICIT_PHASE_GETS_RUNTIME_OVERLAY__ANCESTOR_NEVER_DECORATED');
+assert.equal(BATTLE_SCREEN_RUNTIME.externalPhaseShellOwner, 'CALLER');
 assert.equal(BATTLE_SCREEN_RUNTIME.productionHtmlMutationOwnedHere, false);
 assert.equal(BATTLE_SCREEN_RUNTIME.formalArtOwnedHere, false);
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 51,
+  tests: 63,
   freshMount: {
     laneCount: runtime.laneSurfaces.length,
     phaseAnchor: runtime.phaseSurface.id,

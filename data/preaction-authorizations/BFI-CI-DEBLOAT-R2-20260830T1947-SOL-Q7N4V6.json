@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BFI-CI-DEBLOAT-R2-20260830T1947-SOL-Q7N4V6",
+  "taskId": "BROWSER-FULL-INTERACTION-SCREENSHOT-REGRESSION-CI-001",
+  "workUnitKey": "BROWSER_FULL_INTERACTION_REQUIRED_GATE_DEDUP_R2",
+  "acquireKey": "BFI-CI-DEBLOAT-R2-20260830T1947-SOL-Q7N4V6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R22:BFI-CI-DEBLOAT-R2-20260830T1947-SOL-Q7N4V6:RESOLUTION_PREP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "STATIC_WORKFLOW_DIFF_AND_DEDICATED_LANE_SELF_RUN",
+  "proceedToken": "PROCEED|BFI-CI-DEBLOAT-R2-20260830T1947-SOL-Q7N4V6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260830T1954JST",
+  "authorizationBaseSha": "ccf090a13a2fb4f56841c48b0a460b805f2c30e6",
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml",
+    ".github/workflows/browser-full-interaction.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-FULL-INTERACTION-SCREENSHOT-REGRESSION-CI-001",
+  "leaseWorkUnitKey": "BROWSER_FULL_INTERACTION_REQUIRED_GATE_DEDUP_R2",
+  "leaseAcquireKey": "BFI-CI-DEBLOAT-R2-20260830T1947-SOL-Q7N4V6",
+  "leaseSnapshotReadbackAtJst": "2026-08-30 19:51 JST",
+  "leaseUntilJst": "2026-08-30 20:42 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A208:L208",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@ccf090a13a2fb4f56841c48b0a460b805f2c30e6; new branch work/browser-full-interaction-ci-debloat-r2-20260830; .github/workflows/gameroad-required-gate.yml exact duplicate Full Interaction execution removal only; .github/workflows/browser-full-interaction.yml exact broad browser module/work-branch trigger removal plus public-origin event narrowing only; transient data/preaction-authorizations/BFI-CI-DEBLOAT-R2-20260830T1947-SOL-Q7N4V6.json create-first/delete-before-final-head; own PR/checks/expected-head merge only after fresh global owner check; own CURRENT_ACTIVE_LEASES actual appended row; own R22 records. READ_ONLY current workflows, PRE_ACTION validator, current main/open PR evidence. EXCLUDE browser product/runtime code, test spec content, gameplay/save/economy/Partner/Battle/assets/deploy implementation/unrelated files and any new workflow/classifier/framework.",
+  "leaseScope": [
+    ".github/workflows/gameroad-required-gate.yml",
+    ".github/workflows/browser-full-interaction.yml"
+  ]
+}

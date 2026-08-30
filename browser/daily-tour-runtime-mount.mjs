@@ -154,7 +154,10 @@ function syncLauncher() {
     home.append(button);
   }
   const launcher = document.getElementById(LAUNCHER_ID);
-  if (launcher instanceof HTMLElement) launcher.hidden = !isHomeActive(home);
+  if (launcher instanceof HTMLElement) {
+    const shouldHide = !isHomeActive(home);
+    if (launcher.hidden !== shouldHide) launcher.hidden = shouldHide;
+  }
 }
 
 function ensureOverlay() {

@@ -385,3 +385,31 @@ test('invalid material inputs fail closed',()=>{
   assert.throws(()=>projectMaterialFeedback({material:MATERIALS.GUMMY,phase:'explode'}),/unsupported phase/);
   assert.throws(()=>projectMaterialFeedback({material:MATERIALS.GUMMY,phase:MATERIAL_PHASES.PRESSED,localX:Infinity}),/finite/);
 });
+
+const {
+  resolveControllerButtonEdge,
+  resolveOutsideDismiss,
+}=await import('../browser/ui-state-feedback-core.mjs');
+
+test('controller button edge fires once on press and release, never while held',()=>{
+  assert.deepEqual(resolveControllerButtonEdge({previousPressed:false,pressed:true}),{pressed:true,justPressed:true,justReleased:false});
+  assert.deepEqual(resolveControllerButtonEdge({previousPressed:true,pressed:true}),{pressed:true,justPressed:false,justReleased:false});
+  assert.deepEqual(resolveControllerButtonEdge({previousPressed:true,pressed:false}),{pressed:false,justPressed:false,justReleased:true});
+  assert.deepEqual(resolveControllerButtonEdge({previousPressed:false,pressed:false}),{pressed:false,justPressed:false,justReleased:false});
+});
+
+test('controller button edge fails closed on ambiguous input',()=>{
+  assert.throws(()=>resolveControllerButtonEdge({previousPressed:0,pressed:true}),/previousPressed must be a boolean/);
+  assert.throws(()=>resolveControllerButtonEdge({previousPressed:false,pressed:1}),/pressed must be a boolean/);
+  assert.throws(()=>resolveControllerButtonEdge(),/previousPressed must be a boolean/);
+});
+
+test('outside dismiss closes only outside and blocks underlay activation',()=>{
+  assert.deepEqual(resolveOutsideDismiss({insideSurface:false}),{dismiss:true,consumeInput:true,allowUnderlayActivation:false});
+  assert.deepEqual(resolveOutsideDismiss({insideSurface:true}),{dismiss:false,consumeInput:false,allowUnderlayActivation:false});
+});
+
+test('outside dismiss fails closed on ambiguous hit classification',()=>{
+  assert.throws(()=>resolveOutsideDismiss({insideSurface:null}),/insideSurface must be a boolean/);
+  assert.throws(()=>resolveOutsideDismiss(),/insideSurface must be a boolean/);
+});

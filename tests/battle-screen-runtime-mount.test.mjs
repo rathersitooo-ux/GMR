@@ -93,11 +93,15 @@ assert.equal(runtime.gameStateWrite, false);
 assert.equal(runtime.adoptedPhaseSurface, false);
 assert.equal(runtime.adoptedResolutionSurface, false);
 assert.equal(runtime.laneSurfaces.length, 4);
+assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.visualFixture), ['participant_present', 'participant_present', 'participant_present', 'participant_present']);
 assert.equal(runtime.phaseSurface.id, 'battlePhaseSurface');
 assert.equal(runtime.resolutionSurface.id, 'battleResolution');
 assert.equal(runtime.planSlot.dataset.owner, 'caller');
 assert.equal(runtime.phaseSurface.hidden, true);
-assert.ok(document.getElementById('gameroad-battle-screen-runtime-r1-style'));
+const injectedStyle = document.getElementById('gameroad-battle-screen-runtime-r1-style');
+assert.ok(injectedStyle);
+assert.match(injectedStyle.textContent, /participant_present|data-battle-screen-lane/);
+assert.doesNotMatch(injectedStyle.textContent, /inset-left|inset-right|inset-top|inset-bottom/);
 
 const idle = createBattleScreenModel({ participants });
 runtime.render(idle);
@@ -105,6 +109,7 @@ assert.equal(runtime.shell.dataset.mode, 'MATCH_PLAN');
 assert.equal(runtime.phaseSurface.hidden, true);
 assert.equal(runtime.planSlot.hidden, false);
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['idle', 'idle', 'idle', 'idle']);
+assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.visualFixture), ['participant_present', 'participant_present', 'participant_present', 'participant_present']);
 
 const attackPlan = {
   presentationOnly: true,
@@ -133,6 +138,7 @@ assert.equal(runtime.shell.dataset.eventId, 'attack-1');
 assert.equal(runtime.phaseSurface.dataset.battleScreenInput, 'skip|public_info|accessibility');
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.participantId), ['P1', 'P2', 'P3', 'P4']);
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['source', 'idle', 'idle', 'target']);
+assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.visualFixture), ['participant_present', 'participant_present', 'participant_present', 'participant_present']);
 assert.equal(runtime.resolutionSurface.textContent, 'EXISTING LIVE ADAPTER OWNS THIS CONTENT');
 assert.equal(runtime.resolutionSurface.dataset.battleScreenEventId, 'attack-1');
 
@@ -162,6 +168,7 @@ runtime.render(finisher);
 assert.equal(runtime.shell.dataset.motion, 'static_only');
 assert.equal(runtime.shell.dataset.returnIntent, 'RESULT');
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['loser', 'loser', 'loser', 'winner']);
+assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.visualFixture), ['participant_present', 'participant_present', 'participant_present', 'participant_present']);
 assert.equal(runtime.phaseSurface.dataset.battleScreenPhase, 'finisher');
 
 assert.equal(runtime.destroy(), true);
@@ -201,6 +208,7 @@ assert.equal(walk(existingShell, node => node.className === 'grBattleScreenTop')
 adopted.render(attack);
 assert.equal(existingResolution.textContent, 'KEEP');
 assert.equal(adopted.laneSurfaces.length, 4);
+assert.deepEqual(adopted.laneSurfaces.map(node => node.dataset.visualFixture), ['participant_present', 'participant_present', 'participant_present', 'participant_present']);
 assert.equal(existingShell.getAttribute('data-gr-battle-screen'), null);
 assert.equal(adopted.destroy(), true);
 assert.equal(adoptedDocument.body.children.includes(existingShell), true);
@@ -224,6 +232,7 @@ assert.throws(
 
 assert.equal(BATTLE_SCREEN_RUNTIME.authority, 'NONE');
 assert.equal(BATTLE_SCREEN_RUNTIME.laneCount, 4);
+assert.equal(BATTLE_SCREEN_RUNTIME.participantVisualFallback, 'ALWAYS_VISIBLE_CSS_FIXTURE_UNTIL_FORMAL_ART_EXISTS');
 assert.equal(BATTLE_SCREEN_RUNTIME.existingAnchorPolicy, 'EXPLICIT_PHASE_GETS_RUNTIME_OVERLAY__ANCESTOR_NEVER_DECORATED');
 assert.equal(BATTLE_SCREEN_RUNTIME.externalPhaseShellOwner, 'CALLER');
 assert.equal(BATTLE_SCREEN_RUNTIME.productionHtmlMutationOwnedHere, false);
@@ -231,14 +240,16 @@ assert.equal(BATTLE_SCREEN_RUNTIME.formalArtOwnedHere, false);
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 63,
+  tests: 72,
   freshMount: {
     laneCount: runtime.laneSurfaces.length,
+    visibleFixtures: runtime.laneSurfaces.filter(node => node.dataset.visualFixture === 'participant_present').length,
     phaseAnchor: runtime.phaseSurface.id,
     resolutionAnchor: runtime.resolutionSurface.id
   },
   adoptedMount: {
     adoptedPhaseSurface: adopted.adoptedPhaseSurface,
-    adoptedResolutionSurface: adopted.adoptedResolutionSurface
+    adoptedResolutionSurface: adopted.adoptedResolutionSurface,
+    visibleFixtures: adopted.laneSurfaces.filter(node => node.dataset.visualFixture === 'participant_present').length
   }
 }, null, 2));

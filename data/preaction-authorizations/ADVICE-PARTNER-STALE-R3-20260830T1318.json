@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ADVICE-PARTNER-STALE-R3-20260830T1318",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "ADVICE_PARTNER_STALE_MARKER_RECOVERY_R3",
+  "acquireKey": "ADVICE-PARTNER-STALE-R3-20260830T1318-SOL-M8Q4V7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "Fresh main 2de7b0912310c47d61f994da625b69f4258714b8 retains the exact pre-repair blobs for browser/GAMEROAD.html, browser/partner-advice-runtime-mount.mjs, and deploy/cloudflare/tests/build.test.mjs from the already-exercised R2 repair base. The successor reuses only the three repaired blobs and does not replay the stale branch or introduce a new Advice abstraction.",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R2 established the concrete stale-marker failure mode: HTML-only immediate clear can be followed by queued/background projection resurrection; the exact three repaired blobs were built for that observed convergence path. Current-main drift check proves no intervening edits to those three input blobs, so this run reuses the exact repaired product tree rather than re-editing giant HTML.",
+  "proceedToken": "PROCEED|ADVICE-PARTNER-STALE-R3-20260830T1318|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXACT_REPAIRED_BLOB_REUSE_ONLY",
+  "authorizationBaseSha": "2de7b0912310c47d61f994da625b69f4258714b8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "ADVICE_PARTNER_STALE_MARKER_RECOVERY_R3",
+  "leaseAcquireKey": "ADVICE-PARTNER-STALE-R3-20260830T1318-SOL-M8Q4V7",
+  "leaseSnapshotReadbackAtJst": "2026-08-30 13:18 JST",
+  "leaseUntilJst": "2026-08-30 14:18 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; browser/partner-advice-runtime-mount.mjs; deploy/cloudflare/tests/build.test.mjs ONLY for exact partner-advice-runtime-mount currentBlob provenance pin",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "browser/partner-advice-runtime-mount.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "browser/partner-advice-runtime-mount.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

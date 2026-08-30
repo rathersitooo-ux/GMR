@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-DEGRADE-HOMECARDS-R2-20260830T1949-SOL-Q5N2V1",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "UI_DEGRADE_HOME_CARDS_CURRENT_REPLAY_R2",
+  "acquireKey": "UI-DEGRADE-HOMECARDS-R2-20260830T1949-SOL-Q5N2V1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "UI-DEGRADE-HOMECARDS-R2-current-base-blob-identity-and-reviewed-donor",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "UI-DEGRADE-HOMECARDS-R2-exact-PR699-two-file-donor",
+  "proceedToken": "PROCEED|UI-DEGRADE-HOMECARDS-R2-20260830T1949-SOL-Q5N2V1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|exact-donor-replay|lease-row206",
+  "authorizationBaseSha": "ccf090a13a2fb4f56841c48b0a460b805f2c30e6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "UI_DEGRADE_HOME_CARDS_CURRENT_REPLAY_R2",
+  "leaseAcquireKey": "UI-DEGRADE-HOMECARDS-R2-20260830T1949-SOL-Q5N2V1",
+  "leaseSnapshotReadbackAtJst": "2026-08-30 19:49 JST",
+  "leaseUntilJst": "2026-08-30 20:49 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A206:L206",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/ui-degrade-home-cards-r2-20260830 only: browser/home-cards-2p5d-presentation.mjs; tests/home-cards-2p5d-runtime.spec.mjs; transient data/preaction-authorizations/UI-DEGRADE-HOMECARDS-R2-20260830T1949-SOL-Q5N2V1.json; successor PR/checks; CURRENT_ACTIVE_LEASES own row206; R22 own records",
+  "scope": [
+    "browser/home-cards-2p5d-presentation.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-cards-2p5d-presentation.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs"
+  ]
+}

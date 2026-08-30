@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   composeSaasunaProviderUserMessage,
+  createPartnerConversationReportClient,
   createSaasunaEdgeProvider,
   mountBoardFacilityRuntime,
   mountSaasunaConversationProductSurface,
@@ -302,6 +303,107 @@ test('browser edge provider fails closed before fetch for unsafe collective cont
 
 test('browser without fetch has no provider and therefore uses existing fallback lane', () => {
   assert.equal(createSaasunaEdgeProvider({}), null);
+});
+
+test('Partner report client submits only turn/build identity and accepts verified authority receipt', async () => {
+  const buildId = 'a'.repeat(40);
+  const calls = [];
+  const client = createPartnerConversationReportClient({
+    async fetch(url, options = {}) {
+      calls.push({ url, options });
+      if (url === '/gameroad-version.json') {
+        return new Response(JSON.stringify({ schema: 'GAMEROAD_BROWSER_VERSION_V1', build_id: buildId }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        });
+      }
+      assert.equal(url, '/report?reportOp=submit');
+      const body = JSON.parse(options.body);
+      return new Response(JSON.stringify({
+        ok: true,
+        status: 'ready',
+        reportId: 'r-1',
+        reportType: body.reportType,
+        disposition: 'accepted_unique',
+        partnerId: body.partnerId,
+        sourceUseSite: body.sourceUseSite,
+        sourceStateIdentity: body.sourceStateIdentity,
+        versions: body.versions,
+        authority: { verified: true, authorityId: 'gameroad.partner-report.authority.v1' },
+      }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    },
+  });
+  const turn = {
+    ok: true,
+    partnerId: 'partner.saasuna',
+    sourceUseSite: 'partner-conversation',
+    responseOrigin: 'provider_candidate',
+    utterance: 'この本文は報告payloadへ送らない',
+    evidence: {
+      partnerId: 'partner.saasuna',
+      sourceUseSite: 'partner-conversation',
+      sessionId: 'session-1',
+      turnId: 'turn-2',
+    },
+  };
+
+  const receipt = await client.submitTurn(turn);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].url, '/gameroad-version.json');
+  assert.equal(calls[0].options.cache, 'no-store');
+  assert.deepEqual(JSON.parse(calls[1].options.body), {
+    idempotencyKey: 'partner-conversation:session-1:turn-2:defect',
+    partnerId: 'partner.saasuna',
+    reportType: 'defect',
+    sourceUseSite: 'partner-conversation',
+    sourceStateIdentity: 'partner-conversation:session-1:turn-2:provider_candidate',
+    versions: { rules: buildId, content: buildId, state: buildId },
+  });
+  assert.doesNotMatch(calls[1].options.body, /この本文は報告payloadへ送らない/);
+  assert.deepEqual(receipt, {
+    ok: true,
+    reportId: 'r-1',
+    disposition: 'accepted_unique',
+    characterVoice: false,
+    rawTextStored: false,
+  });
+  assert.deepEqual(client.status(), {
+    transport: 'authoritative_report_receipt',
+    reportType: 'defect',
+    rawTextStored: false,
+    automaticRewardMutation: false,
+    automaticRelationshipMutation: false,
+    automaticLearning: false,
+  });
+});
+
+test('Partner report client fails closed on an invalid current build manifest before report submission', async () => {
+  const calls = [];
+  const client = createPartnerConversationReportClient({
+    async fetch(url) {
+      calls.push(url);
+      return new Response(JSON.stringify({ schema: 'GAMEROAD_BROWSER_VERSION_V1', build_id: 'not-a-commit' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    },
+  });
+  await assert.rejects(() => client.submitTurn({
+    ok: true,
+    partnerId: 'partner.saasuna',
+    sourceUseSite: 'partner-conversation',
+    responseOrigin: 'approved_fallback',
+    evidence: {
+      partnerId: 'partner.saasuna',
+      sourceUseSite: 'partner-conversation',
+      sessionId: 'session-2',
+      turnId: 'turn-1',
+    },
+  }), /PARTNER_REPORT_VERSION_INVALID/);
+  assert.deepEqual(calls, ['/gameroad-version.json']);
 });
 
 test('Cloudflare Partner conversation is unavailable when provider configuration is absent', async () => {

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARD-OWNERSHIP-CATALOG-R1-20260830T2243-SOL-Q8M5V2",
+  "taskId": "GACHA-RESULT-PERSISTENCE-COLLECTION-DECK-AUDIT-001",
+  "workUnitKey": "CARD_CATALOG_OWNERSHIP_PROJECTION_R1",
+  "acquireKey": "CARD-OWNERSHIP-CATALOG-R1-20260830T2243-SOL-Q8M5V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT80+PR728-COMPOSE-PREDICTION-20260830T2243JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOCAL-NODE-TEST-8OF8-20260830T2243JST",
+  "proceedToken": "PROCEED|CARD-OWNERSHIP-CATALOG-R1-20260830T2243-SOL-Q8M5V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT80_COMPOSE",
+  "authorizationBaseSha": "20d222fa372dc23105f7e3c475458d94b4c9a80e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GACHA-RESULT-PERSISTENCE-COLLECTION-DECK-AUDIT-001",
+  "leaseWorkUnitKey": "CARD_CATALOG_OWNERSHIP_PROJECTION_R1",
+  "leaseAcquireKey": "CARD-OWNERSHIP-CATALOG-R1-20260830T2243-SOL-Q8M5V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-30 22:43 JST",
+  "leaseUntilJst": "2026-08-30 23:43 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:L10",
+  "scope": [
+    "data/card-catalog.current.json",
+    "browser/card-ownership-core.mjs",
+    "tests/card-ownership-core.test.mjs"
+  ],
+  "leaseScope": [
+    "data/card-catalog.current.json",
+    "browser/card-ownership-core.mjs",
+    "tests/card-ownership-core.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh main at branch creation; NEW data/card-catalog.current.json; NEW browser/card-ownership-core.mjs; NEW tests/card-ownership-core.test.mjs; transient data/preaction-authorizations/CARD-OWNERSHIP-CATALOG-R1-20260830T2243-SOL-Q8M5V2.json create-first/delete-before-final-head if current Required Gate requires it; own branch/PR/checks; own CURRENT_ACTIVE_LEASES row10; own R22 records.",
+  "solutionSignature": "current79-card-catalog + pure-ownedCardIds-projection + existing-storage-canAdd-guard",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-CURRENT80-CARDPRESENTATION-OWNEDIDS-PR728-CANADD-20260830",
+  "solutionSearchEvidence": [
+    "Drive current card ledger 現役カード80件 A1:I80",
+    "browser/card-presentation-core.mjs existing ownedCardIds input",
+    "browser/deck-storage-corner-core.mjs existing canAdd injection point",
+    "browser/deck-save-recovery-core.mjs existing storage root mechanics; read-only"
+  ]
+}

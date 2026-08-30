@@ -317,14 +317,17 @@ jobs:
               deploy/cloudflare/.gitignore|\
               deploy/cloudflare/README.md|\
               deploy/cloudflare/functions/ws.js|\
+              deploy/cloudflare/functions/report.js|\
               deploy/cloudflare/relay/src/relay-core.mjs|\
               deploy/cloudflare/relay/src/match-store.mjs|\
+              deploy/cloudflare/relay/src/partner-report-store.mjs|\
               deploy/cloudflare/relay/src/relay-worker.mjs|\
               deploy/cloudflare/relay/wrangler.toml|\
               deploy/cloudflare/scripts/build.mjs|\
               deploy/cloudflare/tests/build.test.mjs|\
               deploy/cloudflare/tests/relay-core.test.mjs|\
               deploy/cloudflare/tests/normal-match-r3.test.mjs|\
+              deploy/cloudflare/tests/partner-report-provider.test.mjs|\
               deploy/cloudflare/wrangler.pages.toml|\
               .github/workflows/cloudflare-public-deploy.yml)
                 publichost=true
@@ -708,7 +711,7 @@ jobs:
             fi
             node --test tests/partner-conversation-collective-context.test.mjs
           fi
-          if grep -Eq '^(browser/partner-tea-quick-choice-core\.mjs|tests/partner-tea-quick-choice-core\.test\.mjs)$' /tmp/gameroad-changed.txt; then
+          if grep -Eq '^(browser/partner-tea-quick-choice-core\.mjs|tests/partner-tea-quick-choice-core.test.mjs)$' /tmp/gameroad-changed.txt; then
             if [[ ! -f tests/partner-tea-quick-choice-core.test.mjs ]]; then
               echo "Required Partner Tea quick-choice test is missing: tests/partner-tea-quick-choice-core.test.mjs"
               exit 1
@@ -762,7 +765,17 @@ jobs:
 
       - name: Run PublicHost Cloudflare deploy-prep tests
         if: steps.classify.outputs.publichost == 'true'
-        run: node --test tests/field-music-policy-core.test.mjs deploy/cloudflare/tests/relay-core.test.mjs
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/field-music-policy-core.test.mjs deploy/cloudflare/tests/relay-core.test.mjs
+          if grep -Eq '^(deploy/cloudflare/functions/report\.js|deploy/cloudflare/relay/src/partner-report-store\.mjs|deploy/cloudflare/tests/partner-report-provider\.test\.mjs)$' /tmp/gameroad-changed.txt; then
+            if [[ ! -f deploy/cloudflare/tests/partner-report-provider.test.mjs ]]; then
+              echo "Required Partner report provider test is missing: deploy/cloudflare/tests/partner-report-provider.test.mjs"
+              exit 1
+            fi
+            node --test deploy/cloudflare/tests/partner-report-provider.test.mjs
+          fi
 
       - name: Run PublicHost Cloudflare syntax checks
         if: steps.classify.outputs.publichost == 'true'

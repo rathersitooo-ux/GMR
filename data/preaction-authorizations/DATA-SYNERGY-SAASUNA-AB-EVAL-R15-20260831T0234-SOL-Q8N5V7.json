@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DATA-SYNERGY-SAASUNA-AB-EVAL-R15-20260831T0234-SOL-Q8N5V7",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "PARTNER_SAASUNA_COLLECTIVE_AB_OUTCOME_EVAL_R15",
+  "acquireKey": "DATA-SYNERGY-SAASUNA-AB-EVAL-R15-20260831T0234-SOL-Q8N5V7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R15-privacy-safe-paired-outcome-contract-readback",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R15-pure-evaluator-deterministic-node-tests",
+  "proceedToken": "PROCEED|DATA-SYNERGY-SAASUNA-AB-EVAL-R15-20260831T0234-SOL-Q8N5V7|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|isolated-pure-evaluator",
+  "authorizationBaseSha": "dffc8a68cbded922684c008dbc332dc3043c0938",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "PARTNER_SAASUNA_COLLECTIVE_AB_OUTCOME_EVAL_R15",
+  "leaseAcquireKey": "DATA-SYNERGY-SAASUNA-AB-EVAL-R15-20260831T0234-SOL-Q8N5V7",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 02:38 JST",
+  "leaseUntilJst": "2026-08-31 03:34 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A226:L226",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@dffc8a68cbded922684c008dbc332dc3043c0938; new branch work/data-synergy-saasuna-ab-eval-r15-20260831; NEW browser/partner-conversation-collective-outcome-evaluator.mjs; NEW tests/partner-conversation-collective-outcome-evaluator.test.mjs; transient data/preaction-authorizations/DATA-SYNERGY-SAASUNA-AB-EVAL-R15-20260831T0234-SOL-Q8N5V7.json create-first/delete-before-final-head if Required Gate demands; own branch/PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES appended tuple; own R22 records. READ_ONLY browser/partner-conversation-collective-context.mjs, browser/partner-conversation-core.mjs, browser/partner-saasuna-conversation-source.mjs, browser/partner-humanlike-repair-evaluator.mjs, browser/board-facility-runtime-mount.mjs, deploy/cloudflare/functions/ws.js, active R14 report-collective files, active Convai adapter/server files, GAMEROAD.html, build/workflows, central row1358 while R14 active, Battle/save/economy/formal assets/unrelated.",
+  "scope": [
+    "browser/partner-conversation-collective-outcome-evaluator.mjs",
+    "tests/partner-conversation-collective-outcome-evaluator.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-conversation-collective-outcome-evaluator.mjs",
+    "tests/partner-conversation-collective-outcome-evaluator.test.mjs"
+  ],
+  "solutionSignature": "Compare Saasuna conversation outcomes for current validated collective-context use versus no-collective baseline using privacy-safe paired receipts only.",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R15-current-main-reuse-check-dffc8a68",
+  "solutionSearchEvidence": [
+    "repo:tools/sol_bridge/evaluation/completion-ab-evaluator.mjs@dffc8a68",
+    "repo:browser/partner-humanlike-repair-evaluator.mjs@dffc8a68",
+    "repo:browser/partner-conversation-collective-context.mjs@dffc8a68"
+  ],
+  "buildResidualReason": "The existing completion A/B evaluator is hard-coded to Luna/Sol software-task arms and metrics, while the humanlike repair evaluator is a turn-repair policy. Neither can express Saasuna collective/no-collective privacy-safe outcome receipts, context evidence lineage, provider/fallback delivery metrics, or Human usefulness review without changing unrelated owners."
+}

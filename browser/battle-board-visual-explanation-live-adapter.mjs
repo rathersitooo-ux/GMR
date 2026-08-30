@@ -21,7 +21,6 @@ const ROLE_ATTR = 'data-gmr-board-roles';
 const POSITION_KIND_ATTR = 'data-gmr-board-position-kind';
 const TARGET_KIND_ATTR = 'data-gmr-board-target-kind';
 const INVALID_REASON_ATTR = 'data-gmr-board-invalid-reason';
-const RECOMMENDATION_ATTR = 'data-gmr-partner-recommendation';
 
 function requireProjection(projection) {
   if (!projection || typeof projection !== 'object' || Array.isArray(projection)) {
@@ -54,7 +53,6 @@ function clearElement(element) {
   element.removeAttribute(POSITION_KIND_ATTR);
   element.removeAttribute(TARGET_KIND_ATTR);
   element.removeAttribute(INVALID_REASON_ATTR);
-  element.removeAttribute(RECOMMENDATION_ATTR);
   for (const role of RULE_ROLES) element.removeAttribute(`data-gmr-board-${role}`);
 }
 
@@ -81,7 +79,7 @@ function annotationValue(map, positionId) {
  * This adapter intentionally does not calculate legality, targets, routes, threat,
  * recommendation, card effects, or visual skin. Partner recommendation is returned
  * separately for the existing Partner projection path and is never promoted into a
- * rules-derived board role.
+ * rules-derived board role or mutated on DOM by this adapter.
  */
 export function createBattleBoardVisualExplanationLiveAdapter({ resolveElementByPositionId } = {}) {
   const resolve = requireResolver(resolveElementByPositionId);
@@ -112,7 +110,11 @@ export function createBattleBoardVisualExplanationLiveAdapter({ resolveElementBy
   const apply = (rawProjection) => {
     const projection = requireProjection(rawProjection);
 
-    for (const [, element] of touched) clearElement(element);
+    let clearedCount = 0;
+    for (const [, element] of touched) {
+      clearElement(element);
+      clearedCount += 1;
+    }
     touched.clear();
     revision += 1;
 
@@ -125,16 +127,14 @@ export function createBattleBoardVisualExplanationLiveAdapter({ resolveElementBy
         revision,
         appliedPositionIds: Object.freeze([]),
         missingPositionIds: Object.freeze([]),
-        clearedCount: 0,
+        clearedCount,
         partnerRecommendation: null,
       });
     }
 
     const positionIds = new Set();
-    for (const [positionId, roles] of Object.entries(projection.rolesByPosition || {})) {
-      if (normalizedRuleRoles(projection, positionId).length || (Array.isArray(roles) && roles.includes('partner-recommendation'))) {
-        positionIds.add(positionId);
-      }
+    for (const positionId of Object.keys(projection.rolesByPosition || {})) {
+      if (normalizedRuleRoles(projection, positionId).length) positionIds.add(positionId);
     }
     for (const map of [
       projection.annotations?.positionKindByPosition,
@@ -191,7 +191,7 @@ export function createBattleBoardVisualExplanationLiveAdapter({ resolveElementBy
       revision,
       appliedPositionIds: Object.freeze(applied),
       missingPositionIds: Object.freeze(missing),
-      clearedCount: 0,
+      clearedCount,
       partnerRecommendation: recommendation,
     });
   };

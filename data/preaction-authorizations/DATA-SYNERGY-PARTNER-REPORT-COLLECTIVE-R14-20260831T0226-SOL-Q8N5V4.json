@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DATA-SYNERGY-PARTNER-REPORT-COLLECTIVE-R14-20260831T0226-SOL-Q8N5V4",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "PARTNER_REPORT_TO_CONVERSATION_COLLECTIVE_EVIDENCE_R14",
+  "acquireKey": "DATA-SYNERGY-PARTNER-REPORT-COLLECTIVE-R14-20260831T0226-SOL-Q8N5V4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R14-PREDICT-REPORT-AUTHORITY-TO-COLLECTIVE-CONTEXT-NO-SECOND-STORE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R13-COLLECTIVE-CONTEXT-STRICT-CONTRACT-PLUS-R11-REPORT-PROJECTION-CONTRACT",
+  "proceedToken": "PROCEED|DATA-SYNERGY-PARTNER-REPORT-COLLECTIVE-R14-20260831T0226-SOL-Q8N5V4|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot|reuse-compose",
+  "authorizationBaseSha": "dffc8a68cbded922684c008dbc332dc3043c0938",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "PARTNER_REPORT_TO_CONVERSATION_COLLECTIVE_EVIDENCE_R14",
+  "leaseAcquireKey": "DATA-SYNERGY-PARTNER-REPORT-COLLECTIVE-R14-20260831T0226-SOL-Q8N5V4",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 02:26 JST",
+  "leaseUntilJst": "2026-08-31 03:26 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:L9",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR current-main new branch work/data-synergy-partner-report-collective-r14-20260831; NEW browser/partner-report-collective-evidence-source.mjs; NEW tests/partner-report-collective-evidence-source.test.mjs; transient data/preaction-authorizations/DATA-SYNERGY-PARTNER-REPORT-COLLECTIVE-R14-20260831T0226-SOL-Q8N5V4.json create-first/delete-before-final-head; own PR/checks/expected-head merge; Drive central task row1358 acquisition/evidence/status only; own CURRENT_ACTIVE_LEASES row9; own R22 records. READ_ONLY browser/board-facility-runtime-mount.mjs and tests; browser/partner-report-contribution-event-source.mjs; browser/partner-conversation-collective-context.mjs; browser/GAMEROAD.html; build/workflows; Battle/save/economy/formal assets/unrelated files.",
+  "scope": [
+    "browser/partner-report-collective-evidence-source.mjs",
+    "tests/partner-report-collective-evidence-source.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-report-collective-evidence-source.mjs",
+    "tests/partner-report-collective-evidence-source.test.mjs"
+  ],
+  "solutionSignature": "Compose the existing authoritative Partner report projection with the existing strict Partner collective-context builder so one current versioned evidence source can feed another consumer without a second recorder, store, persona, or memory authority.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R14-REUSE-CURRENT-REPORT-PROJECTION-PLUS-COLLECTIVE-CONTEXT",
+  "solutionSearchEvidence": [
+    "repo:browser/partner-report-contribution-event-source.mjs",
+    "repo:browser/partner-conversation-collective-context.mjs",
+    "repo:browser/board-facility-runtime-mount.mjs:collective-evidence-source-seam",
+    "github:PR-693-authoritative-partner-report-provider",
+    "github:PR-696-open-board-report-surface-owned-elsewhere"
+  ]
+}

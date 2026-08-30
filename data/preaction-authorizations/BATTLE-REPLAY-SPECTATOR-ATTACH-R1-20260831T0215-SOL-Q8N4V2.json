@@ -1,0 +1,41 @@
+{
+  "schema": "GAMEROAD_PRE_ACTION_AUTHORIZATION_V1",
+  "acquireKey": "BATTLE-REPLAY-SPECTATOR-ATTACH-R1-20260831T0215-SOL-Q8N4V2",
+  "taskId": "BATTLE-REPLAY-RUNTIME-CONTRACT-001",
+  "workUnitKey": "BATTLE_REPLAY_SPECTATOR_AUTHORIZED_PRESENCE_ATTACH_R1",
+  "repo": "rathersitooo-ux/GMR",
+  "baseBranch": "main",
+  "baseHead": "dffc8a68cbded922684c008dbc332dc3043c0938",
+  "branch": "work/battle-replay-spectator-attach-r1-20260831",
+  "createdAtJst": "2026-08-31 02:16 JST",
+  "leaseUntilJst": "2026-08-31 03:15 JST",
+  "mutablePaths": [
+    "browser/battle-replay-spectator-follow-adapter.mjs",
+    "tests/battle-replay-spectator-follow-adapter.test.mjs",
+    "data/preaction-authorizations/BATTLE-REPLAY-SPECTATOR-ATTACH-R1-20260831T0215-SOL-Q8N4V2.json"
+  ],
+  "readOnlyDependencies": [
+    "browser/battle-replay-public-commentary-core.mjs",
+    "browser/battle-replay-live-adapter.mjs",
+    "deploy/cloudflare/relay/src/match-store.mjs",
+    "deploy/cloudflare/relay/src/relay-worker.mjs",
+    "tools/multi-agent-match-follow-harness.mjs"
+  ],
+  "intendedDiff": "Accept only caller-supplied viewer-authorized presence snapshots, translate them into the existing continuous public follow signals, and emit a presentation-only spectator attach intent only for an authorized spectatable live match. No transport discovery or gameplay mutation is added.",
+  "privacyBoundary": {
+    "hiddenOrSecretDiscovery": false,
+    "forcePrivateJoin": false,
+    "ticketSecretAccepted": false,
+    "roomSecretAccepted": false,
+    "gameplayAuthority": false,
+    "gameStateWrite": false
+  },
+  "idempotency": "New-file-only seam on an isolated branch. Same authorized live match uses the existing continuous-follow idempotency and deterministic attach-intent identity. Existing follow core stays read-only.",
+  "checks": [
+    "node --test tests/battle-replay-spectator-follow-adapter.test.mjs",
+    "secret0 and gameStateWrite0 contract assertions",
+    "current PR checks / Required Gate when triggered"
+  ],
+  "rollback": "Close the PR and delete/revert only this branch's new files. No shared core rollback is required.",
+  "resume": "If main advances before merge, revalidate current main and replay the exact two-file product diff on a fresh authorized branch; never widen into private match discovery."
+}

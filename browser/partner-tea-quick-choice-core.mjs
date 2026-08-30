@@ -101,6 +101,7 @@ export async function runTeaQuickChoiceTurn(input = {}, deps = {}) {
     sessionId: intent.sessionId,
     turnId,
     userMessage: choice.label,
+    collectiveContext: deps.collectiveContext ?? null,
   }, { provider: deps.provider ?? null });
 
   if (!turn.ok) return fail('CONVERSATION_TURN_FAILED');

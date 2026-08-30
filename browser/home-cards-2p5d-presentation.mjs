@@ -328,3 +328,167 @@ function mount() {
 }
 
 if (typeof window !== 'undefined' && typeof document !== 'undefined') mount();
+
+const QUICK_DECK_BUTTON_ID = 'gameroad-quick-deck-open';
+const QUICK_DECK_ROOT_ID = 'gameroad-quick-deck-overlay-root';
+const QUICK_DECK_STYLE_ID = 'gameroad-quick-deck-live-style';
+const quickDeckRuntime = { root: null, cardsScreen: null, open: false, observer: null, keyBound: false };
+
+function quickDeckLabel(cardId) {
+  const card = Array.isArray(globalThis.__CARD_DATA__)
+    ? globalThis.__CARD_DATA__.find((entry) => String(entry?.id || '') === cardId)
+    : null;
+  return String(card?.displayName ?? card?.name ?? card?.title ?? card?.label ?? cardId);
+}
+
+function readRenderedQuickDeck() {
+  const grouped = new Map();
+  for (const selector of ['#deckSlots [data-id]', '#exDeckSlots [data-id]']) {
+    for (const node of document.querySelectorAll(selector)) {
+      const cardId = String(node?.dataset?.id || '').trim();
+      if (!cardId) continue;
+      const current = grouped.get(cardId);
+      if (current) current.quantity += 1;
+      else grouped.set(cardId, { cardId, label: quickDeckLabel(cardId), quantity: 1 });
+    }
+  }
+  return [...grouped.values()];
+}
+
+function ensureQuickDeckStyle() {
+  if (document.getElementById(QUICK_DECK_STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = QUICK_DECK_STYLE_ID;
+  style.textContent = `
+#${QUICK_DECK_BUTTON_ID}{min-width:44px;min-height:44px;margin:0 0 8px auto;padding:8px 12px;border-radius:12px;border:1px solid color-mix(in srgb,var(--accent,#77dffc) 44%,rgba(255,255,255,.18));background:color-mix(in srgb,var(--bg,#071019) 86%,var(--accent,#77dffc) 14%);color:var(--text,#f5f7fb);font:700 13px/1 system-ui;touch-action:manipulation}
+#${QUICK_DECK_ROOT_ID}[hidden]{display:none!important}#${QUICK_DECK_ROOT_ID}{position:fixed;inset:0;z-index:2147482500}
+#${QUICK_DECK_ROOT_ID} .gameroadQuickDeckBackdrop{position:fixed;inset:0;display:grid;place-items:center;padding:clamp(12px,3vw,28px);background:rgba(3,8,15,.56);backdrop-filter:blur(5px)}
+#${QUICK_DECK_ROOT_ID} .gameroadQuickDeckPanel{width:min(860px,94vw);max-height:min(78vh,720px);overflow:auto;border:1px solid color-mix(in srgb,var(--accent,#77dffc) 34%,rgba(255,255,255,.18));border-radius:18px;background:color-mix(in srgb,var(--bg,#071019) 94%,#111827);box-shadow:0 24px 60px rgba(0,0,0,.4);padding:16px;color:var(--text,#f5f7fb)}
+#${QUICK_DECK_ROOT_ID} .gameroadQuickDeckHead{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:12px}#${QUICK_DECK_ROOT_ID} h2{margin:0;font:700 clamp(18px,2.5vw,26px)/1.2 system-ui}#${QUICK_DECK_ROOT_ID} .gameroadQuickDeckSummary{font-size:13px;opacity:.82}
+#${QUICK_DECK_ROOT_ID} .gameroadQuickDeckClose{min-width:44px;min-height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:inherit;font-size:22px}#${QUICK_DECK_ROOT_ID} .gameroadQuickDeckGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(116px,1fr));gap:10px}
+#${QUICK_DECK_ROOT_ID} .gameroadQuickDeckCard{min-height:86px;border-radius:12px;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.05);padding:10px;display:grid;align-content:space-between;gap:8px}#${QUICK_DECK_ROOT_ID} .gameroadQuickDeckCount{justify-self:end;font-weight:800}#${QUICK_DECK_ROOT_ID} .gameroadQuickDeckEmpty{padding:24px 8px;text-align:center;opacity:.72}
+@media (prefers-reduced-motion:reduce){#${QUICK_DECK_ROOT_ID} .gameroadQuickDeckBackdrop{backdrop-filter:none}}
+`;
+  document.head.append(style);
+}
+
+function closeQuickDeck() {
+  if (!quickDeckRuntime.root || !quickDeckRuntime.open) return false;
+  quickDeckRuntime.root.replaceChildren();
+  quickDeckRuntime.root.hidden = true;
+  quickDeckRuntime.open = false;
+  return true;
+}
+
+function openQuickDeck() {
+  const surface = mountQuickDeckLiveOverlay();
+  if (!surface) return false;
+  const entries = readRenderedQuickDeck();
+  const total = entries.reduce((sum, entry) => sum + entry.quantity, 0);
+  const backdrop = document.createElement('div');
+  backdrop.className = 'gameroadQuickDeckBackdrop';
+  backdrop.dataset.quickDeckOverlay = 'open';
+  const panel = document.createElement('section');
+  panel.className = 'gameroadQuickDeckPanel';
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-modal', 'true');
+  panel.setAttribute('aria-label', 'デッキ確認');
+  const head = document.createElement('div');
+  head.className = 'gameroadQuickDeckHead';
+  const title = document.createElement('div');
+  const heading = document.createElement('h2');
+  heading.textContent = 'デッキ確認';
+  const summary = document.createElement('div');
+  summary.className = 'gameroadQuickDeckSummary';
+  summary.textContent = `${total}枚`;
+  summary.setAttribute('aria-live', 'polite');
+  title.append(heading, summary);
+  const closeButton = document.createElement('button');
+  closeButton.type = 'button';
+  closeButton.className = 'gameroadQuickDeckClose';
+  closeButton.setAttribute('aria-label', '閉じる');
+  closeButton.textContent = '×';
+  closeButton.addEventListener('click', closeQuickDeck);
+  head.append(title, closeButton);
+  panel.append(head);
+  if (entries.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'gameroadQuickDeckEmpty';
+    empty.textContent = 'デッキにカードがありません';
+    panel.append(empty);
+  } else {
+    const grid = document.createElement('div');
+    grid.className = 'gameroadQuickDeckGrid';
+    for (const entry of entries) {
+      const card = document.createElement('article');
+      card.className = 'gameroadQuickDeckCard';
+      card.dataset.cardId = entry.cardId;
+      const name = document.createElement('span');
+      name.textContent = entry.label;
+      const count = document.createElement('span');
+      count.className = 'gameroadQuickDeckCount';
+      count.dataset.quantity = String(entry.quantity);
+      count.textContent = `×${entry.quantity}`;
+      card.append(name, count);
+      grid.append(card);
+    }
+    panel.append(grid);
+  }
+  backdrop.append(panel);
+  backdrop.addEventListener('pointerdown', (event) => {
+    if (event.target === backdrop) closeQuickDeck();
+  });
+  quickDeckRuntime.root.replaceChildren(backdrop);
+  quickDeckRuntime.root.hidden = false;
+  quickDeckRuntime.open = true;
+  return true;
+}
+
+function mountQuickDeckLiveOverlay() {
+  const cardsScreen = document.querySelector('.screen[data-screen="cards"]');
+  const deckSlots = document.getElementById('deckSlots');
+  if (!(cardsScreen instanceof HTMLElement) || !(deckSlots instanceof HTMLElement)) return null;
+  ensureQuickDeckStyle();
+  let button = document.getElementById(QUICK_DECK_BUTTON_ID);
+  if (!(button instanceof HTMLButtonElement)) {
+    button = document.createElement('button');
+    button.id = QUICK_DECK_BUTTON_ID;
+    button.type = 'button';
+    button.textContent = 'デッキ確認';
+    button.setAttribute('aria-haspopup', 'dialog');
+    button.addEventListener('click', openQuickDeck);
+    deckSlots.insertAdjacentElement('beforebegin', button);
+  }
+  let root = document.getElementById(QUICK_DECK_ROOT_ID);
+  if (!(root instanceof HTMLElement)) {
+    root = document.createElement('div');
+    root.id = QUICK_DECK_ROOT_ID;
+    root.hidden = true;
+    cardsScreen.append(root);
+  }
+  quickDeckRuntime.root = root;
+  quickDeckRuntime.cardsScreen = cardsScreen;
+  if (!quickDeckRuntime.observer && typeof MutationObserver !== 'undefined') {
+    quickDeckRuntime.observer = new MutationObserver(() => {
+      if (!cardsScreen.classList.contains('active')) closeQuickDeck();
+    });
+    quickDeckRuntime.observer.observe(cardsScreen, { attributes: true, attributeFilter: ['class'] });
+  }
+  if (!quickDeckRuntime.keyBound) {
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeQuickDeck();
+    });
+    quickDeckRuntime.keyBound = true;
+  }
+  return { button, root };
+}
+
+function scheduleQuickDeckLiveOverlay() {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mountQuickDeckLiveOverlay, { once: true });
+  } else {
+    mountQuickDeckLiveOverlay();
+  }
+}
+
+if (typeof window !== 'undefined' && typeof document !== 'undefined') scheduleQuickDeckLiveOverlay();

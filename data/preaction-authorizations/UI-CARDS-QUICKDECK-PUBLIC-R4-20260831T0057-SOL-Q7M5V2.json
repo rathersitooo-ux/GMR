@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-CARDS-QUICKDECK-PUBLIC-R4-20260831T0057-SOL-Q7M5V2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "UI_CARDS_QUICK_DECK_VISIBLE_INTEGRATION_R4",
+  "acquireKey": "UI-CARDS-QUICKDECK-PUBLIC-R4-20260831T0057-SOL-Q7M5V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-QUICK_DECK_OVERLAY-P0-PARTIAL+MAIN-DECK-DOM-20260831T0057",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR722-QUICK-DECK-SEMANTICS-REVIEWED+MAIN-HOMECARDS-READBACK",
+  "proceedToken": "PROCEED|UI-CARDS-QUICKDECK-PUBLIC-R4-20260831T0057-SOL-Q7M5V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-08-31T00:57+09:00",
+  "authorizationBaseSha": "20d222fa372dc23105f7e3c475458d94b4c9a80e",
+  "scope": [
+    "browser/home-cards-2p5d-presentation.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "UI_CARDS_QUICK_DECK_VISIBLE_INTEGRATION_R4",
+  "leaseAcquireKey": "UI-CARDS-QUICKDECK-PUBLIC-R4-20260831T0057-SOL-Q7M5V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 00:57 JST",
+  "leaseUntilJst": "2026-08-31 01:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A14:L14",
+  "leaseScope": [
+    "browser/home-cards-2p5d-presentation.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@20d222fa372dc23105f7e3c475458d94b4c9a80e; branch work/cards-quick-deck-public-r4-20260831; browser/home-cards-2p5d-presentation.mjs Quick Deck live read-only overlay integration only; tests/home-cards-2p5d-runtime.spec.mjs Quick Deck actual-use-site regression only; transient data/preaction-authorizations/UI-CARDS-QUICKDECK-PUBLIC-R4-20260831T0057-SOL-Q7M5V2.json create-first/delete-before-final-head; own PR/checks/expected-head merge; close superseded PR#722 only after durable successor; own CURRENT_ACTIVE_LEASES row14; own R22 records. READ_ONLY browser/GAMEROAD.html; browser/cards-deck-presentation.mjs; PR#722 reviewed Quick Deck semantics; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; current Deck state/render authority. EXCLUDE new public artifact/build mutation/new deck state/router/database/framework/deck mutation/save/economy/Battle/Partner/formal assets/workflows/unrelated files.",
+  "solutionSignature": "QUICK_DECK_LIVE_RENDERED_PROJECTION_IN_HOMECARDS",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR722+SCREEN_INDEX_CURRENT+MAIN_DECK_RENDERED_PROJECTION",
+  "solutionSearchEvidence": [
+    "PR#722 reviewed Quick Deck read-only semantics",
+    "SCREEN_INDEX_CURRENT QUICK_DECK_OVERLAY P0 PARTIAL FIRST_PUBLIC_REQUIRED",
+    "main Cards renders current deck into #deckSlots and #exDeckSlots"
+  ]
+}

@@ -1,3 +1,5 @@
+import './daily-tour-runtime-mount.mjs';
+
 import {
   classifyHomeViewport,
   createHomeShellState,

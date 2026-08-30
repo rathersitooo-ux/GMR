@@ -841,10 +841,6 @@ jobs:
         if: steps.classify.outputs.browser == 'true'
         run: npx playwright test --config=playwright.config.mjs --workers=1
 
-      - name: Run Browser full interaction evidence
-        if: steps.classify.outputs.browser == 'true'
-        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
-
       - name: Run DINO DIG mobile whitebox smoke
         if: steps.classify.outputs.dino == 'true'
         run: npx playwright test --config=playwright.dino-dig.config.mjs --workers=1

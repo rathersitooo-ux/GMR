@@ -6,6 +6,7 @@ import {
   createStorageCornerViewModel,
   moveStorageCardToDeck,
   removeCardFromDeck,
+  removeCardFromStorage,
   resolveDeckEditorSwipe,
 } from '../browser/deck-storage-corner-core.mjs';
 
@@ -33,13 +34,22 @@ test('storage stays outside deck and cannot bypass forty-card gate', () => {
   assert.equal(result.state.storage.length, 1);
 });
 
-test('storage uses normal-left royal-right view and +N button label', () => {
+test('storage uses normal-left royal-right view and yellow +N button contract', () => {
   const state = createDeckStorageState({ deck: [], storage: ['normal', 'royal', 'normal2'] });
   const view = createStorageCornerViewModel(state, { isRoyal: (id) => id === 'royal' });
   assert.deepEqual(view.normal, ['normal', 'normal2']);
   assert.deepEqual(view.royal, ['royal']);
   assert.equal(view.storageButtonLabel, '+3');
+  assert.equal(view.storageButtonTone, 'yellow');
   assert.deepEqual(view.layout, { normalSide: 'left', royalSide: 'right' });
+});
+
+test('storage candidates can be discarded without touching deck', () => {
+  const state = createDeckStorageState({ deck: ['a'], storage: ['x', 'y'] });
+  const result = removeCardFromStorage(state, 'x');
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.state.deck, ['a']);
+  assert.deepEqual(result.state.storage, ['y']);
 });
 
 test('storage to deck delegates legality to existing deck authority hook', () => {

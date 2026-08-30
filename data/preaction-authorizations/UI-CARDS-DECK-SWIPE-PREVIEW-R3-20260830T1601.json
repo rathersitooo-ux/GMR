@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-CARDS-DECK-SWIPE-PREVIEW-R3-20260830T1601",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "UI_CARDS_DECK_SWIPE_INTENT_PREVIEW_REPLAY_R3",
+  "acquireKey": "UI-CARDS-DECK-SWIPE-PREVIEW-R3-20260830T1601-SOL-Q8N4V7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR679_AND_R2_ONE_FILE_DONOR_CURRENT_MAIN_BASE_BLOB_MATCH",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXACT_DONOR_BLOB_PLUS_PR685_CROSS_SURFACE_RED_CONTRACT",
+  "proceedToken": "PROCEED|UI-CARDS-DECK-SWIPE-PREVIEW-R3-20260830T1601|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-ui-authority|exact-lease",
+  "authorizationBaseSha": "160da43290ea49119256e6fe5381c1b742402eb3",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "UI_CARDS_DECK_SWIPE_INTENT_PREVIEW_REPLAY_R3",
+  "leaseAcquireKey": "UI-CARDS-DECK-SWIPE-PREVIEW-R3-20260830T1601-SOL-Q8N4V7",
+  "leaseSnapshotReadbackAtJst": "2026-08-30 16:01 JST",
+  "leaseUntilJst": "2026-08-30 17:01 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@160da43290ea49119256e6fe5381c1b742402eb3; successor branch work/cards-deck-swipe-preview-r3-20260830; browser/cards-deck-presentation.mjs ONLY; transient data/preaction-authorizations/UI-CARDS-DECK-SWIPE-PREVIEW-R3-20260830T1601.json create-first/delete-before-final-head; successor PR/checks only; own CURRENT_ACTIVE_LEASES row8; own R22 records. READ_ONLY PR#679/#689 donor evidence; PR#685 RED contract; browser/GAMEROAD.html; active UI_CARDS_DECK_SWIPE_FEEDBACK_RUNTIME_R1 resources. NO main merge until fresh dependency-owner check.",
+  "scope": [
+    "browser/cards-deck-presentation.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs"
+  ],
+  "solutionSignature": "Reuse the proven presentation-only bidirectional deck swipe intent preview on fresh current main: right exposes add intent, left exposes remove intent, 44px threshold/dead-zone/horizontal dominance, armed/blocked feedback, reduced-motion semantic preservation, no deck/gameplay semantics change.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "ADAPT_EXACT_PR679_DONOR_BLOB_NO_NEW_GESTURE_FRAMEWORK",
+  "solutionSearchEvidence": [
+    "PR#679 and R2 preserve the same bounded one-file presentation-only donor blob",
+    "current main cards-deck-presentation.mjs base blob exactly matches donor base blob c38ecf6e70d5d1be726c72fe441b38b47b492cdc",
+    "PR#685 independently defines right=+1 left=-1 tap=inspect RED behavior without owning this module",
+    "active UI_CARDS_DECK_SWIPE_FEEDBACK_RUNTIME_R1 lists cards-deck-presentation.mjs READ_ONLY, so branch validation is disjoint and main integration remains fenced"
+  ]
+}

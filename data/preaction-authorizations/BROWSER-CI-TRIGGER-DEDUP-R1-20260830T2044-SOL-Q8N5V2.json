@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BROWSER-CI-TRIGGER-DEDUP-R1-20260830T2044-SOL-Q8N5V2",
+  "taskId": "BROWSER-FULL-INTERACTION-SCREENSHOT-REGRESSION-CI-001",
+  "workUnitKey": "BROWSER_CI_WORK_BRANCH_TRIGGER_DEDUP_R1",
+  "acquireKey": "BROWSER-CI-TRIGGER-DEDUP-R1-20260830T2044-SOL-Q8N5V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BROWSER-CI-TRIGGER-DUPLICATE-EVENT-PROOF-20260830",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "GITHUB-ACTIONS-EVENT-SEMANTICS-AND-CURRENT-WORKFLOW-DIFF-ORACLE-20260830",
+  "proceedToken": "PROCEED|BROWSER-CI-TRIGGER-DEDUP-R1-20260830T2044-SOL-Q8N5V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|duplicate-trigger-proof|lease-snapshot",
+  "authorizationBaseSha": "f1cd76a491a0be23d63d9aa773febf39280634c9",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-FULL-INTERACTION-SCREENSHOT-REGRESSION-CI-001",
+  "leaseWorkUnitKey": "BROWSER_CI_WORK_BRANCH_TRIGGER_DEDUP_R1",
+  "leaseAcquireKey": "BROWSER-CI-TRIGGER-DEDUP-R1-20260830T2044-SOL-Q8N5V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-30 20:44 JST",
+  "leaseUntilJst": "2026-08-30 21:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A209:L209",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact authorization base main@f1cd76a491a0be23d63d9aa773febf39280634c9; successor branch work/browser-ci-trigger-dedup-r1-20260830; .github/workflows/browser-full-interaction.yml; .github/workflows/browser-runtime-smoke.yml; .github/workflows/browser-node-ci.yml; transient data/preaction-authorizations/BROWSER-CI-TRIGGER-DEDUP-R1-20260830T2044-SOL-Q8N5V2.json create-first/delete-before-final-head; successor PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES appended row; own R22 records.",
+  "scope": [
+    ".github/workflows/browser-full-interaction.yml",
+    ".github/workflows/browser-runtime-smoke.yml",
+    ".github/workflows/browser-node-ci.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/browser-full-interaction.yml",
+    ".github/workflows/browser-runtime-smoke.yml",
+    ".github/workflows/browser-node-ci.yml"
+  ]
+}

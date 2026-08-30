@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "SCREEN-NAV-REINPUT-R8-20260830T1417",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "SCREEN_NAV_REPEATED_DESTINATION_RECOVERY_R8",
+  "acquireKey": "SCREEN-NAV-REINPUT-R8-20260830T1417-SOL-Q6N4V8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR432_SEMANTIC_DONOR_AND_CURRENT_SCREEN_NAV_BASE_BLOB_MATCH",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR432_FOCUSED_REINPUT_REGRESSION_AND_CURRENT_UI_TRANSITION_CONTRACT",
+  "proceedToken": "PROCEED|SCREEN-NAV-REINPUT-R8-20260830T1417|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-ui-authority|exact-lease",
+  "authorizationBaseSha": "160da43290ea49119256e6fe5381c1b742402eb3",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "SCREEN_NAV_REPEATED_DESTINATION_RECOVERY_R8",
+  "leaseAcquireKey": "SCREEN-NAV-REINPUT-R8-20260830T1417-SOL-Q6N4V8",
+  "leaseSnapshotReadbackAtJst": "2026-08-30 14:17 JST",
+  "leaseUntilJst": "2026-08-30 15:17 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES row189 exact key",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh main; branch work/screen-nav-reinput-recovery-r8-20260830; browser/screen-navigation-core.mjs; tests/screen-navigation-core.test.mjs; deploy/cloudflare/tests/build.test.mjs exact screen-navigation provenance pin only; transient data/preaction-authorizations/SCREEN-NAV-REINPUT-R8-20260830T1417.json create-first/delete-before-final-head; own CURRENT_ACTIVE_LEASES exact-key row; own R22 records. READ_ONLY old PR#432 donor and current UI task authority. EXCLUDE GAMEROAD.html, Partner/Daily/Deck/Battle/save/economy/assets/workflows/unrelated files.",
+  "scope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "Replay the already-existing repeated-same-destination navigation fix so a second activation before SWAP cancels the old presentation and applies the destination synchronously exactly once, then update only the existing package provenance pin.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "ADAPT_PR432_EXISTING_TRANSITION_RUNTIME_NO_NEW_FRAMEWORK",
+  "solutionSearchEvidence": [
+    "PR#432 contains the bounded semantic donor and focused regression",
+    "current browser/screen-navigation-core.mjs still has the donor base blob referenced by the existing package provenance contract",
+    "current UI-STATE-FEEDBACK-RUNTIME-001 acceptance explicitly requires rapid navigation not to be rolled back by stale transition completion"
+  ]
+}

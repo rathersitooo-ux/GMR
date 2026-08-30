@@ -391,13 +391,21 @@ export function createScreenTransitionRuntimeAdapter({
     }
   });
 
+  function applyScreenSynchronously(to, context) {
+    const applied = applyScreen(to, Object.freeze(context));
+    if (applied && typeof applied.then === 'function') {
+      throw new Error('applyScreen must be synchronous');
+    }
+  }
+
   async function navigate(requestedTarget, {reason = 'navigation'} = {}) {
     const from = getCurrentScreen();
+    const activeBefore = director.getState();
     const decision = navigationBridge.resolve(from, requestedTarget);
     if (!decision.ok) {
       if (
         decision.reason === SCREEN_NAVIGATION_REASON.CURRENT_SCREEN
-        && director.getState().activeRevision !== null
+        && activeBefore.activeRevision !== null
       ) {
         director.cancel();
       }
@@ -411,6 +419,43 @@ export function createScreenTransitionRuntimeAdapter({
       });
     }
 
+    if (activeBefore.activeRevision !== null && activeBefore.to === decision.to) {
+      const supersededRevision = activeBefore.activeRevision;
+      director.cancel();
+      presentationDriver.finishRevision?.(supersededRevision, 'reinput_skip');
+      const revision = director.getState().revision;
+      try {
+        applyScreenSynchronously(decision.to, {
+          from: decision.from,
+          to: decision.to,
+          reason,
+          revision
+        });
+      } catch (error) {
+        return freezeTransitionResult({
+          status: 'failed',
+          revision,
+          from: decision.from,
+          to: decision.to,
+          swapped: false,
+          phase: 'SWAP',
+          skippedPresentation: true,
+          navigationReason: decision.reason,
+          errorName: error instanceof Error ? error.name : 'Error',
+          message: error instanceof Error ? error.message : String(error)
+        });
+      }
+      return freezeTransitionResult({
+        status: 'completed',
+        revision,
+        from: decision.from,
+        to: decision.to,
+        swapped: true,
+        skippedPresentation: true,
+        navigationReason: decision.reason
+      });
+    }
+
     const result = await director.start({
       from: decision.from,
       to: decision.to,
@@ -418,15 +463,12 @@ export function createScreenTransitionRuntimeAdapter({
       reducedMotion: readBoolean(reducedMotion),
       lowPerf: readBoolean(lowPerf),
       applySwap: (context) => {
-        const applied = applyScreen(decision.to, Object.freeze({
+        applyScreenSynchronously(decision.to, {
           from: decision.from,
           to: decision.to,
           reason,
           revision: context.revision
-        }));
-        if (applied && typeof applied.then === 'function') {
-          throw new Error('applyScreen must be synchronous');
-        }
+        });
       }
     });
 

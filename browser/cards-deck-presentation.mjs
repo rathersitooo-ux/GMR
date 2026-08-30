@@ -487,3 +487,138 @@ export function createDeckSwipePresentationController({
 
   return Object.freeze({ playSuccess, playReject, cancelAll, dispose, config: cfg, sfxPlayer: localSfx });
 }
+
+export const DEFAULT_DECK_SWIPE_INTENT_PREVIEW = Object.freeze({
+  thresholdPx: 44,
+  deadZonePx: 6,
+  dominanceRatio: 1.1,
+});
+
+function normalizeIntentPreviewConfig(config = {}) {
+  if (!config || typeof config !== 'object' || Array.isArray(config)) throw new TypeError('PREVIEW_CONFIG_INVALID');
+  const merged = { ...DEFAULT_DECK_SWIPE_INTENT_PREVIEW, ...config };
+  positive(merged.thresholdPx, 'PREVIEW_THRESHOLD_PX');
+  nonNegative(merged.deadZonePx, 'PREVIEW_DEAD_ZONE_PX');
+  positive(merged.dominanceRatio, 'PREVIEW_DOMINANCE_RATIO');
+  if (merged.deadZonePx >= merged.thresholdPx) throw new RangeError('PREVIEW_DEAD_ZONE_RANGE_INVALID');
+  return Object.freeze(merged);
+}
+
+export function createDeckSwipeIntentPreviewPlan({
+  deltaX = 0,
+  deltaY = 0,
+  allowed = true,
+  reason = null,
+  config = {},
+} = {}) {
+  finite(deltaX, 'PREVIEW_DELTA_X');
+  finite(deltaY, 'PREVIEW_DELTA_Y');
+  const cfg = normalizeIntentPreviewConfig(config);
+  const absX = Math.abs(deltaX);
+  const absY = Math.abs(deltaY);
+  const horizontal = absX >= cfg.deadZonePx && absX >= absY * cfg.dominanceRatio;
+  if (!horizontal) {
+    return Object.freeze({
+      kind: absY > absX && absY >= cfg.deadZonePx ? 'pass-through' : 'idle',
+      intent: null,
+      symbol: null,
+      label: null,
+      progress: 0,
+      armed: false,
+      allowed: true,
+      reason: null,
+      thresholdPx: cfg.thresholdPx,
+      preserveSemanticFeedback: true,
+    });
+  }
+
+  const intent = deltaX > 0 ? 'add' : 'remove';
+  const symbol = intent === 'add' ? '+' : '−';
+  const actionLabel = intent === 'add' ? 'デッキに追加' : 'デッキから外す';
+  const armed = absX >= cfg.thresholdPx;
+  const progress = clamp((absX - cfg.deadZonePx) / (cfg.thresholdPx - cfg.deadZonePx), 0, 1);
+  const permitted = allowed !== false;
+  const blockedReason = permitted ? null : String(reason || (intent === 'add' ? '追加できません' : '外せません'));
+
+  return Object.freeze({
+    kind: 'preview',
+    intent,
+    symbol,
+    label: blockedReason || actionLabel,
+    progress,
+    armed,
+    allowed: permitted,
+    reason: blockedReason,
+    thresholdPx: cfg.thresholdPx,
+    preserveSemanticFeedback: true,
+  });
+}
+
+export function installDeckSwipeIntentPreviewStyles(doc, { styleId = 'gameroad-deck-swipe-intent-preview-style' } = {}) {
+  if (!doc?.createElement) return null;
+  if (doc.getElementById?.(styleId)) return doc.getElementById(styleId);
+  const style = doc.createElement('style');
+  style.id = styleId;
+  style.textContent = `
+.gr-deck-swipe-preview-active{position:relative;isolation:isolate;--gr-deck-swipe-preview-progress:0}
+.gr-deck-swipe-preview-active::before{content:attr(data-deck-swipe-preview-symbol);position:absolute;z-index:7;top:50%;width:34px;height:34px;border-radius:999px;display:grid;place-items:center;transform:translateY(-50%) scale(calc(.78 + var(--gr-deck-swipe-preview-progress) * .22));font:800 25px/1 system-ui,sans-serif;pointer-events:none;opacity:calc(.34 + var(--gr-deck-swipe-preview-progress) * .66);transition:opacity 45ms linear,transform 45ms linear,filter 45ms linear;background:rgba(12,18,24,.86);border:1px solid rgba(255,255,255,.46);box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.gr-deck-swipe-preview-add::before{right:8px;color:#dfffe4;filter:drop-shadow(0 0 7px rgba(106,255,149,.45))}
+.gr-deck-swipe-preview-remove::before{left:8px;color:#ffe0e0;filter:drop-shadow(0 0 7px rgba(255,118,118,.42))}
+.gr-deck-swipe-preview-armed::before{border-width:2px;filter:brightness(1.18) drop-shadow(0 0 9px rgba(255,255,255,.35))}
+.gr-deck-swipe-preview-blocked::before{color:#f3f3f3;filter:saturate(.2);opacity:.78}
+@media (prefers-reduced-motion:reduce){.gr-deck-swipe-preview-active::before{transition:none!important;transform:translateY(-50%)!important}}
+`;
+  (doc.head ?? doc.documentElement)?.appendChild?.(style);
+  return style;
+}
+
+export function createDeckSwipeIntentPreviewController({
+  document: doc = globalThis.document,
+  config = {},
+} = {}) {
+  const cfg = normalizeIntentPreviewConfig(config);
+  installDeckSwipeIntentPreviewStyles(doc);
+  let activeElement = null;
+
+  const clearElement = (element) => {
+    if (!element) return;
+    for (const className of [
+      'gr-deck-swipe-preview-active',
+      'gr-deck-swipe-preview-add',
+      'gr-deck-swipe-preview-remove',
+      'gr-deck-swipe-preview-armed',
+      'gr-deck-swipe-preview-blocked',
+    ]) safeClassRemove(element, className);
+    element.removeAttribute?.('data-deck-swipe-preview-symbol');
+    element.removeAttribute?.('data-deck-swipe-preview-label');
+    element.style?.removeProperty?.('--gr-deck-swipe-preview-progress');
+  };
+
+  const clear = () => {
+    clearElement(activeElement);
+    activeElement = null;
+  };
+
+  const update = ({ sourceElement, deltaX = 0, deltaY = 0, allowed = true, reason = null } = {}) => {
+    if (!sourceElement) throw new TypeError('SOURCE_ELEMENT_REQUIRED');
+    const plan = createDeckSwipeIntentPreviewPlan({ deltaX, deltaY, allowed, reason, config: cfg });
+    if (activeElement && activeElement !== sourceElement) clearElement(activeElement);
+    activeElement = sourceElement;
+    clearElement(sourceElement);
+    if (plan.kind !== 'preview') {
+      activeElement = null;
+      return plan;
+    }
+
+    safeClassAdd(sourceElement, 'gr-deck-swipe-preview-active');
+    safeClassAdd(sourceElement, plan.intent === 'add' ? 'gr-deck-swipe-preview-add' : 'gr-deck-swipe-preview-remove');
+    if (plan.armed) safeClassAdd(sourceElement, 'gr-deck-swipe-preview-armed');
+    if (!plan.allowed) safeClassAdd(sourceElement, 'gr-deck-swipe-preview-blocked');
+    sourceElement.setAttribute?.('data-deck-swipe-preview-symbol', plan.symbol);
+    sourceElement.setAttribute?.('data-deck-swipe-preview-label', plan.label);
+    sourceElement.style?.setProperty?.('--gr-deck-swipe-preview-progress', String(plan.progress));
+    return plan;
+  };
+
+  return Object.freeze({ update, clear, dispose: clear, config: cfg });
+}

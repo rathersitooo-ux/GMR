@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GITHUB-CI-TRIGGER-DEBLOAT-R2-20260831T0206-SOL-Q7N4V2",
+  "taskId": "GITHUB-CI-BROWSER-NODE-001",
+  "workUnitKey": "BROWSER_NODE_RUNTIME_WORK_TRIGGER_DEDUP_R2",
+  "acquireKey": "GITHUB-CI-TRIGGER-DEBLOAT-R2-20260831T0206-SOL-Q7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR721+main20d222fa+duplicate-work-push-pr-trigger",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR721-exact-trigger-deletion-predecessor",
+  "proceedToken": "PROCEED|GITHUB-CI-TRIGGER-DEBLOAT-R2-20260831T0206-SOL-Q7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|two-workflow-subtractive-trigger-dedup",
+  "authorizationBaseSha": "20d222fa372dc23105f7e3c475458d94b4c9a80e",
+  "scope": [
+    ".github/workflows/browser-node-ci.yml",
+    ".github/workflows/browser-runtime-smoke.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-CI-BROWSER-NODE-001",
+  "leaseWorkUnitKey": "BROWSER_NODE_RUNTIME_WORK_TRIGGER_DEDUP_R2",
+  "leaseAcquireKey": "GITHUB-CI-TRIGGER-DEBLOAT-R2-20260831T0206-SOL-Q7N4V2",
+  "leaseScope": [
+    ".github/workflows/browser-node-ci.yml",
+    ".github/workflows/browser-runtime-smoke.yml"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-08-31 02:06 JST",
+  "leaseUntilJst": "2026-08-31 02:36 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A22:L22",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@20d222fa372dc23105f7e3c475458d94b4c9a80e; branch work/browser-ci-trigger-dedup-r2-20260831; .github/workflows/browser-node-ci.yml work/** push trigger line only; .github/workflows/browser-runtime-smoke.yml work/** push trigger line only; transient data/preaction-authorizations/GITHUB-CI-TRIGGER-DEBLOAT-R2-20260831T0206-SOL-Q7N4V2.json create-first/delete-before-final-head; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row22; own R22 records. READ_ONLY .github/workflows/browser-full-interaction.yml, .github/workflows/gameroad-required-gate.yml, .github/workflows/gameroad-observability-ci.yml, PR#721. EXCLUDE product/game/runtime/tests/deploy/assets and unrelated files."
+}

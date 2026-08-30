@@ -3,13 +3,11 @@ import assert from 'node:assert/strict';
 import {
   DEFAULT_DECK_SWIPE_PRESENTATION,
   DECK_SWIPE_PRESENTATION_EVENTS,
-  DECK_SWIPE_SFX_CUES,
   normalizeDeckSwipeRect,
   createDeckSwipeFlightPlan,
   createDeckSwipeRejectPlan,
   createDeckSwipeFeedbackDetail,
   createDeckSwipePresentationController,
-  createDeckSwipeSfxPlayer,
 } from '../browser/cards-deck-presentation.mjs';
 
 const rect = (left, top, width, height) => ({ left, top, width, height });
@@ -150,15 +148,15 @@ test('invalid geometry/configuration fails closed', () => {
   );
 });
 
-test('reduced controller emits commit then land and exposes SFX hooks without owning audio', () => {
+test('reduced controller emits commit then land and delegates optional external phase hooks', () => {
   const doc = fakeDocument();
   const order = [];
   const controller = createDeckSwipePresentationController({
     document: doc,
     window: immediateWindow({ reduced: true }),
     reducedMotion: true,
-    onCommitSfx: (detail) => order.push(`sfx:${detail.phase}`),
-    onLandSfx: (detail) => order.push(`sfx:${detail.phase}`),
+    onCommitSfx: (detail) => order.push(`hook:${detail.phase}`),
+    onLandSfx: (detail) => order.push(`hook:${detail.phase}`),
   });
   const source = fakeElement(rect(10, 300, 100, 140));
   const target = fakeElement(rect(500, 40, 180, 240));
@@ -171,10 +169,10 @@ test('reduced controller emits commit then land and exposes SFX hooks without ow
     'gameroad:deck-swipe-commit',
     'gameroad:deck-swipe-land',
   ]);
-  assert.deepEqual(order, ['sfx:commit', 'sfx:land']);
+  assert.deepEqual(order, ['hook:commit', 'hook:land']);
 });
 
-test('reject controller emits reject only and never a land event', () => {
+test('reject controller emits reject only and delegates optional external reject hook', () => {
   const doc = fakeDocument();
   const hook = [];
   const controller = createDeckSwipePresentationController({
@@ -185,69 +183,6 @@ test('reject controller emits reject only and never a land event', () => {
   controller.playReject({ sourceElement: fakeElement(), targetElement: fakeElement(), cardId: 'c9', reason: 'duplicate' });
   assert.deepEqual(doc.events.map((event) => event.type), ['gameroad:deck-swipe-reject']);
   assert.deepEqual(hook, ['duplicate']);
-});
-
-test('local SFX contract supplies distinct commit, land and reject cues without assets', () => {
-  assert.equal(Object.isFrozen(DECK_SWIPE_SFX_CUES), true);
-  assert.equal(DECK_SWIPE_SFX_CUES.commit.kind, 'noise');
-  assert.equal(DECK_SWIPE_SFX_CUES.land.kind, 'tone');
-  assert.ok(DECK_SWIPE_SFX_CUES.land.endHz > DECK_SWIPE_SFX_CUES.land.startHz);
-  assert.ok(DECK_SWIPE_SFX_CUES.reject.endHz < DECK_SWIPE_SFX_CUES.reject.startHz);
-});
-
-function fakeAudioParam() {
-  const calls = [];
-  return {
-    calls,
-    setValueAtTime: (...args) => calls.push(['set', ...args]),
-    linearRampToValueAtTime: (...args) => calls.push(['linear', ...args]),
-    exponentialRampToValueAtTime: (...args) => calls.push(['exp', ...args]),
-    cancelScheduledValues: (...args) => calls.push(['cancel', ...args]),
-  };
-}
-
-class FakeAudioContext {
-  constructor() {
-    FakeAudioContext.instances += 1;
-    this.currentTime = 2;
-    this.sampleRate = 48000;
-    this.state = 'running';
-    this.destination = {};
-    this.oscillators = [];
-    this.bufferSources = [];
-  }
-  createGain() { return { gain: fakeAudioParam(), connect() {} }; }
-  createOscillator() {
-    const node = { frequency: fakeAudioParam(), connect() {}, start() { this.started = true; }, stop() { this.stopped = true; } };
-    this.oscillators.push(node);
-    return node;
-  }
-  createBuffer(_channels, frames) { return { getChannelData: () => new Float32Array(frames) }; }
-  createBufferSource() {
-    const node = { connect() {}, start() { this.started = true; }, stop() { this.stopped = true; } };
-    this.bufferSources.push(node);
-    return node;
-  }
-  createBiquadFilter() { return { Q: fakeAudioParam(), frequency: fakeAudioParam(), connect() {} }; }
-  close() { this.closed = true; }
-}
-FakeAudioContext.instances = 0;
-
-test('SFX player creates AudioContext lazily and plays asset-free whoosh/tone cues', () => {
-  FakeAudioContext.instances = 0;
-  const player = createDeckSwipeSfxPlayer({ window: { AudioContext: FakeAudioContext } });
-  assert.equal(FakeAudioContext.instances, 0);
-  assert.equal(player.playCommit(), true);
-  assert.equal(FakeAudioContext.instances, 1);
-  assert.equal(player.playLand(), true);
-  assert.equal(player.playReject(), true);
-  assert.equal(FakeAudioContext.instances, 1);
-});
-
-test('SFX player fails silent when audio is disabled or unavailable', () => {
-  assert.equal(createDeckSwipeSfxPlayer({ window: {}, enabled: true }).playCommit(), false);
-  assert.equal(createDeckSwipeSfxPlayer({ window: { AudioContext: FakeAudioContext }, enabled: false }).playLand(), false);
-  assert.throws(() => createDeckSwipeSfxPlayer({ volume: 3 }), /SFX_VOLUME_INVALID/);
 });
 
 test('custom timings remain bounded by semantic contract', () => {

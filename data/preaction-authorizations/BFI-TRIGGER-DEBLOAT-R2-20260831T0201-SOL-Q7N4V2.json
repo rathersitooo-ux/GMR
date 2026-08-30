@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BFI-TRIGGER-DEBLOAT-R2-20260831T0201-SOL-Q7N4V2",
+  "taskId": "BROWSER-FULL-INTERACTION-SCREENSHOT-REGRESSION-CI-001",
+  "workUnitKey": "BROWSER_FULL_INTERACTION_TRIGGER_DEBLOAT_R2",
+  "acquireKey": "BFI-TRIGGER-DEBLOAT-R2-20260831T0201-SOL-Q7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_R2_PR721_FULLREG196_TRIGGER_ACTUAL",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "BFI_TRIGGER_TRUTH_TABLE_R2",
+  "proceedToken": "PROCEED|BFI-TRIGGER-DEBLOAT-R2-20260831T0201-SOL-Q7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|SUBTRACT_DUPLICATE_TRIGGER_ONLY",
+  "authorizationBaseSha": "20d222fa372dc23105f7e3c475458d94b4c9a80e",
+  "scope": [
+    ".github/workflows/browser-full-interaction.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-FULL-INTERACTION-SCREENSHOT-REGRESSION-CI-001",
+  "leaseWorkUnitKey": "BROWSER_FULL_INTERACTION_TRIGGER_DEBLOAT_R2",
+  "leaseAcquireKey": "BFI-TRIGGER-DEBLOAT-R2-20260831T0201-SOL-Q7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 02:01 JST",
+  "leaseUntilJst": "2026-08-31 02:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A21:L21",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@20d222fa372dc23105f7e3c475458d94b4c9a80e; branch work/bfi-trigger-debloat-r2-20260831; .github/workflows/gameroad-required-gate.yml duplicate Run Browser full interaction evidence step only; .github/workflows/browser-full-interaction.yml push/PR trigger narrowing + public-origin event condition only; transient data/preaction-authorizations/BFI-TRIGGER-DEBLOAT-R2-20260831T0201-SOL-Q7N4V2.json create-first/delete-before-final-head; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES exact row; own R22 records. READ_ONLY tests/browser-full-interaction.spec.mjs, playwright.full-interaction.config.mjs, .github/workflows/cloudflare-public-deploy.yml, current Browser files. EXCLUDE product/runtime/game semantics/GAMEROAD.html/build/deploy code/other workflows/unrelated files.",
+  "leaseScope": [
+    ".github/workflows/browser-full-interaction.yml"
+  ]
+}

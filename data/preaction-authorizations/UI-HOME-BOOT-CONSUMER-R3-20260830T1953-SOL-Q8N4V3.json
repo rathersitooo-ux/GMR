@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-HOME-BOOT-CONSUMER-R3-20260830T1953-SOL-Q8N4V3",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_BOOT_CANONICAL_CONSUMER_REPLAY_R3",
+  "acquireKey": "UI-HOME-BOOT-CONSUMER-R3-20260830T1953-SOL-Q8N4V3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R2_PR712_ONE_FILE_DIFF_AND_EXACT_DONOR_BLOB_MATCH",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXACT_REUSE_AS_IS_BLOB_bed3930192dc26d9c858daae63badfad986d9e76_PLUS_EXISTING_BOOT_CORE_CONTRACT",
+  "proceedToken": "PROCEED|UI-HOME-BOOT-CONSUMER-R3-20260830T1953-SOL-Q8N4V3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXACT_REUSE_AS_IS",
+  "authorizationBaseSha": "8a8dbb9cca2c17283ec2a9e44d716204e93ee714",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_BOOT_CANONICAL_CONSUMER_REPLAY_R3",
+  "leaseAcquireKey": "UI-HOME-BOOT-CONSUMER-R3-20260830T1953-SOL-Q8N4V3",
+  "leaseSnapshotReadbackAtJst": "2026-08-30 19:53 JST",
+  "leaseUntilJst": "2026-08-30 20:53 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A207:L207",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact authorization base main@8a8dbb9cca2c17283ec2a9e44d716204e93ee714; successor branch work/home-boot-canonical-consumer-r3-20260830; browser/home-boot-runtime-mount.mjs ONLY using REUSE_AS_IS exact blob bed3930192dc26d9c858daae63badfad986d9e76; transient data/preaction-authorizations/UI-HOME-BOOT-CONSUMER-R3-20260830T1953-SOL-Q8N4V3.json create-first/delete-before-final-head; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row; own R22 records. READ_ONLY browser/boot-loading-presentation-core.mjs; browser/home-shell-presentation-core.mjs; tests/home-boot-presentation.test.mjs; browser/home-cards-2p5d-presentation.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; browser/GAMEROAD.html; PR#712 failure evidence. EXCLUDE new Boot framework/state machine/timer fake loading, Cards/Advice/Battle/save/economy/assets/workflows/unrelated files.",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs"
+  ]
+}

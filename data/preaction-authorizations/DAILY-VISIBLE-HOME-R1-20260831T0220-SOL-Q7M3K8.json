@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DAILY-VISIBLE-HOME-R1-20260831T0220-SOL-Q7M3K8",
+  "taskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "workUnitKey": "DAILY_TOUR_VISIBLE_HOME_LAUNCHER_R1",
+  "acquireKey": "DAILY-VISIBLE-HOME-R1-20260831T0220-SOL-Q7M3K8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-DAILY-VISIBLE-MOUNT-RESIDUAL+MAIN-HOME-ROUTES-20260831T0220",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "DAILY-CORE+REGISTRY+HOME-BOOT+PARTNER-ROUNDTRIP-READBACK",
+  "proceedToken": "PROCEED|DAILY-VISIBLE-HOME-R1-20260831T0220-SOL-Q7M3K8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-08-31T02:20+09:00",
+  "authorizationBaseSha": "dffc8a68cbded922684c008dbc332dc3043c0938",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "browser/daily-tour-home-launcher.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "tests/browser-runtime-smoke.spec.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "leaseWorkUnitKey": "DAILY_TOUR_VISIBLE_HOME_LAUNCHER_R1",
+  "leaseAcquireKey": "DAILY-VISIBLE-HOME-R1-20260831T0220-SOL-Q7M3K8",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 02:22 JST",
+  "leaseUntilJst": "2026-08-31 03:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A220:N220",
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "browser/daily-tour-home-launcher.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "tests/browser-runtime-smoke.spec.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@dffc8a68cbded922684c008dbc332dc3043c0938; branch work/daily-tour-visible-home-r1-20260831; browser/home-boot-runtime-mount.mjs thin Daily integration; NEW browser/daily-tour-home-launcher.mjs; deploy/cloudflare/scripts/build.mjs Daily packaging only; deploy/cloudflare/tests/build.test.mjs Daily package assertions only; tests/browser-runtime-smoke.spec.mjs Daily visible acceptance only; transient data/preaction-authorizations/DAILY-VISIBLE-HOME-R1-20260831T0220-SOL-Q7M3K8.json create-first/delete-before-final-head; own PR/checks/merge. READ_ONLY daily-tour-core, registry, GAMEROAD.html/routes/workflows. EXCLUDE old 459-line runtime, storage/provider/scheduler/reward/streak/debt/new router/new registry, active QuickDeck/Battle/Partner resources, giant HTML/workflows/unrelated files.",
+  "solutionSignature": "DAILY_TOUR_HOME_VISIBLE_EXISTING_ROUTE_LAUNCHER",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MAIN-DAILY-CORE+REGISTRY+HOME-BOOT+EXISTING-ROUTE-CONTROLS",
+  "solutionSearchEvidence": [
+    "main daily-tour-core already owns plan ordering/interruption/advance semantics",
+    "main daily-tour-mode-registry already owns plan eligibility constraints",
+    "main Home Boot already owns one observer and existing route controls",
+    "current Partner smoke proves visible Home->characters->Home round trip",
+    "concurrent Daily runtime owner excludes Home/build and is treated as orchestration authority rather than duplicated"
+  ]
+}

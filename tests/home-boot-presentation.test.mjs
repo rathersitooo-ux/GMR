@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   classifyHomeViewport,
   createHomeShellState,
@@ -43,6 +44,22 @@ const state = () => createHomeShellState({
   expanded: false,
   selectedRouteId: 'cards',
   routeIds: ['battle', 'cards', 'partner', 'shop'],
+});
+
+test('Home first paint source does not generate redundant narration or dashboard chrome', () => {
+  const markup = readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8')
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
+  for (const className of ['codexHomeCenterStage', 'codexHomeLeftRail', 'codexHomeRightRail']) {
+    assert.doesNotMatch(
+      markup,
+      new RegExp(`class=["'][^"']*\\b${className}\\b[^"']*["']`, 'i'),
+      `${className} must not be emitted into initial Home markup`,
+    );
+  }
+  for (const text of ['HOME VISUAL', 'GAMEROAD のホーム', 'ホームから各機能へ移動できます']) {
+    assert.equal(markup.includes(text), false, `initial Home markup must not emit: ${text}`);
+  }
 });
 
 test('Home viewport classifier distinguishes wide, short landscape, and portrait', () => {

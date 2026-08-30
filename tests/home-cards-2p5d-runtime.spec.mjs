@@ -190,3 +190,52 @@ test('Cards collection right swipe adds once while wrong gestures and 40-card ov
   expect(fullAfter.main).not.toContain(overflowCardId);
   expect(fullAfter).toEqual(fullBefore);
 });
+
+test('Quick Deck reads the live rendered deck and dismisses on outside pointer or Escape', async ({ page }) => {
+  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'load' });
+  expect(response?.ok()).toBeTruthy();
+  await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_HOMECARDS_2P5D));
+  await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+
+  const seeded = await page.evaluate(() => {
+    const t = globalThis.__GAMEROAD_TEST__;
+    const ids = t.deckPublic().filter((card) => card.slot === 'main').slice(0, 3).map((card) => card.id);
+    if (ids.length !== 3) throw new Error('three public main-deck cards required');
+    t.state.deckDraft.main.splice(0, t.state.deckDraft.main.length, ...ids);
+    t.state.deckDraft.ex.splice(0);
+    return ids;
+  });
+
+  const cards = page.locator('.homePadChoice[data-home-target="cards"]:visible').first();
+  await expect(cards).toBeVisible();
+  await cards.click();
+  await page.waitForFunction(() => (
+    globalThis.GAMEROAD_NAV_QA.snapshot().screen === 'cards'
+    && globalThis.GAMEROAD_SCREEN_TRANSITION.getState().phase === 'IDLE'
+  ));
+
+  const quickDeckButton = page.locator('#gameroad-quick-deck-open');
+  await expect(quickDeckButton).toBeVisible();
+  const rendered = await page.locator('#deckSlots [data-id], #exDeckSlots [data-id]').evaluateAll(
+    (nodes) => nodes.map((node) => node.dataset.id).filter(Boolean),
+  );
+  expect(rendered).toEqual(seeded);
+
+  await quickDeckButton.click();
+  const overlay = page.locator('#gameroad-quick-deck-overlay-root [data-quick-deck-overlay="open"]');
+  await expect(overlay).toBeVisible();
+  await expect(page.locator('#gameroad-quick-deck-overlay-root .gameroadQuickDeckSummary')).toHaveText(`${rendered.length}枚`);
+
+  const projected = await page.locator('#gameroad-quick-deck-overlay-root .gameroadQuickDeckCard').evaluateAll((cards) => (
+    cards.flatMap((card) => Array(Number(card.querySelector('[data-quantity]')?.dataset.quantity || 1)).fill(card.dataset.cardId))
+  ));
+  expect(projected).toEqual(rendered);
+
+  await overlay.click({ position: { x: 5, y: 5 } });
+  await expect(overlay).toHaveCount(0);
+
+  await quickDeckButton.click();
+  await expect(page.locator('#gameroad-quick-deck-overlay-root [data-quick-deck-overlay="open"]')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#gameroad-quick-deck-overlay-root [data-quick-deck-overlay="open"]')).toHaveCount(0);
+});

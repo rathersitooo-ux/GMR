@@ -5,12 +5,28 @@ import {
   DAILY_PARTNER_REPORT_STOP_ID,
   composeDailyStopsWithPartnerReport,
   composePartnerReportDailyStop,
+  composePartnerReportDailyStopFromAdjudicatedRead,
 } from '../browser/daily-partner-report-composition.mjs';
 import {
   createDailyTourPlan,
   advanceDailyTour,
   summarizeDailyTour,
 } from '../browser/daily-tour-core.mjs';
+
+function adjudicatedReport(disposition = 'accepted_unique') {
+  return {
+    ok: true,
+    status: 'ready',
+    reportId: 'report-42',
+    reportType: 'bug',
+    disposition,
+    partnerId: 'partner-naki',
+    sourceUseSite: 'partner-conversation',
+    sourceStateIdentity: 'state-7',
+    versions: { rules: 'r1', content: 'c1', state: 's1' },
+    authority: { verified: true, authorityId: 'report-authority-v1' },
+  };
+}
 
 test('unregistered Partner report never auto-inserts into Daily', () => {
   const composed = composeDailyStopsWithPartnerReport({
@@ -64,14 +80,81 @@ test('explicitly registered report is appended only when provider is READY and p
   });
 });
 
-test('existing Daily core receives Partner report as an optional registered stop with no skip debt', () => {
+test('authoritative adjudicated report read becomes a neutral Daily status stop', () => {
+  const result = composePartnerReportDailyStopFromAdjudicatedRead({
+    registeredStopIds: [DAILY_PARTNER_REPORT_STOP_ID],
+    reportRead: adjudicatedReport('accepted_unique'),
+  });
+
+  assert.equal(result.available, true);
+  assert.equal(result.providerSource, 'adjudicated_report_read');
+  assert.equal(result.sourceDisposition, 'accepted_unique');
+  assert.equal(result.reportStatus.authoritative, true);
+  assert.equal(result.reportStatus.status, 'accepted');
+  assert.equal(result.reportStatus.message, '報告を受け付けました。');
+  assert.deepEqual(result.handoff, {
+    kind: 'partner_report_status_daily_handoff',
+    downstreamUseSite: 'partner-report-status',
+    action: 'show_report_status',
+    reportProviderRequired: true,
+    statusAvailable: true,
+    reportId: 'report-42',
+    statusKey: 'partner_report_accepted',
+    nextAction: 'none',
+  });
+});
+
+test('duplicate and rejected adjudications remain status-only and never become invented contributions', () => {
+  for (const [disposition, status] of [['duplicate', 'duplicate'], ['rejected', 'rejected']]) {
+    const result = composePartnerReportDailyStopFromAdjudicatedRead({
+      registeredStopIds: [DAILY_PARTNER_REPORT_STOP_ID],
+      reportRead: adjudicatedReport(disposition),
+    });
+    assert.equal(result.available, true);
+    assert.equal(result.reportStatus.status, status);
+    assert.equal(result.relationshipMutationAllowed, false);
+    assert.equal(result.rewardMutationAllowed, false);
+    assert.equal(result.saveAuthorityOwnedHere, false);
+    assert.equal('affinityDelta' in result, false);
+    assert.equal('contributionDelta' in result, false);
+  }
+});
+
+test('unready or invalid adjudicated report read fails closed instead of creating a Daily stop', () => {
+  const reportRead = { ...adjudicatedReport(), status: 'pending' };
+  const result = composePartnerReportDailyStopFromAdjudicatedRead({
+    registeredStopIds: [DAILY_PARTNER_REPORT_STOP_ID],
+    reportRead,
+  });
+
+  assert.equal(result.available, false);
+  assert.equal(result.disposition, 'DEFERRED_PROVIDER_REQUIRED');
+  assert.equal(result.reason, 'REPORT_PROVIDER_NOT_READY');
+  assert.equal(result.sourceReason, 'REPORT_NOT_READY');
+  assert.equal(result.reportStatus, null);
+});
+
+test('unregistered adjudicated report is not consumed as a Daily status', () => {
+  const result = composePartnerReportDailyStopFromAdjudicatedRead({
+    registeredStopIds: [],
+    reportRead: adjudicatedReport(),
+  });
+
+  assert.equal(result.available, false);
+  assert.equal(result.disposition, 'UNREGISTERED');
+  assert.equal(result.reportStatus, null);
+  assert.equal(result.sourceReason, null);
+});
+
+test('existing Daily core receives adjudicated Partner report status as optional stop with no skip debt', () => {
   const registeredStopIds = ['brain_training', DAILY_PARTNER_REPORT_STOP_ID];
   const composed = composeDailyStopsWithPartnerReport({
     stops: [{ id: 'brain_training', kind: 'interactive', registered: true, eligible: true }],
     registeredStopIds,
-    providerState: 'READY',
+    adjudicatedReportRead: adjudicatedReport(),
   });
 
+  assert.equal(composed.partnerReport.reportStatus.status, 'accepted');
   const plan = createDailyTourPlan({
     dayKey: '2026-08-30',
     stops: composed.stops,
@@ -89,9 +172,9 @@ test('existing Daily core receives Partner report as an optional registered stop
 });
 
 test('composition never grants relationship, reward, save or raw-chat collection authority', () => {
-  const result = composePartnerReportDailyStop({
+  const result = composePartnerReportDailyStopFromAdjudicatedRead({
     registeredStopIds: [DAILY_PARTNER_REPORT_STOP_ID],
-    providerState: 'READY',
+    reportRead: adjudicatedReport(),
   });
 
   assert.equal(result.relationshipMutationAllowed, false);

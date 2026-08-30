@@ -84,6 +84,67 @@ test('Home to Cards respects reduced-motion while retaining the same semantic re
   expect(await page.evaluate(() => globalThis.GAMEROAD_NAV_QA.snapshot().screen)).toBe('cards');
 });
 
+test('Home to Cards low-perf profile bypasses the heavy 2.5D layer', async ({ page }) => {
+  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'load' });
+  expect(response?.ok()).toBeTruthy();
+  await page.waitForFunction(() => Boolean(globalThis.GAMEROAD_HOMECARDS_2P5D));
+
+  const result = await page.evaluate(async () => {
+    const presentation = globalThis.GAMEROAD_HOMECARDS_2P5D;
+    const module = await import('/browser/home-cards-2p5d-presentation.mjs');
+    const before = presentation.snapshot();
+    const context = { from: 'home', to: 'cards', motionProfile: 'reduced', lowPerf: true };
+    await module.runHomeCardsPresentationPhase('PREPARE', context);
+    const prepared = presentation.snapshot();
+    await module.runHomeCardsPresentationPhase('SETTLE', context);
+    return { before, prepared, settled: presentation.snapshot() };
+  });
+
+  expect(result.prepared.lastProfile).toBe('lowperf-static');
+  expect(result.prepared.startedCount).toBe(result.before.startedCount);
+  expect(result.prepared.bypassedCount).toBe(result.before.bypassedCount + 1);
+  expect(result.prepared.stagePresent).toBe(false);
+  expect(result.settled.completedCount).toBe(result.before.completedCount + 1);
+  expect(result.settled.lastPhase).toBe('IDLE');
+  expect(result.settled.stagePresent).toBe(false);
+});
+
+test('Home to Cards keeps semantic navigation when the optional source visual is unavailable', async ({ page }) => {
+  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'load' });
+  expect(response?.ok()).toBeTruthy();
+  await page.waitForFunction(() => Boolean(
+    globalThis.GAMEROAD_HOMECARDS_2P5D
+    && globalThis.GAMEROAD_SCREEN_TRANSITION
+    && globalThis.GAMEROAD_NAV_QA,
+  ));
+  await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+
+  const before = await page.evaluate(() => globalThis.GAMEROAD_HOMECARDS_2P5D.snapshot());
+  const cards = page.locator('.homePadChoice[data-home-target="cards"]:visible').first();
+  await expect(cards).toBeVisible();
+  await page.evaluate(() => {
+    const button = document.querySelector('.homePadChoice[data-home-target="cards"]');
+    const visual = button?.querySelector('.codexPadArt, img, svg, canvas');
+    if (!(visual instanceof HTMLElement || visual instanceof SVGElement)) {
+      throw new Error('Home Cards optional visual is unavailable before fallback simulation');
+    }
+    visual.style.display = 'none';
+  });
+
+  await cards.click();
+  await page.waitForFunction(() => (
+    globalThis.GAMEROAD_NAV_QA.snapshot().screen === 'cards'
+    && globalThis.GAMEROAD_SCREEN_TRANSITION.getState().phase === 'IDLE'
+  ));
+
+  const after = await page.evaluate(() => globalThis.GAMEROAD_HOMECARDS_2P5D.snapshot());
+  expect(after.startedCount).toBe(before.startedCount);
+  expect(after.bypassedCount).toBeGreaterThan(before.bypassedCount);
+  expect(after.completedCount).toBeGreaterThan(before.completedCount);
+  expect(after.stagePresent).toBe(false);
+  expect(await page.evaluate(() => globalThis.GAMEROAD_NAV_QA.snapshot().screen)).toBe('cards');
+});
+
 test('Cards collection right swipe adds once while wrong gestures and 40-card overflow do not', async ({ page }) => {
   const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'load' });
   expect(response?.ok()).toBeTruthy();

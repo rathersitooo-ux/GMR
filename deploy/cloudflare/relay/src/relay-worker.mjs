@@ -17,6 +17,7 @@ import {
   serviceStoredMatchTimeout,
   storedMatchTicketStatus,
 } from './match-store.mjs';
+import { handlePartnerReportRequest } from './partner-report-store.mjs';
 
 const ROOM_KEY = 'room.v1';
 
@@ -203,6 +204,7 @@ export class GAMEROADFriendRoomRelay extends DurableObject {
   async fetch(request) {
     const url = new URL(request.url);
     if (request.headers.get('Upgrade')?.toLowerCase() !== 'websocket') {
+      if (url.searchParams.has('reportOp')) return handlePartnerReportRequest(this.ctx.storage, request, url);
       if (url.searchParams.has('matchOp')) return handleMatchRequest(this.ctx, request, url);
       return new Response('WebSocket upgrade required', { status: 426, headers: { Upgrade: 'websocket' } });
     }

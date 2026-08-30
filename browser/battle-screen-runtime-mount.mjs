@@ -40,6 +40,7 @@ function addStyle(document) {
   style.id = STYLE_ID;
   style.textContent = `
 [${SHELL_ATTR}="1"]{position:relative;isolation:isolate;width:100%;height:100%;min-height:0;overflow:hidden;background:linear-gradient(180deg,#0b1215 0%,#101a1d 46%,#071011 100%);color:#f7fbfa;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+[${SHELL_ATTR}="1"].grBattleScreenAdoptedOverlay{position:absolute;inset:0;z-index:3;width:auto;height:auto;min-height:0;overflow:hidden;background:transparent;color:inherit;font-family:inherit;pointer-events:none}
 [${SHELL_ATTR}="1"] .grBattleScreenTop{position:absolute;z-index:8;top:0;left:0;right:0;height:clamp(38px,8vh,66px);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 clamp(10px,2.2vw,24px);pointer-events:none;background:linear-gradient(180deg,rgba(4,10,11,.78),rgba(4,10,11,0));text-shadow:0 2px 10px rgba(0,0,0,.75)}
 [${SHELL_ATTR}="1"] .grBattleScreenPhase{font-size:clamp(10px,1.4vw,15px);font-weight:800;letter-spacing:.12em;text-transform:uppercase}
 [${SHELL_ATTR}="1"] .grBattleScreenReturn{font-size:clamp(8px,1vw,11px);opacity:.72}
@@ -131,9 +132,17 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
 
   addStyle(document);
 
-  let shell = options.shell ?? null;
+  const adoptingExistingPhase = Boolean(providedPhase);
+  const callerShell = options.shell ?? null;
+  let shell = callerShell;
   let shellCreated = false;
-  if (!shell) {
+  if (adoptingExistingPhase) {
+    shell = createNode(document, 'div', 'grBattleScreenAdoptedOverlay');
+    shell.setAttribute?.(SHELL_ATTR, '1');
+    shell.dataset.owner = 'runtime_overlay';
+    providedPhase.appendChild(shell);
+    shellCreated = true;
+  } else if (!shell) {
     shell = createNode(document, 'section', 'grBattleScreenShell');
     shell.setAttribute?.(SHELL_ATTR, '1');
     if (validRoot(root)) root.appendChild(shell);
@@ -147,10 +156,10 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   const returnLabel = createNode(document, 'div', 'grBattleScreenReturn', '');
   top.appendChild(phaseLabel);
   top.appendChild(returnLabel);
-  shell.appendChild(top);
+  if (!adoptingExistingPhase) shell.appendChild(top);
 
   let planSlot = null;
-  if (shellCreated) {
+  if (shellCreated && !adoptingExistingPhase) {
     planSlot = createNode(document, 'div', 'grBattlePlanSlot');
     planSlot.setAttribute?.(PLAN_SLOT_ATTR, '');
     planSlot.dataset.owner = 'caller';
@@ -166,7 +175,8 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   let grid = createNode(document, 'div', 'grBattleCausalGrid');
   grid.setAttribute?.(GRID_ATTR, '');
   grid.setAttribute?.('aria-label', '4人バトル比較');
-  phaseSurface.appendChild(grid);
+  const gridHost = adoptingExistingPhase ? shell : phaseSurface;
+  gridHost.appendChild(grid);
   const lanes = Array.from({ length: 4 }, (_, index) => createLane(document, index));
   for (const lane of lanes) grid.appendChild(lane.lane);
 
@@ -228,6 +238,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     gameStateWrite: false,
     adoptedPhaseSurface: phaseAnchor.created === false,
     adoptedResolutionSurface: resolutionAnchor.created === false,
+    callerShellDecorated: !adoptingExistingPhase && Boolean(callerShell),
     shell,
     planSlot,
     phaseSurface,
@@ -245,7 +256,8 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   mount: 'explicit_caller_mount_only',
   presentationOnly: true,
   authority: 'NONE',
-  existingAnchorPolicy: 'ADOPT_IF_EXPLICIT_OR_PRESENT__NEVER_DUPLICATE_ID',
+  existingAnchorPolicy: 'EXPLICIT_PHASE_GETS_RUNTIME_OVERLAY__ANCESTOR_NEVER_DECORATED',
+  externalPhaseShellOwner: 'CALLER',
   planSurfaceOwner: 'CALLER',
   laneCount: 4,
   productionHtmlMutationOwnedHere: false,

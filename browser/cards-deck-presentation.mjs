@@ -6,12 +6,6 @@ const EVENT_NAMES = Object.freeze({
 
 export const DECK_SWIPE_PRESENTATION_EVENTS = EVENT_NAMES;
 
-export const DECK_SWIPE_SFX_CUES = Object.freeze({
-  commit: Object.freeze({ kind: 'noise', durationSec: 0.085, gain: 0.14, filterStartHz: 880, filterEndHz: 2400 }),
-  land: Object.freeze({ kind: 'tone', durationSec: 0.075, gain: 0.12, wave: 'triangle', startHz: 760, endHz: 1180 }),
-  reject: Object.freeze({ kind: 'tone', durationSec: 0.09, gain: 0.08, wave: 'sine', startHz: 190, endHz: 135 }),
-});
-
 export const DEFAULT_DECK_SWIPE_PRESENTATION = Object.freeze({
   flightMs: 220,
   landingPulseMs: 260,
@@ -234,117 +228,6 @@ export function installDeckSwipePresentationStyles(doc, { styleId = 'gameroad-de
   return style;
 }
 
-function resolveEnabled(enabled) {
-  try { return typeof enabled === 'function' ? Boolean(enabled()) : enabled !== false; }
-  catch { return false; }
-}
-
-export function createDeckSwipeSfxPlayer({
-  window: win = globalThis.window,
-  enabled = true,
-  volume = 1,
-} = {}) {
-  if (!Number.isFinite(volume) || volume < 0 || volume > 2) throw new RangeError('SFX_VOLUME_INVALID');
-  let context = null;
-
-  const getContext = () => {
-    if (!resolveEnabled(enabled)) return null;
-    if (context) return context;
-    const AudioContextCtor = win?.AudioContext ?? win?.webkitAudioContext;
-    if (typeof AudioContextCtor !== 'function') return null;
-    try {
-      context = new AudioContextCtor();
-      if (context.state === 'suspended') Promise.resolve(context.resume?.()).catch(() => {});
-      return context;
-    } catch {
-      context = null;
-      return null;
-    }
-  };
-
-  const shapeGain = (gainParam, now, duration, peak) => {
-    gainParam?.cancelScheduledValues?.(now);
-    gainParam?.setValueAtTime?.(0.0001, now);
-    gainParam?.linearRampToValueAtTime?.(Math.max(0.0001, peak), now + Math.min(0.018, duration * 0.28));
-    gainParam?.exponentialRampToValueAtTime?.(0.0001, now + duration);
-  };
-
-  const playNoise = (ctx, cue) => {
-    if (!ctx.createBuffer || !ctx.createBufferSource || !ctx.createBiquadFilter || !ctx.createGain) return false;
-    const rate = Math.max(8000, Number(ctx.sampleRate) || 48000);
-    const frameCount = Math.max(1, Math.ceil(rate * cue.durationSec));
-    const buffer = ctx.createBuffer(1, frameCount, rate);
-    const data = buffer.getChannelData?.(0);
-    if (data) {
-      for (let i = 0; i < data.length; i += 1) {
-        const envelope = 1 - i / data.length;
-        data[i] = (Math.random() * 2 - 1) * envelope;
-      }
-    }
-    const source = ctx.createBufferSource();
-    const filter = ctx.createBiquadFilter();
-    const gain = ctx.createGain();
-    const now = Number(ctx.currentTime) || 0;
-    source.buffer = buffer;
-    filter.type = 'bandpass';
-    filter.Q?.setValueAtTime?.(0.8, now);
-    filter.frequency?.setValueAtTime?.(cue.filterStartHz, now);
-    filter.frequency?.exponentialRampToValueAtTime?.(cue.filterEndHz, now + cue.durationSec);
-    shapeGain(gain.gain, now, cue.durationSec, cue.gain * volume);
-    source.connect?.(filter);
-    filter.connect?.(gain);
-    gain.connect?.(ctx.destination);
-    source.start?.(now);
-    source.stop?.(now + cue.durationSec + 0.01);
-    return true;
-  };
-
-  const playTone = (ctx, cue) => {
-    if (!ctx.createOscillator || !ctx.createGain) return false;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const now = Number(ctx.currentTime) || 0;
-    osc.type = cue.wave;
-    osc.frequency?.setValueAtTime?.(cue.startHz, now);
-    const endHz = Math.max(1, cue.endHz);
-    osc.frequency?.exponentialRampToValueAtTime?.(endHz, now + cue.durationSec);
-    shapeGain(gain.gain, now, cue.durationSec, cue.gain * volume);
-    osc.connect?.(gain);
-    gain.connect?.(ctx.destination);
-    osc.start?.(now);
-    osc.stop?.(now + cue.durationSec + 0.01);
-    return true;
-  };
-
-  const play = (phase) => {
-    const cue = DECK_SWIPE_SFX_CUES[phase];
-    if (!cue || !resolveEnabled(enabled)) return false;
-    try {
-      const ctx = getContext();
-      if (!ctx) return false;
-      if (ctx.state === 'suspended') Promise.resolve(ctx.resume?.()).catch(() => {});
-      return cue.kind === 'noise' ? playNoise(ctx, cue) : playTone(ctx, cue);
-    } catch {
-      return false;
-    }
-  };
-
-  const dispose = () => {
-    const current = context;
-    context = null;
-    try { return current?.close?.(); } catch { return undefined; }
-  };
-
-  return Object.freeze({
-    play,
-    playCommit: () => play('commit'),
-    playLand: () => play('land'),
-    playReject: () => play('reject'),
-    dispose,
-    get hasContext() { return Boolean(context); },
-  });
-}
-
 export function createDeckSwipePresentationController({
   document: doc = globalThis.document,
   window: win = globalThis.window,
@@ -353,16 +236,11 @@ export function createDeckSwipePresentationController({
   onCommitSfx,
   onLandSfx,
   onRejectSfx,
-  sfx = true,
-  sfxEnabled = true,
-  sfxVolume = 1,
-  sfxPlayer = null,
 } = {}) {
   const cfg = normalizeConfig(config);
   const timers = new Set();
   const layers = new Set();
   installDeckSwipePresentationStyles(doc);
-  const localSfx = sfx === false ? null : (sfxPlayer ?? createDeckSwipeSfxPlayer({ window: win, enabled: sfxEnabled, volume: sfxVolume }));
 
   const setTimer = (fn, ms) => {
     let id;
@@ -385,12 +263,7 @@ export function createDeckSwipePresentationController({
   const fire = (phase, payload, callback) => {
     const detail = createDeckSwipeFeedbackDetail({ phase, ...payload });
     emit(doc, win, EVENT_NAMES[phase.toUpperCase()], detail);
-    try {
-      if (callback) callback(detail);
-      else if (phase === 'commit') localSfx?.playCommit?.();
-      else if (phase === 'land') localSfx?.playLand?.();
-      else if (phase === 'reject') localSfx?.playReject?.();
-    } catch { /* presentation audio cannot break deck state */ }
+    try { callback?.(detail); } catch { /* external presentation hook cannot break deck state */ }
     return detail;
   };
 
@@ -483,7 +356,6 @@ export function createDeckSwipePresentationController({
     layers.clear();
   }
 
-  const dispose = () => { cancelAll(); try { localSfx?.dispose?.(); } catch {} };
-
-  return Object.freeze({ playSuccess, playReject, cancelAll, dispose, config: cfg, sfxPlayer: localSfx });
+  const dispose = () => { cancelAll(); };
+  return Object.freeze({ playSuccess, playReject, cancelAll, dispose, config: cfg });
 }

@@ -48,19 +48,23 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"] #battlePhaseSurface{position:absolute;inset:0;z-index:3;overflow:hidden;background:radial-gradient(ellipse at 50% 13%,rgba(90,177,157,.15),transparent 36%),linear-gradient(180deg,rgba(8,20,21,.2),rgba(4,12,13,.72))}
 [${SHELL_ATTR}="1"] #battlePhaseSurface::before{content:"";position:absolute;z-index:-2;left:14%;right:14%;top:10%;bottom:-22%;clip-path:polygon(39% 0,61% 0,100% 100%,0 100%);background:linear-gradient(180deg,rgba(167,232,213,.08),rgba(75,138,118,.14) 46%,rgba(18,44,38,.34));border-left:1px solid rgba(210,255,239,.08);border-right:1px solid rgba(210,255,239,.08);transform:perspective(480px) rotateX(5deg);transform-origin:50% 0}
 [${SHELL_ATTR}="1"] [${GRID_ATTR}]{position:absolute;z-index:4;inset:clamp(44px,10vh,78px) clamp(6px,1.5vw,18px) clamp(48px,9vh,78px);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(4px,1vw,14px);align-items:stretch;pointer-events:none}
-[${SHELL_ATTR}="1"] [${LANE_ATTR}]{position:relative;min-width:0;overflow:hidden;display:grid;grid-template-rows:auto 1fr auto;gap:8px;padding:clamp(7px,1.1vw,13px);border:1px solid rgba(196,231,221,.13);border-radius:clamp(9px,1.4vw,16px);background:linear-gradient(180deg,rgba(17,34,35,.46),rgba(5,14,15,.2));box-shadow:inset 0 0 0 1px rgba(255,255,255,.018);transition:transform 180ms ease,opacity 180ms ease,border-color 180ms ease,background 180ms ease}
-[${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="source"]{transform:translateY(-1.4%);border-color:rgba(165,230,213,.42);background:linear-gradient(180deg,rgba(32,72,65,.62),rgba(5,14,15,.26))}
-[${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="target"]{border-color:rgba(239,183,142,.4);background:linear-gradient(180deg,rgba(83,52,36,.52),rgba(5,14,15,.26))}
-[${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="winner"]{transform:translateY(-2.2%);border-color:rgba(255,225,139,.64);background:linear-gradient(180deg,rgba(101,81,34,.58),rgba(5,14,15,.24));box-shadow:0 0 28px rgba(237,202,102,.13),inset 0 0 0 1px rgba(255,245,196,.08)}
-[${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="loser"]{opacity:.56;transform:translateY(1.8%)}
-[${SHELL_ATTR}="1"] .grBattleLaneIdentity{min-width:0}.grBattleLaneIdentity b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(9px,1.25vw,15px);letter-spacing:.04em}.grBattleLaneIdentity small{display:block;margin-top:2px;opacity:.55;font-size:clamp(7px,.8vw,10px)}
-[${SHELL_ATTR}="1"] .grBattleLaneRole{align-self:center;justify-self:center;padding:5px 7px;border-radius:999px;border:1px solid rgba(220,242,235,.16);background:rgba(3,9,10,.42);font-size:clamp(7px,.8vw,10px);font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+[${SHELL_ATTR}="1"] [${LANE_ATTR}]{--gr-player-rgb:164,232,214;position:relative;min-width:0;overflow:hidden;display:grid;grid-template-rows:auto 1fr auto;gap:8px;padding:clamp(7px,1.1vw,13px);border:1px solid rgba(196,231,221,.22);border-radius:clamp(9px,1.4vw,16px);background:linear-gradient(180deg,rgba(17,34,35,.7),rgba(5,14,15,.45));box-shadow:inset 0 0 0 1px rgba(255,255,255,.026);transition:transform 180ms ease,opacity 180ms ease,border-color 180ms ease,background 180ms ease}
+[${SHELL_ATTR}="1"] [${LANE_ATTR}]:nth-child(n+3){--gr-player-rgb:239,183,142}
+[${SHELL_ATTR}="1"] [${LANE_ATTR}]::before{content:"";position:absolute;z-index:1;left:50%;top:48%;width:min(78%,118px);height:min(62%,190px);min-width:46px;min-height:88px;transform:translate(-50%,-45%);opacity:.96;pointer-events:none;background:radial-gradient(circle at 50% 17%,rgba(var(--gr-player-rgb),.95) 0 14%,rgba(var(--gr-player-rgb),.18) 15% 20%,transparent 21%),radial-gradient(ellipse at 50% 72%,rgba(var(--gr-player-rgb),.72) 0 34%,rgba(var(--gr-player-rgb),.16) 35% 46%,transparent 47%);filter:drop-shadow(0 0 13px rgba(var(--gr-player-rgb),.3))}
+[${SHELL_ATTR}="1"] [${LANE_ATTR}]::after{content:"P" attr(${LANE_ATTR});position:absolute;z-index:2;right:7px;top:36px;padding:2px 5px;border-radius:999px;border:1px solid rgba(var(--gr-player-rgb),.48);background:rgba(3,9,10,.76);color:rgba(var(--gr-player-rgb),1);font-size:clamp(8px,.78vw,10px);font-weight:900;letter-spacing:.08em}
+[${SHELL_ATTR}="1"] .grBattleLaneIdentity,[${SHELL_ATTR}="1"] .grBattleLaneRole,[${SHELL_ATTR}="1"] .grBattleLaneAfterstate{position:relative;z-index:3}
+[${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="source"]{transform:translateY(-1.4%);border-color:rgba(165,230,213,.74);background:linear-gradient(180deg,rgba(32,72,65,.8),rgba(5,14,15,.32))}
+[${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="target"]{border-color:rgba(239,183,142,.76);background:linear-gradient(180deg,rgba(83,52,36,.72),rgba(5,14,15,.32))}
+[${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="winner"]{transform:translateY(-2.2%);border-color:rgba(255,225,139,.9);background:linear-gradient(180deg,rgba(101,81,34,.76),rgba(5,14,15,.28));box-shadow:0 0 34px rgba(237,202,102,.26),inset 0 0 0 1px rgba(255,245,196,.12)}
+[${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="loser"]{opacity:.64;transform:translateY(1.8%)}
+[${SHELL_ATTR}="1"] .grBattleLaneIdentity{min-width:0}.grBattleLaneIdentity b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(9px,1.25vw,15px);letter-spacing:.04em}.grBattleLaneIdentity small{display:block;margin-top:2px;opacity:.7;font-size:clamp(7px,.8vw,10px)}
+[${SHELL_ATTR}="1"] .grBattleLaneRole{align-self:center;justify-self:center;padding:5px 7px;border-radius:999px;border:1px solid rgba(220,242,235,.22);background:rgba(3,9,10,.72);font-size:clamp(7px,.8vw,10px);font-weight:800;letter-spacing:.1em;text-transform:uppercase}
 [${SHELL_ATTR}="1"] .grBattleLaneAfterstate{align-self:end;display:grid;gap:4px;min-height:20px;font-size:clamp(7px,.82vw,10px);line-height:1.25;color:#dce9e5}
-[${SHELL_ATTR}="1"] .grBattleLaneAfterstate span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 5px;border-radius:6px;background:rgba(2,8,9,.52);border:1px solid rgba(214,241,231,.08)}
+[${SHELL_ATTR}="1"] .grBattleLaneAfterstate span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 5px;border-radius:6px;background:rgba(2,8,9,.72);border:1px solid rgba(214,241,231,.12)}
 [${SHELL_ATTR}="1"] #battleResolution{position:absolute;z-index:7;left:50%;bottom:clamp(8px,2vh,18px);transform:translateX(-50%);max-width:min(72vw,760px);min-height:24px;pointer-events:none;text-align:center}
 [${SHELL_ATTR}="1"][data-motion="static_only"] [${LANE_ATTR}]{transition:none!important;transform:none!important}
-@media(max-width:540px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{inset-left:4px;inset-right:4px;gap:3px}[${SHELL_ATTR}="1"] [${LANE_ATTR}]{padding:6px 4px;border-radius:8px}.grBattleLaneRole{max-width:100%;overflow:hidden;text-overflow:ellipsis}}
-@media(max-height:420px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{inset-top:36px;inset-bottom:34px}[${SHELL_ATTR}="1"] .grBattleScreenTop{height:36px}.grBattleLaneAfterstate{gap:2px}}
+@media(max-width:540px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{left:4px;right:4px;gap:3px}[${SHELL_ATTR}="1"] [${LANE_ATTR}]{padding:6px 4px;border-radius:8px}[${SHELL_ATTR}="1"] [${LANE_ATTR}]::before{width:88%;height:58%;min-width:38px;min-height:72px}[${SHELL_ATTR}="1"] .grBattleLaneRole{max-width:100%;overflow:hidden;text-overflow:ellipsis}}
+@media(max-height:420px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:36px;bottom:34px}[${SHELL_ATTR}="1"] .grBattleScreenTop{height:36px}[${SHELL_ATTR}="1"] .grBattleLaneAfterstate{gap:2px}}
 @media(prefers-reduced-motion:reduce){[${SHELL_ATTR}="1"] [${LANE_ATTR}]{transition:none!important;transform:none!important}}
 `;
   document.head?.appendChild(style);
@@ -85,6 +89,7 @@ function createLane(document, participantIndex) {
   const lane = createNode(document, 'article', 'grBattleLane');
   lane.setAttribute?.(LANE_ATTR, String(participantIndex + 1));
   lane.dataset.role = 'idle';
+  lane.dataset.visualFixture = 'participant_present';
   const identity = createNode(document, 'div', 'grBattleLaneIdentity');
   const name = createNode(document, 'b');
   const team = createNode(document, 'small');
@@ -215,6 +220,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
       const lane = model.lanes[index];
       view.lane.dataset.participantId = lane.id;
       view.lane.dataset.role = lane.role;
+      view.lane.dataset.visualFixture = 'participant_present';
       view.name.textContent = lane.label;
       view.team.textContent = lane.team ? `TEAM ${lane.team}` : '';
       view.role.textContent = lane.role;
@@ -260,6 +266,7 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   externalPhaseShellOwner: 'CALLER',
   planSurfaceOwner: 'CALLER',
   laneCount: 4,
+  participantVisualFallback: 'ALWAYS_VISIBLE_CSS_FIXTURE_UNTIL_FORMAL_ART_EXISTS',
   productionHtmlMutationOwnedHere: false,
   formalArtOwnedHere: false
 });

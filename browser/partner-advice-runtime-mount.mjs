@@ -5,6 +5,44 @@ import {
 
 const VERSION_KEYS = Object.freeze(['rulesVersion', 'cardVersion', 'stateVersion']);
 const BOARD_PROJECTION_SCHEMA = 'gameroad.partner-advice-board-projection.v1';
+const BROWSER_BOARD_KEY = '__GAMEROAD_PARTNER_ADVICE_BOARD_R21B__';
+let browserProjectionSuppressed = false;
+
+function currentExplicitBrowserAdvice(value) {
+  if (typeof window === 'undefined') return false;
+  try {
+    return value?.status === 'ready'
+      && window.__GAMEROAD_HATE_PARTNER_TEST__?.validateAdviceEnvelope?.(value)?.ok === true;
+  } catch {
+    return false;
+  }
+}
+
+function installBrowserProjectionFence() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  const board = window[BROWSER_BOARD_KEY];
+  if (!board || typeof board.render !== 'function' || board.staleProjectionFence === true) return;
+
+  const originalRender = board.render.bind(board);
+  window[BROWSER_BOARD_KEY] = Object.freeze({
+    ...board,
+    staleProjectionFence: true,
+    async render(explicit) {
+      if (explicit !== undefined && !currentExplicitBrowserAdvice(explicit)) {
+        browserProjectionSuppressed = true;
+      }
+      if (browserProjectionSuppressed && explicit === undefined) return board.snapshot();
+      if (browserProjectionSuppressed && explicit !== undefined && currentExplicitBrowserAdvice(explicit)) {
+        return board.snapshot();
+      }
+      return originalRender(explicit);
+    },
+  });
+
+  document.addEventListener('click', (event) => {
+    if (event.target?.closest?.('#partnerAdviceBtn')) browserProjectionSuppressed = false;
+  }, true);
+}
 
 function exactVersionTuple(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -57,6 +95,7 @@ export function projectPartnerAdviceBoardEmphasis({
   isCurrent,
   resolveTarget,
 } = {}) {
+  if (browserProjectionSuppressed) return inactiveBoardProjection('STALE_ADVICE_SUPPRESSED');
   if (!adviceResult?.ok) return inactiveBoardProjection('ADVICE_UNAVAILABLE');
   if (adviceResult.containsPrivate !== false) return inactiveBoardProjection('PUBLIC_SCOPE_UNVERIFIED');
 
@@ -179,3 +218,5 @@ export function createPartnerAdviceRuntimeControl({ onChange } = {}) {
     }),
   });
 }
+
+installBrowserProjectionFence();

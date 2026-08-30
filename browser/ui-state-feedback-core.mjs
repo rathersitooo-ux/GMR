@@ -493,3 +493,28 @@ export function materialFeedbackCssVars(projection) {
   const {transform,surface,motion,contact}=projection;
   return freeze({'--mf-scale-x':String(transform.scaleX),'--mf-scale-y':String(transform.scaleY),'--mf-translate-x':`${transform.translateXEm}em`,'--mf-translate-y':`${transform.translateYEm}em`,'--mf-rotate':`${transform.rotateDeg}deg`,'--mf-contact-x':`${contact.x*100}%`,'--mf-contact-y':`${contact.y*100}%`,'--mf-highlight-x':`${surface.highlightX*100}%`,'--mf-highlight-y':`${surface.highlightY*100}%`,'--mf-shadow-compression':String(surface.shadowCompression),'--mf-rim-tension':String(surface.rimTension),'--mf-refraction':String(surface.refraction),'--mf-meniscus':String(surface.meniscus),'--mf-wobble':String(motion.wobble),'--mf-overshoot':String(motion.overshoot),'--mf-duration':`${motion.durationMs}ms`,'--mf-easing':motion.easing});
 }
+
+function requiredBoolean(value,label) {
+  if (typeof value !== 'boolean') throw new Error(`${label} must be a boolean`);
+  return value;
+}
+
+export function resolveControllerButtonEdge({previousPressed,pressed}={}) {
+  const previous=requiredBoolean(previousPressed,'previousPressed');
+  const current=requiredBoolean(pressed,'pressed');
+  return freeze({
+    pressed:current,
+    justPressed:!previous && current,
+    justReleased:previous && !current,
+  });
+}
+
+export function resolveOutsideDismiss({insideSurface}={}) {
+  const inside=requiredBoolean(insideSurface,'insideSurface');
+  const dismiss=!inside;
+  return freeze({
+    dismiss,
+    consumeInput:dismiss,
+    allowUnderlayActivation:false,
+  });
+}

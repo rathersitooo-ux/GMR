@@ -12,6 +12,8 @@ import {
   planBattleConveyor,
   planBattleConveyorEnvironmentFrame
 } from './battle-conveyor-presentation-core.mjs';
+import { createBattleScreenModel } from './battle-screen-presentation-core.mjs';
+import { mountBattleScreenExternalSurface } from './battle-screen-runtime-mount.mjs';
 import {
   PARTNER_BATTLE_EVENT_PROJECTION,
   createPartnerBattleEventLogConsumerAdapter
@@ -367,6 +369,200 @@ export function readBattleReplayCardPresentationPreferences(environment = {}) {
     lowPerf: settingToggleOn(documentRef, 'lowPerf'),
     audioEnabled: false
   });
+}
+
+function fourParticipantBattleScreenState(publicResolution) {
+  if (!publicResolution || typeof publicResolution !== 'object' || Array.isArray(publicResolution)) return null;
+  if (!Array.isArray(publicResolution.players) || publicResolution.players.length !== 4 ||
+      !Array.isArray(publicResolution.maxLaneProgress) || publicResolution.maxLaneProgress.length !== 4) {
+    return null;
+  }
+  const participants = publicResolution.players.map((player, index) => ({
+    id: maybeString(player?.id),
+    label: maybeString(player?.name) || `P${index + 1}`,
+    team: maybeString(player?.team)
+  }));
+  if (participants.some(row => !row.id) || new Set(participants.map(row => row.id)).size !== 4) {
+    throw new TypeError('BATTLE_SCREEN_LIVE_PARTICIPANTS_INVALID');
+  }
+  const participantIds = new Set(participants.map(row => row.id));
+  const winnerIds = stringArray(publicResolution.winnerIds, 'BATTLE_SCREEN_LIVE_WINNER_IDS');
+  if (new Set(winnerIds).size !== winnerIds.length || winnerIds.some(id => !participantIds.has(id))) {
+    throw new TypeError('BATTLE_SCREEN_LIVE_WINNER_IDS_INVALID');
+  }
+  const progress = publicResolution.maxLaneProgress.map(row => ({
+    id: maybeString(row?.id),
+    after: safeInteger(row?.after, 'BATTLE_SCREEN_LIVE_PROGRESS')
+  }));
+  if (progress.some(row => !row.id) || new Set(progress.map(row => row.id)).size !== 4 ||
+      progress.some(row => !participantIds.has(row.id))) {
+    throw new TypeError('BATTLE_SCREEN_LIVE_PROGRESS_SET_INVALID');
+  }
+  return deepFreeze({
+    participants,
+    winnerIds,
+    persistentAfterstate: progress.map(row => ({
+      id: `max-lane-${row.id}`,
+      participantId: row.id,
+      text: `進行 ${row.after}/7`
+    }))
+  });
+}
+
+function exactBattleScreenParticipantSet(participants, ids) {
+  if (!Array.isArray(participants) || participants.length !== 4 || !Array.isArray(ids) || ids.length !== 4) return false;
+  const expected = new Set(participants.map(row => row.id));
+  return new Set(ids).size === 4 && ids.every(id => expected.has(id));
+}
+
+export function createBattleScreenLivePresentationBridge(environment = {}) {
+  const sessions = new Map();
+  let runtime = environment.runtime && typeof environment.runtime.render === 'function'
+    ? environment.runtime
+    : null;
+  const renderModel = typeof environment.renderModel === 'function' ? environment.renderModel : null;
+
+  function ensureRuntime() {
+    if (runtime) return runtime;
+    const documentRef = environmentValue(environment, 'document');
+    const phaseSurface = documentRef?.getElementById?.('battlePhaseSurface');
+    if (!phaseSurface) return null;
+    const shell = environment.battleScreenShell ?? phaseSurface.parentNode;
+    const root = environment.battleScreenRoot ?? shell;
+    if (!shell || !root || typeof shell.appendChild !== 'function' || typeof root.appendChild !== 'function') return null;
+    const resolutionSurface = documentRef?.getElementById?.('battleResolution') ?? null;
+    runtime = mountBattleScreenExternalSurface({ document: documentRef }, {
+      root,
+      shell,
+      phaseSurface,
+      resolutionSurface
+    });
+    return runtime;
+  }
+
+  function renderFailSoft(model) {
+    try {
+      if (renderModel) return renderModel(model) !== false;
+      const target = ensureRuntime();
+      if (!target) return false;
+      target.render(model);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function begin(matchId) {
+    if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
+    sessions.set(matchId, {
+      participants: null,
+      persistentAfterstate: [],
+      lastModel: null,
+      rendered: false
+    });
+    return true;
+  }
+
+  function acceptAcceptedResolution({ matchId, publicResolution }) {
+    if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
+    const screenState = fourParticipantBattleScreenState(publicResolution);
+    if (!screenState) {
+      return deepFreeze({ accepted: false, reason: 'FOUR_PARTICIPANTS_UNAVAILABLE', model: null, rendered: false });
+    }
+    const serial = safeInteger(publicResolution.serial, 'RESOLUTION_SERIAL', 1);
+    const preferences = readBattleReplayCardPresentationPreferences(environment);
+    const timeline = planBattleConveyor([{
+      accepted: true,
+      eventId: `battle-screen-resolution:${matchId}:${serial}`,
+      kind: 'compare4',
+      publicData: {
+        playerIds: screenState.participants.map(row => row.id),
+        winnerIds: screenState.winnerIds
+      }
+    }], preferences);
+    const plan = timeline.plans[0] || null;
+    const model = createBattleScreenModel({
+      participants: screenState.participants,
+      plan,
+      persistentAfterstate: screenState.persistentAfterstate,
+      returnIntent: 'MATCH_PLAN',
+      reducedMotion: preferences.reducedMotion,
+      lowPerf: preferences.lowPerf
+    });
+    const rendered = renderFailSoft(model);
+    sessions.set(matchId, {
+      participants: screenState.participants,
+      persistentAfterstate: screenState.persistentAfterstate,
+      lastModel: model,
+      rendered
+    });
+    return deepFreeze({ accepted: true, reason: 'OK', model, rendered });
+  }
+
+  function acceptAcceptedMatchEnd({ matchId, publicMatchEnd }) {
+    if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
+    const current = sessions.get(matchId);
+    if (!current?.participants) {
+      return deepFreeze({ accepted: false, reason: 'FOUR_PARTICIPANTS_UNAVAILABLE', model: null, rendered: false });
+    }
+    if (!publicMatchEnd || typeof publicMatchEnd !== 'object' || Array.isArray(publicMatchEnd)) {
+      throw new TypeError('BATTLE_SCREEN_LIVE_MATCH_END_INVALID');
+    }
+    const participantIds = current.participants.map(row => row.id);
+    const winnerIds = stringArray(publicMatchEnd.winnerIds, 'BATTLE_SCREEN_LIVE_MATCH_END_WINNER_IDS');
+    if (winnerIds.length === 0 || new Set(winnerIds).size !== winnerIds.length ||
+        winnerIds.some(id => !participantIds.includes(id))) {
+      throw new TypeError('BATTLE_SCREEN_LIVE_MATCH_END_WINNER_IDS_INVALID');
+    }
+    const preferences = readBattleReplayCardPresentationPreferences(environment);
+    let event;
+    if (winnerIds.length === 1 && Array.isArray(publicMatchEnd.formalRanking) && publicMatchEnd.formalRanking.length === 4) {
+      const winnerId = winnerIds[0];
+      const loserIds = publicMatchEnd.formalRanking.map(row => maybeString(row?.id)).filter(id => id && id !== winnerId);
+      if (!exactBattleScreenParticipantSet(current.participants, [winnerId, ...loserIds])) {
+        throw new TypeError('BATTLE_SCREEN_LIVE_FINISHER_SET_INVALID');
+      }
+      event = {
+        accepted: true,
+        eventId: `battle-screen-match-end:${matchId}`,
+        kind: 'finisher',
+        publicData: { winnerId, loserIds }
+      };
+    } else {
+      event = {
+        accepted: true,
+        eventId: `battle-screen-match-end:${matchId}`,
+        kind: 'compare4',
+        publicData: { playerIds: participantIds, winnerIds }
+      };
+    }
+    const plan = planBattleConveyor([event], preferences).plans[0] || null;
+    const model = createBattleScreenModel({
+      participants: current.participants,
+      plan,
+      persistentAfterstate: current.persistentAfterstate,
+      returnIntent: 'RESULT',
+      reducedMotion: preferences.reducedMotion,
+      lowPerf: preferences.lowPerf
+    });
+    const rendered = renderFailSoft(model);
+    sessions.set(matchId, { ...current, lastModel: model, rendered });
+    return deepFreeze({ accepted: true, reason: 'OK', model, rendered });
+  }
+
+  function snapshot(matchId) {
+    const current = sessions.get(matchId);
+    if (!current) return null;
+    return deepFreeze(cloneJson({
+      matchId,
+      participants: current.participants,
+      persistentAfterstate: current.persistentAfterstate,
+      lastModel: current.lastModel,
+      rendered: current.rendered
+    }));
+  }
+
+  return Object.freeze({ begin, acceptAcceptedResolution, acceptAcceptedMatchEnd, snapshot });
 }
 
 function ensureBattleReplayConveyorEnvironmentStyle(documentRef) {
@@ -823,6 +1019,7 @@ export function createPartnerBattleEventLogPresentationBridge(environment = {}) 
 }
 
 const liveCardPresentationBridge = createBattleReplayCardPresentationBridge();
+const liveBattleScreenPresentationBridge = createBattleScreenLivePresentationBridge();
 const livePartnerBattleEventLogBridge = createPartnerBattleEventLogPresentationBridge();
 
 function assertSession(session) {
@@ -840,6 +1037,7 @@ export function createLiveReplaySession(
   { matchId, versions },
   {
     presentationBridge = liveCardPresentationBridge,
+    battleScreenPresentationBridge = liveBattleScreenPresentationBridge,
     partnerBattleEventLogBridge = livePartnerBattleEventLogBridge
   } = {}
 ) {
@@ -859,6 +1057,11 @@ export function createLiveReplaySession(
     // Replay session creation must survive presentation-only failures.
   }
   try {
+    battleScreenPresentationBridge?.begin?.(matchId);
+  } catch {
+    // Battle screen is presentation-only and never owns replay/gameplay success.
+  }
+  try {
     partnerBattleEventLogBridge?.begin?.(matchId);
   } catch {
     // Partner log is presentation-only and never owns replay/gameplay success.
@@ -871,6 +1074,7 @@ export function appendAcceptedBattleResolution(
   resolution,
   {
     presentationBridge = liveCardPresentationBridge,
+    battleScreenPresentationBridge = liveBattleScreenPresentationBridge,
     partnerBattleEventLogBridge = livePartnerBattleEventLogBridge
   } = {}
 ) {
@@ -898,6 +1102,14 @@ export function appendAcceptedBattleResolution(
     // Accepted replay/gameplay state is authoritative; presentation never blocks it.
   }
   try {
+    battleScreenPresentationBridge?.acceptAcceptedResolution?.({
+      matchId: session.matchId,
+      publicResolution: projected
+    });
+  } catch {
+    // Accepted replay/gameplay state is authoritative; Battle screen never blocks it.
+  }
+  try {
     partnerBattleEventLogBridge?.acceptSession?.(next);
   } catch {
     // Accepted replay/gameplay state is authoritative; Partner log never blocks it.
@@ -910,6 +1122,7 @@ export function appendAcceptedMatchEnd(
   { winnerIds, round, mode, formalRanking = null },
   {
     presentationBridge = liveCardPresentationBridge,
+    battleScreenPresentationBridge = liveBattleScreenPresentationBridge,
     partnerBattleEventLogBridge = livePartnerBattleEventLogBridge
   } = {}
 ) {
@@ -967,6 +1180,14 @@ export function appendAcceptedMatchEnd(
     }
   }
   try {
+    battleScreenPresentationBridge?.acceptAcceptedMatchEnd?.({
+      matchId: session.matchId,
+      publicMatchEnd: publicData
+    });
+  } catch {
+    // Accepted replay/gameplay state is authoritative; Battle screen never blocks it.
+  }
+  try {
     partnerBattleEventLogBridge?.acceptSession?.(next);
   } catch {
     // Accepted replay/gameplay state is authoritative; Partner log never blocks it.
@@ -1017,6 +1238,13 @@ export const BATTLE_REPLAY_LIVE_ADAPTER = Object.freeze({
     kind: 'vfx',
     assetAuthority: 'fallback_only',
     audio: 'silent'
+  }),
+  battleScreen: Object.freeze({
+    source: 'accepted_public_battle_resolution_and_match_end',
+    actualDomSurface: 'battlePhaseSurface',
+    laneCount: 4,
+    runtime: 'battle-screen-runtime-mount.mjs',
+    authority: 'presentation_only_no_game_state_write'
   }),
   battleConveyorEnvironment: Object.freeze({
   source: 'accepted_public_battle_resolution',

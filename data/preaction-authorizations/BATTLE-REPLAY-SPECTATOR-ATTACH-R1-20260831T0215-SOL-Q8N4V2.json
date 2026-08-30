@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-REPLAY-SPECTATOR-ATTACH-R1-20260831T0215-SOL-Q8N4V2",
+  "taskId": "BATTLE-REPLAY-RUNTIME-CONTRACT-001",
+  "workUnitKey": "BATTLE_REPLAY_SPECTATOR_AUTHORIZED_PRESENCE_ATTACH_R1",
+  "acquireKey": "BATTLE-REPLAY-SPECTATOR-ATTACH-R1-20260831T0215-SOL-Q8N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BATTLE-REPLAY-SPECTATOR-R1-PRIVACY-BOUNDARY-PREDICTION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BATTLE-REPLAY-SPECTATOR-R1-EXISTING-FOLLOW-CORE-ORACLE",
+  "proceedToken": "PROCEED|BATTLE-REPLAY-SPECTATOR-ATTACH-R1-20260831T0215-SOL-Q8N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|authorized-presence|existing-follow-core",
+  "authorizationBaseSha": "dffc8a68cbded922684c008dbc332dc3043c0938",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-REPLAY-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "BATTLE_REPLAY_SPECTATOR_AUTHORIZED_PRESENCE_ATTACH_R1",
+  "leaseAcquireKey": "BATTLE-REPLAY-SPECTATOR-ATTACH-R1-20260831T0215-SOL-Q8N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 02:15 JST",
+  "leaseUntilJst": "2026-08-31 03:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A215:L215",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@dffc8a68cbded922684c008dbc332dc3043c0938; new branch work/battle-replay-spectator-attach-r1-20260831; NEW browser/battle-replay-spectator-follow-adapter.mjs; NEW tests/battle-replay-spectator-follow-adapter.test.mjs; transient data/preaction-authorizations/BATTLE-REPLAY-SPECTATOR-ATTACH-R1-20260831T0215-SOL-Q8N4V2.json create-first/delete-before-final-head; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES appended row; own R22 records. READ_ONLY browser/battle-replay-public-commentary-core.mjs, browser/battle-replay-live-adapter.mjs, deploy/cloudflare/relay/src/*, tools/multi-agent-match-follow-harness.mjs. EXCLUDE hidden/secret match discovery, force-private join, gameplay authority/write, Battle rules/save/economy/assets/unrelated files.",
+  "scope": [
+    "browser/battle-replay-spectator-follow-adapter.mjs",
+    "tests/battle-replay-spectator-follow-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-replay-spectator-follow-adapter.mjs",
+    "tests/battle-replay-spectator-follow-adapter.test.mjs"
+  ],
+  "solutionSignature": "Bridge an already-authorized public spectator presence snapshot into the existing continuous public follow state and produce a bounded attach intent without adding discovery or gameplay authority.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "BATTLE-REPLAY-SPECTATOR-R1-REUSE-EXISTING-FOLLOW-CORE",
+  "solutionSearchEvidence": [
+    "repo:browser/battle-replay-public-commentary-core.mjs continuous follow state already owns WAITING/ATTACHED/DENIED/OFFLINE transitions",
+    "repo:deploy/cloudflare/relay/src/match-store.mjs current match status is ticket-secret scoped and does not authorize arbitrary target discovery",
+    "repo:deploy/cloudflare/relay/src/relay-worker.mjs current /match transport is participant-ticket scoped"
+  ]
+}

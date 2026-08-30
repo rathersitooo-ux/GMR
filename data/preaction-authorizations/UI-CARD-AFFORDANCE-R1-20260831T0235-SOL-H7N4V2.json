@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-CARD-AFFORDANCE-R1-20260831T0235-SOL-H7N4V2",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "UI_STATE_FEEDBACK_CARD_AFFORDANCE_R1",
+  "acquireKey": "UI-CARD-AFFORDANCE-R1-20260831T0235-SOL-H7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_DCCG_ACTION_CHOICE_GAP_20260831T0240",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "OFFICIAL_DCCG_SINGLE_VS_MULTI_TARGET_CONFIRM_PATTERN_PLUS_CURRENT_BOARD_VISUAL_AND_INSPECTOR_DEDUP",
+  "proceedToken": "PROCEED|UI-CARD-AFFORDANCE-R1-20260831T0235-SOL-H7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|caller-authoritative-choice-projection|lease-readback",
+  "authorizationBaseSha": "dffc8a68cbded922684c008dbc332dc3043c0938",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "UI_STATE_FEEDBACK_CARD_AFFORDANCE_R1",
+  "leaseAcquireKey": "UI-CARD-AFFORDANCE-R1-20260831T0235-SOL-H7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 02:40 JST",
+  "leaseUntilJst": "2026-08-31 03:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A227:N227",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main at mutation; branch work/ui-card-affordance-r1-20260831; NEW browser/ui-card-action-choice-adapter.mjs; NEW tests/ui-card-action-choice-adapter.test.mjs; transient data/preaction-authorizations/UI-CARD-AFFORDANCE-R1-20260831T0235-SOL-H7N4V2.json create-first/delete-before-final-head; own branch/PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES tuple; own R22 records. READ_ONLY browser/ui-state-feedback-core.mjs, tests/ui-state-feedback-core.test.mjs, browser/GAMEROAD.html, browser/cards-deck-presentation.mjs, browser/card-presentation-core.mjs, active board visual/inspector/QuickDeck/deck-storage/Battle resources, rules/legality/gameplay/save/economy/Partner/formal assets/unrelated files.",
+  "scope": [
+    "browser/ui-card-action-choice-adapter.mjs",
+    "tests/ui-card-action-choice-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/ui-card-action-choice-adapter.mjs",
+    "tests/ui-card-action-choice-adapter.test.mjs"
+  ]
+}

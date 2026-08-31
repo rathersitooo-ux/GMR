@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-CARD-FOCUSED-EMPHASIS-R1-20260831T0949-SOL-CH7N4V2",
+  "taskId": "BATTLE-HAND-FAN-SELECTION-PRESENTATION-001",
+  "workUnitKey": "ROAD_CARD_FOCUSED_VISUAL_EMPHASIS_R1",
+  "acquireKey": "ROAD-CARD-FOCUSED-EMPHASIS-R1-20260831T0949-SOL-CH7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-ROAD-FOCUSED-EMPHASIS-R1-20260831T0950",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-LOCAL-FOCUSED-EMPHASIS-4OF4-PLUS-CURRENT-FOCUS-PROJECTION",
+  "proceedToken": "PROCEED|ROAD-CARD-FOCUSED-EMPHASIS-R1-20260831T0949-SOL-CH7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260831T0950JST",
+  "authorizationBaseSha": "124e2c51d44dabb771bc65cb5475886cb93c494c",
+  "scope": [
+    "browser/road-card-focused-emphasis-core.mjs",
+    "tests/road-card-focused-emphasis-core.test.mjs"
+  ],
+  "solutionSignature": "road-card-explicit-focused-visual-emphasis-overlay",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-ROAD-FOCUSED-EMPHASIS-R1-20260831T0950",
+  "solutionSearchEvidence": [
+    "main@124e2c51: ui-state-feedback-core has generic focus feedback but no Road COMPATIBLE-to-FOCUSED semantic strength contract",
+    "work/road-card-focus-r1-20260831: road-card-focus-projection-core derives FOCUSED semantics but no lift/outline/size/luminance emphasis metrics",
+    "main@124e2c51: road-card-soft-focus-projection owns sole-candidate soft focus only and explicitly leaves explicit focus stronger"
+  ],
+  "buildResidualReason": "No current reusable module owns only the explicit Road FOCUSED visual-strength delta. Build the missing presentation overlay while consuming semantic focus/compatibility from existing owners and leaving path, 109 graph, selection, submission, Battle-card behavior, and runtime mount unchanged.",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-HAND-FAN-SELECTION-PRESENTATION-001",
+  "leaseWorkUnitKey": "ROAD_CARD_FOCUSED_VISUAL_EMPHASIS_R1",
+  "leaseAcquireKey": "ROAD-CARD-FOCUSED-EMPHASIS-R1-20260831T0949-SOL-CH7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 09:50 JST",
+  "leaseUntilJst": "2026-08-31 10:49 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A250:L250",
+  "leaseScope": [
+    "browser/road-card-focused-emphasis-core.mjs",
+    "tests/road-card-focused-emphasis-core.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@124e2c51d44dabb771bc65cb5475886cb93c494c; NEW branch work/road-card-focused-emphasis-r1-20260831; transient data/preaction-authorizations/ROAD-CARD-FOCUSED-EMPHASIS-R1-20260831T0949-SOL-CH7N4V2.json first-commit authorization then cleanup-delete before final head; browser/road-card-focused-emphasis-core.mjs + tests/road-card-focused-emphasis-core.test.mjs only; own branch/PR/checks; own CURRENT_ACTIVE_LEASES row250. CONSUME_ONLY active browser/road-card-focus-projection-core.mjs output when merged; READ_ONLY browser/GAMEROAD.html, browser/road-card-focus-projection-core.mjs, compatibility/DraftMove/path-input/soft-focus/compatible-glow files, 109 graph, Battle-card selection/reservation/submission, Battle rules/attack/win/save/economy/deploy/workflows/formal assets/unrelated tests."
+}

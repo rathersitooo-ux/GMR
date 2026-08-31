@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-HIDDEN-RUNTIME-R1-20260831T1753-SOL-N7V4K2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "NEW_BASE_HIDDEN_HAND_RUNTIME_ADAPTER_R1",
+  "acquireKey": "NEWBASE-HIDDEN-RUNTIME-R1-20260831T1753-SOL-N7V4K2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "HIDDEN_RUNTIME_IDENTITY_ONLY_CONTRACT_20260831",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_SCHEMA_AND_MATCHSTART_READBACK_20260831",
+  "proceedToken": "PROCEED|NEWBASE-HIDDEN-RUNTIME-R1-20260831T1753-SOL-N7V4K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|IDENTITY_ONLY_RUNTIME_ADAPTER",
+  "authorizationBaseSha": "78084445e46cbd895059a88e3c049d8fccb2e389",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "NEW_BASE_HIDDEN_HAND_RUNTIME_ADAPTER_R1",
+  "leaseAcquireKey": "NEWBASE-HIDDEN-RUNTIME-R1-20260831T1753-SOL-N7V4K2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 17:53 JST",
+  "leaseUntilJst": "2026-08-31 18:53 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A278:L278",
+  "leaseExactMutableResources": "browser/new-base-hidden-hand-runtime-core.mjs; tests/new-base-hidden-hand-runtime-core.test.mjs",
+  "scope": [
+    "browser/new-base-hidden-hand-runtime-core.mjs",
+    "tests/new-base-hidden-hand-runtime-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-hidden-hand-runtime-core.mjs",
+    "tests/new-base-hidden-hand-runtime-core.test.mjs"
+  ],
+  "solutionSignature": "consume match-start deck.hiddenHandCardIds into immutable identity-only new-base runtime state",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "browser/deck-save-ack-core.mjs current immutable match-start snapshot authority",
+    "CURRENT_ACTIVE_LEASES row275 hiddenHandCardIds registration schema contract",
+    "pursuit CURRENT reviewed only for exclusion and generic boundary"
+  ],
+  "reuseDecisionEvidenceId": "NEWBASE_HIDDEN_RUNTIME_REUSE_DECISION_20260831"
+}

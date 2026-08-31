@@ -4,6 +4,7 @@ import {
   buildPartnerShellView,
   nextPartnerShellView,
   PARTNER_HUB_MENU_ITEMS,
+  PARTNER_STRATEGY_IDS,
 } from '../browser/partner-shell-presentation-core.mjs';
 
 const roster = [
@@ -75,9 +76,26 @@ test('formation and strategy project caller authority without mutating or invent
   assert.deepEqual(input, before);
   assert.deepEqual(view.formationPartnerIds, ['partner.saasuna', 'partner.other']);
   assert.equal(view.strategyId, 'strategy.current');
+  assert.deepEqual(view.strategyIds, ['left', 'right', 'max', 'min']);
   assert.equal('relationship' in view, false);
   assert.equal('save' in view, false);
   assert.equal('reward' in view, false);
+});
+
+test('strategy surface exposes only the formal finite strategy ids', () => {
+  assert.deepEqual(PARTNER_STRATEGY_IDS, ['left', 'right', 'max', 'min']);
+  assert.equal(Object.isFrozen(PARTNER_STRATEGY_IDS), true);
+  const strategy = buildPartnerShellView({
+    activePartnerId: 'partner.saasuna',
+    roster,
+    view: 'strategy',
+    strategyId: 'max',
+  });
+  assert.deepEqual(strategy.strategyIds, ['left', 'right', 'max', 'min']);
+  assert.equal(strategy.strategyId, 'max');
+
+  const hub = buildPartnerShellView({ activePartnerId: 'partner.saasuna', roster, view: 'hub' });
+  assert.deepEqual(hub.strategyIds, []);
 });
 
 test('menu contract and outputs are frozen and deterministic', () => {

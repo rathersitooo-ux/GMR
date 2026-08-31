@@ -6,6 +6,7 @@ on:
     types: [completed]
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -15,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Update stale base or merge exact tested work PR
+        id: merge
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
@@ -60,6 +62,16 @@ jobs:
             exit 0
           fi
 
+          public_deploy_needed=false
+          while IFS= read -r path; do
+            case "${path}" in
+              .github/workflows/cloudflare-public-deploy.yml|browser/*|deploy/cloudflare/*|assets/*|tools/*)
+                public_deploy_needed=true
+                break
+                ;;
+            esac
+          done < <(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files?per_page=100" --jq '.[].filename')
+
           result="$(gh api --method PUT "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/merge" \
             -f sha="${head_sha}" \
             -f merge_method=squash)"
@@ -68,4 +80,13 @@ jobs:
             jq . <<<"${result}"
             exit 1
           fi
+          echo "public_deploy_needed=${public_deploy_needed}" >> "${GITHUB_OUTPUT}"
           echo "Merged PR #${PR_NUMBER} at tested head ${head_sha} and tested base ${base_sha}."
+
+      - name: Dispatch current public build
+        if: steps.merge.outputs.public_deploy_needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run cloudflare-public-deploy.yml --ref main
+          echo "Dispatched GAMEROAD Cloudflare Public Deploy for current main."

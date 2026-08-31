@@ -17,6 +17,8 @@ class FakeElement {
     this.attributes = new Map();
     this.children = [];
     this.parentNode = null;
+    this.onload = null;
+    this.onerror = null;
   }
   appendChild(child) {
     if (child.parentNode) child.parentNode.removeChild(child);
@@ -81,6 +83,32 @@ const participants = [
   { id: 'P4', label: 'B-2', team: 'B' }
 ];
 
+const IDLE_VISUAL_STATES = ['idle', 'idle', 'idle', 'idle'];
+const ATTACK_VISUAL_STATES = ['attack', 'idle', 'idle', 'hit'];
+const FINISHER_VISUAL_STATES = ['defeated', 'defeated', 'defeated', 'joy'];
+
+function assertFailVisibleCharacters(runtime, expectedReason = null, expectedVisualStates = IDLE_VISUAL_STATES) {
+  assert.equal(runtime.characterSurfaces.length, 4);
+  for (let index = 0; index < 4; index += 1) {
+    const host = runtime.characterSurfaces[index];
+    const fallback = host.children[0];
+    const image = host.children[1];
+    assert.equal(host.dataset.participantId, participants[index].id);
+    assert.equal(host.dataset.characterId, 'naki');
+    assert.equal(host.dataset.visualState, expectedVisualStates[index]);
+    assert.equal(host.dataset.visualMode, 'fallback');
+    assert.equal(host.dataset.visible, 'true');
+    assert.equal(host.dataset.usableSource, 'true');
+    assert.equal(host.dataset.transparentOnlyPlaceholder, 'false');
+    if (expectedReason) assert.equal(host.dataset.visualReason, expectedReason);
+    assert.equal(fallback.hidden, false);
+    assert.equal(fallback.textContent, 'ナキ');
+    assert.equal(fallback.dataset.fallback, 'character_silhouette_label');
+    assert.equal(image.hidden, true);
+    assert.equal(image.getAttribute('alt'), '緋累ナキ');
+  }
+}
+
 const document = new FakeDocument();
 const root = document.createElement('main');
 root.setAttribute('data-gr-battle-screen-root', '');
@@ -93,11 +121,21 @@ assert.equal(runtime.gameStateWrite, false);
 assert.equal(runtime.adoptedPhaseSurface, false);
 assert.equal(runtime.adoptedResolutionSurface, false);
 assert.equal(runtime.laneSurfaces.length, 4);
+assert.equal(runtime.characterSurfaces.length, 4);
+assert.equal(runtime.laneSurfaces.some(node => 'visualFixture' in node.dataset), false);
+assert.equal(runtime.laneSurfaces.some(node => walk(node, child => child.className === 'grBattleLaneRole')), false);
 assert.equal(runtime.phaseSurface.id, 'battlePhaseSurface');
 assert.equal(runtime.resolutionSurface.id, 'battleResolution');
 assert.equal(runtime.planSlot.dataset.owner, 'caller');
 assert.equal(runtime.phaseSurface.hidden, true);
-assert.ok(document.getElementById('gameroad-battle-screen-runtime-r1-style'));
+const injectedStyle = document.getElementById('gameroad-battle-screen-runtime-r1-style');
+assert.ok(injectedStyle);
+assert.match(injectedStyle.textContent, /data-battle-character-visual/);
+assert.match(injectedStyle.textContent, /min-width:46px/);
+assert.match(injectedStyle.textContent, /min-height:88px/);
+assert.match(injectedStyle.textContent, /opacity:1/);
+assert.match(injectedStyle.textContent, /visibility:visible/);
+assert.doesNotMatch(injectedStyle.textContent, /grBattleLaneRole|inset-left|inset-right|inset-top|inset-bottom/);
 
 const idle = createBattleScreenModel({ participants });
 runtime.render(idle);
@@ -105,6 +143,7 @@ assert.equal(runtime.shell.dataset.mode, 'MATCH_PLAN');
 assert.equal(runtime.phaseSurface.hidden, true);
 assert.equal(runtime.planSlot.hidden, false);
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['idle', 'idle', 'idle', 'idle']);
+assertFailVisibleCharacters(runtime, 'resolver_unavailable');
 
 const attackPlan = {
   presentationOnly: true,
@@ -133,6 +172,7 @@ assert.equal(runtime.shell.dataset.eventId, 'attack-1');
 assert.equal(runtime.phaseSurface.dataset.battleScreenInput, 'skip|public_info|accessibility');
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.participantId), ['P1', 'P2', 'P3', 'P4']);
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['source', 'idle', 'idle', 'target']);
+assertFailVisibleCharacters(runtime, 'resolver_unavailable', ATTACK_VISUAL_STATES);
 assert.equal(runtime.resolutionSurface.textContent, 'EXISTING LIVE ADAPTER OWNS THIS CONTENT');
 assert.equal(runtime.resolutionSurface.dataset.battleScreenEventId, 'attack-1');
 
@@ -162,7 +202,185 @@ runtime.render(finisher);
 assert.equal(runtime.shell.dataset.motion, 'static_only');
 assert.equal(runtime.shell.dataset.returnIntent, 'RESULT');
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['loser', 'loser', 'loser', 'winner']);
+assertFailVisibleCharacters(runtime, 'resolver_unavailable', FINISHER_VISUAL_STATES);
 assert.equal(runtime.phaseSurface.dataset.battleScreenPhase, 'finisher');
+runtime.render(attack);
+assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['source', 'idle', 'idle', 'target']);
+assertFailVisibleCharacters(runtime, 'resolver_unavailable', ATTACK_VISUAL_STATES);
+
+const resolverDocument = new FakeDocument();
+const resolverRoot = resolverDocument.createElement('main');
+resolverDocument.body.appendChild(resolverRoot);
+const resolverCalls = [];
+const resolverRuntime = mountBattleScreenExternalSurface(
+  { document: resolverDocument },
+  {
+    root: resolverRoot,
+    characterVisualResolver(participant, visualState) {
+      resolverCalls.push([participant.id, visualState]);
+      return { sources: [`naki-idle-${participant.id}.webp`, 'naki-accepted-fallback.webp'] };
+    }
+  }
+);
+resolverRuntime.render(idle);
+assert.deepEqual(resolverCalls, [
+  ['P1', 'idle'], ['P2', 'idle'], ['P3', 'idle'], ['P4', 'idle']
+]);
+for (let index = 0; index < 4; index += 1) {
+  const host = resolverRuntime.characterSurfaces[index];
+  const fallback = host.children[0];
+  const image = host.children[1];
+  assert.equal(host.dataset.participantId, participants[index].id);
+  assert.equal(host.dataset.visualMode, 'asset_pending');
+  assert.equal(host.dataset.visible, 'true');
+  assert.equal(host.dataset.usableSource, 'true');
+  assert.equal(host.dataset.transparentOnlyPlaceholder, 'false');
+  assert.equal(fallback.hidden, false);
+  assert.equal(image.hidden, true);
+  assert.equal(image.getAttribute('src'), `naki-idle-${participants[index].id}.webp`);
+  image.onload();
+  assert.equal(host.dataset.visualMode, 'asset');
+  assert.equal(host.dataset.visualReason, 'loaded');
+  assert.equal(fallback.hidden, true);
+  assert.equal(image.hidden, false);
+}
+
+const embeddedCalls = [];
+let embeddedUnmounts = 0;
+const embeddedThreeCharRuntime = {
+  mount(container, options) {
+    embeddedCalls.push({ ...options });
+    const image = new FakeElement('img');
+    image.setAttribute('src', options.performance === 'low'
+      ? 'data:image/png;base64,NAKI_IDLE_POSTER'
+      : 'data:image/webp;base64,NAKI_IDLE_FORMAL');
+    container.replaceChildren(image);
+    return Promise.resolve({ root: container });
+  },
+  unmount() { embeddedUnmounts += 1; }
+};
+const embeddedDocument = new FakeDocument();
+const embeddedRoot = embeddedDocument.createElement('main');
+embeddedDocument.body.appendChild(embeddedRoot);
+const embeddedRuntime = mountBattleScreenExternalSurface(
+  { document: embeddedDocument, GameRoadThreeCharRuntime: embeddedThreeCharRuntime },
+  { root: embeddedRoot }
+);
+embeddedRuntime.render(idle);
+assert.equal(embeddedCalls.length, 1);
+assert.deepEqual(embeddedCalls[0], {
+  characterId: 'partner.naki',
+  state: 'idle',
+  assetMode: 'embedded',
+  performance: 'normal',
+  allowNetwork: false
+});
+assert.deepEqual(embeddedRuntime.characterSurfaces.map(host => host.dataset.participantId), ['P1', 'P2', 'P3', 'P4']);
+for (const host of embeddedRuntime.characterSurfaces) {
+  const fallback = host.children[0];
+  const image = host.children[1];
+  assert.equal(image.getAttribute('src'), 'data:image/webp;base64,NAKI_IDLE_FORMAL');
+  assert.equal(host.dataset.visualMode, 'asset_pending');
+  assert.equal(host.dataset.visible, 'true');
+  assert.equal(host.dataset.usableSource, 'true');
+  assert.equal(host.dataset.transparentOnlyPlaceholder, 'false');
+  assert.equal(fallback.hidden, false);
+  image.onload();
+  assert.equal(host.dataset.visualMode, 'asset');
+  assert.equal(host.dataset.visualReason, 'loaded');
+  assert.equal(fallback.hidden, true);
+  assert.equal(image.hidden, false);
+}
+await Promise.resolve();
+await Promise.resolve();
+assert.equal(embeddedUnmounts, 1);
+
+const lowDocument = new FakeDocument();
+const lowToggle = lowDocument.createElement('button');
+lowToggle.id = 'lowPerf';
+lowToggle.textContent = 'ON';
+lowDocument.body.appendChild(lowToggle);
+const lowRoot = lowDocument.createElement('main');
+lowDocument.body.appendChild(lowRoot);
+const lowRuntime = mountBattleScreenExternalSurface(
+  { document: lowDocument, GameRoadThreeCharRuntime: embeddedThreeCharRuntime },
+  { root: lowRoot }
+);
+lowRuntime.render(idle);
+assert.equal(embeddedCalls.length, 2);
+assert.equal(embeddedCalls[1].performance, 'low');
+for (const host of lowRuntime.characterSurfaces) {
+  const image = host.children[1];
+  assert.equal(image.getAttribute('src'), 'data:image/png;base64,NAKI_IDLE_POSTER');
+  assert.equal(host.dataset.visible, 'true');
+  image.onload();
+  assert.equal(host.dataset.visualMode, 'asset');
+  assert.equal(image.hidden, false);
+}
+await Promise.resolve();
+await Promise.resolve();
+assert.equal(embeddedUnmounts, 2);
+
+const failureDocument = new FakeDocument();
+const failureRoot = failureDocument.createElement('main');
+failureDocument.body.appendChild(failureRoot);
+const failureRuntime = mountBattleScreenExternalSurface(
+  { document: failureDocument },
+  {
+    root: failureRoot,
+    characterVisualResolver() {
+      return { sources: ['naki-idle.webp', 'naki-accepted-fallback.webp'] };
+    }
+  }
+);
+failureRuntime.render(attack);
+for (let index = 0; index < 4; index += 1) {
+  const host = failureRuntime.characterSurfaces[index];
+  const fallback = host.children[0];
+  const image = host.children[1];
+  assert.equal(host.dataset.visualState, ATTACK_VISUAL_STATES[index]);
+  assert.equal(image.getAttribute('src'), 'naki-idle.webp');
+  assert.equal(fallback.hidden, false);
+  image.onerror();
+  assert.equal(image.getAttribute('src'), 'naki-accepted-fallback.webp');
+  assert.equal(host.dataset.visualMode, 'asset_pending');
+  assert.equal(fallback.hidden, false);
+  assert.equal(host.dataset.visible, 'true');
+  image.onerror();
+  assert.equal(host.dataset.visualMode, 'fallback');
+  assert.equal(host.dataset.visualReason, 'asset_error');
+  assert.equal(host.dataset.visible, 'true');
+  assert.equal(host.dataset.usableSource, 'true');
+  assert.equal(host.dataset.transparentOnlyPlaceholder, 'false');
+  assert.equal(fallback.hidden, false);
+  assert.equal(fallback.textContent, 'ナキ');
+  assert.equal(image.hidden, true);
+}
+
+const throwDocument = new FakeDocument();
+const throwRoot = throwDocument.createElement('main');
+throwDocument.body.appendChild(throwRoot);
+const throwRuntime = mountBattleScreenExternalSurface(
+  { document: throwDocument },
+  {
+    root: throwRoot,
+    characterVisualResolver() {
+      throw new Error('resolver failed');
+    }
+  }
+);
+throwRuntime.render(attack);
+assertFailVisibleCharacters(throwRuntime, 'resolver_unavailable', ATTACK_VISUAL_STATES);
+
+const invalidDocument = new FakeDocument();
+const invalidRoot = invalidDocument.createElement('main');
+invalidDocument.body.appendChild(invalidRoot);
+const invalidRuntime = mountBattleScreenExternalSurface(
+  { document: invalidDocument },
+  { root: invalidRoot, characterVisualResolver: () => ({ sources: ['', '   '] }) }
+);
+invalidRuntime.render(attack);
+assertFailVisibleCharacters(invalidRuntime, 'source_invalid', ATTACK_VISUAL_STATES);
 
 assert.equal(runtime.destroy(), true);
 assert.equal(runtime.destroy(), false);
@@ -190,13 +408,27 @@ assert.equal(adopted.adoptedResolutionSurface, true);
 assert.equal(adopted.planSlot, null);
 assert.equal(adopted.phaseSurface, existingPhase);
 assert.equal(adopted.resolutionSurface, existingResolution);
+assert.equal(existingShell.getAttribute('data-gr-battle-screen'), null);
+assert.notEqual(adopted.shell, existingShell);
+assert.equal(adopted.shell.parentNode, existingPhase);
+assert.equal(adopted.shell.className, 'grBattleScreenAdoptedOverlay');
+assert.equal(adopted.shell.dataset.owner, 'runtime_overlay');
+assert.equal(adopted.shell.getAttribute('data-gr-battle-screen'), '1');
+assert.equal(adopted.grid.parentNode, adopted.shell);
+assert.equal(walk(existingShell, node => node.className === 'grBattleScreenTop'), null);
 adopted.render(attack);
 assert.equal(existingResolution.textContent, 'KEEP');
 assert.equal(adopted.laneSurfaces.length, 4);
+assert.equal(adopted.characterSurfaces.length, 4);
+assert.equal(adopted.laneSurfaces.some(node => 'visualFixture' in node.dataset), false);
+assert.equal(adopted.laneSurfaces.some(node => walk(node, child => child.className === 'grBattleLaneRole')), false);
+assertFailVisibleCharacters(adopted, 'resolver_unavailable', ATTACK_VISUAL_STATES);
+assert.equal(existingShell.getAttribute('data-gr-battle-screen'), null);
 assert.equal(adopted.destroy(), true);
 assert.equal(adoptedDocument.body.children.includes(existingShell), true);
 assert.equal(existingShell.children.includes(existingPhase), true);
 assert.equal(existingPhase.children.includes(existingResolution), true);
+assert.equal(existingPhase.children.includes(adopted.shell), false);
 
 const mismatchDocument = new FakeDocument();
 const mismatchRoot = mismatchDocument.createElement('div');
@@ -214,19 +446,38 @@ assert.throws(
 
 assert.equal(BATTLE_SCREEN_RUNTIME.authority, 'NONE');
 assert.equal(BATTLE_SCREEN_RUNTIME.laneCount, 4);
+assert.equal(BATTLE_SCREEN_RUNTIME.characterVisualBinding, 'SHARED_PARAMETERIZED_ONE_BINDING_FOUR_PROJECTIONS');
+assert.equal(BATTLE_SCREEN_RUNTIME.defaultCharacter, 'NAKI');
+assert.equal(BATTLE_SCREEN_RUNTIME.defaultVisualState, 'idle');
+assert.equal(BATTLE_SCREEN_RUNTIME.roleVisualStatePolicy, 'source=attack|target=hit|winner=joy|loser=defeated|other=idle');
+assert.equal(BATTLE_SCREEN_RUNTIME.liveNakiVisualSource, 'GameRoadThreeCharRuntime:participant.character||partner.naki:embedded');
+assert.equal(BATTLE_SCREEN_RUNTIME.participantVisualFallback, 'NAKI_RESOLVER_THEN_VISIBLE_LABELED_SILHOUETTE');
+assert.equal(BATTLE_SCREEN_RUNTIME.existingAnchorPolicy, 'EXPLICIT_PHASE_GETS_RUNTIME_OVERLAY__ANCESTOR_NEVER_DECORATED');
+assert.equal(BATTLE_SCREEN_RUNTIME.externalPhaseShellOwner, 'CALLER');
 assert.equal(BATTLE_SCREEN_RUNTIME.productionHtmlMutationOwnedHere, false);
 assert.equal(BATTLE_SCREEN_RUNTIME.formalArtOwnedHere, false);
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 51,
+  route: 'embedded_naki_4p_fail_visible',
+  sharedCharacterBinding: true,
+  embeddedNakiRuntime: true,
+  failVisible: true,
   freshMount: {
     laneCount: runtime.laneSurfaces.length,
+    characterCount: runtime.characterSurfaces.length,
+    visibleFallbacks: runtime.characterSurfaces.filter(node => node.dataset.visualMode === 'fallback').length,
     phaseAnchor: runtime.phaseSurface.id,
     resolutionAnchor: runtime.resolutionSurface.id
   },
+  embeddedMount: {
+    resolverMountCalls: embeddedCalls.length,
+    fourSeatFormalSource: embeddedRuntime.characterSurfaces.every(node => node.dataset.visualMode === 'asset'),
+    lowPerfFormalSource: lowRuntime.characterSurfaces.every(node => node.dataset.visualMode === 'asset')
+  },
   adoptedMount: {
     adoptedPhaseSurface: adopted.adoptedPhaseSurface,
-    adoptedResolutionSurface: adopted.adoptedResolutionSurface
+    adoptedResolutionSurface: adopted.adoptedResolutionSurface,
+    characterCount: adopted.characterSurfaces.length
   }
 }, null, 2));

@@ -34,6 +34,7 @@ function normalizeParticipants(participants) {
       id: nonEmptyString(participant.id, 'BATTLE_SCREEN_PARTICIPANT_ID_INVALID'),
       label: optionalString(participant.label, 'BATTLE_SCREEN_PARTICIPANT_LABEL_INVALID') ?? `P${index + 1}`,
       team: optionalString(participant.team, 'BATTLE_SCREEN_PARTICIPANT_TEAM_INVALID'),
+      character: optionalString(participant.character, 'BATTLE_SCREEN_PARTICIPANT_CHARACTER_INVALID'),
       order: index
     };
   });

@@ -7,10 +7,10 @@ import {
 } from '../browser/battle-screen-presentation-core.mjs';
 
 const participants = [
-  { id: 'P1', label: 'PLAYER 1', team: 'A' },
-  { id: 'P2', label: 'PLAYER 2', team: 'A' },
-  { id: 'P3', label: 'PLAYER 3', team: 'B' },
-  { id: 'P4', label: 'PLAYER 4', team: 'B' }
+  { id: 'P1', label: 'PLAYER 1', team: 'A', character: 'partner.naki' },
+  { id: 'P2', label: 'PLAYER 2', team: 'A', character: 'partner.naki' },
+  { id: 'P3', label: 'PLAYER 3', team: 'B', character: 'partner.naki' },
+  { id: 'P4', label: 'PLAYER 4', team: 'B', character: 'partner.naki' }
 ];
 
 const planModel = createBattleScreenModel({ participants });
@@ -26,6 +26,7 @@ assert.equal(planModel.battlePhaseBoardInteractionAllowed, false);
 assert.equal(planModel.fourLaneCausalStructure, true);
 assert.equal(planModel.lanes.length, 4);
 assert.deepEqual(planModel.lanes.map(row => row.id), ['P1', 'P2', 'P3', 'P4']);
+assert.deepEqual(planModel.lanes.map(row => row.character), ['partner.naki', 'partner.naki', 'partner.naki', 'partner.naki']);
 assert.deepEqual(planModel.lanes.map(row => row.role), ['idle', 'idle', 'idle', 'idle']);
 assert.equal(auditBattleScreenModel(planModel).ok, true);
 
@@ -53,6 +54,7 @@ assert.equal(timeline.authorityBoundary, 'existing_battle_conveyor_accepted_publ
 assert.equal(timeline.models.length, events.length);
 assert.ok(timeline.timelineEnd > 0);
 assert.equal(timeline.models.every(model => auditBattleScreenModel(model).ok), true);
+assert.equal(timeline.models.every(model => model.lanes.every(row => row.character === 'partner.naki')), true);
 
 const attack = timeline.models.find(model => model.eventId === 'a1');
 assert.equal(attack.screenMode, 'BATTLE_PHASE');
@@ -133,7 +135,7 @@ assert.deepEqual(BATTLE_SCREEN_PRESENTATION.requiredAnchors, ['battlePhaseSurfac
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 60,
+  tests: 62,
   timelineEnd: timeline.timelineEnd,
   phases: timeline.models.map(model => [model.eventId, model.phase, model.transition]),
   finisherRoles: finisher.lanes.map(row => [row.id, row.role])

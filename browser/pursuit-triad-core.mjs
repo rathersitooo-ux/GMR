@@ -1,3 +1,5 @@
+import { resolveCyclicTriad } from './triad-resolver-core.mjs';
+
 const HAND_ORDER = Object.freeze(['club', 'diamond', 'spade']);
 const VALID_HANDS = new Set(HAND_ORDER);
 const BEATS = Object.freeze({ club: 'diamond', diamond: 'spade', spade: 'club' });
@@ -45,36 +47,10 @@ function normalizeSelections(selections) {
  * winner. `none` means the player did not participate and is excluded.
  */
 export function resolvePursuitTriad(selections) {
-  const normalized = normalizeSelections(selections);
-  const active = normalized.filter((entry) => entry.hand !== PURSUIT_NO_HAND);
-  const handSet = new Set(active.map((entry) => entry.hand));
-  const uniqueHands = HAND_ORDER.filter((hand) => handSet.has(hand));
-
-  let winningHand = null;
-  if (uniqueHands.length === 1) {
-    winningHand = uniqueHands[0];
-  } else if (uniqueHands.length === 2) {
-    const [a, b] = uniqueHands;
-    winningHand = BEATS[a] === b ? a : b;
-  } else if (uniqueHands.length !== 0 && uniqueHands.length !== 3) {
-    fail('unexpected pursuit hand cardinality');
-  }
-
-  const participants = active.map((entry) => entry.playerId).sort(compareText);
-  const nonParticipants = normalized
-    .filter((entry) => entry.hand === PURSUIT_NO_HAND)
-    .map((entry) => entry.playerId)
-    .sort(compareText);
-  const winners = winningHand === null
-    ? []
-    : active.filter((entry) => entry.hand === winningHand).map((entry) => entry.playerId).sort(compareText);
-
-  return Object.freeze({
-    participants: Object.freeze(participants),
-    nonParticipants: Object.freeze(nonParticipants),
-    uniqueHands: Object.freeze(uniqueHands),
-    winningHand,
-    winners: Object.freeze(winners),
+  return resolveCyclicTriad(normalizeSelections(selections), {
+    handOrder: HAND_ORDER,
+    beats: BEATS,
+    noHand: PURSUIT_NO_HAND,
   });
 }
 

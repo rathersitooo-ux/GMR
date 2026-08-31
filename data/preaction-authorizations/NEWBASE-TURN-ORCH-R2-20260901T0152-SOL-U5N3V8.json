@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-TURN-ORCH-R2-20260901T0152-SOL-U5N3V8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "NEW_BASE_TURN_ORCHESTRATOR_CURRENT_RECOVERY_R2",
+  "acquireKey": "NEWBASE-TURN-ORCH-R2-20260901T0152-SOL-U5N3V8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-NEWBASE-TURN-ORCH-R2-20260901T0152",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-PR804-FOCUSED7-REQUIRED-GATE-SUCCESS",
+  "proceedToken": "PROCEED|NEWBASE-TURN-ORCH-R2-20260901T0152-SOL-U5N3V8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260901T0152JST",
+  "authorizationBaseSha": "2110343719f1e18d3931081fda24aa76dd7a7156",
+  "scope": [
+    "browser/new-base-turn-orchestrator-core.mjs",
+    "tests/new-base-turn-orchestrator-core.test.mjs"
+  ],
+  "solutionSignature": "thin-new-base-turn-provider-order-orchestrator",
+  "reuseDisposition": "REUSE_AS_IS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-PR804-EXACT-TURN-ORCH-R2-20260901T0152",
+  "solutionSearchEvidence": [
+    "closed-unmerged PR#804 contains the exact two-file thin new-base turn orchestrator and focused 7/7 oracle; current main lacks both target files",
+    "PR#804 GAMEROAD Required Gate succeeded; the orchestrator delegates all domain calculations to injected authorities and creates no second Battle, movement, janken, ROAD, GOAL or Result engine",
+    "current main now contains the authoritative dice core, turn-start mana hook, movement-budget composer, shared triad resolver and hand3 auto-assignment core, so recover the validated composition seam rather than redesigning it"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "NEW_BASE_TURN_ORCHESTRATOR_CURRENT_RECOVERY_R2",
+  "leaseAcquireKey": "NEWBASE-TURN-ORCH-R2-20260901T0152-SOL-U5N3V8",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 01:55 JST",
+  "leaseUntilJst": "2026-09-01 02:22 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A315:L315",
+  "leaseScope": [
+    "browser/new-base-turn-orchestrator-core.mjs",
+    "tests/new-base-turn-orchestrator-core.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@2110343719f1e18d3931081fda24aa76dd7a7156; new branch work/newbase-turn-orchestrator-r2-20260901; transient data/preaction-authorizations/NEWBASE-TURN-ORCH-R2-20260901T0152-SOL-U5N3V8.json create-first/delete-before-final-head; browser/new-base-turn-orchestrator-core.mjs; tests/new-base-turn-orchestrator-core.test.mjs; successor PR/checks/expected-head merge; GAMEROAD 全作業一覧 row1374 evidence/status/next-action fields; own CURRENT_ACTIVE_LEASES row315; own R23 events. READ_ONLY browser/GAMEROAD.html, fixed-slot and hand3 sibling resources, Battle/Honey/movement/ROAD/GOAL implementations, save/economy/network/deploy/workflows/assets."
+}

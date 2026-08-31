@@ -2,11 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { autoAssignHand3ToFixedJankenSlots } from "../browser/newbase-janken-hand-assignment-core.mjs";
 
-const FIXED_SLOTS = Object.freeze([
-  Object.freeze({ slotId: "slot-rock", jankenHand: "ROCK" }),
-  Object.freeze({ slotId: "slot-scissors", jankenHand: "SCISSORS" }),
-  Object.freeze({ slotId: "slot-paper", jankenHand: "PAPER" }),
-]);
+const FIXED_SLOT_STATE = Object.freeze({
+  ROCK: Object.freeze({ slotId: "ROCK", jankenHand: "ROCK" }),
+  SCISSORS: Object.freeze({ slotId: "SCISSORS", jankenHand: "SCISSORS" }),
+  PAPER: Object.freeze({ slotId: "PAPER", jankenHand: "PAPER" }),
+});
 
 function makeHand() {
   return [
@@ -23,27 +23,31 @@ function permutations(items) {
   );
 }
 
-test("automatically assigns one policy result to the three fixed janken slots", () => {
+test("automatically assigns one policy result to shared fixed ROCK SCISSORS PAPER state", () => {
   const hand = makeHand();
   let calls = 0;
   const assigned = autoAssignHand3ToFixedJankenSlots({
     hand,
-    fixedSlots: FIXED_SLOTS,
+    fixedSlotState: FIXED_SLOT_STATE,
     assignmentPolicy(input) {
       calls += 1;
       assert.equal(Object.isFrozen(input), true);
       assert.equal(Object.isFrozen(input.hand), true);
       assert.equal(Object.isFrozen(input.fixedSlots), true);
-      assert.deepEqual(input.fixedSlots.map((slot) => slot.jankenHand), ["ROCK", "SCISSORS", "PAPER"]);
+      assert.deepEqual(input.fixedSlots, [
+        { slotId: "ROCK", jankenHand: "ROCK" },
+        { slotId: "SCISSORS", jankenHand: "SCISSORS" },
+        { slotId: "PAPER", jankenHand: "PAPER" },
+      ]);
       return ["card-c", "card-a", "card-b"];
     },
   });
 
   assert.equal(calls, 1);
   assert.deepEqual(assigned, [
-    { slotId: "slot-rock", jankenHand: "ROCK", cardId: "card-c" },
-    { slotId: "slot-scissors", jankenHand: "SCISSORS", cardId: "card-a" },
-    { slotId: "slot-paper", jankenHand: "PAPER", cardId: "card-b" },
+    { slotId: "ROCK", jankenHand: "ROCK", cardId: "card-c" },
+    { slotId: "SCISSORS", jankenHand: "SCISSORS", cardId: "card-a" },
+    { slotId: "PAPER", jankenHand: "PAPER", cardId: "card-b" },
   ]);
   assert.equal(Object.isFrozen(assigned), true);
   assert.equal(assigned.every(Object.isFrozen), true);
@@ -54,7 +58,7 @@ test("keeps native card suit separate from assigned janken hand", () => {
   const before = structuredClone(hand);
   const assigned = autoAssignHand3ToFixedJankenSlots({
     hand,
-    fixedSlots: FIXED_SLOTS,
+    fixedSlotState: FIXED_SLOT_STATE,
     assignmentPolicy: () => ["card-b", "card-c", "card-a"],
   });
 
@@ -67,7 +71,7 @@ test("keeps native card suit separate from assigned janken hand", () => {
 
 test("does not invent a default assignment policy", () => {
   assert.throws(
-    () => autoAssignHand3ToFixedJankenSlots({ hand: makeHand(), fixedSlots: FIXED_SLOTS }),
+    () => autoAssignHand3ToFixedJankenSlots({ hand: makeHand(), fixedSlotState: FIXED_SLOT_STATE }),
     /assignmentPolicy_required/,
   );
 });
@@ -76,7 +80,7 @@ test("accepts every exact permutation supplied by policy without imposing a mapp
   for (const permutation of permutations(["card-a", "card-b", "card-c"])) {
     const assigned = autoAssignHand3ToFixedJankenSlots({
       hand: makeHand(),
-      fixedSlots: FIXED_SLOTS,
+      fixedSlotState: FIXED_SLOT_STATE,
       assignmentPolicy: () => permutation,
     });
     assert.deepEqual(assigned.map((entry) => entry.cardId), permutation);
@@ -85,36 +89,35 @@ test("accepts every exact permutation supplied by policy without imposing a mapp
 
 test("fails closed unless current hand is exactly three uniquely identified cards", () => {
   assert.throws(
-    () => autoAssignHand3ToFixedJankenSlots({ hand: makeHand().slice(0, 2), fixedSlots: FIXED_SLOTS, assignmentPolicy: () => [] }),
+    () => autoAssignHand3ToFixedJankenSlots({ hand: makeHand().slice(0, 2), fixedSlotState: FIXED_SLOT_STATE, assignmentPolicy: () => [] }),
     /hand_must_contain_exactly_3_cards/,
   );
   const duplicate = makeHand();
   duplicate[2].id = "card-a";
   assert.throws(
-    () => autoAssignHand3ToFixedJankenSlots({ hand: duplicate, fixedSlots: FIXED_SLOTS, assignmentPolicy: () => ["card-a", "card-b", "card-a"] }),
+    () => autoAssignHand3ToFixedJankenSlots({ hand: duplicate, fixedSlotState: FIXED_SLOT_STATE, assignmentPolicy: () => ["card-a", "card-b", "card-a"] }),
     /hand_card_ids_must_be_unique/,
   );
 });
 
-test("fails closed unless slots are exactly fixed ROCK SCISSORS PAPER identities", () => {
-  const badSlots = [
-    { slotId: "slot-rock", jankenHand: "ROCK" },
-    { slotId: "slot-scissors", jankenHand: "SCISSORS" },
-    { slotId: "slot-lizard", jankenHand: "LIZARD" },
-  ];
+test("fails closed when shared fixed state changes a janken identity", () => {
+  const badState = {
+    ...FIXED_SLOT_STATE,
+    PAPER: { slotId: "PAPER", jankenHand: "ROCK" },
+  };
   assert.throws(
-    () => autoAssignHand3ToFixedJankenSlots({ hand: makeHand(), fixedSlots: badSlots, assignmentPolicy: () => ["card-a", "card-b", "card-c"] }),
-    /fixed_slots_must_be_exactly_ROCK_SCISSORS_PAPER/,
+    () => autoAssignHand3ToFixedJankenSlots({ hand: makeHand(), fixedSlotState: badState, assignmentPolicy: () => ["card-a", "card-b", "card-c"] }),
+    /fixed_slot_PAPER_must_keep_its_janken_identity/,
   );
 });
 
 test("fails closed on duplicate or unknown card ids returned by policy", () => {
   assert.throws(
-    () => autoAssignHand3ToFixedJankenSlots({ hand: makeHand(), fixedSlots: FIXED_SLOTS, assignmentPolicy: () => ["card-a", "card-a", "card-c"] }),
+    () => autoAssignHand3ToFixedJankenSlots({ hand: makeHand(), fixedSlotState: FIXED_SLOT_STATE, assignmentPolicy: () => ["card-a", "card-a", "card-c"] }),
     /assignment_policy_card_ids_must_be_unique/,
   );
   assert.throws(
-    () => autoAssignHand3ToFixedJankenSlots({ hand: makeHand(), fixedSlots: FIXED_SLOTS, assignmentPolicy: () => ["card-a", "card-b", "card-x"] }),
+    () => autoAssignHand3ToFixedJankenSlots({ hand: makeHand(), fixedSlotState: FIXED_SLOT_STATE, assignmentPolicy: () => ["card-a", "card-b", "card-x"] }),
     /assignment_policy_must_use_only_current_hand_card_ids/,
   );
 });
@@ -124,7 +127,7 @@ test("policy receives snapshots, so attempted top-level mutation cannot alter cu
   assert.throws(
     () => autoAssignHand3ToFixedJankenSlots({
       hand,
-      fixedSlots: FIXED_SLOTS,
+      fixedSlotState: FIXED_SLOT_STATE,
       assignmentPolicy(input) {
         input.hand[0].suit = "PAPER";
         return ["card-a", "card-b", "card-c"];

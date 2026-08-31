@@ -97,6 +97,55 @@ test('projects rules-derived selection/target/reachable/invalid roles and annota
   assert.equal(p2.getAttribute('data-gmr-board-invalid-reason'), 'TARGET_BLOCKED');
 });
 
+test('projects Honey presence/collectable separately and clears both without residue', () => {
+  const { elements, adapter } = fixture();
+  const emptyAnnotations = {
+    positionKindByPosition: {},
+    targetKindByPosition: {},
+    invalidReasonByPosition: {},
+  };
+
+  const first = adapter.apply(projection({
+    rolesByPosition: {
+      P1: ['honey'],
+      P2: ['honey', 'honey-collectable'],
+    },
+    annotations: emptyAnnotations,
+    recommendation: { active: false, clear: true },
+  }));
+
+  assert.deepEqual(first.appliedPositionIds, ['P1', 'P2']);
+  assert.equal(elements.get('P1').getAttribute('data-gmr-board-roles'), 'honey');
+  assert.equal(elements.get('P1').getAttribute(BATTLE_BOARD_RULE_ROLE_ATTRIBUTES.honey), 'true');
+  assert.equal(elements.get('P1').hasAttribute(BATTLE_BOARD_RULE_ROLE_ATTRIBUTES['honey-collectable']), false);
+  assert.equal(elements.get('P2').getAttribute('data-gmr-board-roles'), 'honey honey-collectable');
+  assert.equal(elements.get('P2').getAttribute(BATTLE_BOARD_RULE_ROLE_ATTRIBUTES.honey), 'true');
+  assert.equal(elements.get('P2').getAttribute(BATTLE_BOARD_RULE_ROLE_ATTRIBUTES['honey-collectable']), 'true');
+
+  const next = adapter.apply(projection({
+    rolesByPosition: { P1: ['current'] },
+    annotations: emptyAnnotations,
+    recommendation: { active: false, clear: true },
+  }));
+
+  assert.equal(next.clearedCount, 2);
+  assert.equal(elements.get('P1').hasAttribute(BATTLE_BOARD_RULE_ROLE_ATTRIBUTES.honey), false);
+  assert.equal(elements.get('P1').hasAttribute(BATTLE_BOARD_RULE_ROLE_ATTRIBUTES['honey-collectable']), false);
+  assert.equal(elements.get('P2').hasAttribute(BATTLE_BOARD_RULE_ROLE_ATTRIBUTES.honey), false);
+  assert.equal(elements.get('P2').hasAttribute(BATTLE_BOARD_RULE_ROLE_ATTRIBUTES['honey-collectable']), false);
+
+  adapter.apply(projection({
+    rolesByPosition: { P2: ['honey', 'honey-collectable'] },
+    annotations: emptyAnnotations,
+    recommendation: { active: false, clear: true },
+  }));
+  const stale = adapter.apply(projection({ ok: false, clear: true, reason: 'STALE_BOARD_STATE' }));
+
+  assert.equal(stale.clearedCount, 1);
+  assert.equal(elements.get('P2').hasAttribute(BATTLE_BOARD_RULE_ROLE_ATTRIBUTES.honey), false);
+  assert.equal(elements.get('P2').hasAttribute(BATTLE_BOARD_RULE_ROLE_ATTRIBUTES['honey-collectable']), false);
+});
+
 test('keeps Partner recommendation separate from rules DOM ownership', () => {
   const { elements, adapter } = fixture();
   const out = adapter.apply(projection());

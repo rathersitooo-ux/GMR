@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-MANA-TURNSTART-HOOK-R1-20260831T1750-SOL-K7N4V2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "NEW_BASE_TURN_START_MANA_RECOVERY_HOOK_R1",
+  "acquireKey": "NEWBASE-MANA-TURNSTART-HOOK-R1-20260831T1750-SOL-K7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-NEWBASE-MANA-TURNSTART-HOOK-R1-20260831T1750",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-CURRENT-USER-TURNSTART-MANA-UNDESIDED-AMOUNT-AND-MANA-AWAKE-TOTAL-AUDIT",
+  "proceedToken": "PROCEED|NEWBASE-MANA-TURNSTART-HOOK-R1-20260831T1750-SOL-K7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260831T1750JST",
+  "authorizationBaseSha": "78084445e46cbd895059a88e3c049d8fccb2e389",
+  "scope": [
+    "browser/new-base-turn-start-mana-hook.mjs",
+    "tests/new-base-turn-start-mana-hook.test.mjs"
+  ],
+  "solutionSignature": "new-base-turn-start-existing-mana-state-transition-hook",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-NEWBASE-MANA-TURNSTART-HOOK-R1-20260831T1750",
+  "solutionSearchEvidence": [
+    "current main@78084445 contains no isolated new-base turn-start mana recovery hook or conventional module/test pair",
+    "current mana audit confirms the existing resource state names manaAwake and manaTotal, while the legacy turn reset manaAwake=manaTotal has no confirmed canonical basis and therefore must not be reused as a full-refill default",
+    "active sibling NEW_BASE_MANA_RECOVERY_CONFIG_R1 owns unresolved recovery configuration only and explicitly excludes runtime mutation; active NEW_BASE_TURN_ORCHESTRATOR_R1 owns sequencing only, so this hook adapts the existing mana state without duplicating either owner"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "NEW_BASE_TURN_START_MANA_RECOVERY_HOOK_R1",
+  "leaseAcquireKey": "NEWBASE-MANA-TURNSTART-HOOK-R1-20260831T1750-SOL-K7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 17:50 JST",
+  "leaseUntilJst": "2026-08-31 18:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A279:L279",
+  "leaseScope": [
+    "browser/new-base-turn-start-mana-hook.mjs",
+    "tests/new-base-turn-start-mana-hook.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@78084445e46cbd895059a88e3c049d8fccb2e389; NEW branch work/newbase-mana-turnstart-hook-r1-20260831; transient data/preaction-authorizations/NEWBASE-MANA-TURNSTART-HOOK-R1-20260831T1750-SOL-K7N4V2.json create-first/delete-before-final-head; browser/new-base-turn-start-mana-hook.mjs + tests/new-base-turn-start-mana-hook.test.mjs only; own branch/PR/checks/expected-head merge if exact-head gates green; own CURRENT_ACTIVE_LEASES exact tuple; own R23 append-only events. CONSUME_LATER active NEW_BASE_MANA_RECOVERY_CONFIG_R1 and NEW_BASE_TURN_ORCHESTRATOR_R1 outputs after integration. READ_ONLY browser/GAMEROAD.html, existing Battle mana runtime, Honey movement/reservation/revalidation, pursuit triad/durable semantics, cards/rules/save/economy/network/deploy/workflows/formal assets/unrelated."
+}

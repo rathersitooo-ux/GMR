@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-VISUAL-AUTHORITY-R5-20260901T0222-SOL-H7M4V2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_SINGLE_VISUAL_AUTHORITY_RESTORE_R5",
+  "acquireKey": "HOME-VISUAL-AUTHORITY-R5-20260901T0222-SOL-H7M4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R56-HOME-COMPETING-CLUSTERS+DARK-OCCLUSION+PR506-ACCEPTED-VISUAL-AUTHORITY+CURRENT-MOUNT-MISSING-AUTHORITY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR506-EXACT-ACCEPTED-HOME-VISUAL-AUTHORITY+CURRENT-POINTER-GESTURE-TESTS",
+  "proceedToken": "PROCEED|HOME-VISUAL-AUTHORITY-R5-20260901T0222-SOL-H7M4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|reuse-accepted-authority|two-files",
+  "authorizationBaseSha": "df27c3898b47a789c44e66e07a1fdaf8466821d3",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_SINGLE_VISUAL_AUTHORITY_RESTORE_R5",
+  "leaseAcquireKey": "HOME-VISUAL-AUTHORITY-R5-20260901T0222-SOL-H7M4V2",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 02:22 JST",
+  "leaseUntilJst": "2026-09-01 02:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A313:L313",
+  "leaseExactMutableResources": "browser/home-boot-runtime-mount.mjs; tests/home-boot-presentation.test.mjs; transient own PRE_ACTION authorization; new branch/PR/checks/expected-head merge; GAMEROAD 全作業一覧 row2 current evidence/result/next fields",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ]
+}

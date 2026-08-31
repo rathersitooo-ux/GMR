@@ -15,6 +15,28 @@ export const READY_PLAN_FEEDBACK_BINDING_SCHEMA = 'gameroad.ui-state-feedback.re
 const INTERACTION_EVENTS = new Set(['POINTER_DOWN', 'POINTER_MOVE', 'POINTER_UP', 'TICK', 'SECONDARY', 'KEY_ACTIVATE']);
 
 const READY_PLAN_MATERIAL = MATERIAL_FEEDBACK_MATERIALS.GUMMY;
+const BATTLE_INTERACTION_STYLE_ID = 'gameroad-battle-interaction-feedback-r1';
+const BATTLE_INTERACTION_STYLE = `
+.battle button:not(.node):enabled:active,
+.battle .handCard:enabled:active{
+  filter:brightness(.80) saturate(.74);
+  outline:1px solid rgba(255,255,255,.76);
+  outline-offset:-2px;
+}
+.battle button:not(.node):focus-visible,
+.battle .handCard:focus-visible,
+.battle select:focus-visible{
+  outline:2px solid currentColor;
+  outline-offset:2px;
+}
+.battle button:not(.node):disabled,
+.battle .handCard:disabled,
+.battle select:disabled{
+  cursor:not-allowed;
+  opacity:.38;
+  filter:grayscale(.45) brightness(.78);
+}
+`;
 const MATERIAL_CANCEL_REASONS = new Set([
   'pointer_left_target',
   'pointer_release_outside',
@@ -22,6 +44,20 @@ const MATERIAL_CANCEL_REASONS = new Set([
   'pointer_capture_lost',
   'control_blur',
 ]);
+
+function ensureBattleInteractionFeedbackStyle(target) {
+  const document = target?.ownerDocument;
+  if (!document || typeof document.createElement !== 'function' || !document.head || typeof document.head.appendChild !== 'function') {
+    return null;
+  }
+  const existing = typeof document.getElementById === 'function' ? document.getElementById(BATTLE_INTERACTION_STYLE_ID) : null;
+  if (existing) return existing;
+  const style = document.createElement('style');
+  style.id = BATTLE_INTERACTION_STYLE_ID;
+  style.textContent = BATTLE_INTERACTION_STYLE;
+  document.head.appendChild(style);
+  return style;
+}
 
 function clamp01(value) {
   return Math.min(1, Math.max(0, Number(value)));
@@ -321,6 +357,8 @@ export function bindReadyPlanFeedbackControl({
   if (typeof schedule !== 'function' || typeof cancelSchedule !== 'function') throw new Error('schedule/cancelSchedule must be functions');
   if (typeof tickMs !== 'number' || !Number.isFinite(tickMs) || tickMs <= 0) throw new Error('tickMs must be a positive finite number');
 
+  ensureBattleInteractionFeedbackStyle(target);
+
   let activePointerId = null;
   let tickHandle = null;
   let destroyed = false;
@@ -435,6 +473,10 @@ export function bindReadyPlanFeedbackControl({
     if (typeof event.preventDefault === 'function') event.preventDefault();
     dispatch({type: 'SECONDARY'});
   };
+  const onFocus = () => {
+    if (destroyed) return;
+    dispatch({type: 'FOCUS', reason: 'control_focus'});
+  };
   const onBlur = () => {
     if (destroyed) return;
     const pointerId = activePointerId;
@@ -455,6 +497,7 @@ export function bindReadyPlanFeedbackControl({
     ['lostpointercapture', onLostPointerCapture],
     ['keydown', onKeyDown],
     ['contextmenu', onContextMenu],
+    ['focus', onFocus],
     ['blur', onBlur],
   ];
   for (const [type, handler] of listeners) target.addEventListener(type, handler);

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ROAD-FOCUS-INVALID-R1-20260831T1622-SOL-T7N4V2",
+  "taskId": "BATTLE-HAND-FAN-SELECTION-PRESENTATION-001",
+  "workUnitKey": "BATTLE_VISIBLE_ROAD_FOCUS_INVALID_CLEANUP_R1",
+  "acquireKey": "BATTLE-ROAD-FOCUS-INVALID-R1-20260831T1622-SOL-T7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-BATTLE-ROAD-FOCUS-INVALID-SINGLE-PROJECTION-R1",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-BATTLE-ROAD-FOCUS-INVALID-PARAMETERIZED-NODE-TESTS-R1",
+  "proceedToken": "PROCEED|BATTLE-ROAD-FOCUS-INVALID-R1-20260831T1622-SOL-T7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|PRESENTATION_ONLY",
+  "authorizationBaseSha": "78084445e46cbd895059a88e3c049d8fccb2e389",
+  "scope": [
+    "browser/road-card-compatible-glow-projection.mjs",
+    "tests/road-card-compatible-glow-projection.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-HAND-FAN-SELECTION-PRESENTATION-001",
+  "leaseWorkUnitKey": "BATTLE_VISIBLE_ROAD_FOCUS_INVALID_CLEANUP_R1",
+  "leaseAcquireKey": "BATTLE-ROAD-FOCUS-INVALID-R1-20260831T1622-SOL-T7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 16:22 JST",
+  "leaseUntilJst": "2026-08-31 17:22 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A254:L254",
+  "leaseScope": [
+    "browser/road-card-compatible-glow-projection.mjs",
+    "tests/road-card-compatible-glow-projection.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@78084445e46cbd895059a88e3c049d8fccb2e389; NEW branch work/battle-road-focus-invalid-r1-20260831; transient data/preaction-authorizations/BATTLE-ROAD-FOCUS-INVALID-R1-20260831T1622-SOL-T7N4V2.json create-first/delete-before-final-head; browser/road-card-compatible-glow-projection.mjs + tests/road-card-compatible-glow-projection.test.mjs only; own branch/PR/checks/expected-head merge if current gates are green; own CURRENT_ACTIVE_LEASES row254; own R23 events.",
+  "solutionSignature": "Road card visual projection consolidates FOCUSED and INVALID_FOCUS into the existing compatible-glow state priority without adding a second renderer or transform layer",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-ROAD-COMPAT-GLOW-MAIN-SINGLE-PROJECTION-R1",
+  "solutionSearchEvidence": [
+    "browser/road-card-compatible-glow-projection.mjs@78084445e46cbd895059a88e3c049d8fccb2e389 already owns NORMAL/COMPATIBLE/FOCUSED/INVALID_FOCUS ordering",
+    "PR#780 is helper-only and unmounted; do not stack a second focused emphasis helper",
+    "PR#783 is path/focus state projection only and remains read-only"
+  ]
+}

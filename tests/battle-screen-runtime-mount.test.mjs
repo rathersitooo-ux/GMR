@@ -163,6 +163,13 @@ assert.equal(runtime.shell.dataset.motion, 'static_only');
 assert.equal(runtime.shell.dataset.returnIntent, 'RESULT');
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['loser', 'loser', 'loser', 'winner']);
 assert.equal(runtime.phaseSurface.dataset.battleScreenPhase, 'finisher');
+const resolvedRoleSurfaces = runtime.laneSurfaces.map(node => node.children[1]);
+assert.deepEqual(resolvedRoleSurfaces.map(node => node.hidden), [true, true, true, true]);
+assert.deepEqual(resolvedRoleSurfaces.map(node => node.textContent), ['', '', '', '']);
+runtime.render(attack);
+assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['source', 'idle', 'idle', 'target']);
+assert.deepEqual(resolvedRoleSurfaces.map(node => node.hidden), [false, false, false, false]);
+assert.deepEqual(resolvedRoleSurfaces.map(node => node.textContent), ['source', 'idle', 'idle', 'target']);
 
 assert.equal(runtime.destroy(), true);
 assert.equal(runtime.destroy(), false);
@@ -219,7 +226,7 @@ assert.equal(BATTLE_SCREEN_RUNTIME.formalArtOwnedHere, false);
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 51,
+  tests: 56,
   freshMount: {
     laneCount: runtime.laneSurfaces.length,
     phaseAnchor: runtime.phaseSurface.id,

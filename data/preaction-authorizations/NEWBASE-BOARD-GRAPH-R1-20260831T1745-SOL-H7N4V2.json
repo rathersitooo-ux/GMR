@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-BOARD-GRAPH-R1-20260831T1745-SOL-H7N4V2",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "NEW_BASE_BOARD_GRAPH_CORE_R1",
+  "acquireKey": "NEWBASE-BOARD-GRAPH-R1-20260831T1745-SOL-H7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-NEWBASE-BOARD-GRAPH-R1-20260831T1745",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-CURRENT-NEWBASE-BOARD-CONTRACT-NO-INFERENCE",
+  "proceedToken": "PROCEED|NEWBASE-BOARD-GRAPH-R1-20260831T1745-SOL-H7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260831T1745JST",
+  "authorizationBaseSha": "78084445e46cbd895059a88e3c049d8fccb2e389",
+  "scope": [
+    "browser/new-base-board-graph-core.mjs",
+    "tests/new-base-board-graph-core.test.mjs"
+  ],
+  "solutionSignature": "new-base-zone-position-graph-composition-core",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-NEWBASE-BOARD-GRAPH-R1-20260831T1745",
+  "solutionSearchEvidence": [
+    "current main@78084445 has no browser/new-base-board-graph-core.mjs or matching focused test",
+    "existing browser/battle-board-visual-explanation-core.mjs already consumes caller-supplied validPositionIds and explicitly refuses topology inference, so it is reused as a downstream consumer rather than duplicated",
+    "active NEW_BASE_ROAD_SLOT_12X7_CORE_R1 owns 12x7 ROAD_SLOT construction separately; this graph core only accepts externally supplied roadSlotPositionIds and must not duplicate counts or Shield binding",
+    "existing 109 graph and Honey movement/reservation/revalidation stay read-only; caller-supplied adjacency is validated but never inferred or auto-symmetrized"
+  ],
+  "buildResidualReason": "The new-base board needs one composition seam so independently owned GOAL, Shield, ROAD_SLOT and FIELD position producers can feed a single canonical position set without repurposing the existing 109 authority or creating another movement/visual engine. No current module provides that new-base-only composition contract.",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "NEW_BASE_BOARD_GRAPH_CORE_R1",
+  "leaseAcquireKey": "NEWBASE-BOARD-GRAPH-R1-20260831T1745-SOL-H7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 17:45 JST",
+  "leaseUntilJst": "2026-08-31 18:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A254:L254",
+  "leaseScope": [
+    "browser/new-base-board-graph-core.mjs",
+    "tests/new-base-board-graph-core.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@78084445e46cbd895059a88e3c049d8fccb2e389; NEW branch work/newbase-board-graph-r1-20260831; transient data/preaction-authorizations/NEWBASE-BOARD-GRAPH-R1-20260831T1745-SOL-H7N4V2.json create-first/delete-before-final-head; browser/new-base-board-graph-core.mjs + tests/new-base-board-graph-core.test.mjs only; own branch/PR/checks/expected-head merge if exact-head gates are green; own CURRENT_ACTIVE_LEASES exact tuple; own R23 append-only events. CONSUME_LATER active NEW_BASE_ROAD_SLOT_12X7_CORE_R1 output after integration. READ_ONLY browser/new-base-road-slot-core.mjs and its branch, browser/GAMEROAD.html, existing 109 graph/adjacency/legal positions, Honey movement/reservation/revalidation, GOAL/Shield/FIELD concrete node producers, ROAD7->GOAL unlock, Battle/Road rules/cards, save/economy/network/deploy/workflows/formal assets, active PR#764 runtime package, unrelated."
+}

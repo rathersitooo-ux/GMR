@@ -2,7 +2,7 @@ name: Browser Full Interaction Evidence
 
 on:
   schedule:
-    - cron: '17 18 * * *'
+    - cron: '17 18 * * 2'
   workflow_dispatch:
   workflow_run:
     workflows:
@@ -22,7 +22,6 @@ on:
     branches:
       - main
     paths:
-      - 'browser/GAMEROAD.html'
       - 'tests/browser-full-interaction.spec.mjs'
       - 'tests/browser-full-interaction-state-sequence.spec.mjs'
       - 'playwright.full-interaction.config.mjs'

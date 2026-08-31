@@ -57,13 +57,6 @@ function pathIsLegal(validity) {
   return true;
 }
 
-function freezeProjection(value) {
-  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
-  Object.freeze(value);
-  for (const child of Object.values(value)) freezeProjection(child);
-  return value;
-}
-
 /**
  * Derive whether the current Road-card + movement draft may be committed.
  *
@@ -127,7 +120,13 @@ export function deriveRoadMoveDecision(input = {}) {
   else if (canDecide && resolution === RESOLUTIONS.SOLE_COMPATIBLE) reason = 'READY_SOLE_COMPATIBLE';
   else if (legalPath) reason = 'ROAD_CARD_UNRESOLVED';
 
-  return freezeProjection({
+  const compatibleRoadCardIdentities = Object.freeze(
+    compatibleInHand.map(({ identity }) => identity)
+  );
+
+  // Freeze only the projection containers. The selected card remains the
+  // current hand object supplied by the caller and is never mutated/frozen here.
+  return Object.freeze({
     schema: SCHEMA,
     canDecide,
     reason,
@@ -139,7 +138,7 @@ export function deriveRoadMoveDecision(input = {}) {
     focusedRoadCardInHand: focusInHand,
     focusedRoadCardCompatible: focusCompatible,
     compatibleRoadCardCount: compatibleInHand.length,
-    compatibleRoadCardIdentities: compatibleInHand.map(({ identity }) => identity)
+    compatibleRoadCardIdentities
   });
 }
 

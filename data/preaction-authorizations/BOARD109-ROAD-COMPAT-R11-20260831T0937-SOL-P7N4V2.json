@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD109-ROAD-COMPAT-R11-20260831T0937-SOL-P7N4V2",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "ROAD_MOVE_COMPATIBILITY_CORE_R11",
+  "acquireKey": "BOARD109-ROAD-COMPAT-R11-20260831T0937-SOL-P7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-BOARD109-ROAD-COMPAT-R11-20260831T0937",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-CURRENT-109-GRAPH-CONSUMER-PLUS-CONVENTIONAL-NODE-PAIR",
+  "proceedToken": "PROCEED|BOARD109-ROAD-COMPAT-R11-20260831T0937-SOL-P7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260831T0937JST",
+  "authorizationBaseSha": "20dafde6986af00e94d37252298da1adffbeb429",
+  "scope": [
+    "browser/road-move-compatibility-core.mjs",
+    "tests/road-move-compatibility-core.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_COMPATIBILITY_CORE_R11",
+  "leaseAcquireKey": "BOARD109-ROAD-COMPAT-R11-20260831T0937-SOL-P7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 09:37 JST",
+  "leaseUntilJst": "2026-08-31 10:37 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:N10",
+  "leaseScope": [
+    "browser/road-move-compatibility-core.mjs",
+    "tests/road-move-compatibility-core.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@20dafde6986af00e94d37252298da1adffbeb429; branch work/board109-road-compat-r11-20260831; browser/road-move-compatibility-core.mjs + tests/road-move-compatibility-core.test.mjs only; transient data/preaction-authorizations/BOARD109-ROAD-COMPAT-R11-20260831T0937-SOL-P7N4V2.json first-commit authorization then cleanup-delete before final head; own branch/PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row10. browser/GAMEROAD.html, existing 109 graph, Battle cards/Battle rules, save/economy/deploy/workflows/formal assets remain read-only."
+}

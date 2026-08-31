@@ -66,9 +66,6 @@ export function createNewBaseMatchStateSkeleton() {
   return {
     schema: NEW_BASE_MATCH_STATE_SCHEMA,
     ruleset: { ...NEW_BASE_MATCH_RULESET },
-    config: {
-      manaRecoveryPerTurn: null,
-    },
   };
 }
 

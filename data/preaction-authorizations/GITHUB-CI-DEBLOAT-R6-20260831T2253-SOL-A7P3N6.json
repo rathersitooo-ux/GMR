@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GITHUB-CI-DEBLOAT-R6-20260831T2253-SOL-A7P3N6",
+  "taskId": "GITHUB-CI-BROWSER-NODE-001",
+  "workUnitKey": "BROWSER_CI_REDUNDANT_E2E_DEDUP_R6",
+  "acquireKey": "GITHUB-CI-DEBLOAT-R6-20260831T2253-SOL-A7P3N6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "DIRECT_CURRENT_WORKFLOW_INSPECTION_DUPLICATE_BROWSER_E2E_AND_WORK_PUSH_TRIGGERS",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "DEDICATED_PR_BROWSER_LANES_AND_POST_DEPLOY_PUBLIC_ORIGIN_LANE_REMAIN",
+  "proceedToken": "PROCEED|GITHUB-CI-DEBLOAT-R6-20260831T2253-SOL-A7P3N6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|subtractive-browser-ci-debloat",
+  "authorizationBaseSha": "be3f774dd3c1dea4db2fb9dcf4b950c3f42997d0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-CI-BROWSER-NODE-001",
+  "leaseWorkUnitKey": "BROWSER_CI_REDUNDANT_E2E_DEDUP_R6",
+  "leaseAcquireKey": "GITHUB-CI-DEBLOAT-R6-20260831T2253-SOL-A7P3N6",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 22:53 JST",
+  "leaseUntilJst": "2026-08-31 23:53 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A233:L233",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh base main@be3f774dd3c1dea4db2fb9dcf4b950c3f42997d0; new branch work/browser-ci-debloat-r6-20260831; .github/workflows/browser-node-ci.yml; .github/workflows/browser-runtime-smoke.yml; .github/workflows/browser-full-interaction.yml; .github/workflows/gameroad-required-gate.yml; transient PRE_ACTION for this acquire only; own PR/checks/expected-head merge; old PR#826 close-as-superseded after successor exists. Product/runtime/browser content/tests/deploy/assets unrelated read-only.",
+  "scope": [
+    ".github/workflows/browser-node-ci.yml",
+    ".github/workflows/browser-runtime-smoke.yml",
+    ".github/workflows/browser-full-interaction.yml",
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/browser-node-ci.yml",
+    ".github/workflows/browser-runtime-smoke.yml",
+    ".github/workflows/browser-full-interaction.yml",
+    ".github/workflows/gameroad-required-gate.yml"
+  ]
+}

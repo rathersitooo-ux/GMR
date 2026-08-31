@@ -88,12 +88,32 @@ ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}{
   min-width:${HOME_TOUCH_TARGET_MIN_PX}px;
   min-height:${HOME_TOUCH_TARGET_MIN_PX}px;
   touch-action:manipulation;
+  transition:opacity 120ms ease-out,filter 120ms ease-out,outline-color 120ms ease-out;
+}
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}[data-home-target="setup"],
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}[data-home-target="battle"]{
+  opacity:1;
+  filter:brightness(1.16) saturate(1.08);
+  outline:2px solid currentColor;
+  outline-offset:3px;
+  font-weight:800;
+}
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}:not([data-home-target="setup"]):not([data-home-target="battle"]){
+  opacity:.72;
+  filter:brightness(.88) saturate(.78);
+}
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}:not([data-home-target="setup"]):not([data-home-target="battle"]):hover,
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}:not([data-home-target="setup"]):not([data-home-target="battle"]):focus-visible,
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}:not([data-home-target="setup"]):not([data-home-target="battle"])[data-home-slidepad-preview="true"]{
+  opacity:1;
+  filter:brightness(1.06) saturate(1);
 }
 ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}:focus-visible{
   outline:2px solid currentColor;
   outline-offset:3px;
 }
 ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}[data-home-slidepad-preview="true"]{
+  opacity:1;
   outline:2px solid currentColor;
   outline-offset:4px;
   filter:brightness(1.12) saturate(1.05);
@@ -105,6 +125,7 @@ ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SLIDEPAD_CENTER_SELECTOR}{
 @media (prefers-reduced-motion:reduce){
   ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}{
     scroll-behavior:auto;
+    transition:none;
   }
 }
 `;

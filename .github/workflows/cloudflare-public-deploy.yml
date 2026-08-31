@@ -21,7 +21,7 @@ permissions:
 
 concurrency:
   group: gameroad-cloudflare-public-deploy
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.sha != github.event.workflow_run.head_sha) }}
 
 jobs:
   deploy:

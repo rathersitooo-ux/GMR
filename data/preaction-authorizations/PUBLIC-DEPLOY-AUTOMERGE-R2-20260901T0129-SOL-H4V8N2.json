@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PUBLIC-DEPLOY-AUTOMERGE-R2-20260901T0129-SOL-H4V8N2",
+  "taskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "workUnitKey": "PUBLIC_DEPLOY_AUTOMERGE_DISPATCH_CHAIN_R2",
+  "acquireKey": "PUBLIC-DEPLOY-AUTOMERGE-R2-20260901T0129-SOL-H4V8N2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR846_FAIL_CLOSED_ONLY_ON_UNCLASSIFIED_AUTO_MERGE_WORKFLOW",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR846_PREACTION_AND_PUBLIC_PACKAGE_PASS_PLUS_EXACT_REQUIRED_GATE_FAILURE_STEP",
+  "proceedToken": "PROCEED|PUBLIC-DEPLOY-AUTOMERGE-R2-20260901T0129-SOL-H4V8N2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|PUBLIC_DEPLOY_CHAIN_R2_ONLY",
+  "authorizationBaseSha": "7b0ba59e4b563d7e8f664f8ae79fc503ba8a3b12",
+  "scope": [
+    ".github/workflows/required-gate-auto-merge.yml",
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "leaseWorkUnitKey": "PUBLIC_DEPLOY_AUTOMERGE_DISPATCH_CHAIN_R2",
+  "leaseAcquireKey": "PUBLIC-DEPLOY-AUTOMERGE-R2-20260901T0129-SOL-H4V8N2",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 01:29 JST",
+  "leaseUntilJst": "2026-09-01 02:29 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A311:L311",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR new branch work/public-deploy-automerge-r2-20260901 from exact main 7b0ba59e4b563d7e8f664f8ae79fc503ba8a3b12; .github/workflows/required-gate-auto-merge.yml + .github/workflows/gameroad-required-gate.yml only; transient data/preaction-authorizations/PUBLIC-DEPLOY-AUTOMERGE-R2-20260901T0129-SOL-H4V8N2.json; own PR/checks/expected-head merge; own event/lease tuple. READ_ONLY .github/workflows/cloudflare-public-deploy.yml, browser/**, tests/browser-full-interaction.spec.mjs, deploy/cloudflare/**, Rogue, Battle, save/economy/assets/unrelated.",
+  "leaseScope": [
+    ".github/workflows/required-gate-auto-merge.yml",
+    ".github/workflows/gameroad-required-gate.yml"
+  ]
+}

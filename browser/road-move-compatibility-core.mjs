@@ -1,17 +1,17 @@
 const MIN_ROAD_VALUE = 1;
 const MAX_ROAD_VALUE = 6;
 
-function safeCall(fn, args) {
+function safeCall(fn, args, receiver) {
   if (typeof fn !== 'function') return { ok: false, value: undefined };
   try {
-    return { ok: true, value: fn(...args) };
+    return { ok: true, value: fn.apply(receiver, args) };
   } catch {
     return { ok: false, value: undefined };
   }
 }
 
 function readRoadValue(card, boardState) {
-  const result = safeCall(boardState?.roadValueOf, [card]);
+  const result = safeCall(boardState?.roadValueOf, [card], boardState);
   if (!result.ok) return null;
   const value = result.value;
   if (!Number.isSafeInteger(value) || value < MIN_ROAD_VALUE || value > MAX_ROAD_VALUE) return null;
@@ -19,7 +19,7 @@ function readRoadValue(card, boardState) {
 }
 
 function readStepCount(path, boardState) {
-  const result = safeCall(boardState?.pathStepCountOf, [path]);
+  const result = safeCall(boardState?.pathStepCountOf, [path], boardState);
   if (!result.ok) return null;
   const steps = result.value;
   if (!Number.isSafeInteger(steps) || steps < 1) return null;
@@ -27,7 +27,7 @@ function readStepCount(path, boardState) {
 }
 
 function pathPasses(predicate, path, boardState) {
-  const result = safeCall(predicate, [path]);
+  const result = safeCall(predicate, [path], boardState);
   return result.ok && result.value === true;
 }
 

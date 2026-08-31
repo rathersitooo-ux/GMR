@@ -105,6 +105,9 @@ assert.equal(runtime.shell.dataset.mode, 'MATCH_PLAN');
 assert.equal(runtime.phaseSurface.hidden, true);
 assert.equal(runtime.planSlot.hidden, false);
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['idle', 'idle', 'idle', 'idle']);
+const roleSurfaces = runtime.laneSurfaces.map(node => node.children[1]);
+assert.deepEqual(roleSurfaces.map(node => node.hidden), [true, true, true, true]);
+assert.deepEqual(roleSurfaces.map(node => node.textContent), ['', '', '', '']);
 
 const attackPlan = {
   presentationOnly: true,
@@ -133,6 +136,8 @@ assert.equal(runtime.shell.dataset.eventId, 'attack-1');
 assert.equal(runtime.phaseSurface.dataset.battleScreenInput, 'skip|public_info|accessibility');
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.participantId), ['P1', 'P2', 'P3', 'P4']);
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['source', 'idle', 'idle', 'target']);
+assert.deepEqual(roleSurfaces.map(node => node.hidden), [false, true, true, false]);
+assert.deepEqual(roleSurfaces.map(node => node.textContent), ['source', '', '', 'target']);
 assert.equal(runtime.resolutionSurface.textContent, 'EXISTING LIVE ADAPTER OWNS THIS CONTENT');
 assert.equal(runtime.resolutionSurface.dataset.battleScreenEventId, 'attack-1');
 
@@ -163,13 +168,12 @@ assert.equal(runtime.shell.dataset.motion, 'static_only');
 assert.equal(runtime.shell.dataset.returnIntent, 'RESULT');
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['loser', 'loser', 'loser', 'winner']);
 assert.equal(runtime.phaseSurface.dataset.battleScreenPhase, 'finisher');
-const resolvedRoleSurfaces = runtime.laneSurfaces.map(node => node.children[1]);
-assert.deepEqual(resolvedRoleSurfaces.map(node => node.hidden), [true, true, true, true]);
-assert.deepEqual(resolvedRoleSurfaces.map(node => node.textContent), ['', '', '', '']);
+assert.deepEqual(roleSurfaces.map(node => node.hidden), [true, true, true, true]);
+assert.deepEqual(roleSurfaces.map(node => node.textContent), ['', '', '', '']);
 runtime.render(attack);
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['source', 'idle', 'idle', 'target']);
-assert.deepEqual(resolvedRoleSurfaces.map(node => node.hidden), [false, false, false, false]);
-assert.deepEqual(resolvedRoleSurfaces.map(node => node.textContent), ['source', 'idle', 'idle', 'target']);
+assert.deepEqual(roleSurfaces.map(node => node.hidden), [false, true, true, false]);
+assert.deepEqual(roleSurfaces.map(node => node.textContent), ['source', '', '', 'target']);
 
 assert.equal(runtime.destroy(), true);
 assert.equal(runtime.destroy(), false);
@@ -226,7 +230,7 @@ assert.equal(BATTLE_SCREEN_RUNTIME.formalArtOwnedHere, false);
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 56,
+  tests: 62,
   freshMount: {
     laneCount: runtime.laneSurfaces.length,
     phaseAnchor: runtime.phaseSurface.id,

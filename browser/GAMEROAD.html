@@ -4173,4 +4173,56 @@ import { createHomeThemeProfile, createHomePresentationState, resolveHomeProject
   });
 })();
 </script>
+<script id="gameroad-rogue-run-host-r1">
+(() => {
+  'use strict';
+  const qa = globalThis.__GAMEROAD_TEST__;
+  if (!qa?.state || typeof qa.show !== 'function') return;
+  const clone = (value) => JSON.parse(JSON.stringify(value));
+  globalThis.GAMEROAD_ROGUE_HOST = Object.freeze({
+    document,
+    createRunIdentity() {
+      const token = globalThis.crypto?.randomUUID?.() || `r${Date.now().toString(36)}`;
+      const runId = `rogue-${token}`;
+      return { runId, pathSeed: { source: 'current-browser', runId }, chapterIdentity: null };
+    },
+    readDeckSnapshot() {
+      return clone(qa.state.saveAuthorityDeck || qa.state.savedDeck);
+    },
+    readHandSnapshot() {
+      const human = qa.state.match?.players?.find((player) => player.human);
+      return human ? { cardIds: [...human.hand] } : null;
+    },
+    readScreen() {
+      return document.querySelector('.screen.active[data-screen]')?.dataset?.screen || null;
+    },
+    readMatchSnapshot() {
+      const match = qa.state.match;
+      if (!match?.id) return null;
+      const lastResult = match.lastResult;
+      return {
+        matchId: String(match.id),
+        result: lastResult ? {
+          headline: lastResult.headline,
+          grade: lastResult.grade,
+          points: clone(lastResult.points),
+          ranking: lastResult.ranking.map((row) => ({
+            participantId: row.player?.id || null,
+            rank: row.rank,
+            depth: row.depth,
+          })),
+        } : null,
+      };
+    },
+    showSetup() { qa.show('setup'); },
+    showHome() { qa.show('home'); },
+  });
+})();
+</script>
+<script type="module" id="gameroad-rogue-run-live-mount-r1">
+import { mountRogueRunRuntime } from './rogue-run-runtime-mount.mjs';
+if (globalThis.GAMEROAD_ROGUE_HOST) {
+  globalThis.GAMEROAD_ROGUE_RUNTIME = mountRogueRunRuntime(globalThis.GAMEROAD_ROGUE_HOST);
+}
+</script>
 </body></html>

@@ -12,6 +12,11 @@ import {
   createBootLoadingState,
   projectBootLoadingPresentation,
 } from '../browser/boot-loading-presentation-core.mjs';
+import {
+  resolveHomeSlidepadRelease,
+  resolveHomeSlidepadRole,
+  resolveHomeSlidepadRouteId,
+} from '../browser/home-boot-runtime-mount.mjs';
 
 const landscapeProjection = Object.freeze({
   projectionKey: 'Home:HOME_INITIAL_DEFAULT:landscape',
@@ -140,4 +145,43 @@ test('Boot normal/reduced/lowPerf variants keep the same semantic state and acti
   assert.deepEqual(normal.actionIds, lowPerf.actionIds);
   assert.equal(reduced.presentationProfile, 'reduced');
   assert.equal(lowPerf.presentationProfile, 'lowperf-static');
+});
+
+const liveSlidepadRoutes = ['setup', 'shop', 'characters', 'cards'];
+
+test('Home SlidePad restores the four fixed directional responsibilities', () => {
+  assert.equal(resolveHomeSlidepadRole({ dx: 0, dy: -48 }), 'battle');
+  assert.equal(resolveHomeSlidepadRole({ dx: 48, dy: 0 }), 'shop');
+  assert.equal(resolveHomeSlidepadRole({ dx: -42, dy: -34 }), 'partner');
+  assert.equal(resolveHomeSlidepadRole({ dx: -42, dy: 20 }), 'cards');
+});
+
+test('Home SlidePad keeps DOWN and the center dead-zone unassigned', () => {
+  assert.equal(resolveHomeSlidepadRole({ dx: 0, dy: 48 }), null);
+  assert.equal(resolveHomeSlidepadRole({ dx: 8, dy: -7 }), null);
+  assert.equal(resolveHomeSlidepadRole({ dx: 10, dy: 20 }), null);
+});
+
+test('Home SlidePad resolves only routes that already exist in the current Home consumer', () => {
+  assert.equal(resolveHomeSlidepadRouteId(liveSlidepadRoutes, 'battle'), 'setup');
+  assert.equal(resolveHomeSlidepadRouteId(liveSlidepadRoutes, 'shop'), 'shop');
+  assert.equal(resolveHomeSlidepadRouteId(liveSlidepadRoutes, 'partner'), 'characters');
+  assert.equal(resolveHomeSlidepadRouteId(liveSlidepadRoutes, 'cards'), 'cards');
+  assert.equal(resolveHomeSlidepadRouteId(['shop', 'cards'], 'battle'), null);
+  assert.equal(resolveHomeSlidepadRouteId(liveSlidepadRoutes, 'down'), null);
+});
+
+test('Home SlidePad release fail-closes instead of inventing a destination', () => {
+  assert.deepEqual(
+    resolveHomeSlidepadRelease({ dx: 0, dy: -50, routeIds: liveSlidepadRoutes }),
+    { role: 'battle', routeId: 'setup', commit: true },
+  );
+  assert.deepEqual(
+    resolveHomeSlidepadRelease({ dx: 0, dy: 50, routeIds: liveSlidepadRoutes }),
+    { role: null, routeId: null, commit: false },
+  );
+  assert.deepEqual(
+    resolveHomeSlidepadRelease({ dx: 0, dy: -50, routeIds: ['shop', 'cards'] }),
+    { role: 'battle', routeId: null, commit: false },
+  );
 });

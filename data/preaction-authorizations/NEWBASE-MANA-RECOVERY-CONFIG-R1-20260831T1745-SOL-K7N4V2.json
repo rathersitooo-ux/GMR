@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-MANA-RECOVERY-CONFIG-R1-20260831T1745-SOL-K7N4V2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "NEW_BASE_MANA_RECOVERY_CONFIG_R1",
+  "acquireKey": "NEWBASE-MANA-RECOVERY-CONFIG-R1-20260831T1745-SOL-K7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PRED-NEWBASE-MANA-UNDECIDED-NO-DEFAULT-R1",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REHEARSAL-UNDECIDED-CONFIG-ROUNDTRIP-R1",
+  "proceedToken": "PROCEED|NEWBASE-MANA-RECOVERY-CONFIG-R1-20260831T1745-SOL-K7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260831T1745JST",
+  "authorizationBaseSha": "78084445e46cbd895059a88e3c049d8fccb2e389",
+  "scope": [
+    "browser/new-base-mana-recovery-config.mjs",
+    "tests/new-base-mana-recovery-config.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "NEW_BASE_MANA_RECOVERY_CONFIG_R1",
+  "leaseAcquireKey": "NEWBASE-MANA-RECOVERY-CONFIG-R1-20260831T1745-SOL-K7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 17:45 JST",
+  "leaseUntilJst": "2026-08-31 18:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A258:L258",
+  "leaseExactMutableResources": "browser/new-base-mana-recovery-config.mjs; tests/new-base-mana-recovery-config.test.mjs; own branch work/newbase-mana-recovery-config-r1-20260831; own PR/checks/expected-head merge; transient PRE_ACTION manifest only",
+  "leaseScope": [
+    "browser/new-base-mana-recovery-config.mjs",
+    "tests/new-base-mana-recovery-config.test.mjs"
+  ],
+  "solutionSignature": "new-base-turn-start-mana-recovery-amount-config-seam",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-NEWBASE-MANA-CONFIG-R1",
+  "solutionSearchEvidence": [
+    "Drive:1rRgM6plyel-RXem_GKfWVgRByaRNOnAbAR33jn7uJ1I legacy full-refill exists but authority gap is recorded",
+    "GitHub:main@78084445e46cbd895059a88e3c049d8fccb2e389 shared Battle/pursuit mana implementations exist but no new-base unresolved recovery config seam exists",
+    "Drive:CURRENT_ACTIVE_LEASES fresh scan found no active mana-config owner before acquisition"
+  ],
+  "buildResidualReason": "Only the unresolved new-base rules parameter holder is missing. Runtime mana state and mutation remain owned by the existing shared Battle path and will be composed by the separate turn-start hook/orchestrator; this work unit must not create a second mana engine."
+}

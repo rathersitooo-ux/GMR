@@ -1,4 +1,4 @@
-const FIXED_JANKEN_HAND_SET = new Set(["ROCK", "SCISSORS", "PAPER"]);
+const FIXED_JANKEN_HAND_ORDER = Object.freeze(["ROCK", "SCISSORS", "PAPER"]);
 
 function requireObject(value, label) {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -29,28 +29,25 @@ function validateHand3(hand) {
   return ids;
 }
 
-function validateFixedSlots(fixedSlots) {
-  if (!Array.isArray(fixedSlots) || fixedSlots.length !== 3) {
-    throw new RangeError("fixed_slots_must_contain_exactly_3_slots");
-  }
-
-  const normalized = fixedSlots.map((slot, index) => {
-    requireObject(slot, `fixed_slot_${index}`);
-    const slotId = requireNonEmptyString(slot.slotId, `fixed_slot_${index}_slotId`);
-    const jankenHand = requireNonEmptyString(slot.jankenHand, `fixed_slot_${index}_jankenHand`);
+function validateFixedSlotState(fixedSlotState) {
+  requireObject(fixedSlotState, "fixedSlotState");
+  const slots = FIXED_JANKEN_HAND_ORDER.map((jankenHand) => {
+    const slot = requireObject(fixedSlotState[jankenHand], `fixed_slot_${jankenHand}`);
+    const slotId = requireNonEmptyString(slot.slotId, `fixed_slot_${jankenHand}_slotId`);
+    const actualJankenHand = requireNonEmptyString(
+      slot.jankenHand,
+      `fixed_slot_${jankenHand}_jankenHand`,
+    );
+    if (actualJankenHand !== jankenHand) {
+      throw new RangeError(`fixed_slot_${jankenHand}_must_keep_its_janken_identity`);
+    }
     return Object.freeze({ slotId, jankenHand });
   });
 
-  if (new Set(normalized.map((slot) => slot.slotId)).size !== 3) {
+  if (new Set(slots.map((slot) => slot.slotId)).size !== 3) {
     throw new RangeError("fixed_slot_ids_must_be_unique");
   }
-
-  const hands = normalized.map((slot) => slot.jankenHand);
-  if (new Set(hands).size !== 3 || hands.some((hand) => !FIXED_JANKEN_HAND_SET.has(hand))) {
-    throw new RangeError("fixed_slots_must_be_exactly_ROCK_SCISSORS_PAPER");
-  }
-
-  return Object.freeze(normalized);
+  return Object.freeze(slots);
 }
 
 function createPolicyInput(hand, fixedSlots) {
@@ -77,15 +74,15 @@ function validateAssignmentProposal(proposal, handIds) {
 }
 
 /**
- * Automatically binds exactly three current-hand cards to externally supplied
- * fixed ROCK / SCISSORS / PAPER slots.
+ * Automatically binds exactly three current-hand cards to the shared fixed
+ * ROCK / SCISSORS / PAPER slot state.
  *
  * The assignment rule is deliberately injected. This core has no default
  * policy and never derives the janken hand from a card's native suit.
  */
-export function autoAssignHand3ToFixedJankenSlots({ hand, fixedSlots, assignmentPolicy } = {}) {
+export function autoAssignHand3ToFixedJankenSlots({ hand, fixedSlotState, assignmentPolicy } = {}) {
   const handIds = validateHand3(hand);
-  const slots = validateFixedSlots(fixedSlots);
+  const slots = validateFixedSlotState(fixedSlotState);
   if (typeof assignmentPolicy !== "function") {
     throw new TypeError("assignmentPolicy_required");
   }

@@ -10,7 +10,9 @@ const road = (value) => Object.freeze({ id: `R${value}`, value });
 const route = (steps) => Array.from({ length: steps + 1 }, (_, i) => `N${i}`);
 const ids = (cards) => cards.map((card) => card.id);
 
-function deriveByMaximum({ handRoadCards, currentPath }) {
+// Test oracle only. Production compatibility is injected from the shared
+// compatibleRoadCards(handRoadCards, path, boardState) owner.
+function deriveByMaximum(handRoadCards, currentPath) {
   const steps = currentPath.length - 1;
   return handRoadCards.filter((card) => card.value >= steps);
 }
@@ -59,9 +61,9 @@ test('recomputes candidates from the current path when the path shrinks or grows
 
 test('candidate history is never restored; current hand and current path are re-read every call', () => {
   let derivations = 0;
-  const derive = (input) => {
+  const derive = (handRoadCards, currentPath) => {
     derivations += 1;
-    return deriveByMaximum(input);
+    return deriveByMaximum(handRoadCards, currentPath);
   };
 
   const withFour = projectRoadPathCandidates({
@@ -78,6 +80,30 @@ test('candidate history is never restored; current hand and current path are re-
   });
   assert.deepEqual(ids(withoutFour.compatibleRoadCards), ['R6']);
   assert.equal(derivations, 2);
+});
+
+test('passes the shared compatibility function current hand, path, and boardState', () => {
+  const boardState = Object.freeze({ version: 23 });
+  const hand = [road(3), road(5)];
+  const path = route(2);
+  let observed = null;
+
+  const projection = projectRoadPathCandidates({
+    currentPath: path,
+    handRoadCards: hand,
+    boardState,
+    deriveCompatibleRoadCards: (seenHand, seenPath, seenBoardState) => {
+      observed = { seenHand, seenPath, seenBoardState };
+      return [seenHand[1]];
+    },
+  });
+
+  assert.equal(observed.seenBoardState, boardState);
+  assert.deepEqual(observed.seenHand, hand);
+  assert.deepEqual(observed.seenPath, path);
+  assert.equal(Object.isFrozen(observed.seenHand), true);
+  assert.equal(Object.isFrozen(observed.seenPath), true);
+  assert.deepEqual(ids(projection.compatibleRoadCards), ['R5']);
 });
 
 test('an insufficient focused Road card does not delete the path or auto-switch the focus', () => {

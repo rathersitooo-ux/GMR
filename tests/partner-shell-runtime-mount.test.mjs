@@ -66,6 +66,27 @@ test('runtime model exposes only explicitly connected hub actions', () => {
   assert.equal(model.menuActions.some((item) => item.action === 'OPEN_TEA'), false);
 });
 
+test('strategy model exposes only connected formal choices and marks current choice', () => {
+  const contexts = [];
+  const model = buildPartnerShellRuntimeModel({
+    activePartnerId: 'partner.saasuna',
+    roster,
+    view: 'strategy',
+    strategyId: 'max',
+  }, {
+    canDispatch: (action, context) => {
+      if (action === 'SELECT_STRATEGY') contexts.push(context);
+      return action === 'SELECT_STRATEGY';
+    },
+  });
+
+  assert.deepEqual(model.strategyActions.map((item) => item.strategyId), ['left', 'right', 'max', 'min']);
+  assert.deepEqual(model.strategyActions.map((item) => item.label), ['left', 'right', 'max', 'min']);
+  assert.equal(model.strategyActions.find((item) => item.strategyId === 'max').selected, true);
+  assert.equal(model.strategyActions.filter((item) => item.selected).length, 1);
+  assert.deepEqual(contexts.map((context) => context.strategyId), ['left', 'right', 'max', 'min']);
+});
+
 test('list detail buttons carry partner identity but never change active partner', () => {
   const input = { activePartnerId: 'partner.saasuna', roster, view: 'list' };
   const before = structuredClone(input);
@@ -99,9 +120,41 @@ test('mount renders connected actions and dispatches intent without local naviga
     action: 'OPEN_ACTIVE_DETAIL',
     targetView: 'detail',
     partnerId: null,
+    strategyId: null,
     sourceView: 'hub',
   }]);
   assert.equal(runtime.getLastModel().view, 'hub');
+});
+
+test('strategy mount renders four buttons and dispatches selected strategy id', () => {
+  const root = makeRoot();
+  const events = [];
+  const runtime = mountPartnerShellRuntime({
+    root,
+    getInput: () => ({
+      activePartnerId: 'partner.saasuna',
+      roster,
+      view: 'strategy',
+      strategyId: 'right',
+    }),
+    canDispatch: (action) => action === 'SELECT_STRATEGY',
+    onAction: (event) => events.push(event),
+  });
+
+  const result = runtime.render();
+  assert.equal(result.ok, true);
+  const buttons = allNodes(root).filter((node) => node.tagName === 'BUTTON');
+  assert.deepEqual(buttons.map((button) => button.dataset.strategyId), ['left', 'right', 'max', 'min']);
+  assert.equal(buttons.find((button) => button.dataset.strategyId === 'right').dataset.partnerShellSelected, 'true');
+
+  buttons.find((button) => button.dataset.strategyId === 'max').click();
+  assert.deepEqual(events, [{
+    action: 'SELECT_STRATEGY',
+    targetView: null,
+    partnerId: null,
+    strategyId: 'max',
+    sourceView: 'strategy',
+  }]);
 });
 
 test('invalid caller state clears the mount instead of auto-picking or inventing Partner state', () => {

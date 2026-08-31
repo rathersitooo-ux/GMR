@@ -3,6 +3,7 @@ import {
   createHomeShellState,
   HOME_TOUCH_TARGET_MIN_PX,
 } from './home-shell-presentation-core.mjs';
+import { refreshDailyTourHomeLauncher } from './daily-tour-home-launcher.mjs';
 
 const GLOBAL_KEY = 'GAMEROAD_HOME_BOOT_PRESENTATION';
 const STYLE_ID = 'gameroad-home-shell-runtime-style';
@@ -157,6 +158,7 @@ export function refreshHomeBootPresentation() {
     routeIds: state.routeIds,
     selectedRouteId: state.selectedRouteId,
   });
+  refreshDailyTourHomeLauncher(home, { active, routeButtons: buttons });
 
   const entering = active && !runtime.active;
   runtime.active = active;

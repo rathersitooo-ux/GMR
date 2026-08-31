@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - 'work/**'
     paths:
       - 'tools/advice-collective-eval.mjs'
       - 'tests/advice-collective-eval.test.mjs'

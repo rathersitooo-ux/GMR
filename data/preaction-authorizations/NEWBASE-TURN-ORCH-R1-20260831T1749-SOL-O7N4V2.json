@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-TURN-ORCH-R1-20260831T1749-SOL-O7N4V2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "NEW_BASE_TURN_ORCHESTRATOR_R1",
+  "acquireKey": "NEWBASE-TURN-ORCH-R1-20260831T1749-SOL-O7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "NEWBASE-TURN-ORCH-R1-ORDER-AND-BOUNDARY-REVIEW",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "NEWBASE-TURN-ORCH-R1-LOCAL-NODE-7-OF-7-PASS",
+  "proceedToken": "PROCEED|NEWBASE-TURN-ORCH-R1-20260831T1749-SOL-O7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|thin-compose|lease-snapshot",
+  "authorizationBaseSha": "fbcfdf0e4c947538a0a6f219a4c63dca7ee362f8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "NEW_BASE_TURN_ORCHESTRATOR_R1",
+  "leaseAcquireKey": "NEWBASE-TURN-ORCH-R1-20260831T1749-SOL-O7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 17:53 JST",
+  "leaseUntilJst": "2026-08-31 18:49 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A269:L269",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main base; NEW branch work/newbase-turn-orchestrator-r1-20260831; transient data/preaction-authorizations/NEWBASE-TURN-ORCH-R1-20260831T1749-SOL-O7N4V2.json create-first/delete-before-final-head if required; browser/new-base-turn-orchestrator-core.mjs + tests/new-base-turn-orchestrator-core.test.mjs only; own branch/PR/checks/expected-head merge if gates green; own CURRENT_ACTIVE_LEASES exact tuple; own R23 append-only events. READ_ONLY browser/GAMEROAD.html, active new-base ruleset/mana/fixed-slot/hand3/movement/board/ROAD/GOAL branches, pursuit shared-triad promotion/durable, Honey movement/reservation/revalidation/D06, existing Battle resolver/rules/cards, save/economy/network/deploy/workflows/formal assets/unrelated tests.",
+  "scope": [
+    "browser/new-base-turn-orchestrator-core.mjs",
+    "tests/new-base-turn-orchestrator-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-turn-orchestrator-core.mjs",
+    "tests/new-base-turn-orchestrator-core.test.mjs"
+  ],
+  "solutionSignature": "Compose current authoritative new-base, shared janken, existing Battle, and Honey-derived movement providers into one ordered turn pipeline without reimplementing their domain rules.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "NEWBASE-TURN-ORCH-R1-CURRENT-REUSE-DISCOVERY",
+  "solutionSearchEvidence": [
+    "Drive CURRENT: Honey reservation/revalidation and new-base parent/active slice ownership",
+    "GitHub main: pursuit triad core plus generic D06 movement boundary and conventional ESM/test patterns",
+    "Active sibling slices: mana config, fixed janken slots, hand3 assignment, movement budget, ROAD/GOAL structural cores"
+  ]
+}

@@ -16,6 +16,8 @@ const boardState = {
   isPathStoppable(currentPath) { return this.isPathLegal(currentPath); },
   sameRoadCard(a, b) { return a?.id === b?.id; },
 };
+// Test adapter for the already-shared compatibility contract. Product compatibility
+// remains owned by browser/road-move-compatibility-core.mjs on current main.
 function deriveCompatibleRoadCards(hand, currentPath, state) {
   const steps = state.pathStepCountOf(currentPath);
   if (steps < 1 || !state.isPathLegal(currentPath) || !state.isPathStoppable(currentPath)) return [];

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DAILY-VISIBLE-HOME-R2-20260831T0912-SOL-N6Q4V2",
+  "taskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "workUnitKey": "DAILY_VISIBLE_HOME_ORPHAN_RECOVERY_R2",
+  "acquireKey": "DAILY-VISIBLE-HOME-R2-20260831T0905-SOL-N6Q4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "DAILY-VISIBLE-HOME-R2-DONOR-DIFF-2FILES",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "DAILY-VISIBLE-HOME-R1-EXACT-BLOB-REUSE-PLUS-FOCUSED-CONTRACT-TEST",
+  "proceedToken": "PROCEED|DAILY-VISIBLE-HOME-R2-20260831T0912-SOL-N6Q4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|reuse-donor|lease-snapshot",
+  "authorizationBaseSha": "20dafde6986af00e94d37252298da1adffbeb429",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "leaseWorkUnitKey": "DAILY_VISIBLE_HOME_ORPHAN_RECOVERY_R2",
+  "leaseAcquireKey": "DAILY-VISIBLE-HOME-R2-20260831T0905-SOL-N6Q4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 09:12 JST",
+  "leaseUntilJst": "2026-08-31 09:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A239:L239",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@20dafde6986af00e94d37252298da1adffbeb429 READ_ONLY; NEW successor branch work/daily-tour-visible-home-r2-20260831; transient data/preaction-authorizations/DAILY-VISIBLE-HOME-R2-20260831T0912-SOL-N6Q4V2.json create-first/delete-before-final-head; browser/daily-tour-home-launcher.mjs exact donor blob reuse only; browser/home-boot-runtime-mount.mjs exact donor blob reuse only; tests/daily-tour-home-launcher.test.mjs NEW focused module contract only; own successor PR/checks; PR#762 metadata close-as-superseded only; old donor branch read-only; own CURRENT_ACTIVE_LEASES row239; own R22 records. .github/workflows/* READ_ONLY; browser/GAMEROAD.html READ_ONLY; all unrelated product/save/economy/assets/tests READ_ONLY.",
+  "scope": [
+    "browser/daily-tour-home-launcher.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/daily-tour-home-launcher.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/daily-tour-home-launcher.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/daily-tour-home-launcher.test.mjs"
+  ],
+  "solutionSignature": "Expose the already-built optional Daily Tour launcher through the existing Home route controls without creating a second scheduler, registry, router, save, reward, or relationship authority.",
+  "reuseDisposition": "REUSE_AS_IS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "DONOR:work/daily-tour-visible-home-r1-20260831@e25e446a5d6c3b0d77ce3195afd53549992dc38b",
+  "solutionSearchEvidence": [
+    "GitHub donor branch has exact launcher and 2-line Home mount; main compare previously behind=0 ahead=product-only after transient cleanup",
+    "Daily parent task explicitly says not to reimplement Brain/registry and names visible Home navigation as the residual"
+  ]
+}

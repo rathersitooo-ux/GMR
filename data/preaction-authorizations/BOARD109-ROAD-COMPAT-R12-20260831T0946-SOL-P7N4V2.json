@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD109-ROAD-COMPAT-R12-20260831T0946-SOL-P7N4V2",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "ROAD_MOVE_COMPATIBILITY_CORE_R12_PREACTION_REPLAY",
+  "acquireKey": "BOARD109-ROAD-COMPAT-R12-20260831T0946-SOL-P7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-BOARD109-ROAD-COMPAT-R12-20260831T0946",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-R11-LOCAL-12OF12-PLUS-CURRENT-109-CONSUMER",
+  "proceedToken": "PROCEED|BOARD109-ROAD-COMPAT-R12-20260831T0946-SOL-P7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260831T0946JST",
+  "authorizationBaseSha": "20dafde6986af00e94d37252298da1adffbeb429",
+  "scope": [
+    "browser/road-move-compatibility-core.mjs",
+    "tests/road-move-compatibility-core.test.mjs"
+  ],
+  "solutionSignature": "road-card-path-compatibility-upper-bound-road1to6-109-consumer",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-ROAD-COMPAT-R12-20260831T0946",
+  "solutionSearchEvidence": [
+    "current-main-tree@20dafde: no existing road-move-compatibility shared module",
+    "PR#93/current GAMEROAD.html: existing 109 adjacency/reachable/stoppability authority remains consumer-only",
+    "Required Gate conventional-pair classifier supports isolated browser module plus matching test without workflow mutation"
+  ],
+  "buildResidualReason": "Current product contains the 109 movement graph and Road/Battle presentation consumers but no reusable shared compatible(card,path,boardState) predicate. Build only the missing pure composition seam while injecting all existing graph/path/card decisions; do not duplicate 109 authority.",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_COMPATIBILITY_CORE_R12_PREACTION_REPLAY",
+  "leaseAcquireKey": "BOARD109-ROAD-COMPAT-R12-20260831T0946-SOL-P7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 09:46 JST",
+  "leaseUntilJst": "2026-08-31 10:46 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:L10",
+  "leaseScope": [
+    "browser/road-move-compatibility-core.mjs",
+    "tests/road-move-compatibility-core.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@20dafde6986af00e94d37252298da1adffbeb429; successor branch work/board109-road-compat-r12-20260831; browser/road-move-compatibility-core.mjs + tests/road-move-compatibility-core.test.mjs only; transient data/preaction-authorizations/BOARD109-ROAD-COMPAT-R12-20260831T0946-SOL-P7N4V2.json first-commit authorization then cleanup-delete before final head; own successor PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row10. PR#765/R11 read-only failed authorization history; browser/GAMEROAD.html, existing 109 graph, Battle cards/Battle rules, save/economy/deploy/workflows/formal assets remain read-only."
+}

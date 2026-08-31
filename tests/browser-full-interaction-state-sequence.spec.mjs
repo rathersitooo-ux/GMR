@@ -279,3 +279,222 @@ test('R19R2 mounts accepted replay rows on the production Result surface', async
 
   runtime.assertClean(testInfo);
 });
+
+async function visibleLoopScreenshot(page, testInfo, stateName) {
+  const png = await page.screenshot({ fullPage: true, animations: 'disabled' });
+  await testInfo.attach(`${testInfo.project.name}-${stateName}.png`, { body: png, contentType: 'image/png' });
+}
+
+async function visibleLoopNumeric(locator) {
+  return Number.parseInt((await locator.textContent()) ?? '', 10);
+}
+
+async function buildAndSaveVisibleLoopDeck(page, testInfo) {
+  const cardsGo = rootGo(page, 'cards');
+  await expect(cardsGo).toBeVisible();
+  await cardsGo.click();
+  const cards = page.locator('section[data-screen="cards"]');
+  await expect(cards).toBeVisible();
+
+  const deckCount = cards.locator('#deckCount');
+  const initialCount = await visibleLoopNumeric(deckCount);
+  expect(Number.isFinite(initialCount), 'initial main-deck count').toBeTruthy();
+  expect(initialCount, 'default deck leaves room for visible additions').toBeLessThan(40);
+
+  const candidateIds = await cards
+    .locator('#collectionGrid button.slot.live.cardFace:not(.inDeck)[data-id]')
+    .evaluateAll((nodes) => [...new Set(nodes.map((node) => node.getAttribute('data-id')).filter(Boolean))]);
+  const rejected = [];
+
+  for (const cardId of candidateIds) {
+    const before = await visibleLoopNumeric(deckCount);
+    if (before >= 40) break;
+    const candidate = cards
+      .locator(`#collectionGrid button.slot.live.cardFace:not(.inDeck)[data-id="${cardId}"]:visible`)
+      .first();
+    if ((await candidate.count()) === 0) continue;
+
+    await candidate.click();
+    const add = cards.locator('#addSelectedCard');
+    await expect(add, `visible add control for ${cardId}`).toBeVisible();
+    await expect(add, `visible add control for ${cardId}`).toBeEnabled();
+    await add.click();
+    await page.waitForTimeout(120);
+
+    const after = await visibleLoopNumeric(deckCount);
+    expect([before, before + 1], `deck count after visible add for ${cardId}`).toContain(after);
+    if (after === before) rejected.push(cardId);
+
+    const closePreview = cards.locator('#r4PreviewClose:visible');
+    if ((await closePreview.count()) > 0) await closePreview.click();
+  }
+
+  if (rejected.length > 0) {
+    testInfo.annotations.push({
+      type: 'visible-rule-rejection',
+      description: `Current deck rules rejected visible add attempts for ${rejected.join(', ')}; other visible candidates were used without bypassing rules.`,
+    });
+  }
+
+  await expect(deckCount, 'visible Deck construction reaches 40').toHaveText('40');
+  await expect(cards.locator('#exDeckCount')).toHaveText('0');
+
+  const trayToggle = cards.locator('#r4DeckTrayToggle:visible');
+  if ((await trayToggle.count()) > 0) {
+    await trayToggle.click();
+    await page.waitForTimeout(120);
+  }
+
+  const save = cards.locator('#saveDeck');
+  await expect(save).toBeVisible();
+  await expect(save).toBeEnabled();
+  await save.click();
+  await expect(cards.locator('#deckSaveState')).toHaveText('保存済み');
+  await visibleLoopScreenshot(page, testInfo, 'visible-first-loop-deck-saved');
+
+  if ((await trayToggle.count()) > 0) {
+    await trayToggle.click();
+    await page.waitForTimeout(120);
+  }
+
+  const back = cards.locator('[data-back]:visible').first();
+  await expect(back).toBeVisible();
+  await back.click();
+  await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+}
+
+async function satisfyVisibleLoopAbility(page) {
+  const veil = page.locator('#abilityVeil.on:visible');
+  if ((await veil.count()) === 0) return false;
+  const choices = veil.locator('#abilityChoices .abilityChoice:visible');
+  const confirm = veil.locator('#abilityConfirm:visible');
+  const count = await choices.count();
+  expect(count, 'visible ability choice has an option').toBeGreaterThan(0);
+  for (let index = 0; index < count; index += 1) {
+    await choices.nth(index).click();
+    if (await confirm.isEnabled()) {
+      await confirm.click();
+      return true;
+    }
+  }
+  throw new Error('visible ability choice never enabled confirm');
+}
+
+async function submitVisibleLoopPlan(battle) {
+  const roadSelect = battle.locator('#roadSelect');
+  const battleSelect = battle.locator('#battleSelect');
+  const hand = battle.locator('#hand .handCard:visible:not(:disabled)');
+  expect(await hand.count(), 'visible plan has at least two playable hand cards').toBeGreaterThanOrEqual(2);
+
+  if (!(await roadSelect.inputValue())) await hand.nth(0).click();
+  if (!(await battleSelect.inputValue())) {
+    const roadValue = await roadSelect.inputValue();
+    const candidates = battle.locator('#hand .handCard:visible:not(:disabled)');
+    let picked = false;
+    for (let index = 0; index < await candidates.count(); index += 1) {
+      const id = await candidates.nth(index).getAttribute('data-card-id');
+      if (!id || id === roadValue) continue;
+      await candidates.nth(index).click();
+      if (await battleSelect.inputValue()) {
+        picked = true;
+        break;
+      }
+    }
+    expect(picked, 'second visible hand card becomes Battle').toBeTruthy();
+  }
+
+  expect(await roadSelect.inputValue()).not.toBe('');
+  expect(await battleSelect.inputValue()).not.toBe('');
+  expect(await battleSelect.inputValue()).not.toBe(await roadSelect.inputValue());
+  const ready = battle.locator('#readyPlan');
+  await expect(ready).toBeEnabled();
+  await ready.click();
+}
+
+test('R30 closes visible Home Deck Battle Result Home without state injection', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'phone-touch-390x844', 'base viewport matrix covers this loop; touch project remains dedicated to @mobile-touch evidence');
+  test.setTimeout(180_000);
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+  await visibleLoopScreenshot(page, testInfo, 'visible-first-loop-home-start');
+
+  await buildAndSaveVisibleLoopDeck(page, testInfo);
+
+  const setupGo = rootGo(page, 'setup');
+  await expect(setupGo).toBeVisible();
+  await setupGo.click();
+  const setup = page.locator('section[data-screen="setup"]');
+  await expect(setup).toBeVisible();
+  await setup.locator('[data-content="road_shield"]').click();
+  await setup.locator('[data-mode="2p"]').click();
+  const start = setup.locator('#startMatch');
+  await expect(start, 'visible saved deck unlocks Start without test-state injection').toBeVisible();
+  await expect(start, 'visible saved deck unlocks Start without test-state injection').toBeEnabled();
+  await visibleLoopScreenshot(page, testInfo, 'visible-first-loop-setup-ready');
+  await start.click();
+
+  const battle = page.locator('section[data-screen="battle"]');
+  const result = page.locator('section[data-screen="result"]');
+  await expect(battle).toBeVisible();
+  await expect(battle.locator('#phaseTitle')).toContainText('行動を計画');
+  await visibleLoopScreenshot(page, testInfo, 'visible-first-loop-battle-start');
+
+  const deadline = Date.now() + 100_000;
+  let plans = 0;
+  let advances = 0;
+  let targets = 0;
+  let abilities = 0;
+
+  while (Date.now() < deadline) {
+    if (await result.isVisible().catch(() => false)) break;
+
+    if (await satisfyVisibleLoopAbility(page)) {
+      abilities += 1;
+      continue;
+    }
+
+    const advance = battle.locator('#battleResolution .resolutionAdvance:visible');
+    if ((await advance.count()) > 0) {
+      await advance.first().click();
+      advances += 1;
+      continue;
+    }
+
+    const targetConfirm = battle.locator('#targetBox.on #confirmTarget:visible');
+    if ((await targetConfirm.count()) > 0) {
+      await targetConfirm.click();
+      targets += 1;
+      continue;
+    }
+
+    const roadSelect = battle.locator('#roadSelect:visible');
+    if ((await roadSelect.count()) > 0 && (await roadSelect.isEnabled())) {
+      await submitVisibleLoopPlan(battle);
+      plans += 1;
+      continue;
+    }
+
+    await page.waitForTimeout(80);
+  }
+
+  await expect(result, 'visible Battle progression reaches Result without direct state/result injection').toBeVisible({ timeout: 2_000 });
+  expect(plans, 'at least one visible plan was submitted').toBeGreaterThan(0);
+  await expect(result.locator('#resultRanking .rankLine')).toHaveCount(2);
+  await expect(result.locator('#resultMode')).toHaveText('二人');
+  const rounds = (await result.locator('#resultRounds').textContent()) ?? '';
+  expect(rounds).toMatch(/\d+ラウンド/);
+  await visibleLoopScreenshot(page, testInfo, 'visible-first-loop-result');
+
+  const home = result.locator('[data-root-go="home"]');
+  await expect(home).toBeVisible();
+  await expect(home).toBeEnabled();
+  await home.click();
+  await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+  await visibleLoopScreenshot(page, testInfo, 'visible-first-loop-home-returned');
+
+  testInfo.annotations.push({
+    type: 'visible-first-loop',
+    description: `plans=${plans}, battleAdvances=${advances}, targetConfirms=${targets}, abilityConfirms=${abilities}, result=${rounds}`,
+  });
+  runtime.assertClean(testInfo);
+});

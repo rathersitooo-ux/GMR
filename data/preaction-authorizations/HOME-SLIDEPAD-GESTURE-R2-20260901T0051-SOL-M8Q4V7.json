@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-SLIDEPAD-GESTURE-R2-20260901T0051-SOL-M8Q4V7",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "HOME_SLIDEPAD_POINTER_GESTURE_RESTORE_R1",
+  "acquireKey": "HOME-SLIDEPAD-GESTURE-R2-20260901T0051-SOL-M8Q4V7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "HOME_SLIDEPAD_PR824_EXACT_TWO_FILE_DELTA_REVIEWED",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR824_FOCUSED_ROUTE_RESOLUTION_TEST_ORACLE",
+  "proceedToken": "PROCEED|HOME-SLIDEPAD-GESTURE-R2-20260901T0051-SOL-M8Q4V7|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|SLIDEPAD_ONLY",
+  "authorizationBaseSha": "c85c1142b100366f77f6793ee3bb29b50f5faff8",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "HOME_SLIDEPAD_POINTER_GESTURE_RESTORE_R1",
+  "leaseAcquireKey": "HOME-SLIDEPAD-GESTURE-R2-20260901T0051-SOL-M8Q4V7",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 00:51 JST",
+  "leaseUntilJst": "2026-09-01 01:51 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A311:L311",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR new branch work/home-slidepad-gesture-r2-20260901 from exact main 88ff720917e627b7f0ebbfd074eebad6f26e4b39; browser/home-boot-runtime-mount.mjs + tests/home-boot-presentation.test.mjs only; transient PRE_ACTION authorization for own PR; own PR/checks/expected-head merge; own event/lease tuple. READ_ONLY old PR#824/head c4f08917ec680a36dad936f92d58f2cff7bdee27, browser/GAMEROAD.html, tests/browser-full-interaction.spec.mjs, workflows/build/deploy/Home art/orientation core/Partner/Battle/save/economy/assets/unrelated.",
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ]
+}

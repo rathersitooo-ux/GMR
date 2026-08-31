@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createContinuousPublicBroadcastFollow } from '../browser/battle-replay-public-commentary-core.mjs';
 import {
+  createLiveReplaySession,
+  readLiveReplay,
+} from '../browser/battle-replay-live-adapter.mjs';
+import {
   advanceAuthorizedSpectatorPresence,
+  consumeAuthorizedSpectatorReplay,
   BATTLE_REPLAY_SPECTATOR_FOLLOW_ADAPTER_CONTRACT,
 } from '../browser/battle-replay-spectator-follow-adapter.mjs';
 
@@ -23,13 +28,17 @@ function presence(overrides = {}) {
   };
 }
 
-test('authorized public live presence advances the existing follow core and emits one presentation-only attach intent', () => {
-  const result = advanceAuthorizedSpectatorPresence(waitingFollow(), presence({
+function liveResult() {
+  return advanceAuthorizedSpectatorPresence(waitingFollow(), presence({
     lifecycle: 'LIVE',
     spectatable: true,
     matchId: 'MATCH-PUBLIC-1',
     publicAttachRef: 'public-watch:MATCH-PUBLIC-1',
   }));
+}
+
+test('authorized public live presence advances the existing follow core and emits one presentation-only attach intent', () => {
+  const result = liveResult();
 
   assert.equal(result.state.status, 'ATTACHED');
   assert.equal(result.followStatus.matchId, 'MATCH-PUBLIC-1');
@@ -45,12 +54,7 @@ test('authorized public live presence advances the existing follow core and emit
 });
 
 test('repeating the same authorized live match preserves core attachment identity and deterministic attach intent', () => {
-  const first = advanceAuthorizedSpectatorPresence(waitingFollow(), presence({
-    lifecycle: 'LIVE',
-    spectatable: true,
-    matchId: 'MATCH-PUBLIC-1',
-    publicAttachRef: 'public-watch:MATCH-PUBLIC-1',
-  }));
+  const first = liveResult();
   const second = advanceAuthorizedSpectatorPresence(first.state, presence({
     lifecycle: 'LIVE',
     spectatable: true,
@@ -91,12 +95,7 @@ test('denied, non-spectatable, and offline presence fail closed without retainin
 });
 
 test('match end returns the existing follow core to WAIT_NEXT_ALLOWED_MATCH and clears attach intent', () => {
-  const live = advanceAuthorizedSpectatorPresence(waitingFollow(), presence({
-    lifecycle: 'LIVE',
-    spectatable: true,
-    matchId: 'MATCH-PUBLIC-1',
-    publicAttachRef: 'public-watch:MATCH-PUBLIC-1',
-  }));
+  const live = liveResult();
   const ended = advanceAuthorizedSpectatorPresence(live.state, presence({
     lifecycle: 'ENDED',
     spectatable: false,
@@ -148,8 +147,115 @@ test('unexpected secret/private fields and denied match identity are rejected be
   );
 });
 
-test('adapter contract declares a caller-verified public presence seam with no discovery, secrets, private join, or game authority', () => {
+test('authorized attach consumes the existing live replay reader through publicAttachRef only and renders presentation-only output', async () => {
+  const session = createLiveReplaySession({
+    matchId: 'MATCH-PUBLIC-1',
+    versions: { rules: 'rules@1', content: 'content@1', state: 'state@1' },
+  });
+  let readerRequest = null;
+  let renderInput = null;
+
+  const consumed = await consumeAuthorizedSpectatorReplay(liveResult(), {
+    readPublicReplay(request) {
+      readerRequest = request;
+      return readLiveReplay(session);
+    },
+    renderPublicReplay(input) {
+      renderInput = input;
+      return true;
+    },
+  });
+
+  assert.deepEqual(Object.keys(readerRequest).sort(), [
+    'intentId',
+    'matchId',
+    'publicAttachRef',
+    'targetUserId',
+  ]);
+  assert.equal(readerRequest.publicAttachRef, 'public-watch:MATCH-PUBLIC-1');
+  assert.equal(readerRequest.matchId, 'MATCH-PUBLIC-1');
+  assert.equal(renderInput.replay.ok, true);
+  assert.equal(renderInput.replay.matchId, 'MATCH-PUBLIC-1');
+  assert.equal(renderInput.presentationOnly, true);
+  assert.equal(consumed.status, 'ATTACHED');
+  assert.equal(consumed.rendered, true);
+  assert.equal(consumed.gameplayAuthority, false);
+  assert.equal(consumed.gameStateWrite, false);
+});
+
+test('waiting/offline/denied follow clears presentation without invoking replay reader or renderer', async () => {
+  for (const snapshot of [
+    presence(),
+    presence({ lifecycle: 'OFFLINE', viewerAuthorized: false }),
+    presence({ lifecycle: 'DENIED', viewerAuthorized: false }),
+  ]) {
+    let reads = 0;
+    let renders = 0;
+    let clears = 0;
+    const result = advanceAuthorizedSpectatorPresence(waitingFollow(), snapshot);
+    const consumed = await consumeAuthorizedSpectatorReplay(result, {
+      readPublicReplay() {
+        reads += 1;
+        throw new Error('reader must not run');
+      },
+      renderPublicReplay() {
+        renders += 1;
+        throw new Error('renderer must not run');
+      },
+      clearPublicReplay() {
+        clears += 1;
+        return true;
+      },
+    });
+    assert.equal(reads, 0);
+    assert.equal(renders, 0);
+    assert.equal(clears, 1);
+    assert.equal(consumed.rendered, false);
+    assert.equal(consumed.matchId, null);
+  }
+});
+
+test('live consumer rejects mismatched replay identity and any private spectator projection', async () => {
+  await assert.rejects(
+    () => consumeAuthorizedSpectatorReplay(liveResult(), {
+      readPublicReplay() {
+        return {
+          ok: true,
+          status: 'ready',
+          schema: 'GAMEROAD_BATTLE_REPLAY_V1',
+          matchId: 'OTHER-MATCH',
+          events: [],
+        };
+      },
+      renderPublicReplay() {
+        return true;
+      },
+    }),
+    /SPECTATOR_PUBLIC_REPLAY_INVALID/,
+  );
+
+  await assert.rejects(
+    () => consumeAuthorizedSpectatorReplay(liveResult(), {
+      readPublicReplay() {
+        return {
+          ok: true,
+          status: 'ready',
+          schema: 'GAMEROAD_BATTLE_REPLAY_V1',
+          matchId: 'MATCH-PUBLIC-1',
+          events: [{ sequence: 1, kind: 'battle_resolution', publicData: {}, privateData: { hand: ['SECRET'] } }],
+        };
+      },
+      renderPublicReplay() {
+        return true;
+      },
+    }),
+    /SPECTATOR_PUBLIC_REPLAY_PRIVATE_FIELD:privateData/,
+  );
+});
+
+test('adapter contract declares a caller-verified public presence seam with no discovery, secrets, private join, game authority, or second replay state', () => {
   assert.equal(BATTLE_REPLAY_SPECTATOR_FOLLOW_ADAPTER_CONTRACT.inputAuthority, 'CALLER_VERIFIED_PUBLIC_SPECTATOR_PRESENCE');
+  assert.equal(BATTLE_REPLAY_SPECTATOR_FOLLOW_ADAPTER_CONTRACT.consumerReaderAuthority, 'CALLER_SUPPLIED_PUBLIC_ATTACH_REF_RESOLVER');
   assert.equal(BATTLE_REPLAY_SPECTATOR_FOLLOW_ADAPTER_CONTRACT.networkDiscoveryPerformed, false);
   assert.equal(BATTLE_REPLAY_SPECTATOR_FOLLOW_ADAPTER_CONTRACT.hiddenOrSecretDiscoveryAllowed, false);
   assert.equal(BATTLE_REPLAY_SPECTATOR_FOLLOW_ADAPTER_CONTRACT.ticketSecretAccepted, false);
@@ -158,6 +264,7 @@ test('adapter contract declares a caller-verified public presence seam with no d
   assert.equal(BATTLE_REPLAY_SPECTATOR_FOLLOW_ADAPTER_CONTRACT.forcePrivateJoinAllowed, false);
   assert.equal(BATTLE_REPLAY_SPECTATOR_FOLLOW_ADAPTER_CONTRACT.publicAttachRefRequiredForAttach, true);
   assert.equal(BATTLE_REPLAY_SPECTATOR_FOLLOW_ADAPTER_CONTRACT.secondFollowStateStore, false);
+  assert.equal(BATTLE_REPLAY_SPECTATOR_FOLLOW_ADAPTER_CONTRACT.secondReplayStateStore, false);
   assert.equal(BATTLE_REPLAY_SPECTATOR_FOLLOW_ADAPTER_CONTRACT.gameplayAuthority, false);
   assert.equal(BATTLE_REPLAY_SPECTATOR_FOLLOW_ADAPTER_CONTRACT.gameStateWrite, false);
 });

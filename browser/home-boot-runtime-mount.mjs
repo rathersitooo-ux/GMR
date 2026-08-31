@@ -289,6 +289,7 @@ function bindSlidepad(home) {
     pointerdown(event) {
       if (!runtime.active || runtime.slidepad.pointerId != null) return;
       if (event.pointerType === 'mouse' && event.button !== 0) return;
+      event.preventDefault();
       const rect = center.getBoundingClientRect();
       runtime.slidepad.pointerId = event.pointerId;
       runtime.slidepad.originX = rect.left + rect.width / 2;
@@ -308,10 +309,14 @@ function bindSlidepad(home) {
       const { button } = updateFromPointer(event);
       const moved = runtime.slidepad.moved;
       resetGesture();
-      if (!moved) return;
       event.preventDefault();
       event.stopPropagation();
-      if (button && runtime.active) button.click();
+      if (!runtime.active) return;
+      if (!moved) {
+        center.click();
+        return;
+      }
+      if (button) button.click();
     },
     pointercancel(event) {
       if (event.pointerId !== runtime.slidepad.pointerId) return;

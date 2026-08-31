@@ -18,7 +18,7 @@ permissions:
 
 concurrency:
   group: gameroad-cloudflare-public-deploy
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy:

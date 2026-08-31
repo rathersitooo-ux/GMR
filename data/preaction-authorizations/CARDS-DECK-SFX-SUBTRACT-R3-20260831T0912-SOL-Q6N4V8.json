@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-DECK-SFX-SUBTRACT-R3-20260831T0912-SOL-Q6N4V8",
+  "taskId": "AUDIO-FORMAL-ASSET-CROSSMEDIA-ACCEPT-001",
+  "workUnitKey": "CARDS_DECK_SYNTHETIC_SFX_SUBTRACTION_R3",
+  "acquireKey": "CARDS-DECK-SFX-SUBTRACT-R3-20260831T0912-SOL-Q6N4V8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR739-R3-SUBTRACTIVE-DIFF-ONLY-TWO-EXISTING-FILES-PUBLIC-ORIGIN-3OF3",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR739-R3-EXISTING-BEHAVIORAL-TESTS-PLUS-PUBLIC-ORIGIN-EVIDENCE",
+  "proceedToken": "PROCEED|CARDS-DECK-SFX-SUBTRACT-R3-20260831T0912-SOL-Q6N4V8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|subtractive-existing-pr|active-lease-readback",
+  "authorizationBaseSha": "20dafde6986af00e94d37252298da1adffbeb429",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "AUDIO-FORMAL-ASSET-CROSSMEDIA-ACCEPT-001",
+  "leaseWorkUnitKey": "CARDS_DECK_SYNTHETIC_SFX_SUBTRACTION_R3",
+  "leaseAcquireKey": "CARDS-DECK-SFX-SUBTRACT-R3-20260831T0912-SOL-Q6N4V8",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 09:12 JST",
+  "leaseUntilJst": "2026-08-31 10:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A240:L240",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR existing PR#739 branch work/cards-deck-sfx-subtract-r2-20260831; browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; transient data/preaction-authorizations/CARDS-DECK-SFX-SUBTRACT-R3-20260831T0912-SOL-Q6N4V8.json create-first/delete-before-final-head; PR#739 metadata/checks/expected-head merge; own CURRENT_ACTIVE_LEASES appended tuple. READ_ONLY main@20dafde6986af00e94d37252298da1adffbeb429 and all unrelated product/workflows/assets.",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ]
+}

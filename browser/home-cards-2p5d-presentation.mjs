@@ -20,7 +20,7 @@ export function isHomeCardsForward(context = {}) {
 }
 
 export function presentationDurations(profile = 'full') {
-  if (profile === 'none') return Object.freeze({ exit: 0, enter: 0 });
+  if (profile === 'none' || profile === 'lowperf-static') return Object.freeze({ exit: 0, enter: 0 });
   if (profile === 'reduced') return Object.freeze({ exit: 52, enter: 58 });
   return Object.freeze({ exit: 178, enter: 214 });
 }
@@ -72,7 +72,9 @@ function ensureStyle() {
 
 function motionProfile(context = {}) {
   const profile = String(context.motionProfile || 'full');
-  return profile === 'none' || profile === 'reduced' ? profile : 'full';
+  if (context.reducedMotion || profile === 'none') return 'none';
+  if (context.lowPerf) return 'lowperf-static';
+  return profile === 'reduced' ? 'reduced' : 'full';
 }
 
 function findSourceVisual() {
@@ -86,19 +88,23 @@ function findSourceVisual() {
 }
 
 function cloneVisual(visual) {
-  if (visual instanceof HTMLCanvasElement) {
-    const image = new Image();
-    image.src = visual.toDataURL();
-    image.alt = '';
-    return image;
+  try {
+    if (visual instanceof HTMLCanvasElement) {
+      const image = new Image();
+      image.src = visual.toDataURL();
+      image.alt = '';
+      return image;
+    }
+    const clone = visual.cloneNode(true);
+    if (clone instanceof HTMLElement) {
+      clone.removeAttribute('id');
+      clone.removeAttribute('tabindex');
+      clone.setAttribute('aria-hidden', 'true');
+    }
+    return clone;
+  } catch {
+    return null;
   }
-  const clone = visual.cloneNode(true);
-  if (clone instanceof HTMLElement) {
-    clone.removeAttribute('id');
-    clone.removeAttribute('tabindex');
-    clone.setAttribute('aria-hidden', 'true');
-  }
-  return clone;
 }
 
 function cleanupActive({ aborted = false } = {}) {
@@ -133,7 +139,8 @@ function makeStage(context) {
   heroWrap.style.width = `${source.rect.width}px`;
   heroWrap.style.height = `${source.rect.height}px`;
   const hero = cloneVisual(source.visual);
-  if (hero instanceof HTMLElement || hero instanceof SVGElement) hero.classList.add('gr2p5dHero');
+  if (!(hero instanceof HTMLElement || hero instanceof SVGElement)) return null;
+  hero.classList.add('gr2p5dHero');
   heroWrap.append(hero);
   stage.append(heroWrap);
   document.body.append(stage);
@@ -257,7 +264,7 @@ export async function runHomeCardsPresentationPhase(phase, context = {}) {
   runtime.lastPhase = String(phase || 'UNKNOWN');
   runtime.lastProfile = profile === 'none' && context.reducedMotion ? 'reduced' : profile;
   runtime.lastRoute = `${context.from}->${context.to}`;
-  if (profile === 'none') {
+  if (profile === 'none' || profile === 'lowperf-static') {
     if (phase === 'PREPARE') runtime.bypassedCount += 1;
     if (phase === 'SETTLE') {
       cleanupActive();
@@ -267,7 +274,7 @@ export async function runHomeCardsPresentationPhase(phase, context = {}) {
     return;
   }
   if (phase === 'PREPARE') {
-    makeStage(context);
+    if (!makeStage(context)) runtime.bypassedCount += 1;
     return;
   }
   if (phase === 'EXIT') {

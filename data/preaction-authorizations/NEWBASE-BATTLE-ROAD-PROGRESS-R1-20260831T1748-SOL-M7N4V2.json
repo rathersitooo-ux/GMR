@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-BATTLE-ROAD-PROGRESS-R1-20260831T1748-SOL-M7N4V2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "NEW_BASE_BATTLE_RESULT_TO_ROAD_PROGRESSION_R1",
+  "acquireKey": "NEWBASE-BATTLE-ROAD-PROGRESS-R1-20260831T1748-SOL-M7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-NEWBASE-BATTLE-ROAD-PROGRESS-R1-20260831T1750",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-ACCEPTED-LANEGAINS-PLUS-ROAD-SLOT-CONTRACT",
+  "proceedToken": "PROCEED|NEWBASE-BATTLE-ROAD-PROGRESS-R1-20260831T1748-SOL-M7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260831T1750JST",
+  "authorizationBaseSha": "78084445e46cbd895059a88e3c049d8fccb2e389",
+  "scope": [
+    "browser/new-base-battle-road-progression-core.mjs",
+    "tests/new-base-battle-road-progression-core.test.mjs"
+  ],
+  "solutionSignature": "accepted-battle-lanegains-to-road-slot-plan-adapter",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-NEWBASE-BATTLE-ROAD-PROGRESS-R1-20260831T1750",
+  "solutionSearchEvidence": [
+    "current main@78084445 already exposes accepted battle_resolution laneGains as {id,lane,before,after,added}; reuse that authoritative afterstate instead of creating a second Battle progression model",
+    "active NEW_BASE_ROAD_SLOT_12X7_CORE_R1 owns Shield-bound ROAD_SLOT structure only and intentionally does not own Battle progression or win semantics; consume its output shape after integration",
+    "current main has no dedicated Battle-result to new-base ROAD_SLOT delta adapter; old maxLaneProgress/formal-ranking seven-card instant-win logic is legacy replay behavior and remains read-only"
+  ],
+  "buildResidualReason": "A small glue contract is still required to map each accepted player+lane gain to a caller-authoritative Shield identity and exact existing ROAD_SLOT fill delta. The adapter emits an idempotent plan only and does not own persistent Road state, ownership policy, GOAL opening, winner, Result, pursuit mechanics, or a second Battle/ROAD engine.",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "NEW_BASE_BATTLE_RESULT_TO_ROAD_PROGRESSION_R1",
+  "leaseAcquireKey": "NEWBASE-BATTLE-ROAD-PROGRESS-R1-20260831T1748-SOL-M7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 17:50 JST",
+  "leaseUntilJst": "2026-08-31 18:48 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A277:L277",
+  "leaseScope": [
+    "browser/new-base-battle-road-progression-core.mjs",
+    "tests/new-base-battle-road-progression-core.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main READ_ONLY base; NEW branch work/newbase-battle-road-progress-r1-20260831; transient data/preaction-authorizations/NEWBASE-BATTLE-ROAD-PROGRESS-R1-20260831T1748-SOL-M7N4V2.json create-first/delete-before-final-head if required; browser/new-base-battle-road-progression-core.mjs + tests/new-base-battle-road-progression-core.test.mjs only; own branch/PR/checks/expected-head merge if exact-head gates green; own CURRENT_ACTIVE_LEASES exact tuple; own R23 events. CONSUME_ONLY accepted battle_resolution laneGains and NEW_BASE_ROAD_SLOT_12X7_CORE_R1 output after integration. READ_ONLY battle-replay-live-adapter.mjs, new-base-road-slot-core.mjs/branch, ROAD7->GOAL branch, GAMEROAD.html, Honey movement, existing Battle/Road rules/cards, save/economy/network/deploy/workflows/assets."
+}

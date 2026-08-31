@@ -1,3 +1,5 @@
+import './battle-board-naki-4p-visual-binding.mjs';
+
 const PROJECTION_SCHEMA = 'GAMEROAD_PARTNER_BATTLE_EVENT_PROJECTION_V1';
 const REPLAY_SCHEMA = 'GAMEROAD_BATTLE_REPLAY_V1';
 const VERSION_KEYS = Object.freeze(['rules', 'content', 'state']);

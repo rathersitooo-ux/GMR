@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-READY-VISIBLE-R1-20260831T1610-SOL-F7N4V2",
+  "taskId": "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001",
+  "workUnitKey": "BATTLE_VISIBLE_READY_CONFIRM_CANCEL_SYNC_R1",
+  "acquireKey": "BATTLE-READY-VISIBLE-R1-20260831T1610-SOL-F7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-BATTLE-READY-VISIBLE-R1-20260831T1610",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-CURRENT-SOURCE-PROOF-READY-STALE-R1",
+  "proceedToken": "PROCEED|BATTLE-READY-VISIBLE-R1-20260831T1610-SOL-F7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260831T1610JST",
+  "authorizationBaseSha": "78084445e46cbd895059a88e3c049d8fccb2e389",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-ready-visible-stale-reset.test.mjs"
+  ],
+  "solutionSignature": "friend-room-ready-copy-existing-submission-state-projection-reset",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-BATTLE-READY-VISIBLE-R1-20260831T1610",
+  "solutionSearchEvidence": [
+    "current-main@78084445: #readyPlan already uses the existing Ready feedback adapter for pressed/pending/disabled/cancel semantics; no second state machine is needed",
+    "current-main browser/GAMEROAD.html renderRemoteWait writes 予約済み・全員待ち only when private.planSubmitted is true and has no inverse copy reset",
+    "current-main browser/GAMEROAD.html renderFriendHostBattleState writes 予約済み・全員待ち only when FR.planValues.P1 exists and has no inverse copy reset; maybeResolvePlans later clears FR.planValues"
+  ],
+  "buildResidualReason": "The only fresh kana-ふ residual is stale Ready copy across friend-room state transitions. Project the copy bidirectionally from the already-authoritative submitted state, retain existing disabled semantics, and add a focused source regression. Do not touch Battle rules, Road, target authority, save, network transport, economy, or shared Battle renderer package.",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_VISIBLE_READY_CONFIRM_CANCEL_SYNC_R1",
+  "leaseAcquireKey": "BATTLE-READY-VISIBLE-R1-20260831T1610-SOL-F7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 16:10 JST",
+  "leaseUntilJst": "2026-08-31 17:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A253:L253",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-ready-visible-stale-reset.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@78084445e46cbd895059a88e3c049d8fccb2e389; NEW branch work/battle-ready-visible-r1-20260831; transient data/preaction-authorizations/BATTLE-READY-VISIBLE-R1-20260831T1610-SOL-F7N4V2.json create-first/delete-before-final-head; browser/GAMEROAD.html + tests/battle-ready-visible-stale-reset.test.mjs only; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row253. READ_ONLY browser/battle-screen-runtime-mount.mjs, shared Battle package PR#764, Battle rules/cards/Road/109/save/economy/network/hidden information/formal assets/workflows/deploy/unrelated."
+}

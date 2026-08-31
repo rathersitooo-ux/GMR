@@ -1,0 +1,5 @@
+{
+  "schema": "gameroad.codex.dispatch.v1",
+  "state": "IDLE",
+  "assignment": null
+}

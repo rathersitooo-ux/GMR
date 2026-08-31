@@ -7,6 +7,8 @@ const VISUAL_STATE = Object.freeze({
 
 export const ROAD_CARD_VISUAL_STATE = VISUAL_STATE;
 export const ROAD_CARD_COMPATIBLE_CLASS = 'gr-road-card--compatible';
+export const ROAD_CARD_FOCUSED_CLASS = 'gr-road-card--focused';
+export const ROAD_CARD_INVALID_FOCUS_CLASS = 'gr-road-card--invalid-focus';
 
 function requireUniqueIds(label, value) {
   if (!Array.isArray(value)) {
@@ -39,18 +41,53 @@ function requireOptionalKnownId(label, value, knownIds) {
   return value;
 }
 
-function buildCompatibleGlow({ reducedMotion, lowPerf }) {
-  // Static presentation tokens only. Card lift/translate is intentionally not
-  // represented here; that belongs to the separate COMPATIBLE-lift consumer.
+function buildCompatiblePresentation({ reducedMotion, lowPerf }) {
   return Object.freeze({
-    edgeEmphasis: 'strong',
+    edgeEmphasis: 'supporting',
     outlineStyle: 'solid',
-    outlineWidthPx: lowPerf ? 2 : 3,
+    outlineWidthPx: 2,
     outlineOffsetPx: 2,
-    brightnessMultiplier: lowPerf ? 1.06 : 1.12,
-    haloLayerCount: lowPerf ? 1 : 2,
-    haloBlurPx: lowPerf ? 6 : 16,
-    haloOpacity: lowPerf ? 0.58 : 0.82,
+    brightnessMultiplier: lowPerf ? 1.04 : 1.08,
+    haloLayerCount: 1,
+    haloBlurPx: lowPerf ? 5 : 10,
+    haloOpacity: lowPerf ? 0.36 : 0.48,
+    transitionMs: reducedMotion ? 0 : 90,
+    animated: false,
+    lowPerf: Boolean(lowPerf),
+  });
+}
+
+function buildFocusedPresentation({ reducedMotion, lowPerf }) {
+  // Explicit focus is the primary Road-card channel. Keep it stronger than
+  // COMPATIBLE without adding transform/lift that could double the hand's
+  // existing selected-card movement.
+  return Object.freeze({
+    edgeEmphasis: 'primary',
+    outlineStyle: 'solid',
+    outlineWidthPx: lowPerf ? 3 : 4,
+    outlineOffsetPx: 1,
+    brightnessMultiplier: lowPerf ? 1.08 : 1.14,
+    haloLayerCount: lowPerf ? 0 : 1,
+    haloBlurPx: lowPerf ? 0 : 8,
+    haloOpacity: lowPerf ? 0 : 0.58,
+    transitionMs: reducedMotion ? 0 : 90,
+    animated: false,
+    lowPerf: Boolean(lowPerf),
+  });
+}
+
+function buildInvalidFocusPresentation({ reducedMotion, lowPerf }) {
+  // Dashed edge is deliberately non-colour-only. Invalid focus must remain
+  // legible without becoming a second glow or hiding valid compatible cards.
+  return Object.freeze({
+    edgeEmphasis: 'invalid',
+    outlineStyle: 'dashed',
+    outlineWidthPx: lowPerf ? 2 : 3,
+    outlineOffsetPx: 1,
+    brightnessMultiplier: lowPerf ? 0.98 : 0.96,
+    haloLayerCount: 0,
+    haloBlurPx: 0,
+    haloOpacity: 0,
     transitionMs: reducedMotion ? 0 : 90,
     animated: false,
     lowPerf: Boolean(lowPerf),
@@ -74,11 +111,16 @@ function buildNormalPresentation({ reducedMotion, lowPerf }) {
 }
 
 /**
- * Presentation-only projection for Road-card COMPATIBLE glow.
+ * Presentation-only projection for Road-card visible state.
  *
  * `compatibleRoadCardIds` must already be derived by the current movement/card
  * compatibility authority. This module deliberately does not inspect path
  * length, Road value, board adjacency, reachability, or stoppability.
+ *
+ * Per-card priority is INVALID_FOCUS / FOCUSED / COMPATIBLE / NORMAL. The
+ * invalid state is mutually exclusive with compatibility, while an explicitly
+ * focused compatible card keeps compatibility observable in data but renders
+ * only the stronger FOCUSED presentation.
  */
 export function projectRoadCardCompatibleGlow({
   roadCardIds,
@@ -113,8 +155,18 @@ export function projectRoadCardCompatibleGlow({
     throw new Error('INVALID_FOCUS cannot simultaneously be COMPATIBLE');
   }
 
-  const compatibleGlow = buildCompatibleGlow({ reducedMotion, lowPerf });
-  const normalPresentation = buildNormalPresentation({ reducedMotion, lowPerf });
+  const presentationByState = Object.freeze({
+    [VISUAL_STATE.NORMAL]: buildNormalPresentation({ reducedMotion, lowPerf }),
+    [VISUAL_STATE.COMPATIBLE]: buildCompatiblePresentation({ reducedMotion, lowPerf }),
+    [VISUAL_STATE.FOCUSED]: buildFocusedPresentation({ reducedMotion, lowPerf }),
+    [VISUAL_STATE.INVALID_FOCUS]: buildInvalidFocusPresentation({ reducedMotion, lowPerf }),
+  });
+  const classByState = Object.freeze({
+    [VISUAL_STATE.NORMAL]: null,
+    [VISUAL_STATE.COMPATIBLE]: ROAD_CARD_COMPATIBLE_CLASS,
+    [VISUAL_STATE.FOCUSED]: ROAD_CARD_FOCUSED_CLASS,
+    [VISUAL_STATE.INVALID_FOCUS]: ROAD_CARD_INVALID_FOCUS_CLASS,
+  });
 
   return cards.map((cardId) => {
     const isCompatible = compatibleSet.has(cardId);
@@ -129,18 +181,23 @@ export function projectRoadCardCompatibleGlow({
     }
 
     const applyCompatibleGlow = visualState === VISUAL_STATE.COMPATIBLE;
+    const applyFocusedEmphasis = visualState === VISUAL_STATE.FOCUSED;
+    const applyInvalidFocusEmphasis = visualState === VISUAL_STATE.INVALID_FOCUS;
+    const stateClass = classByState[visualState];
 
     return Object.freeze({
       cardId,
       compatible: isCompatible,
       visualState,
       applyCompatibleGlow,
-      classNames: Object.freeze(applyCompatibleGlow ? [ROAD_CARD_COMPATIBLE_CLASS] : []),
+      applyFocusedEmphasis,
+      applyInvalidFocusEmphasis,
+      classNames: Object.freeze(stateClass == null ? [] : [stateClass]),
       dataAttributes: Object.freeze({
         'data-road-card-compatible': isCompatible ? 'true' : 'false',
         'data-road-card-visual-state': visualState,
       }),
-      presentation: applyCompatibleGlow ? compatibleGlow : normalPresentation,
+      presentation: presentationByState[visualState],
     });
   });
 }

@@ -1,0 +1,10 @@
+{
+  "schema": "GAMEROAD_PRE_ACTION_V1",
+  "acquireKey": "BATTLE-ROLE-LABEL-R2-20260901T0147-SOL-R8K3V6",
+  "taskId": "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001",
+  "workUnitKey": "BATTLE_VISIBLE_INTERNAL_ROLE_LABEL_REPAIR_R1",
+  "base": "fc2bdc3b270cfad940719e22cdf0a67e22bf0186",
+  "mutablePaths": ["browser/battle-screen-runtime-mount.mjs", "tests/battle-screen-runtime-mount.test.mjs"],
+  "decision": "Restore prior validated winner/loser role-text suppression and stale-clear only; preserve lane.dataset.role, source/target/revealed labels, gameplay and renderer ownership.",
+  "rollback": "Do not merge if focused or required checks fail; delete this transient authorization before final head."
+}

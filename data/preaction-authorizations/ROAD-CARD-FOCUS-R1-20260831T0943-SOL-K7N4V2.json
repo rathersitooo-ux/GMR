@@ -1,0 +1,23 @@
+{
+  "schema": "gameroad.preaction-authorization.v3",
+  "acquireKey": "ROAD-CARD-FOCUS-R1-20260831T0943-SOL-K7N4V2",
+  "taskId": "BATTLE-HAND-FAN-SELECTION-PRESENTATION-001",
+  "workUnitKey": "ROAD_CARD_FOCUS_PROJECTION_R1",
+  "userRoute": "き",
+  "baseSha": "20dafde6986af00e94d37252298da1adffbeb429",
+  "branch": "work/road-card-focus-r1-20260831",
+  "mutableResources": [
+    "browser/road-card-focus-projection-core.mjs",
+    "tests/road-card-focus-projection-core.test.mjs"
+  ],
+  "readOnlyResources": [
+    "browser/GAMEROAD.html",
+    "browser/road-move-compatibility-core.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "109 graph implementation",
+    "Battle cards and Battle rules"
+  ],
+  "intent": "Implement card-first road-card focus as a projection consumer without a CARD_FIRST mode, path mutation, automatic card switching, or Battle-card behavior.",
+  "acquiredAtJst": "2026-08-31 09:43 JST",
+  "leaseUntilJst": "2026-08-31 10:43 JST"
+}

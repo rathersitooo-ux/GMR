@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD109-DRAFTMOVE-STATE-R1-20260831T0946-SOL-D7M4V2",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "DRAFT_MOVE_COMMON_STATE_R1",
+  "acquireKey": "BOARD109-DRAFTMOVE-STATE-R1-20260831T0946-SOL-D7M4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-BOARD109-DRAFTMOVE-STATE-R1-20260831T0946",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOCAL-NODE-DRAFTMOVE-STATE-7OF7-PASS",
+  "proceedToken": "PROCEED|BOARD109-DRAFTMOVE-STATE-R1-20260831T0946-SOL-D7M4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260831T0946JST",
+  "authorizationBaseSha": "20dafde6986af00e94d37252298da1adffbeb429",
+  "scope": [
+    "browser/draft-move-state-core.mjs",
+    "tests/draft-move-state-core.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "DRAFT_MOVE_COMMON_STATE_R1",
+  "leaseAcquireKey": "BOARD109-DRAFTMOVE-STATE-R1-20260831T0946-SOL-D7M4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 09:46 JST",
+  "leaseUntilJst": "2026-08-31 10:46 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A100:L100",
+  "leaseScope": [
+    "browser/draft-move-state-core.mjs",
+    "tests/draft-move-state-core.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@20dafde6986af00e94d37252298da1adffbeb429; branch work/board109-draft-move-state-r1-20260831; transient data/preaction-authorizations/BOARD109-DRAFTMOVE-STATE-R1-20260831T0946-SOL-D7M4V2.json create-first/delete-before-final-head; browser/draft-move-state-core.mjs + tests/draft-move-state-core.test.mjs only; own branch/PR/checks/expected-head merge if current gates allow; own CURRENT_ACTIVE_LEASES row100. CONSUME_ONLY browser/road-move-compatibility-core.mjs when/if merged. READ_ONLY browser/GAMEROAD.html, browser/draft-move-core.mjs, .github/workflows, deploy/cloudflare, 109 graph/adjacency/reachable/stoppability authority, Battle cards/Battle rules/Battle UI, save/economy/formal assets/unrelated tests.",
+  "solutionSignature": "order-neutral-draft-move-state-v1",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-DRAFTMOVE-STATE-R1-20260831T0946",
+  "solutionSearchEvidence": [
+    "browser/deck-storage-corner-core.mjs pure frozen-state boundary pattern",
+    "browser/battle-board-visual-explanation-core.mjs isolated board-consumer pattern",
+    "active browser/road-move-compatibility-core.mjs kept as injected compatibility authority"
+  ],
+  "buildResidualReason": "No current common DraftMove state coordinator exists. Reuse the repository pure-core, immutable snapshot, and injected-authority patterns while building only the missing order-neutral path/focus reconciliation boundary."
+}

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD109-ROAD-DECISION-R13-20260831T0944-SOL-Q7N4V2",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "ROAD_MOVE_DECISION_CONDITION_R13",
+  "acquireKey": "BOARD109-ROAD-DECISION-R13-20260831T0944-SOL-Q7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "ROAD-MOVE-DECISION-R13-PREDICTION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ROAD-MOVE-DECISION-R13-PURE-UNIT-ORACLE",
+  "proceedToken": "PROCEED|BOARD109-ROAD-DECISION-R13-20260831T0944-SOL-Q7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|isolated-decision-consumer|lease-readback",
+  "authorizationBaseSha": "20dafde6986af00e94d37252298da1adffbeb429",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_DECISION_CONDITION_R13",
+  "leaseAcquireKey": "BOARD109-ROAD-DECISION-R13-20260831T0944-SOL-Q7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 09:44 JST",
+  "leaseUntilJst": "2026-08-31 10:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A13:L13",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/board109-road-decision-r13-20260831 only: browser/road-move-decision-core.mjs; tests/road-move-decision-core.test.mjs; transient authorization manifest create-first/delete-before-final-head; own PR/checks/expected-head merge; CURRENT_ACTIVE_LEASES own row13 only. browser/GAMEROAD.html, road-move compatibility/focus/path-input owners, 109 graph, Battle cards/rules, save/economy/deploy/workflows and unrelated tests are READ_ONLY.",
+  "scope": [
+    "browser/road-move-decision-core.mjs",
+    "tests/road-move-decision-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/road-move-decision-core.mjs",
+    "tests/road-move-decision-core.test.mjs"
+  ],
+  "solutionSignature": "Derive Road-move Decision eligibility from the current draft combination without choosing a card during movement or duplicating path/compatibility authority.",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "ROAD-MOVE-DECISION-R13-REUSE-SEARCH",
+  "solutionSearchEvidence": [
+    "current-main recursive tree: no road-move decision core present",
+    "CURRENT active owners: compatibility, card focus and path-input are separate injected producers",
+    "existing battle readyPlan path is out-of-scope and must not be reused for Road-move decision semantics"
+  ],
+  "buildResidualReason": "No existing current-main pure consumer represents the required Road-only unique-choice-at-decision rule; adding a small stateless evaluator avoids modifying Battle submission or duplicating compatibility/path authority."
+}

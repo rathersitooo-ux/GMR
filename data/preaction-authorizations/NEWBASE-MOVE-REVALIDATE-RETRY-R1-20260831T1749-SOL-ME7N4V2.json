@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-MOVE-REVALIDATE-RETRY-R1-20260831T1749-SOL-ME7N4V2",
+  "taskId": "HONEY-HUNT-CURRENT-INTEGRATION-ACCEPT-001",
+  "workUnitKey": "SHARED_MOVEMENT_COLLISION_REVALIDATION_RETRY_R1",
+  "acquireKey": "NEWBASE-MOVE-REVALIDATE-RETRY-R1-20260831T1749-SOL-ME7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PRED-SHARED-MOVE-D06-COMPOSE-R1",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REHEARSAL-D06-REVALIDATION-RETRY-7OF7-R1",
+  "proceedToken": "PROCEED|NEWBASE-MOVE-REVALIDATE-RETRY-R1-20260831T1749-SOL-ME7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260831T1749JST",
+  "authorizationBaseSha": "78084445e46cbd895059a88e3c049d8fccb2e389",
+  "scope": [
+    "browser/shared-movement-revalidation-retry-core.mjs",
+    "tests/shared-movement-revalidation-retry-core.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "HONEY-HUNT-CURRENT-INTEGRATION-ACCEPT-001",
+  "leaseWorkUnitKey": "SHARED_MOVEMENT_COLLISION_REVALIDATION_RETRY_R1",
+  "leaseAcquireKey": "NEWBASE-MOVE-REVALIDATE-RETRY-R1-20260831T1749-SOL-ME7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 17:49 JST",
+  "leaseUntilJst": "2026-08-31 18:49 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A272:L272",
+  "leaseExactMutableResources": "browser/shared-movement-revalidation-retry-core.mjs; tests/shared-movement-revalidation-retry-core.test.mjs; own branch work/shared-move-revalidation-retry-r1-20260831; own PR/checks/expected-head merge; transient PRE_ACTION manifest only",
+  "leaseScope": [
+    "browser/shared-movement-revalidation-retry-core.mjs",
+    "tests/shared-movement-revalidation-retry-core.test.mjs"
+  ],
+  "solutionSignature": "shared-movement-d06-revalidation-participant-retry-directive",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-EXISTING-D06-COLLISION-CONTRACT-R1",
+  "solutionSearchEvidence": [
+    "Drive:HONEY-HUNT-CURRENT-INTEGRATION-ACCEPT-001 freezes D06 whole-move failure and participant-local reservation/ready repair semantics",
+    "GitHub:main@78084445e46cbd895059a88e3c049d8fccb2e389 browser/auto-rank-d06-collision-contract.mjs already owns H02 crossing/swap/reverse-edge classification and D06 failure semantics",
+    "GitHub:main search/tree inspection found no separate current revalidation/retry helper; browser/GAMEROAD.html live consumer is concurrently owned and remains read-only"
+  ],
+  "buildResidualReason": "Only the thin composition seam from the existing D06 detector/failure contract to per-mover just-before-resolution revalidation plus caller-supplied participant retry revision is missing. It must not duplicate D06 classification, choose priority/order, or create a second movement engine."
+}

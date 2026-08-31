@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GITHUB-CI-TRIGGER-DEBLOAT-R3-20260831T0904-SOL-Q7N4V2",
+  "taskId": "GITHUB-CI-BROWSER-NODE-001",
+  "workUnitKey": "BROWSER_NODE_RUNTIME_TRIGGER_DEDUP_R3",
+  "acquireKey": "GITHUB-CI-TRIGGER-DEBLOAT-R3-20260831T0904-SOL-Q7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR721_DONOR_BLOBS_EXACT_TRIGGER_ONLY_DIFF",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR760_INITIAL_HEAD_BROWSER_NODE_AND_RUNTIME_SMOKE",
+  "proceedToken": "PROCEED|GITHUB-CI-TRIGGER-DEBLOAT-R3-20260831T0904-SOL-Q7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|reuse-existing-donor-subtractive-two-line-change",
+  "authorizationBaseSha": "dffc8a68cbded922684c008dbc332dc3043c0938",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-CI-BROWSER-NODE-001",
+  "leaseWorkUnitKey": "BROWSER_NODE_RUNTIME_TRIGGER_DEDUP_R3",
+  "leaseAcquireKey": "GITHUB-CI-TRIGGER-DEBLOAT-R3-20260831T0904-SOL-Q7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 09:08 JST",
+  "leaseUntilJst": "2026-08-31 10:04 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A234:L234",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@dffc8a68cbded922684c008dbc332dc3043c0938; branch work/browser-ci-trigger-dedup-r3-20260831; transient data/preaction-authorizations/GITHUB-CI-TRIGGER-DEBLOAT-R3-20260831T0904-SOL-Q7N4V2.json create-first/delete-before-final-head; .github/workflows/browser-node-ci.yml work/** push trigger only; .github/workflows/browser-runtime-smoke.yml work/** push trigger only; own PR#760 checks/expected-head merge; PR#721 closed superseded; own CURRENT_ACTIVE_LEASES row234. READ_ONLY .github/workflows/browser-full-interaction.yml and active PR#737; tests/product/runtime/deploy/assets/unrelated.",
+  "scope": [
+    ".github/workflows/browser-node-ci.yml",
+    ".github/workflows/browser-runtime-smoke.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/browser-node-ci.yml",
+    ".github/workflows/browser-runtime-smoke.yml"
+  ]
+}

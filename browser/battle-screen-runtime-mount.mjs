@@ -89,7 +89,8 @@ function createLane(document, participantIndex) {
   const team = createNode(document, 'small');
   identity.appendChild(name);
   identity.appendChild(team);
-  const role = createNode(document, 'div', 'grBattleLaneRole', 'idle');
+  const role = createNode(document, 'div', 'grBattleLaneRole');
+  role.hidden = true;
   const afterstate = createNode(document, 'div', 'grBattleLaneAfterstate');
   lane.appendChild(identity);
   lane.appendChild(role);
@@ -207,9 +208,9 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
       view.lane.dataset.role = lane.role;
       view.name.textContent = lane.label;
       view.team.textContent = lane.team ? `TEAM ${lane.team}` : '';
-      const hideResolvedRoleText = lane.role === 'winner' || lane.role === 'loser';
-      view.role.hidden = hideResolvedRoleText;
-      view.role.textContent = hideResolvedRoleText ? '' : lane.role;
+      const hideInternalRoleText = lane.role === 'idle' || lane.role === 'winner' || lane.role === 'loser';
+      view.role.hidden = hideInternalRoleText;
+      view.role.textContent = hideInternalRoleText ? '' : lane.role;
       writeAfterstate(document, view.afterstate, lane.afterstate);
     }
     return model;

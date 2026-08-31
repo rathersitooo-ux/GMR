@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-STRATEGY-SELECT-R1-20260831T2039-SOL-Q7N4V2",
+  "taskId": "PARTNER-STRATEGY-CIRCLE-CONTRACT-001",
+  "workUnitKey": "PARTNER_STRATEGY_SELECTION_BUTTON_FIX_R1",
+  "acquireKey": "PARTNER-STRATEGY-SELECT-R1-20260831T2039-SOL-Q7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PARTNER-STRATEGY-SELECT-R1-DIRECT-CAUSE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PARTNER-SHELL-EXISTING-READONLY-PROJECTION-TESTS",
+  "proceedToken": "PROCEED|PARTNER-STRATEGY-SELECT-R1-20260831T2039-SOL-Q7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|finite-existing-strategy-selection|lease-readback",
+  "authorizationBaseSha": "236c33843df2c0bc38c9e87ebf34144eb71eccff",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-STRATEGY-CIRCLE-CONTRACT-001",
+  "leaseWorkUnitKey": "PARTNER_STRATEGY_SELECTION_BUTTON_FIX_R1",
+  "leaseAcquireKey": "PARTNER-STRATEGY-SELECT-R1-20260831T2039-SOL-Q7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 20:39 JST",
+  "leaseUntilJst": "2026-08-31 21:09 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A289:L289",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main@236c33843df2c0bc38c9e87ebf34144eb71eccff READ_ONLY base; NEW branch work/partner-strategy-select-r1-20260831; transient data/preaction-authorizations/PARTNER-STRATEGY-SELECT-R1-20260831T2039-SOL-Q7N4V2.json create-first/delete-before-final-head; browser/partner-shell-presentation-core.mjs; browser/partner-shell-runtime-mount.mjs; tests/partner-shell-presentation-core.test.mjs; tests/partner-shell-runtime-mount.test.mjs; own PR/checks/expected-head merge if exact-head required gates green; own CURRENT_ACTIVE_LEASES row289; own R23 events. READ_ONLY browser/GAMEROAD.html due active row283 through 21:15 JST; Partner advice/delegation/HATE legality/save/economy/network/formal assets/workflows/unrelated.",
+  "scope": [
+    "browser/partner-shell-presentation-core.mjs",
+    "browser/partner-shell-runtime-mount.mjs",
+    "tests/partner-shell-presentation-core.test.mjs",
+    "tests/partner-shell-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-shell-presentation-core.mjs",
+    "browser/partner-shell-runtime-mount.mjs",
+    "tests/partner-shell-presentation-core.test.mjs",
+    "tests/partner-shell-runtime-mount.test.mjs"
+  ]
+}

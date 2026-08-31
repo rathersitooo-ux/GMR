@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-ROAD-SLOT-12X7-R1-20260831T1742-SOL-H7N4V2",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "NEW_BASE_ROAD_SLOT_12X7_CORE_R1",
+  "acquireKey": "NEWBASE-ROAD-SLOT-12X7-R1-20260831T1742-SOL-H7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-NEWBASE-ROAD-SLOT-12X7-R1-20260831T1742",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-USER-CONTRACT-12X7-CURRENT-NO-MATCH",
+  "proceedToken": "PROCEED|NEWBASE-ROAD-SLOT-12X7-R1-20260831T1742-SOL-H7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260831T1742JST",
+  "authorizationBaseSha": "78084445e46cbd895059a88e3c049d8fccb2e389",
+  "scope": [
+    "browser/new-base-road-slot-core.mjs",
+    "tests/new-base-road-slot-core.test.mjs"
+  ],
+  "solutionSignature": "new-base-shield-bound-road-slot-matrix-core",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-NEWBASE-ROAD-SLOT-12X7-R1-20260831T1742",
+  "solutionSearchEvidence": [
+    "current main@78084445 has no ROAD_SLOT or 12x7 Road-slot structural core",
+    "existing BOARD-109 graph remains read-only because its canonical legal-position authority must not be repurposed by appearance/name similarity",
+    "Honey movement/reservation and Battle/Road rules remain read-only; new core is structural data only and injects Shield identities instead of creating a second movement/Battle engine"
+  ],
+  "buildResidualReason": "The new-base user contract requires twelve Shield-bound Road columns with seven ROAD_SLOT entries each, while current main has no equivalent structural core. Build the smallest isolated data contract now; leave ownership mapping, graph edges, Road7 completion, GOAL and FIELD semantics to their authorized downstream branches.",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "NEW_BASE_ROAD_SLOT_12X7_CORE_R1",
+  "leaseAcquireKey": "NEWBASE-ROAD-SLOT-12X7-R1-20260831T1742-SOL-H7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 17:42 JST",
+  "leaseUntilJst": "2026-08-31 18:32 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A255:L255",
+  "leaseScope": [
+    "browser/new-base-road-slot-core.mjs",
+    "tests/new-base-road-slot-core.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@78084445e46cbd895059a88e3c049d8fccb2e389; NEW branch work/newbase-road-slot-12x7-r1-20260831; transient data/preaction-authorizations/NEWBASE-ROAD-SLOT-12X7-R1-20260831T1742-SOL-H7N4V2.json create-first/delete-before-final-head; browser/new-base-road-slot-core.mjs + tests/new-base-road-slot-core.test.mjs only; own branch/PR/checks/expected-head merge if exact-head gates are green; own CURRENT_ACTIVE_LEASES exact tuple; own R23 append-only events. READ_ONLY browser/GAMEROAD.html, existing 109 graph/adjacency/legal positions, Honey movement/reservation/revalidation, existing Road/Battle cards/rules, save/economy/network/deploy/workflows/formal assets, active PR#764 runtime package, selected-card regression, hidden-hand authority docs."
+}

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-GOAL-RESULT-R1-20260831T1746-SOL-U7N4V2",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "NEW_BASE_GOAL_ARRIVAL_RESULT_R1",
+  "acquireKey": "NEWBASE-GOAL-RESULT-R1-20260831T1746-SOL-U7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-NEWBASE-GOAL-RESULT-R1-20260831T1754",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-CURRENT-RESULT-PRESENTATION-OPAQUE-FINALIZED-RESULT",
+  "proceedToken": "PROCEED|NEWBASE-GOAL-RESULT-R1-20260831T1746-SOL-U7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260831T1754JST",
+  "authorizationBaseSha": "fbcfdf0e4c947538a0a6f219a4c63dca7ee362f8",
+  "scope": [
+    "browser/new-base-goal-result-core.mjs",
+    "tests/new-base-goal-result-core.test.mjs"
+  ],
+  "solutionSignature": "new-base-authoritative-goal-arrival-exactly-once-terminal-result-handoff",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-NEWBASE-GOAL-RESULT-R1-20260831T1754",
+  "solutionSearchEvidence": [
+    "fresh main@fbcfdf0e has no new-base GOAL terminal-result core",
+    "browser/result-presentation-core.mjs already consumes finalizedResult opaquely and is reused without modification",
+    "legacy browser/battle-replay-live-adapter.mjs derives old Free4P seven-card ranking/win semantics and is intentionally read-only for the new-base ruleset",
+    "active NEW_BASE_ROAD7_GOAL_ROUTE_UNLOCK_R1 explicitly opens GOAL availability only and never emits winner or Result",
+    "main advance from 78084445 to fbcfdf0e adds only new-base mana recovery config/test and has zero resource overlap"
+  ],
+  "buildResidualReason": "A thin upstream terminalization seam is still required between an already-authoritative GOAL_REACHED fact and the existing Result presentation consumer. It must not recount ROAD slots, infer team ownership, or revive legacy seven-card immediate victory.",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "NEW_BASE_GOAL_ARRIVAL_RESULT_R1",
+  "leaseAcquireKey": "NEWBASE-GOAL-RESULT-R1-20260831T1746-SOL-U7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 17:54 JST",
+  "leaseUntilJst": "2026-08-31 18:46 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A264:L264",
+  "leaseScope": [
+    "browser/new-base-goal-result-core.mjs",
+    "tests/new-base-goal-result-core.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@fbcfdf0e4c947538a0a6f219a4c63dca7ee362f8; branch work/newbase-goal-result-r1-20260831 reset/replay allowed after unrelated main advance; transient data/preaction-authorizations/NEWBASE-GOAL-RESULT-R1-20260831T1746-SOL-U7N4V2.json create-first/delete-before-final-head; browser/new-base-goal-result-core.mjs + tests/new-base-goal-result-core.test.mjs only; own PR#795/checks/expected-head merge if exact-head gates are green; own CURRENT_ACTIVE_LEASES exact tuple; own R23 append-only events. CONSUME_ONLY browser/result-presentation-core.mjs. READ_ONLY browser/GAMEROAD.html, browser/battle-replay-live-adapter.mjs legacy Free4P win/ranking, active new-base ROAD_SLOT and ROAD7->GOAL route branches, browser/new-base-mana-recovery-config.mjs, existing 109/Honey movement, Battle/Road rules/cards, save/economy/network/deploy/workflows/formal assets/unrelated."
+}

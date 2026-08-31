@@ -1,0 +1,25 @@
+{
+  "schema": "gameroad.preaction-authorization.v3",
+  "acquireKey": "BOARD109-ELASTIC-FOCUS-R1-20260831T0944-SOL-KO7N4V2",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "ROAD_ELASTIC_FOCUS_PROJECTION_R1",
+  "userRoute": "こ",
+  "baseSha": "20dafde6986af00e94d37252298da1adffbeb429",
+  "branch": "work/board109-elastic-focus-r1-20260831",
+  "mutableResources": [
+    "browser/road-elastic-focus-projection.mjs",
+    "tests/road-elastic-focus-projection.test.mjs"
+  ],
+  "readOnlyResources": [
+    "browser/GAMEROAD.html",
+    "browser/road-move-compatibility-core.mjs",
+    "browser/draft-move-core.mjs",
+    "browser/road-card-focus-projection-core.mjs",
+    "browser/road-move-path-input-projection.mjs",
+    "109 graph/adjacency/reachable/stoppability authority",
+    "Battle cards, Battle rules, and Battle UI"
+  ],
+  "intent": "Implement Elastic Focus only: preserve the draft path when focus becomes insufficient, expose compatible switch candidates without auto-switching, and partition existing reachable projections into strong focused range versus weak expandable range.",
+  "acquiredAtJst": "2026-08-31 09:44 JST",
+  "leaseUntilJst": "2026-08-31 10:44 JST"
+}

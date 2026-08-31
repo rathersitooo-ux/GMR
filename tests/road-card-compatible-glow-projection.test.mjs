@@ -3,6 +3,8 @@ import test from 'node:test';
 
 import {
   ROAD_CARD_COMPATIBLE_CLASS,
+  ROAD_CARD_FOCUSED_CLASS,
+  ROAD_CARD_INVALID_FOCUS_CLASS,
   ROAD_CARD_VISUAL_STATE,
   projectRoadCardCompatibleGlow,
 } from '../browser/road-card-compatible-glow-projection.mjs';
@@ -11,6 +13,12 @@ const ROAD_IDS = ['road-1', 'road-2', 'road-3', 'road-4', 'road-5', 'road-6'];
 
 function byId(result) {
   return Object.fromEntries(result.map((entry) => [entry.cardId, entry]));
+}
+
+function assertNoTransformPresentation(entry) {
+  for (const key of Object.keys(entry.presentation)) {
+    assert.doesNotMatch(key, /transform|translate|lift/i);
+  }
 }
 
 test('zero compatible cards keeps every Road card NORMAL', () => {
@@ -23,12 +31,14 @@ test('zero compatible cards keeps every Road card NORMAL', () => {
     assert.equal(entry.compatible, false);
     assert.equal(entry.visualState, ROAD_CARD_VISUAL_STATE.NORMAL);
     assert.equal(entry.applyCompatibleGlow, false);
+    assert.equal(entry.applyFocusedEmphasis, false);
+    assert.equal(entry.applyInvalidFocusEmphasis, false);
     assert.deepEqual(entry.classNames, []);
     assert.equal(entry.presentation.haloLayerCount, 0);
   }
 });
 
-test('one compatible card gets static outline + brightness + halo without lift', () => {
+test('one compatible card gets supporting static emphasis without lift', () => {
   const result = byId(projectRoadCardCompatibleGlow({
     roadCardIds: ['road-1', 'road-3', 'road-5'],
     compatibleRoadCardIds: ['road-3'],
@@ -38,15 +48,14 @@ test('one compatible card gets static outline + brightness + halo without lift',
   assert.equal(result['road-5'].visualState, ROAD_CARD_VISUAL_STATE.NORMAL);
   assert.equal(result['road-3'].visualState, ROAD_CARD_VISUAL_STATE.COMPATIBLE);
   assert.equal(result['road-3'].applyCompatibleGlow, true);
+  assert.equal(result['road-3'].applyFocusedEmphasis, false);
   assert.deepEqual(result['road-3'].classNames, [ROAD_CARD_COMPATIBLE_CLASS]);
+  assert.equal(result['road-3'].presentation.edgeEmphasis, 'supporting');
   assert.ok(result['road-3'].presentation.outlineWidthPx > 0);
   assert.ok(result['road-3'].presentation.brightnessMultiplier > 1);
   assert.ok(result['road-3'].presentation.haloLayerCount > 0);
   assert.equal(result['road-3'].presentation.animated, false);
-
-  for (const key of Object.keys(result['road-3'].presentation)) {
-    assert.doesNotMatch(key, /transform|translate|lift/i);
-  }
+  assertNoTransformPresentation(result['road-3']);
 });
 
 test('multiple compatible cards all glow and no candidate is auto-chosen', () => {
@@ -79,7 +88,7 @@ test('Road1 through Road6 use the same presentation path', () => {
   }
 });
 
-test('FOCUSED presentation keeps precedence while compatibility remains observable', () => {
+test('FOCUSED is the primary per-card presentation while compatibility remains observable', () => {
   const result = byId(projectRoadCardCompatibleGlow({
     roadCardIds: ['road-3', 'road-5'],
     compatibleRoadCardIds: ['road-3', 'road-5'],
@@ -89,12 +98,21 @@ test('FOCUSED presentation keeps precedence while compatibility remains observab
   assert.equal(result['road-3'].compatible, true);
   assert.equal(result['road-3'].visualState, ROAD_CARD_VISUAL_STATE.FOCUSED);
   assert.equal(result['road-3'].applyCompatibleGlow, false);
-  assert.deepEqual(result['road-3'].classNames, []);
+  assert.equal(result['road-3'].applyFocusedEmphasis, true);
+  assert.equal(result['road-3'].applyInvalidFocusEmphasis, false);
+  assert.deepEqual(result['road-3'].classNames, [ROAD_CARD_FOCUSED_CLASS]);
+  assert.equal(result['road-3'].presentation.edgeEmphasis, 'primary');
+  assert.equal(result['road-3'].presentation.outlineStyle, 'solid');
+  assert.ok(
+    result['road-3'].presentation.outlineWidthPx
+      > result['road-5'].presentation.outlineWidthPx,
+  );
   assert.equal(result['road-5'].visualState, ROAD_CARD_VISUAL_STATE.COMPATIBLE);
   assert.equal(result['road-5'].applyCompatibleGlow, true);
+  assertNoTransformPresentation(result['road-3']);
 });
 
-test('INVALID_FOCUS presentation keeps precedence and cannot also be compatible', () => {
+test('INVALID_FOCUS uses one non-colour dashed channel and cannot also be compatible', () => {
   const result = byId(projectRoadCardCompatibleGlow({
     roadCardIds: ['road-3', 'road-5'],
     compatibleRoadCardIds: ['road-5'],
@@ -104,7 +122,13 @@ test('INVALID_FOCUS presentation keeps precedence and cannot also be compatible'
   assert.equal(result['road-3'].compatible, false);
   assert.equal(result['road-3'].visualState, ROAD_CARD_VISUAL_STATE.INVALID_FOCUS);
   assert.equal(result['road-3'].applyCompatibleGlow, false);
+  assert.equal(result['road-3'].applyFocusedEmphasis, false);
+  assert.equal(result['road-3'].applyInvalidFocusEmphasis, true);
+  assert.deepEqual(result['road-3'].classNames, [ROAD_CARD_INVALID_FOCUS_CLASS]);
+  assert.equal(result['road-3'].presentation.outlineStyle, 'dashed');
+  assert.equal(result['road-3'].presentation.haloLayerCount, 0);
   assert.equal(result['road-5'].applyCompatibleGlow, true);
+  assertNoTransformPresentation(result['road-3']);
 
   assert.throws(() => projectRoadCardCompatibleGlow({
     roadCardIds: ['road-3', 'road-5'],
@@ -113,23 +137,63 @@ test('INVALID_FOCUS presentation keeps precedence and cannot also be compatible'
   }), /INVALID_FOCUS cannot simultaneously be COMPATIBLE/);
 });
 
-test('Reduced Motion removes transition motion; LowPerf uses one static halo layer', () => {
-  const reduced = byId(projectRoadCardCompatibleGlow({
+test('focus and invalid emphasis clear completely on the next projection', () => {
+  const focused = byId(projectRoadCardCompatibleGlow({
+    roadCardIds: ['road-3', 'road-5'],
+    compatibleRoadCardIds: ['road-3'],
+    focusedRoadCardId: 'road-3',
+  }));
+  assert.deepEqual(focused['road-3'].classNames, [ROAD_CARD_FOCUSED_CLASS]);
+
+  const invalid = byId(projectRoadCardCompatibleGlow({
+    roadCardIds: ['road-3', 'road-5'],
+    compatibleRoadCardIds: [],
+    invalidFocusedRoadCardId: 'road-5',
+  }));
+  assert.deepEqual(invalid['road-5'].classNames, [ROAD_CARD_INVALID_FOCUS_CLASS]);
+
+  const cleared = byId(projectRoadCardCompatibleGlow({
+    roadCardIds: ['road-3', 'road-5'],
+    compatibleRoadCardIds: [],
+  }));
+  for (const entry of Object.values(cleared)) {
+    assert.equal(entry.visualState, ROAD_CARD_VISUAL_STATE.NORMAL);
+    assert.equal(entry.applyCompatibleGlow, false);
+    assert.equal(entry.applyFocusedEmphasis, false);
+    assert.equal(entry.applyInvalidFocusEmphasis, false);
+    assert.deepEqual(entry.classNames, []);
+    assert.equal(entry.presentation.outlineStyle, 'none');
+  }
+});
+
+test('Reduced Motion removes transitions and LowPerf preserves state meaning', () => {
+  const reducedFocused = byId(projectRoadCardCompatibleGlow({
     roadCardIds: ['road-5'],
     compatibleRoadCardIds: ['road-5'],
+    focusedRoadCardId: 'road-5',
     reducedMotion: true,
   }))['road-5'];
-  assert.equal(reduced.presentation.transitionMs, 0);
-  assert.equal(reduced.presentation.animated, false);
+  assert.equal(reducedFocused.presentation.transitionMs, 0);
+  assert.equal(reducedFocused.presentation.animated, false);
+  assert.deepEqual(reducedFocused.classNames, [ROAD_CARD_FOCUSED_CLASS]);
 
-  const lowPerf = byId(projectRoadCardCompatibleGlow({
+  const lowPerfCompatible = byId(projectRoadCardCompatibleGlow({
     roadCardIds: ['road-5'],
     compatibleRoadCardIds: ['road-5'],
     lowPerf: true,
   }))['road-5'];
-  assert.equal(lowPerf.presentation.haloLayerCount, 1);
-  assert.equal(lowPerf.presentation.animated, false);
-  assert.ok(lowPerf.presentation.haloBlurPx < reduced.presentation.haloBlurPx);
+  assert.equal(lowPerfCompatible.presentation.haloLayerCount, 1);
+  assert.equal(lowPerfCompatible.presentation.animated, false);
+  assert.deepEqual(lowPerfCompatible.classNames, [ROAD_CARD_COMPATIBLE_CLASS]);
+
+  const lowPerfInvalid = byId(projectRoadCardCompatibleGlow({
+    roadCardIds: ['road-3'],
+    compatibleRoadCardIds: [],
+    invalidFocusedRoadCardId: 'road-3',
+    lowPerf: true,
+  }))['road-3'];
+  assert.equal(lowPerfInvalid.presentation.outlineStyle, 'dashed');
+  assert.deepEqual(lowPerfInvalid.classNames, [ROAD_CARD_INVALID_FOCUS_CLASS]);
 });
 
 test('unknown and duplicate identities fail closed', () => {

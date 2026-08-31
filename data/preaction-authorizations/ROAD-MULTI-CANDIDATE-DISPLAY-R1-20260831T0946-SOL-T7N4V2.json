@@ -1,0 +1,22 @@
+{
+  "schema": "gameroad.preaction-authorization.v3",
+  "acquireKey": "ROAD-MULTI-CANDIDATE-DISPLAY-R1-20260831T0946-SOL-T7N4V2",
+  "taskId": "BATTLE-HAND-FAN-SELECTION-PRESENTATION-001",
+  "workUnitKey": "ROAD_MULTI_CANDIDATE_DISPLAY_REGRESSION_R1",
+  "userRoute": "て",
+  "baseSha": "7d82d4e604a3c322936da13b4340dd0bb1419d5d",
+  "branch": "work/road-multi-candidate-display-r2-20260831",
+  "mutableResources": [
+    "tests/road-card-multi-candidate-display.test.mjs"
+  ],
+  "readOnlyResources": [
+    "browser/road-card-focus-projection-core.mjs",
+    "browser/road-move-compatibility-core.mjs",
+    "browser/GAMEROAD.html",
+    "109 graph implementation",
+    "Battle cards and Battle rules"
+  ],
+  "intent": "Successor rebase for route て: lock simultaneous multiple Road candidate display against the latest card-focus dependency head without duplicating projection logic.",
+  "acquiredAtJst": "2026-08-31 09:46 JST",
+  "leaseUntilJst": "2026-08-31 10:46 JST"
+}

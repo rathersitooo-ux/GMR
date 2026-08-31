@@ -21,6 +21,8 @@ function frozenAction(action, label, context = {}) {
     label,
     targetView: context.targetView ?? null,
     partnerId: context.partnerId ?? null,
+    strategyId: context.strategyId ?? null,
+    selected: context.selected === true,
   });
 }
 
@@ -36,6 +38,19 @@ export function buildPartnerShellRuntimeModel(input = {}, { canDispatch } = {}) 
     .filter((action) => view.view !== 'hub' && action !== 'OPEN_DETAIL')
     .filter((action) => dispatchAllowed(canDispatch, action, context))
     .map((action) => frozenAction(action, NAV_LABELS[action] ?? action)));
+
+  const strategyActions = Object.freeze(view.view === 'strategy'
+    ? view.strategyIds
+      .filter((strategyId) => dispatchAllowed(
+        canDispatch,
+        'SELECT_STRATEGY',
+        Object.freeze({ ...context, strategyId }),
+      ))
+      .map((strategyId) => frozenAction('SELECT_STRATEGY', strategyId, {
+        strategyId,
+        selected: strategyId === view.strategyId,
+      }))
+    : []);
 
   const roster = Object.freeze(view.roster.map((partner) => Object.freeze({
     ...partner,
@@ -56,6 +71,7 @@ export function buildPartnerShellRuntimeModel(input = {}, { canDispatch } = {}) 
     detailPartner: view.detailPartner,
     formationPartnerIds: view.formationPartnerIds,
     strategyId: view.strategyId,
+    strategyActions,
     menuActions,
     navigationActions,
     readOnlyProjection: true,
@@ -76,6 +92,8 @@ function actionButton(doc, spec, emit) {
   button.dataset.partnerShellAction = spec.action;
   if (spec.targetView) button.dataset.partnerShellTarget = spec.targetView;
   if (spec.partnerId) button.dataset.partnerId = spec.partnerId;
+  if (spec.strategyId) button.dataset.strategyId = spec.strategyId;
+  if (spec.selected) button.dataset.partnerShellSelected = 'true';
   button.addEventListener('click', () => emit(spec));
   return button;
 }
@@ -118,9 +136,16 @@ function renderBody(doc, section, model, emit) {
       formation.append(row);
     }
     section.append(formation);
-  } else if (model.view === 'strategy' && model.strategyId) {
-    const strategy = element(doc, 'div', 'partner-shell-strategy', model.strategyId);
-    strategy.dataset.strategyId = model.strategyId;
+  } else if (model.view === 'strategy') {
+    const strategy = element(doc, 'div', 'partner-shell-strategy');
+    if (model.strategyId) {
+      const current = element(doc, 'div', 'partner-shell-strategy-current', model.strategyId);
+      current.dataset.strategyId = model.strategyId;
+      strategy.append(current);
+    }
+    const choices = element(doc, 'div', 'partner-shell-strategy-options');
+    for (const spec of model.strategyActions) choices.append(actionButton(doc, spec, emit));
+    strategy.append(choices);
     section.append(strategy);
   }
 
@@ -152,6 +177,7 @@ export function mountPartnerShellRuntime({
       action: spec.action,
       targetView: spec.targetView,
       partnerId: spec.partnerId,
+      strategyId: spec.strategyId,
       sourceView: lastModel?.view ?? null,
     }));
   };

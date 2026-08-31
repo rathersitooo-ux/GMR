@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PUBLIC-DEPLOY-WORKFLOW-RUN-R3-20260901T0132-SOL-C9T5J1",
+  "taskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "workUnitKey": "PUBLIC_DEPLOY_AUTOMERGE_WORKFLOW_RUN_CHAIN_R3",
+  "acquireKey": "PUBLIC-DEPLOY-WORKFLOW-RUN-R3-20260901T0132-SOL-C9T5J1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "GITHUB_WORKFLOW_RUN_CHAIN_SUPPORTED_AND_AUTO_MERGE_PUSH_DEPLOY_GAP_OBSERVED",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_CLOUDFLARE_WORKFLOW_ALREADY_HAS_PUBLICHOST_GATE_AND_WORKFLOW_DISPATCH",
+  "proceedToken": "PROCEED|PUBLIC-DEPLOY-WORKFLOW-RUN-R3-20260901T0132-SOL-C9T5J1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|PUBLIC_DEPLOY_WORKFLOW_RUN_ONLY",
+  "authorizationBaseSha": "7b0ba59e4b563d7e8f664f8ae79fc503ba8a3b12",
+  "scope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "leaseWorkUnitKey": "PUBLIC_DEPLOY_AUTOMERGE_WORKFLOW_RUN_CHAIN_R3",
+  "leaseAcquireKey": "PUBLIC-DEPLOY-WORKFLOW-RUN-R3-20260901T0132-SOL-C9T5J1",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 01:32 JST",
+  "leaseUntilJst": "2026-09-01 02:32 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A312:L312",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR new branch work/public-deploy-workflow-run-r3-20260901 from exact main 7b0ba59e4b563d7e8f664f8ae79fc503ba8a3b12; .github/workflows/cloudflare-public-deploy.yml only; transient data/preaction-authorizations/PUBLIC-DEPLOY-WORKFLOW-RUN-R3-20260901T0132-SOL-C9T5J1.json; own PR/checks/expected-head merge; own event/lease tuple. READ_ONLY .github/workflows/required-gate-auto-merge.yml, .github/workflows/gameroad-required-gate.yml, browser/**, tests/browser-full-interaction.spec.mjs, deploy/cloudflare implementation/scripts/tests, Rogue, Battle, save/economy/assets/unrelated.",
+  "leaseScope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ]
+}

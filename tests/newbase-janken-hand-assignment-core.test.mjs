@@ -32,8 +32,9 @@ test("automatically assigns one policy result to shared fixed ROCK SCISSORS PAPE
     assignmentPolicy(input) {
       calls += 1;
       assert.equal(Object.isFrozen(input), true);
-      assert.equal(Object.isFrozen(input.hand), true);
+      assert.equal(Object.isFrozen(input.handCardIds), true);
       assert.equal(Object.isFrozen(input.fixedSlots), true);
+      assert.deepEqual(input.handCardIds, ["card-a", "card-b", "card-c"]);
       assert.deepEqual(input.fixedSlots, [
         { slotId: "ROCK", jankenHand: "ROCK" },
         { slotId: "SCISSORS", jankenHand: "SCISSORS" },
@@ -53,16 +54,22 @@ test("automatically assigns one policy result to shared fixed ROCK SCISSORS PAPE
   assert.equal(assigned.every(Object.isFrozen), true);
 });
 
-test("keeps native card suit separate from assigned janken hand", () => {
+test("keeps native card suit outside both assignment policy input and assigned janken state", () => {
   const hand = makeHand();
   const before = structuredClone(hand);
+  let policyInput;
   const assigned = autoAssignHand3ToFixedJankenSlots({
     hand,
     fixedSlotState: FIXED_SLOT_STATE,
-    assignmentPolicy: () => ["card-b", "card-c", "card-a"],
+    assignmentPolicy(input) {
+      policyInput = input;
+      return ["card-b", "card-c", "card-a"];
+    },
   });
 
   assert.deepEqual(hand, before);
+  assert.equal(Object.hasOwn(policyInput, "hand"), false);
+  assert.deepEqual(policyInput.handCardIds, ["card-a", "card-b", "card-c"]);
   assert.equal(hand[1].suit, "diamond");
   assert.equal(assigned[0].jankenHand, "ROCK");
   assert.equal(assigned[0].cardId, "card-b");
@@ -122,18 +129,18 @@ test("fails closed on duplicate or unknown card ids returned by policy", () => {
   );
 });
 
-test("policy receives snapshots, so attempted top-level mutation cannot alter current hand", () => {
+test("policy input is immutable and cannot reorder current hand identities in place", () => {
   const hand = makeHand();
   assert.throws(
     () => autoAssignHand3ToFixedJankenSlots({
       hand,
       fixedSlotState: FIXED_SLOT_STATE,
       assignmentPolicy(input) {
-        input.hand[0].suit = "PAPER";
+        input.handCardIds[0] = "card-c";
         return ["card-a", "card-b", "card-c"];
       },
     }),
     TypeError,
   );
-  assert.equal(hand[0].suit, "club");
+  assert.deepEqual(hand.map((card) => card.id), ["card-a", "card-b", "card-c"]);
 });

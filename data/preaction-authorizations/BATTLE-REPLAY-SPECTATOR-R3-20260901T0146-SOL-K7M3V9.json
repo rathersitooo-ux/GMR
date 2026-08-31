@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-REPLAY-SPECTATOR-R3-20260901T0146-SOL-K7M3V9",
+  "taskId": "BATTLE-REPLAY-RUNTIME-CONTRACT-001",
+  "workUnitKey": "BATTLE_REPLAY_SPECTATOR_ATTACH_CURRENT_REBASE_R3",
+  "acquireKey": "BATTLE-REPLAY-SPECTATOR-R3-20260901T0146-SOL-K7M3V9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BATTLE-REPLAY-SPECTATOR-R3-PRIVACY-BOUNDARY-PREDICTION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BATTLE-REPLAY-SPECTATOR-R3-EXISTING-DONOR-AND-FOLLOW-CORE-ORACLE",
+  "proceedToken": "PROCEED|BATTLE-REPLAY-SPECTATOR-R3-20260901T0146-SOL-K7M3V9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|authorized-presence|exact-donor-rebase",
+  "authorizationBaseSha": "fc2bdc3b270cfad940719e22cdf0a67e22bf0186",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-REPLAY-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "BATTLE_REPLAY_SPECTATOR_ATTACH_CURRENT_REBASE_R3",
+  "leaseAcquireKey": "BATTLE-REPLAY-SPECTATOR-R3-20260901T0146-SOL-K7M3V9",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 01:46 JST",
+  "leaseUntilJst": "2026-09-01 02:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A307:L307",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/battle-replay-spectator-attach-r1-20260831; browser/battle-replay-spectator-follow-adapter.mjs; tests/battle-replay-spectator-follow-adapter.test.mjs; transient own PRE_ACTION authorization artifact; own PR#741 checks/expected-head merge; Drive row1261 checkpoint/result cells; own R23 events; own CURRENT_ACTIVE_LEASES tuple. READ_ONLY browser/GAMEROAD.html, deploy/cloudflare/**, tests/browser-full-interaction.spec.mjs, Rogue files, Battle state/rules/save/assets/workflows.",
+  "scope": [
+    "browser/battle-replay-spectator-follow-adapter.mjs",
+    "tests/battle-replay-spectator-follow-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-replay-spectator-follow-adapter.mjs",
+    "tests/battle-replay-spectator-follow-adapter.test.mjs"
+  ],
+  "solutionSignature": "Replay the preserved two-file authorized public spectator-presence adapter on current main without adding discovery, private join, gameplay authority, or a second follow-state store.",
+  "reuseDisposition": "REUSE_AS_IS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "BATTLE-REPLAY-SPECTATOR-R3-REUSE-PR741-EXACT2",
+  "solutionSearchEvidence": [
+    "PR#741 changed exactly browser/battle-replay-spectator-follow-adapter.mjs and tests/battle-replay-spectator-follow-adapter.test.mjs",
+    "current main browser/battle-replay-public-commentary-core.mjs still exports create/advance/read continuous public follow APIs required by donor",
+    "current main does not already contain either donor file"
+  ]
+}

@@ -114,7 +114,8 @@ jobs:
             [[ -z "${path}" ]] && continue
             case "${path}" in
               tests/browser-full-interaction.spec.mjs|\
-              tests/browser-full-interaction-state-sequence.spec.mjs)
+              tests/browser-full-interaction-state-sequence.spec.mjs|\
+              playwright.full-interaction.config.mjs)
                 browser_full_interaction=true
                 ;;
               browser/GAMEROAD.html|\
@@ -141,11 +142,13 @@ jobs:
               tests/browser-static-check.mjs|\
               tests/browser-runtime-smoke.spec.mjs|\
               playwright.config.mjs|\
-              playwright.full-interaction.config.mjs|\
               .github/workflows/browser-node-ci.yml|\
               .github/workflows/browser-runtime-smoke.yml|\
               .github/workflows/browser-full-interaction.yml)
                 browser=true
+                if [[ "${path}" == "browser/GAMEROAD.html" ]]; then
+                  browser_full_interaction=true
+                fi
                 ;;
               browser/dino-dig-mobile-whitebox.html|\
               tests/dino-dig-mobile-whitebox.spec.mjs|\
@@ -475,7 +478,7 @@ jobs:
           fi
 
       - name: Verify Browser full interaction delegated evidence lane
-        if: steps.classify.outputs.browser_full_interaction == 'true'
+        if: steps.classify.outputs.browser_full_interaction == 'true' && steps.classify.outputs.browser != 'true'
         run: echo "tests/browser-full-interaction.spec.mjs execution is delegated to Browser Full Interaction Evidence."
 
       - name: Set up Node
@@ -842,7 +845,7 @@ jobs:
         run: npx playwright test --config=playwright.config.mjs --workers=1
 
       - name: Run Browser full interaction evidence
-        if: steps.classify.outputs.browser == 'true'
+        if: steps.classify.outputs.browser_full_interaction == 'true' && steps.classify.outputs.browser == 'true'
         run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
 
       - name: Run DINO DIG mobile whitebox smoke

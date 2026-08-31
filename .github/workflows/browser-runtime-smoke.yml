@@ -9,14 +9,6 @@ on:
       - 'tests/browser-runtime-smoke.spec.mjs'
       - 'playwright.config.mjs'
       - '.github/workflows/browser-runtime-smoke.yml'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'browser/GAMEROAD.html'
-      - 'tests/browser-runtime-smoke.spec.mjs'
-      - 'playwright.config.mjs'
-      - '.github/workflows/browser-runtime-smoke.yml'
 
 permissions:
   contents: read

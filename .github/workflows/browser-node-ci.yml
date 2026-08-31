@@ -8,13 +8,6 @@ on:
       - 'browser/GAMEROAD.html'
       - 'tests/browser-static-check.mjs'
       - '.github/workflows/browser-node-ci.yml'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'browser/GAMEROAD.html'
-      - 'tests/browser-static-check.mjs'
-      - '.github/workflows/browser-node-ci.yml'
   schedule:
     - cron: '17 3 * * 2'
 

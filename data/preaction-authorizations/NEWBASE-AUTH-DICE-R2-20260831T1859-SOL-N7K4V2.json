@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-AUTH-DICE-R2-20260831T1859-SOL-N7K4V2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "NEW_BASE_AUTHORITATIVE_DICE_CORE_R2",
+  "acquireKey": "NEWBASE-AUTH-DICE-R2-20260831T1859-SOL-N7K4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-NEWBASE-AUTH-DICE-R2-20260831T1859",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-EXACT-R1-DICE-REPLAY-7OF7",
+  "proceedToken": "PROCEED|NEWBASE-AUTH-DICE-R2-20260831T1859-SOL-N7K4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260831T1859JST",
+  "authorizationBaseSha": "8d8153ef13f5002de705b04ee2fa2a0dba0f115b",
+  "scope": [
+    "browser/new-base-authoritative-dice-core.mjs",
+    "tests/new-base-authoritative-dice-core.test.mjs"
+  ],
+  "solutionSignature": "new-base-authoritative-dice-identity-envelope",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-NEWBASE-AUTH-DICE-R2-20260831T1859",
+  "solutionSearchEvidence": [
+    "Fresh main@8d8153ef13f5002de705b04ee2fa2a0dba0f115b still has no authoritative new-base dice core at the two target paths.",
+    "PR#798 exact R1 product/test semantics already passed focused 7/7 Node regression and Required Gate; R2 is a byte-for-byte product replay only because unrelated #817 advanced main and PR#798 became non-mergeable.",
+    "The main advance #817 changes Battle UI feedback resources only and does not overlap the dice scope.",
+    "Movement-budget, Honey reservation/revalidation, mana, cards and ROAD remain external consumers/read-only; no second engine is introduced."
+  ],
+  "buildResidualReason": "The user contract still requires one authoritative dice roll each new-base turn, while current main does not contain the dice authority. Replay the already-proven minimal two-file core on fresh main without semantic expansion.",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "NEW_BASE_AUTHORITATIVE_DICE_CORE_R2",
+  "leaseAcquireKey": "NEWBASE-AUTH-DICE-R2-20260831T1859-SOL-N7K4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 18:59 JST",
+  "leaseUntilJst": "2026-08-31 19:59 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A283:L283",
+  "leaseScope": [
+    "browser/new-base-authoritative-dice-core.mjs",
+    "tests/new-base-authoritative-dice-core.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main@8d8153ef13f5002de705b04ee2fa2a0dba0f115b; existing branch work/newbase-authoritative-dice-r1-20260831 replay/reset only; transient PRE_ACTION for this AcquireKey create-first/delete-before-final-head; browser/new-base-authoritative-dice-core.mjs; tests/new-base-authoritative-dice-core.test.mjs; PR#798 own head/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row283; own R23 events. READ_ONLY #817/UI/HTML/Honey/movement/mana/cards/Road/save/economy/network/deploy/workflows/assets."
+}

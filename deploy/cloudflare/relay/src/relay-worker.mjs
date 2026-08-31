@@ -122,7 +122,7 @@ function publicMatchSession(status) {
   const size = Array.isArray(status.match.seats) && status.match.seats.length
     ? status.match.seats.length
     : status.match.ticketIds.length;
-  return {
+  const session = {
     sessionId: status.match.matchId,
     matchId: status.match.matchId,
     slot,
@@ -130,6 +130,8 @@ function publicMatchSession(status) {
     format: status.match.format || '',
     aiSeatCount: Array.isArray(status.match.aiSeats) ? status.match.aiSeats.length : 0,
   };
+  if (status.match.ruleset) session.ruleset = { ...status.match.ruleset };
+  return session;
 }
 
 async function handleMatchRequest(ctx, request, url) {

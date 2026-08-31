@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-LEGACY7-WIN-GATE-R1-20260831T1754-SOL-N7M4V2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "NEW_BASE_LEGACY_SEVEN_WIN_ROUTE_GATE_R1",
+  "acquireKey": "NEWBASE-LEGACY7-WIN-GATE-R1-20260831T1754-SOL-N7M4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PRED-NEWBASE-LEGACY7-SUPPRESS-ONLY-R1",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REHEARSAL-LEGACY-PASSTHROUGH-NEWBASE-SUPPRESS-R1",
+  "proceedToken": "PROCEED|NEWBASE-LEGACY7-WIN-GATE-R1-20260831T1754-SOL-N7M4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260831T1754JST",
+  "authorizationBaseSha": "fbcfdf0e4c947538a0a6f219a4c63dca7ee362f8",
+  "scope": [
+    "browser/new-base-legacy-seven-win-gate-core.mjs",
+    "tests/new-base-legacy-seven-win-gate-core.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "NEW_BASE_LEGACY_SEVEN_WIN_ROUTE_GATE_R1",
+  "leaseAcquireKey": "NEWBASE-LEGACY7-WIN-GATE-R1-20260831T1754-SOL-N7M4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 17:54 JST",
+  "leaseUntilJst": "2026-08-31 18:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A281:L281",
+  "leaseExactMutableResources": "browser/new-base-legacy-seven-win-gate-core.mjs; tests/new-base-legacy-seven-win-gate-core.test.mjs; own branch work/newbase-legacy-seven-win-gate-r1-20260831; own PR/checks/expected-head merge; transient PRE_ACTION manifest only",
+  "leaseScope": [
+    "browser/new-base-legacy-seven-win-gate-core.mjs",
+    "tests/new-base-legacy-seven-win-gate-core.test.mjs"
+  ],
+  "solutionSignature": "new-base-legacy-seven-road-terminal-suppression-gate",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-NEWBASE-LEGACY7-GATE-R1",
+  "solutionSearchEvidence": [
+    "GitHub:main@fbcfdf0e4c947538a0a6f219a4c63dca7ee362f8 browser/battle-replay-live-adapter.mjs still validates legacy 4p match-end winners by maxColumn >= 7",
+    "Drive:current new-base authority requires ROAD7 to open GOAL route rather than itself ending the new-base match",
+    "Drive:CURRENT_ACTIVE_LEASES fresh scan shows GOAL-result and ROAD7-route owners are separate and no active owner owns this strict legacy-terminal suppression seam"
+  ],
+  "buildResidualReason": "The legacy seven-road terminal path remains a valid existing consumer for non-new-base behavior, but the new-base ruleset needs a minimal suppression seam before GOAL arrival becomes its only terminal handoff. This work unit does not alter the legacy replay adapter or implement another win engine."
+}

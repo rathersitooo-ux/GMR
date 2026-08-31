@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-SOLE-SOFT-FOCUS-R1-20260831T0943-SOL-T7N4V2",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "ROAD_MOVE_SOLE_CANDIDATE_SOFT_FOCUS_R1",
+  "acquireKey": "ROAD-SOLE-SOFT-FOCUS-R1-20260831T0943-SOL-T7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "ROAD-SOLE-SOFT-FOCUS-SCOPE-20260831T0943",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PURE-PROJECTION-NODE-TEST-ORACLE",
+  "proceedToken": "PROCEED|ROAD-SOLE-SOFT-FOCUS-R1-20260831T0943-SOL-T7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|sole-compatible-presentation-only",
+  "authorizationBaseSha": "20dafde6986af00e94d37252298da1adffbeb429",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_SOLE_CANDIDATE_SOFT_FOCUS_R1",
+  "leaseAcquireKey": "ROAD-SOLE-SOFT-FOCUS-R1-20260831T0943-SOL-T7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 09:43 JST",
+  "leaseUntilJst": "2026-08-31 10:43 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A243:L243",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/road-sole-soft-focus-r1-20260831 only: browser/road-card-soft-focus-projection.mjs; tests/road-card-soft-focus-projection.test.mjs; transient data/preaction-authorizations/ROAD-SOLE-SOFT-FOCUS-R1-20260831T0943-SOL-T7N4V2.json; own PR/checks; own CURRENT_ACTIVE_LEASES row243. READ_ONLY browser/GAMEROAD.html; browser/battle-road-move-draft-core.mjs; battle-card selection/reservation/submission; 109 adjacency/reachable/path; unrelated.",
+  "scope": [
+    "browser/road-card-soft-focus-projection.mjs",
+    "tests/road-card-soft-focus-projection.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/road-card-soft-focus-projection.mjs",
+    "tests/road-card-soft-focus-projection.test.mjs"
+  ],
+  "solutionSignature": "Project a sole-compatible Road-card soft focus from already-derived compatible identities without mutating explicit focus or formal selection state.",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "ROAD-SOLE-SOFT-FOCUS-REUSE-20260831T0943",
+  "solutionSearchEvidence": [
+    "repo:browser/ui-state-feedback-core.mjs generic control feedback has no Road compatibility or sole-candidate semantic",
+    "repo:main@20dafde tree contains no road-card soft-focus projection",
+    "lease:CURRENT_ACTIVE_LEASES!A242:N242 parallel DraftMove compatibility core is separate read-only owner"
+  ],
+  "buildResidualReason": "The missing residual is a tiny presentation-only projection between compatibleRoadCards and card UI; reusing generic selected/focus would incorrectly conflate visual soft focus with formal selection."
+}

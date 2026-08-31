@@ -38,7 +38,7 @@ test('zero compatible cards keeps every Road card NORMAL', () => {
   }
 });
 
-test('one compatible card gets supporting static emphasis without lift', () => {
+test('one compatible card preserves the existing static glow without lift', () => {
   const result = byId(projectRoadCardCompatibleGlow({
     roadCardIds: ['road-1', 'road-3', 'road-5'],
     compatibleRoadCardIds: ['road-3'],
@@ -50,10 +50,12 @@ test('one compatible card gets supporting static emphasis without lift', () => {
   assert.equal(result['road-3'].applyCompatibleGlow, true);
   assert.equal(result['road-3'].applyFocusedEmphasis, false);
   assert.deepEqual(result['road-3'].classNames, [ROAD_CARD_COMPATIBLE_CLASS]);
-  assert.equal(result['road-3'].presentation.edgeEmphasis, 'supporting');
-  assert.ok(result['road-3'].presentation.outlineWidthPx > 0);
-  assert.ok(result['road-3'].presentation.brightnessMultiplier > 1);
-  assert.ok(result['road-3'].presentation.haloLayerCount > 0);
+  assert.equal(result['road-3'].presentation.edgeEmphasis, 'strong');
+  assert.equal(result['road-3'].presentation.outlineWidthPx, 3);
+  assert.equal(result['road-3'].presentation.brightnessMultiplier, 1.12);
+  assert.equal(result['road-3'].presentation.haloLayerCount, 2);
+  assert.equal(result['road-3'].presentation.haloBlurPx, 16);
+  assert.equal(result['road-3'].presentation.haloOpacity, 0.82);
   assert.equal(result['road-3'].presentation.animated, false);
   assertNoTransformPresentation(result['road-3']);
 });
@@ -106,6 +108,10 @@ test('FOCUSED is the primary per-card presentation while compatibility remains o
   assert.ok(
     result['road-3'].presentation.outlineWidthPx
       > result['road-5'].presentation.outlineWidthPx,
+  );
+  assert.ok(
+    result['road-3'].presentation.brightnessMultiplier
+      > result['road-5'].presentation.brightnessMultiplier,
   );
   assert.equal(result['road-5'].visualState, ROAD_CARD_VISUAL_STATE.COMPATIBLE);
   assert.equal(result['road-5'].applyCompatibleGlow, true);
@@ -182,6 +188,7 @@ test('Reduced Motion removes transitions and LowPerf preserves state meaning', (
     compatibleRoadCardIds: ['road-5'],
     lowPerf: true,
   }))['road-5'];
+  assert.equal(lowPerfCompatible.presentation.outlineWidthPx, 2);
   assert.equal(lowPerfCompatible.presentation.haloLayerCount, 1);
   assert.equal(lowPerfCompatible.presentation.animated, false);
   assert.deepEqual(lowPerfCompatible.classNames, [ROAD_CARD_COMPATIBLE_CLASS]);

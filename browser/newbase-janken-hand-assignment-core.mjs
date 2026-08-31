@@ -26,7 +26,7 @@ function validateHand3(hand) {
   if (new Set(ids).size !== 3) {
     throw new RangeError("hand_card_ids_must_be_unique");
   }
-  return ids;
+  return Object.freeze(ids);
 }
 
 function validateFixedSlotState(fixedSlotState) {
@@ -50,10 +50,12 @@ function validateFixedSlotState(fixedSlotState) {
   return Object.freeze(slots);
 }
 
-function createPolicyInput(hand, fixedSlots) {
-  const handSnapshot = Object.freeze(hand.map((card) => Object.freeze({ ...card })));
+function createPolicyInput(handCardIds, fixedSlots) {
   const slotSnapshot = Object.freeze(fixedSlots.map((slot) => Object.freeze({ ...slot })));
-  return Object.freeze({ hand: handSnapshot, fixedSlots: slotSnapshot });
+  return Object.freeze({
+    handCardIds: Object.freeze([...handCardIds]),
+    fixedSlots: slotSnapshot,
+  });
 }
 
 function validateAssignmentProposal(proposal, handIds) {
@@ -74,11 +76,12 @@ function validateAssignmentProposal(proposal, handIds) {
 }
 
 /**
- * Automatically binds exactly three current-hand cards to the shared fixed
- * ROCK / SCISSORS / PAPER slot state.
+ * Automatically binds exactly three current-hand card identities to the shared
+ * fixed ROCK / SCISSORS / PAPER slot state.
  *
- * The assignment rule is deliberately injected. This core has no default
- * policy and never derives the janken hand from a card's native suit.
+ * The assignment rule is deliberately injected. It receives only current card
+ * identities plus fixed slot identities, so native card suit never becomes the
+ * assigned janken hand by accident. This core has no default policy.
  */
 export function autoAssignHand3ToFixedJankenSlots({ hand, fixedSlotState, assignmentPolicy } = {}) {
   const handIds = validateHand3(hand);
@@ -87,7 +90,7 @@ export function autoAssignHand3ToFixedJankenSlots({ hand, fixedSlotState, assign
     throw new TypeError("assignmentPolicy_required");
   }
 
-  const proposal = assignmentPolicy(createPolicyInput(hand, slots));
+  const proposal = assignmentPolicy(createPolicyInput(handIds, slots));
   const cardIdsByFixedSlot = validateAssignmentProposal(proposal, handIds);
 
   return Object.freeze(

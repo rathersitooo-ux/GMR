@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-HAND3-AUTOASSIGN-R1-20260831T1744-SOL-S7N4V2",
+  "taskId": "NEWBASE-JANKEN-HAND-INTEGRATION-001",
+  "workUnitKey": "NEW_BASE_HAND3_FIXED_JANKEN_AUTO_ASSIGN_R1",
+  "acquireKey": "NEWBASE-HAND3-AUTOASSIGN-R1-20260831T1744-SOL-S7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_USER_BRANCH12_EXACT_HAND3_FIXED_RSP_WITH_POLICY_UNDECIDED_AND_EXISTING_PURSUIT_GENERIC_PARTS_SEPARATED",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "local-node-test:newbase-janken-hand-assignment-core:8-of-8-pass",
+  "proceedToken": "PROCEED|NEWBASE-HAND3-AUTOASSIGN-R1-20260831T1744-SOL-S7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|hand3-autoassign-mechanism|lease-snapshot",
+  "authorizationBaseSha": "78084445e46cbd895059a88e3c049d8fccb2e389",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "NEWBASE-JANKEN-HAND-INTEGRATION-001",
+  "leaseWorkUnitKey": "NEW_BASE_HAND3_FIXED_JANKEN_AUTO_ASSIGN_R1",
+  "leaseAcquireKey": "NEWBASE-HAND3-AUTOASSIGN-R1-20260831T1744-SOL-S7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 17:44 JST",
+  "leaseUntilJst": "2026-08-31 18:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A258:L258",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh main read-only base; NEW branch work/newbase-hand3-autoassign-r1-20260831; transient data/preaction-authorizations/NEWBASE-HAND3-AUTOASSIGN-R1-20260831T1744-SOL-S7N4V2.json create-first/delete-before-final-head; browser/newbase-janken-hand-assignment-core.mjs; tests/newbase-janken-hand-assignment-core.test.mjs; own PR/checks/expected-head merge if gates green; own CURRENT_ACTIVE_LEASES tuple; own R23 events",
+  "scope": [
+    "browser/newbase-janken-hand-assignment-core.mjs",
+    "tests/newbase-janken-hand-assignment-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/newbase-janken-hand-assignment-core.mjs",
+    "tests/newbase-janken-hand-assignment-core.test.mjs"
+  ],
+  "solutionSignature": "Compose authoritative current hand3 card identities with externally supplied fixed ROCK/SCISSORS/PAPER slot identities and an injected assignment policy, producing separate assigned-janken state without changing native card suit or creating manual placement.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "current:branch12-boundary+github:pursuit-triad-generic-vs-specific+drive:fixed-slot-owner",
+  "solutionSearchEvidence": [
+    "github:main@78084445:browser/pursuit-triad-core.mjs generic triad/commit-reveal present but pursuit-specific effects excluded",
+    "drive:CURRENT_ACTIVE_LEASES!A256:N256 fixed ROCK/SCISSORS/PAPER slot state owned separately and read-only to this WU",
+    "drive:GAMEROAD全作業一覧 search auto-assignment/hand3 returned no existing implementation owner before acquire",
+    "local:node-test:newbase-janken-hand-assignment-core=8/8-pass"
+  ]
+}

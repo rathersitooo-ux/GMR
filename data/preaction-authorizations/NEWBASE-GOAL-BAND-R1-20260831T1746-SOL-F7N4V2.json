@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-GOAL-BAND-R1-20260831T1746-SOL-F7N4V2",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "NEW_BASE_GOAL_BAND_CORE_R1",
+  "acquireKey": "NEWBASE-GOAL-BAND-R1-20260831T1746-SOL-F7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-NEWBASE-GOAL-BAND-R1-20260831T1747",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-USER-CONTRACT-GOAL-BAND-CURRENT-NO-MATCH",
+  "proceedToken": "PROCEED|NEWBASE-GOAL-BAND-R1-20260831T1746-SOL-F7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260831T1747JST",
+  "authorizationBaseSha": "78084445e46cbd895059a88e3c049d8fccb2e389",
+  "scope": [
+    "browser/new-base-goal-band-core.mjs",
+    "tests/new-base-goal-band-core.test.mjs"
+  ],
+  "solutionSignature": "new-base-goal-band-structural-descriptor",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-NEWBASE-GOAL-BAND-R1-20260831T1747",
+  "solutionSearchEvidence": [
+    "current main@78084445 direct tree contains no GOAL/goal path or GOAL-band producer",
+    "active NEW_BASE_BOARD_GRAPH_CORE_R1 composes caller-supplied GOAL/Shield/ROAD_SLOT/FIELD IDs and explicit adjacency, so GOAL-band production remains a separate structural input",
+    "active Shield and ROAD_SLOT sibling owners retain their concrete identities; Honey movement, existing 109 authority, Battle/Road rules, GOAL opening and winner semantics remain read-only"
+  ],
+  "buildResidualReason": "The current user contract requires a GOAL band at the top of the new-base board, but no equivalent current producer exists. Build only the smallest immutable band descriptor and the confirmed above-Shields relation; leave GOAL positions, adjacency, ownership, route opening and victory semantics to their authorized consumers.",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "NEW_BASE_GOAL_BAND_CORE_R1",
+  "leaseAcquireKey": "NEWBASE-GOAL-BAND-R1-20260831T1746-SOL-F7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 17:47 JST",
+  "leaseUntilJst": "2026-08-31 18:36 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A261:L261",
+  "leaseScope": [
+    "browser/new-base-goal-band-core.mjs",
+    "tests/new-base-goal-band-core.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@78084445e46cbd895059a88e3c049d8fccb2e389; NEW branch work/newbase-goal-band-r1-20260831; transient data/preaction-authorizations/NEWBASE-GOAL-BAND-R1-20260831T1746-SOL-F7N4V2.json create-first/delete-before-final-head; browser/new-base-goal-band-core.mjs + tests/new-base-goal-band-core.test.mjs only; own branch/PR/checks/expected-head merge if exact-head gates are green; own CURRENT_ACTIVE_LEASES exact tuple; own R23 append-only events. READ_ONLY browser/GAMEROAD.html, existing 109 graph/adjacency/legal positions, Honey movement/reservation/revalidation, active new-base ROAD_SLOT branch, Shield/FIELD structures, GOAL graph edges/opening/win semantics, existing Battle/Road/cards/rules, save/economy/network/deploy/workflows/formal assets/unrelated."
+}

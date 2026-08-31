@@ -119,7 +119,7 @@ test('legacy matches stay unversioned and client input cannot select the new-bas
   assert.equal(Object.hasOwn(raw, 'state'), false);
 });
 
-test('authoritative generated new-base envelope persists explicit version and unresolved state skeleton', async () => {
+test('authoritative generated new-base envelope persists explicit version and minimal state skeleton', async () => {
   const storage = new FakeStorage();
   const results = [];
   for (let i = 0; i < 4; i += 1) {
@@ -141,7 +141,8 @@ test('authoritative generated new-base envelope persists explicit version and un
   assert.deepEqual(raw.ruleset, NEW_BASE_MATCH_RULESET);
   assert.equal(raw.state.schema, NEW_BASE_MATCH_STATE_SCHEMA);
   assert.deepEqual(raw.state.ruleset, NEW_BASE_MATCH_RULESET);
-  assert.equal(raw.state.config.manaRecoveryPerTurn, null);
+  assert.equal(Object.hasOwn(raw.state, 'config'), false, 'mana recovery config has a separate current owner');
+  assert.equal(JSON.stringify(raw.state).includes('mana'), false, 'ruleset skeleton must not duplicate mana configuration');
   assert.equal(JSON.stringify(raw.state).includes('pursuit'), false);
   assert.deepEqual(raw.state, createNewBaseMatchStateSkeleton());
   assert.equal(Object.hasOwn(status.match, 'state'), false, 'internal state skeleton must not leak through public match status');

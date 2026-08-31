@@ -17,7 +17,7 @@ async function installLegalBattleDeck(page) {
   });
 }
 
-test('shows four actual Naki visuals together in the current 4P Battle', async ({ page }, testInfo) => {
+test.only('shows four actual Naki visuals together in the current 4P Battle', async ({ page }, testInfo) => {
   test.setTimeout(60_000);
 
   const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });

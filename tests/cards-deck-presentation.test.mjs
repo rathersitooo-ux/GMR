@@ -3,13 +3,11 @@ import assert from 'node:assert/strict';
 import {
   DEFAULT_DECK_SWIPE_PRESENTATION,
   DECK_SWIPE_PRESENTATION_EVENTS,
-  DECK_SWIPE_SFX_CUES,
   normalizeDeckSwipeRect,
   createDeckSwipeFlightPlan,
   createDeckSwipeRejectPlan,
   createDeckSwipeFeedbackDetail,
   createDeckSwipePresentationController,
-  createDeckSwipeSfxPlayer,
 } from '../browser/cards-deck-presentation.mjs';
 
 const rect = (left, top, width, height) => ({ left, top, width, height });
@@ -172,6 +170,7 @@ test('reduced controller emits commit then land and exposes SFX hooks without ow
     'gameroad:deck-swipe-land',
   ]);
   assert.deepEqual(order, ['sfx:commit', 'sfx:land']);
+  assert.equal(controller.sfxPlayer, null);
 });
 
 test('reject controller emits reject only and never a land event', () => {
@@ -187,67 +186,29 @@ test('reject controller emits reject only and never a land event', () => {
   assert.deepEqual(hook, ['duplicate']);
 });
 
-test('local SFX contract supplies distinct commit, land and reject cues without assets', () => {
-  assert.equal(Object.isFrozen(DECK_SWIPE_SFX_CUES), true);
-  assert.equal(DECK_SWIPE_SFX_CUES.commit.kind, 'noise');
-  assert.equal(DECK_SWIPE_SFX_CUES.land.kind, 'tone');
-  assert.ok(DECK_SWIPE_SFX_CUES.land.endHz > DECK_SWIPE_SFX_CUES.land.startHz);
-  assert.ok(DECK_SWIPE_SFX_CUES.reject.endHz < DECK_SWIPE_SFX_CUES.reject.startHz);
-});
-
-function fakeAudioParam() {
+test('optional external SFX player remains a thin presentation hook', () => {
+  const doc = fakeDocument();
   const calls = [];
-  return {
-    calls,
-    setValueAtTime: (...args) => calls.push(['set', ...args]),
-    linearRampToValueAtTime: (...args) => calls.push(['linear', ...args]),
-    exponentialRampToValueAtTime: (...args) => calls.push(['exp', ...args]),
-    cancelScheduledValues: (...args) => calls.push(['cancel', ...args]),
+  const sfxPlayer = {
+    playCommit: () => calls.push('commit'),
+    playLand: () => calls.push('land'),
+    playReject: () => calls.push('reject'),
+    dispose: () => calls.push('dispose'),
   };
-}
-
-class FakeAudioContext {
-  constructor() {
-    FakeAudioContext.instances += 1;
-    this.currentTime = 2;
-    this.sampleRate = 48000;
-    this.state = 'running';
-    this.destination = {};
-    this.oscillators = [];
-    this.bufferSources = [];
-  }
-  createGain() { return { gain: fakeAudioParam(), connect() {} }; }
-  createOscillator() {
-    const node = { frequency: fakeAudioParam(), connect() {}, start() { this.started = true; }, stop() { this.stopped = true; } };
-    this.oscillators.push(node);
-    return node;
-  }
-  createBuffer(_channels, frames) { return { getChannelData: () => new Float32Array(frames) }; }
-  createBufferSource() {
-    const node = { connect() {}, start() { this.started = true; }, stop() { this.stopped = true; } };
-    this.bufferSources.push(node);
-    return node;
-  }
-  createBiquadFilter() { return { Q: fakeAudioParam(), frequency: fakeAudioParam(), connect() {} }; }
-  close() { this.closed = true; }
-}
-FakeAudioContext.instances = 0;
-
-test('SFX player creates AudioContext lazily and plays asset-free whoosh/tone cues', () => {
-  FakeAudioContext.instances = 0;
-  const player = createDeckSwipeSfxPlayer({ window: { AudioContext: FakeAudioContext } });
-  assert.equal(FakeAudioContext.instances, 0);
-  assert.equal(player.playCommit(), true);
-  assert.equal(FakeAudioContext.instances, 1);
-  assert.equal(player.playLand(), true);
-  assert.equal(player.playReject(), true);
-  assert.equal(FakeAudioContext.instances, 1);
-});
-
-test('SFX player fails silent when audio is disabled or unavailable', () => {
-  assert.equal(createDeckSwipeSfxPlayer({ window: {}, enabled: true }).playCommit(), false);
-  assert.equal(createDeckSwipeSfxPlayer({ window: { AudioContext: FakeAudioContext }, enabled: false }).playLand(), false);
-  assert.throws(() => createDeckSwipeSfxPlayer({ volume: 3 }), /SFX_VOLUME_INVALID/);
+  const controller = createDeckSwipePresentationController({
+    document: doc,
+    window: immediateWindow({ reduced: true }),
+    reducedMotion: true,
+    sfxPlayer,
+  });
+  controller.playSuccess({
+    sourceElement: fakeElement(rect(10, 300, 100, 140)),
+    targetElement: fakeElement(rect(500, 40, 180, 240)),
+    cardId: 'c10',
+  });
+  controller.playReject({ sourceElement: fakeElement(), reason: 'deck_full' });
+  controller.dispose();
+  assert.deepEqual(calls, ['commit', 'land', 'reject', 'dispose']);
 });
 
 test('custom timings remain bounded by semantic contract', () => {

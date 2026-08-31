@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-MANA-TURNSTART-R1-20260831T1849-SOL-K4M8Q1",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "NEW_BASE_TURN_START_MANA_RECOVERY_HOOK_R1",
+  "acquireKey": "NEWBASE-MANA-TURNSTART-R1-20260831T1849-SOL-K4M8Q1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "NEWBASE-MANA-TURNSTART-PREDICTION-R1",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CONFIG-FAIL-CLOSED-PLUS-UNIT-TEST-ORACLE",
+  "proceedToken": "PROCEED|NEWBASE-MANA-TURNSTART-R1-20260831T1849-SOL-K4M8Q1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-lease|config-compose",
+  "authorizationBaseSha": "fbcfdf0e4c947538a0a6f219a4c63dca7ee362f8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "NEW_BASE_TURN_START_MANA_RECOVERY_HOOK_R1",
+  "leaseAcquireKey": "NEWBASE-MANA-TURNSTART-R1-20260831T1849-SOL-K4M8Q1",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 18:49 JST",
+  "leaseUntilJst": "2026-08-31 19:49 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A283:L283",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/newbase-turn-start-mana-r1-20260831 only: browser/new-base-turn-start-mana-recovery-core.mjs; tests/new-base-turn-start-mana-recovery-core.test.mjs; CURRENT_ACTIVE_LEASES own AcquireKey row only",
+  "scope": [
+    "browser/new-base-turn-start-mana-recovery-core.mjs",
+    "tests/new-base-turn-start-mana-recovery-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-turn-start-mana-recovery-core.mjs",
+    "tests/new-base-turn-start-mana-recovery-core.test.mjs"
+  ],
+  "solutionSignature": "At new-base turn start, require the externally configured mana recovery amount and delegate exactly one mutation to the existing/shared mana consumer without defining a second mana model.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "NEWBASE-MANA-COMPOSE-CURRENT-CONFIG-R1",
+  "solutionSearchEvidence": [
+    "browser/new-base-mana-recovery-config.mjs@fbcfdf0e4c947538a0a6f219a4c63dca7ee362f8",
+    "CURRENT_ACTIVE_LEASES!A283:L283",
+    "browser/battle-replay-live-adapter.mjs inspected read-only; not mana authority"
+  ]
+}

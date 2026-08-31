@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-ROAD7-GOAL-R1-20260831T1744-SOL-Y7N4V2",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "NEW_BASE_ROAD7_GOAL_ROUTE_UNLOCK_R1",
+  "acquireKey": "NEWBASE-ROAD7-GOAL-R1-20260831T1744-SOL-Y7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-20260831-ROAD7-GOAL-THIN-GATE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PURE-GATE-DETERMINISTIC-NODE-CONTRACT",
+  "proceedToken": "PROCEED|NEWBASE-ROAD7-GOAL-R1-20260831T1744-SOL-Y7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-lease|thin-gate",
+  "authorizationBaseSha": "78084445e46cbd895059a88e3c049d8fccb2e389",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "NEW_BASE_ROAD7_GOAL_ROUTE_UNLOCK_R1",
+  "leaseAcquireKey": "NEWBASE-ROAD7-GOAL-R1-20260831T1744-SOL-Y7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 17:47 JST",
+  "leaseUntilJst": "2026-08-31 18:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A257:L257",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@78084445e46cbd895059a88e3c049d8fccb2e389; NEW branch work/newbase-road7-goal-unlock-r1-20260831; transient data/preaction-authorizations/NEWBASE-ROAD7-GOAL-R1-20260831T1744-SOL-Y7N4V2.json create-first/delete-before-final-head if current gate requires; browser/new-base-goal-route-unlock-core.mjs + tests/new-base-goal-route-unlock-core.test.mjs only; own branch/PR/checks/expected-head merge if exact-head gates are green; own CURRENT_ACTIVE_LEASES exact tuple; own R23 append-only events. CONSUME_ONLY active NEW_BASE_ROAD_SLOT_12X7_CORE_R1 contract after integration; READ_ONLY browser/new-base-road-slot-core.mjs and its branch, browser/GAMEROAD.html, existing 109 graph/adjacency/legal positions, Honey movement/reservation/revalidation, existing Road/Battle rules/cards, Result/save/economy/network/deploy/workflows/formal assets, active PR#764 Battle package, unrelated.",
+  "scope": [
+    "browser/new-base-goal-route-unlock-core.mjs",
+    "tests/new-base-goal-route-unlock-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-goal-route-unlock-core.mjs",
+    "tests/new-base-goal-route-unlock-core.test.mjs"
+  ],
+  "solutionSignature": "Map an externally-derived ROAD completion signal to caller-supplied GOAL route availability without winner, Result, or movement semantics.",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT-20260831-ROAD7-GOAL-REUSE-JIT",
+  "solutionSearchEvidence": [
+    "GitHub main search found no ROAD_SLOT/GOAL route core on current main",
+    "CURRENT_ACTIVE_LEASES shows kana ほ owns NEW_BASE_ROAD_SLOT_12X7_CORE_R1, so completion counting is consumed rather than duplicated"
+  ],
+  "buildResidualReason": "No GOAL-route unlock gate exists on current main. Build only the missing availability gate and consume upstream roadComplete instead of reimplementing ROAD7 counting."
+}

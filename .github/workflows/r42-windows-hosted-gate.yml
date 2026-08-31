@@ -50,6 +50,9 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference = 'Stop'
+          function Write-Utf8NoBom([string]$Path, [string]$Text) {
+            [IO.File]::WriteAllText($Path, $Text, (New-Object Text.UTF8Encoding($false)))
+          }
           $root = (Resolve-Path 'r42').Path
           $tmp = Join-Path $env:RUNNER_TEMP 'r42-live-gate'
           $repo = Join-Path $tmp 'repo'
@@ -57,19 +60,19 @@ jobs:
           $logs = Join-Path $tmp 'launcher-logs'
           $fakeBin = Join-Path $tmp 'fakebin'
           New-Item -ItemType Directory -Force -Path $repo,$state,$logs,$fakeBin | Out-Null
-          Set-Content -LiteralPath (Join-Path $repo 'AGENTS.md') -Value '# test' -Encoding UTF8
-          Set-Content -LiteralPath (Join-Path $repo 'CODEX_HANDOFF_CURRENT.md') -Value '# test' -Encoding UTF8
+          Write-Utf8NoBom (Join-Path $repo 'AGENTS.md') '# test'
+          Write-Utf8NoBom (Join-Path $repo 'CODEX_HANDOFF_CURRENT.md') '# test'
 
           $fakeLog = Join-Path $tmp 'fake-codex.log'
           $fake = Join-Path $fakeBin 'codex.cmd'
-          @"
-@echo off
-if not "%FAKE_CODEX_LOG%"=="" echo %*>>"%FAKE_CODEX_LOG%"
-if "%1"=="--version" (echo codex-r42-fake& exit /b 0)
-if "%1"=="app-server" if "%2"=="--help" (echo fake app server help& exit /b 0)
-if "%1"=="app-server" (python "%R42_ROOT%\tests\fake_bounded_exec_app_server.py" & exit /b %ERRORLEVEL%)
-exit /b 9
-"@ | Set-Content -LiteralPath $fake -Encoding ASCII
+          @(
+            '@echo off',
+            'if not "%FAKE_CODEX_LOG%"=="" echo %*>>"%FAKE_CODEX_LOG%"',
+            'if "%1"=="--version" (echo codex-r42-fake& exit /b 0)',
+            'if "%1"=="app-server" if "%2"=="--help" (echo fake app server help& exit /b 0)',
+            'if "%1"=="app-server" (python "%R42_ROOT%\tests\fake_bounded_exec_app_server.py" & exit /b %ERRORLEVEL%)',
+            'exit /b 9'
+          ) | Set-Content -LiteralPath $fake -Encoding ASCII
           $env:FAKE_CODEX_LOG = $fakeLog
           $env:R42_ROOT = $root
           $env:FAKE_REPO = $repo
@@ -77,9 +80,9 @@ exit /b 9
           $env:PATH = "$fakeBin;$env:PATH"
 
           $config = Join-Path $tmp 'gameroad-start.config.json'
-          [ordered]@{
+          Write-Utf8NoBom $config ([ordered]@{
             schema='gameroad.launcher.v1'; backend='gameroadctl'; repoRoot=$repo; backendRoot=$root; stateRoot=$state; logRoot=$logs
-          } | ConvertTo-Json | Set-Content -LiteralPath $config -Encoding UTF8
+          } | ConvertTo-Json)
 
           # 0: no ticket must exit cleanly without even resolving/touching fake Codex.
           & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'gameroad-start.ps1') -Mode Run -ConfigPath $config
@@ -98,8 +101,9 @@ exit /b 9
           }
 
           # Invalid multi-worker ticket must be rejected before Codex touch.
-          $bad = $ticket.PSObject.Copy(); $bad.resourceAuthorization = [ordered]@{resource='Codex';codexAuthorized=$true;authorizationBasis='test fixture';lowerCostRouteCheck='fake model only';quotaState='TEST_SINGLE_USE';maxModelTurns=1;maxParallelWorkers=4;recurringAuthorized=$false}
-          $bad | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $ticketPath -Encoding UTF8
+          $bad = ($ticket | ConvertTo-Json -Depth 8 | ConvertFrom-Json)
+          $bad.resourceAuthorization.maxParallelWorkers = 4
+          Write-Utf8NoBom $ticketPath ($bad | ConvertTo-Json -Depth 8)
           & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'gameroad-start.ps1') -Mode Run -ConfigPath $config -AssignmentPath $ticketPath
           if ($LASTEXITCODE -ne 2) { throw "invalid-ticket expected exit 2, got $LASTEXITCODE" }
           $invalid = Get-Content -LiteralPath (Join-Path $state 'last-result.json') -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -107,7 +111,7 @@ exit /b 9
           if (Test-Path -LiteralPath $fakeLog) { throw 'Codex executable was touched by invalid ticket' }
 
           # 1: valid one-shot ticket goes through exact launcher/controller and fake app-server exactly once.
-          $ticket | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $ticketPath -Encoding UTF8
+          Write-Utf8NoBom $ticketPath ($ticket | ConvertTo-Json -Depth 8)
           & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'gameroad-start.ps1') -Mode Run -ConfigPath $config -AssignmentPath $ticketPath
           if ($LASTEXITCODE -ne 0) { throw "valid-ticket launcher failed: $LASTEXITCODE" }
           $valid = Get-Content -LiteralPath (Join-Path $state 'last-result.json') -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -118,7 +122,7 @@ exit /b 9
           if ($touchesAfterValid -lt 3) { throw 'fake Codex did not exercise version/help/app-server path' }
 
           # replay 0: recreate the identical ticket; consumed marker must block before any further Codex touch.
-          $ticket | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $ticketPath -Encoding UTF8
+          Write-Utf8NoBom $ticketPath ($ticket | ConvertTo-Json -Depth 8)
           & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'gameroad-start.ps1') -Mode Run -ConfigPath $config -AssignmentPath $ticketPath
           if ($LASTEXITCODE -ne 2) { throw "replay expected exit 2, got $LASTEXITCODE" }
           $replay = Get-Content -LiteralPath (Join-Path $state 'last-result.json') -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -143,7 +147,7 @@ exit /b 9
             codexTouchesAfterReplay=$touchesAfterReplay
             paidCodexCredentialUsed=$false
           }
-          $evidence | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath 'r42-windows-evidence.json' -Encoding UTF8
+          Write-Utf8NoBom 'r42-windows-evidence.json' ($evidence | ConvertTo-Json -Depth 8)
           Get-Content -LiteralPath 'r42-windows-evidence.json' -Raw
 
       - name: Upload Windows evidence

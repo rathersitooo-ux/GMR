@@ -12,10 +12,8 @@ on:
   push:
     branches:
       - main
-      - 'work/**'
     paths:
       - 'browser/GAMEROAD.html'
-      - 'browser/**/*.mjs'
       - 'tests/browser-full-interaction.spec.mjs'
       - 'tests/browser-full-interaction-state-sequence.spec.mjs'
       - 'playwright.full-interaction.config.mjs'
@@ -25,7 +23,6 @@ on:
       - main
     paths:
       - 'browser/GAMEROAD.html'
-      - 'browser/**/*.mjs'
       - 'tests/browser-full-interaction.spec.mjs'
       - 'tests/browser-full-interaction-state-sequence.spec.mjs'
       - 'playwright.full-interaction.config.mjs'
@@ -69,7 +66,7 @@ jobs:
           retention-days: 14
 
   chromium-public-origin-evidence:
-    if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event_name == 'pull_request' }}
+    if: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:

@@ -25,7 +25,6 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop-1280x720',
-      testMatch: ['browser-full-interaction.spec.mjs', 'browser-full-interaction-state-sequence.spec.mjs', 'browser-naki4p-visible.spec.mjs'],
       use: { viewport: { width: 1280, height: 720 } },
     },
     {

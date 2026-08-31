@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SCREEN-RESPONSIVE-INSET-R1-20260901T0117-SOL-Q4N7P2",
+  "taskId": "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001",
+  "workUnitKey": "BATTLE_SCREEN_RESPONSIVE_INSET_FIX_R1",
+  "acquireKey": "BATTLE-SCREEN-RESPONSIVE-INSET-R1-20260901T0117-SOL-Q4N7P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "current-main-battle-screen-responsive-css-invalid-inset-properties",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "source-level-css-property-validity-plus-existing-battle-runtime-test",
+  "proceedToken": "PROCEED|BATTLE-SCREEN-RESPONSIVE-INSET-R1-20260901T0117-SOL-Q4N7P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260901T0117JST",
+  "authorizationBaseSha": "5bfdf267de38103b1ded348844ad2c722a487783",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_SCREEN_RESPONSIVE_INSET_FIX_R1",
+  "leaseAcquireKey": "BATTLE-SCREEN-RESPONSIVE-INSET-R1-20260901T0117-SOL-Q4N7P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 01:17 JST",
+  "leaseUntilJst": "2026-09-01 01:47 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A309:L309",
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR browser/battle-screen-runtime-mount.mjs; transient data/preaction-authorizations/BATTLE-SCREEN-RESPONSIVE-INSET-R1-20260901T0117-SOL-Q4N7P2.json; own branch/PR/checks/expected-head merge; CURRENT_ACTIVE_LEASES!A309:L309"
+}

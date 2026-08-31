@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-CARDS-QUICKDECK-R7-20260831T2013-SOL-Q6M4V9",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "UI_CARDS_QUICK_DECK_CURRENT_REBASE_R7",
+  "acquireKey": "UI-CARDS-QUICKDECK-R7-20260831T2013-SOL-Q6M4V9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_236c338_PLUS_STALE_PR756_QUICK_DECK_VISIBLE_DONOR",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_QUICK_DECK_OVERLAY_API_AND_PR756_INTERACTION_TEST",
+  "proceedToken": "PROCEED|UI-CARDS-QUICKDECK-R7-20260831T2013-SOL-Q6M4V9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_REBASE",
+  "authorizationBaseSha": "236c33843df2c0bc38c9e87ebf34144eb71eccff",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "UI_CARDS_QUICK_DECK_CURRENT_REBASE_R7",
+  "leaseAcquireKey": "UI-CARDS-QUICKDECK-R7-20260831T2013-SOL-Q6M4V9",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 20:14 JST",
+  "leaseUntilJst": "2026-08-31 20:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A289:L289",
+  "leaseExactMutableResources": "browser/home-cards-2p5d-presentation.mjs; tests/home-cards-2p5d-runtime.spec.mjs; transient PRE_ACTION manifest; own branch/PR/checks/expected-head merge; own lease/R23",
+  "scope": [
+    "browser/home-cards-2p5d-presentation.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs"
+  ]
+}

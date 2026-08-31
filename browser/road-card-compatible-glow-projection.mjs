@@ -42,15 +42,17 @@ function requireOptionalKnownId(label, value, knownIds) {
 }
 
 function buildCompatiblePresentation({ reducedMotion, lowPerf }) {
+  // Preserve the existing COMPATIBLE presentation. Kana て only adds the
+  // stronger focus/invalid channels; candidate appearance is not redesigned.
   return Object.freeze({
-    edgeEmphasis: 'supporting',
+    edgeEmphasis: 'strong',
     outlineStyle: 'solid',
-    outlineWidthPx: 2,
+    outlineWidthPx: lowPerf ? 2 : 3,
     outlineOffsetPx: 2,
-    brightnessMultiplier: lowPerf ? 1.04 : 1.08,
-    haloLayerCount: 1,
-    haloBlurPx: lowPerf ? 5 : 10,
-    haloOpacity: lowPerf ? 0.36 : 0.48,
+    brightnessMultiplier: lowPerf ? 1.06 : 1.12,
+    haloLayerCount: lowPerf ? 1 : 2,
+    haloBlurPx: lowPerf ? 6 : 16,
+    haloOpacity: lowPerf ? 0.58 : 0.82,
     transitionMs: reducedMotion ? 0 : 90,
     animated: false,
     lowPerf: Boolean(lowPerf),
@@ -66,10 +68,10 @@ function buildFocusedPresentation({ reducedMotion, lowPerf }) {
     outlineStyle: 'solid',
     outlineWidthPx: lowPerf ? 3 : 4,
     outlineOffsetPx: 1,
-    brightnessMultiplier: lowPerf ? 1.08 : 1.14,
-    haloLayerCount: lowPerf ? 0 : 1,
-    haloBlurPx: lowPerf ? 0 : 8,
-    haloOpacity: lowPerf ? 0 : 0.58,
+    brightnessMultiplier: lowPerf ? 1.1 : 1.18,
+    haloLayerCount: lowPerf ? 1 : 2,
+    haloBlurPx: lowPerf ? 6 : 12,
+    haloOpacity: lowPerf ? 0.62 : 0.86,
     transitionMs: reducedMotion ? 0 : 90,
     animated: false,
     lowPerf: Boolean(lowPerf),

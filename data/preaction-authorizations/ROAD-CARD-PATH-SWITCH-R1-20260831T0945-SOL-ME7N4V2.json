@@ -1,0 +1,22 @@
+{
+  "schema": "gameroad.preaction-authorization.v1",
+  "acquireKey": "ROAD-CARD-PATH-SWITCH-R1-20260831T0945-SOL-ME7N4V2",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "ROAD_CARD_PATH_SWITCH_REGRESSION_R1",
+  "baseSha": "20dafde6986af00e94d37252298da1adffbeb429",
+  "branch": "work/road-card-path-switch-r1-20260831",
+  "mutableResources": [
+    "tests/road-card-path-switch-regression.test.mjs"
+  ],
+  "readOnlyResources": [
+    "browser/GAMEROAD.html",
+    "browser/battle-road-move-draft-core.mjs",
+    "browser/road-card-focus-projection-core.mjs",
+    "browser/road-move-compatibility-core.mjs",
+    "109 adjacency/reachable/path",
+    "battle-card selection/reservation/submission",
+    "Battle rules/attack/win/save/economy/deploy/workflows/formal assets"
+  ],
+  "intent": "Add only the card-to-move-to-card-change regression: preserve currentPath while switching explicit focus between compatible Road cards, never auto-submit, and never touch Battle-card behavior.",
+  "rollback": "Close the workunit PR and delete the branch; do not mutate main unless exact-head required gates are green."
+}

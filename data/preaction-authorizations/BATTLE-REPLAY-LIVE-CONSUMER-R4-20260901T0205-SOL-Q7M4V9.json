@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-REPLAY-LIVE-CONSUMER-R4-20260901T0205-SOL-Q7M4V9",
+  "taskId": "BATTLE-REPLAY-RUNTIME-CONTRACT-001",
+  "workUnitKey": "BATTLE_REPLAY_AUTHORIZED_LIVE_CONSUMER_R4",
+  "acquireKey": "BATTLE-REPLAY-LIVE-CONSUMER-R4-20260901T0205-SOL-Q7M4V9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "ROW1261-LIVE-CONSUMER-USE-SITE-RESIDUAL+MAIN-ADAPTER-ORPHAN-SEARCH0",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING-SPECTATOR-FOLLOW-ADAPTER+READ-LIVE-REPLAY-CONTRACT",
+  "proceedToken": "PROCEED|BATTLE-REPLAY-LIVE-CONSUMER-R4-20260901T0205-SOL-Q7M4V9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-seams-only|two-files",
+  "authorizationBaseSha": "e79b11fddc5e38229d3732fa3cdd79f15834372b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-REPLAY-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "BATTLE_REPLAY_AUTHORIZED_LIVE_CONSUMER_R4",
+  "leaseAcquireKey": "BATTLE-REPLAY-LIVE-CONSUMER-R4-20260901T0205-SOL-Q7M4V9",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 02:05 JST",
+  "leaseUntilJst": "2026-09-01 02:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A313:L313",
+  "leaseExactMutableResources": "browser/battle-replay-spectator-follow-adapter.mjs; tests/battle-replay-spectator-follow-adapter.test.mjs; transient own preaction authorization; own branch/PR/checks/expected-head merge",
+  "scope": [
+    "browser/battle-replay-spectator-follow-adapter.mjs",
+    "tests/battle-replay-spectator-follow-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-replay-spectator-follow-adapter.mjs",
+    "tests/battle-replay-spectator-follow-adapter.test.mjs"
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CLOUDFLARE-DEPLOY-SUPERSEDE-R1-20260831T2349-SOL-Q7N4V2",
+  "taskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "workUnitKey": "CLOUDFLARE_DEPLOY_SUPERSEDED_RUN_CANCEL_R1",
+  "acquireKey": "CLOUDFLARE-DEPLOY-SUPERSEDE-R1-20260831T2349-SOL-Q7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-CLOUDFLARE-SUPERSEDE-CONCURRENCY-R1-20260831T2349",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-CURRENT-WORKFLOW-CONCURRENCY-AND-WORKFLOW-RUN-FANOUT",
+  "proceedToken": "PROCEED|CLOUDFLARE-DEPLOY-SUPERSEDE-R1-20260831T2349-SOL-Q7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260831T2349JST",
+  "authorizationBaseSha": "3e8f53f767d34f706cf26e29de5742c3333058e4",
+  "scope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ],
+  "solutionSignature": "cloudflare-public-deploy-cancel-superseded-main-runs-only",
+  "reuseDisposition": "SUBTRACT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-CLOUDFLARE-DEPLOY-CONCURRENCY-R1-20260831T2349",
+  "solutionSearchEvidence": [
+    "Current main Cloudflare workflow already has a single fixed concurrency group and cancel-in-progress:false; no new workflow or queue is required",
+    "Current Browser Full Interaction workflow consumes successful Cloudflare deploy completion via workflow_run, so superseded successful deploys can fan out additional public-origin evidence runs",
+    "Changing only cancel-in-progress to true preserves deploy steps, secrets, package build, probes, canonical URL and downstream behavior for the newest run"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "leaseWorkUnitKey": "CLOUDFLARE_DEPLOY_SUPERSEDED_RUN_CANCEL_R1",
+  "leaseAcquireKey": "CLOUDFLARE-DEPLOY-SUPERSEDE-R1-20260831T2349-SOL-Q7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 23:49 JST",
+  "leaseUntilJst": "2026-09-01 00:19 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A299:L299",
+  "leaseScope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact fresh main@3e8f53f767d34f706cf26e29de5742c3333058e4; NEW branch work/cloudflare-deploy-supersede-r1-20260831; .github/workflows/cloudflare-public-deploy.yml only; transient data/preaction-authorizations/CLOUDFLARE-DEPLOY-SUPERSEDE-R1-20260831T2349-SOL-Q7N4V2.json create-first/delete-before-final-head; own PR/checks; own CURRENT_ACTIVE_LEASES row299; own R23 events. READ_ONLY deploy/cloudflare scripts/tests/runtime, Browser workflows, product files and unrelated workflows/branches/PRs."
+}

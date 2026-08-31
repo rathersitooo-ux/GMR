@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-PRESENTATION-CLEANUP-R1-20260831T1932-SOL-OE7N4V2",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "ROAD_CARD_PRESENTATION_ORPHAN_CLEANUP_R1",
+  "acquireKey": "ROAD-PRESENTATION-CLEANUP-R1-20260831T1932-SOL-OE7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-DELETE-UNMOUNTED-ROAD-PRESENTATION-R1",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-EXACT4-NO-CONSUMER-SEARCH-R1",
+  "proceedToken": "PROCEED|ROAD-PRESENTATION-CLEANUP-R1-20260831T1932-SOL-OE7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|SUBTRACTION_ONLY",
+  "authorizationBaseSha": "236c33843df2c0bc38c9e87ebf34144eb71eccff",
+  "scope": [
+    "browser/road-card-compatible-glow-projection.mjs",
+    "browser/road-card-soft-focus-projection.mjs",
+    "tests/road-card-compatible-glow-projection.test.mjs",
+    "tests/road-card-soft-focus-projection.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "ROAD_CARD_PRESENTATION_ORPHAN_CLEANUP_R1",
+  "leaseAcquireKey": "ROAD-PRESENTATION-CLEANUP-R1-20260831T1932-SOL-OE7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 19:32 JST",
+  "leaseUntilJst": "2026-08-31 20:32 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A288:L288",
+  "leaseScope": [
+    "browser/road-card-compatible-glow-projection.mjs",
+    "browser/road-card-soft-focus-projection.mjs",
+    "tests/road-card-compatible-glow-projection.test.mjs",
+    "tests/road-card-soft-focus-projection.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact base main@236c33843df2c0bc38c9e87ebf34144eb71eccff; branch work/road-presentation-cleanup-r1-20260831; transient data/preaction-authorizations/ROAD-PRESENTATION-CLEANUP-R1-20260831T1932-SOL-OE7N4V2.json create-first/delete-before-final-head; delete exact four Road presentation/test files only; all other files READ_ONLY.",
+  "solutionSignature": "Remove two unmounted Road-card presentation micro-projections and their dedicated tests without adding replacement abstraction or changing runtime rules",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-SUBTRACT-ORPHAN-ROAD-PRESENTATION-R1",
+  "solutionSearchEvidence": [
+    "current repo symbol search found no non-test consumer for projectRoadCardSoftFocus",
+    "current repo symbol search found no non-test consumer for projectRoadCardCompatibleGlow",
+    "originating Road compatible-glow PR explicitly excluded GAMEROAD.html/runtime mount",
+    "shared compatibility work remains separate and outside this cleanup scope"
+  ]
+}

@@ -22,6 +22,39 @@ function isExecutableScript(attrs) {
   ]).has(type);
 }
 
+function collectHomeVisualShellErrors(html) {
+  if (!/\bdata-codex-home-source\s*=/i.test(html)) return [];
+
+  const errors = [];
+  const homeStart = html.indexOf('<section class="screen home codexHome active"');
+  const cardsStart = html.indexOf('<section class="screen cards"', homeStart);
+  if (homeStart < 0 || cardsStart <= homeStart) {
+    return ['unable to resolve current Home visual-shell boundary'];
+  }
+
+  const home = html.slice(homeStart, cardsStart);
+  for (const forbidden of ['HOME VISUAL', 'GAMEROAD のホーム', 'ホームから各機能へ移動できます']) {
+    if (home.includes(forbidden)) errors.push(`decorative Home copy is present: ${forbidden}`);
+  }
+  if (!/\.app:has\(\.home\.active\)>\.top \.brand\{display:none\}/.test(html)) {
+    errors.push('decorative GAMEROAD brand is not hidden while Home is active');
+  }
+  if (!/class="codexBattleCta" data-go="setup"/.test(home)) {
+    errors.push('Home battle call-to-action is missing');
+  }
+  for (const target of ['setup', 'characters', 'cards', 'shop']) {
+    if (!new RegExp(`data-home-target=["']${target}["']`).test(home)) {
+      errors.push(`Home primary navigation target is missing: ${target}`);
+    }
+  }
+  for (const target of ['missions', 'gacha', 'records', 'profile', 'settings']) {
+    if (!new RegExp(`data-go=["']${target}["']`).test(home)) {
+      errors.push(`Home utility navigation target is missing: ${target}`);
+    }
+  }
+  return errors;
+}
+
 function collectStaticErrors(html) {
   const errors = [];
   if (!/<!doctype\s+html\b/i.test(html)) errors.push('missing HTML doctype');
@@ -87,6 +120,8 @@ function collectStaticErrors(html) {
   for (const [pattern, message] of dedicatedBattleContracts) {
     if (!pattern.test(html)) errors.push(message);
   }
+
+  errors.push(...collectHomeVisualShellErrors(html));
 
   const dedicatedScriptMatch = html.match(
     /<script\s+id=["']gameroad-battle-phase-presentation-r2-dedicated-script["'][^>]*>([\s\S]*?)<\/script\s*>/i,
@@ -172,6 +207,12 @@ async function runSelfTest() {
   const missingNavigationMountResult = await validateHtml(missingNavigationMount);
   if (!missingNavigationMountResult.includes('screen navigation core is not production-mounted')) {
     throw new Error('self-test failed: checker did not detect missing screen-navigation core mount');
+  }
+
+  const brokenHomeShell = '<section class="screen home codexHome active" data-codex-home-source="self-test"><div>HOME VISUAL</div><button class="codexBattleCta" data-go="setup"></button></section><section class="screen cards"></section>';
+  const brokenHomeShellResult = collectHomeVisualShellErrors(brokenHomeShell);
+  if (!brokenHomeShellResult.includes('decorative Home copy is present: HOME VISUAL')) {
+    throw new Error('self-test failed: checker did not detect decorative Home copy');
   }
 
   console.log('SELF_TEST_PASS');

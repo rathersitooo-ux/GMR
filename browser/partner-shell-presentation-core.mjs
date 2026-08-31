@@ -7,6 +7,8 @@ const MENU_ITEMS = Object.freeze([
   Object.freeze({ id: 'tea', label: 'お茶会', action: 'OPEN_TEA', targetView: 'tea' }),
 ]);
 
+const STRATEGY_IDS = Object.freeze(['left', 'right', 'max', 'min']);
+
 const VIEW_META = Object.freeze({
   hub: Object.freeze({ title: 'パートナー', surfaceKind: 'hub' }),
   list: Object.freeze({ title: 'パートナー変更', surfaceKind: 'panel' }),
@@ -76,6 +78,7 @@ export function buildPartnerShellView(input = {}) {
     ? Object.freeze(input.formationPartnerIds.map(token).filter(Boolean))
     : Object.freeze([]);
   const strategyId = token(input.strategyId);
+  const strategyIds = view === 'strategy' ? STRATEGY_IDS : Object.freeze([]);
   const meta = VIEW_META[view];
 
   return Object.freeze({
@@ -88,6 +91,7 @@ export function buildPartnerShellView(input = {}) {
     detailPartner,
     formationPartnerIds,
     strategyId,
+    strategyIds,
     hubMenuItems: view === 'hub' ? MENU_ITEMS : Object.freeze([]),
     availableActions: Object.freeze(actionsFor(view)),
     deadButtonAllowed: false,
@@ -108,3 +112,4 @@ export function nextPartnerShellView(currentView, action) {
 
 export const PARTNER_SHELL_VIEWS = Object.freeze([...VIEWS]);
 export const PARTNER_HUB_MENU_ITEMS = MENU_ITEMS;
+export const PARTNER_STRATEGY_IDS = STRATEGY_IDS;

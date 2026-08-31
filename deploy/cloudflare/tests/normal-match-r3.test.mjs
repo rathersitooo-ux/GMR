@@ -5,9 +5,13 @@ import {
   MATCH_HUMAN_PRIORITY_MS,
   MATCH_STORAGE_META_KEY,
   MATCH_WAITING_PREFIX,
+  NEW_BASE_MATCH_RULESET,
+  NEW_BASE_MATCH_STATE_SCHEMA,
+  createNewBaseMatchStateSkeleton,
   createStoredMatchTicket,
   storedMatchTicketStatus,
   cancelStoredMatchTicket,
+  matchStorageKeysForTest,
 } from '../relay/src/match-store.mjs';
 
 class FakeStorage {
@@ -38,13 +42,14 @@ class FakeStorage {
 }
 
 let sequence = 0;
-function generated(nowMs = undefined) {
+function generated(nowMs = undefined, ruleset = undefined) {
   sequence += 1;
   return {
     ticketId: `t-${String(sequence).padStart(6, '0')}`,
     secret: `0123456789abcdef0123456789abcdef${String(sequence).padStart(8, '0')}`,
     matchId: `m-${String(Math.ceil(sequence / 4)).padStart(6, '0')}`,
     ...(Number.isSafeInteger(nowMs) ? { nowMs } : {}),
+    ...(ruleset ? { ruleset } : {}),
   };
 }
 function idem(n) { return `idem-key-${String(n).padStart(8, '0')}`; }
@@ -86,6 +91,78 @@ test('four humans form one immediate atomic match and remove all WAITING index m
     assert.equal(status.match.aiSeats.length, 0);
     assert.equal(status.match.fillReason, 'HUMAN_QUORUM');
   }
+});
+
+test('legacy matches stay unversioned and client input cannot select the new-base ruleset', async () => {
+  const storage = new FakeStorage();
+  const results = [];
+  for (let i = 0; i < 4; i += 1) {
+    results.push(await createStoredMatchTicket(
+      storage,
+      {
+        clientId: `legacy-client-${i}`,
+        idempotencyKey: `legacy-idem-${String(i).padStart(8, '0')}`,
+        ruleset: NEW_BASE_MATCH_RULESET,
+      },
+      generated(20_000 + i),
+    ));
+  }
+  const formedMatchId = results[3].formedMatchId;
+  assert.equal(formedMatchId.length > 0, true);
+  const status = await storedMatchTicketStatus(storage, {
+    ticketId: results[0].ticket.ticketId,
+    secret: results[0].secret,
+  });
+  assert.equal(Object.hasOwn(status.match, 'ruleset'), false);
+  const raw = await storage.get(matchStorageKeysForTest.matchKey(formedMatchId));
+  assert.equal(Object.hasOwn(raw, 'ruleset'), false);
+  assert.equal(Object.hasOwn(raw, 'state'), false);
+});
+
+test('authoritative generated new-base envelope persists explicit version and unresolved state skeleton', async () => {
+  const storage = new FakeStorage();
+  const results = [];
+  for (let i = 0; i < 4; i += 1) {
+    results.push(await createStoredMatchTicket(
+      storage,
+      { clientId: `newbase-client-${i}`, idempotencyKey: `newbase-idem-${String(i).padStart(8, '0')}` },
+      generated(30_000 + i, NEW_BASE_MATCH_RULESET),
+    ));
+  }
+  const formedMatchId = results[3].formedMatchId;
+  assert.equal(formedMatchId.length > 0, true);
+  const status = await storedMatchTicketStatus(storage, {
+    ticketId: results[0].ticket.ticketId,
+    secret: results[0].secret,
+  });
+  assert.deepEqual(status.match.ruleset, NEW_BASE_MATCH_RULESET);
+
+  const raw = await storage.get(matchStorageKeysForTest.matchKey(formedMatchId));
+  assert.deepEqual(raw.ruleset, NEW_BASE_MATCH_RULESET);
+  assert.equal(raw.state.schema, NEW_BASE_MATCH_STATE_SCHEMA);
+  assert.deepEqual(raw.state.ruleset, NEW_BASE_MATCH_RULESET);
+  assert.equal(raw.state.config.manaRecoveryPerTurn, null);
+  assert.equal(JSON.stringify(raw.state).includes('pursuit'), false);
+  assert.deepEqual(raw.state, createNewBaseMatchStateSkeleton());
+  assert.equal(Object.hasOwn(status.match, 'state'), false, 'internal state skeleton must not leak through public match status');
+
+  const workerSource = await readFile(new URL('../relay/src/relay-worker.mjs', import.meta.url), 'utf8');
+  assert.match(workerSource, /if \(status\.match\.ruleset\) session\.ruleset = \{ \.\.\.status\.match\.ruleset \};/);
+  assert.equal(workerSource.includes('NEW_BASE_MATCH_RULESET'), false, 'current public matchmaking must not silently switch defaults');
+});
+
+test('unknown authoritative ruleset rejects before storage mutation instead of falling back to legacy', async () => {
+  const storage = new FakeStorage();
+  const before = JSON.stringify([...storage.map.entries()]);
+  await assert.rejects(
+    createStoredMatchTicket(
+      storage,
+      { clientId: 'bad-ruleset-client', idempotencyKey: 'bad-ruleset-idem-00000001' },
+      generated(40_000, { id: 'UNKNOWN_RULESET', version: 1 }),
+    ),
+    /generated_match_ruleset_invalid/,
+  );
+  assert.equal(JSON.stringify([...storage.map.entries()]), before);
 });
 
 test('formal 60s human priority keeps three humans waiting before the boundary then fills exactly one AI seat', async () => {

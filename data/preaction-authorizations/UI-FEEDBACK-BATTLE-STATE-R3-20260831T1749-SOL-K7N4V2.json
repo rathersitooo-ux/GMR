@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-FEEDBACK-BATTLE-STATE-R3-20260831T1749-SOL-K7N4V2",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "BATTLE_VISIBLE_INTERACTION_SYNC_PRESS_FOCUS_SELECTED_DISABLED_R3",
+  "acquireKey": "UI-FEEDBACK-BATTLE-STATE-R3-20260831T1749-SOL-K7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R2-PRESSED-FOCUS-EVENT-ORDER-DEFECT-20260831",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R2-PR786-DONOR-CORE-READBACK-AND-FOCUS-SEQUENCE-AUDIT",
+  "proceedToken": "PROCEED|UI-FEEDBACK-BATTLE-STATE-R3-20260831T1749-SOL-K7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|r2-donor|active-pointer-focus-guard",
+  "authorizationBaseSha": "78084445e46cbd895059a88e3c049d8fccb2e389",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "BATTLE_VISIBLE_INTERACTION_SYNC_PRESS_FOCUS_SELECTED_DISABLED_R3",
+  "leaseAcquireKey": "UI-FEEDBACK-BATTLE-STATE-R3-20260831T1749-SOL-K7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 17:49 JST",
+  "leaseUntilJst": "2026-08-31 18:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A254:L254",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/battle-visible-interaction-sync-r3-20260831 only: browser/ui-state-feedback-ready-plan-adapter.mjs; tests/ui-state-feedback-ready-plan-adapter.test.mjs; deploy/cloudflare/tests/build.test.mjs adapter provenance currentBlob only; CURRENT_ACTIVE_LEASES own row254; R23 own records",
+  "scope": [
+    "browser/ui-state-feedback-ready-plan-adapter.mjs",
+    "tests/ui-state-feedback-ready-plan-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/ui-state-feedback-ready-plan-adapter.mjs",
+    "tests/ui-state-feedback-ready-plan-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-RUNTIME-BINDING-R1-20260901T0230-SOL-Q7M4V2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_NEW_BASE_TURN_LOOP_INTEGRATION_001",
+  "acquireKey": "NEWBASE-RUNTIME-BINDING-R1-20260901T0230-SOL-Q7M4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-newbase-runtime-binding-readback-20260901",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT-core-contract-crosscheck-20260901",
+  "proceedToken": "PROCEED|NEWBASE-RUNTIME-BINDING-R1-20260901T0230-SOL-Q7M4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-readback|lease-snapshot|lateral-compose",
+  "authorizationBaseSha": "df27c3898b47a789c44e66e07a1fdaf8466821d3",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_NEW_BASE_TURN_LOOP_INTEGRATION_001",
+  "leaseAcquireKey": "NEWBASE-RUNTIME-BINDING-R1-20260901T0230-SOL-Q7M4V2",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 02:30 JST",
+  "leaseUntilJst": "2026-09-01 03:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A317:L317",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@df27c3898b47a789c44e66e07a1fdaf8466821d3; planned branch work/newbase-turn-runtime-binding-r1-20260901; NEW browser/new-base-turn-runtime-binding.mjs; NEW tests/new-base-turn-runtime-binding.test.mjs; transient data/preaction-authorizations/NEWBASE-RUNTIME-BINDING-R1-20260901T0230-SOL-Q7M4V2.json if required; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES tuple. READ_ONLY browser/GAMEROAD.html, browser/new-base-fixed-janken-slot-state.mjs + test and its active owner branch, existing Battle/Road/Honey/save/economy/network/assets/workflows, current new-base cores.",
+  "scope": [
+    "browser/new-base-turn-runtime-binding.mjs",
+    "tests/new-base-turn-runtime-binding.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-turn-runtime-binding.mjs",
+    "tests/new-base-turn-runtime-binding.test.mjs"
+  ],
+  "solutionSignature": "Bind the existing 14-stage new-base turn orchestrator to current runtime authorities without owning gameplay meaning or inventing undecided defaults.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT-newbase-existing-core-compose-20260901",
+  "solutionSearchEvidence": [
+    "CURRENT:browser/new-base-turn-orchestrator-core.mjs",
+    "CURRENT:browser/new-base-turn-start-mana-recovery-core.mjs",
+    "CURRENT:browser/new-base-authoritative-dice-core.mjs",
+    "CURRENT:browser/newbase-janken-hand-assignment-core.mjs",
+    "CURRENT:browser/new-base-movement-budget-core.mjs"
+  ]
+}

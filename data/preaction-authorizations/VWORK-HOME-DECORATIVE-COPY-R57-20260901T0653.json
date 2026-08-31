@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-HOME-DECORATIVE-COPY-R57-20260901T0653",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_DECORATIVE_COPY_REMOVAL_R57",
+  "acquireKey": "HOME-DECORATIVE-COPY-R57-20260901T0653-LUNA-Q7M2V4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-MAIN-069401D-SHORT-LANDSCAPE-HOME-COPY-REPRO",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT-ROW2-FIXED-VISUAL-VIOLATION-PLUS-DIRECT-SCREENSHOT",
+  "proceedToken": "PROCEED|VWORK-HOME-DECORATIVE-COPY-R57-20260901T0653|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|exact-home-copy-only",
+  "authorizationBaseSha": "069401d4b45543c6585d9ec4379880cec0c87832",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_DECORATIVE_COPY_REMOVAL_R57",
+  "leaseAcquireKey": "HOME-DECORATIVE-COPY-R57-20260901T0653-LUNA-Q7M2V4",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 07:24 JST",
+  "leaseUntilJst": "2026-09-01 08:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A312:L312",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/home-decorative-copy-r57-20260901; browser/GAMEROAD.html; tests/browser-static-check.mjs; own CURRENT_ACTIVE_LEASES row312; own R23 events",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs"
+  ],
+  "solutionSignature": "Remove only decorative brand/title/explanatory Home copy while preserving the existing live Home controls and player route.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT-HOME-DOM-AND-EXISTING-BROWSER-STATIC-CHECKER",
+  "solutionSearchEvidence": [
+    "browser/GAMEROAD.html current codexHome markup",
+    "tests/browser-static-check.mjs existing required-gate-mapped static checks"
+  ]
+}

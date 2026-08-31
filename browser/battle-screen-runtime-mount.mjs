@@ -207,7 +207,9 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
       view.lane.dataset.role = lane.role;
       view.name.textContent = lane.label;
       view.team.textContent = lane.team ? `TEAM ${lane.team}` : '';
-      view.role.textContent = lane.role;
+      const hideResolvedRoleText = lane.role === 'winner' || lane.role === 'loser';
+      view.role.hidden = hideResolvedRoleText;
+      view.role.textContent = hideResolvedRoleText ? '' : lane.role;
       writeAfterstate(document, view.afterstate, lane.afterstate);
     }
     return model;

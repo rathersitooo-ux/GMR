@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD109-ELASTIC-FOCUS-R2-20260831T1012-SOL-K7N4V2",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "ROAD_ELASTIC_FOCUS_R2_PREACTION_REPLAY",
+  "acquireKey": "BOARD109-ELASTIC-FOCUS-R2-20260831T1012-SOL-K7N4V2",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR772_REQUIRED_GATE_FAILURE_IS_AUTH_SCHEMA_ONLY_AND_DONOR_NODE_7_OF_7_PASS",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR772_EXACT_DONOR_TWO_FILE_REPLAY_WITH_NO_SEMANTIC_CHANGE",
+  "proceedToken": "PROCEED|BOARD109-ELASTIC-FOCUS-R2-20260831T1012-SOL-K7N4V2|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|exact-donor-replay|lease-snapshot",
+  "authorizationBaseSha": "78084445e46cbd895059a88e3c049d8fccb2e389",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "ROAD_ELASTIC_FOCUS_R2_PREACTION_REPLAY",
+  "leaseAcquireKey": "BOARD109-ELASTIC-FOCUS-R2-20260831T1012-SOL-K7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-08-31 10:12 JST",
+  "leaseUntilJst": "2026-08-31 11:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A248:L248",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/board109-elastic-focus-r2-20260831 only: browser/road-elastic-focus-projection.mjs; tests/road-elastic-focus-projection.test.mjs; transient data/preaction-authorizations/BOARD109-ELASTIC-FOCUS-R2-20260831T1012-SOL-K7N4V2.json create-first/delete-before-final-head; own successor PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row248",
+  "scope": [
+    "browser/road-elastic-focus-projection.mjs",
+    "tests/road-elastic-focus-projection.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/road-elastic-focus-projection.mjs",
+    "tests/road-elastic-focus-projection.test.mjs"
+  ],
+  "solutionSignature": "Recover the already-tested order-neutral Elastic Focus projection preserving currentPath while exposing compatible alternate Road cards without auto-selection or Battle-card changes.",
+  "reuseDisposition": "REUSE_AS_IS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "github:PR772:exact-two-file-donor",
+  "solutionSearchEvidence": [
+    "github:PR772:head=3bfa4316f20a2982b76d4d8d32569ad56a024443",
+    "github:PR772:local-node-test=7/7-pass",
+    "github:main-advance-124e2c51-to-78084445:scope-overlap=0"
+  ]
+}

@@ -7,9 +7,9 @@ function freezeList(value, name) {
  * Pure projection for the current Road-card/path pairing.
  *
  * This module deliberately owns no compatibility rules and no input-order mode.
- * The caller injects the shared compatibility derivation. Because there is no
- * retained candidate history, every call reflects only the current hand/path/
- * board inputs.
+ * The caller injects the shared compatibleRoadCards(hand, path, boardState)
+ * derivation. Because there is no retained candidate history, every call
+ * reflects only the current hand/path/board inputs.
  */
 export function projectRoadPathCandidates({
   currentPath,
@@ -26,12 +26,7 @@ export function projectRoadPathCandidates({
     throw new TypeError('deriveCompatibleRoadCards must be a function');
   }
 
-  const derived = deriveCompatibleRoadCards({
-    handRoadCards: hand,
-    currentPath: path,
-    boardState,
-    boardVersion,
-  });
+  const derived = deriveCompatibleRoadCards(hand, path, boardState);
   const compatibleRoadCards = freezeList(derived, 'deriveCompatibleRoadCards result');
 
   return Object.freeze({

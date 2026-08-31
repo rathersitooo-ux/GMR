@@ -1,0 +1,158 @@
+name: R42 Windows Hosted Gate
+
+on:
+  push:
+    branches:
+      - work/r42-windows-hosted-gate-r1-20260831
+    paths:
+      - '.github/workflows/r42-windows-hosted-gate.yml'
+      - 'tests/fixtures/r42-pre-codex-package.b64.*'
+
+permissions:
+  contents: read
+
+jobs:
+  exact-r42-windows:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reconstruct exact Drive R42 and verify SHA
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $expected = '8513d1410fb6d0b3ada873a4ec06e86241774a55b2eb2758f611dac2ace636eb'
+          $parts = Get-ChildItem -LiteralPath 'tests/fixtures' -Filter 'r42-pre-codex-package.b64.*' | Sort-Object Name
+          if ($parts.Count -ne 8) { throw "expected 8 package fragments, got $($parts.Count)" }
+          $encoded = [string]::Concat(@($parts | ForEach-Object { [IO.File]::ReadAllText($_.FullName) }))
+          $bytes = [Convert]::FromBase64String($encoded)
+          [IO.File]::WriteAllBytes((Join-Path $PWD 'r42.zip'), $bytes)
+          $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath 'r42.zip').Hash.ToLowerInvariant()
+          Write-Host "R42_SHA256=$actual"
+          if ($actual -ne $expected) { throw "exact Drive R42 SHA mismatch: $actual" }
+          Expand-Archive -LiteralPath 'r42.zip' -DestinationPath 'r42' -Force
+          if (-not (Test-Path -LiteralPath 'r42/Run-GameroadCtl.ps1')) { throw 'R42 extraction missing Run-GameroadCtl.ps1' }
+
+      - name: Run exact package verifier and full Windows test suite
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Push-Location r42
+          try {
+            python verify_r28_package.py
+            if ($LASTEXITCODE -ne 0) { throw "verify_r28_package failed: $LASTEXITCODE" }
+            python -m unittest discover -s tests -p 'test_*.py' -v
+            if ($LASTEXITCODE -ne 0) { throw "Windows unittest suite failed: $LASTEXITCODE" }
+          } finally { Pop-Location }
+
+      - name: Prove pre-Codex 0 -> 1 -> replay 0 on Windows
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = (Resolve-Path 'r42').Path
+          $tmp = Join-Path $env:RUNNER_TEMP 'r42-live-gate'
+          $repo = Join-Path $tmp 'repo'
+          $state = Join-Path $tmp 'launcher-state'
+          $logs = Join-Path $tmp 'launcher-logs'
+          $fakeBin = Join-Path $tmp 'fakebin'
+          New-Item -ItemType Directory -Force -Path $repo,$state,$logs,$fakeBin | Out-Null
+          Set-Content -LiteralPath (Join-Path $repo 'AGENTS.md') -Value '# test' -Encoding UTF8
+          Set-Content -LiteralPath (Join-Path $repo 'CODEX_HANDOFF_CURRENT.md') -Value '# test' -Encoding UTF8
+
+          $fakeLog = Join-Path $tmp 'fake-codex.log'
+          $fake = Join-Path $fakeBin 'codex.cmd'
+          @"
+@echo off
+if not "%FAKE_CODEX_LOG%"=="" echo %*>>"%FAKE_CODEX_LOG%"
+if "%1"=="--version" (echo codex-r42-fake& exit /b 0)
+if "%1"=="app-server" if "%2"=="--help" (echo fake app server help& exit /b 0)
+if "%1"=="app-server" (python "%R42_ROOT%\tests\fake_bounded_exec_app_server.py" & exit /b %ERRORLEVEL%)
+exit /b 9
+"@ | Set-Content -LiteralPath $fake -Encoding ASCII
+          $env:FAKE_CODEX_LOG = $fakeLog
+          $env:R42_ROOT = $root
+          $env:FAKE_REPO = $repo
+          $env:FAKE_BOUNDED_SCENARIO = 'complete'
+          $env:PATH = "$fakeBin;$env:PATH"
+
+          $config = Join-Path $tmp 'gameroad-start.config.json'
+          [ordered]@{
+            schema='gameroad.launcher.v1'; backend='gameroadctl'; repoRoot=$repo; backendRoot=$root; stateRoot=$state; logRoot=$logs
+          } | ConvertTo-Json | Set-Content -LiteralPath $config -Encoding UTF8
+
+          # 0: no ticket must exit cleanly without even resolving/touching fake Codex.
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'gameroad-start.ps1') -Mode Run -ConfigPath $config
+          if ($LASTEXITCODE -ne 0) { throw "no-ticket launcher failed: $LASTEXITCODE" }
+          $noTicket = Get-Content -LiteralPath (Join-Path $state 'last-result.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ($noTicket.outcome -ne 'IDLE_NO_ASSIGNMENT_PRECODEX' -or [bool]$noTicket.codexModelInvocationStarted) { throw 'no-ticket pre-Codex result mismatch' }
+          if (Test-Path -LiteralPath $fakeLog) { throw 'Codex executable was touched without a ticket' }
+
+          $now = [DateTimeOffset]::UtcNow
+          $ticketPath = Join-Path $tmp 'assignment.json'
+          $ticket = [ordered]@{
+            schema='gameroad.codex.assignment.v1'; assignmentId='gha-r42-one-shot'; taskId='OPS-AI-EXECUTION-CAPABILITY-DISCOVERY-001'; workUnitKey='R42_WINDOWS_GITHUB_HOSTED_GATE_ACCEPTANCE_R1'; acquireKey='gha-fixture';
+            exactMutableResources=@('file:test'); consumerUseSite='GitHub-hosted Windows acceptance'; acceptance=@('one fake model turn only'); instruction='test only';
+            issuedAt=$now.ToString('o'); expiresAt=$now.AddMinutes(30).ToString('o');
+            resourceAuthorization=[ordered]@{resource='Codex';codexAuthorized=$true;authorizationBasis='test fixture';lowerCostRouteCheck='fake model only';quotaState='TEST_SINGLE_USE';maxModelTurns=1;maxParallelWorkers=1;recurringAuthorized=$false}
+          }
+
+          # Invalid multi-worker ticket must be rejected before Codex touch.
+          $bad = $ticket.PSObject.Copy(); $bad.resourceAuthorization = [ordered]@{resource='Codex';codexAuthorized=$true;authorizationBasis='test fixture';lowerCostRouteCheck='fake model only';quotaState='TEST_SINGLE_USE';maxModelTurns=1;maxParallelWorkers=4;recurringAuthorized=$false}
+          $bad | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $ticketPath -Encoding UTF8
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'gameroad-start.ps1') -Mode Run -ConfigPath $config -AssignmentPath $ticketPath
+          if ($LASTEXITCODE -ne 2) { throw "invalid-ticket expected exit 2, got $LASTEXITCODE" }
+          $invalid = Get-Content -LiteralPath (Join-Path $state 'last-result.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ($invalid.outcome -ne 'BLOCKED_ASSIGNMENT_INVALID_PRECODEX' -or [bool]$invalid.codexModelInvocationStarted) { throw 'invalid-ticket pre-Codex result mismatch' }
+          if (Test-Path -LiteralPath $fakeLog) { throw 'Codex executable was touched by invalid ticket' }
+
+          # 1: valid one-shot ticket goes through exact launcher/controller and fake app-server exactly once.
+          $ticket | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $ticketPath -Encoding UTF8
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'gameroad-start.ps1') -Mode Run -ConfigPath $config -AssignmentPath $ticketPath
+          if ($LASTEXITCODE -ne 0) { throw "valid-ticket launcher failed: $LASTEXITCODE" }
+          $valid = Get-Content -LiteralPath (Join-Path $state 'last-result.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ($valid.outcome -ne 'BOUNDED_CODEX_ASSIGNMENT_RETURNED' -or -not [bool]$valid.codexModelInvocationStarted -or -not [bool]$valid.codexModelTurnStartDispatched) { throw 'valid-ticket model-turn evidence mismatch' }
+          $backendResult = Get-Content -LiteralPath $valid.backendResultPath -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ([int]$backendResult.codexModelTurnsStarted -ne 1) { throw "expected exactly 1 model turn, got $($backendResult.codexModelTurnsStarted)" }
+          $touchesAfterValid = if (Test-Path $fakeLog) { @(Get-Content $fakeLog).Count } else { 0 }
+          if ($touchesAfterValid -lt 3) { throw 'fake Codex did not exercise version/help/app-server path' }
+
+          # replay 0: recreate the identical ticket; consumed marker must block before any further Codex touch.
+          $ticket | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $ticketPath -Encoding UTF8
+          & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $root 'gameroad-start.ps1') -Mode Run -ConfigPath $config -AssignmentPath $ticketPath
+          if ($LASTEXITCODE -ne 2) { throw "replay expected exit 2, got $LASTEXITCODE" }
+          $replay = Get-Content -LiteralPath (Join-Path $state 'last-result.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ($replay.outcome -ne 'BLOCKED_ASSIGNMENT_REPLAY_PRECODEX' -or [bool]$replay.codexModelInvocationStarted) { throw 'replay pre-Codex result mismatch' }
+          $touchesAfterReplay = @(Get-Content $fakeLog).Count
+          if ($touchesAfterReplay -ne $touchesAfterValid) { throw 'replayed ticket touched Codex again' }
+
+          $evidence = [ordered]@{
+            schema='gameroad.r42.windows-hosted-gate-evidence.v1'
+            os=[Environment]::OSVersion.VersionString
+            packageSha256=(Get-FileHash -Algorithm SHA256 -LiteralPath 'r42.zip').Hash.ToLowerInvariant()
+            noTicketOutcome=$noTicket.outcome
+            noTicketModelStarted=[bool]$noTicket.codexModelInvocationStarted
+            invalidTicketOutcome=$invalid.outcome
+            invalidTicketModelStarted=[bool]$invalid.codexModelInvocationStarted
+            validTicketOutcome=$valid.outcome
+            validModelTurnsStarted=[int]$backendResult.codexModelTurnsStarted
+            validTurnStartDispatched=[bool]$valid.codexModelTurnStartDispatched
+            replayOutcome=$replay.outcome
+            replayModelStarted=[bool]$replay.codexModelInvocationStarted
+            codexTouchesAfterValid=$touchesAfterValid
+            codexTouchesAfterReplay=$touchesAfterReplay
+            paidCodexCredentialUsed=$false
+          }
+          $evidence | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath 'r42-windows-evidence.json' -Encoding UTF8
+          Get-Content -LiteralPath 'r42-windows-evidence.json' -Raw
+
+      - name: Upload Windows evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r42-windows-hosted-gate-${{ github.run_id }}
+          path: |
+            r42-windows-evidence.json
+            r42.zip
+          if-no-files-found: warn
+          retention-days: 7

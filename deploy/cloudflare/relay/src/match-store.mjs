@@ -20,6 +20,8 @@ export const MATCH_WAITING_PREFIX = 'match/waiting/';
 export const MATCH_CLIENT_WAITING_PREFIX = 'match/client-waiting/';
 export const MATCH_RECORD_PREFIX = 'match/record/';
 export const MATCH_HUMAN_PRIORITY_MS = 60_000;
+export const NEW_BASE_MATCH_RULESET = Object.freeze({ id: 'NEW_BASE_BATTLE', version: 1 });
+export const NEW_BASE_MATCH_STATE_SCHEMA = 'gameroad.newbase.matchstate.v1';
 
 function enc(value) { return encodeURIComponent(String(value)); }
 function ticketKey(ticketId) { return `${MATCH_TICKET_PREFIX}${enc(ticketId)}`; }
@@ -47,6 +49,27 @@ function safeNowMs(value) {
 function safeStoredAtMs(value, fallback) {
   const n = Number(value);
   return Number.isSafeInteger(n) && n >= 0 ? n : fallback;
+}
+
+export function normalizeMatchRulesetEnvelope(raw) {
+  if (raw === undefined || raw === null) return null;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new TypeError('generated_match_ruleset_invalid');
+  }
+  if (raw.id !== NEW_BASE_MATCH_RULESET.id || raw.version !== NEW_BASE_MATCH_RULESET.version) {
+    throw new TypeError('generated_match_ruleset_invalid');
+  }
+  return { id: NEW_BASE_MATCH_RULESET.id, version: NEW_BASE_MATCH_RULESET.version };
+}
+
+export function createNewBaseMatchStateSkeleton() {
+  return {
+    schema: NEW_BASE_MATCH_STATE_SCHEMA,
+    ruleset: { ...NEW_BASE_MATCH_RULESET },
+    config: {
+      manaRecoveryPerTurn: null,
+    },
+  };
 }
 
 async function getMany(txn, keys) {
@@ -90,7 +113,13 @@ function ensureGenerated(generated) {
   if (!validMatchTicketId(ticketId)) throw new TypeError('generated_ticket_id_invalid');
   if (!validMatchSecret(secret)) throw new TypeError('generated_ticket_secret_invalid');
   if (matchId && !validMatchId(matchId)) throw new TypeError('generated_match_id_invalid');
-  return { ticketId, secret, matchId, nowMs: safeNowMs(generated?.nowMs) };
+  return {
+    ticketId,
+    secret,
+    matchId,
+    nowMs: safeNowMs(generated?.nowMs),
+    ruleset: normalizeMatchRulesetEnvelope(generated?.ruleset),
+  };
 }
 
 function orderedWaitingEntries(tickets) {
@@ -121,9 +150,9 @@ function seatRecord(ticketIds, tickets, aiCount, format) {
   return { seats, aiSeats };
 }
 
-function buildMatchRecord(matchId, ticketIds, tickets, aiCount, format, fillReason, startedAtMs) {
+function buildMatchRecord(matchId, ticketIds, tickets, aiCount, format, fillReason, startedAtMs, ruleset = null) {
   const seatData = seatRecord(ticketIds, tickets, aiCount, format);
-  return {
+  const record = {
     matchId,
     ticketIds: [...ticketIds],
     aiSeats: seatData.aiSeats,
@@ -132,19 +161,30 @@ function buildMatchRecord(matchId, ticketIds, tickets, aiCount, format, fillReas
     fillReason,
     startedAtMs,
   };
+  if (ruleset) {
+    record.ruleset = { ...ruleset };
+    record.state = createNewBaseMatchStateSkeleton();
+  }
+  return record;
 }
 
 function publicStoredMatch(matchId, raw) {
   if (!raw || typeof raw !== 'object') return null;
   const ticketIds = Array.isArray(raw.ticketIds) ? raw.ticketIds.filter(validMatchTicketId) : [];
   if (!ticketIds.length) return null;
+  let ruleset = null;
+  try {
+    ruleset = normalizeMatchRulesetEnvelope(raw.ruleset);
+  } catch {
+    return null;
+  }
   const aiSeats = Array.isArray(raw.aiSeats)
     ? raw.aiSeats.filter((slot) => Number.isInteger(slot) && slot >= 0 && slot < 4)
     : [];
   const seats = Array.isArray(raw.seats) && raw.seats.length === 4
     ? raw.seats.map((seat, slot) => ({ ...seat, slot }))
     : ticketIds.map((ticketId, slot) => ({ slot, kind: 'HUMAN', ticketId, team: null }));
-  return {
+  const match = {
     matchId,
     ticketIds,
     aiSeats,
@@ -153,6 +193,8 @@ function publicStoredMatch(matchId, raw) {
     fillReason: String(raw.fillReason || (ticketIds.length === 4 ? 'HUMAN_QUORUM' : '')),
     startedAtMs: Number.isSafeInteger(raw.startedAtMs) ? raw.startedAtMs : 0,
   };
+  if (ruleset) match.ruleset = ruleset;
+  return match;
 }
 
 async function stampMissingWaitingTimes(txn, snapshot, nowMs) {
@@ -164,7 +206,7 @@ async function stampMissingWaitingTimes(txn, snapshot, nowMs) {
   }
 }
 
-async function formTimedOutMatch(txn, tickets, nowMs, generatedMatchId) {
+async function formTimedOutMatch(txn, tickets, nowMs, generatedMatchId, ruleset = null) {
   const waiting = orderedWaitingEntries(tickets);
   if (waiting.length < 2 || waiting.length > 3) return null;
   const oldestAt = safeStoredAtMs(waiting[0][1].enqueuedAtMs, nowMs);
@@ -195,6 +237,7 @@ async function formTimedOutMatch(txn, tickets, nowMs, generatedMatchId) {
     format,
     'HUMAN_PRIORITY_TIMEOUT',
     nowMs,
+    ruleset,
   );
   txn.put(matchKey(generatedMatchId), match);
   return { match, matchedTickets };
@@ -210,6 +253,7 @@ function nextStoredMatchAlarmAt(tickets) {
 export async function serviceStoredMatchTimeout(storage, runtime = {}) {
   const nowMs = safeNowMs(runtime?.nowMs);
   const generatedMatchId = String(runtime?.generatedMatchId || '');
+  const ruleset = normalizeMatchRulesetEnvelope(runtime?.ruleset);
 
   return storage.transaction(async (txn) => {
     const snapshot = await waitingSnapshot(txn);
@@ -217,7 +261,7 @@ export async function serviceStoredMatchTimeout(storage, runtime = {}) {
     for (const staleKey of snapshot.staleKeys) txn.delete(staleKey);
     await stampMissingWaitingTimes(txn, snapshot, nowMs);
 
-    const timeout = await formTimedOutMatch(txn, snapshot.queue.tickets, nowMs, generatedMatchId);
+    const timeout = await formTimedOutMatch(txn, snapshot.queue.tickets, nowMs, generatedMatchId, ruleset);
     if (timeout) {
       return {
         ok: true,
@@ -284,7 +328,7 @@ export async function createStoredMatchTicket(storage, input, generated) {
 
     if (!result.formedMatchId) {
       const waitingTickets = { ...snapshot.queue.tickets, [newTicketId]: newTicket };
-      const timeout = await formTimedOutMatch(txn, waitingTickets, ids.nowMs, ids.matchId);
+      const timeout = await formTimedOutMatch(txn, waitingTickets, ids.nowMs, ids.matchId, ids.ruleset);
       if (!timeout) {
         txn.put(ticketKey(newTicketId), newTicket);
         txn.put(waitingKey(newTicket.sequence, newTicketId), newTicketId);
@@ -331,6 +375,7 @@ export async function createStoredMatchTicket(storage, input, generated) {
       'FREE4P',
       'HUMAN_QUORUM',
       ids.nowMs,
+      ids.ruleset,
     ));
 
     return {
@@ -349,6 +394,7 @@ export async function storedMatchTicketStatus(storage, input, runtime = {}) {
   if (!validMatchTicketId(ticketId) || !validMatchSecret(secret)) return reject('match_ticket_auth_invalid');
   const nowMs = safeNowMs(runtime?.nowMs);
   const generatedMatchId = String(runtime?.generatedMatchId || '');
+  const ruleset = normalizeMatchRulesetEnvelope(runtime?.ruleset);
 
   return storage.transaction(async (txn) => {
     let ticket = await txn.get(ticketKey(ticketId));
@@ -359,7 +405,7 @@ export async function storedMatchTicketStatus(storage, input, runtime = {}) {
       if (!snapshot.ok) return reject(snapshot.reason);
       for (const staleKey of snapshot.staleKeys) txn.delete(staleKey);
       await stampMissingWaitingTimes(txn, snapshot, nowMs);
-      const timeout = await formTimedOutMatch(txn, snapshot.queue.tickets, nowMs, generatedMatchId);
+      const timeout = await formTimedOutMatch(txn, snapshot.queue.tickets, nowMs, generatedMatchId, ruleset);
       if (timeout?.matchedTickets[ticketId]) ticket = timeout.matchedTickets[ticketId];
       else ticket = snapshot.queue.tickets[ticketId] || ticket;
     }

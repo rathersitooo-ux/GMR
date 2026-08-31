@@ -144,13 +144,30 @@ class FakeStyle {
   removeProperty(name){ const old=this.getPropertyValue(name); this.custom.delete(name); return old; }
 }
 
-class FakeTarget {
+class FakeDocument {
   constructor(){
+    this.nodes=new Map();
+    this.head={
+      children:[],
+      appendChild:(node)=>{
+        this.head.children.push(node);
+        if(node?.id) this.nodes.set(node.id,node);
+        return node;
+      },
+    };
+  }
+  createElement(tag){ return {tagName:String(tag).toUpperCase(),id:'',textContent:''}; }
+  getElementById(id){ return this.nodes.get(id) || null; }
+}
+
+class FakeTarget {
+  constructor(ownerDocument=null){
     this.listeners=new Map();
     this.capturedPointers=new Set();
     this.rect={left:-10000,top:-10000,right:10000,bottom:10000};
     this.dataset={};
     this.style=new FakeStyle();
+    this.ownerDocument=ownerDocument;
   }
   addEventListener(type,handler){
     const set=this.listeners.get(type) || new Set();
@@ -177,8 +194,8 @@ class FakeTarget {
   }
 }
 
-function makeBinding({holdMs=500,reducedMotion=false,lowPerf=false}={}){
-  const target=new FakeTarget();
+function makeBinding({holdMs=500,reducedMotion=false,lowPerf=false,ownerDocument=null}={}){
+  const target=new FakeTarget(ownerDocument);
   const calls=[];
   const renders=[];
   const timers=[];
@@ -216,6 +233,47 @@ test('binding wires pointer commit, emits one token, and settles matching server
   const ack=h.binding.acknowledge({operationToken:'bind-1',accepted:true,reason:'server_ack'});
   assert.equal(ack.feedback.feedback,'confirmed');
   assert.equal(h.renders.at(-1),'confirmed');
+});
+
+test('binding projects DOM focus and clears it on blur without committing',()=>{
+  const h=makeBinding();
+  h.target.emit('focus');
+  assert.equal(h.adapter.getFeedback().feedback,'focus');
+  assert.equal(h.calls.length,0);
+  h.target.emit('blur');
+  assert.equal(h.adapter.getFeedback().feedback,'normal');
+  assert.notEqual(h.target.dataset.gmrMaterialPhase,'focused');
+  assert.equal(h.calls.length,0);
+});
+
+test('pointer-acquired focus does not replace active pressed feedback',()=>{
+  const h=makeBinding();
+  h.target.emit('pointerdown',{pointerId:8,button:0,clientX:10,clientY:20});
+  assert.equal(h.adapter.getFeedback().feedback,'pressed');
+  assert.equal(h.target.dataset.gmrMaterialPhase,'pressed');
+  h.target.emit('focus');
+  assert.equal(h.adapter.getFeedback().feedback,'pressed');
+  assert.equal(h.target.dataset.gmrMaterialPhase,'pressed');
+  assert.equal(h.calls.length,0);
+  h.target.emit('pointerup',{pointerId:8,button:0,clientX:10,clientY:20});
+  assert.equal(h.tokenCounter,1);
+  assert.deepEqual(h.calls,[{type:'commit',operationToken:'bind-1',source:'pointer_release'}]);
+});
+
+test('binding installs one static Battle interaction style without selection geometry overrides',()=>{
+  const document=new FakeDocument();
+  const first=makeBinding({ownerDocument:document});
+  const second=makeBinding({ownerDocument:document});
+  assert.equal(document.head.children.length,1);
+  const css=document.head.children[0].textContent;
+  assert.match(css,/button:not\(\.node\):enabled:active/);
+  assert.match(css,/:focus-visible/);
+  assert.match(css,/button:not\(\.node\):disabled/);
+  assert.match(css,/\.handCard:disabled/);
+  assert.doesNotMatch(css,/transform\s*:/);
+  assert.doesNotMatch(css,/transition\s*:/);
+  first.binding.destroy();
+  second.binding.destroy();
 });
 
 test('binding cancels a captured release outside the target without allocating a token',()=>{

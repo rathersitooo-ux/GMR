@@ -279,3 +279,89 @@ test('R19R2 mounts accepted replay rows on the production Result surface', async
 
   runtime.assertClean(testInfo);
 });
+
+test('selected Battle hand card clears lift/front residue when Road reservation is cleared', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop-1280x720', 'focused selected-card deselection evidence');
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+
+  const deckSetup = await page.evaluate(() => {
+    const t = window.__GAMEROAD_TEST__;
+    const publicMain = new Set(t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
+    const standard = window.__CARD_DATA__
+      .filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)))
+      .map((card) => card.id);
+    const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
+    const nonRoyal = standard.filter((id) => !t.isRoyalCard(id));
+    const main = [...nonRoyal.slice(0, 37), ...royalIds];
+    const setValidation = t.deckSetDraft(main, []);
+    const draftValidation = t.deckValidate(t.state.deckDraft, { forBattle: true });
+    const committed = draftValidation.ok ? t.deckCommit() : false;
+    const savedValidation = t.deckValidate(t.state.savedDeck, { forBattle: true });
+    return { mainLength: main.length, setValidation, draftValidation, committed, savedValidation };
+  });
+  expect(deckSetup.mainLength).toBe(40);
+  expect(deckSetup.committed, JSON.stringify(deckSetup)).toBeTruthy();
+  expect(deckSetup.savedValidation.ok, JSON.stringify(deckSetup.savedValidation)).toBeTruthy();
+
+  const setupControl = rootGo(page, 'setup');
+  await expect(setupControl).toBeVisible();
+  await setupControl.click();
+  const setup = page.locator('section[data-screen="setup"]');
+  await expect(setup).toBeVisible();
+  await setup.locator('[data-content="road_shield"]').click();
+  await setup.locator('[data-mode="2p"]').click();
+  const startMatch = setup.locator('#startMatch');
+  await expect(startMatch).toBeVisible();
+  await expect(startMatch).toBeEnabled();
+  await startMatch.click();
+
+  const battle = page.locator('section[data-screen="battle"]');
+  await expect(battle).toBeVisible();
+  const roadSelect = battle.locator('#roadSelect');
+  const battleSelect = battle.locator('#battleSelect');
+  await expect(roadSelect).toBeVisible();
+  await expect(battleSelect).toBeVisible();
+  await expect(roadSelect).toHaveValue('');
+  await expect(battleSelect).toHaveValue('');
+
+  const handCards = battle.locator('#hand .handCard:visible:not(:disabled)');
+  expect(await handCards.count(), 'visible plan hand has a selectable card').toBeGreaterThan(0);
+  const card = handCards.first();
+  const cardId = await card.getAttribute('data-card-id');
+  expect(cardId, 'selected hand card exposes its existing card id').toBeTruthy();
+
+  await card.click();
+  await expect(roadSelect).toHaveValue(cardId);
+  const selected = await card.evaluate((node) => ({
+    markers: ['select', 'first10Road', 'first10Battle'].filter((name) => node.classList.contains(name)),
+    transform: getComputedStyle(node).transform,
+    zIndex: getComputedStyle(node).zIndex,
+  }));
+  expect(selected.markers.length, `selected markers=${selected.markers.join(',')}`).toBeGreaterThan(0);
+  expect(Number.parseInt(selected.zIndex, 10), `selected z-index=${selected.zIndex}`).toBeGreaterThanOrEqual(30);
+  const selectedPng = await page.screenshot({ fullPage: true, animations: 'disabled' });
+  await testInfo.attach(`${testInfo.project.name}-battle-hand-selected-before-clear.png`, { body: selectedPng, contentType: 'image/png' });
+
+  await roadSelect.selectOption({ value: '' });
+  await expect(roadSelect).toHaveValue('');
+  await page.waitForTimeout(180);
+
+  const cleared = await card.evaluate((node) => ({
+    markers: ['select', 'first10Road', 'first10Battle'].filter((name) => node.classList.contains(name)),
+    transform: getComputedStyle(node).transform,
+    zIndex: getComputedStyle(node).zIndex,
+  }));
+  expect(cleared.markers, 'old card has no selected/reserved presentation marker after clear').toEqual([]);
+  expect(Number.parseInt(cleared.zIndex, 10), `cleared z-index=${cleared.zIndex}`).toBeLessThan(Number.parseInt(selected.zIndex, 10));
+  expect(cleared.transform, 'old card returns from selected lift/scale to fan geometry').not.toBe(selected.transform);
+  await expect(battle.locator('#hand .handCard.first10Road')).toHaveCount(0);
+
+  const clearedPng = await page.screenshot({ fullPage: true, animations: 'disabled' });
+  await testInfo.attach(`${testInfo.project.name}-battle-hand-after-clear.png`, { body: clearedPng, contentType: 'image/png' });
+  testInfo.annotations.push({
+    type: 'selected-card-deselect-evidence',
+    description: `card=${cardId}; selectedMarkers=${selected.markers.join('|')}; selectedZ=${selected.zIndex}; clearedZ=${cleared.zIndex}; old selected/reserved markers=0`,
+  });
+  runtime.assertClean(testInfo);
+});

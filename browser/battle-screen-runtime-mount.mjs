@@ -6,13 +6,6 @@ const SHELL_ATTR = 'data-gr-battle-screen';
 const GRID_ATTR = 'data-battle-screen-causal-grid';
 const PLAN_SLOT_ATTR = 'data-battle-plan-slot';
 const LANE_ATTR = 'data-battle-screen-lane';
-const TRIAD_ATTR = 'data-battle-triad-legend';
-const TRIAD_TOKEN_ATTR = 'data-battle-triad-token';
-const TRIAD_HANDS = Object.freeze([
-  Object.freeze({ hand: 'rock', label: 'グー', icon: '✊', suit: '♣', suitName: 'クラブ', tone: 'club' }),
-  Object.freeze({ hand: 'scissors', label: 'チョキ', icon: '✌', suit: '♦', suitName: 'ダイヤ', tone: 'diamond' }),
-  Object.freeze({ hand: 'paper', label: 'パー', icon: '✋', suit: '♠', suitName: 'スペード', tone: 'spade' })
-]);
 const PLAYER_ROLE_LABELS = Object.freeze({
   source: '攻撃',
   target: '対象'
@@ -57,15 +50,7 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"] [${PLAN_SLOT_ATTR}]{position:absolute;inset:0;z-index:2;min-width:0;min-height:0}
 [${SHELL_ATTR}="1"] #battlePhaseSurface{position:absolute;inset:0;z-index:3;overflow:hidden;background:radial-gradient(ellipse at 50% 13%,rgba(90,177,157,.15),transparent 36%),linear-gradient(180deg,rgba(8,20,21,.2),rgba(4,12,13,.72))}
 [${SHELL_ATTR}="1"] #battlePhaseSurface::before{content:"";position:absolute;z-index:-2;left:14%;right:14%;top:10%;bottom:-22%;clip-path:polygon(39% 0,61% 0,100% 100%,0 100%);background:linear-gradient(180deg,rgba(167,232,213,.08),rgba(75,138,118,.14) 46%,rgba(18,44,38,.34));border-left:1px solid rgba(210,255,239,.08);border-right:1px solid rgba(210,255,239,.08);transform:perspective(480px) rotateX(5deg);transform-origin:50% 0}
-[${SHELL_ATTR}="1"] [${TRIAD_ATTR}]{position:absolute;z-index:6;top:clamp(44px,8vh,64px);left:50%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;gap:clamp(7px,1vw,13px);pointer-events:none;filter:drop-shadow(0 8px 16px rgba(0,0,0,.28))}
-[${SHELL_ATTR}="1"] [${TRIAD_TOKEN_ATTR}]{--triad-accent:#d7e4df;position:relative;width:clamp(50px,7.4vw,78px);height:clamp(50px,7.4vw,78px);flex:0 0 auto;display:grid;grid-template-columns:1fr auto;grid-template-rows:1fr auto;place-items:center;border:2px solid var(--triad-accent);border-radius:50%;background:radial-gradient(circle at 50% 35%,color-mix(in srgb,var(--triad-accent) 22%,#142022),rgba(3,10,11,.92) 66%);box-shadow:inset 0 0 0 3px rgba(255,255,255,.05),0 0 0 1px rgba(0,0,0,.58);text-shadow:0 2px 7px rgba(0,0,0,.8)}
-[${SHELL_ATTR}="1"] [${TRIAD_TOKEN_ATTR}][data-tone="club"]{--triad-accent:#51d47e}
-[${SHELL_ATTR}="1"] [${TRIAD_TOKEN_ATTR}][data-tone="diamond"]{--triad-accent:#f0d34e}
-[${SHELL_ATTR}="1"] [${TRIAD_TOKEN_ATTR}][data-tone="spade"]{--triad-accent:#61a9ff}
-[${SHELL_ATTR}="1"] .grBattleTriadHand{grid-column:1/3;align-self:end;font-size:clamp(20px,3.2vw,34px);line-height:1;filter:grayscale(.12)}
-[${SHELL_ATTR}="1"] .grBattleTriadSuit{align-self:start;justify-self:end;margin:0 2px 4px 0;color:var(--triad-accent);font-size:clamp(12px,1.65vw,19px);font-weight:1000;line-height:1}
-[${SHELL_ATTR}="1"] .grBattleTriadLabel{align-self:start;justify-self:start;margin:1px 0 0 4px;font-size:clamp(7px,.84vw,10px);font-weight:900;letter-spacing:.04em;line-height:1;color:#f7fbfa}
-[${SHELL_ATTR}="1"] [${GRID_ATTR}]{position:absolute;z-index:4;inset:clamp(112px,18vh,148px) clamp(6px,1.5vw,18px) clamp(48px,9vh,78px);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(4px,1vw,14px);align-items:stretch;pointer-events:none}
+[${SHELL_ATTR}="1"] [${GRID_ATTR}]{position:absolute;z-index:4;inset:clamp(44px,10vh,78px) clamp(6px,1.5vw,18px) clamp(48px,9vh,78px);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(4px,1vw,14px);align-items:stretch;pointer-events:none}
 [${SHELL_ATTR}="1"] [${LANE_ATTR}]{position:relative;min-width:0;overflow:hidden;display:grid;grid-template-rows:auto 1fr auto;gap:8px;padding:clamp(7px,1.1vw,13px);border:1px solid rgba(196,231,221,.13);border-radius:clamp(9px,1.4vw,16px);background:linear-gradient(180deg,rgba(17,34,35,.46),rgba(5,14,15,.2));box-shadow:inset 0 0 0 1px rgba(255,255,255,.018);transition:transform 180ms ease,opacity 180ms ease,border-color 180ms ease,background 180ms ease}
 [${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="source"]{transform:translateY(-1.4%);border-color:rgba(165,230,213,.42);background:linear-gradient(180deg,rgba(32,72,65,.62),rgba(5,14,15,.26))}
 [${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="target"]{border-color:rgba(239,183,142,.4);background:linear-gradient(180deg,rgba(83,52,36,.52),rgba(5,14,15,.26))}
@@ -77,8 +62,8 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"] .grBattleLaneAfterstate span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 5px;border-radius:6px;background:rgba(2,8,9,.52);border:1px solid rgba(214,241,231,.08)}
 [${SHELL_ATTR}="1"] #battleResolution{position:absolute;z-index:7;left:50%;bottom:clamp(8px,2vh,18px);transform:translateX(-50%);max-width:min(72vw,760px);min-height:24px;pointer-events:none;text-align:center}
 [${SHELL_ATTR}="1"][data-motion="static_only"] [${LANE_ATTR}]{transition:none!important;transform:none!important}
-@media(max-width:540px){[${SHELL_ATTR}="1"] [${TRIAD_ATTR}]{top:42px;gap:6px}[${SHELL_ATTR}="1"] [${TRIAD_TOKEN_ATTR}]{width:50px;height:50px}[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:102px;left:4px;right:4px;gap:3px;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}[${SHELL_ATTR}="1"] [${LANE_ATTR}]{padding:6px 4px;border-radius:8px}.grBattleLaneRole{max-width:100%;overflow:hidden;text-overflow:ellipsis}}
-@media(max-height:420px){[${SHELL_ATTR}="1"] [${TRIAD_ATTR}]{top:31px;gap:5px}[${SHELL_ATTR}="1"] [${TRIAD_TOKEN_ATTR}]{width:46px;height:46px}[${SHELL_ATTR}="1"] .grBattleTriadHand{font-size:21px}[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:82px;bottom:34px}[${SHELL_ATTR}="1"] .grBattleScreenTop{height:32px}.grBattleLaneAfterstate{gap:2px}}
+@media(max-width:540px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{left:4px;right:4px;gap:3px;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}[${SHELL_ATTR}="1"] [${LANE_ATTR}]{padding:6px 4px;border-radius:8px}.grBattleLaneRole{max-width:100%;overflow:hidden;text-overflow:ellipsis}}
+@media(max-height:420px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:36px;bottom:34px}[${SHELL_ATTR}="1"] .grBattleScreenTop{height:36px}.grBattleLaneAfterstate{gap:2px}}
 @media(max-height:470px) and (orientation:landscape){.battle .royalUsageStrip{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;width:151px!important;gap:2px!important}}
 @media(prefers-reduced-motion:reduce){[${SHELL_ATTR}="1"] [${LANE_ATTR}]{transition:none!important;transform:none!important}}
 `;
@@ -98,28 +83,6 @@ function ensureAnchor(document, root, explicit, id, tag = 'section') {
   node.id = id;
   root.appendChild(node);
   return { node, created: true };
-}
-
-function createTriadLegend(document) {
-  const legend = createNode(document, 'div', 'grBattleTriadLegend');
-  legend.setAttribute?.(TRIAD_ATTR, '1');
-  legend.setAttribute?.('role', 'img');
-  legend.setAttribute?.('aria-label', 'じゃんけん対応: グーはクラブ、チョキはダイヤ、パーはスペード');
-  legend.dataset.presentationOnly = 'true';
-  for (const spec of TRIAD_HANDS) {
-    const token = createNode(document, 'div', 'grBattleTriadToken');
-    token.setAttribute?.(TRIAD_TOKEN_ATTR, spec.hand);
-    token.dataset.hand = spec.hand;
-    token.dataset.suit = spec.suit;
-    token.dataset.suitName = spec.suitName;
-    token.dataset.tone = spec.tone;
-    token.setAttribute?.('aria-label', `${spec.label} ${spec.suitName}`);
-    token.appendChild(createNode(document, 'span', 'grBattleTriadHand', spec.icon));
-    token.appendChild(createNode(document, 'span', 'grBattleTriadSuit', spec.suit));
-    token.appendChild(createNode(document, 'span', 'grBattleTriadLabel', spec.label));
-    legend.appendChild(token);
-  }
-  return legend;
 }
 
 function createLane(document, participantIndex) {
@@ -199,9 +162,6 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   phaseSurface.dataset.battleScreenBoardInteraction = 'forbidden';
   if (phaseAnchor.created) phaseSurface.hidden = true;
 
-  const triadLegend = createTriadLegend(document);
-  phaseSurface.appendChild(triadLegend);
-
   let grid = createNode(document, 'div', 'grBattleCausalGrid');
   grid.setAttribute?.(GRID_ATTR, '');
   grid.setAttribute?.('aria-label', '4人バトル比較');
@@ -254,7 +214,6 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   function destroy() {
     if (destroyed) return false;
     destroyed = true;
-    if (triadLegend?.parentNode && typeof triadLegend.parentNode.removeChild === 'function') triadLegend.parentNode.removeChild(triadLegend);
     if (grid?.parentNode && typeof grid.parentNode.removeChild === 'function') grid.parentNode.removeChild(grid);
     if (shellCreated && shell?.parentNode && typeof shell.parentNode.removeChild === 'function') shell.parentNode.removeChild(shell);
     return true;
@@ -271,7 +230,6 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     planSlot,
     phaseSurface,
     resolutionSurface,
-    triadLegend,
     grid,
     laneSurfaces: lanes.map(view => view.lane),
     render,

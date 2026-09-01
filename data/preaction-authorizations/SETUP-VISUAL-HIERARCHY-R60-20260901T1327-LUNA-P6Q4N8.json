@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "SETUP-VISUAL-HIERARCHY-R60-20260901T1327-LUNA-P6Q4N8",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "SETUP_MATCH_STAGING_VISUAL_HIERARCHY_R60_CURRENT_RECOVERY",
+  "acquireKey": "SETUP-VISUAL-HIERARCHY-R60-20260901T1327-LUNA-P6Q4N8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "SETUP-R60-BASELINE-THREE-VIEWPORT-20260901T1330",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "SETUP-R60-PLAYWRIGHT-THREE-VIEWPORT-ORACLE-20260901T1342",
+  "proceedToken": "PROCEED|SETUP-VISUAL-HIERARCHY-R60-20260901T1327-LUNA-P6Q4N8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "8b303bb9c28d925debd9b5b146f5cece1a4b4b19",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "SETUP_MATCH_STAGING_VISUAL_HIERARCHY_R60_CURRENT_RECOVERY",
+  "leaseAcquireKey": "SETUP-VISUAL-HIERARCHY-R60-20260901T1327-LUNA-P6Q4N8",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 13:43 JST",
+  "leaseUntilJst": "2026-09-01 14:27 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A313:L313",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main@8b303bb9c28d925debd9b5b146f5cece1a4b4b19; NEW branch work/setup-visual-hierarchy-r60-20260901; browser/GAMEROAD.html; transient data/preaction-authorizations/SETUP-VISUAL-HIERARCHY-R60-20260901T1327-LUNA-P6Q4N8.json create-first/delete-before-final-head; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row313; own R23 checkpoint/terminal.",
+  "scope": [
+    "browser/GAMEROAD.html"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html"
+  ]
+}

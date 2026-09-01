@@ -1,0 +1,52 @@
+name: TEMP Result Shortland Rank R1
+
+on:
+  push:
+    branches:
+      - work/result-shortland-rank-r1-20260901
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temp-result-shortland-rank-r1
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Guard exact authority and inspect Result ranking CSS
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF_NAME}" = "work/result-shortland-rank-r1-20260901"
+          git merge-base --is-ancestor b59c4659b1f999b5afc385c648ba38b4c3fc501e HEAD
+          test -f data/preaction-authorizations/RESULT-SHORTLAND-RANK-R1-20260901T1457-SOL-H6Q2M8.json
+          grep -Fq '".github/workflows/zz-temp-result-shortland-rank-r1.yml"' data/preaction-authorizations/RESULT-SHORTLAND-RANK-R1-20260901T1457-SOL-H6Q2M8.json
+          current_blob="$(git rev-parse HEAD:browser/GAMEROAD.html)"
+          test "$current_blob" = "e3b13b6a770be20ee038bd0e829fc39730e2fac3"
+          python - <<'PY'
+          from pathlib import Path
+          s = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          needles = ['resultRanking', 'rankLine', '@media(max-height', '@media (max-height']
+          print('HTML_CHARS', len(s))
+          for needle in needles:
+              starts = []
+              pos = 0
+              while True:
+                  pos = s.find(needle, pos)
+                  if pos < 0:
+                      break
+                  starts.append(pos)
+                  pos += len(needle)
+              print(f'NEEDLE {needle!r} COUNT {len(starts)} POS {starts}')
+              for i, p in enumerate(starts[:20], 1):
+                  lo = max(0, p - 900)
+                  hi = min(len(s), p + 1400)
+                  print(f'--- {needle} #{i} [{lo}:{hi}] ---')
+                  print(s[lo:hi])
+          PY

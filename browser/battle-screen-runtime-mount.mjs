@@ -143,13 +143,6 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     shell.setAttribute?.(SHELL_ATTR, '1');
   }
 
-  const top = createNode(document, 'header', 'grBattleScreenTop');
-  const phaseLabel = createNode(document, 'div', 'grBattleScreenPhase', 'MATCH / PLAN');
-  const returnLabel = createNode(document, 'div', 'grBattleScreenReturn', '');
-  top.appendChild(phaseLabel);
-  top.appendChild(returnLabel);
-  shell.appendChild(top);
-
   let planSlot = null;
   if (shellCreated) {
     planSlot = createNode(document, 'div', 'grBattlePlanSlot');
@@ -191,11 +184,6 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     setData(phaseSurface, 'battleScreenPhase', model.phase);
     setData(phaseSurface, 'battleScreenInput', model.battlePhaseInputPolicy.join('|'));
     setData(resolutionSurface, 'battleScreenEventId', model.eventId);
-
-    phaseLabel.textContent = model.screenMode === 'BATTLE_PHASE'
-      ? `BATTLE / ${model.phase}`
-      : 'MATCH / PLAN';
-    returnLabel.textContent = model.returnIntent ? `NEXT: ${model.returnIntent}` : '';
 
     const battle = model.screenMode === 'BATTLE_PHASE';
     phaseSurface.hidden = !battle;

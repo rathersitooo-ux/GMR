@@ -3980,7 +3980,10 @@ globalThis.addEventListener("pagehide", () => binding.destroy(), { once: true })
       if (!root) return;
       const toggle = root.querySelector('#postMatchAutoQueueEnabled');
       const status = root.querySelector('#postMatchAutoQueueStatus');
-      if (toggle) toggle.checked = view.enabled;
+      if (toggle) {
+        toggle.checked = view.enabled;
+        toggle.disabled = view.status === STATUS.INELIGIBLE;
+      }
       if (status) {
         status.dataset.state = view.status;
         status.textContent = view.error ? `${LABELS[view.status] || view.status}: ${view.error}` : (LABELS[view.status] || view.status);

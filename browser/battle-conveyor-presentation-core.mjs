@@ -202,11 +202,8 @@ export function planBattleConveyor(events, { reducedMotion = false, lowPerf = fa
       transition = TRANSITIONS.COMPARE4;
     } else if (event.kind === 'finisher') {
       const winnerId = str(data.winnerId, 'WINNER_ID');
-      if (!Array.isArray(data.loserIds) || data.loserIds.length !== 3) throw new TypeError('FINISHER_REQUIRES_THREE_LOSERS');
-      targets = data.loserIds.map(id => str(id, 'LOSER_ID'));
-      if (targets.includes(winnerId)) throw new TypeError('FINISHER_WINNER_IN_LOSERS');
       transition = TRANSITIONS.FINISHER_GATHER;
-      nextStage = { left: winnerId, right: targets[0] };
+      nextStage = { left: winnerId, right: null };
     }
 
     const importance = importanceFor(event.kind, data);

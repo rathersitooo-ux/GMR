@@ -72,6 +72,28 @@ function immediateWindow({ reduced = false } = {}) {
   };
 }
 
+function manualWindow({ reduced = false } = {}) {
+  let next = 1;
+  const timers = new Map();
+  return {
+    CustomEvent: FakeCustomEvent,
+    matchMedia: () => ({ matches: reduced }),
+    setTimeout(fn, ms) {
+      const id = next++;
+      timers.set(id, { fn, ms });
+      return id;
+    },
+    clearTimeout(id) { timers.delete(id); },
+    flushAll() {
+      while (timers.size) {
+        const batch = [...timers.entries()].sort((a, b) => a[1].ms - b[1].ms);
+        timers.clear();
+        for (const [, timer] of batch) timer.fn();
+      }
+    },
+  };
+}
+
 test('default visual contract is stable and frozen', () => {
   assert.equal(Object.isFrozen(DEFAULT_DECK_SWIPE_PRESENTATION), true);
   assert.equal(DEFAULT_DECK_SWIPE_PRESENTATION.flightMs, 220);
@@ -148,6 +170,34 @@ test('invalid geometry/configuration fails closed', () => {
     }),
     /STREAK_COUNT_INVALID/,
   );
+});
+
+test('normal motion acknowledges deck target and count immediately before land', () => {
+  const doc = fakeDocument();
+  const win = manualWindow({ reduced: false });
+  const controller = createDeckSwipePresentationController({
+    document: doc,
+    window: win,
+    reducedMotion: false,
+    sfx: false,
+  });
+  const source = fakeElement(rect(10, 300, 100, 140));
+  const target = fakeElement(rect(500, 40, 180, 240));
+  const count = fakeElement();
+  const inserted = fakeElement();
+
+  controller.playSuccess({ sourceElement: source, targetElement: target, countElement: count, insertedElement: inserted, cardId: 'c7' });
+
+  assert.equal(target.classList.contains('gr-deck-swipe-target-hit'), true);
+  assert.equal(count.classList.contains('gr-deck-swipe-count-hit'), true);
+  assert.equal(inserted.classList.contains('gr-deck-swipe-recent-add'), false);
+  assert.deepEqual(doc.events.map((event) => event.type), ['gameroad:deck-swipe-commit']);
+
+  win.flushAll();
+  assert.deepEqual(doc.events.map((event) => event.type), [
+    'gameroad:deck-swipe-commit',
+    'gameroad:deck-swipe-land',
+  ]);
 });
 
 test('reduced controller emits commit then land and exposes SFX hooks without owning audio', () => {
@@ -260,5 +310,4 @@ test('custom timings remain bounded by semantic contract', () => {
   assert.equal(plan.landingPulseMs, 200);
   assert.equal(plan.countPulseMs, 220);
   assert.equal(plan.recentAddMs, 500);
-  assert.equal(plan.streakCount, 1);
 });

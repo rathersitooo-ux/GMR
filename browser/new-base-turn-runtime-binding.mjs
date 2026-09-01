@@ -1,25 +1,23 @@
 import { rollAuthoritativeNewBaseDice } from './new-base-authoritative-dice-core.mjs';
-import { readNewBaseManaRecoveryConfig } from './new-base-mana-recovery-config.mjs';
 import { composeTurnMovementBudget } from './new-base-movement-budget-core.mjs';
 import { runNewBaseTurn } from './new-base-turn-orchestrator-core.mjs';
-import { applyNewBaseTurnStartManaRecovery } from './new-base-turn-start-mana-recovery-core.mjs';
-import { autoAssignHand3ToFixedJankenSlots } from './newbase-janken-hand-assignment-core.mjs';
+import { resolveCyclicTriadByProcessingOrder } from './triad-resolver-core.mjs';
 
-export const NEW_BASE_TURN_RUNTIME_BINDING_SCHEMA = 'gameroad.new-base-turn-runtime-binding.v1';
+export const NEW_BASE_TURN_RUNTIME_BINDING_SCHEMA = 'gameroad.new-base-turn-runtime-binding.v2';
 
 export const NEW_BASE_TURN_RUNTIME_AUTHORITY_NAMES = Object.freeze([
-  'recoverMana',
+  'requireRoundStateReady',
   'readAuthoritativeDiceRequest',
   'nextDiceInteger',
-  'obtainHand3',
-  'readFixedJankenSlotState',
-  'proposeFixedJankenAssignment',
-  'selectFixedSlotCard',
-  'resolveSharedJanken',
-  'resolveBattle',
   'deriveBaseMovementBudget',
   'reserveMovement',
   'revalidateAndResolveMovement',
+  'resolveLandingInteraction',
+  'registerJankenFromFirstValidCard',
+  'addBattleCardsWithinResources',
+  'readOrderedJankenSelections',
+  'readJankenResolverConfig',
+  'resolveBattleInteraction',
   'progressRoad',
   'evaluateGoal',
   'finalizeResultOrNextTurn',
@@ -45,29 +43,32 @@ function requireObject(value, label) {
   return value;
 }
 
+function requireArray(value, label) {
+  if (!Array.isArray(value)) {
+    throw new TypeError(`${label} must be an array supplied by the runtime authority`);
+  }
+  return value;
+}
+
 /**
- * Bind the composition-only new-base turn orchestrator to current runtime
- * authorities without creating a second Battle, ROAD, janken, mana, movement,
- * GOAL, result, or entropy implementation.
+ * Binds the current composition-only new-base turn orchestrator to existing
+ * runtime authorities without creating a second Battle, ROAD, janken,
+ * movement, GOAL, result, resource, or entropy implementation.
  *
- * Only seams whose current cores already own formal validation/composition are
- * handled here: turn-start mana config/use, authoritative dice identity/range,
- * hand3 -> fixed janken slot assignment, and movement-budget addition. Every
- * other gameplay decision remains delegated to the caller's existing authority.
+ * Round-start resource mutation is not performed here. The existing runtime
+ * authority must prove that the round state is ready before a turn begins.
+ * The binding owns only seams whose existing neutral cores already own formal
+ * composition: authoritative dice, movement-budget addition, and the shared
+ * ordered cyclic-triad resolver. Card eligibility/first-play registration,
+ * additional Battle cards, landing/territory semantics and all destinations
+ * remain delegated to current runtime authority.
  */
-export function createNewBaseTurnRuntimeProviders({
-  runtimeAuthorities,
-  manaRecoveryConfigSource,
-} = {}) {
+export function createNewBaseTurnRuntimeProviders({ runtimeAuthorities } = {}) {
   const authority = requireRuntimeAuthorities(runtimeAuthorities);
-  const manaRecoveryConfig = readNewBaseManaRecoveryConfig(manaRecoveryConfigSource);
 
   return Object.freeze({
-    recoverTurnStartMana(input) {
-      return applyNewBaseTurnStartManaRecovery({
-        manaRecoveryConfig,
-        recoverMana: (amount) => authority.recoverMana(amount, input),
-      });
+    requireRoundStateReady(input) {
+      return requireObject(authority.requireRoundStateReady(input), 'round state');
     },
 
     rollAuthoritativeDice(input) {
@@ -79,31 +80,6 @@ export function createNewBaseTurnRuntimeProviders({
         ...request,
         nextInteger: (rangeRequest) => authority.nextDiceInteger(rangeRequest, input),
       });
-    },
-
-    obtainHand3(input) {
-      return authority.obtainHand3(input);
-    },
-
-    autoAssignFixedJankenSlots(input) {
-      const fixedSlotState = authority.readFixedJankenSlotState(input);
-      return autoAssignHand3ToFixedJankenSlots({
-        hand: input.outputs.hand3,
-        fixedSlotState,
-        assignmentPolicy: (policyInput) => authority.proposeFixedJankenAssignment(policyInput, input),
-      });
-    },
-
-    selectFixedSlotCard(input) {
-      return authority.selectFixedSlotCard(input);
-    },
-
-    resolveSharedJanken(input) {
-      return authority.resolveSharedJanken(input);
-    },
-
-    resolveBattle(input) {
-      return authority.resolveBattle(input);
     },
 
     deriveBaseMovementBudget(input) {
@@ -129,6 +105,34 @@ export function createNewBaseTurnRuntimeProviders({
       return authority.revalidateAndResolveMovement(input);
     },
 
+    resolveLandingInteraction(input) {
+      return authority.resolveLandingInteraction(input);
+    },
+
+    registerJankenFromFirstValidCard(input) {
+      return authority.registerJankenFromFirstValidCard(input);
+    },
+
+    addBattleCardsWithinResources(input) {
+      return authority.addBattleCardsWithinResources(input);
+    },
+
+    resolveOrderedJanken(input) {
+      const orderedSelections = requireArray(
+        authority.readOrderedJankenSelections(input),
+        'ordered janken selections',
+      );
+      const config = requireObject(
+        authority.readJankenResolverConfig(input),
+        'janken resolver config',
+      );
+      return resolveCyclicTriadByProcessingOrder(orderedSelections, config);
+    },
+
+    resolveBattleInteraction(input) {
+      return authority.resolveBattleInteraction(input);
+    },
+
     progressRoad(input) {
       return authority.progressRoad(input);
     },
@@ -146,11 +150,7 @@ export function createNewBaseTurnRuntimeProviders({
 export function runNewBaseTurnWithRuntime({
   turnContext,
   runtimeAuthorities,
-  manaRecoveryConfigSource,
 } = {}) {
-  const providers = createNewBaseTurnRuntimeProviders({
-    runtimeAuthorities,
-    manaRecoveryConfigSource,
-  });
+  const providers = createNewBaseTurnRuntimeProviders({ runtimeAuthorities });
   return runNewBaseTurn({ turnContext, providers });
 }

@@ -1,0 +1,36 @@
+name: TEMP no-defeat whole-repo survey R1
+
+on:
+  push:
+    branches:
+      - work/global-no-defeat-userlock-r1-20260901
+
+permissions:
+  contents: read
+
+jobs:
+  survey:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify exact branch and base lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF_NAME}" = "work/global-no-defeat-userlock-r1-20260901"
+          git merge-base --is-ancestor 417a0eb9c9a1ce69285fdbf58707741287586eb0 HEAD
+          test -f data/preaction-authorizations/GLOBAL-NO-DEFEAT-USERLOCK-R1-20260901T1620-SOL-P8K3V6.json
+      - name: Survey active executable defeat semantics
+        shell: bash
+        run: |
+          set -u
+          echo '=== STRONG DEFEAT TOKENS: active executable/product sources ==='
+          git grep -nEI '\b(loserIds|loser|losers|defeat|defeated|defeats|attack_lose|defend_lose)\b|敗北|冒険失敗|負け' -- browser tools unity roblox 2>/dev/null || true
+          echo '=== LOSS TOKENS: classify technical vs gameplay manually ==='
+          git grep -nEI '\bloss(es)?\b|_loss\b|loss_' -- browser tools unity roblox 2>/dev/null || true
+          echo '=== WINNER-COMPLEMENT SHAPES ==='
+          git grep -nE 'filter\([^\n]*(winner|winnerId|winnerIds)|participantIds[^\n]*filter|ranking[^\n]*filter' -- browser tools unity roblox 2>/dev/null || true
+          echo '=== END SURVEY ==='

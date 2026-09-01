@@ -97,7 +97,9 @@ assert.equal(runtime.phaseSurface.id, 'battlePhaseSurface');
 assert.equal(runtime.resolutionSurface.id, 'battleResolution');
 assert.equal(runtime.planSlot.dataset.owner, 'caller');
 assert.equal(runtime.phaseSurface.hidden, true);
-assert.ok(document.getElementById('gameroad-battle-screen-runtime-r1-style'));
+const runtimeStyle = document.getElementById('gameroad-battle-screen-runtime-r1-style');
+assert.ok(runtimeStyle);
+assert.ok(runtimeStyle.textContent.includes('@media(max-width:540px){[data-gr-battle-screen="1"] [data-battle-screen-causal-grid]{left:4px;right:4px;gap:3px;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}'));
 
 const idle = createBattleScreenModel({ participants });
 runtime.render(idle);
@@ -244,7 +246,7 @@ assert.equal(BATTLE_SCREEN_RUNTIME.formalArtOwnedHere, false);
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 71,
+  tests: 72,
   freshMount: {
     laneCount: runtime.laneSurfaces.length,
     phaseAnchor: runtime.phaseSurface.id,

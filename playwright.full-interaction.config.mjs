@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
-  testMatch: ['browser-full-interaction.spec.mjs', 'browser-full-interaction-state-sequence.spec.mjs'],
+  testMatch: ['browser-full-interaction.spec.mjs', 'browser-full-interaction-state-sequence.spec.mjs', 'player-copy-visual-evidence.spec.mjs'],
   timeout: 90_000,
   expect: { timeout: 7_000 },
   fullyParallel: false,

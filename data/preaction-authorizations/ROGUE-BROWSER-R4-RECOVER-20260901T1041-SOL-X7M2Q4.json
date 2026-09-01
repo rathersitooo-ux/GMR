@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROGUE-BROWSER-R4-RECOVER-20260901T1041-SOL-X7M2Q4",
+  "taskId": "ROGUE-CURRENT-RUNTIME-INTEGRATION-ACCEPT-001",
+  "workUnitKey": "ROGUE_BROWSER_CURRENT_MAIN_RECOVERY_R4",
+  "acquireKey": "ROGUE-BROWSER-R4-RECOVER-20260901T1041-SOL-X7M2Q4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PRED-ROGUE-R4-CURRENT-MAIN-SEAM-20260901",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ORACLE-ROGUE-PR860-FOUR-FILE-R4",
+  "proceedToken": "PROCEED|ROGUE-BROWSER-R4-RECOVER-20260901T1041-SOL-X7M2Q4|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_ACTIVE_LEASES_A7",
+  "authorizationBaseSha": "9a71747b10e9e8b28669da0155a00c3cb7ffbd97",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ROGUE-CURRENT-RUNTIME-INTEGRATION-ACCEPT-001",
+  "leaseWorkUnitKey": "ROGUE_BROWSER_CURRENT_MAIN_RECOVERY_R4",
+  "leaseAcquireKey": "ROGUE-BROWSER-R4-RECOVER-20260901T1041-SOL-X7M2Q4",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 10:41 JST",
+  "leaseUntilJst": "2026-09-01 11:41 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "browser/home-boot-runtime-mount.mjs; browser/rogue-run-runtime-mount.mjs; deploy/cloudflare/scripts/build.mjs; tests/rogue-run-runtime-mount.test.mjs; transient data/preaction-authorizations/ROGUE-BROWSER-R4-RECOVER-20260901T1041-SOL-X7M2Q4.json; existing PR#860/checks/expected-head merge",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "browser/rogue-run-runtime-mount.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/rogue-run-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "browser/rogue-run-runtime-mount.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/rogue-run-runtime-mount.test.mjs"
+  ],
+  "solutionSignature": "rogue-thin-core-current-home-live-consumer-mount",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-EXISTING-PR860-R4-ONTO-CURRENT-MAIN-20260901",
+  "solutionSearchEvidence": [
+    "existing open PR#860 exact Rogue live consumer mount",
+    "current main still lacks rogue-run-runtime-mount.mjs and Home mount call",
+    "current Home/build drift is outside the two-line/two-spec Rogue seam and is preserved by current-main rebase"
+  ]
+}

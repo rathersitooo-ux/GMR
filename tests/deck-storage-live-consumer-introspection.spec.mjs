@@ -1,6 +1,31 @@
 import { test, expect } from '@playwright/test';
 
 async function boot(page) {
+  await page.addInitScript(() => {
+    const registry = new WeakMap();
+    const original = EventTarget.prototype.addEventListener;
+    Object.defineProperty(window, '__GR_LISTENER_AUDIT__', { value: registry, configurable: true });
+    EventTarget.prototype.addEventListener = function auditedAddEventListener(type, listener, options) {
+      try {
+        const source = typeof listener === 'function'
+          ? Function.prototype.toString.call(listener)
+          : listener && typeof listener.handleEvent === 'function'
+            ? Function.prototype.toString.call(listener.handleEvent)
+            : '';
+        const rows = registry.get(this) ?? [];
+        rows.push({
+          type: String(type),
+          source: source.slice(0, 10000),
+          capture: typeof options === 'boolean' ? options : Boolean(options?.capture),
+          passive: typeof options === 'object' ? Boolean(options?.passive) : false,
+          once: typeof options === 'object' ? Boolean(options?.once) : false,
+        });
+        registry.set(this, rows);
+      } catch {}
+      return original.call(this, type, listener, options);
+    };
+  });
+
   const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
   expect(response).not.toBeNull();
   expect(response.ok()).toBeTruthy();
@@ -52,6 +77,12 @@ test('discovers the current Cards deck authority and mount seam without product 
       try { source = Function.prototype.toString.call(value); } catch {}
       return { key, name: value.name || null, arity: value.length, source: source.slice(0, 2400) };
     };
+    const listeners = (target) => {
+      const rows = window.__GR_LISTENER_AUDIT__?.get?.(target) ?? [];
+      return rows
+        .filter((row) => /^(click|pointerdown|pointermove|pointerup|pointercancel|touchstart|touchmove|touchend|keydown)$/.test(row.type))
+        .map((row) => ({ ...row, source: row.source.slice(0, 10000) }));
+    };
 
     const testApiKeys = t ? Object.keys(t).sort() : [];
     const deckApi = t
@@ -78,6 +109,11 @@ test('discovers the current Cards deck authority and mount seam without product 
     });
 
     const cards = document.querySelector('section[data-screen="cards"]');
+    const collectionGrid = document.querySelector('#collectionGrid');
+    const inDeckCard = collectionGrid?.querySelector('button.slot.live.cardFace.inDeck') ?? null;
+    const outsideDeckCard = collectionGrid?.querySelector('button.slot.live.cardFace:not(.inDeck)') ?? null;
+    const deckTrayToggle = document.querySelector('#r4DeckTrayToggle');
+    const restoreDeck = document.querySelector('#restoreDeck');
     const visibleButtons = cards
       ? [...cards.querySelectorAll('button')].filter((button) => {
           const style = getComputedStyle(button);
@@ -108,14 +144,27 @@ test('discovers the current Cards deck authority and mount seam without product 
       resources,
       dom: {
         cards: describe(cards),
-        collectionGrid: describe(document.querySelector('#collectionGrid')),
-        collectionGridParent: describe(document.querySelector('#collectionGrid')?.parentElement),
-        deckTrayToggle: describe(document.querySelector('#r4DeckTrayToggle')),
-        deckTrayToggleParent: describe(document.querySelector('#r4DeckTrayToggle')?.parentElement),
-        restoreDeck: describe(document.querySelector('#restoreDeck')),
-        restoreDeckParent: describe(document.querySelector('#restoreDeck')?.parentElement),
+        collectionGrid: describe(collectionGrid),
+        collectionGridParent: describe(collectionGrid?.parentElement),
+        inDeckCard: describe(inDeckCard),
+        outsideDeckCard: describe(outsideDeckCard),
+        deckTrayToggle: describe(deckTrayToggle),
+        deckTrayToggleParent: describe(deckTrayToggle?.parentElement),
+        restoreDeck: describe(restoreDeck),
+        restoreDeckParent: describe(restoreDeck?.parentElement),
         storageButton: describe(document.querySelector('[data-role="deck-storage-button"]')),
         visibleButtons,
+      },
+      listeners: {
+        window: listeners(window),
+        document: listeners(document),
+        cards: listeners(cards),
+        collectionGrid: listeners(collectionGrid),
+        collectionGridParent: listeners(collectionGrid?.parentElement),
+        inDeckCard: listeners(inDeckCard),
+        outsideDeckCard: listeners(outsideDeckCard),
+        deckTrayToggle: listeners(deckTrayToggle),
+        restoreDeck: listeners(restoreDeck),
       },
     };
   });

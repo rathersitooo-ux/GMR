@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PLAYER-COPY-DECLUTTER-ROGUE-R1-20260901T2028-SOL-H5Q8M3",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "PLAYER_COPY_DECLUTTER_ROGUE_R1",
+  "acquireKey": "PLAYER-COPY-DECLUTTER-ROGUE-R1-20260901T2028-SOL-H5Q8M3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "ROGUE_PLAYER_COPY_CURRENT_SOURCE_20260901",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXACT_COPY_REMOVAL_ONLY_PRESERVE_ROUTE_BUTTONS_AND_STATE",
+  "proceedToken": "PROCEED|PLAYER-COPY-DECLUTTER-ROGUE-R1-20260901T2028-SOL-H5Q8M3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260901T2033JST",
+  "authorizationBaseSha": "4bee2cb9a118730deee386b9337b0dc0d7ed975b",
+  "scope": [
+    "browser/rogue-run-runtime-mount.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "PLAYER_COPY_DECLUTTER_ROGUE_R1",
+  "leaseAcquireKey": "PLAYER-COPY-DECLUTTER-ROGUE-R1-20260901T2028-SOL-H5Q8M3",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 20:33 JST",
+  "leaseUntilJst": "2026-09-01 21:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseScope": [
+    "browser/rogue-run-runtime-mount.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh main@4bee2cb9a118730deee386b9337b0dc0d7ed975b; NEW branch work/player-copy-declutter-rogue-r1-20260901; transient data/preaction-authorizations/PLAYER-COPY-DECLUTTER-ROGUE-R1-20260901T2028-SOL-H5Q8M3.json create-first/delete-before-final-head; browser/rogue-run-runtime-mount.mjs; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row5. READ_ONLY browser/GAMEROAD.html, gameplay/rules/reward authority/save/economy/network/assets/unrelated files."
+}

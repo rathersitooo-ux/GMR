@@ -65,7 +65,6 @@ test('Home projection preserves routes and selected route across viewport profil
   assert.deepEqual(wide.routeIds, s.routeIds);
   assert.deepEqual(short.routeIds, s.routeIds);
   assert.equal(wide.selectedRouteId, 'cards');
-  assert.deepEqual(short.routeIds, s.routeIds);
   assert.equal(short.selectedRouteId, 'cards');
   assert.equal(wide.touchTargetMinPx, HOME_TOUCH_TARGET_MIN_PX);
   assert.equal(HOME_TOUCH_TARGET_MIN_PX, 44);

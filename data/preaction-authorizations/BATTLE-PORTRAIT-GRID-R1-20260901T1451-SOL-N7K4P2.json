@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PORTRAIT-GRID-R1-20260901T1451-SOL-N7K4P2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_PORTRAIT_CAUSAL_GRID_RECOMPOSE_R1",
+  "acquireKey": "BATTLE-PORTRAIT-GRID-R1-20260901T1451-SOL-N7K4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "MAIN_A073_AFTER_PR885_PORTRAIT_CAUSAL_GRID_STILL_FIXED_4COL",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR885_PRESERVED_PLUS_EXISTING_BATTLE_RUNTIME_FOCUSED_TEST",
+  "proceedToken": "PROCEED|BATTLE-PORTRAIT-GRID-R1-20260901T1451-SOL-N7K4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260901T1501JST",
+  "authorizationBaseSha": "a0733e503c894321a809250caf921a37334bd8b1",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_PORTRAIT_CAUSAL_GRID_RECOMPOSE_R1",
+  "leaseAcquireKey": "BATTLE-PORTRAIT-GRID-R1-20260901T1451-SOL-N7K4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 15:01 JST",
+  "leaseUntilJst": "2026-09-01 15:51 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR exact current base a0733e503c894321a809250caf921a37334bd8b1 after merged PR#885; replacement branch work/battle-portrait-grid-r1b-20260901; mutable browser/battle-screen-runtime-mount.mjs + tests/battle-screen-runtime-mount.test.mjs; transient data/preaction-authorizations/BATTLE-PORTRAIT-GRID-R1-20260901T1451-SOL-N7K4P2.json; own CURRENT_ACTIVE_LEASES row8. Preserve PR#885 short-landscape Royal HUD. browser/GAMEROAD.html, Battle rules/state/save/economy/network/assets/deploy/workflows/unrelated tests remain read-only"
+}

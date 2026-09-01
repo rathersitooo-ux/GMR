@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BFI-DECK-PARTNER-COPY-EVIDENCE-R1-20260902T0022-SOL-V7Q4M2",
+  "taskId": "BROWSER-FULL-INTERACTION-SCREENSHOT-REGRESSION-CI-001",
+  "workUnitKey": "DECK_PARTNER_COPY_FRESH_VISUAL_EVIDENCE_R1",
+  "acquireKey": "BFI-DECK-PARTNER-COPY-EVIDENCE-R1-20260902T0022-SOL-V7Q4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_BFI_HAS_VISIBLE_DECK_AND_CHARACTER_NAV_PATHS_PLUS_PR907_FOCUSED_NODE_AND_PUBLIC_PACKAGE_PASS",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR907_MAIN_PUBLIC_R19_PASS_PLUS_EXISTING_R39_DECK_AND_R43_PARTNER_VISUAL_EVIDENCE",
+  "proceedToken": "PROCEED|BFI-DECK-PARTNER-COPY-EVIDENCE-R1-20260902T0022-SOL-V7Q4M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260902T0022JST",
+  "authorizationBaseSha": "ff8d717c8c949864f808a27852c049213b60a1f0",
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-FULL-INTERACTION-SCREENSHOT-REGRESSION-CI-001",
+  "leaseWorkUnitKey": "DECK_PARTNER_COPY_FRESH_VISUAL_EVIDENCE_R1",
+  "leaseAcquireKey": "BFI-DECK-PARTNER-COPY-EVIDENCE-R1-20260902T0022-SOL-V7Q4M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 00:22 JST",
+  "leaseUntilJst": "2026-09-02 01:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A15:L15",
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main@ff8d717c8c949864f808a27852c049213b60a1f0; NEW evidence-only branch work/bfi-deck-partner-copy-evidence-r1-20260902; transient data/preaction-authorizations/BFI-DECK-PARTNER-COPY-EVIDENCE-R1-20260902T0022-SOL-V7Q4M2.json create-first; tests/browser-full-interaction.spec.mjs evidence assertions/screenshots only; temporary draft PR DO NOT MERGE; own checks/artifacts; own CURRENT_ACTIVE_LEASES row15; own R23 events. READ_ONLY all browser/product/runtime/gameplay/rules/save/economy/network/assets/deploy/shared workflows/main; no product byte merge."
+}

@@ -259,7 +259,7 @@ function setPreview(button) {
 }
 
 function clearPreview() {
-  if (runtime.slidepad.previewButton) delete runtime.slidepad.homeSlidepadPreview;
+  if (runtime.slidepad.previewButton) delete runtime.slidepad.previewButton.dataset.homeSlidepadPreview;
   runtime.slidepad.previewButton = null;
 }
 

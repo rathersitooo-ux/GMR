@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-NAKI4P-START-POSITION-R2-20260901T1329-SOL-N4K8V2",
+  "taskId": "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001",
+  "workUnitKey": "NAKI_4P_BOARD_POSITION_AUTHORITY_REPAIR_R2",
+  "acquireKey": "BATTLE-NAKI4P-START-POSITION-R2-20260901T1329-SOL-N4K8V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-NO-NAKI-OWNED-BOARD-COORDINATES-R2",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-CURRENT-CANON-R09C09-PLUS-EXISTING-BOARD-MARKER-R2",
+  "proceedToken": "PROCEED|BATTLE-NAKI4P-START-POSITION-R2-20260901T1329-SOL-N4K8V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|PRESENTATION_ONLY_POSITION_AUTHORITY_REPAIR",
+  "authorizationBaseSha": "8b303bb9c28d925debd9b5b146f5cece1a4b4b19",
+  "scope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001",
+  "leaseWorkUnitKey": "NAKI_4P_BOARD_POSITION_AUTHORITY_REPAIR_R2",
+  "leaseAcquireKey": "BATTLE-NAKI4P-START-POSITION-R2-20260901T1329-SOL-N4K8V2",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 13:29 JST",
+  "leaseUntilJst": "2026-09-01 14:29 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A312:L312",
+  "leaseScope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main@8b303bb9c28d925debd9b5b146f5cece1a4b4b19; branch work/naki4p-board-position-r2-20260901; transient data/preaction-authorizations/BATTLE-NAKI4P-START-POSITION-R2-20260901T1329-SOL-N4K8V2.json create-first/delete-before-final-head; browser/battle-board-naki-4p-visual-binding.mjs; tests/battle-board-naki-4p-visual-binding.test.mjs; deploy/cloudflare/tests/build.test.mjs Naki dependency currentBlob pin only; own PR#875/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row312; own R23 events. READ_ONLY browser/GAMEROAD.html, #boardPlayers marker producer, deploy/cloudflare/scripts/build.mjs, Battle/Road/109 rules, movement authority, save/economy/network/assets/workflows/unrelated.",
+  "solutionSignature": "Attach each Naki visual to the existing authoritative board-player marker, stop copying or amplifying marker coordinates, and refresh only the mandatory public-package blob pin.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-EXISTING-BOARD-MARKER-AS-POSITION-AUTHORITY-R2",
+  "solutionSearchEvidence": [
+    "CURRENT battle-map contract states all four participants share logical start R09C09 and presentation must not repurpose old four-corner anchors as start positions",
+    "current #859 binding already identifies #boardPlayers as the actual-board marker authority but copies marker left/top and multiplies group offsets by 1.35",
+    "first PR#875 gate proved PRE_ACTION and conventional Node tests green and identified only the existing public-package dependency pin as stale"
+  ]
+}

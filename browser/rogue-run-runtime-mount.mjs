@@ -148,6 +148,18 @@ function installStyle(documentSource) {
   documentSource.head.append(style);
 }
 
+export function createRoguePanelOutsideDismissHandler({ panel, onDismiss } = {}) {
+  if (!panel?.contains || typeof onDismiss !== 'function') throw new TypeError('ROGUE_RUNTIME_DISMISS_INPUT_INVALID');
+  return function dismissRoguePanelFromOutside(event) {
+    if (panel.hidden || panel.contains(event?.target)) return false;
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+    event?.stopImmediatePropagation?.();
+    onDismiss();
+    return true;
+  };
+}
+
 export function mountRogueRunRuntime(host) {
   validateHost(host);
   const documentSource = host.document || globalThis.document;
@@ -183,6 +195,7 @@ export function mountRogueRunRuntime(host) {
   const routes = panel.querySelector('[data-rogue-routes]');
   const reward = panel.querySelector('[data-rogue-reward]');
   const status = panel.querySelector('[data-rogue-status]');
+  let panelDismissed = false;
 
   function render() {
     const snapshot = controller.getSnapshot();
@@ -194,7 +207,7 @@ export function mountRogueRunRuntime(host) {
     const completed = phase === 'COMPLETE';
     routes.hidden = !routeReady;
     reward.hidden = !rewardReady;
-    panel.hidden = !(routeReady || rewardReady || completed);
+    panel.hidden = panelDismissed || !(routeReady || rewardReady || completed);
     if (routeReady) status.textContent = '既存ルールの通常戦か章最終戦を選び、準備画面から対戦を開始します。';
     else if (rewardReady) status.textContent = '正式な報酬候補authorityは未接続です。今回は報酬を見送り、同じデッキで次の分岐へ進めます。';
     else if (completed) status.textContent = '章最終戦の結果を既存Resultへ渡しました。Rogue専用Resultは作っていません。';
@@ -205,10 +218,19 @@ export function mountRogueRunRuntime(host) {
     render();
   }
 
-  entry.addEventListener('click', () => { controller.start(); render(); });
+  entry.addEventListener('click', () => { panelDismissed = false; controller.start(); render(); });
   panel.querySelector('[data-rogue-action="route-battle"]').addEventListener('click', () => { controller.chooseRoute('battle'); render(); });
   panel.querySelector('[data-rogue-action="route-boss"]').addEventListener('click', () => { controller.chooseRoute('boss'); render(); });
   panel.querySelector('[data-rogue-action="skip-reward"]').addEventListener('click', () => { controller.skipReward(); render(); });
+
+  const dismissOnOutsideClick = createRoguePanelOutsideDismissHandler({
+    panel,
+    onDismiss() {
+      panelDismissed = true;
+      render();
+    },
+  });
+  documentSource.addEventListener('click', dismissOnOutsideClick, true);
 
   const observer = new MutationObserver(observeAndRender);
   documentSource.querySelectorAll('.screen[data-screen]').forEach((screen) => observer.observe(screen, { attributes: true, attributeFilter: ['class'] }));
@@ -218,6 +240,7 @@ export function mountRogueRunRuntime(host) {
     ...controller,
     destroy() {
       observer.disconnect();
+      documentSource.removeEventListener('click', dismissOnOutsideClick, true);
       entry.remove();
       panel.remove();
     },

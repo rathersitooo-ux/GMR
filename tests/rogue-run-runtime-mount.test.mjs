@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {
   createCurrentBrowserRogueHost,
+  createRoguePanelOutsideDismissHandler,
   createRogueRunConsumerController,
 } from '../browser/rogue-run-runtime-mount.mjs';
 
@@ -123,6 +124,42 @@ test('current Browser host projects existing deck, hand, screen, match result, a
   assert.equal(shown, 'home');
 });
 
+test('Rogue modal outside dismiss closes once, keeps inside clicks, and consumes the underlay click', () => {
+  const inside = { id: 'inside' };
+  const outside = { id: 'outside' };
+  const panel = {
+    hidden: false,
+    contains(target) { return target === inside; },
+  };
+  let dismissCount = 0;
+  const dismiss = createRoguePanelOutsideDismissHandler({
+    panel,
+    onDismiss() {
+      dismissCount += 1;
+      panel.hidden = true;
+    },
+  });
+  const counts = { prevent: 0, stop: 0, immediate: 0 };
+  const eventFor = (target) => ({
+    target,
+    preventDefault() { counts.prevent += 1; },
+    stopPropagation() { counts.stop += 1; },
+    stopImmediatePropagation() { counts.immediate += 1; },
+  });
+
+  assert.equal(dismiss(eventFor(inside)), false);
+  assert.equal(dismissCount, 0);
+  assert.deepEqual(counts, { prevent: 0, stop: 0, immediate: 0 });
+
+  assert.equal(dismiss(eventFor(outside)), true);
+  assert.equal(dismissCount, 1);
+  assert.deepEqual(counts, { prevent: 1, stop: 1, immediate: 1 });
+
+  assert.equal(dismiss(eventFor(outside)), false);
+  assert.equal(dismissCount, 1);
+  assert.deepEqual(counts, { prevent: 1, stop: 1, immediate: 1 });
+});
+
 test('already-loaded Home runtime mounts the Rogue consumer once without rewriting production HTML', () => {
   const homeBoot = fs.readFileSync(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
   assert.equal((homeBoot.match(/mountRogueRunFromCurrentBrowser/g) || []).length, 2);
@@ -132,4 +169,9 @@ test('already-loaded Home runtime mounts the Rogue consumer once without rewriti
   const build = fs.readFileSync(new URL('../deploy/cloudflare/scripts/build.mjs', import.meta.url), 'utf8');
   assert.match(build, /source: 'browser\/rogue-run-core\.mjs'.*output: 'rogue-run-core\.mjs'/);
   assert.match(build, /source: 'browser\/rogue-run-runtime-mount\.mjs'.*output: 'rogue-run-runtime-mount\.mjs'/);
+
+  const runtimeMount = fs.readFileSync(new URL('../browser/rogue-run-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(runtimeMount, /documentSource\.addEventListener\('click', dismissOnOutsideClick, true\);/);
+  assert.match(runtimeMount, /documentSource\.removeEventListener\('click', dismissOnOutsideClick, true\);/);
+  assert.match(runtimeMount, /entry\.addEventListener\('click', \(\) => \{ panelDismissed = false; controller\.start\(\); render\(\); \}\);/);
 });

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-HOME-LEGACY-DOM-R58-20260901T1025",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_LEGACY_DOM_REMOVAL_R58",
+  "acquireKey": "HOME-LEGACY-DOM-REMOVAL-R58-20260901T1025-SOL-H4M8Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-MAIN-19000B-HOME-LEGACY-LAYER-STILL-PRESENT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "USER-CORRECTION-PLUS-CURRENT-ROW2-SINGLE-PRIMARY-HOME-ACCEPTANCE",
+  "proceedToken": "PROCEED|VWORK-HOME-LEGACY-DOM-R58-20260901T1025|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|remove-legacy-home-dom-only",
+  "authorizationBaseSha": "19000b724d9a8d97d2dc8120505b570879a0ead8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_LEGACY_DOM_REMOVAL_R58",
+  "leaseAcquireKey": "HOME-LEGACY-DOM-REMOVAL-R58-20260901T1025-SOL-H4M8Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 10:25 JST",
+  "leaseUntilJst": "2026-09-01 11:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A309:L309",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/home-legacy-dom-removal-r58-20260901; browser/home-boot-runtime-mount.mjs; tests/home-boot-presentation.test.mjs; tests/browser-static-check.mjs; own CURRENT_ACTIVE_LEASES row309",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "tests/browser-static-check.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "tests/browser-static-check.mjs"
+  ],
+  "solutionSignature": "Remove obsolete Home visual-layer and duplicate legacy CTA nodes from the live Home DOM while keeping the canonical SlidePad/current routes and stop static checks from requiring the retired CTA.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT-HOME-RUNTIME-PLUS-MERGED-R4-LEGACY-SUPPRESSION-PROVENANCE",
+  "solutionSearchEvidence": [
+    "browser/home-boot-runtime-mount.mjs current SlidePad runtime",
+    "merged Home single-authority provenance from PR #506",
+    "tests/browser-static-check.mjs current legacy CTA requirement"
+  ]
+}

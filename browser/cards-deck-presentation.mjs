@@ -487,3 +487,73 @@ export function createDeckSwipePresentationController({
 
   return Object.freeze({ playSuccess, playReject, cancelAll, dispose, config: cfg, sfxPlayer: localSfx });
 }
+
+const cardsInspectorDismissInstallations = new WeakMap();
+
+function resolveOpenCardsInspector(doc) {
+  const screen = doc?.querySelector?.('.screen.cards');
+  if (!screen || !screen.classList?.contains?.('active') || screen.dataset?.inspector !== 'open') return null;
+  const preview = screen.querySelector?.('.cardPreview') ?? doc.querySelector?.('.screen.cards .cardPreview');
+  if (!preview) return null;
+  return { screen, preview };
+}
+
+function restoreCardsInspectorFocus(doc, screen) {
+  const selected = screen?.querySelector?.('.collectionGrid [data-card].selected')
+    ?? doc?.querySelector?.('.screen.cards .collectionGrid [data-card].selected');
+  try { selected?.focus?.({ preventScroll: true }); }
+  catch { try { selected?.focus?.(); } catch {} }
+}
+
+function consumeCardsInspectorDismissEvent(event) {
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  event?.stopImmediatePropagation?.();
+}
+
+export function installCardsInspectorDismissInteractions({ document: doc = globalThis.document } = {}) {
+  if (!doc?.addEventListener || !doc?.removeEventListener || !doc?.querySelector) {
+    return Object.freeze({ destroy() {} });
+  }
+  const existing = cardsInspectorDismissInstallations.get(doc);
+  if (existing) return existing;
+
+  const dismiss = (event, resolved) => {
+    consumeCardsInspectorDismissEvent(event);
+    resolved.screen.dataset.inspector = 'closed';
+    restoreCardsInspectorFocus(doc, resolved.screen);
+  };
+
+  const onKeyDown = (event) => {
+    if (event?.key !== 'Escape') return;
+    const resolved = resolveOpenCardsInspector(doc);
+    if (!resolved) return;
+    dismiss(event, resolved);
+  };
+
+  const onClickCapture = (event) => {
+    const resolved = resolveOpenCardsInspector(doc);
+    if (!resolved) return;
+    const target = event?.target;
+    if (target && resolved.preview.contains?.(target)) return;
+    dismiss(event, resolved);
+  };
+
+  doc.addEventListener('keydown', onKeyDown, true);
+  doc.addEventListener('click', onClickCapture, true);
+
+  let destroyed = false;
+  const controller = Object.freeze({
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      doc.removeEventListener('keydown', onKeyDown, true);
+      doc.removeEventListener('click', onClickCapture, true);
+      cardsInspectorDismissInstallations.delete(doc);
+    },
+  });
+  cardsInspectorDismissInstallations.set(doc, controller);
+  return controller;
+}
+
+if (typeof document !== 'undefined') installCardsInspectorDismissInteractions({ document });

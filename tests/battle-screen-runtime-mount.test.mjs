@@ -138,7 +138,7 @@ assert.equal(runtime.phaseSurface.dataset.battleScreenInput, 'skip|public_info|a
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.participantId), ['P1', 'P2', 'P3', 'P4']);
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['source', 'idle', 'idle', 'target']);
 assert.deepEqual(roleSurfaces.map(node => node.hidden), [false, true, true, false]);
-assert.deepEqual(roleSurfaces.map(node => node.textContent), ['source', '', '', 'target']);
+assert.deepEqual(roleSurfaces.map(node => node.textContent), ['攻撃', '', '', '対象']);
 assert.equal(runtime.resolutionSurface.textContent, 'EXISTING LIVE ADAPTER OWNS THIS CONTENT');
 assert.equal(runtime.resolutionSurface.dataset.battleScreenEventId, 'attack-1');
 
@@ -184,7 +184,7 @@ assert.equal(runtime.shell.hidden, false);
 assert.equal(runtime.phaseSurface.hidden, false);
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['source', 'idle', 'idle', 'target']);
 assert.deepEqual(roleSurfaces.map(node => node.hidden), [false, true, true, false]);
-assert.deepEqual(roleSurfaces.map(node => node.textContent), ['source', '', '', 'target']);
+assert.deepEqual(roleSurfaces.map(node => node.textContent), ['攻撃', '', '', '対象']);
 
 assert.equal(runtime.destroy(), true);
 assert.equal(runtime.destroy(), false);

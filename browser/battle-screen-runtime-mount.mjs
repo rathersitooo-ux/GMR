@@ -6,6 +6,10 @@ const SHELL_ATTR = 'data-gr-battle-screen';
 const GRID_ATTR = 'data-battle-screen-causal-grid';
 const PLAN_SLOT_ATTR = 'data-battle-plan-slot';
 const LANE_ATTR = 'data-battle-screen-lane';
+const PLAYER_ROLE_LABELS = Object.freeze({
+  source: '攻撃',
+  target: '対象'
+});
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -198,9 +202,9 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
       view.lane.dataset.role = lane.role;
       view.name.textContent = lane.label;
       view.team.textContent = lane.team ? `TEAM ${lane.team}` : '';
-      const hideInternalRoleText = lane.role === 'idle' || lane.role === 'winner' || lane.role === 'loser';
-      view.role.hidden = hideInternalRoleText;
-      view.role.textContent = hideInternalRoleText ? '' : lane.role;
+      const playerRoleLabel = PLAYER_ROLE_LABELS[lane.role] || '';
+      view.role.hidden = !playerRoleLabel;
+      view.role.textContent = playerRoleLabel;
       writeAfterstate(document, view.afterstate, lane.afterstate);
     }
     return model;

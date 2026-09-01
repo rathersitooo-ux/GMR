@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RESULT-AUTOQUEUE-INELIGIBLE-R1-20260901T1429-SOL-P7N4Q2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "RESULT_INELIGIBLE_AUTOQUEUE_PRESENTATION_R1",
+  "acquireKey": "RESULT-AUTOQUEUE-INELIGIBLE-R1-20260901T1429-SOL-P7N4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_PUBLIC_4P_HONEY_RESULT_INELIGIBLE_TOGGLE_CONTRADICTION_058E4A",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "NATIVE_DISABLED_INPUT_SEMANTICS_PLUS_CURRENT_PUBLIC_RESULT_EVIDENCE",
+  "proceedToken": "PROCEED|RESULT-AUTOQUEUE-INELIGIBLE-R1-20260901T1429-SOL-P7N4Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260901T1430JST",
+  "authorizationBaseSha": "eb38b5d92f8eea57f9cbe409a5c74fa82bf5ab76",
+  "scope": [
+    "browser/GAMEROAD.html"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "RESULT_INELIGIBLE_AUTOQUEUE_PRESENTATION_R1",
+  "leaseAcquireKey": "RESULT-AUTOQUEUE-INELIGIBLE-R1-20260901T1429-SOL-P7N4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 14:29 JST",
+  "leaseUntilJst": "2026-09-01 15:29 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A314:N314",
+  "leaseScope": [
+    "browser/GAMEROAD.html"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact fresh main@eb38b5d92f8eea57f9cbe409a5c74fa82bf5ab76; NEW branch work/result-ineligible-autoqueue-r1-20260901; browser/GAMEROAD.html; transient data/preaction-authorizations/RESULT-AUTOQUEUE-INELIGIBLE-R1-20260901T1429-SOL-P7N4Q2.json create-first/delete-before-final-head; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row314; own R23 checkpoint/terminal. post-match-autoqueue-core.mjs Setup Battle Daily Rogue game rules save economy network assets deploy workflows tests read-only"
+}

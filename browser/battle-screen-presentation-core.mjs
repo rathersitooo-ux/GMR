@@ -4,7 +4,7 @@ const MODEL_SCHEMA = 'gameroad.battle-screen-presentation.v1';
 const TIMELINE_SCHEMA = 'gameroad.battle-screen-timeline.v1';
 const RETURN_INTENTS = new Set(['MATCH_PLAN', 'RESULT']);
 const PLAN_KINDS = new Set(['partner_cutin', 'reveal', 'attack', 'ability', 'compare4', 'finisher', 'settle']);
-const LANE_ROLES = new Set(['idle', 'source', 'target', 'winner', 'loser', 'revealed']);
+const LANE_ROLES = new Set(['idle', 'source', 'target', 'winner', 'revealed']);
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -81,7 +81,7 @@ function idsFromPlan(plan) {
     return [data.sourceId, ...(Array.isArray(plan.groupTargets) ? plan.groupTargets : [])].filter(Boolean);
   }
   if (plan.kind === 'finisher') {
-    return [data.winnerId, ...(Array.isArray(data.loserIds) ? data.loserIds : [])].filter(Boolean);
+    return [data.winnerId].filter(Boolean);
   }
   return [];
 }
@@ -107,7 +107,6 @@ function rolesForPlan(plan, participants) {
     for (const id of data.winnerIds ?? []) roles.set(id, 'winner');
   } else if (plan.kind === 'finisher') {
     roles.set(data.winnerId, 'winner');
-    for (const id of data.loserIds ?? []) roles.set(id, 'loser');
   }
   return roles;
 }
@@ -132,7 +131,7 @@ function focusForPlan(plan) {
   if (plan.kind === 'finisher') {
     return deepFreeze({
       causeId: data.winnerId ?? null,
-      targetIds: Array.isArray(data.loserIds) ? [...data.loserIds] : [],
+      targetIds: [],
       winnerIds: data.winnerId ? [data.winnerId] : []
     });
   }

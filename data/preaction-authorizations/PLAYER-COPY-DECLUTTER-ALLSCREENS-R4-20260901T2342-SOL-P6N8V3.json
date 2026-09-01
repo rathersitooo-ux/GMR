@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PLAYER-COPY-DECLUTTER-ALLSCREENS-R4-20260901T2342-SOL-P6N8V3",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "PLAYER_COPY_DECLUTTER_ALLSCREENS_R2",
+  "acquireKey": "PLAYER-COPY-DECLUTTER-ALLSCREENS-R4-20260901T2342-SOL-P6N8V3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_COPY_R3_GATE_FOCUSED_TEST_PASS_PLUS_PUBLIC_PACKAGE_BLOB_MISMATCH_ROOT_CAUSE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R3_GATE_PREACTION_AND_FOCUSED_NODE_PASS_WITH_EXACT_PROVENANCE_WITNESS_REQUIRED",
+  "proceedToken": "PROCEED|PLAYER-COPY-DECLUTTER-ALLSCREENS-R4-20260901T2342-SOL-P6N8V3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260901T2342JST",
+  "authorizationBaseSha": "66b4a65bdb024b270362e323131ff5f3cb3d3dbd",
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "browser/deck-storage-corner-runtime.mjs",
+    "browser/partner-shell-runtime-mount.mjs",
+    "tests/partner-shell-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "PLAYER_COPY_DECLUTTER_ALLSCREENS_R2",
+  "leaseAcquireKey": "PLAYER-COPY-DECLUTTER-ALLSCREENS-R4-20260901T2342-SOL-P6N8V3",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 23:42 JST",
+  "leaseUntilJst": "2026-09-02 00:37 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "browser/deck-storage-corner-runtime.mjs",
+    "browser/partner-shell-runtime-mount.mjs",
+    "tests/partner-shell-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main@66b4a65bdb024b270362e323131ff5f3cb3d3dbd; NEW branch work/player-copy-declutter-all-r4-20260901; transient data/preaction-authorizations/PLAYER-COPY-DECLUTTER-ALLSCREENS-R4-20260901T2342-SOL-P6N8V3.json create-first/delete-before-final-head; browser/board-facility-runtime-mount.mjs; browser/deck-storage-corner-runtime.mjs; browser/partner-shell-runtime-mount.mjs; tests/partner-shell-runtime-mount.test.mjs; deploy/cloudflare/tests/build.test.mjs exact current-blob provenance update only; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row5; own R23 events. READ_ONLY browser/GAMEROAD.html, gameplay/rules/card effects/numbers/results/rewards/fixed dialogue/action labels/save/economy/network/assets/deploy other than exact provenance test/shared workflows/unrelated files."
+}

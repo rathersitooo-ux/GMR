@@ -8,6 +8,7 @@ import { mountRogueRunFromCurrentBrowser } from './rogue-run-runtime-mount.mjs';
 const GLOBAL_KEY = 'GAMEROAD_HOME_BOOT_PRESENTATION';
 const STYLE_ID = 'gameroad-home-shell-runtime-style';
 const HOME_SELECTOR = 'section[data-screen="home"]';
+const DECORATIVE_GLOBAL_BRAND_SELECTOR = '.top .brand';
 const ROUTE_SELECTOR = '.homePadChoice[data-home-target]';
 const SLIDEPAD_CENTER_SELECTOR = '#homePadCenter';
 const SLIDEPAD_DEAD_ZONE_PX = 18;
@@ -64,6 +65,17 @@ export function removeLegacyHomeNodes(home) {
   }
   let removed = 0;
   for (const node of nodes) {
+    if (!node || typeof node.remove !== 'function') continue;
+    node.remove();
+    removed += 1;
+  }
+  return removed;
+}
+
+export function removeDecorativeGlobalBrand(root = document) {
+  if (!root || typeof root.querySelectorAll !== 'function') return 0;
+  let removed = 0;
+  for (const node of root.querySelectorAll(DECORATIVE_GLOBAL_BRAND_SELECTOR)) {
     if (!node || typeof node.remove !== 'function') continue;
     node.remove();
     removed += 1;
@@ -445,6 +457,7 @@ function scheduleRefresh() {
 
 export function mountHomeBootPresentation() {
   if (runtime.mounted) return snapshot();
+  removeDecorativeGlobalBrand();
   ensureStyle();
   runtime.media = matchMedia('(prefers-reduced-motion: reduce)');
   runtime.resizeHandler = () => scheduleRefresh();

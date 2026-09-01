@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-ROGUE-OUTSIDE-DISMISS-R1-20260901T1419-SOL-K7M3V9",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "ROGUE_MODAL_OUTSIDE_DISMISS_R1",
+  "acquireKey": "UI-ROGUE-OUTSIDE-DISMISS-R1-20260901T1419-SOL-K7M3V9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "ACTUAL_MAIN_B3E43A6_ROGUE_PANEL_OUTSIDE_DISMISS_MISSING",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FOCUSED_ROGUE_RUNTIME_CONSUMER_TEST",
+  "proceedToken": "PROCEED|UI-ROGUE-OUTSIDE-DISMISS-R1-20260901T1419-SOL-K7M3V9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260901T1421JST",
+  "authorizationBaseSha": "b3e43a6dd7d6cdefaadf2ea60e16f3b0d15f86a0",
+  "scope": [
+    "browser/rogue-run-runtime-mount.mjs",
+    "tests/rogue-run-runtime-mount.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "ROGUE_MODAL_OUTSIDE_DISMISS_R1",
+  "leaseAcquireKey": "UI-ROGUE-OUTSIDE-DISMISS-R1-20260901T1419-SOL-K7M3V9",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 14:19 JST",
+  "leaseUntilJst": "2026-09-01 15:19 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A314:L314",
+  "leaseScope": [
+    "browser/rogue-run-runtime-mount.mjs",
+    "tests/rogue-run-runtime-mount.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR fresh base b3e43a6dd7d6cdefaadf2ea60e16f3b0d15f86a0; branch work/rogue-outside-dismiss-r1-20260901; mutable browser/rogue-run-runtime-mount.mjs + tests/rogue-run-runtime-mount.test.mjs; transient data/preaction-authorizations/UI-ROGUE-OUTSIDE-DISMISS-R1-20260901T1419-SOL-K7M3V9.json; own lease row314. HTML Home boot deploy Battle Result Rogue core save rules economy network assets read-only"
+}

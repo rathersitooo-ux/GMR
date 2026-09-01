@@ -142,3 +142,42 @@ test('destroy removes rendered shell and makes later renders inert', () => {
   assert.equal(root.children.length, 0);
   assert.deepEqual(runtime.render(), { ok: false, reason: 'DESTROYED', model: null });
 });
+
+test('conversation view binds the current Saasuna entry and renders only approved output', async () => {
+  const root = makeRoot();
+  const runtime = mountPartnerShellRuntime({
+    root,
+    getInput: () => ({ activePartnerId: 'partner.saasuna', roster, view: 'conversation' }),
+    canDispatch: (action) => action === 'BACK_HUB',
+    createConversationSessionId: () => 'session-shell',
+  });
+
+  assert.equal(runtime.render().ok, true);
+  assert.ok(allNodes(root).some((node) => node.dataset.partnerConversationInput === 'message'));
+  const output = await runtime.sendConversationMessage('話そう');
+  assert.equal(output.turn.ok, true);
+  assert.equal(output.turn.responseOrigin, 'approved_fallback');
+  const utterances = allNodes(root).filter((node) => node.className === 'partner-shell-conversation-utterance');
+  assert.deepEqual(utterances.map((node) => node.textContent), [output.turn.utterance]);
+  const state = runtime.getConversationState();
+  assert.equal(state.available, true);
+  assert.equal(state.turns[0].utterance, output.turn.utterance);
+  assert.equal(JSON.stringify(state).includes('話そう'), false);
+});
+
+test('conversation view never borrows Saasuna dialogue for another partner', async () => {
+  const root = makeRoot();
+  const runtime = mountPartnerShellRuntime({
+    root,
+    getInput: () => ({ activePartnerId: 'partner.other', roster, view: 'conversation' }),
+    canDispatch: (action) => action === 'BACK_HUB',
+  });
+
+  assert.equal(runtime.render().ok, true);
+  assert.equal(allNodes(root).some((node) => node.dataset.partnerConversationInput === 'message'), false);
+  assert.ok(allNodes(root).some((node) => node.className === 'partner-shell-conversation-unavailable'));
+  assert.deepEqual(await runtime.sendConversationMessage('話そう'), {
+    ok: false,
+    reason: 'CONVERSATION_SOURCE_UNAVAILABLE',
+  });
+});

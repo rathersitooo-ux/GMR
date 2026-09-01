@@ -1,0 +1,189 @@
+name: TEMP Home legacy source cleanup R62
+
+on:
+  push:
+    branches:
+      - work/home-legacy-source-cleanup-r62-20260901
+
+permissions:
+  contents: write
+
+jobs:
+  exact-subtractive-cleanup:
+    if: github.event.head_commit.message == 'TEMP: add Home legacy source cleanup executor'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify exact authorized base and mutate only dead Home source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "e284ea7a8fbc48d662b6cafd8af1c3d4623fbaf5"
+          test "$(git hash-object browser/GAMEROAD.html)" = "1c62a75b46c34c33fd54d64848cd6dea017a52ef"
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('browser/GAMEROAD.html')
+          text = path.read_text(encoding='utf-8')
+          tag_re = re.compile(r'<!--[\s\S]*?-->|<![^>]*>|<[^>]+>', re.M)
+          tokens = list(tag_re.finditer(text))
+
+          def tag_info(raw):
+              m = re.match(r'<\s*(/?)\s*([A-Za-z][\w:-]*)', raw)
+              if not m:
+                  return None, None, False
+              closing = bool(m.group(1))
+              name = m.group(2).lower()
+              self_closing = (not closing) and raw.rstrip().endswith('/>')
+              return name, closing, self_closing
+
+          def quoted_attr(raw, name):
+              m = re.search(rf'\b{re.escape(name)}\s*=\s*(["\'])(.*?)\1', raw, re.S | re.I)
+              return m.group(2) if m else None
+
+          def element_range(token_index):
+              tok = tokens[token_index]
+              name, closing, self_closing = tag_info(tok.group(0))
+              if not name or closing:
+                  raise SystemExit('target is not an opening tag')
+              if self_closing:
+                  return tok.start(), tok.end()
+              depth = 1
+              for j in range(token_index + 1, len(tokens)):
+                  name2, closing2, self2 = tag_info(tokens[j].group(0))
+                  if name2 != name:
+                      continue
+                  if closing2:
+                      depth -= 1
+                      if depth == 0:
+                          return tok.start(), tokens[j].end()
+                  elif not self2:
+                      depth += 1
+              raise SystemExit(f'unclosed target element: {name}')
+
+          home_candidates = []
+          for i, tok in enumerate(tokens):
+              raw = tok.group(0)
+              name, closing, _ = tag_info(raw)
+              if name == 'section' and not closing and quoted_attr(raw, 'data-screen') == 'home':
+                  home_candidates.append(i)
+          if len(home_candidates) != 1:
+              raise SystemExit(f'expected exactly one Home section, got {len(home_candidates)}')
+          home_start, home_end = element_range(home_candidates[0])
+
+          target_ids = {'codexHomeVisualLayer', 'codexHomePartnerChip', 'codexHomeBattleCta'}
+          target_classes = {'codexHomeVisualLayer', 'codexPartnerChip', 'codexBattleCta'}
+          found = []
+          identity_counts = {key: 0 for key in sorted(target_ids | target_classes)}
+
+          for i, tok in enumerate(tokens):
+              if tok.start() < home_start or tok.start() >= home_end:
+                  continue
+              raw = tok.group(0)
+              name, closing, _ = tag_info(raw)
+              if not name or closing:
+                  continue
+              element_id = quoted_attr(raw, 'id')
+              class_attr = quoted_attr(raw, 'class') or ''
+              classes = set(class_attr.split())
+              matched = set()
+              if element_id in target_ids:
+                  matched.add(element_id)
+              matched |= classes & target_classes
+              if not matched:
+                  continue
+              for key in matched:
+                  identity_counts[key] += 1
+              start, end = element_range(i)
+              found.append((start, end, tuple(sorted(matched)), name))
+
+          if identity_counts['codexHomeVisualLayer'] != 1:
+              raise SystemExit(f"expected exactly one codexHomeVisualLayer source element, got {identity_counts['codexHomeVisualLayer']}")
+          if not found:
+              raise SystemExit('no legacy Home source elements found')
+
+          unique = {}
+          for start, end, matched, name in found:
+              unique[(start, end)] = (matched, name)
+          ranges = sorted((start, end, meta[0], meta[1]) for (start, end), meta in unique.items())
+          outer = []
+          for candidate in ranges:
+              start, end, matched, name = candidate
+              if any(parent_start <= start and end <= parent_end for parent_start, parent_end, _, _ in outer):
+                  continue
+              outer.append(candidate)
+
+          # Expand deletion over indentation and one following newline only; never beyond Home section.
+          delete_ranges = []
+          for start, end, matched, name in outer:
+              line_start = text.rfind('\n', home_start, start) + 1
+              if text[line_start:start].strip() == '':
+                  start = line_start
+              if end < home_end and text[end:end+2] == '\r\n':
+                  end += 2
+              elif end < home_end and text[end:end+1] == '\n':
+                  end += 1
+              delete_ranges.append((start, end, matched, name))
+
+          edited = text
+          for start, end, matched, name in sorted(delete_ranges, reverse=True):
+              edited = edited[:start] + edited[end:]
+
+          # Re-resolve Home after edit and assert legacy producer is absent while current controls remain.
+          edited_tokens = list(tag_re.finditer(edited))
+          edited_home = None
+          for i, tok in enumerate(edited_tokens):
+              raw = tok.group(0)
+              name, closing, self_closing = tag_info(raw)
+              if name == 'section' and not closing and quoted_attr(raw, 'data-screen') == 'home':
+                  if edited_home is not None:
+                      raise SystemExit('multiple Home sections after edit')
+                  # local matcher using edited token list
+                  depth = 1
+                  for j in range(i + 1, len(edited_tokens)):
+                      n2, c2, s2 = tag_info(edited_tokens[j].group(0))
+                      if n2 != 'section':
+                          continue
+                      if c2:
+                          depth -= 1
+                          if depth == 0:
+                              edited_home = edited[tok.start():edited_tokens[j].end()]
+                              break
+                      elif not s2:
+                          depth += 1
+                  break
+          if edited_home is None:
+              raise SystemExit('Home section missing after edit')
+
+          for key in sorted(target_ids):
+              if re.search(rf'\bid\s*=\s*(["\']){re.escape(key)}\1', edited_home, re.I):
+                  raise SystemExit(f'legacy id remains in Home markup: {key}')
+          for key in sorted(target_classes):
+              for m in re.finditer(r'\bclass\s*=\s*(["\'])(.*?)\1', edited_home, re.S | re.I):
+                  if key in m.group(2).split():
+                      raise SystemExit(f'legacy class remains in Home markup: {key}')
+
+          if not re.search(r'\bid\s*=\s*(["\'])homePadCenter\1', edited_home, re.I):
+              raise SystemExit('current Home SlidePad center disappeared')
+          for route in ('setup', 'shop', 'characters', 'cards'):
+              if not re.search(rf'\bdata-home-target\s*=\s*(["\']){route}\1', edited_home, re.I):
+                  raise SystemExit(f'current Home route disappeared: {route}')
+
+          path.write_text(edited, encoding='utf-8')
+          print('LEGACY_IDENTITY_COUNTS', identity_counts)
+          print('REMOVED_OUTER_ELEMENTS', [(name, matched, end-start) for start, end, matched, name in delete_ranges])
+          print('BYTES_BEFORE', len(text.encode('utf-8')))
+          print('BYTES_AFTER', len(edited.encode('utf-8')))
+          PY
+          git diff --check
+          node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
+          node --test tests/home-boot-presentation.test.mjs
+          test "$(git diff --name-only)" = "browser/GAMEROAD.html"
+          git config user.name "gameroad-r62-bot"
+          git config user.email "gameroad-r62-bot@users.noreply.github.com"
+          git add browser/GAMEROAD.html
+          git commit -m "Home: remove dead legacy source markup"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

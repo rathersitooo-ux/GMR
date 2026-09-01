@@ -102,6 +102,7 @@ assert.ok(document.getElementById('gameroad-battle-screen-runtime-r1-style'));
 const idle = createBattleScreenModel({ participants });
 runtime.render(idle);
 assert.equal(runtime.shell.dataset.mode, 'MATCH_PLAN');
+assert.equal(runtime.shell.hidden, false);
 assert.equal(runtime.phaseSurface.hidden, true);
 assert.equal(runtime.planSlot.hidden, false);
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['idle', 'idle', 'idle', 'idle']);
@@ -164,13 +165,23 @@ const finisher = createBattleScreenModel({
   reducedMotion: true
 });
 runtime.render(finisher);
+assert.equal(runtime.shell.hidden, false);
 assert.equal(runtime.shell.dataset.motion, 'static_only');
 assert.equal(runtime.shell.dataset.returnIntent, 'RESULT');
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['loser', 'loser', 'loser', 'winner']);
 assert.equal(runtime.phaseSurface.dataset.battleScreenPhase, 'finisher');
 assert.deepEqual(roleSurfaces.map(node => node.hidden), [true, true, true, true]);
 assert.deepEqual(roleSurfaces.map(node => node.textContent), ['', '', '', '']);
+
+const terminalResult = createBattleScreenModel({ participants, returnIntent: 'RESULT' });
+runtime.render(terminalResult);
+assert.equal(runtime.shell.hidden, true);
+assert.equal(runtime.phaseSurface.hidden, true);
+assert.equal(runtime.planSlot.hidden, true);
+
 runtime.render(attack);
+assert.equal(runtime.shell.hidden, false);
+assert.equal(runtime.phaseSurface.hidden, false);
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['source', 'idle', 'idle', 'target']);
 assert.deepEqual(roleSurfaces.map(node => node.hidden), [false, true, true, false]);
 assert.deepEqual(roleSurfaces.map(node => node.textContent), ['source', '', '', 'target']);
@@ -204,6 +215,9 @@ assert.equal(adopted.resolutionSurface, existingResolution);
 adopted.render(attack);
 assert.equal(existingResolution.textContent, 'KEEP');
 assert.equal(adopted.laneSurfaces.length, 4);
+adopted.render(terminalResult);
+assert.equal(existingShell.hidden, false);
+assert.equal(existingPhase.hidden, true);
 assert.equal(adopted.destroy(), true);
 assert.equal(adoptedDocument.body.children.includes(existingShell), true);
 assert.equal(existingShell.children.includes(existingPhase), true);
@@ -230,7 +244,7 @@ assert.equal(BATTLE_SCREEN_RUNTIME.formalArtOwnedHere, false);
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 62,
+  tests: 71,
   freshMount: {
     laneCount: runtime.laneSurfaces.length,
     phaseAnchor: runtime.phaseSurface.id,

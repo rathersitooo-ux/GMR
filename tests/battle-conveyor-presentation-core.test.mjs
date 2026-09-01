@@ -18,7 +18,7 @@ const demo = [
   {accepted:true,eventId:'p4',kind:'ability',publicData:{sourceId:'P1',targetIds:['P2','P3'],simultaneous:true}},
   {accepted:true,eventId:'p5',kind:'attack',publicData:{sourceId:'P3',targetIds:['P4'],importance:'normal'}},
   {accepted:true,eventId:'p6',kind:'compare4',publicData:{playerIds:['P1','P2','P3','P4'],winnerIds:['P4']}},
-  {accepted:true,eventId:'p7',kind:'finisher',publicData:{winnerId:'P4',loserIds:['P1','P2','P3']}}
+  {accepted:true,eventId:'p7',kind:'finisher',publicData:{winnerId:'P4'}}
 ];
 
 const envBase = planBattleConveyorEnvironmentFrame({segmentCount:8,travel:0,phase:'IDLE_READ'});
@@ -65,7 +65,9 @@ assert.equal(t.plans[3].transition, 'IMPACT_CARRY_RIGHT');
 assert.equal(t.plans[4].transition, 'MULTI_TARGET_SPREAD');
 assert.equal(t.plans[5].transition, 'PAIR_SWAP_RIGHT');
 assert.equal(t.plans[7].transition, 'FINISHER_GATHER');
-assert.deepEqual(t.plans[7].groupTargets, ['P1','P2','P3']);
+assert.deepEqual(t.plans[7].groupTargets, []);
+assert.deepEqual(t.plans[7].stage, { left: 'P4', right: null });
+assert.equal('loserIds' in t.plans[7].publicData, false);
 assert.ok(t.plans[7].emphasis.impact > t.plans[2].emphasis.impact);
 assert.ok(t.plans[3].emphasis.impact > t.plans[2].emphasis.impact);
 assert.equal(t.plans[2].timing.handoffAt < t.plans[2].timing.recoveryEnd, true);
@@ -78,12 +80,12 @@ assert.equal('motionCoverage' in continuity, false);
 
 const reduced = planBattleConveyor(demo, {reducedMotion:true});
 assert.equal(reduced.plans.map(p => p.kind).join(','), t.plans.map(p => p.kind).join(','));
-assert.equal(reduced.plans[7].groupTargets.length, 3);
+assert.equal(reduced.plans[7].groupTargets.length, 0);
 assert.equal(auditMotionContinuity(reduced).ok, true);
 assert.ok(reduced.timelineEnd < t.timelineEnd);
 
 assert.throws(() => planBattleConveyor([{accepted:false,eventId:'x',kind:'attack',publicData:{sourceId:'P1',targetIds:['P2']}}]), /EVENT_NOT_ACCEPTED/);
-assert.throws(() => planBattleConveyor([{accepted:true,eventId:'x',kind:'finisher',publicData:{winnerId:'P1',loserIds:['P1','P2','P3']}}]), /FINISHER_WINNER_IN_LOSERS/);
+assert.throws(() => planBattleConveyor([{accepted:true,eventId:'x',kind:'finisher',publicData:{}}]), /WINNER_ID_REQUIRED/);
 
 const earlyReady = planBattleStartHandoff({prewarmStartMs:1200,readyBarrierMs:4000,titleDurationMs:700,entryDurationMs:900,movieReadyAtMs:3500});
 assert.equal(earlyReady.presentationOnly, true);
@@ -164,7 +166,7 @@ assert.throws(() => createBattleStartLiveHandoff({generationId:'bad-title',prewa
 
 console.log(JSON.stringify({
   ok:true,
-  tests:63,
+  tests:65,
   timelineEnd:t.timelineEnd,
   reducedTimelineEnd:reduced.timelineEnd,
   transitions:t.plans.map(p=>[p.eventId,p.transition]),

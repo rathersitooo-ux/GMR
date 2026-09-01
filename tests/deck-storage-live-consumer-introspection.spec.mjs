@@ -83,6 +83,22 @@ test('discovers the current Cards deck authority and mount seam without product 
         .filter((row) => /^(click|pointerdown|pointermove|pointerup|pointercancel|touchstart|touchmove|touchend|keydown)$/.test(row.type))
         .map((row) => ({ ...row, source: row.source.slice(0, 10000) }));
     };
+    const sourceSlice = (marker, radius = 24000) => {
+      for (const script of [...document.scripts]) {
+        const source = script.textContent || '';
+        const index = source.indexOf(marker);
+        if (index < 0) continue;
+        return {
+          marker,
+          scriptSrc: script.src || null,
+          index,
+          start: Math.max(0, index - radius),
+          end: Math.min(source.length, index + radius),
+          source: source.slice(Math.max(0, index - radius), Math.min(source.length, index + radius)),
+        };
+      }
+      return null;
+    };
 
     const testApiKeys = t ? Object.keys(t).sort() : [];
     const deckApi = t
@@ -142,6 +158,10 @@ test('discovers the current Cards deck authority and mount seam without product 
       deckStateKeys,
       interestingGlobals,
       resources,
+      sourceSlices: {
+        deckSwipe: sourceSlice('GR_DECK_SWIPE_ADD_THRESHOLD_PX'),
+        renderCards: sourceSlice('function renderCards'),
+      },
       dom: {
         cards: describe(cards),
         collectionGrid: describe(collectionGrid),
@@ -172,5 +192,6 @@ test('discovers the current Cards deck authority and mount seam without product 
   expect(snapshot.dom.cards).not.toBeNull();
   expect(snapshot.dom.collectionGrid).not.toBeNull();
   expect(snapshot.dom.storageButton).toBeNull();
+  expect(snapshot.sourceSlices.deckSwipe).not.toBeNull();
   await jsonAttachment(testInfo, `${testInfo.project.name}-deck-storage-consumer-introspection.json`, snapshot);
 });

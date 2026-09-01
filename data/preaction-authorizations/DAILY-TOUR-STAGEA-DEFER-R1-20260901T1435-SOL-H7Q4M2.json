@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DAILY-TOUR-STAGEA-DEFER-R1-20260901T1435-SOL-H7Q4M2",
+  "taskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "workUnitKey": "DAILY_TOUR_STAGE_A_VISIBLE_MOUNT_DEFER_R1",
+  "acquireKey": "DAILY-TOUR-STAGEA-DEFER-R1-20260901T1435-SOL-H7Q4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "ACTUAL_MAIN_2569CA7_PR879_VISIBLE_DAILY_MOUNT_AND_PACKAGE_DELTA",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR879_EXACT_REVERSE_SCOPE_PLUS_EXISTING_HOME_BUILD_GATES",
+  "proceedToken": "PROCEED|DAILY-TOUR-STAGEA-DEFER-R1-20260901T1435-SOL-H7Q4M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260901T1439JST",
+  "authorizationBaseSha": "2569ca776d2d4d790f4f02fb01602755ddcbf542",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "browser/daily-tour-home-launcher.mjs",
+    "tests/daily-tour-home-launcher.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "leaseWorkUnitKey": "DAILY_TOUR_STAGE_A_VISIBLE_MOUNT_DEFER_R1",
+  "leaseAcquireKey": "DAILY-TOUR-STAGEA-DEFER-R1-20260901T1435-SOL-H7Q4M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 14:39 JST",
+  "leaseUntilJst": "2026-09-01 15:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "browser/daily-tour-home-launcher.mjs",
+    "tests/daily-tour-home-launcher.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR exact base 2569ca776d2d4d790f4f02fb01602755ddcbf542; existing branch work/daily-tour-stagea-defer-r1-20260901 clean-history rebuild; mutable browser/home-boot-runtime-mount.mjs + delete browser/daily-tour-home-launcher.mjs + delete tests/daily-tour-home-launcher.test.mjs + deploy/cloudflare/scripts/build.mjs; transient data/preaction-authorizations/DAILY-TOUR-STAGEA-DEFER-R1-20260901T1435-SOL-H7Q4M2.json; existing PR#886; own lease row6. browser/GAMEROAD.html, daily-tour-core.mjs, daily-tour-mode-registry.v1.json, Home routes/SlidePad/Rogue/gameplay/save/reward/scheduler/day authority/relationship/Battle/Result read-only"
+}

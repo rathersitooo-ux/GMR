@@ -25,6 +25,16 @@ export function addCardToStorage(state, value) {
   return Object.freeze({ ok: true, action: 'storage-add', cardId: id, openStorage: true, state: frozen(current.deck, [...current.storage, id]) });
 }
 
+export function removeCardFromStorage(state, value) {
+  const current = stateOf(state);
+  const id = cardId(value);
+  const index = current.storage.indexOf(id);
+  if (index < 0) return Object.freeze({ ok: false, action: 'storage-remove', reason: 'not-in-storage', cardId: id, state: frozen(current.deck, current.storage) });
+  const storage = [...current.storage];
+  storage.splice(index, 1);
+  return Object.freeze({ ok: true, action: 'storage-remove', cardId: id, state: frozen(current.deck, storage) });
+}
+
 export function removeCardFromDeck(state, value) {
   const current = stateOf(state);
   const id = cardId(value);
@@ -54,7 +64,15 @@ export function createStorageCornerViewModel(state, { isRoyal } = {}) {
   const normal = [];
   const royal = [];
   for (const id of current.storage) (isRoyal(id) ? royal : normal).push(id);
-  return Object.freeze({ deckCount: current.deck.length, storageCount: current.storage.length, storageButtonLabel: `+${current.storage.length}`, normal: Object.freeze(normal), royal: Object.freeze(royal), layout: Object.freeze({ normalSide: 'left', royalSide: 'right' }) });
+  return Object.freeze({
+    deckCount: current.deck.length,
+    storageCount: current.storage.length,
+    storageButtonLabel: `+${current.storage.length}`,
+    storageButtonTone: 'yellow',
+    normal: Object.freeze(normal),
+    royal: Object.freeze(royal),
+    layout: Object.freeze({ normalSide: 'left', royalSide: 'right' }),
+  });
 }
 
 export function resolveDeckEditorSwipe({ surface, deltaX, deltaY, thresholdPx = 56 } = {}) {

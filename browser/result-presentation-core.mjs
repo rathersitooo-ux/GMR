@@ -72,10 +72,10 @@ export function applyResultPresentationEvent(state, event) {
     return rejection(state, 'EVENT_INVALID');
   }
   if (!nonEmptyString(event.eventId)) return rejection(state, 'EVENT_ID_REQUIRED');
+  if (event.presentationId !== state.presentationId) return rejection(state, 'PRESENTATION_ID_MISMATCH');
   if (state.seenEventIds.includes(event.eventId)) {
     return deepFreeze({ accepted: true, duplicate: true, reason: 'DUPLICATE_EVENT', state });
   }
-  if (event.presentationId !== state.presentationId) return rejection(state, 'PRESENTATION_ID_MISMATCH');
   if (!Number.isSafeInteger(event.sequence) || event.sequence < 1) return rejection(state, 'SEQUENCE_INVALID');
   const expected = state.sequence + 1;
   if (event.sequence < expected) return rejection(state, 'STALE_EVENT');

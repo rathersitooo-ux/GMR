@@ -1,8 +1,8 @@
 const NAKI_CHARACTER_ID = 'partner.naki';
-const HOST_ID = 'gameroad-naki-4p-board-visuals';
 const STYLE_ID = 'gameroad-naki-4p-board-visuals-style';
 const SURFACE_ATTR = 'data-naki-4p-board-character';
 const ACTIVE_ATTR = 'data-naki-4p-board-active';
+const MARKER_SELECTOR = '.boardPlayerToken[data-player]';
 const PARTICIPANT_IDS = Object.freeze(['P1', 'P2', 'P3', 'P4']);
 
 function asParticipantId(value) {
@@ -10,30 +10,14 @@ function asParticipantId(value) {
   return PARTICIPANT_IDS.includes(id) ? id : null;
 }
 
-function pxOffset(value) {
-  const match = String(value ?? '').trim().match(/^(-?\d+(?:\.\d+)?)px$/);
-  return match ? Number(match[1]) : 0;
-}
-
 export function projectFourParticipantNakiBoardMarkers(markers) {
   if (!Array.isArray(markers) || markers.length !== 4) return Object.freeze([]);
   const rows = markers.map(marker => {
     const participantId = asParticipantId(marker?.participantId ?? marker?.dataset?.player);
     if (!participantId) return null;
-    const groupCount = Number(marker?.groupCount ?? marker?.dataset?.groupCount) || 1;
-    const left = String(marker?.left ?? marker?.style?.left ?? '').trim();
-    const top = String(marker?.top ?? marker?.style?.top ?? '').trim();
-    if (!left || !top) return null;
-    const ox = pxOffset(marker?.ox ?? marker?.style?.getPropertyValue?.('--ox'));
-    const oy = pxOffset(marker?.oy ?? marker?.style?.getPropertyValue?.('--oy'));
-    const spread = groupCount > 1 ? 1.35 : 1;
     return Object.freeze({
       participantId,
       characterId: NAKI_CHARACTER_ID,
-      left,
-      top,
-      offsetX: Math.round(ox * spread),
-      offsetY: Math.round(oy * spread),
       visible: true
     });
   });
@@ -63,29 +47,17 @@ function ensureStyle(documentRef) {
   const style = documentRef.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
-#${HOST_ID}{position:absolute;inset:3% 3% 18%;z-index:9;pointer-events:none;overflow:visible}
-#${HOST_ID}[hidden]{display:none!important}
-#${HOST_ID} [${SURFACE_ATTR}]{--naki-seat-x:0px;--naki-seat-y:0px;position:absolute;width:72px;height:92px;transform:translate(calc(-50% + var(--naki-seat-x)),calc(-82% + var(--naki-seat-y)));display:flex;align-items:flex-end;justify-content:center;pointer-events:none;overflow:visible;filter:drop-shadow(0 7px 10px rgba(0,0,0,.45))}
-#${HOST_ID} [${SURFACE_ATTR}] .grtc-image{display:block;width:auto;height:100%;max-width:100%;object-fit:contain;opacity:1;visibility:visible}
-#${HOST_ID} .grNaki4pFallback{width:56px;height:72px;display:grid;place-items:end center;padding:0 4px 7px;border:1px solid rgba(255,255,255,.5);border-radius:48% 48% 22% 22%;background:linear-gradient(180deg,rgba(232,218,170,.92),rgba(67,82,77,.95));box-shadow:0 7px 18px rgba(0,0,0,.36);color:#fff;font-size:9px;font-weight:900;letter-spacing:.08em;text-shadow:0 1px 3px #000}
+#boardPlayers ${MARKER_SELECTOR}{overflow:visible}
+#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{position:absolute;left:50%;top:50%;width:72px;height:92px;transform:translate(-50%,-82%);display:flex;align-items:flex-end;justify-content:center;pointer-events:none;overflow:visible;filter:drop-shadow(0 7px 10px rgba(0,0,0,.45))}
+#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}] .grtc-image{display:block;width:auto;height:100%;max-width:100%;object-fit:contain;opacity:1;visibility:visible}
+#boardPlayers ${MARKER_SELECTOR} .grNaki4pFallback{width:56px;height:72px;display:grid;place-items:end center;padding:0 4px 7px;border:1px solid rgba(255,255,255,.5);border-radius:48% 48% 22% 22%;background:linear-gradient(180deg,rgba(232,218,170,.92),rgba(67,82,77,.95));box-shadow:0 7px 18px rgba(0,0,0,.36);color:#fff;font-size:9px;font-weight:900;letter-spacing:.08em;text-shadow:0 1px 3px #000}
 [${ACTIVE_ATTR}="1"] #boardPlayers{z-index:12}
-@media(max-width:900px){#${HOST_ID} [${SURFACE_ATTR}]{width:62px;height:78px}#${HOST_ID} .grNaki4pFallback{width:48px;height:62px}}
-@media(max-height:420px){#${HOST_ID} [${SURFACE_ATTR}]{width:54px;height:70px}#${HOST_ID} .grNaki4pFallback{width:43px;height:55px}}
-@media(max-width:540px) and (orientation:portrait){#${HOST_ID} [${SURFACE_ATTR}]{width:60px;height:76px}#${HOST_ID} .grNaki4pFallback{width:46px;height:60px}}
+@media(max-width:900px){#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{width:62px;height:78px}#boardPlayers ${MARKER_SELECTOR} .grNaki4pFallback{width:48px;height:62px}}
+@media(max-height:420px){#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{width:54px;height:70px}#boardPlayers ${MARKER_SELECTOR} .grNaki4pFallback{width:43px;height:55px}}
+@media(max-width:540px) and (orientation:portrait){#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{width:60px;height:76px}#boardPlayers ${MARKER_SELECTOR} .grNaki4pFallback{width:46px;height:60px}}
 `;
   documentRef.head.appendChild(style);
   return true;
-}
-
-function ensureHost(documentRef, battleMap) {
-  let host = documentRef.getElementById?.(HOST_ID);
-  if (host) return host;
-  host = documentRef.createElement('div');
-  host.id = HOST_ID;
-  host.setAttribute('aria-hidden', 'true');
-  host.hidden = true;
-  battleMap.appendChild(host);
-  return host;
 }
 
 function failVisible(documentRef, surface) {
@@ -125,21 +97,18 @@ async function mountNaki(globalRef, documentRef, surface) {
   }
 }
 
-function ensureSurface(globalRef, documentRef, host, row) {
-  let surface = host.querySelector?.(`[${SURFACE_ATTR}="${row.participantId}"]`);
+function ensureSurface(globalRef, documentRef, marker, row) {
+  let surface = marker.querySelector?.(`[${SURFACE_ATTR}="${row.participantId}"]`);
   if (!surface) {
     surface = documentRef.createElement('div');
     surface.setAttribute(SURFACE_ATTR, row.participantId);
     surface.dataset.participantId = row.participantId;
     surface.dataset.characterId = NAKI_CHARACTER_ID;
+    surface.dataset.positionAuthority = 'parent-board-marker';
     surface.setAttribute('aria-hidden', 'true');
-    host.appendChild(surface);
+    marker.appendChild(surface);
     void mountNaki(globalRef, documentRef, surface);
   }
-  surface.style.left = row.left;
-  surface.style.top = row.top;
-  surface.style.setProperty('--naki-seat-x', `${row.offsetX}px`);
-  surface.style.setProperty('--naki-seat-y', `${row.offsetY}px`);
   surface.hidden = false;
   return surface;
 }
@@ -168,26 +137,33 @@ export function installNaki4pBoardVisualBinding(globalRef = globalThis) {
   const markerRoot = documentRef.getElementById?.('boardPlayers');
   if (!battleMap || !markerRoot) return null;
   ensureStyle(documentRef);
-  const host = ensureHost(documentRef, battleMap);
   const actor = documentRef.getElementById?.('battleRuntime');
   let destroyed = false;
 
   function sync() {
     if (destroyed) return Object.freeze({ active: false, participantIds: [] });
-    const markers = Array.from(markerRoot.querySelectorAll?.('.boardPlayerToken[data-player]') || []);
+    const markers = Array.from(markerRoot.querySelectorAll?.(MARKER_SELECTOR) || []);
     const rows = projectFourParticipantNakiBoardMarkers(markers);
     const active = rows.length === 4;
     battleMap.setAttribute(ACTIVE_ATTR, active ? '1' : '0');
-    host.hidden = !active;
     suppressLegacySingleActor(actor, active);
+    const surfaces = () => Array.from(markerRoot.querySelectorAll?.(`[${SURFACE_ATTR}]`) || []);
     if (!active) {
-      for (const surface of Array.from(host.querySelectorAll?.(`[${SURFACE_ATTR}]`) || [])) surface.hidden = true;
+      for (const surface of surfaces()) surface.hidden = true;
       return Object.freeze({ active: false, participantIds: [] });
     }
+
+    const markerByParticipant = new Map(
+      markers.map(marker => [asParticipantId(marker?.dataset?.player), marker])
+    );
     const live = new Set(rows.map(row => row.participantId));
-    for (const row of rows) ensureSurface(globalRef, documentRef, host, row);
-    for (const surface of Array.from(host.querySelectorAll?.(`[${SURFACE_ATTR}]`) || [])) {
-      if (!live.has(surface.dataset.participantId)) surface.remove?.();
+    for (const row of rows) {
+      const marker = markerByParticipant.get(row.participantId);
+      if (marker) ensureSurface(globalRef, documentRef, marker, row);
+    }
+    for (const surface of surfaces()) {
+      const ownerId = asParticipantId(surface.parentNode?.dataset?.player);
+      if (!live.has(surface.dataset.participantId) || ownerId !== surface.dataset.participantId) surface.remove?.();
     }
     return Object.freeze({
       active: true,
@@ -200,8 +176,7 @@ export function installNaki4pBoardVisualBinding(globalRef = globalThis) {
   const observer = typeof globalRef.MutationObserver === 'function'
     ? new globalRef.MutationObserver(() => queueMicrotask(sync))
     : null;
-  observer?.observe(markerRoot, { childList: true, subtree: false, attributes: true, attributeFilter: ['style', 'data-player', 'data-group-count'] });
-  globalRef.addEventListener?.('resize', sync);
+  observer?.observe(markerRoot, { childList: true, subtree: false });
   sync();
 
   const controller = Object.freeze({
@@ -211,10 +186,9 @@ export function installNaki4pBoardVisualBinding(globalRef = globalThis) {
       if (destroyed) return false;
       destroyed = true;
       observer?.disconnect?.();
-      globalRef.removeEventListener?.('resize', sync);
       suppressLegacySingleActor(actor, false);
       battleMap.setAttribute(ACTIVE_ATTR, '0');
-      host.remove?.();
+      for (const surface of Array.from(markerRoot.querySelectorAll?.(`[${SURFACE_ATTR}]`) || [])) surface.remove?.();
       return true;
     }
   });
@@ -238,6 +212,9 @@ export const NAKI_4P_BOARD_VISUAL_BINDING = Object.freeze({
   characterId: NAKI_CHARACTER_ID,
   participantIds: PARTICIPANT_IDS,
   actualBoardMarkerRoot: '#boardPlayers',
+  actualBoardMarkerSelector: MARKER_SELECTOR,
+  positionAuthority: 'PARENT_BOARD_PLAYER_MARKER',
+  coordinateProjection: 'NONE__VISUAL_IS_CHILD_OF_AUTHORITATIVE_MARKER',
   presentationOnly: true,
   gameplayAuthority: false,
   failVisible: true

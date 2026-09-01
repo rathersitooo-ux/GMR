@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RESULT-SHORTLAND-RANK-R1-20260901T1457-SOL-H6Q2M8",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "RESULT_SHORTLAND_RANK_VIEWPORT_R1",
+  "acquireKey": "RESULT-SHORTLAND-RANK-R1-20260901T1457-SOL-H6Q2M8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_PUBLIC_R19_RESULT_SHORTLAND_667x375_RANK_ROW1_BOTTOM_355_VIEWPORT_BOUND_350",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_PUBLIC_ORIGIN_PLAYWRIGHT_GEOMETRY_FAILURE_DESKTOP_PHONE_CONTROLS_PASS",
+  "proceedToken": "PROCEED|RESULT-SHORTLAND-RANK-R1-20260901T1457-SOL-H6Q2M8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260901T1458JST",
+  "authorizationBaseSha": "b59c4659b1f999b5afc385c648ba38b4c3fc501e",
+  "scope": [
+    "browser/GAMEROAD.html",
+    ".github/workflows/zz-temp-result-shortland-rank-r1.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "RESULT_SHORTLAND_RANK_VIEWPORT_R1",
+  "leaseAcquireKey": "RESULT-SHORTLAND-RANK-R1-20260901T1457-SOL-H6Q2M8",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 14:58 JST",
+  "leaseUntilJst": "2026-09-01 15:57 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A314:N314",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    ".github/workflows/zz-temp-result-shortland-rank-r1.yml"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main@b59c4659b1f999b5afc385c648ba38b4c3fc501e; NEW branch work/result-shortland-rank-r1-20260901; transient data/preaction-authorizations/RESULT-SHORTLAND-RANK-R1-20260901T1457-SOL-H6Q2M8.json create-first/delete-before-final-head; transient .github/workflows/zz-temp-result-shortland-rank-r1.yml exact-branch guarded inspect/patch helper create-after-authorization/delete-before-final-head; browser/GAMEROAD.html; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row314; own R23 events. tests/browser-full-interaction.spec.mjs Result/gameplay/rules/save/economy/network/assets/deploy/unrelated workflows read-only"
+}

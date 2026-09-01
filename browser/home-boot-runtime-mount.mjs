@@ -18,6 +18,14 @@ const SLIDEPAD_ROUTE_IDS = Object.freeze({
   partner: Object.freeze(['characters', 'partner']),
   cards: Object.freeze(['cards']),
 });
+const LEGACY_HOME_SELECTORS = Object.freeze([
+  '#codexHomeVisualLayer',
+  '.codexHomeVisualLayer',
+  '#codexHomePartnerChip',
+  '.codexPartnerChip',
+  '#codexHomeBattleCta',
+  '.codexBattleCta',
+]);
 
 const runtime = {
   mounted: false,
@@ -46,6 +54,21 @@ const runtime = {
     previewButton: null,
   },
 };
+
+export function removeLegacyHomeNodes(home) {
+  if (!home || typeof home.querySelectorAll !== 'function') return 0;
+  const nodes = new Set();
+  for (const selector of LEGACY_HOME_SELECTORS) {
+    for (const node of home.querySelectorAll(selector)) nodes.add(node);
+  }
+  let removed = 0;
+  for (const node of nodes) {
+    if (!node || typeof node.remove !== 'function') continue;
+    node.remove();
+    removed += 1;
+  }
+  return removed;
+}
 
 export function resolveHomeSlidepadRole({
   dx = 0,
@@ -369,6 +392,7 @@ export function refreshHomeBootPresentation() {
     unmarkHome(runtime.home);
   }
   runtime.home = home;
+  removeLegacyHomeNodes(home);
 
   const buttons = routeButtons(home);
   const ids = buttons.map(routeId).filter(Boolean);

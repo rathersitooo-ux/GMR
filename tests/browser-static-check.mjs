@@ -39,9 +39,6 @@ function collectHomeVisualShellErrors(html) {
   if (!/\.app:has\(\.home\.active\)>\.top \.brand\{display:none\}/.test(html)) {
     errors.push('decorative GAMEROAD brand is not hidden while Home is active');
   }
-  if (!/class="codexBattleCta" data-go="setup"/.test(home)) {
-    errors.push('Home battle call-to-action is missing');
-  }
   for (const target of ['setup', 'characters', 'cards', 'shop']) {
     if (!new RegExp(`data-home-target=["']${target}["']`).test(home)) {
       errors.push(`Home primary navigation target is missing: ${target}`);

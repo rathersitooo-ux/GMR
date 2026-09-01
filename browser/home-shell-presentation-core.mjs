@@ -41,7 +41,7 @@ export function classifyHomeViewport(input = {}) {
   return VIEWPORT_VARIANTS.WIDE_LANDSCAPE;
 }
 
-export function createHomeShellState({ expanded = false, selectedRouteId = null, routeIds = [] } = {}) {
+export function createHomeShellState({ expanded = true, selectedRouteId = null, routeIds = [] } = {}) {
   const ids = uniqueRouteIds(routeIds);
   const selected = selectedRouteId == null ? null : nonEmpty(selectedRouteId, 'selectedRouteId');
   if (selected !== null && !ids.includes(selected)) throw new Error('selectedRouteId must exist in routeIds');

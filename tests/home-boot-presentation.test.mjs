@@ -17,6 +17,7 @@ import {
   resolveHomeSlidepadRelease,
   resolveHomeSlidepadRole,
   resolveHomeSlidepadRouteId,
+  resolveHomeSlidepadTargetTranslation,
 } from '../browser/home-boot-runtime-mount.mjs';
 
 const landscapeProjection = Object.freeze({
@@ -56,6 +57,13 @@ test('Home viewport classifier distinguishes wide, short landscape, and portrait
   assert.equal(classifyHomeViewport({ width: 1280, height: 720 }), HOME_VIEWPORT_VARIANTS.WIDE_LANDSCAPE);
   assert.equal(classifyHomeViewport({ width: 844, height: 390 }), HOME_VIEWPORT_VARIANTS.SHORT_LANDSCAPE);
   assert.equal(classifyHomeViewport({ width: 390, height: 844 }), HOME_VIEWPORT_VARIANTS.PORTRAIT);
+});
+
+test('Home SlidePad shell defaults to expanded and remains explicitly collapsible', () => {
+  const expanded = createHomeShellState({ routeIds: ['battle', 'cards', 'partner', 'shop'] });
+  const collapsed = createHomeShellState({ expanded: false, routeIds: ['battle', 'cards', 'partner', 'shop'] });
+  assert.equal(expanded.expanded, true);
+  assert.equal(collapsed.expanded, false);
 });
 
 test('Home projection preserves routes and selected route across viewport profiles', () => {
@@ -172,6 +180,17 @@ test('Home SlidePad restores the four fixed directional responsibilities', () =>
   assert.equal(resolveHomeSlidepadRole({ dx: 48, dy: 0 }), 'shop');
   assert.equal(resolveHomeSlidepadRole({ dx: -42, dy: -34 }), 'partner');
   assert.equal(resolveHomeSlidepadRole({ dx: -42, dy: 20 }), 'cards');
+});
+
+test('Home SlidePad projects the knob to the existing scene target instead of capping local travel', () => {
+  const translation = resolveHomeSlidepadTargetTranslation({
+    originX: 100,
+    originY: 100,
+    targetRect: { left: 300, top: 40, width: 80, height: 60 },
+  });
+  assert.deepEqual(translation, { x: 240, y: -30 });
+  assert.ok(Math.hypot(translation.x, translation.y) > 22);
+  assert.equal(resolveHomeSlidepadTargetTranslation({ originX: 100, originY: 100, targetRect: { left: 0, top: 0, width: 0, height: 20 } }), null);
 });
 
 test('Home SlidePad keeps DOWN and the center dead-zone unassigned', () => {

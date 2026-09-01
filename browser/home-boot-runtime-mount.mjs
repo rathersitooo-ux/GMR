@@ -13,7 +13,6 @@ const ROUTE_SELECTOR = '.homePadChoice[data-home-target]';
 const SLIDEPAD_CENTER_SELECTOR = '#homePadCenter';
 const SLIDEPAD_DEAD_ZONE_PX = 18;
 const SLIDEPAD_DOWN_REJECT_RATIO = 1.15;
-const SLIDEPAD_MAX_KNOB_TRAVEL_PX = 22;
 const SLIDEPAD_ROUTE_IDS = Object.freeze({
   battle: Object.freeze(['setup', 'battle']),
   shop: Object.freeze(['shop']),
@@ -42,6 +41,7 @@ const runtime = {
   renderCount: 0,
   lastVariant: null,
   lastProfile: null,
+  lastExpanded: null,
   lastRouteIds: [],
   lastSelectedRouteId: null,
   lastError: null,
@@ -113,6 +113,20 @@ export function resolveHomeSlidepadRelease({ dx = 0, dy = 0, routeIds = [], dead
   const role = resolveHomeSlidepadRole({ dx, dy, deadZonePx });
   const routeId = resolveHomeSlidepadRouteId(routeIds, role);
   return Object.freeze({ role, routeId, commit: Boolean(routeId) });
+}
+
+export function resolveHomeSlidepadTargetTranslation({ originX, originY, targetRect } = {}) {
+  const ox = Number(originX);
+  const oy = Number(originY);
+  const left = Number(targetRect?.left);
+  const top = Number(targetRect?.top);
+  const width = Number(targetRect?.width);
+  const height = Number(targetRect?.height);
+  if (![ox, oy, left, top, width, height].every(Number.isFinite) || width <= 0 || height <= 0) return null;
+  return Object.freeze({
+    x: left + width / 2 - ox,
+    y: top + height / 2 - oy,
+  });
 }
 
 function ensureStyle() {
@@ -224,10 +238,11 @@ function runEntrance(buttons) {
   });
 }
 
-function markHome(home, { variant, profile, routeIds, selectedRouteId: selected }) {
+function markHome(home, { variant, profile, expanded, routeIds, selectedRouteId: selected }) {
   home.dataset.homeShellMounted = 'true';
   home.dataset.homeShellVariant = variant;
   home.dataset.homeShellProfile = profile;
+  home.dataset.homeShellExpanded = expanded ? 'true' : 'false';
   home.dataset.homeShellRouteCount = String(routeIds.length);
   if (selected) home.dataset.homeShellSelectedRoute = selected;
   else delete home.dataset.homeShellSelectedRoute;
@@ -239,6 +254,7 @@ function unmarkHome(home) {
   delete home.dataset.homeShellMounted;
   delete home.dataset.homeShellVariant;
   delete home.dataset.homeShellProfile;
+  delete home.dataset.homeShellExpanded;
   delete home.dataset.homeShellRouteCount;
   delete home.dataset.homeShellSelectedRoute;
   home.style.removeProperty('--gameroad-home-shell-touch-min');
@@ -263,18 +279,25 @@ function clearPreview() {
   runtime.slidepad.previewButton = null;
 }
 
-function moveKnob(center, dx, dy, role) {
+function moveKnob(center, button) {
   if (!(center instanceof HTMLElement)) return;
-  if (!role) {
+  if (!(button instanceof HTMLElement)) {
     center.style.setProperty('--gameroad-home-slidepad-x', '0px');
     center.style.setProperty('--gameroad-home-slidepad-y', '0px');
     return;
   }
-  const distance = Math.hypot(dx, dy);
-  if (!Number.isFinite(distance) || distance <= 0) return;
-  const travel = Math.min(SLIDEPAD_MAX_KNOB_TRAVEL_PX, distance);
-  center.style.setProperty('--gameroad-home-slidepad-x', `${((dx / distance) * travel).toFixed(1)}px`);
-  center.style.setProperty('--gameroad-home-slidepad-y', `${((dy / distance) * travel).toFixed(1)}px`);
+  const translation = resolveHomeSlidepadTargetTranslation({
+    originX: runtime.slidepad.originX,
+    originY: runtime.slidepad.originY,
+    targetRect: button.getBoundingClientRect(),
+  });
+  if (!translation) {
+    center.style.setProperty('--gameroad-home-slidepad-x', '0px');
+    center.style.setProperty('--gameroad-home-slidepad-y', '0px');
+    return;
+  }
+  center.style.setProperty('--gameroad-home-slidepad-x', `${translation.x.toFixed(1)}px`);
+  center.style.setProperty('--gameroad-home-slidepad-y', `${translation.y.toFixed(1)}px`);
 }
 
 function buttonForRole(home, role) {
@@ -338,7 +361,7 @@ function bindSlidepad(home) {
     const role = resolveHomeSlidepadRole({ dx, dy });
     const button = role ? buttonForRole(home, role) : null;
     setPreview(button);
-    moveKnob(center, dx, dy, button ? role : null);
+    moveKnob(center, button);
     return { dx, dy, role: button ? role : null, button };
   };
 
@@ -424,6 +447,7 @@ export function refreshHomeBootPresentation() {
   markHome(home, {
     variant,
     profile,
+    expanded: state.expanded,
     routeIds: state.routeIds,
     selectedRouteId: state.selectedRouteId,
   });
@@ -433,6 +457,7 @@ export function refreshHomeBootPresentation() {
   runtime.active = active;
   runtime.lastVariant = variant;
   runtime.lastProfile = profile;
+  runtime.lastExpanded = state.expanded;
   runtime.lastRouteIds = [...state.routeIds];
   runtime.lastSelectedRouteId = state.selectedRouteId;
   runtime.lastError = null;
@@ -500,12 +525,13 @@ export function snapshot() {
     renderCount: runtime.renderCount,
     viewportVariant: runtime.lastVariant,
     presentationProfile: runtime.lastProfile,
+    expanded: runtime.lastExpanded,
     routeIds: Object.freeze([...runtime.lastRouteIds]),
     selectedRouteId: runtime.lastSelectedRouteId,
     touchTargetMinPx: HOME_TOUCH_TARGET_MIN_PX,
     slidepadGestureBound: Boolean(runtime.slidepad.center && runtime.slidepad.handlers),
     slidepadPointerActive: runtime.slidepad.pointerId != null,
-    projectionStatus: 'scene-authority-not-mounted-here',
+    projectionStatus: 'scene-target-projection-mounted',
     lastError: runtime.lastError,
   });
 }

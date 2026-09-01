@@ -180,7 +180,6 @@ export function mountRogueRunRuntime(host) {
   panel.hidden = true;
   panel.innerHTML = `
     <h2 id="rogueRunTitle">ローグラン</h2>
-    <p data-rogue-status aria-live="polite"></p>
     <div class="rogueRunActions" data-rogue-routes>
       <button type="button" class="rogueRunAction primary" data-rogue-action="route-battle">通常戦へ</button>
       <button type="button" class="rogueRunAction" data-rogue-action="route-boss">章最終戦へ</button>
@@ -194,7 +193,6 @@ export function mountRogueRunRuntime(host) {
 
   const routes = panel.querySelector('[data-rogue-routes]');
   const reward = panel.querySelector('[data-rogue-reward]');
-  const status = panel.querySelector('[data-rogue-status]');
   let panelDismissed = false;
 
   function render() {
@@ -204,13 +202,9 @@ export function mountRogueRunRuntime(host) {
     entry.textContent = phase === 'AWAITING_ROUTE' ? 'ローグを続ける' : 'ローグを開始';
     const routeReady = phase === 'AWAITING_ROUTE' && snapshot.pendingRouteKind === null;
     const rewardReady = phase === 'AWAITING_REWARD_DECISION';
-    const completed = phase === 'COMPLETE';
     routes.hidden = !routeReady;
     reward.hidden = !rewardReady;
-    panel.hidden = panelDismissed || !(routeReady || rewardReady || completed);
-    if (routeReady) status.textContent = '既存ルールの通常戦か章最終戦を選び、準備画面から対戦を開始します。';
-    else if (rewardReady) status.textContent = '正式な報酬候補authorityは未接続です。今回は報酬を見送り、同じデッキで次の分岐へ進めます。';
-    else if (completed) status.textContent = '章最終戦の結果を既存Resultへ渡しました。Rogue専用Resultは作っていません。';
+    panel.hidden = panelDismissed || !(routeReady || rewardReady);
   }
 
   function observeAndRender() {

@@ -191,8 +191,7 @@ function addConversationStyle(document) {
 .grPartnerIdentity b{font-size:24px;letter-spacing:.04em}
 .grPartnerChat{min-width:0;min-height:0;display:grid;grid-template-rows:auto minmax(120px,1fr) auto;background:linear-gradient(180deg,rgba(12,17,39,.94),rgba(9,13,30,.98));color:#f7f8ff}
 .grPartnerConversationHead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 16px 12px;border-bottom:1px solid rgba(196,215,255,.13)}
-.grPartnerConversationHeadText b{display:block;font-size:15px}.grPartnerConversationHeadText small{display:block;margin-top:2px;color:#aeb7d9;font-size:9px}
-.grPartnerConversationState{flex:0 0 auto;padding:5px 8px;border-radius:999px;border:1px solid rgba(158,188,255,.26);background:rgba(90,113,196,.16);font-size:9px;color:#dce6ff}
+.grPartnerConversationState{flex:0 0 auto;margin-left:auto;padding:5px 8px;border-radius:999px;border:1px solid rgba(158,188,255,.26);background:rgba(90,113,196,.16);font-size:9px;color:#dce6ff}
 .grPartnerConversationState[data-origin="provider"]{background:rgba(93,141,229,.22);color:#eff5ff}
 .grPartnerConversationState[data-origin="fallback"]{background:rgba(137,112,178,.19);color:#e9dcff}
 .grPartnerConversationLog{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:9px;padding:16px}
@@ -256,7 +255,6 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
       </div>
       <div class="grPartnerChat">
         <div class="grPartnerConversationHead">
-          <div class="grPartnerConversationHeadText"><b>サースナーと話す</b></div>
           <span class="grPartnerConversationState" data-origin="neutral">会話できます</span>
         </div>
         <div class="grPartnerConversationLog" aria-live="polite"></div>

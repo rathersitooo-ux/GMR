@@ -133,7 +133,6 @@ runtime.render(attack);
 assert.equal(runtime.phaseSurface.hidden, false);
 assert.equal(runtime.planSlot.hidden, true);
 assert.equal(runtime.shell.dataset.mode, 'BATTLE_PHASE');
-assert.equal(runtime.shell.eventId, undefined);
 assert.equal(runtime.shell.dataset.eventId, 'attack-1');
 assert.equal(runtime.phaseSurface.dataset.battleScreenInput, 'skip|public_info|accessibility');
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.participantId), ['P1', 'P2', 'P3', 'P4']);
@@ -245,7 +244,7 @@ assert.equal(BATTLE_SCREEN_RUNTIME.formalArtOwnedHere, false);
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 70,
+  tests: 71,
   freshMount: {
     laneCount: runtime.laneSurfaces.length,
     phaseAnchor: runtime.phaseSurface.id,

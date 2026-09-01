@@ -310,4 +310,5 @@ test('custom timings remain bounded by semantic contract', () => {
   assert.equal(plan.landingPulseMs, 200);
   assert.equal(plan.countPulseMs, 220);
   assert.equal(plan.recentAddMs, 500);
+  assert.equal(plan.streakCount, 1);
 });

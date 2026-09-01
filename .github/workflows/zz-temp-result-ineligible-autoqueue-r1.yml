@@ -1,0 +1,54 @@
+name: TEMP Result Ineligible Autoqueue R1
+
+on:
+  push:
+    branches:
+      - work/result-ineligible-autoqueue-r1-20260901
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temp-result-ineligible-autoqueue-r1
+  cancel-in-progress: false
+
+jobs:
+  exact-patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Guard exact authority and patch Result autoqueue presentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "${GITHUB_REF_NAME}" = "work/result-ineligible-autoqueue-r1-20260901"
+          git merge-base --is-ancestor eb38b5d92f8eea57f9cbe409a5c74fa82bf5ab76 HEAD
+          test -f data/preaction-authorizations/RESULT-AUTOQUEUE-INELIGIBLE-R1-20260901T1429-SOL-P7N4Q2.json
+          grep -Fq '".github/workflows/zz-temp-result-ineligible-autoqueue-r1.yml"' data/preaction-authorizations/RESULT-AUTOQUEUE-INELIGIBLE-R1-20260901T1429-SOL-P7N4Q2.json
+          current_blob="$(git rev-parse HEAD:browser/GAMEROAD.html)"
+          if [ "$current_blob" != "1c62a75b46c34c33fd54d64848cd6dea017a52ef" ]; then
+            echo "HTML blob already changed; no blind repeat: $current_blob"
+            exit 0
+          fi
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('browser/GAMEROAD.html')
+          s = p.read_text(encoding='utf-8')
+          old = "      if (toggle) toggle.checked = view.enabled;"
+          new = "      if (toggle) {\n        toggle.checked = view.enabled;\n        toggle.disabled = view.status === STATUS.INELIGIBLE;\n      }"
+          if s.count(old) != 1:
+              raise SystemExit(f'anchor cardinality mismatch: {s.count(old)}')
+          s = s.replace(old, new, 1)
+          if s.count('toggle.disabled = view.status === STATUS.INELIGIBLE;') != 1:
+              raise SystemExit('replacement readback mismatch')
+          p.write_text(s, encoding='utf-8')
+          PY
+          git diff --check -- browser/GAMEROAD.html
+          git diff --exit-code -- browser/post-match-autoqueue-core.mjs
+          git config user.name 'gameroad-exact-patch-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add browser/GAMEROAD.html
+          git commit -m 'fix(result): disable autoqueue toggle for ineligible result'
+          git push origin HEAD:work/result-ineligible-autoqueue-r1-20260901

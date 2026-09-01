@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-LEGACY-SOURCE-R62-20260901T1428-SOL-K6M3V8",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_LEGACY_SOURCE_REMOVAL_AND_RATIONALE_R62",
+  "acquireKey": "HOME-LEGACY-SOURCE-R62-20260901T1428-SOL-K6M3V8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "HOME-R58-PR869-LIVE-DOM-REMOVAL-PLUS-CURRENT-SOURCE-BLOB-20260901",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "HOME-CURRENT-PUBLIC-THREE-VIEWPORT-058E-AND-R58-LEGACY-REMOVAL-ORACLE-20260901",
+  "proceedToken": "PROCEED|HOME-LEGACY-SOURCE-R62-20260901T1428-SOL-K6M3V8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "eb38b5d92f8eea57f9cbe409a5c74fa82bf5ab76",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_LEGACY_SOURCE_REMOVAL_AND_RATIONALE_R62",
+  "leaseAcquireKey": "HOME-LEGACY-SOURCE-R62-20260901T1428-SOL-K6M3V8",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 14:28 JST",
+  "leaseUntilJst": "2026-09-01 15:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A312:L312",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main@eb38b5d92f8eea57f9cbe409a5c74fa82bf5ab76; browser/GAMEROAD.html blob@1c62a75b46c34c33fd54d64848cd6dea017a52ef; NEW branch work/home-legacy-source-cleanup-r62-20260901; transient PRE_ACTION authorization/exact patch transport if required; own PR/checks/expected-head merge; central task row2 Y:AB Home rationale only; own CURRENT_ACTIVE_LEASES row312.",
+  "scope": [
+    "browser/GAMEROAD.html"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html"
+  ]
+}

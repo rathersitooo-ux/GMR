@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-BATTLE-VISUALSOURCE-REPAIR-R67-20260901T2340-SOL-K7M4Q2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_RAY_MAGNET_BATTLE_TEXTUALIZATION_ROLLBACK_R67",
+  "acquireKey": "HOME-BATTLE-VISUALSOURCE-REPAIR-R67-20260901T2340-SOL-K7M4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT+actual: Home pointer path still uses coarse direction-role authority before target projection; R66 Battle medallion layer came from text-derived visual interpretation and must be retracted without inventing replacement art",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "Battle rollback oracle is exact pre-R66 blobs; Home correction is bounded to existing runtime and focused tests while preserving route/gameplay authority",
+  "proceedToken": "PROCEED|HOME-BATTLE-VISUALSOURCE-REPAIR-R67-20260901T2340-SOL-K7M4Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260901T2357JST",
+  "authorizationBaseSha": "2f712d71438e42a41145e99f377399153d3b2fcf",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_RAY_MAGNET_BATTLE_TEXTUALIZATION_ROLLBACK_R67",
+  "leaseAcquireKey": "HOME-BATTLE-VISUALSOURCE-REPAIR-R67-20260901T2340-SOL-K7M4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 23:57 JST",
+  "leaseUntilJst": "2026-09-02 00:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseExactMutableResources": "GAMEROAD 全作業一覧!Y2:AB2; GitHub:rathersitooo-ux/GMR exact main@2f712d71438e42a41145e99f377399153d3b2fcf; NEW replacement branch work/home-battle-visualsource-repair-r67b-20260901; transient data/preaction-authorizations/HOME-BATTLE-VISUALSOURCE-REPAIR-R67-20260901T2340-SOL-K7M4Q2.json create-first/delete-before-final-head; browser/home-boot-runtime-mount.mjs; tests/home-boot-presentation.test.mjs; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; own replacement PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row11; own R23 events. READ_ONLY browser/GAMEROAD.html, gameplay/rules/triad-resolver-core.mjs, save/economy/network/assets/deploy/shared workflows/unrelated files."
+}

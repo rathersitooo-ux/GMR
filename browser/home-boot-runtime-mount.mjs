@@ -3,6 +3,7 @@ import {
   createHomeShellState,
   HOME_TOUCH_TARGET_MIN_PX,
 } from './home-shell-presentation-core.mjs';
+import { refreshDailyTourHomeLauncher } from './daily-tour-home-launcher.mjs';
 import { mountRogueRunFromCurrentBrowser } from './rogue-run-runtime-mount.mjs';
 
 const GLOBAL_KEY = 'GAMEROAD_HOME_BOOT_PRESENTATION';
@@ -415,6 +416,7 @@ export function refreshHomeBootPresentation() {
     routeIds: state.routeIds,
     selectedRouteId: state.selectedRouteId,
   });
+  refreshDailyTourHomeLauncher(home, { active, routeButtons: buttons });
   bindSlidepad(home);
 
   const entering = active && !runtime.active;

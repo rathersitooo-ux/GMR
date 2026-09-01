@@ -21,7 +21,7 @@ function marker(participantId, left, top, ox, oy, groupCount = 4) {
   };
 }
 
-test('projects one shared Naki binding across all four distinct actual-board participants', () => {
+test('projects four distinct Naki identities without creating independent board coordinates', () => {
   const input = [
     marker('P1', '50%', '50%', -54, -34),
     marker('P2', '50%', '50%', 54, -34),
@@ -39,12 +39,16 @@ test('projects one shared Naki binding across all four distinct actual-board par
     assert.equal(row.participantId, participantId);
     assert.equal(row.characterId, 'partner.naki');
     assert.equal(row.visible, true);
-    assert.equal(row.left, '50%');
-    assert.equal(row.top, '50%');
-    assert.notEqual(row.offsetX === 0 && row.offsetY === 0, true);
+    assert.equal(Object.hasOwn(row, 'left'), false);
+    assert.equal(Object.hasOwn(row, 'top'), false);
+    assert.equal(Object.hasOwn(row, 'offsetX'), false);
+    assert.equal(Object.hasOwn(row, 'offsetY'), false);
   }
 
   assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.actualBoardMarkerRoot, '#boardPlayers');
+  assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.actualBoardMarkerSelector, '.boardPlayerToken[data-player]');
+  assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.positionAuthority, 'PARENT_BOARD_PLAYER_MARKER');
+  assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.coordinateProjection, 'NONE__VISUAL_IS_CHILD_OF_AUTHORITATIVE_MARKER');
   assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.presentationOnly, true);
   assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.gameplayAuthority, false);
   assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.failVisible, true);

@@ -97,11 +97,27 @@ assert.equal(runtime.phaseSurface.id, 'battlePhaseSurface');
 assert.equal(runtime.resolutionSurface.id, 'battleResolution');
 assert.equal(runtime.planSlot.dataset.owner, 'caller');
 assert.equal(runtime.phaseSurface.hidden, true);
+assert.equal(runtime.triadLegend.getAttribute('role'), 'img');
+assert.equal(runtime.triadLegend.dataset.presentationOnly, 'true');
+assert.match(runtime.triadLegend.getAttribute('aria-label'), /グーはクラブ.*チョキはダイヤ.*パーはスペード/);
+const triadTokens = runtime.triadLegend.children;
+assert.equal(triadTokens.length, 3);
+assert.deepEqual(triadTokens.map(node => node.dataset.hand), ['rock', 'scissors', 'paper']);
+assert.deepEqual(triadTokens.map(node => node.dataset.suit), ['♣', '♦', '♠']);
+assert.deepEqual(triadTokens.map(node => node.dataset.suitName), ['クラブ', 'ダイヤ', 'スペード']);
+assert.deepEqual(triadTokens.map(node => node.dataset.tone), ['club', 'diamond', 'spade']);
+assert.deepEqual(triadTokens.map(node => node.children[0].textContent), ['✊', '✌', '✋']);
+assert.deepEqual(triadTokens.map(node => node.children[1].textContent), ['♣', '♦', '♠']);
+assert.deepEqual(triadTokens.map(node => node.children[2].textContent), ['グー', 'チョキ', 'パー']);
 const runtimeStyle = document.getElementById('gameroad-battle-screen-runtime-r1-style');
 assert.ok(runtimeStyle);
+assert.ok(runtimeStyle.textContent.includes('[data-battle-triad-token][data-tone="club"]{--triad-accent:#51d47e}'));
+assert.ok(runtimeStyle.textContent.includes('[data-battle-triad-token][data-tone="diamond"]{--triad-accent:#f0d34e}'));
+assert.ok(runtimeStyle.textContent.includes('[data-battle-triad-token][data-tone="spade"]{--triad-accent:#61a9ff}'));
 assert.ok(runtimeStyle.textContent.includes('@media(max-height:470px) and (orientation:landscape)'));
 assert.ok(runtimeStyle.textContent.includes('.battle .royalUsageStrip{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;width:151px!important;gap:2px!important}'));
-assert.ok(runtimeStyle.textContent.includes('@media(max-width:540px){[data-gr-battle-screen="1"] [data-battle-screen-causal-grid]{left:4px;right:4px;gap:3px;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}'));
+assert.ok(runtimeStyle.textContent.includes('[data-battle-screen-causal-grid]{top:102px;left:4px;right:4px;gap:3px;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}'));
+assert.ok(runtimeStyle.textContent.includes('[data-battle-screen-causal-grid]{top:82px;bottom:34px}'));
 
 const idle = createBattleScreenModel({ participants });
 runtime.render(idle);
@@ -145,6 +161,8 @@ assert.deepEqual(roleSurfaces.map(node => node.hidden), [false, true, true, fals
 assert.deepEqual(roleSurfaces.map(node => node.textContent), ['攻撃', '', '', '対象']);
 assert.equal(runtime.resolutionSurface.textContent, 'EXISTING LIVE ADAPTER OWNS THIS CONTENT');
 assert.equal(runtime.resolutionSurface.dataset.battleScreenEventId, 'attack-1');
+assert.equal(runtime.phaseSurface.children.includes(runtime.triadLegend), true);
+assert.deepEqual(triadTokens.map(node => node.dataset.hand), ['rock', 'scissors', 'paper']);
 
 const p4View = runtime.laneSurfaces[3];
 const p4Afterstate = p4View.children[2];
@@ -216,6 +234,7 @@ assert.equal(adopted.adoptedResolutionSurface, true);
 assert.equal(adopted.planSlot, null);
 assert.equal(adopted.phaseSurface, existingPhase);
 assert.equal(adopted.resolutionSurface, existingResolution);
+assert.equal(existingPhase.children.includes(adopted.triadLegend), true);
 adopted.render(attack);
 assert.equal(existingResolution.textContent, 'KEEP');
 assert.equal(adopted.laneSurfaces.length, 4);
@@ -226,6 +245,7 @@ assert.equal(adopted.destroy(), true);
 assert.equal(adoptedDocument.body.children.includes(existingShell), true);
 assert.equal(existingShell.children.includes(existingPhase), true);
 assert.equal(existingPhase.children.includes(existingResolution), true);
+assert.equal(existingPhase.children.includes(adopted.triadLegend), false);
 
 const mismatchDocument = new FakeDocument();
 const mismatchRoot = mismatchDocument.createElement('div');
@@ -248,7 +268,7 @@ assert.equal(BATTLE_SCREEN_RUNTIME.formalArtOwnedHere, false);
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 74,
+  tests: 90,
   freshMount: {
     laneCount: runtime.laneSurfaces.length,
     phaseAnchor: runtime.phaseSurface.id,

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HUMAN-REACHABILITY-CENSUS-R70-20260902T0105-SOL-H8K3V6",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HUMAN_REACHABILITY_ROUTE_CENSUS_R70",
+  "acquireKey": "HUMAN-REACHABILITY-CENSUS-R70-20260902T0105-SOL-H8K3V6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_SCREEN_INDEX_HAS_UNROUTED_RUNTIME_NO_CAPTURE_AND_PLANNED_STATES_PLUS_DECK_STORAGE_LIVE_ENTRY_FAILURE_BFI2155",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_BROWSER_FULL_INTERACTION_STATE_SEQUENCE_R26_NAVIGATION_MODEL_REUSED_FOR_CENSUS",
+  "proceedToken": "PROCEED|HUMAN-REACHABILITY-CENSUS-R70-20260902T0105-SOL-H8K3V6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260902T0105JST",
+  "authorizationBaseSha": "ff8d717c8c949864f808a27852c049213b60a1f0",
+  "scope": [
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HUMAN_REACHABILITY_ROUTE_CENSUS_R70",
+  "leaseAcquireKey": "HUMAN-REACHABILITY-CENSUS-R70-20260902T0105-SOL-H8K3V6",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 01:05 JST",
+  "leaseUntilJst": "2026-09-02 02:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseScope": [
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main@ff8d717c8c949864f808a27852c049213b60a1f0; NEW branch work/human-reachability-census-r70-20260902; transient data/preaction-authorizations/HUMAN-REACHABILITY-CENSUS-R70-20260902T0105-SOL-H8K3V6.json create-first/delete-before-final-head; tests/browser-full-interaction-state-sequence.spec.mjs AUDIT/EVIDENCE ONLY; own draft evidence PR/checks; GAMEROAD 全作業一覧!Y2:AB2 finding sync only; own CURRENT_ACTIVE_LEASES row5; own R23 events. READ_ONLY all browser/product/runtime files including browser/GAMEROAD.html and active Battle R68 resources."
+}

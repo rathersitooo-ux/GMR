@@ -13,13 +13,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  inspect:
+  repair-and-verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Guard exact authority and inspect Result ranking CSS
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Guard exact authority and apply one presentation-only patch
+        id: patch
         shell: bash
         run: |
           set -euo pipefail
@@ -27,26 +32,55 @@ jobs:
           git merge-base --is-ancestor b59c4659b1f999b5afc385c648ba38b4c3fc501e HEAD
           test -f data/preaction-authorizations/RESULT-SHORTLAND-RANK-R1-20260901T1457-SOL-H6Q2M8.json
           grep -Fq '".github/workflows/zz-temp-result-shortland-rank-r1.yml"' data/preaction-authorizations/RESULT-SHORTLAND-RANK-R1-20260901T1457-SOL-H6Q2M8.json
-          current_blob="$(git rev-parse HEAD:browser/GAMEROAD.html)"
-          test "$current_blob" = "e3b13b6a770be20ee038bd0e829fc39730e2fac3"
           python - <<'PY'
           from pathlib import Path
-          s = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          needles = ['resultRanking', 'rankLine', '@media(max-height', '@media (max-height']
-          print('HTML_CHARS', len(s))
-          for needle in needles:
-              starts = []
-              pos = 0
-              while True:
-                  pos = s.find(needle, pos)
-                  if pos < 0:
-                      break
-                  starts.append(pos)
-                  pos += len(needle)
-              print(f'NEEDLE {needle!r} COUNT {len(starts)} POS {starts}')
-              for i, p in enumerate(starts[:20], 1):
-                  lo = max(0, p - 900)
-                  hi = min(len(s), p + 1400)
-                  print(f'--- {needle} #{i} [{lo}:{hi}] ---')
-                  print(s[lo:hi])
+          p = Path('browser/GAMEROAD.html')
+          s = p.read_text(encoding='utf-8')
+          old = '''@media (max-height:500px) and (orientation:landscape){
+  .result.active #resultRanking{gap:2px}
+  .result.active #resultRanking .rankLine{min-height:0;margin-bottom:0;padding:2px 6px}
+}'''
+          new = '''@media (max-height:500px) and (orientation:landscape){
+  .result.active .resultPoints{margin:0}
+  .result.active #resultRanking{gap:2px}
+  .result.active #resultRanking .rankLine{min-height:0;margin-bottom:0;padding:2px 6px}
+}'''
+          if new in s:
+              if s.count(new) != 1:
+                  raise SystemExit(f'PATCHED_BLOCK_CARDINALITY:{s.count(new)}')
+              print('PATCH_STATE=ALREADY_APPLIED')
+          else:
+              if s.count(old) != 1:
+                  raise SystemExit(f'OLD_BLOCK_CARDINALITY:{s.count(old)}')
+              p.write_text(s.replace(old, new, 1), encoding='utf-8')
+              print('PATCH_STATE=APPLIED')
           PY
+          if git diff --quiet -- browser/GAMEROAD.html; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          else
+            before_blob="$(git rev-parse HEAD:browser/GAMEROAD.html)"
+            test "$before_blob" = "e3b13b6a770be20ee038bd0e829fc39730e2fac3"
+            git diff --check -- browser/GAMEROAD.html
+            git diff --stat -- browser/GAMEROAD.html
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Browser static check
+        run: node tests/browser-static-check.mjs
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Verify existing R19 Result path in all normal viewports
+        run: npx playwright test tests/browser-full-interaction.spec.mjs --config=playwright.full-interaction.config.mjs --workers=1 --grep "R19 reaches Result from visible four-player Honey Hunt and returns Home"
+      - name: Commit product patch only after verification passes
+        if: steps.patch.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'rathersitooo-ux'
+          git config user.email 'rathersitooo@gmail.com'
+          git add browser/GAMEROAD.html
+          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = "1"
+          test "$(git diff --cached --name-only)" = "browser/GAMEROAD.html"
+          git commit -m 'fix(result): fit ranking in short landscape'
+          git push origin HEAD:work/result-shortland-rank-r1-20260901

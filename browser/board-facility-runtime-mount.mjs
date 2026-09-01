@@ -252,11 +252,11 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
       <div class="grPartnerHero" aria-hidden="true">
         <img class="grPartnerStaticVisual" src="${SAASUNA_PROVISIONAL_VISUAL}" alt="" draggable="false">
         <div class="grPartnerHeroShade"></div>
-        <div class="grPartnerIdentity"><small>PARTNER</small><b>サースナー</b></div>
+        <div class="grPartnerIdentity"><b>サースナー</b></div>
       </div>
       <div class="grPartnerChat">
         <div class="grPartnerConversationHead">
-          <div class="grPartnerConversationHeadText"><b>サースナーと話す</b><small>そのまま話しかけてください</small></div>
+          <div class="grPartnerConversationHeadText"><b>サースナーと話す</b></div>
           <span class="grPartnerConversationState" data-origin="neutral">会話できます</span>
         </div>
         <div class="grPartnerConversationLog" aria-live="polite"></div>
@@ -286,13 +286,11 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
         const response = await entry.send(message, { collectiveContext });
         const turn = response?.turn;
         const ok = turn?.ok && typeof turn.utterance === 'string';
-        appendMessage(document, log, ok ? 'saasuna' : 'system', ok ? turn.utterance : '応答できませんでした。');
-        if (ok && turn.responseOrigin === 'provider_candidate') setConversationState(state, 'AI応答', 'provider');
-        else if (ok) setConversationState(state, '仮応答', 'fallback');
-        else setConversationState(state, '応答エラー', 'fallback');
+        appendMessage(document, log, ok ? 'saasuna' : 'system', ok ? turn.utterance : '応答できませんでした。もう一度送ってください。');
+        setConversationState(state, '会話できます', 'neutral');
       } catch {
-        appendMessage(document, log, 'system', '応答できませんでした。');
-        setConversationState(state, '仮応答', 'fallback');
+        appendMessage(document, log, 'system', '応答できませんでした。もう一度送ってください。');
+        setConversationState(state, '会話できます', 'neutral');
       } finally {
         input.disabled = false;
         send.disabled = false;

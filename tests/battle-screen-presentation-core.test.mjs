@@ -34,7 +34,7 @@ const events = [
   { accepted: true, eventId: 'a1', kind: 'attack', publicData: { sourceId: 'P1', targetIds: ['P3'], importance: 'normal' } },
   { accepted: true, eventId: 'a2', kind: 'ability', publicData: { sourceId: 'P3', targetIds: ['P1', 'P2'], simultaneous: true } },
   { accepted: true, eventId: 'c1', kind: 'compare4', publicData: { playerIds: ['P1', 'P2', 'P3', 'P4'], winnerIds: ['P4'] } },
-  { accepted: true, eventId: 'f1', kind: 'finisher', publicData: { winnerId: 'P4', loserIds: ['P1', 'P2', 'P3'] } },
+  { accepted: true, eventId: 'f1', kind: 'finisher', publicData: { winnerId: 'P4' } },
   { accepted: true, eventId: 's1', kind: 'settle', publicData: {} }
 ];
 
@@ -79,10 +79,12 @@ assert.equal(compare.lanes.find(row => row.id === 'P1').role, 'revealed');
 const finisher = timeline.models.find(model => model.eventId === 'f1');
 assert.equal(finisher.transition, 'FINISHER_GATHER');
 assert.equal(finisher.focus.causeId, 'P4');
-assert.deepEqual(finisher.focus.targetIds, ['P1', 'P2', 'P3']);
+assert.deepEqual(finisher.focus.targetIds, []);
 assert.deepEqual(finisher.focus.winnerIds, ['P4']);
 assert.equal(finisher.lanes.find(row => row.id === 'P4').role, 'winner');
-assert.equal(finisher.lanes.filter(row => row.role === 'loser').length, 3);
+assert.equal(finisher.lanes.filter(row => row.role === 'idle').length, 3);
+assert.equal(finisher.lanes.some(row => row.role === 'loser'), false);
+assert.equal('loserIds' in finisher, false);
 assert.deepEqual(finisher.lanes.find(row => row.id === 'P4').afterstate.map(row => row.text), ['列進行 7']);
 assert.deepEqual(finisher.lanes.find(row => row.id === 'P2').afterstate.map(row => row.text), ['公開済み状態']);
 assert.equal(finisher.returnIntent, 'RESULT');
@@ -133,7 +135,7 @@ assert.deepEqual(BATTLE_SCREEN_PRESENTATION.requiredAnchors, ['battlePhaseSurfac
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 60,
+  tests: 62,
   timelineEnd: timeline.timelineEnd,
   phases: timeline.models.map(model => [model.eventId, model.phase, model.transition]),
   finisherRoles: finisher.lanes.map(row => [row.id, row.role])

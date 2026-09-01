@@ -86,3 +86,60 @@ export function resolveCyclicTriad(selections, config = {}) {
     winners: Object.freeze(winners),
   });
 }
+
+/**
+ * Resolves the same cyclic triad as an ordered elimination chain.
+ *
+ * `orderedSelections` must already be in the authoritative processing order.
+ * This resolver deliberately does not invent numeric sorting, equal-value
+ * tie-breaking, or any destination for invalidated cards. Those remain owned
+ * by the caller/current Battle authority.
+ */
+export function resolveCyclicTriadByProcessingOrder(orderedSelections, config = {}) {
+  const safeConfig = normalizeConfig(config);
+  const normalized = normalizeSelections(orderedSelections, safeConfig);
+  const active = normalized.filter((entry) => entry.hand !== safeConfig.noHand);
+  const nonParticipants = normalized
+    .filter((entry) => entry.hand === safeConfig.noHand)
+    .map((entry) => entry.playerId)
+    .sort(compareText);
+
+  let survivors = [];
+  const invalidated = [];
+  const steps = [];
+
+  for (const entry of active) {
+    if (survivors.length === 0) {
+      survivors = [entry];
+      continue;
+    }
+
+    const contestEntries = [...survivors, entry];
+    const contest = resolveCyclicTriad(contestEntries, config);
+    if (contest.winningHand === null) {
+      fail('ordered triad invariant violated: a processing step produced three active hand types');
+    }
+
+    const winnerIds = new Set(contest.winners);
+    const stepInvalidated = contestEntries
+      .filter((candidate) => !winnerIds.has(candidate.playerId));
+    survivors = contestEntries.filter((candidate) => winnerIds.has(candidate.playerId));
+    invalidated.push(...stepInvalidated);
+
+    steps.push(Object.freeze({
+      processedPlayerId: entry.playerId,
+      winningHand: contest.winningHand,
+      invalidated: Object.freeze(stepInvalidated.map((candidate) => candidate.playerId)),
+      survivors: Object.freeze(survivors.map((candidate) => candidate.playerId)),
+    }));
+  }
+
+  return Object.freeze({
+    processingOrder: Object.freeze(active.map((entry) => entry.playerId)),
+    nonParticipants: Object.freeze(nonParticipants),
+    survivingHand: survivors.length === 0 ? null : survivors[0].hand,
+    survivors: Object.freeze(survivors.map((entry) => entry.playerId)),
+    invalidated: Object.freeze(invalidated.map((entry) => entry.playerId)),
+    steps: Object.freeze(steps),
+  });
+}

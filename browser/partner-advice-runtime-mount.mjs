@@ -5,6 +5,7 @@ import {
 
 const VERSION_KEYS = Object.freeze(['rulesVersion', 'cardVersion', 'stateVersion']);
 const BOARD_PROJECTION_SCHEMA = 'gameroad.partner-advice-board-projection.v1';
+const TUTORIAL_GUIDE_SCHEMA = 'gameroad.tutorial-partner-guide-control.v1';
 
 function exactVersionTuple(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -177,5 +178,97 @@ export function createPartnerAdviceRuntimeControl({ onChange } = {}) {
       runtimeStateReady: Boolean(runtimeStateProvider),
       mode: versions ? (manifest ? 'manifest-or-rule' : 'shared-rule') : 'legacy-fallback',
     }),
+  });
+}
+
+export function createTutorialPartnerGuideControl({
+  tutorialId = 'tutorial.first-battle',
+  isTutorialCompleted = () => false,
+  commitTutorialCompletion = null,
+  onChange,
+} = {}) {
+  const id = exactPresentationToken(tutorialId);
+  if (!id) throw new TypeError('tutorialId must be an exact non-empty token');
+  if (typeof isTutorialCompleted !== 'function') throw new TypeError('isTutorialCompleted must be a function');
+  if (commitTutorialCompletion !== null && typeof commitTutorialCompletion !== 'function') {
+    throw new TypeError('commitTutorialCompletion must be a function or null');
+  }
+
+  let runId = null;
+  let active = false;
+  let autoGuideEnabled = false;
+  let completionCommitted = false;
+  const changed = () => { if (typeof onChange === 'function') onChange(); };
+  const externallyCompleted = () => {
+    try {
+      return isTutorialCompleted(id) === true;
+    } catch {
+      return null;
+    }
+  };
+  const status = () => Object.freeze({
+    schema: TUTORIAL_GUIDE_SCHEMA,
+    tutorialId: id,
+    runId,
+    active,
+    autoGuideEnabled: active && autoGuideEnabled,
+    userCanDisableAutoGuide: active && autoGuideEnabled,
+    onDemandConversationAllowed: true,
+    completionCommitted,
+    completed: completionCommitted || externallyCompleted() === true,
+  });
+
+  return Object.freeze({
+    begin(nextRunId) {
+      const next = exactPresentationToken(nextRunId);
+      if (!next) return false;
+      if (active || completionCommitted) return false;
+      const completed = externallyCompleted();
+      if (completed !== false) return false;
+      runId = next;
+      active = true;
+      autoGuideEnabled = true;
+      changed();
+      return true;
+    },
+    disableAutoGuide() {
+      if (!active) return false;
+      if (!autoGuideEnabled) return true;
+      autoGuideEnabled = false;
+      changed();
+      return true;
+    },
+    shouldAutoGuide(nextRunId = runId) {
+      const next = exactPresentationToken(nextRunId);
+      return Boolean(next && active && autoGuideEnabled && next === runId);
+    },
+    allowsOnDemandConversation() {
+      return true;
+    },
+    abort() {
+      if (!active) return false;
+      runId = null;
+      active = false;
+      autoGuideEnabled = false;
+      changed();
+      return true;
+    },
+    async complete() {
+      if (!active || completionCommitted || typeof commitTutorialCompletion !== 'function') return false;
+      let committed = false;
+      try {
+        committed = await commitTutorialCompletion(Object.freeze({ tutorialId: id, runId }));
+      } catch {
+        return false;
+      }
+      if (committed !== true) return false;
+      completionCommitted = true;
+      runId = null;
+      active = false;
+      autoGuideEnabled = false;
+      changed();
+      return true;
+    },
+    status,
   });
 }

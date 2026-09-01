@@ -27,14 +27,6 @@ export default defineConfig({
       name: 'desktop-1280x720',
       use: { viewport: { width: 1280, height: 720 } },
     },
-    {
-      name: 'phone-390x844',
-      use: { viewport: { width: 390, height: 844 } },
-    },
-    {
-      name: 'short-landscape-667x375',
-      use: { viewport: { width: 667, height: 375 } },
-    },
   ],
   webServer: {
     command: 'python3 -m http.server 4173 --bind 127.0.0.1',

@@ -13,6 +13,7 @@ import {
   projectBootLoadingPresentation,
 } from '../browser/boot-loading-presentation-core.mjs';
 import {
+  removeLegacyHomeNodes,
   resolveHomeSlidepadRelease,
   resolveHomeSlidepadRole,
   resolveHomeSlidepadRouteId,
@@ -64,6 +65,7 @@ test('Home projection preserves routes and selected route across viewport profil
   assert.deepEqual(wide.routeIds, s.routeIds);
   assert.deepEqual(short.routeIds, s.routeIds);
   assert.equal(wide.selectedRouteId, 'cards');
+  assert.deepEqual(short.routeIds, s.routeIds);
   assert.equal(short.selectedRouteId, 'cards');
   assert.equal(wide.touchTargetMinPx, HOME_TOUCH_TARGET_MIN_PX);
   assert.equal(HOME_TOUCH_TARGET_MIN_PX, 44);
@@ -148,6 +150,23 @@ test('Boot normal/reduced/lowPerf variants keep the same semantic state and acti
 });
 
 const liveSlidepadRoutes = ['setup', 'shop', 'characters', 'cards'];
+
+test('Home runtime removes legacy visual layer and duplicate CTAs instead of retaining a fallback', () => {
+  const removed = [];
+  const legacyLayer = { remove: () => removed.push('visual') };
+  const battleCta = { remove: () => removed.push('battle') };
+  const partnerChip = { remove: () => removed.push('partner') };
+  const home = {
+    querySelectorAll(selector) {
+      if (selector === '#codexHomeVisualLayer' || selector === '.codexHomeVisualLayer') return [legacyLayer];
+      if (selector === '#codexHomeBattleCta' || selector === '.codexBattleCta') return [battleCta];
+      if (selector === '#codexHomePartnerChip' || selector === '.codexPartnerChip') return [partnerChip];
+      return [];
+    },
+  };
+  assert.equal(removeLegacyHomeNodes(home), 3);
+  assert.deepEqual(removed.sort(), ['battle', 'partner', 'visual']);
+});
 
 test('Home SlidePad restores the four fixed directional responsibilities', () => {
   assert.equal(resolveHomeSlidepadRole({ dx: 0, dy: -48 }), 'battle');

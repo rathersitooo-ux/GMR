@@ -204,7 +204,7 @@ test('isolated rollback drill restores a validated package and rejects corruptio
   await assert.rejects(() => readFile(path.join(target, 'stale-undeclared.txt')), /ENOENT/);
   await writeFile(path.join(target, 'prevalidation-sentinel.txt'), 'target must remain untouched\n', 'utf8'); const originalSnapshotIndex = await readFile(path.join(snapshot, 'index.html'));
   await writeFile(path.join(snapshot, 'index.html'), Buffer.concat([originalSnapshotIndex, Buffer.from('CORRUPT')]));
-  await assert.rejects(() => restoreRollbackSnapshot({ snapshotDir: snapshot, targetDir: target, expectedSourceCommit, expectedManifestSha256, expectedHeadersSha256 }), /snapshot artifact (byte count|hash) mismatch: index\.html/);
+  await assert.rejects(() => restoreRollbackSnapshot({ snapshotDir: snapshot, targetDir: target, expectedSourceCommit: SOURCE_COMMIT, expectedManifestSha256, expectedHeadersSha256 }), /snapshot artifact (byte count|hash) mismatch: index\.html/);
   assert.equal(await readFile(path.join(target, 'prevalidation-sentinel.txt'), 'utf8'), 'target must remain untouched\n'); assert.equal((await readFile(path.join(target, 'index.html'))).equals(browserBytes), true);
 });
 

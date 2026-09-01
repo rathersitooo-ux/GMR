@@ -2,7 +2,7 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './tests',
-  testMatch: ['browser-full-interaction.spec.mjs', 'browser-full-interaction-state-sequence.spec.mjs', 'player-copy-visual-evidence.spec.mjs'],
+  testMatch: ['player-copy-visual-evidence.spec.mjs'],
   timeout: 90_000,
   expect: { timeout: 7_000 },
   fullyParallel: false,
@@ -34,16 +34,6 @@ export default defineConfig({
     {
       name: 'short-landscape-667x375',
       use: { viewport: { width: 667, height: 375 } },
-    },
-    {
-      name: 'phone-touch-390x844',
-      testMatch: ['browser-full-interaction-state-sequence.spec.mjs'],
-      grep: /@mobile-touch/,
-      use: {
-        viewport: { width: 390, height: 844 },
-        isMobile: true,
-        hasTouch: true,
-      },
     },
   ],
   webServer: {

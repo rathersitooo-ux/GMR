@@ -78,6 +78,27 @@ test('list detail buttons carry partner identity but never change active partner
   assert.equal(model.activePartnerId, 'partner.saasuna');
 });
 
+test('list and detail render partner identity once instead of duplicating active-partner copy', () => {
+  for (const view of ['list', 'detail']) {
+    const root = makeRoot();
+    const runtime = mountPartnerShellRuntime({
+      root,
+      getInput: () => ({
+        activePartnerId: 'partner.saasuna',
+        detailPartnerId: 'partner.saasuna',
+        roster,
+        view,
+      }),
+      canDispatch: () => true,
+    });
+    assert.equal(runtime.render().ok, true);
+    const activeLabels = allNodes(root).filter((node) => node.className === 'partner-shell-active');
+    assert.equal(activeLabels.length, 0);
+    const identityLabels = allNodes(root).filter((node) => node.textContent === 'サースナー');
+    assert.equal(identityLabels.length, 1);
+  }
+});
+
 test('mount renders connected actions and dispatches intent without local navigation', () => {
   const root = makeRoot();
   const events = [];

@@ -191,5 +191,5 @@ export function mountDeckStorageCorner({
 
   button.addEventListener('click', () => { controller.openStorage(); render(); });
   render();
-  return Object.freeze({ button, render, open: () => { controller.openStorage(); render(); }, close, dispose: () => { backdrop?.remove?.(); button.remove?.(); } });
+  return Object.freeze({ button, render, open: () => { controller.openStorage(); render(); }, close, dispose: () => { close(); button.remove?.(); } });
 }

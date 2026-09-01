@@ -81,7 +81,7 @@ function actionButton(doc, spec, emit) {
 }
 
 function renderBody(doc, section, model, emit) {
-  if (model.activePartner) {
+  if (model.activePartner && model.view !== 'list' && model.view !== 'detail') {
     const active = element(doc, 'p', 'partner-shell-active');
     active.dataset.partnerId = model.activePartner.partnerId;
     active.textContent = model.activePartner.displayName ?? model.activePartner.partnerId;

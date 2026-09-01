@@ -173,7 +173,7 @@ export function mountDeckStorageCorner({
     head.className = 'gr-storage-head';
     const title = doc.createElement('div');
     title.className = 'gr-storage-title';
-    title.textContent = `ストレージコーナー +${view.storageCount}`;
+    title.textContent = 'ストレージ';
     const x = doc.createElement('button');
     x.type = 'button';
     x.className = 'gr-storage-close';

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-CONVERSATION-SHELL-R1-20260901T2137-SOL-M6Q4V9",
+  "taskId": "PARTNER-CHARACTER-DIALOGUE-SOURCE-MANIFEST-001",
+  "workUnitKey": "SAASUNA_CONVERSATION_SHELL_BINDING_R1",
+  "acquireKey": "PARTNER-CONVERSATION-SHELL-R1-20260901T2137-SOL-M6Q4V9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "DIRECT-CURRENT-SHELL-GAP-APPROVED-ENTRY-REUSE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FOCUSED-SHELL-AND-CONVERSATION-CONTRACT-TESTS",
+  "proceedToken": "PROCEED|PARTNER-CONVERSATION-SHELL-R1-20260901T2137-SOL-M6Q4V9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|approved-entry-adapt",
+  "authorizationBaseSha": "79ad671a8680279dc81ede0d549b06e6b66d757a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-CHARACTER-DIALOGUE-SOURCE-MANIFEST-001",
+  "leaseWorkUnitKey": "SAASUNA_CONVERSATION_SHELL_BINDING_R1",
+  "leaseAcquireKey": "PARTNER-CONVERSATION-SHELL-R1-20260901T2137-SOL-M6Q4V9",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 21:37 JST",
+  "leaseUntilJst": "2026-09-01 22:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A13:L13",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main@79ad671a8680279dc81ede0d549b06e6b66d757a; NEW branch work/partner-conversation-shell-binding-r1-20260901; transient data/preaction-authorizations/PARTNER-CONVERSATION-SHELL-R1-20260901T2137-SOL-M6Q4V9.json create-first/delete-before-final-head; browser/partner-shell-runtime-mount.mjs exact current blob cddbb068ab04ff47db8e7832f511e17ceaf486b9; tests/partner-shell-runtime-mount.test.mjs exact current blob 9659843f79aa1c7236a021602100b4f8099924ae; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row13. READ_ONLY browser/partner-conversation-core.mjs blob 7ec1af5ffa9f8255a4b64eb5ecc2905d999a59a8, browser/partner-saasuna-conversation-source.mjs blob f2b1bfda9c9a5d9d2511e735b17059a0d2b6a4cc, browser/partner-shell-presentation-core.mjs blob 45825d140c7a0c5ebc3ce7abe48208134e105d34, browser/GAMEROAD.html and unrelated gameplay/save/economy/network/assets/workflows.",
+  "scope": [
+    "browser/partner-shell-runtime-mount.mjs",
+    "tests/partner-shell-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-shell-runtime-mount.mjs",
+    "tests/partner-shell-runtime-mount.test.mjs"
+  ]
+}

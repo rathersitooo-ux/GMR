@@ -86,6 +86,18 @@ test('same event id is idempotent and does not advance twice', () => {
   assert.equal(duplicate.state.stage, 'reveal');
 });
 
+test('duplicate event id cannot bypass presentation identity validation', () => {
+  const initial = makeState();
+  const first = applyResultPresentationEvent(initial, event(initial, 'REVEAL', 1, 'evt-shared'));
+  const forged = applyResultPresentationEvent(first.state, {
+    presentationId: 'OTHER', type: 'SETTLE', sequence: 2, eventId: 'evt-shared'
+  });
+  assert.equal(forged.accepted, false);
+  assert.equal(forged.duplicate, false);
+  assert.equal(forged.reason, 'PRESENTATION_ID_MISMATCH');
+  assert.equal(forged.state, first.state);
+});
+
 test('stale, gap, identity mismatch, and late-stage events fail closed without state mutation', () => {
   const entered = makeState();
   const revealed = applyResultPresentationEvent(entered, event(entered, 'REVEAL', 1, 'reveal-1')).state;

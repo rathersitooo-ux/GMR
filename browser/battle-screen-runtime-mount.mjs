@@ -186,8 +186,10 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     setData(resolutionSurface, 'battleScreenEventId', model.eventId);
 
     const battle = model.screenMode === 'BATTLE_PHASE';
+    const resultExit = !battle && model.returnIntent === 'RESULT';
+    if (shellCreated) shell.hidden = resultExit;
     phaseSurface.hidden = !battle;
-    if (planSlot) planSlot.hidden = battle;
+    if (planSlot) planSlot.hidden = battle || resultExit;
 
     for (let index = 0; index < lanes.length; index += 1) {
       const view = lanes[index];

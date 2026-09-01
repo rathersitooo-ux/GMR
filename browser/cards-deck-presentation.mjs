@@ -394,9 +394,12 @@ export function createDeckSwipePresentationController({
     return detail;
   };
 
-  const land = ({ targetElement, countElement, insertedElement, cardId, reduced }) => {
+  const showCommitFeedback = ({ targetElement, countElement }) => {
     clearPresentationClass(targetElement, 'gr-deck-swipe-target-hit', cfg.landingPulseMs);
     clearPresentationClass(countElement, 'gr-deck-swipe-count-hit', cfg.countPulseMs);
+  };
+
+  const land = ({ insertedElement, cardId, reduced }) => {
     clearPresentationClass(insertedElement, 'gr-deck-swipe-recent-add', cfg.recentAddMs);
     fire('land', { cardId, reducedMotion: reduced }, onLandSfx);
   };
@@ -415,15 +418,16 @@ export function createDeckSwipePresentationController({
     safeClassAdd(sourceElement, 'gr-deck-swipe-source-armed');
     setTimer(() => safeClassRemove(sourceElement, 'gr-deck-swipe-source-armed'), 90);
     fire('commit', { cardId, reducedMotion: reduced }, onCommitSfx);
+    showCommitFeedback({ targetElement, countElement });
 
     if (plan.reducedMotion || plan.flightMs === 0) {
-      land({ targetElement, countElement, insertedElement, cardId, reduced });
+      land({ insertedElement, cardId, reduced });
       return Object.freeze({ plan, cancel: () => {} });
     }
 
     const flight = cloneForFlight(sourceElement, doc, plan);
     if (!flight) {
-      land({ targetElement, countElement, insertedElement, cardId, reduced });
+      land({ insertedElement, cardId, reduced });
       return Object.freeze({ plan, cancel: () => {} });
     }
     layers.add(flight.layer);
@@ -433,7 +437,7 @@ export function createDeckSwipePresentationController({
       landed = true;
       layers.delete(flight.layer);
       flight.layer.remove?.();
-      land({ targetElement, countElement, insertedElement, cardId, reduced });
+      land({ insertedElement, cardId, reduced });
     };
 
     const cardAnim = safeAnimate(flight.clone, [

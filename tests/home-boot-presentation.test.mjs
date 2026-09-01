@@ -14,6 +14,7 @@ import {
 } from '../browser/boot-loading-presentation-core.mjs';
 import {
   removeLegacyHomeNodes,
+  resolveHomeSlidepadRayTarget,
   resolveHomeSlidepadRelease,
   resolveHomeSlidepadRole,
   resolveHomeSlidepadRouteId,
@@ -175,14 +176,56 @@ test('Home runtime removes legacy visual layer and duplicate CTAs instead of ret
   assert.deepEqual(removed.sort(), ['battle', 'partner', 'visual']);
 });
 
-test('Home SlidePad restores the four fixed directional responsibilities', () => {
+test('Home compatibility direction map keeps the four fixed responsibilities for non-pointer input', () => {
   assert.equal(resolveHomeSlidepadRole({ dx: 0, dy: -48 }), 'battle');
   assert.equal(resolveHomeSlidepadRole({ dx: 48, dy: 0 }), 'shop');
   assert.equal(resolveHomeSlidepadRole({ dx: -42, dy: -34 }), 'partner');
   assert.equal(resolveHomeSlidepadRole({ dx: -42, dy: 20 }), 'cards');
 });
 
-test('Home SlidePad projects the knob to the existing scene target instead of capping local travel', () => {
+test('Home pointer targeting follows the straight drag ray and actual target geometry, not a quadrant label', () => {
+  const target = resolveHomeSlidepadRayTarget({
+    originX: 100,
+    originY: 100,
+    pointerX: 180,
+    pointerY: 84,
+    targets: [
+      { routeId: 'setup', rect: { left: 110, top: -100, width: 60, height: 60 } },
+      { routeId: 'shop', rect: { left: 280, top: 40, width: 80, height: 60 } },
+      { routeId: 'characters', rect: { left: -80, top: -80, width: 70, height: 70 } },
+      { routeId: 'cards', rect: { left: -80, top: 130, width: 70, height: 70 } },
+    ],
+  });
+  assert.equal(resolveHomeSlidepadRole({ dx: 80, dy: -16 }), 'battle');
+  assert.equal(target?.routeId, 'shop');
+  assert.ok(target?.forward > 0);
+});
+
+test('Home pointer ray keeps DOWN and center dead-zone unassigned', () => {
+  const targets = [
+    { routeId: 'setup', rect: { left: 80, top: -100, width: 60, height: 60 } },
+    { routeId: 'shop', rect: { left: 220, top: 70, width: 70, height: 70 } },
+  ];
+  assert.equal(resolveHomeSlidepadRayTarget({ originX: 100, originY: 100, pointerX: 106, pointerY: 105, targets }), null);
+  assert.equal(resolveHomeSlidepadRayTarget({ originX: 100, originY: 100, pointerX: 100, pointerY: 160, targets }), null);
+});
+
+test('Home pointer ray retains the attached target through small aim jitter', () => {
+  const targets = [
+    { routeId: 'shop', rect: { left: 280, top: 40, width: 80, height: 60 } },
+    { routeId: 'setup', rect: { left: 260, top: -70, width: 80, height: 60 } },
+  ];
+  const first = resolveHomeSlidepadRayTarget({
+    originX: 100, originY: 100, pointerX: 180, pointerY: 82, targets,
+  });
+  assert.equal(first?.routeId, 'shop');
+  const jitter = resolveHomeSlidepadRayTarget({
+    originX: 100, originY: 100, pointerX: 180, pointerY: 76, targets, currentRouteId: first?.routeId,
+  });
+  assert.equal(jitter?.routeId, 'shop');
+});
+
+test('Home legacy target translation remains available as geometry evidence but is not pointer target authority', () => {
   const translation = resolveHomeSlidepadTargetTranslation({
     originX: 100,
     originY: 100,
@@ -193,7 +236,7 @@ test('Home SlidePad projects the knob to the existing scene target instead of ca
   assert.equal(resolveHomeSlidepadTargetTranslation({ originX: 100, originY: 100, targetRect: { left: 0, top: 0, width: 0, height: 20 } }), null);
 });
 
-test('Home SlidePad keeps DOWN and the center dead-zone unassigned', () => {
+test('Home SlidePad keeps DOWN and the center dead-zone unassigned in the compatibility map', () => {
   assert.equal(resolveHomeSlidepadRole({ dx: 0, dy: 48 }), null);
   assert.equal(resolveHomeSlidepadRole({ dx: 8, dy: -7 }), null);
   assert.equal(resolveHomeSlidepadRole({ dx: 10, dy: 20 }), null);
@@ -208,7 +251,7 @@ test('Home SlidePad resolves only routes that already exist in the current Home 
   assert.equal(resolveHomeSlidepadRouteId(liveSlidepadRoutes, 'down'), null);
 });
 
-test('Home SlidePad release fail-closes instead of inventing a destination', () => {
+test('Home SlidePad compatibility release fail-closes instead of inventing a destination', () => {
   assert.deepEqual(
     resolveHomeSlidepadRelease({ dx: 0, dy: -50, routeIds: liveSlidepadRoutes }),
     { role: 'battle', routeId: 'setup', commit: true },

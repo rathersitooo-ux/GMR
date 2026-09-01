@@ -13,6 +13,9 @@ const ROUTE_SELECTOR = '.homePadChoice[data-home-target]';
 const SLIDEPAD_CENTER_SELECTOR = '#homePadCenter';
 const SLIDEPAD_DEAD_ZONE_PX = 18;
 const SLIDEPAD_DOWN_REJECT_RATIO = 1.15;
+const SLIDEPAD_LOCAL_FEEDBACK_MAX_PX = 56;
+const SLIDEPAD_TARGET_PULL_MAX_PX = 10;
+const SLIDEPAD_SWITCH_ADVANTAGE = 0.22;
 const SLIDEPAD_ROUTE_IDS = Object.freeze({
   battle: Object.freeze(['setup', 'battle']),
   shop: Object.freeze(['shop']),
@@ -38,6 +41,7 @@ const runtime = {
   refreshScheduled: false,
   active: false,
   enterCount: 0,
+  reopenCount: 0,
   renderCount: 0,
   lastVariant: null,
   lastProfile: null,
@@ -83,6 +87,8 @@ export function removeDecorativeGlobalBrand(root = document) {
   return removed;
 }
 
+// Compatibility/fallback mapping for non-pointer input. Pointer targeting below does not use
+// this coarse quadrant resolver as its target authority.
 export function resolveHomeSlidepadRole({
   dx = 0,
   dy = 0,
@@ -129,6 +135,73 @@ export function resolveHomeSlidepadTargetTranslation({ originX, originY, targetR
   });
 }
 
+function targetCandidate({ originX, originY, unitX, unitY, target }) {
+  const routeId = String(target?.routeId || '').trim();
+  const rect = target?.rect;
+  const left = Number(rect?.left);
+  const top = Number(rect?.top);
+  const width = Number(rect?.width);
+  const height = Number(rect?.height);
+  if (!routeId || ![left, top, width, height].every(Number.isFinite) || width <= 0 || height <= 0) return null;
+  const vx = left + width / 2 - originX;
+  const vy = top + height / 2 - originY;
+  const forward = vx * unitX + vy * unitY;
+  if (!(forward > 0)) return null;
+  const perpendicular = Math.abs(vx * unitY - vy * unitX);
+  const targetReach = Math.max(width, height, HOME_TOUCH_TARGET_MIN_PX) / 2;
+  const miss = Math.max(0, perpendicular - targetReach);
+  const score = miss / Math.max(forward, 1) + forward * 0.00025;
+  return Object.freeze({ routeId, score, forward, perpendicular, targetReach });
+}
+
+// Pointer intent is the straight drag ray. Existing targets compete by their actual on-screen
+// geometry; the user is not required to drive the finger into a button centre.
+export function resolveHomeSlidepadRayTarget({
+  originX = 0,
+  originY = 0,
+  pointerX = 0,
+  pointerY = 0,
+  targets = [],
+  currentRouteId = null,
+  deadZonePx = SLIDEPAD_DEAD_ZONE_PX,
+  downRejectRatio = SLIDEPAD_DOWN_REJECT_RATIO,
+  switchAdvantage = SLIDEPAD_SWITCH_ADVANTAGE,
+} = {}) {
+  const ox = Number(originX);
+  const oy = Number(originY);
+  const px = Number(pointerX);
+  const py = Number(pointerY);
+  const dead = Number(deadZonePx);
+  const rejectRatio = Number(downRejectRatio);
+  const advantage = Number(switchAdvantage);
+  if (![ox, oy, px, py, dead, rejectRatio, advantage].every(Number.isFinite)
+    || dead < 0 || rejectRatio <= 0 || advantage < 0 || advantage >= 1 || !Array.isArray(targets)) return null;
+
+  const dx = px - ox;
+  const dy = py - oy;
+  const distance = Math.hypot(dx, dy);
+  if (distance < dead) return null;
+  if (dy > Math.abs(dx) * rejectRatio) return null;
+  const unitX = dx / distance;
+  const unitY = dy / distance;
+  const candidates = targets
+    .map((target) => targetCandidate({ originX: ox, originY: oy, unitX, unitY, target }))
+    .filter(Boolean)
+    .sort((a, b) => a.score - b.score || b.forward - a.forward);
+  if (!candidates.length) return null;
+
+  const best = candidates[0];
+  const current = currentRouteId == null
+    ? null
+    : candidates.find((candidate) => candidate.routeId === String(currentRouteId));
+  if (current && current.routeId !== best.routeId) {
+    // A newly crossed ray must be materially better before the gummy attachment lets go.
+    const retainLimit = best.score * (1 + advantage) + 0.02;
+    if (current.score <= retainLimit) return current;
+  }
+  return best;
+}
+
 function ensureStyle() {
   if (document.getElementById(STYLE_ID)) return;
   const style = document.createElement('style');
@@ -138,7 +211,7 @@ ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}{
   min-width:${HOME_TOUCH_TARGET_MIN_PX}px;
   min-height:${HOME_TOUCH_TARGET_MIN_PX}px;
   touch-action:manipulation;
-  transition:opacity 120ms ease-out,filter 120ms ease-out,outline-color 120ms ease-out;
+  transition:opacity 120ms ease-out,filter 120ms ease-out,outline-color 120ms ease-out,translate 120ms ease-out,scale 120ms ease-out;
 }
 ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}[data-home-target="setup"],
 ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}[data-home-target="battle"]{
@@ -168,6 +241,14 @@ ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}[data-home-sli
   outline-offset:4px;
   filter:brightness(1.12) saturate(1.05);
 }
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}[data-home-slidepad-attached="true"]{
+  opacity:1;
+  translate:var(--gameroad-home-slidepad-attach-x,0px) var(--gameroad-home-slidepad-attach-y,0px);
+  scale:1.035;
+  filter:brightness(1.16) saturate(1.08) drop-shadow(0 0 9px currentColor);
+  outline:3px solid currentColor;
+  outline-offset:2px;
+}
 ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SLIDEPAD_CENTER_SELECTOR}{
   touch-action:none;
   translate:var(--gameroad-home-slidepad-x, 0px) var(--gameroad-home-slidepad-y, 0px);
@@ -191,6 +272,13 @@ function routeId(button) {
   return value || null;
 }
 
+function roleForRouteId(id) {
+  for (const [role, ids] of Object.entries(SLIDEPAD_ROUTE_IDS)) {
+    if (ids.includes(id)) return role;
+  }
+  return null;
+}
+
 function selectedRouteId(buttons) {
   const selected = buttons.find((button) => (
     button.getAttribute('aria-current') === 'page'
@@ -212,6 +300,17 @@ function isHomeActive(home) {
   return style.display !== 'none' && style.visibility !== 'hidden';
 }
 
+function explicitExpandedState(home) {
+  const center = home?.querySelector?.(SLIDEPAD_CENTER_SELECTOR);
+  if (center instanceof HTMLElement) {
+    const ariaExpanded = center.getAttribute('aria-expanded');
+    if (ariaExpanded === 'false') return false;
+    if (ariaExpanded === 'true') return true;
+  }
+  if (home?.dataset?.homeSlidepadStowed === 'true') return false;
+  return true;
+}
+
 function clearAnimations() {
   for (const animation of runtime.animations) {
     try { animation.cancel(); } catch {}
@@ -219,7 +318,7 @@ function clearAnimations() {
   runtime.animations.clear();
 }
 
-function runEntrance(buttons) {
+function runReopenEntrance(buttons) {
   clearAnimations();
   if (reducedMotion()) return;
   buttons.forEach((button, index) => {
@@ -267,43 +366,53 @@ function resetKnob(center) {
   delete center.dataset.homeSlidepadDragging;
 }
 
+function clearButtonAttachment(button) {
+  if (!(button instanceof HTMLElement)) return;
+  delete button.dataset.homeSlidepadPreview;
+  delete button.dataset.homeSlidepadAttached;
+  button.style.removeProperty('--gameroad-home-slidepad-attach-x');
+  button.style.removeProperty('--gameroad-home-slidepad-attach-y');
+}
+
 function setPreview(button) {
   const previous = runtime.slidepad.previewButton;
-  if (previous && previous !== button) delete previous.dataset.homeSlidepadPreview;
+  if (previous && previous !== button) clearButtonAttachment(previous);
   runtime.slidepad.previewButton = button instanceof HTMLElement ? button : null;
   if (runtime.slidepad.previewButton) runtime.slidepad.previewButton.dataset.homeSlidepadPreview = 'true';
 }
 
 function clearPreview() {
-  if (runtime.slidepad.previewButton) delete runtime.slidepad.previewButton.dataset.homeSlidepadPreview;
+  if (runtime.slidepad.previewButton) clearButtonAttachment(runtime.slidepad.previewButton);
   runtime.slidepad.previewButton = null;
 }
 
-function moveKnob(center, button) {
+function moveKnobWithGesture(center, dx, dy) {
   if (!(center instanceof HTMLElement)) return;
-  if (!(button instanceof HTMLElement)) {
+  const distance = Math.hypot(dx, dy);
+  if (!Number.isFinite(distance) || distance <= 0) {
     center.style.setProperty('--gameroad-home-slidepad-x', '0px');
     center.style.setProperty('--gameroad-home-slidepad-y', '0px');
     return;
   }
-  const translation = resolveHomeSlidepadTargetTranslation({
-    originX: runtime.slidepad.originX,
-    originY: runtime.slidepad.originY,
-    targetRect: button.getBoundingClientRect(),
-  });
-  if (!translation) {
-    center.style.setProperty('--gameroad-home-slidepad-x', '0px');
-    center.style.setProperty('--gameroad-home-slidepad-y', '0px');
-    return;
-  }
-  center.style.setProperty('--gameroad-home-slidepad-x', `${translation.x.toFixed(1)}px`);
-  center.style.setProperty('--gameroad-home-slidepad-y', `${translation.y.toFixed(1)}px`);
+  const gain = Math.min(1, SLIDEPAD_LOCAL_FEEDBACK_MAX_PX / distance);
+  center.style.setProperty('--gameroad-home-slidepad-x', `${(dx * gain).toFixed(1)}px`);
+  center.style.setProperty('--gameroad-home-slidepad-y', `${(dy * gain).toFixed(1)}px`);
 }
 
-function buttonForRole(home, role) {
-  const buttons = routeButtons(home);
-  const id = resolveHomeSlidepadRouteId(buttons.map(routeId).filter(Boolean), role);
-  return id ? buttons.find((button) => routeId(button) === id) || null : null;
+function applyTargetAdhesion(button) {
+  if (!(button instanceof HTMLElement)) return;
+  const rect = button.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const vx = runtime.slidepad.originX - cx;
+  const vy = runtime.slidepad.originY - cy;
+  const distance = Math.hypot(vx, vy);
+  const pull = distance > 0 ? Math.min(SLIDEPAD_TARGET_PULL_MAX_PX, Math.max(4, distance * 0.015)) : 0;
+  const x = distance > 0 ? vx / distance * pull : 0;
+  const y = distance > 0 ? vy / distance * pull : 0;
+  button.style.setProperty('--gameroad-home-slidepad-attach-x', `${x.toFixed(1)}px`);
+  button.style.setProperty('--gameroad-home-slidepad-attach-y', `${y.toFixed(1)}px`);
+  button.dataset.homeSlidepadAttached = 'true';
 }
 
 function resetGesture({ releaseCapture = true } = {}) {
@@ -358,11 +467,21 @@ function bindSlidepad(home) {
     const { dx, dy } = pointerVector(event);
     const distance = Math.hypot(dx, dy);
     if (distance >= SLIDEPAD_DEAD_ZONE_PX) runtime.slidepad.moved = true;
-    const role = resolveHomeSlidepadRole({ dx, dy });
-    const button = role ? buttonForRole(home, role) : null;
+    const buttons = routeButtons(home);
+    const currentRouteId = routeId(runtime.slidepad.previewButton);
+    const target = resolveHomeSlidepadRayTarget({
+      originX: runtime.slidepad.originX,
+      originY: runtime.slidepad.originY,
+      pointerX: Number(event.clientX),
+      pointerY: Number(event.clientY),
+      currentRouteId,
+      targets: buttons.map((button) => ({ routeId: routeId(button), rect: button.getBoundingClientRect() })),
+    });
+    const button = target ? buttons.find((candidate) => routeId(candidate) === target.routeId) || null : null;
     setPreview(button);
-    moveKnob(center, button);
-    return { dx, dy, role: button ? role : null, button };
+    if (button) applyTargetAdhesion(button);
+    moveKnobWithGesture(center, dx, dy);
+    return { dx, dy, role: button ? roleForRouteId(routeId(button)) : null, button };
   };
 
   const handlers = {
@@ -433,9 +552,10 @@ export function refreshHomeBootPresentation() {
   const buttons = routeButtons(home);
   const ids = buttons.map(routeId).filter(Boolean);
   const selected = selectedRouteId(buttons);
+  const expanded = explicitExpandedState(home);
   let state;
   try {
-    state = createHomeShellState({ routeIds: ids, selectedRouteId: selected });
+    state = createHomeShellState({ expanded, routeIds: ids, selectedRouteId: selected });
   } catch (error) {
     runtime.lastError = String(error?.message || error || 'HOME_STATE_INVALID');
     return snapshot();
@@ -444,6 +564,7 @@ export function refreshHomeBootPresentation() {
   const variant = classifyHomeViewport({ width: innerWidth, height: innerHeight });
   const profile = reducedMotion() ? 'reduced' : 'full';
   const active = isHomeActive(home);
+  const reopening = runtime.lastExpanded === false && state.expanded === true;
   markHome(home, {
     variant,
     profile,
@@ -462,9 +583,10 @@ export function refreshHomeBootPresentation() {
   runtime.lastSelectedRouteId = state.selectedRouteId;
   runtime.lastError = null;
   runtime.renderCount += 1;
-  if (entering) {
-    runtime.enterCount += 1;
-    runEntrance(buttons);
+  if (entering) runtime.enterCount += 1;
+  if (active && reopening) {
+    runtime.reopenCount += 1;
+    runReopenEntrance(buttons);
   }
   return snapshot();
 }
@@ -494,7 +616,7 @@ export function mountHomeBootPresentation() {
     subtree: true,
     childList: true,
     attributes: true,
-    attributeFilter: ['class', 'hidden', 'aria-current', 'aria-pressed', 'data-home-target'],
+    attributeFilter: ['class', 'hidden', 'aria-current', 'aria-pressed', 'aria-expanded', 'data-home-target', 'data-home-slidepad-stowed'],
   });
   runtime.mounted = true;
   refreshHomeBootPresentation();
@@ -522,6 +644,7 @@ export function snapshot() {
     mounted: runtime.mounted,
     active: runtime.active,
     enterCount: runtime.enterCount,
+    reopenCount: runtime.reopenCount,
     renderCount: runtime.renderCount,
     viewportVariant: runtime.lastVariant,
     presentationProfile: runtime.lastProfile,
@@ -531,6 +654,7 @@ export function snapshot() {
     touchTargetMinPx: HOME_TOUCH_TARGET_MIN_PX,
     slidepadGestureBound: Boolean(runtime.slidepad.center && runtime.slidepad.handlers),
     slidepadPointerActive: runtime.slidepad.pointerId != null,
+    slidepadTargeting: 'straight-ray-target-side-adhesion',
     projectionStatus: 'scene-target-projection-mounted',
     lastError: runtime.lastError,
   });

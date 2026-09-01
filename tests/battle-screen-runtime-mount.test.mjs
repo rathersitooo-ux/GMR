@@ -102,6 +102,7 @@ assert.ok(runtimeStyle);
 assert.ok(runtimeStyle.textContent.includes('@media(max-height:470px) and (orientation:landscape)'));
 assert.ok(runtimeStyle.textContent.includes('.battle .royalUsageStrip{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;width:151px!important;gap:2px!important}'));
 assert.ok(runtimeStyle.textContent.includes('@media(max-width:540px){[data-gr-battle-screen="1"] [data-battle-screen-causal-grid]{left:4px;right:4px;gap:3px;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}'));
+assert.equal(runtimeStyle.textContent.includes('data-role="loser"'), false);
 
 const idle = createBattleScreenModel({ participants });
 runtime.render(idle);
@@ -158,9 +159,9 @@ const finisherPlan = {
   eventId: 'finish-1',
   kind: 'finisher',
   transition: 'FINISHER_GATHER',
-  groupTargets: ['P1', 'P2', 'P3'],
+  groupTargets: [],
   importance: 'major',
-  publicData: { winnerId: 'P4', loserIds: ['P1', 'P2', 'P3'] }
+  publicData: { winnerId: 'P4' }
 };
 const finisher = createBattleScreenModel({
   participants,
@@ -172,7 +173,8 @@ runtime.render(finisher);
 assert.equal(runtime.shell.hidden, false);
 assert.equal(runtime.shell.dataset.motion, 'static_only');
 assert.equal(runtime.shell.dataset.returnIntent, 'RESULT');
-assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['loser', 'loser', 'loser', 'winner']);
+assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['idle', 'idle', 'idle', 'winner']);
+assert.equal(runtime.laneSurfaces.some(node => node.dataset.role === 'loser'), false);
 assert.equal(runtime.phaseSurface.dataset.battleScreenPhase, 'finisher');
 assert.deepEqual(roleSurfaces.map(node => node.hidden), [true, true, true, true]);
 assert.deepEqual(roleSurfaces.map(node => node.textContent), ['', '', '', '']);
@@ -248,7 +250,7 @@ assert.equal(BATTLE_SCREEN_RUNTIME.formalArtOwnedHere, false);
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 74,
+  tests: 76,
   freshMount: {
     laneCount: runtime.laneSurfaces.length,
     phaseAnchor: runtime.phaseSurface.id,
@@ -256,6 +258,6 @@ console.log(JSON.stringify({
   },
   adoptedMount: {
     adoptedPhaseSurface: adopted.adoptedPhaseSurface,
-    adoptedResolutionSurface: adopted.adoptedResolutionSurface
+    adoptedResolutionSurface: adopted.resolutionSurface.id
   }
 }, null, 2));

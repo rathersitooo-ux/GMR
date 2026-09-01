@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createDeckStorageCornerController } from '../browser/deck-storage-corner-runtime.mjs';
+import { createDeckStorageCornerController, mountDeckStorageCorner } from '../browser/deck-storage-corner-runtime.mjs';
 
 function fixture({ deck = ['a'], rejectAdd = false, rejectRemove = false } = {}) {
   let currentDeck = [...deck];
@@ -24,6 +24,39 @@ function fixture({ deck = ['a'], rejectAdd = false, rejectRemove = false } = {})
     isRoyal: (id) => id.startsWith('R_'),
   });
   return { controller, calls, deck: () => [...currentDeck] };
+}
+
+function fakeElement() {
+  return {
+    children: [],
+    dataset: {},
+    attributes: {},
+    appendChild(node) {
+      this.children.push(node);
+      node.parentNode = this;
+      return node;
+    },
+    append(...nodes) {
+      for (const node of nodes) this.appendChild(node);
+    },
+    setAttribute(name, value) {
+      this.attributes[name] = String(value);
+    },
+    addEventListener() {},
+    remove() {
+      if (this.parentNode?.children) this.parentNode.children = this.parentNode.children.filter((node) => node !== this);
+      this.parentNode = null;
+    },
+  };
+}
+
+function fakeDocument() {
+  return {
+    head: fakeElement(),
+    body: fakeElement(),
+    createElement: () => fakeElement(),
+    getElementById: () => null,
+  };
 }
 
 test('collection left swipe stores candidate and opens storage immediately', () => {
@@ -105,4 +138,24 @@ test('storage discard never calls deck mutation authority', () => {
   assert.equal(result.ok, true);
   assert.equal(controller.view().storageCount, 0);
   assert.deepEqual(calls, { add: [], remove: [] });
+});
+
+test('dispose closes storage state so remount does not reopen stale UI', () => {
+  const { controller } = fixture();
+  const document = fakeDocument();
+  const buttonHost = fakeElement();
+  const first = mountDeckStorageCorner({ controller, buttonHost, document });
+
+  first.open();
+  assert.equal(controller.view().open, true);
+  assert.equal(document.body.children.length, 1);
+
+  first.dispose();
+  assert.equal(controller.view().open, false);
+  assert.equal(document.body.children.length, 0);
+
+  const second = mountDeckStorageCorner({ controller, buttonHost, document });
+  assert.equal(controller.view().open, false);
+  assert.equal(document.body.children.length, 0);
+  second.dispose();
 });

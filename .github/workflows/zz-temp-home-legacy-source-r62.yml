@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   exact-subtractive-cleanup:
-    if: github.event.head_commit.message == 'TEMP: add Home legacy source cleanup executor'
+    if: github.event.head_commit.message == 'TEMP_HOME_R62_EXECUTOR_RETRY'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +20,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "e284ea7a8fbc48d662b6cafd8af1c3d4623fbaf5"
+          test "$(git rev-parse HEAD^)" = "2a48ad12d73aaeede3649eb69b9e98102175b67b"
           test "$(git hash-object browser/GAMEROAD.html)" = "1c62a75b46c34c33fd54d64848cd6dea017a52ef"
           python - <<'PY'
           from pathlib import Path
@@ -116,7 +116,6 @@ jobs:
                   continue
               outer.append(candidate)
 
-          # Expand deletion over indentation and one following newline only; never beyond Home section.
           delete_ranges = []
           for start, end, matched, name in outer:
               line_start = text.rfind('\n', home_start, start) + 1
@@ -132,7 +131,6 @@ jobs:
           for start, end, matched, name in sorted(delete_ranges, reverse=True):
               edited = edited[:start] + edited[end:]
 
-          # Re-resolve Home after edit and assert legacy producer is absent while current controls remain.
           edited_tokens = list(tag_re.finditer(edited))
           edited_home = None
           for i, tok in enumerate(edited_tokens):
@@ -141,7 +139,6 @@ jobs:
               if name == 'section' and not closing and quoted_attr(raw, 'data-screen') == 'home':
                   if edited_home is not None:
                       raise SystemExit('multiple Home sections after edit')
-                  # local matcher using edited token list
                   depth = 1
                   for j in range(i + 1, len(edited_tokens)):
                       n2, c2, s2 = tag_info(edited_tokens[j].group(0))

@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   createPartnerAdviceReplayBridge,
   createPartnerAdviceRuntimeControl,
+  createTutorialPartnerGuideControl,
   projectPartnerAdviceBoardEmphasis,
 } from '../browser/partner-advice-runtime-mount.mjs';
 
@@ -189,4 +190,84 @@ test('projection gate is mandatory and never implies automatic execution', () =>
   assert.equal(projection.clear, true);
   assert.equal(projection.reason, 'PROJECTION_GATE_REQUIRED');
   assert.equal(projection.autoExecute, false);
+});
+
+test('Tutorial Battle starts Saasuna auto guide on and disabling it never disables on-demand conversation', () => {
+  const control = createTutorialPartnerGuideControl();
+  assert.equal(control.begin('tutorial-run-1'), true);
+  assert.equal(control.shouldAutoGuide(), true);
+  assert.equal(control.status().autoGuideEnabled, true);
+  assert.equal(control.status().userCanDisableAutoGuide, true);
+  assert.equal(control.allowsOnDemandConversation(), true);
+
+  assert.equal(control.disableAutoGuide(), true);
+  assert.equal(control.shouldAutoGuide(), false);
+  assert.equal(control.status().autoGuideEnabled, false);
+  assert.equal(control.status().userCanDisableAutoGuide, false);
+  assert.equal(control.allowsOnDemandConversation(), true);
+});
+
+test('Tutorial completion uses caller save authority and prevents same-session replay', async () => {
+  const receipts = [];
+  const control = createTutorialPartnerGuideControl({
+    commitTutorialCompletion: async (receipt) => {
+      receipts.push(receipt);
+      return true;
+    },
+  });
+
+  assert.equal(control.begin('tutorial-run-1'), true);
+  assert.equal(control.disableAutoGuide(), true);
+  assert.equal(await control.complete(), true);
+  assert.deepEqual(receipts, [{
+    tutorialId: 'tutorial.first-battle',
+    runId: 'tutorial-run-1',
+  }]);
+  assert.equal(control.status().completed, true);
+  assert.equal(control.status().active, false);
+  assert.equal(control.begin('tutorial-run-2'), false);
+  assert.equal(control.allowsOnDemandConversation(), true);
+});
+
+test('missing or failed Tutorial completion authority never fakes one-time completion', async () => {
+  const noCommit = createTutorialPartnerGuideControl();
+  assert.equal(noCommit.begin('tutorial-run-1'), true);
+  assert.equal(await noCommit.complete(), false);
+  assert.equal(noCommit.status().active, true);
+  assert.equal(noCommit.status().completed, false);
+
+  assert.equal(noCommit.abort(), true);
+  assert.equal(noCommit.begin('tutorial-run-2'), true);
+
+  const refused = createTutorialPartnerGuideControl({
+    commitTutorialCompletion: () => false,
+  });
+  assert.equal(refused.begin('tutorial-run-1'), true);
+  assert.equal(await refused.complete(), false);
+  assert.equal(refused.status().active, true);
+  assert.equal(refused.status().completed, false);
+});
+
+test('saved or unreadable Tutorial completion state fails closed before a new tutorial run', () => {
+  const saved = createTutorialPartnerGuideControl({
+    isTutorialCompleted: () => true,
+  });
+  assert.equal(saved.begin('tutorial-run-1'), false);
+
+  const unknown = createTutorialPartnerGuideControl({
+    isTutorialCompleted: () => { throw new Error('save unavailable'); },
+  });
+  assert.equal(unknown.begin('tutorial-run-1'), false);
+});
+
+test('aborting Tutorial does not consume it and the next run starts Saasuna auto guide on again', () => {
+  const control = createTutorialPartnerGuideControl();
+  assert.equal(control.begin('tutorial-run-1'), true);
+  assert.equal(control.disableAutoGuide(), true);
+  assert.equal(control.abort(), true);
+  assert.equal(control.status().completed, false);
+
+  assert.equal(control.begin('tutorial-run-2'), true);
+  assert.equal(control.shouldAutoGuide('tutorial-run-2'), true);
+  assert.equal(control.allowsOnDemandConversation(), true);
 });

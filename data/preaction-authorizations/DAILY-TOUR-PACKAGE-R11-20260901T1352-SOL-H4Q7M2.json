@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DAILY-TOUR-PACKAGE-R11-20260901T1352-SOL-H4Q7M2",
+  "taskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "workUnitKey": "DAILY_TOUR_PUBLIC_PACKAGE_CLOSURE_R11",
+  "acquireKey": "DAILY-TOUR-PACKAGE-R11-20260901T1352-SOL-H4Q7M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-DAILY-TOUR-DONOR-PLUS-PACKAGE-CLOSURE-R11",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ALT-ORACLE-PR763-FOCUSED-PASS-PACKAGE-MISSING-ONLY-R11",
+  "proceedToken": "PROCEED|DAILY-TOUR-PACKAGE-R11-20260901T1352-SOL-H4Q7M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_MAIN_DONOR_REBASE_AND_PUBLIC_PACKAGE_CLOSURE",
+  "authorizationBaseSha": "d275e5aed7dd7abae0ab75cdad8f7403b4ac351c",
+  "scope": [
+    "browser/daily-tour-home-launcher.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/daily-tour-home-launcher.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DAILY-ROUTINE-AUTONOMY-CHOICE-LOAD-001",
+  "leaseWorkUnitKey": "DAILY_TOUR_PUBLIC_PACKAGE_CLOSURE_R11",
+  "leaseAcquireKey": "DAILY-TOUR-PACKAGE-R11-20260901T1352-SOL-H4Q7M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 13:52 JST",
+  "leaseUntilJst": "2026-09-01 14:52 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A316:L316",
+  "leaseScope": [
+    "browser/daily-tour-home-launcher.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/daily-tour-home-launcher.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh main@268824c7cd38f5ec1692ab9cb0ea950fd3988ff8; NEW branch work/daily-tour-public-package-r11-20260901; transient data/preaction-authorizations/DAILY-TOUR-PACKAGE-R11-20260901T1352-SOL-H4Q7M2.json create-first/delete-before-final-head; browser/daily-tour-home-launcher.mjs; browser/home-boot-runtime-mount.mjs; tests/daily-tour-home-launcher.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row316; own R23 events. READ_ONLY browser/GAMEROAD.html, Setup/Battle/Result, registry/core semantics/content, reward/save/scheduler/day authority/relationship/gameplay/unrelated workflows.",
+  "solutionSignature": "Recover the already-tested Daily Tour Home launcher on fresh main, preserve current Home/Rogue runtime work, and copy the launcher plus its existing Daily core and registry into the public package so the visible consumer has no missing dependency.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-PR763-DONOR-AND-EXISTING-PACKAGER-R11",
+  "solutionSearchEvidence": [
+    "PR#763 already isolated the visible Daily Tour Home launcher, two-line Home mount, and focused contract test without creating scheduler/save/reward/day authority",
+    "current main Home runtime has later Rogue integration, so only the two Daily seam lines are semantically rebased rather than whole-file donor replacement",
+    "current public packager omits daily-tour-home-launcher.mjs; the launcher statically imports daily-tour-core.mjs and fetches /data/daily-tour-mode-registry.v1.json, so all three existing artifacts are required for actual public use"
+  ]
+}

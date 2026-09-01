@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GLOBAL-BRAND-REMOVAL-R64-20260901T1450-SOL-M4K7Q2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "GLOBAL_DECORATIVE_BRAND_REMOVAL_R64",
+  "acquireKey": "GLOBAL-BRAND-REMOVAL-R64-20260901T1450-SOL-M4K7Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_PUBLIC_SCREENSHOTS_BATTLE_RESULT_DECORATIVE_GAMEROAD_VISIBLE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_HOME_BOOT_RUNTIME_DOM_REMOVAL_PATTERN_PLUS_CURRENT_BFI_VISUAL_ACCEPTANCE",
+  "proceedToken": "PROCEED|GLOBAL-BRAND-REMOVAL-R64-20260901T1450-SOL-M4K7Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260901T1500JST",
+  "authorizationBaseSha": "a0733e503c894321a809250caf921a37334bd8b1",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "GLOBAL_DECORATIVE_BRAND_REMOVAL_R64",
+  "leaseAcquireKey": "GLOBAL-BRAND-REMOVAL-R64-20260901T1450-SOL-M4K7Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-01 15:00 JST",
+  "leaseUntilJst": "2026-09-01 15:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh main@a0733e503c894321a809250caf921a37334bd8b1; NEW replacement branch work/global-brand-removal-r64b-20260901; transient data/preaction-authorizations/GLOBAL-BRAND-REMOVAL-R64-20260901T1450-SOL-M4K7Q2.json create-first/delete-before-final-head; browser/home-boot-runtime-mount.mjs; own replacement PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row6. READ_ONLY browser/GAMEROAD.html, closed failed PR#889, Setup/Battle/Result gameplay/state, gummy Home UI, deploy/workflows/unrelated files."
+}

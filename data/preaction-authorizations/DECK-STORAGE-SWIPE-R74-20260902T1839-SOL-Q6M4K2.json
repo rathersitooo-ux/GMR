@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DECK-STORAGE-SWIPE-R74-20260902T1839-SOL-Q6M4K2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "DECK_STORAGE_HUMAN_REACHABILITY_R71_R73",
+  "acquireKey": "DECK-STORAGE-SWIPE-R74-20260902T1839-SOL-Q6M4K2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ROW2_R61_DIRECTION_PLUS_CURRENT_RUNTIME_FILTER_R74",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_DECK_STORAGE_RUNTIME_TEST_RIGHT_ADD_ORACLE",
+  "proceedToken": "PROCEED|DECK-STORAGE-SWIPE-R74-20260902T1839-SOL-Q6M4K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-02T18:39+09:00",
+  "authorizationBaseSha": "d5faba7414e3733d7f09f463382419eeb5ad8a8e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "DECK_STORAGE_HUMAN_REACHABILITY_R71_R73",
+  "leaseAcquireKey": "DECK-STORAGE-SWIPE-R74-20260902T1839-SOL-Q6M4K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 18:39 JST",
+  "leaseUntilJst": "2026-09-02 19:39 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A320:L320",
+  "leaseExactMutableResources": "browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ]
+}

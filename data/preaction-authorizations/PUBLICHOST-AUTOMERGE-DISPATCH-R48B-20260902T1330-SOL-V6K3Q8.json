@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PUBLICHOST-AUTOMERGE-DISPATCH-R48B-20260902T1330-SOL-V6K3Q8",
+  "taskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "workUnitKey": "PUBLICHOST_AUTOMERGE_DEPLOY_DISPATCH_R48B",
+  "acquireKey": "PUBLICHOST-AUTOMERGE-DISPATCH-R48B-20260902T1330-SOL-V6K3Q8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "current-auto-merge-publication-delay+github-token-recursion+required-gate-classification",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing-cloudflare-workflow-dispatch-entrypoint+current-public-runs+required-gate-self-check",
+  "proceedToken": "PROCEED|PUBLICHOST-AUTOMERGE-DISPATCH-R48B-20260902T1330-SOL-V6K3Q8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|reuse-existing-auto-merge-and-public-deploy",
+  "authorizationBaseSha": "97ccdf2b04b8e20886508c9d503b776ae4865fa1",
+  "scope": [
+    ".github/workflows/required-gate-auto-merge.yml",
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "leaseWorkUnitKey": "PUBLICHOST_AUTOMERGE_DEPLOY_DISPATCH_R48B",
+  "leaseAcquireKey": "PUBLICHOST-AUTOMERGE-DISPATCH-R48B-20260902T1330-SOL-V6K3Q8",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 13:30 JST",
+  "leaseUntilJst": "2026-09-02 14:29 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A24:L24",
+  "leaseScope": [
+    ".github/workflows/required-gate-auto-merge.yml",
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseExactMutableResources": ".github/workflows/required-gate-auto-merge.yml; .github/workflows/gameroad-required-gate.yml; data/preaction-authorizations/PUBLICHOST-AUTOMERGE-DISPATCH-R48B-20260902T1330-SOL-V6K3Q8.json; work/publichost-automerge-dispatch-r48b-20260902; CURRENT_ACTIVE_LEASES row24; R23 own events"
+}

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "STORY-COMMON-RUNTIME-R3-20260902T1810-SOL-R4N7K2",
+  "taskId": "STORY-COMMON-RUNTIME-CONTRACT-001",
+  "workUnitKey": "STORY_FIRST_SCENE_LIVE_VERTICAL_SLICE_R3_RECOVERY",
+  "acquireKey": "STORY-COMMON-RUNTIME-R3-20260902T1810-SOL-R4N7K2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "RECOVER-EXACT-STORY-R2-COMMITS-ONTO-FRESH-MAIN-5B9069E6",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "REQUIRED-GATE-33613298148-STORY-4OF4-PASS-PACKAGE-MISSING-STORY-MODULE",
+  "proceedToken": "PROCEED|STORY-COMMON-RUNTIME-R3-20260902T1810-SOL-R4N7K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-repair|reuse-compose",
+  "authorizationBaseSha": "5b9069e6d0575208e2bda70e29b8215306639839",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "STORY-COMMON-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "STORY_FIRST_SCENE_LIVE_VERTICAL_SLICE_R3_RECOVERY",
+  "leaseAcquireKey": "STORY-COMMON-RUNTIME-R3-20260902T1810-SOL-R4N7K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 18:10 JST",
+  "leaseUntilJst": "2026-09-02 19:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A27:L27",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh main@5b9069e6d0575208e2bda70e29b8215306639839; NEW branch work/story-first-scene-r3-recovery-20260902; browser/story-first-scene-runtime-mount.mjs; browser/home-boot-runtime-mount.mjs; tests/story-first-scene-runtime-mount.test.mjs; deploy/cloudflare/scripts/build.mjs only if existing package registration still required; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row27; central GAMEROAD 全作業一覧 row1241; own R23 events. READ_ONLY GAMEROAD.html, Tea/Partner/Tutorial/gameplay/save/economy/network/assets/unrelated files.",
+  "scope": [
+    "browser/story-first-scene-runtime-mount.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/story-first-scene-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "leaseScope": [
+    "browser/story-first-scene-runtime-mount.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/story-first-scene-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "solutionSignature": "Recover the already-built accepted Story first-scene Browser vertical slice onto current main and package that exact runtime through the existing Cloudflare artifact registry.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "OLD-R2-EXACT-BLOBS-PLUS-REQUIRED-GATE-PACKAGE-FAILURE",
+  "solutionSearchEvidence": [
+    "Old R2 Story implementation bytes remain directly recoverable from commit ce48adbf5009f80ad7d88052573b7ff0dabf8cad",
+    "Required Gate run 33613298148 passed PRE_ACTION and Story tests 4/4",
+    "The only observed failure is existing public-package dependency completeness: ./story-first-scene-runtime-mount.mjs missing",
+    "Existing ARTIFACT_SPECS is the current package registry, so one registration entry is shorter than any new packaging mechanism"
+  ]
+}

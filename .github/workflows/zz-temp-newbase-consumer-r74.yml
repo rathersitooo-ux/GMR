@@ -16,7 +16,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - name: Map targeted GAMEROAD runtime seams
+      - name: Map decisive current production seams
         shell: bash
         run: |
           python - <<'PY'
@@ -24,59 +24,67 @@ jobs:
           from pathlib import Path
 
           text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          targets = [
-              'normalMoveLimitForPlayer', 'preferredRoadCandidates', 'randomOrderByRoad',
-              'setBattleRuntimeState', 'renderHand', 'removeHand', 'selectedCardId',
-              'legalLaneCards', 'replacementBattleCard', 'resolveBattle', 'renderBattle',
-              'parseRoad', 'currentPublicRoad', 'publicMatchHasWinner', 'renderResult',
-              'phaseRunner', 'controller', 'safeResult', 'onResultCurrent',
-          ]
-
-          def clean(s):
-              return s.replace('\r', ' ').replace('\n', ' ')
-
-          def declaration_positions(name):
-              pats = [
-                  rf'\b(?:async\s+)?function\s+{re.escape(name)}\s*\(',
-                  rf'\b(?:const|let|var)\s+{re.escape(name)}\s*=',
-              ]
-              out = []
-              for pat in pats:
-                  out.extend(m.start() for m in re.finditer(pat, text))
+          def clean(s): return s.replace('\r',' ').replace('\n',' ')
+          def decls(name):
+              pats=[rf'\b(?:async\s+)?function\s+{re.escape(name)}\s*\(',rf'\b(?:const|let|var)\s+{re.escape(name)}\s*=']
+              out=[]
+              for pat in pats: out += [m.start() for m in re.finditer(pat,text)]
               return sorted(set(out))
+          def refs(name): return [m.start() for m in re.finditer(rf'\b{re.escape(name)}\b', text)]
+          def contexts(name,before=900,after=5000,maxrefs=4):
+              ds=decls(name); ps=[('DECL',p) for p in ds[:2]]
+              ps += [('REF',p) for p in refs(name)[:maxrefs] if p not in ds]
+              out=[]; seen=set()
+              for kind,p in ps:
+                  if p in seen: continue
+                  seen.add(p)
+                  out.append({'kind':kind,'offset':p,'text':clean(text[max(0,p-before):min(len(text),p+after)])})
+              return {'decl_offsets':ds,'ref_count':len(refs(name)),'contexts':out}
 
-          report = {'html_bytes': len(text.encode('utf-8')), 'targets': {}, 'random_sites': []}
-          for name in targets:
-              decls = declaration_positions(name)
-              refs = [m.start() for m in re.finditer(rf'\b{re.escape(name)}\b', text)]
-              entry = {'decl_offsets': decls, 'reference_count': len(refs), 'contexts': []}
-              positions = []
-              for p in decls[:2]:
-                  positions.append(('DECL', p, 1200, 6500))
-              for p in refs[:8]:
-                  if p not in decls:
-                      positions.append(('REF', p, 900, 1500))
-              seen = set()
-              for kind, p, before, after in positions:
-                  key = (kind, p)
-                  if key in seen: continue
-                  seen.add(key)
-                  lo, hi = max(0, p-before), min(len(text), p+after)
-                  entry['contexts'].append({'kind': kind, 'offset': p, 'text': clean(text[lo:hi])})
-              report['targets'][name] = entry
+          names=[
+            'createThinPhaseRunner','PHASE_GRAPH','phaseRunner','confirmTarget',
+            'resolveBattle','renderBattle','legalLaneCards','removeHand','replacementBattleCard',
+            'preferredRoadCandidates','normalMoveLimitForPlayer','parseRoad','currentPublicRoad',
+            'publicMatchHasWinner','renderResult','onResultCurrent','safeResult','controller'
+          ]
+          report={'html_bytes':len(text.encode()),'targets':{n:contexts(n) for n in names}}
 
-          runtime_lo, runtime_hi = 9_700_000, 10_800_000
-          for m in re.finditer(r'Math\.random\s*\(', text):
-              p = m.start()
-              if runtime_lo <= p <= runtime_hi:
-                  report['random_sites'].append({'offset': p, 'text': clean(text[max(0,p-1200):min(len(text),p+1800)])})
+          # Exact member use of the centralized phase runner.
+          members=[]
+          for m in re.finditer(r'\bphaseRunner\s*(?:\.\s*([A-Za-z_$][\w$]*)|\[\s*["\']([^"\']+)["\']\s*\])',text):
+              member=m.group(1) or m.group(2)
+              members.append({'member':member,'offset':m.start(),'text':clean(text[max(0,m.start()-800):min(len(text),m.start()+2200)])})
+          report['phase_runner_members']=members
 
-          exact_literals = ['READY','ROAD','BATTLE','RESULT','phase','turn','dice','roll','moveLimit','roadSelected']
-          report['runtime_literal_counts'] = {k: len(re.findall(re.escape(k), text[runtime_lo:runtime_hi], flags=re.I)) for k in exact_literals}
+          # Candidate production runtime declarations in the main late-game region.
+          region_lo,region_hi=9_750_000,10_750_000
+          declaration=re.compile(r'\b(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(|\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=')
+          semantic=('move','step','advance','walk','position','road','land','goal','result','battle','turn','dice','roll','hand','card','target','phase')
+          cands=[]; seen=set()
+          for m in declaration.finditer(text,region_lo,region_hi):
+              n=m.group(1) or m.group(2); low=n.lower()
+              if n in seen or not any(k in low for k in semantic): continue
+              seen.add(n); cands.append({'name':n,'offset':m.start()})
+          report['semantic_declarations']=cands[:250]
 
-          out = Path('/tmp/newbase-r74-targeted-map.json')
-          out.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
-          print('R74_TARGETED_MAP_BEGIN')
+          # Only entropy sites whose bounded context itself mentions dice/roll/sugoroku movement.
+          entropy=[]
+          for m in re.finditer(r'Math\.random\s*\(',text):
+              p=m.start()
+              if not (region_lo <= p <= region_hi): continue
+              s=text[max(0,p-1800):min(len(text),p+2200)]
+              if re.search(r'dice|roll|サイコロ|moveLimit|movement|roadSelected',s,re.I):
+                  entropy.append({'offset':p,'text':clean(s)})
+          report['candidate_entropy_sites']=entropy
+
+          # Exact transition/result invocation signatures around known phase graph block.
+          for literal in ['PLAN','MOVE','TARGET','BATTLE','EVENT','RESULT','transitionConfirm','resultFn','onResult']:
+              ps=[m.start() for m in re.finditer(re.escape(literal),text[10_500_000:10_620_000],re.I)]
+              report.setdefault('late_runtime_literals',{})[literal]=[10_500_000+p for p in ps[:20]]
+
+          out=Path('/tmp/newbase-r74-decisive-map.json')
+          out.write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+          print('R74_DECISIVE_MAP_BEGIN')
           print(out.read_text(encoding='utf-8'))
-          print('R74_TARGETED_MAP_END')
+          print('R74_DECISIVE_MAP_END')
           PY

@@ -1,4 +1,5 @@
 import { createSaasunaConversationEntry } from './partner-conversation-core.mjs';
+import { projectPartnerTeaQuickChoices } from './partner-tea-runtime-mount.mjs';
 
 const CLASSIC_BRIDGE_NAME = 'GAMEROAD_BOARD_FACILITY_STATE_CORE';
 const RUNTIME_NAME = 'GAMEROAD_BOARD_FACILITY_RUNTIME';
@@ -297,6 +298,7 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
     });
 
     roster.replaceChildren(surface);
+    projectPartnerTeaQuickChoices(global);
     const charName = document.querySelector('#charName');
     if (charName) charName.textContent = 'サースナー';
     return true;

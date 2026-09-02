@@ -21,12 +21,7 @@
   "leaseUntilJst": "2026-09-03 04:55 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A13:N13",
   "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs; focused tests for release-flight path",
-  "scope": [
-    "browser/battle-janken-slidepad-runtime-mount.mjs",
-    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
-  ],
-  "leaseScope": [
-    "browser/battle-janken-slidepad-runtime-mount.mjs",
-    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
-  ]
+  "scope": ["browser/battle-janken-slidepad-runtime-mount.mjs", "tests/battle-janken-slidepad-runtime-mount.test.mjs"],
+  "leaseScope": ["browser/battle-janken-slidepad-runtime-mount.mjs", "tests/battle-janken-slidepad-runtime-mount.test.mjs"],
+  "transientAuthorizationCleanup": "PENDING_DELETE_BEFORE_PR_HEAD"
 }

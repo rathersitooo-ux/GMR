@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PORTRAIT-PHASE-LAYOUT-R1-20260903T0000-SOL-N4Q7M2",
+  "taskId": "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PORTRAIT_PHASE_LAYOUT_R1",
+  "acquireKey": "BATTLE-PORTRAIT-PHASE-LAYOUT-R1-20260903T0000-SOL-N4Q7M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT+SCREEN_INDEX+BATTLE_RUNTIME_MAIN_96299511",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PORTRAIT_CSS_ONLY_EXISTING_SHELL_NO_STATE_WRITE",
+  "proceedToken": "PROCEED|BATTLE-PORTRAIT-PHASE-LAYOUT-R1-20260903T0000-SOL-N4Q7M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|PORTRAIT_ONLY",
+  "authorizationBaseSha": "96299511cf58a53f59510cbf863b524c39bd7122",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PORTRAIT_PHASE_LAYOUT_R1",
+  "leaseAcquireKey": "BATTLE-PORTRAIT-PHASE-LAYOUT-R1-20260903T0000-SOL-N4Q7M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-03 00:00 JST",
+  "leaseUntilJst": "2026-09-03 01:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:L9",
+  "leaseExactMutableResources": "browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

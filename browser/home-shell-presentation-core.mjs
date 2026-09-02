@@ -1,3 +1,5 @@
+import { mountSetupStagingPresentation } from './setup-staging-presentation-runtime.mjs';
+
 const SCHEMA = 'gameroad.home-shell-presentation.v1';
 const VIEWPORT_VARIANTS = Object.freeze({
   WIDE_LANDSCAPE: 'wide-landscape',
@@ -34,6 +36,11 @@ function freezeObject(value) {
   return Object.freeze(out);
 }
 
+function ensureSharedShellPresentation() {
+  if (typeof document === 'undefined') return false;
+  return mountSetupStagingPresentation(document);
+}
+
 export function classifyHomeViewport(input = {}) {
   const { width, height } = viewport(input);
   if (height > width) return VIEWPORT_VARIANTS.PORTRAIT;
@@ -42,6 +49,7 @@ export function classifyHomeViewport(input = {}) {
 }
 
 export function createHomeShellState({ expanded = true, selectedRouteId = null, routeIds = [] } = {}) {
+  ensureSharedShellPresentation();
   const ids = uniqueRouteIds(routeIds);
   const selected = selectedRouteId == null ? null : nonEmpty(selectedRouteId, 'selectedRouteId');
   if (selected !== null && !ids.includes(selected)) throw new Error('selectedRouteId must exist in routeIds');

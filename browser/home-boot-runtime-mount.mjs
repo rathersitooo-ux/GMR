@@ -14,7 +14,6 @@ const ROUTE_SELECTOR = '.homePadChoice[data-home-target]';
 const SLIDEPAD_CENTER_SELECTOR = '#homePadCenter';
 const SLIDEPAD_DEAD_ZONE_PX = 18;
 const SLIDEPAD_DOWN_REJECT_RATIO = 1.15;
-const SLIDEPAD_LOCAL_FEEDBACK_MAX_PX = 144;
 const SLIDEPAD_TARGET_PULL_MAX_PX = 18;
 const SLIDEPAD_SWITCH_ADVANTAGE = 0.22;
 const SLIDEPAD_ROUTE_IDS = Object.freeze({
@@ -387,17 +386,19 @@ function clearPreview() {
   runtime.slidepad.previewButton = null;
 }
 
+export function resolveHomeSlidepadFeedbackTranslation({ dx = 0, dy = 0 } = {}) {
+  const x = Number(dx);
+  const y = Number(dy);
+  if (![x, y].every(Number.isFinite)) return null;
+  return Object.freeze({ x, y });
+}
+
 function moveKnobWithGesture(center, dx, dy) {
   if (!(center instanceof HTMLElement)) return;
-  const distance = Math.hypot(dx, dy);
-  if (!Number.isFinite(distance) || distance <= 0) {
-    center.style.setProperty('--gameroad-home-slidepad-x', '0px');
-    center.style.setProperty('--gameroad-home-slidepad-y', '0px');
-    return;
-  }
-  const gain = Math.min(1, SLIDEPAD_LOCAL_FEEDBACK_MAX_PX / distance);
-  center.style.setProperty('--gameroad-home-slidepad-x', `${(dx * gain).toFixed(1)}px`);
-  center.style.setProperty('--gameroad-home-slidepad-y', `${(dy * gain).toFixed(1)}px`);
+  const translation = resolveHomeSlidepadFeedbackTranslation({ dx, dy });
+  if (!translation) return;
+  center.style.setProperty('--gameroad-home-slidepad-x', `${translation.x.toFixed(1)}px`);
+  center.style.setProperty('--gameroad-home-slidepad-y', `${translation.y.toFixed(1)}px`);
 }
 
 function applyTargetAdhesion(button) {

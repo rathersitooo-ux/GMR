@@ -14,8 +14,8 @@ const ROUTE_SELECTOR = '.homePadChoice[data-home-target]';
 const SLIDEPAD_CENTER_SELECTOR = '#homePadCenter';
 const SLIDEPAD_DEAD_ZONE_PX = 18;
 const SLIDEPAD_DOWN_REJECT_RATIO = 1.15;
-const SLIDEPAD_LOCAL_FEEDBACK_MAX_PX = 56;
-const SLIDEPAD_TARGET_PULL_MAX_PX = 10;
+const SLIDEPAD_LOCAL_FEEDBACK_MAX_PX = 144;
+const SLIDEPAD_TARGET_PULL_MAX_PX = 18;
 const SLIDEPAD_SWITCH_ADVANTAGE = 0.22;
 const SLIDEPAD_ROUTE_IDS = Object.freeze({
   battle: Object.freeze(['setup', 'battle']),

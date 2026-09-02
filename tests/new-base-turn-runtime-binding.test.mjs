@@ -74,7 +74,8 @@ function makeAuthorities(calls = []) {
     },
     resolveBattleInteraction(input) {
       calls.push('battle-interaction');
-      assert.deepEqual(input.outputs.orderedJanken.invalidated, ['p2', 'p1']);
+      assert.deepEqual(input.outputs.orderedJanken.invalidated, ['p2']);
+      assert.deepEqual(input.outputs.orderedJanken.resolvedWinners, ['p1']);
       return { appliedBy: 'CURRENT_BATTLE_AUTHORITY' };
     },
     progressRoad(input) {
@@ -126,7 +127,8 @@ test('runtime binding composes current cores after round readiness and resolves 
     diceMovementDelta: 4,
     totalMovementBudget: 7,
   });
-  assert.deepEqual(result.outputs.orderedJanken.invalidated, ['p2', 'p1']);
+  assert.deepEqual(result.outputs.orderedJanken.invalidated, ['p2']);
+  assert.deepEqual(result.outputs.orderedJanken.resolvedWinners, ['p1']);
   assert.deepEqual(result.outputs.completion, { kind: 'NEXT_TURN' });
 });
 
@@ -149,7 +151,7 @@ test('runtime binding does not perform per-turn mana recovery or fixed hand/RSP 
   assert.equal(result.outputs.roundState.resourceState, 'READY_BY_ROUND_AUTHORITY');
 });
 
-test('runtime binding reuses current win-only ordered cyclic resolver without assigning invalidated-card destination', async () => {
+test('runtime binding reuses current ascending first-win-lock cyclic resolver without assigning invalidated-card destination', async () => {
   const result = await runNewBaseTurnWithRuntime({
     turnContext: {},
     runtimeAuthorities: makeAuthorities(),
@@ -160,10 +162,12 @@ test('runtime binding reuses current win-only ordered cyclic resolver without as
     result.outputs.orderedJanken.steps.map((step) => step.processedPlayerId),
     ['p1', 'p3', 'p4'],
   );
-  assert.deepEqual(result.outputs.orderedJanken.survivors, ['p3', 'p4']);
-  assert.deepEqual(result.outputs.orderedJanken.invalidated, ['p2', 'p1']);
+  assert.deepEqual(result.outputs.orderedJanken.survivors, ['p1', 'p3', 'p4']);
+  assert.deepEqual(result.outputs.orderedJanken.resolvedWinners, ['p1']);
+  assert.deepEqual(result.outputs.orderedJanken.unresolvedSurvivors, ['p3', 'p4']);
+  assert.deepEqual(result.outputs.orderedJanken.invalidated, ['p2']);
   const serialized = JSON.stringify(result.outputs.orderedJanken);
-  assert.doesNotMatch(serialized, /destination|graveyard|chip|subdeck/i);
+  assert.doesNotMatch(serialized, /destination|graveyard|chip|subdeck|heart|luna|support|interference/i);
 });
 
 test('runtime binding fails closed when a required existing authority is absent', () => {

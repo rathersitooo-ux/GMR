@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DECK-STORAGE-LIVE-MOUNT-R73-20260902T1321-SOL-Q8N4V6",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "DECK_STORAGE_CARDS_LIVE_MOUNT_R73",
+  "acquireKey": "DECK-STORAGE-LIVE-MOUNT-R73-20260902T1321-SOL-Q8N4V6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R72_LIVE_CARDS_CONSUMER_INTROSPECTION_PLUS_EXISTING_STORAGE_RUNTIME",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_DECK_STORAGE_CORE_RUNTIME_TESTS_PLUS_R72_BROWSER_FULL_INTERACTION",
+  "proceedToken": "PROCEED|DECK-STORAGE-LIVE-MOUNT-R73-20260902T1321-SOL-Q8N4V6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXISTING_REPAIR_REUSE",
+  "authorizationBaseSha": "c9b1bd42eb5e9bc6accab547669ec6eddae27605",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "browser/cards-deck-presentation-core.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "DECK_STORAGE_CARDS_LIVE_MOUNT_R73",
+  "leaseAcquireKey": "DECK-STORAGE-LIVE-MOUNT-R73-20260902T1321-SOL-Q8N4V6",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 13:21 JST",
+  "leaseUntilJst": "2026-09-02 14:21 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A20:L20",
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "browser/cards-deck-presentation-core.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main@c9b1bd42eb5e9bc6accab547669ec6eddae27605; NEW branch work/deck-storage-live-mount-r73-20260902; transient data/preaction-authorizations/DECK-STORAGE-LIVE-MOUNT-R73-20260902T1321-SOL-Q8N4V6.json create-first/delete-before-final-head; browser/cards-deck-presentation.mjs blob 59ff475290c81e33c91b2144ff29758999e5edb7 -> same bytes reused at browser/cards-deck-presentation-core.mjs; browser/cards-deck-presentation.mjs thin live facade; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row20; own R23 events. READ_ONLY browser/deck-storage-corner-runtime.mjs, browser/deck-storage-corner-core.mjs, browser/GAMEROAD.html, gameplay/rules/save/economy/network/assets/unrelated files."
+}

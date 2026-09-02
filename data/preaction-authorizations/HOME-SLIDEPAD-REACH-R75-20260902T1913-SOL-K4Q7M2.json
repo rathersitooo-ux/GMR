@@ -8,7 +8,7 @@
   "predictionStatus": "PASS",
   "predictionEvidenceId": "CURRENT_HOME_SLIDEPAD_56PX_CLAMP_VS_FULL_SCREEN_RAY_TARGETING_20260902",
   "rehearsalStatus": "N_A_ALT_ORACLE",
-  "rehearsalEvidenceId": "PURE_GEOMETRY_UNIT_TEST_PLUS_EXISTING_HOME_PRESENTATION_GATE",
+  "rehearsalEvidenceId": "EXISTING_HOME_PRESENTATION_TESTS_PLUS_EXACT_LITERAL_CARDINALITY_GUARD",
   "proceedToken": "PROCEED|HOME-SLIDEPAD-REACH-R75-20260902T1913-SOL-K4Q7M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260902T1918JST",
   "authorizationBaseSha": "1a374699803942caa7481fc7568cec13103fe1e3",
   "stateModelVersion": "STATE_MODEL_V1",
@@ -20,13 +20,21 @@
   "leaseSnapshotReadbackAtJst": "2026-09-02 19:18 JST",
   "leaseUntilJst": "2026-09-02 20:15 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A300:L300",
-  "leaseExactMutableResources": "browser/home-boot-runtime-mount.mjs; tests/home-boot-presentation.test.mjs; data/preaction-authorizations/HOME-SLIDEPAD-REACH-R75-20260902T1913-SOL-K4Q7M2.json; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row300",
+  "leaseExactMutableResources": "browser/home-boot-runtime-mount.mjs; .github/workflows/zz-temp-home-slidepad-reach-r75.yml transient exact-branch guarded patch executor; data/preaction-authorizations/HOME-SLIDEPAD-REACH-R75-20260902T1913-SOL-K4Q7M2.json; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row300",
   "scope": [
     "browser/home-boot-runtime-mount.mjs",
-    "tests/home-boot-presentation.test.mjs"
+    ".github/workflows/zz-temp-home-slidepad-reach-r75.yml"
   ],
   "leaseScope": [
     "browser/home-boot-runtime-mount.mjs",
-    "tests/home-boot-presentation.test.mjs"
+    ".github/workflows/zz-temp-home-slidepad-reach-r75.yml"
+  ],
+  "solutionSignature": "guarded exact-literal patch executor for oversized or connector-unpatchable tracked source",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_ACTIVE_LEASES prior Setup/Result exact-patch executor pattern",
+  "solutionSearchEvidence": [
+    "CURRENT_ACTIVE_LEASES!A312:L314",
+    "tools/preaction-authorization-validator.mjs current v3"
   ]
 }

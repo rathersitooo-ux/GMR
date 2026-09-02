@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DECK-STORAGE-DISCOVERY-R75-20260902T1321-SOL-Q7M4N9",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "DECK_STORAGE_PRIMARY_DISCOVERY_R75",
+  "acquireKey": "DECK-STORAGE-DISCOVERY-R75-20260902T1321-SOL-Q7M4N9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_R74_PRIMARY_DISCOVERY_GAP_PLUS_EXISTING_DECK_STORAGE_RUNTIME_DIRECT_ACTUAL",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_STORAGE_OPEN_PATH_PLUS_PURE_HORIZONTAL_LEFT_SWIPE_ORACLE_AND_FOCUSED_RUNTIME_TEST",
+  "proceedToken": "PROCEED|DECK-STORAGE-DISCOVERY-R75-20260902T1321-SOL-Q7M4N9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260902T1329JST",
+  "authorizationBaseSha": "58d07dc398ac8854ba60b6f8efbddd57ecde9863",
+  "scope": [
+    "browser/deck-storage-corner-runtime.mjs",
+    "tests/deck-storage-corner-runtime.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "DECK_STORAGE_PRIMARY_DISCOVERY_R75",
+  "leaseAcquireKey": "DECK-STORAGE-DISCOVERY-R75-20260902T1321-SOL-Q7M4N9",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 13:29 JST",
+  "leaseUntilJst": "2026-09-02 14:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A322:L322",
+  "leaseScope": [
+    "browser/deck-storage-corner-runtime.mjs",
+    "tests/deck-storage-corner-runtime.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main@58d07dc398ac8854ba60b6f8efbddd57ecde9863; branch work/deck-storage-discovery-r75-20260902; transient data/preaction-authorizations/DECK-STORAGE-DISCOVERY-R75-20260902T1321-SOL-Q7M4N9.json create-first/delete-before-final-head; browser/deck-storage-corner-runtime.mjs; tests/deck-storage-corner-runtime.test.mjs; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row322. READ_ONLY browser/GAMEROAD.html; browser/cards-deck-presentation.mjs; browser/deck-storage-corner-core.mjs; active Battle/UI-motion resources; unrelated files."
+}

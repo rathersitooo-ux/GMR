@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-TEA-BUSY-FEEDBACK-R1-20260903T0254-SOL-Q7N4V2",
+  "taskId": "MINOR-MODE-PLAYGLOBAL-COVERAGE-001",
+  "workUnitKey": "PARTNER-TEA-QUICK-CHOICE-BUSY-STATE-R1",
+  "acquireKey": "PARTNER-TEA-BUSY-FEEDBACK-R1-20260903T0254-SOL-Q7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT+main@84b70768+Tea-production-route+existing-disabled-authority",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "direct Tea runtime/Board consumer readback + existing focused Tea runtime suite",
+  "proceedToken": "PROCEED|PARTNER-TEA-BUSY-FEEDBACK-R1-20260903T0254-SOL-Q7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260903T0259JST",
+  "authorizationBaseSha": "84b70768a4d4c1d5866619596bd10056c3e70c7d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "MINOR-MODE-PLAYGLOBAL-COVERAGE-001",
+  "leaseWorkUnitKey": "PARTNER-TEA-QUICK-CHOICE-BUSY-STATE-R1",
+  "leaseAcquireKey": "PARTNER-TEA-BUSY-FEEDBACK-R1-20260903T0254-SOL-Q7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-09-03 02:59 JST",
+  "leaseUntilJst": "2026-09-03 03:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A321:L321",
+  "leaseExactMutableResources": "browser/partner-tea-runtime-mount.mjs; tests/partner-tea-runtime-mount.test.mjs; branch work/partner-tea-quick-choice-busy-state-r1b-20260903; replacement PR/checks/expected-head merge",
+  "scope": [
+    "browser/partner-tea-runtime-mount.mjs",
+    "tests/partner-tea-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-tea-runtime-mount.mjs",
+    "tests/partner-tea-runtime-mount.test.mjs"
+  ]
+}

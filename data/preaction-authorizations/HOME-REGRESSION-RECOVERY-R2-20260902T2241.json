@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-REGRESSION-RECOVERY-R2-20260902T2241",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME-VISIBILITY-SLIDEPAD-REGRESSION-RECOVERY-R2",
+  "acquireKey": "HOME-REGRESSION-RECOVERY-R2-20260902T2241-SOL-H4M8Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER-ACTUAL-HOME-MISSING-SLIDEPAD-IMMOBILE-20260902T2224+CURRENT-CODE-CAUSE-READBACK",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "TARGETED-DIFF-REHEARSAL-R1-PR963-NOT-MERGED-CODE-DIFF-ONLY-PREAUTH-SCHEMA-FAILED",
+  "proceedToken": "PROCEED|HOME-REGRESSION-RECOVERY-R2-20260902T2241|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|TARGETED_HOME_RECOVERY",
+  "authorizationBaseSha": "7f0a7ec98fecd4c0d20cd381f55e43b4aedde57a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME-VISIBILITY-SLIDEPAD-REGRESSION-RECOVERY-R2",
+  "leaseAcquireKey": "HOME-REGRESSION-RECOVERY-R2-20260902T2241-SOL-H4M8Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 22:41 JST",
+  "leaseUntilJst": "2026-09-02 23:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A320:L320",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main@7f0a7ec98fecd4c0d20cd381f55e43b4aedde57a; NEW branch work/home-visibility-slidepad-regression-r2-20260902; browser/home-boot-runtime-mount.mjs; tests/home-boot-presentation.test.mjs; data/preaction-authorizations/HOME-REGRESSION-RECOVERY-R2-20260902T2241.json transient; own PR/checks/expected-head merge. browser/rogue-run-runtime-mount.mjs and Battle resources READ_ONLY.",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ]
+}

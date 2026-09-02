@@ -73,6 +73,72 @@ test('approved manifest can override the rule only inside current legal public c
   assert.equal(result.selected.candidateId, 'learned');
 });
 
+test('formal partner identity can resolve an existing saved strategy without changing legality', () => {
+  const bridge = createPartnerAdviceReplayBridge({
+    legacyReplay,
+    getVersions: () => V,
+    getPartnerId: () => 'partner.saasuna',
+    getStrategyPreference: (partnerId) => {
+      assert.equal(partnerId, 'partner.saasuna');
+      return 'right';
+    },
+  });
+
+  const result = bridge([
+    candidate('left-card', 0, 3),
+    candidate('right-card', 1, 5),
+  ], 'left');
+
+  assert.equal(result.source, 'shared-legal-action-core');
+  assert.equal(result.selected.candidateId, 'right-card');
+});
+
+test('different formal partner identities may resolve different existing strategy preferences', () => {
+  let currentPartnerId = 'partner.alpha';
+  const bridge = createPartnerAdviceReplayBridge({
+    legacyReplay,
+    getVersions: () => V,
+    getPartnerId: () => currentPartnerId,
+    getStrategyPreference: (partnerId) => ({
+      'partner.alpha': 'min',
+      'partner.beta': 'max',
+    })[partnerId] ?? null,
+  });
+  const candidates = [candidate('low', 0, 1), candidate('high', 1, 9)];
+
+  assert.equal(bridge(candidates, 'left').selected.candidateId, 'low');
+  currentPartnerId = 'partner.beta';
+  assert.equal(bridge(candidates, 'left').selected.candidateId, 'high');
+});
+
+test('missing invalid or failed preference authority never invents a default strategy', () => {
+  const candidates = [candidate('left-card', 0, 9), candidate('right-card', 1, 1)];
+
+  for (const getStrategyPreference of [
+    () => null,
+    () => 'balanced',
+    () => { throw new Error('save unavailable'); },
+  ]) {
+    const bridge = createPartnerAdviceReplayBridge({
+      legacyReplay,
+      getVersions: () => V,
+      getPartnerId: () => 'partner.saasuna',
+      getStrategyPreference,
+    });
+    assert.equal(bridge(candidates, 'left').selected.candidateId, 'left-card');
+  }
+
+  let calls = 0;
+  const noIdentity = createPartnerAdviceReplayBridge({
+    legacyReplay,
+    getVersions: () => V,
+    getPartnerId: () => null,
+    getStrategyPreference: () => { calls += 1; return 'right'; },
+  });
+  assert.equal(noIdentity(candidates, 'left').selected.candidateId, 'left-card');
+  assert.equal(calls, 0);
+});
+
 test('runtime control rejects invented/partial versions and exposes activation status', () => {
   const control = createPartnerAdviceRuntimeControl();
   assert.deepEqual(control.status(), { versionReady: false, manifestReady: false, runtimeStateReady: false, mode: 'legacy-fallback' });

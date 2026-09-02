@@ -4,6 +4,7 @@ import {
 } from './partner-legal-action-adapter.mjs';
 
 const VERSION_KEYS = Object.freeze(['rulesVersion', 'cardVersion', 'stateVersion']);
+const PARTNER_STRATEGY_RULES = new Set(['left', 'right', 'max', 'min']);
 const BOARD_PROJECTION_SCHEMA = 'gameroad.partner-advice-board-projection.v1';
 const TUTORIAL_GUIDE_SCHEMA = 'gameroad.tutorial-partner-guide-control.v1';
 
@@ -23,6 +24,20 @@ function exactPresentationToken(value) {
   const token = value.trim();
   if (!token || token !== value || token.length > 160) return null;
   return token;
+}
+
+function resolvePartnerStrategyRule(rule, getPartnerId, getStrategyPreference) {
+  if (!PARTNER_STRATEGY_RULES.has(rule)) return rule;
+  if (typeof getPartnerId !== 'function' || typeof getStrategyPreference !== 'function') return rule;
+
+  try {
+    const partnerId = exactPresentationToken(getPartnerId());
+    if (!partnerId) return rule;
+    const preferredRule = getStrategyPreference(partnerId);
+    return PARTNER_STRATEGY_RULES.has(preferredRule) ? preferredRule : rule;
+  } catch {
+    return rule;
+  }
 }
 
 function inactiveBoardProjection(reason) {
@@ -105,11 +120,20 @@ export function createPartnerAdviceReplayBridge({
   getVersions = () => null,
   getManifest = () => null,
   getRuntimeState = () => null,
+  getPartnerId = null,
+  getStrategyPreference = null,
 } = {}) {
   if (typeof legacyReplay !== 'function') throw new TypeError('legacyReplay must be a function');
+  if (getPartnerId !== null && typeof getPartnerId !== 'function') {
+    throw new TypeError('getPartnerId must be a function or null');
+  }
+  if (getStrategyPreference !== null && typeof getStrategyPreference !== 'function') {
+    throw new TypeError('getStrategyPreference must be a function or null');
+  }
 
   return function partnerAdviceReplay(candidates, rule) {
-    const fallback = () => legacyReplay({ rule, candidates });
+    const effectiveRule = resolvePartnerStrategyRule(rule, getPartnerId, getStrategyPreference);
+    const fallback = () => legacyReplay({ rule: effectiveRule, candidates });
     const versions = exactVersionTuple(getVersions());
     if (!versions) return fallback();
 
@@ -118,7 +142,7 @@ export function createPartnerAdviceReplayBridge({
       const result = manifest
         ? selectPartnerManifestOrRuleCandidate({
             candidates,
-            rule,
+            rule: effectiveRule,
             sourceVersions: versions,
             targetVersions: versions,
             manifest,
@@ -126,7 +150,7 @@ export function createPartnerAdviceReplayBridge({
           })
         : selectPartnerLegalCandidate({
             candidates,
-            rule,
+            rule: effectiveRule,
             sourceVersions: versions,
             targetVersions: versions,
           });

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-FIRST-WIN-LOCK-R12-20260902T1218-SOL-P6N4Q8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "NEW_BASE_FIRST_WIN_LOCK_R12",
+  "acquireKey": "NEWBASE-FIRST-WIN-LOCK-R12-20260902T1218-SOL-P6N4Q8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_R12_USER_OVERRIDE_VS_MAIN_R10_WIN_ONLY_DIRECT_DIFF",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXHAUSTIVE_81_R12_EXPECTED_INVALIDATED_0_1_2_3_EQ_3_21_45_12_POSITION_SURVIVAL_60_39_39_39_HAND_SURVIVAL_59_59_59",
+  "proceedToken": "PROCEED|NEWBASE-FIRST-WIN-LOCK-R12-20260902T1218-SOL-P6N4Q8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260902T1226JST",
+  "authorizationBaseSha": "58d07dc398ac8854ba60b6f8efbddd57ecde9863",
+  "scope": [
+    "browser/triad-resolver-core.mjs",
+    "tests/triad-resolver-core.test.mjs",
+    "tests/new-base-turn-runtime-binding.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "NEW_BASE_FIRST_WIN_LOCK_R12",
+  "leaseAcquireKey": "NEWBASE-FIRST-WIN-LOCK-R12-20260902T1218-SOL-P6N4Q8",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 12:18 JST",
+  "leaseUntilJst": "2026-09-02 13:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A18:M18",
+  "leaseScope": [
+    "browser/triad-resolver-core.mjs",
+    "tests/triad-resolver-core.test.mjs",
+    "tests/new-base-turn-runtime-binding.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main@58d07dc398ac8854ba60b6f8efbddd57ecde9863; NEW branch work/newbase-first-win-lock-r12-20260902; transient data/preaction-authorizations/NEWBASE-FIRST-WIN-LOCK-R12-20260902T1218-SOL-P6N4Q8.json create-first/delete-before-final-head; browser/triad-resolver-core.mjs; tests/triad-resolver-core.test.mjs; tests/new-base-turn-runtime-binding.test.mjs; GAMEROAD 全作業一覧!Y1374:AB1374 result sync; Google Doc 1VhOF5qIOkfGyWNloEL8bXsXpzMwnWzKAPBtSLl2wBwA exact R12 ruling sync only; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row18. READ_ONLY browser/GAMEROAD.html and R11 initial-hand7 owner; R8 slot assignment; Heart/Luna concrete effects; invalidated-card destination; tie/hand-count/hidden-finisher; save/economy/network/assets/unrelated files."
+}

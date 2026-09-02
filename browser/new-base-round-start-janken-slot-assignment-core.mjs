@@ -120,9 +120,10 @@ function freezeSlot(slot) {
  * has duplicate candidates, the caller must inject an authoritative integer
  * chooser. This core never calls Math.random() and never owns entropy.
  *
- * The returned ordinaryHandCardIds are precisely the cards not selected into
- * the three janken slots at this round start. The snapshot does not auto-refill
- * or reassign from those leftovers later in the round.
+ * selectedJankenCardIds are stable slot references, not cards removed from the
+ * normal hand. ordinaryHandCardIds therefore preserves the complete source hand,
+ * including cards referenced by occupied janken slots. The snapshot does not
+ * auto-refill or reassign any slot later in the round.
  */
 export function createRoundStartJankenSlotAssignment({
   roundId,
@@ -133,7 +134,6 @@ export function createRoundStartJankenSlotAssignment({
   const canonicalRoundId = requireNonEmptyString(roundId, 'roundId');
   const currentHand = requireHand(hand);
   const fixedSlots = requireFixedSlots(fixedSlotState);
-  const selectedCardIds = new Set();
 
   const slots = fixedSlots.map((slot) => {
     const suit = NEW_BASE_JANKEN_SUIT_BY_HAND[slot.jankenHand];
@@ -160,7 +160,6 @@ export function createRoundStartJankenSlotAssignment({
       candidateCardIds,
       pickDuplicateIndex,
     });
-    selectedCardIds.add(cardId);
     return freezeSlot({
       slotId: slot.slotId,
       jankenHand: slot.jankenHand,
@@ -176,7 +175,7 @@ export function createRoundStartJankenSlotAssignment({
   const selectedJankenCardIds = slots
     .filter((slot) => slot.cardId !== null)
     .map((slot) => slot.cardId);
-  const ordinaryHandCardIds = sourceHandCardIds.filter((cardId) => !selectedCardIds.has(cardId));
+  const ordinaryHandCardIds = [...sourceHandCardIds];
 
   return Object.freeze({
     schema: NEW_BASE_ROUND_START_JANKEN_SLOT_ASSIGNMENT_SCHEMA,

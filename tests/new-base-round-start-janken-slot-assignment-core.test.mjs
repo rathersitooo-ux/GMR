@@ -13,7 +13,7 @@ function slotByHand(snapshot, jankenHand) {
   return snapshot.slots.find((slot) => slot.jankenHand === jankenHand);
 }
 
-test('binds CL/DI/SP to fixed ROCK/SCISSORS/PAPER while leaving HT and duplicate leftovers ordinary', () => {
+test('binds CL/DI/SP to fixed ROCK/SCISSORS/PAPER while keeping every source card in normal hand membership', () => {
   const requests = [];
   const snapshot = createRoundStartJankenSlotAssignment({
     roundId: 'round-7',
@@ -41,7 +41,14 @@ test('binds CL/DI/SP to fixed ROCK/SCISSORS/PAPER while leaving HT and duplicate
   assert.equal(slotByHand(snapshot, 'SCISSORS').cardId, 'DI_8');
   assert.equal(slotByHand(snapshot, 'PAPER').cardId, 'SP_Q');
   assert.deepEqual(snapshot.selectedJankenCardIds, ['CL_4', 'DI_8', 'SP_Q']);
-  assert.deepEqual(snapshot.ordinaryHandCardIds, ['CL_A', 'HT_2']);
+  assert.deepEqual(snapshot.ordinaryHandCardIds, ['CL_A', 'CL_4', 'DI_8', 'SP_Q', 'HT_2']);
+  for (const selectedCardId of snapshot.selectedJankenCardIds) {
+    assert.equal(
+      snapshot.ordinaryHandCardIds.includes(selectedCardId),
+      true,
+      'a janken slot references a hand card without removing its direct-play hand membership',
+    );
+  }
 
   assert.equal(requests.length, 1, 'authoritative chooser is called only for duplicate suits');
   assert.deepEqual(requests[0], {
@@ -92,7 +99,7 @@ test('keeps missing-suit directions present as empty disabled slots', () => {
     cardId: null,
     candidateCardIds: [],
   });
-  assert.deepEqual(snapshot.ordinaryHandCardIds, ['HT_K']);
+  assert.deepEqual(snapshot.ordinaryHandCardIds, ['CL_2', 'HT_K']);
 });
 
 test('supports arbitrary hand size and does not require all three janken suits', () => {
@@ -110,6 +117,8 @@ test('supports arbitrary hand size and does not require all three janken suits',
   ]) {
     const snapshot = createRoundStartJankenSlotAssignment({ roundId: `round-${hand.length}`, hand });
     assert.equal(snapshot.sourceHandCardIds.length, hand.length);
+    assert.equal(snapshot.ordinaryHandCardIds.length, hand.length);
+    assert.deepEqual(snapshot.ordinaryHandCardIds, snapshot.sourceHandCardIds);
     assert.equal(snapshot.slots.length, 3);
   }
 });
@@ -147,6 +156,7 @@ test('returns the exact same immutable snapshot within a round and never rerolls
   assert.equal(chooserCalls, 1);
   assert.equal(slotByHand(repeated, 'ROCK').cardId, 'CL_3');
   assert.equal(slotByHand(repeated, 'PAPER').cardId, null, 'same-round redraw does not backfill an empty slot');
+  assert.deepEqual(repeated.ordinaryHandCardIds, ['CL_3', 'CL_9', 'HT_A']);
   assert.equal(Object.isFrozen(first), true);
   assert.equal(Object.isFrozen(first.slots), true);
   for (const slot of first.slots) {
@@ -185,6 +195,8 @@ test('creates a fresh assignment for a new round and can choose a different dupl
   assert.notStrictEqual(next, first);
   assert.equal(slotByHand(first, 'SCISSORS').cardId, 'DI_2');
   assert.equal(slotByHand(next, 'SCISSORS').cardId, 'DI_7');
+  assert.deepEqual(first.ordinaryHandCardIds, ['DI_2', 'DI_7']);
+  assert.deepEqual(next.ordinaryHandCardIds, ['DI_2', 'DI_7']);
   assert.equal(chooserCalls, 2);
 });
 

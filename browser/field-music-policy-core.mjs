@@ -1,4 +1,5 @@
 export const FIELD_MUSIC_ROLE = 'FIELD_MUSIC';
+export const DEFAULT_FIELD_MUSIC_WEIGHT = 50;
 
 function clamp01(value) {
   const number = Number(value);
@@ -72,6 +73,46 @@ function silent(reason, context = {}) {
     trackKey: null,
     source: null,
   });
+}
+
+export function normalizeFieldMusicSettings({
+  trackKeys = [],
+  trackWeights = {},
+  defaultWeight = DEFAULT_FIELD_MUSIC_WEIGHT,
+  musicVolume = 1,
+  musicMuted = false,
+} = {}) {
+  const fallbackWeight = clampWeight(defaultWeight);
+  const seen = new Set();
+  const weights = {};
+  for (const rawKey of Array.isArray(trackKeys) ? trackKeys : []) {
+    const key = safeKey(rawKey);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    const configured = trackWeights && typeof trackWeights === 'object' && Object.hasOwn(trackWeights, key)
+      ? clampWeight(trackWeights[key])
+      : fallbackWeight;
+    weights[key] = configured;
+  }
+  return Object.freeze({
+    schema: 'gameroad.field-music-settings.v1',
+    defaultWeight: fallbackWeight,
+    trackWeights: Object.freeze(weights),
+    musicVolume: clamp01(musicVolume),
+    musicMuted: musicMuted === true,
+  });
+}
+
+export function applyFieldMusicSettings({ tracks, settings } = {}) {
+  const normalizedSettings = settings && settings.schema === 'gameroad.field-music-settings.v1'
+    ? settings
+    : normalizeFieldMusicSettings({ trackKeys: (Array.isArray(tracks) ? tracks : []).map((track) => track?.key) });
+  const rawWeights = normalizedSettings.trackWeights ?? {};
+  return Object.freeze(normalizeTracks(tracks).map((track) => Object.freeze({
+    ...track,
+    weight: Object.hasOwn(rawWeights, track.key) ? clampWeight(rawWeights[track.key]) : normalizedSettings.defaultWeight,
+    defaultWeight: normalizedSettings.defaultWeight,
+  })));
 }
 
 export function resolveFieldMusicSelection({
@@ -156,10 +197,14 @@ export function resolveOneShotFallback({
   attempted.add(failedKey);
   if (attempted.size >= 2) return null;
 
-  const candidates = normalizeTracks(tracks).filter(
-    (track) => !attempted.has(track.key) && track.weight > 0,
+  const normalizedTracks = normalizeTracks(tracks);
+  const hasConfiguredWeight = normalizedTracks.some((track) => track.weight > 0);
+  const candidates = normalizedTracks.filter((track) => !attempted.has(track.key));
+  const selected = chooseWeighted(
+    candidates,
+    hasConfiguredWeight ? (track) => track.weight : (track) => track.defaultWeight,
+    random,
   );
-  const selected = chooseWeighted(candidates, (track) => track.weight, random);
   if (!selected) return null;
 
   return Object.freeze({
@@ -168,12 +213,16 @@ export function resolveOneShotFallback({
     trackKey: selected.key,
     baseVolume: selected.baseVolume,
     reason: 'primary_failed_once',
+    source: hasConfiguredWeight ? 'configured_weight' : 'default_weight',
   });
 }
 
 export const FIELD_MUSIC_POLICY_CORE = Object.freeze({
   schema: 'gameroad.field-music-policy.v1',
   role: FIELD_MUSIC_ROLE,
+  defaultWeight: DEFAULT_FIELD_MUSIC_WEIGHT,
+  normalizeSettings: normalizeFieldMusicSettings,
+  applySettings: applyFieldMusicSettings,
   resolveSelection: resolveFieldMusicSelection,
   resolveEffectiveVolume: resolveEffectiveMusicVolume,
   resolveOneShotFallback,

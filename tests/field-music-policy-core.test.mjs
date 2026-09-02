@@ -2,7 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import '../deploy/cloudflare/tests/normal-match-r3.test.mjs';
 import {
+  DEFAULT_FIELD_MUSIC_WEIGHT,
   FIELD_MUSIC_ROLE,
+  applyFieldMusicSettings,
+  normalizeFieldMusicSettings,
   resolveEffectiveMusicVolume,
   resolveFieldMusicSelection,
   resolveOneShotFallback,
@@ -12,6 +15,14 @@ const TRACKS = [
   { key: 'field.a', role: FIELD_MUSIC_ROLE, weight: 50, defaultWeight: 50, baseVolume: 0.65 },
   { key: 'field.b', role: FIELD_MUSIC_ROLE, weight: 50, defaultWeight: 50, baseVolume: 0.5 },
 ];
+
+const TEN_TRACKS = Array.from({ length: 10 }, (_, index) => ({
+  key: `field.track.${index + 1}`,
+  role: FIELD_MUSIC_ROLE,
+  weight: DEFAULT_FIELD_MUSIC_WEIGHT,
+  defaultWeight: DEFAULT_FIELD_MUSIC_WEIGHT,
+  baseVolume: 1,
+}));
 
 test('FIELD_MUSIC never aliases an unsupported BATTLE_MUSIC role and invalid context stays silent', () => {
   assert.deepEqual(
@@ -78,7 +89,7 @@ test('effective volume is baseVolume multiplied by user volume and mute is autho
   assert.equal(resolveEffectiveMusicVolume({ baseVolume: 0.65, musicVolume: 0.5, musicMuted: true }), 0);
 });
 
-test('playback failure can nominate at most one positive-weight alternate and then stops', () => {
+test('playback failure can nominate at most one alternate and all-zero configured weights use defaults', () => {
   const fallback = resolveOneShotFallback({
     role: FIELD_MUSIC_ROLE,
     failedTrackKey: 'field.a',
@@ -88,6 +99,7 @@ test('playback failure can nominate at most one positive-weight alternate and th
   });
   assert.equal(fallback.trackKey, 'field.b');
   assert.equal(fallback.reason, 'primary_failed_once');
+  assert.equal(fallback.source, 'configured_weight');
 
   const noSecondFallback = resolveOneShotFallback({
     role: FIELD_MUSIC_ROLE,
@@ -98,13 +110,15 @@ test('playback failure can nominate at most one positive-weight alternate and th
   });
   assert.equal(noSecondFallback, null);
 
-  const noZeroWeightFallback = resolveOneShotFallback({
+  const defaultFallback = resolveOneShotFallback({
     role: FIELD_MUSIC_ROLE,
     failedTrackKey: 'field.a',
     attemptedTrackKeys: ['field.a'],
     tracks: TRACKS.map((track) => ({ ...track, weight: 0 })),
+    random: () => 0,
   });
-  assert.equal(noZeroWeightFallback, null);
+  assert.equal(defaultFallback.trackKey, 'field.b');
+  assert.equal(defaultFallback.source, 'default_weight');
 });
 
 test('duplicate, malformed, and non-FIELD track entries cannot create an implicit playable choice', () => {
@@ -121,4 +135,54 @@ test('duplicate, malformed, and non-FIELD track entries cannot create an implici
     ],
   });
   assert.equal(selected.trackKey, 'field.a');
+});
+
+test('My Music settings expose all 10 tracks at equal defaults and preserve independent volume/mute', () => {
+  const settings = normalizeFieldMusicSettings({
+    trackKeys: TEN_TRACKS.map((track) => track.key),
+    musicVolume: 0.7,
+    musicMuted: false,
+  });
+  assert.equal(settings.defaultWeight, 50);
+  assert.equal(Object.keys(settings.trackWeights).length, 10);
+  assert.ok(Object.values(settings.trackWeights).every((weight) => weight === 50));
+  assert.equal(settings.musicVolume, 0.7);
+  assert.equal(settings.musicMuted, false);
+
+  const applied = applyFieldMusicSettings({ tracks: TEN_TRACKS, settings });
+  assert.equal(applied.length, 10);
+  assert.ok(applied.every((track) => track.weight === 50 && track.defaultWeight === 50));
+});
+
+test('My Music can pin one song with 100/0/... and all-zero intentionally falls back to equal defaults', () => {
+  const pinnedWeights = Object.fromEntries(TEN_TRACKS.map((track, index) => [track.key, index === 6 ? 100 : 0]));
+  const pinnedSettings = normalizeFieldMusicSettings({
+    trackKeys: TEN_TRACKS.map((track) => track.key),
+    trackWeights: pinnedWeights,
+  });
+  const pinnedTracks = applyFieldMusicSettings({ tracks: TEN_TRACKS, settings: pinnedSettings });
+  const pinned = resolveFieldMusicSelection({
+    role: FIELD_MUSIC_ROLE,
+    fieldId: 'field.initial',
+    sessionId: 'match-pinned',
+    tracks: pinnedTracks,
+    random: () => 0.99,
+  });
+  assert.equal(pinned.trackKey, TEN_TRACKS[6].key);
+  assert.equal(pinned.source, 'configured_weight');
+
+  const zeroSettings = normalizeFieldMusicSettings({
+    trackKeys: TEN_TRACKS.map((track) => track.key),
+    trackWeights: Object.fromEntries(TEN_TRACKS.map((track) => [track.key, 0])),
+  });
+  const zeroTracks = applyFieldMusicSettings({ tracks: TEN_TRACKS, settings: zeroSettings });
+  const defaulted = resolveFieldMusicSelection({
+    role: FIELD_MUSIC_ROLE,
+    fieldId: 'field.initial',
+    sessionId: 'match-zero',
+    tracks: zeroTracks,
+    random: () => 0.95,
+  });
+  assert.equal(defaulted.trackKey, TEN_TRACKS[9].key);
+  assert.equal(defaulted.source, 'default_weight');
 });

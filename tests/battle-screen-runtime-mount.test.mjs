@@ -105,6 +105,10 @@ assert.ok(runtimeStyle.textContent.includes('clip-path:polygon(50% 0,100% 50%,50
 assert.ok(runtimeStyle.textContent.includes('@media(max-height:470px) and (orientation:landscape)'));
 assert.ok(runtimeStyle.textContent.includes('.battle .royalUsageStrip{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;width:151px!important;gap:2px!important}'));
 assert.ok(runtimeStyle.textContent.includes('@media(max-width:540px){[data-gr-battle-screen="1"] [data-battle-screen-causal-grid]{left:4px;right:4px;gap:3px;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}'));
+assert.ok(runtimeStyle.textContent.includes('@media(max-width:540px) and (orientation:portrait){[data-gr-battle-screen="1"] [data-battle-screen-causal-grid]{top:50px;right:8px;bottom:96px;left:8px;gap:6px;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(4,minmax(0,1fr))}'));
+assert.ok(runtimeStyle.textContent.includes('[data-gr-battle-screen="1"] [data-battle-screen-causal-grid]::before{display:none}'));
+assert.ok(runtimeStyle.textContent.includes('[data-gr-battle-screen="1"] [data-battle-screen-lane]{grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(20px,auto);'));
+assert.ok(runtimeStyle.textContent.includes('[data-gr-battle-screen="1"] #battleResolution{left:8px;right:8px;bottom:12px;transform:none;max-width:none}'));
 assert.equal(runtimeStyle.textContent.includes('data-role="loser"'), false);
 
 const idle = createBattleScreenModel({ participants });
@@ -252,7 +256,7 @@ assert.equal(BATTLE_SCREEN_RUNTIME.formalArtOwnedHere, false);
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 78,
+  tests: 82,
   freshMount: {
     laneCount: runtime.laneSurfaces.length,
     phaseAnchor: runtime.phaseSurface.id,

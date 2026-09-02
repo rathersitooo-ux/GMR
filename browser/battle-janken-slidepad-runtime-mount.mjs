@@ -17,6 +17,7 @@ const SLOT_ATTR = 'data-janken-slot';
 const GESTURE_DEAD_ZONE_PX = 10;
 const GESTURE_MIN_DIRECTION_COSINE = 0.45;
 const GESTURE_STICK_TRAVEL_PX = 30;
+const RELEASE_FLIGHT_DURATION_MS = 560;
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -220,6 +221,88 @@ function elementCenter(node) {
   return Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null;
 }
 
+function launchTargetCenter(battleRoot) {
+  const target = battleRoot?.querySelector?.('#battlePhaseSurface') ?? battleRoot;
+  const rect = target?.getBoundingClientRect?.();
+  if (!rect) return null;
+  const x = Number(rect.left) + (Number(rect.width) * 0.5);
+  const y = Number(rect.top) + (Number(rect.height) * 0.44);
+  return Number.isFinite(x) && Number.isFinite(y) ? { x, y } : null;
+}
+
+function spatialSlotRole(slotNodes, selectedHand) {
+  const ordered = [...slotNodes.entries()].flatMap(([hand, node]) => {
+    const center = elementCenter(node);
+    return center ? [{ hand, y: center.y }] : [];
+  }).sort((a, b) => a.y - b.y);
+  const index = ordered.findIndex((entry) => entry.hand === selectedHand);
+  if (index < 0 || ordered.length < 2) return 'middle';
+  if (index === 0) return 'top';
+  if (index === ordered.length - 1) return 'bottom';
+  return 'middle';
+}
+
+function animateReleasedJankenCard(globalRef, battleRoot, host, slotNodes, selectedHand) {
+  if (globalRef?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return false;
+  const sourceNode = slotNodes.get(selectedHand);
+  const sourceRect = sourceNode?.getBoundingClientRect?.();
+  const start = elementCenter(sourceNode);
+  const target = launchTargetCenter(battleRoot);
+  if (!sourceNode || !sourceRect || !start || !target || typeof sourceNode.animate !== 'function') return false;
+
+  const clone = sourceNode.cloneNode(true);
+  clone.disabled = false;
+  clone.dataset.armed = 'false';
+  clone.dataset.jankenFlight = '1';
+  clone.setAttribute('aria-hidden', 'true');
+  clone.style.position = 'fixed';
+  clone.style.left = `${sourceRect.left}px`;
+  clone.style.top = `${sourceRect.top}px`;
+  clone.style.right = 'auto';
+  clone.style.bottom = 'auto';
+  clone.style.width = `${sourceRect.width}px`;
+  clone.style.height = `${sourceRect.height}px`;
+  clone.style.margin = '0';
+  clone.style.opacity = '1';
+  clone.style.pointerEvents = 'none';
+  clone.style.zIndex = '160';
+  clone.style.transition = 'none';
+  clone.style.transformOrigin = '50% 50%';
+  host.appendChild(clone);
+
+  const dx = target.x - start.x;
+  const dy = target.y - start.y;
+  const role = spatialSlotRole(slotNodes, selectedHand);
+  const flightDistance = Math.hypot(dx, dy);
+  const bend = Math.min(150, Math.max(64, flightDistance * 0.22));
+  const curveY = role === 'top' ? -bend : role === 'bottom' ? bend : 0;
+  const spin = role === 'top' ? -720 : role === 'bottom' ? 720 : 0;
+  const controlX = dx * 0.5;
+  const controlY = (dy * 0.5) + curveY;
+  const pointAt = (t) => {
+    const inv = 1 - t;
+    return {
+      x: (2 * inv * t * controlX) + (t * t * dx),
+      y: (2 * inv * t * controlY) + (t * t * dy),
+    };
+  };
+  const frames = [0, 0.25, 0.5, 0.75, 1].map((t) => {
+    const point = pointAt(t);
+    return {
+      offset: t,
+      opacity: t < 1 ? 1 : 0.12,
+      transform: `translate3d(${point.x.toFixed(2)}px,${point.y.toFixed(2)}px,0) rotate(${(spin * t).toFixed(2)}deg) scale(${(1 - (0.08 * t)).toFixed(3)})`,
+    };
+  });
+  const animation = clone.animate(frames, {
+    duration: RELEASE_FLIGHT_DURATION_MS,
+    easing: 'cubic-bezier(.18,.72,.18,1)',
+    fill: 'forwards',
+  });
+  animation.finished.then(() => clone.remove(), () => clone.remove());
+  return true;
+}
+
 export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battleRoot = null } = {}) {
   const documentRef = globalRef?.document;
   const root = battleRoot ?? documentRef?.querySelector?.('section[data-screen="battle"]');
@@ -337,7 +420,9 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     if (!selectedHand || !model) return;
     const currentHandIds = readHand(globalRef, root).map((card) => card.id);
     const cardId = resolveBattleJankenSlotCardAction(model, selectedHand, currentHandIds);
-    if (cardId) clickExistingHandCard(root, cardId);
+    if (cardId && clickExistingHandCard(root, cardId)) {
+      animateReleasedJankenCard(globalRef, root, host, slotNodes, selectedHand);
+    }
   }
 
   function openForRound(roundId) {

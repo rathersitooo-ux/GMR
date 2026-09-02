@@ -1120,7 +1120,17 @@ test('covers visible 2v2 Battle shell, info/log drawer, range, partner advice, u
 
   const battle = page.locator('section[data-screen="battle"]');
   await expect(battle).toBeVisible();
-  await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(4);
+const jankenSlidePad = battle.locator('[data-battle-janken-slidepad="1"]');
+await expect(jankenSlidePad).toBeVisible();
+await expect(jankenSlidePad.locator('[data-janken-slot]')).toHaveCount(3);
+await expect.poll(async () => page.evaluate(() => window.__GAMEROAD_BATTLE_JANKEN_SLIDEPAD__?.snapshot?.()?.roundId ?? null)).not.toBeNull();
+const jankenSnapshot = await page.evaluate(() => window.__GAMEROAD_BATTLE_JANKEN_SLIDEPAD__?.snapshot?.() ?? null);
+expect(jankenSnapshot?.ordinaryHandCardIds?.length).toBeGreaterThan(0);
+expect(jankenSnapshot?.assignment?.selectedJankenCardIds?.length).toBeGreaterThan(0);
+for (const cardId of jankenSnapshot?.assignment?.selectedJankenCardIds ?? []) {
+  await expect(battle.locator(`#hand .handCard[data-card-id="${cardId}"]`)).toHaveCount(1);
+}
+await expect(battle.locator('#publicPlayerStrip .publicPlayerChip')).toHaveCount(4);
   await expect(battle.locator('#boardPlayers .boardPlayerToken')).toHaveCount(4);
   await attachStateScreenshot(page, testInfo, 'battle-two-v-two-entry-visible');
 

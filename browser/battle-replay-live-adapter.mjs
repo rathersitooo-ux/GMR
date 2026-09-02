@@ -1,3 +1,4 @@
+import './battle-janken-slidepad-runtime-mount.mjs';
 import {
   appendAcceptedEvent,
   createReplayLog,

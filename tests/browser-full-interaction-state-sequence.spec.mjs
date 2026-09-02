@@ -212,6 +212,68 @@ test('R29 @mobile-touch drives a visible Home to Cards transition with real touc
   });
 });
 
+test('R74 proves Deck Storage is visible and left-swipe round-trips through current Cards UI', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'phone-touch-390x844', 'the normal three viewport projects provide the bounded R74 proof');
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+
+  const cardsControl = rootGo(page, 'cards');
+  await expect(cardsControl).toBeVisible();
+  await cardsControl.click();
+  const cards = page.locator('section[data-screen="cards"]');
+  await expect(cards).toBeVisible();
+
+  const tray = cards.locator('#r4DeckTrayToggle:visible');
+  if ((await tray.count()) > 0 && (await cards.getAttribute('data-deck-drawer')) !== 'open') {
+    await tray.click();
+    await expect(cards).toHaveAttribute('data-deck-drawer', 'open');
+  }
+
+  const storageButton = cards.locator('[data-role="deck-storage-button"]:visible');
+  await expect(storageButton, 'Deck Storage has a human-visible Cards entry').toBeVisible();
+  await expect(storageButton).toHaveText('ストレージ');
+  await expect(storageButton).toHaveAttribute('aria-label', 'ストレージ 0枚');
+  await expect(cards.locator('#deckCount')).toHaveText('40');
+
+  const remove = cards.locator('#deckSlots [data-deck-remove][data-id]:visible').first();
+  await expect(remove).toBeVisible();
+  const cardId = await remove.getAttribute('data-id');
+  expect(cardId).toBeTruthy();
+  await remove.click();
+  await expect(cards.locator('#deckCount')).toHaveText('39');
+
+  const collectionCard = cards.locator(`#collectionGrid [data-id="${cardId}"]:visible`).first();
+  await expect(collectionCard).toBeVisible();
+  await collectionCard.scrollIntoViewIfNeeded();
+  const box = await collectionCard.boundingBox();
+  expect(box, 'left-swipe source card has geometry').not.toBeNull();
+  const centerX = box.x + box.width / 2;
+  const centerY = box.y + box.height / 2;
+  await page.mouse.move(centerX, centerY);
+  await page.mouse.down();
+  await page.mouse.move(centerX - 84, centerY, { steps: 8 });
+  await page.mouse.up();
+
+  const backdrop = page.locator('[data-role="deck-storage-backdrop"]');
+  await expect(backdrop, 'collection left swipe opens Storage').toBeVisible();
+  await expect(page.locator('.gr-storage-title')).toHaveText('ストレージ');
+  await expect(storageButton).toHaveAttribute('aria-label', 'ストレージ 1枚');
+  const storedRow = page.locator(`.gr-storage-card[data-card-id="${cardId}"]`);
+  await expect(storedRow).toBeVisible();
+  await storedRow.getByRole('button', { name: 'デッキへ' }).click();
+  await expect(cards.locator('#deckCount'), 'Storage uses the current deck add path').toHaveText('40');
+  await expect(storageButton).toHaveAttribute('aria-label', 'ストレージ 0枚');
+
+  const backdropBox = await backdrop.boundingBox();
+  expect(backdropBox, 'Storage backdrop has geometry').not.toBeNull();
+  await page.mouse.click(backdropBox.x + 3, backdropBox.y + 3);
+  await expect(backdrop).toBeHidden();
+
+  const png = await page.screenshot({ fullPage: true, animations: 'disabled' });
+  await testInfo.attach(`${testInfo.project.name}-r74-deck-storage-roundtrip.png`, { body: png, contentType: 'image/png' });
+  runtime.assertClean(testInfo);
+});
+
 test('R19R2 mounts accepted replay rows on the production Result surface', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop-1280x720', 'single-project replay mount evidence');
   test.setTimeout(120_000);

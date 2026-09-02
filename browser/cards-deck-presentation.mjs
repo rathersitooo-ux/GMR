@@ -131,7 +131,7 @@ export function installDeckStorageLiveMount({
     if (!current || current.pointerId !== event?.pointerId || !current.cardId) return;
     const dx = Number(event.clientX) - current.startX;
     const dy = Number(event.clientY) - current.startY;
-    if (!Number.isFinite(dx) || !Number.isFinite(dy) || dx >= 0) return;
+    if (!Number.isFinite(dx) || !Number.isFinite(dy)) return;
     const result = controller.applySwipe({
       surface: current.surface,
       cardId: current.cardId,

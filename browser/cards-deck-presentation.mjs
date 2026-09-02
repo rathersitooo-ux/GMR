@@ -71,29 +71,33 @@ function closestSwipeCard(target) {
   return target?.closest?.('#collectionGrid [data-id], #deckSlots [data-id], #exDeckSlots [data-id]') ?? null;
 }
 
-function presentDeckAddSwipe({ doc, presentation, result, sourceElement, cardId }) {
-  if (result?.action !== 'deck-add') return false;
-  if (!result.ok) {
-    presentation?.playReject?.({
+export function presentDeckAddSwipe({ doc, presentation, result, sourceElement, cardId }) {
+  if (result?.action !== 'deck-add' || !sourceElement) return false;
+  try {
+    if (!result.ok) {
+      presentation?.playReject?.({
+        sourceElement,
+        targetElement: doc?.querySelector?.('#deckSlots, #exDeckSlots') ?? sourceElement,
+        cardId,
+        reason: result.reason ?? 'deck-rule-rejected',
+      });
+      return typeof presentation?.playReject === 'function';
+    }
+    const insertedElement = byCardId(doc, '#deckSlots [data-id], #exDeckSlots [data-id]', cardId);
+    const targetElement = insertedElement?.closest?.('#deckSlots, #exDeckSlots')
+      ?? insertedElement?.parentElement
+      ?? doc?.querySelector?.('#deckSlots, #exDeckSlots');
+    if (!targetElement) return false;
+    presentation?.playSuccess?.({
       sourceElement,
-      targetElement: doc?.querySelector?.('#deckSlots, #exDeckSlots') ?? sourceElement,
+      targetElement,
+      insertedElement,
       cardId,
-      reason: result.reason ?? 'deck-rule-rejected',
     });
-    return true;
+    return typeof presentation?.playSuccess === 'function';
+  } catch {
+    return false;
   }
-  const insertedElement = byCardId(doc, '#deckSlots [data-id], #exDeckSlots [data-id]', cardId);
-  const targetElement = insertedElement?.closest?.('#deckSlots, #exDeckSlots')
-    ?? insertedElement?.parentElement
-    ?? doc?.querySelector?.('#deckSlots, #exDeckSlots');
-  if (!sourceElement || !targetElement) return false;
-  presentation?.playSuccess?.({
-    sourceElement,
-    targetElement,
-    insertedElement,
-    cardId,
-  });
-  return true;
 }
 
 export function installDeckStorageLiveMount({

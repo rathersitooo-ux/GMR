@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-TEA-VISIBLE-R2-20260902T1816",
+  "taskId": "PARTNER-RELATIONSHIP-CROSSMODE-RUNTIME-001",
+  "workUnitKey": "PARTNER_TEA_VISIBLE_R1",
+  "acquireKey": "PARTNER-TEA-VISIBLE-R2-20260902T1816-SOL-T6Q2V9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR705_REUSE_CURRENT_CONVERSATION_CONSUMER",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "TEA_TWO_LINE_CONSUMER_COMPOSITION",
+  "proceedToken": "PROCEED|PARTNER-TEA-VISIBLE-R2-20260902T1816|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "313be431f42ee6ff2623f8170b04ccdeea4cbb25",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-RELATIONSHIP-CROSSMODE-RUNTIME-001",
+  "leaseWorkUnitKey": "PARTNER_TEA_VISIBLE_R1",
+  "leaseAcquireKey": "PARTNER-TEA-VISIBLE-R2-20260902T1816-SOL-T6Q2V9",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 18:16 JST",
+  "leaseUntilJst": "2026-09-02 19:16 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A29:L29",
+  "leaseExactMutableResources": "browser/partner-tea-runtime-mount.mjs; tests/partner-tea-runtime-mount.test.mjs; browser/board-facility-runtime-mount.mjs",
+  "scope": [
+    "browser/partner-tea-runtime-mount.mjs",
+    "tests/partner-tea-runtime-mount.test.mjs",
+    "browser/board-facility-runtime-mount.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-tea-runtime-mount.mjs",
+    "tests/partner-tea-runtime-mount.test.mjs",
+    "browser/board-facility-runtime-mount.mjs"
+  ]
+}

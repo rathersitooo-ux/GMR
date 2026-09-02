@@ -35,8 +35,8 @@ jobs:
           from pathlib import Path
           p = Path('tests/browser-full-interaction.spec.mjs')
           text = p.read_text()
-          needle = "  expect(jankenSnapshot?.ordinaryHandCardIds?.length).toBeGreaterThan(0);\n"
-          addition = needle + "  expect(jankenSnapshot?.assignment?.selectedJankenCardIds?.length).toBeGreaterThan(0);\n"
+          needle = "expect(jankenSnapshot?.ordinaryHandCardIds?.length).toBeGreaterThan(0);\n"
+          addition = needle + "expect(jankenSnapshot?.assignment?.selectedJankenCardIds?.length).toBeGreaterThan(0);\n"
           if 'selectedJankenCardIds?.length).toBeGreaterThan(0)' not in text:
               if needle not in text:
                   raise SystemExit('janken BFI assertion marker missing')

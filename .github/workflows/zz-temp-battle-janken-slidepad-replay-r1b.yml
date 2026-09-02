@@ -1,0 +1,35 @@
+name: TEMP Battle Janken SlidePad Replay R1B
+on:
+  push:
+    branches:
+      - work/battle-janken-slidepad-live-r1b-20260902
+    paths:
+      - .github/workflows/zz-temp-battle-janken-slidepad-replay-r1b.yml
+permissions:
+  contents: write
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/battle-janken-slidepad-live-r1b-20260902
+          fetch-depth: 0
+      - name: Inspect actual Battle hand card metadata sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          python <<'PY'
+          from pathlib import Path
+          import re
+          text = Path('browser/GAMEROAD.html').read_text()
+          print('HTML_BYTES', len(text.encode()))
+          for pattern in ['handCard', 'data-card-id', 'dataset.cardId', 'suit:', '.suit', 'const CARDS', 'let CARDS', 'window.CARD', '__CARD']:
+              hits = [m.start() for m in re.finditer(re.escape(pattern), text)]
+              print('PATTERN', pattern, 'COUNT', len(hits))
+              for pos in hits[:5]:
+                  chunk = text[max(0,pos-900):min(len(text),pos+1300)].replace('\n',' ')
+                  print('CONTEXT', pattern, chunk)
+          globals_found = sorted(set(re.findall(r'(?:window|globalThis)\.[A-Za-z0-9_$]*[Cc][Aa][Rr][Dd][A-Za-z0-9_$]*', text)))
+          print('CARD_GLOBALS', globals_found[:100])
+          PY

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-FLIGHT-DEPTH-R1-20260903T0355-SOL-C8N4Q2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_CENTER_CONVERGENCE_DEPTH_FLIGHT_R1",
+  "acquireKey": "BATTLE-JANKEN-FLIGHT-DEPTH-R1-20260903T0355-SOL-C8N4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_CORRECTION_PLUS_CURRENT_RELEASE_FLIGHT_ACTUAL_SHOWS_VISUAL_CENTER_CONVERGENCE_AND_DEPTH_GAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_POINTERUP_AND_HAND_CLICK_AUTHORITY_RETAINED_WITH_TEMPORAL_RUNTIME_ACCEPTANCE",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-FLIGHT-DEPTH-R1-20260903T0355-SOL-C8N4Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|PRESENTATION_REPAIR",
+  "authorizationBaseSha": "af07b43599d10ff34114941d8aa72ce918c46cc6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_CENTER_CONVERGENCE_DEPTH_FLIGHT_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-FLIGHT-DEPTH-R1-20260903T0355-SOL-C8N4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-03 03:55 JST",
+  "leaseUntilJst": "2026-09-03 04:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A13:N13",
+  "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs; focused tests for release-flight path",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

@@ -210,7 +210,7 @@ test('fails closed when duplicate selection has no authoritative chooser or retu
     () => createRoundStartJankenSlotAssignment({
       roundId: 'r1',
       hand: duplicateHand,
-      pickDuplicateIndex: () => Math.random(),
+      pickDuplicateIndex: () => 0.5,
     }),
     /must return an integer/,
   );

@@ -67,7 +67,7 @@ export function createStorageCornerViewModel(state, { isRoyal } = {}) {
   return Object.freeze({
     deckCount: current.deck.length,
     storageCount: current.storage.length,
-    storageButtonLabel: `+${current.storage.length}`,
+    storageButtonLabel: 'ストレージ',
     storageButtonTone: 'yellow',
     normal: Object.freeze(normal),
     royal: Object.freeze(royal),

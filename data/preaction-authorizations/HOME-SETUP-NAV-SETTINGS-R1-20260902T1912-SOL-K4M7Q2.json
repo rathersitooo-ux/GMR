@@ -8,7 +8,7 @@
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A25:L25",
   "intent": "Recover the already-designed Setup primary-action hierarchy on fresh current without rewriting giant HTML; preserve current Home expanded SlidePad, existing navigation graph, and Settings semantics.",
   "mutableResources": [
-    "browser/home-boot-runtime-mount.mjs",
+    "browser/home-shell-presentation-core.mjs",
     "browser/setup-staging-presentation-runtime.mjs",
     "tests/setup-staging-presentation-runtime.test.mjs",
     "data/preaction-authorizations/HOME-SETUP-NAV-SETTINGS-R1-20260902T1912-SOL-K4M7Q2.json"

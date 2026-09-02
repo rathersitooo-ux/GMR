@@ -332,7 +332,8 @@ jobs:
               deploy/cloudflare/tests/normal-match-r3.test.mjs|\
               deploy/cloudflare/tests/partner-report-provider.test.mjs|\
               deploy/cloudflare/wrangler.pages.toml|\
-              .github/workflows/cloudflare-public-deploy.yml)
+              .github/workflows/cloudflare-public-deploy.yml|\
+              .github/workflows/required-gate-auto-merge.yml)
                 publichost=true
                 ;;
               data/gameroad-fixed-knowledge-witness.json|\

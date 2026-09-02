@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "PRE_ACTION_V3",
+  "acquireKey": "HOME-SETUP-NAV-SETTINGS-R1-20260902T1912-SOL-K4M7Q2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BRANCH02_HOME_SETUP_NAV_SETTINGS_R1",
+  "owner": "ChatGPT / GPT-5.6 Sol / current conversation",
+  "baseSha": "df74a230a62b7c993e07e83193a376a5f6832fae",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A25:L25",
+  "intent": "Recover the already-designed Setup primary-action hierarchy on fresh current without rewriting giant HTML; preserve current Home expanded SlidePad, existing navigation graph, and Settings semantics.",
+  "mutableResources": [
+    "browser/home-boot-runtime-mount.mjs",
+    "browser/setup-staging-presentation-runtime.mjs",
+    "tests/setup-staging-presentation-runtime.test.mjs",
+    "data/preaction-authorizations/HOME-SETUP-NAV-SETTINGS-R1-20260902T1912-SOL-K4M7Q2.json"
+  ],
+  "readOnly": ["Battle rules", "save", "economy", "network", "assets", "Settings values/semantics", "unrelated files"]
+}

@@ -8,6 +8,7 @@ import {
   STORY_FIRST_SCENE_SOURCE,
   createDefaultStoryProgress,
   createStoryFirstSceneController,
+  mountStoryFirstSceneFromCurrentBrowser,
   normalizeStoryProgress,
 } from '../browser/story-first-scene-runtime-mount.mjs';
 
@@ -37,6 +38,7 @@ test('accepted first-scene identity and provenance stay fixed to the Drive canon
   assert.equal(STORY_FIRST_SCENE_SOURCE.documentId, '1u0yuXDfCGyouZ28EgmrIZFi_uu1hxIgXuzit5eAJozk');
   assert.equal(STORY_FIRST_SCENE_SOURCE.sectionTitle, '月光の夜');
   assert.equal(STORY_FIRST_SCENE_SOURCE.runtimeMirrorRole, 'NON_AUTHORITY_EXACT_TEXT_MIRROR');
+  assert.equal(STORY_FIRST_SCENE_RULES.explicitInvocationOnly, true);
   assert.equal(STORY_FIRST_SCENE_RULES.choices, false);
   assert.equal(STORY_FIRST_SCENE_RULES.rewards, false);
   assert.equal(STORY_FIRST_SCENE_RULES.migrationFromOtherModes, false);
@@ -45,6 +47,10 @@ test('accepted first-scene identity and provenance stay fixed to the Drive canon
   assert.ok(STORY_FIRST_SCENE_LINES.includes('「私は、勝ってしまいました。」'));
   assert.ok(STORY_FIRST_SCENE_LINES.includes('おはよ、爺'));
   assert.equal(STORY_FIRST_SCENE_LINES.at(-1), 'この日はとても…');
+});
+
+test('current-browser Story mount fails closed unless invocation is explicit', () => {
+  assert.equal(mountStoryFirstSceneFromCurrentBrowser(), null);
 });
 
 test('new Story progress is isolated, resumable, and confirmed by readback', () => {

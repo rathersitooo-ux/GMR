@@ -160,21 +160,21 @@ test('Boot normal/reduced/lowPerf variants keep the same semantic state and acti
 
 const liveSlidepadRoutes = ['setup', 'shop', 'characters', 'cards'];
 
-test('Home runtime removes legacy visual layer and duplicate CTAs instead of retaining a fallback', () => {
+test('Home runtime preserves the current visual layer while removing duplicate legacy controls', () => {
   const removed = [];
-  const legacyLayer = { remove: () => removed.push('visual') };
+  const liveVisualLayer = { remove: () => removed.push('visual') };
   const battleCta = { remove: () => removed.push('battle') };
   const partnerChip = { remove: () => removed.push('partner') };
   const home = {
     querySelectorAll(selector) {
-      if (selector === '#codexHomeVisualLayer' || selector === '.codexHomeVisualLayer') return [legacyLayer];
+      if (selector === '#codexHomeVisualLayer' || selector === '.codexHomeVisualLayer') return [liveVisualLayer];
       if (selector === '#codexHomeBattleCta' || selector === '.codexBattleCta') return [battleCta];
       if (selector === '#codexHomePartnerChip' || selector === '.codexPartnerChip') return [partnerChip];
       return [];
     },
   };
-  assert.equal(removeLegacyHomeNodes(home), 3);
-  assert.deepEqual(removed.sort(), ['battle', 'partner', 'visual']);
+  assert.equal(removeLegacyHomeNodes(home), 2);
+  assert.deepEqual(removed.sort(), ['battle', 'partner']);
 });
 
 test('Home compatibility direction map keeps the four fixed responsibilities for non-pointer input', () => {
@@ -267,9 +267,11 @@ test('Home SlidePad compatibility release fail-closes instead of inventing a des
   );
 });
 
-
-test('Home SlidePad visual feedback follows the full pointer displacement without a fixed pixel clamp', () => {
-  assert.deepEqual(resolveHomeSlidepadFeedbackTranslation({ dx: 320, dy: -180 }), { x: 320, y: -180 });
-  assert.deepEqual(resolveHomeSlidepadFeedbackTranslation({ dx: -260, dy: 90 }), { x: -260, y: 90 });
+test('Home SlidePad visual feedback stays responsive while bounded to the current reach envelope', () => {
+  const far = resolveHomeSlidepadFeedbackTranslation({ dx: 320, dy: -180 });
+  assert.ok(far);
+  assert.ok(Math.abs(Math.hypot(far.x, far.y) - 144) < 1e-9);
+  assert.ok(far.x > 0 && far.y < 0);
+  assert.deepEqual(resolveHomeSlidepadFeedbackTranslation({ dx: 48, dy: -24 }), { x: 48, y: -24 });
   assert.equal(resolveHomeSlidepadFeedbackTranslation({ dx: Number.POSITIVE_INFINITY, dy: 0 }), null);
 });

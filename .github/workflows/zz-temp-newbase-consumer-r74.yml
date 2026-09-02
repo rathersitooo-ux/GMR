@@ -1,0 +1,82 @@
+name: TEMP Newbase Consumer R74 Authority Map
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  authority-map:
+    if: github.head_ref == 'work/newbase-production-consumer-r74-20260902'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Map targeted GAMEROAD runtime seams
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+
+          text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          targets = [
+              'normalMoveLimitForPlayer', 'preferredRoadCandidates', 'randomOrderByRoad',
+              'setBattleRuntimeState', 'renderHand', 'removeHand', 'selectedCardId',
+              'legalLaneCards', 'replacementBattleCard', 'resolveBattle', 'renderBattle',
+              'parseRoad', 'currentPublicRoad', 'publicMatchHasWinner', 'renderResult',
+              'phaseRunner', 'controller', 'safeResult', 'onResultCurrent',
+          ]
+
+          def clean(s):
+              return s.replace('\r', ' ').replace('\n', ' ')
+
+          def declaration_positions(name):
+              pats = [
+                  rf'\b(?:async\s+)?function\s+{re.escape(name)}\s*\(',
+                  rf'\b(?:const|let|var)\s+{re.escape(name)}\s*=',
+              ]
+              out = []
+              for pat in pats:
+                  out.extend(m.start() for m in re.finditer(pat, text))
+              return sorted(set(out))
+
+          report = {'html_bytes': len(text.encode('utf-8')), 'targets': {}, 'random_sites': []}
+          for name in targets:
+              decls = declaration_positions(name)
+              refs = [m.start() for m in re.finditer(rf'\b{re.escape(name)}\b', text)]
+              entry = {'decl_offsets': decls, 'reference_count': len(refs), 'contexts': []}
+              positions = []
+              for p in decls[:2]:
+                  positions.append(('DECL', p, 1200, 6500))
+              for p in refs[:8]:
+                  if p not in decls:
+                      positions.append(('REF', p, 900, 1500))
+              seen = set()
+              for kind, p, before, after in positions:
+                  key = (kind, p)
+                  if key in seen: continue
+                  seen.add(key)
+                  lo, hi = max(0, p-before), min(len(text), p+after)
+                  entry['contexts'].append({'kind': kind, 'offset': p, 'text': clean(text[lo:hi])})
+              report['targets'][name] = entry
+
+          runtime_lo, runtime_hi = 9_700_000, 10_800_000
+          for m in re.finditer(r'Math\.random\s*\(', text):
+              p = m.start()
+              if runtime_lo <= p <= runtime_hi:
+                  report['random_sites'].append({'offset': p, 'text': clean(text[max(0,p-1200):min(len(text),p+1800)])})
+
+          exact_literals = ['READY','ROAD','BATTLE','RESULT','phase','turn','dice','roll','moveLimit','roadSelected']
+          report['runtime_literal_counts'] = {k: len(re.findall(re.escape(k), text[runtime_lo:runtime_hi], flags=re.I)) for k in exact_literals}
+
+          out = Path('/tmp/newbase-r74-targeted-map.json')
+          out.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
+          print('R74_TARGETED_MAP_BEGIN')
+          print(out.read_text(encoding='utf-8'))
+          print('R74_TARGETED_MAP_END')
+          PY

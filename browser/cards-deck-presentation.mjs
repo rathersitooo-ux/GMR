@@ -1,5 +1,6 @@
 export * from './cards-deck-presentation-core.mjs';
 
+import { createDeckSwipePresentationController } from './cards-deck-presentation-core.mjs';
 import {
   createDeckStorageCornerController,
   mountDeckStorageCorner,
@@ -70,6 +71,31 @@ function closestSwipeCard(target) {
   return target?.closest?.('#collectionGrid [data-id], #deckSlots [data-id], #exDeckSlots [data-id]') ?? null;
 }
 
+function presentDeckAddSwipe({ doc, presentation, result, sourceElement, cardId }) {
+  if (result?.action !== 'deck-add') return false;
+  if (!result.ok) {
+    presentation?.playReject?.({
+      sourceElement,
+      targetElement: doc?.querySelector?.('#deckSlots, #exDeckSlots') ?? sourceElement,
+      cardId,
+      reason: result.reason ?? 'deck-rule-rejected',
+    });
+    return true;
+  }
+  const insertedElement = byCardId(doc, '#deckSlots [data-id], #exDeckSlots [data-id]', cardId);
+  const targetElement = insertedElement?.closest?.('#deckSlots, #exDeckSlots')
+    ?? insertedElement?.parentElement
+    ?? doc?.querySelector?.('#deckSlots, #exDeckSlots');
+  if (!sourceElement || !targetElement) return false;
+  presentation?.playSuccess?.({
+    sourceElement,
+    targetElement,
+    insertedElement,
+    cardId,
+  });
+  return true;
+}
+
 export function installDeckStorageLiveMount({
   document: doc = globalThis.document,
   window: win = globalThis.window,
@@ -106,6 +132,7 @@ export function installDeckStorageLiveMount({
     document: doc,
     getCardLabel: (id) => cardLabel(doc, id),
   });
+  const presentation = createDeckSwipePresentationController({ document: doc, window: win });
 
   let gesture = null;
   let suppressClick = null;
@@ -139,6 +166,13 @@ export function installDeckStorageLiveMount({
       deltaY: dy,
       thresholdPx: 56,
     });
+    presentDeckAddSwipe({
+      doc,
+      presentation,
+      result,
+      sourceElement: current.card,
+      cardId: current.cardId,
+    });
     if (!result?.ok) return;
     suppressClick = { cardId: current.cardId, until: now() + 450 };
     mounted?.render?.();
@@ -171,6 +205,7 @@ export function installDeckStorageLiveMount({
       doc.removeEventListener('pointerup', onPointerUp, false);
       doc.removeEventListener('pointercancel', onPointerCancel, false);
       doc.removeEventListener('click', onClickCapture, true);
+      presentation?.dispose?.();
       mounted?.dispose?.();
       host.remove?.();
       deckStorageLiveInstallations.delete(doc);

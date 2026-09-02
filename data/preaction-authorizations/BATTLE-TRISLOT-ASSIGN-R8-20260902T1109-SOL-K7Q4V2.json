@@ -35,7 +35,7 @@
   "reuseDecisionEvidenceId": "R8_REUSE_NEUTRAL_FIXED_SLOT_IDENTITY_REJECT_OLD_EXACT3_SUIT_BLIND_ASSIGNMENT",
   "solutionSearchEvidence": [
     "browser/new-base-fixed-janken-slot-state.mjs@0130bcb988ae0aeaf78bd7e2313331ca8bfa920a",
-    "browser/newbase-janken-hand-assignment-core.mjs@7d626d53c021343b9b602b1c5c6fab6ddd7b9f",
+    "browser/newbase-janken-hand-assignment-core.mjs@7d626d53c021343b9b602b1c5c6fab6ddd7b7b9f",
     "GAMEROAD_UI_CANON_R72@AIroW37j5D4des9rw1e9RIKRdHHjF4NRfqXA97HL9pL09X1JOUHgWPvmJKdSxIUEnyRZwzh718eq7xYdIBrqvl_oP4xXsUFtOXF2V3kTVxo"
   ]
 }

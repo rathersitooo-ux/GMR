@@ -99,6 +99,9 @@ assert.equal(runtime.planSlot.dataset.owner, 'caller');
 assert.equal(runtime.phaseSurface.hidden, true);
 const runtimeStyle = document.getElementById('gameroad-battle-screen-runtime-r1-style');
 assert.ok(runtimeStyle);
+assert.ok(runtimeStyle.textContent.includes('left:52%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))'));
+assert.ok(runtimeStyle.textContent.includes('[data-battle-screen-causal-grid]::before'));
+assert.ok(runtimeStyle.textContent.includes('clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)'));
 assert.ok(runtimeStyle.textContent.includes('@media(max-height:470px) and (orientation:landscape)'));
 assert.ok(runtimeStyle.textContent.includes('.battle .royalUsageStrip{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;width:151px!important;gap:2px!important}'));
 assert.ok(runtimeStyle.textContent.includes('@media(max-width:540px){[data-gr-battle-screen="1"] [data-battle-screen-causal-grid]{left:4px;right:4px;gap:3px;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}'));
@@ -249,7 +252,7 @@ assert.equal(BATTLE_SCREEN_RUNTIME.formalArtOwnedHere, false);
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 75,
+  tests: 78,
   freshMount: {
     laneCount: runtime.laneSurfaces.length,
     phaseAnchor: runtime.phaseSurface.id,

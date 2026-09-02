@@ -420,6 +420,7 @@ export function createCurrentBrowserStoryHost({
 }
 
 export function mountStoryFirstSceneFromCurrentBrowser(options = {}) {
+  if (options.explicitInvocation !== true) return null;
   if (globalThis[GLOBAL_KEY]?.getSnapshot) return globalThis[GLOBAL_KEY];
   const host = createCurrentBrowserStoryHost(options);
   if (!host) return null;

@@ -92,9 +92,129 @@ export function installDeckStorageCornerStyles(doc = globalThis.document) {
 .gr-storage-window{width:min(760px,94vw);max-height:82vh;overflow:auto;background:#111827;color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:18px;padding:16px;box-shadow:0 18px 60px rgba(0,0,0,.45)}
 .gr-storage-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.gr-storage-title{font:800 18px/1.2 system-ui}.gr-storage-close{appearance:none;border:0;border-radius:10px;padding:8px 10px;cursor:pointer}
 .gr-storage-columns{display:grid;grid-template-columns:1fr 1fr;gap:12px}.gr-storage-column{min-width:0;background:rgba(255,255,255,.06);border-radius:14px;padding:10px}.gr-storage-column h3{margin:0 0 8px;font:800 14px/1.2 system-ui}.gr-storage-card{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin:6px 0;padding:9px 10px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:rgba(255,255,255,.08);color:#fff}.gr-storage-card-actions{display:flex;gap:6px}.gr-storage-card-actions button{cursor:pointer}
-@media(max-width:560px){.gr-storage-columns{grid-template-columns:1fr 1fr;gap:8px}.gr-storage-window{padding:12px}.gr-storage-card{display:block}.gr-storage-card-actions{margin-top:6px}}
+.gr-storage-discovery-hint{position:absolute;left:12px;bottom:12px;z-index:3;pointer-events:none;user-select:none;border-radius:999px;padding:6px 10px;background:rgba(17,24,39,.72);border:1px solid rgba(255,216,74,.72);color:#fff3bd;font:800 12px/1 system-ui;letter-spacing:.01em;box-shadow:0 5px 18px rgba(0,0,0,.2)}
+@media(max-width:560px){.gr-storage-columns{grid-template-columns:1fr 1fr;gap:8px}.gr-storage-window{padding:12px}.gr-storage-card{display:block}.gr-storage-card-actions{margin-top:6px}.gr-storage-discovery-hint{left:8px;bottom:8px;padding:5px 8px;font-size:11px}}
 `;
   doc.head.appendChild(style);
+}
+
+const CARDS_INTERACTIVE_SELECTOR = 'button,a,input,select,textarea,label,[role="button"],[role="link"],[data-card],[data-card-id],.card,.cardPreview';
+
+function finitePoint(value) {
+  return Number.isFinite(value);
+}
+
+export function shouldRevealDeckStorageFromCardsSwipe({
+  startX,
+  startY,
+  endX,
+  endY,
+  interactive = false,
+  thresholdPx = 56,
+} = {}) {
+  if (interactive || !finitePoint(startX) || !finitePoint(startY) || !finitePoint(endX) || !finitePoint(endY)) return false;
+  if (!Number.isFinite(thresholdPx) || thresholdPx <= 0) return false;
+  const deltaX = endX - startX;
+  const deltaY = endY - startY;
+  return deltaX <= -thresholdPx && Math.abs(deltaX) > Math.abs(deltaY) * 1.25;
+}
+
+function resolveCardsScreen(doc) {
+  return doc?.querySelector?.('.screen.cards') ?? null;
+}
+
+function isCardsInteractiveTarget(target) {
+  try { return Boolean(target?.closest?.(CARDS_INTERACTIVE_SELECTOR)); }
+  catch { return true; }
+}
+
+export function installDeckStorageCardsDiscovery({
+  document: doc = globalThis.document,
+  openStorage,
+  thresholdPx = 56,
+} = {}) {
+  requiredFn(openStorage, 'OPEN_STORAGE');
+  if (!doc?.addEventListener || !doc?.removeEventListener) {
+    return Object.freeze({ ensureHint: () => null, destroy() {} });
+  }
+
+  let gesture = null;
+  let hint = null;
+
+  const ensureHint = () => {
+    if (hint?.parentNode) return hint;
+    const screen = resolveCardsScreen(doc);
+    if (!screen?.appendChild || !doc.createElement) return null;
+    const existing = screen.querySelector?.('[data-role="deck-storage-discovery-hint"]');
+    if (existing) { hint = existing; return hint; }
+    hint = doc.createElement('div');
+    hint.className = 'gr-storage-discovery-hint';
+    hint.dataset.role = 'deck-storage-discovery-hint';
+    hint.setAttribute?.('aria-hidden', 'true');
+    hint.textContent = '← ストレージ';
+    screen.appendChild(hint);
+    return hint;
+  };
+
+  const onPointerDown = (event) => {
+    const screen = resolveCardsScreen(doc);
+    if (!screen?.classList?.contains?.('active') || !screen.contains?.(event?.target)) {
+      gesture = null;
+      return;
+    }
+    const interactive = isCardsInteractiveTarget(event?.target);
+    if (interactive || !finitePoint(event?.clientX) || !finitePoint(event?.clientY)) {
+      gesture = null;
+      return;
+    }
+    gesture = {
+      pointerId: event?.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      interactive,
+    };
+  };
+
+  const finishGesture = (event, cancelled = false) => {
+    const current = gesture;
+    gesture = null;
+    if (!current || cancelled) return false;
+    if (current.pointerId != null && event?.pointerId != null && current.pointerId !== event.pointerId) return false;
+    const screen = resolveCardsScreen(doc);
+    if (!screen?.classList?.contains?.('active')) return false;
+    const reveal = shouldRevealDeckStorageFromCardsSwipe({
+      ...current,
+      endX: event?.clientX,
+      endY: event?.clientY,
+      thresholdPx,
+    });
+    if (!reveal) return false;
+    openStorage();
+    return true;
+  };
+
+  const onPointerUp = (event) => { finishGesture(event, false); };
+  const onPointerCancel = (event) => { finishGesture(event, true); };
+
+  doc.addEventListener('pointerdown', onPointerDown, { passive: true });
+  doc.addEventListener('pointerup', onPointerUp, { passive: true });
+  doc.addEventListener('pointercancel', onPointerCancel, { passive: true });
+  ensureHint();
+
+  let destroyed = false;
+  return Object.freeze({
+    ensureHint,
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      gesture = null;
+      doc.removeEventListener('pointerdown', onPointerDown, { passive: true });
+      doc.removeEventListener('pointerup', onPointerUp, { passive: true });
+      doc.removeEventListener('pointercancel', onPointerCancel, { passive: true });
+      hint?.remove?.();
+      hint = null;
+    },
+  });
 }
 
 export function mountDeckStorageCorner({
@@ -189,7 +309,19 @@ export function mountDeckStorageCorner({
     doc.body.appendChild(backdrop);
   }
 
-  button.addEventListener('click', () => { controller.openStorage(); render(); });
+  const open = () => { controller.openStorage(); render(); };
+  button.addEventListener('click', open);
+  const discovery = installDeckStorageCardsDiscovery({ document: doc, openStorage: open });
   render();
-  return Object.freeze({ button, render, open: () => { controller.openStorage(); render(); }, close, dispose: () => { close(); button.remove?.(); } });
+  return Object.freeze({
+    button,
+    render,
+    open,
+    close,
+    dispose: () => {
+      discovery.destroy();
+      close();
+      button.remove?.();
+    },
+  });
 }

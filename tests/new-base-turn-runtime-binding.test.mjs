@@ -149,13 +149,17 @@ test('runtime binding does not perform per-turn mana recovery or fixed hand/RSP 
   assert.equal(result.outputs.roundState.resourceState, 'READY_BY_ROUND_AUTHORITY');
 });
 
-test('runtime binding reuses ordered cyclic resolver without assigning invalidated-card destination', async () => {
+test('runtime binding reuses current win-only ordered cyclic resolver without assigning invalidated-card destination', async () => {
   const result = await runNewBaseTurnWithRuntime({
     turnContext: {},
     runtimeAuthorities: makeAuthorities(),
   });
 
   assert.deepEqual(result.outputs.orderedJanken.processingOrder, ['p1', 'p2', 'p3', 'p4']);
+  assert.deepEqual(
+    result.outputs.orderedJanken.steps.map((step) => step.processedPlayerId),
+    ['p1', 'p3', 'p4'],
+  );
   assert.deepEqual(result.outputs.orderedJanken.survivors, ['p3', 'p4']);
   assert.deepEqual(result.outputs.orderedJanken.invalidated, ['p2', 'p1']);
   const serialized = JSON.stringify(result.outputs.orderedJanken);

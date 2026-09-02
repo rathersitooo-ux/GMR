@@ -88,7 +88,15 @@ export function resolveCyclicTriad(selections, config = {}) {
 }
 
 /**
- * Resolves the same cyclic triad as an ordered elimination chain.
+ * Resolves an already-authoritatively-ordered cyclic triad using the current
+ * win-only pass rule.
+ *
+ * Each still-valid entry gets its pass in the supplied order. During that pass
+ * it invalidates only other still-valid entries whose hand it beats. The
+ * current entry is never invalidated merely because another still-valid hand
+ * beats it; that opposing entry can invalidate it later only if that entry is
+ * still valid when its own pass arrives. Invalidated entries never receive a
+ * later pass.
  *
  * `orderedSelections` must already be in the authoritative processing order.
  * This resolver deliberately does not invent numeric sorting, equal-value
@@ -104,36 +112,32 @@ export function resolveCyclicTriadByProcessingOrder(orderedSelections, config = 
     .map((entry) => entry.playerId)
     .sort(compareText);
 
-  let survivors = [];
+  const validIds = new Set(active.map((entry) => entry.playerId));
   const invalidated = [];
   const steps = [];
 
   for (const entry of active) {
-    if (survivors.length === 0) {
-      survivors = [entry];
-      continue;
+    if (!validIds.has(entry.playerId)) continue;
+
+    const stepInvalidated = [];
+    for (const candidate of active) {
+      if (candidate.playerId === entry.playerId || !validIds.has(candidate.playerId)) continue;
+      if (safeConfig.beats[entry.hand] !== candidate.hand) continue;
+      validIds.delete(candidate.playerId);
+      invalidated.push(candidate);
+      stepInvalidated.push(candidate);
     }
 
-    const contestEntries = [...survivors, entry];
-    const contest = resolveCyclicTriad(contestEntries, config);
-    if (contest.winningHand === null) {
-      fail('ordered triad invariant violated: a processing step produced three active hand types');
-    }
-
-    const winnerIds = new Set(contest.winners);
-    const stepInvalidated = contestEntries
-      .filter((candidate) => !winnerIds.has(candidate.playerId));
-    survivors = contestEntries.filter((candidate) => winnerIds.has(candidate.playerId));
-    invalidated.push(...stepInvalidated);
-
+    const stepSurvivors = active.filter((candidate) => validIds.has(candidate.playerId));
     steps.push(Object.freeze({
       processedPlayerId: entry.playerId,
-      winningHand: contest.winningHand,
+      winningHand: entry.hand,
       invalidated: Object.freeze(stepInvalidated.map((candidate) => candidate.playerId)),
-      survivors: Object.freeze(survivors.map((candidate) => candidate.playerId)),
+      survivors: Object.freeze(stepSurvivors.map((candidate) => candidate.playerId)),
     }));
   }
 
+  const survivors = active.filter((entry) => validIds.has(entry.playerId));
   return Object.freeze({
     processingOrder: Object.freeze(active.map((entry) => entry.playerId)),
     nonParticipants: Object.freeze(nonParticipants),

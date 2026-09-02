@@ -6,6 +6,7 @@ on:
     types: [completed]
 
 permissions:
+  actions: write
   contents: write
   pull-requests: write
 
@@ -69,3 +70,8 @@ jobs:
             exit 1
           fi
           echo "Merged PR #${PR_NUMBER} at tested head ${head_sha} and tested base ${base_sha}."
+
+          gh api --method POST \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/cloudflare-public-deploy.yml/dispatches" \
+            -f ref=main
+          echo "Dispatched Cloudflare public deploy for current main after confirmed merge."

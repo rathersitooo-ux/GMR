@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-SLIDEPAD-POINTER-R1-20260903T0143-SOL-Q6M2K8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_SLIDEPAD_POINTER_REPAIR_R1",
+  "acquireKey": "BATTLE-JANKEN-SLIDEPAD-POINTER-R1-20260903T0143-SOL-Q6M2K8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLIC_ORIGIN_BFI_33647139234_POINTER_INTERCEPT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "REMOVE_AUTO_EXPAND_KEEP_MANUAL_TOGGLE_EXISTING_UI",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-SLIDEPAD-POINTER-R1-20260903T0143-SOL-Q6M2K8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXISTING_REPAIR",
+  "authorizationBaseSha": "120282665cc1863b4e774f1c9501c44362375cf5",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_SLIDEPAD_POINTER_REPAIR_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-SLIDEPAD-POINTER-R1-20260903T0143-SOL-Q6M2K8",
+  "leaseSnapshotReadbackAtJst": "2026-09-03 01:43 JST",
+  "leaseUntilJst": "2026-09-03 02:43 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:L10",
+  "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs"
+  ]
+}

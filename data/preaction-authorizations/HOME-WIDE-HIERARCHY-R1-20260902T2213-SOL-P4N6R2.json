@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-WIDE-HIERARCHY-R1-20260902T2213-SOL-P4N6R2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME-WIDE-PRIMARY-HIERARCHY-R1",
+  "acquireKey": "HOME-WIDE-HIERARCHY-R1-20260902T2213-SOL-P4N6R2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_HOME_WIDE_DUPLICATE_UTILITY_PR961_REUSE_MAIN_FD94D920",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_PR961_SINGLE_FILE_PATCH_PLUS_LIVE_HOME_RUNTIME_CONSUMER",
+  "proceedToken": "PROCEED|HOME-WIDE-HIERARCHY-R1-20260902T2213-SOL-P4N6R2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXISTING_REPAIR",
+  "authorizationBaseSha": "fd94d920c9eb846765d1d8eef842191ec2d66609",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME-WIDE-PRIMARY-HIERARCHY-R1",
+  "leaseAcquireKey": "HOME-WIDE-HIERARCHY-R1-20260902T2213-SOL-P4N6R2",
+  "leaseSnapshotReadbackAtJst": "2026-09-03 02:12 JST",
+  "leaseUntilJst": "2026-09-03 03:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A319:L319",
+  "leaseExactMutableResources": "browser/home-boot-runtime-mount.mjs; tests/home-boot-runtime-mount.test.mjs",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs"
+  ]
+}

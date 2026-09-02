@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "STORY-COMMON-RUNTIME-R2-20260902T1505-SOL-P3N6K9",
+  "taskId": "STORY-COMMON-RUNTIME-CONTRACT-001",
+  "workUnitKey": "STORY_FIRST_SCENE_LIVE_VERTICAL_SLICE_R2",
+  "acquireKey": "STORY-COMMON-RUNTIME-R2-20260902T1448-SOL-P3N6K9",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "STORY-R2-PR935-GATE-FAILURE-ISOLATED-PUBLIC-PACKAGE-REGISTRATION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR935-RUN33597193735-PREACTION-PASS-STORY-TESTS-4OF4-PUBLIC-PACKAGE-ONLY-FAIL",
+  "proceedToken": "PROCEED|STORY-COMMON-RUNTIME-R2-20260902T1505-SOL-P3N6K9|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|accepted-canon|current-lease|reuse-compose-public-package",
+  "authorizationBaseSha": "5b9069e6d0575208e2bda70e29b8215306639839",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "STORY-COMMON-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "STORY_FIRST_SCENE_LIVE_VERTICAL_SLICE_R2",
+  "leaseAcquireKey": "STORY-COMMON-RUNTIME-R2-20260902T1448-SOL-P3N6K9",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 15:05 JST",
+  "leaseUntilJst": "2026-09-02 15:48 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A26:L26",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh rebuild base main@5b9069e6d0575208e2bda70e29b8215306639839; EXISTING branch work/story-first-scene-r2-20260902 force-reset/rebuild in-place; EXISTING PR #935; transient data/preaction-authorizations/STORY-COMMON-RUNTIME-R2-20260902T1505-SOL-P3N6K9.json create-first/delete-before-final-head; browser/story-first-scene-runtime-mount.mjs; browser/home-boot-runtime-mount.mjs; tests/story-first-scene-runtime-mount.test.mjs; deploy/cloudflare/scripts/build.mjs minimal ARTIFACT_SPECS package registration; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row26; central GAMEROAD 全作業一覧 row1241; own R23 events. READ_ONLY deploy/cloudflare/tests/build.test.mjs, browser/GAMEROAD.html, Tea/Partner/Tutorial, other browser/data/tests/deploy/workflows.",
+  "scope": [
+    "browser/story-first-scene-runtime-mount.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/story-first-scene-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "leaseScope": [
+    "browser/story-first-scene-runtime-mount.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/story-first-scene-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "solutionSignature": "Expose accepted arondight/ch01/moonlit-night from Home using the existing runtime-mount seam and register that new static dependency in the existing Cloudflare public-package artifact list.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT-REUSE-HOME-COMPOSITION-AND-EXISTING-PUBLIC-ARTIFACT-SPECS",
+  "solutionSearchEvidence": [
+    "PR #935 Required Gate proved PREACTION and Story focused tests pass; only existing Cloudflare dependency completeness rejected the unregistered new module",
+    "deploy/cloudflare/scripts/build.mjs already centralizes Browser runtime packaging through ARTIFACT_SPECS; one registration line closes the residual package gap",
+    "browser/home-boot-runtime-mount.mjs already composes independent runtime mounts, so no giant GAMEROAD.html or Tea/Partner mutation is needed",
+    "Drive row1268 accepted canon packet and canonical source remain unchanged"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-TEXT-READABILITY-R1-20260902T2223",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE-PRESENTATION-TEXT-READABILITY-R1",
+  "acquireKey": "BATTLE-TEXT-READABILITY-R1-20260902T2223-SOL-Q6N4V8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-BATTLE-RUNTIME-7PX-PLAYER-TEXT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT-SOURCE-READBACK-PLUS-XAG101-TEXT-DISPLAY",
+  "proceedToken": "PROCEED|BATTLE-TEXT-READABILITY-R1-20260902T2223|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-runtime-css|lease-A7",
+  "authorizationBaseSha": "37981bee4241408e12d212fb541ac9b957123553",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE-PRESENTATION-TEXT-READABILITY-R1",
+  "leaseAcquireKey": "BATTLE-TEXT-READABILITY-R1-20260902T2223-SOL-Q6N4V8",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 22:23 JST",
+  "leaseUntilJst": "2026-09-02 23:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main@37981bee4241408e12d212fb541ac9b957123553; branch work/battle-text-readability-r1-20260902; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs only if existing assertions require update; own PR/checks/expected-head merge. Gameplay/rules/109/cards/input/board coordinates/save/economy/network/assets/deploy READ_ONLY.",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs"
+  ]
+}

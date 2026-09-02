@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NO-DEFEAT-BATTLE-PRESENTATION-R3-20260902T1312-SOL-Q5N8V2",
+  "taskId": "QUALITY-FINDING-ROUTE-REPAIR-REGLOBAL-CLOSURE-001",
+  "workUnitKey": "GLOBAL_NO_DEFEAT_BATTLE_PRESENTATION_R3",
+  "acquireKey": "NO-DEFEAT-BATTLE-PRESENTATION-R3-20260902T1312-SOL-Q5N8V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_USER_LOCK_NO_DEFEAT_PLUS_EXACT_MAIN_LOSER_PRESENTATION_RESIDUAL_58d07dc",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "DIRECT_CANON_USER_LOCK_AND_EXISTING_FOCUSED_BATTLE_PRESENTATION_TESTS",
+  "proceedToken": "PROCEED|NO-DEFEAT-BATTLE-PRESENTATION-R3-20260902T1312-SOL-Q5N8V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|USER_LOCK_EXACT_REPAIR",
+  "authorizationBaseSha": "58d07dc398ac8854ba60b6f8efbddd57ecde9863",
+  "scope": [
+    "browser/battle-screen-presentation-core.mjs",
+    "tests/battle-screen-presentation-core.test.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "QUALITY-FINDING-ROUTE-REPAIR-REGLOBAL-CLOSURE-001",
+  "leaseWorkUnitKey": "GLOBAL_NO_DEFEAT_BATTLE_PRESENTATION_R3",
+  "leaseAcquireKey": "NO-DEFEAT-BATTLE-PRESENTATION-R3-20260902T1312-SOL-Q5N8V2",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 13:12 JST",
+  "leaseUntilJst": "2026-09-02 14:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A321:L321",
+  "leaseScope": [
+    "browser/battle-screen-presentation-core.mjs",
+    "tests/battle-screen-presentation-core.test.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main@58d07dc398ac8854ba60b6f8efbddd57ecde9863; NEW branch work/no-defeat-battle-presentation-r3-20260902; transient data/preaction-authorizations/NO-DEFEAT-BATTLE-PRESENTATION-R3-20260902T1312-SOL-Q5N8V2.json create-first/delete-before-final-head; browser/battle-screen-presentation-core.mjs; tests/battle-screen-presentation-core.test.mjs; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row321; own R23 events if durable checkpoint/terminal needed. READ_ONLY battle-conveyor event authority, winner/rank/result facts, cards/RNG/save/economy/network/assets, browser/GAMEROAD.html, UI motion/newbase active resources, unrelated files."
+}

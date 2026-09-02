@@ -11,6 +11,8 @@ const STYLE_ID = 'gameroad-home-shell-runtime-style';
 const HOME_SELECTOR = 'section[data-screen="home"]';
 const DECORATIVE_GLOBAL_BRAND_SELECTOR = '.top .brand';
 const ROUTE_SELECTOR = '.homePadChoice[data-home-target]';
+const SECONDARY_UTILITY_SELECTOR = '.codexHomeUtilities';
+const SECONDARY_UTILITY_BUTTON_SELECTOR = '.homeUtilityBtn';
 const SLIDEPAD_CENTER_SELECTOR = '#homePadCenter';
 const SLIDEPAD_DEAD_ZONE_PX = 18;
 const SLIDEPAD_DOWN_REJECT_RATIO = 1.15;
@@ -254,10 +256,36 @@ ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SLIDEPAD_CENTER_SELECTOR}{
   touch-action:none;
   translate:var(--gameroad-home-slidepad-x, 0px) var(--gameroad-home-slidepad-y, 0px);
 }
+/* The wide Home already exposes the same utility destinations in the global top rail.
+   Keep the local utility rail usable, but subordinate it so scene art and SlidePad remain primary. */
+${HOME_SELECTOR}[data-home-shell-variant="wide-landscape"] ${SECONDARY_UTILITY_SELECTOR}{
+  opacity:.38!important;
+  filter:saturate(.55) brightness(.82)!important;
+  transition:opacity 120ms ease-out,filter 120ms ease-out!important;
+}
+${HOME_SELECTOR}[data-home-shell-variant="wide-landscape"] ${SECONDARY_UTILITY_SELECTOR}:hover,
+${HOME_SELECTOR}[data-home-shell-variant="wide-landscape"] ${SECONDARY_UTILITY_SELECTOR}:focus-within{
+  opacity:.94!important;
+  filter:none!important;
+}
+${HOME_SELECTOR}[data-home-shell-variant="wide-landscape"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}{
+  min-width:${HOME_TOUCH_TARGET_MIN_PX}px!important;
+  min-height:${HOME_TOUCH_TARGET_MIN_PX}px!important;
+  border-color:transparent!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+}
+${HOME_SELECTOR}[data-home-shell-variant="wide-landscape"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}:focus-visible{
+  opacity:1!important;
+  outline:2px solid currentColor!important;
+  outline-offset:3px!important;
+}
 @media (prefers-reduced-motion:reduce){
-  ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}{
+  ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR},
+  ${HOME_SELECTOR}[data-home-shell-variant="wide-landscape"] ${SECONDARY_UTILITY_SELECTOR}{
     scroll-behavior:auto;
-    transition:none;
+    transition:none!important;
   }
 }
 `;

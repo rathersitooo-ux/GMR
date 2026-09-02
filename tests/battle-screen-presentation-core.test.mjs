@@ -79,10 +79,11 @@ assert.equal(compare.lanes.find(row => row.id === 'P1').role, 'revealed');
 const finisher = timeline.models.find(model => model.eventId === 'f1');
 assert.equal(finisher.transition, 'FINISHER_GATHER');
 assert.equal(finisher.focus.causeId, 'P4');
-assert.deepEqual(finisher.focus.targetIds, ['P1', 'P2', 'P3']);
+assert.deepEqual(finisher.focus.targetIds, []);
 assert.deepEqual(finisher.focus.winnerIds, ['P4']);
 assert.equal(finisher.lanes.find(row => row.id === 'P4').role, 'winner');
-assert.equal(finisher.lanes.filter(row => row.role === 'loser').length, 3);
+assert.deepEqual(finisher.lanes.map(row => row.role), ['idle', 'idle', 'idle', 'winner']);
+assert.equal(finisher.lanes.some(row => row.role === 'loser'), false);
 assert.deepEqual(finisher.lanes.find(row => row.id === 'P4').afterstate.map(row => row.text), ['列進行 7']);
 assert.deepEqual(finisher.lanes.find(row => row.id === 'P2').afterstate.map(row => row.text), ['公開済み状態']);
 assert.equal(finisher.returnIntent, 'RESULT');
@@ -133,7 +134,7 @@ assert.deepEqual(BATTLE_SCREEN_PRESENTATION.requiredAnchors, ['battlePhaseSurfac
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 60,
+  tests: 61,
   timelineEnd: timeline.timelineEnd,
   phases: timeline.models.map(model => [model.eventId, model.phase, model.transition]),
   finisherRoles: finisher.lanes.map(row => [row.id, row.role])

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-ROGUE-HIERARCHY-R1-20260902T2210",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME-ROGUE-SECONDARY-HIERARCHY-R1",
+  "acquireKey": "HOME-ROGUE-HIERARCHY-R1-20260902T2210-SOL-V7K2M4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-PUBLIC-BFI-HOME-ROGUE-PRIMARY-COMPETITION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT-PUBLIC-BFI-9A0131-HOME-390-820-667-PLUS-SOURCE-DELTA",
+  "proceedToken": "PROCEED|HOME-ROGUE-HIERARCHY-R1-20260902T2210|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|actual-public-home|lease-A6",
+  "authorizationBaseSha": "4b9b106bd1b31d03a1d0d11eaa34bbbc63318671",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME-ROGUE-SECONDARY-HIERARCHY-R1",
+  "leaseAcquireKey": "HOME-ROGUE-HIERARCHY-R1-20260902T2210-SOL-V7K2M4",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 22:10 JST",
+  "leaseUntilJst": "2026-09-02 23:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/home-rogue-secondary-hierarchy-r1; browser/rogue-run-runtime-mount.mjs; tests/rogue-run-runtime-mount.test.mjs; own PR/checks/expected-head merge. Result presentation + exact-old-main Cloudflare production deploy READ_ONLY.",
+  "scope": [
+    "browser/rogue-run-runtime-mount.mjs"
+  ],
+  "leaseScope": [
+    "browser/rogue-run-runtime-mount.mjs"
+  ]
+}

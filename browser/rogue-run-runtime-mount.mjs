@@ -140,10 +140,11 @@ function installStyle(documentSource) {
   if (documentSource.getElementById('gameroad-rogue-run-live-mount-r1-style')) return;
   const style = element(documentSource, 'style', { id: 'gameroad-rogue-run-live-mount-r1-style' });
   style.textContent = `
-    .rogueRunEntry{position:absolute;left:2%;bottom:3%;z-index:68;min-width:132px;min-height:44px;border:1px solid rgba(255,218,126,.82);border-radius:18px;background:linear-gradient(145deg,#53366f,#241a43);color:#fff4c5;font-weight:950;letter-spacing:.04em;box-shadow:0 10px 26px rgba(0,0,0,.34)}
+    .rogueRunEntry{position:absolute;left:2%;bottom:3%;z-index:7;min-width:120px;min-height:44px;padding:0 12px;border:1px solid rgba(160,239,213,.3);border-radius:12px;background:rgba(3,17,14,.9);color:#c4d8d2;font-size:10px;font-weight:850;letter-spacing:.04em;box-shadow:none;opacity:.74;transition:opacity .14s ease,border-color .14s ease,background .14s ease,transform .14s ease}
+    .rogueRunEntry:hover,.rogueRunEntry:focus-visible{opacity:1;border-color:rgba(160,239,213,.66);background:rgba(7,29,23,.96);transform:translateY(-1px);outline:none}
     .rogueRunPanel{position:absolute;z-index:150;left:50%;top:50%;transform:translate(-50%,-50%);width:min(520px,calc(100vw - 24px));padding:18px;border:1px solid rgba(214,187,255,.72);border-radius:18px;background:rgba(15,12,31,.97);box-shadow:0 24px 80px rgba(0,0,0,.62);color:#f8f3ff}
     .rogueRunPanel[hidden]{display:none}.rogueRunPanel h2{margin:0 0 8px;font-size:22px}.rogueRunPanel p{margin:0 0 14px;color:#d6cae9;line-height:1.6}.rogueRunActions{display:flex;flex-wrap:wrap;gap:8px}.rogueRunAction{min-height:44px;border:1px solid rgba(220,200,255,.55);border-radius:12px;background:#332451;color:#fff;padding:0 14px;font-weight:900}.rogueRunAction.primary{border-color:#ffe19a;background:#60406f;color:#fff7d5}
-    @media(max-width:620px) and (orientation:portrait){.rogueRunEntry{left:4%;bottom:31%;font-size:12px}.rogueRunPanel{top:44%;padding:14px}.rogueRunPanel h2{font-size:18px}}
+    @media(max-width:620px) and (orientation:portrait){.rogueRunEntry{left:4%;bottom:31%;font-size:10px}.rogueRunPanel{top:44%;padding:14px}.rogueRunPanel h2{font-size:18px}}
   `;
   documentSource.head.append(style);
 }

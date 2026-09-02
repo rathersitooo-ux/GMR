@@ -23,12 +23,12 @@
   "routeChange": "LEAN_EXISTING_CARDS_MODULE_CONSUMER_NO_NEW_WORKFLOW_OR_TEST_SUITE",
   "scope": [
     "browser/cards-deck-presentation.mjs",
+    "browser/deck-storage-corner-core.mjs",
     "deploy/cloudflare/scripts/build.mjs",
     "tests/browser-full-interaction.spec.mjs"
   ],
   "readOnly": [
     "browser/GAMEROAD.html",
-    "browser/deck-storage-corner-core.mjs",
     "browser/deck-storage-corner-runtime.mjs",
     "deploy/cloudflare/tests/build.test.mjs",
     "playwright.full-interaction.config.mjs"

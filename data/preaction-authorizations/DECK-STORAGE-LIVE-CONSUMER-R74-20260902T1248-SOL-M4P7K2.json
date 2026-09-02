@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DECK-STORAGE-LIVE-CONSUMER-R74-20260902T1248-SOL-M4P7K2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "DECK_STORAGE_LIVE_CONSUMER_R74",
+  "acquireKey": "DECK-STORAGE-LIVE-CONSUMER-R74-20260902T1248-SOL-M4P7K2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R71_CONFIRMED_HUMAN_UNREACHABLE_STORAGE_ENTRY_PLUS_CURRENT_LIVE_CARDS_SWIPE_AUTHORITY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R71_BFI_2155_DECK_FAILURE_PLUS_CURRENT_MAIN_DIRECT_RUNTIME_READBACK",
+  "proceedToken": "PROCEED|DECK-STORAGE-LIVE-CONSUMER-R74-20260902T1248-SOL-M4P7K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260902T1248JST",
+  "authorizationBaseSha": "58d07dc398ac8854ba60b6f8efbddd57ecde9863",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "DECK_STORAGE_LIVE_CONSUMER_R74",
+  "leaseAcquireKey": "DECK-STORAGE-LIVE-CONSUMER-R74-20260902T1248-SOL-M4P7K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 12:48 JST",
+  "leaseUntilJst": "2026-09-02 13:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A15:N15",
+  "routeChange": "LEAN_EXISTING_CARDS_MODULE_CONSUMER_NO_NEW_WORKFLOW_OR_TEST_SUITE",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "readOnly": [
+    "browser/GAMEROAD.html",
+    "browser/deck-storage-corner-core.mjs",
+    "browser/deck-storage-corner-runtime.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "playwright.full-interaction.config.mjs"
+  ]
+}

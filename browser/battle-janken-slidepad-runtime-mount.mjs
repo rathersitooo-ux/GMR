@@ -222,7 +222,6 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     const roundText = root.querySelector?.('#roundNo')?.textContent;
     const hand = readHand(globalRef, root);
     if (!String(roundText ?? '').trim() || hand.length === 0) return;
-    const previousRound = assignment?.roundId ?? null;
     model = buildBattleJankenSlidePadModel({
       roundId: roundText,
       hand,
@@ -230,7 +229,6 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
       pickDuplicateIndex: (request) => entropyIndex(globalRef, request),
     });
     assignment = model.assignment;
-    if (assignment?.roundId && assignment.roundId !== previousRound) setExpanded(true);
     const currentHandIds = hand.map((card) => card.id);
     for (const slot of model.slots) {
       const node = slotNodes.get(slot.jankenHand);

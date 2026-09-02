@@ -89,19 +89,19 @@ export function resolveCyclicTriad(selections, config = {}) {
 
 /**
  * Resolves an already-authoritatively-ordered cyclic triad using the current
- * win-only pass rule.
+ * ascending first-win-lock rule.
  *
- * Each still-valid entry gets its pass in the supplied order. During that pass
- * it invalidates only other still-valid entries whose hand it beats. The
- * current entry is never invalidated merely because another still-valid hand
- * beats it; that opposing entry can invalidate it later only if that entry is
- * still valid when its own pass arrives. Invalidated entries never receive a
- * later pass.
+ * Each unresolved entry gets its pass in the supplied order. During that pass
+ * it invalidates every other unresolved entry whose hand it beats. If it
+ * invalidates at least one entry, it immediately becomes a resolved winner and
+ * leaves the unresolved comparison pool, so no later card can invalidate it.
+ * If it beats nobody, it remains unresolved and can still be invalidated by a
+ * later unresolved card. Invalidated entries never receive a later pass.
  *
  * `orderedSelections` must already be in the authoritative processing order.
  * This resolver deliberately does not invent numeric sorting, equal-value
- * tie-breaking, or any destination for invalidated cards. Those remain owned
- * by the caller/current Battle authority.
+ * tie-breaking, Heart/Luna effects, or any destination for invalidated cards.
+ * Those remain owned by the caller/current Battle authority.
  */
 export function resolveCyclicTriadByProcessingOrder(orderedSelections, config = {}) {
   const safeConfig = normalizeConfig(config);
@@ -112,37 +112,53 @@ export function resolveCyclicTriadByProcessingOrder(orderedSelections, config = 
     .map((entry) => entry.playerId)
     .sort(compareText);
 
-  const validIds = new Set(active.map((entry) => entry.playerId));
+  const unresolvedIds = new Set(active.map((entry) => entry.playerId));
+  const resolvedWinnerIds = new Set();
   const invalidated = [];
   const steps = [];
 
   for (const entry of active) {
-    if (!validIds.has(entry.playerId)) continue;
+    if (!unresolvedIds.has(entry.playerId)) continue;
 
     const stepInvalidated = [];
     for (const candidate of active) {
-      if (candidate.playerId === entry.playerId || !validIds.has(candidate.playerId)) continue;
+      if (candidate.playerId === entry.playerId || !unresolvedIds.has(candidate.playerId)) continue;
       if (safeConfig.beats[entry.hand] !== candidate.hand) continue;
-      validIds.delete(candidate.playerId);
+      unresolvedIds.delete(candidate.playerId);
       invalidated.push(candidate);
       stepInvalidated.push(candidate);
     }
 
-    const stepSurvivors = active.filter((candidate) => validIds.has(candidate.playerId));
+    const resolvedWinner = stepInvalidated.length > 0;
+    if (resolvedWinner) {
+      unresolvedIds.delete(entry.playerId);
+      resolvedWinnerIds.add(entry.playerId);
+    }
+
+    const stepSurvivors = active.filter((candidate) => (
+      unresolvedIds.has(candidate.playerId) || resolvedWinnerIds.has(candidate.playerId)
+    ));
     steps.push(Object.freeze({
       processedPlayerId: entry.playerId,
       winningHand: entry.hand,
+      resolvedWinner,
       invalidated: Object.freeze(stepInvalidated.map((candidate) => candidate.playerId)),
       survivors: Object.freeze(stepSurvivors.map((candidate) => candidate.playerId)),
     }));
   }
 
-  const survivors = active.filter((entry) => validIds.has(entry.playerId));
+  const resolvedWinners = active.filter((entry) => resolvedWinnerIds.has(entry.playerId));
+  const unresolvedSurvivors = active.filter((entry) => unresolvedIds.has(entry.playerId));
+  const survivors = active.filter((entry) => (
+    resolvedWinnerIds.has(entry.playerId) || unresolvedIds.has(entry.playerId)
+  ));
   return Object.freeze({
     processingOrder: Object.freeze(active.map((entry) => entry.playerId)),
     nonParticipants: Object.freeze(nonParticipants),
     survivingHand: survivors.length === 0 ? null : survivors[0].hand,
     survivors: Object.freeze(survivors.map((entry) => entry.playerId)),
+    resolvedWinners: Object.freeze(resolvedWinners.map((entry) => entry.playerId)),
+    unresolvedSurvivors: Object.freeze(unresolvedSurvivors.map((entry) => entry.playerId)),
     invalidated: Object.freeze(invalidated.map((entry) => entry.playerId)),
     steps: Object.freeze(steps),
   });

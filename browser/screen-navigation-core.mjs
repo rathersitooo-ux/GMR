@@ -1,4 +1,10 @@
 import {createTransitionDirector} from './ui-state-feedback-core.mjs';
+import {
+  motionTransform,
+  resolveContinuityKey,
+  resolveControlMotionRole,
+  resolveMenuMotionIntent
+} from './ui-motion-intent-core.mjs';
 
 export const SCREEN_NAVIGATION_REASON = Object.freeze({
   EMPTY_TARGET: 'EMPTY_TARGET',
@@ -159,12 +165,13 @@ function containsNode(surface, node) {
   return Boolean(surface && node && (surface === node || surface.contains?.(node)));
 }
 
-function presentationFrames(kind, spec, axis, reverse) {
-  const signedDistance = spec.distancePx * (reverse ? -1 : 1);
-  const translate = (distance) => axis === 'x'
-    ? `translate3d(${distance}px,0,0)`
-    : `translate3d(0,${distance}px,0)`;
+function findContinuityNode(surface, continuityKey) {
+  if (!surface || !continuityKey || typeof surface.querySelectorAll !== 'function') return null;
+  const candidates = surface.querySelectorAll('[data-motion-key],[data-home-target],[data-screen-target],[data-nav-target]');
+  return [...candidates].find((candidate) => resolveContinuityKey(candidate) === continuityKey) || null;
+}
 
+function presentationFrames(kind, spec, intent) {
   if (kind === 'press') {
     return [{transform: 'scale(1)'}, {transform: 'scale(.985)'}, {transform: 'scale(1)'}];
   }
@@ -175,14 +182,33 @@ function presentationFrames(kind, spec, axis, reverse) {
       {boxShadow: '0 0 0 0 rgba(160,239,213,0)'}
     ];
   }
-  if (kind === 'exit') {
-    return spec.distancePx > 0
-      ? [{opacity: 1, transform: translate(0)}, {opacity: .86, transform: translate(-signedDistance)}]
-      : [{opacity: 1}, {opacity: .88}];
+
+  if (spec.distancePx <= 0) {
+    return kind === 'exit'
+      ? [{opacity: 1}, {opacity: .88}]
+      : [{opacity: .86}, {opacity: 1}];
   }
-  return spec.distancePx > 0
-    ? [{opacity: .82, transform: translate(signedDistance)}, {opacity: 1, transform: translate(0)}]
-    : [{opacity: .86}, {opacity: 1}];
+
+  const kinetics = intent?.kinetics || {axis: 'y', enterSign: 1, scaleFrom: 1, rotateDeg: 0};
+  const signedDistance = spec.distancePx * kinetics.enterSign;
+  const neutral = motionTransform({axis: kinetics.axis, distance: 0, scale: 1, rotateDeg: 0});
+  const entering = motionTransform({
+    axis: kinetics.axis,
+    distance: signedDistance,
+    scale: kinetics.scaleFrom,
+    rotateDeg: kinetics.rotateDeg
+  });
+  const leaving = motionTransform({
+    axis: kinetics.axis,
+    distance: -signedDistance * 0.72,
+    scale: 1 + (1 - kinetics.scaleFrom) * 0.35,
+    rotateDeg: -kinetics.rotateDeg * 0.5
+  });
+
+  if (kind === 'exit') {
+    return [{opacity: 1, transform: neutral}, {opacity: .84, transform: leaving}];
+  }
+  return [{opacity: .8, transform: entering}, {opacity: 1, transform: neutral}];
 }
 
 function animationDuration(kind, spec) {
@@ -216,6 +242,8 @@ export function createScreenMotionPresentationDriver({
       delete surface.dataset.screenMotionRevision;
       delete surface.dataset.screenMotionPhase;
       delete surface.dataset.screenMotionProfile;
+      delete surface.dataset.screenMotionFamily;
+      delete surface.dataset.screenMotionBridge;
     }
   }
 
@@ -240,30 +268,37 @@ export function createScreenMotionPresentationDriver({
       outgoing: screenSurface(documentSource, context.from),
       incoming: null,
       pressedControl: null,
+      destinationContinuityNode: null,
       animations: new Set(),
-      onAbort: null
+      onAbort: null,
+      intent: null
     };
     session.pressedControl = containsNode(session.outgoing, documentSource?.activeElement)
       ? documentSource.activeElement
       : null;
+    const controlRole = resolveControlMotionRole(session.pressedControl);
+    const continuityKey = resolveContinuityKey(session.pressedControl);
+    session.intent = resolveMenuMotionIntent({
+      from: context.from,
+      to: context.to,
+      reason: context.reason,
+      controlRole,
+      continuityKey,
+      destinationHasContinuity: false
+    });
     session.onAbort = () => finishRevision(context.revision, 'aborted');
     context.signal?.addEventListener?.('abort', session.onAbort, {once: true});
     sessions.set(context.revision, session);
     return session;
   }
 
-  function mark(surface, context, phase) {
+  function mark(surface, context, phase, intent) {
     if (!surface?.dataset) return;
     surface.dataset.screenMotionRevision = String(context.revision);
     surface.dataset.screenMotionPhase = String(phase).toLowerCase();
     surface.dataset.screenMotionProfile = context.motionProfile;
-  }
-
-  function shortAxis() {
-    const root = documentSource?.documentElement;
-    const width = Number(root?.clientWidth) || 0;
-    const height = Number(root?.clientHeight) || 0;
-    return width > height ? 'y' : 'x';
+    surface.dataset.screenMotionFamily = intent.family;
+    surface.dataset.screenMotionBridge = intent.bridge;
   }
 
   async function animate(session, target, kind, context) {
@@ -271,14 +306,22 @@ export function createScreenMotionPresentationDriver({
       || SCREEN_MOTION_PRESENTATION_SPEC[MENU_TRANSITION_MOTION_PROFILE.NORMAL];
     const duration = animationDuration(kind, spec);
     if (!target || duration === 0 || typeof target.animate !== 'function' || context.signal?.aborted) {
-      record({revision: context.revision, phase: context.phase, kind, status: 'no_effect', profile: context.motionProfile});
+      record({
+        revision: context.revision,
+        phase: context.phase,
+        kind,
+        status: 'no_effect',
+        profile: context.motionProfile,
+        family: session.intent.family,
+        bridge: session.intent.bridge
+      });
       return;
     }
 
     let animation;
     try {
       animation = target.animate(
-        presentationFrames(kind, spec, shortAxis(), context.reason === 'back' || context.to === 'home'),
+        presentationFrames(kind, spec, session.intent),
         {duration, easing: spec.easing, fill: 'none'}
       );
     } catch (error) {
@@ -288,6 +331,8 @@ export function createScreenMotionPresentationDriver({
         kind,
         status: 'failed_soft',
         profile: context.motionProfile,
+        family: session.intent.family,
+        bridge: session.intent.bridge,
         errorName: error instanceof Error ? error.name : 'Error'
       });
       return;
@@ -297,7 +342,15 @@ export function createScreenMotionPresentationDriver({
     context.signal?.addEventListener?.('abort', cancel, {once: true});
     try {
       await Promise.resolve(animation.finished);
-      record({revision: context.revision, phase: context.phase, kind, status: 'completed', profile: context.motionProfile});
+      record({
+        revision: context.revision,
+        phase: context.phase,
+        kind,
+        status: 'completed',
+        profile: context.motionProfile,
+        family: session.intent.family,
+        bridge: session.intent.bridge
+      });
     } catch (error) {
       record({
         revision: context.revision,
@@ -305,6 +358,8 @@ export function createScreenMotionPresentationDriver({
         kind,
         status: context.signal?.aborted ? 'aborted' : 'failed_soft',
         profile: context.motionProfile,
+        family: session.intent.family,
+        bridge: session.intent.bridge,
         errorName: error instanceof Error ? error.name : 'Error'
       });
     } finally {
@@ -320,23 +375,39 @@ export function createScreenMotionPresentationDriver({
     const phaseContext = Object.freeze({...context, phase});
     try {
       if (phase === 'PREPARE') {
-        mark(session.outgoing, context, phase);
+        mark(session.outgoing, context, phase, session.intent);
         void animate(session, session.pressedControl, 'press', phaseContext);
       } else if (phase === 'EXIT') {
-        mark(session.outgoing, context, phase);
+        mark(session.outgoing, context, phase, session.intent);
         await animate(session, session.outgoing, 'exit', phaseContext);
       } else if (phase === 'SWAP') {
         session.incoming = screenSurface(documentSource, context.to);
-        mark(session.incoming, context, phase);
-        record({revision: context.revision, phase, kind: 'surface_swap_observed', status: session.incoming ? 'completed' : 'surface_missing', profile: context.motionProfile});
+        session.destinationContinuityNode = findContinuityNode(session.incoming, session.intent.continuityKey);
+        session.intent = resolveMenuMotionIntent({
+          from: context.from,
+          to: context.to,
+          reason: context.reason,
+          controlRole: session.intent.controlRole,
+          continuityKey: session.intent.continuityKey,
+          destinationHasContinuity: Boolean(session.destinationContinuityNode)
+        });
+        mark(session.incoming, context, phase, session.intent);
+        record({
+          revision: context.revision,
+          phase,
+          kind: 'surface_swap_observed',
+          status: session.incoming ? 'completed' : 'surface_missing',
+          profile: context.motionProfile,
+          family: session.intent.family,
+          bridge: session.intent.bridge
+        });
       } else if (phase === 'ENTER') {
-        mark(session.incoming, context, phase);
+        mark(session.incoming, context, phase, session.intent);
         await animate(session, session.incoming, 'enter', phaseContext);
       } else if (phase === 'SETTLE') {
-        mark(session.incoming, context, phase);
-        const focusedControl = containsNode(session.incoming, documentSource?.activeElement)
-          ? documentSource.activeElement
-          : null;
+        mark(session.incoming, context, phase, session.intent);
+        const focusedControl = session.destinationContinuityNode
+          || (containsNode(session.incoming, documentSource?.activeElement) ? documentSource.activeElement : null);
         await animate(session, focusedControl, 'focus', phaseContext);
         finishRevision(context.revision, 'settled');
       }

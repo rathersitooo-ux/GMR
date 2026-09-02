@@ -267,6 +267,55 @@ function animationDuration(kind, spec) {
   return spec.feedbackMs;
 }
 
+function concurrentEntryBatch(surface, documentSource, intent) {
+  const directChildren = surface?.children ? [...surface.children] : [];
+  const explicit = directChildren.filter((piece) => piece?.dataset?.screenMotionPiece === 'enter');
+  const pool = explicit.length
+    ? explicit
+    : directChildren.filter((piece) => piece?.dataset?.screenMotionPiece !== 'exclude');
+  const measured = [];
+  for (const piece of pool) {
+    if (typeof piece?.animate !== 'function' || typeof piece?.getBoundingClientRect !== 'function') continue;
+    let rect;
+    try {
+      rect = piece.getBoundingClientRect();
+    } catch {
+      continue;
+    }
+    if (!rect || !(rect.width > 0) || !(rect.height > 0)) continue;
+    if (![rect.left, rect.right, rect.top, rect.bottom].every(Number.isFinite)) continue;
+    measured.push(Object.freeze({piece, rect: Object.freeze({
+      left: rect.left,
+      right: rect.right,
+      top: rect.top,
+      bottom: rect.bottom,
+      width: rect.width,
+      height: rect.height
+    })}));
+  }
+  if (measured.length < 2) return null;
+
+  const width = Number(documentSource?.documentElement?.clientWidth);
+  const height = Number(documentSource?.documentElement?.clientHeight);
+  if (!(width > 0) || !(height > 0)) return null;
+
+  const minLeft = Math.min(...measured.map(({rect}) => rect.left));
+  const maxRight = Math.max(...measured.map(({rect}) => rect.right));
+  const minTop = Math.min(...measured.map(({rect}) => rect.top));
+  const maxBottom = Math.max(...measured.map(({rect}) => rect.bottom));
+  const distance = intent.axis === 'x'
+    ? (intent.enterSign > 0 ? width - minLeft : -maxRight)
+    : (intent.enterSign > 0 ? height - minTop : -maxBottom);
+  if (!Number.isFinite(distance) || distance === 0) return null;
+
+  return Object.freeze({
+    pieces: Object.freeze(measured),
+    distance,
+    axis: intent.axis,
+    viewport: Object.freeze({width, height})
+  });
+}
+
 /**
  * Presentation-only driver for real screen surfaces. It uses the Web Animations
  * API without moving focus, changing hitboxes, or owning navigation state.
@@ -408,6 +457,101 @@ export function createScreenMotionPresentationDriver({
     }
   }
 
+  async function animateConcurrentEntry(session, batch, context) {
+    const spec = SCREEN_MOTION_PRESENTATION_SPEC[context.motionProfile]
+      || SCREEN_MOTION_PRESENTATION_SPEC[MENU_TRANSITION_MOTION_PROFILE.NORMAL];
+    if (!batch || spec.distancePx <= 0 || spec.enterMs === 0 || context.signal?.aborted) return false;
+    const frames = [
+      {opacity: .8, transform: transformFor(session.intent, batch.distance)},
+      {opacity: 1, transform: transformFor(session.intent, 0)}
+    ];
+    record({
+      revision: context.revision,
+      phase: context.phase,
+      kind: 'enter_batch',
+      status: 'started',
+      pieceCount: batch.pieces.length,
+      axis: batch.axis,
+      distance: batch.distance,
+      profile: context.motionProfile,
+      family: session.intent.family,
+      bridge: session.intent.bridge
+    });
+
+    const runPiece = async ({piece}, index) => {
+      let animation;
+      try {
+        animation = piece.animate(frames, {duration: spec.enterMs, easing: spec.easing, fill: 'none'});
+      } catch (error) {
+        record({
+          revision: context.revision,
+          phase: context.phase,
+          kind: 'enter_piece',
+          status: 'failed_soft',
+          pieceIndex: index,
+          pieceCount: batch.pieces.length,
+          errorName: error instanceof Error ? error.name : 'Error'
+        });
+        return;
+      }
+      session.animations.add(animation);
+      const cancel = () => animation.cancel?.();
+      context.signal?.addEventListener?.('abort', cancel, {once: true});
+      record({
+        revision: context.revision,
+        phase: context.phase,
+        kind: 'enter_piece',
+        status: 'started',
+        pieceIndex: index,
+        pieceCount: batch.pieces.length,
+        axis: batch.axis,
+        distance: batch.distance
+      });
+      try {
+        await Promise.resolve(animation.finished);
+        record({
+          revision: context.revision,
+          phase: context.phase,
+          kind: 'enter_piece',
+          status: 'completed',
+          pieceIndex: index,
+          pieceCount: batch.pieces.length,
+          axis: batch.axis,
+          distance: batch.distance
+        });
+      } catch (error) {
+        record({
+          revision: context.revision,
+          phase: context.phase,
+          kind: 'enter_piece',
+          status: context.signal?.aborted ? 'aborted' : 'failed_soft',
+          pieceIndex: index,
+          pieceCount: batch.pieces.length,
+          errorName: error instanceof Error ? error.name : 'Error'
+        });
+      } finally {
+        context.signal?.removeEventListener?.('abort', cancel);
+        session.animations.delete(animation);
+        animation.cancel?.();
+      }
+    };
+
+    await Promise.all(batch.pieces.map(runPiece));
+    record({
+      revision: context.revision,
+      phase: context.phase,
+      kind: 'enter_batch',
+      status: context.signal?.aborted ? 'aborted' : 'completed',
+      pieceCount: batch.pieces.length,
+      axis: batch.axis,
+      distance: batch.distance,
+      profile: context.motionProfile,
+      family: session.intent.family,
+      bridge: session.intent.bridge
+    });
+    return true;
+  }
+
   async function runPhase(phase, context) {
     const session = ensureSession(context);
     if (context.signal?.aborted) return;
@@ -433,7 +577,12 @@ export function createScreenMotionPresentationDriver({
         });
       } else if (phase === 'ENTER') {
         mark(session.incoming, context, phase, session.intent);
-        await animate(session, session.incoming, 'enter', phaseContext);
+        const batch = context.motionProfile === MENU_TRANSITION_MOTION_PROFILE.NORMAL
+          ? concurrentEntryBatch(session.incoming, documentSource, session.intent)
+          : null;
+        if (!await animateConcurrentEntry(session, batch, phaseContext)) {
+          await animate(session, session.incoming, 'enter', phaseContext);
+        }
       } else if (phase === 'SETTLE') {
         mark(session.incoming, context, phase, session.intent);
         const focusedControl = containsNode(session.incoming, documentSource?.activeElement)

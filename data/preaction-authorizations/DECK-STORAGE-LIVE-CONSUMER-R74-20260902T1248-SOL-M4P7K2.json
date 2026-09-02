@@ -25,7 +25,7 @@
     "browser/cards-deck-presentation.mjs",
     "browser/deck-storage-corner-core.mjs",
     "deploy/cloudflare/scripts/build.mjs",
-    "tests/browser-full-interaction.spec.mjs"
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
   ],
   "readOnly": [
     "browser/GAMEROAD.html",

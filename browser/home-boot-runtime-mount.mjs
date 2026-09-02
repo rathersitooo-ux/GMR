@@ -536,6 +536,7 @@ function bindSlidepad(home) {
 }
 
 export function refreshHomeBootPresentation() {
+  removeDecorativeGlobalBrand();
   const home = document.querySelector(HOME_SELECTOR);
   if (!(home instanceof HTMLElement)) {
     runtime.lastError = 'HOME_DOM_UNAVAILABLE';

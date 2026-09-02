@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-R75-LOAD-PREVIEW-R1-20260903T0440-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_R75_LOAD_CARD_PREVIEW_R1",
+  "acquireKey": "BATTLE-R75-LOAD-PREVIEW-R1-20260903T0440-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_EXPLICIT_R75_PLUS_CURRENT_BATTLE_JANKEN_RUNTIME_MODEL_AND_ARMED_GESTURE_STATE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FOCUSED_PURE_MODEL_TESTS_NO_GAMEPLAY_WRITE_AND_EXISTING_SLOT_ACTION_CONTRACT",
+  "proceedToken": "PROCEED|BATTLE-R75-LOAD-PREVIEW-R1-20260903T0440-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|PRESENTATION_ONLY",
+  "authorizationBaseSha": "ac0ab6e253cdafe8b9b8113bd50697732e06e41c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_R75_LOAD_CARD_PREVIEW_R1",
+  "leaseAcquireKey": "BATTLE-R75-LOAD-PREVIEW-R1-20260903T0440-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-03 04:40 JST",
+  "leaseUntilJst": "2026-09-03 05:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A14:N14",
+  "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "solutionSignature": "On the existing Battle janken SlidePad, show one prominent Load Card preview only when an actual drag has armed a current selectable slot; source label and janken hand from the existing immutable slot model; never invent a default selection, numeric value, rule, or heart mapping.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_R75_USER_EXPLICIT_PLUS_EXISTING_JANKEN_SLIDEPAD_RUNTIME_AND_EXTERNAL_GLANCEABLE_HUD_EVIDENCE",
+  "solutionSearchEvidence": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs@0570cbf6fee1686b0df22434caa581593494a565",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs@a28aad57cbffbc91144ed0cc9c63c4dd21a190f9",
+    "BATTLE_UI_USER_EXPLICIT_R75",
+    "GameDeveloper HUD peripheral-vision reference"
+  ]
+}

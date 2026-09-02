@@ -10,6 +10,7 @@ import {
   createDeckSwipeFeedbackDetail,
   createDeckSwipePresentationController,
   createDeckSwipeSfxPlayer,
+  presentDeckAddSwipe,
 } from '../browser/cards-deck-presentation.mjs';
 
 const rect = (left, top, width, height) => ({ left, top, width, height });
@@ -81,6 +82,60 @@ test('default visual contract is stable and frozen', () => {
     LAND: 'gameroad:deck-swipe-land',
     REJECT: 'gameroad:deck-swipe-reject',
   });
+});
+
+test('live Deck add binding reuses inserted slot as the existing presentation landing', () => {
+  const source = fakeElement();
+  const target = fakeElement();
+  target.dataset = { id: 'c7' };
+  const deck = fakeElement();
+  target.closest = () => deck;
+  const calls = [];
+  const doc = {
+    querySelectorAll(selector) {
+      return selector === '#deckSlots [data-id], #exDeckSlots [data-id]' ? [target] : [];
+    },
+    querySelector() { return deck; },
+  };
+  const presentation = {
+    playSuccess(payload) { calls.push(['success', payload]); },
+    playReject(payload) { calls.push(['reject', payload]); },
+  };
+
+  assert.equal(presentDeckAddSwipe({
+    doc,
+    presentation,
+    result: { ok: true, action: 'deck-add' },
+    sourceElement: source,
+    cardId: 'c7',
+  }), true);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0][0], 'success');
+  assert.equal(calls[0][1].sourceElement, source);
+  assert.equal(calls[0][1].targetElement, deck);
+  assert.equal(calls[0][1].insertedElement, target);
+});
+
+test('live Deck add binding rejects without fake landing and presentation failures stay non-fatal', () => {
+  const source = fakeElement();
+  const deck = fakeElement();
+  const calls = [];
+  const doc = { querySelectorAll: () => [], querySelector: () => deck };
+  assert.equal(presentDeckAddSwipe({
+    doc,
+    presentation: { playReject(payload) { calls.push(payload); } },
+    result: { ok: false, action: 'deck-add', reason: 'deck-rule-rejected' },
+    sourceElement: source,
+    cardId: 'c9',
+  }), true);
+  assert.equal(calls[0].reason, 'deck-rule-rejected');
+  assert.equal(presentDeckAddSwipe({
+    doc,
+    presentation: { playSuccess() { throw new Error('visual-only failure'); } },
+    result: { ok: true, action: 'deck-add' },
+    sourceElement: source,
+    cardId: 'c9',
+  }), false);
 });
 
 test('rect normalization preserves usable centers without trusting right/bottom', () => {

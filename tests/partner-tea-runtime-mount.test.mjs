@@ -23,7 +23,10 @@ function element(tag = 'div') {
     appendChild(child) { this.children.push(child); child.parent = this; return child; },
     setAttribute(name, value) { this.attributes.set(name, value); },
     addEventListener(type, listener) { this.listeners.set(type, listener); },
-    click() { this.listeners.get('click')?.({ preventDefault() {} }); },
+    click() {
+      if (this.disabled) return;
+      this.listeners.get('click')?.({ preventDefault() {} });
+    },
   };
 }
 
@@ -99,6 +102,7 @@ test('projects two touch-sized Tea actions into the existing conversation form',
     ['study', '勉強する'],
     ['consult', '相談する'],
   ]);
+  assert.deepEqual(buttons.map((button) => button.disabled), [false, false]);
 });
 
 test('Tea click reuses the existing submit path and preserves a free-talk draft', () => {
@@ -112,25 +116,54 @@ test('Tea click reuses the existing submit path and preserves a free-talk draft'
   assert.equal(fixture.send.disabled, true);
 });
 
+test('Tea quick choices mirror the existing conversation busy state and recover when it clears', () => {
+  const fixture = teaFixture();
+  projectPartnerTeaQuickChoices({ document: fixture.document });
+  const buttons = fixture.form.insertedBefore.children.slice(1);
+
+  fixture.input.disabled = true;
+  fixture.send.disabled = true;
+  assert.equal(projectPartnerTeaQuickChoices({ document: fixture.document }), 0);
+  assert.deepEqual(buttons.map((button) => button.disabled), [true, true]);
+
+  buttons[0].click();
+  assert.deepEqual(fixture.form.submittedValues, []);
+
+  fixture.input.disabled = false;
+  fixture.send.disabled = false;
+  assert.equal(projectPartnerTeaQuickChoices({ document: fixture.document }), 0);
+  assert.deepEqual(buttons.map((button) => button.disabled), [false, false]);
+
+  buttons[1].click();
+  assert.deepEqual(fixture.form.submittedValues, ['相談する']);
+});
+
 test('projection is idempotent on an already-mounted conversation surface', () => {
   const fixture = teaFixture();
   assert.equal(projectPartnerTeaQuickChoices({ document: fixture.document }), 1);
   assert.equal(projectPartnerTeaQuickChoices({ document: fixture.document }), 0);
 });
 
-test('runtime observes future conversation surfaces and fails closed on global collision', () => {
+test('runtime observes future surfaces and disabled-state changes and fails closed on global collision', () => {
   const fixture = teaFixture();
   let observerCallback = null;
+  let observedOptions = null;
   let disconnected = false;
   class FakeObserver {
     constructor(callback) { observerCallback = callback; }
-    observe(target, options) { this.target = target; this.options = options; }
+    observe(target, options) { this.target = target; observedOptions = options; }
     disconnect() { disconnected = true; }
   }
   const global = { document: fixture.document, MutationObserver: FakeObserver };
   const runtime = mountPartnerTeaQuickChoiceRuntime(global);
   assert.equal(runtime.version, 'gameroad.partner-tea-quick-choice-runtime.v1');
   assert.equal(typeof observerCallback, 'function');
+  assert.deepEqual(observedOptions, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['disabled'],
+  });
   assert.equal(mountPartnerTeaQuickChoiceRuntime(global), runtime);
   runtime.disconnect();
   assert.equal(disconnected, true);

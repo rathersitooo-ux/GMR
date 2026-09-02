@@ -217,11 +217,22 @@ function appendMessage(document, log, role, text) {
   log.appendChild(row);
   log.scrollTop = log.scrollHeight;
 }
-
 function setConversationState(node, label, origin) {
   if (!node) return;
   node.textContent = label;
   node.dataset.origin = origin || 'neutral';
+}
+
+function setConversationResponseState(node, turn) {
+  if (turn?.responseOrigin === 'provider_candidate') {
+    setConversationState(node, '生成AIで応答', 'provider');
+    return;
+  }
+  if (turn?.responseOrigin === 'approved_fallback') {
+    setConversationState(node, '現在は代替応答', 'fallback');
+    return;
+  }
+  setConversationState(node, '会話できます', 'neutral');
 }
 
 export function mountSaasunaConversationProductSurface(global = globalThis) {
@@ -286,7 +297,7 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
         const turn = response?.turn;
         const ok = turn?.ok && typeof turn.utterance === 'string';
         appendMessage(document, log, ok ? 'saasuna' : 'system', ok ? turn.utterance : '応答できませんでした。もう一度送ってください。');
-        setConversationState(state, '会話できます', 'neutral');
+        setConversationResponseState(state, turn);
       } catch {
         appendMessage(document, log, 'system', '応答できませんでした。もう一度送ってください。');
         setConversationState(state, '会話できます', 'neutral');

@@ -55,7 +55,6 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="source"]{transform:translateY(-1.4%);border-color:rgba(165,230,213,.42);background:linear-gradient(180deg,rgba(32,72,65,.62),rgba(5,14,15,.26))}
 [${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="target"]{border-color:rgba(239,183,142,.4);background:linear-gradient(180deg,rgba(83,52,36,.52),rgba(5,14,15,.26))}
 [${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="winner"]{transform:translateY(-2.2%);border-color:rgba(255,225,139,.64);background:linear-gradient(180deg,rgba(101,81,34,.58),rgba(5,14,15,.24));box-shadow:0 0 28px rgba(237,202,102,.13),inset 0 0 0 1px rgba(255,245,196,.08)}
-[${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="loser"]{opacity:.56;transform:translateY(1.8%)}
 [${SHELL_ATTR}="1"] .grBattleLaneIdentity{min-width:0}.grBattleLaneIdentity b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(9px,1.25vw,15px);letter-spacing:.04em}.grBattleLaneIdentity small{display:block;margin-top:2px;opacity:.55;font-size:clamp(7px,.8vw,10px)}
 [${SHELL_ATTR}="1"] .grBattleLaneRole{align-self:center;justify-self:center;padding:5px 7px;border-radius:999px;border:1px solid rgba(220,242,235,.16);background:rgba(3,9,10,.42);font-size:clamp(7px,.8vw,10px);font-weight:800;letter-spacing:.1em;text-transform:uppercase}
 [${SHELL_ATTR}="1"] .grBattleLaneAfterstate{align-self:end;display:grid;gap:4px;min-height:20px;font-size:clamp(7px,.82vw,10px);line-height:1.25;color:#dce9e5}

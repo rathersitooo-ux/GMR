@@ -14,6 +14,7 @@ import {
 } from '../browser/boot-loading-presentation-core.mjs';
 import {
   removeLegacyHomeNodes,
+  resolveHomeSlidepadFeedbackTranslation,
   resolveHomeSlidepadRayTarget,
   resolveHomeSlidepadRelease,
   resolveHomeSlidepadRole,
@@ -264,4 +265,11 @@ test('Home SlidePad compatibility release fail-closes instead of inventing a des
     resolveHomeSlidepadRelease({ dx: 0, dy: -50, routeIds: ['shop', 'cards'] }),
     { role: 'battle', routeId: null, commit: false },
   );
+});
+
+
+test('Home SlidePad visual feedback follows the full pointer displacement without a fixed pixel clamp', () => {
+  assert.deepEqual(resolveHomeSlidepadFeedbackTranslation({ dx: 320, dy: -180 }), { x: 320, y: -180 });
+  assert.deepEqual(resolveHomeSlidepadFeedbackTranslation({ dx: -260, dy: 90 }), { x: -260, y: 90 });
+  assert.equal(resolveHomeSlidepadFeedbackTranslation({ dx: Number.POSITIVE_INFINITY, dy: 0 }), null);
 });

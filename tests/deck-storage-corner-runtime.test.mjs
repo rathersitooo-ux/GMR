@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createDeckStorageCornerController, mountDeckStorageCorner } from '../browser/deck-storage-corner-runtime.mjs';
+import {
+  createDeckStorageCornerController,
+  installDeckStorageCardsDiscovery,
+  mountDeckStorageCorner,
+  shouldRevealDeckStorageFromCardsSwipe,
+} from '../browser/deck-storage-corner-runtime.mjs';
 
 function fixture({ deck = ['a'], rejectAdd = false, rejectRemove = false } = {}) {
   let currentDeck = [...deck];
@@ -57,6 +62,29 @@ function fakeDocument() {
     createElement: () => fakeElement(),
     getElementById: () => null,
   };
+}
+
+function discoveryDocument() {
+  const listeners = new Map();
+  const document = fakeDocument();
+  const screen = fakeElement();
+  screen.classList = { contains: (name) => name === 'active' };
+  screen.contains = (node) => node === screen || node?.parentNode === screen;
+  screen.querySelector = (selector) => selector === '[data-role="deck-storage-discovery-hint"]'
+    ? screen.children.find((node) => node.dataset?.role === 'deck-storage-discovery-hint') ?? null
+    : null;
+
+  document.querySelector = (selector) => selector === '.screen.cards' ? screen : null;
+  document.addEventListener = (type, handler) => {
+    const set = listeners.get(type) ?? new Set();
+    set.add(handler);
+    listeners.set(type, set);
+  };
+  document.removeEventListener = (type, handler) => listeners.get(type)?.delete(handler);
+  document.emit = (type, event) => {
+    for (const handler of [...(listeners.get(type) ?? [])]) handler(event);
+  };
+  return { document, screen };
 }
 
 test('collection left swipe stores candidate and opens storage immediately', () => {
@@ -138,6 +166,44 @@ test('storage discard never calls deck mutation authority', () => {
   assert.equal(result.ok, true);
   assert.equal(controller.view().storageCount, 0);
   assert.deepEqual(calls, { add: [], remove: [] });
+});
+
+test('Cards discovery accepts only a horizontal left swipe from non-interactive surface', () => {
+  assert.equal(shouldRevealDeckStorageFromCardsSwipe({ startX: 140, startY: 80, endX: 60, endY: 84 }), true);
+  assert.equal(shouldRevealDeckStorageFromCardsSwipe({ startX: 60, startY: 80, endX: 140, endY: 84 }), false);
+  assert.equal(shouldRevealDeckStorageFromCardsSwipe({ startX: 140, startY: 80, endX: 95, endY: 84 }), false);
+  assert.equal(shouldRevealDeckStorageFromCardsSwipe({ startX: 140, startY: 80, endX: 60, endY: 160 }), false);
+  assert.equal(shouldRevealDeckStorageFromCardsSwipe({ startX: 140, startY: 80, endX: 60, endY: 84, interactive: true }), false);
+});
+
+test('Cards discovery opens existing Storage once, ignores card controls, and disposes cleanly', () => {
+  const { document, screen } = discoveryDocument();
+  let opens = 0;
+  const discovery = installDeckStorageCardsDiscovery({ document, openStorage: () => { opens += 1; } });
+
+  assert.equal(screen.children.length, 1);
+  assert.equal(screen.children[0].dataset.role, 'deck-storage-discovery-hint');
+  assert.equal(screen.children[0].textContent, '← ストレージ');
+
+  const blank = { parentNode: screen, closest: () => null };
+  document.emit('pointerdown', { target: blank, pointerId: 1, clientX: 150, clientY: 80 });
+  document.emit('pointerup', { target: blank, pointerId: 1, clientX: 70, clientY: 82 });
+  assert.equal(opens, 1);
+
+  const cardControl = { parentNode: screen, closest: () => ({}) };
+  document.emit('pointerdown', { target: cardControl, pointerId: 2, clientX: 150, clientY: 80 });
+  document.emit('pointerup', { target: cardControl, pointerId: 2, clientX: 70, clientY: 82 });
+  assert.equal(opens, 1);
+
+  document.emit('pointerdown', { target: blank, pointerId: 3, clientX: 70, clientY: 80 });
+  document.emit('pointerup', { target: blank, pointerId: 3, clientX: 150, clientY: 82 });
+  assert.equal(opens, 1);
+
+  discovery.destroy();
+  assert.equal(screen.children.length, 0);
+  document.emit('pointerdown', { target: blank, pointerId: 4, clientX: 150, clientY: 80 });
+  document.emit('pointerup', { target: blank, pointerId: 4, clientX: 70, clientY: 82 });
+  assert.equal(opens, 1);
 });
 
 test('dispose closes storage state so remount does not reopen stale UI', () => {

@@ -1,3 +1,5 @@
+import './battle-board-visible-explanation-runtime.mjs';
+
 const NAKI_CHARACTER_ID = 'partner.naki';
 const STYLE_ID = 'gameroad-naki-4p-board-visuals-style';
 const SURFACE_ATTR = 'data-naki-4p-board-character';

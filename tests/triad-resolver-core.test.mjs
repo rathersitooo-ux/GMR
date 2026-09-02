@@ -100,7 +100,7 @@ test('configuration validation requires exactly one closed three-hand cycle', ()
   }), /noHand must be distinct/);
 });
 
-test('ordered resolution gives each still-valid card only its own winning pass', () => {
+test('ordered resolution locks an earlier winner outside later comparison', () => {
   assert.deepEqual(resolveCyclicTriadByProcessingOrder([
     { playerId: 'p1', hand: 'alpha' },
     { playerId: 'p2', hand: 'beta' },
@@ -109,41 +109,47 @@ test('ordered resolution gives each still-valid card only its own winning pass',
   ], CONFIG), {
     processingOrder: ['p1', 'p2', 'p3', 'p4'],
     nonParticipants: [],
-    survivingHand: 'gamma',
-    survivors: ['p3', 'p4'],
-    invalidated: ['p2', 'p1'],
+    survivingHand: 'alpha',
+    survivors: ['p1', 'p3', 'p4'],
+    resolvedWinners: ['p1'],
+    unresolvedSurvivors: ['p3', 'p4'],
+    invalidated: ['p2'],
     steps: [
       {
         processedPlayerId: 'p1',
         winningHand: 'alpha',
+        resolvedWinner: true,
         invalidated: ['p2'],
         survivors: ['p1', 'p3', 'p4'],
       },
       {
         processedPlayerId: 'p3',
         winningHand: 'gamma',
-        invalidated: ['p1'],
-        survivors: ['p3', 'p4'],
+        resolvedWinner: false,
+        invalidated: [],
+        survivors: ['p1', 'p3', 'p4'],
       },
       {
         processedPlayerId: 'p4',
         winningHand: 'gamma',
+        resolvedWinner: false,
         invalidated: [],
-        survivors: ['p3', 'p4'],
+        survivors: ['p1', 'p3', 'p4'],
       },
     ],
   });
 });
 
-test('a card is not invalidated by a losing matchup during its own pass', () => {
+test('a card that scores a win cannot be invalidated by a later counter', () => {
   const result = resolveCyclicTriadByProcessingOrder([
     { playerId: 'p1', hand: 'alpha' },
     { playerId: 'p2', hand: 'gamma' },
     { playerId: 'p3', hand: 'beta' },
   ], CONFIG);
-  assert.deepEqual(result.invalidated, ['p3', 'p1']);
-  assert.deepEqual(result.survivors, ['p2']);
-  assert.equal(result.survivingHand, 'gamma');
+  assert.deepEqual(result.invalidated, ['p3']);
+  assert.deepEqual(result.survivors, ['p1', 'p2']);
+  assert.deepEqual(result.resolvedWinners, ['p1']);
+  assert.deepEqual(result.unresolvedSurvivors, ['p2']);
   assert.deepEqual(result.steps.map((step) => step.processedPlayerId), ['p1', 'p2']);
 });
 
@@ -155,21 +161,22 @@ test('an invalidated card never receives its later processing pass', () => {
   ], CONFIG);
   assert.deepEqual(result.steps.map((step) => step.processedPlayerId), ['p1', 'p3']);
   assert.equal(result.steps.some((step) => step.processedPlayerId === 'p2'), false);
+  assert.deepEqual(result.resolvedWinners, ['p1']);
 });
 
-test('ordered resolution never assigns a destination to invalidated cards', () => {
+test('ordered resolution never assigns a destination or special-suit effect to invalidated cards', () => {
   const result = resolveCyclicTriadByProcessingOrder([
     { playerId: 'p1', hand: 'alpha' },
     { playerId: 'p2', hand: 'gamma' },
   ], CONFIG);
   assert.deepEqual(result.invalidated, ['p1']);
+  assert.deepEqual(result.resolvedWinners, ['p2']);
   assert.equal('destination' in result, false);
-  assert.equal(JSON.stringify(result).includes('graveyard'), false);
-  assert.equal(JSON.stringify(result).includes('chip'), false);
-  assert.equal(JSON.stringify(result).includes('subdeck'), false);
+  const serialized = JSON.stringify(result);
+  assert.doesNotMatch(serialized, /graveyard|chip|subdeck|heart|luna|support|interference/i);
 });
 
-test('four-player win-only-pass statistics match the R9 exhaustive profile', () => {
+test('four-player first-win-lock statistics keep hand symmetry and give the first numeric position initiative', () => {
   const profiles = [];
   function enumerateActive(prefix = []) {
     if (prefix.length === 4) {
@@ -184,6 +191,7 @@ test('four-player win-only-pass statistics match the R9 exhaustive profile', () 
   const survivorCounts = new Map();
   const survivorAppearancesByHand = new Map(HAND_ORDER.map((hand) => [hand, 0]));
   const survivorAppearancesByPosition = new Map([[0, 0], [1, 0], [2, 0], [3, 0]]);
+  const resolvedWinnerAppearancesByPosition = new Map([[0, 0], [1, 0], [2, 0], [3, 0]]);
   const threeHandInvalidatedCounts = new Map();
 
   for (const hands of profiles) {
@@ -210,6 +218,13 @@ test('four-player win-only-pass statistics match the R9 exhaustive profile', () 
         (survivorAppearancesByPosition.get(index) ?? 0) + 1,
       );
     }
+    for (const playerId of result.resolvedWinners) {
+      const index = Number(playerId.slice(1)) - 1;
+      resolvedWinnerAppearancesByPosition.set(
+        index,
+        (resolvedWinnerAppearancesByPosition.get(index) ?? 0) + 1,
+      );
+    }
     if (new Set(hands).size === 3) {
       threeHandInvalidatedCounts.set(
         result.invalidated.length,
@@ -219,9 +234,10 @@ test('four-player win-only-pass statistics match the R9 exhaustive profile', () 
   }
 
   assert.equal(profiles.length, 81);
-  assert.deepEqual(Object.fromEntries(invalidatedCounts), { 0: 3, 1: 12, 2: 27, 3: 39 });
-  assert.deepEqual(Object.fromEntries(survivorCounts), { 1: 39, 2: 27, 3: 12, 4: 3 });
-  assert.deepEqual(Object.fromEntries(survivorAppearancesByHand), { alpha: 47, beta: 47, gamma: 47 });
-  assert.deepEqual(Object.fromEntries(survivorAppearancesByPosition), { 0: 24, 1: 39, 2: 39, 3: 39 });
-  assert.deepEqual(Object.fromEntries(threeHandInvalidatedCounts), { 2: 9, 3: 27 });
+  assert.deepEqual(Object.fromEntries(invalidatedCounts), { 0: 3, 1: 21, 2: 45, 3: 12 });
+  assert.deepEqual(Object.fromEntries(survivorCounts), { 1: 12, 2: 45, 3: 21, 4: 3 });
+  assert.deepEqual(Object.fromEntries(survivorAppearancesByHand), { alpha: 59, beta: 59, gamma: 59 });
+  assert.deepEqual(Object.fromEntries(survivorAppearancesByPosition), { 0: 60, 1: 39, 2: 39, 3: 39 });
+  assert.deepEqual(Object.fromEntries(resolvedWinnerAppearancesByPosition), { 0: 57, 1: 18, 2: 12, 3: 9 });
+  assert.deepEqual(Object.fromEntries(threeHandInvalidatedCounts), { 1: 9, 2: 27 });
 });

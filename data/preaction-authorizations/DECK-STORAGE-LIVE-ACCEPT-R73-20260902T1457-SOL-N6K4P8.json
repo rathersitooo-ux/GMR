@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DECK-STORAGE-LIVE-ACCEPT-R73-20260902T1457-SOL-N6K4P8",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "DECK_STORAGE_CARDS_LIVE_MOUNT_R73_R2",
+  "acquireKey": "DECK-STORAGE-LIVE-ACCEPT-R73-20260902T1457-SOL-N6K4P8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R71_REPRODUCED_DECK_STORAGE_HUMAN_REACHABILITY_GAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R73_PRODUCT_MAIN_PLUS_EXISTING_PLAYWRIGHT_THREE_VIEWPORT_RUNNER",
+  "proceedToken": "PROCEED|DECK-STORAGE-LIVE-ACCEPT-R73-20260902T1457-SOL-N6K4P8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXISTING_SUITE_ADAPT",
+  "authorizationBaseSha": "33cf0f58c66e1bc693889bc253f7bad858b717cf",
+  "scope": [
+    "tests/browser-full-interaction-deck-storage.spec.mjs",
+    "playwright.full-interaction.config.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction-deck-storage.spec.mjs",
+    "playwright.full-interaction.config.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "DECK_STORAGE_CARDS_LIVE_MOUNT_R73_R2",
+  "leaseAcquireKey": "DECK-STORAGE-LIVE-ACCEPT-R73-20260902T1457-SOL-N6K4P8",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 15:03 JST",
+  "leaseUntilJst": "2026-09-02 15:57 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A24:L24",
+  "leaseSnapshotReadbackRow": 24,
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main@33cf0f58c66e1bc693889bc253f7bad858b717cf; branch work/deck-storage-live-accept-r73-20260902; transient preaction; NEW tests/browser-full-interaction-deck-storage.spec.mjs blob b94a22080553513efa81bbc0a245162fa317653a; playwright.full-interaction.config.mjs testMatch-only addition from base blob 4d828985083ced4068a27c28929182b5f79fdd37; PR#937/checks/expected-head merge; row24. Product/runtime/rules/save/deploy remain READ_ONLY.",
+  "solutionSignature": "reuse existing Playwright full-interaction runner and three viewport matrix for one reproduced Deck Storage human-reachability regression",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R71_R73_EXISTING_SUITE_MINIMAL_ACCEPTANCE",
+  "solutionSearchEvidence": [
+    "R71 actual Chromium census proved Deck Storage was the first confirmed disconnected implementation",
+    "R73 product repair merged and deployed on exact product main 167457ad5a45bd652cee1a762fc22a2db21ce4c4",
+    "fresh main advanced only through unrelated Battle PR#934 while the target Playwright config remained byte-identical",
+    "existing node test covers presentation contract but not human reachability",
+    "existing playwright.full-interaction.config.mjs already owns desktop1280x720 phone390x844 short-landscape667x375"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-SLIDEPAD-FULLREACH-R76-20260902T1934-SOL-N4Q7K2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_SLIDEPAD_FULL_POINTER_REACH_R76",
+  "acquireKey": "HOME-SLIDEPAD-FULLREACH-R76-20260902T1934-SOL-N4Q7K2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_HOME_SLIDEPAD_144PX_FIXED_CLAMP_VS_USER_FULL_SCREEN_NAVIGATION_20260902",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PURE_TRANSLATION_UNIT_TEST_PLUS_EXISTING_HOME_PRESENTATION_AND_RUNTIME_GATES",
+  "proceedToken": "PROCEED|HOME-SLIDEPAD-FULLREACH-R76-20260902T1934-SOL-N4Q7K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260902T1934JST",
+  "authorizationBaseSha": "7cd7645613b193010e25e66cc22fb71cb3ac9e22",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_SLIDEPAD_FULL_POINTER_REACH_R76",
+  "leaseAcquireKey": "HOME-SLIDEPAD-FULLREACH-R76-20260902T1934-SOL-N4Q7K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 19:34 JST",
+  "leaseUntilJst": "2026-09-02 20:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A300:L300",
+  "leaseExactMutableResources": "browser/home-boot-runtime-mount.mjs; tests/home-boot-presentation.test.mjs; .github/workflows/zz-temp-home-slidepad-fullreach-r76.yml transient exact-branch guarded patch/test helper; data/preaction-authorizations/HOME-SLIDEPAD-FULLREACH-R76-20260902T1934-SOL-N4Q7K2.json; own PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row300",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    ".github/workflows/zz-temp-home-slidepad-fullreach-r76.yml"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    ".github/workflows/zz-temp-home-slidepad-fullreach-r76.yml"
+  ],
+  "solutionSignature": "guarded exact-source patch helper for current Home pointer feedback residual",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R75 clean reconstruction exact-patch helper pattern plus current source readback",
+  "solutionSearchEvidence": [
+    "prior merged PR#951 R75 clean reconstruction",
+    "CURRENT_ACTIVE_LEASES!A300:L300",
+    "browser/home-boot-runtime-mount.mjs current main"
+  ]
+}

@@ -61,6 +61,18 @@ function submitFixedChoice(global, { form, input, send, choice }) {
   return submitted;
 }
 
+function syncQuickChoiceBusyState(bar, input, send) {
+  if (!bar || !input || !send) return false;
+  const busy = Boolean(input.disabled || send.disabled);
+  const buttons = typeof bar.querySelectorAll === 'function'
+    ? Array.from(bar.querySelectorAll('.grPartnerTeaQuickChoiceButton'))
+    : Array.from(bar.children || []).filter((child) => child?.className === 'grPartnerTeaQuickChoiceButton');
+  for (const button of buttons) {
+    if (Boolean(button.disabled) !== busy) button.disabled = busy;
+  }
+  return busy;
+}
+
 export function projectPartnerTeaQuickChoices(global = globalThis) {
   const document = global?.document;
   if (!document?.querySelectorAll || !document?.createElement) return 0;
@@ -68,11 +80,16 @@ export function projectPartnerTeaQuickChoices(global = globalThis) {
 
   let mounted = 0;
   for (const surface of document.querySelectorAll(CONVERSATION_SELECTOR)) {
-    if (surface?.querySelector?.(TEA_BAR_SELECTOR)) continue;
+    const existingBar = surface?.querySelector?.(TEA_BAR_SELECTOR);
     const form = surface?.querySelector?.('form.grPartnerConversationComposer');
     const input = surface?.querySelector?.('.grPartnerConversationInput');
     const send = surface?.querySelector?.('.grPartnerConversationSend');
-    if (!form || !input || !send || typeof form.before !== 'function') continue;
+    if (!form || !input || !send) continue;
+    if (existingBar) {
+      syncQuickChoiceBusyState(existingBar, input, send);
+      continue;
+    }
+    if (typeof form.before !== 'function') continue;
 
     const bar = document.createElement('div');
     bar.className = 'grPartnerTeaQuickChoice';
@@ -97,6 +114,7 @@ export function projectPartnerTeaQuickChoices(global = globalThis) {
       bar.appendChild?.(button);
     }
 
+    syncQuickChoiceBusyState(bar, input, send);
     form.before(bar);
     mounted += 1;
   }
@@ -117,7 +135,12 @@ export function mountPartnerTeaQuickChoiceRuntime(global = globalThis) {
   const project = () => projectPartnerTeaQuickChoices(global);
   const observer = new MutationObserverCtor(project);
   const observeTarget = document.body || document.documentElement;
-  if (observeTarget) observer.observe(observeTarget, { childList: true, subtree: true });
+  if (observeTarget) observer.observe(observeTarget, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['disabled'],
+  });
   project();
 
   const runtime = Object.freeze({

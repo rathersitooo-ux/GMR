@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-SLIDEPAD-GESTURE-R1-20260903T0154-SOL-P8M4K2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_SLIDEPAD_GESTURE_REPAIR_R1",
+  "acquireKey": "BATTLE-JANKEN-SLIDEPAD-GESTURE-R1-20260903T0154-SOL-P8M4K2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_USER_R7_R72_PLUS_MAIN_980A5ECB_POINTER_REPAIR_CONFLICT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_SLIDEPAD_RUNTIME_EXISTING_HAND_ACTION_POINTER_TRANSPARENT_SLOTS_HANDLE_GESTURE",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-SLIDEPAD-GESTURE-R1-20260903T0154-SOL-P8M4K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXISTING_REPAIR",
+  "authorizationBaseSha": "980a5ecbc39559f2c6fc14f5899b8a5a00ca6a7c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_SLIDEPAD_GESTURE_REPAIR_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-SLIDEPAD-GESTURE-R1-20260903T0154-SOL-P8M4K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-03 01:54 JST",
+  "leaseUntilJst": "2026-09-03 02:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:L10",
+  "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

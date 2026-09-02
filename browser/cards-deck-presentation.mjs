@@ -1,3 +1,8 @@
+import {
+  createDeckStorageCornerController,
+  mountDeckStorageCorner,
+} from './deck-storage-corner-runtime.mjs';
+
 const EVENT_NAMES = Object.freeze({
   COMMIT: 'gameroad:deck-swipe-commit',
   LAND: 'gameroad:deck-swipe-land',
@@ -556,4 +561,112 @@ export function installCardsInspectorDismissInteractions({ document: doc = globa
   return controller;
 }
 
-if (typeof document !== 'undefined') installCardsInspectorDismissInteractions({ document });
+const deckStorageInstallations = new WeakMap();
+
+export function installDeckStorageLiveConsumer({
+  document: doc = globalThis.document,
+  window: win = globalThis.window,
+} = {}) {
+  if (!doc?.querySelector || !doc?.addEventListener) return null;
+  const existing = deckStorageInstallations.get(doc);
+  if (existing) return existing;
+  const buttonHost = doc.querySelector('#restoreDeck')?.parentElement ?? doc.querySelector('#saveDeck')?.parentElement;
+  if (!buttonHost) return null;
+
+  const deckIds = () => [...doc.querySelectorAll('#deckSlots [data-id],#exDeckSlots [data-id]')]
+    .map((node) => String(node.dataset.id));
+  const byId = (selector, id) => [...doc.querySelectorAll(selector)]
+    .find((node) => String(node.dataset.id) === String(id));
+  const addDeckCard = (id) => {
+    if (deckIds().includes(String(id))) return { ok: false, reason: 'already-in-deck' };
+    const card = byId('#collectionGrid [data-id]', id);
+    if (!card) return { ok: false, reason: 'card-not-rendered' };
+    card.click();
+    const add = doc.querySelector('#addSelectedCard');
+    if (!add || add.disabled) return { ok: false, reason: 'deck-rule-rejected' };
+    add.click();
+    return { ok: deckIds().includes(String(id)), reason: 'deck-rule-rejected' };
+  };
+  const removeDeckCard = (id) => {
+    const card = byId('#deckSlots [data-deck-remove][data-id],#exDeckSlots [data-deck-remove][data-id]', id);
+    if (!card) return { ok: false, reason: 'not-in-deck' };
+    card.click();
+    return { ok: !deckIds().includes(String(id)), reason: 'remove-rejected' };
+  };
+  const cardData = (id) => (win?.__CARD_DATA__ ?? []).find((card) => String(card.id) === String(id));
+  const controller = createDeckStorageCornerController({
+    getDeck: deckIds,
+    addDeckCard,
+    removeDeckCard,
+    isRoyal: (id) => ['J', 'Q', 'K'].includes(String(cardData(id)?.rank ?? '')),
+  });
+  const storage = mountDeckStorageCorner({
+    controller,
+    buttonHost,
+    document: doc,
+    getCardLabel: (id) => cardData(id)?.display_name ?? String(id),
+  });
+
+  let swipe = null;
+  let suppress = null;
+  const hit = (target) => {
+    const collection = target?.closest?.('#collectionGrid [data-id]');
+    if (collection) return { surface: 'collection', node: collection };
+    const deck = target?.closest?.('#deckSlots [data-deck-remove][data-id],#exDeckSlots [data-deck-remove][data-id]');
+    return deck ? { surface: 'deck', node: deck } : null;
+  };
+  const onPointerDown = (event) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    const found = hit(event.target);
+    if (found) swipe = { ...found, pointerId: event.pointerId, x: event.clientX, y: event.clientY };
+  };
+  const onPointerUp = (event) => {
+    const current = swipe;
+    swipe = null;
+    if (!current || current.pointerId !== event.pointerId) return;
+    const dx = event.clientX - current.x;
+    const dy = event.clientY - current.y;
+    if (dx > -56 || Math.abs(dx) <= Math.abs(dy) * 1.15) return;
+    event.preventDefault();
+    controller.applySwipe({
+      surface: current.surface,
+      cardId: current.node.dataset.id,
+      deltaX: dx,
+      deltaY: dy,
+      thresholdPx: 56,
+    });
+    storage.render();
+    suppress = { node: current.node, until: (win?.performance?.now?.() ?? 0) + 420 };
+  };
+  const onClickCapture = (event) => {
+    if (!suppress) return;
+    const now = win?.performance?.now?.() ?? 0;
+    if (now <= suppress.until && suppress.node.contains(event.target)) {
+      suppress = null;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    } else if (now > suppress.until) suppress = null;
+  };
+  doc.addEventListener('pointerdown', onPointerDown, true);
+  doc.addEventListener('pointerup', onPointerUp, true);
+  doc.addEventListener('click', onClickCapture, true);
+
+  const installation = Object.freeze({
+    controller,
+    storage,
+    destroy() {
+      doc.removeEventListener('pointerdown', onPointerDown, true);
+      doc.removeEventListener('pointerup', onPointerUp, true);
+      doc.removeEventListener('click', onClickCapture, true);
+      storage.dispose();
+      deckStorageInstallations.delete(doc);
+    },
+  });
+  deckStorageInstallations.set(doc, installation);
+  return installation;
+}
+
+if (typeof document !== 'undefined') {
+  installCardsInspectorDismissInteractions({ document });
+  installDeckStorageLiveConsumer({ document, window: globalThis.window });
+}

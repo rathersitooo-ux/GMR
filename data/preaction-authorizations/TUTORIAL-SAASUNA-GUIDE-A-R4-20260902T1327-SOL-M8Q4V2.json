@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "TUTORIAL-SAASUNA-GUIDE-A-R4-20260902T1327-SOL-M8Q4V2",
+  "taskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "workUnitKey": "TUTORIAL_SAASUNA_FIRST_BATTLE_GUIDE_A_R4",
+  "acquireKey": "TUTORIAL-SAASUNA-GUIDE-A-R4-20260902T1327-SOL-M8Q4V2",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "HUMAN-RULING-A-20260901-FIRST-TUTORIAL-GUIDE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR914-DONOR-LOGIC-AND-FOCUSED-TESTS",
+  "proceedToken": "PROCEED|TUTORIAL-SAASUNA-GUIDE-A-R4-20260902T1327-SOL-M8Q4V2|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|prediction|lease-snapshot",
+  "authorizationBaseSha": "97ccdf2b04b8e20886508c9d503b776ae4865fa1",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "TUTORIAL_SAASUNA_FIRST_BATTLE_GUIDE_A_R4",
+  "leaseAcquireKey": "TUTORIAL-SAASUNA-GUIDE-A-R4-20260902T1327-SOL-M8Q4V2",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 13:28 JST",
+  "leaseUntilJst": "2026-09-02 14:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A23:L23",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@97ccdf2b04b8e20886508c9d503b776ae4865fa1; branch work/tutorial-saasuna-guide-a-r4-20260902; transient preaction; browser/partner-advice-runtime-mount.mjs; tests/partner-advice-runtime-mount.test.mjs; deploy/cloudflare/tests/build.test.mjs partner-advice blob pin only; own PR/checks/merge; own row23. Other game/runtime/save/network files READ_ONLY.",
+  "scope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

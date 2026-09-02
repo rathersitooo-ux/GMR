@@ -100,7 +100,7 @@ test('configuration validation requires exactly one closed three-hand cycle', ()
   }), /noHand must be distinct/);
 });
 
-test('ordered elimination reuses the cyclic contest and invalidates only losing hands', () => {
+test('ordered resolution gives each still-valid card only its own winning pass', () => {
   assert.deepEqual(resolveCyclicTriadByProcessingOrder([
     { playerId: 'p1', hand: 'alpha' },
     { playerId: 'p2', hand: 'beta' },
@@ -114,16 +114,16 @@ test('ordered elimination reuses the cyclic contest and invalidates only losing 
     invalidated: ['p2', 'p1'],
     steps: [
       {
-        processedPlayerId: 'p2',
+        processedPlayerId: 'p1',
         winningHand: 'alpha',
         invalidated: ['p2'],
-        survivors: ['p1'],
+        survivors: ['p1', 'p3', 'p4'],
       },
       {
         processedPlayerId: 'p3',
         winningHand: 'gamma',
         invalidated: ['p1'],
-        survivors: ['p3'],
+        survivors: ['p3', 'p4'],
       },
       {
         processedPlayerId: 'p4',
@@ -135,7 +135,29 @@ test('ordered elimination reuses the cyclic contest and invalidates only losing 
   });
 });
 
-test('ordered elimination never assigns a destination to invalidated cards', () => {
+test('a card is not invalidated by a losing matchup during its own pass', () => {
+  const result = resolveCyclicTriadByProcessingOrder([
+    { playerId: 'p1', hand: 'alpha' },
+    { playerId: 'p2', hand: 'gamma' },
+    { playerId: 'p3', hand: 'beta' },
+  ], CONFIG);
+  assert.deepEqual(result.invalidated, ['p3', 'p1']);
+  assert.deepEqual(result.survivors, ['p2']);
+  assert.equal(result.survivingHand, 'gamma');
+  assert.deepEqual(result.steps.map((step) => step.processedPlayerId), ['p1', 'p2']);
+});
+
+test('an invalidated card never receives its later processing pass', () => {
+  const result = resolveCyclicTriadByProcessingOrder([
+    { playerId: 'p1', hand: 'alpha' },
+    { playerId: 'p2', hand: 'beta' },
+    { playerId: 'p3', hand: 'gamma' },
+  ], CONFIG);
+  assert.deepEqual(result.steps.map((step) => step.processedPlayerId), ['p1', 'p3']);
+  assert.equal(result.steps.some((step) => step.processedPlayerId === 'p2'), false);
+});
+
+test('ordered resolution never assigns a destination to invalidated cards', () => {
   const result = resolveCyclicTriadByProcessingOrder([
     { playerId: 'p1', hand: 'alpha' },
     { playerId: 'p2', hand: 'gamma' },
@@ -147,20 +169,21 @@ test('ordered elimination never assigns a destination to invalidated cards', () 
   assert.equal(JSON.stringify(result).includes('subdeck'), false);
 });
 
-test('four-player ordered elimination statistics cover every three-hand profile', () => {
-  const activeHands = [...HAND_ORDER];
+test('four-player win-only-pass statistics match the R9 exhaustive profile', () => {
   const profiles = [];
   function enumerateActive(prefix = []) {
     if (prefix.length === 4) {
       profiles.push(prefix);
       return;
     }
-    for (const hand of activeHands) enumerateActive([...prefix, hand]);
+    for (const hand of HAND_ORDER) enumerateActive([...prefix, hand]);
   }
   enumerateActive();
 
   const invalidatedCounts = new Map();
-  const survivingHands = new Map(activeHands.map((hand) => [hand, 0]));
+  const survivorCounts = new Map();
+  const survivorAppearancesByHand = new Map(HAND_ORDER.map((hand) => [hand, 0]));
+  const survivorAppearancesByPosition = new Map([[0, 0], [1, 0], [2, 0], [3, 0]]);
   const threeHandInvalidatedCounts = new Map();
 
   for (const hands of profiles) {
@@ -172,10 +195,21 @@ test('four-player ordered elimination statistics cover every three-hand profile'
       result.invalidated.length,
       (invalidatedCounts.get(result.invalidated.length) ?? 0) + 1,
     );
-    survivingHands.set(
-      result.survivingHand,
-      (survivingHands.get(result.survivingHand) ?? 0) + 1,
+    survivorCounts.set(
+      result.survivors.length,
+      (survivorCounts.get(result.survivors.length) ?? 0) + 1,
     );
+    for (const playerId of result.survivors) {
+      const index = Number(playerId.slice(1)) - 1;
+      survivorAppearancesByHand.set(
+        hands[index],
+        (survivorAppearancesByHand.get(hands[index]) ?? 0) + 1,
+      );
+      survivorAppearancesByPosition.set(
+        index,
+        (survivorAppearancesByPosition.get(index) ?? 0) + 1,
+      );
+    }
     if (new Set(hands).size === 3) {
       threeHandInvalidatedCounts.set(
         result.invalidated.length,
@@ -185,7 +219,9 @@ test('four-player ordered elimination statistics cover every three-hand profile'
   }
 
   assert.equal(profiles.length, 81);
-  assert.deepEqual(Object.fromEntries(invalidatedCounts), { 0: 3, 1: 12, 2: 24, 3: 42 });
-  assert.deepEqual(Object.fromEntries(survivingHands), { alpha: 27, beta: 27, gamma: 27 });
-  assert.deepEqual(Object.fromEntries(threeHandInvalidatedCounts), { 2: 6, 3: 30 });
+  assert.deepEqual(Object.fromEntries(invalidatedCounts), { 0: 3, 1: 12, 2: 27, 3: 39 });
+  assert.deepEqual(Object.fromEntries(survivorCounts), { 1: 39, 2: 27, 3: 12, 4: 3 });
+  assert.deepEqual(Object.fromEntries(survivorAppearancesByHand), { alpha: 47, beta: 47, gamma: 47 });
+  assert.deepEqual(Object.fromEntries(survivorAppearancesByPosition), { 0: 24, 1: 39, 2: 39, 3: 39 });
+  assert.deepEqual(Object.fromEntries(threeHandInvalidatedCounts), { 2: 9, 3: 27 });
 });

@@ -2,11 +2,20 @@ import {
   selectPartnerLegalCandidate,
   selectPartnerManifestOrRuleCandidate,
 } from './partner-legal-action-adapter.mjs';
+import {
+  selectSaasunaBattleUtterance,
+  SAASUNA_PARTNER_ID,
+  SAASUNA_DIALOGUE_VERSION,
+  SAASUNA_DIALOGUE_SOURCE_ID,
+  SAASUNA_BATTLE_SPEECH_ACT,
+} from './partner-saasuna-conversation-source.mjs';
 
 const VERSION_KEYS = Object.freeze(['rulesVersion', 'cardVersion', 'stateVersion']);
 const PARTNER_STRATEGY_RULES = new Set(['left', 'right', 'max', 'min']);
 const BOARD_PROJECTION_SCHEMA = 'gameroad.partner-advice-board-projection.v1';
 const TUTORIAL_GUIDE_SCHEMA = 'gameroad.tutorial-partner-guide-control.v1';
+const QUICK_REPLY_SCHEMA = 'gameroad.partner-advice-quick-reply.v1';
+const DELEGATE_REPLY_TEXT = 'まかせた！';
 
 function exactVersionTuple(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -296,3 +305,87 @@ export function createTutorialPartnerGuideControl({
     status,
   });
 }
+
+export function createPartnerAdviceQuickReplyControl({
+  getPartnerId = () => null,
+  getDialogueVersion = () => SAASUNA_DIALOGUE_VERSION,
+  getSourceId = () => SAASUNA_DIALOGUE_SOURCE_ID,
+} = {}) {
+  if (typeof getPartnerId !== 'function' || typeof getDialogueVersion !== 'function' || typeof getSourceId !== 'function') {
+    throw new TypeError('quick reply authority providers must be functions');
+  }
+
+  let pending = null;
+  const consumed = new Set();
+  const status = () => Object.freeze({
+    schema: QUICK_REPLY_SCHEMA,
+    pendingReplyId: pending?.replyId ?? null,
+    pendingText: pending?.text ?? null,
+    committedReplyIds: Object.freeze([...consumed]),
+    autoExecute: false,
+    emits2v2Ping: false,
+  });
+
+  return Object.freeze({
+    arm({ replyId, text } = {}) {
+      const id = exactPresentationToken(replyId);
+      if (!id || text !== DELEGATE_REPLY_TEXT || pending || consumed.has(id)) return false;
+      pending = Object.freeze({ replyId: id, text });
+      return true;
+    },
+    cancel(replyId) {
+      const id = exactPresentationToken(replyId);
+      if (!id || !pending || pending.replyId !== id) return false;
+      pending = null;
+      return true;
+    },
+    commit(replyId) {
+      const id = exactPresentationToken(replyId);
+      if (!id || !pending || pending.replyId !== id || consumed.has(id)) return null;
+
+      let partnerId;
+      let dialogueVersion;
+      let sourceId;
+      try {
+        partnerId = exactPresentationToken(getPartnerId());
+        dialogueVersion = exactPresentationToken(getDialogueVersion());
+        sourceId = exactPresentationToken(getSourceId());
+      } catch {
+        return null;
+      }
+      if (partnerId !== SAASUNA_PARTNER_ID || dialogueVersion !== SAASUNA_DIALOGUE_VERSION || sourceId !== SAASUNA_DIALOGUE_SOURCE_ID) {
+        return null;
+      }
+
+      const utterance = selectSaasunaBattleUtterance({
+        partnerId,
+        dialogueVersion,
+        sourceId,
+        speechAct: SAASUNA_BATTLE_SPEECH_ACT,
+        triggerId: 'delegate_normal',
+        seed: id,
+      });
+      if (!utterance) return null;
+
+      consumed.add(id);
+      pending = null;
+      return Object.freeze({
+        schema: QUICK_REPLY_SCHEMA,
+        replyId: id,
+        playerText: DELEGATE_REPLY_TEXT,
+        partnerId,
+        speechAct: SAASUNA_BATTLE_SPEECH_ACT,
+        partnerUtterance: utterance.text,
+        sourceId,
+        dialogueVersion,
+        presentationOnly: true,
+        autoExecute: false,
+        emits2v2Ping: false,
+        exactlyOnce: true,
+      });
+    },
+    status,
+  });
+}
+
+export const PARTNER_ADVICE_DELEGATE_REPLY_TEXT = DELEGATE_REPLY_TEXT;

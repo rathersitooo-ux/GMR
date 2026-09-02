@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA,
   buildBattleJankenSlidePadModel,
+  projectBattleLoadCardPreview,
   resolveBattleJankenSlotCardAction,
   resolveBattleJankenSlidePadGestureTarget,
 } from '../browser/battle-janken-slidepad-runtime-mount.mjs';
@@ -54,6 +55,29 @@ test('missing suit stays visibly representable but disabled and never invents an
 test('slot action fails closed when the referenced card is no longer in the current ordinary hand DOM', () => {
   const model = buildBattleJankenSlidePadModel({ roundId: '3', hand, pickDuplicateIndex: () => 0 });
   assert.equal(resolveBattleJankenSlotCardAction(model, 'ROCK', ['diamond-a', 'spade-a']), null);
+});
+
+test('R75 Load Card preview exists only for the actually armed selectable slot and carries its janken hand', () => {
+  const model = buildBattleJankenSlidePadModel({ roundId: '7', hand, pickDuplicateIndex: () => 1 });
+  assert.equal(projectBattleLoadCardPreview(model, null), null);
+  assert.equal(projectBattleLoadCardPreview(model, 'HEART'), null);
+  assert.deepEqual(projectBattleLoadCardPreview(model, 'ROCK'), {
+    kind: 'LOAD_CARD',
+    cardId: 'club-b',
+    cardLabel: 'Club B',
+    jankenHand: 'ROCK',
+    symbol: '♣',
+    hand: 'グー',
+  });
+});
+
+test('R75 Load Card preview does not invent a preview for an empty or disabled slot', () => {
+  const model = buildBattleJankenSlidePadModel({
+    roundId: '8',
+    hand: [{ id: 'club-only', suit: 'CL', label: 'Club' }],
+  });
+  assert.equal(projectBattleLoadCardPreview(model, 'SCISSORS'), null);
+  assert.equal(projectBattleLoadCardPreview(model, 'PAPER'), null);
 });
 
 test('gesture direction sticks to the eligible slot that lies along the drag direction', () => {

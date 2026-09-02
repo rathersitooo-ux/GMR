@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-SLIDEPAD-LIVE-R1-20260902T2251-SOL-K7M4Q2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_SLIDEPAD_LIVE_CONSUMER_R1",
+  "acquireKey": "BATTLE-JANKEN-SLIDEPAD-LIVE-R1-20260902T2251-SOL-K7M4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R8_R73_EXISTING_SLOT_CORE_PLUS_CURRENT_BATTLE_HAND_CONSUMER",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_BFI_HAND_SELECTION_PLUS_EXISTING_SLOT_CORE_CONTRACT",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-SLIDEPAD-LIVE-R1-20260902T2251-SOL-K7M4Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXISTING_REPAIR_LIVE_CONSUMER",
+  "authorizationBaseSha": "e949864e5b569fa699ff95684dd6204379e57002",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_SLIDEPAD_LIVE_CONSUMER_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-SLIDEPAD-LIVE-R1-20260902T2251-SOL-K7M4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 22:51 JST",
+  "leaseUntilJst": "2026-09-02 23:51 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseSnapshotReadbackRow": 7,
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main@e949864e5b569fa699ff95684dd6204379e57002; branch work/battle-janken-slidepad-live-r1-20260902; transient PRE_ACTION; NEW browser/battle-janken-slidepad-runtime-mount.mjs; browser/battle-replay-live-adapter.mjs; deploy/cloudflare/scripts/build.mjs only for existing package artifact registration; focused tests; own PR/checks/expected-head merge; CURRENT_ACTIVE_LEASES!A7:L7; central row1374 result sync. browser/GAMEROAD.html READ_ONLY; gameplay/rules/save/economy/network/assets READ_ONLY.",
+  "solutionSignature": "mount the existing round-start suit-bound janken assignment as a visible Battle SlidePad while delegating occupied slot activation to the existing ordinary hand card input",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R7_R8_R73_CURRENT_CANON_EXISTING_CORE_AND_CURRENT_HAND_CONSUMER",
+  "solutionSearchEvidence": [
+    "CURRENT requires the Battle triad to be a card-bearing SlidePad with CLUB/DIAMOND/SPADE slots and clockwise round-start expansion",
+    "existing new-base-round-start-janken-slot-assignment-core.mjs already owns stable per-round suit assignment and preserves ordinary hand membership",
+    "current Battle input is #hand .handCard[data-card-id], so occupied slot input can reuse that consumer rather than inventing a second hand action path",
+    "browser/GAMEROAD.html remains read-only; existing adapter and public package are reused"
+  ]
+}

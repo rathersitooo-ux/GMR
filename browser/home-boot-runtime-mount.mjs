@@ -14,6 +14,7 @@ const ROUTE_SELECTOR = '.homePadChoice[data-home-target]';
 const SLIDEPAD_CENTER_SELECTOR = '#homePadCenter';
 const SLIDEPAD_DEAD_ZONE_PX = 18;
 const SLIDEPAD_DOWN_REJECT_RATIO = 1.15;
+const SLIDEPAD_LOCAL_FEEDBACK_MAX_PX = 144;
 const SLIDEPAD_TARGET_PULL_MAX_PX = 18;
 const SLIDEPAD_SWITCH_ADVANTAGE = 0.22;
 const SLIDEPAD_ROUTE_IDS = Object.freeze({
@@ -22,9 +23,9 @@ const SLIDEPAD_ROUTE_IDS = Object.freeze({
   partner: Object.freeze(['characters', 'partner']),
   cards: Object.freeze(['cards']),
 });
+// The codex Home visual layer is still the current player-facing Home consumer. Do not destroy it
+// during compatibility cleanup; only duplicate legacy controls are safe to remove here.
 const LEGACY_HOME_SELECTORS = Object.freeze([
-  '#codexHomeVisualLayer',
-  '.codexHomeVisualLayer',
   '#codexHomePartnerChip',
   '.codexPartnerChip',
   '#codexHomeBattleCta',
@@ -386,11 +387,19 @@ function clearPreview() {
   runtime.slidepad.previewButton = null;
 }
 
-export function resolveHomeSlidepadFeedbackTranslation({ dx = 0, dy = 0 } = {}) {
+export function resolveHomeSlidepadFeedbackTranslation({
+  dx = 0,
+  dy = 0,
+  maxPx = SLIDEPAD_LOCAL_FEEDBACK_MAX_PX,
+} = {}) {
   const x = Number(dx);
   const y = Number(dy);
-  if (![x, y].every(Number.isFinite)) return null;
-  return Object.freeze({ x, y });
+  const max = Number(maxPx);
+  if (![x, y, max].every(Number.isFinite) || max < 0) return null;
+  const distance = Math.hypot(x, y);
+  if (distance <= 0 || max === 0) return Object.freeze({ x: 0, y: 0 });
+  const gain = Math.min(1, max / distance);
+  return Object.freeze({ x: x * gain, y: y * gain });
 }
 
 function moveKnobWithGesture(center, dx, dy) {

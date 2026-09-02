@@ -347,6 +347,64 @@ test('presentation driver animates the actual outgoing and incoming screen surfa
   assert.ok(runtime.getPresentationState().events.some((event) => event.kind === 'surface_swap_observed' && event.status === 'completed'));
 });
 
+test('normal ENTER launches 2+ measured pieces offscreen in one batch and settles to resolved layout', async () => {
+  const documentSource = fakeMotionDocument();
+  const makePiece = (rect) => ({
+    dataset: {},
+    animations: [],
+    getBoundingClientRect() { return {...rect}; },
+    animate(frames, options) {
+      const animation = {finished: Promise.resolve(), cancel() {}};
+      this.animations.push({frames, options, animation});
+      return animation;
+    }
+  });
+  const firstPiece = makePiece({left: 90, right: 310, top: 120, bottom: 200, width: 220, height: 80});
+  const secondPiece = makePiece({left: 430, right: 690, top: 300, bottom: 410, width: 260, height: 110});
+  documentSource.surfaces.cards.children = [firstPiece, secondPiece];
+
+  let screen = 'home';
+  const runtime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => screen,
+    applyScreen: (next) => {
+      screen = next;
+      documentSource.activeElement = documentSource.controls[next];
+    },
+    presentationDriver: createScreenMotionPresentationDriver({document: documentSource})
+  });
+
+  const result = await runtime.navigate('cards');
+  assert.equal(result.status, 'completed');
+  assert.equal(screen, 'cards');
+  assert.equal(documentSource.surfaces.cards.animations.length, 0, 'piece batch replaces whole-surface ENTER only when 2+ pieces are measurable');
+  assert.equal(firstPiece.animations.length, 1);
+  assert.equal(secondPiece.animations.length, 1);
+  assert.equal(firstPiece.animations[0].options.duration, SCREEN_MOTION_PRESENTATION_SPEC.normal.enterMs);
+  assert.equal(secondPiece.animations[0].options.duration, SCREEN_MOTION_PRESENTATION_SPEC.normal.enterMs);
+  assert.equal(firstPiece.animations[0].frames[0].transform, 'translate3d(0,600px,0)');
+  assert.equal(secondPiece.animations[0].frames[0].transform, firstPiece.animations[0].frames[0].transform);
+  assert.equal(firstPiece.animations[0].frames[1].transform, 'translate3d(0,0px,0)');
+  assert.ok(120 + 600 >= documentSource.documentElement.clientHeight);
+  assert.ok(300 + 600 >= documentSource.documentElement.clientHeight);
+  assert.equal((300 + 600) - (120 + 600), 300 - 120, 'shared measured translation preserves relative piece layout and cannot create a new crossing');
+
+  const events = runtime.getPresentationState().events;
+  const batchStart = events.find((event) => event.kind === 'enter_batch' && event.status === 'started');
+  assert.equal(batchStart.pieceCount, 2);
+  assert.equal(batchStart.distance, 600);
+  const startedIndexes = events
+    .map((event, index) => [event, index])
+    .filter(([event]) => event.kind === 'enter_piece' && event.status === 'started')
+    .map(([, index]) => index);
+  const completedIndexes = events
+    .map((event, index) => [event, index])
+    .filter(([event]) => event.kind === 'enter_piece' && event.status === 'completed')
+    .map(([, index]) => index);
+  assert.equal(startedIndexes.length, 2);
+  assert.equal(completedIndexes.length, 2);
+  assert.ok(Math.max(...startedIndexes) < Math.min(...completedIndexes), 'all eligible pieces begin in the same transition window before any one completes');
+});
+
 test('press feedback never delays the screen swap or the next actionable surface', async () => {
   const documentSource = fakeMotionDocument();
   const pressGate = deferred();

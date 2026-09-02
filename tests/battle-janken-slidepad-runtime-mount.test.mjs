@@ -4,6 +4,7 @@ import {
   BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA,
   buildBattleJankenSlidePadModel,
   resolveBattleJankenSlotCardAction,
+  resolveBattleJankenSlidePadGestureTarget,
 } from '../browser/battle-janken-slidepad-runtime-mount.mjs';
 
 const hand = [
@@ -53,4 +54,38 @@ test('missing suit stays visibly representable but disabled and never invents an
 test('slot action fails closed when the referenced card is no longer in the current ordinary hand DOM', () => {
   const model = buildBattleJankenSlidePadModel({ roundId: '3', hand, pickDuplicateIndex: () => 0 });
   assert.equal(resolveBattleJankenSlotCardAction(model, 'ROCK', ['diamond-a', 'spade-a']), null);
+});
+
+test('gesture direction sticks to the eligible slot that lies along the drag direction', () => {
+  const target = resolveBattleJankenSlidePadGestureTarget({
+    origin: { x: 100, y: 100 },
+    pointer: { x: 35, y: 92 },
+    candidates: [
+      { id: 'ROCK', x: 0, y: 105, selectable: true },
+      { id: 'SCISSORS', x: 30, y: 25, selectable: true },
+      { id: 'PAPER', x: 92, y: 0, selectable: true },
+    ],
+  });
+  assert.equal(target, 'ROCK');
+});
+
+test('gesture stays neutral inside the handle dead zone', () => {
+  const target = resolveBattleJankenSlidePadGestureTarget({
+    origin: { x: 100, y: 100 },
+    pointer: { x: 94, y: 97 },
+    candidates: [{ id: 'ROCK', x: 0, y: 100, selectable: true }],
+  });
+  assert.equal(target, null);
+});
+
+test('gesture never snaps to an empty or disabled slot', () => {
+  const target = resolveBattleJankenSlidePadGestureTarget({
+    origin: { x: 100, y: 100 },
+    pointer: { x: 30, y: 100 },
+    candidates: [
+      { id: 'ROCK', x: 0, y: 100, selectable: false },
+      { id: 'SCISSORS', x: 100, y: 0, selectable: true },
+    ],
+  });
+  assert.equal(target, null);
 });

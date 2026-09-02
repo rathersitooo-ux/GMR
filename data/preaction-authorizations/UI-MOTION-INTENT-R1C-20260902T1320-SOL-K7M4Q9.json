@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-MOTION-INTENT-R1C-20260902T1320-SOL-K7M4Q9",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "MENU_SEMANTIC_CONTINUITY_MOTION_R1",
+  "acquireKey": "UI-MOTION-INTENT-R1C-20260902T1320-SOL-K7M4Q9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_GENERIC_SCREEN_MOTION_AND_PUBLIC_PACKAGE_PROVENANCE_DIRECT_DIFF",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR920_PREACTION_PASS_PLUS_PUBLIC_PACKAGE_STALE_BLOB_FAILURE_ANCHOR",
+  "proceedToken": "PROCEED|UI-MOTION-INTENT-R1C-20260902T1320-SOL-K7M4Q9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260902T1320JST",
+  "authorizationBaseSha": "58d07dc398ac8854ba60b6f8efbddd57ecde9863",
+  "scope": [
+    "browser/screen-navigation-core.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "MENU_SEMANTIC_CONTINUITY_MOTION_R1",
+  "leaseAcquireKey": "UI-MOTION-INTENT-R1C-20260902T1320-SOL-K7M4Q9",
+  "leaseSnapshotReadbackAtJst": "2026-09-02 13:20 JST",
+  "leaseUntilJst": "2026-09-02 14:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A15:L15",
+  "leaseScope": [
+    "browser/screen-navigation-core.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main@58d07dc398ac8854ba60b6f8efbddd57ecde9863; NEW replacement branch work/ui-motion-intent-r1c-20260902; transient data/preaction-authorizations/UI-MOTION-INTENT-R1C-20260902T1320-SOL-K7M4Q9.json create-first/delete-before-final-head; browser/screen-navigation-core.mjs; deploy/cloudflare/tests/build.test.mjs current screen-navigation provenance witness only; own replacement PR/checks/expected-head merge; own CURRENT_ACTIVE_LEASES row15. READ_ONLY failed PR#919/#920 and prior branches, Home runtime, Battle runtime/canonical, gameplay/rules, assets, save/economy/network. Image generation/editing 0."
+}

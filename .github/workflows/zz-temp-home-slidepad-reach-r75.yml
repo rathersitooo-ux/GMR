@@ -1,0 +1,56 @@
+name: TEMP Home SlidePad reach R75
+
+on:
+  push:
+    branches:
+      - work/home-slidepad-reach-r75-20260902
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/home-slidepad-reach-r75-20260902
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Guarded exact patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('browser/home-boot-runtime-mount.mjs')
+          s = p.read_text()
+          old_a = 'const SLIDEPAD_LOCAL_FEEDBACK_MAX_PX = 56;'
+          new_a = 'const SLIDEPAD_LOCAL_FEEDBACK_MAX_PX = 144;'
+          old_b = 'const SLIDEPAD_TARGET_PULL_MAX_PX = 10;'
+          new_b = 'const SLIDEPAD_TARGET_PULL_MAX_PX = 18;'
+          counts = (s.count(old_a), s.count(old_b), s.count(new_a), s.count(new_b))
+          if counts == (0, 0, 1, 1):
+              print('R75 patch already applied')
+              raise SystemExit(0)
+          if counts != (1, 1, 0, 0):
+              raise SystemExit(f'fail closed: unexpected literal cardinality {counts}')
+          s = s.replace(old_a, new_a).replace(old_b, new_b)
+          p.write_text(s)
+          print('R75 patch applied: knob 56->144px; target pull 10->18px')
+          PY
+      - name: Focused Home tests
+        run: node --test tests/home-boot-presentation.test.mjs
+      - name: Commit product delta if needed
+        shell: bash
+        run: |
+          if git diff --quiet -- browser/home-boot-runtime-mount.mjs; then
+            echo 'No product diff to commit'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/home-boot-runtime-mount.mjs
+          git commit -m 'fix(home): extend slidepad reach feedback'
+          git push origin HEAD:work/home-slidepad-reach-r75-20260902

@@ -1,0 +1,50 @@
+name: TEMP Battle Hand7 Production R1
+
+on:
+  push:
+    branches:
+      - work/battle-hand7-production-r1-20260903
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temp-battle-hand7-production-r1
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Guard current authorization and inspect production lifecycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" = "work/battle-hand7-production-r1-20260903"
+          git merge-base --is-ancestor ab65d588decab75596cb3d3914aa964a72aab44c HEAD
+          test -f data/preaction-authorizations/BATTLE-HAND7-PRODUCTION-R1-20260903T1649-SOL-Q7M4N2.json
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('browser/GAMEROAD.html')
+          s = p.read_text(encoding='utf-8')
+          print('HTML_LEN', len(s))
+          needles = ['function makePlayer', 'makePlayer(', 'function refillHand', 'refillHand(', 'drawFromDeck', 'hand.length<3', 'hand.length < 3']
+          for needle in needles:
+              hits=[]
+              start=0
+              while True:
+                  i=s.find(needle,start)
+                  if i<0: break
+                  hits.append(i)
+                  start=i+1
+              print('NEEDLE', repr(needle), 'COUNT', len(hits), 'OFFSETS', hits[:20])
+              for i in hits[:8]:
+                  lo=max(0,i-700); hi=min(len(s),i+1800)
+                  print(f'--- CONTEXT {needle} @{i} ---')
+                  print(s[lo:hi])
+          PY
+          git diff --exit-code -- browser/GAMEROAD.html

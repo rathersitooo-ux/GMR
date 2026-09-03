@@ -84,6 +84,57 @@ test('turn rewind or explicit new-match reset clears stale score and chain', () 
   assert.deepEqual(state.cards, []);
 });
 
+test('current Battle DOM selectors resolve the local accepted score and Battle card without invention', () => {
+  function card(origin, label, value) {
+    const em = { nodeType: 1, textContent: origin };
+    const labelNode = { nodeType: 3, textContent: label };
+    const b = { nodeType: 1, textContent: String(value) };
+    return {
+      childNodes: [em, labelNode, b],
+      textContent: `${origin}${label}${value}`,
+      querySelector(selector) { return selector === 'em' ? em : selector === 'b' ? b : null; },
+    };
+  }
+  function row(score, cards) {
+    return {
+      querySelector(selector) { return selector === '.resolutionScore' ? { textContent: String(score) } : null; },
+      querySelectorAll(selector) { return selector === '.resolutionCard' ? cards : []; },
+    };
+  }
+  const chips = ['P1', 'P2', 'P3', 'P4'].map(id => ({ dataset: { playerId: id } }));
+  const document = {
+    body: { classList: { contains: () => false } },
+    getElementById(id) {
+      if (id === 'roundNo') return { textContent: '6' };
+      if (id === 'battleResolution') return { dataset: { stage: 'settle' } };
+      return null;
+    },
+    querySelector(selector) {
+      return selector === '#publicPlayerStrip .publicPlayerChip.you[data-player-id]' ? chips[1] : null;
+    },
+    querySelectorAll(selector) {
+      if (selector === '#publicPlayerStrip .publicPlayerChip') return chips;
+      if (selector === '#battleResolution .resolutionPlayer') return [
+        row(3, []),
+        row(12, [card('ロード', 'Road', 4), card('バトル', 'Real Battle', 8)]),
+        row(7, []),
+        row(5, []),
+      ];
+      return [];
+    },
+  };
+  const read = readBattleR75SelfHudDom(document);
+  assert.equal(read.turn, 6);
+  assert.deepEqual(read.resolution, {
+    schema: BATTLE_R75_SELF_HUD_RUNTIME_SCHEMA,
+    turn: 6,
+    playerId: 'P2',
+    score: 12,
+    cards: [{ label: 'Real Battle', value: 8 }],
+    fingerprint: '6|12|Real Battle:8',
+  });
+});
+
 test('friend-room DOM fails closed instead of guessing reordered viewer identity', () => {
   const document = {
     body: { classList: { contains: name => name === 'friend-room-match' } },

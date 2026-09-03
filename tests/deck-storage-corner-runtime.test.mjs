@@ -176,7 +176,7 @@ test('Cards discovery accepts only a horizontal left swipe from non-interactive 
   assert.equal(shouldRevealDeckStorageFromCardsSwipe({ startX: 140, startY: 80, endX: 60, endY: 84, interactive: true }), false);
 });
 
-test('Cards discovery opens existing Storage once, ignores card controls, and disposes cleanly', () => {
+test('Cards discovery opens existing Storage once, ignores live card surfaces, and disposes cleanly', () => {
   const { document, screen } = discoveryDocument();
   let opens = 0;
   const discovery = installDeckStorageCardsDiscovery({ document, openStorage: () => { opens += 1; } });
@@ -190,19 +190,30 @@ test('Cards discovery opens existing Storage once, ignores card controls, and di
   document.emit('pointerup', { target: blank, pointerId: 1, clientX: 70, clientY: 82 });
   assert.equal(opens, 1);
 
-  const cardControl = { parentNode: screen, closest: () => ({}) };
-  document.emit('pointerdown', { target: cardControl, pointerId: 2, clientX: 150, clientY: 80 });
-  document.emit('pointerup', { target: cardControl, pointerId: 2, clientX: 70, clientY: 82 });
+  const deckCard = {
+    parentNode: screen,
+    closest: (selector) => selector.includes('#deckSlots [data-id]') ? deckCard : null,
+  };
+  document.emit('pointerdown', { target: deckCard, pointerId: 2, clientX: 150, clientY: 80 });
+  document.emit('pointerup', { target: deckCard, pointerId: 2, clientX: 70, clientY: 82 });
   assert.equal(opens, 1);
 
-  document.emit('pointerdown', { target: blank, pointerId: 3, clientX: 70, clientY: 80 });
-  document.emit('pointerup', { target: blank, pointerId: 3, clientX: 150, clientY: 82 });
+  const collectionCard = {
+    parentNode: screen,
+    closest: (selector) => selector.includes('#collectionGrid [data-id]') ? collectionCard : null,
+  };
+  document.emit('pointerdown', { target: collectionCard, pointerId: 3, clientX: 150, clientY: 80 });
+  document.emit('pointerup', { target: collectionCard, pointerId: 3, clientX: 70, clientY: 82 });
+  assert.equal(opens, 1);
+
+  document.emit('pointerdown', { target: blank, pointerId: 4, clientX: 70, clientY: 80 });
+  document.emit('pointerup', { target: blank, pointerId: 4, clientX: 150, clientY: 82 });
   assert.equal(opens, 1);
 
   discovery.destroy();
   assert.equal(screen.children.length, 0);
-  document.emit('pointerdown', { target: blank, pointerId: 4, clientX: 150, clientY: 80 });
-  document.emit('pointerup', { target: blank, pointerId: 4, clientX: 70, clientY: 82 });
+  document.emit('pointerdown', { target: blank, pointerId: 5, clientX: 150, clientY: 80 });
+  document.emit('pointerup', { target: blank, pointerId: 5, clientX: 70, clientY: 82 });
   assert.equal(opens, 1);
 });
 

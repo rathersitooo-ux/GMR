@@ -347,6 +347,43 @@ test('presentation driver animates the actual outgoing and incoming screen surfa
   assert.ok(runtime.getPresentationState().events.some((event) => event.kind === 'surface_swap_observed' && event.status === 'completed'));
 });
 
+test('outgoing EXIT overlaps the incoming ENTER window and SETTLE waits for both', async () => {
+  const documentSource = fakeMotionDocument();
+  const exitGate = deferred();
+  let exitCancelled = false;
+  documentSource.surfaces.home.animate = function animate(frames, options) {
+    const animation = {
+      finished: exitGate.promise,
+      cancel() { exitCancelled = true; exitGate.resolve(); }
+    };
+    this.animations.push({frames, options, animation});
+    return animation;
+  };
+
+  let screen = 'home';
+  const runtime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => screen,
+    applyScreen: (next) => { screen = next; documentSource.activeElement = documentSource.controls[next]; },
+    presentationDriver: createScreenMotionPresentationDriver({document: documentSource})
+  });
+
+  let settled = false;
+  const navigation = runtime.navigate('cards').then((result) => { settled = true; return result; });
+  await turn();
+
+  assert.equal(screen, 'cards', 'SWAP must not wait for outgoing EXIT to finish');
+  assert.equal(documentSource.surfaces.home.animations.length, 1);
+  assert.equal(documentSource.surfaces.cards.animations.length, 1, 'incoming ENTER must start while outgoing EXIT is unresolved');
+  assert.equal(settled, false, 'SETTLE must wait for the pending outgoing EXIT');
+
+  exitGate.resolve();
+  const result = await navigation;
+  assert.equal(result.status, 'completed');
+  assert.equal(settled, true);
+  assert.equal(exitCancelled, true);
+  assert.deepEqual(runtime.getPresentationState().activeRevisions, []);
+});
+
 test('press feedback never delays the screen swap or the next actionable surface', async () => {
   const documentSource = fakeMotionDocument();
   const pressGate = deferred();

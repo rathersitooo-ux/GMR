@@ -302,7 +302,7 @@ async function openProbeSocket(pagesUrl, handshake, label) {
 
 test('live public Pages friend-room WebSocket routes and reconnects', { skip: !process.env.GAMEROAD_PUBLIC_WS_PROBE_URL }, async () => {
   const pagesUrl = process.env.GAMEROAD_PUBLIC_WS_PROBE_URL;
-  const runIdentity = `${process.env.GITHUB_RUN_ID || 'probe'}:${process.env.GITHUB_RUN_ATTEMPT || '1'}:${process.env.GITHUB_SHA || ''}`;
+  const runIdentity = `${process.env.GITHUB_RUN_ID || 'probe'}:${process.env.GITHUB_RUN_ATTEMPT || '1'}:${process.env.GITHUB_SHA || ''}:${process.pid}`;
   const code = probeRoomCode(runIdentity);
   const publicChannel = `gameroad.friend.r2.${code}`;
   const suffix = String(process.env.GITHUB_RUN_ID || Date.now());
@@ -430,7 +430,7 @@ test('live public Pages friend-room WebSocket routes and reconnects', { skip: !p
 
 test('live public Pages survives abrupt host process loss before reconnect without ejecting the guest', { skip: !process.env.GAMEROAD_PUBLIC_WS_PROBE_URL }, async () => {
   const pagesUrl = process.env.GAMEROAD_PUBLIC_WS_PROBE_URL;
-  const runIdentity = `${process.env.GITHUB_RUN_ID || 'probe'}:${process.env.GITHUB_RUN_ATTEMPT || '1'}:${process.env.GITHUB_SHA || ''}:host-drop-first`;
+  const runIdentity = `${process.env.GITHUB_RUN_ID || 'probe'}:${process.env.GITHUB_RUN_ATTEMPT || '1'}:${process.env.GITHUB_SHA || ''}:host-drop-first:${process.pid}`;
   const code = probeRoomCode(runIdentity);
   const publicChannel = `gameroad.friend.r2.${code}`;
   const suffix = String(process.env.GITHUB_RUN_ID || Date.now());
@@ -573,7 +573,7 @@ payload: {
 });
 test('live public Pages four-player presence is compatible with HATE disconnect and rejoin contract', { skip: !process.env.GAMEROAD_PUBLIC_WS_PROBE_URL }, async () => {
   const pagesUrl = process.env.GAMEROAD_PUBLIC_WS_PROBE_URL;
-  const runIdentity = `${process.env.GITHUB_RUN_ID || 'probe'}:${process.env.GITHUB_RUN_ATTEMPT || '1'}:${process.env.GITHUB_SHA || ''}:hate-4p`;
+  const runIdentity = `${process.env.GITHUB_RUN_ID || 'probe'}:${process.env.GITHUB_RUN_ATTEMPT || '1'}:${process.env.GITHUB_SHA || ''}:hate-4p:${process.pid}`;
   const code = probeRoomCode(runIdentity);
   const publicChannel = `gameroad.friend.r2.${code}`;
   const suffix = String(process.env.GITHUB_RUN_ID || Date.now());

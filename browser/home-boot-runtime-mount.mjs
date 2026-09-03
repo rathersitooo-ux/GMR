@@ -21,7 +21,7 @@ const SLIDEPAD_SWITCH_ADVANTAGE = 0.22;
 const SLIDEPAD_ROUTE_IDS = Object.freeze({
   battle: Object.freeze(['setup', 'battle']),
   shop: Object.freeze(['shop']),
-  partner: Object.freeze(['characters', 'partner']),
+  partner: Object.freeze(['partner', 'characters']),
   cards: Object.freeze(['cards']),
 });
 // The codex Home visual layer is still the current player-facing Home consumer. Do not destroy it

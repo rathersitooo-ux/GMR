@@ -158,7 +158,7 @@ test('Boot normal/reduced/lowPerf variants keep the same semantic state and acti
   assert.equal(lowPerf.presentationProfile, 'lowperf-static');
 });
 
-const liveSlidepadRoutes = ['setup', 'shop', 'characters', 'cards'];
+const liveSlidepadRoutes = ['setup', 'shop', 'partner', 'characters', 'cards'];
 
 test('Home runtime preserves the current visual layer while removing duplicate legacy controls', () => {
   const removed = [];
@@ -246,7 +246,8 @@ test('Home SlidePad keeps DOWN and the center dead-zone unassigned in the compat
 test('Home SlidePad resolves only routes that already exist in the current Home consumer', () => {
   assert.equal(resolveHomeSlidepadRouteId(liveSlidepadRoutes, 'battle'), 'setup');
   assert.equal(resolveHomeSlidepadRouteId(liveSlidepadRoutes, 'shop'), 'shop');
-  assert.equal(resolveHomeSlidepadRouteId(liveSlidepadRoutes, 'partner'), 'characters');
+  assert.equal(resolveHomeSlidepadRouteId(liveSlidepadRoutes, 'partner'), 'partner');
+  assert.equal(resolveHomeSlidepadRouteId(['setup', 'shop', 'characters', 'cards'], 'partner'), 'characters');
   assert.equal(resolveHomeSlidepadRouteId(liveSlidepadRoutes, 'cards'), 'cards');
   assert.equal(resolveHomeSlidepadRouteId(['shop', 'cards'], 'battle'), null);
   assert.equal(resolveHomeSlidepadRouteId(liveSlidepadRoutes, 'down'), null);

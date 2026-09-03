@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HAND7-SLIDEPAD-INPUT-R4-20260903T2055-SOL-R6N2P8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_HAND7_SLIDEPAD_INPUT_REPAIR_R4",
+  "acquireKey": "BATTLE-HAND7-SLIDEPAD-INPUT-R4-20260903T2055-SOL-R6N2P8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-CI-ORDINARY-HAND-POINTER-INTERCEPTION-RUN33747498572-RUN33747498539",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "TEMPORARY-RESPONSIVE-SLIDEPAD-BOTTOM-OVERRIDE-HTTP200-ERROR0-HANDCLICK-PASS-3VIEWPORTS",
+  "proceedToken": "PROCEED|BATTLE-HAND7-SLIDEPAD-INPUT-R4-20260903T2055-SOL-R6N2P8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-actual|lease-snapshot",
+  "authorizationBaseSha": "e2ef3c749d4b99a6b06e8d33101b4144a97a3408",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_HAND7_SLIDEPAD_INPUT_REPAIR_R4",
+  "leaseAcquireKey": "BATTLE-HAND7-SLIDEPAD-INPUT-R4-20260903T2055-SOL-R6N2P8",
+  "leaseSnapshotReadbackAtJst": "2026-09-03 20:55 JST",
+  "leaseUntilJst": "2026-09-03 21:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A344:L344",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@e2ef3c749d4b99a6b06e8d33101b4144a97a3408; existing branch work/battle-hand7-production-r2; PR#1008; mutable: browser/battle-janken-slidepad-runtime-mount.mjs, tests/battle-janken-slidepad-runtime-mount.test.mjs; preserved existing hand7 diff browser/GAMEROAD.html, tests/browser-full-interaction.spec.mjs; transient PRE_ACTION; own checks/expected-head merge/public deploy. All unrelated gameplay/rules/save/economy/network/assets READ_ONLY.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

@@ -176,3 +176,19 @@ test('target-confirm proxy is layered above the expanded SlidePad only during ta
     'section[data-screen="battle"] #targetBox.on,section[data-screen="battle"] #targetBox.vfTargetProxyOn{z-index:60!important}',
   );
 });
+
+
+test('disabled expanded janken slots do not intercept ordinary hand hit-testing', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(
+    source,
+    /\.grJankenSlidePadSlot:disabled\{[^}]*pointer-events:none[^}]*\}/,
+    'a disabled or empty visual slot must not win hit-testing over the ordinary hand beneath it',
+  );
+  assert.equal(
+    source.includes('data-expanded=\"true\"] .grJankenSlidePadSlot{opacity:1;pointer-events:auto}'),
+    true,
+    'expanded selectable slots retain their existing pointer target behavior before :disabled overrides it',
+  );
+});

@@ -10,9 +10,8 @@ import {
   resolveDeckEditorSwipe,
 } from '../browser/deck-storage-corner-core.mjs';
 
-test('collection left swipe is consumed without assigning Storage while right still means Deck add', () => {
-  const left = resolveDeckEditorSwipe({ surface: 'collection', deltaX: -80, deltaY: 4 });
-  assert.deepEqual(left, { action: 'none', consumed: true, reason: 'user-unassigned-left-swipe' });
+test('collection left stores while right still means Deck add', () => {
+  assert.equal(resolveDeckEditorSwipe({ surface: 'collection', deltaX: -80, deltaY: 4 }).action, 'storage-add');
   assert.equal(resolveDeckEditorSwipe({ surface: 'collection', deltaX: 80, deltaY: 4 }).action, 'deck-add');
 
   const state = createDeckStorageState({ deck: ['a'], storage: [] });
@@ -21,11 +20,8 @@ test('collection left swipe is consumed without assigning Storage while right st
   assert.deepEqual(result.state.storage, ['b']);
 });
 
-test('deck left swipe is consumed without remove while direct deck removal primitive remains intact', () => {
-  assert.deepEqual(
-    resolveDeckEditorSwipe({ surface: 'deck', deltaX: -70, deltaY: 2 }),
-    { action: 'none', consumed: true, reason: 'user-unassigned-left-swipe' },
-  );
+test('deck left swipe removes one while deck right remains reserved', () => {
+  assert.equal(resolveDeckEditorSwipe({ surface: 'deck', deltaX: -70, deltaY: 2 }).action, 'deck-remove');
   assert.equal(resolveDeckEditorSwipe({ surface: 'deck', deltaX: 70, deltaY: 2 }).action, 'none');
   const result = removeCardFromDeck(createDeckStorageState({ deck: ['a', 'b'], storage: [] }), 'a');
   assert.deepEqual(result.state.deck, ['b']);
@@ -40,14 +36,30 @@ test('storage stays outside deck and cannot bypass forty-card gate', () => {
   assert.equal(result.state.storage.length, 1);
 });
 
-test('storage uses normal-left royal-right view and yellow +N button contract', () => {
+test('storage uses normal-left royal-right view and yellow +N button before overflow', () => {
   const state = createDeckStorageState({ deck: [], storage: ['normal', 'royal', 'normal2'] });
   const view = createStorageCornerViewModel(state, { isRoyal: (id) => id === 'royal' });
   assert.deepEqual(view.normal, ['normal', 'normal2']);
   assert.deepEqual(view.royal, ['royal']);
   assert.equal(view.storageButtonLabel, '+3');
   assert.equal(view.storageButtonTone, 'yellow');
+  assert.equal(view.selectionCount, 3);
+  assert.equal(view.overDeckLimit, false);
   assert.deepEqual(view.layout, { normalSide: 'left', royalSide: 'right' });
+});
+
+test('forty plus overflow storage projects 41/40 and overflow tone', () => {
+  const deck = Array.from({ length: 40 }, (_, index) => `d${index}`);
+  const view = createStorageCornerViewModel(
+    createDeckStorageState({ deck, storage: ['overflow'] }),
+    { isRoyal: () => false },
+  );
+  assert.equal(view.deckCount, 40);
+  assert.equal(view.storageCount, 1);
+  assert.equal(view.selectionCount, 41);
+  assert.equal(view.storageButtonLabel, '41/40');
+  assert.equal(view.storageButtonTone, 'overflow');
+  assert.equal(view.overDeckLimit, true);
 });
 
 test('storage candidates can be discarded without touching deck', () => {

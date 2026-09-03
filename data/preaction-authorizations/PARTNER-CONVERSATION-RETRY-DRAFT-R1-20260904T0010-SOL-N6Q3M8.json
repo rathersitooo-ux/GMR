@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-CONVERSATION-RETRY-DRAFT-R1-20260904T0010-SOL-N6Q3M8",
+  "taskId": "MINOR-MODE-PLAYGLOBAL-COVERAGE-001",
+  "workUnitKey": "PARTNER_CONVERSATION_FAILED_SEND_RETRY_DRAFT_R1",
+  "acquireKey": "PARTNER-CONVERSATION-RETRY-DRAFT-R1-20260904T0010-SOL-N6Q3M8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT+main@e2ef3c7+live-board-facility-partner-conversation+failed-send-input-cleared",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "direct board-facility runtime readback + existing focused board-facility runtime suite",
+  "proceedToken": "PROCEED|PARTNER-CONVERSATION-RETRY-DRAFT-R1-20260904T0010-SOL-N6Q3M8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260904T0011JST",
+  "authorizationBaseSha": "e2ef3c749d4b99a6b06e8d33101b4144a97a3408",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "MINOR-MODE-PLAYGLOBAL-COVERAGE-001",
+  "leaseWorkUnitKey": "PARTNER_CONVERSATION_FAILED_SEND_RETRY_DRAFT_R1",
+  "leaseAcquireKey": "PARTNER-CONVERSATION-RETRY-DRAFT-R1-20260904T0010-SOL-N6Q3M8",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 00:10 JST",
+  "leaseUntilJst": "2026-09-04 01:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A345:L345",
+  "leaseExactMutableResources": "browser/board-facility-runtime-mount.mjs; tests/board-facility-runtime-mount.test.mjs; branch work/partner-conversation-retry-draft-r1-20260904; own PR/checks/expected-head merge/public package readback",
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs"
+  ]
+}

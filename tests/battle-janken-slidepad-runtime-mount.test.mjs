@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA,
+  BATTLE_JANKEN_HAND_INPUT_SAFE_AREA_CSS,
   BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS,
   buildBattleJankenSlidePadModel,
   isBattleHandAuraLaunchArmed,
@@ -174,5 +175,12 @@ test('target-confirm proxy is layered above the expanded SlidePad only during ta
   assert.equal(
     BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS,
     'section[data-screen="battle"] #targetBox.on,section[data-screen="battle"] #targetBox.vfTargetProxyOn{z-index:60!important}',
+  );
+});
+
+test('expanded SlidePad stays clear of ordinary hand input on compact Battle viewports', () => {
+  assert.equal(
+    BATTLE_JANKEN_HAND_INPUT_SAFE_AREA_CSS,
+    '@media(max-width:540px) and (orientation:portrait){[data-battle-janken-slidepad="1"]{bottom:max(154px,calc(env(safe-area-inset-bottom) + 154px))!important}}@media(max-height:430px) and (orientation:landscape){[data-battle-janken-slidepad="1"]{bottom:74px!important}}.battleDrawer.on ~ [data-battle-janken-slidepad="1"]{pointer-events:none!important}.battleDrawer.on ~ [data-battle-janken-slidepad="1"] *{pointer-events:none!important}',
   );
 });

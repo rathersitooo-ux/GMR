@@ -20,7 +20,15 @@ function currentInput(overrides = {}) {
   };
 }
 
-test('current source exposes only formally connected battle trigger ids', () => {
+const FORBIDDEN_NON_WINNING_TRIGGER_IDS = Object.freeze([
+  'game_result_non_first',
+  'attack_side_loss',
+  'attack_side_loss_opponent_royal_nonlethal',
+  'attack_side_loss_opponent_max_lane_unchanged_2p',
+  'defense_side_nonlethal_loss',
+]);
+
+test('current source exposes only formally connected allowed battle trigger ids', () => {
   const source = getSaasunaConversationSource();
   assert.ok(source);
   assert.deepEqual(source.approvedBattleTriggerIds, [
@@ -36,14 +44,12 @@ test('current source exposes only formally connected battle trigger ids', () => 
     'effect_activation',
     'delegate_normal',
     'game_result_first',
-    'game_result_non_first',
     'attack_side_win',
-    'attack_side_loss',
-    'attack_side_loss_opponent_royal_nonlethal',
-    'attack_side_loss_opponent_max_lane_unchanged_2p',
-    'defense_side_nonlethal_loss',
     'defense_side_win',
   ]);
+  for (const triggerId of FORBIDDEN_NON_WINNING_TRIGGER_IDS) {
+    assert.equal(source.approvedBattleTriggerIds.includes(triggerId), false);
+  }
   assert.equal(source.approvedBattleTriggerIds.includes('battle_phase'), false);
   assert.equal(source.approvedBattleTriggerIds.includes('near_lost'), false);
   assert.equal(source.unresolvedDialogueEnabled, false);
@@ -57,6 +63,12 @@ test('selector fails closed unless partner, version, source and character speech
   assert.equal(selectSaasunaBattleUtterance(currentInput({ sourceId: 'stale', triggerId: 'battle_start' })), null);
   assert.equal(selectSaasunaBattleUtterance(currentInput({ speechAct: 'diagnostic', triggerId: 'battle_start' })), null);
   assert.equal(selectSaasunaBattleUtterance(currentInput({ triggerId: 'battle_phase' })), null);
+});
+
+test('forbidden non-winning result classifications have no approved utterance', () => {
+  for (const triggerId of FORBIDDEN_NON_WINNING_TRIGGER_IDS) {
+    assert.equal(selectSaasunaBattleUtterance(currentInput({ triggerId })), null);
+  }
 });
 
 test('approved card-name templates require explicit public field and never leak unresolved placeholders', () => {
@@ -82,15 +94,10 @@ test('first-place synonym selection is deterministic and cannot invent a third l
   assert.equal(first.automaticGameMutationAllowed, false);
 });
 
-test('connected combat/result lines remain exact approved source text', () => {
+test('remaining connected combat lines remain exact approved source text', () => {
   const expected = new Map([
     ['delegate_normal', 'かしこまりました'],
-    ['game_result_non_first', 'よくがんばりました、いいこいいこしてあげましょうね'],
     ['attack_side_win', 'お見通しだよ'],
-    ['attack_side_loss', '随分と良いカードをお持ちのようで'],
-    ['attack_side_loss_opponent_royal_nonlethal', '切りましたね？'],
-    ['attack_side_loss_opponent_max_lane_unchanged_2p', '流せた'],
-    ['defense_side_nonlethal_loss', '気は済みましたか？'],
     ['defense_side_win', 'あら、運がお悪い'],
   ]);
   for (const [triggerId, text] of expected) {

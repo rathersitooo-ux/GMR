@@ -1,0 +1,194 @@
+name: TEMP UI Offscreen R3 Actual Acceptance
+
+on:
+  push:
+    branches:
+      - work/ui-offscreen-concurrent-enter-r3-accept-20260904
+
+permissions:
+  contents: read
+
+jobs:
+  chromium-actual-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Create bounded actual-use acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .ui-offscreen-r3 test-results/ui-offscreen-r3
+          cat > .ui-offscreen-r3/accept.spec.mjs <<'EOF'
+          import { test, expect } from '@playwright/test';
+
+          const VIEWPORTS = [
+            ['desktop-1280x720', { width: 1280, height: 720 }],
+            ['phone-390x844', { width: 390, height: 844 }],
+            ['short-landscape-667x375', { width: 667, height: 375 }],
+          ];
+
+          function parseTranslate(value) {
+            const match = String(value || '').match(/^(-?\d+(?:\.\d+)?)px\s+(-?\d+(?:\.\d+)?)px$/);
+            return match ? { dx: Number(match[1]), dy: Number(match[2]) } : null;
+          }
+
+          for (const [name, viewport] of VIEWPORTS) {
+            test(`Home→Setup emits concurrent offscreen pieces and settles (${name})`, async ({ browser }, testInfo) => {
+              const context = await browser.newContext({ viewport });
+              const page = await context.newPage();
+              await page.addInitScript(() => {
+                window.__gmrMotionCalls = [];
+                const original = Element.prototype.animate;
+                Element.prototype.animate = function patchedAnimate(keyframes, options) {
+                  const frames = Array.isArray(keyframes)
+                    ? keyframes.map((frame) => ({ ...frame }))
+                    : Array.from(keyframes || []).map((frame) => ({ ...frame }));
+                  const rect = this.getBoundingClientRect();
+                  const screen = this.closest?.('.screen[data-screen]')?.dataset?.screen || '';
+                  window.__gmrMotionCalls.push({
+                    at: performance.now(),
+                    screen,
+                    id: this.id || '',
+                    classes: Array.from(this.classList || []),
+                    frames,
+                    duration: typeof options === 'number' ? options : Number(options?.duration || 0),
+                    rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+                    viewport: {
+                      width: Number(document.documentElement.clientWidth) || window.innerWidth,
+                      height: Number(document.documentElement.clientHeight) || window.innerHeight,
+                    },
+                  });
+                  return original.call(this, keyframes, options);
+                };
+              });
+
+              const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
+              expect(response?.ok()).toBeTruthy();
+              await page.waitForTimeout(1000);
+              await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+
+              await page.evaluate(() => { window.__gmrMotionCalls = []; });
+              const setupControl = page.locator('[data-home-target="setup"]:visible, [data-go="setup"]:visible').first();
+              await expect(setupControl).toBeVisible();
+              await setupControl.click();
+
+              const setup = page.locator('section[data-screen="setup"]');
+              await expect(setup).toBeVisible();
+              await page.waitForTimeout(350);
+
+              const calls = await page.evaluate(() => window.__gmrMotionCalls || []);
+              const pieceCalls = calls.filter((call) =>
+                call.screen === 'setup' &&
+                (call.classes.includes('setupHero') || call.classes.includes('setupBox')) &&
+                call.frames?.[0]?.translate,
+              );
+              const byClass = new Map();
+              for (const call of pieceCalls) {
+                const key = call.classes.includes('setupHero') ? 'setupHero' : 'setupBox';
+                if (!byClass.has(key)) byClass.set(key, call);
+              }
+
+              expect([...byClass.keys()].sort()).toEqual(['setupBox', 'setupHero']);
+              const selected = [...byClass.values()];
+              const startSpreadMs = Math.max(...selected.map((call) => call.at)) - Math.min(...selected.map((call) => call.at));
+              expect(startSpreadMs, 'both pieces are launched in the same ENTER window').toBeLessThanOrEqual(50);
+
+              for (const call of selected) {
+                const shift = parseTranslate(call.frames[0].translate);
+                expect(shift, `${call.classes.join('.')} has a numeric first-frame translate`).not.toBeNull();
+                const left = call.rect.x + shift.dx;
+                const right = left + call.rect.width;
+                const top = call.rect.y + shift.dy;
+                const bottom = top + call.rect.height;
+                const outside = right <= 0 || left >= call.viewport.width || bottom <= 0 || top >= call.viewport.height;
+                expect(outside, `${call.classes.join('.')} first frame is outside viewport`).toBeTruthy();
+                expect(call.frames.at(-1)?.translate, `${call.classes.join('.')} settles to final translation`).toBe('0px 0px');
+              }
+
+              const finalState = await page.evaluate(() => {
+                const setup = document.querySelector('section[data-screen="setup"]');
+                const read = (selector) => {
+                  const node = setup?.querySelector(selector);
+                  if (!node) return null;
+                  const rect = node.getBoundingClientRect();
+                  const style = getComputedStyle(node);
+                  return {
+                    rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+                    translate: style.translate,
+                    pointerEvents: style.pointerEvents,
+                  };
+                };
+                return {
+                  hero: read('.setupHero'),
+                  box: read('.setupBox'),
+                  revision: setup?.dataset?.screenMotionRevision || '',
+                  phase: setup?.dataset?.screenMotionPhase || '',
+                };
+              });
+
+              for (const [label, state] of [['hero', finalState.hero], ['box', finalState.box]]) {
+                expect(state, `${label} final DOM exists`).not.toBeNull();
+                expect(state.rect.width).toBeGreaterThan(0);
+                expect(state.rect.height).toBeGreaterThan(0);
+                expect(state.rect.x + state.rect.width).toBeGreaterThan(0);
+                expect(state.rect.x).toBeLessThan(viewport.width);
+                expect(state.rect.y + state.rect.height).toBeGreaterThan(0);
+                expect(state.rect.y).toBeLessThan(viewport.height);
+                expect(['none', '0px', '0px 0px']).toContain(state.translate);
+                expect(state.pointerEvents).not.toBe('none');
+              }
+              expect(finalState.revision, 'transition revision marker is cleaned after SETTLE').toBe('');
+              expect(finalState.phase, 'transition phase marker is cleaned after SETTLE').toBe('');
+
+              await testInfo.attach(`${name}-motion-calls.json`, {
+                body: Buffer.from(JSON.stringify({ viewport, startSpreadMs, selected, finalState }, null, 2)),
+                contentType: 'application/json',
+              });
+              await testInfo.attach(`${name}-setup-settled.png`, {
+                body: await page.screenshot({ fullPage: true, animations: 'disabled' }),
+                contentType: 'image/png',
+              });
+              await context.close();
+            });
+          }
+          EOF
+          cat > .ui-offscreen-r3/playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir: '.',
+            testMatch: 'accept.spec.mjs',
+            timeout: 45_000,
+            expect: { timeout: 7_000 },
+            workers: 1,
+            retries: 0,
+            reporter: [
+              ['line'],
+              ['json', { outputFile: '../test-results/ui-offscreen-r3/report.json' }],
+            ],
+            use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true },
+            webServer: {
+              command: 'python3 -m http.server 4173 --bind 127.0.0.1',
+              url: 'http://127.0.0.1:4173/browser/GAMEROAD.html',
+              reuseExistingServer: false,
+              timeout: 120_000,
+            },
+          });
+          EOF
+      - name: Run actual Home→Setup temporal acceptance
+        run: npx playwright test --config=.ui-offscreen-r3/playwright.config.mjs --workers=1
+      - name: Upload temporal evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-offscreen-r3-${{ github.run_id }}
+          path: test-results/ui-offscreen-r3/
+          if-no-files-found: error
+          retention-days: 14

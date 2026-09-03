@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PUBLICHOST-PARTNER-PIN-RECONVERGE-R2-20260903T1145-SOL",
+  "taskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "workUnitKey": "PUBLICHOST_PARTNER_BLOB_PIN_RECONVERGENCE_R2",
+  "acquireKey": "PUBLICHOST-PARTNER-PIN-RECONVERGE-R2-20260903T1145-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "REQGATE-33708615122-CURRENT-MAIN-PARTNER-BLOB-MISMATCH",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING-R1-TWO-LINE-RECONVERGENCE-PLUS-BUILD-TEST-ORACLE",
+  "proceedToken": "PROCEED|PUBLICHOST-PARTNER-PIN-RECONVERGE-R2-20260903T1145-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|provenance-only|lease-snapshot",
+  "authorizationBaseSha": "ac0ab6e253cdafe8b9b8113bd50697732e06e41c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "leaseWorkUnitKey": "PUBLICHOST_PARTNER_BLOB_PIN_RECONVERGENCE_R2",
+  "leaseAcquireKey": "PUBLICHOST-PARTNER-PIN-RECONVERGE-R2-20260903T1145-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-03 11:45 JST",
+  "leaseUntilJst": "2026-09-03 12:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
+  "leaseExactMutableResources": "deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs",
+  "scope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

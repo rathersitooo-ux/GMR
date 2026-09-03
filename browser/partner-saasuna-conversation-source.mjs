@@ -29,12 +29,7 @@ const BATTLE_UTTERANCES = Object.freeze({
   effect_activation: Object.freeze({ candidates: Object.freeze(['{カード名}の効果発動！']), requiredFields: Object.freeze(['cardName']) }),
   delegate_normal: Object.freeze({ candidates: Object.freeze(['かしこまりました']) }),
   game_result_first: Object.freeze({ candidates: Object.freeze(['これにて終演', 'ふう…戦略通り']) }),
-  game_result_non_first: Object.freeze({ candidates: Object.freeze(['よくがんばりました、いいこいいこしてあげましょうね']) }),
   attack_side_win: Object.freeze({ candidates: Object.freeze(['お見通しだよ']) }),
-  attack_side_loss: Object.freeze({ candidates: Object.freeze(['随分と良いカードをお持ちのようで']) }),
-  attack_side_loss_opponent_royal_nonlethal: Object.freeze({ candidates: Object.freeze(['切りましたね？']) }),
-  attack_side_loss_opponent_max_lane_unchanged_2p: Object.freeze({ candidates: Object.freeze(['流せた']) }),
-  defense_side_nonlethal_loss: Object.freeze({ candidates: Object.freeze(['気は済みましたか？']) }),
   defense_side_win: Object.freeze({ candidates: Object.freeze(['あら、運がお悪い']) }),
 });
 

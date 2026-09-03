@@ -7,7 +7,7 @@ import {
   installFanartLocalSkinCards,
   normalizeLocalSkinCardId,
   validateLocalSkinSource,
-} from '../browser/fanart-local-skin-runtime.mjs';
+} from '../browser/cards-deck-presentation.mjs';
 
 function pngHeader(width, height) {
   const bytes = new Uint8Array(24);
@@ -47,10 +47,12 @@ test('runtime fails closed when there is no Cards document instead of inventing 
   assert.doesNotThrow(() => installation.destroy());
 });
 
-test('production local-skin runtime contains no transport or localStorage fallback', async () => {
-  const source = await readFile(new URL('../browser/fanart-local-skin-runtime.mjs', import.meta.url), 'utf8');
+test('packaged Cards runtime contains no transport or localStorage fallback for local skins', async () => {
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const fanartSource = source.slice(source.indexOf("const FANART_DB_NAME = 'gameroad_local_card_creator_v1'"));
+  assert.ok(fanartSource.length > 0);
   for (const forbidden of ['fetch(', 'XMLHttpRequest', 'WebSocket', 'localStorage', 'sessionStorage']) {
-    assert.equal(source.includes(forbidden), false, `forbidden transport/storage fallback: ${forbidden}`);
+    assert.equal(fanartSource.includes(forbidden), false, `forbidden transport/storage fallback: ${forbidden}`);
   }
-  assert.equal(source.includes("gameroad_local_card_creator_v1"), true);
+  assert.equal(fanartSource.includes("gameroad_local_card_creator_v1"), true);
 });

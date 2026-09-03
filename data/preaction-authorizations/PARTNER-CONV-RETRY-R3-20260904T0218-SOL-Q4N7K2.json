@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-CONV-RETRY-R3-20260904T0218-SOL-Q4N7K2",
+  "taskId": "MINOR-MODE-PLAYGLOBAL-COVERAGE-001",
+  "workUnitKey": "PARTNER_CONVERSATION_FAILED_SEND_RETRY_R3",
+  "acquireKey": "PARTNER-CONV-RETRY-R3-20260904T0218-SOL-Q4N7K2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "Current main 2bbf246 clears the input before awaiting Partner send and does not restore it on !ok/throw. Existing PR1031 exact two-file repair preserves successful send semantics; its only observed Gate failure was invalid leaseSnapshotReadbackRef A:N instead of A:L.",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "Reuse exact PR1031 runtime/test blobs plus deterministic package currentBlob witness update. Focused board-facility conventional test and public-package provenance are the differential oracles.",
+  "proceedToken": "PROCEED|PARTNER-CONV-RETRY-R3-20260904T0218-SOL-Q4N7K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_LEASE_AND_EXACT_BLOB_READBACK",
+  "authorizationBaseSha": "2bbf24665a4ed9380a2fe92f1ea306c540110695",
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "MINOR-MODE-PLAYGLOBAL-COVERAGE-001",
+  "leaseWorkUnitKey": "PARTNER_CONVERSATION_FAILED_SEND_RETRY_R3",
+  "leaseAcquireKey": "PARTNER-CONV-RETRY-R3-20260904T0218-SOL-Q4N7K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 02:18 JST",
+  "leaseUntilJst": "2026-09-04 03:18 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A348:L348",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@2bbf24665a4ed9380a2fe92f1ea306c540110695; branch work/partner-conversation-retry-r3-20260904; mutable only browser/board-facility-runtime-mount.mjs@1dc13f3ba3359c33bfac08c1fa6c7d612002966e; tests/board-facility-runtime-mount.test.mjs@5be8be518213d7e7ae6c968cc1fe8dd9a10375bb; deploy/cloudflare/tests/build.test.mjs@454629b7ab575f7b8ad75b50c368619dd44158d9; transient data/preaction-authorizations/PARTNER-CONV-RETRY-R3-20260904T0218-SOL-Q4N7K2.json; own clean recovery PR/checks/expected-head merge/public readback. GAMEROAD.html, Partner identity/provider/fallback, relationship/save/reward/gameplay/rules/economy/network/assets READ_ONLY.",
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

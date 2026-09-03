@@ -274,14 +274,18 @@ export function mountBattleR75SelfHudRuntime(globalRef = globalThis) {
   function install() {
     if (destroyed) return;
     sync();
-    const map = documentRef.getElementById?.('battleMap');
     const MutationObserverRef = globalRef.MutationObserver;
-    if (map && typeof MutationObserverRef === 'function') {
+    const watchTargets = ['roundNo', 'publicPlayerStrip', 'battleResolution']
+      .map(id => documentRef.getElementById?.(id))
+      .filter(Boolean);
+    if (watchTargets.length && typeof MutationObserverRef === 'function') {
       observer = new MutationObserverRef(() => {
         if (typeof globalRef.queueMicrotask === 'function') globalRef.queueMicrotask(sync);
         else Promise.resolve().then(sync);
       });
-      observer.observe(map, { subtree: true, childList: true, characterData: true, attributes: true });
+      for (const target of watchTargets) {
+        observer.observe(target, { subtree: true, childList: true, characterData: true, attributes: true });
+      }
     }
     for (const id of ['startMatch', 'rematch']) {
       documentRef.getElementById?.(id)?.addEventListener?.('click', reset);

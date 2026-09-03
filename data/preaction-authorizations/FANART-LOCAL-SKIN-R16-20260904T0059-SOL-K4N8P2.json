@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "FANART-LOCAL-SKIN-R16-20260904T0059-SOL-K4N8P2",
+  "taskId": "FANART-LOCAL-CARD-CREATOR-BROWSER-001",
+  "workUnitKey": "FANART_LOCAL_SKIN_CARDS_PRODUCTION_MOUNT_R16",
+  "acquireKey": "FANART-LOCAL-SKIN-R16-20260904T0059-SOL-K4N8P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FANART_R16_EXISTING_CARDS_CONSUMER",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FANART_R4_HOSTED_SECURE_LOOPBACK_3_OF_3_PASS",
+  "proceedToken": "PROCEED|FANART-LOCAL-SKIN-R16-20260904T0059-SOL-K4N8P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|FANART_R16_EXISTING_CARDS_CONSUMER",
+  "authorizationBaseSha": "69e0522f549332ac0c3045bfdec264ab95196b35",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "FANART-LOCAL-CARD-CREATOR-BROWSER-001",
+  "leaseWorkUnitKey": "FANART_LOCAL_SKIN_CARDS_PRODUCTION_MOUNT_R16",
+  "leaseAcquireKey": "FANART-LOCAL-SKIN-R16-20260904T0059-SOL-K4N8P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 00:59 JST",
+  "leaseUntilJst": "2026-09-04 01:58 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "browser/cards-deck-presentation.mjs; browser/fanart-local-skin-runtime.mjs; tests/fanart-local-skin-runtime.test.mjs",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "browser/fanart-local-skin-runtime.mjs",
+    "tests/fanart-local-skin-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "browser/fanart-local-skin-runtime.mjs",
+    "tests/fanart-local-skin-runtime.test.mjs"
+  ],
+  "solutionSignature": "fanart-local-skin|canonical-id|indexeddb-r4|cards-consumer",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R16_REUSE_R4_STORAGE_AND_CURRENT_CARDS_MOUNT",
+  "solutionSearchEvidence": [
+    "Drive candidate 1t0Cu-7AtUT4yo8EPU-KmkYVD0C3pxB7x re-read current actual",
+    "browser/cards-deck-presentation.mjs blob b1b1bd3064fc583c944451356bef0dbf6d7642bb",
+    "public build recursively copies local module dependencies"
+  ]
+}

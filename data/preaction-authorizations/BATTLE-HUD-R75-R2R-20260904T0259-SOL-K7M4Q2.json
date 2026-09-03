@@ -20,15 +20,17 @@
   "leaseSnapshotReadbackAtJst": "2026-09-04 02:59 JST",
   "leaseUntilJst": "2026-09-04 03:59 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A15:N15",
-  "leaseExactMutableResources": "browser/partner-battle-event-log-projection.mjs; tests/partner-battle-event-log-projection.test.mjs; deploy/cloudflare/tests/build.test.mjs; transient this authorization JSON; own branch/PR/checks/expected-head merge/public proof. GAMEROAD.html, battle-replay-live-adapter.mjs, battle-janken runtime, gameplay/rules/save/economy/network/assets READ_ONLY",
+  "leaseExactMutableResources": "browser/partner-battle-event-log-projection.mjs; tests/partner-battle-event-log-projection.test.mjs; tests/partner-battle-r75-projection-runtime.test.mjs; deploy/cloudflare/tests/build.test.mjs; transient this authorization JSON; own branch/PR/checks/expected-head merge/public proof. GAMEROAD.html, battle-replay-live-adapter.mjs, battle-janken runtime, gameplay/rules/save/economy/network/assets READ_ONLY",
   "scope": [
     "browser/partner-battle-event-log-projection.mjs",
     "tests/partner-battle-event-log-projection.test.mjs",
+    "tests/partner-battle-r75-projection-runtime.test.mjs",
     "deploy/cloudflare/tests/build.test.mjs"
   ],
   "leaseScope": [
     "browser/partner-battle-event-log-projection.mjs",
     "tests/partner-battle-event-log-projection.test.mjs",
+    "tests/partner-battle-r75-projection-runtime.test.mjs",
     "deploy/cloudflare/tests/build.test.mjs"
   ]
 }

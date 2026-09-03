@@ -10,8 +10,18 @@
     "items": []
   },
   "release_notes": {
-    "state": "UNPUBLISHED",
-    "items": []
+    "state": "PUBLISHED",
+    "items": [
+      {
+        "id": "2026-09-04-cards-partner-quality",
+        "title": "カードと相棒まわりを改善",
+        "changes": [
+          "カード画面で、この端末に設定したローカルカードスキンが自分のカード表示に反映されるようになりました。",
+          "相棒へのメッセージ送信に失敗したとき、入力内容が戻るようになり、そのまま再送しやすくなりました。",
+          "相棒の対戦リアクションが、GAMEROADの結果ルールと食い違わないよう修正しました。"
+        ]
+      }
+    ]
   },
   "known_issues": {
     "state": "NOT_ASSERTED",

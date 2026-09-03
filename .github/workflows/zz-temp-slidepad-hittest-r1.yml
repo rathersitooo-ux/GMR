@@ -1,0 +1,60 @@
+name: ZZ TEMP SlidePad HitTest R1
+
+on:
+  push:
+    branches:
+      - work/battle-slidepad-hittest-r1-20260904
+    paths:
+      - .github/workflows/zz-temp-slidepad-hittest-r1.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/battle-slidepad-hittest-r1-20260904
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply bounded disabled-slot hit-test repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          runtime = Path('browser/battle-janken-slidepad-runtime-mount.mjs')
+          test = Path('tests/battle-janken-slidepad-runtime-mount.test.mjs')
+          source = runtime.read_text()
+          old = '[${HOST_ATTR}="1"] .grJankenSlidePadSlot:disabled{filter:saturate(.15);background:linear-gradient(160deg,#f2f4f3,#c7cecb);border-color:rgba(255,255,255,.5);color:#68736f;box-shadow:0 6px 14px rgba(0,0,0,.22);cursor:default}'
+          new = '[${HOST_ATTR}="1"] .grJankenSlidePadSlot:disabled{filter:saturate(.15);background:linear-gradient(160deg,#f2f4f3,#c7cecb);border-color:rgba(255,255,255,.5);color:#68736f;box-shadow:0 6px 14px rgba(0,0,0,.22);cursor:default;pointer-events:none}'
+          if source.count(old) != 1:
+              raise SystemExit(f'exact runtime target count must be 1, got {source.count(old)}')
+          runtime.write_text(source.replace(old, new, 1))
+          marker = "test('disabled expanded janken slots do not intercept ordinary hand hit-testing'"
+          test_source = test.read_text()
+          if marker in test_source:
+              raise SystemExit('focused regression already exists')
+          test_source += '''\n\ntest('disabled expanded janken slots do not intercept ordinary hand hit-testing', async () => {\n  const { readFile } = await import('node:fs/promises');\n  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');\n  assert.match(\n    source,\n    /\\.grJankenSlidePadSlot:disabled\\{[^}]*pointer-events:none[^}]*\\}/,\n    'a disabled or empty visual slot must not win hit-testing over the ordinary hand beneath it',\n  );\n  assert.match(\n    source,\n    /data-expanded=\\\\\"true\\\\\"\\] \\.grJankenSlidePadSlot\\{opacity:1;pointer-events:auto\\}/,\n    'expanded selectable slots retain their existing pointer target behavior before :disabled overrides it',\n  );\n});\n'''
+          test.write_text(test_source)
+          PY
+      - name: Run focused SlidePad regression
+        run: node --test tests/battle-janken-slidepad-runtime-mount.test.mjs
+      - name: Remove transient workflow and push bounded product commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/zz-temp-slidepad-hittest-r1.yml
+          git config user.name 'gameroad-bot'
+          git config user.email 'gameroad-bot@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git diff --cached --name-only
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = "browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs "
+          git commit -m 'Fix disabled SlidePad hit testing'
+          git push origin HEAD:work/battle-slidepad-hittest-r1-20260904

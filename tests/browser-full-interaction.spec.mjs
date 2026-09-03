@@ -177,24 +177,40 @@ async function submitVisiblePlan(battle) {
   await expect(roadSelect).toBeVisible();
   await expect(battleSelect).toBeVisible();
   const handCards = battle.locator('#hand .handCard:visible:not(:disabled)');
-  expect(await handCards.count(), 'visible plan hand has at least two cards').toBeGreaterThanOrEqual(2);
+  const jankenCards = battle.locator('[data-battle-janken-slidepad="1"] [data-janken-slot]:visible:not(:disabled)');
+  const candidateGroups = [
+    { locator: handCards, selector: '#hand .handCard' },
+    { locator: jankenCards, selector: '[data-battle-janken-slidepad="1"] [data-janken-slot]' },
+  ];
+  const candidateCount = (await Promise.all(candidateGroups.map(({ locator }) => locator.evaluateAll((nodes) => nodes
+    .filter((node) => !node.disabled && node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden')
+    .map((node) => node.getAttribute('data-card-id'))
+    .filter(Boolean)))))
+    .flat().length;
+  expect(candidateCount, 'visible plan controls expose at least two distinct cards').toBeGreaterThanOrEqual(2);
 
-  if (!(await roadSelect.inputValue())) await handCards.nth(0).click();
-  if (!(await battleSelect.inputValue())) {
-    const roadValue = await roadSelect.inputValue();
-    const candidates = battle.locator('#hand .handCard:visible:not(:disabled)');
-    const candidateCount = await candidates.count();
-    let picked = false;
-    for (let i = 0; i < candidateCount; i += 1) {
-      const id = await candidates.nth(i).getAttribute('data-card-id');
-      if (!id || id === roadValue) continue;
-      await candidates.nth(i).click();
-      if (await battleSelect.inputValue()) {
-        picked = true;
-        break;
+  const clickCandidate = async (excludedId = null) => {
+    for (const group of candidateGroups) {
+      const ids = await group.locator.evaluateAll((nodes) => nodes
+        .filter((node) => !node.disabled && node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden')
+        .map((node) => node.getAttribute('data-card-id'))
+        .filter(Boolean));
+      for (const id of ids) {
+        if (!id || id === excludedId) continue;
+        const candidate = battle.locator(`${group.selector}[data-card-id="${id}"]`).first();
+        if (!(await candidate.isVisible()) || await candidate.isDisabled()) continue;
+        await candidate.click();
+        return id;
       }
     }
-    expect(picked, 'a different visible hand card can be reserved as Battle').toBeTruthy();
+    return null;
+  };
+
+  if (!(await roadSelect.inputValue())) await expect.poll(() => clickCandidate()).not.toBeNull();
+  if (!(await battleSelect.inputValue())) {
+    const roadValue = await roadSelect.inputValue();
+    await expect.poll(() => clickCandidate(roadValue)).not.toBeNull();
+    await expect(battleSelect, 'a different visible card can be reserved as Battle').not.toHaveValue('');
   }
 
   expect(await roadSelect.inputValue(), 'visible Road selection').not.toBe('');
@@ -481,8 +497,10 @@ test('starts through visible Setup and advances the first Battle decision throug
   await expect(battle.locator('#phaseTitle')).toContainText('行動を計画');
   await attachStateScreenshot(page, testInfo, 'battle-first-plan-visible');
 
+  const initialHands = await page.evaluate(() => window.__GAMEROAD_TEST__.state.match.players.map((player) => player.hand.length));
+  expect(initialHands, 'fresh match deals seven source hand cards to every participant').toEqual([7, 7]);
   const handCards = battle.locator('#hand .handCard:visible');
-  await expect(handCards).toHaveCount(3);
+  expect(await handCards.count(), 'janken reservation leaves ordinary hand cards visibly playable').toBeGreaterThanOrEqual(2);
   await handCards.nth(0).click();
   await expect(battle.locator('#roadSelect')).not.toHaveValue('');
   await handCards.nth(1).click();
@@ -600,6 +618,8 @@ test('reaches Result and starts a rematch through visible controls only', async 
   await expect(battle, 'visible Result rematch returns to a fresh Battle').toBeVisible();
   await expect(battle.locator('#roundNo')).toHaveText('1');
   await expect(battle.locator('#phaseTitle')).toContainText('行動を計画');
+  const rematchHands = await page.evaluate(() => window.__GAMEROAD_TEST__.state.match.players.map((player) => player.hand.length));
+  expect(rematchHands, 'visible rematch creates a fresh seven-card opening hand for every participant').toEqual([7, 7]);
   await attachStateScreenshot(page, testInfo, 'visible-rematch-battle-restarted');
 
   runtime.assertClean(testInfo);

@@ -104,6 +104,21 @@ export function buildBattleJankenSlidePadModel({
   });
 }
 
+export function projectBattleLoadCardPreview(model, jankenHand) {
+  const hand = typeof jankenHand === 'string' ? jankenHand : null;
+  if (!hand || !model?.slots) return null;
+  const slot = model.slots.find?.((candidate) => candidate.jankenHand === hand);
+  if (!slot?.selectable || !slot.cardId) return null;
+  return deepFreeze({
+    kind: 'LOAD_CARD',
+    cardId: slot.cardId,
+    cardLabel: slot.cardLabel,
+    jankenHand: slot.jankenHand,
+    symbol: slot.symbol,
+    hand: slot.hand,
+  });
+}
+
 export function resolveBattleJankenSlotCardAction(model, jankenHand, currentSourceHandCardIds = []) {
   const slot = model?.slots?.find?.((candidate) => candidate.jankenHand === jankenHand);
   if (!slot?.selectable || !slot.cardId) return null;
@@ -184,6 +199,12 @@ function addStyle(documentRef) {
 [${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:25px;line-height:1;font-weight:900}
 [${HOST_ATTR}="1"] .grJankenSlidePadCard{font-size:10px;line-height:1.15;font-weight:850;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
 [${HOST_ATTR}="1"] .grJankenSlidePadHand{font-size:9px;font-weight:900;letter-spacing:.08em;opacity:.72}
+[${HOST_ATTR}="1"] .grJankenLoadPreview{position:absolute;left:8px;top:8px;width:106px;height:142px;border-radius:16px;border:2px solid rgba(255,255,255,.92);background:linear-gradient(155deg,rgba(252,255,253,.98),rgba(210,229,219,.98));box-shadow:0 14px 34px rgba(0,0,0,.45),0 0 0 3px rgba(255,255,255,.12);color:#10211e;padding:9px 8px;display:grid;grid-template-rows:auto auto 1fr auto;gap:4px;align-items:center;text-align:center;opacity:0;transform:translateY(8px) scale(.88);transition:opacity 90ms ease,transform 120ms cubic-bezier(.2,.8,.2,1);pointer-events:none}
+[${HOST_ATTR}="1"] .grJankenLoadPreview[data-visible="true"]{opacity:1;transform:translateY(0) scale(1)}
+[${HOST_ATTR}="1"] .grJankenLoadPreviewLabel{font-size:9px;font-weight:950;letter-spacing:.12em;opacity:.62}
+[${HOST_ATTR}="1"] .grJankenLoadPreviewSuit{font-size:34px;line-height:1;font-weight:950}
+[${HOST_ATTR}="1"] .grJankenLoadPreviewCard{font-size:12px;line-height:1.12;font-weight:900;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical}
+[${HOST_ATTR}="1"] .grJankenLoadPreviewHand{font-size:12px;font-weight:950;letter-spacing:.08em}
 section[data-screen="battle"] #hand .handCard[data-janken-reserved="true"]{display:none!important}
 section[data-screen="battle"] #hand .handCard[data-hand-aura-draggable="true"]{touch-action:none}
 section[data-screen="battle"] #hand .handCard[data-hand-aura-dragging="true"]{opacity:.22!important}
@@ -191,9 +212,9 @@ section[data-screen="battle"] #hand .handCard[data-hand-aura-dragging="true"]{op
 [${HOST_ATTR}="1"][data-hand-aura-armed="true"] .grJankenSlidePadHandle{filter:brightness(1.75) saturate(1.55);box-shadow:0 8px 22px rgba(0,0,0,.34),0 0 0 8px rgba(214,255,239,.25),0 0 44px rgba(115,255,208,.9),inset 0 0 20px rgba(255,255,255,.42)}
 .grHandAuraDragGhost{position:fixed!important;right:auto!important;bottom:auto!important;margin:0!important;z-index:220!important;pointer-events:none!important;transition:none!important;transform:none!important;transform-origin:50% 50%!important;will-change:left,top,transform,opacity,filter;box-sizing:border-box}
 .grHandAuraDragGhost[data-aura-charged="true"]{filter:brightness(1.35) saturate(1.3) drop-shadow(0 0 7px rgba(222,255,244,.98)) drop-shadow(0 0 18px rgba(89,255,199,.9))!important;box-shadow:0 0 0 3px rgba(231,255,247,.62),0 0 26px rgba(75,255,191,.8)!important}
-@media(max-width:540px) and (orientation:portrait){[${HOST_ATTR}="1"]{bottom:max(92px,calc(env(safe-area-inset-bottom) + 92px))}}
-@media(max-height:430px) and (orientation:landscape){[${HOST_ATTR}="1"]{width:220px;height:160px;right:7px;bottom:7px}[${HOST_ATTR}="1"] .grJankenSlidePadHandle{width:58px;height:58px}[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:70px;height:94px;padding:5px}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-143px,10px) rotate(-18deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-109px,-47px) rotate(-8deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-43px,-75px) rotate(5deg)}}
-@media(prefers-reduced-motion:reduce){[${HOST_ATTR}="1"] .grJankenSlidePadSlot,[${HOST_ATTR}="1"] .grJankenSlidePadHandle{transition:none!important}}
+@media(max-width:540px) and (orientation:portrait){[${HOST_ATTR}="1"]{bottom:max(92px,calc(env(safe-area-inset-bottom) + 92px))}[${HOST_ATTR}="1"] .grJankenLoadPreview{width:98px;height:132px}}
+@media(max-height:430px) and (orientation:landscape){[${HOST_ATTR}="1"]{width:220px;height:160px;right:7px;bottom:7px}[${HOST_ATTR}="1"] .grJankenSlidePadHandle{width:58px;height:58px}[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:70px;height:94px;padding:5px}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-143px,10px) rotate(-18deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-109px,-47px) rotate(-8deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-43px,-75px) rotate(5deg)}[${HOST_ATTR}="1"] .grJankenLoadPreview{width:90px;height:120px;left:2px;top:2px}}
+@media(prefers-reduced-motion:reduce){[${HOST_ATTR}="1"] .grJankenSlidePadSlot,[${HOST_ATTR}="1"] .grJankenSlidePadHandle,[${HOST_ATTR}="1"] .grJankenLoadPreview{transition:none!important}}
 `;
   documentRef.head?.appendChild(style);
 }
@@ -453,6 +474,15 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     host.appendChild(button);
     slotNodes.set(hand, button);
   }
+  const loadPreview = documentRef.createElement('div');
+  loadPreview.className = 'grJankenLoadPreview';
+  loadPreview.dataset.visible = 'false';
+  loadPreview.setAttribute('aria-hidden', 'true');
+  loadPreview.innerHTML = '<span class="grJankenLoadPreviewLabel">LOAD CARD</span><span class="grJankenLoadPreviewSuit"></span><span class="grJankenLoadPreviewCard"></span><span class="grJankenLoadPreviewHand"></span>';
+  host.appendChild(loadPreview);
+  const loadPreviewSuit = loadPreview.querySelector('.grJankenLoadPreviewSuit');
+  const loadPreviewCard = loadPreview.querySelector('.grJankenLoadPreviewCard');
+  const loadPreviewHand = loadPreview.querySelector('.grJankenLoadPreviewHand');
   const handle = documentRef.createElement('button');
   handle.type = 'button';
   handle.className = 'grJankenSlidePadHandle';
@@ -480,6 +510,19 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
   let allowAuraProgrammaticClick = false;
   let suppressClickTimer = null;
 
+  function renderLoadPreview(nextHand) {
+    const preview = projectBattleLoadCardPreview(model, nextHand);
+    const visible = !!preview;
+    loadPreview.dataset.visible = String(visible);
+    loadPreview.setAttribute('aria-hidden', String(!visible));
+    loadPreview.dataset.cardId = preview?.cardId ?? '';
+    loadPreview.dataset.jankenHand = preview?.jankenHand ?? '';
+    loadPreviewSuit.textContent = preview?.symbol ?? '';
+    loadPreviewCard.textContent = preview?.cardLabel ?? '';
+    loadPreviewHand.textContent = preview ? `${preview.hand} / ${preview.jankenHand}` : '';
+    return preview;
+  }
+
   function setExpanded(next) {
     expanded = next === true;
     host.dataset.expanded = String(expanded);
@@ -489,6 +532,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
   function setArmed(nextHand) {
     armedHand = nextHand ?? null;
     for (const [hand, node] of slotNodes) node.dataset.armed = String(hand === armedHand);
+    renderLoadPreview(armedHand);
     handle.style.transform = '';
     if (!armedHand || !dragOrigin) return;
     const target = elementCenter(slotNodes.get(armedHand));
@@ -765,6 +809,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
         if (cardId) clickExistingHandCard(root, cardId);
       };
     }
+    if (armedHand) renderLoadPreview(armedHand);
     openForRound(model.roundId);
   }
 
@@ -810,6 +855,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
   const runtime = Object.freeze({
     render,
     snapshot: () => model,
+    loadPreviewSnapshot: () => projectBattleLoadCardPreview(model, armedHand),
     isExpanded: () => expanded,
     destroy() {
       if (destroyed) return false;

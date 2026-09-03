@@ -481,8 +481,10 @@ test('starts through visible Setup and advances the first Battle decision throug
   await expect(battle.locator('#phaseTitle')).toContainText('行動を計画');
   await attachStateScreenshot(page, testInfo, 'battle-first-plan-visible');
 
+  const initialHands = await page.evaluate(() => window.__GAMEROAD_TEST__.state.match.players.map((player) => player.hand.length));
+  expect(initialHands, 'fresh match deals seven source hand cards to every participant').toEqual([7, 7]);
   const handCards = battle.locator('#hand .handCard:visible');
-  await expect(handCards).toHaveCount(3);
+  expect(await handCards.count(), 'janken reservation leaves ordinary hand cards visibly playable').toBeGreaterThanOrEqual(2);
   await handCards.nth(0).click();
   await expect(battle.locator('#roadSelect')).not.toHaveValue('');
   await handCards.nth(1).click();
@@ -600,6 +602,8 @@ test('reaches Result and starts a rematch through visible controls only', async 
   await expect(battle, 'visible Result rematch returns to a fresh Battle').toBeVisible();
   await expect(battle.locator('#roundNo')).toHaveText('1');
   await expect(battle.locator('#phaseTitle')).toContainText('行動を計画');
+  const rematchHands = await page.evaluate(() => window.__GAMEROAD_TEST__.state.match.players.map((player) => player.hand.length));
+  expect(rematchHands, 'visible rematch creates a fresh seven-card opening hand for every participant').toEqual([7, 7]);
   await attachStateScreenshot(page, testInfo, 'visible-rematch-battle-restarted');
 
   runtime.assertClean(testInfo);

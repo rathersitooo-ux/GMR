@@ -4,6 +4,7 @@ import {
   DEFAULT_DECK_SWIPE_PRESENTATION,
   DECK_SWIPE_PRESENTATION_EVENTS,
   DECK_SWIPE_SFX_CUES,
+  FANART_LOCAL_SKIN_CONTRACT,
   normalizeDeckSwipeRect,
   createDeckSwipeFlightPlan,
   createDeckSwipeRejectPlan,
@@ -12,6 +13,8 @@ import {
   createDeckSwipeSfxPlayer,
   isNeutralizedDeckEditorSwipe,
   presentDeckAddSwipe,
+  isSafeLocalFanArtSkinRow,
+  buildLocalFanArtSkinProjectionEntries,
 } from '../browser/cards-deck-presentation.mjs';
 
 const rect = (left, top, width, height) => ({ left, top, width, height });
@@ -323,4 +326,39 @@ test('custom timings remain bounded by semantic contract', () => {
   assert.equal(plan.countPulseMs, 220);
   assert.equal(plan.recentAddMs, 500);
   assert.equal(plan.streakCount, 1);
+});
+
+test('FanArt live projection contract is local-only and cannot mutate canonical identity', () => {
+  assert.equal(Object.isFrozen(FANART_LOCAL_SKIN_CONTRACT), true);
+  assert.equal(FANART_LOCAL_SKIN_CONTRACT.dbName, 'gameroad_local_card_creator_v1');
+  assert.equal(FANART_LOCAL_SKIN_CONTRACT.localOnly, true);
+  assert.equal(FANART_LOCAL_SKIN_CONTRACT.networkWrites, 0);
+  assert.equal(FANART_LOCAL_SKIN_CONTRACT.canonicalIdentityMutation, false);
+  assert.equal(isSafeLocalFanArtSkinRow({ baseCardId: 'HT_8', assetHash: 'abc', localOnly: true }), true);
+  assert.equal(isSafeLocalFanArtSkinRow({ baseCardId: 'HT_8', assetHash: 'abc', localOnly: false }), false);
+  assert.equal(isSafeLocalFanArtSkinRow({ baseCardId: '', assetHash: 'abc', localOnly: true }), false);
+});
+
+test('FanArt projection accepts only current canonical ids with a local asset and keeps one skin per id', () => {
+  const blobA = { local: 'a' };
+  const blobB = { local: 'b' };
+  const entries = buildLocalFanArtSkinProjectionEntries({
+    cardIds: ['HT_8', 'SP_A'],
+    skins: [
+      { baseCardId: 'HT_8', assetHash: 'a', localOnly: true },
+      { baseCardId: 'HT_8', assetHash: 'b', localOnly: true },
+      { baseCardId: 'SP_A', assetHash: 'missing', localOnly: true },
+      { baseCardId: 'DI_4', assetHash: 'b', localOnly: true },
+      { baseCardId: 'SP_A', assetHash: 'b', localOnly: false },
+    ],
+    assets: [
+      { hash: 'a', blob: blobA },
+      { hash: 'b', blob: blobB },
+    ],
+  });
+  assert.deepEqual(entries, [
+    { cardId: 'HT_8', assetHash: 'a', blob: blobA, localOnly: true },
+  ]);
+  assert.equal(Object.isFrozen(entries), true);
+  assert.equal(Object.isFrozen(entries[0]), true);
 });

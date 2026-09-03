@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PUBLICHOST-WS-PROBE-ROOM-ISOLATION-R1-20260903T1129-SOL",
+  "taskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "workUnitKey": "PUBLICHOST_WS_PROBE_ROOM_ISOLATION_R1",
+  "acquireKey": "PUBLICHOST-WS-PROBE-RERUN-R1-20260903T1129-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "RUN33709169086-RETRY-ROOM-STATE-CONTAMINATION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING-FIVE-RETRY-LIVE-PROBE-PLUS-EXACT-PUBLIC-REDEPLOY",
+  "proceedToken": "PROCEED|PUBLICHOST-WS-PROBE-ROOM-ISOLATION-R1-20260903T1129-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-actual|lease-snapshot",
+  "authorizationBaseSha": "c8cde834de3f1330941ec79089546ca1a7c10826",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "leaseWorkUnitKey": "PUBLICHOST_WS_PROBE_ROOM_ISOLATION_R1",
+  "leaseAcquireKey": "PUBLICHOST-WS-PROBE-RERUN-R1-20260903T1129-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-03 11:29 JST",
+  "leaseUntilJst": "2026-09-03 12:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A120:L120",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR deploy/cloudflare/tests/relay-core.test.mjs; branch work/publichost-ws-probe-room-isolation-r1; own PR/checks/expected-head merge; exact-main Cloudflare deploy/readback/probes",
+  "scope": [
+    "deploy/cloudflare/tests/relay-core.test.mjs"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/tests/relay-core.test.mjs"
+  ]
+}

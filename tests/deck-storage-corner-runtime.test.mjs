@@ -87,23 +87,19 @@ function discoveryDocument() {
   return { document, screen };
 }
 
-test('collection left swipe is mutation-free while dedicated Storage remains available', () => {
+test('collection left swipe stores the card and opens Storage', () => {
   const { controller, calls, deck } = fixture();
   const result = controller.applySwipe({ surface: 'collection', cardId: 'N_1', deltaX: -90, deltaY: 3 });
-  assert.equal(result.ok, false);
-  assert.equal(result.action, 'none');
-  assert.equal(result.view.open, false);
-  assert.equal(result.view.storageCount, 0);
+  assert.equal(result.ok, true);
+  assert.equal(result.action, 'storage-add');
+  assert.equal(result.view.open, true);
+  assert.equal(result.view.storageCount, 1);
+  assert.deepEqual(result.view.normal, ['N_1']);
   assert.deepEqual(calls, { add: [], remove: [] });
   assert.deepEqual(deck(), ['a']);
-
-  controller.store('N_1');
-  assert.equal(controller.view().open, true);
-  assert.equal(controller.view().storageButtonLabel, '+1');
-  assert.deepEqual(controller.view().normal, ['N_1']);
 });
 
-test('collection right swipe still delegates directly to existing addDeckCard authority', () => {
+test('collection right swipe below forty delegates directly to existing addDeckCard authority', () => {
   const { controller, calls, deck } = fixture();
   const result = controller.applySwipe({ surface: 'collection', cardId: 'N_2', deltaX: 90, deltaY: 2 });
   assert.equal(result.ok, true);
@@ -112,12 +108,12 @@ test('collection right swipe still delegates directly to existing addDeckCard au
   assert.equal(result.view.storageCount, 0);
 });
 
-test('deck left swipe is mutation-free and never delegates to remove authority', () => {
-  const { controller, calls, deck } = fixture({ deck: ['a', 'b'] });
+test('deck left swipe removes exactly one card through existing remove authority', () => {
+  const { controller, calls, deck } = fixture({ deck: ['a', 'b', 'b'] });
   const result = controller.applySwipe({ surface: 'deck', cardId: 'b', deltaX: -84, deltaY: 1 });
-  assert.equal(result.ok, false);
-  assert.equal(result.action, 'none');
-  assert.deepEqual(calls.remove, []);
+  assert.equal(result.ok, true);
+  assert.equal(result.action, 'deck-remove');
+  assert.deepEqual(calls.remove, ['b']);
   assert.deepEqual(deck(), ['a', 'b']);
 });
 
@@ -154,16 +150,45 @@ test('storage to deck removes candidate only after existing authority accepts it
   assert.deepEqual(acceptedFixture.deck(), ['a', 'N_1']);
 });
 
-test('forty-card deck can still accumulate storage candidates but cannot consume them', () => {
+test('forty-card right swipe routes overflow to Storage instead of hard rejecting', () => {
+  const deck = Array.from({ length: 40 }, (_, i) => `d${i}`);
+  const { controller, calls, deck: readDeck } = fixture({ deck });
+  const result = controller.applySwipe({ surface: 'collection', cardId: 'N_candidate', deltaX: 90, deltaY: 2 });
+  assert.equal(result.ok, true);
+  assert.equal(result.action, 'storage-add');
+  assert.equal(result.overflow, true);
+  assert.equal(result.reason, 'deck-full-overflow');
+  assert.deepEqual(calls.add, []);
+  assert.equal(readDeck().length, 40);
+  assert.equal(result.view.storageCount, 1);
+  assert.equal(result.view.selectionCount, 41);
+  assert.equal(result.view.storageButtonLabel, '41/40');
+  assert.equal(result.view.overDeckLimit, true);
+  assert.equal(result.view.open, true);
+});
+
+test('forty-card deck cannot move overflow Storage card back into Deck until space exists', () => {
   const deck = Array.from({ length: 40 }, (_, i) => `d${i}`);
   const { controller, calls } = fixture({ deck });
-  controller.store('N_candidate');
-  assert.equal(controller.view().storageCount, 1);
+  controller.applySwipe({ surface: 'collection', cardId: 'N_candidate', deltaX: 90, deltaY: 2 });
   const result = controller.sendToDeck('N_candidate');
   assert.equal(result.ok, false);
   assert.equal(result.reason, 'deck-full');
   assert.deepEqual(calls.add, ['N_candidate']);
   assert.equal(controller.view().storageCount, 1);
+});
+
+test('overflow button renders 41/40 with red-text state while physical deck stays forty', () => {
+  const deck = Array.from({ length: 40 }, (_, i) => `d${i}`);
+  const { controller } = fixture({ deck });
+  controller.applySwipe({ surface: 'collection', cardId: 'N_candidate', deltaX: 90, deltaY: 2 });
+  const document = fakeDocument();
+  const buttonHost = fakeElement();
+  const mounted = mountDeckStorageCorner({ controller, buttonHost, document });
+  assert.equal(mounted.button.textContent, '41/40');
+  assert.equal(mounted.button.dataset.overflow, 'true');
+  assert.match(mounted.button.attributes['aria-label'], /41\/40/);
+  mounted.dispose();
 });
 
 test('storage discard never calls deck mutation authority', () => {

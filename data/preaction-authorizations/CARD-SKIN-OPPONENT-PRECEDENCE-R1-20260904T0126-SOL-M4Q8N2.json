@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARD-SKIN-OPPONENT-PRECEDENCE-R1-20260904T0126-SOL-M4Q8N2",
+  "taskId": "CARD-SKIN-DEFAULT-UNEQUIP-CONNECTION-001",
+  "workUnitKey": "CARD_SKIN_OPPONENT_PRECEDENCE_RESOLVER_R1",
+  "acquireKey": "CARD-SKIN-OPPONENT-PRECEDENCE-R1-20260904T0126-SOL-M4Q8N2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT row1339 USER_EXPLICIT: viewer opponent skin preference must override opponent equipped skin, then fallback to canonical; no state/network mutation",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "Pure deterministic resolver with focused Node assertions and git rollback; active R16 consumer files remain read-only",
+  "proceedToken": "PROCEED|CARD-SKIN-OPPONENT-PRECEDENCE-R1-20260904T0126-SOL-M4Q8N2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_LEASE_AND_EXACT_BLOB_READBACK",
+  "authorizationBaseSha": "c5894d632952afa37f26720bb61dafc3e65c3c3d",
+  "scope": [
+    "browser/card-presentation-core.mjs",
+    "tests/card-presentation-core-opponent-skin.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "CARD-SKIN-DEFAULT-UNEQUIP-CONNECTION-001",
+  "leaseWorkUnitKey": "CARD_SKIN_OPPONENT_PRECEDENCE_RESOLVER_R1",
+  "leaseAcquireKey": "CARD-SKIN-OPPONENT-PRECEDENCE-R1-20260904T0126-SOL-M4Q8N2",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 01:26 JST",
+  "leaseUntilJst": "2026-09-04 03:26 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A12:L12",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@c5894d632952afa37f26720bb61dafc3e65c3c3d; branch work/card-skin-opponent-precedence-r1-20260904; mutable only browser/card-presentation-core.mjs@a98d982e3686425edec3d8122d61aff73d2eeec8 + new tests/card-presentation-core-opponent-skin.test.mjs + transient authorization; R16 Cards/local-skin files and Battle/GAMEROAD.html/gameplay/network read-only.",
+  "leaseScope": [
+    "browser/card-presentation-core.mjs",
+    "tests/card-presentation-core-opponent-skin.test.mjs"
+  ]
+}

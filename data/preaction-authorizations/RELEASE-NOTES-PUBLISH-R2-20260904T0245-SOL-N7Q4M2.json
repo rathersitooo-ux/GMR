@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RELEASE-NOTES-PUBLISH-R2-20260904T0245-SOL-N7Q4M2",
+  "taskId": "OPS-RELEASE-CALENDAR-ROADMAP-NOTES-STATUS-001",
+  "workUnitKey": "RELEASE_NOTES_PUBLISHED_INPUT_R2",
+  "acquireKey": "RELEASE-NOTES-PUBLISH-R2-20260904T0245-SOL-N7Q4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "Current canonical row1288 explicitly resumes on concrete formal release-note input; user explicitly requires update details and current merged product changes provide factual content",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R1 PR#191 proves the existing source-to-version-linked-public-manifest path; fresh main readback shows only release_notes is fixed to UNPUBLISHED while the source and workflow are otherwise current",
+  "proceedToken": "PROCEED|RELEASE-NOTES-PUBLISH-R2-20260904T0245-SOL-N7Q4M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_LEASE_AND_EXACT_BLOB_READBACK",
+  "authorizationBaseSha": "8ff8d4ca46f3c6cb86036cc972418bfcb9550709",
+  "scope": [
+    "deploy/cloudflare/release-comms-source.json",
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ],
+  "solutionSignature": "version-linked-release-notes-published-v1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "Existing OPS R1 release-comms infrastructure is canonical and already deployed/probed; no second communications system is needed",
+  "solutionSearchEvidence": [
+    "Current deploy/cloudflare/release-comms-source.json exposes release_notes as UNPUBLISHED with empty items",
+    "Current cloudflare-public-deploy.yml generates and exact-byte probes gameroad-release-comms.json tied to GITHUB_SHA",
+    "R1 PR#191 established the same two-file publication path and fail-closed states"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-RELEASE-CALENDAR-ROADMAP-NOTES-STATUS-001",
+  "leaseWorkUnitKey": "RELEASE_NOTES_PUBLISHED_INPUT_R2",
+  "leaseAcquireKey": "RELEASE-NOTES-PUBLISH-R2-20260904T0245-SOL-N7Q4M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 02:45 JST",
+  "leaseUntilJst": "2026-09-04 03:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A350:L350",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@8ff8d4ca46f3c6cb86036cc972418bfcb9550709; new branch work/release-notes-publish-r2-20260904; mutable only deploy/cloudflare/release-comms-source.json@689748a26b837f80877d869cba8e90aa628d69c9 + .github/workflows/cloudflare-public-deploy.yml@c4f1fdde805c83e2c08375e245f189c6bb16c79d + transient data/preaction-authorizations/RELEASE-NOTES-PUBLISH-R2-20260904T0245-SOL-N7Q4M2.json; own PR/checks/expected-head merge/public release-comms readback. browser/GAMEROAD.html and gameplay/rules/save/economy/network/assets are READ_ONLY.",
+  "leaseScope": [
+    "deploy/cloudflare/release-comms-source.json",
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ]
+}

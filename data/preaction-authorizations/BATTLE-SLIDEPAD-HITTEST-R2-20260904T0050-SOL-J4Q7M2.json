@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SLIDEPAD-HITTEST-R2-20260904T0050-SOL-J4Q7M2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_JANKEN_SLIDEPAD_DISABLED_HITTEST_R2_CLEAN",
+  "acquireKey": "BATTLE-SLIDEPAD-HITTEST-R2-20260904T0050-SOL-J4Q7M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLIC_BFI_RUN33772489024_PHONE_DISABLED_ROCK_INTERCEPTS_HT8_PLUS_CURRENT_SOURCE_2D53A96",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "REJECTED_PR1026_DONOR_FOCUSED_TEST14_OF_14_PASS_RUN33774759757_PLUS_W3C_POINTER_EVENTS_HITTEST",
+  "proceedToken": "PROCEED|BATTLE-SLIDEPAD-HITTEST-R2-20260904T0050-SOL-J4Q7M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXISTING_REPAIR_PUBLIC_INPUT_BLOCKER",
+  "authorizationBaseSha": "ae27b41075c04eaf1e001d89a9e2736b0a75a2ff",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_SLIDEPAD_DISABLED_HITTEST_R2_CLEAN",
+  "leaseAcquireKey": "BATTLE-SLIDEPAD-HITTEST-R2-20260904T0050-SOL-J4Q7M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 00:50 JST",
+  "leaseUntilJst": "2026-09-04 01:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A347:L347",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@ae27b41075c04eaf1e001d89a9e2736b0a75a2ff; new branch work/battle-slidepad-hittest-r2-clean-20260904; exact mutable: browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient data/preaction-authorizations/BATTLE-SLIDEPAD-HITTEST-R2-20260904T0050-SOL-J4Q7M2.json (first commit only; cleanup-delete before PR merge); own PR/checks/expected-head merge/public evidence readback. browser/GAMEROAD.html, gameplay/rules/hand resource/Mana/Honey/save/economy/network/Partner/assets and PREACTION control-plane implementation READ_ONLY.",
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

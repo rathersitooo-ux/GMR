@@ -324,3 +324,46 @@ test('custom timings remain bounded by semantic contract', () => {
   assert.equal(plan.recentAddMs, 500);
   assert.equal(plan.streakCount, 1);
 });
+
+function localSkinPngHeader(width, height) {
+  const bytes = new Uint8Array(24);
+  bytes.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], 0);
+  const view = new DataView(bytes.buffer);
+  view.setUint32(16, width);
+  view.setUint32(20, height);
+  return bytes;
+}
+
+test('Cards local skin contract is local-only and preserves canonical identity', async () => {
+  const mod = await import('../browser/cards-deck-presentation.mjs');
+  assert.equal(mod.FANART_LOCAL_SKIN_CONTRACT.localOnly, true);
+  assert.equal(mod.FANART_LOCAL_SKIN_CONTRACT.canonicalIdentityPreserved, true);
+  assert.equal(mod.FANART_LOCAL_SKIN_CONTRACT.networkSync, false);
+  assert.equal(mod.FANART_LOCAL_SKIN_CONTRACT.rankedStateMutation, false);
+  assert.equal(mod.FANART_LOCAL_SKIN_CONTRACT.dbName, 'gameroad_local_card_creator_v1');
+  assert.equal(mod.normalizeLocalSkinCardId('SP_A'), 'SP_A');
+  assert.equal(mod.normalizeLocalSkinCardId(' SP_A'), null);
+});
+
+test('Cards local skin source validation retains bounded PNG safety envelope', async () => {
+  const mod = await import('../browser/cards-deck-presentation.mjs');
+  const bytes = localSkinPngHeader(1200, 1600);
+  assert.deepEqual(mod.inspectLocalSkinImageHeader(bytes), { type: 'image/png', width: 1200, height: 1600 });
+  assert.deepEqual(mod.validateLocalSkinSource({ bytes, size: bytes.length }), { ok: true, type: 'image/png', width: 1200, height: 1600 });
+  assert.equal(mod.validateLocalSkinSource({ bytes: localSkinPngHeader(5001, 1), size: 24 }).reason, 'SOURCE_DIMENSIONS');
+  assert.equal(mod.validateLocalSkinSource({ bytes, size: mod.FANART_LOCAL_SKIN_CONTRACT.maxSourceBytes + 1 }).reason, 'SOURCE_SIZE');
+});
+
+test('Cards local skin consumer fails closed without a Cards document and has no transport fallback', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const mod = await import('../browser/cards-deck-presentation.mjs');
+  const installation = mod.installFanartLocalSkinCards({ document: null, window: null, indexedDB: null });
+  assert.equal(typeof installation.destroy, 'function');
+  assert.doesNotThrow(() => installation.destroy());
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const localSkinSource = source.slice(source.indexOf("const FANART_DB_NAME = 'gameroad_local_card_creator_v1'"));
+  assert.ok(localSkinSource.length > 0);
+  for (const forbidden of ['fetch(', 'XMLHttpRequest', 'WebSocket', 'localStorage', 'sessionStorage']) {
+    assert.equal(localSkinSource.includes(forbidden), false, `forbidden transport/storage fallback: ${forbidden}`);
+  }
+});

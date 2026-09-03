@@ -1,3 +1,4 @@
+import './fanart-local-skin-runtime.mjs';
 export * from './cards-deck-presentation-core.mjs';
 
 import { createDeckSwipePresentationController } from './cards-deck-presentation-core.mjs';

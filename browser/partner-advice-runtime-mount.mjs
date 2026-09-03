@@ -389,3 +389,159 @@ export function createPartnerAdviceQuickReplyControl({
 }
 
 export const PARTNER_ADVICE_DELEGATE_REPLY_TEXT = DELEGATE_REPLY_TEXT;
+
+const CHAT_PRESENTATION_SCHEMA = 'gameroad.partner-advice-chat-presentation.v1';
+const CHAT_STYLE_ID = 'gameroad-partner-advice-chat-r1';
+const CHAT_ROOT_ID = 'partnerAdviceChatPresentation';
+
+function chatLaneProgress(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
+  const out = {};
+  for (const lane of ['L', 'C', 'R']) {
+    const value = Number(input[lane]);
+    if (!Number.isInteger(value) || value < 0) return null;
+    out[lane] = value;
+  }
+  return Object.freeze(out);
+}
+
+function chatText(value) {
+  if (typeof value !== 'string') return null;
+  const token = value.trim();
+  return token ? token.slice(0, 240) : null;
+}
+
+export function projectPartnerAdviceChatPresentation({ laneProgress, partnerText = null, playerText = null } = {}) {
+  const progress = chatLaneProgress(laneProgress);
+  if (!progress) return Object.freeze({ schema: CHAT_PRESENTATION_SCHEMA, active: false, reason: 'LANE_PROGRESS_UNVERIFIED', presentationOnly: true, autoExecute: false, emits2v2Ping: false });
+  return Object.freeze({
+    schema: CHAT_PRESENTATION_SCHEMA,
+    active: true,
+    reason: null,
+    laneProgress: progress,
+    partnerText: chatText(partnerText),
+    playerText: playerText === DELEGATE_REPLY_TEXT ? DELEGATE_REPLY_TEXT : null,
+    presentationOnly: true,
+    autoExecute: false,
+    emits2v2Ping: false,
+  });
+}
+
+function currentBattleChatSnapshot(win) {
+  try {
+    const raw = win.__GAMEROAD_PARTNER_ADVICE_STATE_VERSION__?.();
+    const snapshot = typeof raw === 'string' ? JSON.parse(raw) : null;
+    const status = win.__GAMEROAD_HATE_PARTNER_TEST__?.status?.() || null;
+    return {
+      lanes: snapshot?.human?.lanes || null,
+      partnerText: status?.advice || null,
+      partnerId: win.__GAMEROAD_TEST__?.state?.selectedPartnerId || null,
+      matchId: snapshot?.matchId || null,
+      round: snapshot?.round ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function ensureBattleChatStyle(doc) {
+  if (doc.getElementById(CHAT_STYLE_ID)) return;
+  const style = doc.createElement('style');
+  style.id = CHAT_STYLE_ID;
+  style.textContent = `#${CHAT_ROOT_ID}{display:grid;gap:6px;margin:7px 0;padding:7px;border:1px solid rgba(190,225,214,.28);border-radius:10px;background:rgba(3,18,16,.72)}#${CHAT_ROOT_ID} .partnerAdviceLaneProgress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}#${CHAT_ROOT_ID} .partnerAdviceLane{display:grid;place-items:center;min-height:38px;border:1px solid rgba(205,239,228,.22);border-radius:8px;background:rgba(8,35,29,.72)}#${CHAT_ROOT_ID} .partnerAdviceLane span{font-size:6px;color:#9eb7af;font-weight:900}#${CHAT_ROOT_ID} .partnerAdviceLane b{font-size:15px;line-height:1;font-variant-numeric:tabular-nums}.partnerAdviceSpeech{display:none;max-width:92%;padding:7px 9px;border:1px solid rgba(173,235,214,.38);font-size:9px;font-weight:850;line-height:1.4}.partnerAdviceSpeech.on{display:block}.partnerAdviceSpeech.partner{border-radius:10px 10px 10px 3px;background:#143e34}.partnerAdviceSpeech.player{justify-self:end;border-radius:10px 10px 3px 10px;background:rgba(69,49,19,.72);border-color:rgba(255,211,126,.56);color:#fff1c9}.partnerAdviceQuickReply{justify-self:end;min-height:42px;padding:7px 12px;border:1px solid rgba(255,211,126,.56);border-radius:12px;background:rgba(69,49,19,.72);color:#fff1c9;font-weight:950}@media(max-width:540px){#${CHAT_ROOT_ID}{padding:5px;gap:4px}.partnerAdviceSpeech{font-size:8px}}@media(prefers-reduced-motion:reduce){#${CHAT_ROOT_ID} *{transition:none!important;animation:none!important}}`;
+  doc.head?.append(style);
+}
+
+export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.window } = {}) {
+  const win = windowRef;
+  const doc = win?.document;
+  if (!doc) return null;
+  const host = doc.getElementById('partnerDecisionBox');
+  if (!host) return null;
+  ensureBattleChatStyle(doc);
+  let root = doc.getElementById(CHAT_ROOT_ID);
+  if (!root) {
+    root = doc.createElement('section');
+    root.id = CHAT_ROOT_ID;
+    root.setAttribute('aria-label', 'パートナーとの対戦チャット');
+    root.innerHTML = '<div class="partnerAdviceLaneProgress" aria-label="3列の現在進行値"><div class="partnerAdviceLane" data-lane="L"><span>左列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="C"><span>中央列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="R"><span>右列</span><b>—</b></div></div><div class="partnerAdviceSpeech partner" aria-live="polite"></div><div class="partnerAdviceSpeech player" aria-live="polite"></div><button type="button" class="partnerAdviceQuickReply">まかせた！</button>';
+    const statusNode = host.querySelector('.partnerDecisionStatus');
+    host.insertBefore(root, statusNode || host.firstChild);
+  }
+
+  let lastReceipt = null;
+  const quickReply = createPartnerAdviceQuickReplyControl({ getPartnerId: () => currentBattleChatSnapshot(win)?.partnerId });
+  const render = () => {
+    const current = currentBattleChatSnapshot(win);
+    const projection = projectPartnerAdviceChatPresentation({
+      laneProgress: current?.lanes,
+      partnerText: lastReceipt?.partnerUtterance || current?.partnerText || null,
+      playerText: lastReceipt?.playerText || null,
+    });
+    root.hidden = !projection.active;
+    if (!projection.active) return projection;
+    for (const lane of ['L', 'C', 'R']) {
+      const value = root.querySelector(`[data-lane="${lane}"] b`);
+      if (value) value.textContent = String(projection.laneProgress[lane]);
+    }
+    const partner = root.querySelector('.partnerAdviceSpeech.partner');
+    if (partner) {
+      partner.textContent = projection.partnerText || '';
+      partner.classList.toggle('on', Boolean(projection.partnerText));
+    }
+    const player = root.querySelector('.partnerAdviceSpeech.player');
+    if (player) {
+      player.textContent = projection.playerText || '';
+      player.classList.toggle('on', Boolean(projection.playerText));
+    }
+    const button = root.querySelector('.partnerAdviceQuickReply');
+    if (button) button.disabled = current?.partnerId !== SAASUNA_PARTNER_ID;
+    return projection;
+  };
+
+  const button = root.querySelector('.partnerAdviceQuickReply');
+  if (button && button.dataset.partnerAdviceBound !== 'true') {
+    button.dataset.partnerAdviceBound = 'true';
+    button.addEventListener('click', () => {
+      const current = currentBattleChatSnapshot(win);
+      if (!current?.matchId || current.partnerId !== SAASUNA_PARTNER_ID) return;
+      const replyId = `${current.matchId}:${current.round ?? 'x'}:delegate-quick-reply`;
+      if (!quickReply.arm({ replyId, text: DELEGATE_REPLY_TEXT })) return;
+      const receipt = quickReply.commit(replyId);
+      if (!receipt) {
+        quickReply.cancel(replyId);
+        return;
+      }
+      lastReceipt = receipt;
+      render();
+    });
+  }
+
+  if (root.dataset.partnerAdviceObserved !== 'true') {
+    root.dataset.partnerAdviceObserved = 'true';
+    const observer = new win.MutationObserver(() => queueMicrotask(render));
+    for (const id of ['publicPlayerStrip', 'partnerDecisionStatus']) {
+      const node = doc.getElementById(id);
+      if (node) observer.observe(node, { subtree: true, childList: true, characterData: true, attributes: true });
+    }
+    doc.getElementById('partnerAdviceBtn')?.addEventListener('click', () => queueMicrotask(render));
+  }
+  render();
+  return Object.freeze({ root, render });
+}
+
+function schedulePartnerAdviceChatMount(win) {
+  const doc = win?.document;
+  if (!doc) return;
+  const tryMount = () => mountPartnerAdviceChatPresentation({ windowRef: win });
+  if (tryMount()) return;
+  const observer = new win.MutationObserver(() => {
+    if (tryMount()) observer.disconnect();
+  });
+  observer.observe(doc.documentElement, { childList: true, subtree: true });
+}
+
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => schedulePartnerAdviceChatMount(window), { once: true });
+  else schedulePartnerAdviceChatMount(window);
+}

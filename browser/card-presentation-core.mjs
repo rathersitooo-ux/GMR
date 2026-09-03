@@ -138,6 +138,23 @@ export function deriveOutfitFusionState({ set, ownedCardIds } = {}) {
   });
 }
 
+export function resolveOpponentCardSkin({
+  viewerPreference,
+  opponentEquippedSkin,
+  defaultSkin,
+} = {}) {
+  if (viewerPreference !== undefined && viewerPreference !== null) {
+    return deepFreeze({ source: 'viewer_preference', skin: cloneJson(viewerPreference) });
+  }
+  if (opponentEquippedSkin !== undefined && opponentEquippedSkin !== null) {
+    return deepFreeze({ source: 'opponent_equipped', skin: cloneJson(opponentEquippedSkin) });
+  }
+  if (defaultSkin !== undefined && defaultSkin !== null) {
+    return deepFreeze({ source: 'default', skin: cloneJson(defaultSkin) });
+  }
+  return deepFreeze({ source: 'default', skin: null });
+}
+
 export function applyCardPresentationEvent(state, event, preferences = {}) {
   if (!assertState(state)) return reject(state, 'STATE_INVALID');
   if (!event || typeof event !== 'object' || Array.isArray(event)) {

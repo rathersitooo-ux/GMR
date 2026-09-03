@@ -443,14 +443,24 @@ test('reduced-motion makes screen presentation effect-free while low-perf uses o
 test('latest presentation revision survives stale cleanup and its detector rejects unconditional legacy cleanup', async () => {
   const documentSource = fakeMotionDocument();
   const gates = new Map();
-  documentSource.surfaces.home.animate = function animate(frames, options) {
-    const revision = this.dataset.screenMotionRevision;
-    const gate = deferred();
-    const animation = {finished: gate.promise, cancel: gate.resolve};
-    gates.set(revision, gate);
-    this.animations.push({frames, options, animation});
-    return animation;
+  const gateExit = (surface) => {
+    surface.animate = function animate(frames, options) {
+      if (this.dataset.screenMotionPhase !== 'exit') {
+        const animation = {finished: Promise.resolve(), cancel() {}};
+        this.animations.push({frames, options, animation});
+        return animation;
+      }
+      const revision = this.dataset.screenMotionRevision;
+      const gate = deferred();
+      const animation = {finished: gate.promise, cancel: gate.resolve};
+      gates.set(revision, gate);
+      this.animations.push({frames, options, animation});
+      return animation;
+    };
   };
+  gateExit(documentSource.surfaces.home);
+  gateExit(documentSource.surfaces.cards);
+
   let screen = 'home';
   const runtime = createScreenTransitionRuntimeAdapter({
     getCurrentScreen: () => screen,
@@ -460,10 +470,12 @@ test('latest presentation revision survives stale cleanup and its detector rejec
 
   const first = runtime.navigate('cards');
   await turn();
+  assert.equal(screen, 'cards', 'the overlapped first transition has already committed its semantic SWAP');
   assert.equal(documentSource.surfaces.home.dataset.screenMotionRevision, '1');
   const second = runtime.navigate('shop');
   await turn();
-  assert.equal(documentSource.surfaces.home.dataset.screenMotionRevision, '2');
+  assert.equal(screen, 'shop', 'the latest transition commits its SWAP without waiting for the prior exit');
+  assert.equal(documentSource.surfaces.cards.dataset.screenMotionRevision, '2');
 
   const brokenLegacyMarker = {screenMotionRevision: '2'};
   const unconditionalLegacyCleanup = (dataset) => { delete dataset.screenMotionRevision; };
@@ -476,6 +488,7 @@ test('latest presentation revision survives stale cleanup and its detector rejec
   assert.equal(secondResult.status, 'completed');
   assert.equal(screen, 'shop');
   assert.equal(documentSource.surfaces.home.dataset.screenMotionRevision, undefined);
+  assert.equal(documentSource.surfaces.cards.dataset.screenMotionRevision, undefined);
   assert.deepEqual(runtime.getPresentationState().activeRevisions, []);
 });
 

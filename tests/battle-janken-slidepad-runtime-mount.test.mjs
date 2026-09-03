@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA,
   buildBattleJankenSlidePadModel,
+  isBattleHandAuraLaunchArmed,
   resolveBattleJankenSlotCardAction,
   resolveBattleJankenSlidePadGestureTarget,
 } from '../browser/battle-janken-slidepad-runtime-mount.mjs';
@@ -14,7 +15,7 @@ const hand = [
   { id: 'club-b', suit: 'CL', label: 'Club B' },
 ];
 
-test('projects the existing suit-bound round snapshot as ROCK/SCISSORS/PAPER without removing ordinary hand cards', () => {
+test('projects fixed janken slots while keeping selected physical cards out of ordinary hand membership', () => {
   const model = buildBattleJankenSlidePadModel({ roundId: '1', hand, pickDuplicateIndex: () => 1 });
   assert.equal(model.schema, BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA);
   assert.deepEqual(model.slots.map((slot) => [slot.jankenHand, slot.cardId]), [
@@ -22,8 +23,26 @@ test('projects the existing suit-bound round snapshot as ROCK/SCISSORS/PAPER wit
     ['SCISSORS', 'diamond-a'],
     ['PAPER', 'spade-a'],
   ]);
-  assert.deepEqual(model.ordinaryHandCardIds, hand.map((card) => card.id));
-  assert.equal(resolveBattleJankenSlotCardAction(model, 'ROCK', model.ordinaryHandCardIds), 'club-b');
+  assert.deepEqual(model.assignment.sourceHandCardIds, hand.map((card) => card.id));
+  assert.deepEqual(model.assignment.selectedJankenCardIds, ['club-b', 'diamond-a', 'spade-a']);
+  assert.deepEqual(model.ordinaryHandCardIds, ['club-a']);
+  assert.deepEqual(
+    model.assignment.selectedJankenCardIds.filter((cardId) => model.ordinaryHandCardIds.includes(cardId)),
+    [],
+  );
+});
+
+test('janken slot can still reach its round-source card action without restoring ordinary-hand membership', () => {
+  const model = buildBattleJankenSlidePadModel({ roundId: '1', hand, pickDuplicateIndex: () => 1 });
+  assert.equal(
+    resolveBattleJankenSlotCardAction(model, 'ROCK', model.assignment.sourceHandCardIds),
+    'club-b',
+  );
+  assert.equal(
+    resolveBattleJankenSlotCardAction(model, 'ROCK', model.ordinaryHandCardIds),
+    null,
+    'ordinary hand membership is not a backdoor for a reserved janken card',
+  );
 });
 
 test('same-round redraw keeps the immutable slot assignment even if duplicate chooser would change', () => {
@@ -36,24 +55,31 @@ test('same-round redraw keeps the immutable slot assignment even if duplicate ch
   });
   assert.strictEqual(second.assignment, first.assignment);
   assert.equal(second.slots.find((slot) => slot.jankenHand === 'ROCK').cardId, 'club-a');
+  assert.deepEqual(second.ordinaryHandCardIds, ['club-b']);
 });
 
-test('missing suit stays visibly representable but disabled and never invents an action', () => {
+test('missing suit stays visibly representable but disabled and occupied suit card is not duplicated in ordinary hand', () => {
   const model = buildBattleJankenSlidePadModel({
     roundId: '2',
     hand: [{ id: 'club-only', suit: 'CL', label: 'Club' }],
   });
+  const rock = model.slots.find((slot) => slot.jankenHand === 'ROCK');
   const scissors = model.slots.find((slot) => slot.jankenHand === 'SCISSORS');
   const paper = model.slots.find((slot) => slot.jankenHand === 'PAPER');
+  assert.equal(rock.occupied, true);
+  assert.deepEqual(model.ordinaryHandCardIds, []);
   assert.equal(scissors.occupied, false);
   assert.equal(scissors.selectable, false);
   assert.equal(paper.occupied, false);
   assert.equal(resolveBattleJankenSlotCardAction(model, 'PAPER', ['club-only']), null);
 });
 
-test('slot action fails closed when the referenced card is no longer in the current ordinary hand DOM', () => {
+test('slot action fails closed when the reserved card is no longer present in the current round source hand', () => {
   const model = buildBattleJankenSlidePadModel({ roundId: '3', hand, pickDuplicateIndex: () => 0 });
-  assert.equal(resolveBattleJankenSlotCardAction(model, 'ROCK', ['diamond-a', 'spade-a']), null);
+  assert.equal(
+    resolveBattleJankenSlotCardAction(model, 'ROCK', ['diamond-a', 'spade-a', 'club-b']),
+    null,
+  );
 });
 
 test('gesture direction sticks to the eligible slot that lies along the drag direction', () => {
@@ -88,4 +114,33 @@ test('gesture never snaps to an empty or disabled slot', () => {
     ],
   });
   assert.equal(target, null);
+});
+
+test('ordinary hand card arms the bottom-right aura when pointer enters the emitter radius', () => {
+  const auraRect = { left: 900, top: 500, width: 68, height: 68 };
+  assert.equal(
+    isBattleHandAuraLaunchArmed({ pointer: { x: 934, y: 534 }, auraRect }),
+    true,
+  );
+  assert.equal(
+    isBattleHandAuraLaunchArmed({ pointer: { x: 982, y: 534 }, auraRect }),
+    true,
+    'default padding keeps the screen-edge launch target forgiving on touch',
+  );
+});
+
+test('ordinary hand card does not arm or launch when released away from the bottom-right aura', () => {
+  const auraRect = { left: 900, top: 500, width: 68, height: 68 };
+  assert.equal(
+    isBattleHandAuraLaunchArmed({ pointer: { x: 720, y: 390 }, auraRect }),
+    false,
+  );
+  assert.equal(
+    isBattleHandAuraLaunchArmed({ pointer: { x: 934, y: 534 }, auraRect, paddingPx: 0 }),
+    true,
+  );
+  assert.equal(
+    isBattleHandAuraLaunchArmed({ pointer: { x: 970, y: 534 }, auraRect, paddingPx: 0 }),
+    false,
+  );
 });

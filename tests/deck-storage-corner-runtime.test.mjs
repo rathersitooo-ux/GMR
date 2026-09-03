@@ -87,14 +87,20 @@ function discoveryDocument() {
   return { document, screen };
 }
 
-test('collection left swipe stores candidate and opens storage immediately', () => {
-  const { controller, calls } = fixture();
+test('collection left swipe is mutation-free while dedicated Storage remains available', () => {
+  const { controller, calls, deck } = fixture();
   const result = controller.applySwipe({ surface: 'collection', cardId: 'N_1', deltaX: -90, deltaY: 3 });
-  assert.equal(result.ok, true);
-  assert.equal(result.view.open, true);
-  assert.equal(result.view.storageButtonLabel, '+1');
-  assert.deepEqual(result.view.normal, ['N_1']);
-  assert.deepEqual(calls.add, []);
+  assert.equal(result.ok, false);
+  assert.equal(result.action, 'none');
+  assert.equal(result.view.open, false);
+  assert.equal(result.view.storageCount, 0);
+  assert.deepEqual(calls, { add: [], remove: [] });
+  assert.deepEqual(deck(), ['a']);
+
+  controller.store('N_1');
+  assert.equal(controller.view().open, true);
+  assert.equal(controller.view().storageButtonLabel, '+1');
+  assert.deepEqual(controller.view().normal, ['N_1']);
 });
 
 test('collection right swipe still delegates directly to existing addDeckCard authority', () => {
@@ -106,12 +112,13 @@ test('collection right swipe still delegates directly to existing addDeckCard au
   assert.equal(result.view.storageCount, 0);
 });
 
-test('deck left swipe delegates to existing removeDeckCard authority exactly once', () => {
+test('deck left swipe is mutation-free and never delegates to remove authority', () => {
   const { controller, calls, deck } = fixture({ deck: ['a', 'b'] });
   const result = controller.applySwipe({ surface: 'deck', cardId: 'b', deltaX: -84, deltaY: 1 });
-  assert.equal(result.ok, true);
-  assert.deepEqual(calls.remove, ['b']);
-  assert.deepEqual(deck(), ['a']);
+  assert.equal(result.ok, false);
+  assert.equal(result.action, 'none');
+  assert.deepEqual(calls.remove, []);
+  assert.deepEqual(deck(), ['a', 'b']);
 });
 
 test('vertical and short gestures do not mutate deck or storage', () => {

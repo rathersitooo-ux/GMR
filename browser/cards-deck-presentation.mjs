@@ -8,6 +8,17 @@ import {
 } from './deck-storage-corner-runtime.mjs';
 
 const deckStorageLiveInstallations = new WeakMap();
+const fanArtLocalSkinInstallations = new WeakMap();
+
+export const FANART_LOCAL_SKIN_CONTRACT = Object.freeze({
+  dbName: 'gameroad_local_card_creator_v1',
+  dbVersion: 1,
+  assetsStore: 'assets',
+  skinsStore: 'skins',
+  localOnly: true,
+  networkWrites: 0,
+  canonicalIdentityMutation: false,
+});
 
 function cardsScreen(doc) {
   return doc?.querySelector?.('section[data-screen="cards"]') ?? null;
@@ -103,6 +114,209 @@ export function presentDeckAddSwipe({ doc, presentation, result, sourceElement, 
   } catch {
     return false;
   }
+}
+
+export function isSafeLocalFanArtSkinRow(row) {
+  return Boolean(
+    row
+    && typeof row.baseCardId === 'string'
+    && row.baseCardId.length > 0
+    && typeof row.assetHash === 'string'
+    && row.assetHash.length > 0
+    && row.localOnly === true,
+  );
+}
+
+export function buildLocalFanArtSkinProjectionEntries({ skins = [], assets = [], cardIds = [] } = {}) {
+  const allowedIds = new Set(cardIds.map((value) => String(value ?? '')).filter(Boolean));
+  const assetByHash = new Map(
+    assets
+      .filter((asset) => asset && typeof asset.hash === 'string' && asset.hash && asset.blob)
+      .map((asset) => [asset.hash, asset]),
+  );
+  const seen = new Set();
+  const entries = [];
+  for (const skin of skins) {
+    if (!isSafeLocalFanArtSkinRow(skin) || !allowedIds.has(skin.baseCardId) || seen.has(skin.baseCardId)) continue;
+    const asset = assetByHash.get(skin.assetHash);
+    if (!asset?.blob) continue;
+    seen.add(skin.baseCardId);
+    entries.push(Object.freeze({
+      cardId: skin.baseCardId,
+      assetHash: skin.assetHash,
+      blob: asset.blob,
+      localOnly: true,
+    }));
+  }
+  return Object.freeze(entries);
+}
+
+function openFanArtLocalDb(win) {
+  return new Promise((resolve, reject) => {
+    const idb = win?.indexedDB;
+    if (!idb?.open) {
+      reject(new Error('indexeddb-unavailable'));
+      return;
+    }
+    let request;
+    try { request = idb.open(FANART_LOCAL_SKIN_CONTRACT.dbName, FANART_LOCAL_SKIN_CONTRACT.dbVersion); }
+    catch (error) { reject(error); return; }
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(FANART_LOCAL_SKIN_CONTRACT.assetsStore)) {
+        db.createObjectStore(FANART_LOCAL_SKIN_CONTRACT.assetsStore, { keyPath: 'hash' });
+      }
+      if (!db.objectStoreNames.contains(FANART_LOCAL_SKIN_CONTRACT.skinsStore)) {
+        db.createObjectStore(FANART_LOCAL_SKIN_CONTRACT.skinsStore, { keyPath: 'baseCardId' });
+      }
+      if (!db.objectStoreNames.contains('customCards')) {
+        db.createObjectStore('customCards', { keyPath: 'id' });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error ?? new Error('indexeddb-open-failed'));
+    request.onblocked = () => reject(new Error('indexeddb-blocked'));
+  });
+}
+
+function readFanArtStore(db, storeName) {
+  return new Promise((resolve, reject) => {
+    let tx;
+    try { tx = db.transaction(storeName, 'readonly'); }
+    catch (error) { reject(error); return; }
+    const request = tx.objectStore(storeName).getAll();
+    request.onsuccess = () => resolve(request.result ?? []);
+    request.onerror = () => reject(request.error ?? new Error('indexeddb-read-failed'));
+  });
+}
+
+function localSkinTargets(doc) {
+  return [...(doc?.querySelectorAll?.('#collectionGrid [data-id], #deckSlots [data-id], #exDeckSlots [data-id]') ?? [])];
+}
+
+export function installLocalFanArtSkinProjection({
+  document: doc = globalThis.document,
+  window: win = globalThis.window,
+} = {}) {
+  if (!doc?.querySelector || !doc?.querySelectorAll || !doc?.createElement) {
+    return Object.freeze({ ready: Promise.resolve({ ok: false, reason: 'dom-unavailable' }), refresh: async () => ({ ok: false }), destroy() {} });
+  }
+  const existing = fanArtLocalSkinInstallations.get(doc);
+  if (existing) return existing;
+
+  const urls = new Set();
+  let db = null;
+  let observer = null;
+  let destroyed = false;
+  let entries = Object.freeze([]);
+
+  const clearProjection = () => {
+    for (const node of doc.querySelectorAll('[data-role="fanart-local-skin-projection"]')) node.remove?.();
+    for (const url of urls) win?.URL?.revokeObjectURL?.(url);
+    urls.clear();
+  };
+
+  const render = () => {
+    if (destroyed) return { ok: false, reason: 'destroyed', applied: 0 };
+    clearProjection();
+    const targets = localSkinTargets(doc);
+    let applied = 0;
+    for (const entry of entries) {
+      const url = win?.URL?.createObjectURL?.(entry.blob);
+      if (!url) continue;
+      urls.add(url);
+      for (const target of targets) {
+        if (String(target?.dataset?.id ?? '') !== entry.cardId) continue;
+        const img = doc.createElement('img');
+        img.dataset.role = 'fanart-local-skin-projection';
+        img.dataset.cardId = entry.cardId;
+        img.alt = '';
+        img.src = url;
+        img.setAttribute?.('aria-hidden', 'true');
+        if (img.style) {
+          img.style.position = 'absolute';
+          img.style.inset = '0';
+          img.style.width = '100%';
+          img.style.height = '100%';
+          img.style.objectFit = 'cover';
+          img.style.pointerEvents = 'none';
+          img.style.borderRadius = 'inherit';
+          img.style.zIndex = '0';
+        }
+        if (target.style && !target.style.position) target.style.position = 'relative';
+        target.appendChild?.(img);
+        applied += 1;
+      }
+    }
+    const trayToggle = doc.querySelector('#r4DeckTrayToggle');
+    let badge = doc.querySelector('[data-role="fanart-local-skin-status"]');
+    if (entries.length && trayToggle) {
+      if (!badge) {
+        badge = doc.createElement('span');
+        badge.dataset.role = 'fanart-local-skin-status';
+        badge.setAttribute?.('aria-label', 'この端末だけのファンアートスキン');
+        trayToggle.after?.(badge);
+      }
+      badge.textContent = `ローカル絵 ${entries.length}`;
+    } else {
+      badge?.remove?.();
+    }
+    return { ok: true, localSkinCount: entries.length, applied };
+  };
+
+  const refresh = async () => {
+    if (!db) return { ok: false, reason: 'storage-unavailable', applied: 0 };
+    const [skins, assets] = await Promise.all([
+      readFanArtStore(db, FANART_LOCAL_SKIN_CONTRACT.skinsStore),
+      readFanArtStore(db, FANART_LOCAL_SKIN_CONTRACT.assetsStore),
+    ]);
+    const cardIds = localSkinTargets(doc).map((node) => String(node?.dataset?.id ?? '')).filter(Boolean);
+    entries = buildLocalFanArtSkinProjectionEntries({ skins, assets, cardIds });
+    return render();
+  };
+
+  const installation = {
+    ready: null,
+    refresh,
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      observer?.disconnect?.();
+      observer = null;
+      clearProjection();
+      doc.querySelector('[data-role="fanart-local-skin-status"]')?.remove?.();
+      try { db?.close?.(); } catch {}
+      db = null;
+      fanArtLocalSkinInstallations.delete(doc);
+    },
+  };
+  installation.ready = (async () => {
+    try {
+      db = await openFanArtLocalDb(win);
+      const result = await refresh();
+      const Observer = win?.MutationObserver;
+      const screen = cardsScreen(doc);
+      if (Observer && screen) {
+        let queued = false;
+        observer = new Observer(() => {
+          if (queued || destroyed) return;
+          queued = true;
+          Promise.resolve().then(() => {
+            queued = false;
+            if (!destroyed) render();
+          });
+        });
+        observer.observe(screen, { childList: true, subtree: true });
+      }
+      return result;
+    } catch {
+      clearProjection();
+      return { ok: false, reason: 'storage-unavailable', applied: 0 };
+    }
+  })();
+  const frozen = Object.freeze(installation);
+  fanArtLocalSkinInstallations.set(doc, frozen);
+  return frozen;
 }
 
 export function installDeckStorageLiveMount({
@@ -235,7 +449,10 @@ export function installDeckStorageLiveMount({
 }
 
 function autoInstallDeckStorageLiveMount(doc, win) {
-  const install = () => installDeckStorageLiveMount({ document: doc, window: win });
+  const install = () => {
+    installLocalFanArtSkinProjection({ document: doc, window: win });
+    installDeckStorageLiveMount({ document: doc, window: win });
+  };
   if (doc?.readyState === 'loading') doc.addEventListener?.('DOMContentLoaded', install, { once: true });
   else install();
 }

@@ -21,6 +21,7 @@ const RELEASE_FLIGHT_DURATION_MS = 560;
 const HAND_DRAG_DEAD_ZONE_PX = 8;
 const HAND_AURA_ARM_PADDING_PX = 18;
 const HAND_AURA_RELEASE_DURATION_MS = 520;
+export const BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS = 'section[data-screen="battle"] #targetBox.on,section[data-screen="battle"] #targetBox.vfTargetProxyOn{z-index:60!important}';
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -208,6 +209,7 @@ function addStyle(documentRef) {
 section[data-screen="battle"] #hand .handCard[data-janken-reserved="true"]{display:none!important}
 section[data-screen="battle"] #hand .handCard[data-hand-aura-draggable="true"]{touch-action:none}
 section[data-screen="battle"] #hand .handCard[data-hand-aura-dragging="true"]{opacity:.22!important}
+${BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS}
 [${HOST_ATTR}="1"][data-hand-aura-active="true"] .grJankenSlidePadHandle{filter:brightness(1.3) saturate(1.35);box-shadow:0 8px 22px rgba(0,0,0,.38),0 0 0 5px rgba(132,255,213,.18),0 0 28px rgba(108,255,205,.45),inset 0 0 0 4px rgba(255,255,255,.15)}
 [${HOST_ATTR}="1"][data-hand-aura-armed="true"] .grJankenSlidePadHandle{filter:brightness(1.75) saturate(1.55);box-shadow:0 8px 22px rgba(0,0,0,.34),0 0 0 8px rgba(214,255,239,.25),0 0 44px rgba(115,255,208,.9),inset 0 0 20px rgba(255,255,255,.42)}
 .grHandAuraDragGhost{position:fixed!important;right:auto!important;bottom:auto!important;margin:0!important;z-index:220!important;pointer-events:none!important;transition:none!important;transform:none!important;transform-origin:50% 50%!important;will-change:left,top,transform,opacity,filter;box-sizing:border-box}

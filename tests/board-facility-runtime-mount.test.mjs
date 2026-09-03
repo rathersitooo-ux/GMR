@@ -8,6 +8,7 @@ import {
   mountSaasunaConversationProductSurface,
   partnerConversationProjectionDecision,
   resolveSaasunaCollectiveContext,
+  restoreSaasunaConversationRetryDraft,
   SAASUNA_PROVISIONAL_VISUAL_CONTRACT,
 } from '../browser/board-facility-runtime-mount.mjs';
 import { buildPartnerConversationCollectiveContext } from '../browser/partner-conversation-collective-context.mjs';
@@ -82,6 +83,15 @@ test('rejects an incompatible occupied runtime global', async () => {
 test('conversation product mount is a no-op outside a browser DOM', () => {
   assert.equal(mountSaasunaConversationProductSurface({}), null);
   assert.equal(mountSaasunaConversationProductSurface({ document: {} }), null);
+});
+
+test('failed Partner conversation send restores the retry draft without keeping a duplicate user bubble', () => {
+  const input = { value: '' };
+  let removals = 0;
+  const userRow = { remove() { removals += 1; } };
+  restoreSaasunaConversationRetryDraft(input, userRow, 'さっきのメッセージ');
+  assert.equal(input.value, 'さっきのメッセージ');
+  assert.equal(removals, 1);
 });
 
 test('active Partner screen projects straight to conversation with no picker state', () => {

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-EXCLUSIVE-AURA-R2-20260903T1643-SOL-H7Q2M5",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_EXCLUSIVE_AURA_R2",
+  "acquireKey": "BATTLE-JANKEN-EXCLUSIVE-AURA-R2-20260903T1643-SOL-H7Q2M5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER-EXPLICIT-JANKEN-EXCLUSIVE-ORDINARY-HAND-PLUS-BOTTOM-RIGHT-AURA-LAUNCH",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PRIOR-UNMERGED-FOUR-FILE-DIFF-REVIEWED-AGAINST-SAME-MAIN-PLUS-FOCUSED-ZONE-PARTITION-AND-AURA-HIT-TESTS",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-EXCLUSIVE-AURA-R2-20260903T1643-SOL-H7Q2M5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-actual|lease-snapshot",
+  "authorizationBaseSha": "ab65d588decab75596cb3d3914aa964a72aab44c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_EXCLUSIVE_AURA_R2",
+  "leaseAcquireKey": "BATTLE-JANKEN-EXCLUSIVE-AURA-R2-20260903T1643-SOL-H7Q2M5",
+  "leaseSnapshotReadbackAtJst": "2026-09-03 16:50 JST",
+  "leaseUntilJst": "2026-09-03 17:43 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A330:L330",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@ab65d588decab75596cb3d3914aa964a72aab44c; branch work/battle-janken-exclusive-aura-r2; browser/new-base-round-start-janken-slot-assignment-core.mjs; tests/new-base-round-start-janken-slot-assignment-core.test.mjs; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient PRE_ACTION for own branch",
+  "scope": [
+    "browser/new-base-round-start-janken-slot-assignment-core.mjs",
+    "tests/new-base-round-start-janken-slot-assignment-core.test.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-round-start-janken-slot-assignment-core.mjs",
+    "tests/new-base-round-start-janken-slot-assignment-core.test.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

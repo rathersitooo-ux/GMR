@@ -55,6 +55,6 @@ jobs:
           git add -A
           git diff --cached --check
           git diff --cached --name-only
-          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = "browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs "
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = ".github/workflows/zz-temp-slidepad-hittest-r1.yml browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs "
           git commit -m 'Fix disabled SlidePad hit testing'
           git push origin HEAD:work/battle-slidepad-hittest-r1-20260904

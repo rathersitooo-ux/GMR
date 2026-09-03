@@ -4,6 +4,7 @@ import {
   BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA,
   buildBattleJankenSlidePadModel,
   isBattleHandAuraLaunchArmed,
+  projectBattleLoadCardPreview,
   resolveBattleJankenSlotCardAction,
   resolveBattleJankenSlidePadGestureTarget,
 } from '../browser/battle-janken-slidepad-runtime-mount.mjs';
@@ -143,4 +144,27 @@ test('ordinary hand card does not arm or launch when released away from the bott
     isBattleHandAuraLaunchArmed({ pointer: { x: 970, y: 534 }, auraRect, paddingPx: 0 }),
     false,
   );
+});
+
+test('R75 preview projects only the actually armed selectable janken slot', () => {
+  const model = buildBattleJankenSlidePadModel({ roundId: '7', hand, pickDuplicateIndex: () => 1 });
+  assert.equal(projectBattleLoadCardPreview(model, null), null);
+  assert.equal(projectBattleLoadCardPreview(model, 'HEART'), null);
+  assert.deepEqual(projectBattleLoadCardPreview(model, 'ROCK'), {
+    kind: 'LOAD_CARD',
+    cardId: 'club-b',
+    cardLabel: 'Club B',
+    jankenHand: 'ROCK',
+    symbol: '♣',
+    hand: 'グー',
+  });
+});
+
+test('R75 preview fails closed for empty or disabled slots', () => {
+  const model = buildBattleJankenSlidePadModel({
+    roundId: '8',
+    hand: [{ id: 'club-only', suit: 'CL', label: 'Club' }],
+  });
+  assert.equal(projectBattleLoadCardPreview(model, 'SCISSORS'), null);
+  assert.equal(projectBattleLoadCardPreview(model, 'PAPER'), null);
 });

@@ -13,14 +13,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  inspect:
+  patch:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Guard current authorization and inspect production lifecycle
+      - name: Guard authorization and patch opening hand only
         shell: bash
         run: |
           set -euo pipefail
@@ -31,20 +31,48 @@ jobs:
           from pathlib import Path
           p = Path('browser/GAMEROAD.html')
           s = p.read_text(encoding='utf-8')
-          print('HTML_LEN', len(s))
-          needles = ['function makePlayer', 'makePlayer(', 'function refillHand', 'refillHand(', 'drawFromDeck', 'hand.length<3', 'hand.length < 3']
-          for needle in needles:
-              hits=[]
-              start=0
-              while True:
-                  i=s.find(needle,start)
-                  if i<0: break
-                  hits.append(i)
-                  start=i+1
-              print('NEEDLE', repr(needle), 'COUNT', len(hits), 'OFFSETS', hits[:20])
-              for i in hits[:8]:
-                  lo=max(0,i-700); hi=min(len(s),i+1800)
-                  print(f'--- CONTEXT {needle} @{i} ---')
-                  print(s[lo:hi])
+          old = 'const shields=deck.splice(0,3);const hand=deck.splice(0,3);return{id:'
+          new = 'const shields=deck.splice(0,3);const hand=deck.splice(0,7);return{id:'
+          refill = 'function refill(p){while(p.hand.length<3&&p.deck.length)p.hand.push(p.deck.shift())}'
+          make_player = 'function makePlayer(i,human,deckIds=null)'
+          start_match_call = 'ps.push(makePlayer(i,i===0,i===0?[...snapshot.deck.main]:diagnosticCpuDeck))'
+          counts = {
+              'old_opening_deal': s.count(old),
+              'new_opening_deal': s.count(new),
+              'refill3': s.count(refill),
+              'makePlayer': s.count(make_player),
+              'startMatch_makePlayer': s.count(start_match_call),
+          }
+          print('PRE_COUNTS', counts)
+          if counts['refill3'] != 1 or counts['makePlayer'] != 1 or counts['startMatch_makePlayer'] != 1:
+              raise SystemExit('guard failed: production lifecycle shape changed')
+          if counts['new_opening_deal'] == 1 and counts['old_opening_deal'] == 0:
+              print('HAND7_ALREADY_APPLIED')
+              raise SystemExit(0)
+          if counts['old_opening_deal'] != 1 or counts['new_opening_deal'] != 0:
+              raise SystemExit('guard failed: opening deal is not exact current hand3 state')
+          patched = s.replace(old, new, 1)
+          if patched.count(new) != 1 or patched.count(old) != 0:
+              raise SystemExit('guard failed: opening hand replacement mismatch')
+          if patched.count(refill) != 1:
+              raise SystemExit('guard failed: refill3 changed')
+          p.write_text(patched, encoding='utf-8')
+          print('POST_COUNTS', {
+              'old_opening_deal': patched.count(old),
+              'new_opening_deal': patched.count(new),
+              'refill3': patched.count(refill),
+          })
           PY
-          git diff --exit-code -- browser/GAMEROAD.html
+          if git diff --quiet -- browser/GAMEROAD.html; then
+            echo "No product change required."
+            exit 0
+          fi
+          test "$(git diff --numstat -- browser/GAMEROAD.html | awk '{print $1":"$2}')" = "1:1"
+          git diff --check -- browser/GAMEROAD.html
+          git diff -- browser/GAMEROAD.html | grep -F 'const hand=deck.splice(0,7)'
+          git diff -- browser/GAMEROAD.html | grep -F 'const hand=deck.splice(0,3)'
+          git config user.name "gameroad-hand7-guard"
+          git config user.email "actions@users.noreply.github.com"
+          git add browser/GAMEROAD.html
+          git commit -m "Battle: deal seven opening cards"
+          git push origin HEAD:work/battle-hand7-production-r1-20260903

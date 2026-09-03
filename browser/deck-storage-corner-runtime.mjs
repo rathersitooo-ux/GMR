@@ -2,6 +2,7 @@ import {
   addCardToStorage,
   createDeckStorageState,
   createStorageCornerViewModel,
+  DECK_STORAGE_DEFAULTS,
   removeCardFromStorage,
   resolveDeckEditorSwipe,
 } from './deck-storage-corner-core.mjs';
@@ -21,18 +22,20 @@ export function createDeckStorageCornerController({
   removeDeckCard,
   isRoyal,
   initialStorage = [],
+  maxDeckSize = DECK_STORAGE_DEFAULTS.maxDeckSize,
   onChange = null,
 } = {}) {
   requiredFn(getDeck, 'GET_DECK');
   requiredFn(addDeckCard, 'ADD_DECK_CARD');
   requiredFn(removeDeckCard, 'REMOVE_DECK_CARD');
   requiredFn(isRoyal, 'IS_ROYAL');
+  if (!Number.isInteger(maxDeckSize) || maxDeckSize <= 0) throw new RangeError('MAX_DECK_SIZE_INVALID');
 
   let storage = [...initialStorage];
   let open = false;
 
   const snapshot = () => createDeckStorageState({ deck: getDeck(), storage });
-  const view = () => Object.freeze({ ...createStorageCornerViewModel(snapshot(), { isRoyal }), open });
+  const view = () => Object.freeze({ ...createStorageCornerViewModel(snapshot(), { isRoyal, maxDeckSize }), open });
   const notify = (event) => { try { onChange?.(Object.freeze({ event, view: view() })); } catch {} };
 
   const openStorage = () => { open = true; notify('open'); return view(); };
@@ -70,6 +73,10 @@ export function createDeckStorageCornerController({
     if (intent.action === 'none') return Object.freeze({ ok: false, action: 'none', view: view() });
     if (intent.action === 'storage-add') return store(cardId);
     if (intent.action === 'deck-add') {
+      if (getDeck().length >= maxDeckSize) {
+        const overflow = store(cardId);
+        return Object.freeze({ ...overflow, overflow: true, reason: 'deck-full-overflow' });
+      }
       const result = addDeckCard(cardId);
       notify(accepted(result) ? 'deck-add' : 'deck-add-reject');
       return Object.freeze({ ok: accepted(result), action: 'deck-add', reason: result?.reason, view: view() });
@@ -88,6 +95,7 @@ export function installDeckStorageCornerStyles(doc = globalThis.document) {
   style.id = 'gr-deck-storage-style';
   style.textContent = `
 .gr-storage-button{appearance:none;border:1px solid #b58a00;border-radius:999px;background:#ffd84a;color:#241b00;font:800 14px/1 system-ui;padding:8px 12px;min-width:48px;cursor:pointer}
+.gr-storage-button[data-overflow="true"]{color:#c51616}
 .gr-storage-backdrop{position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,.34);display:grid;place-items:center;padding:18px}
 .gr-storage-window{width:min(760px,94vw);max-height:82vh;overflow:auto;background:#111827;color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:18px;padding:16px;box-shadow:0 18px 60px rgba(0,0,0,.45)}
 .gr-storage-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.gr-storage-title{font:800 18px/1.2 system-ui}.gr-storage-close{appearance:none;border:0;border-radius:10px;padding:8px 10px;cursor:pointer}
@@ -273,8 +281,12 @@ export function mountDeckStorageCorner({
   };
 
   function renderButton() {
-    button.textContent = controller.view().storageButtonLabel;
-    button.setAttribute('aria-label', `ストレージ ${controller.view().storageCount}枚`);
+    const view = controller.view();
+    button.textContent = view.storageButtonLabel;
+    button.dataset.overflow = view.overDeckLimit ? 'true' : 'false';
+    button.setAttribute('aria-label', view.overDeckLimit
+      ? `デッキ選択 ${view.selectionCount}/${view.maxDeckSize}枚・超過分ストレージ ${view.storageCount}枚`
+      : `ストレージ ${view.storageCount}枚`);
   }
 
   function render() {

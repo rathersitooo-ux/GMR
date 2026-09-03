@@ -4,7 +4,6 @@ import {
   HOME_TOUCH_TARGET_MIN_PX,
 } from './home-shell-presentation-core.mjs';
 import { mountRogueRunFromCurrentBrowser } from './rogue-run-runtime-mount.mjs';
-import { mountStoryFirstSceneFromCurrentBrowser } from './story-first-scene-runtime-mount.mjs';
 
 const GLOBAL_KEY = 'GAMEROAD_HOME_BOOT_PRESENTATION';
 const STYLE_ID = 'gameroad-home-shell-runtime-style';
@@ -661,7 +660,6 @@ export function mountHomeBootPresentation() {
   runtime.mounted = true;
   refreshHomeBootPresentation();
   mountRogueRunFromCurrentBrowser();
-  mountStoryFirstSceneFromCurrentBrowser();
   return snapshot();
 }
 

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "SAASUNA-NODEFEAT-R2-20260904T0211-SOL-M5Q8N2",
+  "taskId": "PARTNER-CHARACTER-DIALOGUE-SOURCE-MANIFEST-001",
+  "workUnitKey": "SAASUNA_NO_DEFEAT_APPROVED_SOURCE_R2",
+  "acquireKey": "SAASUNA-NODEFEAT-R2-20260904T0211-SOL-M5Q8N2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "Current main 59ef2c7 still contains five loss/non-first Saasuna Battle trigger IDs; existing PR1021 exact source/test repair passed PRE_ACTION and 6/6 conventional tests; only formal public-package source blob pin remained stale.",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "Reuse exact PR1021 source/test blobs and change only the existing formal package source SHA witness; existing conventional test and build provenance gate are deterministic differential oracles.",
+  "proceedToken": "PROCEED|SAASUNA-NODEFEAT-R2-20260904T0211-SOL-M5Q8N2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_LEASE_AND_EXACT_BLOB_READBACK",
+  "authorizationBaseSha": "59ef2c716de267db62b63cab08f3567fee2460c0",
+  "scope": [
+    "browser/partner-saasuna-conversation-source.mjs",
+    "tests/partner-saasuna-conversation-source.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-CHARACTER-DIALOGUE-SOURCE-MANIFEST-001",
+  "leaseWorkUnitKey": "SAASUNA_NO_DEFEAT_APPROVED_SOURCE_R2",
+  "leaseAcquireKey": "SAASUNA-NODEFEAT-R2-20260904T0211-SOL-M5Q8N2",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 02:11 JST",
+  "leaseUntilJst": "2026-09-04 03:11 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A348:L348",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@59ef2c716de267db62b63cab08f3567fee2460c0; branch work/saasuna-nodefeat-r2-20260904; mutable only browser/partner-saasuna-conversation-source.mjs@d6fcbcc8856b231b38f558e6d2487ac43545ad36; tests/partner-saasuna-conversation-source.test.mjs@23ee492c61f4783e3ce09e14e81459e3613628e9; deploy/cloudflare/scripts/build.mjs@b3d51b729b6f8f24bc9a0ca7fd9eb5299dc154ec; transient data/preaction-authorizations/SAASUNA-NODEFEAT-R2-20260904T0211-SOL-M5Q8N2.json; own recovery PR/checks/expected-head merge/public readback. GAMEROAD.html, Partner conversation core, Battle/gameplay/rules/save/economy/network/assets READ_ONLY.",
+  "leaseScope": [
+    "browser/partner-saasuna-conversation-source.mjs",
+    "tests/partner-saasuna-conversation-source.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ]
+}

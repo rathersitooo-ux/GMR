@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HUD-R75-R2R-20260904T0259-SOL-K7M4Q2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_HUD_USER_EXPLICIT_R75_RUNTIME_R2_CURRENT_RECOVERY",
+  "acquireKey": "BATTLE-HUD-R75-R2R-20260904T0259-SOL-K7M4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "current-main-3c2044ef-plus-user-r75-and-pr1020-recovery-evidence",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "prior-r75-self-hud-focused-tests-and-current-projection-contract",
+  "proceedToken": "PROCEED|BATTLE-HUD-R75-R2R-20260904T0259-SOL-K7M4Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|r75-packaged-projection-adaptation",
+  "authorizationBaseSha": "3c2044ef58fe7f19d6bff68c823489a7d16470f1",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_HUD_USER_EXPLICIT_R75_RUNTIME_R2_CURRENT_RECOVERY",
+  "leaseAcquireKey": "BATTLE-HUD-R75-R2R-20260904T0259-SOL-K7M4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 02:59 JST",
+  "leaseUntilJst": "2026-09-04 03:59 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A15:N15",
+  "leaseExactMutableResources": "browser/partner-battle-event-log-projection.mjs; tests/partner-battle-event-log-projection.test.mjs; deploy/cloudflare/tests/build.test.mjs; transient this authorization JSON; own branch/PR/checks/expected-head merge/public proof. GAMEROAD.html, battle-replay-live-adapter.mjs, battle-janken runtime, gameplay/rules/save/economy/network/assets READ_ONLY",
+  "scope": [
+    "browser/partner-battle-event-log-projection.mjs",
+    "tests/partner-battle-event-log-projection.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-battle-event-log-projection.mjs",
+    "tests/partner-battle-event-log-projection.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

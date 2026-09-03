@@ -10,16 +10,22 @@ import {
   resolveDeckEditorSwipe,
 } from '../browser/deck-storage-corner-core.mjs';
 
-test('collection left stores and asks UI to open storage', () => {
+test('collection left swipe is consumed without assigning Storage while right still means Deck add', () => {
+  const left = resolveDeckEditorSwipe({ surface: 'collection', deltaX: -80, deltaY: 4 });
+  assert.deepEqual(left, { action: 'none', consumed: true, reason: 'user-unassigned-left-swipe' });
+  assert.equal(resolveDeckEditorSwipe({ surface: 'collection', deltaX: 80, deltaY: 4 }).action, 'deck-add');
+
   const state = createDeckStorageState({ deck: ['a'], storage: [] });
-  assert.equal(resolveDeckEditorSwipe({ surface: 'collection', deltaX: -80, deltaY: 4 }).action, 'storage-add');
   const result = addCardToStorage(state, 'b');
   assert.equal(result.openStorage, true);
   assert.deepEqual(result.state.storage, ['b']);
 });
 
-test('deck left swipe resolves to remove while deck right is reserved', () => {
-  assert.equal(resolveDeckEditorSwipe({ surface: 'deck', deltaX: -70, deltaY: 2 }).action, 'deck-remove');
+test('deck left swipe is consumed without remove while direct deck removal primitive remains intact', () => {
+  assert.deepEqual(
+    resolveDeckEditorSwipe({ surface: 'deck', deltaX: -70, deltaY: 2 }),
+    { action: 'none', consumed: true, reason: 'user-unassigned-left-swipe' },
+  );
   assert.equal(resolveDeckEditorSwipe({ surface: 'deck', deltaX: 70, deltaY: 2 }).action, 'none');
   const result = removeCardFromDeck(createDeckStorageState({ deck: ['a', 'b'], storage: [] }), 'a');
   assert.deepEqual(result.state.deck, ['b']);

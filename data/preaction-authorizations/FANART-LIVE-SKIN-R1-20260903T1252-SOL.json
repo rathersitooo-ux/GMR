@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "FANART-LIVE-SKIN-R1-20260903T1252-SOL",
+  "taskId": "FANART-LOCAL-CARD-CREATOR-BROWSER-001",
+  "workUnitKey": "FANART_LOCAL_SKIN_LIVE_R1",
+  "acquireKey": "FANART-LIVE-SKIN-R1-20260903T1252-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "ROW111_LOCAL_ONLY_SKIN_CONTRACT_PLUS_CURRENT_CARDS_LIVE_SEAM",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "DRIVE_1t0Cu-7AtUT4yo8EPU-KmkYVD0C3pxB7x_EXISTING_ISOLATED_PASS",
+  "proceedToken": "PROCEED|FANART-LIVE-SKIN-R1-20260903T1252-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|LOCAL_SKIN_CURRENT_CARDS",
+  "authorizationBaseSha": "ab65d588decab75596cb3d3914aa964a72aab44c",
+  "scope": [
+    "browser/fanart-local-card-skin-runtime.mjs",
+    "browser/cards-deck-presentation.mjs",
+    "tests/fanart-local-card-skin-runtime.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "FANART-LOCAL-CARD-CREATOR-BROWSER-001",
+  "leaseWorkUnitKey": "FANART_LOCAL_SKIN_LIVE_R1",
+  "leaseAcquireKey": "FANART-LIVE-SKIN-R1-20260903T1252-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-03 12:52 JST",
+  "leaseUntilJst": "2026-09-03 13:52 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseScope": [
+    "browser/fanart-local-card-skin-runtime.mjs",
+    "browser/cards-deck-presentation.mjs",
+    "tests/fanart-local-card-skin-runtime.test.mjs"
+  ],
+  "leaseExactMutableResources": "browser/fanart-local-card-skin-runtime.mjs; browser/cards-deck-presentation.mjs; tests/fanart-local-card-skin-runtime.test.mjs",
+  "solutionSignature": "local-only PNG/JPG card skin -> current Cards collection/deck visual projection",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "OLD_FANART_R7_PLUS_CURRENT_CARDS_SMALL_LIVE_MOUNT",
+  "solutionSearchEvidence": [
+    "Drive:1t0Cu-7AtUT4yo8EPU-KmkYVD0C3pxB7x",
+    "GitHub:browser/cards-deck-presentation.mjs@dbc07cf630833621dd7926f0a76ad26eca012027",
+    "Cloudflare build localModuleRefs recursive dependency packaging"
+  ]
+}

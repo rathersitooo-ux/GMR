@@ -22,7 +22,7 @@ const HAND_DRAG_DEAD_ZONE_PX = 8;
 const HAND_AURA_ARM_PADDING_PX = 18;
 const HAND_AURA_RELEASE_DURATION_MS = 520;
 export const BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS = 'section[data-screen="battle"] #targetBox.on,section[data-screen="battle"] #targetBox.vfTargetProxyOn{z-index:60!important}';
-export const BATTLE_JANKEN_HAND_INPUT_SAFE_AREA_CSS = '@media(max-width:540px) and (orientation:portrait){[data-battle-janken-slidepad="1"]{bottom:max(154px,calc(env(safe-area-inset-bottom) + 154px))!important}}@media(max-height:430px) and (orientation:landscape){[data-battle-janken-slidepad="1"]{bottom:74px!important}}';
+export const BATTLE_JANKEN_HAND_INPUT_SAFE_AREA_CSS = '@media(max-width:540px) and (orientation:portrait){[data-battle-janken-slidepad="1"]{bottom:max(154px,calc(env(safe-area-inset-bottom) + 154px))!important}}@media(max-height:430px) and (orientation:landscape){[data-battle-janken-slidepad="1"]{bottom:74px!important}}.battleDrawer.on ~ [data-battle-janken-slidepad="1"]{pointer-events:none!important}.battleDrawer.on ~ [data-battle-janken-slidepad="1"] *{pointer-events:none!important}';
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;

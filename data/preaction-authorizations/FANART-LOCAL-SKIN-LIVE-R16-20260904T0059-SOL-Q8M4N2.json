@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "FANART-LOCAL-SKIN-LIVE-R16-20260904T0059-SOL-Q8M4N2",
+  "taskId": "FANART-LOCAL-CARD-CREATOR-BROWSER-001",
+  "workUnitKey": "FANART_LOCAL_SKIN_CARDS_LIVE_R16",
+  "acquireKey": "FANART-LOCAL-SKIN-LIVE-R16-20260904T0059-SOL-Q8M4N2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R7_HOSTED_CHROMIUM_INDEXEDDB_LOCAL_ONLY_3_OF_3_PLUS_CURRENT_CARDS_SMALL_SEAM_B1B1BD3",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R7_CANDIDATE_SHA256_903E7A852DFD39EB6038272C0594B5D317BDBF5647FE51D9DE4FCD4A72B61DBD_UNCHANGED",
+  "proceedToken": "PROCEED|FANART-LOCAL-SKIN-LIVE-R16-20260904T0059-SOL-Q8M4N2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXISTING_REPAIR_LOCAL_SKIN_LIVE_CONSUMER",
+  "authorizationBaseSha": "69e0522f549332ac0c3045bfdec264ab95196b35",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "FANART-LOCAL-CARD-CREATOR-BROWSER-001",
+  "leaseWorkUnitKey": "FANART_LOCAL_SKIN_CARDS_LIVE_R16",
+  "leaseAcquireKey": "FANART-LOCAL-SKIN-LIVE-R16-20260904T0059-SOL-Q8M4N2",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 00:59 JST",
+  "leaseUntilJst": "2026-09-04 01:59 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A348:N348",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@69e0522f549332ac0c3045bfdec264ab95196b35; new branch work/fanart-local-skin-live-r16-20260904; exact mutable browser/cards-deck-presentation.mjs + tests/cards-deck-presentation.test.mjs; transient PRE_ACTION manifest first commit only; own PR/checks/expected-head merge/public readback. browser/GAMEROAD.html, Battle/gameplay/rules/save/economy/network/canonical card identity READ_ONLY.",
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ]
+}

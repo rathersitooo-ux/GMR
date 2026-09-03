@@ -177,24 +177,40 @@ async function submitVisiblePlan(battle) {
   await expect(roadSelect).toBeVisible();
   await expect(battleSelect).toBeVisible();
   const handCards = battle.locator('#hand .handCard:visible:not(:disabled)');
-  expect(await handCards.count(), 'visible plan hand has at least two cards').toBeGreaterThanOrEqual(2);
+  const jankenCards = battle.locator('[data-battle-janken-slidepad="1"] [data-janken-slot]:visible:not(:disabled)');
+  const candidateGroups = [
+    { locator: handCards, selector: '#hand .handCard' },
+    { locator: jankenCards, selector: '[data-battle-janken-slidepad="1"] [data-janken-slot]' },
+  ];
+  const candidateCount = (await Promise.all(candidateGroups.map(({ locator }) => locator.evaluateAll((nodes) => nodes
+    .filter((node) => !node.disabled && node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden')
+    .map((node) => node.getAttribute('data-card-id'))
+    .filter(Boolean)))))
+    .flat().length;
+  expect(candidateCount, 'visible plan controls expose at least two distinct cards').toBeGreaterThanOrEqual(2);
 
-  if (!(await roadSelect.inputValue())) await handCards.nth(0).click();
-  if (!(await battleSelect.inputValue())) {
-    const roadValue = await roadSelect.inputValue();
-    const candidates = battle.locator('#hand .handCard:visible:not(:disabled)');
-    const candidateCount = await candidates.count();
-    let picked = false;
-    for (let i = 0; i < candidateCount; i += 1) {
-      const id = await candidates.nth(i).getAttribute('data-card-id');
-      if (!id || id === roadValue) continue;
-      await candidates.nth(i).click();
-      if (await battleSelect.inputValue()) {
-        picked = true;
-        break;
+  const clickCandidate = async (excludedId = null) => {
+    for (const group of candidateGroups) {
+      const ids = await group.locator.evaluateAll((nodes) => nodes
+        .filter((node) => !node.disabled && node.getClientRects().length > 0 && getComputedStyle(node).visibility !== 'hidden')
+        .map((node) => node.getAttribute('data-card-id'))
+        .filter(Boolean));
+      for (const id of ids) {
+        if (!id || id === excludedId) continue;
+        const candidate = battle.locator(`${group.selector}[data-card-id="${id}"]`).first();
+        if (!(await candidate.isVisible()) || await candidate.isDisabled()) continue;
+        await candidate.click();
+        return id;
       }
     }
-    expect(picked, 'a different visible hand card can be reserved as Battle').toBeTruthy();
+    return null;
+  };
+
+  if (!(await roadSelect.inputValue())) await expect.poll(() => clickCandidate()).not.toBeNull();
+  if (!(await battleSelect.inputValue())) {
+    const roadValue = await roadSelect.inputValue();
+    await expect.poll(() => clickCandidate(roadValue)).not.toBeNull();
+    await expect(battleSelect, 'a different visible card can be reserved as Battle').not.toHaveValue('');
   }
 
   expect(await roadSelect.inputValue(), 'visible Road selection').not.toBe('');

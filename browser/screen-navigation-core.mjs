@@ -229,7 +229,7 @@ export function createScreenMotionPresentationDriver({document: documentSource =
     session = {
       revision: context.revision, signal: context.signal,
       outgoing: screenSurface(documentSource, context.from), incoming: null,
-      pressedControl: null, animations: new Set(), onAbort: null,
+      pressedControl: null, animations: new Set(), onAbort: null, exitPromise: null,
       intent: resolveScreenMotionIntent(context.from, context.to, context.reason)
     };
     session.pressedControl = containsNode(session.outgoing, documentSource?.activeElement) ? documentSource.activeElement : null;
@@ -307,14 +307,17 @@ export function createScreenMotionPresentationDriver({document: documentSource =
         void animate(session, session.pressedControl, 'press', phaseContext);
       } else if (phase === 'EXIT') {
         mark(session.outgoing, context, phase, session.intent);
-        await animate(session, session.outgoing, 'exit', phaseContext);
+        session.exitPromise = animate(session, session.outgoing, 'exit', phaseContext);
       } else if (phase === 'SWAP') {
         session.incoming = screenSurface(documentSource, context.to);
         mark(session.incoming, context, phase, session.intent);
         record({revision: context.revision, phase, kind: 'surface_swap_observed', status: session.incoming ? 'completed' : 'surface_missing', profile: context.motionProfile, family: session.intent.family, bridge: session.intent.bridge});
       } else if (phase === 'ENTER') {
         mark(session.incoming, context, phase, session.intent);
-        await animateIncoming(session, phaseContext);
+        const exitPromise = session.exitPromise || Promise.resolve();
+        const enterPromise = animateIncoming(session, phaseContext);
+        await Promise.all([exitPromise, enterPromise]);
+        session.exitPromise = null;
       } else if (phase === 'SETTLE') {
         mark(session.incoming, context, phase, session.intent);
         const focusedControl = containsNode(session.incoming, documentSource?.activeElement) ? documentSource.activeElement : null;

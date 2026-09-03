@@ -216,6 +216,12 @@ function appendMessage(document, log, role, text) {
   row.textContent = text;
   log.appendChild(row);
   log.scrollTop = log.scrollHeight;
+  return row;
+}
+
+export function restoreSaasunaConversationRetryDraft(input, userRow, message) {
+  userRow?.remove?.();
+  if (input) input.value = typeof message === 'string' ? message : '';
 }
 
 function setConversationState(node, label, origin) {
@@ -275,7 +281,7 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
       event.preventDefault();
       const message = String(input.value || '').trim();
       if (!message || send.disabled) return;
-      appendMessage(document, log, 'user', message);
+      const userRow = appendMessage(document, log, 'user', message);
       input.value = '';
       input.disabled = true;
       send.disabled = true;
@@ -285,9 +291,11 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
         const response = await entry.send(message, { collectiveContext });
         const turn = response?.turn;
         const ok = turn?.ok && typeof turn.utterance === 'string';
+        if (!ok) restoreSaasunaConversationRetryDraft(input, userRow, message);
         appendMessage(document, log, ok ? 'saasuna' : 'system', ok ? turn.utterance : '応答できませんでした。もう一度送ってください。');
         setConversationState(state, '会話できます', 'neutral');
       } catch {
+        restoreSaasunaConversationRetryDraft(input, userRow, message);
         appendMessage(document, log, 'system', '応答できませんでした。もう一度送ってください。');
         setConversationState(state, '会話できます', 'neutral');
       } finally {

@@ -1,4 +1,5 @@
 import './battle-board-naki-4p-visual-binding.mjs';
+import './battle-r75-self-hud-runtime-mount.mjs';
 
 const PROJECTION_SCHEMA = 'GAMEROAD_PARTNER_BATTLE_EVENT_PROJECTION_V1';
 const REPLAY_SCHEMA = 'GAMEROAD_BATTLE_REPLAY_V1';

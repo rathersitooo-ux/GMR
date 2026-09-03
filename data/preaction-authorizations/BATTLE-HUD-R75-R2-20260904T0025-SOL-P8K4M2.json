@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HUD-R75-R2-20260904T0025-SOL-P8K4M2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_HUD_USER_EXPLICIT_R75_RUNTIME_R2_PUBLIC_CONTRACT_RECOVERY",
+  "acquireKey": "BATTLE-HUD-R75-R2-20260904T0025-SOL-P8K4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R75-R2-EXISTING-PUBLIC-ARTIFACT-20260904",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1020-GATE-FAIL-PUBLIC-DEPENDENCY-20260904",
+  "proceedToken": "PROCEED|BATTLE-HUD-R75-R2-20260904T0025-SOL-P8K4M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-public-artifact|active-lease-readback",
+  "authorizationBaseSha": "999dcc8f57d4cda9a1984e9cae4ce41fe7acd36f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_HUD_USER_EXPLICIT_R75_RUNTIME_R2_PUBLIC_CONTRACT_RECOVERY",
+  "leaseAcquireKey": "BATTLE-HUD-R75-R2-20260904T0025-SOL-P8K4M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 00:25 JST",
+  "leaseUntilJst": "2026-09-04 01:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A11:L11",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@999dcc8f57d4cda9a1984e9cae4ce41fe7acd36f; fresh branch work/battle-hud-r75-live-r2-20260904; exact writes browser/partner-battle-event-log-projection.mjs@aa196a1ee01e0c386d8ba3664c99c0b4f582a7e7 + tests/partner-battle-event-log-projection.test.mjs@8d2ddb0547cd68b4882353c69d2f34f205949626 + deploy/cloudflare/tests/build.test.mjs@ade497ee4c9bf651f9ac2f0f751b7c8c0cdeb0e0 + transient data/preaction-authorizations/BATTLE-HUD-R75-R2-20260904T0025-SOL-P8K4M2.json; own PR/checks/expected-head merge/public deploy readback; CURRENT_ACTIVE_LEASES!A11:L11. deploy/cloudflare/scripts/build.mjs READ_ONLY active STORY owner; browser/GAMEROAD.html, battle-replay-live-adapter.mjs, battle-janken-slidepad runtime, gameplay/rules/save/economy/network/assets READ_ONLY.",
+  "scope": [
+    "browser/partner-battle-event-log-projection.mjs",
+    "tests/partner-battle-event-log-projection.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-battle-event-log-projection.mjs",
+    "tests/partner-battle-event-log-projection.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "Persist the local player's actual Battle score and accepted Battle-card history inside an already-published runtime artifact, without adding a public dependency or exposing private opponent data.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R75-R2-REUSE-PARTNER-PROJECTION-PUBLIC-ARTIFACT-20260904",
+  "solutionSearchEvidence": [
+    "PR#1020: PRE_ACTION and conventional Node tests passed; Public package provenance invariant failed only because a newly imported runtime module was absent from the current public artifact set",
+    "GitHub:partner-battle-event-log-projection.mjs is already in the live replay import graph and already packaged by deploy/cloudflare/scripts/build.mjs",
+    "Drive:deploy/cloudflare/scripts/build.mjs is actively owned by STORY-PUBLIC-DEINTEGRATION-R4 until 00:55 JST and is READ_ONLY for this WorkUnit",
+    "GitHub:deploy/cloudflare/tests/build.test.mjs pins the current partner projection blob and can be updated without changing the active build owner",
+    "Drive:BATTLE_UI_USER_EXPLICIT_R75 requires actual SCORE and played Battle-card chain with no invented numerics"
+  ]
+}

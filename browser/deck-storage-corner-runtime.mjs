@@ -98,7 +98,7 @@ export function installDeckStorageCornerStyles(doc = globalThis.document) {
   doc.head.appendChild(style);
 }
 
-const CARDS_INTERACTIVE_SELECTOR = 'button,a,input,select,textarea,label,[role="button"],[role="link"],[data-card],[data-card-id],.card,.cardPreview';
+const CARDS_INTERACTIVE_SELECTOR = 'button,a,input,select,textarea,label,[role="button"],[role="link"],[data-card],[data-card-id],#collectionGrid [data-id],#deckSlots [data-id],#exDeckSlots [data-id],.card,.cardPreview';
 
 function finitePoint(value) {
   return Number.isFinite(value);

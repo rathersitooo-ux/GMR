@@ -1,6 +1,7 @@
 export * from './cards-deck-presentation-core.mjs';
 
 import { createDeckSwipePresentationController } from './cards-deck-presentation-core.mjs';
+import { resolveDeckEditorSwipe } from './deck-storage-corner-core.mjs';
 import {
   createDeckStorageCornerController,
   mountDeckStorageCorner,
@@ -69,6 +70,10 @@ function isRoyalThroughCurrentProjection(win, id) {
 
 function closestSwipeCard(target) {
   return target?.closest?.('#collectionGrid [data-id], #deckSlots [data-id], #exDeckSlots [data-id]') ?? null;
+}
+
+export function isNeutralizedDeckEditorSwipe(intent) {
+  return intent?.action === 'none' && intent?.consumed === true;
 }
 
 export function presentDeckAddSwipe({ doc, presentation, result, sourceElement, cardId }) {
@@ -163,6 +168,16 @@ export function installDeckStorageLiveMount({
     const dx = Number(event.clientX) - current.startX;
     const dy = Number(event.clientY) - current.startY;
     if (!Number.isFinite(dx) || !Number.isFinite(dy)) return;
+    const intent = resolveDeckEditorSwipe({
+      surface: current.surface,
+      deltaX: dx,
+      deltaY: dy,
+      thresholdPx: 56,
+    });
+    if (isNeutralizedDeckEditorSwipe(intent)) {
+      suppressClick = { cardId: current.cardId, until: now() + 450 };
+      return;
+    }
     const result = controller.applySwipe({
       surface: current.surface,
       cardId: current.cardId,

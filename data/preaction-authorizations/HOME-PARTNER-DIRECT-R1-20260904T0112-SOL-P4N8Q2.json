@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-PARTNER-DIRECT-R1-20260904T0112-SOL-P4N8Q2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_PARTNER_DIRECT_CONVERSATION_ROUTE_R1",
+  "acquireKey": "HOME-PARTNER-DIRECT-R1-20260904T0112-SOL-P4N8Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT row127 USER_EXPLICIT + main@69e0522 home route actual: direct Partner must beat characters picker; no gameplay/state/economy change",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "Pure deterministic candidate-order repair with existing focused Home route resolver test as differential oracle and git rollback",
+  "proceedToken": "PROCEED|HOME-PARTNER-DIRECT-R1-20260904T0112-SOL-P4N8Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_LEASE_AND_EXACT_BLOB_READBACK",
+  "authorizationBaseSha": "69e0522f549332ac0c3045bfdec264ab95196b35",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_PARTNER_DIRECT_CONVERSATION_ROUTE_R1",
+  "leaseAcquireKey": "HOME-PARTNER-DIRECT-R1-20260904T0112-SOL-P4N8Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 01:12 JST",
+  "leaseUntilJst": "2026-09-04 02:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A348:L348",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@69e0522f549332ac0c3045bfdec264ab95196b35; branch work/home-partner-direct-r1-20260904; mutable only: browser/home-boot-runtime-mount.mjs@2b30444908389c1c9861cbb6cbfa3315ac30b8b0; tests/home-boot-presentation.test.mjs@85758e98df82f09a2924908c4cb4907b41c16e25; transient data/preaction-authorizations/HOME-PARTNER-DIRECT-R1-20260904T0112-SOL-P4N8Q2.json; own PR/checks/expected-head merge. GAMEROAD.html, Partner identity/state, gameplay/rules/save/economy/assets READ_ONLY.",
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ]
+}

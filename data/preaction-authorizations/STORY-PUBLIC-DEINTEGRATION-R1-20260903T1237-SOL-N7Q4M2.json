@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "STORY-PUBLIC-DEINTEGRATION-R1-20260903T1237-SOL-N7Q4M2",
+  "taskId": "STORY-COMMON-RUNTIME-CONTRACT-001",
+  "workUnitKey": "STORY_PUBLIC_DEINTEGRATION_R1",
+  "acquireKey": "STORY-PUBLIC-DEINTEGRATION-R1-20260903T1237-SOL-N7Q4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER-REJECTED-STORY-CURRENT-PUBLIC-CONSUMER-PR935-READBACK",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR935-EXACT-STORY-RUNTIME-BOUNDARY-PLUS-CURRENT-HOME-BUILD-DRIFT",
+  "proceedToken": "PROCEED|STORY-PUBLIC-DEINTEGRATION-R1-20260903T1237-SOL-N7Q4M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-actual|lease-snapshot",
+  "authorizationBaseSha": "aeaf6c65814ccf4299b77ff6106382b46b94206e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "STORY-COMMON-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "STORY_PUBLIC_DEINTEGRATION_R1",
+  "leaseAcquireKey": "STORY-PUBLIC-DEINTEGRATION-R1-20260903T1237-SOL-N7Q4M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-03 12:37 JST",
+  "leaseUntilJst": "2026-09-03 13:37 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A323:N323",
+  "leaseExactMutableResources": "browser/story-first-scene-runtime-mount.mjs; tests/story-first-scene-runtime-mount.test.mjs; transient preaction manifest. Home/build read-only in first slice due later unrelated changes.",
+  "scope": [
+    "browser/story-first-scene-runtime-mount.mjs",
+    "tests/story-first-scene-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/story-first-scene-runtime-mount.mjs",
+    "tests/story-first-scene-runtime-mount.test.mjs"
+  ]
+}

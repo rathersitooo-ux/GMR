@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-R75-LOAD-PREVIEW-R4-20260903T1712-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_R75_LOAD_CARD_PREVIEW_R4_CONVENTIONAL_PAIR",
+  "acquireKey": "BATTLE-R75-LOAD-PREVIEW-R4-20260903T1712-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_ADOPTED_R75_PLUS_FRESH_CURRENT_MAIN_2D755C1_AND_CURRENT_JANKEN_RUNTIME_MODEL",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R3_GATE_FAILURE_LOCALIZED_PLUS_EXISTING_CONVENTIONAL_SLIDEPAD_TEST_PAIR",
+  "proceedToken": "PROCEED|BATTLE-R75-LOAD-PREVIEW-R4-20260903T1712-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-actual|lease-snapshot",
+  "authorizationBaseSha": "2d755c1656dac0256a3d71b4473ae4a8f44dda9d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_R75_LOAD_CARD_PREVIEW_R4_CONVENTIONAL_PAIR",
+  "leaseAcquireKey": "BATTLE-R75-LOAD-PREVIEW-R4-20260903T1712-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-03 17:12 JST",
+  "leaseUntilJst": "2026-09-03 18:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A20:L20",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@2d755c1656dac0256a3d71b4473ae4a8f44dda9d; branch work/battle-r75-load-preview-r4-current; mutable: browser/battle-janken-slidepad-runtime-mount.mjs + tests/battle-janken-slidepad-runtime-mount.test.mjs; transient data/preaction-authorizations/BATTLE-R75-LOAD-PREVIEW-R4-20260903T1712-SOL.json; own PR/checks/expected-head merge.",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "reuseDisposition": "ADAPT_CURRENT_MAIN",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R75_EXPIRED_CANDIDATE_PLUS_FRESH_MAIN_AND_CURRENT_CONVENTIONAL_PAIR",
+  "solutionSearchEvidence": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs@2b574925b25e97e19b5c5c6d2b6bfcfda7776ce3",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs@1d0195e618ef6db2a5a2844cfa8dcc968fabaee8",
+    "R75 presentation candidate blob 5e34f2b1fcdbac86b24707e9d2958fceb8b67865",
+    "CURRENT_ACTIVE_LEASES!A20:L20"
+  ]
+}

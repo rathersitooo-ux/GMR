@@ -3,6 +3,8 @@ import './battle-board-naki-4p-visual-binding.mjs';
 const PROJECTION_SCHEMA = 'GAMEROAD_PARTNER_BATTLE_EVENT_PROJECTION_V1';
 const REPLAY_SCHEMA = 'GAMEROAD_BATTLE_REPLAY_V1';
 const VERSION_KEYS = Object.freeze(['rules', 'content', 'state']);
+const R75_HUD_STYLE_ID = 'gameroad-r75-battle-hud-summary-style';
+const R75_HUD_HOST_ATTR = 'data-battle-r75-hud-summary';
 
 function nonEmptyString(value) {
   return typeof value === 'string' && value.trim().length > 0;
@@ -173,9 +175,98 @@ export function projectPartnerBattleEventLog(replayRead) {
   });
 }
 
+function latestBattleResolution(projection) {
+  if (!projection || projection.ok !== true || projection.schema !== PROJECTION_SCHEMA || !Array.isArray(projection.events)) {
+    return null;
+  }
+  for (let index = projection.events.length - 1; index >= 0; index -= 1) {
+    if (projection.events[index]?.kind === 'battle_resolution') return projection.events[index];
+  }
+  return null;
+}
+
+export function projectR75BattleHudSummary(projection) {
+  const event = latestBattleResolution(projection);
+  if (!event?.data || !Number.isSafeInteger(event.data.round) || event.data.round < 1) {
+    return deepFreeze({ ok: false, reason: 'R75_ACCEPTED_BATTLE_STATE_UNAVAILABLE' });
+  }
+  const teamTotals = safeTeamTotals(event.data.teamTotals);
+  return deepFreeze({
+    ok: true,
+    presentationOnly: true,
+    matchId: projection.matchId,
+    sourceSequence: event.sequence,
+    turn: event.data.round,
+    score: teamTotals,
+    selfCardHistory: null,
+    opponentHate: null,
+    unresolved: Object.freeze([
+      'SELF_CARD_HISTORY_NEEDS_VIEWER_IDENTITY_AUTHORITY',
+      'OPPONENT_HATE_NOT_IN_PUBLIC_REPLAY_PROJECTION'
+    ])
+  });
+}
+
+function ensureR75HudStyle(documentRef) {
+  if (!documentRef?.head || typeof documentRef.createElement !== 'function') return false;
+  if (documentRef.getElementById?.(R75_HUD_STYLE_ID)) return true;
+  const style = documentRef.createElement('style');
+  style.id = R75_HUD_STYLE_ID;
+  style.textContent = `
+#battlePhaseSurface [${R75_HUD_HOST_ATTR}]{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:18;display:flex;align-items:center;gap:10px;pointer-events:none;font:800 12px/1.1 system-ui,sans-serif;letter-spacing:.08em}
+#battlePhaseSurface [${R75_HUD_HOST_ATTR}]>span{display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:999px;background:rgba(7,16,24,.72);border:1px solid rgba(255,255,255,.2);box-shadow:0 4px 14px rgba(0,0,0,.18);backdrop-filter:blur(6px)}
+@media (max-width:720px){#battlePhaseSurface [${R75_HUD_HOST_ATTR}]{top:7px;gap:6px;font-size:10px}#battlePhaseSurface [${R75_HUD_HOST_ATTR}]>span{min-height:24px;padding:0 8px}}
+`;
+  documentRef.head.appendChild(style);
+  return true;
+}
+
+function findR75HudHost(surface) {
+  return typeof surface?.querySelector === 'function'
+    ? surface.querySelector(`[${R75_HUD_HOST_ATTR}]`)
+    : null;
+}
+
+export function renderR75BattleHudSummary(projection, { document: documentRef = globalThis?.document } = {}) {
+  const summary = projectR75BattleHudSummary(projection);
+  if (!summary.ok || !documentRef || typeof documentRef.createElement !== 'function') return false;
+  const surface = documentRef.getElementById?.('battlePhaseSurface');
+  if (!surface || typeof surface.appendChild !== 'function') return false;
+  ensureR75HudStyle(documentRef);
+
+  let host = findR75HudHost(surface);
+  if (!host) {
+    host = documentRef.createElement('div');
+    if (!host || typeof host.setAttribute !== 'function') return false;
+    host.setAttribute(R75_HUD_HOST_ATTR, '');
+    host.setAttribute('aria-label', 'Battle turn and score');
+    surface.appendChild(host);
+  }
+  if (!host.dataset || typeof host.replaceChildren !== 'function') return false;
+
+  const turn = documentRef.createElement('span');
+  turn.setAttribute?.('data-r75-hud-turn', '');
+  turn.textContent = `TURN ${summary.turn}`;
+  const children = [turn];
+  if (summary.score) {
+    const score = documentRef.createElement('span');
+    score.setAttribute?.('data-r75-hud-score', '');
+    score.textContent = `SCORE A ${summary.score.A} / B ${summary.score.B}`;
+    children.push(score);
+  }
+  host.replaceChildren(...children);
+  host.dataset.matchId = summary.matchId;
+  host.dataset.sourceSequence = String(summary.sourceSequence);
+  host.dataset.presentationOnly = 'true';
+  host.dataset.selfCardHistory = 'unresolved';
+  host.dataset.opponentHate = 'unresolved';
+  return true;
+}
+
 export function createPartnerBattleEventLogConsumerAdapter({
   readReplay,
-  consumeProjection
+  consumeProjection,
+  renderHud = renderR75BattleHudSummary
 } = {}) {
   if (typeof readReplay !== 'function') throw new TypeError('readReplay must be a function');
   if (typeof consumeProjection !== 'function') throw new TypeError('consumeProjection must be a function');
@@ -199,6 +290,12 @@ export function createPartnerBattleEventLogConsumerAdapter({
       return deepFreeze({ ok: false, consumed: false, reason: 'PARTNER_CONSUMER_FAILED' });
     }
 
+    try {
+      if (typeof renderHud === 'function') renderHud(projection);
+    } catch {
+      // R75 HUD is presentation-only and never owns accepted replay/gameplay success.
+    }
+
     return deepFreeze({
       ok: true,
       consumed: true,
@@ -217,5 +314,13 @@ export const PARTNER_BATTLE_EVENT_PROJECTION = Object.freeze({
   storageAuthority: 'NONE',
   identityPolicy: 'DROP_PLAYER_IDS_AND_NAMES',
   privateDataPolicy: 'NEVER_PROJECT_PRIVATE_DATA',
-  provenancePolicy: 'PRESERVE_EXACT_REPLAY_VERSIONS'
+  provenancePolicy: 'PRESERVE_EXACT_REPLAY_VERSIONS',
+  r75Hud: Object.freeze({
+    source: 'latest accepted public battle_resolution',
+    surface: 'battlePhaseSurface',
+    fields: Object.freeze(['TURN', 'A_B_SCORE_IF_AVAILABLE']),
+    selfCardHistory: 'UNRESOLVED_WITHOUT_VIEWER_IDENTITY',
+    opponentHate: 'UNRESOLVED_NOT_PROJECTED',
+    authority: 'presentation_only_no_game_state_write'
+  })
 });

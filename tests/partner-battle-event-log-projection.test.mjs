@@ -4,7 +4,9 @@ import assert from 'node:assert/strict';
 import {
   PARTNER_BATTLE_EVENT_PROJECTION,
   createPartnerBattleEventLogConsumerAdapter,
-  projectPartnerBattleEventLog
+  projectPartnerBattleEventLog,
+  projectR75BattleHudSummary,
+  renderR75BattleHudSummary
 } from '../browser/partner-battle-event-log-projection.mjs';
 import {
   BATTLE_REPLAY_LIVE_ADAPTER,
@@ -27,14 +29,14 @@ function replay(events) {
   };
 }
 
-test('projects canonical battle resolution without player identity or privateData', () => {
-  const result = projectPartnerBattleEventLog(replay([{
-    sequence: 1,
+function projectedResolutionEvent({ sequence = 1, round = 3, scoreA = 12, scoreB = 9 } = {}) {
+  return {
+    sequence,
     kind: 'battle_resolution',
     privateData: { secret: 'must-not-project' },
     publicData: {
-      serial: 1,
-      round: 3,
+      serial: sequence,
+      round,
       mode: '2v2',
       attackerId: 'raw-user-a',
       defenderId: 'raw-user-b',
@@ -42,15 +44,19 @@ test('projects canonical battle resolution without player identity or privateDat
       shield: 'shield-card-id',
       winnerIds: ['raw-user-a'],
       winningTeam: 'A',
-      teamTotals: { A: 12, B: 9 },
+      teamTotals: { A: scoreA, B: scoreB },
       players: [
-        { id: 'raw-user-a', name: 'Private Display Name', team: 'A', score: 12, winner: true, cards: [{ cardId: 'c1', label: 'ignored label', value: 5, origin: 'hand' }] },
-        { id: 'raw-user-b', name: 'Other Name', team: 'B', score: 9, winner: false, cards: [{ cardId: 'c2', value: 4, origin: 'shield' }] }
+        { id: 'raw-user-a', name: 'Private Display Name', team: 'A', score: scoreA, winner: true, cards: [{ cardId: 'c1', label: 'ignored label', value: 5, origin: 'hand' }] },
+        { id: 'raw-user-b', name: 'Other Name', team: 'B', score: scoreB, winner: false, cards: [{ cardId: 'c2', value: 4, origin: 'shield' }] }
       ],
       laneGains: [{ id: 'raw-user-a', lane: 'left', before: 2, after: 4, added: 2 }],
       maxLaneProgress: [{ id: 'raw-user-a', before: 2, after: 4 }]
     }
-  }]));
+  };
+}
+
+test('projects canonical battle resolution without player identity or privateData', () => {
+  const result = projectPartnerBattleEventLog(replay([projectedResolutionEvent()]));
 
   assert.equal(result.ok, true);
   assert.deepEqual(result.versions, { rules: 'rule@7', content: 'cards:v4', state: 'runtime:v2' });
@@ -102,6 +108,110 @@ test('projection contract declares no storage authority and preserves replay ver
   assert.equal(PARTNER_BATTLE_EVENT_PROJECTION.identityPolicy, 'DROP_PLAYER_IDS_AND_NAMES');
   assert.equal(PARTNER_BATTLE_EVENT_PROJECTION.privateDataPolicy, 'NEVER_PROJECT_PRIVATE_DATA');
   assert.equal(PARTNER_BATTLE_EVENT_PROJECTION.provenancePolicy, 'PRESERVE_EXACT_REPLAY_VERSIONS');
+  assert.deepEqual(PARTNER_BATTLE_EVENT_PROJECTION.r75Hud.fields, ['TURN', 'A_B_SCORE_IF_AVAILABLE']);
+  assert.equal(PARTNER_BATTLE_EVENT_PROJECTION.r75Hud.selfCardHistory, 'UNRESOLVED_WITHOUT_VIEWER_IDENTITY');
+  assert.equal(PARTNER_BATTLE_EVENT_PROJECTION.r75Hud.opponentHate, 'UNRESOLVED_NOT_PROJECTED');
+});
+
+test('R75 HUD summary uses only latest accepted public Battle resolution and never invents unavailable fields', () => {
+  const projection = projectPartnerBattleEventLog(replay([
+    projectedResolutionEvent({ sequence: 1, round: 2, scoreA: 8, scoreB: 7 }),
+    projectedResolutionEvent({ sequence: 2, round: 3, scoreA: 12, scoreB: 9 })
+  ]));
+  const summary = projectR75BattleHudSummary(projection);
+  assert.deepEqual(summary, {
+    ok: true,
+    presentationOnly: true,
+    matchId: 'match-evidence-1',
+    sourceSequence: 2,
+    turn: 3,
+    score: { A: 12, B: 9 },
+    selfCardHistory: null,
+    opponentHate: null,
+    unresolved: [
+      'SELF_CARD_HISTORY_NEEDS_VIEWER_IDENTITY_AUTHORITY',
+      'OPPONENT_HATE_NOT_IN_PUBLIC_REPLAY_PROJECTION'
+    ]
+  });
+  assert.equal(JSON.stringify(summary).includes('raw-user-a'), false);
+  assert.deepEqual(
+    projectR75BattleHudSummary(projectPartnerBattleEventLog(replay([]))),
+    { ok: false, reason: 'R75_ACCEPTED_BATTLE_STATE_UNAVAILABLE' }
+  );
+});
+
+test('consumer adapter invokes R75 HUD presentation with the same sanitized projection and keeps gameplay success independent', () => {
+  const seen = [];
+  const adapter = createPartnerBattleEventLogConsumerAdapter({
+    readReplay: () => replay([projectedResolutionEvent({ round: 4, scoreA: 15, scoreB: 13 })]),
+    consumeProjection: () => {},
+    renderHud(projection) {
+      seen.push(projectR75BattleHudSummary(projection));
+      throw new Error('presentation-only failure after capture');
+    }
+  });
+  const result = adapter();
+  assert.equal(result.ok, true);
+  assert.equal(result.consumed, true);
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].turn, 4);
+  assert.deepEqual(seen[0].score, { A: 15, B: 13 });
+});
+
+function fakeR75HudDocument() {
+  function node(tag) {
+    const children = [];
+    let text = '';
+    return {
+      tagName: String(tag).toUpperCase(),
+      id: '',
+      attributes: {},
+      dataset: {},
+      children,
+      set textContent(value) { text = String(value); children.length = 0; },
+      get textContent() { return children.length ? children.map(child => child.textContent).join(' ') : text; },
+      setAttribute(name, value) { this.attributes[name] = String(value); },
+      getAttribute(name) { return this.attributes[name] ?? null; },
+      appendChild(child) { children.push(child); return child; },
+      replaceChildren(...next) { children.splice(0, children.length, ...next); text = ''; },
+      querySelector(selector) {
+        if (selector !== '[data-battle-r75-hud-summary]') return null;
+        return children.find(child => Object.prototype.hasOwnProperty.call(child.attributes, 'data-battle-r75-hud-summary')) || null;
+      }
+    };
+  }
+  const head = node('head');
+  const surface = node('div');
+  const ids = new Map([['battlePhaseSurface', surface]]);
+  const document = {
+    head,
+    createElement: tag => node(tag),
+    getElementById(id) {
+      if (id === 'gameroad-r75-battle-hud-summary-style') {
+        return head.children.find(child => child.id === id) || null;
+      }
+      return ids.get(id) || null;
+    }
+  };
+  return { document, head, surface };
+}
+
+test('R75 HUD renderer mounts TURN and actual A/B score on Battle surface without player identity or fake HATE/card history', () => {
+  const fake = fakeR75HudDocument();
+  const projection = projectPartnerBattleEventLog(replay([
+    projectedResolutionEvent({ round: 5, scoreA: 21, scoreB: 18 })
+  ]));
+  assert.equal(renderR75BattleHudSummary(projection, { document: fake.document }), true);
+  assert.equal(fake.surface.children.length, 1);
+  const host = fake.surface.children[0];
+  assert.equal(host.dataset.presentationOnly, 'true');
+  assert.equal(host.dataset.selfCardHistory, 'unresolved');
+  assert.equal(host.dataset.opponentHate, 'unresolved');
+  assert.match(host.textContent, /TURN 5/);
+  assert.match(host.textContent, /SCORE A 21 \/ B 18/);
+  assert.equal(host.textContent.includes('P1'), false);
+  assert.equal(host.textContent.includes('HATE'), false);
+  assert.equal(fake.head.children.length, 1);
 });
 
 test('consumer adapter delivers exactly one frozen sanitized projection and no caller context', () => {

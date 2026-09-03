@@ -20,15 +20,17 @@
   "leaseSnapshotReadbackAtJst": "2026-09-03 23:26 JST",
   "leaseUntilJst": "2026-09-04 00:26 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:N6",
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/battle-hand7-honey-r3-20260903 only: browser/GAMEROAD.html; tests/browser-static-check.mjs; transient data/preaction-authorizations/BATTLE-HAND7-HONEY-R3-20260903T2326-SOL-K7M4Q2.json; transient .github/workflows/zz-temp-battle-hand7-honey-r3.yml exact-patch executor; own PR/checks/expected-head merge/public deploy if gates pass; CURRENT_ACTIVE_LEASES own AcquireKey row only",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/battle-hand7-honey-r3-20260903 only: browser/GAMEROAD.html; tests/browser-static-check.mjs; transient data/preaction-authorizations/BATTLE-HAND7-HONEY-R3-20260903T2326-SOL-K7M4Q2.json; transient .github/workflows/zz-temp-battle-hand7-honey-r3.yml; transient scripts/zz-temp-battle-hand7-honey-r3.py; own PR/checks/expected-head merge/public deploy if gates pass; CURRENT_ACTIVE_LEASES own AcquireKey row only",
   "scope": [
     "browser/GAMEROAD.html",
     "tests/browser-static-check.mjs",
-    ".github/workflows/zz-temp-battle-hand7-honey-r3.yml"
+    ".github/workflows/zz-temp-battle-hand7-honey-r3.yml",
+    "scripts/zz-temp-battle-hand7-honey-r3.py"
   ],
   "leaseScope": [
     "browser/GAMEROAD.html",
     "tests/browser-static-check.mjs",
-    ".github/workflows/zz-temp-battle-hand7-honey-r3.yml"
+    ".github/workflows/zz-temp-battle-hand7-honey-r3.yml",
+    "scripts/zz-temp-battle-hand7-honey-r3.py"
   ]
 }

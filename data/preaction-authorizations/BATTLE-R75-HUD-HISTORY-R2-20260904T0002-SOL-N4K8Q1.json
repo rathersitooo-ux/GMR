@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-R75-HUD-HISTORY-R2-20260904T0002-SOL-N4K8Q1",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_R75_TURN_SCORE_CARD_HISTORY_R2_CURRENT",
+  "acquireKey": "BATTLE-R75-HUD-HISTORY-R2-20260904T0002-SOL-N4K8Q1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R75-current-public-replay-turn-team-score-gap-20260904",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "current-partner-battle-event-projection-contract-and-existing-node-tests",
+  "proceedToken": "PROCEED|BATTLE-R75-HUD-HISTORY-R2-20260904T0002-SOL-N4K8Q1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|r75-turn-score-summary",
+  "authorizationBaseSha": "e2ef3c749d4b99a6b06e8d33101b4144a97a3408",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_R75_TURN_SCORE_CARD_HISTORY_R2_CURRENT",
+  "leaseAcquireKey": "BATTLE-R75-HUD-HISTORY-R2-20260904T0002-SOL-N4K8Q1",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 00:02 JST",
+  "leaseUntilJst": "2026-09-04 01:02 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A334:L334",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@e2ef3c749d4b99a6b06e8d33101b4144a97a3408; branch work/battle-r75-hud-summary-r3-20260904; mutable only browser/partner-battle-event-log-projection.mjs; tests/partner-battle-event-log-projection.test.mjs; transient PRE_ACTION manifest first commit + cleanup deletion; own PR/checks/expected-head merge; CURRENT_ACTIVE_LEASES own AcquireKey row only",
+  "scope": [
+    "browser/partner-battle-event-log-projection.mjs",
+    "tests/partner-battle-event-log-projection.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-battle-event-log-projection.mjs",
+    "tests/partner-battle-event-log-projection.test.mjs"
+  ]
+}

@@ -19,7 +19,7 @@ const FORMAL_SELECTED3_SFX_BLOBS = Object.freeze({
 });
 const FORMAL_PARTNER_CONVERSATION_BLOBS = Object.freeze({
   core: '7ec1af5ffa9f8255a4b64eb5ecc2905d999a59a8',
-  saasunaSource: 'f2b1bfda9c9a5d9d2511e735b17059a0d2b6a4cc',
+  saasunaSource: 'd6fcbcc8856b231b38f558e6d2487ac43545ad36',
 });
 
 const ARTIFACT_SPECS = Object.freeze([

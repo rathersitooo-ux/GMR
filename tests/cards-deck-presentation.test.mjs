@@ -10,6 +10,7 @@ import {
   createDeckSwipeFeedbackDetail,
   createDeckSwipePresentationController,
   createDeckSwipeSfxPlayer,
+  isNeutralizedDeckEditorSwipe,
   presentDeckAddSwipe,
 } from '../browser/cards-deck-presentation.mjs';
 
@@ -136,6 +137,12 @@ test('live Deck add binding rejects without fake landing and presentation failur
     sourceElement: source,
     cardId: 'c9',
   }), false);
+});
+
+test('neutralized card left-swipe is explicitly recognized for follow-up click suppression', () => {
+  assert.equal(isNeutralizedDeckEditorSwipe({ action: 'none', consumed: true }), true);
+  assert.equal(isNeutralizedDeckEditorSwipe({ action: 'none' }), false);
+  assert.equal(isNeutralizedDeckEditorSwipe({ action: 'deck-add', consumed: true }), false);
 });
 
 test('rect normalization preserves usable centers without trusting right/bottom', () => {

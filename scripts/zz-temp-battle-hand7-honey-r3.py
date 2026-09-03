@@ -1,124 +1,17 @@
 from pathlib import Path
 import re
 
-html_path = Path('browser/GAMEROAD.html')
-test_path = Path('tests/browser-static-check.mjs')
-html = html_path.read_text(encoding='utf-8')
-static = test_path.read_text(encoding='utf-8')
-
-
-def replace_once(text, old, new, label):
-    count = text.count(old)
-    if count != 1:
-        raise SystemExit(f'{label}: expected 1 exact match, got {count}')
-    return text.replace(old, new, 1)
-
-
-html = replace_once(html, 'const hand=deck.splice(0,3);', 'const hand=deck.splice(0,7);', 'initial-hand-7')
-html = replace_once(html, 'mana,awake:0,chip:', 'mana,awake:0,honey:0,chip:', 'player-owned-honey-init')
-html = replace_once(
-    html,
-    'position:p.position,awake:Number(p.awake)||0,mana:',
-    'position:p.position,awake:Number(p.awake)||0,honey:Number(p.honey)||0,mana:',
-    'friend-honey-projection',
-)
-
-old_rank = "function ranksFFA(){const ps=state.match.players.map(p=>({p,depth:Math.max(...Object.values(p.lanes).map(a=>a.length))})).sort((a,b)=>b.depth-a.depth);let prev=null,rank=0;return ps.map((x,i)=>{if(prev===null||x.depth!==prev)rank=i+1;prev=x.depth;return{player:x.p,rank,depth:x.depth}})}"
-new_rank = "function currentPlacementRanks(m=state.match){const ps=m.players.map(p=>({p,depth:Math.max(...Object.values(p.lanes).map(a=>a.length))})).sort((a,b)=>b.depth-a.depth);let prev=null,rank=0;return ps.map((x,i)=>{if(prev===null||x.depth!==prev)rank=i+1;prev=x.depth;return{player:x.p,rank,depth:x.depth}})}\nfunction awardRoundStartHoney(m){for(const row of currentPlacementRanks(m)){const gain=Math.max(1,Number(row.rank)||1);row.player.honey=Math.max(0,Number(row.player.honey)||0)+gain;log(`${row.player.name}：${gain}位のためハニー+${gain}。`)}}\nfunction ranksFFA(){return currentPlacementRanks(state.match)}"
-html = replace_once(html, old_rank, new_rank, 'reuse-current-ranking-for-honey')
-
-html = replace_once(
-    html,
-    "state.match.selectionLock=grCreateSelectionLock(state.match,'P1');grBattleReplayBegin(state.match);initRoundRuntime(state.match);",
-    "state.match.selectionLock=grCreateSelectionLock(state.match,'P1');grBattleReplayBegin(state.match);awardRoundStartHoney(state.match);initRoundRuntime(state.match);",
-    'initial-round-honey-award',
-)
-html = replace_once(
-    html,
-    'm.players.forEach(p=>p.plan=null);initRoundRuntime(m);',
-    'm.players.forEach(p=>p.plan=null);awardRoundStartHoney(m);initRoundRuntime(m);',
-    'later-round-honey-award',
-)
-
-auto_mana_pattern = re.compile(r'p\.awake\s*=\s*Math\.min\(\s*p\.mana\.length\s*,\s*p\.awake\s*\+\s*1\s*\)')
-hits = list(auto_mana_pattern.finditer(html))
+html = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+pattern = re.compile(r'p\.awake\s*=\s*Math\.min\(\s*p\.mana\.length\s*,\s*p\.awake\s*\+\s*1\s*\)')
+hits = list(pattern.finditer(html))
+print('AUTO_MANA_HIT_COUNT', len(hits))
 if len(hits) != 2:
-    raise SystemExit(f'legacy-generic-mana-wake: expected 2 residuals, got {len(hits)}')
-
-for _ in range(2):
-    hit = auto_mana_pattern.search(html)
-    if not hit:
-        raise SystemExit('legacy-generic-mana-wake disappeared during bounded removal')
-    start = html.rfind('if(!isHoneyHuntMode()', 0, hit.start())
-    if start < 0 or hit.start() - start > 800:
-        raise SystemExit('legacy-generic-mana-wake: enclosing guard not found')
-    brace = html.find('{', start, hit.start())
-    if brace < 0:
-        raise SystemExit('legacy-generic-mana-wake: opening brace not found')
-    depth = 0
-    end = None
-    quote = None
-    escape = False
-    for i in range(brace, len(html)):
-        ch = html[i]
-        if quote is not None:
-            if escape:
-                escape = False
-            elif ch == '\\':
-                escape = True
-            elif ch == quote:
-                quote = None
-            continue
-        if ch in ('"', "'", '`'):
-            quote = ch
-            continue
-        if ch == '{':
-            depth += 1
-        elif ch == '}':
-            depth -= 1
-            if depth == 0:
-                end = i + 1
-                break
-    if end is None:
-        raise SystemExit('legacy-generic-mana-wake: closing brace not found')
-    block = html[start:end]
-    if 'road.card' not in block or 'effect_type' not in block or not auto_mana_pattern.search(block):
-        raise SystemExit('legacy-generic-mana-wake: guard identity mismatch')
-    html = html[:start] + html[end:]
-
-if auto_mana_pattern.search(html):
-    raise SystemExit('legacy-generic-mana-wake remains after bounded removal')
-if 'function awakeManaFromHoney(' not in html:
-    raise SystemExit('Honey Hunt Mana wake authority was accidentally removed')
-
-marker = '  errors.push(...collectHomeVisualShellErrors(html));\n'
-if static.count(marker) != 1:
-    raise SystemExit(f'static-contract-marker: expected 1, got {static.count(marker)}')
-contract = """  const correctedBattleResourceContracts = [
-    [/const hand=deck\\.splice\\(0,7\\);/, 'fresh Battle ordinary hand is not initialized to seven'],
-    [/function refill\\(p\\)\\{while\\(p\\.hand\\.length<3&&p\\.deck\\.length\\)p\\.hand\\.push\\(p\\.deck\\.shift\\(\\)\\)\\}/, 'post-use refill target is no longer three'],
-    [/mana,awake:0,honey:0,chip:/, 'player-owned Honey balance is not initialized'],
-    [/function currentPlacementRanks\\(m=state\\.match\\)/, 'current placement ranking was not made reusable for round income'],
-    [/function awardRoundStartHoney\\(m\\)/, 'round-start Honey income is not mounted'],
-    [/grBattleReplayBegin\\(state\\.match\\);awardRoundStartHoney\\(state\\.match\\);initRoundRuntime\\(state\\.match\\)/, 'round one does not award current-rank Honey before play'],
-    [/m\\.players\\.forEach\\(p=>p\\.plan=null\\);awardRoundStartHoney\\(m\\);initRoundRuntime\\(m\\)/, 'later rounds do not award current-rank Honey'],
-    [/position:p\\.position,awake:Number\\(p\\.awake\\)\\|\\|0,honey:Number\\(p\\.honey\\)\\|\\|0,mana:/, 'friend projection drops player-owned Honey'],
-    [/function awakeManaFromHoney\\(/, 'Honey Hunt node-Honey Mana wake authority was removed'],
-  ];
-  for (const [pattern, message] of correctedBattleResourceContracts) {
-    if (!pattern.test(html)) errors.push(message);
-  }
-  if (/p\\.awake\\s*=\\s*Math\\.min\\(\\s*p\\.mana\\.length\\s*,\\s*p\\.awake\\s*\\+\\s*1\\s*\\)/.test(html)) {
-    errors.push('legacy generic no-effect-road Mana +1 wake remains');
-  }
-"""
-static = static.replace(marker, marker + contract, 1)
-
-html_path.write_text(html, encoding='utf-8')
-test_path.write_text(static, encoding='utf-8')
-print('PATCH_OK')
-print('initial_hand_7', html.count('const hand=deck.splice(0,7);'))
-print('refill_to_3', html.count('while(p.hand.length<3&&p.deck.length)'))
-print('round_honey_calls', html.count('awardRoundStartHoney('))
-print('generic_mana_plus_one', len(auto_mana_pattern.findall(html)))
-print('honey_hunt_wake_preserved', html.count('function awakeManaFromHoney('))
+    raise SystemExit(f'expected exactly 2 legacy generic Mana +1 residuals, got {len(hits)}')
+for index, hit in enumerate(hits, 1):
+    start = max(0, hit.start() - 1000)
+    end = min(len(html), hit.end() + 1000)
+    context = html[start:end].replace('\r', '')
+    print(f'===== AUTO_MANA_CONTEXT_{index}_BEGIN =====')
+    print(context)
+    print(f'===== AUTO_MANA_CONTEXT_{index}_END =====')
+raise SystemExit('INSPECTION_ONLY_STOP_BEFORE_PRODUCT_MUTATION')

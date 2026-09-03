@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "STORY-PUBLIC-DEINTEGRATION-R3-20260903T1251-SOL-H4M8Q2",
+  "taskId": "STORY-COMMON-RUNTIME-CONTRACT-001",
+  "workUnitKey": "STORY_PUBLIC_DEINTEGRATION_R3_PHYSICAL_CLEANUP",
+  "acquireKey": "STORY-PUBLIC-DEINTEGRATION-R3-20260903T1251-SOL-H4M8Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R2-MAIN-AB65D588-STORY-INERT-PLUS-CURRENT-DEAD-REFERENCES",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXACT-PR935-STORY-REFERENCE-BOUNDARY-ON-FRESH-MAIN",
+  "proceedToken": "PROCEED|STORY-PUBLIC-DEINTEGRATION-R3-20260903T1251-SOL-H4M8Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-actual|lease-snapshot",
+  "authorizationBaseSha": "ab65d588decab75596cb3d3914aa964a72aab44c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "STORY-COMMON-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "STORY_PUBLIC_DEINTEGRATION_R3_PHYSICAL_CLEANUP",
+  "leaseAcquireKey": "STORY-PUBLIC-DEINTEGRATION-R3-20260903T1251-SOL-H4M8Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-03 12:51 JST",
+  "leaseUntilJst": "2026-09-03 13:51 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A325:L325",
+  "leaseExactMutableResources": "browser/home-boot-runtime-mount.mjs; browser/story-first-scene-runtime-mount.mjs; deploy/cloudflare/scripts/build.mjs; tests/story-first-scene-runtime-mount.test.mjs",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "browser/story-first-scene-runtime-mount.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/story-first-scene-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "browser/story-first-scene-runtime-mount.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/story-first-scene-runtime-mount.test.mjs"
+  ]
+}

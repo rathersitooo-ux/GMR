@@ -5,6 +5,7 @@ import {
   createDeckStorageCornerController,
   mountDeckStorageCorner,
 } from './deck-storage-corner-runtime.mjs';
+import { installLocalFanArtSkinMount } from './fanart-local-card-skin-runtime.mjs';
 
 const deckStorageLiveInstallations = new WeakMap();
 
@@ -220,7 +221,10 @@ export function installDeckStorageLiveMount({
 }
 
 function autoInstallDeckStorageLiveMount(doc, win) {
-  const install = () => installDeckStorageLiveMount({ document: doc, window: win });
+  const install = () => {
+    installDeckStorageLiveMount({ document: doc, window: win });
+    installLocalFanArtSkinMount({ document: doc, window: win });
+  };
   if (doc?.readyState === 'loading') doc.addEventListener?.('DOMContentLoaded', install, { once: true });
   else install();
 }

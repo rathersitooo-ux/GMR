@@ -63,6 +63,31 @@ test('live consumer closes Home route -> existing Battle -> reward skip -> next 
   });
 });
 
+test('Home continue reopens existing Setup when a chosen Rogue route has not started Battle yet', () => {
+  const fixture = hostFixture();
+  const runtime = createRogueRunConsumerController({ host: fixture.host });
+
+  runtime.start();
+  runtime.chooseRoute('battle');
+  const chosen = runtime.getSnapshot();
+  assert.equal(chosen.run.phase, 'AWAITING_ROUTE');
+  assert.equal(chosen.pendingRouteKind, 'battle');
+  assert.equal(fixture.counts().setupCount, 1);
+
+  fixture.setScreen('home');
+  const resumed = runtime.start();
+  assert.equal(fixture.counts().setupCount, 2);
+  assert.equal(resumed.run.phase, 'AWAITING_ROUTE');
+  assert.equal(resumed.pendingRouteKind, 'battle');
+  assert.deepEqual(resumed.run, chosen.run);
+
+  fixture.setMatch({ matchId: 'match-resumed', result: null });
+  fixture.setScreen('battle');
+  assert.equal(runtime.observe(), true);
+  assert.equal(runtime.getSnapshot().run.phase, 'AWAITING_BATTLE_RESULT');
+  assert.equal(runtime.getSnapshot().pendingRouteKind, null);
+});
+
 test('consumer never invents a reward selection or duplicate Battle result', () => {
   const fixture = hostFixture();
   const runtime = createRogueRunConsumerController({ host: fixture.host });

@@ -18,6 +18,7 @@ export function createNewBaseGoalRuntime({ matchId } = {}) {
   return Object.freeze({
     schema: RUNTIME_SCHEMA,
     matchId: matchId.trim(),
+    victoryColumnComplete: false,
     terminal: createNewBaseGoalTerminalState({ matchId })
   });
 }
@@ -35,12 +36,20 @@ export function applyNewBaseGoalRuntimeFact(runtime, fact) {
   }
 
   // Human-authored new-base rule: completing the victory column alone is not a win.
-  // GOAL can terminate the match only after that prerequisite is already true.
+  // GOAL can terminate the match only after that prerequisite has been recorded.
   if (fact.type === 'VICTORY_COLUMN_COMPLETED') {
-    return Object.freeze({ accepted: true, duplicate: false, reason: 'VICTORY_COLUMN_RECORDED', runtime });
+    const nextRuntime = runtime.victoryColumnComplete
+      ? runtime
+      : Object.freeze({ ...runtime, victoryColumnComplete: true });
+    return Object.freeze({
+      accepted: true,
+      duplicate: runtime.victoryColumnComplete,
+      reason: runtime.victoryColumnComplete ? 'DUPLICATE_VICTORY_COLUMN_FACT' : 'VICTORY_COLUMN_RECORDED',
+      runtime: nextRuntime
+    });
   }
   if (fact.type !== 'GOAL_REACHED') return rejection(runtime, 'GOAL_REACHED_REQUIRED');
-  if (fact.victoryColumnComplete !== true) {
+  if (runtime.victoryColumnComplete !== true) {
     return rejection(runtime, 'VICTORY_COLUMN_REQUIRED_BEFORE_GOAL');
   }
 

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "SLIDEPAD-HOME-MODE-ROLL-PROVENANCE-R1-20260904T2200-SOL",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "GLOBAL_SLIDEPAD_SLOTROLL_HOME_MODE_R1",
+  "acquireKey": "SLIDEPAD-HOME-MODE-ROLL-R1-20260904T2151-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1066-Required-Gate-33875625404-public-package-provenance-failure",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing-ARTIFACT_SPECS-plus-dependencyContract-fail-closed-oracle",
+  "proceedToken": "PROCEED|SLIDEPAD-HOME-MODE-ROLL-PROVENANCE-R1-20260904T2200-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|slidepad-home-mode-roll-provenance-r1",
+  "authorizationBaseSha": "cc83e22294feb1e0f8281e615e8e8ec70108c9df",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "GLOBAL_SLIDEPAD_SLOTROLL_HOME_MODE_R1",
+  "leaseAcquireKey": "SLIDEPAD-HOME-MODE-ROLL-R1-20260904T2151-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 22:02 JST",
+  "leaseUntilJst": "2026-09-04 22:51 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "scope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/SLIDEPAD-HOME-MODE-ROLL-PROVENANCE-R1-20260904T2200-SOL.json"
+  ],
+  "solutionSignature": "Repair the directly reproduced public-package provenance failure by registering the already-existing slidepad-slot-roll-core.mjs in the existing Cloudflare artifact registry and dependency contract, and by updating only the Home runtime current blob witness. No new packaging mechanism or CI lane.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "PR#1066 Required Gate PRE_ACTION passed and then failed exactly at Public package provenance invariant",
+    "home-boot-runtime-mount.mjs now imports ./slidepad-slot-roll-core.mjs",
+    "deploy/cloudflare/scripts/build.mjs already owns Browser runtime ARTIFACT_SPECS and recursive dependency completeness",
+    "slidepad-slot-roll-core.mjs is absent from that artifact registry",
+    "the repair does not change gameplay, navigation meaning, save/network, or create a second package system"
+  ]
+}

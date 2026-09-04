@@ -17,25 +17,29 @@ function goalFact(overrides = {}) {
     actorId: 'p1',
     goalId: 'goal-a',
     winnerIds: ['p1', 'p2'],
-    victoryColumnComplete: true,
     ...overrides
   };
 }
 
+function recordVictoryColumn(runtime) {
+  return applyNewBaseGoalRuntimeFact(runtime, {
+    type: 'VICTORY_COLUMN_COMPLETED',
+    authoritative: true,
+    matchId: 'match-1'
+  }).runtime;
+}
+
 test('GOAL cannot end the match before the victory-column prerequisite', () => {
   const runtime = createNewBaseGoalRuntime({ matchId: 'match-1' });
-  const result = applyNewBaseGoalRuntimeFact(
-    runtime,
-    goalFact({ victoryColumnComplete: false })
-  );
+  const result = applyNewBaseGoalRuntimeFact(runtime, goalFact());
 
   assert.equal(result.accepted, false);
   assert.equal(result.reason, 'VICTORY_COLUMN_REQUIRED_BEFORE_GOAL');
   assert.equal(runtime.terminal.status, 'ACTIVE');
 });
 
-test('authoritative GOAL after victory-column completion finalizes the existing result core', () => {
-  const runtime = createNewBaseGoalRuntime({ matchId: 'match-1' });
+test('authoritative GOAL after recorded victory-column completion finalizes the existing result core', () => {
+  const runtime = recordVictoryColumn(createNewBaseGoalRuntime({ matchId: 'match-1' }));
   const result = applyNewBaseGoalRuntimeFact(runtime, goalFact());
 
   assert.equal(result.accepted, true);
@@ -45,9 +49,9 @@ test('authoritative GOAL after victory-column completion finalizes the existing 
   assert.deepEqual(result.finalizedResult.winnerIds, ['p1', 'p2']);
 });
 
-test('victory-column completion alone remains non-terminal', () => {
-  const runtime = createNewBaseGoalRuntime({ matchId: 'match-1' });
-  const result = applyNewBaseGoalRuntimeFact(runtime, {
+test('victory-column completion is recorded but remains non-terminal', () => {
+  const initial = createNewBaseGoalRuntime({ matchId: 'match-1' });
+  const result = applyNewBaseGoalRuntimeFact(initial, {
     type: 'VICTORY_COLUMN_COMPLETED',
     authoritative: true,
     matchId: 'match-1'
@@ -55,11 +59,21 @@ test('victory-column completion alone remains non-terminal', () => {
 
   assert.equal(result.accepted, true);
   assert.equal(result.reason, 'VICTORY_COLUMN_RECORDED');
+  assert.equal(result.runtime.victoryColumnComplete, true);
   assert.equal(result.runtime.terminal.status, 'ACTIVE');
+
+  const duplicate = applyNewBaseGoalRuntimeFact(result.runtime, {
+    type: 'VICTORY_COLUMN_COMPLETED',
+    authoritative: true,
+    matchId: 'match-1'
+  });
+  assert.equal(duplicate.accepted, true);
+  assert.equal(duplicate.duplicate, true);
+  assert.equal(duplicate.reason, 'DUPLICATE_VICTORY_COLUMN_FACT');
 });
 
 test('runtime adapter does not invent rank, reward, or tie semantics', () => {
-  const runtime = createNewBaseGoalRuntime({ matchId: 'match-1' });
+  const runtime = recordVictoryColumn(createNewBaseGoalRuntime({ matchId: 'match-1' }));
   const result = applyNewBaseGoalRuntimeFact(runtime, goalFact());
 
   assert.equal(Object.hasOwn(result.finalizedResult, 'ranking'), false);

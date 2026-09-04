@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-SECONDARY-TOUCH-PRIORITY-R1-20260905T0252-SOL-H7K3P6",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "HOME_SECONDARY_TOUCH_PRIORITY_R1",
+  "acquireKey": "HOME-SECONDARY-TOUCH-PRIORITY-R1-20260905T0252-SOL-H7K3P6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-HOME-WIDE-ONLY-FRAMELESS-SECONDARY-UTILITY-DEFECT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT-CSS-DIFF-PLUS-HOME-44PX-VIEWPORT-REGRESSION-ORACLE",
+  "proceedToken": "PROCEED|HOME-SECONDARY-TOUCH-PRIORITY-R1-20260905T0252-SOL-H7K3P6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "07900ed371f6f8213836fc998886164cb718ae98",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "HOME_SECONDARY_TOUCH_PRIORITY_R1",
+  "leaseAcquireKey": "HOME-SECONDARY-TOUCH-PRIORITY-R1-20260905T0252-SOL-H7K3P6",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 02:52 JST",
+  "leaseUntilJst": "2026-09-05 03:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A300:L300",
+  "leaseExactMutableResources": "Drive Sheet 1QKCll_T9ej6K96fRkRUESCAIYVGbsCYZILGIWMUdm2Y mutable GAMEROAD 全作業一覧 Y2:AB2 + Y1237:AB1237 + Y1336:AB1336 + Y1375:AB1375; GitHub:rathersitooo-ux/GMR main@07900ed371f6f8213836fc998886164cb718ae98 mutable browser/home-boot-runtime-mount.mjs + tests/home-boot-presentation.test.mjs + transient data/preaction-authorizations/HOME-SECONDARY-TOUCH-PRIORITY-R1-20260905T0252-SOL-H7K3P6.json on branch work/home-secondary-touch-priority-r1-20260905; browser/GAMEROAD.html, gameplay/rules/save/economy/network/assets READ_ONLY.",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "solutionSignature": "Adapt the existing current Home secondary utility CSS so its already-accepted frameless 44px utility presentation applies consistently to short-landscape and portrait as well as wide, without changing routes or hit semantics.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "reuse-current-wide-home-secondary-utility-presentation",
+  "solutionSearchEvidence": [
+    "repo:browser/home-boot-runtime-mount.mjs@07900ed371f6f8213836fc998886164cb718ae98",
+    "repo:tests/home-boot-presentation.test.mjs@07900ed371f6f8213836fc998886164cb718ae98",
+    "Drive:row2-R62-current-2026-09-05-override"
+  ]
+}

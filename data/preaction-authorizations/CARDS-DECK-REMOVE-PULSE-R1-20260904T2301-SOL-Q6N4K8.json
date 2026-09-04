@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-DECK-REMOVE-PULSE-R1-20260904T2301-SOL-Q6N4K8",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "CARDS_DECK_REMOVE_RETURN_PULSE_R1",
+  "acquireKey": "CARDS-DECK-REMOVE-PULSE-R1-20260904T2301-SOL-Q6N4K8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_EXPLICIT_DECK_LEFT_REMOVE_MOTION+DIRECT_USER_MOTION_FRAMES+CURRENT_RUNTIME_CONSUMER+FRESH_NO_OVERLAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_DECK_REMOVE_AUTHORITY+FOCUSED_RUNTIME_TEST+REDUCED_MOTION_FALLBACK",
+  "proceedToken": "PROCEED|CARDS-DECK-REMOVE-PULSE-R1-20260904T2301-SOL-Q6N4K8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ADAPT_EXISTING_RUNTIME_RETURN_PULSE",
+  "authorizationBaseSha": "7ec9f49bae0667ee46fc43673914ece67367aef3",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "CARDS_DECK_REMOVE_RETURN_PULSE_R1",
+  "leaseAcquireKey": "CARDS-DECK-REMOVE-PULSE-R1-20260904T2301-SOL-Q6N4K8",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 23:01 JST",
+  "leaseUntilJst": "2026-09-05 00:01 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A19:L19",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@7ec9f49bae0667ee46fc43673914ece67367aef3; branch work/cards-deck-remove-return-pulse-r1-20260904; mutable browser/deck-storage-corner-runtime.mjs@a5c2c360244debc0395876f9c0571308703a782b + tests/deck-storage-corner-runtime.test.mjs@8baa89960c48747e015489bbff8903bb6da8ab9c + transient data/preaction-authorizations/CARDS-DECK-REMOVE-PULSE-R1-20260904T2301-SOL-Q6N4K8.json; own PR/checks/expected-head merge/readback. browser/cards-deck-presentation.mjs and tests/cards-deck-presentation.test.mjs READ_ONLY due current FanArt owners; core swipe routing already merged main@7ec9f49.",
+  "scope": [
+    "browser/deck-storage-corner-runtime.mjs",
+    "tests/deck-storage-corner-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/deck-storage-corner-runtime.mjs",
+    "tests/deck-storage-corner-runtime.test.mjs"
+  ]
+}

@@ -1737,6 +1737,29 @@ test('R19 reaches Result from visible four-player Honey Hunt and returns Home', 
   expect(presentationAdvances).toBeGreaterThan(0);
   await expect(result.locator('#resultRanking .rankLine')).toHaveCount(4);
   await assertVisibleResultRankPresentation(result);
+  await expect(result.locator('#resultHeadline'), 'R84 removes the duplicate primary Result label from visual presentation').toBeHidden();
+  const resultViewport = page.viewportSize();
+  expect(resultViewport, 'R84 Result viewport exists').not.toBeNull();
+  const resultRankBox = await result.locator('.resultRank').boundingBox();
+  const resultGradeBox = await result.locator('#resultGrade').boundingBox();
+  const resultBodyBox = await result.locator('.resultBody').boundingBox();
+  const resultButtonsGeometry = await result.locator('.resultBtns').boundingBox();
+  const resultCharacter = result.locator('.resultWorld .grtc-image:visible').first();
+  await expect(resultCharacter, 'R84 Result keeps the current character visible').toBeVisible({ timeout: 5_000 });
+  const resultCharacterBox = await resultCharacter.boundingBox();
+  for (const [name, box] of [['rank', resultRankBox], ['grade', resultGradeBox], ['body', resultBodyBox], ['buttons', resultButtonsGeometry], ['character', resultCharacterBox]]) {
+    expect(box, `R84 ${name} has geometry`).not.toBeNull();
+    expect(box.x, `R84 ${name} left edge stays in viewport`).toBeGreaterThanOrEqual(-1);
+    expect(box.y, `R84 ${name} top edge stays in viewport`).toBeGreaterThanOrEqual(-1);
+    expect(box.x + box.width, `R84 ${name} right edge stays in viewport`).toBeLessThanOrEqual(resultViewport.width + 1);
+    expect(box.y + box.height, `R84 ${name} bottom edge stays in viewport`).toBeLessThanOrEqual(resultViewport.height + 1);
+  }
+  expect(resultGradeBox.x, 'R84 primary outcome starts inside its Result column').toBeGreaterThanOrEqual(resultRankBox.x - 1);
+  expect(resultGradeBox.x + resultGradeBox.width, 'R84 primary outcome no longer spills out of its Result column').toBeLessThanOrEqual(resultRankBox.x + resultRankBox.width + 1);
+  const characterBodyOverlap = Math.max(0, Math.min(resultCharacterBox.x + resultCharacterBox.width, resultBodyBox.x + resultBodyBox.width) - Math.max(resultCharacterBox.x, resultBodyBox.x))
+    * Math.max(0, Math.min(resultCharacterBox.y + resultCharacterBox.height, resultBodyBox.y + resultBodyBox.height) - Math.max(resultCharacterBox.y, resultBodyBox.y));
+  expect(characterBodyOverlap, 'R84 character never covers Result cause/reward/ranking content').toBe(0);
+  expect(resultCharacterBox.y + resultCharacterBox.height, 'R84 character clears the Result action row').toBeLessThanOrEqual(resultButtonsGeometry.y + 1);
   const rankingViewport = await result.locator('#resultRanking').boundingBox();
   expect(rankingViewport, 'R20 result ranking viewport must have geometry').not.toBeNull();
   const rankingRows = await result.locator('#resultRanking .rankLine').evaluateAll((rows) => rows.map((row) => {

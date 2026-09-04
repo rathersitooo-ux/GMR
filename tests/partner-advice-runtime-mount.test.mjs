@@ -4,6 +4,7 @@ import {
   createPartnerAdviceReplayBridge,
   createPartnerAdviceRuntimeControl,
   createTutorialPartnerGuideControl,
+  isPartnerAdviceQuickReplyAvailable,
   projectPartnerAdviceBoardEmphasis,
 } from '../browser/partner-advice-runtime-mount.mjs';
 
@@ -256,6 +257,19 @@ test('projection gate is mandatory and never implies automatic execution', () =>
   assert.equal(projection.clear, true);
   assert.equal(projection.reason, 'PROJECTION_GATE_REQUIRED');
   assert.equal(projection.autoExecute, false);
+});
+
+test('battle quick reply is available only for Saasuna with an exact current match id', () => {
+  assert.equal(isPartnerAdviceQuickReplyAvailable({ partnerId: 'partner.saasuna', matchId: 'match-42' }), true);
+  for (const input of [
+    { partnerId: 'partner.other', matchId: 'match-42' },
+    { partnerId: 'partner.saasuna', matchId: null },
+    { partnerId: 'partner.saasuna', matchId: '' },
+    { partnerId: 'partner.saasuna', matchId: ' match-42' },
+    { partnerId: 'partner.saasuna', matchId: 'match-42 ' },
+  ]) {
+    assert.equal(isPartnerAdviceQuickReplyAvailable(input), false);
+  }
 });
 
 test('Tutorial Battle starts Saasuna auto guide on and disabling it never disables on-demand conversation', () => {

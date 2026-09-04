@@ -59,7 +59,7 @@ export function createSlotRollState({ items = [], anchorIndex = 0 } = {}) {
 
 export function stepSlotRoll(state, direction) {
   if (!state || state.schema !== SLIDEPAD_SLOT_ROLL_SCHEMA) throw new Error('state must be a Slot Roll state');
-  if (!state.items.length) return state;
+  if (state.items.length < 2) return state;
   const sign = Math.sign(finite(direction, 'direction'));
   if (sign === 0) return state;
   return freezeState({
@@ -75,7 +75,7 @@ export function advanceSlotRollDrag(state, { deltaPx = 0, detentPx } = {}) {
   if (!state || state.schema !== SLIDEPAD_SLOT_ROLL_SCHEMA) throw new Error('state must be a Slot Roll state');
   const delta = finite(deltaPx, 'deltaPx');
   const detent = positive(detentPx, 'detentPx');
-  if (!state.items.length || delta === 0) {
+  if (state.items.length < 2 || delta === 0) {
     return Object.freeze({ state, detents: Object.freeze([]) });
   }
 
@@ -104,7 +104,7 @@ export function advanceSlotRollDrag(state, { deltaPx = 0, detentPx } = {}) {
   }
 
   return Object.freeze({
-    state: freezeState({ state, items: state.items, index, carryPx, totalSteps, lastDirection }),
+    state: freezeState({ items: state.items, index, carryPx, totalSteps, lastDirection }),
     detents: Object.freeze(detents),
   });
 }

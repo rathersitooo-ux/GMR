@@ -282,9 +282,9 @@ export function installDeckStorageCornerStyles(doc = globalThis.document) {
 .gr-storage-backdrop{position:fixed;left:12px;top:12px;right:auto;bottom:auto;z-index:2200;width:min(420px,46vw);max-width:calc(100vw - 24px);pointer-events:none;background:transparent;padding:0}
 .gr-storage-window{pointer-events:auto;width:100%;max-height:42vh;overflow:auto;background:rgba(17,24,39,.96);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:12px;box-shadow:0 10px 32px rgba(0,0,0,.34)}
 .gr-storage-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.gr-storage-title{font:800 16px/1.2 system-ui}.gr-storage-close{appearance:none;border:0;border-radius:9px;padding:6px 8px;cursor:pointer}
-.gr-storage-columns{display:grid;grid-template-columns:1fr 1fr;gap:8px}.gr-storage-column{min-width:0;background:rgba(255,255,255,.06);border-radius:11px;padding:8px}.gr-storage-column h3{margin:0 0 6px;font:800 13px/1.2 system-ui}.gr-storage-card{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;margin:5px 0;padding:7px 8px;border:1px solid rgba(255,255,255,.14);border-radius:9px;background:rgba(255,255,255,.08);color:#fff}.gr-storage-card-actions{display:flex;gap:5px}.gr-storage-card-actions button{cursor:pointer}
+.gr-storage-columns{display:grid;grid-template-columns:1fr 1fr;gap:8px}.gr-storage-column{min-width:0;background:rgba(255,255,255,.06);border-radius:11px;padding:8px}.gr-storage-column h3{margin:0 0 6px;font:800 13px/1.2 system-ui}.gr-storage-card{display:grid;grid-template-columns:54px minmax(0,1fr) auto;align-items:center;gap:6px;width:100%;margin:5px 0;padding:7px 8px;border:1px solid rgba(255,255,255,.14);border-radius:9px;background:rgba(255,255,255,.08);color:#fff}.gr-storage-card-visual{display:block;width:54px;aspect-ratio:5/7;overflow:hidden;border-radius:6px;background:rgba(255,255,255,.08);pointer-events:none}.gr-storage-card-visual>*{display:block;max-width:100%;width:100%;height:100%;object-fit:cover;pointer-events:none}.gr-storage-card-actions{display:flex;gap:5px}.gr-storage-card-actions button{cursor:pointer}
 .gr-storage-discovery-hint{position:absolute;left:12px;bottom:12px;z-index:3;pointer-events:none;user-select:none;border-radius:999px;padding:6px 10px;background:rgba(17,24,39,.72);border:1px solid rgba(255,216,74,.72);color:#fff3bd;font:800 12px/1 system-ui;letter-spacing:.01em;box-shadow:0 5px 18px rgba(0,0,0,.2)}
-@media(max-width:560px){.gr-storage-backdrop{left:8px;top:8px;width:min(310px,58vw);max-width:calc(100vw - 16px)}.gr-storage-window{max-height:38vh;padding:9px}.gr-storage-columns{grid-template-columns:1fr 1fr;gap:6px}.gr-storage-card{display:block;padding:6px}.gr-storage-card-actions{margin-top:5px}.gr-storage-discovery-hint{left:8px;bottom:8px;padding:5px 8px;font-size:11px}}
+@media(max-width:560px){.gr-storage-backdrop{left:8px;top:8px;width:min(310px,58vw);max-width:calc(100vw - 16px)}.gr-storage-window{max-height:38vh;padding:9px}.gr-storage-columns{grid-template-columns:1fr 1fr;gap:6px}.gr-storage-card{grid-template-columns:44px minmax(0,1fr);padding:6px}.gr-storage-card-visual{width:44px}.gr-storage-card-actions{grid-column:2;margin-top:5px;flex-wrap:wrap}.gr-storage-discovery-hint{left:8px;bottom:8px;padding:5px 8px;font-size:11px}}
 `;
   doc.head.appendChild(style);
 }
@@ -453,10 +453,37 @@ export function mountDeckStorageCorner({
     renderButton();
   };
 
+  const cloneStorageVisual = (id) => {
+    const card = findCollectionCard(id) ?? findDeckCard(id);
+    const source = card?.querySelector?.('img,[data-card-art],.card-art,.card-image') ?? card;
+    if (!source?.cloneNode) return null;
+    const clone = source.cloneNode(true);
+    clone.removeAttribute?.('id');
+    clone.removeAttribute?.('data-id');
+    clone.setAttribute?.('aria-hidden', 'true');
+    clone.setAttribute?.('tabindex', '-1');
+    for (const child of [...(clone.querySelectorAll?.('[id],[data-id],button,a,input,select,textarea,[tabindex],[role="button"],[role="link"]') ?? [])]) {
+      child.removeAttribute?.('id');
+      child.removeAttribute?.('data-id');
+      child.setAttribute?.('aria-hidden', 'true');
+      child.setAttribute?.('tabindex', '-1');
+      if ('disabled' in child) child.disabled = true;
+    }
+    return clone;
+  };
+
   const cardRow = (id) => {
     const row = doc.createElement('div');
     row.className = 'gr-storage-card';
     row.dataset.cardId = id;
+    const visualClone = cloneStorageVisual(id);
+    if (visualClone) {
+      const visual = doc.createElement('span');
+      visual.className = 'gr-storage-card-visual';
+      visual.setAttribute?.('aria-hidden', 'true');
+      visual.appendChild(visualClone);
+      row.appendChild(visual);
+    }
     const label = doc.createElement('span');
     label.textContent = String(getCardLabel(id));
     const actions = doc.createElement('span');
@@ -490,7 +517,7 @@ export function mountDeckStorageCorner({
     button.textContent = view.storageButtonLabel;
     button.dataset.overflow = view.overDeckLimit ? 'true' : 'false';
     button.setAttribute('aria-label', view.overDeckLimit
-      ? `デッキ選択 ${view.selectionCount}/${view.maxDeckSize}枚・超過分ストレージ ${view.storageCount}枚`
+      ? `デッキ上限を${view.overflowCount}枚超過・ストレージ ${view.storageCount}枚`
       : `ストレージ ${view.storageCount}枚`);
   }
 

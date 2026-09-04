@@ -1,0 +1,106 @@
+name: Temporary Result Player Clarity R84 Patch
+
+on:
+  push:
+    branches:
+      - sol/result-player-clarity-r84-r1-20260905
+    paths:
+      - '.github/workflows/result-player-clarity-r84-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  exact-patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify exact authorized base and inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 69f4ec540bb283df1b067ed0f1bcf8ad13093827 HEAD
+          test "$(git hash-object browser/GAMEROAD.html)" = "3b12e8f291ee27f68fee07983052b14dccef958d"
+          test "$(git hash-object tests/browser-full-interaction.spec.mjs)" = "46a3ef121ef3ab8641b2f7a7d19ceb3c4d77bfa0"
+          test -f data/preaction-authorizations/RESULT-PLAYER-CLARITY-R84-R1-20260905T0212-SOL-Q7M4P2.json
+      - name: Apply bounded Result presentation repair and same-path regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          html_path = Path('browser/GAMEROAD.html')
+          test_path = Path('tests/browser-full-interaction.spec.mjs')
+          html = html_path.read_text(encoding='utf-8')
+          tests = test_path.read_text(encoding='utf-8')
+
+          style_id = 'result-player-clarity-r84'
+          if style_id in html:
+              raise SystemExit('result clarity style already present; refusing duplicate patch')
+          if html.count('</head>') != 1:
+              raise SystemExit(f'unexpected </head> count: {html.count("</head>")}')
+
+          result_style = r'''<style id="result-player-clarity-r84">
+          /* R84 player-facing Result clarity repair. Presentation only: formal rank semantics remain owned by result-presentation-core.mjs. */
+          #resultHeadline{display:none!important}
+          .screen.result{overflow:hidden}
+          .resultWorld{left:0!important;right:56%!important;top:0!important;bottom:0!important;overflow:hidden!important}
+          .resultWorld .grtc-root{inset:12% 2% 16% 2%!important;align-items:flex-end!important;justify-content:center!important}
+          .resultWorld .grtc-image{width:auto!important;height:auto!important;max-width:94%!important;max-height:58%!important;object-fit:contain!important}
+          .resultRank{left:3%!important;top:11%!important;width:38%!important;overflow:hidden!important}
+          .grade{font-size:clamp(68px,9vw,124px)!important;line-height:.82!important;letter-spacing:-.04em!important;white-space:nowrap!important}
+          .resultBody{left:45%!important;right:3%!important;top:9%!important;bottom:20%!important}
+          @media(max-width:900px){
+            .resultRank{left:2.5%!important;width:39%!important}
+            .resultBody{left:44%!important;right:2%!important}
+          }
+          @media(max-height:470px) and (orientation:landscape){
+            .resultWorld{right:58%!important}
+            .resultWorld .grtc-root{inset:28% 2% 16% 2%!important}
+            .resultWorld .grtc-image{max-width:94%!important;max-height:56%!important}
+            .resultRank{left:2%!important;top:8%!important;width:38%!important}
+            .grade{font-size:clamp(48px,8vw,68px)!important;line-height:.84!important}
+            .resultRank .sub{font-size:7px!important;line-height:1.3!important}
+            .resultBody{left:43%!important;right:2%!important;top:7%!important;bottom:18%!important;padding:7px!important;gap:4px!important}
+          }
+          @media(max-width:540px) and (orientation:portrait){
+            .resultWorld{left:38%!important;right:3%!important;top:62px!important;bottom:auto!important;width:auto!important;height:186px!important}
+            .resultWorld .grtc-root{inset:0!important;align-items:flex-end!important;justify-content:center!important}
+            .resultWorld .grtc-image{width:auto!important;height:auto!important;max-width:100%!important;max-height:100%!important}
+            .resultRank{left:4%!important;right:auto!important;top:76px!important;width:31%!important}
+            .grade{font-size:clamp(56px,16vw,70px)!important;line-height:.88!important;letter-spacing:-.04em!important}
+            .resultRank .k{font-size:8px!important}
+            .resultRank .sub{font-size:8px!important;line-height:1.35!important;margin-top:7px!important}
+            .resultBody{left:3%!important;right:3%!important;top:264px!important;bottom:94px!important;padding:9px!important;gap:6px!important}
+            .resultBtns{left:3%!important;right:3%!important;bottom:14px!important;justify-content:stretch!important}
+          }
+          </style>
+          '''
+          html = html.replace('</head>', result_style + '</head>')
+
+          anchor = '''  await expect(result.locator('#resultRanking .rankLine')).toHaveCount(4);\n  await assertVisibleResultRankPresentation(result);\n'''
+          if tests.count(anchor) != 1:
+              raise SystemExit(f'unexpected R19 Result anchor count: {tests.count(anchor)}')
+          regression = anchor + '''  await expect(result.locator('#resultHeadline'), 'R84 removes the duplicate primary Result label from visual presentation').toBeHidden();\n  const resultViewport = page.viewportSize();\n  expect(resultViewport, 'R84 Result viewport exists').not.toBeNull();\n  const resultRankBox = await result.locator('.resultRank').boundingBox();\n  const resultGradeBox = await result.locator('#resultGrade').boundingBox();\n  const resultBodyBox = await result.locator('.resultBody').boundingBox();\n  const resultButtonsGeometry = await result.locator('.resultBtns').boundingBox();\n  const resultCharacter = result.locator('.resultWorld .grtc-image:visible').first();\n  await expect(resultCharacter, 'R84 Result keeps the current character visible').toBeVisible({ timeout: 5_000 });\n  const resultCharacterBox = await resultCharacter.boundingBox();\n  for (const [name, box] of [['rank', resultRankBox], ['grade', resultGradeBox], ['body', resultBodyBox], ['buttons', resultButtonsGeometry], ['character', resultCharacterBox]]) {\n    expect(box, `R84 ${name} has geometry`).not.toBeNull();\n    expect(box.x, `R84 ${name} left edge stays in viewport`).toBeGreaterThanOrEqual(-1);\n    expect(box.y, `R84 ${name} top edge stays in viewport`).toBeGreaterThanOrEqual(-1);\n    expect(box.x + box.width, `R84 ${name} right edge stays in viewport`).toBeLessThanOrEqual(resultViewport.width + 1);\n    expect(box.y + box.height, `R84 ${name} bottom edge stays in viewport`).toBeLessThanOrEqual(resultViewport.height + 1);\n  }\n  expect(resultGradeBox.x, 'R84 primary outcome starts inside its Result column').toBeGreaterThanOrEqual(resultRankBox.x - 1);\n  expect(resultGradeBox.x + resultGradeBox.width, 'R84 primary outcome no longer spills out of its Result column').toBeLessThanOrEqual(resultRankBox.x + resultRankBox.width + 1);\n  const characterBodyOverlap = Math.max(0, Math.min(resultCharacterBox.x + resultCharacterBox.width, resultBodyBox.x + resultBodyBox.width) - Math.max(resultCharacterBox.x, resultBodyBox.x))\n    * Math.max(0, Math.min(resultCharacterBox.y + resultCharacterBox.height, resultBodyBox.y + resultBodyBox.height) - Math.max(resultCharacterBox.y, resultBodyBox.y));\n  expect(characterBodyOverlap, 'R84 character never covers Result cause/reward/ranking content').toBe(0);\n  expect(resultCharacterBox.y + resultCharacterBox.height, 'R84 character clears the Result action row').toBeLessThanOrEqual(resultButtonsGeometry.y + 1);\n'''
+          tests = tests.replace(anchor, regression)
+
+          html_path.write_text(html, encoding='utf-8')
+          test_path.write_text(tests, encoding='utf-8')
+          PY
+          git diff --check
+          changed="$(git diff --name-only)"
+          test "$changed" = $'browser/GAMEROAD.html\ntests/browser-full-interaction.spec.mjs'
+          grep -q 'id="result-player-clarity-r84"' browser/GAMEROAD.html
+          grep -q 'R84 character never covers Result cause/reward/ranking content' tests/browser-full-interaction.spec.mjs
+      - name: Commit bounded repair to authorized branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-result-repair-bot'
+          git config user.email 'gameroad-result-repair-bot@users.noreply.github.com'
+          git add browser/GAMEROAD.html tests/browser-full-interaction.spec.mjs
+          git commit -m 'Result: restore player clarity across current viewports'
+          git push origin HEAD:sol/result-player-clarity-r84-r1-20260905

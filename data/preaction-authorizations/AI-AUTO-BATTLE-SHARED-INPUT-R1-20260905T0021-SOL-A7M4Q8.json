@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "AI-AUTO-BATTLE-SHARED-INPUT-R1-20260905T0021-SOL-A7M4Q8",
+  "taskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "workUnitKey": "AI_AUTO_BATTLE_SHARED_HUMAN_INPUT_R1",
+  "acquireKey": "AI-AUTO-BATTLE-SHARED-INPUT-R1-20260905T0021-SOL-A7M4Q8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "AUTO_BATTLE_CURRENT_FORMAL_SHARED_HUMAN_COMMIT_PATH_R1",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FOCUSED_NODE_TEST_DOUBLE_LEGALITY_AND_COMMIT_SPY_R1",
+  "proceedToken": "PROCEED|AI-AUTO-BATTLE-SHARED-INPUT-R1-20260905T0021-SOL-A7M4Q8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|SHARED_HUMAN_INPUT_ONLY",
+  "authorizationBaseSha": "b3766650e51aa702b5a91e7d75e4d1c23ad36c56",
+  "scope": [
+    "browser/battle-auto-input-core.mjs",
+    "tests/battle-auto-input-core.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "leaseWorkUnitKey": "AI_AUTO_BATTLE_SHARED_HUMAN_INPUT_R1",
+  "leaseAcquireKey": "AI-AUTO-BATTLE-SHARED-INPUT-R1-20260905T0021-SOL-A7M4Q8",
+  "leaseScope": [
+    "browser/battle-auto-input-core.mjs",
+    "tests/battle-auto-input-core.test.mjs"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-09-05 00:21 JST",
+  "leaseUntilJst": "2026-09-05 01:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A103:L103",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@b3766650e51aa702b5a91e7d75e4d1c23ad36c56; mutable browser/battle-auto-input-core.mjs (new) + tests/battle-auto-input-core.test.mjs (new) + transient data/preaction-authorizations/AI-AUTO-BATTLE-SHARED-INPUT-R1-20260905T0021-SOL-A7M4Q8.json",
+  "solutionSignature": "Auto Battle chooses only a currently human-legal simple hand input, revalidates from a fresh human legal-input read, and invokes the same caller-owned human commit function without selecting targets or creating a second progression/network route.",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "browser/partner-legal-action-adapter.mjs@f32b3dbcba54d1ab0538fc43a8b935353510f990",
+    "GAMEROAD_対戦人工知能・自動操作・非同期セリフ方針_CURRENT_20260718"
+  ],
+  "reuseDecisionEvidenceId": "AUTO_BATTLE_REUSE_COMPARE_R1",
+  "buildResidualReason": "Existing partner legal-action adapter owns partner-advice version/private-scope contracts; direct reuse would couple simple Auto to the currently blocked long stateVersion authority. A smaller caller-owned legal-input helper preserves the formal shared human commit path without duplicating gameplay progression."
+}

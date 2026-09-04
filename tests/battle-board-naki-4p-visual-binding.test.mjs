@@ -47,6 +47,8 @@ test('projects four distinct Naki identities without creating independent board 
 
   assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.actualBoardMarkerRoot, '#boardPlayers');
   assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.actualBoardMarkerSelector, '.boardPlayerToken[data-player]');
+  assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.battleFocusChromeSelector, 'body:has(.battle.active) .top');
+  assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.battleFocusChromePolicy, 'SUPPRESS_GLOBAL_BANNER_DURING_ACTIVE_BATTLE_ONLY');
   assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.positionAuthority, 'PARENT_BOARD_PLAYER_MARKER');
   assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.coordinateProjection, 'NONE__VISUAL_IS_CHILD_OF_AUTHORITATIVE_MARKER');
   assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.presentationOnly, true);

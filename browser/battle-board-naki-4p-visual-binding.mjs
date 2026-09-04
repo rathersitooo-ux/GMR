@@ -3,6 +3,7 @@ const STYLE_ID = 'gameroad-naki-4p-board-visuals-style';
 const SURFACE_ATTR = 'data-naki-4p-board-character';
 const ACTIVE_ATTR = 'data-naki-4p-board-active';
 const MARKER_SELECTOR = '.boardPlayerToken[data-player]';
+const BATTLE_FOCUS_CHROME_SELECTOR = 'body:has(.battle.active) .top';
 const PARTICIPANT_IDS = Object.freeze(['P1', 'P2', 'P3', 'P4']);
 
 function asParticipantId(value) {
@@ -47,6 +48,7 @@ function ensureStyle(documentRef) {
   const style = documentRef.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
+${BATTLE_FOCUS_CHROME_SELECTOR}{display:none!important}
 #boardPlayers ${MARKER_SELECTOR}{overflow:visible}
 #boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{position:absolute;left:50%;top:50%;width:72px;height:92px;transform:translate(-50%,-82%);display:flex;align-items:flex-end;justify-content:center;pointer-events:none;overflow:visible;filter:drop-shadow(0 7px 10px rgba(0,0,0,.45))}
 #boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}] .grtc-image{display:block;width:auto;height:100%;max-width:100%;object-fit:contain;opacity:1;visibility:visible}
@@ -213,6 +215,8 @@ export const NAKI_4P_BOARD_VISUAL_BINDING = Object.freeze({
   participantIds: PARTICIPANT_IDS,
   actualBoardMarkerRoot: '#boardPlayers',
   actualBoardMarkerSelector: MARKER_SELECTOR,
+  battleFocusChromeSelector: BATTLE_FOCUS_CHROME_SELECTOR,
+  battleFocusChromePolicy: 'SUPPRESS_GLOBAL_BANNER_DURING_ACTIVE_BATTLE_ONLY',
   positionAuthority: 'PARENT_BOARD_PLAYER_MARKER',
   coordinateProjection: 'NONE__VISUAL_IS_CHILD_OF_AUTHORITATIVE_MARKER',
   presentationOnly: true,

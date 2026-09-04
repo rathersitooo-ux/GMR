@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DATA-SYNERGY-BATTLE-EVENT-STORE-R2-PREACTION",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "BATTLE_REPLAY_RECEIPT_IN_EXISTING_MATCH_STORE_R2",
+  "acquireKey": "DATA-SYNERGY-BATTLE-EVENT-STORE-R2-20260905T0136-SOL-M7K2P5",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "DATA-SYNERGY-R2-CLASSIFIED-REPORT-PROVIDER-MATCH-AUTH-BOUNDARY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "DATA-SYNERGY-R1-CLOSED-UNMERGED-PLUS-EXISTING-PARTNER-REPORT-TESTS",
+  "proceedToken": "PROCEED|DATA-SYNERGY-BATTLE-EVENT-STORE-R2-PREACTION|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|prediction|lease-snapshot",
+  "authorizationBaseSha": "66abb9579a9be00ef1288fc70c70d57c456e8de8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "BATTLE_REPLAY_RECEIPT_IN_EXISTING_MATCH_STORE_R2",
+  "leaseAcquireKey": "DATA-SYNERGY-BATTLE-EVENT-STORE-R2-20260905T0136-SOL-M7K2P5",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 01:36 JST",
+  "leaseUntilJst": "2026-09-05 02:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A22:L22",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@66abb9579a9be00ef1288fc70c70d57c456e8de8; mutable deploy/cloudflare/relay/src/partner-report-store.mjs + deploy/cloudflare/relay/src/relay-worker.mjs + deploy/cloudflare/functions/report.js + deploy/cloudflare/tests/partner-report-provider.test.mjs; deploy/cloudflare/relay/src/match-store.mjs READ_ONLY auth/match authority; Required Gate/control plane READ_ONLY; browser Replay READ_ONLY.",
+  "scope": [
+    "deploy/cloudflare/relay/src/partner-report-store.mjs",
+    "deploy/cloudflare/relay/src/relay-worker.mjs",
+    "deploy/cloudflare/functions/report.js",
+    "deploy/cloudflare/tests/partner-report-provider.test.mjs"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/relay/src/partner-report-store.mjs",
+    "deploy/cloudflare/relay/src/relay-worker.mjs",
+    "deploy/cloudflare/functions/report.js",
+    "deploy/cloudflare/tests/partner-report-provider.test.mjs"
+  ]
+}

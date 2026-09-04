@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-UPDATE-DETAILS-R1-20260904T1905-SOL-Q6M8N2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_UPDATE_DETAILS_R1",
+  "acquireKey": "HOME-UPDATE-DETAILS-R1-20260904T1905-SOL-Q6M8N2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-user-explicit-update-details+actual-gameroadUpdateBanner+public-gameroad-release-comms",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "bounded-unit-test+existing-public-release-comms-probe",
+  "proceedToken": "PROCEED|HOME-UPDATE-DETAILS-R1-20260904T1905-SOL-Q6M8N2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|active-lease|actual-consumer",
+  "authorizationBaseSha": "e7c307633ebfc4d11e48b2a0502f3a5a1d0d990a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_UPDATE_DETAILS_R1",
+  "leaseAcquireKey": "HOME-UPDATE-DETAILS-R1-20260904T1905-SOL-Q6M8N2",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 19:05 JST",
+  "leaseUntilJst": "2026-09-04 20:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@e7c307633ebfc4d11e48b2a0502f3a5a1d0d990a; new browser/home-update-details-runtime-mount.mjs; new tests/home-update-details-runtime-mount.test.mjs; browser/home-boot-runtime-mount.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; transient data/preaction-authorizations/HOME-UPDATE-DETAILS-R1-20260904T1905-SOL-Q6M8N2.json; own branch/PR/checks/expected-head merge/public readback",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-update-details-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-update-details-runtime-mount.test.mjs"
+  ]
+}

@@ -261,6 +261,7 @@ export const FANART_LOCAL_SKIN_CONTRACT = Object.freeze({
   canonicalIdentityPreserved: true,
   networkSync: false,
   rankedStateMutation: false,
+  opponentPreferenceLocalOnly: true,
   maxSourceBytes: FANART_MAX_SOURCE_BYTES,
   maxSourcePixels: FANART_MAX_PIXELS,
   maxSourceSide: FANART_MAX_SIDE,
@@ -362,6 +363,37 @@ async function fanartDeleteSkin(idb, cardId) {
   await fanartTx(tx);
 }
 
+async function fanartSetOpponentUsage(idb, record, enabled) {
+  if (!record?.skin || !record?.asset) return false;
+  await fanartWriteSkin(idb, {
+    ...record.skin,
+    opponentEnabled: enabled === true,
+    updatedAt: Date.now(),
+  }, record.asset);
+  return true;
+}
+
+export async function readFanartLocalOpponentSkinPreference({
+  indexedDB: idb = globalThis.indexedDB,
+  cardId,
+} = {}) {
+  const id = normalizeLocalSkinCardId(cardId);
+  if (!id) return null;
+  let record = null;
+  try { record = await fanartReadSkin(idb, id); }
+  catch { return null; }
+  if (!record || record.skin?.opponentEnabled !== true) return null;
+  return Object.freeze({
+    source: 'viewer_local',
+    cardId: id,
+    assetHash: record.skin.assetHash,
+    blob: record.asset.blob,
+    mime: record.asset.mime ?? record.asset.blob?.type ?? '',
+    width: record.asset.width ?? null,
+    height: record.asset.height ?? null,
+  });
+}
+
 function fanartCanvasBlob(canvas, type, quality) {
   return new Promise((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('IMAGE_ENCODE_FAILED')), type, quality));
 }
@@ -410,13 +442,17 @@ export function installFanartLocalSkinCards({ document: doc = globalThis.documen
   const button = doc.createElement('button');
   button.type = 'button'; button.dataset.role = 'fanart-local-skin-button'; button.textContent = '自分用スキン';
   button.setAttribute('aria-label', '選択したカードへ端末内画像スキンを設定');
+  const opponentButton = doc.createElement('button');
+  opponentButton.type = 'button'; opponentButton.dataset.role = 'fanart-opponent-skin-button'; opponentButton.textContent = '相手用スキン';
+  opponentButton.setAttribute('aria-label', '選択したカードの端末内画像を自分の画面で相手カードにも使用');
   const input = doc.createElement('input'); input.type = 'file'; input.accept = 'image/png,image/jpeg'; input.hidden = true;
   const anchor = doc.querySelector('#r4DeckTrayToggle') || screen.querySelector('button') || screen;
   anchor.after?.(button); if (!button.parentNode) screen.appendChild(button);
-  button.after?.(input); if (!input.parentNode) screen.appendChild(input);
+  button.after?.(opponentButton); if (!opponentButton.parentNode) screen.appendChild(opponentButton);
+  opponentButton.after?.(input); if (!input.parentNode) screen.appendChild(input);
   if (!doc.getElementById('gameroad-fanart-local-skin-style')) {
     const style = doc.createElement('style'); style.id = 'gameroad-fanart-local-skin-style';
-    style.textContent = '[data-fanart-local-skin-host="1"]{position:relative!important}[data-role="fanart-local-skin-overlay"]{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;pointer-events:none;z-index:3}[data-role="fanart-local-skin-button"]{min-height:44px}';
+    style.textContent = '[data-fanart-local-skin-host="1"]{position:relative!important}[data-role="fanart-local-skin-overlay"]{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;pointer-events:none;z-index:3}[data-role="fanart-local-skin-button"],[data-role="fanart-opponent-skin-button"]{min-height:44px}';
     (doc.head || doc.documentElement)?.appendChild(style);
   }
   const revoke = (id) => { const url = urls.get(id); if (url) { win.URL.revokeObjectURL(url); urls.delete(id); } };
@@ -434,7 +470,13 @@ export function installFanartLocalSkinCards({ document: doc = globalThis.documen
     const currentTicket = ++ticket;
     const nodes = [...screen.querySelectorAll('#collectionGrid [data-id], #deckSlots [data-id], #exDeckSlots [data-id]')];
     await Promise.all(nodes.map((node) => renderNode(node, currentTicket)));
-    if (selected) { let record = null; try { record = await fanartReadSkin(idb, selected); } catch {} if (!destroyed && currentTicket === ticket) button.textContent = record ? 'スキン解除' : '自分用スキン'; }
+    if (selected) {
+      let record = null; try { record = await fanartReadSkin(idb, selected); } catch {}
+      if (!destroyed && currentTicket === ticket) {
+        button.textContent = record ? 'スキン解除' : '自分用スキン';
+        opponentButton.textContent = record?.skin?.opponentEnabled === true ? '相手用:使用中' : '相手用スキン';
+      }
+    }
   };
   const select = (event) => {
     const node = event.target?.closest?.('#collectionGrid [data-id], #deckSlots [data-id], #exDeckSlots [data-id]');
@@ -446,19 +488,27 @@ export function installFanartLocalSkinCards({ document: doc = globalThis.documen
     if (current) { await fanartDeleteSkin(idb, selected); await refresh(); return; }
     input.click();
   };
+  const chooseOpponent = async () => {
+    if (!selected) { opponentButton.textContent = '先にカードを選択'; return; }
+    let current = null; try { current = await fanartReadSkin(idb, selected); } catch {}
+    if (!current) { opponentButton.textContent = '先に自分用スキンを設定'; return; }
+    await fanartSetOpponentUsage(idb, current, current.skin?.opponentEnabled !== true);
+    await refresh();
+  };
   const save = async () => {
     const file = input.files?.[0]; input.value = ''; if (!file || !selected) return;
     const asset = await fanartProcessImage(file, doc, win);
-    await fanartWriteSkin(idb, { baseCardId: selected, assetHash: asset.hash, label: '自分用skin', localOnly: true, updatedAt: Date.now() }, asset);
+    await fanartWriteSkin(idb, { baseCardId: selected, assetHash: asset.hash, label: '自分用skin', localOnly: true, opponentEnabled: false, updatedAt: Date.now() }, asset);
     await refresh();
   };
   screen.addEventListener('pointerdown', select, true);
   button.addEventListener('click', () => choose().catch(() => { button.textContent = '端末保存を確認できません'; }));
+  opponentButton.addEventListener('click', () => chooseOpponent().catch(() => { opponentButton.textContent = '端末保存を確認できません'; }));
   input.addEventListener('change', () => save().catch(() => { button.textContent = '画像を確認できません'; }));
   const observer = typeof win.MutationObserver === 'function' ? new win.MutationObserver(() => refresh().catch(() => {})) : null;
   observer?.observe(screen, { childList: true, subtree: true }); refresh().catch(() => {});
   const installation = Object.freeze({ contract: FANART_LOCAL_SKIN_CONTRACT, refresh, selectedCardId: () => selected, destroy() {
-    if (destroyed) return; destroyed = true; observer?.disconnect?.(); screen.removeEventListener('pointerdown', select, true); for (const id of [...urls.keys()]) revoke(id); button.remove?.(); input.remove?.(); fanartInstallations.delete(doc);
+    if (destroyed) return; destroyed = true; observer?.disconnect?.(); screen.removeEventListener('pointerdown', select, true); for (const id of [...urls.keys()]) revoke(id); button.remove?.(); opponentButton.remove?.(); input.remove?.(); fanartInstallations.delete(doc);
   } });
   fanartInstallations.set(doc, installation); return installation;
 }

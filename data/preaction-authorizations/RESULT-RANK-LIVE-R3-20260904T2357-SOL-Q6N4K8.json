@@ -56,11 +56,11 @@
     "rankingRow": ".rankLine"
   },
   "packageConstraint": "Cloudflare public package uses explicit ARTIFACT_SPECS seeds plus recursive module-import closure; result-presentation-core.mjs is not currently a seed.",
-  "lastConfirmedStep": "Exact current Result CSS/theme token occurrences captured from giant HTML; no product mutation.",
+  "lastConfirmedStep": "Guarded exact patch applied in workspace to live Result, package registry, static check and 2P/4P BFI assertions; tests not yet credited until following steps pass.",
   "nextExpectedAction": "Use a transient guarded workflow to inspect current Result CSS/theme tokens and, only when exact guards are unique, patch live Result + package registry + existing focused tests.",
   "nextContingency": "Any token or exact-old-text ambiguity fails closed with evidence only. Do not invent brand color or new gameplay semantics.",
   "earlyWakePolicy": "No blind retry loop; react only to observed action evidence or material conflict.",
-  "persistenceState": "THEME_DIAGNOSTIC_CAPTURED_NO_PRODUCT_MUTATION",
+  "persistenceState": "PRODUCT_PATCH_APPLIED_PENDING_TESTS",
   "rollback": "No merge unless exact guards, focused tests, Required Gate, expected-head merge and main/public readback pass. Remove transient workflow and manifest before final PR.",
   "themeDiagnostic": {
     "findings": {
@@ -409,5 +409,13 @@
         "offset": 306
       }
     ]
+  },
+  "patchDecision": {
+    "gold": "reuse existing var(--gold)",
+    "platinum": "#e5e4e2 local Result metal color; no global token added",
+    "silver": "#c0c0c0 local Result metal color; no global token added",
+    "colorOnlyAvoidance": "visible label remains 1位 or 勝利; formal rank and role are mirrored as data attributes for deterministic verification",
+    "rankAuthority": "state.match.lastResult.ranking[].rank only",
+    "gameplayMutation": false
   }
 }

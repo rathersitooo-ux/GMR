@@ -137,6 +137,20 @@ function collectStaticErrors(html) {
     errors.push('legacy generic no-effect-road Mana +1 wake remains');
   }
 
+  const resultRankPresentationContracts = [
+    [/import\(['"]\.\/result-presentation-core\.mjs['"]\)/, 'Result rank presentation core is not mounted in live Result'],
+    [/projectResultRankPresentation\(me\?\.rank\)/, 'human Result rank does not project authoritative formal rank'],
+    [/d\.dataset\.formalRank=String\(presentation\.formalRank\)/, 'Result ranking rows do not mirror projected formal rank'],
+    [/d\.dataset\.rankColorRole=presentation\.rankColorRole/, 'Result ranking rows do not project rank color role'],
+    [/class=\"resultOutcome\"/, 'Result ranking rows do not expose corrected outcome label'],
+  ];
+  for (const [pattern, message] of resultRankPresentationContracts) {
+    if (!pattern.test(html)) errors.push(message);
+  }
+  if (/d\.innerHTML=`<b>\$\{x\.rank\}位 /.test(html)) {
+    errors.push('legacy visible per-row numeric rank wording remains in live Result');
+  }
+
   const saasunaForbiddenLossTokens = [
     'attack_lose:',
     'attack_lose_royal_nonlethal:',

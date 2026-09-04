@@ -6,9 +6,18 @@ const SHELL_ATTR = 'data-gr-battle-screen';
 const GRID_ATTR = 'data-battle-screen-causal-grid';
 const PLAN_SLOT_ATTR = 'data-battle-plan-slot';
 const LANE_ATTR = 'data-battle-screen-lane';
+const HUD_ATTR = 'data-battle-r75-hud';
 const PLAYER_ROLE_LABELS = Object.freeze({
   source: '攻撃',
   target: '対象'
+});
+const LOAD_JANKEN_LABELS = Object.freeze({
+  rock: 'グー',
+  scissors: 'チョキ',
+  paper: 'パー',
+  'グー': 'グー',
+  'チョキ': 'チョキ',
+  'パー': 'パー'
 });
 
 function deepFreeze(value) {
@@ -44,14 +53,27 @@ function addStyle(document) {
   style.id = STYLE_ID;
   style.textContent = `
 [${SHELL_ATTR}="1"]{position:relative;isolation:isolate;width:100%;height:100%;min-height:0;overflow:hidden;background:linear-gradient(180deg,#173f42 0%,#286052 42%,#102f2c 100%);color:#f7fbfa;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-[${SHELL_ATTR}="1"] .grBattleScreenTop{position:absolute;z-index:8;top:0;left:0;right:0;height:clamp(38px,8vh,66px);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 clamp(10px,2.2vw,24px);pointer-events:none;background:linear-gradient(180deg,rgba(4,10,11,.68),rgba(4,10,11,0));text-shadow:0 2px 10px rgba(0,0,0,.75)}
-[${SHELL_ATTR}="1"] .grBattleScreenPhase{font-size:clamp(13px,1.4vw,16px);font-weight:800;letter-spacing:.12em;text-transform:uppercase}
-[${SHELL_ATTR}="1"] .grBattleScreenReturn{font-size:clamp(11px,1vw,13px);opacity:.72}
+[${SHELL_ATTR}="1"] .grBattleScreenTop{position:absolute;z-index:9;top:0;left:0;right:0;height:clamp(42px,9vh,72px);display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:start;gap:clamp(6px,1.2vw,14px);padding:clamp(5px,.8vh,8px) clamp(8px,1.6vw,18px);pointer-events:none;background:linear-gradient(180deg,rgba(4,10,11,.76),rgba(4,10,11,.18) 72%,rgba(4,10,11,0));text-shadow:0 2px 10px rgba(0,0,0,.75)}
+[${SHELL_ATTR}="1"] .grBattleHudLeft,[${SHELL_ATTR}="1"] .grBattleHudRight{display:flex;align-items:center;gap:clamp(5px,.8vw,9px);min-width:0}
+[${SHELL_ATTR}="1"] .grBattleHudRight{justify-content:flex-end}
+[${SHELL_ATTR}="1"] .grBattleHudSettings{pointer-events:auto;width:clamp(32px,4.3vw,42px);height:clamp(32px,4.3vw,42px);border-radius:50%;border:1px solid rgba(235,247,238,.52);background:rgba(8,28,25,.78);color:inherit;font:inherit;font-weight:900;box-shadow:0 4px 14px rgba(0,0,0,.24)}
+[${SHELL_ATTR}="1"] .grBattleHudMetric{display:grid;gap:1px;min-width:clamp(48px,7vw,76px);padding:4px 7px;border-radius:9px;background:rgba(3,20,17,.64);border:1px solid rgba(225,244,215,.18)}
+[${SHELL_ATTR}="1"] .grBattleHudMetric small{font-size:clamp(8px,.7vw,10px);font-weight:800;letter-spacing:.11em;opacity:.72;text-transform:uppercase}
+[${SHELL_ATTR}="1"] .grBattleHudMetric b{font-size:clamp(13px,1.35vw,17px);line-height:1}
+[${SHELL_ATTR}="1"] .grBattleHudCenter{min-width:0;display:flex;justify-content:center;align-items:flex-start;gap:clamp(6px,.8vw,10px)}
+[${SHELL_ATTR}="1"] .grBattleHudChain{min-width:0;display:flex;align-items:center;justify-content:center;gap:3px;padding-top:1px;overflow:hidden}
+[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{display:flex;align-items:center;justify-content:center;flex:0 0 auto;width:clamp(28px,4.2vw,42px);height:clamp(36px,5.6vw,54px);padding:2px;border-radius:6px;border:1px solid rgba(235,247,226,.38);background:rgba(9,35,30,.82);font-size:clamp(8px,.8vw,11px);font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+[${SHELL_ATTR}="1"] .grBattleHudPlayedCard:nth-of-type(4n+1){transform:translateY(4px) rotate(-4deg)}
+[${SHELL_ATTR}="1"] .grBattleHudPlayedCard:nth-of-type(4n+3){transform:translateY(4px) rotate(4deg)}
+[${SHELL_ATTR}="1"] .grBattleHudChainArrow{flex:0 0 auto;font-weight:900;opacity:.78}
+[${SHELL_ATTR}="1"] .grBattleHudLoad{flex:0 0 auto;display:grid;place-items:center;align-content:center;width:clamp(50px,6.8vw,70px);height:clamp(40px,6vw,62px);border-radius:8px;border:1px solid rgba(255,233,158,.66);background:linear-gradient(180deg,rgba(108,88,38,.86),rgba(35,42,26,.80));box-shadow:0 5px 16px rgba(0,0,0,.22)}
+[${SHELL_ATTR}="1"] .grBattleHudLoad small{font-size:clamp(8px,.72vw,10px);font-weight:900;letter-spacing:.12em;opacity:.72}
+[${SHELL_ATTR}="1"] .grBattleHudLoad b{font-size:clamp(14px,1.6vw,20px);line-height:1.1}
 [${SHELL_ATTR}="1"] [${PLAN_SLOT_ATTR}]{position:absolute;inset:0;z-index:2;min-width:0;min-height:0}
 [${SHELL_ATTR}="1"] #battlePhaseSurface{position:absolute;inset:0;z-index:3;overflow:hidden;background:radial-gradient(ellipse at 75% 33%,rgba(220,246,217,.24),transparent 29%),radial-gradient(ellipse at 18% 78%,rgba(96,145,87,.38),transparent 31%),linear-gradient(180deg,rgba(111,178,166,.30) 0%,rgba(62,126,104,.22) 43%,rgba(22,69,54,.58) 100%)}
 [${SHELL_ATTR}="1"] #battlePhaseSurface::before{content:"";position:absolute;z-index:-2;left:-7%;right:-6%;top:41%;bottom:-31%;clip-path:polygon(0 31%,12% 19%,23% 26%,36% 10%,48% 24%,61% 8%,74% 25%,88% 14%,100% 29%,100% 100%,0 100%);background:linear-gradient(180deg,rgba(69,124,83,.78),rgba(42,96,64,.92) 42%,rgba(22,62,47,.98));border-top:1px solid rgba(214,250,211,.16);transform:perspective(560px) rotateX(5deg);transform-origin:50% 0}
 [${SHELL_ATTR}="1"] #battlePhaseSurface::after{content:"";position:absolute;z-index:-1;left:4%;width:42%;bottom:5%;height:29%;border-radius:50%;background:radial-gradient(ellipse at 50% 45%,rgba(159,197,119,.30),rgba(49,101,67,.20) 55%,transparent 70%);border-top:1px solid rgba(225,255,214,.10);transform:perspective(380px) rotateX(62deg);transform-origin:50% 100%}
-[${SHELL_ATTR}="1"] [${GRID_ATTR}]{position:absolute;z-index:4;top:clamp(48px,10vh,78px);right:5%;bottom:clamp(54px,10vh,82px);left:52%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:clamp(8px,1.5vw,18px);align-items:stretch;overflow:visible;pointer-events:none}
+[${SHELL_ATTR}="1"] [${GRID_ATTR}]{position:absolute;z-index:4;top:clamp(68px,12vh,92px);right:5%;bottom:clamp(54px,10vh,82px);left:52%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:clamp(8px,1.5vw,18px);align-items:stretch;overflow:visible;pointer-events:none}
 [${SHELL_ATTR}="1"] [${GRID_ATTR}]::before{content:"";position:absolute;z-index:-1;left:50%;top:50%;width:clamp(56px,8vw,104px);aspect-ratio:1;transform:translate(-50%,-50%) rotate(45deg);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:radial-gradient(circle at 34% 30%,rgba(249,255,229,.82),rgba(171,211,127,.72) 19%,rgba(67,126,85,.76) 53%,rgba(16,60,50,.94) 76%);border:1px solid rgba(237,255,217,.52);box-shadow:0 0 0 8px rgba(20,68,52,.18),0 15px 36px rgba(0,0,0,.28)}
 [${SHELL_ATTR}="1"] [${LANE_ATTR}]{position:relative;min-width:0;overflow:hidden;display:grid;grid-template-rows:auto 1fr auto;gap:8px;padding:clamp(7px,1.1vw,13px);border:1px solid rgba(219,241,207,.24);border-radius:clamp(9px,1.4vw,16px);background:linear-gradient(180deg,rgba(19,56,49,.76),rgba(6,25,24,.58));box-shadow:0 10px 22px rgba(2,20,17,.20),inset 0 0 0 1px rgba(255,255,255,.025);transition:transform 180ms ease,opacity 180ms ease,border-color 180ms ease,background 180ms ease}
 [${SHELL_ATTR}="1"] [${LANE_ATTR}]:nth-child(1){left:-10%;top:9%}
@@ -68,11 +90,11 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"] #battleResolution{position:absolute;z-index:7;left:50%;bottom:clamp(8px,2vh,18px);transform:translateX(-50%);max-width:min(72vw,760px);min-height:24px;pointer-events:none;text-align:center}
 [${SHELL_ATTR}="1"][data-motion="static_only"] [${LANE_ATTR}]{transition:none!important;transform:none!important}
 @media(max-width:720px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{left:38%;right:3%}}
-@media(max-width:540px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{left:4px;right:4px;gap:3px;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}[${SHELL_ATTR}="1"] [${LANE_ATTR}]{left:0!important;top:0!important;padding:7px 6px;border-radius:8px}.grBattleLaneRole{max-width:100%;overflow:hidden;text-overflow:ellipsis}}
-@media(max-width:540px) and (orientation:portrait){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:50px;right:8px;bottom:96px;left:8px;gap:6px;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(4,minmax(0,1fr))}[${SHELL_ATTR}="1"] [${GRID_ATTR}]::before{display:none}[${SHELL_ATTR}="1"] [${LANE_ATTR}]{grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(20px,auto);column-gap:8px;row-gap:3px;padding:8px 10px;transform:none!important}[${SHELL_ATTR}="1"] .grBattleLaneIdentity{grid-column:1;grid-row:1}[${SHELL_ATTR}="1"] .grBattleLaneRole{grid-column:2;grid-row:1 / span 2;align-self:center;justify-self:end}[${SHELL_ATTR}="1"] .grBattleLaneAfterstate{grid-column:1;grid-row:2;align-self:end;min-height:0}[${SHELL_ATTR}="1"] #battleResolution{left:8px;right:8px;bottom:12px;transform:none;max-width:none}}
-@media(max-height:420px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:36px;bottom:34px}[${SHELL_ATTR}="1"] .grBattleScreenTop{height:36px}.grBattleLaneAfterstate{gap:2px}}
+@media(max-width:540px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{left:4px;right:4px;gap:3px;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}[${SHELL_ATTR}="1"] [${LANE_ATTR}]{left:0!important;top:0!important;padding:7px 6px;border-radius:8px}.grBattleLaneRole{max-width:100%;overflow:hidden;text-overflow:ellipsis}[${SHELL_ATTR}="1"] .grBattleHudMetric{min-width:42px;padding:3px 5px}[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{width:26px;height:34px}[${SHELL_ATTR}="1"] .grBattleHudLoad{width:44px;height:38px}}
+@media(max-width:540px) and (orientation:portrait){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:76px;right:8px;bottom:96px;left:8px;gap:6px;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(4,minmax(0,1fr))}[${SHELL_ATTR}="1"] [${GRID_ATTR}]::before{display:none}[${SHELL_ATTR}="1"] [${LANE_ATTR}]{grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(20px,auto);column-gap:8px;row-gap:3px;padding:8px 10px;transform:none!important}[${SHELL_ATTR}="1"] .grBattleLaneIdentity{grid-column:1;grid-row:1}[${SHELL_ATTR}="1"] .grBattleLaneRole{grid-column:2;grid-row:1 / span 2;align-self:center;justify-self:end}[${SHELL_ATTR}="1"] .grBattleLaneAfterstate{grid-column:1;grid-row:2;align-self:end;min-height:0}[${SHELL_ATTR}="1"] #battleResolution{left:8px;right:8px;bottom:12px;transform:none;max-width:none}}
+@media(max-height:420px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:48px;bottom:34px}[${SHELL_ATTR}="1"] .grBattleScreenTop{height:46px;padding-top:3px}.grBattleLaneAfterstate{gap:2px}[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{height:32px}[${SHELL_ATTR}="1"] .grBattleHudLoad{height:34px}}
 @media(max-height:470px) and (orientation:landscape){.battle .royalUsageStrip{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;width:151px!important;gap:2px!important}}
-@media(prefers-reduced-motion:reduce){[${SHELL_ATTR}="1"] [${LANE_ATTR}]{transition:none!important;transform:none!important}}
+@media(prefers-reduced-motion:reduce){[${SHELL_ATTR}="1"] [${LANE_ATTR}]{transition:none!important;transform:none!important}[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{transform:none!important}}
 `;
   document.head?.appendChild(style);
 }
@@ -131,6 +153,107 @@ function validRoot(root) {
   return root && typeof root.appendChild === 'function';
 }
 
+function authoritativeText(value, unresolvedToken) {
+  if (typeof value === 'number' && Number.isFinite(value)) return { text: String(value), resolved: true };
+  if (typeof value === 'string' && value.trim()) return { text: value.trim(), resolved: true };
+  return { text: unresolvedToken, resolved: false };
+}
+
+function normalizeHudSnapshot(snapshot = {}) {
+  const source = snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot) ? snapshot : {};
+  const score = authoritativeText(source.score, 'X');
+  const hate = authoritativeText(source.hate, 'XXX');
+  const turn = authoritativeText(source.turn, 'XX');
+  const hand = LOAD_JANKEN_LABELS[source.loadJanken] ?? '?';
+  const playedCards = Array.isArray(source.playedCards)
+    ? source.playedCards.filter(card => card && typeof card === 'object').map((card, index) => ({
+        cardId: typeof card.cardId === 'string' && card.cardId ? card.cardId : `played-${index + 1}`,
+        label: typeof card.label === 'string' && card.label ? card.label : (typeof card.cardId === 'string' ? card.cardId : '?')
+      }))
+    : [];
+  return {
+    score,
+    hate,
+    turn,
+    loadJanken: { text: hand, resolved: hand !== '?' },
+    playedCards
+  };
+}
+
+function createHud(document, shell) {
+  const root = createNode(document, 'div', 'grBattleScreenTop');
+  root.setAttribute?.(HUD_ATTR, '1');
+  root.dataset.presentationOnly = 'true';
+  root.dataset.authority = 'caller';
+
+  const left = createNode(document, 'div', 'grBattleHudLeft');
+  const settingsButton = createNode(document, 'button', 'grBattleHudSettings', '⚙');
+  settingsButton.setAttribute?.('type', 'button');
+  settingsButton.setAttribute?.('aria-label', '設定');
+  settingsButton.dataset.action = 'settings';
+  settingsButton.dataset.owner = 'caller';
+  const score = createNode(document, 'div', 'grBattleHudMetric');
+  score.appendChild(createNode(document, 'small', '', 'SCORE'));
+  const scoreValue = createNode(document, 'b');
+  score.appendChild(scoreValue);
+  left.appendChild(settingsButton);
+  left.appendChild(score);
+
+  const center = createNode(document, 'div', 'grBattleHudCenter');
+  const chain = createNode(document, 'div', 'grBattleHudChain');
+  chain.setAttribute?.('aria-label', '使用済みBattleカード');
+  const load = createNode(document, 'div', 'grBattleHudLoad');
+  load.appendChild(createNode(document, 'small', '', 'LOAD'));
+  const loadValue = createNode(document, 'b');
+  load.appendChild(loadValue);
+  center.appendChild(chain);
+  center.appendChild(load);
+
+  const right = createNode(document, 'div', 'grBattleHudRight');
+  const hate = createNode(document, 'div', 'grBattleHudMetric');
+  hate.appendChild(createNode(document, 'small', '', 'HATE'));
+  const hateValue = createNode(document, 'b');
+  hate.appendChild(hateValue);
+  const turn = createNode(document, 'div', 'grBattleHudMetric');
+  turn.appendChild(createNode(document, 'small', '', 'Turn'));
+  const turnValue = createNode(document, 'b');
+  turn.appendChild(turnValue);
+  right.appendChild(hate);
+  right.appendChild(turn);
+
+  root.appendChild(left);
+  root.appendChild(center);
+  root.appendChild(right);
+  shell.appendChild(root);
+  return { root, settingsButton, scoreValue, chain, loadValue, hateValue, turnValue };
+}
+
+function writeHud(document, hud, snapshot) {
+  const model = normalizeHudSnapshot(snapshot);
+  hud.scoreValue.textContent = model.score.text;
+  hud.hateValue.textContent = model.hate.text;
+  hud.turnValue.textContent = model.turn.text;
+  hud.loadValue.textContent = model.loadJanken.text;
+  setData(hud.scoreValue, 'resolved', model.score.resolved);
+  setData(hud.hateValue, 'resolved', model.hate.resolved);
+  setData(hud.turnValue, 'resolved', model.turn.resolved);
+  setData(hud.loadValue, 'resolved', model.loadJanken.resolved);
+  clearChildren(hud.chain);
+  model.playedCards.forEach((card, index) => {
+    if (index > 0) hud.chain.appendChild(createNode(document, 'span', 'grBattleHudChainArrow', '▷'));
+    const cardNode = createNode(document, 'span', 'grBattleHudPlayedCard', card.label);
+    cardNode.dataset.cardId = card.cardId;
+    cardNode.dataset.order = String(index + 1);
+    hud.chain.appendChild(cardNode);
+  });
+  setData(hud.root, 'scoreResolved', model.score.resolved);
+  setData(hud.root, 'hateResolved', model.hate.resolved);
+  setData(hud.root, 'turnResolved', model.turn.resolved);
+  setData(hud.root, 'loadJankenResolved', model.loadJanken.resolved);
+  setData(hud.root, 'playedCardCount', model.playedCards.length);
+  return deepFreeze(model);
+}
+
 export function mountBattleScreenExternalSurface(global = globalThis, options = {}) {
   const document = requireDocument(global);
   const providedPhase = options.phaseSurface ?? null;
@@ -155,6 +278,9 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     shell.setAttribute?.(SHELL_ATTR, '1');
   }
 
+  const hud = createHud(document, shell);
+  let lastHudSnapshot = writeHud(document, hud, options.hud);
+
   let planSlot = null;
   if (shellCreated) {
     planSlot = createNode(document, 'div', 'grBattlePlanSlot');
@@ -169,7 +295,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   phaseSurface.dataset.battleScreenBoardInteraction = 'forbidden';
   if (phaseAnchor.created) phaseSurface.hidden = true;
 
-  let grid = createNode(document, 'div', 'grBattleCausalGrid');
+  const grid = createNode(document, 'div', 'grBattleCausalGrid');
   grid.setAttribute?.(GRID_ATTR, '');
   grid.setAttribute?.('aria-label', '4人バトル比較');
   phaseSurface.appendChild(grid);
@@ -181,10 +307,17 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   resolutionSurface.dataset.battleScreenResolutionAuthority = 'external_existing_presentation_consumer';
 
   let destroyed = false;
-  function render(model) {
+  function renderHud(snapshot = {}) {
+    if (destroyed) throw new Error('BATTLE_SCREEN_RUNTIME_DESTROYED');
+    lastHudSnapshot = writeHud(document, hud, snapshot);
+    return lastHudSnapshot;
+  }
+
+  function render(model, hudSnapshot = null) {
     if (destroyed) throw new Error('BATTLE_SCREEN_RUNTIME_DESTROYED');
     const audit = auditBattleScreenModel(model);
     if (!audit.ok) throw new TypeError(`BATTLE_SCREEN_MODEL_REJECTED:${audit.defects.join(',')}`);
+    if (hudSnapshot !== null) renderHud(hudSnapshot);
 
     setData(shell, 'mode', model.screenMode);
     setData(shell, 'eventId', model.eventId);
@@ -201,6 +334,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     const resultExit = !battle && model.returnIntent === 'RESULT';
     if (shellCreated) shell.hidden = resultExit;
     phaseSurface.hidden = !battle;
+    hud.root.hidden = !battle;
     if (planSlot) planSlot.hidden = battle || resultExit;
 
     for (let index = 0; index < lanes.length; index += 1) {
@@ -222,6 +356,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     if (destroyed) return false;
     destroyed = true;
     if (grid?.parentNode && typeof grid.parentNode.removeChild === 'function') grid.parentNode.removeChild(grid);
+    if (hud.root?.parentNode && typeof hud.root.parentNode.removeChild === 'function') hud.root.parentNode.removeChild(hud.root);
     if (shellCreated && shell?.parentNode && typeof shell.parentNode.removeChild === 'function') shell.parentNode.removeChild(shell);
     return true;
   }
@@ -237,8 +372,10 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     planSlot,
     phaseSurface,
     resolutionSurface,
+    hud,
     grid,
     laneSurfaces: lanes.map(view => view.lane),
+    renderHud,
     render,
     destroy
   };
@@ -250,6 +387,8 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   mount: 'explicit_caller_mount_only',
   presentationOnly: true,
   authority: 'NONE',
+  hudAuthority: 'CALLER_ONLY_FAIL_CLOSED_PLACEHOLDERS',
+  hudUnresolvedTokens: Object.freeze({ score: 'X', hate: 'XXX', turn: 'XX', loadJanken: '?' }),
   existingAnchorPolicy: 'ADOPT_IF_EXPLICIT_OR_PRESENT__NEVER_DUPLICATE_ID',
   planSurfaceOwner: 'CALLER',
   laneCount: 4,

@@ -6,6 +6,7 @@ import {
   removeCardFromStorage,
   resolveDeckEditorSwipe,
 } from './deck-storage-corner-core.mjs';
+import { createDeckRemoveGhostTransfer } from './deck-remove-ghost-transfer.mjs';
 
 function requiredFn(value, name) {
   if (typeof value !== 'function') throw new TypeError(`${name}_REQUIRED`);
@@ -93,8 +94,9 @@ export function createDeckStorageCornerController({
       notify(accepted(result) ? 'deck-add' : 'deck-add-reject', { cardId: String(cardId) });
       return Object.freeze({ ok: accepted(result), action: 'deck-add', reason: result?.reason, view: view() });
     }
+    notify('deck-remove-start', { cardId: String(cardId), surface });
     const result = removeDeckCard(cardId);
-    notify(accepted(result) ? 'deck-remove' : 'deck-remove-reject', { cardId: String(cardId) });
+    notify(accepted(result) ? 'deck-remove' : 'deck-remove-reject', { cardId: String(cardId), surface });
     return Object.freeze({ ok: accepted(result), action: 'deck-remove', reason: result?.reason, view: view() });
   };
 
@@ -108,15 +110,12 @@ export function installDeckStorageCornerStyles(doc = globalThis.document) {
   style.textContent = `
 .gr-storage-button{appearance:none;border:1px solid #b58a00;border-radius:999px;background:#ffd84a;color:#241b00;font:800 14px/1 system-ui;padding:8px 12px;min-width:48px;cursor:pointer}
 .gr-storage-button[data-overflow="true"]{color:#c51616}
-.gr-storage-backdrop{position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,.34);display:grid;place-items:center;padding:18px}
-.gr-storage-window{width:min(760px,94vw);max-height:82vh;overflow:auto;background:#111827;color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:18px;padding:16px;box-shadow:0 18px 60px rgba(0,0,0,.45)}
-.gr-storage-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.gr-storage-title{font:800 18px/1.2 system-ui}.gr-storage-close{appearance:none;border:0;border-radius:10px;padding:8px 10px;cursor:pointer}
-.gr-storage-columns{display:grid;grid-template-columns:1fr 1fr;gap:12px}.gr-storage-column{min-width:0;background:rgba(255,255,255,.06);border-radius:14px;padding:10px}.gr-storage-column h3{margin:0 0 8px;font:800 14px/1.2 system-ui}.gr-storage-card{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin:6px 0;padding:9px 10px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:rgba(255,255,255,.08);color:#fff}.gr-storage-card-actions{display:flex;gap:6px}.gr-storage-card-actions button{cursor:pointer}
+.gr-storage-backdrop{position:fixed;left:12px;top:12px;right:auto;bottom:auto;z-index:2200;width:min(420px,46vw);max-width:calc(100vw - 24px);pointer-events:none;background:transparent;padding:0}
+.gr-storage-window{pointer-events:auto;width:100%;max-height:42vh;overflow:auto;background:rgba(17,24,39,.96);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:12px;box-shadow:0 10px 32px rgba(0,0,0,.34)}
+.gr-storage-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.gr-storage-title{font:800 16px/1.2 system-ui}.gr-storage-close{appearance:none;border:0;border-radius:9px;padding:6px 8px;cursor:pointer}
+.gr-storage-columns{display:grid;grid-template-columns:1fr 1fr;gap:8px}.gr-storage-column{min-width:0;background:rgba(255,255,255,.06);border-radius:11px;padding:8px}.gr-storage-column h3{margin:0 0 6px;font:800 13px/1.2 system-ui}.gr-storage-card{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;margin:5px 0;padding:7px 8px;border:1px solid rgba(255,255,255,.14);border-radius:9px;background:rgba(255,255,255,.08);color:#fff}.gr-storage-card-actions{display:flex;gap:5px}.gr-storage-card-actions button{cursor:pointer}
 .gr-storage-discovery-hint{position:absolute;left:12px;bottom:12px;z-index:3;pointer-events:none;user-select:none;border-radius:999px;padding:6px 10px;background:rgba(17,24,39,.72);border:1px solid rgba(255,216,74,.72);color:#fff3bd;font:800 12px/1 system-ui;letter-spacing:.01em;box-shadow:0 5px 18px rgba(0,0,0,.2)}
-@keyframes gr-deck-remove-return-pulse{0%{filter:brightness(1);box-shadow:0 0 0 0 rgba(255,235,160,0)}38%{filter:brightness(1.34);box-shadow:0 0 0 2px rgba(255,235,160,.95),0 0 18px rgba(255,216,74,.72)}100%{filter:brightness(1);box-shadow:0 0 0 0 rgba(255,235,160,0)}}
-.gr-deck-remove-return-pulse{animation:gr-deck-remove-return-pulse 360ms ease-out 1}
-@media(prefers-reduced-motion:reduce){.gr-deck-remove-return-pulse{animation:none;filter:brightness(1.14);box-shadow:0 0 0 2px rgba(255,235,160,.88)}}
-@media(max-width:560px){.gr-storage-columns{grid-template-columns:1fr 1fr;gap:8px}.gr-storage-window{padding:12px}.gr-storage-card{display:block}.gr-storage-card-actions{margin-top:6px}.gr-storage-discovery-hint{left:8px;bottom:8px;padding:5px 8px;font-size:11px}}
+@media(max-width:560px){.gr-storage-backdrop{left:8px;top:8px;width:min(310px,58vw);max-width:calc(100vw - 16px)}.gr-storage-window{max-height:38vh;padding:9px}.gr-storage-columns{grid-template-columns:1fr 1fr;gap:6px}.gr-storage-card{display:block;padding:6px}.gr-storage-card-actions{margin-top:5px}.gr-storage-discovery-hint{left:8px;bottom:8px;padding:5px 8px;font-size:11px}}
 `;
   doc.head.appendChild(style);
 }
@@ -256,40 +255,31 @@ export function mountDeckStorageCorner({
   button.dataset.role = 'deck-storage-button';
   buttonHost.appendChild(button);
   let backdrop = null;
-  const pulseTimers = new Map();
-  const setTimer = typeof win?.setTimeout === 'function' ? win.setTimeout.bind(win) : globalThis.setTimeout?.bind(globalThis);
-  const clearTimer = typeof win?.clearTimeout === 'function' ? win.clearTimeout.bind(win) : globalThis.clearTimeout?.bind(globalThis);
+  let panel = null;
+  const ghostTransfer = createDeckRemoveGhostTransfer({ document: doc, window: win });
 
   const findCollectionCard = (cardId) => [...(doc?.querySelectorAll?.('#collectionGrid [data-id]') ?? [])]
     .find((node) => String(node?.dataset?.id ?? '') === String(cardId ?? '')) ?? null;
-
-  const pulseReturnedCollectionCard = (cardId) => {
-    const node = findCollectionCard(cardId);
-    if (!node?.classList?.add || !node?.classList?.remove) return false;
-    const prior = pulseTimers.get(node);
-    if (prior != null) clearTimer?.(prior);
-    node.classList.remove('gr-deck-remove-return-pulse');
-    void node.offsetWidth;
-    node.classList.add('gr-deck-remove-return-pulse');
-    if (setTimer) {
-      const timer = setTimer(() => {
-        node.classList.remove('gr-deck-remove-return-pulse');
-        pulseTimers.delete(node);
-      }, 380);
-      pulseTimers.set(node, timer);
-    }
-    return true;
-  };
+  const findDeckCard = (cardId) => [...(doc?.querySelectorAll?.('#deckSlots [data-id], #exDeckSlots [data-id]') ?? [])]
+    .find((node) => String(node?.dataset?.id ?? '') === String(cardId ?? '')) ?? null;
 
   const unsubscribe = typeof controller.subscribe === 'function'
     ? controller.subscribe((payload) => {
-        if (payload?.event === 'deck-remove' && payload?.cardId) pulseReturnedCollectionCard(payload.cardId);
+        if (!payload?.cardId) return;
+        if (payload.event === 'deck-remove-start') {
+          ghostTransfer.prepare({ cardId: payload.cardId, sourceElement: findDeckCard(payload.cardId) ?? findCollectionCard(payload.cardId) });
+        } else if (payload.event === 'deck-remove') {
+          ghostTransfer.commit({ cardId: payload.cardId, targetElement: findCollectionCard(payload.cardId) });
+        } else if (payload.event === 'deck-remove-reject') {
+          ghostTransfer.cancel({ cardId: payload.cardId });
+        }
       })
     : () => {};
 
   const close = () => {
     backdrop?.remove?.();
     backdrop = null;
+    panel = null;
     controller.closeStorage();
     renderButton();
   };
@@ -338,15 +328,16 @@ export function mountDeckStorageCorner({
   function render() {
     renderButton();
     const view = controller.view();
-    if (!view.open) { backdrop?.remove?.(); backdrop = null; return; }
+    if (!view.open) { backdrop?.remove?.(); backdrop = null; panel = null; return; }
     backdrop?.remove?.();
     backdrop = doc.createElement('div');
     backdrop.className = 'gr-storage-backdrop';
     backdrop.dataset.role = 'deck-storage-backdrop';
-    const win = doc.createElement('section');
-    win.className = 'gr-storage-window';
-    win.setAttribute('role', 'dialog');
-    win.setAttribute('aria-modal', 'true');
+    const storageWindow = doc.createElement('section');
+    panel = storageWindow;
+    storageWindow.className = 'gr-storage-window';
+    storageWindow.setAttribute('role', 'dialog');
+    storageWindow.setAttribute('aria-modal', 'false');
     const head = doc.createElement('div');
     head.className = 'gr-storage-head';
     const title = doc.createElement('div');
@@ -361,14 +352,18 @@ export function mountDeckStorageCorner({
     const cols = doc.createElement('div');
     cols.className = 'gr-storage-columns';
     cols.append(column('その他', view.normal, 'left'), column('ロイヤル', view.royal, 'right'));
-    win.append(head, cols);
-    backdrop.appendChild(win);
-    backdrop.addEventListener('pointerdown', (event) => { if (event.target === backdrop) close(); });
+    storageWindow.append(head, cols);
+    backdrop.appendChild(storageWindow);
     doc.body.appendChild(backdrop);
   }
 
   const open = () => { controller.openStorage(); render(); };
+  const onOutsidePointerDown = (event) => {
+    if (!panel || panel.contains?.(event?.target) || button.contains?.(event?.target)) return;
+    close();
+  };
   button.addEventListener('click', open);
+  doc.addEventListener?.('pointerdown', onOutsidePointerDown, true);
   const discovery = installDeckStorageCardsDiscovery({ document: doc, openStorage: open });
   render();
   return Object.freeze({
@@ -378,11 +373,8 @@ export function mountDeckStorageCorner({
     close,
     dispose: () => {
       unsubscribe();
-      for (const [node, timer] of pulseTimers) {
-        clearTimer?.(timer);
-        node.classList?.remove?.('gr-deck-remove-return-pulse');
-      }
-      pulseTimers.clear();
+      ghostTransfer.dispose();
+      doc.removeEventListener?.('pointerdown', onOutsidePointerDown, true);
       discovery.destroy();
       close();
       button.remove?.();

@@ -277,8 +277,9 @@ ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SLIDEPAD_CENTER_SELECTOR}{
   touch-action:none;
   translate:var(--gameroad-home-slidepad-x, 0px) var(--gameroad-home-slidepad-y, 0px);
 }
-/* The wide Home already exposes the same utility destinations in the global top rail.
-   Keep the local utility rail usable, but subordinate it so scene art and SlidePad remain primary. */
+/* Wide layout keeps duplicate utility navigation visually subordinate. The frameless utility
+   control itself is shared by every mounted Home projection so responsive reflow cannot restore
+   panel chrome or shrink the semantic touch target. */
 ${HOME_SELECTOR}[data-home-shell-variant="wide-landscape"] ${SECONDARY_UTILITY_SELECTOR}{
   opacity:.38!important;
   filter:saturate(.55) brightness(.82)!important;
@@ -289,7 +290,7 @@ ${HOME_SELECTOR}[data-home-shell-variant="wide-landscape"] ${SECONDARY_UTILITY_S
   opacity:.94!important;
   filter:none!important;
 }
-${HOME_SELECTOR}[data-home-shell-variant="wide-landscape"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}{
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}{
   min-width:${HOME_TOUCH_TARGET_MIN_PX}px!important;
   min-height:${HOME_TOUCH_TARGET_MIN_PX}px!important;
   border-color:transparent!important;
@@ -297,7 +298,7 @@ ${HOME_SELECTOR}[data-home-shell-variant="wide-landscape"] ${SECONDARY_UTILITY_S
   box-shadow:none!important;
   backdrop-filter:none!important;
 }
-${HOME_SELECTOR}[data-home-shell-variant="wide-landscape"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}:focus-visible{
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}:focus-visible{
   opacity:1!important;
   outline:2px solid currentColor!important;
   outline-offset:3px!important;

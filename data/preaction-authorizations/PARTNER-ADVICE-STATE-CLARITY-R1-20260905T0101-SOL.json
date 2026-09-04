@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-ADVICE-STATE-CLARITY-R1-20260905T0101-SOL",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_ADVICE_UNAVAILABLE_STATE_CLARITY_R1",
+  "acquireKey": "PARTNER-ADVICE-STATE-CLARITY-R1-20260905T0101-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "current-advice-chat-hidden-on-lane-progress-unverified+current-task-fail-closed+external-tcg-qol-state-reason-clarity",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing-projection-reason-is-non-semantic-presentation-only; focused-unit-and-required-gate-after-diff",
+  "proceedToken": "PROCEED|PARTNER-ADVICE-STATE-CLARITY-R1-20260905T0101-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260905T0104JST",
+  "authorizationBaseSha": "66abb9579a9be00ef1288fc70c70d57c456e8de8",
+  "scope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_ADVICE_UNAVAILABLE_STATE_CLARITY_R1",
+  "leaseAcquireKey": "PARTNER-ADVICE-STATE-CLARITY-R1-20260905T0101-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 01:01 JST",
+  "leaseUntilJst": "2026-09-05 02:01 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A20:L20",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@66abb9579a9be00ef1288fc70c70d57c456e8de8; mutable browser/partner-advice-runtime-mount.mjs + tests/partner-advice-runtime-mount.test.mjs on own branch; GAMEROAD.html, Cloudflare build/test, battle rules/state, save, voice/formal assets READ_ONLY.",
+  "leaseScope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs"
+  ],
+  "intendedChange": "Keep the existing Partner battle chat visible in a compact read-only unavailable state when lane progress is not currently verified, surfacing the existing fail-closed reason without creating advice, gameplay actions, save state, or voice behavior."
+}

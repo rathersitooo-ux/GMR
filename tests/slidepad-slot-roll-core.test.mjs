@@ -3,9 +3,15 @@ import assert from 'node:assert/strict';
 
 import {
   advanceSlotRollDrag,
+  BATTLE_FIELD_CATALOG,
+  BATTLE_FIELD_SELECTION_SCHEMA,
+  battleFieldSelectionSnapshot,
   createSlotRollState,
+  DEFAULT_BATTLE_FIELD_ID,
   projectSlotRollWindow,
+  resolveBattleField,
   resolveSlotRollCommit,
+  selectBattleField,
   stepSlotRoll,
   wrapSlotRollIndex,
 } from '../browser/slidepad-slot-roll-core.mjs';
@@ -93,4 +99,34 @@ test('step helper preserves circular semantics without presentation assumptions'
   assert.equal(state.itemId, 'alpha');
   state = stepSlotRoll(state, -1);
   assert.equal(state.itemId, 'gamma');
+});
+
+test('Battle field catalog keeps approved battle fields distinct by landmark identity', () => {
+  assert.equal(BATTLE_FIELD_SELECTION_SCHEMA, 'gameroad.battle-field-selection.v1');
+  assert.equal(DEFAULT_BATTLE_FIELD_ID, 'FIELD-01');
+  assert.deepEqual(BATTLE_FIELD_CATALOG.map((entry) => entry.id), ['FIELD-01', 'FIELD-02', 'FIELD-03', 'FIELD-04', 'FIELD-05', 'FIELD-08', 'FIELD-09']);
+  assert.equal(new Set(BATTLE_FIELD_CATALOG.map((entry) => entry.landmark)).size, BATTLE_FIELD_CATALOG.length);
+  for (const entry of BATTLE_FIELD_CATALOG) {
+    assert.ok(entry.name);
+    assert.ok(entry.landmark);
+    assert.ok(entry.preview.includes('gradient'));
+    assert.ok(entry.battleBackground.includes('gradient'));
+  }
+  assert.equal(resolveBattleField('FIELD-06'), null);
+  assert.equal(resolveBattleField('FIELD-07'), null);
+  assert.equal(resolveBattleField('FIELD-10'), null);
+});
+
+test('Battle field identity can change without navigating or requiring Browser globals', () => {
+  assert.equal(selectBattleField('FIELD-08', { document: null, persist: false, source: 'test' }), true);
+  assert.deepEqual(battleFieldSelectionSnapshot(), {
+    schema: BATTLE_FIELD_SELECTION_SCHEMA,
+    mounted: false,
+    fieldId: 'FIELD-08',
+    fieldName: '雨季水路・流木競技場',
+    sessionId: null,
+  });
+  assert.equal(selectBattleField('FIELD-06', { document: null, persist: false, source: 'test' }), false);
+  assert.equal(battleFieldSelectionSnapshot().fieldId, 'FIELD-08');
+  assert.equal(selectBattleField(DEFAULT_BATTLE_FIELD_ID, { document: null, persist: false, source: 'test-reset' }), true);
 });

@@ -10,7 +10,6 @@ permissions:
 
 jobs:
   inspect-result-rank-seam:
-    if: ${{ !contains(github.event.head_commit.message, 'diag: capture Result rank seam') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -19,7 +18,13 @@ jobs:
           fetch-depth: 1
       - name: Capture exact Result rank seam
         shell: bash
+        env:
+          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
+          if [[ "$HEAD_MESSAGE" == "diag: capture Result rank seam" ]]; then
+            echo "Diagnostic readback commit; no further capture needed."
+            exit 0
+          fi
           python3 - <<'PY'
           from pathlib import Path
           import json
@@ -56,21 +61,18 @@ jobs:
                   'positions': positions[:40],
               }
 
-          # Capture bounded source windows around every unique relevant occurrence.
           windows = []
           for pos in sorted(set(all_positions))[:80]:
               lo = max(0, pos - 1800)
               hi = min(len(text), pos + 2600)
-              snippet = text[lo:hi]
               windows.append({
                   'offset': pos,
                   'start': lo,
                   'end': hi,
-                  'snippet': snippet,
+                  'snippet': text[lo:hi],
               })
           diagnostic['windows'] = windows
 
-          # Fail closed if there is no actual Result ranking DOM marker.
           if diagnostic['needles']['resultRanking']['count'] == 0 or diagnostic['needles']['rankLine']['count'] == 0:
               raise SystemExit('Result ranking seam not found; refusing product mutation')
 

@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PRESENTATION-CLEARANCE-R3-20260904T2154-SOL-M6P9X3",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_PRESENTATION_CLEARANCE_R3",
+  "acquireKey": "BATTLE-PRESENTATION-CLEARANCE-R3-20260904T2154-SOL-M6P9X3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BFI-33872381368-phone390-slidepad-rock-interception",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "current-slidepad-css-geometry-and-existing-focused-tests",
+  "proceedToken": "PROCEED|BATTLE-PRESENTATION-CLEARANCE-R3-20260904T2154-SOL-M6P9X3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|portrait-slidepad-clearance",
+  "authorizationBaseSha": "681a9214f369fad91f0d10d4efc8688002af4c14",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_PRESENTATION_CLEARANCE_R3",
+  "leaseAcquireKey": "BATTLE-PRESENTATION-CLEARANCE-R3-20260904T2154-SOL-M6P9X3",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 21:54 JST",
+  "leaseUntilJst": "2026-09-04 22:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:L9",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@681a9214f369fad91f0d10d4efc8688002af4c14; mutable browser/battle-janken-slidepad-runtime-mount.mjs + transient data/preaction-authorizations/BATTLE-PRESENTATION-CLEARANCE-R3-20260904T2154-SOL-M6P9X3.json on branch work/battle-presentation-clearance-r2-20260904; own PR/checks/expected-head merge/public readback. browser/GAMEROAD.html, gameplay/rules/save/economy/network/assets/control-plane READ_ONLY.",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "data/preaction-authorizations/BATTLE-PRESENTATION-CLEARANCE-R3-20260904T2154-SOL-M6P9X3.json"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "data/preaction-authorizations/BATTLE-PRESENTATION-CLEARANCE-R3-20260904T2154-SOL-M6P9X3.json"
+  ],
+  "solutionSignature": "Presentation-only ADAPT: on portrait phone Battle, move the existing SlidePad host above the existing ordinary-hand row so expanded selectable janken slots cannot intercept ordinary hand cards; preserve slot selection, source-card action, Hand7/refill3, save/network and all gameplay semantics.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "same-use-site-slidepad-donor-and-phone-bfi-failure",
+  "solutionSearchEvidence": [
+    "The existing SlidePad runtime already owns the selectable slot pointer targets and the focused runtime tests pass; the defect is confined to portrait placement.",
+    "Browser Full Interaction run 33872381368 directly reproduced phone390x844 interception while desktop and short-landscape passed; the existing runtime is the correct consumer to adapt.",
+    "The target mode already layers its proxy above the SlidePad and the fix does not change card membership, routing, or pointer-events semantics."
+  ]
+}

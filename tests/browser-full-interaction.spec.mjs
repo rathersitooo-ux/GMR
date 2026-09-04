@@ -177,6 +177,13 @@ async function submitVisiblePlan(battle) {
   await expect(roadSelect).toBeVisible();
   await expect(battleSelect).toBeVisible();
   const handCards = battle.locator('#hand .handCard:visible:not(:disabled)');
+  const jankenPad = battle.locator('[data-battle-janken-slidepad="1"]').first();
+  if ((await handCards.count()) < 2 && (await jankenPad.getAttribute('data-expanded')) !== 'true') {
+    const jankenHandle = jankenPad.locator('.grJankenSlidePadHandle:visible');
+    await expect(jankenHandle, 'visible player path can open the Janken SlidePad when ordinary hand cards are insufficient').toBeVisible();
+    await jankenHandle.click();
+    await expect(jankenPad, 'Janken SlidePad expands through its real visible handle').toHaveAttribute('data-expanded', 'true');
+  }
   const jankenCards = battle.locator('[data-battle-janken-slidepad="1"] [data-janken-slot]:visible:not(:disabled)');
   const candidateGroups = [
     { locator: handCards, selector: '#hand .handCard' },

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DATA-SYNERGY-DECISION-OUTCOME-JOIN-R1-20260905T0226-SOL-H6K3P8",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "DECISION_OUTCOME_JOIN_R1",
+  "acquireKey": "DATA-SYNERGY-DECISION-OUTCOME-JOIN-R1-20260905T0226-SOL-H6K3P8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "DECISION-OUTCOME-JOIN-VERSION-PRIVACY-NO-LABEL-UPGRADE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING-PARTNER-BATTLE-EVENT-PROJECTION-AND-LEGAL-ACTION-CORE",
+  "proceedToken": "PROCEED|DATA-SYNERGY-DECISION-OUTCOME-JOIN-R1-20260905T0226-SOL-H6K3P8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "69f4ec540bb283df1b067ed0f1bcf8ad13093827",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "DECISION_OUTCOME_JOIN_R1",
+  "leaseAcquireKey": "DATA-SYNERGY-DECISION-OUTCOME-JOIN-R1-20260905T0226-SOL-H6K3P8",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 02:26 JST",
+  "leaseUntilJst": "2026-09-05 03:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A22:L22",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@69f4ec540bb283df1b067ed0f1bcf8ad13093827; mutable browser/partner-battle-event-log-projection.mjs + tests/partner-battle-event-log-projection.test.mjs + transient data/preaction-authorizations/DATA-SYNERGY-DECISION-OUTCOME-JOIN-R1-20260905T0226-SOL-H6K3P8.json; browser/partner-legal-action-adapter.mjs + tools/advice-collective-eval.mjs + Battle receipt store + GAMEROAD.html READ_ONLY.",
+  "scope": [
+    "browser/partner-battle-event-log-projection.mjs",
+    "tests/partner-battle-event-log-projection.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-battle-event-log-projection.mjs",
+    "tests/partner-battle-event-log-projection.test.mjs"
+  ]
+}

@@ -53,6 +53,7 @@ const runtime = {
   lastError: null,
   animations: new Set(),
   slidepad: {
+    home: null,
     center: null,
     handlers: null,
     pointerId: null,
@@ -339,6 +340,29 @@ function explicitExpandedState(home) {
   return true;
 }
 
+export function shouldDismissHomeSlidepadOnBlankDoubleClick({ expanded, home, target } = {}) {
+  if (expanded !== true || !home || !target) return false;
+  if (target !== home && typeof home.contains === 'function' && !home.contains(target)) return false;
+  if (typeof target.closest === 'function') {
+    const interactive = target.closest([
+      SLIDEPAD_CENTER_SELECTOR,
+      ROUTE_SELECTOR,
+      SECONDARY_UTILITY_SELECTOR,
+      'button',
+      'a',
+      'input',
+      'select',
+      'textarea',
+      '[role="button"]',
+      '[role="link"]',
+      '[role="menuitem"]',
+      '[data-home-target]',
+    ].join(','));
+    if (interactive) return false;
+  }
+  return true;
+}
+
 function clearAnimations() {
   for (const animation of runtime.animations) {
     try { animation.cancel(); } catch {}
@@ -470,6 +494,7 @@ function resetGesture({ releaseCapture = true } = {}) {
 }
 
 function unbindSlidepad() {
+  const home = runtime.slidepad.home;
   const center = runtime.slidepad.center;
   const handlers = runtime.slidepad.handlers;
   resetGesture();
@@ -481,6 +506,8 @@ function unbindSlidepad() {
     center.removeEventListener('lostpointercapture', handlers.lostpointercapture);
     delete center.dataset.homeSlidepadBound;
   }
+  if (home instanceof HTMLElement && handlers) home.removeEventListener('dblclick', handlers.dblclick);
+  runtime.slidepad.home = null;
   runtime.slidepad.center = null;
   runtime.slidepad.handlers = null;
 }
@@ -491,8 +518,9 @@ function bindSlidepad(home) {
     if (runtime.slidepad.center) unbindSlidepad();
     return;
   }
-  if (runtime.slidepad.center === center && runtime.slidepad.handlers) return;
+  if (runtime.slidepad.home === home && runtime.slidepad.center === center && runtime.slidepad.handlers) return;
   unbindSlidepad();
+  runtime.slidepad.home = home;
   runtime.slidepad.center = center;
   center.dataset.homeSlidepadBound = 'true';
 
@@ -523,6 +551,14 @@ function bindSlidepad(home) {
   };
 
   const handlers = {
+    dblclick(event) {
+      if (!runtime.active) return;
+      const expanded = explicitExpandedState(home);
+      if (!shouldDismissHomeSlidepadOnBlankDoubleClick({ expanded, home, target: event.target })) return;
+      event.preventDefault();
+      event.stopPropagation();
+      center.click();
+    },
     pointerdown(event) {
       if (!runtime.active || runtime.slidepad.pointerId != null) return;
       if (event.pointerType === 'mouse' && event.button !== 0) return;
@@ -565,6 +601,7 @@ function bindSlidepad(home) {
     },
   };
   runtime.slidepad.handlers = handlers;
+  home.addEventListener('dblclick', handlers.dblclick);
   center.addEventListener('pointerdown', handlers.pointerdown);
   center.addEventListener('pointermove', handlers.pointermove);
   center.addEventListener('pointerup', handlers.pointerup);
@@ -692,6 +729,7 @@ export function snapshot() {
     selectedRouteId: runtime.lastSelectedRouteId,
     touchTargetMinPx: HOME_TOUCH_TARGET_MIN_PX,
     slidepadGestureBound: Boolean(runtime.slidepad.center && runtime.slidepad.handlers),
+    slidepadBlankDoubleClickDismissBound: Boolean(runtime.slidepad.home && runtime.slidepad.handlers),
     slidepadPointerActive: runtime.slidepad.pointerId != null,
     slidepadTargeting: 'straight-ray-target-side-adhesion',
     projectionStatus: 'scene-target-projection-mounted',

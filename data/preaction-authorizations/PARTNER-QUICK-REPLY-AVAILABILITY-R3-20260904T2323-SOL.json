@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-QUICK-REPLY-AVAILABILITY-R3-20260904T2323-SOL",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_QUICK_REPLY_AVAILABILITY_R3",
+  "acquireKey": "PARTNER-QUICK-REPLY-AVAILABILITY-R3-20260904T2323-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "current-partner-chat-dead-affordance-plus-public-package-provenance-pin",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing-partner-advice-focused-test-plus-build-provenance-test",
+  "proceedToken": "PROCEED|PARTNER-QUICK-REPLY-AVAILABILITY-R3-20260904T2323-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|callable-quick-reply-availability-public-package",
+  "authorizationBaseSha": "ea1dff6a51a66697a79569fa68a68077ec9781a2",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_QUICK_REPLY_AVAILABILITY_R3",
+  "leaseAcquireKey": "PARTNER-QUICK-REPLY-AVAILABILITY-R3-20260904T2323-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 23:23 JST",
+  "leaseUntilJst": "2026-09-05 00:23 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A15:L15",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@ea1dff6a51a66697a79569fa68a68077ec9781a2; branch work/partner-quick-reply-availability-r3-20260904; mutable browser/partner-advice-runtime-mount.mjs + tests/partner-advice-runtime-mount.test.mjs + deploy/cloudflare/tests/build.test.mjs + transient data/preaction-authorizations/PARTNER-QUICK-REPLY-AVAILABILITY-R3-20260904T2323-SOL.json; own PR/checks/expected-head merge/public readback. browser/GAMEROAD.html, deploy build script, Partner persona/dialogue/relationship/Tutorial/save/gameplay/rules/network/assets/control-plane READ_ONLY.",
+  "scope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/PARTNER-QUICK-REPLY-AVAILABILITY-R3-20260904T2323-SOL.json"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/PARTNER-QUICK-REPLY-AVAILABILITY-R3-20260904T2323-SOL.json"
+  ],
+  "solutionSignature": "ADAPT the existing Saasuna battle-chat quick reply so the existing one-click まかせた！ affordance is visible/callable only when Saasuna is selected and current matchId is valid, then synchronize the existing exact public-package provenance pin for that changed runtime blob.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "existing-runtime-and-existing-package-contract-direct-read",
+  "solutionSearchEvidence": [
+    "The quick-reply handler, UI and focused tests already exist; no subsystem is missing.",
+    "R2 Required Gate passed PRE_ACTION but failed only because the existing public-package dependency contract still pinned the prior partner-advice runtime blob.",
+    "The minimal accepted path is the already-reviewed two-file repair plus one currentBlob replacement in the existing build provenance test; build scripts and broader interaction tests remain unchanged."
+  ]
+}

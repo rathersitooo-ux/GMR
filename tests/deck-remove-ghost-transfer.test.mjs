@@ -77,7 +77,7 @@ function documentFixture() {
   };
 }
 
-test('Deck remove transfer keeps the source stationary and moves only a fading clone with streaks', () => {
+test('Deck remove transfer keeps a stationary source anchor and moves only a fading ghost with streaks', () => {
   const doc = documentFixture();
   const win = timerWindow();
   const source = element(rect(680, 390, 110, 154));
@@ -93,14 +93,18 @@ test('Deck remove transfer keeps the source stationary and moves only a fading c
 
   assert.ok(prepared);
   assert.equal(prepared.sourceElement, source);
+  assert.notEqual(prepared.anchorElement, source);
   assert.notEqual(prepared.ghostElement, source);
+  assert.notEqual(prepared.anchorElement, prepared.ghostElement);
   assert.equal(source.animations.length, 0);
+  assert.equal(prepared.anchorElement.animations.length, 0);
   assert.equal(prepared.streakElements.length, 2);
   assert.equal(doc.body.children.length, 1);
   assert.equal(doc.body.children[0].style.visibility, 'hidden');
 
   assert.equal(prepared.play(), true);
   assert.equal(source.animations.length, 0, 'the real/source card must never translate or fade');
+  assert.equal(prepared.anchorElement.animations.length, 0, 'the visible source anchor must remain stationary');
   assert.equal(prepared.ghostElement.animations.length, 1);
   const ghostFrames = prepared.ghostElement.animations[0].keyframes;
   assert.equal(ghostFrames.at(-1).opacity, 0);

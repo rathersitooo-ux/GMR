@@ -103,6 +103,28 @@ async function numericText(locator) {
   return Number.parseInt((await locator.textContent()) ?? '', 10);
 }
 
+async function assertVisibleResultRankPresentation(result) {
+  const rows = await result.locator('#resultRanking .rankLine').evaluateAll((nodes) => nodes.map((node) => ({
+    formalRank: Number(node.dataset.formalRank),
+    rankColorRole: node.dataset.rankColorRole || null,
+    visibleLabel: node.querySelector('.resultOutcome')?.textContent?.trim() ?? '',
+  })));
+  expect(rows.length, 'Result exposes at least one projected formal-rank row').toBeGreaterThan(0);
+  const expected = new Map([[1, ['1位', null]], [2, ['勝利', 'platinum']], [3, ['勝利', 'gold']], [4, ['勝利', 'silver']]]);
+  for (const row of rows) {
+    expect(expected.has(row.formalRank), `formal Result rank ${row.formalRank}`).toBeTruthy();
+    expect(row.visibleLabel, `visible label for rank ${row.formalRank}`).toBe(expected.get(row.formalRank)[0]);
+    expect(row.rankColorRole, `color role for rank ${row.formalRank}`).toBe(expected.get(row.formalRank)[1]);
+  }
+  const primary = result.locator('#resultGrade');
+  const primaryRank = Number(await primary.getAttribute('data-formal-rank'));
+  expect(expected.has(primaryRank), 'primary Result formal rank').toBeTruthy();
+  await expect(primary).toHaveText(expected.get(primaryRank)[0]);
+  expect(await primary.getAttribute('data-rank-color-role'), `primary color role for rank ${primaryRank}`).toBe(expected.get(primaryRank)[1]);
+  const visibleText = await result.innerText();
+  for (const forbidden of ['敗北', '敗者', '負け', '最下位']) expect(visibleText).not.toContain(forbidden);
+}
+
 async function installLegalBattleDeck(page) {
   return page.evaluate(() => {
     const t = window.__GAMEROAD_TEST__;
@@ -304,6 +326,7 @@ async function playVisibleTwoPlayerToResult(page, testInfo, evidencePrefix) {
   const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';
   expect(roundsText, 'Result exposes a real round count').toMatch(/\d+ラウンド/);
   await expect(result.locator('#resultRanking .rankLine')).toHaveCount(2);
+  await assertVisibleResultRankPresentation(result);
   await expect(result.locator('#resultMode')).toHaveText('二人');
   await attachStateScreenshot(page, testInfo, `${evidencePrefix}-result-visible`);
   testInfo.annotations.push({
@@ -1713,6 +1736,7 @@ test('R19 reaches Result from visible four-player Honey Hunt and returns Home', 
   expect(roundsSubmitted).toBeGreaterThan(0);
   expect(presentationAdvances).toBeGreaterThan(0);
   await expect(result.locator('#resultRanking .rankLine')).toHaveCount(4);
+  await assertVisibleResultRankPresentation(result);
   const rankingViewport = await result.locator('#resultRanking').boundingBox();
   expect(rankingViewport, 'R20 result ranking viewport must have geometry').not.toBeNull();
   const rankingRows = await result.locator('#resultRanking .rankLine').evaluateAll((rows) => rows.map((row) => {

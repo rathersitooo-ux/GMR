@@ -44,11 +44,12 @@ test('storage uses normal-left royal-right view and yellow +N button before over
   assert.equal(view.storageButtonLabel, '+3');
   assert.equal(view.storageButtonTone, 'yellow');
   assert.equal(view.selectionCount, 3);
+  assert.equal(view.overflowCount, 0);
   assert.equal(view.overDeckLimit, false);
   assert.deepEqual(view.layout, { normalSide: 'left', royalSide: 'right' });
 });
 
-test('forty plus overflow storage projects cumulative 41/40 and 42/40 labels', () => {
+test('overflow projects only the red delta above forty and increments one by one', () => {
   const deck = Array.from({ length: 40 }, (_, index) => `d${index}`);
   const view41 = createStorageCornerViewModel(
     createDeckStorageState({ deck, storage: ['overflow'] }),
@@ -57,7 +58,8 @@ test('forty plus overflow storage projects cumulative 41/40 and 42/40 labels', (
   assert.equal(view41.deckCount, 40);
   assert.equal(view41.storageCount, 1);
   assert.equal(view41.selectionCount, 41);
-  assert.equal(view41.storageButtonLabel, '41/40');
+  assert.equal(view41.overflowCount, 1);
+  assert.equal(view41.storageButtonLabel, '1');
   assert.equal(view41.storageButtonTone, 'overflow');
   assert.equal(view41.overDeckLimit, true);
 
@@ -67,7 +69,17 @@ test('forty plus overflow storage projects cumulative 41/40 and 42/40 labels', (
   );
   assert.equal(view42.storageCount, 2);
   assert.equal(view42.selectionCount, 42);
-  assert.equal(view42.storageButtonLabel, '42/40');
+  assert.equal(view42.overflowCount, 2);
+  assert.equal(view42.storageButtonLabel, '2');
+
+  const deck39 = deck.slice(0, 39);
+  const viewOneOver = createStorageCornerViewModel(
+    createDeckStorageState({ deck: deck39, storage: ['overflow', 'overflow2'] }),
+    { isRoyal: () => false },
+  );
+  assert.equal(viewOneOver.selectionCount, 41);
+  assert.equal(viewOneOver.overflowCount, 1);
+  assert.equal(viewOneOver.storageButtonLabel, '1');
 });
 
 test('storage candidates can be discarded without touching deck', () => {

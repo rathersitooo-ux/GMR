@@ -31,11 +31,22 @@ function fixture({ deck = ['a'], rejectAdd = false, rejectRemove = false } = {})
   return { controller, calls, deck: () => [...currentDeck] };
 }
 
+function fakeClassList() {
+  const values = new Set();
+  return {
+    add: (...names) => names.forEach((name) => values.add(name)),
+    remove: (...names) => names.forEach((name) => values.delete(name)),
+    contains: (name) => values.has(name),
+  };
+}
+
 function fakeElement() {
   return {
     children: [],
     dataset: {},
     attributes: {},
+    classList: fakeClassList(),
+    offsetWidth: 100,
     appendChild(node) {
       this.children.push(node);
       node.parentNode = this;
@@ -64,6 +75,27 @@ function fakeDocument() {
   };
 }
 
+function timerWindow() {
+  let next = 1;
+  const timers = new Map();
+  return {
+    setTimeout(fn) {
+      const id = next++;
+      timers.set(id, fn);
+      return id;
+    },
+    clearTimeout(id) {
+      timers.delete(id);
+    },
+    flush() {
+      for (const [id, fn] of [...timers]) {
+        timers.delete(id);
+        fn();
+      }
+    },
+  };
+}
+
 function discoveryDocument() {
   const listeners = new Map();
   const document = fakeDocument();
@@ -87,14 +119,13 @@ function discoveryDocument() {
   return { document, screen };
 }
 
-test('collection left swipe stores the card and opens Storage', () => {
+test('collection left swipe is consumed without Deck or Storage mutation', () => {
   const { controller, calls, deck } = fixture();
   const result = controller.applySwipe({ surface: 'collection', cardId: 'N_1', deltaX: -90, deltaY: 3 });
-  assert.equal(result.ok, true);
-  assert.equal(result.action, 'storage-add');
-  assert.equal(result.view.open, true);
-  assert.equal(result.view.storageCount, 1);
-  assert.deepEqual(result.view.normal, ['N_1']);
+  assert.equal(result.ok, false);
+  assert.equal(result.action, 'none');
+  assert.equal(result.view.open, false);
+  assert.equal(result.view.storageCount, 0);
   assert.deepEqual(calls, { add: [], remove: [] });
   assert.deepEqual(deck(), ['a']);
 });
@@ -115,6 +146,44 @@ test('deck left swipe removes exactly one card through existing remove authority
   assert.equal(result.action, 'deck-remove');
   assert.deepEqual(calls.remove, ['b']);
   assert.deepEqual(deck(), ['a', 'b']);
+});
+
+test('accepted Deck remove pulses the matching returned Collection card and rejection does not', () => {
+  const acceptedFixture = fixture({ deck: ['a', 'b'] });
+  const document = fakeDocument();
+  const returnedCard = fakeElement();
+  returnedCard.dataset.id = 'b';
+  document.querySelectorAll = (selector) => selector === '#collectionGrid [data-id]' ? [returnedCard] : [];
+  const window = timerWindow();
+  const mounted = mountDeckStorageCorner({
+    controller: acceptedFixture.controller,
+    buttonHost: fakeElement(),
+    document,
+    window,
+  });
+
+  const accepted = acceptedFixture.controller.applySwipe({ surface: 'deck', cardId: 'b', deltaX: -84, deltaY: 1 });
+  assert.equal(accepted.ok, true);
+  assert.equal(returnedCard.classList.contains('gr-deck-remove-return-pulse'), true);
+  window.flush();
+  assert.equal(returnedCard.classList.contains('gr-deck-remove-return-pulse'), false);
+  mounted.dispose();
+
+  const rejectedFixture = fixture({ deck: ['b'], rejectRemove: true });
+  const rejectedCard = fakeElement();
+  rejectedCard.dataset.id = 'b';
+  const rejectedDocument = fakeDocument();
+  rejectedDocument.querySelectorAll = (selector) => selector === '#collectionGrid [data-id]' ? [rejectedCard] : [];
+  const rejectedMount = mountDeckStorageCorner({
+    controller: rejectedFixture.controller,
+    buttonHost: fakeElement(),
+    document: rejectedDocument,
+    window: timerWindow(),
+  });
+  const rejected = rejectedFixture.controller.applySwipe({ surface: 'deck', cardId: 'b', deltaX: -84, deltaY: 1 });
+  assert.equal(rejected.ok, false);
+  assert.equal(rejectedCard.classList.contains('gr-deck-remove-return-pulse'), false);
+  rejectedMount.dispose();
 });
 
 test('vertical and short gestures do not mutate deck or storage', () => {

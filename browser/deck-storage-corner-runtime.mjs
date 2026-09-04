@@ -33,10 +33,22 @@ export function createDeckStorageCornerController({
 
   let storage = [...initialStorage];
   let open = false;
+  const subscribers = new Set();
 
   const snapshot = () => createDeckStorageState({ deck: getDeck(), storage });
   const view = () => Object.freeze({ ...createStorageCornerViewModel(snapshot(), { isRoyal, maxDeckSize }), open });
-  const notify = (event) => { try { onChange?.(Object.freeze({ event, view: view() })); } catch {} };
+  const notify = (event, detail = {}) => {
+    const payload = Object.freeze({ event, ...detail, view: view() });
+    try { onChange?.(payload); } catch {}
+    for (const subscriber of [...subscribers]) {
+      try { subscriber(payload); } catch {}
+    }
+  };
+  const subscribe = (listener) => {
+    requiredFn(listener, 'SUBSCRIBER');
+    subscribers.add(listener);
+    return () => subscribers.delete(listener);
+  };
 
   const openStorage = () => { open = true; notify('open'); return view(); };
   const closeStorage = () => { open = false; notify('close'); return view(); };
@@ -45,14 +57,14 @@ export function createDeckStorageCornerController({
     const result = addCardToStorage(snapshot(), cardId);
     storage = [...result.state.storage];
     open = true;
-    notify('storage-add');
+    notify('storage-add', { cardId: String(cardId) });
     return Object.freeze({ ...result, view: view() });
   };
 
   const discard = (cardId) => {
     const result = removeCardFromStorage(snapshot(), cardId);
     if (result.ok) storage = [...result.state.storage];
-    notify(result.ok ? 'storage-remove' : 'storage-remove-reject');
+    notify(result.ok ? 'storage-remove' : 'storage-remove-reject', { cardId: String(cardId) });
     return Object.freeze({ ...result, view: view() });
   };
 
@@ -60,11 +72,11 @@ export function createDeckStorageCornerController({
     if (!storage.includes(String(cardId))) return Object.freeze({ ok: false, action: 'storage-to-deck', reason: 'not-in-storage', view: view() });
     const result = addDeckCard(cardId);
     if (!accepted(result)) {
-      notify('storage-to-deck-reject');
+      notify('storage-to-deck-reject', { cardId: String(cardId) });
       return Object.freeze({ ok: false, action: 'storage-to-deck', reason: result?.reason ?? 'deck-rule-rejected', view: view() });
     }
     storage.splice(storage.indexOf(String(cardId)), 1);
-    notify('storage-to-deck');
+    notify('storage-to-deck', { cardId: String(cardId) });
     return Object.freeze({ ok: true, action: 'storage-to-deck', cardId: String(cardId), view: view() });
   };
 
@@ -78,15 +90,15 @@ export function createDeckStorageCornerController({
         return Object.freeze({ ...overflow, overflow: true, reason: 'deck-full-overflow' });
       }
       const result = addDeckCard(cardId);
-      notify(accepted(result) ? 'deck-add' : 'deck-add-reject');
+      notify(accepted(result) ? 'deck-add' : 'deck-add-reject', { cardId: String(cardId) });
       return Object.freeze({ ok: accepted(result), action: 'deck-add', reason: result?.reason, view: view() });
     }
     const result = removeDeckCard(cardId);
-    notify(accepted(result) ? 'deck-remove' : 'deck-remove-reject');
+    notify(accepted(result) ? 'deck-remove' : 'deck-remove-reject', { cardId: String(cardId) });
     return Object.freeze({ ok: accepted(result), action: 'deck-remove', reason: result?.reason, view: view() });
   };
 
-  return Object.freeze({ view, openStorage, closeStorage, store, discard, sendToDeck, applySwipe });
+  return Object.freeze({ view, openStorage, closeStorage, store, discard, sendToDeck, applySwipe, subscribe });
 }
 
 export function installDeckStorageCornerStyles(doc = globalThis.document) {
@@ -101,6 +113,9 @@ export function installDeckStorageCornerStyles(doc = globalThis.document) {
 .gr-storage-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.gr-storage-title{font:800 18px/1.2 system-ui}.gr-storage-close{appearance:none;border:0;border-radius:10px;padding:8px 10px;cursor:pointer}
 .gr-storage-columns{display:grid;grid-template-columns:1fr 1fr;gap:12px}.gr-storage-column{min-width:0;background:rgba(255,255,255,.06);border-radius:14px;padding:10px}.gr-storage-column h3{margin:0 0 8px;font:800 14px/1.2 system-ui}.gr-storage-card{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;margin:6px 0;padding:9px 10px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:rgba(255,255,255,.08);color:#fff}.gr-storage-card-actions{display:flex;gap:6px}.gr-storage-card-actions button{cursor:pointer}
 .gr-storage-discovery-hint{position:absolute;left:12px;bottom:12px;z-index:3;pointer-events:none;user-select:none;border-radius:999px;padding:6px 10px;background:rgba(17,24,39,.72);border:1px solid rgba(255,216,74,.72);color:#fff3bd;font:800 12px/1 system-ui;letter-spacing:.01em;box-shadow:0 5px 18px rgba(0,0,0,.2)}
+@keyframes gr-deck-remove-return-pulse{0%{filter:brightness(1);box-shadow:0 0 0 0 rgba(255,235,160,0)}38%{filter:brightness(1.34);box-shadow:0 0 0 2px rgba(255,235,160,.95),0 0 18px rgba(255,216,74,.72)}100%{filter:brightness(1);box-shadow:0 0 0 0 rgba(255,235,160,0)}}
+.gr-deck-remove-return-pulse{animation:gr-deck-remove-return-pulse 360ms ease-out 1}
+@media(prefers-reduced-motion:reduce){.gr-deck-remove-return-pulse{animation:none;filter:brightness(1.14);box-shadow:0 0 0 2px rgba(255,235,160,.88)}}
 @media(max-width:560px){.gr-storage-columns{grid-template-columns:1fr 1fr;gap:8px}.gr-storage-window{padding:12px}.gr-storage-card{display:block}.gr-storage-card-actions{margin-top:6px}.gr-storage-discovery-hint{left:8px;bottom:8px;padding:5px 8px;font-size:11px}}
 `;
   doc.head.appendChild(style);
@@ -229,6 +244,7 @@ export function mountDeckStorageCorner({
   controller,
   buttonHost,
   document: doc = globalThis.document,
+  window: win = globalThis.window,
   getCardLabel = (id) => id,
 } = {}) {
   if (!controller?.view || !buttonHost || !doc?.createElement) throw new TypeError('MOUNT_INPUT_INVALID');
@@ -240,6 +256,36 @@ export function mountDeckStorageCorner({
   button.dataset.role = 'deck-storage-button';
   buttonHost.appendChild(button);
   let backdrop = null;
+  const pulseTimers = new Map();
+  const setTimer = typeof win?.setTimeout === 'function' ? win.setTimeout.bind(win) : globalThis.setTimeout?.bind(globalThis);
+  const clearTimer = typeof win?.clearTimeout === 'function' ? win.clearTimeout.bind(win) : globalThis.clearTimeout?.bind(globalThis);
+
+  const findCollectionCard = (cardId) => [...(doc?.querySelectorAll?.('#collectionGrid [data-id]') ?? [])]
+    .find((node) => String(node?.dataset?.id ?? '') === String(cardId ?? '')) ?? null;
+
+  const pulseReturnedCollectionCard = (cardId) => {
+    const node = findCollectionCard(cardId);
+    if (!node?.classList?.add || !node?.classList?.remove) return false;
+    const prior = pulseTimers.get(node);
+    if (prior != null) clearTimer?.(prior);
+    node.classList.remove('gr-deck-remove-return-pulse');
+    void node.offsetWidth;
+    node.classList.add('gr-deck-remove-return-pulse');
+    if (setTimer) {
+      const timer = setTimer(() => {
+        node.classList.remove('gr-deck-remove-return-pulse');
+        pulseTimers.delete(node);
+      }, 380);
+      pulseTimers.set(node, timer);
+    }
+    return true;
+  };
+
+  const unsubscribe = typeof controller.subscribe === 'function'
+    ? controller.subscribe((payload) => {
+        if (payload?.event === 'deck-remove' && payload?.cardId) pulseReturnedCollectionCard(payload.cardId);
+      })
+    : () => {};
 
   const close = () => {
     backdrop?.remove?.();
@@ -331,6 +377,12 @@ export function mountDeckStorageCorner({
     open,
     close,
     dispose: () => {
+      unsubscribe();
+      for (const [node, timer] of pulseTimers) {
+        clearTimer?.(timer);
+        node.classList?.remove?.('gr-deck-remove-return-pulse');
+      }
+      pulseTimers.clear();
       discovery.destroy();
       close();
       button.remove?.();

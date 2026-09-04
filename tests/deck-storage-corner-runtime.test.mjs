@@ -41,11 +41,14 @@ function fakeClassList() {
 }
 
 function fakeElement() {
-  return {
+  const element = {
     children: [],
     dataset: {},
     attributes: {},
     classList: fakeClassList(),
+    className: '',
+    style: {},
+    textContent: '',
     offsetWidth: 100,
     appendChild(node) {
       this.children.push(node);
@@ -57,6 +60,29 @@ function fakeElement() {
     },
     setAttribute(name, value) {
       this.attributes[name] = String(value);
+      if (name === 'data-id') this.dataset.id = String(value);
+    },
+    removeAttribute(name) {
+      delete this.attributes[name];
+      if (name === 'data-id') delete this.dataset.id;
+    },
+    querySelector() { return null; },
+    querySelectorAll() { return []; },
+    contains(node) {
+      if (node === this) return true;
+      return this.children.some((child) => child?.contains?.(node) || child === node);
+    },
+    cloneNode(deep = false) {
+      const clone = fakeElement();
+      clone.dataset = { ...this.dataset };
+      clone.attributes = { ...this.attributes };
+      clone.className = this.className;
+      clone.style = { ...this.style };
+      clone.textContent = this.textContent;
+      if (deep) {
+        for (const child of this.children) clone.appendChild(child?.cloneNode ? child.cloneNode(true) : child);
+      }
+      return clone;
     },
     addEventListener() {},
     remove() {
@@ -64,6 +90,7 @@ function fakeElement() {
       this.parentNode = null;
     },
   };
+  return element;
 }
 
 function fakeDocument() {
@@ -231,7 +258,8 @@ test('forty-card right swipe routes overflow to Storage instead of hard rejectin
   assert.equal(readDeck().length, 40);
   assert.equal(result.view.storageCount, 1);
   assert.equal(result.view.selectionCount, 41);
-  assert.equal(result.view.storageButtonLabel, '41/40');
+  assert.equal(result.view.overflowCount, 1);
+  assert.equal(result.view.storageButtonLabel, '1');
   assert.equal(result.view.overDeckLimit, true);
   assert.equal(result.view.open, true);
 });
@@ -247,16 +275,47 @@ test('forty-card deck cannot move overflow Storage card back into Deck until spa
   assert.equal(controller.view().storageCount, 1);
 });
 
-test('overflow button renders 41/40 with red-text state while physical deck stays forty', () => {
+test('overflow button renders only the red excess delta and increments while physical deck stays forty', () => {
   const deck = Array.from({ length: 40 }, (_, i) => `d${i}`);
   const { controller } = fixture({ deck });
   controller.applySwipe({ surface: 'collection', cardId: 'N_candidate', deltaX: 90, deltaY: 2 });
+  controller.applySwipe({ surface: 'collection', cardId: 'N_candidate_2', deltaX: 90, deltaY: 2 });
   const document = fakeDocument();
   const buttonHost = fakeElement();
   const mounted = mountDeckStorageCorner({ controller, buttonHost, document });
-  assert.equal(mounted.button.textContent, '41/40');
+  assert.equal(mounted.button.textContent, '2');
   assert.equal(mounted.button.dataset.overflow, 'true');
-  assert.match(mounted.button.attributes['aria-label'], /41\/40/);
+  assert.match(mounted.button.attributes['aria-label'], /2枚超過/);
+  assert.doesNotMatch(mounted.button.attributes['aria-label'], /42\/40/);
+  mounted.dispose();
+});
+
+test('Storage row reuses current live card visual without creating a second interactive card authority', () => {
+  const deck = Array.from({ length: 40 }, (_, i) => `d${i}`);
+  const { controller } = fixture({ deck });
+  controller.applySwipe({ surface: 'collection', cardId: 'N_candidate', deltaX: 90, deltaY: 2 });
+
+  const document = fakeDocument();
+  const sourceCard = fakeElement();
+  sourceCard.dataset.id = 'N_candidate';
+  sourceCard.dataset.art = 'candidate-art';
+  document.querySelectorAll = (selector) => selector === '#collectionGrid [data-id]' ? [sourceCard] : [];
+
+  const mounted = mountDeckStorageCorner({ controller, buttonHost: fakeElement(), document });
+  const backdrop = document.body.children[0];
+  const storageWindow = backdrop.children[0];
+  const columns = storageWindow.children[1];
+  const normalColumn = columns.children[0];
+  const row = normalColumn.children[1];
+  const visual = row.children[0];
+  const clone = visual.children[0];
+
+  assert.equal(visual.className, 'gr-storage-card-visual');
+  assert.equal(visual.attributes['aria-hidden'], 'true');
+  assert.equal(clone.dataset.art, 'candidate-art');
+  assert.equal(clone.dataset.id, undefined);
+  assert.equal(clone.attributes['aria-hidden'], 'true');
+  assert.equal(clone.attributes.tabindex, '-1');
   mounted.dispose();
 });
 

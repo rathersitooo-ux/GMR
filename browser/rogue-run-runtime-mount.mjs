@@ -94,6 +94,8 @@ export function createRogueRunConsumerController({ host } = {}) {
     if (!run || run.phase !== 'AWAITING_BATTLE_RESULT' || host.readScreen() !== 'result') return false;
     const match = host.readMatchSnapshot();
     if (!match?.matchId || !match.result) return false;
+    const expectedMatchId = run.battleHandoff?.matchId;
+    if (!expectedMatchId || match.matchId !== expectedMatchId) return false;
     const boss = run.currentNode?.nodeKind === 'boss';
     run = applyRogueRunEvent(run, {
       type: 'BATTLE_RESULT_CONFIRMED',

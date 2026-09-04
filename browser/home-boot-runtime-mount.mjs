@@ -4,10 +4,18 @@ import {
   HOME_TOUCH_TARGET_MIN_PX,
 } from './home-shell-presentation-core.mjs';
 import { mountRogueRunFromCurrentBrowser } from './rogue-run-runtime-mount.mjs';
+import {
+  advanceSlotRollDrag,
+  createSlotRollState,
+  projectSlotRollWindow,
+  resolveSlotRollCommit,
+} from './slidepad-slot-roll-core.mjs';
 
 const GLOBAL_KEY = 'GAMEROAD_HOME_BOOT_PRESENTATION';
 const STYLE_ID = 'gameroad-home-shell-runtime-style';
 const HOME_SELECTOR = 'section[data-screen="home"]';
+const SETUP_SELECTOR = 'section[data-screen="setup"]';
+const SETUP_MODE_SELECTOR = '[data-mode]';
 const DECORATIVE_GLOBAL_BRAND_SELECTOR = '.top .brand';
 const ROUTE_SELECTOR = '.homePadChoice[data-home-target]';
 const SECONDARY_UTILITY_SELECTOR = '.codexHomeUtilities';
@@ -61,6 +69,19 @@ const runtime = {
     originY: 0,
     moved: false,
     previewButton: null,
+  },
+  slotRoll: {
+    home: null,
+    center: null,
+    handlers: null,
+    pointerId: null,
+    originX: 0,
+    originY: 0,
+    routeButton: null,
+    state: null,
+    lastX: 0,
+    detentPx: 0,
+    previewNode: null,
   },
 };
 
@@ -438,6 +459,209 @@ function clearPreview() {
   runtime.slidepad.previewButton = null;
 }
 
+export function normalizeHomeSetupModeItems(items = []) {
+  if (!Array.isArray(items)) return Object.freeze([]);
+  const normalized = [];
+  const seen = new Set();
+  for (const source of items) {
+    const id = String(source?.id ?? '').trim();
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    const label = String(source?.label ?? id).trim() || id;
+    normalized.push(Object.freeze({ id, label, selected: source?.selected === true, control: source?.control ?? null }));
+  }
+  return Object.freeze(normalized);
+}
+
+export function createHomeSetupModeSlotRoll({ items = [], centerWidth = 0 } = {}) {
+  const modes = normalizeHomeSetupModeItems(items);
+  const anchorIndex = modes.findIndex((item) => item.selected);
+  const width = Number(centerWidth);
+  if (modes.length < 2 || anchorIndex < 0 || !Number.isFinite(width) || width <= 0) return null;
+  return Object.freeze({
+    state: createSlotRollState({ items: modes.map(({ id, label }) => ({ id, label })), anchorIndex }),
+    detentPx: width,
+  });
+}
+
+function currentSetupModeItems() {
+  const setup = document.querySelector(SETUP_SELECTOR);
+  if (!(setup instanceof HTMLElement)) return Object.freeze([]);
+  return normalizeHomeSetupModeItems([...setup.querySelectorAll(SETUP_MODE_SELECTOR)]
+    .filter((node) => node instanceof HTMLElement)
+    .map((control) => ({
+      id: control.dataset.mode,
+      label: control.textContent,
+      selected: control.classList.contains('on') || control.getAttribute('aria-pressed') === 'true',
+      control,
+    })));
+}
+
+function clearSlotRollProjection() {
+  runtime.slotRoll.previewNode?.remove?.();
+  if (runtime.slotRoll.routeButton instanceof HTMLElement) {
+    delete runtime.slotRoll.routeButton.dataset.homeSlotRollActive;
+    delete runtime.slotRoll.routeButton.dataset.homeSlotRollItem;
+  }
+  runtime.slotRoll.routeButton = null;
+  runtime.slotRoll.state = null;
+  runtime.slotRoll.lastX = 0;
+  runtime.slotRoll.detentPx = 0;
+  runtime.slotRoll.previewNode = null;
+}
+
+function renderSlotRollProjection(home, button) {
+  const state = runtime.slotRoll.state;
+  if (!(home instanceof HTMLElement) || !(button instanceof HTMLElement) || !state) return;
+  let node = runtime.slotRoll.previewNode;
+  if (!(node instanceof HTMLElement)) {
+    node = document.createElement('div');
+    node.dataset.homeSlotRollPreview = 'true';
+    node.setAttribute('aria-live', 'polite');
+    node.style.cssText = 'position:fixed;z-index:80;pointer-events:none;white-space:nowrap;padding:7px 10px;border-radius:999px;background:rgba(9,13,30,.9);border:1px solid currentColor;box-shadow:0 8px 24px rgba(0,0,0,.32);font-size:11px;font-weight:800;line-height:1.2;transform:translate(-50%,-100%);';
+    home.appendChild(node);
+    runtime.slotRoll.previewNode = node;
+  }
+  const windowItems = projectSlotRollWindow(state, { radius: 1 });
+  node.textContent = windowItems.map((entry) => entry.selected ? `【${entry.item.label}】` : entry.item.label).join('  ‹  ');
+  const rect = button.getBoundingClientRect();
+  node.style.left = `${rect.left + rect.width / 2}px`;
+  node.style.top = `${Math.max(8, rect.top - 8)}px`;
+  button.dataset.homeSlotRollActive = 'true';
+  button.dataset.homeSlotRollItem = state.itemId || '';
+}
+
+function beginOrAdvanceHomeModeSlotRoll(home, button, event) {
+  if (!(button instanceof HTMLElement) || roleForRouteId(routeId(button)) !== 'battle') {
+    clearSlotRollProjection();
+    return null;
+  }
+  if (runtime.slotRoll.routeButton !== button || !runtime.slotRoll.state) {
+    const centerRect = runtime.slotRoll.center?.getBoundingClientRect?.();
+    const created = createHomeSetupModeSlotRoll({ items: currentSetupModeItems(), centerWidth: centerRect?.width });
+    if (!created) {
+      clearSlotRollProjection();
+      return null;
+    }
+    clearSlotRollProjection();
+    runtime.slotRoll.routeButton = button;
+    runtime.slotRoll.state = created.state;
+    runtime.slotRoll.lastX = Number(event.clientX);
+    runtime.slotRoll.detentPx = created.detentPx;
+    renderSlotRollProjection(home, button);
+    return runtime.slotRoll.state;
+  }
+  const nextX = Number(event.clientX);
+  const deltaPx = nextX - runtime.slotRoll.lastX;
+  runtime.slotRoll.lastX = nextX;
+  const advanced = advanceSlotRollDrag(runtime.slotRoll.state, { deltaPx, detentPx: runtime.slotRoll.detentPx });
+  runtime.slotRoll.state = advanced.state;
+  renderSlotRollProjection(home, button);
+  return runtime.slotRoll.state;
+}
+
+function releaseRouteButtonAtEvent(home, event) {
+  const buttons = routeButtons(home);
+  const target = resolveHomeSlidepadRayTarget({
+    originX: runtime.slotRoll.originX,
+    originY: runtime.slotRoll.originY,
+    pointerX: Number(event.clientX),
+    pointerY: Number(event.clientY),
+    currentRouteId: routeId(runtime.slotRoll.routeButton),
+    targets: buttons.map((button) => ({ routeId: routeId(button), rect: button.getBoundingClientRect() })),
+  });
+  return target ? buttons.find((button) => routeId(button) === target.routeId) || null : null;
+}
+
+function selectSetupModeAfterExistingRoute(itemId) {
+  if (!itemId) return;
+  queueMicrotask(() => {
+    const setup = document.querySelector(SETUP_SELECTOR);
+    if (!(setup instanceof HTMLElement) || !setup.classList.contains('active')) return;
+    const control = currentSetupModeItems().find((item) => item.id === itemId)?.control;
+    if (!(control instanceof HTMLElement)) return;
+    if (control.classList.contains('on') || control.getAttribute('aria-pressed') === 'true') return;
+    control.click();
+  });
+}
+
+function unbindHomeModeSlotRoll() {
+  const center = runtime.slotRoll.center;
+  const handlers = runtime.slotRoll.handlers;
+  clearSlotRollProjection();
+  if (center instanceof HTMLElement && handlers) {
+    center.removeEventListener('pointerdown', handlers.pointerdown);
+    center.removeEventListener('pointermove', handlers.pointermove);
+    center.removeEventListener('pointerup', handlers.pointerupCapture, true);
+    center.removeEventListener('pointercancel', handlers.pointercancel);
+    center.removeEventListener('lostpointercapture', handlers.lostpointercapture);
+    delete center.dataset.homeSlotRollBound;
+  }
+  runtime.slotRoll.home = null;
+  runtime.slotRoll.center = null;
+  runtime.slotRoll.handlers = null;
+  runtime.slotRoll.pointerId = null;
+  runtime.slotRoll.originX = 0;
+  runtime.slotRoll.originY = 0;
+}
+
+function bindHomeModeSlotRoll(home) {
+  const center = home.querySelector(SLIDEPAD_CENTER_SELECTOR);
+  if (!(center instanceof HTMLElement)) {
+    if (runtime.slotRoll.center) unbindHomeModeSlotRoll();
+    return;
+  }
+  if (runtime.slotRoll.home === home && runtime.slotRoll.center === center && runtime.slotRoll.handlers) return;
+  unbindHomeModeSlotRoll();
+  runtime.slotRoll.home = home;
+  runtime.slotRoll.center = center;
+  center.dataset.homeSlotRollBound = 'true';
+  const handlers = {
+    pointerdown(event) {
+      if (!runtime.active) return;
+      runtime.slotRoll.pointerId = event.pointerId;
+      const rect = center.getBoundingClientRect();
+      runtime.slotRoll.originX = rect.left + rect.width / 2;
+      runtime.slotRoll.originY = rect.top + rect.height / 2;
+      clearSlotRollProjection();
+    },
+    pointermove(event) {
+      if (event.pointerId !== runtime.slotRoll.pointerId || !runtime.active) return;
+      const button = home.querySelector(`${ROUTE_SELECTOR}[data-home-slidepad-preview="true"]`);
+      beginOrAdvanceHomeModeSlotRoll(home, button, event);
+    },
+    pointerupCapture(event) {
+      if (event.pointerId !== runtime.slotRoll.pointerId) return;
+      const releaseButton = releaseRouteButtonAtEvent(home, event);
+      const commit = releaseButton instanceof HTMLElement && releaseButton === runtime.slotRoll.routeButton
+        && roleForRouteId(routeId(releaseButton)) === 'battle'
+        ? resolveSlotRollCommit(runtime.slotRoll.state)
+        : null;
+      runtime.slotRoll.pointerId = null;
+      runtime.slotRoll.originX = 0;
+      runtime.slotRoll.originY = 0;
+      clearSlotRollProjection();
+      if (commit?.itemId) selectSetupModeAfterExistingRoute(commit.itemId);
+    },
+    pointercancel(event) {
+      if (event.pointerId !== runtime.slotRoll.pointerId) return;
+      runtime.slotRoll.pointerId = null;
+      clearSlotRollProjection();
+    },
+    lostpointercapture(event) {
+      if (event.pointerId !== runtime.slotRoll.pointerId) return;
+      runtime.slotRoll.pointerId = null;
+      clearSlotRollProjection();
+    },
+  };
+  runtime.slotRoll.handlers = handlers;
+  center.addEventListener('pointerdown', handlers.pointerdown);
+  center.addEventListener('pointermove', handlers.pointermove);
+  center.addEventListener('pointerup', handlers.pointerupCapture, true);
+  center.addEventListener('pointercancel', handlers.pointercancel);
+  center.addEventListener('lostpointercapture', handlers.lostpointercapture);
+}
+
 export function resolveHomeSlidepadFeedbackTranslation({
   dx = 0,
   dy = 0,
@@ -615,10 +839,12 @@ export function refreshHomeBootPresentation() {
   if (!(home instanceof HTMLElement)) {
     runtime.lastError = 'HOME_DOM_UNAVAILABLE';
     runtime.active = false;
+    unbindHomeModeSlotRoll();
     unbindSlidepad();
     return snapshot();
   }
   if (runtime.home && runtime.home !== home) {
+    unbindHomeModeSlotRoll();
     unbindSlidepad();
     unmarkHome(runtime.home);
   }
@@ -649,6 +875,7 @@ export function refreshHomeBootPresentation() {
     selectedRouteId: state.selectedRouteId,
   });
   bindSlidepad(home);
+  bindHomeModeSlotRoll(home);
 
   const entering = active && !runtime.active;
   runtime.active = active;
@@ -705,6 +932,7 @@ export function unmountHomeBootPresentation() {
   runtime.observer?.disconnect();
   if (runtime.resizeHandler) removeEventListener('resize', runtime.resizeHandler);
   runtime.media?.removeEventListener?.('change', runtime.mediaHandler);
+  unbindHomeModeSlotRoll();
   unbindSlidepad();
   unmarkHome(runtime.home);
   runtime.mounted = false;
@@ -732,6 +960,10 @@ export function snapshot() {
     slidepadBlankDoubleClickDismissBound: Boolean(runtime.slidepad.home && runtime.slidepad.handlers),
     slidepadPointerActive: runtime.slidepad.pointerId != null,
     slidepadTargeting: 'straight-ray-target-side-adhesion',
+    slotRollModeBranchBound: Boolean(runtime.slotRoll.center && runtime.slotRoll.handlers),
+    slotRollModeBranchActive: Boolean(runtime.slotRoll.state),
+    slotRollModeItemId: runtime.slotRoll.state?.itemId ?? null,
+    slotRollModeSource: 'setup-data-mode-current-dom',
     projectionStatus: 'scene-target-projection-mounted',
     lastError: runtime.lastError,
   });

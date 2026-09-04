@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GLOBAL-SLIDEPAD-HOME-ADAPTER-R4-20260904T1728-SOL",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "GLOBAL_SLIDEPAD_HOME_LIVE_ADAPTER_R4",
+  "acquireKey": "GLOBAL-SLIDEPAD-HOME-ADAPTER-R4-20260904T1728-SOL",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "user-approved-one-stroke-bidirectional-loop-plus-current-home-ray-and-live-dom-consumer-crosscheck",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "focused-node-tests-for-dom-derived-choice-order-anchor-reanchor-detent-reverse-release-cancel-contract",
+  "proceedToken": "PROCEED|GLOBAL-SLIDEPAD-HOME-ADAPTER-R4-20260904T1728-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|CURRENT_LEASE_READBACK",
+  "authorizationBaseSha": "f86838f22ec15b68d5ba89d194dc47339f782c2b",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "browser/home-slidepad-slot-roll-adapter.mjs",
+    "tests/home-slidepad-slot-roll-adapter.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "GLOBAL_SLIDEPAD_HOME_LIVE_ADAPTER_R4",
+  "leaseAcquireKey": "GLOBAL-SLIDEPAD-HOME-ADAPTER-R4-20260904T1728-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 17:28 JST",
+  "leaseUntilJst": "2026-09-04 18:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:N5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@f86838f22ec15b68d5ba89d194dc47339f782c2b; mutable browser/home-boot-runtime-mount.mjs + new browser/home-slidepad-slot-roll-adapter.mjs + new tests/home-slidepad-slot-roll-adapter.test.mjs + transient data/preaction-authorizations/GLOBAL-SLIDEPAD-HOME-ADAPTER-R4-20260904T1728-SOL.json on branch work/global-slidepad-home-adapter-r4-20260904; own PR/checks/expected-head merge/readback. browser/GAMEROAD.html and Battle files READ_ONLY.",
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "browser/home-slidepad-slot-roll-adapter.mjs",
+    "tests/home-slidepad-slot-roll-adapter.test.mjs"
+  ],
+  "solutionSignature": "home-existing-ray-to-dom-derived-cyclic-slot-roll-live-adapter",
+  "reuseDisposition": "REUSE_EXTEND",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "current-main browser/home-boot-runtime-mount.mjs already owns straight-ray first-level selection and release click",
+    "current-main browser/slidepad-slot-roll-core.mjs already owns modulo index/detent/carry/reverse semantics",
+    "current Home exposes existing route controls plus .homeUtilityBtn controls; adapter can reuse their native click semantics instead of inventing new routes",
+    "existing TransitionDirector remains navigation/state authority; this adapter only supplies selection projection and final direction metadata"
+  ],
+  "reuseDecisionEvidenceId": "home-live-consumer-crosscheck-main-f86838f-plus-core-pr1057",
+  "buildResidualReason": "Only the missing Home consumer handoff is built: first-level ray selection stays authoritative until a Slot Roll detent occurs, the cyclic item set is derived from controls already present in the live Home DOM, and release clicks the existing control exactly once. No second navigation engine, new route map, or GAMEROAD.html structure is introduced."
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-OPS-INFO-VIEW-R1-20260904T2231-SOL-Q7M4N2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_OPS_INFO_VIEW_R1",
+  "acquireKey": "HOME-OPS-INFO-VIEW-R1-20260904T2231-SOL-Q7M4N2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_APPROVED_A+CURRENT_HOME_UPDATE_DETAILS+RELEASE_COMMS_R1_R2+FRESH_NO_OVERLAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_RELEASE_NOTES_STRICT_VALIDATOR+EXISTING_HOME_DIALOG_DISMISSAL+FOCUSED_NODE_TESTS",
+  "proceedToken": "PROCEED|HOME-OPS-INFO-VIEW-R1-20260904T2231-SOL-Q7M4N2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ADAPT_EXISTING_COMMS_ONLY",
+  "authorizationBaseSha": "796f8c011da4729ce1bd4b79fbbbb4ca5dd49193",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_OPS_INFO_VIEW_R1",
+  "leaseAcquireKey": "HOME-OPS-INFO-VIEW-R1-20260904T2231-SOL-Q7M4N2",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 22:31 JST",
+  "leaseUntilJst": "2026-09-04 23:31 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A12:L12",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@267f175e6f9f26e8b88e6b38fea11e03a5200055; branch work/home-ops-info-view-r1-20260904; mutable browser/home-shell-presentation-core.mjs + tests/home-boot-presentation.test.mjs + .github/workflows/cloudflare-public-deploy.yml + transient data/preaction-authorizations/HOME-OPS-INFO-VIEW-R1-20260904T2231-SOL-Q7M4N2.json; own PR/checks/expected-head merge/public readback. deploy/cloudflare/release-comms-source.json, browser/GAMEROAD.html, gameplay/rules/save/economy/network/assets/control-plane READ_ONLY.",
+  "scope": [
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ],
+  "leaseScope": [
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ]
+}

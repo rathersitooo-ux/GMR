@@ -6,6 +6,12 @@ const VIEWPORT_VARIANTS = Object.freeze({
 });
 const TOUCH_TARGET_MIN_PX = 44;
 const SETUP_STAGING_STYLE_ID = 'gameroad-setup-staging-presentation-r1';
+const UPDATE_BANNER_ID = 'gameroadUpdateBanner';
+const UPDATE_DETAILS_TRIGGER_CLASS = 'gameroadUpdateDetailsTrigger';
+const UPDATE_DETAILS_DIALOG_ID = 'gameroadUpdateDetailsDialog';
+const UPDATE_DETAILS_STYLE_ID = 'gameroad-update-details-style-r1';
+const RELEASE_COMMS_URL = './gameroad-release-comms.json';
+const UPDATE_MESSAGE = 'アップデートがあります';
 const SETUP_STAGING_CSS = `
 section[data-screen="setup"] [data-content],
 section[data-screen="setup"] [data-mode]{min-height:44px !important;padding:10px 14px !important;touch-action:manipulation;display:flex;align-items:center;justify-content:center;border-radius:14px !important;border:1px solid color-mix(in srgb,currentColor 32%,transparent) !important;background:color-mix(in srgb,currentColor 7%,transparent) !important;box-shadow:0 4px 12px rgba(0,0,0,.12);transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease}
@@ -20,6 +26,29 @@ section[data-screen="setup"] #startMatch:focus-visible{outline:3px solid current
 @media (max-width:540px){section[data-screen="setup"]{overflow-y:auto;overscroll-behavior:contain}section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode]{min-height:48px !important}section[data-screen="setup"] #startMatch{position:sticky;bottom:max(10px,env(safe-area-inset-bottom));z-index:20;min-height:60px !important;margin-top:12px}}
 @media (max-height:430px) and (orientation:landscape){section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode]{min-height:44px !important;padding-block:7px !important}section[data-screen="setup"] #startMatch{min-height:48px !important}}
 `;
+const UPDATE_DETAILS_CSS = `
+.${UPDATE_DETAILS_TRIGGER_CLASS}{appearance:none;border:0;background:none;color:inherit;font:inherit;font-weight:inherit;line-height:inherit;padding:0;margin:0;text-decoration:underline;text-decoration-thickness:.08em;text-underline-offset:.18em;cursor:pointer;touch-action:manipulation}
+.${UPDATE_DETAILS_TRIGGER_CLASS}:focus-visible{outline:2px solid currentColor;outline-offset:3px;border-radius:4px}
+#${UPDATE_DETAILS_DIALOG_ID}[hidden]{display:none!important}
+#${UPDATE_DETAILS_DIALOG_ID}{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));background:rgba(6,9,18,.62);backdrop-filter:blur(8px)}
+#${UPDATE_DETAILS_DIALOG_ID} .gameroadUpdateDetailsPanel{width:min(640px,100%);max-height:min(78vh,720px);overflow:auto;overscroll-behavior:contain;background:color-mix(in srgb,#111827 92%,transparent);color:#fff;border:1px solid rgba(255,255,255,.18);border-radius:18px;box-shadow:0 24px 72px rgba(0,0,0,.46);padding:18px 18px 20px}
+#${UPDATE_DETAILS_DIALOG_ID} .gameroadUpdateDetailsHead{display:flex;gap:12px;align-items:center;justify-content:space-between;position:sticky;top:-18px;margin:-18px -18px 12px;padding:18px;background:color-mix(in srgb,#111827 96%,transparent);z-index:1}
+#${UPDATE_DETAILS_DIALOG_ID} h2{margin:0;font-size:clamp(18px,3vw,24px)}
+#${UPDATE_DETAILS_DIALOG_ID} h3{margin:16px 0 8px;font-size:clamp(16px,2.5vw,20px)}
+#${UPDATE_DETAILS_DIALOG_ID} ul{margin:0;padding-left:1.35em;display:grid;gap:8px}
+#${UPDATE_DETAILS_DIALOG_ID} li{line-height:1.55}
+#${UPDATE_DETAILS_DIALOG_ID} .gameroadUpdateDetailsClose{min-width:44px;min-height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:inherit;font:inherit;font-weight:700;cursor:pointer;touch-action:manipulation}
+#${UPDATE_DETAILS_DIALOG_ID} .gameroadUpdateDetailsClose:focus-visible{outline:3px solid #fff;outline-offset:2px}
+#${UPDATE_DETAILS_DIALOG_ID} .gameroadUpdateDetailsStatus{margin:16px 0;line-height:1.6}
+@media (max-height:430px) and (orientation:landscape){#${UPDATE_DETAILS_DIALOG_ID}{align-items:stretch;padding:8px max(10px,env(safe-area-inset-right)) 8px max(10px,env(safe-area-inset-left))}#${UPDATE_DETAILS_DIALOG_ID} .gameroadUpdateDetailsPanel{max-height:none;border-radius:14px;padding:12px 14px 14px}#${UPDATE_DETAILS_DIALOG_ID} .gameroadUpdateDetailsHead{top:-12px;margin:-12px -14px 8px;padding:12px 14px}}
+`;
+
+const updateDetailsRuntime = {
+  trigger: null,
+  dialog: null,
+  loadPromise: null,
+  releaseNotes: null,
+};
 
 function nonEmpty(value, label) {
   if (typeof value !== 'string' || value.trim() === '') throw new Error(`${label} must be a non-empty string`);
@@ -49,12 +78,206 @@ function freezeObject(value) {
   return Object.freeze(out);
 }
 
+export function parsePublishedReleaseNotes(payload) {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return null;
+  if (payload.schema !== 'gameroad.release-comms.v1' || payload.channel !== 'public') return null;
+  const section = payload.release_notes;
+  if (!section || section.state !== 'PUBLISHED' || !Array.isArray(section.items) || section.items.length < 1 || section.items.length > 20) return null;
+  const seen = new Set();
+  const items = [];
+  for (const item of section.items) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return null;
+    const keys = Object.keys(item).sort();
+    if (JSON.stringify(keys) !== JSON.stringify(['changes', 'id', 'title'])) return null;
+    if (typeof item.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,79}$/.test(item.id) || seen.has(item.id)) return null;
+    if (typeof item.title !== 'string' || item.title.trim() !== item.title || item.title.length < 1 || item.title.length > 120) return null;
+    if (!Array.isArray(item.changes) || item.changes.length < 1 || item.changes.length > 20) return null;
+    const changes = [];
+    for (const change of item.changes) {
+      if (typeof change !== 'string' || change.trim() !== change || change.length < 1 || change.length > 300) return null;
+      changes.push(change);
+    }
+    seen.add(item.id);
+    items.push(Object.freeze({ id: item.id, title: item.title, changes: Object.freeze(changes) }));
+  }
+  return Object.freeze(items);
+}
+
+export function isUpdateBannerMessage(value) {
+  return typeof value === 'string' && value.includes(UPDATE_MESSAGE);
+}
+
 function ensureSharedShellPresentation() {
   if (typeof document === 'undefined' || !document.head || document.getElementById(SETUP_STAGING_STYLE_ID)) return false;
   const style = document.createElement('style');
   style.id = SETUP_STAGING_STYLE_ID;
   style.textContent = SETUP_STAGING_CSS;
   document.head.append(style);
+  return true;
+}
+
+function ensureUpdateDetailsStyle() {
+  if (typeof document === 'undefined' || !document.head || document.getElementById(UPDATE_DETAILS_STYLE_ID)) return false;
+  const style = document.createElement('style');
+  style.id = UPDATE_DETAILS_STYLE_ID;
+  style.textContent = UPDATE_DETAILS_CSS;
+  document.head.append(style);
+  return true;
+}
+
+function closeUpdateDetails() {
+  const dialog = updateDetailsRuntime.dialog;
+  if (!(dialog instanceof HTMLElement)) return;
+  dialog.hidden = true;
+  updateDetailsRuntime.trigger?.focus?.();
+}
+
+function ensureUpdateDetailsDialog() {
+  if (typeof document === 'undefined' || !document.body) return null;
+  const existing = document.getElementById(UPDATE_DETAILS_DIALOG_ID);
+  if (existing instanceof HTMLElement) {
+    updateDetailsRuntime.dialog = existing;
+    return existing;
+  }
+  ensureUpdateDetailsStyle();
+  const root = document.createElement('div');
+  root.id = UPDATE_DETAILS_DIALOG_ID;
+  root.hidden = true;
+  root.setAttribute('role', 'dialog');
+  root.setAttribute('aria-modal', 'true');
+  root.setAttribute('aria-labelledby', `${UPDATE_DETAILS_DIALOG_ID}Title`);
+  const panel = document.createElement('section');
+  panel.className = 'gameroadUpdateDetailsPanel';
+  const head = document.createElement('div');
+  head.className = 'gameroadUpdateDetailsHead';
+  const title = document.createElement('h2');
+  title.id = `${UPDATE_DETAILS_DIALOG_ID}Title`;
+  title.textContent = 'アップデート内容';
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.className = 'gameroadUpdateDetailsClose';
+  close.textContent = '閉じる';
+  close.addEventListener('click', closeUpdateDetails);
+  head.append(title, close);
+  const content = document.createElement('div');
+  content.dataset.updateDetailsContent = 'true';
+  panel.append(head, content);
+  root.append(panel);
+  root.addEventListener('click', (event) => {
+    if (event.target === root) closeUpdateDetails();
+  });
+  root.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeUpdateDetails();
+    }
+  });
+  document.body.append(root);
+  updateDetailsRuntime.dialog = root;
+  return root;
+}
+
+function renderUpdateDetails(dialog, items) {
+  const content = dialog?.querySelector?.('[data-update-details-content="true"]');
+  if (!(content instanceof HTMLElement)) return;
+  content.replaceChildren();
+  for (const item of items) {
+    const article = document.createElement('article');
+    const heading = document.createElement('h3');
+    heading.textContent = item.title;
+    const list = document.createElement('ul');
+    for (const change of item.changes) {
+      const li = document.createElement('li');
+      li.textContent = change;
+      list.append(li);
+    }
+    article.append(heading, list);
+    content.append(article);
+  }
+}
+
+function renderUpdateDetailsStatus(dialog, text) {
+  const content = dialog?.querySelector?.('[data-update-details-content="true"]');
+  if (!(content instanceof HTMLElement)) return;
+  content.replaceChildren();
+  const status = document.createElement('p');
+  status.className = 'gameroadUpdateDetailsStatus';
+  status.textContent = text;
+  content.append(status);
+}
+
+async function loadPublishedReleaseNotes() {
+  if (updateDetailsRuntime.releaseNotes) return updateDetailsRuntime.releaseNotes;
+  if (updateDetailsRuntime.loadPromise) return updateDetailsRuntime.loadPromise;
+  if (typeof fetch !== 'function') return null;
+  updateDetailsRuntime.loadPromise = (async () => {
+    try {
+      const response = await fetch(RELEASE_COMMS_URL, { cache: 'no-store', credentials: 'same-origin' });
+      if (!response?.ok) return null;
+      const items = parsePublishedReleaseNotes(await response.json());
+      if (items) updateDetailsRuntime.releaseNotes = items;
+      return items;
+    } catch {
+      return null;
+    } finally {
+      updateDetailsRuntime.loadPromise = null;
+    }
+  })();
+  return updateDetailsRuntime.loadPromise;
+}
+
+async function openUpdateDetails() {
+  const dialog = ensureUpdateDetailsDialog();
+  if (!(dialog instanceof HTMLElement)) return;
+  dialog.hidden = false;
+  renderUpdateDetailsStatus(dialog, '更新内容を読み込んでいます…');
+  dialog.querySelector?.('.gameroadUpdateDetailsClose')?.focus?.();
+  const items = await loadPublishedReleaseNotes();
+  if (!items) {
+    renderUpdateDetailsStatus(dialog, '更新内容を取得できませんでした。');
+    return;
+  }
+  renderUpdateDetails(dialog, items);
+}
+
+function updateBannerTextNode(banner) {
+  if (typeof document === 'undefined' || typeof document.createTreeWalker !== 'function' || typeof NodeFilter === 'undefined') return null;
+  const walker = document.createTreeWalker(banner, NodeFilter.SHOW_TEXT);
+  let node = walker.nextNode();
+  while (node) {
+    const parent = node.parentElement;
+    if (isUpdateBannerMessage(node.textContent || '') && parent && !parent.closest('button,a,input,select,textarea,[role="button"]')) return node;
+    node = walker.nextNode();
+  }
+  return null;
+}
+
+export function ensureHomeUpdateDetailsConsumer() {
+  if (typeof document === 'undefined') return false;
+  const banner = document.getElementById(UPDATE_BANNER_ID);
+  if (!(banner instanceof HTMLElement)) return false;
+  const existing = banner.querySelector(`.${UPDATE_DETAILS_TRIGGER_CLASS}`);
+  if (existing instanceof HTMLButtonElement) {
+    updateDetailsRuntime.trigger = existing;
+    return true;
+  }
+  const textNode = updateBannerTextNode(banner);
+  if (!textNode?.parentNode) return false;
+  ensureUpdateDetailsStyle();
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.className = UPDATE_DETAILS_TRIGGER_CLASS;
+  trigger.setAttribute('aria-haspopup', 'dialog');
+  trigger.setAttribute('aria-controls', UPDATE_DETAILS_DIALOG_ID);
+  trigger.title = 'アップデート内容を表示';
+  textNode.parentNode.insertBefore(trigger, textNode);
+  trigger.append(textNode);
+  trigger.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    void openUpdateDetails();
+  });
+  updateDetailsRuntime.trigger = trigger;
   return true;
 }
 
@@ -67,6 +290,7 @@ export function classifyHomeViewport(input = {}) {
 
 export function createHomeShellState({ expanded = true, selectedRouteId = null, routeIds = [] } = {}) {
   ensureSharedShellPresentation();
+  ensureHomeUpdateDetailsConsumer();
   const ids = uniqueRouteIds(routeIds);
   const selected = selectedRouteId == null ? null : nonEmpty(selectedRouteId, 'selectedRouteId');
   if (selected !== null && !ids.includes(selected)) throw new Error('selectedRouteId must exist in routeIds');
@@ -157,3 +381,4 @@ export function projectHomeShell({
 export const HOME_SHELL_PRESENTATION_SCHEMA = SCHEMA;
 export const HOME_VIEWPORT_VARIANTS = VIEWPORT_VARIANTS;
 export const HOME_TOUCH_TARGET_MIN_PX = TOUCH_TARGET_MIN_PX;
+export const HOME_UPDATE_DETAILS_MANIFEST_URL = RELEASE_COMMS_URL;

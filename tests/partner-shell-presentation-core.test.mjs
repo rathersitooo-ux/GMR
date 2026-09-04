@@ -11,7 +11,7 @@ const roster = [
   { partnerId: 'partner.other', displayName: 'Other' },
 ];
 
-const expectedHubIds = ['detail', 'list', 'formation', 'strategy', 'conversation', 'tea'];
+const expectedHubIds = ['detail', 'list', 'formation', 'strategy', 'conversation', 'dialogue_feedback', 'tea'];
 
 test('hub exposes concrete current Partner entries only', () => {
   const view = buildPartnerShellView({ activePartnerId: 'partner.saasuna', roster });
@@ -32,6 +32,24 @@ test('every visible Partner hub button routes to its concrete surface', () => {
     assert.equal(targetView.view, target);
     assert.equal(targetView.availableActions.includes('BACK_HUB') || target === 'detail', true);
   }
+});
+
+test('dialogue feedback surface only projects caller-provided post-battle line and versions', () => {
+  const input = {
+    activePartnerId: 'partner.saasuna',
+    roster,
+    view: 'dialogue_feedback',
+    postBattleLine: {
+      sourceLineId: 'post.win.001',
+      text: '勝てましたね。',
+      sourceStateIdentity: 'match-42:result',
+      versions: { rules: 'r1', content: 'c2', state: 's3' },
+    },
+  };
+  const view = buildPartnerShellView(input);
+  assert.equal(view.view, 'dialogue_feedback');
+  assert.deepEqual(view.postBattleLine, input.postBattleLine);
+  assert.equal(nextPartnerShellView('dialogue_feedback', 'BACK_HUB'), 'hub');
 });
 
 test('placeholder-only concepts are not advertised as usable surfaces', () => {

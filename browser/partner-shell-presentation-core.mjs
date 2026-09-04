@@ -4,6 +4,7 @@ const MENU_ITEMS = Object.freeze([
   Object.freeze({ id: 'formation', label: '編成', action: 'OPEN_FORMATION', targetView: 'formation' }),
   Object.freeze({ id: 'strategy', label: '作戦', action: 'OPEN_STRATEGY', targetView: 'strategy' }),
   Object.freeze({ id: 'conversation', label: '話す', action: 'OPEN_CONVERSATION', targetView: 'conversation' }),
+  Object.freeze({ id: 'dialogue_feedback', label: 'セリフ・声調整', action: 'OPEN_DIALOGUE_FEEDBACK', targetView: 'dialogue_feedback' }),
   Object.freeze({ id: 'tea', label: 'お茶会', action: 'OPEN_TEA', targetView: 'tea' }),
 ]);
 
@@ -14,6 +15,7 @@ const VIEW_META = Object.freeze({
   formation: Object.freeze({ title: '編成', surfaceKind: 'panel' }),
   strategy: Object.freeze({ title: '作戦', surfaceKind: 'panel' }),
   conversation: Object.freeze({ title: '話す', surfaceKind: 'mode_entry' }),
+  dialogue_feedback: Object.freeze({ title: 'セリフ・声調整', surfaceKind: 'panel' }),
   tea: Object.freeze({ title: 'お茶会', surfaceKind: 'mode_entry' }),
 });
 
@@ -53,6 +55,23 @@ function actionsFor(view) {
   return ['BACK_HUB'];
 }
 
+function projectPostBattleLine(input) {
+  const raw = input?.postBattleLine;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const sourceLineId = token(raw.sourceLineId);
+  const text = token(raw.text);
+  const sourceStateIdentity = token(raw.sourceStateIdentity);
+  const versions = raw.versions && typeof raw.versions === 'object' && !Array.isArray(raw.versions)
+    ? Object.freeze({
+      rules: token(raw.versions.rules),
+      content: token(raw.versions.content),
+      state: token(raw.versions.state),
+    })
+    : null;
+  if (!sourceLineId || !text || !sourceStateIdentity || !versions?.rules || !versions?.content || !versions?.state) return null;
+  return Object.freeze({ sourceLineId, text, sourceStateIdentity, versions });
+}
+
 export function buildPartnerShellView(input = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw new TypeError('partner shell input must be an object');
@@ -76,6 +95,7 @@ export function buildPartnerShellView(input = {}) {
     ? Object.freeze(input.formationPartnerIds.map(token).filter(Boolean))
     : Object.freeze([]);
   const strategyId = token(input.strategyId);
+  const postBattleLine = projectPostBattleLine(input);
   const meta = VIEW_META[view];
 
   return Object.freeze({
@@ -88,6 +108,7 @@ export function buildPartnerShellView(input = {}) {
     detailPartner,
     formationPartnerIds,
     strategyId,
+    postBattleLine,
     hubMenuItems: view === 'hub' ? MENU_ITEMS : Object.freeze([]),
     availableActions: Object.freeze(actionsFor(view)),
     deadButtonAllowed: false,

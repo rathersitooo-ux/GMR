@@ -38,15 +38,15 @@ jobs:
           ]
           for line in forbidden_lines:
               count = html.count(line)
-              if count != 2:
-                  raise SystemExit(f'guard failed: expected 2 embedded copies for {line.strip()!r}, found {count}')
+              if count != 1:
+                  raise SystemExit(f'guard failed: expected 1 embedded copy for {line.strip()!r}, found {count}')
               html = html.replace(line, '')
 
           old_fn = "function saasunaBattleReaction(){const m=state?.match,r=m?.lastBattleResolution,me=m?.players?.find?.(p=>p.human);if(!r||!me)return null;const mine=r.winnerIds?.includes(me.id),attacking=r.attackerId===me.id,defending=r.defenderId===me.id;if(!attacking&&!defending)return null;const nonlethal=!publicMatchHasWinner();if(attacking){if(mine)return'attack_win';const enemy=m.mode==='2p'?m.players.find(p=>p.id!==me.id):null,prog=enemy?r.maxLaneProgress?.find(x=>x.id===enemy.id):null,flowFlag=!!(prog&&prog.after<=prog.before),royalFlag=!!(nonlethal&&r.players?.filter(p=>p.id!==me.id).flatMap(p=>p.cards||[]).some(x=>['J','Q','K'].includes(CARDS[x.cardId]?.rank)));if(flowFlag&&!royalFlag)return'attack_lose_no_enemy_max_progress';if(royalFlag&&!flowFlag)return'attack_lose_royal_nonlethal';return'attack_lose'}if(defending){if(mine)return'defend_win';if(nonlethal)return'defend_lose_nonlethal'}return null}"
           new_fn = "function saasunaBattleReaction(){const m=state?.match,r=m?.lastBattleResolution,me=m?.players?.find?.(p=>p.human);if(!r||!me)return null;const mine=r.winnerIds?.includes(me.id),attacking=r.attackerId===me.id,defending=r.defenderId===me.id;if(!attacking&&!defending)return null;if(!mine)return null;if(attacking)return'attack_win';if(defending)return'defend_win';return null}"
           fn_count = html.count(old_fn)
-          if fn_count != 2:
-              raise SystemExit(f'guard failed: expected 2 stale saasunaBattleReaction copies, found {fn_count}')
+          if fn_count != 1:
+              raise SystemExit(f'guard failed: expected 1 stale saasunaBattleReaction copy, found {fn_count}')
           html = html.replace(old_fn, new_fn)
 
           marker = "  const dedicatedScriptMatch = html.match(\n"

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARD-SKIN-OPPONENT-PREF-R4-20260904T1117-SOL-K7M3Q9",
+  "taskId": "CARD-SKIN-DEFAULT-UNEQUIP-CONNECTION-001",
+  "workUnitKey": "CARD_SKIN_OPPONENT_LOCAL_PREFERENCE_CARDS_R4",
+  "acquireKey": "CARD-SKIN-OPPONENT-PREF-R4-20260904T1117-SOL-K7M3Q9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "row1339-user-explicit-self-opponent-separation+main-cards-local-skin-actual",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing-cards-conventional-node-test+viewer-local-no-network-contract",
+  "proceedToken": "PROCEED|CARD-SKIN-OPPONENT-PREF-R4-20260904T1117-SOL-K7M3Q9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-04T11:17+09:00",
+  "authorizationBaseSha": "3c2044ef58fe7f19d6bff68c823489a7d16470f1",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "CARD-SKIN-DEFAULT-UNEQUIP-CONNECTION-001",
+  "leaseWorkUnitKey": "CARD_SKIN_OPPONENT_LOCAL_PREFERENCE_CARDS_R4",
+  "leaseAcquireKey": "CARD-SKIN-OPPONENT-PREF-R4-20260904T1117-SOL-K7M3Q9",
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-09-04 11:17 JST",
+  "leaseUntilJst": "2026-09-04 12:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A348:L348",
+  "leaseExactMutableResources": "browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; transient data/preaction-authorizations/CARD-SKIN-OPPONENT-PREF-R4-20260904T1117-SOL-K7M3Q9.json; GAMEROAD 全作業一覧!Y1339:AB1339 post-merge evidence only"
+}

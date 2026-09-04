@@ -13,18 +13,25 @@ const UPDATE_DETAILS_STYLE_ID = 'gameroad-update-details-style-r1';
 const RELEASE_COMMS_URL = './gameroad-release-comms.json';
 const UPDATE_MESSAGE = 'アップデートがあります';
 const SETUP_STAGING_CSS = `
+section[data-screen="setup"] .setupHero{position:relative;padding:clamp(14px,2.2vw,24px);border-radius:22px;background:linear-gradient(145deg,color-mix(in srgb,currentColor 10%,transparent),color-mix(in srgb,currentColor 3%,transparent));box-shadow:0 16px 38px rgba(0,0,0,.18),inset 0 0 0 1px color-mix(in srgb,currentColor 18%,transparent)}
+section[data-screen="setup"] .setupBox{display:grid;gap:12px;padding:clamp(12px,2vw,20px);border-radius:20px;background:color-mix(in srgb,currentColor 4%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,currentColor 14%,transparent)}
 section[data-screen="setup"] [data-content],
-section[data-screen="setup"] [data-mode]{min-height:44px !important;padding:10px 14px !important;touch-action:manipulation;display:flex;align-items:center;justify-content:center;border-radius:14px !important;border:1px solid color-mix(in srgb,currentColor 32%,transparent) !important;background:color-mix(in srgb,currentColor 7%,transparent) !important;box-shadow:0 4px 12px rgba(0,0,0,.12);transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease}
+section[data-screen="setup"] [data-mode]{min-height:44px !important;padding:10px 14px !important;touch-action:manipulation;display:flex;align-items:center;justify-content:center;border-radius:14px !important;border:1px solid color-mix(in srgb,currentColor 20%,transparent) !important;background:color-mix(in srgb,currentColor 3%,transparent) !important;box-shadow:0 3px 10px rgba(0,0,0,.1);opacity:.76;filter:saturate(.82) brightness(.94);transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease,filter .16s ease,opacity .16s ease}
+section[data-screen="setup"] [data-content]:hover,
+section[data-screen="setup"] [data-mode]:hover{opacity:.94;filter:saturate(.96) brightness(1.01);border-color:color-mix(in srgb,currentColor 34%,transparent) !important}
 section[data-screen="setup"] [data-content].on,
-section[data-screen="setup"] [data-mode].on{font-weight:800 !important;outline:2px solid currentColor;outline-offset:-2px;background:color-mix(in srgb,currentColor 15%,transparent) !important;box-shadow:0 8px 18px rgba(0,0,0,.2);transform:translateY(-1px)}
+section[data-screen="setup"] [data-mode].on{position:relative;font-weight:850 !important;opacity:1;filter:brightness(1.12) saturate(1.08);outline:2px solid currentColor;outline-offset:-2px;background:color-mix(in srgb,currentColor 18%,transparent) !important;box-shadow:0 10px 24px rgba(0,0,0,.24),inset 0 0 0 1px color-mix(in srgb,currentColor 35%,transparent);transform:translateY(-2px) scale(1.012)}
 section[data-screen="setup"] [data-content]:focus-visible,
-section[data-screen="setup"] [data-mode]:focus-visible{outline:3px solid currentColor;outline-offset:3px}
-section[data-screen="setup"] #startMatch{width:100%;min-height:56px !important;font-size:clamp(15px,2vw,18px) !important;font-weight:800 !important;letter-spacing:.02em;border-width:2px !important;box-shadow:0 8px 24px rgba(0,0,0,.28),0 0 0 1px currentColor;touch-action:manipulation}
-section[data-screen="setup"] #startMatch:not(:disabled){filter:brightness(1.12) saturate(1.06)}
-section[data-screen="setup"] #startMatch:focus-visible{outline:3px solid currentColor;outline-offset:3px}
-@media (prefers-reduced-motion:reduce){section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode]{transition:none}section[data-screen="setup"] [data-content].on,section[data-screen="setup"] [data-mode].on{transform:none}}
-@media (max-width:540px){section[data-screen="setup"]{overflow-y:auto;overscroll-behavior:contain}section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode]{min-height:48px !important}section[data-screen="setup"] #startMatch{position:sticky;bottom:max(10px,env(safe-area-inset-bottom));z-index:20;min-height:60px !important;margin-top:12px}}
-@media (max-height:430px) and (orientation:landscape){section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode]{min-height:44px !important;padding-block:7px !important}section[data-screen="setup"] #startMatch{min-height:48px !important}}
+section[data-screen="setup"] [data-mode]:focus-visible{outline:3px solid currentColor;outline-offset:3px;opacity:1;filter:none}
+section[data-screen="setup"] #startMatch{position:relative;width:100%;min-height:62px !important;margin-top:clamp(10px,2vh,18px);font-size:clamp(16px,2.25vw,20px) !important;font-weight:900 !important;letter-spacing:.045em;border-width:2px !important;box-shadow:0 14px 34px rgba(0,0,0,.34),0 0 0 1px currentColor;touch-action:manipulation;transition:transform .12s ease,filter .12s ease,box-shadow .12s ease}
+section[data-screen="setup"] #startMatch:not(:disabled){filter:brightness(1.18) saturate(1.1);box-shadow:0 16px 38px rgba(0,0,0,.38),0 0 0 2px color-mix(in srgb,currentColor 72%,transparent)}
+section[data-screen="setup"] #startMatch:not(:disabled):hover{filter:brightness(1.25) saturate(1.14);transform:translateY(-1px)}
+section[data-screen="setup"] #startMatch:not(:disabled):active{filter:brightness(1.08) saturate(1.03);transform:translateY(1px) scale(.992);box-shadow:0 7px 18px rgba(0,0,0,.28),0 0 0 2px color-mix(in srgb,currentColor 60%,transparent)}
+section[data-screen="setup"] #startMatch:disabled{opacity:.52;box-shadow:0 5px 14px rgba(0,0,0,.18)}
+section[data-screen="setup"] #startMatch:focus-visible{outline:3px solid currentColor;outline-offset:4px}
+@media (prefers-reduced-motion:reduce){section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode],section[data-screen="setup"] #startMatch{transition:none}section[data-screen="setup"] [data-content].on,section[data-screen="setup"] [data-mode].on,section[data-screen="setup"] #startMatch:not(:disabled):hover,section[data-screen="setup"] #startMatch:not(:disabled):active{transform:none}}
+@media (max-width:540px){section[data-screen="setup"]{overflow-y:auto;overscroll-behavior:contain}section[data-screen="setup"] .setupHero{padding:14px;border-radius:18px}section[data-screen="setup"] .setupBox{gap:10px;padding:12px;border-radius:18px}section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode]{min-height:48px !important}section[data-screen="setup"] #startMatch{position:sticky;bottom:max(10px,env(safe-area-inset-bottom));z-index:20;min-height:64px !important;margin-top:12px}}
+@media (max-height:430px) and (orientation:landscape){section[data-screen="setup"] .setupHero{padding:9px 12px}section[data-screen="setup"] .setupBox{gap:7px;padding:9px 11px}section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode]{min-height:44px !important;padding-block:7px !important}section[data-screen="setup"] #startMatch{min-height:50px !important;margin-top:7px}}
 `;
 const UPDATE_DETAILS_CSS = `
 .${UPDATE_DETAILS_TRIGGER_CLASS}{appearance:none;border:0;background:none;color:inherit;font:inherit;font-weight:inherit;line-height:inherit;padding:0;margin:0;text-decoration:underline;text-decoration-thickness:.08em;text-underline-offset:.18em;cursor:pointer;touch-action:manipulation}
@@ -349,7 +356,7 @@ export function projectHomeShell({
   if (!state || state.schema !== SCHEMA || state.route !== 'Home') throw new Error('valid Home shell state is required');
   const variant = classifyHomeViewport(v);
   const expectedOrientation = variant === VIEWPORT_VARIANTS.PORTRAIT ? 'portrait' : 'landscape';
-  if (projection.orientation !== expectedOrientation) throw new Error('homeProjection orientation does not match viewport');
+  if (projection.orientation !== expectedOrientation) throw new Error('homeProjection.orientation does not match viewport');
 
   return Object.freeze({
     schema: SCHEMA,

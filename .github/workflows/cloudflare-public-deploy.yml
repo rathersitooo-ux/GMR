@@ -94,62 +94,58 @@ jobs:
             throw new Error(`Unexpected release comms channel: ${source.channel}`);
           }
 
-          function validateReleaseNotes(section) {
+          const hiddenStates = {
+            calendar: 'UNPUBLISHED',
+            roadmap: 'UNPUBLISHED',
+            release_notes: 'UNPUBLISHED',
+            known_issues: 'NOT_ASSERTED',
+            service_status: 'NOT_ASSERTED',
+          };
+          function validateReleaseCommsSection(key, section, hiddenState) {
             if (!section || !Array.isArray(section.items)) {
-              throw new Error('Release comms release_notes must have an items array');
+              throw new Error(`Release comms ${key} must have an items array`);
             }
-            if (section.state === 'UNPUBLISHED') {
+            if (section.state === hiddenState) {
               if (section.items.length !== 0) {
-                throw new Error('Release comms release_notes UNPUBLISHED state must have an empty items array');
+                throw new Error(`Release comms ${key} ${hiddenState} state must have an empty items array`);
               }
               return;
             }
             if (section.state !== 'PUBLISHED') {
-              throw new Error(`Release comms release_notes state is unsupported: ${section.state}`);
+              throw new Error(`Release comms ${key} state is unsupported: ${section.state}`);
             }
             if (section.items.length < 1 || section.items.length > 20) {
-              throw new Error('Release comms release_notes PUBLISHED state must contain 1..20 items');
+              throw new Error(`Release comms ${key} PUBLISHED state must contain 1..20 items`);
             }
             const seenIds = new Set();
             for (const [index, item] of section.items.entries()) {
               if (!item || typeof item !== 'object' || Array.isArray(item)) {
-                throw new Error(`Release comms release_notes item ${index} must be an object`);
+                throw new Error(`Release comms ${key} item ${index} must be an object`);
               }
               const keys = Object.keys(item).sort();
               if (JSON.stringify(keys) !== JSON.stringify(['changes', 'id', 'title'])) {
-                throw new Error(`Release comms release_notes item ${index} has unsupported fields`);
+                throw new Error(`Release comms ${key} item ${index} has unsupported fields`);
               }
               if (typeof item.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,79}$/.test(item.id) || seenIds.has(item.id)) {
-                throw new Error(`Release comms release_notes item ${index} has an invalid or duplicate id`);
+                throw new Error(`Release comms ${key} item ${index} has an invalid or duplicate id`);
               }
               seenIds.add(item.id);
               if (typeof item.title !== 'string' || item.title.length < 1 || item.title.length > 120 || item.title.trim() !== item.title) {
-                throw new Error(`Release comms release_notes item ${index} has an invalid title`);
+                throw new Error(`Release comms ${key} item ${index} has an invalid title`);
               }
               if (!Array.isArray(item.changes) || item.changes.length < 1 || item.changes.length > 20) {
-                throw new Error(`Release comms release_notes item ${index} must contain 1..20 changes`);
+                throw new Error(`Release comms ${key} item ${index} must contain 1..20 changes`);
               }
               for (const [changeIndex, change] of item.changes.entries()) {
                 if (typeof change !== 'string' || change.length < 1 || change.length > 300 || change.trim() !== change) {
-                  throw new Error(`Release comms release_notes item ${index} change ${changeIndex} is invalid`);
+                  throw new Error(`Release comms ${key} item ${index} change ${changeIndex} is invalid`);
                 }
               }
             }
           }
-
-          const expectedStates = {
-            calendar: 'UNPUBLISHED',
-            roadmap: 'UNPUBLISHED',
-            known_issues: 'NOT_ASSERTED',
-            service_status: 'NOT_ASSERTED',
-          };
-          for (const [key, expectedState] of Object.entries(expectedStates)) {
-            const section = source[key];
-            if (!section || section.state !== expectedState || !Array.isArray(section.items)) {
-              throw new Error(`Release comms ${key} must be ${expectedState} with an items array`);
-            }
+          for (const [key, hiddenState] of Object.entries(hiddenStates)) {
+            validateReleaseCommsSection(key, source[key], hiddenState);
           }
-          validateReleaseNotes(source.release_notes);
 
           const manifest = {
             schema: 'gameroad.release-comms.v1',
@@ -383,60 +379,58 @@ jobs:
               throw new Error(`Public release communications ${key} does not match generated manifest`);
             }
           }
-          function validateReleaseNotes(section) {
+          const hiddenStates = {
+            calendar: 'UNPUBLISHED',
+            roadmap: 'UNPUBLISHED',
+            release_notes: 'UNPUBLISHED',
+            known_issues: 'NOT_ASSERTED',
+            service_status: 'NOT_ASSERTED',
+          };
+          function validateReleaseCommsSection(key, section, hiddenState) {
             if (!section || !Array.isArray(section.items)) {
-              throw new Error('Public release communications release_notes must have an items array');
+              throw new Error(`Public release communications ${key} must have an items array`);
             }
-            if (section.state === 'UNPUBLISHED') {
+            if (section.state === hiddenState) {
               if (section.items.length !== 0) {
-                throw new Error('Public release communications release_notes UNPUBLISHED state must have an empty items array');
+                throw new Error(`Public release communications ${key} ${hiddenState} state must have an empty items array`);
               }
               return;
             }
             if (section.state !== 'PUBLISHED') {
-              throw new Error(`Public release communications release_notes state is unsupported: ${section.state}`);
+              throw new Error(`Public release communications ${key} state is unsupported: ${section.state}`);
             }
             if (section.items.length < 1 || section.items.length > 20) {
-              throw new Error('Public release communications release_notes PUBLISHED state must contain 1..20 items');
+              throw new Error(`Public release communications ${key} PUBLISHED state must contain 1..20 items`);
             }
             const seenIds = new Set();
             for (const [index, item] of section.items.entries()) {
               if (!item || typeof item !== 'object' || Array.isArray(item)) {
-                throw new Error(`Public release communications release_notes item ${index} must be an object`);
+                throw new Error(`Public release communications ${key} item ${index} must be an object`);
               }
               const keys = Object.keys(item).sort();
               if (JSON.stringify(keys) !== JSON.stringify(['changes', 'id', 'title'])) {
-                throw new Error(`Public release communications release_notes item ${index} has unsupported fields`);
+                throw new Error(`Public release communications ${key} item ${index} has unsupported fields`);
               }
               if (typeof item.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,79}$/.test(item.id) || seenIds.has(item.id)) {
-                throw new Error(`Public release communications release_notes item ${index} has an invalid or duplicate id`);
+                throw new Error(`Public release communications ${key} item ${index} has an invalid or duplicate id`);
               }
               seenIds.add(item.id);
               if (typeof item.title !== 'string' || item.title.length < 1 || item.title.length > 120 || item.title.trim() !== item.title) {
-                throw new Error(`Public release communications release_notes item ${index} has an invalid title`);
+                throw new Error(`Public release communications ${key} item ${index} has an invalid title`);
               }
               if (!Array.isArray(item.changes) || item.changes.length < 1 || item.changes.length > 20) {
-                throw new Error(`Public release communications release_notes item ${index} must contain 1..20 changes`);
+                throw new Error(`Public release communications ${key} item ${index} must contain 1..20 changes`);
               }
               for (const [changeIndex, change] of item.changes.entries()) {
                 if (typeof change !== 'string' || change.length < 1 || change.length > 300 || change.trim() !== change) {
-                  throw new Error(`Public release communications release_notes item ${index} change ${changeIndex} is invalid`);
+                  throw new Error(`Public release communications ${key} item ${index} change ${changeIndex} is invalid`);
                 }
               }
             }
           }
-          const expectedStates = {
-            calendar: 'UNPUBLISHED',
-            roadmap: 'UNPUBLISHED',
-            known_issues: 'NOT_ASSERTED',
-            service_status: 'NOT_ASSERTED',
-          };
-          for (const [key, state] of Object.entries(expectedStates)) {
-            if (manifest[key]?.state !== state || !Array.isArray(manifest[key]?.items)) {
-              throw new Error(`Public release communications ${key} is not fail-closed as ${state}`);
-            }
+          for (const [key, hiddenState] of Object.entries(hiddenStates)) {
+            validateReleaseCommsSection(key, manifest[key], hiddenState);
           }
-          validateReleaseNotes(manifest.release_notes);
           NODE
           echo "External release-comms exact-byte/cache/build/state probe succeeded for ${PAGES_URL}/gameroad-release-comms.json"
 

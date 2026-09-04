@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "artifactClass": "pre-action-authorization",
+  "purpose": "Authorize the adopted in-match recent public Battle history presentation over the existing replay consumer without creating a second event/log authority.",
+  "goal": "Keep the newest viewer-authorized public Battle events immediately readable in the existing Battle log and allow older public rows to be revealed inline without leaving Battle.",
+  "keepReason": "Current replay adapter already owns a viewer-safe canonical public event projection and existing battleLog consumer; a presentation-only compact/reveal layer closes a player comprehension gap without duplicating replay state.",
+  "changeReason": "The adopted Battle recent-history gate is not yet implemented at the actual consumer use-site: rows accumulate, but there is no explicit compact-current versus inline-history presentation state.",
+  "dropReason": "Delete this authorization after the product patch and focused regression pass; it is evidence for the write gate, not runtime data.",
+  "confidence": 0.97,
+  "evidenceRefs": [
+    "Drive CURRENT task BATTLE-REPLAY-RUNTIME-CONTRACT-001 row1261 / BATTLE_RECENT_PUBLIC_HISTORY_GATE_20260905",
+    "CURRENT_ACTIVE_LEASES!A304:N304 readback",
+    "main@a47174ff3207107f9f93ad69d18fa6e5cb435d6f browser/battle-replay-live-adapter.mjs direct readback"
+  ],
+  "acceptanceNow": "One canonical public replay projection only; newest public rows remain immediately readable; older rows are inline-revealable; begin/reset collapses presentation cleanly; duplicate/stale projection does not duplicate rows; presentation failure never blocks replay/gameplay; no secret/private fields or gameplay write are introduced.",
+  "nonAdoptionBoundary": [
+    "No second recorder, replay state, event schema, persistence or storage",
+    "No secret/private information expansion or post-hoc hidden knowledge",
+    "No gameplay, save, economy, network, spectator-follow or shared GAMEROAD.html mutation",
+    "Do not freeze a permanent exact visible-row count, dimensions or player-facing wording before actual UI/Human acceptance"
+  ]
+}

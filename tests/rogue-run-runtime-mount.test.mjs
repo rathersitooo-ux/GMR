@@ -114,13 +114,13 @@ test('consumer ignores an unrelated Result until the started Rogue match Result 
   fixture.setScreen('battle');
   assert.equal(runtime.observe(), true);
   assert.equal(runtime.getSnapshot().run.phase, 'AWAITING_BATTLE_RESULT');
-  assert.equal(runtime.getSnapshot().run.currentNode.battleHandoff.matchId, 'match-run');
+  assert.equal(runtime.getSnapshot().run.battleHandoff.matchId, 'match-run');
 
   fixture.setMatch({ matchId: 'match-other', result: { winnerIds: ['P2'], receiptId: 'result-other' } });
   fixture.setScreen('result');
   assert.equal(runtime.observe(), false);
   assert.equal(runtime.getSnapshot().run.phase, 'AWAITING_BATTLE_RESULT');
-  assert.equal(runtime.getSnapshot().run.currentNode.battleHandoff.matchId, 'match-run');
+  assert.equal(runtime.getSnapshot().run.battleHandoff.matchId, 'match-run');
 
   fixture.setMatch({ matchId: 'match-run', result: { winnerIds: ['P1'], receiptId: 'result-run' } });
   assert.equal(runtime.observe(), true);

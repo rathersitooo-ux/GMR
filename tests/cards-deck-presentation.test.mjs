@@ -367,3 +367,61 @@ test('Cards local skin consumer fails closed without a Cards document and has no
     assert.equal(localSkinSource.includes(forbidden), false, `forbidden transport/storage fallback: ${forbidden}`);
   }
 });
+
+test('Cards findability contract stays minimal and does not own card, Deck, or ownership state', async () => {
+  const mod = await import('../browser/cards-deck-presentation.mjs');
+  assert.equal(mod.CARDS_DECK_FINDABILITY_CONTRACT.schema, 'gameroad.cards-deck-findability.v1');
+  assert.deepEqual(mod.CARDS_DECK_FINDABILITY_CONTRACT.searchFields, ['cardId', 'accessible-visible-text']);
+  assert.deepEqual(mod.CARDS_DECK_FINDABILITY_CONTRACT.quickFilters, ['in-deck', 'not-in-deck']);
+  assert.equal(mod.CARDS_DECK_FINDABILITY_CONTRACT.quickFilterCount, 2);
+  assert.equal(mod.CARDS_DECK_FINDABILITY_CONTRACT.persistence, 'none');
+  assert.equal(mod.CARDS_DECK_FINDABILITY_CONTRACT.ownsCardData, false);
+  assert.equal(mod.CARDS_DECK_FINDABILITY_CONTRACT.mutatesDeck, false);
+  assert.equal(mod.CARDS_DECK_FINDABILITY_CONTRACT.mutatesOwnership, false);
+});
+
+test('Cards findability normalizes query and searches current text or card id', async () => {
+  const mod = await import('../browser/cards-deck-presentation.mjs');
+  assert.equal(mod.normalizeCardsDeckSearchQuery('  ＳＰ＿Ａ  '), 'sp_a');
+  assert.equal(mod.matchCardsDeckFindabilityCard(
+    { cardId: 'SP_A', text: 'Spade A 詳細を開く', inDeck: false },
+    { query: 'ｓｐ＿ａ', deckFilter: 'all' },
+  ), true);
+  assert.equal(mod.matchCardsDeckFindabilityCard(
+    { cardId: 'DCG_SAASUNA', text: 'サースナー 詳細を開く', inDeck: true },
+    { query: 'サースナー', deckFilter: 'all' },
+  ), true);
+  assert.equal(mod.matchCardsDeckFindabilityCard(
+    { cardId: 'HT_7', text: 'ハート7', inDeck: false },
+    { query: 'サースナー', deckFilter: 'all' },
+  ), false);
+});
+
+test('Cards findability uses only the two current Deck-membership quick filters', async () => {
+  const mod = await import('../browser/cards-deck-presentation.mjs');
+  const inDeck = { cardId: 'SP_A', text: 'Spade A', inDeck: true };
+  const outDeck = { cardId: 'HT_A', text: 'ハートA', inDeck: false };
+  assert.equal(mod.matchCardsDeckFindabilityCard(inDeck, { deckFilter: 'in-deck' }), true);
+  assert.equal(mod.matchCardsDeckFindabilityCard(outDeck, { deckFilter: 'in-deck' }), false);
+  assert.equal(mod.matchCardsDeckFindabilityCard(inDeck, { deckFilter: 'not-in-deck' }), false);
+  assert.equal(mod.matchCardsDeckFindabilityCard(outDeck, { deckFilter: 'not-in-deck' }), true);
+  assert.equal(mod.matchCardsDeckFindabilityCard(inDeck, { deckFilter: 'corrupt-state' }), true);
+  assert.equal(mod.matchCardsDeckFindabilityCard(outDeck, { deckFilter: 'corrupt-state' }), true);
+});
+
+test('Cards findability application changes only Collection visibility and fails closed without Cards DOM', async () => {
+  const mod = await import('../browser/cards-deck-presentation.mjs');
+  const cards = [
+    { dataset: { id: 'SP_A' }, textContent: 'Spade A', hidden: false, classList: { contains: () => true }, getAttribute: () => 'Spade A 札組登録済み' },
+    { dataset: { id: 'HT_A' }, textContent: 'ハートA', hidden: false, classList: { contains: () => false }, getAttribute: () => 'ハートA 詳細を開く' },
+  ];
+  const doc = { querySelectorAll: (selector) => selector === '#collectionGrid [data-id]' ? cards : [] };
+  assert.deepEqual(mod.applyCardsDeckFindability({ document: doc, query: 'spade', deckFilter: 'in-deck' }), {
+    total: 2, visible: 1, query: 'spade', deckFilter: 'in-deck',
+  });
+  assert.equal(cards[0].hidden, false);
+  assert.equal(cards[1].hidden, true);
+  const installation = mod.installCardsDeckFindability({ document: null, window: null });
+  assert.equal(typeof installation.destroy, 'function');
+  assert.doesNotThrow(() => installation.destroy());
+});

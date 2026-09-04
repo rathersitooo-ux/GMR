@@ -5,6 +5,8 @@ import {
   createHomeShellState,
   HOME_TOUCH_TARGET_MIN_PX,
   HOME_VIEWPORT_VARIANTS,
+  parsePublishedReleaseCommunications,
+  parsePublishedReleaseNotes,
   projectHomeShell,
 } from '../browser/home-shell-presentation-core.mjs';
 import {
@@ -53,6 +55,61 @@ const state = () => createHomeShellState({
   expanded: false,
   selectedRouteId: 'cards',
   routeIds: ['battle', 'cards', 'partner', 'shop'],
+});
+
+const releaseCommsPayload = (overrides = {}) => ({
+  schema: 'gameroad.release-comms.v1',
+  channel: 'public',
+  release_notes: {
+    state: 'PUBLISHED',
+    items: [{ id: 'release-1', title: 'アップデート', changes: ['更新しました。'] }],
+  },
+  known_issues: { state: 'NOT_ASSERTED', items: [] },
+  service_status: { state: 'NOT_ASSERTED', items: [] },
+  calendar: { state: 'UNPUBLISHED', items: [] },
+  roadmap: { state: 'UNPUBLISHED', items: [] },
+  ...overrides,
+});
+
+test('Home operations information reuses the existing release manifest and hides non-published sections', () => {
+  const sections = parsePublishedReleaseCommunications(releaseCommsPayload());
+  assert.deepEqual(sections, [{
+    key: 'release_notes',
+    label: 'アップデート',
+    items: [{ id: 'release-1', title: 'アップデート', changes: ['更新しました。'] }],
+  }]);
+  assert.deepEqual(parsePublishedReleaseNotes(releaseCommsPayload()), [
+    { id: 'release-1', title: 'アップデート', changes: ['更新しました。'] },
+  ]);
+});
+
+test('Home operations information exposes only formally PUBLISHED existing sections', () => {
+  const payload = releaseCommsPayload({
+    known_issues: {
+      state: 'PUBLISHED',
+      items: [{ id: 'known-1', title: '既知の問題', changes: ['現在確認中です。'] }],
+    },
+    service_status: {
+      state: 'PUBLISHED',
+      items: [{ id: 'status-1', title: 'サービス状況', changes: ['通常どおり利用できます。'] }],
+    },
+  });
+  const sections = parsePublishedReleaseCommunications(payload);
+  assert.deepEqual(sections.map((section) => section.key), ['release_notes', 'known_issues', 'service_status']);
+  assert.equal(sections.some((section) => section.key === 'calendar'), false);
+  assert.equal(sections.some((section) => section.key === 'roadmap'), false);
+});
+
+test('Home operations information fails closed on contradictory hidden states or malformed published items', () => {
+  assert.equal(parsePublishedReleaseCommunications(releaseCommsPayload({
+    known_issues: { state: 'NOT_ASSERTED', items: [{ id: 'leak', title: '漏れ', changes: ['表示禁止'] }] },
+  })), null);
+  assert.equal(parsePublishedReleaseCommunications(releaseCommsPayload({
+    service_status: { state: 'PUBLISHED', items: [{ id: 'bad', title: 'bad', changes: [] }] },
+  })), null);
+  assert.equal(parsePublishedReleaseCommunications(releaseCommsPayload({
+    roadmap: { state: 'UNKNOWN', items: [] },
+  })), null);
 });
 
 test('Home viewport classifier distinguishes wide, short landscape, and portrait', () => {

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROGUE-PENDING-ROUTE-HOME-RESUME-R1-20260904T2200-SOL-V4K7P2",
+  "taskId": "ROGUE-CURRENT-RUNTIME-INTEGRATION-ACCEPT-001",
+  "workUnitKey": "ROGUE_PENDING_ROUTE_HOME_RESUME_R1",
+  "acquireKey": "ROGUE-PENDING-ROUTE-HOME-RESUME-R1-20260904T2200-SOL-V4K7P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "current-rogue-home-pending-route-dead-end-direct-source-read",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing-rogue-host-fixture-plus-state-machine-source-oracle",
+  "proceedToken": "PROCEED|ROGUE-PENDING-ROUTE-HOME-RESUME-R1-20260904T2200-SOL-V4K7P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|pending-route-home-resume",
+  "authorizationBaseSha": "e8ea9a3f7935b4730c65bf109268dcbac20b2706",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ROGUE-CURRENT-RUNTIME-INTEGRATION-ACCEPT-001",
+  "leaseWorkUnitKey": "ROGUE_PENDING_ROUTE_HOME_RESUME_R1",
+  "leaseAcquireKey": "ROGUE-PENDING-ROUTE-HOME-RESUME-R1-20260904T2200-SOL-V4K7P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 22:00 JST",
+  "leaseUntilJst": "2026-09-04 23:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:L10",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@e8ea9a3f7935b4730c65bf109268dcbac20b2706; branch work/rogue-pending-route-home-resume-r1-20260904; mutable browser/rogue-run-runtime-mount.mjs + tests/rogue-run-runtime-mount.test.mjs + transient data/preaction-authorizations/ROGUE-PENDING-ROUTE-HOME-RESUME-R1-20260904T2200-SOL-V4K7P2.json; own PR/checks/expected-head merge/public exact-build readback. browser/GAMEROAD.html, home-boot-runtime-mount.mjs, Setup/Battle/Result/gameplay/rules/save/economy/network/assets/control-plane READ_ONLY.",
+  "scope": [
+    "browser/rogue-run-runtime-mount.mjs",
+    "tests/rogue-run-runtime-mount.test.mjs",
+    "data/preaction-authorizations/ROGUE-PENDING-ROUTE-HOME-RESUME-R1-20260904T2200-SOL-V4K7P2.json"
+  ],
+  "leaseScope": [
+    "browser/rogue-run-runtime-mount.mjs",
+    "tests/rogue-run-runtime-mount.test.mjs",
+    "data/preaction-authorizations/ROGUE-PENDING-ROUTE-HOME-RESUME-R1-20260904T2200-SOL-V4K7P2.json"
+  ],
+  "solutionSignature": "ADAPT the existing Rogue Home resume action: when an already-selected battle/boss route is still pending and the current screen is Home, reopen the existing Setup surface while preserving the same run and pending route; no new route, reward, persistence, gameplay, or presentation system.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "existing-rogue-controller-and-setup-handoff-direct-read",
+  "solutionSearchEvidence": [
+    "The current controller already owns run state, pendingRouteKind, and the existing host.showSetup handoff; the defect is a missing resume transition, not a missing subsystem.",
+    "The current Home entry already labels AWAITING_ROUTE as ローグを続ける while render intentionally hides route choices once pendingRouteKind is set, proving the existing pending route should be resumed rather than reselected.",
+    "The focused host fixture can verify Setup -> Home -> continue -> same Setup and then existing Battle observation without changing reward, save, economy, network, or gameplay semantics."
+  ]
+}

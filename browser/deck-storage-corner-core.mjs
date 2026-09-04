@@ -66,14 +66,16 @@ export function createStorageCornerViewModel(state, { isRoyal, maxDeckSize = DEC
   const royal = [];
   for (const id of current.storage) (isRoyal(id) ? royal : normal).push(id);
   const selectionCount = current.deck.length + current.storage.length;
-  const overDeckLimit = selectionCount > maxDeckSize;
+  const overflowCount = Math.max(0, selectionCount - maxDeckSize);
+  const overDeckLimit = overflowCount > 0;
   return Object.freeze({
     deckCount: current.deck.length,
     storageCount: current.storage.length,
     selectionCount,
+    overflowCount,
     overDeckLimit,
     maxDeckSize,
-    storageButtonLabel: overDeckLimit ? `${selectionCount}/${maxDeckSize}` : `+${current.storage.length}`,
+    storageButtonLabel: overDeckLimit ? `${overflowCount}` : `+${current.storage.length}`,
     storageButtonTone: overDeckLimit ? 'overflow' : 'yellow',
     normal: Object.freeze(normal),
     royal: Object.freeze(royal),

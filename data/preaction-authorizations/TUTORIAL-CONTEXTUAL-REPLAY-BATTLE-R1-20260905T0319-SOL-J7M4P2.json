@@ -20,22 +20,25 @@
   "leaseSnapshotReadbackAtJst": "2026-09-05 03:21 JST",
   "leaseUntilJst": "2026-09-05 04:19 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A303:L303",
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@a47174ff3207107f9f93ad69d18fa6e5cb435d6f; branch work/tutorial-contextual-replay-battle-r1-20260905; mutable browser/partner-advice-runtime-mount.mjs + tests/partner-advice-runtime-mount.test.mjs + transient data/preaction-authorizations/TUTORIAL-CONTEXTUAL-REPLAY-BATTLE-R1-20260905T0319-SOL-J7M4P2.json; browser/GAMEROAD.html + Home + Cards/Deck + Result + gameplay/rules/save/economy/network READ_ONLY.",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@a47174ff3207107f9f93ad69d18fa6e5cb435d6f; branch work/tutorial-contextual-replay-battle-r1-20260905; mutable browser/partner-advice-runtime-mount.mjs + tests/partner-advice-runtime-mount.test.mjs + deploy/cloudflare/tests/build.test.mjs (partner runtime blob pin only) + transient data/preaction-authorizations/TUTORIAL-CONTEXTUAL-REPLAY-BATTLE-R1-20260905T0319-SOL-J7M4P2.json; browser/GAMEROAD.html + deploy/cloudflare/scripts/build.mjs + Home + Cards/Deck + Result + gameplay/rules/save/economy/network READ_ONLY.",
   "scope": [
     "browser/partner-advice-runtime-mount.mjs",
-    "tests/partner-advice-runtime-mount.test.mjs"
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
   ],
   "leaseScope": [
     "browser/partner-advice-runtime-mount.mjs",
-    "tests/partner-advice-runtime-mount.test.mjs"
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
   ],
-  "solutionSignature": "Adapt the already-live Battle partnerDecisionBox mount into a compact contextual re-explain entry that reuses the current FIRST10 cue/highlight and owner-local contextHelp presentation, stays on the same Battle screen, and never mutates first-run Tutorial completion, reward, save, or gameplay authority.",
+  "solutionSignature": "Adapt the already-live Battle partnerDecisionBox mount into a compact contextual re-explain entry that reuses the current FIRST10 cue/highlight and owner-local contextHelp presentation, stays on the same Battle screen, and never mutates first-run Tutorial completion, reward, save, or gameplay authority. Follow the same runtime artifact into the public-package dependency contract by updating only its existing blob pin.",
   "reuseDisposition": "ADAPT",
   "solutionSearchStatus": "PASS",
   "reuseDecisionEvidenceId": "reuse-current-first10-contexthelp-through-live-partner-mount",
   "solutionSearchEvidence": [
     "repo:browser/partner-advice-runtime-mount.mjs@a47174ff3207107f9f93ad69d18fa6e5cb435d6f",
     "repo:browser/GAMEROAD.html@a47174ff3207107f9f93ad69d18fa6e5cb435d6f FIRST10/contextHelp production actual READ_ONLY",
+    "repo:deploy/cloudflare/tests/build.test.mjs current partner_advice_runtime_mount dependency pin",
     "Drive:TUTORIAL-CONTENT-RUNTIME-CONTRACT-001 row1242 2026-09-05 contextual replay ruling",
     "external:Hearthstone replayable/contextual tutorial guidance and Marvel Snap 2026 tutorial expansion"
   ]

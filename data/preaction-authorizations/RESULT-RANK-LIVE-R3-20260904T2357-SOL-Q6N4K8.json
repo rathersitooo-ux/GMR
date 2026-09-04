@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "STATE_MODEL_V1_PRE_ACTION",
+  "acquireKey": "RESULT-RANK-LIVE-R3-20260904T2357-SOL-Q6N4K8",
+  "taskId": "RANK-RESULT-EMBLEM-FORMAL-ASSET-001",
+  "workUnitKey": "RESULT_RANK_LIVE_CONSUMER_R3",
+  "owner": "ChatGPT / GPT-5.6 Sol / current conversation",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A101:L101",
+  "base": {
+    "repository": "rathersitooo-ux/GMR",
+    "branch": "main",
+    "sha": "d3c668c1fc62d0bcbd6ed64cb59b7e469dceec73"
+  },
+  "mutableResources": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/browser-static-check.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/result-rank-live-r3.yml",
+    "data/preaction-authorizations/RESULT-RANK-LIVE-R3-20260904T2357-SOL-Q6N4K8.json"
+  ],
+  "readOnlyResources": [
+    "browser/result-presentation-core.mjs",
+    "tests/result-presentation-core.test.mjs"
+  ],
+  "userLockedSemantics": {
+    "rank1": {"label": "1位", "colorRole": null},
+    "rank2": {"label": "勝利", "colorRole": "platinum"},
+    "rank3": {"label": "勝利", "colorRole": "gold"},
+    "rank4": {"label": "勝利", "colorRole": "silver"},
+    "ties": "same upstream formal rank => same presentation",
+    "invalidRank": "fail closed without guessed rank color",
+    "forbiddenNormalResultWords": ["敗北", "敗者", "負け", "最下位"]
+  },
+  "actualConsumer": {
+    "formalRankSource": "state.match.lastResult.ranking[].rank",
+    "renderer": "async renderResult()",
+    "rankingContainer": "#resultRanking",
+    "rankingRow": ".rankLine"
+  },
+  "packageConstraint": "Cloudflare public package uses explicit ARTIFACT_SPECS seeds plus recursive module-import closure; result-presentation-core.mjs is not currently a seed.",
+  "lastConfirmedStep": "R2 diagnostic established exact live consumer and package gap; R2 released with product mutation 0. Fresh main d3c668c retains all target blobs and no current mutable owner.",
+  "nextExpectedAction": "Use a transient guarded workflow to inspect current Result CSS/theme tokens and, only when exact guards are unique, patch live Result + package registry + existing focused tests.",
+  "nextContingency": "Any token or exact-old-text ambiguity fails closed with evidence only. Do not invent brand color or new gameplay semantics.",
+  "earlyWakePolicy": "No blind retry loop; react only to observed action evidence or material conflict.",
+  "persistenceState": "PREPARED_NOT_APPLIED",
+  "rollback": "No merge unless exact guards, focused tests, Required Gate, expected-head merge and main/public readback pass. Remove transient workflow and manifest before final PR."
+}

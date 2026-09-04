@@ -388,6 +388,10 @@ export function createPartnerAdviceQuickReplyControl({
   });
 }
 
+export function isPartnerAdviceQuickReplyAvailable({ partnerId, matchId } = {}) {
+  return partnerId === SAASUNA_PARTNER_ID && Boolean(exactPresentationToken(matchId));
+}
+
 export const PARTNER_ADVICE_DELEGATE_REPLY_TEXT = DELEGATE_REPLY_TEXT;
 
 const CHAT_PRESENTATION_SCHEMA = 'gameroad.partner-advice-chat-presentation.v1';
@@ -495,7 +499,11 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
       player.classList.toggle('on', Boolean(projection.playerText));
     }
     const button = root.querySelector('.partnerAdviceQuickReply');
-    if (button) button.disabled = current?.partnerId !== SAASUNA_PARTNER_ID;
+    const quickReplyAvailable = isPartnerAdviceQuickReplyAvailable(current);
+    if (button) {
+      button.hidden = !quickReplyAvailable;
+      button.disabled = !quickReplyAvailable;
+    }
     return projection;
   };
 
@@ -504,7 +512,7 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
     button.dataset.partnerAdviceBound = 'true';
     button.addEventListener('click', () => {
       const current = currentBattleChatSnapshot(win);
-      if (!current?.matchId || current.partnerId !== SAASUNA_PARTNER_ID) return;
+      if (!isPartnerAdviceQuickReplyAvailable(current)) return;
       const replyId = `${current.matchId}:${current.round ?? 'x'}:delegate-quick-reply`;
       if (!quickReply.arm({ replyId, text: DELEGATE_REPLY_TEXT })) return;
       const receipt = quickReply.commit(replyId);

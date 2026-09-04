@@ -20,14 +20,16 @@
   "leaseSnapshotReadbackAtJst": "2026-09-05 01:40 JST",
   "leaseUntilJst": "2026-09-05 02:20 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:N5",
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@66abb9579a9be00ef1288fc70c70d57c456e8de8; branch work/auto-battle-live-r2-20260905; mutable browser/ui-state-feedback-ready-plan-adapter.mjs + tests/battle-auto-live-ready-plan-bridge.test.mjs + transient data/preaction-authorizations/AUTO-BATTLE-LIVE-R2-20260905T0105-SOL-N7K4P2.json; browser/GAMEROAD.html + browser/battle-auto-input-core.mjs + tests/ui-state-feedback-ready-plan-adapter.test.mjs + deploy/cloudflare/scripts/build.mjs READ_ONLY.",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@66abb9579a9be00ef1288fc70c70d57c456e8de8; branch work/auto-battle-live-r2-20260905; mutable browser/ui-state-feedback-ready-plan-adapter.mjs + tests/battle-auto-live-ready-plan-bridge.test.mjs + transient .github/workflows/auto-battle-live-r2.yml + transient data/preaction-authorizations/AUTO-BATTLE-LIVE-R2-20260905T0105-SOL-N7K4P2.json; browser/GAMEROAD.html + browser/battle-auto-input-core.mjs + tests/ui-state-feedback-ready-plan-adapter.test.mjs + deploy/cloudflare/scripts/build.mjs READ_ONLY.",
   "scope": [
     "browser/ui-state-feedback-ready-plan-adapter.mjs",
-    "tests/battle-auto-live-ready-plan-bridge.test.mjs"
+    "tests/battle-auto-live-ready-plan-bridge.test.mjs",
+    ".github/workflows/auto-battle-live-r2.yml"
   ],
   "leaseScope": [
     "browser/ui-state-feedback-ready-plan-adapter.mjs",
-    "tests/battle-auto-live-ready-plan-bridge.test.mjs"
+    "tests/battle-auto-live-ready-plan-bridge.test.mjs",
+    ".github/workflows/auto-battle-live-r2.yml"
   ],
   "solutionSignature": "battle-auto-existing-core-human-legal-input-live-ready-plan-seam",
   "reuseDisposition": "ADAPT",
@@ -42,5 +44,5 @@
     "tests/battle-auto-input-core.test.mjs",
     "tests/battle-auto-live-ready-plan-bridge.test.mjs"
   ],
-  "scopeRebaseReason": "Direct connector replacement of the ~11.9MB production HTML is an unnecessary high-risk mutation. The Ready-plan adapter is already imported by that HTML and is the narrower existing live seam. The focused new test isolates the DOM bridge without rewriting the existing Ready-plan regression file. No gameplay meaning changes: Auto chooses only an ordinary human-legal hand card; target/column/shield and READY remain manual, and no second submit/progression path is created."
+  "scopeRebaseReason": "Direct connector replacement of the production HTML or manual reconstruction of the live adapter is unnecessary risk. The transient workflow performs an exact marker-guarded append to the already-live Ready-plan adapter, creates only the focused bridge test, runs syntax plus Auto/Ready-plan regressions, and commits only on success. No gameplay meaning changes: Auto chooses only ordinary human-legal hand cards; target/column/shield and READY remain manual, and no second submit/progression path is created."
 }

@@ -397,9 +397,10 @@ export const PARTNER_ADVICE_DELEGATE_REPLY_TEXT = DELEGATE_REPLY_TEXT;
 const CHAT_PRESENTATION_SCHEMA = 'gameroad.partner-advice-chat-presentation.v1';
 const CHAT_STYLE_ID = 'gameroad-partner-advice-chat-r1';
 const CHAT_ROOT_ID = 'partnerAdviceChatPresentation';
+const CHAT_UNAVAILABLE_LABEL = '盤面情報を確認中';
 
 function chatLaneProgress(input) {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
+  if (!input || typeof input !== 'object' || Array.isArray(value)) return null;
   const out = {};
   for (const lane of ['L', 'C', 'R']) {
     const value = Number(input[lane]);
@@ -452,7 +453,7 @@ function ensureBattleChatStyle(doc) {
   if (doc.getElementById(CHAT_STYLE_ID)) return;
   const style = doc.createElement('style');
   style.id = CHAT_STYLE_ID;
-  style.textContent = `#${CHAT_ROOT_ID}{display:grid;gap:6px;margin:7px 0;padding:7px;border:1px solid rgba(190,225,214,.28);border-radius:10px;background:rgba(3,18,16,.72)}#${CHAT_ROOT_ID} .partnerAdviceLaneProgress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}#${CHAT_ROOT_ID} .partnerAdviceLane{display:grid;place-items:center;min-height:38px;border:1px solid rgba(205,239,228,.22);border-radius:8px;background:rgba(8,35,29,.72)}#${CHAT_ROOT_ID} .partnerAdviceLane span{font-size:8px;color:#9eb7af;font-weight:900}#${CHAT_ROOT_ID} .partnerAdviceLane b{font-size:15px;line-height:1;font-variant-numeric:tabular-nums}.partnerAdviceSpeech{display:none;max-width:92%;padding:8px 10px;border:1px solid rgba(173,235,214,.38);font-size:11px;font-weight:850;line-height:1.4}.partnerAdviceSpeech.on{display:block}.partnerAdviceSpeech.partner{border-radius:10px 10px 10px 3px;background:#143e34}.partnerAdviceSpeech.player{justify-self:end;border-radius:10px 10px 3px 10px;background:rgba(69,49,19,.72);border-color:rgba(255,211,126,.56);color:#fff1c9}.partnerAdviceQuickReply{justify-self:end;min-height:44px;padding:9px 14px;border:1px solid rgba(255,211,126,.56);border-radius:12px;background:rgba(69,49,19,.72);color:#fff1c9;font-size:11px;font-weight:950}@media(max-width:540px){#${CHAT_ROOT_ID}{padding:5px;gap:4px}.partnerAdviceSpeech{font-size:10px}}@media(prefers-reduced-motion:reduce){#${CHAT_ROOT_ID} *{transition:none!important;animation:none!important}}`;
+  style.textContent = `#${CHAT_ROOT_ID}{display:grid;gap:6px;margin:7px 0;padding:7px;border:1px solid rgba(190,225,214,.28);border-radius:10px;background:rgba(3,18,16,.72)}#${CHAT_ROOT_ID} .partnerAdviceStateNotice{padding:3px 4px;color:#9eb7af;font-size:10px;font-weight:850;line-height:1.35}#${CHAT_ROOT_ID} .partnerAdviceLaneProgress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}#${CHAT_ROOT_ID} .partnerAdviceLane{display:grid;place-items:center;min-height:38px;border:1px solid rgba(205,239,228,.22);border-radius:8px;background:rgba(8,35,29,.72)}#${CHAT_ROOT_ID} .partnerAdviceLane span{font-size:8px;color:#9eb7af;font-weight:900}#${CHAT_ROOT_ID} .partnerAdviceLane b{font-size:15px;line-height:1;font-variant-numeric:tabular-nums}.partnerAdviceSpeech{display:none;max-width:92%;padding:8px 10px;border:1px solid rgba(173,235,214,.38);font-size:11px;font-weight:850;line-height:1.4}.partnerAdviceSpeech.on{display:block}.partnerAdviceSpeech.partner{border-radius:10px 10px 10px 3px;background:#143e34}.partnerAdviceSpeech.player{justify-self:end;border-radius:10px 10px 3px 10px;background:rgba(69,49,19,.72);border-color:rgba(255,211,126,.56);color:#fff1c9}.partnerAdviceQuickReply{justify-self:end;min-height:44px;padding:9px 14px;border:1px solid rgba(255,211,126,.56);border-radius:12px;background:rgba(69,49,19,.72);color:#fff1c9;font-size:11px;font-weight:950}@media(max-width:540px){#${CHAT_ROOT_ID}{padding:5px;gap:4px}.partnerAdviceSpeech{font-size:10px}}@media(prefers-reduced-motion:reduce){#${CHAT_ROOT_ID} *{transition:none!important;animation:none!important}}`;
   doc.head?.append(style);
 }
 
@@ -468,7 +469,7 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
     root = doc.createElement('section');
     root.id = CHAT_ROOT_ID;
     root.setAttribute('aria-label', 'パートナーとの対戦チャット');
-    root.innerHTML = '<div class="partnerAdviceLaneProgress" aria-label="3列の現在進行値"><div class="partnerAdviceLane" data-lane="L"><span>左列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="C"><span>中央列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="R"><span>右列</span><b>—</b></div></div><div class="partnerAdviceSpeech partner" aria-live="polite"></div><div class="partnerAdviceSpeech player" aria-live="polite"></div><button type="button" class="partnerAdviceQuickReply">まかせた！</button>';
+    root.innerHTML = '<div class="partnerAdviceStateNotice" role="status" aria-live="polite" hidden></div><div class="partnerAdviceLaneProgress" aria-label="3列の現在進行値"><div class="partnerAdviceLane" data-lane="L"><span>左列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="C"><span>中央列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="R"><span>右列</span><b>—</b></div></div><div class="partnerAdviceSpeech partner" aria-live="polite"></div><div class="partnerAdviceSpeech player" aria-live="polite"></div><button type="button" class="partnerAdviceQuickReply">まかせた！</button>';
     const statusNode = host.querySelector('.partnerDecisionStatus');
     host.insertBefore(root, statusNode || host.firstChild);
   }
@@ -482,23 +483,49 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
       partnerText: lastReceipt?.partnerUtterance || current?.partnerText || null,
       playerText: lastReceipt?.playerText || null,
     });
-    root.hidden = !projection.active;
-    if (!projection.active) return projection;
+    const stateNotice = root.querySelector('.partnerAdviceStateNotice');
+    const laneProgress = root.querySelector('.partnerAdviceLaneProgress');
+    const partner = root.querySelector('.partnerAdviceSpeech.partner');
+    const player = root.querySelector('.partnerAdviceSpeech.player');
+    const button = root.querySelector('.partnerAdviceQuickReply');
+    root.hidden = false;
+    if (!projection.active) {
+      if (stateNotice) {
+        stateNotice.hidden = false;
+        stateNotice.textContent = CHAT_UNAVAILABLE_LABEL;
+      }
+      if (laneProgress) laneProgress.hidden = true;
+      if (partner) {
+        partner.textContent = '';
+        partner.classList.remove('on');
+      }
+      if (player) {
+        player.textContent = '';
+        player.classList.remove('on');
+      }
+      if (button) {
+        button.hidden = true;
+        button.disabled = true;
+      }
+      return projection;
+    }
+    if (stateNotice) {
+      stateNotice.hidden = true;
+      stateNotice.textContent = '';
+    }
+    if (laneProgress) laneProgress.hidden = false;
     for (const lane of ['L', 'C', 'R']) {
       const value = root.querySelector(`[data-lane="${lane}"] b`);
       if (value) value.textContent = String(projection.laneProgress[lane]);
     }
-    const partner = root.querySelector('.partnerAdviceSpeech.partner');
     if (partner) {
       partner.textContent = projection.partnerText || '';
       partner.classList.toggle('on', Boolean(projection.partnerText));
     }
-    const player = root.querySelector('.partnerAdviceSpeech.player');
     if (player) {
       player.textContent = projection.playerText || '';
       player.classList.toggle('on', Boolean(projection.playerText));
     }
-    const button = root.querySelector('.partnerAdviceQuickReply');
     const quickReplyAvailable = isPartnerAdviceQuickReplyAvailable(current);
     if (button) {
       button.hidden = !quickReplyAvailable;

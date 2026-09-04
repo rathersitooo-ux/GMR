@@ -31,11 +31,14 @@ function fixture({ deck = ['a'], rejectAdd = false, rejectRemove = false } = {})
   return { controller, calls, deck: () => [...currentDeck] };
 }
 
-function fakeElement() {
+function fakeElement(tagName = 'div') {
   return {
+    tagName: String(tagName).toUpperCase(),
     children: [],
     dataset: {},
     attributes: {},
+    className: '',
+    textContent: '',
     appendChild(node) {
       this.children.push(node);
       node.parentNode = this;
@@ -47,7 +50,25 @@ function fakeElement() {
     setAttribute(name, value) {
       this.attributes[name] = String(value);
     },
+    removeAttribute(name) {
+      delete this.attributes[name];
+    },
     addEventListener() {},
+    querySelector() { return null; },
+    querySelectorAll() { return []; },
+    contains(node) {
+      if (node === this) return true;
+      return this.children.some((child) => child?.contains?.(node));
+    },
+    cloneNode(deep = false) {
+      const clone = fakeElement(this.tagName);
+      clone.dataset = { ...this.dataset };
+      clone.attributes = { ...this.attributes };
+      clone.className = this.className;
+      clone.textContent = this.textContent;
+      if (deep) for (const child of this.children) clone.appendChild(child.cloneNode?.(true) ?? child);
+      return clone;
+    },
     remove() {
       if (this.parentNode?.children) this.parentNode.children = this.parentNode.children.filter((node) => node !== this);
       this.parentNode = null;
@@ -57,11 +78,21 @@ function fakeElement() {
 
 function fakeDocument() {
   return {
-    head: fakeElement(),
-    body: fakeElement(),
-    createElement: () => fakeElement(),
+    head: fakeElement('head'),
+    body: fakeElement('body'),
+    createElement: (tagName) => fakeElement(tagName),
     getElementById: () => null,
+    querySelectorAll: () => [],
   };
+}
+
+function findDescendant(root, predicate) {
+  if (predicate(root)) return root;
+  for (const child of root?.children ?? []) {
+    const found = findDescendant(child, predicate);
+    if (found) return found;
+  }
+  return null;
 }
 
 function discoveryDocument() {
@@ -162,7 +193,8 @@ test('forty-card right swipe routes overflow to Storage instead of hard rejectin
   assert.equal(readDeck().length, 40);
   assert.equal(result.view.storageCount, 1);
   assert.equal(result.view.selectionCount, 41);
-  assert.equal(result.view.storageButtonLabel, '41/40');
+  assert.equal(result.view.overflowCount, 1);
+  assert.equal(result.view.storageButtonLabel, '1');
   assert.equal(result.view.overDeckLimit, true);
   assert.equal(result.view.open, true);
 });
@@ -178,16 +210,52 @@ test('forty-card deck cannot move overflow Storage card back into Deck until spa
   assert.equal(controller.view().storageCount, 1);
 });
 
-test('overflow button renders 41/40 with red-text state while physical deck stays forty', () => {
+test('overflow button renders only the red excess count while physical deck stays forty', () => {
   const deck = Array.from({ length: 40 }, (_, i) => `d${i}`);
   const { controller } = fixture({ deck });
   controller.applySwipe({ surface: 'collection', cardId: 'N_candidate', deltaX: 90, deltaY: 2 });
   const document = fakeDocument();
   const buttonHost = fakeElement();
   const mounted = mountDeckStorageCorner({ controller, buttonHost, document });
-  assert.equal(mounted.button.textContent, '41/40');
+  assert.equal(mounted.button.textContent, '1');
   assert.equal(mounted.button.dataset.overflow, 'true');
-  assert.match(mounted.button.attributes['aria-label'], /41\/40/);
+  assert.match(mounted.button.attributes['aria-label'], /超過分ストレージ 1枚/);
+  assert.doesNotMatch(mounted.button.attributes['aria-label'], /41\/40/);
+  mounted.dispose();
+});
+
+test('Storage window is upper-left and does not install a blocking dark center backdrop', () => {
+  const { controller } = fixture();
+  controller.store('N_1');
+  const document = fakeDocument();
+  const mounted = mountDeckStorageCorner({ controller, buttonHost: fakeElement(), document });
+  mounted.render();
+  const css = document.head.children[0].textContent;
+  assert.match(css, /\.gr-storage-backdrop\{[^}]*background:transparent;pointer-events:none/);
+  assert.match(css, /\.gr-storage-window\{[^}]*left:12px;top:12px/);
+  assert.doesNotMatch(css, /place-items:center/);
+  const dialog = findDescendant(document.body, (node) => node.className === 'gr-storage-window');
+  assert.equal(dialog?.attributes['aria-modal'], 'false');
+  mounted.dispose();
+});
+
+test('stored card row reuses the current Collection card illustration', () => {
+  const { controller } = fixture();
+  controller.store('N_1');
+  const document = fakeDocument();
+  const collectionCard = fakeElement('button');
+  collectionCard.dataset.id = 'N_1';
+  const image = fakeElement('img');
+  image.setAttribute('src', 'actual-card-art.png');
+  collectionCard.querySelector = (selector) => selector.includes('img') ? image : null;
+  document.querySelectorAll = (selector) => selector.includes('#collectionGrid [data-id]') ? [collectionCard] : [];
+  const mounted = mountDeckStorageCorner({ controller, buttonHost: fakeElement(), document, getCardLabel: () => 'Actual card' });
+  mounted.render();
+  const visual = findDescendant(document.body, (node) => node.dataset?.role === 'deck-storage-card-visual');
+  assert.ok(visual);
+  assert.equal(visual.children.length, 1);
+  assert.equal(visual.children[0].tagName, 'IMG');
+  assert.equal(visual.children[0].attributes.src, 'actual-card-art.png');
   mounted.dispose();
 });
 

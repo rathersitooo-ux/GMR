@@ -44,22 +44,33 @@ test('storage uses normal-left royal-right view and yellow +N button before over
   assert.equal(view.storageButtonLabel, '+3');
   assert.equal(view.storageButtonTone, 'yellow');
   assert.equal(view.selectionCount, 3);
+  assert.equal(view.overflowCount, 0);
   assert.equal(view.overDeckLimit, false);
   assert.deepEqual(view.layout, { normalSide: 'left', royalSide: 'right' });
 });
 
-test('forty plus overflow storage projects 41/40 and overflow tone', () => {
+test('forty-card deck projects only the red overflow amount instead of 41/40', () => {
   const deck = Array.from({ length: 40 }, (_, index) => `d${index}`);
-  const view = createStorageCornerViewModel(
-    createDeckStorageState({ deck, storage: ['overflow'] }),
+  const one = createStorageCornerViewModel(
+    createDeckStorageState({ deck, storage: ['overflow-1'] }),
     { isRoyal: () => false },
   );
-  assert.equal(view.deckCount, 40);
-  assert.equal(view.storageCount, 1);
-  assert.equal(view.selectionCount, 41);
-  assert.equal(view.storageButtonLabel, '41/40');
-  assert.equal(view.storageButtonTone, 'overflow');
-  assert.equal(view.overDeckLimit, true);
+  assert.equal(one.deckCount, 40);
+  assert.equal(one.storageCount, 1);
+  assert.equal(one.selectionCount, 41);
+  assert.equal(one.overflowCount, 1);
+  assert.equal(one.storageButtonLabel, '1');
+  assert.equal(one.storageButtonTone, 'overflow');
+  assert.equal(one.overDeckLimit, true);
+
+  const two = createStorageCornerViewModel(
+    createDeckStorageState({ deck, storage: ['overflow-1', 'overflow-2'] }),
+    { isRoyal: () => false },
+  );
+  assert.equal(two.deckCount, 40);
+  assert.equal(two.storageCount, 2);
+  assert.equal(two.overflowCount, 2);
+  assert.equal(two.storageButtonLabel, '2');
 });
 
 test('storage candidates can be discarded without touching deck', () => {

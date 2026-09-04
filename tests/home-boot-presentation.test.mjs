@@ -20,6 +20,7 @@ import {
   resolveHomeSlidepadRole,
   resolveHomeSlidepadRouteId,
   resolveHomeSlidepadTargetTranslation,
+  shouldDismissHomeSlidepadOnBlankDoubleClick,
 } from '../browser/home-boot-runtime-mount.mjs';
 
 const landscapeProjection = Object.freeze({
@@ -66,6 +67,17 @@ test('Home SlidePad shell defaults to expanded and remains explicitly collapsibl
   const collapsed = createHomeShellState({ expanded: false, routeIds: ['battle', 'cards', 'partner', 'shop'] });
   assert.equal(expanded.expanded, true);
   assert.equal(collapsed.expanded, false);
+});
+
+test('Home blank double-click dismissal only accepts blank Home space while SlidePad is expanded', () => {
+  const outside = {};
+  const home = { contains: (target) => target !== outside };
+  const blank = { closest: () => null };
+  const interactive = { closest: () => ({ tagName: 'BUTTON' }) };
+  assert.equal(shouldDismissHomeSlidepadOnBlankDoubleClick({ expanded: true, home, target: blank }), true);
+  assert.equal(shouldDismissHomeSlidepadOnBlankDoubleClick({ expanded: false, home, target: blank }), false);
+  assert.equal(shouldDismissHomeSlidepadOnBlankDoubleClick({ expanded: true, home, target: interactive }), false);
+  assert.equal(shouldDismissHomeSlidepadOnBlankDoubleClick({ expanded: true, home, target: outside }), false);
 });
 
 test('Home projection preserves routes and selected route across viewport profiles', () => {

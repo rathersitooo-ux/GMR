@@ -3,6 +3,12 @@ import {
   createHomeShellState,
   HOME_TOUCH_TARGET_MIN_PX,
 } from './home-shell-presentation-core.mjs';
+import {
+  advanceHomeSlotRollSession,
+  createHomeSlotRollSession,
+  deriveHomeSlotRollDetentPx,
+  resolveHomeSlotRollRelease,
+} from './home-slidepad-slot-roll-adapter.mjs';
 import { mountRogueRunFromCurrentBrowser } from './rogue-run-runtime-mount.mjs';
 
 const GLOBAL_KEY = 'GAMEROAD_HOME_BOOT_PRESENTATION';
@@ -61,6 +67,8 @@ const runtime = {
     originY: 0,
     moved: false,
     previewButton: null,
+    slotRollSession: null,
+    slotRollFocusButton: null,
   },
 };
 
@@ -252,6 +260,12 @@ ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}[data-home-sli
   outline:3px solid currentColor;
   outline-offset:2px;
 }
+${HOME_SELECTOR}[data-home-shell-mounted="true"] [data-home-slot-roll-focus="true"]{
+  opacity:1!important;
+  outline:3px solid currentColor!important;
+  outline-offset:3px!important;
+  filter:brightness(1.12) saturate(1.05)!important;
+}
 ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SLIDEPAD_CENTER_SELECTOR}{
   touch-action:none;
   translate:var(--gameroad-home-slidepad-x, 0px) var(--gameroad-home-slidepad-y, 0px);
@@ -315,6 +329,42 @@ function selectedRouteId(buttons) {
     || button.getAttribute('aria-pressed') === 'true'
   ));
   return selected ? routeId(selected) : null;
+}
+
+function isSlotRollControlAvailable(control) {
+  if (!(control instanceof HTMLElement)) return false;
+  if (control.hasAttribute('hidden') || control.hasAttribute('disabled')) return false;
+  if (control.getAttribute('aria-hidden') === 'true' || control.getAttribute('aria-disabled') === 'true') return false;
+  return true;
+}
+
+function slotRollChoices(home) {
+  const controls = [];
+  const seenControls = new Set();
+  for (const button of routeButtons(home)) {
+    if (!isSlotRollControlAvailable(button) || seenControls.has(button)) continue;
+    const id = routeId(button);
+    if (!id) continue;
+    seenControls.add(button);
+    controls.push(Object.freeze({ id: `route:${id}`, kind: 'route', routeId: id, control: button }));
+  }
+  const utilities = [...home.querySelectorAll(SECONDARY_UTILITY_BUTTON_SELECTOR)]
+    .filter((node) => isSlotRollControlAvailable(node));
+  utilities.forEach((button, index) => {
+    if (seenControls.has(button)) return;
+    seenControls.add(button);
+    const stableId = String(button.id || '').trim() || String(index);
+    controls.push(Object.freeze({ id: `utility:${stableId}`, kind: 'utility', control: button }));
+  });
+  return Object.freeze(controls);
+}
+
+function slotRollChoiceForControl(choices, control) {
+  return choices.find((choice) => choice.control === control) || null;
+}
+
+function slotRollControlForId(session, itemId) {
+  return session?.choices?.find((choice) => choice.id === itemId)?.control || null;
 }
 
 function reducedMotion() {
@@ -408,6 +458,7 @@ function unmarkHome(home) {
   delete home.dataset.homeShellExpanded;
   delete home.dataset.homeShellRouteCount;
   delete home.dataset.homeShellSelectedRoute;
+  delete home.dataset.homeSlidepadSlotDirection;
   home.style.removeProperty('--gameroad-home-shell-touch-min');
 }
 
@@ -436,6 +487,35 @@ function setPreview(button) {
 function clearPreview() {
   if (runtime.slidepad.previewButton) clearButtonAttachment(runtime.slidepad.previewButton);
   runtime.slidepad.previewButton = null;
+}
+
+function setSlotRollFocus(button) {
+  const previous = runtime.slidepad.slotRollFocusButton;
+  if (previous instanceof HTMLElement && previous !== button) delete previous.dataset.homeSlotRollFocus;
+  runtime.slidepad.slotRollFocusButton = button instanceof HTMLElement ? button : null;
+  if (runtime.slidepad.slotRollFocusButton) runtime.slidepad.slotRollFocusButton.dataset.homeSlotRollFocus = 'true';
+}
+
+function clearSlotRollFocus() {
+  if (runtime.slidepad.slotRollFocusButton instanceof HTMLElement) {
+    delete runtime.slidepad.slotRollFocusButton.dataset.homeSlotRollFocus;
+  }
+  runtime.slidepad.slotRollFocusButton = null;
+}
+
+function emitSlotRollDetents(center, detents) {
+  if (!(center instanceof HTMLElement) || !Array.isArray(detents) || !detents.length) return;
+  for (const detent of detents) {
+    center.dispatchEvent(new CustomEvent('gameroad:slidepad-slot-detent', {
+      bubbles: true,
+      detail: Object.freeze({
+        direction: detent.direction,
+        fromItemId: detent.fromItemId,
+        toItemId: detent.toItemId,
+        wrapped: detent.wrapped,
+      }),
+    }));
+  }
 }
 
 export function resolveHomeSlidepadFeedbackTranslation({
@@ -484,6 +564,8 @@ function resetGesture({ releaseCapture = true } = {}) {
   runtime.slidepad.originX = 0;
   runtime.slidepad.originY = 0;
   runtime.slidepad.moved = false;
+  runtime.slidepad.slotRollSession = null;
+  clearSlotRollFocus();
   clearPreview();
   resetKnob(center);
   if (releaseCapture && center instanceof HTMLElement && pointerId != null) {
@@ -533,19 +615,65 @@ function bindSlidepad(home) {
     const { dx, dy } = pointerVector(event);
     const distance = Math.hypot(dx, dy);
     if (distance >= SLIDEPAD_DEAD_ZONE_PX) runtime.slidepad.moved = true;
-    const buttons = routeButtons(home);
-    const currentRouteId = routeId(runtime.slidepad.previewButton);
-    const target = resolveHomeSlidepadRayTarget({
-      originX: runtime.slidepad.originX,
-      originY: runtime.slidepad.originY,
-      pointerX: Number(event.clientX),
-      pointerY: Number(event.clientY),
-      currentRouteId,
-      targets: buttons.map((button) => ({ routeId: routeId(button), rect: button.getBoundingClientRect() })),
-    });
-    const button = target ? buttons.find((candidate) => routeId(candidate) === target.routeId) || null : null;
-    setPreview(button);
-    if (button) applyTargetAdhesion(button);
+
+    const rollLocked = runtime.slidepad.slotRollSession?.engaged === true;
+    let button = runtime.slidepad.previewButton;
+    if (!rollLocked) {
+      const buttons = routeButtons(home);
+      const currentRouteId = routeId(runtime.slidepad.previewButton);
+      const target = resolveHomeSlidepadRayTarget({
+        originX: runtime.slidepad.originX,
+        originY: runtime.slidepad.originY,
+        pointerX: Number(event.clientX),
+        pointerY: Number(event.clientY),
+        currentRouteId,
+        targets: buttons.map((candidate) => ({ routeId: routeId(candidate), rect: candidate.getBoundingClientRect() })),
+      });
+      button = target ? buttons.find((candidate) => routeId(candidate) === target.routeId) || null : null;
+      setPreview(button);
+      if (button) applyTargetAdhesion(button);
+    }
+
+    if (button && !runtime.slidepad.slotRollSession) {
+      const choices = slotRollChoices(home);
+      const anchor = slotRollChoiceForControl(choices, button);
+      if (anchor) {
+        const rect = center.getBoundingClientRect();
+        const anchorSpanPx = Math.min(Number(rect.width), Number(rect.height));
+        const detentPx = deriveHomeSlotRollDetentPx({
+          anchorSpanPx: anchorSpanPx > 0 ? anchorSpanPx : HOME_TOUCH_TARGET_MIN_PX,
+          touchTargetMinPx: HOME_TOUCH_TARGET_MIN_PX,
+        });
+        runtime.slidepad.slotRollSession = createHomeSlotRollSession({
+          choices,
+          anchorId: anchor.id,
+          detentPx,
+          clientX: Number(event.clientX),
+        });
+      }
+    }
+
+    if (runtime.slidepad.slotRollSession) {
+      const anchor = button
+        ? slotRollChoiceForControl(runtime.slidepad.slotRollSession.choices, button)
+        : null;
+      const advanced = advanceHomeSlotRollSession(runtime.slidepad.slotRollSession, {
+        anchorId: anchor?.id || null,
+        clientX: Number(event.clientX),
+      });
+      runtime.slidepad.slotRollSession = advanced.session;
+      emitSlotRollDetents(center, advanced.detents);
+      if (advanced.engaged) {
+        const focusButton = slotRollControlForId(advanced.session, advanced.focusId);
+        if (focusButton instanceof HTMLElement) {
+          clearButtonAttachment(focusButton);
+          setPreview(focusButton);
+          setSlotRollFocus(focusButton);
+          button = focusButton;
+        }
+      }
+    }
+
     moveKnobWithGesture(center, dx, dy);
     return { dx, dy, role: button ? roleForRouteId(routeId(button)) : null, button };
   };
@@ -568,6 +696,8 @@ function bindSlidepad(home) {
       runtime.slidepad.originX = rect.left + rect.width / 2;
       runtime.slidepad.originY = rect.top + rect.height / 2;
       runtime.slidepad.moved = false;
+      runtime.slidepad.slotRollSession = null;
+      clearSlotRollFocus();
       center.dataset.homeSlidepadDragging = 'true';
       try { center.setPointerCapture?.(event.pointerId); } catch {}
       updateFromPointer(event);
@@ -581,12 +711,29 @@ function bindSlidepad(home) {
       if (event.pointerId !== runtime.slidepad.pointerId) return;
       const { button } = updateFromPointer(event);
       const moved = runtime.slidepad.moved;
+      const rollCommit = runtime.slidepad.slotRollSession
+        ? resolveHomeSlotRollRelease(runtime.slidepad.slotRollSession)
+        : null;
       resetGesture();
       event.preventDefault();
       event.stopPropagation();
       if (!runtime.active) return;
       if (!moved) {
         center.click();
+        return;
+      }
+      if (rollCommit?.control instanceof HTMLElement) {
+        const direction = rollCommit.lastDirection > 0 ? 'right' : rollCommit.lastDirection < 0 ? 'left' : null;
+        if (direction) home.dataset.homeSlidepadSlotDirection = direction;
+        center.dispatchEvent(new CustomEvent('gameroad:slidepad-slot-commit', {
+          bubbles: true,
+          detail: Object.freeze({
+            itemId: rollCommit.itemId,
+            direction,
+            totalSteps: rollCommit.totalSteps,
+          }),
+        }));
+        rollCommit.control.click();
         return;
       }
       if (button) button.click();
@@ -731,7 +878,8 @@ export function snapshot() {
     slidepadGestureBound: Boolean(runtime.slidepad.center && runtime.slidepad.handlers),
     slidepadBlankDoubleClickDismissBound: Boolean(runtime.slidepad.home && runtime.slidepad.handlers),
     slidepadPointerActive: runtime.slidepad.pointerId != null,
-    slidepadTargeting: 'straight-ray-target-side-adhesion',
+    slidepadSlotRollEngaged: runtime.slidepad.slotRollSession?.engaged === true,
+    slidepadTargeting: 'straight-ray-target-side-adhesion+cyclic-slot-roll',
     projectionStatus: 'scene-target-projection-mounted',
     lastError: runtime.lastError,
   });

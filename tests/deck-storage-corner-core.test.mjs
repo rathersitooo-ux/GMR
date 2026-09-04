@@ -10,11 +10,8 @@ import {
   resolveDeckEditorSwipe,
 } from '../browser/deck-storage-corner-core.mjs';
 
-test('collection left is consumed without Storage while right still means Deck add', () => {
-  assert.deepEqual(resolveDeckEditorSwipe({ surface: 'collection', deltaX: -80, deltaY: 4 }), {
-    action: 'none',
-    consumed: true,
-  });
+test('collection left means Deck remove while right still means Deck add', () => {
+  assert.equal(resolveDeckEditorSwipe({ surface: 'collection', deltaX: -80, deltaY: 4 }).action, 'deck-remove');
   assert.equal(resolveDeckEditorSwipe({ surface: 'collection', deltaX: 80, deltaY: 4 }).action, 'deck-add');
 
   const state = createDeckStorageState({ deck: ['a'], storage: [] });
@@ -51,18 +48,26 @@ test('storage uses normal-left royal-right view and yellow +N button before over
   assert.deepEqual(view.layout, { normalSide: 'left', royalSide: 'right' });
 });
 
-test('forty plus overflow storage projects 41/40 and overflow tone', () => {
+test('forty plus overflow storage projects cumulative 41/40 and 42/40 labels', () => {
   const deck = Array.from({ length: 40 }, (_, index) => `d${index}`);
-  const view = createStorageCornerViewModel(
+  const view41 = createStorageCornerViewModel(
     createDeckStorageState({ deck, storage: ['overflow'] }),
     { isRoyal: () => false },
   );
-  assert.equal(view.deckCount, 40);
-  assert.equal(view.storageCount, 1);
-  assert.equal(view.selectionCount, 41);
-  assert.equal(view.storageButtonLabel, '41/40');
-  assert.equal(view.storageButtonTone, 'overflow');
-  assert.equal(view.overDeckLimit, true);
+  assert.equal(view41.deckCount, 40);
+  assert.equal(view41.storageCount, 1);
+  assert.equal(view41.selectionCount, 41);
+  assert.equal(view41.storageButtonLabel, '41/40');
+  assert.equal(view41.storageButtonTone, 'overflow');
+  assert.equal(view41.overDeckLimit, true);
+
+  const view42 = createStorageCornerViewModel(
+    createDeckStorageState({ deck, storage: ['overflow', 'overflow2'] }),
+    { isRoyal: () => false },
+  );
+  assert.equal(view42.storageCount, 2);
+  assert.equal(view42.selectionCount, 42);
+  assert.equal(view42.storageButtonLabel, '42/40');
 });
 
 test('storage candidates can be discarded without touching deck', () => {

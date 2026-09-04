@@ -125,12 +125,15 @@ test('Auto fails closed when the fresh human legal-input read changes the select
 
 test('concurrent runOnce calls cannot commit the same human input frame twice', async () => {
   let commits = 0;
+  let notifyCommitStarted;
+  const commitStarted = new Promise((resolve) => { notifyCommitStarted = resolve; });
   let releaseCommit;
   const commitGate = new Promise((resolve) => { releaseCommit = resolve; });
   const controller = createBattleAutoInputController({
     readHumanLegalInputs: () => frame('round-4b|road|P1', [candidate('a')]),
     commitHumanInput: async () => {
       commits += 1;
+      notifyCommitStarted();
       await commitGate;
       return true;
     },
@@ -138,8 +141,7 @@ test('concurrent runOnce calls cannot commit the same human input frame twice', 
 
   controller.setMode('left');
   const first = controller.runOnce();
-  await Promise.resolve();
-  await Promise.resolve();
+  await commitStarted;
   const second = await controller.runOnce();
   assert.equal(second.ok, false);
   assert.equal(second.reason, 'FRAME_COMMIT_IN_FLIGHT');

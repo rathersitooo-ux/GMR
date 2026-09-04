@@ -94,9 +94,13 @@ export function createDeckStorageCornerController({
       notify(accepted(result) ? 'deck-add' : 'deck-add-reject', { cardId: String(cardId) });
       return Object.freeze({ ok: accepted(result), action: 'deck-add', reason: result?.reason, view: view() });
     }
-    notify('deck-remove-start', { cardId: String(cardId), surface });
+    const id = String(cardId);
+    if (surface === 'collection' && !getDeck().includes(id)) {
+      return Object.freeze({ ok: false, action: 'none', reason: 'not-in-deck', view: view() });
+    }
+    notify('deck-remove-start', { cardId: id, surface });
     const result = removeDeckCard(cardId);
-    notify(accepted(result) ? 'deck-remove' : 'deck-remove-reject', { cardId: String(cardId), surface });
+    notify(accepted(result) ? 'deck-remove' : 'deck-remove-reject', { cardId: id, surface });
     return Object.freeze({ ok: accepted(result), action: 'deck-remove', reason: result?.reason, view: view() });
   };
 
@@ -256,6 +260,9 @@ export function mountDeckStorageCorner({
   buttonHost.appendChild(button);
   let backdrop = null;
   let panel = null;
+  const pulseTimers = new Map();
+  const setTimer = typeof win?.setTimeout === 'function' ? win.setTimeout.bind(win) : globalThis.setTimeout?.bind(globalThis);
+  const clearTimer = typeof win?.clearTimeout === 'function' ? win.clearTimeout.bind(win) : globalThis.clearTimeout?.bind(globalThis);
   const ghostTransfer = createDeckRemoveGhostTransfer({ document: doc, window: win });
 
   const findCollectionCard = (cardId) => [...(doc?.querySelectorAll?.('#collectionGrid [data-id]') ?? [])]
@@ -263,12 +270,31 @@ export function mountDeckStorageCorner({
   const findDeckCard = (cardId) => [...(doc?.querySelectorAll?.('#deckSlots [data-id], #exDeckSlots [data-id]') ?? [])]
     .find((node) => String(node?.dataset?.id ?? '') === String(cardId ?? '')) ?? null;
 
+  const pulseReturnedCollectionCard = (cardId) => {
+    const node = findCollectionCard(cardId);
+    if (!node?.classList?.add || !node?.classList?.remove) return false;
+    const prior = pulseTimers.get(node);
+    if (prior != null) clearTimer?.(prior);
+    node.classList.remove('gr-deck-remove-return-pulse');
+    void node.offsetWidth;
+    node.classList.add('gr-deck-remove-return-pulse');
+    if (setTimer) {
+      const timer = setTimer(() => {
+        node.classList.remove('gr-deck-remove-return-pulse');
+        pulseTimers.delete(node);
+      }, 380);
+      pulseTimers.set(node, timer);
+    }
+    return true;
+  };
+
   const unsubscribe = typeof controller.subscribe === 'function'
     ? controller.subscribe((payload) => {
         if (!payload?.cardId) return;
         if (payload.event === 'deck-remove-start') {
           ghostTransfer.prepare({ cardId: payload.cardId, sourceElement: findDeckCard(payload.cardId) ?? findCollectionCard(payload.cardId) });
         } else if (payload.event === 'deck-remove') {
+          pulseReturnedCollectionCard(payload.cardId);
           ghostTransfer.commit({ cardId: payload.cardId, targetElement: findCollectionCard(payload.cardId) });
         } else if (payload.event === 'deck-remove-reject') {
           ghostTransfer.cancel({ cardId: payload.cardId });
@@ -374,6 +400,11 @@ export function mountDeckStorageCorner({
     dispose: () => {
       unsubscribe();
       ghostTransfer.dispose();
+      for (const [node, timer] of pulseTimers) {
+        clearTimer?.(timer);
+        node.classList?.remove?.('gr-deck-remove-return-pulse');
+      }
+      pulseTimers.clear();
       doc.removeEventListener?.('pointerdown', onOutsidePointerDown, true);
       discovery.destroy();
       close();

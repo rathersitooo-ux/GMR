@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "SETUP-STAGING-HIERARCHY-R1-20260904T2108-SOL",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "SETUP_STAGING_HIERARCHY_R1",
+  "acquireKey": "SETUP-STAGING-HIERARCHY-R1-20260904T2108-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-R56-accepted-Setup-staging-hierarchy-defect-plus-current-mounted-SETUP_STAGING_CSS",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "fresh-current-home-shell-core-readback-plus-focused-home-presentation-test-and-Required-Gate",
+  "proceedToken": "PROCEED|SETUP-STAGING-HIERARCHY-R1-20260904T2108-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|setup-staging-hierarchy-r1",
+  "authorizationBaseSha": "0d6697d97875bb276480a7744ae3d08ac1fff396",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "SETUP_STAGING_HIERARCHY_R1",
+  "leaseAcquireKey": "SETUP-STAGING-HIERARCHY-R1-20260904T2108-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 21:08 JST",
+  "leaseUntilJst": "2026-09-04 22:08 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A35:L35",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@0d6697d97875bb276480a7744ae3d08ac1fff396; branch work/setup-staging-hierarchy-r1-20260904; mutable browser/home-shell-presentation-core.mjs + tests/home-boot-presentation.test.mjs + transient data/preaction-authorizations/SETUP-STAGING-HIERARCHY-R1-20260904T2108-SOL.json + own PR/checks/expected-head merge/public readback. browser/GAMEROAD.html, Battle/Result/gameplay/rules/save/economy/network/assets READ_ONLY.",
+  "scope": [
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "data/preaction-authorizations/SETUP-STAGING-HIERARCHY-R1-20260904T2108-SOL.json"
+  ],
+  "leaseScope": [
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "data/preaction-authorizations/SETUP-STAGING-HIERARCHY-R1-20260904T2108-SOL.json"
+  ],
+  "solutionSignature": "Adapt the already-mounted Setup staging presentation only: make existing mode/content choices read as a staged match selection and make the existing Start action visually dominant, without adding controls, copy, routes, gameplay state, or a second presentation engine.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT-R56-defect-plus-current-home-shell-core-existing-SETUP_STAGING_CSS",
+  "solutionSearchEvidence": [
+    "CURRENT Stage A explicitly identifies current Setup as reading like an admin/configuration form and requires clearer current selection plus a dominant Start action",
+    "current main home-shell-presentation-core.mjs already owns mounted Setup staging CSS through createHomeShellState, so no new runtime or giant HTML mutation is required",
+    "current CSS already exposes existing setup selectors [data-content], [data-mode], .on, and #startMatch, allowing presentation-only adaptation without inventing semantics",
+    "Battle short-landscape resources are actively owned by another chat until 22:04 JST and are excluded from this WorkUnit",
+    "no new controls, text, game state, layout authority, asset identity, or management framework is introduced"
+  ]
+}

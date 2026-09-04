@@ -137,6 +137,20 @@ function collectStaticErrors(html) {
     errors.push('legacy generic no-effect-road Mana +1 wake remains');
   }
 
+  const saasunaForbiddenLossTokens = [
+    'attack_lose:',
+    'attack_lose_royal_nonlethal:',
+    'attack_lose_no_enemy_max_progress:',
+    'attack_lose_disadvantage:',
+    'defend_lose_nonlethal:',
+  ];
+  for (const token of saasunaForbiddenLossTokens) {
+    if (html.includes(token)) errors.push(`embedded Saasuna defeat/loss reaction remains: ${token}`);
+  }
+  if (!/function saasunaBattleReaction\(\)\{[^}]*if\(!mine\)return null;if\(attacking\)return'attack_win';if\(defending\)return'defend_win';return null\}/.test(html)) {
+    errors.push('embedded Saasuna battle reaction is not fail-closed for non-winning outcomes');
+  }
+
   const dedicatedScriptMatch = html.match(
     /<script\s+id=["']gameroad-battle-phase-presentation-r2-dedicated-script["'][^>]*>([\s\S]*?)<\/script\s*>/i,
   );

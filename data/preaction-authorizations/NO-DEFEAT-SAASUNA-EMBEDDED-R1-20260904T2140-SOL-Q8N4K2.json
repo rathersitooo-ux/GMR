@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NO-DEFEAT-SAASUNA-EMBEDDED-R1-20260904T2140-SOL-Q8N4K2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "NO_DEFEAT_SAASUNA_EMBEDDED_RUNTIME_R1",
+  "acquireKey": "NO-DEFEAT-SAASUNA-EMBEDDED-R1-20260904T2140-SOL-Q8N4K2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-row2-NO_DEFEAT-USER_LOCK-plus-current-public-embedded-Saasuna-loss-classifier-direct-readback",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "current-standalone-partner-saasuna-source-1037-fail-closed-policy-plus-browser-static-check-and-Required-Gate",
+  "proceedToken": "PROCEED|NO-DEFEAT-SAASUNA-EMBEDDED-R1-20260904T2140-SOL-Q8N4K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|no-defeat-saasuna-embedded-r1",
+  "authorizationBaseSha": "681a9214f369fad91f0d10d4efc8688002af4c14",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "NO_DEFEAT_SAASUNA_EMBEDDED_RUNTIME_R1",
+  "leaseAcquireKey": "NO-DEFEAT-SAASUNA-EMBEDDED-R1-20260904T2140-SOL-Q8N4K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 21:40 JST",
+  "leaseUntilJst": "2026-09-04 22:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A36:L36",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@681a9214f369fad91f0d10d4efc8688002af4c14; fresh branch work/no-defeat-saasuna-embedded-r1-20260904; mutable browser/GAMEROAD.html@5d07241a681693bf62819ad449ba128828297297 + tests/browser-static-check.mjs@8fdad684a3d9a98c8f306eb31e77b011e4bad4af + transient .github/workflows/no-defeat-saasuna-embedded-r1.yml + transient data/preaction-authorizations/NO-DEFEAT-SAASUNA-EMBEDDED-R1-20260904T2140-SOL-Q8N4K2.json; own PR/checks/expected-head merge/public same-SHA readback. Battle presentation/FanArt/Setup, gameplay/rules/save/economy/network/assets otherwise READ_ONLY.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    ".github/workflows/no-defeat-saasuna-embedded-r1.yml",
+    "data/preaction-authorizations/NO-DEFEAT-SAASUNA-EMBEDDED-R1-20260904T2140-SOL-Q8N4K2.json"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    ".github/workflows/no-defeat-saasuna-embedded-r1.yml",
+    "data/preaction-authorizations/NO-DEFEAT-SAASUNA-EMBEDDED-R1-20260904T2140-SOL-Q8N4K2.json"
+  ],
+  "solutionSignature": "Remove the stale embedded Browser Saasuna defeat/loss reaction branch so battle_result_reaction only resolves existing attack_win/defend_win for the human winner and otherwise returns null; delete the corresponding embedded attack_lose*/defend_lose* manifest entries; add only an existing static-check regression. No replacement dialogue or game-state semantics.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "current-NO_DEFEAT-hard-lock-plus-standalone-Saasuna-1037-policy-plus-live-embedded-split-brain",
+  "solutionSearchEvidence": [
+    "CURRENT row2 absolute USER_LOCK forbids defeat/loss meaning across all live implementations and forbids inventing a replacement failure condition",
+    "current public Browser HTML directly contains active attack_lose*/defend_lose* entries and saasunaBattleReaction routes non-winning battle_result_reaction to those keys",
+    "current standalone partner-saasuna-conversation-source.mjs already removed forbidden non-winning loss reactions in merged PR #1037, so this is embedded-consumer reconvergence rather than a new dialogue design",
+    "current main 681a9214 has successful Cloudflare public deploy and Browser Full Interaction evidence, so the scope is the specific semantic split-brain rather than an unrelated broad-path repair",
+    "active Battle presentation and FanArt WorkUnits mark browser/GAMEROAD.html read-only and do not own this mutable target; no current Saasuna/no-defeat mutable owner was found",
+    "because GAMEROAD.html is about 11.9 MB, one transient guarded exact-patch workflow is authorized instead of blind whole-file replacement; it must be removed before final PR head"
+  ]
+}

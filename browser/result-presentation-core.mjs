@@ -1,6 +1,11 @@
 const SCHEMA = 'GAMEROAD_RESULT_PRESENTATION_V1';
 const STAGES = Object.freeze(['enter', 'reveal', 'settled', 'exit']);
 const ASSET_KEYS = Object.freeze(['character', 'rankEmblem', 'rewardVisual']);
+const RANK_COLOR_ROLES = Object.freeze({
+  2: 'platinum',
+  3: 'gold',
+  4: 'silver'
+});
 
 function cloneJson(value) {
   if (value === undefined) return undefined;
@@ -33,6 +38,34 @@ function stageEffects({ reducedMotion, lowPerf }) {
     motion: motionEnabled ? 'enabled' : 'instant',
     particles: motionEnabled ? 'enabled' : 'disabled'
   };
+}
+
+export function projectResultRankPresentation(formalRank) {
+  if (!Number.isSafeInteger(formalRank) || formalRank < 1 || formalRank > 4) {
+    return deepFreeze({
+      ok: false,
+      reason: 'FORMAL_RANK_INVALID',
+      formalRank: null,
+      visibleLabel: null,
+      rankColorRole: null
+    });
+  }
+  return deepFreeze({
+    ok: true,
+    reason: 'OK',
+    formalRank,
+    visibleLabel: formalRank === 1 ? '1位' : '勝利',
+    rankColorRole: RANK_COLOR_ROLES[formalRank] ?? null
+  });
+}
+
+function projectRankingPresentation(finalizedResult) {
+  if (!Array.isArray(finalizedResult?.ranking)) return [];
+  return finalizedResult.ranking.map((entry, index) => deepFreeze({
+    sourceIndex: index,
+    playerId: nonEmptyString(entry?.playerId) ? entry.playerId : null,
+    ...projectResultRankPresentation(entry?.rank)
+  }));
 }
 
 function normalizeBase({ presentationId, finalizedResult, reducedMotion = false, lowPerf = false, assets = null }) {
@@ -124,6 +157,7 @@ export function projectResultPresentation(state) {
     ok: true,
     stage: state.stage,
     finalizedResult: cloneJson(state.finalizedResult),
+    rankingPresentation: projectRankingPresentation(state.finalizedResult),
     effects: cloneJson(state.effects),
     assets: cloneJson(state.assets)
   });
@@ -132,5 +166,6 @@ export function projectResultPresentation(state) {
 export const RESULT_PRESENTATION_CORE = Object.freeze({
   schema: SCHEMA,
   stages: STAGES,
-  assetKeys: ASSET_KEYS
+  assetKeys: ASSET_KEYS,
+  rankColorRoles: RANK_COLOR_ROLES
 });

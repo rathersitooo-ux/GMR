@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROGUE-MATCH-RESULT-BINDING-R1-20260904T2248-SOL-K7N3P2",
+  "taskId": "ROGUE-CURRENT-RUNTIME-INTEGRATION-ACCEPT-001",
+  "workUnitKey": "ROGUE_MATCH_RESULT_BINDING_R1",
+  "acquireKey": "ROGUE-MATCH-RESULT-BINDING-R1-20260904T2248-SOL-K7N3P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ROGUE_BATTLE_HANDOFF_MATCH_ID+LIVE_RESULT_CONSUMER_GAP+FRESH_NO_OVERLAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_CORE_BATTLE_HANDOFF_IDENTITY+FOCUSED_WRONG_MATCH_REGRESSION_ORACLE",
+  "proceedToken": "PROCEED|ROGUE-MATCH-RESULT-BINDING-R1-20260904T2248-SOL-K7N3P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ADAPT_EXISTING_MATCH_IDENTITY_ONLY",
+  "authorizationBaseSha": "57d6b609d547de5f15d4841b5d3b9e649c4112e3",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ROGUE-CURRENT-RUNTIME-INTEGRATION-ACCEPT-001",
+  "leaseWorkUnitKey": "ROGUE_MATCH_RESULT_BINDING_R1",
+  "leaseAcquireKey": "ROGUE-MATCH-RESULT-BINDING-R1-20260904T2248-SOL-K7N3P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 22:50 JST",
+  "leaseUntilJst": "2026-09-04 23:47 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A14:L14",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@57d6b609d547de5f15d4841b5d3b9e649c4112e3; branch work/rogue-match-result-binding-r1-20260904; mutable browser/rogue-run-runtime-mount.mjs@6bec6b2c49ef38543e5f9336f675e09ca3629130 + tests/rogue-run-runtime-mount.test.mjs@a67b4781583e8089e6a8cf6f4af4552e2e041980 + transient data/preaction-authorizations/ROGUE-MATCH-RESULT-BINDING-R1-20260904T2248-SOL-K7N3P2.json; own PR/checks/expected-head merge/readback. browser/rogue-run-core.mjs, browser/GAMEROAD.html, Home/Battle/Result/gameplay/rules/save/economy/network/assets/control-plane READ_ONLY.",
+  "scope": [
+    "browser/rogue-run-runtime-mount.mjs",
+    "tests/rogue-run-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/rogue-run-runtime-mount.mjs",
+    "tests/rogue-run-runtime-mount.test.mjs"
+  ]
+}

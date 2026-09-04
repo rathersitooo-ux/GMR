@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DATA-SYNERGY-DECISION-CONTROL-IDENTITY-R1-20260905T0240-SOL-H6K3P8",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "DECISION_CONTROL_IDENTITY_FRESHNESS_R1",
+  "acquireKey": "DATA-SYNERGY-DECISION-CONTROL-IDENTITY-R1-20260905T0240-SOL-H6K3P8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R10-DECISION-TO-CURRENT-2V2-CONTROL-GENERATION-BOUNDARY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING-R10-DECISION-EVIDENCE-PLUS-2V2-RECONNECT-CONTROL-ORACLE",
+  "proceedToken": "PROCEED|DATA-SYNERGY-DECISION-CONTROL-IDENTITY-R1-20260905T0240-SOL-H6K3P8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "e74216aba8264ce57b48cfba967fe384d9fc2113",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "DECISION_CONTROL_IDENTITY_FRESHNESS_R1",
+  "leaseAcquireKey": "DATA-SYNERGY-DECISION-CONTROL-IDENTITY-R1-20260905T0240-SOL-H6K3P8",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 02:40 JST",
+  "leaseUntilJst": "2026-09-05 03:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A22:L22",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@e74216aba8264ce57b48cfba967fe384d9fc2113; mutable NEW browser/partner-decision-control-identity-core.mjs + NEW tests/partner-decision-control-identity-core.test.mjs + transient data/preaction-authorizations/DATA-SYNERGY-DECISION-CONTROL-IDENTITY-R1-20260905T0240-SOL-H6K3P8.json; browser/battle-2v2-reconnect-core.mjs + browser/partner-decision-evidence-projection.mjs + browser/partner-decision-outcome-join-core.mjs + Cloudflare receipt/match files + GAMEROAD.html READ_ONLY.",
+  "scope": [
+    "browser/partner-decision-control-identity-core.mjs",
+    "tests/partner-decision-control-identity-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-decision-control-identity-core.mjs",
+    "tests/partner-decision-control-identity-core.test.mjs"
+  ],
+  "solutionSignature": "Compose formal R10 viewer-safe decision evidence with the existing current 2v2 reconnect control envelope to bind a decision to current seat/team/control-mode/control-generation freshness while excluding player identity and preserving explicit non-authenticated match boundaries.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "reuse-r10-decision-evidence-plus-2v2-reconnect-control",
+  "solutionSearchEvidence": [
+    "repo:browser/partner-decision-evidence-projection.mjs@main",
+    "repo:browser/battle-2v2-reconnect-core.mjs@main",
+    "repo:browser/partner-decision-outcome-join-core.mjs@main"
+  ]
+}

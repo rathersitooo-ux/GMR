@@ -17,6 +17,9 @@ import {
   PARTNER_BATTLE_EVENT_PROJECTION,
   createPartnerBattleEventLogConsumerAdapter
 } from './partner-battle-event-log-projection.mjs';
+import {
+  createFanartOpponentBattleProjectionBridge
+} from './fanart-local-skin-opponent-runtime.mjs';
 
 const LIVE_ADAPTER_SCHEMA = 'GAMEROAD_BATTLE_REPLAY_LIVE_ADAPTER_V1';
 const VERSION_KEYS = Object.freeze(['rules', 'content', 'state']);
@@ -825,6 +828,7 @@ export function createPartnerBattleEventLogPresentationBridge(environment = {}) 
 
 const liveCardPresentationBridge = createBattleReplayCardPresentationBridge();
 const livePartnerBattleEventLogBridge = createPartnerBattleEventLogPresentationBridge();
+const liveFanartOpponentBattleBridge = createFanartOpponentBattleProjectionBridge();
 
 function assertSession(session) {
   if (!session || session.schema !== LIVE_ADAPTER_SCHEMA || !nonEmptyString(session.matchId)) {
@@ -841,7 +845,8 @@ export function createLiveReplaySession(
   { matchId, versions },
   {
     presentationBridge = liveCardPresentationBridge,
-    partnerBattleEventLogBridge = livePartnerBattleEventLogBridge
+    partnerBattleEventLogBridge = livePartnerBattleEventLogBridge,
+    fanartOpponentBattleBridge = liveFanartOpponentBattleBridge
   } = {}
 ) {
   if (!nonEmptyString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
@@ -864,6 +869,11 @@ export function createLiveReplaySession(
   } catch {
     // Partner log is presentation-only and never owns replay/gameplay success.
   }
+  try {
+    fanartOpponentBattleBridge?.begin?.(matchId);
+  } catch {
+    // Viewer-local FanArt projection is presentation-only and never owns replay/gameplay success.
+  }
   return session;
 }
 
@@ -872,7 +882,8 @@ export function appendAcceptedBattleResolution(
   resolution,
   {
     presentationBridge = liveCardPresentationBridge,
-    partnerBattleEventLogBridge = livePartnerBattleEventLogBridge
+    partnerBattleEventLogBridge = livePartnerBattleEventLogBridge,
+    fanartOpponentBattleBridge = liveFanartOpponentBattleBridge
   } = {}
 ) {
   assertSession(session);
@@ -897,6 +908,14 @@ export function appendAcceptedBattleResolution(
     });
   } catch {
     // Accepted replay/gameplay state is authoritative; presentation never blocks it.
+  }
+  try {
+    fanartOpponentBattleBridge?.acceptAcceptedResolution?.({
+      matchId: session.matchId,
+      resolution: projected
+    });
+  } catch {
+    // Accepted replay/gameplay state is authoritative; viewer-local FanArt never blocks it.
   }
   try {
     partnerBattleEventLogBridge?.acceptSession?.(next);
@@ -1030,6 +1049,13 @@ export const BATTLE_REPLAY_LIVE_ADAPTER = Object.freeze({
     transition: 'FINISHER_GATHER',
     authority: 'presentation_only_no_game_state_write'
   }),
+  viewerLocalOpponentSkin: Object.freeze({
+    source: 'accepted_public_battle_resolution',
+    identity: 'canonicalCardId',
+    preferenceSource: 'cards-deck-presentation:readFanartLocalOpponentSkinPreference',
+    networkSync: false,
+    authority: 'presentation_only_no_game_state_write'
+  }),
   partnerBattleEventLog: Object.freeze({
     source: 'viewer_authorized_public_replay_read',
     projectionSchema: PARTNER_BATTLE_EVENT_PROJECTION.schema,
@@ -1117,7 +1143,6 @@ export function projectBattleMovieSurface({
       : liveState.phase === 'BRIDGE'
         ? 'MOVIE_READY_BRIDGE'
         : null;
-
   return deepFreeze({
     schema: BATTLE_MOVIE_SURFACE_SCHEMA,
     presentationOnly: true,

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DATA-SYNERGY-BATTLE-EVENT-STORE-R1-PREACTION",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "BATTLE_REPLAY_AUTHORITATIVE_EVENT_STORAGE_R1",
+  "acquireKey": "DATA-SYNERGY-BATTLE-EVENT-STORE-R1-20260905T0122-SOL-Q4M8V2",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "DATA-SYNERGY-R1-MATCH-AUTH-PRIVACY-SEQUENCE-BOUNDARY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "DATA-SYNERGY-R1-EXISTING-PARTNER-REPORT-MATCH-STORE-REUSE",
+  "proceedToken": "PROCEED|DATA-SYNERGY-BATTLE-EVENT-STORE-R1-PREACTION|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|prediction|lease-snapshot",
+  "authorizationBaseSha": "66abb9579a9be00ef1288fc70c70d57c456e8de8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "BATTLE_REPLAY_AUTHORITATIVE_EVENT_STORAGE_R1",
+  "leaseAcquireKey": "DATA-SYNERGY-BATTLE-EVENT-STORE-R1-20260905T0122-SOL-Q4M8V2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 01:22 JST",
+  "leaseUntilJst": "2026-09-05 02:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A21:N21",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@66abb9579a9be00ef1288fc70c70d57c456e8de8; mutable deploy/cloudflare/relay/src/battle-event-store.mjs + deploy/cloudflare/relay/src/relay-worker.mjs + deploy/cloudflare/functions/battle-event.js + deploy/cloudflare/tests/battle-event-provider.test.mjs; partner-report-store.mjs/read-only pattern; browser Replay files read-only.",
+  "scope": [
+    "deploy/cloudflare/relay/src/battle-event-store.mjs",
+    "deploy/cloudflare/relay/src/relay-worker.mjs",
+    "deploy/cloudflare/functions/battle-event.js",
+    "deploy/cloudflare/tests/battle-event-provider.test.mjs"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/relay/src/battle-event-store.mjs",
+    "deploy/cloudflare/relay/src/relay-worker.mjs",
+    "deploy/cloudflare/functions/battle-event.js",
+    "deploy/cloudflare/tests/battle-event-provider.test.mjs"
+  ],
+  "solutionSignature": "Persist versioned privacy-safe public Battle Replay events in the existing queue-scoped Cloudflare Durable Object after authenticating a current match participant, without creating a second database or gameplay authority.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "reuse-existing-cloudflare-do-match-store-and-partner-report-pattern",
+  "solutionSearchEvidence": [
+    "repo:deploy/cloudflare/relay/src/match-store.mjs",
+    "repo:deploy/cloudflare/relay/src/partner-report-store.mjs",
+    "repo:browser/battle-replay-core.mjs",
+    "repo:deploy/cloudflare/functions/ws.js"
+  ]
+}

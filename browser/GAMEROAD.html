@@ -1082,6 +1082,41 @@ html.r10LowPerf .codexHomeArtSheen,html.r10Reduced .codexHomeArtSheen{display:no
   .result.active .resultBody{left:48%;right:2%;top:9%;bottom:18%;padding:7px 9px;gap:4px}
 }
 </style>
+<style id="result-player-clarity-r84">
+/* R84 player-facing Result clarity repair. Presentation only: formal rank semantics remain owned by result-presentation-core.mjs. */
+#resultHeadline{display:none!important}
+.screen.result{overflow:hidden}
+.resultWorld{left:0!important;right:56%!important;top:0!important;bottom:0!important;overflow:hidden!important}
+.resultWorld .grtc-root{inset:12% 2% 16% 2%!important;align-items:flex-end!important;justify-content:center!important}
+.resultWorld .grtc-image{width:auto!important;height:auto!important;max-width:94%!important;max-height:58%!important;object-fit:contain!important}
+.resultRank{left:3%!important;top:11%!important;width:38%!important;overflow:hidden!important}
+.grade{font-size:clamp(68px,9vw,124px)!important;line-height:.82!important;letter-spacing:-.04em!important;white-space:nowrap!important}
+.resultBody{left:45%!important;right:3%!important;top:9%!important;bottom:20%!important}
+@media(max-width:900px){
+  .resultRank{left:2.5%!important;width:39%!important}
+  .resultBody{left:44%!important;right:2%!important}
+}
+@media(max-height:470px) and (orientation:landscape){
+  .resultWorld{right:58%!important}
+  .resultWorld .grtc-root{inset:28% 2% 16% 2%!important}
+  .resultWorld .grtc-image{max-width:94%!important;max-height:56%!important}
+  .resultRank{left:2%!important;top:8%!important;width:38%!important}
+  .grade{font-size:clamp(48px,8vw,68px)!important;line-height:.84!important}
+  .resultRank .sub{font-size:7px!important;line-height:1.3!important}
+  .resultBody{left:43%!important;right:2%!important;top:7%!important;bottom:18%!important;padding:7px!important;gap:4px!important}
+}
+@media(max-width:540px) and (orientation:portrait){
+  .resultWorld{left:38%!important;right:3%!important;top:62px!important;bottom:auto!important;width:auto!important;height:186px!important}
+  .resultWorld .grtc-root{inset:0!important;align-items:flex-end!important;justify-content:center!important}
+  .resultWorld .grtc-image{width:auto!important;height:auto!important;max-width:100%!important;max-height:100%!important}
+  .resultRank{left:4%!important;right:auto!important;top:76px!important;width:31%!important}
+  .grade{font-size:clamp(56px,16vw,70px)!important;line-height:.88!important;letter-spacing:-.04em!important}
+  .resultRank .k{font-size:8px!important}
+  .resultRank .sub{font-size:8px!important;line-height:1.35!important;margin-top:7px!important}
+  .resultBody{left:3%!important;right:3%!important;top:264px!important;bottom:94px!important;padding:9px!important;gap:6px!important}
+  .resultBtns{left:3%!important;right:3%!important;bottom:14px!important;justify-content:stretch!important}
+}
+</style>
 </head><body><div class="app" id="app"><header class="top"><div class="brand">GAMEROAD</div><div class="topRight"><div class="pill" id="saveState">保存済み</div><div class="pill" id="topMode">ホーム</div></div></header>
 <div id="screenMotionBridge" aria-hidden="true"></div>
 <section class="screen home codexHome active" data-screen="home" data-home-state="HOME_EXPANDED" data-home-preview="" data-home-orientation="landscape" data-codex-home-source="provided-illustration-drive-source" data-home-art-source-id="1t-viE1VSuatsJd6rC1yuc2ctncguwOVx;1nzw0J6yRLTxxZm9An4L4abI7_rUwUKfx">

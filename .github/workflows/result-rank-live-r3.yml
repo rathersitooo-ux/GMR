@@ -1,0 +1,94 @@
+name: GAMEROAD Result Rank Live R3
+
+on:
+  push:
+    branches:
+      - work/result-rank-live-r3-20260904
+
+permissions:
+  contents: write
+
+jobs:
+  inspect-result-theme:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Inspect exact Result CSS and current theme tokens
+        shell: bash
+        env:
+          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          if [[ "$HEAD_MESSAGE" == "diag: capture Result theme R3" ]]; then
+            echo "Diagnostic readback commit; no repeated capture."
+            exit 0
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          import json, re
+
+          html = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          manifest_path = Path('data/preaction-authorizations/RESULT-RANK-LIVE-R3-20260904T2357-SOL-Q6N4K8.json')
+          manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+
+          needles = [
+            '.rankLine', '#resultRanking', '#resultGrade', '#resultHeadline', '#resultLeadText',
+            '--gold', '--silver', 'platinum', 'gold', 'silver', '#c0c0c0', '#d4af37', '#e5e4e2'
+          ]
+          findings = {}
+          for needle in needles:
+            positions=[]
+            start=0
+            while True:
+              pos=html.find(needle,start)
+              if pos < 0: break
+              positions.append(pos)
+              start=pos+len(needle)
+            findings[needle]={'count':len(positions),'positions':positions[:30]}
+
+          windows=[]
+          interesting=[]
+          for key in ['.rankLine','#resultRanking','#resultGrade','#resultHeadline','#resultLeadText','--gold','--silver','platinum']:
+            interesting.extend(findings[key]['positions'])
+          for pos in sorted(set(interesting))[:60]:
+            lo=max(0,pos-1800); hi=min(len(html),pos+2600)
+            windows.append({'offset':pos,'snippet':html[lo:hi]})
+
+          # Capture root/theme CSS variable declarations without dumping the full HTML.
+          var_pairs=[]
+          for m in re.finditer(r'(--[A-Za-z0-9_-]+)\s*:\s*([^;}{]{1,80})', html):
+            name,value=m.group(1),m.group(2).strip()
+            if any(term in name.lower() for term in ['gold','silver','metal','accent','muted','ink','text','cream','sand','yellow','gray','grey']):
+              var_pairs.append({'name':name,'value':value,'offset':m.start()})
+          # stable unique list
+          seen=set(); uniq=[]
+          for item in var_pairs:
+            key=(item['name'],item['value'])
+            if key in seen: continue
+            seen.add(key); uniq.append(item)
+
+          manifest['themeDiagnostic']={
+            'findings':findings,
+            'windows':windows,
+            'candidateVariables':uniq[:120]
+          }
+          manifest['persistenceState']='THEME_DIAGNOSTIC_CAPTURED_NO_PRODUCT_MUTATION'
+          manifest['lastConfirmedStep']='Exact current Result CSS/theme token occurrences captured from giant HTML; no product mutation.'
+          manifest_path.write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+      - name: Commit diagnostic readback only
+        shell: bash
+        run: |
+          if [[ "$HEAD_MESSAGE" == "diag: capture Result theme R3" ]]; then
+            exit 0
+          fi
+          git config user.name 'gameroad-result-rank-bot'
+          git config user.email 'gameroad-result-rank-bot@users.noreply.github.com'
+          git add data/preaction-authorizations/RESULT-RANK-LIVE-R3-20260904T2357-SOL-Q6N4K8.json
+          git diff --cached --quiet && exit 0
+          git commit -m 'diag: capture Result theme R3'
+          git push
+        env:
+          HEAD_MESSAGE: ${{ github.event.head_commit.message }}

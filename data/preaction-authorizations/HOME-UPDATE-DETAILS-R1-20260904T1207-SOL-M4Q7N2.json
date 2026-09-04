@@ -20,13 +20,13 @@
   "leaseSnapshotReadbackAtJst": "2026-09-04 12:07 JST",
   "leaseUntilJst": "2026-09-04 13:07 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A352:L352",
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@62712e9a034253cfc2ec77606db43f54b0a4d156; branch work/home-update-details-r1-20260904; exact mutable: browser/home-boot-runtime-mount.mjs; tests/home-boot-presentation.test.mjs; transient data/preaction-authorizations/HOME-UPDATE-DETAILS-R1-20260904T1207-SOL-M4Q7N2.json; own PR/checks/expected-head merge/public same-SHA readback. browser/GAMEROAD.html, deploy/cloudflare/release-comms-source.json, .github/workflows/cloudflare-public-deploy.yml, gameplay/rules/save/economy/network/assets READ_ONLY.",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@62712e9a034253cfc2ec77606db43f54b0a4d156; branch work/home-update-details-r1-20260904; exact mutable: browser/home-shell-presentation-core.mjs; tests/home-boot-presentation.test.mjs; transient data/preaction-authorizations/HOME-UPDATE-DETAILS-R1-20260904T1207-SOL-M4Q7N2.json; own PR/checks/expected-head merge/public same-SHA readback. browser/home-boot-runtime-mount.mjs, browser/GAMEROAD.html, deploy/cloudflare/release-comms-source.json, .github/workflows/cloudflare-public-deploy.yml, gameplay/rules/save/economy/network/assets READ_ONLY.",
   "scope": [
-    "browser/home-boot-runtime-mount.mjs",
+    "browser/home-shell-presentation-core.mjs",
     "tests/home-boot-presentation.test.mjs"
   ],
   "leaseScope": [
-    "browser/home-boot-runtime-mount.mjs",
+    "browser/home-shell-presentation-core.mjs",
     "tests/home-boot-presentation.test.mjs"
   ]
 }

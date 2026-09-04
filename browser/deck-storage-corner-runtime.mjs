@@ -117,8 +117,8 @@ export function createDeckRemoveGhostTransfer({
   const commit = ({ cardId, targetElement } = {}) => {
     const id = String(cardId ?? '');
     const entry = pending.get(id);
-    if (!entry || !targetElement?.getBoundingClientRect) return false;
     pulseTarget(targetElement);
+    if (!entry || !targetElement?.getBoundingClientRect) return false;
     const isReduced = resolveReducedMotion(win, reducedMotion);
     const plan = createDeckSwipeFlightPlan({
       sourceRect: entry.sourceRect,

@@ -8,6 +8,32 @@ import {
 } from './deck-storage-corner-runtime.mjs';
 
 const deckStorageLiveInstallations = new WeakMap();
+const cardsDeckFindabilityInstallations = new WeakMap();
+
+export const CARDS_DECK_FINDABILITY_CONTRACT = Object.freeze({
+  schema: 'gameroad.cards-deck-findability.v1',
+  searchFields: Object.freeze(['cardId', 'accessible-visible-text']),
+  quickFilters: Object.freeze(['in-deck', 'not-in-deck']),
+  quickFilterCount: 2,
+  persistence: 'none',
+  ownsCardData: false,
+  mutatesDeck: false,
+  mutatesOwnership: false,
+});
+
+export function normalizeCardsDeckSearchQuery(value) {
+  return String(value ?? '').normalize('NFKC').trim().toLocaleLowerCase('ja-JP');
+}
+
+export function matchCardsDeckFindabilityCard({ cardId, text, inDeck } = {}, { query = '', deckFilter = 'all' } = {}) {
+  const normalizedFilter = new Set(['all', 'in-deck', 'not-in-deck']).has(deckFilter) ? deckFilter : 'all';
+  if (normalizedFilter === 'in-deck' && inDeck !== true) return false;
+  if (normalizedFilter === 'not-in-deck' && inDeck === true) return false;
+  const needle = normalizeCardsDeckSearchQuery(query);
+  if (!needle) return true;
+  const haystack = normalizeCardsDeckSearchQuery(`${String(cardId ?? '')} ${String(text ?? '')}`);
+  return haystack.includes(needle);
+}
 
 function cardsScreen(doc) {
   return doc?.querySelector?.('section[data-screen="cards"]') ?? null;
@@ -24,6 +50,116 @@ function readLiveDeck(doc) {
     .map((node) => String(node?.dataset?.id ?? ''))
     .filter(Boolean);
   return [...ids('#deckSlots [data-id]'), ...ids('#exDeckSlots [data-id]')];
+}
+
+function currentCollectionFindabilityRecord(node) {
+  const cardId = String(node?.dataset?.id ?? '');
+  const aria = String(node?.getAttribute?.('aria-label') ?? '');
+  const text = `${aria} ${String(node?.textContent ?? '')}`;
+  return Object.freeze({ cardId, text, inDeck: Boolean(node?.classList?.contains?.('inDeck')) });
+}
+
+export function applyCardsDeckFindability({ document: doc = globalThis.document, query = '', deckFilter = 'all' } = {}) {
+  if (!doc?.querySelectorAll) return Object.freeze({ total: 0, visible: 0, query: normalizeCardsDeckSearchQuery(query), deckFilter: 'all' });
+  const normalizedFilter = new Set(['all', 'in-deck', 'not-in-deck']).has(deckFilter) ? deckFilter : 'all';
+  const nodes = [...doc.querySelectorAll('#collectionGrid [data-id]')];
+  let visible = 0;
+  for (const node of nodes) {
+    const matches = matchCardsDeckFindabilityCard(currentCollectionFindabilityRecord(node), { query, deckFilter: normalizedFilter });
+    node.hidden = !matches;
+    if (matches) visible += 1;
+  }
+  return Object.freeze({ total: nodes.length, visible, query: normalizeCardsDeckSearchQuery(query), deckFilter: normalizedFilter });
+}
+
+export function installCardsDeckFindability({ document: doc = globalThis.document, window: win = globalThis.window } = {}) {
+  if (!doc?.querySelector || !doc?.createElement) return Object.freeze({ destroy() {} });
+  const existing = cardsDeckFindabilityInstallations.get(doc);
+  if (existing) return existing;
+  const screen = cardsScreen(doc);
+  const grid = doc.querySelector('#collectionGrid');
+  if (!screen || !grid) return Object.freeze({ destroy() {} });
+
+  const host = doc.createElement('div');
+  host.dataset.role = 'cards-deck-findability';
+  host.setAttribute?.('role', 'search');
+  const input = doc.createElement('input');
+  input.type = 'search';
+  input.placeholder = 'カード検索';
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  input.setAttribute?.('aria-label', 'カード名またはカードIDで検索');
+  const inDeckButton = doc.createElement('button');
+  inDeckButton.type = 'button';
+  inDeckButton.textContent = '札組中';
+  inDeckButton.dataset.filter = 'in-deck';
+  inDeckButton.setAttribute?.('aria-pressed', 'false');
+  const outDeckButton = doc.createElement('button');
+  outDeckButton.type = 'button';
+  outDeckButton.textContent = '未投入';
+  outDeckButton.dataset.filter = 'not-in-deck';
+  outDeckButton.setAttribute?.('aria-pressed', 'false');
+  const count = doc.createElement('span');
+  count.dataset.role = 'cards-deck-findability-count';
+  count.setAttribute?.('aria-live', 'polite');
+  host.appendChild(input);
+  host.appendChild(inDeckButton);
+  host.appendChild(outDeckButton);
+  host.appendChild(count);
+  grid.before?.(host);
+  if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);
+
+  if (!doc.getElementById?.('gameroad-cards-deck-findability-style')) {
+    const style = doc.createElement('style');
+    style.id = 'gameroad-cards-deck-findability-style';
+    style.textContent = '[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}[data-role="cards-deck-findability"] input{min-height:44px;min-width:min(240px,58vw);padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(10,18,30,.72);color:inherit;font:inherit}[data-role="cards-deck-findability"] button{min-height:44px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:transparent;color:inherit;font:700 13px/1 system-ui}[data-role="cards-deck-findability"] button[aria-pressed="true"]{background:rgba(255,216,74,.22);border-color:#ffd84a}[data-role="cards-deck-findability-count"]{font:700 12px/1 system-ui;opacity:.72;white-space:nowrap}';
+    (doc.head ?? doc.documentElement)?.appendChild?.(style);
+  }
+
+  let deckFilter = 'all';
+  let destroyed = false;
+  const render = () => {
+    if (destroyed) return Object.freeze({ total: 0, visible: 0, query: '', deckFilter: 'all' });
+    const result = applyCardsDeckFindability({ document: doc, query: input.value, deckFilter });
+    inDeckButton.setAttribute?.('aria-pressed', String(deckFilter === 'in-deck'));
+    outDeckButton.setAttribute?.('aria-pressed', String(deckFilter === 'not-in-deck'));
+    count.textContent = `${result.visible}/${result.total}`;
+    return result;
+  };
+  const toggle = (next) => {
+    deckFilter = deckFilter === next ? 'all' : next;
+    render();
+  };
+  const onInput = () => render();
+  const onInDeck = () => toggle('in-deck');
+  const onOutDeck = () => toggle('not-in-deck');
+  input.addEventListener?.('input', onInput);
+  inDeckButton.addEventListener?.('click', onInDeck);
+  outDeckButton.addEventListener?.('click', onOutDeck);
+  const observer = typeof win?.MutationObserver === 'function'
+    ? new win.MutationObserver(() => render())
+    : null;
+  observer?.observe?.(grid, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'aria-label', 'data-id'] });
+  render();
+
+  const installation = Object.freeze({
+    contract: CARDS_DECK_FINDABILITY_CONTRACT,
+    render,
+    state: () => Object.freeze({ query: normalizeCardsDeckSearchQuery(input.value), deckFilter }),
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      observer?.disconnect?.();
+      input.removeEventListener?.('input', onInput);
+      inDeckButton.removeEventListener?.('click', onInDeck);
+      outDeckButton.removeEventListener?.('click', onOutDeck);
+      for (const node of [...(doc.querySelectorAll?.('#collectionGrid [data-id]') ?? [])]) node.hidden = false;
+      host.remove?.();
+      cardsDeckFindabilityInstallations.delete(doc);
+    },
+  });
+  cardsDeckFindabilityInstallations.set(doc, installation);
+  return installation;
 }
 
 function createExistingDeckAuthorityBridge(doc) {
@@ -240,7 +376,16 @@ function autoInstallDeckStorageLiveMount(doc, win) {
   else install();
 }
 
-if (typeof document !== 'undefined') autoInstallDeckStorageLiveMount(document, globalThis.window);
+function autoInstallCardsDeckFindability(doc, win) {
+  const install = () => installCardsDeckFindability({ document: doc, window: win });
+  if (doc?.readyState === 'loading') doc.addEventListener?.('DOMContentLoaded', install, { once: true });
+  else install();
+}
+
+if (typeof document !== 'undefined') {
+  autoInstallDeckStorageLiveMount(document, globalThis.window);
+  autoInstallCardsDeckFindability(document, globalThis.window);
+}
 
 const FANART_DB_NAME = 'gameroad_local_card_creator_v1';
 const FANART_DB_VERSION = 1;

@@ -19,7 +19,9 @@ function installStyles(doc) {
 .gr-deck-remove-ghost-layer{position:fixed;inset:0;z-index:10000;pointer-events:none;overflow:hidden;contain:layout style paint}
 .gr-deck-remove-ghost-card{position:fixed!important;margin:0!important;pointer-events:none!important;transform-origin:center center;will-change:transform,opacity,filter;opacity:.76;filter:brightness(1.12) drop-shadow(0 10px 12px rgba(0,0,0,.24))}
 .gr-deck-remove-ghost-streak{position:fixed;width:76px;height:3px;border-radius:999px;transform-origin:right center;opacity:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.14) 24%,rgba(255,239,176,.94));filter:drop-shadow(0 0 5px rgba(255,224,139,.58));will-change:transform,opacity}
-@media(prefers-reduced-motion:reduce){.gr-deck-remove-ghost-streak{display:none!important}}
+@keyframes grDeckRemoveReturnPulse{0%{filter:brightness(1)}38%{filter:brightness(1.34) drop-shadow(0 0 14px rgba(255,216,74,.7))}100%{filter:brightness(1)}}
+.gr-deck-remove-return-pulse{animation:grDeckRemoveReturnPulse 360ms ease-out 1}
+@media(prefers-reduced-motion:reduce){.gr-deck-remove-ghost-streak{display:none!important}.gr-deck-remove-return-pulse{animation:none;filter:brightness(1.14)}}
 `;
   (doc.head ?? doc.documentElement)?.appendChild?.(style);
 }
@@ -76,10 +78,19 @@ export function createDeckRemoveGhostTransfer({
     return true;
   };
 
+  const pulseTarget = (targetElement) => {
+    if (!targetElement?.classList?.add || !targetElement?.classList?.remove) return;
+    targetElement.classList.remove('gr-deck-remove-return-pulse');
+    void targetElement.offsetWidth;
+    targetElement.classList.add('gr-deck-remove-return-pulse');
+    setTimer(() => targetElement.classList.remove('gr-deck-remove-return-pulse'), 380);
+  };
+
   const commit = ({ cardId, targetElement } = {}) => {
     const id = String(cardId ?? '');
     const entry = pending.get(id);
     if (!entry || !targetElement?.getBoundingClientRect) return false;
+    pulseTarget(targetElement);
     const isReduced = reduced(win, reducedMotion);
     const plan = createDeckSwipeFlightPlan({
       sourceRect: entry.sourceRect,

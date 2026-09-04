@@ -6,10 +6,10 @@
   "acquireKey": "AUTO-BATTLE-LIVE-R2-20260905T0105-SOL-N7K4P2",
   "riskClass": "MATERIAL_STANDARD",
   "predictionStatus": "PASS",
-  "predictionEvidenceId": "USER_EXPLICIT_AUTO_MISSING+FORMAL_AUTO_SAME_HUMAN_INPUT_COMMIT_ROUTE+CURRENT_CORE_DIRECT_READ+CURRENT_HTML_DIRECT_READ+FRESH_ACTIVE_LEASE",
+  "predictionEvidenceId": "USER_EXPLICIT_AUTO_MISSING+FORMAL_AUTO_SAME_HUMAN_INPUT_COMMIT_ROUTE+CURRENT_CORE_DIRECT_READ+CURRENT_READY_PLAN_LIVE_SEAM+FRESH_ACTIVE_LEASE",
   "rehearsalStatus": "N_A_ALT_ORACLE",
-  "rehearsalEvidenceId": "EXISTING_BATTLE_AUTO_INPUT_CORE_TESTS+EXISTING_READY_PLAN_HUMAN_COMMIT_PATH+FOCUSED_LIVE_INTEGRATION_TEST",
-  "proceedToken": "PROCEED|AUTO-BATTLE-LIVE-R2-20260905T0105-SOL-N7K4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ADAPT_EXISTING_AUTO_CORE_TO_HUMAN_INPUT_ROUTE",
+  "rehearsalEvidenceId": "EXISTING_BATTLE_AUTO_INPUT_CORE_TESTS+EXISTING_READY_PLAN_ADAPTER_TESTS+FOCUSED_SAME_SELECTION_PATH_TEST",
+  "proceedToken": "PROCEED|AUTO-BATTLE-LIVE-R2-20260905T0105-SOL-N7K4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ADAPT_EXISTING_AUTO_CORE_TO_LIVE_READY_PLAN_SEAM",
   "authorizationBaseSha": "66abb9579a9be00ef1288fc70c70d57c456e8de8",
   "stateModelVersion": "STATE_MODEL_V1",
   "leaseAuthority": "CURRENT_ACTIVE_LEASES",
@@ -17,29 +17,29 @@
   "leaseTaskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
   "leaseWorkUnitKey": "AUTO_BATTLE_LIVE_INPUT_UI_R2",
   "leaseAcquireKey": "AUTO-BATTLE-LIVE-R2-20260905T0105-SOL-N7K4P2",
-  "leaseSnapshotReadbackAtJst": "2026-09-05 01:22 JST",
-  "leaseUntilJst": "2026-09-05 01:50 JST",
-  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@66abb9579a9be00ef1288fc70c70d57c456e8de8; branch work/auto-battle-live-r2-20260905; mutable browser/GAMEROAD.html + deploy/cloudflare/scripts/build.mjs + tests/battle-auto-live-integration.test.mjs + transient preaction authorization; browser/battle-auto-input-core.mjs READ_ONLY.",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 01:40 JST",
+  "leaseUntilJst": "2026-09-05 02:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:N5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@66abb9579a9be00ef1288fc70c70d57c456e8de8; branch work/auto-battle-live-r2-20260905; mutable browser/ui-state-feedback-ready-plan-adapter.mjs + tests/ui-state-feedback-ready-plan-adapter.test.mjs + transient data/preaction-authorizations/AUTO-BATTLE-LIVE-R2-20260905T0105-SOL-N7K4P2.json; browser/GAMEROAD.html + browser/battle-auto-input-core.mjs + deploy/cloudflare/scripts/build.mjs READ_ONLY.",
   "scope": [
-    "browser/GAMEROAD.html",
-    "deploy/cloudflare/scripts/build.mjs",
-    "tests/battle-auto-live-integration.test.mjs"
+    "browser/ui-state-feedback-ready-plan-adapter.mjs",
+    "tests/ui-state-feedback-ready-plan-adapter.test.mjs"
   ],
   "leaseScope": [
-    "browser/GAMEROAD.html",
-    "deploy/cloudflare/scripts/build.mjs",
-    "tests/battle-auto-live-integration.test.mjs"
+    "browser/ui-state-feedback-ready-plan-adapter.mjs",
+    "tests/ui-state-feedback-ready-plan-adapter.test.mjs"
   ],
-  "solutionSignature": "battle-auto-existing-core-human-legal-input-same-commit-path-selector",
+  "solutionSignature": "battle-auto-existing-core-human-legal-input-live-ready-plan-seam",
   "reuseDisposition": "ADAPT",
   "solutionSearchStatus": "PASS",
-  "reuseDecisionEvidenceId": "BATTLE_AUTO_INPUT_CORE+GAMEROAD_READY_PLAN_COMMIT+CURRENT_HAND_SELECTS+FORMAL_AUTO_SAME_COMMIT_RULE",
+  "reuseDecisionEvidenceId": "BATTLE_AUTO_INPUT_CORE+READY_PLAN_LIVE_ADAPTER+FORMAL_AUTO_SAME_HUMAN_SELECTION_RULE",
   "solutionSearchEvidence": [
-    "browser/battle-auto-input-core.mjs:createBattleAutoController",
+    "browser/battle-auto-input-core.mjs:createBattleAutoInputController",
     "browser/battle-auto-input-core.mjs:runOnce",
-    "browser/GAMEROAD.html:GAMEROAD_READY_PLAN_COMMIT",
-    "browser/GAMEROAD.html:roadSelect+battleSelect",
-    "tests/battle-auto-input-core.test.mjs"
-  ]
+    "browser/ui-state-feedback-ready-plan-adapter.mjs:bindReadyPlanFeedbackControl",
+    "browser/GAMEROAD.html:ready-plan live module import",
+    "tests/battle-auto-input-core.test.mjs",
+    "tests/ui-state-feedback-ready-plan-adapter.test.mjs"
+  ],
+  "scopeRebaseReason": "Direct connector replacement of the ~11.9MB production HTML is an unnecessary high-risk mutation. The Ready-plan adapter is already imported by that HTML and is the narrower existing live seam. No gameplay meaning changes: Auto chooses only an ordinary human-legal hand card; target/column/shield and READY remain manual, and no second submit/progression path is created."
 }

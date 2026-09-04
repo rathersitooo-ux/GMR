@@ -2,7 +2,7 @@ name: Required Gate auto-merge
 
 on:
   workflow_run:
-    workflows: ["GAMEROAD Required Gate"]
+    workflows: ["GAMEROAD Required Gate", "Browser Full Interaction Evidence"]
     types: [completed]
 
 permissions:
@@ -23,7 +23,7 @@ jobs:
           TESTED_BASE_SHA: ${{ github.event.workflow_run.pull_requests[0].base.sha }}
         run: |
           if [ -z "${PR_NUMBER}" ]; then
-            echo "No pull request associated with this Required Gate run."
+            echo "No pull request associated with this evidence run."
             exit 0
           fi
 
@@ -49,15 +49,52 @@ jobs:
             *) echo "PR head is not work/**; skip."; exit 0 ;;
           esac
           if [ "${head_sha}" != "${TESTED_HEAD_SHA}" ]; then
-            echo "Head moved after Required Gate; wait for the newer Gate run."
+            echo "Head moved after this evidence run; wait for evidence on the newer head."
             exit 0
           fi
 
+          required_gate_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/gameroad-required-gate.yml/runs?event=pull_request&head_sha=${head_sha}&per_page=20")"
+          required_gate_status="$(jq -r --arg sha "${head_sha}" '[.workflow_runs[] | select(.head_sha == $sha)][0].status // ""' <<<"${required_gate_json}")"
+          required_gate_conclusion="$(jq -r --arg sha "${head_sha}" '[.workflow_runs[] | select(.head_sha == $sha)][0].conclusion // ""' <<<"${required_gate_json}")"
+          if [ "${required_gate_status}" != "completed" ] || [ "${required_gate_conclusion}" != "success" ]; then
+            echo "Required Gate is not successful for exact head ${head_sha}; skip automatic merge."
+            exit 0
+          fi
+
+          bfi_required=false
+          while IFS= read -r path; do
+            case "${path}" in
+              browser/GAMEROAD.html|\
+              tests/browser-full-interaction.spec.mjs|\
+              tests/browser-full-interaction-state-sequence.spec.mjs|\
+              playwright.full-interaction.config.mjs|\
+              .github/workflows/browser-full-interaction.yml)
+                bfi_required=true
+                ;;
+              *) ;;
+            esac
+          done < <(gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files?per_page=100" --jq '.[].filename')
+
+          if [ "${bfi_required}" = "true" ]; then
+            bfi_json="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/browser-full-interaction.yml/runs?event=pull_request&head_sha=${head_sha}&per_page=20")"
+            bfi_status="$(jq -r --arg sha "${head_sha}" '[.workflow_runs[] | select(.head_sha == $sha)][0].status // ""' <<<"${bfi_json}")"
+            bfi_conclusion="$(jq -r --arg sha "${head_sha}" '[.workflow_runs[] | select(.head_sha == $sha)][0].conclusion // ""' <<<"${bfi_json}")"
+            if [ "${bfi_status}" != "completed" ]; then
+              echo "Broad Browser Full Interaction evidence is still nonterminal for exact head ${head_sha}; wait."
+              exit 0
+            fi
+            if [ "${bfi_conclusion}" != "success" ]; then
+              echo "Broad Browser Full Interaction evidence is non-success for exact head ${head_sha}."
+              echo "This stops automatic merge only; it is not proof that the current PR caused the broad-suite failure. Route the failed assertion to causal scope review instead of patching unrelated product code."
+              exit 0
+            fi
+          fi
+
           if [ -n "${TESTED_BASE_SHA}" ] && [ "${base_sha}" != "${TESTED_BASE_SHA}" ]; then
-            echo "Base advanced after this Gate run; updating PR branch first."
+            echo "Base advanced after this evidence run; updating PR branch first."
             gh api --method PUT "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/update-branch" \
               -f expected_head_sha="${head_sha}"
-            echo "Branch update requested. The synchronize event will run Required Gate again."
+            echo "Branch update requested. The synchronize event will run evidence again."
             exit 0
           fi
 
@@ -69,7 +106,7 @@ jobs:
             jq . <<<"${result}"
             exit 1
           fi
-          echo "Merged PR #${PR_NUMBER} at tested head ${head_sha} and tested base ${base_sha}."
+          echo "Merged PR #${PR_NUMBER} at evidence-complete head ${head_sha} and base ${base_sha}."
 
           gh api --method POST \
             "repos/${GITHUB_REPOSITORY}/actions/workflows/cloudflare-public-deploy.yml/dispatches" \

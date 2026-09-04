@@ -479,8 +479,8 @@ jobs:
           fi
 
       - name: Verify Browser full interaction delegated evidence lane
-        if: steps.classify.outputs.browser_full_interaction == 'true' && steps.classify.outputs.browser != 'true'
-        run: echo "tests/browser-full-interaction.spec.mjs execution is delegated to Browser Full Interaction Evidence."
+        if: steps.classify.outputs.browser_full_interaction == 'true'
+        run: echo "Browser full interaction execution is delegated to Browser Full Interaction Evidence."
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -844,10 +844,6 @@ jobs:
       - name: Run Browser runtime smoke
         if: steps.classify.outputs.browser == 'true'
         run: npx playwright test --config=playwright.config.mjs --workers=1
-
-      - name: Run Browser full interaction evidence
-        if: steps.classify.outputs.browser_full_interaction == 'true' && steps.classify.outputs.browser == 'true'
-        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
 
       - name: Run DINO DIG mobile whitebox smoke
         if: steps.classify.outputs.dino == 'true'

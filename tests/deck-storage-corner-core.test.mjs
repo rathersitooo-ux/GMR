@@ -10,8 +10,11 @@ import {
   resolveDeckEditorSwipe,
 } from '../browser/deck-storage-corner-core.mjs';
 
-test('collection left stores while right still means Deck add', () => {
-  assert.equal(resolveDeckEditorSwipe({ surface: 'collection', deltaX: -80, deltaY: 4 }).action, 'storage-add');
+test('collection left is consumed without Storage while right still means Deck add', () => {
+  assert.deepEqual(resolveDeckEditorSwipe({ surface: 'collection', deltaX: -80, deltaY: 4 }), {
+    action: 'none',
+    consumed: true,
+  });
   assert.equal(resolveDeckEditorSwipe({ surface: 'collection', deltaX: 80, deltaY: 4 }).action, 'deck-add');
 
   const state = createDeckStorageState({ deck: ['a'], storage: [] });

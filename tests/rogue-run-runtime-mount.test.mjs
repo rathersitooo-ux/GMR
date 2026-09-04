@@ -63,6 +63,32 @@ test('live consumer closes Home route -> existing Battle -> reward skip -> next 
   });
 });
 
+test('Rogue run ignores an unrelated Result until its own Battle result arrives', () => {
+  const fixture = hostFixture();
+  const runtime = createRogueRunConsumerController({ host: fixture.host });
+
+  runtime.start();
+  runtime.chooseRoute('battle');
+  fixture.setMatch({ matchId: 'match-rogue', result: null });
+  fixture.setScreen('battle');
+  assert.equal(runtime.observe(), true);
+  const awaiting = runtime.getSnapshot().run;
+  assert.equal(awaiting.phase, 'AWAITING_BATTLE_RESULT');
+  assert.deepEqual(awaiting.battleHandoff, { matchId: 'match-rogue' });
+
+  fixture.setMatch({ matchId: 'match-unrelated', result: { winnerIds: ['P2'], receiptId: 'result-unrelated' } });
+  fixture.setScreen('result');
+  assert.equal(runtime.observe(), false);
+  const afterUnrelated = runtime.getSnapshot().run;
+  assert.equal(afterUnrelated.phase, 'AWAITING_BATTLE_RESULT');
+  assert.deepEqual(afterUnrelated.battleHandoff, { matchId: 'match-rogue' });
+  assert.equal(afterUnrelated.lastBattleResult, null);
+
+  fixture.setMatch({ matchId: 'match-rogue', result: { winnerIds: ['P1'], receiptId: 'result-rogue' } });
+  assert.equal(runtime.observe(), true);
+  assert.equal(runtime.getSnapshot().run.phase, 'AWAITING_REWARD_DECISION');
+});
+
 test('Home continue reopens existing Setup when a chosen Rogue route has not started Battle yet', () => {
   const fixture = hostFixture();
   const runtime = createRogueRunConsumerController({ host: fixture.host });

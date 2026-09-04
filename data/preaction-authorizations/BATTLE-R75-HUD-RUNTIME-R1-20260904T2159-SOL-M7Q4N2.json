@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-R75-HUD-RUNTIME-R1-20260904T2159-SOL-M7Q4N2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_R75_HUD_RUNTIME_PRESENTATION_R1",
+  "acquireKey": "BATTLE-R75-HUD-RUNTIME-R1-20260904T2159-SOL-M7Q4N2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_EXPLICIT_R75_BATTLE_HUD+CURRENT_BATTLE_SCREEN_RUNTIME_24b84c1e+HATE_CORE_674b04b6+PR1069_PROCESS_DEFECT_REPAIR",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_BATTLE_SCREEN_RUNTIME_FOCUSED_TEST+FAIL_CLOSED_HUD_INPUT_CONTRACT+VALIDATOR_SOURCE_A_L_WITNESS",
+  "proceedToken": "PROCEED|BATTLE-R75-HUD-RUNTIME-R1-20260904T2159-SOL-M7Q4N2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXISTING_REPAIR_ONLY",
+  "authorizationBaseSha": "9d63fb6893297c188de70069029476b907a949f7",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_R75_HUD_RUNTIME_PRESENTATION_R1",
+  "leaseAcquireKey": "BATTLE-R75-HUD-RUNTIME-R1-20260904T2159-SOL-M7Q4N2",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 22:09 JST",
+  "leaseUntilJst": "2026-09-04 22:59 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A31:L31",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@9d63fb6893297c188de70069029476b907a949f7; branch work/battle-r75-hud-runtime-r1b-20260904; mutable browser/battle-screen-runtime-mount.mjs@24b84c1eeb538d6615e711907036d36ef3db9e55 + tests/battle-screen-runtime-mount.test.mjs@1bec81c5a247687906038f1d4db57e9393827f14 + transient data/preaction-authorizations/BATTLE-R75-HUD-RUNTIME-R1-20260904T2159-SOL-M7Q4N2.json; own PR/checks/expected-head merge/readback. browser/GAMEROAD.html, battle-janken slidepad, gameplay/rules/save/economy/network/assets/control-plane READ_ONLY.",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

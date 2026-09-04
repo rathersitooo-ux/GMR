@@ -5,7 +5,8 @@ import {
   applyResultPresentationEvent,
   applyResultPresentationInput,
   createResultPresentation,
-  projectResultPresentation
+  projectResultPresentation,
+  projectResultRankPresentation
 } from '../browser/result-presentation-core.mjs';
 
 const finalizedResult = Object.freeze({
@@ -44,6 +45,71 @@ test('normal presentation advances enter -> reveal -> settled -> exit without mu
   assert.equal(JSON.stringify(finalizedResult), sourceBefore);
   assert.deepEqual(projectResultPresentation(state).finalizedResult, finalizedResult);
   assert.equal(Object.isFrozen(state), true);
+});
+
+test('corrected Result rank projection uses exact visible labels and semantic color roles', () => {
+  assert.deepEqual(projectResultRankPresentation(1), {
+    ok: true,
+    reason: 'OK',
+    formalRank: 1,
+    visibleLabel: '1位',
+    rankColorRole: null
+  });
+  assert.deepEqual(projectResultRankPresentation(2), {
+    ok: true,
+    reason: 'OK',
+    formalRank: 2,
+    visibleLabel: '勝利',
+    rankColorRole: 'platinum'
+  });
+  assert.deepEqual(projectResultRankPresentation(3), {
+    ok: true,
+    reason: 'OK',
+    formalRank: 3,
+    visibleLabel: '勝利',
+    rankColorRole: 'gold'
+  });
+  assert.deepEqual(projectResultRankPresentation(4), {
+    ok: true,
+    reason: 'OK',
+    formalRank: 4,
+    visibleLabel: '勝利',
+    rankColorRole: 'silver'
+  });
+});
+
+test('ties reuse the same higher formal rank presentation without inventing a second ranking rule', () => {
+  const tiedResult = {
+    ranking: [
+      { playerId: 'P1', rank: 1 },
+      { playerId: 'P2', rank: 2 },
+      { playerId: 'P3', rank: 2 },
+      { playerId: 'P4', rank: 4 }
+    ]
+  };
+  const projected = projectResultPresentation(createResultPresentation({
+    presentationId: 'TIED',
+    finalizedResult: tiedResult
+  }));
+  assert.deepEqual(projected.rankingPresentation, [
+    { sourceIndex: 0, playerId: 'P1', ok: true, reason: 'OK', formalRank: 1, visibleLabel: '1位', rankColorRole: null },
+    { sourceIndex: 1, playerId: 'P2', ok: true, reason: 'OK', formalRank: 2, visibleLabel: '勝利', rankColorRole: 'platinum' },
+    { sourceIndex: 2, playerId: 'P3', ok: true, reason: 'OK', formalRank: 2, visibleLabel: '勝利', rankColorRole: 'platinum' },
+    { sourceIndex: 3, playerId: 'P4', ok: true, reason: 'OK', formalRank: 4, visibleLabel: '勝利', rankColorRole: 'silver' }
+  ]);
+  assert.deepEqual(projected.finalizedResult, tiedResult);
+});
+
+test('missing or invalid formal rank fails closed instead of guessing a visible rank color', () => {
+  for (const rank of [undefined, null, 0, 5, 1.5, '2']) {
+    assert.deepEqual(projectResultRankPresentation(rank), {
+      ok: false,
+      reason: 'FORMAL_RANK_INVALID',
+      formalRank: null,
+      visibleLabel: null,
+      rankColorRole: null
+    });
+  }
 });
 
 test('skip goes directly to settled and still requires an explicit exit', () => {
@@ -127,6 +193,15 @@ test('module treats ranking/reward payload as opaque finalized upstream truth', 
   assert.deepEqual(projected.finalizedResult, weird);
   assert.notEqual(projected.finalizedResult, weird);
   assert.equal(JSON.stringify(weird), JSON.stringify(projected.finalizedResult));
+  assert.deepEqual(projected.rankingPresentation, [{
+    sourceIndex: 0,
+    playerId: null,
+    ok: false,
+    reason: 'FORMAL_RANK_INVALID',
+    formalRank: null,
+    visibleLabel: null,
+    rankColorRole: null
+  }]);
 });
 
 test('live input owns presentation identity and sequencing while caller supplies only presentation action', () => {

@@ -7,6 +7,7 @@ const GRID_ATTR = 'data-battle-screen-causal-grid';
 const PLAN_SLOT_ATTR = 'data-battle-plan-slot';
 const LANE_ATTR = 'data-battle-screen-lane';
 const HUD_ATTR = 'data-battle-r75-hud';
+const PROGRESS_GUIDE_ATTR = 'data-battle-progress-guide';
 const PLAYER_ROLE_LABELS = Object.freeze({
   source: '攻撃',
   target: '対象'
@@ -73,6 +74,11 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"] #battlePhaseSurface{position:absolute;inset:0;z-index:3;overflow:hidden;background:radial-gradient(ellipse at 75% 33%,rgba(220,246,217,.24),transparent 29%),radial-gradient(ellipse at 18% 78%,rgba(96,145,87,.38),transparent 31%),linear-gradient(180deg,rgba(111,178,166,.30) 0%,rgba(62,126,104,.22) 43%,rgba(22,69,54,.58) 100%)}
 [${SHELL_ATTR}="1"] #battlePhaseSurface::before{content:"";position:absolute;z-index:-2;left:-7%;right:-6%;top:41%;bottom:-31%;clip-path:polygon(0 31%,12% 19%,23% 26%,36% 10%,48% 24%,61% 8%,74% 25%,88% 14%,100% 29%,100% 100%,0 100%);background:linear-gradient(180deg,rgba(69,124,83,.78),rgba(42,96,64,.92) 42%,rgba(22,62,47,.98));border-top:1px solid rgba(214,250,211,.16);transform:perspective(560px) rotateX(5deg);transform-origin:50% 0}
 [${SHELL_ATTR}="1"] #battlePhaseSurface::after{content:"";position:absolute;z-index:-1;left:4%;width:42%;bottom:5%;height:29%;border-radius:50%;background:radial-gradient(ellipse at 50% 45%,rgba(159,197,119,.30),rgba(49,101,67,.20) 55%,transparent 70%);border-top:1px solid rgba(225,255,214,.10);transform:perspective(380px) rotateX(62deg);transform-origin:50% 100%}
+[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}]{position:absolute;z-index:6;left:clamp(12px,3vw,34px);top:clamp(86px,28vh,150px);width:min(33vw,300px);display:flex;align-items:center;gap:clamp(6px,1vw,10px);pointer-events:none;opacity:.86;color:#f2f7e6;text-shadow:0 2px 8px rgba(0,0,0,.72);font-size:clamp(10px,.95vw,13px);font-weight:900;letter-spacing:.13em}
+[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}] .grBattleProgressEndpoint{flex:0 0 auto;padding:4px 7px;border:1px solid rgba(235,248,217,.28);border-radius:999px;background:rgba(5,28,23,.62);box-shadow:0 5px 14px rgba(0,0,0,.18)}
+[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}] .grBattleProgressGoal{border-color:rgba(255,226,129,.58);background:rgba(73,62,22,.72)}
+[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}] .grBattleProgressArrow{position:relative;flex:1 1 auto;min-width:36px;height:2px;border-radius:999px;background:linear-gradient(90deg,rgba(255,226,129,.88),rgba(219,241,207,.36));box-shadow:0 0 10px rgba(255,226,129,.18)}
+[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}] .grBattleProgressArrow::before{content:"◀";position:absolute;left:-2px;top:50%;transform:translate(-35%,-53%);font-size:14px;color:#ffe181;text-shadow:0 1px 8px rgba(0,0,0,.72)}
 [${SHELL_ATTR}="1"] [${GRID_ATTR}]{position:absolute;z-index:4;top:clamp(68px,12vh,92px);right:5%;bottom:clamp(54px,10vh,82px);left:52%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:clamp(8px,1.5vw,18px);align-items:stretch;overflow:visible;pointer-events:none}
 [${SHELL_ATTR}="1"] [${GRID_ATTR}]::before{content:"";position:absolute;z-index:-1;left:50%;top:50%;width:clamp(56px,8vw,104px);aspect-ratio:1;transform:translate(-50%,-50%) rotate(45deg);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:radial-gradient(circle at 34% 30%,rgba(249,255,229,.82),rgba(171,211,127,.72) 19%,rgba(67,126,85,.76) 53%,rgba(16,60,50,.94) 76%);border:1px solid rgba(237,255,217,.52);box-shadow:0 0 0 8px rgba(20,68,52,.18),0 15px 36px rgba(0,0,0,.28)}
 [${SHELL_ATTR}="1"] [${LANE_ATTR}]{position:relative;min-width:0;overflow:hidden;display:grid;grid-template-rows:auto 1fr auto;gap:8px;padding:clamp(7px,1.1vw,13px);border:1px solid rgba(219,241,207,.24);border-radius:clamp(9px,1.4vw,16px);background:linear-gradient(180deg,rgba(19,56,49,.76),rgba(6,25,24,.58));box-shadow:0 10px 22px rgba(2,20,17,.20),inset 0 0 0 1px rgba(255,255,255,.025);transition:transform 180ms ease,opacity 180ms ease,border-color 180ms ease,background 180ms ease}
@@ -91,8 +97,8 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"][data-motion="static_only"] [${LANE_ATTR}]{transition:none!important;transform:none!important}
 @media(max-width:720px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{left:38%;right:3%}}
 @media(max-width:540px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{left:4px;right:4px;gap:3px;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}[${SHELL_ATTR}="1"] [${LANE_ATTR}]{left:0!important;top:0!important;padding:7px 6px;border-radius:8px}.grBattleLaneRole{max-width:100%;overflow:hidden;text-overflow:ellipsis}[${SHELL_ATTR}="1"] .grBattleHudMetric{min-width:42px;padding:3px 5px}[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{width:26px;height:34px}[${SHELL_ATTR}="1"] .grBattleHudLoad{width:44px;height:38px}}
-@media(max-width:540px) and (orientation:portrait){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:76px;right:8px;bottom:96px;left:8px;gap:6px;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(4,minmax(0,1fr))}[${SHELL_ATTR}="1"] [${GRID_ATTR}]::before{display:none}[${SHELL_ATTR}="1"] [${LANE_ATTR}]{grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(20px,auto);column-gap:8px;row-gap:3px;padding:8px 10px;transform:none!important}[${SHELL_ATTR}="1"] .grBattleLaneIdentity{grid-column:1;grid-row:1}[${SHELL_ATTR}="1"] .grBattleLaneRole{grid-column:2;grid-row:1 / span 2;align-self:center;justify-self:end}[${SHELL_ATTR}="1"] .grBattleLaneAfterstate{grid-column:1;grid-row:2;align-self:end;min-height:0}[${SHELL_ATTR}="1"] #battleResolution{left:8px;right:8px;bottom:12px;transform:none;max-width:none}}
-@media(max-height:420px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:48px;bottom:34px}[${SHELL_ATTR}="1"] .grBattleScreenTop{height:46px;padding-top:3px}.grBattleLaneAfterstate{gap:2px}[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{height:32px}[${SHELL_ATTR}="1"] .grBattleHudLoad{height:34px}}
+@media(max-width:540px) and (orientation:portrait){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:76px;right:8px;bottom:96px;left:8px;gap:6px;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(4,minmax(0,1fr))}[${SHELL_ATTR}="1"] [${GRID_ATTR}]::before{display:none}[${SHELL_ATTR}="1"] [${LANE_ATTR}]{grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(20px,auto);column-gap:8px;row-gap:3px;padding:8px 10px;transform:none!important}[${SHELL_ATTR}="1"] .grBattleLaneIdentity{grid-column:1;grid-row:1}[${SHELL_ATTR}="1"] .grBattleLaneRole{grid-column:2;grid-row:1 / span 2;align-self:center;justify-self:end}[${SHELL_ATTR}="1"] .grBattleLaneAfterstate{grid-column:1;grid-row:2;align-self:end;min-height:0}[${SHELL_ATTR}="1"] #battleResolution{left:8px;right:8px;bottom:12px;transform:none;max-width:none}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}]{left:8px;top:22%;bottom:27%;width:auto;height:auto;flex-direction:column;justify-content:space-between;gap:5px;font-size:10px;letter-spacing:.09em}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}] .grBattleProgressArrow{width:2px;min-width:2px;min-height:42px;flex:1 1 auto;background:linear-gradient(180deg,rgba(255,226,129,.88),rgba(219,241,207,.30))}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}] .grBattleProgressArrow::before{content:"▲";left:50%;top:-2px;transform:translate(-50%,-45%)}}
+@media(max-height:420px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:48px;bottom:34px}[${SHELL_ATTR}="1"] .grBattleScreenTop{height:46px;padding-top:3px}.grBattleLaneAfterstate{gap:2px}[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{height:32px}[${SHELL_ATTR}="1"] .grBattleHudLoad{height:34px}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}]{top:50px;left:10px;width:min(30vw,200px);font-size:9px}}
 @media(max-height:470px) and (orientation:landscape){.battle .royalUsageStrip{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;width:151px!important;gap:2px!important}}
 @media(prefers-reduced-motion:reduce){[${SHELL_ATTR}="1"] [${LANE_ATTR}]{transition:none!important;transform:none!important}[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{transform:none!important}}
 `;
@@ -130,6 +136,22 @@ function createLane(document, participantIndex) {
   lane.appendChild(role);
   lane.appendChild(afterstate);
   return { lane, name, team, role, afterstate };
+}
+
+function createProgressGuide(document) {
+  const guide = createNode(document, 'div', 'grBattleProgressGuide');
+  guide.setAttribute?.(PROGRESS_GUIDE_ATTR, '1');
+  guide.setAttribute?.('aria-label', 'ROADからGOALへの進行方向');
+  guide.dataset.presentationOnly = 'true';
+  guide.dataset.authority = 'existing-road-goal-meaning-only';
+  const goal = createNode(document, 'span', 'grBattleProgressEndpoint grBattleProgressGoal', 'GOAL');
+  const arrow = createNode(document, 'span', 'grBattleProgressArrow');
+  arrow.setAttribute?.('aria-hidden', 'true');
+  const road = createNode(document, 'span', 'grBattleProgressEndpoint grBattleProgressRoad', 'ROAD');
+  guide.appendChild(goal);
+  guide.appendChild(arrow);
+  guide.appendChild(road);
+  return guide;
 }
 
 function clearChildren(node) {
@@ -295,6 +317,9 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   phaseSurface.dataset.battleScreenBoardInteraction = 'forbidden';
   if (phaseAnchor.created) phaseSurface.hidden = true;
 
+  const progressGuide = createProgressGuide(document);
+  phaseSurface.appendChild(progressGuide);
+
   const grid = createNode(document, 'div', 'grBattleCausalGrid');
   grid.setAttribute?.(GRID_ATTR, '');
   grid.setAttribute?.('aria-label', '4人バトル比較');
@@ -355,6 +380,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   function destroy() {
     if (destroyed) return false;
     destroyed = true;
+    if (progressGuide?.parentNode && typeof progressGuide.parentNode.removeChild === 'function') progressGuide.parentNode.removeChild(progressGuide);
     if (grid?.parentNode && typeof grid.parentNode.removeChild === 'function') grid.parentNode.removeChild(grid);
     if (hud.root?.parentNode && typeof hud.root.parentNode.removeChild === 'function') hud.root.parentNode.removeChild(hud.root);
     if (shellCreated && shell?.parentNode && typeof shell.parentNode.removeChild === 'function') shell.parentNode.removeChild(shell);
@@ -372,6 +398,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     planSlot,
     phaseSurface,
     resolutionSurface,
+    progressGuide,
     hud,
     grid,
     laneSurfaces: lanes.map(view => view.lane),

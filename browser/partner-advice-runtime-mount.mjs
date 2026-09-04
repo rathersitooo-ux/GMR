@@ -400,7 +400,7 @@ const CHAT_ROOT_ID = 'partnerAdviceChatPresentation';
 const CHAT_UNAVAILABLE_LABEL = '盤面情報を確認中';
 
 function chatLaneProgress(input) {
-  if (!input || typeof input !== 'object' || Array.isArray(value)) return null;
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
   const out = {};
   for (const lane of ['L', 'C', 'R']) {
     const value = Number(input[lane]);

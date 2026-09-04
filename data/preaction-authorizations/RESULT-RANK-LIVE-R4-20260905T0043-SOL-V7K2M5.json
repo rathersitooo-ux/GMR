@@ -21,20 +21,6 @@
   "leaseUntilJst": "2026-09-05 01:40 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A104:L104",
   "leaseExactMutableResources": "browser/GAMEROAD.html; tests/browser-full-interaction.spec.mjs; tests/browser-static-check.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; data/preaction-authorizations/RESULT-RANK-LIVE-R4-20260905T0043-SOL-V7K2M5.json; browser/result-presentation-core.mjs READ_ONLY; gameplay/rules/save/economy/network/formal assets/control-plane READ_ONLY.",
-  "scope": [
-    "browser/GAMEROAD.html",
-    "tests/browser-full-interaction.spec.mjs",
-    "tests/browser-static-check.mjs",
-    "deploy/cloudflare/scripts/build.mjs",
-    "deploy/cloudflare/tests/build.test.mjs",
-    "data/preaction-authorizations/RESULT-RANK-LIVE-R4-20260905T0043-SOL-V7K2M5.json"
-  ],
-  "leaseScope": [
-    "browser/GAMEROAD.html",
-    "tests/browser-full-interaction.spec.mjs",
-    "tests/browser-static-check.mjs",
-    "deploy/cloudflare/scripts/build.mjs",
-    "deploy/cloudflare/tests/build.test.mjs",
-    "data/preaction-authorizations/RESULT-RANK-LIVE-R4-20260905T0043-SOL-V7K2M5.json"
-  ]
+  "scope": ["browser/GAMEROAD.html","tests/browser-full-interaction.spec.mjs","tests/browser-static-check.mjs","deploy/cloudflare/scripts/build.mjs","deploy/cloudflare/tests/build.test.mjs","data/preaction-authorizations/RESULT-RANK-LIVE-R4-20260905T0043-SOL-V7K2M5.json"],
+  "leaseScope": ["browser/GAMEROAD.html","tests/browser-full-interaction.spec.mjs","tests/browser-static-check.mjs","deploy/cloudflare/scripts/build.mjs","deploy/cloudflare/tests/build.test.mjs","data/preaction-authorizations/RESULT-RANK-LIVE-R4-20260905T0043-SOL-V7K2M5.json"]
 }

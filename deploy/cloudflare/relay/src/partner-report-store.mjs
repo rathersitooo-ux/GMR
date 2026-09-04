@@ -6,6 +6,7 @@ export const PARTNER_REPORT_CANONICAL_PREFIX = 'partner-report/canonical/';
 const REPORT_TYPES = new Set(['bug', 'defect', 'request']);
 const VERSION_KEYS = Object.freeze(['rules', 'content', 'state']);
 const MAX_REQUEST_BYTES = 4096;
+const DIALOGUE_FEEDBACK_KIND = 'dialogue_edit';
 
 function reject(reason) {
   return { ok: false, reason };
@@ -16,6 +17,18 @@ function exactToken(value, max = 192) {
   const text = value.trim();
   if (!text || text !== value || text.length > max || /[\u0000-\u001f\u007f]/.test(text)) return null;
   return text;
+}
+
+function boundedText(value, max = 600) {
+  if (typeof value !== 'string') return null;
+  const text = value.trim();
+  if (!text || text.length > max || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(text)) return null;
+  return text;
+}
+
+function boundedNumber(value, min, max) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= min && number <= max ? number : null;
 }
 
 function safeVersions(value) {
@@ -29,6 +42,44 @@ function safeVersions(value) {
   return versions;
 }
 
+function normalizeVoiceTuning(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const rate = boundedNumber(value.rate, 0.5, 2);
+  const pitch = boundedNumber(value.pitch, 0, 2);
+  const volume = boundedNumber(value.volume, 0, 1);
+  const pauseMs = boundedNumber(value.pauseMs, 0, 1000);
+  const voiceURI = value.voiceURI === '' ? '' : exactToken(value.voiceURI, 240);
+  if (rate === null || pitch === null || volume === null || pauseMs === null || voiceURI === null) return null;
+  return { rate, pitch, volume, pauseMs: Math.round(pauseMs), voiceURI };
+}
+
+function normalizeFeedback(value, reportType) {
+  if (value === undefined) return null;
+  if (reportType !== 'request' || !value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const kind = exactToken(value.kind, 64);
+  const sourceLineId = exactToken(value.sourceLineId, 160);
+  const proposedText = boundedText(value.proposedText, 600);
+  const voiceTuning = normalizeVoiceTuning(value.voiceTuning);
+  if (
+    kind !== DIALOGUE_FEEDBACK_KIND
+    || !sourceLineId
+    || !proposedText
+    || !voiceTuning
+    || value.candidateOnly !== true
+    || value.canonicalWrite !== false
+    || value.chatgptOpinionInput !== true
+  ) return false;
+  return {
+    kind,
+    sourceLineId,
+    proposedText,
+    voiceTuning,
+    candidateOnly: true,
+    canonicalWrite: false,
+    chatgptOpinionInput: true,
+  };
+}
+
 function normalizeSubmit(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
   const idempotencyKey = exactToken(input.idempotencyKey, 160);
@@ -40,7 +91,9 @@ function normalizeSubmit(input) {
   if (!idempotencyKey || !partnerId || !REPORT_TYPES.has(reportType) || !sourceUseSite || !sourceStateIdentity || !versions) {
     return null;
   }
-  return { idempotencyKey, partnerId, reportType, sourceUseSite, sourceStateIdentity, versions };
+  const feedback = normalizeFeedback(input.feedback, reportType);
+  if (feedback === false) return null;
+  return { idempotencyKey, partnerId, reportType, sourceUseSite, sourceStateIdentity, versions, ...(feedback ? { feedback } : {}) };
 }
 
 function normalizeRead(input) {
@@ -62,7 +115,7 @@ function idempotencyStorageKey(idempotencyKey) {
 }
 
 function canonicalIdentity(input) {
-  return [
+  const base = [
     input.partnerId,
     input.reportType,
     input.sourceUseSite,
@@ -70,7 +123,20 @@ function canonicalIdentity(input) {
     input.versions.rules,
     input.versions.content,
     input.versions.state,
-  ].join('\u001f');
+  ];
+  if (input.feedback) {
+    base.push(
+      input.feedback.kind,
+      input.feedback.sourceLineId,
+      input.feedback.proposedText,
+      String(input.feedback.voiceTuning.rate),
+      String(input.feedback.voiceTuning.pitch),
+      String(input.feedback.voiceTuning.volume),
+      String(input.feedback.voiceTuning.pauseMs),
+      input.feedback.voiceTuning.voiceURI,
+    );
+  }
+  return base.join('\u001f');
 }
 
 function canonicalStorageKey(input) {
@@ -93,6 +159,7 @@ function publicReport(record) {
       content: record.versions.content,
       state: record.versions.state,
     },
+    ...(record.feedback ? { feedback: structuredClone(record.feedback) } : {}),
     authority: {
       verified: true,
       authorityId: PARTNER_REPORT_AUTHORITY_ID,
@@ -133,7 +200,7 @@ export async function submitStoredPartnerReport(storage, input, runtime = {}) {
     const uniqueReportId = await txn.get(canonicalKey);
     const disposition = exactToken(uniqueReportId, 160) ? 'duplicate' : 'accepted_unique';
     const record = {
-      schema: 'gameroad.partner-report.record.v1',
+      schema: normalized.feedback ? 'gameroad.partner-report.record.v2' : 'gameroad.partner-report.record.v1',
       reportId: generated.reportId,
       reportType: normalized.reportType,
       disposition,
@@ -141,6 +208,7 @@ export async function submitStoredPartnerReport(storage, input, runtime = {}) {
       sourceUseSite: normalized.sourceUseSite,
       sourceStateIdentity: normalized.sourceStateIdentity,
       versions: normalized.versions,
+      ...(normalized.feedback ? { feedback: normalized.feedback } : {}),
       createdAtMs: generated.createdAtMs,
       authorityId: PARTNER_REPORT_AUTHORITY_ID,
     };

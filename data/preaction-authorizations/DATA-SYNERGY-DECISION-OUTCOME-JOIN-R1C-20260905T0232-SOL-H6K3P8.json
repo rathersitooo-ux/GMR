@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DATA-SYNERGY-DECISION-OUTCOME-JOIN-R1C-20260905T0232-SOL-H6K3P8",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "DECISION_OUTCOME_JOIN_R10_EVIDENCE_R1C",
+  "acquireKey": "DATA-SYNERGY-DECISION-OUTCOME-JOIN-R1C-20260905T0232-SOL-H6K3P8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R10-DECISION-EVIDENCE-TO-REPLAY-OUTCOME-EXACT-JOIN",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FORMAL-R10-DECISION-PROJECTION-PLUS-EXISTING-REPLAY-PROJECTION",
+  "proceedToken": "PROCEED|DATA-SYNERGY-DECISION-OUTCOME-JOIN-R1C-20260905T0232-SOL-H6K3P8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "4ae7b16a4183302c1653a0b41bd982869279e729",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "DECISION_OUTCOME_JOIN_R10_EVIDENCE_R1C",
+  "leaseAcquireKey": "DATA-SYNERGY-DECISION-OUTCOME-JOIN-R1C-20260905T0232-SOL-H6K3P8",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 02:32 JST",
+  "leaseUntilJst": "2026-09-05 03:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A22:L22",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@4ae7b16a4183302c1653a0b41bd982869279e729; mutable NEW browser/partner-decision-outcome-join-core.mjs + NEW tests/partner-decision-outcome-join-core.test.mjs + transient data/preaction-authorizations/DATA-SYNERGY-DECISION-OUTCOME-JOIN-R1C-20260905T0232-SOL-H6K3P8.json; browser/partner-decision-evidence-projection.mjs + browser/partner-battle-event-log-projection.mjs + tools/advice-collective-eval.mjs + Battle receipt store + GAMEROAD.html READ_ONLY.",
+  "scope": [
+    "browser/partner-decision-outcome-join-core.mjs",
+    "tests/partner-decision-outcome-join-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-decision-outcome-join-core.mjs",
+    "tests/partner-decision-outcome-join-core.test.mjs"
+  ],
+  "solutionSignature": "Compose the formal R10 viewer-safe decision evidence packet with an explicit actual chosen action and the existing privacy-safe Battle Replay projection using exact match, resolution serial, and version boundaries without deriving training labels.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "reuse-formal-r10-decision-evidence-and-replay-projection",
+  "solutionSearchEvidence": [
+    "repo:browser/partner-decision-evidence-projection.mjs@main",
+    "repo:browser/partner-battle-event-log-projection.mjs@main",
+    "repo:tools/advice-collective-eval.mjs@main"
+  ]
+}

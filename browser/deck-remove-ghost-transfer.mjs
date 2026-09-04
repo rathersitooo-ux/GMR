@@ -25,6 +25,18 @@ function setVar(element, name, value) {
   try { element?.style?.setProperty?.(name, value); } catch {}
 }
 
+function positionClone(node, plan) {
+  node.removeAttribute?.('id');
+  node.setAttribute?.('aria-hidden', 'true');
+  setStyle(node, {
+    left: `${plan.source.left}px`,
+    top: `${plan.source.top}px`,
+    width: `${plan.source.width}px`,
+    height: `${plan.source.height}px`,
+    pointerEvents: 'none',
+  });
+}
+
 export function prepareDeckRemoveGhostTransfer({
   document: doc = globalThis.document,
   window: win = globalThis.window,
@@ -73,6 +85,7 @@ export function prepareDeckRemoveGhostTransfer({
       plan,
       sourceElement,
       targetElement,
+      anchorElement: null,
       ghostElement: null,
       streakElements: Object.freeze([]),
       play() {
@@ -92,17 +105,15 @@ export function prepareDeckRemoveGhostTransfer({
   layer.setAttribute?.('aria-hidden', 'true');
   setStyle(layer, { visibility: 'hidden' });
 
+  const anchor = sourceElement.cloneNode(true);
+  positionClone(anchor, plan);
+  anchor.classList?.add?.('gr-deck-swipe-flight-card', 'gr-deck-remove-source-anchor');
+  setStyle(anchor, { opacity: '1', filter: 'none' });
+  layer.appendChild(anchor);
+
   const ghost = sourceElement.cloneNode(true);
-  ghost.removeAttribute?.('id');
-  ghost.setAttribute?.('aria-hidden', 'true');
+  positionClone(ghost, plan);
   ghost.classList?.add?.('gr-deck-swipe-flight-card', 'gr-deck-remove-ghost-card');
-  setStyle(ghost, {
-    left: `${plan.source.left}px`,
-    top: `${plan.source.top}px`,
-    width: `${plan.source.width}px`,
-    height: `${plan.source.height}px`,
-    pointerEvents: 'none',
-  });
   layer.appendChild(ghost);
 
   const streaks = [];
@@ -134,6 +145,7 @@ export function prepareDeckRemoveGhostTransfer({
     plan,
     sourceElement,
     targetElement,
+    anchorElement: anchor,
     ghostElement: ghost,
     streakElements: Object.freeze([...streaks]),
     play() {
@@ -142,8 +154,8 @@ export function prepareDeckRemoveGhostTransfer({
       setStyle(layer, { visibility: 'visible' });
 
       const cardAnim = animate(ghost, [
-        { transform: 'translate3d(0,0,0) scale(.98)', opacity: 0.76, filter: 'brightness(1.08)', offset: 0 },
-        { transform: `translate3d(${plan.dx * 0.54}px,${plan.dy * 0.54 + plan.arcY}px,0) scale(${plan.midFlightScale}) rotate(${plan.rotationDeg}deg)`, opacity: 0.5, filter: 'brightness(1.12)', offset: 0.56 },
+        { transform: 'translate3d(0,0,0) scale(.98)', opacity: 0.72, filter: 'brightness(1.08)', offset: 0 },
+        { transform: `translate3d(${plan.dx * 0.54}px,${plan.dy * 0.54 + plan.arcY}px,0) scale(${plan.midFlightScale}) rotate(${plan.rotationDeg}deg)`, opacity: 0.48, filter: 'brightness(1.12)', offset: 0.56 },
         { transform: `translate3d(${plan.dx}px,${plan.dy}px,0) scale(${plan.flightEndScale}) rotate(${plan.rotationDeg * 0.35}deg)`, opacity: 0, filter: 'brightness(1.18)', offset: 1 },
       ], { duration: plan.flightMs, easing: 'cubic-bezier(.18,.82,.25,1)', fill: 'forwards' });
 

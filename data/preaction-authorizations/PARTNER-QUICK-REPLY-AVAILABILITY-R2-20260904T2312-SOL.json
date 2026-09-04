@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-QUICK-REPLY-AVAILABILITY-R2-20260904T2312-SOL",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_QUICK_REPLY_AVAILABILITY_R2",
+  "acquireKey": "PARTNER-QUICK-REPLY-AVAILABILITY-R2-20260904T2312-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "current-partner-chat-dead-affordance-direct-source-read",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing-partner-advice-runtime-focused-test-harness-plus-handler-source-oracle",
+  "proceedToken": "PROCEED|PARTNER-QUICK-REPLY-AVAILABILITY-R2-20260904T2312-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|callable-quick-reply-availability",
+  "authorizationBaseSha": "ea1dff6a51a66697a79569fa68a68077ec9781a2",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_QUICK_REPLY_AVAILABILITY_R2",
+  "leaseAcquireKey": "PARTNER-QUICK-REPLY-AVAILABILITY-R2-20260904T2312-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 23:12 JST",
+  "leaseUntilJst": "2026-09-05 00:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A15:L15",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@ea1dff6a51a66697a79569fa68a68077ec9781a2; branch work/partner-quick-reply-availability-r2-20260904; mutable browser/partner-advice-runtime-mount.mjs + tests/partner-advice-runtime-mount.test.mjs + transient data/preaction-authorizations/PARTNER-QUICK-REPLY-AVAILABILITY-R2-20260904T2312-SOL.json; own PR/checks/expected-head merge/readback. browser/GAMEROAD.html, Partner persona/dialogue/relationship/Tutorial/save/gameplay/rules/network/assets/control-plane READ_ONLY.",
+  "scope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "data/preaction-authorizations/PARTNER-QUICK-REPLY-AVAILABILITY-R2-20260904T2312-SOL.json"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "data/preaction-authorizations/PARTNER-QUICK-REPLY-AVAILABILITY-R2-20260904T2312-SOL.json"
+  ],
+  "solutionSignature": "ADAPT the existing Saasuna battle-chat quick reply presentation so the existing one-click まかせた！ affordance is exposed only when the current handler can actually execute: selected partner is Saasuna and a valid matchId exists. Preserve exact reply semantics, single-use behavior, dialogue, tutorial, relationship, save, gameplay and rules.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "existing-partner-advice-runtime-control-and-handler-direct-read",
+  "solutionSearchEvidence": [
+    "The current runtime already owns the quick-reply button, selected partner identity, matchId snapshot, and delegate handler; the defect is only availability presentation, not a missing subsystem.",
+    "The current render leaves a disabled まかせた！ affordance for non-Saasuna partners, while Saasuna without matchId can expose an enabled button whose click handler returns without action.",
+    "Current main still has the exact pre-repair target blobs while PR #1071 carries the already-reviewed two-file delta; R2 reuses that bounded delta instead of rebuilding or expanding scope."
+  ]
+}

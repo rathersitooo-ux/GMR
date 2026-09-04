@@ -45,7 +45,12 @@ export function createRogueRunConsumerController({ host } = {}) {
   });
 
   function start() {
-    if (run && run.phase !== 'COMPLETE') return readSnapshot();
+    if (run && run.phase !== 'COMPLETE') {
+      if (run.phase === 'AWAITING_ROUTE' && pendingRouteKind !== null && host.readScreen() === 'home') {
+        host.showSetup();
+      }
+      return readSnapshot();
+    }
     const identity = cloneJson(host.createRunIdentity());
     run = createRogueRunState({
       runId: identity.runId,

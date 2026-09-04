@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "FANART-OPPONENT-BATTLE-PUBLICPACK-R19-20260904T1215-SOL-P6V2K8",
+  "taskId": "FANART-LOCAL-CARD-CREATOR-BROWSER-001",
+  "workUnitKey": "FANART_OPPONENT_BATTLE_PUBLIC_PACKAGE_CLOSURE_R19",
+  "acquireKey": "FANART-OPPONENT-BATTLE-PUBLICPACK-R19-20260904T1215-SOL-P6V2K8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "Required Gate #1884 proved the product slice PRE_ACTION-valid and focused FanArt tests 5/5 pass; remaining failure is exact public-package provenance for the changed replay adapter and its new transitive runtime.",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "Fresh main@62712e9 plus Gate #1884 logs and current deploy/cloudflare ARTIFACT_SPECS identify the bounded closure: package the existing fanart-local-skin-opponent-runtime module and synchronize the replay adapter production blob expectation.",
+  "proceedToken": "PROCEED|FANART-OPPONENT-BATTLE-PUBLICPACK-R19-20260904T1215-SOL-P6V2K8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|GATE1884_PUBLIC_PACKAGE_CLOSURE",
+  "authorizationBaseSha": "62712e9a034253cfc2ec77606db43f54b0a4d156",
+  "scope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "browser/fanart-local-skin-opponent-runtime.mjs",
+    "tests/fanart-local-skin-opponent-runtime.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "browser/fanart-local-skin-opponent-runtime.mjs",
+    "tests/fanart-local-skin-opponent-runtime.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "compose-r18-battle-projection-with-existing-cloudflare-artifact-contract-v1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "Reuse PR#1042 Cards preference authority, the already-tested R18 Battle projection, and current Cloudflare ARTIFACT_SPECS/provenance gate; do not create a second preference system or bypass the public package contract.",
+  "solutionSearchEvidence": [
+    "main@62712e9 browser/cards-deck-presentation.mjs already owns readFanartLocalOpponentSkinPreference and local-only image bytes",
+    "Gate #1884 PREACTION_AUTHORIZATION PASS and tests/fanart-local-skin-opponent-runtime.test.mjs 5/5 PASS",
+    "Gate #1884 public-package provenance failed only because battle-replay-live-adapter production expected blob remained 6721a1f1f7204ae2de529bf924d028b5fe111fe0 while intended adapter blob is a5019d21526c016f3e9b4f3bd28bebb4450f3edf",
+    "deploy/cloudflare/scripts/build.mjs already enumerates Browser runtime artifacts and recursively verifies transitive local imports, so the new runtime belongs in that existing contract"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "FANART-LOCAL-CARD-CREATOR-BROWSER-001",
+  "leaseWorkUnitKey": "FANART_OPPONENT_BATTLE_PUBLIC_PACKAGE_CLOSURE_R19",
+  "leaseAcquireKey": "FANART-OPPONENT-BATTLE-PUBLICPACK-R19-20260904T1215-SOL-P6V2K8",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 12:15 JST",
+  "leaseUntilJst": "2026-09-04 13:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A353:L353",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@62712e9a034253cfc2ec77606db43f54b0a4d156; branch work/fanart-opponent-battle-r18-20260904; mutable: browser/battle-replay-live-adapter.mjs; browser/fanart-local-skin-opponent-runtime.mjs; tests/fanart-local-skin-opponent-runtime.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; transient PRE_ACTION; PR#1043/checks/expected-head merge/main+public readback. READ_ONLY cards-deck-presentation.mjs, GAMEROAD.html, canonical card/save/rules/economy/network/server/opponent entitlement/equip, deploy workflow/credentials/release comms."
+}

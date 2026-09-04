@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-DECK-GHOST-STORAGE-R1-20260904T2345-SOL-Q9N4K7",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "CARDS_DECK_GHOST_TRANSFER_STORAGE_NONBLOCK_R1",
+  "acquireKey": "CARDS-DECK-GHOST-STORAGE-R1-20260904T2345-SOL-Q9N4K7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_EXPLICIT_SOURCE_STILL_GHOST_STREAK_NONBLOCK_STORAGE+RAW_VIDEO_DIRECT+CURRENT_MAIN_DIRECT_READ+FRESH_NO_OVERLAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_CLONE_FOR_FLIGHT_STREAK_INFRA+FOCUSED_NODE_TESTS+CURRENT_STORAGE_VIEWMODEL",
+  "proceedToken": "PROCEED|CARDS-DECK-GHOST-STORAGE-R1-20260904T2345-SOL-Q9N4K7|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ADAPT_EXISTING_GHOST_AND_STORAGE_RUNTIME",
+  "authorizationBaseSha": "a838fe10c952c09cdab1f17e14859e76469c0ebe",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "CARDS_DECK_GHOST_TRANSFER_STORAGE_NONBLOCK_R1",
+  "leaseAcquireKey": "CARDS-DECK-GHOST-STORAGE-R1-20260904T2345-SOL-Q9N4K7",
+  "leaseSnapshotReadbackAtJst": "2026-09-04 23:47 JST",
+  "leaseUntilJst": "2026-09-05 00:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A19:N19",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@a838fe10c952c09cdab1f17e14859e76469c0ebe; branch work/cards-deck-ghost-storage-r1-20260904; mutable browser/cards-deck-presentation-core.mjs@59ff475290c81e33c91b2144ff29758999e5edb7 + browser/cards-deck-presentation.mjs@06e0bc61c99299665f6ecde4e66bc63213a6b94a + browser/deck-storage-corner-runtime.mjs@8d4f87c7e180489b20b4d30bb72ec03b13bffc48 + tests/cards-deck-presentation.test.mjs@b09715cfe01bee102ca89c062978237a7039dc35 + tests/deck-storage-corner-runtime.test.mjs@01c6bdf090648a2dc1a989910f19e3756e5c6343 + transient preaction authorization; deck-storage-corner-core.mjs read-only.",
+  "scope": [
+    "browser/cards-deck-presentation-core.mjs",
+    "browser/cards-deck-presentation.mjs",
+    "browser/deck-storage-corner-runtime.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "tests/deck-storage-corner-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation-core.mjs",
+    "browser/cards-deck-presentation.mjs",
+    "browser/deck-storage-corner-runtime.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "tests/deck-storage-corner-runtime.test.mjs"
+  ]
+}

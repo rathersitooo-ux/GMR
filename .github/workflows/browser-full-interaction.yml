@@ -18,15 +18,6 @@ on:
       - 'tests/browser-full-interaction-state-sequence.spec.mjs'
       - 'playwright.full-interaction.config.mjs'
       - '.github/workflows/browser-full-interaction.yml'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'browser/GAMEROAD.html'
-      - 'tests/browser-full-interaction.spec.mjs'
-      - 'tests/browser-full-interaction-state-sequence.spec.mjs'
-      - 'playwright.full-interaction.config.mjs'
-      - '.github/workflows/browser-full-interaction.yml'
 
 permissions:
   contents: read

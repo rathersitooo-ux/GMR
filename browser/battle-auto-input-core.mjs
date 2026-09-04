@@ -187,40 +187,42 @@ export function createBattleAutoInputController({
       if (committedFrames.has(first.frameKey)) return fail('FRAME_ALREADY_COMMITTED', { frameKey: first.frameKey });
       if (inFlightFrameKey === first.frameKey) return fail('FRAME_COMMIT_IN_FLIGHT', { frameKey: first.frameKey });
 
-      const firstChoice = await choose(first);
-      if (!firstChoice.candidate) return fail(firstChoice.reason, { frameKey: first.frameKey });
-
-      const second = await readFrame();
-      if (!second) return fail('HUMAN_INPUT_REVALIDATION_UNAVAILABLE', { frameKey: first.frameKey });
-      if (second.frameKey !== first.frameKey) return fail('HUMAN_INPUT_FRAME_CHANGED', { frameKey: first.frameKey });
-
-      const secondChoice = await choose(second);
-      if (!secondChoice.candidate) return fail(secondChoice.reason, { frameKey: first.frameKey });
-      if (!sameCandidateBoundary(firstChoice.candidate, secondChoice.candidate)) {
-        return fail('AUTO_SELECTION_CHANGED_ON_REVALIDATION', { frameKey: first.frameKey });
-      }
-
       inFlightFrameKey = first.frameKey;
-      let committed = false;
       try {
-        committed = await commitHumanInput(secondChoice.candidate.commitInput) === true;
-      } catch {
-        return fail('HUMAN_COMMIT_PATH_FAILED', { frameKey: first.frameKey });
-      } finally {
-        inFlightFrameKey = null;
-      }
-      if (!committed) return fail('HUMAN_COMMIT_PATH_REJECTED', { frameKey: first.frameKey });
+        const firstChoice = await choose(first);
+        if (!firstChoice.candidate) return fail(firstChoice.reason, { frameKey: first.frameKey });
 
-      committedFrames.add(first.frameKey);
-      return Object.freeze({
-        ok: true,
-        committed: true,
-        reason: secondChoice.reason,
-        frameKey: first.frameKey,
-        selected: freezePublicCandidate(secondChoice.candidate),
-        commitPath: 'human',
-        targetSelection: 'manual',
-      });
+        const second = await readFrame();
+        if (!second) return fail('HUMAN_INPUT_REVALIDATION_UNAVAILABLE', { frameKey: first.frameKey });
+        if (second.frameKey !== first.frameKey) return fail('HUMAN_INPUT_FRAME_CHANGED', { frameKey: first.frameKey });
+
+        const secondChoice = await choose(second);
+        if (!secondChoice.candidate) return fail(secondChoice.reason, { frameKey: first.frameKey });
+        if (!sameCandidateBoundary(firstChoice.candidate, secondChoice.candidate)) {
+          return fail('AUTO_SELECTION_CHANGED_ON_REVALIDATION', { frameKey: first.frameKey });
+        }
+
+        let committed = false;
+        try {
+          committed = await commitHumanInput(secondChoice.candidate.commitInput) === true;
+        } catch {
+          return fail('HUMAN_COMMIT_PATH_FAILED', { frameKey: first.frameKey });
+        }
+        if (!committed) return fail('HUMAN_COMMIT_PATH_REJECTED', { frameKey: first.frameKey });
+
+        committedFrames.add(first.frameKey);
+        return Object.freeze({
+          ok: true,
+          committed: true,
+          reason: secondChoice.reason,
+          frameKey: first.frameKey,
+          selected: freezePublicCandidate(secondChoice.candidate),
+          commitPath: 'human',
+          targetSelection: 'manual',
+        });
+      } finally {
+        if (inFlightFrameKey === first.frameKey) inFlightFrameKey = null;
+      }
     },
   });
 }

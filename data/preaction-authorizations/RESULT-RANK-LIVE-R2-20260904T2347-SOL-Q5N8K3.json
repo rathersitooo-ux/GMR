@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "STATE_MODEL_V1_PRE_ACTION",
+  "acquireKey": "RESULT-RANK-LIVE-R2-20260904T2347-SOL-Q5N8K3",
+  "taskId": "RANK-RESULT-EMBLEM-FORMAL-ASSET-001",
+  "workUnitKey": "RESULT_RANK_LIVE_CONSUMER_R2",
+  "owner": "ChatGPT / GPT-5.6 Sol / current conversation",
+  "base": {
+    "repository": "rathersitooo-ux/GMR",
+    "branch": "main",
+    "sha": "a838fe10c952c09cdab1f17e14859e76469c0ebe"
+  },
+  "mutableResources": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    "tests/browser-static-check.mjs",
+    ".github/workflows/result-rank-live-r2.yml",
+    "data/preaction-authorizations/RESULT-RANK-LIVE-R2-20260904T2347-SOL-Q5N8K3.json"
+  ],
+  "readOnlyResources": [
+    "browser/result-presentation-core.mjs",
+    "tests/result-presentation-core.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "userLockedSemantics": {
+    "rank1": {"label": "1位", "colorRole": null},
+    "rank2": {"label": "勝利", "colorRole": "platinum"},
+    "rank3": {"label": "勝利", "colorRole": "gold"},
+    "rank4": {"label": "勝利", "colorRole": "silver"},
+    "ties": "same upstream formal rank => same presentation",
+    "invalidRank": "fail closed without guessed rank color",
+    "forbiddenNormalResultWords": ["敗北", "敗者", "負け", "最下位"]
+  },
+  "lastConfirmedStep": "Fresh CURRENT/Ops/main/lease; actual #resultRanking/.rankLine exists; current state.match.lastResult.ranking[].rank evidence found; PR#1074 guarded giant-HTML executor precedent verified.",
+  "nextExpectedAction": "Run a transient diagnostic workflow that extracts the exact Result rank render seam; do not mutate product from a guessed seam.",
+  "nextContingency": "If no unique seam is observed, fail closed with logs only and perform at most one evidence-driven diagnostic refinement.",
+  "earlyWakePolicy": "No blind retry loop; react only to observed run evidence or material conflict.",
+  "persistenceState": "PREPARED_NOT_APPLIED",
+  "rollback": "Do not merge any product mutation unless exact old-text guard, tests, Required Gate and expected-head merge/readback pass. Delete transient workflow and manifest before final PR."
+}

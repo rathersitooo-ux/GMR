@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWBASE-GOAL-PATH-R1-20260905T0311-SOL-G7M4K2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "NEW_BASE_GOAL_PATH_12COL_R1",
+  "acquireKey": "NEWBASE-GOAL-PATH-R1-20260905T0311-SOL-G7M4K2",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_EXPLICIT_NEW_MAP_GOAL_PATH_20260905_PLUS_CURRENT_GOAL_CORE_READBACK",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PURE_PROJECTION_FOCUSED_NODE_TEST_ORACLE",
+  "proceedToken": "PROCEED|NEWBASE-GOAL-PATH-R1-20260905T0311-SOL-G7M4K2|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|goal-path-projection",
+  "authorizationBaseSha": "b261ae9d79ed50009debc00cc4f1953019af8acc",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "NEW_BASE_GOAL_PATH_12COL_R1",
+  "leaseAcquireKey": "NEWBASE-GOAL-PATH-R1-20260905T0311-SOL-G7M4K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 03:11 JST",
+  "leaseUntilJst": "2026-09-05 04:11 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A302:L302",
+  "leaseExactMutableResources": "Drive Sheet 1QKCll_T9ej6K96fRkRUESCAIYVGbsCYZILGIWMUdm2Y mutable GAMEROAD 全作業一覧 Y1374 + AB1374; GitHub:rathersitooo-ux/GMR main@b261ae9d79ed50009debc00cc4f1953019af8acc; intended branch work/new-base-goal-path-r1-20260905; mutable NEW browser/new-base-goal-path-core.mjs + NEW tests/new-base-goal-path-core.test.mjs; browser/GAMEROAD.html + new-base-goal-result-core.mjs + new-base-legacy-seven-win-gate-core.mjs + gameplay/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/new-base-goal-path-core.mjs",
+    "tests/new-base-goal-path-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-goal-path-core.mjs",
+    "tests/new-base-goal-path-core.test.mjs"
+  ],
+  "solutionSignature": "Project the user-authoritative four-player, three-shield-linked-lanes-per-player board rule into a bounded goal-path state without reviving legacy seven-card terminal victory.",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_GOAL_AND_LEGACY_GATE_GAP_20260905",
+  "solutionSearchEvidence": [
+    "internal:browser/new-base-goal-result-core.mjs is terminal-event consumer only",
+    "internal:browser/new-base-legacy-seven-win-gate-core.mjs suppresses legacy immediate terminal and owns no road counting or goal mutation",
+    "external:Shadowverse Worlds Beyond community UI feedback reinforces preserving board/path readability over secondary chrome"
+  ],
+  "buildResidualReason": "No current reusable producer represents the missing intermediate rule: one of each player's three Shield-linked lanes reaches seven straight cards and thereby connects a path to a top-row GOAL. Extending the terminal-result core would mix path geometry with result finalization, and the legacy gate explicitly owns only forwarding suppression."
+}

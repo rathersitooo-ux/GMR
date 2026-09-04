@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DATA-SYNERGY-DECISION-PARTICIPANT-RECEIPT-R1-20260905T0245-SOL-H6K3P8",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "DECISION_PARTICIPANT_RECEIPT_R1",
+  "acquireKey": "DATA-SYNERGY-DECISION-PARTICIPANT-RECEIPT-R1-20260905T0245-SOL-H6K3P8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1092_AUTHENTICATED_MATCH_RECEIPT+PR1095_VIEWER_SAFE_DECISION_EVIDENCE+PR1099_CONTROL_IDENTITY+CURRENT_MATCH_STORE_TICKET_SECRET_AUTH+FRESH_NONOVERLAP_MAIN",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_PARTNER_REPORT_PROVIDER_TEST+NEW_DECISION_PARTICIPANT_RECEIPT_FOCUSED_CASES",
+  "proceedToken": "PROCEED|DATA-SYNERGY-DECISION-PARTICIPANT-RECEIPT-R1-20260905T0245-SOL-H6K3P8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ADAPT_EXISTING_MATCH_REPORT_PROVIDER",
+  "authorizationBaseSha": "b261ae9d79ed50009debc00cc4f1953019af8acc",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "DECISION_PARTICIPANT_RECEIPT_R1",
+  "leaseAcquireKey": "DATA-SYNERGY-DECISION-PARTICIPANT-RECEIPT-R1-20260905T0245-SOL-H6K3P8",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 03:12 JST",
+  "leaseUntilJst": "2026-09-05 03:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A22:L22",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh main b261ae9d79ed50009debc00cc4f1953019af8acc after non-overlap drift check from acquired 07900ed371f6f8213836fc998886164cb718ae98; branch work/data-synergy-decision-participant-receipt-r1; mutable deploy/cloudflare/relay/src/partner-report-store.mjs + deploy/cloudflare/tests/partner-report-provider.test.mjs + transient data/preaction-authorizations/DATA-SYNERGY-DECISION-PARTICIPANT-RECEIPT-R1-20260905T0245-SOL-H6K3P8.json; report.js + relay-worker.mjs + match-store.mjs + browser decision/control/outcome modules + GAMEROAD.html READ_ONLY.",
+  "scope": [
+    "deploy/cloudflare/relay/src/partner-report-store.mjs",
+    "deploy/cloudflare/tests/partner-report-provider.test.mjs"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/relay/src/partner-report-store.mjs",
+    "deploy/cloudflare/tests/partner-report-provider.test.mjs"
+  ],
+  "solutionSignature": "authenticated-decision-participant-receipt-existing-provider",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_BATTLE_EVENT_PROVIDER+MATCH_STORE_AUTH+PR1099_CONTROL_PACKET",
+  "solutionSearchEvidence": [
+    "deploy/cloudflare/relay/src/partner-report-store.mjs:submitStoredBattleReceipt",
+    "deploy/cloudflare/relay/src/match-store.mjs:storedMatchTicketStatus",
+    "browser/partner-decision-control-identity-core.mjs",
+    "deploy/cloudflare/tests/partner-report-provider.test.mjs"
+  ],
+  "scopeRebaseReason": "Acquired base 07900ed advanced by two commits touching only Cards/Home files. Exact target files are unchanged, so implementation is rebuilt from fresh main b261ae9 without importing unrelated changes. This slice authenticates only match participation and derives reporter slot/team from server match state; it does not create gameplay authority, reward labels, best-move claims, or a second store."
+}

@@ -1,0 +1,375 @@
+name: Battle recent public history R1 scoped patch
+
+on:
+  push:
+    branches:
+      - work/battle-recent-public-history-r1-20260905
+    paths:
+      - .github/workflows/battle-recent-history-r1-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/battle-recent-public-history-r1-20260905
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Apply deterministic owned-file patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          adapter = Path('browser/battle-replay-live-adapter.mjs')
+          tests = Path('tests/battle-replay-live-adapter.test.mjs')
+
+          def replace_once(path, old, new, label):
+              text = path.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one anchor, found {count}')
+              path.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          replace_once(
+              adapter,
+              "const PARTNER_BATTLE_LOG_HOST_ATTR = 'data-partner-battle-event-log';\nconst PARTNER_BATTLE_LOG_ROW_ATTR = 'data-partner-battle-event-log-row';",
+              "const PARTNER_BATTLE_LOG_HOST_ATTR = 'data-partner-battle-event-log';\nconst PARTNER_BATTLE_LOG_ROW_ATTR = 'data-partner-battle-event-log-row';\nconst PARTNER_BATTLE_LOG_TOGGLE_ATTR = 'data-partner-battle-event-log-toggle';\nconst PARTNER_BATTLE_LOG_DEFAULT_RECENT_ROWS = 2;",
+              'adapter constants'
+          )
+
+          replace_once(
+              adapter,
+              """function formatPartnerBattleEventLogRow(event) {
+  if (!event || typeof event !== 'object') return null;
+  if (event.kind === 'battle_resolution') {
+    const data = event.data;
+    if (!data || !Number.isSafeInteger(data.round) || !nonEmptyString(data.lane)) return null;
+    const totals = data.teamTotals && Number.isFinite(data.teamTotals.A) && Number.isFinite(data.teamTotals.B)
+      ? `・A ${data.teamTotals.A} / B ${data.teamTotals.B}`
+      : '';
+    return `第${data.round}ラウンド・${data.lane}列${totals}・勝者${Number(data.winnerCount) || 0}人`;
+  }
+  if (event.kind === 'match_ended') {
+    const data = event.data;
+    if (!data || !Number.isSafeInteger(data.round)) return null;
+    return `対戦終了・第${data.round}ラウンド・勝者${Number(data.winnerCount) || 0}人`;
+  }
+  return Number.isSafeInteger(event.sequence) ? `対戦イベント ${event.sequence}` : null;
+}
+""",
+              """function formatPartnerBattleEventLogRow(event) {
+  if (!event || typeof event !== 'object') return null;
+  if (event.kind === 'battle_resolution') {
+    const data = event.data;
+    if (!data || !Number.isSafeInteger(data.round) || !nonEmptyString(data.lane)) return null;
+    const totals = data.teamTotals && Number.isFinite(data.teamTotals.A) && Number.isFinite(data.teamTotals.B)
+      ? `・A ${data.teamTotals.A} / B ${data.teamTotals.B}`
+      : '';
+    const publicCards = Array.isArray(data.players)
+      ? data.players.flatMap(player => Array.isArray(player?.cards)
+        ? player.cards.flatMap(card => nonEmptyString(card?.cardId) && Number.isFinite(card?.value)
+          ? [`${card.cardId}(${card.value})`]
+          : [])
+        : [])
+      : [];
+    const cards = publicCards.length > 0 ? `・公開カード ${publicCards.join(' / ')}` : '';
+    return `第${data.round}ラウンド・対象${data.lane}列${cards}${totals}・勝者${Number(data.winnerCount) || 0}人`;
+  }
+  if (event.kind === 'match_ended') {
+    const data = event.data;
+    if (!data || !Number.isSafeInteger(data.round)) return null;
+    return `対戦終了・第${data.round}ラウンド・勝者${Number(data.winnerCount) || 0}人`;
+  }
+  return Number.isSafeInteger(event.sequence) ? `対戦イベント ${event.sequence}` : null;
+}
+""",
+              'public event row formatter'
+          )
+
+          replace_once(
+              adapter,
+              """function partnerBattleEventLogChildren(host) {
+  if (!host?.children || typeof host.children.length !== 'number') return null;
+  return Array.from(host.children);
+}
+
+function resetPartnerBattleEventLogHost(host) {
+  if (!host?.dataset) return false;
+  if (typeof host.replaceChildren === 'function') host.replaceChildren();
+  else host.textContent = '';
+  host.dataset.partnerBattleEventCount = '0';
+  return true;
+}
+""",
+              """function partnerBattleEventLogChildren(host) {
+  if (!host?.children || typeof host.children.length !== 'number') return null;
+  return Array.from(host.children);
+}
+
+function partnerBattleEventLogRecentRows(environment = {}) {
+  const requested = Number(environment.partnerBattleLogRecentRows);
+  return Number.isSafeInteger(requested) && requested >= 1 && requested <= 3
+    ? requested
+    : PARTNER_BATTLE_LOG_DEFAULT_RECENT_ROWS;
+}
+
+function applyPartnerBattleEventLogPresentation(host, toggle, environment = {}) {
+  const children = partnerBattleEventLogChildren(host);
+  if (!host?.dataset || !children || !toggle || typeof toggle.setAttribute !== 'function') return false;
+  const recentRows = partnerBattleEventLogRecentRows(environment);
+  const hasOlderRows = children.length > recentRows;
+  if (!hasOlderRows) host.dataset.partnerBattleEventLogExpanded = 'false';
+  const expanded = hasOlderRows && host.dataset.partnerBattleEventLogExpanded === 'true';
+  const compactStart = Math.max(0, children.length - recentRows);
+  for (let index = 0; index < children.length; index += 1) {
+    children[index].hidden = !expanded && index < compactStart;
+  }
+  host.dataset.partnerBattleEventLogRecentRows = String(recentRows);
+  host.dataset.partnerBattleEventLogExpanded = expanded ? 'true' : 'false';
+  toggle.hidden = !hasOlderRows;
+  toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  toggle.textContent = expanded ? '直近だけ' : '履歴を表示';
+  return true;
+}
+
+function ensurePartnerBattleEventLogToggle(host, environment = {}) {
+  const documentRef = environmentValue(environment, 'document');
+  const shell = documentRef?.getElementById?.('battleLog');
+  if (!host || !shell || typeof documentRef?.createElement !== 'function') return null;
+  let toggle = typeof shell.querySelector === 'function'
+    ? shell.querySelector(`[${PARTNER_BATTLE_LOG_TOGGLE_ATTR}]`)
+    : null;
+  if (!toggle) {
+    toggle = documentRef.createElement('button');
+    if (!toggle || typeof toggle.setAttribute !== 'function' ||
+        typeof toggle.addEventListener !== 'function' || typeof shell.appendChild !== 'function') {
+      return null;
+    }
+    toggle.setAttribute(PARTNER_BATTLE_LOG_TOGGLE_ATTR, '');
+    toggle.setAttribute('type', 'button');
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.hidden = true;
+    toggle.textContent = '履歴を表示';
+    toggle.addEventListener('click', () => {
+      if (!host.dataset) return;
+      host.dataset.partnerBattleEventLogExpanded =
+        host.dataset.partnerBattleEventLogExpanded === 'true' ? 'false' : 'true';
+      applyPartnerBattleEventLogPresentation(host, toggle, environment);
+    });
+    shell.appendChild(toggle);
+  }
+  return toggle;
+}
+
+function resetPartnerBattleEventLogHost(host, environment = {}) {
+  if (!host?.dataset) return false;
+  if (typeof host.replaceChildren === 'function') host.replaceChildren();
+  else host.textContent = '';
+  host.dataset.partnerBattleEventCount = '0';
+  host.dataset.partnerBattleEventLogExpanded = 'false';
+  const toggle = ensurePartnerBattleEventLogToggle(host, environment);
+  return applyPartnerBattleEventLogPresentation(host, toggle, environment);
+}
+""",
+              'compact/expand presentation helpers'
+          )
+
+          replace_once(
+              adapter,
+              """  for (const row of additions) host.appendChild(row);
+  host.dataset.partnerBattleEventCount = String(rows.length);
+  return true;
+}
+
+export function createPartnerBattleEventLogPresentationBridge(environment = {}) {
+  function begin() {
+    const host = ensurePartnerBattleEventLogHost(environment);
+    return resetPartnerBattleEventLogHost(host);
+  }
+
+  function acceptSession(session) {
+    return createPartnerBattleEventLogConsumerAdapter({
+""",
+              """  for (const row of additions) host.appendChild(row);
+  host.dataset.partnerBattleEventCount = String(rows.length);
+  const toggle = ensurePartnerBattleEventLogToggle(host, environment);
+  return applyPartnerBattleEventLogPresentation(host, toggle, environment);
+}
+
+export function createPartnerBattleEventLogPresentationBridge(environment = {}) {
+  let activeMatchId = null;
+
+  function begin(matchId) {
+    activeMatchId = nonEmptyString(matchId) ? matchId : null;
+    const host = ensurePartnerBattleEventLogHost(environment);
+    return resetPartnerBattleEventLogHost(host, environment);
+  }
+
+  function acceptSession(session) {
+    if (!session || !activeMatchId || session.matchId !== activeMatchId) {
+      return deepFreeze({ ok: false, consumed: false, reason: 'PARTNER_BATTLE_LOG_MATCH_STALE' });
+    }
+    return createPartnerBattleEventLogConsumerAdapter({
+""",
+              'render and active-match bridge'
+          )
+
+          replace_once(
+              tests,
+              "  createBattleReplayVersionAuthority,\n  createLiveReplaySession,",
+              "  createBattleReplayVersionAuthority,\n  createLiveReplaySession,\n  createPartnerBattleEventLogPresentationBridge,",
+              'test import'
+          )
+
+          replace_once(
+              tests,
+              """  return { document, box, resultHeadline, styles };
+}
+
+test('production session still requires all exact version authorities; capture never invents them', () => {
+""",
+              """  return { document, box, resultHeadline, styles };
+}
+
+function fakeBattleLogDocument() {
+  function node(tagName = 'div') {
+    const attributes = new Map();
+    const listeners = new Map();
+    return {
+      tagName: String(tagName).toUpperCase(),
+      dataset: {},
+      style: {},
+      children: [],
+      textContent: '',
+      hidden: false,
+      setAttribute(name, value) { attributes.set(name, String(value)); },
+      getAttribute(name) { return attributes.has(name) ? attributes.get(name) : null; },
+      addEventListener(type, listener) { listeners.set(type, listener); },
+      appendChild(child) { this.children.push(child); return child; },
+      replaceChildren(...children) { this.children = [...children]; },
+      querySelector(selector) {
+        if (!selector.startsWith('[') || !selector.endsWith(']')) return null;
+        const attribute = selector.slice(1, -1);
+        return this.children.find(child => child.getAttribute?.(attribute) !== null) || null;
+      },
+      click() { listeners.get('click')?.({ currentTarget: this }); }
+    };
+  }
+  const shell = node('section');
+  const document = {
+    createElement: tagName => node(tagName),
+    getElementById(id) { return id === 'battleLog' ? shell : null; }
+  };
+  return { document, shell };
+}
+
+test('production session still requires all exact version authorities; capture never invents them', () => {
+""",
+              'fake Battle log DOM'
+          )
+
+          replace_once(
+              tests,
+              """function replayMatchEndPublicData(matchId, command) {
+""",
+              """test('Battle recent public history stays compact, expands inline, deduplicates, reconnects, and rejects stale match data', () => {
+  const fake = fakeBattleLogDocument();
+  const bridge = createPartnerBattleEventLogPresentationBridge({
+    document: fake.document,
+    partnerBattleLogRecentRows: 2
+  });
+  let session = createLiveReplaySession(
+    { matchId: 'M-HISTORY', versions },
+    { presentationBridge: null, partnerBattleEventLogBridge: bridge }
+  );
+  for (let serial = 1; serial <= 3; serial += 1) {
+    session = appendAcceptedBattleResolution(
+      session,
+      resolution(serial),
+      { presentationBridge: null, partnerBattleEventLogBridge: bridge }
+    );
+  }
+
+  const host = fake.shell.querySelector('[data-partner-battle-event-log]');
+  const toggle = fake.shell.querySelector('[data-partner-battle-event-log-toggle]');
+  assert.ok(host);
+  assert.ok(toggle);
+  assert.equal(host.children.length, 3);
+  assert.deepEqual(host.children.map(row => row.hidden), [true, false, false]);
+  assert.equal(host.dataset.partnerBattleEventLogRecentRows, '2');
+  assert.equal(host.dataset.partnerBattleEventLogExpanded, 'false');
+  assert.equal(toggle.hidden, false);
+  assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+  assert.match(host.children[0].textContent, /対象C列/);
+  assert.match(host.children[0].textContent, /公開カード C1\(6\) \/ C2\(4\)/);
+
+  toggle.click();
+  assert.deepEqual(host.children.map(row => row.hidden), [false, false, false]);
+  assert.equal(host.dataset.partnerBattleEventLogExpanded, 'true');
+  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+
+  const before = host.children.map(row => row.textContent);
+  const duplicate = bridge.acceptSession(session);
+  assert.equal(duplicate.ok, true);
+  assert.equal(duplicate.consumed, true);
+  assert.equal(host.children.length, 3);
+  assert.deepEqual(host.children.map(row => row.textContent), before);
+
+  assert.equal(bridge.begin('M-HISTORY'), true);
+  assert.equal(host.children.length, 0);
+  const reconnect = bridge.acceptSession(session);
+  assert.equal(reconnect.ok, true);
+  assert.equal(reconnect.eventCount, 3);
+  assert.deepEqual(host.children.map(row => row.hidden), [true, false, false]);
+
+  assert.equal(bridge.begin('M-NEXT'), true);
+  assert.equal(host.children.length, 0);
+  assert.equal(toggle.hidden, true);
+  assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+  const stale = bridge.acceptSession(session);
+  assert.deepEqual(stale, {
+    ok: false,
+    consumed: false,
+    reason: 'PARTNER_BATTLE_LOG_MATCH_STALE'
+  });
+  assert.equal(host.children.length, 0);
+});
+
+function replayMatchEndPublicData(matchId, command) {
+""",
+              'recent public history focused test'
+          )
+          PY
+
+      - name: Focused replay adapter regression
+        run: node --test tests/battle-replay-live-adapter.test.mjs
+
+      - name: Commit only owned product patch and remove transport
+        shell: bash
+        run: |
+          rm -f .github/workflows/battle-recent-history-r1-patch.yml
+          git config user.name "gameroad-scoped-patch"
+          git config user.email "gameroad-scoped-patch@users.noreply.github.com"
+          git add -A browser/battle-replay-live-adapter.mjs tests/battle-replay-live-adapter.test.mjs .github/workflows/battle-recent-history-r1-patch.yml
+          python3 - <<'PY'
+          import subprocess
+          allowed = {
+              'browser/battle-replay-live-adapter.mjs',
+              'tests/battle-replay-live-adapter.test.mjs',
+              '.github/workflows/battle-recent-history-r1-patch.yml'
+          }
+          changed = set(subprocess.check_output(['git', 'diff', '--cached', '--name-only'], text=True).splitlines())
+          if changed != allowed:
+              raise SystemExit(f'Unexpected staged paths: {sorted(changed)}')
+          PY
+          git commit -m "Battle: add compact recent public history"
+          git push origin HEAD:work/battle-recent-public-history-r1-20260905

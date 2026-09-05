@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-LOW-FREQ-CHROME-R85-R2-20260905T1754-SOL-K7M2P5",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_LOW_FREQUENCY_CHROME_CLEANUP_R85_R2",
+  "acquireKey": "HOME-LOW-FREQ-CHROME-R85-R2-20260905T1754-SOL-K7M2P5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-R85-ADOPTED-HOME-LOW-FREQUENCY-PRESENTATION-VS-CURRENT-MAIN-ACTUAL",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FOCUSED-HOME-PRESENTATION-REGRESSION-PLUS-REQUIRED-GATE",
+  "proceedToken": "PROCEED|HOME-LOW-FREQ-CHROME-R85-R2-20260905T1754-SOL-K7M2P5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "37633d9d2acf37405c3f883917a3f475596e0f77",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_LOW_FREQUENCY_CHROME_CLEANUP_R85_R2",
+  "leaseAcquireKey": "HOME-LOW-FREQ-CHROME-R85-R2-20260905T1754-SOL-K7M2P5",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 17:54 JST",
+  "leaseUntilJst": "2026-09-05 18:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A344:L344",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@37633d9d2acf37405c3f883917a3f475596e0f77; branch sol/home-low-freq-chrome-r85-r2-20260905; MUTABLE browser/home-boot-runtime-mount.mjs + tests/home-boot-presentation.test.mjs + UNIQUE_TRANSIENT .github/workflows/home-low-freq-r85-r2-patch.yml + transient data/preaction-authorizations/HOME-LOW-FREQ-CHROME-R85-R2-20260905T1754-SOL-K7M2P5.json only; browser/GAMEROAD.html + gameplay/rules/save/economy/network/formal assets READ_ONLY.",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    ".github/workflows/home-low-freq-r85-r2-patch.yml"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    ".github/workflows/home-low-freq-r85-r2-patch.yml"
+  ],
+  "solutionSignature": "Finish the already-adopted Home R85 low-frequency presentation inside the existing Home runtime. A unique transient workflow is used only because the connected GitHub writer replaces whole UTF-8 files; it exact-patches the current source/test and deletes itself before PR review.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "reuse-existing-home-boot-runtime-css-and-existing-secondary-utility-nav-with-established-large-text-patch-path",
+  "solutionSearchEvidence": [
+    "Drive:BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001 row2 R85 current rationale",
+    "repo:browser/home-boot-runtime-mount.mjs@37633d9d2acf37405c3f883917a3f475596e0f77",
+    "repo:browser/GAMEROAD.html@37633d9d2acf37405c3f883917a3f475596e0f77 READ_ONLY actual Home rails/save/secondary nav",
+    "Drive:CURRENT_ACTIVE_LEASES target-path search showing only expired prior R85 candidates before this acquire"
+  ]
+}

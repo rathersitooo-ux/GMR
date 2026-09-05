@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HOME-JELLY-CONTINUITY-R2-20260905T2020-SOL-J6K4P8",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_JANKEN_HOME_VISUAL_CONTINUITY_R2",
+  "acquireKey": "BATTLE-HOME-JELLY-CONTINUITY-R2-20260905T2020-SOL-J6K4P8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "ROW2_USER_VISUAL_CONTINUITY+CURRENT_LIVE_JANKEN_MINT_GRAY_MATERIAL+R1_ADOPTED_SCOPE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_FOCUSED_JANKEN_TESTS+EXACT_STRING_FAIL_CLOSED_EXECUTOR",
+  "proceedToken": "PROCEED|BATTLE-HOME-JELLY-CONTINUITY-R2-20260905T2020-SOL-J6K4P8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|BATTLE_HOME_JANKEN_GLASS_JELLY_ONLY",
+  "authorizationBaseSha": "da22d175f7292f7b8a441ab3bf834989d64bc746",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_HOME_VISUAL_CONTINUITY_R2",
+  "leaseAcquireKey": "BATTLE-HOME-JELLY-CONTINUITY-R2-20260905T2020-SOL-J6K4P8",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 20:20 JST",
+  "leaseUntilJst": "2026-09-05 21:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A397:L397",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@da22d175f7292f7b8a441ab3bf834989d64bc746; intended branch sol/battle-home-jelly-continuity-r2-20260905; mutable browser/battle-janken-slidepad-runtime-mount.mjs + tests/battle-janken-slidepad-runtime-mount.test.mjs + UNIQUE_TRANSIENT .github/workflows/battle-home-jelly-continuity-r2-executor.yml + TRANSIENT data/preaction-authorizations/BATTLE-HOME-JELLY-CONTINUITY-R2-20260905T2020-SOL-J6K4P8.json only; browser/GAMEROAD.html + all other Battle/Home/gameplay/rules/save/economy/network/formal assets READ_ONLY.",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "solutionSignature": "battle-janken-home-glass-jelly-visual-continuity-only",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_MAIN_LIVE_CONSUMER+EXPIRED_R1_ADOPTED_VISUAL_SCOPE+ROW2_PLAYER_FACING_CONTINUITY",
+  "solutionSearchEvidence": [
+    "Current main battle-janken-slidepad-runtime-mount.mjs owns the live player-visible right-side janken control and still uses mint/gray handle, slot, disabled, and Load preview material.",
+    "The adopted R1 scope requires only Home-linked moonlit blue/indigo/cyan/violet glass/jelly material while preserving janken semantics and geometry.",
+    "Current main da22d175 includes portrait janken fan compaction from PR#1156, which this slice must preserve unchanged.",
+    "Current public build dependencyContract does not blob-pin battle-janken-slidepad-runtime-mount.mjs, so build.test is outside this repair."
+  ],
+  "scopeRebaseReason": "Expired R1 is read-only donor evidence and no longer an owner. Rebuild the same presentation-only continuity from fresh main da22d175. The currently valid browser/GAMEROAD.html owner is explicitly excluded and read-only."
+}

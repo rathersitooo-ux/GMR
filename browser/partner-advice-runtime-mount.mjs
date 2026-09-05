@@ -14,6 +14,7 @@ const VERSION_KEYS = Object.freeze(['rulesVersion', 'cardVersion', 'stateVersion
 const PARTNER_STRATEGY_RULES = new Set(['left', 'right', 'max', 'min']);
 const BOARD_PROJECTION_SCHEMA = 'gameroad.partner-advice-board-projection.v1';
 const TUTORIAL_GUIDE_SCHEMA = 'gameroad.tutorial-partner-guide-control.v1';
+const CONTEXTUAL_TUTORIAL_REPLAY_SCHEMA = 'gameroad.tutorial-contextual-replay-control.v1';
 const QUICK_REPLY_SCHEMA = 'gameroad.partner-advice-quick-reply.v1';
 const DELEGATE_REPLY_TEXT = 'まかせた！';
 
@@ -306,6 +307,143 @@ export function createTutorialPartnerGuideControl({
   });
 }
 
+export function projectBattleContextualTutorialReplay(snapshot = {}) {
+  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot) || snapshot.screen !== 'battle') {
+    return Object.freeze({
+      schema: CONTEXTUAL_TUTORIAL_REPLAY_SCHEMA,
+      active: false,
+      reason: 'BATTLE_CONTEXT_REQUIRED',
+      message: null,
+      focusRole: null,
+      presentationOnly: true,
+      autoExecute: false,
+    });
+  }
+
+  const phase = exactPresentationToken(snapshot.phase) || null;
+  const busy = snapshot.busy === true;
+  let message = '公開・移動・次の判断へ進行中';
+  let focusRole = null;
+
+  if (phase === 'plan' && !busy) {
+    if (!exactPresentationToken(snapshot.roadId)) {
+      message = '手札からロードカードを1枚選ぶ';
+      focusRole = 'road';
+    } else if (!exactPresentationToken(snapshot.battleId)) {
+      message = '次に、別のバトルカードを1枚選ぶ';
+      focusRole = 'battle';
+    } else {
+      message = '予約内容を確認して準備完了';
+      focusRole = 'ready';
+    }
+  } else if (phase === 'reveal' || phase === 'move') {
+    message = 'ロード受理済み。公開と次段階を確認中';
+  }
+
+  return Object.freeze({
+    schema: CONTEXTUAL_TUTORIAL_REPLAY_SCHEMA,
+    active: true,
+    reason: null,
+    message,
+    focusRole,
+    presentationOnly: true,
+    autoExecute: false,
+  });
+}
+
+export function createBattleContextualTutorialReplayControl({
+  getSnapshot = () => null,
+  showHelp = null,
+  clearHelp = null,
+  setFocus = null,
+  onChange,
+} = {}) {
+  if (typeof getSnapshot !== 'function') throw new TypeError('getSnapshot must be a function');
+  if (showHelp !== null && typeof showHelp !== 'function') throw new TypeError('showHelp must be a function or null');
+  if (clearHelp !== null && typeof clearHelp !== 'function') throw new TypeError('clearHelp must be a function or null');
+  if (setFocus !== null && typeof setFocus !== 'function') throw new TypeError('setFocus must be a function or null');
+
+  let active = false;
+  const changed = () => { if (typeof onChange === 'function') onChange(); };
+  const projection = () => {
+    try {
+      return projectBattleContextualTutorialReplay(getSnapshot());
+    } catch {
+      return projectBattleContextualTutorialReplay(null);
+    }
+  };
+  const available = () => projection().active && typeof showHelp === 'function' && typeof clearHelp === 'function';
+  const status = () => {
+    const current = projection();
+    return Object.freeze({
+      schema: CONTEXTUAL_TUTORIAL_REPLAY_SCHEMA,
+      available: current.active && typeof showHelp === 'function' && typeof clearHelp === 'function',
+      active,
+      message: active ? current.message : null,
+      focusRole: active ? current.focusRole : null,
+      returnContext: 'same-battle',
+      presentationOnly: true,
+      firstTutorialCompletionMutated: false,
+      rewardMutated: false,
+      saveMutated: false,
+      gameplayAuthorityMutated: false,
+      autoExecute: false,
+    });
+  };
+  const clearPresentation = () => {
+    try {
+      clearHelp?.('BATTLE_CONTEXTUAL_REPLAY');
+    } catch {}
+    try {
+      setFocus?.(null);
+    } catch {}
+  };
+  const apply = () => {
+    const current = projection();
+    if (!current.active || typeof showHelp !== 'function' || typeof clearHelp !== 'function') return false;
+    try {
+      clearHelp('BATTLE_CONTEXTUAL_REPLAY');
+      const shown = showHelp(Object.freeze({
+        code: 'BATTLE_CONTEXTUAL_REPLAY',
+        message: current.message,
+        kind: 'ok',
+        ttl: 0,
+      }));
+      if (shown === false) return false;
+      setFocus?.(current.focusRole);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  return Object.freeze({
+    open() {
+      if (!available() || !apply()) return false;
+      active = true;
+      changed();
+      return true;
+    },
+    close() {
+      if (!active) return false;
+      clearPresentation();
+      active = false;
+      changed();
+      return true;
+    },
+    refresh() {
+      if (!active) return status();
+      if (!apply()) {
+        clearPresentation();
+        active = false;
+        changed();
+      }
+      return status();
+    },
+    status,
+  });
+}
+
 export function createPartnerAdviceQuickReplyControl({
   getPartnerId = () => null,
   getDialogueVersion = () => SAASUNA_DIALOGUE_VERSION,
@@ -448,11 +586,41 @@ function currentBattleChatSnapshot(win) {
   }
 }
 
+function currentBattleTutorialReplaySnapshot(win) {
+  try {
+    const state = win.__GAMEROAD_TEST__?.state || null;
+    const me = state?.match?.players?.[0] || null;
+    return {
+      screen: state?.screen || null,
+      phase: state?.match?.phase || null,
+      busy: state?.match?.busy === true,
+      roadId: me?.plan?.roadId || null,
+      battleId: me?.plan?.battleId || null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function setBattleContextualTutorialFocus(doc, role) {
+  doc.querySelectorAll('[data-contextual-tutorial-focus="true"]').forEach((node) => {
+    node.removeAttribute('data-contextual-tutorial-focus');
+    node.classList.remove('contextualTutorialFocus');
+  });
+  const selector = role === 'road' ? '#roadSelect' : role === 'battle' ? '#battleSelect' : role === 'ready' ? '#readyPlan' : null;
+  if (!selector) return true;
+  const target = doc.querySelector(selector);
+  if (!target) return false;
+  target.dataset.contextualTutorialFocus = 'true';
+  target.classList.add('contextualTutorialFocus');
+  return true;
+}
+
 function ensureBattleChatStyle(doc) {
   if (doc.getElementById(CHAT_STYLE_ID)) return;
   const style = doc.createElement('style');
   style.id = CHAT_STYLE_ID;
-  style.textContent = `#${CHAT_ROOT_ID}{display:grid;gap:6px;margin:7px 0;padding:7px;border:1px solid rgba(190,225,214,.28);border-radius:10px;background:rgba(3,18,16,.72)}#${CHAT_ROOT_ID} .partnerAdviceLaneProgress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}#${CHAT_ROOT_ID} .partnerAdviceLane{display:grid;place-items:center;min-height:38px;border:1px solid rgba(205,239,228,.22);border-radius:8px;background:rgba(8,35,29,.72)}#${CHAT_ROOT_ID} .partnerAdviceLane span{font-size:8px;color:#9eb7af;font-weight:900}#${CHAT_ROOT_ID} .partnerAdviceLane b{font-size:15px;line-height:1;font-variant-numeric:tabular-nums}.partnerAdviceSpeech{display:none;max-width:92%;padding:8px 10px;border:1px solid rgba(173,235,214,.38);font-size:11px;font-weight:850;line-height:1.4}.partnerAdviceSpeech.on{display:block}.partnerAdviceSpeech.partner{border-radius:10px 10px 10px 3px;background:#143e34}.partnerAdviceSpeech.player{justify-self:end;border-radius:10px 10px 3px 10px;background:rgba(69,49,19,.72);border-color:rgba(255,211,126,.56);color:#fff1c9}.partnerAdviceQuickReply{justify-self:end;min-height:44px;padding:9px 14px;border:1px solid rgba(255,211,126,.56);border-radius:12px;background:rgba(69,49,19,.72);color:#fff1c9;font-size:11px;font-weight:950}@media(max-width:540px){#${CHAT_ROOT_ID}{padding:5px;gap:4px}.partnerAdviceSpeech{font-size:10px}}@media(prefers-reduced-motion:reduce){#${CHAT_ROOT_ID} *{transition:none!important;animation:none!important}}`;
+  style.textContent = `#${CHAT_ROOT_ID}{display:grid;gap:6px;margin:7px 0;padding:7px;border:1px solid rgba(190,225,214,.28);border-radius:10px;background:rgba(3,18,16,.72)}#${CHAT_ROOT_ID} .partnerAdviceLaneProgress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}#${CHAT_ROOT_ID} .partnerAdviceLane{display:grid;place-items:center;min-height:38px;border:1px solid rgba(205,239,228,.22);border-radius:8px;background:rgba(8,35,29,.72)}#${CHAT_ROOT_ID} .partnerAdviceLane span{font-size:8px;color:#9eb7af;font-weight:900}#${CHAT_ROOT_ID} .partnerAdviceLane b{font-size:15px;line-height:1;font-variant-numeric:tabular-nums}.partnerAdviceSpeech{display:none;max-width:92%;padding:8px 10px;border:1px solid rgba(173,235,214,.38);font-size:11px;font-weight:850;line-height:1.4}.partnerAdviceSpeech.on{display:block}.partnerAdviceSpeech.partner{border-radius:10px 10px 10px 3px;background:#143e34}.partnerAdviceSpeech.player{justify-self:end;border-radius:10px 10px 3px 10px;background:rgba(69,49,19,.72);border-color:rgba(255,211,126,.56);color:#fff1c9}.partnerAdviceQuickReply,.partnerAdviceTutorialReplay{min-height:44px;padding:9px 14px;border-radius:12px;font-size:11px;font-weight:950}.partnerAdviceQuickReply{justify-self:end;border:1px solid rgba(255,211,126,.56);background:rgba(69,49,19,.72);color:#fff1c9}.partnerAdviceTutorialReplay{justify-self:start;border:1px solid rgba(173,235,214,.38);background:rgba(10,45,38,.78);color:#e4fff6}.contextualTutorialFocus{outline:2px solid rgba(255,216,120,.78)!important;outline-offset:2px!important;box-shadow:0 0 0 2px rgba(255,216,120,.24),0 0 18px rgba(255,216,120,.22)!important}@media(max-width:540px){#${CHAT_ROOT_ID}{padding:5px;gap:4px}.partnerAdviceSpeech{font-size:10px}.partnerAdviceQuickReply,.partnerAdviceTutorialReplay{font-size:10px}}@media(prefers-reduced-motion:reduce){#${CHAT_ROOT_ID} *,.contextualTutorialFocus{transition:none!important;animation:none!important}}`;
   doc.head?.append(style);
 }
 
@@ -468,13 +636,19 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
     root = doc.createElement('section');
     root.id = CHAT_ROOT_ID;
     root.setAttribute('aria-label', 'パートナーとの対戦チャット');
-    root.innerHTML = '<div class="partnerAdviceLaneProgress" aria-label="3列の現在進行値"><div class="partnerAdviceLane" data-lane="L"><span>左列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="C"><span>中央列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="R"><span>右列</span><b>—</b></div></div><div class="partnerAdviceSpeech partner" aria-live="polite"></div><div class="partnerAdviceSpeech player" aria-live="polite"></div><button type="button" class="partnerAdviceQuickReply">まかせた！</button>';
+    root.innerHTML = '<div class="partnerAdviceLaneProgress" aria-label="3列の現在進行値"><div class="partnerAdviceLane" data-lane="L"><span>左列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="C"><span>中央列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="R"><span>右列</span><b>—</b></div></div><div class="partnerAdviceSpeech partner" aria-live="polite"></div><div class="partnerAdviceSpeech player" aria-live="polite"></div><button type="button" class="partnerAdviceTutorialReplay" aria-pressed="false">操作を再確認</button><button type="button" class="partnerAdviceQuickReply">まかせた！</button>';
     const statusNode = host.querySelector('.partnerDecisionStatus');
     host.insertBefore(root, statusNode || host.firstChild);
   }
 
   let lastReceipt = null;
   const quickReply = createPartnerAdviceQuickReplyControl({ getPartnerId: () => currentBattleChatSnapshot(win)?.partnerId });
+  const tutorialReplay = createBattleContextualTutorialReplayControl({
+    getSnapshot: () => currentBattleTutorialReplaySnapshot(win),
+    showHelp: ({ code, message, kind, ttl }) => win.__GAMEROAD_CONTEXT_HELP_TEST__?.set?.(code, { message, kind, ttl }) ?? false,
+    clearHelp: (code) => win.__GAMEROAD_CONTEXT_HELP_TEST__?.clear?.(code),
+    setFocus: (role) => setBattleContextualTutorialFocus(doc, role),
+  });
   const render = () => {
     const current = currentBattleChatSnapshot(win);
     const projection = projectPartnerAdviceChatPresentation({
@@ -482,29 +656,40 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
       partnerText: lastReceipt?.partnerUtterance || current?.partnerText || null,
       playerText: lastReceipt?.playerText || null,
     });
-    root.hidden = !projection.active;
-    if (!projection.active) return projection;
-    for (const lane of ['L', 'C', 'R']) {
-      const value = root.querySelector(`[data-lane="${lane}"] b`);
-      if (value) value.textContent = String(projection.laneProgress[lane]);
+    const tutorialStatus = tutorialReplay.refresh();
+    root.hidden = !projection.active && !tutorialStatus.available;
+    const lanes = root.querySelector('.partnerAdviceLaneProgress');
+    if (lanes) lanes.hidden = !projection.active;
+    if (projection.active) {
+      for (const lane of ['L', 'C', 'R']) {
+        const value = root.querySelector(`[data-lane="${lane}"] b`);
+        if (value) value.textContent = String(projection.laneProgress[lane]);
+      }
     }
     const partner = root.querySelector('.partnerAdviceSpeech.partner');
     if (partner) {
-      partner.textContent = projection.partnerText || '';
-      partner.classList.toggle('on', Boolean(projection.partnerText));
+      partner.textContent = projection.active ? projection.partnerText || '' : '';
+      partner.classList.toggle('on', projection.active && Boolean(projection.partnerText));
     }
     const player = root.querySelector('.partnerAdviceSpeech.player');
     if (player) {
-      player.textContent = projection.playerText || '';
-      player.classList.toggle('on', Boolean(projection.playerText));
+      player.textContent = projection.active ? projection.playerText || '' : '';
+      player.classList.toggle('on', projection.active && Boolean(projection.playerText));
     }
     const button = root.querySelector('.partnerAdviceQuickReply');
-    const quickReplyAvailable = isPartnerAdviceQuickReplyAvailable(current);
+    const quickReplyAvailable = projection.active && isPartnerAdviceQuickReplyAvailable(current);
     if (button) {
       button.hidden = !quickReplyAvailable;
       button.disabled = !quickReplyAvailable;
     }
-    return projection;
+    const tutorialButton = root.querySelector('.partnerAdviceTutorialReplay');
+    if (tutorialButton) {
+      tutorialButton.hidden = !tutorialStatus.available;
+      tutorialButton.disabled = !tutorialStatus.available;
+      tutorialButton.setAttribute('aria-pressed', tutorialStatus.active ? 'true' : 'false');
+      tutorialButton.textContent = tutorialStatus.active ? '説明を閉じる' : '操作を再確認';
+    }
+    return Object.freeze({ projection, tutorial: tutorialStatus });
   };
 
   const button = root.querySelector('.partnerAdviceQuickReply');
@@ -525,6 +710,17 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
     });
   }
 
+  const tutorialButton = root.querySelector('.partnerAdviceTutorialReplay');
+  if (tutorialButton && tutorialButton.dataset.contextualTutorialBound !== 'true') {
+    tutorialButton.dataset.contextualTutorialBound = 'true';
+    tutorialButton.addEventListener('click', () => {
+      const status = tutorialReplay.status();
+      if (status.active) tutorialReplay.close();
+      else tutorialReplay.open();
+      render();
+    });
+  }
+
   if (root.dataset.partnerAdviceObserved !== 'true') {
     root.dataset.partnerAdviceObserved = 'true';
     const observer = new win.MutationObserver(() => queueMicrotask(render));
@@ -535,7 +731,7 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
     doc.getElementById('partnerAdviceBtn')?.addEventListener('click', () => queueMicrotask(render));
   }
   render();
-  return Object.freeze({ root, render });
+  return Object.freeze({ root, render, tutorialReplay });
 }
 
 function schedulePartnerAdviceChatMount(win) {

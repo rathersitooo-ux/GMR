@@ -1,0 +1,287 @@
+name: TEMP Deck swipe first-success hints R1
+
+on:
+  push:
+    branches:
+      - sol/deck-swipe-firstsuccess-hint-r1-20260905
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temp-deck-swipe-firstsuccess-hint-r1-k7m4p2
+  cancel-in-progress: false
+
+jobs:
+  apply-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify reviewed targets are unchanged from authorization base
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code 2696d00d23ff84e63de6c3d79c666a1f2c0cf3e6 HEAD -- \
+            browser/deck-storage-corner-runtime.mjs \
+            tests/deck-storage-corner-runtime.test.mjs
+      - name: Apply bounded first-success hint patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          runtime_path = Path('browser/deck-storage-corner-runtime.mjs')
+          text = runtime_path.read_text()
+
+          def replace_once(old, new, label):
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one marker, found {count}')
+              text = text.replace(old, new, 1)
+
+          replace_once(
+              "import { createDeckSwipeFlightPlan } from './cards-deck-presentation-core.mjs';",
+              "import { createDeckSwipeFlightPlan, DECK_SWIPE_PRESENTATION_EVENTS } from './cards-deck-presentation-core.mjs';",
+              'presentation event import',
+          )
+
+          css = '''.gr-deck-swipe-gesture-hint{position:absolute;right:12px;z-index:3;pointer-events:none;user-select:none;max-width:min(220px,46vw);border-radius:999px;padding:6px 10px;background:rgba(17,24,39,.72);border:1px solid rgba(255,216,74,.72);color:#fff3bd;font:800 12px/1 system-ui;letter-spacing:.01em;box-shadow:0 5px 18px rgba(0,0,0,.2);white-space:nowrap}\n.gr-deck-swipe-gesture-hint[data-gesture="collection-right"]{bottom:56px}\n.gr-deck-swipe-gesture-hint[data-gesture="deck-left"]{bottom:12px}\n'''
+          replace_once('@media(max-width:560px){', css + '@media(max-width:560px){', 'hint style insertion')
+
+          installer = r'''
+const DECK_SWIPE_FIRST_SUCCESS_STORAGE_KEY = 'gameroad.cards.deck-swipe-first-success.v1';
+
+function readDeckSwipeFirstSuccessState(win) {
+  const fallback = { collectionRightDone: false, deckLeftDone: false };
+  try {
+    const raw = win?.localStorage?.getItem?.(DECK_SWIPE_FIRST_SUCCESS_STORAGE_KEY);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    return {
+      collectionRightDone: parsed?.collectionRightDone === true,
+      deckLeftDone: parsed?.deckLeftDone === true,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function persistDeckSwipeFirstSuccessState(win, state) {
+  try {
+    if (typeof win?.localStorage?.setItem !== 'function') return false;
+    win.localStorage.setItem(DECK_SWIPE_FIRST_SUCCESS_STORAGE_KEY, JSON.stringify({
+      collectionRightDone: state.collectionRightDone === true,
+      deckLeftDone: state.deckLeftDone === true,
+    }));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function installDeckSwipeFirstSuccessHints({
+  document: doc = globalThis.document,
+  window: win = globalThis.window,
+  controller,
+} = {}) {
+  if (!doc?.addEventListener || !doc?.removeEventListener || typeof controller?.subscribe !== 'function') {
+    return Object.freeze({ state: () => Object.freeze({ collectionRightDone: false, deckLeftDone: false }), render: () => null, destroy() {} });
+  }
+
+  let state = readDeckSwipeFirstSuccessState(win);
+  let destroyed = false;
+  const roleFor = (gesture) => `deck-swipe-first-success-hint-${gesture}`;
+  const currentHint = (screen, gesture) => [...(screen?.children ?? [])]
+    .find((node) => node?.dataset?.role === roleFor(gesture)) ?? null;
+  const ensureHint = (screen, gesture, textContent) => {
+    const existing = currentHint(screen, gesture);
+    if (existing) return existing;
+    if (!screen?.appendChild || !doc?.createElement) return null;
+    const hint = doc.createElement('div');
+    hint.className = 'gr-deck-swipe-gesture-hint';
+    hint.dataset.role = roleFor(gesture);
+    hint.dataset.gesture = gesture;
+    hint.setAttribute?.('aria-hidden', 'true');
+    hint.textContent = textContent;
+    screen.appendChild(hint);
+    return hint;
+  };
+  const removeHint = (screen, gesture) => currentHint(screen, gesture)?.remove?.();
+  const render = () => {
+    if (destroyed) return null;
+    const screen = resolveCardsScreen(doc);
+    if (!screen) return null;
+    if (state.collectionRightDone) removeHint(screen, 'collection-right');
+    else ensureHint(screen, 'collection-right', 'カードを → デッキへ');
+    if (state.deckLeftDone) removeHint(screen, 'deck-left');
+    else ensureHint(screen, 'deck-left', 'デッキから ← 外す');
+    return Object.freeze({ ...state });
+  };
+  const retire = (key) => {
+    if (destroyed || state[key] === true) return false;
+    state = { ...state, [key]: true };
+    persistDeckSwipeFirstSuccessState(win, state);
+    render();
+    return true;
+  };
+  const onDeckSwipeLand = () => { retire('collectionRightDone'); };
+  doc.addEventListener(DECK_SWIPE_PRESENTATION_EVENTS.LAND, onDeckSwipeLand);
+  const unsubscribe = controller.subscribe((payload) => {
+    if (payload?.event === 'deck-remove' && payload?.surface === 'deck') retire('deckLeftDone');
+  });
+  render();
+
+  return Object.freeze({
+    state: () => Object.freeze({ ...state }),
+    render,
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      doc.removeEventListener(DECK_SWIPE_PRESENTATION_EVENTS.LAND, onDeckSwipeLand);
+      unsubscribe?.();
+      const screen = resolveCardsScreen(doc);
+      removeHint(screen, 'collection-right');
+      removeHint(screen, 'deck-left');
+    },
+  });
+}
+
+'''
+          replace_once('\nexport function mountDeckStorageCorner({\n', '\n' + installer + 'export function mountDeckStorageCorner({\n', 'first-success installer insertion')
+
+          replace_once(
+              "  const discovery = installDeckStorageCardsDiscovery({ document: doc, openStorage: open });\n  render();",
+              "  const discovery = installDeckStorageCardsDiscovery({ document: doc, openStorage: open });\n  const swipeHints = installDeckSwipeFirstSuccessHints({ document: doc, window: win, controller });\n  render();",
+              'mount first-success installer',
+          )
+          replace_once(
+              "      discovery.destroy();\n      close();",
+              "      swipeHints.destroy();\n      discovery.destroy();\n      close();",
+              'dispose first-success installer',
+          )
+          runtime_path.write_text(text)
+
+          test_path = Path('tests/deck-storage-corner-runtime.test.mjs')
+          tests = test_path.read_text()
+          import_old = "  installDeckStorageCardsDiscovery,\n  mountDeckStorageCorner,"
+          import_new = "  installDeckStorageCardsDiscovery,\n  installDeckSwipeFirstSuccessHints,\n  mountDeckStorageCorner,"
+          if tests.count(import_old) != 1:
+              raise SystemExit(f'test import marker count={tests.count(import_old)}')
+          tests = tests.replace(import_old, import_new, 1)
+
+          appended = r'''
+
+test('first-success swipe hints retire independently only on successful gestures and survive remount', () => {
+  const values = new Map();
+  const window = {
+    localStorage: {
+      getItem: (key) => values.has(key) ? values.get(key) : null,
+      setItem: (key, value) => values.set(key, String(value)),
+    },
+  };
+  const rejectedFixture = fixture({ deck: ['a', 'b'], rejectRemove: true });
+  const rejectedDocument = discoveryDocument();
+  const rejectedHints = installDeckSwipeFirstSuccessHints({
+    document: rejectedDocument.document,
+    window,
+    controller: rejectedFixture.controller,
+  });
+  const roles = (screen) => screen.children.map((node) => node.dataset?.role).filter(Boolean);
+  assert.deepEqual(roles(rejectedDocument.screen).sort(), [
+    'deck-swipe-first-success-hint-collection-right',
+    'deck-swipe-first-success-hint-deck-left',
+  ]);
+  const rejected = rejectedFixture.controller.applySwipe({ surface: 'deck', cardId: 'b', deltaX: -84, deltaY: 1 });
+  assert.equal(rejected.ok, false);
+  rejectedDocument.document.emit('gameroad:deck-swipe-reject', { detail: { cardId: 'x' } });
+  assert.equal(rejectedHints.state().collectionRightDone, false);
+  assert.equal(rejectedHints.state().deckLeftDone, false);
+  assert.equal(roles(rejectedDocument.screen).length, 2);
+  rejectedHints.destroy();
+
+  const acceptedFixture = fixture({ deck: ['a', 'b'] });
+  const acceptedDocument = discoveryDocument();
+  const acceptedHints = installDeckSwipeFirstSuccessHints({
+    document: acceptedDocument.document,
+    window,
+    controller: acceptedFixture.controller,
+  });
+  const removed = acceptedFixture.controller.applySwipe({ surface: 'deck', cardId: 'b', deltaX: -84, deltaY: 1 });
+  assert.equal(removed.ok, true);
+  assert.equal(acceptedHints.state().deckLeftDone, true);
+  assert.equal(acceptedHints.state().collectionRightDone, false);
+  assert.deepEqual(roles(acceptedDocument.screen), ['deck-swipe-first-success-hint-collection-right']);
+
+  acceptedDocument.document.emit('gameroad:deck-swipe-land', { detail: { phase: 'land', cardId: 'N_2' } });
+  assert.equal(acceptedHints.state().collectionRightDone, true);
+  assert.equal(roles(acceptedDocument.screen).length, 0);
+  acceptedHints.destroy();
+
+  const remount = installDeckSwipeFirstSuccessHints({
+    document: acceptedDocument.document,
+    window,
+    controller: acceptedFixture.controller,
+  });
+  assert.equal(remount.state().collectionRightDone, true);
+  assert.equal(remount.state().deckLeftDone, true);
+  assert.equal(roles(acceptedDocument.screen).length, 0);
+  remount.destroy();
+});
+
+test('first-success swipe hints fail soft when local UI persistence is unavailable', () => {
+  const { controller } = fixture({ deck: ['a', 'b'] });
+  const { document, screen } = discoveryDocument();
+  const window = {};
+  Object.defineProperty(window, 'localStorage', { get() { throw new Error('blocked'); } });
+  const hints = installDeckSwipeFirstSuccessHints({ document, window, controller });
+  assert.equal(screen.children.length, 2);
+  document.emit('gameroad:deck-swipe-land', { detail: { cardId: 'N_3' } });
+  controller.applySwipe({ surface: 'deck', cardId: 'b', deltaX: -84, deltaY: 1 });
+  assert.equal(hints.state().collectionRightDone, true);
+  assert.equal(hints.state().deckLeftDone, true);
+  assert.equal(screen.children.length, 0);
+  hints.destroy();
+});
+'''
+          if 'first-success swipe hints retire independently only on successful gestures and survive remount' in tests:
+              raise SystemExit('focused tests already present before bounded append')
+          tests = tests.rstrip() + appended
+          test_path.write_text(tests)
+          PY
+          git diff --check
+      - name: Focused tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check browser/deck-storage-corner-runtime.mjs
+          node --test tests/deck-storage-corner-runtime.test.mjs
+      - name: Verify exact persistent product scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t changed < <(git diff --name-only 2696d00d23ff84e63de6c3d79c666a1f2c0cf3e6 -- \
+            browser/deck-storage-corner-runtime.mjs \
+            tests/deck-storage-corner-runtime.test.mjs)
+          printf '%s\n' "${changed[@]}"
+          test "${#changed[@]}" -eq 2
+          printf '%s\n' "${changed[@]}" | grep -Fxq browser/deck-storage-corner-runtime.mjs
+          printf '%s\n' "${changed[@]}" | grep -Fxq tests/deck-storage-corner-runtime.test.mjs
+      - name: Commit bounded product patch and clean transients
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/temp-deck-swipe-firstsuccess-hint-r1-k7m4p2.yml
+          rm -f data/preaction-authorizations/DECK-SWIPE-FIRSTSUCCESS-HINT-R1-20260905T1625-SOL-K7M4P2.json
+          git add -A
+          test -z "$(git diff --cached --name-only | grep -v -E '^(browser/deck-storage-corner-runtime\.mjs|tests/deck-storage-corner-runtime\.test\.mjs|\.github/workflows/temp-deck-swipe-firstsuccess-hint-r1-k7m4p2\.yml|data/preaction-authorizations/DECK-SWIPE-FIRSTSUCCESS-HINT-R1-20260905T1625-SOL-K7M4P2\.json)$' || true)"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'feat: teach Deck swipe gestures until first success'
+          git push origin HEAD:sol/deck-swipe-firstsuccess-hint-r1-20260905

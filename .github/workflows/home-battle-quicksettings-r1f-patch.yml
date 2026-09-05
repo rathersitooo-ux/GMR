@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   patch-test-clean:
-    if: ${{ github.event.head_commit.message == 'R1F runner' }}
+    if: ${{ github.event.head_commit.message == 'R1F runner2' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -30,27 +30,31 @@ jobs:
           path = Path('tests/browser-full-interaction.spec.mjs')
           text = path.read_text(encoding='utf-8')
 
-          old_entry = '''  const settings = visibleOperationGo(page, 'settings');
-          await expect(settings, 'Settings must be reachable by a visible current Home control').toBeVisible();
-          await settings.click();
-          await expect(page.locator('section[data-screen="settings"]')).toBeVisible();
-          await attachStateScreenshot(page, testInfo, 'settings-entry-visible');
-          runtime.assertClean(testInfo);
-          });'''
-          new_entry = '''  const settings = visibleOperationGo(page, 'settings');
-          await expect(settings, 'Settings must be reachable by a visible current Home control').toBeVisible();
-          await settings.click();
-          const quickSettings = page.locator('[data-gameroad-quick-settings="1"]');
-          await expect(quickSettings, 'Home Settings opens the adopted quick-settings dialog first').toBeVisible();
-          await expect(quickSettings).toHaveAttribute('data-surface', 'home');
-          await attachStateScreenshot(page, testInfo, 'home-quick-settings-entry-visible');
-          const details = quickSettings.locator('.grSharedQuickSettingsDetails');
-          await expect(details, 'Home quick settings keeps a visible route to full Settings').toBeVisible();
-          await details.click();
-          await expect(page.locator('section[data-screen="settings"]')).toBeVisible();
-          await attachStateScreenshot(page, testInfo, 'settings-entry-visible');
-          runtime.assertClean(testInfo);
-          });'''
+          old_entry = "\n".join([
+              "  const settings = visibleOperationGo(page, 'settings');",
+              "  await expect(settings, 'Settings must be reachable by a visible current Home control').toBeVisible();",
+              "  await settings.click();",
+              "  await expect(page.locator('section[data-screen=\"settings\"]')).toBeVisible();",
+              "  await attachStateScreenshot(page, testInfo, 'settings-entry-visible');",
+              "  runtime.assertClean(testInfo);",
+              "});",
+          ])
+          new_entry = "\n".join([
+              "  const settings = visibleOperationGo(page, 'settings');",
+              "  await expect(settings, 'Settings must be reachable by a visible current Home control').toBeVisible();",
+              "  await settings.click();",
+              "  const quickSettings = page.locator('[data-gameroad-quick-settings=\"1\"]');",
+              "  await expect(quickSettings, 'Home Settings opens the adopted quick-settings dialog first').toBeVisible();",
+              "  await expect(quickSettings).toHaveAttribute('data-surface', 'home');",
+              "  await attachStateScreenshot(page, testInfo, 'home-quick-settings-entry-visible');",
+              "  const details = quickSettings.locator('.grSharedQuickSettingsDetails');",
+              "  await expect(details, 'Home quick settings keeps a visible route to full Settings').toBeVisible();",
+              "  await details.click();",
+              "  await expect(page.locator('section[data-screen=\"settings\"]')).toBeVisible();",
+              "  await attachStateScreenshot(page, testInfo, 'settings-entry-visible');",
+              "  runtime.assertClean(testInfo);",
+              "});",
+          ])
           if text.count(old_entry) != 1:
               raise SystemExit(f'entry anchor count={text.count(old_entry)} expected=1')
           text = text.replace(old_entry, new_entry, 1)
@@ -60,68 +64,74 @@ jobs:
           if title_index < 0:
               raise SystemExit('settings audio test title anchor missing')
           prefix, tail = text[:title_index], text[title_index:]
-          old_audio_entry = '''  const settingsGo = visibleOperationGo(page, 'settings');
-          await expect(settingsGo).toBeVisible();
-          await settingsGo.click();
-          const settings = page.locator('section[data-screen="settings"]');
-          await expect(settings).toBeVisible();'''
-          new_audio_entry = '''  const settingsGo = visibleOperationGo(page, 'settings');
-          await expect(settingsGo).toBeVisible();
-          await settingsGo.click();
-          const quickSettings = page.locator('[data-gameroad-quick-settings="1"]');
-          await expect(quickSettings).toBeVisible();
-          await expect(quickSettings).toHaveAttribute('data-surface', 'home');
-          await quickSettings.locator('.grSharedQuickSettingsDetails').click();
-          const settings = page.locator('section[data-screen="settings"]');
-          await expect(settings).toBeVisible();'''
+          old_audio_entry = "\n".join([
+              "  const settingsGo = visibleOperationGo(page, 'settings');",
+              "  await expect(settingsGo).toBeVisible();",
+              "  await settingsGo.click();",
+              "  const settings = page.locator('section[data-screen=\"settings\"]');",
+              "  await expect(settings).toBeVisible();",
+          ])
+          new_audio_entry = "\n".join([
+              "  const settingsGo = visibleOperationGo(page, 'settings');",
+              "  await expect(settingsGo).toBeVisible();",
+              "  await settingsGo.click();",
+              "  const quickSettings = page.locator('[data-gameroad-quick-settings=\"1\"]');",
+              "  await expect(quickSettings).toBeVisible();",
+              "  await expect(quickSettings).toHaveAttribute('data-surface', 'home');",
+              "  await quickSettings.locator('.grSharedQuickSettingsDetails').click();",
+              "  const settings = page.locator('section[data-screen=\"settings\"]');",
+              "  await expect(settings).toBeVisible();",
+          ])
           if tail.count(old_audio_entry) < 1:
               raise SystemExit('settings audio entry anchor missing')
           tail = tail.replace(old_audio_entry, new_audio_entry, 1)
           text = prefix + tail
 
-          new_test = r'''test('R1F proves Home quick settings and Battle gear share the existing Settings authority', async ({ page }, testInfo) => {
-          const runtime = observeRuntimeErrors(page);
-          await bootCurrentBrowser(page);
-
-          const settingsGo = visibleOperationGo(page, 'settings');
-          await expect(settingsGo).toBeVisible();
-          await settingsGo.click();
-          const homeQuick = page.locator('[data-gameroad-quick-settings="1"]');
-          await expect(homeQuick).toBeVisible();
-          await expect(homeQuick).toHaveAttribute('data-surface', 'home');
-          const musicQuick = homeQuick.locator('[data-quick-volume="musicVolume"]');
-          await expect(musicQuick).toBeVisible();
-          await musicQuick.fill('31');
-          await expect(page.locator('#musicVolume')).toHaveValue('31');
-          await attachStateScreenshot(page, testInfo, 'r1f-home-quick-settings-visible');
-
-          await homeQuick.locator('.grSharedQuickSettingsDetails').click();
-          const settings = page.locator('section[data-screen="settings"]');
-          await expect(settings).toBeVisible();
-          await expect(settings.locator('#musicVolume')).toHaveValue('31');
-          await backOperationVisible(page);
-          await expect(page.locator('section[data-screen="home"]')).toBeVisible();
-
-          const battle = await beginVisibleTwoPlayerRoadShield(page, testInfo, 'r1f-quick-settings');
-          await submitVisiblePlan(battle);
-          const gear = battle.locator('.grBattleHudSettings:visible').first();
-          await expect(gear, 'Battle exposes its existing visible settings gear during the battle phase').toBeVisible({ timeout: 10_000 });
-          await gear.click();
-          const battleQuick = page.locator('[data-gameroad-quick-settings="1"]');
-          await expect(battleQuick).toBeVisible();
-          await expect(battleQuick).toHaveAttribute('data-surface', 'battle');
-          await expect(battleQuick.locator('.grSharedQuickSettingsDetails')).toHaveCount(0);
-          await expect(battleQuick.locator('[data-quick-volume="musicVolume"]')).toHaveValue('31');
-          const sfxQuick = battleQuick.locator('[data-quick-volume="sfxVolume"]');
-          await sfxQuick.fill('29');
-          await expect(page.locator('#sfxVolume')).toHaveValue('29');
-          await attachStateScreenshot(page, testInfo, 'r1f-battle-quick-settings-visible');
-          await battleQuick.locator('.grSharedQuickSettingsClose').click();
-          await expect(page.locator('[data-gameroad-quick-settings="1"]')).toHaveCount(0);
-          runtime.assertClean(testInfo);
-          });
-
-          '''
+          new_test = "\n".join([
+              "test('R1F proves Home quick settings and Battle gear share the existing Settings authority', async ({ page }, testInfo) => {",
+              "  const runtime = observeRuntimeErrors(page);",
+              "  await bootCurrentBrowser(page);",
+              "",
+              "  const settingsGo = visibleOperationGo(page, 'settings');",
+              "  await expect(settingsGo).toBeVisible();",
+              "  await settingsGo.click();",
+              "  const homeQuick = page.locator('[data-gameroad-quick-settings=\"1\"]');",
+              "  await expect(homeQuick).toBeVisible();",
+              "  await expect(homeQuick).toHaveAttribute('data-surface', 'home');",
+              "  const musicQuick = homeQuick.locator('[data-quick-volume=\"musicVolume\"]');",
+              "  await expect(musicQuick).toBeVisible();",
+              "  await musicQuick.fill('31');",
+              "  await expect(page.locator('#musicVolume')).toHaveValue('31');",
+              "  await attachStateScreenshot(page, testInfo, 'r1f-home-quick-settings-visible');",
+              "",
+              "  await homeQuick.locator('.grSharedQuickSettingsDetails').click();",
+              "  const settings = page.locator('section[data-screen=\"settings\"]');",
+              "  await expect(settings).toBeVisible();",
+              "  await expect(settings.locator('#musicVolume')).toHaveValue('31');",
+              "  await backOperationVisible(page);",
+              "  await expect(page.locator('section[data-screen=\"home\"]')).toBeVisible();",
+              "",
+              "  const battle = await beginVisibleTwoPlayerRoadShield(page, testInfo, 'r1f-quick-settings');",
+              "  await submitVisiblePlan(battle);",
+              "  const gear = battle.locator('.grBattleHudSettings:visible').first();",
+              "  await expect(gear, 'Battle exposes its existing visible settings gear during the battle phase').toBeVisible({ timeout: 10_000 });",
+              "  await gear.click();",
+              "  const battleQuick = page.locator('[data-gameroad-quick-settings=\"1\"]');",
+              "  await expect(battleQuick).toBeVisible();",
+              "  await expect(battleQuick).toHaveAttribute('data-surface', 'battle');",
+              "  await expect(battleQuick.locator('.grSharedQuickSettingsDetails')).toHaveCount(0);",
+              "  await expect(battleQuick.locator('[data-quick-volume=\"musicVolume\"]')).toHaveValue('31');",
+              "  const sfxQuick = battleQuick.locator('[data-quick-volume=\"sfxVolume\"]');",
+              "  await sfxQuick.fill('29');",
+              "  await expect(page.locator('#sfxVolume')).toHaveValue('29');",
+              "  await attachStateScreenshot(page, testInfo, 'r1f-battle-quick-settings-visible');",
+              "  await battleQuick.locator('.grSharedQuickSettingsClose').click();",
+              "  await expect(page.locator('[data-gameroad-quick-settings=\"1\"]')).toHaveCount(0);",
+              "  runtime.assertClean(testInfo);",
+              "});",
+              "",
+              "",
+          ])
           if text.count("R1F proves Home quick settings and Battle gear share the existing Settings authority") != 0:
               raise SystemExit('R1F acceptance test already present unexpectedly')
           if text.count(settings_title) != 1:
@@ -148,7 +158,7 @@ jobs:
         run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
 
       - name: Upload R1F interaction evidence
-        if: ${{ !cancelled() }}
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: home-battle-quicksettings-r1f-${{ github.run_id }}

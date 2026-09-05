@@ -23,9 +23,13 @@ jobs:
           node-version: '22'
       - name: Apply exact bounded product and acceptance patch
         shell: bash
+        env:
+          HTML_BLOCK_B64: LyogR0FNRVJPQURfQkFUVExFX1BSRUNPTU1JVF9DTEVBUl9MSVZFX1IyICovCmNvbnN0IGdyQmF0dGxlUHJlY29tbWl0Q2xlYXJDb3JlUHJvbWlzZT1pbXBvcnQoJy4vYmF0dGxlLXByZWNvbW1pdC1jbGVhci1jb3JlLm1qcycpOwpsZXQgZ3JCYXR0bGVQcmVjb21taXRDb21taXRJbkZsaWdodD1udWxsOwpsZXQgZ3JCYXR0bGVQcmVjb21taXRUYXJnZXRDbGVhckNvbnRleHQ9bnVsbDsKZnVuY3Rpb24gZ3JCYXR0bGVGcmllbmRQbGFuU3VibWl0dGVkKG0sbWUpewogIGlmKCFtPy5mcmllbmRSb29tKXJldHVybiBmYWxzZTsKICBjb25zdCBzdGF0dXM9Z2xvYmFsVGhpcy5HQU1FUk9BRF9GUklFTkRfUk9PTV9SMj8uc3RhdHVzPy4oKTsKICBjb25zdCBzdWJtaXR0ZWQ9c3RhdHVzPy5wbGFuU3VibWl0dGVkOwogIHJldHVybiBBcnJheS5pc0FycmF5KHN1Ym1pdHRlZCk/c3VibWl0dGVkLmluY2x1ZGVzKG1lPy5pZCk6Qm9vbGVhbihzdWJtaXR0ZWQpCn0KZnVuY3Rpb24gZ3JCYXR0bGVUYXJnZXREcmFmdCgpewogIHJldHVybiB7ZGVmZW5kZXJJZDokKCcjdGFyZ2V0UGxheWVyJyk/LnZhbHVlfHxudWxsLGxhbmU6JCgnI3RhcmdldExhbmUnKT8udmFsdWV8fG51bGwsc2hpZWxkOiQoJyN0YXJnZXRTaGllbGQnKT8udmFsdWV8fG51bGx9Cn0KZnVuY3Rpb24gZ3JCYXR0bGVUYXJnZXREcmFmdEhhc1ZhbHVlKCl7Y29uc3QgZD1nckJhdHRsZVRhcmdldERyYWZ0KCk7cmV0dXJuIEJvb2xlYW4oZC5kZWZlbmRlcklkfHxkLmxhbmV8fGQuc2hpZWxkKX0KZnVuY3Rpb24gZ3JCYXR0bGVQbGFuRHJhZnRIYXNWYWx1ZShtZSl7Y29uc3QgcD1tZT8ucGxhbjtpZighcClyZXR1cm4gZmFsc2U7cmV0dXJuIEJvb2xlYW4ocC5yb2FkSWR8fHAuYmF0dGxlSWR8fChBcnJheS5pc0FycmF5KHAucGF0aCkmJihwLnBhdGgubGVuZ3RoIT09MXx8cC5wYXRoWzBdIT09bWUucG9zaXRpb24pKSl9CmZ1bmN0aW9uIGdyRW5zdXJlQmF0dGxlUHJlY29tbWl0Q2xlYXJCdXR0b24oKXsKICBsZXQgYj0kKCcjY2xlYXJQcmVjb21taXRTZWxlY3Rpb24nKTtpZihiKXJldHVybiBiOwogIGNvbnN0IHJhaWw9ZG9jdW1lbnQucXVlcnlTZWxlY3RvcignLmJhdHRsZVJhaWwnKSxsZWF2ZT0kKCcjbGVhdmVNYXRjaCcpO2lmKCFyYWlsfHwhbGVhdmUpcmV0dXJuIG51bGw7CiAgYj1kb2N1bWVudC5jcmVhdGVFbGVtZW50KCdidXR0b24nKTtiLmlkPSdjbGVhclByZWNvbW1pdFNlbGVjdGlvbic7Yi5jbGFzc05hbWU9J3JhaWxCdG4nO2IudHlwZT0nYnV0dG9uJztiLmhpZGRlbj10cnVlO2IuZGlzYWJsZWQ9dHJ1ZTsKICBiLnNldEF0dHJpYnV0ZSgnYXJpYS1sYWJlbCcsJ+mBuOaKnuOCkuOBmeOBueOBpuino+mZpCcpO2IudGl0bGU9J+mBuOaKnuOCkuOBmeOBueOBpuino+mZpCc7Yi5kYXRhc2V0LnByZWNvbW1pdENsZWFyPScxJzsKICBiLmlubmVySFRNTD0nPHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIGFyaWEtaGlkZGVuPSJ0cnVlIj48cGF0aCBkPSJNNiA2bDEyIDEyTTE4IDZMNiAxOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJjdXJyZW50Q29sb3IiIHN0cm9rZS13aWR0aD0iMi4yIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4nOwogIHJhaWwuaW5zZXJ0QmVmb3JlKGIsbGVhdmUpO2IuYWRkRXZlbnRMaXN0ZW5lcignY2xpY2snLCgpPT57dm9pZCBnckNsZWFyQmF0dGxlUHJlY29tbWl0U2VsZWN0aW9uKCl9KTtyZXR1cm4gYgp9CmZ1bmN0aW9uIGdyU3luY0JhdHRsZVByZWNvbW1pdENsZWFyKCl7CiAgY29uc3QgYj1nckVuc3VyZUJhdHRsZVByZWNvbW1pdENsZWFyQnV0dG9uKCksbT1zdGF0ZS5tYXRjaDtpZighYilyZXR1cm47CiAgY29uc3QgcGhhc2U9bT8ucGhhc2V8fCcnLG1lPW0/LnBsYXllcnM/LlswXXx8bnVsbCxjb25maXJtPSQoJyNjb25maXJtVGFyZ2V0Jyk7CiAgaWYoZ3JCYXR0bGVQcmVjb21taXRUYXJnZXRDbGVhckNvbnRleHQmJihnckJhdHRsZVByZWNvbW1pdFRhcmdldENsZWFyQ29udGV4dC5tYXRjaCE9PW18fHBoYXNlIT09J3RhcmdldCd8fG0/LnRhcmdldCkpZ3JCYXR0bGVQcmVjb21taXRUYXJnZXRDbGVhckNvbnRleHQ9bnVsbDsKICBpZihnckJhdHRsZVByZWNvbW1pdFRhcmdldENsZWFyQ29udGV4dCYmcGhhc2U9PT0ndGFyZ2V0JyYmIW0/LmJ1c3kmJiFtPy50YXJnZXQpewogICAgZm9yKGNvbnN0IGlkIG9mIFsndGFyZ2V0UGxheWVyJywndGFyZ2V0TGFuZScsJ3RhcmdldFNoaWVsZCddKXtjb25zdCBlbD0kKCcjJytpZCk7aWYoZWwmJmVsLnZhbHVlKWVsLnZhbHVlPScnfQogIH0KICBpZihwaGFzZSE9PSd0YXJnZXQnJiZjb25maXJtPy5kYXRhc2V0LnByZWNvbW1pdENsZWFyRGlzYWJsZWQ9PT0nMScpe2NvbmZpcm0uZGlzYWJsZWQ9ZmFsc2U7ZGVsZXRlIGNvbmZpcm0uZGF0YXNldC5wcmVjb21taXRDbGVhckRpc2FibGVkfQogIGNvbnN0IHBsYW5TdWJtaXR0ZWQ9cGhhc2U9PT0ncGxhbicmJm0mJm1lP2dyQmF0dGxlRnJpZW5kUGxhblN1Ym1pdHRlZChtLG1lKTpmYWxzZTsKICBjb25zdCBwbGFuQ2xlYXJhYmxlPXBoYXNlPT09J3BsYW4nJiZtJiYhbS5idXN5JiZnckJhdHRsZVByZWNvbW1pdENvbW1pdEluRmxpZ2h0IT09bSYmIXBsYW5TdWJtaXR0ZWQmJmdyQmF0dGxlUGxhbkRyYWZ0SGFzVmFsdWUobWUpOwogIGNvbnN0IGFjdGl2ZT1tPy5wbGF5ZXJzPy5maW5kKHA9PnAuaWQ9PT1tLmFjdGl2ZUlkKSx0YXJnZXRDbGVhcmFibGU9cGhhc2U9PT0ndGFyZ2V0JyYmbSYmIW0uYnVzeSYmIW0udGFyZ2V0JiZhY3RpdmU/Lmh1bWFuJiZnckJhdHRsZVRhcmdldERyYWZ0SGFzVmFsdWUoKTsKICBiLmhpZGRlbj0hKHBoYXNlPT09J3BsYW4nfHwocGhhc2U9PT0ndGFyZ2V0JyYmYWN0aXZlPy5odW1hbikpO2IuZGlzYWJsZWQ9IShwbGFuQ2xlYXJhYmxlfHx0YXJnZXRDbGVhcmFibGUpOwogIGIuZGF0YXNldC5wcmVjb21taXRDbGVhclBoYXNlPXBoYXNlfHwnbm9uZSc7Yi5kYXRhc2V0LnByZWNvbW1pdENsZWFyU3RhdGU9Yi5kaXNhYmxlZD8nYmxvY2tlZCc6J3JlYWR5JztiLnNldEF0dHJpYnV0ZSgnYXJpYS1kaXNhYmxlZCcsYi5kaXNhYmxlZD8ndHJ1ZSc6J2ZhbHNlJykKfQphc3luYyBmdW5jdGlvbiBnckNsZWFyQmF0dGxlUHJlY29tbWl0U2VsZWN0aW9uKCl7CiAgY29uc3QgbT1zdGF0ZS5tYXRjaDtpZighbXx8bS5idXN5KXJldHVybiBmYWxzZTtjb25zdCBwaGFzZT1tLnBoYXNlLG1lPW0ucGxheWVycz8uWzBdOwogIGlmKHBoYXNlIT09J3BsYW4nJiZwaGFzZSE9PSd0YXJnZXQnKXJldHVybiBmYWxzZTsKICBjb25zdCBhcGk9YXdhaXQgZ3JCYXR0bGVQcmVjb21taXRDbGVhckNvcmVQcm9taXNlOwogIGlmKHN0YXRlLm1hdGNoIT09bXx8bS5idXN5fHxtLnBoYXNlIT09cGhhc2UpcmV0dXJuIGZhbHNlOwogIGlmKHBoYXNlPT09J3BsYW4nKXsKICAgIGNvbnN0IHN1Ym1pdHRlZD1nckJhdHRsZUZyaWVuZFBsYW5TdWJtaXR0ZWQobSxtZSksY29tbWl0SW5GbGlnaHQ9Z3JCYXR0bGVQcmVjb21taXRDb21taXRJbkZsaWdodD09PW07CiAgICBjb25zdCByZXN1bHQ9YXBpLmNsZWFyQmF0dGxlUHJlY29tbWl0U2VsZWN0aW9uKHtwaGFzZToncGxhbicsYnVzeTptLmJ1c3l8fGNvbW1pdEluRmxpZ2h0LHBsYW5TdWJtaXR0ZWQ6c3VibWl0dGVkLHBvc2l0aW9uOm1lPy5wb3NpdGlvbixwbGFuOm1lPy5wbGFufSk7CiAgICBpZighcmVzdWx0LmNsZWFyZWQpcmV0dXJuIGZhbHNlOwogICAgbWUucGxhbj17Li4ucmVzdWx0Lm5leHQucGxhbixwYXRoOlsuLi5yZXN1bHQubmV4dC5wbGFuLnBhdGhdfTsKICAgIGNvbnN0IHJzPSQoJyNyb2FkU2VsZWN0JyksYnM9JCgnI2JhdHRsZVNlbGVjdCcpO2lmKHJzKXJzLnZhbHVlPScnO2lmKGJzKWJzLnZhbHVlPScnOwogICAgJCgnI2VuZHBvaW50VGV4dCcpJiYoJCgnI2VuZHBvaW50VGV4dCcpLnRleHRDb250ZW50PW1lLnBvc2l0aW9uKTtyZW5kZXJCb2FyZCgpO3N5bmNEaXJlY3RQbGFuUm9sZVVpKCk7dm9pZCB1cGRhdGVCYXR0bGVBdmF0YXIoKTsKICAgIHJzPy5kaXNwYXRjaEV2ZW50KG5ldyBFdmVudCgnY2hhbmdlJyx7YnViYmxlczp0cnVlfSkpO2JzPy5kaXNwYXRjaEV2ZW50KG5ldyBFdmVudCgnY2hhbmdlJyx7YnViYmxlczp0cnVlfSkpO2dyU3luY0JhdHRsZVByZWNvbW1pdENsZWFyKCk7cmV0dXJuIHRydWUKICB9CiAgY29uc3QgYWN0aXZlPW0ucGxheWVycz8uZmluZChwPT5wLmlkPT09bS5hY3RpdmVJZCk7aWYoIWFjdGl2ZT8uaHVtYW4pcmV0dXJuIGZhbHNlOwogIGNvbnN0IHJlc3VsdD1hcGkuY2xlYXJCYXR0bGVQcmVjb21taXRTZWxlY3Rpb24oe3BoYXNlOid0YXJnZXQnLGJ1c3k6bS5idXN5LHRhcmdldENvbW1pdHRlZDpCb29sZWFuKG0udGFyZ2V0KSxwb3NpdGlvbjphY3RpdmUucG9zaXRpb24scGxhbjphY3RpdmUucGxhbix0YXJnZXREcmFmdDpnckJhdHRsZVRhcmdldERyYWZ0KCl9KTsKICBpZighcmVzdWx0LmNsZWFyZWQpcmV0dXJuIGZhbHNlOwogIGdyQmF0dGxlUHJlY29tbWl0VGFyZ2V0Q2xlYXJDb250ZXh0PXttYXRjaDptLHJvdW5kOm0ucm91bmR9OwogIGZvcihjb25zdCBpZCBvZiBbJ3RhcmdldFBsYXllcicsJ3RhcmdldExhbmUnLCd0YXJnZXRTaGllbGQnXSl7Y29uc3QgZWw9JCgnIycraWQpO2lmKGVsKXtlbC52YWx1ZT0nJztlbC5kaXNwYXRjaEV2ZW50KG5ldyBFdmVudCgnY2hhbmdlJyx7YnViYmxlczp0cnVlfSkpfX0KICBjb25zdCBjb25maXJtPSQoJyNjb25maXJtVGFyZ2V0Jyk7aWYoY29uZmlybSl7Y29uZmlybS5kaXNhYmxlZD10cnVlO2NvbmZpcm0uZGF0YXNldC5wcmVjb21taXRDbGVhckRpc2FibGVkPScxJ30KICBnclN5bmNCYXR0bGVQcmVjb21taXRDbGVhcigpO3JldHVybiB0cnVlCn0KY29uc3QgX19nckJhdHRsZVByZWNvbW1pdEJhc2VDb21taXRQbGFucz1jb21taXRQbGFuczsKY29tbWl0UGxhbnM9YXN5bmMgZnVuY3Rpb24oKXtjb25zdCBtPXN0YXRlLm1hdGNoO2dyQmF0dGxlUHJlY29tbWl0Q29tbWl0SW5GbGlnaHQ9bTtnclN5bmNCYXR0bGVQcmVjb21taXRDbGVhcigpO3RyeXtyZXR1cm4gYXdhaXQgX19nckJhdHRsZVByZWNvbW1pdEJhc2VDb21taXRQbGFucy5hcHBseSh0aGlzLGFyZ3VtZW50cyl9ZmluYWxseXtpZihnckJhdHRsZVByZWNvbW1pdENvbW1pdEluRmxpZ2h0PT09bSlnckJhdHRsZVByZWNvbW1pdENvbW1pdEluRmxpZ2h0PW51bGw7Z3JTeW5jQmF0dGxlUHJlY29tbWl0Q2xlYXIoKX19Owpjb25zdCBfX2dyQmF0dGxlUHJlY29tbWl0QmFzZVJlbmRlckJhdHRsZT1yZW5kZXJCYXR0bGU7CnJlbmRlckJhdHRsZT1mdW5jdGlvbigpe2NvbnN0IHI9X19nckJhdHRsZVByZWNvbW1pdEJhc2VSZW5kZXJCYXR0bGUuYXBwbHkodGhpcyxhcmd1bWVudHMpO3F1ZXVlTWljcm90YXNrKGdyU3luY0JhdHRsZVByZWNvbW1pdENsZWFyKTtyZXR1cm4gcn07CmZvcihjb25zdCBpZCBvZiBbJ3RhcmdldFBsYXllcicsJ3RhcmdldExhbmUnLCd0YXJnZXRTaGllbGQnXSkkKCcjJytpZCk/LmFkZEV2ZW50TGlzdGVuZXIoJ2NoYW5nZScsKCk9PnsKICBpZihnckJhdHRsZVByZWNvbW1pdFRhcmdldENsZWFyQ29udGV4dCYmZ3JCYXR0bGVUYXJnZXREcmFmdEhhc1ZhbHVlKCkpZ3JCYXR0bGVQcmVjb21taXRUYXJnZXRDbGVhckNvbnRleHQ9bnVsbDsKICBjb25zdCBjb25maXJtPSQoJyNjb25maXJtVGFyZ2V0JyksZD1nckJhdHRsZVRhcmdldERyYWZ0KCk7aWYoY29uZmlybT8uZGF0YXNldC5wcmVjb21taXRDbGVhckRpc2FibGVkPT09JzEnJiZkLmRlZmVuZGVySWQmJmQubGFuZSYmZC5zaGllbGQpe2NvbmZpcm0uZGlzYWJsZWQ9ZmFsc2U7ZGVsZXRlIGNvbmZpcm0uZGF0YXNldC5wcmVjb21taXRDbGVhckRpc2FibGVkfQogIGdyU3luY0JhdHRsZVByZWNvbW1pdENsZWFyKCkKfSk7CmdyRW5zdXJlQmF0dGxlUHJlY29tbWl0Q2xlYXJCdXR0b24oKTtnclN5bmNCYXR0bGVQcmVjb21taXRDbGVhcigpOwoK
+          BFI_BLOCK_B64: CnRlc3QoJ1IyIHZpc2libGUgcHJlY29tbWl0IG9uZS1vcGVyYXRpb24gY2xlYXIgcHJlc2VydmVzIHJvdXRlIHVuZG8gYW5kIGZhaWxzIGNsb3NlZCBhZ2FpbnN0IGNvbW1pdCByYWNlJywgYXN5bmMgKHsgcGFnZSB9LCB0ZXN0SW5mbykgPT4gewogIGNvbnN0IHJ1bnRpbWUgPSBvYnNlcnZlUnVudGltZUVycm9ycyhwYWdlKTsKICBhd2FpdCBib290Q3VycmVudEJyb3dzZXIocGFnZSk7CiAgY29uc3QgYmF0dGxlID0gYXdhaXQgYmVnaW5WaXNpYmxlVHdvUGxheWVyUm9hZFNoaWVsZChwYWdlLCB0ZXN0SW5mbywgJ3IyLXByZWNvbW1pdC1jbGVhcicpOwogIGNvbnN0IGNsZWFyQWxsID0gYmF0dGxlLmxvY2F0b3IoJyNjbGVhclByZWNvbW1pdFNlbGVjdGlvbicpOwogIGNvbnN0IHJvYWRTZWxlY3QgPSBiYXR0bGUubG9jYXRvcignI3JvYWRTZWxlY3QnKTsKICBjb25zdCBiYXR0bGVTZWxlY3QgPSBiYXR0bGUubG9jYXRvcignI2JhdHRsZVNlbGVjdCcpOwogIGNvbnN0IHJvdXRlVW5kbyA9IGJhdHRsZS5sb2NhdG9yKCcjY2xlYXJQYXRoJyk7CiAgYXdhaXQgZXhwZWN0KHJvdXRlVW5kbywgJ2V4aXN0aW5nIG9uZS1zdGVwIHJvdXRlIHVuZG8gcmVtYWlucyBwcmVzZW50JykudG9CZVZpc2libGUoKTsKICBhd2FpdCBleHBlY3QoY2xlYXJBbGwpLnRvQmVWaXNpYmxlKCk7CiAgYXdhaXQgZXhwZWN0KGNsZWFyQWxsKS50b0JlRGlzYWJsZWQoKTsKCiAgY29uc3Qgcm9hZHMgPSBhd2FpdCByb2FkU2VsZWN0LmxvY2F0b3IoJ29wdGlvbicpLmV2YWx1YXRlQWxsKG5vZGVzID0+IG5vZGVzLm1hcChub2RlID0+IG5vZGUudmFsdWUpLmZpbHRlcihCb29sZWFuKSk7CiAgY29uc3QgYmF0dGxlcyA9IGF3YWl0IGJhdHRsZVNlbGVjdC5sb2NhdG9yKCdvcHRpb24nKS5ldmFsdWF0ZUFsbChub2RlcyA9PiBub2Rlcy5tYXAobm9kZSA9PiBub2RlLnZhbHVlKS5maWx0ZXIoQm9vbGVhbikpOwogIGNvbnN0IHJvYWRJZCA9IHJvYWRzWzBdOwogIGNvbnN0IGJhdHRsZUlkID0gYmF0dGxlcy5maW5kKGlkID0+IGlkICE9PSByb2FkSWQpOwogIGV4cGVjdChyb2FkSWQpLnRvQmVUcnV0aHkoKTsKICBleHBlY3QoYmF0dGxlSWQpLnRvQmVUcnV0aHkoKTsKICBhd2FpdCByb2FkU2VsZWN0LnNlbGVjdE9wdGlvbihyb2FkSWQpOwogIGF3YWl0IGJhdHRsZVNlbGVjdC5zZWxlY3RPcHRpb24oYmF0dGxlSWQpOwogIGF3YWl0IGV4cGVjdChjbGVhckFsbCkudG9CZUVuYWJsZWQoKTsKICBhd2FpdCBjbGVhckFsbC5jbGljaygpOwogIGF3YWl0IGV4cGVjdChyb2FkU2VsZWN0KS50b0hhdmVWYWx1ZSgnJyk7CiAgYXdhaXQgZXhwZWN0KGJhdHRsZVNlbGVjdCkudG9IYXZlVmFsdWUoJycpOwogIGNvbnN0IGNsZWFyZWRQbGFuID0gYXdhaXQgcGFnZS5ldmFsdWF0ZSgoKSA9PiB7CiAgICBjb25zdCBtID0gd2luZG93Ll9fR0FNRVJPQURfVEVTVF9fLnN0YXRlLm1hdGNoOwogICAgY29uc3QgbWUgPSBtLnBsYXllcnNbMF07CiAgICByZXR1cm4geyByb2FkSWQ6IG1lLnBsYW4/LnJvYWRJZCA/PyBudWxsLCBiYXR0bGVJZDogbWUucGxhbj8uYmF0dGxlSWQgPz8gbnVsbCwgcGF0aDogWy4uLihtZS5wbGFuPy5wYXRoIHx8IFtdKV0sIHBvc2l0aW9uOiBtZS5wb3NpdGlvbiB9OwogIH0pOwogIGV4cGVjdChjbGVhcmVkUGxhbi5yb2FkSWQpLnRvQmVOdWxsKCk7CiAgZXhwZWN0KGNsZWFyZWRQbGFuLmJhdHRsZUlkKS50b0JlTnVsbCgpOwogIGV4cGVjdChjbGVhcmVkUGxhbi5wYXRoKS50b0VxdWFsKFtjbGVhcmVkUGxhbi5wb3NpdGlvbl0pOwogIGF3YWl0IGV4cGVjdChyb3V0ZVVuZG8sICdmdWxsIGNsZWFyIGRvZXMgbm90IHJlcGxhY2UgdGhlIG9uZS1zdGVwIHJvdXRlIHVuZG8gY29udHJvbCcpLnRvQmVWaXNpYmxlKCk7CgogIGF3YWl0IHBhZ2UuZXZhbHVhdGUoKCkgPT4gewogICAgY29uc3QgdCA9IHdpbmRvdy5fX0dBTUVST0FEX1RFU1RfXywgbSA9IHQuc3RhdGUubWF0Y2gsIG1lID0gbS5wbGF5ZXJzWzBdOwogICAgbS5waGFzZSA9ICd0YXJnZXQnOyBtLmFjdGl2ZUlkID0gbWUuaWQ7IG0uYnVzeSA9IGZhbHNlOyBtLnRhcmdldCA9IG51bGw7CiAgICB0LmJhdHRsZVByZXNlbnRhdGlvblJlbmRlcigpOwogIH0pOwogIGF3YWl0IGV4cGVjdChiYXR0bGUubG9jYXRvcignI3RhcmdldEJveCcpKS50b0hhdmVDbGFzcygvb24vKTsKICBhd2FpdCBleHBlY3QoY2xlYXJBbGwpLnRvQmVWaXNpYmxlKCk7CiAgYXdhaXQgZXhwZWN0KGNsZWFyQWxsKS50b0JlRW5hYmxlZCgpOwogIGF3YWl0IGNsZWFyQWxsLmNsaWNrKCk7CiAgYXdhaXQgZXhwZWN0KGJhdHRsZS5sb2NhdG9yKCcjdGFyZ2V0UGxheWVyJykpLnRvSGF2ZVZhbHVlKCcnKTsKICBhd2FpdCBleHBlY3QoYmF0dGxlLmxvY2F0b3IoJyN0YXJnZXRMYW5lJykpLnRvSGF2ZVZhbHVlKCcnKTsKICBhd2FpdCBleHBlY3QoYmF0dGxlLmxvY2F0b3IoJyN0YXJnZXRTaGllbGQnKSkudG9IYXZlVmFsdWUoJycpOwogIGF3YWl0IGV4cGVjdChiYXR0bGUubG9jYXRvcignI2NvbmZpcm1UYXJnZXQnKSkudG9CZURpc2FibGVkKCk7CgogIGNvbnN0IHRhcmdldElkID0gYXdhaXQgYmF0dGxlLmxvY2F0b3IoJyN0YXJnZXRQbGF5ZXIgb3B0aW9uJykuZXZhbHVhdGVBbGwobm9kZXMgPT4gbm9kZXMubWFwKG5vZGUgPT4gbm9kZS52YWx1ZSkuZmluZChCb29sZWFuKSk7CiAgZXhwZWN0KHRhcmdldElkKS50b0JlVHJ1dGh5KCk7CiAgYXdhaXQgYmF0dGxlLmxvY2F0b3IoJyN0YXJnZXRQbGF5ZXInKS5zZWxlY3RPcHRpb24odGFyZ2V0SWQpOwogIGF3YWl0IGJhdHRsZS5sb2NhdG9yKCcjdGFyZ2V0TGFuZScpLnNlbGVjdE9wdGlvbignTCcpOwogIGF3YWl0IGJhdHRsZS5sb2NhdG9yKCcjdGFyZ2V0U2hpZWxkJykuc2VsZWN0T3B0aW9uKCdDJyk7CiAgYXdhaXQgZXhwZWN0KGJhdHRsZS5sb2NhdG9yKCcjY29uZmlybVRhcmdldCcpLCAncmVzZWxlY3RpbmcgYSBjb21wbGV0ZSB0YXJnZXQgcmVzdG9yZXMgY29tbWl0IGFmZm9yZGFuY2UnKS50b0JlRW5hYmxlZCgpOwoKICBhd2FpdCBwYWdlLmV2YWx1YXRlKCgpID0+IHsKICAgIGNvbnN0IHQgPSB3aW5kb3cuX19HQU1FUk9BRF9URVNUX18sIG0gPSB0LnN0YXRlLm1hdGNoOwogICAgbS5waGFzZSA9ICdwbGFuJzsgbS5hY3RpdmVJZCA9IG51bGw7IG0uYnVzeSA9IGZhbHNlOyBtLnRhcmdldCA9IG51bGw7CiAgICB0LmJhdHRsZVByZXNlbnRhdGlvblJlbmRlcigpOwogIH0pOwogIGF3YWl0IHJvYWRTZWxlY3Quc2VsZWN0T3B0aW9uKHJvYWRJZCk7CiAgYXdhaXQgYmF0dGxlU2VsZWN0LnNlbGVjdE9wdGlvbihiYXR0bGVJZCk7CiAgYXdhaXQgZXhwZWN0KGJhdHRsZS5sb2NhdG9yKCcjcmVhZHlQbGFuJykpLnRvQmVFbmFibGVkKCk7CiAgYXdhaXQgZXhwZWN0KGNsZWFyQWxsKS50b0JlRW5hYmxlZCgpOwogIGF3YWl0IHBhZ2UuZXZhbHVhdGUoKCkgPT4gewogICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2NsZWFyUHJlY29tbWl0U2VsZWN0aW9uJykuY2xpY2soKTsKICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdyZWFkeVBsYW4nKS5jbGljaygpOwogIH0pOwogIGF3YWl0IHBhZ2Uud2FpdEZvclRpbWVvdXQoODApOwogIGNvbnN0IHJhY2UgPSBhd2FpdCBwYWdlLmV2YWx1YXRlKCgpID0+IHsKICAgIGNvbnN0IG0gPSB3aW5kb3cuX19HQU1FUk9BRF9URVNUX18uc3RhdGUubWF0Y2gsIG1lID0gbS5wbGF5ZXJzWzBdOwogICAgcmV0dXJuIHsgcGhhc2U6IG0ucGhhc2UsIGJ1c3k6IEJvb2xlYW4obS5idXN5KSwgcm9hZElkOiBtZS5wbGFuPy5yb2FkSWQgPz8gbnVsbCwgYmF0dGxlSWQ6IG1lLnBsYW4/LmJhdHRsZUlkID8/IG51bGwgfTsKICB9KTsKICBleHBlY3QocmFjZS5yb2FkSWQsICdSZWFkeS1zdGFydGVkIGNvbW1pdCBpcyBuZXZlciByb2xsZWQgYmFjayBieSB0aGUgYXN5bmNocm9ub3VzIGNsZWFyJykudG9CZShyb2FkSWQpOwogIGV4cGVjdChyYWNlLmJhdHRsZUlkLCAnUmVhZHktc3RhcnRlZCBjb21taXQgcHJlc2VydmVzIHRoZSBzdGFnZWQgQmF0dGxlIGNhcmQnKS50b0JlKGJhdHRsZUlkKTsKICBhd2FpdCBhdHRhY2hTdGF0ZVNjcmVlbnNob3QocGFnZSwgdGVzdEluZm8sICdyMi1wcmVjb21taXQtY2xlYXItcmFjZS1mYWlsLWNsb3NlZCcpOwogIHJ1bnRpbWUuYXNzZXJ0Q2xlYW4odGVzdEluZm8pOwp9KTsK
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import base64, os
 
           html_path = Path('browser/GAMEROAD.html')
           build_path = Path('deploy/cloudflare/scripts/build.mjs')
@@ -37,80 +41,8 @@ jobs:
           if marker not in html:
               if html.count(anchor) != 1:
                   raise SystemExit(f'HTML anchor count drift: {html.count(anchor)}')
-              block = r'''
-/* GAMEROAD_BATTLE_PRECOMMIT_CLEAR_LIVE_R2 */
-const grBattlePrecommitClearCorePromise=import('./battle-precommit-clear-core.mjs');
-let grBattlePrecommitCommitInFlight=null;
-let grBattlePrecommitTargetClearContext=null;
-function grBattleFriendPlanSubmitted(m,me){
-  if(!m?.friendRoom)return false;
-  const status=globalThis.GAMEROAD_FRIEND_ROOM_R2?.status?.();
-  const submitted=status?.planSubmitted;
-  return Array.isArray(submitted)?submitted.includes(me?.id):Boolean(submitted)
-}
-function grBattleTargetDraft(){
-  return {defenderId:$('#targetPlayer')?.value||null,lane:$('#targetLane')?.value||null,shield:$('#targetShield')?.value||null}
-}
-function grBattleTargetDraftHasValue(){const d=grBattleTargetDraft();return Boolean(d.defenderId||d.lane||d.shield)}
-function grBattlePlanDraftHasValue(me){const p=me?.plan;if(!p)return false;return Boolean(p.roadId||p.battleId||(Array.isArray(p.path)&&(p.path.length!==1||p.path[0]!==me.position)))}
-function grEnsureBattlePrecommitClearButton(){
-  let b=$('#clearPrecommitSelection');if(b)return b;
-  const rail=document.querySelector('.battleRail'),leave=$('#leaveMatch');if(!rail||!leave)return null;
-  b=document.createElement('button');b.id='clearPrecommitSelection';b.className='railBtn';b.type='button';b.hidden=true;b.disabled=true;
-  b.setAttribute('aria-label','選択をすべて解除');b.title='選択をすべて解除';b.dataset.precommitClear='1';
-  b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
-  rail.insertBefore(b,leave);b.addEventListener('click',()=>{void grClearBattlePrecommitSelection()});return b
-}
-function grSyncBattlePrecommitClear(){
-  const b=grEnsureBattlePrecommitClearButton(),m=state.match;if(!b)return;
-  const phase=m?.phase||'',me=m?.players?.[0]||null,confirm=$('#confirmTarget');
-  if(grBattlePrecommitTargetClearContext&&(grBattlePrecommitTargetClearContext.match!==m||phase!=='target'||m?.target))grBattlePrecommitTargetClearContext=null;
-  if(grBattlePrecommitTargetClearContext&&phase==='target'&&!m?.busy&&!m?.target){
-    for(const id of ['targetPlayer','targetLane','targetShield']){const el=$('#'+id);if(el&&el.value)el.value=''}
-  }
-  if(phase!=='target'&&confirm?.dataset.precommitClearDisabled==='1'){confirm.disabled=false;delete confirm.dataset.precommitClearDisabled}
-  const planSubmitted=phase==='plan'&&m&&me?grBattleFriendPlanSubmitted(m,me):false;
-  const planClearable=phase==='plan'&&m&&!m.busy&&grBattlePrecommitCommitInFlight!==m&&!planSubmitted&&grBattlePlanDraftHasValue(me);
-  const active=m?.players?.find(p=>p.id===m.activeId),targetClearable=phase==='target'&&m&&!m.busy&&!m.target&&active?.human&&grBattleTargetDraftHasValue();
-  b.hidden=!(phase==='plan'||(phase==='target'&&active?.human));b.disabled=!(planClearable||targetClearable);
-  b.dataset.precommitClearPhase=phase||'none';b.dataset.precommitClearState=b.disabled?'blocked':'ready';b.setAttribute('aria-disabled',b.disabled?'true':'false')
-}
-async function grClearBattlePrecommitSelection(){
-  const m=state.match;if(!m||m.busy)return false;const phase=m.phase,me=m.players?.[0];
-  if(phase!=='plan'&&phase!=='target')return false;
-  const api=await grBattlePrecommitClearCorePromise;
-  if(state.match!==m||m.busy||m.phase!==phase)return false;
-  if(phase==='plan'){
-    const submitted=grBattleFriendPlanSubmitted(m,me),commitInFlight=grBattlePrecommitCommitInFlight===m;
-    const result=api.clearBattlePrecommitSelection({phase:'plan',busy:m.busy||commitInFlight,planSubmitted:submitted,position:me?.position,plan:me?.plan});
-    if(!result.cleared)return false;
-    me.plan={...result.next.plan,path:[...result.next.plan.path]};
-    const rs=$('#roadSelect'),bs=$('#battleSelect');if(rs)rs.value='';if(bs)bs.value='';
-    $('#endpointText')&&($('#endpointText').textContent=me.position);renderBoard();syncDirectPlanRoleUi();void updateBattleAvatar();
-    rs?.dispatchEvent(new Event('change',{bubbles:true}));bs?.dispatchEvent(new Event('change',{bubbles:true}));grSyncBattlePrecommitClear();return true
-  }
-  const active=m.players?.find(p=>p.id===m.activeId);if(!active?.human)return false;
-  const result=api.clearBattlePrecommitSelection({phase:'target',busy:m.busy,targetCommitted:Boolean(m.target),position:active.position,plan:active.plan,targetDraft:grBattleTargetDraft()});
-  if(!result.cleared)return false;
-  grBattlePrecommitTargetClearContext={match:m,round:m.round};
-  for(const id of ['targetPlayer','targetLane','targetShield']){const el=$('#'+id);if(el){el.value='';el.dispatchEvent(new Event('change',{bubbles:true}))}}
-  const confirm=$('#confirmTarget');if(confirm){confirm.disabled=true;confirm.dataset.precommitClearDisabled='1'}
-  grSyncBattlePrecommitClear();return true
-}
-const __grBattlePrecommitBaseCommitPlans=commitPlans;
-commitPlans=async function(){const m=state.match;grBattlePrecommitCommitInFlight=m;grSyncBattlePrecommitClear();try{return await __grBattlePrecommitBaseCommitPlans.apply(this,arguments)}finally{if(grBattlePrecommitCommitInFlight===m)grBattlePrecommitCommitInFlight=null;grSyncBattlePrecommitClear()}};
-const __grBattlePrecommitBaseRenderBattle=renderBattle;
-renderBattle=function(){const r=__grBattlePrecommitBaseRenderBattle.apply(this,arguments);queueMicrotask(grSyncBattlePrecommitClear);return r};
-for(const id of ['targetPlayer','targetLane','targetShield'])$('#'+id)?.addEventListener('change',()=>{
-  if(grBattlePrecommitTargetClearContext&&grBattleTargetDraftHasValue())grBattlePrecommitTargetClearContext=null;
-  const confirm=$('#confirmTarget'),d=grBattleTargetDraft();if(confirm?.dataset.precommitClearDisabled==='1'&&d.defenderId&&d.lane&&d.shield){confirm.disabled=false;delete confirm.dataset.precommitClearDisabled}
-  grSyncBattlePrecommitClear()
-});
-grEnsureBattlePrecommitClearButton();grSyncBattlePrecommitClear();
-
-'''
-              html = html.replace(anchor, block + anchor, 1)
-              html_path.write_text(html, encoding='utf-8')
+              block = base64.b64decode(os.environ['HTML_BLOCK_B64']).decode('utf-8')
+              html_path.write_text(html.replace(anchor, block + anchor, 1), encoding='utf-8')
 
           build = build_path.read_text(encoding='utf-8')
           artifact = "  { source: 'browser/battle-precommit-clear-core.mjs', output: 'battle-precommit-clear-core.mjs', artifact: 'battle_precommit_clear_core', label: 'Battle precommit clear core' },"
@@ -118,93 +50,12 @@ grEnsureBattlePrecommitClearButton();grSyncBattlePrecommitClear();
           if artifact not in build:
               if build.count(build_anchor) != 1:
                   raise SystemExit(f'build anchor count drift: {build.count(build_anchor)}')
-              build = build.replace(build_anchor, build_anchor + '\n' + artifact, 1)
-              build_path.write_text(build, encoding='utf-8')
+              build_path.write_text(build.replace(build_anchor, build_anchor + '\n' + artifact, 1), encoding='utf-8')
 
           bfi = bfi_path.read_text(encoding='utf-8')
           test_marker = 'R2 visible precommit one-operation clear preserves route undo and fails closed against commit race'
           if test_marker not in bfi:
-              test_block = r'''
-
-test('R2 visible precommit one-operation clear preserves route undo and fails closed against commit race', async ({ page }, testInfo) => {
-  const runtime = observeRuntimeErrors(page);
-  await bootCurrentBrowser(page);
-  const battle = await beginVisibleTwoPlayerRoadShield(page, testInfo, 'r2-precommit-clear');
-  const clearAll = battle.locator('#clearPrecommitSelection');
-  const roadSelect = battle.locator('#roadSelect');
-  const battleSelect = battle.locator('#battleSelect');
-  const routeUndo = battle.locator('#clearPath');
-  await expect(routeUndo, 'existing one-step route undo remains present').toBeVisible();
-  await expect(clearAll).toBeVisible();
-  await expect(clearAll).toBeDisabled();
-
-  const roads = await roadSelect.locator('option').evaluateAll(nodes => nodes.map(node => node.value).filter(Boolean));
-  const battles = await battleSelect.locator('option').evaluateAll(nodes => nodes.map(node => node.value).filter(Boolean));
-  const roadId = roads[0];
-  const battleId = battles.find(id => id !== roadId);
-  expect(roadId).toBeTruthy();
-  expect(battleId).toBeTruthy();
-  await roadSelect.selectOption(roadId);
-  await battleSelect.selectOption(battleId);
-  await expect(clearAll).toBeEnabled();
-  await clearAll.click();
-  await expect(roadSelect).toHaveValue('');
-  await expect(battleSelect).toHaveValue('');
-  const clearedPlan = await page.evaluate(() => {
-    const m = window.__GAMEROAD_TEST__.state.match;
-    const me = m.players[0];
-    return { roadId: me.plan?.roadId ?? null, battleId: me.plan?.battleId ?? null, path: [...(me.plan?.path || [])], position: me.position };
-  });
-  expect(clearedPlan.roadId).toBeNull();
-  expect(clearedPlan.battleId).toBeNull();
-  expect(clearedPlan.path).toEqual([clearedPlan.position]);
-  await expect(routeUndo, 'full clear does not replace the one-step route undo control').toBeVisible();
-
-  await page.evaluate(() => {
-    const t = window.__GAMEROAD_TEST__, m = t.state.match, me = m.players[0];
-    m.phase = 'target'; m.activeId = me.id; m.busy = false; m.target = null;
-    t.battlePresentationRender();
-  });
-  await expect(battle.locator('#targetBox')).toHaveClass(/on/);
-  await expect(clearAll).toBeVisible();
-  await expect(clearAll).toBeEnabled();
-  await clearAll.click();
-  await expect(battle.locator('#targetPlayer')).toHaveValue('');
-  await expect(battle.locator('#targetLane')).toHaveValue('');
-  await expect(battle.locator('#targetShield')).toHaveValue('');
-  await expect(battle.locator('#confirmTarget')).toBeDisabled();
-
-  const targetId = await battle.locator('#targetPlayer option').evaluateAll(nodes => nodes.map(node => node.value).find(Boolean));
-  expect(targetId).toBeTruthy();
-  await battle.locator('#targetPlayer').selectOption(targetId);
-  await battle.locator('#targetLane').selectOption('L');
-  await battle.locator('#targetShield').selectOption('C');
-  await expect(battle.locator('#confirmTarget'), 'reselecting a complete target restores commit affordance').toBeEnabled();
-
-  await page.evaluate(() => {
-    const t = window.__GAMEROAD_TEST__, m = t.state.match;
-    m.phase = 'plan'; m.activeId = null; m.busy = false; m.target = null;
-    t.battlePresentationRender();
-  });
-  await roadSelect.selectOption(roadId);
-  await battleSelect.selectOption(battleId);
-  await expect(battle.locator('#readyPlan')).toBeEnabled();
-  await expect(clearAll).toBeEnabled();
-  await page.evaluate(() => {
-    document.getElementById('clearPrecommitSelection').click();
-    document.getElementById('readyPlan').click();
-  });
-  await page.waitForTimeout(80);
-  const race = await page.evaluate(() => {
-    const m = window.__GAMEROAD_TEST__.state.match, me = m.players[0];
-    return { phase: m.phase, busy: Boolean(m.busy), roadId: me.plan?.roadId ?? null, battleId: me.plan?.battleId ?? null };
-  });
-  expect(race.roadId, 'Ready-started commit is never rolled back by the asynchronous clear').toBe(roadId);
-  expect(race.battleId, 'Ready-started commit preserves the staged Battle card').toBe(battleId);
-  await attachStateScreenshot(page, testInfo, 'r2-precommit-clear-race-fail-closed');
-  runtime.assertClean(testInfo);
-});
-'''
+              test_block = base64.b64decode(os.environ['BFI_BLOCK_B64']).decode('utf-8')
               bfi_path.write_text(bfi + test_block, encoding='utf-8')
           PY
       - name: Run focused core and public package tests
@@ -226,10 +77,11 @@ test('R2 visible precommit one-operation clear preserves route undo and fails cl
             '.github/workflows/battle-precommit-clear-live-r2-executor.yml',
             'data/preaction-authorizations/BATTLE-PRECOMMIT-CLEAR-LIVE-R2-20260905T2010-SOL-Q7M4P2.json',
           }
-          paths=set(subprocess.check_output(['git','status','--porcelain'],text=True).splitlines())
-          changed={line[3:] for line in paths if len(line)>=4}
+          lines=subprocess.check_output(['git','status','--porcelain'],text=True).splitlines()
+          changed={line[3:] for line in lines if len(line)>=4}
           extra=changed-allowed
-          if extra: raise SystemExit('unexpected changed paths: '+','.join(sorted(extra)))
+          if extra:
+              raise SystemExit('unexpected changed paths: '+','.join(sorted(extra)))
           PY
       - name: Cleanup transient authorization and executor then commit product slice
         shell: bash

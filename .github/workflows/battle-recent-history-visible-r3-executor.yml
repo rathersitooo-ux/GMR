@@ -1,6 +1,9 @@
 name: Battle Recent History Visible R3 Executor
 
 on:
+  push:
+    branches:
+      - sol/battle-recent-history-visible-r3-20260905
   workflow_dispatch:
 
 permissions:

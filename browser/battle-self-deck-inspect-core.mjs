@@ -1,7 +1,15 @@
 const SCHEMA = 'GAMEROAD_BATTLE_SELF_DECK_INSPECT_V1';
+const COUNT_ONLY_SCHEMA = 'GAMEROAD_BATTLE_REMAINING_DECK_COUNT_V1';
 const VIEWER_KNOWLEDGE_SCHEMA = 'GAMEROAD_BATTLE_REMAINING_DECK_VIEWER_KNOWLEDGE_V1';
 const SNAPSHOT_KEYS = Object.freeze([
   'cardCounts',
+  'matchId',
+  'ownerPlayerId',
+  'revision',
+  'schema',
+  'total'
+]);
+const COUNT_ONLY_SNAPSHOT_KEYS = Object.freeze([
   'matchId',
   'ownerPlayerId',
   'revision',
@@ -121,6 +129,14 @@ export function createAuthoritativeRemainingDeckSnapshot({ matchId, ownerPlayerI
   return deepFreeze({ schema: SCHEMA, matchId, ownerPlayerId, revision, total: remainingCardIds.length, cardCounts });
 }
 
+export function createAuthoritativeRemainingDeckCountSnapshot({ matchId, ownerPlayerId, revision, remainingCount }) {
+  if (!validCanonicalString(matchId)) throw new TypeError('MATCH_ID_REQUIRED');
+  if (!validCanonicalString(ownerPlayerId)) throw new TypeError('OWNER_PLAYER_ID_REQUIRED');
+  if (!Number.isSafeInteger(revision) || revision < 0) throw new TypeError('REVISION_INVALID');
+  if (!Number.isSafeInteger(remainingCount) || remainingCount < 0) throw new TypeError('REMAINING_COUNT_INVALID');
+  return deepFreeze({ schema: COUNT_ONLY_SCHEMA, matchId, ownerPlayerId, revision, total: remainingCount });
+}
+
 export function validateAuthoritativeRemainingDeckSnapshot(snapshot) {
   if (!sameExactKeys(snapshot, SNAPSHOT_KEYS)) return fail('SNAPSHOT_SHAPE_INVALID');
   if (snapshot.schema !== SCHEMA) return fail('SCHEMA_UNKNOWN');
@@ -144,6 +160,16 @@ export function validateAuthoritativeRemainingDeckSnapshot(snapshot) {
   return deepFreeze({ ok: true, status: 'ready' });
 }
 
+export function validateAuthoritativeRemainingDeckCountSnapshot(snapshot) {
+  if (!sameExactKeys(snapshot, COUNT_ONLY_SNAPSHOT_KEYS)) return fail('COUNT_SNAPSHOT_SHAPE_INVALID');
+  if (snapshot.schema !== COUNT_ONLY_SCHEMA) return fail('COUNT_SCHEMA_UNKNOWN');
+  if (!validCanonicalString(snapshot.matchId)) return fail('MATCH_ID_INVALID');
+  if (!validCanonicalString(snapshot.ownerPlayerId)) return fail('OWNER_PLAYER_ID_INVALID');
+  if (!Number.isSafeInteger(snapshot.revision) || snapshot.revision < 0) return fail('REVISION_INVALID');
+  if (!Number.isSafeInteger(snapshot.total) || snapshot.total < 0) return fail('TOTAL_INVALID');
+  return deepFreeze({ ok: true, status: 'ready' });
+}
+
 export function projectRemainingDeckForViewer(snapshot, { viewer = null, viewerKnowledge = null } = {}) {
   const validation = validateAuthoritativeRemainingDeckSnapshot(snapshot);
   if (!validation.ok) return validation;
@@ -153,10 +179,21 @@ export function projectRemainingDeckForViewer(snapshot, { viewer = null, viewerK
   return projectAuthorizedKnowledge(snapshot, viewerKnowledge, viewerId);
 }
 
+export function projectRemainingDeckCountForViewer(snapshot, { viewer = null, viewerKnowledge = null } = {}) {
+  const validation = validateAuthoritativeRemainingDeckCountSnapshot(snapshot);
+  if (!validation.ok) return validation;
+  if (viewerKnowledge === null || viewerKnowledge === undefined) return deepFreeze(baseProjection(snapshot));
+  const viewerId = viewer?.authenticated === true && validCanonicalString(viewer?.id) ? viewer.id : null;
+  if (viewerId === null) return fail('VIEWER_AUTHENTICATION_REQUIRED');
+  return projectAuthorizedKnowledge(snapshot, viewerKnowledge, viewerId);
+}
+
 export const BATTLE_SELF_DECK_INSPECT_CORE = deepFreeze({
   schema: SCHEMA,
+  countOnlySchema: COUNT_ONLY_SCHEMA,
   viewerKnowledgeSchema: VIEWER_KNOWLEDGE_SCHEMA,
   projectionAuthority: 'CALLER_AUTHORIZED_VIEWER_KNOWLEDGE_ONLY',
+  acceptsAuthoritativeCountOnly: true,
   exposesAuthoritativeCardCounts: false,
   exposesDeckOrder: false
 });

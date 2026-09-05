@@ -2,8 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   BATTLE_SELF_DECK_INSPECT_CORE,
+  createAuthoritativeRemainingDeckCountSnapshot,
   createAuthoritativeRemainingDeckSnapshot,
+  projectRemainingDeckCountForViewer,
   projectRemainingDeckForViewer,
+  validateAuthoritativeRemainingDeckCountSnapshot,
   validateAuthoritativeRemainingDeckSnapshot
 } from '../browser/battle-self-deck-inspect-core.mjs';
 import { appendAcceptedEvent, createReplayLog, readReplay } from '../browser/battle-replay-core.mjs';
@@ -15,11 +18,17 @@ const event = (sequence, kind, cardId) => ({ sequence, kind, cardId });
 function snapshot(ids = ['SP-2', 'SP-1', 'SP-2', 'HT-1'], revision = 7) {
   return createAuthoritativeRemainingDeckSnapshot({ matchId: 'MATCH-1', ownerPlayerId: 'P1', revision, remainingCardIds: ids });
 }
+function countSnapshot(total = 4, revision = 7) {
+  return createAuthoritativeRemainingDeckCountSnapshot({ matchId: 'MATCH-1', ownerPlayerId: 'P1', revision, remainingCount: total });
+}
 function knowledge({ viewerId = 'P1', revision = 7, events = [] } = {}) {
   return { schema: BATTLE_SELF_DECK_INSPECT_CORE.viewerKnowledgeSchema, matchId: 'MATCH-1', viewerId, revision, events };
 }
 function projection(value, id = 'P1', viewerKnowledge = null) {
   return projectRemainingDeckForViewer(value, { viewer: viewer(id), viewerKnowledge });
+}
+function countProjection(value, id = 'P1', viewerKnowledge = null) {
+  return projectRemainingDeckCountForViewer(value, { viewer: viewer(id), viewerKnowledge });
 }
 
 test('authority snapshot canonicalizes counts but projection contract never exposes authority-only counts or order', () => {
@@ -36,6 +45,58 @@ test('authority snapshot canonicalizes counts but projection contract never expo
   assert.equal(BATTLE_SELF_DECK_INSPECT_CORE.exposesAuthoritativeCardCounts, false);
   assert.equal(BATTLE_SELF_DECK_INSPECT_CORE.exposesDeckOrder, false);
   assert.equal(Object.isFrozen(value.cardCounts[0]), true);
+});
+
+test('count-only authority accepts live draw-pile size without secret identities or order', () => {
+  const value = countSnapshot(4);
+  assert.deepEqual(value, {
+    schema: 'GAMEROAD_BATTLE_REMAINING_DECK_COUNT_V1',
+    matchId: 'MATCH-1',
+    ownerPlayerId: 'P1',
+    revision: 7,
+    total: 4
+  });
+  assert.equal(validateAuthoritativeRemainingDeckCountSnapshot(value).ok, true);
+  assert.deepEqual(countProjection(value), projection(snapshot()));
+  assert.equal('cardCounts' in value, false);
+  assert.equal('remainingCardIds' in value, false);
+  assert.equal(BATTLE_SELF_DECK_INSPECT_CORE.countOnlySchema, 'GAMEROAD_BATTLE_REMAINING_DECK_COUNT_V1');
+  assert.equal(BATTLE_SELF_DECK_INSPECT_CORE.acceptsAuthoritativeCountOnly, true);
+  assert.equal(BATTLE_SELF_DECK_INSPECT_CORE.exposesAuthoritativeCardCounts, false);
+  assert.equal(BATTLE_SELF_DECK_INSPECT_CORE.exposesDeckOrder, false);
+  assert.equal(Object.isFrozen(value), true);
+});
+
+test('count-only authority overlays only viewer-authorized known identities and leaves the rest unknown', () => {
+  const value = countSnapshot(3, 9);
+  const known = knowledge({ viewerId: 'P2', revision: 9, events: [event(20, 'RETURN_KNOWN', 'KNOWN-X')] });
+  const projected = countProjection(value, 'P2', known);
+  assert.deepEqual(projected.knownCardCounts, [{ cardId: 'KNOWN-X', count: 1 }]);
+  assert.equal(projected.total, 3);
+  assert.equal(projected.knownCount, 1);
+  assert.equal(projected.unknownCount, 2);
+  assert.equal(projected.knownTypeCount, 1);
+  assert.equal('cardCounts' in projected, false);
+  assert.equal('remainingCardIds' in projected, false);
+
+  const tooManyKnown = countProjection(countSnapshot(1, 10), 'P1', knowledge({
+    revision: 10,
+    events: [event(0, 'INITIAL_KNOWN', 'A'), event(1, 'INITIAL_KNOWN', 'B')]
+  }));
+  assert.equal(tooManyKnown.ok, false);
+  assert.equal(tooManyKnown.reason, 'VIEWER_KNOWN_COUNT_EXCEEDS_TOTAL');
+});
+
+test('count-only authority rejects invalid count and tampered secret-bearing shapes', () => {
+  const valid = { matchId: 'M', ownerPlayerId: 'P1', revision: 0, remainingCount: 3 };
+  assert.throws(() => createAuthoritativeRemainingDeckCountSnapshot({ ...valid, remainingCount: -1 }), /REMAINING_COUNT_INVALID/);
+  assert.throws(() => createAuthoritativeRemainingDeckCountSnapshot({ ...valid, remainingCount: 1.5 }), /REMAINING_COUNT_INVALID/);
+  assert.throws(() => createAuthoritativeRemainingDeckCountSnapshot({ ...valid, remainingCount: '3' }), /REMAINING_COUNT_INVALID/);
+  const extraSecret = { ...countSnapshot(2), cardCounts: [{ cardId: 'SECRET', count: 2 }] };
+  assert.equal(validateAuthoritativeRemainingDeckCountSnapshot(extraSecret).reason, 'COUNT_SNAPSHOT_SHAPE_INVALID');
+  assert.equal(countProjection(extraSecret).reason, 'COUNT_SNAPSHOT_SHAPE_INVALID');
+  const wrongSchema = { ...countSnapshot(2), schema: 'OTHER' };
+  assert.equal(validateAuthoritativeRemainingDeckCountSnapshot(wrongSchema).reason, 'COUNT_SCHEMA_UNKNOWN');
 });
 
 test('ownership alone no longer reveals exact remaining identities', () => {

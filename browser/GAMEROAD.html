@@ -2300,6 +2300,76 @@ $('#roadSelect').addEventListener('change',()=>ctxClear());$('#battleSelect').ad
 const __ctxBaseRenderBattle=renderBattle;renderBattle=function(){const r=__ctxBaseRenderBattle();ctxRender();return r};
 window.__GAMEROAD_CONTEXT_HELP_TEST__={contract:CONTEXT_REASON_CONTRACT,defs:CONTEXT_REASON_DEFS,snapshot:()=>JSON.parse(JSON.stringify({current:contextReasonRuntime.current,lastResolution:contextReasonRuntime.lastResolution,events:contextReasonRuntime.events})),set:(code,opts={})=>ctxSet(code,opts),clear:ctxClear,render:ctxRender,planReason:ctxPlanReason,legalTarget:(pid)=>{const m=state.match,a=m?.players?.find(p=>p.id===m.activeId);return ctxLegalTarget(a,pid)},targetOptions:()=>[...document.querySelectorAll('#targetPlayer option')].map(o=>o.value),forceRenderTarget:()=>{renderTarget();ctxRender();return [...document.querySelectorAll('#targetPlayer option')].map(o=>o.value)},abilityNoChoiceProbe:()=>chooseAbilityItems('試験能力','',[],1,1,true),autoTargetProbe:(pid='P1')=>{const p=state.match?.players?.find(x=>x.id===pid);if(!p)return null;autoTarget(p);return state.match?.target?{...state.match.target}:null},surface:()=>({visible:$('#contextHelp').classList.contains('on'),text:$('#contextHelp').innerText,screen:$('#contextHelp').dataset.screen,phase:$('#contextHelp').dataset.phase}),privacyScan:()=>{const t=$('#contextHelp')?.innerText||'',m=state.match;if(!m)return{ok:true,hits:[]};const secrets=[];m.players.filter(p=>!p.human).forEach(p=>{if(p.plan?.roadId)secrets.push(p.plan.roadId);if(p.plan?.battleId)secrets.push(p.plan.battleId);if(p.plan?.path)secrets.push(...p.plan.path)});const hits=[...new Set(secrets.filter(v=>v&&t.includes(String(v))))];return{ok:hits.length===0,hits}},formalChanges:Object.freeze({teamTargetFilter:true,H01_H06:false,cardRules:false,economy:false})};
 
+/* GAMEROAD_BATTLE_PRECOMMIT_CLEAR_LIVE_R2 */
+const grBattlePrecommitClearCorePromise=import('./battle-precommit-clear-core.mjs');
+let grBattlePrecommitCommitInFlight=null;
+let grBattlePrecommitTargetClearContext=null;
+function grBattleFriendPlanSubmitted(m,me){
+  if(!m?.friendRoom)return false;
+  const status=globalThis.GAMEROAD_FRIEND_ROOM_R2?.status?.();
+  const submitted=status?.planSubmitted;
+  return Array.isArray(submitted)?submitted.includes(me?.id):Boolean(submitted)
+}
+function grBattleTargetDraft(){
+  return {defenderId:$('#targetPlayer')?.value||null,lane:$('#targetLane')?.value||null,shield:$('#targetShield')?.value||null}
+}
+function grBattleTargetDraftHasValue(){const d=grBattleTargetDraft();return Boolean(d.defenderId||d.lane||d.shield)}
+function grBattlePlanDraftHasValue(me){const p=me?.plan;if(!p)return false;return Boolean(p.roadId||p.battleId||(Array.isArray(p.path)&&(p.path.length!==1||p.path[0]!==me.position)))}
+function grEnsureBattlePrecommitClearButton(){
+  let b=$('#clearPrecommitSelection');if(b)return b;
+  const rail=document.querySelector('.battleRail'),leave=$('#leaveMatch');if(!rail||!leave)return null;
+  b=document.createElement('button');b.id='clearPrecommitSelection';b.className='railBtn';b.type='button';b.hidden=true;b.disabled=true;
+  b.setAttribute('aria-label','選択をすべて解除');b.title='選択をすべて解除';b.dataset.precommitClear='1';
+  b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+  rail.insertBefore(b,leave);b.addEventListener('click',()=>{void grClearBattlePrecommitSelection()});return b
+}
+function grSyncBattlePrecommitClear(){
+  const b=grEnsureBattlePrecommitClearButton(),m=state.match;if(!b)return;
+  const phase=m?.phase||'',me=m?.players?.[0]||null,confirm=$('#confirmTarget');
+  if(grBattlePrecommitTargetClearContext&&(grBattlePrecommitTargetClearContext.match!==m||phase!=='target'||m?.target))grBattlePrecommitTargetClearContext=null;
+  if(grBattlePrecommitTargetClearContext&&phase==='target'&&!m?.busy&&!m?.target){
+    for(const id of ['targetPlayer','targetLane','targetShield']){const el=$('#'+id);if(el&&el.value)el.value=''}
+  }
+  if(phase!=='target'&&confirm?.dataset.precommitClearDisabled==='1'){confirm.disabled=false;delete confirm.dataset.precommitClearDisabled}
+  const planSubmitted=phase==='plan'&&m&&me?grBattleFriendPlanSubmitted(m,me):false;
+  const planClearable=phase==='plan'&&m&&!m.busy&&grBattlePrecommitCommitInFlight!==m&&!planSubmitted&&grBattlePlanDraftHasValue(me);
+  const active=m?.players?.find(p=>p.id===m.activeId),targetClearable=phase==='target'&&m&&!m.busy&&!m.target&&active?.human&&grBattleTargetDraftHasValue();
+  b.hidden=!(phase==='plan'||(phase==='target'&&active?.human));b.disabled=!(planClearable||targetClearable);
+  b.dataset.precommitClearPhase=phase||'none';b.dataset.precommitClearState=b.disabled?'blocked':'ready';b.setAttribute('aria-disabled',b.disabled?'true':'false')
+}
+async function grClearBattlePrecommitSelection(){
+  const m=state.match;if(!m||m.busy)return false;const phase=m.phase,me=m.players?.[0];
+  if(phase!=='plan'&&phase!=='target')return false;
+  const api=await grBattlePrecommitClearCorePromise;
+  if(state.match!==m||m.busy||m.phase!==phase)return false;
+  if(phase==='plan'){
+    const submitted=grBattleFriendPlanSubmitted(m,me),commitInFlight=grBattlePrecommitCommitInFlight===m;
+    const result=api.clearBattlePrecommitSelection({phase:'plan',busy:m.busy||commitInFlight,planSubmitted:submitted,position:me?.position,plan:me?.plan});
+    if(!result.cleared)return false;
+    me.plan={...result.next.plan,path:[...result.next.plan.path]};
+    const rs=$('#roadSelect'),bs=$('#battleSelect');if(rs)rs.value='';if(bs)bs.value='';
+    $('#endpointText')&&($('#endpointText').textContent=me.position);renderBoard();syncDirectPlanRoleUi();void updateBattleAvatar();
+    rs?.dispatchEvent(new Event('change',{bubbles:true}));bs?.dispatchEvent(new Event('change',{bubbles:true}));grSyncBattlePrecommitClear();return true
+  }
+  const active=m.players?.find(p=>p.id===m.activeId);if(!active?.human)return false;
+  const result=api.clearBattlePrecommitSelection({phase:'target',busy:m.busy,targetCommitted:Boolean(m.target),position:active.position,plan:active.plan,targetDraft:grBattleTargetDraft()});
+  if(!result.cleared)return false;
+  grBattlePrecommitTargetClearContext={match:m,round:m.round};
+  for(const id of ['targetPlayer','targetLane','targetShield']){const el=$('#'+id);if(el){el.value='';el.dispatchEvent(new Event('change',{bubbles:true}))}}
+  const confirm=$('#confirmTarget');if(confirm){confirm.disabled=true;confirm.dataset.precommitClearDisabled='1'}
+  grSyncBattlePrecommitClear();return true
+}
+const __grBattlePrecommitBaseCommitPlans=commitPlans;
+commitPlans=async function(){const m=state.match;grBattlePrecommitCommitInFlight=m;grSyncBattlePrecommitClear();try{return await __grBattlePrecommitBaseCommitPlans.apply(this,arguments)}finally{if(grBattlePrecommitCommitInFlight===m)grBattlePrecommitCommitInFlight=null;grSyncBattlePrecommitClear()}};
+const __grBattlePrecommitBaseRenderBattle=renderBattle;
+renderBattle=function(){const r=__grBattlePrecommitBaseRenderBattle.apply(this,arguments);queueMicrotask(grSyncBattlePrecommitClear);return r};
+for(const id of ['targetPlayer','targetLane','targetShield'])$('#'+id)?.addEventListener('change',()=>{
+  if(grBattlePrecommitTargetClearContext&&grBattleTargetDraftHasValue())grBattlePrecommitTargetClearContext=null;
+  const confirm=$('#confirmTarget'),d=grBattleTargetDraft();if(confirm?.dataset.precommitClearDisabled==='1'&&d.defenderId&&d.lane&&d.shield){confirm.disabled=false;delete confirm.dataset.precommitClearDisabled}
+  grSyncBattlePrecommitClear()
+});
+grEnsureBattlePrecommitClearButton();grSyncBattlePrecommitClear();
+
 window.GAMEROAD_PARTNER_STATE=Object.freeze({partner:()=>{const c=partnerInfo();return{id:c.id,name:c.name}},player:()=>{const c=playerCharInfo();return{id:c.id,name:c.name}},snapshot:()=>({selectedPartnerId:state.selectedPartnerId,playerCharacterId:state.playerCharacterId,profiles:safeClone(state.partnerProfiles)})});
 window.__GAMEROAD_TEST__={state,show,partnerRoles:()=>({selectedPartnerId:state.selectedPartnerId,playerCharacterId:state.playerCharacterId,profiles:safeClone(state.partnerProfiles)}),setPartnerRole:(id)=>{if(!PROD_CHARS.some(c=>c.id===id))return false;state.selectedPartnerId=id;save();return true},setPlayerCharacter:(id)=>{if(!isPlayablePlayerCharacter(id))return false;state.playerCharacterId=id;save();return true},battleResolution:()=>safeClone(state.match?.lastBattleResolution||null),battlePresentation:()=>safeClone(state.match?.battlePresentation||null),battleResolutionVisible:()=>!$('#battleResolution')?.hidden,battlePresentationFast:(v=true)=>{battlePresentationRuntime.fast=!!v;if(v)advanceBattlePresentation();return battlePresentationRuntime.fast},battlePresentationTimings:()=>({step:BATTLE_PRESENTATION_STEP_MS,read:BATTLE_PRESENTATION_STEP_MS,result:BATTLE_PRESENTATION_RESULT_MS}),publicCardPresentationBuild:(reveal,manifest=FORMAL_CARD_PRESENTATION_MANIFEST)=>safeClone(buildPublicCardPresentationInputs(reveal,manifest)),publicCardPresentationManifest:()=>safeClone(FORMAL_CARD_PRESENTATION_MANIFEST),battlePresentationRender:()=>{renderBattle();return true},battlePresentationProbe:()=>{const e=$('#battleResolution'),r=e?.getBoundingClientRect(),c=fieldCameraState;return{stage:state.match?.battlePresentation?.stage||null,phase:state.match?.phase||null,busy:!!state.match?.busy,hidden:!!e?.hidden,players:e?.querySelectorAll('.resolutionPlayer').length||0,advance:!!e?.querySelector('.resolutionAdvance'),text:e?.innerText?.slice(0,800)||'',rect:r?[r.x,r.y,r.width,r.height]:null,overflowX:e?e.scrollWidth-e.clientWidth:0,overflowY:e?e.scrollHeight-e.clientHeight:0,docOverflow:document.documentElement.scrollWidth-document.documentElement.clientWidth,camera:c?{moveFocus:!!c.moveFocus,battleFocus:!!c.battleFocus,kind:c.kind,eye:c.eye,center:c.center}:null}},targetLegalIds:(id)=>{const p=state.match?.players.find(x=>x.id===id);return p?legalOpponents(p).map(x=>x.id):[]},forceAutoTarget:(id)=>{const p=state.match?.players.find(x=>x.id===id);if(!p)throw Error('player-missing');autoTarget(p);return {...state.match.target}},start:(mode='2p',content=state.setupContent)=>{state.setupMode=mode;state.setupContent=content;startMatch();return state.match},autoRound,autoToResult,cardConservation,boardCount:()=>$('#board').children.length,visibleButtons:()=>$$('button').filter(b=>{const r=b.getBoundingClientRect(),s=getComputedStyle(b);return r.width>0&&r.height>0&&s.visibility!=='hidden'&&s.display!=='none'}).length,surfaceNames:()=>$$('.screen').map(x=>x.dataset.screen),missionProgress:()=>({matches:state.history.length,wins:historyWins(),modes:historyModes()}),packPreview:()=>{state.lastPackPreview=buildPackPreview();return state.lastPackPreview.map(x=>x.ticket?'ticket':x.id)},projectionIndependent:()=>{const p=state.match?.players?.[0];if(!p)return true;const before=JSON.stringify(state.match.players.map(x=>x.lanes));const orig=[...state.match.projection];state.match.projection.reverse();const after=JSON.stringify(state.match.players.map(x=>x.lanes));state.match.projection=orig;return before===after},save,load,deckRule:()=>safeClone(DECK_RULE),isTrumpCard:(id)=>isTrumpCard(id),isRoyalCard:(id)=>isRoyalCard(id),royalUsed:(p)=>publicRoyalUsed(p),deckValidate:(deck=state.deckDraft,opts={})=>validateDeck(deck,opts),deckSetDraft:(main,ex=[])=>{state.deckDraft={main:[...main],ex:[...ex]};return validateDeck(state.deckDraft)},deckDraftSessionKey:()=>DECK_DRAFT_SESSION_KEY,deckDraftSessionSave:saveDeckDraftSession,deckDraftSessionRecover:recoverDeckDraftSession,deckDraftSessionClear:clearDeckDraftSession,deckRestore:restoreDeck,deckDefault:defaultDeckDraft,deckCommit:commitDeck,deckSaved:()=>safeClone(state.savedDeck),deckPublic:()=>window.__CARD_DATA__.filter(publicCard).map(c=>({id:c.id,slot:deckSlot(c.id)})),makePlayerTest:(ids)=>makePlayer(0,true,ids)};
 window.__V105_ABILITY_TEST__={makeParticipant,resolveAbilityBundle,effectiveAbilityCost,payAbility,participantEntries,sortAbilityEntries,abilityOrderReceiptKey,matchRnd,initRoundRuntime,clearAbilityOrderReceipts:()=>{state.match?.abilityOrderReceipts?.clear();return state.match?.abilityOrderReceipts?.size||0},abilityOrderReceiptSize:()=>state.match?.abilityOrderReceipts?.size||0,setAutoChoices:(v=true)=>{if(state.match)state.match.testAutoChoices=!!v},setAwake:(pid,n)=>{const p=state.match?.players.find(x=>x.id===pid);if(p)p.awake=Math.max(0,Math.min(p.mana.length,n));return p?.awake},setReduction:(pid,n)=>{const p=state.match?.players.find(x=>x.id===pid);if(p)p.nextCostReduction=Math.max(0,n);return p?.nextCostReduction},clearParticipants:()=>{if(state.match){state.match.participants=new Map(state.match.players.map(p=>[p.id,[]]));state.match.participantSeq=0;state.match.resolvedAbilityKeys=new Set()}},addLane:(pid,lane,id)=>{const p=state.match?.players.find(x=>x.id===pid);if(!p||!CARDS[id])return false;const ix=p.deck.indexOf(id);if(ix>=0)p.deck.splice(ix,1);else{const hi=p.hand.indexOf(id);if(hi>=0)p.hand.splice(hi,1);else return false}p.lanes[lane].push(id);return true},snapshot:()=>state.match?{round:state.match.round,players:state.match.players.map(p=>({id:p.id,awake:p.awake,reduction:p.nextCostReduction,blocked:p.battleBlockedRound,hand:[...p.hand],deck:[...p.deck],chip:[...p.chip],lanes:safeClone(p.lanes)})),participants:participantEntries().map(e=>({...e}))}:null};

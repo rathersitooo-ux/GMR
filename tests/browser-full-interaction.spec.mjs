@@ -1867,3 +1867,82 @@ test('update manifest is strictly validated, rollback-safe in wording, session-l
   await fresh.close();
   runtime.assertClean(testInfo);
 });
+
+test('R2 visible precommit one-operation clear preserves route undo and fails closed against commit race', async ({ page }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+  const battle = await beginVisibleTwoPlayerRoadShield(page, testInfo, 'r2-precommit-clear');
+  const clearAll = battle.locator('#clearPrecommitSelection');
+  const roadSelect = battle.locator('#roadSelect');
+  const battleSelect = battle.locator('#battleSelect');
+  const routeUndo = battle.locator('#clearPath');
+  await expect(routeUndo, 'existing one-step route undo remains present').toBeVisible();
+  await expect(clearAll).toBeVisible();
+  await expect(clearAll).toBeDisabled();
+
+  const roads = await roadSelect.locator('option').evaluateAll(nodes => nodes.map(node => node.value).filter(Boolean));
+  const battles = await battleSelect.locator('option').evaluateAll(nodes => nodes.map(node => node.value).filter(Boolean));
+  const roadId = roads[0];
+  const battleId = battles.find(id => id !== roadId);
+  expect(roadId).toBeTruthy();
+  expect(battleId).toBeTruthy();
+  await roadSelect.selectOption(roadId);
+  await battleSelect.selectOption(battleId);
+  await expect(clearAll).toBeEnabled();
+  await clearAll.click();
+  await expect(roadSelect).toHaveValue('');
+  await expect(battleSelect).toHaveValue('');
+  const clearedPlan = await page.evaluate(() => {
+    const m = window.__GAMEROAD_TEST__.state.match;
+    const me = m.players[0];
+    return { roadId: me.plan?.roadId ?? null, battleId: me.plan?.battleId ?? null, path: [...(me.plan?.path || [])], position: me.position };
+  });
+  expect(clearedPlan.roadId).toBeNull();
+  expect(clearedPlan.battleId).toBeNull();
+  expect(clearedPlan.path).toEqual([clearedPlan.position]);
+  await expect(routeUndo, 'full clear does not replace the one-step route undo control').toBeVisible();
+
+  await page.evaluate(() => {
+    const t = window.__GAMEROAD_TEST__, m = t.state.match, me = m.players[0];
+    m.phase = 'target'; m.activeId = me.id; m.busy = false; m.target = null;
+    t.battlePresentationRender();
+  });
+  await expect(battle.locator('#targetBox')).toHaveClass(/on/);
+  await expect(clearAll).toBeVisible();
+  await expect(clearAll).toBeEnabled();
+  await clearAll.click();
+  await expect(battle.locator('#targetPlayer')).toHaveValue('');
+  await expect(battle.locator('#targetLane')).toHaveValue('');
+  await expect(battle.locator('#targetShield')).toHaveValue('');
+  await expect(battle.locator('#confirmTarget')).toBeDisabled();
+
+  const targetId = await battle.locator('#targetPlayer option').evaluateAll(nodes => nodes.map(node => node.value).find(Boolean));
+  expect(targetId).toBeTruthy();
+  await battle.locator('#targetPlayer').selectOption(targetId);
+  await battle.locator('#targetLane').selectOption('L');
+  await battle.locator('#targetShield').selectOption('C');
+  await expect(battle.locator('#confirmTarget'), 'reselecting a complete target restores commit affordance').toBeEnabled();
+
+  await page.evaluate(() => {
+    const t = window.__GAMEROAD_TEST__, m = t.state.match;
+    m.phase = 'plan'; m.activeId = null; m.busy = false; m.target = null;
+    t.battlePresentationRender();
+  });
+  await roadSelect.selectOption(roadId);
+  await battleSelect.selectOption(battleId);
+  await expect(battle.locator('#readyPlan')).toBeEnabled();
+  await expect(clearAll).toBeEnabled();
+  await page.evaluate(() => {
+    document.getElementById('clearPrecommitSelection').click();
+    document.getElementById('readyPlan').click();
+  });
+  await page.waitForTimeout(80);
+  const race = await page.evaluate(() => {
+    const m = window.__GAMEROAD_TEST__.state.match, me = m.players[0];
+    return { phase: m.phase, busy: Boolean(m.busy), roadId: me.plan?.roadId ?? null, battleId: me.plan?.battleId ?? null };
+  });
+  expect(race.roadId, 'Ready-started commit is never rolled back by the asynchronous clear').toBe(roadId);
+  expect(race.battleId, 'Ready-started commit preserves the staged Battle card').toBe(battleId);
+  await attachStateScreenshot(page, testInfo, 'r2-precommit-clear-race-fail-closed');
+  runtime.assertClean(testInfo);
+});

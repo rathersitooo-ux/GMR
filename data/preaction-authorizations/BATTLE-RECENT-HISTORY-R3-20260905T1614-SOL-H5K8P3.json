@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RECENT-HISTORY-R3-20260905T1614-SOL-H5K8P3",
+  "taskId": "BATTLE-REPLAY-RUNTIME-CONTRACT-001",
+  "workUnitKey": "BATTLE_RECENT_PUBLIC_HISTORY_R3",
+  "acquireKey": "BATTLE-RECENT-HISTORY-R3-20260905T1614-SOL-H5K8P3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1144_GATE_79_OF_81_PLUS_FOCUSED_RECENT_HISTORY_PASS_AND_NEARBY_NORMAL_ROOT_CAUSE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1144_REQUIRED_GATE_33952639125_PREACTION_AND_PROVENANCE_PASS_FOCUSED_NEW_TEST_PASS",
+  "proceedToken": "PROCEED|BATTLE-RECENT-HISTORY-R3-20260905T1614-SOL-H5K8P3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "2696d00d23ff84e63de6c3d79c666a1f2c0cf3e6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-REPLAY-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "BATTLE_RECENT_PUBLIC_HISTORY_R3",
+  "leaseAcquireKey": "BATTLE-RECENT-HISTORY-R3-20260905T1614-SOL-H5K8P3",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 16:33 JST",
+  "leaseUntilJst": "2026-09-05 17:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A378:L378",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR current main@2696d00d23ff84e63de6c3d79c666a1f2c0cf3e6; CLEAN repair branch sol/battle-recent-public-history-r3b-20260905; mutable branch ref + browser/battle-replay-live-adapter.mjs + tests/battle-replay-live-adapter.test.mjs + deploy/cloudflare/tests/build.test.mjs (ONLY battle-replay-live-adapter.mjs currentBlob provenance pin) + UNIQUE_TRANSIENT tools/battle-recent-history-r3b-patch.py + UNIQUE_TRANSIENT .github/workflows/temp-battle-recent-history-r3b-h5k8p3.yml + transient data/preaction-authorizations/BATTLE-RECENT-HISTORY-R3-20260905T1614-SOL-H5K8P3.json only; browser/GAMEROAD.html + deploy/cloudflare/scripts/build.mjs + tests/partner-battle-event-log-projection.test.mjs + battle-screen-runtime-mount.mjs + gameplay/rules/save/economy/network/spectator state + all other build.test entries/all other files READ_ONLY. Prior PR#1112/#1144 and old branch are READ_ONLY evidence only.",
+  "scope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "tools/battle-recent-history-r3b-patch.py",
+    ".github/workflows/temp-battle-recent-history-r3b-h5k8p3.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "tools/battle-recent-history-r3b-patch.py",
+    ".github/workflows/temp-battle-recent-history-r3b-h5k8p3.yml"
+  ],
+  "solutionSignature": "Reuse the existing viewer-authorized Battle replay log consumer, keep the compact recent-history enhancement fail-soft when an interactive toggle cannot mount, require explicit Battle-live opt-in before showing already-public card/value details, retain stale-match rejection, and keep the public-package replay-adapter provenance pin synchronized; no second recorder/schema/storage/gameplay authority.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "existing-battle-replay-public-log-consumer-compatibility-repair",
+  "solutionSearchEvidence": [
+    "Drive:BATTLE-REPLAY-RUNTIME-CONTRACT-001 row1261 adopted recent-public-history gate",
+    "repo:PR#1144 Required Gate run33952639125 exact failure shows focused recent-history PASS and only two nearby-normal compatibility failures",
+    "repo:tests/partner-battle-event-log-projection.test.mjs current minimal privacy-default and no-interactive-toggle fake DOM",
+    "repo:browser/battle-replay-live-adapter.mjs production live bridge and viewer-authorized replay projection",
+    "external:Shadowverse Worlds Beyond official Battle Log/replay behavior cross-check already recorded"
+  ]
+}

@@ -15,10 +15,10 @@ env:
   WORKFLOW_FILE: .github/workflows/cards-favorite-hitaccess-r4-executor.yml
 
 jobs:
-  patch-test-cleanup:
+  phone-geometry-probe:
     if: ${{ !contains(github.event.head_commit.message, '[r4-diag-result]') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
     steps:
       - name: Checkout exact owned branch
         uses: actions/checkout@v4
@@ -57,14 +57,12 @@ jobs:
           test "${changed[0]}" = "${expected[0]}"
           test "${changed[1]}" = "${expected[1]}"
 
-      - name: Patch product and focused browser regression
+      - name: Patch candidate and write temporary phone probe
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          import textwrap
-
           product = Path('browser/cards-deck-presentation.mjs')
           text = product.read_text(encoding='utf-8')
           old = '[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}[data-role="cards-deck-findability"] input{min-height:44px;min-width:min(240px,58vw);padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(10,18,30,.72);color:inherit;font:inherit}[data-role="cards-deck-findability"] button{min-height:44px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:transparent;color:inherit;font:700 13px/1 system-ui}'
@@ -72,108 +70,71 @@ jobs:
           if text.count(old) != 1:
               raise SystemExit(f'expected one findability style seam, found {text.count(old)}')
           product.write_text(text.replace(old, new, 1), encoding='utf-8')
+          Path('tests/r4-phone-hit-geometry.spec.mjs').write_text(r'''import { test, expect } from '@playwright/test';
 
-          test_path = Path('tests/home-cards-2p5d-runtime.spec.mjs')
-          current = test_path.read_text(encoding='utf-8')
-          marker = 'Cards favorite controls and Collection cards remain mutually hit-accessible across target viewports'
-          if marker in current:
-              raise SystemExit('focused regression already present')
-          addition = textwrap.dedent(r'''
-          test('Cards favorite controls and Collection cards remain mutually hit-accessible across target viewports', async ({ page }) => {
-            test.setTimeout(180_000);
-            const storageKey = 'gameroad.cards.favorite.v1';
-            const sizes = [
-              { width: 1280, height: 720, label: 'desktop' },
-              { width: 390, height: 844, label: 'phone' },
-              { width: 667, height: 375, label: 'short-landscape' },
-            ];
-            const ownsPoint = async (locator) => locator.evaluate((node) => {
-              const r = node.getBoundingClientRect();
-              const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-              return top === node || node.contains(top);
-            });
-            const ready = async () => {
-              await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
-            };
-            const enterCards = async () => {
-              const go = page.locator('.homePadChoice[data-home-target="cards"]:visible').first();
-              await expect(go).toBeVisible();
-              await go.click();
-              await page.waitForFunction(() => (
-                globalThis.GAMEROAD_NAV_QA?.snapshot?.().screen === 'cards'
-                && globalThis.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase === 'IDLE'
-              ));
-              await expect(page.locator('section[data-screen="cards"]')).toBeVisible();
-            };
-            const favoriteFilter = () => page.locator('section[data-screen="cards"] [data-role="cards-deck-findability"] [data-filter="favorite"]');
-            const favoriteAction = () => page.locator('section[data-screen="cards"] [data-role="cards-favorite-action"]');
-
-            for (const size of sizes) {
-              await page.setViewportSize({ width: size.width, height: size.height });
-              const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'load' });
-              expect(response?.ok(), `${size.label}: Browser entry loads`).toBeTruthy();
-              await ready();
-              await page.evaluate((key) => localStorage.removeItem(key), storageKey);
-              await page.reload({ waitUntil: 'load' });
-              await ready();
-              await enterCards();
-
-              const card = page.locator('#collectionGrid button.slot.live.cardFace:visible').first();
-              await expect(card).toBeVisible();
-              await card.scrollIntoViewIfNeeded();
-              expect(await ownsPoint(card), `${size.label}: Collection card owns its hit point`).toBe(true);
-              const cardId = await card.getAttribute('data-id');
-              expect(cardId, `${size.label}: Collection card has stable id`).toBeTruthy();
-              await card.click();
-
-              const favorite = favoriteAction();
-              await expect(favorite).toBeVisible();
-              await favorite.click();
-              await expect(favorite).toHaveAttribute('aria-pressed', 'true');
-              await page.locator('#r4PreviewClose').click();
-
-              const filter = favoriteFilter();
-              await expect(filter).toBeVisible();
-              await filter.scrollIntoViewIfNeeded();
-              expect(await ownsPoint(filter), `${size.label}: favorite-only filter owns its hit point`).toBe(true);
-              await filter.click();
-              await expect(filter).toHaveAttribute('aria-pressed', 'true');
-
-              const filtered = page.locator(`#collectionGrid [data-id="${cardId}"]:visible`).first();
-              await expect(filtered, `${size.label}: favorited card remains visible`).toBeVisible();
-              await filtered.scrollIntoViewIfNeeded();
-              expect(await ownsPoint(filtered), `${size.label}: filtered card remains hit-accessible`).toBe(true);
-              await filtered.click();
-              await expect(favoriteAction()).toHaveAttribute('aria-pressed', 'true');
-              await page.locator('#r4PreviewClose').click();
-
-              await page.reload({ waitUntil: 'load' });
-              await ready();
-              await enterCards();
-              const filterAfterReload = favoriteFilter();
-              await expect(filterAfterReload).toBeVisible();
-              await filterAfterReload.scrollIntoViewIfNeeded();
-              expect(await ownsPoint(filterAfterReload), `${size.label}: filter remains hit-accessible after reload`).toBe(true);
-              await filterAfterReload.click();
-              await expect(filterAfterReload).toHaveAttribute('aria-pressed', 'true');
-              const persisted = page.locator(`#collectionGrid [data-id="${cardId}"]:visible`).first();
-              await expect(persisted, `${size.label}: favorite survives reload`).toBeVisible();
-              await persisted.scrollIntoViewIfNeeded();
-              expect(await ownsPoint(persisted), `${size.label}: persisted favorite remains hit-accessible`).toBe(true);
-              await persisted.click();
-              await expect(favoriteAction()).toHaveAttribute('aria-pressed', 'true');
-              await favoriteAction().click();
-              await expect(favoriteAction()).toHaveAttribute('aria-pressed', 'false');
-              await page.evaluate((key) => localStorage.removeItem(key), storageKey);
-            }
-          });
-          ''').strip()
-          test_path.write_text(current.rstrip() + '\n\n' + addition + '\n', encoding='utf-8')
+test('R4 phone hit geometry probe', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'load' });
+  expect(response?.ok()).toBeTruthy();
+  await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
+  await page.evaluate(() => localStorage.removeItem('gameroad.cards.favorite.v1'));
+  await page.reload({ waitUntil: 'load' });
+  await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
+  const go = page.locator('.homePadChoice[data-home-target="cards"]:visible').first();
+  await expect(go).toBeVisible();
+  await go.click();
+  await page.waitForFunction(() => (
+    globalThis.GAMEROAD_NAV_QA?.snapshot?.().screen === 'cards'
+    && globalThis.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase === 'IDLE'
+  ));
+  const card = page.locator('#collectionGrid button.slot.live.cardFace:visible').first();
+  await expect(card).toBeVisible();
+  await card.scrollIntoViewIfNeeded();
+  const geometry = await card.evaluate((node) => {
+    const describe = (el) => {
+      if (!el) return null;
+      const r = el.getBoundingClientRect();
+      const s = getComputedStyle(el);
+      return {
+        tag: el.tagName,
+        id: el.id || null,
+        className: typeof el.className === 'string' ? el.className : null,
+        role: el.getAttribute('data-role'),
+        filter: el.getAttribute('data-filter'),
+        dataId: el.getAttribute('data-id'),
+        rect: { left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width, height:r.height },
+        style: { position:s.position, zIndex:s.zIndex, pointerEvents:s.pointerEvents, transform:s.transform, overflow:s.overflow },
+      };
+    };
+    const r = node.getBoundingClientRect();
+    const x = r.left + r.width / 2;
+    const y = r.top + r.height / 2;
+    const host = document.querySelector('[data-role="cards-deck-findability"]');
+    const filter = document.querySelector('[data-role="cards-deck-findability"] [data-filter="favorite"]');
+    const grid = document.querySelector('#collectionGrid');
+    const screen = document.querySelector('section[data-screen="cards"]');
+    const stack = document.elementsFromPoint(x, y).slice(0, 10).map(describe);
+    const fr = filter?.getBoundingClientRect?.();
+    const fx = fr ? fr.left + fr.width / 2 : 0;
+    const fy = fr ? fr.top + fr.height / 2 : 0;
+    return {
+      point: { x, y },
+      card: describe(node),
+      stack,
+      host: describe(host),
+      filter: describe(filter),
+      filterStack: fr ? document.elementsFromPoint(fx, fy).slice(0, 10).map(describe) : [],
+      grid: describe(grid),
+      screen: describe(screen),
+      scroll: { x: window.scrollX, y: window.scrollY },
+      viewport: { width: innerWidth, height: innerHeight },
+    };
+  });
+  console.log('R4_GEOMETRY=' + JSON.stringify(geometry));
+});
+''', encoding='utf-8')
           PY
           git diff --check
-          grep -Fq 'pointer-events:none' browser/cards-deck-presentation.mjs
-          grep -Fq 'mutually hit-accessible across target viewports' tests/home-cards-2p5d-runtime.spec.mjs
-          ! grep -Fq 'data-screed' tests/home-cards-2p5d-runtime.spec.mjs
 
       - name: Install Playwright
         run: npm install --no-save --no-package-lock @playwright/test@1.62.0
@@ -181,47 +142,33 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Run focused browser regression
+      - name: Run phone probe and persist geometry
         shell: bash
         run: |
-          set +e
-          npx playwright test tests/home-cards-2p5d-runtime.spec.mjs --config=playwright.config.mjs --grep "mutually hit-accessible across target viewports" --workers=1 2>&1 | tee /tmp/r4-focused.log
-          status=${PIPESTATUS[0]}
-          set -e
-          if [ "$status" -ne 0 ]; then
-            git reset --hard HEAD
-            python3 - <<'PY'
-          import json, os
+          set -euo pipefail
+          npx playwright test tests/r4-phone-hit-geometry.spec.mjs --config=playwright.config.mjs --workers=1 2>&1 | tee /tmp/r4-geometry.log
+          git reset --hard HEAD
+          python3 - <<'PY'
+          import json, os, re
           from datetime import datetime, timedelta, timezone
           from pathlib import Path
+          log = Path('/tmp/r4-geometry.log').read_text(encoding='utf-8', errors='replace')
+          match = re.search(r'R4_GEOMETRY=(\{.*\})', log)
+          if not match:
+              raise SystemExit('R4 geometry marker missing')
+          geometry = json.loads(match.group(1))
           manifest = Path(os.environ['MANIFEST'])
           data = json.loads(manifest.read_text(encoding='utf-8'))
-          log = Path('/tmp/r4-focused.log').read_text(encoding='utf-8', errors='replace')
-          data['diagnosticCaptured'] = True
-          data['diagnosticCapturedAtJst'] = datetime.now(timezone(timedelta(hours=9))).strftime('%Y-%m-%d %H:%M:%S JST')
-          data['diagnosticRunId'] = os.environ.get('GITHUB_RUN_ID', '')
-          data['diagnosticHeadSha'] = os.environ.get('GITHUB_SHA', '')
-          data['diagnosticLogTail'] = log[-12000:]
+          data['diagnosticGeometryCaptured'] = True
+          data['diagnosticGeometryCapturedAtJst'] = datetime.now(timezone(timedelta(hours=9))).strftime('%Y-%m-%d %H:%M:%S JST')
+          data['diagnosticGeometryRunId'] = os.environ.get('GITHUB_RUN_ID', '')
+          data['diagnosticGeometry'] = geometry
           data['leaseSnapshotReadbackAtJst'] = '2026-09-06 04:24 JST'
           data['leaseUntilJst'] = '2026-09-06 05:30 JST'
           manifest.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git add "$MANIFEST"
-            git commit -m '[r4-diag-result] capture focused failure'
-            git push origin HEAD:sol/cards-favorite-hitaccess-r4-20260906
-            exit "$status"
-          fi
-
-      - name: Commit bounded product result and remove transient authorization
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -f "$WORKFLOW_FILE" "$MANIFEST"
-          git diff --check
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add browser/cards-deck-presentation.mjs tests/home-cards-2p5d-runtime.spec.mjs "$WORKFLOW_FILE" "$MANIFEST"
-          git commit -m 'Fix Cards favorite filter hit access'
+          git add "$MANIFEST"
+          git commit -m '[r4-diag-result] capture phone hit geometry'
           git push origin HEAD:sol/cards-favorite-hitaccess-r4-20260906

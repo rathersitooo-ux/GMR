@@ -15,6 +15,8 @@ import {
   projectBootLoadingPresentation,
 } from '../browser/boot-loading-presentation-core.mjs';
 import {
+  QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS,
+  readExistingQuickSettings,
   removeLegacyHomeNodes,
   resolveHomeSlidepadFeedbackTranslation,
   resolveHomeSlidepadRayTarget,
@@ -22,7 +24,10 @@ import {
   resolveHomeSlidepadRole,
   resolveHomeSlidepadRouteId,
   resolveHomeSlidepadTargetTranslation,
+  resolveQuickSettingsTrigger,
+  setExistingQuickSettingsVolume,
   shouldDismissHomeSlidepadOnBlankDoubleClick,
+  toggleExistingQuickSetting,
 } from '../browser/home-boot-runtime-mount.mjs';
 
 const landscapeProjection = Object.freeze({
@@ -344,4 +349,72 @@ test('Home SlidePad visual feedback stays responsive while bounded to the curren
   assert.ok(far.x > 0 && far.y < 0);
   assert.deepEqual(resolveHomeSlidepadFeedbackTranslation({ dx: 48, dy: -24 }), { x: 48, y: -24 });
   assert.equal(resolveHomeSlidepadFeedbackTranslation({ dx: Number.POSITIVE_INFINITY, dy: 0 }), null);
+});
+
+test('Home/Battle quick settings proxy mutates only the existing Settings controls', () => {
+  const dispatched = [];
+  const volume = (value) => ({
+    value: String(value),
+    dispatchEvent(event) { dispatched.push(event.type); return true; },
+  });
+  const toggle = (initial = false) => {
+    let pressed = initial;
+    return {
+      textContent: '',
+      getAttribute(name) { return name === 'aria-pressed' ? String(pressed) : null; },
+      click() { pressed = !pressed; },
+    };
+  };
+  const controls = {
+    musicVolume: volume(64),
+    sfxVolume: volume(70),
+    partnerVoiceVolume: volume(55),
+    musicMute: toggle(false),
+    sfxMute: toggle(false),
+    partnerVoiceMute: toggle(true),
+    reduceMotion: toggle(false),
+    lowPerf: toggle(false),
+  };
+  const documentSource = {
+    getElementById(id) { return controls[id] ?? null; },
+    querySelector(selector) { return selector === 'section[data-screen="settings"]' ? { dataset: { screen: 'settings' } } : null; },
+  };
+  class FakeEvent { constructor(type) { this.type = type; } }
+
+  const before = readExistingQuickSettings(documentSource);
+  assert.equal(before.musicVolume, 64);
+  assert.equal(before.partnerVoiceMuted, true);
+  assert.deepEqual(before.missing, []);
+  assert.deepEqual(before.knownAuthorityGaps, QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS);
+  assert.ok(before.knownAuthorityGaps.includes('masterVolume'));
+
+  assert.equal(setExistingQuickSettingsVolume('musicVolume', 42, documentSource, { Event: FakeEvent }), true);
+  assert.equal(controls.musicVolume.value, '42');
+  assert.deepEqual(dispatched, ['input', 'change']);
+  assert.equal(toggleExistingQuickSetting('reduceMotion', documentSource), true);
+  assert.equal(readExistingQuickSettings(documentSource).reduceMotion, true);
+  assert.equal(setExistingQuickSettingsVolume('masterVolume', 50, documentSource, { Event: FakeEvent }), false);
+});
+
+test('Quick settings trigger distinguishes Home settings and Battle gear without inventing navigation', () => {
+  const battleTrigger = {};
+  const battleTarget = {
+    closest(selector) { return selector.startsWith('.grBattleHudSettings') ? battleTrigger : null; },
+  };
+  assert.deepEqual(resolveQuickSettingsTrigger(battleTarget), { surface: 'battle', trigger: battleTrigger });
+
+  const home = { contains: (node) => node === homeTrigger };
+  const homeTrigger = {
+    dataset: { go: 'settings' },
+    textContent: '設定',
+    getAttribute() { return null; },
+  };
+  const homeTarget = {
+    closest(selector) {
+      if (selector === 'section[data-screen="home"]') return home;
+      if (selector.includes('.homeUtilityBtn')) return homeTrigger;
+      return null;
+    },
+  };
+  assert.deepEqual(resolveQuickSettingsTrigger(homeTarget), { surface: 'home', trigger: homeTrigger });
 });

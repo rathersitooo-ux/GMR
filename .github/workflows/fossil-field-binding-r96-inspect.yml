@@ -1,0 +1,154 @@
+name: FOSSIL R96 FIELD seam inspection
+
+on:
+  push:
+    branches:
+      - sol/fossil-field-binding-r96-20260905
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Confirm exact inspection base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git merge-base HEAD e878972e2bdb3df294a48b0aab11b0259a8a00a8)" = "e878972e2bdb3df294a48b0aab11b0259a8a00a8"
+          git diff --name-only e878972e2bdb3df294a48b0aab11b0259a8a00a8...HEAD
+
+      - name: Locate FIELD stop, persistence, fossil and restoration seams
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import json, re
+
+          repo = Path('.')
+          files = [repo / 'browser' / 'GAMEROAD.html']
+          files += sorted((repo / 'browser').glob('*.mjs'))
+          files += sorted((repo / 'tests').glob('*.mjs'))
+
+          terms = {
+              'fossil': re.compile(r'fossil|excavat|stratum|restoration', re.I),
+              'stop': re.compile(r'stopAuthorized|legal.?stop|\bstop\b|land(?:ed|ing)?|arriv(?:e|ed|al)|settle', re.I),
+              'movement': re.compile(r'\broad\b|\bfield\b|\bboard\b|\bmove\w*\b|\bdice\b|\btile\b|\bcell\b|\bnode\b', re.I),
+              'event': re.compile(r'dispatchEvent|CustomEvent|addEventListener|emit\w*|on[A-Z][A-Za-z0-9_]*', re.I),
+              'save': re.compile(r'localStorage|save\w*|persist\w*|serialize\w*|snapshot|reconnect|load\w*', re.I),
+          }
+
+          def score(line):
+              cats = [k for k, rx in terms.items() if rx.search(line)]
+              s = 0
+              if 'fossil' in cats: s += 8
+              if 'stop' in cats: s += 7
+              if 'event' in cats: s += 5
+              if 'save' in cats: s += 5
+              if 'movement' in cats: s += 3
+              if len(cats) >= 2: s += 6 * (len(cats) - 1)
+              if re.search(r'function\s+|=>|class\s+|const\s+|let\s+|var\s+', line): s += 2
+              return s, cats
+
+          records = []
+          for path in files:
+              if not path.exists():
+                  continue
+              try:
+                  lines = path.read_text(encoding='utf-8', errors='replace').splitlines()
+              except Exception:
+                  continue
+              rel = path.as_posix()
+              for i, line in enumerate(lines, start=1):
+                  s, cats = score(line)
+                  if s < 6:
+                      continue
+                  lo = max(1, i - 2)
+                  hi = min(len(lines), i + 2)
+                  context = '\n'.join(f'{n}: {lines[n-1]}' for n in range(lo, hi + 1))
+                  records.append({
+                      'score': s,
+                      'categories': cats,
+                      'path': rel,
+                      'line': i,
+                      'context': context[:1800],
+                  })
+
+          records.sort(key=lambda r: (-r['score'], r['path'], r['line']))
+          html = [r for r in records if r['path'] == 'browser/GAMEROAD.html'][:140]
+          modules = [r for r in records if r['path'] != 'browser/GAMEROAD.html'][:220]
+
+          direct = {}
+          for needle in [
+              'issueFossilsFromExcavation', 'createFossilExcavationState',
+              'serializeFossilExcavationState', 'loadFossilExcavationState',
+              'consumeFossilsForRestoration', 'FIELD-06', 'FIELD-10',
+              'stopAuthorized', 'GAMEROAD_BOARD_FACILITY_RUNTIME',
+          ]:
+              hits = []
+              rx = re.compile(re.escape(needle), re.I)
+              for path in files:
+                  if not path.exists():
+                      continue
+                  text = path.read_text(encoding='utf-8', errors='replace')
+                  for m in list(rx.finditer(text))[:20]:
+                      line = text.count('\n', 0, m.start()) + 1
+                      hits.append({'path': path.as_posix(), 'line': line})
+              direct[needle] = hits
+
+          html_text = (repo / 'browser' / 'GAMEROAD.html').read_text(encoding='utf-8', errors='replace')
+          script_refs = sorted(set(re.findall(r'<script[^>]+src=["\']([^"\']+)["\']', html_text, re.I)))
+          module_refs = [x for x in script_refs if any(t in x.lower() for t in ['board', 'road', 'field', 'turn', 'fossil', 'save', 'facility'])]
+
+          report = {
+              'head': __import__('subprocess').check_output(['git','rev-parse','HEAD'], text=True).strip(),
+              'base': 'e878972e2bdb3df294a48b0aab11b0259a8a00a8',
+              'directHits': direct,
+              'relevantScriptRefs': module_refs,
+              'topHtml': html,
+              'topModulesAndTests': modules,
+          }
+          Path('fossil-r96-seam-inspection.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
+
+          out = []
+          out.append('# FOSSIL R96 seam inspection')
+          out.append('')
+          out.append('## Direct hits')
+          for needle, hits in direct.items():
+              out.append(f'- {needle}: {len(hits)} hits' + (f"; {', '.join(f'{h['path']}:{h['line']}' for h in hits[:8])}" if hits else ''))
+          out.append('')
+          out.append('## Relevant HTML script refs')
+          out.extend(f'- {x}' for x in module_refs)
+          out.append('')
+          out.append('## Highest-signal GAMEROAD.html contexts')
+          for r in html[:70]:
+              out.append(f"### score={r['score']} line={r['line']} cats={','.join(r['categories'])}")
+              out.append('```text')
+              out.append(r['context'])
+              out.append('```')
+          out.append('')
+          out.append('## Highest-signal module/test contexts')
+          for r in modules[:90]:
+              out.append(f"### {r['path']} score={r['score']} line={r['line']} cats={','.join(r['categories'])}")
+              out.append('```text')
+              out.append(r['context'])
+              out.append('```')
+          Path('fossil-r96-seam-inspection.md').write_text('\n'.join(out), encoding='utf-8')
+          print('\n'.join(out[:900]))
+          PY
+
+      - name: Upload compact seam evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: fossil-r96-seam-inspection
+          path: |
+            fossil-r96-seam-inspection.json
+            fossil-r96-seam-inspection.md
+          if-no-files-found: error

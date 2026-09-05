@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RESULT-PHONE-RANK-CLEARANCE-R21-20260905T2104-SOL-P7K4M2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "RESULT_PHONE_RANK_ACTION_CLEARANCE_R21",
+  "acquireKey": "RESULT-PHONE-RANK-CLEARANCE-R21-20260905T2104-SOL-P7K4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_PUBLIC_BFI_093220_PHONE390_RESULT_RANK_BOTTOM_733_734_ACTION_Y_729_125",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXACT_CURRENT_PUBLIC_PLAYWRIGHT_TRACE_AND_EXISTING_R19_BFI_REGRESSION",
+  "proceedToken": "PROCEED|RESULT-PHONE-RANK-CLEARANCE-R21-20260905T2104-SOL-P7K4M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|PHONE_RESULT_ACTION_CLEARANCE_ONLY",
+  "authorizationBaseSha": "093220a142bea6cfb60b453b16bbfb279ccfa1db",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "RESULT_PHONE_RANK_ACTION_CLEARANCE_R21",
+  "leaseAcquireKey": "RESULT-PHONE-RANK-CLEARANCE-R21-20260905T2104-SOL-P7K4M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 21:04 JST",
+  "leaseUntilJst": "2026-09-05 22:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES acquireKey direct readback row404",
+  "leaseExactMutableResources": "browser/GAMEROAD.html + UNIQUE_TRANSIENT .github/workflows/result-phone-rank-clearance-r21-executor.yml + TRANSIENT this manifest only; existing BFI/test and all gameplay/state authorities READ_ONLY",
+  "scope": [
+    "browser/GAMEROAD.html",
+    ".github/workflows/result-phone-rank-clearance-r21-executor.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    ".github/workflows/result-phone-rank-clearance-r21-executor.yml"
+  ],
+  "solutionSignature": "phone-result-actions-bottom-3pct-to-2pct-clearance",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_R19_BFI_FAIL_IS_ACCEPTANCE_ORACLE_NO_NEW_TEST_REQUIRED",
+  "solutionSearchEvidence": [
+    "exact current-public phone390x844 fails only because rank4 bottom 733.734375 exceeds result actions y+1 730.125",
+    "desktop1280x720 and short-landscape667x375 pass on the same exact public build",
+    "current trace shows <=480x900 Result action grid after autoqueue visibility repair while <=900 layout still places Result actions at bottom 3%",
+    "moving phone Result actions to bottom 2% yields about 8.44px additional vertical clearance without removing rank/status/action content or changing queue/gameplay semantics"
+  ],
+  "scopeRebaseReason": "Presentation-only regression repair on exact current public build. Preserve visible truthful autoqueue state, all four rank rows, 44px+ actions, Result meaning, default ON, transport, reward and gameplay authority. Existing R19 BFI remains unchanged and must flip phone from FAIL to PASS before integration."
+}

@@ -1033,6 +1033,14 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
 const QUICK_SETTINGS_GLOBAL_KEY = 'GAMEROAD_QUICK_SETTINGS';
 const QUICK_SETTINGS_STYLE_ID = 'gameroad-shared-quick-settings-style-r1';
 const QUICK_SETTINGS_OVERLAY_ATTR = 'data-gameroad-quick-settings';
+const QUICK_SETTINGS_FOCUSABLE_SELECTOR = [
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  'a[href]',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
 
 export const QUICK_SETTINGS_CONTROL_IDS = Object.freeze({
   reduceMotion: 'reduceMotion',
@@ -1064,6 +1072,33 @@ const quickSettingsRuntime = {
   bypassTrigger: null,
   installed: false,
 };
+
+function quickSettingsFocusableNodes(overlay) {
+  if (!overlay || typeof overlay.querySelectorAll !== 'function') return [];
+  return [...overlay.querySelectorAll(QUICK_SETTINGS_FOCUSABLE_SELECTOR)].filter((node) => (
+    node && node.hidden !== true && node.getAttribute?.('aria-hidden') !== 'true'
+  ));
+}
+
+export function containSharedQuickSettingsTab({
+  event,
+  overlay,
+  documentSource = globalThis.document,
+} = {}) {
+  if (!overlay || event?.key !== 'Tab') return false;
+  const focusables = quickSettingsFocusableNodes(overlay);
+  if (!focusables.length) return false;
+  const active = documentSource?.activeElement;
+  const index = focusables.indexOf(active);
+  let target = null;
+  if (index < 0) target = event.shiftKey ? focusables[focusables.length - 1] : focusables[0];
+  else if (event.shiftKey && index === 0) target = focusables[focusables.length - 1];
+  else if (!event.shiftKey && index === focusables.length - 1) target = focusables[0];
+  if (!target) return false;
+  event.preventDefault?.();
+  target.focus?.();
+  return true;
+}
 
 function quickSettingsPercent(value) {
   const number = Number(value);
@@ -1349,6 +1384,10 @@ function installSharedQuickSettingsCapture(documentSource = globalThis.document)
     openSharedQuickSettings({ surface: match.surface, trigger: match.trigger, documentSource, globalSource: globalThis });
   }, true);
   documentSource.addEventListener('keydown', (event) => {
+    if (event?.key === 'Tab' && quickSettingsRuntime.overlay) {
+      containSharedQuickSettingsTab({ event, overlay: quickSettingsRuntime.overlay, documentSource });
+      return;
+    }
     if (event?.key === 'Escape' && quickSettingsRuntime.overlay) closeSharedQuickSettings();
   });
   return true;

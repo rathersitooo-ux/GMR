@@ -279,3 +279,50 @@ test('R19R2 mounts accepted replay rows on the production Result surface', async
 
   runtime.assertClean(testInfo);
 });
+
+test('Profile identity-first surface and Records bridge are visible through real controls', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'phone-touch-390x844', 'bounded Profile evidence runs in the three standard viewport projects');
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+
+  const home = page.locator('section[data-screen="home"]');
+  const profileControl = rootGo(page, 'profile');
+  await expect(home).toBeVisible();
+  await expect(profileControl, 'visible Home-to-Profile control').toBeVisible();
+  await profileControl.click();
+
+  const profile = page.locator('section[data-screen="profile"]');
+  await expect(profile, 'Profile target reached through visible pointer navigation').toBeVisible();
+  await expect(profile).toHaveAttribute('data-profile-presentation', 'PROFILE_IDENTITY_PRESENTATION_R1B');
+  await expect(profile.locator('.profileIdentityCard[data-role="player"]'), 'current player identity card').toBeVisible();
+  await expect(profile.locator('.profileIdentityCard[data-role="partner"]'), 'current Partner identity card').toBeVisible();
+  const legacyMetrics = profile.locator('.metricGrid');
+  if (await legacyMetrics.count()) await expect(legacyMetrics, 'legacy local-history metrics stay hidden on Profile').toBeHidden();
+
+  const profilePng = await page.screenshot({ fullPage: true, animations: 'disabled' });
+  await testInfo.attach(`${testInfo.project.name}-profile-identity-visible.png`, { body: profilePng, contentType: 'image/png' });
+
+  const recordsControl = nestedGo(page, 'profile', 'records');
+  await expect(recordsControl, 'visible Profile-to-Records control').toBeVisible();
+  await expect(recordsControl).toHaveText('対戦記録を見る');
+  await recordsControl.click();
+
+  const records = page.locator('section[data-screen="records"]');
+  await expect(records, 'Records reached from Profile through the visible action').toBeVisible();
+  const recordsPng = await page.screenshot({ fullPage: true, animations: 'disabled' });
+  await testInfo.attach(`${testInfo.project.name}-profile-records-visible.png`, { body: recordsPng, contentType: 'image/png' });
+
+  const back = records.locator('[data-back]:visible').first();
+  await expect(back, 'visible Records Back control').toBeVisible();
+  await back.click();
+  const active = page.locator('section.screen.active:visible');
+  await expect(active, 'one active screen after Records Back').toHaveCount(1);
+  const returnedScreen = await active.getAttribute('data-screen');
+  expect(['profile', 'home'], 'Records Back returns to a safe existing parent route').toContain(returnedScreen);
+
+  runtime.assertClean(testInfo);
+  testInfo.annotations.push({
+    type: 'profile-blackbox-evidence',
+    description: `visible Home→Profile→Records→Back path passed on ${testInfo.project.name}; Player+Partner identity presentation visible; legacy metrics hidden; no Profile product authority or save mutation introduced`,
+  });
+});

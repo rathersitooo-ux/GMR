@@ -1,0 +1,37 @@
+name: TEMP Battle Recent History R3B
+
+on:
+  push:
+    branches:
+      - sol/battle-recent-public-history-r3b-20260905
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: sol/battle-recent-public-history-r3b-20260905
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply bounded compatibility repair
+        run: python3 tools/battle-recent-history-r3b-patch.py
+      - name: Run focused and nearby-normal replay regressions
+        run: |
+          node --test tests/battle-replay-live-adapter.test.mjs
+          node --test tests/partner-battle-event-log-projection.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Commit product repair and cleanup transients
+        run: |
+          git config user.name gameroad-scoped-patch
+          git config user.email gameroad-scoped-patch@users.noreply.github.com
+          git add browser/battle-replay-live-adapter.mjs tests/battle-replay-live-adapter.test.mjs deploy/cloudflare/tests/build.test.mjs
+          git commit -m "Battle: keep recent public history compact without breaking generic replay"
+          git rm tools/battle-recent-history-r3b-patch.py .github/workflows/temp-battle-recent-history-r3b-h5k8p3.yml data/preaction-authorizations/BATTLE-RECENT-HISTORY-R3-20260905T1614-SOL-H5K8P3.json
+          git commit -m "PREACTION: cleanup Battle recent public history R3B repair"
+          git push origin HEAD:sol/battle-recent-public-history-r3b-20260905

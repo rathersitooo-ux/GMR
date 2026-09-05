@@ -1,0 +1,108 @@
+name: Board Facility Shop Owner R27 Executor
+
+on:
+  push:
+    branches:
+      - sol/board-facility-shop-owner-r27-20260906
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-commit:
+    if: ${{ !contains(github.event.head_commit.message, '[r27-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/board-facility-shop-owner-r27-20260906
+          fetch-depth: 0
+
+      - name: Verify bounded authorization witness
+        run: |
+          test -f data/preaction-authorizations/BOARD-FACILITY-SHOP-OWNER-R27-20260906T0550-SOL-K7M4Q2.json
+          node -e "const r=require('./data/preaction-authorizations/BOARD-FACILITY-SHOP-OWNER-R27-20260906T0550-SOL-K7M4Q2.json'); if(r.authorizationBaseSha!=='77777f15cc263a33ff9bb8ec1de7e896c979223b'||r.leaseState!=='ACTIVE'||r.solutionSignature!=='BOARD_FACILITY_SHOP_GRANT_OWNER_GUARD_R27') process.exit(1)"
+
+      - name: Patch Shop ownership guard and focused regression
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          core_path = Path('browser/board-facility-state-core.mjs')
+          core = core_path.read_text()
+          old = """  const product = state.shopProducts[productId];
+          if (!product) return decision(state, 'rejected', 'PRODUCT_NOT_REGISTERED');
+          if (state.honey < product.cost) return decision(state, 'rejected', 'INSUFFICIENT_HONEY');
+"""
+          new = """  const product = state.shopProducts[productId];
+          if (!product) return decision(state, 'rejected', 'PRODUCT_NOT_REGISTERED');
+          if (product.grantCard.ownerId !== state.playerId) return decision(state, 'rejected', 'GRANT_CARD_NOT_OWNED');
+          if (state.honey < product.cost) return decision(state, 'rejected', 'INSUFFICIENT_HONEY');
+"""
+          if core.count(old) != 1:
+              raise SystemExit('core anchor mismatch')
+          core_path.write_text(core.replace(old, new, 1))
+
+          test_path = Path('tests/board-facility-state-core.test.mjs')
+          tests = test_path.read_text()
+          anchor = "// H: arena contract, sixteen evidence cases.\n"
+          addition = """test('G7 a Shop product cannot charge or grant a card owned by another player', () => {
+            const initial = baseState({
+              shopProducts: {
+                itemForeign: { cost: 3, grantCard: { id: 'shop-card-foreign', ownerId: 'p2' } },
+              },
+            });
+            const result = purchaseShopProduct(initial, {
+              requestId: 'shop-foreign-owner-1', catalogRevision: 'shop-r7', productId: 'itemForeign',
+            });
+            assert.equal(result.status, 'rejected');
+            assert.equal(result.reason, 'GRANT_CARD_NOT_OWNED');
+            assert.equal(result.state, initial);
+            assert.equal(result.state.honey, 10);
+            assert.deepEqual(result.state.pendingReturns, []);
+            assert.deepEqual(result.state.processedRequestIds, []);
+          });
+
+"""
+          if tests.count(anchor) != 1:
+              raise SystemExit('test anchor mismatch')
+          test_path.write_text(tests.replace(anchor, addition + anchor, 1))
+          PY
+
+      - name: Run focused Board facility regression
+        run: node --test tests/board-facility-state-core.test.mjs
+
+      - name: Refresh public package exact blob pin
+        run: |
+          NEW_BLOB="$(git hash-object browser/board-facility-state-core.mjs)"
+          echo "NEW_BLOB=$NEW_BLOB" >> "$GITHUB_ENV"
+          python - <<'PY'
+          import os, re
+          from pathlib import Path
+          path = Path('deploy/cloudflare/tests/build.test.mjs')
+          text = path.read_text()
+          pattern = r"(\{ file: 'board-facility-state-core\.mjs', source: 'browser/board-facility-state-core\.mjs'.*?currentBlob: ')[0-9a-f]{40}(' \},)"
+          replaced, count = re.subn(pattern, lambda m: m.group(1) + os.environ['NEW_BLOB'] + m.group(2), text, count=1)
+          if count != 1:
+              raise SystemExit('build dependency pin anchor mismatch')
+          path.write_text(replaced)
+          PY
+
+      - name: Verify public package dependency contract
+        run: node --test deploy/cloudflare/tests/build.test.mjs
+
+      - name: Verify bounded diff and remove transient authorization artifacts
+        run: |
+          git diff --check
+          git diff -- browser/board-facility-state-core.mjs tests/board-facility-state-core.test.mjs deploy/cloudflare/tests/build.test.mjs
+          rm .github/workflows/board-facility-shop-owner-r27-executor.yml
+          rm data/preaction-authorizations/BOARD-FACILITY-SHOP-OWNER-R27-20260906T0550-SOL-K7M4Q2.json
+          git diff --check
+
+      - name: Commit verified product delta
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add browser/board-facility-state-core.mjs tests/board-facility-state-core.test.mjs deploy/cloudflare/tests/build.test.mjs .github/workflows/board-facility-shop-owner-r27-executor.yml data/preaction-authorizations/BOARD-FACILITY-SHOP-OWNER-R27-20260906T0550-SOL-K7M4Q2.json
+          git commit -m "[r27-applied] Board Shop reject foreign-owner grants"
+          git push origin HEAD:sol/board-facility-shop-owner-r27-20260906

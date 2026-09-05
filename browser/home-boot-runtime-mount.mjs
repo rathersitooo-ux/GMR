@@ -34,9 +34,11 @@ const SLIDEPAD_ROUTE_IDS = Object.freeze({
   partner: Object.freeze(['partner', 'characters']),
   cards: Object.freeze(['cards']),
 });
-// The codex Home visual layer is still the current player-facing Home consumer. Do not destroy it
-// during compatibility cleanup; only duplicate legacy controls are safe to remove here.
+// R62: the legacy visual layer and duplicate legacy controls are retired Home producers.
+// Keep the current hero/background/character and canonical SlidePad/routes; remove only these legacy nodes.
 const LEGACY_HOME_SELECTORS = Object.freeze([
+  '#codexHomeVisualLayer',
+  '.codexHomeVisualLayer',
   '#codexHomePartnerChip',
   '.codexPartnerChip',
   '#codexHomeBattleCta',

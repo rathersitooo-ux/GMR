@@ -263,21 +263,21 @@ test('Boot normal/reduced/lowPerf variants keep the same semantic state and acti
 
 const liveSlidepadRoutes = ['setup', 'shop', 'partner', 'characters', 'cards'];
 
-test('Home runtime preserves the current visual layer while removing duplicate legacy controls', () => {
+test('Home runtime removes the retired visual layer together with duplicate legacy controls', () => {
   const removed = [];
-  const liveVisualLayer = { remove: () => removed.push('visual') };
+  const legacyLayer = { remove: () => removed.push('visual') };
   const battleCta = { remove: () => removed.push('battle') };
   const partnerChip = { remove: () => removed.push('partner') };
   const home = {
     querySelectorAll(selector) {
-      if (selector === '#codexHomeVisualLayer' || selector === '.codexHomeVisualLayer') return [liveVisualLayer];
+      if (selector === '#codexHomeVisualLayer' || selector === '.codexHomeVisualLayer') return [legacyLayer];
       if (selector === '#codexHomeBattleCta' || selector === '.codexBattleCta') return [battleCta];
       if (selector === '#codexHomePartnerChip' || selector === '.codexPartnerChip') return [partnerChip];
       return [];
     },
   };
-  assert.equal(removeLegacyHomeNodes(home), 2);
-  assert.deepEqual(removed.sort(), ['battle', 'partner']);
+  assert.equal(removeLegacyHomeNodes(home), 3);
+  assert.deepEqual(removed.sort(), ['battle', 'partner', 'visual']);
 });
 
 test('Home compatibility direction map keeps the four fixed responsibilities for non-pointer input', () => {

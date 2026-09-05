@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-FIELD-LANDMARK-R83-R2-20260905T2018-SOL-K7M4P2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_FIELD_LANDMARK_TERRAIN_IDENTITY_R83_R2",
+  "acquireKey": "BATTLE-FIELD-LANDMARK-R83-R2-20260905T2018-SOL-K7M4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_FIELD_CATALOG_HAS_7_DISTINCT_LANDMARK_IDENTITIES_BUT_BATTLE_CONSUMER_IS_GRADIENT_ONLY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1077_CURRENT_FIELD_IDS_PLUS_CURRENT_BATTLE_RUNTIME_TEST_AND_R83_ACCEPTANCE",
+  "proceedToken": "PROCEED|BATTLE-FIELD-LANDMARK-R83-R2-20260905T2018-SOL-K7M4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ADAPT_EXISTING_FIELD_IDS_TO_PRESENTATION_ONLY_TERRAIN_LANDMARK_CUES",
+  "authorizationBaseSha": "da22d175f7292f7b8a441ab3bf834989d64bc746",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_FIELD_LANDMARK_TERRAIN_IDENTITY_R83_R2",
+  "leaseAcquireKey": "BATTLE-FIELD-LANDMARK-R83-R2-20260905T2018-SOL-K7M4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 20:18 JST",
+  "leaseUntilJst": "2026-09-05 21:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A398:L398",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@da22d175f7292f7b8a441ab3bf834989d64bc746; intended branch sol/battle-field-landmark-r83-r2-20260905; mutable browser/battle-screen-runtime-mount.mjs + tests/battle-screen-runtime-mount.test.mjs + UNIQUE_TRANSIENT .github/workflows/battle-field-landmark-r83-r2-executor.yml + TRANSIENT data/preaction-authorizations/BATTLE-FIELD-LANDMARK-R83-R2-20260905T2018-SOL-K7M4P2.json only; browser/slidepad-slot-roll-core.mjs + browser/GAMEROAD.html + deploy/cloudflare/** + gameplay/rules/save/economy/network/formal assets READ_ONLY. Existing FIELD-01/02/03/04/05/08/09 IDs and landmark meanings are authority; no new field semantics.",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    ".github/workflows/battle-field-landmark-r83-r2-executor.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    ".github/workflows/battle-field-landmark-r83-r2-executor.yml"
+  ],
+  "solutionSignature": "existing-field-id-presentation-only-landmark-terrain-cues",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1077_ALREADY_DEFINES_FIELD_IDS_AND_LANDMARK_MEANINGS;R83_REQUIRES_NON_TINT_FIELD_IDENTITY;CURRENT_BATTLE_RUNTIME_IS_PRESENTATION_ONLY_CONSUMER",
+  "solutionSearchEvidence": [
+    "PR#1077 merged existing FIELD-01/02/03/04/05/08/09 selection and landmark identities",
+    "current Battle runtime retains ROAD to GOAL presentation guide and presentationOnly/gameStateWrite=false boundary",
+    "current selected-field Battle consumer applies only background gradients, leaving R83 non-color identity acceptance unmet",
+    "patch stays in already-packaged Battle runtime/test pair and reads existing battle data-battle-field-id without changing selection/rules/state"
+  ],
+  "scopeRebaseReason": "Prior R83 ROAD-to-GOAL direction slice is already merged and retained. This R2 closes only the remaining adopted visual identity gap by adapting existing field IDs into low-priority non-interactive terrain/landmark silhouettes."
+}

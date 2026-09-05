@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-LEGACY-VISUAL-LAYER-R88B-20260906T0318-SOL-H7K4M2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_LEGACY_VISUAL_LAYER_REMOVE_R88",
+  "acquireKey": "HOME-LEGACY-VISUAL-LAYER-R88B-20260906T0318-SOL-H7K4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_PUBLIC_BFI_MAIN5A94373_HOME_CENTER_OVERLAY+CURRENT_RUNTIME_SELECTOR_REGRESSION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "MERGED_PR869_EXACT_LEGACY_LAYER_REMOVAL_AND_FOCUSED_TEST",
+  "proceedToken": "PROCEED|HOME-LEGACY-VISUAL-LAYER-R88B-20260906T0318-SOL-H7K4M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|HOME_LEGACY_LAYER_REGRESSION_ONLY",
+  "authorizationBaseSha": "5a94373bdb5c1a754c79dbf729d9a4a629af576e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_LEGACY_VISUAL_LAYER_REMOVE_R88",
+  "leaseAcquireKey": "HOME-LEGACY-VISUAL-LAYER-R88B-20260906T0318-SOL-H7K4M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 03:18 JST",
+  "leaseUntilJst": "2026-09-06 04:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:L9",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch sol/home-legacy-visual-layer-r88-20260906 only: browser/home-boot-runtime-mount.mjs; tests/home-boot-presentation.test.mjs; UNIQUE_TRANSIENT .github/workflows/home-legacy-visual-layer-r88-executor.yml; data/preaction-authorizations/HOME-LEGACY-VISUAL-LAYER-R88B-20260906T0318-SOL-H7K4M2.json transient authorization witness only. browser/GAMEROAD.html + hero/background/character assets + routes/SlidePad/settings/save/gameplay/rules/economy/network READ_ONLY while current HTML owner is active.",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    ".github/workflows/home-legacy-visual-layer-r88-executor.yml"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    ".github/workflows/home-legacy-visual-layer-r88-executor.yml"
+  ],
+  "solutionSignature": "restore-retired-codex-home-visual-layer-removal",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR869_MERGED_REMOVELEGACYHOMENODES+CURRENT_R62_REMOVE_AUTHORITY",
+  "solutionSearchEvidence": [
+    "Current same-SHA public Browser Full Interaction screenshot on main 5a94373 shows the giant translucent Home center overlay still covering the hero/world.",
+    "Current home-boot-runtime-mount.mjs still calls removeLegacyHomeNodes(home), but LEGACY_HOME_SELECTORS no longer contains #codexHomeVisualLayer or .codexHomeVisualLayer.",
+    "Merged PR #869 previously added exactly those two selectors to the existing removal function and a focused regression test, proving the smallest reusable repair without changing routes, hero assets, gameplay or state authority.",
+    "Current row2 R62 classifies old codexHomeVisualLayer as REMOVE and keeps background+character hero plus SlidePad/routes, so restoring the existing removal behavior matches current authority rather than inventing a new visual rule.",
+    "browser/GAMEROAD.html is currently owned by Battle R96, so this repair intentionally uses the disjoint existing runtime removal seam and leaves HTML read-only."
+  ],
+  "scopeRebaseReason": "Restore only the regressed legacy Home visual-layer removal in the already-loaded Home runtime and its focused test. Do not alter the current HTML, hero/background/character assets, navigation, SlidePad, Settings, save, gameplay, rules, economy or network."
+}

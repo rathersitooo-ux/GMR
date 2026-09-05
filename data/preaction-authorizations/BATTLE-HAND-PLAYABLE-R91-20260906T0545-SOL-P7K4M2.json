@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HAND-PLAYABLE-R91-20260906T0545-SOL-P7K4M2",
+  "taskId": "BATTLE-HAND-FAN-SELECTION-PRESENTATION-001",
+  "workUnitKey": "BATTLE_HAND_PLAYABLE_AFFORDANCE_R91",
+  "acquireKey": "BATTLE-HAND-PLAYABLE-R91-20260906T0545-SOL-P7K4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_USER_EXPLICIT_PLAYABLE_HAND_AFFORDANCE_GAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_BATTLE_HAND_SELECTABLE_AND_JANKEN_RESERVED_PROJECTION_READBACK",
+  "proceedToken": "PROCEED|BATTLE-HAND-PLAYABLE-R91-20260906T0545-SOL-P7K4M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-legality-projection|active-lease-readback",
+  "authorizationBaseSha": "77777f15cc263a33ff9bb8ec1de7e896c979223b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-HAND-FAN-SELECTION-PRESENTATION-001",
+  "leaseWorkUnitKey": "BATTLE_HAND_PLAYABLE_AFFORDANCE_R91",
+  "leaseAcquireKey": "BATTLE-HAND-PLAYABLE-R91-20260906T0545-SOL-P7K4M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 05:45 JST",
+  "leaseUntilJst": "2026-09-06 06:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A12:L12",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch sol/battle-hand-playable-r91-20260906 only: browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-hand-playable-affordance.test.mjs; .github/workflows/battle-hand-playable-r91-executor.yml; data/preaction-authorizations/BATTLE-HAND-PLAYABLE-R91-20260906T0545-SOL-P7K4M2.json transient authorization witness only. browser/GAMEROAD.html + tests/browser-full-interaction.spec.mjs + gameplay/rules/save/economy/network/Partner/Home/Cards/Profile READ_ONLY.",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-hand-playable-affordance.test.mjs",
+    ".github/workflows/battle-hand-playable-r91-executor.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-hand-playable-affordance.test.mjs",
+    ".github/workflows/battle-hand-playable-r91-executor.yml"
+  ],
+  "solutionSignature": "READ_ONLY_LEGALITY_PLAYABLE_HAND_AFFORDANCE_R91",
+  "reuseDisposition": "ADAPT_EXISTING",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE_EXISTING_HAND_SELECTABLE_JANKEN_RESERVED_AND_SLIDEPAD_RUNTIME",
+  "solutionSearchEvidence": [
+    "Current battle-janken SlidePad runtime already reads the actual hand and derives selectable from existing disabled/aria-disabled state.",
+    "Current syncHandZoneProjection already distinguishes janken-reserved cards from ordinary hand cards without changing legality.",
+    "User explicitly adopted yellow playable markers plus a semicircle action base as presentation-only legality projection.",
+    "Hearthstone expert wiki documents a comparable player-facing convention: cards currently usable from hand are visibly highlighted, supporting immediate visual affordance rather than extra explanatory text.",
+    "Current active Partner lease owns shared HTML/BFI resources, so this bounded implementation avoids those files and uses a unique focused regression test."
+  ]
+}

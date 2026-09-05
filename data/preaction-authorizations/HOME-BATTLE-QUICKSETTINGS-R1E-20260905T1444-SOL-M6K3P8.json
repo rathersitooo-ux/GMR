@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-BATTLE-QUICKSETTINGS-R1E-20260905T1444-SOL-M6K3P8",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_BATTLE_QUICK_SETTINGS_VISIBLE_ACCEPTANCE_R1E",
+  "acquireKey": "HOME-BATTLE-QUICKSETTINGS-R1E-20260905T1444-SOL-M6K3P8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R1D_MERGED_PUBLIC+CURRENT_BFI_STALE_DIRECT_SETTINGS_EXPECTATION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_BFI_VISIBLE_SETTINGS_AUDIO_AND_BATTLE_PATHS+R1D_REQUIRED_GATE_AND_PUBLIC_RUNTIME_SMOKE",
+  "proceedToken": "PROCEED|HOME-BATTLE-QUICKSETTINGS-R1E-20260905T1444-SOL-M6K3P8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ADAPT_EXISTING_BFI_TO_ADOPTED_VISIBLE_QUICK_SETTINGS_FLOW",
+  "authorizationBaseSha": "b490f10377f29191e8a53abc633934713d829468",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_BATTLE_QUICK_SETTINGS_VISIBLE_ACCEPTANCE_R1E",
+  "leaseAcquireKey": "HOME-BATTLE-QUICKSETTINGS-R1E-20260905T1444-SOL-M6K3P8",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 14:44 JST",
+  "leaseUntilJst": "2026-09-05 15:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A357:L357",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@b490f10377f29191e8a53abc633934713d829468; intended branch sol/home-battle-quicksettings-r1e-20260905; mutable tests/browser-full-interaction.spec.mjs@46a3ef121ef3ab8641b2f7a7d19ceb3c4d77bfa0 + TRANSIENT data/preaction-authorizations/HOME-BATTLE-QUICKSETTINGS-R1E-20260905T1444-SOL-M6K3P8.json only; browser/home-boot-runtime-mount.mjs + browser/battle-screen-runtime-mount.mjs + browser/GAMEROAD.html + deploy/cloudflare/** + gameplay/rules/save/economy/network READ_ONLY. No product behavior mutation; acceptance/test contract follow-up only.",
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "solutionSignature": "adapt-existing-full-interaction-settings-and-battle-visible-paths-to-quick-settings",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_BFI_ALREADY_OWNS_VISIBLE_HOME_SETTINGS_AUDIO_AND_BATTLE_INTERACTION_COVERAGE",
+  "solutionSearchEvidence": [
+    "current browser-full-interaction.spec.mjs already tests visible Home Settings reachability and full Settings audio/toggle controls",
+    "current browser-full-interaction.spec.mjs already has real visible Battle entry/play paths, so a second acceptance harness is unnecessary",
+    "R1D changed the intended Settings entry semantics; the current direct Home click to section[data-screen=settings] expectation is stale",
+    "fresh exact-resource collision scan shows no unexpired owner for tests/browser-full-interaction.spec.mjs"
+  ],
+  "scopeRebaseReason": "Acceptance-only direct downstream of merged R1D. Update the existing BFI contract rather than add a new test system: Home Settings must open the quick dialog first, existing quick controls must affect the same Settings authority, Details must reach the full Settings screen, and the existing Battle gear must open the battle-context quick dialog without a Details button. Product runtime is read-only in R1E."
+}

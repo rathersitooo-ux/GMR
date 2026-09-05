@@ -13,12 +13,13 @@ env:
   ACQUIRE_KEY: CARDS-FAVORITE-HITACCESS-R5-20260906T0539-SOL-M8Q4K7
   MANIFEST: data/preaction-authorizations/CARDS-FAVORITE-HITACCESS-R5-20260906T0539-SOL-M8Q4K7.json
   WORKFLOW_FILE: .github/workflows/cards-favorite-hitaccess-r5-executor.yml
+  PRODUCT_FILE: browser/cards-deck-presentation.mjs
+  TEST_FILE: tests/home-cards-2p5d-runtime.spec.mjs
 
 jobs:
-  geometry-probe:
-    if: ${{ !contains(github.event.head_commit.message, '[r5-diag-result]') }}
+  repair-and-accept:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout exact owned branch
         uses: actions/checkout@v4
@@ -26,7 +27,7 @@ jobs:
           ref: sol/cards-favorite-hitaccess-r5-20260906
           fetch-depth: 0
 
-      - name: Verify PRE_ACTION fence
+      - name: Verify current authorization and diagnostic
         shell: bash
         run: |
           set -euo pipefail
@@ -47,39 +48,59 @@ jobs:
           for key, value in expected.items():
               if m.get(key) != value:
                   raise SystemExit(f'PRE_ACTION mismatch {key}: {m.get(key)!r} != {value!r}')
-          if not str(m.get('proceedToken', '')).startswith(f"PROCEED|{os.environ['ACQUIRE_KEY']}|"):
-              raise SystemExit('PRE_ACTION proceed token mismatch')
+          if not m.get('diagnosticCaptured') or m.get('diagnosticRunId') != '33991263168':
+              raise SystemExit('R5 real-Chromium diagnostic not captured')
           PY
-          mapfile -t changed < <(git diff --name-only "$BASE_SHA...HEAD" | sort)
-          mapfile -t expected < <(printf '%s\n' "$MANIFEST" "$WORKFLOW_FILE" | sort)
-          test "${#changed[@]}" -eq 2
-          test "${changed[0]}" = "${expected[0]}"
-          test "${changed[1]}" = "${expected[1]}"
 
-      - name: Install Playwright
-        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
-
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Measure current Cards hit geometry
+      - name: Apply one-file flow-layout repair
         shell: bash
         run: |
           set -euo pipefail
-          TEST_FILE=tests/home-cards-2p5d-runtime.spec.mjs
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          p = Path(os.environ['PRODUCT_FILE'])
+          text = p.read_text(encoding='utf-8')
+          old_mount = """  grid.before?.(host);\n  if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);"""
+          new_mount = """  grid.prepend?.(host);\n  if (!host.parentNode) grid.insertBefore?.(host, grid.firstChild ?? null) ?? grid.appendChild?.(host);"""
+          if text.count(old_mount) != 1:
+              raise SystemExit(f'expected exact findability mount seam once, found {text.count(old_mount)}')
+          text = text.replace(old_mount, new_mount)
+          old_style = '[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}'
+          new_style = '[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;grid-column:1/-1;min-width:0;margin:6px 0 10px}'
+          if text.count(old_style) != 1:
+              raise SystemExit(f'expected exact findability style seam once, found {text.count(old_style)}')
+          text = text.replace(old_style, new_style)
+          p.write_text(text, encoding='utf-8')
+          PY
+          mapfile -t changed < <(git diff --name-only | sort)
+          test "${#changed[@]}" -eq 1
+          test "${changed[0]}" = "$PRODUCT_FILE"
+          git diff --check
+          git diff -- "$PRODUCT_FILE"
+
+      - name: Install Playwright Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+
+      - name: Run real Chromium favorite hit-access and persistence acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
           cp "$TEST_FILE" /tmp/home-cards-2p5d-runtime.spec.mjs
           trap 'cp /tmp/home-cards-2p5d-runtime.spec.mjs "$TEST_FILE"' EXIT
           cat >> "$TEST_FILE" <<'EOF'
 
-          test('R5 current Cards hit geometry', async ({ page }) => {
+          test('R5 Cards favorite controls and cards are physically hit-accessible across target viewports', async ({ page }) => {
             test.setTimeout(120_000);
             const sizes = [
               { width: 1280, height: 720, label: 'desktop' },
               { width: 390, height: 844, label: 'phone' },
               { width: 667, height: 375, label: 'short-landscape' },
             ];
-            const results = [];
-            const ready = async () => page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
             const enterCards = async () => {
               const go = page.locator('.homePadChoice[data-home-target="cards"]:visible').first();
               await expect(go).toBeVisible();
@@ -89,92 +110,88 @@ jobs:
                 && globalThis.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase === 'IDLE'
               ));
             };
+            const topOwns = async (locator, selector) => {
+              const box = await locator.boundingBox();
+              expect(box).not.toBeNull();
+              return page.evaluate(({ x, y, selector }) => {
+                const top = document.elementFromPoint(x, y);
+                return Boolean(top?.closest?.(selector));
+              }, { x: box.x + box.width / 2, y: box.y + box.height / 2, selector });
+            };
             for (const size of sizes) {
               await page.setViewportSize({ width: size.width, height: size.height });
-              const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'load' });
-              expect(response?.ok()).toBeTruthy();
-              await ready();
+              let response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'load' });
+              expect(response?.ok(), size.label).toBeTruthy();
+              await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
+              await page.evaluate(() => localStorage.removeItem('gameroad.cards.favorite.v1'));
+              response = await page.reload({ waitUntil: 'load' });
+              expect(response?.ok(), size.label + ' reload after storage clear').toBeTruthy();
+              await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
               await enterCards();
+
+              const host = page.locator('[data-role="cards-deck-findability"]');
+              const filter = host.locator('[data-filter="favorite"]');
+              await expect(host, size.label).toBeVisible();
+              await expect(filter, size.label).toBeVisible();
+              expect(await page.evaluate(() => document.querySelector('[data-role="cards-deck-findability"]')?.parentElement?.id), size.label).toBe('collectionGrid');
+              expect(await topOwns(filter, '[data-role="cards-deck-findability"] [data-filter="favorite"]'), size.label + ' filter center').toBe(true);
+
               const card = page.locator('#collectionGrid button.slot.live.cardFace:visible').first();
-              const filter = page.locator('[data-role="cards-deck-findability"] [data-filter="favorite"]');
-              await expect(card).toBeVisible();
-              await expect(filter).toBeVisible();
-              const snapshot = async (phase) => page.evaluate(({ phase }) => {
-                const host = document.querySelector('[data-role="cards-deck-findability"]');
-                const filter = document.querySelector('[data-role="cards-deck-findability"] [data-filter="favorite"]');
-                const grid = document.querySelector('#collectionGrid');
-                const card = document.querySelector('#collectionGrid button.slot.live.cardFace:not([hidden])');
-                const describe = (node) => {
-                  if (!node) return null;
-                  const r = node.getBoundingClientRect();
-                  const s = getComputedStyle(node);
-                  return {
-                    tag: node.tagName, id: node.id || null,
-                    className: typeof node.className === 'string' ? node.className : null,
-                    role: node.getAttribute('data-role'), filter: node.getAttribute('data-filter'), dataId: node.getAttribute('data-id'),
-                    rect: { left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width, height:r.height },
-                    style: { position:s.position, zIndex:s.zIndex, transform:s.transform, marginTop:s.marginTop, marginBottom:s.marginBottom, overflow:s.overflow, pointerEvents:s.pointerEvents, display:s.display },
-                  };
-                };
-                const centerStack = (node) => {
-                  if (!node) return [];
-                  const r = node.getBoundingClientRect();
-                  return document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).slice(0, 10).map(describe);
-                };
-                const ancestry = (node) => {
-                  const out = [];
-                  for (let n = node, i = 0; n && i < 7; n = n.parentElement, i += 1) out.push(describe(n));
-                  return out;
-                };
-                const hr = host?.getBoundingClientRect();
-                const cr = card?.getBoundingClientRect();
-                return {
-                  phase,
-                  viewport: { width: innerWidth, height: innerHeight }, scroll: { x: scrollX, y: scrollY },
-                  host: describe(host), filter: describe(filter), grid: describe(grid), card: describe(card),
-                  hostCardVerticalOverlap: hr && cr ? Math.max(0, Math.min(hr.bottom, cr.bottom) - Math.max(hr.top, cr.top)) : null,
-                  filterStack: centerStack(filter), cardStack: centerStack(card),
-                  hostAncestry: ancestry(host), cardAncestry: ancestry(card),
-                };
-              }, { phase });
-              const before = await snapshot('before-card-scroll');
+              await expect(card, size.label).toBeVisible();
               await card.scrollIntoViewIfNeeded();
-              const after = await snapshot('after-card-scroll');
-              results.push({ label: size.label, before, after });
+              expect(await topOwns(card, '#collectionGrid button.slot.live.cardFace'), size.label + ' card center').toBe(true);
+              const cardId = await card.getAttribute('data-id');
+              expect(cardId, size.label).toBeTruthy();
+              await card.click();
+
+              const favoriteAction = page.locator('[data-role="cards-favorite-action"]');
+              await expect(favoriteAction, size.label).toBeVisible();
+              await expect(favoriteAction, size.label).toHaveAttribute('aria-pressed', 'false');
+              await favoriteAction.click();
+              await expect(favoriteAction, size.label).toHaveAttribute('aria-pressed', 'true');
+
+              await filter.scrollIntoViewIfNeeded();
+              expect(await topOwns(filter, '[data-role="cards-deck-findability"] [data-filter="favorite"]'), size.label + ' filter after card click').toBe(true);
+              await filter.click();
+              await expect(filter, size.label).toHaveAttribute('aria-pressed', 'true');
+              await expect(page.locator(`#collectionGrid button.slot.live.cardFace[data-id="${cardId}"]`), size.label + ' favorite survives filter').toBeVisible();
+
+              await page.reload({ waitUntil: 'load' });
+              await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
+              await enterCards();
+              const persistedCard = page.locator(`#collectionGrid button.slot.live.cardFace[data-id="${cardId}"]`).first();
+              await expect(persistedCard, size.label + ' persisted card').toBeVisible();
+              await persistedCard.click();
+              await expect(page.locator('[data-role="cards-favorite-action"]'), size.label + ' persisted favorite').toHaveAttribute('aria-pressed', 'true');
             }
-            console.log('R5_GEOMETRY_JSON=' + JSON.stringify(results));
           });
           EOF
           set +e
-          npx playwright test "$TEST_FILE" --config=playwright.config.mjs --workers=1 --grep 'R5 current Cards hit geometry' 2>&1 | tee /tmp/r5-geometry.log
+          npx playwright test "$TEST_FILE" --config=playwright.config.mjs --workers=1 --grep 'R5 Cards favorite controls and cards are physically hit-accessible' 2>&1 | tee /tmp/r5-acceptance.log
           status=${PIPESTATUS[0]}
           set -e
           cp /tmp/home-cards-2p5d-runtime.spec.mjs "$TEST_FILE"
           trap - EXIT
           test "$status" -eq 0
-          grep -F 'R5_GEOMETRY_JSON=' /tmp/r5-geometry.log > /tmp/r5-geometry-line.txt
+          git diff --exit-code -- "$TEST_FILE"
 
-      - name: Persist diagnostic readback only
+      - name: Run bounded existing Cards regression
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import json, os
-          from datetime import datetime, timedelta, timezone
-          from pathlib import Path
-          manifest = Path(os.environ['MANIFEST'])
-          data = json.loads(manifest.read_text(encoding='utf-8'))
-          line = Path('/tmp/r5-geometry-line.txt').read_text(encoding='utf-8').strip()
-          payload = line.split('R5_GEOMETRY_JSON=', 1)[1]
-          data['diagnosticCaptured'] = True
-          data['diagnosticCapturedAtJst'] = datetime.now(timezone(timedelta(hours=9))).strftime('%Y-%m-%d %H:%M:%S JST')
-          data['diagnosticRunId'] = os.environ.get('GITHUB_RUN_ID', '')
-          data['diagnosticHeadSha'] = os.environ.get('GITHUB_SHA', '')
-          data['geometry'] = json.loads(payload)
-          manifest.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-          PY
+          npx playwright test "$TEST_FILE" --config=playwright.config.mjs --workers=1
+
+      - name: Commit tested product and remove transient execution witnesses
+        shell: bash
+        run: |
+          set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add "$MANIFEST"
-          git commit -m '[r5-diag-result] capture Cards hit geometry'
+          git rm "$WORKFLOW_FILE" "$MANIFEST"
+          mapfile -t changed < <(git diff --name-only "$BASE_SHA" | sort)
+          test "${#changed[@]}" -eq 1
+          test "${changed[0]}" = "$PRODUCT_FILE"
+          git add "$PRODUCT_FILE"
+          git diff --cached --check
+          git commit -m 'Fix Cards favorite filter hit access across viewports'
           git push origin HEAD:sol/cards-favorite-hitaccess-r5-20260906

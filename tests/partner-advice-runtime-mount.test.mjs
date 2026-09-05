@@ -4,6 +4,7 @@ import {
   createBattleContextualTutorialReplayControl,
   createPartnerAdviceReplayBridge,
   createPartnerAdviceRuntimeControl,
+  createPartnerBattleCharacterReactionControl,
   createTutorialPartnerGuideControl,
   isPartnerAdviceQuickReplyAvailable,
   projectBattleContextualTutorialReplay,
@@ -272,6 +273,56 @@ test('battle quick reply is available only for Saasuna with an exact current mat
   ]) {
     assert.equal(isPartnerAdviceQuickReplyAvailable(input), false);
   }
+});
+
+test('confirmed used Battle card emits a character reaction once and never from missing pre-use state', () => {
+  const control = createPartnerBattleCharacterReactionControl();
+  const resolution = Object.freeze({
+    fingerprint: 'turn-4|score-7|card-alpha',
+    cards: Object.freeze([{ label: 'カードA', value: 7 }]),
+  });
+
+  assert.equal(control.consume({ partnerId: 'partner.saasuna', resolution: null }), null);
+  const receipt = control.consume({ partnerId: 'partner.saasuna', resolution });
+  assert.equal(receipt.triggerId, 'battle_card_submit');
+  assert.equal(receipt.cardName, 'カードA');
+  assert.equal(receipt.partnerText, 'バトルカード、セット');
+  assert.equal(receipt.presentationOnly, true);
+  assert.equal(receipt.gameplayAuthorityMutated, false);
+  assert.equal(receipt.autoExecute, false);
+  assert.equal(control.consume({ partnerId: 'partner.saasuna', resolution }), null);
+});
+
+test('character reaction routing is partner-neutral and unknown source fails closed without Saasuna leakage', () => {
+  const resolution = Object.freeze({ fingerprint: 'turn-5|score-8|card-beta', cards: Object.freeze([{ label: 'カードB', value: 8 }]) });
+  const current = createPartnerBattleCharacterReactionControl();
+  assert.equal(current.consume({ partnerId: 'partner.future', resolution }), null);
+  assert.equal(current.consume({ partnerId: 'partner.saasuna', resolution }).partnerText, 'バトルカード、セット');
+
+  const future = createPartnerBattleCharacterReactionControl({
+    resolveUtterance: ({ partnerId, triggerId }) => partnerId === 'partner.future'
+      ? Object.freeze({
+          partnerId,
+          triggerId,
+          text: '了解。',
+          sourceId: 'SOURCE-FUTURE-APPROVED',
+          dialogueVersion: 'future.dialogue.r1',
+          speechAct: 'character_utterance',
+          sourceState: 'approved_current',
+        })
+      : null,
+  });
+  const receipt = future.consume({ partnerId: 'partner.future', resolution });
+  assert.equal(receipt.partnerText, '了解。');
+  assert.equal(receipt.partnerId, 'partner.future');
+});
+
+test('priming an already-settled resolution prevents stale reconnect reaction', () => {
+  const control = createPartnerBattleCharacterReactionControl();
+  const resolution = Object.freeze({ fingerprint: 'turn-6|score-9|card-gamma', cards: Object.freeze([{ label: 'カードC', value: 9 }]) });
+  assert.equal(control.prime(resolution), true);
+  assert.equal(control.consume({ partnerId: 'partner.saasuna', resolution }), null);
+  assert.deepEqual(control.status().consumedEventFingerprints, ['turn-6|score-9|card-gamma']);
 });
 
 test('Tutorial Battle starts Saasuna auto guide on and disabling it never disables on-demand conversation', () => {

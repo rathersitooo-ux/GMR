@@ -62,7 +62,6 @@ function cloneState(raw) {
     pendingReturns: raw.pendingReturns.map(entry => ({ ...entry, card: cloneCard(entry.card) })),
     arenaPending: raw.arenaPending ? { ...raw.arenaPending, card: cloneCard(raw.arenaPending.card) } : null,
     arenaSettlement: raw.arenaSettlement ? { ...raw.arenaSettlement, card: cloneCard(raw.arenaSettlement.card) } : null,
-    lostThisMatch: raw.lostThisMatch.map(cloneCard),
   };
 }
 
@@ -76,7 +75,6 @@ function allRegionCards(state) {
   for (const entry of state.pendingReturns) cards.push(['pending_return', entry.card]);
   if (state.arenaPending) cards.push(['arena_pending', state.arenaPending.card]);
   if (state.arenaSettlement) cards.push(['arena_settlement', state.arenaSettlement.card]);
-  for (const card of state.lostThisMatch) cards.push(['lost_this_match', card]);
   return cards;
 }
 
@@ -135,8 +133,6 @@ function assertState(state) {
     normalizeCard(entry.card);
     requireRound(entry.eligibleRound);
   }
-  if (!Array.isArray(state.lostThisMatch)) throw new TypeError('LOST_THIS_MATCH_INVALID');
-  state.lostThisMatch.forEach(normalizeCard);
   if (state.arenaPending) {
     requireString(state.arenaPending.requestId, 'requestId');
     requireString(state.arenaPending.opponentRef, 'opponentRef');
@@ -225,7 +221,6 @@ export function createBoardFacilityState({
     pendingReturns: [],
     arenaPending: null,
     arenaSettlement: null,
-    lostThisMatch: [],
   };
   return freezeState(assertState(state));
 }
@@ -349,7 +344,7 @@ export function resolveArenaBattle(state, { battleId, outcome, rewardRef = null 
   if (state.processedBattleIds.includes(battleId)) return decision(state, 'duplicate', 'BATTLE_ALREADY_APPLIED');
   if (!state.arenaPending || state.arenaPending.stage !== 'prepared') return decision(state, 'ignored', 'NO_PREPARED_ARENA_BATTLE');
   if (state.arenaPending.battleId !== battleId) return decision(state, 'ignored', 'BATTLE_ID_MISMATCH');
-  if (!['win', 'loss', 'draw'].includes(outcome)) throw new TypeError('OUTCOME_INVALID');
+  if (!['win', 'draw'].includes(outcome)) throw new TypeError('OUTCOME_INVALID');
   if (outcome === 'win') requireString(rewardRef, 'rewardRef');
   if (outcome !== 'win' && rewardRef !== null) throw new TypeError('REWARD_REF_FORBIDDEN');
 
@@ -359,14 +354,6 @@ export function resolveArenaBattle(state, { battleId, outcome, rewardRef = null 
     processedBattleIds: addProcessed(state.processedBattleIds, battleId),
     arenaPending: null,
   };
-
-  if (outcome === 'loss') {
-    const next = freezeState(assertState({
-      ...common,
-      lostThisMatch: [...state.lostThisMatch, cloneCard(pending.card)],
-    }));
-    return decision(next, 'accepted', 'ARENA_LOSS_APPLIED');
-  }
 
   const next = freezeState(assertState({
     ...common,

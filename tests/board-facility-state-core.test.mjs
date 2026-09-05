@@ -195,13 +195,15 @@ test('H7 win waits for the next round before returning the card and reward refer
   assert.equal(win.state.arenaSettlement.rewardRef, 'opaque-reward-ref');
 });
 
-test('H8 loss removes only the current-match card instance and preserves permanent assets', () => {
-  const initial = baseState();
-  const loss = resolved('loss', { state: initial });
-  assert.equal(loss.reason, 'ARENA_LOSS_APPLIED');
-  assert.deepEqual(loss.state.lostThisMatch.map(card => card.id), ['card-a']);
-  assert.deepEqual(loss.state.permanent, initial.permanent);
-  assert.equal(loss.state.availableCards.some(card => card.id === 'card-b'), true);
+test('H8 unsupported loss outcome is rejected without mutating the prepared arena state', () => {
+  const current = prepared();
+  assert.equal(Object.hasOwn(current, 'lostThisMatch'), false);
+  assert.throws(
+    () => resolveArenaBattle(current, { battleId: 'battle-1', outcome: 'loss' }),
+    error => error instanceof TypeError && error.message === 'OUTCOME_INVALID',
+  );
+  assert.equal(current.arenaPending.card.id, 'card-a');
+  assert.deepEqual(current.processedBattleIds, []);
 });
 
 test('H9 draw queues only the card return and never a reward', () => {

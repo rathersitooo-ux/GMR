@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "QUICK-SETTINGS-MODAL-ISOLATION-R1-20260905T2028-SOL-Q6M4P8",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "QUICK_SETTINGS_MODAL_INPUT_ISOLATION_R1",
+  "acquireKey": "QUICK-SETTINGS-MODAL-ISOLATION-R1-20260905T2028-SOL-Q6M4P8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "ROW1336_EXPLICIT_MODAL_OWNER_CONTRACT+CURRENT_QUICK_SETTINGS_NO_TAB_CONTAINMENT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_FOCUSED_HOME_BOOT_TESTS+SCOPED_KEYBOARD_MODAL_ORACLE",
+  "proceedToken": "PROCEED|QUICK-SETTINGS-MODAL-ISOLATION-R1-20260905T2028-SOL-Q6M4P8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|QUICK_SETTINGS_KEYBOARD_ISOLATION_ONLY",
+  "authorizationBaseSha": "4cee72bd0e7f34574fade91e73491b66ae177d8f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "QUICK_SETTINGS_MODAL_INPUT_ISOLATION_R1",
+  "leaseAcquireKey": "QUICK-SETTINGS-MODAL-ISOLATION-R1-20260905T2028-SOL-Q6M4P8",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 20:28 JST",
+  "leaseUntilJst": "2026-09-05 21:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A400:L400",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@4cee72bd0e7f34574fade91e73491b66ae177d8f; intended branch sol/quick-settings-modal-isolation-r1-20260905; mutable browser/home-boot-runtime-mount.mjs + tests/home-boot-presentation.test.mjs + TRANSIENT data/preaction-authorizations/QUICK-SETTINGS-MODAL-ISOLATION-R1-20260905T2028-SOL-Q6M4P8.json only; GAMEROAD.html + settings/audio/save authority + gameplay/rules/economy/network + row1336 task cells READ_ONLY while adjacent owner is active.",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "solutionSignature": "quick-settings-modal-keyboard-focus-containment-only",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_QUICK_SETTINGS_MODAL+ROW1336_EXISTING_MODAL_INPUT_CONTRACT",
+  "solutionSearchEvidence": [
+    "Current main home-boot-runtime-mount.mjs already owns the shared Quick Settings overlay, outside-click dismissal, Escape dismissal, and trigger focus restoration.",
+    "The current modal declares role=dialog and aria-modal=true, but its document keydown handler only handles Escape and does not contain Tab or Shift+Tab focus inside the open dialog.",
+    "Current home-boot-presentation tests cover open, proxy controls, outside dismissal, Escape, and cleanup but do not cover keyboard focus containment.",
+    "This slice reuses the existing modal and settings authorities; it does not add a second settings store, master volume, route, gameplay, save, economy, network, or formal asset authority."
+  ],
+  "scopeRebaseReason": "Fresh main 4cee72bd matches the acquired base and target blobs. Adjacent active owners mutate different product files and row1336 task cells, so this bounded two-file consumer repair keeps row1336 cells read-only."
+}

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "FOSSIL-FIELD-BINDING-R96-20260905T2319-SOL-K7M4P2",
+  "taskId": "FOSSIL-EXCAVATION-STATE-RUNTIME-001",
+  "workUnitKey": "FOSSIL_FIELD_STOP_PRODUCT_CALLER_INSPECTION_R96",
+  "acquireKey": "FOSSIL-FIELD-BINDING-R96-20260905T2319-SOL-K7M4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R96_CURRENT_ACTUAL_FIELD_CALLER_GAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R96_READ_ONLY_REPO_INSPECTION",
+  "proceedToken": "PROCEED|FOSSIL-FIELD-BINDING-R96-20260905T2319-SOL-K7M4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|R96_INSPECTION_ONLY",
+  "authorizationBaseSha": "e878972e2bdb3df294a48b0aab11b0259a8a00a8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "FOSSIL-EXCAVATION-STATE-RUNTIME-001",
+  "leaseWorkUnitKey": "FOSSIL_FIELD_STOP_PRODUCT_CALLER_INSPECTION_R96",
+  "leaseAcquireKey": "FOSSIL-FIELD-BINDING-R96-20260905T2319-SOL-K7M4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 23:19 JST",
+  "leaseUntilJst": "2026-09-06 00:08 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A483:L483",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@e878972e2bdb3df294a48b0aab11b0259a8a00a8; intended inspection branch sol/fossil-field-binding-r96-20260905; mutable ONLY UNIQUE_TRANSIENT .github/workflows/fossil-field-binding-r96-inspect.yml + TRANSIENT data/preaction-authorizations/FOSSIL-FIELD-BINDING-R96-20260905T2319-SOL-K7M4P2.json. browser/GAMEROAD.html + browser/fossil-excavation-state-core.mjs + browser/board-facility-*.mjs + deploy/cloudflare/** + gameplay/rules/save/economy/network READ_ONLY during inspection.",
+  "scope": [
+    ".github/workflows/fossil-field-binding-r96-inspect.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/fossil-field-binding-r96-inspect.yml"
+  ],
+  "solutionSignature": "transient-readonly-repo-seam-inspector-v1",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R96_EXISTING_TRANSIENT_WORKFLOW_PATTERN_REUSED_BUT_QUERY_IS_TASK_SPECIFIC",
+  "solutionSearchEvidence": [
+    "existing .github/workflows runtime inspection/executor pattern",
+    "current giant HTML cannot be safely hydrated through connector",
+    "GitHub Actions checkout can inspect exact current branch bytes without product mutation"
+  ],
+  "buildResidualReason": "No existing current workflow emits the exact FIELD-stop plus fossil save/restoration seam evidence required for this task."
+}

@@ -1127,10 +1127,15 @@ test('covers Settings reduced-motion/low-performance, volume and mute controls, 
 
   const gacha = page.locator('section[data-screen="gacha"]');
   await expect(gacha).toBeVisible();
+  await expect(gacha.locator('.gachaControls .safeNote')).toHaveText('演出プレビュー：所持・保存は変わりません');
+  await expect(gacha.locator('#openPack')).toHaveText('7枚をプレビュー');
   await attachStateScreenshot(page, testInfo, 'gacha-idle-visible');
   await gacha.locator('#openPack').click();
   await expect(gacha.locator('#gachaResultsView')).not.toHaveClass(/hidden/);
+  await expect(gacha.locator('.gachaResultsHead')).toContainText('演出プレビュー結果');
   await expect(gacha.locator('#packResults .packCard')).toHaveCount(7);
+  const previewAriaLabels = await gacha.locator('#packResults .packCard').evaluateAll((nodes) => nodes.map((node) => node.getAttribute('aria-label') || ''));
+  expect(previewAriaLabels.every((label) => label.startsWith('プレビュー'))).toBe(true);
   await attachStateScreenshot(page, testInfo, 'gacha-seven-results-visible');
 
   const detailCard = gacha.locator('#packResults button.packCard[aria-label*="詳細を開く"]').first();

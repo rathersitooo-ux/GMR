@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   PROFILE_PRESENTATION_CONTRACT,
@@ -84,4 +85,11 @@ test('Profile presentation contract forbids new deck/comment/persistence authori
   assert.equal(PROFILE_PRESENTATION_CONTRACT.favoriteCardsRequireOwnershipAuthority, true);
   assert.equal(PROFILE_PRESENTATION_CONTRACT.maxFavoriteCards, 3);
   assert.equal(PROFILE_PRESENTATION_CONTRACT.detailedRecordsRoute, 'records');
+});
+
+test('Profile secondary copy keeps the bounded phone legibility floor', () => {
+  const source = readFileSync(new URL('../browser/profile-presentation-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /\.profileIdentityCopy span\{[^}]*font-size:11px;[^}]*line-height:1\.35/);
+  assert.match(source, /\.profileRecordsNote\{[^}]*font-size:12px;line-height:1\.45/);
+  assert.match(source, /@media\(max-height:470px\)[\s\S]*?\.profileRecordsNote\{[^}]*font-size:10px;line-height:1\.35/);
 });

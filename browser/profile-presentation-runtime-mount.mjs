@@ -77,12 +77,12 @@ function ensureStyle(doc) {
 [data-screen="profile"] .profileIdentityMark{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(255,208,123,.62);background:#0c3028;color:var(--gold);font-size:20px;font-weight:1000}
 [data-screen="profile"] .profileIdentityCard[data-role="partner"] .profileIdentityMark{border-color:rgba(154,240,213,.62);color:var(--a)}
 [data-screen="profile"] .profileIdentityCopy{min-width:0}
-[data-screen="profile"] .profileIdentityCopy span{display:block;color:var(--muted);font-size:8px;font-weight:900;letter-spacing:.08em}
+[data-screen="profile"] .profileIdentityCopy span{display:block;color:var(--muted);font-size:11px;font-weight:900;letter-spacing:.08em;line-height:1.35}
 [data-screen="profile"] .profileIdentityCopy b{display:block;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px}
-[data-screen="profile"] .profileRecordsNote{border-left:3px solid var(--a);background:rgba(154,240,213,.06);padding:9px 10px;color:#c9ddd6;font-size:9px;line-height:1.5}
+[data-screen="profile"] .profileRecordsNote{border-left:3px solid var(--a);background:rgba(154,240,213,.06);padding:9px 10px;color:#c9ddd6;font-size:12px;line-height:1.45}
 [data-screen="profile"] .profileActions{margin-top:auto}
 @media(max-width:540px) and (orientation:portrait){[data-screen="profile"] .profileIdentitySummary{grid-template-columns:1fr}[data-screen="profile"] .profileIdentityCard{min-height:72px}}
-@media(max-height:470px) and (orientation:landscape){[data-screen="profile"] .profileStats{gap:6px;padding:8px}[data-screen="profile"] .profileIdentityCard{min-height:58px;padding:6px;grid-template-columns:36px minmax(0,1fr);gap:7px}[data-screen="profile"] .profileIdentityMark{width:36px;height:36px;font-size:16px}[data-screen="profile"] .profileIdentityCopy b{font-size:12px}[data-screen="profile"] .profileRecordsNote{padding:5px 7px;font-size:8px}.profileActions{margin-top:0}}
+@media(max-height:470px) and (orientation:landscape){[data-screen="profile"] .profileStats{gap:6px;padding:8px}[data-screen="profile"] .profileIdentityCard{min-height:58px;padding:6px;grid-template-columns:36px minmax(0,1fr);gap:7px}[data-screen="profile"] .profileIdentityMark{width:36px;height:36px;font-size:16px}[data-screen="profile"] .profileIdentityCopy b{font-size:12px}[data-screen="profile"] .profileRecordsNote{padding:5px 7px;font-size:10px;line-height:1.35}.profileActions{margin-top:0}}
 `;
   doc.head?.appendChild(style);
 }

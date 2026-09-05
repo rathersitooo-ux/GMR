@@ -1,0 +1,74 @@
+name: Battle remaining Deck live R95b inspect
+
+on:
+  push:
+    branches:
+      - sol/battle-remaining-deck-live-r95b-20260905
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-remaining-deck-live-r95b-20260905
+          fetch-depth: 0
+      - name: Verify current reconstructed inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git merge-base HEAD 1c04e3089acae18ea4312730cf1fd3d9872a86b2)" = "1c04e3089acae18ea4312730cf1fd3d9872a86b2"
+          test "$(git hash-object browser/battle-replay-live-adapter.mjs)" = "591c4b3a5104f43832d9ed3e1e561c59deb75c83"
+          test "$(git hash-object tests/battle-replay-live-adapter.test.mjs)" = "deee7cdb9dfafebba935ecf052404e9312c86ee9"
+          test "$(git hash-object deploy/cloudflare/scripts/build.mjs)" = "6e24f77cb11a7f99eeb3d9919656f3797c922379"
+          test "$(git hash-object deploy/cloudflare/tests/build.test.mjs)" = "a85c8936afb9d7a9c0a2aa913f78eda1708a65a5"
+          test "$(git hash-object browser/GAMEROAD.html)" = "470bbdbb621cd7a5326d51dfbbfb8d15c53948df"
+      - name: Inspect bounded live seams
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def bounded(path, needles, radius=7, max_hits=12, width=520):
+              lines = Path(path).read_text(errors='replace').splitlines()
+              print(f'=== FILE {path} lines={len(lines)} ===')
+              for needle in needles:
+                  hits = [i for i, line in enumerate(lines) if needle in line]
+                  print(f'--- NEEDLE {needle!r} hits={len(hits)} ---')
+                  for ordinal, i in enumerate(hits[:max_hits], 1):
+                      print(f'@@ hit {ordinal}/{min(len(hits), max_hits)} line {i+1} @@')
+                      lo=max(0,i-radius); hi=min(len(lines),i+radius+1)
+                      for j in range(lo,hi):
+                          text=lines[j].replace('\t','  ')
+                          if len(text)>width: text=text[:width]+'…'
+                          print(f'{j+1:>7}: {text}')
+
+          bounded('browser/GAMEROAD.html', [
+              'battle-replay-live-adapter.mjs',
+              'createLiveReplaySession',
+              'appendAcceptedBattleResolution',
+              'battleLog',
+              'function makePlayer',
+              'makePlayer(',
+              'player.deck',
+              '.deck.shift(',
+              'deck.shift(',
+              'refill',
+              'matchId',
+              'viewer',
+              'battleDrawer'
+          ])
+          bounded('tests/browser-full-interaction.spec.mjs', [
+              'battleLog',
+              'battleDrawer',
+              'battleMap',
+              'Battle',
+              'matchId',
+              'replay'
+          ], radius=5, max_hits=10)
+          PY

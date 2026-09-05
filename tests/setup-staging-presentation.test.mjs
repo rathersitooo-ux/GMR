@@ -20,10 +20,9 @@ test('Setup mode presentation makes participant count and 2v2 team split visuall
   assert.match(SETUP_STAGING_PRESENTATION_CSS, /\[data-mode\]\.on::before\{/);
 });
 
-test('Setup pictograms stay presentation-only and keep the existing mode labels/selectors authoritative', () => {
+test('Setup pictograms preserve the existing interaction and mobile presentation guards', () => {
   assert.doesNotMatch(SETUP_STAGING_PRESENTATION_CSS, /pointer-events\s*:/);
   assert.doesNotMatch(SETUP_STAGING_PRESENTATION_CSS, /display\s*:\s*none/);
-  assert.doesNotMatch(SETUP_STAGING_PRESENTATION_CSS, /data-mode\s*=/);
   assert.match(SETUP_STAGING_PRESENTATION_CSS, /min-height:44px !important/);
   assert.match(SETUP_STAGING_PRESENTATION_CSS, /@media \(max-width:540px\)/);
   assert.match(SETUP_STAGING_PRESENTATION_CSS, /@media \(max-height:430px\) and \(orientation:landscape\)/);

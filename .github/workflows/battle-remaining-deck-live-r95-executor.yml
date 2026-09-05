@@ -1,0 +1,80 @@
+name: Battle remaining Deck live R95 executor
+
+on:
+  push:
+    branches:
+      - sol/battle-remaining-deck-live-r95-20260905
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package-closure:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-remaining-deck-live-r95-20260905
+          fetch-depth: 0
+      - name: Verify authorized package inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git merge-base HEAD 093220a142bea6cfb60b453b16bbfb279ccfa1db)" = "093220a142bea6cfb60b453b16bbfb279ccfa1db"
+          test "$(git hash-object browser/battle-replay-live-adapter.mjs)" = "591c4b3a5104f43832d9ed3e1e561c59deb75c83"
+          test "$(git hash-object tests/battle-replay-live-adapter.test.mjs)" = "deee7cdb9dfafebba935ecf052404e9312c86ee9"
+          test "$(git hash-object browser/battle-self-deck-inspect-core.mjs)" = "78e63a6690f6846a2ce7b3538d4711ab10e4771d"
+          test "$(git hash-object deploy/cloudflare/scripts/build.mjs)" = "98650d66d84ef123afc8864761ef793dddfdf892"
+          test "$(git hash-object deploy/cloudflare/tests/build.test.mjs)" = "2f1caa3fe9e808fa0d6f05838a406899601dfe77"
+          test -f data/preaction-authorizations/BATTLE-REMAINING-DECK-LIVE-R95-20260905T2104-SOL-V8K4M2.json
+      - name: Apply exact public-package closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          build_path = Path('deploy/cloudflare/scripts/build.mjs')
+          test_path = Path('deploy/cloudflare/tests/build.test.mjs')
+          build = build_path.read_text()
+          tests = test_path.read_text()
+
+          build_anchor = "  { option: 'replayAdapterSource', expected: 'expectedReplayAdapterBlob', source: 'browser/battle-replay-live-adapter.mjs', output: 'battle-replay-live-adapter.mjs', artifact: 'battle_replay_live_adapter', label: 'Battle replay live adapter', sourceFlag: '--replay-adapter-source', expectedFlag: '--expected-replay-adapter-blob' },\n"
+          build_insert = build_anchor + "  { option: 'remainingDeckInspectCoreSource', expected: 'expectedRemainingDeckInspectCoreBlob', source: 'browser/battle-self-deck-inspect-core.mjs', output: 'battle-self-deck-inspect-core.mjs', artifact: 'battle_self_deck_inspect_core', label: 'Battle viewer-safe remaining Deck inspect core', sourceFlag: '--remaining-deck-inspect-core-source', expectedFlag: '--expected-remaining-deck-inspect-core-blob' },\n"
+          if build.count(build_anchor) != 1:
+              raise SystemExit(f'build replay anchor count={build.count(build_anchor)}')
+          build = build.replace(build_anchor, build_insert, 1)
+
+          test_anchor = "  { file: 'battle-replay-live-adapter.mjs', source: 'browser/battle-replay-live-adapter.mjs', sourceArg: 'replayAdapterSource', expectedArg: 'expectedReplayAdapterBlob', artifact: 'battle_replay_live_adapter', fixture: \"import './battle-replay-core.mjs';\\nimport './card-presentation-core.mjs';\\nimport './battle-conveyor-presentation-core.mjs';\\nimport './partner-battle-event-log-projection.mjs';\\n\", currentBlob: '02da4629e0713406297d9692ce2afe8e0e624ea9' },\n"
+          test_insert = "  { file: 'battle-replay-live-adapter.mjs', source: 'browser/battle-replay-live-adapter.mjs', sourceArg: 'replayAdapterSource', expectedArg: 'expectedReplayAdapterBlob', artifact: 'battle_replay_live_adapter', fixture: \"import './battle-replay-core.mjs';\\nimport './card-presentation-core.mjs';\\nimport './battle-self-deck-inspect-core.mjs';\\nimport './battle-conveyor-presentation-core.mjs';\\nimport './partner-battle-event-log-projection.mjs';\\n\", currentBlob: '591c4b3a5104f43832d9ed3e1e561c59deb75c83' },\n  { file: 'battle-self-deck-inspect-core.mjs', source: 'browser/battle-self-deck-inspect-core.mjs', sourceArg: 'remainingDeckInspectCoreSource', expectedArg: 'expectedRemainingDeckInspectCoreBlob', artifact: 'battle_self_deck_inspect_core', fixture: \"export function createAuthoritativeRemainingDeckCountSnapshot(){ return Object.freeze({}); }\\nexport function projectRemainingDeckCountForViewer(){ return Object.freeze({ ok: true }); }\\n\", currentBlob: '78e63a6690f6846a2ce7b3538d4711ab10e4771d' },\n"
+          if tests.count(test_anchor) != 1:
+              raise SystemExit(f'build test replay anchor count={tests.count(test_anchor)}')
+          tests = tests.replace(test_anchor, test_insert, 1)
+
+          build_path.write_text(build)
+          test_path.write_text(tests)
+          PY
+          git diff --check
+          git diff -- deploy/cloudflare/scripts/build.mjs deploy/cloudflare/tests/build.test.mjs
+      - name: Run package and privacy tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test deploy/cloudflare/tests/build.test.mjs tests/battle-self-deck-inspect-core.test.mjs tests/battle-replay-live-adapter.test.mjs
+      - name: Commit package closure only
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git status --short)"
+          printf '%s\n' "$changed"
+          test -n "$changed"
+          test "$(printf '%s\n' "$changed" | wc -l)" -eq 2
+          printf '%s\n' "$changed" | grep -q 'deploy/cloudflare/scripts/build.mjs'
+          printf '%s\n' "$changed" | grep -q 'deploy/cloudflare/tests/build.test.mjs'
+          git config user.name gameroad-scoped-patch
+          git config user.email gameroad-scoped-patch@users.noreply.github.com
+          git add deploy/cloudflare/scripts/build.mjs deploy/cloudflare/tests/build.test.mjs
+          git commit -m 'Battle: package viewer-safe remaining Deck core'
+          git push origin HEAD:sol/battle-remaining-deck-live-r95-20260905

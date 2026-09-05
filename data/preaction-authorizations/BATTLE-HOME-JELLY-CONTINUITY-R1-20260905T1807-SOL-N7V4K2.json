@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HOME-JELLY-CONTINUITY-R1-20260905T1807-SOL-N7V4K2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_JANKEN_HOME_VISUAL_CONTINUITY_R1",
+  "acquireKey": "BATTLE-HOME-JELLY-CONTINUITY-R1-20260905T1807-SOL-N7V4K2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_HOME_TO_BATTLE_VISUAL_CONTINUITY_PLUS_CURRENT_LIVE_JANKEN_MATERIAL_MISMATCH",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_FOCUSED_JANKEN_TESTS_PLUS_R67B_INVENTED_VISUAL_ROLLBACK_BOUNDARY",
+  "proceedToken": "PROCEED|BATTLE-HOME-JELLY-CONTINUITY-R1-20260905T1807-SOL-N7V4K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "7687041833bc767052629b24b2a79b011b2c64b4",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_HOME_VISUAL_CONTINUITY_R1",
+  "leaseAcquireKey": "BATTLE-HOME-JELLY-CONTINUITY-R1-20260905T1807-SOL-N7V4K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 18:07 JST",
+  "leaseUntilJst": "2026-09-05 19:07 JST",
+  "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs + tests/battle-janken-slidepad-runtime-mount.test.mjs + this transient manifest only; GAMEROAD.html, gameplay/rules/save/economy/network/formal art, screen-navigation-core and all other Battle modules are read-only.",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "solutionSignature": "Adapt the existing live packaged Battle janken SlidePad presentation only: keep current slot assignment, gestures, action dispatch, right-hand layout, target layering, aura behavior and accessibility/performance fallbacks; replace mint/gray control material with the Home visual language's moonlit blue/indigo/cyan/violet glass-jelly palette. Add no buttons, fake values, RPG controls, formal art, or alternate authority.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "current-live-janken-slidepad-plus-home-visual-direction",
+  "solutionSearchEvidence": [
+    "CURRENT UI router Battle Core/Presentation boundaries and Screen Index",
+    "CURRENT completion-distance visual shell task row 19",
+    "current main battle-janken-slidepad runtime is a public build artifact and current Battle right-hand consumer",
+    "PR#910/R67b explicitly rolled back invented Battle visual content; this slice changes material only",
+    "user explicitly rejected unrelated generated RPG UI and explicitly forbids image generation in this turn"
+  ]
+}

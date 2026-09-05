@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DECK-SAVE-DUAL-TX-R1-20260906T0551-SOL-Q6M8K4",
+  "taskId": "DECK-UNSAVED-SAVE-ACK-INTEGRATE-001",
+  "workUnitKey": "DECK_SAVE_DUAL_AUTHORITY_TRANSACTION_CORE_R1",
+  "acquireKey": "DECK-SAVE-DUAL-TX-R1-20260906T0551-SOL-Q6M8K4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_DIRECT_READ_COMMITDECK_PARTIAL_DURABLE_SUCCESS",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_VERIFIED_WRITE_ROLLBACK_CORE_PLUS_FOCUSED_NODE_REGRESSION",
+  "proceedToken": "PROCEED|DECK-SAVE-DUAL-TX-R1-20260906T0551-SOL-Q6M8K4|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-save-recovery-authority-extension|active-lease-readback",
+  "authorizationBaseSha": "77777f15cc263a33ff9bb8ec1de7e896c979223b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DECK-UNSAVED-SAVE-ACK-INTEGRATE-001",
+  "leaseWorkUnitKey": "DECK_SAVE_DUAL_AUTHORITY_TRANSACTION_CORE_R1",
+  "leaseAcquireKey": "DECK-SAVE-DUAL-TX-R1-20260906T0551-SOL-Q6M8K4",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 05:51 JST",
+  "leaseUntilJst": "2026-09-06 06:41 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A13:N13",
+  "scope": [
+    "browser/deck-save-recovery-core.mjs",
+    "tests/deck-save-dual-transaction.test.mjs"
+  ],
+  "solutionSignature": "DECK_SAVE_DUAL_KEY_VERIFIED_TRANSACTION_R1",
+  "reuseDisposition": "EXTEND_EXISTING_AUTHORITY",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidence": [
+    "Current main already mounts GAMEROAD_DECK_SAVE_RECOVERY_CORE and uses writePreparedSaveVerified for the authoritative SAVE_KEY.",
+    "Current commitDeck writes gameroad.deck.library.v1 before the verified primary save, so primary failure can leave the deck library durable key ahead of the primary authority.",
+    "The live browser/GAMEROAD.html mount is under a valid PARTNER-MULTI-CHAR-R2 lease through 06:37 JST, so this WorkUnit does not steal or mutate that file.",
+    "The smallest non-duplicate artifact is a companion-write transaction primitive in the existing recovery authority, with focused failure/readback tests; later HTML mounting needs no new transaction design."
+  ]
+}

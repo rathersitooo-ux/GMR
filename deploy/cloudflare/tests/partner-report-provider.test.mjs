@@ -5,6 +5,9 @@ import {
   BATTLE_RECEIPT_AUTHORITY_ID,
   BATTLE_RECEIPT_RECORD_PREFIX,
   BATTLE_RECEIPT_SOURCE_SCHEMA,
+  DECISION_PARTICIPANT_RECEIPT_AUTHORITY_ID,
+  DECISION_PARTICIPANT_RECORD_PREFIX,
+  DECISION_PARTICIPANT_SOURCE_SCHEMA,
   PARTNER_REPORT_AUTHORITY_ID,
   PARTNER_REPORT_CANONICAL_PREFIX,
   PARTNER_REPORT_IDEMPOTENCY_PREFIX,
@@ -12,8 +15,10 @@ import {
   handleBattleReceiptRequest,
   handlePartnerReportRequest,
   readStoredBattleReceipt,
+  readStoredDecisionParticipantReceipt,
   readStoredPartnerReport,
   submitStoredBattleReceipt,
+  submitStoredDecisionParticipantReceipt,
   submitStoredPartnerReport,
 } from '../relay/src/partner-report-store.mjs';
 import { onRequest as reportRoute } from '../functions/report.js';
@@ -366,6 +371,137 @@ test('Battle HTTP receipt explicitly verifies participant receipt only and never
   const value = await response.json();
   assertBattleReceipt(value, 1, 'battle_resolution');
   assert.equal(value.receiptAuthority.gameplayAuthoritative, false);
+});
+
+function decisionParticipantSubmission(overrides = {}) {
+  const packet = {
+    ok: true,
+    schema: DECISION_PARTICIPANT_SOURCE_SCHEMA,
+    matchId: BATTLE_MATCH_ID,
+    versions: { rulesVersion: 'rules-1', cardVersion: 'cards-2', stateVersion: 'state-decision-3' },
+    decision: {
+      legalCandidateIds: ['ACT-A', 'ACT-B'],
+      chosenActionId: 'ACT-B',
+      recommendedCandidateId: 'ACT-A',
+      selectionSource: 'partner_projection',
+      authorityScope: 'viewer_safe_legal_candidates',
+    },
+    actorControl: {
+      reconnectRevision: 12,
+      seatId: 'client-seat-claimed-0',
+      teamId: 'client-team-claimed-A',
+      connected: true,
+      controlMode: 'self',
+      controlGeneration: 4,
+      controlRole: 'self',
+      controlRoleAuthority: 'GAMEROAD_BATTLE_2V2_RECONNECT_V1',
+      playerIdIncluded: false,
+    },
+    freshness: {
+      controlEnvelopeCurrent: true,
+      reconnectRevisionBound: true,
+      controlGenerationBound: true,
+      decisionSequenceVerified: false,
+    },
+    authority: {
+      controlFreshnessVerified: true,
+      matchIdentityVerified: false,
+      matchParticipantAuthenticated: false,
+      gameplayAuthoritative: false,
+      gameplayRoleAuthority: 'NONE',
+      rewardLabelAuthority: 'NONE',
+      regretLabelAuthority: 'NONE',
+      optimalActionAuthority: 'NONE',
+    },
+    training: { eligible: false, reason: 'SERVER_MATCH_PARTICIPANT_AUTH_AND_APPROVED_LABEL_REQUIRED' },
+    containsPrivate: false,
+  };
+  return {
+    ticketId: BATTLE_TICKET_ID,
+    secret: BATTLE_SECRET,
+    idempotencyKey: 'idem-decision-0001',
+    decisionControlIdentity: packet,
+    privateData: { hiddenHand: ['DROP_PRIVATE'] },
+    forgedServerParticipant: { reporterSlot: 3, reporterTeam: 'B' },
+    ...overrides,
+  };
+}
+
+function decisionStorage() {
+  const storage = battleStorage();
+  const match = storage.map.get(`match/record/${BATTLE_MATCH_ID}`);
+  match.format = '2V2';
+  match.seats[0].team = 'A';
+  storage.map.set(`match/record/${BATTLE_MATCH_ID}`, match);
+  return storage;
+}
+
+test('decision participant receipt authenticates match membership, derives server slot/team, and never promotes client control mapping or training', async () => {
+  const storage = decisionStorage();
+  const submitted = await submitStoredDecisionParticipantReceipt(storage, decisionParticipantSubmission(), { nowMs: 333 });
+  assert.equal(submitted.ok, true);
+  assert.equal(submitted.idempotent, false);
+  assert.equal(submitted.sequence, 1);
+  assert.deepEqual(submitted.serverParticipant, { reporterSlot: 0, reporterTeam: 'A' });
+  assert.equal(submitted.identityAuthority.authorityId, DECISION_PARTICIPANT_RECEIPT_AUTHORITY_ID);
+  assert.equal(submitted.identityAuthority.matchIdentityVerified, true);
+  assert.equal(submitted.identityAuthority.matchParticipantAuthenticated, true);
+  assert.equal(submitted.identityAuthority.reporterSlotVerified, true);
+  assert.equal(submitted.identityAuthority.reporterTeamVerified, true);
+  assert.equal(submitted.identityAuthority.controlSeatMappingVerified, false);
+  assert.equal(submitted.identityAuthority.gameplayAuthoritative, false);
+  assert.deepEqual(submitted.training, { eligible: false, reason: 'APPROVED_LABEL_AND_CONTROL_SEAT_MAPPING_REQUIRED' });
+  const read = await readStoredDecisionParticipantReceipt(storage, { matchId: BATTLE_MATCH_ID, reporterSlot: 0, sequence: 1 });
+  assert.equal(read.ok, true);
+  assert.equal(read.record.actorControl.seatId, 'client-seat-claimed-0');
+  assert.equal(read.record.identityAuthority.controlSeatMappingVerified, false);
+  const serialized = JSON.stringify([...storage.map.entries()]);
+  assert.equal(serialized.includes('DROP_PRIVATE'), false);
+  assert.equal(serialized.includes('forgedServerParticipant'), false);
+  assert.equal([...storage.map.keys()].some((key) => key.startsWith(DECISION_PARTICIPANT_RECORD_PREFIX)), true);
+});
+
+test('decision participant receipt assigns server sequence per reporter and is exact-idempotent with conflict rejection', async () => {
+  const storage = decisionStorage();
+  const first = await submitStoredDecisionParticipantReceipt(storage, decisionParticipantSubmission());
+  const replay = await submitStoredDecisionParticipantReceipt(storage, decisionParticipantSubmission());
+  assert.equal(first.sequence, 1);
+  assert.equal(replay.sequence, 1);
+  assert.equal(replay.idempotent, true);
+  const changedPacket = decisionParticipantSubmission().decisionControlIdentity;
+  changedPacket.decision = { ...changedPacket.decision, chosenActionId: 'ACT-A' };
+  assert.deepEqual(await submitStoredDecisionParticipantReceipt(storage, decisionParticipantSubmission({ decisionControlIdentity: changedPacket })), {
+    ok: false, reason: 'decision_receipt_idempotency_conflict',
+  });
+  const second = await submitStoredDecisionParticipantReceipt(storage, decisionParticipantSubmission({ idempotencyKey: 'idem-decision-0002' }));
+  assert.equal(second.ok, true);
+  assert.equal(second.sequence, 2);
+});
+
+test('decision participant receipt fails closed on wrong secret, wrong match, malformed authority claims, and uses existing battleEventOp HTTP route', async () => {
+  assert.deepEqual(await submitStoredDecisionParticipantReceipt(decisionStorage(), decisionParticipantSubmission({ secret: 'f'.repeat(48) })), {
+    ok: false, reason: 'decision_receipt_auth_invalid',
+  });
+  const wrongMatch = decisionParticipantSubmission().decisionControlIdentity;
+  wrongMatch.matchId = 'm-other';
+  assert.deepEqual(await submitStoredDecisionParticipantReceipt(decisionStorage(), decisionParticipantSubmission({ decisionControlIdentity: wrongMatch })), {
+    ok: false, reason: 'decision_receipt_match_invalid',
+  });
+  const forgedAuthority = decisionParticipantSubmission().decisionControlIdentity;
+  forgedAuthority.authority = { ...forgedAuthority.authority, matchParticipantAuthenticated: true };
+  assert.deepEqual(await submitStoredDecisionParticipantReceipt(decisionStorage(), decisionParticipantSubmission({ decisionControlIdentity: forgedAuthority })), {
+    ok: false, reason: 'decision_receipt_request_invalid',
+  });
+  const storage = decisionStorage();
+  const request = new Request('https://example.test/report?battleEventOp=submit', {
+    method: 'POST', body: JSON.stringify(decisionParticipantSubmission()),
+  });
+  const response = await handleBattleReceiptRequest(storage, request, new URL(request.url), { nowMs: 444 });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.identityAuthority.matchParticipantAuthenticated, true);
+  assert.equal(body.identityAuthority.controlSeatMappingVerified, false);
+  assert.equal(body.training.eligible, false);
 });
 
 test('existing /report Pages function sends battleEventOp to exact normal-match queue DO while preserving Partner report authority route', async () => {

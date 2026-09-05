@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD-NO-DEFEAT-R1B-20260905T1550-SOL-Q6M4K2",
+  "taskId": "BOARD-FACILITY-RUNTIME-CONTRACT-001",
+  "workUnitKey": "BOARD_FACILITY_NO_DEFEAT_CONTRACT_REPAIR_R1B_PREACTION_REBUILD",
+  "acquireKey": "BOARD-NO-DEFEAT-R1B-20260905T1550-SOL-Q6M4K2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_NO_DEFEAT_USER_LOCK+CURRENT_BOARD_CORE_DIRECT_READBACK+R1_EXACT_DONOR_DIFF_AUDIT",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_DONOR_LOCAL_BOARD_STATE_CORE_22_OF_22_PASS+FORBIDDEN_SOURCE_TOKEN_SCAN_EMPTY",
+  "proceedToken": "PROCEED|BOARD-NO-DEFEAT-R1B-20260905T1550-SOL-Q6M4K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|REPAIR_EXISTING_BOARD_CONTRACT_TO_NO_DEFEAT_LOCK",
+  "authorizationBaseSha": "d257e551b54814a97a338d6a6c41f6297dd0c037",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-FACILITY-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "BOARD_FACILITY_NO_DEFEAT_CONTRACT_REPAIR_R1B_PREACTION_REBUILD",
+  "leaseAcquireKey": "BOARD-NO-DEFEAT-R1B-20260905T1550-SOL-Q6M4K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 15:50 JST",
+  "leaseUntilJst": "2026-09-05 16:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A364:L364",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@d257e551b54814a97a338d6a6c41f6297dd0c037; intended CLEAN branch sol/board-no-defeat-r1b-20260905; mutable browser/board-facility-state-core.mjs + tests/board-facility-state-core.test.mjs + deploy/cloudflare/tests/build.test.mjs (ONLY board-facility-state-core currentBlob refresh 105f16e8dd8df7fd04611723fe8cb2bf089525e0 -> e1aec42eab392b04a94a5b30b1f0f97ad81f368f) + TRANSIENT data/preaction-authorizations/BOARD-NO-DEFEAT-R1B-20260905T1550-SOL-Q6M4K2.json only. browser/board-facility-state-core.classic.js + browser/board-facility-runtime-mount.mjs + browser/GAMEROAD.html + deploy/cloudflare/scripts/build.mjs + all Battle/Home/Deck/Result/gameplay/save/economy/network files READ_ONLY. R1 branch sol/board-no-defeat-r1-20260905 READ_ONLY donor evidence only.",
+  "scope": [
+    "browser/board-facility-state-core.mjs",
+    "tests/board-facility-state-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/board-facility-state-core.mjs",
+    "tests/board-facility-state-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "repair-existing-board-facility-arena-contract-to-formal-no-defeat-semantics",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_BOARD_STATE_CORE_AND_PUBLIC_PACKAGE_PROVENANCE_ARE_THE_AUTHORITATIVE_IMPLEMENTATION_SEAMS",
+  "solutionSearchEvidence": [
+    "current core already owns arena outcome state and currently accepts win/loss/draw",
+    "formal CURRENT user lock forbids defeat/loss generation, storage and consumption",
+    "current public-package build already copies this exact Board core and pins its git blob",
+    "fresh lease and open-PR checks found no unexpired owner or existing Board-facility no-defeat repair"
+  ],
+  "scopeRebaseReason": "Supersede the R1 donor branch because current Required Gate requires the authorization manifest as the first commit. Reapply only the audited source/test delta and the single required Board core provenance-pin refresh. Do not create a second state machine, replacement defeat condition, failure reward, gameplay rule, save schema, UI or public-host mechanism."
+}

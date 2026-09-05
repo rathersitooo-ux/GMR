@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import {
   BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA,
   BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS,
+  advanceBattleJankenSlotRollState,
   buildBattleJankenSlidePadModel,
+  createBattleJankenSlotRollState,
   isBattleHandAuraLaunchArmed,
   projectBattleLoadCardPreview,
   resolveBattleJankenSlotCardAction,
@@ -191,4 +193,36 @@ test('disabled expanded janken slots do not intercept ordinary hand hit-testing'
     true,
     'expanded selectable slots retain their existing pointer target behavior before :disabled overrides it',
   );
+});
+
+
+test('Battle Slot Roll uses the shared detent loop after the radial anchor', () => {
+  const model = buildBattleJankenSlidePadModel({ roundId: 'roll-1', hand, pickDuplicateIndex: () => 1 });
+  let state = createBattleJankenSlotRollState(model, 'ROCK');
+  assert.equal(state.itemId, 'ROCK');
+
+  state = advanceBattleJankenSlotRollState(state, { deltaPx: 68, detentPx: 68 }).state;
+  assert.equal(state.itemId, 'SCISSORS');
+  state = advanceBattleJankenSlotRollState(state, { deltaPx: 68, detentPx: 68 }).state;
+  assert.equal(state.itemId, 'PAPER');
+  state = advanceBattleJankenSlotRollState(state, { deltaPx: 68, detentPx: 68 }).state;
+  assert.equal(state.itemId, 'ROCK', 'rightward stepping wraps');
+  state = advanceBattleJankenSlotRollState(state, { deltaPx: -68, detentPx: 68 }).state;
+  assert.equal(state.itemId, 'PAPER', 'reversing direction immediately walks the same loop backward');
+});
+
+test('Battle Slot Roll excludes empty or disabled janken hands instead of creating a second selection authority', () => {
+  const model = {
+    slots: [
+      { jankenHand: 'ROCK', symbol: '♣', hand: 'グー', cardId: 'r', selectable: true },
+      { jankenHand: 'SCISSORS', symbol: '♦', hand: 'チョキ', cardId: null, selectable: false },
+      { jankenHand: 'PAPER', symbol: '♠', hand: 'パー', cardId: 'p', selectable: true },
+    ],
+  };
+  let state = createBattleJankenSlotRollState(model, 'ROCK');
+  assert.deepEqual(state.items.map((item) => item.id), ['ROCK', 'PAPER']);
+  state = advanceBattleJankenSlotRollState(state, { deltaPx: 58, detentPx: 58 }).state;
+  assert.equal(state.itemId, 'PAPER');
+  state = advanceBattleJankenSlotRollState(state, { deltaPx: 58, detentPx: 58 }).state;
+  assert.equal(state.itemId, 'ROCK');
 });

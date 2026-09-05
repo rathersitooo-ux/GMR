@@ -2,6 +2,11 @@ import {
   ensureRoundStartJankenSlotAssignment,
   NEW_BASE_ROUND_START_JANKEN_SLOT_STATUS,
 } from './new-base-round-start-janken-slot-assignment-core.mjs';
+import {
+  advanceSlotRollDrag,
+  createSlotRollState,
+  resolveSlotRollCommit,
+} from './slidepad-slot-roll-core.mjs';
 
 export const BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA = 'gameroad.battle-janken-slidepad-runtime.v1';
 
@@ -162,6 +167,23 @@ export function resolveBattleJankenSlidePadGestureTarget({
     }
   }
   return best?.id ?? null;
+}
+
+
+export function createBattleJankenSlotRollState(model, anchorHand) {
+  const items = SLOT_ORDER.flatMap((hand) => {
+    const slot = model?.slots?.find?.((candidate) => candidate.jankenHand === hand);
+    if (!slot?.selectable || !slot.cardId) return [];
+    return [{ id: hand, label: `${slot.symbol ?? ''} ${slot.hand ?? hand}`.trim() }];
+  });
+  const anchorIndex = items.findIndex((item) => item.id === anchorHand);
+  if (items.length === 0 || anchorIndex < 0) return null;
+  return createSlotRollState({ items, anchorIndex });
+}
+
+export function advanceBattleJankenSlotRollState(state, { deltaPx, detentPx } = {}) {
+  if (!state) return Object.freeze({ state: null, detents: Object.freeze([]) });
+  return advanceSlotRollDrag(state, { deltaPx, detentPx });
 }
 
 export function isBattleHandAuraLaunchArmed({
@@ -506,6 +528,9 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
   let dragMoved = false;
   let dragStartedExpanded = false;
   let armedHand = null;
+  let slotRollState = null;
+  let slotRollLastX = 0;
+  let slotRollDetentPx = 0;
   let handDrag = null;
   let boundHandRoot = null;
   let suppressNativeClickCardId = null;
@@ -547,6 +572,20 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     handle.style.transform = `translate(${((dx / distance) * travel).toFixed(2)}px,${((dy / distance) * travel).toFixed(2)}px)`;
   }
 
+  function clearBattleSlotRoll() {
+    slotRollState = null;
+    slotRollLastX = 0;
+    slotRollDetentPx = 0;
+  }
+
+  function beginBattleSlotRoll(anchorHand, pointerX) {
+    slotRollState = createBattleJankenSlotRollState(model, anchorHand);
+    slotRollLastX = Number(pointerX);
+    const handleWidth = Number(handle.getBoundingClientRect?.()?.width);
+    slotRollDetentPx = Number.isFinite(handleWidth) && handleWidth > 0 ? handleWidth : 0;
+    return slotRollState;
+  }
+
   function currentGestureCandidates() {
     return SLOT_ORDER.flatMap((hand) => {
       const node = slotNodes.get(hand);
@@ -561,14 +600,30 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     const pointer = { x: Number(event.clientX), y: Number(event.clientY) };
     if (![pointer.x, pointer.y].every(Number.isFinite)) return null;
     if (Math.hypot(pointer.x - dragOrigin.x, pointer.y - dragOrigin.y) >= GESTURE_DEAD_ZONE_PX) dragMoved = true;
-    const target = resolveBattleJankenSlidePadGestureTarget({
-      origin: dragOrigin,
-      pointer,
-      candidates: currentGestureCandidates(),
-    });
-    setArmed(target);
+
+    if (!slotRollState) {
+      const anchor = resolveBattleJankenSlidePadGestureTarget({
+        origin: dragOrigin,
+        pointer,
+        candidates: currentGestureCandidates(),
+      });
+      setArmed(anchor);
+      if (anchor) beginBattleSlotRoll(anchor, pointer.x);
+      event.preventDefault?.();
+      return anchor;
+    }
+
+    const deltaPx = pointer.x - slotRollLastX;
+    slotRollLastX = pointer.x;
+    if (slotRollDetentPx > 0 && Number.isFinite(deltaPx) && deltaPx !== 0) {
+      slotRollState = advanceBattleJankenSlotRollState(slotRollState, {
+        deltaPx,
+        detentPx: slotRollDetentPx,
+      }).state;
+      setArmed(slotRollState?.itemId ?? armedHand);
+    }
     event.preventDefault?.();
-    return target;
+    return armedHand;
   }
 
   function finishGesture(event, { commit = false, cancelled = false } = {}) {
@@ -577,11 +632,14 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     const pointerId = activePointerId;
     const startedExpanded = dragStartedExpanded;
     const shouldToggle = !dragMoved && !cancelled;
-    const selectedHand = commit && dragMoved ? armedHand : null;
+    const selectedHand = commit && dragMoved
+      ? (slotRollState ? (resolveSlotRollCommit(slotRollState)?.itemId ?? armedHand) : armedHand)
+      : null;
     activePointerId = null;
     dragOrigin = null;
     dragMoved = false;
     dragStartedExpanded = false;
+    clearBattleSlotRoll();
     setArmed(null);
     try {
       if (handle.hasPointerCapture?.(pointerId)) handle.releasePointerCapture?.(pointerId);
@@ -830,6 +888,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     activePointerId = pointerId;
     dragOrigin = center;
     dragMoved = false;
+    clearBattleSlotRoll();
     dragStartedExpanded = expanded;
     if (!expanded) setExpanded(true);
     try { handle.setPointerCapture?.(pointerId); } catch {}

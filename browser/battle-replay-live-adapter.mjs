@@ -736,7 +736,7 @@ function formatPartnerBattleEventLogRow(event, environment = {}) {
 
 function ensurePartnerBattleEventLogHost(environment = {}) {
   const documentRef = environmentValue(environment, 'document');
-  const shell = documentRef?.getElementById?.('battleLog');
+  const shell = documentRef?.getElementById?.('battleMap');
   if (!shell || typeof documentRef?.createElement !== 'function') return null;
   let host = typeof shell.querySelector === 'function'
     ? shell.querySelector(`[${PARTNER_BATTLE_LOG_HOST_ATTR}]`)
@@ -749,8 +749,23 @@ function ensurePartnerBattleEventLogHost(environment = {}) {
     host.setAttribute('aria-live', 'polite');
     host.setAttribute('aria-atomic', 'false');
     host.setAttribute('aria-relevant', 'additions text');
-    host.setAttribute('aria-label', '対戦ログ');
-    if (host.style) host.style.whiteSpace = 'pre-line';
+    host.setAttribute('aria-label', '直近の公開対戦履歴');
+    if (host.dataset) host.dataset.partnerBattleEventLogSurface = 'battle_map_always_visible';
+    if (host.style) {
+      host.style.position = 'absolute';
+      host.style.left = '8px';
+      host.style.top = 'clamp(52px,14vh,96px)';
+      host.style.zIndex = '19';
+      host.style.width = 'min(310px,42vw)';
+      host.style.maxWidth = 'calc(100% - 88px)';
+      host.style.display = 'grid';
+      host.style.gap = '3px';
+      host.style.pointerEvents = 'none';
+      host.style.fontSize = 'clamp(8px,.82vw,10px)';
+      host.style.lineHeight = '1.35';
+      host.style.color = '#eef8f4';
+      host.style.textShadow = '0 1px 5px rgba(0,0,0,.86)';
+    }
     shell.appendChild(host);
   }
   return host;
@@ -758,7 +773,9 @@ function ensurePartnerBattleEventLogHost(environment = {}) {
 
 function partnerBattleEventLogChildren(host) {
   if (!host?.children || typeof host.children.length !== 'number') return null;
-  return Array.from(host.children);
+  return Array.from(host.children).filter(
+    child => child?.getAttribute?.(PARTNER_BATTLE_LOG_ROW_ATTR) !== null
+  );
 }
 
 function partnerBattleEventLogRecentRows(environment = {}) {
@@ -793,8 +810,8 @@ function applyPartnerBattleEventLogPresentation(host, toggle, environment = {}) 
 
 function ensurePartnerBattleEventLogToggle(host, environment = {}) {
   const documentRef = environmentValue(environment, 'document');
-  const shell = documentRef?.getElementById?.('battleLog');
-  if (!host || !shell || typeof documentRef?.createElement !== 'function') return null;
+  const shell = host;
+  if (!host || typeof documentRef?.createElement !== 'function') return null;
   let toggle = typeof shell.querySelector === 'function'
     ? shell.querySelector(`[${PARTNER_BATTLE_LOG_TOGGLE_ATTR}]`)
     : null;
@@ -806,6 +823,20 @@ function ensurePartnerBattleEventLogToggle(host, environment = {}) {
     toggle.setAttribute('aria-expanded', 'false');
     toggle.hidden = true;
     toggle.textContent = '履歴を表示';
+    if (toggle.style) {
+      toggle.style.order = '2';
+      toggle.style.justifySelf = 'start';
+      toggle.style.minHeight = '32px';
+      toggle.style.padding = '0 8px';
+      toggle.style.border = '0';
+      toggle.style.borderRadius = '999px';
+      toggle.style.background = 'rgba(3,18,15,.72)';
+      toggle.style.color = 'inherit';
+      toggle.style.font = 'inherit';
+      toggle.style.fontWeight = '900';
+      toggle.style.pointerEvents = 'auto';
+      toggle.style.touchAction = 'manipulation';
+    }
     toggle.addEventListener('click', () => {
       if (!host.dataset) return;
       host.dataset.partnerBattleEventLogExpanded = host.dataset.partnerBattleEventLogExpanded === 'true' ? 'false' : 'true';
@@ -863,6 +894,16 @@ export function renderPartnerBattleEventLogProjection(projection, environment = 
     if (!row || typeof row.setAttribute !== 'function') return false;
     row.setAttribute(PARTNER_BATTLE_LOG_ROW_ATTR, String(index + 1));
     row.textContent = rows[index];
+    if (row.style) {
+      row.style.order = '1';
+      row.style.padding = '2px 5px';
+      row.style.borderRadius = '5px';
+      row.style.background = 'linear-gradient(90deg,rgba(3,18,15,.72),rgba(3,18,15,.16))';
+      row.style.overflow = 'hidden';
+      row.style.textOverflow = 'ellipsis';
+      row.style.whiteSpace = 'nowrap';
+      row.style.pointerEvents = 'none';
+    }
     additions.push(row);
   }
   for (const row of additions) host.appendChild(row);
@@ -1106,7 +1147,8 @@ export const BATTLE_REPLAY_LIVE_ADAPTER = Object.freeze({
   partnerBattleEventLog: Object.freeze({
     source: 'viewer_authorized_public_replay_read',
     projectionSchema: PARTNER_BATTLE_EVENT_PROJECTION.schema,
-    actualDomSurface: 'battleLog',
+    actualDomSurface: 'battleMap',
+    fullDrawerLogPolicy: 'PRESERVE_EXISTING_RAW_LOG',
     identityPolicy: PARTNER_BATTLE_EVENT_PROJECTION.identityPolicy,
     privateDataPolicy: PARTNER_BATTLE_EVENT_PROJECTION.privateDataPolicy,
     authority: 'presentation_only_no_game_state_write'

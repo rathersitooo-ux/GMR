@@ -14,7 +14,9 @@ import {
   projectAcceptedBattleResolution,
   readBattleReplayCardPresentationPreferences,
   readLiveReplay,
-  renderBattleReplayCardPresentationPlan
+  projectLiveBattleRemainingDeckPresentation,
+  renderBattleReplayCardPresentationPlan,
+  renderLiveBattleRemainingDeckPresentation
 } from '../browser/battle-replay-live-adapter.mjs';
 
 const versions = Object.freeze({
@@ -104,6 +106,111 @@ function fakeBattleLogDocument() {
   const shell = node('section');
   return { document: { createElement: tag => node(tag), getElementById: id => id === 'battleLog' ? shell : null }, shell };
 }
+
+test('remaining Deck live bridge exposes authoritative total while unknown identities stay unknown', () => {
+  const projected = projectLiveBattleRemainingDeckPresentation({
+    matchId: 'M-DECK',
+    ownerPlayerId: 'P1',
+    revision: 4,
+    remainingCount: 17,
+    viewer: { id: 'P1', authenticated: true }
+  });
+  assert.equal(projected.ok, true);
+  assert.equal(projected.total, 17);
+  assert.equal(projected.knownCount, 0);
+  assert.equal(projected.unknownCount, 17);
+  assert.deepEqual(projected.knownCardCounts, []);
+  assert.equal(projected.orderHidden, true);
+  assert.equal(projected.presentationOnly, true);
+  assert.equal(BATTLE_REPLAY_LIVE_ADAPTER.remainingDeckProjection.exposesDeckOrder, false);
+  assert.equal(BATTLE_REPLAY_LIVE_ADAPTER.remainingDeckProjection.exposesHiddenIdentities, false);
+});
+
+test('remaining Deck live bridge uses only caller-authorized viewer knowledge', () => {
+  const viewerKnowledge = {
+    schema: 'GAMEROAD_BATTLE_REMAINING_DECK_VIEWER_KNOWLEDGE_V1',
+    matchId: 'M-DECK',
+    viewerId: 'P1',
+    revision: 5,
+    events: [
+      { sequence: 0, kind: 'INITIAL_KNOWN', cardId: 'A' },
+      { sequence: 1, kind: 'INITIAL_KNOWN', cardId: 'A' },
+      { sequence: 2, kind: 'INITIAL_KNOWN', cardId: 'B' },
+      { sequence: 3, kind: 'DEPART_KNOWN', cardId: 'A' }
+    ]
+  };
+  const projected = projectLiveBattleRemainingDeckPresentation({
+    matchId: 'M-DECK',
+    ownerPlayerId: 'P1',
+    revision: 5,
+    remainingCount: 9,
+    viewer: { id: 'P1', authenticated: true },
+    viewerKnowledge
+  });
+  assert.equal(projected.ok, true);
+  assert.equal(projected.knownCount, 2);
+  assert.equal(projected.unknownCount, 7);
+  assert.deepEqual(projected.knownCardCounts, [
+    { cardId: 'A', count: 1 },
+    { cardId: 'B', count: 1 }
+  ]);
+
+  const wrongViewer = projectLiveBattleRemainingDeckPresentation({
+    matchId: 'M-DECK',
+    ownerPlayerId: 'P1',
+    revision: 5,
+    remainingCount: 9,
+    viewer: { id: 'P2', authenticated: true },
+    viewerKnowledge
+  });
+  assert.equal(wrongViewer.ok, false);
+  assert.equal(wrongViewer.reason, 'VIEWER_KNOWLEDGE_VIEWER_MISMATCH');
+});
+
+test('remaining Deck live bridge rejects secret-bearing wider input instead of silently accepting it', () => {
+  const projected = projectLiveBattleRemainingDeckPresentation({
+    matchId: 'M-DECK',
+    ownerPlayerId: 'P1',
+    revision: 6,
+    remainingCount: 8,
+    viewer: { id: 'P1', authenticated: true },
+    remainingCardIds: ['SECRET_A', 'SECRET_B']
+  });
+  assert.equal(projected.ok, false);
+  assert.equal(projected.reason, 'REMAINING_DECK_INPUT_SHAPE_INVALID');
+  assert.equal(JSON.stringify(projected).includes('SECRET_A'), false);
+});
+
+test('remaining Deck renderer reuses existing Battle log host and writes text only', () => {
+  const { document, shell } = fakeBattleLogDocument();
+  const projected = projectLiveBattleRemainingDeckPresentation({
+    matchId: 'M-DECK',
+    ownerPlayerId: 'P1',
+    revision: 7,
+    remainingCount: 4,
+    viewer: { id: 'P1', authenticated: true },
+    viewerKnowledge: {
+      schema: 'GAMEROAD_BATTLE_REMAINING_DECK_VIEWER_KNOWLEDGE_V1',
+      matchId: 'M-DECK',
+      viewerId: 'P1',
+      revision: 7,
+      events: [{ sequence: 0, kind: 'INITIAL_KNOWN', cardId: 'A' }]
+    }
+  });
+  assert.equal(renderLiveBattleRemainingDeckPresentation(projected, {
+    document,
+    cardLabel: cardId => cardId === 'A' ? '公開A' : cardId
+  }), true);
+  const root = shell.querySelector('[data-battle-remaining-deck]');
+  assert.ok(root);
+  assert.equal(root.getAttribute('data-battle-remaining-deck-total'), '4');
+  assert.equal(root.getAttribute('data-battle-remaining-deck-unknown'), '3');
+  assert.deepEqual(root.children.map(child => child.textContent), [
+    '残りデッキ 4枚',
+    '判明: 公開A×1',
+    '不明: 3枚'
+  ]);
+});
 
 test('production session still requires all exact version authorities; capture never invents them', () => {
   for (const missing of ['rules', 'content', 'state']) {

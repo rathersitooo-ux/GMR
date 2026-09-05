@@ -1,4 +1,5 @@
 import { auditBattleScreenModel } from './battle-screen-presentation-core.mjs';
+import { bindQuickSettingsTrigger } from './quick-settings-panel-runtime.mjs';
 
 const RUNTIME_SCHEMA = 'gameroad.battle-screen-runtime-mount.v1';
 const STYLE_ID = 'gameroad-battle-screen-runtime-r1-style';
@@ -301,6 +302,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   }
 
   const hud = createHud(document, shell);
+  const quickSettingsBinding = bindQuickSettingsTrigger(global, { trigger: hud.settingsButton, surface: 'battle' });
   let lastHudSnapshot = writeHud(document, hud, options.hud);
 
   let planSlot = null;
@@ -380,6 +382,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   function destroy() {
     if (destroyed) return false;
     destroyed = true;
+    quickSettingsBinding?.destroy?.();
     if (progressGuide?.parentNode && typeof progressGuide.parentNode.removeChild === 'function') progressGuide.parentNode.removeChild(progressGuide);
     if (grid?.parentNode && typeof grid.parentNode.removeChild === 'function') grid.parentNode.removeChild(grid);
     if (hud.root?.parentNode && typeof hud.root.parentNode.removeChild === 'function') hud.root.parentNode.removeChild(hud.root);

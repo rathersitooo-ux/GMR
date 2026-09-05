@@ -10,6 +10,7 @@ import {
   projectSlotRollWindow,
   resolveSlotRollCommit,
 } from './slidepad-slot-roll-core.mjs';
+import { bindQuickSettingsTrigger } from './quick-settings-panel-runtime.mjs';
 
 const GLOBAL_KEY = 'GAMEROAD_HOME_BOOT_PRESENTATION';
 const STYLE_ID = 'gameroad-home-shell-runtime-style';
@@ -60,6 +61,7 @@ const runtime = {
   lastSelectedRouteId: null,
   lastError: null,
   animations: new Set(),
+  quickSettingsBinding: null,
   slidepad: {
     home: null,
     center: null,
@@ -834,6 +836,16 @@ function bindSlidepad(home) {
   center.addEventListener('lostpointercapture', handlers.lostpointercapture);
 }
 
+function bindHomeQuickSettings(home) {
+  const trigger = home?.querySelector?.('[data-home-target=\"settings\"],[data-go=\"settings\"],[data-root-go=\"settings\"]');
+  if (runtime.quickSettingsBinding?.trigger === trigger) return Boolean(trigger);
+  runtime.quickSettingsBinding?.destroy?.();
+  runtime.quickSettingsBinding = null;
+  if (!(trigger instanceof HTMLElement)) return false;
+  runtime.quickSettingsBinding = bindQuickSettingsTrigger(globalThis, { trigger, surface: 'home' });
+  return runtime.quickSettingsBinding.connected;
+}
+
 export function refreshHomeBootPresentation() {
   removeDecorativeGlobalBrand();
   const home = document.querySelector(HOME_SELECTOR);
@@ -851,6 +863,7 @@ export function refreshHomeBootPresentation() {
   }
   runtime.home = home;
   removeLegacyHomeNodes(home);
+  bindHomeQuickSettings(home);
 
   const buttons = routeButtons(home);
   const ids = buttons.map(routeId).filter(Boolean);
@@ -930,6 +943,8 @@ export function mountHomeBootPresentation() {
 
 export function unmountHomeBootPresentation() {
   clearAnimations();
+  runtime.quickSettingsBinding?.destroy?.();
+  runtime.quickSettingsBinding = null;
   runtime.observer?.disconnect();
   if (runtime.resizeHandler) removeEventListener('resize', runtime.resizeHandler);
   runtime.media?.removeEventListener?.('change', runtime.mediaHandler);

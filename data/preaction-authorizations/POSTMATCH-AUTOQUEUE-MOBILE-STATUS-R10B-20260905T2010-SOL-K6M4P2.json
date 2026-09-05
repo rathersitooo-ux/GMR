@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "POSTMATCH-AUTOQUEUE-MOBILE-STATUS-R10B-20260905T2010-SOL-K6M4P2",
+  "taskId": "NORMAL-MATCH-BONUS-REGULATION-001",
+  "workUnitKey": "POSTMATCH_AUTOQUEUE_MOBILE_TRUTHFUL_STATUS_R10",
+  "acquireKey": "POSTMATCH-AUTOQUEUE-MOBILE-STATUS-R10B-20260905T2010-SOL-K6M4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_HTML_MOBILE_STATUS_CLIPPED+ASYNC_CANCEL_MATCH_STATE_MACHINE+PHONE390_RESULT_EVIDENCE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FOCUSED_EXISTING_BFI_PHONE390_VISIBLE_STATUS+POSTMATCH_CORE_TESTS+SAME_PUBLIC_RESULT_SCREENSHOT",
+  "proceedToken": "PROCEED|POSTMATCH-AUTOQUEUE-MOBILE-STATUS-R10B-20260905T2010-SOL-K6M4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|MOBILE_TRUTHFUL_STATUS_PRESENTATION_ONLY",
+  "authorizationBaseSha": "da22d175f7292f7b8a441ab3bf834989d64bc746",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "NORMAL-MATCH-BONUS-REGULATION-001",
+  "leaseWorkUnitKey": "POSTMATCH_AUTOQUEUE_MOBILE_TRUTHFUL_STATUS_R10",
+  "leaseAcquireKey": "POSTMATCH-AUTOQUEUE-MOBILE-STATUS-R10B-20260905T2010-SOL-K6M4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 20:10 JST",
+  "leaseUntilJst": "2026-09-05 21:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A395:L395",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@da22d175f7292f7b8a441ab3bf834989d64bc746; intended clean branch sol/postmatch-autoqueue-mobile-status-r10b-20260905; mutable browser/GAMEROAD.html + tests/browser-full-interaction.spec.mjs + UNIQUE_TRANSIENT .github/workflows/postmatch-autoqueue-mobile-r10b-patch.yml + TRANSIENT data/preaction-authorizations/POSTMATCH-AUTOQUEUE-MOBILE-STATUS-R10B-20260905T2010-SOL-K6M4P2.json only; browser/post-match-autoqueue-core.mjs + gameplay/rules/save/economy/network + default-ON semantics READ_ONLY.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/postmatch-autoqueue-mobile-r10b-patch.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/postmatch-autoqueue-mobile-r10b-patch.yml"
+  ],
+  "solutionSignature": "mobile-visible-truthful-postmatch-autoqueue-status",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_RESULT_AUTOQUEUE_CONTROL_AND_STATUS_SPAN_REUSED;NO_SECOND_QUEUE_OR_UI_AUTHORITY",
+  "solutionSearchEvidence": [
+    "row50 already requires same-screen OFF plus truthful cancellation/match race state",
+    "current main HTML is unchanged from the reproduced R10 defect base and still clips the mobile status span",
+    "existing post-match controller already emits the required truthful states; only the mobile visual presentation is missing",
+    "the minimal repair is to keep the existing compact checkbox and restore a visible short status in the same Result action surface"
+  ],
+  "scopeRebaseReason": "Presentation-only repair of the existing Result autoqueue UI. Preserve default ON, ticket creation/cancel semantics, race handling, transport, rematch behavior and desktop layout. On narrow phone Result, keep the compact control but make the existing authoritative status span visually readable without covering ranking or primary actions."
+}

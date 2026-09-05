@@ -1,0 +1,225 @@
+name: Cards Swipe Discovery R1 Executor
+
+on:
+  push:
+    branches:
+      - sol/cards-swipe-discovery-r1-20260905
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    if: startsWith(github.event.head_commit.message, 'EXECUTOR: Cards swipe discovery R1')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/cards-swipe-discovery-r1-20260905
+          fetch-depth: 0
+      - name: Patch exact Cards swipe discovery surfaces
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one anchor, got {count}')
+              return text.replace(old, new, 1)
+
+          product_path = Path('browser/cards-deck-presentation.mjs')
+          text = product_path.read_text()
+
+          anchor = "const CARDS_FAVORITE_STORAGE_KEY = 'gameroad.cards.favorite.v1';\n"
+          addition = anchor + """const CARDS_DECK_SWIPE_DISCOVERY_STORAGE_KEY = 'gameroad.cards.deck-swipe-discovery.v1';
+
+export const CARDS_DECK_SWIPE_DISCOVERY_CONTRACT = Object.freeze({
+  schema: 'gameroad.cards-deck-swipe-discovery.v1',
+  storageKey: CARDS_DECK_SWIPE_DISCOVERY_STORAGE_KEY,
+  persistence: 'local-ui-only',
+  collectionAdd: Object.freeze({ surface: 'collection', direction: 'right' }),
+  deckRemove: Object.freeze({ surface: 'deck', direction: 'left' }),
+  ownsDeck: false,
+  ownsSave: false,
+});
+
+export function normalizeDeckSwipeDiscoveryState(value = {}) {
+  return Object.freeze({
+    collectionAddLearned: value?.collectionAddLearned === true,
+    deckRemoveLearned: value?.deckRemoveLearned === true,
+  });
+}
+
+export function parseDeckSwipeDiscoveryState(raw) {
+  if (typeof raw !== 'string' || !raw) return normalizeDeckSwipeDiscoveryState();
+  try { return normalizeDeckSwipeDiscoveryState(JSON.parse(raw)); }
+  catch { return normalizeDeckSwipeDiscoveryState(); }
+}
+
+export function serializeDeckSwipeDiscoveryState(value) {
+  return JSON.stringify(normalizeDeckSwipeDiscoveryState(value));
+}
+
+export function readDeckSwipeDiscoveryStateFromStorage({ storage, key = CARDS_DECK_SWIPE_DISCOVERY_STORAGE_KEY } = {}) {
+  try { return parseDeckSwipeDiscoveryState(storage?.getItem?.(key) ?? null); }
+  catch { return normalizeDeckSwipeDiscoveryState(); }
+}
+
+export function writeDeckSwipeDiscoveryStateToStorage({ storage, value, key = CARDS_DECK_SWIPE_DISCOVERY_STORAGE_KEY } = {}) {
+  try {
+    if (typeof storage?.setItem !== 'function') return false;
+    storage.setItem(key, serializeDeckSwipeDiscoveryState(value));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function reduceDeckSwipeDiscoveryAfterGesture(state, { surface, action, ok } = {}) {
+  const current = normalizeDeckSwipeDiscoveryState(state);
+  if (ok !== true) return current;
+  if (surface === 'collection' && action === 'deck-add') {
+    return normalizeDeckSwipeDiscoveryState({ ...current, collectionAddLearned: true });
+  }
+  if (surface === 'deck' && action === 'deck-remove') {
+    return normalizeDeckSwipeDiscoveryState({ ...current, deckRemoveLearned: true });
+  }
+  return current;
+}
+"""
+          text = replace_once(text, anchor, addition, 'discovery helpers')
+
+          anchor = "  const presentation = createDeckSwipePresentationController({ document: doc, window: win });\n\n  let gesture = null;"
+          addition = """  const presentation = createDeckSwipePresentationController({ document: doc, window: win });
+
+  const discoveryStorage = cardsFavoriteStorage(win);
+  let discoveryState = readDeckSwipeDiscoveryStateFromStorage({ storage: discoveryStorage });
+  const collectionHint = doc.createElement('div');
+  collectionHint.dataset.role = 'deck-swipe-discovery-add';
+  collectionHint.textContent = '→ 右フリックで札組へ';
+  collectionHint.setAttribute?.('aria-label', '右フリックで札組へ追加');
+  const removeHint = doc.createElement('span');
+  removeHint.dataset.role = 'deck-swipe-discovery-remove';
+  removeHint.textContent = '← 左フリックで札組から外す';
+  removeHint.setAttribute?.('aria-label', '左フリックで札組から外す');
+  const collectionGrid = doc.querySelector('#collectionGrid');
+  collectionGrid?.before?.(collectionHint);
+  if (!collectionHint.parentNode) collectionGrid?.parentElement?.insertBefore?.(collectionHint, collectionGrid);
+  host.after?.(removeHint);
+  if (!removeHint.parentNode) host.parentElement?.appendChild?.(removeHint);
+
+  if (!doc.getElementById?.('gameroad-deck-swipe-discovery-style')) {
+    const style = doc.createElement('style');
+    style.id = 'gameroad-deck-swipe-discovery-style';
+    style.textContent = '[data-role^="deck-swipe-discovery-"]{display:inline-flex;align-items:center;min-height:24px;padding:3px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(10,18,30,.58);font:700 12px/1.2 system-ui;opacity:.82;pointer-events:none;user-select:none}[data-role="deck-swipe-discovery-add"]{margin:0 0 6px}[data-role="deck-swipe-discovery-remove"]{margin-inline-start:6px}[data-role^="deck-swipe-discovery-"][hidden]{display:none}';
+    (doc.head ?? doc.documentElement)?.appendChild?.(style);
+  }
+
+  const renderDiscoveryHints = () => {
+    collectionHint.hidden = discoveryState.collectionAddLearned;
+    removeHint.hidden = discoveryState.deckRemoveLearned || readLiveDeck(doc).length === 0;
+  };
+  const learnDiscoveryGesture = ({ surface, action, ok }) => {
+    const next = reduceDeckSwipeDiscoveryAfterGesture(discoveryState, { surface, action, ok });
+    const changed = next.collectionAddLearned !== discoveryState.collectionAddLearned
+      || next.deckRemoveLearned !== discoveryState.deckRemoveLearned;
+    discoveryState = next;
+    if (changed) writeDeckSwipeDiscoveryStateToStorage({ storage: discoveryStorage, value: discoveryState });
+    renderDiscoveryHints();
+  };
+  const deckHintObserver = typeof win?.MutationObserver === 'function'
+    ? new win.MutationObserver(() => renderDiscoveryHints())
+    : null;
+  for (const deckSurface of [...(doc.querySelectorAll?.('#deckSlots, #exDeckSlots') ?? [])]) {
+    deckHintObserver?.observe?.(deckSurface, { childList: true, subtree: true });
+  }
+  renderDiscoveryHints();
+
+  let gesture = null;"""
+          text = replace_once(text, anchor, addition, 'live discovery mount')
+
+          anchor = "    if (!result?.ok) return;\n    suppressClick = { cardId: current.cardId, until: now() + 450 };"
+          addition = """    if (!result?.ok) return;
+    learnDiscoveryGesture({ surface: current.surface, action: result.action, ok: true });
+    suppressClick = { cardId: current.cardId, until: now() + 450 };"""
+          text = replace_once(text, anchor, addition, 'first-success learn hook')
+
+          anchor = "      doc.removeEventListener('click', onClickCapture, true);\n      presentation?.dispose?.();"
+          addition = """      doc.removeEventListener('click', onClickCapture, true);
+      deckHintObserver?.disconnect?.();
+      collectionHint.remove?.();
+      removeHint.remove?.();
+      presentation?.dispose?.();"""
+          text = replace_once(text, anchor, addition, 'discovery cleanup')
+          product_path.write_text(text)
+
+          test_path = Path('tests/cards-deck-presentation.test.mjs')
+          tests = test_path.read_text()
+          anchor = "  presentDeckAddSwipe,\n} from '../browser/cards-deck-presentation.mjs';"
+          addition = """  presentDeckAddSwipe,
+  CARDS_DECK_SWIPE_DISCOVERY_CONTRACT,
+  parseDeckSwipeDiscoveryState,
+  readDeckSwipeDiscoveryStateFromStorage,
+  writeDeckSwipeDiscoveryStateToStorage,
+  reduceDeckSwipeDiscoveryAfterGesture,
+} from '../browser/cards-deck-presentation.mjs';"""
+          tests = replace_once(tests, anchor, addition, 'test imports')
+
+          anchor = "const rect = (left, top, width, height) => ({ left, top, width, height });\n"
+          addition = anchor + """
+test('Cards swipe discovery is local-only presentation state and owns no deck/save authority', () => {
+  assert.equal(CARDS_DECK_SWIPE_DISCOVERY_CONTRACT.persistence, 'local-ui-only');
+  assert.equal(CARDS_DECK_SWIPE_DISCOVERY_CONTRACT.collectionAdd.direction, 'right');
+  assert.equal(CARDS_DECK_SWIPE_DISCOVERY_CONTRACT.deckRemove.direction, 'left');
+  assert.equal(CARDS_DECK_SWIPE_DISCOVERY_CONTRACT.ownsDeck, false);
+  assert.equal(CARDS_DECK_SWIPE_DISCOVERY_CONTRACT.ownsSave, false);
+});
+
+test('Cards swipe discovery learns only the matching successful surface gesture', () => {
+  const fresh = parseDeckSwipeDiscoveryState(null);
+  assert.deepEqual(fresh, { collectionAddLearned: false, deckRemoveLearned: false });
+  assert.deepEqual(
+    reduceDeckSwipeDiscoveryAfterGesture(fresh, { surface: 'collection', action: 'deck-add', ok: false }),
+    fresh,
+  );
+  const afterAdd = reduceDeckSwipeDiscoveryAfterGesture(fresh, { surface: 'collection', action: 'deck-add', ok: true });
+  assert.deepEqual(afterAdd, { collectionAddLearned: true, deckRemoveLearned: false });
+  assert.deepEqual(
+    reduceDeckSwipeDiscoveryAfterGesture(afterAdd, { surface: 'collection', action: 'deck-remove', ok: true }),
+    afterAdd,
+  );
+  const afterRemove = reduceDeckSwipeDiscoveryAfterGesture(afterAdd, { surface: 'deck', action: 'deck-remove', ok: true });
+  assert.deepEqual(afterRemove, { collectionAddLearned: true, deckRemoveLearned: true });
+});
+
+test('Cards swipe discovery persistence is bounded to local UI storage and fails closed', () => {
+  const values = new Map();
+  const storage = {
+    getItem(key) { return values.get(key) ?? null; },
+    setItem(key, value) { values.set(key, value); },
+  };
+  const learned = { collectionAddLearned: true, deckRemoveLearned: false };
+  assert.equal(writeDeckSwipeDiscoveryStateToStorage({ storage, value: learned }), true);
+  assert.deepEqual(readDeckSwipeDiscoveryStateFromStorage({ storage }), learned);
+  assert.deepEqual(parseDeckSwipeDiscoveryState('{bad'), { collectionAddLearned: false, deckRemoveLearned: false });
+  assert.equal(writeDeckSwipeDiscoveryStateToStorage({ storage: {}, value: learned }), false);
+});
+"""
+          tests = replace_once(tests, anchor, addition, 'focused discovery tests')
+          test_path.write_text(tests)
+          PY
+      - name: Focused tests
+        run: |
+          git diff --check
+          node --test tests/cards-deck-presentation.test.mjs
+      - name: Commit product delta
+        shell: bash
+        run: |
+          git config user.name "gameroad-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add browser/cards-deck-presentation.mjs tests/cards-deck-presentation.test.mjs
+          git diff --cached --exit-code && { echo 'No authorized product diff produced'; exit 1; } || true
+          git commit -m "Cards: teach deck swipe gestures once"
+          git push origin HEAD:sol/cards-swipe-discovery-r1-20260905

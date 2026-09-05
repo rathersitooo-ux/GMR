@@ -9,12 +9,17 @@ import {
 
 const deckStorageLiveInstallations = new WeakMap();
 const cardsDeckFindabilityInstallations = new WeakMap();
+const CARDS_FAVORITE_STORAGE_KEY = 'gameroad.cards.favorite.v1';
 
 export const CARDS_DECK_FINDABILITY_CONTRACT = Object.freeze({
-  schema: 'gameroad.cards-deck-findability.v1',
+  schema: 'gameroad.cards-deck-findability.v2',
   searchFields: Object.freeze(['cardId', 'accessible-visible-text']),
   quickFilters: Object.freeze(['in-deck', 'not-in-deck']),
   quickFilterCount: 2,
+  favoriteFilter: 'favorite',
+  favoritePersistence: 'local-ui-only',
+  favoriteStorageKey: CARDS_FAVORITE_STORAGE_KEY,
+  favoriteActionUseSite: 'card-detail-action-area',
   persistence: 'none',
   ownsCardData: false,
   mutatesDeck: false,
@@ -25,10 +30,70 @@ export function normalizeCardsDeckSearchQuery(value) {
   return String(value ?? '').normalize('NFKC').trim().toLocaleLowerCase('ja-JP');
 }
 
-export function matchCardsDeckFindabilityCard({ cardId, text, inDeck } = {}, { query = '', deckFilter = 'all' } = {}) {
+export function normalizeCardsFavoriteId(value) {
+  const token = String(value ?? '').trim();
+  return token && token.length <= 160 ? token : null;
+}
+
+export function normalizeCardsFavoriteIds(values) {
+  const ids = [];
+  const seen = new Set();
+  for (const value of values ?? []) {
+    const id = normalizeCardsFavoriteId(value);
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    ids.push(id);
+  }
+  return Object.freeze(ids);
+}
+
+export function parseCardsFavoriteIds(raw) {
+  if (typeof raw !== 'string' || !raw) return Object.freeze([]);
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? normalizeCardsFavoriteIds(parsed) : Object.freeze([]);
+  } catch {
+    return Object.freeze([]);
+  }
+}
+
+export function serializeCardsFavoriteIds(values) {
+  return JSON.stringify([...normalizeCardsFavoriteIds(values)]);
+}
+
+export function toggleCardsFavoriteId(values, cardId) {
+  const id = normalizeCardsFavoriteId(cardId);
+  const current = [...normalizeCardsFavoriteIds(values)];
+  if (!id) return Object.freeze(current);
+  const index = current.indexOf(id);
+  if (index >= 0) current.splice(index, 1);
+  else current.push(id);
+  return Object.freeze(current);
+}
+
+export function readCardsFavoriteIdsFromStorage({ storage, key = CARDS_FAVORITE_STORAGE_KEY } = {}) {
+  try { return parseCardsFavoriteIds(storage?.getItem?.(key) ?? null); }
+  catch { return Object.freeze([]); }
+}
+
+export function writeCardsFavoriteIdsToStorage({ storage, values, key = CARDS_FAVORITE_STORAGE_KEY } = {}) {
+  try {
+    if (typeof storage?.setItem !== 'function') return false;
+    storage.setItem(key, serializeCardsFavoriteIds(values));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function matchCardsDeckFindabilityCard(
+  { cardId, text, inDeck, favorite } = {},
+  { query = '', deckFilter = 'all', favoriteOnly = false } = {},
+) {
   const normalizedFilter = new Set(['all', 'in-deck', 'not-in-deck']).has(deckFilter) ? deckFilter : 'all';
   if (normalizedFilter === 'in-deck' && inDeck !== true) return false;
   if (normalizedFilter === 'not-in-deck' && inDeck === true) return false;
+  if (favoriteOnly === true && favorite !== true) return false;
   const needle = normalizeCardsDeckSearchQuery(query);
   if (!needle) return true;
   const haystack = normalizeCardsDeckSearchQuery(`${String(cardId ?? '')} ${String(text ?? '')}`);
@@ -52,24 +117,56 @@ function readLiveDeck(doc) {
   return [...ids('#deckSlots [data-id]'), ...ids('#exDeckSlots [data-id]')];
 }
 
-function currentCollectionFindabilityRecord(node) {
+function currentCollectionFindabilityRecord(node, favoriteSet = new Set()) {
   const cardId = String(node?.dataset?.id ?? '');
   const aria = String(node?.getAttribute?.('aria-label') ?? '');
   const text = `${aria} ${String(node?.textContent ?? '')}`;
-  return Object.freeze({ cardId, text, inDeck: Boolean(node?.classList?.contains?.('inDeck')) });
+  return Object.freeze({
+    cardId,
+    text,
+    inDeck: Boolean(node?.classList?.contains?.('inDeck')),
+    favorite: favoriteSet.has(cardId),
+  });
 }
 
-export function applyCardsDeckFindability({ document: doc = globalThis.document, query = '', deckFilter = 'all' } = {}) {
-  if (!doc?.querySelectorAll) return Object.freeze({ total: 0, visible: 0, query: normalizeCardsDeckSearchQuery(query), deckFilter: 'all' });
+export function applyCardsDeckFindability({
+  document: doc = globalThis.document,
+  query = '',
+  deckFilter = 'all',
+  favoriteOnly = false,
+  favoriteIds = [],
+} = {}) {
+  if (!doc?.querySelectorAll) return Object.freeze({
+    total: 0,
+    visible: 0,
+    query: normalizeCardsDeckSearchQuery(query),
+    deckFilter: 'all',
+    favoriteOnly: favoriteOnly === true,
+  });
   const normalizedFilter = new Set(['all', 'in-deck', 'not-in-deck']).has(deckFilter) ? deckFilter : 'all';
+  const favoriteSet = new Set(normalizeCardsFavoriteIds(favoriteIds));
   const nodes = [...doc.querySelectorAll('#collectionGrid [data-id]')];
   let visible = 0;
   for (const node of nodes) {
-    const matches = matchCardsDeckFindabilityCard(currentCollectionFindabilityRecord(node), { query, deckFilter: normalizedFilter });
+    const matches = matchCardsDeckFindabilityCard(
+      currentCollectionFindabilityRecord(node, favoriteSet),
+      { query, deckFilter: normalizedFilter, favoriteOnly },
+    );
     node.hidden = !matches;
     if (matches) visible += 1;
   }
-  return Object.freeze({ total: nodes.length, visible, query: normalizeCardsDeckSearchQuery(query), deckFilter: normalizedFilter });
+  return Object.freeze({
+    total: nodes.length,
+    visible,
+    query: normalizeCardsDeckSearchQuery(query),
+    deckFilter: normalizedFilter,
+    favoriteOnly: favoriteOnly === true,
+  });
+}
+
+function cardsFavoriteStorage(win) {
+  try { return win?.localStorage ?? null; }
+  catch { return null; }
 }
 
 export function installCardsDeckFindability({ document: doc = globalThis.document, window: win = globalThis.window } = {}) {
@@ -99,31 +196,70 @@ export function installCardsDeckFindability({ document: doc = globalThis.documen
   outDeckButton.textContent = '未投入';
   outDeckButton.dataset.filter = 'not-in-deck';
   outDeckButton.setAttribute?.('aria-pressed', 'false');
+  const favoriteFilterButton = doc.createElement('button');
+  favoriteFilterButton.type = 'button';
+  favoriteFilterButton.textContent = '★お気に入り';
+  favoriteFilterButton.dataset.filter = 'favorite';
+  favoriteFilterButton.setAttribute?.('aria-pressed', 'false');
   const count = doc.createElement('span');
   count.dataset.role = 'cards-deck-findability-count';
   count.setAttribute?.('aria-live', 'polite');
   host.appendChild(input);
   host.appendChild(inDeckButton);
   host.appendChild(outDeckButton);
+  host.appendChild(favoriteFilterButton);
   host.appendChild(count);
   grid.before?.(host);
   if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);
 
+  const detailAnchor = doc.querySelector('#addSelectedCard');
+  const favoriteAction = detailAnchor ? doc.createElement('button') : null;
+  if (favoriteAction) {
+    favoriteAction.type = 'button';
+    favoriteAction.dataset.role = 'cards-favorite-action';
+    favoriteAction.hidden = true;
+    favoriteAction.setAttribute?.('aria-pressed', 'false');
+    favoriteAction.textContent = '☆ お気に入り';
+    detailAnchor.after?.(favoriteAction);
+    if (!favoriteAction.parentNode) detailAnchor.parentElement?.appendChild?.(favoriteAction);
+  }
+
   if (!doc.getElementById?.('gameroad-cards-deck-findability-style')) {
     const style = doc.createElement('style');
     style.id = 'gameroad-cards-deck-findability-style';
-    style.textContent = '[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}[data-role="cards-deck-findability"] input{min-height:44px;min-width:min(240px,58vw);padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(10,18,30,.72);color:inherit;font:inherit}[data-role="cards-deck-findability"] button{min-height:44px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:transparent;color:inherit;font:700 13px/1 system-ui}[data-role="cards-deck-findability"] button[aria-pressed="true"]{background:rgba(255,216,74,.22);border-color:#ffd84a}[data-role="cards-deck-findability-count"]{font:700 12px/1 system-ui;opacity:.72;white-space:nowrap}';
+    style.textContent = '[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}[data-role="cards-deck-findability"] input{min-height:44px;min-width:min(240px,58vw);padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(10,18,30,.72);color:inherit;font:inherit}[data-role="cards-deck-findability"] button{min-height:44px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:transparent;color:inherit;font:700 13px/1 system-ui}[data-role="cards-deck-findability"] button[aria-pressed="true"]{background:rgba(255,216,74,.22);border-color:#ffd84a}[data-role="cards-deck-findability-count"]{font:700 12px/1 system-ui;opacity:.72;white-space:nowrap}[data-role="cards-favorite-action"]{min-height:44px;padding:8px 12px}';
     (doc.head ?? doc.documentElement)?.appendChild?.(style);
   }
 
   let deckFilter = 'all';
+  let favoriteOnly = false;
+  let selectedCardId = null;
+  let favoriteIds = readCardsFavoriteIdsFromStorage({ storage: cardsFavoriteStorage(win) });
   let destroyed = false;
+
+  const isFavorite = (cardId) => favoriteIds.includes(String(cardId ?? ''));
+  const renderFavoriteAction = () => {
+    if (!favoriteAction) return;
+    const active = Boolean(selectedCardId && isFavorite(selectedCardId));
+    favoriteAction.hidden = !selectedCardId;
+    favoriteAction.setAttribute?.('aria-pressed', String(active));
+    favoriteAction.textContent = active ? '★ お気に入り' : '☆ お気に入り';
+    favoriteAction.setAttribute?.('aria-label', active ? 'このカードをお気に入りから解除' : 'このカードをお気に入りに追加');
+  };
   const render = () => {
-    if (destroyed) return Object.freeze({ total: 0, visible: 0, query: '', deckFilter: 'all' });
-    const result = applyCardsDeckFindability({ document: doc, query: input.value, deckFilter });
+    if (destroyed) return Object.freeze({ total: 0, visible: 0, query: '', deckFilter: 'all', favoriteOnly: false });
+    const result = applyCardsDeckFindability({
+      document: doc,
+      query: input.value,
+      deckFilter,
+      favoriteOnly,
+      favoriteIds,
+    });
     inDeckButton.setAttribute?.('aria-pressed', String(deckFilter === 'in-deck'));
     outDeckButton.setAttribute?.('aria-pressed', String(deckFilter === 'not-in-deck'));
+    favoriteFilterButton.setAttribute?.('aria-pressed', String(favoriteOnly));
     count.textContent = `${result.visible}/${result.total}`;
+    renderFavoriteAction();
     return result;
   };
   const toggle = (next) => {
@@ -133,9 +269,25 @@ export function installCardsDeckFindability({ document: doc = globalThis.documen
   const onInput = () => render();
   const onInDeck = () => toggle('in-deck');
   const onOutDeck = () => toggle('not-in-deck');
+  const onFavoriteFilter = () => { favoriteOnly = !favoriteOnly; render(); };
+  const onCollectionSelect = (event) => {
+    const node = event?.target?.closest?.('#collectionGrid [data-id]');
+    if (!node || !screen.contains?.(node)) return;
+    selectedCardId = normalizeCardsFavoriteId(node.dataset?.id);
+    renderFavoriteAction();
+  };
+  const onFavoriteAction = () => {
+    if (!selectedCardId) return;
+    favoriteIds = toggleCardsFavoriteId(favoriteIds, selectedCardId);
+    writeCardsFavoriteIdsToStorage({ storage: cardsFavoriteStorage(win), values: favoriteIds });
+    render();
+  };
   input.addEventListener?.('input', onInput);
   inDeckButton.addEventListener?.('click', onInDeck);
   outDeckButton.addEventListener?.('click', onOutDeck);
+  favoriteFilterButton.addEventListener?.('click', onFavoriteFilter);
+  screen.addEventListener?.('click', onCollectionSelect, true);
+  favoriteAction?.addEventListener?.('click', onFavoriteAction);
   const observer = typeof win?.MutationObserver === 'function'
     ? new win.MutationObserver(() => render())
     : null;
@@ -145,7 +297,13 @@ export function installCardsDeckFindability({ document: doc = globalThis.documen
   const installation = Object.freeze({
     contract: CARDS_DECK_FINDABILITY_CONTRACT,
     render,
-    state: () => Object.freeze({ query: normalizeCardsDeckSearchQuery(input.value), deckFilter }),
+    state: () => Object.freeze({
+      query: normalizeCardsDeckSearchQuery(input.value),
+      deckFilter,
+      favoriteOnly,
+      favoriteCount: favoriteIds.length,
+      selectedCardId,
+    }),
     destroy() {
       if (destroyed) return;
       destroyed = true;
@@ -153,7 +311,11 @@ export function installCardsDeckFindability({ document: doc = globalThis.documen
       input.removeEventListener?.('input', onInput);
       inDeckButton.removeEventListener?.('click', onInDeck);
       outDeckButton.removeEventListener?.('click', onOutDeck);
+      favoriteFilterButton.removeEventListener?.('click', onFavoriteFilter);
+      screen.removeEventListener?.('click', onCollectionSelect, true);
+      favoriteAction?.removeEventListener?.('click', onFavoriteAction);
       for (const node of [...(doc.querySelectorAll?.('#collectionGrid [data-id]') ?? [])]) node.hidden = false;
+      favoriteAction?.remove?.();
       host.remove?.();
       cardsDeckFindabilityInstallations.delete(doc);
     },

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GACHA-PREVIEW-TRUTH-R1B-20260906T0044-SOL-Q4N8M2",
+  "taskId": "GACHA-RESULT-PERSISTENCE-COLLECTION-DECK-AUDIT-001",
+  "workUnitKey": "GACHA_PREVIEW_TRUTHFULNESS_R1_CONTINUATION",
+  "acquireKey": "GACHA-PREVIEW-TRUTH-R1B-20260906T0044-SOL-Q4N8M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "DIRECT_ACTUAL_GACHA_PREVIEW_NO_OWNERSHIP_20260906",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_BFI_GACHA_VISIBLE_PATH_AND_EXACT_COPY_ORACLE_20260906",
+  "proceedToken": "PROCEED|GACHA-PREVIEW-TRUTH-R1B-20260906T0044-SOL-Q4N8M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|preview-truthfulness|lease-readback",
+  "authorizationBaseSha": "e878972e2bdb3df294a48b0aab11b0259a8a00a8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GACHA-RESULT-PERSISTENCE-COLLECTION-DECK-AUDIT-001",
+  "leaseWorkUnitKey": "GACHA_PREVIEW_TRUTHFULNESS_R1_CONTINUATION",
+  "leaseAcquireKey": "GACHA-PREVIEW-TRUTH-R1B-20260906T0044-SOL-Q4N8M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 00:44 JST",
+  "leaseUntilJst": "2026-09-06 01:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A488:N488",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh base main@e878972e2bdb3df294a48b0aab11b0259a8a00a8; intended branch sol/gacha-preview-truthfulness-r1b-20260906; mutable browser/GAMEROAD.html + tests/browser-full-interaction.spec.mjs + UNIQUE_TRANSIENT .github/workflows/gacha-preview-truthfulness-r1b.yml + TRANSIENT data/preaction-authorizations/GACHA-PREVIEW-TRUTH-R1B-20260906T0044-SOL-Q4N8M2.json only. Old branch sol/gacha-preview-truthfulness-r1-20260905 is READ_ONLY donor; gacha ownership/save/receipt/Collection/economy/gameplay/rules/network/deploy READ_ONLY.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/gacha-preview-truthfulness-r1b.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/gacha-preview-truthfulness-r1b.yml"
+  ],
+  "solutionSignature": "Make the current locally generated Gacha animation unmistakably a non-acquiring preview while preserving the exact random preview bundle and navigation behavior.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "GACHA_PREVIEW_TRUTH_BUILD_VS_REUSE_20260906",
+  "solutionSearchEvidence": [
+    "current:GAMEROAD.html renderGacha already exposes 所持追加：なし",
+    "current:gacha-presentation-core is contractually server-confirmed-result-only and therefore not a valid preview authority",
+    "current:browser-full-interaction.spec.mjs already exercises idle/open/seven-results/detail/skip visible Gacha paths",
+    "donor:expired R1 branch contains only preaction/workflow and no product patch; no current owner holds HTML/BFI"
+  ]
+}

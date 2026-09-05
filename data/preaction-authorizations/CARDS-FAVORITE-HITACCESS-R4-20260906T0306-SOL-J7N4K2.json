@@ -1,0 +1,29 @@
+{
+  "schema": "gameroad.preaction-authorization.v1",
+  "acquireKey": "CARDS-FAVORITE-HITACCESS-R4-20260906T0306-SOL-J7N4K2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnit": "CARDS-FAVORITE-HITACCESS-LIVE-R4",
+  "owner": "ChatGPT/GPT-5.6 Sol",
+  "base": {
+    "repository": "rathersitooo-ux/GMR",
+    "branch": "main",
+    "commit": "5a94373bdb5c1a754c79dbf729d9a4a629af576e"
+  },
+  "mutableResources": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs",
+    "data/preaction-authorizations/CARDS-FAVORITE-HITACCESS-R4-20260906T0306-SOL-J7N4K2.json"
+  ],
+  "intent": "Restore physical click/tap access to the existing Cards findability/favorite controls without changing card rules, deck rules, navigation, or adding new player features.",
+  "acceptance": [
+    "The findability host has an explicit positioned stacking layer above the collection grid/deck builder layers.",
+    "The existing favorite filter can be clicked on the Browser Cards route and updates aria-pressed/state without bypassing normal event handling.",
+    "Focused Home-to-Cards runtime coverage remains green."
+  ],
+  "nonOverlap": [
+    "Do not mutate browser/GAMEROAD.html or Battle-owned resources.",
+    "Do not touch the active Deck Save lane or its mutable resources."
+  ],
+  "humanBoundary": "Physical touch QA on the user's device remains unconfirmed unless directly observed.",
+  "recordedAt": "2026-09-06T03:06:00+09:00"
+}

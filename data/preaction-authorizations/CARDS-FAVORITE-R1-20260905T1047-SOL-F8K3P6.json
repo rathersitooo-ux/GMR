@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-FAVORITE-R1-20260905T1047-SOL-F8K3P6",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "CARDS_FAVORITE_FINDABILITY_R1",
+  "acquireKey": "CARDS-FAVORITE-R1-20260905T1047-SOL-F8K3P6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_EXPLICIT_FAVORITE_PLUS_CURRENT_FINDABILITY_AND_DETAIL_PATTERN",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_CARDS_FINDABILITY_TESTS_PLUS_CURRENT_CARD_DETAIL_VISIBLE_FLOW",
+  "proceedToken": "PROCEED|CARDS-FAVORITE-R1-20260905T1047-SOL-F8K3P6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "15e5157091f398c30378683d0630b9dcbd12da4e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "CARDS_FAVORITE_FINDABILITY_R1",
+  "leaseAcquireKey": "CARDS-FAVORITE-R1-20260905T1047-SOL-F8K3P6",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 10:55 JST",
+  "leaseUntilJst": "2026-09-05 11:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A340:L340",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@15e5157091f398c30378683d0630b9dcbd12da4e; branch work/cards-favorite-r1-20260905; mutable browser/cards-deck-presentation.mjs + tests/cards-deck-presentation.test.mjs + transient PRE_ACTION authorization only; browser/GAMEROAD.html + deck-storage runtime/core + gameplay/rules/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "solutionSignature": "Adapt the existing Cards findability consumer: add a UI-only local favorite-id set, expose a composable ★お気に入り filter beside current search/Deck membership filters, and place mark/unmark action in the existing card-detail action area rather than on the swipe-sensitive Collection card surface. Preserve current Deck/Storage/ownership/save/gameplay authority and do not add social/profile/history/cap semantics.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "reuse-current-cards-findability-and-current-detail-action-area",
+  "solutionSearchEvidence": [
+    "repo:browser/cards-deck-presentation.mjs@15e5157091f398c30378683d0630b9dcbd12da4e blob cfdd201a31fa877d0cedbba1158238b08f0af496",
+    "repo:tests/cards-deck-presentation.test.mjs@15e5157091f398c30378683d0630b9dcbd12da4e blob 29eb3c2029e04f9702d935678fbbee85b09808c9",
+    "Drive:CURRENT root/Ops/UI branch2 + CURRENT_ACTIVE_LEASES!A340:L340",
+    "USER_EXPLICIT:2026-09-05 お気に入りも入れていい",
+    "external:Pokemon TCG Pocket official wishlist uses Card Details favorite action",
+    "external:Master Duel 2025 Bookmarks supports card-management findability"
+  ]
+}

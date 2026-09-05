@@ -1,4 +1,4 @@
-name: FOSSIL R96 FIELD seam inspection
+name: FOSSIL R96 FIELD deep seam inspection
 
 on:
   push:
@@ -17,138 +17,117 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Confirm exact inspection base
+      - name: Confirm exact inspection base and product bytes untouched
         shell: bash
         run: |
           set -euo pipefail
           test "$(git merge-base HEAD e878972e2bdb3df294a48b0aab11b0259a8a00a8)" = "e878972e2bdb3df294a48b0aab11b0259a8a00a8"
-          git diff --name-only e878972e2bdb3df294a48b0aab11b0259a8a00a8...HEAD
+          git diff --name-only e878972e2bdb3df294a48b0aab11b0259a8a00a8...HEAD | tee /tmp/diff.txt
+          test "$(grep -Ev '^(\.github/workflows/fossil-field-binding-r96-inspect\.yml|data/preaction-authorizations/FOSSIL-FIELD-BINDING-R96-20260905T2319-SOL-K7M4P2\.json)$' /tmp/diff.txt | wc -l)" -eq 0
 
-      - name: Locate FIELD stop, persistence, fossil and restoration seams
+      - name: Extract exact live movement ability save and field seams
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          import json, re
+          import json,re,subprocess
 
-          repo = Path('.')
-          files = [repo / 'browser' / 'GAMEROAD.html']
-          files += sorted((repo / 'browser').glob('*.mjs'))
-          files += sorted((repo / 'tests').glob('*.mjs'))
+          path=Path('browser/GAMEROAD.html')
+          text=path.read_text(encoding='utf-8',errors='replace')
+          lines=text.splitlines()
 
-          terms = {
-              'fossil': re.compile(r'fossil|excavat|stratum|restoration', re.I),
-              'stop': re.compile(r'stopAuthorized|legal.?stop|\bstop\b|land(?:ed|ing)?|arriv(?:e|ed|al)|settle', re.I),
-              'movement': re.compile(r'\broad\b|\bfield\b|\bboard\b|\bmove\w*\b|\bdice\b|\btile\b|\bcell\b|\bnode\b', re.I),
-              'event': re.compile(r'dispatchEvent|CustomEvent|addEventListener|emit\w*|on[A-Z][A-Za-z0-9_]*', re.I),
-              'save': re.compile(r'localStorage|save\w*|persist\w*|serialize\w*|snapshot|reconnect|load\w*', re.I),
+          needles=[
+            r'async function animateResolvedPath',
+            r'function animateResolvedPath',
+            r'p\.position\s*=',
+            r'\.position\s*=\s*[^=]',
+            r'async function resolveAbilityBundle',
+            r'function resolveAbilityBundle',
+            r'function resolveAbility',
+            r'effect_type',
+            r'const CARDS',
+            r'window\.__CARD_DATA__',
+            r'function savePack',
+            r'function save\(',
+            r'function load',
+            r'SAVE_KEY',
+            r'function startMatch',
+            r'function newMatch',
+            r'match=\{',
+            r'roadEntries',
+            r'normalMoveLimitForRoad',
+            r'function reachable',
+            r'function neighbors',
+            r'function randomOrderByRoad',
+            r'spawnHoneyFromRoads',
+          ]
+
+          def line_of(pos):
+            return text.count('\n',0,pos)+1
+
+          def char_snip(m, radius=5000):
+            lo=max(0,m.start()-radius); hi=min(len(text),m.end()+radius)
+            return text[lo:hi]
+
+          hits={}
+          for raw in needles:
+            rx=re.compile(raw,re.I)
+            arr=[]
+            for m in list(rx.finditer(text))[:12]:
+              arr.append({'line':line_of(m.start()),'match':m.group(0),'snippet':char_snip(m,3500)})
+            hits[raw]=arr
+
+          # Exact line windows around key live-flow functions, preserving whole source lines.
+          windows=[]
+          for key in ['animateResolvedPath','resolveHumanPlans','resolveAbilityBundle','savePack','function save(){','startMatch','randomOrderByRoad']:
+            for i,line in enumerate(lines):
+              if key in line:
+                lo=max(0,i-2); hi=min(len(lines),i+3)
+                windows.append({'key':key,'line':i+1,'context':'\n'.join(f'{n+1}: {lines[n]}' for n in range(lo,hi))})
+                break
+
+          # Search current product modules for fossil/stratum/landing producer or consumer.
+          module_hits=[]
+          for p in sorted(Path('browser').glob('*.mjs')):
+            if p.name=='fossil-excavation-state-core.mjs':
+              continue
+            s=p.read_text(encoding='utf-8',errors='replace')
+            for rx in [r'fossil',r'stratum',r'issueFossilsFromExcavation',r'resolveLandingInteraction',r'runNewBaseTurnWithRuntime']:
+              m=re.search(rx,s,re.I)
+              if m:
+                module_hits.append({'path':p.as_posix(),'term':rx,'line':s.count('\n',0,m.start())+1})
+
+          report={
+            'head':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
+            'base':'e878972e2bdb3df294a48b0aab11b0259a8a00a8',
+            'hits':hits,
+            'windows':windows,
+            'moduleHits':module_hits,
           }
+          Path('fossil-r96-deep-inspection.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
 
-          def score(line):
-              cats = [k for k, rx in terms.items() if rx.search(line)]
-              s = 0
-              if 'fossil' in cats: s += 8
-              if 'stop' in cats: s += 7
-              if 'event' in cats: s += 5
-              if 'save' in cats: s += 5
-              if 'movement' in cats: s += 3
-              if len(cats) >= 2: s += 6 * (len(cats) - 1)
-              if re.search(r'function\s+|=>|class\s+|const\s+|let\s+|var\s+', line): s += 2
-              return s, cats
-
-          records = []
-          for path in files:
-              if not path.exists():
-                  continue
-              try:
-                  lines = path.read_text(encoding='utf-8', errors='replace').splitlines()
-              except Exception:
-                  continue
-              rel = path.as_posix()
-              for i, line in enumerate(lines, start=1):
-                  s, cats = score(line)
-                  if s < 6:
-                      continue
-                  lo = max(1, i - 2)
-                  hi = min(len(lines), i + 2)
-                  context = '\n'.join(f'{n}: {lines[n-1]}' for n in range(lo, hi + 1))
-                  records.append({
-                      'score': s,
-                      'categories': cats,
-                      'path': rel,
-                      'line': i,
-                      'context': context[:1800],
-                  })
-
-          records.sort(key=lambda r: (-r['score'], r['path'], r['line']))
-          html = [r for r in records if r['path'] == 'browser/GAMEROAD.html'][:140]
-          modules = [r for r in records if r['path'] != 'browser/GAMEROAD.html'][:220]
-
-          direct = {}
-          for needle in [
-              'issueFossilsFromExcavation', 'createFossilExcavationState',
-              'serializeFossilExcavationState', 'loadFossilExcavationState',
-              'consumeFossilsForRestoration', 'FIELD-06', 'FIELD-10',
-              'stopAuthorized', 'GAMEROAD_BOARD_FACILITY_RUNTIME',
-          ]:
-              hits = []
-              rx = re.compile(re.escape(needle), re.I)
-              for path in files:
-                  if not path.exists():
-                      continue
-                  text = path.read_text(encoding='utf-8', errors='replace')
-                  for m in list(rx.finditer(text))[:20]:
-                      line = text.count('\n', 0, m.start()) + 1
-                      hits.append({'path': path.as_posix(), 'line': line})
-              direct[needle] = hits
-
-          html_text = (repo / 'browser' / 'GAMEROAD.html').read_text(encoding='utf-8', errors='replace')
-          script_refs = sorted(set(re.findall(r'<script[^>]+src=["\']([^"\']+)["\']', html_text, re.I)))
-          module_refs = [x for x in script_refs if any(t in x.lower() for t in ['board', 'road', 'field', 'turn', 'fossil', 'save', 'facility'])]
-
-          report = {
-              'head': __import__('subprocess').check_output(['git','rev-parse','HEAD'], text=True).strip(),
-              'base': 'e878972e2bdb3df294a48b0aab11b0259a8a00a8',
-              'directHits': direct,
-              'relevantScriptRefs': module_refs,
-              'topHtml': html,
-              'topModulesAndTests': modules,
-          }
-          Path('fossil-r96-seam-inspection.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
-
-          out = []
-          out.append('# FOSSIL R96 seam inspection')
+          out=['# FOSSIL R96 deep live seam inspection','',f"HEAD {report['head']}",'']
+          out.append('## Exact line windows')
+          for w in windows:
+            out += [f"### {w['key']} @ {w['line']}",'```text',w['context'],'```']
           out.append('')
-          out.append('## Direct hits')
-          for needle, hits in direct.items():
-              out.append(f'- {needle}: {len(hits)} hits' + (f"; {', '.join(f'{h['path']}:{h['line']}' for h in hits[:8])}" if hits else ''))
+          out.append('## Pattern hit summary')
+          for k,v in hits.items():
+            out.append(f'- `{k}`: '+(', '.join(str(x['line']) for x in v) if v else '0'))
           out.append('')
-          out.append('## Relevant HTML script refs')
-          out.extend(f'- {x}' for x in module_refs)
-          out.append('')
-          out.append('## Highest-signal GAMEROAD.html contexts')
-          for r in html[:70]:
-              out.append(f"### score={r['score']} line={r['line']} cats={','.join(r['categories'])}")
-              out.append('```text')
-              out.append(r['context'])
-              out.append('```')
-          out.append('')
-          out.append('## Highest-signal module/test contexts')
-          for r in modules[:90]:
-              out.append(f"### {r['path']} score={r['score']} line={r['line']} cats={','.join(r['categories'])}")
-              out.append('```text')
-              out.append(r['context'])
-              out.append('```')
-          Path('fossil-r96-seam-inspection.md').write_text('\n'.join(out), encoding='utf-8')
-          print('\n'.join(out[:900]))
+          out.append('## Non-core module hits')
+          for x in module_hits:
+            out.append(f"- {x['path']}:{x['line']} term={x['term']}")
+          Path('fossil-r96-deep-inspection.md').write_text('\n'.join(out),encoding='utf-8')
+          print('\n'.join(out))
           PY
 
-      - name: Upload compact seam evidence
+      - name: Upload deep seam evidence
         uses: actions/upload-artifact@v4
         with:
-          name: fossil-r96-seam-inspection
+          name: fossil-r96-deep-inspection
           path: |
-            fossil-r96-seam-inspection.json
-            fossil-r96-seam-inspection.md
+            fossil-r96-deep-inspection.json
+            fossil-r96-deep-inspection.md
           if-no-files-found: error

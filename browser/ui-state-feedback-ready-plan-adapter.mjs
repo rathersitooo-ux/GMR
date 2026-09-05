@@ -533,3 +533,226 @@ export function bindReadyPlanFeedbackControl({
     destroy,
   });
 }
+import { createBattleAutoInputController } from './battle-auto-input-core.mjs';
+
+const BATTLE_AUTO_VISIBLE_MODES = Object.freeze(['manual', 'left', 'right', 'max', 'min']);
+const BATTLE_AUTO_MODE_LABELS = Object.freeze({
+  manual: '手動',
+  left: '左',
+  right: '右',
+  max: '大',
+  min: '小',
+});
+
+function battleAutoHash(value) {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, '0');
+}
+
+function battleAutoPlanRole(document) {
+  const road = document?.getElementById?.('roadSelect');
+  const battle = document?.getElementById?.('battleSelect');
+  if (!road || !battle) return null;
+  if (!road.value) return 'road';
+  if (!battle.value) return 'battle';
+  return null;
+}
+
+function battleAutoComparisonValue(button) {
+  const raw = button?.querySelector?.('.handCardRank')?.textContent;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+}
+
+function battleAutoSelectHasValue(select, value) {
+  if (!select?.options) return false;
+  return [...select.options].some((option) => !option.disabled && option.value === value);
+}
+
+export function createBattleAutoDomBridge({ target } = {}) {
+  const document = target?.ownerDocument;
+  if (!document || typeof document.getElementById !== 'function' || typeof document.querySelectorAll !== 'function') {
+    throw new TypeError('target.ownerDocument must expose the live Battle DOM');
+  }
+
+  const readHumanLegalInputs = () => {
+    const road = document.getElementById('roadSelect');
+    const battle = document.getElementById('battleSelect');
+    const role = battleAutoPlanRole(document);
+    if (!road || !battle) return null;
+
+    const select = role === 'road' ? road : role === 'battle' ? battle : null;
+    const other = role === 'road' ? battle : role === 'battle' ? road : null;
+    const buttons = [...document.querySelectorAll('#hand .handCard')];
+    const candidates = buttons.map((button, positionOrder) => {
+      const inputId = String(button?.dataset?.cardId || '').trim();
+      if (!inputId) return null;
+      const legal = Boolean(select)
+        && button.disabled !== true
+        && inputId !== String(other?.value || '')
+        && battleAutoSelectHasValue(select, inputId);
+      return Object.freeze({
+        inputId,
+        kind: 'card',
+        legal,
+        autoSelectable: legal,
+        requiresManualTarget: false,
+        positionOrder,
+        comparisonValue: battleAutoComparisonValue(button),
+        commitInput: Object.freeze({ inputId, role }),
+      });
+    }).filter(Boolean);
+
+    const fingerprint = [
+      role || 'ready',
+      String(road.value || ''),
+      String(battle.value || ''),
+      ...candidates.map((candidate) => `${candidate.inputId}:${candidate.legal ? 1 : 0}:${candidate.comparisonValue ?? 'x'}`),
+    ].join('|');
+    return Object.freeze({
+      frameKey: `battle-plan:${battleAutoHash(fingerprint)}`,
+      candidates: Object.freeze(candidates),
+    });
+  };
+
+  const commitHumanInput = ({ inputId, role } = {}) => {
+    if (battleAutoPlanRole(document) !== role) return false;
+    const select = document.getElementById(role === 'road' ? 'roadSelect' : 'battleSelect');
+    if (!select || !battleAutoSelectHasValue(select, inputId)) return false;
+    const button = [...document.querySelectorAll('#hand .handCard')]
+      .find((candidate) => String(candidate?.dataset?.cardId || '') === inputId);
+    if (!button || button.disabled === true || typeof button.click !== 'function') return false;
+    if (typeof select.focus === 'function') {
+      try { select.focus({ preventScroll: true }); } catch { select.focus(); }
+    }
+    button.click();
+    return select.value === inputId;
+  };
+
+  return Object.freeze({ readHumanLegalInputs, commitHumanInput });
+}
+
+export function bindBattleAutoHandSelector({ target } = {}) {
+  const document = target?.ownerDocument;
+  const rail = document?.querySelector?.('.battleRail');
+  if (!document || !rail || typeof document.createElement !== 'function') return null;
+  const existing = document.getElementById?.('battleAutoMode');
+  if (existing) return null;
+
+  const bridge = createBattleAutoDomBridge({ target });
+  const controller = createBattleAutoInputController(bridge);
+  const button = document.createElement('button');
+  button.id = 'battleAutoMode';
+  button.type = 'button';
+  button.className = 'railBtn';
+  button.dataset.autoMode = 'manual';
+  rail.appendChild(button);
+
+  let modeIndex = 0;
+  let destroyed = false;
+  let queued = false;
+  let running = false;
+  let rerun = false;
+  const road = document.getElementById('roadSelect');
+  const battle = document.getElementById('battleSelect');
+  const hand = document.getElementById('hand');
+  const MutationObserverCtor = document.defaultView?.MutationObserver || globalThis.MutationObserver;
+  let observer = null;
+
+  const renderMode = () => {
+    const mode = BATTLE_AUTO_VISIBLE_MODES[modeIndex];
+    button.dataset.autoMode = mode;
+    button.textContent = `AUTO ${BATTLE_AUTO_MODE_LABELS[mode]}`;
+    button.setAttribute('aria-label', `オート札選択 ${BATTLE_AUTO_MODE_LABELS[mode]}`);
+    button.title = mode === 'manual'
+      ? 'AUTO: 手動。押すと左端→右端→最大→最小を切替'
+      : `AUTO: ${BATTLE_AUTO_MODE_LABELS[mode]}。札選択のみ自動。経路・対象・準備完了は手動`;
+  };
+
+  const run = async () => {
+    queued = false;
+    if (destroyed || controller.status().mode === 'manual') return null;
+    if (running) {
+      rerun = true;
+      return null;
+    }
+    running = true;
+    try {
+      const outcome = await controller.runOnce();
+      button.dataset.autoLastReason = String(outcome?.reason || 'UNKNOWN');
+      if (outcome?.committed === true) rerun = true;
+      return outcome;
+    } finally {
+      running = false;
+      if (rerun) {
+        rerun = false;
+        scheduleRun();
+      }
+    }
+  };
+
+  const scheduleRun = () => {
+    if (destroyed || queued || controller.status().mode === 'manual') return false;
+    queued = true;
+    const enqueue = globalThis.queueMicrotask || ((fn) => Promise.resolve().then(fn));
+    enqueue(() => { void run(); });
+    return true;
+  };
+
+  const onModeClick = (event) => {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+    modeIndex = (modeIndex + 1) % BATTLE_AUTO_VISIBLE_MODES.length;
+    const mode = BATTLE_AUTO_VISIBLE_MODES[modeIndex];
+    controller.setMode(mode);
+    renderMode();
+    if (mode !== 'manual') scheduleRun();
+  };
+  const onPlanChange = () => scheduleRun();
+  button.addEventListener('click', onModeClick);
+  road?.addEventListener?.('change', onPlanChange);
+  battle?.addEventListener?.('change', onPlanChange);
+  if (hand && typeof MutationObserverCtor === 'function') {
+    observer = new MutationObserverCtor(() => scheduleRun());
+    observer.observe(hand, { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled', 'data-card-id'] });
+  }
+  renderMode();
+
+  const destroy = () => {
+    if (destroyed) return false;
+    destroyed = true;
+    observer?.disconnect?.();
+    button.removeEventListener('click', onModeClick);
+    road?.removeEventListener?.('change', onPlanChange);
+    battle?.removeEventListener?.('change', onPlanChange);
+    button.remove?.();
+    controller.reset();
+    return true;
+  };
+
+  return Object.freeze({
+    runOnce: run,
+    scheduleRun,
+    status: controller.status,
+    destroy,
+  });
+}
+
+const bindReadyPlanFeedbackControlBase = bindReadyPlanFeedbackControl;
+bindReadyPlanFeedbackControl = function bindReadyPlanFeedbackControlWithAuto(options = {}) {
+  const binding = bindReadyPlanFeedbackControlBase(options);
+  const auto = bindBattleAutoHandSelector({ target: options?.target });
+  if (!auto) return binding;
+  return Object.freeze({
+    schema: binding.schema,
+    acknowledge: binding.acknowledge,
+    destroy() {
+      auto.destroy();
+      return binding.destroy();
+    },
+  });
+};

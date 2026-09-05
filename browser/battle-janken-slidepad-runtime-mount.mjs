@@ -239,6 +239,7 @@ function addStyle(documentRef) {
 [${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-124px,-55px) rotate(-8deg);transition-delay:35ms}
 [${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-48px,-92px) rotate(5deg);transition-delay:70ms}
 [${HOST_ATTR}="1"] .grJankenSlidePadSlot[data-armed="true"]{filter:brightness(1.12) saturate(1.08);border-color:rgba(194,238,255,.98);box-shadow:0 10px 28px rgba(3,5,24,.5),0 0 0 4px rgba(92,205,255,.2),0 0 24px rgba(135,105,255,.26)}
+[${HOST_ATTR}="1"] .grJankenSlidePadSlot[data-staged="true"]{filter:brightness(1.2) saturate(1.12);border-color:rgba(255,243,166,.98);box-shadow:0 10px 28px rgba(3,5,24,.5),0 0 0 4px rgba(255,220,96,.22),0 0 26px rgba(255,198,70,.34)}
 [${HOST_ATTR}="1"] .grJankenSlidePadSlot:disabled{filter:saturate(.15);background:linear-gradient(160deg,rgba(77,87,132,.84),rgba(39,42,79,.92));border-color:rgba(184,197,228,.42);color:rgba(224,231,247,.58);box-shadow:0 6px 16px rgba(3,5,24,.32);cursor:default;pointer-events:none}
 [${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:25px;line-height:1;font-weight:900}
 [${HOST_ATTR}="1"] .grJankenSlidePadCard{font-size:10px;line-height:1.15;font-weight:850;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
@@ -249,6 +250,11 @@ function addStyle(documentRef) {
 [${HOST_ATTR}="1"] .grJankenLoadPreviewSuit{font-size:34px;line-height:1;font-weight:950}
 [${HOST_ATTR}="1"] .grJankenLoadPreviewCard{font-size:12px;line-height:1.12;font-weight:900;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical}
 [${HOST_ATTR}="1"] .grJankenLoadPreviewHand{font-size:12px;font-weight:950;letter-spacing:.08em}
+[${HOST_ATTR}="1"] .grJankenPrecommit{position:absolute;left:2px;bottom:0;width:116px;display:flex;gap:6px;opacity:0;transform:translateY(5px);transition:opacity 90ms ease,transform 90ms ease;pointer-events:none}
+[${HOST_ATTR}="1"][data-precommit="true"] .grJankenPrecommit{opacity:1;transform:translateY(0);pointer-events:auto}
+[${HOST_ATTR}="1"] .grJankenPrecommit button{min-width:0;flex:1;height:32px;border-radius:11px;border:1px solid rgba(255,255,255,.72);font-weight:950;font-size:11px;touch-action:manipulation}
+[${HOST_ATTR}="1"] .grJankenPrecommitCancel{background:rgba(27,31,65,.94);color:#eef4ff}
+[${HOST_ATTR}="1"] .grJankenPrecommitConfirm{background:linear-gradient(160deg,#fff2a8,#ffc44f);color:#332100;border-color:rgba(255,247,198,.96)!important}
 section[data-screen="battle"] #hand .handCard[data-janken-reserved="true"]{display:none!important}
 section[data-screen="battle"] #hand .handCard[data-hand-aura-draggable="true"]{touch-action:none}
 section[data-screen="battle"] #hand .handCard[data-hand-aura-dragging="true"]{opacity:.22!important}
@@ -259,7 +265,7 @@ ${BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS}
 .grHandAuraDragGhost[data-aura-charged="true"]{filter:brightness(1.35) saturate(1.3) drop-shadow(0 0 7px rgba(222,255,244,.98)) drop-shadow(0 0 18px rgba(89,255,199,.9))!important;box-shadow:0 0 0 3px rgba(231,255,247,.62),0 0 26px rgba(75,255,191,.8)!important}
 @media(max-width:540px) and (orientation:portrait){[${HOST_ATTR}="1"]{bottom:185px}[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:64px;height:88px;padding:5px 4px;border-radius:10px}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-126px,12px) rotate(-15deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-96px,-43px) rotate(-7deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-38px,-72px) rotate(4deg)}[${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:20px}[${HOST_ATTR}="1"] .grJankenSlidePadCard{font-size:9px;line-height:1.1}[${HOST_ATTR}="1"] .grJankenSlidePadHand{font-size:8px}[${HOST_ATTR}="1"] .grJankenLoadPreview{width:98px;height:132px}}
 @media(max-height:430px) and (orientation:landscape){[${HOST_ATTR}="1"]{width:220px;height:160px;right:7px;bottom:7px}[${HOST_ATTR}="1"] .grJankenSlidePadHandle{width:58px;height:58px}[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:70px;height:94px;padding:5px}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-143px,10px) rotate(-18deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-109px,-47px) rotate(-8deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-64px,-75px) rotate(5deg)}[${HOST_ATTR}="1"] .grJankenLoadPreview{width:90px;height:120px;left:2px;top:2px}}
-@media(prefers-reduced-motion:reduce){[${HOST_ATTR}="1"] .grJankenSlidePadSlot,[${HOST_ATTR}="1"] .grJankenSlidePadHandle,[${HOST_ATTR}="1"] .grJankenLoadPreview{transition:none!important}}
+@media(prefers-reduced-motion:reduce){[${HOST_ATTR}="1"] .grJankenSlidePadSlot,[${HOST_ATTR}="1"] .grJankenSlidePadHandle,[${HOST_ATTR}="1"] .grJankenLoadPreview,[${HOST_ATTR}="1"] .grJankenPrecommit{transition:none!important}}
 `;
   documentRef.head?.appendChild(style);
 }
@@ -505,6 +511,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
   host.dataset.expanded = 'false';
   host.dataset.handAuraActive = 'false';
   host.dataset.handAuraArmed = 'false';
+  host.dataset.precommit = 'false';
   host.setAttribute('aria-label', 'じゃんけん SlidePad / カード発射オーラ');
   const slotNodes = new Map();
   for (const hand of SLOT_ORDER) {
@@ -514,6 +521,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     button.className = `grJankenSlidePadSlot ${view.className}`;
     button.setAttribute(SLOT_ATTR, hand);
     button.dataset.armed = 'false';
+    button.dataset.staged = 'false';
     button.disabled = true;
     button.innerHTML = `<span class="grJankenSlidePadSuit">${view.symbol}</span><span class="grJankenSlidePadCard">空き</span><span class="grJankenSlidePadHand">${view.hand}</span>`;
     host.appendChild(button);
@@ -525,9 +533,25 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
   loadPreview.setAttribute('aria-hidden', 'true');
   loadPreview.innerHTML = '<span class="grJankenLoadPreviewLabel">LOAD CARD</span><span class="grJankenLoadPreviewSuit"></span><span class="grJankenLoadPreviewCard"></span><span class="grJankenLoadPreviewHand"></span>';
   host.appendChild(loadPreview);
+  const loadPreviewLabel = loadPreview.querySelector('.grJankenLoadPreviewLabel');
   const loadPreviewSuit = loadPreview.querySelector('.grJankenLoadPreviewSuit');
   const loadPreviewCard = loadPreview.querySelector('.grJankenLoadPreviewCard');
   const loadPreviewHand = loadPreview.querySelector('.grJankenLoadPreviewHand');
+  const precommitPanel = documentRef.createElement('div');
+  precommitPanel.className = 'grJankenPrecommit';
+  precommitPanel.setAttribute('aria-label', '未確定じゃんけんカード');
+  const cancelPrecommit = documentRef.createElement('button');
+  cancelPrecommit.type = 'button';
+  cancelPrecommit.className = 'grJankenPrecommitCancel';
+  cancelPrecommit.textContent = '取消';
+  cancelPrecommit.setAttribute('aria-label', '未確定のじゃんけんカードを取り消す');
+  const confirmPrecommit = documentRef.createElement('button');
+  confirmPrecommit.type = 'button';
+  confirmPrecommit.className = 'grJankenPrecommitConfirm';
+  confirmPrecommit.textContent = '確定';
+  confirmPrecommit.setAttribute('aria-label', 'じゃんけんカードを確定する');
+  precommitPanel.append(cancelPrecommit, confirmPrecommit);
+  host.appendChild(precommitPanel);
   const handle = documentRef.createElement('button');
   handle.type = 'button';
   handle.className = 'grJankenSlidePadHandle';
@@ -549,6 +573,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
   let dragMoved = false;
   let dragStartedExpanded = false;
   let armedHand = null;
+  let stagedJankenHand = null;
   let slotRollState = null;
   let slotRollLastX = 0;
   let slotRollDetentPx = 0;
@@ -559,16 +584,57 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
   let suppressClickTimer = null;
 
   function renderLoadPreview(nextHand) {
-    const preview = projectBattleLoadCardPreview(model, nextHand);
+    const displayHand = stagedJankenHand ?? nextHand;
+    const preview = projectBattleLoadCardPreview(model, displayHand);
     const visible = !!preview;
     loadPreview.dataset.visible = String(visible);
     loadPreview.setAttribute('aria-hidden', String(!visible));
     loadPreview.dataset.cardId = preview?.cardId ?? '';
     loadPreview.dataset.jankenHand = preview?.jankenHand ?? '';
+    loadPreviewLabel.textContent = stagedJankenHand ? '未確定 / LOAD' : 'LOAD CARD';
     loadPreviewSuit.textContent = preview?.symbol ?? '';
     loadPreviewCard.textContent = preview?.cardLabel ?? '';
     loadPreviewHand.textContent = preview ? `${preview.hand} / ${preview.jankenHand}` : '';
     return preview;
+  }
+
+  function syncStagedVisual() {
+    host.dataset.precommit = String(!!stagedJankenHand);
+    for (const [hand, node] of slotNodes) node.dataset.staged = String(hand === stagedJankenHand);
+    renderLoadPreview(armedHand);
+  }
+
+  function clearStagedJankenAction() {
+    if (!stagedJankenHand) return false;
+    stagedJankenHand = null;
+    syncStagedVisual();
+    return true;
+  }
+
+  function stageJankenAction(nextHand) {
+    if (!model || !nextHand) return false;
+    const currentSourceHandIds = readHand(globalRef, root).map((card) => card.id);
+    const cardId = resolveBattleJankenSlotCardAction(model, nextHand, currentSourceHandIds);
+    if (!cardId) {
+      clearStagedJankenAction();
+      return false;
+    }
+    stagedJankenHand = nextHand;
+    syncStagedVisual();
+    return true;
+  }
+
+  function commitStagedJankenAction() {
+    const selectedHand = stagedJankenHand;
+    if (!selectedHand || !model) return false;
+    const currentSourceHandIds = readHand(globalRef, root).map((card) => card.id);
+    const cardId = resolveBattleJankenSlotCardAction(model, selectedHand, currentSourceHandIds);
+    const flight = cardId ? captureReleasedJankenCardFlight(globalRef, root, slotNodes, selectedHand) : null;
+    clearStagedJankenAction();
+    if (!cardId) return false;
+    const clicked = clickExistingHandCard(root, cardId);
+    if (clicked) animateReleasedJankenCard(host, flight);
+    return clicked;
   }
 
   function setExpanded(next) {
@@ -674,10 +740,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
       return;
     }
     if (!selectedHand || !model) return;
-    const currentSourceHandIds = readHand(globalRef, root).map((card) => card.id);
-    const cardId = resolveBattleJankenSlotCardAction(model, selectedHand, currentSourceHandIds);
-    const flight = cardId ? captureReleasedJankenCardFlight(globalRef, root, slotNodes, selectedHand) : null;
-    if (cardId && clickExistingHandCard(root, cardId)) animateReleasedJankenCard(host, flight);
+    stageJankenAction(selectedHand);
   }
 
   function clearAuraHostState() {
@@ -860,6 +923,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
 
   function openForRound(roundId) {
     if (!roundId || roundId === lastRoundId) return;
+    clearStagedJankenAction();
     lastRoundId = roundId;
     setExpanded(false);
     if (roundOpenTimer !== null) globalRef.clearTimeout?.(roundOpenTimer);
@@ -874,7 +938,10 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     bindHandInput();
     const roundText = root.querySelector?.('#roundNo')?.textContent;
     const hand = readHand(globalRef, root);
-    if (!String(roundText ?? '').trim() || hand.length === 0) return;
+    if (!String(roundText ?? '').trim() || hand.length === 0) {
+      clearStagedJankenAction();
+      return;
+    }
     model = buildBattleJankenSlidePadModel({
       roundId: roundText,
       hand,
@@ -884,21 +951,25 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     assignment = model.assignment;
     syncHandZoneProjection(root, model);
     const currentSourceHandIds = hand.map((card) => card.id);
+    if (stagedJankenHand
+      && !resolveBattleJankenSlotCardAction(model, stagedJankenHand, currentSourceHandIds)) {
+      clearStagedJankenAction();
+    }
     for (const slot of model.slots) {
       const node = slotNodes.get(slot.jankenHand);
       const cardText = node.querySelector('.grJankenSlidePadCard');
       node.disabled = !slot.selectable;
       node.dataset.cardId = slot.cardId ?? '';
+      node.dataset.staged = String(slot.jankenHand === stagedJankenHand);
       node.setAttribute('aria-label', slot.occupied
         ? `${slot.symbol} ${slot.hand} ${slot.cardLabel}`
         : `${slot.symbol} ${slot.hand} 空き`);
       cardText.textContent = slot.occupied ? slot.cardLabel : '空き';
       node.onclick = () => {
-        const cardId = resolveBattleJankenSlotCardAction(model, slot.jankenHand, currentSourceHandIds);
-        if (cardId) clickExistingHandCard(root, cardId);
+        stageJankenAction(slot.jankenHand);
       };
     }
-    if (armedHand) renderLoadPreview(armedHand);
+    if (stagedJankenHand || armedHand) renderLoadPreview(armedHand);
     openForRound(model.roundId);
   }
 
@@ -907,6 +978,18 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     if (timer !== null) globalRef.clearTimeout?.(timer);
     timer = globalRef.setTimeout?.(() => { timer = null; render(); }, 50) ?? null;
   }
+
+  function handlePrecommitKeydown(event) {
+    if (event?.key !== 'Escape' || !stagedJankenHand) return;
+    if (clearStagedJankenAction()) {
+      event.preventDefault?.();
+      event.stopPropagation?.();
+    }
+  }
+
+  cancelPrecommit.addEventListener('click', () => clearStagedJankenAction());
+  confirmPrecommit.addEventListener('click', () => commitStagedJankenAction());
+  documentRef.addEventListener?.('keydown', handlePrecommitKeydown);
 
   handle.addEventListener('pointerdown', (event) => {
     if (activePointerId !== null || handDrag) return;
@@ -945,7 +1028,12 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
   const runtime = Object.freeze({
     render,
     snapshot: () => model,
-    loadPreviewSnapshot: () => projectBattleLoadCardPreview(model, armedHand),
+    loadPreviewSnapshot: () => projectBattleLoadCardPreview(model, stagedJankenHand ?? armedHand),
+    precommitSnapshot: () => stagedJankenHand
+      ? projectBattleLoadCardPreview(model, stagedJankenHand)
+      : null,
+    clearPrecommit: clearStagedJankenAction,
+    commitPrecommit: commitStagedJankenAction,
     isExpanded: () => expanded,
     destroy() {
       if (destroyed) return false;
@@ -953,6 +1041,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
       if (timer !== null) globalRef.clearTimeout?.(timer);
       if (roundOpenTimer !== null) globalRef.clearTimeout?.(roundOpenTimer);
       if (suppressClickTimer !== null) globalRef.clearTimeout?.(suppressClickTimer);
+      documentRef.removeEventListener?.('keydown', handlePrecommitKeydown);
       if (handDrag) cleanupHandDrag(handDrag);
       if (boundHandRoot) {
         boundHandRoot.removeEventListener?.('pointerdown', beginHandDrag);

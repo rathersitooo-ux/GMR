@@ -1,25 +1,32 @@
 {
-  "task_id": "BATTLE-HAND-FAN-SELECTION-PRESENTATION-001",
-  "work_unit_key": "BATTLE_HAND_PLAYABLE_AFFORDANCE_R91",
-  "acquire_key": "BATTLE-HAND-PLAYABLE-R91-20260906T0540-SOL-Q8M4K2",
-  "owner": "ChatGPT/GPT-5.6 Sol",
-  "source": "USER_EXPLICIT GAMEROAD NORTH_STAR one-response bounded run; recover adopted playable-hand affordance after expired R90/R90B without product mutation",
-  "pre_action_phase": "PRE_ACTION_AUTHORIZATION",
-  "manifest_role": "first branch commit authorization witness",
-  "base_branch": "main",
-  "base_sha": "77777f15cc263a33ff9bb8ec1de7e896c979223b",
-  "branch": "sol/battle-hand-playable-r91b-20260906",
-  "initial_branch_head": "77777f15cc263a33ff9bb8ec1de7e896c979223b",
-  "expected_lease_until": "2026-09-06 06:25 JST",
-  "formal_resource_gates": ["CURRENT root read", "Ops CURRENT read", "exact Task row read", "CURRENT_ACTIVE_LEASES exact-scope collision check", "fresh main SHA read"],
-  "exact_mutable_resources": ["browser/battle-janken-slidepad-runtime-mount.mjs", "tests/battle-hand-playable-affordance.test.mjs", "data/preaction-authorizations/BATTLE-HAND-PLAYABLE-R91-20260906T0540-SOL-Q8M4K2.json"],
-  "forbidden_scope": ["browser/GAMEROAD.html", "tests/browser-full-interaction.spec.mjs", "gameplay/rules", "save", "economy", "network", "Partner", "Home", "Cards", "Profile"],
-  "volatile_inputs": {
-    "main_sha": "77777f15cc263a33ff9bb8ec1de7e896c979223b",
-    "lease_row": "CURRENT_ACTIVE_LEASES!A14:N14",
-    "lease_readback_event": "2026-09-06 05:40 JST exact row readback; branch target corrected to R91B after discovering unleased R91 manifest-only collision",
-    "current_legality_projection": "GAMEROAD.html renderHand -> roadSelectable options; directPlanRole -> .directRoleActive; duplicate road/battle reservation rejected by updatePlanFromSelect"
-  },
-  "acceptance_gates": ["yellow ▲ is presentation-only and attached only to currently playable ordinary-hand candidates", "semicircle action base is visible only while at least one candidate exists", "reserved card in the opposite role is excluded from the current role affordance", "no legality/card membership/input authority mutation", "new pure projection test passes", "focused existing Node runtime test passes", "Required Gate passes", "exact diff/readback"],
-  "status": "AUTHORIZED"
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HAND-PLAYABLE-R91-20260906T0540-SOL-Q8M4K2",
+  "taskId": "BATTLE-HAND-FAN-SELECTION-PRESENTATION-001",
+  "workUnitKey": "BATTLE_HAND_PLAYABLE_AFFORDANCE_R91",
+  "acquireKey": "BATTLE-HAND-PLAYABLE-R91-20260906T0540-SOL-Q8M4K2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BATTLE-HAND-PLAYABLE-R91-CURRENT-PROJECTION-READBACK",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BATTLE-HAND-PLAYABLE-R91-READONLY-LEGALITY-PROJECTION",
+  "proceedToken": "PROCEED|BATTLE-HAND-PLAYABLE-R91-20260906T0540-SOL-Q8M4K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-projection|lease-readback",
+  "authorizationBaseSha": "77777f15cc263a33ff9bb8ec1de7e896c979223b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-HAND-FAN-SELECTION-PRESENTATION-001",
+  "leaseWorkUnitKey": "BATTLE_HAND_PLAYABLE_AFFORDANCE_R91",
+  "leaseAcquireKey": "BATTLE-HAND-PLAYABLE-R91-20260906T0540-SOL-Q8M4K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 05:58 JST",
+  "leaseUntilJst": "2026-09-06 06:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch sol/battle-hand-playable-r91b-20260906 only: browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-hand-playable-affordance.test.mjs transient test evidence; data/preaction-authorizations/BATTLE-HAND-PLAYABLE-R91-20260906T0540-SOL-Q8M4K2.json transient authorization witness only. browser/GAMEROAD.html; tests/browser-full-interaction.spec.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; gameplay/rules/save/economy/network/Partner/Home/Cards/Profile READ_ONLY.",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-hand-playable-affordance.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-hand-playable-affordance.test.mjs"
+  ]
 }

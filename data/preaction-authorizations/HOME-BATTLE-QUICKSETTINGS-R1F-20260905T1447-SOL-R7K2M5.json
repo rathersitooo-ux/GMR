@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-BATTLE-QUICKSETTINGS-R1F-20260905T1447-SOL-R7K2M5",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_BATTLE_QUICK_SETTINGS_VISIBLE_ACCEPTANCE_R1F",
+  "acquireKey": "HOME-BATTLE-QUICKSETTINGS-R1F-20260905T1447-SOL-R7K2M5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R1D_MERGED_PUBLIC+CURRENT_BFI_STALE_DIRECT_SETTINGS_EXPECTATION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_BFI_SETTINGS_AUDIO_AND_BATTLE_VISIBLE_PATHS+R1D_REQUIRED_GATE_AND_PUBLIC_SMOKE",
+  "proceedToken": "PROCEED|HOME-BATTLE-QUICKSETTINGS-R1F-20260905T1447-SOL-R7K2M5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ADAPT_EXISTING_BFI_WITH_TRANSIENT_EXACT_PATCH",
+  "authorizationBaseSha": "b490f10377f29191e8a53abc633934713d829468",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_BATTLE_QUICK_SETTINGS_VISIBLE_ACCEPTANCE_R1F",
+  "leaseAcquireKey": "HOME-BATTLE-QUICKSETTINGS-R1F-20260905T1447-SOL-R7K2M5",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 14:47 JST",
+  "leaseUntilJst": "2026-09-05 15:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A360:L360",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@b490f10377f29191e8a53abc633934713d829468; intended branch sol/home-battle-quicksettings-r1f-20260905; mutable tests/browser-full-interaction.spec.mjs@46a3ef121ef3ab8641b2f7a7d19ceb3c4d77bfa0 + UNIQUE_TRANSIENT .github/workflows/home-battle-quicksettings-r1f-patch.yml + TRANSIENT data/preaction-authorizations/HOME-BATTLE-QUICKSETTINGS-R1F-20260905T1447-SOL-R7K2M5.json only; browser/home-boot-runtime-mount.mjs + browser/battle-screen-runtime-mount.mjs + browser/GAMEROAD.html + deploy/cloudflare/** + gameplay/rules/save/economy/network READ_ONLY. Transient workflow may only exact-string patch stale Settings test blocks, run bounded BFI, then must be removed before PR.",
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/home-battle-quicksettings-r1f-patch.yml"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/home-battle-quicksettings-r1f-patch.yml"
+  ],
+  "solutionSignature": "adapt-existing-bfi-via-transient-exact-string-patch",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_BFI_ALREADY_OWNS_VISIBLE_SETTINGS_AND_BATTLE_ACCEPTANCE;CONNECTOR_ONLY_SUPPORTS_FULL_FILE_REPLACEMENT",
+  "solutionSearchEvidence": [
+    "current browser-full-interaction.spec.mjs already tests visible Home Settings reachability and full Settings audio/toggle controls",
+    "current BFI contains existing visible Battle entry/play paths; no second acceptance harness is needed",
+    "R1D intentionally changes Home Settings entry semantics, making the direct Home click to full Settings expectation stale",
+    "connector update_file requires complete-file replacement; one branch-only exact-string patch workflow is safer than reconstructing the large existing BFI file",
+    "fresh collision scan shows no unexpired owner for the BFI file"
+  ],
+  "scopeRebaseReason": "Acceptance-only clean recovery after R1E writer-boundary. A unique transient workflow may modify only tests/browser-full-interaction.spec.mjs by fail-closed exact anchors and execute bounded evidence. Runtime/product files stay read-only. Workflow and manifest must be cleanup-deleted before PR."
+}

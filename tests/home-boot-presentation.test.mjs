@@ -28,6 +28,7 @@ import {
   resolveHomeSlidepadRouteId,
   resolveHomeSlidepadTargetTranslation,
   resolveQuickSettingsTrigger,
+  setExistingQuickSettingsMasterVolume,
   setExistingQuickSettingsVolume,
   shouldDismissHomeSlidepadOnBlankDoubleClick,
   toggleExistingQuickSetting,
@@ -411,12 +412,21 @@ test('Home/Battle quick settings proxy mutates only the existing Settings contro
   class FakeEvent { constructor(type) { this.type = type; } }
 
   const before = readExistingQuickSettings(documentSource);
+  assert.equal(before.masterVolume, 70);
   assert.equal(before.musicVolume, 64);
   assert.equal(before.partnerVoiceMuted, true);
   assert.deepEqual(before.missing, []);
   assert.deepEqual(before.knownAuthorityGaps, QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS);
-  assert.ok(before.knownAuthorityGaps.includes('masterVolume'));
+  assert.deepEqual(before.knownAuthorityGaps, []);
 
+  assert.equal(setExistingQuickSettingsMasterVolume(35, documentSource, { Event: FakeEvent }), true);
+  assert.equal(controls.musicVolume.value, '32');
+  assert.equal(controls.sfxVolume.value, '35');
+  assert.equal(controls.partnerVoiceVolume.value, '28');
+  assert.equal(readExistingQuickSettings(documentSource).masterVolume, 35);
+  assert.deepEqual(dispatched, ['input', 'change', 'input', 'change', 'input', 'change']);
+
+  dispatched.length = 0;
   assert.equal(setExistingQuickSettingsVolume('musicVolume', 42, documentSource, { Event: FakeEvent }), true);
   assert.equal(controls.musicVolume.value, '42');
   assert.deepEqual(dispatched, ['input', 'change']);

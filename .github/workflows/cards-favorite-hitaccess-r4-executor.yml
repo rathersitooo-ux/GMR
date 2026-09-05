@@ -16,6 +16,7 @@ env:
 
 jobs:
   patch-test-cleanup:
+    if: ${{ !contains(github.event.head_commit.message, '[r4-diag-result]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -181,7 +182,37 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run focused browser regression
-        run: npx playwright test tests/home-cards-2p5d-runtime.spec.mjs --config=playwright.config.mjs --grep "mutually hit-accessible across target viewports" --workers=1
+        shell: bash
+        run: |
+          set +e
+          npx playwright test tests/home-cards-2p5d-runtime.spec.mjs --config=playwright.config.mjs --grep "mutually hit-accessible across target viewports" --workers=1 2>&1 | tee /tmp/r4-focused.log
+          status=${PIPESTATUS[0]}
+          set -e
+          if [ "$status" -ne 0 ]; then
+            git reset --hard HEAD
+            python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timedelta, timezone
+          from pathlib import Path
+          manifest = Path(os.environ['MANIFEST'])
+          data = json.loads(manifest.read_text(encoding='utf-8'))
+          log = Path('/tmp/r4-focused.log').read_text(encoding='utf-8', errors='replace')
+          data['diagnosticCaptured'] = True
+          data['diagnosticCapturedAtJst'] = datetime.now(timezone(timedelta(hours=9))).strftime('%Y-%m-%d %H:%M:%S JST')
+          data['diagnosticRunId'] = os.environ.get('GITHUB_RUN_ID', '')
+          data['diagnosticHeadSha'] = os.environ.get('GITHUB_SHA', '')
+          data['diagnosticLogTail'] = log[-12000:]
+          data['leaseSnapshotReadbackAtJst'] = '2026-09-06 04:24 JST'
+          data['leaseUntilJst'] = '2026-09-06 05:30 JST'
+          manifest.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git add "$MANIFEST"
+            git commit -m '[r4-diag-result] capture focused failure'
+            git push origin HEAD:sol/cards-favorite-hitaccess-r4-20260906
+            exit "$status"
+          fi
 
       - name: Commit bounded product result and remove transient authorization
         shell: bash

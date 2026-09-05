@@ -10,6 +10,61 @@ import {
 const deckStorageLiveInstallations = new WeakMap();
 const cardsDeckFindabilityInstallations = new WeakMap();
 const CARDS_FAVORITE_STORAGE_KEY = 'gameroad.cards.favorite.v1';
+const CARDS_DECK_SWIPE_DISCOVERY_STORAGE_KEY = 'gameroad.cards.deck-swipe-discovery.v1';
+
+export const CARDS_DECK_SWIPE_DISCOVERY_CONTRACT = Object.freeze({
+  schema: 'gameroad.cards-deck-swipe-discovery.v1',
+  storageKey: CARDS_DECK_SWIPE_DISCOVERY_STORAGE_KEY,
+  persistence: 'local-ui-only',
+  collectionAdd: Object.freeze({ surface: 'collection', direction: 'right' }),
+  deckRemove: Object.freeze({ surface: 'deck', direction: 'left' }),
+  ownsDeck: false,
+  ownsSave: false,
+});
+
+export function normalizeDeckSwipeDiscoveryState(value = {}) {
+  return Object.freeze({
+    collectionAddLearned: value?.collectionAddLearned === true,
+    deckRemoveLearned: value?.deckRemoveLearned === true,
+  });
+}
+
+export function parseDeckSwipeDiscoveryState(raw) {
+  if (typeof raw !== 'string' || !raw) return normalizeDeckSwipeDiscoveryState();
+  try { return normalizeDeckSwipeDiscoveryState(JSON.parse(raw)); }
+  catch { return normalizeDeckSwipeDiscoveryState(); }
+}
+
+export function serializeDeckSwipeDiscoveryState(value) {
+  return JSON.stringify(normalizeDeckSwipeDiscoveryState(value));
+}
+
+export function readDeckSwipeDiscoveryStateFromStorage({ storage, key = CARDS_DECK_SWIPE_DISCOVERY_STORAGE_KEY } = {}) {
+  try { return parseDeckSwipeDiscoveryState(storage?.getItem?.(key) ?? null); }
+  catch { return normalizeDeckSwipeDiscoveryState(); }
+}
+
+export function writeDeckSwipeDiscoveryStateToStorage({ storage, value, key = CARDS_DECK_SWIPE_DISCOVERY_STORAGE_KEY } = {}) {
+  try {
+    if (typeof storage?.setItem !== 'function') return false;
+    storage.setItem(key, serializeDeckSwipeDiscoveryState(value));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function reduceDeckSwipeDiscoveryAfterGesture(state, { surface, action, ok } = {}) {
+  const current = normalizeDeckSwipeDiscoveryState(state);
+  if (ok !== true) return current;
+  if (surface === 'collection' && action === 'deck-add') {
+    return normalizeDeckSwipeDiscoveryState({ ...current, collectionAddLearned: true });
+  }
+  if (surface === 'deck' && action === 'deck-remove') {
+    return normalizeDeckSwipeDiscoveryState({ ...current, deckRemoveLearned: true });
+  }
+  return current;
+}
 
 export const CARDS_DECK_FINDABILITY_CONTRACT = Object.freeze({
   schema: 'gameroad.cards-deck-findability.v2',
@@ -476,6 +531,49 @@ export function installDeckStorageLiveMount({
   });
   const presentation = createDeckSwipePresentationController({ document: doc, window: win });
 
+  const discoveryStorage = cardsFavoriteStorage(win);
+  let discoveryState = readDeckSwipeDiscoveryStateFromStorage({ storage: discoveryStorage });
+  const collectionHint = doc.createElement('div');
+  collectionHint.dataset.role = 'deck-swipe-discovery-add';
+  collectionHint.textContent = '→ 右フリックで札組へ';
+  collectionHint.setAttribute?.('aria-label', '右フリックで札組へ追加');
+  const removeHint = doc.createElement('span');
+  removeHint.dataset.role = 'deck-swipe-discovery-remove';
+  removeHint.textContent = '← 左フリックで札組から外す';
+  removeHint.setAttribute?.('aria-label', '左フリックで札組から外す');
+  const collectionGrid = doc.querySelector('#collectionGrid');
+  collectionGrid?.before?.(collectionHint);
+  if (!collectionHint.parentNode) collectionGrid?.parentElement?.insertBefore?.(collectionHint, collectionGrid);
+  host.after?.(removeHint);
+  if (!removeHint.parentNode) host.parentElement?.appendChild?.(removeHint);
+
+  if (!doc.getElementById?.('gameroad-deck-swipe-discovery-style')) {
+    const style = doc.createElement('style');
+    style.id = 'gameroad-deck-swipe-discovery-style';
+    style.textContent = '[data-role^="deck-swipe-discovery-"]{display:inline-flex;align-items:center;min-height:24px;padding:3px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(10,18,30,.58);font:700 12px/1.2 system-ui;opacity:.82;pointer-events:none;user-select:none}[data-role="deck-swipe-discovery-add"]{margin:0 0 6px}[data-role="deck-swipe-discovery-remove"]{margin-inline-start:6px}[data-role^="deck-swipe-discovery-"][hidden]{display:none}';
+    (doc.head ?? doc.documentElement)?.appendChild?.(style);
+  }
+
+  const renderDiscoveryHints = () => {
+    collectionHint.hidden = discoveryState.collectionAddLearned;
+    removeHint.hidden = discoveryState.deckRemoveLearned || readLiveDeck(doc).length === 0;
+  };
+  const learnDiscoveryGesture = ({ surface, action, ok }) => {
+    const next = reduceDeckSwipeDiscoveryAfterGesture(discoveryState, { surface, action, ok });
+    const changed = next.collectionAddLearned !== discoveryState.collectionAddLearned
+      || next.deckRemoveLearned !== discoveryState.deckRemoveLearned;
+    discoveryState = next;
+    if (changed) writeDeckSwipeDiscoveryStateToStorage({ storage: discoveryStorage, value: discoveryState });
+    renderDiscoveryHints();
+  };
+  const deckHintObserver = typeof win?.MutationObserver === 'function'
+    ? new win.MutationObserver(() => renderDiscoveryHints())
+    : null;
+  for (const deckSurface of [...(doc.querySelectorAll?.('#deckSlots, #exDeckSlots') ?? [])]) {
+    deckHintObserver?.observe?.(deckSurface, { childList: true, subtree: true });
+  }
+  renderDiscoveryHints();
+
   let gesture = null;
   let suppressClick = null;
   const now = () => Number(win?.performance?.now?.() ?? Date.now());
@@ -526,6 +624,7 @@ export function installDeckStorageLiveMount({
       cardId: current.cardId,
     });
     if (!result?.ok) return;
+    learnDiscoveryGesture({ surface: current.surface, action: result.action, ok: true });
     suppressClick = { cardId: current.cardId, until: now() + 450 };
     mounted?.render?.();
   };
@@ -557,6 +656,9 @@ export function installDeckStorageLiveMount({
       doc.removeEventListener('pointerup', onPointerUp, false);
       doc.removeEventListener('pointercancel', onPointerCancel, false);
       doc.removeEventListener('click', onClickCapture, true);
+      deckHintObserver?.disconnect?.();
+      collectionHint.remove?.();
+      removeHint.remove?.();
       presentation?.dispose?.();
       mounted?.dispose?.();
       host.remove?.();

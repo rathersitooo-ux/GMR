@@ -12,9 +12,52 @@ import {
   createDeckSwipeSfxPlayer,
   isNeutralizedDeckEditorSwipe,
   presentDeckAddSwipe,
+  CARDS_DECK_SWIPE_DISCOVERY_CONTRACT,
+  parseDeckSwipeDiscoveryState,
+  readDeckSwipeDiscoveryStateFromStorage,
+  writeDeckSwipeDiscoveryStateToStorage,
+  reduceDeckSwipeDiscoveryAfterGesture,
 } from '../browser/cards-deck-presentation.mjs';
 
 const rect = (left, top, width, height) => ({ left, top, width, height });
+
+test('Cards swipe discovery is local-only presentation state and owns no deck/save authority', () => {
+  assert.equal(CARDS_DECK_SWIPE_DISCOVERY_CONTRACT.persistence, 'local-ui-only');
+  assert.equal(CARDS_DECK_SWIPE_DISCOVERY_CONTRACT.collectionAdd.direction, 'right');
+  assert.equal(CARDS_DECK_SWIPE_DISCOVERY_CONTRACT.deckRemove.direction, 'left');
+  assert.equal(CARDS_DECK_SWIPE_DISCOVERY_CONTRACT.ownsDeck, false);
+  assert.equal(CARDS_DECK_SWIPE_DISCOVERY_CONTRACT.ownsSave, false);
+});
+
+test('Cards swipe discovery learns only the matching successful surface gesture', () => {
+  const fresh = parseDeckSwipeDiscoveryState(null);
+  assert.deepEqual(fresh, { collectionAddLearned: false, deckRemoveLearned: false });
+  assert.deepEqual(
+    reduceDeckSwipeDiscoveryAfterGesture(fresh, { surface: 'collection', action: 'deck-add', ok: false }),
+    fresh,
+  );
+  const afterAdd = reduceDeckSwipeDiscoveryAfterGesture(fresh, { surface: 'collection', action: 'deck-add', ok: true });
+  assert.deepEqual(afterAdd, { collectionAddLearned: true, deckRemoveLearned: false });
+  assert.deepEqual(
+    reduceDeckSwipeDiscoveryAfterGesture(afterAdd, { surface: 'collection', action: 'deck-remove', ok: true }),
+    afterAdd,
+  );
+  const afterRemove = reduceDeckSwipeDiscoveryAfterGesture(afterAdd, { surface: 'deck', action: 'deck-remove', ok: true });
+  assert.deepEqual(afterRemove, { collectionAddLearned: true, deckRemoveLearned: true });
+});
+
+test('Cards swipe discovery persistence is bounded to local UI storage and fails closed', () => {
+  const values = new Map();
+  const storage = {
+    getItem(key) { return values.get(key) ?? null; },
+    setItem(key, value) { values.set(key, value); },
+  };
+  const learned = { collectionAddLearned: true, deckRemoveLearned: false };
+  assert.equal(writeDeckSwipeDiscoveryStateToStorage({ storage, value: learned }), true);
+  assert.deepEqual(readDeckSwipeDiscoveryStateFromStorage({ storage }), learned);
+  assert.deepEqual(parseDeckSwipeDiscoveryState('{bad'), { collectionAddLearned: false, deckRemoveLearned: false });
+  assert.equal(writeDeckSwipeDiscoveryStateToStorage({ storage: {}, value: learned }), false);
+});
 
 function fakeClassList() {
   const values = new Set();

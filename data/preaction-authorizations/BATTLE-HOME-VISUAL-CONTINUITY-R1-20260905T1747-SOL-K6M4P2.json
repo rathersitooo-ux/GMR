@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HOME-VISUAL-CONTINUITY-R1-20260905T1747-SOL-K6M4P2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_HOME_VISUAL_CONTINUITY_R1",
+  "acquireKey": "BATTLE-HOME-VISUAL-CONTINUITY-R1-20260905T1747-SOL-K6M4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_HOME_BATTLE_VISUAL_CONTINUITY_REQUEST_PLUS_CURRENT_GREEN_BATTLE_SHELL_MISMATCH",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR929_RADIAL_DIORAMA_DONOR_PLUS_CURRENT_BATTLE_SCREEN_RUNTIME_FOCUSED_TEST_CONTRACT",
+  "proceedToken": "PROCEED|BATTLE-HOME-VISUAL-CONTINUITY-R1-20260905T1747-SOL-K6M4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "cf6976f80d0fd2566f47846583d75d6279f2343a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_HOME_VISUAL_CONTINUITY_R1",
+  "leaseAcquireKey": "BATTLE-HOME-VISUAL-CONTINUITY-R1-20260905T1747-SOL-K6M4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 17:47 JST",
+  "leaseUntilJst": "2026-09-05 18:47 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A385:L385",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@cf6976f80d0fd2566f47846583d75d6279f2343a; branch sol/battle-home-visual-continuity-r1-20260905; mutable browser/battle-screen-runtime-mount.mjs + tests/battle-screen-runtime-mount.test.mjs + deploy/cloudflare/tests/build.test.mjs (ONLY battle-screen-runtime-mount.mjs currentBlob provenance pin) + transient authorization manifest only; GAMEROAD.html + build script + gameplay/rules/save/economy/network/formal art + screen-navigation-core + all other build.test entries READ_ONLY.",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "Adapt the already-merged radial Battle diorama presentation only: retain the existing semantic HUD, four causal lanes, source-target-winner meaning, caller-owned gameplay state, reduced-motion and low-perf behavior; replace only the green scenic shell material with a blue-indigo luminous continuity palette derived from the user-provided Home visual direction, and add no RPG HP/guard/item/escape controls, rule values, formal art, or second transition authority.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "existing-pr929-radial-diorama-and-current-home-route-takeover",
+  "solutionSearchEvidence": [
+    "Drive:UI router Branch 4 Battle Core / Branch 5 Battle Presentation plus Screen Index BATTLE_PLAN/BATTLE_DECISION",
+    "Drive:UIVIS visual-first/card-game rule and CONN-004 causal Battle connection contract",
+    "repo:PR#929 current radial diorama donor already adapted from direct user Battle visual direction",
+    "repo:main@cf6976f8 battle-screen-runtime-mount current scenic green CSS and focused presentation-only tests",
+    "repo:main Home route takeover d257e551 keeps SlidePad fixed and routes the outgoing Home visual layer by actual geometry",
+    "user:direct Home-to-Battle visual continuity request; explicit rejection of unrelated invented UI; current turn image generation forbidden"
+  ]
+}

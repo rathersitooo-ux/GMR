@@ -205,6 +205,27 @@ export function isBattleHandAuraLaunchArmed({
   return Math.hypot(x - centerX, y - centerY) <= radius;
 }
 
+export function projectBattleHandDragGhostPosition({
+  pointer,
+  grabOffset,
+  cardSize,
+  viewportHeight = null,
+} = {}) {
+  const x = Number(pointer?.x);
+  const y = Number(pointer?.y);
+  const grabX = Number(grabOffset?.x);
+  const height = Number(cardSize?.height);
+  if (![x, y, grabX, height].every(Number.isFinite) || height <= 0) return null;
+  const left = x - grabX;
+  const unclampedTop = y - height;
+  const viewport = Number(viewportHeight);
+  const maxTop = Number.isFinite(viewport) && viewport > 0
+    ? Math.max(0, viewport - height)
+    : Number.POSITIVE_INFINITY;
+  const top = Math.min(Math.max(0, unclampedTop), maxTop);
+  return deepFreeze({ left, top });
+}
+
 function addStyle(documentRef) {
   if (documentRef.getElementById?.(STYLE_ID)) return;
   const style = documentRef.createElement('style');
@@ -705,8 +726,15 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
       host.dataset.handAuraActive = 'true';
     }
     if (!state.moved) return false;
-    state.ghost.style.left = `${(x - state.offset.x).toFixed(2)}px`;
-    state.ghost.style.top = `${(y - state.offset.y).toFixed(2)}px`;
+    const ghostPosition = projectBattleHandDragGhostPosition({
+      pointer: { x, y },
+      grabOffset: state.offset,
+      cardSize: state.cardSize,
+      viewportHeight: globalRef?.innerHeight,
+    });
+    if (!ghostPosition) return false;
+    state.ghost.style.left = `${ghostPosition.left.toFixed(2)}px`;
+    state.ghost.style.top = `${ghostPosition.top.toFixed(2)}px`;
     const armed = isBattleHandAuraLaunchArmed({
       pointer: { x, y },
       auraRect: handle.getBoundingClientRect?.(),
@@ -787,6 +815,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
       ghost,
       originPointer: { x, y },
       offset: { x: x - Number(rect.left), y: y - Number(rect.top) },
+      cardSize: { width: Number(rect.width), height: Number(rect.height) },
       moved: false,
       armed: false,
       handlers: null,

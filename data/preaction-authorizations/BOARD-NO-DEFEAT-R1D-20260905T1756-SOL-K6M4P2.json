@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD-NO-DEFEAT-R1D-20260905T1756-SOL-K6M4P2",
+  "taskId": "BOARD-FACILITY-RUNTIME-CONTRACT-001",
+  "workUnitKey": "BOARD_FACILITY_NO_DEFEAT_CONTRACT_REPAIR_R1D",
+  "acquireKey": "BOARD-NO-DEFEAT-R1D-20260905T1756-SOL-K6M4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_USER_LOCK_NO_DEFEAT+MAIN_CORE_DIRECT_LOSS_PATH+R1_DONOR_22_OF_22",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R1_DONOR_EXACT_CORE_TEST_REPAIR+CURRENT_R1C_ACCEPTANCE_GATE",
+  "proceedToken": "PROCEED|BOARD-NO-DEFEAT-R1D-20260905T1756-SOL-K6M4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|REMOVE_STALE_LOSS_STATE_ONLY",
+  "authorizationBaseSha": "7687041833bc767052629b24b2a79b011b2c64b4",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-FACILITY-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "BOARD_FACILITY_NO_DEFEAT_CONTRACT_REPAIR_R1D",
+  "leaseAcquireKey": "BOARD-NO-DEFEAT-R1D-20260905T1756-SOL-K6M4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 17:59 JST",
+  "leaseUntilJst": "2026-09-05 18:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A387:L387",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@7687041833bc767052629b24b2a79b011b2c64b4; intended branch sol/board-no-defeat-r1d-20260905; mutable branch ref + browser/board-facility-state-core.mjs + tests/board-facility-state-core.test.mjs + deploy/cloudflare/tests/build.test.mjs (ONLY board-facility-state-core.mjs currentBlob pin) + TRANSIENT data/preaction-authorizations/BOARD-NO-DEFEAT-R1D-20260905T1756-SOL-K6M4P2.json only; browser/board-facility-state-core.classic.js + browser/board-facility-runtime-mount.mjs + browser/GAMEROAD.html + gameplay/rules/save/economy/network + all other build.test entries READ_ONLY.",
+  "scope": [
+    "browser/board-facility-state-core.mjs",
+    "tests/board-facility-state-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/board-facility-state-core.mjs",
+    "tests/board-facility-state-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "board-facility-remove-stale-loss-state-and-reject-unsupported-outcome",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R1_DONOR_MATCHES_CURRENT_R1C_GATE;CURRENT_MAIN_STILL_HAS_ONLY_TARGETED_STALE_LOSS_PATH",
+  "solutionSearchEvidence": [
+    "Current main board-facility-state-core.mjs directly contains lostThisMatch and a loss outcome mutation path.",
+    "Current Task R1C explicitly requires lostThisMatch absent and outcomes other than win/draw to throw OUTCOME_INVALID before mutation.",
+    "Read-only donor sol/board-no-defeat-r1-20260905 implements exactly that bounded change and its focused suite previously passed 22/22.",
+    "Current build provenance contract pins only the Board core blob and therefore needs one currentBlob refresh after the core changes."
+  ],
+  "scopeRebaseReason": "Prior donor was not merged because its authorization manifest was not the first commit and later a shared build.test owner blocked provenance repair. Those blockers are now resolved/expired. Rebuild the same no-defeat correction from current main without changing win/draw, facility economy, runtime mount, HTML, save, or network semantics."
+}

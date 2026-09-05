@@ -1,0 +1,129 @@
+name: TEMP Public BFI Northstar R1
+
+on:
+  push:
+    branches:
+      - evidence/public-bfi-northstar-r1-20260905
+    paths:
+      - .github/workflows/temp-public-bfi-northstar-r1.yml
+
+permissions:
+  contents: read
+
+jobs:
+  public-r19-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GAMEROAD_PUBLIC_BASE_URL: https://gameroad-browser-r5.pages.dev
+      EXPECTED_BUILD_ID: d257e551b54814a97a338d6a6c41f6297dd0c037
+    steps:
+      - name: Checkout exact deployed source
+        uses: actions/checkout@v4
+        with:
+          ref: d257e551b54814a97a338d6a6c41f6297dd0c037
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Bind canonical public origin to exact deployed build
+        id: public_manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public-origin-metadata
+          MANIFEST='public-origin-metadata/gameroad-version.json'
+          curl --fail --silent --show-error --location \
+            --header 'Accept-Encoding: identity' \
+            --header 'Cache-Control: no-cache' \
+            --retry 5 --retry-delay 2 --retry-all-errors --retry-max-time 40 \
+            --max-time 30 \
+            --output "$MANIFEST" \
+            "${GAMEROAD_PUBLIC_BASE_URL}/gameroad-version.json"
+          OBSERVED_BUILD_ID="$(MANIFEST="$MANIFEST" node -e "const fs=require('node:fs');const m=JSON.parse(fs.readFileSync(process.env.MANIFEST,'utf8'));if(!m.build_id)process.exit(2);process.stdout.write(String(m.build_id));")"
+          echo "observed_build_id=${OBSERVED_BUILD_ID}" >> "$GITHUB_OUTPUT"
+          if [[ "$OBSERVED_BUILD_ID" != "$EXPECTED_BUILD_ID" ]]; then
+            echo "::error::Public build mismatch expected=${EXPECTED_BUILD_ID} observed=${OBSERVED_BUILD_ID}"
+            exit 1
+          fi
+          printf 'expected_build_id=%s\nobserved_build_id=%s\npublic_origin=%s\n' \
+            "$EXPECTED_BUILD_ID" "$OBSERVED_BUILD_ID" "$GAMEROAD_PUBLIC_BASE_URL" \
+            > public-origin-metadata/binding.txt
+
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Prepare exact public-origin R19 runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .northstar-public
+          SOURCE='tests/browser-full-interaction.spec.mjs'
+          TARGET='.northstar-public/browser-full-interaction.spec.mjs'
+          grep -qF "'/browser/GAMEROAD.html'" "$SOURCE"
+          sed "s#'/browser/GAMEROAD.html'#'/'#g" "$SOURCE" > "$TARGET"
+          cat > .northstar-public/playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          import baseConfig from '../playwright.full-interaction.config.mjs';
+
+          const publicProjects = (baseConfig.projects ?? [])
+            .filter((project) => !project.grep)
+            .map((project) => ({ name: project.name, use: project.use }));
+
+          export default defineConfig({
+            testDir: '.',
+            testMatch: 'browser-full-interaction.spec.mjs',
+            grep: /R19 reaches Result from visible four-player Honey Hunt and returns Home/,
+            timeout: 240_000,
+            expect: { timeout: 7_000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            outputDir: '../test-results/public-origin',
+            reporter: [
+              ['line'],
+              ['html', { outputFolder: '../playwright-report-public-origin', open: 'never' }],
+              ['json', { outputFile: '../test-results/public-origin/public-origin-report.json' }],
+            ],
+            use: {
+              ...baseConfig.use,
+              baseURL: process.env.GAMEROAD_PUBLIC_BASE_URL,
+              trace: 'retain-on-failure',
+              screenshot: 'on',
+              video: 'off',
+            },
+            projects: publicProjects,
+          });
+          EOF
+
+      - name: Run public Home Setup 4P Honey Battle Result Home path
+        run: npx playwright test --config=.northstar-public/playwright.config.mjs --workers=1
+
+      - name: Record evidence binding
+        if: always()
+        shell: bash
+        env:
+          OBSERVED_BUILD_ID: ${{ steps.public_manifest.outputs.observed_build_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p public-origin-metadata
+          printf 'workflow_run_id=%s\nsource_sha=%s\nexpected_build_id=%s\nobserved_build_id=%s\npublic_origin=%s\n' \
+            "$GITHUB_RUN_ID" "d257e551b54814a97a338d6a6c41f6297dd0c037" "$EXPECTED_BUILD_ID" "${OBSERVED_BUILD_ID:-}" "$GAMEROAD_PUBLIC_BASE_URL" \
+            > public-origin-metadata/run-binding.txt
+
+      - name: Upload public interaction evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: temp-public-bfi-northstar-${{ github.run_id }}
+          path: |
+            playwright-report-public-origin/
+            test-results/public-origin/
+            public-origin-metadata/
+          if-no-files-found: error
+          retention-days: 7

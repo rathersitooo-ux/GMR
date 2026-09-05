@@ -117,6 +117,12 @@ assert.equal(runtime.progressGuide.dataset.presentationOnly, 'true');
 assert.equal(runtime.progressGuide.dataset.authority, 'existing-road-goal-meaning-only');
 assert.equal(runtime.progressGuide.parentNode, runtime.phaseSurface);
 assert.deepEqual(runtime.progressGuide.children.map(node => node.textContent), ['GOAL', '', 'ROAD']);
+assert.ok(runtime.fieldLandmark);
+assert.equal(runtime.fieldLandmark.parentNode, runtime.phaseSurface);
+assert.equal(runtime.fieldLandmark.hidden, true);
+assert.equal(runtime.fieldLandmark.getAttribute('data-battle-field-landmark'), '');
+assert.equal(runtime.fieldLandmark.dataset.presentationOnly, 'true');
+assert.equal(runtime.fieldLandmark.dataset.authority, 'existing-field-selection-id-only');
 
 const runtimeStyle = document.getElementById('gameroad-battle-screen-runtime-r1-style');
 assert.ok(runtimeStyle);
@@ -136,6 +142,13 @@ assert.ok(runtimeStyle.textContent.includes('.grBattleHudLoad'));
 assert.ok(runtimeStyle.textContent.includes('[data-battle-progress-guide]'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleProgressArrow::before{content:"◀"'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleProgressArrow::before{content:"▲"'));
+for (const fieldId of ['FIELD-01', 'FIELD-02', 'FIELD-03', 'FIELD-04', 'FIELD-05', 'FIELD-08', 'FIELD-09']) {
+  assert.ok(runtimeStyle.textContent.includes(`[data-battle-field-landmark=\"${fieldId}\"]`));
+}
+assert.ok(runtimeStyle.textContent.includes('clip-path:polygon'));
+assert.ok(runtimeStyle.textContent.includes('repeating-linear-gradient'));
+assert.ok(runtimeStyle.textContent.includes('@media(max-width:540px) and (orientation:portrait){[data-gr-battle-screen=\"1\"] [data-battle-field-landmark]'));
+assert.ok(runtimeStyle.textContent.includes('@media(max-height:420px) and (orientation:landscape){[data-gr-battle-screen=\"1\"] [data-battle-field-landmark]'));
 assert.equal(runtimeStyle.textContent.includes('10000'), false);
 assert.equal(runtimeStyle.textContent.includes('1000 / 100 / 10 / 1'), false);
 assert.equal(runtimeStyle.textContent.includes('data-role="loser"'), false);
@@ -214,6 +227,21 @@ assert.deepEqual(
   ['▷', '▷']
 );
 
+for (const fieldId of ['FIELD-01', 'FIELD-02', 'FIELD-03', 'FIELD-04', 'FIELD-05', 'FIELD-08', 'FIELD-09']) {
+  root.dataset.battleFieldId = fieldId;
+  runtime.render(attack);
+  assert.equal(runtime.fieldLandmark.hidden, false);
+  assert.equal(runtime.fieldLandmark.getAttribute('data-battle-field-landmark'), fieldId);
+  assert.equal(runtime.fieldLandmark.dataset.fieldId, fieldId);
+}
+root.dataset.battleFieldId = 'FIELD-UNKNOWN';
+runtime.render(attack);
+assert.equal(runtime.fieldLandmark.hidden, true);
+assert.equal(runtime.fieldLandmark.getAttribute('data-battle-field-landmark'), '');
+root.dataset.battleFieldId = 'FIELD-01';
+runtime.render(attack);
+assert.equal(runtime.fieldLandmark.hidden, false);
+
 const p4View = runtime.laneSurfaces[3];
 const p4Afterstate = p4View.children[2];
 assert.equal(p4Afterstate.children.length, 1);
@@ -271,9 +299,11 @@ assert.deepEqual(roleSurfaces.map(node => node.hidden), [false, true, true, fals
 assert.deepEqual(roleSurfaces.map(node => node.textContent), ['攻撃', '', '', '対象']);
 
 const progressGuide = runtime.progressGuide;
+const fieldLandmark = runtime.fieldLandmark;
 assert.equal(runtime.destroy(), true);
 assert.equal(runtime.destroy(), false);
 assert.equal(progressGuide.parentNode, null);
+assert.equal(fieldLandmark.parentNode, null);
 assert.equal(root.children.includes(runtime.shell), false);
 assert.throws(() => runtime.render(idle), /RUNTIME_DESTROYED/);
 assert.throws(() => runtime.renderHud({ score: 1 }), /RUNTIME_DESTROYED/);
@@ -284,6 +314,7 @@ existingShell.setAttribute('data-gr-existing-battle-shell', '1');
 adoptedDocument.body.appendChild(existingShell);
 const existingPhase = adoptedDocument.createElement('section');
 existingPhase.id = 'battlePhaseSurface';
+existingShell.dataset.battleFieldId = 'FIELD-09';
 existingShell.appendChild(existingPhase);
 const existingResolution = adoptedDocument.createElement('div');
 existingResolution.id = 'battleResolution';
@@ -302,6 +333,9 @@ assert.equal(adopted.resolutionSurface, existingResolution);
 assert.equal(adopted.hud.root.parentNode, existingShell);
 assert.equal(adopted.progressGuide.parentNode, existingPhase);
 assert.equal(adopted.progressGuide.dataset.presentationOnly, 'true');
+assert.equal(adopted.fieldLandmark.parentNode, existingPhase);
+assert.equal(adopted.fieldLandmark.hidden, false);
+assert.equal(adopted.fieldLandmark.getAttribute('data-battle-field-landmark'), 'FIELD-09');
 adopted.render(attack, { score: 'S', hate: 'H', turn: 'T', loadJanken: 'paper' });
 assert.equal(existingResolution.textContent, 'KEEP');
 assert.equal(adopted.laneSurfaces.length, 4);
@@ -311,8 +345,10 @@ assert.equal(existingShell.hidden, false);
 assert.equal(existingPhase.hidden, true);
 assert.equal(adopted.hud.root.hidden, true);
 const adoptedProgressGuide = adopted.progressGuide;
+const adoptedFieldLandmark = adopted.fieldLandmark;
 assert.equal(adopted.destroy(), true);
 assert.equal(adoptedProgressGuide.parentNode, null);
+assert.equal(adoptedFieldLandmark.parentNode, null);
 assert.equal(adoptedDocument.body.children.includes(existingShell), true);
 assert.equal(existingShell.children.includes(existingPhase), true);
 assert.equal(existingShell.children.includes(adopted.hud.root), false);

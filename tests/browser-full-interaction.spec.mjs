@@ -1753,6 +1753,16 @@ test('R19 reaches Result from visible four-player Honey Hunt and returns Home', 
   expect(resultButtonsBox, 'R20 result actions must have geometry').not.toBeNull();
   expect(rankingRows.at(-1).bottom, 'R20 fourth rank row must not be covered by Result actions').toBeLessThanOrEqual(resultButtonsBox.y + 1);
 
+  const autoQueue = result.locator('#postMatchAutoQueue');
+  const autoQueueStatus = result.locator('#postMatchAutoQueueStatus');
+  await expect(autoQueue, 'Result autoqueue control remains visible').toBeVisible();
+  await expect(autoQueueStatus, 'Result autoqueue status remains visibly readable').toBeVisible();
+  const autoQueueStatusBox = await autoQueueStatus.boundingBox();
+  expect(autoQueueStatusBox, 'Result autoqueue status must have geometry').not.toBeNull();
+  expect(autoQueueStatusBox.width, 'Result autoqueue status must not collapse to an accessibility-only pixel').toBeGreaterThan(24);
+  expect(autoQueueStatusBox.height, 'Result autoqueue status must have readable height').toBeGreaterThan(8);
+  expect(((await autoQueueStatus.textContent()) ?? '').trim().length, 'Result autoqueue status must expose truthful state text').toBeGreaterThan(0);
+
   const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';
   expect(roundsText).toMatch(/\d+ラウンド/);
   await attachStateScreenshot(page, testInfo, 'r19-honey-four-player-result-visible');

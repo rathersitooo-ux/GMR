@@ -1,0 +1,306 @@
+name: Battle Recent History Visible R3 Executor
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-recent-history-visible-r3-20260905
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify authorized base blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD:browser/battle-replay-live-adapter.mjs)" = "02da4629e0713406297d9692ce2afe8e0e624ea9"
+          test "$(git rev-parse HEAD:tests/battle-replay-live-adapter.test.mjs)" = "697d9780600fadc145922c1d4f43155ce6c76987"
+      - name: Apply marker-guarded presentation repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new, label):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one marker, got {count}')
+              p.write_text(text.replace(old, new, 1))
+
+          adapter = 'browser/battle-replay-live-adapter.mjs'
+          tests = 'tests/battle-replay-live-adapter.test.mjs'
+
+          replace_once(adapter, '''function ensurePartnerBattleEventLogHost(environment = {}) {
+            const documentRef = environmentValue(environment, 'document');
+            const shell = documentRef?.getElementById?.('battleLog');
+            if (!shell || typeof documentRef?.createElement !== 'function') return null;
+            let host = typeof shell.querySelector === 'function'
+              ? shell.querySelector(`[${PARTNER_BATTLE_LOG_HOST_ATTR}]`)
+              : null;
+            if (!host) {
+              host = documentRef.createElement('div');
+              if (!host || typeof host.setAttribute !== 'function' || typeof shell.appendChild !== 'function') return null;
+              host.setAttribute(PARTNER_BATTLE_LOG_HOST_ATTR, '');
+              host.setAttribute('role', 'log');
+              host.setAttribute('aria-live', 'polite');
+              host.setAttribute('aria-atomic', 'false');
+              host.setAttribute('aria-relevant', 'additions text');
+              host.setAttribute('aria-label', '対戦ログ');
+              if (host.style) host.style.whiteSpace = 'pre-line';
+              shell.appendChild(host);
+            }
+            return host;
+          }
+
+          function partnerBattleEventLogChildren(host) {
+            if (!host?.children || typeof host.children.length !== 'number') return null;
+            return Array.from(host.children);
+          }''', '''function ensurePartnerBattleEventLogHost(environment = {}) {
+            const documentRef = environmentValue(environment, 'document');
+            const shell = documentRef?.getElementById?.('battleMap');
+            if (!shell || typeof documentRef?.createElement !== 'function') return null;
+            let host = typeof shell.querySelector === 'function'
+              ? shell.querySelector(`[${PARTNER_BATTLE_LOG_HOST_ATTR}]`)
+              : null;
+            if (!host) {
+              host = documentRef.createElement('div');
+              if (!host || typeof host.setAttribute !== 'function' || typeof shell.appendChild !== 'function') return null;
+              host.setAttribute(PARTNER_BATTLE_LOG_HOST_ATTR, '');
+              host.setAttribute('role', 'log');
+              host.setAttribute('aria-live', 'polite');
+              host.setAttribute('aria-atomic', 'false');
+              host.setAttribute('aria-relevant', 'additions text');
+              host.setAttribute('aria-label', '直近の公開対戦履歴');
+              if (host.dataset) host.dataset.partnerBattleEventLogSurface = 'battle_map_always_visible';
+              if (host.style) {
+                host.style.position = 'absolute';
+                host.style.left = '8px';
+                host.style.top = 'clamp(52px,14vh,96px)';
+                host.style.zIndex = '19';
+                host.style.width = 'min(310px,42vw)';
+                host.style.maxWidth = 'calc(100% - 88px)';
+                host.style.display = 'grid';
+                host.style.gap = '3px';
+                host.style.pointerEvents = 'none';
+                host.style.fontSize = 'clamp(8px,.82vw,10px)';
+                host.style.lineHeight = '1.35';
+                host.style.color = '#eef8f4';
+                host.style.textShadow = '0 1px 5px rgba(0,0,0,.86)';
+              }
+              shell.appendChild(host);
+            }
+            return host;
+          }
+
+          function partnerBattleEventLogChildren(host) {
+            if (!host?.children || typeof host.children.length !== 'number') return null;
+            return Array.from(host.children).filter(
+              child => child?.getAttribute?.(PARTNER_BATTLE_LOG_ROW_ATTR) !== null
+            );
+          }''', 'adapter host')
+
+          replace_once(adapter, '''function ensurePartnerBattleEventLogToggle(host, environment = {}) {
+            const documentRef = environmentValue(environment, 'document');
+            const shell = documentRef?.getElementById?.('battleLog');
+            if (!host || !shell || typeof documentRef?.createElement !== 'function') return null;
+            let toggle = typeof shell.querySelector === 'function'
+              ? shell.querySelector(`[${PARTNER_BATTLE_LOG_TOGGLE_ATTR}]`)
+              : null;
+            if (!toggle) {
+              toggle = documentRef.createElement('button');
+              if (!toggle || typeof toggle.setAttribute !== 'function' || typeof toggle.addEventListener !== 'function' || typeof shell.appendChild !== 'function') return null;
+              toggle.setAttribute(PARTNER_BATTLE_LOG_TOGGLE_ATTR, '');
+              toggle.setAttribute('type', 'button');
+              toggle.setAttribute('aria-expanded', 'false');
+              toggle.hidden = true;
+              toggle.textContent = '履歴を表示';
+              toggle.addEventListener('click', () => {
+                if (!host.dataset) return;
+                host.dataset.partnerBattleEventLogExpanded = host.dataset.partnerBattleEventLogExpanded === 'true' ? 'false' : 'true';
+                applyPartnerBattleEventLogPresentation(host, toggle, environment);
+              });
+              shell.appendChild(toggle);
+            }
+            return toggle;
+          }''', '''function ensurePartnerBattleEventLogToggle(host, environment = {}) {
+            const documentRef = environmentValue(environment, 'document');
+            const shell = host;
+            if (!host || typeof documentRef?.createElement !== 'function') return null;
+            let toggle = typeof shell.querySelector === 'function'
+              ? shell.querySelector(`[${PARTNER_BATTLE_LOG_TOGGLE_ATTR}]`)
+              : null;
+            if (!toggle) {
+              toggle = documentRef.createElement('button');
+              if (!toggle || typeof toggle.setAttribute !== 'function' || typeof toggle.addEventListener !== 'function' || typeof shell.appendChild !== 'function') return null;
+              toggle.setAttribute(PARTNER_BATTLE_LOG_TOGGLE_ATTR, '');
+              toggle.setAttribute('type', 'button');
+              toggle.setAttribute('aria-expanded', 'false');
+              toggle.hidden = true;
+              toggle.textContent = '履歴を表示';
+              if (toggle.style) {
+                toggle.style.order = '2';
+                toggle.style.justifySelf = 'start';
+                toggle.style.minHeight = '32px';
+                toggle.style.padding = '0 8px';
+                toggle.style.border = '0';
+                toggle.style.borderRadius = '999px';
+                toggle.style.background = 'rgba(3,18,15,.72)';
+                toggle.style.color = 'inherit';
+                toggle.style.font = 'inherit';
+                toggle.style.fontWeight = '900';
+                toggle.style.pointerEvents = 'auto';
+                toggle.style.touchAction = 'manipulation';
+              }
+              toggle.addEventListener('click', () => {
+                if (!host.dataset) return;
+                host.dataset.partnerBattleEventLogExpanded = host.dataset.partnerBattleEventLogExpanded === 'true' ? 'false' : 'true';
+                applyPartnerBattleEventLogPresentation(host, toggle, environment);
+              });
+              shell.appendChild(toggle);
+            }
+            return toggle;
+          }''', 'adapter toggle')
+
+          replace_once(adapter, '''    row.setAttribute(PARTNER_BATTLE_LOG_ROW_ATTR, String(index + 1));
+              row.textContent = rows[index];
+              additions.push(row);''', '''    row.setAttribute(PARTNER_BATTLE_LOG_ROW_ATTR, String(index + 1));
+              row.textContent = rows[index];
+              if (row.style) {
+                row.style.order = '1';
+                row.style.padding = '2px 5px';
+                row.style.borderRadius = '5px';
+                row.style.background = 'linear-gradient(90deg,rgba(3,18,15,.72),rgba(3,18,15,.16))';
+                row.style.overflow = 'hidden';
+                row.style.textOverflow = 'ellipsis';
+                row.style.whiteSpace = 'nowrap';
+                row.style.pointerEvents = 'none';
+              }
+              additions.push(row);''', 'adapter row style')
+
+          replace_once(adapter, "    actualDomSurface: 'battleLog',", "    actualDomSurface: 'battleMap',\n    fullDrawerLogPolicy: 'PRESERVE_EXISTING_RAW_LOG',", 'adapter contract')
+
+          replace_once(tests, '''function fakeBattleLogDocument() {
+            function node(tagName = 'div') {
+              const attributes = new Map(), listeners = new Map();
+              return { tagName: String(tagName).toUpperCase(), dataset: {}, style: {}, children: [], textContent: '', hidden: false,
+                setAttribute(name, value) { attributes.set(name, String(value)); },
+                getAttribute(name) { return attributes.has(name) ? attributes.get(name) : null; },
+                addEventListener(type, listener) { listeners.set(type, listener); },
+                appendChild(child) { this.children.push(child); return child; },
+                replaceChildren(...children) { this.children = [...children]; },
+                querySelector(selector) { if (!selector.startsWith('[') || !selector.endsWith(']')) return null; const attribute = selector.slice(1, -1); return this.children.find(child => child.getAttribute?.(attribute) !== null) || null; },
+                click() { listeners.get('click')?.({ currentTarget: this }); }
+              };
+            }
+            const shell = node('section');
+            return { document: { createElement: tag => node(tag), getElementById: id => id === 'battleLog' ? shell : null }, shell };
+          }''', '''function fakeBattleLogDocument() {
+            function node(tagName = 'div') {
+              const attributes = new Map(), listeners = new Map();
+              return { tagName: String(tagName).toUpperCase(), dataset: {}, style: {}, children: [], textContent: '', hidden: false,
+                setAttribute(name, value) { attributes.set(name, String(value)); },
+                getAttribute(name) { return attributes.has(name) ? attributes.get(name) : null; },
+                addEventListener(type, listener) { listeners.set(type, listener); },
+                appendChild(child) { this.children.push(child); return child; },
+                replaceChildren(...children) { this.children = [...children]; },
+                querySelector(selector) { if (!selector.startsWith('[') || !selector.endsWith(']')) return null; const attribute = selector.slice(1, -1); return this.children.find(child => child.getAttribute?.(attribute) !== null) || null; },
+                click() { listeners.get('click')?.({ currentTarget: this }); }
+              };
+            }
+            const battleMap = node('section');
+            const battleLog = node('section');
+            battleLog.textContent = '既存フルログ';
+            return {
+              document: {
+                createElement: tag => node(tag),
+                getElementById: id => id === 'battleMap' ? battleMap : id === 'battleLog' ? battleLog : null
+              },
+              shell: battleMap,
+              battleMap,
+              battleLog
+            };
+          }''', 'test fake Battle surface')
+
+          replace_once(tests, '''test('Battle recent public history stays compact, expands inline, deduplicates, reconnects, and rejects stale match data', () => {
+            const fake = fakeBattleLogDocument();
+            const bridge = createPartnerBattleEventLogPresentationBridge({ document: fake.document, partnerBattleLogRecentRows: 2, partnerBattleLogIncludePublicCards: true });
+            let session = createLiveReplaySession({ matchId: 'M-HISTORY', versions }, { presentationBridge: null, partnerBattleEventLogBridge: bridge });
+            for (let serial = 1; serial <= 3; serial += 1) session = appendAcceptedBattleResolution(session, resolution(serial), { presentationBridge: null, partnerBattleEventLogBridge: bridge });
+            const host = fake.shell.querySelector('[data-partner-battle-event-log]');
+            const toggle = fake.shell.querySelector('[data-partner-battle-event-log-toggle]');
+            assert.ok(host); assert.ok(toggle); assert.equal(host.children.length, 3);
+            assert.deepEqual(host.children.map(row => row.hidden), [true, false, false]);
+            assert.equal(host.dataset.partnerBattleEventLogRecentRows, '2');
+            assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+            assert.match(host.children[0].textContent, /対象C列/);
+            assert.match(host.children[0].textContent, /公開カード C1\\(6\\) \\/ C2\\(4\\)/);
+            toggle.click();
+            assert.deepEqual(host.children.map(row => row.hidden), [false, false, false]);
+            assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+            const before = host.children.map(row => row.textContent);
+            assert.equal(bridge.acceptSession(session).ok, true);
+            assert.equal(host.children.length, 3); assert.deepEqual(host.children.map(row => row.textContent), before);
+            assert.equal(bridge.begin('M-HISTORY'), true); assert.equal(host.children.length, 0);
+            assert.equal(bridge.acceptSession(session).eventCount, 3);
+            assert.deepEqual(host.children.map(row => row.hidden), [true, false, false]);
+            assert.equal(bridge.begin('M-NEXT'), true); assert.equal(host.children.length, 0); assert.equal(toggle.hidden, true);
+            assert.deepEqual(bridge.acceptSession(session), { ok: false, consumed: false, reason: 'PARTNER_BATTLE_LOG_MATCH_STALE' });
+          });''', '''test('Battle recent public history stays always visible on battleMap, compact, expandable, deduplicated, reconnect-safe, and leaves the full drawer log untouched', () => {
+            const fake = fakeBattleLogDocument();
+            const bridge = createPartnerBattleEventLogPresentationBridge({ document: fake.document, partnerBattleLogRecentRows: 2, partnerBattleLogIncludePublicCards: true });
+            let session = createLiveReplaySession({ matchId: 'M-HISTORY', versions }, { presentationBridge: null, partnerBattleEventLogBridge: bridge });
+            for (let serial = 1; serial <= 3; serial += 1) session = appendAcceptedBattleResolution(session, resolution(serial), { presentationBridge: null, partnerBattleEventLogBridge: bridge });
+            const host = fake.battleMap.querySelector('[data-partner-battle-event-log]');
+            const toggle = host?.querySelector('[data-partner-battle-event-log-toggle]');
+            const rows = () => host.children.filter(child => child.getAttribute?.('data-partner-battle-event-log-row') !== null);
+            assert.ok(host); assert.ok(toggle); assert.equal(rows().length, 3);
+            assert.equal(fake.battleLog.querySelector('[data-partner-battle-event-log]'), null);
+            assert.equal(fake.battleLog.textContent, '既存フルログ');
+            assert.equal(host.dataset.partnerBattleEventLogSurface, 'battle_map_always_visible');
+            assert.equal(host.style.position, 'absolute');
+            assert.equal(host.style.left, '8px');
+            assert.equal(host.style.pointerEvents, 'none');
+            assert.equal(toggle.style.pointerEvents, 'auto');
+            assert.deepEqual(rows().map(row => row.hidden), [true, false, false]);
+            assert.equal(host.dataset.partnerBattleEventLogRecentRows, '2');
+            assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+            assert.match(rows()[0].textContent, /対象C列/);
+            assert.match(rows()[0].textContent, /公開カード C1\\(6\\) \\/ C2\\(4\\)/);
+            toggle.click();
+            assert.deepEqual(rows().map(row => row.hidden), [false, false, false]);
+            assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+            const before = rows().map(row => row.textContent);
+            assert.equal(bridge.acceptSession(session).ok, true);
+            assert.equal(rows().length, 3); assert.deepEqual(rows().map(row => row.textContent), before);
+            assert.equal(bridge.begin('M-HISTORY'), true); assert.equal(rows().length, 0);
+            assert.equal(bridge.acceptSession(session).eventCount, 3);
+            assert.deepEqual(rows().map(row => row.hidden), [true, false, false]);
+            assert.equal(bridge.begin('M-NEXT'), true); assert.equal(rows().length, 0); assert.equal(toggle.hidden, true);
+            assert.deepEqual(bridge.acceptSession(session), { ok: false, consumed: false, reason: 'PARTNER_BATTLE_LOG_MATCH_STALE' });
+            assert.equal(fake.battleLog.textContent, '既存フルログ');
+          });''', 'test recent history')
+          PY
+      - name: Run focused replay adapter regression
+        run: node --test tests/battle-replay-live-adapter.test.mjs
+      - name: Commit product repair and clean transient control files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/battle-recent-history-visible-r3-executor.yml
+          git rm data/preaction-authorizations/BATTLE-RECENT-HISTORY-VISIBLE-R3-20260905T1810-SOL-H7K4P2.json
+          git add browser/battle-replay-live-adapter.mjs tests/battle-replay-live-adapter.test.mjs
+          git config user.name "gameroad-sol"
+          git config user.email "actions@users.noreply.github.com"
+          git commit -m "Battle: keep recent public history visible on board"
+          git push origin HEAD:sol/battle-recent-history-visible-r3-20260905

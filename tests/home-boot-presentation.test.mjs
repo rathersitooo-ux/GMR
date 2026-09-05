@@ -17,6 +17,7 @@ import {
 import {
   HOME_CONTEXTUAL_REPLAY_LABEL,
   QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS,
+  containSharedQuickSettingsTabFocus,
   projectHomeContextualTutorialReplay,
   readExistingQuickSettings,
   removeLegacyHomeNodes,
@@ -422,6 +423,65 @@ test('Home/Battle quick settings proxy mutates only the existing Settings contro
   assert.equal(toggleExistingQuickSetting('reduceMotion', documentSource), true);
   assert.equal(readExistingQuickSettings(documentSource).reduceMotion, true);
   assert.equal(setExistingQuickSettingsVolume('masterVolume', 50, documentSource, { Event: FakeEvent }), false);
+});
+
+test('Quick settings keeps Tab focus inside the explicit modal without hijacking interior progression', () => {
+  const focusLog = [];
+  const documentSource = { activeElement: null };
+  const node = (name) => ({
+    name,
+    disabled: false,
+    getAttribute() { return null; },
+    focus() {
+      focusLog.push(name);
+      documentSource.activeElement = this;
+    },
+  });
+  const first = node('first');
+  const middle = node('middle');
+  const last = node('last');
+  const inside = new Set([first, middle, last]);
+  const overlay = {
+    querySelectorAll() { return [first, middle, last]; },
+    contains(value) { return inside.has(value); },
+  };
+  const tabEvent = (shiftKey = false) => ({
+    key: 'Tab',
+    shiftKey,
+    prevented: false,
+    preventDefault() { this.prevented = true; },
+  });
+
+  documentSource.activeElement = last;
+  const forward = tabEvent(false);
+  assert.equal(containSharedQuickSettingsTabFocus(forward, overlay, documentSource), true);
+  assert.equal(forward.prevented, true);
+  assert.equal(documentSource.activeElement, first);
+
+  documentSource.activeElement = first;
+  const backward = tabEvent(true);
+  assert.equal(containSharedQuickSettingsTabFocus(backward, overlay, documentSource), true);
+  assert.equal(backward.prevented, true);
+  assert.equal(documentSource.activeElement, last);
+
+  documentSource.activeElement = middle;
+  const interior = tabEvent(false);
+  assert.equal(containSharedQuickSettingsTabFocus(interior, overlay, documentSource), false);
+  assert.equal(interior.prevented, false);
+  assert.equal(documentSource.activeElement, middle);
+
+  documentSource.activeElement = {};
+  const escapedForward = tabEvent(false);
+  assert.equal(containSharedQuickSettingsTabFocus(escapedForward, overlay, documentSource), true);
+  assert.equal(escapedForward.prevented, true);
+  assert.equal(documentSource.activeElement, first);
+
+  documentSource.activeElement = {};
+  const escapedBackward = tabEvent(true);
+  assert.equal(containSharedQuickSettingsTabFocus(escapedBackward, overlay, documentSource), true);
+  assert.equal(escapedBackward.prevented, true);
+  assert.equal(documentSource.activeElement, last);
+  assert.deepEqual(focusLog, ['first', 'last', 'first', 'last']);
 });
 
 test('Quick settings trigger distinguishes Home settings and Battle gear without inventing navigation', () => {

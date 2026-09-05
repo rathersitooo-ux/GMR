@@ -1334,6 +1334,34 @@ export function openSharedQuickSettings({ surface = 'home', trigger = null, docu
   return true;
 }
 
+export function containSharedQuickSettingsTabFocus(
+  event,
+  overlay = quickSettingsRuntime.overlay,
+  documentSource = globalThis.document,
+) {
+  if (event?.key !== 'Tab' || !overlay || typeof overlay.querySelectorAll !== 'function') return false;
+  const focusables = [...overlay.querySelectorAll([
+    'button:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    'a[href]',
+    '[tabindex]:not([tabindex="-1"])',
+  ].join(','))].filter((node) => node?.disabled !== true && node?.getAttribute?.('aria-hidden') !== 'true');
+  if (!focusables.length) return false;
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  const active = documentSource?.activeElement ?? null;
+  const activeInside = typeof overlay.contains === 'function' ? overlay.contains(active) : focusables.includes(active);
+  let target = null;
+  if (!activeInside) target = event.shiftKey ? last : first;
+  else if (event.shiftKey && active === first) target = last;
+  else if (!event.shiftKey && active === last) target = first;
+  if (!target) return false;
+  event.preventDefault?.();
+  target.focus?.();
+  return true;
+}
 function installSharedQuickSettingsCapture(documentSource = globalThis.document) {
   if (quickSettingsRuntime.installed || !documentSource?.addEventListener) return false;
   quickSettingsRuntime.installed = true;
@@ -1349,7 +1377,13 @@ function installSharedQuickSettingsCapture(documentSource = globalThis.document)
     openSharedQuickSettings({ surface: match.surface, trigger: match.trigger, documentSource, globalSource: globalThis });
   }, true);
   documentSource.addEventListener('keydown', (event) => {
-    if (event?.key === 'Escape' && quickSettingsRuntime.overlay) closeSharedQuickSettings();
+    const overlay = quickSettingsRuntime.overlay;
+    if (!overlay) return;
+    if (event?.key === 'Escape') {
+      closeSharedQuickSettings();
+      return;
+    }
+    containSharedQuickSettingsTabFocus(event, overlay, documentSource);
   });
   return true;
 }

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DECK-SAVE-ATOMIC-R1-20260906T0108-SOL-Q6M3P9",
+  "taskId": "DECK-UNSAVED-SAVE-ACK-INTEGRATE-001",
+  "workUnitKey": "DECK-SAVE-ATOMIC-LOCAL-R1",
+  "acquireKey": "DECK-SAVE-ATOMIC-R1-20260906T0108-SOL-Q6M3P9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_HTML_COMMITDECK_PARTIAL_PERSIST_READBACK_20260906T0108",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_DECK_SAVE_CORE_VERIFIED_ROLLBACK_TESTS_PLUS_DIRECT_CODE_PATH_AUDIT_20260906T0108",
+  "proceedToken": "PROCEED|DECK-SAVE-ATOMIC-R1-20260906T0108-SOL-Q6M3P9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|LOCAL_DURABLE_DUAL_KEY_ATOMICITY",
+  "authorizationBaseSha": "f2f0857dc73b02eda03cb8f8cebb07147cba9a8b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DECK-UNSAVED-SAVE-ACK-INTEGRATE-001",
+  "leaseWorkUnitKey": "DECK-SAVE-ATOMIC-LOCAL-R1",
+  "leaseAcquireKey": "DECK-SAVE-ATOMIC-R1-20260906T0108-SOL-Q6M3P9",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 01:08 JST",
+  "leaseUntilJst": "2026-09-06 02:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "rathersitooo-ux/GMR:browser/GAMEROAD.html\nrathersitooo-ux/GMR:browser/deck-save-recovery-core.mjs\nrathersitooo-ux/GMR:tests/deck-save-recovery-core.test.mjs\nrathersitooo-ux/GMR:data/preaction-authorizations/DECK-SAVE-ATOMIC-R1-20260906T0108-SOL-Q6M3P9.json",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "browser/deck-save-recovery-core.mjs",
+    "tests/deck-save-recovery-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "browser/deck-save-recovery-core.mjs",
+    "tests/deck-save-recovery-core.test.mjs"
+  ]
+}

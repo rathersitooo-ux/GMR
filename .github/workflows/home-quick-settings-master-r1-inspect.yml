@@ -1,0 +1,57 @@
+name: Home Quick Settings Master R1 Inspect
+
+on:
+  push:
+    branches:
+      - sol/home-quick-settings-master-r1-20260905
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify exact inspection authorization
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git merge-base HEAD e878972e2bdb3df294a48b0aab11b0259a8a00a8)" = "e878972e2bdb3df294a48b0aab11b0259a8a00a8"
+          test -f data/preaction-authorizations/HOME-QUICK-SETTINGS-MASTER-R1-20260905T2324-SOL-M7K3Q5.json
+          test "$(git diff --name-only e878972e2bdb3df294a48b0aab11b0259a8a00a8...HEAD | sort | tr '\n' ' ')" = ".github/workflows/home-quick-settings-master-r1-inspect.yml data/preaction-authorizations/HOME-QUICK-SETTINGS-MASTER-R1-20260905T2324-SOL-M7K3Q5.json "
+      - name: Capture current settings and audio seams
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/home-quick-settings-master-r1-inspection.txt"
+          {
+            echo '=== BASE ==='
+            git rev-parse e878972e2bdb3df294a48b0aab11b0259a8a00a8
+            echo '=== INSPECTION DIFF ==='
+            git diff --name-only e878972e2bdb3df294a48b0aab11b0259a8a00a8...HEAD
+            echo '=== VOLUME DOM / SETTINGS LABELS ==='
+            grep -n -C 24 -E 'musicVolume|sfxVolume|voiceVolume|masterVolume|BGM|効果音|ボイス|全体音量' browser/GAMEROAD.html | head -n 1800 || true
+            echo '=== SETTINGS STATE / PERSISTENCE ==='
+            grep -n -C 30 -E 'settings|saveSettings|loadSettings|localStorage|musicVolume|sfxVolume|voiceVolume' browser/GAMEROAD.html | head -n 2200 || true
+            echo '=== AUDIO PLAYBACK / APPLY ==='
+            grep -n -C 30 -E 'AudioContext|createGain|GainNode|\.gain\.|new Audio|Audio\(|\.volume[[:space:]]*=|playSfx|playSFX|playSound|playMusic|musicVolume|sfxVolume|voiceVolume' browser/GAMEROAD.html | head -n 2600 || true
+            echo '=== AUDIO-RELATED MODULES ==='
+            find browser tests -maxdepth 2 -type f \( -iname '*audio*' -o -iname '*music*' -o -iname '*sound*' -o -iname '*sfx*' -o -iname '*settings*' \) | sort || true
+            echo '=== FIELD MUSIC POLICY ==='
+            sed -n '1,260p' browser/field-music-policy-core.mjs 2>/dev/null || true
+            echo '=== QUICK SETTINGS RUNTIME ==='
+            grep -n -C 30 -E 'KNOWN_AUTHORITY_GAPS|masterVolume|musicVolume|sfxVolume|voiceVolume|detail|詳細設定' browser/home-boot-runtime-mount.mjs | head -n 1400 || true
+            echo '=== QUICK SETTINGS TESTS ==='
+            grep -n -C 24 -E 'masterVolume|musicVolume|sfxVolume|voiceVolume|quick settings|Quick Settings|簡易設定' tests/home-boot-presentation.test.mjs | head -n 1400 || true
+          } > "$OUT"
+          wc -l "$OUT"
+      - name: Upload bounded inspection evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: home-quick-settings-master-r1-inspection
+          path: ${{ runner.temp }}/home-quick-settings-master-r1-inspection.txt
+          if-no-files-found: error
+          retention-days: 1

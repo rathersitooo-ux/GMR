@@ -329,6 +329,144 @@ function writePreparedSaveVerified(storage, key, preparedCommit, options = {}) {
   });
 }
 
+function normalizeCompanionWrites(companionWrites) {
+  if (companionWrites === undefined) return Object.freeze([]);
+  if (!Array.isArray(companionWrites)) throw new TypeError('COMPANION_WRITES_INVALID');
+  return Object.freeze(companionWrites.map((entry) => {
+    if (!isPlainObject(entry) || !nonEmptyString(entry.key) || typeof entry.serialized !== 'string') {
+      throw new TypeError('COMPANION_WRITE_INVALID');
+    }
+    const normalized = { key: entry.key, serialized: entry.serialized };
+    if (Object.prototype.hasOwnProperty.call(entry, 'previousRawValue')) {
+      if (entry.previousRawValue !== null && typeof entry.previousRawValue !== 'string') {
+        throw new TypeError('COMPANION_PREVIOUS_RAW_INVALID');
+      }
+      normalized.previousRawValue = entry.previousRawValue;
+    }
+    return Object.freeze(normalized);
+  }));
+}
+
+function rollbackCapturedKeys(storage, snapshots, keys) {
+  const failures = [];
+  for (const key of [...keys].reverse()) {
+    const restored = restorePreviousRaw(storage, key, snapshots.get(key));
+    if (restored.status !== 'restored') failures.push(Object.freeze({ key, reason: restored.reason }));
+  }
+  return Object.freeze({ ok: failures.length === 0, failures: Object.freeze(failures) });
+}
+
+function writePreparedSaveTransaction(storage, primaryKey, preparedCommit, companionWrites = [], options = {}) {
+  if (!preparedCommit || preparedCommit.schema !== SCHEMA || preparedCommit.status !== 'prepared') {
+    return decision('failed', 'PREPARED_COMMIT_REQUIRED');
+  }
+  if (!storage || typeof storage.setItem !== 'function' || typeof storage.getItem !== 'function') {
+    return decision('failed', 'STORAGE_VERIFIED_WRITE_UNAVAILABLE');
+  }
+  if (!nonEmptyString(primaryKey)) throw new TypeError('STORAGE_KEY_REQUIRED');
+
+  let companions;
+  try {
+    companions = normalizeCompanionWrites(companionWrites);
+  } catch (error) {
+    return decision('failed', error?.message || 'COMPANION_WRITES_INVALID');
+  }
+
+  const allKeys = [primaryKey, ...companions.map((entry) => entry.key)];
+  if (new Set(allKeys).size !== allKeys.length) {
+    return decision('failed', 'STORAGE_TRANSACTION_DUPLICATE_KEY', { originalPreserved: true, rolledBack: false });
+  }
+
+  const primaryHasPrevious = Object.prototype.hasOwnProperty.call(options, 'previousRawValue');
+  if (primaryHasPrevious && options.previousRawValue !== null && typeof options.previousRawValue !== 'string') {
+    return decision('failed', 'PREVIOUS_RAW_INVALID');
+  }
+
+  const snapshots = new Map();
+  try {
+    for (const key of allKeys) snapshots.set(key, storage.getItem(key));
+  } catch {
+    return decision('failed', 'STORAGE_TRANSACTION_SNAPSHOT_FAILED', { originalPreserved: true, rolledBack: false });
+  }
+
+  if (primaryHasPrevious && snapshots.get(primaryKey) !== options.previousRawValue) {
+    return decision('failed', 'PREVIOUS_RAW_STALE', { originalPreserved: true, rolledBack: false });
+  }
+  for (const companion of companions) {
+    if (Object.prototype.hasOwnProperty.call(companion, 'previousRawValue') &&
+        snapshots.get(companion.key) !== companion.previousRawValue) {
+      return decision('failed', 'COMPANION_PREVIOUS_RAW_STALE', {
+        staleKey: companion.key,
+        originalPreserved: true,
+        rolledBack: false,
+      });
+    }
+  }
+
+  const committedCompanionKeys = [];
+  for (const companion of companions) {
+    const companionPrepared = decision('prepared', 'COMPANION_COMMIT_READY', { serialized: companion.serialized });
+    const written = writePreparedSaveVerified(storage, companion.key, companionPrepared, {
+      previousRawValue: snapshots.get(companion.key),
+    });
+    if (written.status !== 'saved') {
+      const rollback = rollbackCapturedKeys(storage, snapshots, committedCompanionKeys);
+      const originalPreserved = written.originalPreserved !== false && rollback.ok;
+      return decision('failed', rollback.ok ? 'STORAGE_TRANSACTION_COMPANION_FAILED' : 'STORAGE_TRANSACTION_ROLLBACK_FAILED', {
+        failedKey: companion.key,
+        writeFailureReason: written.reason,
+        originalPreserved,
+        rolledBack: committedCompanionKeys.length > 0 && rollback.ok,
+        rollbackFailures: rollback.failures,
+      });
+    }
+    committedCompanionKeys.push(companion.key);
+  }
+
+  const primaryWritten = writePreparedSaveVerified(storage, primaryKey, preparedCommit, {
+    previousRawValue: snapshots.get(primaryKey),
+  });
+  if (primaryWritten.status !== 'saved') {
+    const rollback = rollbackCapturedKeys(storage, snapshots, committedCompanionKeys);
+    const originalPreserved = primaryWritten.originalPreserved !== false && rollback.ok;
+    return decision('failed', rollback.ok ? 'STORAGE_TRANSACTION_PRIMARY_FAILED' : 'STORAGE_TRANSACTION_ROLLBACK_FAILED', {
+      failedKey: primaryKey,
+      writeFailureReason: primaryWritten.reason,
+      originalPreserved,
+      rolledBack: committedCompanionKeys.length > 0 && rollback.ok,
+      rollbackFailures: rollback.failures,
+    });
+  }
+
+  let finalMismatchKey = null;
+  try {
+    for (const companion of companions) {
+      if (storage.getItem(companion.key) !== companion.serialized) {
+        finalMismatchKey = companion.key;
+        break;
+      }
+    }
+    if (!finalMismatchKey && storage.getItem(primaryKey) !== preparedCommit.serialized) finalMismatchKey = primaryKey;
+  } catch {
+    finalMismatchKey = '__READ_FAILED__';
+  }
+
+  if (finalMismatchKey) {
+    const rollback = rollbackCapturedKeys(storage, snapshots, [...committedCompanionKeys, primaryKey]);
+    return decision('failed', rollback.ok ? 'STORAGE_TRANSACTION_FINAL_READBACK_FAILED' : 'STORAGE_TRANSACTION_ROLLBACK_FAILED', {
+      failedKey: finalMismatchKey,
+      originalPreserved: rollback.ok,
+      rolledBack: rollback.ok,
+      rollbackFailures: rollback.failures,
+    });
+  }
+
+  return decision('saved', 'STORAGE_TRANSACTION_READBACK_OK', {
+    keys: Object.freeze([...allKeys]),
+    originalPreserved: true,
+  });
+}
+
 function resetExplicitSaveKeys(storage, keys, { confirmed = false } = {}) {
   if (confirmed !== true) return decision('blocked', 'RESET_CONFIRMATION_REQUIRED');
   if (!storage || typeof storage.removeItem !== 'function') return decision('failed', 'STORAGE_REMOVE_UNAVAILABLE');
@@ -354,6 +492,7 @@ globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE = Object.freeze({
   readStorage,
   writePreparedSave,
   writePreparedSaveVerified,
+  writePreparedSaveTransaction,
   resetExplicitSaveKeys,
   DECK_SAVE_RECOVERY_CORE,
 });

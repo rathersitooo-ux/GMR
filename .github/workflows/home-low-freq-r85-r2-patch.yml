@@ -27,24 +27,9 @@ jobs:
 
           source_path = Path('browser/home-boot-runtime-mount.mjs')
           source = source_path.read_text(encoding='utf-8')
-          needle = r'''${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}{
-            min-width:${HOME_TOUCH_TARGET_MIN_PX}px!important;
-            min-height:${HOME_TOUCH_TARGET_MIN_PX}px!important;
-            border-color:transparent!important;
-            background:transparent!important;
-            box-shadow:none!important;
-            backdrop-filter:none!important;
-          }
-          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}:focus-visible{'''
-          replacement = r'''${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}{
-            min-width:${HOME_TOUCH_TARGET_MIN_PX}px!important;
-            min-height:${HOME_TOUCH_TARGET_MIN_PX}px!important;
-            border-color:transparent!important;
-            background:transparent!important;
-            box-shadow:none!important;
-            backdrop-filter:none!important;
-          }
-          /* R85: persistent Mission/progress and duplicate guide rails are not Home navigation
+          marker = 'R85: persistent Mission/progress and duplicate guide rails are not Home navigation'
+          anchor = r'''${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}:focus-visible{'''
+          insertion = r'''/* R85: persistent Mission/progress and duplicate guide rails are not Home navigation
              authorities. Keep their destinations reachable through the compact secondary row. */
           ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] .codexHomeLeftRail,
           ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] .codexHomeRightRail{
@@ -82,15 +67,17 @@ jobs:
           ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go=\"records\"]::before{content:\"≡\";}
           ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go=\"profile\"]::before{content:\"◉\";}
           ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go=\"settings\"]::before{content:\"⚙\";}
-          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}:focus-visible{'''
-          if source.count(needle) != 1:
-              raise SystemExit(f'expected exactly one Home secondary utility CSS anchor, found {source.count(needle)}')
-          source_path.write_text(source.replace(needle, replacement, 1), encoding='utf-8')
+          '''
+          if marker in source:
+              raise SystemExit('R85 marker already present before patch; refusing duplicate insertion')
+          if source.count(anchor) != 1:
+              raise SystemExit(f'expected exactly one focus-visible anchor, found {source.count(anchor)}')
+          source_path.write_text(source.replace(anchor, insertion + anchor, 1), encoding='utf-8')
 
           test_path = Path('tests/home-boot-presentation.test.mjs')
           tests = test_path.read_text(encoding='utf-8')
-          marker = "Home low-frequency chrome keeps duplicate rails and normal save status out of active Home"
-          if marker not in tests:
+          test_marker = "Home low-frequency chrome keeps duplicate rails and normal save status out of active Home"
+          if test_marker not in tests:
               tests += r'''
 
           test('Home low-frequency chrome keeps duplicate rails and normal save status out of active Home', async () => {

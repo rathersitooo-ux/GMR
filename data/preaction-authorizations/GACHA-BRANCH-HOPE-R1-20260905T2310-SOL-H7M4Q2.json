@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GACHA-BRANCH-HOPE-R1-20260905T2310-SOL-H7M4Q2",
+  "taskId": "GACHA-AI-MOVIE-DEEPRESEARCH-PRODUCTION-PACK-002",
+  "workUnitKey": "GACHA_BRANCH_HOPE_GREYBOX_R1",
+  "acquireKey": "GACHA-BRANCH-HOPE-R1-20260905T2310-SOL-H7M4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_GACHA_R4_BRANCH_CONTRACT+MAIN_GACHA_PRESENTATION_CORE_READBACK+PR269_COUNTEREXAMPLE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOCAL_NODE_TEST_GACHA_BRANCH_HOPE_11_OF_11_PASS_20260905T2314JST",
+  "proceedToken": "PROCEED|GACHA-BRANCH-HOPE-R1-20260905T2310-SOL-H7M4Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|GACHA_BRANCH_HOPE_GREYBOX_ONLY",
+  "authorizationBaseSha": "e878972e2bdb3df294a48b0aab11b0259a8a00a8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GACHA-AI-MOVIE-DEEPRESEARCH-PRODUCTION-PACK-002",
+  "leaseWorkUnitKey": "GACHA_BRANCH_HOPE_GREYBOX_R1",
+  "leaseAcquireKey": "GACHA-BRANCH-HOPE-R1-20260905T2310-SOL-H7M4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 23:18 JST",
+  "leaseUntilJst": "2026-09-06 00:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A481:L481",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@e878972e2bdb3df294a48b0aab11b0259a8a00a8; branch work/gacha-branch-hope-greybox-r1-20260905; mutable ONLY TRANSIENT data/preaction-authorizations/GACHA-BRANCH-HOPE-R1-20260905T2310-SOL-H7M4Q2.json + browser/gacha-branch-hope-greybox.mjs + tests/gacha-branch-hope-greybox.test.mjs. browser/gacha-presentation-core.mjs READ_ONLY; browser/GAMEROAD.html READ_ONLY; RNG/result/save/ownership/formal assets READ_ONLY.",
+  "scope": [
+    "browser/gacha-branch-hope-greybox.mjs",
+    "tests/gacha-branch-hope-greybox.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/gacha-branch-hope-greybox.mjs",
+    "tests/gacha-branch-hope-greybox.test.mjs"
+  ],
+  "solutionSignature": "gacha-r4-three-branch-hope-semantics-proposal-greybox",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_R4+MAIN_GACHA_CORE+PR269_REUSE_BOUNDARY",
+  "solutionSearchEvidence": [
+    "Current main browser/gacha-presentation-core.mjs already provides result-binding state integrity, reveal ordering, skip, and reducedMotion/lowPerf behavior, but has no quiet_standard / late_upgrade / early_premium branch semantics; it remains read-only and is not duplicated.",
+    "Closed PR #269 is a result-review hierarchy projection, not an opening-branch greybox; its reusable invariants are no unrevealed-result exposure, redundant non-color meaning, and presentation-only result truth.",
+    "CURRENT GACHA BRANCH-HOPE R4 defines exactly three proposal branches: quiet standard, one monotonic late upgrade, and authoritative early premium; cue meanings must stay stable and early weak cues must not mean certain loss.",
+    "Existing B01-B04 assets/meaning contracts cover common omen and low-to-mid/mid-to-high/low-to-high upgrade media semantics; this work only creates a small branch planning contract and tests, not replacement media or runtime integration.",
+    "A local isolated rehearsal of the proposed module/test pair passed 11/11 Node tests before material branch reconstruction, covering signal fail-close, result-payload rejection, multi-pull compression, and accessibility semantic equivalence."
+  ],
+  "buildResidualReason": "No existing current artifact expresses the R4 three-way opening branch contract without mutating the live gacha core. Build a new proposal-only greybox module/test pair so Human can compare semantics before any formal adoption or runtime integration.",
+  "scopeRebaseReason": "The earlier un-authorized draft commit order was discarded after Required Gate correctly rejected it. Rebuild from exact authorized main with only a transient manifest plus the two isolated proposal files; keep all existing product/runtime and authoritative result systems read-only."
+}

@@ -1047,7 +1047,7 @@ export const QUICK_SETTINGS_CONTROL_IDS = Object.freeze({
   partnerVoiceMute: 'partnerVoiceMute',
 });
 
-export const QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS = Object.freeze(['masterVolume']);
+export const QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS = Object.freeze([]);
 
 const QUICK_SETTINGS_AUDIO_ROWS = Object.freeze([
   Object.freeze({ label: 'BGM', volume: 'musicVolume', mute: 'musicMute', muted: 'musicMuted' }),
@@ -1105,10 +1105,18 @@ export function inspectExistingQuickSettingsAuthority(documentSource = globalThi
 export function readExistingQuickSettings(documentSource = globalThis.document) {
   const authority = inspectExistingQuickSettingsAuthority(documentSource);
   const controls = authority.controls;
+  const musicVolume = controls.musicVolume ? quickSettingsPercent(controls.musicVolume.value) : null;
+  const sfxVolume = controls.sfxVolume ? quickSettingsPercent(controls.sfxVolume.value) : null;
+  const partnerVoiceVolume = controls.partnerVoiceVolume ? quickSettingsPercent(controls.partnerVoiceVolume.value) : null;
+  const channelVolumes = [musicVolume, sfxVolume, partnerVoiceVolume];
+  const masterVolume = channelVolumes.every((value) => value != null)
+    ? Math.max(...channelVolumes)
+    : null;
   return Object.freeze({
-    musicVolume: controls.musicVolume ? quickSettingsPercent(controls.musicVolume.value) : null,
-    sfxVolume: controls.sfxVolume ? quickSettingsPercent(controls.sfxVolume.value) : null,
-    partnerVoiceVolume: controls.partnerVoiceVolume ? quickSettingsPercent(controls.partnerVoiceVolume.value) : null,
+    masterVolume,
+    musicVolume,
+    sfxVolume,
+    partnerVoiceVolume,
     musicMuted: controls.musicMute ? quickSettingsToggleOn(controls.musicMute) : null,
     sfxMuted: controls.sfxMute ? quickSettingsToggleOn(controls.sfxMute) : null,
     partnerVoiceMuted: controls.partnerVoiceMute ? quickSettingsToggleOn(controls.partnerVoiceMute) : null,
@@ -1135,6 +1143,20 @@ export function setExistingQuickSettingsVolume(key, value, documentSource = glob
   dispatchExistingQuickSetting(globalSource, control, 'input');
   dispatchExistingQuickSetting(globalSource, control, 'change');
   return true;
+}
+
+export function setExistingQuickSettingsMasterVolume(value, documentSource = globalThis.document, globalSource = globalThis) {
+  const current = readExistingQuickSettings(documentSource);
+  const sourceVolumes = [current.musicVolume, current.sfxVolume, current.partnerVoiceVolume];
+  if (sourceVolumes.some((item) => item == null)) return false;
+  const targetMaster = quickSettingsPercent(value);
+  const sourceMaster = Math.max(...sourceVolumes);
+  const nextVolumes = sourceMaster > 0
+    ? sourceVolumes.map((item) => quickSettingsPercent((item * targetMaster) / sourceMaster))
+    : sourceVolumes.map(() => targetMaster);
+  return ['musicVolume', 'sfxVolume', 'partnerVoiceVolume'].every((key, index) => (
+    setExistingQuickSettingsVolume(key, nextVolumes[index], documentSource, globalSource)
+  ));
 }
 
 export function toggleExistingQuickSetting(key, documentSource = globalThis.document) {
@@ -1193,6 +1215,7 @@ function ensureQuickSettingsStyle(documentSource) {
 [${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsRow{display:grid;grid-template-columns:minmax(62px,auto) minmax(110px,1fr) minmax(76px,auto);align-items:center;gap:8px}
 [${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsRow>span{font-weight:800}
 [${QUICK_SETTINGS_OVERLAY_ATTR}] input[type="range"]{width:100%;min-height:44px}
+[${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsMasterRange{grid-column:2/4}
 [${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsToggle{grid-column:2/4;width:100%}
 [${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsDetails{width:100%}
 [${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsStatus{margin:0;font-size:12px;opacity:.72}
@@ -1242,6 +1265,11 @@ export function openSharedQuickSettings({ surface = 'home', trigger = null, docu
 
   const refresh = () => {
     const current = readExistingQuickSettings(documentSource);
+    const masterRange = overlay.querySelector?.('[data-quick-volume="masterVolume"]');
+    if (masterRange) {
+      masterRange.disabled = current.masterVolume == null;
+      if (current.masterVolume != null) masterRange.value = String(current.masterVolume);
+    }
     for (const row of QUICK_SETTINGS_AUDIO_ROWS) {
       const range = overlay.querySelector?.(`[data-quick-volume="${row.volume}"]`);
       const mute = overlay.querySelector?.(`[data-quick-toggle="${row.mute}"]`);
@@ -1269,6 +1297,22 @@ export function openSharedQuickSettings({ surface = 'home', trigger = null, docu
     const status = overlay.querySelector?.('.grSharedQuickSettingsStatus');
     if (status) status.textContent = current.missing.length ? `未接続: ${current.missing.join(', ')}` : '';
   };
+
+  const masterWrap = quickSettingsNode(documentSource, 'div', 'grSharedQuickSettingsRow');
+  masterWrap.append(quickSettingsNode(documentSource, 'span', '', '全体'));
+  const masterRange = quickSettingsNode(documentSource, 'input', 'grSharedQuickSettingsMasterRange');
+  masterRange.setAttribute?.('type', 'range');
+  masterRange.setAttribute?.('min', '0');
+  masterRange.setAttribute?.('max', '100');
+  masterRange.setAttribute?.('step', '1');
+  masterRange.setAttribute?.('aria-label', '全体音量');
+  masterRange.dataset.quickVolume = 'masterVolume';
+  masterRange.addEventListener?.('input', () => {
+    setExistingQuickSettingsMasterVolume(masterRange.value, documentSource, globalSource);
+    refresh();
+  });
+  masterWrap.append(masterRange);
+  panel.append(masterWrap);
 
   for (const row of QUICK_SETTINGS_AUDIO_ROWS) {
     const wrap = quickSettingsNode(documentSource, 'div', 'grSharedQuickSettingsRow');
@@ -1396,6 +1440,7 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     inspect: inspectExistingQuickSettingsAuthority,
     read: readExistingQuickSettings,
     setVolume: setExistingQuickSettingsVolume,
+    setMasterVolume: setExistingQuickSettingsMasterVolume,
     toggle: toggleExistingQuickSetting,
     open: openSharedQuickSettings,
     close: closeSharedQuickSettings,

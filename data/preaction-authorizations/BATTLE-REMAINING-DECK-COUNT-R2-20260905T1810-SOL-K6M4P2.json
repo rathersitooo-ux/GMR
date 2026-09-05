@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-REMAINING-DECK-COUNT-R2-20260905T1810-SOL-K6M4P2",
+  "taskId": "BATTLE-SELF-REMAINING-DECK-INSPECT-001",
+  "workUnitKey": "BATTLE_VIEWER_SAFE_COUNT_CORE_R2",
+  "acquireKey": "BATTLE-REMAINING-DECK-COUNT-R2-20260905T1810-SOL-K6M4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_USER_VIEWER_SAFE_REMAINING_DECK+MAIN_PLAYER_DECK_LENGTH_AUTHORITY+COUNT_ONLY_PRIVACY_BOUNDARY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_CORE_TESTS+DIRECT_CURRENT_GAMEROAD_DECK_MUTATION_PATHS",
+  "proceedToken": "PROCEED|BATTLE-REMAINING-DECK-COUNT-R2-20260905T1810-SOL-K6M4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|COUNT_ONLY_VIEWER_SAFE_CORE",
+  "authorizationBaseSha": "6a9b5d1d8c72743fd39b30e3e5db6cc6fc3617e5",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-SELF-REMAINING-DECK-INSPECT-001",
+  "leaseWorkUnitKey": "BATTLE_VIEWER_SAFE_COUNT_CORE_R2",
+  "leaseAcquireKey": "BATTLE-REMAINING-DECK-COUNT-R2-20260905T1810-SOL-K6M4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 18:12 JST",
+  "leaseUntilJst": "2026-09-05 19:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A394:L394",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@6a9b5d1d8c72743fd39b30e3e5db6cc6fc3617e5 (tree 8d134904c1adc51a487233e8016c8d26ee3f94a8 identical to pre-incident 8dc0aaff after immediate README.tmp add/delete repair); intended branch sol/battle-remaining-deck-count-r2-20260905; mutable browser/battle-self-deck-inspect-core.mjs + tests/battle-self-deck-inspect-core.test.mjs + transient data/preaction-authorizations/BATTLE-REMAINING-DECK-COUNT-R2-20260905T1810-SOL-K6M4P2.json only; browser/battle-replay-live-adapter.mjs + browser/GAMEROAD.html + deploy/cloudflare/** + gameplay/rules/save/network READ_ONLY while current shared owners are active.",
+  "scope": [
+    "browser/battle-self-deck-inspect-core.mjs",
+    "tests/battle-self-deck-inspect-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-self-deck-inspect-core.mjs",
+    "tests/battle-self-deck-inspect-core.test.mjs"
+  ],
+  "solutionSignature": "viewer-safe-remaining-deck-count-without-secret-identity-input",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_VIEWER_SAFE_CORE_PRESENT;CURRENT_GAMEPLAY_HAS_AUTHORITATIVE_DECK_LENGTH;SECRET_REMAINING_IDS_NOT_NEEDED_FOR_COUNT",
+  "solutionSearchEvidence": [
+    "Current Browser gameplay directly owns each live draw pile as players[].deck and mutates it only by authoritative deck shifts/refill in the inspected current paths.",
+    "Current viewer-safe core unnecessarily requires secret remainingCardIds even when the consumer only needs authoritative total plus viewer-authorized known identities.",
+    "Using public played-card history alone is rejected because cards leave the draw pile at draw/refill time, not at later play/reveal time.",
+    "Count-only authority lets the later live consumer pass players[].deck.length while keeping identities/order outside the presentation boundary."
+  ],
+  "scopeRebaseReason": "The earlier core correctly removed unconditional secret identity disclosure, but the live product remained blocked because its authoritative constructor still required secret remaining identities. This strict subset adds a count-only authority path without touching the currently occupied HTML/build/live-consumer resources. The temporary README.tmp branch-creation mistake was repaired on main before this branch and the resulting current tree is content-identical to the pre-incident main tree."
+}

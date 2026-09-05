@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   createDeckStorageCornerController,
   installDeckStorageCardsDiscovery,
+  installDeckSwipeFirstSuccessHints,
   mountDeckStorageCorner,
   shouldRevealDeckStorageFromCardsSwipe,
 } from '../browser/deck-storage-corner-runtime.mjs';
@@ -395,4 +396,76 @@ test('dispose closes storage state so remount does not reopen stale UI', () => {
   assert.equal(controller.view().open, false);
   assert.equal(document.body.children.length, 0);
   second.dispose();
+});
+
+test('first-success swipe hints retire independently only on successful gestures and survive remount', () => {
+  const values = new Map();
+  const window = {
+    localStorage: {
+      getItem: (key) => values.has(key) ? values.get(key) : null,
+      setItem: (key, value) => values.set(key, String(value)),
+    },
+  };
+  const rejectedFixture = fixture({ deck: ['a', 'b'], rejectRemove: true });
+  const rejectedDocument = discoveryDocument();
+  const rejectedHints = installDeckSwipeFirstSuccessHints({
+    document: rejectedDocument.document,
+    window,
+    controller: rejectedFixture.controller,
+  });
+  const roles = (screen) => screen.children.map((node) => node.dataset?.role).filter(Boolean);
+  assert.deepEqual(roles(rejectedDocument.screen).sort(), [
+    'deck-swipe-first-success-hint-collection-right',
+    'deck-swipe-first-success-hint-deck-left',
+  ]);
+  const rejected = rejectedFixture.controller.applySwipe({ surface: 'deck', cardId: 'b', deltaX: -84, deltaY: 1 });
+  assert.equal(rejected.ok, false);
+  rejectedDocument.document.emit('gameroad:deck-swipe-reject', { detail: { cardId: 'x' } });
+  assert.equal(rejectedHints.state().collectionRightDone, false);
+  assert.equal(rejectedHints.state().deckLeftDone, false);
+  assert.equal(roles(rejectedDocument.screen).length, 2);
+  rejectedHints.destroy();
+
+  const acceptedFixture = fixture({ deck: ['a', 'b'] });
+  const acceptedDocument = discoveryDocument();
+  const acceptedHints = installDeckSwipeFirstSuccessHints({
+    document: acceptedDocument.document,
+    window,
+    controller: acceptedFixture.controller,
+  });
+  const removed = acceptedFixture.controller.applySwipe({ surface: 'deck', cardId: 'b', deltaX: -84, deltaY: 1 });
+  assert.equal(removed.ok, true);
+  assert.equal(acceptedHints.state().deckLeftDone, true);
+  assert.equal(acceptedHints.state().collectionRightDone, false);
+  assert.deepEqual(roles(acceptedDocument.screen), ['deck-swipe-first-success-hint-collection-right']);
+
+  acceptedDocument.document.emit('gameroad:deck-swipe-land', { detail: { phase: 'land', cardId: 'N_2' } });
+  assert.equal(acceptedHints.state().collectionRightDone, true);
+  assert.equal(roles(acceptedDocument.screen).length, 0);
+  acceptedHints.destroy();
+
+  const remount = installDeckSwipeFirstSuccessHints({
+    document: acceptedDocument.document,
+    window,
+    controller: acceptedFixture.controller,
+  });
+  assert.equal(remount.state().collectionRightDone, true);
+  assert.equal(remount.state().deckLeftDone, true);
+  assert.equal(roles(acceptedDocument.screen).length, 0);
+  remount.destroy();
+});
+
+test('first-success swipe hints fail soft when local UI persistence is unavailable', () => {
+  const { controller } = fixture({ deck: ['a', 'b'] });
+  const { document, screen } = discoveryDocument();
+  const window = {};
+  Object.defineProperty(window, 'localStorage', { get() { throw new Error('blocked'); } });
+  const hints = installDeckSwipeFirstSuccessHints({ document, window, controller });
+  assert.equal(screen.children.length, 2);
+  document.emit('gameroad:deck-swipe-land', { detail: { cardId: 'N_3' } });
+  controller.applySwipe({ surface: 'deck', cardId: 'b', deltaX: -84, deltaY: 1 });
+  assert.equal(hints.state().collectionRightDone, true);
+  assert.equal(hints.state().deckLeftDone, true);
+  assert.equal(screen.children.length, 0);
+  hints.destroy();
 });

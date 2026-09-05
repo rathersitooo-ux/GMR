@@ -6,7 +6,7 @@ import {
   removeCardFromStorage,
   resolveDeckEditorSwipe,
 } from './deck-storage-corner-core.mjs';
-import { createDeckSwipeFlightPlan } from './cards-deck-presentation-core.mjs';
+import { createDeckSwipeFlightPlan, DECK_SWIPE_PRESENTATION_EVENTS } from './cards-deck-presentation-core.mjs';
 
 function requiredFn(value, name) {
   if (typeof value !== 'function') throw new TypeError(`${name}_REQUIRED`);
@@ -284,6 +284,9 @@ export function installDeckStorageCornerStyles(doc = globalThis.document) {
 .gr-storage-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}.gr-storage-title{font:800 16px/1.2 system-ui}.gr-storage-close{appearance:none;border:0;border-radius:9px;padding:6px 8px;cursor:pointer}
 .gr-storage-columns{display:grid;grid-template-columns:1fr 1fr;gap:8px}.gr-storage-column{min-width:0;background:rgba(255,255,255,.06);border-radius:11px;padding:8px}.gr-storage-column h3{margin:0 0 6px;font:800 13px/1.2 system-ui}.gr-storage-card{display:grid;grid-template-columns:54px minmax(0,1fr) auto;align-items:center;gap:6px;width:100%;margin:5px 0;padding:7px 8px;border:1px solid rgba(255,255,255,.14);border-radius:9px;background:rgba(255,255,255,.08);color:#fff}.gr-storage-card-visual{display:block;width:54px;aspect-ratio:5/7;overflow:hidden;border-radius:6px;background:rgba(255,255,255,.08);pointer-events:none}.gr-storage-card-visual>*{display:block;max-width:100%;width:100%;height:100%;object-fit:cover;pointer-events:none}.gr-storage-card-actions{display:flex;gap:5px}.gr-storage-card-actions button{cursor:pointer}
 .gr-storage-discovery-hint{position:absolute;left:12px;bottom:12px;z-index:3;pointer-events:none;user-select:none;border-radius:999px;padding:6px 10px;background:rgba(17,24,39,.72);border:1px solid rgba(255,216,74,.72);color:#fff3bd;font:800 12px/1 system-ui;letter-spacing:.01em;box-shadow:0 5px 18px rgba(0,0,0,.2)}
+.gr-deck-swipe-gesture-hint{position:absolute;right:12px;z-index:3;pointer-events:none;user-select:none;max-width:min(220px,46vw);border-radius:999px;padding:6px 10px;background:rgba(17,24,39,.72);border:1px solid rgba(255,216,74,.72);color:#fff3bd;font:800 12px/1 system-ui;letter-spacing:.01em;box-shadow:0 5px 18px rgba(0,0,0,.2);white-space:nowrap}
+.gr-deck-swipe-gesture-hint[data-gesture="collection-right"]{bottom:56px}
+.gr-deck-swipe-gesture-hint[data-gesture="deck-left"]{bottom:12px}
 @media(max-width:560px){.gr-storage-backdrop{left:8px;top:8px;width:min(310px,58vw);max-width:calc(100vw - 16px)}.gr-storage-window{max-height:38vh;padding:9px}.gr-storage-columns{grid-template-columns:1fr 1fr;gap:6px}.gr-storage-card{grid-template-columns:44px minmax(0,1fr);padding:6px}.gr-storage-card-visual{width:44px}.gr-storage-card-actions{grid-column:2;margin-top:5px;flex-wrap:wrap}.gr-storage-discovery-hint{left:8px;bottom:8px;padding:5px 8px;font-size:11px}}
 `;
   doc.head.appendChild(style);
@@ -404,6 +407,104 @@ export function installDeckStorageCardsDiscovery({
       doc.removeEventListener('pointercancel', onPointerCancel, { passive: true });
       hint?.remove?.();
       hint = null;
+    },
+  });
+}
+
+
+const DECK_SWIPE_FIRST_SUCCESS_STORAGE_KEY = 'gameroad.cards.deck-swipe-first-success.v1';
+
+function readDeckSwipeFirstSuccessState(win) {
+  const fallback = { collectionRightDone: false, deckLeftDone: false };
+  try {
+    const raw = win?.localStorage?.getItem?.(DECK_SWIPE_FIRST_SUCCESS_STORAGE_KEY);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    return {
+      collectionRightDone: parsed?.collectionRightDone === true,
+      deckLeftDone: parsed?.deckLeftDone === true,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function persistDeckSwipeFirstSuccessState(win, state) {
+  try {
+    if (typeof win?.localStorage?.setItem !== 'function') return false;
+    win.localStorage.setItem(DECK_SWIPE_FIRST_SUCCESS_STORAGE_KEY, JSON.stringify({
+      collectionRightDone: state.collectionRightDone === true,
+      deckLeftDone: state.deckLeftDone === true,
+    }));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function installDeckSwipeFirstSuccessHints({
+  document: doc = globalThis.document,
+  window: win = globalThis.window,
+  controller,
+} = {}) {
+  if (!doc?.addEventListener || !doc?.removeEventListener || typeof controller?.subscribe !== 'function') {
+    return Object.freeze({ state: () => Object.freeze({ collectionRightDone: false, deckLeftDone: false }), render: () => null, destroy() {} });
+  }
+
+  let state = readDeckSwipeFirstSuccessState(win);
+  let destroyed = false;
+  const roleFor = (gesture) => `deck-swipe-first-success-hint-${gesture}`;
+  const currentHint = (screen, gesture) => [...(screen?.children ?? [])]
+    .find((node) => node?.dataset?.role === roleFor(gesture)) ?? null;
+  const ensureHint = (screen, gesture, textContent) => {
+    const existing = currentHint(screen, gesture);
+    if (existing) return existing;
+    if (!screen?.appendChild || !doc?.createElement) return null;
+    const hint = doc.createElement('div');
+    hint.className = 'gr-deck-swipe-gesture-hint';
+    hint.dataset.role = roleFor(gesture);
+    hint.dataset.gesture = gesture;
+    hint.setAttribute?.('aria-hidden', 'true');
+    hint.textContent = textContent;
+    screen.appendChild(hint);
+    return hint;
+  };
+  const removeHint = (screen, gesture) => currentHint(screen, gesture)?.remove?.();
+  const render = () => {
+    if (destroyed) return null;
+    const screen = resolveCardsScreen(doc);
+    if (!screen) return null;
+    if (state.collectionRightDone) removeHint(screen, 'collection-right');
+    else ensureHint(screen, 'collection-right', 'カードを → デッキへ');
+    if (state.deckLeftDone) removeHint(screen, 'deck-left');
+    else ensureHint(screen, 'deck-left', 'デッキから ← 外す');
+    return Object.freeze({ ...state });
+  };
+  const retire = (key) => {
+    if (destroyed || state[key] === true) return false;
+    state = { ...state, [key]: true };
+    persistDeckSwipeFirstSuccessState(win, state);
+    render();
+    return true;
+  };
+  const onDeckSwipeLand = () => { retire('collectionRightDone'); };
+  doc.addEventListener(DECK_SWIPE_PRESENTATION_EVENTS.LAND, onDeckSwipeLand);
+  const unsubscribe = controller.subscribe((payload) => {
+    if (payload?.event === 'deck-remove' && payload?.surface === 'deck') retire('deckLeftDone');
+  });
+  render();
+
+  return Object.freeze({
+    state: () => Object.freeze({ ...state }),
+    render,
+    destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      doc.removeEventListener(DECK_SWIPE_PRESENTATION_EVENTS.LAND, onDeckSwipeLand);
+      unsubscribe?.();
+      const screen = resolveCardsScreen(doc);
+      removeHint(screen, 'collection-right');
+      removeHint(screen, 'deck-left');
     },
   });
 }
@@ -561,6 +662,7 @@ export function mountDeckStorageCorner({
   button.addEventListener('click', open);
   doc.addEventListener?.('pointerdown', onOutsidePointerDown, true);
   const discovery = installDeckStorageCardsDiscovery({ document: doc, openStorage: open });
+  const swipeHints = installDeckSwipeFirstSuccessHints({ document: doc, window: win, controller });
   render();
   return Object.freeze({
     button,
@@ -571,6 +673,7 @@ export function mountDeckStorageCorner({
       unsubscribe();
       ghostTransfer.dispose();
       doc.removeEventListener?.('pointerdown', onOutsidePointerDown, true);
+      swipeHints.destroy();
       discovery.destroy();
       close();
       button.remove?.();

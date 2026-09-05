@@ -8,6 +8,11 @@ export const BATTLE_RECEIPT_AUTHORITY_ID = 'gameroad.match-participant-receipt.v
 export const BATTLE_RECEIPT_SOURCE_SCHEMA = 'GAMEROAD_BATTLE_REPLAY_V1';
 export const BATTLE_RECEIPT_RECORD_PREFIX = 'battle-receipt/event/';
 export const BATTLE_RECEIPT_META_PREFIX = 'battle-receipt/meta/';
+export const DECISION_PARTICIPANT_RECEIPT_AUTHORITY_ID = 'gameroad.decision-participant-receipt.v1';
+export const DECISION_PARTICIPANT_SOURCE_SCHEMA = 'GAMEROAD_PARTNER_DECISION_CONTROL_IDENTITY_V1';
+export const DECISION_PARTICIPANT_RECORD_PREFIX = 'decision-participant/event/';
+export const DECISION_PARTICIPANT_META_PREFIX = 'decision-participant/meta/';
+export const DECISION_PARTICIPANT_IDEMPOTENCY_PREFIX = 'decision-participant/idempotency/';
 
 const REPORT_TYPES = new Set(['bug', 'defect', 'request']);
 const VERSION_KEYS = Object.freeze(['rules', 'content', 'state']);
@@ -18,6 +23,8 @@ const BATTLE_RECEIPT_MAX_REQUEST_BYTES = 16_384;
 const BATTLE_RECEIPT_MAX_EVENTS = 512;
 const BATTLE_RECEIPT_MAX_PLAYERS = 4;
 const BATTLE_RECEIPT_MAX_CARDS = 16;
+const DECISION_PARTICIPANT_MAX_CANDIDATES = 128;
+const DECISION_CONTROL_MODES = new Set(['self', 'temporary_partner', 'permanent_partner']);
 
 function reject(reason) {
   return { ok: false, reason };
@@ -493,6 +500,111 @@ function normalizeBattleReceiptSubmit(input) {
   return { ticketId, secret, event, fingerprint: fnv1a(canonicalJson(event)) };
 }
 
+function decisionParticipantRecordKey(matchId, reporterSlot, sequence) {
+  return `${DECISION_PARTICIPANT_RECORD_PREFIX}${enc(matchId)}/${reporterSlot}/${String(sequence).padStart(6, '0')}`;
+}
+
+function decisionParticipantMetaKey(matchId, reporterSlot) {
+  return `${DECISION_PARTICIPANT_META_PREFIX}${enc(matchId)}/${reporterSlot}`;
+}
+
+function decisionParticipantIdempotencyKey(matchId, reporterSlot, idempotencyKey) {
+  return `${DECISION_PARTICIPANT_IDEMPOTENCY_PREFIX}${enc(matchId)}/${reporterSlot}/${enc(idempotencyKey)}`;
+}
+
+function exactDecisionVersions(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const rulesVersion = exactToken(value.rulesVersion, 96);
+  const cardVersion = exactToken(value.cardVersion, 96);
+  const stateVersion = exactToken(value.stateVersion, 96);
+  return rulesVersion && cardVersion && stateVersion ? { rulesVersion, cardVersion, stateVersion } : null;
+}
+
+function normalizeDecisionParticipantPacket(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  if (value.ok !== true || value.schema !== DECISION_PARTICIPANT_SOURCE_SCHEMA || value.containsPrivate !== false) return null;
+  const matchId = exactToken(value.matchId, 160);
+  const versions = exactDecisionVersions(value.versions);
+  const decision = value.decision;
+  const actorControl = value.actorControl;
+  const freshness = value.freshness;
+  const authority = value.authority;
+  const training = value.training;
+  if (!matchId || !versions || !decision || !actorControl || !freshness || !authority || !training) return null;
+  if ([decision, actorControl, freshness, authority, training].some((row) => typeof row !== 'object' || Array.isArray(row))) return null;
+  const legalCandidateIds = safeUniqueTokens(decision.legalCandidateIds, DECISION_PARTICIPANT_MAX_CANDIDATES);
+  const chosenActionId = exactToken(decision.chosenActionId, 96);
+  const recommendedCandidateId = exactToken(decision.recommendedCandidateId, 96);
+  const selectionSource = exactToken(decision.selectionSource, 96);
+  const authorityScope = exactToken(decision.authorityScope, 192);
+  if (!legalCandidateIds || !chosenActionId || !recommendedCandidateId || !selectionSource || !authorityScope) return null;
+  if (!legalCandidateIds.includes(chosenActionId) || !legalCandidateIds.includes(recommendedCandidateId)) return null;
+  const reconnectRevision = safeInteger(actorControl.reconnectRevision);
+  const seatId = exactToken(actorControl.seatId, 160);
+  const teamId = exactToken(actorControl.teamId, 160);
+  const controlMode = exactToken(actorControl.controlMode, 64);
+  const controlGeneration = safeInteger(actorControl.controlGeneration);
+  const controlRole = exactToken(actorControl.controlRole, 64);
+  const controlRoleAuthority = exactToken(actorControl.controlRoleAuthority, 160);
+  if (reconnectRevision === null || !seatId || !teamId || !DECISION_CONTROL_MODES.has(controlMode) ||
+      controlGeneration === null || controlRole !== controlMode || !controlRoleAuthority ||
+      typeof actorControl.connected !== 'boolean' || actorControl.playerIdIncluded !== false) return null;
+  if (freshness.controlEnvelopeCurrent !== true || freshness.reconnectRevisionBound !== true ||
+      freshness.controlGenerationBound !== true || freshness.decisionSequenceVerified !== false) return null;
+  if (authority.controlFreshnessVerified !== true || authority.matchIdentityVerified !== false ||
+      authority.matchParticipantAuthenticated !== false || authority.gameplayAuthoritative !== false ||
+      authority.gameplayRoleAuthority !== 'NONE' || authority.rewardLabelAuthority !== 'NONE' ||
+      authority.regretLabelAuthority !== 'NONE' || authority.optimalActionAuthority !== 'NONE') return null;
+  if (training.eligible !== false) return null;
+  const trainingReason = exactToken(training.reason, 192);
+  if (!trainingReason) return null;
+  return {
+    sourceSchema: DECISION_PARTICIPANT_SOURCE_SCHEMA,
+    matchId,
+    versions,
+    decision: { legalCandidateIds, chosenActionId, recommendedCandidateId, selectionSource, authorityScope },
+    actorControl: {
+      reconnectRevision, seatId, teamId, connected: actorControl.connected,
+      controlMode, controlGeneration, controlRole, controlRoleAuthority,
+      playerIdIncluded: false,
+    },
+    freshness: {
+      controlEnvelopeCurrent: true,
+      reconnectRevisionBound: true,
+      controlGenerationBound: true,
+      decisionSequenceVerified: false,
+    },
+    training: { eligible: false, reason: trainingReason },
+    containsPrivate: false,
+  };
+}
+
+function normalizeDecisionParticipantSubmit(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return null;
+  const ticketId = exactToken(input.ticketId, 160);
+  const secret = exactToken(input.secret, 256);
+  const idempotencyKey = exactToken(input.idempotencyKey, 160);
+  const packet = normalizeDecisionParticipantPacket(input.decisionControlIdentity);
+  if (!ticketId || !secret || !idempotencyKey || !packet) return null;
+  return { ticketId, secret, idempotencyKey, packet, fingerprint: fnv1a(canonicalJson(packet)) };
+}
+
+function battleReporterIdentity(status) {
+  const ticketId = status?.ticket?.ticketId;
+  const seats = status?.match?.seats;
+  if (Array.isArray(seats)) {
+    const seat = seats.find((candidate) => candidate?.kind === 'HUMAN' && candidate.ticketId === ticketId);
+    if (seat && Number.isInteger(seat.slot) && seat.slot >= 0 && seat.slot < BATTLE_RECEIPT_MAX_PLAYERS) {
+      const team = seat.team == null ? null : exactToken(seat.team, 32);
+      if (seat.team != null && !team) return null;
+      return { reporterSlot: seat.slot, reporterTeam: team };
+    }
+  }
+  const fallback = status?.match?.ticketIds?.indexOf(ticketId);
+  if (!Number.isInteger(fallback) || fallback < 0 || fallback >= BATTLE_RECEIPT_MAX_PLAYERS) return null;
+  return { reporterSlot: fallback, reporterTeam: null };
+}
+
 function battleReporterSlot(status) {
   const ticketId = status?.ticket?.ticketId;
   const seats = status?.match?.seats;
@@ -592,6 +704,105 @@ export async function submitStoredBattleReceipt(storage, input, runtime = {}) {
   });
 }
 
+function publicDecisionParticipantReceipt(record, idempotent = false) {
+  return {
+    ok: true,
+    idempotent,
+    schema: record.schema,
+    sourceSchema: record.sourceSchema,
+    matchId: record.matchId,
+    sequence: record.sequence,
+    versions: structuredClone(record.versions),
+    decision: structuredClone(record.decision),
+    actorControl: structuredClone(record.actorControl),
+    freshness: structuredClone(record.freshness),
+    serverParticipant: structuredClone(record.serverParticipant),
+    identityAuthority: {
+      verified: true,
+      authorityId: DECISION_PARTICIPANT_RECEIPT_AUTHORITY_ID,
+      scope: 'authenticated_match_participant_decision_receipt',
+      matchIdentityVerified: true,
+      matchParticipantAuthenticated: true,
+      reporterSlotVerified: true,
+      reporterTeamVerified: record.serverParticipant.reporterTeam !== null,
+      controlSeatMappingVerified: false,
+      gameplayAuthoritative: false,
+    },
+    training: structuredClone(record.training),
+    containsPrivate: false,
+  };
+}
+
+export async function submitStoredDecisionParticipantReceipt(storage, input, runtime = {}) {
+  const normalized = normalizeDecisionParticipantSubmit(input);
+  if (!normalized) return reject('decision_receipt_request_invalid');
+  const now = Number(runtime.nowMs);
+  const nowMs = Number.isSafeInteger(now) && now >= 0 ? now : Date.now();
+  const status = await storedMatchTicketStatus(storage, {
+    ticketId: normalized.ticketId,
+    secret: normalized.secret,
+  }, { nowMs, generatedMatchId: '' });
+  if (!status.ok) return reject('decision_receipt_auth_invalid');
+  if (!status.match || status.ticket?.matchId !== normalized.packet.matchId || status.match.matchId !== normalized.packet.matchId) {
+    return reject('decision_receipt_match_invalid');
+  }
+  const reporter = battleReporterIdentity(status);
+  if (!reporter) return reject('decision_receipt_reporter_invalid');
+
+  return storage.transaction(async (txn) => {
+    const metaKey = decisionParticipantMetaKey(normalized.packet.matchId, reporter.reporterSlot);
+    const idemKey = decisionParticipantIdempotencyKey(normalized.packet.matchId, reporter.reporterSlot, normalized.idempotencyKey);
+    const existingIdem = await txn.get(idemKey);
+    if (existingIdem !== undefined) {
+      if (existingIdem?.fingerprint !== normalized.fingerprint || !Number.isSafeInteger(existingIdem?.sequence)) {
+        return reject('decision_receipt_idempotency_conflict');
+      }
+      const existing = await txn.get(decisionParticipantRecordKey(normalized.packet.matchId, reporter.reporterSlot, existingIdem.sequence));
+      if (!existing || existing.fingerprint !== normalized.fingerprint) return reject('decision_receipt_state_invalid');
+      return publicDecisionParticipantReceipt(existing, true);
+    }
+    const prior = await txn.get(metaKey);
+    const meta = prior && typeof prior === 'object' && prior.schema === 'gameroad.decision-participant-receipt.meta.v1'
+      ? prior
+      : { schema: 'gameroad.decision-participant-receipt.meta.v1', matchId: normalized.packet.matchId, reporterSlot: reporter.reporterSlot, nextSequence: 1 };
+    if (meta.matchId !== normalized.packet.matchId || meta.reporterSlot !== reporter.reporterSlot ||
+        !Number.isSafeInteger(meta.nextSequence) || meta.nextSequence < 1 || meta.nextSequence > BATTLE_RECEIPT_MAX_EVENTS) {
+      return reject('decision_receipt_state_invalid');
+    }
+    const sequence = meta.nextSequence;
+    const record = {
+      schema: 'gameroad.decision-participant-receipt.event.v1',
+      sourceSchema: normalized.packet.sourceSchema,
+      matchId: normalized.packet.matchId,
+      sequence,
+      versions: normalized.packet.versions,
+      decision: normalized.packet.decision,
+      actorControl: normalized.packet.actorControl,
+      freshness: normalized.packet.freshness,
+      serverParticipant: { reporterSlot: reporter.reporterSlot, reporterTeam: reporter.reporterTeam },
+      fingerprint: normalized.fingerprint,
+      receivedAtMs: nowMs,
+      authorityId: DECISION_PARTICIPANT_RECEIPT_AUTHORITY_ID,
+      training: { eligible: false, reason: 'APPROVED_LABEL_AND_CONTROL_SEAT_MAPPING_REQUIRED' },
+      containsPrivate: false,
+    };
+    txn.put(decisionParticipantRecordKey(record.matchId, reporter.reporterSlot, sequence), record);
+    txn.put(metaKey, { ...meta, nextSequence: sequence + 1 });
+    txn.put(idemKey, { fingerprint: normalized.fingerprint, sequence });
+    return publicDecisionParticipantReceipt(record, false);
+  });
+}
+
+export async function readStoredDecisionParticipantReceipt(storage, input) {
+  const matchId = exactToken(input?.matchId, 160);
+  const reporterSlot = safeInteger(input?.reporterSlot, 0, BATTLE_RECEIPT_MAX_PLAYERS - 1);
+  const sequence = safeInteger(input?.sequence, 1, BATTLE_RECEIPT_MAX_EVENTS);
+  if (!matchId || reporterSlot === null || sequence === null) return reject('decision_receipt_request_invalid');
+  const record = await storage.get(decisionParticipantRecordKey(matchId, reporterSlot, sequence));
+  if (!record || record.schema !== 'gameroad.decision-participant-receipt.event.v1') return reject('decision_receipt_not_found');
+  return { ok: true, record: publicDecisionParticipantReceipt(record, false) };
+}
+
 export async function readStoredBattleReceipt(storage, input) {
   const matchId = exactToken(input?.matchId, 160);
   const sequence = safeInteger(input?.sequence, 1, BATTLE_RECEIPT_MAX_EVENTS);
@@ -622,7 +833,10 @@ export async function readStoredBattleReceipt(storage, input) {
 }
 
 function battleReceiptErrorStatus(reason) {
-  if (reason === 'battle_receipt_auth_invalid' || reason === 'battle_receipt_match_invalid' || reason === 'battle_receipt_reporter_invalid') return 403;
+  if (reason === 'battle_receipt_auth_invalid' || reason === 'battle_receipt_match_invalid' || reason === 'battle_receipt_reporter_invalid' ||
+      reason === 'decision_receipt_auth_invalid' || reason === 'decision_receipt_match_invalid' || reason === 'decision_receipt_reporter_invalid') return 403;
+  if (reason === 'decision_receipt_idempotency_conflict') return 409;
+  if (reason === 'decision_receipt_state_invalid') return 500;
   if (reason === 'battle_receipt_sequence_conflict' || reason === 'battle_receipt_sequence_gap' ||
       reason === 'battle_receipt_version_conflict' || reason === 'battle_receipt_terminal') return 409;
   if (reason === 'battle_receipt_request_too_large') return 413;
@@ -658,7 +872,9 @@ export async function handleBattleReceiptRequest(storage, request, url, runtime 
       : 'battle_receipt_request_invalid';
     return reportJson({ ok: false, reason }, battleReceiptErrorStatus(reason));
   }
-  const result = await submitStoredBattleReceipt(storage, body, runtime);
+  const result = body?.decisionControlIdentity?.schema === DECISION_PARTICIPANT_SOURCE_SCHEMA
+    ? await submitStoredDecisionParticipantReceipt(storage, body, runtime)
+    : await submitStoredBattleReceipt(storage, body, runtime);
   if (!result.ok) return reportJson(result, battleReceiptErrorStatus(result.reason));
   return reportJson(result);
 }

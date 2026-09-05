@@ -11,24 +11,24 @@ permissions:
   contents: read
 
 jobs:
-  public-r19-evidence:
+  public-setup-dom-evidence:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     env:
       GAMEROAD_PUBLIC_BASE_URL: https://gameroad-browser-r5.pages.dev
-      EXPECTED_BUILD_ID: d257e551b54814a97a338d6a6c41f6297dd0c037
+      EXPECTED_BUILD_ID: ca182b54bb8fd91ac90284d96355e3c53be78ecf
     steps:
-      - name: Checkout exact deployed source
+      - name: Checkout current public source
         uses: actions/checkout@v4
         with:
-          ref: d257e551b54814a97a338d6a6c41f6297dd0c037
+          ref: ca182b54bb8fd91ac90284d96355e3c53be78ecf
 
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Bind canonical public origin to exact deployed build
+      - name: Bind canonical public origin to current deployed build
         id: public_manifest
         shell: bash
         run: |
@@ -100,7 +100,7 @@ jobs:
             const node = (el) => el ? ({
               tag:el.tagName, id:el.id || null, cls:el.className || null,
               rect:rect(el), style:style(el),
-              text:(el.textContent || '').replace(/\s+/g,' ').trim().slice(0,120),
+              text:(el.textContent || '').replace(/\s+/g,' ').trim().slice(0,140),
             }) : null;
             const setup = document.querySelector('section[data-screen="setup"]');
             const start = document.querySelector('#startMatch');
@@ -119,8 +119,8 @@ jobs:
                 return r.width > 0 && r.height > 0 && s.display !== 'none' && s.visibility !== 'hidden';
               })
               .map(node)
-              .filter((entry) => entry.rect.width >= 80 && entry.rect.height >= 30)
-              .slice(0,120);
+              .filter((entry) => entry.rect.width >= 70 && entry.rect.height >= 25)
+              .slice(0,160);
             return {
               viewport:{width:innerWidth,height:innerHeight,scrollX,scrollY},
               setup:node(setup), start:node(start), host:node(host),
@@ -133,72 +133,11 @@ jobs:
           EOF
           node .northstar-public/inspect-setup.mjs
 
-      - name: Prepare exact public-origin R19 runner
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p .northstar-public
-          SOURCE='tests/browser-full-interaction.spec.mjs'
-          TARGET='.northstar-public/browser-full-interaction.spec.mjs'
-          grep -qF "'/browser/GAMEROAD.html'" "$SOURCE"
-          sed "s#'/browser/GAMEROAD.html'#'/'#g" "$SOURCE" > "$TARGET"
-          cat > .northstar-public/playwright.config.mjs <<'EOF'
-          import { defineConfig } from '@playwright/test';
-          import baseConfig from '../playwright.full-interaction.config.mjs';
-
-          const publicProjects = (baseConfig.projects ?? [])
-            .filter((project) => !project.grep)
-            .map((project) => ({ name: project.name, use: project.use }));
-
-          export default defineConfig({
-            testDir: '.',
-            testMatch: 'browser-full-interaction.spec.mjs',
-            grep: /R19 reaches Result from visible four-player Honey Hunt and returns Home/,
-            timeout: 240_000,
-            expect: { timeout: 7_000 },
-            fullyParallel: false,
-            workers: 1,
-            retries: 0,
-            outputDir: '../test-results/public-origin',
-            reporter: [
-              ['line'],
-              ['html', { outputFolder: '../playwright-report-public-origin', open: 'never' }],
-              ['json', { outputFile: '../test-results/public-origin/public-origin-report.json' }],
-            ],
-            use: {
-              ...baseConfig.use,
-              baseURL: process.env.GAMEROAD_PUBLIC_BASE_URL,
-              trace: 'retain-on-failure',
-              screenshot: 'on',
-              video: 'off',
-            },
-            projects: publicProjects,
-          });
-          EOF
-
-      - name: Run public Home Setup 4P Honey Battle Result Home path
-        run: npx playwright test --config=.northstar-public/playwright.config.mjs --workers=1
-
-      - name: Record evidence binding
-        if: always()
-        shell: bash
-        env:
-          OBSERVED_BUILD_ID: ${{ steps.public_manifest.outputs.observed_build_id }}
-        run: |
-          set -euo pipefail
-          mkdir -p public-origin-metadata
-          printf 'workflow_run_id=%s\nsource_sha=%s\nexpected_build_id=%s\nobserved_build_id=%s\npublic_origin=%s\n' \
-            "$GITHUB_RUN_ID" "d257e551b54814a97a338d6a6c41f6297dd0c037" "$EXPECTED_BUILD_ID" "${OBSERVED_BUILD_ID:-}" "$GAMEROAD_PUBLIC_BASE_URL" \
-            > public-origin-metadata/run-binding.txt
-
-      - name: Upload public interaction evidence
+      - name: Upload Setup DOM evidence
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: temp-public-bfi-northstar-${{ github.run_id }}
-          path: |
-            playwright-report-public-origin/
-            test-results/public-origin/
-            public-origin-metadata/
+          name: temp-public-setup-dom-${{ github.run_id }}
+          path: public-origin-metadata/
           if-no-files-found: error
           retention-days: 7

@@ -1,0 +1,196 @@
+name: Cards Favorite Hit Access R4
+
+on:
+  push:
+    branches:
+      - sol/cards-favorite-hitaccess-r4-20260906
+
+permissions:
+  contents: write
+
+env:
+  BASE_SHA: 5a94373bdb5c1a754c79dbf729d9a4a629af576e
+  ACQUIRE_KEY: CARDS-FAVORITE-HITACCESS-R4-20260906T0306-SOL-J7N4K2
+  MANIFEST: data/preaction-authorizations/CARDS-FAVORITE-HITACCESS-R4-20260906T0306-SOL-J7N4K2.json
+  WORKFLOW_FILE: .github/workflows/cards-favorite-hitaccess-r4-executor.yml
+
+jobs:
+  patch-test-cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact owned branch
+        uses: actions/checkout@v4
+        with:
+          ref: sol/cards-favorite-hitaccess-r4-20260906
+          fetch-depth: 0
+
+      - name: Verify PRE_ACTION fence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$BASE_SHA" HEAD
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          m = json.loads(Path(os.environ['MANIFEST']).read_text(encoding='utf-8'))
+          expected = {
+              'schemaVersion': 'gameroad-preaction-v3',
+              'recordId': os.environ['ACQUIRE_KEY'],
+              'taskId': 'BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001',
+              'workUnitKey': 'CARDS-FAVORITE-HITACCESS-LIVE-R4',
+              'authorizationBaseSha': os.environ['BASE_SHA'],
+              'leaseAuthority': 'CURRENT_ACTIVE_LEASES',
+              'leaseState': 'ACTIVE',
+          }
+          for key, value in expected.items():
+              if m.get(key) != value:
+                  raise SystemExit(f'PRE_ACTION mismatch {key}: {m.get(key)!r} != {value!r}')
+          token = str(m.get('proceedToken', ''))
+          if not token.startswith(f"PROCEED|{os.environ['ACQUIRE_KEY']}|"):
+              raise SystemExit('PRE_ACTION proceed token mismatch')
+          PY
+          mapfile -t changed < <(git diff --name-only "$BASE_SHA...HEAD" | sort)
+          mapfile -t expected < <(printf '%s\n' "$MANIFEST" "$WORKFLOW_FILE" | sort)
+          test "${#changed[@]}" -eq 2
+          test "${changed[0]}" = "${expected[0]}"
+          test "${changed[1]}" = "${expected[1]}"
+
+      - name: Patch product and focused browser regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import textwrap
+
+          product = Path('browser/cards-deck-presentation.mjs')
+          text = product.read_text(encoding='utf-8')
+          old = '[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}[data-role="cards-deck-findability"] input{min-height:44px;min-width:min(240px,58vw);padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(10,18,30,.72);color:inherit;font:inherit}[data-role="cards-deck-findability"] button{min-height:44px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:transparent;color:inherit;font:700 13px/1 system-ui}'
+          new = '[data-role="cards-deck-findability"]{position:relative;z-index:2;pointer-events:none;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}#collectionGrid{position:relative;z-index:1;isolation:isolate}[data-role="cards-deck-findability"] input{pointer-events:auto;min-height:44px;min-width:min(240px,58vw);padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(10,18,30,.72);color:inherit;font:inherit}[data-role="cards-deck-findability"] button{pointer-events:auto;min-height:44px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:transparent;color:inherit;font:700 13px/1 system-ui}'
+          if text.count(old) != 1:
+              raise SystemExit(f'expected one findability style seam, found {text.count(old)}')
+          product.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          test_path = Path('tests/home-cards-2p5d-runtime.spec.mjs')
+          current = test_path.read_text(encoding='utf-8')
+          marker = 'Cards favorite controls and Collection cards remain mutually hit-accessible across target viewports'
+          if marker in current:
+              raise SystemExit('focused regression already present')
+          addition = textwrap.dedent(r'''
+          test('Cards favorite controls and Collection cards remain mutually hit-accessible across target viewports', async ({ page }) => {
+            test.setTimeout(180_000);
+            const storageKey = 'gameroad.cards.favorite.v1';
+            const sizes = [
+              { width: 1280, height: 720, label: 'desktop' },
+              { width: 390, height: 844, label: 'phone' },
+              { width: 667, height: 375, label: 'short-landscape' },
+            ];
+            const ownsPoint = async (locator) => locator.evaluate((node) => {
+              const r = node.getBoundingClientRect();
+              const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+              return top === node || node.contains(top);
+            });
+            const ready = async () => {
+              await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
+            };
+            const enterCards = async () => {
+              const go = page.locator('.homePadChoice[data-home-target="cards"]:visible').first();
+              await expect(go).toBeVisible();
+              await go.click();
+              await page.waitForFunction(() => (
+                globalThis.GAMEROAD_NAV_QA?.snapshot?.().screen === 'cards'
+                && globalThis.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase === 'IDLE'
+              ));
+              await expect(page.locator('section[data-screen="cards"]')).toBeVisible();
+            };
+            const favoriteFilter = () => page.locator('section[data-screen="cards"] [data-role="cards-deck-findability"] [data-filter="favorite"]');
+            const favoriteAction = () => page.locator('section[data-screen="cards"] [data-role="cards-favorite-action"]');
+
+            for (const size of sizes) {
+              await page.setViewportSize({ width: size.width, height: size.height });
+              const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'load' });
+              expect(response?.ok(), `${size.label}: Browser entry loads`).toBeTruthy();
+              await ready();
+              await page.evaluate((key) => localStorage.removeItem(key), storageKey);
+              await page.reload({ waitUntil: 'load' });
+              await ready();
+              await enterCards();
+
+              const card = page.locator('#collectionGrid button.slot.live.cardFace:visible').first();
+              await expect(card).toBeVisible();
+              await card.scrollIntoViewIfNeeded();
+              expect(await ownsPoint(card), `${size.label}: Collection card owns its hit point`).toBe(true);
+              const cardId = await card.getAttribute('data-id');
+              expect(cardId, `${size.label}: Collection card has stable id`).toBeTruthy();
+              await card.click();
+
+              const favorite = favoriteAction();
+              await expect(favorite).toBeVisible();
+              await favorite.click();
+              await expect(favorite).toHaveAttribute('aria-pressed', 'true');
+              await page.locator('#r4PreviewClose').click();
+
+              const filter = favoriteFilter();
+              await expect(filter).toBeVisible();
+              await filter.scrollIntoViewIfNeeded();
+              expect(await ownsPoint(filter), `${size.label}: favorite-only filter owns its hit point`).toBe(true);
+              await filter.click();
+              await expect(filter).toHaveAttribute('aria-pressed', 'true');
+
+              const filtered = page.locator(`#collectionGrid [data-id="${cardId}"]:visible`).first();
+              await expect(filtered, `${size.label}: favorited card remains visible`).toBeVisible();
+              await filtered.scrollIntoViewIfNeeded();
+              expect(await ownsPoint(filtered), `${size.label}: filtered card remains hit-accessible`).toBe(true);
+              await filtered.click();
+              await expect(favoriteAction()).toHaveAttribute('aria-pressed', 'true');
+              await page.locator('#r4PreviewClose').click();
+
+              await page.reload({ waitUntil: 'load' });
+              await ready();
+              await enterCards();
+              const filterAfterReload = favoriteFilter();
+              await expect(filterAfterReload).toBeVisible();
+              await filterAfterReload.scrollIntoViewIfNeeded();
+              expect(await ownsPoint(filterAfterReload), `${size.label}: filter remains hit-accessible after reload`).toBe(true);
+              await filterAfterReload.click();
+              await expect(filterAfterReload).toHaveAttribute('aria-pressed', 'true');
+              const persisted = page.locator(`#collectionGrid [data-id="${cardId}"]:visible`).first();
+              await expect(persisted, `${size.label}: favorite survives reload`).toBeVisible();
+              await persisted.scrollIntoViewIfNeeded();
+              expect(await ownsPoint(persisted), `${size.label}: persisted favorite remains hit-accessible`).toBe(true);
+              await persisted.click();
+              await expect(favoriteAction()).toHaveAttribute('aria-pressed', 'true');
+              await favoriteAction().click();
+              await expect(favoriteAction()).toHaveAttribute('aria-pressed', 'false');
+              await page.evaluate((key) => localStorage.removeItem(key), storageKey);
+            }
+          });
+          ''').strip()
+          test_path.write_text(current.rstrip() + '\n\n' + addition + '\n', encoding='utf-8')
+          PY
+          git diff --check
+          grep -Fq 'pointer-events:none' browser/cards-deck-presentation.mjs
+          grep -Fq 'mutually hit-accessible across target viewports' tests/home-cards-2p5d-runtime.spec.mjs
+          ! grep -Fq 'data-screed' tests/home-cards-2p5d-runtime.spec.mjs
+
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run focused browser regression
+        run: npx playwright test tests/home-cards-2p5d-runtime.spec.mjs --config=playwright.config.mjs --grep "mutually hit-accessible across target viewports" --workers=1
+
+      - name: Commit bounded product result and remove transient authorization
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f "$WORKFLOW_FILE" "$MANIFEST"
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/cards-deck-presentation.mjs tests/home-cards-2p5d-runtime.spec.mjs "$WORKFLOW_FILE" "$MANIFEST"
+          git commit -m 'Fix Cards favorite filter hit access'
+          git push origin HEAD:sol/cards-favorite-hitaccess-r4-20260906

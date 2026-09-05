@@ -368,12 +368,16 @@ test('Cards local skin consumer fails closed without a Cards document and has no
   }
 });
 
-test('Cards findability contract stays minimal and does not own card, Deck, or ownership state', async () => {
+test('Cards findability contract adds favorite without taking Deck or ownership authority', async () => {
   const mod = await import('../browser/cards-deck-presentation.mjs');
-  assert.equal(mod.CARDS_DECK_FINDABILITY_CONTRACT.schema, 'gameroad.cards-deck-findability.v1');
+  assert.equal(mod.CARDS_DECK_FINDABILITY_CONTRACT.schema, 'gameroad.cards-deck-findability.v2');
   assert.deepEqual(mod.CARDS_DECK_FINDABILITY_CONTRACT.searchFields, ['cardId', 'accessible-visible-text']);
   assert.deepEqual(mod.CARDS_DECK_FINDABILITY_CONTRACT.quickFilters, ['in-deck', 'not-in-deck']);
   assert.equal(mod.CARDS_DECK_FINDABILITY_CONTRACT.quickFilterCount, 2);
+  assert.equal(mod.CARDS_DECK_FINDABILITY_CONTRACT.favoriteFilter, 'favorite');
+  assert.equal(mod.CARDS_DECK_FINDABILITY_CONTRACT.favoritePersistence, 'local-ui-only');
+  assert.equal(mod.CARDS_DECK_FINDABILITY_CONTRACT.favoriteStorageKey, 'gameroad.cards.favorite.v1');
+  assert.equal(mod.CARDS_DECK_FINDABILITY_CONTRACT.favoriteActionUseSite, 'card-detail-action-area');
   assert.equal(mod.CARDS_DECK_FINDABILITY_CONTRACT.persistence, 'none');
   assert.equal(mod.CARDS_DECK_FINDABILITY_CONTRACT.ownsCardData, false);
   assert.equal(mod.CARDS_DECK_FINDABILITY_CONTRACT.mutatesDeck, false);
@@ -384,23 +388,23 @@ test('Cards findability normalizes query and searches current text or card id', 
   const mod = await import('../browser/cards-deck-presentation.mjs');
   assert.equal(mod.normalizeCardsDeckSearchQuery('  ＳＰ＿Ａ  '), 'sp_a');
   assert.equal(mod.matchCardsDeckFindabilityCard(
-    { cardId: 'SP_A', text: 'Spade A 詳細を開く', inDeck: false },
+    { cardId: 'SP_A', text: 'Spade A 詳細を開く', inDeck: false, favorite: false },
     { query: 'ｓｐ＿ａ', deckFilter: 'all' },
   ), true);
   assert.equal(mod.matchCardsDeckFindabilityCard(
-    { cardId: 'DCG_SAASUNA', text: 'サースナー 詳細を開く', inDeck: true },
+    { cardId: 'DCG_SAASUNA', text: 'サースナー 詳細を開く', inDeck: true, favorite: false },
     { query: 'サースナー', deckFilter: 'all' },
   ), true);
   assert.equal(mod.matchCardsDeckFindabilityCard(
-    { cardId: 'HT_7', text: 'ハート7', inDeck: false },
+    { cardId: 'HT_7', text: 'ハート7', inDeck: false, favorite: false },
     { query: 'サースナー', deckFilter: 'all' },
   ), false);
 });
 
-test('Cards findability uses only the two current Deck-membership quick filters', async () => {
+test('Cards findability retains exactly two Deck-membership quick filters', async () => {
   const mod = await import('../browser/cards-deck-presentation.mjs');
-  const inDeck = { cardId: 'SP_A', text: 'Spade A', inDeck: true };
-  const outDeck = { cardId: 'HT_A', text: 'ハートA', inDeck: false };
+  const inDeck = { cardId: 'SP_A', text: 'Spade A', inDeck: true, favorite: false };
+  const outDeck = { cardId: 'HT_A', text: 'ハートA', inDeck: false, favorite: false };
   assert.equal(mod.matchCardsDeckFindabilityCard(inDeck, { deckFilter: 'in-deck' }), true);
   assert.equal(mod.matchCardsDeckFindabilityCard(outDeck, { deckFilter: 'in-deck' }), false);
   assert.equal(mod.matchCardsDeckFindabilityCard(inDeck, { deckFilter: 'not-in-deck' }), false);
@@ -409,19 +413,81 @@ test('Cards findability uses only the two current Deck-membership quick filters'
   assert.equal(mod.matchCardsDeckFindabilityCard(outDeck, { deckFilter: 'corrupt-state' }), true);
 });
 
-test('Cards findability application changes only Collection visibility and fails closed without Cards DOM', async () => {
+test('Cards favorite state is local, deduped, reversible and corrupt storage fails closed', async () => {
+  const mod = await import('../browser/cards-deck-presentation.mjs');
+  assert.deepEqual(mod.normalizeCardsFavoriteIds(['SP_A', 'SP_A', ' HT_A ', '', null]), ['SP_A', 'HT_A']);
+  assert.deepEqual(mod.parseCardsFavoriteIds('["SP_A","HT_A","SP_A"]'), ['SP_A', 'HT_A']);
+  assert.deepEqual(mod.parseCardsFavoriteIds('{broken'), []);
+  assert.deepEqual(mod.toggleCardsFavoriteId(['SP_A'], 'HT_A'), ['SP_A', 'HT_A']);
+  assert.deepEqual(mod.toggleCardsFavoriteId(['SP_A', 'HT_A'], 'SP_A'), ['HT_A']);
+
+  const memory = new Map();
+  const storage = {
+    getItem: (key) => memory.get(key) ?? null,
+    setItem: (key, value) => memory.set(key, value),
+  };
+  assert.equal(mod.writeCardsFavoriteIdsToStorage({ storage, values: ['SP_A', 'HT_A', 'SP_A'] }), true);
+  assert.equal(memory.get('gameroad.cards.favorite.v1'), '["SP_A","HT_A"]');
+  assert.deepEqual(mod.readCardsFavoriteIdsFromStorage({ storage }), ['SP_A', 'HT_A']);
+  memory.set('gameroad.cards.favorite.v1', 'not-json');
+  assert.deepEqual(mod.readCardsFavoriteIdsFromStorage({ storage }), []);
+  assert.equal(mod.writeCardsFavoriteIdsToStorage({ storage: null, values: ['SP_A'] }), false);
+});
+
+test('favorite filter composes with search and Deck membership instead of replacing them', async () => {
+  const mod = await import('../browser/cards-deck-presentation.mjs');
+  const favoriteInDeck = { cardId: 'SP_A', text: 'Spade A', inDeck: true, favorite: true };
+  const favoriteOutDeck = { cardId: 'HT_A', text: 'ハートA', inDeck: false, favorite: true };
+  const ordinaryInDeck = { cardId: 'CL_A', text: 'クラブA', inDeck: true, favorite: false };
+  assert.equal(mod.matchCardsDeckFindabilityCard(favoriteInDeck, { favoriteOnly: true }), true);
+  assert.equal(mod.matchCardsDeckFindabilityCard(ordinaryInDeck, { favoriteOnly: true }), false);
+  assert.equal(mod.matchCardsDeckFindabilityCard(favoriteInDeck, { favoriteOnly: true, deckFilter: 'in-deck', query: 'spade' }), true);
+  assert.equal(mod.matchCardsDeckFindabilityCard(favoriteOutDeck, { favoriteOnly: true, deckFilter: 'in-deck' }), false);
+  assert.equal(mod.matchCardsDeckFindabilityCard(favoriteInDeck, { favoriteOnly: true, deckFilter: 'in-deck', query: 'heart' }), false);
+});
+
+test('Cards findability application changes only Collection visibility and combines favorite state', async () => {
   const mod = await import('../browser/cards-deck-presentation.mjs');
   const cards = [
     { dataset: { id: 'SP_A' }, textContent: 'Spade A', hidden: false, classList: { contains: () => true }, getAttribute: () => 'Spade A 札組登録済み' },
     { dataset: { id: 'HT_A' }, textContent: 'ハートA', hidden: false, classList: { contains: () => false }, getAttribute: () => 'ハートA 詳細を開く' },
   ];
   const doc = { querySelectorAll: (selector) => selector === '#collectionGrid [data-id]' ? cards : [] };
-  assert.deepEqual(mod.applyCardsDeckFindability({ document: doc, query: 'spade', deckFilter: 'in-deck' }), {
-    total: 2, visible: 1, query: 'spade', deckFilter: 'in-deck',
+  assert.deepEqual(mod.applyCardsDeckFindability({
+    document: doc,
+    query: 'spade',
+    deckFilter: 'in-deck',
+    favoriteOnly: true,
+    favoriteIds: ['SP_A'],
+  }), {
+    total: 2, visible: 1, query: 'spade', deckFilter: 'in-deck', favoriteOnly: true,
   });
   assert.equal(cards[0].hidden, false);
   assert.equal(cards[1].hidden, true);
+  assert.deepEqual(mod.applyCardsDeckFindability({
+    document: doc,
+    deckFilter: 'all',
+    favoriteOnly: true,
+    favoriteIds: ['HT_A'],
+  }), {
+    total: 2, visible: 1, query: '', deckFilter: 'all', favoriteOnly: true,
+  });
+  assert.equal(cards[0].hidden, true);
+  assert.equal(cards[1].hidden, false);
   const installation = mod.installCardsDeckFindability({ document: null, window: null });
   assert.equal(typeof installation.destroy, 'function');
   assert.doesNotThrow(() => installation.destroy());
+});
+
+test('favorite action reuses existing card-detail action area instead of overlaying swipe card surfaces', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('export function installCardsDeckFindability');
+  const end = source.indexOf('function createExistingDeckAuthorityBridge');
+  const findabilitySource = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.ok(findabilitySource.includes("const detailAnchor = doc.querySelector('#addSelectedCard')"));
+  assert.ok(findabilitySource.includes("favoriteAction.dataset.role = 'cards-favorite-action'"));
+  assert.ok(findabilitySource.includes("event?.target?.closest?.('#collectionGrid [data-id]')"));
+  assert.equal(findabilitySource.includes("node.appendChild(favoriteAction)"), false);
 });

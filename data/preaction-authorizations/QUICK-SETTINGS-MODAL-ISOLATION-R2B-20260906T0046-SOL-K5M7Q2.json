@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "QUICK-SETTINGS-MODAL-ISOLATION-R2B-20260906T0046-SOL-K5M7Q2",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "QUICK_SETTINGS_MODAL_INPUT_ISOLATION_R2_RECOVERY",
+  "acquireKey": "QUICK-SETTINGS-MODAL-ISOLATION-R2B-20260906T0046-SOL-K5M7Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-main-e878972e-modal-tab-escape-direct-readback",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "actions-run-33976513854-exact-product-blobs-focused-tests-pass",
+  "proceedToken": "PROCEED|QUICK-SETTINGS-MODAL-ISOLATION-R2B-20260906T0046-SOL-K5M7Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-actual|exact-tested-blobs|lease-A487",
+  "authorizationBaseSha": "e878972e2bdb3df294a48b0aab11b0259a8a00a8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "QUICK_SETTINGS_MODAL_INPUT_ISOLATION_R2_RECOVERY",
+  "leaseAcquireKey": "QUICK-SETTINGS-MODAL-ISOLATION-R2B-20260906T0046-SOL-K5M7Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 01:04 JST",
+  "leaseUntilJst": "2026-09-06 01:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A487:L487",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch sol/quick-settings-modal-isolation-r2b-20260906 only: browser/home-boot-runtime-mount.mjs; tests/home-boot-presentation.test.mjs; data/preaction-authorizations/QUICK-SETTINGS-MODAL-ISOLATION-R2B-20260906T0046-SOL-K5M7Q2.json transient authorization witness only. browser/GAMEROAD.html + Cards/Gacha/Battle modules + settings/audio/save/gameplay/rules/economy/network READ_ONLY. Prior executor workflow history is invalid for merge and is excluded by force-reconstructed clean history.",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ]
+}

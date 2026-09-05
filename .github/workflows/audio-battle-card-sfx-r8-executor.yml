@@ -1,0 +1,37 @@
+name: AUDIO Battle Card SFX R8 Executor
+
+on:
+  push:
+    branches:
+      - sol/audio-battle-card-sfx-r8-20260905
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify exact authorization lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD~1)" = "b831c0c8858ddeab032775d23f83e69fe2c2b109"
+          test "$(git rev-parse HEAD~2)" = "093220a142bea6cfb60b453b16bbfb279ccfa1db"
+          git diff --name-only 093220a142bea6cfb60b453b16bbfb279ccfa1db...HEAD
+      - name: Inspect live selection submit and audio seams
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== roadSelect / battleSelect ==='
+          grep -n -C 7 -E 'roadSelect|battleSelect' browser/GAMEROAD.html | head -n 220 || true
+          echo '=== readyPlan ==='
+          grep -n -C 12 -E 'readyPlan' browser/GAMEROAD.html | head -n 260 || true
+          echo '=== formal audio references ==='
+          grep -R -n -C 6 -E 'click_002\.ogg|cardSlide6\.ogg|cardPlace1\.ogg|new Audio\(|\.play\(\)' browser tests --exclude='GAMEROAD.html' | head -n 280 || true
+          echo '=== battle screen mount exports / caller seams ==='
+          grep -n -C 8 -E 'mountBattleScreenExternalSurface|renderHud|settingsButton|addEventListener|dispatchEvent' browser/battle-screen-runtime-mount.mjs | head -n 240 || true

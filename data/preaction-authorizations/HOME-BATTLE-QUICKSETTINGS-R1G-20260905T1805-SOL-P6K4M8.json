@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-BATTLE-QUICKSETTINGS-R1G-20260905T1805-SOL-P6K4M8",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_BATTLE_QUICK_SETTINGS_MASTER_VOLUME_INSPECTION_R1G",
+  "acquireKey": "HOME-BATTLE-QUICKSETTINGS-R1G-20260905T1805-SOL-P6K4M8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_TASK_REQUIRES_MASTER_VOLUME+CURRENT_QUICK_SETTINGS_EXPLICIT_MASTER_GAP",
+  "rehearsalStatus": "N_A_READ_ONLY_INSPECTION",
+  "rehearsalEvidenceId": "CURRENT_MAIN_DIRECT_AUDIO_CONSUMER_AND_SETTINGS_TEST_READBACK",
+  "proceedToken": "PROCEED|HOME-BATTLE-QUICKSETTINGS-R1G-20260905T1805-SOL-P6K4M8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|READ_ONLY_SETTINGS_AUTHORITY_INSPECTION",
+  "authorizationBaseSha": "37633d9d2acf37405c3f883917a3f475596e0f77",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_BATTLE_QUICK_SETTINGS_MASTER_VOLUME_INSPECTION_R1G",
+  "leaseAcquireKey": "HOME-BATTLE-QUICKSETTINGS-R1G-20260905T1805-SOL-P6K4M8",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 18:05 JST",
+  "leaseUntilJst": "2026-09-05 19:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A392:L392",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@37633d9d2acf37405c3f883917a3f475596e0f77; intended branch sol/home-battle-quicksettings-r1g-inspect-20260905; mutable UNIQUE_TRANSIENT .github/workflows/home-battle-quicksettings-r1g-inspect.yml + TRANSIENT data/preaction-authorizations/HOME-BATTLE-QUICKSETTINGS-R1G-20260905T1805-SOL-P6K4M8.json only; browser/GAMEROAD.html + browser/home-boot-runtime-mount.mjs + browser/field-music-policy-core.mjs + browser/partner-saasuna-voice-runtime.mjs + tests/browser-full-interaction.spec.mjs + gameplay/rules/save/economy/network READ_ONLY. Workflow may only print bounded grep/context and browser-state diagnostics for existing Settings authority; no product/test mutation.",
+  "scope": [
+    ".github/workflows/home-battle-quicksettings-r1g-inspect.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/home-battle-quicksettings-r1g-inspect.yml"
+  ],
+  "solutionSignature": "inspect-existing-settings-authority-before-master-volume-implementation",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_TASK_FORBIDS_SECOND_SETTINGS_AUTHORITY;MONOLITH_IS_CURRENT_CANONICAL_SETTINGS_HOST",
+  "solutionSearchEvidence": [
+    "current parent Task explicitly requires 全体音量 and forbids omission as an implementation gap",
+    "current quick-settings runtime explicitly lists masterVolume as an authority gap",
+    "current field music consumer multiplies baseVolume by musicVolume only",
+    "current partner voice runtime applies only the voice tuning volume",
+    "current monolith and Home runtime are owned by other valid leases, so product mutation is intentionally excluded from this inspection"
+  ],
+  "scopeRebaseReason": "Horizontal cross-check: do not make stale acceptance green before the required master-volume behavior exists. Inspect the exact existing Settings persistence and audio wiring first, using one branch-only bounded workflow; product and tests remain read-only."
+}

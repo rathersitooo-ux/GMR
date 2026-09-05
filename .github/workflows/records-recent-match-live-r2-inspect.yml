@@ -1,0 +1,56 @@
+name: Records Recent Match Live R2 Inspect
+
+on:
+  push:
+    branches:
+      - sol/records-recent-match-live-r2-20260905
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify exact inspection authorization
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD~2)" = "e878972e2bdb3df294a48b0aab11b0259a8a00a8"
+          test -f data/preaction-authorizations/RECORDS-RECENT-MATCH-LIVE-R2-20260905T2312-SOL-R5K8P2.json
+          printf '%s\n' '=== inspection-only diff ==='
+          git diff --name-only e878972e2bdb3df294a48b0aab11b0259a8a00a8...HEAD
+          test "$(git diff --name-only e878972e2bdb3df294a48b0aab11b0259a8a00a8...HEAD | sort | tr '\n' ' ')" = ".github/workflows/records-recent-match-live-r2-inspect.yml data/preaction-authorizations/RECORDS-RECENT-MATCH-LIVE-R2-20260905T2312-SOL-R5K8P2.json "
+      - name: Inspect current Records screen and navigation seams
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== Records / 履歴 matches in GAMEROAD.html ==='
+          grep -n -C 14 -E 'Records|records|対戦履歴|履歴' browser/GAMEROAD.html | head -n 700 || true
+      - name: Inspect current history producer and save shape
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== state.history / history mutation ==='
+          grep -n -C 22 -E 'state\.history|history\.(unshift|push|slice)|history[[:space:]]*:' browser/GAMEROAD.html | head -n 900 || true
+          echo '=== endMatch seams ==='
+          grep -n -C 35 -E 'function[[:space:]]+endMatch|endMatch[[:space:]]*=|endMatch\(' browser/GAMEROAD.html | head -n 1200 || true
+          echo '=== save/load/localStorage near history ==='
+          grep -n -C 20 -E 'saveState|loadState|localStorage|JSON\.stringify|JSON\.parse' browser/GAMEROAD.html | head -n 900 || true
+      - name: Inspect Deck snapshot candidates without changing authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== current deck / selected deck / match-start seams ==='
+          grep -n -C 18 -E 'selectedDeck|activeDeck|currentDeck|deckId|deckName|deck[[:space:]]*:' browser/GAMEROAD.html | head -n 900 || true
+      - name: Inspect Browser public packaging seams
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== build copy/package rules ==='
+          grep -n -C 12 -E 'browser/|copyFile|copyFileSync|source-only|sourceOnly|\.mjs' deploy/cloudflare/scripts/build.mjs | head -n 900 || true
+          echo '=== current records files ==='
+          find browser tests -maxdepth 2 -type f -iname '*record*' -o -iname '*history*' | sort || true

@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   apply-bounded-repair:
-    if: ${{ github.event.head_commit.message == 'PREACTION: authorize Setup short-landscape CTA repair R1' }}
+    if: "${{ github.event.head_commit.message == 'PREACTION: fix Setup short-landscape executor condition syntax' }}"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,7 +47,7 @@ jobs:
           git push origin HEAD:sol/setup-short-landscape-cta-r1-20260905
 
   exact-head-browser-evidence:
-    if: ${{ github.event.head_commit.message == 'Setup: keep primary start visible in short landscape' }}
+    if: "${{ github.event.head_commit.message == 'Setup: keep primary start visible in short landscape' }}"
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

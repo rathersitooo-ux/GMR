@@ -1,0 +1,209 @@
+name: Battle Slot Roll Parity R1 Patch
+
+on:
+  push:
+    branches:
+      - sol/battle-slotroll-parity-r1-20260905
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-slotroll-parity-r1-20260905
+          fetch-depth: 0
+      - name: Apply marker-guarded Battle Slot Roll parity patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          runtime = Path('browser/battle-janken-slidepad-runtime-mount.mjs')
+          text = runtime.read_text()
+
+          def replace_once(source, old, new, label):
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one marker, found {count}')
+              return source.replace(old, new, 1)
+
+          text = replace_once(text,
+          "} from './new-base-round-start-janken-slot-assignment-core.mjs';\n",
+          "} from './new-base-round-start-janken-slot-assignment-core.mjs';\nimport {\n  advanceSlotRollDrag,\n  createSlotRollState,\n  resolveSlotRollCommit,\n} from './slidepad-slot-roll-core.mjs';\n",
+          'shared core import')
+
+          helper = r'''
+export function createBattleJankenSlotRollState(model, anchorHand) {
+  const items = SLOT_ORDER.flatMap((hand) => {
+    const slot = model?.slots?.find?.((candidate) => candidate.jankenHand === hand);
+    if (!slot?.selectable || !slot.cardId) return [];
+    return [{ id: hand, label: `${slot.symbol ?? ''} ${slot.hand ?? hand}`.trim() }];
+  });
+  const anchorIndex = items.findIndex((item) => item.id === anchorHand);
+  if (items.length === 0 || anchorIndex < 0) return null;
+  return createSlotRollState({ items, anchorIndex });
+}
+
+export function advanceBattleJankenSlotRollState(state, { deltaPx, detentPx } = {}) {
+  if (!state) return Object.freeze({ state: null, detents: Object.freeze([]) });
+  return advanceSlotRollDrag(state, { deltaPx, detentPx });
+}
+
+'''
+          text = replace_once(text,
+          "export function isBattleHandAuraLaunchArmed({\n",
+          helper + "export function isBattleHandAuraLaunchArmed({\n",
+          'slot roll helper insertion')
+
+          text = replace_once(text,
+          "  let armedHand = null;\n  let handDrag = null;\n",
+          "  let armedHand = null;\n  let slotRollState = null;\n  let slotRollLastX = 0;\n  let slotRollDetentPx = 0;\n  let handDrag = null;\n",
+          'slot roll runtime state')
+
+          text = replace_once(text,
+          "  function currentGestureCandidates() {\n",
+          r'''  function clearBattleSlotRoll() {
+    slotRollState = null;
+    slotRollLastX = 0;
+    slotRollDetentPx = 0;
+  }
+
+  function beginBattleSlotRoll(anchorHand, pointerX) {
+    slotRollState = createBattleJankenSlotRollState(model, anchorHand);
+    slotRollLastX = Number(pointerX);
+    const handleWidth = Number(handle.getBoundingClientRect?.()?.width);
+    slotRollDetentPx = Number.isFinite(handleWidth) && handleWidth > 0 ? handleWidth : 0;
+    return slotRollState;
+  }
+
+  function currentGestureCandidates() {
+''',
+          'slot roll runtime helpers')
+
+          old_update = r'''  function updateGesture(event) {
+    if (activePointerId === null || event?.pointerId !== activePointerId || !dragOrigin) return null;
+    const pointer = { x: Number(event.clientX), y: Number(event.clientY) };
+    if (![pointer.x, pointer.y].every(Number.isFinite)) return null;
+    if (Math.hypot(pointer.x - dragOrigin.x, pointer.y - dragOrigin.y) >= GESTURE_DEAD_ZONE_PX) dragMoved = true;
+    const target = resolveBattleJankenSlidePadGestureTarget({
+      origin: dragOrigin,
+      pointer,
+      candidates: currentGestureCandidates(),
+    });
+    setArmed(target);
+    event.preventDefault?.();
+    return target;
+  }
+'''
+          new_update = r'''  function updateGesture(event) {
+    if (activePointerId === null || event?.pointerId !== activePointerId || !dragOrigin) return null;
+    const pointer = { x: Number(event.clientX), y: Number(event.clientY) };
+    if (![pointer.x, pointer.y].every(Number.isFinite)) return null;
+    if (Math.hypot(pointer.x - dragOrigin.x, pointer.y - dragOrigin.y) >= GESTURE_DEAD_ZONE_PX) dragMoved = true;
+
+    if (!slotRollState) {
+      const anchor = resolveBattleJankenSlidePadGestureTarget({
+        origin: dragOrigin,
+        pointer,
+        candidates: currentGestureCandidates(),
+      });
+      setArmed(anchor);
+      if (anchor) beginBattleSlotRoll(anchor, pointer.x);
+      event.preventDefault?.();
+      return anchor;
+    }
+
+    const deltaPx = pointer.x - slotRollLastX;
+    slotRollLastX = pointer.x;
+    if (slotRollDetentPx > 0 && Number.isFinite(deltaPx) && deltaPx !== 0) {
+      slotRollState = advanceBattleJankenSlotRollState(slotRollState, {
+        deltaPx,
+        detentPx: slotRollDetentPx,
+      }).state;
+      setArmed(slotRollState?.itemId ?? armedHand);
+    }
+    event.preventDefault?.();
+    return armedHand;
+  }
+'''
+          text = replace_once(text, old_update, new_update, 'gesture adapter')
+
+          text = replace_once(text,
+          "    const selectedHand = commit && dragMoved ? armedHand : null;\n    activePointerId = null;\n",
+          "    const selectedHand = commit && dragMoved\n      ? (resolveSlotRollCommit(slotRollState)?.itemId ?? armedHand)\n      : null;\n    activePointerId = null;\n",
+          'release commit')
+
+          text = replace_once(text,
+          "    dragStartedExpanded = false;\n    setArmed(null);\n",
+          "    dragStartedExpanded = false;\n    clearBattleSlotRoll();\n    setArmed(null);\n",
+          'release cleanup')
+
+          text = replace_once(text,
+          "    dragMoved = false;\n    dragStartedExpanded = expanded;\n",
+          "    dragMoved = false;\n    clearBattleSlotRoll();\n    dragStartedExpanded = expanded;\n",
+          'pointerdown reset')
+
+          runtime.write_text(text)
+
+          test_file = Path('tests/battle-janken-slidepad-runtime-mount.test.mjs')
+          tests = test_file.read_text()
+          tests = replace_once(tests,
+          "  buildBattleJankenSlidePadModel,\n",
+          "  advanceBattleJankenSlotRollState,\n  buildBattleJankenSlidePadModel,\n  createBattleJankenSlotRollState,\n",
+          'test imports')
+
+          marker = "test('Battle Slot Roll uses the shared detent loop after the radial anchor'"
+          if marker in tests:
+              raise SystemExit('focused tests already present')
+          tests += r'''
+
+test('Battle Slot Roll uses the shared detent loop after the radial anchor', () => {
+  const model = buildBattleJankenSlidePadModel({ roundId: 'roll-1', hand, pickDuplicateIndex: () => 1 });
+  let state = createBattleJankenSlotRollState(model, 'ROCK');
+  assert.equal(state.itemId, 'ROCK');
+
+  state = advanceBattleJankenSlotRollState(state, { deltaPx: 68, detentPx: 68 }).state;
+  assert.equal(state.itemId, 'SCISSORS');
+  state = advanceBattleJankenSlotRollState(state, { deltaPx: 68, detentPx: 68 }).state;
+  assert.equal(state.itemId, 'PAPER');
+  state = advanceBattleJankenSlotRollState(state, { deltaPx: 68, detentPx: 68 }).state;
+  assert.equal(state.itemId, 'ROCK', 'rightward stepping wraps');
+  state = advanceBattleJankenSlotRollState(state, { deltaPx: -68, detentPx: 68 }).state;
+  assert.equal(state.itemId, 'PAPER', 'reversing direction immediately walks the same loop backward');
+});
+
+test('Battle Slot Roll excludes empty or disabled janken hands instead of creating a second selection authority', () => {
+  const model = {
+    slots: [
+      { jankenHand: 'ROCK', symbol: '♣', hand: 'グー', cardId: 'r', selectable: true },
+      { jankenHand: 'SCISSORS', symbol: '♦', hand: 'チョキ', cardId: null, selectable: false },
+      { jankenHand: 'PAPER', symbol: '♠', hand: 'パー', cardId: 'p', selectable: true },
+    ],
+  };
+  let state = createBattleJankenSlotRollState(model, 'ROCK');
+  assert.deepEqual(state.items.map((item) => item.id), ['ROCK', 'PAPER']);
+  state = advanceBattleJankenSlotRollState(state, { deltaPx: 58, detentPx: 58 }).state;
+  assert.equal(state.itemId, 'PAPER');
+  state = advanceBattleJankenSlotRollState(state, { deltaPx: 58, detentPx: 58 }).state;
+  assert.equal(state.itemId, 'ROCK');
+});
+'''
+          test_file.write_text(tests)
+          PY
+
+          node --check browser/battle-janken-slidepad-runtime-mount.mjs
+          node --test tests/battle-janken-slidepad-runtime-mount.test.mjs
+          git diff --check
+
+          rm .github/workflows/battle-slotroll-parity-r1.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs .github/workflows/battle-slotroll-parity-r1.yml
+          git commit -m "Battle: reuse shared Slot Roll gesture core"
+          git push origin HEAD:sol/battle-slotroll-parity-r1-20260905

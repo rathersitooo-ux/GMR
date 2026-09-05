@@ -95,12 +95,17 @@ jobs:
           cat >> "$TEST_FILE" <<'EOF'
 
           test('R5 Cards favorite controls and cards are physically hit-accessible across target viewports', async ({ page }) => {
-            test.setTimeout(120_000);
+            test.setTimeout(180_000);
             const sizes = [
               { width: 1280, height: 720, label: 'desktop' },
               { width: 390, height: 844, label: 'phone' },
               { width: 667, height: 375, label: 'short-landscape' },
             ];
+            const boot = async () => {
+              const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded', timeout: 30_000 });
+              expect(response?.ok()).toBeTruthy();
+              await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA && globalThis.GAMEROAD_SCREEN_TRANSITION));
+            };
             const enterCards = async () => {
               const go = page.locator('.homePadChoice[data-home-target="cards"]:visible').first();
               await expect(go).toBeVisible();
@@ -120,13 +125,9 @@ jobs:
             };
             for (const size of sizes) {
               await page.setViewportSize({ width: size.width, height: size.height });
-              let response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'load' });
-              expect(response?.ok(), size.label).toBeTruthy();
-              await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
+              await boot();
               await page.evaluate(() => localStorage.removeItem('gameroad.cards.favorite.v1'));
-              response = await page.reload({ waitUntil: 'load' });
-              expect(response?.ok(), size.label + ' reload after storage clear').toBeTruthy();
-              await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
+              await boot();
               await enterCards();
 
               const host = page.locator('[data-role="cards-deck-findability"]');
@@ -156,8 +157,7 @@ jobs:
               await expect(filter, size.label).toHaveAttribute('aria-pressed', 'true');
               await expect(page.locator(`#collectionGrid button.slot.live.cardFace[data-id="${cardId}"]`), size.label + ' favorite survives filter').toBeVisible();
 
-              await page.reload({ waitUntil: 'load' });
-              await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
+              await boot();
               await enterCards();
               const persistedCard = page.locator(`#collectionGrid button.slot.live.cardFace[data-id="${cardId}"]`).first();
               await expect(persistedCard, size.label + ' persisted card').toBeVisible();

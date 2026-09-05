@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PUBLICHOST-DEPLOY-RACE-R50-20260905T1305-SOL-M7K4P2",
+  "taskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "workUnitKey": "PUBLIC_DEPLOY_CONCURRENCY_RACE_R50",
+  "acquireKey": "PUBLICHOST-DEPLOY-RACE-R50-20260905T1305-SOL-M7K4P2",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1124 exact one-file deploy-trigger delta plus fresh main 199dba5 workflow readback; failure was PREACTION first-commit history only",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1124 patch is exact minimal removal of redundant workflow_run path; existing push and workflow_dispatch deploy path already independently exercised",
+  "proceedToken": "PROCEED|PUBLICHOST-DEPLOY-RACE-R50-20260905T1305-SOL-M7K4P2|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|CLEAN_RECOVERY_ONLY",
+  "authorizationBaseSha": "199dba5ae61b3ecaccd0f00fac49908922479ed4",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "leaseWorkUnitKey": "PUBLIC_DEPLOY_CONCURRENCY_RACE_R50",
+  "leaseAcquireKey": "PUBLICHOST-DEPLOY-RACE-R50-20260905T1305-SOL-M7K4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 13:05 JST",
+  "leaseUntilJst": "2026-09-05 14:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A357:L357",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@199dba5ae61b3ecaccd0f00fac49908922479ed4; intended clean branch work/publichost-deploy-race-r50-20260905; MUTABLE branch ref + .github/workflows/cloudflare-public-deploy.yml + transient data/preaction-authorizations/PUBLICHOST-DEPLOY-RACE-R50-20260905T1305-SOL-M7K4P2.json only; browser/gameplay/rules/save/economy/network/assets/deploy scripts/tests READ_ONLY.",
+  "scope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ]
+}

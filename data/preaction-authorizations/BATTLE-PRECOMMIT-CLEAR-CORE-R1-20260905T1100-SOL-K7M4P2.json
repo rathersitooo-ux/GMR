@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PRECOMMIT-CLEAR-CORE-R1-20260905T1100-SOL-K7M4P2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PRECOMMIT_CLEAR_CORE_R1",
+  "acquireKey": "BATTLE-PRECOMMIT-CLEAR-CORE-R1-20260905T1100-SOL-K7M4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_EXPLICIT_PRECOMMIT_CLEAR+CURRENT_PLAN_AND_TARGET_COMMIT_BOUNDARIES+FRESH_EXACT_LEASE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_GAMEROAD_HTML_PLAN_DRAFT+TARGET_DRAFT+FOCUSED_PURE_CORE_TESTS",
+  "proceedToken": "PROCEED|BATTLE-PRECOMMIT-CLEAR-CORE-R1-20260905T1100-SOL-K7M4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ADAPT_CURRENT_BATTLE_DRAFT_BOUNDARIES_TO_PURE_CORE",
+  "authorizationBaseSha": "4944578becfb3116682c5522254f661a6b690317",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PRECOMMIT_CLEAR_CORE_R1",
+  "leaseAcquireKey": "BATTLE-PRECOMMIT-CLEAR-CORE-R1-20260905T1100-SOL-K7M4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 11:04 JST",
+  "leaseUntilJst": "2026-09-05 11:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A353:L353",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@4944578becfb3116682c5522254f661a6b690317; clean-reconstruction branch work/battle-precommit-clear-core-r1b-20260905; mutable NEW browser/battle-precommit-clear-core.mjs + NEW tests/battle-precommit-clear-core.test.mjs + transient data/preaction-authorizations/BATTLE-PRECOMMIT-CLEAR-CORE-R1-20260905T1100-SOL-K7M4P2.json only; browser/GAMEROAD.html + tests/browser-full-interaction.spec.mjs + gameplay/rules/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/battle-precommit-clear-core.mjs",
+    "tests/battle-precommit-clear-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-precommit-clear-core.mjs",
+    "tests/battle-precommit-clear-core.test.mjs"
+  ],
+  "solutionSignature": "battle-current-draft-clear-precommit-only-no-authoritative-rollback",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_BATTLE_INLINE_DRAFT_AND_COMMIT_BOUNDARIES_ADAPTED_WITHOUT_SECOND_STATE_AUTHORITY",
+  "solutionSearchEvidence": [
+    "browser/GAMEROAD.html:updatePlanFromSelect stores current plan draft before commitPlans",
+    "browser/GAMEROAD.html:commitPlans sets busy and advances reveal after validation",
+    "browser/GAMEROAD.html:target selects stay in DOM until confirmTarget writes match.target",
+    "browser/GAMEROAD.html:resolveBattle requires match.target then sets busy/resolve",
+    "browser/GAMEROAD.html:friend planSubmitted/planValues already distinguish submitted state"
+  ],
+  "scopeRebaseReason": "Adapt the existing inline plan/target draft boundaries into a pure reusable policy helper because the live HTML consumer is independently leased. Clear is allowed only before the existing commit seams; no second Battle state, rule engine, or authoritative rollback is introduced. R1 PR#1117 remains closed unmerged as the control-plane failure record."
+}

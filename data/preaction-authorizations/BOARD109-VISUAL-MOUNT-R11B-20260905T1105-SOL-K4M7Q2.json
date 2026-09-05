@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD109-VISUAL-MOUNT-R11B-20260905T1105-SOL-K4M7Q2",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "BOARD_109_VISUAL_EXPLANATION_RUNTIME_R11",
+  "acquireKey": "BOARD109-VISUAL-MOUNT-R11-20260905T1058-SOL-K4M7Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BOARD109_R11B_CURRENT_ACTUAL_AND_TASK_R1322_20260905T1105",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "BOARD109_R11_LOCAL_NODE_CHECK_20260905T1100",
+  "proceedToken": "PROCEED|BOARD109-VISUAL-MOUNT-R11B-20260905T1105-SOL-K4M7Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_ACTUAL_REUSE_AND_LOCAL_REHEARSAL",
+  "authorizationBaseSha": "1c8698df940368e1036de769e5947bb047b783d3",
+  "scope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "browser/battle-board-visual-explanation-runtime-mount.mjs",
+    "tests/battle-board-visual-explanation-runtime-mount.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "BOARD_109_VISUAL_EXPLANATION_RUNTIME_R11",
+  "leaseAcquireKey": "BOARD109-VISUAL-MOUNT-R11-20260905T1058-SOL-K4M7Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 11:05 JST",
+  "leaseUntilJst": "2026-09-05 12:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A352:L352",
+  "leaseScope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "browser/battle-board-visual-explanation-runtime-mount.mjs",
+    "tests/battle-board-visual-explanation-runtime-mount.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@1c8698df940368e1036de769e5947bb047b783d3; branch sol/board109-visual-explanation-runtime-r11b-20260905; MUTABLE browser/battle-board-naki-4p-visual-binding.mjs + NEW browser/battle-board-visual-explanation-runtime-mount.mjs + NEW tests/battle-board-visual-explanation-runtime-mount.test.mjs + transient data/preaction-authorizations/BOARD109-VISUAL-MOUNT-R11B-20260905T1105-SOL-K4M7Q2.json only; browser/GAMEROAD.html + deploy/cloudflare/scripts/build.mjs + browser/partner-advice-runtime-mount.mjs + browser/battle-board-visual-explanation-core.mjs + gameplay/rules/save/economy/network READ_ONLY.",
+  "solutionSignature": "actual-109-board-existing-authority-to-existing-visual-core-runtime-mount",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "BOARD109_R10_CORE_NAKI_BINDING_PARTNER_EMPHASIS_REUSE_20260905",
+  "solutionSearchEvidence": [
+    "browser/battle-board-visual-explanation-core.mjs existing main core",
+    "browser/battle-board-naki-4p-visual-binding.mjs existing public artifact root blob 35da814ac389908698bcd4aa78345ea583ab724d",
+    "browser/partner-advice-runtime-mount.mjs existing projectPartnerAdviceBoardEmphasis fail-closed projector",
+    "tests/browser-full-interaction.spec.mjs actual #board .node.reachable[data-move-distance=1][data-pos] and #endpointText interaction seam"
+  ]
+}

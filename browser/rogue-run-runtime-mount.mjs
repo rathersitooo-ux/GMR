@@ -12,6 +12,10 @@ function cloneJson(value) {
   return JSON.parse(text);
 }
 
+export function getRogueRunEntryLabel(run = null) {
+  return run && run.phase !== 'COMPLETE' ? 'ローグを続ける' : 'ローグを開始';
+}
+
 function requireFunction(host, name) {
   if (typeof host?.[name] !== 'function') throw new TypeError(`ROGUE_RUNTIME_HOST_${name.toUpperCase()}_REQUIRED`);
 }
@@ -207,7 +211,7 @@ export function mountRogueRunRuntime(host) {
     const snapshot = controller.getSnapshot();
     const phase = snapshot.run?.phase || 'NOT_STARTED';
     panel.dataset.roguePhase = phase;
-    entry.textContent = phase === 'AWAITING_ROUTE' ? 'ローグを続ける' : 'ローグを開始';
+    entry.textContent = getRogueRunEntryLabel(snapshot.run);
     const routeReady = phase === 'AWAITING_ROUTE' && snapshot.pendingRouteKind === null;
     const rewardReady = phase === 'AWAITING_REWARD_DECISION';
     routes.hidden = !routeReady;

@@ -5,6 +5,7 @@ import {
   createCurrentBrowserRogueHost,
   createRoguePanelOutsideDismissHandler,
   createRogueRunConsumerController,
+  getRogueRunEntryLabel,
 } from '../browser/rogue-run-runtime-mount.mjs';
 
 function hostFixture() {
@@ -27,6 +28,19 @@ function hostFixture() {
     counts: () => ({ setupCount, homeCount }),
   };
 }
+
+test('Rogue Home entry labels every active non-complete run as continue', () => {
+  assert.equal(getRogueRunEntryLabel(null), 'ローグを開始');
+  for (const phase of [
+    'AWAITING_ROUTE',
+    'AWAITING_BATTLE_RESULT',
+    'AWAITING_REWARD_DECISION',
+    'READY_FOR_NEXT_NODE',
+  ]) {
+    assert.equal(getRogueRunEntryLabel({ phase }), 'ローグを続ける', phase);
+  }
+  assert.equal(getRogueRunEntryLabel({ phase: 'COMPLETE' }), 'ローグを開始');
+});
 
 test('live consumer closes Home route -> existing Battle -> reward skip -> next route -> boss Result', () => {
   const fixture = hostFixture();

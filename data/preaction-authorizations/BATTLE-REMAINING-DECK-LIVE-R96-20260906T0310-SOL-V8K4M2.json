@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-REMAINING-DECK-LIVE-R96-20260906T0310-SOL-V8K4M2",
+  "taskId": "BATTLE-SELF-REMAINING-DECK-INSPECT-001",
+  "workUnitKey": "BATTLE_REMAINING_DECK_LIVE_BROWSER_R96",
+  "acquireKey": "BATTLE-REMAINING-DECK-LIVE-R96-20260906T0310-SOL-V8K4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_HAS_AUTHORITATIVE_LIVE_PLAYER_DECK_COUNT_AND_EXISTING_VIEWER_SAFE_CORE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R94_PACKAGE_CLOSURE_59_OF_59_PLUS_R95B_BOUNDED_LIVE_SEAM_INSPECTION",
+  "proceedToken": "PROCEED|BATTLE-REMAINING-DECK-LIVE-R96-20260906T0310-SOL-V8K4M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|live-authority-found|active-lease-readback",
+  "authorizationBaseSha": "5a94373bdb5c1a754c79dbf729d9a4a629af576e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-SELF-REMAINING-DECK-INSPECT-001",
+  "leaseWorkUnitKey": "BATTLE_REMAINING_DECK_LIVE_BROWSER_R96",
+  "leaseAcquireKey": "BATTLE-REMAINING-DECK-LIVE-R96-20260906T0310-SOL-V8K4M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 03:10 JST",
+  "leaseUntilJst": "2026-09-06 04:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch sol/battle-remaining-deck-live-r96-20260906 only: browser/battle-replay-live-adapter.mjs; tests/battle-replay-live-adapter.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; browser/GAMEROAD.html; tests/browser-full-interaction.spec.mjs; data/preaction-authorizations/BATTLE-REMAINING-DECK-LIVE-R96-20260906T0310-SOL-V8K4M2.json transient authorization witness only. Shared gameplay/rules/save/economy/network/replay cores READ_ONLY.",
+  "scope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

@@ -58,6 +58,84 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
+      - name: Inspect short-landscape Setup DOM geometry
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public-origin-metadata
+          cat > /tmp/inspect-setup.mjs <<'EOF'
+          import fs from 'node:fs';
+          import { chromium } from '@playwright/test';
+          const base = process.env.GAMEROAD_PUBLIC_BASE_URL;
+          const browser = await chromium.launch({ headless: true });
+          const page = await browser.newPage({ viewport: { width: 667, height: 375 } });
+          await page.goto(`${base}/`, { waitUntil: 'domcontentloaded' });
+          await page.waitForTimeout(1000);
+          const setupGo = page.locator('[data-home-target="setup"]:visible, [data-go="setup"]:visible, [data-root-go="setup"]:visible').first();
+          await setupGo.click();
+          const setup = page.locator('section[data-screen="setup"]');
+          await setup.waitFor({ state: 'visible' });
+          await setup.locator('[data-content="honey_hunt"]').click();
+          await setup.locator('[data-mode="4p"]').click();
+          await page.waitForTimeout(300);
+          const data = await page.evaluate(() => {
+            const rect = (el) => {
+              const r = el?.getBoundingClientRect?.();
+              return r ? { x:r.x, y:r.y, width:r.width, height:r.height, right:r.right, bottom:r.bottom } : null;
+            };
+            const style = (el) => {
+              if (!el) return null;
+              const s = getComputedStyle(el);
+              return {
+                display:s.display, position:s.position, overflow:s.overflow,
+                overflowX:s.overflowX, overflowY:s.overflowY,
+                gridTemplateColumns:s.gridTemplateColumns,
+                gridTemplateRows:s.gridTemplateRows,
+                flexDirection:s.flexDirection,
+                justifyContent:s.justifyContent,
+                alignItems:s.alignItems,
+                padding:s.padding, margin:s.margin,
+              };
+            };
+            const node = (el) => el ? ({
+              tag:el.tagName, id:el.id || null, cls:el.className || null,
+              rect:rect(el), style:style(el),
+              text:(el.textContent || '').replace(/\s+/g,' ').trim().slice(0,120),
+            }) : null;
+            const setup = document.querySelector('section[data-screen="setup"]');
+            const start = document.querySelector('#startMatch');
+            const host = document.querySelector('#battleFieldSetupHost');
+            const ancestors = [];
+            let cur = start;
+            while (cur && cur !== document.documentElement) {
+              ancestors.push({
+                ...node(cur),
+                children:[...cur.children].map(node),
+              });
+              if (cur === setup) break;
+              cur = cur.parentElement;
+            }
+            const visibleSetupChildren = [...setup.querySelectorAll('*')]
+              .filter((el) => {
+                const r = el.getBoundingClientRect();
+                const s = getComputedStyle(el);
+                return r.width > 0 && r.height > 0 && s.display !== 'none' && s.visibility !== 'hidden';
+              })
+              .map(node)
+              .filter((entry) => entry.rect.width >= 80 && entry.rect.height >= 30)
+              .slice(0,120);
+            return {
+              viewport:{width:innerWidth,height:innerHeight,scrollX,scrollY},
+              setup:node(setup), start:node(start), host:node(host),
+              ancestors, setupChildren:[...setup.children].map(node), visibleSetupChildren,
+            };
+          });
+          fs.writeFileSync('public-origin-metadata/setup-short-landscape-dom.json', JSON.stringify(data, null, 2));
+          console.log(JSON.stringify(data, null, 2));
+          await browser.close();
+          EOF
+          node /tmp/inspect-setup.mjs
+
       - name: Prepare exact public-origin R19 runner
         shell: bash
         run: |

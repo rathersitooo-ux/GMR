@@ -1,0 +1,38 @@
+name: Result phone rank clearance R21 executor
+on:
+  push:
+    branches: [sol/result-phone-rank-clearance-r21-20260905]
+    paths: [.github/workflows/result-phone-rank-clearance-r21-executor.yml]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/result-phone-rank-clearance-r21-20260905
+          fetch-depth: 0
+      - name: Apply bounded CSS replacement
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('browser/GAMEROAD.html')
+          s = p.read_text()
+          old = '.screen.result .resultBtns{grid-template-columns:repeat(4,minmax(0,1fr))}'
+          new = '.screen.result .resultBtns{grid-template-columns:repeat(4,minmax(0,1fr));bottom:2%}'
+          if s.count(old) != 1:
+              raise SystemExit(f'expected exact rule once, got {s.count(old)}')
+          if '#postMatchAutoQueueStatus{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;line-height:1.3}' not in s:
+              raise SystemExit('mobile autoqueue visibility prerequisite missing')
+          p.write_text(s.replace(old, new))
+          PY
+          git diff --check
+          test "$(git diff --name-only)" = "browser/GAMEROAD.html"
+      - name: Commit bounded product change
+        run: |
+          git config user.name gameroad-scoped-patch
+          git config user.email gameroad-scoped-patch@users.noreply.github.com
+          git add browser/GAMEROAD.html
+          git commit -m "Result: clear phone ranking from action row"
+          git push origin HEAD:sol/result-phone-rank-clearance-r21-20260905

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "TUTORIAL-LEGACY-FIRST10-RETIRE-R1-20260905T1553-SOL-M7K4P2",
+  "taskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "workUnitKey": "TUTORIAL_NORMAL_BATTLE_LEGACY_FIRST10_PRESENTATION_RETIRE_R1",
+  "acquireKey": "TUTORIAL-LEGACY-FIRST10-RETIRE-R1-20260905T1553-SOL-M7K4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "STALE-FIRST10-LATER-TUTORIAL-RULING-20260905",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FOCUSED-DOM-CONTRACT-TEST-PLUS-REQUIRED-GATE",
+  "proceedToken": "PROCEED|TUTORIAL-LEGACY-FIRST10-RETIRE-R1-20260905T1553-SOL-M7K4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|later-user-ruling|exact-lease|reversible-presentation-only",
+  "authorizationBaseSha": "ca182b54bb8fd91ac90284d96355e3c53be78ecf",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "TUTORIAL_NORMAL_BATTLE_LEGACY_FIRST10_PRESENTATION_RETIRE_R1",
+  "leaseAcquireKey": "TUTORIAL-LEGACY-FIRST10-RETIRE-R1-20260905T1553-SOL-M7K4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 15:53 JST",
+  "leaseUntilJst": "2026-09-05 16:43 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A376:L376",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch sol/tutorial-legacy-first10-retire-r1-20260905 only: browser/profile-presentation-runtime-mount.mjs; browser/legacy-first10-presentation-retirement.mjs; tests/legacy-first10-presentation-retirement.test.mjs; data/preaction-authorizations/TUTORIAL-LEGACY-FIRST10-RETIRE-R1-20260905T1553-SOL-M7K4P2.json; CURRENT_ACTIVE_LEASES own AcquireKey row only; browser/GAMEROAD.html, partner-advice, build.test, gameplay/rules/save/economy/network/reward/formal Tutorial content READ_ONLY",
+  "scope": [
+    "browser/profile-presentation-runtime-mount.mjs",
+    "browser/legacy-first10-presentation-retirement.mjs",
+    "tests/legacy-first10-presentation-retirement.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/profile-presentation-runtime-mount.mjs",
+    "browser/legacy-first10-presentation-retirement.mjs",
+    "tests/legacy-first10-presentation-retirement.test.mjs"
+  ],
+  "solutionSignature": "Retire only stale automatic FIRST10 presentation in ordinary Battle while preserving the existing direct hand-selection and plan plumbing.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-EXISTING-RUNTIME-MOUNT-AND-FIRST10-DOM-SEAM-20260905",
+  "solutionSearchEvidence": [
+    "repo:browser/profile-presentation-runtime-mount.mjs is already a body-end always-loaded runtime mount",
+    "repo:browser/GAMEROAD.html exposes stable #first10Cue/#first10PublicRoad/.first10Focus presentation seams while .first10Road/.first10Battle carry direct selection"
+  ]
+}

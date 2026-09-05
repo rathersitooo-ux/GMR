@@ -1,0 +1,24 @@
+{
+  "schema": "gameroad.preaction-authorization.v1",
+  "acquire_key": "CARDS-FAVORITE-HITACCESS-R2-20260906T0039-SOL-M7Q2V9",
+  "task_id": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "work_unit_key": "CARDS-FAVORITE-HITACCESS-LIVE-R2",
+  "owner": "ChatGPT/GPT-5.6 Sol",
+  "authorized_at": "2026-09-06T00:39:00+09:00",
+  "base_sha": "e878972e2bdb3df294a48b0aab11b0259a8a00a8",
+  "branch": "work/cards-favorite-hitaccess-r2",
+  "mutable_resources": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-favorite-hitaccess.spec.mjs",
+    "playwright.cards-favorite-hitaccess.config.mjs",
+    "data/preaction-authorizations/CARDS-FAVORITE-HITACCESS-R2-20260906T0039-SOL-M7Q2V9.json"
+  ],
+  "intent": "Restore physical pointer hit access for the already-approved Cards favorite-only filter without changing favorite, deck, save, economy, network, or gameplay semantics.",
+  "acceptance": [
+    "Visible favorite action can favorite a card using physical pointer input.",
+    "Visible favorite-only filter can be physically clicked at 1280x720, 390x844, and 667x375.",
+    "Favorite-only view shows the saved favorite and remains correct after reload.",
+    "Collection card remains physically clickable after the hit-access repair."
+  ],
+  "rollback": "Revert the branch commits; no schema or player data migration is introduced."
+}

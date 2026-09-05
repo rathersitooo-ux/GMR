@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-DECK-STORAGE-DISMISS-R1-20260906T0548-SOL-P4K7M2",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "DECK_STORAGE_OUTSIDE_DISMISS_CLICKTHROUGH_GUARD_R1",
+  "acquireKey": "UI-DECK-STORAGE-DISMISS-R1-20260906T0548-SOL-P4K7M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_FIXED_OUTSIDE_DISMISS_NO_UNDERLAY_CLICKTHROUGH_CURRENT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_DECK_STORAGE_HANDLER_READBACK_PLUS_FOCUSED_NODE_REGRESSION",
+  "proceedToken": "PROCEED|UI-DECK-STORAGE-DISMISS-R1-20260906T0548-SOL-P4K7M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-ui-contract-repair|active-lease-readback",
+  "authorizationBaseSha": "77777f15cc263a33ff9bb8ec1de7e896c979223b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "DECK_STORAGE_OUTSIDE_DISMISS_CLICKTHROUGH_GUARD_R1",
+  "leaseAcquireKey": "UI-DECK-STORAGE-DISMISS-R1-20260906T0548-SOL-P4K7M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 05:48 JST",
+  "leaseUntilJst": "2026-09-06 06:48 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:L10",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch sol/deck-storage-dismiss-r1-20260906 only: browser/deck-storage-corner-runtime.mjs; tests/deck-storage-corner-runtime.test.mjs; .github/workflows/deck-storage-dismiss-r1-executor.yml transient patch/test executor only; data/preaction-authorizations/UI-DECK-STORAGE-DISMISS-R1-20260906T0548-SOL-P4K7M2.json transient authorization witness only. browser/GAMEROAD.html; cards-deck-presentation; gameplay/rules/save/economy/network/Partner/Home/Battle/Profile READ_ONLY.",
+  "scope": [
+    "browser/deck-storage-corner-runtime.mjs",
+    "tests/deck-storage-corner-runtime.test.mjs",
+    ".github/workflows/deck-storage-dismiss-r1-executor.yml"
+  ],
+  "leaseScope": [
+    "browser/deck-storage-corner-runtime.mjs",
+    "tests/deck-storage-corner-runtime.test.mjs",
+    ".github/workflows/deck-storage-dismiss-r1-executor.yml"
+  ],
+  "solutionSignature": "DECK_STORAGE_OUTSIDE_DISMISS_CONSUME_EXISTING_POINTER_HANDLER_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_DECK_STORAGE_POINTER_HANDLER_AND_EXISTING_MODAL_INPUT_OWNER_CONTRACT",
+  "solutionSearchEvidence": [
+    "Current main already has a single document-capture outside pointerdown handler for Deck Storage; the repair adapts that existing path rather than adding a second modal authority.",
+    "The current user-fixed UI contract already requires outside-dismiss without underlay input click-through and forbids screen-specific divergence.",
+    "The stale PR #1064 is not current owner authority; current main already contains its major upper-left Storage presentation, so only the remaining input-consumption gap is repaired."
+  ]
+}

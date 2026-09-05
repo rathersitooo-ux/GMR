@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "AUTO-BATTLE-LIVE-R3-20260905T1049-SOL-P6N4K2",
+  "taskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "workUnitKey": "AUTO_BATTLE_LIVE_INPUT_UI_R2",
+  "acquireKey": "AUTO-BATTLE-LIVE-R3-20260905T1049-SOL-P6N4K2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "fresh-main-target-blob-and-donor-base-exact-match",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing-r2-focused-live-bridge-test-plus-current-ui-feedback-runtime-gates",
+  "proceedToken": "PROCEED|AUTO-BATTLE-LIVE-R3-20260905T1049-SOL-P6N4K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|reuse-verified-r2-live-bridge",
+  "authorizationBaseSha": "2d4dfe23aa0dfcc6453c82d70aa8e7b2f861f8c8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "leaseWorkUnitKey": "AUTO_BATTLE_LIVE_INPUT_UI_R2",
+  "leaseAcquireKey": "AUTO-BATTLE-LIVE-R3-20260905T1049-SOL-P6N4K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 10:54 JST",
+  "leaseUntilJst": "2026-09-05 11:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/ui-state-feedback-ready-plan-adapter.mjs; data/preaction-authorizations/AUTO-BATTLE-LIVE-R3-20260905T1049-SOL-P6N4K2.json; browser/battle-auto-input-core.mjs READ_ONLY; browser/GAMEROAD.html READ_ONLY; tests/ui-state-feedback-ready-plan-adapter.test.mjs READ_ONLY; deploy/cloudflare/scripts/build.mjs READ_ONLY.",
+  "scope": [
+    "browser/ui-state-feedback-ready-plan-adapter.mjs",
+    "data/preaction-authorizations/AUTO-BATTLE-LIVE-R3-20260905T1049-SOL-P6N4K2.json"
+  ],
+  "leaseScope": [
+    "browser/ui-state-feedback-ready-plan-adapter.mjs",
+    "data/preaction-authorizations/AUTO-BATTLE-LIVE-R3-20260905T1049-SOL-P6N4K2.json"
+  ]
+}

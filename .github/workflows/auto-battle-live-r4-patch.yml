@@ -1,0 +1,64 @@
+name: Auto Battle live R4 patch
+
+on:
+  push:
+    branches:
+      - work/auto-battle-live-r4-20260905
+    paths:
+      - .github/workflows/auto-battle-live-r4-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/auto-battle-live-r4-20260905
+          fetch-depth: 0
+      - name: Apply validated Auto bridge and public dependency closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object browser/ui-state-feedback-ready-plan-adapter.mjs)" = "c03292900b4d58384b80846a0b56f21b9acaf70b"
+          git show 9986961d7f978101ee18474699606d74f15f0fe4:browser/ui-state-feedback-ready-plan-adapter.mjs > browser/ui-state-feedback-ready-plan-adapter.mjs
+          test "$(git hash-object browser/ui-state-feedback-ready-plan-adapter.mjs)" = "e9a608d0d9efb62e04a167c5a26686d48f754c20"
+          python - <<'PY'
+          from pathlib import Path
+
+          build = Path('deploy/cloudflare/scripts/build.mjs')
+          s = build.read_text()
+          line = "  { source: 'browser/battle-auto-input-core.mjs', output: 'battle-auto-input-core.mjs', artifact: 'battle_auto_input_core', label: 'Battle Auto input core' },\n"
+          anchor = "  { option: 'uiStateFeedbackReadyPlanAdapterSource', expected: 'expectedUiStateFeedbackReadyPlanAdapterBlob', source: 'browser/ui-state-feedback-ready-plan-adapter.mjs', output: 'ui-state-feedback-ready-plan-adapter.mjs', artifact: 'ui_state_feedback_ready_plan_adapter', label: 'UI state feedback ready-plan adapter', sourceFlag: '--ui-state-feedback-ready-plan-adapter-source', expectedFlag: '--expected-ui-state-feedback-ready-plan-adapter-blob' },\n"
+          if line not in s:
+              if s.count(anchor) != 1:
+                  raise SystemExit(f'build adapter anchor count={s.count(anchor)}')
+              s = s.replace(anchor, line + anchor, 1)
+          build.write_text(s)
+
+          test = Path('deploy/cloudflare/tests/build.test.mjs')
+          t = test.read_text()
+          old = "currentBlob: 'c03292900b4d58384b80846a0b56f21b9acaf70b'"
+          new = "currentBlob: 'e9a608d0d9efb62e04a167c5a26686d48f754c20'"
+          hits = [ln for ln in t.splitlines() if 'ui-state-feedback-ready-plan-adapter.mjs' in ln and old in ln]
+          if len(hits) != 1:
+              raise SystemExit(f'build.test adapter old-blob hits={len(hits)}')
+          t = t.replace(old, new, 1)
+          test.write_text(t)
+          PY
+          git diff --check
+          node --check browser/ui-state-feedback-ready-plan-adapter.mjs
+          node --test tests/ui-state-feedback-ready-plan-adapter.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+          git diff -- browser/ui-state-feedback-ready-plan-adapter.mjs deploy/cloudflare/scripts/build.mjs deploy/cloudflare/tests/build.test.mjs
+      - name: Commit tested product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name gameroad-auto-r4
+          git config user.email gameroad-auto-r4@users.noreply.github.com
+          git add browser/ui-state-feedback-ready-plan-adapter.mjs deploy/cloudflare/scripts/build.mjs deploy/cloudflare/tests/build.test.mjs
+          git commit -m 'Battle: publish Auto card selection through live input path'
+          git push origin HEAD:work/auto-battle-live-r4-20260905

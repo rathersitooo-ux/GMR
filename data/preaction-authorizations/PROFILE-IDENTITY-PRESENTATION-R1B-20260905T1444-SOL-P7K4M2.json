@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PROFILE-IDENTITY-PRESENTATION-R1B-20260905T1444-SOL-P7K4M2",
+  "taskId": "PROFILE-PROGRESSION-COLLECTION-PRESENTATION-001",
+  "workUnitKey": "PROFILE_IDENTITY_PRESENTATION_RUNTIME_R1B",
+  "acquireKey": "PROFILE-IDENTITY-PRESENTATION-R1B-20260905T1444-SOL-P7K4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PROFILE_SEMANTICS_20260905+CURRENT_PROFILE_ACTUAL_B490F103",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PURE_PROJECTION_TEST+EXACT_DOM_MARKER_GUARDS",
+  "proceedToken": "PROCEED|PROFILE-IDENTITY-PRESENTATION-R1B-20260905T1444-SOL-P7K4M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|PROFILE_IDENTITY_ONLY",
+  "authorizationBaseSha": "b490f10377f29191e8a53abc633934713d829468",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PROFILE-PROGRESSION-COLLECTION-PRESENTATION-001",
+  "leaseWorkUnitKey": "PROFILE_IDENTITY_PRESENTATION_RUNTIME_R1B",
+  "leaseAcquireKey": "PROFILE-IDENTITY-PRESENTATION-R1B-20260905T1444-SOL-P7K4M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 14:44 JST",
+  "leaseUntilJst": "2026-09-05 15:34 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A359:L359",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@b490f10377f29191e8a53abc633934713d829468; branch sol/profile-identity-presentation-r1b-20260905; mutable browser/GAMEROAD.html + NEW browser/profile-presentation-runtime-mount.mjs + NEW tests/profile-presentation-runtime-mount.test.mjs + deploy/cloudflare/scripts/build.mjs + TRANSIENT data/preaction-authorizations/PROFILE-IDENTITY-PRESENTATION-R1B-20260905T1444-SOL-P7K4M2.json + UNIQUE_TRANSIENT .github/workflows/profile-identity-presentation-r1b-patch.yml only; Home/Battle/Cards/Records runtime + gameplay/rules/save/economy/network/formal assets READ_ONLY.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "browser/profile-presentation-runtime-mount.mjs",
+    "tests/profile-presentation-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/profile-identity-presentation-r1b-patch.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "browser/profile-presentation-runtime-mount.mjs",
+    "tests/profile-presentation-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/profile-identity-presentation-r1b-patch.yml"
+  ],
+  "solutionSignature": "adapt-current-profile-dom-and-gameroad-partner-state-into-identity-first-profile-runtime",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_PROFILE_DOM+GAMEROAD_PARTNER_STATE+EXISTING_SEPARATED_RUNTIME_PACKAGING",
+  "solutionSearchEvidence": [
+    "browser/GAMEROAD.html current Profile DOM and renderProfile",
+    "window.GAMEROAD_PARTNER_STATE current player/partner identity authority",
+    "deploy/cloudflare/scripts/build.mjs existing runtime artifact packaging pattern"
+  ]
+}

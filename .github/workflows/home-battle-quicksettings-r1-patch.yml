@@ -1,0 +1,106 @@
+name: Home Battle Quick Settings R1 Patch
+
+on:
+  push:
+    branches:
+      - sol/home-battle-quicksettings-r1-20260905
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    if: ${{ !contains(github.event.head_commit.message, '[quicksettings-patched]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/home-battle-quicksettings-r1-20260905
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Patch exact runtime seams
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected anchor exactly once, got {count}: {old[:100]!r}')
+              p.write_text(text.replace(old, new, 1))
+
+          home = 'browser/home-boot-runtime-mount.mjs'
+          replace_once(
+              home,
+              "} from './slidepad-slot-roll-core.mjs';\n",
+              "} from './slidepad-slot-roll-core.mjs';\nimport { bindQuickSettingsTrigger } from './quick-settings-panel-runtime.mjs';\n",
+          )
+          replace_once(
+              home,
+              "  animations: new Set(),\n  slidepad: {",
+              "  animations: new Set(),\n  quickSettingsBinding: null,\n  slidepad: {",
+          )
+          replace_once(
+              home,
+              "  runtime.home = home;\n  removeLegacyHomeNodes(home);\n\n  const buttons = routeButtons(home);",
+              "  runtime.home = home;\n  removeLegacyHomeNodes(home);\n  bindHomeQuickSettings(home);\n\n  const buttons = routeButtons(home);",
+          )
+          replace_once(
+              home,
+              "export function refreshHomeBootPresentation() {",
+              "function bindHomeQuickSettings(home) {\n  const trigger = home?.querySelector?.('[data-home-target=\\\"settings\\\"],[data-go=\\\"settings\\\"],[data-root-go=\\\"settings\\\"]');\n  if (runtime.quickSettingsBinding?.trigger === trigger) return Boolean(trigger);\n  runtime.quickSettingsBinding?.destroy?.();\n  runtime.quickSettingsBinding = null;\n  if (!(trigger instanceof HTMLElement)) return false;\n  runtime.quickSettingsBinding = bindQuickSettingsTrigger(globalThis, { trigger, surface: 'home' });\n  return runtime.quickSettingsBinding.connected;\n}\n\nexport function refreshHomeBootPresentation() {",
+          )
+          replace_once(
+              home,
+              "export function unmountHomeBootPresentation() {\n  clearAnimations();",
+              "export function unmountHomeBootPresentation() {\n  clearAnimations();\n  runtime.quickSettingsBinding?.destroy?.();\n  runtime.quickSettingsBinding = null;",
+          )
+
+          battle = 'browser/battle-screen-runtime-mount.mjs'
+          replace_once(
+              battle,
+              "import { auditBattleScreenModel } from './battle-screen-presentation-core.mjs';\n",
+              "import { auditBattleScreenModel } from './battle-screen-presentation-core.mjs';\nimport { bindQuickSettingsTrigger } from './quick-settings-panel-runtime.mjs';\n",
+          )
+          replace_once(
+              battle,
+              "  const hud = createHud(document, shell);\n  let lastHudSnapshot = writeHud(document, hud, options.hud);",
+              "  const hud = createHud(document, shell);\n  const quickSettingsBinding = bindQuickSettingsTrigger(global, { trigger: hud.settingsButton, surface: 'battle' });\n  let lastHudSnapshot = writeHud(document, hud, options.hud);",
+          )
+          replace_once(
+              battle,
+              "    destroyed = true;\n    if (progressGuide?.parentNode",
+              "    destroyed = true;\n    quickSettingsBinding?.destroy?.();\n    if (progressGuide?.parentNode",
+          )
+          PY
+
+      - name: Focused regression
+        run: |
+          node --check browser/quick-settings-panel-runtime.mjs
+          node --check browser/home-boot-runtime-mount.mjs
+          node --check browser/battle-screen-runtime-mount.mjs
+          node tests/quick-settings-panel-runtime.test.mjs
+          node tests/home-boot-presentation.test.mjs
+          node tests/battle-screen-runtime-mount.test.mjs
+
+      - name: Remove transient authorization and patch workflow
+        run: |
+          rm -f data/preaction-authorizations/HOME-BATTLE-QUICKSETTINGS-R1-20260905T1107-SOL-Q8M4P2.json
+          rm -f .github/workflows/home-battle-quicksettings-r1-patch.yml
+
+      - name: Commit tested product delta
+        run: |
+          git config user.name 'gameroad-bot'
+          git config user.email 'gameroad-bot@users.noreply.github.com'
+          git add browser/quick-settings-panel-runtime.mjs browser/home-boot-runtime-mount.mjs browser/battle-screen-runtime-mount.mjs tests/quick-settings-panel-runtime.test.mjs
+          git add -u data/preaction-authorizations/HOME-BATTLE-QUICKSETTINGS-R1-20260905T1107-SOL-Q8M4P2.json .github/workflows/home-battle-quicksettings-r1-patch.yml
+          git diff --cached --check
+          git commit -m 'Home/Battle: wire quick settings to current Settings authority [quicksettings-patched]'
+          git push origin HEAD:sol/home-battle-quicksettings-r1-20260905

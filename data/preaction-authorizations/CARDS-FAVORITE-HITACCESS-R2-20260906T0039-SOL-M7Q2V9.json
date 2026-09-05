@@ -9,8 +9,7 @@
   "branch": "work/cards-favorite-hitaccess-r2",
   "mutable_resources": [
     "browser/cards-deck-presentation.mjs",
-    "tests/cards-favorite-hitaccess.spec.mjs",
-    "playwright.cards-favorite-hitaccess.config.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs",
     "data/preaction-authorizations/CARDS-FAVORITE-HITACCESS-R2-20260906T0039-SOL-M7Q2V9.json"
   ],
   "intent": "Restore physical pointer hit access for the already-approved Cards favorite-only filter without changing favorite, deck, save, economy, network, or gameplay semantics.",

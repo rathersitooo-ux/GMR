@@ -491,3 +491,83 @@ test('favorite action reuses existing card-detail action area instead of overlay
   assert.ok(findabilitySource.includes("event?.target?.closest?.('#collectionGrid [data-id]')"));
   assert.equal(findabilitySource.includes("node.appendChild(favoriteAction)"), false);
 });
+// COLLECTION_ZERO_RESULT_ESCAPE_R1D_TESTS
+const ZERO_RESULT_MODULE_R1D = await import('../browser/cards-deck-presentation.mjs');
+
+function zeroResultCardR1D(id, label, inDeck = false) {
+  return {
+    dataset: { id },
+    textContent: label,
+    hidden: false,
+    classList: { contains: (name) => name === 'inDeck' && inDeck },
+    getAttribute: () => label,
+  };
+}
+
+test('Collection zero-result escape stays inside current findability presentation authority', () => {
+  const { CARDS_DECK_FINDABILITY_CONTRACT } = ZERO_RESULT_MODULE_R1D;
+  assert.equal(CARDS_DECK_FINDABILITY_CONTRACT.zeroResultEscape, 'clear-current-findability-only');
+  assert.equal(CARDS_DECK_FINDABILITY_CONTRACT.persistence, 'none');
+  assert.equal(CARDS_DECK_FINDABILITY_CONTRACT.mutatesDeck, false);
+  assert.equal(CARDS_DECK_FINDABILITY_CONTRACT.mutatesOwnership, false);
+});
+
+test('Collection zero-result reset is offered only when existing cards are hidden by an active restriction', () => {
+  const { shouldOfferCardsDeckFindabilityReset } = ZERO_RESULT_MODULE_R1D;
+  assert.equal(shouldOfferCardsDeckFindabilityReset({ total: 2, visible: 0, query: 'zzz' }), true);
+  assert.equal(shouldOfferCardsDeckFindabilityReset({ total: 2, visible: 0, deckFilter: 'in-deck' }), true);
+  assert.equal(shouldOfferCardsDeckFindabilityReset({ total: 2, visible: 0, favoriteOnly: true }), true);
+  assert.equal(shouldOfferCardsDeckFindabilityReset({ total: 2, visible: 1, query: 'spade' }), false);
+  assert.equal(shouldOfferCardsDeckFindabilityReset({ total: 0, visible: 0, query: 'spade' }), false);
+  assert.equal(shouldOfferCardsDeckFindabilityReset({ total: 2, visible: 0 }), false);
+});
+
+test('Collection zero-result clearing restores the existing Collection projection', () => {
+  const { applyCardsDeckFindability, shouldOfferCardsDeckFindabilityReset } = ZERO_RESULT_MODULE_R1D;
+  const cards = [zeroResultCardR1D('SP_A', 'Spade A', true), zeroResultCardR1D('HT_A', 'ハートA', false)];
+  const doc = { querySelectorAll: (selector) => selector === '#collectionGrid [data-id]' ? cards : [] };
+
+  const blocked = applyCardsDeckFindability({
+    document: doc,
+    query: '存在しないカード',
+    deckFilter: 'in-deck',
+    favoriteOnly: true,
+    favoriteIds: ['SP_A'],
+  });
+  assert.equal(blocked.visible, 0);
+  assert.equal(shouldOfferCardsDeckFindabilityReset(blocked), true);
+
+  const restored = applyCardsDeckFindability({
+    document: doc,
+    query: '',
+    deckFilter: 'all',
+    favoriteOnly: false,
+    favoriteIds: ['SP_A'],
+  });
+  assert.deepEqual(restored, {
+    total: 2,
+    visible: 2,
+    query: '',
+    deckFilter: 'all',
+    favoriteOnly: false,
+  });
+  assert.equal(cards.every((entry) => entry.hidden === false), true);
+});
+
+test('Collection zero-result live reset clears only query/filter toggles and preserves favorites/selection', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('const onReset = () => {');
+  const end = source.indexOf('const onCollectionSelect =', start);
+  const handler = source.slice(start, end);
+
+  assert.ok(start >= 0 && end > start);
+  assert.ok(source.includes("resetButton.dataset.role = 'cards-deck-findability-reset'"));
+  assert.ok(source.includes('resetButton.hidden = !shouldOfferCardsDeckFindabilityReset(result)'));
+  assert.ok(handler.includes("input.value = '';"));
+  assert.ok(handler.includes("deckFilter = 'all';"));
+  assert.ok(handler.includes('favoriteOnly = false;'));
+  assert.equal(handler.includes('favoriteIds ='), false);
+  assert.equal(handler.includes('selectedCardId ='), false);
+  assert.equal(handler.includes('writeCardsFavoriteIdsToStorage'), false);
+});

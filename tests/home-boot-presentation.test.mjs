@@ -446,3 +446,17 @@ test('Quick settings trigger distinguishes Home settings and Battle gear without
   };
   assert.deepEqual(resolveQuickSettingsTrigger(homeTarget), { surface: 'home', trigger: homeTrigger });
 });
+
+
+test('Home low-frequency chrome keeps duplicate rails and normal save status out of active Home', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.equal(source.includes('.codexHomeLeftRail'), true);
+  assert.equal(source.includes('.codexHomeRightRail'), true);
+  assert.equal(source.includes('html.grCodexHomeActive #saveState'), true);
+  for (const route of ['missions', 'gacha', 'records', 'profile', 'settings']) {
+    assert.equal(source.includes(`[data-go="${route}"]::before`), true, route);
+  }
+  assert.equal(source.includes('[data-home-contextual-replay-trigger="true"]::before'), false);
+  assert.equal(source.includes('HOME_CONTEXTUAL_REPLAY_LABEL'), true);
+});

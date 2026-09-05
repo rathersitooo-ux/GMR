@@ -300,6 +300,44 @@ ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} $
   box-shadow:none!important;
   backdrop-filter:none!important;
 }
+/* R85: persistent Mission/progress and duplicate guide rails are not Home navigation
+   authorities. Keep their destinations reachable through the compact secondary row. */
+${HOME_SELECTOR}[data-home-shell-mounted="true"] .codexHomeLeftRail,
+${HOME_SELECTOR}[data-home-shell-mounted="true"] .codexHomeRightRail{
+  display:none!important;
+}
+/* A normal successful save is silent on Home. Existing abnormal save feedback remains
+   owned by the save-recovery/toast/settings surfaces; this rule changes no save state. */
+html.grCodexHomeActive #saveState{
+  display:none!important;
+}
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go="missions"],
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go="gacha"],
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go="records"],
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go="profile"],
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go="settings"]{
+  width:${HOME_TOUCH_TARGET_MIN_PX}px!important;
+  aspect-ratio:1!important;
+  padding:0!important;
+  font-size:0!important;
+  line-height:0!important;
+  display:grid!important;
+  place-items:center!important;
+}
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go="missions"]::before,
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go="gacha"]::before,
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go="records"]::before,
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go="profile"]::before,
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go="settings"]::before{
+  font-size:20px!important;
+  line-height:1!important;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI Symbol",sans-serif!important;
+}
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go="missions"]::before{content:"✓";}
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go="gacha"]::before{content:"▣";}
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go="records"]::before{content:"≡";}
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go="profile"]::before{content:"◉";}
+${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go="settings"]::before{content:"⚙";}
 ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}:focus-visible{
   opacity:1!important;
   outline:2px solid currentColor!important;

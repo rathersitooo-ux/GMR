@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HAND-FINGER-OFFSET-R1-20260905T1754-SOL-M7K4P2",
+  "taskId": "BATTLE-HAND-FAN-SELECTION-PRESENTATION-001",
+  "workUnitKey": "BATTLE_HAND_FINGER_OCCLUSION_OFFSET_R1",
+  "acquireKey": "BATTLE-HAND-FINGER-OFFSET-R1-20260905T1754-SOL-M7K4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_EXPLICIT_ADOPTION+CURRENT_ORDINARY_HAND_GHOST+POINTER_AUTHORITY_SEPARATION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_UPDATEHANDDRAG_POINTER_ARMING_PATH+FOCUSED_UNIT_REGRESSION",
+  "proceedToken": "PROCEED|BATTLE-HAND-FINGER-OFFSET-R1-20260905T1754-SOL-M7K4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|VISUAL_GHOST_OFFSET_ONLY",
+  "authorizationBaseSha": "7687041833bc767052629b24b2a79b011b2c64b4",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-HAND-FAN-SELECTION-PRESENTATION-001",
+  "leaseWorkUnitKey": "BATTLE_HAND_FINGER_OCCLUSION_OFFSET_R1",
+  "leaseAcquireKey": "BATTLE-HAND-FINGER-OFFSET-R1-20260905T1754-SOL-M7K4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 17:59 JST",
+  "leaseUntilJst": "2026-09-05 18:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A388:L388",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@7687041833bc767052629b24b2a79b011b2c64b4; mutable branch ref sol/battle-hand-finger-offset-r1-20260905 + browser/battle-janken-slidepad-runtime-mount.mjs + tests/battle-janken-slidepad-runtime-mount.test.mjs + TRANSIENT data/preaction-authorizations/BATTLE-HAND-FINGER-OFFSET-R1-20260905T1754-SOL-M7K4P2.json + TRANSIENT .github/workflows/temp-battle-hand-finger-offset-r1-m7k4p2.yml; Drive GAMEROAD 全作業一覧!Y1327:AB1327 semantic adoption sync. browser/GAMEROAD.html + battle-screen-runtime-mount.mjs + gameplay/rules/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "solutionSignature": "ordinary-hand-drag-ghost-above-pointer-while-pointer-remains-authority",
+  "reuseDisposition": "STRENGTHEN",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_RUNTIME_ALREADY_OWNS_GHOST_AND_POINTER_ARMING;SECOND_DRAG_SYSTEM_UNNECESSARY",
+  "solutionSearchEvidence": [
+    "Current ordinary-hand drag already clones the source card into .grHandAuraDragGhost and moves that visual on pointermove.",
+    "Current aura arming uses the raw event clientX/clientY pointer against the handle rectangle, independent of ghost position.",
+    "Current commit/cancel path clicks the existing hand card only after the existing pointer-based armed state is true.",
+    "The adopted UI change therefore needs only a visual ghost projection change plus focused regression coverage."
+  ],
+  "scopeRebaseReason": "User explicitly adopted the finger-occlusion fix. Current target paths have no valid active owner, current main is unchanged, and the existing drag ghost is the narrowest reusable consumer."
+}

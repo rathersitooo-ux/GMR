@@ -78,7 +78,8 @@ test('unknown selection and private advice fail closed instead of inventing boar
     resolveTarget: () => ({ targetId: 'C' }),
   }));
   assert.equal(authority.selectedPositionId, null);
-  assert.equal(authority.partnerProjection, null);
+  assert.equal(authority.partnerProjection.active, false);
+  assert.equal(authority.partnerProjection.reason, 'PUBLIC_SCOPE_UNVERIFIED');
 
   const projection = projectBattleBoardRuntimeExplanation(authority);
   assert.equal(projection.ok, true);

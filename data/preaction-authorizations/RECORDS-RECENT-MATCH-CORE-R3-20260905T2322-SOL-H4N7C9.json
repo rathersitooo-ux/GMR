@@ -1,0 +1,36 @@
+{
+  "schema": "GAMEROAD_PREACTION_AUTHORIZATION_V1",
+  "leaseId": "RECORDS-RECENT-MATCH-CORE-R3-20260905T2322-SOL-H4N7C9",
+  "parentTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitId": "RECORDS_RECENT_MATCH_CORE_ADAPTER_R3",
+  "base": "e878972e2bdb3df294a48b0aab11b0259a8a00a8",
+  "inspectionHead": "cc4326b20098d91f40124cdea2a08c68e9a79dd7",
+  "authorizedAt": "2026-09-05T23:22:00+09:00",
+  "expiresAt": "2026-09-06T00:10:00+09:00",
+  "mutable": [
+    "browser/records-presentation-core.mjs",
+    "tests/records-presentation-core.test.mjs",
+    "browser/records-history-adapter.mjs",
+    "tests/records-history-adapter.test.mjs",
+    "data/preaction-authorizations/RECORDS-RECENT-MATCH-CORE-R3-20260905T2322-SOL-H4N7C9.json"
+  ],
+  "readOnly": [
+    "browser/GAMEROAD.html",
+    "Battle/Result runtime",
+    "save/gameplay/rules/economy/network"
+  ],
+  "userMeaning": "Records is recent match history first. Selecting a match leads to the deck used and match details; lifetime stats do not displace this purpose.",
+  "actualEvidence": {
+    "main": "e878972e2bdb3df294a48b0aab11b0259a8a00a8",
+    "inspectionRun": 33971505778,
+    "inspectionArtifact": 9971052592,
+    "currentHistory": "state.history persists up to 30 entries; endMatch records at/mode/rank/rounds/character/partner/BattlePoints; renderRecords only renders mode/rank/rounds",
+    "runtimeDeckEvidence": "human match player carries sourceDeckIds/sourceDeckSize; not yet persisted into history"
+  },
+  "unknownDisposition": {
+    "legacyDeck": "do not fabricate; expose unavailable",
+    "exDeckSnapshot": "not proven by current inspection; do not fabricate in R3",
+    "replay": "not part of adopted Records meaning for this slice",
+    "lifetimeAggregates": "explicitly non-primary; do not add"
+  }
+}

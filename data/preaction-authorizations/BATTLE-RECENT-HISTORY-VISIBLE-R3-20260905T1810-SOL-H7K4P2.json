@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RECENT-HISTORY-VISIBLE-R3-20260905T1810-SOL-H7K4P2",
+  "taskId": "BATTLE-REPLAY-RUNTIME-CONTRACT-001",
+  "workUnitKey": "BATTLE_RECENT_PUBLIC_HISTORY_ALWAYS_VISIBLE_R3",
+  "acquireKey": "BATTLE-RECENT-HISTORY-VISIBLE-R3-20260905T1810-SOL-H7K4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_EXPLICIT_RECENT_PUBLIC_HISTORY+CURRENT_R2_HIDDEN_DRAWER_RESIDUAL+R3_STALE_TEST_REFERENCE_ONLY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R3_EXACT_MARKERS_PASS+33_OF_34_TESTS_PASS+CORRECTED_LIVE_TOGGLE_REACQUIRE_TEST",
+  "proceedToken": "PROCEED|BATTLE-RECENT-HISTORY-VISIBLE-R3-20260905T1810-SOL-H7K4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ADAPT_EXISTING_REPLAY_HISTORY_TO_ALWAYS_VISIBLE_BATTLEMAP_SURFACE",
+  "authorizationBaseSha": "b3075e8d3786dc531434f80f86fd1c52fc064feb",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-REPLAY-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "BATTLE_RECENT_PUBLIC_HISTORY_ALWAYS_VISIBLE_R3",
+  "leaseAcquireKey": "BATTLE-RECENT-HISTORY-VISIBLE-R3-20260905T1810-SOL-H7K4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 18:10 JST",
+  "leaseUntilJst": "2026-09-05 19:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A393:L393",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@b3075e8d3786dc531434f80f86fd1c52fc064feb; branch sol/battle-recent-history-visible-r3b-20260905; mutable browser/battle-replay-live-adapter.mjs@02da4629e0713406297d9692ce2afe8e0e624ea9 + tests/battle-replay-live-adapter.test.mjs@697d9780600fadc145922c1d4f43155ce6c76987 + UNIQUE_TRANSIENT .github/workflows/battle-recent-history-visible-r3-executor.yml + TRANSIENT data/preaction-authorizations/BATTLE-RECENT-HISTORY-VISIBLE-R3-20260905T1810-SOL-H7K4P2.json only; browser/GAMEROAD.html + gameplay/rules/save/economy/network + battle-replay-core/projection + all other Battle modules READ_ONLY.",
+  "scope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    ".github/workflows/battle-recent-history-visible-r3-executor.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    ".github/workflows/battle-recent-history-visible-r3-executor.yml"
+  ],
+  "solutionSignature": "existing-viewer-safe-replay-history-projection-to-always-visible-battlemap-edge-surface",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_REPLAY_ADAPTER_ALREADY_OWNS_PUBLIC_HISTORY_RENDERING_BUT_TARGETS_HIDDEN_DRAWER_LOG",
+  "solutionSearchEvidence": [
+    "browser/battle-replay-live-adapter.mjs:createPartnerBattleEventLogPresentationBridge",
+    "browser/battle-replay-live-adapter.mjs:ensurePartnerBattleEventLogHost currently uses #battleLog",
+    "browser/GAMEROAD.html:#battleLog is nested under closed #battleDrawer",
+    "browser/GAMEROAD.html:#battleMap is the persistent in-match board surface",
+    "R3 run33957500122 exact marker application succeeded and only stale detached-toggle assertion failed"
+  ],
+  "scopeRebaseReason": "Clean R3B preserves the exact R3 product design and only corrects the focused test lifecycle: begin() rebuilds presentation-only controls, so the test must reacquire the current toggle rather than inspect a detached old node. Current main advanced only in Collection and the exact Replay adapter/test blobs are unchanged. The raw full drawer log, replay truth, schema, storage, gameplay authority and secret boundary remain untouched."
+}

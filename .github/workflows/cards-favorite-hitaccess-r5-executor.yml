@@ -66,8 +66,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cat > tests/r5-cards-hit-geometry-probe.spec.mjs <<'EOF'
-          import { test, expect } from '@playwright/test';
+          TEST_FILE=tests/home-cards-2p5d-runtime.spec.mjs
+          cp "$TEST_FILE" /tmp/home-cards-2p5d-runtime.spec.mjs
+          trap 'cp /tmp/home-cards-2p5d-runtime.spec.mjs "$TEST_FILE"' EXIT
+          cat >> "$TEST_FILE" <<'EOF'
 
           test('R5 current Cards hit geometry', async ({ page }) => {
             test.setTimeout(120_000);
@@ -107,12 +109,9 @@ jobs:
                   const r = node.getBoundingClientRect();
                   const s = getComputedStyle(node);
                   return {
-                    tag: node.tagName,
-                    id: node.id || null,
+                    tag: node.tagName, id: node.id || null,
                     className: typeof node.className === 'string' ? node.className : null,
-                    role: node.getAttribute('data-role'),
-                    filter: node.getAttribute('data-filter'),
-                    dataId: node.getAttribute('data-id'),
+                    role: node.getAttribute('data-role'), filter: node.getAttribute('data-filter'), dataId: node.getAttribute('data-id'),
                     rect: { left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width, height:r.height },
                     style: { position:s.position, zIndex:s.zIndex, transform:s.transform, marginTop:s.marginTop, marginBottom:s.marginBottom, overflow:s.overflow, pointerEvents:s.pointerEvents, display:s.display },
                   };
@@ -120,9 +119,7 @@ jobs:
                 const centerStack = (node) => {
                   if (!node) return [];
                   const r = node.getBoundingClientRect();
-                  const x = r.left + r.width / 2;
-                  const y = r.top + r.height / 2;
-                  return document.elementsFromPoint(x, y).slice(0, 10).map(describe);
+                  return document.elementsFromPoint(r.left + r.width / 2, r.top + r.height / 2).slice(0, 10).map(describe);
                 };
                 const ancestry = (node) => {
                   const out = [];
@@ -133,8 +130,7 @@ jobs:
                 const cr = card?.getBoundingClientRect();
                 return {
                   phase,
-                  viewport: { width: innerWidth, height: innerHeight },
-                  scroll: { x: scrollX, y: scrollY },
+                  viewport: { width: innerWidth, height: innerHeight }, scroll: { x: scrollX, y: scrollY },
                   host: describe(host), filter: describe(filter), grid: describe(grid), card: describe(card),
                   hostCardVerticalOverlap: hr && cr ? Math.max(0, Math.min(hr.bottom, cr.bottom) - Math.max(hr.top, cr.top)) : null,
                   filterStack: centerStack(filter), cardStack: centerStack(card),
@@ -150,10 +146,11 @@ jobs:
           });
           EOF
           set +e
-          npx playwright test tests/r5-cards-hit-geometry-probe.spec.mjs --config=playwright.config.mjs --workers=1 2>&1 | tee /tmp/r5-geometry.log
+          npx playwright test "$TEST_FILE" --config=playwright.config.mjs --workers=1 --grep 'R5 current Cards hit geometry' 2>&1 | tee /tmp/r5-geometry.log
           status=${PIPESTATUS[0]}
           set -e
-          rm -f tests/r5-cards-hit-geometry-probe.spec.mjs
+          cp /tmp/home-cards-2p5d-runtime.spec.mjs "$TEST_FILE"
+          trap - EXIT
           test "$status" -eq 0
           grep -F 'R5_GEOMETRY_JSON=' /tmp/r5-geometry.log > /tmp/r5-geometry-line.txt
 

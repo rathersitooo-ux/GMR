@@ -17,16 +17,16 @@
   "leaseTaskId": "COLLECTION-CROSSDOMAIN-EXPERIENCE-001",
   "leaseWorkUnitKey": "COLLECTION_ZERO_RESULT_ESCAPE_R1",
   "leaseAcquireKey": "COLLECTION-ZERO-RESULT-RESET-R1-20260905T1621-SOL-N7K4P2",
-  "leaseSnapshotReadbackAtJst": "2026-09-05 16:21 JST",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 16:26 JST",
   "leaseUntilJst": "2026-09-05 17:10 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A381:L381",
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/collection-zero-result-reset-r1-20260905 only: browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; data/preaction-authorizations/COLLECTION-ZERO-RESULT-RESET-R1-20260905T1621-SOL-N7K4P2.json",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/collection-zero-result-reset-r1-20260905 only: browser/cards-deck-presentation.mjs; tests/cards-deck-findability-zero-reset.test.mjs; data/preaction-authorizations/COLLECTION-ZERO-RESULT-RESET-R1-20260905T1621-SOL-N7K4P2.json only; browser/GAMEROAD.html + existing cards-deck-presentation.test.mjs + deck storage/runtime + ownership/save/economy/gameplay/network READ_ONLY. Existing findability state only; no second context/store.",
   "scope": [
     "browser/cards-deck-presentation.mjs",
-    "tests/cards-deck-presentation.test.mjs"
+    "tests/cards-deck-findability-zero-reset.test.mjs"
   ],
   "leaseScope": [
     "browser/cards-deck-presentation.mjs",
-    "tests/cards-deck-presentation.test.mjs"
+    "tests/cards-deck-findability-zero-reset.test.mjs"
   ]
 }

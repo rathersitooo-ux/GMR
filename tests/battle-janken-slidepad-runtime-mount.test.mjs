@@ -7,6 +7,7 @@ import {
   buildBattleJankenSlidePadModel,
   createBattleJankenSlotRollState,
   isBattleHandAuraLaunchArmed,
+  projectBattleHandDragGhostPosition,
   projectBattleLoadCardPreview,
   resolveBattleJankenSlotCardAction,
   resolveBattleJankenSlidePadGestureTarget,
@@ -147,6 +148,35 @@ test('ordinary hand card does not arm or launch when released away from the bott
     isBattleHandAuraLaunchArmed({ pointer: { x: 970, y: 534 }, auraRect, paddingPx: 0 }),
     false,
   );
+});
+
+test('ordinary hand drag ghost stays above the pointer while preserving horizontal grab position', () => {
+  assert.deepEqual(
+    projectBattleHandDragGhostPosition({
+      pointer: { x: 420, y: 360 },
+      grabOffset: { x: 40, y: 60 },
+      cardSize: { width: 100, height: 140 },
+      viewportHeight: 720,
+    }),
+    { left: 380, top: 220 },
+  );
+  assert.deepEqual(
+    projectBattleHandDragGhostPosition({
+      pointer: { x: 420, y: 80 },
+      grabOffset: { x: 40, y: 60 },
+      cardSize: { width: 100, height: 140 },
+      viewportHeight: 720,
+    }),
+    { left: 380, top: 0 },
+    'visual projection clamps at the viewport top instead of moving the pointer authority',
+  );
+});
+
+test('ordinary hand drag integration keeps aura arming on the raw pointer rather than the lifted ghost', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /projectBattleHandDragGhostPosition\(\{[\s\S]*pointer: \{ x, y \}/);
+  assert.match(source, /isBattleHandAuraLaunchArmed\(\{\s*pointer: \{ x, y \}/);
 });
 
 test('R75 preview projects only the actually armed selectable janken slot', () => {

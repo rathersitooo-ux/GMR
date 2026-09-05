@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-FAVORITE-HITACCESS-R5-20260906T0539-SOL-M8Q4K7",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "CARDS_FAVORITE_HITACCESS_LIVE_R5",
+  "acquireKey": "CARDS-FAVORITE-HITACCESS-R5-20260906T0539-SOL-M8Q4K7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R4_FAILURE_33987210152_PLUS_BASELINE_POINTER_INTERCEPT_33970702681",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_MODULE_DIRECT_READBACK_AND_REAL_CHROMIUM_GEOMETRY_PROBE",
+  "proceedToken": "PROCEED|CARDS-FAVORITE-HITACCESS-R5-20260906T0539-SOL-M8Q4K7|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-adopted-favorite-hitaccess-repair|active-lease-readback",
+  "authorizationBaseSha": "77777f15cc263a33ff9bb8ec1de7e896c979223b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "CARDS_FAVORITE_HITACCESS_LIVE_R5",
+  "leaseAcquireKey": "CARDS-FAVORITE-HITACCESS-R5-20260906T0539-SOL-M8Q4K7",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 05:39 JST",
+  "leaseUntilJst": "2026-09-06 06:29 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A13:M13",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs"
+  ],
+  "solutionSignature": "CARDS_FAVORITE_HITACCESS_GEOMETRY_SEPARATION_R5",
+  "reuseDisposition": "REPAIR_EXISTING",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidence": [
+    "Current main already owns favorite-only filter semantics and local favorite persistence; no new component or state authority is needed.",
+    "Normal-entry run 33970702681 proved the visible favorite-only filter is physically intercepted by Collection card hit surfaces.",
+    "R4 run 33987210152 proved blanket host-above-grid stacking reverses the failure on phone by making a Collection card lose its center hit point.",
+    "R5 therefore measures actual host/filter/grid/card geometry before choosing the smallest presentation-only separation repair."
+  ],
+  "diagnosticCaptured": false
+}

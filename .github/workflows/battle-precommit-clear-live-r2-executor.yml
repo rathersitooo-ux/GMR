@@ -1,0 +1,245 @@
+name: Battle Precommit Clear Live R2 Executor
+
+on:
+  push:
+    branches:
+      - sol/battle-precommit-clear-live-r2-20260905
+    paths:
+      - .github/workflows/battle-precommit-clear-live-r2-executor.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact bounded product and acceptance patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html_path = Path('browser/GAMEROAD.html')
+          build_path = Path('deploy/cloudflare/scripts/build.mjs')
+          bfi_path = Path('tests/browser-full-interaction.spec.mjs')
+
+          html = html_path.read_text(encoding='utf-8')
+          marker = 'GAMEROAD_BATTLE_PRECOMMIT_CLEAR_LIVE_R2'
+          anchor = 'window.GAMEROAD_PARTNER_STATE=Object.freeze('
+          if marker not in html:
+              if html.count(anchor) != 1:
+                  raise SystemExit(f'HTML anchor count drift: {html.count(anchor)}')
+              block = r'''
+/* GAMEROAD_BATTLE_PRECOMMIT_CLEAR_LIVE_R2 */
+const grBattlePrecommitClearCorePromise=import('./battle-precommit-clear-core.mjs');
+let grBattlePrecommitCommitInFlight=null;
+let grBattlePrecommitTargetClearContext=null;
+function grBattleFriendPlanSubmitted(m,me){
+  if(!m?.friendRoom)return false;
+  const status=globalThis.GAMEROAD_FRIEND_ROOM_R2?.status?.();
+  const submitted=status?.planSubmitted;
+  return Array.isArray(submitted)?submitted.includes(me?.id):Boolean(submitted)
+}
+function grBattleTargetDraft(){
+  return {defenderId:$('#targetPlayer')?.value||null,lane:$('#targetLane')?.value||null,shield:$('#targetShield')?.value||null}
+}
+function grBattleTargetDraftHasValue(){const d=grBattleTargetDraft();return Boolean(d.defenderId||d.lane||d.shield)}
+function grBattlePlanDraftHasValue(me){const p=me?.plan;if(!p)return false;return Boolean(p.roadId||p.battleId||(Array.isArray(p.path)&&(p.path.length!==1||p.path[0]!==me.position)))}
+function grEnsureBattlePrecommitClearButton(){
+  let b=$('#clearPrecommitSelection');if(b)return b;
+  const rail=document.querySelector('.battleRail'),leave=$('#leaveMatch');if(!rail||!leave)return null;
+  b=document.createElement('button');b.id='clearPrecommitSelection';b.className='railBtn';b.type='button';b.hidden=true;b.disabled=true;
+  b.setAttribute('aria-label','選択をすべて解除');b.title='選択をすべて解除';b.dataset.precommitClear='1';
+  b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>';
+  rail.insertBefore(b,leave);b.addEventListener('click',()=>{void grClearBattlePrecommitSelection()});return b
+}
+function grSyncBattlePrecommitClear(){
+  const b=grEnsureBattlePrecommitClearButton(),m=state.match;if(!b)return;
+  const phase=m?.phase||'',me=m?.players?.[0]||null,confirm=$('#confirmTarget');
+  if(grBattlePrecommitTargetClearContext&&(grBattlePrecommitTargetClearContext.match!==m||phase!=='target'||m?.target))grBattlePrecommitTargetClearContext=null;
+  if(grBattlePrecommitTargetClearContext&&phase==='target'&&!m?.busy&&!m?.target){
+    for(const id of ['targetPlayer','targetLane','targetShield']){const el=$('#'+id);if(el&&el.value)el.value=''}
+  }
+  if(phase!=='target'&&confirm?.dataset.precommitClearDisabled==='1'){confirm.disabled=false;delete confirm.dataset.precommitClearDisabled}
+  const planSubmitted=phase==='plan'&&m&&me?grBattleFriendPlanSubmitted(m,me):false;
+  const planClearable=phase==='plan'&&m&&!m.busy&&grBattlePrecommitCommitInFlight!==m&&!planSubmitted&&grBattlePlanDraftHasValue(me);
+  const active=m?.players?.find(p=>p.id===m.activeId),targetClearable=phase==='target'&&m&&!m.busy&&!m.target&&active?.human&&grBattleTargetDraftHasValue();
+  b.hidden=!(phase==='plan'||(phase==='target'&&active?.human));b.disabled=!(planClearable||targetClearable);
+  b.dataset.precommitClearPhase=phase||'none';b.dataset.precommitClearState=b.disabled?'blocked':'ready';b.setAttribute('aria-disabled',b.disabled?'true':'false')
+}
+async function grClearBattlePrecommitSelection(){
+  const m=state.match;if(!m||m.busy)return false;const phase=m.phase,me=m.players?.[0];
+  if(phase!=='plan'&&phase!=='target')return false;
+  const api=await grBattlePrecommitClearCorePromise;
+  if(state.match!==m||m.busy||m.phase!==phase)return false;
+  if(phase==='plan'){
+    const submitted=grBattleFriendPlanSubmitted(m,me),commitInFlight=grBattlePrecommitCommitInFlight===m;
+    const result=api.clearBattlePrecommitSelection({phase:'plan',busy:m.busy||commitInFlight,planSubmitted:submitted,position:me?.position,plan:me?.plan});
+    if(!result.cleared)return false;
+    me.plan={...result.next.plan,path:[...result.next.plan.path]};
+    const rs=$('#roadSelect'),bs=$('#battleSelect');if(rs)rs.value='';if(bs)bs.value='';
+    $('#endpointText')&&($('#endpointText').textContent=me.position);renderBoard();syncDirectPlanRoleUi();void updateBattleAvatar();
+    rs?.dispatchEvent(new Event('change',{bubbles:true}));bs?.dispatchEvent(new Event('change',{bubbles:true}));grSyncBattlePrecommitClear();return true
+  }
+  const active=m.players?.find(p=>p.id===m.activeId);if(!active?.human)return false;
+  const result=api.clearBattlePrecommitSelection({phase:'target',busy:m.busy,targetCommitted:Boolean(m.target),position:active.position,plan:active.plan,targetDraft:grBattleTargetDraft()});
+  if(!result.cleared)return false;
+  grBattlePrecommitTargetClearContext={match:m,round:m.round};
+  for(const id of ['targetPlayer','targetLane','targetShield']){const el=$('#'+id);if(el){el.value='';el.dispatchEvent(new Event('change',{bubbles:true}))}}
+  const confirm=$('#confirmTarget');if(confirm){confirm.disabled=true;confirm.dataset.precommitClearDisabled='1'}
+  grSyncBattlePrecommitClear();return true
+}
+const __grBattlePrecommitBaseCommitPlans=commitPlans;
+commitPlans=async function(){const m=state.match;grBattlePrecommitCommitInFlight=m;grSyncBattlePrecommitClear();try{return await __grBattlePrecommitBaseCommitPlans.apply(this,arguments)}finally{if(grBattlePrecommitCommitInFlight===m)grBattlePrecommitCommitInFlight=null;grSyncBattlePrecommitClear()}};
+const __grBattlePrecommitBaseRenderBattle=renderBattle;
+renderBattle=function(){const r=__grBattlePrecommitBaseRenderBattle.apply(this,arguments);queueMicrotask(grSyncBattlePrecommitClear);return r};
+for(const id of ['targetPlayer','targetLane','targetShield'])$('#'+id)?.addEventListener('change',()=>{
+  if(grBattlePrecommitTargetClearContext&&grBattleTargetDraftHasValue())grBattlePrecommitTargetClearContext=null;
+  const confirm=$('#confirmTarget'),d=grBattleTargetDraft();if(confirm?.dataset.precommitClearDisabled==='1'&&d.defenderId&&d.lane&&d.shield){confirm.disabled=false;delete confirm.dataset.precommitClearDisabled}
+  grSyncBattlePrecommitClear()
+});
+grEnsureBattlePrecommitClearButton();grSyncBattlePrecommitClear();
+
+'''
+              html = html.replace(anchor, block + anchor, 1)
+              html_path.write_text(html, encoding='utf-8')
+
+          build = build_path.read_text(encoding='utf-8')
+          artifact = "  { source: 'browser/battle-precommit-clear-core.mjs', output: 'battle-precommit-clear-core.mjs', artifact: 'battle_precommit_clear_core', label: 'Battle precommit clear core' },"
+          build_anchor = "  { source: 'browser/battle-auto-input-core.mjs', output: 'battle-auto-input-core.mjs', artifact: 'battle_auto_input_core', label: 'Battle Auto input core' },"
+          if artifact not in build:
+              if build.count(build_anchor) != 1:
+                  raise SystemExit(f'build anchor count drift: {build.count(build_anchor)}')
+              build = build.replace(build_anchor, build_anchor + '\n' + artifact, 1)
+              build_path.write_text(build, encoding='utf-8')
+
+          bfi = bfi_path.read_text(encoding='utf-8')
+          test_marker = 'R2 visible precommit one-operation clear preserves route undo and fails closed against commit race'
+          if test_marker not in bfi:
+              test_block = r'''
+
+test('R2 visible precommit one-operation clear preserves route undo and fails closed against commit race', async ({ page }, testInfo) => {
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+  const battle = await beginVisibleTwoPlayerRoadShield(page, testInfo, 'r2-precommit-clear');
+  const clearAll = battle.locator('#clearPrecommitSelection');
+  const roadSelect = battle.locator('#roadSelect');
+  const battleSelect = battle.locator('#battleSelect');
+  const routeUndo = battle.locator('#clearPath');
+  await expect(routeUndo, 'existing one-step route undo remains present').toBeVisible();
+  await expect(clearAll).toBeVisible();
+  await expect(clearAll).toBeDisabled();
+
+  const roads = await roadSelect.locator('option').evaluateAll(nodes => nodes.map(node => node.value).filter(Boolean));
+  const battles = await battleSelect.locator('option').evaluateAll(nodes => nodes.map(node => node.value).filter(Boolean));
+  const roadId = roads[0];
+  const battleId = battles.find(id => id !== roadId);
+  expect(roadId).toBeTruthy();
+  expect(battleId).toBeTruthy();
+  await roadSelect.selectOption(roadId);
+  await battleSelect.selectOption(battleId);
+  await expect(clearAll).toBeEnabled();
+  await clearAll.click();
+  await expect(roadSelect).toHaveValue('');
+  await expect(battleSelect).toHaveValue('');
+  const clearedPlan = await page.evaluate(() => {
+    const m = window.__GAMEROAD_TEST__.state.match;
+    const me = m.players[0];
+    return { roadId: me.plan?.roadId ?? null, battleId: me.plan?.battleId ?? null, path: [...(me.plan?.path || [])], position: me.position };
+  });
+  expect(clearedPlan.roadId).toBeNull();
+  expect(clearedPlan.battleId).toBeNull();
+  expect(clearedPlan.path).toEqual([clearedPlan.position]);
+  await expect(routeUndo, 'full clear does not replace the one-step route undo control').toBeVisible();
+
+  await page.evaluate(() => {
+    const t = window.__GAMEROAD_TEST__, m = t.state.match, me = m.players[0];
+    m.phase = 'target'; m.activeId = me.id; m.busy = false; m.target = null;
+    t.battlePresentationRender();
+  });
+  await expect(battle.locator('#targetBox')).toHaveClass(/on/);
+  await expect(clearAll).toBeVisible();
+  await expect(clearAll).toBeEnabled();
+  await clearAll.click();
+  await expect(battle.locator('#targetPlayer')).toHaveValue('');
+  await expect(battle.locator('#targetLane')).toHaveValue('');
+  await expect(battle.locator('#targetShield')).toHaveValue('');
+  await expect(battle.locator('#confirmTarget')).toBeDisabled();
+
+  const targetId = await battle.locator('#targetPlayer option').evaluateAll(nodes => nodes.map(node => node.value).find(Boolean));
+  expect(targetId).toBeTruthy();
+  await battle.locator('#targetPlayer').selectOption(targetId);
+  await battle.locator('#targetLane').selectOption('L');
+  await battle.locator('#targetShield').selectOption('C');
+  await expect(battle.locator('#confirmTarget'), 'reselecting a complete target restores commit affordance').toBeEnabled();
+
+  await page.evaluate(() => {
+    const t = window.__GAMEROAD_TEST__, m = t.state.match;
+    m.phase = 'plan'; m.activeId = null; m.busy = false; m.target = null;
+    t.battlePresentationRender();
+  });
+  await roadSelect.selectOption(roadId);
+  await battleSelect.selectOption(battleId);
+  await expect(battle.locator('#readyPlan')).toBeEnabled();
+  await expect(clearAll).toBeEnabled();
+  await page.evaluate(() => {
+    document.getElementById('clearPrecommitSelection').click();
+    document.getElementById('readyPlan').click();
+  });
+  await page.waitForTimeout(80);
+  const race = await page.evaluate(() => {
+    const m = window.__GAMEROAD_TEST__.state.match, me = m.players[0];
+    return { phase: m.phase, busy: Boolean(m.busy), roadId: me.plan?.roadId ?? null, battleId: me.plan?.battleId ?? null };
+  });
+  expect(race.roadId, 'Ready-started commit is never rolled back by the asynchronous clear').toBe(roadId);
+  expect(race.battleId, 'Ready-started commit preserves the staged Battle card').toBe(battleId);
+  await attachStateScreenshot(page, testInfo, 'r2-precommit-clear-race-fail-closed');
+  runtime.assertClean(testInfo);
+});
+'''
+              bfi_path.write_text(bfi + test_block, encoding='utf-8')
+          PY
+      - name: Run focused core and public package tests
+        run: |
+          node --test tests/battle-precommit-clear-core.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Verify bounded changed paths before cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git status --short
+          python3 - <<'PY'
+          import subprocess
+          allowed={
+            'browser/GAMEROAD.html',
+            'deploy/cloudflare/scripts/build.mjs',
+            'tests/browser-full-interaction.spec.mjs',
+            '.github/workflows/battle-precommit-clear-live-r2-executor.yml',
+            'data/preaction-authorizations/BATTLE-PRECOMMIT-CLEAR-LIVE-R2-20260905T2010-SOL-Q7M4P2.json',
+          }
+          paths=set(subprocess.check_output(['git','status','--porcelain'],text=True).splitlines())
+          changed={line[3:] for line in paths if len(line)>=4}
+          extra=changed-allowed
+          if extra: raise SystemExit('unexpected changed paths: '+','.join(sorted(extra)))
+          PY
+      - name: Cleanup transient authorization and executor then commit product slice
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name gameroad-scoped-patch
+          git config user.email gameroad-scoped-patch@users.noreply.github.com
+          git rm .github/workflows/battle-precommit-clear-live-r2-executor.yml
+          git rm data/preaction-authorizations/BATTLE-PRECOMMIT-CLEAR-LIVE-R2-20260905T2010-SOL-Q7M4P2.json
+          git add browser/GAMEROAD.html deploy/cloudflare/scripts/build.mjs tests/browser-full-interaction.spec.mjs
+          git diff --cached --check
+          git commit -m 'Battle: connect precommit selection clear to live consumer'
+          git push origin HEAD:sol/battle-precommit-clear-live-r2-20260905

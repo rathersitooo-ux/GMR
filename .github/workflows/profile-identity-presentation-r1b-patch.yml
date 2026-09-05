@@ -1,0 +1,72 @@
+name: Profile Identity Presentation R1B Patch
+
+on:
+  push:
+    branches:
+      - sol/profile-identity-presentation-r1b-20260905
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/profile-identity-presentation-r1b-20260905
+          fetch-depth: 0
+
+      - name: Apply marker-guarded Profile connection
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          html = Path('browser/GAMEROAD.html')
+          text = html.read_text(encoding='utf-8')
+          marker = '<script type="module" src="./profile-presentation-runtime-mount.mjs"></script>'
+          tail = '</script>\n</body></html>'
+          if marker not in text:
+              if text.count(tail) != 1:
+                  raise SystemExit(f'HTML tail guard failed: {text.count(tail)}')
+              text = text.replace(tail, f'</script>\n{marker}\n</body></html>', 1)
+              html.write_text(text, encoding='utf-8')
+
+          build = Path('deploy/cloudflare/scripts/build.mjs')
+          source = build.read_text(encoding='utf-8')
+          profile_line = "  { source: 'browser/profile-presentation-runtime-mount.mjs', output: 'profile-presentation-runtime-mount.mjs', artifact: 'profile_presentation_runtime_mount', label: 'Profile presentation runtime mount' },\n"
+          anchor = "  { option: 'homeBootRuntimeMountSource', expected: 'expectedHomeBootRuntimeMountBlob', source: 'browser/home-boot-runtime-mount.mjs', output: 'home-boot-runtime-mount.mjs', artifact: 'home_boot_runtime_mount', label: 'Home Boot runtime mount', sourceFlag: '--home-boot-runtime-mount-source', expectedFlag: '--expected-home-boot-runtime-mount-blob' },\n"
+          if profile_line not in source:
+              if source.count(anchor) != 1:
+                  raise SystemExit(f'build anchor guard failed: {source.count(anchor)}')
+              source = source.replace(anchor, anchor + profile_line, 1)
+              build.write_text(source, encoding='utf-8')
+          PY
+
+      - name: Focused Profile and public-package tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/profile-presentation-runtime-mount.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+          node tests/browser-static-check.mjs
+
+      - name: Commit product delta and clean transient control files
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f data/preaction-authorizations/PROFILE-IDENTITY-PRESENTATION-R1B-20260905T1444-SOL-P7K4M2.json
+          rm -f .github/workflows/profile-identity-presentation-r1b-patch.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/GAMEROAD.html browser/profile-presentation-runtime-mount.mjs tests/profile-presentation-runtime-mount.test.mjs deploy/cloudflare/scripts/build.mjs data/preaction-authorizations .github/workflows
+          if git diff --cached --quiet; then
+            echo 'No product delta to commit.'
+            exit 0
+          fi
+          git commit -m 'Profile: connect identity-first presentation runtime'
+          git push origin HEAD:sol/profile-identity-presentation-r1b-20260905

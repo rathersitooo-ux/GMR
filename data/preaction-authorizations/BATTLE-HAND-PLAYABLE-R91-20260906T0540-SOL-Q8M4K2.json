@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HAND-PLAYABLE-R91-20260906T0540-SOL-Q8M4K2",
+  "taskId": "BATTLE-HAND-FAN-SELECTION-PRESENTATION-001",
+  "workUnitKey": "BATTLE_HAND_PLAYABLE_AFFORDANCE_R91",
+  "acquireKey": "BATTLE-HAND-PLAYABLE-R91-20260906T0540-SOL-Q8M4K2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BATTLE-HAND-PLAYABLE-R92-CURRENT-PROJECTION-READBACK",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BATTLE-HAND-PLAYABLE-R92-READONLY-LEGALITY-PROJECTION",
+  "proceedToken": "PROCEED|BATTLE-HAND-PLAYABLE-R91-20260906T0540-SOL-Q8M4K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-projection|lease-readback",
+  "authorizationBaseSha": "0a0056b3ff8ae343b113d997fd2006973d1efd63",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-HAND-FAN-SELECTION-PRESENTATION-001",
+  "leaseWorkUnitKey": "BATTLE_HAND_PLAYABLE_AFFORDANCE_R91",
+  "leaseAcquireKey": "BATTLE-HAND-PLAYABLE-R91-20260906T0540-SOL-Q8M4K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 06:01 JST",
+  "leaseUntilJst": "2026-09-06 06:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch sol/battle-hand-playable-r92-20260906 only: browser/battle-janken-slidepad-runtime-mount.mjs; data/preaction-authorizations/BATTLE-HAND-PLAYABLE-R91-20260906T0540-SOL-Q8M4K2.json transient authorization witness only. browser/GAMEROAD.html; tests/browser-full-interaction.spec.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; gameplay/rules/save/economy/network/Partner/Home/Cards/Profile READ_ONLY.",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs"
+  ]
+}

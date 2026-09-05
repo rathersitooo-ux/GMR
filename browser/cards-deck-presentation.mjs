@@ -310,8 +310,9 @@ export function installCardsDeckFindability({ document: doc = globalThis.documen
   };
   const onFavoriteAction = () => {
     if (!selectedCardId) return;
-    favoriteIds = toggleCardsFavoriteId(favoriteIds, selectedCardId);
-    writeCardsFavoriteIdsToStorage({ storage: cardsFavoriteStorage(win), values: favoriteIds });
+    const nextFavoriteIds = toggleCardsFavoriteId(favoriteIds, selectedCardId);
+    if (!writeCardsFavoriteIdsToStorage({ storage: cardsFavoriteStorage(win), values: nextFavoriteIds })) return;
+    favoriteIds = nextFavoriteIds;
     render();
   };
   input.addEventListener?.('input', onInput);

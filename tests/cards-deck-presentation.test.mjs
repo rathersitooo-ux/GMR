@@ -571,3 +571,19 @@ test('Collection zero-result live reset clears only query/filter toggles and pre
   assert.equal(handler.includes('selectedCardId ='), false);
   assert.equal(handler.includes('writeCardsFavoriteIdsToStorage'), false);
 });
+
+test('favorite action commits visible state only after local persistence succeeds', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('const onFavoriteAction = () => {');
+  const end = source.indexOf("input.addEventListener?.('input', onInput)", start);
+  const handler = source.slice(start, end);
+
+  assert.ok(start >= 0 && end > start);
+  assert.ok(handler.includes('const nextFavoriteIds = toggleCardsFavoriteId(favoriteIds, selectedCardId);'));
+  assert.ok(handler.includes('if (!writeCardsFavoriteIdsToStorage({ storage: cardsFavoriteStorage(win), values: nextFavoriteIds })) return;'));
+  assert.ok(handler.includes('favoriteIds = nextFavoriteIds;'));
+  assert.ok(handler.indexOf('writeCardsFavoriteIdsToStorage') < handler.indexOf('favoriteIds = nextFavoriteIds'));
+  assert.ok(handler.indexOf('favoriteIds = nextFavoriteIds') < handler.indexOf('render();'));
+  assert.equal(handler.includes('favoriteIds = toggleCardsFavoriteId('), false);
+});

@@ -8,6 +8,7 @@ import {
   createBattleJankenSlotRollState,
   isBattleHandAuraLaunchArmed,
   projectBattleHandDragGhostPosition,
+  projectBattleJankenSlotRollDetents,
   projectBattleLoadCardPreview,
   resolveBattleJankenSlotCardAction,
   resolveBattleJankenSlidePadGestureTarget,
@@ -255,6 +256,55 @@ test('Battle Slot Roll excludes empty or disabled janken hands instead of creati
   assert.equal(state.itemId, 'PAPER');
   state = advanceBattleJankenSlotRollState(state, { deltaPx: 58, detentPx: 58 }).state;
   assert.equal(state.itemId, 'ROCK');
+});
+
+test('Battle Slot Roll projects one bounded visual snap per emitted detent without moving slot geometry', () => {
+  const calls = { SCISSORS: [], PAPER: [] };
+  const node = (hand) => ({
+    disabled: false,
+    animate(frames, options) {
+      calls[hand].push({ frames, options });
+      return {};
+    },
+  });
+  const slotNodes = new Map([
+    ['SCISSORS', node('SCISSORS')],
+    ['PAPER', node('PAPER')],
+  ]);
+  const projected = projectBattleJankenSlotRollDetents(slotNodes, [
+    { direction: 1, fromItemId: 'ROCK', toItemId: 'SCISSORS' },
+    { direction: 1, fromItemId: 'SCISSORS', toItemId: 'PAPER' },
+  ]);
+
+  assert.equal(projected, 2);
+  assert.equal(calls.SCISSORS.length, 1);
+  assert.equal(calls.PAPER.length, 1);
+  for (const call of [...calls.SCISSORS, ...calls.PAPER]) {
+    assert.equal(call.options.duration, 110);
+    assert.equal(call.frames.some((frame) => Object.hasOwn(frame, 'transform')), false,
+      'detent feedback must not take over slot position or selection geometry');
+  }
+});
+
+test('Battle Slot Roll does not fabricate detent feedback when no detent was emitted', () => {
+  let animateCount = 0;
+  const slotNodes = new Map([
+    ['SCISSORS', { disabled: false, animate() { animateCount += 1; } }],
+    ['PAPER', { disabled: true, animate() { animateCount += 1; } }],
+  ]);
+  assert.equal(projectBattleJankenSlotRollDetents(slotNodes, []), 0);
+  assert.equal(projectBattleJankenSlotRollDetents(slotNodes, [{ toItemId: 'PAPER' }]), 0);
+  assert.equal(projectBattleJankenSlotRollDetents(slotNodes, [{ toItemId: 'MISSING' }]), 0);
+  assert.equal(animateCount, 0);
+});
+
+test('live Battle pointer adapter consumes shared detents instead of discarding them', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /const advanced = advanceBattleJankenSlotRollState\(slotRollState,[\s\S]*slotRollState = advanced\.state;/);
+  assert.match(source, /projectBattleJankenSlotRollDetents\(slotNodes, advanced\.detents\);/);
+  assert.equal(source.includes('advanceBattleJankenSlotRollState(slotRollState, {\n        deltaPx,\n        detentPx: slotRollDetentPx,\n      }).state;'), false,
+    'the live pointer adapter must not throw away the shared detent event list');
 });
 
 

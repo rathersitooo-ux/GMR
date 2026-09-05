@@ -51,6 +51,10 @@ export const SCREEN_MOTION_PIECE_SELECTORS = Object.freeze({
   gacha: Object.freeze(['.gachaLayout > .gachaStage', '.gachaLayout > .gachaControls'])
 });
 
+const HOME_ROUTE_SELECTOR = '.homePadChoice[data-home-target]';
+const HOME_SLIDEPAD_CENTER_SELECTOR = '#homePadCenter';
+const HOME_VISUAL_LAYER_SELECTOR = '.codexHomeVisualLayer';
+
 export function resolveScreenMotionIntent(from, to, reason = 'navigation') {
   const destinationKey = String(to || '').trim().toLowerCase();
   const family = SCREEN_MOTION_FAMILY_BY_SCREEN[destinationKey] || SCREEN_MOTION_FAMILY.ROUTE;
@@ -116,8 +120,37 @@ function screenSurface(documentSource, screen) {
 }
 function containsNode(surface, node) { return Boolean(surface && node && (surface === node || surface.contains?.(node))); }
 
+function rectCenter(node) {
+  const rect = node?.getBoundingClientRect?.();
+  const left = Number(rect?.left);
+  const top = Number(rect?.top);
+  const width = Number(rect?.width);
+  const height = Number(rect?.height);
+  if (![left, top, width, height].every(Number.isFinite) || width <= 0 || height <= 0) return null;
+  return Object.freeze({x: left + width / 2, y: top + height / 2});
+}
+
+export function resolveHomeRouteMotionVector(surface, to) {
+  if (!surface || typeof surface.querySelector !== 'function' || typeof surface.querySelectorAll !== 'function') return null;
+  const targetKey = String(to || '').trim();
+  if (!targetKey) return null;
+  const pivot = surface.querySelector(HOME_SLIDEPAD_CENTER_SELECTOR);
+  const target = [...surface.querySelectorAll(HOME_ROUTE_SELECTOR)]
+    .find((candidate) => String(candidate?.dataset?.homeTarget || '').trim() === targetKey);
+  const pivotCenter = rectCenter(pivot);
+  const targetCenter = rectCenter(target);
+  if (!pivotCenter || !targetCenter) return null;
+  const dx = targetCenter.x - pivotCenter.x;
+  const dy = targetCenter.y - pivotCenter.y;
+  const distance = Math.hypot(dx, dy);
+  if (!(distance > 0)) return null;
+  return Object.freeze({x: dx / distance, y: dy / distance, target: targetKey});
+}
+
 function transformFor(intent, distance, scale = 1, rotateDeg = 0) {
-  const translate = intent.axis === 'x' ? `translate3d(${distance}px,0,0)` : `translate3d(0,${distance}px,0)`;
+  const translate = intent.routeVector
+    ? `translate3d(${intent.routeVector.x * distance}px,${intent.routeVector.y * distance}px,0)`
+    : intent.axis === 'x' ? `translate3d(${distance}px,0,0)` : `translate3d(0,${distance}px,0)`;
   const rotation = rotateDeg === 0 ? '' : ` rotate(${rotateDeg}deg)`;
   const scaling = scale === 1 ? '' : ` scale(${scale})`;
   return `${translate}${rotation}${scaling}`;
@@ -132,12 +165,15 @@ function presentationFrames(kind, spec, intent) {
   ];
   if (spec.distancePx <= 0) return kind === 'exit' ? [{opacity: 1}, {opacity: .88}] : [{opacity: .86}, {opacity: 1}];
   const signedDistance = spec.distancePx * intent.enterSign;
+  const routeDirected = Boolean(intent.routeVector);
+  const exitDistance = routeDirected ? spec.distancePx : -signedDistance;
+  const enterDistance = routeDirected ? -spec.distancePx : signedDistance;
   if (kind === 'exit') return [
     {opacity: 1, transform: transformFor(intent, 0)},
-    {opacity: .84, transform: transformFor(intent, -signedDistance, 1 + ((1 - intent.scaleFrom) * .35), -intent.rotateDeg * .5)}
+    {opacity: .84, transform: transformFor(intent, exitDistance, 1 + ((1 - intent.scaleFrom) * .35), -intent.rotateDeg * .5)}
   ];
   return [
-    {opacity: .8, transform: transformFor(intent, signedDistance, intent.scaleFrom, intent.rotateDeg)},
+    {opacity: .8, transform: transformFor(intent, enterDistance, intent.scaleFrom, intent.rotateDeg)},
     {opacity: 1, transform: transformFor(intent, 0)}
   ];
 }
@@ -226,11 +262,22 @@ export function createScreenMotionPresentationDriver({document: documentSource =
   function ensureSession(context) {
     let session = sessions.get(context.revision);
     if (session) return session;
+    const outgoing = screenSurface(documentSource, context.from);
+    const baseIntent = resolveScreenMotionIntent(context.from, context.to, context.reason);
+    const routeVector = context.from === 'home' && context.reason !== 'back'
+      ? resolveHomeRouteMotionVector(outgoing, context.to)
+      : null;
+    const intent = routeVector
+      ? Object.freeze({...baseIntent, routeVector, motionSource: 'home-route-geometry'})
+      : baseIntent;
+    const exitTarget = context.from === 'home'
+      ? outgoing?.querySelector?.(HOME_VISUAL_LAYER_SELECTOR) || outgoing
+      : outgoing;
     session = {
       revision: context.revision, signal: context.signal,
-      outgoing: screenSurface(documentSource, context.from), incoming: null,
+      outgoing, incoming: null, exitTarget,
       pressedControl: null, animations: new Set(), onAbort: null, exitPromise: null,
-      intent: resolveScreenMotionIntent(context.from, context.to, context.reason)
+      intent
     };
     session.pressedControl = containsNode(session.outgoing, documentSource?.activeElement) ? documentSource.activeElement : null;
     session.onAbort = () => finishRevision(context.revision, 'aborted');
@@ -283,7 +330,7 @@ export function createScreenMotionPresentationDriver({document: documentSource =
   }
 
   async function animateIncoming(session, context) {
-    if (context.motionProfile !== MENU_TRANSITION_MOTION_PROFILE.NORMAL) {
+    if (session.intent.routeVector || context.motionProfile !== MENU_TRANSITION_MOTION_PROFILE.NORMAL) {
       await animate(session, session.incoming, 'enter', context);
       return;
     }
@@ -307,7 +354,7 @@ export function createScreenMotionPresentationDriver({document: documentSource =
         void animate(session, session.pressedControl, 'press', phaseContext);
       } else if (phase === 'EXIT') {
         mark(session.outgoing, context, phase, session.intent);
-        session.exitPromise = animate(session, session.outgoing, 'exit', phaseContext);
+        session.exitPromise = animate(session, session.exitTarget, 'exit', phaseContext);
       } else if (phase === 'SWAP') {
         session.incoming = screenSurface(documentSource, context.to);
         mark(session.incoming, context, phase, session.intent);

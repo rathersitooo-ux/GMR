@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-QUICK-SETTINGS-MASTER-R1-20260905T2324-SOL-M7K3Q5",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_QUICK_SETTINGS_MASTER_VOLUME_AUTHORITY_R1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_QUICK_SETTINGS_MASTER_KNOWN_AUTHORITY_GAP+USER_EXPLICIT_MASTER_VOLUME+NO_FRESH_SETTINGS_LEASE",
+  "rehearsalStatus": "N_A_INSPECTION_ONLY",
+  "rehearsalEvidenceId": "READ_ONLY_CURRENT_AUDIO_AUTHORITY_EXTRACTION",
+  "proceedToken": "PROCEED|HOME-QUICK-SETTINGS-MASTER-R1-20260905T2324-SOL-M7K3Q5|INSPECTION_ONLY|MATERIAL_STANDARD|PRODUCT_WRITE0",
+  "authorizationBaseSha": "e878972e2bdb3df294a48b0aab11b0259a8a00a8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseState": "ACTIVE",
+  "leaseSnapshotRef": "CURRENT_ACTIVE_LEASES row484",
+  "scope": [
+    ".github/workflows/home-quick-settings-master-r1-inspect.yml",
+    "data/preaction-authorizations/HOME-QUICK-SETTINGS-MASTER-R1-20260905T2324-SOL-M7K3Q5.json"
+  ],
+  "productMutationAllowed": false,
+  "intent": "Extract the current full-settings BGM/SFX/Voice DOM, persistence, apply path, and audio playback seams. Determine whether one multiplicative master layer can reuse the current authority without overwriting per-channel ratios or creating a second settings store.",
+  "resumeFrom": "After inspection evidence readback, release this inspection scope and reacquire only the exact product files/tests proven necessary if the current authority supports a bounded player-facing master-volume implementation."
+}

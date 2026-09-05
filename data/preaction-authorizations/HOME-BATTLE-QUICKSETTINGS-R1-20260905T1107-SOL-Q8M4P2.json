@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-BATTLE-QUICKSETTINGS-R1-20260905T1107-SOL-Q8M4P2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_BATTLE_QUICK_SETTINGS_SHARED_AUTHORITY_R1",
+  "acquireKey": "HOME-BATTLE-QUICKSETTINGS-R1-20260905T1107-SOL-Q8M4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_EXPLICIT_QUICK_SETTINGS_ADOPTION+CURRENT_SETTINGS_VISIBLE_CONTROL_ACCEPTANCE+PUBLIC_PACKAGE_FAILURE_SHRINK",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "HOME_BATTLE_CONVENTIONAL_TESTS+REQUIRED_GATE_PUBLIC_PACKAGE_INVARIANT",
+  "proceedToken": "PROCEED|HOME-BATTLE-QUICKSETTINGS-R1-20260905T1107-SOL-Q8M4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ADAPT_EXISTING_SETTINGS_DOM_AUTHORITY_WITHOUT_NEW_PUBLIC_MODULE",
+  "authorizationBaseSha": "199dba5ae61b3ecaccd0f00fac49908922479ed4",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_BATTLE_QUICK_SETTINGS_SHARED_AUTHORITY_R1",
+  "leaseAcquireKey": "HOME-BATTLE-QUICKSETTINGS-R1-20260905T1107-SOL-Q8M4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 11:20 JST",
+  "leaseUntilJst": "2026-09-05 12:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A354:L354",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@199dba5ae61b3ecaccd0f00fac49908922479ed4; clean branch sol/home-battle-quicksettings-r1c-20260905; mutable browser/home-boot-runtime-mount.mjs + tests/home-boot-presentation.test.mjs + browser/battle-screen-runtime-mount.mjs + tests/battle-screen-runtime-mount.test.mjs + UNIQUE_TRANSIENT .github/workflows/home-battle-quicksettings-r1c-verify.yml + TRANSIENT data/preaction-authorizations/HOME-BATTLE-QUICKSETTINGS-R1-20260905T1107-SOL-Q8M4P2.json only; browser/GAMEROAD.html + deploy/cloudflare/scripts/build.mjs + deploy/cloudflare/tests/build.test.mjs + gameplay/rules/save/economy/network READ_ONLY. No new runtime module: shared quick-settings API lives in already-packaged Home runtime; Battle consumes it fail-soft.",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    ".github/workflows/home-battle-quicksettings-r1c-verify.yml"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    ".github/workflows/home-battle-quicksettings-r1c-verify.yml"
+  ],
+  "solutionSignature": "compact-quick-settings-proxy-inside-packaged-home-runtime",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "FULL_SETTINGS_ALREADY_OWNS_SETTINGS_STATE_AND_HOME_RUNTIME_ALREADY_PUBLIC_PACKAGED",
+  "solutionSearchEvidence": [
+    "current Browser full-interaction controls already own music/sfx/voice volume, mute, reduceMotion and lowPerf",
+    "PR#1128 PREACTION and conventional tests passed but public package rejected the new runtime dependency",
+    "deploy/cloudflare build files are currently locked by another valid ACTIVE owner, so no collision is allowed",
+    "Home runtime is already a current public package artifact and auto-mounts as the Home consumer"
+  ],
+  "scopeRebaseReason": "Shrink after real public-package evidence. Do not add a new module or touch locked build configuration. Put a compact presentation/proxy API in the already-packaged Home runtime; it forwards only to existing Settings DOM controls and creates no setting state/store. Battle consumes the same API fail-soft. Add regression coverage to the existing Home/Battle tests. Master/global volume remains an explicit unresolved authority gap and is not fabricated."
+}

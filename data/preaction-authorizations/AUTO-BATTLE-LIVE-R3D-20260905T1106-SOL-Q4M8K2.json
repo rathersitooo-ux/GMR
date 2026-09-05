@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "AUTO-BATTLE-LIVE-R3D-20260905T1106-SOL-Q4M8K2",
+  "taskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "workUnitKey": "AUTO_BATTLE_LIVE_INPUT_UI_R2",
+  "acquireKey": "AUTO-BATTLE-LIVE-R3D-20260905T1106-SOL-Q4M8K2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1119_REQUIRED_GATE_EXACT_MISSING_BATTLE_AUTO_CORE+CURRENT_MAIN_EAA5_TARGET_BLOBS+R2_VERIFIED_ADAPTER",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R2_FOCUSED_LIVE_BRIDGE_ORACLE+PR1119_PREACTION_AND_OBSERVABILITY_PASS+PUBLIC_PROVENANCE_FAIL_CLOSED",
+  "proceedToken": "PROCEED|AUTO-BATTLE-LIVE-R3D-20260905T1106-SOL-Q4M8K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|RELAND_AUTO_WITH_PUBLIC_CORE_ARTIFACT",
+  "authorizationBaseSha": "eaa5e4cf3c6343b3b3567e35947a7e0265e6a7f0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "leaseWorkUnitKey": "AUTO_BATTLE_LIVE_INPUT_UI_R2",
+  "leaseAcquireKey": "AUTO-BATTLE-LIVE-R3D-20260905T1106-SOL-Q4M8K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 11:06 JST",
+  "leaseUntilJst": "2026-09-05 11:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:N5",
+  "leaseExactMutableResources": "browser/ui-state-feedback-ready-plan-adapter.mjs; deploy/cloudflare/scripts/build.mjs ONLY add battle-auto-input-core artifact spec; deploy/cloudflare/tests/build.test.mjs ONLY add Auto core dependencyContract/provenance stale case plus adapter currentBlob refresh; this transient manifest. browser/battle-auto-input-core.mjs and all gameplay rules are READ_ONLY.",
+  "scope": [
+    "browser/ui-state-feedback-ready-plan-adapter.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/AUTO-BATTLE-LIVE-R3D-20260905T1106-SOL-Q4M8K2.json"
+  ],
+  "leaseScope": [
+    "browser/ui-state-feedback-ready-plan-adapter.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/AUTO-BATTLE-LIVE-R3D-20260905T1106-SOL-Q4M8K2.json"
+  ],
+  "solutionSignature": "verified-auto-card-selection-through-human-path-plus-existing-auto-core-public-package-registration",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R2_ADAPTER_e9a608d0+AUTO_CORE_ca47f5c7+PR1119_GATE33937981137",
+  "solutionSearchEvidence": [
+    "work/auto-battle-live-r2-20260905 verified adapter donor e9a608d0",
+    "browser/battle-auto-input-core.mjs existing unchanged blob ca47f5c7 and no local imports",
+    "PR#1119 Required Gate exact missing runtime dependency error",
+    "current main eaa5 build.mjs artifact list direct readback and target blobs"
+  ]
+}

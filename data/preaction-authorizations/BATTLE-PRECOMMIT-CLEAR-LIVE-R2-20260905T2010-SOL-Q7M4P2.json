@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PRECOMMIT-CLEAR-LIVE-R2-20260905T2010-SOL-Q7M4P2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PRECOMMIT_CLEAR_LIVE_R2",
+  "acquireKey": "BATTLE-PRECOMMIT-CLEAR-LIVE-R2-20260905T2010-SOL-Q7M4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_EXPLICIT_PRECOMMIT_CLEAR+MERGED_PURE_CORE+CURRENT_PLAN_TARGET_COMMIT_BOUNDARIES+FRESH_EXACT_LEASE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_GAMEROAD_HTML_PLAN_TARGET_FRIEND_BOUNDARIES+CORE_8_OF_8+EXISTING_BFI_R13_ROUTE_UNDO",
+  "proceedToken": "PROCEED|BATTLE-PRECOMMIT-CLEAR-LIVE-R2-20260905T2010-SOL-Q7M4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ADAPT_MERGED_CORE_TO_LIVE_PLAN_AND_TARGET_DRAFTS",
+  "authorizationBaseSha": "da22d175f7292f7b8a441ab3bf834989d64bc746",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PRECOMMIT_CLEAR_LIVE_R2",
+  "leaseAcquireKey": "BATTLE-PRECOMMIT-CLEAR-LIVE-R2-20260905T2010-SOL-Q7M4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 20:10 JST",
+  "leaseUntilJst": "2026-09-05 21:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A395:L395",
+  "leaseExactMutableResources": "Drive GAMEROAD 全作業一覧 Y1374:AB1374; GitHub:rathersitooo-ux/GMR base main@da22d175f7292f7b8a441ab3bf834989d64bc746 branch sol/battle-precommit-clear-live-r2-20260905; mutable browser/GAMEROAD.html + deploy/cloudflare/scripts/build.mjs + tests/browser-full-interaction.spec.mjs + .github/workflows/battle-precommit-clear-live-r2-executor.yml only; browser/battle-precommit-clear-core.mjs and gameplay/rules/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/battle-precommit-clear-live-r2-executor.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/battle-precommit-clear-live-r2-executor.yml"
+  ],
+  "solutionSignature": "battle-live-precommit-clear-reuse-merged-core-preserve-route-undo",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MERGED_BATTLE_PRECOMMIT_CLEAR_CORE_PLUS_EXISTING_INLINE_PLAN_TARGET_DOM_SEAMS",
+  "solutionSearchEvidence": [
+    "browser/battle-precommit-clear-core.mjs already owns precommit-only clear/fail-closed policy",
+    "browser/GAMEROAD.html updatePlanFromSelect owns staged plan before commitPlans busy/phase transition",
+    "browser/GAMEROAD.html clearPath is existing one-step route undo and must remain unchanged",
+    "browser/GAMEROAD.html target selects are staged DOM until confirmTarget writes state.match.target",
+    "friend-room existing FR.planValues and snapshot.private.planSubmitted distinguish submitted plans",
+    "deploy/cloudflare/scripts/build.mjs currently omits battle-precommit-clear-core.mjs from public package"
+  ],
+  "scopeRebaseReason": "Connect the already-merged policy core to the sole production Battle flow with a separate one-operation clear control, preserving the established route-step undo and all existing commit/resolve authorities. A unique transient executor is used only for bounded exact-string patches to the large monolith/BFI and is removed before PR."
+}

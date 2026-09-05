@@ -1,0 +1,97 @@
+name: TEMP Public BFI Battle Janken Clearance R1
+
+on:
+  push:
+    branches:
+      - work/public-bfi-battle-janken-clearance-r1-20260905
+    paths:
+      - .github/workflows/temp-public-bfi-battle-janken-clearance-r1.yml
+
+permissions:
+  contents: read
+
+jobs:
+  public-origin-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GAMEROAD_PUBLIC_BASE_URL: https://gameroad-browser-r5.pages.dev
+      EXPECTED_BUILD_ID: da22d175f7292f7b8a441ab3bf834989d64bc746
+    steps:
+      - name: Checkout exact deployed source
+        uses: actions/checkout@v4
+        with:
+          ref: da22d175f7292f7b8a441ab3bf834989d64bc746
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Bind public origin to exact deployed build
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public-origin-metadata
+          curl --fail --silent --show-error --location --header 'Accept-Encoding: identity' --retry 4 --retry-delay 2 --retry-connrefused --max-time 30 --output public-origin-metadata/gameroad-version.json "${GAMEROAD_PUBLIC_BASE_URL}/gameroad-version.json"
+          OBSERVED="$(node -e "const fs=require('node:fs');const m=JSON.parse(fs.readFileSync('public-origin-metadata/gameroad-version.json','utf8'));process.stdout.write(String(m.build_id||''))")"
+          echo "Public GAMEROAD build_id=${OBSERVED}"
+          test "$OBSERVED" = "$EXPECTED_BUILD_ID" || { echo "::error::expected=$EXPECTED_BUILD_ID observed=$OBSERVED"; exit 1; }
+          printf 'expected_build_id=%s\nobserved_build_id=%s\npublic_origin=%s\n' "$EXPECTED_BUILD_ID" "$OBSERVED" "$GAMEROAD_PUBLIC_BASE_URL" > public-origin-metadata/binding.txt
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+
+      - name: Prepare bounded public-origin R19 runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .r1-public
+          SOURCE='tests/browser-full-interaction.spec.mjs'
+          TARGET='.r1-public/browser-full-interaction.spec.mjs'
+          grep -Fq "'/browser/GAMEROAD.html'" "$SOURCE"
+          sed "s#'/browser/GAMEROAD.html'#'/'#g" "$SOURCE" > "$TARGET"
+          cat > .r1-public/playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          import baseConfig from '../playwright.full-interaction.config.mjs';
+          const publicProjects=(baseConfig.projects??[]).filter((project)=>!project.grep).map((project)=>({name:project.name,use:project.use}));
+          export default defineConfig({
+            testDir:'.',
+            testMatch:'browser-full-interaction.spec.mjs',
+            grep:/R19 reaches Result from visible four-player Honey Hunt and returns Home/,
+            timeout:240_000,
+            expect:{timeout:7_000},
+            fullyParallel:false,
+            workers:1,
+            retries:0,
+            outputDir:'../test-results/public-origin',
+            reporter:[['line'],['html',{outputFolder:'../playwright-report-public-origin',open:'never'}],['json',{outputFile:'../test-results/public-origin/public-origin-report.json'}]],
+            use:{...baseConfig.use,baseURL:process.env.GAMEROAD_PUBLIC_BASE_URL,trace:'retain-on-failure',screenshot:'on',video:'off'},
+            projects:publicProjects,
+          });
+          EOF
+
+      - name: Run visible four-player Honey Hunt on public origin
+        run: npx playwright test --config=.r1-public/playwright.config.mjs --workers=1
+
+      - name: Record evidence binding
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public-origin-metadata
+          printf 'run_id=%s\nsource_sha=%s\nexpected_build_id=%s\npublic_origin=%s\n' "$GITHUB_RUN_ID" "$EXPECTED_BUILD_ID" "$EXPECTED_BUILD_ID" "$GAMEROAD_PUBLIC_BASE_URL" > public-origin-metadata/run-binding.txt
+
+      - name: Upload public interaction evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-public-interaction-${{ github.run_id }}
+          path: |
+            playwright-report-public-origin/
+            test-results/public-origin/
+            public-origin-metadata/
+          if-no-files-found: error
+          retention-days: 14

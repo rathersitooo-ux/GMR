@@ -5,13 +5,18 @@ const VIEWPORT_VARIANTS = Object.freeze({
   PORTRAIT: 'portrait',
 });
 const TOUCH_TARGET_MIN_PX = 44;
-const SETUP_STAGING_STYLE_ID = 'gameroad-setup-staging-presentation-r1';
+const SETUP_STAGING_STYLE_ID = 'gameroad-setup-staging-presentation-r2';
 const UPDATE_BANNER_ID = 'gameroadUpdateBanner';
 const UPDATE_DETAILS_TRIGGER_CLASS = 'gameroadUpdateDetailsTrigger';
 const UPDATE_DETAILS_DIALOG_ID = 'gameroadUpdateDetailsDialog';
 const UPDATE_DETAILS_STYLE_ID = 'gameroad-update-details-style-r1';
 const RELEASE_COMMS_URL = './gameroad-release-comms.json';
 const UPDATE_MESSAGE = 'アップデートがあります';
+export const SETUP_MODE_PICTOGRAMS = Object.freeze({
+  '2p': '● ●',
+  '4p': '● ● ● ●',
+  '2v2': '●● │ ●●',
+});
 const RELEASE_COMMS_SECTION_DEFINITIONS = Object.freeze([
   Object.freeze({ key: 'release_notes', label: 'アップデート', hiddenState: 'UNPUBLISHED' }),
   Object.freeze({ key: 'known_issues', label: '既知の問題', hiddenState: 'NOT_ASSERTED' }),
@@ -24,6 +29,11 @@ section[data-screen="setup"] .setupHero{position:relative;padding:clamp(14px,2.2
 section[data-screen="setup"] .setupBox{display:grid;gap:12px;padding:clamp(12px,2vw,20px);border-radius:20px;background:color-mix(in srgb,currentColor 4%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,currentColor 14%,transparent)}
 section[data-screen="setup"] [data-content],
 section[data-screen="setup"] [data-mode]{min-height:44px !important;padding:10px 14px !important;touch-action:manipulation;display:flex;align-items:center;justify-content:center;border-radius:14px !important;border:1px solid color-mix(in srgb,currentColor 20%,transparent) !important;background:color-mix(in srgb,currentColor 3%,transparent) !important;box-shadow:0 3px 10px rgba(0,0,0,.1);opacity:.76;filter:saturate(.82) brightness(.94);transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease,filter .16s ease,opacity .16s ease}
+section[data-screen="setup"] [data-mode]::before{display:inline-flex;align-items:center;justify-content:center;min-width:4.65em;margin-inline-end:.58em;padding:.22em .46em;border-radius:999px;background:color-mix(in srgb,currentColor 9%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,currentColor 22%,transparent);font-size:.72em;font-weight:900;line-height:1;letter-spacing:.12em;white-space:nowrap;opacity:.88}
+section[data-screen="setup"] [data-mode="2p"]::before{content:"${SETUP_MODE_PICTOGRAMS['2p']}"}
+section[data-screen="setup"] [data-mode="4p"]::before{content:"${SETUP_MODE_PICTOGRAMS['4p']}"}
+section[data-screen="setup"] [data-mode="2v2"]::before{content:"${SETUP_MODE_PICTOGRAMS['2v2']}";letter-spacing:.06em}
+section[data-screen="setup"] [data-mode].on::before{opacity:1;background:color-mix(in srgb,currentColor 24%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,currentColor 42%,transparent)}
 section[data-screen="setup"] [data-content]:hover,
 section[data-screen="setup"] [data-mode]:hover{opacity:.94;filter:saturate(.96) brightness(1.01);border-color:color-mix(in srgb,currentColor 34%,transparent) !important}
 section[data-screen="setup"] [data-content].on,
@@ -37,8 +47,8 @@ section[data-screen="setup"] #startMatch:not(:disabled):active{filter:brightness
 section[data-screen="setup"] #startMatch:disabled{opacity:.52;box-shadow:0 5px 14px rgba(0,0,0,.18)}
 section[data-screen="setup"] #startMatch:focus-visible{outline:3px solid currentColor;outline-offset:4px}
 @media (prefers-reduced-motion:reduce){section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode],section[data-screen="setup"] #startMatch{transition:none}section[data-screen="setup"] [data-content].on,section[data-screen="setup"] [data-mode].on,section[data-screen="setup"] #startMatch:not(:disabled):hover,section[data-screen="setup"] #startMatch:not(:disabled):active{transform:none}}
-@media (max-width:540px){section[data-screen="setup"]{overflow-y:auto;overscroll-behavior:contain}section[data-screen="setup"] .setupHero{padding:14px;border-radius:18px}section[data-screen="setup"] .setupBox{gap:10px;padding:12px;border-radius:18px}section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode]{min-height:48px !important}section[data-screen="setup"] #startMatch{position:sticky;bottom:max(10px,env(safe-area-inset-bottom));z-index:20;min-height:64px !important;margin-top:12px}}
-@media (max-height:430px) and (orientation:landscape){section[data-screen="setup"] .setupHero{padding:9px 12px}section[data-screen="setup"] .setupBox{gap:7px;padding:9px 11px}section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode]{min-height:44px !important;padding-block:7px !important}section[data-screen="setup"] #startMatch{min-height:50px !important;margin-top:7px}}
+@media (max-width:540px){section[data-screen="setup"]{overflow-y:auto;overscroll-behavior:contain}section[data-screen="setup"] .setupHero{padding:14px;border-radius:18px}section[data-screen="setup"] .setupBox{gap:10px;padding:12px;border-radius:18px}section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode]{min-height:48px !important}section[data-screen="setup"] [data-mode]::before{min-width:4.3em;margin-inline-end:.46em;padding-inline:.34em;font-size:.68em}section[data-screen="setup"] #startMatch{position:sticky;bottom:max(10px,env(safe-area-inset-bottom));z-index:20;min-height:64px !important;margin-top:12px}}
+@media (max-height:430px) and (orientation:landscape){section[data-screen="setup"] .setupHero{padding:9px 12px}section[data-screen="setup"] .setupBox{gap:7px;padding:9px 11px}section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode]{min-height:44px !important;padding-block:7px !important}section[data-screen="setup"] [data-mode]::before{min-width:4.15em;margin-inline-end:.42em;font-size:.66em}section[data-screen="setup"] #startMatch{min-height:50px !important;margin-top:7px}}
 `;
 const UPDATE_DETAILS_CSS = `
 .${UPDATE_DETAILS_TRIGGER_CLASS}{appearance:none;border:0;background:none;color:inherit;font:inherit;font-weight:inherit;line-height:inherit;padding:0;margin:0;text-decoration:underline;text-decoration-thickness:.08em;text-underline-offset:.18em;cursor:pointer;touch-action:manipulation}
@@ -427,3 +437,4 @@ export const HOME_SHELL_PRESENTATION_SCHEMA = SCHEMA;
 export const HOME_VIEWPORT_VARIANTS = VIEWPORT_VARIANTS;
 export const HOME_TOUCH_TARGET_MIN_PX = TOUCH_TARGET_MIN_PX;
 export const HOME_UPDATE_DETAILS_MANIFEST_URL = RELEASE_COMMS_URL;
+export const SETUP_STAGING_PRESENTATION_CSS = SETUP_STAGING_CSS;

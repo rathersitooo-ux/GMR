@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "AUTO-BATTLE-LIVE-R3B-20260905T1058-SOL-P6N4K2",
+  "taskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "workUnitKey": "AUTO_BATTLE_LIVE_INPUT_UI_R2",
+  "acquireKey": "AUTO-BATTLE-LIVE-R3-20260905T1049-SOL-P6N4K2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1109_GATE_FAILURE_CLASSIFICATION_ONLY+R2_DONOR_EXACT_PRODUCT_DELTA+FRESH_MAIN_NONOVERLAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R2_FOCUSED_AUTO_BRIDGE_TEST_REUSED_INSIDE_EXISTING_CLASSIFIED_READY_PLAN_TEST",
+  "proceedToken": "PROCEED|AUTO-BATTLE-LIVE-R3-20260905T1049-SOL-P6N4K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|RELAND_AUTO_WITH_EXISTING_CLASSIFIED_TEST",
+  "authorizationBaseSha": "15e5157091f398c30378683d0630b9dcbd12da4e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "leaseWorkUnitKey": "AUTO_BATTLE_LIVE_INPUT_UI_R2",
+  "leaseAcquireKey": "AUTO-BATTLE-LIVE-R3-20260905T1049-SOL-P6N4K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 10:59 JST",
+  "leaseUntilJst": "2026-09-05 11:49 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR current main@15e5157091f398c30378683d0630b9dcbd12da4e; clean branch work/auto-battle-live-r3b-20260905; mutable browser/ui-state-feedback-ready-plan-adapter.mjs + tests/ui-state-feedback-ready-plan-adapter.test.mjs + transient data/preaction-authorizations/AUTO-BATTLE-LIVE-R3B-20260905T1058-SOL-P6N4K2.json; donor tests/battle-auto-live-ready-plan-bridge.test.mjs READ_ONLY evidence; browser/battle-auto-input-core.mjs + browser/GAMEROAD.html + deploy/cloudflare/scripts/build.mjs READ_ONLY.",
+  "scope": [
+    "browser/ui-state-feedback-ready-plan-adapter.mjs",
+    "tests/ui-state-feedback-ready-plan-adapter.test.mjs",
+    "data/preaction-authorizations/AUTO-BATTLE-LIVE-R3B-20260905T1058-SOL-P6N4K2.json"
+  ],
+  "leaseScope": [
+    "browser/ui-state-feedback-ready-plan-adapter.mjs",
+    "tests/ui-state-feedback-ready-plan-adapter.test.mjs",
+    "data/preaction-authorizations/AUTO-BATTLE-LIVE-R3B-20260905T1058-SOL-P6N4K2.json"
+  ],
+  "solutionSignature": "auto-card-selection-through-existing-human-live-input-path",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R2_DONOR_ADAPTER_e9a608d0+R2_FOCUSED_TEST_1a4226ab+CURRENT_READY_PLAN_PAIR",
+  "solutionSearchEvidence": [
+    "browser/battle-auto-input-core.mjs merged shared controller",
+    "work/auto-battle-live-r2-20260905 adapter donor",
+    "work/auto-battle-live-r2-20260905 focused regression donor",
+    "tests/ui-state-feedback-ready-plan-adapter.test.mjs existing Required-Gate classified pair"
+  ],
+  "scopeRebaseReason": "PR#1109 failed before product tests because the standalone focused test filename was unclassified. Required Gate is not modified. Same product delta is cleanly re-landed while moving only the focused regression assertions into the existing classified Ready-plan adapter test. Public Auto semantics remain manual/left/right/max/min card selection only; situation, target, column, shield and READY remain manual/unexposed."
+}

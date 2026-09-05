@@ -26,6 +26,7 @@ const RELEASE_FLIGHT_DURATION_MS = 560;
 const HAND_DRAG_DEAD_ZONE_PX = 8;
 const HAND_AURA_ARM_PADDING_PX = 18;
 const HAND_AURA_RELEASE_DURATION_MS = 520;
+const SLOT_ROLL_DETENT_FEEDBACK_DURATION_MS = 110;
 export const BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS = 'section[data-screen="battle"] #targetBox.on,section[data-screen="battle"] #targetBox.vfTargetProxyOn{z-index:60!important}';
 
 function deepFreeze(value) {
@@ -184,6 +185,37 @@ export function createBattleJankenSlotRollState(model, anchorHand) {
 export function advanceBattleJankenSlotRollState(state, { deltaPx, detentPx } = {}) {
   if (!state) return Object.freeze({ state: null, detents: Object.freeze([]) });
   return advanceSlotRollDrag(state, { deltaPx, detentPx });
+}
+
+export function projectBattleJankenSlotRollDetents(slotNodes, detents) {
+  if (!slotNodes || typeof slotNodes.get !== 'function' || !Array.isArray(detents) || detents.length === 0) return 0;
+  let projected = 0;
+  for (const detent of detents) {
+    const node = slotNodes.get(detent?.toItemId);
+    if (!node || node.disabled || typeof node.animate !== 'function') continue;
+    node.animate([
+      {
+        offset: 0,
+        filter: 'brightness(1.12) saturate(1.08)',
+        boxShadow: '0 10px 28px rgba(3,5,24,.5),0 0 0 4px rgba(92,205,255,.2),0 0 24px rgba(135,105,255,.26)',
+      },
+      {
+        offset: 0.42,
+        filter: 'brightness(1.42) saturate(1.22)',
+        boxShadow: '0 8px 24px rgba(3,5,24,.46),0 0 0 7px rgba(194,238,255,.34),0 0 34px rgba(135,105,255,.42)',
+      },
+      {
+        offset: 1,
+        filter: 'brightness(1.12) saturate(1.08)',
+        boxShadow: '0 10px 28px rgba(3,5,24,.5),0 0 0 4px rgba(92,205,255,.2),0 0 24px rgba(135,105,255,.26)',
+      },
+    ], {
+      duration: SLOT_ROLL_DETENT_FEEDBACK_DURATION_MS,
+      easing: 'cubic-bezier(.16,.82,.22,1)',
+    });
+    projected += 1;
+  }
+  return projected;
 }
 
 export function isBattleHandAuraLaunchArmed({
@@ -637,11 +669,13 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     const deltaPx = pointer.x - slotRollLastX;
     slotRollLastX = pointer.x;
     if (slotRollDetentPx > 0 && Number.isFinite(deltaPx) && deltaPx !== 0) {
-      slotRollState = advanceBattleJankenSlotRollState(slotRollState, {
+      const advanced = advanceBattleJankenSlotRollState(slotRollState, {
         deltaPx,
         detentPx: slotRollDetentPx,
-      }).state;
+      });
+      slotRollState = advanced.state;
       setArmed(slotRollState?.itemId ?? armedHand);
+      projectBattleJankenSlotRollDetents(slotNodes, advanced.detents);
     }
     event.preventDefault?.();
     return armedHand;

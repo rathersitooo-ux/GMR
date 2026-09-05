@@ -110,6 +110,13 @@ assert.equal(runtime.hud.hateValue.dataset.resolved, 'false');
 assert.equal(runtime.hud.turnValue.dataset.resolved, 'false');
 assert.equal(runtime.hud.loadValue.dataset.resolved, 'false');
 assert.equal(runtime.hud.chain.children.length, 0);
+assert.ok(runtime.progressGuide);
+assert.equal(runtime.progressGuide.getAttribute('data-battle-progress-guide'), '1');
+assert.equal(runtime.progressGuide.getAttribute('aria-label'), 'ROADからGOALへの進行方向');
+assert.equal(runtime.progressGuide.dataset.presentationOnly, 'true');
+assert.equal(runtime.progressGuide.dataset.authority, 'existing-road-goal-meaning-only');
+assert.equal(runtime.progressGuide.parentNode, runtime.phaseSurface);
+assert.deepEqual(runtime.progressGuide.children.map(node => node.textContent), ['GOAL', '', 'ROAD']);
 
 const runtimeStyle = document.getElementById('gameroad-battle-screen-runtime-r1-style');
 assert.ok(runtimeStyle);
@@ -126,6 +133,11 @@ assert.ok(runtimeStyle.textContent.includes('[data-gr-battle-screen="1"] #battle
 assert.ok(runtimeStyle.textContent.includes('.grBattleHudSettings{pointer-events:auto'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleHudChainArrow'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleHudLoad'));
+assert.ok(runtimeStyle.textContent.includes('[data-battle-progress-guide]'));
+assert.ok(runtimeStyle.textContent.includes('.grBattleProgressArrow::before{content:"◀"'));
+assert.ok(runtimeStyle.textContent.includes('.grBattleProgressArrow::before{content:"▲"'));
+assert.equal(runtimeStyle.textContent.includes('10000'), false);
+assert.equal(runtimeStyle.textContent.includes('1000 / 100 / 10 / 1'), false);
 assert.equal(runtimeStyle.textContent.includes('data-role="loser"'), false);
 assert.equal(runtimeStyle.textContent.includes('♥'), false);
 
@@ -258,8 +270,10 @@ assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['source',
 assert.deepEqual(roleSurfaces.map(node => node.hidden), [false, true, true, false]);
 assert.deepEqual(roleSurfaces.map(node => node.textContent), ['攻撃', '', '', '対象']);
 
+const progressGuide = runtime.progressGuide;
 assert.equal(runtime.destroy(), true);
 assert.equal(runtime.destroy(), false);
+assert.equal(progressGuide.parentNode, null);
 assert.equal(root.children.includes(runtime.shell), false);
 assert.throws(() => runtime.render(idle), /RUNTIME_DESTROYED/);
 assert.throws(() => runtime.renderHud({ score: 1 }), /RUNTIME_DESTROYED/);
@@ -286,6 +300,8 @@ assert.equal(adopted.planSlot, null);
 assert.equal(adopted.phaseSurface, existingPhase);
 assert.equal(adopted.resolutionSurface, existingResolution);
 assert.equal(adopted.hud.root.parentNode, existingShell);
+assert.equal(adopted.progressGuide.parentNode, existingPhase);
+assert.equal(adopted.progressGuide.dataset.presentationOnly, 'true');
 adopted.render(attack, { score: 'S', hate: 'H', turn: 'T', loadJanken: 'paper' });
 assert.equal(existingResolution.textContent, 'KEEP');
 assert.equal(adopted.laneSurfaces.length, 4);
@@ -294,7 +310,9 @@ adopted.render(terminalResult);
 assert.equal(existingShell.hidden, false);
 assert.equal(existingPhase.hidden, true);
 assert.equal(adopted.hud.root.hidden, true);
+const adoptedProgressGuide = adopted.progressGuide;
 assert.equal(adopted.destroy(), true);
+assert.equal(adoptedProgressGuide.parentNode, null);
 assert.equal(adoptedDocument.body.children.includes(existingShell), true);
 assert.equal(existingShell.children.includes(existingPhase), true);
 assert.equal(existingShell.children.includes(adopted.hud.root), false);
@@ -323,7 +341,7 @@ assert.equal(BATTLE_SCREEN_RUNTIME.formalArtOwnedHere, false);
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 118,
+  tests: 130,
   freshMount: {
     laneCount: runtime.laneSurfaces.length,
     phaseAnchor: runtime.phaseSurface.id,
@@ -336,5 +354,10 @@ console.log(JSON.stringify({
   r75Hud: {
     authority: BATTLE_SCREEN_RUNTIME.hudAuthority,
     placeholders: BATTLE_SCREEN_RUNTIME.hudUnresolvedTokens
+  },
+  progressGuide: {
+    direction: 'ROAD_TO_GOAL',
+    landscape: 'GOAL_LEFT_ROAD_RIGHT',
+    portrait: 'GOAL_ABOVE_ROAD'
   }
 }, null, 2));

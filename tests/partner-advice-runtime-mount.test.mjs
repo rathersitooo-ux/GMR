@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  createBattleContextualTutorialReplayControl,
   createPartnerAdviceReplayBridge,
   createPartnerAdviceRuntimeControl,
   createTutorialPartnerGuideControl,
   isPartnerAdviceQuickReplyAvailable,
+  projectBattleContextualTutorialReplay,
   projectPartnerAdviceBoardEmphasis,
 } from '../browser/partner-advice-runtime-mount.mjs';
 
@@ -350,4 +352,99 @@ test('aborting Tutorial does not consume it and the next run starts Saasuna auto
   assert.equal(control.begin('tutorial-run-2'), true);
   assert.equal(control.shouldAutoGuide('tutorial-run-2'), true);
   assert.equal(control.allowsOnDemandConversation(), true);
+});
+
+test('contextual Battle replay reuses the current FIRST10 wording without owning gameplay state', () => {
+  const road = projectBattleContextualTutorialReplay({ screen: 'battle', phase: 'plan', busy: false, roadId: null, battleId: null });
+  assert.equal(road.message, '手札からロードカードを1枚選ぶ');
+  assert.equal(road.focusRole, 'road');
+  assert.equal(road.presentationOnly, true);
+  assert.equal(road.autoExecute, false);
+
+  const battle = projectBattleContextualTutorialReplay({ screen: 'battle', phase: 'plan', busy: false, roadId: 'road-a', battleId: null });
+  assert.equal(battle.message, '次に、別のバトルカードを1枚選ぶ');
+  assert.equal(battle.focusRole, 'battle');
+
+  const ready = projectBattleContextualTutorialReplay({ screen: 'battle', phase: 'plan', busy: false, roadId: 'road-a', battleId: 'battle-b' });
+  assert.equal(ready.message, '予約内容を確認して準備完了');
+  assert.equal(ready.focusRole, 'ready');
+
+  const outside = projectBattleContextualTutorialReplay({ screen: 'home', phase: 'plan' });
+  assert.equal(outside.active, false);
+  assert.equal(outside.reason, 'BATTLE_CONTEXT_REQUIRED');
+});
+
+test('contextual Battle replay opens and closes through presentation callbacks only', () => {
+  let snapshot = { screen: 'battle', phase: 'plan', busy: false, roadId: null, battleId: null };
+  const shown = [];
+  const cleared = [];
+  const focused = [];
+  const control = createBattleContextualTutorialReplayControl({
+    getSnapshot: () => snapshot,
+    showHelp: (payload) => { shown.push(payload); return true; },
+    clearHelp: (code) => { cleared.push(code); return true; },
+    setFocus: (role) => { focused.push(role); return true; },
+  });
+
+  assert.equal(control.open(), true);
+  assert.deepEqual(shown, [{ code: 'BATTLE_CONTEXTUAL_REPLAY', message: '手札からロードカードを1枚選ぶ', kind: 'ok', ttl: 0 }]);
+  assert.deepEqual(focused, ['road']);
+  assert.deepEqual(control.status(), {
+    schema: 'gameroad.tutorial-contextual-replay-control.v1',
+    available: true,
+    active: true,
+    message: '手札からロードカードを1枚選ぶ',
+    focusRole: 'road',
+    returnContext: 'same-battle',
+    presentationOnly: true,
+    firstTutorialCompletionMutated: false,
+    rewardMutated: false,
+    saveMutated: false,
+    gameplayAuthorityMutated: false,
+    autoExecute: false,
+  });
+
+  snapshot = { ...snapshot, roadId: 'road-a' };
+  assert.equal(control.refresh().message, '次に、別のバトルカードを1枚選ぶ');
+  assert.equal(focused.at(-1), 'battle');
+
+  assert.equal(control.close(), true);
+  assert.equal(control.status().active, false);
+  assert.equal(focused.at(-1), null);
+  assert.ok(cleared.every((code) => code === 'BATTLE_CONTEXTUAL_REPLAY'));
+});
+
+test('contextual Battle replay fails closed without current Battle or existing help display authority', () => {
+  const outside = createBattleContextualTutorialReplayControl({
+    getSnapshot: () => ({ screen: 'home', phase: 'plan' }),
+    showHelp: () => true,
+    clearHelp: () => true,
+  });
+  assert.equal(outside.status().available, false);
+  assert.equal(outside.open(), false);
+
+  const missingHelp = createBattleContextualTutorialReplayControl({
+    getSnapshot: () => ({ screen: 'battle', phase: 'plan', roadId: null, battleId: null }),
+  });
+  assert.equal(missingHelp.status().available, false);
+  assert.equal(missingHelp.open(), false);
+});
+
+test('contextual Battle replay aborts its presentation when the caller leaves Battle', () => {
+  let snapshot = { screen: 'battle', phase: 'plan', busy: false, roadId: 'road-a', battleId: 'battle-b' };
+  const focused = [];
+  const control = createBattleContextualTutorialReplayControl({
+    getSnapshot: () => snapshot,
+    showHelp: () => true,
+    clearHelp: () => true,
+    setFocus: (role) => { focused.push(role); return true; },
+  });
+  assert.equal(control.open(), true);
+  assert.equal(control.status().active, true);
+
+  snapshot = { screen: 'home', phase: null };
+  const status = control.refresh();
+  assert.equal(status.active, false);
+  assert.equal(status.available, false);
+  assert.equal(focused.at(-1), null);
 });

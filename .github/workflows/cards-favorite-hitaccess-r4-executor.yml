@@ -82,11 +82,13 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Run phone probe and persist geometry
+      - name: Run phone probe and persist output
         shell: bash
         run: |
-          set -euo pipefail
+          set +e
           npx playwright test tests/r4-phone-hit-geometry.spec.mjs --config=playwright.config.mjs --workers=1 2>&1 | tee /tmp/r4-geometry.log
+          status=${PIPESTATUS[0]}
+          set -e
           git reset --hard HEAD
           python3 - <<'PY'
           import json, os, re
@@ -94,15 +96,13 @@ jobs:
           from pathlib import Path
           log = Path('/tmp/r4-geometry.log').read_text(encoding='utf-8', errors='replace')
           match = re.search(r'R4_GEOMETRY=(\{.*\})', log)
-          if not match:
-              raise SystemExit('R4 geometry marker missing')
-          geometry = json.loads(match.group(1))
           manifest = Path(os.environ['MANIFEST'])
           data = json.loads(manifest.read_text(encoding='utf-8'))
-          data['diagnosticGeometryCaptured'] = True
           data['diagnosticGeometryCapturedAtJst'] = datetime.now(timezone(timedelta(hours=9))).strftime('%Y-%m-%d %H:%M:%S JST')
           data['diagnosticGeometryRunId'] = os.environ.get('GITHUB_RUN_ID', '')
-          data['diagnosticGeometry'] = geometry
+          data['diagnosticGeometryExitStatus'] = int(os.environ.get('R4_STATUS', '0')) if os.environ.get('R4_STATUS') else None
+          data['diagnosticGeometry'] = json.loads(match.group(1)) if match else None
+          data['diagnosticGeometryLogTail'] = log[-12000:]
           data['leaseSnapshotReadbackAtJst'] = '2026-09-06 04:24 JST'
           data['leaseUntilJst'] = '2026-09-06 05:30 JST'
           manifest.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
@@ -110,5 +110,6 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$MANIFEST"
-          git commit -m '[r4-diag-result] capture phone hit geometry'
+          git commit -m '[r4-diag-result] capture phone probe output'
           git push origin HEAD:sol/cards-favorite-hitaccess-r4-20260906
+          exit "$status"

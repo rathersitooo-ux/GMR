@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-FIELD-LANDMARK-R83-R3-20260905T2249-SOL-Q8M3K6",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_FIELD_LANDMARK_VISIBILITY_R83_R3",
+  "acquireKey": "BATTLE-FIELD-LANDMARK-R83-R3-20260905T2249-SOL-Q8M3K6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R83_CURRENT+THREE_VIEWPORT_PUBLIC_VISUAL_FAIL+CURRENT_MAIN_E878972_READBACK",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_PRESENTATION_ONLY_RUNTIME+CONVENTIONAL_BATTLE_SCREEN_RUNTIME_TEST+THREE_VIEWPORT_PUBLIC_READBACK",
+  "proceedToken": "PROCEED|BATTLE-FIELD-LANDMARK-R83-R3-20260905T2249-SOL-Q8M3K6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ADAPT_EXISTING_BATTLE_PRESENTATION_ONLY",
+  "authorizationBaseSha": "e878972e2bdb3df294a48b0aab11b0259a8a00a8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_FIELD_LANDMARK_VISIBILITY_R83_R3",
+  "leaseAcquireKey": "BATTLE-FIELD-LANDMARK-R83-R3-20260905T2249-SOL-Q8M3K6",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 22:49 JST",
+  "leaseUntilJst": "2026-09-05 23:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A480:L480",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@e878972e2bdb3df294a48b0aab11b0259a8a00a8; branch sol/battle-field-landmark-r83-r3-20260905; mutable browser/battle-screen-runtime-mount.mjs + tests/battle-screen-runtime-mount.test.mjs + transient preaction authorization only; browser/GAMEROAD.html + gameplay/rules/save/economy/network/topology + formal assets READ_ONLY.",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "solutionSignature": "battle-field-landmark-and-road-goal-guide-visibility-presentation-only",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_R83_RUNTIME+DIRECT_THREE_VIEWPORT_VISUAL_ACCEPTANCE_FAILURE",
+  "solutionSearchEvidence": [
+    "browser/battle-screen-runtime-mount.mjs existing presentationOnly progress guide and field landmark",
+    "tests/battle-screen-runtime-mount.test.mjs existing conventional pair",
+    "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001 R83 current acceptance",
+    "direct public screenshots at 1280x720 390x844 667x375"
+  ]
+}

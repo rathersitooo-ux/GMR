@@ -181,7 +181,8 @@ test('build packages the exact current production Browser dependency set with ve
   const partnerConversationCoreBytes = await readFile(path.join(repoRoot, 'browser/partner-conversation-core.mjs'));
   const partnerSaasunaSourceBytes = await readFile(path.join(repoRoot, 'browser/partner-saasuna-conversation-source.mjs'));
   assert.equal((await readFile(path.join(dist, 'partner-conversation-core.mjs'))).equals(partnerConversationCoreBytes), true);
-  assert.equal((await readFile(path.join(dist, 'partner-saasuna-conversation-source.mjs'))).equals(partnerSaasunaSourceBytes), true); assert.equal(manifest.artifacts.partner_conversation_core.git_blob_sha1, gitBlobSha1(partnerConversationCoreBytes));
+  assert.equal((await readFile(path.join(dist, 'partner-saasuna-conversation-source.mjs'))).equals(partnerSaasunaSourceBytes), true);
+  assert.equal(manifest.artifacts.partner_conversation_core.git_blob_sha1, gitBlobSha1(partnerConversationCoreBytes));
   assert.equal(manifest.artifacts.partner_saasuna_conversation_source.git_blob_sha1, gitBlobSha1(partnerSaasunaSourceBytes));
 });
 

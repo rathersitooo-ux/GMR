@@ -1,0 +1,335 @@
+name: Home Battle Quick Settings R1C Verify
+
+on:
+  push:
+    branches:
+      - sol/home-battle-quicksettings-r1c-20260905
+
+permissions:
+  contents: write
+
+jobs:
+  patch-verify-cleanup:
+    if: ${{ !contains(github.event.head_commit.message, '[quicksettings-r1c-clean]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/home-battle-quicksettings-r1c-20260905
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply compact exact-scope product patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected anchor exactly once, got {count}: {old[:120]!r}')
+              p.write_text(text.replace(old, new, 1))
+
+          home = 'browser/home-boot-runtime-mount.mjs'
+          quick_code = r'''
+export const QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS = Object.freeze(['masterVolume']);
+const QUICK_SETTINGS_STYLE_ID = 'gameroad-home-quick-settings-r1c-style';
+const QUICK_SETTINGS_CONTROL_IDS = Object.freeze({
+  musicVolume: 'musicVolume', sfxVolume: 'sfxVolume', partnerVoiceVolume: 'partnerVoiceVolume',
+  musicMute: 'musicMute', sfxMute: 'sfxMute', partnerVoiceMute: 'partnerVoiceMute',
+  reduceMotion: 'reduceMotion', lowPerf: 'lowPerf',
+});
+const QUICK_SETTINGS_AUDIO_ROWS = Object.freeze([
+  Object.freeze({ label: 'BGM', volume: 'musicVolume', mute: 'musicMute', muted: 'musicMuted' }),
+  Object.freeze({ label: '効果音', volume: 'sfxVolume', mute: 'sfxMute', muted: 'sfxMuted' }),
+  Object.freeze({ label: 'Voice', volume: 'partnerVoiceVolume', mute: 'partnerVoiceMute', muted: 'partnerVoiceMuted' }),
+]);
+
+function quickPercent(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, Math.min(100, Math.round(number))) : 100;
+}
+
+function quickToggleState(control) {
+  const aria = control?.getAttribute?.('aria-pressed');
+  if (aria === 'true') return true;
+  if (aria === 'false') return false;
+  const value = String(control?.textContent || '').trim().toLowerCase();
+  if (value.includes('off') || value.includes('オフ')) return false;
+  if (value.includes('on') || value.includes('オン')) return true;
+  return false;
+}
+
+function quickControl(documentSource, key) {
+  const id = QUICK_SETTINGS_CONTROL_IDS[key];
+  return id ? documentSource?.getElementById?.(id) ?? null : null;
+}
+
+export function readCurrentQuickSettings(documentSource = globalThis.document) {
+  const controls = Object.fromEntries(Object.keys(QUICK_SETTINGS_CONTROL_IDS).map((key) => [key, quickControl(documentSource, key)]));
+  const missing = Object.entries(controls).filter(([, value]) => !value).map(([key]) => key);
+  return Object.freeze({
+    musicVolume: controls.musicVolume ? quickPercent(controls.musicVolume.value) : null,
+    sfxVolume: controls.sfxVolume ? quickPercent(controls.sfxVolume.value) : null,
+    partnerVoiceVolume: controls.partnerVoiceVolume ? quickPercent(controls.partnerVoiceVolume.value) : null,
+    musicMuted: controls.musicMute ? quickToggleState(controls.musicMute) : null,
+    sfxMuted: controls.sfxMute ? quickToggleState(controls.sfxMute) : null,
+    partnerVoiceMuted: controls.partnerVoiceMute ? quickToggleState(controls.partnerVoiceMute) : null,
+    reduceMotion: controls.reduceMotion ? quickToggleState(controls.reduceMotion) : null,
+    lowPerf: controls.lowPerf ? quickToggleState(controls.lowPerf) : null,
+    missing: Object.freeze(missing),
+    knownAuthorityGaps: QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS,
+  });
+}
+
+export function setCurrentQuickSettingVolume(documentSource, globalSource, key, value) {
+  if (!['musicVolume', 'sfxVolume', 'partnerVoiceVolume'].includes(key)) return false;
+  const control = quickControl(documentSource, key);
+  if (!control) return false;
+  control.value = String(quickPercent(value));
+  const EventCtor = globalSource?.Event;
+  if (typeof EventCtor === 'function') {
+    control.dispatchEvent?.(new EventCtor('input', { bubbles: true }));
+    control.dispatchEvent?.(new EventCtor('change', { bubbles: true }));
+  } else {
+    control.dispatchEvent?.({ type: 'input', bubbles: true, target: control });
+    control.dispatchEvent?.({ type: 'change', bubbles: true, target: control });
+  }
+  return true;
+}
+
+export function toggleCurrentQuickSetting(documentSource, key) {
+  if (!['musicMute', 'sfxMute', 'partnerVoiceMute', 'reduceMotion', 'lowPerf'].includes(key)) return false;
+  const control = quickControl(documentSource, key);
+  if (!control || typeof control.click !== 'function') return false;
+  control.click();
+  return true;
+}
+
+function ensureQuickSettingsStyle(documentSource) {
+  if (!documentSource?.head || documentSource.getElementById?.(QUICK_SETTINGS_STYLE_ID)) return;
+  const style = documentSource.createElement('style');
+  style.id = QUICK_SETTINGS_STYLE_ID;
+  style.textContent = `
+[data-gameroad-quick-settings][hidden]{display:none!important}
+[data-gameroad-quick-settings]{position:fixed;inset:0;z-index:100100;display:flex;align-items:flex-end;justify-content:flex-end;padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));background:rgba(4,10,14,.46);backdrop-filter:blur(5px)}
+[data-gameroad-quick-settings] .grQuickSettingsPanel{width:min(410px,100%);max-height:min(88vh,640px);overflow:auto;display:grid;gap:10px;padding:14px;border:1px solid rgba(255,255,255,.18);border-radius:18px;background:rgba(13,28,31,.97);color:#f7fbfa;box-shadow:0 20px 58px rgba(0,0,0,.42);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+[data-gameroad-quick-settings] .grQuickSettingsHead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+[data-gameroad-quick-settings] .grQuickSettingsHead h2{margin:0;font-size:18px}
+[data-gameroad-quick-settings] .grQuickSettingsRow{display:grid;grid-template-columns:minmax(58px,auto) minmax(100px,1fr) minmax(74px,auto);align-items:center;gap:8px}
+[data-gameroad-quick-settings] button{min-height:44px;border:1px solid rgba(255,255,255,.22);border-radius:12px;background:rgba(255,255,255,.08);color:inherit;font:inherit;font-weight:800;touch-action:manipulation}
+[data-gameroad-quick-settings] input[type="range"]{width:100%;min-height:44px;touch-action:manipulation}
+[data-gameroad-quick-settings] .grQuickSettingsWide{grid-column:2/4;width:100%}
+[data-gameroad-quick-settings] .grQuickSettingsDetails{width:100%}
+[data-gameroad-quick-settings] .grQuickSettingsStatus{margin:0;font-size:12px;opacity:.7}
+[data-gameroad-quick-settings] button:focus-visible,[data-gameroad-quick-settings] input:focus-visible{outline:3px solid currentColor;outline-offset:2px}
+@media(max-height:430px) and (orientation:landscape){[data-gameroad-quick-settings]{align-items:stretch}[data-gameroad-quick-settings] .grQuickSettingsPanel{width:min(390px,52vw);max-height:none;gap:7px;padding:10px}}
+`;
+  documentSource.head.appendChild(style);
+}
+
+function quickNode(documentSource, tag, className = '', label = '') {
+  const value = documentSource.createElement(tag);
+  if (className) value.className = className;
+  if (label) value.textContent = label;
+  return value;
+}
+
+export function bindQuickSettingsTrigger(globalSource = globalThis, { trigger, surface = 'home' } = {}) {
+  const documentSource = globalSource?.document;
+  if (!trigger || typeof trigger.addEventListener !== 'function' || !documentSource?.body) {
+    return Object.freeze({ connected: false, trigger: trigger ?? null, surface, destroy: () => false });
+  }
+  ensureQuickSettingsStyle(documentSource);
+  const overlay = quickNode(documentSource, 'div');
+  overlay.hidden = true;
+  overlay.setAttribute?.('data-gameroad-quick-settings', '1');
+  overlay.setAttribute?.('role', 'dialog');
+  overlay.setAttribute?.('aria-modal', 'true');
+  overlay.dataset.surface = surface;
+  overlay.dataset.authorityGap = QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS.join(',');
+  const panel = quickNode(documentSource, 'section', 'grQuickSettingsPanel');
+  const head = quickNode(documentSource, 'div', 'grQuickSettingsHead');
+  const title = quickNode(documentSource, 'h2', '', surface === 'battle' ? '対戦設定' : '簡易設定');
+  const closeButton = quickNode(documentSource, 'button', '', '閉じる');
+  closeButton.setAttribute?.('type', 'button');
+  head.append?.(title, closeButton);
+  panel.appendChild(head);
+  const ranges = {};
+  const muteButtons = {};
+  for (const row of QUICK_SETTINGS_AUDIO_ROWS) {
+    const wrap = quickNode(documentSource, 'div', 'grQuickSettingsRow');
+    const label = quickNode(documentSource, 'span', '', row.label);
+    const range = quickNode(documentSource, 'input');
+    range.setAttribute?.('type', 'range'); range.setAttribute?.('min', '0'); range.setAttribute?.('max', '100'); range.setAttribute?.('step', '1');
+    range.setAttribute?.('aria-label', `${row.label}音量`);
+    const mute = quickNode(documentSource, 'button', '', 'MUTE');
+    mute.setAttribute?.('type', 'button'); mute.setAttribute?.('aria-label', `${row.label}ミュート`);
+    range.addEventListener?.('input', () => setCurrentQuickSettingVolume(documentSource, globalSource, row.volume, range.value));
+    mute.addEventListener?.('click', () => { toggleCurrentQuickSetting(documentSource, row.mute); refresh(); });
+    ranges[row.volume] = range; muteButtons[row.mute] = mute;
+    wrap.append?.(label, range, mute); panel.appendChild(wrap);
+  }
+  const toggles = {};
+  for (const [key, labelText] of [['reduceMotion', '動き軽減'], ['lowPerf', '軽量表示']]) {
+    const wrap = quickNode(documentSource, 'div', 'grQuickSettingsRow');
+    const label = quickNode(documentSource, 'span', '', labelText);
+    const button = quickNode(documentSource, 'button', 'grQuickSettingsWide'); button.setAttribute?.('type', 'button');
+    button.addEventListener?.('click', () => { toggleCurrentQuickSetting(documentSource, key); refresh(); });
+    toggles[key] = button; wrap.append?.(label, button); panel.appendChild(wrap);
+  }
+  let detailButton = null;
+  let bypassOnce = false;
+  if (surface === 'home') {
+    detailButton = quickNode(documentSource, 'button', 'grQuickSettingsDetails', '詳細設定');
+    detailButton.setAttribute?.('type', 'button');
+    panel.appendChild(detailButton);
+  }
+  const status = quickNode(documentSource, 'p', 'grQuickSettingsStatus'); panel.appendChild(status);
+  overlay.appendChild(panel); documentSource.body.appendChild(overlay);
+
+  function refresh() {
+    const current = readCurrentQuickSettings(documentSource);
+    for (const row of QUICK_SETTINGS_AUDIO_ROWS) {
+      const range = ranges[row.volume]; const mute = muteButtons[row.mute]; const volume = current[row.volume]; const muted = current[row.muted];
+      range.disabled = volume == null; if (volume != null) range.value = String(volume);
+      mute.disabled = muted == null; mute.textContent = muted === true ? 'MUTE ON' : muted === false ? 'MUTE OFF' : '未接続';
+      mute.setAttribute?.('aria-pressed', muted === true ? 'true' : 'false');
+    }
+    for (const key of ['reduceMotion', 'lowPerf']) {
+      const value = current[key]; const button = toggles[key]; button.disabled = value == null;
+      button.textContent = value === true ? 'ON' : value === false ? 'OFF' : '未接続'; button.setAttribute?.('aria-pressed', value === true ? 'true' : 'false');
+    }
+    status.textContent = current.missing.length ? `未接続: ${current.missing.join(', ')}` : '';
+    return current;
+  }
+  function open() { refresh(); overlay.hidden = false; trigger.setAttribute?.('aria-expanded', 'true'); closeButton.focus?.(); return true; }
+  function close() { if (overlay.hidden) return false; overlay.hidden = true; trigger.setAttribute?.('aria-expanded', 'false'); trigger.focus?.(); return true; }
+  const triggerClick = (event) => {
+    if (bypassOnce) { bypassOnce = false; return; }
+    event?.preventDefault?.(); event?.stopPropagation?.(); open();
+  };
+  const outsideClick = (event) => { if (event?.target === overlay) close(); };
+  const keydown = (event) => { if (event?.key === 'Escape' && !overlay.hidden) close(); };
+  trigger.addEventListener('click', triggerClick, true); overlay.addEventListener?.('click', outsideClick); documentSource.addEventListener?.('keydown', keydown);
+  closeButton.addEventListener?.('click', close);
+  detailButton?.addEventListener?.('click', () => { close(); bypassOnce = true; trigger.click?.(); if (bypassOnce) bypassOnce = false; });
+  trigger.setAttribute?.('aria-haspopup', 'dialog');
+  let destroyed = false;
+  return Object.freeze({
+    connected: true, trigger, surface, overlay, detailButton, open, close, refresh,
+    destroy() {
+      if (destroyed) return false; destroyed = true;
+      trigger.removeEventListener?.('click', triggerClick, true); documentSource.removeEventListener?.('keydown', keydown);
+      overlay.remove?.(); trigger.setAttribute?.('aria-expanded', 'false'); return true;
+    },
+  });
+}
+
+export function findHomeSettingsTrigger(home) {
+  if (!home || typeof home.querySelector !== 'function') return null;
+  for (const selector of ['[data-home-target="settings"]', '[data-go="settings"]', '[data-root-go="settings"]']) {
+    const found = home.querySelector(selector); if (found) return found;
+  }
+  const utilities = typeof home.querySelectorAll === 'function' ? [...home.querySelectorAll(SECONDARY_UTILITY_BUTTON_SELECTOR)] : [];
+  return utilities.find((node) => String(node?.textContent || '').trim() === '設定') ?? null;
+}
+'''
+          anchor = "const LEGACY_HOME_SELECTORS = Object.freeze([\n  '#codexHomePartnerChip',\n  '.codexPartnerChip',\n  '#codexHomeBattleCta',\n  '.codexBattleCta',\n]);\n"
+          replace_once(home, anchor, anchor + quick_code)
+          replace_once(home, "  animations: new Set(),\n  slidepad: {", "  animations: new Set(),\n  quickSettingsBinding: null,\n  slidepad: {")
+          bind_code = r'''
+function bindHomeQuickSettings(home) {
+  const trigger = findHomeSettingsTrigger(home);
+  if (runtime.quickSettingsBinding?.trigger === trigger) return Boolean(trigger);
+  runtime.quickSettingsBinding?.destroy?.();
+  runtime.quickSettingsBinding = trigger ? bindQuickSettingsTrigger(globalThis, { trigger, surface: 'home' }) : null;
+  return Boolean(runtime.quickSettingsBinding?.connected);
+}
+
+'''
+          replace_once(home, "export function refreshHomeBootPresentation() {", bind_code + "export function refreshHomeBootPresentation() {")
+          replace_once(home, "  runtime.home = home;\n  removeLegacyHomeNodes(home);\n\n  const buttons = routeButtons(home);", "  runtime.home = home;\n  removeLegacyHomeNodes(home);\n  bindHomeQuickSettings(home);\n\n  const buttons = routeButtons(home);")
+          replace_once(home, "export function unmountHomeBootPresentation() {\n  clearAnimations();", "export function unmountHomeBootPresentation() {\n  clearAnimations();\n  runtime.quickSettingsBinding?.destroy?.();\n  runtime.quickSettingsBinding = null;")
+          replace_once(home, "  globalThis[GLOBAL_KEY] = Object.freeze({\n    mount: mountHomeBootPresentation,\n    refresh: refreshHomeBootPresentation,\n    snapshot,\n  });", "  globalThis[GLOBAL_KEY] = Object.freeze({\n    mount: mountHomeBootPresentation,\n    refresh: refreshHomeBootPresentation,\n    snapshot,\n    bindQuickSettingsTrigger,\n    readCurrentQuickSettings,\n  });")
+
+          battle = 'browser/battle-screen-runtime-mount.mjs'
+          replace_once(battle, "  const hud = createHud(document, shell);\n  let lastHudSnapshot = writeHud(document, hud, options.hud);", "  const hud = createHud(document, shell);\n  const quickSettingsBinding = global?.GAMEROAD_HOME_BOOT_PRESENTATION?.bindQuickSettingsTrigger?.(global, { trigger: hud.settingsButton, surface: 'battle' }) ?? null;\n  let lastHudSnapshot = writeHud(document, hud, options.hud);")
+          replace_once(battle, "    destroyed = true;\n    if (progressGuide?.parentNode", "    destroyed = true;\n    quickSettingsBinding?.destroy?.();\n    if (progressGuide?.parentNode")
+          replace_once(battle, "    hud,\n    grid,", "    hud,\n    quickSettingsConnected: Boolean(quickSettingsBinding?.connected),\n    grid,")
+
+          home_test = 'tests/home-boot-presentation.test.mjs'
+          replace_once(home_test, "  shouldDismissHomeSlidepadOnBlankDoubleClick,\n} from '../browser/home-boot-runtime-mount.mjs';", "  shouldDismissHomeSlidepadOnBlankDoubleClick,\n  QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS,\n  findHomeSettingsTrigger,\n  readCurrentQuickSettings,\n  setCurrentQuickSettingVolume,\n  toggleCurrentQuickSetting,\n} from '../browser/home-boot-runtime-mount.mjs';")
+          p = Path(home_test)
+          text = p.read_text()
+          text += r'''
+
+test('Home quick settings proxy writes only through the existing Settings controls and keeps master volume explicit as a gap', () => {
+  class EventStub { constructor(type, init = {}) { this.type = type; this.bubbles = init.bubbles === true; } }
+  const events = [];
+  const make = ({ value = '', pressed = false } = {}) => ({
+    value, textContent: pressed ? 'ON' : 'OFF', pressed,
+    getAttribute(name) { return name === 'aria-pressed' ? String(this.pressed) : null; },
+    dispatchEvent(event) { events.push(event.type); },
+    click() { this.pressed = !this.pressed; this.textContent = this.pressed ? 'ON' : 'OFF'; },
+  });
+  const controls = {
+    musicVolume: make({ value: '80' }), sfxVolume: make({ value: '70' }), partnerVoiceVolume: make({ value: '60' }),
+    musicMute: make(), sfxMute: make(), partnerVoiceMute: make(), reduceMotion: make(), lowPerf: make(),
+  };
+  const documentSource = { getElementById(id) { return controls[id] ?? null; } };
+  const before = readCurrentQuickSettings(documentSource);
+  assert.equal(before.musicVolume, 80); assert.equal(before.reduceMotion, false);
+  assert.deepEqual(before.missing, []); assert.deepEqual(before.knownAuthorityGaps, ['masterVolume']);
+  assert.deepEqual(QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS, ['masterVolume']);
+  assert.equal(setCurrentQuickSettingVolume(documentSource, { Event: EventStub }, 'musicVolume', 35), true);
+  assert.equal(controls.musicVolume.value, '35'); assert.deepEqual(events, ['input', 'change']);
+  assert.equal(toggleCurrentQuickSetting(documentSource, 'reduceMotion'), true);
+  assert.equal(readCurrentQuickSettings(documentSource).reduceMotion, true);
+  assert.equal(setCurrentQuickSettingVolume(documentSource, { Event: EventStub }, 'masterVolume', 50), false);
+});
+
+test('Home quick settings trigger prefers semantic settings routes and falls back to the existing utility label', () => {
+  const semantic = { id: 'semantic' };
+  const fallback = { textContent: '設定' };
+  const homeWithSemantic = { querySelector(selector) { return selector === '[data-go="settings"]' ? semantic : null; }, querySelectorAll() { return [fallback]; } };
+  assert.equal(findHomeSettingsTrigger(homeWithSemantic), semantic);
+  const homeFallback = { querySelector() { return null; }, querySelectorAll() { return [{ textContent: '記録' }, fallback]; } };
+  assert.equal(findHomeSettingsTrigger(homeFallback), fallback);
+});
+'''
+          p.write_text(text)
+
+          battle_test = 'tests/battle-screen-runtime-mount.test.mjs'
+          replace_once(battle_test, "const runtime = mountBattleScreenExternalSurface({ document }, { root });", "let quickSettingsBindArgs = null;\nlet quickSettingsDestroyCount = 0;\nconst quickSettingsBinding = { connected: true, destroy() { quickSettingsDestroyCount += 1; return true; } };\nconst battleGlobal = {\n  document,\n  GAMEROAD_HOME_BOOT_PRESENTATION: {\n    bindQuickSettingsTrigger(globalSource, args) { quickSettingsBindArgs = { globalSource, ...args }; return quickSettingsBinding; }\n  }\n};\nconst runtime = mountBattleScreenExternalSurface(battleGlobal, { root });")
+          replace_once(battle_test, "assert.equal(runtime.hud.settingsButton.getAttribute('aria-label'), '設定');", "assert.equal(runtime.hud.settingsButton.getAttribute('aria-label'), '設定');\nassert.equal(runtime.quickSettingsConnected, true);\nassert.equal(quickSettingsBindArgs.globalSource, battleGlobal);\nassert.equal(quickSettingsBindArgs.trigger, runtime.hud.settingsButton);\nassert.equal(quickSettingsBindArgs.surface, 'battle');")
+          replace_once(battle_test, "assert.equal(runtime.destroy(), true);\nassert.equal(runtime.destroy(), false);", "assert.equal(runtime.destroy(), true);\nassert.equal(quickSettingsDestroyCount, 1);\nassert.equal(runtime.destroy(), false);\nassert.equal(quickSettingsDestroyCount, 1);")
+          PY
+
+      - name: Verify focused regressions and public package invariant
+        run: |
+          node --check browser/home-boot-runtime-mount.mjs
+          node --check browser/battle-screen-runtime-mount.mjs
+          node tests/home-boot-presentation.test.mjs
+          node tests/battle-screen-runtime-mount.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+
+      - name: Remove transient authorization and workflow
+        run: |
+          rm -f data/preaction-authorizations/HOME-BATTLE-QUICKSETTINGS-R1-20260905T1107-SOL-Q8M4P2.json
+          rm -f .github/workflows/home-battle-quicksettings-r1c-verify.yml
+
+      - name: Commit clean tested product delta
+        run: |
+          git config user.name 'gameroad-bot'
+          git config user.email 'gameroad-bot@users.noreply.github.com'
+          git add browser/home-boot-runtime-mount.mjs tests/home-boot-presentation.test.mjs browser/battle-screen-runtime-mount.mjs tests/battle-screen-runtime-mount.test.mjs
+          git add -u data/preaction-authorizations/HOME-BATTLE-QUICKSETTINGS-R1-20260905T1107-SOL-Q8M4P2.json .github/workflows/home-battle-quicksettings-r1c-verify.yml
+          git diff --cached --check
+          git commit -m 'Home/Battle: share compact quick settings via current authority [quicksettings-r1c-clean]'
+          git push origin HEAD:sol/home-battle-quicksettings-r1c-20260905

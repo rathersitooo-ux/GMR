@@ -1,0 +1,124 @@
+name: Home low-frequency R85 R2 exact patch
+
+on:
+  push:
+    branches:
+      - sol/home-low-freq-chrome-r85-r2-20260905
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/home-low-freq-chrome-r85-r2-20260905
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply bounded exact patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          source_path = Path('browser/home-boot-runtime-mount.mjs')
+          source = source_path.read_text(encoding='utf-8')
+          needle = r'''${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}{
+            min-width:${HOME_TOUCH_TARGET_MIN_PX}px!important;
+            min-height:${HOME_TOUCH_TARGET_MIN_PX}px!important;
+            border-color:transparent!important;
+            background:transparent!important;
+            box-shadow:none!important;
+            backdrop-filter:none!important;
+          }
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}:focus-visible{'''
+          replacement = r'''${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}{
+            min-width:${HOME_TOUCH_TARGET_MIN_PX}px!important;
+            min-height:${HOME_TOUCH_TARGET_MIN_PX}px!important;
+            border-color:transparent!important;
+            background:transparent!important;
+            box-shadow:none!important;
+            backdrop-filter:none!important;
+          }
+          /* R85: persistent Mission/progress and duplicate guide rails are not Home navigation
+             authorities. Keep their destinations reachable through the compact secondary row. */
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] .codexHomeLeftRail,
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] .codexHomeRightRail{
+            display:none!important;
+          }
+          /* A normal successful save is silent on Home. Existing abnormal save feedback remains
+             owned by the save-recovery/toast/settings surfaces; this rule changes no save state. */
+          html.grCodexHomeActive #saveState{
+            display:none!important;
+          }
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go=\"missions\"],
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go=\"gacha\"],
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go=\"records\"],
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go=\"profile\"],
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go=\"settings\"]{
+            width:${HOME_TOUCH_TARGET_MIN_PX}px!important;
+            aspect-ratio:1!important;
+            padding:0!important;
+            font-size:0!important;
+            line-height:0!important;
+            display:grid!important;
+            place-items:center!important;
+          }
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go=\"missions\"]::before,
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go=\"gacha\"]::before,
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go=\"records\"]::before,
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go=\"profile\"]::before,
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go=\"settings\"]::before{
+            font-size:20px!important;
+            line-height:1!important;
+            font-family:system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI Symbol\",sans-serif!important;
+          }
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go=\"missions\"]::before{content:\"✓\";}
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go=\"gacha\"]::before{content:\"▣\";}
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go=\"records\"]::before{content:\"≡\";}
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go=\"profile\"]::before{content:\"◉\";}
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}[data-go=\"settings\"]::before{content:\"⚙\";}
+          ${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}:focus-visible{'''
+          if source.count(needle) != 1:
+              raise SystemExit(f'expected exactly one Home secondary utility CSS anchor, found {source.count(needle)}')
+          source_path.write_text(source.replace(needle, replacement, 1), encoding='utf-8')
+
+          test_path = Path('tests/home-boot-presentation.test.mjs')
+          tests = test_path.read_text(encoding='utf-8')
+          marker = "Home low-frequency chrome keeps duplicate rails and normal save status out of active Home"
+          if marker not in tests:
+              tests += r'''
+
+          test('Home low-frequency chrome keeps duplicate rails and normal save status out of active Home', async () => {
+            const { readFile } = await import('node:fs/promises');
+            const source = await readFile(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
+            const normalized = source.replaceAll('\\"', '"');
+            assert.equal(normalized.includes('.codexHomeLeftRail'), true);
+            assert.equal(normalized.includes('.codexHomeRightRail'), true);
+            assert.equal(normalized.includes('html.grCodexHomeActive #saveState'), true);
+            for (const route of ['missions', 'gacha', 'records', 'profile', 'settings']) {
+              assert.equal(normalized.includes(`[data-go="${route}"]::before`), true, route);
+            }
+            assert.equal(normalized.includes('[data-home-contextual-replay-trigger="true"]::before'), false);
+            assert.equal(source.includes('HOME_CONTEXTUAL_REPLAY_LABEL'), true);
+          });
+          '''
+              test_path.write_text(tests, encoding='utf-8')
+
+          Path('.github/workflows/home-low-freq-r85-r2-patch.yml').unlink()
+          PY
+      - name: Focused Home presentation tests
+        run: node --test tests/home-boot-presentation.test.mjs
+      - name: Commit exact product and regression diff
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add browser/home-boot-runtime-mount.mjs tests/home-boot-presentation.test.mjs .github/workflows/home-low-freq-r85-r2-patch.yml
+          git diff --cached --check
+          git commit -m "Home: finish low-frequency chrome cleanup R85"
+          git push origin HEAD:sol/home-low-freq-chrome-r85-r2-20260905

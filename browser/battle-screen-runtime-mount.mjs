@@ -56,6 +56,7 @@ function addStyle(document) {
   style.id = STYLE_ID;
   style.textContent = `
 [${SHELL_ATTR}="1"]{position:relative;isolation:isolate;width:100%;height:100%;min-height:0;overflow:hidden;background:linear-gradient(180deg,#173f42 0%,#286052 42%,#102f2c 100%);color:#f7fbfa;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+[${SHELL_ATTR}="1"].grBattleScreenAdoptedOverlay{position:absolute;inset:0;z-index:3;width:auto;height:auto;min-height:0;overflow:hidden;background:transparent;color:inherit;font-family:inherit;pointer-events:none}
 [${SHELL_ATTR}="1"] .grBattleScreenTop{position:absolute;z-index:9;top:0;left:0;right:0;height:clamp(42px,9vh,72px);display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:start;gap:clamp(6px,1.2vw,14px);padding:clamp(5px,.8vh,8px) clamp(8px,1.6vw,18px);pointer-events:none;background:linear-gradient(180deg,rgba(4,10,11,.76),rgba(4,10,11,.18) 72%,rgba(4,10,11,0));text-shadow:0 2px 10px rgba(0,0,0,.75)}
 [${SHELL_ATTR}="1"] .grBattleHudLeft,[${SHELL_ATTR}="1"] .grBattleHudRight{display:flex;align-items:center;gap:clamp(5px,.8vw,9px);min-width:0}
 [${SHELL_ATTR}="1"] .grBattleHudRight{justify-content:flex-end}
@@ -339,9 +340,17 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
 
   addStyle(document);
 
-  let shell = options.shell ?? null;
+  const adoptingExistingPhase = Boolean(providedPhase);
+  const callerShell = options.shell ?? null;
+  let shell = callerShell;
   let shellCreated = false;
-  if (!shell) {
+  if (adoptingExistingPhase) {
+    shell = createNode(document, 'div', 'grBattleScreenAdoptedOverlay');
+    shell.setAttribute?.(SHELL_ATTR, '1');
+    shell.dataset.owner = 'runtime_overlay';
+    providedPhase.appendChild(shell);
+    shellCreated = true;
+  } else if (!shell) {
     shell = createNode(document, 'section', 'grBattleScreenShell');
     shell.setAttribute?.(SHELL_ATTR, '1');
     if (validRoot(root)) root.appendChild(shell);
@@ -354,7 +363,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   let lastHudSnapshot = writeHud(document, hud, options.hud);
 
   let planSlot = null;
-  if (shellCreated) {
+  if (shellCreated && !adoptingExistingPhase) {
     planSlot = createNode(document, 'div', 'grBattlePlanSlot');
     planSlot.setAttribute?.(PLAN_SLOT_ATTR, '');
     planSlot.dataset.owner = 'caller';
@@ -367,17 +376,18 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   phaseSurface.dataset.battleScreenBoardInteraction = 'forbidden';
   if (phaseAnchor.created) phaseSurface.hidden = true;
 
+  const visualHost = adoptingExistingPhase ? shell : phaseSurface;
   const fieldLandmark = createFieldLandmark(document);
-  phaseSurface.appendChild(fieldLandmark);
+  visualHost.appendChild(fieldLandmark);
   syncFieldLandmark(fieldLandmark, phaseSurface, shell, root);
 
   const progressGuide = createProgressGuide(document);
-  phaseSurface.appendChild(progressGuide);
+  visualHost.appendChild(progressGuide);
 
   const grid = createNode(document, 'div', 'grBattleCausalGrid');
   grid.setAttribute?.(GRID_ATTR, '');
   grid.setAttribute?.('aria-label', '4人バトル比較');
-  phaseSurface.appendChild(grid);
+  visualHost.appendChild(grid);
   const lanes = Array.from({ length: 4 }, (_, index) => createLane(document, index));
   for (const lane of lanes) grid.appendChild(lane.lane);
 
@@ -450,6 +460,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     gameStateWrite: false,
     adoptedPhaseSurface: phaseAnchor.created === false,
     adoptedResolutionSurface: resolutionAnchor.created === false,
+    callerShellDecorated: !adoptingExistingPhase && Boolean(callerShell),
     shell,
     planSlot,
     phaseSurface,
@@ -473,7 +484,8 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   authority: 'NONE',
   hudAuthority: 'CALLER_ONLY_FAIL_CLOSED_PLACEHOLDERS',
   hudUnresolvedTokens: Object.freeze({ score: 'X', hate: 'XXX', turn: 'XX', loadJanken: '?' }),
-  existingAnchorPolicy: 'ADOPT_IF_EXPLICIT_OR_PRESENT__NEVER_DUPLICATE_ID',
+  existingAnchorPolicy: 'EXPLICIT_PHASE_GETS_RUNTIME_OVERLAY__ANCESTOR_NEVER_DECORATED',
+  externalPhaseShellOwner: 'CALLER',
   planSurfaceOwner: 'CALLER',
   laneCount: 4,
   productionHtmlMutationOwnedHere: false,

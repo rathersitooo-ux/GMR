@@ -26,20 +26,32 @@ jobs:
           from pathlib import Path
           p = Path('.github/workflows/cloudflare-public-deploy.yml')
           s = p.read_text()
-          old = '''  workflow_dispatch:\n  workflow_run:\n    workflows: ["Required Gate auto-merge"]\n    types: [completed]\n'''
-          new = '''  workflow_dispatch:\n'''
-          if s.count(old) != 1:
-              raise SystemExit(f'workflow_run trigger block count={s.count(old)}')
-          s = s.replace(old, new, 1)
-          old = '''  cancel-in-progress: ${{ github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.sha != github.event.workflow_run.head_sha) }}\n'''
-          new = '''  cancel-in-progress: true\n'''
-          if s.count(old) != 1:
-              raise SystemExit(f'concurrency expression count={s.count(old)}')
-          s = s.replace(old, new, 1)
-          old = '''    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.sha != github.event.workflow_run.head_sha)\n'''
-          if s.count(old) != 1:
-              raise SystemExit(f'deploy job guard count={s.count(old)}')
-          s = s.replace(old, '', 1)
+          trigger = '''  workflow_dispatch:\n  workflow_run:\n    workflows: ["Required Gate auto-merge"]\n    types: [completed]\n'''
+          if s.count(trigger) != 1:
+              raise SystemExit(f'workflow_run trigger block count={s.count(trigger)}')
+          s = s.replace(trigger, '  workflow_dispatch:\n', 1)
+
+          lines = s.splitlines(keepends=True)
+          concurrency_hits = 0
+          job_guard_hits = 0
+          out = []
+          for line in lines:
+              stripped = line.strip()
+              if stripped.startswith('cancel-in-progress:') and 'workflow_run' in line:
+                  concurrency_hits += 1
+                  out.append('  cancel-in-progress: true\n')
+                  continue
+              if stripped.startswith('if:') and 'github.event_name' in line and 'workflow_run' in line:
+                  job_guard_hits += 1
+                  continue
+              out.append(line)
+          if concurrency_hits != 1:
+              raise SystemExit(f'concurrency expression count={concurrency_hits}')
+          if job_guard_hits != 1:
+              raise SystemExit(f'deploy job guard count={job_guard_hits}')
+          s = ''.join(out)
+          if 'workflow_run:' in s or 'github.event.workflow_run' in s:
+              raise SystemExit('workflow_run residue remains')
           p.write_text(s)
           PY
           git diff --check

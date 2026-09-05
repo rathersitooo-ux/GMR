@@ -16,7 +16,6 @@ env:
 
 jobs:
   implement-and-test:
-    if: ${{ !contains(github.event.head_commit.message, '[qs-master-result]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -31,223 +30,19 @@ jobs:
         run: |
           set -euo pipefail
           git merge-base --is-ancestor "$BASE_SHA" HEAD
-          python3 - <<'PY'
-          import json, os
-          from pathlib import Path
-          m = json.loads(Path(os.environ['MANIFEST']).read_text(encoding='utf-8'))
-          expected = {
-              'schemaVersion': 'gameroad-preaction-v3',
-              'recordId': os.environ['ACQUIRE_KEY'],
-              'taskId': 'UI-STATE-FEEDBACK-RUNTIME-001',
-              'workUnitKey': 'QUICK_SETTINGS_MASTER_VOLUME_R1',
-              'authorizationBaseSha': os.environ['BASE_SHA'],
-              'leaseAuthority': 'CURRENT_ACTIVE_LEASES',
-              'leaseState': 'ACTIVE',
-          }
-          for key, value in expected.items():
-              if m.get(key) != value:
-                  raise SystemExit(f'PRE_ACTION mismatch {key}: {m.get(key)!r} != {value!r}')
-          if not str(m.get('proceedToken', '')).startswith(f"PROCEED|{os.environ['ACQUIRE_KEY']}|"):
-              raise SystemExit('PRE_ACTION proceed token mismatch')
-          PY
+          python3 -c "import json,os,pathlib; m=json.loads(pathlib.Path(os.environ['MANIFEST']).read_text()); assert m['schemaVersion']=='gameroad-preaction-v3'; assert m['recordId']==os.environ['ACQUIRE_KEY']; assert m['taskId']=='UI-STATE-FEEDBACK-RUNTIME-001'; assert m['workUnitKey']=='QUICK_SETTINGS_MASTER_VOLUME_R1'; assert m['authorizationBaseSha']==os.environ['BASE_SHA']; assert m['leaseAuthority']=='CURRENT_ACTIVE_LEASES'; assert m['leaseState']=='ACTIVE'; assert str(m['proceedToken']).startswith('PROCEED|'+os.environ['ACQUIRE_KEY']+'|')"
           mapfile -t changed < <(git diff --name-only "$BASE_SHA...HEAD" | sort)
           mapfile -t expected < <(printf '%s\n' "$MANIFEST" "$WORKFLOW_FILE" | sort)
           test "${#changed[@]}" -eq 2
           test "${changed[0]}" = "${expected[0]}"
           test "${changed[1]}" = "${expected[1]}"
 
-      - name: Patch derived master-volume proxy and focused regression
+      - name: Patch derived master-volume proxy
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-
-          home_path = Path('browser/home-boot-runtime-mount.mjs')
-          test_path = Path('tests/home-boot-presentation.test.mjs')
-          home = home_path.read_text(encoding='utf-8')
-          test = test_path.read_text(encoding='utf-8')
-
-          def replace_once(source, old, new, label):
-              count = source.count(old)
-              if count != 1:
-                  raise SystemExit(f'{label}: expected exactly one match, got {count}')
-              return source.replace(old, new, 1)
-
-          home = replace_once(
-              home,
-              "export const QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS = Object.freeze(['masterVolume']);",
-              "export const QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS = Object.freeze([]);",
-              'known authority gap',
-          )
-
-          old_read = '''export function readExistingQuickSettings(documentSource = globalThis.document) {
-            const authority = inspectExistingQuickSettingsAuthority(documentSource);
-            const controls = authority.controls;
-            return Object.freeze({
-              musicVolume: controls.musicVolume ? quickSettingsPercent(controls.musicVolume.value) : null,
-              sfxVolume: controls.sfxVolume ? quickSettingsPercent(controls.sfxVolume.value) : null,
-              partnerVoiceVolume: controls.partnerVoiceVolume ? quickSettingsPercent(controls.partnerVoiceVolume.value) : null,
-              musicMuted: controls.musicMute ? quickSettingsToggleOn(controls.musicMute) : null,
-              sfxMuted: controls.sfxMute ? quickSettingsToggleOn(controls.sfxMute) : null,
-              partnerVoiceMuted: controls.partnerVoiceMute ? quickSettingsToggleOn(controls.partnerVoiceMute) : null,
-              reduceMotion: controls.reduceMotion ? quickSettingsToggleOn(controls.reduceMotion) : null,
-              lowPerf: controls.lowPerf ? quickSettingsToggleOn(controls.lowPerf) : null,
-              missing: authority.missing,
-              knownAuthorityGaps: authority.knownAuthorityGaps,
-            });
-          }'''
-          old_read = '\n'.join(line[10:] if line.startswith('          ') else line for line in old_read.splitlines())
-          new_read = '''export function readExistingQuickSettings(documentSource = globalThis.document) {
-            const authority = inspectExistingQuickSettingsAuthority(documentSource);
-            const controls = authority.controls;
-            const musicVolume = controls.musicVolume ? quickSettingsPercent(controls.musicVolume.value) : null;
-            const sfxVolume = controls.sfxVolume ? quickSettingsPercent(controls.sfxVolume.value) : null;
-            const partnerVoiceVolume = controls.partnerVoiceVolume ? quickSettingsPercent(controls.partnerVoiceVolume.value) : null;
-            const channelVolumes = [musicVolume, sfxVolume, partnerVoiceVolume];
-            const masterVolume = channelVolumes.every((value) => value != null)
-              ? Math.max(...channelVolumes)
-              : null;
-            return Object.freeze({
-              masterVolume,
-              musicVolume,
-              sfxVolume,
-              partnerVoiceVolume,
-              musicMuted: controls.musicMute ? quickSettingsToggleOn(controls.musicMute) : null,
-              sfxMuted: controls.sfxMute ? quickSettingsToggleOn(controls.sfxMute) : null,
-              partnerVoiceMuted: controls.partnerVoiceMute ? quickSettingsToggleOn(controls.partnerVoiceMute) : null,
-              reduceMotion: controls.reduceMotion ? quickSettingsToggleOn(controls.reduceMotion) : null,
-              lowPerf: controls.lowPerf ? quickSettingsToggleOn(controls.lowPerf) : null,
-              missing: authority.missing,
-              knownAuthorityGaps: authority.knownAuthorityGaps,
-            });
-          }'''
-          new_read = '\n'.join(line[10:] if line.startswith('          ') else line for line in new_read.splitlines())
-          home = replace_once(home, old_read, new_read, 'readExistingQuickSettings')
-
-          old_setter = '''export function setExistingQuickSettingsVolume(key, value, documentSource = globalThis.document, globalSource = globalThis) {
-            if (!['musicVolume', 'sfxVolume', 'partnerVoiceVolume'].includes(key)) return false;
-            const control = quickSettingsControl(documentSource, key);
-            if (!control) return false;
-            control.value = String(quickSettingsPercent(value));
-            dispatchExistingQuickSetting(globalSource, control, 'input');
-            dispatchExistingQuickSetting(globalSource, control, 'change');
-            return true;
-          }'''
-          old_setter = '\n'.join(line[10:] if line.startswith('          ') else line for line in old_setter.splitlines())
-          new_setter = old_setter + '''
-
-export function setExistingQuickSettingsMasterVolume(value, documentSource = globalThis.document, globalSource = globalThis) {
-  const current = readExistingQuickSettings(documentSource);
-  const sourceVolumes = [current.musicVolume, current.sfxVolume, current.partnerVoiceVolume];
-  if (sourceVolumes.some((item) => item == null)) return false;
-  const targetMaster = quickSettingsPercent(value);
-  const sourceMaster = Math.max(...sourceVolumes);
-  const nextVolumes = sourceMaster > 0
-    ? sourceVolumes.map((item) => quickSettingsPercent((item * targetMaster) / sourceMaster))
-    : sourceVolumes.map(() => targetMaster);
-  return ['musicVolume', 'sfxVolume', 'partnerVoiceVolume'].every((key, index) => (
-    setExistingQuickSettingsVolume(key, nextVolumes[index], documentSource, globalSource)
-  ));
-}'''
-          home = replace_once(home, old_setter, new_setter, 'volume setter')
-
-          home = replace_once(
-              home,
-              f'[{QUICK := "${QUICK_SETTINGS_OVERLAY_ATTR}"}] .grSharedQuickSettingsToggle{{grid-column:2/4;width:100%}}' if False else '[${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsToggle{grid-column:2/4;width:100%}',
-              '[${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsMasterRange{grid-column:2/4}\n[${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsToggle{grid-column:2/4;width:100%}',
-              'master range style',
-          )
-
-          refresh_anchor = '''  const refresh = () => {
-    const current = readExistingQuickSettings(documentSource);
-    for (const row of QUICK_SETTINGS_AUDIO_ROWS) {'''
-          refresh_replacement = '''  const refresh = () => {
-    const current = readExistingQuickSettings(documentSource);
-    const masterRange = overlay.querySelector?.('[data-quick-volume="masterVolume"]');
-    if (masterRange) {
-      masterRange.disabled = current.masterVolume == null;
-      if (current.masterVolume != null) masterRange.value = String(current.masterVolume);
-    }
-    for (const row of QUICK_SETTINGS_AUDIO_ROWS) {'''
-          home = replace_once(home, refresh_anchor, refresh_replacement, 'refresh master range')
-
-          render_anchor = '''  for (const row of QUICK_SETTINGS_AUDIO_ROWS) {
-    const wrap = quickSettingsNode(documentSource, 'div', 'grSharedQuickSettingsRow');'''
-          render_replacement = '''  const masterWrap = quickSettingsNode(documentSource, 'div', 'grSharedQuickSettingsRow');
-  masterWrap.append(quickSettingsNode(documentSource, 'span', '', '全体'));
-  const masterRange = quickSettingsNode(documentSource, 'input', 'grSharedQuickSettingsMasterRange');
-  masterRange.setAttribute?.('type', 'range');
-  masterRange.setAttribute?.('min', '0');
-  masterRange.setAttribute?.('max', '100');
-  masterRange.setAttribute?.('step', '1');
-  masterRange.setAttribute?.('aria-label', '全体音量');
-  masterRange.dataset.quickVolume = 'masterVolume';
-  masterRange.addEventListener?.('input', () => {
-    setExistingQuickSettingsMasterVolume(masterRange.value, documentSource, globalSource);
-    refresh();
-  });
-  masterWrap.append(masterRange);
-  panel.append(masterWrap);
-
-  for (const row of QUICK_SETTINGS_AUDIO_ROWS) {
-    const wrap = quickSettingsNode(documentSource, 'div', 'grSharedQuickSettingsRow');'''
-          home = replace_once(home, render_anchor, render_replacement, 'render master row')
-
-          home = replace_once(
-              home,
-              '    setVolume: setExistingQuickSettingsVolume,\n    toggle: toggleExistingQuickSetting,',
-              '    setVolume: setExistingQuickSettingsVolume,\n    setMasterVolume: setExistingQuickSettingsMasterVolume,\n    toggle: toggleExistingQuickSetting,',
-              'global master setter',
-          )
-
-          test = replace_once(
-              test,
-              '  setExistingQuickSettingsVolume,\n  shouldDismissHomeSlidepadOnBlankDoubleClick,',
-              '  setExistingQuickSettingsMasterVolume,\n  setExistingQuickSettingsVolume,\n  shouldDismissHomeSlidepadOnBlankDoubleClick,',
-              'test import',
-          )
-          test = replace_once(
-              test,
-              '''  assert.equal(before.musicVolume, 64);
-  assert.equal(before.partnerVoiceMuted, true);
-  assert.deepEqual(before.missing, []);
-  assert.deepEqual(before.knownAuthorityGaps, QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS);
-  assert.ok(before.knownAuthorityGaps.includes('masterVolume'));
-
-  assert.equal(setExistingQuickSettingsVolume('musicVolume', 42, documentSource, { Event: FakeEvent }), true);
-  assert.equal(controls.musicVolume.value, '42');
-  assert.deepEqual(dispatched, ['input', 'change']);
-  assert.equal(toggleExistingQuickSetting('reduceMotion', documentSource), true);
-  assert.equal(readExistingQuickSettings(documentSource).reduceMotion, true);
-  assert.equal(setExistingQuickSettingsVolume('masterVolume', 50, documentSource, { Event: FakeEvent }), false);''',
-              '''  assert.equal(before.masterVolume, 70);
-  assert.equal(before.musicVolume, 64);
-  assert.equal(before.partnerVoiceMuted, true);
-  assert.deepEqual(before.missing, []);
-  assert.deepEqual(before.knownAuthorityGaps, QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS);
-  assert.deepEqual(before.knownAuthorityGaps, []);
-
-  assert.equal(setExistingQuickSettingsMasterVolume(35, documentSource, { Event: FakeEvent }), true);
-  assert.equal(controls.musicVolume.value, '32');
-  assert.equal(controls.sfxVolume.value, '35');
-  assert.equal(controls.partnerVoiceVolume.value, '28');
-  assert.equal(readExistingQuickSettings(documentSource).masterVolume, 35);
-  assert.deepEqual(dispatched, ['input', 'change', 'input', 'change', 'input', 'change']);
-
-  dispatched.length = 0;
-  assert.equal(setExistingQuickSettingsVolume('musicVolume', 42, documentSource, { Event: FakeEvent }), true);
-  assert.equal(controls.musicVolume.value, '42');
-  assert.deepEqual(dispatched, ['input', 'change']);
-  assert.equal(toggleExistingQuickSetting('reduceMotion', documentSource), true);
-  assert.equal(readExistingQuickSettings(documentSource).reduceMotion, true);
-  assert.equal(setExistingQuickSettingsVolume('masterVolume', 50, documentSource, { Event: FakeEvent }), false);''',
-              'focused regression',
-          )
-
-          home_path.write_text(home, encoding='utf-8')
-          test_path.write_text(test, encoding='utf-8')
-          PY
+          printf '%s' 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCgpob21lX3BhdGggPSBQYXRoKCJicm93c2VyL2hvbWUtYm9vdC1ydW50aW1lLW1vdW50Lm1qcyIpCnRlc3RfcGF0aCA9IFBhdGgoInRlc3RzL2hvbWUtYm9vdC1wcmVzZW50YXRpb24udGVzdC5tanMiKQpob21lID0gaG9tZV9wYXRoLnJlYWRfdGV4dChlbmNvZGluZz0idXRmLTgiKQp0ZXN0ID0gdGVzdF9wYXRoLnJlYWRfdGV4dChlbmNvZGluZz0idXRmLTgiKQoKZGVmIHJlcGxhY2Vfb25jZShzb3VyY2UsIG9sZCwgbmV3LCBsYWJlbCk6CiAgICBjb3VudCA9IHNvdXJjZS5jb3VudChvbGQpCiAgICBpZiBjb3VudCAhPSAxOgogICAgICAgIHJhaXNlIFN5c3RlbUV4aXQoZiJ7bGFiZWx9OiBleHBlY3RlZCBleGFjdGx5IG9uZSBtYXRjaCwgZ290IHtjb3VudH0iKQogICAgcmV0dXJuIHNvdXJjZS5yZXBsYWNlKG9sZCwgbmV3LCAxKQoKaG9tZSA9IHJlcGxhY2Vfb25jZSgKICAgIGhvbWUsCiAgICAiZXhwb3J0IGNvbnN0IFFVSUNLX1NFVFRJTkdTX0tOT1dOX0FVVEhPUklUWV9HQVBTID0gT2JqZWN0LmZyZWV6ZShbJ21hc3RlclZvbHVtZSddKTsiLAogICAgImV4cG9ydCBjb25zdCBRVUlDS19TRVRUSU5HU19LTk9XTl9BVVRIT1JJVFlfR0FQUyA9IE9iamVjdC5mcmVlemUoW10pOyIsCiAgICAia25vd24gYXV0aG9yaXR5IGdhcCIsCikKCm9sZF9yZWFkID0gIiIiZXhwb3J0IGZ1bmN0aW9uIHJlYWRFeGlzdGluZ1F1aWNrU2V0dGluZ3MoZG9jdW1lbnRTb3VyY2UgPSBnbG9iYWxUaGlzLmRvY3VtZW50KSB7CiAgY29uc3QgYXV0aG9yaXR5ID0gaW5zcGVjdEV4aXN0aW5nUXVpY2tTZXR0aW5nc0F1dGhvcml0eShkb2N1bWVudFNvdXJjZSk7CiAgY29uc3QgY29udHJvbHMgPSBhdXRob3JpdHkuY29udHJvbHM7CiAgcmV0dXJuIE9iamVjdC5mcmVlemUoewogICAgbXVzaWNWb2x1bWU6IGNvbnRyb2xzLm11c2ljVm9sdW1lID8gcXVpY2tTZXR0aW5nc1BlcmNlbnQoY29udHJvbHMubXVzaWNWb2x1bWUudmFsdWUpIDogbnVsbCwKICAgIHNmeFZvbHVtZTogY29udHJvbHMuc2Z4Vm9sdW1lID8gcXVpY2tTZXR0aW5nc1BlcmNlbnQoY29udHJvbHMuc2Z4Vm9sdW1lLnZhbHVlKSA6IG51bGwsCiAgICBwYXJ0bmVyVm9pY2VWb2x1bWU6IGNvbnRyb2xzLnBhcnRuZXJWb2ljZVZvbHVtZSA/IHF1aWNrU2V0dGluZ3NQZXJjZW50KGNvbnRyb2xzLnBhcnRuZXJWb2ljZVZvbHVtZS52YWx1ZSkgOiBudWxsLAogICAgbXVzaWNNdXRlZDogY29udHJvbHMubXVzaWNNdXRlID8gcXVpY2tTZXR0aW5nc1RvZ2dsZU9uKGNvbnRyb2xzLm11c2ljTXV0ZSkgOiBudWxsLAogICAgc2Z4TXV0ZWQ6IGNvbnRyb2xzLnNmeE11dGUgPyBxdWlja1NldHRpbmdzVG9nZ2xlT24oY29udHJvbHMuc2Z4TXV0ZSkgOiBudWxsLAogICAgcGFydG5lclZvaWNlTXV0ZWQ6IGNvbnRyb2xzLnBhcnRuZXJWb2ljZU11dGUgPyBxdWlja1NldHRpbmdzVG9nZ2xlT24oY29udHJvbHMucGFydG5lclZvaWNlTXV0ZSkgOiBudWxsLAogICAgcmVkdWNlTW90aW9uOiBjb250cm9scy5yZWR1Y2VNb3Rpb24gPyBxdWlja1NldHRpbmdzVG9nZ2xlT24oY29udHJvbHMucmVkdWNlTW90aW9uKSA6IG51bGwsCiAgICBsb3dQZXJmOiBjb250cm9scy5sb3dQZXJmID8gcXVpY2tTZXR0aW5nc1RvZ2dsZU9uKGNvbnRyb2xzLmxvd1BlcmYpIDogbnVsbCwKICAgIG1pc3Npbmc6IGF1dGhvcml0eS5taXNzaW5nLAogICAga25vd25BdXRob3JpdHlHYXBzOiBhdXRob3JpdHkua25vd25BdXRob3JpdHlHYXBzLAogIH0pOwp9IiIiCm5ld19yZWFkID0gIiIiZXhwb3J0IGZ1bmN0aW9uIHJlYWRFeGlzdGluZ1F1aWNrU2V0dGluZ3MoZG9jdW1lbnRTb3VyY2UgPSBnbG9iYWxUaGlzLmRvY3VtZW50KSB7CiAgY29uc3QgYXV0aG9yaXR5ID0gaW5zcGVjdEV4aXN0aW5nUXVpY2tTZXR0aW5nc0F1dGhvcml0eShkb2N1bWVudFNvdXJjZSk7CiAgY29uc3QgY29udHJvbHMgPSBhdXRob3JpdHkuY29udHJvbHM7CiAgY29uc3QgbXVzaWNWb2x1bWUgPSBjb250cm9scy5tdXNpY1ZvbHVtZSA/IHF1aWNrU2V0dGluZ3NQZXJjZW50KGNvbnRyb2xzLm11c2ljVm9sdW1lLnZhbHVlKSA6IG51bGw7CiAgY29uc3Qgc2Z4Vm9sdW1lID0gY29udHJvbHMuc2Z4Vm9sdW1lID8gcXVpY2tTZXR0aW5nc1BlcmNlbnQoY29udHJvbHMuc2Z4Vm9sdW1lLnZhbHVlKSA6IG51bGw7CiAgY29uc3QgcGFydG5lclZvaWNlVm9sdW1lID0gY29udHJvbHMucGFydG5lclZvaWNlVm9sdW1lID8gcXVpY2tTZXR0aW5nc1BlcmNlbnQoY29udHJvbHMucGFydG5lclZvaWNlVm9sdW1lLnZhbHVlKSA6IG51bGw7CiAgY29uc3QgY2hhbm5lbFZvbHVtZXMgPSBbbXVzaWNWb2x1bWUsIHNmeFZvbHVtZSwgcGFydG5lclZvaWNlVm9sdW1lXTsKICBjb25zdCBtYXN0ZXJWb2x1bWUgPSBjaGFubmVsVm9sdW1lcy5ldmVyeSgodmFsdWUpID0+IHZhbHVlICE9IG51bGwpCiAgICA/IE1hdGgubWF4KC4uLmNoYW5uZWxWb2x1bWVzKQogICAgOiBudWxsOwogIHJldHVybiBPYmplY3QuZnJlZXplKHsKICAgIG1hc3RlclZvbHVtZSwKICAgIG11c2ljVm9sdW1lLAogICAgc2Z4Vm9sdW1lLAogICAgcGFydG5lclZvaWNlVm9sdW1lLAogICAgbXVzaWNNdXRlZDogY29udHJvbHMubXVzaWNNdXRlID8gcXVpY2tTZXR0aW5nc1RvZ2dsZU9uKGNvbnRyb2xzLm11c2ljTXV0ZSkgOiBudWxsLAogICAgc2Z4TXV0ZWQ6IGNvbnRyb2xzLnNmeE11dGUgPyBxdWlja1NldHRpbmdzVG9nZ2xlT24oY29udHJvbHMuc2Z4TXV0ZSkgOiBudWxsLAogICAgcGFydG5lclZvaWNlTXV0ZWQ6IGNvbnRyb2xzLnBhcnRuZXJWb2ljZU11dGUgPyBxdWlja1NldHRpbmdzVG9nZ2xlT24oY29udHJvbHMucGFydG5lclZvaWNlTXV0ZSkgOiBudWxsLAogICAgcmVkdWNlTW90aW9uOiBjb250cm9scy5yZWR1Y2VNb3Rpb24gPyBxdWlja1NldHRpbmdzVG9nZ2xlT24oY29udHJvbHMucmVkdWNlTW90aW9uKSA6IG51bGwsCiAgICBsb3dQZXJmOiBjb250cm9scy5sb3dQZXJmID8gcXVpY2tTZXR0aW5nc1RvZ2dsZU9uKGNvbnRyb2xzLmxvd1BlcmYpIDogbnVsbCwKICAgIG1pc3Npbmc6IGF1dGhvcml0eS5taXNzaW5nLAogICAga25vd25BdXRob3JpdHlHYXBzOiBhdXRob3JpdHkua25vd25BdXRob3JpdHlHYXBzLAogIH0pOwp9IiIiCmhvbWUgPSByZXBsYWNlX29uY2UoaG9tZSwgb2xkX3JlYWQsIG5ld19yZWFkLCAicmVhZEV4aXN0aW5nUXVpY2tTZXR0aW5ncyIpCgpvbGRfc2V0dGVyID0gIiIiZXhwb3J0IGZ1bmN0aW9uIHNldEV4aXN0aW5nUXVpY2tTZXR0aW5nc1ZvbHVtZShrZXksIHZhbHVlLCBkb2N1bWVudFNvdXJjZSA9IGdsb2JhbFRoaXMuZG9jdW1lbnQsIGdsb2JhbFNvdXJjZSA9IGdsb2JhbFRoaXMpIHsKICBpZiAoIVsnbXVzaWNWb2x1bWUnLCAnc2Z4Vm9sdW1lJywgJ3BhcnRuZXJWb2ljZVZvbHVtZSddLmluY2x1ZGVzKGtleSkpIHJldHVybiBmYWxzZTsKICBjb25zdCBjb250cm9sID0gcXVpY2tTZXR0aW5nc0NvbnRyb2woZG9jdW1lbnRTb3VyY2UsIGtleSk7CiAgaWYgKCFjb250cm9sKSByZXR1cm4gZmFsc2U7CiAgY29udHJvbC52YWx1ZSA9IFN0cmluZyhxdWlja1NldHRpbmdzUGVyY2VudCh2YWx1ZSkpOwogIGRpc3BhdGNoRXhpc3RpbmdRdWlja1NldHRpbmcoZ2xvYmFsU291cmNlLCBjb250cm9sLCAnaW5wdXQnKTsKICBkaXNwYXRjaEV4aXN0aW5nUXVpY2tTZXR0aW5nKGdsb2JhbFNvdXJjZSwgY29udHJvbCwgJ2NoYW5nZScpOwogIHJldHVybiB0cnVlOwp9IiIiCm5ld19zZXR0ZXIgPSBvbGRfc2V0dGVyICsgIiIiCgpleHBvcnQgZnVuY3Rpb24gc2V0RXhpc3RpbmdRdWlja1NldHRpbmdzTWFzdGVyVm9sdW1lKHZhbHVlLCBkb2N1bWVudFNvdXJjZSA9IGdsb2JhbFRoaXMuZG9jdW1lbnQsIGdsb2JhbFNvdXJjZSA9IGdsb2JhbFRoaXMpIHsKICBjb25zdCBjdXJyZW50ID0gcmVhZEV4aXN0aW5nUXVpY2tTZXR0aW5ncyhkb2N1bWVudFNvdXJjZSk7CiAgY29uc3Qgc291cmNlVm9sdW1lcyA9IFtjdXJyZW50Lm11c2ljVm9sdW1lLCBjdXJyZW50LnNmeFZvbHVtZSwgY3VycmVudC5wYXJ0bmVyVm9pY2VWb2x1bWVdOwogIGlmIChzb3VyY2VWb2x1bWVzLnNvbWUoKGl0ZW0pID0+IGl0ZW0gPT0gbnVsbCkpIHJldHVybiBmYWxzZTsKICBjb25zdCB0YXJnZXRNYXN0ZXIgPSBxdWlja1NldHRpbmdzUGVyY2VudCh2YWx1ZSk7CiAgY29uc3Qgc291cmNlTWFzdGVyID0gTWF0aC5tYXgoLi4uc291cmNlVm9sdW1lcyk7CiAgY29uc3QgbmV4dFZvbHVtZXMgPSBzb3VyY2VNYXN0ZXIgPiAwCiAgICA/IHNvdXJjZVZvbHVtZXMubWFwKChpdGVtKSA9PiBxdWlja1NldHRpbmdzUGVyY2VudCgoaXRlbSAqIHRhcmdldE1hc3RlcikgLyBzb3VyY2VNYXN0ZXIpKQogICAgOiBzb3VyY2VWb2x1bWVzLm1hcCgoKSA9PiB0YXJnZXRNYXN0ZXIpOwogIHJldHVybiBbJ211c2ljVm9sdW1lJywgJ3NmeFZvbHVtZScsICdwYXJ0bmVyVm9pY2VWb2x1bWUnXS5ldmVyeSgoa2V5LCBpbmRleCkgPT4gKAogICAgc2V0RXhpc3RpbmdRdWlja1NldHRpbmdzVm9sdW1lKGtleSwgbmV4dFZvbHVtZXNbaW5kZXhdLCBkb2N1bWVudFNvdXJjZSwgZ2xvYmFsU291cmNlKQogICkpOwp9IiIiCmhvbWUgPSByZXBsYWNlX29uY2UoaG9tZSwgb2xkX3NldHRlciwgbmV3X3NldHRlciwgInZvbHVtZSBzZXR0ZXIiKQoKaG9tZSA9IHJlcGxhY2Vfb25jZSgKICAgIGhvbWUsCiAgICAnWyR7UVVJQ0tfU0VUVElOR1NfT1ZFUkxBWV9BVFRSfV0gLmdyU2hhcmVkUXVpY2tTZXR0aW5nc1RvZ2dsZXtncmlkLWNvbHVtbjoyLzQ7d2lkdGg6MTAwJX0nLAogICAgJ1ske1FVSUNLX1NFVFRJTkdTX09WRVJMQVlfQVRUUn1dIC5nclNoYXJlZFF1aWNrU2V0dGluZ3NNYXN0ZXJSYW5nZXtncmlkLWNvbHVtbjoyLzR9XG5bJHtRVUlDS19TRVRUSU5HU19PVkVSTEFZX0FUVFJ9XSAuZ3JTaGFyZWRRdWlja1NldHRpbmdzVG9nZ2xle2dyaWQtY29sdW1uOjIvNDt3aWR0aDoxMDAlfScsCiAgICAibWFzdGVyIHJhbmdlIHN0eWxlIiwKKQoKcmVmcmVzaF9hbmNob3IgPSAiIiIgIGNvbnN0IHJlZnJlc2ggPSAoKSA9PiB7CiAgICBjb25zdCBjdXJyZW50ID0gcmVhZEV4aXN0aW5nUXVpY2tTZXR0aW5ncyhkb2N1bWVudFNvdXJjZSk7CiAgICBmb3IgKGNvbnN0IHJvdyBvZiBRVUlDS19TRVRUSU5HU19BVURJT19ST1dTKSB7IiIiCnJlZnJlc2hfcmVwbGFjZW1lbnQgPSAiIiIgIGNvbnN0IHJlZnJlc2ggPSAoKSA9PiB7CiAgICBjb25zdCBjdXJyZW50ID0gcmVhZEV4aXN0aW5nUXVpY2tTZXR0aW5ncyhkb2N1bWVudFNvdXJjZSk7CiAgICBjb25zdCBtYXN0ZXJSYW5nZSA9IG92ZXJsYXkucXVlcnlTZWxlY3Rvcj8uKCdbZGF0YS1xdWljay12b2x1bWU9Im1hc3RlclZvbHVtZSJdJyk7CiAgICBpZiAobWFzdGVyUmFuZ2UpIHsKICAgICAgbWFzdGVyUmFuZ2UuZGlzYWJsZWQgPSBjdXJyZW50Lm1hc3RlclZvbHVtZSA9PSBudWxsOwogICAgICBpZiAoY3VycmVudC5tYXN0ZXJWb2x1bWUgIT0gbnVsbCkgbWFzdGVyUmFuZ2UudmFsdWUgPSBTdHJpbmcoY3VycmVudC5tYXN0ZXJWb2x1bWUpOwogICAgfQogICAgZm9yIChjb25zdCByb3cgb2YgUVVJQ0tfU0VUVElOR1NfQVVESU9fUk9XUykgeyIiIgpob21lID0gcmVwbGFjZV9vbmNlKGhvbWUsIHJlZnJlc2hfYW5jaG9yLCByZWZyZXNoX3JlcGxhY2VtZW50LCAicmVmcmVzaCBtYXN0ZXIgcmFuZ2UiKQoKcmVuZGVyX2FuY2hvciA9ICIiIiAgZm9yIChjb25zdCByb3cgb2YgUVVJQ0tfU0VUVElOR1NfQVVESU9fUk9XUykgewogICAgY29uc3Qgd3JhcCA9IHF1aWNrU2V0dGluZ3NOb2RlKGRvY3VtZW50U291cmNlLCAnZGl2JywgJ2dyU2hhcmVkUXVpY2tTZXR0aW5nc1JvdycpOyIiIgpyZW5kZXJfcmVwbGFjZW1lbnQgPSAiIiIgIGNvbnN0IG1hc3RlcldyYXAgPSBxdWlja1NldHRpbmdzTm9kZShkb2N1bWVudFNvdXJjZSwgJ2RpdicsICdnclNoYXJlZFF1aWNrU2V0dGluZ3NSb3cnKTsKICBtYXN0ZXJXcmFwLmFwcGVuZChxdWlja1NldHRpbmdzTm9kZShkb2N1bWVudFNvdXJjZSwgJ3NwYW4nLCAnJywgJ+WFqOS9kycpKTsKICBjb25zdCBtYXN0ZXJSYW5nZSA9IHF1aWNrU2V0dGluZ3NOb2RlKGRvY3VtZW50U291cmNlLCAnaW5wdXQnLCAnZ3JTaGFyZWRRdWlja1NldHRpbmdzTWFzdGVyUmFuZ2UnKTsKICBtYXN0ZXJSYW5nZS5zZXRBdHRyaWJ1dGU/LigndHlwZScsICdyYW5nZScpOwogIG1hc3RlclJhbmdlLnNldEF0dHJpYnV0ZT8uKCdtaW4nLCAnMCcpOwogIG1hc3RlclJhbmdlLnNldEF0dHJpYnV0ZT8uKCdtYXgnLCAnMTAwJyk7CiAgbWFzdGVyUmFuZ2Uuc2V0QXR0cmlidXRlPy4oJ3N0ZXAnLCAnMScpOwogIG1hc3RlclJhbmdlLnNldEF0dHJpYnV0ZT8uKCdhcmlhLWxhYmVsJywgJ+WFqOS9k+mfs+mHjycpOwogIG1hc3RlclJhbmdlLmRhdGFzZXQucXVpY2tWb2x1bWUgPSAnbWFzdGVyVm9sdW1lJzsKICBtYXN0ZXJSYW5nZS5hZGRFdmVudExpc3RlbmVyPy4oJ2lucHV0JywgKCkgPT4gewogICAgc2V0RXhpc3RpbmdRdWlja1NldHRpbmdzTWFzdGVyVm9sdW1lKG1hc3RlclJhbmdlLnZhbHVlLCBkb2N1bWVudFNvdXJjZSwgZ2xvYmFsU291cmNlKTsKICAgIHJlZnJlc2goKTsKICB9KTsKICBtYXN0ZXJXcmFwLmFwcGVuZChtYXN0ZXJSYW5nZSk7CiAgcGFuZWwuYXBwZW5kKG1hc3RlcldyYXApOwoKICBmb3IgKGNvbnN0IHJvdyBvZiBRVUlDS19TRVRUSU5HU19BVURJT19ST1dTKSB7CiAgICBjb25zdCB3cmFwID0gcXVpY2tTZXR0aW5nc05vZGUoZG9jdW1lbnRTb3VyY2UsICdkaXYnLCAnZ3JTaGFyZWRRdWlja1NldHRpbmdzUm93Jyk7IiIiCmhvbWUgPSByZXBsYWNlX29uY2UoaG9tZSwgcmVuZGVyX2FuY2hvciwgcmVuZGVyX3JlcGxhY2VtZW50LCAicmVuZGVyIG1hc3RlciByb3ciKQoKaG9tZSA9IHJlcGxhY2Vfb25jZSgKICAgIGhvbWUsCiAgICAiICAgIHNldFZvbHVtZTogc2V0RXhpc3RpbmdRdWlja1NldHRpbmdzVm9sdW1lLFxuICAgIHRvZ2dsZTogdG9nZ2xlRXhpc3RpbmdRdWlja1NldHRpbmcsIiwKICAgICIgICAgc2V0Vm9sdW1lOiBzZXRFeGlzdGluZ1F1aWNrU2V0dGluZ3NWb2x1bWUsXG4gICAgc2V0TWFzdGVyVm9sdW1lOiBzZXRFeGlzdGluZ1F1aWNrU2V0dGluZ3NNYXN0ZXJWb2x1bWUsXG4gICAgdG9nZ2xlOiB0b2dnbGVFeGlzdGluZ1F1aWNrU2V0dGluZywiLAogICAgImdsb2JhbCBtYXN0ZXIgc2V0dGVyIiwKKQoKdGVzdCA9IHJlcGxhY2Vfb25jZSgKICAgIHRlc3QsCiAgICAiICBzZXRFeGlzdGluZ1F1aWNrU2V0dGluZ3NWb2x1bWUsXG4gIHNob3VsZERpc21pc3NIb21lU2xpZGVwYWRPbkJsYW5rRG91YmxlQ2xpY2ssIiwKICAgICIgIHNldEV4aXN0aW5nUXVpY2tTZXR0aW5nc01hc3RlclZvbHVtZSxcbiAgc2V0RXhpc3RpbmdRdWlja1NldHRpbmdzVm9sdW1lLFxuICBzaG91bGREaXNtaXNzSG9tZVNsaWRlcGFkT25CbGFua0RvdWJsZUNsaWNrLCIsCiAgICAidGVzdCBpbXBvcnQiLAopCgpvbGRfdGVzdCA9ICIiIiAgYXNzZXJ0LmVxdWFsKGJlZm9yZS5tdXNpY1ZvbHVtZSwgNjQpOwogIGFzc2VydC5lcXVhbChiZWZvcmUucGFydG5lclZvaWNlTXV0ZWQsIHRydWUpOwogIGFzc2VydC5kZWVwRXF1YWwoYmVmb3JlLm1pc3NpbmcsIFtdKTsKICBhc3NlcnQuZGVlcEVxdWFsKGJlZm9yZS5rbm93bkF1dGhvcml0eUdhcHMsIFFVSUNLX1NFVFRJTkdTX0tOT1dOX0FVVEhPUklUWV9HQVBTKTsKICBhc3NlcnQub2soYmVmb3JlLmtub3duQXV0aG9yaXR5R2Fwcy5pbmNsdWRlcygnbWFzdGVyVm9sdW1lJykpOwoKICBhc3NlcnQuZXF1YWwoc2V0RXhpc3RpbmdRdWlja1NldHRpbmdzVm9sdW1lKCdtdXNpY1ZvbHVtZScsIDQyLCBkb2N1bWVudFNvdXJjZSwgeyBFdmVudDogRmFrZUV2ZW50IH0pLCB0cnVlKTsKICBhc3NlcnQuZXF1YWwoY29udHJvbHMubXVzaWNWb2x1bWUudmFsdWUsICc0MicpOwogIGFzc2VydC5kZWVwRXF1YWwoZGlzcGF0Y2hlZCwgWydpbnB1dCcsICdjaGFuZ2UnXSk7CiAgYXNzZXJ0LmVxdWFsKHRvZ2dsZUV4aXN0aW5nUXVpY2tTZXR0aW5nKCdyZWR1Y2VNb3Rpb24nLCBkb2N1bWVudFNvdXJjZSksIHRydWUpOwogIGFzc2VydC5lcXVhbChyZWFkRXhpc3RpbmdRdWlja1NldHRpbmdzKGRvY3VtZW50U291cmNlKS5yZWR1Y2VNb3Rpb24sIHRydWUpOwogIGFzc2VydC5lcXVhbChzZXRFeGlzdGluZ1F1aWNrU2V0dGluZ3NWb2x1bWUoJ21hc3RlclZvbHVtZScsIDUwLCBkb2N1bWVudFNvdXJjZSwgeyBFdmVudDogRmFrZUV2ZW50IH0pLCBmYWxzZSk7IiIiCm5ld190ZXN0ID0gIiIiICBhc3NlcnQuZXF1YWwoYmVmb3JlLm1hc3RlclZvbHVtZSwgNzApOwogIGFzc2VydC5lcXVhbChiZWZvcmUubXVzaWNWb2x1bWUsIDY0KTsKICBhc3NlcnQuZXF1YWwoYmVmb3JlLnBhcnRuZXJWb2ljZU11dGVkLCB0cnVlKTsKICBhc3NlcnQuZGVlcEVxdWFsKGJlZm9yZS5taXNzaW5nLCBbXSk7CiAgYXNzZXJ0LmRlZXBFcXVhbChiZWZvcmUua25vd25BdXRob3JpdHlHYXBzLCBRVUlDS19TRVRUSU5HU19LTk9XTl9BVVRIT1JJVFlfR0FQUyk7CiAgYXNzZXJ0LmRlZXBFcXVhbChiZWZvcmUua25vd25BdXRob3JpdHlHYXBzLCBbXSk7CgogIGFzc2VydC5lcXVhbChzZXRFeGlzdGluZ1F1aWNrU2V0dGluZ3NNYXN0ZXJWb2x1bWUoMzUsIGRvY3VtZW50U291cmNlLCB7IEV2ZW50OiBGYWtlRXZlbnQgfSksIHRydWUpOwogIGFzc2VydC5lcXVhbChjb250cm9scy5tdXNpY1ZvbHVtZS52YWx1ZSwgJzMyJyk7CiAgYXNzZXJ0LmVxdWFsKGNvbnRyb2xzLnNmeFZvbHVtZS52YWx1ZSwgJzM1Jyk7CiAgYXNzZXJ0LmVxdWFsKGNvbnRyb2xzLnBhcnRuZXJWb2ljZVZvbHVtZS52YWx1ZSwgJzI4Jyk7CiAgYXNzZXJ0LmVxdWFsKHJlYWRFeGlzdGluZ1F1aWNrU2V0dGluZ3MoZG9jdW1lbnRTb3VyY2UpLm1hc3RlclZvbHVtZSwgMzUpOwogIGFzc2VydC5kZWVwRXF1YWwoZGlzcGF0Y2hlZCwgWydpbnB1dCcsICdjaGFuZ2UnLCAnaW5wdXQnLCAnY2hhbmdlJywgJ2lucHV0JywgJ2NoYW5nZSddKTsKCiAgZGlzcGF0Y2hlZC5sZW5ndGggPSAwOwogIGFzc2VydC5lcXVhbChzZXRFeGlzdGluZ1F1aWNrU2V0dGluZ3NWb2x1bWUoJ211c2ljVm9sdW1lJywgNDIsIGRvY3VtZW50U291cmNlLCB7IEV2ZW50OiBGYWtlRXZlbnQgfSksIHRydWUpOwogIGFzc2VydC5lcXVhbChjb250cm9scy5tdXNpY1ZvbHVtZS52YWx1ZSwgJzQyJyk7CiAgYXNzZXJ0LmRlZXBFcXVhbChkaXNwYXRjaGVkLCBbJ2lucHV0JywgJ2NoYW5nZSddKTsKICBhc3NlcnQuZXF1YWwodG9nZ2xlRXhpc3RpbmdRdWlja1NldHRpbmcoJ3JlZHVjZU1vdGlvbicsIGRvY3VtZW50U291cmNlKSwgdHJ1ZSk7CiAgYXNzZXJ0LmVxdWFsKHJlYWRFeGlzdGluZ1F1aWNrU2V0dGluZ3MoZG9jdW1lbnRTb3VyY2UpLnJlZHVjZU1vdGlvbiwgdHJ1ZSk7CiAgYXNzZXJ0LmVxdWFsKHNldEV4aXN0aW5nUXVpY2tTZXR0aW5nc1ZvbHVtZSgnbWFzdGVyVm9sdW1lJywgNTAsIGRvY3VtZW50U291cmNlLCB7IEV2ZW50OiBGYWtlRXZlbnQgfSksIGZhbHNlKTsiIiIKdGVzdCA9IHJlcGxhY2Vfb25jZSh0ZXN0LCBvbGRfdGVzdCwgbmV3X3Rlc3QsICJmb2N1c2VkIHJlZ3Jlc3Npb24iKQoKaG9tZV9wYXRoLndyaXRlX3RleHQoaG9tZSwgZW5jb2Rpbmc9InV0Zi04IikKdGVzdF9wYXRoLndyaXRlX3RleHQodGVzdCwgZW5jb2Rpbmc9InV0Zi04IikK' | base64 -d > /tmp/qs-master-patch.py
+          python3 /tmp/qs-master-patch.py
 
       - name: Run focused Quick Settings regression
         shell: bash
@@ -261,11 +56,7 @@ export function setExistingQuickSettingsMasterVolume(value, documentSource = glo
           set -euo pipefail
           rm -f "$MANIFEST" "$WORKFLOW_FILE"
           mapfile -t changed < <(git status --short | sed 's/^...//' | sort)
-          mapfile -t expected < <(printf '%s\n' \
-            browser/home-boot-runtime-mount.mjs \
-            tests/home-boot-presentation.test.mjs \
-            "$MANIFEST" \
-            "$WORKFLOW_FILE" | sort)
+          mapfile -t expected < <(printf '%s\n' browser/home-boot-runtime-mount.mjs tests/home-boot-presentation.test.mjs "$MANIFEST" "$WORKFLOW_FILE" | sort)
           test "${#changed[@]}" -eq 4
           test "${changed[0]}" = "${expected[0]}"
           test "${changed[1]}" = "${expected[1]}"
@@ -273,6 +64,6 @@ export function setExistingQuickSettingsMasterVolume(value, documentSource = glo
           test "${changed[3]}" = "${expected[3]}"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add browser/home-boot-runtime-mount.mjs tests/home-boot-presentation.test.mjs "$MANIFEST" "$WORKFLOW_FILE"
+          git add -A browser/home-boot-runtime-mount.mjs tests/home-boot-presentation.test.mjs "$MANIFEST" "$WORKFLOW_FILE"
           git commit -m '[qs-master-result] add derived Quick Settings master volume'
           git push origin HEAD:sol/quick-settings-master-r1-20260906

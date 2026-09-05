@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "TUTORIAL-CONTEXTUAL-REPLAY-R1B-RESUME-20260905T1051-SOL-J7M4P2",
+  "taskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "workUnitKey": "BATTLE_CONTEXTUAL_TUTORIAL_REPLAY_R1B_RESUME",
+  "acquireKey": "TUTORIAL-CONTEXTUAL-REPLAY-R1B-RESUME-20260905T1051-SOL-J7M4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_EXPLICIT_CONTEXTUAL_TUTORIAL_REPLAY_PLUS_CURRENT_FIRST10_CONTEXTHELP_ACTUAL",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXACT_PR1106_PRODUCT_BLOBS_PLUS_FOCUSED_NODE_TEST_ORACLE",
+  "proceedToken": "PROCEED|TUTORIAL-CONTEXTUAL-REPLAY-R1B-RESUME-20260905T1051-SOL-J7M4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "485438b8ec2007ef831e9a87e727258e274ed610",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "BATTLE_CONTEXTUAL_TUTORIAL_REPLAY_R1B_RESUME",
+  "leaseAcquireKey": "TUTORIAL-CONTEXTUAL-REPLAY-R1B-RESUME-20260905T1051-SOL-J7M4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 10:51 JST",
+  "leaseUntilJst": "2026-09-05 11:46 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A303:L303",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@485438b8ec2007ef831e9a87e727258e274ed610; branch work/tutorial-contextual-replay-battle-r1b-20260905; mutable branch ref + browser/partner-advice-runtime-mount.mjs + tests/partner-advice-runtime-mount.test.mjs + deploy/cloudflare/tests/build.test.mjs (partner runtime blob pin only) + transient data/preaction-authorizations/TUTORIAL-CONTEXTUAL-REPLAY-R1B-RESUME-20260905T1051-SOL-J7M4P2.json; prior PR#1106/head used READ_ONLY as exact source; browser/GAMEROAD.html + deploy/cloudflare/scripts/build.mjs + Home/navigation + Cards/Deck + Result + gameplay/rules/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "Resume the already-adopted Battle contextual Tutorial replay by reusing the exact reviewed PR #1106 product blobs on a clean authorization history. The live partnerDecisionBox exposes a compact re-explain entry, reuses current FIRST10/contextHelp presentation, returns to the same Battle context, and does not mutate first-run Tutorial completion, reward, save, or gameplay authority.",
+  "reuseDisposition": "REUSE_AS_IS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "exact-pr1106-product-delta-clean-gate-rebase",
+  "solutionSearchEvidence": [
+    "repo:PR#1106 head 6dc6eb9aa595029f5688006a6fee942a0a7b79d7 exact product blobs",
+    "repo:browser/partner-advice-runtime-mount.mjs@485438b8ec2007ef831e9a87e727258e274ed610 current main",
+    "Drive:TUTORIAL-CONTENT-RUNTIME-CONTRACT-001 row1242 contextual replay ruling",
+    "Drive:COV-020/COVD-003/COVD-004 current ignorance map",
+    "external:current DCCG onboarding/replay guidance countercheck"
+  ]
+}

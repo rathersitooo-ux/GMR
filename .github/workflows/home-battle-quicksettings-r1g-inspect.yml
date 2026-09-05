@@ -1,0 +1,80 @@
+name: Home Battle Quick Settings R1G Inspect
+
+on:
+  push:
+    branches:
+      - sol/home-battle-quicksettings-r1g-inspect-20260905
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-settings-authority:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/home-battle-quicksettings-r1g-inspect-20260905
+          fetch-depth: 1
+      - name: Extract bounded current Settings authority context
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          src = Path('browser/GAMEROAD.html')
+          text = src.read_text(encoding='utf-8')
+          lines = text.splitlines()
+          needles = [
+              'id="musicVolume"',
+              'id="sfxVolume"',
+              'id="partnerVoiceVolume"',
+              'id="musicMute"',
+              'id="sfxMute"',
+              'id="partnerVoiceMute"',
+              'musicVolumeLabel',
+              'partnerVoiceVolumeLabel',
+              'reduceMotion',
+              'lowPerf',
+              'localStorage',
+              'STORAGE_KEY',
+              'musicVolume',
+              'sfxVolume',
+              'partnerVoiceVolume',
+              'musicMute',
+              'sfxMute',
+              'partnerVoiceMute',
+              'resolveEffectiveMusicVolume',
+              'FIELD_MUSIC_POLICY_CORE',
+              'SpeechSynthesisUtterance',
+              '.volume =',
+              '.volume=',
+              'new Audio(',
+              'Audio(',
+          ]
+          report = []
+          report.append(f'FILE={src} LINES={len(lines)} BYTES={len(text.encode("utf-8"))}')
+          seen = set()
+          for needle in needles:
+              hits = [i for i, line in enumerate(lines) if needle in line]
+              report.append(f'\n=== NEEDLE {needle!r} HITS={len(hits)} ===')
+              for i in hits[:12]:
+                  key = (needle, i)
+                  if key in seen:
+                      continue
+                  seen.add(key)
+                  lo = max(0, i - 14)
+                  hi = min(len(lines), i + 15)
+                  report.append(f'--- {needle!r} line {i+1} context {lo+1}:{hi} ---')
+                  for j in range(lo, hi):
+                      report.append(f'{j+1:07d}: {lines[j]}')
+          Path('settings-authority-inspection.txt').write_text('\n'.join(report), encoding='utf-8')
+          print('\n'.join(report[:9000]))
+          PY
+      - name: Upload bounded inspection evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: home-battle-quicksettings-r1g-inspection
+          path: settings-authority-inspection.txt
+          if-no-files-found: error
+          retention-days: 2

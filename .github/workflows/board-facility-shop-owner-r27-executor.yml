@@ -1,0 +1,18 @@
+name: Board Facility Shop Owner R27
+
+on:
+  push:
+    branches:
+      - sol/board-facility-shop-owner-r27-20260906
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-accept:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/board-facility-shop-owner-r27-20260906
+      - run: echo R27_EXECUTOR_READY

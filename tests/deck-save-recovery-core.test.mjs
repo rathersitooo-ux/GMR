@@ -9,6 +9,10 @@ const {
   writePreparedSave,
   writePreparedSaveVerified,
   resetExplicitSaveKeys,
+  deriveLiveDeckSaveKeys,
+  expectedDeckLibraryRaw,
+  captureDeckSaveAtomicitySnapshot,
+  settleDeckSaveAtomicitySnapshot,
   DECK_SAVE_RECOVERY_CORE,
 } = globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE;
 
@@ -53,8 +57,55 @@ function prepare(inspection, currentClassification = classify(inspection), proje
   });
 }
 
+function memoryStorage(initial = {}) {
+  const map = new Map(Object.entries(initial));
+  return {
+    getItem(key) { return map.has(key) ? map.get(key) : null; },
+    setItem(key, value) { map.set(key, String(value)); },
+    removeItem(key) { map.delete(key); },
+    snapshot() { return Object.fromEntries(map); },
+  };
+}
+
+function atomicFixture() {
+  const rootKey = 'gameroad.browser.v10.core.1';
+  const libraryKey = `${rootKey}.deckSlots.v1`;
+  const draftSessionKey = `${rootKey}.deckDraft.session.v1`;
+  const oldDeck = { main: ['old'], ex: [] };
+  const nextDeck = { main: Array.from({ length: 40 }, (_, i) => `c${i}`), ex: [] };
+  const oldSlots = Array.from({ length: 12 }, (_, i) => i === 0 ? oldDeck : { main: [], ex: [] });
+  const state = {
+    selectedDeckIndex: 0,
+    deckSlots: JSON.parse(JSON.stringify(oldSlots)),
+    savedDeck: JSON.parse(JSON.stringify(oldDeck)),
+    savedDeckRule: { id: 'FIRST_REGULATION', revision: 3 },
+    deckDraft: JSON.parse(JSON.stringify(nextDeck)),
+    saveAuthorityDeck: JSON.parse(JSON.stringify(oldDeck)),
+    saveAuthorityDeckRule: { id: 'FIRST_REGULATION', revision: 3 },
+    storage: 'localStorage',
+  };
+  const rootRaw = JSON.stringify({
+    v: 3,
+    deck: { ...oldDeck, ruleId: 'FIRST_REGULATION', ruleRevision: 3 },
+    keep: true,
+  });
+  const libraryRaw = JSON.stringify({ schema: 'gameroad.deck-slots.v1', slots: oldSlots });
+  const draftSessionRaw = JSON.stringify({ v: 1, deck: nextDeck });
+  const storage = memoryStorage({ [rootKey]: rootRaw, [libraryKey]: libraryRaw });
+  const sessionStorage = memoryStorage({ [draftSessionKey]: draftSessionRaw });
+  let draftSessionSaveCalls = 0;
+  const api = {
+    state,
+    deckDraftSessionKey: () => draftSessionKey,
+    deckRule: () => ({ id: 'FIRST_REGULATION', revision: 3 }),
+    deckDraftSessionSave: () => { draftSessionSaveCalls += 1; return true; },
+  };
+  return { rootKey, libraryKey, draftSessionKey, rootRaw, libraryRaw, draftSessionRaw, oldDeck, nextDeck, oldSlots, state, storage, sessionStorage, api, draftSessionSaveCalls: () => draftSessionSaveCalls };
+}
+
 test('schema is stable', () => {
   assert.equal(DECK_SAVE_RECOVERY_CORE.schema, 'gameroad.deck-save-recovery.v1');
+  assert.equal(DECK_SAVE_RECOVERY_CORE.atomicitySchema, 'gameroad.deck-save-atomicity-guard.v1');
 });
 
 test('missing save is classified without implicit materialization', () => {
@@ -399,4 +450,117 @@ test('classification and preparation are deterministic and frozen', () => {
   const prepared = prepare(inspection);
   assert.equal(Object.isFrozen(prepared), true);
   assert.equal(Object.isFrozen(prepared.nextRoot), true);
+});
+
+test('live save keys derive from the existing draft-session authority key without hardcoded save revision', () => {
+  const { api, rootKey, libraryKey, draftSessionKey } = atomicFixture();
+  assert.deepEqual(deriveLiveDeckSaveKeys(api), { rootKey, libraryKey, draftSessionKey });
+});
+
+test('library-only path explicitly bypasses root atomicity guard', () => {
+  const { api, state, storage, sessionStorage } = atomicFixture();
+  const result = captureDeckSaveAtomicitySnapshot({ storage, sessionStorage, api, state, requiresRootSave: false });
+  assert.equal(result.status, 'bypass');
+  assert.equal(result.reason, 'LIBRARY_ONLY_PATH_UNCHANGED');
+});
+
+test('atomic capture computes the exact library bytes existing commitDeck is expected to persist', () => {
+  const { api, state, storage, sessionStorage, oldSlots, nextDeck } = atomicFixture();
+  const result = captureDeckSaveAtomicitySnapshot({ storage, sessionStorage, api, state });
+  const expected = JSON.parse(JSON.stringify(oldSlots));
+  expected[0] = nextDeck;
+  assert.equal(result.status, 'captured');
+  assert.equal(result.expectedLibraryRaw, JSON.stringify({ schema: 'gameroad.deck-slots.v1', slots: expected }));
+  assert.equal(expectedDeckLibraryRaw(oldSlots, 0, nextDeck), result.expectedLibraryRaw);
+});
+
+test('atomic settle accepts success only after root deck and library exact readback both match', () => {
+  const f = atomicFixture();
+  const snapshot = captureDeckSaveAtomicitySnapshot({ storage: f.storage, sessionStorage: f.sessionStorage, api: f.api, state: f.state });
+  f.state.deckSlots[0] = JSON.parse(JSON.stringify(f.nextDeck));
+  f.state.savedDeck = JSON.parse(JSON.stringify(f.nextDeck));
+  f.state.saveAuthorityDeck = JSON.parse(JSON.stringify(f.nextDeck));
+  f.storage.setItem(f.libraryKey, snapshot.expectedLibraryRaw);
+  f.storage.setItem(f.rootKey, JSON.stringify({
+    v: 3,
+    deck: { ...f.nextDeck, ruleId: 'FIRST_REGULATION', ruleRevision: 3 },
+    keep: true,
+  }));
+  const result = settleDeckSaveAtomicitySnapshot({
+    snapshot,
+    storage: f.storage,
+    sessionStorage: f.sessionStorage,
+    api: f.api,
+    state: f.state,
+    saveReceipt: { status: 'saved' },
+  });
+  assert.equal(result.status, 'saved');
+  assert.equal(result.rootExact, true);
+  assert.equal(result.libraryExact, true);
+  assert.deepEqual(f.state.savedDeck, f.nextDeck);
+});
+
+test('authoritative root failure rolls back library and in-memory saved baseline while preserving dirty draft session', () => {
+  const f = atomicFixture();
+  const snapshot = captureDeckSaveAtomicitySnapshot({ storage: f.storage, sessionStorage: f.sessionStorage, api: f.api, state: f.state });
+  f.state.deckSlots[0] = JSON.parse(JSON.stringify(f.nextDeck));
+  f.state.savedDeck = JSON.parse(JSON.stringify(f.nextDeck));
+  f.state.saveAuthorityDeck = JSON.parse(JSON.stringify(f.nextDeck));
+  f.state.storage = 'memory';
+  f.storage.setItem(f.libraryKey, snapshot.expectedLibraryRaw);
+  f.sessionStorage.removeItem(f.draftSessionKey);
+  const result = settleDeckSaveAtomicitySnapshot({
+    snapshot,
+    storage: f.storage,
+    sessionStorage: f.sessionStorage,
+    api: f.api,
+    state: f.state,
+    saveReceipt: { status: 'failed', reason: 'STORAGE_WRITE_FAILED' },
+  });
+  assert.equal(result.status, 'failed');
+  assert.equal(result.reason, 'AUTHORITATIVE_ROOT_SAVE_NOT_CONFIRMED');
+  assert.equal(result.originalPreserved, true);
+  assert.equal(f.storage.getItem(f.rootKey), f.rootRaw);
+  assert.equal(f.storage.getItem(f.libraryKey), f.libraryRaw);
+  assert.deepEqual(f.state.savedDeck, f.oldDeck);
+  assert.deepEqual(f.state.saveAuthorityDeck, f.oldDeck);
+  assert.deepEqual(f.state.deckDraft, f.nextDeck);
+  assert.equal(f.sessionStorage.getItem(f.draftSessionKey), f.draftSessionRaw);
+});
+
+test('library readback mismatch after root success rolls both durable keys back instead of reporting saved', () => {
+  const f = atomicFixture();
+  const snapshot = captureDeckSaveAtomicitySnapshot({ storage: f.storage, sessionStorage: f.sessionStorage, api: f.api, state: f.state });
+  f.state.deckSlots[0] = JSON.parse(JSON.stringify(f.nextDeck));
+  f.state.savedDeck = JSON.parse(JSON.stringify(f.nextDeck));
+  f.state.saveAuthorityDeck = JSON.parse(JSON.stringify(f.nextDeck));
+  f.storage.setItem(f.rootKey, JSON.stringify({ v: 3, deck: { ...f.nextDeck, ruleId: 'FIRST_REGULATION', ruleRevision: 3 } }));
+  f.storage.setItem(f.libraryKey, `${snapshot.expectedLibraryRaw}x`);
+  const result = settleDeckSaveAtomicitySnapshot({
+    snapshot,
+    storage: f.storage,
+    sessionStorage: f.sessionStorage,
+    api: f.api,
+    state: f.state,
+    saveReceipt: { status: 'saved' },
+  });
+  assert.equal(result.status, 'failed');
+  assert.equal(result.reason, 'DECK_LIBRARY_READBACK_MISMATCH');
+  assert.equal(result.originalPreserved, true);
+  assert.equal(f.storage.getItem(f.rootKey), f.rootRaw);
+  assert.equal(f.storage.getItem(f.libraryKey), f.libraryRaw);
+  assert.deepEqual(f.state.savedDeck, f.oldDeck);
+  assert.deepEqual(f.state.deckDraft, f.nextDeck);
+});
+
+test('atomic snapshot is blocked before mutation when baseline storage cannot be read', () => {
+  const f = atomicFixture();
+  const storage = {
+    getItem() { throw new Error('blocked'); },
+    setItem() {},
+    removeItem() {},
+  };
+  const result = captureDeckSaveAtomicitySnapshot({ storage, sessionStorage: f.sessionStorage, api: f.api, state: f.state });
+  assert.equal(result.status, 'blocked');
+  assert.equal(result.reason, 'ATOMIC_BASELINE_READ_FAILED');
 });

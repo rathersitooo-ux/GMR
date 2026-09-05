@@ -1,0 +1,116 @@
+name: Cards Favorites Visible Acceptance R2 Patch
+
+on:
+  push:
+    branches:
+      - sol/cards-favorite-accept-r2-20260905
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: sol/cards-favorite-accept-r2-20260905
+          fetch-depth: 0
+
+      - name: Exact-anchor Favorites acceptance patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('tests/browser-full-interaction.spec.mjs')
+          text = path.read_text(encoding='utf-8')
+          old = """  const search = cards.locator('#cardSearch');
+          await search.fill('スペードA');
+          const result = cards.locator('#collectionGrid button.slot.live.cardFace:visible').first();
+          await expect(result).toBeVisible();
+          await result.click();
+          await expect(cards.locator('.cardPreview')).toBeVisible();
+          await expect(cards.locator('#previewName')).toContainText('スペードA');
+          await attachStateScreenshot(page, testInfo, 'card-detail-visible');
+          await cards.locator('#r4PreviewClose').click();
+
+          await search.fill('');
+          """
+          new = """  const search = cards.locator('#cardSearch');
+          await search.fill('スペードA');
+          const result = cards.locator('#collectionGrid button.slot.live.cardFace:visible').first();
+          await expect(result).toBeVisible();
+          const favoriteCardId = await result.getAttribute('data-id');
+          expect(favoriteCardId, 'visible searched card has a stable card id').toBeTruthy();
+          await result.click();
+          await expect(cards.locator('.cardPreview')).toBeVisible();
+          await expect(cards.locator('#previewName')).toContainText('スペードA');
+          const favoriteAction = cards.locator('[data-role=\"cards-favorite-action\"]');
+          await expect(favoriteAction, 'card detail exposes the adopted favorite action').toBeVisible();
+          await expect(favoriteAction).toHaveAttribute('aria-pressed', 'false');
+          await favoriteAction.click();
+          await expect(favoriteAction).toHaveAttribute('aria-pressed', 'true');
+          await attachStateScreenshot(page, testInfo, 'card-detail-favorite-selected');
+          await cards.locator('#r4PreviewClose').click();
+
+          await page.reload({ waitUntil: 'domcontentloaded' });
+          await page.waitForTimeout(1_000);
+          await expect(page.locator('section[data-screen=\"home\"]')).toBeVisible();
+          const cardsGoAfterFavoriteReload = visibleOperationGo(page, 'cards');
+          await expect(cardsGoAfterFavoriteReload).toBeVisible();
+          await cardsGoAfterFavoriteReload.click();
+          await expect(cards).toBeVisible();
+
+          const favoriteFilter = cards.locator('[data-role=\"cards-deck-findability\"] [data-filter=\"favorite\"]');
+          await expect(favoriteFilter, 'Cards exposes the adopted favorite-only filter').toBeVisible();
+          await favoriteFilter.click();
+          await expect(favoriteFilter).toHaveAttribute('aria-pressed', 'true');
+          const persistedFavorite = cards.locator(`#collectionGrid [data-id=\"${favoriteCardId}\"]:visible`).first();
+          await expect(persistedFavorite, 'favorited card remains visible after reload under favorite-only filter').toBeVisible();
+          await persistedFavorite.click();
+          await expect(cards.locator('.cardPreview')).toBeVisible();
+          await expect(favoriteAction, 'reloaded card detail remembers favorite state').toBeVisible();
+          await expect(favoriteAction).toHaveAttribute('aria-pressed', 'true');
+          await attachStateScreenshot(page, testInfo, 'card-favorite-persisted-after-reload');
+
+          await favoriteAction.click();
+          await expect(favoriteAction).toHaveAttribute('aria-pressed', 'false');
+          await cards.locator('#r4PreviewClose').click();
+          await favoriteFilter.click();
+          await expect(favoriteFilter).toHaveAttribute('aria-pressed', 'false');
+
+          await search.fill('');
+          """
+          hits = text.count(old)
+          if hits != 1:
+              raise SystemExit(f'expected exactly one Cards detail anchor, found {hits}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+          git diff --check
+          grep -Fq "card-favorite-persisted-after-reload" tests/browser-full-interaction.spec.mjs
+
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Run existing Cards visible interaction test only
+        run: npx playwright test --config=playwright.full-interaction.config.mjs --grep "covers Cards search" --workers=1
+
+      - name: Commit bounded test diff and remove transient authorization files
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/cards-favorite-accept-r2-patch.yml
+          rm -f data/preaction-authorizations/CARDS-FAVORITE-ACCEPT-R2-20260905T1626-SOL-F7K3P5.json
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/browser-full-interaction.spec.mjs .github/workflows/cards-favorite-accept-r2-patch.yml data/preaction-authorizations/CARDS-FAVORITE-ACCEPT-R2-20260905T1626-SOL-F7K3P5.json
+          git commit -m 'test(cards): verify Favorites survive reload'
+          git push origin HEAD:sol/cards-favorite-accept-r2-20260905

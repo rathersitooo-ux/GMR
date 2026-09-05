@@ -33,5 +33,5807 @@
     "R4 run 33987210152 proved blanket host-above-grid stacking reverses the failure on phone by making a Collection card lose its center hit point.",
     "R5 therefore measures actual host/filter/grid/card geometry before choosing the smallest presentation-only separation repair."
   ],
-  "diagnosticCaptured": false
+  "diagnosticCaptured": true,
+  "diagnosticCapturedAtJst": "2026-09-06 05:50:36 JST",
+  "diagnosticRunId": "33991263168",
+  "diagnosticHeadSha": "2c621021302b727cc64481bdfb1668d6349d15e1",
+  "geometry": [
+    {
+      "label": "desktop",
+      "before": {
+        "phase": "before-card-scroll",
+        "viewport": {
+          "width": 1280,
+          "height": 720
+        },
+        "scroll": {
+          "x": 0,
+          "y": 0
+        },
+        "host": {
+          "tag": "DIV",
+          "id": null,
+          "className": "",
+          "role": "cards-deck-findability",
+          "filter": null,
+          "dataId": null,
+          "rect": {
+            "left": 30,
+            "top": 188,
+            "right": 890,
+            "bottom": 188,
+            "width": 860,
+            "height": 0
+          },
+          "style": {
+            "position": "static",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "6px",
+            "marginBottom": "10px",
+            "overflow": "visible",
+            "pointerEvents": "auto",
+            "display": "flex"
+          }
+        },
+        "filter": {
+          "tag": "BUTTON",
+          "id": null,
+          "className": "",
+          "role": null,
+          "filter": "favorite",
+          "dataId": null,
+          "rect": {
+            "left": 437,
+            "top": 188,
+            "right": 539.65625,
+            "bottom": 232,
+            "width": 102.65625,
+            "height": 44
+          },
+          "style": {
+            "position": "static",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "0px",
+            "marginBottom": "0px",
+            "overflow": "visible",
+            "pointerEvents": "auto",
+            "display": "block"
+          }
+        },
+        "grid": {
+          "tag": "DIV",
+          "id": "collectionGrid",
+          "className": "collectionGrid",
+          "role": null,
+          "filter": null,
+          "dataId": null,
+          "rect": {
+            "left": 30,
+            "top": 182,
+            "right": 890,
+            "bottom": 693,
+            "width": 860,
+            "height": 511
+          },
+          "style": {
+            "position": "static",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "0px",
+            "marginBottom": "0px",
+            "overflow": "auto",
+            "pointerEvents": "auto",
+            "display": "grid"
+          }
+        },
+        "card": {
+          "tag": "BUTTON",
+          "id": null,
+          "className": "slot live cardFace inDeck pick",
+          "role": null,
+          "filter": null,
+          "dataId": "SP_A",
+          "rect": {
+            "left": 30,
+            "top": 194,
+            "right": 165.15625,
+            "bottom": 368,
+            "width": 135.15625,
+            "height": 174
+          },
+          "style": {
+            "position": "relative",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "0px",
+            "marginBottom": "0px",
+            "overflow": "hidden",
+            "pointerEvents": "auto",
+            "display": "flex"
+          }
+        },
+        "hostCardVerticalOverlap": 0,
+        "filterStack": [
+          {
+            "tag": "B",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 481.28125,
+              "top": 207,
+              "right": 491.71875,
+              "bottom": 222,
+              "width": 10.4375,
+              "height": 15
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "id": null,
+            "className": "cardCostBadge vanilla",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 471.5,
+              "top": 203,
+              "right": 501.5,
+              "bottom": 241,
+              "width": 30,
+              "height": 38
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "3",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "slot live cardFace inDeck",
+            "role": null,
+            "filter": null,
+            "dataId": "SP_4",
+            "rect": {
+              "left": 462.5,
+              "top": 194,
+              "right": 597.65625,
+              "bottom": 368,
+              "width": 135.15625,
+              "height": 174
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "collectionGrid",
+            "className": "collectionGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 30,
+              "top": 182,
+              "right": 890,
+              "bottom": 693,
+              "width": 860,
+              "height": 511
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "auto",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": "favorite",
+            "dataId": null,
+            "rect": {
+              "left": 437,
+              "top": 188,
+              "right": 539.65625,
+              "bottom": 232,
+              "width": 102.65625,
+              "height": 44
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 14,
+              "top": 60,
+              "right": 906,
+              "bottom": 706,
+              "width": 892,
+              "height": 646
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 14,
+              "top": 60,
+              "right": 1266,
+              "bottom": 706,
+              "width": 1252,
+              "height": 646
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ],
+        "cardStack": [
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "slot live cardFace inDeck pick",
+            "role": null,
+            "filter": null,
+            "dataId": "SP_A",
+            "rect": {
+              "left": 30,
+              "top": 194,
+              "right": 165.15625,
+              "bottom": 368,
+              "width": 135.15625,
+              "height": 174
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "collectionGrid",
+            "className": "collectionGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 30,
+              "top": 182,
+              "right": 890,
+              "bottom": 693,
+              "width": 860,
+              "height": 511
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "auto",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 14,
+              "top": 60,
+              "right": 906,
+              "bottom": 706,
+              "width": 892,
+              "height": 646
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 14,
+              "top": 60,
+              "right": 1266,
+              "bottom": 706,
+              "width": 1252,
+              "height": 646
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "HTML",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ],
+        "hostAncestry": [
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "",
+            "role": "cards-deck-findability",
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 30,
+              "top": 188,
+              "right": 890,
+              "bottom": 188,
+              "width": 860,
+              "height": 0
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "6px",
+              "marginBottom": "10px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 14,
+              "top": 60,
+              "right": 906,
+              "bottom": 706,
+              "width": 892,
+              "height": 646
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 14,
+              "top": 60,
+              "right": 1266,
+              "bottom": 706,
+              "width": 1252,
+              "height": 646
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "HTML",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ],
+        "cardAncestry": [
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "slot live cardFace inDeck pick",
+            "role": null,
+            "filter": null,
+            "dataId": "SP_A",
+            "rect": {
+              "left": 30,
+              "top": 194,
+              "right": 165.15625,
+              "bottom": 368,
+              "width": 135.15625,
+              "height": 174
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "collectionGrid",
+            "className": "collectionGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 30,
+              "top": 182,
+              "right": 890,
+              "bottom": 693,
+              "width": 860,
+              "height": 511
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "auto",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 14,
+              "top": 60,
+              "right": 906,
+              "bottom": 706,
+              "width": 892,
+              "height": 646
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 14,
+              "top": 60,
+              "right": 1266,
+              "bottom": 706,
+              "width": 1252,
+              "height": 646
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ]
+      },
+      "after": {
+        "phase": "after-card-scroll",
+        "viewport": {
+          "width": 1280,
+          "height": 720
+        },
+        "scroll": {
+          "x": 0,
+          "y": 0
+        },
+        "host": {
+          "tag": "DIV",
+          "id": null,
+          "className": "",
+          "role": "cards-deck-findability",
+          "filter": null,
+          "dataId": null,
+          "rect": {
+            "left": 30,
+            "top": 188,
+            "right": 890,
+            "bottom": 188,
+            "width": 860,
+            "height": 0
+          },
+          "style": {
+            "position": "static",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "6px",
+            "marginBottom": "10px",
+            "overflow": "visible",
+            "pointerEvents": "auto",
+            "display": "flex"
+          }
+        },
+        "filter": {
+          "tag": "BUTTON",
+          "id": null,
+          "className": "",
+          "role": null,
+          "filter": "favorite",
+          "dataId": null,
+          "rect": {
+            "left": 437,
+            "top": 188,
+            "right": 539.65625,
+            "bottom": 232,
+            "width": 102.65625,
+            "height": 44
+          },
+          "style": {
+            "position": "static",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "0px",
+            "marginBottom": "0px",
+            "overflow": "visible",
+            "pointerEvents": "auto",
+            "display": "block"
+          }
+        },
+        "grid": {
+          "tag": "DIV",
+          "id": "collectionGrid",
+          "className": "collectionGrid",
+          "role": null,
+          "filter": null,
+          "dataId": null,
+          "rect": {
+            "left": 30,
+            "top": 182,
+            "right": 890,
+            "bottom": 693,
+            "width": 860,
+            "height": 511
+          },
+          "style": {
+            "position": "static",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "0px",
+            "marginBottom": "0px",
+            "overflow": "auto",
+            "pointerEvents": "auto",
+            "display": "grid"
+          }
+        },
+        "card": {
+          "tag": "BUTTON",
+          "id": null,
+          "className": "slot live cardFace inDeck pick",
+          "role": null,
+          "filter": null,
+          "dataId": "SP_A",
+          "rect": {
+            "left": 30,
+            "top": 194,
+            "right": 165.15625,
+            "bottom": 368,
+            "width": 135.15625,
+            "height": 174
+          },
+          "style": {
+            "position": "relative",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "0px",
+            "marginBottom": "0px",
+            "overflow": "hidden",
+            "pointerEvents": "auto",
+            "display": "flex"
+          }
+        },
+        "hostCardVerticalOverlap": 0,
+        "filterStack": [
+          {
+            "tag": "B",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 481.28125,
+              "top": 207,
+              "right": 491.71875,
+              "bottom": 222,
+              "width": 10.4375,
+              "height": 15
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "SPAN",
+            "id": null,
+            "className": "cardCostBadge vanilla",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 471.5,
+              "top": 203,
+              "right": 501.5,
+              "bottom": 241,
+              "width": 30,
+              "height": 38
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "3",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "slot live cardFace inDeck",
+            "role": null,
+            "filter": null,
+            "dataId": "SP_4",
+            "rect": {
+              "left": 462.5,
+              "top": 194,
+              "right": 597.65625,
+              "bottom": 368,
+              "width": 135.15625,
+              "height": 174
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "collectionGrid",
+            "className": "collectionGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 30,
+              "top": 182,
+              "right": 890,
+              "bottom": 693,
+              "width": 860,
+              "height": 511
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "auto",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": "favorite",
+            "dataId": null,
+            "rect": {
+              "left": 437,
+              "top": 188,
+              "right": 539.65625,
+              "bottom": 232,
+              "width": 102.65625,
+              "height": 44
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 14,
+              "top": 60,
+              "right": 906,
+              "bottom": 706,
+              "width": 892,
+              "height": 646
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 14,
+              "top": 60,
+              "right": 1266,
+              "bottom": 706,
+              "width": 1252,
+              "height": 646
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ],
+        "cardStack": [
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "slot live cardFace inDeck pick",
+            "role": null,
+            "filter": null,
+            "dataId": "SP_A",
+            "rect": {
+              "left": 30,
+              "top": 194,
+              "right": 165.15625,
+              "bottom": 368,
+              "width": 135.15625,
+              "height": 174
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "collectionGrid",
+            "className": "collectionGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 30,
+              "top": 182,
+              "right": 890,
+              "bottom": 693,
+              "width": 860,
+              "height": 511
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "auto",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 14,
+              "top": 60,
+              "right": 906,
+              "bottom": 706,
+              "width": 892,
+              "height": 646
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 14,
+              "top": 60,
+              "right": 1266,
+              "bottom": 706,
+              "width": 1252,
+              "height": 646
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "HTML",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ],
+        "hostAncestry": [
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "",
+            "role": "cards-deck-findability",
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 30,
+              "top": 188,
+              "right": 890,
+              "bottom": 188,
+              "width": 860,
+              "height": 0
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "6px",
+              "marginBottom": "10px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 14,
+              "top": 60,
+              "right": 906,
+              "bottom": 706,
+              "width": 892,
+              "height": 646
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 14,
+              "top": 60,
+              "right": 1266,
+              "bottom": 706,
+              "width": 1252,
+              "height": 646
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "HTML",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ],
+        "cardAncestry": [
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "slot live cardFace inDeck pick",
+            "role": null,
+            "filter": null,
+            "dataId": "SP_A",
+            "rect": {
+              "left": 30,
+              "top": 194,
+              "right": 165.15625,
+              "bottom": 368,
+              "width": 135.15625,
+              "height": 174
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "collectionGrid",
+            "className": "collectionGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 30,
+              "top": 182,
+              "right": 890,
+              "bottom": 693,
+              "width": 860,
+              "height": 511
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "auto",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 14,
+              "top": 60,
+              "right": 906,
+              "bottom": 706,
+              "width": 892,
+              "height": 646
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 14,
+              "top": 60,
+              "right": 1266,
+              "bottom": 706,
+              "width": 1252,
+              "height": 646
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 1280,
+              "bottom": 720,
+              "width": 1280,
+              "height": 720
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "label": "phone",
+      "before": {
+        "phase": "before-card-scroll",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "scroll": {
+          "x": 0,
+          "y": 0
+        },
+        "host": {
+          "tag": "DIV",
+          "id": null,
+          "className": "",
+          "role": "cards-deck-findability",
+          "filter": null,
+          "dataId": null,
+          "rect": {
+            "left": 17,
+            "top": 266,
+            "right": 373,
+            "bottom": 266,
+            "width": 356,
+            "height": 0
+          },
+          "style": {
+            "position": "static",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "6px",
+            "marginBottom": "10px",
+            "overflow": "visible",
+            "pointerEvents": "auto",
+            "display": "flex"
+          }
+        },
+        "filter": {
+          "tag": "BUTTON",
+          "id": null,
+          "className": "",
+          "role": null,
+          "filter": "favorite",
+          "dataId": null,
+          "rect": {
+            "left": 90,
+            "top": 318,
+            "right": 192.65625,
+            "bottom": 362,
+            "width": 102.65625,
+            "height": 44
+          },
+          "style": {
+            "position": "static",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "0px",
+            "marginBottom": "0px",
+            "overflow": "visible",
+            "pointerEvents": "auto",
+            "display": "block"
+          }
+        },
+        "grid": {
+          "tag": "DIV",
+          "id": "collectionGrid",
+          "className": "collectionGrid",
+          "role": null,
+          "filter": null,
+          "dataId": null,
+          "rect": {
+            "left": 17,
+            "top": 260,
+            "right": 373,
+            "bottom": 767,
+            "width": 356,
+            "height": 507
+          },
+          "style": {
+            "position": "static",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "0px",
+            "marginBottom": "0px",
+            "overflow": "auto",
+            "pointerEvents": "auto",
+            "display": "grid"
+          }
+        },
+        "card": {
+          "tag": "BUTTON",
+          "id": null,
+          "className": "slot live cardFace inDeck pick",
+          "role": null,
+          "filter": null,
+          "dataId": "SP_A",
+          "rect": {
+            "left": 17,
+            "top": 268,
+            "right": 130.328125,
+            "bottom": 418,
+            "width": 113.328125,
+            "height": 150
+          },
+          "style": {
+            "position": "relative",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "0px",
+            "marginBottom": "0px",
+            "overflow": "hidden",
+            "pointerEvents": "auto",
+            "display": "flex"
+          }
+        },
+        "hostCardVerticalOverlap": 0,
+        "filterStack": [
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "slot live cardFace inDeck",
+            "role": null,
+            "filter": null,
+            "dataId": "SP_2",
+            "rect": {
+              "left": 136.328125,
+              "top": 268,
+              "right": 249.65625,
+              "bottom": 418,
+              "width": 113.328125,
+              "height": 150
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "collectionGrid",
+            "className": "collectionGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 17,
+              "top": 260,
+              "right": 373,
+              "bottom": 767,
+              "width": 356,
+              "height": 507
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "auto",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": "favorite",
+            "dataId": null,
+            "rect": {
+              "left": 90,
+              "top": 318,
+              "right": 192.65625,
+              "bottom": 362,
+              "width": 102.65625,
+              "height": 44
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 100,
+              "right": 384,
+              "bottom": 778,
+              "width": 378,
+              "height": 678
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 100,
+              "right": 384,
+              "bottom": 778,
+              "width": 378,
+              "height": 678
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "HTML",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ],
+        "cardStack": [
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "slot live cardFace inDeck pick",
+            "role": null,
+            "filter": null,
+            "dataId": "SP_A",
+            "rect": {
+              "left": 17,
+              "top": 268,
+              "right": 130.328125,
+              "bottom": 418,
+              "width": 113.328125,
+              "height": 150
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "collectionGrid",
+            "className": "collectionGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 17,
+              "top": 260,
+              "right": 373,
+              "bottom": 767,
+              "width": 356,
+              "height": 507
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "auto",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": "not-in-deck",
+            "dataId": null,
+            "rect": {
+              "left": 17,
+              "top": 318,
+              "right": 82,
+              "bottom": 362,
+              "width": 65,
+              "height": 44
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 100,
+              "right": 384,
+              "bottom": 778,
+              "width": 378,
+              "height": 678
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 100,
+              "right": 384,
+              "bottom": 778,
+              "width": 378,
+              "height": 678
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "HTML",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ],
+        "hostAncestry": [
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "",
+            "role": "cards-deck-findability",
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 17,
+              "top": 266,
+              "right": 373,
+              "bottom": 266,
+              "width": 356,
+              "height": 0
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "6px",
+              "marginBottom": "10px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 100,
+              "right": 384,
+              "bottom": 778,
+              "width": 378,
+              "height": 678
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 100,
+              "right": 384,
+              "bottom": 778,
+              "width": 378,
+              "height": 678
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "HTML",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ],
+        "cardAncestry": [
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "slot live cardFace inDeck pick",
+            "role": null,
+            "filter": null,
+            "dataId": "SP_A",
+            "rect": {
+              "left": 17,
+              "top": 268,
+              "right": 130.328125,
+              "bottom": 418,
+              "width": 113.328125,
+              "height": 150
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "collectionGrid",
+            "className": "collectionGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 17,
+              "top": 260,
+              "right": 373,
+              "bottom": 767,
+              "width": 356,
+              "height": 507
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "auto",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 100,
+              "right": 384,
+              "bottom": 778,
+              "width": 378,
+              "height": 678
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 100,
+              "right": 384,
+              "bottom": 778,
+              "width": 378,
+              "height": 678
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ]
+      },
+      "after": {
+        "phase": "after-card-scroll",
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "scroll": {
+          "x": 0,
+          "y": 0
+        },
+        "host": {
+          "tag": "DIV",
+          "id": null,
+          "className": "",
+          "role": "cards-deck-findability",
+          "filter": null,
+          "dataId": null,
+          "rect": {
+            "left": 17,
+            "top": 266,
+            "right": 373,
+            "bottom": 266,
+            "width": 356,
+            "height": 0
+          },
+          "style": {
+            "position": "static",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "6px",
+            "marginBottom": "10px",
+            "overflow": "visible",
+            "pointerEvents": "auto",
+            "display": "flex"
+          }
+        },
+        "filter": {
+          "tag": "BUTTON",
+          "id": null,
+          "className": "",
+          "role": null,
+          "filter": "favorite",
+          "dataId": null,
+          "rect": {
+            "left": 90,
+            "top": 318,
+            "right": 192.65625,
+            "bottom": 362,
+            "width": 102.65625,
+            "height": 44
+          },
+          "style": {
+            "position": "static",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "0px",
+            "marginBottom": "0px",
+            "overflow": "visible",
+            "pointerEvents": "auto",
+            "display": "block"
+          }
+        },
+        "grid": {
+          "tag": "DIV",
+          "id": "collectionGrid",
+          "className": "collectionGrid",
+          "role": null,
+          "filter": null,
+          "dataId": null,
+          "rect": {
+            "left": 17,
+            "top": 260,
+            "right": 373,
+            "bottom": 767,
+            "width": 356,
+            "height": 507
+          },
+          "style": {
+            "position": "static",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "0px",
+            "marginBottom": "0px",
+            "overflow": "auto",
+            "pointerEvents": "auto",
+            "display": "grid"
+          }
+        },
+        "card": {
+          "tag": "BUTTON",
+          "id": null,
+          "className": "slot live cardFace inDeck pick",
+          "role": null,
+          "filter": null,
+          "dataId": "SP_A",
+          "rect": {
+            "left": 17,
+            "top": 268,
+            "right": 130.328125,
+            "bottom": 418,
+            "width": 113.328125,
+            "height": 150
+          },
+          "style": {
+            "position": "relative",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "0px",
+            "marginBottom": "0px",
+            "overflow": "hidden",
+            "pointerEvents": "auto",
+            "display": "flex"
+          }
+        },
+        "hostCardVerticalOverlap": 0,
+        "filterStack": [
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "slot live cardFace inDeck",
+            "role": null,
+            "filter": null,
+            "dataId": "SP_2",
+            "rect": {
+              "left": 136.328125,
+              "top": 268,
+              "right": 249.65625,
+              "bottom": 418,
+              "width": 113.328125,
+              "height": 150
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "collectionGrid",
+            "className": "collectionGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 17,
+              "top": 260,
+              "right": 373,
+              "bottom": 767,
+              "width": 356,
+              "height": 507
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "auto",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": "favorite",
+            "dataId": null,
+            "rect": {
+              "left": 90,
+              "top": 318,
+              "right": 192.65625,
+              "bottom": 362,
+              "width": 102.65625,
+              "height": 44
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 100,
+              "right": 384,
+              "bottom": 778,
+              "width": 378,
+              "height": 678
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 100,
+              "right": 384,
+              "bottom": 778,
+              "width": 378,
+              "height": 678
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "HTML",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ],
+        "cardStack": [
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "slot live cardFace inDeck pick",
+            "role": null,
+            "filter": null,
+            "dataId": "SP_A",
+            "rect": {
+              "left": 17,
+              "top": 268,
+              "right": 130.328125,
+              "bottom": 418,
+              "width": 113.328125,
+              "height": 150
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "collectionGrid",
+            "className": "collectionGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 17,
+              "top": 260,
+              "right": 373,
+              "bottom": 767,
+              "width": 356,
+              "height": 507
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "auto",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": "not-in-deck",
+            "dataId": null,
+            "rect": {
+              "left": 17,
+              "top": 318,
+              "right": 82,
+              "bottom": 362,
+              "width": 65,
+              "height": 44
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 100,
+              "right": 384,
+              "bottom": 778,
+              "width": 378,
+              "height": 678
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 100,
+              "right": 384,
+              "bottom": 778,
+              "width": 378,
+              "height": 678
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "HTML",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ],
+        "hostAncestry": [
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "",
+            "role": "cards-deck-findability",
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 17,
+              "top": 266,
+              "right": 373,
+              "bottom": 266,
+              "width": 356,
+              "height": 0
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "6px",
+              "marginBottom": "10px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 100,
+              "right": 384,
+              "bottom": 778,
+              "width": 378,
+              "height": 678
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 100,
+              "right": 384,
+              "bottom": 778,
+              "width": 378,
+              "height": 678
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "HTML",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ],
+        "cardAncestry": [
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "slot live cardFace inDeck pick",
+            "role": null,
+            "filter": null,
+            "dataId": "SP_A",
+            "rect": {
+              "left": 17,
+              "top": 268,
+              "right": 130.328125,
+              "bottom": 418,
+              "width": 113.328125,
+              "height": 150
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "collectionGrid",
+            "className": "collectionGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 17,
+              "top": 260,
+              "right": 373,
+              "bottom": 767,
+              "width": 356,
+              "height": 507
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "auto",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 100,
+              "right": 384,
+              "bottom": 778,
+              "width": 378,
+              "height": 678
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 100,
+              "right": 384,
+              "bottom": 778,
+              "width": 378,
+              "height": 678
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 390,
+              "bottom": 844,
+              "width": 390,
+              "height": 844
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "label": "short-landscape",
+      "before": {
+        "phase": "before-card-scroll",
+        "viewport": {
+          "width": 667,
+          "height": 375
+        },
+        "scroll": {
+          "x": 0,
+          "y": 0
+        },
+        "host": {
+          "tag": "DIV",
+          "id": null,
+          "className": "",
+          "role": "cards-deck-findability",
+          "filter": null,
+          "dataId": null,
+          "rect": {
+            "left": 15,
+            "top": 151,
+            "right": 336,
+            "bottom": 151,
+            "width": 321,
+            "height": 0
+          },
+          "style": {
+            "position": "static",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "6px",
+            "marginBottom": "10px",
+            "overflow": "visible",
+            "pointerEvents": "auto",
+            "display": "flex"
+          }
+        },
+        "filter": {
+          "tag": "BUTTON",
+          "id": null,
+          "className": "",
+          "role": null,
+          "filter": "favorite",
+          "dataId": null,
+          "rect": {
+            "left": 174,
+            "top": 203,
+            "right": 276.65625,
+            "bottom": 247,
+            "width": 102.65625,
+            "height": 44
+          },
+          "style": {
+            "position": "static",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "0px",
+            "marginBottom": "0px",
+            "overflow": "visible",
+            "pointerEvents": "auto",
+            "display": "block"
+          }
+        },
+        "grid": {
+          "tag": "DIV",
+          "id": "collectionGrid",
+          "className": "collectionGrid",
+          "role": null,
+          "filter": null,
+          "dataId": null,
+          "rect": {
+            "left": 15,
+            "top": 145,
+            "right": 336,
+            "bottom": 361,
+            "width": 321,
+            "height": 216
+          },
+          "style": {
+            "position": "static",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "0px",
+            "marginBottom": "0px",
+            "overflow": "auto",
+            "pointerEvents": "auto",
+            "display": "grid"
+          }
+        },
+        "card": {
+          "tag": "BUTTON",
+          "id": null,
+          "className": "slot live cardFace inDeck pick",
+          "role": null,
+          "filter": null,
+          "dataId": "SP_A",
+          "rect": {
+            "left": 15,
+            "top": 150,
+            "right": 90.5,
+            "bottom": 266,
+            "width": 75.5,
+            "height": 116
+          },
+          "style": {
+            "position": "relative",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "0px",
+            "marginBottom": "0px",
+            "overflow": "hidden",
+            "pointerEvents": "auto",
+            "display": "flex"
+          }
+        },
+        "hostCardVerticalOverlap": 0,
+        "filterStack": [
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "slot live cardFace inDeck",
+            "role": null,
+            "filter": null,
+            "dataId": "SP_3",
+            "rect": {
+              "left": 176,
+              "top": 150,
+              "right": 251.5,
+              "bottom": 266,
+              "width": 75.5,
+              "height": 116
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "collectionGrid",
+            "className": "collectionGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 15,
+              "top": 145,
+              "right": 336,
+              "bottom": 361,
+              "width": 321,
+              "height": 216
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "auto",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": "favorite",
+            "dataId": null,
+            "rect": {
+              "left": 174,
+              "top": 203,
+              "right": 276.65625,
+              "bottom": 247,
+              "width": 102.65625,
+              "height": 44
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 54,
+              "right": 345,
+              "bottom": 369,
+              "width": 339,
+              "height": 315
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 54,
+              "right": 661,
+              "bottom": 369,
+              "width": 655,
+              "height": 315
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "HTML",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ],
+        "cardStack": [
+          {
+            "tag": "SPAN",
+            "id": null,
+            "className": "cardWatermark",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 47.41067886352539,
+              "top": 162.12387084960938,
+              "right": 98.76119232177734,
+              "bottom": 217.87612915039062,
+              "width": 51.35051345825195,
+              "height": 55.75225830078125
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "-1",
+              "transform": "matrix(0.990268, -0.139173, 0.139173, 0.990268, 0, 0)",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "slot live cardFace inDeck pick",
+            "role": null,
+            "filter": null,
+            "dataId": "SP_A",
+            "rect": {
+              "left": 15,
+              "top": 150,
+              "right": 90.5,
+              "bottom": 266,
+              "width": 75.5,
+              "height": 116
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "collectionGrid",
+            "className": "collectionGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 15,
+              "top": 145,
+              "right": 336,
+              "bottom": 361,
+              "width": 321,
+              "height": 216
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "auto",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": "in-deck",
+            "dataId": null,
+            "rect": {
+              "left": 15,
+              "top": 203,
+              "right": 93,
+              "bottom": 247,
+              "width": 78,
+              "height": 44
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 54,
+              "right": 345,
+              "bottom": 369,
+              "width": 339,
+              "height": 315
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 54,
+              "right": 661,
+              "bottom": 369,
+              "width": 655,
+              "height": 315
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "HTML",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ],
+        "hostAncestry": [
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "",
+            "role": "cards-deck-findability",
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 15,
+              "top": 151,
+              "right": 336,
+              "bottom": 151,
+              "width": 321,
+              "height": 0
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "6px",
+              "marginBottom": "10px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 54,
+              "right": 345,
+              "bottom": 369,
+              "width": 339,
+              "height": 315
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 54,
+              "right": 661,
+              "bottom": 369,
+              "width": 655,
+              "height": 315
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "HTML",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ],
+        "cardAncestry": [
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "slot live cardFace inDeck pick",
+            "role": null,
+            "filter": null,
+            "dataId": "SP_A",
+            "rect": {
+              "left": 15,
+              "top": 150,
+              "right": 90.5,
+              "bottom": 266,
+              "width": 75.5,
+              "height": 116
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "collectionGrid",
+            "className": "collectionGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 15,
+              "top": 145,
+              "right": 336,
+              "bottom": 361,
+              "width": 321,
+              "height": 216
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "auto",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 54,
+              "right": 345,
+              "bottom": 369,
+              "width": 339,
+              "height": 315
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 54,
+              "right": 661,
+              "bottom": 369,
+              "width": 655,
+              "height": 315
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ]
+      },
+      "after": {
+        "phase": "after-card-scroll",
+        "viewport": {
+          "width": 667,
+          "height": 375
+        },
+        "scroll": {
+          "x": 0,
+          "y": 0
+        },
+        "host": {
+          "tag": "DIV",
+          "id": null,
+          "className": "",
+          "role": "cards-deck-findability",
+          "filter": null,
+          "dataId": null,
+          "rect": {
+            "left": 15,
+            "top": 151,
+            "right": 336,
+            "bottom": 151,
+            "width": 321,
+            "height": 0
+          },
+          "style": {
+            "position": "static",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "6px",
+            "marginBottom": "10px",
+            "overflow": "visible",
+            "pointerEvents": "auto",
+            "display": "flex"
+          }
+        },
+        "filter": {
+          "tag": "BUTTON",
+          "id": null,
+          "className": "",
+          "role": null,
+          "filter": "favorite",
+          "dataId": null,
+          "rect": {
+            "left": 174,
+            "top": 203,
+            "right": 276.65625,
+            "bottom": 247,
+            "width": 102.65625,
+            "height": 44
+          },
+          "style": {
+            "position": "static",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "0px",
+            "marginBottom": "0px",
+            "overflow": "visible",
+            "pointerEvents": "auto",
+            "display": "block"
+          }
+        },
+        "grid": {
+          "tag": "DIV",
+          "id": "collectionGrid",
+          "className": "collectionGrid",
+          "role": null,
+          "filter": null,
+          "dataId": null,
+          "rect": {
+            "left": 15,
+            "top": 145,
+            "right": 336,
+            "bottom": 361,
+            "width": 321,
+            "height": 216
+          },
+          "style": {
+            "position": "static",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "0px",
+            "marginBottom": "0px",
+            "overflow": "auto",
+            "pointerEvents": "auto",
+            "display": "grid"
+          }
+        },
+        "card": {
+          "tag": "BUTTON",
+          "id": null,
+          "className": "slot live cardFace inDeck pick",
+          "role": null,
+          "filter": null,
+          "dataId": "SP_A",
+          "rect": {
+            "left": 15,
+            "top": 150,
+            "right": 90.5,
+            "bottom": 266,
+            "width": 75.5,
+            "height": 116
+          },
+          "style": {
+            "position": "relative",
+            "zIndex": "auto",
+            "transform": "none",
+            "marginTop": "0px",
+            "marginBottom": "0px",
+            "overflow": "hidden",
+            "pointerEvents": "auto",
+            "display": "flex"
+          }
+        },
+        "hostCardVerticalOverlap": 0,
+        "filterStack": [
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "slot live cardFace inDeck",
+            "role": null,
+            "filter": null,
+            "dataId": "SP_3",
+            "rect": {
+              "left": 176,
+              "top": 150,
+              "right": 251.5,
+              "bottom": 266,
+              "width": 75.5,
+              "height": 116
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "collectionGrid",
+            "className": "collectionGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 15,
+              "top": 145,
+              "right": 336,
+              "bottom": 361,
+              "width": 321,
+              "height": 216
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "auto",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": "favorite",
+            "dataId": null,
+            "rect": {
+              "left": 174,
+              "top": 203,
+              "right": 276.65625,
+              "bottom": 247,
+              "width": 102.65625,
+              "height": 44
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 54,
+              "right": 345,
+              "bottom": 369,
+              "width": 339,
+              "height": 315
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 54,
+              "right": 661,
+              "bottom": 369,
+              "width": 655,
+              "height": 315
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "HTML",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ],
+        "cardStack": [
+          {
+            "tag": "SPAN",
+            "id": null,
+            "className": "cardWatermark",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 47.41067886352539,
+              "top": 162.12387084960938,
+              "right": 98.76119232177734,
+              "bottom": 217.87612915039062,
+              "width": 51.35051345825195,
+              "height": 55.75225830078125
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "-1",
+              "transform": "matrix(0.990268, -0.139173, 0.139173, 0.990268, 0, 0)",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "slot live cardFace inDeck pick",
+            "role": null,
+            "filter": null,
+            "dataId": "SP_A",
+            "rect": {
+              "left": 15,
+              "top": 150,
+              "right": 90.5,
+              "bottom": 266,
+              "width": 75.5,
+              "height": 116
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "collectionGrid",
+            "className": "collectionGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 15,
+              "top": 145,
+              "right": 336,
+              "bottom": 361,
+              "width": 321,
+              "height": 216
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "auto",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": "in-deck",
+            "dataId": null,
+            "rect": {
+              "left": 15,
+              "top": 203,
+              "right": 93,
+              "bottom": 247,
+              "width": 78,
+              "height": 44
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 54,
+              "right": 345,
+              "bottom": 369,
+              "width": 339,
+              "height": 315
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 54,
+              "right": 661,
+              "bottom": 369,
+              "width": 655,
+              "height": 315
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "HTML",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ],
+        "hostAncestry": [
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "",
+            "role": "cards-deck-findability",
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 15,
+              "top": 151,
+              "right": 336,
+              "bottom": 151,
+              "width": 321,
+              "height": 0
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "6px",
+              "marginBottom": "10px",
+              "overflow": "visible",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 54,
+              "right": 345,
+              "bottom": 369,
+              "width": 339,
+              "height": 315
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 54,
+              "right": 661,
+              "bottom": 369,
+              "width": 655,
+              "height": 315
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "HTML",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ],
+        "cardAncestry": [
+          {
+            "tag": "BUTTON",
+            "id": null,
+            "className": "slot live cardFace inDeck pick",
+            "role": null,
+            "filter": null,
+            "dataId": "SP_A",
+            "rect": {
+              "left": 15,
+              "top": 150,
+              "right": 90.5,
+              "bottom": 266,
+              "width": 75.5,
+              "height": 116
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "flex"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "collectionGrid",
+            "className": "collectionGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 15,
+              "top": 145,
+              "right": 336,
+              "bottom": 361,
+              "width": 321,
+              "height": 216
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "auto",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "MAIN",
+            "id": null,
+            "className": "collection",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 54,
+              "right": 345,
+              "bottom": 369,
+              "width": 339,
+              "height": 315
+            },
+            "style": {
+              "position": "static",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": null,
+            "className": "cardsGrid",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 6,
+              "top": 54,
+              "right": 661,
+              "bottom": 369,
+              "width": 655,
+              "height": 315
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "grid"
+            }
+          },
+          {
+            "tag": "SECTION",
+            "id": null,
+            "className": "screen cards active",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "absolute",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "DIV",
+            "id": "app",
+            "className": "app",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "relative",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          },
+          {
+            "tag": "BODY",
+            "id": null,
+            "className": "",
+            "role": null,
+            "filter": null,
+            "dataId": null,
+            "rect": {
+              "left": 0,
+              "top": 0,
+              "right": 667,
+              "bottom": 375,
+              "width": 667,
+              "height": 375
+            },
+            "style": {
+              "position": "fixed",
+              "zIndex": "auto",
+              "transform": "none",
+              "marginTop": "0px",
+              "marginBottom": "0px",
+              "overflow": "hidden",
+              "pointerEvents": "auto",
+              "display": "block"
+            }
+          }
+        ]
+      }
+    }
+  ]
 }

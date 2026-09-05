@@ -1,0 +1,103 @@
+name: Temporary Collection Zero Result R1D Executor
+
+on:
+  push:
+    branches:
+      - sol/collection-zero-result-reset-r1d-20260905
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: sol/collection-zero-result-reset-r1d-20260905
+          fetch-depth: 0
+
+      - name: Apply bounded product and recognized-test delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch="sol/collection-zero-result-reset-r1d-20260905"
+          manifest="data/preaction-authorizations/COLLECTION-ZERO-RESULT-RESET-R1D-20260905T1802-SOL-R6K4P8.json"
+          workflow=".github/workflows/collection-zero-result-r1d-executor.yml"
+          product="browser/cards-deck-presentation.mjs"
+          testfile="tests/cards-deck-presentation.test.mjs"
+          marker="COLLECTION_ZERO_RESULT_ESCAPE_R1D_TESTS"
+
+          test "$(git rev-parse HEAD~2)" = "7687041833bc767052629b24b2a79b011b2c64b4"
+          test "$(git hash-object "$product")" = "21a66f5527473dcb6ba2ca7e1b17c5c9b38ad912"
+          test "$(git hash-object "$testfile")" = "60490c6808fcd5e08bbbbe387dd69b10e7c2ca1f"
+          test -f "$manifest"
+          test -f "$workflow"
+          ! grep -Fq "$marker" "$testfile"
+
+          git fetch origin sol/collection-zero-result-reset-r1b-20260905 --no-tags
+          git show 6184fa8be316ad32b4ffe8ae7e521fed8745f8ec:browser/cards-deck-presentation.mjs > /tmp/cards-deck-presentation.mjs
+          test "$(git hash-object /tmp/cards-deck-presentation.mjs)" = "8bda9341df004df1f22c7e4182aa0f3263194bbb"
+          mv /tmp/cards-deck-presentation.mjs "$product"
+
+          cat >> "$testfile" <<'EOF'
+
+// COLLECTION_ZERO_RESULT_ESCAPE_R1D_TESTS
+ test('Collection zero-result escape appears only for active findability restrictions and clears only those restrictions', async () => {
+  const {
+    CARDS_DECK_FINDABILITY_CONTRACT,
+    applyCardsDeckFindability,
+    shouldOfferCardsDeckFindabilityReset,
+  } = await import('../browser/cards-deck-presentation.mjs');
+
+  assert.equal(CARDS_DECK_FINDABILITY_CONTRACT.authoritativeOwnedCardIds, 'caller-supplied-only');
+  assert.equal(CARDS_DECK_FINDABILITY_CONTRACT.authoritativeSavedDeckCardIds, 'caller-supplied-only');
+  assert.equal(CARDS_DECK_FINDABILITY_CONTRACT.persistence, 'none-second-store');
+  assert.equal(CARDS_DECK_FINDABILITY_CONTRACT.zeroResultEscape, 'clear-current-findability-only');
+
+  const cards = [
+    { id: 'C1', name: 'Alpha', desc: '', suit: '♠', rankLabel: 'A' },
+    { id: 'C2', name: 'Beta', desc: '', suit: '♥', rankLabel: '2' },
+  ];
+  const context = {
+    surface: 'collection',
+    query: 'zzz',
+    deckFilter: 'all',
+    favoriteOnly: false,
+    ownerCardIds: ['C1', 'C2'],
+    savedDeckCardIds: [],
+    favoriteCardIds: [],
+  };
+  const zero = applyCardsDeckFindability(cards, context);
+  assert.equal(zero.totalCount, 2);
+  assert.equal(zero.visibleCount, 0);
+  assert.equal(shouldOfferCardsDeckFindabilityReset(zero), true);
+
+  const restored = applyCardsDeckFindability(cards, { ...context, query: '' });
+  assert.equal(restored.visibleCount, 2);
+  assert.equal(shouldOfferCardsDeckFindabilityReset(restored), false);
+});
+
+ test('Collection zero-result reset handler preserves favorites and current selection', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const handler = source.match(/onReset:\s*\(\)\s*=>\s*\{([\s\S]*?)\n\s*\}/)?.[1] ?? '';
+  assert.match(handler, /context\.query = ''/);
+  assert.match(handler, /context\.deckFilter = 'all'/);
+  assert.match(handler, /context\.favoriteOnly = false/);
+  assert.doesNotMatch(handler, /favoriteIds\s*=/);
+  assert.doesNotMatch(handler, /selectedCardId\s*=/);
+});
+EOF
+
+          node --test "$testfile"
+
+          git config user.name "gameroad-scoped-patch"
+          git config user.email "gameroad-scoped-patch@users.noreply.github.com"
+          git add "$product" "$testfile"
+          git commit -m "fix: add Collection zero-result escape"
+
+          git rm "$workflow" "$manifest"
+          git commit -m "PREACTION: cleanup Collection zero-result reset R1D"
+          git push origin "HEAD:$branch"

@@ -8,6 +8,8 @@ const PLAN_SLOT_ATTR = 'data-battle-plan-slot';
 const LANE_ATTR = 'data-battle-screen-lane';
 const HUD_ATTR = 'data-battle-r75-hud';
 const PROGRESS_GUIDE_ATTR = 'data-battle-progress-guide';
+const FIELD_LANDMARK_ATTR = 'data-battle-field-landmark';
+const BATTLE_FIELD_IDS = Object.freeze(['FIELD-01', 'FIELD-02', 'FIELD-03', 'FIELD-04', 'FIELD-05', 'FIELD-08', 'FIELD-09']);
 const PLAYER_ROLE_LABELS = Object.freeze({
   source: '攻撃',
   target: '対象'
@@ -79,6 +81,24 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}] .grBattleProgressGoal{border-color:rgba(255,226,129,.58);background:rgba(73,62,22,.72)}
 [${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}] .grBattleProgressArrow{position:relative;flex:1 1 auto;min-width:36px;height:2px;border-radius:999px;background:linear-gradient(90deg,rgba(255,226,129,.88),rgba(219,241,207,.36));box-shadow:0 0 10px rgba(255,226,129,.18)}
 [${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}] .grBattleProgressArrow::before{content:"◀";position:absolute;left:-2px;top:50%;transform:translate(-35%,-53%);font-size:14px;color:#ffe181;text-shadow:0 1px 8px rgba(0,0,0,.72)}
+[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}]{position:absolute;z-index:1;left:2%;bottom:5%;width:min(28vw,250px);height:min(34vh,220px);pointer-events:none;opacity:.22;overflow:visible;filter:drop-shadow(0 10px 18px rgba(0,0,0,.22))}
+[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}]::before,[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}]::after{content:"";position:absolute;display:block;box-sizing:border-box}
+[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}="FIELD-01"]::before{left:5%;bottom:0;width:76%;height:64%;background:rgba(35,67,48,.82);clip-path:polygon(0 100%,8% 46%,28% 38%,39% 16%,58% 27%,69% 5%,100% 22%,100% 100%)}
+[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}="FIELD-01"]::after{left:53%;top:4%;width:13%;height:82%;border-radius:45% 45% 18% 18%;background:linear-gradient(180deg,rgba(225,244,239,.84),rgba(124,193,187,.64) 50%,rgba(225,244,239,.22));transform:skewX(-5deg)}
+[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}="FIELD-02"]::before{left:35%;top:27%;width:31%;aspect-ratio:1;border-radius:50%;background:rgba(220,190,202,.72);box-shadow:-34px 0 0 rgba(220,190,202,.52),34px 0 0 rgba(220,190,202,.52),0 -31px 0 rgba(220,190,202,.52),0 31px 0 rgba(220,190,202,.52)}
+[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}="FIELD-02"]::after{left:49%;top:54%;width:5%;height:43%;border-radius:999px;background:rgba(70,108,66,.78);transform:rotate(7deg);transform-origin:50% 0}
+[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}="FIELD-03"]::before{left:14%;bottom:2%;width:70%;height:90%;background:rgba(185,218,226,.74);clip-path:polygon(9% 100%,28% 42%,41% 69%,54% 0,68% 61%,82% 31%,100% 100%)}
+[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}="FIELD-03"]::after{left:34%;bottom:2%;width:28%;height:67%;border:2px solid rgba(235,249,249,.68);clip-path:polygon(50% 0,100% 100%,0 100%);transform:rotate(-8deg)}
+[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}="FIELD-04"]::before{left:41%;top:28%;width:24%;height:29%;border-radius:45% 45% 36% 36%;border:2px solid rgba(239,190,101,.76);background:radial-gradient(circle,rgba(255,205,98,.74),rgba(181,109,50,.28) 66%,transparent 70%);box-shadow:0 0 25px rgba(255,176,64,.28)}
+[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}="FIELD-04"]::after{left:52%;top:0;width:2px;height:31%;background:rgba(112,91,62,.78);box-shadow:0 62px 0 rgba(112,91,62,.45)}
+[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}="FIELD-05"]::before{left:8%;bottom:25%;width:84%;height:14%;border-radius:5px;background:repeating-linear-gradient(90deg,rgba(104,79,54,.82) 0 11px,rgba(180,151,105,.55) 11px 14px);transform:rotate(-4deg)}
+[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}="FIELD-05"]::after{left:7%;top:24%;width:86%;height:44%;border-top:4px solid rgba(141,112,74,.72);border-radius:50% 50% 0 0;transform:rotate(-4deg)}
+[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}="FIELD-08"]::before{left:8%;bottom:30%;width:84%;height:15%;border-radius:999px;background:rgba(107,83,58,.78);transform:rotate(13deg);box-shadow:0 18px 0 rgba(81,68,54,.58)}
+[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}="FIELD-08"]::after{left:16%;bottom:31%;width:72%;height:12%;border-radius:999px;background:rgba(139,111,74,.64);transform:rotate(-12deg)}
+[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}="FIELD-09"]::before{left:2%;bottom:0;width:96%;height:66%;background:rgba(225,235,232,.72);clip-path:polygon(0 100%,0 62%,17% 48%,31% 59%,49% 27%,62% 48%,77% 21%,100% 51%,100% 100%)}
+[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}="FIELD-09"]::after{left:48%;top:28%;width:28%;height:57%;border-left:4px solid rgba(96,111,100,.68);border-bottom:4px solid rgba(96,111,100,.58);transform:skewX(-24deg) rotate(-8deg);transform-origin:0 100%;box-shadow:-18px 9px 0 -15px rgba(96,111,100,.65)}
+@media(max-width:540px) and (orientation:portrait){[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}]{left:2px;top:82px;bottom:auto;width:72px;height:90px;opacity:.13}}
+@media(max-height:420px) and (orientation:landscape){[${SHELL_ATTR}="1"] [${FIELD_LANDMARK_ATTR}]{left:4px;bottom:4px;width:120px;height:76px;opacity:.16}}
 [${SHELL_ATTR}="1"] [${GRID_ATTR}]{position:absolute;z-index:4;top:clamp(68px,12vh,92px);right:5%;bottom:clamp(54px,10vh,82px);left:52%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:clamp(8px,1.5vw,18px);align-items:stretch;overflow:visible;pointer-events:none}
 [${SHELL_ATTR}="1"] [${GRID_ATTR}]::before{content:"";position:absolute;z-index:-1;left:50%;top:50%;width:clamp(56px,8vw,104px);aspect-ratio:1;transform:translate(-50%,-50%) rotate(45deg);clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:radial-gradient(circle at 34% 30%,rgba(249,255,229,.82),rgba(171,211,127,.72) 19%,rgba(67,126,85,.76) 53%,rgba(16,60,50,.94) 76%);border:1px solid rgba(237,255,217,.52);box-shadow:0 0 0 8px rgba(20,68,52,.18),0 15px 36px rgba(0,0,0,.28)}
 [${SHELL_ATTR}="1"] [${LANE_ATTR}]{position:relative;min-width:0;overflow:hidden;display:grid;grid-template-rows:auto 1fr auto;gap:8px;padding:clamp(7px,1.1vw,13px);border:1px solid rgba(219,241,207,.24);border-radius:clamp(9px,1.4vw,16px);background:linear-gradient(180deg,rgba(19,56,49,.76),rgba(6,25,24,.58));box-shadow:0 10px 22px rgba(2,20,17,.20),inset 0 0 0 1px rgba(255,255,255,.025);transition:transform 180ms ease,opacity 180ms ease,border-color 180ms ease,background 180ms ease}
@@ -136,6 +156,36 @@ function createLane(document, participantIndex) {
   lane.appendChild(role);
   lane.appendChild(afterstate);
   return { lane, name, team, role, afterstate };
+}
+
+function readBattleFieldId(...nodes) {
+  for (const start of nodes) {
+    let node = start;
+    while (node) {
+      const candidate = typeof node.dataset?.battleFieldId === 'string' ? node.dataset.battleFieldId.trim() : '';
+      if (BATTLE_FIELD_IDS.includes(candidate)) return candidate;
+      node = node.parentNode ?? null;
+    }
+  }
+  return '';
+}
+
+function createFieldLandmark(document) {
+  const landmark = createNode(document, 'div', 'grBattleFieldLandmark');
+  landmark.setAttribute?.(FIELD_LANDMARK_ATTR, '');
+  landmark.setAttribute?.('aria-hidden', 'true');
+  landmark.dataset.presentationOnly = 'true';
+  landmark.dataset.authority = 'existing-field-selection-id-only';
+  landmark.hidden = true;
+  return landmark;
+}
+
+function syncFieldLandmark(landmark, ...sources) {
+  const fieldId = readBattleFieldId(...sources);
+  landmark.hidden = !fieldId;
+  landmark.setAttribute?.(FIELD_LANDMARK_ATTR, fieldId);
+  setData(landmark, 'fieldId', fieldId || null);
+  return fieldId || null;
 }
 
 function createProgressGuide(document) {
@@ -317,6 +367,10 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   phaseSurface.dataset.battleScreenBoardInteraction = 'forbidden';
   if (phaseAnchor.created) phaseSurface.hidden = true;
 
+  const fieldLandmark = createFieldLandmark(document);
+  phaseSurface.appendChild(fieldLandmark);
+  syncFieldLandmark(fieldLandmark, phaseSurface, shell, root);
+
   const progressGuide = createProgressGuide(document);
   phaseSurface.appendChild(progressGuide);
 
@@ -361,6 +415,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     phaseSurface.hidden = !battle;
     hud.root.hidden = !battle;
     if (planSlot) planSlot.hidden = battle || resultExit;
+    syncFieldLandmark(fieldLandmark, phaseSurface, shell, root);
 
     for (let index = 0; index < lanes.length; index += 1) {
       const view = lanes[index];
@@ -380,6 +435,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   function destroy() {
     if (destroyed) return false;
     destroyed = true;
+    if (fieldLandmark?.parentNode && typeof fieldLandmark.parentNode.removeChild === 'function') fieldLandmark.parentNode.removeChild(fieldLandmark);
     if (progressGuide?.parentNode && typeof progressGuide.parentNode.removeChild === 'function') progressGuide.parentNode.removeChild(progressGuide);
     if (grid?.parentNode && typeof grid.parentNode.removeChild === 'function') grid.parentNode.removeChild(grid);
     if (hud.root?.parentNode && typeof hud.root.parentNode.removeChild === 'function') hud.root.parentNode.removeChild(hud.root);
@@ -398,6 +454,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     planSlot,
     phaseSurface,
     resolutionSurface,
+    fieldLandmark,
     progressGuide,
     hud,
     grid,

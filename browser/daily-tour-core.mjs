@@ -1,8 +1,9 @@
-export const DAILY_TOUR_MODES = Object.freeze({
-  RECOMMENDED: 'recommended',
-  CUSTOM: 'custom',
-  BATTLE_ONLY: 'battle_only',
+export const DAILY_TOUR_STOP_KINDS = Object.freeze({
+  FREE: 'free',
+  CLAIMABLE: 'claimable',
 });
+
+export const DAILY_TOUR_GACHA_STOP_ID = 'gacha_collection';
 
 const STOP_STATUS = Object.freeze({
   PENDING: 'pending',
@@ -10,124 +11,86 @@ const STOP_STATUS = Object.freeze({
   SKIPPED: 'skipped',
 });
 
+const NEVER_AUTO_TOUR_IDS = new Set([
+  'battle',
+  'missions',
+  'mission',
+  'mission_progress',
+  'season_mission',
+]);
+
 function assertNonEmptyString(value, name) {
   if (typeof value !== 'string' || value.trim() === '') {
     throw new TypeError(`${name} must be a non-empty string`);
   }
-  return value;
+  return value.trim();
 }
 
-function uniqueStrings(values) {
-  if (!Array.isArray(values)) return [];
-  const out = [];
-  const seen = new Set();
-  for (const value of values) {
-    if (typeof value !== 'string' || value.trim() === '' || seen.has(value)) continue;
-    seen.add(value);
-    out.push(value);
-  }
-  return out;
+function normalizeStop(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const id = typeof raw.id === 'string' ? raw.id.trim() : '';
+  if (!id || NEVER_AUTO_TOUR_IDS.has(id)) return null;
+  if (!Object.values(DAILY_TOUR_STOP_KINDS).includes(raw.kind)) return null;
+
+  // Daily Tour consumes no eligibility authority of its own. A stop exists only when the
+  // feature's current production authority explicitly says the free/claimable action is usable.
+  if (raw.authoritative !== true || raw.eligible !== true || raw.consumed === true) return null;
+
+  // A Tour stop may never substitute a paid action for a missing free/claimable right.
+  if (raw.requiresPaidResource === true || raw.paidFallbackAllowed === true) return null;
+
+  return Object.freeze({ id, kind: raw.kind });
 }
 
-function normalizeStops(stops, registeredStopIds) {
-  const explicitRegistered = Array.isArray(registeredStopIds)
-    ? new Set(uniqueStrings(registeredStopIds))
-    : null;
+function normalizeStops(stops, gachaStopId) {
   const seen = new Set();
   const normalized = [];
-
   for (const raw of Array.isArray(stops) ? stops : []) {
-    if (!raw || typeof raw !== 'object') continue;
-    const id = typeof raw.id === 'string' ? raw.id.trim() : '';
-    if (!id || seen.has(id)) continue;
-    seen.add(id);
+    const stop = normalizeStop(raw);
+    if (!stop || seen.has(stop.id)) continue;
+    seen.add(stop.id);
+    normalized.push(stop);
+  }
 
-    const kind = raw.kind === 'background' ? 'background' : 'interactive';
-    const registered = explicitRegistered ? explicitRegistered.has(id) : raw.registered !== false;
-    const eligible = raw.eligible !== false && raw.enabled !== false;
-
-    normalized.push(Object.freeze({ id, kind, registered, eligible }));
+  // Gacha is the first Tour destination only when its own authority says today's free action
+  // is actually eligible. Absence of that authority never fabricates a Gacha stop.
+  const gachaIndex = normalized.findIndex((stop) => stop.id === gachaStopId);
+  if (gachaIndex > 0) {
+    const [gacha] = normalized.splice(gachaIndex, 1);
+    normalized.unshift(gacha);
   }
   return normalized;
 }
 
-function orderedEligibleIds(stops, preferredOrder, { custom = false, baseOrder = [] } = {}) {
-  const eligible = stops.filter((stop) => stop.kind === 'interactive' && stop.registered && stop.eligible);
-  const eligibleIds = new Set(eligible.map((stop) => stop.id));
-  const preferred = uniqueStrings(preferredOrder).filter((id) => eligibleIds.has(id));
-  const explicitBase = uniqueStrings(baseOrder).filter((id) => eligibleIds.has(id));
-  const baseUsed = new Set(explicitBase);
-  const fallback = [
-    ...explicitBase,
-    ...eligible.map((stop) => stop.id).filter((id) => !baseUsed.has(id)),
-  ];
-
-  if (custom) return preferred.length > 0 ? preferred : fallback;
-
-  const used = new Set(preferred);
-  return [...preferred, ...fallback.filter((id) => !used.has(id))];
-}
-
 function freezePlan(plan) {
-  const route = plan.route.map((stop) => Object.freeze({ ...stop }));
   return Object.freeze({
     ...plan,
-    route: Object.freeze(route),
-    battle: Object.freeze({ ...plan.battle }),
+    route: Object.freeze(plan.route.map((stop) => Object.freeze({ ...stop }))),
   });
 }
 
 export function createDailyTourPlan({
   dayKey,
-  mode = DAILY_TOUR_MODES.RECOMMENDED,
   stops = [],
-  registeredStopIds,
-  recommendationOrder = [],
-  customOrder = [],
-  includeBattleFinale = true,
-  battleStopId = 'battle',
+  gachaStopId = DAILY_TOUR_GACHA_STOP_ID,
 } = {}) {
-  assertNonEmptyString(dayKey, 'dayKey');
-  if (!Object.values(DAILY_TOUR_MODES).includes(mode)) {
-    throw new TypeError(`unsupported Daily Tour mode: ${mode}`);
-  }
-  assertNonEmptyString(battleStopId, 'battleStopId');
+  const resolvedDayKey = assertNonEmptyString(dayKey, 'dayKey');
+  const resolvedGachaStopId = assertNonEmptyString(gachaStopId, 'gachaStopId');
+  const route = normalizeStops(stops, resolvedGachaStopId)
+    .map((stop) => ({ ...stop, status: STOP_STATUS.PENDING }));
 
-  const normalizedStops = normalizeStops(stops, registeredStopIds);
-  const registeredOrder = Array.isArray(registeredStopIds) ? uniqueStrings(registeredStopIds) : [];
-  let routeIds = [];
-  if (mode === DAILY_TOUR_MODES.RECOMMENDED) {
-    routeIds = orderedEligibleIds(normalizedStops, recommendationOrder, { baseOrder: registeredOrder });
-  } else if (mode === DAILY_TOUR_MODES.CUSTOM) {
-    routeIds = orderedEligibleIds(normalizedStops, customOrder, {
-      custom: true,
-      baseOrder: registeredOrder,
-    });
-  }
-
-  const battleEnabled = mode === DAILY_TOUR_MODES.BATTLE_ONLY ? true : includeBattleFinale === true;
   return freezePlan({
-    schemaVersion: 'daily-tour-plan-v1',
-    dayKey,
-    mode,
+    schemaVersion: 'daily-tour-plan-v2',
+    dayKey: resolvedDayKey,
     interrupted: false,
-    route: routeIds.map((id) => ({ id, status: STOP_STATUS.PENDING })),
-    battle: {
-      id: battleStopId,
-      enabled: battleEnabled,
-      status: battleEnabled ? STOP_STATUS.PENDING : STOP_STATUS.SKIPPED,
-    },
+    route,
   });
 }
 
 export function getNextDailyTourStop(plan) {
-  if (!plan || plan.schemaVersion !== 'daily-tour-plan-v1' || plan.interrupted) return null;
+  if (!plan || plan.schemaVersion !== 'daily-tour-plan-v2' || plan.interrupted) return null;
   const next = plan.route.find((stop) => stop.status === STOP_STATUS.PENDING);
-  if (next) return Object.freeze({ id: next.id, type: 'daily_stop' });
-  if (plan.battle.enabled && plan.battle.status === STOP_STATUS.PENDING) {
-    return Object.freeze({ id: plan.battle.id, type: 'battle_finale' });
-  }
-  return null;
+  return next ? Object.freeze({ id: next.id, kind: next.kind, type: 'daily_free_or_claimable' }) : null;
 }
 
 function updateRouteStatus(plan, stopId, nextStatus) {
@@ -141,55 +104,43 @@ function updateRouteStatus(plan, stopId, nextStatus) {
 }
 
 export function advanceDailyTour(plan, action = {}) {
-  if (!plan || plan.schemaVersion !== 'daily-tour-plan-v1') {
-    throw new TypeError('plan must be a daily-tour-plan-v1 object');
+  if (!plan || plan.schemaVersion !== 'daily-tour-plan-v2') {
+    throw new TypeError('plan must be a daily-tour-plan-v2 object');
   }
-  const type = action?.type;
 
-  if (type === 'interrupt') {
+  if (action?.type === 'interrupt') {
     return plan.interrupted ? plan : freezePlan({ ...plan, interrupted: true });
   }
-  if (type === 'resume') {
+  if (action?.type === 'resume') {
     return plan.interrupted ? freezePlan({ ...plan, interrupted: false }) : plan;
   }
-  if (type === 'complete_stop' || type === 'skip_stop') {
+  if (action?.type === 'complete_stop' || action?.type === 'skip_stop' || action?.type === 'fail_stop') {
     const stopId = assertNonEmptyString(action.stopId, 'action.stopId');
     return updateRouteStatus(
       plan,
       stopId,
-      type === 'complete_stop' ? STOP_STATUS.COMPLETED : STOP_STATUS.SKIPPED,
+      action.type === 'complete_stop' ? STOP_STATUS.COMPLETED : STOP_STATUS.SKIPPED,
     );
   }
-  if (type === 'complete_battle' || type === 'skip_battle') {
-    if (!plan.battle.enabled || plan.battle.status !== STOP_STATUS.PENDING) return plan;
-    const status = type === 'complete_battle' ? STOP_STATUS.COMPLETED : STOP_STATUS.SKIPPED;
-    return freezePlan({ ...plan, battle: { ...plan.battle, status } });
-  }
 
-  throw new TypeError(`unsupported Daily Tour action: ${String(type)}`);
+  throw new TypeError(`unsupported Daily Tour action: ${String(action?.type)}`);
 }
 
 export function summarizeDailyTour(plan) {
-  if (!plan || plan.schemaVersion !== 'daily-tour-plan-v1') {
-    throw new TypeError('plan must be a daily-tour-plan-v1 object');
+  if (!plan || plan.schemaVersion !== 'daily-tour-plan-v2') {
+    throw new TypeError('plan must be a daily-tour-plan-v2 object');
   }
   const completedStopCount = plan.route.filter((stop) => stop.status === STOP_STATUS.COMPLETED).length;
   const skippedStopCount = plan.route.filter((stop) => stop.status === STOP_STATUS.SKIPPED).length;
   const pendingStopCount = plan.route.filter((stop) => stop.status === STOP_STATUS.PENDING).length;
-  const dailyRouteSettled = pendingStopCount === 0;
-  const battleSettled = !plan.battle.enabled || plan.battle.status !== STOP_STATUS.PENDING;
 
   return Object.freeze({
     dayKey: plan.dayKey,
-    mode: plan.mode,
     completedStopCount,
     skippedStopCount,
     pendingStopCount,
-    meaningfulDailyParticipation: completedStopCount > 0,
-    battleCompleted: plan.battle.status === STOP_STATUS.COMPLETED,
     interrupted: plan.interrupted,
-    dailyRouteSettled,
-    tourSettled: dailyRouteSettled && battleSettled,
+    tourSettled: pendingStopCount === 0,
     hasDebt: false,
   });
 }

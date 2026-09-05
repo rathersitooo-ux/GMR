@@ -62,8 +62,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p public-origin-metadata
-          cat > /tmp/inspect-setup.mjs <<'EOF'
+          mkdir -p public-origin-metadata .northstar-public
+          cat > .northstar-public/inspect-setup.mjs <<'EOF'
           import fs from 'node:fs';
           import { chromium } from '@playwright/test';
           const base = process.env.GAMEROAD_PUBLIC_BASE_URL;
@@ -108,10 +108,7 @@ jobs:
             const ancestors = [];
             let cur = start;
             while (cur && cur !== document.documentElement) {
-              ancestors.push({
-                ...node(cur),
-                children:[...cur.children].map(node),
-              });
+              ancestors.push({ ...node(cur), children:[...cur.children].map(node) });
               if (cur === setup) break;
               cur = cur.parentElement;
             }
@@ -134,7 +131,7 @@ jobs:
           console.log(JSON.stringify(data, null, 2));
           await browser.close();
           EOF
-          node /tmp/inspect-setup.mjs
+          node .northstar-public/inspect-setup.mjs
 
       - name: Prepare exact public-origin R19 runner
         shell: bash

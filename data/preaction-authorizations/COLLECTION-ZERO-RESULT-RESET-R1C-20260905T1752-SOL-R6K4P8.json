@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "COLLECTION-ZERO-RESULT-RESET-R1C-20260905T1752-SOL-R6K4P8",
+  "taskId": "COLLECTION-CROSSDOMAIN-EXPERIENCE-001",
+  "workUnitKey": "COLLECTION_ZERO_RESULT_ESCAPE_R1C",
+  "acquireKey": "COLLECTION-ZERO-RESULT-RESET-R1C-20260905T1752-SOL-R6K4P8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-row1311-zero-result-escape-plus-main-76870418-cards-findability-no-reset",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "reuse-exact-donor-product-and-focused-test-blobs-from-fail-closed-pr1145-lineage",
+  "proceedToken": "PROCEED|COLLECTION-ZERO-RESULT-RESET-R1C-20260905T1752-SOL-R6K4P8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "7687041833bc767052629b24b2a79b011b2c64b4",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTION-CROSSDOMAIN-EXPERIENCE-001",
+  "leaseWorkUnitKey": "COLLECTION_ZERO_RESULT_ESCAPE_R1C",
+  "leaseAcquireKey": "COLLECTION-ZERO-RESULT-RESET-R1C-20260905T1752-SOL-R6K4P8",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 17:52 JST",
+  "leaseUntilJst": "2026-09-05 18:52 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A384:L384",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@7687041833bc767052629b24b2a79b011b2c64b4; intended branch sol/collection-zero-result-reset-r1c-20260905; mutable browser/cards-deck-presentation.mjs + tests/cards-deck-findability-zero-reset.test.mjs + transient data/preaction-authorizations/COLLECTION-ZERO-RESULT-RESET-R1C-20260905T1752-SOL-R6K4P8.json only; browser/GAMEROAD.html + Deck/ownership/save/economy/gameplay/network + all unrelated tests READ_ONLY. Reuse exact prior product/test blobs; no second state/context store.",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-findability-zero-reset.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-findability-zero-reset.test.mjs"
+  ]
+}

@@ -1,0 +1,370 @@
+name: Home Contextual Tutorial Replay R1 Patch
+
+on:
+  push:
+    branches:
+      - work/home-contextual-tutorial-replay-r1-20260905
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'chore: add transient Home contextual tutorial patch runner'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/home-contextual-tutorial-replay-r1-20260905
+          fetch-depth: 0
+      - name: Apply fail-closed Home contextual replay patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          runtime_path = Path('browser/home-boot-runtime-mount.mjs')
+          test_path = Path('tests/home-boot-presentation.test.mjs')
+          runtime = runtime_path.read_text()
+          tests = test_path.read_text()
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one anchor, found {count}')
+              return text.replace(old, new, 1)
+
+          runtime = replace_once(runtime, """const SECONDARY_UTILITY_SELECTOR = '.codexHomeUtilities';
+          const SECONDARY_UTILITY_BUTTON_SELECTOR = '.homeUtilityBtn';
+          const SLIDEPAD_CENTER_SELECTOR = '#homePadCenter';
+          """, """const SECONDARY_UTILITY_SELECTOR = '.codexHomeUtilities';
+          const SECONDARY_UTILITY_BUTTON_SELECTOR = '.homeUtilityBtn';
+          const HOME_CONTEXTUAL_REPLAY_TRIGGER_SELECTOR = '[data-home-contextual-replay-trigger=\"true\"]';
+          const HOME_CONTEXTUAL_REPLAY_ACTIVE_ATTR = 'data-home-contextual-replay-active';
+          export const HOME_CONTEXTUAL_REPLAY_LABEL = '操作を再確認';
+          const HOME_CONTEXTUAL_REPLAY_SCHEMA = 'gameroad.tutorial-contextual-replay-home.v1';
+          const SLIDEPAD_CENTER_SELECTOR = '#homePadCenter';
+          """, 'constants')
+
+          runtime = replace_once(runtime, """  lastError: null,
+            animations: new Set(),
+            slidepad: {
+          """, """  lastError: null,
+            animations: new Set(),
+            contextualReplay: {
+              home: null,
+              trigger: null,
+              handler: null,
+              active: false,
+            },
+            slidepad: {
+          """, 'runtime-state')
+
+          runtime = replace_once(runtime, """export function removeDecorativeGlobalBrand(root = document) {
+            if (!root || typeof root.querySelectorAll !== 'function') return 0;
+            let removed = 0;
+            for (const node of root.querySelectorAll(DECORATIVE_GLOBAL_BRAND_SELECTOR)) {
+              if (!node || typeof node.remove !== 'function') continue;
+              node.remove();
+              removed += 1;
+            }
+            return removed;
+          }
+
+          // Compatibility/fallback mapping for non-pointer input. Pointer targeting below does not use
+          """, """export function removeDecorativeGlobalBrand(root = document) {
+            if (!root || typeof root.querySelectorAll !== 'function') return 0;
+            let removed = 0;
+            for (const node of root.querySelectorAll(DECORATIVE_GLOBAL_BRAND_SELECTOR)) {
+              if (!node || typeof node.remove !== 'function') continue;
+              node.remove();
+              removed += 1;
+            }
+            return removed;
+          }
+
+          export function projectHomeContextualTutorialReplay({ routeIds = [], active = false } = {}) {
+            const normalized = Array.isArray(routeIds)
+              ? routeIds.map((value) => typeof value === 'string' ? value.trim() : '')
+              : [];
+            const exact = normalized.length === routeIds.length
+              && normalized.length > 0
+              && normalized.every(Boolean)
+              && new Set(normalized).size === normalized.length;
+            const ids = exact ? normalized : [];
+            const available = ids.length > 0;
+            return Object.freeze({
+              schema: HOME_CONTEXTUAL_REPLAY_SCHEMA,
+              available,
+              active: available && active === true,
+              label: HOME_CONTEXTUAL_REPLAY_LABEL,
+              routeIds: Object.freeze([...ids]),
+              returnContext: 'same-home',
+              presentationOnly: true,
+              firstTutorialCompletionMutated: false,
+              rewardMutated: false,
+              saveMutated: false,
+              unlockMutated: false,
+              gameplayAuthorityMutated: false,
+              autoExecute: false,
+            });
+          }
+
+          // Compatibility/fallback mapping for non-pointer input. Pointer targeting below does not use
+          """, 'projection')
+
+          runtime = replace_once(runtime, """${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}:focus-visible{
+            opacity:1!important;
+            outline:2px solid currentColor!important;
+            outline-offset:3px!important;
+          }
+          @media (prefers-reduced-motion:reduce){
+          """, """${HOME_SELECTOR}[data-home-shell-mounted=\"true\"] ${SECONDARY_UTILITY_SELECTOR} ${SECONDARY_UTILITY_BUTTON_SELECTOR}:focus-visible{
+            opacity:1!important;
+            outline:2px solid currentColor!important;
+            outline-offset:3px!important;
+          }
+          ${HOME_SELECTOR}[${HOME_CONTEXTUAL_REPLAY_ACTIVE_ATTR}=\"true\"] ${ROUTE_SELECTOR}{
+            opacity:1!important;
+            filter:brightness(1.14) saturate(1.05)!important;
+            outline:2px solid currentColor!important;
+            outline-offset:4px!important;
+          }
+          ${HOME_SELECTOR}[${HOME_CONTEXTUAL_REPLAY_ACTIVE_ATTR}=\"true\"] ${SLIDEPAD_CENTER_SELECTOR}{
+            outline:3px solid currentColor!important;
+            outline-offset:6px!important;
+          }
+          @media (prefers-reduced-motion:reduce){
+          """, 'contextual-style')
+
+          runtime = replace_once(runtime, """function unmarkHome(home) {
+            if (!home) return;
+            delete home.dataset.homeShellMounted;
+            delete home.dataset.homeShellVariant;
+            delete home.dataset.homeShellProfile;
+            delete home.dataset.homeShellExpanded;
+            delete home.dataset.homeShellRouteCount;
+            delete home.dataset.homeShellSelectedRoute;
+            home.style.removeProperty('--gameroad-home-shell-touch-min');
+          }
+
+          function resetKnob(center) {
+          """, """function unmarkHome(home) {
+            if (!home) return;
+            delete home.dataset.homeShellMounted;
+            delete home.dataset.homeShellVariant;
+            delete home.dataset.homeShellProfile;
+            delete home.dataset.homeShellExpanded;
+            delete home.dataset.homeShellRouteCount;
+            delete home.dataset.homeShellSelectedRoute;
+            home.removeAttribute(HOME_CONTEXTUAL_REPLAY_ACTIVE_ATTR);
+            home.style.removeProperty('--gameroad-home-shell-touch-min');
+          }
+
+          function setHomeContextualReplayActive(next) {
+            const home = runtime.contextualReplay.home;
+            const trigger = runtime.contextualReplay.trigger;
+            if (!(home instanceof HTMLElement) || !(trigger instanceof HTMLElement)) {
+              runtime.contextualReplay.active = false;
+              return false;
+            }
+            const routeIds = routeButtons(home).map(routeId).filter(Boolean);
+            const projection = projectHomeContextualTutorialReplay({ routeIds, active: next === true });
+            const shouldActivate = next === true && isHomeActive(home) && projection.available;
+            runtime.contextualReplay.active = shouldActivate;
+            if (shouldActivate) home.setAttribute(HOME_CONTEXTUAL_REPLAY_ACTIVE_ATTR, 'true');
+            else home.removeAttribute(HOME_CONTEXTUAL_REPLAY_ACTIVE_ATTR);
+            trigger.setAttribute('aria-pressed', shouldActivate ? 'true' : 'false');
+            return next === true ? shouldActivate : true;
+          }
+
+          function unbindHomeContextualReplay() {
+            const trigger = runtime.contextualReplay.trigger;
+            const handler = runtime.contextualReplay.handler;
+            setHomeContextualReplayActive(false);
+            if (trigger instanceof HTMLElement && handler) trigger.removeEventListener('click', handler);
+            trigger?.remove?.();
+            runtime.contextualReplay.home = null;
+            runtime.contextualReplay.trigger = null;
+            runtime.contextualReplay.handler = null;
+            runtime.contextualReplay.active = false;
+          }
+
+          function bindHomeContextualReplay(home) {
+            const host = home?.querySelector?.(SECONDARY_UTILITY_SELECTOR);
+            if (!(home instanceof HTMLElement) || !(host instanceof HTMLElement)) {
+              if (runtime.contextualReplay.home || runtime.contextualReplay.trigger) unbindHomeContextualReplay();
+              return;
+            }
+            if (runtime.contextualReplay.home === home && runtime.contextualReplay.trigger?.isConnected) return;
+            unbindHomeContextualReplay();
+            let trigger = home.querySelector(HOME_CONTEXTUAL_REPLAY_TRIGGER_SELECTOR);
+            if (!(trigger instanceof HTMLElement)) {
+              trigger = document.createElement('button');
+              trigger.type = 'button';
+              trigger.className = 'homeUtilityBtn';
+              trigger.dataset.homeContextualReplayTrigger = 'true';
+              trigger.textContent = HOME_CONTEXTUAL_REPLAY_LABEL;
+              trigger.setAttribute('aria-label', HOME_CONTEXTUAL_REPLAY_LABEL);
+              trigger.setAttribute('aria-pressed', 'false');
+              host.appendChild(trigger);
+            }
+            const handler = () => setHomeContextualReplayActive(!runtime.contextualReplay.active);
+            trigger.addEventListener('click', handler);
+            runtime.contextualReplay.home = home;
+            runtime.contextualReplay.trigger = trigger;
+            runtime.contextualReplay.handler = handler;
+          }
+
+          function resetKnob(center) {
+          """, 'contextual-lifecycle')
+
+          runtime = replace_once(runtime, """  if (!(home instanceof HTMLElement)) {
+              runtime.lastError = 'HOME_DOM_UNAVAILABLE';
+              runtime.active = false;
+              unbindHomeModeSlotRoll();
+              unbindSlidepad();
+              return snapshot();
+            }
+            if (runtime.home && runtime.home !== home) {
+              unbindHomeModeSlotRoll();
+              unbindSlidepad();
+              unmarkHome(runtime.home);
+            }
+          """, """  if (!(home instanceof HTMLElement)) {
+              runtime.lastError = 'HOME_DOM_UNAVAILABLE';
+              runtime.active = false;
+              unbindHomeContextualReplay();
+              unbindHomeModeSlotRoll();
+              unbindSlidepad();
+              return snapshot();
+            }
+            if (runtime.home && runtime.home !== home) {
+              unbindHomeContextualReplay();
+              unbindHomeModeSlotRoll();
+              unbindSlidepad();
+              unmarkHome(runtime.home);
+            }
+          """, 'refresh-home-loss')
+
+          runtime = replace_once(runtime, """  bindSlidepad(home);
+            bindHomeModeSlotRoll(home);
+
+            const entering = active && !runtime.active;
+            runtime.active = active;
+            runtime.lastVariant = variant;
+          """, """  bindSlidepad(home);
+            bindHomeModeSlotRoll(home);
+            bindHomeContextualReplay(home);
+
+            const entering = active && !runtime.active;
+            runtime.active = active;
+            const contextualReplay = projectHomeContextualTutorialReplay({ routeIds: state.routeIds, active: runtime.contextualReplay.active });
+            if (runtime.contextualReplay.trigger instanceof HTMLElement) {
+              runtime.contextualReplay.trigger.hidden = !contextualReplay.available;
+              runtime.contextualReplay.trigger.disabled = !contextualReplay.available;
+            }
+            if (!active || !contextualReplay.available) setHomeContextualReplayActive(false);
+            runtime.lastVariant = variant;
+          """, 'refresh-bind')
+
+          runtime = replace_once(runtime, """  unbindHomeModeSlotRoll();
+            unbindSlidepad();
+            unmarkHome(runtime.home);
+            runtime.mounted = false;
+          """, """  unbindHomeContextualReplay();
+            unbindHomeModeSlotRoll();
+            unbindSlidepad();
+            unmarkHome(runtime.home);
+            runtime.mounted = false;
+          """, 'unmount')
+
+          runtime = replace_once(runtime, """    slidepadTargeting: 'straight-ray-target-side-adhesion',
+              slotRollModeBranchBound: Boolean(runtime.slotRoll.center && runtime.slotRoll.handlers),
+          """, """    slidepadTargeting: 'straight-ray-target-side-adhesion',
+              contextualReplayAvailable: Boolean(runtime.contextualReplay.trigger && runtime.lastRouteIds.length),
+              contextualReplayActive: runtime.contextualReplay.active,
+              contextualReplayLabel: HOME_CONTEXTUAL_REPLAY_LABEL,
+              slotRollModeBranchBound: Boolean(runtime.slotRoll.center && runtime.slotRoll.handlers),
+          """, 'snapshot')
+
+          tests = replace_once(tests, """import {
+            QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS,
+            readExistingQuickSettings,
+          """, """import {
+            HOME_CONTEXTUAL_REPLAY_LABEL,
+            QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS,
+            projectHomeContextualTutorialReplay,
+            readExistingQuickSettings,
+          """, 'test-import')
+
+          tests = replace_once(tests, """test('Home blank double-click dismissal only accepts blank Home space while SlidePad is expanded', () => {
+            const outside = {};
+            const home = { contains: (target) => target !== outside };
+            const blank = { closest: () => null };
+            const interactive = { closest: () => ({ tagName: 'BUTTON' }) };
+            assert.equal(shouldDismissHomeSlidepadOnBlankDoubleClick({ expanded: true, home, target: blank }), true);
+            assert.equal(shouldDismissHomeSlidepadOnBlankDoubleClick({ expanded: false, home, target: blank }), false);
+            assert.equal(shouldDismissHomeSlidepadOnBlankDoubleClick({ expanded: true, home, target: interactive }), false);
+            assert.equal(shouldDismissHomeSlidepadOnBlankDoubleClick({ expanded: true, home, target: outside }), false);
+          });
+
+          test('Home projection preserves routes and selected route across viewport profiles', () => {
+          """, """test('Home blank double-click dismissal only accepts blank Home space while SlidePad is expanded', () => {
+            const outside = {};
+            const home = { contains: (target) => target !== outside };
+            const blank = { closest: () => null };
+            const interactive = { closest: () => ({ tagName: 'BUTTON' }) };
+            assert.equal(shouldDismissHomeSlidepadOnBlankDoubleClick({ expanded: true, home, target: blank }), true);
+            assert.equal(shouldDismissHomeSlidepadOnBlankDoubleClick({ expanded: false, home, target: blank }), false);
+            assert.equal(shouldDismissHomeSlidepadOnBlankDoubleClick({ expanded: true, home, target: interactive }), false);
+            assert.equal(shouldDismissHomeSlidepadOnBlankDoubleClick({ expanded: true, home, target: outside }), false);
+          });
+
+          test('Home contextual replay reuses exact current routes and remains presentation-only', () => {
+            const routeIds = ['setup', 'shop', 'partner', 'cards'];
+            const view = projectHomeContextualTutorialReplay({ routeIds, active: true });
+            assert.equal(HOME_CONTEXTUAL_REPLAY_LABEL, '操作を再確認');
+            assert.equal(view.available, true);
+            assert.equal(view.active, true);
+            assert.deepEqual(view.routeIds, routeIds);
+            assert.equal(view.returnContext, 'same-home');
+            assert.equal(view.presentationOnly, true);
+            assert.equal(view.firstTutorialCompletionMutated, false);
+            assert.equal(view.rewardMutated, false);
+            assert.equal(view.saveMutated, false);
+            assert.equal(view.unlockMutated, false);
+            assert.equal(view.gameplayAuthorityMutated, false);
+            assert.equal(view.autoExecute, false);
+          });
+
+          test('Home contextual replay fails closed instead of inventing malformed or duplicate routes', () => {
+            for (const routeIds of [[], ['cards', 'cards'], ['cards', ' '], ['cards', 7]]) {
+              const view = projectHomeContextualTutorialReplay({ routeIds, active: true });
+              assert.equal(view.available, false);
+              assert.equal(view.active, false);
+              assert.deepEqual(view.routeIds, []);
+            }
+          });
+
+          test('Home projection preserves routes and selected route across viewport profiles', () => {
+          """, 'test-cases')
+
+          runtime_path.write_text(runtime)
+          test_path.write_text(tests)
+          PY
+      - name: Verify exact persistent scope
+        shell: bash
+        run: |
+          test "$(git diff --name-only | sort)" = $'browser/home-boot-runtime-mount.mjs\ntests/home-boot-presentation.test.mjs'
+      - name: Run focused Home tests
+        run: node --test tests/home-boot-presentation.test.mjs
+      - name: Commit product patch
+        shell: bash
+        run: |
+          git config user.name "gameroad-bot"
+          git config user.email "gameroad-bot@users.noreply.github.com"
+          git add browser/home-boot-runtime-mount.mjs tests/home-boot-presentation.test.mjs
+          test "$(git diff --cached --name-only | sort)" = $'browser/home-boot-runtime-mount.mjs\ntests/home-boot-presentation.test.mjs'
+          git commit -m "feat: add Home contextual tutorial replay"
+          git push origin HEAD:work/home-contextual-tutorial-replay-r1-20260905

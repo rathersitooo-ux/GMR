@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD109-VISUAL-MOUNT-R12-20260905T1616-SOL-Q6M4K8",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "BOARD_109_VISUAL_EXPLANATION_RUNTIME_R12",
+  "acquireKey": "BOARD109-VISUAL-MOUNT-R12-20260905T1616-SOL-Q6M4K8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BOARD109_R12_CURRENT_MAIN_PR1123_AND_DEPENDENCY_READBACK_20260905T1616",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "BOARD109_R11_DEDICATED_NODE_PASS_PLUS_R12_CURRENT_COMPATIBILITY_READBACK",
+  "proceedToken": "PROCEED|BOARD109-VISUAL-MOUNT-R12-20260905T1616-SOL-Q6M4K8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_ACTUAL_REUSE_AND_PRIOR_REHEARSAL",
+  "authorizationBaseSha": "2696d00d23ff84e63de6c3d79c666a1f2c0cf3e6",
+  "scope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "browser/battle-board-visual-explanation-runtime-mount.mjs",
+    "tests/battle-board-visual-explanation-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "BOARD_109_VISUAL_EXPLANATION_RUNTIME_R12",
+  "leaseAcquireKey": "BOARD109-VISUAL-MOUNT-R12-20260905T1616-SOL-Q6M4K8",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 16:16 JST",
+  "leaseUntilJst": "2026-09-05 17:16 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A380:L380",
+  "leaseScope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "browser/battle-board-visual-explanation-runtime-mount.mjs",
+    "tests/battle-board-visual-explanation-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@2696d00d23ff84e63de6c3d79c666a1f2c0cf3e6; intended clean branch sol/board109-visual-explanation-runtime-r12-20260905; mutable browser/battle-board-naki-4p-visual-binding.mjs + NEW browser/battle-board-visual-explanation-runtime-mount.mjs + NEW tests/battle-board-visual-explanation-runtime-mount.test.mjs + deploy/cloudflare/tests/build.test.mjs (ONLY refresh battle-board-naki-4p-visual-binding.mjs currentBlob provenance pin) + transient data/preaction-authorizations/BOARD109-VISUAL-MOUNT-R12-20260905T1616-SOL-Q6M4K8.json only; browser/battle-board-visual-explanation-core.mjs + browser/partner-advice-runtime-mount.mjs + browser/GAMEROAD.html + deploy/cloudflare/scripts/build.mjs + gameplay/rules/save/economy/network/formal assets READ_ONLY. PR#1123/old branch READ_ONLY donor evidence.",
+  "solutionSignature": "actual-109-board-existing-authority-to-existing-visual-core-runtime-mount-with-current-package-provenance",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "BOARD109_R12_REUSE_R11_DONOR_CURRENT_CORE_PARTNER_AND_PACKAGE_PIN_20260905",
+  "solutionSearchEvidence": [
+    "PR#1123 exact three-file donor delta already passed PRE_ACTION and dedicated Node tests",
+    "browser/battle-board-visual-explanation-core.mjs current main core blob 8375b5d90b604c14f165f978a28f37902df8d7e7",
+    "browser/partner-advice-runtime-mount.mjs current main still exports projectPartnerAdviceBoardEmphasis fail-closed projector",
+    "deploy/cloudflare/tests/build.test.mjs current dependencyContract pins battle-board-naki-4p-visual-binding.mjs blob 35da814ac389908698bcd4aa78345ea583ab724d"
+  ]
+}

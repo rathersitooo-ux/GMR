@@ -28,67 +28,67 @@ jobs:
 
           path = Path('tests/browser-full-interaction.spec.mjs')
           text = path.read_text(encoding='utf-8')
-          old = """  const search = cards.locator('#cardSearch');
-          await search.fill('スペードA');
-          const result = cards.locator('#collectionGrid button.slot.live.cardFace:visible').first();
-          await expect(result).toBeVisible();
-          await result.click();
-          await expect(cards.locator('.cardPreview')).toBeVisible();
-          await expect(cards.locator('#previewName')).toContainText('スペードA');
-          await attachStateScreenshot(page, testInfo, 'card-detail-visible');
-          await cards.locator('#r4PreviewClose').click();
+          start_marker = "  const search = cards.locator('#cardSearch');\n"
+          end_marker = "  await search.fill('');\n"
+          if text.count(start_marker) != 1:
+              raise SystemExit(f'expected one Cards search start marker, found {text.count(start_marker)}')
+          start = text.index(start_marker)
+          end_start = text.find(end_marker, start)
+          if end_start < 0:
+              raise SystemExit('Cards search cleanup marker not found after detail start')
+          end = end_start + len(end_marker)
+          current = text[start:end]
+          if "card-favorite-persisted-after-reload" in current:
+              raise SystemExit('Favorites acceptance patch is already present')
 
-          await search.fill('');
-          """
-          new = """  const search = cards.locator('#cardSearch');
-          await search.fill('スペードA');
-          const result = cards.locator('#collectionGrid button.slot.live.cardFace:visible').first();
-          await expect(result).toBeVisible();
-          const favoriteCardId = await result.getAttribute('data-id');
-          expect(favoriteCardId, 'visible searched card has a stable card id').toBeTruthy();
-          await result.click();
-          await expect(cards.locator('.cardPreview')).toBeVisible();
-          await expect(cards.locator('#previewName')).toContainText('スペードA');
-          const favoriteAction = cards.locator('[data-role=\"cards-favorite-action\"]');
-          await expect(favoriteAction, 'card detail exposes the adopted favorite action').toBeVisible();
-          await expect(favoriteAction).toHaveAttribute('aria-pressed', 'false');
-          await favoriteAction.click();
-          await expect(favoriteAction).toHaveAttribute('aria-pressed', 'true');
-          await attachStateScreenshot(page, testInfo, 'card-detail-favorite-selected');
-          await cards.locator('#r4PreviewClose').click();
-
-          await page.reload({ waitUntil: 'domcontentloaded' });
-          await page.waitForTimeout(1_000);
-          await expect(page.locator('section[data-screen=\"home\"]')).toBeVisible();
-          const cardsGoAfterFavoriteReload = visibleOperationGo(page, 'cards');
-          await expect(cardsGoAfterFavoriteReload).toBeVisible();
-          await cardsGoAfterFavoriteReload.click();
-          await expect(cards).toBeVisible();
-
-          const favoriteFilter = cards.locator('[data-role=\"cards-deck-findability\"] [data-filter=\"favorite\"]');
-          await expect(favoriteFilter, 'Cards exposes the adopted favorite-only filter').toBeVisible();
-          await favoriteFilter.click();
-          await expect(favoriteFilter).toHaveAttribute('aria-pressed', 'true');
-          const persistedFavorite = cards.locator(`#collectionGrid [data-id=\"${favoriteCardId}\"]:visible`).first();
-          await expect(persistedFavorite, 'favorited card remains visible after reload under favorite-only filter').toBeVisible();
-          await persistedFavorite.click();
-          await expect(cards.locator('.cardPreview')).toBeVisible();
-          await expect(favoriteAction, 'reloaded card detail remembers favorite state').toBeVisible();
-          await expect(favoriteAction).toHaveAttribute('aria-pressed', 'true');
-          await attachStateScreenshot(page, testInfo, 'card-favorite-persisted-after-reload');
-
-          await favoriteAction.click();
-          await expect(favoriteAction).toHaveAttribute('aria-pressed', 'false');
-          await cards.locator('#r4PreviewClose').click();
-          await favoriteFilter.click();
-          await expect(favoriteFilter).toHaveAttribute('aria-pressed', 'false');
-
-          await search.fill('');
-          """
-          hits = text.count(old)
-          if hits != 1:
-              raise SystemExit(f'expected exactly one Cards detail anchor, found {hits}')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          new_lines = [
+              "  const search = cards.locator('#cardSearch');",
+              "  await search.fill('スペードA');",
+              "  const result = cards.locator('#collectionGrid button.slot.live.cardFace:visible').first();",
+              "  await expect(result).toBeVisible();",
+              "  const favoriteCardId = await result.getAttribute('data-id');",
+              "  expect(favoriteCardId, 'visible searched card has a stable card id').toBeTruthy();",
+              "  await result.click();",
+              "  await expect(cards.locator('.cardPreview')).toBeVisible();",
+              "  await expect(cards.locator('#previewName')).toContainText('スペードA');",
+              "  const favoriteAction = cards.locator('[data-role=\"cards-favorite-action\"]');",
+              "  await expect(favoriteAction, 'card detail exposes the adopted favorite action').toBeVisible();",
+              "  await expect(favoriteAction).toHaveAttribute('aria-pressed', 'false');",
+              "  await favoriteAction.click();",
+              "  await expect(favoriteAction).toHaveAttribute('aria-pressed', 'true');",
+              "  await attachStateScreenshot(page, testInfo, 'card-detail-favorite-selected');",
+              "  await cards.locator('#r4PreviewClose').click();",
+              "",
+              "  await page.reload({ waitUntil: 'domcontentloaded' });",
+              "  await page.waitForTimeout(1_000);",
+              "  await expect(page.locator('section[data-screen=\"home\"]')).toBeVisible();",
+              "  const cardsGoAfterFavoriteReload = visibleOperationGo(page, 'cards');",
+              "  await expect(cardsGoAfterFavoriteReload).toBeVisible();",
+              "  await cardsGoAfterFavoriteReload.click();",
+              "  await expect(cards).toBeVisible();",
+              "",
+              "  const favoriteFilter = cards.locator('[data-role=\"cards-deck-findability\"] [data-filter=\"favorite\"]');",
+              "  await expect(favoriteFilter, 'Cards exposes the adopted favorite-only filter').toBeVisible();",
+              "  await favoriteFilter.click();",
+              "  await expect(favoriteFilter).toHaveAttribute('aria-pressed', 'true');",
+              "  const persistedFavorite = cards.locator(`#collectionGrid [data-id=\"${favoriteCardId}\"]:visible`).first();",
+              "  await expect(persistedFavorite, 'favorited card remains visible after reload under favorite-only filter').toBeVisible();",
+              "  await persistedFavorite.click();",
+              "  await expect(cards.locator('.cardPreview')).toBeVisible();",
+              "  await expect(favoriteAction, 'reloaded card detail remembers favorite state').toBeVisible();",
+              "  await expect(favoriteAction).toHaveAttribute('aria-pressed', 'true');",
+              "  await attachStateScreenshot(page, testInfo, 'card-favorite-persisted-after-reload');",
+              "",
+              "  await favoriteAction.click();",
+              "  await expect(favoriteAction).toHaveAttribute('aria-pressed', 'false');",
+              "  await cards.locator('#r4PreviewClose').click();",
+              "  await favoriteFilter.click();",
+              "  await expect(favoriteFilter).toHaveAttribute('aria-pressed', 'false');",
+              "",
+              "  await search.fill('');",
+          ]
+          replacement = "\n".join(new_lines) + "\n"
+          path.write_text(text[:start] + replacement + text[end:], encoding='utf-8')
           PY
           git diff --check
           grep -Fq "card-favorite-persisted-after-reload" tests/browser-full-interaction.spec.mjs

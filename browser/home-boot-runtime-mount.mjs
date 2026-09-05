@@ -20,6 +20,8 @@ const DECORATIVE_GLOBAL_BRAND_SELECTOR = '.top .brand';
 const ROUTE_SELECTOR = '.homePadChoice[data-home-target]';
 const SECONDARY_UTILITY_SELECTOR = '.codexHomeUtilities';
 const SECONDARY_UTILITY_BUTTON_SELECTOR = '.homeUtilityBtn';
+export const HOME_CONTEXTUAL_REPLAY_LABEL = '操作を再確認';
+const HOME_CONTEXTUAL_REPLAY_SCHEMA = 'gameroad.tutorial-contextual-replay-home.v1';
 const SLIDEPAD_CENTER_SELECTOR = '#homePadCenter';
 const SLIDEPAD_DEAD_ZONE_PX = 18;
 const SLIDEPAD_DOWN_REJECT_RATIO = 1.15;
@@ -430,6 +432,7 @@ function unmarkHome(home) {
   delete home.dataset.homeShellExpanded;
   delete home.dataset.homeShellRouteCount;
   delete home.dataset.homeShellSelectedRoute;
+  home.removeAttribute('data-home-contextual-replay-active');
   home.style.removeProperty('--gameroad-home-shell-touch-min');
 }
 
@@ -877,6 +880,12 @@ export function refreshHomeBootPresentation() {
   });
   bindSlidepad(home);
   bindHomeModeSlotRoll(home);
+  if (active) mountHomeContextualTutorialReplay(home);
+  else {
+    home.removeAttribute('data-home-contextual-replay-active');
+    const replayTrigger = home.querySelector('[data-home-contextual-replay-trigger="true"]');
+    if (replayTrigger instanceof HTMLElement) replayTrigger.setAttribute('aria-pressed', 'false');
+  }
 
   const entering = active && !runtime.active;
   runtime.active = active;
@@ -1318,4 +1327,85 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     close: closeSharedQuickSettings,
     knownAuthorityGaps: QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS,
   });
+}
+
+
+export function projectHomeContextualTutorialReplay({ routeIds = [], active = false } = {}) {
+  const sourceIsArray = Array.isArray(routeIds);
+  const normalized = sourceIsArray
+    ? routeIds.map((value) => typeof value === 'string' ? value.trim() : '')
+    : [];
+  const exact = sourceIsArray
+    && normalized.length > 0
+    && normalized.length === routeIds.length
+    && normalized.every(Boolean)
+    && new Set(normalized).size === normalized.length;
+  const ids = exact ? normalized : [];
+  const available = ids.length > 0;
+  return Object.freeze({
+    schema: HOME_CONTEXTUAL_REPLAY_SCHEMA,
+    available,
+    active: available && active === true,
+    label: HOME_CONTEXTUAL_REPLAY_LABEL,
+    routeIds: Object.freeze([...ids]),
+    returnContext: 'same-home',
+    presentationOnly: true,
+    firstTutorialCompletionMutated: false,
+    rewardMutated: false,
+    saveMutated: false,
+    unlockMutated: false,
+    gameplayAuthorityMutated: false,
+    autoExecute: false,
+  });
+}
+
+export function mountHomeContextualTutorialReplay(home) {
+  if (!(home instanceof HTMLElement)) return false;
+  const host = home.querySelector(SECONDARY_UTILITY_SELECTOR);
+  const ids = routeButtons(home).map(routeId).filter(Boolean);
+  const projection = projectHomeContextualTutorialReplay({ routeIds: ids });
+  if (!(host instanceof HTMLElement) || !projection.available) return false;
+
+  const styleId = 'gameroad-home-contextual-replay-style-r1';
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+${HOME_SELECTOR}[data-home-contextual-replay-active="true"] ${ROUTE_SELECTOR}{
+  opacity:1!important;
+  filter:brightness(1.14) saturate(1.05)!important;
+  outline:2px solid currentColor!important;
+  outline-offset:4px!important;
+}
+${HOME_SELECTOR}[data-home-contextual-replay-active="true"] ${SLIDEPAD_CENTER_SELECTOR}{
+  outline:3px solid currentColor!important;
+  outline-offset:6px!important;
+}
+`;
+    document.head.appendChild(style);
+  }
+
+  let trigger = home.querySelector('[data-home-contextual-replay-trigger="true"]');
+  if (!(trigger instanceof HTMLElement)) {
+    trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'homeUtilityBtn';
+    trigger.dataset.homeContextualReplayTrigger = 'true';
+    host.appendChild(trigger);
+  }
+  trigger.textContent = HOME_CONTEXTUAL_REPLAY_LABEL;
+  trigger.title = HOME_CONTEXTUAL_REPLAY_LABEL;
+  trigger.setAttribute('aria-label', HOME_CONTEXTUAL_REPLAY_LABEL);
+  trigger.setAttribute('aria-pressed', home.getAttribute('data-home-contextual-replay-active') === 'true' ? 'true' : 'false');
+  trigger.hidden = false;
+  trigger.onclick = () => {
+    const currentIds = routeButtons(home).map(routeId).filter(Boolean);
+    const current = projectHomeContextualTutorialReplay({ routeIds: currentIds });
+    if (!current.available) return;
+    const next = home.getAttribute('data-home-contextual-replay-active') !== 'true';
+    if (next) home.setAttribute('data-home-contextual-replay-active', 'true');
+    else home.removeAttribute('data-home-contextual-replay-active');
+    trigger.setAttribute('aria-pressed', next ? 'true' : 'false');
+  };
+  return true;
 }

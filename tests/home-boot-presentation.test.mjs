@@ -15,7 +15,9 @@ import {
   projectBootLoadingPresentation,
 } from '../browser/boot-loading-presentation-core.mjs';
 import {
+  HOME_CONTEXTUAL_REPLAY_LABEL,
   QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS,
+  projectHomeContextualTutorialReplay,
   readExistingQuickSettings,
   removeLegacyHomeNodes,
   resolveHomeSlidepadFeedbackTranslation,
@@ -140,6 +142,32 @@ test('Home blank double-click dismissal only accepts blank Home space while Slid
   assert.equal(shouldDismissHomeSlidepadOnBlankDoubleClick({ expanded: false, home, target: blank }), false);
   assert.equal(shouldDismissHomeSlidepadOnBlankDoubleClick({ expanded: true, home, target: interactive }), false);
   assert.equal(shouldDismissHomeSlidepadOnBlankDoubleClick({ expanded: true, home, target: outside }), false);
+});
+
+test('Home contextual replay reuses exact current routes and remains presentation-only', () => {
+  const routeIds = ['setup', 'shop', 'partner', 'cards'];
+  const view = projectHomeContextualTutorialReplay({ routeIds, active: true });
+  assert.equal(HOME_CONTEXTUAL_REPLAY_LABEL, '操作を再確認');
+  assert.equal(view.available, true);
+  assert.equal(view.active, true);
+  assert.deepEqual(view.routeIds, routeIds);
+  assert.equal(view.returnContext, 'same-home');
+  assert.equal(view.presentationOnly, true);
+  assert.equal(view.firstTutorialCompletionMutated, false);
+  assert.equal(view.rewardMutated, false);
+  assert.equal(view.saveMutated, false);
+  assert.equal(view.unlockMutated, false);
+  assert.equal(view.gameplayAuthorityMutated, false);
+  assert.equal(view.autoExecute, false);
+});
+
+test('Home contextual replay fails closed instead of inventing malformed or duplicate routes', () => {
+  for (const routeIds of [[], ['cards', 'cards'], ['cards', ' '], ['cards', 7], null]) {
+    const view = projectHomeContextualTutorialReplay({ routeIds, active: true });
+    assert.equal(view.available, false);
+    assert.equal(view.active, false);
+    assert.deepEqual(view.routeIds, []);
+  }
 });
 
 test('Home projection preserves routes and selected route across viewport profiles', () => {

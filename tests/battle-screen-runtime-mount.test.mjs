@@ -140,8 +140,13 @@ assert.ok(runtimeStyle.textContent.includes('.grBattleHudSettings{pointer-events
 assert.ok(runtimeStyle.textContent.includes('.grBattleHudChainArrow'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleHudLoad'));
 assert.ok(runtimeStyle.textContent.includes('[data-battle-progress-guide]'));
+assert.ok(runtimeStyle.textContent.includes('opacity:.98;color:#fffbe9'));
+assert.ok(runtimeStyle.textContent.includes('.grBattleProgressArrow{position:relative;flex:1 1 auto;min-width:44px;height:4px'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleProgressArrow::before{content:"◀"'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleProgressArrow::before{content:"▲"'));
+assert.ok(runtimeStyle.textContent.includes('[data-battle-field-landmark]{position:absolute;z-index:1;left:2%;bottom:5%;width:min(28vw,250px);height:min(34vh,220px);pointer-events:none;opacity:.34'));
+assert.ok(runtimeStyle.textContent.includes('@media(max-width:540px) and (orientation:portrait){[data-gr-battle-screen="1"] [data-battle-field-landmark]{left:2px;top:82px;bottom:auto;width:72px;height:90px;opacity:.23}'));
+assert.ok(runtimeStyle.textContent.includes('@media(max-height:420px) and (orientation:landscape){[data-gr-battle-screen="1"] [data-battle-field-landmark]{left:4px;bottom:4px;width:120px;height:76px;opacity:.26}'));
 for (const fieldId of ['FIELD-01', 'FIELD-02', 'FIELD-03', 'FIELD-04', 'FIELD-05', 'FIELD-08', 'FIELD-09']) {
   assert.ok(runtimeStyle.textContent.includes(`[data-battle-field-landmark=\"${fieldId}\"]`));
 }
@@ -377,7 +382,7 @@ assert.equal(BATTLE_SCREEN_RUNTIME.formalArtOwnedHere, false);
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 130,
+  tests: 135,
   freshMount: {
     laneCount: runtime.laneSurfaces.length,
     phaseAnchor: runtime.phaseSurface.id,
@@ -394,6 +399,7 @@ console.log(JSON.stringify({
   progressGuide: {
     direction: 'ROAD_TO_GOAL',
     landscape: 'GOAL_LEFT_ROAD_RIGHT',
-    portrait: 'GOAL_ABOVE_ROAD'
+    portrait: 'GOAL_ABOVE_ROAD',
+    visibilityFloor: 'R83_R3'
   }
 }, null, 2));

@@ -256,3 +256,12 @@ test('Battle Slot Roll excludes empty or disabled janken hands instead of creati
   state = advanceBattleJankenSlotRollState(state, { deltaPx: 58, detentPx: 58 }).state;
   assert.equal(state.itemId, 'ROCK');
 });
+
+
+test('portrait reserved janken fan compacts without changing desktop slot geometry', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /\.grJankenSlidePadSlot\{position:absolute;right:2px;bottom:2px;width:82px;height:112px/);
+  assert.match(source, /@media\(max-width:540px\) and \(orientation:portrait\)\{[^\n]*\.grJankenSlidePadSlot\{width:64px;height:88px/);
+  assert.match(source, /orientation:portrait[^\n]*rock\{transform:translate\(-126px,12px\)[^\n]*scissors\{transform:translate\(-96px,-43px\)[^\n]*paper\{transform:translate\(-38px,-72px\)/);
+});

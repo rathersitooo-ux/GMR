@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "COLLECTION-ZERO-RESULT-RESET-R1B-20260905T1632-SOL-P4N8V6",
+  "taskId": "COLLECTION-CROSSDOMAIN-EXPERIENCE-001",
+  "workUnitKey": "COLLECTION_ZERO_RESULT_ESCAPE_R1B",
+  "acquireKey": "COLLECTION-ZERO-RESULT-RESET-R1B-20260905T1632-SOL-P4N8V6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-row1311-zero-result-escape-plus-main-2696d00-cards-findability-no-reset",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "bounded-existing-findability-repair-plus-existing-recognized-cards-test-path",
+  "proceedToken": "PROCEED|COLLECTION-ZERO-RESULT-RESET-R1B-20260905T1632-SOL-P4N8V6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "2696d00d23ff84e63de6c3d79c666a1f2c0cf3e6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTION-CROSSDOMAIN-EXPERIENCE-001",
+  "leaseWorkUnitKey": "COLLECTION_ZERO_RESULT_ESCAPE_R1B",
+  "leaseAcquireKey": "COLLECTION-ZERO-RESULT-RESET-R1B-20260905T1632-SOL-P4N8V6",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 16:32 JST",
+  "leaseUntilJst": "2026-09-05 17:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A384:L384",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/collection-zero-result-reset-r1b-20260905 only: browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; data/preaction-authorizations/COLLECTION-ZERO-RESULT-RESET-R1B-20260905T1632-SOL-P4N8V6.json only; browser/GAMEROAD.html + deck storage/runtime + ownership/save/economy/gameplay/network READ_ONLY. Existing findability state only; no second context/store.",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs"
+  ]
+}

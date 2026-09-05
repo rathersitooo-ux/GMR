@@ -22,59 +22,52 @@ jobs:
           python - <<'PY'
           from pathlib import Path
 
-          src = Path('browser/GAMEROAD.html')
-          text = src.read_text(encoding='utf-8')
-          lines = text.splitlines()
+          targets = [Path('browser/GAMEROAD.html'), *sorted(Path('browser').glob('*.mjs'))]
           needles = [
-              'id="musicVolume"',
-              'id="sfxVolume"',
-              'id="partnerVoiceVolume"',
-              'id="musicMute"',
-              'id="sfxMute"',
-              'id="partnerVoiceMute"',
-              'musicVolumeLabel',
-              'partnerVoiceVolumeLabel',
-              'reduceMotion',
-              'lowPerf',
-              'localStorage',
-              'STORAGE_KEY',
-              'musicVolume',
-              'sfxVolume',
-              'partnerVoiceVolume',
-              'musicMute',
-              'sfxMute',
-              'partnerVoiceMute',
-              'resolveEffectiveMusicVolume',
-              'FIELD_MUSIC_POLICY_CORE',
-              'SpeechSynthesisUtterance',
-              '.volume =',
-              '.volume=',
-              'new Audio(',
-              'Audio(',
+              'id="musicVolume"', 'id="sfxVolume"', 'id="partnerVoiceVolume"',
+              'id="musicMute"', 'id="sfxMute"', 'id="partnerVoiceMute"',
+              'musicVolumeLabel', 'partnerVoiceVolumeLabel', 'reduceMotion', 'lowPerf',
+              'AUDIO_DEFAULTS', 'normalizeAudioSettings', 'audioEffective(', 'audioUpdateLiveVolumes',
+              'savePack(', 'SAVE_KEY', 'localStorage',
+              'partnerVoiceVolume', 'partnerVoiceTuning', 'previewSaasunaVoice',
+              'partner-saasuna-voice-runtime', 'SpeechSynthesisUtterance',
+              'resolveEffectiveMusicVolume', 'normalizeFieldMusicSettings', 'field-music-policy-core',
+              'FIELD_MUSIC_POLICY_CORE', 'new Audio(', '.volume =', '.volume=',
           ]
-          report = []
-          report.append(f'FILE={src} LINES={len(lines)} BYTES={len(text.encode("utf-8"))}')
-          seen = set()
-          for needle in needles:
-              hits = [i for i, line in enumerate(lines) if needle in line]
-              report.append(f'\n=== NEEDLE {needle!r} HITS={len(hits)} ===')
-              for i in hits[:12]:
-                  key = (needle, i)
-                  if key in seen:
-                      continue
-                  seen.add(key)
-                  lo = max(0, i - 14)
-                  hi = min(len(lines), i + 15)
-                  report.append(f'--- {needle!r} line {i+1} context {lo+1}:{hi} ---')
-                  for j in range(lo, hi):
-                      report.append(f'{j+1:07d}: {lines[j]}')
-          Path('settings-authority-inspection.txt').write_text('\n'.join(report), encoding='utf-8')
-          print('\n'.join(report[:9000]))
+          report=[]
+          total_hits=0
+          for src in targets:
+              try:
+                  text=src.read_text(encoding='utf-8')
+              except Exception:
+                  continue
+              lines=text.splitlines()
+              file_hits=[]
+              for needle in needles:
+                  hits=[i for i,line in enumerate(lines) if needle in line]
+                  if hits:
+                      file_hits.append((needle,hits[:16]))
+              if not file_hits:
+                  continue
+              report.append(f'\n##### FILE={src} LINES={len(lines)} BYTES={len(text.encode("utf-8"))} #####')
+              emitted=set()
+              for needle,hits in file_hits:
+                  report.append(f'\n=== NEEDLE {needle!r} HITS={len([1 for line in lines if needle in line])} ===')
+                  for i in hits:
+                      key=(i,needle)
+                      if key in emitted: continue
+                      emitted.add(key); total_hits+=1
+                      lo=max(0,i-8); hi=min(len(lines),i+9)
+                      report.append(f'--- line {i+1} context {lo+1}:{hi} ---')
+                      for j in range(lo,hi): report.append(f'{j+1:07d}: {lines[j]}')
+          report.insert(0,f'TOTAL_CONTEXT_HITS={total_hits}')
+          Path('settings-authority-inspection.txt').write_text('\n'.join(report),encoding='utf-8')
+          print('\n'.join(report[:12000]))
           PY
       - name: Upload bounded inspection evidence
         uses: actions/upload-artifact@v4
         with:
-          name: home-battle-quicksettings-r1g-inspection
+          name: home-battle-quicksettings-r1g-inspection-${{ github.run_number }}
           path: settings-authority-inspection.txt
           if-no-files-found: error
           retention-days: 2

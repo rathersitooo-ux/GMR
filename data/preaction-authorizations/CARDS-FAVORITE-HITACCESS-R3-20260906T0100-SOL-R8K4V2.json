@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-FAVORITE-HITACCESS-R3-20260906T0100-SOL-R8K4V2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "CARDS-FAVORITE-HITACCESS-LIVE-R3",
+  "acquireKey": "CARDS-FAVORITE-HITACCESS-R3-20260906T0100-SOL-R8K4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R23:2026-09-06T01:00JST-CARDS-HITACCESS-R3-PREDICTION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1171:R2-one-line-CSS-diff-and-preaction-only-gate-failure",
+  "proceedToken": "PROCEED|CARDS-FAVORITE-HITACCESS-R3-20260906T0100-SOL-R8K4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot|rehearsal-oracle",
+  "authorizationBaseSha": "e878972e2bdb3df294a48b0aab11b0259a8a00a8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "CARDS-FAVORITE-HITACCESS-LIVE-R3",
+  "leaseAcquireKey": "CARDS-FAVORITE-HITACCESS-R3-20260906T0100-SOL-R8K4V2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 01:00 JST",
+  "leaseUntilJst": "2026-09-06 01:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "rathersitooo-ux/GMR:browser/cards-deck-presentation.mjs; rathersitooo-ux/GMR:tests/home-cards-2p5d-runtime.spec.mjs; rathersitooo-ux/GMR:data/preaction-authorizations/CARDS-FAVORITE-HITACCESS-R3-20260906T0100-SOL-R8K4V2.json; CURRENT_ACTIVE_LEASES!A5:L5 own AcquireKey row only",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs"
+  ]
+}

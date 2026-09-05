@@ -8,7 +8,7 @@
   "predictionStatus": "PASS",
   "predictionEvidenceId": "CURRENT_PROFILE_R1B_BLACKBOX_EVIDENCE_GAP",
   "rehearsalStatus": "N_A_ALT_ORACLE",
-  "rehearsalEvidenceId": "CURRENT_PROFILE_RUNTIME_DIRECT_READBACK_PLUS_EXISTING_BROWSER_RUNTIME_SMOKE_HARNESS",
+  "rehearsalEvidenceId": "CURRENT_PROFILE_RUNTIME_DIRECT_READBACK_PLUS_EXISTING_STATE_SEQUENCE_BFI_HARNESS",
   "proceedToken": "PROCEED|PROFILE-BLACKBOX-R1-20260906T0425-SOL-P4K8M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-profile-blackbox-evidence|active-lease-readback",
   "authorizationBaseSha": "b689f07bd7110874655899bdfecf817d51a9567d",
   "stateModelVersion": "STATE_MODEL_V1",
@@ -20,22 +20,22 @@
   "leaseSnapshotReadbackAtJst": "2026-09-06 04:25 JST",
   "leaseUntilJst": "2026-09-06 05:25 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:M8",
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/profile-blackbox-r1-20260906 only: tests/browser-runtime-smoke.spec.mjs; data/preaction-authorizations/PROFILE-BLACKBOX-R1-20260906T0425-SOL-P4K8M2.json transient authorization witness. browser/profile-presentation-runtime-mount.mjs + browser/GAMEROAD.html + screen-navigation/runtime/source/save/social/gameplay/economy/network READ_ONLY.",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/profile-blackbox-r1-20260906 only: tests/browser-full-interaction-state-sequence.spec.mjs; data/preaction-authorizations/PROFILE-BLACKBOX-R1-20260906T0425-SOL-P4K8M2.json transient authorization witness. browser/profile-presentation-runtime-mount.mjs + browser/GAMEROAD.html + tests/browser-full-interaction.spec.mjs + screen-navigation/runtime/source/save/social/gameplay/economy/network READ_ONLY.",
   "scope": [
-    "tests/browser-runtime-smoke.spec.mjs"
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
   ],
   "leaseScope": [
-    "tests/browser-runtime-smoke.spec.mjs"
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
   ],
   "solutionSignature": "PROFILE_EXISTING_VISIBLE_ROUTE_BLACKBOX_ACCEPTANCE_R1",
   "reuseDisposition": "VERIFY_EXISTING",
   "solutionSearchStatus": "PASS",
-  "reuseDecisionEvidenceId": "REUSE_EXISTING_PROFILE_RUNTIME_AND_EXISTING_BROWSER_SMOKE_HARNESS",
+  "reuseDecisionEvidenceId": "REUSE_EXISTING_PROFILE_RUNTIME_AND_EXISTING_CLASSIFIED_STATE_SEQUENCE_BFI",
   "solutionSearchEvidence": [
     "Current Profile R1B owner explicitly leaves bounded black-box Profile evidence unresolved while the identity-first runtime is already merged and public.",
     "Current profile-presentation-runtime-mount.mjs reads only existing GAMEROAD_PARTNER_STATE, hides legacy local-history metrics, and exposes the existing Records route without creating a second Profile/save/social authority.",
-    "Current browser-full-interaction.spec.mjs contains no Profile path, so its historical failure cannot be treated as Profile acceptance.",
-    "tests/browser-runtime-smoke.spec.mjs is currently unleased and already executes real visible pointer navigation in the production Browser surface.",
-    "The shared browser-full-interaction.spec.mjs is intentionally untouched because an expired/stale Battle lease and open branch still overlap that file."
+    "The existing classified state-sequence BFI already models visible Home to Profile and Profile to Records navigation, but it does not assert the current R1B identity presentation itself.",
+    "tests/browser-full-interaction-state-sequence.spec.mjs is currently unleased and already runs in the three main Browser Full Interaction viewport projects plus its touch-only project.",
+    "The shared tests/browser-full-interaction.spec.mjs remains intentionally untouched because stale/open Battle work overlaps that file."
   ]
 }

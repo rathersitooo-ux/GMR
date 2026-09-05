@@ -1,0 +1,24 @@
+{
+  "schema": "gameroad.preaction-authorization.v1",
+  "acquire_key": "QUICK-SETTINGS-MODAL-ISOLATION-R3-20260906T0055-SOL-R6K3M8",
+  "task_id": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "work_unit_key": "QUICK_SETTINGS_MODAL_INPUT_ISOLATION_R3",
+  "owner": "ChatGPT/GPT-5.6 Sol",
+  "authorized_at": "2026-09-06T00:55:00+09:00",
+  "base_sha": "e878972e2bdb3df294a48b0aab11b0259a8a00a8",
+  "branch": "sol/quick-settings-modal-isolation-r3-20260906",
+  "mutable_resources": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "data/preaction-authorizations/QUICK-SETTINGS-MODAL-ISOLATION-R3-20260906T0055-SOL-R6K3M8.json"
+  ],
+  "intent": "Contain keyboard focus inside the already-adopted shared Quick Settings aria-modal while preserving existing settings authority, outside/Escape dismissal, and trigger focus return.",
+  "acceptance": [
+    "Tab from the last modal focusable wraps to the first.",
+    "Shift+Tab from the first modal focusable wraps to the last.",
+    "If focus is outside the open modal, Tab or Shift+Tab re-enters the modal instead of advancing through the underlay.",
+    "Tab between interior modal controls remains native and is not unnecessarily prevented.",
+    "Existing outside click, Escape close, trigger focus return, and Settings proxy semantics remain unchanged."
+  ],
+  "rollback": "Revert the branch commits; no save, gameplay, rule, economy, network, or data schema migration is introduced."
+}

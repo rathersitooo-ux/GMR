@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "AUDIO-BATTLE-CARD-SFX-R8-20260905T2057-SOL-V7K4P2",
+  "taskId": "AUDIO-FORMAL-ASSET-CROSSMEDIA-ACCEPT-001",
+  "workUnitKey": "BATTLE_FORMAL_CARD_INTERACTION_SFX_R8",
+  "acquireKey": "AUDIO-BATTLE-CARD-SFX-R8-20260905T2057-SOL-V7K4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FORMAL_SFX_ROLE_MAP+CURRENT_BATTLE_RUNTIME_OWNER_FREE+PR306_PR310_PACKAGE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PRIOR_R7_BOUNDED_PLAN+CURRENT_CONVENTIONAL_BATTLE_SCREEN_TEST_PAIR",
+  "proceedToken": "PROCEED|AUDIO-BATTLE-CARD-SFX-R8-20260905T2057-SOL-V7K4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|BATTLE_FORMAL_CARD_SFX_ONLY",
+  "authorizationBaseSha": "093220a142bea6cfb60b453b16bbfb279ccfa1db",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "AUDIO-FORMAL-ASSET-CROSSMEDIA-ACCEPT-001",
+  "leaseWorkUnitKey": "BATTLE_FORMAL_CARD_INTERACTION_SFX_R8",
+  "leaseAcquireKey": "AUDIO-BATTLE-CARD-SFX-R8-20260905T2057-SOL-V7K4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 20:57 JST",
+  "leaseUntilJst": "2026-09-05 21:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A402:L402",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@093220a142bea6cfb60b453b16bbfb279ccfa1db; intended branch sol/audio-battle-card-sfx-r8-20260905; mutable browser/battle-screen-runtime-mount.mjs + tests/battle-screen-runtime-mount.test.mjs + UNIQUE_TRANSIENT .github/workflows/audio-battle-card-sfx-r8-executor.yml + TRANSIENT data/preaction-authorizations/AUDIO-BATTLE-CARD-SFX-R8-20260905T2057-SOL-V7K4P2.json only; browser/GAMEROAD.html + battle-janken SlidePad + gameplay/rules/save/economy/network + all other files READ_ONLY.",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    ".github/workflows/audio-battle-card-sfx-r8-executor.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    ".github/workflows/audio-battle-card-sfx-r8-executor.yml"
+  ],
+  "solutionSignature": "battle-formal-card-select-submit-sfx-failsoft-existing-events",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "ROW54_FORMAL_ROLES+PR306_ASSETS+PR310_PUBLIC_PACKAGE+PRIOR_R7_EXACT_EVENT_BOUNDARY",
+  "solutionSearchEvidence": [
+    "Human-approved formal SFX roles already map cardSlide6.ogg to card-select and cardPlace1.ogg to card-submit.",
+    "PR #306 persists the exact adopted audio blobs and PR #310 packages them in the Browser public build.",
+    "Prior R7 current-state analysis fixed the live event boundary: selection only after roadSelect/battleSelect actually changes, submit only after accepted readyPlan advances out of planning.",
+    "Current battle-screen runtime/test paths have no active mutable owner and are the existing live presentation seam; no second audio or event authority is required."
+  ],
+  "scopeRebaseReason": "Earlier R7 lease expired without a merged product change. Rebase the same bounded formal-role binding on current main and current owner state; keep GAMEROAD.html, Battle rules, save, economy, network and janken runtime read-only."
+}

@@ -28,12 +28,48 @@ const HAND_AURA_ARM_PADDING_PX = 18;
 const HAND_AURA_RELEASE_DURATION_MS = 520;
 const SLOT_ROLL_DETENT_FEEDBACK_DURATION_MS = 110;
 export const BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS = 'section[data-screen="battle"] #targetBox.on,section[data-screen="battle"] #targetBox.vfTargetProxyOn{z-index:60!important}';
+export const BATTLE_HAND_PLAYABLE_AFFORDANCE_SCHEMA = 'gameroad.battle-hand-playable-affordance.v1';
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
   Object.freeze(value);
   for (const child of Object.values(value)) deepFreeze(child);
   return value;
+}
+
+export function projectBattlePlayableHandAffordance({
+  handCardIds = [],
+  activeRole = null,
+  activeOptionValues = [],
+  oppositeSelectedCardId = null,
+  reservedCardIds = [],
+  phasePlayable = true,
+} = {}) {
+  const hand = [];
+  const seen = new Set();
+  for (const raw of Array.isArray(handCardIds) ? handCardIds : []) {
+    const id = typeof raw === 'string' ? raw.trim() : '';
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    hand.push(id);
+  }
+  const legal = new Set((Array.isArray(activeOptionValues) ? activeOptionValues : [])
+    .map((value) => typeof value === 'string' ? value.trim() : '')
+    .filter(Boolean));
+  const reserved = new Set((Array.isArray(reservedCardIds) ? reservedCardIds : [])
+    .map((value) => typeof value === 'string' ? value.trim() : '')
+    .filter(Boolean));
+  const opposite = typeof oppositeSelectedCardId === 'string' ? oppositeSelectedCardId.trim() : '';
+  const role = activeRole === 'road' || activeRole === 'battle' ? activeRole : null;
+  const candidateCardIds = role && phasePlayable === true
+    ? hand.filter((id) => legal.has(id) && id !== opposite && !reserved.has(id))
+    : [];
+  return deepFreeze({
+    schema: BATTLE_HAND_PLAYABLE_AFFORDANCE_SCHEMA,
+    activeRole: role,
+    candidateCardIds: Object.freeze(candidateCardIds),
+    showActionBase: candidateCardIds.length > 0,
+  });
 }
 
 function canonicalRoundId(value) {
@@ -170,7 +206,6 @@ export function resolveBattleJankenSlidePadGestureTarget({
   return best?.id ?? null;
 }
 
-
 export function createBattleJankenSlotRollState(model, anchorHand) {
   const items = SLOT_ORDER.flatMap((hand) => {
     const slot = model?.slots?.find?.((candidate) => candidate.jankenHand === hand);
@@ -284,6 +319,10 @@ function addStyle(documentRef) {
 section[data-screen="battle"] #hand .handCard[data-janken-reserved="true"]{display:none!important}
 section[data-screen="battle"] #hand .handCard[data-hand-aura-draggable="true"]{touch-action:none}
 section[data-screen="battle"] #hand .handCard[data-hand-aura-dragging="true"]{opacity:.22!important}
+section[data-screen="battle"] #hand.grPlayableHandActionBase{position:relative;isolation:isolate}
+section[data-screen="battle"] #hand.grPlayableHandActionBase::before{content:"";position:absolute;left:50%;bottom:-7px;width:min(270px,88%);height:30px;transform:translateX(-50%);border-top:2px solid rgba(255,216,74,.92);border-radius:50% 50% 8px 8px/100% 100% 8px 8px;background:radial-gradient(ellipse at 50% 0%,rgba(255,216,74,.18),rgba(255,216,74,.06) 54%,transparent 72%);box-shadow:0 -4px 16px rgba(255,216,74,.10);pointer-events:none;z-index:0}
+section[data-screen="battle"] #hand .handCard.grPlayableHandCandidate{position:relative;overflow:visible!important;z-index:1}
+section[data-screen="battle"] #hand .grPlayableHandTriangle{position:absolute;left:50%;bottom:-14px;transform:translateX(-50%);color:#ffd84a;font:1000 13px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 7px rgba(255,216,74,.58);pointer-events:none;user-select:none;z-index:3}
 ${BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS}
 [${HOST_ATTR}="1"][data-hand-aura-active="true"] .grJankenSlidePadHandle{filter:brightness(1.3) saturate(1.35);box-shadow:0 8px 22px rgba(0,0,0,.38),0 0 0 5px rgba(132,255,213,.18),0 0 28px rgba(108,255,205,.45),inset 0 0 0 4px rgba(255,255,255,.15)}
 [${HOST_ATTR}="1"][data-hand-aura-armed="true"] .grJankenSlidePadHandle{filter:brightness(1.75) saturate(1.55);box-shadow:0 8px 22px rgba(0,0,0,.34),0 0 0 8px rgba(214,255,239,.25),0 0 44px rgba(115,255,208,.9),inset 0 0 20px rgba(255,255,255,.42)}
@@ -306,6 +345,73 @@ function cardCatalog(globalRef) {
 
 function handCardNodes(battleRoot) {
   return [...battleRoot.querySelectorAll('#hand .handCard[data-card-id]')];
+}
+
+function selectOptionValues(select) {
+  if (!select || select.disabled) return [];
+  return [...(select.options ?? [])].flatMap((option) => {
+    const value = typeof option?.value === 'string' ? option.value.trim() : '';
+    return value && option?.disabled !== true ? [value] : [];
+  });
+}
+
+function planProjection(battleRoot) {
+  const road = battleRoot.querySelector?.('#roadSelect') ?? null;
+  const battle = battleRoot.querySelector?.('#battleSelect') ?? null;
+  const roadActive = road?.closest?.('.planSelect')?.classList?.contains?.('directRoleActive') === true;
+  const battleActive = battle?.closest?.('.planSelect')?.classList?.contains?.('directRoleActive') === true;
+  const activeRole = roadActive === battleActive ? null : (roadActive ? 'road' : 'battle');
+  const active = activeRole === 'road' ? road : activeRole === 'battle' ? battle : null;
+  const opposite = activeRole === 'road' ? battle : activeRole === 'battle' ? road : null;
+  return {
+    activeRole,
+    activeOptionValues: selectOptionValues(active),
+    oppositeSelectedCardId: typeof opposite?.value === 'string' ? opposite.value : null,
+    phasePlayable: !!active && active.disabled !== true,
+  };
+}
+
+function clearPlayableHandAffordance(battleRoot) {
+  const handRoot = battleRoot.querySelector?.('#hand');
+  handRoot?.classList?.remove?.('grPlayableHandActionBase');
+  for (const node of handCardNodes(battleRoot)) {
+    node.classList?.remove?.('grPlayableHandCandidate');
+    node.querySelector?.('.grPlayableHandTriangle')?.remove?.();
+  }
+}
+
+function syncPlayableHandAffordance(battleRoot) {
+  const handRoot = battleRoot.querySelector?.('#hand');
+  if (!handRoot) return null;
+  const nodes = handCardNodes(battleRoot);
+  const projection = planProjection(battleRoot);
+  const reservedCardIds = nodes.flatMap((node) => node.dataset?.jankenReserved === 'true'
+    ? [node.dataset?.cardId ?? '']
+    : []);
+  const state = projectBattlePlayableHandAffordance({
+    handCardIds: nodes.map((node) => node.dataset?.cardId ?? ''),
+    reservedCardIds,
+    ...projection,
+  });
+  const candidates = new Set(state.candidateCardIds);
+  handRoot.classList?.toggle?.('grPlayableHandActionBase', state.showActionBase);
+  for (const node of nodes) {
+    const candidate = candidates.has(node.dataset?.cardId ?? '');
+    node.classList?.toggle?.('grPlayableHandCandidate', candidate);
+    const current = node.querySelector?.('.grPlayableHandTriangle');
+    if (!candidate) {
+      current?.remove?.();
+      continue;
+    }
+    if (current) continue;
+    const marker = battleRoot.ownerDocument?.createElement?.('span');
+    if (!marker) continue;
+    marker.className = 'grPlayableHandTriangle';
+    marker.textContent = '▲';
+    marker.setAttribute?.('aria-hidden', 'true');
+    node.appendChild?.(marker);
+  }
+  return state;
 }
 
 function readHand(globalRef, battleRoot) {
@@ -331,6 +437,8 @@ function restoreHandNode(node) {
   delete node.dataset.jankenReserved;
   delete node.dataset.handAuraDraggable;
   delete node.dataset.handAuraDragging;
+  node.classList?.remove?.('grPlayableHandCandidate');
+  node.querySelector?.('.grPlayableHandTriangle')?.remove?.();
   if (node.dataset.jankenReservedAriaOwned === '1') {
     node.removeAttribute?.('aria-hidden');
     delete node.dataset.jankenReservedAriaOwned;
@@ -908,7 +1016,10 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     bindHandInput();
     const roundText = root.querySelector?.('#roundNo')?.textContent;
     const hand = readHand(globalRef, root);
-    if (!String(roundText ?? '').trim() || hand.length === 0) return;
+    if (!String(roundText ?? '').trim() || hand.length === 0) {
+      clearPlayableHandAffordance(root);
+      return;
+    }
     model = buildBattleJankenSlidePadModel({
       roundId: roundText,
       hand,
@@ -917,6 +1028,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     });
     assignment = model.assignment;
     syncHandZoneProjection(root, model);
+    syncPlayableHandAffordance(root);
     const currentSourceHandIds = hand.map((card) => card.id);
     for (const slot of model.slots) {
       const node = slotNodes.get(slot.jankenHand);
@@ -964,11 +1076,23 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     if (event?.detail === 0) setExpanded(!expanded);
   });
 
+  const planInputs = [root.querySelector?.('#roadSelect'), root.querySelector?.('#battleSelect')].filter(Boolean);
+  for (const input of planInputs) {
+    input.addEventListener?.('change', schedule);
+    input.addEventListener?.('focus', schedule);
+  }
+
   const Observer = globalRef.MutationObserver;
   const observers = [];
   if (typeof Observer === 'function') {
-    for (const target of [root.querySelector?.('#hand'), root.querySelector?.('#roundNo'), root.querySelector?.('#phaseTitle')]) {
-      if (!target) continue;
+    const projectionTargets = [
+      root.querySelector?.('#hand'),
+      root.querySelector?.('#roundNo'),
+      root.querySelector?.('#phaseTitle'),
+      ...planInputs,
+      ...planInputs.map((input) => input.closest?.('.planSelect')),
+    ];
+    for (const target of new Set(projectionTargets.filter(Boolean))) {
       const observer = new Observer(schedule);
       observer.observe(target, { subtree: true, childList: true, characterData: true, attributes: true });
       observers.push(observer);
@@ -992,6 +1116,11 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
         boundHandRoot.removeEventListener?.('pointerdown', beginHandDrag);
         boundHandRoot.removeEventListener?.('click', captureHandClick, true);
       }
+      for (const input of planInputs) {
+        input.removeEventListener?.('change', schedule);
+        input.removeEventListener?.('focus', schedule);
+      }
+      clearPlayableHandAffordance(root);
       for (const node of handCardNodes(root)) restoreHandNode(node);
       for (const observer of observers) observer.disconnect();
       host.remove();

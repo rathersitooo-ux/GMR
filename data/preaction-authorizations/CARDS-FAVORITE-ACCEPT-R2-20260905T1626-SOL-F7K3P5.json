@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-FAVORITE-ACCEPT-R2-20260905T1626-SOL-F7K3P5",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "CARDS_FAVORITE_VISIBLE_ACCEPTANCE_R2",
+  "acquireKey": "CARDS-FAVORITE-ACCEPT-R2-20260905T1626-SOL-F7K3P5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "MERGED_PUBLIC_FAVORITES_R1_PLUS_CURRENT_BFI_CARDS_DETAIL_SEAM",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FOCUSED_FAVORITES_NODE_TESTS_ALREADY_GREEN_AND_CURRENT_BFI_VISIBLE_CARD_DETAIL_FLOW",
+  "proceedToken": "PROCEED|CARDS-FAVORITE-ACCEPT-R2-20260905T1626-SOL-F7K3P5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|VISIBLE_ACCEPTANCE",
+  "authorizationBaseSha": "2696d00d23ff84e63de6c3d79c666a1f2c0cf3e6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "CARDS_FAVORITE_VISIBLE_ACCEPTANCE_R2",
+  "leaseAcquireKey": "CARDS-FAVORITE-ACCEPT-R2-20260905T1626-SOL-F7K3P5",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 16:26 JST",
+  "leaseUntilJst": "2026-09-05 17:26 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A380:L380",
+  "leaseExactMutableResources": "tests/browser-full-interaction.spec.mjs; .github/workflows/cards-favorite-accept-r2-patch.yml; transient PREACTION manifest only",
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/cards-favorite-accept-r2-patch.yml"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/cards-favorite-accept-r2-patch.yml"
+  ],
+  "solutionSignature": "CARDS_FAVORITE_VISIBLE_RELOAD_ACCEPTANCE_BFI_PATCH",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_BFI_CARDS_DETAIL_TEST_PLUS_MERGED_FAVORITES_R1",
+  "solutionSearchEvidence": [
+    "Existing Browser Full Interaction already enters Cards, searches スペードA, opens the real card detail, closes it, and continues visible filtering.",
+    "Favorites R1 is already merged and publicly packaged in browser/cards-deck-presentation.mjs; this work changes only its missing visible acceptance evidence.",
+    "No second Playwright suite, favorite store, product behavior, or deck/ownership authority is introduced.",
+    "A unique transient exact-anchor workflow is required only because the connected GitHub writer replaces whole files and the current BFI file is about 99k bytes; the workflow self-deletes before PR."
+  ]
+}

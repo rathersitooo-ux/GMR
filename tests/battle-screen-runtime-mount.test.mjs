@@ -126,6 +126,8 @@ assert.equal(runtime.fieldLandmark.dataset.authority, 'existing-field-selection-
 
 const runtimeStyle = document.getElementById('gameroad-battle-screen-runtime-r1-style');
 assert.ok(runtimeStyle);
+assert.ok(runtimeStyle.textContent.includes('.grBattleScreenAdoptedOverlay{position:absolute;inset:0;z-index:3'));
+assert.ok(runtimeStyle.textContent.includes('background:transparent;color:inherit;font-family:inherit;pointer-events:none'));
 assert.ok(runtimeStyle.textContent.includes('left:52%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))'));
 assert.ok(runtimeStyle.textContent.includes('[data-battle-screen-causal-grid]::before'));
 assert.ok(runtimeStyle.textContent.includes('clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)'));
@@ -327,13 +329,20 @@ const adopted = mountBattleScreenExternalSurface(
 );
 assert.equal(adopted.adoptedPhaseSurface, true);
 assert.equal(adopted.adoptedResolutionSurface, true);
+assert.equal(adopted.callerShellDecorated, false);
 assert.equal(adopted.planSlot, null);
 assert.equal(adopted.phaseSurface, existingPhase);
 assert.equal(adopted.resolutionSurface, existingResolution);
-assert.equal(adopted.hud.root.parentNode, existingShell);
-assert.equal(adopted.progressGuide.parentNode, existingPhase);
+assert.equal(existingShell.getAttribute('data-gr-battle-screen'), null);
+assert.equal(adopted.shell.parentNode, existingPhase);
+assert.equal(adopted.shell.className, 'grBattleScreenAdoptedOverlay');
+assert.equal(adopted.shell.getAttribute('data-gr-battle-screen'), '1');
+assert.equal(adopted.shell.dataset.owner, 'runtime_overlay');
+assert.equal(adopted.hud.root.parentNode, adopted.shell);
+assert.equal(adopted.progressGuide.parentNode, adopted.shell);
 assert.equal(adopted.progressGuide.dataset.presentationOnly, 'true');
-assert.equal(adopted.fieldLandmark.parentNode, existingPhase);
+assert.equal(adopted.fieldLandmark.parentNode, adopted.shell);
+assert.equal(adopted.grid.parentNode, adopted.shell);
 assert.equal(adopted.fieldLandmark.hidden, false);
 assert.equal(adopted.fieldLandmark.getAttribute('data-battle-field-landmark'), 'FIELD-09');
 adopted.render(attack, { score: 'S', hate: 'H', turn: 'T', loadJanken: 'paper' });
@@ -343,10 +352,13 @@ assert.equal(adopted.hud.loadValue.textContent, 'パー');
 adopted.render(terminalResult);
 assert.equal(existingShell.hidden, false);
 assert.equal(existingPhase.hidden, true);
+assert.equal(adopted.shell.hidden, true);
 assert.equal(adopted.hud.root.hidden, true);
+const adoptedOverlay = adopted.shell;
 const adoptedProgressGuide = adopted.progressGuide;
 const adoptedFieldLandmark = adopted.fieldLandmark;
 assert.equal(adopted.destroy(), true);
+assert.equal(adoptedOverlay.parentNode, null);
 assert.equal(adoptedProgressGuide.parentNode, null);
 assert.equal(adoptedFieldLandmark.parentNode, null);
 assert.equal(adoptedDocument.body.children.includes(existingShell), true);
@@ -371,13 +383,15 @@ assert.throws(
 assert.equal(BATTLE_SCREEN_RUNTIME.authority, 'NONE');
 assert.equal(BATTLE_SCREEN_RUNTIME.hudAuthority, 'CALLER_ONLY_FAIL_CLOSED_PLACEHOLDERS');
 assert.deepEqual(BATTLE_SCREEN_RUNTIME.hudUnresolvedTokens, { score: 'X', hate: 'XXX', turn: 'XX', loadJanken: '?' });
+assert.equal(BATTLE_SCREEN_RUNTIME.existingAnchorPolicy, 'EXPLICIT_PHASE_GETS_RUNTIME_OVERLAY__ANCESTOR_NEVER_DECORATED');
+assert.equal(BATTLE_SCREEN_RUNTIME.externalPhaseShellOwner, 'CALLER');
 assert.equal(BATTLE_SCREEN_RUNTIME.laneCount, 4);
 assert.equal(BATTLE_SCREEN_RUNTIME.productionHtmlMutationOwnedHere, false);
 assert.equal(BATTLE_SCREEN_RUNTIME.formalArtOwnedHere, false);
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 130,
+  tests: 143,
   freshMount: {
     laneCount: runtime.laneSurfaces.length,
     phaseAnchor: runtime.phaseSurface.id,
@@ -385,7 +399,9 @@ console.log(JSON.stringify({
   },
   adoptedMount: {
     adoptedPhaseSurface: adopted.adoptedPhaseSurface,
-    adoptedResolutionSurface: adopted.adoptedResolutionSurface
+    adoptedResolutionSurface: adopted.adoptedResolutionSurface,
+    callerShellDecorated: adopted.callerShellDecorated,
+    owner: adoptedOverlay.dataset.owner
   },
   r75Hud: {
     authority: BATTLE_SCREEN_RUNTIME.hudAuthority,

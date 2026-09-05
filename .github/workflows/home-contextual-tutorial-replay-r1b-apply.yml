@@ -18,6 +18,10 @@ jobs:
         with:
           ref: work/home-contextual-tutorial-replay-r1b-20260905
           fetch-depth: 0
+      - name: Configure local committer identity
+        run: |
+          git config user.name "gameroad-bot"
+          git config user.email "gameroad-bot@users.noreply.github.com"
       - name: Fetch verified donor history
         run: git fetch origin work/home-contextual-tutorial-replay-r1-20260905
       - name: Reuse verified product commit

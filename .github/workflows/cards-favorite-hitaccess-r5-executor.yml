@@ -1,0 +1,183 @@
+name: Cards Favorite Hit Access R5
+
+on:
+  push:
+    branches:
+      - sol/cards-favorite-hitaccess-r5-20260906
+
+permissions:
+  contents: write
+
+env:
+  BASE_SHA: 77777f15cc263a33ff9bb8ec1de7e896c979223b
+  ACQUIRE_KEY: CARDS-FAVORITE-HITACCESS-R5-20260906T0539-SOL-M8Q4K7
+  MANIFEST: data/preaction-authorizations/CARDS-FAVORITE-HITACCESS-R5-20260906T0539-SOL-M8Q4K7.json
+  WORKFLOW_FILE: .github/workflows/cards-favorite-hitaccess-r5-executor.yml
+
+jobs:
+  geometry-probe:
+    if: ${{ !contains(github.event.head_commit.message, '[r5-diag-result]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact owned branch
+        uses: actions/checkout@v4
+        with:
+          ref: sol/cards-favorite-hitaccess-r5-20260906
+          fetch-depth: 0
+
+      - name: Verify PRE_ACTION fence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$BASE_SHA" HEAD
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          m = json.loads(Path(os.environ['MANIFEST']).read_text(encoding='utf-8'))
+          expected = {
+              'schemaVersion': 'gameroad-preaction-v3',
+              'recordId': os.environ['ACQUIRE_KEY'],
+              'taskId': 'BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001',
+              'workUnitKey': 'CARDS_FAVORITE_HITACCESS_LIVE_R5',
+              'authorizationBaseSha': os.environ['BASE_SHA'],
+              'leaseAuthority': 'CURRENT_ACTIVE_LEASES',
+              'leaseState': 'ACTIVE',
+          }
+          for key, value in expected.items():
+              if m.get(key) != value:
+                  raise SystemExit(f'PRE_ACTION mismatch {key}: {m.get(key)!r} != {value!r}')
+          if not str(m.get('proceedToken', '')).startswith(f"PROCEED|{os.environ['ACQUIRE_KEY']}|"):
+              raise SystemExit('PRE_ACTION proceed token mismatch')
+          PY
+          mapfile -t changed < <(git diff --name-only "$BASE_SHA...HEAD" | sort)
+          mapfile -t expected < <(printf '%s\n' "$MANIFEST" "$WORKFLOW_FILE" | sort)
+          test "${#changed[@]}" -eq 2
+          test "${changed[0]}" = "${expected[0]}"
+          test "${changed[1]}" = "${expected[1]}"
+
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Measure current Cards hit geometry
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > tests/r5-cards-hit-geometry-probe.spec.mjs <<'EOF'
+          import { test, expect } from '@playwright/test';
+
+          test('R5 current Cards hit geometry', async ({ page }) => {
+            test.setTimeout(120_000);
+            const sizes = [
+              { width: 1280, height: 720, label: 'desktop' },
+              { width: 390, height: 844, label: 'phone' },
+              { width: 667, height: 375, label: 'short-landscape' },
+            ];
+            const results = [];
+            const ready = async () => page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
+            const enterCards = async () => {
+              const go = page.locator('.homePadChoice[data-home-target="cards"]:visible').first();
+              await expect(go).toBeVisible();
+              await go.click();
+              await page.waitForFunction(() => (
+                globalThis.GAMEROAD_NAV_QA?.snapshot?.().screen === 'cards'
+                && globalThis.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase === 'IDLE'
+              ));
+            };
+            for (const size of sizes) {
+              await page.setViewportSize({ width: size.width, height: size.height });
+              const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'load' });
+              expect(response?.ok()).toBeTruthy();
+              await ready();
+              await enterCards();
+              const card = page.locator('#collectionGrid button.slot.live.cardFace:visible').first();
+              const filter = page.locator('[data-role="cards-deck-findability"] [data-filter="favorite"]');
+              await expect(card).toBeVisible();
+              await expect(filter).toBeVisible();
+              const snapshot = async (phase) => page.evaluate(({ phase }) => {
+                const host = document.querySelector('[data-role="cards-deck-findability"]');
+                const filter = document.querySelector('[data-role="cards-deck-findability"] [data-filter="favorite"]');
+                const grid = document.querySelector('#collectionGrid');
+                const card = document.querySelector('#collectionGrid button.slot.live.cardFace:not([hidden])');
+                const describe = (node) => {
+                  if (!node) return null;
+                  const r = node.getBoundingClientRect();
+                  const s = getComputedStyle(node);
+                  return {
+                    tag: node.tagName,
+                    id: node.id || null,
+                    className: typeof node.className === 'string' ? node.className : null,
+                    role: node.getAttribute('data-role'),
+                    filter: node.getAttribute('data-filter'),
+                    dataId: node.getAttribute('data-id'),
+                    rect: { left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width, height:r.height },
+                    style: { position:s.position, zIndex:s.zIndex, transform:s.transform, marginTop:s.marginTop, marginBottom:s.marginBottom, overflow:s.overflow, pointerEvents:s.pointerEvents, display:s.display },
+                  };
+                };
+                const centerStack = (node) => {
+                  if (!node) return [];
+                  const r = node.getBoundingClientRect();
+                  const x = r.left + r.width / 2;
+                  const y = r.top + r.height / 2;
+                  return document.elementsFromPoint(x, y).slice(0, 10).map(describe);
+                };
+                const ancestry = (node) => {
+                  const out = [];
+                  for (let n = node, i = 0; n && i < 7; n = n.parentElement, i += 1) out.push(describe(n));
+                  return out;
+                };
+                const hr = host?.getBoundingClientRect();
+                const cr = card?.getBoundingClientRect();
+                return {
+                  phase,
+                  viewport: { width: innerWidth, height: innerHeight },
+                  scroll: { x: scrollX, y: scrollY },
+                  host: describe(host), filter: describe(filter), grid: describe(grid), card: describe(card),
+                  hostCardVerticalOverlap: hr && cr ? Math.max(0, Math.min(hr.bottom, cr.bottom) - Math.max(hr.top, cr.top)) : null,
+                  filterStack: centerStack(filter), cardStack: centerStack(card),
+                  hostAncestry: ancestry(host), cardAncestry: ancestry(card),
+                };
+              }, { phase });
+              const before = await snapshot('before-card-scroll');
+              await card.scrollIntoViewIfNeeded();
+              const after = await snapshot('after-card-scroll');
+              results.push({ label: size.label, before, after });
+            }
+            console.log('R5_GEOMETRY_JSON=' + JSON.stringify(results));
+          });
+          EOF
+          set +e
+          npx playwright test tests/r5-cards-hit-geometry-probe.spec.mjs --config=playwright.config.mjs --workers=1 2>&1 | tee /tmp/r5-geometry.log
+          status=${PIPESTATUS[0]}
+          set -e
+          rm -f tests/r5-cards-hit-geometry-probe.spec.mjs
+          test "$status" -eq 0
+          grep -F 'R5_GEOMETRY_JSON=' /tmp/r5-geometry.log > /tmp/r5-geometry-line.txt
+
+      - name: Persist diagnostic readback only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timedelta, timezone
+          from pathlib import Path
+          manifest = Path(os.environ['MANIFEST'])
+          data = json.loads(manifest.read_text(encoding='utf-8'))
+          line = Path('/tmp/r5-geometry-line.txt').read_text(encoding='utf-8').strip()
+          payload = line.split('R5_GEOMETRY_JSON=', 1)[1]
+          data['diagnosticCaptured'] = True
+          data['diagnosticCapturedAtJst'] = datetime.now(timezone(timedelta(hours=9))).strftime('%Y-%m-%d %H:%M:%S JST')
+          data['diagnosticRunId'] = os.environ.get('GITHUB_RUN_ID', '')
+          data['diagnosticHeadSha'] = os.environ.get('GITHUB_SHA', '')
+          data['geometry'] = json.loads(payload)
+          manifest.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$MANIFEST"
+          git commit -m '[r5-diag-result] capture Cards hit geometry'
+          git push origin HEAD:sol/cards-favorite-hitaccess-r5-20260906

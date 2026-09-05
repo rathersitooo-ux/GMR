@@ -20,14 +20,16 @@
   "leaseSnapshotReadbackAtJst": "2026-09-05 15:29 JST",
   "leaseUntilJst": "2026-09-05 16:20 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A361:L361",
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@d257e551b54814a97a338d6a6c41f6297dd0c037; intended branch work/home-contextual-tutorial-replay-r1-20260905; mutable browser/home-boot-runtime-mount.mjs + tests/home-boot-presentation.test.mjs + transient data/preaction-authorizations/HOME-CONTEXT-HELP-R1-20260905T1529-SOL-H7K4P2.json only; browser/GAMEROAD.html + gameplay/rules/save/economy/network/first-Tutorial completion authority READ_ONLY.",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@d257e551b54814a97a338d6a6c41f6297dd0c037; intended branch work/home-contextual-tutorial-replay-r1-20260905; mutable browser/home-boot-runtime-mount.mjs + tests/home-boot-presentation.test.mjs + UNIQUE_TRANSIENT .github/workflows/home-contextual-tutorial-replay-r1-patch.yml + transient data/preaction-authorizations/HOME-CONTEXT-HELP-R1-20260905T1529-SOL-H7K4P2.json only; browser/GAMEROAD.html + gameplay/rules/save/economy/network/first-Tutorial completion authority READ_ONLY. Transient workflow may only fail-closed exact-string patch these two leased files, run focused Node tests, commit on success, then must be removed before PR.",
   "scope": [
     "browser/home-boot-runtime-mount.mjs",
-    "tests/home-boot-presentation.test.mjs"
+    "tests/home-boot-presentation.test.mjs",
+    ".github/workflows/home-contextual-tutorial-replay-r1-patch.yml"
   ],
   "leaseScope": [
     "browser/home-boot-runtime-mount.mjs",
-    "tests/home-boot-presentation.test.mjs"
+    "tests/home-boot-presentation.test.mjs",
+    ".github/workflows/home-contextual-tutorial-replay-r1-patch.yml"
   ],
   "solutionSignature": "home-contextual-replay-existing-labels-and-slidepad-geometry",
   "reuseDisposition": "ADAPT",
@@ -38,7 +40,8 @@
     "Battle contextual replay is already public-closed, so this slice is the non-duplicate Home consumer",
     "current Home runtime already owns the live SlidePad route geometry and route labels and self-mounts without GAMEROAD.html mutation",
     "MTG Arena officially permits tutorial skipping and mode unlock; Hearthstone keeps replay/additional native-screen guidance; Master Duel keeps optional learning in Solo, supporting non-forced contextual help as external candidate evidence only",
-    "the slice does not read or mutate first-Tutorial completion, rewards, unlocks, save, gameplay, economy or Partner conversation authority"
+    "the slice does not read or mutate first-Tutorial completion, rewards, unlocks, save, gameplay, economy or Partner conversation authority",
+    "the connected GitHub writer requires complete replacement for existing files, so one unique transient workflow is the bounded fail-closed patch executor rather than reconstructing current source"
   ],
-  "scopeRebaseReason": "Direct player-facing onboarding friction reduction inside the existing Home consumer. Add only an on-demand presentation toggle that reuses current route labels and SlidePad geometry; no timed script, new tutorial copy, persistence or gameplay semantics."
+  "scopeRebaseReason": "Direct player-facing onboarding friction reduction inside the existing Home consumer. Add only an on-demand presentation toggle that reuses current route labels and SlidePad geometry; no timed script, new tutorial copy, persistence or gameplay semantics. Writer-boundary rebase adds one unique branch-only exact-string workflow that may patch only the two leased files, run focused tests, then is deleted before PR."
 }

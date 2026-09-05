@@ -23,6 +23,7 @@ function element(tag = 'div') {
     appendChild(child) { this.children.push(child); child.parent = this; return child; },
     setAttribute(name, value) { this.attributes.set(name, value); },
     addEventListener(type, listener) { this.listeners.set(type, listener); },
+    dispatch(type, event = {}) { this.listeners.get(type)?.(event); },
     click() {
       if (this.disabled) return;
       this.listeners.get('click')?.({ preventDefault() {} });
@@ -103,6 +104,47 @@ test('projects two touch-sized Tea actions into the existing conversation form',
     ['consult', '相談する'],
   ]);
   assert.deepEqual(buttons.map((button) => button.disabled), [false, false]);
+  assert.deepEqual(buttons.map((button) => button.dataset.grPartnerTeaPressState), ['idle', 'idle']);
+});
+
+test('Tea pointer press feedback is visible before commit and clears on release or cancel', () => {
+  const fixture = teaFixture();
+  projectPartnerTeaQuickChoices({ document: fixture.document });
+  const study = fixture.form.insertedBefore.children[1];
+
+  study.dispatch('pointerdown', { button: 0 });
+  assert.equal(study.dataset.grPartnerTeaPressState, 'pressed');
+  assert.deepEqual(fixture.form.submittedValues, []);
+
+  study.dispatch('pointerup');
+  assert.equal(study.dataset.grPartnerTeaPressState, 'idle');
+  assert.deepEqual(fixture.form.submittedValues, []);
+
+  study.dispatch('pointerdown', { button: 0 });
+  assert.equal(study.dataset.grPartnerTeaPressState, 'pressed');
+  study.dispatch('pointerleave');
+  assert.equal(study.dataset.grPartnerTeaPressState, 'idle');
+
+  study.dispatch('pointerdown', { button: 2 });
+  assert.equal(study.dataset.grPartnerTeaPressState, 'idle');
+});
+
+test('Tea keyboard press feedback covers Enter and Space without synthesizing action', () => {
+  const fixture = teaFixture();
+  projectPartnerTeaQuickChoices({ document: fixture.document });
+  const consult = fixture.form.insertedBefore.children[2];
+
+  consult.dispatch('keydown', { key: 'Enter', repeat: false });
+  assert.equal(consult.dataset.grPartnerTeaPressState, 'pressed');
+  assert.deepEqual(fixture.form.submittedValues, []);
+  consult.dispatch('keyup', { key: 'Enter' });
+  assert.equal(consult.dataset.grPartnerTeaPressState, 'idle');
+
+  consult.dispatch('keydown', { key: ' ', repeat: false });
+  assert.equal(consult.dataset.grPartnerTeaPressState, 'pressed');
+  consult.dispatch('blur');
+  assert.equal(consult.dataset.grPartnerTeaPressState, 'idle');
+  assert.deepEqual(fixture.form.submittedValues, []);
 });
 
 test('Tea click reuses the existing submit path and preserves a free-talk draft', () => {
@@ -116,16 +158,22 @@ test('Tea click reuses the existing submit path and preserves a free-talk draft'
   assert.equal(fixture.send.disabled, true);
 });
 
-test('Tea quick choices mirror the existing conversation busy state and recover when it clears', () => {
+test('Tea quick choices mirror the existing conversation busy state, clear pressed state, and recover', () => {
   const fixture = teaFixture();
   projectPartnerTeaQuickChoices({ document: fixture.document });
   const buttons = fixture.form.insertedBefore.children.slice(1);
+
+  buttons[0].dispatch('pointerdown', { button: 0 });
+  assert.equal(buttons[0].dataset.grPartnerTeaPressState, 'pressed');
 
   fixture.input.disabled = true;
   fixture.send.disabled = true;
   assert.equal(projectPartnerTeaQuickChoices({ document: fixture.document }), 0);
   assert.deepEqual(buttons.map((button) => button.disabled), [true, true]);
+  assert.deepEqual(buttons.map((button) => button.dataset.grPartnerTeaPressState), ['idle', 'idle']);
 
+  buttons[0].dispatch('pointerdown', { button: 0 });
+  assert.equal(buttons[0].dataset.grPartnerTeaPressState, 'idle');
   buttons[0].click();
   assert.deepEqual(fixture.form.submittedValues, []);
 

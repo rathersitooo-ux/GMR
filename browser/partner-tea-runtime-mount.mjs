@@ -5,6 +5,8 @@ const RUNTIME_VERSION = 'gameroad.partner-tea-quick-choice-runtime.v1';
 const STYLE_ID = 'gameroad-partner-tea-quick-choice-style';
 const CONVERSATION_SELECTOR = '[data-gr-partner-conversation="1"]';
 const TEA_BAR_SELECTOR = '[data-gr-partner-tea-quick-choice="1"]';
+const PRESS_STATE_KEY = 'grPartnerTeaPressState';
+const PRESS_KEYS = new Set(['Enter', ' ']);
 
 function freezeDeep(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -34,13 +36,41 @@ function ensureStyle(document) {
   style.textContent = `
 .grPartnerTeaQuickChoice{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px 0;border-top:1px solid rgba(196,215,255,.08)}
 .grPartnerTeaQuickChoiceLabel{font-size:10px;color:#aeb7d9;letter-spacing:.08em;margin-right:2px}
-.grPartnerTeaQuickChoiceButton{min-height:44px;min-width:92px;padding:9px 14px;border:1px solid rgba(184,207,255,.24);border-radius:999px;background:rgba(55,72,126,.32);color:#eef3ff;font:inherit;font-size:12px;cursor:pointer;touch-action:manipulation}
+.grPartnerTeaQuickChoiceButton{min-height:44px;min-width:92px;padding:9px 14px;border:1px solid rgba(184,207,255,.24);border-radius:999px;background:rgba(55,72,126,.32);color:#eef3ff;font:inherit;font-size:12px;cursor:pointer;touch-action:manipulation;transform:translateY(0) scale(1);box-shadow:0 1px 0 rgba(255,255,255,.06) inset}
 .grPartnerTeaQuickChoiceButton:hover{background:rgba(73,96,164,.42)}
 .grPartnerTeaQuickChoiceButton:focus-visible{outline:2px solid rgba(159,190,255,.8);outline-offset:2px}
-.grPartnerTeaQuickChoiceButton:disabled{opacity:.48;cursor:default}
+.grPartnerTeaQuickChoiceButton[data-gr-partner-tea-press-state="pressed"]:not(:disabled){background:rgba(46,62,110,.58);border-color:rgba(178,204,255,.42);transform:translateY(1px) scale(.98);box-shadow:0 2px 7px rgba(8,14,36,.34) inset}
+.grPartnerTeaQuickChoiceButton:disabled{opacity:.48;cursor:default;transform:none;box-shadow:none}
 @media(max-width:540px){.grPartnerTeaQuickChoice{padding:8px 10px 0;gap:6px}.grPartnerTeaQuickChoiceButton{flex:1 1 112px}}
 `;
   document.head?.appendChild?.(style);
+}
+
+function setQuickChoicePressState(button, pressed) {
+  if (!button?.dataset) return false;
+  const next = Boolean(pressed && !button.disabled);
+  button.dataset[PRESS_STATE_KEY] = next ? 'pressed' : 'idle';
+  return next;
+}
+
+function wireQuickChoicePressFeedback(button) {
+  if (!button?.addEventListener) return;
+  const release = () => setQuickChoicePressState(button, false);
+  button.addEventListener('pointerdown', (event = {}) => {
+    if (button.disabled || (event.button != null && event.button !== 0)) return;
+    setQuickChoicePressState(button, true);
+  });
+  button.addEventListener('pointerup', release);
+  button.addEventListener('pointercancel', release);
+  button.addEventListener('pointerleave', release);
+  button.addEventListener('keydown', (event = {}) => {
+    if (button.disabled || event.repeat || !PRESS_KEYS.has(event.key)) return;
+    setQuickChoicePressState(button, true);
+  });
+  button.addEventListener('keyup', (event = {}) => {
+    if (PRESS_KEYS.has(event.key)) release();
+  });
+  button.addEventListener('blur', release);
 }
 
 function submitFixedChoice(global, { form, input, send, choice }) {
@@ -69,6 +99,7 @@ function syncQuickChoiceBusyState(bar, input, send) {
     : Array.from(bar.children || []).filter((child) => child?.className === 'grPartnerTeaQuickChoiceButton');
   for (const button of buttons) {
     if (Boolean(button.disabled) !== busy) button.disabled = busy;
+    if (busy) setQuickChoicePressState(button, false);
   }
   return busy;
 }
@@ -106,8 +137,10 @@ export function projectPartnerTeaQuickChoices(global = globalThis) {
       button.type = 'button';
       button.className = 'grPartnerTeaQuickChoiceButton';
       button.dataset.choiceId = choice.id;
+      button.dataset[PRESS_STATE_KEY] = 'idle';
       button.textContent = choice.label;
       button.setAttribute?.('aria-label', `お茶会: ${choice.label}`);
+      wireQuickChoicePressFeedback(button);
       button.addEventListener?.('click', () => {
         submitFixedChoice(global, { form, input, send, choice });
       });

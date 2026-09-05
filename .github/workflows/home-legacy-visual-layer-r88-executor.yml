@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify authorized base and apply bounded existing repair
+      - name: Apply bounded current-authority regression repair
         shell: bash
         run: |
           set -euo pipefail
@@ -30,30 +30,41 @@ jobs:
           runtime = runtime_path.read_text()
           tests = test_path.read_text()
 
-          old = """// The codex Home visual layer is still the current player-facing Home consumer. Do not destroy it
+          old_runtime = """// The codex Home visual layer is still the current player-facing Home consumer. Do not destroy it
           // during compatibility cleanup; only duplicate legacy controls are safe to remove here.
           const LEGACY_HOME_SELECTORS = Object.freeze([
             '#codexHomePartnerChip',
           """
-          new = """// R62: the legacy visual layer and duplicate legacy controls are retired Home producers.
+          new_runtime = """// R62: the legacy visual layer and duplicate legacy controls are retired Home producers.
           // Keep the current hero/background/character and canonical SlidePad/routes; remove only these legacy nodes.
           const LEGACY_HOME_SELECTORS = Object.freeze([
             '#codexHomeVisualLayer',
             '.codexHomeVisualLayer',
             '#codexHomePartnerChip',
           """
-          if runtime.count(old) != 1:
-              raise SystemExit(f'authorized runtime pattern count was {runtime.count(old)}, expected exactly 1')
+          if runtime.count(old_runtime) != 1:
+              raise SystemExit(f'authorized runtime pattern count was {runtime.count(old_runtime)}, expected exactly 1')
           if '#codexHomeVisualLayer' in runtime or '.codexHomeVisualLayer' in runtime:
               raise SystemExit('legacy visual-layer selector already present before bounded repair')
-          runtime = runtime.replace(old, new, 1)
+          runtime = runtime.replace(old_runtime, new_runtime, 1)
 
-          marker = "Home runtime removes the retired visual layer together with duplicate legacy controls"
-          if marker in tests:
-              raise SystemExit('focused regression already exists; refusing duplicate append')
-          focused = r'''
-
-          test('Home runtime removes the retired visual layer together with duplicate legacy controls', () => {
+          old_test = r'''test('Home runtime preserves the current visual layer while removing duplicate legacy controls', () => {
+            const removed = [];
+            const liveVisualLayer = { remove: () => removed.push('visual') };
+            const battleCta = { remove: () => removed.push('battle') };
+            const partnerChip = { remove: () => removed.push('partner') };
+            const home = {
+              querySelectorAll(selector) {
+                if (selector === '#codexHomeVisualLayer' || selector === '.codexHomeVisualLayer') return [liveVisualLayer];
+                if (selector === '#codexHomeBattleCta' || selector === '.codexBattleCta') return [battleCta];
+                if (selector === '#codexHomePartnerChip' || selector === '.codexPartnerChip') return [partnerChip];
+                return [];
+              },
+            };
+            assert.equal(removeLegacyHomeNodes(home), 2);
+            assert.deepEqual(removed.sort(), ['battle', 'partner']);
+          });'''
+          new_test = r'''test('Home runtime removes the retired visual layer together with duplicate legacy controls', () => {
             const removed = [];
             const legacyLayer = { remove: () => removed.push('visual') };
             const battleCta = { remove: () => removed.push('battle') };
@@ -68,9 +79,13 @@ jobs:
             };
             assert.equal(removeLegacyHomeNodes(home), 3);
             assert.deepEqual(removed.sort(), ['battle', 'partner', 'visual']);
-          });
-          '''
-          tests = tests.rstrip() + focused + '\n'
+          });'''
+          if tests.count(old_test) != 1:
+              raise SystemExit(f'stale current test pattern count was {tests.count(old_test)}, expected exactly 1')
+          if new_test in tests:
+              raise SystemExit('replacement current-authority test already exists before repair')
+          tests = tests.replace(old_test, new_test, 1)
+
           runtime_path.write_text(runtime)
           test_path.write_text(tests)
           PY

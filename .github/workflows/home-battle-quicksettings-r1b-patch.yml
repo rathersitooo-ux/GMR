@@ -1,0 +1,46 @@
+name: Home Battle Quick Settings R1B Verify Cleanup
+
+on:
+  push:
+    branches:
+      - sol/home-battle-quicksettings-r1b-20260905
+
+permissions:
+  contents: write
+
+jobs:
+  verify-cleanup:
+    if: ${{ !contains(github.event.head_commit.message, '[quicksettings-r1b-clean]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/home-battle-quicksettings-r1b-20260905
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Verify focused product delta
+        run: |
+          node --check browser/quick-settings-panel-runtime.mjs
+          node --check browser/home-boot-runtime-mount.mjs
+          node --check browser/battle-screen-runtime-mount.mjs
+          node tests/quick-settings-panel-runtime.test.mjs
+          node tests/home-boot-presentation.test.mjs
+          node tests/battle-screen-runtime-mount.test.mjs
+
+      - name: Remove transient authorization and workflow
+        run: |
+          rm -f data/preaction-authorizations/HOME-BATTLE-QUICKSETTINGS-R1-20260905T1107-SOL-Q8M4P2.json
+          rm -f .github/workflows/home-battle-quicksettings-r1b-patch.yml
+
+      - name: Commit clean tested head
+        run: |
+          git config user.name 'gameroad-bot'
+          git config user.email 'gameroad-bot@users.noreply.github.com'
+          git add -u data/preaction-authorizations/HOME-BATTLE-QUICKSETTINGS-R1-20260905T1107-SOL-Q8M4P2.json .github/workflows/home-battle-quicksettings-r1b-patch.yml
+          git diff --cached --check
+          git commit -m 'PREACTION: cleanup Home/Battle quick settings R1 [quicksettings-r1b-clean]'
+          git push origin HEAD:sol/home-battle-quicksettings-r1b-20260905

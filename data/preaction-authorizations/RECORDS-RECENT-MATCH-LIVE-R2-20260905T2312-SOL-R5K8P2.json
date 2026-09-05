@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RECORDS-RECENT-MATCH-LIVE-R2-20260905T2312-SOL-R5K8P2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "RECORDS_RECENT_MATCH_LIVE_R2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_RECORDS_EMPTY_SHELL+USER_EXPLICIT_RECENT_MATCH_PRIMARY+PR713_DONOR",
+  "rehearsalStatus": "N_A_INSPECTION_ONLY",
+  "rehearsalEvidenceId": "READ_ONLY_CURRENT_SHAPE_EXTRACTION",
+  "proceedToken": "PROCEED|RECORDS-RECENT-MATCH-LIVE-R2-20260905T2312-SOL-R5K8P2|INSPECTION_ONLY|MATERIAL_STANDARD|PRODUCT_WRITE0",
+  "authorizationBaseSha": "e878972e2bdb3df294a48b0aab11b0259a8a00a8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseState": "ACTIVE",
+  "leaseSnapshotRef": "CURRENT_ACTIVE_LEASES row482",
+  "scope": [
+    ".github/workflows/records-recent-match-live-r2-inspect.yml",
+    "data/preaction-authorizations/RECORDS-RECENT-MATCH-LIVE-R2-20260905T2312-SOL-R5K8P2.json"
+  ],
+  "productMutationAllowed": false,
+  "intent": "Extract current Records DOM, state.history/endMatch/save shape, and Browser build packaging seams before deciding any product mutation. Do not invent used Deck or match detail fields that are not currently authoritative.",
+  "resumeFrom": "After inspection run/log readback, release this inspection lease and reacquire an exact product scope only if current actual supports a valuable non-duplicative implementation."
+}

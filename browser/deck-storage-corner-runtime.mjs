@@ -657,6 +657,8 @@ export function mountDeckStorageCorner({
   const open = () => { controller.openStorage(); render(); };
   const onOutsidePointerDown = (event) => {
     if (!panel || panel.contains?.(event?.target) || button.contains?.(event?.target)) return;
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
     close();
   };
   button.addEventListener('click', open);

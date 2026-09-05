@@ -469,3 +469,39 @@ test('first-success swipe hints fail soft when local UI persistence is unavailab
   assert.equal(screen.children.length, 0);
   hints.destroy();
 });
+
+
+test('Storage outside-dismiss consumes the dismissing pointer so Cards underlay cannot click through', () => {
+  const { controller } = fixture();
+  const { document } = discoveryDocument();
+  const mounted = mountDeckStorageCorner({ controller, buttonHost: fakeElement(), document });
+
+  mounted.open();
+  assert.equal(controller.view().open, true);
+  const outside = {
+    target: fakeElement(),
+    prevented: false,
+    stopped: false,
+    preventDefault() { this.prevented = true; },
+    stopPropagation() { this.stopped = true; },
+  };
+  document.emit('pointerdown', outside);
+  assert.equal(controller.view().open, false);
+  assert.equal(outside.prevented, true);
+  assert.equal(outside.stopped, true);
+
+  mounted.open();
+  const storageWindow = document.body.children[0].children[0];
+  const inside = {
+    target: storageWindow,
+    prevented: false,
+    stopped: false,
+    preventDefault() { this.prevented = true; },
+    stopPropagation() { this.stopped = true; },
+  };
+  document.emit('pointerdown', inside);
+  assert.equal(controller.view().open, true);
+  assert.equal(inside.prevented, false);
+  assert.equal(inside.stopped, false);
+  mounted.dispose();
+});

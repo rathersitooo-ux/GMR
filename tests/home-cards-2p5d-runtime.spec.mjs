@@ -251,3 +251,97 @@ test('Cards collection right swipe adds once while wrong gestures and 40-card ov
   expect(fullAfter.main).not.toContain(overflowCardId);
   expect(fullAfter).toEqual(fullBefore);
 });
+
+test('Cards favorite-only filter stays physically clickable across desktop, phone, and short landscape', async ({ page }) => {
+  const favoriteKey = 'gameroad.cards.favorite.v1';
+  const pageErrors = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+
+  const enterCards = async () => {
+    const cards = page.locator('section[data-screen="cards"]');
+    if (await cards.isVisible().catch(() => false)) return cards;
+    const control = page.locator('[data-home-target="cards"]:visible, [data-go="cards"]:visible').first();
+    await expect(control, 'Cards has a visible Home entry control').toBeVisible();
+    await control.click();
+    await page.waitForFunction(() => globalThis.GAMEROAD_NAV_QA?.snapshot?.().screen === 'cards');
+    await expect(cards).toBeVisible();
+    return cards;
+  };
+
+  const closePreview = async (cards) => {
+    const close = cards.locator('#r4PreviewClose:visible');
+    if ((await close.count()) > 0) await close.click();
+  };
+
+  const assertFilterAndCardHitAccess = async (cards, cardId, label) => {
+    const filter = cards.locator('[data-role="cards-deck-findability"] button[data-filter="favorite"]:visible');
+    await expect(filter, `${label}: favorite-only filter is visible`).toBeVisible();
+    await filter.click();
+    await expect(filter, `${label}: physical click toggles favorite-only filter`).toHaveAttribute('aria-pressed', 'true');
+
+    const visibleIds = await cards.locator('#collectionGrid [data-id]').evaluateAll((nodes) =>
+      nodes.filter((node) => !node.hidden).map((node) => node.getAttribute('data-id')).filter(Boolean),
+    );
+    expect(visibleIds.length, `${label}: favorite-only result is non-empty`).toBeGreaterThan(0);
+    expect(new Set(visibleIds), `${label}: non-favorites are hidden`).toEqual(new Set([cardId]));
+
+    const favoriteCard = cards.locator(`#collectionGrid button.slot.live.cardFace[data-id="${cardId}"]:visible`).first();
+    await expect(favoriteCard, `${label}: favorite card remains visible`).toBeVisible();
+    await favoriteCard.click();
+    await expect(cards.locator('.cardPreview'), `${label}: collection card still accepts a physical click`).toBeVisible();
+    await closePreview(cards);
+  };
+
+  const viewports = [
+    { label: 'desktop-1280x720', width: 1280, height: 720 },
+    { label: 'phone-390x844', width: 390, height: 844 },
+    { label: 'short-landscape-667x375', width: 667, height: 375 },
+  ];
+
+  let cardId = null;
+  for (const viewport of viewports) {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'load' });
+    expect(response?.ok(), `${viewport.label}: main HTML loads`).toBeTruthy();
+    await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
+    await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+
+    if (!cardId) {
+      await page.evaluate((key) => localStorage.removeItem(key), favoriteKey);
+      await page.reload({ waitUntil: 'load' });
+      await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
+      await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+    } else {
+      const persistedBeforeEntry = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '[]'), favoriteKey);
+      expect(persistedBeforeEntry, `${viewport.label}: favorite persisted from prior viewport/reload`).toContain(cardId);
+    }
+
+    let cards = await enterCards();
+    if (!cardId) {
+      const firstCard = cards.locator('#collectionGrid button.slot.live.cardFace[data-id]:visible').first();
+      await expect(firstCard, 'collection exposes a physically clickable card').toBeVisible();
+      cardId = await firstCard.getAttribute('data-id');
+      expect(cardId, 'selected card has a data-id').toBeTruthy();
+      await firstCard.click();
+      const favoriteAction = cards.locator('[data-role="cards-favorite-action"]:visible');
+      await expect(favoriteAction, 'favorite action appears after a real card click').toBeVisible();
+      await favoriteAction.click();
+      await expect(favoriteAction).toHaveAttribute('aria-pressed', 'true');
+      const saved = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '[]'), favoriteKey);
+      expect(saved, 'favorite is saved through current local UI authority').toContain(cardId);
+      await closePreview(cards);
+    }
+
+    await assertFilterAndCardHitAccess(cards, cardId, viewport.label);
+
+    await page.reload({ waitUntil: 'load' });
+    await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
+    await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+    const persisted = await page.evaluate((key) => JSON.parse(localStorage.getItem(key) || '[]'), favoriteKey);
+    expect(persisted, `${viewport.label}: favorite survives a full reload`).toContain(cardId);
+    cards = await enterCards();
+    await assertFilterAndCardHitAccess(cards, cardId, `${viewport.label}-reload`);
+  }
+
+  expect(pageErrors, `page errors:\n${pageErrors.join('\n')}`).toEqual([]);
+});

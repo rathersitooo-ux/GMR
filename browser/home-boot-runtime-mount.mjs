@@ -982,3 +982,340 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     mountHomeBootPresentation();
   }
 }
+
+const QUICK_SETTINGS_GLOBAL_KEY = 'GAMEROAD_QUICK_SETTINGS';
+const QUICK_SETTINGS_STYLE_ID = 'gameroad-shared-quick-settings-style-r1';
+const QUICK_SETTINGS_OVERLAY_ATTR = 'data-gameroad-quick-settings';
+
+export const QUICK_SETTINGS_CONTROL_IDS = Object.freeze({
+  reduceMotion: 'reduceMotion',
+  lowPerf: 'lowPerf',
+  musicVolume: 'musicVolume',
+  sfxVolume: 'sfxVolume',
+  partnerVoiceVolume: 'partnerVoiceVolume',
+  musicMute: 'musicMute',
+  sfxMute: 'sfxMute',
+  partnerVoiceMute: 'partnerVoiceMute',
+});
+
+export const QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS = Object.freeze(['masterVolume']);
+
+const QUICK_SETTINGS_AUDIO_ROWS = Object.freeze([
+  Object.freeze({ label: 'BGM', volume: 'musicVolume', mute: 'musicMute', muted: 'musicMuted' }),
+  Object.freeze({ label: '効果音', volume: 'sfxVolume', mute: 'sfxMute', muted: 'sfxMuted' }),
+  Object.freeze({ label: 'Voice', volume: 'partnerVoiceVolume', mute: 'partnerVoiceMute', muted: 'partnerVoiceMuted' }),
+]);
+
+const QUICK_SETTINGS_TOGGLE_ROWS = Object.freeze([
+  Object.freeze({ key: 'reduceMotion', label: '動き軽減' }),
+  Object.freeze({ key: 'lowPerf', label: '軽量表示' }),
+]);
+
+const quickSettingsRuntime = {
+  overlay: null,
+  trigger: null,
+  bypassTrigger: null,
+  installed: false,
+};
+
+function quickSettingsPercent(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 100;
+  return Math.max(0, Math.min(100, Math.round(number)));
+}
+
+function quickSettingsToggleOn(control) {
+  const aria = control?.getAttribute?.('aria-pressed');
+  if (aria === 'true') return true;
+  if (aria === 'false') return false;
+  const value = String(control?.textContent || '').trim().toLowerCase();
+  return value === 'on' || value === 'オン' || value.includes(' on');
+}
+
+function quickSettingsControl(documentSource, key) {
+  const id = QUICK_SETTINGS_CONTROL_IDS[key];
+  return id ? documentSource?.getElementById?.(id) ?? null : null;
+}
+
+export function inspectExistingQuickSettingsAuthority(documentSource = globalThis.document) {
+  const controls = {};
+  const missing = [];
+  for (const key of Object.keys(QUICK_SETTINGS_CONTROL_IDS)) {
+    const control = quickSettingsControl(documentSource, key);
+    controls[key] = control;
+    if (!control) missing.push(key);
+  }
+  return Object.freeze({
+    settingsSection: documentSource?.querySelector?.('section[data-screen="settings"]') ?? null,
+    controls: Object.freeze(controls),
+    missing: Object.freeze(missing),
+    knownAuthorityGaps: QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS,
+  });
+}
+
+export function readExistingQuickSettings(documentSource = globalThis.document) {
+  const authority = inspectExistingQuickSettingsAuthority(documentSource);
+  const controls = authority.controls;
+  return Object.freeze({
+    musicVolume: controls.musicVolume ? quickSettingsPercent(controls.musicVolume.value) : null,
+    sfxVolume: controls.sfxVolume ? quickSettingsPercent(controls.sfxVolume.value) : null,
+    partnerVoiceVolume: controls.partnerVoiceVolume ? quickSettingsPercent(controls.partnerVoiceVolume.value) : null,
+    musicMuted: controls.musicMute ? quickSettingsToggleOn(controls.musicMute) : null,
+    sfxMuted: controls.sfxMute ? quickSettingsToggleOn(controls.sfxMute) : null,
+    partnerVoiceMuted: controls.partnerVoiceMute ? quickSettingsToggleOn(controls.partnerVoiceMute) : null,
+    reduceMotion: controls.reduceMotion ? quickSettingsToggleOn(controls.reduceMotion) : null,
+    lowPerf: controls.lowPerf ? quickSettingsToggleOn(controls.lowPerf) : null,
+    missing: authority.missing,
+    knownAuthorityGaps: authority.knownAuthorityGaps,
+  });
+}
+
+function dispatchExistingQuickSetting(globalSource, control, type) {
+  if (!control?.dispatchEvent) return false;
+  const EventCtor = globalSource?.Event;
+  if (typeof EventCtor === 'function') control.dispatchEvent(new EventCtor(type, { bubbles: true }));
+  else control.dispatchEvent({ type, bubbles: true, target: control });
+  return true;
+}
+
+export function setExistingQuickSettingsVolume(key, value, documentSource = globalThis.document, globalSource = globalThis) {
+  if (!['musicVolume', 'sfxVolume', 'partnerVoiceVolume'].includes(key)) return false;
+  const control = quickSettingsControl(documentSource, key);
+  if (!control) return false;
+  control.value = String(quickSettingsPercent(value));
+  dispatchExistingQuickSetting(globalSource, control, 'input');
+  dispatchExistingQuickSetting(globalSource, control, 'change');
+  return true;
+}
+
+export function toggleExistingQuickSetting(key, documentSource = globalThis.document) {
+  if (!['musicMute', 'sfxMute', 'partnerVoiceMute', 'reduceMotion', 'lowPerf'].includes(key)) return false;
+  const control = quickSettingsControl(documentSource, key);
+  if (!control || typeof control.click !== 'function') return false;
+  control.click();
+  return true;
+}
+
+function isHomeSettingsTrigger(trigger) {
+  if (!trigger) return false;
+  const candidates = [
+    trigger?.dataset?.homeTarget,
+    trigger?.dataset?.go,
+    trigger?.dataset?.rootGo,
+    trigger?.dataset?.screen,
+    trigger?.dataset?.target,
+  ].map((value) => String(value || '').trim().toLowerCase()).filter(Boolean);
+  if (candidates.includes('settings')) return true;
+  const label = String(trigger?.getAttribute?.('aria-label') || trigger?.textContent || '').trim();
+  return label === '設定' || label.includes('設定');
+}
+
+export function resolveQuickSettingsTrigger(target) {
+  if (!target || typeof target.closest !== 'function') return null;
+  const battleTrigger = target.closest('.grBattleHudSettings,[data-battle-r75-hud] [data-action="settings"]');
+  if (battleTrigger) return Object.freeze({ surface: 'battle', trigger: battleTrigger });
+  const home = target.closest(HOME_SELECTOR);
+  if (!home) return null;
+  const trigger = target.closest(`${SECONDARY_UTILITY_BUTTON_SELECTOR},[data-home-target="settings"],[data-go="settings"],[data-root-go="settings"]`);
+  if (!trigger || !home.contains?.(trigger) || !isHomeSettingsTrigger(trigger)) return null;
+  return Object.freeze({ surface: 'home', trigger });
+}
+
+function quickSettingsNode(documentSource, tag, className = '', label = '') {
+  const value = documentSource.createElement(tag);
+  if (className) value.className = className;
+  if (label) value.textContent = label;
+  return value;
+}
+
+function ensureQuickSettingsStyle(documentSource) {
+  if (!documentSource?.head || documentSource.getElementById?.(QUICK_SETTINGS_STYLE_ID)) return;
+  const style = quickSettingsNode(documentSource, 'style');
+  style.id = QUICK_SETTINGS_STYLE_ID;
+  style.textContent = `
+[${QUICK_SETTINGS_OVERLAY_ATTR}][hidden]{display:none!important}
+[${QUICK_SETTINGS_OVERLAY_ATTR}]{position:fixed;inset:0;z-index:100100;display:flex;align-items:flex-end;justify-content:flex-end;padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));background:rgba(4,10,14,.44);backdrop-filter:blur(4px)}
+[${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsPanel{width:min(410px,100%);max-height:min(88vh,640px);overflow:auto;display:grid;gap:10px;padding:14px;border:1px solid rgba(255,255,255,.18);border-radius:18px;background:rgba(13,28,31,.97);color:#f7fbfa;box-shadow:0 20px 58px rgba(0,0,0,.42);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+[${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsHead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+[${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsHead h2{margin:0;font-size:18px}
+[${QUICK_SETTINGS_OVERLAY_ATTR}] button,[${QUICK_SETTINGS_OVERLAY_ATTR}] input{touch-action:manipulation}
+[${QUICK_SETTINGS_OVERLAY_ATTR}] button{min-height:44px;border:1px solid rgba(255,255,255,.22);border-radius:12px;background:rgba(255,255,255,.08);color:inherit;font:inherit;font-weight:800}
+[${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsClose{min-width:44px}
+[${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsRow{display:grid;grid-template-columns:minmax(62px,auto) minmax(110px,1fr) minmax(76px,auto);align-items:center;gap:8px}
+[${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsRow>span{font-weight:800}
+[${QUICK_SETTINGS_OVERLAY_ATTR}] input[type="range"]{width:100%;min-height:44px}
+[${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsToggle{grid-column:2/4;width:100%}
+[${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsDetails{width:100%}
+[${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsStatus{margin:0;font-size:12px;opacity:.72}
+[${QUICK_SETTINGS_OVERLAY_ATTR}] button:focus-visible,[${QUICK_SETTINGS_OVERLAY_ATTR}] input:focus-visible{outline:3px solid currentColor;outline-offset:2px}
+@media(max-height:430px) and (orientation:landscape){[${QUICK_SETTINGS_OVERLAY_ATTR}]{align-items:stretch}[${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsPanel{max-height:none;width:min(390px,52vw);gap:7px;padding:10px}}
+`;
+  documentSource.head.append(style);
+}
+
+function removeQuickSettingsNode(value) {
+  if (!value?.parentNode) return;
+  if (typeof value.remove === 'function') value.remove();
+  else value.parentNode.removeChild?.(value);
+}
+
+export function closeSharedQuickSettings() {
+  const overlay = quickSettingsRuntime.overlay;
+  if (!overlay) return false;
+  quickSettingsRuntime.overlay = null;
+  removeQuickSettingsNode(overlay);
+  quickSettingsRuntime.trigger?.setAttribute?.('aria-expanded', 'false');
+  quickSettingsRuntime.trigger?.focus?.();
+  quickSettingsRuntime.trigger = null;
+  return true;
+}
+
+export function openSharedQuickSettings({ surface = 'home', trigger = null, documentSource = globalThis.document, globalSource = globalThis } = {}) {
+  if (!documentSource?.body || typeof documentSource.createElement !== 'function') return false;
+  closeSharedQuickSettings();
+  ensureQuickSettingsStyle(documentSource);
+  quickSettingsRuntime.trigger = trigger;
+
+  const overlay = quickSettingsNode(documentSource, 'div');
+  overlay.setAttribute?.(QUICK_SETTINGS_OVERLAY_ATTR, '1');
+  overlay.setAttribute?.('role', 'dialog');
+  overlay.setAttribute?.('aria-modal', 'true');
+  overlay.dataset.surface = surface === 'battle' ? 'battle' : 'home';
+  overlay.dataset.authority = 'existing-settings-controls-only';
+  overlay.dataset.authorityGap = QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS.join(',');
+  const panel = quickSettingsNode(documentSource, 'section', 'grSharedQuickSettingsPanel');
+  const head = quickSettingsNode(documentSource, 'div', 'grSharedQuickSettingsHead');
+  const title = quickSettingsNode(documentSource, 'h2', '', surface === 'battle' ? '対戦設定' : '簡易設定');
+  const closeButton = quickSettingsNode(documentSource, 'button', 'grSharedQuickSettingsClose', '閉じる');
+  closeButton.setAttribute?.('type', 'button');
+  head.append(title, closeButton);
+  panel.append(head);
+
+  const refresh = () => {
+    const current = readExistingQuickSettings(documentSource);
+    for (const row of QUICK_SETTINGS_AUDIO_ROWS) {
+      const range = overlay.querySelector?.(`[data-quick-volume="${row.volume}"]`);
+      const mute = overlay.querySelector?.(`[data-quick-toggle="${row.mute}"]`);
+      const value = current[row.volume];
+      if (range) {
+        range.disabled = value == null;
+        if (value != null) range.value = String(value);
+      }
+      const muted = current[row.muted];
+      if (mute) {
+        mute.disabled = muted == null;
+        mute.textContent = muted === true ? 'MUTE ON' : muted === false ? 'MUTE OFF' : '未接続';
+        mute.setAttribute?.('aria-pressed', muted === true ? 'true' : 'false');
+      }
+    }
+    for (const row of QUICK_SETTINGS_TOGGLE_ROWS) {
+      const button = overlay.querySelector?.(`[data-quick-toggle="${row.key}"]`);
+      const enabled = current[row.key];
+      if (button) {
+        button.disabled = enabled == null;
+        button.textContent = enabled === true ? 'ON' : enabled === false ? 'OFF' : '未接続';
+        button.setAttribute?.('aria-pressed', enabled === true ? 'true' : 'false');
+      }
+    }
+    const status = overlay.querySelector?.('.grSharedQuickSettingsStatus');
+    if (status) status.textContent = current.missing.length ? `未接続: ${current.missing.join(', ')}` : '';
+  };
+
+  for (const row of QUICK_SETTINGS_AUDIO_ROWS) {
+    const wrap = quickSettingsNode(documentSource, 'div', 'grSharedQuickSettingsRow');
+    wrap.append(quickSettingsNode(documentSource, 'span', '', row.label));
+    const range = quickSettingsNode(documentSource, 'input');
+    range.setAttribute?.('type', 'range');
+    range.setAttribute?.('min', '0');
+    range.setAttribute?.('max', '100');
+    range.setAttribute?.('step', '1');
+    range.setAttribute?.('aria-label', `${row.label}音量`);
+    range.dataset.quickVolume = row.volume;
+    range.addEventListener?.('input', () => {
+      setExistingQuickSettingsVolume(row.volume, range.value, documentSource, globalSource);
+      refresh();
+    });
+    const mute = quickSettingsNode(documentSource, 'button');
+    mute.setAttribute?.('type', 'button');
+    mute.setAttribute?.('aria-label', `${row.label}ミュート`);
+    mute.dataset.quickToggle = row.mute;
+    mute.addEventListener?.('click', () => {
+      toggleExistingQuickSetting(row.mute, documentSource);
+      refresh();
+    });
+    wrap.append(range, mute);
+    panel.append(wrap);
+  }
+
+  for (const row of QUICK_SETTINGS_TOGGLE_ROWS) {
+    const wrap = quickSettingsNode(documentSource, 'div', 'grSharedQuickSettingsRow');
+    wrap.append(quickSettingsNode(documentSource, 'span', '', row.label));
+    const button = quickSettingsNode(documentSource, 'button', 'grSharedQuickSettingsToggle');
+    button.setAttribute?.('type', 'button');
+    button.dataset.quickToggle = row.key;
+    button.addEventListener?.('click', () => {
+      toggleExistingQuickSetting(row.key, documentSource);
+      refresh();
+    });
+    wrap.append(button);
+    panel.append(wrap);
+  }
+
+  if (surface !== 'battle' && trigger) {
+    const detail = quickSettingsNode(documentSource, 'button', 'grSharedQuickSettingsDetails', '詳細設定');
+    detail.setAttribute?.('type', 'button');
+    detail.addEventListener?.('click', () => {
+      closeSharedQuickSettings();
+      quickSettingsRuntime.bypassTrigger = trigger;
+      trigger.click?.();
+      if (quickSettingsRuntime.bypassTrigger === trigger) quickSettingsRuntime.bypassTrigger = null;
+    });
+    panel.append(detail);
+  }
+
+  const status = quickSettingsNode(documentSource, 'p', 'grSharedQuickSettingsStatus');
+  panel.append(status);
+  overlay.append(panel);
+  overlay.addEventListener?.('click', (event) => { if (event?.target === overlay) closeSharedQuickSettings(); });
+  closeButton.addEventListener?.('click', closeSharedQuickSettings);
+  documentSource.body.append(overlay);
+  quickSettingsRuntime.overlay = overlay;
+  trigger?.setAttribute?.('aria-haspopup', 'dialog');
+  trigger?.setAttribute?.('aria-expanded', 'true');
+  refresh();
+  closeButton.focus?.();
+  return true;
+}
+
+function installSharedQuickSettingsCapture(documentSource = globalThis.document) {
+  if (quickSettingsRuntime.installed || !documentSource?.addEventListener) return false;
+  quickSettingsRuntime.installed = true;
+  documentSource.addEventListener('click', (event) => {
+    const match = resolveQuickSettingsTrigger(event?.target);
+    if (!match) return;
+    if (quickSettingsRuntime.bypassTrigger === match.trigger) {
+      quickSettingsRuntime.bypassTrigger = null;
+      return;
+    }
+    event.preventDefault?.();
+    event.stopPropagation?.();
+    openSharedQuickSettings({ surface: match.surface, trigger: match.trigger, documentSource, globalSource: globalThis });
+  }, true);
+  documentSource.addEventListener('keydown', (event) => {
+    if (event?.key === 'Escape' && quickSettingsRuntime.overlay) closeSharedQuickSettings();
+  });
+  return true;
+}
+
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  installSharedQuickSettingsCapture(document);
+  globalThis[QUICK_SETTINGS_GLOBAL_KEY] = Object.freeze({
+    inspect: inspectExistingQuickSettingsAuthority,
+    read: readExistingQuickSettings,
+    setVolume: setExistingQuickSettingsVolume,
+    toggle: toggleExistingQuickSetting,
+    open: openSharedQuickSettings,
+    close: closeSharedQuickSettings,
+    knownAuthorityGaps: QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS,
+  });
+}

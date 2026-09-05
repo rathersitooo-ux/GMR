@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "AUTO-BATTLE-LIVE-R4-20260905T1342-SOL-Q4M8K2",
+  "taskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "workUnitKey": "AUTO_BATTLE_LIVE_INPUT_UI_R4",
+  "acquireKey": "AUTO-BATTLE-LIVE-R4-20260905T1342-SOL-Q4M8K2",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "Fresh main dbf20a1 adapter blob c032929 exactly matches validated donor base; PR#1119 isolated only missing public dependency; PR#1125 carried same 3-file product delta and failed PREACTION witness shape rather than product semantics",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "Donor workflow run33897163088 succeeded applying exact Auto bridge and focused test; prior PR#1119 PREACTION/observability passed before provenance identified missing Auto core package dependency",
+  "proceedToken": "PROCEED|AUTO-BATTLE-LIVE-R4-20260905T1342-SOL-Q4M8K2|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|ADAPT_EXISTING_VALIDATED_BRIDGE",
+  "authorizationBaseSha": "dbf20a1fe65e8117f36b6b319581722521491e79",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "leaseWorkUnitKey": "AUTO_BATTLE_LIVE_INPUT_UI_R4",
+  "leaseAcquireKey": "AUTO-BATTLE-LIVE-R4-20260905T1342-SOL-Q4M8K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 13:42 JST",
+  "leaseUntilJst": "2026-09-05 14:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A357:L357",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@dbf20a1fe65e8117f36b6b319581722521491e79; intended clean branch work/auto-battle-live-r4-20260905; MUTABLE browser/ui-state-feedback-ready-plan-adapter.mjs + deploy/cloudflare/scripts/build.mjs (ONLY add existing battle-auto-input-core.mjs source-only artifact spec) + deploy/cloudflare/tests/build.test.mjs (ONLY Auto dependency/provenance coverage/currentBlob refresh required by exact adapter) + UNIQUE_TRANSIENT .github/workflows/auto-battle-live-r4-patch.yml + transient data/preaction-authorizations/AUTO-BATTLE-LIVE-R4-20260905T1342-SOL-Q4M8K2.json; browser/battle-auto-input-core.mjs + browser/GAMEROAD.html + gameplay/rules/save/economy/network + all other build/test entries READ_ONLY; PR#1119/#1125 and donor branches READ_ONLY evidence only.",
+  "scope": [
+    "browser/ui-state-feedback-ready-plan-adapter.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/auto-battle-live-r4-patch.yml"
+  ],
+  "leaseScope": [
+    "browser/ui-state-feedback-ready-plan-adapter.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/auto-battle-live-r4-patch.yml"
+  ]
+}

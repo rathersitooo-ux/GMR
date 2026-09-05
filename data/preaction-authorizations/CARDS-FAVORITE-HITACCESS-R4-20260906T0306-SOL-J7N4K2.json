@@ -45,9 +45,578 @@
   "diagnosticRunId": "33987210152",
   "diagnosticHeadSha": "f22cc96df6647455c0c26e4dc60e51c31fdcc73e",
   "diagnosticLogTail": " 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/partner-battle-event-log-projection.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/battle-conveyor-presentation-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/cards-deck-presentation-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/deck-storage-corner-runtime.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/deck-storage-corner-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] code 404, message File not found\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/gameroad-version.json?_grcheck=1788636544267 HTTP/1.1\" 404 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/new-base-round-start-janken-slot-assignment-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/slidepad-slot-roll-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/home-cards-2p5d-presentation.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/profile-presentation-runtime-mount.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/battle-board-naki-4p-visual-binding.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/ui-state-feedback-ready-plan-adapter.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/home-theme-orientation-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/new-base-fixed-janken-slot-state.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/home-boot-runtime-mount.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/battle-auto-input-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/rogue-run-runtime-mount.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/home-shell-presentation-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/post-match-autoqueue-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/rogue-run-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /assets/visual/home/home-illustration-portrait.webp HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /assets/visual/home/home-illustration-landscape.webp HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/GAMEROAD.html HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] code 404, message File not found\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:04] \"GET /browser/gameroad-version.json?_grcheck=1788636544847 HTTP/1.1\" 404 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:05] \"GET /assets/audio/sfx/click_002.ogg HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/GAMEROAD.html HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/deck-save-recovery-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/board-facility-state-core.classic.js HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/board-facility-state-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/deck-save-ack-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/board-facility-runtime-mount.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/ui-state-feedback-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/screen-navigation-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/partner-conversation-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/partner-tea-runtime-mount.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/cards-deck-presentation.mjs HTTP/1.1\" 304 -\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/battle-replay-live-adapter.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/battle-precommit-clear-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/partner-tea-quick-choice-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/partner-saasuna-conversation-source.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] code 404, message File not found\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/gameroad-version.json?_grcheck=1788636547969 HTTP/1.1\" 404 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/cards-deck-presentation-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/battle-janken-slidepad-runtime-mount.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/battle-replay-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/deck-storage-corner-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /browser/deck-storage-corner-runtime.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:07] \"GET /browser/card-presentation-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /browser/battle-conveyor-presentation-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /browser/partner-battle-event-log-projection.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /browser/home-cards-2p5d-presentation.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /browser/profile-presentation-runtime-mount.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /browser/ui-state-feedback-ready-plan-adapter.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /browser/home-theme-orientation-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /browser/new-base-round-start-janken-slot-assignment-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /browser/slidepad-slot-roll-core.mjs HTTP/1.1\" 304 -\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /browser/battle-board-naki-4p-visual-binding.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /browser/home-boot-runtime-mount.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /browser/new-base-fixed-janken-slot-state.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /browser/battle-auto-input-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /browser/home-shell-presentation-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /browser/rogue-run-runtime-mount.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /browser/post-match-autoqueue-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /browser/rogue-run-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /assets/visual/home/home-illustration-landscape.webp HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /assets/visual/home/home-illustration-portrait.webp HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:08] \"GET /assets/audio/sfx/click_002.ogg HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:09] \"GET /browser/GAMEROAD.html HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/deck-save-recovery-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/board-facility-state-core.classic.js HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/board-facility-state-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/deck-save-ack-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/board-facility-runtime-mount.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/screen-navigation-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/ui-state-feedback-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/partner-conversation-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/partner-tea-runtime-mount.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/cards-deck-presentation.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/battle-precommit-clear-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/battle-replay-live-adapter.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/partner-saasuna-conversation-source.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/partner-tea-quick-choice-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] code 404, message File not found\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/gameroad-version.json?_grcheck=1788636550303 HTTP/1.1\" 404 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/cards-deck-presentation-core.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/battle-janken-slidepad-runtime-mount.mjs HTTP/1.1\" 304 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/GAMEROAD.html HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] code 404, message File not found\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:29:10] \"GET /browser/gameroad-version.json?_grcheck=1788636550846 HTTP/1.1\" 404 -\n\n  1) tests/home-cards-2p5d-runtime.spec.mjs:255:1 › Cards favorite controls and Collection cards remain mutually hit-accessible across target viewports \n\n    Error: phone: Collection card owns its hit point\n\n    expect(received).toBe(expected) // Object.is equality\n\n    Expected: true\n    Received: false\n\n      295 |     await expect(card).toBeVisible();\n      296 |     await card.scrollIntoViewIfNeeded();\n    > 297 |     expect(await ownsPoint(card), `${size.label}: Collection card owns its hit point`).toBe(true);\n          |                                                                                        ^\n      298 |     const cardId = await card.getAttribute('data-id');\n      299 |     expect(cardId, `${size.label}: Collection card has stable id`).toBeTruthy();\n      300 |     await card.click();\n        at /home/runner/work/GMR/GMR/tests/home-cards-2p5d-runtime.spec.mjs:297:88\n\n    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────\n    test-results/home-cards-2p5d-runtime-Ca-bbce0-ble-across-target-viewports/test-failed-1.png\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n    Error Context: test-results/home-cards-2p5d-runtime-Ca-bbce0-ble-across-target-viewports/error-context.md\n\n    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────\n    test-results/home-cards-2p5d-runtime-Ca-bbce0-ble-across-target-viewports/trace.zip\n    Usage:\n\n        npx playwright show-trace test-results/home-cards-2p5d-runtime-Ca-bbce0-ble-across-target-viewports/trace.zip\n\n    ────────────────────────────────────────────────────────────────────────────────────────────────\n\n\n  1 failed\n    tests/home-cards-2p5d-runtime.spec.mjs:255:1 › Cards favorite controls and Collection cards remain mutually hit-accessible across target viewports \n",
-  "diagnosticGeometryCapturedAtJst": "2026-09-06 04:36:43 JST",
-  "diagnosticGeometryRunId": "33987603367",
-  "diagnosticGeometryExitStatus": null,
-  "diagnosticGeometry": null,
-  "diagnosticGeometryLogTail": "[WebServer] 127.0.0.1 - - [05/Sep/2026 19:36:43] \"GET /browser/GAMEROAD.html HTTP/1.1\" 200 -\n\nError: No tests found.\nMake sure that arguments are regular expressions matching test files.\nYou may need to escape symbols like \"$\" or \"*\" and quote the arguments.\n\n"
+  "diagnosticGeometryCapturedAtJst": "2026-09-06 04:41:51 JST",
+  "diagnosticGeometryRunId": "33987851060",
+  "diagnosticGeometryExitStatus": 0,
+  "diagnosticGeometry": {
+    "point": {
+      "x": 73.6640625,
+      "y": 343
+    },
+    "card": {
+      "tag": "BUTTON",
+      "id": null,
+      "className": "slot live cardFace inDeck pick",
+      "role": null,
+      "filter": null,
+      "dataId": "SP_A",
+      "text": "0♠♠AトランプスペードA✓",
+      "rect": {
+        "left": 17,
+        "top": 268,
+        "right": 130.328125,
+        "bottom": 418,
+        "width": 113.328125,
+        "height": 150
+      },
+      "style": {
+        "position": "relative",
+        "zIndex": "auto",
+        "pointerEvents": "auto",
+        "transform": "none",
+        "overflow": "hidden"
+      }
+    },
+    "stack": [
+      {
+        "tag": "BUTTON",
+        "id": null,
+        "className": "",
+        "role": null,
+        "filter": "not-in-deck",
+        "dataId": null,
+        "text": "未投入",
+        "rect": {
+          "left": 17,
+          "top": 318,
+          "right": 82,
+          "bottom": 362,
+          "width": 65,
+          "height": 44
+        },
+        "style": {
+          "position": "static",
+          "zIndex": "auto",
+          "pointerEvents": "auto",
+          "transform": "none",
+          "overflow": "visible"
+        }
+      },
+      {
+        "tag": "BUTTON",
+        "id": null,
+        "className": "slot live cardFace inDeck pick",
+        "role": null,
+        "filter": null,
+        "dataId": "SP_A",
+        "text": "0♠♠AトランプスペードA✓",
+        "rect": {
+          "left": 17,
+          "top": 268,
+          "right": 130.328125,
+          "bottom": 418,
+          "width": 113.328125,
+          "height": 150
+        },
+        "style": {
+          "position": "relative",
+          "zIndex": "auto",
+          "pointerEvents": "auto",
+          "transform": "none",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "tag": "DIV",
+        "id": "collectionGrid",
+        "className": "collectionGrid",
+        "role": null,
+        "filter": null,
+        "dataId": null,
+        "text": "0♠♠AトランプスペードA✓0♠♠2トランプスペード2✓0♠♠3トランプスペード3✓0♠♠4トランプスペード4✓0♠♠5トランプスペード5✓0♠♠6トランプスペ",
+        "rect": {
+          "left": 17,
+          "top": 260,
+          "right": 373,
+          "bottom": 767,
+          "width": 356,
+          "height": 507
+        },
+        "style": {
+          "position": "relative",
+          "zIndex": "1",
+          "pointerEvents": "auto",
+          "transform": "none",
+          "overflow": "auto"
+        }
+      },
+      {
+        "tag": "MAIN",
+        "id": null,
+        "className": "collection",
+        "role": null,
+        "filter": null,
+        "dataId": null,
+        "text": "カード一覧カードを選ぶ63すべて♠♥♦♣☾能力デッキ中未投入★お気に入り絞り込みを解除63/630♠♠AトランプスペードA✓0♠♠2トランプスペード2✓0♠♠3",
+        "rect": {
+          "left": 6,
+          "top": 100,
+          "right": 384,
+          "bottom": 778,
+          "width": 378,
+          "height": 678
+        },
+        "style": {
+          "position": "static",
+          "zIndex": "auto",
+          "pointerEvents": "auto",
+          "transform": "none",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "tag": "DIV",
+        "id": null,
+        "className": "cardsGrid",
+        "role": null,
+        "filter": null,
+        "dataId": null,
+        "text": "カード一覧カードを選ぶ63すべて♠♥♦♣☾能力デッキ中未投入★お気に入り絞り込みを解除63/630♠♠AトランプスペードA✓0♠♠2トランプスペード2✓0♠♠3",
+        "rect": {
+          "left": 6,
+          "top": 100,
+          "right": 384,
+          "bottom": 778,
+          "width": 378,
+          "height": 678
+        },
+        "style": {
+          "position": "relative",
+          "zIndex": "auto",
+          "pointerEvents": "auto",
+          "transform": "none",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "tag": "SECTION",
+        "id": null,
+        "className": "screen cards active",
+        "role": null,
+        "filter": null,
+        "dataId": null,
+        "text": "← 戻るカード一覧カードを選ぶ63すべて♠♥♦♣☾能力デッキ中未投入★お気に入り絞り込みを解除63/630♠♠AトランプスペードA✓0♠♠2トランプスペード2✓",
+        "rect": {
+          "left": 0,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "width": 390,
+          "height": 844
+        },
+        "style": {
+          "position": "absolute",
+          "zIndex": "auto",
+          "pointerEvents": "auto",
+          "transform": "none",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "tag": "DIV",
+        "id": "app",
+        "className": "app",
+        "role": null,
+        "filter": null,
+        "dataId": null,
+        "text": "保存済みカード\n\n\n  \n    \n    \n    \n    \n    \n  \n  \n  \n  \n\n  \n    進行中\n    \n      PASS\n  ",
+        "rect": {
+          "left": 0,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "width": 390,
+          "height": 844
+        },
+        "style": {
+          "position": "relative",
+          "zIndex": "auto",
+          "pointerEvents": "auto",
+          "transform": "none",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "tag": "BODY",
+        "id": null,
+        "className": "",
+        "role": null,
+        "filter": null,
+        "dataId": null,
+        "text": "保存済みカード\n\n\n  \n    \n    \n    \n    \n    \n  \n  \n  \n  \n\n  \n    進行中\n    \n      PASS\n  ",
+        "rect": {
+          "left": 0,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "width": 390,
+          "height": 844
+        },
+        "style": {
+          "position": "fixed",
+          "zIndex": "auto",
+          "pointerEvents": "auto",
+          "transform": "none",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "tag": "HTML",
+        "id": null,
+        "className": "",
+        "role": null,
+        "filter": null,
+        "dataId": null,
+        "text": "GAMEROAD\n\n:root{--bg:#07110f;--panel:#0a201b;--panel2:#12352c;--ink:#f5fff9;--mu",
+        "rect": {
+          "left": 0,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "width": 390,
+          "height": 844
+        },
+        "style": {
+          "position": "static",
+          "zIndex": "auto",
+          "pointerEvents": "auto",
+          "transform": "none",
+          "overflow": "hidden"
+        }
+      }
+    ],
+    "host": {
+      "tag": "DIV",
+      "id": null,
+      "className": "",
+      "role": "cards-deck-findability",
+      "filter": null,
+      "dataId": null,
+      "text": "デッキ中未投入★お気に入り絞り込みを解除63/63",
+      "rect": {
+        "left": 17,
+        "top": 266,
+        "right": 373,
+        "bottom": 266,
+        "width": 356,
+        "height": 0
+      },
+      "style": {
+        "position": "relative",
+        "zIndex": "2",
+        "pointerEvents": "none",
+        "transform": "none",
+        "overflow": "visible"
+      }
+    },
+    "filter": {
+      "tag": "BUTTON",
+      "id": null,
+      "className": "",
+      "role": null,
+      "filter": "favorite",
+      "dataId": null,
+      "text": "★お気に入り",
+      "rect": {
+        "left": 90,
+        "top": 318,
+        "right": 192.65625,
+        "bottom": 362,
+        "width": 102.65625,
+        "height": 44
+      },
+      "style": {
+        "position": "static",
+        "zIndex": "auto",
+        "pointerEvents": "auto",
+        "transform": "none",
+        "overflow": "visible"
+      }
+    },
+    "filterStack": [
+      {
+        "tag": "BUTTON",
+        "id": null,
+        "className": "",
+        "role": null,
+        "filter": "favorite",
+        "dataId": null,
+        "text": "★お気に入り",
+        "rect": {
+          "left": 90,
+          "top": 318,
+          "right": 192.65625,
+          "bottom": 362,
+          "width": 102.65625,
+          "height": 44
+        },
+        "style": {
+          "position": "static",
+          "zIndex": "auto",
+          "pointerEvents": "auto",
+          "transform": "none",
+          "overflow": "visible"
+        }
+      },
+      {
+        "tag": "BUTTON",
+        "id": null,
+        "className": "slot live cardFace inDeck",
+        "role": null,
+        "filter": null,
+        "dataId": "SP_2",
+        "text": "0♠♠2トランプスペード2✓",
+        "rect": {
+          "left": 136.328125,
+          "top": 268,
+          "right": 249.65625,
+          "bottom": 418,
+          "width": 113.328125,
+          "height": 150
+        },
+        "style": {
+          "position": "relative",
+          "zIndex": "auto",
+          "pointerEvents": "auto",
+          "transform": "none",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "tag": "DIV",
+        "id": "collectionGrid",
+        "className": "collectionGrid",
+        "role": null,
+        "filter": null,
+        "dataId": null,
+        "text": "0♠♠AトランプスペードA✓0♠♠2トランプスペード2✓0♠♠3トランプスペード3✓0♠♠4トランプスペード4✓0♠♠5トランプスペード5✓0♠♠6トランプスペ",
+        "rect": {
+          "left": 17,
+          "top": 260,
+          "right": 373,
+          "bottom": 767,
+          "width": 356,
+          "height": 507
+        },
+        "style": {
+          "position": "relative",
+          "zIndex": "1",
+          "pointerEvents": "auto",
+          "transform": "none",
+          "overflow": "auto"
+        }
+      },
+      {
+        "tag": "MAIN",
+        "id": null,
+        "className": "collection",
+        "role": null,
+        "filter": null,
+        "dataId": null,
+        "text": "カード一覧カードを選ぶ63すべて♠♥♦♣☾能力デッキ中未投入★お気に入り絞り込みを解除63/630♠♠AトランプスペードA✓0♠♠2トランプスペード2✓0♠♠3",
+        "rect": {
+          "left": 6,
+          "top": 100,
+          "right": 384,
+          "bottom": 778,
+          "width": 378,
+          "height": 678
+        },
+        "style": {
+          "position": "static",
+          "zIndex": "auto",
+          "pointerEvents": "auto",
+          "transform": "none",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "tag": "DIV",
+        "id": null,
+        "className": "cardsGrid",
+        "role": null,
+        "filter": null,
+        "dataId": null,
+        "text": "カード一覧カードを選ぶ63すべて♠♥♦♣☾能力デッキ中未投入★お気に入り絞り込みを解除63/630♠♠AトランプスペードA✓0♠♠2トランプスペード2✓0♠♠3",
+        "rect": {
+          "left": 6,
+          "top": 100,
+          "right": 384,
+          "bottom": 778,
+          "width": 378,
+          "height": 678
+        },
+        "style": {
+          "position": "relative",
+          "zIndex": "auto",
+          "pointerEvents": "auto",
+          "transform": "none",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "tag": "SECTION",
+        "id": null,
+        "className": "screen cards active",
+        "role": null,
+        "filter": null,
+        "dataId": null,
+        "text": "← 戻るカード一覧カードを選ぶ63すべて♠♥♦♣☾能力デッキ中未投入★お気に入り絞り込みを解除63/630♠♠AトランプスペードA✓0♠♠2トランプスペード2✓",
+        "rect": {
+          "left": 0,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "width": 390,
+          "height": 844
+        },
+        "style": {
+          "position": "absolute",
+          "zIndex": "auto",
+          "pointerEvents": "auto",
+          "transform": "none",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "tag": "DIV",
+        "id": "app",
+        "className": "app",
+        "role": null,
+        "filter": null,
+        "dataId": null,
+        "text": "保存済みカード\n\n\n  \n    \n    \n    \n    \n    \n  \n  \n  \n  \n\n  \n    進行中\n    \n      PASS\n  ",
+        "rect": {
+          "left": 0,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "width": 390,
+          "height": 844
+        },
+        "style": {
+          "position": "relative",
+          "zIndex": "auto",
+          "pointerEvents": "auto",
+          "transform": "none",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "tag": "BODY",
+        "id": null,
+        "className": "",
+        "role": null,
+        "filter": null,
+        "dataId": null,
+        "text": "保存済みカード\n\n\n  \n    \n    \n    \n    \n    \n  \n  \n  \n  \n\n  \n    進行中\n    \n      PASS\n  ",
+        "rect": {
+          "left": 0,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "width": 390,
+          "height": 844
+        },
+        "style": {
+          "position": "fixed",
+          "zIndex": "auto",
+          "pointerEvents": "auto",
+          "transform": "none",
+          "overflow": "hidden"
+        }
+      },
+      {
+        "tag": "HTML",
+        "id": null,
+        "className": "",
+        "role": null,
+        "filter": null,
+        "dataId": null,
+        "text": "GAMEROAD\n\n:root{--bg:#07110f;--panel:#0a201b;--panel2:#12352c;--ink:#f5fff9;--mu",
+        "rect": {
+          "left": 0,
+          "top": 0,
+          "right": 390,
+          "bottom": 844,
+          "width": 390,
+          "height": 844
+        },
+        "style": {
+          "position": "static",
+          "zIndex": "auto",
+          "pointerEvents": "auto",
+          "transform": "none",
+          "overflow": "hidden"
+        }
+      }
+    ],
+    "grid": {
+      "tag": "DIV",
+      "id": "collectionGrid",
+      "className": "collectionGrid",
+      "role": null,
+      "filter": null,
+      "dataId": null,
+      "text": "0♠♠AトランプスペードA✓0♠♠2トランプスペード2✓0♠♠3トランプスペード3✓0♠♠4トランプスペード4✓0♠♠5トランプスペード5✓0♠♠6トランプスペ",
+      "rect": {
+        "left": 17,
+        "top": 260,
+        "right": 373,
+        "bottom": 767,
+        "width": 356,
+        "height": 507
+      },
+      "style": {
+        "position": "relative",
+        "zIndex": "1",
+        "pointerEvents": "auto",
+        "transform": "none",
+        "overflow": "auto"
+      }
+    },
+    "screen": {
+      "tag": "SECTION",
+      "id": null,
+      "className": "screen cards active",
+      "role": null,
+      "filter": null,
+      "dataId": null,
+      "text": "← 戻るカード一覧カードを選ぶ63すべて♠♥♦♣☾能力デッキ中未投入★お気に入り絞り込みを解除63/630♠♠AトランプスペードA✓0♠♠2トランプスペード2✓",
+      "rect": {
+        "left": 0,
+        "top": 0,
+        "right": 390,
+        "bottom": 844,
+        "width": 390,
+        "height": 844
+      },
+      "style": {
+        "position": "absolute",
+        "zIndex": "auto",
+        "pointerEvents": "auto",
+        "transform": "none",
+        "overflow": "hidden"
+      }
+    },
+    "scroll": {
+      "x": 0,
+      "y": 0
+    },
+    "viewport": {
+      "width": 390,
+      "height": 844
+    }
+  },
+  "diagnosticGeometryLogTail": "/2026 19:41:49] \"GET /browser/partner-saasuna-conversation-source.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/partner-tea-quick-choice-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/battle-janken-slidepad-runtime-mount.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/battle-replay-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/card-presentation-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/battle-conveyor-presentation-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/partner-battle-event-log-projection.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/cards-deck-presentation-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/deck-storage-corner-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/deck-storage-corner-runtime.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] code 404, message File not found\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/gameroad-version.json?_grcheck=1788637309211 HTTP/1.1\" 404 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/home-cards-2p5d-presentation.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/profile-presentation-runtime-mount.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/new-base-round-start-janken-slot-assignment-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/slidepad-slot-roll-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/battle-board-naki-4p-visual-binding.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/ui-state-feedback-ready-plan-adapter.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/home-theme-orientation-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/home-boot-runtime-mount.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/new-base-fixed-janken-slot-state.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/battle-auto-input-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/home-shell-presentation-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/rogue-run-runtime-mount.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/rogue-run-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/post-match-autoqueue-core.mjs HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /assets/visual/home/home-illustration-portrait.webp HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /assets/visual/home/home-illustration-landscape.webp HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/GAMEROAD.html HTTP/1.1\" 200 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] code 404, message File not found\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:49] \"GET /browser/gameroad-version.json?_grcheck=1788637309776 HTTP/1.1\" 404 -\n\n[WebServer] 127.0.0.1 - - [05/Sep/2026 19:41:50] \"GET /assets/audio/sfx/click_002.ogg HTTP/1.1\" 200 -\n\ntests/home-cards-2p5d-runtime.spec.mjs:255:1 › R4 phone hit geometry probe\nR4_GEOMETRY={\"point\":{\"x\":73.6640625,\"y\":343},\"card\":{\"tag\":\"BUTTON\",\"id\":null,\"className\":\"slot live cardFace inDeck pick\",\"role\":null,\"filter\":null,\"dataId\":\"SP_A\",\"text\":\"0♠♠AトランプスペードA✓\",\"rect\":{\"left\":17,\"top\":268,\"right\":130.328125,\"bottom\":418,\"width\":113.328125,\"height\":150},\"style\":{\"position\":\"relative\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"hidden\"}},\"stack\":[{\"tag\":\"BUTTON\",\"id\":null,\"className\":\"\",\"role\":null,\"filter\":\"not-in-deck\",\"dataId\":null,\"text\":\"未投入\",\"rect\":{\"left\":17,\"top\":318,\"right\":82,\"bottom\":362,\"width\":65,\"height\":44},\"style\":{\"position\":\"static\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"visible\"}},{\"tag\":\"BUTTON\",\"id\":null,\"className\":\"slot live cardFace inDeck pick\",\"role\":null,\"filter\":null,\"dataId\":\"SP_A\",\"text\":\"0♠♠AトランプスペードA✓\",\"rect\":{\"left\":17,\"top\":268,\"right\":130.328125,\"bottom\":418,\"width\":113.328125,\"height\":150},\"style\":{\"position\":\"relative\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"hidden\"}},{\"tag\":\"DIV\",\"id\":\"collectionGrid\",\"className\":\"collectionGrid\",\"role\":null,\"filter\":null,\"dataId\":null,\"text\":\"0♠♠AトランプスペードA✓0♠♠2トランプスペード2✓0♠♠3トランプスペード3✓0♠♠4トランプスペード4✓0♠♠5トランプスペード5✓0♠♠6トランプスペ\",\"rect\":{\"left\":17,\"top\":260,\"right\":373,\"bottom\":767,\"width\":356,\"height\":507},\"style\":{\"position\":\"relative\",\"zIndex\":\"1\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"auto\"}},{\"tag\":\"MAIN\",\"id\":null,\"className\":\"collection\",\"role\":null,\"filter\":null,\"dataId\":null,\"text\":\"カード一覧カードを選ぶ63すべて♠♥♦♣☾能力デッキ中未投入★お気に入り絞り込みを解除63/630♠♠AトランプスペードA✓0♠♠2トランプスペード2✓0♠♠3\",\"rect\":{\"left\":6,\"top\":100,\"right\":384,\"bottom\":778,\"width\":378,\"height\":678},\"style\":{\"position\":\"static\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"hidden\"}},{\"tag\":\"DIV\",\"id\":null,\"className\":\"cardsGrid\",\"role\":null,\"filter\":null,\"dataId\":null,\"text\":\"カード一覧カードを選ぶ63すべて♠♥♦♣☾能力デッキ中未投入★お気に入り絞り込みを解除63/630♠♠AトランプスペードA✓0♠♠2トランプスペード2✓0♠♠3\",\"rect\":{\"left\":6,\"top\":100,\"right\":384,\"bottom\":778,\"width\":378,\"height\":678},\"style\":{\"position\":\"relative\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"hidden\"}},{\"tag\":\"SECTION\",\"id\":null,\"className\":\"screen cards active\",\"role\":null,\"filter\":null,\"dataId\":null,\"text\":\"← 戻るカード一覧カードを選ぶ63すべて♠♥♦♣☾能力デッキ中未投入★お気に入り絞り込みを解除63/630♠♠AトランプスペードA✓0♠♠2トランプスペード2✓\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"style\":{\"position\":\"absolute\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"hidden\"}},{\"tag\":\"DIV\",\"id\":\"app\",\"className\":\"app\",\"role\":null,\"filter\":null,\"dataId\":null,\"text\":\"保存済みカード\\n\\n\\n  \\n    \\n    \\n    \\n    \\n    \\n  \\n  \\n  \\n  \\n\\n  \\n    進行中\\n    \\n      PASS\\n  \",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"style\":{\"position\":\"relative\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"hidden\"}},{\"tag\":\"BODY\",\"id\":null,\"className\":\"\",\"role\":null,\"filter\":null,\"dataId\":null,\"text\":\"保存済みカード\\n\\n\\n  \\n    \\n    \\n    \\n    \\n    \\n  \\n  \\n  \\n  \\n\\n  \\n    進行中\\n    \\n      PASS\\n  \",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"style\":{\"position\":\"fixed\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"hidden\"}},{\"tag\":\"HTML\",\"id\":null,\"className\":\"\",\"role\":null,\"filter\":null,\"dataId\":null,\"text\":\"GAMEROAD\\n\\n:root{--bg:#07110f;--panel:#0a201b;--panel2:#12352c;--ink:#f5fff9;--mu\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"style\":{\"position\":\"static\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"hidden\"}}],\"host\":{\"tag\":\"DIV\",\"id\":null,\"className\":\"\",\"role\":\"cards-deck-findability\",\"filter\":null,\"dataId\":null,\"text\":\"デッキ中未投入★お気に入り絞り込みを解除63/63\",\"rect\":{\"left\":17,\"top\":266,\"right\":373,\"bottom\":266,\"width\":356,\"height\":0},\"style\":{\"position\":\"relative\",\"zIndex\":\"2\",\"pointerEvents\":\"none\",\"transform\":\"none\",\"overflow\":\"visible\"}},\"filter\":{\"tag\":\"BUTTON\",\"id\":null,\"className\":\"\",\"role\":null,\"filter\":\"favorite\",\"dataId\":null,\"text\":\"★お気に入り\",\"rect\":{\"left\":90,\"top\":318,\"right\":192.65625,\"bottom\":362,\"width\":102.65625,\"height\":44},\"style\":{\"position\":\"static\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"visible\"}},\"filterStack\":[{\"tag\":\"BUTTON\",\"id\":null,\"className\":\"\",\"role\":null,\"filter\":\"favorite\",\"dataId\":null,\"text\":\"★お気に入り\",\"rect\":{\"left\":90,\"top\":318,\"right\":192.65625,\"bottom\":362,\"width\":102.65625,\"height\":44},\"style\":{\"position\":\"static\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"visible\"}},{\"tag\":\"BUTTON\",\"id\":null,\"className\":\"slot live cardFace inDeck\",\"role\":null,\"filter\":null,\"dataId\":\"SP_2\",\"text\":\"0♠♠2トランプスペード2✓\",\"rect\":{\"left\":136.328125,\"top\":268,\"right\":249.65625,\"bottom\":418,\"width\":113.328125,\"height\":150},\"style\":{\"position\":\"relative\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"hidden\"}},{\"tag\":\"DIV\",\"id\":\"collectionGrid\",\"className\":\"collectionGrid\",\"role\":null,\"filter\":null,\"dataId\":null,\"text\":\"0♠♠AトランプスペードA✓0♠♠2トランプスペード2✓0♠♠3トランプスペード3✓0♠♠4トランプスペード4✓0♠♠5トランプスペード5✓0♠♠6トランプスペ\",\"rect\":{\"left\":17,\"top\":260,\"right\":373,\"bottom\":767,\"width\":356,\"height\":507},\"style\":{\"position\":\"relative\",\"zIndex\":\"1\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"auto\"}},{\"tag\":\"MAIN\",\"id\":null,\"className\":\"collection\",\"role\":null,\"filter\":null,\"dataId\":null,\"text\":\"カード一覧カードを選ぶ63すべて♠♥♦♣☾能力デッキ中未投入★お気に入り絞り込みを解除63/630♠♠AトランプスペードA✓0♠♠2トランプスペード2✓0♠♠3\",\"rect\":{\"left\":6,\"top\":100,\"right\":384,\"bottom\":778,\"width\":378,\"height\":678},\"style\":{\"position\":\"static\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"hidden\"}},{\"tag\":\"DIV\",\"id\":null,\"className\":\"cardsGrid\",\"role\":null,\"filter\":null,\"dataId\":null,\"text\":\"カード一覧カードを選ぶ63すべて♠♥♦♣☾能力デッキ中未投入★お気に入り絞り込みを解除63/630♠♠AトランプスペードA✓0♠♠2トランプスペード2✓0♠♠3\",\"rect\":{\"left\":6,\"top\":100,\"right\":384,\"bottom\":778,\"width\":378,\"height\":678},\"style\":{\"position\":\"relative\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"hidden\"}},{\"tag\":\"SECTION\",\"id\":null,\"className\":\"screen cards active\",\"role\":null,\"filter\":null,\"dataId\":null,\"text\":\"← 戻るカード一覧カードを選ぶ63すべて♠♥♦♣☾能力デッキ中未投入★お気に入り絞り込みを解除63/630♠♠AトランプスペードA✓0♠♠2トランプスペード2✓\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"style\":{\"position\":\"absolute\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"hidden\"}},{\"tag\":\"DIV\",\"id\":\"app\",\"className\":\"app\",\"role\":null,\"filter\":null,\"dataId\":null,\"text\":\"保存済みカード\\n\\n\\n  \\n    \\n    \\n    \\n    \\n    \\n  \\n  \\n  \\n  \\n\\n  \\n    進行中\\n    \\n      PASS\\n  \",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"style\":{\"position\":\"relative\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"hidden\"}},{\"tag\":\"BODY\",\"id\":null,\"className\":\"\",\"role\":null,\"filter\":null,\"dataId\":null,\"text\":\"保存済みカード\\n\\n\\n  \\n    \\n    \\n    \\n    \\n    \\n  \\n  \\n  \\n  \\n\\n  \\n    進行中\\n    \\n      PASS\\n  \",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"style\":{\"position\":\"fixed\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"hidden\"}},{\"tag\":\"HTML\",\"id\":null,\"className\":\"\",\"role\":null,\"filter\":null,\"dataId\":null,\"text\":\"GAMEROAD\\n\\n:root{--bg:#07110f;--panel:#0a201b;--panel2:#12352c;--ink:#f5fff9;--mu\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"style\":{\"position\":\"static\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"hidden\"}}],\"grid\":{\"tag\":\"DIV\",\"id\":\"collectionGrid\",\"className\":\"collectionGrid\",\"role\":null,\"filter\":null,\"dataId\":null,\"text\":\"0♠♠AトランプスペードA✓0♠♠2トランプスペード2✓0♠♠3トランプスペード3✓0♠♠4トランプスペード4✓0♠♠5トランプスペード5✓0♠♠6トランプスペ\",\"rect\":{\"left\":17,\"top\":260,\"right\":373,\"bottom\":767,\"width\":356,\"height\":507},\"style\":{\"position\":\"relative\",\"zIndex\":\"1\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"auto\"}},\"screen\":{\"tag\":\"SECTION\",\"id\":null,\"className\":\"screen cards active\",\"role\":null,\"filter\":null,\"dataId\":null,\"text\":\"← 戻るカード一覧カードを選ぶ63すべて♠♥♦♣☾能力デッキ中未投入★お気に入り絞り込みを解除63/630♠♠AトランプスペードA✓0♠♠2トランプスペード2✓\",\"rect\":{\"left\":0,\"top\":0,\"right\":390,\"bottom\":844,\"width\":390,\"height\":844},\"style\":{\"position\":\"absolute\",\"zIndex\":\"auto\",\"pointerEvents\":\"auto\",\"transform\":\"none\",\"overflow\":\"hidden\"}},\"scroll\":{\"x\":0,\"y\":0},\"viewport\":{\"width\":390,\"height\":844}}\n\n  1 passed (4.7s)\n"
 }

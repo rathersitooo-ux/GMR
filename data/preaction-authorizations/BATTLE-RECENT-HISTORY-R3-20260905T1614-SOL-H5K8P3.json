@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RECENT-HISTORY-R3-20260905T1614-SOL-H5K8P3",
+  "taskId": "BATTLE-REPLAY-RUNTIME-CONTRACT-001",
+  "workUnitKey": "BATTLE_RECENT_PUBLIC_HISTORY_R3",
+  "acquireKey": "BATTLE-RECENT-HISTORY-R3-20260905T1614-SOL-H5K8P3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_BATTLE_LOG_RAW_HISTORY_PLUS_EXISTING_PUBLIC_REPLAY_CONSUMER_AND_CURRENT_MAIN_RECONCILIATION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXACT_PRODUCT_BLOBS_FROM_SCOPED_EXECUTOR_PLUS_PRIOR_FOCUSED_REGRESSION_RUN_33937555593",
+  "proceedToken": "PROCEED|BATTLE-RECENT-HISTORY-R3-20260905T1614-SOL-H5K8P3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "2696d00d23ff84e63de6c3d79c666a1f2c0cf3e6",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-REPLAY-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "BATTLE_RECENT_PUBLIC_HISTORY_R3",
+  "leaseAcquireKey": "BATTLE-RECENT-HISTORY-R3-20260905T1614-SOL-H5K8P3",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 16:25 JST",
+  "leaseUntilJst": "2026-09-05 17:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A378:L378",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR current main@2696d00d23ff84e63de6c3d79c666a1f2c0cf3e6; RESUME existing PR#1112 branch sol/battle-recent-public-history-r2-20260905; mutable branch ref + browser/battle-replay-live-adapter.mjs + tests/battle-replay-live-adapter.test.mjs + deploy/cloudflare/tests/build.test.mjs (ONLY battle-replay-live-adapter.mjs currentBlob provenance pin) + transient data/preaction-authorizations/BATTLE-RECENT-HISTORY-R3-20260905T1614-SOL-H5K8P3.json only; browser/GAMEROAD.html + deploy/cloudflare/scripts/build.mjs + battle-screen-runtime-mount.mjs + gameplay/rules/save/economy/network/spectator state + all other build.test entries/all other files READ_ONLY.",
+  "scope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "Adapt the existing viewer-authorized Battle replay log consumer so the newest accepted-public events remain immediately scannable, older rows are revealable inline, public card/value and target context remain public-only, and stale previous-match projections are rejected; keep the public package provenance pin aligned without creating any second recorder, schema, storage path, or gameplay authority.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "existing-battle-replay-public-log-consumer-adaptation",
+  "solutionSearchEvidence": [
+    "repo:browser/battle-replay-live-adapter.mjs@2696d00d23ff84e63de6c3d79c666a1f2c0cf3e6 existing viewer-authorized public replay log consumer",
+    "repo:PR#1112 exact product candidate blobs reconstructed against current main",
+    "Drive:BATTLE-REPLAY-RUNTIME-CONTRACT-001 row1261 adopted recent-public-history gate",
+    "external:Shadowverse Worlds Beyond official Battle Log and replay behavior cross-check"
+  ]
+}

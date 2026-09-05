@@ -133,6 +133,23 @@ test('G6 purchase after match end is rejected', () => {
   assert.equal(result.state, ended);
 });
 
+test('G7 a Shop product cannot charge or grant a card owned by another player', () => {
+  const initial = baseState({
+    shopProducts: {
+      itemForeign: { cost: 3, grantCard: { id: 'shop-card-foreign', ownerId: 'p2' } },
+    },
+  });
+  const result = purchaseShopProduct(initial, {
+    requestId: 'shop-foreign-owner-1', catalogRevision: 'shop-r7', productId: 'itemForeign',
+  });
+  assert.equal(result.status, 'rejected');
+  assert.equal(result.reason, 'GRANT_CARD_NOT_OWNED');
+  assert.equal(result.state, initial);
+  assert.equal(result.state.honey, 10);
+  assert.deepEqual(result.state.pendingReturns, []);
+  assert.deepEqual(result.state.processedRequestIds, []);
+});
+
 // H: arena contract, sixteen evidence cases.
 test('H1 arena deposit atomically charges honey and moves one owned card into the deposit region', () => {
   const result = deposit();

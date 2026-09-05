@@ -11,9 +11,6 @@ on:
       - assets/**
       - tools/**
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Required Gate auto-merge"]
-    types: [completed]
 
 permissions:
   contents: read
@@ -21,11 +18,10 @@ permissions:
 
 concurrency:
   group: gameroad-cloudflare-public-deploy
-  cancel-in-progress: ${{ github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.sha != github.event.workflow_run.head_sha) }}
+  cancel-in-progress: true
 
 jobs:
   deploy:
-    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.sha != github.event.workflow_run.head_sha)
     name: Deploy public GAMEROAD package
     runs-on: ubuntu-latest
     env:

@@ -44,28 +44,25 @@ jobs:
 
           t = Path('tests/browser-full-interaction.spec.mjs')
           ts = t.read_text()
-          old_test = '''  const resultButtonsBox = await result.locator('.resultBtns').boundingBox();
-          expect(resultButtonsBox, 'R20 result actions must have geometry').not.toBeNull();
-          expect(rankingRows.at(-1).bottom, 'R20 fourth rank row must not be covered by Result actions').toBeLessThanOrEqual(resultButtonsBox.y + 1);
-
-          const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';'''
-          new_test = '''  const resultButtonsBox = await result.locator('.resultBtns').boundingBox();
-          expect(resultButtonsBox, 'R20 result actions must have geometry').not.toBeNull();
-          expect(rankingRows.at(-1).bottom, 'R20 fourth rank row must not be covered by Result actions').toBeLessThanOrEqual(resultButtonsBox.y + 1);
-          const autoQueue = result.locator('#postMatchAutoQueue');
-          const autoQueueStatus = result.locator('#postMatchAutoQueueStatus');
-          await expect(autoQueue, 'Result autoqueue control remains visible').toBeVisible();
-          await expect(autoQueueStatus, 'Result autoqueue status remains visibly readable').toBeVisible();
-          const autoQueueStatusBox = await autoQueueStatus.boundingBox();
-          expect(autoQueueStatusBox, 'Result autoqueue status must have geometry').not.toBeNull();
-          expect(autoQueueStatusBox.width, 'Result autoqueue status must not collapse to an accessibility-only pixel').toBeGreaterThan(24);
-          expect(autoQueueStatusBox.height, 'Result autoqueue status must have readable height').toBeGreaterThan(8);
-          expect(((await autoQueueStatus.textContent()) ?? '').trim().length, 'Result autoqueue status must expose truthful state text').toBeGreaterThan(0);
-
-          const roundsText = (await result.locator('#resultRounds').textContent()) ?? '';'''
-          if ts.count(old_test) != 1:
-              raise SystemExit(f'expected R20 Result geometry anchor once, got {ts.count(old_test)}')
-          t.write_text(ts.replace(old_test, new_test))
+          marker = 'Result autoqueue status must expose truthful state text'
+          if marker in ts:
+              raise SystemExit('focused autoqueue visual acceptance already present')
+          i = '  '
+          anchor = i + "expect(rankingRows.at(-1).bottom, 'R20 fourth rank row must not be covered by Result actions').toBeLessThanOrEqual(resultButtonsBox.y + 1);\n\n"
+          if ts.count(anchor) != 1:
+              raise SystemExit(f'expected R20 Result geometry anchor once, got {ts.count(anchor)}')
+          addition = (
+              i + "const autoQueue = result.locator('#postMatchAutoQueue');\n"
+              + i + "const autoQueueStatus = result.locator('#postMatchAutoQueueStatus');\n"
+              + i + "await expect(autoQueue, 'Result autoqueue control remains visible').toBeVisible();\n"
+              + i + "await expect(autoQueueStatus, 'Result autoqueue status remains visibly readable').toBeVisible();\n"
+              + i + "const autoQueueStatusBox = await autoQueueStatus.boundingBox();\n"
+              + i + "expect(autoQueueStatusBox, 'Result autoqueue status must have geometry').not.toBeNull();\n"
+              + i + "expect(autoQueueStatusBox.width, 'Result autoqueue status must not collapse to an accessibility-only pixel').toBeGreaterThan(24);\n"
+              + i + "expect(autoQueueStatusBox.height, 'Result autoqueue status must have readable height').toBeGreaterThan(8);\n"
+              + i + "expect(((await autoQueueStatus.textContent()) ?? '').trim().length, 'Result autoqueue status must expose truthful state text').toBeGreaterThan(0);\n\n"
+          )
+          t.write_text(ts.replace(anchor, anchor + addition))
       - name: Verify exact bounded delta
         run: |
           set -euo pipefail

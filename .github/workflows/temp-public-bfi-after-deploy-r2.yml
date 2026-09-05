@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      GAMEROAD_PUBLIC_BASE_URL: https://gameroad-browser-r5.pages.dev
+      GAMEROAD_PUBLIC_BASE_URL: https://3faf3aaf.gameroad-browser-r5.pages.dev
       EXPECTED_BUILD_ID: 7687041833bc767052629b24b2a79b011b2c64b4
     steps:
       - name: Checkout exact deployed source
@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Bind canonical public origin to exact deployed build
+      - name: Bind immutable deployment origin to exact deployed build
         shell: bash
         run: |
           set -euo pipefail

@@ -1,0 +1,93 @@
+name: TEMP Partner confirmed-card reaction R1B
+
+on:
+  push:
+    branches:
+      - work/partner-card-reaction-r1b-20260905
+
+permissions:
+  contents: write
+
+concurrency:
+  group: temp-partner-card-reaction-r1b-q8m4n2
+  cancel-in-progress: false
+
+jobs:
+  apply-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify current targets are unchanged from reviewed donor base
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e b490f10377f29191e8a53abc633934713d829468^{commit}
+          git cat-file -e ec85a4fa6d0e75825c05ca680b10e7380373853f^{commit}
+          git diff --exit-code b490f10377f29191e8a53abc633934713d829468 HEAD -- \
+            browser/partner-advice-runtime-mount.mjs \
+            tests/partner-advice-runtime-mount.test.mjs
+      - name: Apply exact reviewed donor product and test
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show ec85a4fa6d0e75825c05ca680b10e7380373853f:browser/partner-advice-runtime-mount.mjs > browser/partner-advice-runtime-mount.mjs
+          git show ec85a4fa6d0e75825c05ca680b10e7380373853f:tests/partner-advice-runtime-mount.test.mjs > tests/partner-advice-runtime-mount.test.mjs
+      - name: Update only partner advice public provenance pin
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('deploy/cloudflare/tests/build.test.mjs')
+          text = path.read_text()
+          old = "e12d35702055d88c6d92a62b3daac9c73113d033"
+          new = "3d6c7473284cfbbb56df6ad38ae01b0189317774"
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one old partner-advice pin, found {text.count(old)}')
+          if text.count(new) != 0:
+              raise SystemExit('new partner-advice pin already present before bounded replacement')
+          path.write_text(text.replace(old, new, 1))
+          PY
+          git diff --check
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('deploy/cloudflare/tests/build.test.mjs').read_text()
+          assert text.count('3d6c7473284cfbbb56df6ad38ae01b0189317774') == 1
+          assert text.count('e12d35702055d88c6d92a62b3daac9c73113d033') == 0
+          PY
+      - name: Focused tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/partner-advice-runtime-mount.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Verify exact persistent product scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t changed < <(git diff --name-only d257e551b54814a97a338d6a6c41f6297dd0c037 -- \
+            browser/partner-advice-runtime-mount.mjs \
+            tests/partner-advice-runtime-mount.test.mjs \
+            deploy/cloudflare/tests/build.test.mjs)
+          printf '%s\n' "${changed[@]}"
+          test "${#changed[@]}" -eq 3
+          printf '%s\n' "${changed[@]}" | grep -Fxq browser/partner-advice-runtime-mount.mjs
+          printf '%s\n' "${changed[@]}" | grep -Fxq tests/partner-advice-runtime-mount.test.mjs
+          printf '%s\n' "${changed[@]}" | grep -Fxq deploy/cloudflare/tests/build.test.mjs
+      - name: Commit bounded product patch and clean transients
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/temp-partner-card-reaction-r1b-q8m4n2.yml
+          rm -f data/preaction-authorizations/PARTNER-CARD-REACTION-R1B-20260905T1550-SOL-Q8M4N2.json
+          git add -A
+          test -z "$(git diff --cached --name-only | grep -v -E '^(browser/partner-advice-runtime-mount\.mjs|tests/partner-advice-runtime-mount\.test\.mjs|deploy/cloudflare/tests/build\.test\.mjs|\.github/workflows/temp-partner-card-reaction-r1b-q8m4n2\.yml|data/preaction-authorizations/PARTNER-CARD-REACTION-R1B-20260905T1550-SOL-Q8M4N2\.json)$' || true)"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'feat: react to confirmed Battle card use'
+          git push origin HEAD:work/partner-card-reaction-r1b-20260905

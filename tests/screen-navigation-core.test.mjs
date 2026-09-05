@@ -609,3 +609,155 @@ test('screen transition back path uses the existing navigation fallback and comm
   assert.equal(screen, 'home');
   assert.equal(swaps, 1);
 });
+
+const {resolveHomeRouteMotionVector: resolveHomeRouteMotionVectorForTakeover} = await import('../browser/screen-navigation-core.mjs');
+
+function homeTakeoverApprox(actual, expected, epsilon = 1e-9) {
+  assert.ok(Math.abs(actual - expected) <= epsilon, `${actual} ~= ${expected}`);
+}
+
+function homeTakeoverNode(rect = null) {
+  return {
+    animations: [],
+    getBoundingClientRect: rect ? () => ({...rect}) : undefined,
+    animate(frames, options) {
+      const animation = {finished: Promise.resolve(), cancel() {}};
+      this.animations.push({frames, options, animation});
+      return animation;
+    }
+  };
+}
+
+function homeTakeoverTranslate(transform) {
+  const match = /translate3d\(([-+\d.eE]+)px,([-+\d.eE]+)px,0\)/.exec(String(transform || ''));
+  assert.ok(match, `expected translate3d in ${transform}`);
+  return {x: Number(match[1]), y: Number(match[2])};
+}
+
+function fakeHomeTakeoverDocument({withGeometry = true} = {}) {
+  const pivot = homeTakeoverNode({left: 90, top: 90, width: 20, height: 20});
+  const cardsRoute = homeTakeoverNode({left: 30, top: 170, width: 20, height: 20});
+  cardsRoute.dataset = {homeTarget: 'cards'};
+  const homeVisual = homeTakeoverNode();
+  const homeControl = homeTakeoverNode();
+  const cardsControl = homeTakeoverNode();
+  const home = {
+    dataset: {screen: 'home'}, animations: [],
+    contains(node) { return node === homeControl; },
+    querySelector(selector) {
+      if (selector === '.codexHomeVisualLayer') return homeVisual;
+      if (withGeometry && selector === '#homePadCenter') return pivot;
+      return null;
+    },
+    querySelectorAll(selector) {
+      if (withGeometry && selector === '.homePadChoice[data-home-target]') return [cardsRoute];
+      return [];
+    },
+    animate(frames, options) {
+      const animation = {finished: Promise.resolve(), cancel() {}};
+      this.animations.push({frames, options, animation});
+      return animation;
+    }
+  };
+  const cards = {
+    dataset: {screen: 'cards'}, animations: [],
+    contains(node) { return node === cardsControl; },
+    querySelector() { return null; },
+    querySelectorAll() { return []; },
+    animate(frames, options) {
+      const animation = {finished: Promise.resolve(), cancel() {}};
+      this.animations.push({frames, options, animation});
+      return animation;
+    }
+  };
+  const documentSource = {
+    documentElement: {clientWidth: 1280, clientHeight: 720},
+    activeElement: homeControl,
+    querySelectorAll(selector) {
+      assert.equal(selector, '.screen[data-screen]');
+      return [home, cards];
+    }
+  };
+  return {documentSource, home, cards, homeVisual, pivot, cardsRoute, homeControl, cardsControl};
+}
+
+test('Home route vector comes from the actual SlidePad pivot-to-lobe geometry', () => {
+  const pivot = homeTakeoverNode({left: 90, top: 90, width: 20, height: 20});
+  const battle = homeTakeoverNode({left: 170, top: 30, width: 20, height: 20});
+  battle.dataset = {homeTarget: 'setup'};
+  const surface = {
+    querySelector(selector) { return selector === '#homePadCenter' ? pivot : null; },
+    querySelectorAll(selector) { return selector === '.homePadChoice[data-home-target]' ? [battle] : []; }
+  };
+  const vector = resolveHomeRouteMotionVectorForTakeover(surface, 'setup');
+  assert.ok(vector);
+  assert.equal(Object.isFrozen(vector), true);
+  assert.equal(vector.target, 'setup');
+  homeTakeoverApprox(vector.x, .8);
+  homeTakeoverApprox(vector.y, -.6);
+});
+
+test('Home route takeover keeps SlidePad fixed while scene exits toward lobe and destination enters behind', async () => {
+  const fixture = fakeHomeTakeoverDocument();
+  let screen = 'home';
+  const runtime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => screen,
+    applyScreen: (next) => { screen = next; fixture.documentSource.activeElement = fixture.cardsControl; },
+    presentationDriver: createScreenMotionPresentationDriver({document: fixture.documentSource})
+  });
+  const result = await runtime.navigate('cards');
+  assert.equal(result.status, 'completed');
+  assert.equal(screen, 'cards');
+  assert.equal(fixture.home.animations.length, 0);
+  assert.equal(fixture.pivot.animations.length, 0);
+  assert.equal(fixture.homeVisual.animations.length, 1);
+  assert.equal(fixture.cards.animations.length, 1);
+  const exitVector = homeTakeoverTranslate(fixture.homeVisual.animations[0].frames[1].transform);
+  const enterVector = homeTakeoverTranslate(fixture.cards.animations[0].frames[0].transform);
+  homeTakeoverApprox(exitVector.x, -10.8);
+  homeTakeoverApprox(exitVector.y, 14.4);
+  homeTakeoverApprox(enterVector.x, 10.8);
+  homeTakeoverApprox(enterVector.y, -14.4);
+});
+
+test('Home route takeover falls back to existing family motion when geometry is unavailable', async () => {
+  const fixture = fakeHomeTakeoverDocument({withGeometry: false});
+  let screen = 'home';
+  const runtime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => screen,
+    applyScreen: (next) => { screen = next; },
+    presentationDriver: createScreenMotionPresentationDriver({document: fixture.documentSource})
+  });
+  assert.equal((await runtime.navigate('cards')).status, 'completed');
+  assert.equal(fixture.home.animations.length, 0);
+  assert.equal(fixture.homeVisual.animations.length, 1);
+  assert.match(fixture.homeVisual.animations[0].frames[1].transform, /translate3d\(0,-18px,0\)/);
+});
+
+test('Home route takeover preserves low-perf and reduced-motion spatial suppression', async () => {
+  const low = fakeHomeTakeoverDocument();
+  let lowScreen = 'home';
+  const lowRuntime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => lowScreen,
+    applyScreen: (next) => { lowScreen = next; },
+    lowPerf: true,
+    presentationDriver: createScreenMotionPresentationDriver({document: low.documentSource})
+  });
+  assert.equal((await lowRuntime.navigate('cards')).status, 'completed');
+  assert.equal(low.homeVisual.animations.length, 1);
+  assert.equal(low.cards.animations.length, 1);
+  assert.ok(low.homeVisual.animations[0].frames.every((frame) => !('transform' in frame)));
+  assert.ok(low.cards.animations[0].frames.every((frame) => !('transform' in frame)));
+
+  const reduced = fakeHomeTakeoverDocument();
+  let reducedScreen = 'home';
+  const reducedRuntime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => reducedScreen,
+    applyScreen: (next) => { reducedScreen = next; },
+    reducedMotion: true,
+    presentationDriver: createScreenMotionPresentationDriver({document: reduced.documentSource})
+  });
+  assert.equal((await reducedRuntime.navigate('cards')).status, 'completed');
+  assert.equal(reduced.homeVisual.animations.length, 0);
+  assert.equal(reduced.cards.animations.length, 0);
+});

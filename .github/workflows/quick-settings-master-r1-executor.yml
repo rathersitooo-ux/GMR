@@ -1,0 +1,278 @@
+name: Quick Settings Master Volume R1
+
+on:
+  push:
+    branches:
+      - sol/quick-settings-master-r1-20260906
+
+permissions:
+  contents: write
+
+env:
+  BASE_SHA: 77777f15cc263a33ff9bb8ec1de7e896c979223b
+  ACQUIRE_KEY: UI-QS-MASTER-R1-20260906T0548-SOL-N6P3K8
+  MANIFEST: data/preaction-authorizations/UI-QS-MASTER-R1-20260906T0548-SOL-N6P3K8.json
+  WORKFLOW_FILE: .github/workflows/quick-settings-master-r1-executor.yml
+
+jobs:
+  implement-and-test:
+    if: ${{ !contains(github.event.head_commit.message, '[qs-master-result]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact owned branch
+        uses: actions/checkout@v4
+        with:
+          ref: sol/quick-settings-master-r1-20260906
+          fetch-depth: 0
+
+      - name: Verify PRE_ACTION fence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$BASE_SHA" HEAD
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          m = json.loads(Path(os.environ['MANIFEST']).read_text(encoding='utf-8'))
+          expected = {
+              'schemaVersion': 'gameroad-preaction-v3',
+              'recordId': os.environ['ACQUIRE_KEY'],
+              'taskId': 'UI-STATE-FEEDBACK-RUNTIME-001',
+              'workUnitKey': 'QUICK_SETTINGS_MASTER_VOLUME_R1',
+              'authorizationBaseSha': os.environ['BASE_SHA'],
+              'leaseAuthority': 'CURRENT_ACTIVE_LEASES',
+              'leaseState': 'ACTIVE',
+          }
+          for key, value in expected.items():
+              if m.get(key) != value:
+                  raise SystemExit(f'PRE_ACTION mismatch {key}: {m.get(key)!r} != {value!r}')
+          if not str(m.get('proceedToken', '')).startswith(f"PROCEED|{os.environ['ACQUIRE_KEY']}|"):
+              raise SystemExit('PRE_ACTION proceed token mismatch')
+          PY
+          mapfile -t changed < <(git diff --name-only "$BASE_SHA...HEAD" | sort)
+          mapfile -t expected < <(printf '%s\n' "$MANIFEST" "$WORKFLOW_FILE" | sort)
+          test "${#changed[@]}" -eq 2
+          test "${changed[0]}" = "${expected[0]}"
+          test "${changed[1]}" = "${expected[1]}"
+
+      - name: Patch derived master-volume proxy and focused regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          home_path = Path('browser/home-boot-runtime-mount.mjs')
+          test_path = Path('tests/home-boot-presentation.test.mjs')
+          home = home_path.read_text(encoding='utf-8')
+          test = test_path.read_text(encoding='utf-8')
+
+          def replace_once(source, old, new, label):
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, got {count}')
+              return source.replace(old, new, 1)
+
+          home = replace_once(
+              home,
+              "export const QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS = Object.freeze(['masterVolume']);",
+              "export const QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS = Object.freeze([]);",
+              'known authority gap',
+          )
+
+          old_read = '''export function readExistingQuickSettings(documentSource = globalThis.document) {
+            const authority = inspectExistingQuickSettingsAuthority(documentSource);
+            const controls = authority.controls;
+            return Object.freeze({
+              musicVolume: controls.musicVolume ? quickSettingsPercent(controls.musicVolume.value) : null,
+              sfxVolume: controls.sfxVolume ? quickSettingsPercent(controls.sfxVolume.value) : null,
+              partnerVoiceVolume: controls.partnerVoiceVolume ? quickSettingsPercent(controls.partnerVoiceVolume.value) : null,
+              musicMuted: controls.musicMute ? quickSettingsToggleOn(controls.musicMute) : null,
+              sfxMuted: controls.sfxMute ? quickSettingsToggleOn(controls.sfxMute) : null,
+              partnerVoiceMuted: controls.partnerVoiceMute ? quickSettingsToggleOn(controls.partnerVoiceMute) : null,
+              reduceMotion: controls.reduceMotion ? quickSettingsToggleOn(controls.reduceMotion) : null,
+              lowPerf: controls.lowPerf ? quickSettingsToggleOn(controls.lowPerf) : null,
+              missing: authority.missing,
+              knownAuthorityGaps: authority.knownAuthorityGaps,
+            });
+          }'''
+          old_read = '\n'.join(line[10:] if line.startswith('          ') else line for line in old_read.splitlines())
+          new_read = '''export function readExistingQuickSettings(documentSource = globalThis.document) {
+            const authority = inspectExistingQuickSettingsAuthority(documentSource);
+            const controls = authority.controls;
+            const musicVolume = controls.musicVolume ? quickSettingsPercent(controls.musicVolume.value) : null;
+            const sfxVolume = controls.sfxVolume ? quickSettingsPercent(controls.sfxVolume.value) : null;
+            const partnerVoiceVolume = controls.partnerVoiceVolume ? quickSettingsPercent(controls.partnerVoiceVolume.value) : null;
+            const channelVolumes = [musicVolume, sfxVolume, partnerVoiceVolume];
+            const masterVolume = channelVolumes.every((value) => value != null)
+              ? Math.max(...channelVolumes)
+              : null;
+            return Object.freeze({
+              masterVolume,
+              musicVolume,
+              sfxVolume,
+              partnerVoiceVolume,
+              musicMuted: controls.musicMute ? quickSettingsToggleOn(controls.musicMute) : null,
+              sfxMuted: controls.sfxMute ? quickSettingsToggleOn(controls.sfxMute) : null,
+              partnerVoiceMuted: controls.partnerVoiceMute ? quickSettingsToggleOn(controls.partnerVoiceMute) : null,
+              reduceMotion: controls.reduceMotion ? quickSettingsToggleOn(controls.reduceMotion) : null,
+              lowPerf: controls.lowPerf ? quickSettingsToggleOn(controls.lowPerf) : null,
+              missing: authority.missing,
+              knownAuthorityGaps: authority.knownAuthorityGaps,
+            });
+          }'''
+          new_read = '\n'.join(line[10:] if line.startswith('          ') else line for line in new_read.splitlines())
+          home = replace_once(home, old_read, new_read, 'readExistingQuickSettings')
+
+          old_setter = '''export function setExistingQuickSettingsVolume(key, value, documentSource = globalThis.document, globalSource = globalThis) {
+            if (!['musicVolume', 'sfxVolume', 'partnerVoiceVolume'].includes(key)) return false;
+            const control = quickSettingsControl(documentSource, key);
+            if (!control) return false;
+            control.value = String(quickSettingsPercent(value));
+            dispatchExistingQuickSetting(globalSource, control, 'input');
+            dispatchExistingQuickSetting(globalSource, control, 'change');
+            return true;
+          }'''
+          old_setter = '\n'.join(line[10:] if line.startswith('          ') else line for line in old_setter.splitlines())
+          new_setter = old_setter + '''
+
+export function setExistingQuickSettingsMasterVolume(value, documentSource = globalThis.document, globalSource = globalThis) {
+  const current = readExistingQuickSettings(documentSource);
+  const sourceVolumes = [current.musicVolume, current.sfxVolume, current.partnerVoiceVolume];
+  if (sourceVolumes.some((item) => item == null)) return false;
+  const targetMaster = quickSettingsPercent(value);
+  const sourceMaster = Math.max(...sourceVolumes);
+  const nextVolumes = sourceMaster > 0
+    ? sourceVolumes.map((item) => quickSettingsPercent((item * targetMaster) / sourceMaster))
+    : sourceVolumes.map(() => targetMaster);
+  return ['musicVolume', 'sfxVolume', 'partnerVoiceVolume'].every((key, index) => (
+    setExistingQuickSettingsVolume(key, nextVolumes[index], documentSource, globalSource)
+  ));
+}'''
+          home = replace_once(home, old_setter, new_setter, 'volume setter')
+
+          home = replace_once(
+              home,
+              f'[{QUICK := "${QUICK_SETTINGS_OVERLAY_ATTR}"}] .grSharedQuickSettingsToggle{{grid-column:2/4;width:100%}}' if False else '[${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsToggle{grid-column:2/4;width:100%}',
+              '[${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsMasterRange{grid-column:2/4}\n[${QUICK_SETTINGS_OVERLAY_ATTR}] .grSharedQuickSettingsToggle{grid-column:2/4;width:100%}',
+              'master range style',
+          )
+
+          refresh_anchor = '''  const refresh = () => {
+    const current = readExistingQuickSettings(documentSource);
+    for (const row of QUICK_SETTINGS_AUDIO_ROWS) {'''
+          refresh_replacement = '''  const refresh = () => {
+    const current = readExistingQuickSettings(documentSource);
+    const masterRange = overlay.querySelector?.('[data-quick-volume="masterVolume"]');
+    if (masterRange) {
+      masterRange.disabled = current.masterVolume == null;
+      if (current.masterVolume != null) masterRange.value = String(current.masterVolume);
+    }
+    for (const row of QUICK_SETTINGS_AUDIO_ROWS) {'''
+          home = replace_once(home, refresh_anchor, refresh_replacement, 'refresh master range')
+
+          render_anchor = '''  for (const row of QUICK_SETTINGS_AUDIO_ROWS) {
+    const wrap = quickSettingsNode(documentSource, 'div', 'grSharedQuickSettingsRow');'''
+          render_replacement = '''  const masterWrap = quickSettingsNode(documentSource, 'div', 'grSharedQuickSettingsRow');
+  masterWrap.append(quickSettingsNode(documentSource, 'span', '', '全体'));
+  const masterRange = quickSettingsNode(documentSource, 'input', 'grSharedQuickSettingsMasterRange');
+  masterRange.setAttribute?.('type', 'range');
+  masterRange.setAttribute?.('min', '0');
+  masterRange.setAttribute?.('max', '100');
+  masterRange.setAttribute?.('step', '1');
+  masterRange.setAttribute?.('aria-label', '全体音量');
+  masterRange.dataset.quickVolume = 'masterVolume';
+  masterRange.addEventListener?.('input', () => {
+    setExistingQuickSettingsMasterVolume(masterRange.value, documentSource, globalSource);
+    refresh();
+  });
+  masterWrap.append(masterRange);
+  panel.append(masterWrap);
+
+  for (const row of QUICK_SETTINGS_AUDIO_ROWS) {
+    const wrap = quickSettingsNode(documentSource, 'div', 'grSharedQuickSettingsRow');'''
+          home = replace_once(home, render_anchor, render_replacement, 'render master row')
+
+          home = replace_once(
+              home,
+              '    setVolume: setExistingQuickSettingsVolume,\n    toggle: toggleExistingQuickSetting,',
+              '    setVolume: setExistingQuickSettingsVolume,\n    setMasterVolume: setExistingQuickSettingsMasterVolume,\n    toggle: toggleExistingQuickSetting,',
+              'global master setter',
+          )
+
+          test = replace_once(
+              test,
+              '  setExistingQuickSettingsVolume,\n  shouldDismissHomeSlidepadOnBlankDoubleClick,',
+              '  setExistingQuickSettingsMasterVolume,\n  setExistingQuickSettingsVolume,\n  shouldDismissHomeSlidepadOnBlankDoubleClick,',
+              'test import',
+          )
+          test = replace_once(
+              test,
+              '''  assert.equal(before.musicVolume, 64);
+  assert.equal(before.partnerVoiceMuted, true);
+  assert.deepEqual(before.missing, []);
+  assert.deepEqual(before.knownAuthorityGaps, QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS);
+  assert.ok(before.knownAuthorityGaps.includes('masterVolume'));
+
+  assert.equal(setExistingQuickSettingsVolume('musicVolume', 42, documentSource, { Event: FakeEvent }), true);
+  assert.equal(controls.musicVolume.value, '42');
+  assert.deepEqual(dispatched, ['input', 'change']);
+  assert.equal(toggleExistingQuickSetting('reduceMotion', documentSource), true);
+  assert.equal(readExistingQuickSettings(documentSource).reduceMotion, true);
+  assert.equal(setExistingQuickSettingsVolume('masterVolume', 50, documentSource, { Event: FakeEvent }), false);''',
+              '''  assert.equal(before.masterVolume, 70);
+  assert.equal(before.musicVolume, 64);
+  assert.equal(before.partnerVoiceMuted, true);
+  assert.deepEqual(before.missing, []);
+  assert.deepEqual(before.knownAuthorityGaps, QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS);
+  assert.deepEqual(before.knownAuthorityGaps, []);
+
+  assert.equal(setExistingQuickSettingsMasterVolume(35, documentSource, { Event: FakeEvent }), true);
+  assert.equal(controls.musicVolume.value, '32');
+  assert.equal(controls.sfxVolume.value, '35');
+  assert.equal(controls.partnerVoiceVolume.value, '28');
+  assert.equal(readExistingQuickSettings(documentSource).masterVolume, 35);
+  assert.deepEqual(dispatched, ['input', 'change', 'input', 'change', 'input', 'change']);
+
+  dispatched.length = 0;
+  assert.equal(setExistingQuickSettingsVolume('musicVolume', 42, documentSource, { Event: FakeEvent }), true);
+  assert.equal(controls.musicVolume.value, '42');
+  assert.deepEqual(dispatched, ['input', 'change']);
+  assert.equal(toggleExistingQuickSetting('reduceMotion', documentSource), true);
+  assert.equal(readExistingQuickSettings(documentSource).reduceMotion, true);
+  assert.equal(setExistingQuickSettingsVolume('masterVolume', 50, documentSource, { Event: FakeEvent }), false);''',
+              'focused regression',
+          )
+
+          home_path.write_text(home, encoding='utf-8')
+          test_path.write_text(test, encoding='utf-8')
+          PY
+
+      - name: Run focused Quick Settings regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/home-boot-presentation.test.mjs
+
+      - name: Commit only product and test delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f "$MANIFEST" "$WORKFLOW_FILE"
+          mapfile -t changed < <(git status --short | sed 's/^...//' | sort)
+          mapfile -t expected < <(printf '%s\n' \
+            browser/home-boot-runtime-mount.mjs \
+            tests/home-boot-presentation.test.mjs \
+            "$MANIFEST" \
+            "$WORKFLOW_FILE" | sort)
+          test "${#changed[@]}" -eq 4
+          test "${changed[0]}" = "${expected[0]}"
+          test "${changed[1]}" = "${expected[1]}"
+          test "${changed[2]}" = "${expected[2]}"
+          test "${changed[3]}" = "${expected[3]}"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/home-boot-runtime-mount.mjs tests/home-boot-presentation.test.mjs "$MANIFEST" "$WORKFLOW_FILE"
+          git commit -m '[qs-master-result] add derived Quick Settings master volume'
+          git push origin HEAD:sol/quick-settings-master-r1-20260906

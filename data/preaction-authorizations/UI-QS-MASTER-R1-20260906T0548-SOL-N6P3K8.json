@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-QS-MASTER-R1-20260906T0548-SOL-N6P3K8",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "QUICK_SETTINGS_MASTER_VOLUME_R1",
+  "acquireKey": "UI-QS-MASTER-R1-20260906T0548-SOL-N6P3K8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_QUICK_SETTINGS_MASTER_VOLUME_KNOWN_AUTHORITY_GAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_MODULE_READBACK_PLUS_FOCUSED_NODE_REGRESSION",
+  "proceedToken": "PROCEED|UI-QS-MASTER-R1-20260906T0548-SOL-N6P3K8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|user-explicit-quick-settings-master-volume|active-lease-readback",
+  "authorizationBaseSha": "77777f15cc263a33ff9bb8ec1de7e896c979223b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "QUICK_SETTINGS_MASTER_VOLUME_R1",
+  "leaseAcquireKey": "UI-QS-MASTER-R1-20260906T0548-SOL-N6P3K8",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 05:48 JST",
+  "leaseUntilJst": "2026-09-06 06:38 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:M7",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "solutionSignature": "QUICK_SETTINGS_DERIVED_MASTER_VOLUME_PROXY_R1",
+  "reuseDisposition": "REPAIR_EXISTING",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidence": [
+    "The current Quick Settings already proxies the full Settings BGM/SFX/Voice controls and explicitly lists masterVolume as its only known authority gap.",
+    "The user-authored task row requires 全体音量 in Quick Settings and forbids a second settings store/authority.",
+    "A derived grouped slider can scale the three existing authoritative volume controls proportionally, preserving their mix while adding no persisted state or HTML/schema mutation.",
+    "browser/GAMEROAD.html is read-only because the current Partner lease owns it; this repair remains entirely in owner-free Home runtime/test files."
+  ]
+}

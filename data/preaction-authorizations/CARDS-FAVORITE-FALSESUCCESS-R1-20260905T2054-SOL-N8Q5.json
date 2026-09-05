@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-FAVORITE-FALSESUCCESS-R1-20260905T2054-SOL-N8Q5",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "CARDS_FAVORITE_FINDABILITY_R1",
+  "acquireKey": "CARDS-FAVORITE-FALSESUCCESS-R1-20260905T2054-SOL-N8Q5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_FAVORITE_HANDLER_COMMITS_UI_BEFORE_PERSIST_RESULT_093220_20260905",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_FAVORITE_STORAGE_FAILCLOSED_UNIT_TEST_PLUS_LIVE_HANDLER_SOURCE_READBACK_20260905",
+  "proceedToken": "PROCEED|CARDS-FAVORITE-FALSESUCCESS-R1-20260905T2054-SOL-N8Q5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260905T2057JST",
+  "authorizationBaseSha": "093220a142bea6cfb60b453b16bbfb279ccfa1db",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "data/preaction-authorizations/CARDS-FAVORITE-FALSESUCCESS-R1-20260905T2054-SOL-N8Q5.json"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "CARDS_FAVORITE_FINDABILITY_R1",
+  "leaseAcquireKey": "CARDS-FAVORITE-FALSESUCCESS-R1-20260905T2054-SOL-N8Q5",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 20:57 JST",
+  "leaseUntilJst": "2026-09-05 21:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A401:L401",
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "data/preaction-authorizations/CARDS-FAVORITE-FALSESUCCESS-R1-20260905T2054-SOL-N8Q5.json"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR base main@093220a142bea6cfb60b453b16bbfb279ccfa1db; intended branch sol/cards-favorite-failclosed-r1-20260905; mutable browser/cards-deck-presentation.mjs + tests/cards-deck-presentation.test.mjs + TRANSIENT data/preaction-authorizations/CARDS-FAVORITE-FALSESUCCESS-R1-20260905T2054-SOL-N8Q5.json only; browser/GAMEROAD.html + deck rules/storage/ownership/save/economy/network READ_ONLY"
+}

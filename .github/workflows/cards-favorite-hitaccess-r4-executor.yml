@@ -13,6 +13,7 @@ env:
   ACQUIRE_KEY: CARDS-FAVORITE-HITACCESS-R4-20260906T0306-SOL-J7N4K2
   MANIFEST: data/preaction-authorizations/CARDS-FAVORITE-HITACCESS-R4-20260906T0306-SOL-J7N4K2.json
   WORKFLOW_FILE: .github/workflows/cards-favorite-hitaccess-r4-executor.yml
+  PROBE_B64: dGVzdCgnUjQgcGhvbmUgaGl0IGdlb21ldHJ5IHByb2JlJywgYXN5bmMgKHsgcGFnZSB9KSA9PiB7CiAgYXdhaXQgcGFnZS5zZXRWaWV3cG9ydFNpemUoeyB3aWR0aDogMzkwLCBoZWlnaHQ6IDg0NCB9KTsKICBjb25zdCByZXNwb25zZSA9IGF3YWl0IHBhZ2UuZ290bygnL2Jyb3dzZXIvR0FNRVJPQUQuaHRtbCcsIHsgd2FpdFVudGlsOiAnbG9hZCcgfSk7CiAgZXhwZWN0KHJlc3BvbnNlPy5vaygpKS50b0JlVHJ1dGh5KCk7CiAgYXdhaXQgcGFnZS53YWl0Rm9yRnVuY3Rpb24oKCkgPT4gQm9vbGVhbihnbG9iYWxUaGlzLl9fR0FNRVJPQURfVEVTVF9fICYmIGdsb2JhbFRoaXMuR0FNRVJPQURfTkFWX1FBKSk7CiAgYXdhaXQgcGFnZS5ldmFsdWF0ZSgoKSA9PiBsb2NhbFN0b3JhZ2UucmVtb3ZlSXRlbSgnZ2FtZXJvYWQuY2FyZHMuZmF2b3JpdGUudjEnKSk7CiAgYXdhaXQgcGFnZS5yZWxvYWQoeyB3YWl0VW50aWw6ICdsb2FkJyB9KTsKICBhd2FpdCBwYWdlLndhaXRGb3JGdW5jdGlvbigoKSA9PiBCb29sZWFuKGdsb2JhbFRoaXMuX19HQU1FUk9BRF9URVNUX18gJiYgZ2xvYmFsVGhpcy5HQU1FUk9BRF9OQVZfUUEpKTsKICBjb25zdCBnbyA9IHBhZ2UubG9jYXRvcignLmhvbWVQYWRDaG9pY2VbZGF0YS1ob21lLXRhcmdldD0iY2FyZHMiXTp2aXNpYmxlJykuZmlyc3QoKTsKICBhd2FpdCBleHBlY3QoZ28pLnRvQmVWaXNpYmxlKCk7CiAgYXdhaXQgZ28uY2xpY2soKTsKICBhd2FpdCBwYWdlLndhaXRGb3JGdW5jdGlvbigoKSA9PiBnbG9iYWxUaGlzLkdBTUVST0FEX05BVl9RQT8uc25hcHNob3Q/LigpLnNjcmVlbiA9PT0gJ2NhcmRzJyAmJiBnbG9iYWxUaGlzLkdBTUVST0FEX1NDUkVFTl9UUkFOU0lUSU9OPy5nZXRTdGF0ZT8uKCkucGhhc2UgPT09ICdJRExFJyk7CiAgY29uc3QgY2FyZCA9IHBhZ2UubG9jYXRvcignI2NvbGxlY3Rpb25HcmlkIGJ1dHRvbi5zbG90LmxpdmUuY2FyZEZhY2U6dmlzaWJsZScpLmZpcnN0KCk7CiAgYXdhaXQgZXhwZWN0KGNhcmQpLnRvQmVWaXNpYmxlKCk7CiAgYXdhaXQgY2FyZC5zY3JvbGxJbnRvVmlld0lmTmVlZGVkKCk7CiAgY29uc3QgZ2VvbWV0cnkgPSBhd2FpdCBjYXJkLmV2YWx1YXRlKChub2RlKSA9PiB7CiAgICBjb25zdCBkZXNjcmliZSA9IChlbCkgPT4gewogICAgICBpZiAoIWVsKSByZXR1cm4gbnVsbDsKICAgICAgY29uc3QgciA9IGVsLmdldEJvdW5kaW5nQ2xpZW50UmVjdCgpOwogICAgICBjb25zdCBzID0gZ2V0Q29tcHV0ZWRTdHlsZShlbCk7CiAgICAgIHJldHVybiB7CiAgICAgICAgdGFnOiBlbC50YWdOYW1lLAogICAgICAgIGlkOiBlbC5pZCB8fCBudWxsLAogICAgICAgIGNsYXNzTmFtZTogdHlwZW9mIGVsLmNsYXNzTmFtZSA9PT0gJ3N0cmluZycgPyBlbC5jbGFzc05hbWUgOiBudWxsLAogICAgICAgIHJvbGU6IGVsLmdldEF0dHJpYnV0ZSgnZGF0YS1yb2xlJyksCiAgICAgICAgZmlsdGVyOiBlbC5nZXRBdHRyaWJ1dGUoJ2RhdGEtZmlsdGVyJyksCiAgICAgICAgZGF0YUlkOiBlbC5nZXRBdHRyaWJ1dGUoJ2RhdGEtaWQnKSwKICAgICAgICB0ZXh0OiBTdHJpbmcoZWwudGV4dENvbnRlbnQgfHwgJycpLnRyaW0oKS5zbGljZSgwLCA4MCksCiAgICAgICAgcmVjdDogeyBsZWZ0OnIubGVmdCwgdG9wOnIudG9wLCByaWdodDpyLnJpZ2h0LCBib3R0b206ci5ib3R0b20sIHdpZHRoOnIud2lkdGgsIGhlaWdodDpyLmhlaWdodCB9LAogICAgICAgIHN0eWxlOiB7IHBvc2l0aW9uOnMucG9zaXRpb24sIHpJbmRleDpzLnpJbmRleCwgcG9pbnRlckV2ZW50czpzLnBvaW50ZXJFdmVudHMsIHRyYW5zZm9ybTpzLnRyYW5zZm9ybSwgb3ZlcmZsb3c6cy5vdmVyZmxvdyB9LAogICAgICB9OwogICAgfTsKICAgIGNvbnN0IHIgPSBub2RlLmdldEJvdW5kaW5nQ2xpZW50UmVjdCgpOwogICAgY29uc3QgeCA9IHIubGVmdCArIHIud2lkdGggLyAyOwogICAgY29uc3QgeSA9IHIudG9wICsgci5oZWlnaHQgLyAyOwogICAgY29uc3QgZmlsdGVyID0gZG9jdW1lbnQucXVlcnlTZWxlY3RvcignW2RhdGEtcm9sZT0iY2FyZHMtZGVjay1maW5kYWJpbGl0eSJdIFtkYXRhLWZpbHRlcj0iZmF2b3JpdGUiXScpOwogICAgY29uc3QgZnIgPSBmaWx0ZXI/LmdldEJvdW5kaW5nQ2xpZW50UmVjdD8uKCk7CiAgICBjb25zdCBmeCA9IGZyID8gZnIubGVmdCArIGZyLndpZHRoIC8gMiA6IDA7CiAgICBjb25zdCBmeSA9IGZyID8gZnIudG9wICsgZnIuaGVpZ2h0IC8gMiA6IDA7CiAgICByZXR1cm4gewogICAgICBwb2ludDogeyB4LCB5IH0sCiAgICAgIGNhcmQ6IGRlc2NyaWJlKG5vZGUpLAogICAgICBzdGFjazogZG9jdW1lbnQuZWxlbWVudHNGcm9tUG9pbnQoeCwgeSkuc2xpY2UoMCwgMTIpLm1hcChkZXNjcmliZSksCiAgICAgIGhvc3Q6IGRlc2NyaWJlKGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoJ1tkYXRhLXJvbGU9ImNhcmRzLWRlY2stZmluZGFiaWxpdHkiXScpKSwKICAgICAgZmlsdGVyOiBkZXNjcmliZShmaWx0ZXIpLAogICAgICBmaWx0ZXJTdGFjazogZnIgPyBkb2N1bWVudC5lbGVtZW50c0Zyb21Qb2ludChmeCwgZnkpLnNsaWNlKDAsIDEyKS5tYXAoZGVzY3JpYmUpIDogW10sCiAgICAgIGdyaWQ6IGRlc2NyaWJlKGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoJyNjb2xsZWN0aW9uR3JpZCcpKSwKICAgICAgc2NyZWVuOiBkZXNjcmliZShkb2N1bWVudC5xdWVyeVNlbGVjdG9yKCdzZWN0aW9uW2RhdGEtc2NyZWVuPSJjYXJkcyJdJykpLAogICAgICBzY3JvbGw6IHsgeDogd2luZG93LnNjcm9sbFgsIHk6IHdpbmRvdy5zY3JvbGxZIH0sCiAgICAgIHZpZXdwb3J0OiB7IHdpZHRoOiBpbm5lcldpZHRoLCBoZWlnaHQ6IGlubmVySGVpZ2h0IH0sCiAgICB9OwogIH0pOwogIGNvbnNvbGUubG9nKCdSNF9HRU9NRVRSWT0nICsgSlNPTi5zdHJpbmdpZnkoZ2VvbWV0cnkpKTsKfSk7Cg==
 
 jobs:
   phone-geometry-probe:
@@ -57,83 +58,26 @@ jobs:
           test "${changed[0]}" = "${expected[0]}"
           test "${changed[1]}" = "${expected[1]}"
 
-      - name: Patch candidate and append temporary phone probe
+      - name: Patch candidate and append phone probe
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
+          import base64, os
           from pathlib import Path
           product = Path('browser/cards-deck-presentation.mjs')
           text = product.read_text(encoding='utf-8')
           old = '[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}[data-role="cards-deck-findability"] input{min-height:44px;min-width:min(240px,58vw);padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(10,18,30,.72);color:inherit;font:inherit}[data-role="cards-deck-findability"] button{min-height:44px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:transparent;color:inherit;font:700 13px/1 system-ui}'
-          new = '[data-role="cards-deck-findability"]{position:relative;z-index:2;pointer-events:none;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}#collectionGrid{position:relative;z-index:1;isolation:isolate}[data-role="cards-deck-findability"] input{pointer-events:auto;min-height:44px;min-width:min(240px,58vw);padding:8px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:rgba(10,18,30,.72);color:inherit;font:inherit}[data-role="cards-deck-findability"] button{pointer-events:auto;min-height:44px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:transparent;color:inherit;font:700 13px/1 system-ui}'
+          new = '[data-role="cards-deck-findability"]{position:relative;z-index:2;pointer-events:none;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}#collectionGrid{position:relative;z-index:1;isolation:isolate}[data-role="cards-deck-findability"] input{pointer-events:auto;min-height:44px;min-width:min(240px,58vw);padding:8px 12px;border-radius:12px;border:1px solid rgba(10,18,30,.72);background:rgba(10,18,30,.72);color:inherit;font:inherit}[data-role="cards-deck-findability"] button{pointer-events:auto;min-height:44px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:transparent;color:inherit;font:700 13px/1 system-ui}'
           if text.count(old) != 1:
               raise SystemExit(f'expected one findability style seam, found {text.count(old)}')
           product.write_text(text.replace(old, new, 1), encoding='utf-8')
-
           test_path = Path('tests/home-cards-2p5d-runtime.spec.mjs')
           current = test_path.read_text(encoding='utf-8')
-          marker = 'R4 phone hit geometry probe'
-          if marker in current:
+          probe = base64.b64decode(os.environ['PROBE_B64']).decode('utf-8')
+          if 'R4 phone hit geometry probe' in current:
               raise SystemExit('probe already present')
-          probe = r'''
-
-test('R4 phone hit geometry probe', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'load' });
-  expect(response?.ok()).toBeTruthy();
-  await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
-  await page.evaluate(() => localStorage.removeItem('gameroad.cards.favorite.v1'));
-  await page.reload({ waitUntil: 'load' });
-  await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
-  const go = page.locator('.homePadChoice[data-home-target="cards"]:visible').first();
-  await expect(go).toBeVisible();
-  await go.click();
-  await page.waitForFunction(() => globalThis.GAMEROAD_NAV_QA?.snapshot?.().screen === 'cards' && globalThis.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase === 'IDLE');
-  const card = page.locator('#collectionGrid button.slot.live.cardFace:visible').first();
-  await expect(card).toBeVisible();
-  await card.scrollIntoViewIfNeeded();
-  const geometry = await card.evaluate((node) => {
-    const describe = (el) => {
-      if (!el) return null;
-      const r = el.getBoundingClientRect();
-      const s = getComputedStyle(el);
-      return {
-        tag: el.tagName,
-        id: el.id || null,
-        className: typeof el.className === 'string' ? el.className : null,
-        role: el.getAttribute('data-role'),
-        filter: el.getAttribute('data-filter'),
-        dataId: el.getAttribute('data-id'),
-        text: String(el.textContent || '').trim().slice(0, 80),
-        rect: { left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width, height:r.height },
-        style: { position:s.position, zIndex:s.zIndex, pointerEvents:s.pointerEvents, transform:s.transform, overflow:s.overflow },
-      };
-    };
-    const r = node.getBoundingClientRect();
-    const x = r.left + r.width / 2;
-    const y = r.top + r.height / 2;
-    const filter = document.querySelector('[data-role="cards-deck-findability"] [data-filter="favorite"]');
-    const fr = filter?.getBoundingClientRect?.();
-    const fx = fr ? fr.left + fr.width / 2 : 0;
-    const fy = fr ? fr.top + fr.height / 2 : 0;
-    return {
-      point: { x, y },
-      card: describe(node),
-      stack: document.elementsFromPoint(x, y).slice(0, 12).map(describe),
-      host: describe(document.querySelector('[data-role="cards-deck-findability"]')),
-      filter: describe(filter),
-      filterStack: fr ? document.elementsFromPoint(fx, fy).slice(0, 12).map(describe) : [],
-      grid: describe(document.querySelector('#collectionGrid')),
-      screen: describe(document.querySelector('section[data-screen="cards"]')),
-      scroll: { x: window.scrollX, y: window.scrollY },
-      viewport: { width: innerWidth, height: innerHeight },
-    };
-  });
-  console.log('R4_GEOMETRY=' + JSON.stringify(geometry));
-});
-'''
-          test_path.write_text(current.rstrip() + probe + '\n', encoding='utf-8')
+          test_path.write_text(current.rstrip() + '\n\n' + probe, encoding='utf-8')
           PY
           git diff --check
 
@@ -171,6 +115,6 @@ test('R4 phone hit geometry probe', async ({ page }) => {
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add "$MANIFEST"
-          git commit -m '[r4-diag-result] capture leased-suite phone geometry'
+          git commit -m '[r4-diag-result] capture existing-suite phone geometry'
           git push origin HEAD:sol/cards-favorite-hitaccess-r4-20260906
           exit "$status"

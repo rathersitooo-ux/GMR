@@ -1,62 +1,31 @@
-name: TEMP Setup Short Landscape CTA R1
+name: TEMP Setup Short Landscape CTA Evidence R1
 
 on:
   push:
     branches:
       - sol/setup-short-landscape-cta-r1-20260905
     paths:
-      - 'browser/home-shell-presentation-core.mjs'
       - '.github/workflows/temp-setup-short-landscape-cta-r1.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  apply-bounded-repair:
-    if: "${{ github.event.head_commit.message == 'PREACTION: fix Setup short-landscape executor condition syntax' }}"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: sol/setup-short-landscape-cta-r1-20260905
-      - name: Replace only the existing short-landscape Setup media rule
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-          path = Path('browser/home-shell-presentation-core.mjs')
-          text = path.read_text()
-          old = '''@media (max-height:430px) and (orientation:landscape){section[data-screen="setup"] .setupHero{padding:9px 12px}section[data-screen="setup"] .setupBox{gap:7px;padding:9px 11px}section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode]{min-height:44px !important;padding-block:7px !important}section[data-screen="setup"] #startMatch{min-height:50px !important;margin-top:7px}}'''
-          new = '''@media (max-height:430px) and (orientation:landscape){section[data-screen="setup"] .setupHero{padding:9px 12px}section[data-screen="setup"] .setupBox{gap:6px;padding:8px 10px;grid-template-columns:minmax(0,1fr) minmax(168px,.9fr);align-items:stretch}section[data-screen="setup"] .setupBox>:not(#gameroadBattleFieldSelection):not(#startMatch){grid-column:1/-1}section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode]{min-height:44px !important;padding-block:7px !important}section[data-screen="setup"] #gameroadBattleFieldSelection{grid-column:1;min-width:0;margin:2px 0 0!important;padding:4px!important;border-radius:10px!important}section[data-screen="setup"] #gameroadBattleFieldSelection .grFieldHead{display:none}section[data-screen="setup"] #gameroadBattleFieldSelection .grFieldChoices{grid-auto-columns:88px!important;gap:4px!important;padding:0!important}section[data-screen="setup"] #gameroadBattleFieldSelection .grFieldChoice{min-height:44px!important}section[data-screen="setup"] #gameroadBattleFieldSelection .grFieldPreview{height:16px!important}section[data-screen="setup"] #gameroadBattleFieldSelection .grFieldText{padding:2px 4px 3px!important}section[data-screen="setup"] #gameroadBattleFieldSelection .grFieldName{font-size:10px!important}section[data-screen="setup"] #gameroadBattleFieldSelection .grFieldRole{display:none}section[data-screen="setup"] #startMatch{grid-column:2;align-self:stretch;min-height:50px !important;margin:2px 0 0!important}}'''
-          if text.count(old) != 1:
-              raise SystemExit(f'expected exactly one old rule, found {text.count(old)}')
-          path.write_text(text.replace(old, new, 1))
-          PY
-          node --check browser/home-shell-presentation-core.mjs
-          git diff --check
-          git diff -- browser/home-shell-presentation-core.mjs
-      - name: Commit bounded presentation repair
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'gameroad-executor'
-          git config user.email 'actions@users.noreply.github.com'
-          git add browser/home-shell-presentation-core.mjs
-          git commit -m 'Setup: keep primary start visible in short landscape'
-          git push origin HEAD:sol/setup-short-landscape-cta-r1-20260905
-
   exact-head-browser-evidence:
-    if: "${{ github.event.head_commit.message == 'Setup: keep primary start visible in short landscape' }}"
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Confirm product patch is present on this exact head
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'grid-template-columns:minmax(0,1fr) minmax(168px,.9fr)' browser/home-shell-presentation-core.mjs
+          grep -Fq '#gameroadBattleFieldSelection .grFieldChoice{min-height:44px!important}' browser/home-shell-presentation-core.mjs
+          node --check browser/home-shell-presentation-core.mjs
       - name: Install Playwright
         run: npm install --no-save --no-package-lock @playwright/test@1.62.0
       - name: Install Chromium

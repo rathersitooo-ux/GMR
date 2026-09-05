@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-FAVORITE-HITACCESS-R4-20260906T0306-SOL-J7N4K2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "CARDS-FAVORITE-HITACCESS-LIVE-R4",
+  "acquireKey": "CARDS-FAVORITE-HITACCESS-R4-20260906T0306-SOL-J7N4K2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FAILED_NORMAL_ENTRY_RUN_33970702681_POINTER_INTERCEPT_PLUS_CURRENT_FINDABILITY_STACKING_GAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_MODULE_DIRECT_READBACK_AND_EXISTING_PLAYWRIGHT_CARDS_ENTRY_SUITE",
+  "proceedToken": "PROCEED|CARDS-FAVORITE-HITACCESS-R4-20260906T0306-SOL-J7N4K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-adopted-favorite-hitaccess-repair|active-lease-readback",
+  "authorizationBaseSha": "5a94373bdb5c1a754c79dbf729d9a4a629af576e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "CARDS-FAVORITE-HITACCESS-LIVE-R4",
+  "leaseAcquireKey": "CARDS-FAVORITE-HITACCESS-R4-20260906T0306-SOL-J7N4K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 03:14 JST",
+  "leaseUntilJst": "2026-09-06 04:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:N5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/cards-favorite-hitaccess-r4-20260906 only: browser/cards-deck-presentation.mjs; tests/home-cards-2p5d-runtime.spec.mjs; .github/workflows/cards-favorite-hitaccess-r4-executor.yml transient executor; data/preaction-authorizations/CARDS-FAVORITE-HITACCESS-R4-20260906T0306-SOL-J7N4K2.json transient authorization witness. tests/browser-full-interaction.spec.mjs + browser/GAMEROAD.html + Deck/save/economy/network/gameplay/rules + all other files READ_ONLY.",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs"
+  ],
+  "solutionSignature": "CARDS_FAVORITE_FILTER_STACKING_ISOLATION_HITACCESS_R4",
+  "reuseDisposition": "REPAIR_EXISTING",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE_EXISTING_FINDABILITY_HOST_AND_EXISTING_CARDS_PLAYWRIGHT_SUITE",
+  "solutionSearchEvidence": [
+    "Current main already creates and handles the adopted favorite-only filter; no second favorite component or state store is needed.",
+    "Failed visible acceptance run 33970702681 reached the adopted filter and failed on physical click interception by Collection card hit surfaces.",
+    "Current injected findability CSS has no stacking isolation; the bounded repair can isolate Collection descendants and lift the existing findability host without changing layout or semantics.",
+    "At 03:10 JST another valid run acquired tests/browser-full-interaction.spec.mjs, so this run explicitly reuses its already-leased Playwright home-cards suite instead of overlapping BFI.",
+    "Acceptance will execute real Chromium across 1280x720, 390x844, and 667x375 within tests/home-cards-2p5d-runtime.spec.mjs."
+  ]
+}

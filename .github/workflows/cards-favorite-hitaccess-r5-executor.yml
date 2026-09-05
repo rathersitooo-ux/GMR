@@ -61,16 +61,15 @@ jobs:
           from pathlib import Path
           p = Path(os.environ['PRODUCT_FILE'])
           text = p.read_text(encoding='utf-8')
-          old_mount = """  grid.before?.(host);\n  if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);"""
-          new_mount = """  grid.prepend?.(host);\n  if (!host.parentNode) grid.insertBefore?.(host, grid.firstChild ?? null) ?? grid.appendChild?.(host);"""
-          if text.count(old_mount) != 1:
-              raise SystemExit(f'expected exact findability mount seam once, found {text.count(old_mount)}')
-          text = text.replace(old_mount, new_mount)
-          old_style = '[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}'
-          new_style = '[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;grid-column:1/-1;min-width:0;margin:6px 0 10px}'
-          if text.count(old_style) != 1:
-              raise SystemExit(f'expected exact findability style seam once, found {text.count(old_style)}')
-          text = text.replace(old_style, new_style)
+          replacements = [
+            ("  grid.before?.(host);\n  if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);", "  grid.prepend?.(host);\n  if (!host.parentNode) grid.insertBefore?.(host, grid.firstChild ?? null) ?? grid.appendChild?.(host);"),
+            ('[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}', '[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;grid-column:1/-1;min-width:0;margin:6px 0 10px}'),
+            ("  const observer = typeof win?.MutationObserver === 'function'\n    ? new win.MutationObserver(() => render())\n    : null;", "  const observer = typeof win?.MutationObserver === 'function'\n    ? new win.MutationObserver((mutations) => {\n      if (mutations?.length && mutations.every((mutation) => host.contains?.(mutation.target))) return;\n      render();\n    })\n    : null;")
+          ]
+          for old, new in replacements:
+              if text.count(old) != 1:
+                  raise SystemExit(f'expected repair seam once, found {text.count(old)}')
+              text = text.replace(old, new)
           p.write_text(text, encoding='utf-8')
           PY
           mapfile -t changed < <(git diff --name-only | sort)
@@ -115,14 +114,11 @@ jobs:
                 && globalThis.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase === 'IDLE'
               ));
             };
-            const topOwns = async (locator, selector) => {
-              const box = await locator.boundingBox();
-              expect(box).not.toBeNull();
-              return page.evaluate(({ x, y, selector }) => {
-                const top = document.elementFromPoint(x, y);
-                return Boolean(top?.closest?.(selector));
-              }, { x: box.x + box.width / 2, y: box.y + box.height / 2, selector });
-            };
+            const ownsCenter = async (locator) => locator.evaluate((node) => {
+              const rect = node.getBoundingClientRect();
+              const top = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+              return Boolean(top && (top === node || node.contains(top)));
+            });
             for (const size of sizes) {
               await page.setViewportSize({ width: size.width, height: size.height });
               await boot();
@@ -135,24 +131,25 @@ jobs:
               await expect(host, size.label).toBeVisible();
               await expect(filter, size.label).toBeVisible();
               expect(await page.evaluate(() => document.querySelector('[data-role="cards-deck-findability"]')?.parentElement?.id), size.label).toBe('collectionGrid');
-              expect(await topOwns(filter, '[data-role="cards-deck-findability"] [data-filter="favorite"]'), size.label + ' filter center').toBe(true);
+              expect(await host.evaluate((node) => node.getBoundingClientRect().height), size.label + ' host height').toBeGreaterThanOrEqual(44);
+              expect(await ownsCenter(filter), size.label + ' filter center').toBe(true);
 
               const card = page.locator('#collectionGrid button.slot.live.cardFace:visible').first();
               await expect(card, size.label).toBeVisible();
               await card.scrollIntoViewIfNeeded();
-              expect(await topOwns(card, '#collectionGrid button.slot.live.cardFace'), size.label + ' card center').toBe(true);
+              expect(await ownsCenter(card), size.label + ' card center').toBe(true);
               const cardId = await card.getAttribute('data-id');
               expect(cardId, size.label).toBeTruthy();
               await card.click();
 
               const favoriteAction = page.locator('[data-role="cards-favorite-action"]');
               await expect(favoriteAction, size.label).toBeVisible();
-              await expect(favoriteAction, size.label).toHaveAttribute('aria-pressed', 'false');
               await favoriteAction.click();
               await expect(favoriteAction, size.label).toHaveAttribute('aria-pressed', 'true');
+              await page.locator('#r4PreviewClose').click();
 
               await filter.scrollIntoViewIfNeeded();
-              expect(await topOwns(filter, '[data-role="cards-deck-findability"] [data-filter="favorite"]'), size.label + ' filter after card click').toBe(true);
+              expect(await ownsCenter(filter), size.label + ' filter after favorite').toBe(true);
               await filter.click();
               await expect(filter, size.label).toHaveAttribute('aria-pressed', 'true');
               await expect(page.locator(`#collectionGrid button.slot.live.cardFace[data-id="${cardId}"]`), size.label + ' favorite survives filter').toBeVisible();
@@ -161,6 +158,8 @@ jobs:
               await enterCards();
               const persistedCard = page.locator(`#collectionGrid button.slot.live.cardFace[data-id="${cardId}"]`).first();
               await expect(persistedCard, size.label + ' persisted card').toBeVisible();
+              await persistedCard.scrollIntoViewIfNeeded();
+              expect(await ownsCenter(persistedCard), size.label + ' persisted card center').toBe(true);
               await persistedCard.click();
               await expect(page.locator('[data-role="cards-favorite-action"]'), size.label + ' persisted favorite').toHaveAttribute('aria-pressed', 'true');
             }

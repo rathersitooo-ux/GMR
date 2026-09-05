@@ -47,23 +47,28 @@ jobs:
           import os
           from pathlib import Path
           p=Path(os.environ['PRODUCT_FILE']); s=p.read_text()
-          pairs=[
-            ("  grid.before?.(host);\n  if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);","  grid.prepend?.(host);\n  if (!host.parentNode) grid.insertBefore?.(host, grid.firstChild ?? null) ?? grid.appendChild?.(host);"),
-            ('[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}','[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;grid-column:1/-1;min-width:0;margin:6px 0 10px}'),
-            ("  const observer = typeof win?.MutationObserver === 'function'\n    ? new win.MutationObserver(() => render())\n    : null;","  const observer = typeof win?.MutationObserver === 'function'\n    ? new win.MutationObserver((mutations) => {\n      if (mutations?.length && mutations.every((mutation) => host.contains?.(mutation.target))) return;\n      render();\n    })\n    : null;")]
-          for old,new in pairs:
-            if s.count(old)!=1: raise SystemExit(f'repair seam count={s.count(old)}')
-            s=s.replace(old,new)
+          old="  grid.before?.(host);\n  if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);"
+          new="  const collectionTools = screen.querySelector?.('.r4CollectionTools');\n  collectionTools?.appendChild?.(host);\n  if (!host.parentNode) {\n    grid.before?.(host);\n    if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);\n  }"
+          if s.count(old)!=1: raise SystemExit(f'mount seam count={s.count(old)}')
+          s=s.replace(old,new)
+          old_style='[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}'
+          new_style='[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;grid-column:1/-1;min-width:0;margin:6px 0 4px}'
+          if s.count(old_style)!=1: raise SystemExit(f'style seam count={s.count(old_style)}')
+          s=s.replace(old_style,new_style)
           p.write_text(s)
           PY
+          mapfile -t changed < <(git diff --name-only | sort)
+          test "${#changed[@]}" -eq 1
+          test "${changed[0]}" = "$PRODUCT_FILE"
           git diff --check
+          git diff -- "$PRODUCT_FILE"
 
       - name: Install Chromium
         run: |
           npm install --no-save --no-package-lock @playwright/test@1.62.0
           npx playwright install --with-deps chromium
 
-      - name: Verify normal-entry hit access
+      - name: Verify favorite hit access and persistence on real Chromium
         shell: bash
         run: |
           set -euo pipefail
@@ -71,43 +76,76 @@ jobs:
           trap 'cp /tmp/r5-test "$TEST_FILE"' EXIT
           cat >> "$TEST_FILE" <<'EOF'
 
-          test('R5 favorite filter and collection cards own their hit centers', async ({ page }) => {
-            test.setTimeout(120_000);
-            const ownsCenter = async (loc) => loc.evaluate((node) => {
+          test('R5 favorite filter and collection cards keep physical hit access and favorite persistence', async ({ page }) => {
+            test.setTimeout(180_000);
+            const sizes=[
+              {width:1280,height:720,label:'desktop'},
+              {width:390,height:844,label:'phone'},
+              {width:667,height:375,label:'short-landscape'},
+            ];
+            const ownsCenter=async (loc)=>loc.evaluate((node)=>{
               const r=node.getBoundingClientRect();
               const top=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
               return !!top && (top===node || node.contains(top));
             });
-            for (const size of [{width:1280,height:720},{width:390,height:844},{width:667,height:375}]) {
-              await page.setViewportSize(size);
+            const boot=async()=>{
               const response=await page.goto('/browser/GAMEROAD.html',{waitUntil:'load',timeout:30_000});
               expect(response?.ok()).toBeTruthy();
-              await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA && globalThis.GAMEROAD_SCREEN_TRANSITION));
+              await page.waitForFunction(()=>Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA && globalThis.GAMEROAD_SCREEN_TRANSITION));
+            };
+            const enterCards=async()=>{
               const go=page.locator('.homePadChoice[data-home-target="cards"]:visible').first();
               await expect(go).toBeVisible();
               await go.click();
-              await page.waitForFunction(() => globalThis.GAMEROAD_NAV_QA?.snapshot?.().screen==='cards' && globalThis.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase==='IDLE');
+              await page.waitForFunction(()=>globalThis.GAMEROAD_NAV_QA?.snapshot?.().screen==='cards' && globalThis.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase==='IDLE');
+            };
+            for (const size of sizes) {
+              await page.setViewportSize({width:size.width,height:size.height});
+              await boot();
+              await page.evaluate(()=>localStorage.removeItem('gameroad.cards.favorite.v1'));
+              await page.reload({waitUntil:'load',timeout:30_000});
+              await page.waitForFunction(()=>Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA && globalThis.GAMEROAD_SCREEN_TRANSITION));
+              await enterCards();
+
               const host=page.locator('[data-role="cards-deck-findability"]');
               const filter=host.locator('[data-filter="favorite"]');
-              await expect(host).toBeVisible({timeout:10_000});
-              await expect(filter).toBeVisible();
-              expect(await host.evaluate(n=>n.parentElement?.id)).toBe('collectionGrid');
-              expect(await host.evaluate(n=>n.getBoundingClientRect().height)).toBeGreaterThanOrEqual(44);
-              expect(await ownsCenter(filter)).toBe(true);
+              await expect(host,size.label+' host').toBeVisible({timeout:10_000});
+              await expect(filter,size.label+' filter').toBeVisible();
+              expect(await host.evaluate(n=>n.parentElement?.classList?.contains('r4CollectionTools')),size.label+' stable parent').toBe(true);
+              expect(await host.evaluate(n=>n.getBoundingClientRect().height),size.label+' host height').toBeGreaterThanOrEqual(44);
+              expect(await ownsCenter(filter),size.label+' filter center').toBe(true);
+
+              const card=page.locator('#collectionGrid button.slot.live.cardFace:visible').first();
+              await expect(card,size.label+' card').toBeVisible();
+              await card.scrollIntoViewIfNeeded();
+              expect(await ownsCenter(card),size.label+' card center').toBe(true);
+              const cardId=await card.getAttribute('data-id');
+              expect(cardId,size.label+' card id').toBeTruthy();
+              await card.click();
+              await expect(page.locator('.cardPreview'),size.label+' preview').toBeVisible();
+
+              const favoriteAction=page.locator('[data-role="cards-favorite-action"]');
+              await expect(favoriteAction,size.label+' favorite action').toBeVisible();
+              await expect(favoriteAction).toHaveAttribute('aria-pressed','false');
+              await favoriteAction.click();
+              await expect(favoriteAction).toHaveAttribute('aria-pressed','true');
+
+              expect(await ownsCenter(filter),size.label+' filter after favorite').toBe(true);
               await filter.click();
               await expect(filter).toHaveAttribute('aria-pressed','true');
-              await filter.click();
-              await expect(filter).toHaveAttribute('aria-pressed','false');
-              const card=page.locator('#collectionGrid button.slot.live.cardFace:visible').first();
-              await expect(card).toBeVisible();
-              await card.scrollIntoViewIfNeeded();
-              expect(await ownsCenter(card)).toBe(true);
-              await card.click();
-              await expect(page.locator('.cardPreview')).toBeVisible();
+              await expect(page.locator(`#collectionGrid button.slot.live.cardFace[data-id="${cardId}"]`),size.label+' favorite remains after filter').toBeVisible();
+
+              await page.reload({waitUntil:'load',timeout:30_000});
+              await page.waitForFunction(()=>Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA && globalThis.GAMEROAD_SCREEN_TRANSITION));
+              await enterCards();
+              const persisted=page.locator(`#collectionGrid button.slot.live.cardFace[data-id="${cardId}"]`).first();
+              await expect(persisted,size.label+' persisted card').toBeVisible();
+              await persisted.click();
+              await expect(page.locator('[data-role="cards-favorite-action"]'),size.label+' persisted favorite').toHaveAttribute('aria-pressed','true');
             }
           });
           EOF
-          npx playwright test "$TEST_FILE" --config=playwright.config.mjs --workers=1 --grep 'R5 favorite filter and collection cards own their hit centers'
+          npx playwright test "$TEST_FILE" --config=playwright.config.mjs --workers=1 --grep 'R5 favorite filter and collection cards keep physical hit access and favorite persistence'
           cp /tmp/r5-test "$TEST_FILE"
           trap - EXIT
           git diff --exit-code -- "$TEST_FILE"

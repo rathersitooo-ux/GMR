@@ -13,6 +13,7 @@ env:
   ACQUIRE_KEY: CARDS-FAVORITE-HITACCESS-R4-20260906T0306-SOL-J7N4K2
   MANIFEST: data/preaction-authorizations/CARDS-FAVORITE-HITACCESS-R4-20260906T0306-SOL-J7N4K2.json
   WORKFLOW_FILE: .github/workflows/cards-favorite-hitaccess-r4-executor.yml
+  PROBE_B64: aW1wb3J0IHsgdGVzdCwgZXhwZWN0IH0gZnJvbSAnQHBsYXl3cmlnaHQvdGVzdCc7Cgp0ZXN0KCdSNCBwaG9uZSBoaXQgZ2VvbWV0cnkgcHJvYmUnLCBhc3luYyAoeyBwYWdlIH0pID0+IHsKICBhd2FpdCBwYWdlLnNldFZpZXdwb3J0U2l6ZSh7IHdpZHRoOiAzOTAsIGhlaWdodDogODQ0IH0pOwogIGNvbnN0IHJlc3BvbnNlID0gYXdhaXQgcGFnZS5nb3RvKCcvYnJvd3Nlci9HQU1FUk9BRC5odG1sJywgeyB3YWl0VW50aWw6ICdsb2FkJyB9KTsKICBleHBlY3QocmVzcG9uc2U/Lm9rKCkpLnRvQmVUcnV0aHkoKTsKICBhd2FpdCBwYWdlLndhaXRGb3JGdW5jdGlvbigoKSA9PiBCb29sZWFuKGdsb2JhbFRoaXMuX19HQU1FUk9BRF9URVNUX18gJiYgZ2xvYmFsVGhpcy5HQU1FUk9BRF9OQVZfUUEpKTsKICBhd2FpdCBwYWdlLmV2YWx1YXRlKCgpID0+IGxvY2FsU3RvcmFnZS5yZW1vdmVJdGVtKCdnYW1lcm9hZC5jYXJkcy5mYXZvcml0ZS52MScpKTsKICBhd2FpdCBwYWdlLnJlbG9hZCh7IHdhaXRVbnRpbDogJ2xvYWQnIH0pOwogIGF3YWl0IHBhZ2Uud2FpdEZvckZ1bmN0aW9uKCgpID0+IEJvb2xlYW4oZ2xvYmFsVGhpcy5fX0dBTUVST0FEX1RFU1RfXyAmJiBnbG9iYWxUaGlzLkdBTUVST0FEX05BVl9RQSkpOwogIGNvbnN0IGdvID0gcGFnZS5sb2NhdG9yKCcuaG9tZVBhZENob2ljZVtkYXRhLWhvbWUtdGFyZ2V0PSJjYXJkcyJdOnZpc2libGUnKS5maXJzdCgpOwogIGF3YWl0IGV4cGVjdChnbykudG9CZVZpc2libGUoKTsKICBhd2FpdCBnby5jbGljaygpOwogIGF3YWl0IHBhZ2Uud2FpdEZvckZ1bmN0aW9uKCgpID0+ICgKICAgIGdsb2JhbFRoaXMuR0FNRVJPQURfTkFWX1FBPy5zbmFwc2hvdD8uKCkuc2NyZWVuID09PSAnY2FyZHMnCiAgICAmJiBnbG9iYWxUaGlzLkdBTUVST0FEX1NDUkVFTl9UUkFOU0lUSU9OPy5nZXRTdGF0ZT8uKCkucGhhc2UgPT09ICdJRExFJwogICkpOwogIGNvbnN0IGNhcmQgPSBwYWdlLmxvY2F0b3IoJyNjb2xsZWN0aW9uR3JpZCBidXR0b24uc2xvdC5saXZlLmNhcmRGYWNlOnZpc2libGUnKS5maXJzdCgpOwogIGF3YWl0IGV4cGVjdChjYXJkKS50b0JlVmlzaWJsZSgpOwogIGF3YWl0IGNhcmQuc2Nyb2xsSW50b1ZpZXdJZk5lZWRlZCgpOwogIGNvbnN0IGdlb21ldHJ5ID0gYXdhaXQgY2FyZC5ldmFsdWF0ZSgobm9kZSkgPT4gewogICAgY29uc3QgZGVzY3JpYmUgPSAoZWwpID0+IHsKICAgICAgaWYgKCFlbCkgcmV0dXJuIG51bGw7CiAgICAgIGNvbnN0IHIgPSBlbC5nZXRCb3VuZGluZ0NsaWVudFJlY3QoKTsKICAgICAgY29uc3QgcyA9IGdldENvbXB1dGVkU3R5bGUoZWwpOwogICAgICByZXR1cm4gewogICAgICAgIHRhZzogZWwudGFnTmFtZSwKICAgICAgICBpZDogZWwuaWQgfHwgbnVsbCwKICAgICAgICBjbGFzc05hbWU6IHR5cGVvZiBlbC5jbGFzc05hbWUgPT09ICdzdHJpbmcnID8gZWwuY2xhc3NOYW1lIDogbnVsbCwKICAgICAgICByb2xlOiBlbC5nZXRBdHRyaWJ1dGUoJ2RhdGEtcm9sZScpLAogICAgICAgIGZpbHRlcjogZWwuZ2V0QXR0cmlidXRlKCdkYXRhLWZpbHRlcicpLAogICAgICAgIGRhdGFJZDogZWwuZ2V0QXR0cmlidXRlKCdkYXRhLWlkJyksCiAgICAgICAgdGV4dDogU3RyaW5nKGVsLnRleHRDb250ZW50IHx8ICcnKS50cmltKCkuc2xpY2UoMCwgODApLAogICAgICAgIHJlY3Q6IHsgbGVmdDpyLmxlZnQsIHRvcDpyLnRvcCwgcmlnaHQ6ci5yaWdodCwgYm90dG9tOnIuYm90dG9tLCB3aWR0aDpyLndpZHRoLCBoZWlnaHQ6ci5oZWlnaHQgfSwKICAgICAgICBzdHlsZTogeyBwb3NpdGlvbjpzLnBvc2l0aW9uLCB6SW5kZXg6cy56SW5kZXgsIHBvaW50ZXJFdmVudHM6cy5wb2ludGVyRXZlbnRzLCB0cmFuc2Zvcm06cy50cmFuc2Zvcm0sIG92ZXJmbG93OnMub3ZlcmZsb3cgfSwKICAgICAgfTsKICAgIH07CiAgICBjb25zdCByID0gbm9kZS5nZXRCb3VuZGluZ0NsaWVudFJlY3QoKTsKICAgIGNvbnN0IHggPSByLmxlZnQgKyByLndpZHRoIC8gMjsKICAgIGNvbnN0IHkgPSByLnRvcCArIHIuaGVpZ2h0IC8gMjsKICAgIGNvbnN0IGhvc3QgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKCdbZGF0YS1yb2xlPSJjYXJkcy1kZWNrLWZpbmRhYmlsaXR5Il0nKTsKICAgIGNvbnN0IGZpbHRlciA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoJ1tkYXRhLXJvbGU9ImNhcmRzLWRlY2stZmluZGFiaWxpdHkiXSBbZGF0YS1maWx0ZXI9ImZhdm9yaXRlIl0nKTsKICAgIGNvbnN0IGdyaWQgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKCcjY29sbGVjdGlvbkdyaWQnKTsKICAgIGNvbnN0IHNjcmVlbiA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3IoJ3NlY3Rpb25bZGF0YS1zY3JlZW49ImNhcmRzIl0nKTsKICAgIGNvbnN0IHN0YWNrID0gZG9jdW1lbnQuZWxlbWVudHNGcm9tUG9pbnQoeCwgeSkuc2xpY2UoMCwgMTApLm1hcChkZXNjcmliZSk7CiAgICBjb25zdCBmciA9IGZpbHRlcj8uZ2V0Qm91bmRpbmdDbGllbnRSZWN0Py4oKTsKICAgIGNvbnN0IGZ4ID0gZnIgPyBmci5sZWZ0ICsgZnIud2lkdGggLyAyIDogMDsKICAgIGNvbnN0IGZ5ID0gZnIgPyBmci50b3AgKyBmci5oZWlnaHQgLyAyIDogMDsKICAgIHJldHVybiB7CiAgICAgIHBvaW50OiB7IHgsIHkgfSwKICAgICAgY2FyZDogZGVzY3JpYmUobm9kZSksCiAgICAgIHN0YWNrLAogICAgICBob3N0OiBkZXNjcmliZShob3N0KSwKICAgICAgZmlsdGVyOiBkZXNjcmliZShmaWx0ZXIpLAogICAgICBmaWx0ZXJTdGFjazogZnIgPyBkb2N1bWVudC5lbGVtZW50c0Zyb21Qb2ludChmeCwgZnkpLnNsaWNlKDAsIDEwKS5tYXAoZGVzY3JpYmUpIDogW10sCiAgICAgIGdyaWQ6IGRlc2NyaWJlKGdyaWQpLAogICAgICBzY3JlZW46IGRlc2NyaWJlKHNjcmVlbiksCiAgICAgIHNjcm9sbDogeyB4OiB3aW5kb3cuc2Nyb2xsWCwgeTogd2luZG93LnNjcm9sbFkgfSwKICAgICAgdmlld3BvcnQ6IHsgd2lkdGg6IGlubmVyV2lkdGgsIGhlaWdodDogaW5uZXJIZWlnaHQgfSwKICAgIH07CiAgfSk7CiAgY29uc29sZS5sb2coJ1I0X0dFT01FVFJZPScgKyBKU09OLnN0cmluZ2lmeShnZW9tZXRyeSkpOwp9KTsK
 
 jobs:
   phone-geometry-probe:
@@ -62,6 +63,7 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
+          import base64, os
           from pathlib import Path
           product = Path('browser/cards-deck-presentation.mjs')
           text = product.read_text(encoding='utf-8')
@@ -70,69 +72,7 @@ jobs:
           if text.count(old) != 1:
               raise SystemExit(f'expected one findability style seam, found {text.count(old)}')
           product.write_text(text.replace(old, new, 1), encoding='utf-8')
-          Path('tests/r4-phone-hit-geometry.spec.mjs').write_text(r'''import { test, expect } from '@playwright/test';
-
-test('R4 phone hit geometry probe', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'load' });
-  expect(response?.ok()).toBeTruthy();
-  await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
-  await page.evaluate(() => localStorage.removeItem('gameroad.cards.favorite.v1'));
-  await page.reload({ waitUntil: 'load' });
-  await page.waitForFunction(() => Boolean(globalThis.__GAMEROAD_TEST__ && globalThis.GAMEROAD_NAV_QA));
-  const go = page.locator('.homePadChoice[data-home-target="cards"]:visible').first();
-  await expect(go).toBeVisible();
-  await go.click();
-  await page.waitForFunction(() => (
-    globalThis.GAMEROAD_NAV_QA?.snapshot?.().screen === 'cards'
-    && globalThis.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase === 'IDLE'
-  ));
-  const card = page.locator('#collectionGrid button.slot.live.cardFace:visible').first();
-  await expect(card).toBeVisible();
-  await card.scrollIntoViewIfNeeded();
-  const geometry = await card.evaluate((node) => {
-    const describe = (el) => {
-      if (!el) return null;
-      const r = el.getBoundingClientRect();
-      const s = getComputedStyle(el);
-      return {
-        tag: el.tagName,
-        id: el.id || null,
-        className: typeof el.className === 'string' ? el.className : null,
-        role: el.getAttribute('data-role'),
-        filter: el.getAttribute('data-filter'),
-        dataId: el.getAttribute('data-id'),
-        rect: { left:r.left, top:r.top, right:r.right, bottom:r.bottom, width:r.width, height:r.height },
-        style: { position:s.position, zIndex:s.zIndex, pointerEvents:s.pointerEvents, transform:s.transform, overflow:s.overflow },
-      };
-    };
-    const r = node.getBoundingClientRect();
-    const x = r.left + r.width / 2;
-    const y = r.top + r.height / 2;
-    const host = document.querySelector('[data-role="cards-deck-findability"]');
-    const filter = document.querySelector('[data-role="cards-deck-findability"] [data-filter="favorite"]');
-    const grid = document.querySelector('#collectionGrid');
-    const screen = document.querySelector('section[data-screen="cards"]');
-    const stack = document.elementsFromPoint(x, y).slice(0, 10).map(describe);
-    const fr = filter?.getBoundingClientRect?.();
-    const fx = fr ? fr.left + fr.width / 2 : 0;
-    const fy = fr ? fr.top + fr.height / 2 : 0;
-    return {
-      point: { x, y },
-      card: describe(node),
-      stack,
-      host: describe(host),
-      filter: describe(filter),
-      filterStack: fr ? document.elementsFromPoint(fx, fy).slice(0, 10).map(describe) : [],
-      grid: describe(grid),
-      screen: describe(screen),
-      scroll: { x: window.scrollX, y: window.scrollY },
-      viewport: { width: innerWidth, height: innerHeight },
-    };
-  });
-  console.log('R4_GEOMETRY=' + JSON.stringify(geometry));
-});
-''', encoding='utf-8')
+          Path('tests/r4-phone-hit-geometry.spec.mjs').write_bytes(base64.b64decode(os.environ['PROBE_B64']))
           PY
           git diff --check
 

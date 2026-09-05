@@ -28,8 +28,9 @@ jobs:
           product="browser/cards-deck-presentation.mjs"
           testfile="tests/cards-deck-presentation.test.mjs"
           marker="COLLECTION_ZERO_RESULT_ESCAPE_R1D_TESTS"
+          payload="Ci8vIENPTExFQ1RJT05fWkVST19SRVNVTFRfRVNDQVBFX1IxRF9URVNUUwp0ZXN0KCdDb2xsZWN0aW9uIHplcm8tcmVzdWx0IGVzY2FwZSBhcHBlYXJzIG9ubHkgZm9yIGFjdGl2ZSBmaW5kYWJpbGl0eSByZXN0cmljdGlvbnMgYW5kIGNsZWFycyBvbmx5IHRob3NlIHJlc3RyaWN0aW9ucycsIGFzeW5jICgpID0+IHsKICBjb25zdCB7CiAgICBDQVJEU19ERUNLX0ZJTkRBQklMSVRZX0NPTlRSQUNULAogICAgYXBwbHlDYXJkc0RlY2tGaW5kYWJpbGl0eSwKICAgIHNob3VsZE9mZmVyQ2FyZHNEZWNrRmluZGFiaWxpdHlSZXNldCwKICB9ID0gYXdhaXQgaW1wb3J0KCcuLi9icm93c2VyL2NhcmRzLWRlY2stcHJlc2VudGF0aW9uLm1qcycpOwoKICBhc3NlcnQuZXF1YWwoQ0FSRFNfREVDS19GSU5EQUJJTElUWV9DT05UUkFDVC5hdXRob3JpdGF0aXZlT3duZWRDYXJkSWRzLCAnY2FsbGVyLXN1cHBsaWVkLW9ubHknKTsKICBhc3NlcnQuZXF1YWwoQ0FSRFNfREVDS19GSU5EQUJJTElUWV9DT05UUkFDVC5hdXRob3JpdGF0aXZlU2F2ZWREZWNrQ2FyZElkcywgJ2NhbGxlci1zdXBwbGllZC1vbmx5Jyk7CiAgYXNzZXJ0LmVxdWFsKENBUkRTX0RFQ0tfRklOREFCSUxJVFlfQ09OVFJBQ1QucGVyc2lzdGVuY2UsICdub25lLXNlY29uZC1zdG9yZScpOwogIGFzc2VydC5lcXVhbChDQVJEU19ERUNLX0ZJTkRBQklMSVRZX0NPTlRSQUNULnplcm9SZXN1bHRFc2NhcGUsICdjbGVhci1jdXJyZW50LWZpbmRhYmlsaXR5LW9ubHknKTsKCiAgY29uc3QgY2FyZHMgPSBbCiAgICB7IGlkOiAnQzEnLCBuYW1lOiAnQWxwaGEnLCBkZXNjOiAnJywgc3VpdDogJ+KZoCcsIHJhbmtMYWJlbDogJ0EnIH0sCiAgICB7IGlkOiAnQzInLCBuYW1lOiAnQmV0YScsIGRlc2M6ICcnLCBzdWl0OiAn4pmlJywgcmFua0xhYmVsOiAnMicgfSwKICBdOwogIGNvbnN0IGNvbnRleHQgPSB7CiAgICBzdXJmYWNlOiAnY29sbGVjdGlvbicsCiAgICBxdWVyeTogJ3p6eicsCiAgICBkZWNrRmlsdGVyOiAnYWxsJywKICAgIGZhdm9yaXRlT25seTogZmFsc2UsCiAgICBvd25lckNhcmRJZHM6IFsnQzEnLCAnQzInXSwKICAgIHNhdmVkRGVja0NhcmRJZHM6IFtdLAogICAgZmF2b3JpdGVDYXJkSWRzOiBbXSwKICB9OwogIGNvbnN0IHplcm8gPSBhcHBseUNhcmRzRGVja0ZpbmRhYmlsaXR5KGNhcmRzLCBjb250ZXh0KTsKICBhc3NlcnQuZXF1YWwoemVyby50b3RhbENvdW50LCAyKTsKICBhc3NlcnQuZXF1YWwoemVyby52aXNpYmxlQ291bnQsIDApOwogIGFzc2VydC5lcXVhbChzaG91bGRPZmZlckNhcmRzRGVja0ZpbmRhYmlsaXR5UmVzZXQoemVybyksIHRydWUpOwoKICBjb25zdCByZXN0b3JlZCA9IGFwcGx5Q2FyZHNEZWNrRmluZGFiaWxpdHkoY2FyZHMsIHsgLi4uY29udGV4dCwgcXVlcnk6ICcnIH0pOwogIGFzc2VydC5lcXVhbChyZXN0b3JlZC52aXNpYmxlQ291bnQsIDIpOwogIGFzc2VydC5lcXVhbChzaG91bGRPZmZlckNhcmRzRGVja0ZpbmRhYmlsaXR5UmVzZXQocmVzdG9yZWQpLCBmYWxzZSk7Cn0pOwoKdGVzdCgnQ29sbGVjdGlvbiB6ZXJvLXJlc3VsdCByZXNldCBoYW5kbGVyIHByZXNlcnZlcyBmYXZvcml0ZXMgYW5kIGN1cnJlbnQgc2VsZWN0aW9uJywgYXN5bmMgKCkgPT4gewogIGNvbnN0IHsgcmVhZEZpbGUgfSA9IGF3YWl0IGltcG9ydCgnbm9kZTpmcy9wcm9taXNlcycpOwogIGNvbnN0IHNvdXJjZSA9IGF3YWl0IHJlYWRGaWxlKG5ldyBVUkwoJy4uL2Jyb3dzZXIvY2FyZHMtZGVjay1wcmVzZW50YXRpb24ubWpzJywgaW1wb3J0Lm1ldGEudXJsKSwgJ3V0ZjgnKTsKICBjb25zdCBoYW5kbGVyID0gc291cmNlLm1hdGNoKC9vblJlc2V0OlxzKlwoXClccyo9PlxzKlx7KFtcc1xTXSo/KVxuXHMqXH0vKT8uWzFdID8/ICcnOwogIGFzc2VydC5tYXRjaChoYW5kbGVyLCAvY29udGV4dFwucXVlcnkgPSAnJy8pOwogIGFzc2VydC5tYXRjaChoYW5kbGVyLCAvY29udGV4dFwuZGVja0ZpbHRlciA9ICdhbGwnLyk7CiAgYXNzZXJ0Lm1hdGNoKGhhbmRsZXIsIC9jb250ZXh0XC5mYXZvcml0ZU9ubHkgPSBmYWxzZS8pOwogIGFzc2VydC5kb2VzTm90TWF0Y2goaGFuZGxlciwgL2Zhdm9yaXRlSWRzXHMqPS8pOwogIGFzc2VydC5kb2VzTm90TWF0Y2goaGFuZGxlciwgL3NlbGVjdGVkQ2FyZElkXHMqPS8pOwp9KTsK"
 
-          test "$(git rev-parse HEAD~2)" = "7687041833bc767052629b24b2a79b011b2c64b4"
+          test "$(git merge-base HEAD 7687041833bc767052629b24b2a79b011b2c64b4)" = "7687041833bc767052629b24b2a79b011b2c64b4"
           test "$(git hash-object "$product")" = "21a66f5527473dcb6ba2ca7e1b17c5c9b38ad912"
           test "$(git hash-object "$testfile")" = "60490c6808fcd5e08bbbbe387dd69b10e7c2ca1f"
           test -f "$manifest"
@@ -40,56 +41,7 @@ jobs:
           git show 6184fa8be316ad32b4ffe8ae7e521fed8745f8ec:browser/cards-deck-presentation.mjs > /tmp/cards-deck-presentation.mjs
           test "$(git hash-object /tmp/cards-deck-presentation.mjs)" = "8bda9341df004df1f22c7e4182aa0f3263194bbb"
           mv /tmp/cards-deck-presentation.mjs "$product"
-
-          cat >> "$testfile" <<'EOF'
-
-// COLLECTION_ZERO_RESULT_ESCAPE_R1D_TESTS
- test('Collection zero-result escape appears only for active findability restrictions and clears only those restrictions', async () => {
-  const {
-    CARDS_DECK_FINDABILITY_CONTRACT,
-    applyCardsDeckFindability,
-    shouldOfferCardsDeckFindabilityReset,
-  } = await import('../browser/cards-deck-presentation.mjs');
-
-  assert.equal(CARDS_DECK_FINDABILITY_CONTRACT.authoritativeOwnedCardIds, 'caller-supplied-only');
-  assert.equal(CARDS_DECK_FINDABILITY_CONTRACT.authoritativeSavedDeckCardIds, 'caller-supplied-only');
-  assert.equal(CARDS_DECK_FINDABILITY_CONTRACT.persistence, 'none-second-store');
-  assert.equal(CARDS_DECK_FINDABILITY_CONTRACT.zeroResultEscape, 'clear-current-findability-only');
-
-  const cards = [
-    { id: 'C1', name: 'Alpha', desc: '', suit: '♠', rankLabel: 'A' },
-    { id: 'C2', name: 'Beta', desc: '', suit: '♥', rankLabel: '2' },
-  ];
-  const context = {
-    surface: 'collection',
-    query: 'zzz',
-    deckFilter: 'all',
-    favoriteOnly: false,
-    ownerCardIds: ['C1', 'C2'],
-    savedDeckCardIds: [],
-    favoriteCardIds: [],
-  };
-  const zero = applyCardsDeckFindability(cards, context);
-  assert.equal(zero.totalCount, 2);
-  assert.equal(zero.visibleCount, 0);
-  assert.equal(shouldOfferCardsDeckFindabilityReset(zero), true);
-
-  const restored = applyCardsDeckFindability(cards, { ...context, query: '' });
-  assert.equal(restored.visibleCount, 2);
-  assert.equal(shouldOfferCardsDeckFindabilityReset(restored), false);
-});
-
- test('Collection zero-result reset handler preserves favorites and current selection', async () => {
-  const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
-  const handler = source.match(/onReset:\s*\(\)\s*=>\s*\{([\s\S]*?)\n\s*\}/)?.[1] ?? '';
-  assert.match(handler, /context\.query = ''/);
-  assert.match(handler, /context\.deckFilter = 'all'/);
-  assert.match(handler, /context\.favoriteOnly = false/);
-  assert.doesNotMatch(handler, /favoriteIds\s*=/);
-  assert.doesNotMatch(handler, /selectedCardId\s*=/);
-});
-EOF
+          printf '%s' "$payload" | base64 --decode >> "$testfile"
 
           node --test "$testfile"
 

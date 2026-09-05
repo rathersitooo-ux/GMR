@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "TUTORIAL-FIRST-BATTLE-LIVE-R1-20260905T2110-SOL-Q7N4M2",
+  "taskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "workUnitKey": "FIRST-TUTORIAL-BATTLE-LIVE-CONSUMER-R1",
+  "acquireKey": "LOCK-TUTORIAL-FIRST-BATTLE-LIVE-R1-20260905T2106JST",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_DELEGATED_20260905_FIRST_TUTORIAL_PRACTICE_BATTLE_PLUS_CURRENT_SAVE_AND_FRIENDROOM_NO_REWARD_PATTERN",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_MAIN_1C04E308_SAVE_PACK_PLUS_START_ENDMATCH_PLUS_936_GUIDE_CONTROL_PLUS_1110_CONTEXTUAL_REPLAY",
+  "proceedToken": "PROCEED|LOCK-TUTORIAL-FIRST-BATTLE-LIVE-R1-20260905T2106JST|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|prediction|lease-snapshot",
+  "authorizationBaseSha": "1c04e3089acae18ea4312730cf1fd3d9872a86b2",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "FIRST-TUTORIAL-BATTLE-LIVE-CONSUMER-R1",
+  "leaseAcquireKey": "LOCK-TUTORIAL-FIRST-BATTLE-LIVE-R1-20260905T2106JST",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 21:12 JST",
+  "leaseUntilJst": "2026-09-05 22:06 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main@1c04e3089acae18ea4312730cf1fd3d9872a86b2; branch work/tutorial-first-battle-live-r1-20260905; mutable browser/GAMEROAD.html + browser/partner-advice-runtime-mount.mjs + tests/partner-advice-runtime-mount.test.mjs + tests/browser-full-interaction.spec.mjs + deploy/cloudflare/tests/build.test.mjs + TRANSIENT data/preaction-authorizations/TUTORIAL-FIRST-BATTLE-LIVE-R1-20260905T2110-SOL-Q7N4M2.json only; 093220→1c04 diff is Cards-only/nonoverlap; unrelated rules/cards/economy/network/assets READ_ONLY; second Tutorial/save authority forbidden.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/TUTORIAL-FIRST-BATTLE-LIVE-R1-20260905T2110-SOL-Q7N4M2.json"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/TUTORIAL-FIRST-BATTLE-LIVE-R1-20260905T2110-SOL-Q7N4M2.json"
+  ]
+}

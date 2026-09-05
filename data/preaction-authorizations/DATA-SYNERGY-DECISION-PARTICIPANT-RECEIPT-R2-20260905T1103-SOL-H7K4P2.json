@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DATA-SYNERGY-DECISION-PARTICIPANT-RECEIPT-R2-20260905T1103-SOL-H7K4P2",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "DECISION_PARTICIPANT_RECEIPT_R2",
+  "acquireKey": "DATA-SYNERGY-DECISION-PARTICIPANT-RECEIPT-R2-20260905T1103-SOL-H7K4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_R16_DECISION_IDENTITY_JOIN_OPEN_PLUS_EXISTING_AUTHENTICATED_BATTLE_RECEIPT_STORE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "FOCUSED_PARTNER_REPORT_PROVIDER_TEST_PASS_RUN_33938059294",
+  "proceedToken": "PROCEED|DATA-SYNERGY-DECISION-PARTICIPANT-RECEIPT-R2-20260905T1103-SOL-H7K4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "eaa5e4cf3c6343b3b3567e35947a7e0265e6a7f0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "DECISION_PARTICIPANT_RECEIPT_R2",
+  "leaseAcquireKey": "DATA-SYNERGY-DECISION-PARTICIPANT-RECEIPT-R2-20260905T1103-SOL-H7K4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-05 11:06 JST",
+  "leaseUntilJst": "2026-09-05 11:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A356:L356",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@eaa5e4cf3c6343b3b3567e35947a7e0265e6a7f0; branch sol/data-synergy-decision-participant-receipt-r2-20260905; mutable branch ref + deploy/cloudflare/relay/src/partner-report-store.mjs + deploy/cloudflare/tests/partner-report-provider.test.mjs + transient data/preaction-authorizations/DATA-SYNERGY-DECISION-PARTICIPANT-RECEIPT-R2-20260905T1103-SOL-H7K4P2.json only; report.js + relay-worker.mjs + match-store.mjs + browser decision/replay/control modules + browser/GAMEROAD.html READ_ONLY.",
+  "scope": [
+    "deploy/cloudflare/relay/src/partner-report-store.mjs",
+    "deploy/cloudflare/tests/partner-report-provider.test.mjs"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/relay/src/partner-report-store.mjs",
+    "deploy/cloudflare/tests/partner-report-provider.test.mjs"
+  ],
+  "solutionSignature": "Adapt the existing authenticated battleEventOp storage path to accept one sanitized GAMEROAD_PARTNER_DECISION_CONTROL_IDENTITY_V1 packet from a matched ticket, derive reporter slot/team from server match membership, assign server-side per-reporter sequence, and reject idempotency conflicts while preserving client control/decision evidence as non-gameplay-authoritative and non-training-eligible.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "existing-battle-receipt-storage-and-match-ticket-auth-adaptation",
+  "solutionSearchEvidence": [
+    "repo:deploy/cloudflare/relay/src/partner-report-store.mjs existing storedMatchTicketStatus + battleEventOp receipt authority",
+    "repo:browser/partner-decision-control-identity-core.mjs viewer-safe control identity packet",
+    "Drive:COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001 R16 exact live identity join blocker",
+    "focused-run:33938059294 exact product blobs pass existing + new provider regression"
+  ]
+}

@@ -10,6 +10,7 @@ import {
   createBattleReplayCardPresentationBridge,
   createBattleReplayVersionAuthority,
   createLiveReplaySession,
+  createPartnerBattleEventLogPresentationBridge,
   projectAcceptedBattleResolution,
   readBattleReplayCardPresentationPreferences,
   readLiveReplay,
@@ -85,6 +86,23 @@ function fakePresentationDocument({ reduceMotion = false, lowPerf = false } = {}
     getElementById(id) { return elements.get(id) || null; }
   };
   return { document, box, resultHeadline, styles };
+}
+
+function fakeBattleLogDocument() {
+  function node(tagName = 'div') {
+    const attributes = new Map(), listeners = new Map();
+    return { tagName: String(tagName).toUpperCase(), dataset: {}, style: {}, children: [], textContent: '', hidden: false,
+      setAttribute(name, value) { attributes.set(name, String(value)); },
+      getAttribute(name) { return attributes.has(name) ? attributes.get(name) : null; },
+      addEventListener(type, listener) { listeners.set(type, listener); },
+      appendChild(child) { this.children.push(child); return child; },
+      replaceChildren(...children) { this.children = [...children]; },
+      querySelector(selector) { if (!selector.startsWith('[') || !selector.endsWith(']')) return null; const attribute = selector.slice(1, -1); return this.children.find(child => child.getAttribute?.(attribute) !== null) || null; },
+      click() { listeners.get('click')?.({ currentTarget: this }); }
+    };
+  }
+  const shell = node('section');
+  return { document: { createElement: tag => node(tag), getElementById: id => id === 'battleLog' ? shell : null }, shell };
 }
 
 test('production session still requires all exact version authorities; capture never invents them', () => {
@@ -386,6 +404,32 @@ test('production Browser mounts replay at the canonical accepted Battle seam wit
   const replayAppend = adapter.indexOf("kind: 'battle_resolution'");
   const presentationAccept = adapter.indexOf('presentationBridge?.acceptAcceptedResolution?.({');
   assert.ok(replayAppend >= 0 && presentationAccept > replayAppend);
+});
+
+test('Battle recent public history stays compact, expands inline, deduplicates, reconnects, and rejects stale match data', () => {
+  const fake = fakeBattleLogDocument();
+  const bridge = createPartnerBattleEventLogPresentationBridge({ document: fake.document, partnerBattleLogRecentRows: 2, partnerBattleLogIncludePublicCards: true });
+  let session = createLiveReplaySession({ matchId: 'M-HISTORY', versions }, { presentationBridge: null, partnerBattleEventLogBridge: bridge });
+  for (let serial = 1; serial <= 3; serial += 1) session = appendAcceptedBattleResolution(session, resolution(serial), { presentationBridge: null, partnerBattleEventLogBridge: bridge });
+  const host = fake.shell.querySelector('[data-partner-battle-event-log]');
+  const toggle = fake.shell.querySelector('[data-partner-battle-event-log-toggle]');
+  assert.ok(host); assert.ok(toggle); assert.equal(host.children.length, 3);
+  assert.deepEqual(host.children.map(row => row.hidden), [true, false, false]);
+  assert.equal(host.dataset.partnerBattleEventLogRecentRows, '2');
+  assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+  assert.match(host.children[0].textContent, /対象C列/);
+  assert.match(host.children[0].textContent, /公開カード C1\(6\) \/ C2\(4\)/);
+  toggle.click();
+  assert.deepEqual(host.children.map(row => row.hidden), [false, false, false]);
+  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+  const before = host.children.map(row => row.textContent);
+  assert.equal(bridge.acceptSession(session).ok, true);
+  assert.equal(host.children.length, 3); assert.deepEqual(host.children.map(row => row.textContent), before);
+  assert.equal(bridge.begin('M-HISTORY'), true); assert.equal(host.children.length, 0);
+  assert.equal(bridge.acceptSession(session).eventCount, 3);
+  assert.deepEqual(host.children.map(row => row.hidden), [true, false, false]);
+  assert.equal(bridge.begin('M-NEXT'), true); assert.equal(host.children.length, 0); assert.equal(toggle.hidden, true);
+  assert.deepEqual(bridge.acceptSession(session), { ok: false, consumed: false, reason: 'PARTNER_BATTLE_LOG_MATCH_STALE' });
 });
 
 function replayMatchEndPublicData(matchId, command) {

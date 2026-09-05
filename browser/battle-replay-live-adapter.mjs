@@ -34,6 +34,8 @@ const BATTLE_CONVEYOR_ENV_TRAVEL_STEP = 0.16;
 const BATTLE_CONVEYOR_ENV_SETTLE_MS = 260;
 const PARTNER_BATTLE_LOG_HOST_ATTR = 'data-partner-battle-event-log';
 const PARTNER_BATTLE_LOG_ROW_ATTR = 'data-partner-battle-event-log-row';
+const PARTNER_BATTLE_LOG_TOGGLE_ATTR = 'data-partner-battle-event-log-toggle';
+const PARTNER_BATTLE_LOG_DEFAULT_RECENT_ROWS = 2;
 
 function cloneJson(value) {
   const text = JSON.stringify(value);
@@ -706,7 +708,7 @@ renderEnvironmentFailSoft(settleFrame, nextEnvironmentEventId);
 
   return Object.freeze({ begin, acceptAcceptedResolution, acceptAcceptedMatchEnd, snapshot });
 }
-function formatPartnerBattleEventLogRow(event) {
+function formatPartnerBattleEventLogRow(event, environment = {}) {
   if (!event || typeof event !== 'object') return null;
   if (event.kind === 'battle_resolution') {
     const data = event.data;
@@ -714,7 +716,15 @@ function formatPartnerBattleEventLogRow(event) {
     const totals = data.teamTotals && Number.isFinite(data.teamTotals.A) && Number.isFinite(data.teamTotals.B)
       ? `・A ${data.teamTotals.A} / B ${data.teamTotals.B}`
       : '';
-    return `第${data.round}ラウンド・${data.lane}列${totals}・勝者${Number(data.winnerCount) || 0}人`;
+    const publicCards = environment.partnerBattleLogIncludePublicCards === true && Array.isArray(data.players)
+      ? data.players.flatMap(player => Array.isArray(player?.cards)
+        ? player.cards.flatMap(card => nonEmptyString(card?.cardId) && Number.isFinite(card?.value)
+          ? [`${card.cardId}(${card.value})`]
+          : [])
+        : [])
+      : [];
+    const cards = publicCards.length ? `・公開カード ${publicCards.join(' / ')}` : '';
+    return `第${data.round}ラウンド・対象${data.lane}列${cards}${totals}・勝者${Number(data.winnerCount) || 0}人`;
   }
   if (event.kind === 'match_ended') {
     const data = event.data;
@@ -751,12 +761,69 @@ function partnerBattleEventLogChildren(host) {
   return Array.from(host.children);
 }
 
-function resetPartnerBattleEventLogHost(host) {
+function partnerBattleEventLogRecentRows(environment = {}) {
+  const requested = Number(environment.partnerBattleLogRecentRows);
+  return Number.isSafeInteger(requested) && requested >= 1 && requested <= 3
+    ? requested
+    : PARTNER_BATTLE_LOG_DEFAULT_RECENT_ROWS;
+}
+
+function applyPartnerBattleEventLogPresentation(host, toggle, environment = {}) {
+  const children = partnerBattleEventLogChildren(host);
+  if (!host?.dataset || !children) return false;
+  const recentRows = partnerBattleEventLogRecentRows(environment);
+  if (!toggle || typeof toggle.setAttribute !== 'function') {
+    children.forEach(child => { child.hidden = false; });
+    host.dataset.partnerBattleEventLogRecentRows = String(recentRows);
+    host.dataset.partnerBattleEventLogExpanded = 'false';
+    return true;
+  }
+  const hasOlderRows = children.length > recentRows;
+  if (!hasOlderRows) host.dataset.partnerBattleEventLogExpanded = 'false';
+  const expanded = hasOlderRows && host.dataset.partnerBattleEventLogExpanded === 'true';
+  const compactStart = Math.max(0, children.length - recentRows);
+  children.forEach((child, index) => { child.hidden = !expanded && index < compactStart; });
+  host.dataset.partnerBattleEventLogRecentRows = String(recentRows);
+  host.dataset.partnerBattleEventLogExpanded = expanded ? 'true' : 'false';
+  toggle.hidden = !hasOlderRows;
+  toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+  toggle.textContent = expanded ? '直近だけ' : '履歴を表示';
+  return true;
+}
+
+function ensurePartnerBattleEventLogToggle(host, environment = {}) {
+  const documentRef = environmentValue(environment, 'document');
+  const shell = documentRef?.getElementById?.('battleLog');
+  if (!host || !shell || typeof documentRef?.createElement !== 'function') return null;
+  let toggle = typeof shell.querySelector === 'function'
+    ? shell.querySelector(`[${PARTNER_BATTLE_LOG_TOGGLE_ATTR}]`)
+    : null;
+  if (!toggle) {
+    toggle = documentRef.createElement('button');
+    if (!toggle || typeof toggle.setAttribute !== 'function' || typeof toggle.addEventListener !== 'function' || typeof shell.appendChild !== 'function') return null;
+    toggle.setAttribute(PARTNER_BATTLE_LOG_TOGGLE_ATTR, '');
+    toggle.setAttribute('type', 'button');
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.hidden = true;
+    toggle.textContent = '履歴を表示';
+    toggle.addEventListener('click', () => {
+      if (!host.dataset) return;
+      host.dataset.partnerBattleEventLogExpanded = host.dataset.partnerBattleEventLogExpanded === 'true' ? 'false' : 'true';
+      applyPartnerBattleEventLogPresentation(host, toggle, environment);
+    });
+    shell.appendChild(toggle);
+  }
+  return toggle;
+}
+
+function resetPartnerBattleEventLogHost(host, environment = {}) {
   if (!host?.dataset) return false;
   if (typeof host.replaceChildren === 'function') host.replaceChildren();
   else host.textContent = '';
   host.dataset.partnerBattleEventCount = '0';
-  return true;
+  host.dataset.partnerBattleEventLogExpanded = 'false';
+  const toggle = ensurePartnerBattleEventLogToggle(host, environment);
+  return applyPartnerBattleEventLogPresentation(host, toggle, environment);
 }
 
 export function renderPartnerBattleEventLogProjection(projection, environment = {}) {
@@ -766,7 +833,7 @@ export function renderPartnerBattleEventLogProjection(projection, environment = 
       !Array.isArray(projection.events)) {
     return false;
   }
-  const rows = projection.events.map(formatPartnerBattleEventLogRow);
+  const rows = projection.events.map(event => formatPartnerBattleEventLogRow(event, environment));
   if (rows.some(row => row == null)) return false;
   const host = ensurePartnerBattleEventLogHost(environment);
   const documentRef = environmentValue(environment, 'document');
@@ -800,16 +867,22 @@ export function renderPartnerBattleEventLogProjection(projection, environment = 
   }
   for (const row of additions) host.appendChild(row);
   host.dataset.partnerBattleEventCount = String(rows.length);
-  return true;
+  const toggle = ensurePartnerBattleEventLogToggle(host, environment);
+  return applyPartnerBattleEventLogPresentation(host, toggle, environment);
 }
 
 export function createPartnerBattleEventLogPresentationBridge(environment = {}) {
-  function begin() {
+  let activeMatchId = null;
+  function begin(matchId) {
+    activeMatchId = nonEmptyString(matchId) ? matchId : null;
     const host = ensurePartnerBattleEventLogHost(environment);
-    return resetPartnerBattleEventLogHost(host);
+    return resetPartnerBattleEventLogHost(host, environment);
   }
 
   function acceptSession(session) {
+    if (!session || !activeMatchId || session.matchId !== activeMatchId) {
+      return deepFreeze({ ok: false, consumed: false, reason: 'PARTNER_BATTLE_LOG_MATCH_STALE' });
+    }
     return createPartnerBattleEventLogConsumerAdapter({
       readReplay: () => readLiveReplay(session),
       consumeProjection(projection) {
@@ -824,7 +897,7 @@ export function createPartnerBattleEventLogPresentationBridge(environment = {}) 
 }
 
 const liveCardPresentationBridge = createBattleReplayCardPresentationBridge();
-const livePartnerBattleEventLogBridge = createPartnerBattleEventLogPresentationBridge();
+const livePartnerBattleEventLogBridge = createPartnerBattleEventLogPresentationBridge({ partnerBattleLogIncludePublicCards: true });
 
 function assertSession(session) {
   if (!session || session.schema !== LIVE_ADAPTER_SCHEMA || !nonEmptyString(session.matchId)) {

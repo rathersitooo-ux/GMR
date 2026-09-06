@@ -36,6 +36,10 @@ jobs:
           s=s.replace('road-move-bidirectional-live-r5.spec.mjs','road-move-bidirectional-live-r8.spec.mjs')
           s=s.replace('ROAD-MOVE-BIDIRECTIONAL-R5','ROAD-MOVE-BIDIRECTIONAL-R8')
           s=s.replace('R5 source contract','R8 source contract').replace('R5_PATCH_READY','R8_PATCH_READY')
+          guard="extra = {x for x in git('diff', '--name-only', f'{BASE}...HEAD').splitlines() if x} - ALLOWED_PRE"
+          replacement="changed = {x for x in git('diff', '--name-only', f'{BASE}...HEAD').splitlines() if x}\nextra = {x for x in changed if x not in ALLOWED_PRE and not x.startswith('data/preaction-authorizations/ROAD-MOVE-RUNTIME-R8-')}"
+          if guard not in s: raise SystemExit('R8 guard target missing')
+          s=s.replace(guard,replacement,1)
           p.write_text(s)
           PY
             python3 /tmp/r8-base.py

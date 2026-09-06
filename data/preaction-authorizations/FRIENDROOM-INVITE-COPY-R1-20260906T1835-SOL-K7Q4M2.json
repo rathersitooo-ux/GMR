@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "FRIENDROOM-INVITE-COPY-R1-20260906T1835-SOL-K7Q4M2",
+  "taskId": "MINOR-MODE-PLAYGLOBAL-COVERAGE-001",
+  "workUnitKey": "FRIEND_ROOM_INVITE_COPY_R1",
+  "acquireKey": "FRIENDROOM-INVITE-COPY-R1-20260906T1835-SOL-K7Q4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_FRIEND_ROOM_CODE_VISIBLE_BUT_SHARE_ACTION_ABSENT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "READ_ONLY_CURRENT_ACTUAL_PLUS_BFI_CREATE_READY_LEAVE_CONTRACT",
+  "proceedToken": "PROCEED|FRIENDROOM-INVITE-COPY-R1-20260906T1835-SOL-K7Q4M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|exact-fr-code-copy-only|active-lease-readback",
+  "authorizationBaseSha": "f27a3ab8e1a8ea4e6a4db2faf657ae2a6b4c6136",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "MINOR-MODE-PLAYGLOBAL-COVERAGE-001",
+  "leaseWorkUnitKey": "FRIEND_ROOM_INVITE_COPY_R1",
+  "leaseAcquireKey": "FRIENDROOM-INVITE-COPY-R1-20260906T1835-SOL-K7Q4M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 18:35 JST",
+  "leaseUntilJst": "2026-09-06 19:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A24:L24",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/friendroom-invite-copy-r1-20260906 only: browser/friend-room-share-runtime.mjs; tests/friend-room-share-runtime.test.mjs; browser/rogue-run-runtime-mount.mjs; tests/rogue-run-runtime-mount.test.mjs; transient data/preaction-authorizations/FRIENDROOM-INVITE-COPY-R1-20260906T1835-SOL-K7Q4M2.json; own R23 event and CURRENT_ACTIVE_LEASES tuple. READ_ONLY browser/GAMEROAD.html; Friend Room transport/create/join/ready/start/leave authority; deploy/build; gameplay/rules/save/economy/network; active Cards/Partner/Battle/Gacha/Records/Board/Road/Result/Spectator resources.",
+  "scope": [
+    "browser/friend-room-share-runtime.mjs",
+    "tests/friend-room-share-runtime.test.mjs",
+    "browser/rogue-run-runtime-mount.mjs",
+    "tests/rogue-run-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/friend-room-share-runtime.mjs",
+    "tests/friend-room-share-runtime.test.mjs",
+    "browser/rogue-run-runtime-mount.mjs",
+    "tests/rogue-run-runtime-mount.test.mjs"
+  ],
+  "solutionSignature": "FRIEND_ROOM_EXISTING_CODE_ONE_ACTION_COPY_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_FR_CODE_AND_ALREADY_MOUNTED_RUNTIME_SEAM_NO_DUPLICATE_ROOM_STATE",
+  "solutionSearchEvidence": [
+    "Current Friend Room renders the authoritative visible FR.code directly in .friendCode > b and has no copy/share handler or secondary room-code state.",
+    "Current browser-full-interaction coverage already exercises room creation, code display, ready toggle, start gating and leave; this change must not alter those authorities.",
+    "External card-game references converge on making private-room IDs directly shareable/copyable; user complaint evidence also shows manual out-of-game code sharing is friction.",
+    "Active Cards, Partner, Battle, Gacha, Records, Board and Road work is excluded. The integration uses a separate presentation consumer loaded from an already-mounted runtime seam, leaving the monolithic Friend Room authority read-only."
+  ]
+}

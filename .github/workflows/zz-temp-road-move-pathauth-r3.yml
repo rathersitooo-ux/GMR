@@ -6,16 +6,17 @@ on:
       - sol/road-move-pathauth-r3-20260906
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   inspect:
+    if: ${{ !contains(github.event.head_commit.message, '[diag-output]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
-      - name: Inspect board input and position mutation
+      - name: Persist bounded current movement findings
         shell: bash
         run: |
           python - <<'PY'
@@ -23,32 +24,62 @@ jobs:
           import re
 
           text=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          patterns={
+          out=[]
+          def add(s=''): out.append(str(s))
+          def excerpts(label, rx, before=700, after=1200, limit=12, flags=re.I|re.S):
+              ms=list(re.finditer(rx,text,flags))
+              add(f'=== {label} count={len(ms)} ===')
+              for i,m in enumerate(ms[:limit]):
+                  lo=max(0,m.start()-before); hi=min(len(text),m.end()+after)
+                  sn=text[lo:hi].replace('\r','').replace('\n',' ')
+                  sn=re.sub(r'\s+',' ',sn)
+                  add(f'[{i+1}] at={m.start()} {sn}')
+              add()
+
+          add('ROAD MOVE PATH AUTHORITY DIAGNOSTIC')
+          add('source=browser/GAMEROAD.html exact checked-out branch base')
+          add(f'bytes={Path("browser/GAMEROAD.html").stat().st_size}')
+          add()
+
+          checks={
             'BOARD_LISTENER': r'ui\.board.{0,260}addEventListener|addEventListener.{0,260}ui\.board',
-            'NODE_CLOSEST': r'closest\([^\)]{0,120}(?:\.node|data-pos)[^\)]*\)',
-            'NODE_LISTENER': r'\b(?:b|node|btn)\.addEventListener\([^\)]{0,160}(?:click|pointer)',
+            'NODE_CLOSEST': r'closest\([^\)]{0,160}(?:\.node|data-pos)[^\)]*\)',
             'DATASET_POS': r'dataset\.pos',
             'PLAYER_NODE_ASSIGN': r'\b[A-Za-z_$][A-Za-z0-9_$]*\.node\s*=',
-            'PLAYER_NODE_OBJECT': r'\bnode\s*:\s*[A-Za-z_$][A-Za-z0-9_$\.\[\]"\'?-]*',
             'NODE_SET': r'\.node\s*=\s*[A-Za-z_$"\']',
-            'ROAD_SELECT_LISTENER': r'roadSelect.{0,260}addEventListener|addEventListener.{0,260}roadSelect',
-            'READY_LISTENER': r'readyPlan.{0,320}addEventListener|addEventListener.{0,320}readyPlan',
-            'PLAN_FN': r'function\s+[A-Za-z_$][A-Za-z0-9_$]*(?:Plan|plan|Road|road|Node|node|Path|path)[A-Za-z0-9_$]*\s*\(',
-            'PATH_CALL': r'\b[A-Za-z_$][A-Za-z0-9_$]*(?:Path|path)[A-Za-z0-9_$]*\s*\(',
+            'ROAD_SELECT_LISTENER': r'roadSelect.{0,360}addEventListener|addEventListener.{0,360}roadSelect',
+            'READY_LISTENER': r'readyPlan.{0,440}addEventListener|addEventListener.{0,440}readyPlan',
+            'CURRENT_PATH_WORDS': r'\b(?:currentPath|selectedPath|movePath|draftPath|pathHistory|plannedPath|selectedEndpoint|stepBack)\b',
+            'NODE_POINTER_OR_CLICK': r'(?:\.node|data-pos).{0,500}(?:click|pointer)|(?:click|pointer).{0,500}(?:\.node|data-pos)',
           }
-          for label,rx in patterns.items():
-            ms=list(re.finditer(rx,text,re.I|re.S))
-            print(f'\n=== {label} count={len(ms)} ===')
-            for i,m in enumerate(ms[:40]):
-              lo=max(0,m.start()-1300); hi=min(len(text),m.end()+2300)
-              print(f'--- {label} {i+1} at {m.start()} ---')
-              print(text[lo:hi].replace('\r',''))
+          for label,rx in checks.items(): excerpts(label,rx)
 
-          for token in ['pathCounts(', 'buildAdj(', 'renderBoard', 'renderBattle', 'roadSelect.value', 'battleSelect.value', 'readyPlan.disabled', 'm.players', '.node=', '.node =']:
-            ps=[m.start() for m in re.finditer(re.escape(token),text,re.I)]
-            print(f'\n=== TOKEN {token} count={len(ps)} ===')
-            for i,pos in enumerate(ps[:30]):
-              lo=max(0,pos-1500); hi=min(len(text),pos+len(token)+2600)
-              print(f'--- {token} {i+1} at {pos} ---')
-              print(text[lo:hi].replace('\r',''))
+          for token in ['pathCounts(', 'buildAdj(', 'renderBoard', 'roadSelect.value', 'battleSelect.value', 'readyPlan.disabled', 'readyPlan.addEventListener', 'roadSelect.addEventListener', 'm.players', '.node=', '.node =']:
+              positions=[m.start() for m in re.finditer(re.escape(token),text,re.I)]
+              add(f'=== TOKEN {token} count={len(positions)} ===')
+              for i,pos in enumerate(positions[:16]):
+                  lo=max(0,pos-900); hi=min(len(text),pos+len(token)+1500)
+                  sn=text[lo:hi].replace('\r','').replace('\n',' ')
+                  sn=re.sub(r'\s+',' ',sn)
+                  add(f'[{i+1}] at={pos} {sn}')
+              add()
+
+          # List path/move identifiers, useful for finding hidden names without dumping the full file.
+          for label,rx in [
+              ('PATH_IDENT',r'\b[A-Za-z_$][A-Za-z0-9_$]*(?:Path|path)[A-Za-z0-9_$]*\b'),
+              ('MOVE_IDENT',r'\b[A-Za-z_$][A-Za-z0-9_$]*(?:Move|move)[A-Za-z0-9_$]*\b'),
+              ('NODE_IDENT',r'\b[A-Za-z_$][A-Za-z0-9_$]*(?:Node|node)[A-Za-z0-9_$]*\b'),
+          ]:
+              d={}
+              for m in re.finditer(rx,text): d[m.group(0)]=d.get(m.group(0),0)+1
+              add(f'=== {label} unique={len(d)} ===')
+              for k,v in sorted(d.items(), key=lambda kv:(-kv[1],kv[0]))[:160]: add(f'{v} {k}')
+              add()
+
+          Path('data/road-move-pathauth-r3-result.txt').write_text('\n'.join(out),encoding='utf-8')
           PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add data/road-move-pathauth-r3-result.txt
+          git commit -m '[diag-output] persist Road movement path findings'
+          git push

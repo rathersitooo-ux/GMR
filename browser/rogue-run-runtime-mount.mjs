@@ -1,3 +1,4 @@
+import './friend-room-share-runtime.mjs';
 import {
   applyRogueRunEvent,
   createRogueRunState,

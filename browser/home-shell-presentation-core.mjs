@@ -52,7 +52,7 @@ section[data-screen="setup"] #startMatch:focus-visible{outline:3px solid current
 @media (max-height:430px) and (orientation:landscape){section[data-screen="setup"] .setupHero{padding:9px 12px}section[data-screen="setup"] .setupBox{gap:7px;padding:9px 11px}section[data-screen="setup"] [data-content],section[data-screen="setup"] [data-mode]{min-height:44px !important;padding-block:7px !important}section[data-screen="setup"] [data-mode]::before{min-width:4.15em;margin-inline-end:.42em;font-size:.66em}section[data-screen="setup"] #startMatch{min-height:50px !important;margin-top:7px}}
 `;
 const UPDATE_DETAILS_CSS = `
-.${UPDATE_DETAILS_TRIGGER_CLASS}{appearance:none;border:0;background:none;color:inherit;font:inherit;font-weight:inherit;line-height:inherit;padding:0;margin:0;text-decoration:underline;text-decoration-thickness:.08em;text-underline-offset:.18em;cursor:pointer;touch-action:manipulation}
+.${UPDATE_DETAILS_TRIGGER_CLASS}{appearance:none;border:0;background:none;color:inherit;font:inherit;font-weight:inherit;line-height:inherit;min-height:${TOUCH_TARGET_MIN_PX}px;padding:0;margin:0;text-decoration:underline;text-decoration-thickness:.08em;text-underline-offset:.18em;cursor:pointer;touch-action:manipulation}
 .${UPDATE_DETAILS_TRIGGER_CLASS}:focus-visible{outline:2px solid currentColor;outline-offset:3px;border-radius:4px}
 #${UPDATE_DETAILS_DIALOG_ID}[hidden]{display:none!important}
 #${UPDATE_DETAILS_DIALOG_ID}{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));background:rgba(6,9,18,.62);backdrop-filter:blur(8px)}

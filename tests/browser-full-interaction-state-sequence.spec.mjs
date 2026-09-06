@@ -326,3 +326,73 @@ test('Profile identity-first surface and Records bridge are visible through real
     description: `visible Home→Profile→Records→Back path passed on ${testInfo.project.name}; Player+Partner identity presentation visible; legacy metrics hidden; no Profile product authority or save mutation introduced`,
   });
 });
+
+test('Cards favorite-only filter is physically clickable and survives reload in the three standard viewports', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name === 'phone-touch-390x844', 'three standard viewport evidence only');
+  const runtime = observeRuntimeErrors(page);
+  await bootCurrentBrowser(page);
+
+  const cardsControl = rootGo(page, 'cards');
+  await expect(cardsControl, 'visible Home-to-Cards control').toBeVisible();
+  await cardsControl.click();
+
+  const cards = page.locator('section[data-screen="cards"]');
+  await expect(cards).toBeVisible();
+  const selected = cards.locator('#collectionGrid [data-id]:visible').first();
+  await expect(selected, 'at least one visible collection card').toBeVisible();
+  const selectedId = await selected.getAttribute('data-id');
+  expect(selectedId, 'selected card has an id').toBeTruthy();
+  await selected.click();
+
+  const favoriteAction = cards.locator('[data-role="cards-favorite-action"]:visible');
+  await expect(favoriteAction, 'favorite action becomes visible for the selected card').toBeVisible();
+  await favoriteAction.click();
+  await expect(favoriteAction, 'favorite state commits before filtering').toHaveAttribute('aria-pressed', 'true');
+
+  const favoriteFilter = cards.locator('[data-role="cards-deck-findability"] [data-filter="favorite"]');
+  await expect(favoriteFilter, 'favorite-only filter is visible').toBeVisible();
+  await favoriteFilter.scrollIntoViewIfNeeded();
+  const firstHit = await favoriteFilter.evaluate((button) => {
+    const rect = button.getBoundingClientRect();
+    const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    return {
+      reachesFilter: hit === button || button.contains(hit),
+      hitTag: hit?.tagName ?? null,
+      hitId: hit?.id ?? null,
+      hitRole: hit?.dataset?.role ?? null,
+      hitFilter: hit?.dataset?.filter ?? null,
+    };
+  });
+  expect(firstHit.reachesFilter, `favorite filter center hit target=${JSON.stringify(firstHit)}`).toBeTruthy();
+  await favoriteFilter.click();
+  await expect(favoriteFilter, 'physical click toggles favorite-only mode').toHaveAttribute('aria-pressed', 'true');
+  await expect(cards.locator(`#collectionGrid [data-id="${selectedId}"]`), 'favorited card remains visible under favorite-only filter').toBeVisible();
+
+  const filteredPng = await page.screenshot({ fullPage: true, animations: 'disabled' });
+  await testInfo.attach(`${testInfo.project.name}-cards-favorite-filter-clickable.png`, { body: filteredPng, contentType: 'image/png' });
+
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(400);
+  await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+  await rootGo(page, 'cards').click();
+  const reloadedCards = page.locator('section[data-screen="cards"]');
+  await expect(reloadedCards).toBeVisible();
+  const reloadedFilter = reloadedCards.locator('[data-role="cards-deck-findability"] [data-filter="favorite"]');
+  await expect(reloadedFilter).toBeVisible();
+  await reloadedFilter.scrollIntoViewIfNeeded();
+  const reloadHit = await reloadedFilter.evaluate((button) => {
+    const rect = button.getBoundingClientRect();
+    const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    return hit === button || button.contains(hit);
+  });
+  expect(reloadHit, 'favorite filter remains the physical hit target after reload').toBeTruthy();
+  await reloadedFilter.click();
+  await expect(reloadedFilter).toHaveAttribute('aria-pressed', 'true');
+  await expect(reloadedCards.locator(`#collectionGrid [data-id="${selectedId}"]`), 'favorite persists and is findable after reload').toBeVisible();
+
+  runtime.assertClean(testInfo);
+  testInfo.annotations.push({
+    type: 'cards-favorite-hit-access-evidence',
+    description: `favorite→visible filter click→reload→visible filter click path passed on ${testInfo.project.name}; selected=${selectedId}; no forced click used`,
+  });
+});

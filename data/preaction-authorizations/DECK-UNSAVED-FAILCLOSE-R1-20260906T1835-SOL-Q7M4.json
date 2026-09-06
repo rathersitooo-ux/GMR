@@ -9,7 +9,7 @@
   "predictionEvidenceId": "CURRENT-COMMITDECK-FAILURE-ORDERING-READBACK-20260906",
   "rehearsalStatus": "N_A_ALT_ORACLE",
   "rehearsalEvidenceId": "DECK-SAVE-RECOVERY-CORE-EXACT-READBACK-ROLLBACK-ORACLE",
-  "proceedToken": "PROCEED|DECK-UNSAVED-FAILCLOSE-R1-20260906T1835-SOL-Q7M4|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-source|existing-save-oracle|lease-snapshot",
+  "proceedToken": "PROCEED|DECK-UNSAVED-FAILCLOSE-R1-20260906T1835-SOL-Q7M4|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-source|existing-save-oracle|lease-snapshot-1846",
   "authorizationBaseSha": "f27a3ab8e1a8ea4e6a4db2faf657ae2a6b4c6136",
   "stateModelVersion": "STATE_MODEL_V1",
   "leaseAuthority": "CURRENT_ACTIVE_LEASES",
@@ -17,16 +17,20 @@
   "leaseTaskId": "DECK-UNSAVED-SAVE-ACK-INTEGRATE-001",
   "leaseWorkUnitKey": "DECK_SAVE_FAILURE_TRANSACTION_INTEGRITY_R1",
   "leaseAcquireKey": "DECK-UNSAVED-FAILCLOSE-R1-20260906T1835-SOL-Q7M4",
-  "leaseSnapshotReadbackAtJst": "2026-09-06 18:35 JST",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 18:46 JST",
   "leaseUntilJst": "2026-09-06 19:30 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A478:L478",
-  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch sol/deck-save-failclose-r1-20260906 only: browser/GAMEROAD.html; tests/deck-save-failure-transaction-integrity.test.mjs; transient data/preaction-authorizations/DECK-UNSAVED-FAILCLOSE-R1-20260906T1835-SOL-Q7M4.json; CURRENT_ACTIVE_LEASES own AcquireKey row only",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR: browser/GAMEROAD.html; browser/deck-save-recovery-core.mjs; tests/deck-save-recovery-core.test.mjs; tests/deck-save-failure-transaction-integrity.test.mjs; transient data/preaction-authorizations/DECK-UNSAVED-FAILCLOSE-R1-20260906T1835-SOL-Q7M4.json. READ_ONLY browser/deck-save-ack-core.mjs; tests/deck-save-ack-core.test.mjs.",
   "scope": [
     "browser/GAMEROAD.html",
+    "browser/deck-save-recovery-core.mjs",
+    "tests/deck-save-recovery-core.test.mjs",
     "tests/deck-save-failure-transaction-integrity.test.mjs"
   ],
   "leaseScope": [
     "browser/GAMEROAD.html",
+    "browser/deck-save-recovery-core.mjs",
+    "tests/deck-save-recovery-core.test.mjs",
     "tests/deck-save-failure-transaction-integrity.test.mjs"
   ]
 }

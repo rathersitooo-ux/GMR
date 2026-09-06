@@ -5,6 +5,7 @@ import {
   applyResultPresentationEvent,
   applyResultPresentationInput,
   createResultPresentation,
+  projectResultCharacterState,
   projectResultPresentation,
   projectResultRankPresentation
 } from '../browser/result-presentation-core.mjs';
@@ -76,6 +77,11 @@ test('corrected Result rank projection uses exact visible labels and semantic co
     visibleLabel: '勝利',
     rankColorRole: 'silver'
   });
+});
+
+test('all valid formal ranks project the existing non-defeat Result character state', () => {
+  for (const rank of [1, 2, 3, 4]) assert.equal(projectResultCharacterState(rank), 'joy');
+  for (const rank of [undefined, null, 0, 5, 1.5, '2']) assert.equal(projectResultCharacterState(rank), null);
 });
 
 test('ties reuse the same higher formal rank presentation without inventing a second ranking rule', () => {

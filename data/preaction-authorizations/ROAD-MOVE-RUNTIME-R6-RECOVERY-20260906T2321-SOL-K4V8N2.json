@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-MOVE-RUNTIME-R6-RECOVERY-20260906T2321-SOL-K4V8N2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE_R6",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R6-RECOVERY-20260906T2321-SOL-K4V8N2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R5_SHARED_ROAD_CONTRACT_PASS_AND_R6_FAILURE_ISOLATION_WITH_POSTPATCH_READY",
+  "rehearsalStatus": "PASS_WITH_CORRECTION",
+  "rehearsalEvidenceId": "RECOVER_EXISTING_R5_PATCH_THEN_ROUTE_COMPATIBLE_CARD_TAPS_DIRECTLY_TO_ROAD_SELECTION_AND_RETEST",
+  "proceedToken": "PROCEED|ROAD-MOVE-RUNTIME-R6-RECOVERY-20260906T2321-SOL-K4V8N2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|same-workunit-r6-recovery",
+  "authorizationBaseSha": "108b19a6881a95af1ea91578dbf5da246ea96776",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseUntilJst": "2026-09-07 00:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A479:N479",
+  "constraints": [
+    "Road card and movement are two inputs to one draft; never create CARD_FIRST/MOVE_FIRST modes",
+    "Road1-6 are movement upper bounds, never exact-length requirements",
+    "multiple compatible Road cards are never auto-selected",
+    "path survives Road focus changes whenever structurally legal",
+    "single compatible candidate is visual soft focus only until explicit decision/commit",
+    "do not add/select/reserve/submit/reorder/change Battle-card behavior",
+    "do not rebuild 109 topology/reachable/shortest/adjacency/stoppability authority",
+    "acceptance requires card-first, move-first, switching, back/cancel, 3 viewports and Battle-card noninterference"
+  ]
+}

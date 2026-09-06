@@ -1,119 +1,28 @@
 name: TEMP Road Move Bidirectional Live R4
 on:
   push:
-    branches: [sol/road-move-bidirectional-live-r4-20260906]
+    branches:
+      - sol/road-move-bidirectional-live-r4-20260906
 permissions:
   contents: write
 jobs:
   patch-test-commit:
-    if: ${{ !contains(github.event.head_commit.message, '[road-move-live-r4-generated]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
         with:
           ref: sol/road-move-bidirectional-live-r4-20260906
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify exact base and bounded pre-state
-        shell: bash
-        run: |
-          set -euo pipefail
-          BASE='3b9d95a9690a135b545315be1e4bff968fcfe306'
-          EXPECTED_HTML_BLOB='35f9203e2be95ba07b44c875e26bfe2047a3cee5'
-          test "$(git merge-base HEAD "$BASE")" = "$BASE"
-          test "$(git rev-parse "$BASE:browser/GAMEROAD.html")" = "$EXPECTED_HTML_BLOB"
-          EXTRA="$(git diff --name-only "$BASE"...HEAD | grep -Ev '^(data/preaction-authorizations/ROAD-MOVE-RUNTIME-R4-20260906T2001-SOL-Q8N5V1.json|\.github/workflows/zz-temp-road-move-runtime-r4.yml)$' || true)"
-          if [ -n "$EXTRA" ]; then echo "::error::Unexpected pre-patch branch files: $EXTRA"; exit 1; fi
-      - name: Patch the existing single movement authority
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('browser/GAMEROAD.html')
-          s=p.read_text()
-          if 'ROAD-MOVE-BIDIRECTIONAL-R4' in s:
-              raise SystemExit('R4 marker already present; fail closed instead of double patching')
-          def one(old,new,label):
-              global s
-              n=s.count(old)
-              if n!=1: raise SystemExit(f'{label}: expected 1 match, got {n}')
-              s=s.replace(old,new,1)
-
-          one("function preferredRoadCandidates(hand){const all=(hand||[]).filter(roadSelectable),movable=all.filter(id=>normalMoveLimitForRoad(id)>0);return movable.length?movable:all}", """function preferredRoadCandidates(hand){const all=(hand||[]).filter(roadSelectable),movable=all.filter(id=>normalMoveLimitForRoad(id)>0);return movable.length?movable:all}
-/* ROAD-MOVE-BIDIRECTIONAL-R4 — one draft, two input orders; no second movement authority. */
-function roadMoveDraftPath(p){const path=p?.plan?.path;return Array.isArray(path)&&path.length?[...path]:(p?.position?[p.position]:[])}
-function roadMoveDraftSteps(p,path=roadMoveDraftPath(p)){return Math.max(0,(path?.length||0)-1)}
-function roadMoveHeldCandidates(p){return preferredRoadCandidates(p?.hand).filter(id=>id!==p?.plan?.battleId&&normalMoveLimitForRoad(id)>0)}
-function roadMovePathStructurallyLegal(p,path=roadMoveDraftPath(p)){if(!p?.position||!path?.length||path[0]!==p.position)return false;const seen=new Set([path[0]]);for(let i=1;i<path.length;i++){if(seen.has(path[i])||!neighbors(path[i-1],p).includes(path[i]))return false;seen.add(path[i])}return true}
-function compatibleRoadCandidatesForPath(p,path=roadMoveDraftPath(p)){if(!roadMovePathStructurallyLegal(p,path))return[];const steps=roadMoveDraftSteps(p,path);return roadMoveHeldCandidates(p).filter(id=>steps<=normalMoveLimitForRoad(id))}
-function draftMoveLimitForPlayer(p){return roadMoveHeldCandidates(p).reduce((max,id)=>Math.max(max,normalMoveLimitForRoad(id)),0)}
-function roadMoveDecisionCard(p){const candidates=compatibleRoadCandidatesForPath(p),focused=p?.plan?.roadId||null;if(focused&&candidates.includes(focused))return focused;if(roadMoveDraftSteps(p)>0&&candidates.length===1)return candidates[0];return null}
-function syncRoadMoveDraftUi(){const m=state.match,me=m?.players?.[0],cards=$$('#hand .handCard'),map=$('#battleMap');cards.forEach(e=>{e.dataset.roadMoveState='NORMAL';e.classList.remove('roadMoveSoft')});if(!m||!me||m.phase!=='plan'){if(map){delete map.dataset.roadMoveSteps;delete map.dataset.roadMoveCompatibleCount}return}const path=roadMoveDraftPath(me),steps=roadMoveDraftSteps(me,path),candidates=compatibleRoadCandidatesForPath(me,path),compatible=new Set(candidates),focused=me.plan?.roadId||null;cards.forEach(e=>{const id=e.dataset.cardId;if(focused===id)e.dataset.roadMoveState=compatible.has(id)?'FOCUSED':'INVALID_FOCUS';else if(steps>0&&compatible.has(id))e.dataset.roadMoveState='COMPATIBLE';if(steps>0&&candidates.length===1&&compatible.has(id)&&focused!==id)e.classList.add('roadMoveSoft')});if(map){map.dataset.roadMoveSteps=String(steps);map.dataset.roadMoveCompatibleCount=String(candidates.length)}}""", 'draft helpers')
-
-          one("function fieldMoveFocusNodes(){const m=state.match,me=m?.players?.[0];if(!m||!me||m.phase!=='plan'||!me.plan?.roadId)return null;const moveLimit=normalMoveLimitForRoad(me.plan.roadId);if(moveLimit<=0)return null;const s=new Set([me.position,...reachable(me,moveLimit).keys(),...(me.plan?.path||[])]);return[...s]}", "function fieldMoveFocusNodes(){const m=state.match,me=m?.players?.[0];if(!m||!me||m.phase!=='plan')return null;const moveLimit=draftMoveLimitForPlayer(me);if(moveLimit<=0)return null;const s=new Set([me.position,...reachable(me,moveLimit).keys(),...(me.plan?.path||[])]);return[...s]}", 'field focus')
-          one("function renderRangeSurfaces(reach,moveLimit,viewer){const layer=$('#rangeSurfaceLayer');if(!layer)return;layer.replaceChildren();if(!reach||moveLimit<=0)return;const ns='http://www.w3.org/2000/svg';for(const [id,d] of reach){if(d>moveLimit)continue;const pts=nodeTopSurface(id,viewer);if(!pts)continue;const e=document.createElementNS(ns,'polygon');e.setAttribute('class','rangeSurface');e.setAttribute('points',pts.map(p=>`${p.x},${p.y}`).join(' '));e.dataset.pos=id;layer.appendChild(e)}syncRangeSurfacePath()}", "function renderRangeSurfaces(reach,moveLimit,viewer,strongLimit=0){const layer=$('#rangeSurfaceLayer');if(!layer)return;layer.replaceChildren();if(!reach||moveLimit<=0)return;const ns='http://www.w3.org/2000/svg';for(const [id,d] of reach){if(d>moveLimit)continue;const pts=nodeTopSurface(id,viewer);if(!pts)continue;const e=document.createElementNS(ns,'polygon');e.setAttribute('class','rangeSurface'+(strongLimit>0&&d>strongLimit?' roadMoveExtension':''));e.setAttribute('points',pts.map(p=>`${p.x},${p.y}`).join(' '));e.dataset.pos=id;layer.appendChild(e)}syncRangeSurfacePath()}", 'range surfaces')
-          one("const moveLimit=normalMoveLimitForRoad(me.plan?.roadId),reach=m.phase==='plan'&&me.plan?.roadId&&moveLimit>0?reachable(me,moveLimit):new Map();renderRangeSurfaces(reach,moveLimit,me);", "const moveLimit=draftMoveLimitForPlayer(me),strongMoveLimit=normalMoveLimitForPlayer(me),reach=m.phase==='plan'&&moveLimit>0?reachable(me,moveLimit):new Map();renderRangeSurfaces(reach,moveLimit,me,strongMoveLimit);", 'render board reach')
-          one("board.appendChild(e)});renderBoardPlayers();renderRouteLine()}", "board.appendChild(e)});renderBoardPlayers();renderRouteLine();syncRoadMoveDraftUi()}", 'render board sync')
-          one("if(me.plan?.battleId)bs.value=me.plan.battleId;syncDirectPlanRoleUi()}", "if(me.plan?.battleId)bs.value=me.plan.battleId;syncDirectPlanRoleUi();syncRoadMoveDraftUi()}", 'render hand sync')
-          one("if(r!==me.plan.roadId){me.plan.roadId=r||null;me.plan.path=[me.position]}me.plan.battleId=b||null;", "if(r!==me.plan.roadId)me.plan.roadId=r||null;me.plan.battleId=b||null;", 'preserve path on road focus')
-          one("function selectEndpoint(id){const me=state.match.players[0];if(!me.plan?.roadId)return;const path=shortest(me.position,id,normalMoveLimitForRoad(me.plan.roadId),me);if(!path)return;me.plan.path=path;$('#endpointText').textContent=id;renderBoard();updateBattleAvatar()}", "function selectEndpoint(id){const me=state.match.players[0],moveLimit=draftMoveLimitForPlayer(me);if(moveLimit<1)return;const path=shortest(me.position,id,moveLimit,me);if(!path)return;me.plan=me.plan||{roadId:null,battleId:null,path:[me.position]};me.plan.path=path;$('#endpointText').textContent=id;renderBoard();updateBattleAvatar()}", 'endpoint move first')
-          one("const reach=me.plan?.roadId?reachable(me,normalMoveLimitForRoad(me.plan.roadId)):new Map();", "const moveLimit=draftMoveLimitForPlayer(me),reach=moveLimit>0?reachable(me,moveLimit):new Map();", 'drag nearest reach')
-          one("function refreshDragVisual(){const me=state.match.players[0],end=me.plan?.path?.at(-1)||me.position,p=fieldProjection.get(end);if(p){const e=$('#battleRuntime');e.style.left=p.x+'%';e.style.top=p.y+'%'}layoutBoardPlayerTokens();renderRouteLine();syncRangeSurfacePath();$$('#board .node').forEach(e=>e.classList.toggle('path',me.plan?.path?.includes(e.dataset.pos)));$('#endpointText').textContent=end;window.__GAMEROAD_BATTLE_FOCUS_R1__?.decorate?.()}", "function refreshDragVisual(){const me=state.match.players[0],end=me.plan?.path?.at(-1)||me.position,p=fieldProjection.get(end);if(p){const e=$('#battleRuntime');e.style.left=p.x+'%';e.style.top=p.y+'%'}layoutBoardPlayerTokens();renderRouteLine();syncRangeSurfacePath();$$('#board .node').forEach(e=>e.classList.toggle('path',me.plan?.path?.includes(e.dataset.pos)));$('#endpointText').textContent=end;syncRoadMoveDraftUi();window.__GAMEROAD_BATTLE_FOCUS_R1__?.decorate?.()}", 'drag ui sync')
-          one("function beginRouteDrag(ev){const m=state.match,me=m?.players?.[0];if(!m||m.phase!=='plan'||m.busy||!me.plan?.roadId)return;const power=normalMoveLimitForRoad(me.plan.roadId);if(power<1)return;routeDrag={pointerId:ev.pointerId,before:[...(me.plan.path||[me.position])],path:[me.position]};me.plan.path=[me.position];", "function beginRouteDrag(ev){const m=state.match,me=m?.players?.[0];if(!m||m.phase!=='plan'||m.busy)return;const power=draftMoveLimitForPlayer(me);if(power<1)return;const currentPath=roadMoveDraftPath(me);me.plan=me.plan||{roadId:null,battleId:null,path:[me.position]};routeDrag={pointerId:ev.pointerId,before:[...currentPath],path:[...currentPath]};me.plan.path=[...currentPath];", 'drag begin move first')
-          one("path.length-1<normalMoveLimitForRoad(me.plan.roadId)", "path.length-1<draftMoveLimitForPlayer(me)", 'drag extension limit')
-          one("const me=m.players[0];updatePlanFromSelect();if(!me.plan?.roadId||!me.plan?.battleId){toast('ロードカードとバトルカードを選択してください');return false}", "const me=m.players[0];updatePlanFromSelect();const compatibleRoadIds=compatibleRoadCandidatesForPath(me);if(roadMoveDraftSteps(me)>0&&!compatibleRoadIds.includes(me.plan?.roadId)){const decisionRoadId=roadMoveDecisionCard(me);if(decisionRoadId){me.plan.roadId=decisionRoadId;const roadSelect=$('#roadSelect');if(roadSelect)roadSelect.value=decisionRoadId;syncRoadMoveDraftUi()}else{toast(compatibleRoadIds.length>1?'使用するロードカードを選択してください':'この経路に対応するロードカードがありません');return false}}if(!me.plan?.roadId||!me.plan?.battleId){toast('ロードカードとバトルカードを選択してください');return false}", 'explicit decision normalization')
-          one("if(step==='road'){cue.textContent='手札からロードカードを1枚選ぶ';", "if(step==='road'){cue.textContent='ロードカードを選ぶか、先に人物を動かす';if(draftMoveLimitForPlayer(me)>0)$('#battleRuntime')?.classList.add('first10Focus');", 'first10 neutral order')
-          one("snapshot:()=>{const me=state.match?.players?.[0];return{role:directPlanRole,roadId:me?.plan?.roadId||null,battleId:me?.plan?.battleId||null,path:[...(me?.plan?.path||[])],moveLimit:normalMoveLimitForPlayer(me)}}", "snapshot:()=>{const me=state.match?.players?.[0];return{role:directPlanRole,roadId:me?.plan?.roadId||null,battleId:me?.plan?.battleId||null,path:[...(me?.plan?.path||[])],moveLimit:normalMoveLimitForPlayer(me),draftMoveLimit:draftMoveLimitForPlayer(me),compatibleRoadIds:compatibleRoadCandidatesForPath(me),decisionRoadId:roadMoveDecisionCard(me)}}", 'test snapshot')
-
-          style='''\n<style id="gameroad-road-move-bidirectional-r4">\n.battle #hand .handCard[data-road-move-state="COMPATIBLE"]{outline:2px solid rgba(185,245,224,.92)!important;outline-offset:2px!important;filter:brightness(1.12)!important;translate:0 -7px!important;scale:1.015!important}\n.battle #hand .handCard[data-road-move-state="FOCUSED"]{outline:3px double #fff0a8!important;outline-offset:2px!important;filter:brightness(1.18)!important;translate:0 -11px!important;scale:1.035!important;box-shadow:0 0 0 2px rgba(255,240,168,.14),0 0 18px rgba(255,223,125,.32)!important}\n.battle #hand .handCard[data-road-move-state="INVALID_FOCUS"]{outline:2px dashed rgba(255,255,255,.72)!important;outline-offset:2px!important;filter:brightness(.78) saturate(.72)!important;translate:0 -3px!important;scale:.985!important}\n.battle #hand .handCard.roadMoveSoft{outline-width:3px!important;translate:0 -10px!important;scale:1.03!important}\n#battleMap.decisionRoad .rangeSurface.roadMoveExtension{fill:rgba(151,203,190,.055)!important;stroke:rgba(220,241,234,.42)!important;stroke-dasharray:4 4!important;opacity:.72!important}\nhtml.r10LowPerf .battle #hand .handCard[data-road-move-state]{box-shadow:none!important}\n@media(prefers-reduced-motion:reduce){.battle #hand .handCard[data-road-move-state],.battle #hand .handCard.roadMoveSoft{transition:none!important;translate:none!important;scale:1!important}}\n</style>\n'''
-          one('</body>',style+'</body>','R4 style')
-          p.write_text(s)
-
-          test=Path('tests/road-move-bidirectional-live-r4.spec.mjs')
-          test.write_text(r'''import { test, expect } from '@playwright/test';
-import fs from 'node:fs';
-const html=fs.readFileSync(new URL('../browser/GAMEROAD.html',import.meta.url),'utf8');
-
-test('R4 source contract keeps one authority, upper-bound Road semantics, and Battle invariants',()=>{
-  expect(html).toContain('ROAD-MOVE-BIDIRECTIONAL-R4');
-  expect(html).toContain('steps<=normalMoveLimitForRoad(id)');
-  expect(html).toContain("compatibleRoadIds.length>1?'使用するロードカードを選択してください'");
-  expect(html).toContain("if(me.plan.roadId===me.plan.battleId){toast('別の札を選択してください')");
-  expect(html).toContain("removeHand(p,p.plan.battleId)");
-  expect(html).not.toContain('if(r!==me.plan.roadId){me.plan.roadId=r||null;me.plan.path=[me.position]}');
-  for(const state of ['NORMAL','COMPATIBLE','FOCUSED','INVALID_FOCUS']) expect(html).toContain(state);
-  expect(html).toContain('@media(prefers-reduced-motion:reduce)');
-});
-
-async function installLegalBattleDeck(page){return page.evaluate(()=>{const t=window.__GAMEROAD_TEST__;const publicMain=new Set(t.deckPublic().filter(c=>c.slot==='main').map(c=>c.id));const standard=window.__CARD_DATA__.filter(c=>publicMain.has(c.id)&&/^(SP|HT|DI|CL)$/.test(c.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c=>c.id);const royal=['SP_J','SP_Q','SP_K'],nonRoyal=standard.filter(id=>!t.isRoyalCard(id)),main=[...nonRoyal.slice(0,37),...royal];t.deckSetDraft(main,[]);return t.deckCommit()})}
-async function openRoadBattle(page){const response=await page.goto('/browser/GAMEROAD.html',{waitUntil:'domcontentloaded'});expect(response?.ok()).toBeTruthy();await page.waitForTimeout(800);expect(await installLegalBattleDeck(page)).toBeTruthy();const setupGo=page.locator('[data-home-target="setup"]:visible,[data-go="setup"]:visible').first();await expect(setupGo).toBeVisible();await setupGo.click();const setup=page.locator('section[data-screen="setup"]');await expect(setup).toBeVisible();await setup.locator('[data-content="road_shield"]').click();await setup.locator('[data-mode="2p"]').click();await setup.locator('#startMatch').click();const battle=page.locator('section[data-screen="battle"]');await expect(battle).toBeVisible();await expect(battle.locator('#phaseTitle')).toContainText('行動を計画');return battle}
-
-test('move-first exposes compatible Road cards and focusing one preserves the drafted path',async({page})=>{
-  const battle=await openRoadBattle(page);const road=battle.locator('#roadSelect');await expect(road).toHaveValue('');
-  const snapshot0=await page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot());expect(snapshot0.draftMoveLimit).toBeGreaterThan(0);
-  const next=battle.locator('.node.reachable[data-move-distance="1"]').first();await expect(next).toBeEnabled();await next.click();
-  const moved=await page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot());expect(moved.path.length).toBeGreaterThan(1);expect(moved.compatibleRoadIds.length).toBeGreaterThan(0);expect(moved.roadId).toBeNull();
-  const candidates=battle.locator('#hand .handCard[data-road-move-state="COMPATIBLE"],#hand .handCard.roadMoveSoft');expect(await candidates.count()).toBeGreaterThan(0);
-  const beforePath=JSON.stringify(moved.path);await candidates.first().click();
-  await expect.poll(()=>page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot().roadId)).not.toBeNull();
-  const focused=await page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot());expect(JSON.stringify(focused.path)).toBe(beforePath);expect(focused.compatibleRoadIds).toContain(focused.roadId);
-  const focusedCard=battle.locator(`#hand .handCard[data-card-id="${focused.roadId}"]`);await expect(focusedCard).toHaveAttribute('data-road-move-state','FOCUSED');
-});
-
-test('card-first still moves inside that Road upper bound without changing Battle-card authority',async({page})=>{
-  const battle=await openRoadBattle(page);const roadCard=battle.locator('#hand .handCard').filter({hasNotText:'BATTLE'}).first();
-  const roadOptions=battle.locator('#roadSelect option:not([value=""])');expect(await roadOptions.count()).toBeGreaterThan(0);const roadId=await roadOptions.first().getAttribute('value');expect(roadId).toBeTruthy();
-  const exact=battle.locator(`#hand .handCard[data-card-id="${roadId}"]`);await expect(exact).toBeVisible();await exact.click();await expect.poll(()=>page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot().roadId)).toBe(roadId);
-  const before=await page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot());expect(before.path.length).toBe(1);
-  const next=battle.locator('.node.reachable[data-move-distance="1"]').first();await expect(next).toBeEnabled();await next.click();const after=await page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot());expect(after.roadId).toBe(roadId);expect(after.path.length).toBeGreaterThan(1);expect(after.path.length-1).toBeLessThanOrEqual(after.draftMoveLimit);
-});
-''')
-          PY
-          git diff --check
+      - name: Apply exact bounded Road patch
+        run: python3 tools/zz-temp-road-move-runtime-r4.py
+      - name: Validate patch whitespace
+        run: git diff --check
       - name: Install Playwright
         run: |
           npm install --no-save --no-package-lock @playwright/test@1.62.0
@@ -124,30 +33,31 @@ test('card-first still moves inside that Road upper bound without changing Battl
           cat > .road-r4-playwright.config.mjs <<'EOF'
           import { defineConfig } from '@playwright/test';
           export default defineConfig({
-            testDir:'./tests',
-            testMatch:'road-move-bidirectional-live-r4.spec.mjs',
-            timeout:90_000,
-            expect:{timeout:7_000},
-            fullyParallel:false,
-            workers:1,
-            retries:0,
-            use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,trace:'retain-on-failure',screenshot:'only-on-failure',video:'off'},
-            projects:[
-              {name:'desktop-1280x720',use:{viewport:{width:1280,height:720}}},
-              {name:'phone-390x844',use:{viewport:{width:390,height:844}}},
-              {name:'short-landscape-667x375',use:{viewport:{width:667,height:375}}}
+            testDir: './tests',
+            testMatch: 'road-move-bidirectional-live-r4.spec.mjs',
+            timeout: 90000,
+            expect: { timeout: 7000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true, trace: 'retain-on-failure', screenshot: 'only-on-failure', video: 'off' },
+            projects: [
+              { name: 'desktop-1280x720', use: { viewport: { width: 1280, height: 720 } } },
+              { name: 'phone-390x844', use: { viewport: { width: 390, height: 844 } } },
+              { name: 'short-landscape-667x375', use: { viewport: { width: 667, height: 375 } } }
             ],
-            webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1',url:'http://127.0.0.1:4173/browser/GAMEROAD.html',reuseExistingServer:false,timeout:120_000}
+            webServer: { command: 'python3 -m http.server 4173 --bind 127.0.0.1', url: 'http://127.0.0.1:4173/browser/GAMEROAD.html', reuseExistingServer: false, timeout: 120000 }
           });
           EOF
           npx playwright test --config=.road-r4-playwright.config.mjs --workers=1
           rm .road-r4-playwright.config.mjs
-      - name: Commit verified product delta and remove executor
+      - name: Commit verified product delta and remove transients
         shell: bash
         run: |
           set -euo pipefail
           rm .github/workflows/zz-temp-road-move-runtime-r4.yml
-          git add browser/GAMEROAD.html tests/road-move-bidirectional-live-r4.spec.mjs .github/workflows/zz-temp-road-move-runtime-r4.yml
+          rm tools/zz-temp-road-move-runtime-r4.py
+          git add browser/GAMEROAD.html tests/road-move-bidirectional-live-r4.spec.mjs .github/workflows/zz-temp-road-move-runtime-r4.yml tools/zz-temp-road-move-runtime-r4.py
           git diff --cached --check
           git config user.name 'gameroad-runtime-bot'
           git config user.email 'actions@users.noreply.github.com'

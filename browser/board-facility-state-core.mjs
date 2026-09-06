@@ -235,6 +235,7 @@ export function purchaseShopProduct(state, { requestId, catalogRevision, product
 
   const product = state.shopProducts[productId];
   if (!product) return decision(state, 'rejected', 'PRODUCT_NOT_REGISTERED');
+  if (product.grantCard.ownerId !== state.playerId) return decision(state, 'rejected', 'GRANT_CARD_NOT_OWNED');
   if (state.honey < product.cost) return decision(state, 'rejected', 'INSUFFICIENT_HONEY');
   if (cardExistsAnywhere(state, product.grantCard.id)) return decision(state, 'rejected', 'GRANT_CARD_ALREADY_EXISTS');
 

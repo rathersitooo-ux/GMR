@@ -34,7 +34,7 @@ jobs:
           s=s.replace('ROAD-MOVE-RUNTIME-R5-20260906T2113-SOL-P8N4V6','ROAD-MOVE-RUNTIME-R6-20260906T2210-SOL-R6Q4V2')
           s=s.replace('.github/workflows/zz-temp-road-move-runtime-r5.yml','.github/workflows/zz-temp-road-move-runtime-r6.yml')
           s=s.replace("    'tools/zz-temp-road-move-runtime-r5.py',\n",'')
-          s=s.replace("ALLOWED_PRE = {\n", "ALLOWED_PRE = {\n    'data/preaction-authorizations/ROAD-MOVE-RUNTIME-R7-20260906T2321-SOL-V8Q4N6.json',\n    'data/preaction-authorizations/ROAD-MOVE-RUNTIME-R6-RECOVERY-20260906T2321-SOL-K4V8N2.json',\n    'tools/zz-temp-road-move-runtime-r6.py',\n")
+          s=s.replace("ALLOWED_PRE = {\n", "ALLOWED_PRE = {\n    'data/preaction-authorizations/ROAD-MOVE-RUNTIME-R8-20260907T0100-SOL-P4V8N2.json',\n    'data/preaction-authorizations/ROAD-MOVE-RUNTIME-R7-20260906T2321-SOL-V8Q4N6.json',\n    'data/preaction-authorizations/ROAD-MOVE-RUNTIME-R6-RECOVERY-20260906T2321-SOL-K4V8N2.json',\n    'tools/zz-temp-road-move-runtime-r6.py',\n")
           s=s.replace('road-move-bidirectional-live-r5.spec.mjs','road-move-bidirectional-live-r6.spec.mjs')
           s=s.replace('ROAD-MOVE-BIDIRECTIONAL-R5','ROAD-MOVE-BIDIRECTIONAL-R6')
           s=s.replace('R5 source contract','R6 source contract').replace('R5_PATCH_READY','R6_PATCH_READY')

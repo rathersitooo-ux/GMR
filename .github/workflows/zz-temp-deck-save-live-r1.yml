@@ -21,32 +21,18 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          import re
 
-          path = Path('browser/GAMEROAD.html')
-          text = path.read_text(encoding='utf-8')
-          lines = text.splitlines()
-          patterns = [
-              r'保存', r'saveDeck', r'deckSave', r'activeDeck', r'currentDeck',
-              r'deckSlots', r'exDeckSlots', r'localStorage', r'sessionStorage',
-          ]
-          rx = re.compile('|'.join(f'(?:{p})' for p in patterns), re.I)
-          hits = []
-          for i, line in enumerate(lines, 1):
-              if rx.search(line):
-                  hits.append(i)
-          print(f'GAMEROAD.html lines={len(lines)} candidate_hit_lines={len(hits)}')
-          for line_no in hits[:160]:
-              lo = max(1, line_no - 2)
-              hi = min(len(lines), line_no + 2)
-              print(f'--- context {lo}:{hi} (hit {line_no}) ---')
-              for n in range(lo, hi + 1):
-                  s = lines[n-1]
-                  if len(s) > 800:
-                      s = s[:800] + '…'
-                  print(f'{n}: {s}')
+          lines = Path('browser/GAMEROAD.html').read_text(encoding='utf-8').splitlines()
+          print(f'GAMEROAD.html lines={len(lines)}')
+          for line_no in [1390,1391,1415,1416,1417,1506,1507,1547]:
+              s = lines[line_no-1]
+              print(f'=== LINE {line_no} len={len(s)} ===')
+              for start in range(0, len(s), 700):
+                  print(f'{line_no}:{start}-{min(start+700,len(s))}: {s[start:start+700]}')
 
           module = Path('browser/cards-deck-presentation.mjs').read_text(encoding='utf-8')
-          for needle in ['createExistingDeckAuthorityBridge', 'readLiveDeck', 'save', 'storage']:
-              print(f'MODULE {needle}:', module.lower().count(needle.lower()))
+          print('=== CARDS PRESENTATION SAVE/DECK EXPORT CONTEXT ===')
+          for i, line in enumerate(module.splitlines(), 1):
+              if any(term in line.lower() for term in ['createexistingdeckauthoritybridge', 'readlivedeck', 'savedeck', 'save', 'storage']):
+                  print(f'{i}: {line[:1200]}')
           PY

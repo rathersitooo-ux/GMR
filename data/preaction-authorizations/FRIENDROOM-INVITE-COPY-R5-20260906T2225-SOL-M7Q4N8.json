@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "FRIENDROOM-INVITE-COPY-R5-20260906T2225-SOL-M7Q4N8",
+  "taskId": "MINOR-MODE-PLAYGLOBAL-COVERAGE-001",
+  "workUnitKey": "FRIEND_ROOM_INVITE_COPY_R1",
+  "acquireKey": "FRIENDROOM-INVITE-COPY-R5-20260906T2225-SOL-M7Q4N8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_FRIEND_ROOM_REAL_CODE_VISIBLE_WITHOUT_DIRECT_COPY_ACTION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1225_DONOR_LOGIC_PLUS_FRESH_MAIN_TARGET_FILES_UNCHANGED_FROM_DONOR_BASE",
+  "proceedToken": "PROCEED|FRIENDROOM-INVITE-COPY-R5-20260906T2225-SOL-M7Q4N8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|exact-visible-code-copy-only|active-lease-readback",
+  "authorizationBaseSha": "108b19a6881a95af1ea91578dbf5da246ea96776",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "MINOR-MODE-PLAYGLOBAL-COVERAGE-001",
+  "leaseWorkUnitKey": "FRIEND_ROOM_INVITE_COPY_R1",
+  "leaseAcquireKey": "FRIENDROOM-INVITE-COPY-R5-20260906T2225-SOL-M7Q4N8",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 22:25 JST",
+  "leaseUntilJst": "2026-09-06 23:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A477:N477",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR new branch sol/friendroom-invite-copy-r5-20260906 only: browser/rogue-run-runtime-mount.mjs; tests/rogue-run-runtime-mount.test.mjs; transient data/preaction-authorizations/FRIENDROOM-INVITE-COPY-R5-20260906T2225-SOL-M7Q4N8.json; own branch/PR/checks/merge/public evidence; own CURRENT_ACTIVE_LEASES tuple. READ_ONLY browser/GAMEROAD.html; Friend Room create/join/ready/start/leave authority; gameplay/rules/save/economy/network; deploy/cloudflare scripts/tests; all active Road/Deck/Map/Records/Partner resources.",
+  "scope": [
+    "browser/rogue-run-runtime-mount.mjs",
+    "tests/rogue-run-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/rogue-run-runtime-mount.mjs",
+    "tests/rogue-run-runtime-mount.test.mjs"
+  ],
+  "solutionSignature": "FRIEND_ROOM_EXISTING_VISIBLE_CODE_ONE_ACTION_COPY_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1225_DONOR_REUSED_WITHOUT_STANDALONE_TEST_OR_SECOND_ROOM_STATE",
+  "solutionSearchEvidence": [
+    "PR #1225 already contains the bounded presentation behavior: copy only the currently visible normalized seven-character code and report success only after clipboard resolution.",
+    "Fresh comparison from PR #1225 base 0be3a466b55cbd0af23244bc9fc90b2f5f6640fd to current main 108b19a6881a95af1ea91578dbf5da246ea96776 changes only Partner/public-package files; neither target Friend Room runtime/test file changed.",
+    "The runtime is already included by the current public package, so deploy/cloudflare build files remain read-only and no package mutation is required.",
+    "This R5 shrinks the prior three-file donor to the existing packaged runtime plus its existing focused test, avoiding a duplicate standalone test and preserving Friend Room create/join/ready/start/leave, transport, gameplay, save and economy authority."
+  ]
+}

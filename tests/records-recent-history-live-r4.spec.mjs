@@ -79,8 +79,8 @@ for (const viewport of VIEWPORTS) {
     const row = records.locator('#recordsList .record').first();
     await expect(row, 'latest completed match renders on production Records surface').toBeVisible();
     const beforeReloadText = (await row.innerText()).trim();
-    expect(beforeReloadText).toMatch(/2P\s*\/\s*\d+位/);
-    expect(beforeReloadText).toMatch(/\d+巡/);
+    expect(beforeReloadText).toContain(`二人 / ${driven.latest.rank}位`);
+    expect(beforeReloadText).toContain(`${driven.latest.rounds}ラウンド`);
     await testInfo.attach(`${viewport.name}-records-before-reload.txt`, {
       body: Buffer.from(`${JSON.stringify({ driven, beforeReloadText }, null, 2)}\n`, 'utf8'),
       contentType: 'application/json',

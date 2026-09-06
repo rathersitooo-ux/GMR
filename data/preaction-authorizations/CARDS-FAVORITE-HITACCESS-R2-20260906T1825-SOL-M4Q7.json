@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-FAVORITE-HITACCESS-R2-20260906T1825-SOL-M4Q7",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "CARDS_FAVORITE_FINDABILITY_R1",
+  "acquireKey": "CARDS-FAVORITE-HITACCESS-R2-20260906T1825-SOL-M4Q7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "NORMAL_ENTRY_RUN33970702681_VISIBLE_FILTER_POINTER_INTERCEPT_PLUS_CURRENT_FINDABILITY_HOST_NO_STACKING_CONTEXT_F27A3AB_20260906",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "THREE_VIEWPORT_PHYSICAL_CLICK_FAILURE_REPRO_PLUS_CURRENT_CARDS_PRESENTATION_SOURCE_READBACK_20260906",
+  "proceedToken": "PROCEED|CARDS-FAVORITE-HITACCESS-R2-20260906T1825-SOL-M4Q7|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260906T1834JST",
+  "authorizationBaseSha": "f27a3ab8e1a8ea4e6a4db2faf657ae2a6b4c6136",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs",
+    "data/preaction-authorizations/CARDS-FAVORITE-HITACCESS-R2-20260906T1825-SOL-M4Q7.json"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "CARDS_FAVORITE_FINDABILITY_R1",
+  "leaseAcquireKey": "CARDS-FAVORITE-HITACCESS-R2-20260906T1825-SOL-M4Q7",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 18:25 JST",
+  "leaseUntilJst": "2026-09-06 19:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A17:L17",
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs",
+    "data/preaction-authorizations/CARDS-FAVORITE-HITACCESS-R2-20260906T1825-SOL-M4Q7.json"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/cards-favorite-hitaccess-r2-20260906 only: browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; tests/browser-full-interaction-state-sequence.spec.mjs only if needed for visible flow; transient data/preaction-authorizations/CARDS-FAVORITE-HITACCESS-R2-20260906T1825-SOL-M4Q7.json; own R23 event and CURRENT_ACTIVE_LEASES tuple. browser/GAMEROAD.html/gameplay/rules/save/economy/network/Battle/Home/Partner READ_ONLY."
+}

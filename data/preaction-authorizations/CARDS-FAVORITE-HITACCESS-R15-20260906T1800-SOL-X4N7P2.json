@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-FAVORITE-HITACCESS-R15-20260906T1800-SOL-X4N7P2",
+  "taskId": "COLLECTION-CROSSDOMAIN-EXPERIENCE-001",
+  "workUnitKey": "COLLECTION_CARDS_FAVORITE_FILTER_HITACCESS_R15",
+  "acquireKey": "CARDS-FAVORITE-HITACCESS-R15-20260906T1800-SOL-X4N7P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R14_FILTER_CARD_DUAL_HIT_OWNERSHIP_AND_PLAYWRIGHT_INTERCEPTOR_DIAGNOSIS",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "RUN_34019901745_R4COLLECTIONTOOLS_CANDIDATE",
+  "proceedToken": "PROCEED|CARDS-FAVORITE-HITACCESS-R15-20260906T1800-SOL-X4N7P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-cards-favorite-hitaccess-repair|active-lease-readback",
+  "authorizationBaseSha": "f27a3ab8e1a8ea4e6a4db2faf657ae2a6b4c6136",
+  "targetBlobSha": "5f54a0ee0cb7fe7ef65bf06260bc89c5722fac5f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTION-CROSSDOMAIN-EXPERIENCE-001",
+  "leaseWorkUnitKey": "COLLECTION_CARDS_FAVORITE_FILTER_HITACCESS_R15",
+  "leaseAcquireKey": "CARDS-FAVORITE-HITACCESS-R15-20260906T1800-SOL-X4N7P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 18:00 JST",
+  "leaseUntilJst": "2026-09-06 19:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A475:L475",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch sol/cards-favorite-hitaccess-r15-20260906 only: transient data/preaction-authorizations/CARDS-FAVORITE-HITACCESS-R15-20260906T1800-SOL-X4N7P2.json; browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; tests/home-cards-2p5d-runtime.spec.mjs; branch ref/PR integration if needed; CURRENT_ACTIVE_LEASES own AcquireKey row only. GitHub Actions workflows and all other repo paths READ_ONLY.",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs"
+  ]
+}

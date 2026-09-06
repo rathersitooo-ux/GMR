@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CURRENT-ACTION-R3-20260906T2004-SOL-J6Q9M2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CURRENT_ACTION_CUE_R1",
+  "acquireKey": "BATTLE-CURRENT-ACTION-R3-20260906T2004-SOL-J6Q9M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_BATTLE_SCREEN_CONTRACT_PLUS_MAIN_357D759_CURRENT_ACTION_GAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_R1_TWO_FILE_BLOBS_AND_FOCUSED_RUNTIME_TEST_DELTA",
+  "proceedToken": "PROCEED|BATTLE-CURRENT-ACTION-R3-20260906T2004-SOL-J6Q9M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260906T2008JST",
+  "authorizationBaseSha": "357d75937322503ea8fcdeb9bf619c3de0f3efe7",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CURRENT_ACTION_CUE_R1",
+  "leaseAcquireKey": "BATTLE-CURRENT-ACTION-R3-20260906T2004-SOL-J6Q9M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 20:08 JST",
+  "leaseUntilJst": "2026-09-06 20:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A466:L466",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-current-action-cue-r3-20260906 only: transient data/preaction-authorizations/BATTLE-CURRENT-ACTION-R3-20260906T2004-SOL-J6Q9M2.json; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; own branch/PR/checks/merge evidence; own CURRENT_ACTIVE_LEASES tuple. READ_ONLY prior branch sol/battle-current-action-cue-r1-20260906@b90d2d90a7b0e86a95d1492de70e056f5206174a; browser/GAMEROAD.html; Road/Janken/Result/Cards/Home/Partner; gameplay/rules/save/economy/network.",
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

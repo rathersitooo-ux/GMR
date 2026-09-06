@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-UPDATE-DETAILS-TOUCH-R1-20260906T2336",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_UPDATE_DETAILS_TOUCH_TARGET_R1",
+  "acquireKey": "HOME-UPDATE-DETAILS-TOUCH-R1-20260906T2336-SOL-N7Q4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "HOME-UPDATE-DETAILS-TOUCH-R1-ACTUAL-CSS-GAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "HOME-UPDATE-DETAILS-TOUCH-R1-FOCUSED-REGRESSION-ORACLE",
+  "proceedToken": "PROCEED|HOME-UPDATE-DETAILS-TOUCH-R1-20260906T2336|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-lease|bounded-css-repair",
+  "authorizationBaseSha": "108b19a6881a95af1ea91578dbf5da246ea96776",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_UPDATE_DETAILS_TOUCH_TARGET_R1",
+  "leaseAcquireKey": "HOME-UPDATE-DETAILS-TOUCH-R1-20260906T2336-SOL-N7Q4V2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 23:36 JST",
+  "leaseUntilJst": "2026-09-07 00:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A493:L493",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/home-update-details-touch-r1-20260906 only: browser/home-shell-presentation-core.mjs; tests/home-boot-presentation.test.mjs; own CURRENT_ACTIVE_LEASES AcquireKey row only",
+  "scope": [
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ]
+}

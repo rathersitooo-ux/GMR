@@ -8,47 +8,41 @@ permissions:
 jobs:
   live-current:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout exact branch
         uses: actions/checkout@v4
         with:
           ref: sol/records-recent-history-r4-20260906
           fetch-depth: 0
-      - name: Install current test dependencies
-        run: npm ci
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
       - name: Write bounded Records config
         shell: bash
         run: |
-          cat > /tmp/playwright.records-r4.config.mjs <<'EOF'
+          cat > .records-r4-playwright.config.mjs <<'EOF'
           import { defineConfig } from '@playwright/test';
           export default defineConfig({
-            testDir: process.cwd() + '/tests',
-            testMatch: ['records-recent-history-live-r4.spec.mjs'],
-            timeout: 120_000,
-            expect: { timeout: 7_000 },
+            testDir: './tests',
+            testMatch: 'records-recent-history-live-r4.spec.mjs',
+            timeout: 120000,
+            expect: { timeout: 7000 },
+            fullyParallel: false,
             workers: 1,
             retries: 0,
             reporter: [['line']],
-            use: {
-              baseURL: 'http://127.0.0.1:4173',
-              browserName: 'chromium',
-              headless: true,
-              trace: 'retain-on-failure',
-              screenshot: 'only-on-failure',
-            },
-            webServer: {
-              command: 'python3 -m http.server 4173 --bind 127.0.0.1',
-              url: 'http://127.0.0.1:4173/browser/GAMEROAD.html',
-              reuseExistingServer: false,
-              timeout: 120_000,
-            },
+            use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true, trace: 'retain-on-failure', screenshot: 'only-on-failure', video: 'off' },
+            webServer: { command: 'python3 -m http.server 4173 --bind 127.0.0.1', url: 'http://127.0.0.1:4173/browser/GAMEROAD.html', reuseExistingServer: false, timeout: 120000 }
           });
           EOF
       - name: Verify actual completed match to Records across 3 viewports
-        run: npx playwright test --config=/tmp/playwright.records-r4.config.mjs
+        run: npx playwright test --config=.records-r4-playwright.config.mjs --workers=1
       - name: Upload live evidence
         if: always()
         uses: actions/upload-artifact@v4

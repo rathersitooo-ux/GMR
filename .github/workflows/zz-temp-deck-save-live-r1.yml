@@ -1,0 +1,52 @@
+name: TEMP Deck Save Live R1 Diagnostics
+
+on:
+  push:
+    branches:
+      - sol/deck-verified-save-live-r1-20260906
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect current Deck save use-sites without mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('browser/GAMEROAD.html')
+          text = path.read_text(encoding='utf-8')
+          lines = text.splitlines()
+          patterns = [
+              r'保存', r'saveDeck', r'deckSave', r'activeDeck', r'currentDeck',
+              r'deckSlots', r'exDeckSlots', r'localStorage', r'sessionStorage',
+          ]
+          rx = re.compile('|'.join(f'(?:{p})' for p in patterns), re.I)
+          hits = []
+          for i, line in enumerate(lines, 1):
+              if rx.search(line):
+                  hits.append(i)
+          print(f'GAMEROAD.html lines={len(lines)} candidate_hit_lines={len(hits)}')
+          for line_no in hits[:160]:
+              lo = max(1, line_no - 2)
+              hi = min(len(lines), line_no + 2)
+              print(f'--- context {lo}:{hi} (hit {line_no}) ---')
+              for n in range(lo, hi + 1):
+                  s = lines[n-1]
+                  if len(s) > 800:
+                      s = s[:800] + '…'
+                  print(f'{n}: {s}')
+
+          module = Path('browser/cards-deck-presentation.mjs').read_text(encoding='utf-8')
+          for needle in ['createExistingDeckAuthorityBridge', 'readLiveDeck', 'save', 'storage']:
+              print(f'MODULE {needle}:', module.lower().count(needle.lower()))
+          PY

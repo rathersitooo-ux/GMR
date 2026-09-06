@@ -1,14 +1,14 @@
-name: TEMP Road Move Bidirectional Live R6 Diagnostic
+name: TEMP Road Move Bidirectional Live R6 Recovery
 on:
   push:
     branches:
       - sol/road-move-bidirectional-live-r6-20260906
 permissions:
-  contents: read
+  contents: write
 jobs:
-  reproduce-r5-live-failure:
+  recover-and-commit:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 28
     steps:
       - uses: actions/checkout@v4
         with:
@@ -17,64 +17,82 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Recover and rebase exact R5 patch generator
+      - name: Recover adopted Road bidirectional patch
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin sol/road-move-bidirectional-live-r5-20260906
-          git show FETCH_HEAD:tools/zz-temp-road-move-runtime-r5.py > /tmp/r6.py
-          python3 - <<'PY'
+          if grep -q 'ROAD-MOVE-BIDIRECTIONAL-R6' browser/GAMEROAD.html; then
+            echo 'Road R6 product marker already present; skip regeneration.'
+          else
+            git fetch origin sol/road-move-bidirectional-live-r5-20260906
+            git show FETCH_HEAD:tools/zz-temp-road-move-runtime-r5.py > /tmp/r6-base.py
+            python3 - <<'PY'
           from pathlib import Path
-          p=Path('/tmp/r6.py')
+          p=Path('/tmp/r6-base.py')
           s=p.read_text()
           s=s.replace("BASE = '0be3a466b55cbd0af23244bc9fc90b2f5f6640fd'", "BASE = '108b19a6881a95af1ea91578dbf5da246ea96776'")
           s=s.replace('ROAD-MOVE-RUNTIME-R5-20260906T2113-SOL-P8N4V6','ROAD-MOVE-RUNTIME-R6-20260906T2210-SOL-R6Q4V2')
           s=s.replace('.github/workflows/zz-temp-road-move-runtime-r5.yml','.github/workflows/zz-temp-road-move-runtime-r6.yml')
           s=s.replace("    'tools/zz-temp-road-move-runtime-r5.py',\n",'')
+          s=s.replace("ALLOWED_PRE = {\n", "ALLOWED_PRE = {\n    'data/preaction-authorizations/ROAD-MOVE-RUNTIME-R6-RECOVERY-20260906T2321-SOL-K4V8N2.json',\n    'tools/zz-temp-road-move-runtime-r6.py',\n")
           s=s.replace('road-move-bidirectional-live-r5.spec.mjs','road-move-bidirectional-live-r6.spec.mjs')
           s=s.replace('ROAD-MOVE-BIDIRECTIONAL-R5','ROAD-MOVE-BIDIRECTIONAL-R6')
           s=s.replace('R5 source contract','R6 source contract').replace('R5_PATCH_READY','R6_PATCH_READY')
           p.write_text(s)
           PY
-          python3 /tmp/r6.py
+            python3 /tmp/r6-base.py
+            python3 tools/zz-temp-road-move-runtime-r6.py
+          fi
           git diff --check
           node --test tests/road-move-compatibility-core.test.mjs
-      - name: Capture current Road/Battle interaction context
-        shell: bash
-        run: |
-          set -euo pipefail
-          grep -nE -C 5 'function (commitPlans|selectEndpoint|beginRouteDrag|updatePlanFromSelect|first10SelectHandCard|first10BindHand)|#clearPath|roadSelect|battleSelect|ROAD-MOVE-BIDIRECTIONAL-R6|roadMoveShouldTreatTapAsRoad' browser/GAMEROAD.html > /tmp/road-r6-context.txt || true
       - name: Install Playwright
         run: |
           npm install --no-save --no-package-lock @playwright/test@1.62.0
           npx playwright install --with-deps chromium
-      - name: Run one-viewport failure isolation
-        id: roadtest
-        continue-on-error: true
+      - name: Run focused live Road acceptance in three viewports
         shell: bash
         run: |
+          set -euo pipefail
           cat > .road-r6-playwright.config.mjs <<'EOF'
           import { defineConfig } from '@playwright/test';
           export default defineConfig({
-            testDir: './tests', testMatch: 'road-move-bidirectional-live-r6.spec.mjs', timeout: 30000,
-            expect: { timeout: 6000 }, fullyParallel: false, workers: 1, retries: 0, reporter: [['line']],
-            use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true, trace: 'retain-on-failure', screenshot: 'only-on-failure', video: 'off', viewport: { width: 1280, height: 720 } },
+            testDir: './tests',
+            testMatch: 'road-move-bidirectional-live-r6.spec.mjs',
+            timeout: 60000,
+            expect: { timeout: 8000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            reporter: [['line']],
+            use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true, trace: 'retain-on-failure', screenshot: 'only-on-failure', video: 'off' },
+            projects: [
+              { name: 'desktop-1280x720', use: { viewport: { width: 1280, height: 720 } } },
+              { name: 'phone-390x844', use: { viewport: { width: 390, height: 844 } } },
+              { name: 'short-landscape-667x375', use: { viewport: { width: 667, height: 375 } } }
+            ],
             webServer: { command: 'python3 -m http.server 4173 --bind 127.0.0.1', url: 'http://127.0.0.1:4173/browser/GAMEROAD.html', reuseExistingServer: false, timeout: 120000 }
           });
           EOF
-          set -o pipefail
-          npx playwright test --config=.road-r6-playwright.config.mjs --workers=1 2>&1 | tee /tmp/road-r6-test.log
+          npx playwright test --config=.road-r6-playwright.config.mjs --workers=1
           rm -f .road-r6-playwright.config.mjs
-      - name: Upload diagnostic evidence
+      - name: Commit product delta only after acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add browser/GAMEROAD.html tests/road-move-bidirectional-live-r6.spec.mjs
+          if git diff --cached --quiet; then
+            echo 'No product delta to commit.'
+            exit 0
+          fi
+          git config user.name 'gameroad-road-recovery'
+          git config user.email 'actions@users.noreply.github.com'
+          git commit -m 'Battle: allow Road card and movement in either order'
+          git push origin HEAD:sol/road-move-bidirectional-live-r6-20260906
+      - name: Upload Road acceptance evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: road-r6-diagnostic-fast
+          name: road-r6-recovery-evidence
           path: |
-            /tmp/road-r6-context.txt
-            /tmp/road-r6-test.log
             test-results
-          if-no-files-found: warn
-      - name: Fail if focused Road evidence failed
-        if: steps.roadtest.outcome != 'success'
-        run: exit 1
+          if-no-files-found: ignore

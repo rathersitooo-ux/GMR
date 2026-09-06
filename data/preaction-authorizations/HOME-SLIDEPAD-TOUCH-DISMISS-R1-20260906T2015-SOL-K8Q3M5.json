@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-SLIDEPAD-TOUCH-DISMISS-R1-20260906T2015-SOL-K8Q3M5",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "HOME_SLIDEPAD_TOUCH_DISMISS_R1",
+  "acquireKey": "HOME-SLIDEPAD-TOUCH-DISMISS-R1-20260906T2015-SOL-K8Q3M5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "HOME-SLIDEPAD-TOUCH-DISMISS-R1-CURRENT-DBLCLICK-ONLY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BROWSER-CLICK-DETAIL-PLUS-EXISTING-BLANK-PREDICATE",
+  "proceedToken": "PROCEED|HOME-SLIDEPAD-TOUCH-DISMISS-R1-20260906T2015-SOL-K8Q3M5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-code|browser-event-contract|lease-snapshot",
+  "authorizationBaseSha": "0be3a466b55cbd0af23244bc9fc90b2f5f6640fd",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "HOME_SLIDEPAD_TOUCH_DISMISS_R1",
+  "leaseAcquireKey": "HOME-SLIDEPAD-TOUCH-DISMISS-R1-20260906T2015-SOL-K8Q3M5",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 20:15 JST",
+  "leaseUntilJst": "2026-09-06 21:14 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A467:L467",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/home-slidepad-touch-dismiss-r1-20260906 only: browser/home-boot-runtime-mount.mjs; tests/home-boot-presentation.test.mjs; transient data/preaction-authorizations/HOME-SLIDEPAD-TOUCH-DISMISS-R1-20260906T2015-SOL-K8Q3M5.json; own branch/PR/checks/merge evidence; own CURRENT_ACTIVE_LEASES tuple. READ_ONLY browser/GAMEROAD.html; browser/home-shell-presentation-core.mjs; Setup/Road/Battle/Cards/Result/Deck/FriendRoom/Records/Gacha resources; gameplay/rules/save/economy/network/assets.",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs"
+  ]
+}

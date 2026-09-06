@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RECORDS-LIVE-R1-20260906T1650-SOL-K7M4Q2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "RECORDS_RECENT_HISTORY_LIVE_R1",
+  "acquireKey": "RECORDS-LIVE-R1-20260906T1650-SOL-K7M4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "RECORDS-R1-CURRENT-USERLOCK-PROFILE-ROUTE-ACTUAL",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "RECORDS-R1-EXISTING-PROFILE-TO-RECORDS-BLACKBOX-AND-FAILCLOSE",
+  "proceedToken": "PROCEED|RECORDS-LIVE-R1-20260906T1650-SOL-K7M4Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-projection|lease-readback",
+  "authorizationBaseSha": "f27a3ab8e1a8ea4e6a4db2faf657ae2a6b4c6136",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "RECORDS_RECENT_HISTORY_LIVE_R1",
+  "leaseAcquireKey": "RECORDS-LIVE-R1-20260906T1650-SOL-K7M4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 16:50 JST",
+  "leaseUntilJst": "2026-09-06 17:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:M9",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/records-recent-history-r1-20260906 only: browser/profile-presentation-runtime-mount.mjs; tests/profile-presentation-runtime-mount.test.mjs; tests/browser-full-interaction-state-sequence.spec.mjs; UNIQUE_TRANSIENT .github/workflows/records-recent-history-r1-executor.yml; data/preaction-authorizations/RECORDS-LIVE-R1-20260906T1650-SOL-K7M4Q2.json transient witness only; own R23 event and CURRENT_ACTIVE_LEASES tuple. browser/GAMEROAD.html; gameplay/rules/save/economy/network/Battle/Cards/Home/Partner source authority READ_ONLY.",
+  "scope": [
+    "browser/profile-presentation-runtime-mount.mjs",
+    "tests/profile-presentation-runtime-mount.test.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs",
+    ".github/workflows/records-recent-history-r1-executor.yml"
+  ],
+  "leaseScope": [
+    "browser/profile-presentation-runtime-mount.mjs",
+    "tests/profile-presentation-runtime-mount.test.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs",
+    ".github/workflows/records-recent-history-r1-executor.yml"
+  ]
+}

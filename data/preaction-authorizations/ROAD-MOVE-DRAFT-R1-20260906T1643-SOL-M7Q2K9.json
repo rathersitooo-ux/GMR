@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-MOVE-DRAFT-R1-20260906T1643-SOL-M7Q2K9",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_DRAFT_CORE_R1",
+  "acquireKey": "ROAD-MOVE-DRAFT-R1-20260906T1643-SOL-M7Q2K9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ROAD_COMPATIBILITY_CORE_ALREADY_PROVES_UPPER_BOUND_AND_DERIVED_CANDIDATES_WITHOUT_ORDER_MODE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_ROAD_COMPATIBILITY_PARAMETERIZED_TESTS_PLUS_READ_ONLY_BATTLE_RUNTIME_BOUNDARY",
+  "proceedToken": "PROCEED|ROAD-MOVE-DRAFT-R1-20260906T1643-SOL-M7Q2K9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|draft-only|active-lease-readback",
+  "authorizationBaseSha": "f27a3ab8e1a8ea4e6a4db2faf657ae2a6b4c6136",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_BIDIRECTIONAL_DRAFT_CORE_R1",
+  "leaseAcquireKey": "ROAD-MOVE-DRAFT-R1-20260906T1643-SOL-M7Q2K9",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 16:43 JST",
+  "leaseUntilJst": "2026-09-06 17:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:N9",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/road-move-draft-bidirectional-r1-20260906 only: browser/road-move-draft-core.mjs; tests/road-move-draft-core.test.mjs; transient data/preaction-authorizations/ROAD-MOVE-DRAFT-R1-20260906T1643-SOL-M7Q2K9.json; own R23 event and CURRENT_ACTIVE_LEASES tuple. READ_ONLY browser/road-move-compatibility-core.mjs; tests/road-move-compatibility-core.test.mjs; browser/GAMEROAD.html; browser/battle-screen-runtime-mount.mjs; browser/battle-janken-slidepad-runtime-mount.mjs; gameplay/rules/save/network/Battle-card logic.",
+  "scope": [
+    "browser/road-move-draft-core.mjs",
+    "tests/road-move-draft-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/road-move-draft-core.mjs",
+    "tests/road-move-draft-core.test.mjs"
+  ]
+}

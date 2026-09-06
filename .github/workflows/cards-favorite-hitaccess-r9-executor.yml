@@ -1,0 +1,133 @@
+name: Cards Favorite Hit Access R9
+
+on:
+  push:
+    branches: [sol/cards-favorite-hitaccess-r9-20260906]
+
+permissions:
+  contents: write
+
+env:
+  BASE_SHA: d0d1fcfe1910848e7f6dc51eaa2a92625a156736
+  TARGET_BLOB: 5f54a0ee0cb7fe7ef65bf06260bc89c5722fac5f
+  MANIFEST: data/preaction-authorizations/CARDS-FAVORITE-HITACCESS-R9-20260906T1305-SOL-V7K4M9.json
+  WORKFLOW_FILE: .github/workflows/cards-favorite-hitaccess-r9-executor.yml
+  PRODUCT_FILE: browser/cards-deck-presentation.mjs
+  TEST_FILE: tests/home-cards-2p5d-runtime.spec.mjs
+
+jobs:
+  repair-and-accept:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/cards-favorite-hitaccess-r9-20260906
+          fetch-depth: 0
+
+      - name: Verify PRE_ACTION and exact target
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$BASE_SHA" HEAD
+          test "$(git rev-parse "$BASE_SHA:$PRODUCT_FILE")" = "$TARGET_BLOB"
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          m=json.loads(Path(os.environ['MANIFEST']).read_text())
+          assert m['schemaVersion']=='gameroad-preaction-v3'
+          assert m['recordId']=='CARDS-FAVORITE-HITACCESS-R9-20260906T1305-SOL-V7K4M9'
+          assert m['leaseState']=='ACTIVE'
+          assert m['authorizationBaseSha']==os.environ['BASE_SHA']
+          assert m['targetBlobSha']==os.environ['TARGET_BLOB']
+          assert m['priorHarnessFailureRuns']==['34010078189','34010337882']
+          PY
+
+      - name: Apply in-flow Collection repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          p=Path(os.environ['PRODUCT_FILE']); s=p.read_text()
+          old="  grid.before?.(host);\n  if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);"
+          new="  grid.prepend?.(host);\n  if (!host.parentNode) {\n    grid.before?.(host);\n    if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);\n  }"
+          if s.count(old)!=1: raise SystemExit(f'mount seam count={s.count(old)}')
+          s=s.replace(old,new)
+          old_style='[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}'
+          new_style='[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;grid-column:1/-1;min-width:0;margin:6px 0 10px}'
+          if s.count(old_style)!=1: raise SystemExit(f'style seam count={s.count(old_style)}')
+          p.write_text(s.replace(old_style,new_style))
+          PY
+          test "$(git diff --name-only | wc -l)" -eq 1
+          test "$(git diff --name-only)" = "$PRODUCT_FILE"
+          git diff --check
+
+      - name: Install Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+
+      - name: Verify three-viewport favorite flow using runtime-ready oracle
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp "$TEST_FILE" /tmp/r9-test
+          trap 'cp /tmp/r9-test "$TEST_FILE"' EXIT
+          cat >> "$TEST_FILE" <<'EOF'
+
+          test('R9 favorite filter stays physically usable and persistent across target viewports', async ({ page }) => {
+            test.setTimeout(180_000);
+            const sizes=[{width:1280,height:720,label:'desktop'},{width:390,height:844,label:'phone'},{width:667,height:375,label:'short-landscape'}];
+            const ownsCenter=async (loc)=>loc.evaluate((node)=>{const r=node.getBoundingClientRect();const top=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);return !!top&&(top===node||node.contains(top));});
+            const ready=async()=>{
+              await page.waitForFunction(()=>Boolean(globalThis.__GAMEROAD_TEST__&&globalThis.GAMEROAD_NAV_QA&&globalThis.GAMEROAD_SCREEN_TRANSITION),null,{timeout:30_000});
+              await page.locator('.homePadChoice[data-home-target="cards"]:visible').first().waitFor({state:'visible',timeout:10_000});
+            };
+            const navigate=async()=>{
+              const response=await page.goto('/browser/GAMEROAD.html',{waitUntil:'commit',timeout:30_000});
+              expect(response).not.toBeNull(); expect(response.ok()).toBeTruthy(); await ready();
+            };
+            const reload=async()=>{
+              const response=await page.reload({waitUntil:'commit',timeout:30_000});
+              expect(response).not.toBeNull(); expect(response.ok()).toBeTruthy(); await ready();
+            };
+            const open=async()=>{const go=page.locator('.homePadChoice[data-home-target="cards"]:visible').first();await go.click();await page.waitForFunction(()=>globalThis.GAMEROAD_NAV_QA?.snapshot?.().screen==='cards'&&globalThis.GAMEROAD_SCREEN_TRANSITION?.getState?.().phase==='IDLE',{},{timeout:10_000});};
+            for (const size of sizes) {
+              await page.setViewportSize(size); await navigate();
+              await page.evaluate(()=>localStorage.removeItem('gameroad.cards.favorite.v1')); await reload(); await open();
+              const host=page.locator('[data-role="cards-deck-findability"]'); const filter=host.locator('[data-filter="favorite"]');
+              await expect(host).toBeVisible(); expect(await host.evaluate(n=>n.parentElement?.id),size.label+' parent').toBe('collectionGrid');
+              expect(await host.evaluate(n=>n.getBoundingClientRect().height),size.label+' host height').toBeGreaterThanOrEqual(44); expect(await ownsCenter(filter),size.label+' filter center').toBe(true);
+              const card=page.locator('#collectionGrid button.slot.live.cardFace:visible').first(); await expect(card).toBeVisible(); await card.scrollIntoViewIfNeeded(); expect(await ownsCenter(card),size.label+' card center').toBe(true);
+              const cardId=await card.getAttribute('data-id'); expect(cardId).toBeTruthy(); await card.click(); await expect(page.locator('.cardPreview')).toBeVisible();
+              const favorite=page.locator('[data-role="cards-favorite-action"]'); await expect(favorite).toHaveAttribute('aria-pressed','false'); await favorite.click(); await expect(favorite).toHaveAttribute('aria-pressed','true');
+              await filter.scrollIntoViewIfNeeded(); expect(await ownsCenter(filter),size.label+' filter post favorite').toBe(true); await filter.click(); await expect(filter).toHaveAttribute('aria-pressed','true');
+              await expect(page.locator(`#collectionGrid button.slot.live.cardFace[data-id="${cardId}"]`)).toBeVisible();
+              await reload(); await open();
+              const persisted=page.locator(`#collectionGrid button.slot.live.cardFace[data-id="${cardId}"]`).first(); await expect(persisted).toBeVisible(); await persisted.scrollIntoViewIfNeeded(); expect(await ownsCenter(persisted),size.label+' persisted card center').toBe(true); await persisted.click(); await expect(page.locator('[data-role="cards-favorite-action"]')).toHaveAttribute('aria-pressed','true');
+            }
+          });
+          EOF
+          npx playwright test "$TEST_FILE" --config=playwright.config.mjs --workers=1 --grep 'R9 favorite filter stays physically usable and persistent across target viewports'
+          cp /tmp/r9-test "$TEST_FILE"
+          trap - EXIT
+          git diff --exit-code -- "$TEST_FILE"
+
+      - name: Run existing Cards regression
+        run: npx playwright test "$TEST_FILE" --config=playwright.config.mjs --workers=1
+
+      - name: Commit tested product only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm "$WORKFLOW_FILE" "$MANIFEST"
+          test "$(git diff --name-only "$BASE_SHA" | wc -l)" -eq 1
+          test "$(git diff --name-only "$BASE_SHA")" = "$PRODUCT_FILE"
+          git add "$PRODUCT_FILE"
+          git diff --cached --check
+          git commit -m 'Fix Cards favorite filter hit access in Collection flow'
+          git push origin HEAD:sol/cards-favorite-hitaccess-r9-20260906

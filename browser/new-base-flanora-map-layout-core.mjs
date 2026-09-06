@@ -71,6 +71,10 @@ function normalizeLaneBlocks(participantIds, horizontalCellCount, source) {
   }
 
   if (new Set(allColumns).size !== MIN_HORIZONTAL_CELLS) return null;
+  const sortedColumns = [...allColumns].sort((a, b) => a - b);
+  for (let index = 1; index < sortedColumns.length; index += 1) {
+    if (sortedColumns[index] !== sortedColumns[index - 1] + 1) return null;
+  }
   return normalized;
 }
 
@@ -101,6 +105,38 @@ function edge(fromCellId, toCellId, from, to) {
   };
 }
 
+function projectConnectivity(cells, edges) {
+  const cellIds = new Set(cells.map((item) => item.id));
+  const adjacency = new Map([...cellIds].map((id) => [id, new Set()]));
+
+  for (const geometryEdge of edges) {
+    if (!cellIds.has(geometryEdge.fromCellId) || !cellIds.has(geometryEdge.toCellId)) continue;
+    adjacency.get(geometryEdge.fromCellId).add(geometryEdge.toCellId);
+    adjacency.get(geometryEdge.toCellId).add(geometryEdge.fromCellId);
+  }
+
+  const isolatedCellIds = [...adjacency.entries()]
+    .filter(([, neighbors]) => neighbors.size === 0)
+    .map(([id]) => id);
+  const firstCellId = cells[0]?.id ?? null;
+  const visited = new Set(firstCellId ? [firstCellId] : []);
+  const queue = firstCellId ? [firstCellId] : [];
+  while (queue.length > 0) {
+    const current = queue.shift();
+    for (const neighbor of adjacency.get(current) ?? []) {
+      if (visited.has(neighbor)) continue;
+      visited.add(neighbor);
+      queue.push(neighbor);
+    }
+  }
+
+  return {
+    connected: visited.size === cells.length,
+    visitedCellCount: visited.size,
+    isolatedCellIds,
+  };
+}
+
 export function createFlanoraMapLayout({
   participantIds,
   horizontalCellCount,
@@ -120,6 +156,7 @@ export function createFlanoraMapLayout({
   if (!laneBlocks) throw new TypeError('FOUR_CONTIGUOUS_THREE_LANE_BLOCKS_REQUIRED');
 
   const clearingCells = [];
+  const clearingEntryCells = [];
   const geometryEdges = [];
   const road7EntryConnections = [];
   const startCellByParticipant = {};
@@ -136,6 +173,7 @@ export function createFlanoraMapLayout({
         laneIndex,
       );
       clearingCells.push(entry);
+      clearingEntryCells.push(entry);
       road7EntryConnections.push({
         participantId,
         laneIndex,
@@ -166,11 +204,21 @@ export function createFlanoraMapLayout({
     startCellByParticipant[participantId] = start;
 
     geometryEdges.push(
-      edge(entryCells[0].id, entryCells[1].id, entryCells[0], entryCells[1]),
-      edge(entryCells[1].id, entryCells[2].id, entryCells[1], entryCells[2]),
       edge(entryCells[1].id, neck.id, entryCells[1], neck),
       edge(neck.id, start.id, neck, start),
     );
+  }
+
+  clearingEntryCells.sort((left, right) => left.columnIndex - right.columnIndex);
+  for (let index = 1; index < clearingEntryCells.length; index += 1) {
+    const previous = clearingEntryCells[index - 1];
+    const current = clearingEntryCells[index];
+    geometryEdges.push(edge(previous.id, current.id, previous, current));
+  }
+
+  const connectivity = projectConnectivity(clearingCells, geometryEdges);
+  if (!connectivity.connected || connectivity.isolatedCellIds.length > 0) {
+    throw new TypeError('CLEARING_MUST_BE_SINGLE_ORTHOGONAL_COMPONENT');
   }
 
   return deepFreeze({
@@ -189,6 +237,10 @@ export function createFlanoraMapLayout({
     road7EntryConnections,
     geometryEdges,
     geometryAdjacency: 'ORTHOGONAL_ONLY',
+    clearingConnectivity: 'SINGLE_ORTHOGONAL_COMPONENT',
+    clearingConnected: true,
+    isolatedClearingCellIds: [],
+    clearingTraversalAxes: ['VERTICAL', 'HORIZONTAL'],
     geometryIsMovementAuthority: false,
   });
 }
@@ -203,5 +255,7 @@ export const FLANORA_MAP_LAYOUT_CORE = Object.freeze({
   verticalOrder: VERTICAL_ORDER,
   rowIndex: ROW_INDEX,
   geometryAdjacency: 'ORTHOGONAL_ONLY',
+  clearingConnectivity: 'SINGLE_ORTHOGONAL_COMPONENT',
+  clearingTraversalAxes: Object.freeze(['VERTICAL', 'HORIZONTAL']),
   geometryIsMovementAuthority: false,
 });

@@ -1,56 +1,21 @@
 name: TEMP Battle Attacker Max Load R1
-
 on:
   push:
-    branches:
-      - sol/battle-attacker-max-load-r1-20260907
-    paths:
-      - '.github/workflows/zz-temp-battle-attacker-r1.yml'
-
+    branches: [sol/battle-attacker-max-load-r1-20260907]
+    paths: ['.github/workflows/zz-temp-battle-attacker-r1.yml']
 permissions:
   contents: read
-
 jobs:
-  inspect-live-seam:
+  inspect:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Print exact reveal and attack resolver contexts
-        shell: bash
+      - name: Inspect presentation and janken mount
         run: |
-          node <<'EOF'
-          const fs = require('node:fs');
-          const text = fs.readFileSync('browser/GAMEROAD.html', 'utf8');
-          const patterns = [
-            'function resolveBattle',
-            'function resolveMove',
-            "phase='reveal'",
-            'phase="reveal"',
-            '.phase="reveal"',
-            '.phase=\'reveal\'',
-            'moveOrder=',
-            'publicHudRuntime.moveOrder',
-            'activeId=',
-            '.activeId=',
-            'battleId',
-            'cardRank(',
-            'CARDS[p.plan.roadId]?.power',
-            'phase=\'target\'',
-            'phase=\'resolve\''
-          ];
-          for (const pattern of patterns) {
-            console.log(`\n===== PATTERN ${pattern} =====`);
-            let from = 0, shown = 0;
-            while (shown < 12) {
-              const i = text.indexOf(pattern, from);
-              if (i < 0) break;
-              const start = Math.max(0, i - 1700);
-              const end = Math.min(text.length, i + pattern.length + 2800);
-              console.log(`--- match ${shown + 1} @${i} ---`);
-              console.log(text.slice(start, end).replace(/\r/g, ''));
-              from = i + pattern.length;
-              shown += 1;
-            }
-            if (shown === 0) console.log('(none)');
-          }
-          EOF
+          grep -n -C 18 'function setBattlePresentation' browser/GAMEROAD.html || true
+          grep -n -C 14 'battleResolution' browser/GAMEROAD.html | head -n 180 || true
+          grep -n -C 18 'mountBattleJanken' browser/battle-janken-slidepad-runtime-mount.mjs || true
+          grep -n -C 18 'export function mount' browser/battle-janken-slidepad-runtime-mount.mjs || true
+          grep -n -C 12 'resolveBattleJankenSlotCardAction' browser/battle-janken-slidepad-runtime-mount.mjs || true
+          grep -n -C 12 'ordinaryHandCardIds' browser/battle-janken-slidepad-runtime-mount.mjs | head -n 180 || true
+          grep -n -C 12 '__GAMEROAD_TEST__' browser/GAMEROAD.html | tail -n 220 || true

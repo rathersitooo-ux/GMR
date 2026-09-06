@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-FAVORITE-HITACCESS-R7-20260906T1249-SOL-P6K3N8",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "CARDS_FAVORITE_HITACCESS_LIVE_R7",
+  "acquireKey": "CARDS-FAVORITE-HITACCESS-R7-20260906T1249-SOL-P6K3N8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R5_GEOMETRY_33991263168_PLUS_R6_FAILURE_34009813088",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_TARGET_BLOB_5f54a0ee_PLUS_REAL_CHROMIUM_R6",
+  "proceedToken": "PROCEED|CARDS-FAVORITE-HITACCESS-R7-20260906T1249-SOL-P6K3N8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-adopted-favorite-hitaccess-repair|active-lease-readback",
+  "authorizationBaseSha": "4b4356b75922152ebdb2f272086ff8c24b2c273d",
+  "targetBlobSha": "5f54a0ee0cb7fe7ef65bf06260bc89c5722fac5f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "CARDS_FAVORITE_HITACCESS_LIVE_R7",
+  "leaseAcquireKey": "CARDS-FAVORITE-HITACCESS-R7-20260906T1249-SOL-P6K3N8",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 12:49 JST",
+  "leaseUntilJst": "2026-09-06 13:44 JST",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs"
+  ],
+  "solutionSignature": "CARDS_FAVORITE_GRID_INFLOW_R7",
+  "reuseDisposition": "REPAIR_EXISTING",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidence": [
+    "R5 proved the existing pre-grid host collapses to zero height while its 44px controls overlap the Collection grid at all three acceptance viewports.",
+    "R6 moved the host into .r4CollectionTools and restored center hit ownership for both filter and cards, but the filter click no longer toggled its state after favorite selection.",
+    "R7 changes the failed integration boundary rather than retrying it: keep the existing host/listeners/state and place that host as a full-width in-flow child of the Collection grid, where it consumes layout space instead of overlaying cards and does not depend on the foreign .r4CollectionTools event lifecycle.",
+    "Current main advanced for unrelated Board work only; the exact Cards target blob remains 5f54a0ee0cb7fe7ef65bf06260bc89c5722fac5f."
+  ],
+  "priorFailureRunId": "34009813088",
+  "priorFailureJobId": "101423541716"
+}

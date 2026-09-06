@@ -1,4 +1,4 @@
-name: TEMP Records Recent History R4 Diagnose
+name: TEMP Records Recent History R4 Live
 on:
   push:
     branches:
@@ -6,20 +6,56 @@ on:
 permissions:
   contents: write
 jobs:
-  diagnose:
+  live-current:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout exact branch
         uses: actions/checkout@v4
         with:
           ref: sol/records-recent-history-r4-20260906
           fetch-depth: 0
-      - name: Inspect existing Records and history authority
-        run: python3 tools/zz-temp-records-recent-history-r4.py
-      - name: Upload bounded diagnostics
+      - name: Install current test dependencies
+        run: npm ci
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Write bounded Records config
+        shell: bash
+        run: |
+          cat > /tmp/playwright.records-r4.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir: process.cwd() + '/tests',
+            testMatch: ['records-recent-history-live-r4.spec.mjs'],
+            timeout: 120_000,
+            expect: { timeout: 7_000 },
+            workers: 1,
+            retries: 0,
+            reporter: [['line']],
+            use: {
+              baseURL: 'http://127.0.0.1:4173',
+              browserName: 'chromium',
+              headless: true,
+              trace: 'retain-on-failure',
+              screenshot: 'only-on-failure',
+            },
+            webServer: {
+              command: 'python3 -m http.server 4173 --bind 127.0.0.1',
+              url: 'http://127.0.0.1:4173/browser/GAMEROAD.html',
+              reuseExistingServer: false,
+              timeout: 120_000,
+            },
+          });
+          EOF
+      - name: Verify actual completed match to Records across 3 viewports
+        run: npx playwright test --config=/tmp/playwright.records-r4.config.mjs
+      - name: Upload live evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: records-r4-diagnostics
-          path: /tmp/records-r4-diagnostics.txt
+          name: records-r4-live-evidence
+          path: |
+            test-results
+            playwright-report
+          if-no-files-found: ignore
           retention-days: 1

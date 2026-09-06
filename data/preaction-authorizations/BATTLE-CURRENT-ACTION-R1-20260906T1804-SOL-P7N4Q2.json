@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CURRENT-ACTION-R1-20260906T1804-SOL-P7N4Q2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CURRENT_ACTION_CUE_R1",
+  "acquireKey": "BATTLE-CURRENT-ACTION-R1-20260906T1804-SOL-P7N4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_BATTLE_SCREEN_CONTRACT_ROW1374_PLUS_MAIN_F27A3AB8_ACTION_PHASE_GAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_BATTLE_SCREEN_MODEL_PHASE_FOCUS_LANES_AND_FOCUSED_RUNTIME_TEST",
+  "proceedToken": "PROCEED|BATTLE-CURRENT-ACTION-R1-20260906T1804-SOL-P7N4Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260906T1804JST",
+  "authorizationBaseSha": "f27a3ab8e1a8ea4e6a4db2faf657ae2a6b4c6136",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CURRENT_ACTION_CUE_R1",
+  "leaseAcquireKey": "BATTLE-CURRENT-ACTION-R1-20260906T1804-SOL-P7N4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 18:04 JST",
+  "leaseUntilJst": "2026-09-06 18:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A14:L14",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-current-action-cue-r1-20260906 only: browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; transient data/preaction-authorizations/BATTLE-CURRENT-ACTION-R1-20260906T1804-SOL-P7N4Q2.json; own R23 event and CURRENT_ACTIVE_LEASES tuple. READ_ONLY browser/battle-screen-presentation-core.mjs; browser/battle-conveyor-presentation-core.mjs; browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs; gameplay/rules/save/network; Road/Janken/Result/Spectator resources.",
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

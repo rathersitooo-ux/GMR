@@ -18,17 +18,15 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
-      - name: Locate every current Records producer/consumer context
+      - name: Inspect exact current Records and save-authority exposure
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== files containing Records signals ==='
-          grep -RIlE 'recordsList|renderRecords|data-screen="records"|対戦記録|ラウンド|まだ対戦記録' browser tests || true
-          echo '=== contexts outside giant HTML ==='
-          while IFS= read -r f; do
-            [ "$f" = browser/GAMEROAD.html ] && continue
-            echo "--- $f"
-            grep -nE -C 4 'recordsList|renderRecords|data-screen="records"|対戦記録|ラウンド|まだ対戦記録' "$f" || true
-          done < <(grep -RIlE 'recordsList|renderRecords|data-screen="records"|対戦記録|ラウンド|まだ対戦記録' browser tests || true)
-          echo '=== script/import refs near profile/records in HTML ==='
-          grep -nE -C 2 'profile-presentation|records|Records' browser/GAMEROAD.html | tail -n 220 || true
+          echo '=== Records producer ==='
+          grep -nE -C 4 'function renderRecords|if\(name===.records.\)|data-screen="records"' browser/GAMEROAD.html || true
+          echo '=== save authority ==='
+          grep -nE -C 8 'SAVE_AUTHORITY|SAVE_KEY|__GAMEROAD_SAVE_RECOVERY__' browser/GAMEROAD.html | head -n 260 || true
+          echo '=== production globals touching history/state ==='
+          grep -nE -C 3 'window\.[A-Za-z0-9_]*(HISTORY|STATE|SAVE)|history:[[:space:]]*\(\)|history:[[:space:]]*\[' browser/GAMEROAD.html | head -n 320 || true
+          echo '=== mode/round localization ==='
+          grep -nE -C 3 '二人|四人|二対二|ラウンド|巡' browser/GAMEROAD.html | tail -n 260 || true

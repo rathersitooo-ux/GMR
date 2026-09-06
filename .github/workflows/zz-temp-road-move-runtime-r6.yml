@@ -8,7 +8,7 @@ permissions:
 jobs:
   reproduce-r5-live-failure:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,18 +43,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          {
-            echo '=== relevant current functions ==='
-            grep -nE -C 3 'function (commitPlans|selectEndpoint|beginRouteDrag|updatePlanFromSelect|first10SelectHandCard|renderBoard|renderHand)|#clearPath|roadSelect|battleSelect' browser/GAMEROAD.html | head -n 900 || true
-            echo '=== patched source markers ==='
-            grep -nE -C 2 'ROAD-MOVE-BIDIRECTIONAL-R6|roadMoveDecisionCard|draftMoveLimitForPlayer|compatibleRoadCandidatesForPath' browser/GAMEROAD.html | head -n 500 || true
-          } > /tmp/road-r6-context.txt
-          cat /tmp/road-r6-context.txt
+          grep -nE -C 5 'function (commitPlans|selectEndpoint|beginRouteDrag|updatePlanFromSelect|first10SelectHandCard|first10BindHand)|#clearPath|roadSelect|battleSelect|ROAD-MOVE-BIDIRECTIONAL-R6|roadMoveShouldTreatTapAsRoad' browser/GAMEROAD.html > /tmp/road-r6-context.txt || true
       - name: Install Playwright
         run: |
           npm install --no-save --no-package-lock @playwright/test@1.62.0
           npx playwright install --with-deps chromium
-      - name: Run focused live Road evidence with retained log
+      - name: Run one-viewport failure isolation
         id: roadtest
         continue-on-error: true
         shell: bash
@@ -62,20 +56,9 @@ jobs:
           cat > .road-r6-playwright.config.mjs <<'EOF'
           import { defineConfig } from '@playwright/test';
           export default defineConfig({
-            testDir: './tests',
-            testMatch: 'road-move-bidirectional-live-r6.spec.mjs',
-            timeout: 90000,
-            expect: { timeout: 10000 },
-            fullyParallel: false,
-            workers: 1,
-            retries: 0,
-            reporter: [['line']],
-            use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true, trace: 'retain-on-failure', screenshot: 'only-on-failure', video: 'off' },
-            projects: [
-              { name: 'desktop-1280x720', use: { viewport: { width: 1280, height: 720 } } },
-              { name: 'phone-390x844', use: { viewport: { width: 390, height: 844 } } },
-              { name: 'short-landscape-667x375', use: { viewport: { width: 667, height: 375 } } }
-            ],
+            testDir: './tests', testMatch: 'road-move-bidirectional-live-r6.spec.mjs', timeout: 30000,
+            expect: { timeout: 6000 }, fullyParallel: false, workers: 1, retries: 0, reporter: [['line']],
+            use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true, trace: 'retain-on-failure', screenshot: 'only-on-failure', video: 'off', viewport: { width: 1280, height: 720 } },
             webServer: { command: 'python3 -m http.server 4173 --bind 127.0.0.1', url: 'http://127.0.0.1:4173/browser/GAMEROAD.html', reuseExistingServer: false, timeout: 120000 }
           });
           EOF
@@ -86,7 +69,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: road-r6-diagnostic
+          name: road-r6-diagnostic-fast
           path: |
             /tmp/road-r6-context.txt
             /tmp/road-r6-test.log

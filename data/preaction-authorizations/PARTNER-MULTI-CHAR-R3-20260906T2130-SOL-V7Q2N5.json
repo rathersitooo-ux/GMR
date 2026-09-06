@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-MULTI-CHAR-R3-20260906T2130-SOL-V7Q2N5",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_MULTI_CHARACTER_SELECTION_R3",
+  "acquireKey": "PARTNER-MULTI-CHAR-R3-20260906T2130-SOL-V7Q2N5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MULTI_CHARACTER_PARTNER_ADVICE_RESIDUAL",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1184_FOCUSED_TESTS_AND_PR1230_PUBLIC_PACKAGE_DIAGNOSTIC_DONOR_ONLY",
+  "proceedToken": "PROCEED|PARTNER-MULTI-CHAR-R3-20260906T2130-SOL-V7Q2N5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|fresh-main-reconstruct-existing-authorities|active-lease-readback",
+  "authorizationBaseSha": "0be3a466b55cbd0af23244bc9fc90b2f5f6640fd",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_MULTI_CHARACTER_SELECTION_R3",
+  "leaseAcquireKey": "PARTNER-MULTI-CHAR-R3-20260906T2130-SOL-V7Q2N5",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 21:30 JST",
+  "leaseUntilJst": "2026-09-06 22:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch only: browser/partner-advice-runtime-mount.mjs; browser/partner-dialogue-source-registry.mjs; tests/partner-dialogue-source-registry.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; transient PREACTION authorization; own branch/PR/check/merge evidence; own CURRENT_ACTIVE_LEASES row5; own R23 events. browser/GAMEROAD.html and gameplay/rules/save/economy/network/Home/Road/Deck/Records are READ_ONLY.",
+  "scope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "browser/partner-dialogue-source-registry.mjs",
+    "tests/partner-dialogue-source-registry.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "browser/partner-dialogue-source-registry.mjs",
+    "tests/partner-dialogue-source-registry.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "COMMON_PARTNER_ROSTER_INDEPENDENT_ADVICE_ROLE_WITH_PUBLIC_REGISTRY_PACKAGE_R3",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "FRESH_MAIN_RECONSTRUCTION_FROM_CURRENT_AUTHORITIES",
+  "solutionSearchEvidence": [
+    "Fresh CURRENT says the explicit residual is selecting non-Saasuna characters as both normal Partner and Advice Partner while preserving existing authorities.",
+    "Current normal Partner selection already uses partnerProfiles/selectedPartnerId, so no duplicate normal picker is added.",
+    "Advice Partner remains independent and persists only through existing settings.advicePartnerId/save behavior; no second roster or save authority is introduced.",
+    "Unapproved non-Saasuna character dialogue remains fail-closed/silent and never reuses Saasuna lines.",
+    "Prior PR #1184/#1230 are donor/diagnostic evidence only; this branch starts from fresh current main under a new valid lease."
+  ]
+}

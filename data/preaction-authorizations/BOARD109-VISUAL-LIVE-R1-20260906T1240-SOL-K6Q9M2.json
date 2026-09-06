@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD109-VISUAL-LIVE-R1-20260906T1240-SOL-K6Q9M2",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "BOARD109_VISUAL_EXPLANATION_LIVE_MOUNT_R1",
+  "acquireKey": "BOARD109-VISUAL-LIVE-R1-20260906T1240-SOL-K6Q9M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1143_R12_PLAYER_DELTA_PASS_AND_PUBLIC_PACKAGE_BLOCKER_NOW_DECISION_SUFFICIENT",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1143_R12_RUNTIME_NODE_4_OF_4_PLUS_CURRENT_MAIN_PACKAGE_CORE_READBACK",
+  "proceedToken": "PROCEED|BOARD109-VISUAL-LIVE-R1-20260906T1240-SOL-K6Q9M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_ACTUAL_R12_REUSE_AND_PACKAGE_CLOSURE",
+  "authorizationBaseSha": "4b4356b75922152ebdb2f272086ff8c24b2c273d",
+  "scope": [
+    "browser/battle-board-visual-explanation-runtime-mount.mjs",
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-visual-explanation-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "BOARD109_VISUAL_EXPLANATION_LIVE_MOUNT_R1",
+  "leaseAcquireKey": "BOARD109-VISUAL-LIVE-R1-20260906T1240-SOL-K6Q9M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 12:51 JST",
+  "leaseUntilJst": "2026-09-06 13:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A13:N13",
+  "leaseScope": [
+    "browser/battle-board-visual-explanation-runtime-mount.mjs",
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-visual-explanation-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/board109-visual-live-r1b-20260906 from main@4b4356b75922152ebdb2f272086ff8c24b2c273d; mutable NEW browser/battle-board-visual-explanation-runtime-mount.mjs + browser/battle-board-naki-4p-visual-binding.mjs + NEW tests/battle-board-visual-explanation-runtime-mount.test.mjs + deploy/cloudflare/scripts/build.mjs + deploy/cloudflare/tests/build.test.mjs + this transient manifest only; core/partner/HTML/gameplay/rules/save/economy/network/topology READ_ONLY; old sol/board109-visual-live-r1-20260906 ABANDONED_READ_ONLY manifest-only branch.",
+  "solutionSignature": "reuse-pr1143-player-facing-board109-runtime-and-close-current-public-package-dependency",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1143_R12_DONOR_PLUS_PR1197_CORE_PACKAGE_PLUS_CURRENT_MAIN_4B4356",
+  "solutionSearchEvidence": [
+    "PR #1143 already passed the Board109 player-facing runtime focused Node suite 4/4 and existing Naki binding 2/2.",
+    "PR #1143 failed only because battle-board-visual-explanation-runtime-mount.mjs was not copied into the public package, and was closed rather than racing the then-owner of package files.",
+    "PR #1197 later added the existing battle-board-visual-explanation-core.mjs to the public package, but did not add or mount the runtime consumer.",
+    "Current main still packages battle-board-naki-4p-visual-binding.mjs and the visual explanation core; no new HTML, topology, legality, save, or gameplay authority is required."
+  ]
+}

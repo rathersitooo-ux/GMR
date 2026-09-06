@@ -329,6 +329,124 @@ function writePreparedSaveVerified(storage, key, preparedCommit, options = {}) {
   });
 }
 
+function normalizeStorageBatchEntries(entries) {
+  if (!Array.isArray(entries) || entries.length === 0) throw new TypeError('STORAGE_BATCH_ENTRIES_REQUIRED');
+  const normalized = entries.map((entry) => {
+    if (!isPlainObject(entry) || !nonEmptyString(entry.key) || typeof entry.serialized !== 'string') {
+      throw new TypeError('STORAGE_BATCH_ENTRY_INVALID');
+    }
+    const hasPreviousRawValue = Object.prototype.hasOwnProperty.call(entry, 'previousRawValue');
+    if (hasPreviousRawValue && entry.previousRawValue !== null && typeof entry.previousRawValue !== 'string') {
+      throw new TypeError('STORAGE_BATCH_PREVIOUS_RAW_INVALID');
+    }
+    return Object.freeze({
+      key: entry.key,
+      serialized: entry.serialized,
+      hasPreviousRawValue,
+      previousRawValue: hasPreviousRawValue ? entry.previousRawValue : undefined,
+    });
+  });
+  if (new Set(normalized.map((entry) => entry.key)).size !== normalized.length) {
+    throw new TypeError('STORAGE_BATCH_KEYS_DUPLICATE');
+  }
+  return Object.freeze(normalized);
+}
+
+function restoreStorageBatch(storage, entries, previousRawValues) {
+  const rollbackFailures = [];
+  for (const entry of [...entries].reverse()) {
+    const restored = restorePreviousRaw(storage, entry.key, previousRawValues.get(entry.key));
+    if (restored.status !== 'restored') {
+      rollbackFailures.push(Object.freeze({ key: entry.key, reason: restored.reason }));
+    }
+  }
+  if (rollbackFailures.length) {
+    return decision('failed', 'STORAGE_BATCH_ROLLBACK_FAILED', {
+      originalPreserved: false,
+      rolledBack: false,
+      rollbackFailures: Object.freeze(rollbackFailures),
+    });
+  }
+  return decision('restored', 'STORAGE_BATCH_ROLLBACK_OK', {
+    originalPreserved: true,
+    rolledBack: true,
+  });
+}
+
+function writeStorageBatchVerified(storage, entries) {
+  if (!storage || typeof storage.setItem !== 'function' || typeof storage.getItem !== 'function') {
+    return decision('failed', 'STORAGE_BATCH_WRITE_UNAVAILABLE');
+  }
+  const normalized = normalizeStorageBatchEntries(entries);
+  const previousRawValues = new Map();
+
+  for (const entry of normalized) {
+    let currentRawValue;
+    try {
+      currentRawValue = storage.getItem(entry.key);
+    } catch {
+      return decision('failed', 'STORAGE_BATCH_READ_FAILED', {
+        failureKey: entry.key,
+        originalPreserved: true,
+        rolledBack: false,
+      });
+    }
+    if (entry.hasPreviousRawValue && currentRawValue !== entry.previousRawValue) {
+      return decision('failed', 'STORAGE_BATCH_PREVIOUS_RAW_STALE', {
+        failureKey: entry.key,
+        originalPreserved: true,
+        rolledBack: false,
+      });
+    }
+    previousRawValues.set(entry.key, currentRawValue);
+  }
+
+  for (const entry of normalized) {
+    let writeFailed = false;
+    try {
+      storage.setItem(entry.key, entry.serialized);
+    } catch {
+      writeFailed = true;
+    }
+
+    let readback;
+    let readbackFailed = false;
+    try {
+      readback = storage.getItem(entry.key);
+    } catch {
+      readbackFailed = true;
+    }
+
+    if (!writeFailed && !readbackFailed && readback === entry.serialized) continue;
+
+    const failureReason = writeFailed
+      ? 'STORAGE_BATCH_WRITE_FAILED'
+      : readbackFailed
+        ? 'STORAGE_BATCH_READBACK_FAILED'
+        : 'STORAGE_BATCH_READBACK_MISMATCH';
+    const rollback = restoreStorageBatch(storage, normalized, previousRawValues);
+    if (rollback.status !== 'restored') {
+      return decision('failed', rollback.reason, {
+        failureKey: entry.key,
+        originalPreserved: false,
+        rolledBack: false,
+        writeFailureReason: failureReason,
+        rollbackFailures: rollback.rollbackFailures,
+      });
+    }
+    return decision('failed', failureReason, {
+      failureKey: entry.key,
+      originalPreserved: true,
+      rolledBack: true,
+    });
+  }
+
+  return decision('saved', 'STORAGE_BATCH_WRITE_READBACK_OK', {
+    originalPreserved: true,
+    savedKeys: Object.freeze(normalized.map((entry) => entry.key)),
+  });
+}
+
 function resetExplicitSaveKeys(storage, keys, { confirmed = false } = {}) {
   if (confirmed !== true) return decision('blocked', 'RESET_CONFIRMATION_REQUIRED');
   if (!storage || typeof storage.removeItem !== 'function') return decision('failed', 'STORAGE_REMOVE_UNAVAILABLE');
@@ -354,6 +472,7 @@ globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE = Object.freeze({
   readStorage,
   writePreparedSave,
   writePreparedSaveVerified,
+  writeStorageBatchVerified,
   resetExplicitSaveKeys,
   DECK_SAVE_RECOVERY_CORE,
 });

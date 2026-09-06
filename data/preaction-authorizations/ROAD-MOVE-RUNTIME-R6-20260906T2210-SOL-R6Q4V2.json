@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-MOVE-RUNTIME-R6-20260906T2210-SOL-R6Q4V2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE_R6",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R6-20260906T2210-SOL-R6Q4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R5_PATCH_AND_SHARED_ROAD_CONTRACT_PASS_LIVE_EVIDENCE_FAIL_PRODUCT_COMMIT_SKIPPED",
+  "rehearsalStatus": "PASS_WITH_CORRECTION",
+  "rehearsalEvidenceId": "RECOVER_EXACT_R5_LIVE_FAILURE_BEFORE_NEW_PRODUCT_MUTATION",
+  "proceedToken": "PROCEED|ROAD-MOVE-RUNTIME-R6-20260906T2210-SOL-R6Q4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|same-workunit-r6-recovery",
+  "authorizationBaseSha": "108b19a6881a95af1ea91578dbf5da246ea96776",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseUntilJst": "2026-09-06 23:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A470:N470",
+  "constraints": [
+    "Road card and movement are two inputs to one draft, never CARD_FIRST/MOVE_FIRST modes",
+    "Road1-6 are movement upper bounds, not exact-length requirements",
+    "multiple compatible Road cards are never auto-selected",
+    "path survives Road focus change whenever structurally legal",
+    "do not add, select, reserve, submit, reorder, or change Battle-card behavior for this Road/movement repair",
+    "do not rebuild 109 topology, reachable, shortest, adjacency, or stoppability authority",
+    "R5 failure is evidence, not product completion"
+  ]
+}

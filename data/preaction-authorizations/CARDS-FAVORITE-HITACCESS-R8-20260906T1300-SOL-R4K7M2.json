@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-FAVORITE-HITACCESS-R8-20260906T1300-SOL-R4K7M2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "CARDS_FAVORITE_HITACCESS_LIVE_R8",
+  "acquireKey": "CARDS-FAVORITE-HITACCESS-R8-20260906T1300-SOL-R4K7M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R5_GEOMETRY_33991263168_PLUS_R7_HARNESS_TIMEOUT_34010078189",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXACT_TARGET_BLOB_PLUS_REAL_CHROMIUM_PRIOR_RUNS",
+  "proceedToken": "PROCEED|CARDS-FAVORITE-HITACCESS-R8-20260906T1300-SOL-R4K7M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-adopted-favorite-hitaccess-repair|active-lease-readback",
+  "authorizationBaseSha": "d0d1fcfe1910848e7f6dc51eaa2a92625a156736",
+  "targetBlobSha": "5f54a0ee0cb7fe7ef65bf06260bc89c5722fac5f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "CARDS_FAVORITE_HITACCESS_LIVE_R8",
+  "leaseAcquireKey": "CARDS-FAVORITE-HITACCESS-R8-20260906T1300-SOL-R4K7M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 13:00 JST",
+  "leaseUntilJst": "2026-09-06 13:55 JST",
+  "scope": ["browser/cards-deck-presentation.mjs","tests/home-cards-2p5d-runtime.spec.mjs"],
+  "solutionSignature": "CARDS_FAVORITE_GRID_INFLOW_R8",
+  "reuseDisposition": "REPAIR_EXISTING",
+  "solutionSearchStatus": "PASS",
+  "priorHarnessFailureRunId": "34010078189",
+  "reuseDecisionEvidence": [
+    "Fresh main preserves exact target blob 5f54a0ee0cb7fe7ef65bf06260bc89c5722fac5f.",
+    "R7 did not reach product assertions: page.goto waiting for full load timed out while GAMEROAD.html and current modules returned 200.",
+    "R8 therefore keeps the same in-flow Collection candidate and changes only test synchronization to domcontentloaded plus explicit application readiness."
+  ]
+}

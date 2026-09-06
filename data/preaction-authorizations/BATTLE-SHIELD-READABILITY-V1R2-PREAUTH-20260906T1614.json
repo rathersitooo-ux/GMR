@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SHIELD-READABILITY-V1R2-PREAUTH-20260906T1614",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_SHIELD_LANE_READABILITY_V1_R2_GATE_REPAIR",
+  "acquireKey": "BATTLE-SHIELD-READABILITY-V1R2-20260906T1614-SOL-P6N3K8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BATTLE-SHIELD-V1R2-PREDICT-STRUCTURE-ONLY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1205-DIFF-AND-REQUIRED-GATE-FAILURE-RECONSTRUCTION",
+  "proceedToken": "PROCEED|BATTLE-SHIELD-READABILITY-V1R2-PREAUTH-20260906T1614|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|shield-lane-structure|lease-readback-477",
+  "authorizationBaseSha": "a67955117945a57eb4bbddf6b3181a145e61bdfd",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_SHIELD_LANE_READABILITY_V1_R2_GATE_REPAIR",
+  "leaseAcquireKey": "BATTLE-SHIELD-READABILITY-V1R2-20260906T1614-SOL-P6N3K8",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 16:14 JST",
+  "leaseUntilJst": "2026-09-06 17:14 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A477:L477",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch sol/battle-shield-lane-readability-v1r2-20260906 only: browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; CURRENT_ACTIVE_LEASES own AcquireKey row only",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

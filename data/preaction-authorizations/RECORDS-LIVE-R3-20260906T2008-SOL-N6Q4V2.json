@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RECORDS-LIVE-R3-20260906T2008-SOL-N6Q4V2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "RECORDS_RECENT_HISTORY_LIVE_R1",
+  "acquireKey": "RECORDS-LIVE-R3-20260906T2008-SOL-N6Q4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "RECORDS-R3-R1-PRODUCTION-HISTORY-PERSISTS-RECORDS-EMPTY-RUN-34029452834",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "RECORDS-R3-READ-ONLY-EXISTING-SAVE-FAILCLOSE-PRESENTATION",
+  "proceedToken": "PROCEED|RECORDS-LIVE-R3-20260906T2008-SOL-N6Q4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|fresh-main-0be3a466|lease-readback-A470",
+  "authorizationBaseSha": "0be3a466b55cbd0af23244bc9fc90b2f5f6640fd",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "RECORDS_RECENT_HISTORY_LIVE_R1",
+  "leaseAcquireKey": "RECORDS-LIVE-R3-20260906T2008-SOL-N6Q4V2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 20:08 JST",
+  "leaseUntilJst": "2026-09-06 21:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A470:N470",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/records-recent-history-r3-20260906 only: browser/profile-presentation-runtime-mount.mjs; tests/profile-presentation-runtime-mount.test.mjs; tests/browser-full-interaction-state-sequence.spec.mjs only if needed for visible acceptance; UNIQUE_TRANSIENT .github/workflows/zz-temp-records-recent-history-r3.yml; transient data/preaction-authorizations/RECORDS-LIVE-R3-20260906T2008-SOL-N6Q4V2.json; own PR/checks/merge evidence; own R23 event and CURRENT_ACTIVE_LEASES tuple. browser/GAMEROAD.html; gameplay/rules/save/economy/network/Battle/Cards/Home/Partner/Road/Result resources READ_ONLY.",
+  "scope": [
+    "browser/profile-presentation-runtime-mount.mjs",
+    "tests/profile-presentation-runtime-mount.test.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs",
+    ".github/workflows/zz-temp-records-recent-history-r3.yml"
+  ],
+  "leaseScope": [
+    "browser/profile-presentation-runtime-mount.mjs",
+    "tests/profile-presentation-runtime-mount.test.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs",
+    ".github/workflows/zz-temp-records-recent-history-r3.yml"
+  ],
+  "constraints": [
+    "Use only existing production match-history authority from gameroad.browser.v10.core.1/history.",
+    "Do not use __GAMEROAD_TEST__ as production authority.",
+    "Do not mutate GAMEROAD.html or gameplay/rules/save/economy/network.",
+    "Do not invent per-match deck/replay detail authority that current persisted history does not contain.",
+    "Fail closed if current production history cannot be read without inventing a second authority."
+  ]
+}

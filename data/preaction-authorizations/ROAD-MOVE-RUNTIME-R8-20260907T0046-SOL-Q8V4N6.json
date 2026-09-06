@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-MOVE-RUNTIME-R8-20260907T0046-SOL-Q8V4N6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE_R8",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R8-20260907T0046-SOL-Q8V4N6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R5_SHARED_ROAD_CONTRACT_PASS_R6_R7_PREPRODUCT_RECOVERY_FAILURE_ONLY",
+  "rehearsalStatus": "PASS_WITH_CORRECTION",
+  "rehearsalEvidenceId": "R7_DONOR_IDENTIFIED_COMPATIBLE_ROAD_TAP_ROUTING_AS_LIVE_FAILURE_AND_PRODUCT_MUTATION_REMAINED_ZERO",
+  "proceedToken": "PROCEED|ROAD-MOVE-RUNTIME-R8-20260907T0046-SOL-Q8V4N6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|same-workunit-r8-continuation",
+  "authorizationBaseSha": "e12a0191656f066c4a66577269c8c26096d2e7ce",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseUntilJst": "2026-09-07 01:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A497:N497",
+  "constraints": [
+    "Road card and movement are two inputs to one draft; never split CARD_FIRST and MOVE_FIRST modes",
+    "Road1-6 are movement upper bounds rather than exact-length requirements",
+    "compatible Road cards are derived from current hand, path and board state",
+    "multiple compatible Road cards are never auto-selected",
+    "path survives Road focus changes whenever structurally legal",
+    "single-candidate soft focus remains provisional until explicit decision",
+    "do not add, select, reserve, submit, reorder or modify Battle-card semantics",
+    "do not rebuild 109 topology, adjacency, reachable, path or stoppability authority",
+    "Home Quick Set active resources remain read-only and non-overlapping"
+  ]
+}

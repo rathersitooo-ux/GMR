@@ -537,7 +537,10 @@ export function mountDeckStorageCorner({
     ? controller.subscribe((payload) => {
         if (!payload?.cardId) return;
         if (payload.event === 'deck-remove-start') {
-          ghostTransfer.prepare({ cardId: payload.cardId, sourceElement: findDeckCard(payload.cardId) ?? findCollectionCard(payload.cardId) });
+          const sourceElement = payload.surface === 'collection'
+            ? (findCollectionCard(payload.cardId) ?? findDeckCard(payload.cardId))
+            : (findDeckCard(payload.cardId) ?? findCollectionCard(payload.cardId));
+          ghostTransfer.prepare({ cardId: payload.cardId, sourceElement });
         } else if (payload.event === 'deck-remove') {
           ghostTransfer.commit({ cardId: payload.cardId, targetElement: findCollectionCard(payload.cardId) });
         } else if (payload.event === 'deck-remove-reject') {

@@ -1,0 +1,67 @@
+name: TEMP Road Move Bidirectional Live R5
+on:
+  push:
+    branches:
+      - sol/road-move-bidirectional-live-r5-20260906
+permissions:
+  contents: write
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: sol/road-move-bidirectional-live-r5-20260906
+          fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact bounded Road patch
+        run: python3 tools/zz-temp-road-move-runtime-r5.py
+      - name: Validate patch whitespace
+        run: git diff --check
+      - name: Run shared Road 1-6 compatibility contract
+        run: node --test tests/road-move-compatibility-core.test.mjs
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Run focused live Road evidence
+        shell: bash
+        run: |
+          cat > .road-r5-playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir: './tests',
+            testMatch: 'road-move-bidirectional-live-r5.spec.mjs',
+            timeout: 90000,
+            expect: { timeout: 10000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true, trace: 'retain-on-failure', screenshot: 'only-on-failure', video: 'off' },
+            projects: [
+              { name: 'desktop-1280x720', use: { viewport: { width: 1280, height: 720 } } },
+              { name: 'phone-390x844', use: { viewport: { width: 390, height: 844 } } },
+              { name: 'short-landscape-667x375', use: { viewport: { width: 667, height: 375 } } }
+            ],
+            webServer: { command: 'python3 -m http.server 4173 --bind 127.0.0.1', url: 'http://127.0.0.1:4173/browser/GAMEROAD.html', reuseExistingServer: false, timeout: 120000 }
+          });
+          EOF
+          npx playwright test --config=.road-r5-playwright.config.mjs --workers=1
+          rm .road-r5-playwright.config.mjs
+      - name: Commit verified product delta and remove transients
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm .github/workflows/zz-temp-road-move-runtime-r5.yml
+          rm tools/zz-temp-road-move-runtime-r5.py
+          git add browser/GAMEROAD.html tests/road-move-bidirectional-live-r5.spec.mjs .github/workflows/zz-temp-road-move-runtime-r5.yml tools/zz-temp-road-move-runtime-r5.py
+          git diff --cached --check
+          git config user.name 'gameroad-runtime-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git commit -m 'Battle: allow Road and movement in either order [road-move-live-r5-generated]'
+          git push origin HEAD:sol/road-move-bidirectional-live-r5-20260906

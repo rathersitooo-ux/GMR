@@ -1,4 +1,7 @@
 const SCHEMA = 'gameroad.deck-save-recovery.v1';
+const ATOMICITY_SCHEMA = 'gameroad.deck-save-atomicity-guard.v1';
+const DECK_DRAFT_SESSION_SUFFIX = '.deckDraft.session.v1';
+const DECK_LIBRARY_SUFFIX = '.deckSlots.v1';
 
 function isPlainObject(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -73,6 +76,10 @@ function normalizeAuthority(authority = {}) {
 
 function decision(status, reason, extra = {}) {
   return deepFreeze({ schema: SCHEMA, status, reason, ...extra });
+}
+
+function atomicityDecision(status, reason, extra = {}) {
+  return deepFreeze({ schema: ATOMICITY_SCHEMA, status, reason, ...extra });
 }
 
 function inspectRawSave(rawValue) {
@@ -344,7 +351,249 @@ function resetExplicitSaveKeys(storage, keys, { confirmed = false } = {}) {
   }
 }
 
-const DECK_SAVE_RECOVERY_CORE = Object.freeze({ schema: SCHEMA });
+function normalizeAtomicDeckRecord(deck) {
+  return {
+    main: Array.isArray(deck?.main) ? deck.main.map(String) : [],
+    ex: Array.isArray(deck?.ex) ? deck.ex.map(String) : [],
+  };
+}
+
+function sameAtomicDeck(left, right) {
+  return JSON.stringify(normalizeAtomicDeckRecord(left)) === JSON.stringify(normalizeAtomicDeckRecord(right));
+}
+
+function deriveLiveDeckSaveKeys(api) {
+  const draftSessionKey = api?.deckDraftSessionKey?.();
+  if (!nonEmptyString(draftSessionKey) || !draftSessionKey.endsWith(DECK_DRAFT_SESSION_SUFFIX)) return null;
+  const rootKey = draftSessionKey.slice(0, -DECK_DRAFT_SESSION_SUFFIX.length);
+  if (!nonEmptyString(rootKey)) return null;
+  return Object.freeze({
+    rootKey,
+    libraryKey: `${rootKey}${DECK_LIBRARY_SUFFIX}`,
+    draftSessionKey,
+  });
+}
+
+function expectedDeckLibraryRaw(deckSlots, selectedDeckIndex, deckDraft) {
+  if (!Array.isArray(deckSlots) || !Number.isInteger(selectedDeckIndex) || selectedDeckIndex < 0 || selectedDeckIndex >= deckSlots.length) return null;
+  const slots = deckSlots.map(normalizeAtomicDeckRecord);
+  slots[selectedDeckIndex] = normalizeAtomicDeckRecord(deckDraft);
+  return JSON.stringify({ schema: 'gameroad.deck-slots.v1', slots });
+}
+
+function captureDeckSaveAtomicitySnapshot({
+  storage,
+  sessionStorage,
+  api,
+  state = api?.state,
+  requiresRootSave = true,
+} = {}) {
+  if (requiresRootSave !== true) return atomicityDecision('bypass', 'LIBRARY_ONLY_PATH_UNCHANGED');
+  const keys = deriveLiveDeckSaveKeys(api);
+  if (!keys) return atomicityDecision('blocked', 'LIVE_SAVE_KEYS_UNAVAILABLE');
+  if (!state || !Array.isArray(state.deckSlots) || !isPlainObject(state.deckDraft)) {
+    return atomicityDecision('blocked', 'LIVE_DECK_STATE_UNAVAILABLE');
+  }
+  const expectedLibraryRaw = expectedDeckLibraryRaw(state.deckSlots, state.selectedDeckIndex, state.deckDraft);
+  if (!expectedLibraryRaw) return atomicityDecision('blocked', 'LIVE_DECK_LIBRARY_EXPECTATION_INVALID');
+  const rule = api?.deckRule?.();
+  if (!isPlainObject(rule) || !nonEmptyString(rule.id) || !nonNegativeInteger(rule.revision)) {
+    return atomicityDecision('blocked', 'LIVE_DECK_RULE_UNAVAILABLE');
+  }
+  try {
+    return atomicityDecision('captured', 'ATOMIC_BASELINE_CAPTURED', {
+      keys,
+      rootRaw: storage.getItem(keys.rootKey),
+      libraryRaw: storage.getItem(keys.libraryKey),
+      draftSessionRaw: sessionStorage?.getItem?.(keys.draftSessionKey) ?? null,
+      expectedLibraryRaw,
+      expectedDeck: normalizeAtomicDeckRecord(state.deckDraft),
+      expectedRule: { id: rule.id, revision: rule.revision },
+      stateBaseline: {
+        deckSlots: cloneJson(state.deckSlots),
+        selectedDeckIndex: state.selectedDeckIndex,
+        savedDeck: cloneJson(state.savedDeck),
+        savedDeckRule: cloneJson(state.savedDeckRule),
+        deckDraft: cloneJson(state.deckDraft),
+        saveAuthorityDeck: cloneJson(state.saveAuthorityDeck),
+        saveAuthorityDeckRule: cloneJson(state.saveAuthorityDeckRule),
+        storage: state.storage,
+      },
+    });
+  } catch {
+    return atomicityDecision('blocked', 'ATOMIC_BASELINE_READ_FAILED');
+  }
+}
+
+function rootRawMatchesAtomicExpectation(rawValue, snapshot) {
+  if (typeof rawValue !== 'string') return false;
+  try {
+    const parsed = JSON.parse(rawValue);
+    const deck = parsed?.deck;
+    return isPlainObject(deck)
+      && sameAtomicDeck(deck, snapshot.expectedDeck)
+      && deck.ruleId === snapshot.expectedRule.id
+      && deck.ruleRevision === snapshot.expectedRule.revision;
+  } catch {
+    return false;
+  }
+}
+
+function restoreAtomicState(state, baseline) {
+  if (!state || !baseline) return false;
+  state.deckSlots = cloneJson(baseline.deckSlots);
+  state.selectedDeckIndex = baseline.selectedDeckIndex;
+  state.savedDeck = cloneJson(baseline.savedDeck);
+  state.savedDeckRule = cloneJson(baseline.savedDeckRule);
+  state.deckDraft = cloneJson(baseline.deckDraft);
+  state.saveAuthorityDeck = cloneJson(baseline.saveAuthorityDeck);
+  state.saveAuthorityDeckRule = cloneJson(baseline.saveAuthorityDeckRule);
+  state.storage = 'memory';
+  return true;
+}
+
+function settleDeckSaveAtomicitySnapshot({
+  snapshot,
+  storage,
+  sessionStorage,
+  api,
+  state = api?.state,
+  saveReceipt,
+} = {}) {
+  if (!snapshot || snapshot.schema !== ATOMICITY_SCHEMA || snapshot.status !== 'captured') {
+    return atomicityDecision('failed', 'ATOMIC_BASELINE_REQUIRED');
+  }
+  let rootRaw;
+  let libraryRaw;
+  let postReadFailed = false;
+  try {
+    rootRaw = storage.getItem(snapshot.keys.rootKey);
+    libraryRaw = storage.getItem(snapshot.keys.libraryKey);
+  } catch {
+    postReadFailed = true;
+  }
+  const receiptSaved = saveReceipt?.status === 'saved';
+  const rootExact = !postReadFailed && rootRawMatchesAtomicExpectation(rootRaw, snapshot);
+  const libraryExact = !postReadFailed && libraryRaw === snapshot.expectedLibraryRaw;
+  if (receiptSaved && rootExact && libraryExact) {
+    return atomicityDecision('saved', 'ATOMIC_ROOT_AND_LIBRARY_READBACK_OK', {
+      rootExact: true,
+      libraryExact: true,
+      originalPreserved: true,
+    });
+  }
+
+  const rootRollback = restorePreviousRaw(storage, snapshot.keys.rootKey, snapshot.rootRaw);
+  const libraryRollback = restorePreviousRaw(storage, snapshot.keys.libraryKey, snapshot.libraryRaw);
+  const stateRestored = restoreAtomicState(state, snapshot.stateBaseline);
+  const sessionRollback = sessionStorage?.getItem && sessionStorage?.setItem && sessionStorage?.removeItem
+    ? restorePreviousRaw(sessionStorage, snapshot.keys.draftSessionKey, snapshot.draftSessionRaw)
+    : decision('failed', 'DRAFT_SESSION_ROLLBACK_UNAVAILABLE', { originalPreserved: false });
+  if (snapshot.draftSessionRaw === null && stateRestored) {
+    try { api?.deckDraftSessionSave?.(); } catch {}
+  }
+  const originalPreserved = rootRollback.status === 'restored'
+    && libraryRollback.status === 'restored'
+    && stateRestored
+    && sessionRollback.status === 'restored';
+  const reason = postReadFailed
+    ? 'ATOMIC_POST_READ_FAILED'
+    : !receiptSaved
+      ? 'AUTHORITATIVE_ROOT_SAVE_NOT_CONFIRMED'
+      : !rootExact
+        ? 'AUTHORITATIVE_ROOT_DECK_MISMATCH'
+        : 'DECK_LIBRARY_READBACK_MISMATCH';
+  return atomicityDecision('failed', originalPreserved ? reason : 'ATOMIC_ROLLBACK_FAILED', {
+    failureReason: reason,
+    rootExact,
+    libraryExact,
+    originalPreserved,
+    rootRollback: rootRollback.reason,
+    libraryRollback: libraryRollback.reason,
+    sessionRollback: sessionRollback.reason,
+  });
+}
+
+const liveDeckSaveAtomicityInstallations = new WeakMap();
+let liveDeckSaveAtomicityStatus = atomicityDecision('idle', 'LIVE_GUARD_NOT_INSTALLED');
+
+function renderLiveDeckSaveAtomicityFailure(doc, api, message) {
+  try { api?.show?.('cards', { skipCrossScreenMotion: true }); } catch {}
+  const toast = doc?.querySelector?.('#toast');
+  if (toast) {
+    toast.textContent = message;
+    toast.dataset.toastScreen = 'cards';
+    toast.classList?.add?.('on');
+  }
+}
+
+function installLiveDeckSaveAtomicityGuard({ document: doc = globalThis.document, window: win = globalThis.window } = {}) {
+  if (!doc?.querySelector || !doc?.addEventListener) return atomicityDecision('disabled', 'LIVE_DOCUMENT_UNAVAILABLE');
+  const existing = liveDeckSaveAtomicityInstallations.get(doc);
+  if (existing) return existing;
+  const button = doc.querySelector('#saveDeck');
+  if (!button?.addEventListener) return atomicityDecision('disabled', 'LIVE_SAVE_BUTTON_UNAVAILABLE');
+
+  const onCapture = (event) => {
+    const validation = doc.querySelector('#deckValidation');
+    if (!validation?.classList?.contains?.('ok')) {
+      liveDeckSaveAtomicityStatus = atomicityDecision('bypass', 'LIBRARY_ONLY_PATH_UNCHANGED');
+      return;
+    }
+    const api = win?.__GAMEROAD_TEST__ ?? globalThis.__GAMEROAD_TEST__;
+    const storage = win?.localStorage ?? globalThis.localStorage;
+    const session = win?.sessionStorage ?? globalThis.sessionStorage;
+    const snapshot = captureDeckSaveAtomicitySnapshot({ storage, sessionStorage: session, api, requiresRootSave: true });
+    if (snapshot.status !== 'captured') {
+      event?.preventDefault?.();
+      event?.stopImmediatePropagation?.();
+      liveDeckSaveAtomicityStatus = snapshot;
+      renderLiveDeckSaveAtomicityFailure(doc, api, '端末保存を確認できないため保存しません。変更は未保存のままです');
+      return;
+    }
+    liveDeckSaveAtomicityStatus = atomicityDecision('pending', 'ATOMIC_SAVE_IN_FLIGHT');
+    const settle = () => {
+      const receipt = win?.__GAMEROAD_SAVE_RECOVERY__?.snapshot?.().write
+        ?? globalThis.__GAMEROAD_SAVE_RECOVERY__?.snapshot?.().write
+        ?? null;
+      const result = settleDeckSaveAtomicitySnapshot({
+        snapshot,
+        storage,
+        sessionStorage: session,
+        api,
+        saveReceipt: receipt,
+      });
+      liveDeckSaveAtomicityStatus = result;
+      if (result.status !== 'saved') {
+        renderLiveDeckSaveAtomicityFailure(doc, api, 'デッキ保存を確認できません。変更は未保存のままです');
+      }
+    };
+    if (typeof win?.queueMicrotask === 'function') win.queueMicrotask(settle);
+    else if (typeof globalThis.queueMicrotask === 'function') globalThis.queueMicrotask(settle);
+    else Promise.resolve().then(settle);
+  };
+
+  button.addEventListener('click', onCapture, true);
+  const installation = Object.freeze({
+    schema: ATOMICITY_SCHEMA,
+    status: () => cloneJson(liveDeckSaveAtomicityStatus),
+    dispose() {
+      button.removeEventListener?.('click', onCapture, true);
+      liveDeckSaveAtomicityInstallations.delete(doc);
+    },
+  });
+  liveDeckSaveAtomicityInstallations.set(doc, installation);
+  liveDeckSaveAtomicityStatus = atomicityDecision('ready', 'LIVE_GUARD_INSTALLED');
+  return installation;
+}
+
+function autoInstallLiveDeckSaveAtomicityGuard(doc, win) {
+  const install = () => installLiveDeckSaveAtomicityGuard({ document: doc, window: win });
+  if (doc?.readyState === 'loading') doc.addEventListener?.('DOMContentLoaded', install, { once: true });
+  else install();
+}
+
+const DECK_SAVE_RECOVERY_CORE = Object.freeze({ schema: SCHEMA, atomicitySchema: ATOMICITY_SCHEMA });
 
 
 globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE = Object.freeze({
@@ -355,5 +604,20 @@ globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE = Object.freeze({
   writePreparedSave,
   writePreparedSaveVerified,
   resetExplicitSaveKeys,
+  deriveLiveDeckSaveKeys,
+  expectedDeckLibraryRaw,
+  captureDeckSaveAtomicitySnapshot,
+  settleDeckSaveAtomicitySnapshot,
+  installLiveDeckSaveAtomicityGuard,
   DECK_SAVE_RECOVERY_CORE,
 });
+
+globalThis.GAMEROAD_DECK_SAVE_ATOMICITY_GUARD = Object.freeze({
+  schema: ATOMICITY_SCHEMA,
+  snapshot: () => cloneJson(liveDeckSaveAtomicityStatus),
+  install: installLiveDeckSaveAtomicityGuard,
+});
+
+if (typeof document !== 'undefined') {
+  autoInstallLiveDeckSaveAtomicityGuard(document, globalThis.window);
+}

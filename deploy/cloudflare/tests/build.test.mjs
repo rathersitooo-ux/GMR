@@ -87,7 +87,7 @@ async function restoreRollbackSnapshot({ snapshotDir, targetDir, expectedSourceC
 }
 
 const dependencyContract = [
-  { file: 'deck-save-recovery-core.mjs', source: 'browser/deck-save-recovery-core.mjs', sourceArg: 'coreSource', expectedArg: 'expectedCoreBlob', artifact: 'deck_save_recovery_core', fixture: 'globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE = Object.freeze({});\n', currentBlob: 'd29fde280b3eb7c5f760b162987e04bda3446258' },
+  { file: 'deck-save-recovery-core.mjs', source: 'browser/deck-save-recovery-core.mjs', sourceArg: 'coreSource', expectedArg: 'expectedCoreBlob', artifact: 'deck_save_recovery_core', fixture: 'globalThis.GAMEROAD_DECK_SAVE_RECOVERY_CORE = Object.freeze({});\n', currentBlob: '64f87734076b57c209bb832aec2361417c4df0c2' },
   { file: 'deck-save-ack-core.mjs', source: 'browser/deck-save-ack-core.mjs', sourceArg: 'deckSaveAckCoreSource', expectedArg: 'expectedDeckSaveAckCoreBlob', artifact: 'deck_save_ack_core', fixture: 'export function createDeckMatchStartSnapshot(){ return Object.freeze({}); }\n', currentBlob: 'e62c901c2cf78d8459dd3474072c5b735ac9c449' },
   { file: 'hate-peer-presence-core.mjs', source: 'browser/hate-peer-presence-core.mjs', sourceArg: 'presenceCoreSource', expectedArg: 'expectedPresenceCoreBlob', artifact: 'hate_peer_presence_core', fixture: 'export const HATE_PEER_PRESENCE_CORE = Object.freeze({});\n', currentBlob: '522c6132e4b49c0a0df15690927da511c1e40f43' },
   { file: 'screen-navigation-core.mjs', source: 'browser/screen-navigation-core.mjs', sourceArg: 'navigationCoreSource', expectedArg: 'expectedNavigationCoreBlob', artifact: 'screen_navigation_core', fixture: 'export function resolveScreenNavigation(){ return { ok: true }; }\n', currentBlob: 'b6bfc5d4001916796e87d901986493adb5ae809c' },

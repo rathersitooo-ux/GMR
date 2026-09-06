@@ -1,5 +1,8 @@
 import { compatibleRoadCards as deriveCompatibleRoadCards } from './road-move-compatibility-core.mjs';
 
+const MIN_ROAD_VALUE = 1;
+const MAX_ROAD_VALUE = 6;
+
 export const ROAD_MOVE_CARD_PRESENTATION_STATE = Object.freeze({
   NORMAL: 'NORMAL',
   COMPATIBLE: 'COMPATIBLE',
@@ -32,6 +35,15 @@ function requireDraft(draft) {
   return draft;
 }
 
+function safeCall(fn, args, receiver) {
+  if (typeof fn !== 'function') return { ok: false, value: undefined };
+  try {
+    return { ok: true, value: fn.apply(receiver, args) };
+  } catch {
+    return { ok: false, value: undefined };
+  }
+}
+
 function safeIdentity(cardIdentityOf, card) {
   if (typeof cardIdentityOf !== 'function') return null;
   try {
@@ -53,6 +65,21 @@ function sameRoadCard(left, right, cardIdentityOf) {
 function findSameCard(cards, target, cardIdentityOf) {
   if (target == null) return null;
   return cards.find((card) => sameRoadCard(card, target, cardIdentityOf)) ?? null;
+}
+
+function readRoadValue(card, boardState) {
+  const result = safeCall(boardState?.roadValueOf, [card], boardState);
+  if (!result.ok) return null;
+  const value = result.value;
+  if (!Number.isSafeInteger(value) || value < MIN_ROAD_VALUE || value > MAX_ROAD_VALUE) return null;
+  return value;
+}
+
+function readNonNegativeStepCount(path, boardState) {
+  const result = safeCall(boardState?.pathStepCountOf, [path], boardState);
+  if (!result.ok) return null;
+  const value = result.value;
+  return Number.isSafeInteger(value) && value >= 0 ? value : null;
 }
 
 function freezeDraft({ currentPath, focusedRoadCard, boardVersion, validity }) {
@@ -151,12 +178,15 @@ export function projectRoadMoveDraft({
   const compatible = deriveCompatibleRoadCards(hand, current.currentPath, boardState);
   const focusedInHand = findSameCard(hand, current.focusedRoadCard, cardIdentityOf);
   const focusedCompatible = findSameCard(compatible, current.focusedRoadCard, cardIdentityOf);
+  const stepCount = readNonNegativeStepCount(current.currentPath, boardState);
+  const focusIsPreMove = focusedInHand !== null
+    && (current.currentPath == null || stepCount === 0);
 
   const cardStates = Object.freeze(hand.map((card) => {
     const isFocused = sameRoadCard(card, current.focusedRoadCard, cardIdentityOf);
     const isCompatible = findSameCard(compatible, card, cardIdentityOf) !== null;
     let state = ROAD_MOVE_CARD_PRESENTATION_STATE.NORMAL;
-    if (isFocused && isCompatible) state = ROAD_MOVE_CARD_PRESENTATION_STATE.FOCUSED;
+    if (isFocused && (isCompatible || focusIsPreMove)) state = ROAD_MOVE_CARD_PRESENTATION_STATE.FOCUSED;
     else if (isFocused) state = ROAD_MOVE_CARD_PRESENTATION_STATE.INVALID_FOCUS;
     else if (isCompatible) state = ROAD_MOVE_CARD_PRESENTATION_STATE.COMPATIBLE;
     return Object.freeze({ card, state });
@@ -164,9 +194,21 @@ export function projectRoadMoveDraft({
 
   const focusState = current.focusedRoadCard == null
     ? ROAD_MOVE_FOCUS_STATE.NONE
-    : focusedCompatible !== null
+    : focusedCompatible !== null || focusIsPreMove
       ? ROAD_MOVE_FOCUS_STATE.FOCUSED
       : ROAD_MOVE_FOCUS_STATE.INVALID_FOCUS;
+
+  const focusedRoadValue = readRoadValue(focusedInHand, boardState);
+  const heldRoadValues = hand
+    .map((card) => readRoadValue(card, boardState))
+    .filter((value) => value !== null);
+  const maxHeldRoadValue = heldRoadValues.length > 0 ? Math.max(...heldRoadValues) : null;
+  const strongRangeMax = focusState === ROAD_MOVE_FOCUS_STATE.FOCUSED ? focusedRoadValue : null;
+  const extensionRangeMax = strongRangeMax !== null
+    && maxHeldRoadValue !== null
+    && maxHeldRoadValue > strongRangeMax
+      ? maxHeldRoadValue
+      : null;
 
   const soleCompatibleRoadCard = compatible.length === 1 ? compatible[0] : null;
   const softFocusRoadCard = focusedCompatible === null ? soleCompatibleRoadCard : null;
@@ -183,5 +225,11 @@ export function projectRoadMoveDraft({
     softFocusRoadCard,
     decisionRoadCard,
     confirmReady,
+    rangeHints: Object.freeze({
+      focusedRoadValue,
+      maxHeldRoadValue,
+      strongRangeMax,
+      extensionRangeMax,
+    }),
   });
 }

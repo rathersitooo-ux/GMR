@@ -1,0 +1,106 @@
+name: Records recent-history R1 diagnostic
+
+on:
+  push:
+    branches:
+      - sol/records-recent-history-r1-20260906
+    paths:
+      - '.github/workflows/records-recent-history-r1-executor.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  records-current-dom:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Capture actual Records DOM through visible Home to Profile to Records route
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p records-r1-evidence
+          python3 -m http.server 4173 --bind 127.0.0.1 > records-r1-evidence/http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/browser/GAMEROAD.html >/dev/null; then break; fi
+            sleep 0.25
+          done
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { chromium } from '@playwright/test';
+          const browser = await chromium.launch({headless:true});
+          const page = await browser.newPage({viewport:{width:1280,height:720}});
+          const pageErrors = [];
+          const consoleErrors = [];
+          page.on('pageerror', e => pageErrors.push(e.message));
+          page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
+          const response = await page.goto('http://127.0.0.1:4173/browser/GAMEROAD.html', {waitUntil:'domcontentloaded'});
+          if (!response?.ok()) throw new Error(`Browser boot failed: ${response?.status()}`);
+          await page.waitForTimeout(500);
+          const rootGo = (target) => page.locator(`[data-go="${target}"]:visible, [data-home-target="${target}"]:visible, [data-root-go="${target}"]:visible`).first();
+          const profileGo = rootGo('profile');
+          if (!(await profileGo.isVisible())) throw new Error('Visible Home→Profile control missing');
+          await profileGo.click();
+          const profile = page.locator('section[data-screen="profile"]');
+          await profile.waitFor({state:'visible'});
+          const recordsGo = profile.locator('[data-go="records"]:visible').first();
+          if (!(await recordsGo.isVisible())) throw new Error('Visible Profile→Records control missing');
+          await recordsGo.click();
+          const records = page.locator('section[data-screen="records"]');
+          await records.waitFor({state:'visible'});
+          const snapshot = await records.evaluate((node) => ({
+            text: node.innerText,
+            html: node.innerHTML,
+            dataset: {...node.dataset},
+            directChildren: [...node.children].map((child) => ({
+              tag: child.tagName,
+              id: child.id || null,
+              className: typeof child.className === 'string' ? child.className : null,
+              text: child.innerText || '',
+              dataset: {...child.dataset},
+            })),
+            buttons: [...node.querySelectorAll('button,[role="button"],a,summary')].map((control) => ({
+              tag: control.tagName,
+              id: control.id || null,
+              className: typeof control.className === 'string' ? control.className : null,
+              text: control.innerText || control.textContent || '',
+              dataGo: control.getAttribute('data-go'),
+              dataBack: control.hasAttribute('data-back'),
+            })),
+          }));
+          fs.writeFileSync('records-r1-evidence/records-dom.json', JSON.stringify({
+            sourceSha: process.env.GITHUB_SHA,
+            pageErrors,
+            consoleErrors,
+            snapshot,
+          }, null, 2));
+          await page.screenshot({path:'records-r1-evidence/records-desktop.png', fullPage:true, animations:'disabled'});
+          console.log('RECORDS_R1_DOM=' + JSON.stringify(snapshot));
+          console.log(`RECORDS_R1_ERRORS page=${pageErrors.length} console=${consoleErrors.length}`);
+          await browser.close();
+          NODE
+
+      - name: Upload bounded Records evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: records-r1-current-dom-${{ github.run_id }}
+          path: records-r1-evidence/
+          if-no-files-found: error
+          retention-days: 3

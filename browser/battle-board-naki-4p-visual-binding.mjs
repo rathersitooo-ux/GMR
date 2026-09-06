@@ -1,3 +1,5 @@
+import './battle-board-visual-explanation-runtime-mount.mjs';
+
 const NAKI_CHARACTER_ID = 'partner.naki';
 const STYLE_ID = 'gameroad-naki-4p-board-visuals-style';
 const SURFACE_ATTR = 'data-naki-4p-board-character';
@@ -5,12 +7,6 @@ const ACTIVE_ATTR = 'data-naki-4p-board-active';
 const MARKER_SELECTOR = '.boardPlayerToken[data-player]';
 const BATTLE_FOCUS_CHROME_SELECTOR = 'body:has(.battle.active) .top';
 const PARTICIPANT_IDS = Object.freeze(['P1', 'P2', 'P3', 'P4']);
-const VISUAL_FOOTPRINT = Object.freeze({
-  desktop: Object.freeze({ surfaceWidth: 54, surfaceHeight: 68, fallbackWidth: 42, fallbackHeight: 54 }),
-  compact: Object.freeze({ surfaceWidth: 48, surfaceHeight: 60, fallbackWidth: 38, fallbackHeight: 48 }),
-  shortLandscape: Object.freeze({ surfaceWidth: 42, surfaceHeight: 52, fallbackWidth: 34, fallbackHeight: 44 }),
-  portrait: Object.freeze({ surfaceWidth: 46, surfaceHeight: 58, fallbackWidth: 36, fallbackHeight: 46 })
-});
 
 function asParticipantId(value) {
   const id = String(value ?? '').trim();
@@ -56,13 +52,13 @@ function ensureStyle(documentRef) {
   style.textContent = `
 ${BATTLE_FOCUS_CHROME_SELECTOR}{display:none!important}
 #boardPlayers ${MARKER_SELECTOR}{overflow:visible}
-#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{position:absolute;left:50%;top:50%;width:${VISUAL_FOOTPRINT.desktop.surfaceWidth}px;height:${VISUAL_FOOTPRINT.desktop.surfaceHeight}px;transform:translate(-50%,-82%);display:flex;align-items:flex-end;justify-content:center;pointer-events:none;overflow:visible;filter:drop-shadow(0 6px 8px rgba(0,0,0,.42))}
+#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{position:absolute;left:50%;top:50%;width:72px;height:92px;transform:translate(-50%,-82%);display:flex;align-items:flex-end;justify-content:center;pointer-events:none;overflow:visible;filter:drop-shadow(0 7px 10px rgba(0,0,0,.45))}
 #boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}] .grtc-image{display:block;width:auto;height:100%;max-width:100%;object-fit:contain;opacity:1;visibility:visible}
-#boardPlayers ${MARKER_SELECTOR} .grNaki4pFallback{width:${VISUAL_FOOTPRINT.desktop.fallbackWidth}px;height:${VISUAL_FOOTPRINT.desktop.fallbackHeight}px;display:grid;place-items:end center;padding:0 4px 6px;border:1px solid rgba(255,255,255,.5);border-radius:48% 48% 22% 22%;background:linear-gradient(180deg,rgba(232,218,170,.92),rgba(67,82,77,.95));box-shadow:0 6px 14px rgba(0,0,0,.34);color:#fff;font-size:8px;font-weight:900;letter-spacing:.08em;text-shadow:0 1px 3px #000}
+#boardPlayers ${MARKER_SELECTOR} .grNaki4pFallback{width:56px;height:72px;display:grid;place-items:end center;padding:0 4px 7px;border:1px solid rgba(255,255,255,.5);border-radius:48% 48% 22% 22%;background:linear-gradient(180deg,rgba(232,218,170,.92),rgba(67,82,77,.95));box-shadow:0 7px 18px rgba(0,0,0,.36);color:#fff;font-size:9px;font-weight:900;letter-spacing:.08em;text-shadow:0 1px 3px #000}
 [${ACTIVE_ATTR}="1"] #boardPlayers{z-index:12}
-@media(max-width:900px){#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{width:${VISUAL_FOOTPRINT.compact.surfaceWidth}px;height:${VISUAL_FOOTPRINT.compact.surfaceHeight}px}#boardPlayers ${MARKER_SELECTOR} .grNaki4pFallback{width:${VISUAL_FOOTPRINT.compact.fallbackWidth}px;height:${VISUAL_FOOTPRINT.compact.fallbackHeight}px}}
-@media(max-height:420px){#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{width:${VISUAL_FOOTPRINT.shortLandscape.surfaceWidth}px;height:${VISUAL_FOOTPRINT.shortLandscape.surfaceHeight}px}#boardPlayers ${MARKER_SELECTOR} .grNaki4pFallback{width:${VISUAL_FOOTPRINT.shortLandscape.fallbackWidth}px;height:${VISUAL_FOOTPRINT.shortLandscape.fallbackHeight}px}}
-@media(max-width:540px) and (orientation:portrait){#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{width:${VISUAL_FOOTPRINT.portrait.surfaceWidth}px;height:${VISUAL_FOOTPRINT.portrait.surfaceHeight}px}#boardPlayers ${MARKER_SELECTOR} .grNaki4pFallback{width:${VISUAL_FOOTPRINT.portrait.fallbackWidth}px;height:${VISUAL_FOOTPRINT.portrait.fallbackHeight}px}}
+@media(max-width:900px){#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{width:62px;height:78px}#boardPlayers ${MARKER_SELECTOR} .grNaki4pFallback{width:48px;height:62px}}
+@media(max-height:420px){#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{width:54px;height:70px}#boardPlayers ${MARKER_SELECTOR} .grNaki4pFallback{width:43px;height:55px}}
+@media(max-width:540px) and (orientation:portrait){#boardPlayers ${MARKER_SELECTOR} [${SURFACE_ATTR}]{width:60px;height:76px}#boardPlayers ${MARKER_SELECTOR} .grNaki4pFallback{width:46px;height:60px}}
 `;
   documentRef.head.appendChild(style);
   return true;
@@ -227,6 +223,5 @@ export const NAKI_4P_BOARD_VISUAL_BINDING = Object.freeze({
   coordinateProjection: 'NONE__VISUAL_IS_CHILD_OF_AUTHORITATIVE_MARKER',
   presentationOnly: true,
   gameplayAuthority: false,
-  failVisible: true,
-  visualFootprint: VISUAL_FOOTPRINT
+  failVisible: true
 });

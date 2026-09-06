@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-FAVORITE-HITACCESS-R15-20260906T1800-SOL-X4N7P2",
+  "taskId": "COLLECTION-CROSSDOMAIN-EXPERIENCE-001",
+  "workUnitKey": "COLLECTION_CARDS_FAVORITE_FILTER_HITACCESS_R15",
+  "acquireKey": "CARDS-FAVORITE-HITACCESS-R15-20260906T1800-SOL-X4N7P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R14_R4COLLECTIONTOOLS_HIT_SEPARATION_PLUS_PLAYWRIGHT_INTERCEPTOR_DIAGNOSIS",
+  "rehearsalStatus": "PASS_DIAGNOSTIC",
+  "rehearsalEvidenceId": "RUN_34019901745_FILTER_TARGET_AND_RUN_34020098740_INTERCEPTOR_SOURCE",
+  "proceedToken": "PROCEED|CARDS-FAVORITE-HITACCESS-R15-20260906T1800-SOL-X4N7P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-adopted-favorite-hitaccess-repair|active-lease-readback",
+  "authorizationBaseSha": "f27a3ab8e1a8ea4e6a4db2faf657ae2a6b4c6136",
+  "branchPreHeadSha": "2604967e8043dc6882c1403ccb255d9908569698",
+  "targetBlobSha": "26357d2432b7d73fe649c882f76351e0cb5d90b2",
+  "unitTestBlobSha": "87bbe9104b0ba2a5a7a2de5c756c74bd1b999f89",
+  "browserTestBlobSha": "51df1b560273c48d4bfa98d322c236054b3d8090",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTION-CROSSDOMAIN-EXPERIENCE-001",
+  "leaseWorkUnitKey": "COLLECTION_CARDS_FAVORITE_FILTER_HITACCESS_R15",
+  "leaseAcquireKey": "CARDS-FAVORITE-HITACCESS-R15-20260906T1800-SOL-X4N7P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 18:00 JST",
+  "leaseUntilJst": "2026-09-06 19:00 JST",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs"
+  ],
+  "solutionSignature": "CARDS_FINDABILITY_EXISTING_COLLECTION_TOOLS_HIT_PLANE_R15",
+  "reuseDisposition": "REPAIR_EXISTING",
+  "solutionSearchStatus": "PASS",
+  "rejectedAlternatives": [
+    "Whole-host z-index/isolation fronting from R1/R90C because it can steal Collection card hit ownership.",
+    "Global click suppressor repair because run34020098740 identified the observed window capture listener as Playwright InjectedScript, not GAMEROAD."
+  ],
+  "acceptance": [
+    "findability host mounts under existing .r4CollectionTools when present and remains outside #collectionGrid",
+    "elementFromPoint owns favorite filter center and Collection card center",
+    "locator click favorite action then favorite-only filter works",
+    "favorite identity persists across reload while transient filter state remains non-persistent",
+    "desktop 1366x768, phone 390x844, short-landscape 844x390"
+  ]
+}

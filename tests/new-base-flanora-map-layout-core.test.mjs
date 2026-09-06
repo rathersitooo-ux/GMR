@@ -23,6 +23,29 @@ function layout(overrides = {}) {
   });
 }
 
+function clearingAdjacency(map) {
+  const adjacency = new Map(map.clearingCells.map((cell) => [cell.id, new Set()]));
+  for (const geometryEdge of map.geometryEdges) {
+    adjacency.get(geometryEdge.fromCellId)?.add(geometryEdge.toCellId);
+    adjacency.get(geometryEdge.toCellId)?.add(geometryEdge.fromCellId);
+  }
+  return adjacency;
+}
+
+function reachableFrom(adjacency, startId) {
+  const visited = new Set([startId]);
+  const queue = [startId];
+  while (queue.length > 0) {
+    const current = queue.shift();
+    for (const neighbor of adjacency.get(current) ?? []) {
+      if (visited.has(neighbor)) continue;
+      visited.add(neighbor);
+      queue.push(neighbor);
+    }
+  }
+  return visited;
+}
+
 test('Flanora keeps GOAL-to-bottom order 1..6, Shield, 7, clearing, start', () => {
   const map = layout();
   assert.deepEqual(map.verticalOrder, [
@@ -69,6 +92,8 @@ test('clearing uses 20 cells total with four separate starts centered under each
 test('all emitted clearing geometry is orthogonal; no diagonal connection is present', () => {
   const map = layout();
   assert.equal(map.geometryAdjacency, 'ORTHOGONAL_ONLY');
+  assert.equal(map.clearingConnectivity, 'SINGLE_ORTHOGONAL_COMPONENT');
+  assert.deepEqual(map.clearingTraversalAxes, ['VERTICAL', 'HORIZONTAL']);
   assert.equal(map.geometryIsMovementAuthority, false);
 
   for (const geometryEdge of map.geometryEdges) {
@@ -81,6 +106,32 @@ test('all emitted clearing geometry is orthogonal; no diagonal connection is pre
     const rowDelta = Math.abs(connection.road7.rowIndex - connection.clearingEntry.rowIndex);
     const columnDelta = Math.abs(connection.road7.columnIndex - connection.clearingEntry.columnIndex);
     assert.equal(rowDelta + columnDelta, 1, `${connection.participantId}:${connection.laneIndex}`);
+  }
+});
+
+test('the 20 clearing cells form one component and contain zero isolated cells', () => {
+  const map = layout();
+  const adjacency = clearingAdjacency(map);
+  assert.equal(map.clearingConnected, true);
+  assert.deepEqual(map.isolatedClearingCellIds, []);
+  assert.equal(map.geometryEdges.length, 19);
+
+  for (const cell of map.clearingCells) {
+    assert.ok(adjacency.get(cell.id)?.size > 0, cell.id);
+  }
+
+  const firstCell = map.clearingCells[0];
+  assert.equal(reachableFrom(adjacency, firstCell.id).size, 20);
+});
+
+test('every player START can reach every clearing cell using only vertical/horizontal clearing edges', () => {
+  const map = layout();
+  const adjacency = clearingAdjacency(map);
+
+  for (const participantId of participantIds) {
+    const start = map.startCellByParticipant[participantId];
+    const reachable = reachableFrom(adjacency, start.id);
+    assert.equal(reachable.size, 20, participantId);
   }
 });
 
@@ -98,24 +149,41 @@ test('12 lane columns remain symmetric for four 3-column player blocks without a
   }
 });
 
-test('extra horizontal columns remain possible but each player clearing stays under its own contiguous 3 lanes', () => {
-  const thirteen = createFlanoraMapLayout({
+test('extra horizontal columns remain possible only outside the contiguous 12-column clearing band', () => {
+  const fourteen = createFlanoraMapLayout({
     participantIds,
-    horizontalCellCount: 13,
+    horizontalCellCount: 14,
     shieldLinkedLaneColumnsByParticipant: {
-      P1: [0, 1, 2],
-      P2: [3, 4, 5],
+      P1: [1, 2, 3],
+      P2: [4, 5, 6],
       P3: [7, 8, 9],
       P4: [10, 11, 12],
     },
   });
 
-  assert.equal(thirteen.horizontalCellCount, 13);
-  assert.equal(thirteen.minimumHorizontalCellCount, 12);
-  assert.equal(thirteen.clearingCellCount, 20);
+  assert.equal(fourteen.horizontalCellCount, 14);
+  assert.equal(fourteen.minimumHorizontalCellCount, 12);
+  assert.equal(fourteen.clearingCellCount, 20);
+  assert.equal(fourteen.clearingConnected, true);
   assert.deepEqual(
-    participantIds.map((participantId) => thirteen.startCellByParticipant[participantId].columnIndex),
-    [1, 4, 8, 11],
+    participantIds.map((participantId) => fourteen.startCellByParticipant[participantId].columnIndex),
+    [2, 5, 8, 11],
+  );
+});
+
+test('a gap between player lane blocks fails closed instead of producing disconnected clearing', () => {
+  assert.throws(
+    () => createFlanoraMapLayout({
+      participantIds,
+      horizontalCellCount: 13,
+      shieldLinkedLaneColumnsByParticipant: {
+        P1: [0, 1, 2],
+        P2: [3, 4, 5],
+        P3: [7, 8, 9],
+        P4: [10, 11, 12],
+      },
+    }),
+    /FOUR_CONTIGUOUS_THREE_LANE_BLOCKS_REQUIRED/,
   );
 });
 
@@ -133,10 +201,12 @@ test('non-contiguous three-lane blocks fail closed rather than creating diagonal
   );
 });
 
-test('published core metadata locks only adopted layout geometry, not movement authority', () => {
+test('published core metadata locks adopted clearing placement and connected orthogonal traversal topology', () => {
   assert.equal(FLANORA_MAP_LAYOUT_CORE.playerCount, 4);
   assert.equal(FLANORA_MAP_LAYOUT_CORE.shieldLinkedLanesPerPlayer, 3);
   assert.equal(FLANORA_MAP_LAYOUT_CORE.clearingCellCount, 20);
   assert.equal(FLANORA_MAP_LAYOUT_CORE.geometryAdjacency, 'ORTHOGONAL_ONLY');
+  assert.equal(FLANORA_MAP_LAYOUT_CORE.clearingConnectivity, 'SINGLE_ORTHOGONAL_COMPONENT');
+  assert.deepEqual(FLANORA_MAP_LAYOUT_CORE.clearingTraversalAxes, ['VERTICAL', 'HORIZONTAL']);
   assert.equal(FLANORA_MAP_LAYOUT_CORE.geometryIsMovementAuthority, false);
 });

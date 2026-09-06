@@ -23,21 +23,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Checkout exact branch
-        uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
-
       - name: Install Playwright
         run: npm install --no-save --no-package-lock @playwright/test@1.62.0
-
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-
-      - name: Capture actual Records DOM through visible Home to Profile to Records route
+      - name: Capture Records before and after one current match
         shell: bash
         run: |
           set -euo pipefail
@@ -54,56 +48,56 @@ jobs:
           import { chromium } from '@playwright/test';
           const browser = await chromium.launch({headless:true});
           const page = await browser.newPage({viewport:{width:1280,height:720}});
-          const pageErrors = [];
-          const consoleErrors = [];
-          page.on('pageerror', e => pageErrors.push(e.message));
-          page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
           const response = await page.goto('http://127.0.0.1:4173/browser/GAMEROAD.html', {waitUntil:'domcontentloaded'});
           if (!response?.ok()) throw new Error(`Browser boot failed: ${response?.status()}`);
           await page.waitForTimeout(500);
           const rootGo = (target) => page.locator(`[data-go="${target}"]:visible, [data-home-target="${target}"]:visible, [data-root-go="${target}"]:visible`).first();
-          const profileGo = rootGo('profile');
-          if (!(await profileGo.isVisible())) throw new Error('Visible Home→Profile control missing');
-          await profileGo.click();
+          await rootGo('profile').click();
           const profile = page.locator('section[data-screen="profile"]');
           await profile.waitFor({state:'visible'});
-          const recordsGo = profile.locator('[data-go="records"]:visible').first();
-          if (!(await recordsGo.isVisible())) throw new Error('Visible Profile→Records control missing');
-          await recordsGo.click();
+          await profile.locator('[data-go="records"]:visible').first().click();
           const records = page.locator('section[data-screen="records"]');
           await records.waitFor({state:'visible'});
-          const snapshot = await records.evaluate((node) => ({
-            text: node.innerText,
-            html: node.innerHTML,
-            dataset: {...node.dataset},
-            directChildren: [...node.children].map((child) => ({
-              tag: child.tagName,
-              id: child.id || null,
-              className: typeof child.className === 'string' ? child.className : null,
-              text: child.innerText || '',
-              dataset: {...child.dataset},
-            })),
-            buttons: [...node.querySelectorAll('button,[role="button"],a,summary')].map((control) => ({
-              tag: control.tagName,
-              id: control.id || null,
-              className: typeof control.className === 'string' ? control.className : null,
-              text: control.innerText || control.textContent || '',
-              dataGo: control.getAttribute('data-go'),
-              dataBack: control.hasAttribute('data-back'),
-            })),
-          }));
-          fs.writeFileSync('records-r1-evidence/records-dom.json', JSON.stringify({
-            sourceSha: process.env.GITHUB_SHA,
-            pageErrors,
-            consoleErrors,
-            snapshot,
-          }, null, 2));
-          await page.screenshot({path:'records-r1-evidence/records-desktop.png', fullPage:true, animations:'disabled'});
-          console.log('RECORDS_R1_DOM=' + JSON.stringify(snapshot));
-          console.log(`RECORDS_R1_ERRORS page=${pageErrors.length} console=${consoleErrors.length}`);
+          const before = await records.evaluate((node) => ({text:node.innerText, html:node.innerHTML}));
+          await page.screenshot({path:'records-r1-evidence/records-before-match.png', fullPage:true, animations:'disabled'});
+
+          await page.reload({waitUntil:'domcontentloaded'});
+          await page.waitForTimeout(500);
+          const afterMatch = await page.evaluate(async () => {
+            const t = window.__GAMEROAD_TEST__;
+            const publicMain = new Set(t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
+            const standard = window.__CARD_DATA__
+              .filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)))
+              .map((card) => card.id);
+            const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
+            const nonRoyal = standard.filter((id) => !t.isRoyalCard(id));
+            t.deckSetDraft([...nonRoyal.slice(0, 37), ...royalIds], []);
+            if (!t.deckValidate(t.state.deckDraft, {forBattle:true}).ok || !t.deckCommit()) throw new Error('LEGAL_DECK_COMMIT_FAILED');
+            t.battlePresentationFast(true);
+            const match = t.start('2p', 'road_shield');
+            window.__V105_ABILITY_TEST__?.setAutoChoices?.(true);
+            const reached = await t.autoToResult(30);
+            if (!reached) throw new Error('RESULT_NOT_REACHED');
+            const globals = Object.keys(window)
+              .filter((key) => /history|record|match|gameroad/i.test(key))
+              .sort()
+              .map((key) => ({key, type:typeof window[key], isArray:Array.isArray(window[key])}));
+            const recordsList = document.querySelector('#recordsList');
+            return {
+              matchId: match?.id ?? null,
+              historyLength: t.state.history?.length ?? 0,
+              historySample: t.state.history?.[0] ?? null,
+              recordsListText: recordsList?.innerText ?? null,
+              recordsListHtml: recordsList?.innerHTML ?? null,
+              candidateGlobals: globals,
+            };
+          });
+          if (!(afterMatch.historyLength > 0)) throw new Error('CURRENT_HISTORY_NOT_CREATED');
+          fs.writeFileSync('records-r1-evidence/records-authority-probe.json', JSON.stringify({sourceSha:process.env.GITHUB_SHA,before,afterMatch}, null, 2));
+          console.log('RECORDS_R1_BEFORE=' + JSON.stringify(before));
+          console.log('RECORDS_R1_AFTER_MATCH=' + JSON.stringify(afterMatch));
           await browser.close();
           NODE
-
       - name: Upload bounded Records evidence
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4

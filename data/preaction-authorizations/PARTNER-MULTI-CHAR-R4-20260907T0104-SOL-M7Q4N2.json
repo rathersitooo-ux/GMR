@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-MULTI-CHAR-R4-20260907T0104-SOL-M7Q4N2",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_MULTI_CHARACTER_SELECTION_R3",
+  "acquireKey": "PARTNER-MULTI-CHAR-R4-20260907T0104-SOL-M7Q4N2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_NORMAL_PARTNER_PICKER_DESTRUCTIVE_MOUNT_REGRESSION_R4_REBASED",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_MAIN_DIRECT_SOURCE_PLUS_VISIBLE_EXISTING_PICKER_AND_PR1232_ACCEPTANCE",
+  "proceedToken": "PROCEED|PARTNER-MULTI-CHAR-R4-20260907T0104-SOL-M7Q4N2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|restore-existing-picker-nondestructive-conversation|rebased-current-main",
+  "authorizationBaseSha": "469e6b800fb420369db9bc0c09c565c43fc2845c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_MULTI_CHARACTER_SELECTION_R3",
+  "leaseAcquireKey": "PARTNER-MULTI-CHAR-R4-20260907T0104-SOL-M7Q4N2",
+  "leaseSnapshotReadbackAtJst": "2026-09-07 01:24 JST",
+  "leaseUntilJst": "2026-09-07 02:03 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR new clean branch sol/partner-multi-character-r4-20260907 only: browser/board-facility-runtime-mount.mjs; tests/board-facility-runtime-mount.test.mjs; tests/browser-runtime-smoke.spec.mjs; tests/browser-full-interaction.spec.mjs; .github/workflows/browser-full-interaction.yml; transient data/preaction-authorizations/PARTNER-MULTI-CHAR-R4-20260907T0104-SOL-M7Q4N2.json; own PR/check evidence; own R23/lease tuple. READ_ONLY: browser/GAMEROAD.html; browser/partner-advice-runtime-mount.mjs; browser/partner-dialogue-source-registry.mjs; deploy/cloudflare/tests/build.test.mjs while GACHA-PREVIEW-TRUTH-R2 lease is valid; gameplay/rules/save/economy/network.",
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "tests/browser-runtime-smoke.spec.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/browser-full-interaction.yml"
+  ],
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "tests/browser-runtime-smoke.spec.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/browser-full-interaction.yml"
+  ],
+  "solutionSignature": "RESTORE_EXISTING_NORMAL_PARTNER_PICKER_WITH_NONDESTRUCTIVE_SAASUNA_CONVERSATION_AND_PUBLIC_SWITCH_EVIDENCE_R4",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_EXISTING_PICKER_AND_CONVERSATION_CONSUMER_RECONCILIATION_R4",
+  "solutionSearchEvidence": [
+    "Current ADVICE_PARTNER-01 requires normal Partner and Advice Partner to remain independently selectable from the existing runtime roster.",
+    "Current board-facility-runtime-mount replaces #charRoster with the Saasuna conversation surface and forces #charName to Saasuna, directly removing the existing normal Partner picker.",
+    "Current GAMEROAD.html directly exposes the existing normal Partner role tab and charCard selection, persisting state.selectedPartnerId through the existing save path.",
+    "PR #1232 and current partner-advice runtime already supply independent Advice Partner selection through existing settings.advicePartnerId and approved-dialogue fail-closed behavior.",
+    "Main advanced from e12a019 to 469e6b8 only through deck-save/home-shell/build-provenance files with zero overlap against this five-file R4 scope; this PREACTION is rebuilt from current main before product mutation."
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "gameroad.preaction.v1",
+  "acquireKey": "CARDS-GESTURE-HINT-R1-20260906T2341-SOL-Q7N4V8",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnit": "CARDS_GESTURE_FIRST_SUCCESS_HINT_R1",
+  "baseSha": "108b19a6881a95af1ea91578dbf5da246ea96776",
+  "branch": "sol/cards-gesture-first-success-hint-r1-20260906",
+  "mutable": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-swipe-discovery.test.mjs",
+    ".github/workflows/zz-temp-cards-gesture-hint-r1.yml"
+  ],
+  "readOnly": [
+    "browser/GAMEROAD.html",
+    "tests/cards-deck-presentation.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "intent": "Add the already-adopted first-success directional discovery hint for Collection right-swipe add and Deck left-swipe remove. Dismiss only after the matching successful gesture; persist local UI-only state; preserve existing deck authority and gesture semantics.",
+  "acceptance": [
+    "add/remove hints are visible until each matching success",
+    "failed or neutral gestures do not dismiss",
+    "storage failure is non-fatal",
+    "static/no-motion affordance",
+    "existing swipe semantics and click suppression unchanged",
+    "focused tests pass before PR"
+  ]
+}

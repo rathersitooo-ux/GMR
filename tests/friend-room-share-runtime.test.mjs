@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import {
   copyFriendRoomCode,
   normalizeVisibleFriendRoomCode,
-} from '../browser/friend-room-share-runtime.mjs';
+} from '../browser/rogue-run-runtime-mount.mjs';
 
 test('only a real seven-character visible room code is copyable', () => {
   assert.equal(normalizeVisibleFriendRoomCode(' ABC12DE '), 'ABC12DE');
@@ -42,13 +42,13 @@ test('clipboard absence and rejection never produce fake success', async () => {
   );
 });
 
-test('runtime is wired through the already-mounted browser seam without changing Friend Room authority', async () => {
-  const rogueRuntime = await readFile(new URL('../browser/rogue-run-runtime-mount.mjs', import.meta.url), 'utf8');
-  const shareRuntime = await readFile(new URL('../browser/friend-room-share-runtime.mjs', import.meta.url), 'utf8');
-  assert.match(rogueRuntime, /^import '\.\/friend-room-share-runtime\.mjs';/);
-  assert.match(shareRuntime, /#friendRoomPanel/);
-  assert.match(shareRuntime, /\.friendCode > b/);
-  assert.match(shareRuntime, /min-height:44px/);
-  assert.match(shareRuntime, /aria-live/);
-  assert.doesNotMatch(shareRuntime, /createRoom\(|joinRoom\(|toggleReady\(|hostStart\(|BroadcastChannel|WebSocket/);
+test('copy consumer lives inside the already-packaged runtime seam without changing Friend Room authority', async () => {
+  const runtime = await readFile(new URL('../browser/rogue-run-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(runtime, /#friendRoomPanel/);
+  assert.match(runtime, /\.friendCode > b/);
+  assert.match(runtime, /min-height:44px/);
+  assert.match(runtime, /aria-live/);
+  assert.match(runtime, /autoMountFriendRoomShare\(\)/);
+  assert.doesNotMatch(runtime, /friend-room-share-runtime\.mjs/);
+  assert.doesNotMatch(runtime, /createRoom\(|joinRoom\(|toggleReady\(|hostStart\(|BroadcastChannel|WebSocket/);
 });

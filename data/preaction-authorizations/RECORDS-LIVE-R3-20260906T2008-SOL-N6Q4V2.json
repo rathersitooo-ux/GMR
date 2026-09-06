@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RECORDS-LIVE-R3-20260906T2008-SOL-N6Q4V2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "RECORDS_RECENT_HISTORY_LIVE_R1",
+  "acquireKey": "RECORDS-LIVE-R3-20260906T2008-SOL-N6Q4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "RECORDS-R3-PHYSICAL-LIST-LIVE-DETAIL-GAP-ONLY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "RECORDS-R3-PHYSICAL-HOME-PROFILE-RECORDS-PASS",
+  "proceedToken": "PROCEED|RECORDS-LIVE-R3-20260906T2008-SOL-N6Q4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|fresh-main-0be3a466|lease-branch-r3b",
+  "authorizationBaseSha": "0be3a466b55cbd0af23244bc9fc90b2f5f6640fd",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseUntilJst": "2026-09-06 22:00 JST",
+  "branch": "sol/records-recent-history-r3b-20260906",
+  "constraints": [
+    "Current physical recent-history list already works; do not repair a nonexistent blank-list defect.",
+    "Use only existing production match-history authority for detail projection.",
+    "Do not use __GAMEROAD_TEST__ as production authority.",
+    "Do not fabricate the historical Deck from the current Deck; current history producer has no per-match Deck snapshot.",
+    "Do not mutate GAMEROAD.html or gameplay/rules/save/economy/network under this lease.",
+    "Do not introduce defeat/loss semantics."
+  ],
+  "scope": [
+    "browser/profile-presentation-runtime-mount.mjs",
+    "tests/profile-presentation-runtime-mount.test.mjs",
+    "tests/browser-full-interaction-state-sequence.spec.mjs",
+    ".github/workflows/zz-temp-records-recent-history-r3.yml"
+  ]
+}

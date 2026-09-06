@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD109-VISUAL-LIVE-R1-20260906T1240-SOL-K6Q9M2",
+  "taskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "workUnitKey": "BOARD109_VISUAL_EXPLANATION_LIVE_MOUNT_R1",
+  "acquireKey": "BOARD109-VISUAL-LIVE-R1-20260906T1240-SOL-K6Q9M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BOARD_VISUAL_CORE_PACKAGED_BUT_NO_ACTUAL_BATTLE_DOM_CONSUMER",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_CORE_AND_LIVE_BATTLE_RUNTIME_DIRECT_READBACK_PLUS_FOCUSED_NODE_TEST",
+  "proceedToken": "PROCEED|BOARD109-VISUAL-LIVE-R1-20260906T1240-SOL-K6Q9M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-board-visual-core-live-composition|active-lease-readback",
+  "authorizationBaseSha": "2f5b1b0baf117a81b96e1553427666e115fe2168",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-109-RUNTIME-ASSET-HUMAN-ACCEPT-001",
+  "leaseWorkUnitKey": "BOARD109_VISUAL_EXPLANATION_LIVE_MOUNT_R1",
+  "leaseAcquireKey": "BOARD109-VISUAL-LIVE-R1-20260906T1240-SOL-K6Q9M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 12:40 JST",
+  "leaseUntilJst": "2026-09-06 13:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A13:N13",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR branch sol/board109-visual-live-r1-20260906 only: browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; data/preaction-authorizations/BOARD109-VISUAL-LIVE-R1-20260906T1240-SOL-K6Q9M2.json transient authorization witness only.",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "solutionSignature": "BOARD_VISUAL_EXPLANATION_EXISTING_CORE_TO_LIVE_BATTLE_DOM_R1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "COMPOSE_EXISTING_BOARD_VISUAL_CORE_WITH_EXISTING_BATTLE_RUNTIME_NO_SECOND_BOARD_STATE",
+  "solutionSearchEvidence": [
+    "The adopted battle-board-visual-explanation core is already merged and included in the public package.",
+    "PR #1197 explicitly did not mount the core into a player-visible Battle DOM consumer.",
+    "battle-screen-runtime-mount is an existing presentation-only Battle consumer and already owns the ROAD-to-GOAL/field presentation shell.",
+    "The composition consumes caller-supplied authoritative position sets only; it must not infer the retired 109-cell topology, legality, save, or gameplay state."
+  ]
+}

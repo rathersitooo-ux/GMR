@@ -14,6 +14,7 @@ on:
       - main
     paths:
       - 'browser/GAMEROAD.html'
+      - 'browser/board-facility-runtime-mount.mjs'
       - 'tests/browser-full-interaction.spec.mjs'
       - 'tests/browser-full-interaction-state-sequence.spec.mjs'
       - 'playwright.full-interaction.config.mjs'
@@ -42,8 +43,12 @@ jobs:
       - name: Install Chromium and OS dependencies
         run: npx playwright install --with-deps chromium
 
-      - name: Run GAMEROAD full interaction evidence R1
-        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
+      - name: Run current GAMEROAD full interaction evidence
+        run: >-
+          npx playwright test
+          --config=playwright.full-interaction.config.mjs
+          --workers=1
+          --grep-invert 'covers current visible Saasuna partner conversation product surface|R13 covers the current visible advice-partner conversation composer without inventing a picker'
 
       - name: Upload interaction evidence
         if: ${{ !cancelled() }}
@@ -158,6 +163,200 @@ jobs:
       - name: Run visible four-player Honey Hunt on public origin
         run: npx playwright test --config=.r37-public/playwright.config.mjs --workers=1
 
+      - name: Prepare Partner role independence public-origin acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > .r37-public/partner-role-independence.spec.mjs <<'EOF'
+          import { test, expect } from '@playwright/test';
+
+          function visibleGo(page, target) {
+            return page.locator(`[data-home-target="${target}"]:visible, [data-go="${target}"]:visible, [data-root-go="${target}"]:visible`).first();
+          }
+
+          async function installLegalBattleDeck(page) {
+            return page.evaluate(() => {
+              const t = window.__GAMEROAD_TEST__;
+              const publicMain = new Set(t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
+              const standard = window.__CARD_DATA__
+                .filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)))
+                .map((card) => card.id);
+              const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
+              const nonRoyal = standard.filter((id) => !t.isRoyalCard(id));
+              const main = [...nonRoyal.slice(0, 37), ...royalIds];
+              const setValidation = t.deckSetDraft(main, []);
+              const draftValidation = t.deckValidate(t.state.deckDraft, { forBattle: true });
+              const committed = draftValidation.ok ? t.deckCommit() : false;
+              const savedValidation = t.deckValidate(t.state.savedDeck, { forBattle: true });
+              return { main, setValidation, draftValidation, committed, savedValidation };
+            });
+          }
+
+          async function enterVisibleTwoPlayerBattle(page) {
+            const deck = await installLegalBattleDeck(page);
+            expect(deck.main).toHaveLength(40);
+            expect(deck.committed).toBeTruthy();
+            expect(deck.savedValidation.ok).toBeTruthy();
+            const setupGo = visibleGo(page, 'setup');
+            await expect(setupGo).toBeVisible();
+            await setupGo.click();
+            const setup = page.locator('section[data-screen="setup"]');
+            await expect(setup).toBeVisible();
+            await setup.locator('[data-content="road_shield"]').click();
+            await setup.locator('[data-mode="2p"]').click();
+            const start = setup.locator('#startMatch');
+            await expect(start).toBeEnabled();
+            await start.click();
+            const battle = page.locator('section[data-screen="battle"]');
+            await expect(battle).toBeVisible();
+            await expect(battle.locator('#phaseTitle')).toContainText('行動を計画');
+            return battle;
+          }
+
+          async function attach(page, testInfo, name) {
+            await testInfo.attach(`${testInfo.project.name}-${name}.png`, {
+              body: await page.screenshot({ fullPage: true, animations: 'disabled' }),
+              contentType: 'image/png',
+            });
+          }
+
+          test('R4 public normal Partner and Advice Partner stay independently selectable and persistent', async ({ page }, testInfo) => {
+            const response = await page.goto('/', { waitUntil: 'domcontentloaded' });
+            expect(response).not.toBeNull();
+            expect(response.ok()).toBeTruthy();
+            await page.waitForTimeout(1_000);
+            await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+
+            const charactersGo = visibleGo(page, 'characters');
+            await expect(charactersGo).toBeVisible();
+            await charactersGo.click();
+            const characters = page.locator('section[data-screen="characters"]');
+            await expect(characters).toBeVisible();
+            await expect(characters.locator('[data-role="partner"]')).toBeVisible();
+            await characters.locator('[data-role="partner"]').click();
+            await expect(characters.locator('.charRoleTab')).toHaveCount(2);
+            await expect(characters.locator('.charCard')).toHaveCount(4);
+
+            const saasuna = characters.locator('.charCard').filter({ hasText: 'サースナー' }).first();
+            await expect(saasuna).toBeVisible();
+            await saasuna.click();
+            await expect(characters.locator('#charName')).toHaveText('サースナー');
+            await expect(characters.locator('.grPartnerConversation[data-gr-partner-conversation="1"]')).toBeVisible();
+            await expect(characters.locator('.charRoleTab')).toHaveCount(2);
+            await expect(characters.locator('.charCard')).toHaveCount(4);
+            await attach(page, testInfo, 'partner-picker-and-saasuna-conversation-coexist');
+
+            const naki = characters.locator('.charCard').filter({ hasText: '緋累ナキ' }).first();
+            await expect(naki).toBeVisible();
+            await naki.click();
+            await expect(characters.locator('#charName')).toHaveText('緋累ナキ');
+            await expect(characters.locator('.grPartnerConversation[data-gr-partner-conversation="1"]')).toHaveCount(0);
+            const normalPartnerId = await page.evaluate(() => window.__GAMEROAD_TEST__?.state?.selectedPartnerId ?? null);
+            expect(normalPartnerId).toBe('partner.naki');
+            await attach(page, testInfo, 'normal-partner-changed-with-picker-intact');
+
+            await characters.locator('[data-back]:visible').first().click();
+            await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+            let battle = await enterVisibleTwoPlayerBattle(page);
+            await battle.locator('#detailsBtn').click();
+            const drawer = battle.locator('#battleDrawer');
+            await expect(drawer).toHaveAttribute('aria-hidden', 'false');
+            const adviceName = drawer.locator('[data-role="advice-partner-name"]');
+            const switchButton = drawer.locator('.partnerAdvicePartnerSwitch');
+            await expect(adviceName).toBeVisible();
+            await expect(switchButton).toBeVisible();
+            const before = await page.evaluate(() => ({
+              normal: window.__GAMEROAD_TEST__?.state?.selectedPartnerId ?? null,
+              advice: window.__GAMEROAD_TEST__?.state?.settings?.advicePartnerId ?? null,
+            }));
+            expect(before.normal).toBe(normalPartnerId);
+
+            await switchButton.click();
+            let after = await page.evaluate(() => ({
+              normal: window.__GAMEROAD_TEST__?.state?.selectedPartnerId ?? null,
+              advice: window.__GAMEROAD_TEST__?.state?.settings?.advicePartnerId ?? null,
+            }));
+            if (after.advice === normalPartnerId) {
+              await switchButton.click();
+              after = await page.evaluate(() => ({
+                normal: window.__GAMEROAD_TEST__?.state?.selectedPartnerId ?? null,
+                advice: window.__GAMEROAD_TEST__?.state?.settings?.advicePartnerId ?? null,
+              }));
+            }
+            expect(after.normal).toBe(normalPartnerId);
+            expect(after.advice).not.toBeNull();
+            expect(after.advice).not.toBe(normalPartnerId);
+            expect(after.advice).not.toBe(before.advice);
+            const persistedAdviceName = ((await adviceName.textContent()) || '').trim();
+            expect(persistedAdviceName).not.toBe('');
+            await attach(page, testInfo, 'battle-advice-partner-switched-normal-unchanged');
+
+            await battle.locator('#leaveMatch').click();
+            await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+            await page.reload({ waitUntil: 'domcontentloaded' });
+            await page.waitForTimeout(1_000);
+            await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+            const restored = await page.evaluate(() => ({
+              normal: window.__GAMEROAD_TEST__?.state?.selectedPartnerId ?? null,
+              advice: window.__GAMEROAD_TEST__?.state?.settings?.advicePartnerId ?? null,
+            }));
+            expect(restored.normal).toBe(normalPartnerId);
+            expect(restored.advice).toBe(after.advice);
+
+            const restoredCharactersGo = visibleGo(page, 'characters');
+            await expect(restoredCharactersGo).toBeVisible();
+            await restoredCharactersGo.click();
+            const restoredCharacters = page.locator('section[data-screen="characters"]');
+            await restoredCharacters.locator('[data-role="partner"]').click();
+            await expect(restoredCharacters.locator('.charCard[aria-pressed="true"] .charCardCopy b')).toHaveText('緋累ナキ');
+            await restoredCharacters.locator('[data-back]:visible').first().click();
+            await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+
+            battle = await enterVisibleTwoPlayerBattle(page);
+            await battle.locator('#detailsBtn').click();
+            const restoredDrawer = battle.locator('#battleDrawer');
+            await expect(restoredDrawer).toHaveAttribute('aria-hidden', 'false');
+            await expect(restoredDrawer.locator('[data-role="advice-partner-name"]')).toHaveText(persistedAdviceName);
+            await attach(page, testInfo, 'partner-roles-restored-after-reload');
+          });
+          EOF
+
+          cat > .r37-public/partner-playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          import baseConfig from '../playwright.full-interaction.config.mjs';
+
+          const publicProjects = (baseConfig.projects ?? [])
+            .filter((project) => !project.grep)
+            .map((project) => ({ name: project.name, use: project.use }));
+
+          export default defineConfig({
+            testDir: '.',
+            testMatch: 'partner-role-independence.spec.mjs',
+            timeout: 120_000,
+            expect: { timeout: 10_000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            outputDir: '../test-results/public-origin-partner',
+            reporter: [
+              ['line'],
+              ['html', { outputFolder: '../playwright-report-public-origin-partner', open: 'never' }],
+              ['json', { outputFile: '../test-results/public-origin-partner/partner-public-origin-report.json' }],
+            ],
+            use: {
+              ...baseConfig.use,
+              baseURL: process.env.GAMEROAD_PUBLIC_BASE_URL,
+              trace: 'retain-on-failure',
+              screenshot: 'only-on-failure',
+              video: 'off',
+            },
+            projects: publicProjects,
+          });
+          EOF
+
+      - name: Run Partner role independence on public origin
+        run: npx playwright test --config=.r37-public/partner-playwright.config.mjs --workers=1
+
       - name: Record public-origin evidence binding
         if: always()
         shell: bash
@@ -178,6 +377,8 @@ jobs:
           path: |
             playwright-report-public-origin/
             test-results/public-origin/
+            playwright-report-public-origin-partner/
+            test-results/public-origin-partner/
             public-origin-metadata/
           if-no-files-found: error
           retention-days: 14

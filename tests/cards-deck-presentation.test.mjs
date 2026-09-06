@@ -587,3 +587,16 @@ test('favorite action commits visible state only after local persistence succeed
   assert.ok(handler.indexOf('favoriteIds = nextFavoriteIds') < handler.indexOf('render();'));
   assert.equal(handler.includes('favoriteIds = toggleCardsFavoriteId('), false);
 });
+
+test('Cards findability controls keep a dedicated hit layer above Collection without disabling card input', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf("style.id = 'gameroad-cards-deck-findability-style'");
+  const end = source.indexOf('(doc.head ?? doc.documentElement)', start);
+  const styleSource = source.slice(start, end);
+
+  assert.ok(start >= 0 && end > start);
+  assert.ok(styleSource.includes('[data-role="cards-deck-findability"]{position:relative;z-index:4;isolation:isolate;'));
+  assert.equal(styleSource.includes('#collectionGrid{pointer-events:none'), false);
+  assert.equal(styleSource.includes('#collectionGrid [data-id]{pointer-events:none'), false);
+});

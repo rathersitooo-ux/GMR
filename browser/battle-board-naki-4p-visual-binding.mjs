@@ -6,10 +6,10 @@ const MARKER_SELECTOR = '.boardPlayerToken[data-player]';
 const BATTLE_FOCUS_CHROME_SELECTOR = 'body:has(.battle.active) .top';
 const PARTICIPANT_IDS = Object.freeze(['P1', 'P2', 'P3', 'P4']);
 const VISUAL_FOOTPRINT = Object.freeze({
-  desktop: Object.freeze({ surfaceWidth: 54, surfaceHeight: 68, fallbackWidth: 42, fallbackHeight: 54 }),
-  compact: Object.freeze({ surfaceWidth: 48, surfaceHeight: 60, fallbackWidth: 38, fallbackHeight: 48 }),
-  shortLandscape: Object.freeze({ surfaceWidth: 42, surfaceHeight: 52, fallbackWidth: 34, fallbackHeight: 44 }),
-  portrait: Object.freeze({ surfaceWidth: 46, surfaceHeight: 58, fallbackWidth: 36, fallbackHeight: 46 })
+  desktop: Object.freeze({ surfaceWidth: 40, surfaceHeight: 50, fallbackWidth: 30, fallbackHeight: 38 }),
+  compact: Object.freeze({ surfaceWidth: 34, surfaceHeight: 42, fallbackWidth: 26, fallbackHeight: 32 }),
+  shortLandscape: Object.freeze({ surfaceWidth: 28, surfaceHeight: 34, fallbackWidth: 22, fallbackHeight: 26 }),
+  portrait: Object.freeze({ surfaceWidth: 30, surfaceHeight: 38, fallbackWidth: 24, fallbackHeight: 30 })
 });
 
 function asParticipantId(value) {

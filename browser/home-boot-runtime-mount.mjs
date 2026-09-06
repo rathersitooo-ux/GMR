@@ -774,7 +774,7 @@ function unbindSlidepad() {
     center.removeEventListener('lostpointercapture', handlers.lostpointercapture);
     delete center.dataset.homeSlidepadBound;
   }
-  if (home instanceof HTMLElement && handlers) home.removeEventListener('dblclick', handlers.dblclick);
+  if (home instanceof HTMLElement && handlers) home.removeEventListener('click', handlers.click);
   runtime.slidepad.home = null;
   runtime.slidepad.center = null;
   runtime.slidepad.handlers = null;
@@ -819,8 +819,8 @@ function bindSlidepad(home) {
   };
 
   const handlers = {
-    dblclick(event) {
-      if (!runtime.active) return;
+    click(event) {
+      if (!runtime.active || Number(event?.detail) !== 2) return;
       const expanded = explicitExpandedState(home);
       if (!shouldDismissHomeSlidepadOnBlankDoubleClick({ expanded, home, target: event.target })) return;
       event.preventDefault();
@@ -869,7 +869,7 @@ function bindSlidepad(home) {
     },
   };
   runtime.slidepad.handlers = handlers;
-  home.addEventListener('dblclick', handlers.dblclick);
+  home.addEventListener('click', handlers.click);
   center.addEventListener('pointerdown', handlers.pointerdown);
   center.addEventListener('pointermove', handlers.pointermove);
   center.addEventListener('pointerup', handlers.pointerup);

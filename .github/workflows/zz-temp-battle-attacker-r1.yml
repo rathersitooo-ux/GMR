@@ -1,0 +1,51 @@
+name: TEMP Battle Attacker Max Load R1
+
+on:
+  push:
+    branches:
+      - sol/battle-attacker-max-load-r1-20260907
+    paths:
+      - '.github/workflows/zz-temp-battle-attacker-r1.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-live-seam:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print bounded Battle seam contexts
+        shell: bash
+        run: |
+          node <<'EOF'
+          const fs = require('node:fs');
+          const text = fs.readFileSync('browser/GAMEROAD.html', 'utf8');
+          const patterns = [
+            'resolveCyclicTriadByProcessingOrder',
+            'FIRST_WIN_LOCK',
+            'processingOrder',
+            'roadSelect',
+            'battleResolution',
+            'loadNumber',
+            'roadValue',
+            'ロード公開',
+            'じゃんけん',
+            'janken'
+          ];
+          for (const pattern of patterns) {
+            console.log(`\n===== PATTERN ${pattern} =====`);
+            let from = 0, shown = 0;
+            while (shown < 8) {
+              const i = text.indexOf(pattern, from);
+              if (i < 0) break;
+              const start = Math.max(0, i - 900);
+              const end = Math.min(text.length, i + pattern.length + 1400);
+              console.log(`--- match ${shown + 1} @${i} ---`);
+              console.log(text.slice(start, end).replace(/\r/g, ''));
+              from = i + pattern.length;
+              shown += 1;
+            }
+            if (shown === 0) console.log('(none)');
+          }
+          EOF

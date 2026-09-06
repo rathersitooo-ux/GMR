@@ -1,0 +1,34 @@
+name: TEMP Records detail R3 locate current consumer
+
+on:
+  push:
+    branches: [sol/records-recent-history-r3b-20260906]
+    paths:
+      - '.github/workflows/zz-temp-records-recent-history-r3.yml'
+      - 'browser/profile-presentation-runtime-mount.mjs'
+      - 'tests/profile-presentation-runtime-mount.test.mjs'
+      - 'tests/browser-full-interaction-state-sequence.spec.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  locate-records-consumer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Locate every current Records producer/consumer context
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== files containing Records signals ==='
+          grep -RIlE 'recordsList|renderRecords|data-screen="records"|対戦記録|ラウンド|まだ対戦記録' browser tests || true
+          echo '=== contexts outside giant HTML ==='
+          while IFS= read -r f; do
+            [ "$f" = browser/GAMEROAD.html ] && continue
+            echo "--- $f"
+            grep -nE -C 4 'recordsList|renderRecords|data-screen="records"|対戦記録|ラウンド|まだ対戦記録' "$f" || true
+          done < <(grep -RIlE 'recordsList|renderRecords|data-screen="records"|対戦記録|ラウンド|まだ対戦記録' browser tests || true)
+          echo '=== script/import refs near profile/records in HTML ==='
+          grep -nE -C 2 'profile-presentation|records|Records' browser/GAMEROAD.html | tail -n 220 || true

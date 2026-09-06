@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "FLANORA-CLEARING-CONNECT-R2-20260907T0005-SOL-K6N4V8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "FLANORA_START_CLEARING_LAYOUT_R1",
+  "acquireKey": "FLANORA-MAP-LAYOUT-R1-20260906T2346-SOL-K6N4V8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_EXPLICIT_ZERO_ISOLATED_CLEARING_AND_CURRENT_R1_GRAPH_GAP_READBACK",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "DIRECT_GRAPH_INVARIANT_PATCH_WITH_FOCUSED_NODE_TESTS_REQUIRED_BEFORE_MERGE",
+  "proceedToken": "PROCEED|FLANORA-CLEARING-CONNECT-R2-20260907T0005-SOL-K6N4V8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|same-layout-workunit-connectivity-correction",
+  "authorizationBaseSha": "5299acfc584de4716983f36bba605ecc8185c254",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "FLANORA_START_CLEARING_LAYOUT_R1",
+  "leaseAcquireKey": "FLANORA-MAP-LAYOUT-R1-20260906T2346-SOL-K6N4V8",
+  "leaseSnapshotReadbackAtJst": "2026-09-07 00:05 JST",
+  "leaseUntilJst": "2026-09-07 00:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A495:L495",
+  "leaseExactMutableResources": "browser/new-base-flanora-map-layout-core.mjs; tests/new-base-flanora-map-layout-core.test.mjs; data/preaction-authorizations/FLANORA-CLEARING-CONNECT-R2-20260907T0005-SOL-K6N4V8.json",
+  "scope": [
+    "browser/new-base-flanora-map-layout-core.mjs",
+    "tests/new-base-flanora-map-layout-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-flanora-map-layout-core.mjs",
+    "tests/new-base-flanora-map-layout-core.test.mjs"
+  ],
+  "solutionSignature": "Adapt the merged Flanora 20-cell clearing geometry so all clearing cells form one orthogonally connected component without changing Road movement-budget, stoppability, GOAL, save, network, or Battle authority.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MERGED_FLANORA_R1_LAYOUT_PLUS_USER_EXPLICIT_CONNECTIVITY_CORRECTION",
+  "solutionSearchEvidence": [
+    "main browser/new-base-flanora-map-layout-core.mjs already owns the 20-cell four-START placement contract",
+    "current graph edges connect each 5-cell player block internally but omit three horizontal inter-block clearing-entry edges",
+    "new USER_RAW requires zero isolated clearing cells and vertical/horizontal-only reachability while retaining the existing placement rule"
+  ]
+}

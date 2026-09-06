@@ -1,0 +1,96 @@
+name: TEMP Road Move Bidirectional Live R6 Diagnostic
+on:
+  push:
+    branches:
+      - sol/road-move-bidirectional-live-r6-20260906
+permissions:
+  contents: read
+jobs:
+  reproduce-r5-live-failure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/road-move-bidirectional-live-r6-20260906
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Recover and rebase exact R5 patch generator
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin sol/road-move-bidirectional-live-r5-20260906
+          git show FETCH_HEAD:tools/zz-temp-road-move-runtime-r5.py > /tmp/r6.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/r6.py')
+          s=p.read_text()
+          s=s.replace("BASE = '0be3a466b55cbd0af23244bc9fc90b2f5f6640fd'", "BASE = '108b19a6881a95af1ea91578dbf5da246ea96776'")
+          s=s.replace('ROAD-MOVE-RUNTIME-R5-20260906T2113-SOL-P8N4V6','ROAD-MOVE-RUNTIME-R6-20260906T2210-SOL-R6Q4V2')
+          s=s.replace('.github/workflows/zz-temp-road-move-runtime-r5.yml','.github/workflows/zz-temp-road-move-runtime-r6.yml')
+          s=s.replace("    'tools/zz-temp-road-move-runtime-r5.py',\n",'')
+          s=s.replace('road-move-bidirectional-live-r5.spec.mjs','road-move-bidirectional-live-r6.spec.mjs')
+          s=s.replace('ROAD-MOVE-BIDIRECTIONAL-R5','ROAD-MOVE-BIDIRECTIONAL-R6')
+          s=s.replace('R5 source contract','R6 source contract').replace('R5_PATCH_READY','R6_PATCH_READY')
+          p.write_text(s)
+          PY
+          python3 /tmp/r6.py
+          git diff --check
+          node --test tests/road-move-compatibility-core.test.mjs
+      - name: Capture current Road/Battle interaction context
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo '=== relevant current functions ==='
+            grep -nE -C 3 'function (confirmPlan|selectEndpoint|beginRouteDrag|updatePlanFromSelect|first10SelectHandCard|renderBoard|renderHand)|#clearPath|roadSelect|battleSelect' browser/GAMEROAD.html | head -n 900 || true
+            echo '=== patched source markers ==='
+            grep -nE -C 2 'ROAD-MOVE-BIDIRECTIONAL-R6|roadMoveDecisionCard|draftMoveLimitForPlayer|compatibleRoadCandidatesForPath' browser/GAMEROAD.html | head -n 500 || true
+          } > /tmp/road-r6-context.txt
+          cat /tmp/road-r6-context.txt
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Run focused live Road evidence with retained log
+        id: roadtest
+        continue-on-error: true
+        shell: bash
+        run: |
+          cat > /tmp/road-r6-playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir: process.cwd() + '/tests',
+            testMatch: 'road-move-bidirectional-live-r6.spec.mjs',
+            timeout: 90000,
+            expect: { timeout: 10000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            reporter: [['line']],
+            use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true, trace: 'retain-on-failure', screenshot: 'only-on-failure', video: 'off' },
+            projects: [
+              { name: 'desktop-1280x720', use: { viewport: { width: 1280, height: 720 } } },
+              { name: 'phone-390x844', use: { viewport: { width: 390, height: 844 } } },
+              { name: 'short-landscape-667x375', use: { viewport: { width: 667, height: 375 } } }
+            ],
+            webServer: { command: 'python3 -m http.server 4173 --bind 127.0.0.1', url: 'http://127.0.0.1:4173/browser/GAMEROAD.html', reuseExistingServer: false, timeout: 120000 }
+          });
+          EOF
+          set -o pipefail
+          npx playwright test --config=/tmp/road-r6-playwright.config.mjs --workers=1 2>&1 | tee /tmp/road-r6-test.log
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: road-r6-diagnostic
+          path: |
+            /tmp/road-r6-context.txt
+            /tmp/road-r6-test.log
+            test-results
+          if-no-files-found: warn
+      - name: Fail if focused Road evidence failed
+        if: steps.roadtest.outcome != 'success'
+        run: exit 1

@@ -1,0 +1,219 @@
+name: Cards Favorite Hit Access R15
+
+on:
+  push:
+    branches:
+      - sol/cards-favorite-hitaccess-r1-20260906
+    paths:
+      - .github/workflows/cards-favorite-hitaccess-r15-executor.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-accept:
+    runs-on: ubuntu-latest
+    env:
+      BASE_SHA: f27a3ab8e1a8ea4e6a4db2faf657ae2a6b4c6136
+      MANIFEST: data/preaction-authorizations/CARDS-FAVORITE-HITACCESS-R15-20260906T1800-SOL-X4N7P2.json
+      PRODUCT_FILE: browser/cards-deck-presentation.mjs
+      UNIT_FILE: tests/cards-deck-presentation.test.mjs
+      BROWSER_FILE: tests/home-cards-2p5d-runtime.spec.mjs
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/cards-favorite-hitaccess-r1-20260906
+          fetch-depth: 0
+      - name: Verify authorization and exact inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$BASE_SHA" HEAD
+          python3 - <<'PY'
+          import json, os, subprocess
+          from pathlib import Path
+          m=json.loads(Path(os.environ['MANIFEST']).read_text())
+          assert m['schemaVersion']=='gameroad-preaction-v3'
+          assert m['recordId']=='CARDS-FAVORITE-HITACCESS-R15-20260906T1800-SOL-X4N7P2'
+          assert m['leaseState']=='ACTIVE'
+          assert m['leaseTaskId']=='COLLECTION-CROSSDOMAIN-EXPERIENCE-001'
+          assert m['leaseWorkUnitKey']=='COLLECTION_CARDS_FAVORITE_FILTER_HITACCESS_R15'
+          assert m['authorizationBaseSha']==os.environ['BASE_SHA']
+          def blob(path):
+              return subprocess.check_output(['git','hash-object',path], text=True).strip()
+          assert blob(os.environ['PRODUCT_FILE'])==m['targetBlobSha']
+          assert blob(os.environ['UNIT_FILE'])==m['unitTestBlobSha']
+          assert blob(os.environ['BROWSER_FILE'])==m['browserTestBlobSha']
+          PY
+      - name: Apply bounded hit-plane repair and regression coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          product=Path(os.environ['PRODUCT_FILE'])
+          s=product.read_text()
+          old_mount="  grid.before?.(host);\n  if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);"
+          new_mount="  const collectionTools = screen.querySelector?.('.r4CollectionTools');\n  collectionTools?.appendChild?.(host);\n  if (!host.parentNode) {\n    grid.before?.(host);\n    if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);\n  }"
+          if s.count(old_mount)!=1:
+              raise SystemExit(f'mount seam count={s.count(old_mount)}')
+          s=s.replace(old_mount,new_mount)
+          old_style='[data-role="cards-deck-findability"]{position:relative;z-index:4;isolation:isolate;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 10px}'
+          new_style='[data-role="cards-deck-findability"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;grid-column:1/-1;min-width:0;margin:6px 0 4px}'
+          if s.count(old_style)!=1:
+              raise SystemExit(f'style seam count={s.count(old_style)}')
+          product.write_text(s.replace(old_style,new_style))
+
+          unit=Path(os.environ['UNIT_FILE'])
+          u=unit.read_text()
+          marker="test('Cards findability controls keep a dedicated hit layer above Collection without disabling card input', async () => {"
+          if u.count(marker)!=1:
+              raise SystemExit(f'unit marker count={u.count(marker)}')
+          start=u.index(marker)
+          replacement=r'''test('Cards findability controls use existing Collection tools plane without fronting the card grid', async () => {
+            const { readFile } = await import('node:fs/promises');
+            const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+            const mountStart = source.indexOf("const collectionTools = screen.querySelector?.('.r4CollectionTools');");
+            const mountEnd = source.indexOf('const detailAnchor =', mountStart);
+            const mountSource = source.slice(mountStart, mountEnd);
+            const styleStart = source.indexOf("style.id = 'gameroad-cards-deck-findability-style'");
+            const styleEnd = source.indexOf('(doc.head ?? doc.documentElement)', styleStart);
+            const styleSource = source.slice(styleStart, styleEnd);
+
+            assert.ok(mountStart >= 0 && mountEnd > mountStart);
+            assert.ok(mountSource.includes('collectionTools?.appendChild?.(host);'));
+            assert.ok(mountSource.includes('if (!host.parentNode) {'));
+            assert.ok(mountSource.includes('grid.before?.(host);'));
+            assert.ok(styleSource.includes('grid-column:1/-1;min-width:0;'));
+            assert.equal(styleSource.includes('z-index:'), false);
+            assert.equal(styleSource.includes('pointer-events:'), false);
+          });
+          '''
+          unit.write_text(u[:start] + replacement)
+
+          browser=Path(os.environ['BROWSER_FILE'])
+          b=browser.read_text()
+          test_name='Cards favorite findability keeps distinct hit ownership across supported viewports'
+          if test_name in b:
+              raise SystemExit('browser regression already present')
+          addition=r'''
+
+          test('Cards favorite findability keeps distinct hit ownership across supported viewports', async ({ page }) => {
+            test.setTimeout(120_000);
+            const viewports = [
+              { name: 'desktop', width: 1366, height: 768 },
+              { name: 'phone', width: 390, height: 844 },
+              { name: 'short-landscape', width: 844, height: 390 },
+            ];
+            const waitReady = async () => page.waitForFunction(() => Boolean(
+              globalThis.__GAMEROAD_TEST__
+              && globalThis.GAMEROAD_NAV_QA
+              && globalThis.GAMEROAD_SCREEN_TRANSITION,
+            ));
+            const enterCards = async () => {
+              const control = page.locator('.homePadChoice[data-home-target="cards"]:visible').first();
+              await expect(control).toBeVisible();
+              await control.click();
+              await page.waitForFunction(() => (
+                globalThis.GAMEROAD_NAV_QA.snapshot().screen === 'cards'
+                && globalThis.GAMEROAD_SCREEN_TRANSITION.getState().phase === 'IDLE'
+              ));
+              await expect(page.locator('section[data-screen="cards"]')).toBeVisible();
+            };
+            const ownsCenter = async (locator) => {
+              await locator.scrollIntoViewIfNeeded();
+              return locator.evaluate((node) => {
+                const rect = node.getBoundingClientRect();
+                if (!(rect.width > 0 && rect.height > 0)) return false;
+                const target = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+                return Boolean(target && (target === node || node.contains(target)));
+              });
+            };
+
+            for (const viewport of viewports) {
+              await page.setViewportSize({ width: viewport.width, height: viewport.height });
+              const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'load', timeout: 30_000 });
+              expect(response?.ok()).toBeTruthy();
+              await waitReady();
+              await page.evaluate(() => localStorage.removeItem('gameroad.cards.favorite.v1'));
+              await page.reload({ waitUntil: 'load', timeout: 30_000 });
+              await waitReady();
+              await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+              await enterCards();
+
+              const host = page.locator('[data-role="cards-deck-findability"]');
+              await expect(host).toBeVisible();
+              expect(await host.evaluate((node) => ({
+                tools: Boolean(node.closest('.r4CollectionTools')),
+                inGrid: Boolean(node.closest('#collectionGrid')),
+              }))).toEqual({ tools: true, inGrid: false });
+
+              const card = page.locator('#collectionGrid button.slot.live.cardFace:visible').first();
+              await expect(card).toBeVisible();
+              expect(await ownsCenter(card), `${viewport.name}: card center keeps card hit ownership`).toBe(true);
+              const chosenId = await card.getAttribute('data-id');
+              expect(chosenId).toBeTruthy();
+              await card.click();
+
+              const favoriteAction = page.locator('[data-role="cards-favorite-action"]');
+              await expect(favoriteAction).toBeVisible();
+              await favoriteAction.click();
+              await expect(favoriteAction).toHaveAttribute('aria-pressed', 'true');
+              expect(await page.evaluate((id) => {
+                try { return JSON.parse(localStorage.getItem('gameroad.cards.favorite.v1') || '[]').includes(id); }
+                catch { return false; }
+              }, chosenId)).toBe(true);
+
+              const favoriteFilter = page.locator('[data-role="cards-deck-findability"] [data-filter="favorite"]');
+              await expect(favoriteFilter).toBeVisible();
+              expect(await ownsCenter(favoriteFilter), `${viewport.name}: favorite filter center keeps filter hit ownership`).toBe(true);
+              await favoriteFilter.click();
+              await expect(favoriteFilter).toHaveAttribute('aria-pressed', 'true');
+              const visibleIds = await page.locator('#collectionGrid [data-id]:visible').evaluateAll(
+                (nodes) => nodes.map((node) => node.dataset.id).filter(Boolean),
+              );
+              expect(visibleIds.length).toBeGreaterThan(0);
+              expect(visibleIds.every((id) => id === chosenId)).toBe(true);
+
+              await page.reload({ waitUntil: 'load', timeout: 30_000 });
+              await waitReady();
+              expect(await page.evaluate((id) => {
+                try { return JSON.parse(localStorage.getItem('gameroad.cards.favorite.v1') || '[]').includes(id); }
+                catch { return false; }
+              }, chosenId)).toBe(true);
+              await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+              await enterCards();
+              const restoredCard = page.locator(`#collectionGrid button.slot.live.cardFace[data-id="${chosenId}"]`).first();
+              await expect(restoredCard).toBeVisible();
+              expect(await ownsCenter(restoredCard)).toBe(true);
+              await restoredCard.click();
+              await expect(page.locator('[data-role="cards-favorite-action"]')).toHaveAttribute('aria-pressed', 'true');
+              await expect(page.locator('[data-role="cards-deck-findability"] [data-filter="favorite"]')).toHaveAttribute('aria-pressed', 'false');
+              await page.evaluate(() => localStorage.removeItem('gameroad.cards.favorite.v1'));
+            }
+          });
+          '''
+          browser.write_text(b.rstrip() + addition + '\n')
+          PY
+          git diff --check
+      - name: Run focused unit regression
+        run: node --test "$UNIT_FILE"
+      - name: Install Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Run real Chromium acceptance
+        run: npx playwright test "$BROWSER_FILE" --config=playwright.config.mjs --workers=1 --grep 'Cards favorite findability keeps distinct hit ownership across supported viewports' --reporter=line
+      - name: Commit accepted product and tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          git status --short
+          git add "$PRODUCT_FILE" "$UNIT_FILE" "$BROWSER_FILE"
+          git diff --cached --check
+          git config user.name 'rathersitooo-ux'
+          git config user.email 'rathersitooo@gmail.com'
+          git commit -m 'Cards: separate favorite controls from Collection hit plane'
+          git push origin HEAD:sol/cards-favorite-hitaccess-r1-20260906

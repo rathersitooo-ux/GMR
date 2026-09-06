@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DECK-UNSAVED-FAILCLOSE-LIVE-R2-20260906T2005-SOL-N9K2",
+  "taskId": "DECK-UNSAVED-SAVE-ACK-INTEGRATE-001",
+  "workUnitKey": "DECK_SAVE_FAILURE_TRANSACTION_INTEGRITY_R1",
+  "acquireKey": "DECK-UNSAVED-FAILCLOSE-LIVE-R2-20260906T2005-SOL-N9K2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-DECK-SAVE-CORE-MULTIKEY-FAILCLOSE-20260906",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1222-TRANSACTION-SEAM-PLUS-CANONICAL-TEST-ORACLE",
+  "proceedToken": "PROCEED|DECK-UNSAVED-FAILCLOSE-LIVE-R2-20260906T2005-SOL-N9K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|main-0be3a46|existing-save-oracle|lease-A463",
+  "authorizationBaseSha": "0be3a466b55cbd0af23244bc9fc90b2f5f6640fd",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DECK-UNSAVED-SAVE-ACK-INTEGRATE-001",
+  "leaseWorkUnitKey": "DECK_SAVE_FAILURE_TRANSACTION_INTEGRITY_R1",
+  "leaseAcquireKey": "DECK-UNSAVED-FAILCLOSE-LIVE-R2-20260906T2005-SOL-N9K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 20:05 JST",
+  "leaseUntilJst": "2026-09-06 20:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A463:L463",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR: browser/deck-save-recovery-core.mjs; tests/deck-save-recovery-core.test.mjs; transient data/preaction-authorizations/DECK-UNSAVED-FAILCLOSE-LIVE-R2-20260906T2005-SOL-N9K2.json; own branch/PR/check evidence. READ_ONLY browser/GAMEROAD.html while ROAD_MOVE_BIDIRECTIONAL_LIVE_R4 owner remains valid; browser/deck-save-ack-core.mjs; tests/deck-save-ack-core.test.mjs.",
+  "scope": [
+    "browser/deck-save-recovery-core.mjs",
+    "tests/deck-save-recovery-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/deck-save-recovery-core.mjs",
+    "tests/deck-save-recovery-core.test.mjs"
+  ]
+}

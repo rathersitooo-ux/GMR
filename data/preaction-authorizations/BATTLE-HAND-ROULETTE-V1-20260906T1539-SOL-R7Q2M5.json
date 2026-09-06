@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HAND-ROULETTE-V1-20260906T1539-SOL-R7Q2M5",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_ROULETTE_OPTIONAL_HAND_PRESENTATION_V1",
+  "acquireKey": "BATTLE-ROULETTE-V1-20260906T1539-SOL-R7Q2M5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_PLAYABLE_HAND_CANDIDATES_PLUS_SHARED_SLOT_ROLL_CAN_SUPPORT_ROULETTE_WITHOUT_SECOND_RULE_ENGINE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_PROJECT_BATTLE_PLAYABLE_HAND_AFFORDANCE_AND_SLIDEPAD_SLOT_ROLL_CONVENTIONAL_TESTS",
+  "proceedToken": "PROCEED|BATTLE-HAND-ROULETTE-V1-20260906T1539-SOL-R7Q2M5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-hand-projection|active-lease-readback",
+  "authorizationBaseSha": "a67955117945a57eb4bbddf6b3181a145e61bdfd",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_ROULETTE_OPTIONAL_HAND_PRESENTATION_V1",
+  "leaseAcquireKey": "BATTLE-ROULETTE-V1-20260906T1539-SOL-R7Q2M5",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 15:45 JST",
+  "leaseUntilJst": "2026-09-06 16:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:N5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-hand-roulette-v1-20260906 only: browser/battle-hand-roulette-core.mjs; tests/battle-hand-roulette-core.test.mjs; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient data/preaction-authorizations/BATTLE-HAND-ROULETTE-V1-20260906T1539-SOL-R7Q2M5.json; own R23 event and CURRENT_ACTIVE_LEASES tuple. READ_ONLY slidepad-slot-roll-core.mjs and related current janken/refill/result authorities.",
+  "scope": [
+    "browser/battle-hand-roulette-core.mjs",
+    "tests/battle-hand-roulette-core.test.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-hand-roulette-core.mjs",
+    "tests/battle-hand-roulette-core.test.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

@@ -1,0 +1,142 @@
+name: TEMP Road Move Bidirectional Live R8
+on:
+  push:
+    branches:
+      - sol/road-move-bidirectional-live-r8-20260907
+permissions:
+  contents: write
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/road-move-bidirectional-live-r8-20260907
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Rebase adopted Road bidirectional patch on current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -q 'ROAD-MOVE-BIDIRECTIONAL-R8' browser/GAMEROAD.html; then
+            echo 'Road R8 product marker already present; skip regeneration.'
+          else
+            git fetch origin sol/road-move-bidirectional-live-r5-20260906 sol/road-move-bidirectional-live-r6-20260906
+            git show origin/sol/road-move-bidirectional-live-r5-20260906:tools/zz-temp-road-move-runtime-r5.py > /tmp/r8-base.py
+            python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/r8-base.py')
+          s=p.read_text()
+          s=s.replace("BASE = '0be3a466b55cbd0af23244bc9fc90b2f5f6640fd'", "BASE = 'e12a0191656f066c4a66577269c8c26096d2e7ce'")
+          s=s.replace('ROAD-MOVE-RUNTIME-R5-20260906T2113-SOL-P8N4V6','ROAD-MOVE-RUNTIME-R8-20260907T0046-SOL-Q8V4N6')
+          s=s.replace('.github/workflows/zz-temp-road-move-runtime-r5.yml','.github/workflows/zz-temp-road-move-runtime-r8.yml')
+          s=s.replace('road-move-bidirectional-live-r5.spec.mjs','road-move-bidirectional-live-r8.spec.mjs')
+          s=s.replace('ROAD-MOVE-BIDIRECTIONAL-R5','ROAD-MOVE-BIDIRECTIONAL-R8')
+          s=s.replace('R5 source contract','R8 source contract').replace('R5_PATCH_READY','R8_PATCH_READY')
+          p.write_text(s)
+          PY
+            python3 /tmp/r8-base.py
+            python3 - <<'PY'
+          from pathlib import Path
+          html=Path('browser/GAMEROAD.html')
+          s=html.read_text()
+          old="function roadMoveShouldTreatTapAsRoad(p,id){const candidates=compatibleRoadCandidatesForPath(p);if(!candidates.includes(id))return false;const focused=p?.plan?.roadId||null;return !focused||!candidates.includes(focused)}"
+          new="function roadMoveShouldTreatTapAsRoad(p,id){return compatibleRoadCandidatesForPath(p).includes(id)}"
+          if s.count(old)!=1: raise SystemExit(f'road candidate routing predicate mismatch: {s.count(old)}')
+          s=s.replace(old,new,1)
+          old="b.onclick=()=>{if(roadMoveShouldTreatTapAsRoad(me,id))setDirectPlanRole('road');return first10SelectHandCard(id)}"
+          new="b.onclick=()=>{if(roadMoveShouldTreatTapAsRoad(me,id)){const road=$('#roadSelect');first10Runtime.manualRoad=true;first10Runtime.roadSelectedAt=performance.now();first10Event('manual_road_select',{cardId:id,reselect:!!road?.value,source:'compatible_candidate'});return first10SetSelect(road,id)}return first10SelectHandCard(id)}"
+          if s.count(old)!=1: raise SystemExit(f'hand candidate click routing mismatch: {s.count(old)}')
+          s=s.replace(old,new,1)
+          html.write_text(s)
+          test=Path('tests/road-move-bidirectional-live-r8.spec.mjs')
+          t=test.read_text()
+          t=t.replace("expect(backed.compatibleRoadIds.length).toBeGreaterThanOrEqual(beforeCount===0?0:beforeCount);", "expect(backed.path.length).toBe(Math.max(1,moved.path.length-1));if(backed.path.length===1)expect(backed.compatibleRoadIds).toEqual([]);else expect(backed.compatibleRoadIds.length).toBeGreaterThanOrEqual(beforeCount);")
+          t += r'''
+
+          test('compatible Road card taps stay Road-side while a path is drafted',async({page})=>{
+            const battle=await openRoadBattle(page);
+            const next=battle.locator('.node.reachable[data-move-distance="1"]').first();
+            await expect(next).toBeEnabled();
+            await next.click();
+            const moved=await snapshot(page);
+            expect(moved.battleId).toBeNull();
+            expect(moved.compatibleRoadIds.length).toBeGreaterThan(0);
+            const ids=moved.compatibleRoadIds.slice(0,2);
+            const a=ids[0];
+            await battle.locator(`#hand .handCard[data-card-id="${a}"]`).click();
+            let focused=await snapshot(page);
+            expect(focused.roadId).toBe(a);
+            expect(focused.battleId).toBeNull();
+            expect(focused.path).toEqual(moved.path);
+            if(ids.length>1){
+              const b=ids[1];
+              await battle.locator(`#hand .handCard[data-card-id="${b}"]`).click();
+              focused=await snapshot(page);
+              expect(focused.roadId).toBe(b);
+              expect(focused.battleId).toBeNull();
+              expect(focused.path).toEqual(moved.path);
+            }
+          });
+          '''
+          if 'compatible_candidate' not in s: raise SystemExit('candidate source marker missing')
+          if 'battleId).toBeNull()' not in t: raise SystemExit('Battle non-interference assertion missing')
+          test.write_text(t)
+          PY
+          fi
+          git diff --check
+          node --test tests/road-move-compatibility-core.test.mjs
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Run focused live Road acceptance in three viewports
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > .road-r8-playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir: './tests',
+            testMatch: 'road-move-bidirectional-live-r8.spec.mjs',
+            timeout: 60000,
+            expect: { timeout: 8000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            reporter: [['line']],
+            use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true, trace: 'retain-on-failure', screenshot: 'only-on-failure', video: 'off' },
+            projects: [
+              { name: 'desktop-1280x720', use: { viewport: { width: 1280, height: 720 } } },
+              { name: 'phone-390x844', use: { viewport: { width: 390, height: 844 } } },
+              { name: 'short-landscape-667x375', use: { viewport: { width: 667, height: 375 } } }
+            ],
+            webServer: { command: 'python3 -m http.server 4173 --bind 127.0.0.1', url: 'http://127.0.0.1:4173/browser/GAMEROAD.html', reuseExistingServer: false, timeout: 120000 }
+          });
+          EOF
+          npx playwright test --config=.road-r8-playwright.config.mjs --workers=1
+          rm -f .road-r8-playwright.config.mjs
+      - name: Commit product delta only after acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add browser/GAMEROAD.html tests/road-move-bidirectional-live-r8.spec.mjs
+          if git diff --cached --quiet; then
+            echo 'No product delta to commit.'
+            exit 0
+          fi
+          git config user.name 'gameroad-road-r8'
+          git config user.email 'actions@users.noreply.github.com'
+          git commit -m 'Battle: allow Road card and movement in either order'
+          git push origin HEAD:sol/road-move-bidirectional-live-r8-20260907
+      - name: Upload Road acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: road-r8-live-evidence
+          path: |
+            test-results
+          if-no-files-found: ignore

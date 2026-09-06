@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "NEWMAP-RULESPLIT-R1B-20260906T2114-SOL-K4M8Q2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "NEW_MAP_RULE_EFFECT_SPLIT_R1",
+  "acquireKey": "NEWMAP-RULESPLIT-R1B-20260906T2114-SOL-K4M8Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_EXPLICIT_MAP_RULE_SPLIT_PLUS_CURRENT_GOAL_CORE_AND_LEGACY_GATE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_GOAL_PATH_AND_LEGACY_GATE_CORES_PLUS_PR1231_DONOR_DIFF",
+  "proceedToken": "PROCEED|NEWMAP-RULESPLIT-R1B-20260906T2114-SOL-K4M8Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260906T2117JST",
+  "authorizationBaseSha": "0be3a466b55cbd0af23244bc9fc90b2f5f6640fd",
+  "scope": [
+    "browser/battle-map-ruleset-core.mjs",
+    "browser/franoora-castle-town-map-core.mjs",
+    "tests/battle-map-ruleset-core.test.mjs",
+    "tests/franoora-castle-town-map-core.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "NEW_MAP_RULE_EFFECT_SPLIT_R1",
+  "leaseAcquireKey": "NEWMAP-RULESPLIT-R1B-20260906T2114-SOL-K4M8Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 21:14 JST",
+  "leaseUntilJst": "2026-09-06 22:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A469:L469",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR new branch sol/franoora-map-ruleset-split-r1b-20260906 only: browser/battle-map-ruleset-core.mjs; browser/franoora-castle-town-map-core.mjs; tests/battle-map-ruleset-core.test.mjs; tests/franoora-castle-town-map-core.test.mjs; transient data/preaction-authorizations/NEWMAP-RULESPLIT-R1B-20260906T2114-SOL-K4M8Q2.json; own branch/PR/checks/merge evidence; own R23 event and CURRENT_ACTIVE_LEASES tuple. READ_ONLY browser/GAMEROAD.html; browser/new-base-goal-path-core.mjs; browser/new-base-goal-result-core.mjs; browser/new-base-legacy-seven-win-gate-core.mjs; browser/road-move-compatibility-core.mjs; gameplay/card-effects/save/economy/network/assets; unrelated Home/Cards/Partner/Result/Road resources.",
+  "leaseScope": [
+    "browser/battle-map-ruleset-core.mjs",
+    "browser/franoora-castle-town-map-core.mjs",
+    "tests/battle-map-ruleset-core.test.mjs",
+    "tests/franoora-castle-town-map-core.test.mjs"
+  ]
+}

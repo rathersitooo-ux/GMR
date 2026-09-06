@@ -237,3 +237,47 @@ test('already-loaded Home runtime mounts the Rogue consumer once without rewriti
   assert.match(runtimeMount, /documentSource\.removeEventListener\('click', dismissOnOutsideClick, true\);/);
   assert.match(runtimeMount, /entry\.addEventListener\('click', \(\) => \{ panelDismissed = false; controller\.start\(\); render\(\); \}\);/);
 });
+
+test('Friend Room copy accepts only the currently visible seven-character code and never fakes clipboard success', async () => {
+  const {
+    copyFriendRoomCode,
+    normalizeVisibleFriendRoomCode,
+  } = await import('../browser/rogue-run-runtime-mount.mjs');
+
+  assert.equal(normalizeVisibleFriendRoomCode(' ABC12DE '), 'ABC12DE');
+  assert.equal(normalizeVisibleFriendRoomCode('abc12de'), 'ABC12DE');
+  assert.equal(normalizeVisibleFriendRoomCode('-------'), null);
+  assert.equal(normalizeVisibleFriendRoomCode('ABC123'), null);
+
+  const writes = [];
+  assert.deepEqual(
+    await copyFriendRoomCode({
+      code: 'ab12cde',
+      clipboard: { async writeText(value) { writes.push(value); } },
+    }),
+    { ok: true, reason: 'COPIED', code: 'AB12CDE' },
+  );
+  assert.deepEqual(writes, ['AB12CDE']);
+  assert.deepEqual(
+    await copyFriendRoomCode({ code: 'ABC12DE', clipboard: null }),
+    { ok: false, reason: 'CLIPBOARD_UNAVAILABLE', code: 'ABC12DE' },
+  );
+  assert.deepEqual(
+    await copyFriendRoomCode({
+      code: 'ABC12DE',
+      clipboard: { async writeText() { throw new Error('denied'); } },
+    }),
+    { ok: false, reason: 'CLIPBOARD_REJECTED', code: 'ABC12DE' },
+  );
+});
+
+test('Friend Room copy consumer stays in the already-packaged runtime and does not acquire room authority', () => {
+  const runtimeMount = fs.readFileSync(new URL('../browser/rogue-run-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(runtimeMount, /#friendRoomPanel/);
+  assert.match(runtimeMount, /\.friendCode > b/);
+  assert.match(runtimeMount, /min-height:44px/);
+  assert.match(runtimeMount, /aria-live/);
+  assert.match(runtimeMount, /autoMountFriendRoomShare\(\)/);
+  assert.doesNotMatch(runtimeMount, /friend-room-share-runtime\.mjs/);
+  assert.doesNotMatch(runtimeMount, /createRoom\(|joinRoom\(|toggleReady\(|hostStart\(|BroadcastChannel|WebSocket/);
+});

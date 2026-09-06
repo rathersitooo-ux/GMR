@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BOARD-FACILITY-SHOP-OWNER-R27R2-20260906T1239-SOL-K4M8Q6",
+  "taskId": "BOARD-FACILITY-RUNTIME-CONTRACT-001",
+  "workUnitKey": "BOARD_FACILITY_SHOP_GRANT_OWNER_GUARD_R27",
+  "acquireKey": "BOARD-FACILITY-SHOP-OWNER-R27R2-20260906T1239-SOL-K4M8Q6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1196_R27_FOCUSED_PASS_PLUS_CURRENT_MAIN_REFRESH",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1196_HEAD_FOCUSED_BOARD_AND_BUILD_PASS",
+  "proceedToken": "PROCEED|BOARD-FACILITY-SHOP-OWNER-R27R2-20260906T1239-SOL-K4M8Q6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-board-shop-owner-guard-repair|current-lease-readback",
+  "authorizationBaseSha": "2f5b1b0baf117a81b96e1553427666e115fe2168",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BOARD-FACILITY-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "BOARD_FACILITY_SHOP_GRANT_OWNER_GUARD_R27",
+  "leaseAcquireKey": "BOARD-FACILITY-SHOP-OWNER-R27R2-20260906T1239-SOL-K4M8Q6",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 12:39 JST",
+  "leaseUntilJst": "2026-09-06 13:39 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A475:L475",
+  "leaseExactMutableResources": "GITHUB:rathersitooo-ux/GMR new branch sol/board-facility-shop-owner-r27r2-20260906 only: data/preaction-authorizations/BOARD-FACILITY-SHOP-OWNER-R27R2-20260906T1239-SOL-K4M8Q6.json; browser/board-facility-state-core.mjs; tests/board-facility-state-core.test.mjs; deploy/cloudflare/tests/build.test.mjs; PR#1196 close metadata only after replacement PR exists; replacement PR metadata for this branch only. All other repo paths READ_ONLY.",
+  "scope": [
+    "browser/board-facility-state-core.mjs",
+    "tests/board-facility-state-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/board-facility-state-core.mjs",
+    "tests/board-facility-state-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "BOARD_FACILITY_SHOP_GRANT_OWNER_GUARD_R27",
+  "reuseDisposition": "REPAIR_EXISTING",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1196_EXISTING_FIX_AND_CURRENT_MAIN_DIFF",
+  "solutionSearchEvidence": [
+    "PR #1196 contains the same bounded one-line ownership guard plus focused regression and public-package blob pin.",
+    "Current main 2f5b1b0baf117a81b96e1553427666e115fe2168 still lacks the Shop owner guard while preserving the later Board109 package change.",
+    "Open-PR search found no second Board Shop / GRANT_CARD_NOT_OWNED implementation beyond #1196."
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "schema": "GAMEROAD_PREACTION_V3",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R3-20260906T1842-SOL-Q5M8V3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE_R3",
+  "owner": "ChatGPT / GPT-5.6 Sol / current conversation",
+  "createdAtJST": "2026-09-06 18:42 JST",
+  "leaseUntilJST": "2026-09-06 19:35 JST",
+  "repository": "rathersitooo-ux/GMR",
+  "branch": "sol/road-move-bidirectional-live-r3-20260906",
+  "baseCommit": "f27a3ab8e1a8ea4e6a4db2faf657ae2a6b4c6136",
+  "purpose": "Finish the already-approved Road-card <-> movement DraftMove as a live player path. Allow movement-first and card-first without modes, preserve current path across Road focus changes, derive compatible Road1-6 candidates from current hand/path, and visually distinguish compatible/focused/invalid focus while reusing existing movement authority.",
+  "actualGapProof": [
+    "browser/GAMEROAD.html renderBoard currently creates no reachable map without me.plan.roadId",
+    "selectEndpoint currently returns immediately when me.plan.roadId is absent",
+    "updatePlanFromSelect currently resets me.plan.path to current position whenever Road changes"
+  ],
+  "mutableResources": [
+    "browser/GAMEROAD.html",
+    "browser/road-move-draft-core.mjs",
+    "tests/road-move-draft-core.test.mjs",
+    "browser/road-move-draft-runtime-mount.mjs",
+    "tests/road-move-draft-runtime-mount.test.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "data/preaction-authorizations/ROAD-MOVE-RUNTIME-R3-20260906T1842-SOL-Q5M8V3.json"
+  ],
+  "readOnlyAuthorities": [
+    "browser/road-move-compatibility-core.mjs",
+    "existing 109-position topology/reachable/shortest/stoppability internals",
+    "gameplay/rules/save/network",
+    "Battle-card selection/reservation/submission semantics"
+  ],
+  "invariants": [
+    "No CARD_FIRST/MOVE_FIRST dual state machine",
+    "No second movement/topology/reachable authority",
+    "Road value 1-6 is an upper bound, never exact-distance-only",
+    "No automatic Road card formal selection or submission",
+    "Changing Road focus preserves the current draft path",
+    "Back/cancel recomputes candidates from current path",
+    "Battle-card behavior diff must remain zero",
+    "Existing commitPlans authority validation remains authoritative"
+  ],
+  "acceptance": [
+    "A: Road3 first -> legal path <=3 -> Road3 compatible -> decision remains explicit",
+    "B: no Road first -> move 2 -> every compatible held Road rises -> user can focus one",
+    "C: Road3 first -> inspect/choose step 4 with held Road5 -> path survives, Road3 invalid focus, Road5 compatible -> switch",
+    "D: backtrack from 5 to 2 -> compatible candidates immediately broaden",
+    "Road1-6 parameterized upper-bound behavior",
+    "multiple candidates are all shown and never auto-picked",
+    "sole candidate may soft-focus visually but is not formally selected",
+    "Battle-card selection/reservation/submission remains unchanged"
+  ],
+  "rollback": "Delete the R3 branch or revert only R3 commits; main is untouched until reviewed/merged.",
+  "status": "AUTHORIZED_FOR_BRANCH_LOCAL_MUTATION"
+}

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SHIELD-LANE-AUTH-R3-20260907T0106-SOL-H7Q3M9",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_SHIELD_LANE_READABILITY_R3",
+  "acquireKey": "BATTLE-SHIELD-LANE-R3-20260907T0104-SOL-H7Q3M9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_LACKS_SHIELD_LANE_MAPPING_AND_PR1206_GATE_GREEN_PRECEDENT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "ADAPT_GATE_GREEN_PRESENTATION_ONLY_PATCH_ON_FRESH_MAIN_PRESERVING_CURRENT_ACTION_CUE",
+  "proceedToken": "PROCEED|BATTLE-SHIELD-LANE-AUTH-R3-20260907T0106-SOL-H7Q3M9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|shield-road-lane-readability-adapt",
+  "authorizationBaseSha": "e12a0191656f066c4a66577269c8c26096d2e7ce",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_SHIELD_LANE_READABILITY_R3",
+  "leaseAcquireKey": "BATTLE-SHIELD-LANE-R3-20260907T0104-SOL-H7Q3M9",
+  "leaseSnapshotReadbackAtJst": "2026-09-07 01:06 JST",
+  "leaseUntilJst": "2026-09-07 02:04 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A515:L515",
+  "leaseExactMutableResources": "browser/battle-screen-runtime-mount.mjs; data/preaction-authorizations/BATTLE-SHIELD-LANE-AUTH-R3-20260907T0106-SOL-H7Q3M9.json; tests/battle-screen-runtime-mount.test.mjs only if needed",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs"
+  ],
+  "solutionSignature": "Adapt the gate-green Shield L/C/R presentation rail from superseded PR #1206 onto current main so each participant surface locally maps Shield L/C/R to same-named ROAD L/C/R while preserving the newer current-action cue and all Battle authority/rules.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1206_REQUIRED_GATE_SUCCESS_PLUS_CURRENT_MAIN_ABSENCE_AND_LATER_SAME_FILE_EVOLUTION",
+  "solutionSearchEvidence": [
+    "PR #1206 already proved the presentation-only Shield rail through Required Gate but is no longer mergeable against current main",
+    "fresh current main battle-screen-runtime-mount.mjs has no SHIELD_RAIL_ATTR or equivalent local Shield-to-ROAD mapping",
+    "current main includes newer accepted-action presentation that must remain unchanged; this work therefore adapts only the Shield readability meaning rather than merging the stale branch"
+  ]
+}

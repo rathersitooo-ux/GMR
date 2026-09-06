@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DECK-VERIFIED-SAVE-LIVE-R1-20260906T2118-SOL-H7Q4N9",
+  "taskId": "DECK-UNSAVED-SAVE-ACK-INTEGRATE-001",
+  "workUnitKey": "DECK_LOCAL_VERIFIED_SAVE_LIVE_R1",
+  "acquireKey": "DECK-VERIFIED-SAVE-LIVE-R1-20260906T2118-SOL-H7Q4N9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-row1341-existing-verified-local-save-core-plus-live-Cards-consumer-gap",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "deck-save-recovery-core-existing-exact-write-readback-rollback-contract-and-read-only-live-use-site-probe",
+  "proceedToken": "PROCEED|DECK-VERIFIED-SAVE-LIVE-R1-20260906T2118-SOL-H7Q4N9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-save-authority|fresh-lease-snapshot",
+  "authorizationBaseSha": "0be3a466b55cbd0af23244bc9fc90b2f5f6640fd",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DECK-UNSAVED-SAVE-ACK-INTEGRATE-001",
+  "leaseWorkUnitKey": "DECK_LOCAL_VERIFIED_SAVE_LIVE_R1",
+  "leaseAcquireKey": "DECK-VERIFIED-SAVE-LIVE-R1-20260906T2118-SOL-H7Q4N9",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 21:24 JST",
+  "leaseUntilJst": "2026-09-06 22:24 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A472:L472",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/deck-verified-save-live-r1-20260906 only: browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; UNIQUE_TRANSIENT .github/workflows/zz-temp-deck-save-live-r1.yml; transient data/preaction-authorizations/DECK-VERIFIED-SAVE-LIVE-R1-20260906T2118-SOL-H7Q4N9.json; own branch/PR/check/merge evidence; own R23 event and CURRENT_ACTIVE_LEASES tuple. READ_ONLY browser/GAMEROAD.html; browser/deck-save-recovery-core.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; gameplay/rules/economy/network/other-owner resources. If actual proves deck-save core export itself must change, extend lease before mutating it.",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    ".github/workflows/zz-temp-deck-save-live-r1.yml"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    ".github/workflows/zz-temp-deck-save-live-r1.yml"
+  ],
+  "solutionSignature": "Connect the existing current Deck save action to the existing verified local write/readback/rollback authority through the live Cards/Deck presentation consumer, with no new storage or save semantics.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "reuse-decision:row1341-current-live-mount-residual",
+  "solutionSearchEvidence": [
+    "CURRENT:DECK-UNSAVED-SAVE-ACK-INTEGRATE-001-row1341",
+    "GitHub:browser/deck-save-recovery-core.mjs-existing-verified-write-readback-rollback",
+    "GitHub:browser/cards-deck-presentation.mjs-existing-live-deck-authority-bridge"
+  ]
+}

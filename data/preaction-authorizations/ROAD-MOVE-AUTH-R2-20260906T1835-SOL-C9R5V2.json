@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-MOVE-AUTH-R2-20260906T1835-SOL-C9R5V2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_AUTHORITY_R2",
+  "acquireKey": "ROAD-MOVE-AUTH-R2-20260906T1835-SOL-C9R5V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_SINGLE_MOVEMENT_AUTHORITY_CONFIRMED_ROAD_REQUIRED_IN_RENDER_SELECT_AND_DRAG_AND_PATH_RESET_ON_ROAD_CHANGE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_MAIN_F27A3AB_BLOB_READBACK_PLUS_EXISTING_109_REACHABLE_SHORTEST_AND_COMMIT_VALIDATION",
+  "proceedToken": "PROCEED|ROAD-MOVE-AUTH-R2-20260906T1835-SOL-C9R5V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|single-authority-minimal-repair|active-lease-readback",
+  "authorizationBaseSha": "f27a3ab8e1a8ea4e6a4db2faf657ae2a6b4c6136",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_BIDIRECTIONAL_AUTHORITY_R2",
+  "leaseAcquireKey": "ROAD-MOVE-AUTH-R2-20260906T1835-SOL-C9R5V2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 18:35 JST",
+  "leaseUntilJst": "2026-09-06 19:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A481:N481",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/road-move-bidirectional-authority-r2-20260906 only: browser/GAMEROAD.html; tests/road-move-bidirectional-authority-r2.spec.mjs; transient .github/workflows/zz-temp-road-move-authority-r2.yml; transient data/preaction-authorizations/ROAD-MOVE-AUTH-R2-20260906T1835-SOL-C9R5V2.json; own CURRENT_ACTIVE_LEASES tuple. READ_ONLY browser/battle-screen-runtime-mount.mjs; browser/battle-janken-slidepad-runtime-mount.mjs; Cards/Partner/Result/Home modules; gameplay/rules/save/economy/network/Battle-card logic; 109 topology definitions.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-authority-r2.spec.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-authority-r2.spec.mjs"
+  ],
+  "safetyInvariants": [
+    "one existing movement authority only",
+    "Road values 1-6 remain upper bounds",
+    "multiple compatible Road cards are never auto-selected before explicit decision",
+    "changing Road focus never clears the draft path",
+    "Battle-card selection reservation submission UI and semantics remain unchanged",
+    "109 topology reachable shortest adjacency and stoppability definitions remain unchanged"
+  ]
+}

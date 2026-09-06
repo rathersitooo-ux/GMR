@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RESULT-NODEFEAT-POLICY-R2-20260906T2004-SOL-M7Q3K8",
+  "taskId": "RANK-RESULT-EMBLEM-FORMAL-ASSET-001",
+  "workUnitKey": "RESULT_NO_DEFEAT_CHARACTER_PRESENTATION_POLICY_R1",
+  "acquireKey": "RESULT-NODEFEAT-POLICY-R2-20260906T2004-SOL-M7Q3K8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "RESULT-NODEFEAT-R2-existing-core-minimal-diff-no-html-rule-reward-change",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "RESULT-NODEFEAT-R2-focused-existing-core-test-and-direct-diff",
+  "proceedToken": "PROCEED|RESULT-NODEFEAT-POLICY-R2-20260906T2004-SOL-M7Q3K8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-core|minimal-reversible|lease-readback",
+  "authorizationBaseSha": "0be3a466b55cbd0af23244bc9fc90b2f5f6640fd",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "RANK-RESULT-EMBLEM-FORMAL-ASSET-001",
+  "leaseWorkUnitKey": "RESULT_NO_DEFEAT_CHARACTER_PRESENTATION_POLICY_R1",
+  "leaseAcquireKey": "RESULT-NODEFEAT-POLICY-R2-20260906T2004-SOL-M7Q3K8",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 20:16 JST",
+  "leaseUntilJst": "2026-09-06 20:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A462:L462",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/result-nodefeat-policy-r2-20260906 only: browser/result-presentation-core.mjs; tests/result-presentation-core.test.mjs; transient data/preaction-authorizations/RESULT-NODEFEAT-POLICY-R2-20260906T2004-SOL-M7Q3K8.json; own R23 event and CURRENT_ACTIVE_LEASES tuple. browser/GAMEROAD.html READ_ONLY while ROAD_MOVE_BIDIRECTIONAL_LIVE_R4 owner remains valid. gameplay/rules/rank/reward/save/economy/network/assets READ_ONLY.",
+  "scope": [
+    "browser/result-presentation-core.mjs",
+    "tests/result-presentation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/result-presentation-core.mjs",
+    "tests/result-presentation-core.test.mjs"
+  ]
+}

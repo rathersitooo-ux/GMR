@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-DECK-GHOST-SOURCE-R1G-20260906T1617-SOL-K7M4P2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "CARDS_DECK_GHOST_SOURCE_SURFACE_R1",
+  "acquireKey": "CARDS-DECK-GHOST-SOURCE-R1G-20260906T1617-SOL-K7M4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_SOURCE_SELECTION_MISMATCH+USER_APPROVED_STATIONARY_SOURCE_MOTION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FOCUSED_SURFACE_SOURCE_SELECTION_REGRESSION+EXISTING_GHOST_RUNTIME_TESTS",
+  "proceedToken": "PROCEED|CARDS-DECK-GHOST-SOURCE-R1G-20260906T1617-SOL-K7M4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ADAPT_EXISTING_SOURCE_SELECTION",
+  "authorizationBaseSha": "a67955117945a57eb4bbddf6b3181a145e61bdfd",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "CARDS_DECK_GHOST_SOURCE_SURFACE_R1",
+  "leaseAcquireKey": "CARDS-DECK-GHOST-SOURCE-R1G-20260906T1617-SOL-K7M4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 16:17 JST",
+  "leaseUntilJst": "2026-09-06 17:17 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@a67955117945a57eb4bbddf6b3181a145e61bdfd; intended branch work/cards-deck-ghost-source-r1g-20260906; mutable browser/deck-storage-corner-runtime.mjs@c7c50b4bb3109710c229c393911beb2eeb2c1b6d + tests/deck-storage-corner-runtime.test.mjs@2add3256e2c3553926070529c1461b39ff11c04e + transient data/preaction-authorizations/CARDS-DECK-GHOST-SOURCE-R1G-20260906T1617-SOL-K7M4P2.json; all other files READ_ONLY.",
+  "scope": [
+    "browser/deck-storage-corner-runtime.mjs",
+    "tests/deck-storage-corner-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/deck-storage-corner-runtime.mjs",
+    "tests/deck-storage-corner-runtime.test.mjs"
+  ],
+  "solutionSignature": "surface-aware-deck-remove-ghost-source-selection",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_EVENT_PAYLOAD_SURFACE+CURRENT_FIND_COLLECTION_AND_DECK_CARD_HELPERS",
+  "solutionSearchEvidence": [
+    "browser/deck-storage-corner-runtime.mjs:deck-remove-start payload.surface",
+    "browser/deck-storage-corner-runtime.mjs:findCollectionCard/findDeckCard",
+    "existing user-approved remove motion contract"
+  ]
+}

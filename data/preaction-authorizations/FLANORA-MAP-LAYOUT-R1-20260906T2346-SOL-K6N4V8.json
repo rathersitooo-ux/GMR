@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "FLANORA-MAP-LAYOUT-R1-20260906T2346-SOL-K6N4V8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "FLANORA_START_CLEARING_LAYOUT_R1",
+  "acquireKey": "FLANORA-MAP-LAYOUT-R1-20260906T2346-SOL-K6N4V8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_EXPLICIT_FLANORA_VERTICAL_ORDER_4START_AND_R1_FOCUSED_LAYOUT_TESTS",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1237_IDENTICAL_LAYOUT_CORE_FOCUSED_NODE_7_OF_7_PASS_BEFORE_PREACTION_SEQUENCE_REPAIR",
+  "proceedToken": "PROCEED|FLANORA-MAP-LAYOUT-R1-20260906T2346-SOL-K6N4V8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|manifest-first-clean-layout",
+  "authorizationBaseSha": "9fd3271e83de5243c082b14966551d9eadb10630",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "FLANORA_START_CLEARING_LAYOUT_R1",
+  "leaseAcquireKey": "FLANORA-MAP-LAYOUT-R1-20260906T2346-SOL-K6N4V8",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 23:53 JST",
+  "leaseUntilJst": "2026-09-07 00:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A495:L495",
+  "leaseExactMutableResources": "browser/new-base-flanora-map-layout-core.mjs; tests/new-base-flanora-map-layout-core.test.mjs; data/preaction-authorizations/FLANORA-MAP-LAYOUT-R1-20260906T2346-SOL-K6N4V8.json",
+  "scope": [
+    "browser/new-base-flanora-map-layout-core.mjs",
+    "tests/new-base-flanora-map-layout-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-flanora-map-layout-core.mjs",
+    "tests/new-base-flanora-map-layout-core.test.mjs"
+  ],
+  "solutionSignature": "Adapt the existing new-base 4-player × 3 Shield-linked lane contract into Flanora-specific lower-board geometry while keeping movement authority separate.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "NEW_BASE_GOAL_PATH_CORE_PLUS_USER_EXPLICIT_FLANORA_LAYOUT_CORRECTIONS",
+  "solutionSearchEvidence": [
+    "browser/new-base-goal-path-core.mjs already owns the 4 participants × 3 Shield-linked lane and minimum-12-column contract",
+    "current USER_RAW fixes vertical order as GOAL→1→2→3→4→5→6→Shield→7→clearing and requires four START locations",
+    "PR #1237 rehearsal proved the isolated 20-cell orthogonal clearing geometry with 7/7 focused Node tests"
+  ]
+}

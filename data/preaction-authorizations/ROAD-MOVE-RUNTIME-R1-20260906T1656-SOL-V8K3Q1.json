@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-MOVE-RUNTIME-R1-20260906T1656-SOL-V8K3Q1",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_RUNTIME_CONSUMER_R1",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R1-20260906T1656-SOL-V8K3Q1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_BATTLE_HAND_RUNTIME_ALREADY_MOUNTED_AND_OBSERVES_ROAD_SELECT_HAND_WHILE_ROAD_DRAFT_CORE_IS_ORDER_NEUTRAL",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "HISTORICAL_PR831_PLUS_CURRENT_ROAD_CORE_TESTS_PLUS_PR1195_MOUNTED_HAND_PROJECTION_BOUNDARY",
+  "proceedToken": "PROCEED|ROAD-MOVE-RUNTIME-R1-20260906T1656-SOL-V8K3Q1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|runtime-consumer-bfi|active-lease-readback",
+  "authorizationBaseSha": "eab9702aeb8009021e0e64de0751c154d147fa08",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_BIDIRECTIONAL_RUNTIME_CONSUMER_R1",
+  "leaseAcquireKey": "ROAD-MOVE-RUNTIME-R1-20260906T1656-SOL-V8K3Q1",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 16:56 JST",
+  "leaseUntilJst": "2026-09-06 17:56 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A10:N10",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/road-move-bidirectional-runtime-r1-20260906 only: browser/road-move-draft-runtime-mount.mjs; tests/road-move-draft-runtime-mount.test.mjs; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient data/preaction-authorizations/ROAD-MOVE-RUNTIME-R1-20260906T1656-SOL-V8K3Q1.json; own R23 event and CURRENT_ACTIVE_LEASES tuple. READ_ONLY browser/road-move-draft-core.mjs from sol/road-move-draft-bidirectional-r1-20260906 pinned at eab9702aeb8009021e0e64de0751c154d147fa08; browser/road-move-compatibility-core.mjs; browser/GAMEROAD.html; 109 topology/reachable/stoppability/movement authority; gameplay/rules/save/network/Battle-card selection/reservation/submission/UI.",
+  "scope": [
+    "browser/road-move-draft-runtime-mount.mjs",
+    "tests/road-move-draft-runtime-mount.test.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/road-move-draft-runtime-mount.mjs",
+    "tests/road-move-draft-runtime-mount.test.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "readOnlyDependency": {
+    "branch": "sol/road-move-draft-bidirectional-r1-20260906",
+    "commit": "eab9702aeb8009021e0e64de0751c154d147fa08",
+    "files": ["browser/road-move-draft-core.mjs", "browser/road-move-compatibility-core.mjs"]
+  }
+}

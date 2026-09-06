@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-FAVORITE-HITACCESS-R9-20260906T1305-SOL-V7K4M9",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "CARDS_FAVORITE_HITACCESS_LIVE_R9",
+  "acquireKey": "CARDS-FAVORITE-HITACCESS-R9-20260906T1305-SOL-V7K4M9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R5_GEOMETRY_33991263168_PLUS_R7_R8_HARNESS_TERMINALS",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXACT_TARGET_BLOB_PLUS_HTTP_COMMIT_RUNTIME_READY_ORACLE",
+  "proceedToken": "PROCEED|CARDS-FAVORITE-HITACCESS-R9-20260906T1305-SOL-V7K4M9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-adopted-favorite-hitaccess-repair|active-lease-readback",
+  "authorizationBaseSha": "d0d1fcfe1910848e7f6dc51eaa2a92625a156736",
+  "targetBlobSha": "5f54a0ee0cb7fe7ef65bf06260bc89c5722fac5f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "CARDS_FAVORITE_HITACCESS_LIVE_R9",
+  "leaseAcquireKey": "CARDS-FAVORITE-HITACCESS-R9-20260906T1305-SOL-V7K4M9",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 13:05 JST",
+  "leaseUntilJst": "2026-09-06 14:00 JST",
+  "scope": ["browser/cards-deck-presentation.mjs","tests/home-cards-2p5d-runtime.spec.mjs"],
+  "solutionSignature": "CARDS_FAVORITE_GRID_INFLOW_R9",
+  "reuseDisposition": "REPAIR_EXISTING",
+  "solutionSearchStatus": "PASS",
+  "priorHarnessFailureRuns": ["34010078189","34010337882"],
+  "reuseDecisionEvidence": [
+    "R7 and R8 never reached product assertions; both failed in page navigation lifecycle waits after HTML/module HTTP 200 responses.",
+    "Fresh main preserves exact Cards target blob 5f54a0ee0cb7fe7ef65bf06260bc89c5722fac5f.",
+    "R9 keeps the same in-flow candidate and replaces only the oracle boundary: wait for HTTP commit, then explicit GAMEROAD runtime readiness and visible route controls."
+  ]
+}

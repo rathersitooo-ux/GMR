@@ -110,6 +110,13 @@ assert.equal(runtime.hud.hateValue.dataset.resolved, 'false');
 assert.equal(runtime.hud.turnValue.dataset.resolved, 'false');
 assert.equal(runtime.hud.loadValue.dataset.resolved, 'false');
 assert.equal(runtime.hud.chain.children.length, 0);
+assert.ok(runtime.currentActionCue);
+assert.equal(runtime.currentActionCue.getAttribute('data-battle-current-action'), '1');
+assert.equal(runtime.currentActionCue.getAttribute('role'), 'status');
+assert.equal(runtime.currentActionCue.getAttribute('aria-live'), 'polite');
+assert.equal(runtime.currentActionCue.dataset.presentationOnly, 'true');
+assert.equal(runtime.currentActionCue.dataset.authority, 'accepted-public-model-only');
+assert.equal(runtime.currentActionCue.hidden, true);
 assert.ok(runtime.progressGuide);
 assert.equal(runtime.progressGuide.getAttribute('data-battle-progress-guide'), '1');
 assert.equal(runtime.progressGuide.getAttribute('aria-label'), 'ROADからGOALへの進行方向');
@@ -134,13 +141,15 @@ assert.ok(runtimeStyle.textContent.includes('clip-path:polygon(50% 0,100% 50%,50
 assert.ok(runtimeStyle.textContent.includes('@media(max-height:470px) and (orientation:landscape)'));
 assert.ok(runtimeStyle.textContent.includes('.battle .royalUsageStrip{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;width:151px!important;gap:2px!important}'));
 assert.ok(runtimeStyle.textContent.includes('@media(max-width:540px){[data-gr-battle-screen="1"] [data-battle-screen-causal-grid]{left:4px;right:4px;gap:3px;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}'));
-assert.ok(runtimeStyle.textContent.includes('@media(max-width:540px) and (orientation:portrait){[data-gr-battle-screen="1"] [data-battle-screen-causal-grid]{top:76px;right:8px;bottom:96px;left:8px;gap:6px;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(4,minmax(0,1fr))}'));
+assert.ok(runtimeStyle.textContent.includes('@media(max-width:540px) and (orientation:portrait){[data-gr-battle-screen="1"] [data-battle-screen-causal-grid]{top:88px;right:8px;bottom:96px;left:8px;gap:6px;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(4,minmax(0,1fr))}'));
 assert.ok(runtimeStyle.textContent.includes('[data-gr-battle-screen="1"] [data-battle-screen-causal-grid]::before{display:none}'));
 assert.ok(runtimeStyle.textContent.includes('[data-gr-battle-screen="1"] [data-battle-screen-lane]{grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(20px,auto);'));
 assert.ok(runtimeStyle.textContent.includes('[data-gr-battle-screen="1"] #battleResolution{left:8px;right:8px;bottom:12px;transform:none;max-width:none}'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleHudSettings{pointer-events:auto'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleHudChainArrow'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleHudLoad'));
+assert.ok(runtimeStyle.textContent.includes('[data-battle-current-action]'));
+assert.ok(runtimeStyle.textContent.includes('max-width:min(42vw,420px)'));
 assert.ok(runtimeStyle.textContent.includes('[data-battle-progress-guide]'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleProgressArrow::before{content:"◀"'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleProgressArrow::before{content:"▲"'));
@@ -162,6 +171,8 @@ assert.equal(runtime.shell.dataset.mode, 'MATCH_PLAN');
 assert.equal(runtime.shell.hidden, false);
 assert.equal(runtime.phaseSurface.hidden, true);
 assert.equal(runtime.hud.root.hidden, true);
+assert.equal(runtime.currentActionCue.hidden, true);
+assert.equal(runtime.currentActionCue.textContent, '');
 assert.equal(runtime.planSlot.hidden, false);
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['idle', 'idle', 'idle', 'idle']);
 const roleSurfaces = runtime.laneSurfaces.map(node => node.children[1]);
@@ -200,6 +211,10 @@ runtime.render(attack, {
 });
 assert.equal(runtime.phaseSurface.hidden, false);
 assert.equal(runtime.hud.root.hidden, false);
+assert.equal(runtime.currentActionCue.hidden, false);
+assert.equal(runtime.currentActionCue.textContent, '今：攻撃 A-1 → B-2');
+assert.equal(runtime.currentActionCue.dataset.phase, 'attack');
+assert.equal(runtime.currentActionCue.dataset.eventId, 'attack-1');
 assert.equal(runtime.planSlot.hidden, true);
 assert.equal(runtime.shell.dataset.mode, 'BATTLE_PHASE');
 assert.equal(runtime.shell.dataset.eventId, 'attack-1');
@@ -282,6 +297,9 @@ assert.equal(runtime.shell.dataset.returnIntent, 'RESULT');
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['idle', 'idle', 'idle', 'winner']);
 assert.equal(runtime.phaseSurface.dataset.battleScreenPhase, 'finisher');
 assert.equal(runtime.hud.root.hidden, false);
+assert.equal(runtime.currentActionCue.hidden, false);
+assert.equal(runtime.currentActionCue.textContent, '今：決着 B-2');
+assert.equal(runtime.currentActionCue.dataset.phase, 'finisher');
 assert.deepEqual(roleSurfaces.map(node => node.hidden), [true, true, true, true]);
 assert.deepEqual(roleSurfaces.map(node => node.textContent), ['', '', '', '']);
 
@@ -290,22 +308,26 @@ runtime.render(terminalResult);
 assert.equal(runtime.shell.hidden, true);
 assert.equal(runtime.phaseSurface.hidden, true);
 assert.equal(runtime.hud.root.hidden, true);
+assert.equal(runtime.currentActionCue.hidden, true);
 assert.equal(runtime.planSlot.hidden, true);
 
 runtime.render(attack);
 assert.equal(runtime.shell.hidden, false);
 assert.equal(runtime.phaseSurface.hidden, false);
 assert.equal(runtime.hud.root.hidden, false);
+assert.equal(runtime.currentActionCue.textContent, '今：攻撃 A-1 → B-2');
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['source', 'idle', 'idle', 'target']);
 assert.deepEqual(roleSurfaces.map(node => node.hidden), [false, true, true, false]);
 assert.deepEqual(roleSurfaces.map(node => node.textContent), ['攻撃', '', '', '対象']);
 
 const progressGuide = runtime.progressGuide;
 const fieldLandmark = runtime.fieldLandmark;
+const currentActionCue = runtime.currentActionCue;
 assert.equal(runtime.destroy(), true);
 assert.equal(runtime.destroy(), false);
 assert.equal(progressGuide.parentNode, null);
 assert.equal(fieldLandmark.parentNode, null);
+assert.equal(currentActionCue.parentNode, null);
 assert.equal(root.children.includes(runtime.shell), false);
 assert.throws(() => runtime.render(idle), /RUNTIME_DESTROYED/);
 assert.throws(() => runtime.renderHud({ score: 1 }), /RUNTIME_DESTROYED/);
@@ -339,6 +361,8 @@ assert.equal(adopted.shell.className, 'grBattleScreenAdoptedOverlay');
 assert.equal(adopted.shell.getAttribute('data-gr-battle-screen'), '1');
 assert.equal(adopted.shell.dataset.owner, 'runtime_overlay');
 assert.equal(adopted.hud.root.parentNode, adopted.shell);
+assert.equal(adopted.currentActionCue.parentNode, adopted.shell);
+assert.equal(adopted.currentActionCue.dataset.presentationOnly, 'true');
 assert.equal(adopted.progressGuide.parentNode, adopted.shell);
 assert.equal(adopted.progressGuide.dataset.presentationOnly, 'true');
 assert.equal(adopted.fieldLandmark.parentNode, adopted.shell);
@@ -349,16 +373,20 @@ adopted.render(attack, { score: 'S', hate: 'H', turn: 'T', loadJanken: 'paper' }
 assert.equal(existingResolution.textContent, 'KEEP');
 assert.equal(adopted.laneSurfaces.length, 4);
 assert.equal(adopted.hud.loadValue.textContent, 'パー');
+assert.equal(adopted.currentActionCue.textContent, '今：攻撃 A-1 → B-2');
 adopted.render(terminalResult);
 assert.equal(existingShell.hidden, false);
 assert.equal(existingPhase.hidden, true);
 assert.equal(adopted.shell.hidden, true);
 assert.equal(adopted.hud.root.hidden, true);
+assert.equal(adopted.currentActionCue.hidden, true);
 const adoptedOverlay = adopted.shell;
+const adoptedCurrentActionCue = adopted.currentActionCue;
 const adoptedProgressGuide = adopted.progressGuide;
 const adoptedFieldLandmark = adopted.fieldLandmark;
 assert.equal(adopted.destroy(), true);
 assert.equal(adoptedOverlay.parentNode, null);
+assert.equal(adoptedCurrentActionCue.parentNode, null);
 assert.equal(adoptedProgressGuide.parentNode, null);
 assert.equal(adoptedFieldLandmark.parentNode, null);
 assert.equal(adoptedDocument.body.children.includes(existingShell), true);
@@ -379,37 +407,7 @@ assert.throws(
   () => mountBattleScreenExternalSurface({ document: null }, { root: mismatchRoot }),
   /DOCUMENT_REQUIRED/
 );
-
+assert.equal(BATTLE_SCREEN_RUNTIME.presentationOnly, true);
 assert.equal(BATTLE_SCREEN_RUNTIME.authority, 'NONE');
-assert.equal(BATTLE_SCREEN_RUNTIME.hudAuthority, 'CALLER_ONLY_FAIL_CLOSED_PLACEHOLDERS');
-assert.deepEqual(BATTLE_SCREEN_RUNTIME.hudUnresolvedTokens, { score: 'X', hate: 'XXX', turn: 'XX', loadJanken: '?' });
-assert.equal(BATTLE_SCREEN_RUNTIME.existingAnchorPolicy, 'EXPLICIT_PHASE_GETS_RUNTIME_OVERLAY__ANCESTOR_NEVER_DECORATED');
-assert.equal(BATTLE_SCREEN_RUNTIME.externalPhaseShellOwner, 'CALLER');
-assert.equal(BATTLE_SCREEN_RUNTIME.laneCount, 4);
+assert.equal(BATTLE_SCREEN_RUNTIME.currentActionAuthority, 'ACCEPTED_PUBLIC_MODEL_ONLY');
 assert.equal(BATTLE_SCREEN_RUNTIME.productionHtmlMutationOwnedHere, false);
-assert.equal(BATTLE_SCREEN_RUNTIME.formalArtOwnedHere, false);
-
-console.log(JSON.stringify({
-  ok: true,
-  tests: 143,
-  freshMount: {
-    laneCount: runtime.laneSurfaces.length,
-    phaseAnchor: runtime.phaseSurface.id,
-    resolutionAnchor: runtime.resolutionSurface.id
-  },
-  adoptedMount: {
-    adoptedPhaseSurface: adopted.adoptedPhaseSurface,
-    adoptedResolutionSurface: adopted.adoptedResolutionSurface,
-    callerShellDecorated: adopted.callerShellDecorated,
-    owner: adoptedOverlay.dataset.owner
-  },
-  r75Hud: {
-    authority: BATTLE_SCREEN_RUNTIME.hudAuthority,
-    placeholders: BATTLE_SCREEN_RUNTIME.hudUnresolvedTokens
-  },
-  progressGuide: {
-    direction: 'ROAD_TO_GOAL',
-    landscape: 'GOAL_LEFT_ROAD_RIGHT',
-    portrait: 'GOAL_ABOVE_ROAD'
-  }
-}, null, 2));

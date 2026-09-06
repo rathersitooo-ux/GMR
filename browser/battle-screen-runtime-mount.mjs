@@ -7,12 +7,22 @@ const GRID_ATTR = 'data-battle-screen-causal-grid';
 const PLAN_SLOT_ATTR = 'data-battle-plan-slot';
 const LANE_ATTR = 'data-battle-screen-lane';
 const HUD_ATTR = 'data-battle-r75-hud';
+const CURRENT_ACTION_ATTR = 'data-battle-current-action';
 const PROGRESS_GUIDE_ATTR = 'data-battle-progress-guide';
 const FIELD_LANDMARK_ATTR = 'data-battle-field-landmark';
 const BATTLE_FIELD_IDS = Object.freeze(['FIELD-01', 'FIELD-02', 'FIELD-03', 'FIELD-04', 'FIELD-05', 'FIELD-08', 'FIELD-09']);
 const PLAYER_ROLE_LABELS = Object.freeze({
   source: '攻撃',
   target: '対象'
+});
+const CURRENT_ACTION_PHASE_LABELS = Object.freeze({
+  partner_cutin: '相棒',
+  reveal: '公開',
+  attack: '攻撃',
+  ability: '能力',
+  compare4: '4人比較',
+  finisher: '決着',
+  settle: '盤面反映'
 });
 const LOAD_JANKEN_LABELS = Object.freeze({
   rock: 'グー',
@@ -73,6 +83,7 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"] .grBattleHudLoad{flex:0 0 auto;display:grid;place-items:center;align-content:center;width:clamp(50px,6.8vw,70px);height:clamp(40px,6vw,62px);border-radius:8px;border:1px solid rgba(255,233,158,.66);background:linear-gradient(180deg,rgba(108,88,38,.86),rgba(35,42,26,.80));box-shadow:0 5px 16px rgba(0,0,0,.22)}
 [${SHELL_ATTR}="1"] .grBattleHudLoad small{font-size:clamp(8px,.72vw,10px);font-weight:900;letter-spacing:.12em;opacity:.72}
 [${SHELL_ATTR}="1"] .grBattleHudLoad b{font-size:clamp(14px,1.6vw,20px);line-height:1.1}
+[${SHELL_ATTR}="1"] [${CURRENT_ACTION_ATTR}]{position:absolute;z-index:8;top:clamp(56px,10vh,78px);left:clamp(12px,3vw,34px);max-width:min(42vw,420px);padding:5px 10px;border:1px solid rgba(245,248,225,.48);border-radius:999px;background:rgba(4,28,24,.80);box-shadow:0 6px 18px rgba(0,0,0,.24);pointer-events:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f8fbeb;text-shadow:0 2px 8px rgba(0,0,0,.72);font-size:clamp(11px,1vw,14px);font-weight:900;letter-spacing:.05em}
 [${SHELL_ATTR}="1"] [${PLAN_SLOT_ATTR}]{position:absolute;inset:0;z-index:2;min-width:0;min-height:0}
 [${SHELL_ATTR}="1"] #battlePhaseSurface{position:absolute;inset:0;z-index:3;overflow:hidden;background:radial-gradient(ellipse at 75% 33%,rgba(220,246,217,.24),transparent 29%),radial-gradient(ellipse at 18% 78%,rgba(96,145,87,.38),transparent 31%),linear-gradient(180deg,rgba(111,178,166,.30) 0%,rgba(62,126,104,.22) 43%,rgba(22,69,54,.58) 100%)}
 [${SHELL_ATTR}="1"] #battlePhaseSurface::before{content:"";position:absolute;z-index:-2;left:-7%;right:-6%;top:41%;bottom:-31%;clip-path:polygon(0 31%,12% 19%,23% 26%,36% 10%,48% 24%,61% 8%,74% 25%,88% 14%,100% 29%,100% 100%,0 100%);background:linear-gradient(180deg,rgba(69,124,83,.78),rgba(42,96,64,.92) 42%,rgba(22,62,47,.98));border-top:1px solid rgba(214,250,211,.16);transform:perspective(560px) rotateX(5deg);transform-origin:50% 0}
@@ -117,9 +128,9 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"] #battleResolution{position:absolute;z-index:7;left:50%;bottom:clamp(8px,2vh,18px);transform:translateX(-50%);max-width:min(72vw,760px);min-height:24px;pointer-events:none;text-align:center}
 [${SHELL_ATTR}="1"][data-motion="static_only"] [${LANE_ATTR}]{transition:none!important;transform:none!important}
 @media(max-width:720px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{left:38%;right:3%}}
-@media(max-width:540px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{left:4px;right:4px;gap:3px;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}[${SHELL_ATTR}="1"] [${LANE_ATTR}]{left:0!important;top:0!important;padding:7px 6px;border-radius:8px}.grBattleLaneRole{max-width:100%;overflow:hidden;text-overflow:ellipsis}[${SHELL_ATTR}="1"] .grBattleHudMetric{min-width:42px;padding:3px 5px}[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{width:26px;height:34px}[${SHELL_ATTR}="1"] .grBattleHudLoad{width:44px;height:38px}}
-@media(max-width:540px) and (orientation:portrait){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:76px;right:8px;bottom:96px;left:8px;gap:6px;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(4,minmax(0,1fr))}[${SHELL_ATTR}="1"] [${GRID_ATTR}]::before{display:none}[${SHELL_ATTR}="1"] [${LANE_ATTR}]{grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(20px,auto);column-gap:8px;row-gap:3px;padding:8px 10px;transform:none!important}[${SHELL_ATTR}="1"] .grBattleLaneIdentity{grid-column:1;grid-row:1}[${SHELL_ATTR}="1"] .grBattleLaneRole{grid-column:2;grid-row:1 / span 2;align-self:center;justify-self:end}[${SHELL_ATTR}="1"] .grBattleLaneAfterstate{grid-column:1;grid-row:2;align-self:end;min-height:0}[${SHELL_ATTR}="1"] #battleResolution{left:8px;right:8px;bottom:12px;transform:none;max-width:none}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}]{left:8px;top:22%;bottom:27%;width:auto;height:auto;flex-direction:column;justify-content:space-between;gap:5px;font-size:10px;letter-spacing:.09em}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}] .grBattleProgressArrow{width:2px;min-width:2px;min-height:42px;flex:1 1 auto;background:linear-gradient(180deg,rgba(255,226,129,.88),rgba(219,241,207,.30))}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}] .grBattleProgressArrow::before{content:"▲";left:50%;top:-2px;transform:translate(-50%,-45%)}}
-@media(max-height:420px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:48px;bottom:34px}[${SHELL_ATTR}="1"] .grBattleScreenTop{height:46px;padding-top:3px}.grBattleLaneAfterstate{gap:2px}[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{height:32px}[${SHELL_ATTR}="1"] .grBattleHudLoad{height:34px}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}]{top:50px;left:10px;width:min(30vw,200px);font-size:9px}}
+@media(max-width:540px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{left:4px;right:4px;gap:3px;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr))}[${SHELL_ATTR}="1"] [${LANE_ATTR}]{left:0!important;top:0!important;padding:7px 6px;border-radius:8px}.grBattleLaneRole{max-width:100%;overflow:hidden;text-overflow:ellipsis}[${SHELL_ATTR}="1"] .grBattleHudMetric{min-width:42px;padding:3px 5px}[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{width:26px;height:34px}[${SHELL_ATTR}="1"] .grBattleHudLoad{width:44px;height:38px}[${SHELL_ATTR}="1"] [${CURRENT_ACTION_ATTR}]{top:58px;left:8px;right:8px;max-width:none;font-size:11px;padding:4px 8px}}
+@media(max-width:540px) and (orientation:portrait){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:88px;right:8px;bottom:96px;left:8px;gap:6px;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(4,minmax(0,1fr))}[${SHELL_ATTR}="1"] [${GRID_ATTR}]::before{display:none}[${SHELL_ATTR}="1"] [${LANE_ATTR}]{grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(20px,auto);column-gap:8px;row-gap:3px;padding:8px 10px;transform:none!important}[${SHELL_ATTR}="1"] .grBattleLaneIdentity{grid-column:1;grid-row:1}[${SHELL_ATTR}="1"] .grBattleLaneRole{grid-column:2;grid-row:1 / span 2;align-self:center;justify-self:end}[${SHELL_ATTR}="1"] .grBattleLaneAfterstate{grid-column:1;grid-row:2;align-self:end;min-height:0}[${SHELL_ATTR}="1"] #battleResolution{left:8px;right:8px;bottom:12px;transform:none;max-width:none}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}]{left:8px;top:22%;bottom:27%;width:auto;height:auto;flex-direction:column;justify-content:space-between;gap:5px;font-size:10px;letter-spacing:.09em}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}] .grBattleProgressArrow{width:2px;min-width:2px;min-height:42px;flex:1 1 auto;background:linear-gradient(180deg,rgba(255,226,129,.88),rgba(219,241,207,.30))}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}] .grBattleProgressArrow::before{content:"▲";left:50%;top:-2px;transform:translate(-50%,-45%)}}
+@media(max-height:420px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:58px;bottom:34px}[${SHELL_ATTR}="1"] .grBattleScreenTop{height:46px;padding-top:3px}.grBattleLaneAfterstate{gap:2px}[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{height:32px}[${SHELL_ATTR}="1"] .grBattleHudLoad{height:34px}[${SHELL_ATTR}="1"] [${CURRENT_ACTION_ATTR}]{top:47px;left:10px;max-width:min(46vw,320px);padding:3px 7px;font-size:10px}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}]{top:82px;left:10px;width:min(30vw,200px);font-size:9px}}
 @media(max-height:470px) and (orientation:landscape){.battle .royalUsageStrip{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;width:151px!important;gap:2px!important}}
 @media(prefers-reduced-motion:reduce){[${SHELL_ATTR}="1"] [${LANE_ATTR}]{transition:none!important;transform:none!important}[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{transform:none!important}}
 `;
@@ -203,6 +214,50 @@ function createProgressGuide(document) {
   guide.appendChild(arrow);
   guide.appendChild(road);
   return guide;
+}
+
+function createCurrentActionCue(document) {
+  const cue = createNode(document, 'div', 'grBattleCurrentAction');
+  cue.setAttribute?.(CURRENT_ACTION_ATTR, '1');
+  cue.setAttribute?.('role', 'status');
+  cue.setAttribute?.('aria-live', 'polite');
+  cue.setAttribute?.('aria-atomic', 'true');
+  cue.dataset.presentationOnly = 'true';
+  cue.dataset.authority = 'accepted-public-model-only';
+  cue.hidden = true;
+  return cue;
+}
+
+function participantLabelById(model, participantId) {
+  if (!participantId) return '';
+  const lane = Array.isArray(model?.lanes) ? model.lanes.find(row => row?.id === participantId) : null;
+  return typeof lane?.label === 'string' ? lane.label : '';
+}
+
+function writeCurrentActionCue(cue, model) {
+  const phase = typeof model?.phase === 'string' ? model.phase : '';
+  const phaseLabel = CURRENT_ACTION_PHASE_LABELS[phase] ?? '';
+  const source = participantLabelById(model, model?.focus?.causeId);
+  const targets = Array.isArray(model?.focus?.targetIds)
+    ? model.focus.targetIds.map(id => participantLabelById(model, id)).filter(Boolean)
+    : [];
+  const winners = Array.isArray(model?.focus?.winnerIds)
+    ? model.focus.winnerIds.map(id => participantLabelById(model, id)).filter(Boolean)
+    : [];
+
+  let detail = '';
+  if ((phase === 'attack' || phase === 'ability') && source) {
+    detail = targets.length ? `${source} → ${targets.join('・')}` : source;
+  } else if ((phase === 'finisher' || phase === 'compare4') && winners.length) {
+    detail = winners.join('・');
+  }
+
+  const text = phaseLabel ? `今：${phaseLabel}${detail ? ` ${detail}` : ''}` : '';
+  cue.textContent = text;
+  cue.hidden = !text;
+  setData(cue, 'phase', text ? phase : null);
+  setData(cue, 'eventId', text ? model?.eventId : null);
+  return text;
 }
 
 function clearChildren(node) {
@@ -381,6 +436,9 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   visualHost.appendChild(fieldLandmark);
   syncFieldLandmark(fieldLandmark, phaseSurface, shell, root);
 
+  const currentActionCue = createCurrentActionCue(document);
+  visualHost.appendChild(currentActionCue);
+
   const progressGuide = createProgressGuide(document);
   visualHost.appendChild(progressGuide);
 
@@ -424,6 +482,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     if (shellCreated) shell.hidden = resultExit;
     phaseSurface.hidden = !battle;
     hud.root.hidden = !battle;
+    writeCurrentActionCue(currentActionCue, battle ? model : null);
     if (planSlot) planSlot.hidden = battle || resultExit;
     syncFieldLandmark(fieldLandmark, phaseSurface, shell, root);
 
@@ -446,6 +505,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     if (destroyed) return false;
     destroyed = true;
     if (fieldLandmark?.parentNode && typeof fieldLandmark.parentNode.removeChild === 'function') fieldLandmark.parentNode.removeChild(fieldLandmark);
+    if (currentActionCue?.parentNode && typeof currentActionCue.parentNode.removeChild === 'function') currentActionCue.parentNode.removeChild(currentActionCue);
     if (progressGuide?.parentNode && typeof progressGuide.parentNode.removeChild === 'function') progressGuide.parentNode.removeChild(progressGuide);
     if (grid?.parentNode && typeof grid.parentNode.removeChild === 'function') grid.parentNode.removeChild(grid);
     if (hud.root?.parentNode && typeof hud.root.parentNode.removeChild === 'function') hud.root.parentNode.removeChild(hud.root);
@@ -466,6 +526,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     phaseSurface,
     resolutionSurface,
     fieldLandmark,
+    currentActionCue,
     progressGuide,
     hud,
     grid,
@@ -482,6 +543,7 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   mount: 'explicit_caller_mount_only',
   presentationOnly: true,
   authority: 'NONE',
+  currentActionAuthority: 'ACCEPTED_PUBLIC_MODEL_ONLY',
   hudAuthority: 'CALLER_ONLY_FAIL_CLOSED_PLACEHOLDERS',
   hudUnresolvedTokens: Object.freeze({ score: 'X', hate: 'XXX', turn: 'XX', loadJanken: '?' }),
   existingAnchorPolicy: 'EXPLICIT_PHASE_GETS_RUNTIME_OVERLAY__ANCESTOR_NEVER_DECORATED',

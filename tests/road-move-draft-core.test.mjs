@@ -32,6 +32,28 @@ const boardState = Object.freeze({
 
 const stateOf = (view, id) => view.cardStates.find(({ card }) => card.id === id)?.state;
 
+test('card-first focus is immediately FOCUSED before movement and exposes Elastic range hints', () => {
+  const road3 = road(3);
+  const road5 = road(5);
+  const hand = [road3, road5, battle];
+  const draft = setRoadMoveDraftFocus(createRoadMoveDraft({ currentPath: [], boardVersion: 41 }), road3);
+  const view = projectRoadMoveDraft({ draft, handRoadCards: hand, boardState, cardIdentityOf });
+
+  assert.equal(view.focusState, ROAD_MOVE_FOCUS_STATE.FOCUSED);
+  assert.equal(stateOf(view, 'road-3'), ROAD_MOVE_CARD_PRESENTATION_STATE.FOCUSED);
+  assert.equal(stateOf(view, 'road-5'), ROAD_MOVE_CARD_PRESENTATION_STATE.NORMAL);
+  assert.equal(stateOf(view, 'battle-x'), ROAD_MOVE_CARD_PRESENTATION_STATE.NORMAL);
+  assert.deepEqual(view.compatibleRoadCards, []);
+  assert.equal(view.decisionRoadCard, null);
+  assert.equal(view.confirmReady, false);
+  assert.deepEqual(view.rangeHints, {
+    focusedRoadValue: 3,
+    maxHeldRoadValue: 5,
+    strongRangeMax: 3,
+    extensionRangeMax: 5,
+  });
+});
+
 test('card-first keeps one draft: focus Road3, build a 2-step path, then confirm Road3', () => {
   const road3 = road(3);
   const road5 = road(5);
@@ -233,4 +255,19 @@ test('snapshot card replacement can preserve focus by caller-owned card identity
   assert.equal(view.focusedRoadCardInHand, refreshedRoad3);
   assert.equal(stateOf(view, 'road-3'), ROAD_MOVE_CARD_PRESENTATION_STATE.FOCUSED);
   assert.equal(view.decisionRoadCard, refreshedRoad3);
+});
+
+test('focused card that is no longer in hand is INVALID_FOCUS and cannot become a decision', () => {
+  const removedRoad3 = road(3);
+  const road5 = road(5);
+  const draft = setRoadMoveDraftPath(setRoadMoveDraftFocus(createRoadMoveDraft(), removedRoad3), {
+    currentPath: ['A-B', 'B-C'],
+    validity: ROAD_MOVE_DRAFT_VALIDITY.VALID,
+  });
+  const view = projectRoadMoveDraft({ draft, handRoadCards: [road5], boardState, cardIdentityOf });
+
+  assert.equal(view.focusState, ROAD_MOVE_FOCUS_STATE.INVALID_FOCUS);
+  assert.equal(view.focusedRoadCardInHand, null);
+  assert.equal(view.decisionRoadCard, road5);
+  assert.equal(view.softFocusRoadCard, road5);
 });

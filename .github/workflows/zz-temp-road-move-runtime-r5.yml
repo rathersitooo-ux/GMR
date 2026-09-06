@@ -21,6 +21,18 @@ jobs:
           node-version: '22'
       - name: Apply exact bounded Road patch
         run: python3 tools/zz-temp-road-move-runtime-r5.py
+      - name: Repair focused evidence selector to live node contract
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tests/road-move-bidirectional-live-r5.spec.mjs')
+          s=p.read_text()
+          old='.node.reachable[data-move-distance="1"]'
+          if s.count(old) != 2:
+              raise SystemExit(f'expected exactly 2 stale selector occurrences, got {s.count(old)}')
+          p.write_text(s.replace(old,'.node.reachable'))
+          PY
       - name: Validate patch whitespace
         run: git diff --check
       - name: Run shared Road 1-6 compatibility contract

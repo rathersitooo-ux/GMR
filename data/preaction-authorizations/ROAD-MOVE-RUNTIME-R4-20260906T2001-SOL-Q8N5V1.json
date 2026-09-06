@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-MOVE-RUNTIME-R4-20260906T2001-SOL-Q8N5V1",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE_R4",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R4-20260906T2001-SOL-Q8N5V1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_HTML_UNCHANGED_FROM_PROVEN_R2_ANCHOR_BASE_AND_R2_R3_PRODUCT_MUTATION_ZERO_20260906T2003JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXPIRED_R2_SELF_BOUNDED_EXACT_ANCHOR_EXECUTOR_754EDBC_PLUS_CURRENT_MAIN_BLOB_35F9203E_20260906",
+  "proceedToken": "PROCEED|ROAD-MOVE-RUNTIME-R4-20260906T2001-SOL-Q8N5V1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|single-authority-live-road-r4|A484-readback",
+  "authorizationBaseSha": "3b9d95a9690a135b545315be1e4bff968fcfe306",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE_R4",
+  "leaseAcquireKey": "ROAD-MOVE-RUNTIME-R4-20260906T2001-SOL-Q8N5V1",
+  "leaseSnapshotReadbackAtJst": "2026-09-06 20:01 JST",
+  "leaseUntilJst": "2026-09-06 20:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A484:N484",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r4.spec.mjs",
+    ".github/workflows/zz-temp-road-move-runtime-r4.yml",
+    "data/preaction-authorizations/ROAD-MOVE-RUNTIME-R4-20260906T2001-SOL-Q8N5V1.json"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r4.spec.mjs",
+    ".github/workflows/zz-temp-road-move-runtime-r4.yml",
+    "data/preaction-authorizations/ROAD-MOVE-RUNTIME-R4-20260906T2001-SOL-Q8N5V1.json"
+  ],
+  "safetyInvariants": [
+    "one existing movement authority only",
+    "Road values 1-6 remain movement upper bounds",
+    "multiple compatible Road cards are never auto-selected before explicit decision",
+    "changing Road focus never clears the draft path",
+    "Battle-card selection reservation submission UI and semantics remain unchanged",
+    "109 topology reachable shortest adjacency and stoppability definitions remain unchanged"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/road-move-bidirectional-live-r4-20260906 only: browser/GAMEROAD.html; tests/road-move-bidirectional-live-r4.spec.mjs; transient .github/workflows/zz-temp-road-move-runtime-r4.yml; transient data/preaction-authorizations/ROAD-MOVE-RUNTIME-R4-20260906T2001-SOL-Q8N5V1.json; own PR/checks/merge evidence; own R23 events; own CURRENT_ACTIVE_LEASES tuple. READ_ONLY browser/road-move-compatibility-core.mjs; browser/battle-screen-runtime-mount.mjs; browser/battle-janken-slidepad-runtime-mount.mjs; 109 topology/reachable/shortest/stoppability definitions except calling existing functions; gameplay/rules/save/economy/network; Battle-card selection/reservation/submission semantics; other Task resources."
+}

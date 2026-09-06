@@ -1,0 +1,25 @@
+name: TEMP Records Recent History R4 Diagnose
+on:
+  push:
+    branches:
+      - sol/records-recent-history-r4-20260906
+permissions:
+  contents: write
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: sol/records-recent-history-r4-20260906
+          fetch-depth: 0
+      - name: Inspect existing Records and history authority
+        run: python3 tools/zz-temp-records-recent-history-r4.py
+      - name: Upload bounded diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: records-r4-diagnostics
+          path: /tmp/records-r4-diagnostics.txt
+          retention-days: 1

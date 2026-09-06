@@ -1,0 +1,108 @@
+name: Records recent-history R1 diagnostic
+
+on:
+  push:
+    branches:
+      - sol/records-recent-history-r1-20260906
+    paths:
+      - '.github/workflows/records-recent-history-r1-executor.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/records-recent-history-r1-executor.yml'
+      - 'browser/profile-presentation-runtime-mount.mjs'
+      - 'tests/profile-presentation-runtime-mount.test.mjs'
+      - 'tests/browser-full-interaction-state-sequence.spec.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  records-current-dom:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Capture Records before and after one current match
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p records-r1-evidence
+          python3 -m http.server 4173 --bind 127.0.0.1 > records-r1-evidence/http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:4173/browser/GAMEROAD.html >/dev/null; then break; fi
+            sleep 0.25
+          done
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { chromium } from '@playwright/test';
+          const browser = await chromium.launch({headless:true});
+          const page = await browser.newPage({viewport:{width:1280,height:720}});
+          const response = await page.goto('http://127.0.0.1:4173/browser/GAMEROAD.html', {waitUntil:'domcontentloaded'});
+          if (!response?.ok()) throw new Error(`Browser boot failed: ${response?.status()}`);
+          await page.waitForTimeout(500);
+          const rootGo = (target) => page.locator(`[data-go="${target}"]:visible, [data-home-target="${target}"]:visible, [data-root-go="${target}"]:visible`).first();
+          await rootGo('profile').click();
+          const profile = page.locator('section[data-screen="profile"]');
+          await profile.waitFor({state:'visible'});
+          await profile.locator('[data-go="records"]:visible').first().click();
+          const records = page.locator('section[data-screen="records"]');
+          await records.waitFor({state:'visible'});
+          const before = await records.evaluate((node) => ({text:node.innerText, html:node.innerHTML}));
+          await page.screenshot({path:'records-r1-evidence/records-before-match.png', fullPage:true, animations:'disabled'});
+
+          await page.reload({waitUntil:'domcontentloaded'});
+          await page.waitForTimeout(500);
+          const afterMatch = await page.evaluate(async () => {
+            const t = window.__GAMEROAD_TEST__;
+            const publicMain = new Set(t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
+            const standard = window.__CARD_DATA__
+              .filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)))
+              .map((card) => card.id);
+            const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
+            const nonRoyal = standard.filter((id) => !t.isRoyalCard(id));
+            t.deckSetDraft([...nonRoyal.slice(0, 37), ...royalIds], []);
+            if (!t.deckValidate(t.state.deckDraft, {forBattle:true}).ok || !t.deckCommit()) throw new Error('LEGAL_DECK_COMMIT_FAILED');
+            t.battlePresentationFast(true);
+            const match = t.start('2p', 'road_shield');
+            window.__V105_ABILITY_TEST__?.setAutoChoices?.(true);
+            const reached = await t.autoToResult(30);
+            if (!reached) throw new Error('RESULT_NOT_REACHED');
+            const globals = Object.keys(window)
+              .filter((key) => /history|record|match|gameroad/i.test(key))
+              .sort()
+              .map((key) => ({key, type:typeof window[key], isArray:Array.isArray(window[key])}));
+            const recordsList = document.querySelector('#recordsList');
+            return {
+              matchId: match?.id ?? null,
+              historyLength: t.state.history?.length ?? 0,
+              historySample: t.state.history?.[0] ?? null,
+              recordsListText: recordsList?.innerText ?? null,
+              recordsListHtml: recordsList?.innerHTML ?? null,
+              candidateGlobals: globals,
+            };
+          });
+          if (!(afterMatch.historyLength > 0)) throw new Error('CURRENT_HISTORY_NOT_CREATED');
+          fs.writeFileSync('records-r1-evidence/records-authority-probe.json', JSON.stringify({sourceSha:process.env.GITHUB_SHA,before,afterMatch}, null, 2));
+          console.log('RECORDS_R1_BEFORE=' + JSON.stringify(before));
+          console.log('RECORDS_R1_AFTER_MATCH=' + JSON.stringify(afterMatch));
+          await browser.close();
+          NODE
+      - name: Upload bounded Records evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: records-r1-current-dom-${{ github.run_id }}
+          path: records-r1-evidence/
+          if-no-files-found: error
+          retention-days: 3

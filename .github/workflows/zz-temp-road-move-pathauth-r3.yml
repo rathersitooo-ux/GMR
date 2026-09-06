@@ -1,0 +1,77 @@
+name: zz-temp-road-move-pathauth-r3
+
+on:
+  push:
+    branches:
+      - sol/road-move-pathauth-r3-20260906
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Inspect current movement-path authority
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('browser/GAMEROAD.html')
+          text = p.read_text(encoding='utf-8')
+          print('FILE_BYTES', p.stat().st_size)
+          print('TEXT_LEN', len(text))
+
+          exact = [
+              'endpointText', 'reachable', 'activeNodes', 'neighbors',
+              'roadSelect', 'battleSelect', 'readyPlan',
+              'currentPath', 'selectedPath', 'movePath', 'draftPath',
+              'pathHistory', 'plannedPath', 'selectedEndpoint',
+              'currentPos', 'playerPos', 'positionId', 'data-pos',
+              'undo', 'cancel', 'back', 'stepBack'
+          ]
+          for pat in exact:
+              positions = [m.start() for m in re.finditer(re.escape(pat), text, re.I)]
+              print(f'\n=== EXACT {pat} count={len(positions)} ===')
+              for i, pos in enumerate(positions[:12]):
+                  lo = max(0, pos - 900)
+                  hi = min(len(text), pos + len(pat) + 1400)
+                  snippet = text[lo:hi].replace('\r','')
+                  print(f'--- {pat} occurrence {i+1} at {pos} ---')
+                  print(snippet)
+
+          families = {
+              'PATH_IDENT': r'\b[A-Za-z_$][A-Za-z0-9_$]*(?:Path|path)[A-Za-z0-9_$]*\b',
+              'MOVE_IDENT': r'\b[A-Za-z_$][A-Za-z0-9_$]*(?:Move|move)[A-Za-z0-9_$]*\b',
+              'POS_IDENT': r'\b[A-Za-z_$][A-Za-z0-9_$]*(?:Pos|pos|Position|position)[A-Za-z0-9_$]*\b',
+              'ROUTE_IDENT': r'\b[A-Za-z_$][A-Za-z0-9_$]*(?:Route|route)[A-Za-z0-9_$]*\b',
+              'ENDPOINT_IDENT': r'\b[A-Za-z_$][A-Za-z0-9_$]*(?:Endpoint|endpoint)[A-Za-z0-9_$]*\b',
+          }
+          for label, rx in families.items():
+              found = {}
+              for m in re.finditer(rx, text):
+                  found[m.group(0)] = found.get(m.group(0), 0) + 1
+              print(f'\n=== {label} unique={len(found)} ===')
+              for name, count in sorted(found.items(), key=lambda kv: (-kv[1], kv[0]))[:120]:
+                  print(count, name)
+
+          # High-value adjacency between board-node clicks and endpoint/reachable writes.
+          anchors = [
+              r'addEventListener\([^\n]{0,160}(?:click|pointer)',
+              r'classList\.(?:add|remove|toggle)\([^\n]{0,120}reachable',
+              r'endpointText[^\n]{0,240}',
+              r'querySelectorAll\([^\n]{0,180}data-pos',
+          ]
+          for rx in anchors:
+              ms = list(re.finditer(rx, text, re.I))
+              print(f'\n=== ANCHOR {rx} count={len(ms)} ===')
+              for i, m in enumerate(ms[:30]):
+                  lo=max(0,m.start()-1600); hi=min(len(text),m.end()+2200)
+                  print(f'--- anchor {i+1} at {m.start()} ---')
+                  print(text[lo:hi].replace('\r',''))
+          PY

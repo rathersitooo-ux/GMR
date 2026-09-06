@@ -56,16 +56,22 @@ test('projects four distinct Naki identities without creating independent board 
   assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.failVisible, true);
 });
 
-test('keeps the four-character presentation inside a bounded footprint so the board remains primary', () => {
+test('keeps four-character identity visible inside a board-first footprint budget', () => {
   const footprint = NAKI_4P_BOARD_VISUAL_BINDING.visualFootprint;
-  assert.deepEqual(footprint.desktop, { surfaceWidth: 54, surfaceHeight: 68, fallbackWidth: 42, fallbackHeight: 54 });
-  assert.deepEqual(footprint.compact, { surfaceWidth: 48, surfaceHeight: 60, fallbackWidth: 38, fallbackHeight: 48 });
-  assert.deepEqual(footprint.shortLandscape, { surfaceWidth: 42, surfaceHeight: 52, fallbackWidth: 34, fallbackHeight: 44 });
-  assert.deepEqual(footprint.portrait, { surfaceWidth: 46, surfaceHeight: 58, fallbackWidth: 36, fallbackHeight: 46 });
+  assert.deepEqual(footprint.desktop, { surfaceWidth: 44, surfaceHeight: 56, fallbackWidth: 34, fallbackHeight: 44 });
+  assert.deepEqual(footprint.compact, { surfaceWidth: 38, surfaceHeight: 48, fallbackWidth: 30, fallbackHeight: 38 });
+  assert.deepEqual(footprint.shortLandscape, { surfaceWidth: 32, surfaceHeight: 40, fallbackWidth: 26, fallbackHeight: 32 });
+  assert.deepEqual(footprint.portrait, { surfaceWidth: 34, surfaceHeight: 44, fallbackWidth: 28, fallbackHeight: 36 });
 
-  for (const dimensions of Object.values(footprint)) {
-    assert.ok(dimensions.surfaceWidth <= 54);
-    assert.ok(dimensions.surfaceHeight <= 68);
+  const maximumSurface = {
+    desktop: { width: 44, height: 56 },
+    compact: { width: 38, height: 48 },
+    shortLandscape: { width: 32, height: 40 },
+    portrait: { width: 34, height: 44 }
+  };
+  for (const [viewport, dimensions] of Object.entries(footprint)) {
+    assert.ok(dimensions.surfaceWidth <= maximumSurface[viewport].width);
+    assert.ok(dimensions.surfaceHeight <= maximumSurface[viewport].height);
     assert.ok(dimensions.fallbackWidth < dimensions.surfaceWidth);
     assert.ok(dimensions.fallbackHeight < dimensions.surfaceHeight);
   }

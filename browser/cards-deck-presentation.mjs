@@ -1,5 +1,6 @@
 export * from './cards-deck-presentation-core.mjs';
 
+import './deck-save-recovery-core.mjs';
 import { createDeckSwipePresentationController } from './cards-deck-presentation-core.mjs';
 import { resolveDeckEditorSwipe } from './deck-storage-corner-core.mjs';
 import {

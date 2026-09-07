@@ -200,11 +200,11 @@ jobs:
             echo '::error::Deliberate negative control unexpectedly passed'
             exit 1
           fi
-          if grep -Fq 'NEGATIVE_CONTROL_PRECONDITION_NOT_MET' cards-gesture-evidence/negative-control.log; then
+          if grep -Fq 'Error: NEGATIVE_CONTROL_PRECONDITION_NOT_MET' cards-gesture-evidence/negative-control.log; then
             echo '::error::Negative run failed before the deliberate inverted postcondition'
             exit 1
           fi
-          grep -F 'DELIBERATE_NEGATIVE_CONTROL_REMOVE_HINT_SHOULD_STAY_VISIBLE' cards-gesture-evidence/negative-control.log >/dev/null
+          grep -F 'Error: DELIBERATE_NEGATIVE_CONTROL_REMOVE_HINT_SHOULD_STAY_VISIBLE' cards-gesture-evidence/negative-control.log >/dev/null
           printf 'EXPECTED_RED_EXIT=%s\nTARGET=DELIBERATE_NEGATIVE_CONTROL_REMOVE_HINT_SHOULD_STAY_VISIBLE\n' "$RED_EXIT" > cards-gesture-evidence/test-sensitivity.txt
 
       - name: Run normal public Cards gesture black-box

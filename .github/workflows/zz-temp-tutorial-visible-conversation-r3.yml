@@ -1,0 +1,31 @@
+name: TEMP Tutorial visible conversation R3 census
+
+on:
+  push:
+    branches:
+      - sol/tutorial-visible-conversation-r3-20260908
+    paths:
+      - .github/workflows/zz-temp-tutorial-visible-conversation-r3.yml
+
+permissions:
+  contents: read
+
+jobs:
+  census:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Census current Tutorial eligibility and completion signals
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== GAMEROAD.html tutorial-like identifiers ==='
+          grep -nEi 'tutorial|first[-_ ]?battle|onboarding|guide.?complete|tutorial.?complete|practice.?battle' browser/GAMEROAD.html | head -n 200 || true
+          echo '=== Browser module tutorial authority candidates ==='
+          grep -RniE 'tutorial\.first-battle|isTutorialCompleted|commitTutorialCompletion|tutorial.?eligible|first[-_ ]?tutorial|tutorial.?complete' browser --include='*.mjs' --include='*.js' | head -n 300 || true
+          echo '=== Existing Partner mount imports ==='
+          grep -nE "tutorial-experience-profile-core|createTutorialExperience|projectTutorialExperience" browser/partner-advice-runtime-mount.mjs || true
+          echo '=== Public package contains tutorial experience core spec? ==='
+          grep -n 'tutorial-experience-profile-core' deploy/cloudflare/scripts/build.mjs deploy/cloudflare/tests/build.test.mjs || true

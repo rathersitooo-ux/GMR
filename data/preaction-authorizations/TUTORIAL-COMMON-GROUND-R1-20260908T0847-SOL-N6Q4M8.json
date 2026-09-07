@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "TUTORIAL-COMMON-GROUND-R1-20260908T0847-SOL-N6Q4M8",
+  "taskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "workUnitKey": "TUTORIAL_COMMON_GROUND_FAMILIAR_PEER_R1",
+  "acquireKey": "TUTORIAL-COMMON-GROUND-R1-20260908T0847-SOL-N6Q4M8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-row1242-user-conversation-branch-plus-main-f948f315-common-ground-generic-gap",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing-focused-tutorial-tests-plus-pure-projection-no-gameplay-save-authority",
+  "proceedToken": "PROCEED|TUTORIAL-COMMON-GROUND-R1-20260908T0847-SOL-N6Q4M8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-08T08:47+09:00",
+  "authorizationBaseSha": "2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb",
+  "scope": [
+    "browser/tutorial-experience-profile-core.mjs",
+    "tests/tutorial-experience-profile-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "TUTORIAL_COMMON_GROUND_FAMILIAR_PEER_R1",
+  "leaseAcquireKey": "TUTORIAL-COMMON-GROUND-R1-20260908T0847-SOL-N6Q4M8",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 08:47 JST",
+  "leaseUntilJst": "2026-09-08 09:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A601:L601",
+  "leaseScope": [
+    "browser/tutorial-experience-profile-core.mjs",
+    "tests/tutorial-experience-profile-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseExactMutableResources": "browser/tutorial-experience-profile-core.mjs; tests/tutorial-experience-profile-core.test.mjs; deploy/cloudflare/tests/build.test.mjs; data/preaction-authorizations/TUTORIAL-COMMON-GROUND-R1-20260908T0847-SOL-N6Q4M8.json; own PR/check/merge/main/public-package readback",
+  "solutionSignature": "existing-tutorial-experience-conversation-common-ground-familiar-peer-copy",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "main-f948f315-projectTutorialExperienceConversation-existing-common-ground-branch",
+  "solutionSearchEvidence": [
+    "browser/tutorial-experience-profile-core.mjs already owns shared-interest conversation projection",
+    "tests/tutorial-experience-profile-core.test.mjs already fixes commonGroundOnly and no-rule-equivalence boundaries",
+    "browser/partner-advice-runtime-mount.mjs already renders this projection and remains read-only"
+  ]
+}

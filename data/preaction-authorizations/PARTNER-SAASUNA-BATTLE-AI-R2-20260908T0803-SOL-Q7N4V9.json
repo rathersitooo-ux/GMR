@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "gameroad.preaction.v3",
+  "taskId": "PARTNER-CHARACTER-DIALOGUE-SOURCE-MANIFEST-001",
+  "workUnitKey": "SAASUNA_BATTLE_AI_CONTEXTUAL_REACTION_R2",
+  "acquireKey": "PARTNER-SAASUNA-BATTLE-AI-R2-20260908T0803-SOL-Q7N4V9",
+  "baseCommit": "88b5aa6f82f3f1f0f82dc1ae1f15fad648b82edb",
+  "branch": "sol/saasuna-battle-ai-contextual-reaction-r2-20260908",
+  "intent": "Reuse the existing Saasuna AI edge for confirmed Battle character reactions. Keep gameplay authority deterministic and fixed approved Battle utterance as failure fallback.",
+  "durablePaths": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-battle-ai-contextual-reaction.test.mjs"
+  ],
+  "transientPaths": [
+    "data/preaction-authorizations/PARTNER-SAASUNA-BATTLE-AI-R2-20260908T0803-SOL-Q7N4V9.json",
+    ".github/workflows/zz-temp-saasuna-battle-ai-r2.yml",
+    "tools/zz-temp-saasuna-battle-ai-r2.py"
+  ],
+  "readOnlyDependencies": [
+    "browser/board-facility-runtime-mount.mjs",
+    "browser/partner-conversation-core.mjs",
+    "browser/partner-saasuna-conversation-source.mjs",
+    "deploy/cloudflare/functions/ws.js"
+  ],
+  "acceptance": [
+    "Confirmed self Battle-card resolution attempts existing Saasuna provider at most once per fingerprint.",
+    "Valid provider speech is ephemeral presentation only.",
+    "Missing, failed, or invalid provider falls back to existing approved Battle utterance.",
+    "Other Partners remain on existing approved-source behavior.",
+    "Primed reconnect resolution is not replayed.",
+    "Focused tests pass."
+  ],
+  "doNotChange": [
+    "Battle rules, legal decisions, card choice, save, economy, network",
+    "Human-authored dialogue wording",
+    "Convai server transport and secrets",
+    "Partner canon, relationship, memory authority"
+  ]
+}

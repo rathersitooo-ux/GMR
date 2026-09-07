@@ -1,0 +1,74 @@
+name: FanArt Opponent Real Card Host Census R1
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  census:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout evidence branch
+        uses: actions/checkout@v4
+
+      - name: Inspect real Battle opponent card-art and skin authority seams
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('browser/GAMEROAD.html', 'utf8');
+          const battleRuntime = fs.readFileSync('browser/battle-screen-runtime-mount.mjs', 'utf8');
+          const precedence = fs.readFileSync('browser/card-skin-opponent-precedence-core.mjs', 'utf8');
+
+          const compact = value => String(value).replace(/\s+/g, ' ').trim();
+          function contexts(source, regex, max = 12, radius = 220) {
+            const out = [];
+            let match;
+            regex.lastIndex = 0;
+            while ((match = regex.exec(source)) && out.length < max) {
+              const start = Math.max(0, match.index - radius);
+              const end = Math.min(source.length, match.index + match[0].length + radius);
+              out.push(compact(source.slice(start, end)));
+              if (match[0].length === 0) regex.lastIndex += 1;
+            }
+            return out;
+          }
+          function count(source, regex) {
+            const flags = regex.flags.includes('g') ? regex.flags : regex.flags + 'g';
+            const copy = new RegExp(regex.source, flags);
+            let n = 0;
+            while (copy.exec(source)) {
+              n += 1;
+              if (copy.lastIndex === 0) copy.lastIndex += 1;
+            }
+            return n;
+          }
+
+          const termCounts = {};
+          for (const term of [
+            'opponent','enemy','rival','remotePlayer','otherPlayer','targetPlayer','participant',
+            'cardSkin','equippedSkin','skinId','selectedSkin','appearance','cosmetic','fanart',
+            'battleCard','cardId','renderCard','createCard','cardArt','cardImage','backgroundImage',
+            'hand','reveal','playedCards','battlePhaseSurface'
+          ]) {
+            termCounts[term] = count(html, new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'));
+          }
+
+          const evidence = {
+            htmlBytes: Buffer.byteLength(html),
+            termCounts,
+            opponentCardContexts: contexts(html, /(?:opponent|enemy|rival|remotePlayer|otherPlayer|targetPlayer)[\s\S]{0,180}card|card[\s\S]{0,180}(?:opponent|enemy|rival|remotePlayer|otherPlayer|targetPlayer)/gi, 20),
+            revealCardContexts: contexts(html, /(?:reveal|公開|比較)[\s\S]{0,180}(?:cardId|battleCard|card|hand)|(?:cardId|battleCard|card|hand)[\s\S]{0,180}(?:reveal|公開|比較)/gi, 20),
+            cardArtContexts: contexts(html, /(?:cardId|battleCard|card)[\s\S]{0,180}(?:createElement\(['\"]img|\.src\s*=|backgroundImage|image|art)|(?:createElement\(['\"]img|\.src\s*=|backgroundImage|image|art)[\s\S]{0,180}(?:cardId|battleCard|card)/gi, 24),
+            skinAuthorityContexts: contexts(html, /(?:cardSkin|equippedSkin|skinId|selectedSkin|appearance|cosmetic|fanart)/gi, 24),
+            battleHostContexts: contexts(html, /(?:battlePhaseSurface|battleResolution|hand|reveal|playedCards|participant)/gi, 24),
+            battleRuntimeOpponentTerms: contexts(battleRuntime, /(?:opponent|enemy|rival|remote|otherPlayer|targetPlayer|equippedSkin|cardSkin|skinId|appearance)/gi, 20),
+            battleRuntimeCardTerms: contexts(battleRuntime, /(?:cardId|playedCards|createNode\(document, 'img'|grBattleHudPlayedCardArt)/gi, 20),
+            precedenceSource: compact(precedence)
+          };
+
+          console.log('OPPONENT_HOST_CENSUS=' + JSON.stringify(evidence));
+          NODE

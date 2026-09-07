@@ -8,7 +8,7 @@
   "predictionStatus": "PASS",
   "predictionEvidenceId": "current-main-existing-partner-battle-chat-plus-merged-conversation-core",
   "rehearsalStatus": "N_A_ALT_ORACLE",
-  "rehearsalEvidenceId": "branch-only-exact-patch-runner-plus-focused-node-and-public-package-tests",
+  "rehearsalEvidenceId": "branch-only-exact-patch-script-plus-focused-node-and-public-package-tests",
   "proceedToken": "PROCEED|TUTORIAL-VISIBLE-CONVERSATION-R3-20260908T0658-SOL-N7Q4K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|visible-conversation-clean-successor",
   "authorizationBaseSha": "ca1fac5106140b7faf3e82701988c3d33b112720",
   "stateModelVersion": "STATE_MODEL_V1",
@@ -20,13 +20,14 @@
   "leaseSnapshotReadbackAtJst": "2026-09-08 06:58 JST",
   "leaseUntilJst": "2026-09-08 07:50 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A566:L566",
-  "leaseExactMutableResources": "browser/partner-advice-runtime-mount.mjs; tests/partner-advice-runtime-mount.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; .github/workflows/zz-temp-tutorial-visible-conversation-r3.yml; data/preaction-authorizations/TUTORIAL-VISIBLE-CONVERSATION-R3-20260908T0658-SOL-N7Q4K2.json",
+  "leaseExactMutableResources": "browser/partner-advice-runtime-mount.mjs; tests/partner-advice-runtime-mount.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; .github/workflows/zz-temp-tutorial-visible-conversation-r3.yml; tools/zz-temp-tutorial-visible-conversation-r3.py; data/preaction-authorizations/TUTORIAL-VISIBLE-CONVERSATION-R3-20260908T0658-SOL-N7Q4K2.json",
   "scope": [
     "browser/partner-advice-runtime-mount.mjs",
     "tests/partner-advice-runtime-mount.test.mjs",
     "deploy/cloudflare/scripts/build.mjs",
     "deploy/cloudflare/tests/build.test.mjs",
     ".github/workflows/zz-temp-tutorial-visible-conversation-r3.yml",
+    "tools/zz-temp-tutorial-visible-conversation-r3.py",
     "data/preaction-authorizations/TUTORIAL-VISIBLE-CONVERSATION-R3-20260908T0658-SOL-N7Q4K2.json"
   ],
   "leaseScope": [
@@ -35,6 +36,7 @@
     "deploy/cloudflare/scripts/build.mjs",
     "deploy/cloudflare/tests/build.test.mjs",
     ".github/workflows/zz-temp-tutorial-visible-conversation-r3.yml",
+    "tools/zz-temp-tutorial-visible-conversation-r3.py",
     "data/preaction-authorizations/TUTORIAL-VISIBLE-CONVERSATION-R3-20260908T0658-SOL-N7Q4K2.json"
   ],
   "solutionSignature": "tutorial-natural-conversation-visible-partner-surface-with-authoritative-eligibility-gate",

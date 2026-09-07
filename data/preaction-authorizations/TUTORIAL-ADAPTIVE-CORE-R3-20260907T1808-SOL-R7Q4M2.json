@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "TUTORIAL-ADAPTIVE-CORE-R3-20260907T1808-SOL-R7Q4M2",
+  "taskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "workUnitKey": "TUTORIAL_EXPERIENCE_PROFILE_CORE_R2",
+  "acquireKey": "TUTORIAL-ADAPTIVE-CORE-R3-20260907T1808-SOL-R7Q4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "current-main-306b849-existing-tutorial-guide-control-and-contextual-help-readback",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "superseded-pr1259-exact-two-file-donor-plus-matching-node-test-lane",
+  "proceedToken": "PROCEED|TUTORIAL-ADAPTIVE-CORE-R3-20260907T1808-SOL-R7Q4M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|adapt-existing-tutorial-help-contract",
+  "authorizationBaseSha": "306b849df7f65ade55ea0ec24d580ff1d15c059e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "TUTORIAL_EXPERIENCE_PROFILE_CORE_R2",
+  "leaseAcquireKey": "TUTORIAL-ADAPTIVE-CORE-R3-20260907T1808-SOL-R7Q4M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-07 18:08 JST",
+  "leaseUntilJst": "2026-09-07 18:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A540:L540",
+  "leaseExactMutableResources": "browser/tutorial-experience-profile-core.mjs; tests/tutorial-experience-profile-core.test.mjs; data/preaction-authorizations/TUTORIAL-ADAPTIVE-CORE-R3-20260907T1808-SOL-R7Q4M2.json. READ_ONLY: superseded R2 branch/PR#1259; browser/partner-advice-runtime-mount.mjs; browser/GAMEROAD.html; gameplay/rules/save/economy/network; Tutorial run/completion authorities.",
+  "scope": [
+    "browser/tutorial-experience-profile-core.mjs",
+    "tests/tutorial-experience-profile-core.test.mjs",
+    "data/preaction-authorizations/TUTORIAL-ADAPTIVE-CORE-R3-20260907T1808-SOL-R7Q4M2.json"
+  ],
+  "leaseScope": [
+    "browser/tutorial-experience-profile-core.mjs",
+    "tests/tutorial-experience-profile-core.test.mjs",
+    "data/preaction-authorizations/TUTORIAL-ADAPTIVE-CORE-R3-20260907T1808-SOL-R7Q4M2.json"
+  ],
+  "solutionSignature": "adaptive-tutorial-audience-source-game-canonical-help-translation",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "current-main-existing-tutorial-guide-control-contextual-help-adapt",
+  "solutionSearchEvidence": [
+    "browser/partner-advice-runtime-mount.mjs:createTutorialPartnerGuideControl",
+    "browser/partner-advice-runtime-mount.mjs:projectBattleContextualTutorialReplay",
+    "CURRENT:Y1242:EXPERIENCE_ADAPTIVE_TUTORIAL_USER_EXPLICIT"
+  ]
+}

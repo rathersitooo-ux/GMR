@@ -16,6 +16,8 @@ import {
   selectApprovedPartnerBattleUtterance,
 } from './partner-dialogue-source-registry.mjs';
 import { readBattleR75SelfHudDom } from './partner-battle-event-log-projection.mjs';
+import { runSaasunaConversationTurn } from './partner-conversation-core.mjs';
+import { createSaasunaEdgeProvider } from './board-facility-runtime-mount.mjs';
 import {
   createTutorialExperienceProfileControl,
   createTutorialSharedContextControl,
@@ -737,6 +739,124 @@ export function createPartnerBattleCharacterReactionControl({
   });
 }
 
+function saasunaBattleAiReactionPrompt(cardName) {
+  return `【ゲーム内の確定情報】プレイヤーがバトルカード「${cardName}」を使用し、その使用は確定しました。サースナーとして短く自然に一言だけ反応してください。同じ内容を言い直さず、勝敗・相手の手札・未確定の戦況は推測しないでください。`;
+}
+
+export function createSaasunaBattleAiCharacterReactionControl({
+  provider = null,
+  runConversationTurn = runSaasunaConversationTurn,
+  resolveUtterance = resolveApprovedPartnerBattleCharacterUtterance,
+} = {}) {
+  if (provider !== null && (typeof provider !== 'object' || typeof provider.sendMessage !== 'function')) {
+    throw new TypeError('provider must expose sendMessage or be null');
+  }
+  if (typeof runConversationTurn !== 'function') throw new TypeError('runConversationTurn must be a function');
+  if (typeof resolveUtterance !== 'function') throw new TypeError('resolveUtterance must be a function');
+
+  const consumed = new Set();
+  const pending = new Set();
+  const fallback = createPartnerBattleCharacterReactionControl({ resolveUtterance });
+
+  const aiReceipt = (partnerId, input, turn) => {
+    const descriptor = approvedPartnerDialogueDescriptor(partnerId);
+    const text = exactPresentationToken(turn?.utterance);
+    if (
+      partnerId !== SAASUNA_PARTNER_ID ||
+      !descriptor ||
+      turn?.ok !== true ||
+      turn?.responseOrigin !== 'provider_candidate' ||
+      turn?.partnerId !== partnerId ||
+      turn?.dialogueVersion !== descriptor.dialogueVersion ||
+      turn?.sourceId !== descriptor.sourceId ||
+      !text
+    ) {
+      return null;
+    }
+    return Object.freeze({
+      schema: CHARACTER_REACTION_SCHEMA,
+      eventFingerprint: input.fingerprint,
+      triggerId: CHARACTER_REACTION_TRIGGER_ID,
+      cardName: input.cardName,
+      partnerId,
+      partnerText: text,
+      sourceId: turn.sourceId,
+      dialogueVersion: turn.dialogueVersion,
+      speechAct: descriptor.battleSpeechAct,
+      responseOrigin: 'provider_candidate',
+      canonStatus: 'ephemeral_candidate',
+      presentationOnly: true,
+      gameplayAuthorityMutated: false,
+      automaticCanonMutationAllowed: false,
+      automaticRelationshipMutationAllowed: false,
+      automaticGameMutationAllowed: false,
+      exactlyOncePerConfirmedEvent: true,
+    });
+  };
+
+  return Object.freeze({
+    prime(resolution) {
+      const input = confirmedCardReactionInput(resolution);
+      if (!input) return false;
+      consumed.add(input.fingerprint);
+      fallback.prime(resolution);
+      return true;
+    },
+    request({ partnerId, resolution, onResolved } = {}) {
+      const id = exactPresentationToken(partnerId);
+      const input = confirmedCardReactionInput(resolution);
+      if (
+        id !== SAASUNA_PARTNER_ID ||
+        !input ||
+        consumed.has(input.fingerprint) ||
+        pending.has(input.fingerprint) ||
+        typeof onResolved !== 'function'
+      ) {
+        return false;
+      }
+      pending.add(input.fingerprint);
+
+      void (async () => {
+        let receipt = null;
+        try {
+          if (provider) {
+            const turn = await runConversationTurn({
+              partnerId: id,
+              sessionId: 'battle-character-reaction',
+              turnId: input.fingerprint,
+              userMessage: saasunaBattleAiReactionPrompt(input.cardName),
+            }, { provider });
+            receipt = aiReceipt(id, input, turn);
+          }
+        } catch {
+          receipt = null;
+        }
+
+        if (!receipt) {
+          receipt = fallback.consume({ partnerId: id, resolution });
+        } else {
+          fallback.prime(resolution);
+        }
+        consumed.add(input.fingerprint);
+        pending.delete(input.fingerprint);
+        try { onResolved(receipt); } catch {}
+      })();
+      return true;
+    },
+    status() {
+      return Object.freeze({
+        schema: CHARACTER_REACTION_SCHEMA,
+        consumedEventFingerprints: Object.freeze([...consumed]),
+        pendingEventFingerprints: Object.freeze([...pending]),
+        providerAvailable: provider !== null,
+        presentationOnly: true,
+        gameplayAuthorityMutated: false,
+        autoExecute: false,
+      });
+    },
+  });
+}
+
 const CHAT_PRESENTATION_SCHEMA = 'gameroad.partner-advice-chat-presentation.v1';
 const CHAT_STYLE_ID = 'gameroad-partner-advice-chat-r1';
 const CHAT_ROOT_ID = 'partnerAdviceChatPresentation';
@@ -856,7 +976,10 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
     getSourceId: () => dialogueDescriptor()?.sourceId || null,
   });
   const characterReaction = createPartnerBattleCharacterReactionControl();
-  characterReaction.prime(readBattleR75SelfHudDom(doc)?.resolution);
+  const saasunaAiReaction = createSaasunaBattleAiCharacterReactionControl({ provider: createSaasunaEdgeProvider(win) });
+  const initialCharacterResolution = readBattleR75SelfHudDom(doc)?.resolution;
+  characterReaction.prime(initialCharacterResolution);
+  saasunaAiReaction.prime(initialCharacterResolution);
   const tutorialExperience = createBattleTutorialExperienceConversationControl({
     isEligible: tutorialExperienceEligibility,
   });
@@ -873,8 +996,27 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
     const roleControlActive = win.__GAMEROAD_TEST__?.state?.screen === 'battle' && roster.length > 1 && Boolean(current?.partnerId);
     const confirmedSelf = readBattleR75SelfHudDom(doc);
     if (lastCharacterReaction && current?.partnerId !== lastCharacterReaction.partnerId) lastCharacterReaction = null;
-    const nextReaction = characterReaction.consume({ partnerId: current?.partnerId, resolution: confirmedSelf?.resolution });
-    if (nextReaction) lastCharacterReaction = nextReaction;
+    if (current?.partnerId === SAASUNA_PARTNER_ID) {
+      saasunaAiReaction.request({
+        partnerId: current.partnerId,
+        resolution: confirmedSelf?.resolution,
+        onResolved(nextReaction) {
+          const latestResolution = readBattleR75SelfHudDom(doc)?.resolution;
+          const latestInput = confirmedCardReactionInput(latestResolution);
+          if (
+            nextReaction &&
+            currentAdvicePartnerId(win) === SAASUNA_PARTNER_ID &&
+            latestInput?.fingerprint === nextReaction.eventFingerprint
+          ) {
+            lastCharacterReaction = nextReaction;
+          }
+          queueMicrotask(render);
+        },
+      });
+    } else {
+      const nextReaction = characterReaction.consume({ partnerId: current?.partnerId, resolution: confirmedSelf?.resolution });
+      if (nextReaction) lastCharacterReaction = nextReaction;
+    }
     if (!confirmedSelf?.resolution) lastCharacterReaction = null;
     const projection = projectPartnerAdviceChatPresentation({
       laneProgress: current?.lanes,
@@ -1029,7 +1171,7 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
     doc.getElementById('partnerAdviceBtn')?.addEventListener('click', () => queueMicrotask(render));
   }
   render();
-  return Object.freeze({ root, render, tutorialReplay, tutorialExperience, characterReaction });
+  return Object.freeze({ root, render, tutorialReplay, tutorialExperience, characterReaction, saasunaAiReaction });
 }
 
 function schedulePartnerAdviceChatMount(win) {

@@ -1,0 +1,90 @@
+name: TEMP Road Move Bidirectional Live R10
+on:
+  push:
+    branches:
+      - sol/road-move-bidirectional-live-r10-20260908
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/road-move-bidirectional-live-r10-20260908
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Rebuild bounded Road R10 candidate on current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='2b1b12d842ad07cc193a58e6e721b6b8908dd488'
+          HTML_BLOB='35f9203e2be95ba07b44c875e26bfe2047a3cee5'
+          test "$(git merge-base HEAD "$BASE")" = "$BASE"
+          test "$(git rev-parse "$BASE:browser/GAMEROAD.html")" = "$HTML_BLOB"
+          git fetch origin sol/road-move-bidirectional-live-r5-20260906 sol/road-move-bidirectional-live-r6-20260906
+          git show origin/sol/road-move-bidirectional-live-r5-20260906:tools/zz-temp-road-move-runtime-r5.py > /tmp/r10-base.py
+          git show origin/sol/road-move-bidirectional-live-r6-20260906:tools/zz-temp-road-move-runtime-r6.py > /tmp/r10-post.py
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('/tmp/r10-base.py')
+          s=p.read_text()
+          s=s.replace("BASE = '0be3a466b55cbd0af23244bc9fc90b2f5f6640fd'", "BASE = '2b1b12d842ad07cc193a58e6e721b6b8908dd488'")
+          s=re.sub(r"ALLOWED_PRE = \{.*?\}\n", "ALLOWED_PRE = {\n    '.github/workflows/zz-temp-road-move-runtime-r10.yml',\n}\n", s, count=1, flags=re.S)
+          s=s.replace('road-move-bidirectional-live-r5.spec.mjs','road-move-bidirectional-live-r10.spec.mjs')
+          s=s.replace('ROAD-MOVE-BIDIRECTIONAL-R5','ROAD-MOVE-BIDIRECTIONAL-R10')
+          s=s.replace('gameroad-road-move-bidirectional-r5','gameroad-road-move-bidirectional-r10')
+          s=s.replace('R5 source contract','R10 source contract').replace('R5_PATCH_READY','R10_PATCH_READY')
+          p.write_text(s)
+          p=Path('/tmp/r10-post.py')
+          s=p.read_text().replace('road-move-bidirectional-live-r6.spec.mjs','road-move-bidirectional-live-r10.spec.mjs').replace('R6_POSTPATCH_READY','R10_POSTPATCH_READY')
+          p.write_text(s)
+          PY
+          python3 /tmp/r10-base.py
+          python3 /tmp/r10-post.py
+          git diff --check
+          node --test tests/road-move-compatibility-core.test.mjs
+          git diff -- browser/GAMEROAD.html tests/road-move-bidirectional-live-r10.spec.mjs > road-r10.patch
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Run focused desktop acceptance and capture compact failure
+        id: roadtest
+        continue-on-error: true
+        shell: bash
+        run: |
+          cat > .road-r10-playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir:'./tests', testMatch:'road-move-bidirectional-live-r10.spec.mjs',
+            timeout:60000, expect:{timeout:8000}, workers:1, retries:0,
+            reporter:[['json',{outputFile:'road-r10-result.json'}],['line']],
+            use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,viewport:{width:1280,height:720},trace:'off',screenshot:'off',video:'off'},
+            webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1',url:'http://127.0.0.1:4173/browser/GAMEROAD.html',reuseExistingServer:false,timeout:120000}
+          });
+          EOF
+          npx playwright test --config=.road-r10-playwright.config.mjs --workers=1
+      - name: Write diagnostic status
+        if: always()
+        shell: bash
+        run: |
+          printf 'step_outcome=%s\n' '${{ steps.roadtest.outcome }}' > road-r10-status.txt
+          test -f road-r10-result.json || printf '{"missing":true}\n' > road-r10-result.json
+      - name: Upload compact Road R10 diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: road-r10-diagnostic
+          path: |
+            road-r10-result.json
+            road-r10-status.txt
+            road-r10.patch
+          if-no-files-found: error
+      - name: Fail if focused acceptance failed
+        if: steps.roadtest.outcome != 'success'
+        run: exit 1

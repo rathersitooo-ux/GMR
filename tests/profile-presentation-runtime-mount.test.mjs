@@ -85,6 +85,19 @@ test('Profile presentation contract forbids new deck/comment/persistence authori
   assert.equal(PROFILE_PRESENTATION_CONTRACT.favoriteCardsRequireOwnershipAuthority, true);
   assert.equal(PROFILE_PRESENTATION_CONTRACT.maxFavoriteCards, 3);
   assert.equal(PROFILE_PRESENTATION_CONTRACT.detailedRecordsRoute, 'records');
+  assert.equal(PROFILE_PRESENTATION_CONTRACT.recordsSurfaceSource, '#recordsList .record');
+  assert.equal(PROFILE_PRESENTATION_CONTRACT.recordsPersistence, 'existing-history-only');
+});
+
+test('Records enhancement stays on the current rendered history and does not add storage authority', () => {
+  const source = readFileSync(new URL('../browser/profile-presentation-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /querySelector\('section\[data-screen="records"\]'\)/);
+  assert.match(source, /querySelectorAll\('\.record'\)/);
+  assert.match(source, /setAttribute\('role', 'button'\)/);
+  assert.match(source, /setAttribute\('aria-expanded', selected \? 'true' : 'false'\)/);
+  assert.match(source, /使用デッキ：この対戦履歴では未記録です。/);
+  assert.match(source, /@media\(prefers-reduced-motion:reduce\)/);
+  assert.doesNotMatch(source, /localStorage|sessionStorage|__GAMEROAD_TEST__/);
 });
 
 test('Profile secondary copy keeps the bounded phone legibility floor', () => {

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "TUTORIAL-ADAPTIVE-CODE-R1-20260907T1756-SOL-P7N4Q8",
+  "taskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "workUnitKey": "TUTORIAL_EXPERIENCE_PROFILE_GUIDE_R1",
+  "acquireKey": "TUTORIAL-ADAPTIVE-CODE-R1-20260907T1756-SOL-P7N4Q8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "current-main-306b849-partner-advice-existing-contextual-tutorial-and-guide-control-readback",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing-partner-advice-focused-test-lane-plus-default-message-compatibility-contract",
+  "proceedToken": "PROCEED|TUTORIAL-ADAPTIVE-CODE-R1-20260907T1756-SOL-P7N4Q8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|minimal-existing-module-extension",
+  "authorizationBaseSha": "306b849df7f65ade55ea0ec24d580ff1d15c059e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "TUTORIAL_EXPERIENCE_PROFILE_GUIDE_R1",
+  "leaseAcquireKey": "TUTORIAL-ADAPTIVE-CODE-R1-20260907T1756-SOL-P7N4Q8",
+  "leaseSnapshotReadbackAtJst": "2026-09-07 17:56 JST",
+  "leaseUntilJst": "2026-09-07 18:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A538:L538",
+  "leaseExactMutableResources": "browser/partner-advice-runtime-mount.mjs; tests/partner-advice-runtime-mount.test.mjs; data/preaction-authorizations/TUTORIAL-ADAPTIVE-CODE-R1-20260907T1756-SOL-P7N4Q8.json. READ_ONLY: browser/GAMEROAD.html; gameplay/rules/save/economy/network; completion store; other Partner files.",
+  "scope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "data/preaction-authorizations/TUTORIAL-ADAPTIVE-CODE-R1-20260907T1756-SOL-P7N4Q8.json"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "data/preaction-authorizations/TUTORIAL-ADAPTIVE-CODE-R1-20260907T1756-SOL-P7N4Q8.json"
+  ]
+}

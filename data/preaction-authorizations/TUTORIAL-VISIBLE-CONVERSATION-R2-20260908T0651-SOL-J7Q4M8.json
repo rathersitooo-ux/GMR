@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "TUTORIAL-VISIBLE-CONVERSATION-R2-20260908T0651-SOL-J7Q4M8",
+  "taskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "workUnitKey": "TUTORIAL_EXPERIENCE_CONVERSATION_VISIBLE_MOUNT_R2",
+  "acquireKey": "TUTORIAL-VISIBLE-CONVERSATION-R2-20260908T0651-SOL-J7Q4M8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "current-main-existing-partner-battle-chat-plus-merged-conversation-core",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "focused-node-dom-contract-plus-public-package-dependency-test",
+  "proceedToken": "PROCEED|TUTORIAL-VISIBLE-CONVERSATION-R2-20260908T0651-SOL-J7Q4M8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|visible-conversation-mount",
+  "authorizationBaseSha": "ca1fac5106140b7faf3e82701988c3d33b112720",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "TUTORIAL_EXPERIENCE_CONVERSATION_VISIBLE_MOUNT_R2",
+  "leaseAcquireKey": "TUTORIAL-VISIBLE-CONVERSATION-R2-20260908T0651-SOL-J7Q4M8",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 06:51 JST",
+  "leaseUntilJst": "2026-09-08 07:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A565:L565",
+  "leaseExactMutableResources": "browser/partner-advice-runtime-mount.mjs; tests/partner-advice-runtime-mount.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; data/preaction-authorizations/TUTORIAL-VISIBLE-CONVERSATION-R2-20260908T0651-SOL-J7Q4M8.json",
+  "scope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/TUTORIAL-VISIBLE-CONVERSATION-R2-20260908T0651-SOL-J7Q4M8.json"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/TUTORIAL-VISIBLE-CONVERSATION-R2-20260908T0651-SOL-J7Q4M8.json"
+  ],
+  "solutionSignature": "tutorial-natural-conversation-visible-partner-surface-with-authoritative-eligibility-gate",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "reuse-current-partner-chat-plus-conversation-core-and-r1-bridge-concepts-without-r1-architecture",
+  "solutionSearchEvidence": [
+    "browser/partner-advice-runtime-mount.mjs:existing-Battle-chat-and-contextual-help",
+    "browser/tutorial-experience-profile-core.mjs:projectTutorialExperienceConversation",
+    "browser/tutorial-experience-profile-core.mjs:projectTutorialExperienceHelp",
+    "abandoned-branch:sol/tutorial-live-conversation-r1-20260908:bridge-concepts-only",
+    "CURRENT:Y1242:TUTORIAL_MODE_SEMANTIC_CORRECTION_USER_EXPLICIT",
+    "CURRENT:Y1242:TUTORIAL_CONVERSATION_BRANCH_USER_EXPLICIT"
+  ]
+}

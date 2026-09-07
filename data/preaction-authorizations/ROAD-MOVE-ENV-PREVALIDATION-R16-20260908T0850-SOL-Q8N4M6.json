@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-MOVE-ENV-PREVALIDATION-R16-20260908T0850-SOL-Q8N4M6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE_R16_ENV_PREVALIDATION",
+  "acquireKey": "ROAD-MOVE-ENV-PREVALIDATION-R16-20260908T0850-SOL-Q8N4M6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R13_EPHEMERAL_LIVE_4_OF_4_PLUS_R1283_DETERMINISTIC_ELASTIC",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R13_HUMAN_SEMANTIC_HIT_TEST_INPUT_SUCCESS",
+  "proceedToken": "PROCEED|ROAD-MOVE-ENV-PREVALIDATION-R16-20260908T0850-SOL-Q8N4M6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|remaining-environment-readonly-prevalidation",
+  "authorizationBaseSha": "2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE_R16_ENV_PREVALIDATION",
+  "leaseAcquireKey": "ROAD-MOVE-ENV-PREVALIDATION-R16-20260908T0850-SOL-Q8N4M6",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 08:50 JST",
+  "leaseUntilJst": "2026-09-08 09:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A605:L605",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/road-move-env-prevalidation-r16-20260908; transient .github/workflows/zz-temp-road-move-env-prevalidation-r16.yml; this PRE_ACTION manifest only. READ_ONLY: browser/GAMEROAD.html; Road core/test; R5/R6 donors; Battle-card lifecycle; 109 topology; save/economy/network.",
+  "scope": [
+    ".github/workflows/zz-temp-road-move-env-prevalidation-r16.yml",
+    "data/preaction-authorizations/ROAD-MOVE-ENV-PREVALIDATION-R16-20260908T0850-SOL-Q8N4M6.json"
+  ],
+  "leaseScope": [
+    ".github/workflows/zz-temp-road-move-env-prevalidation-r16.yml",
+    "data/preaction-authorizations/ROAD-MOVE-ENV-PREVALIDATION-R16-20260908T0850-SOL-Q8N4M6.json"
+  ],
+  "solutionSignature": "ROAD_MOVE_ENV_PREVALIDATION_R16_REUSE_R13_HIT_TEST",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R13_WORKFLOW_AND_CURRENT_MAIN_ROAD_CORE",
+  "solutionSearchEvidence": [
+    "R13 run 34166060239 passed focused human-semantic physical-input prevalidation",
+    "PR #1283 deterministic Road3/Road5/Road6 Elastic core test is merged on main",
+    "current browser/GAMEROAD.html remains read-only under an active independent owner"
+  ]
+}

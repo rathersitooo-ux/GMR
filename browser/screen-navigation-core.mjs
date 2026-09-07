@@ -1,4 +1,5 @@
 import {createTransitionDirector} from './ui-state-feedback-core.mjs';
+import {ensureGachaPreviewDisclosure} from './gacha-preview-disclosure-runtime.mjs';
 
 export const SCREEN_NAVIGATION_REASON = Object.freeze({
   EMPTY_TARGET: 'EMPTY_TARGET',
@@ -415,6 +416,7 @@ export function createScreenTransitionRuntimeAdapter({
       applySwap: (context) => {
         const applied = applyScreen(decision.to, Object.freeze({from: decision.from, to: decision.to, reason, revision: context.revision}));
         if (applied && typeof applied.then === 'function') throw new Error('applyScreen must be synchronous');
+        if (decision.to === 'gacha') ensureGachaPreviewDisclosure(globalThis.document);
       }
     });
     presentationDriver.finishRevision?.(result.revision, result.status);

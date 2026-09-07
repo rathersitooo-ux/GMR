@@ -64,6 +64,24 @@ test('candidate derivation keeps every matching Road card and never chooses one 
   assert.equal(candidates[1], hand[2]);
 });
 
+test('Elastic Focus fixture deterministically keeps the path and exposes longer Road candidates', () => {
+  const focusedRoad = road(3);
+  const hand = [focusedRoad, road(5), road(6), battle()];
+  const beforeHand = structuredClone(hand);
+  const extendedPath = path(4);
+  const beforePath = structuredClone(extendedPath);
+  const state = boardState();
+
+  assert.equal(compatible(focusedRoad, extendedPath, state), false);
+
+  const candidates = compatibleRoadCards(hand, extendedPath, state);
+
+  assert.deepEqual(candidates.map(card => card.value), [5, 6]);
+  assert.equal(candidates.includes(focusedRoad), false);
+  assert.deepEqual(extendedPath, beforePath);
+  assert.deepEqual(hand, beforeHand);
+});
+
 test('backtracking naturally broadens the derived candidates from current path only', () => {
   const hand = [road(2), road(4), road(5), road(6)];
   const state = boardState();

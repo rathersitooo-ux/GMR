@@ -62,6 +62,29 @@ const SOURCE_GAME_BY_ID = new Map(TUTORIAL_EXPERIENCE_SOURCE_GAMES.map((game) =>
 const SHARED_INTEREST_BY_ID = new Map(TUTORIAL_SHARED_INTERESTS.map((interest) => [interest.id, interest]));
 const AUDIENCE_IDS = new Set(TUTORIAL_EXPERIENCE_AUDIENCES.map((audience) => audience.id));
 
+const SOURCE_GAME_STAGE_COACHING = Object.freeze({
+  'master-duel': Object.freeze({
+    road: '遊戯王でいうなら、まず「このターンの展開の軸を決める」感覚に近い。ただし召喚でも魔法・罠でもなく、GAMEROADでは先にロードを1枚選ぶ',
+    battle: '次は、その軸に対して実際にぶつける1枚を選ぶ感覚に近い。ただしチェーンや発動順の置き換えではなく、ロードとは別にバトルを1枚選ぶ',
+    ready: '最後は選んだ行動を出す前に見直す感覚に近い。ただしセットや発動確認ではなく、ロードとバトルの2枚が合っているかを確認する',
+  }),
+  'duel-masters-plays': Object.freeze({
+    road: 'デュエマでいうなら、今のターンに何を軸にするか先に決める感覚に近い。ただしマナチャージではなく、GAMEROADのロードを1枚選ぶ',
+    battle: '次は、その軸で実際にぶつける札を決める感覚に近い。ただしクリーチャーを召喚する操作そのものではなく、ロードとは別にバトルを1枚選ぶ',
+    ready: '最後は使う札の組み合わせを見直す感覚に近い。ただしマナの支払いやシールド処理ではなく、選んだロードとバトルの2枚を確認する',
+  }),
+  'pokemon-pocket': Object.freeze({
+    road: 'ポケカでいうなら、今の盤面からこのターンの方針を先に決める感覚に近い。ただしエネルギーを付ける操作ではなく、GAMEROADのロードを1枚選ぶ',
+    battle: '次は、その方針に沿って実際に勝負へ使う1枚を決める感覚に近い。ただしワザを使う操作そのものではなく、ロードとは別にバトルを1枚選ぶ',
+    ready: '最後は行動前に選択を見直す感覚に近い。ただしワザ・にげる・エネルギーの確認ではなく、選んだロードとバトルの2枚を確認する',
+  }),
+  shadowverse: Object.freeze({
+    road: 'シャドバでいうなら、このターンの動きの軸を先に決める感覚に近い。ただしPPを払ってカードをプレイする操作ではなく、GAMEROADのロードを1枚選ぶ',
+    battle: '次は、その軸に続けて勝負へ出す札を決める感覚に近い。ただしフォロワーやスペルの種類対応ではなく、ロードとは別にバトルを1枚選ぶ',
+    ready: '最後はプレイ確定前に選択を見直す感覚に近い。ただしPP消費やカードプレイの確定ではなく、選んだロードとバトルの2枚を確認する',
+  }),
+});
+
 function exactToken(value, maxLength = 160) {
   if (typeof value !== 'string') return null;
   const token = value.trim();
@@ -341,6 +364,12 @@ function generalExperiencedSuffix() {
   return 'カードゲーム経験は前提にして進める。ただし別作品のルールへ無理に置き換えず、GAMEROAD固有の違いだけ確認する';
 }
 
+function sourceGameSuffix(game, focusRole) {
+  const stage = SOURCE_GAME_STAGE_COACHING[game.id];
+  if (stage && focusRole && stage[focusRole]) return stage[focusRole];
+  return `${game.bridge}。${game.difference}`;
+}
+
 export function projectTutorialExperienceHelp({
   canonicalMessage,
   focusRole = null,
@@ -394,7 +423,7 @@ export function projectTutorialExperienceHelp({
     suffix = generalExperiencedSuffix();
   } else {
     const game = SOURCE_GAME_BY_ID.get(profile.sourceGameId);
-    suffix = `${game.bridge}。${game.difference}`;
+    suffix = sourceGameSuffix(game, role);
   }
 
   return Object.freeze({

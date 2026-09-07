@@ -1,3 +1,4 @@
+import './battle-hand-roulette-runtime-mount.mjs';
 import {
   ensureRoundStartJankenSlotAssignment,
   NEW_BASE_ROUND_START_JANKEN_SLOT_STATUS,

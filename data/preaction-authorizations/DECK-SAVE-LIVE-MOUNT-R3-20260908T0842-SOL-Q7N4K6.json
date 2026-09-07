@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DECK-SAVE-LIVE-MOUNT-R3-20260908T0842-SOL-Q7N4K6",
+  "taskId": "DECK-UNSAVED-SAVE-ACK-INTEGRATE-001",
+  "workUnitKey": "DECK_SAVE_LOCAL_DURABLE_LIVE_MOUNT_R3",
+  "acquireKey": "DECK-SAVE-LIVE-MOUNT-R3-20260908T0842-SOL-Q7N4K6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_DECK_SAVE_RECOVERY_CORE_PLUS_LIVE_CARDS_DECK_ENTRY_GAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_VERIFIED_WRITE_READBACK_ROLLBACK_CORE_AND_CLASSIFIED_CARDS_DECK_TEST",
+  "proceedToken": "PROCEED|DECK-SAVE-LIVE-MOUNT-R3-20260908T0842-SOL-Q7N4K6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|COMPOSE_EXISTING_DECK_SAVE_GUARD",
+  "authorizationBaseSha": "2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DECK-UNSAVED-SAVE-ACK-INTEGRATE-001",
+  "leaseWorkUnitKey": "DECK_SAVE_LOCAL_DURABLE_LIVE_MOUNT_R3",
+  "leaseAcquireKey": "DECK-SAVE-LIVE-MOUNT-R3-20260908T0842-SOL-Q7N4K6",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 08:43 JST",
+  "leaseUntilJst": "2026-09-08 09:32 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A575:N575",
+  "leaseExactMutableResources": "branch sol/deck-save-live-mount-r3-20260908; browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; data/preaction-authorizations/DECK-SAVE-LIVE-MOUNT-R3-20260908T0842-SOL-Q7N4K6.json. READ_ONLY: browser/deck-save-recovery-core.mjs; browser/GAMEROAD.html; deploy/cloudflare build scripts/tests; gameplay/rules/save/economy/network.",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "data/preaction-authorizations/DECK-SAVE-LIVE-MOUNT-R3-20260908T0842-SOL-Q7N4K6.json"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "data/preaction-authorizations/DECK-SAVE-LIVE-MOUNT-R3-20260908T0842-SOL-Q7N4K6.json"
+  ],
+  "solutionSignature": "live-deck-save-existing-atomic-readback-rollback-guard-mounted-through-current-cards-deck-entry",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_CORE_ALREADY_OWNS_SAVE_VALIDATION_AND_CURRENT_ENTRY_IS_ONLY_MISSING_CONNECTION",
+  "solutionSearchEvidence": [
+    "main:browser/deck-save-recovery-core.mjs:installLiveDeckSaveAtomicityGuard",
+    "main:browser/deck-save-recovery-core.mjs:writePreparedSaveVerified",
+    "main:browser/cards-deck-presentation.mjs:live Cards/Deck module entry",
+    "Drive:GAMEROAD 全作業一覧 row 1341"
+  ]
+}

@@ -12,6 +12,15 @@ const KNOWLEDGE_CONTEXT_SCHEMA = 'gameroad.partner-knowledge-context.v1';
 const SESSION_CONTEXT_MAX_TURNS = 4;
 const SOURCE_USE_SITE = 'partner-conversation';
 const ENTRY_SCREEN_ID = 'partner-conversation';
+const CLOSE_COMPANION_GUIDANCE = Object.freeze([
+  '利用者とは毎回初対面の案内役ではなく、距離の近い相棒として接する。直近会話が渡されていれば、その流れを自然に引き継ぐ。',
+  '共有した記憶を捏造しない。渡された会話履歴・確認済み知識・現在のゲーム状態に無い過去を、覚えている出来事として作らない。',
+  '毎回質問で返さない。短い感想、からかい、提案、ぼやき、喜び、短い反応も状況に合わせて自然に使う。',
+  '何でも肯定する接客役にしない。サースナー自身の好み、食欲、妹への思い、得意気、照れ、毒舌など、正本にある癖を状況に合う時だけ出す。',
+  '直前の自分と同じ意味や同じ説明を繰り返さない。既に言ったことは必要がなければ言い直さない。',
+  '利用者との距離は近く、付き合いよく、理解して先回りできる相棒として振る舞う。ただしゲーム上の事実や関係上の出来事を創作しない。',
+  '人間原文の固定台詞が正本から与えられた場合、その文言を勝手に言い換えたり弱めたりしない。',
+]);
 const KNOWLEDGE_TOP_LEVEL_KEYS = new Set([
   'schemaVersion', 'partnerId', 'useSite', 'safeForPrompt', 'containsPrivate', 'containsRawUserText', 'items', 'lineage',
 ]);
@@ -204,7 +213,7 @@ export async function runSaasunaConversationTurn(input = {}, deps = {}) {
         sessionId,
         turnId,
         userMessage: text,
-        personaGuidance: [...source.personaGuidance],
+        personaGuidance: [...source.personaGuidance, ...CLOSE_COMPANION_GUIDANCE],
         highIntimacyEnabled: false,
         collectiveContext: collectiveContext ? {
           schemaVersion: collectiveContext.schemaVersion,

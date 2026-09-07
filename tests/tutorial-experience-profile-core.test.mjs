@@ -175,9 +175,36 @@ test('shared hobby changes conversational common ground without becoming a GAMER
   assert.equal(conversation.sharedInterestId, 'horse-racing');
   assert.equal(conversation.sharedInterestLabel, '競馬');
   assert.equal(conversation.commonGroundOnly, true);
-  assert.match(conversation.partnerText, /競馬の話なら通じそう/);
+  assert.match(conversation.partnerText, /競馬見るんだ/);
+  assert.match(conversation.partnerText, /前からそういう話は合いそう/);
   assert.doesNotMatch(conversation.partnerText, /GAMEROADでは競馬と同じ|馬券|オッズ|的中/);
   assert.equal(conversation.gameplayAuthorityMutated, false);
+});
+
+test('named shared interests produce distinct familiar-peer replies without becoming rule bridges', () => {
+  const profile = createTutorialExperienceProfileControl();
+  const context = createTutorialSharedContextControl();
+  profile.chooseAudience('beginner');
+  const signals = {
+    'pachinko-slots': /パチンコ／スロットもやるんだ/,
+    'horse-racing': /競馬見るんだ/,
+    mahjong: /麻雀もやるんだ/,
+    'video-games': /ゲームはやるんだ/,
+  };
+  const messages = [];
+  for (const [interestId, signal] of Object.entries(signals)) {
+    assert.equal(context.chooseSharedInterest(interestId), true, interestId);
+    const conversation = projectTutorialExperienceConversation({
+      experienceStatus: profile.status(),
+      sharedContext: context.status(),
+    });
+    assert.equal(conversation.relationshipFrame, 'familiar-peer', interestId);
+    assert.equal(conversation.commonGroundOnly, true, interestId);
+    assert.match(conversation.partnerText, signal, interestId);
+    assert.doesNotMatch(conversation.partnerText, /馬券|オッズ|的中|大当たり|確変|役満|牌効率|GAMEROADでは.+同じ/, interestId);
+    messages.push(conversation.partnerText);
+  }
+  assert.equal(new Set(messages).size, 4);
 });
 
 test('named source-game conversation reaches a familiar-peer ready state', () => {

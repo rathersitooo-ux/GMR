@@ -1,0 +1,126 @@
+name: TEMP Road Move Bidirectional Live R9
+on:
+  push:
+    branches:
+      - sol/road-move-bidirectional-live-r9-20260907
+permissions:
+  contents: write
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/road-move-bidirectional-live-r9-20260907
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build R9 from validated Road donor onto exact fresh main
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='469e6b800fb420369db9bc0c09c565c43fc2845c'
+          HTML_BLOB='35f9203e2be95ba07b44c875e26bfe2047a3cee5'
+          test "$(git merge-base HEAD "$BASE")" = "$BASE"
+          test "$(git rev-parse "$BASE:browser/GAMEROAD.html")" = "$HTML_BLOB"
+          if grep -q 'ROAD-MOVE-BIDIRECTIONAL-R9' browser/GAMEROAD.html; then
+            echo 'R9 product marker already present; validation-only rerun.'
+          else
+            git fetch origin sol/road-move-bidirectional-live-r5-20260906 sol/road-move-bidirectional-live-r6-20260906
+            git show origin/sol/road-move-bidirectional-live-r5-20260906:tools/zz-temp-road-move-runtime-r5.py > /tmp/r9-base.py
+            git show origin/sol/road-move-bidirectional-live-r6-20260906:tools/zz-temp-road-move-runtime-r6.py > /tmp/r9-post.py
+            python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('/tmp/r9-base.py')
+          s=p.read_text()
+          s=s.replace("BASE = '0be3a466b55cbd0af23244bc9fc90b2f5f6640fd'", "BASE = '469e6b800fb420369db9bc0c09c565c43fc2845c'")
+          s=re.sub(r"ALLOWED_PRE = \{.*?\}\n", "ALLOWED_PRE = {\n    'ops/preaction/BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001_ROAD_MOVE_BIDIRECTIONAL_LIVE_R9.md',\n    '.github/workflows/zz-temp-road-move-runtime-r9.yml',\n}\n", s, count=1, flags=re.S)
+          s=s.replace('road-move-bidirectional-live-r5.spec.mjs','road-move-bidirectional-live-r9.spec.mjs')
+          s=s.replace('ROAD-MOVE-BIDIRECTIONAL-R5','ROAD-MOVE-BIDIRECTIONAL-R9')
+          s=s.replace('gameroad-road-move-bidirectional-r5','gameroad-road-move-bidirectional-r9')
+          s=s.replace('R5 source contract','R9 source contract').replace('R5_PATCH_READY','R9_PATCH_READY')
+          p.write_text(s)
+          p=Path('/tmp/r9-post.py')
+          s=p.read_text().replace('road-move-bidirectional-live-r6.spec.mjs','road-move-bidirectional-live-r9.spec.mjs').replace('R6_POSTPATCH_READY','R9_POSTPATCH_READY')
+          p.write_text(s)
+          PY
+            python3 /tmp/r9-base.py
+            python3 /tmp/r9-post.py
+          fi
+          git diff --check
+          node --test tests/road-move-compatibility-core.test.mjs
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Run live Road acceptance across required environments
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > .road-r9-playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir: './tests',
+            testMatch: 'road-move-bidirectional-live-r9.spec.mjs',
+            timeout: 60000,
+            expect: { timeout: 8000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            reporter: [['line']],
+            use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true, trace: 'retain-on-failure', screenshot: 'only-on-failure', video: 'off' },
+            projects: [
+              { name: 'desktop-1280x720', use: { viewport: { width: 1280, height: 720 } } },
+              { name: 'portrait-390x844', use: { viewport: { width: 390, height: 844 } } },
+              { name: 'landscape-844x390', use: { viewport: { width: 844, height: 390 } } },
+              { name: 'reduced-motion-844x390', use: { viewport: { width: 844, height: 390 }, reducedMotion: 'reduce' } }
+            ],
+            webServer: { command: 'python3 -m http.server 4173 --bind 127.0.0.1', url: 'http://127.0.0.1:4173/browser/GAMEROAD.html', reuseExistingServer: false, timeout: 120000 }
+          });
+          EOF
+          npx playwright test --config=.road-r9-playwright.config.mjs --workers=1
+          rm -f .road-r9-playwright.config.mjs
+      - name: LowPerf live path smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > tests/.road-r9-lowperf.spec.mjs <<'EOF'
+          import { test, expect } from '@playwright/test';
+          test('LowPerf keeps Road matching semantics usable', async ({page}) => {
+            await page.goto('/browser/GAMEROAD.html',{waitUntil:'domcontentloaded'});
+            await page.evaluate(()=>document.documentElement.classList.add('r10LowPerf'));
+            await expect(page.locator('html')).toHaveClass(/r10LowPerf/);
+            const css=await page.locator('#gameroad-road-move-bidirectional-r9').textContent();
+            expect(css).toContain('html.r10LowPerf');
+            expect(css).toContain('box-shadow:none');
+          });
+          EOF
+          cat > .road-r9-lowperf.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({testDir:'./tests',testMatch:'.road-r9-lowperf.spec.mjs',workers:1,retries:0,use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,viewport:{width:844,height:390}},webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1',url:'http://127.0.0.1:4173/browser/GAMEROAD.html',reuseExistingServer:false,timeout:120000}});
+          EOF
+          npx playwright test --config=.road-r9-lowperf.config.mjs --workers=1
+          rm -f tests/.road-r9-lowperf.spec.mjs .road-r9-lowperf.config.mjs
+      - name: Commit product delta only after focused acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add browser/GAMEROAD.html tests/road-move-bidirectional-live-r9.spec.mjs
+          if git diff --cached --quiet; then
+            echo 'No product delta to commit.'
+            exit 0
+          fi
+          git config user.name 'gameroad-road-r9'
+          git config user.email 'actions@users.noreply.github.com'
+          git commit -m 'Battle: make Road card and movement bidirectional'
+          git push origin HEAD:sol/road-move-bidirectional-live-r9-20260907
+      - name: Upload focused evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: road-r9-live-evidence
+          path: test-results
+          if-no-files-found: ignore

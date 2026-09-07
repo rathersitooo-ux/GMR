@@ -10,6 +10,10 @@ import {
   createCardPresentationSession
 } from './card-presentation-core.mjs';
 import {
+  createAuthoritativeRemainingDeckCountSnapshot,
+  projectRemainingDeckCountForViewer
+} from './battle-self-deck-inspect-core.mjs';
+import {
   planBattleConveyor,
   planBattleConveyorEnvironmentFrame
 } from './battle-conveyor-presentation-core.mjs';
@@ -1077,10 +1081,121 @@ export function readLiveReplay(session, { viewer = null } = {}) {
   return readReplay(session.log, { viewer, supportedVersions });
 }
 
+const REMAINING_DECK_PRESENTATION_SCHEMA = 'gameroad.battle-remaining-deck-presentation.v1';
+const REMAINING_DECK_INPUT_KEYS = Object.freeze([
+  'matchId',
+  'ownerPlayerId',
+  'remainingCount',
+  'revision',
+  'viewer',
+  'viewerKnowledge'
+]);
+
+function remainingDeckUnavailable(reason) {
+  return deepFreeze({ ok: false, status: 'unavailable', reason });
+}
+
+function exactRemainingDeckInputShape(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return false;
+  const actual = Object.keys(input).sort();
+  const allowed = new Set(REMAINING_DECK_INPUT_KEYS);
+  return actual.every(key => allowed.has(key));
+}
+
+export function projectLiveBattleRemainingDeckPresentation(input = {}) {
+  if (!exactRemainingDeckInputShape(input)) {
+    return remainingDeckUnavailable('REMAINING_DECK_INPUT_SHAPE_INVALID');
+  }
+  const {
+    matchId,
+    ownerPlayerId,
+    revision,
+    remainingCount,
+    viewer = null,
+    viewerKnowledge = null
+  } = input;
+  let snapshot;
+  try {
+    snapshot = createAuthoritativeRemainingDeckCountSnapshot({
+      matchId,
+      ownerPlayerId,
+      revision,
+      remainingCount
+    });
+  } catch (error) {
+    return remainingDeckUnavailable(error instanceof Error ? error.message : 'REMAINING_DECK_INPUT_INVALID');
+  }
+  const projected = projectRemainingDeckCountForViewer(snapshot, { viewer, viewerKnowledge });
+  if (!projected?.ok) return projected;
+
+  const knownCardCounts = Array.isArray(projected.knownCardCounts)
+    ? projected.knownCardCounts.map(({ cardId, count }) => ({ cardId, count }))
+    : [];
+  const knownCount = Number.isSafeInteger(projected.knownCount) ? projected.knownCount : 0;
+  const unknownCount = Number.isSafeInteger(projected.unknownCount) ? projected.unknownCount : projected.total;
+  return deepFreeze({
+    ok: true,
+    status: 'ready',
+    schema: REMAINING_DECK_PRESENTATION_SCHEMA,
+    matchId: projected.matchId,
+    ownerPlayerId: projected.ownerPlayerId,
+    revision: projected.revision,
+    total: projected.total,
+    knownCount,
+    unknownCount,
+    knownCardCounts,
+    orderHidden: true,
+    presentationOnly: true,
+    authority: 'CALLER_AUTHORIZED_REMAINING_COUNT_AND_VIEWER_KNOWLEDGE'
+  });
+}
+
+export function renderLiveBattleRemainingDeckPresentation(presentation, {
+  document = browserGlobal('document'),
+  hostId = 'battleLog',
+  cardLabel = cardId => cardId
+} = {}) {
+  if (!presentation?.ok || presentation.status !== 'ready') return false;
+  if (!document || typeof document.createElement !== 'function') return false;
+  const host = document.getElementById?.(hostId);
+  if (!host) return false;
+
+  let root = host.querySelector?.('[data-battle-remaining-deck]') || null;
+  if (!root) {
+    root = document.createElement('section');
+    root.setAttribute?.('data-battle-remaining-deck', '1');
+    host.appendChild?.(root);
+  }
+  root.setAttribute?.('data-battle-remaining-deck-total', String(presentation.total));
+  root.setAttribute?.('data-battle-remaining-deck-unknown', String(presentation.unknownCount));
+  root.setAttribute?.('data-battle-remaining-deck-revision', String(presentation.revision));
+
+  const title = document.createElement('b');
+  title.textContent = `残りデッキ ${presentation.total}枚`;
+  const known = document.createElement('span');
+  known.textContent = presentation.knownCardCounts.length
+    ? `判明: ${presentation.knownCardCounts.map(entry => {
+        const candidate = typeof cardLabel === 'function' ? cardLabel(entry.cardId) : entry.cardId;
+        const label = typeof candidate === 'string' && candidate.trim() ? candidate.trim() : entry.cardId;
+        return `${label}×${entry.count}`;
+      }).join(' / ')}`
+    : '判明: 0枚';
+  const unknown = document.createElement('span');
+  unknown.textContent = `不明: ${presentation.unknownCount}枚`;
+  root.replaceChildren?.(title, known, unknown);
+  return true;
+}
+
 export const BATTLE_REPLAY_LIVE_ADAPTER = Object.freeze({
   schema: LIVE_ADAPTER_SCHEMA,
   versionKeys: VERSION_KEYS,
   contentVersionPrefix: CONTENT_VERSION_PREFIX,
+  remainingDeckProjection: Object.freeze({
+    authority: 'CALLER_AUTHORIZED_REMAINING_COUNT_AND_VIEWER_KNOWLEDGE',
+    presentationOnly: true,
+    exposesDeckOrder: false,
+    exposesHiddenIdentities: false
+  }),
   versionAuthoritySources: Object.freeze({
     rules: 'DECK_RULE.id+revision',
     content: 'window.__CARD_DATA__ canonical JSON fingerprint',

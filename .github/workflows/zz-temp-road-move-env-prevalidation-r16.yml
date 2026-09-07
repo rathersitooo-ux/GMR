@@ -69,39 +69,39 @@ jobs:
           t=t.replace(anchor,helper,1)
           t=t.replace('await next.click();','await physicalTapReachable(page,1);')
           t=t.replace('await target.click();','await physicalTapReachable(page,targetDistance);')
-          t += r'''
-
-test('LowPerf through visible Battle quick settings keeps Road draft and Battle-card noninterference',async({page})=>{
-  const battle=await openRoadBattle(page);
-  const settings=battle.locator('.grBattleHudSettings,[data-battle-r75-hud] [data-action="settings"]').first();
-  await expect(settings).toBeVisible();
-  await settings.click();
-  const overlay=page.locator('[data-gameroad-quick-settings][data-surface="battle"]');
-  await expect(overlay).toBeVisible();
-  const low=overlay.locator('[data-quick-toggle="lowPerf"]');
-  await expect(low).toBeVisible();
-  await low.click();
-  await expect.poll(async()=>page.locator('#lowPerf').textContent()).toContain('ON');
-  await overlay.locator('.grSharedQuickSettingsClose').click();
-  const before=await snapshot(page);
-  expect(before.roadId).toBeNull();
-  expect(before.battleId).toBeNull();
-  await physicalTapReachable(page,1);
-  const moved=await snapshot(page);
-  expect(moved.compatibleRoadIds.length).toBeGreaterThan(0);
-  expect(moved.battleId).toBeNull();
-  const candidate=battle.locator('#hand .handCard[data-road-move-state="COMPATIBLE"],#hand .handCard.roadMoveSoft').first();
-  await expect(candidate).toBeVisible();
-  await candidate.click();
-  const focused=await snapshot(page);
-  expect(focused.roadId).not.toBeNull();
-  expect(focused.battleId).toBeNull();
-  expect(focused.path).toEqual(moved.path);
-  await expect(candidate).toHaveAttribute('data-road-move-state','FOCUSED');
-});
-'''
           spec.write_text(t)
           PY
+          cat >> tests/road-move-bidirectional-live-r16.spec.mjs <<'EOF'
+
+          test('LowPerf through visible Battle quick settings keeps Road draft and Battle-card noninterference',async({page})=>{
+            const battle=await openRoadBattle(page);
+            const settings=battle.locator('.grBattleHudSettings,[data-battle-r75-hud] [data-action="settings"]').first();
+            await expect(settings).toBeVisible();
+            await settings.click();
+            const overlay=page.locator('[data-gameroad-quick-settings][data-surface="battle"]');
+            await expect(overlay).toBeVisible();
+            const low=overlay.locator('[data-quick-toggle="lowPerf"]');
+            await expect(low).toBeVisible();
+            await low.click();
+            await expect.poll(async()=>page.locator('#lowPerf').textContent()).toContain('ON');
+            await overlay.locator('.grSharedQuickSettingsClose').click();
+            const before=await snapshot(page);
+            expect(before.roadId).toBeNull();
+            expect(before.battleId).toBeNull();
+            await physicalTapReachable(page,1);
+            const moved=await snapshot(page);
+            expect(moved.compatibleRoadIds.length).toBeGreaterThan(0);
+            expect(moved.battleId).toBeNull();
+            const candidate=battle.locator('#hand .handCard[data-road-move-state="COMPATIBLE"],#hand .handCard.roadMoveSoft').first();
+            await expect(candidate).toBeVisible();
+            await candidate.click();
+            const focused=await snapshot(page);
+            expect(focused.roadId).not.toBeNull();
+            expect(focused.battleId).toBeNull();
+            expect(focused.path).toEqual(moved.path);
+            await expect(candidate).toHaveAttribute('data-road-move-state','FOCUSED');
+          });
+          EOF
           git diff --check
           node --test tests/road-move-compatibility-core.test.mjs
           printf 'base=%s\nhtml_blob_before=%s\n' "2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb" "$(git rev-parse 2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb:browser/GAMEROAD.html)" > r16-evidence.txt

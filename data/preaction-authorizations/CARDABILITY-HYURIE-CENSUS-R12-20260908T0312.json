@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDABILITY-HYURIE-CENSUS-R12-20260908T0312",
+  "taskId": "CARD-ABILITY-BATCH-002",
+  "workUnitKey": "HYURIE_SAASUNA_CURRENT_MONOLITH_CENSUS_R12",
+  "acquireKey": "CARDABILITY-HYURIE-CENSUS-R12-20260908T0312-SOL-M8Q4H7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R11_UNCLASSIFIED_TEST_FAILCLOSE_PRODUCT_BYTES_ZERO",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BRANCH_ONLY_WORKFLOW_READS_MONOLITH_WITHOUT_PRODUCT_MUTATION",
+  "proceedToken": "PROCEED|CARDABILITY-HYURIE-CENSUS-R12-20260908T0312|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|branch-only|monolith-census",
+  "authorizationBaseSha": "38acd925a55ec0f19c38b23ced17f683f6d48dd0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "CARD-ABILITY-BATCH-002",
+  "leaseWorkUnitKey": "HYURIE_SAASUNA_CURRENT_MONOLITH_CENSUS_R12",
+  "leaseAcquireKey": "CARDABILITY-HYURIE-CENSUS-R12-20260908T0312-SOL-M8Q4H7",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 03:12 JST",
+  "leaseUntilJst": "2026-09-08 03:52 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A564:L564",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean branch sol/hyurie-saasuna-census-r12-20260908; transient .github/workflows/zz-temp-hyurie-saasuna-census-r12.yml; transient data/preaction-authorizations/CARDABILITY-HYURIE-CENSUS-R12-20260908T0312.json; own workflow/readback/cleanup only. READ_ONLY: browser/GAMEROAD.html; card workbook; Cards local-skin runtime; gameplay/rules/save/economy/network.",
+  "scope": [
+    ".github/workflows/zz-temp-hyurie-saasuna-census-r12.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/zz-temp-hyurie-saasuna-census-r12.yml"
+  ],
+  "solutionSignature": "Read exact current monolith bytes in repository context and emit bounded presence/context evidence without changing product bytes.",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R12_TRANSIENT_RUNNER_AFTER_R11_PATH_CLASSIFICATION_BLOCK",
+  "solutionSearchEvidence": [
+    "current:GitHub_connector_huge_monolith_direct_range_unavailable",
+    "current:R11_new_test_path_fail_closed_as_unclassified"
+  ],
+  "buildResidualReason": "No existing callable connector action can return the required substring from the ~11.9MB monolith, and modifying an existing classified test would require full-file replacement; a self-deleting branch-only runner is the smallest direct evidence path."
+}

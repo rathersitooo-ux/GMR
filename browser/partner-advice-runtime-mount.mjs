@@ -16,6 +16,12 @@ import {
   selectApprovedPartnerBattleUtterance,
 } from './partner-dialogue-source-registry.mjs';
 import { readBattleR75SelfHudDom } from './partner-battle-event-log-projection.mjs';
+import {
+  createTutorialExperienceProfileControl,
+  createTutorialSharedContextControl,
+  projectTutorialExperienceConversation,
+  projectTutorialExperienceHelp,
+} from './tutorial-experience-profile-core.mjs';
 
 const VERSION_KEYS = Object.freeze(['rulesVersion', 'cardVersion', 'stateVersion']);
 const PARTNER_STRATEGY_RULES = new Set(['left', 'right', 'max', 'min']);
@@ -316,6 +322,102 @@ export function createTutorialPartnerGuideControl({
   });
 }
 
+export function createBattleTutorialExperienceConversationControl({
+  isEligible = () => false,
+  onChange,
+} = {}) {
+  if (typeof isEligible !== 'function') throw new TypeError('isEligible must be a function');
+  if (onChange !== undefined && typeof onChange !== 'function') throw new TypeError('onChange must be a function when provided');
+
+  const profileControl = createTutorialExperienceProfileControl();
+  const sharedContextControl = createTutorialSharedContextControl();
+  const changed = () => { if (typeof onChange === 'function') onChange(); };
+  const eligible = () => {
+    try {
+      return isEligible() === true;
+    } catch {
+      return false;
+    }
+  };
+  const inactiveConversation = () => Object.freeze({
+    schema: 'gameroad.tutorial-experience-conversation.v1',
+    active: false,
+    reason: 'TUTORIAL_ELIGIBILITY_REQUIRED',
+    stage: null,
+    partnerText: null,
+    options: Object.freeze([]),
+    optional: false,
+    readyForGameplayExplanation: false,
+    canContinueWithoutSharedInterest: false,
+    presentationOnly: true,
+    persistenceOwned: false,
+    tutorialRunOwned: false,
+    saveMutated: false,
+    gameplayAuthorityMutated: false,
+    autoExecute: false,
+  });
+  const conversation = () => {
+    if (!eligible()) return inactiveConversation();
+    const current = projectTutorialExperienceConversation({
+      experienceStatus: profileControl.status(),
+      sharedContext: sharedContextControl.status(),
+    });
+    return Object.freeze({ ...current, active: true, reason: null });
+  };
+  const mutate = (operation) => {
+    if (!eligible()) return false;
+    const accepted = operation() === true;
+    if (accepted) changed();
+    return accepted;
+  };
+
+  return Object.freeze({
+    chooseAudience(audienceId) {
+      return mutate(() => profileControl.chooseAudience(audienceId));
+    },
+    chooseSourceGame(sourceGameId) {
+      return mutate(() => profileControl.chooseSourceGame(sourceGameId));
+    },
+    chooseSharedInterest(sharedInterestId) {
+      return mutate(() => sharedContextControl.chooseSharedInterest(sharedInterestId));
+    },
+    skipSharedInterest() {
+      if (conversation().stage !== 'common-ground-optional') return false;
+      return mutate(() => sharedContextControl.chooseSharedInterest('none'));
+    },
+    profile() {
+      return eligible() ? profileControl.profile() : null;
+    },
+    conversation,
+    adaptHelp({ canonicalMessage, focusRole } = {}) {
+      return projectTutorialExperienceHelp({
+        canonicalMessage,
+        focusRole,
+        experienceProfile: eligible() ? profileControl.profile() : null,
+      });
+    },
+    status() {
+      const current = conversation();
+      return Object.freeze({
+        eligible: eligible(),
+        active: current.active === true,
+        reason: current.reason ?? null,
+        stage: current.stage ?? null,
+        readyForGameplayExplanation: current.readyForGameplayExplanation === true,
+        sourceGameId: profileControl.status().sourceGameId,
+        sharedInterestId: sharedContextControl.status().sharedInterestId,
+        conversation: current,
+        presentationOnly: true,
+        persistenceOwned: false,
+        tutorialRunOwned: false,
+        saveMutated: false,
+        gameplayAuthorityMutated: false,
+        autoExecute: false,
+      });
+    },
+  });
+}
+
 export function projectBattleContextualTutorialReplay(snapshot = {}) {
   if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot) || snapshot.screen !== 'battle') {
     return Object.freeze({
@@ -365,12 +467,14 @@ export function createBattleContextualTutorialReplayControl({
   showHelp = null,
   clearHelp = null,
   setFocus = null,
+  getExperienceProfile = () => null,
   onChange,
 } = {}) {
   if (typeof getSnapshot !== 'function') throw new TypeError('getSnapshot must be a function');
   if (showHelp !== null && typeof showHelp !== 'function') throw new TypeError('showHelp must be a function or null');
   if (clearHelp !== null && typeof clearHelp !== 'function') throw new TypeError('clearHelp must be a function or null');
   if (setFocus !== null && typeof setFocus !== 'function') throw new TypeError('setFocus must be a function or null');
+  if (typeof getExperienceProfile !== 'function') throw new TypeError('getExperienceProfile must be a function');
 
   let active = false;
   const changed = () => { if (typeof onChange === 'function') onChange(); };
@@ -382,13 +486,25 @@ export function createBattleContextualTutorialReplayControl({
     }
   };
   const available = () => projection().active && typeof showHelp === 'function' && typeof clearHelp === 'function';
+  const helpMessage = (current) => {
+    try {
+      const adapted = projectTutorialExperienceHelp({
+        canonicalMessage: current?.message,
+        focusRole: current?.focusRole,
+        experienceProfile: getExperienceProfile(),
+      });
+      return adapted?.active && exactPresentationToken(adapted.message) ? adapted.message : current?.message ?? null;
+    } catch {
+      return current?.message ?? null;
+    }
+  };
   const status = () => {
     const current = projection();
     return Object.freeze({
       schema: CONTEXTUAL_TUTORIAL_REPLAY_SCHEMA,
       available: current.active && typeof showHelp === 'function' && typeof clearHelp === 'function',
       active,
-      message: active ? current.message : null,
+      message: active ? helpMessage(current) : null,
       focusRole: active ? current.focusRole : null,
       returnContext: 'same-battle',
       presentationOnly: true,
@@ -414,7 +530,7 @@ export function createBattleContextualTutorialReplayControl({
       clearHelp('BATTLE_CONTEXTUAL_REPLAY');
       const shown = showHelp(Object.freeze({
         code: 'BATTLE_CONTEXTUAL_REPLAY',
-        message: current.message,
+        message: helpMessage(current),
         kind: 'ok',
         ttl: 0,
       }));
@@ -709,11 +825,12 @@ function ensureBattleChatStyle(doc) {
   if (doc.getElementById(CHAT_STYLE_ID)) return;
   const style = doc.createElement('style');
   style.id = CHAT_STYLE_ID;
-  style.textContent = `#${CHAT_ROOT_ID}{display:grid;gap:6px;margin:7px 0;padding:7px;border:1px solid rgba(190,225,214,.28);border-radius:10px;background:rgba(3,18,16,.72)}#${CHAT_ROOT_ID} .partnerAdviceRoleControl{display:flex;align-items:center;gap:7px;min-height:34px}#${CHAT_ROOT_ID} .partnerAdviceRoleControl span{font-size:8px;color:#9eb7af;font-weight:900}#${CHAT_ROOT_ID} .partnerAdviceRoleControl strong{font-size:11px;font-weight:950;flex:1}#${CHAT_ROOT_ID} .partnerAdvicePartnerSwitch{width:34px;height:34px;min-width:34px;padding:0;border-radius:999px;border:1px solid rgba(173,235,214,.38);background:rgba(10,45,38,.78);color:#e4fff6;font-size:18px;font-weight:950;line-height:1}#${CHAT_ROOT_ID} .partnerAdviceLaneProgress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}#${CHAT_ROOT_ID} .partnerAdviceLane{display:grid;place-items:center;min-height:38px;border:1px solid rgba(205,239,228,.22);border-radius:8px;background:rgba(8,35,29,.72)}#${CHAT_ROOT_ID} .partnerAdviceLane span{font-size:8px;color:#9eb7af;font-weight:900}#${CHAT_ROOT_ID} .partnerAdviceLane b{font-size:15px;line-height:1;font-variant-numeric:tabular-nums}.partnerAdviceSpeech{display:none;max-width:92%;padding:8px 10px;border:1px solid rgba(173,235,214,.38);font-size:11px;font-weight:850;line-height:1.4}.partnerAdviceSpeech.on{display:block}.partnerAdviceSpeech.partner{border-radius:10px 10px 10px 3px;background:#143e34}.partnerAdviceSpeech.characterReaction{border-color:rgba(255,224,150,.42);background:rgba(31,45,31,.9)}.partnerAdviceSpeech.player{justify-self:end;border-radius:10px 10px 3px 10px;background:rgba(69,49,19,.72);border-color:rgba(255,211,126,.56);color:#fff1c9}.partnerAdviceQuickReply,.partnerAdviceTutorialReplay{min-height:44px;padding:9px 14px;border-radius:12px;font-size:11px;font-weight:950}.partnerAdviceQuickReply{justify-self:end;border:1px solid rgba(255,211,126,.56);background:rgba(69,49,19,.72);color:#fff1c9}.partnerAdviceTutorialReplay{justify-self:start;border:1px solid rgba(173,235,214,.38);background:rgba(10,45,38,.78);color:#e4fff6}.contextualTutorialFocus{outline:2px solid rgba(255,216,120,.78)!important;outline-offset:2px!important;box-shadow:0 0 0 2px rgba(255,216,120,.24),0 0 18px rgba(255,216,120,.22)!important}@media(max-width:540px){#${CHAT_ROOT_ID}{padding:5px;gap:4px}.partnerAdviceSpeech{font-size:10px}.partnerAdviceQuickReply,.partnerAdviceTutorialReplay{font-size:10px}}@media(prefers-reduced-motion:reduce){#${CHAT_ROOT_ID} *,.contextualTutorialFocus{transition:none!important;animation:none!important}}`;
+  style.textContent = `#${CHAT_ROOT_ID}{display:grid;gap:6px;margin:7px 0;padding:7px;border:1px solid rgba(190,225,214,.28);border-radius:10px;background:rgba(3,18,16,.72)}#${CHAT_ROOT_ID} .partnerAdviceRoleControl{display:flex;align-items:center;gap:7px;min-height:34px}#${CHAT_ROOT_ID} .partnerAdviceRoleControl span{font-size:8px;color:#9eb7af;font-weight:900}#${CHAT_ROOT_ID} .partnerAdviceRoleControl strong{font-size:11px;font-weight:950;flex:1}#${CHAT_ROOT_ID} .partnerAdvicePartnerSwitch{width:34px;height:34px;min-width:34px;padding:0;border-radius:999px;border:1px solid rgba(173,235,214,.38);background:rgba(10,45,38,.78);color:#e4fff6;font-size:18px;font-weight:950;line-height:1}#${CHAT_ROOT_ID} .partnerAdviceLaneProgress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}#${CHAT_ROOT_ID} .partnerAdviceLane{display:grid;place-items:center;min-height:38px;border:1px solid rgba(205,239,228,.22);border-radius:8px;background:rgba(8,35,29,.72)}#${CHAT_ROOT_ID} .partnerAdviceLane span{font-size:8px;color:#9eb7af;font-weight:900}#${CHAT_ROOT_ID} .partnerAdviceLane b{font-size:15px;line-height:1;font-variant-numeric:tabular-nums}.partnerAdviceSpeech{display:none;max-width:92%;padding:8px 10px;border:1px solid rgba(173,235,214,.38);font-size:11px;font-weight:850;line-height:1.4}.partnerAdviceSpeech.on{display:block}.partnerAdviceSpeech.partner{border-radius:10px 10px 10px 3px;background:#143e34}.partnerAdviceSpeech.characterReaction{border-color:rgba(255,224,150,.42);background:rgba(31,45,31,.9)}.partnerAdviceSpeech.player{justify-self:end;border-radius:10px 10px 3px 10px;background:rgba(69,49,19,.72);border-color:rgba(255,211,126,.56);color:#fff1c9}.partnerAdviceQuickReply,.partnerAdviceTutorialReplay,.partnerAdviceTutorialChoice,.partnerAdviceTutorialSkip{min-height:44px;padding:9px 14px;border-radius:12px;font-size:11px;font-weight:950}.partnerAdviceTutorialConversation{display:grid;gap:6px;padding:8px;border:1px solid rgba(173,235,214,.3);border-radius:10px;background:rgba(7,31,27,.86)}.partnerAdviceTutorialConversation[hidden]{display:none}.partnerAdviceTutorialQuestion{font-size:11px;font-weight:850;line-height:1.45}.partnerAdviceTutorialChoices{display:flex;flex-wrap:wrap;gap:6px}.partnerAdviceTutorialChoice,.partnerAdviceTutorialSkip{border:1px solid rgba(173,235,214,.38);background:rgba(10,45,38,.78);color:#e4fff6}.partnerAdviceTutorialSkip{justify-self:start}.partnerAdviceQuickReply{justify-self:end;border:1px solid rgba(255,211,126,.56);background:rgba(69,49,19,.72);color:#fff1c9}.partnerAdviceTutorialReplay{justify-self:start;border:1px solid rgba(173,235,214,.38);background:rgba(10,45,38,.78);color:#e4fff6}.contextualTutorialFocus{outline:2px solid rgba(255,216,120,.78)!important;outline-offset:2px!important;box-shadow:0 0 0 2px rgba(255,216,120,.24),0 0 18px rgba(255,216,120,.22)!important}@media(max-width:540px){#${CHAT_ROOT_ID}{padding:5px;gap:4px}.partnerAdviceSpeech{font-size:10px}.partnerAdviceQuickReply,.partnerAdviceTutorialReplay{font-size:10px}}@media(prefers-reduced-motion:reduce){#${CHAT_ROOT_ID} *,.contextualTutorialFocus{transition:none!important;animation:none!important}}`;
   doc.head?.append(style);
 }
 
-export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.window } = {}) {
+export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.window, tutorialExperienceEligibility = () => false } = {}) {
+  if (typeof tutorialExperienceEligibility !== 'function') throw new TypeError('tutorialExperienceEligibility must be a function');
   const win = windowRef;
   const doc = win?.document;
   if (!doc) return null;
@@ -725,7 +842,7 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
     root = doc.createElement('section');
     root.id = CHAT_ROOT_ID;
     root.setAttribute('aria-label', 'パートナーとの対戦チャット');
-    root.innerHTML = '<div class="partnerAdviceRoleControl"><span>アドバイスパートナー</span><strong data-role="advice-partner-name">パートナー</strong><button type="button" class="partnerAdvicePartnerSwitch" aria-label="アドバイスパートナーを変更">↻</button></div><div class="partnerAdviceLaneProgress" aria-label="3列の現在進行値"><div class="partnerAdviceLane" data-lane="L"><span>左列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="C"><span>中央列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="R"><span>右列</span><b>—</b></div></div><div class="partnerAdviceSpeech partner characterReaction" data-role="character-reaction" aria-live="polite"></div><div class="partnerAdviceSpeech partner" aria-live="polite"></div><div class="partnerAdviceSpeech player" aria-live="polite"></div><button type="button" class="partnerAdviceTutorialReplay" aria-pressed="false">操作を再確認</button><button type="button" class="partnerAdviceQuickReply">まかせた！</button>';
+    root.innerHTML = '<div class="partnerAdviceRoleControl"><span>アドバイスパートナー</span><strong data-role="advice-partner-name">パートナー</strong><button type="button" class="partnerAdvicePartnerSwitch" aria-label="アドバイスパートナーを変更">↻</button></div><div class="partnerAdviceLaneProgress" aria-label="3列の現在進行値"><div class="partnerAdviceLane" data-lane="L"><span>左列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="C"><span>中央列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="R"><span>右列</span><b>—</b></div></div><div class="partnerAdviceSpeech partner characterReaction" data-role="character-reaction" aria-live="polite"></div><div class="partnerAdviceSpeech partner" aria-live="polite"></div><div class="partnerAdviceSpeech player" aria-live="polite"></div><section class="partnerAdviceTutorialConversation" data-role="tutorial-experience-conversation" aria-live="polite" hidden><div class="partnerAdviceTutorialQuestion" data-role="tutorial-experience-question"></div><div class="partnerAdviceTutorialChoices" data-role="tutorial-experience-choices"></div><button type="button" class="partnerAdviceTutorialSkip" data-role="tutorial-experience-skip" hidden>このまま進む</button></section><button type="button" class="partnerAdviceTutorialReplay" aria-pressed="false">操作を再確認</button><button type="button" class="partnerAdviceQuickReply">まかせた！</button>';
     const statusNode = host.querySelector('.partnerDecisionStatus');
     host.insertBefore(root, statusNode || host.firstChild);
   }
@@ -740,11 +857,15 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
   });
   const characterReaction = createPartnerBattleCharacterReactionControl();
   characterReaction.prime(readBattleR75SelfHudDom(doc)?.resolution);
+  const tutorialExperience = createBattleTutorialExperienceConversationControl({
+    isEligible: tutorialExperienceEligibility,
+  });
   const tutorialReplay = createBattleContextualTutorialReplayControl({
     getSnapshot: () => currentBattleTutorialReplaySnapshot(win),
     showHelp: ({ code, message, kind, ttl }) => win.__GAMEROAD_CONTEXT_HELP_TEST__?.set?.(code, { message, kind, ttl }) ?? false,
     clearHelp: (code) => win.__GAMEROAD_CONTEXT_HELP_TEST__?.clear?.(code),
     setFocus: (role) => setBattleContextualTutorialFocus(doc, role),
+    getExperienceProfile: () => tutorialExperience.profile(),
   });
   const render = () => {
     const current = currentBattleChatSnapshot(win);
@@ -761,8 +882,10 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
       playerText: lastReceipt?.playerText || null,
     });
     const tutorialStatus = tutorialReplay.refresh();
+    const tutorialExperienceStatus = tutorialExperience.status();
+    const tutorialConversation = tutorialExperienceStatus.conversation;
     const reactionActive = Boolean(lastCharacterReaction?.partnerText);
-    root.hidden = !projection.active && !tutorialStatus.available && !reactionActive && !roleControlActive;
+    root.hidden = !projection.active && !tutorialStatus.available && !tutorialExperienceStatus.active && !reactionActive && !roleControlActive;
     const roleControl = root.querySelector('.partnerAdviceRoleControl');
     if (roleControl) roleControl.hidden = !roleControlActive;
     const roleName = root.querySelector('[data-role="advice-partner-name"]');
@@ -792,6 +915,29 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
       player.textContent = projection.active ? projection.playerText || '' : '';
       player.classList.toggle('on', projection.active && Boolean(projection.playerText));
     }
+    const tutorialConversationNode = root.querySelector('[data-role="tutorial-experience-conversation"]');
+    if (tutorialConversationNode) tutorialConversationNode.hidden = !tutorialExperienceStatus.active;
+    const tutorialQuestion = root.querySelector('[data-role="tutorial-experience-question"]');
+    if (tutorialQuestion) tutorialQuestion.textContent = tutorialExperienceStatus.active ? tutorialConversation.partnerText || '' : '';
+    const tutorialChoices = root.querySelector('[data-role="tutorial-experience-choices"]');
+    if (tutorialChoices) {
+      const options = tutorialExperienceStatus.active && Array.isArray(tutorialConversation.options) ? tutorialConversation.options : [];
+      const signature = `${tutorialConversation.stage || 'none'}:${options.map((option) => `${option.id}:${option.label}`).join('|')}`;
+      if (tutorialChoices.dataset.tutorialChoicesSignature !== signature) {
+        tutorialChoices.dataset.tutorialChoicesSignature = signature;
+        tutorialChoices.replaceChildren();
+        for (const option of options) {
+          const choice = doc.createElement('button');
+          choice.type = 'button';
+          choice.className = 'partnerAdviceTutorialChoice';
+          choice.dataset.tutorialChoiceId = option.id;
+          choice.textContent = option.label;
+          tutorialChoices.append(choice);
+        }
+      }
+    }
+    const tutorialSkip = root.querySelector('[data-role="tutorial-experience-skip"]');
+    if (tutorialSkip) tutorialSkip.hidden = !(tutorialExperienceStatus.active && tutorialConversation.stage === 'common-ground-optional' && tutorialConversation.optional === true);
     const button = root.querySelector('.partnerAdviceQuickReply');
     const quickReplyAvailable = projection.active && isPartnerAdviceQuickReplyAvailable(current);
     if (button) {
@@ -807,6 +953,29 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
     }
     return Object.freeze({ projection, tutorial: tutorialStatus, characterReaction: lastCharacterReaction, advicePartnerId: current?.partnerId || null, roster });
   };
+
+  const tutorialChoices = root.querySelector('[data-role="tutorial-experience-choices"]');
+  if (tutorialChoices && tutorialChoices.dataset.tutorialExperienceBound !== 'true') {
+    tutorialChoices.dataset.tutorialExperienceBound = 'true';
+    tutorialChoices.addEventListener('click', (event) => {
+      const choice = event.target?.closest?.('[data-tutorial-choice-id]');
+      const choiceId = exactPresentationToken(choice?.dataset?.tutorialChoiceId);
+      if (!choiceId) return;
+      const stage = tutorialExperience.conversation().stage;
+      if (stage === 'experience-opener') tutorialExperience.chooseAudience(choiceId);
+      else if (stage === 'source-game-follow-up') tutorialExperience.chooseSourceGame(choiceId);
+      else if (stage === 'common-ground-optional') tutorialExperience.chooseSharedInterest(choiceId);
+      render();
+    });
+  }
+
+  const tutorialSkip = root.querySelector('[data-role="tutorial-experience-skip"]');
+  if (tutorialSkip && tutorialSkip.dataset.tutorialExperienceSkipBound !== 'true') {
+    tutorialSkip.dataset.tutorialExperienceSkipBound = 'true';
+    tutorialSkip.addEventListener('click', () => {
+      if (tutorialExperience.skipSharedInterest()) render();
+    });
+  }
 
   const switchButton = root.querySelector('.partnerAdvicePartnerSwitch');
   if (switchButton && switchButton.dataset.partnerAdviceRoleBound !== 'true') {
@@ -860,7 +1029,7 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
     doc.getElementById('partnerAdviceBtn')?.addEventListener('click', () => queueMicrotask(render));
   }
   render();
-  return Object.freeze({ root, render, tutorialReplay, characterReaction });
+  return Object.freeze({ root, render, tutorialReplay, tutorialExperience, characterReaction });
 }
 
 function schedulePartnerAdviceChatMount(win) {

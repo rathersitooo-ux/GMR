@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARDS-GESTURE-HINT-R8-20260907T1649-SOL-Q6N4M8",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "CARDS_GESTURE_FIRST_SUCCESS_HINT_R2",
+  "acquireKey": "CARDS-GESTURE-HINT-R8-20260907T1649-SOL-Q6N4M8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R7-PUBLIC-DUPLICATE-APPLICATION-RUN34094799340",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1251-BOUNDED-WORKFLOW-PRECEDENT-PLUS-R7-TARGETED-RED",
+  "proceedToken": "PROCEED|CARDS-GESTURE-HINT-R8-20260907T1649-SOL-Q6N4M8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-seam|bounded-workflow|public-regression|fail-closed",
+  "authorizationBaseSha": "e8084627cd7f59cdeffe9022e16003d76425c96d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "CARDS_GESTURE_FIRST_SUCCESS_HINT_R2",
+  "leaseAcquireKey": "CARDS-GESTURE-HINT-R8-20260907T1649-SOL-Q6N4M8",
+  "leaseSnapshotReadbackAtJst": "2026-09-07 16:49 JST",
+  "leaseUntilJst": "2026-09-07 17:49 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A530:L530",
+  "leaseExactMutableResources": "browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; .github/workflows/zz-temp-cards-gesture-doubleapply-r8.yml; transient PREACTION manifest; own PR/check/merge/public same-SHA evidence",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    ".github/workflows/zz-temp-cards-gesture-doubleapply-r8.yml"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    ".github/workflows/zz-temp-cards-gesture-doubleapply-r8.yml"
+  ],
+  "solutionSignature": "Reuse the existing Cards swipe authority and discovery hint mount. During the same pointer gesture, if the existing Browser handler has already completed the requested deck membership transition before the discovery mount handles pointerup, reuse that observed success for presentation and first-success discovery rather than applying the deck action twice.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CARDS-R8-EXISTING-AUTHORITY-BRIDGE-ADAPT",
+  "solutionSearchEvidence": [
+    "R7 public blackbox run34094799340: Collection-right restored deck count while hint stayed visible and Storage opened",
+    "browser/cards-deck-presentation.mjs existing deck authority bridge and discovery pointerup consumer",
+    "PR#1251 accepted PREACTION-scoped bounded transient workflow pattern",
+    "UI-STATE-FEEDBACK-RUNTIME-001 row1336 matching-success-only semantics"
+  ]
+}

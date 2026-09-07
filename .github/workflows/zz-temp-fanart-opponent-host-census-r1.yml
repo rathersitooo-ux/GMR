@@ -14,20 +14,14 @@ jobs:
       - name: Checkout evidence branch
         uses: actions/checkout@v4
 
-      - name: Inspect real Battle reveal host and opponent skin authority
+      - name: Inspect module loading seams for Battle local opponent skins
         shell: bash
         run: |
           node <<'NODE'
           const fs = require('node:fs');
-          const path = require('node:path');
           const html = fs.readFileSync('browser/GAMEROAD.html', 'utf8');
           const compact = value => String(value).replace(/\s+/g, ' ').trim();
-          function contextAt(source, needle, radius = 1200) {
-            const i = source.indexOf(needle);
-            if (i < 0) return null;
-            return compact(source.slice(Math.max(0, i - radius), Math.min(source.length, i + needle.length + radius)));
-          }
-          function allContexts(source, needle, max = 8, radius = 700) {
+          function contexts(source, needle, max = 8, radius = 1100) {
             const out = [];
             let from = 0;
             while (out.length < max) {
@@ -38,35 +32,14 @@ jobs:
             }
             return out;
           }
-          function walk(dir, out = []) {
-            for (const entry of fs.readdirSync(dir, {withFileTypes:true})) {
-              const p = path.join(dir, entry.name);
-              if (entry.isDirectory()) walk(p, out);
-              else if (/\.(?:mjs|js|html|json|test\.mjs|spec\.mjs)$/.test(entry.name)) out.push(p);
-            }
-            return out;
-          }
-          const files = ['browser','tests','deploy'].filter(fs.existsSync).flatMap(d => walk(d));
-          const skinHits = [];
-          const precedenceConsumers = [];
-          for (const file of files) {
-            let text;
-            try { text = fs.readFileSync(file, 'utf8'); } catch { continue; }
-            if (/resolveOpponentCardSkin|card-skin-opponent-precedence-core/.test(text)) precedenceConsumers.push(file);
-            const matches = [...text.matchAll(/.{0,100}(?:equippedSkin|cardSkin|skinId|selectedSkin|opponentEquippedSkin|viewerPreference).{0,140}/gi)].slice(0,8);
-            if (matches.length) skinHits.push({file, contexts: matches.map(m=>compact(m[0]))});
-          }
-
           const evidence = {
-            resolutionCardContexts: allContexts(html, 'resolutionCard', 12, 950),
-            battlePresentationPlayers: contextAt(html, 'function battlePresentationPlayers', 2200),
-            setBattlePresentation: contextAt(html, 'function setBattlePresentation', 2600),
-            renderBattleResolution: contextAt(html, 'function renderBattleResolution', 3200),
-            renderBattlePresentation: contextAt(html, 'function renderBattlePresentation', 3200),
-            publicRevealPresentation: contextAt(html, 'const publicRevealPresentation', 2400),
-            makeParticipant: contextAt(html, 'function makeParticipant', 1800),
-            precedenceConsumers,
-            skinHits
+            cardsDeckModule: contexts(html, 'cards-deck-presentation.mjs', 12),
+            battleScreenModule: contexts(html, 'battle-screen-runtime-mount.mjs', 12),
+            moduleScripts: [...html.matchAll(/<script[^>]+type=["']module["'][^>]*>[\s\S]{0,1600}?<\/script>/gi)].slice(-16).map(m=>compact(m[0])),
+            dynamicImports: [...html.matchAll(/import\([^)]{0,220}\)/g)].slice(-40).map(m=>compact(m[0])),
+            resolutionRenderer: contexts(html, 'function renderBattlePlayerCards', 3, 1800),
+            resolutionHostMarkup: contexts(html, 'id="battleResolution"', 4, 1200),
+            resolutionHostMarkupBare: contexts(html, 'id=battleResolution', 4, 1200)
           };
-          console.log('OPPONENT_REVEAL_DEEP_CENSUS=' + JSON.stringify(evidence));
+          console.log('OPPONENT_MODULE_LOAD_CENSUS=' + JSON.stringify(evidence));
           NODE

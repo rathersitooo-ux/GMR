@@ -258,22 +258,53 @@ test('beginner help stays local and plain-language', () => {
   assert.doesNotMatch(help.message, /PP|マナゾーン|エネルギー/);
 });
 
-test('each named supported card game contributes its own bridge and explicit difference warning', () => {
+test('each named supported card game adapts road, battle, and ready with different source-game coaching', () => {
   const control = createTutorialExperienceProfileControl();
   control.chooseAudience('experienced');
+  const stageSignals = {
+    'master-duel': [/展開の軸/, /実際にぶつける1枚/, /2枚が合っているか/],
+    'duel-masters-plays': [/ターンに何を軸/, /実際にぶつける札/, /組み合わせを見直す/],
+    'pokemon-pocket': [/このターンの方針/, /実際に勝負へ使う1枚/, /行動前に選択を見直す/],
+    shadowverse: [/このターンの動きの軸/, /勝負へ出す札/, /プレイ確定前に選択を見直す/],
+  };
+  const stages = [
+    ['road', '手札からロードカードを1枚選ぶ'],
+    ['battle', '次に、別のバトルカードを1枚選ぶ'],
+    ['ready', '予約内容を確認して準備完了'],
+  ];
+
   for (const game of TUTORIAL_EXPERIENCE_SOURCE_GAMES.filter((entry) => entry.id !== 'other')) {
     assert.equal(control.chooseSourceGame(game.id), true, game.id);
-    const help = projectTutorialExperienceHelp({
-      canonicalMessage: '次に、別のバトルカードを1枚選ぶ',
-      focusRole: 'battle',
-      experienceProfile: control.profile(),
-    });
-    assert.equal(help.adapted, true, game.id);
-    assert.equal(help.sourceGameId, game.id, game.id);
-    assert.ok(help.message.includes(game.bridge), game.id);
-    assert.ok(help.message.includes(game.difference), game.id);
-    assert.equal(help.canonicalMessage, '次に、別のバトルカードを1枚選ぶ', game.id);
+    const messages = [];
+    for (let index = 0; index < stages.length; index += 1) {
+      const [focusRole, canonicalMessage] = stages[index];
+      const help = projectTutorialExperienceHelp({
+        canonicalMessage,
+        focusRole,
+        experienceProfile: control.profile(),
+      });
+      assert.equal(help.adapted, true, `${game.id}:${focusRole}`);
+      assert.equal(help.sourceGameId, game.id, `${game.id}:${focusRole}`);
+      assert.equal(help.canonicalMessage, canonicalMessage, `${game.id}:${focusRole}`);
+      assert.match(help.message, stageSignals[game.id][index], `${game.id}:${focusRole}`);
+      messages.push(help.message);
+    }
+    assert.equal(new Set(messages).size, 3, game.id);
   }
+});
+
+test('unknown focus role falls back to the safe generic bridge and explicit difference warning', () => {
+  const control = createTutorialExperienceProfileControl();
+  control.chooseAudience('experienced');
+  control.chooseSourceGame('master-duel');
+  const game = TUTORIAL_EXPERIENCE_SOURCE_GAMES.find((entry) => entry.id === 'master-duel');
+  const help = projectTutorialExperienceHelp({
+    canonicalMessage: 'いま必要な操作を確認する',
+    focusRole: 'unknown-role',
+    experienceProfile: control.profile(),
+  });
+  assert.ok(help.message.includes(game.bridge));
+  assert.ok(help.message.includes(game.difference));
 });
 
 test('other card-game help remains general and non-hallucinating', () => {

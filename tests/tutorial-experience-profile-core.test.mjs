@@ -148,7 +148,8 @@ test('every named supported game produces its own bridge rather than a generic s
     assert.equal(help.sourceGameId, game.id, game.id);
     assert.equal(help.sourceGameLabel, game.label, game.id);
     assert.notEqual(help.message, help.canonicalMessage, game.id);
-    assert.match(help.message, /置き換え/, game.id);
+    assert.ok(help.message.includes(game.bridge), game.id);
+    assert.ok(help.message.includes(game.difference), game.id);
   }
 });
 

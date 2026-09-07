@@ -184,6 +184,7 @@ function addConversationStyle(document) {
   style.id = PARTNER_CONVERSATION_STYLE_ID;
   style.textContent = `
 .grPartnerConversation{height:100%;min-height:0;display:grid;grid-template-columns:minmax(240px,46%) minmax(280px,1fr);overflow:hidden;border:1px solid rgba(191,217,255,.23);border-radius:18px;background:linear-gradient(145deg,#11142b 0%,#171d39 54%,#0e1021 100%);box-shadow:0 18px 60px rgba(0,0,0,.34)}
+.charRoster>.grPartnerConversation{height:auto;min-height:360px;margin-top:8px}
 .grPartnerHero{position:relative;min-height:0;overflow:hidden;background:#12162d}
 .grPartnerHero img{width:100%;height:100%;display:block;object-fit:cover;object-position:center 42%;user-select:none;pointer-events:none}
 .grPartnerHeroShade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,10,28,.03) 38%,rgba(8,10,28,.82) 100%);pointer-events:none}
@@ -230,6 +231,15 @@ function setConversationState(node, label, origin) {
   node.dataset.origin = origin || 'neutral';
 }
 
+function shouldProjectSaasunaConversation(global, screen) {
+  const state = global?.__GAMEROAD_TEST__?.state || null;
+  return Boolean(
+    screen?.classList?.contains?.('active') &&
+    state?.characterSelectionRole === 'partner' &&
+    state?.selectedPartnerId === 'partner.saasuna'
+  );
+}
+
 export function mountSaasunaConversationProductSurface(global = globalThis) {
   const document = global?.document;
   const MutationObserverCtor = global?.MutationObserver;
@@ -239,13 +249,20 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
   addConversationStyle(document);
   const provider = createSaasunaEdgeProvider(global);
   const entry = createSaasunaConversationEntry({ provider });
-  let observer = null;
+  let screenObserver = null;
+  let rosterObserver = null;
 
   const project = () => {
     const screen = document.querySelector('[data-screen="characters"]');
     const roster = document.querySelector('#charRoster');
-    if (!screen || !roster || !screen.classList.contains('active')) return false;
-    if (roster.querySelector('[data-gr-partner-conversation="1"]')) return true;
+    if (!screen || !roster) return false;
+
+    const existingSurface = roster.querySelector('[data-gr-partner-conversation="1"]');
+    if (!shouldProjectSaasunaConversation(global, screen)) {
+      existingSurface?.remove?.();
+      return false;
+    }
+    if (existingSurface) return true;
 
     const surface = document.createElement('section');
     surface.className = 'grPartnerConversation';
@@ -305,24 +322,29 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
       }
     });
 
-    roster.replaceChildren(surface);
+    roster.appendChild(surface);
     projectPartnerTeaQuickChoices(global);
-    const charName = document.querySelector('#charName');
-    if (charName) charName.textContent = 'サースナー';
     return true;
   };
 
   const screen = document.querySelector('[data-screen="characters"]');
+  const roster = document.querySelector('#charRoster');
   if (screen) {
-    observer = new MutationObserverCtor(project);
-    observer.observe(screen, { attributes: true, attributeFilter: ['class'] });
+    screenObserver = new MutationObserverCtor(project);
+    screenObserver.observe(screen, { attributes: true, attributeFilter: ['class'] });
+  }
+  if (roster) {
+    rosterObserver = new MutationObserverCtor(project);
+    rosterObserver.observe(roster, { childList: true });
   }
   project();
 
   const runtime = Object.freeze({
-    version: 'gameroad.partner-conversation-product-mount.v2',
+    version: 'gameroad.partner-conversation-product-mount.v3',
     partnerId: 'partner.saasuna',
     pickerRequired: false,
+    normalPartnerPickerPreserved: true,
+    conversationVisibility: 'selected-normal-partner-only',
     providerReady: provider !== null,
     persistentTranscript: false,
     staticVisual: true,
@@ -338,7 +360,10 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
       collectiveContextPolicy: 'approved_runtime_source_only',
       provider: provider?.status?.() ?? Object.freeze({ transport: 'fallback_only', providerSessionActive: false, providerSessionStoredInCanon: false }),
     }),
-    disconnect: () => observer?.disconnect(),
+    disconnect: () => {
+      screenObserver?.disconnect();
+      rosterObserver?.disconnect();
+    },
   });
 
   Object.defineProperty(global, PARTNER_CONVERSATION_MOUNT_NAME, {

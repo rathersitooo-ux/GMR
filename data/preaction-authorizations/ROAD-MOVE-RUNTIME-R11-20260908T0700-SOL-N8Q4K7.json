@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-MOVE-RUNTIME-R11-20260908T0700-SOL-N8Q4K7",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE_R11",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R11-20260908T0700-SOL-N8Q4K7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "fresh-current-main-plus-expired-r10b-product-zero-plus-r5-r6-donor-readback",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing-road-compatibility-core-and-r5-r6-focused-donor-contracts-with-current-main-guard",
+  "proceedToken": "PROCEED|ROAD-MOVE-RUNTIME-R11-20260908T0700-SOL-N8Q4K7|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|same-road-bidirectional-live-continuation",
+  "authorizationBaseSha": "ca1fac5106140b7faf3e82701988c3d33b112720",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE_R11",
+  "leaseAcquireKey": "ROAD-MOVE-RUNTIME-R11-20260908T0700-SOL-N8Q4K7",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 07:00 JST",
+  "leaseUntilJst": "2026-09-08 07:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A567:L567",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; tests/road-move-bidirectional-live-r11.spec.mjs; .github/workflows/zz-temp-road-move-runtime-r11b.yml; tools/zz-temp-road-move-runtime-r11b.py; data/preaction-authorizations/ROAD-MOVE-RUNTIME-R11-20260908T0700-SOL-N8Q4K7.json; own PR/check/merge/readback. browser/road-move-compatibility-core.mjs, 109 topology/reachable/stoppability, Battle-card selection/reservation/submission/order/resolve, save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r11.spec.mjs",
+    ".github/workflows/zz-temp-road-move-runtime-r11b.yml",
+    "tools/zz-temp-road-move-runtime-r11b.py",
+    "data/preaction-authorizations/ROAD-MOVE-RUNTIME-R11-20260908T0700-SOL-N8Q4K7.json"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r11.spec.mjs",
+    ".github/workflows/zz-temp-road-move-runtime-r11b.yml",
+    "tools/zz-temp-road-move-runtime-r11b.py",
+    "data/preaction-authorizations/ROAD-MOVE-RUNTIME-R11-20260908T0700-SOL-N8Q4K7.json"
+  ]
+}

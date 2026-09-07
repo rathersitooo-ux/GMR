@@ -1,0 +1,122 @@
+name: TEMP Road Move Acceptance Prevalidation R13
+on:
+  push:
+    branches:
+      - sol/road-move-acceptance-r13-20260908
+permissions:
+  contents: read
+jobs:
+  prevalidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/road-move-acceptance-r13-20260908
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build ephemeral Road candidate from current main and existing donors
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin \
+            sol/road-move-bidirectional-live-r5-20260906:refs/remotes/origin/road-r5-donor \
+            sol/road-move-bidirectional-live-r6-20260906:refs/remotes/origin/road-r6-donor
+          git show refs/remotes/origin/road-r5-donor:tools/zz-temp-road-move-runtime-r5.py > /tmp/road-r13-base.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/road-r13-base.py')
+          s=p.read_text()
+          s=s.replace("BASE = '0be3a466b55cbd0af23244bc9fc90b2f5f6640fd'", "BASE = '8001a76e2d44724f017ef228a62162ae1ea30200'")
+          s=s.replace('ROAD-MOVE-RUNTIME-R5-20260906T2113-SOL-P8N4V6','ROAD-MOVE-ACCEPTANCE-R13-20260908T0710-SOL-V7N4Q6')
+          s=s.replace('.github/workflows/zz-temp-road-move-runtime-r5.yml','.github/workflows/zz-temp-road-move-acceptance-r13.yml')
+          s=s.replace("    'tools/zz-temp-road-move-runtime-r5.py',\n",'')
+          s=s.replace('road-move-bidirectional-live-r5.spec.mjs','road-move-bidirectional-live-r13.spec.mjs')
+          s=s.replace('ROAD-MOVE-BIDIRECTIONAL-R5','ROAD-MOVE-BIDIRECTIONAL-R13')
+          s=s.replace('R5 source contract','R13 source contract').replace('R5_PATCH_READY','R13_PATCH_READY')
+          p.write_text(s)
+          PY
+          python3 /tmp/road-r13-base.py
+          git show refs/remotes/origin/road-r6-donor:tools/zz-temp-road-move-runtime-r6.py > /tmp/road-r13-post.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/road-r13-post.py')
+          s=p.read_text().replace('tests/road-move-bidirectional-live-r6.spec.mjs','tests/road-move-bidirectional-live-r13.spec.mjs').replace('R6_POSTPATCH_READY','R13_POSTPATCH_READY')
+          p.write_text(s)
+          PY
+          python3 /tmp/road-r13-post.py
+          python3 - <<'PY'
+          from pathlib import Path
+          html=Path('browser/GAMEROAD.html')
+          s=html.read_text()
+          old="const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0];if(!me?.plan?.roadId){ctxSet('PLAN_CARD_MISSING',{message:'先にロードカードを選ぶと移動範囲を決められます。'});return}const path=shortest(me.position,id,normalMoveLimitForRoad(me.plan.roadId),me);if(!path){ctxSet('MOVE_PATH_INVALID');return}const r=__ctxBaseSelectEndpoint(id);ctxClear();return r};"
+          new="const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0],moveLimit=draftMoveLimitForPlayer(me);if(moveLimit<1){ctxSet('PLAN_CARD_MISSING',{message:'移動に使えるロードカードがありません。'});return}const path=shortest(me.position,id,moveLimit,me);if(!path){ctxSet('MOVE_PATH_INVALID');return}const r=__ctxBaseSelectEndpoint(id);ctxClear();return r};"
+          if s.count(old)!=1: raise SystemExit(f'context endpoint wrapper mismatch: {s.count(old)}')
+          s=s.replace(old,new,1)
+          html.write_text(s)
+
+          spec=Path('tests/road-move-bidirectional-live-r13.spec.mjs')
+          t=spec.read_text()
+          stale='  expect(html).toContain("removeHand(p,p.plan.battleId)");'
+          semantic='  expect(html).toContain("let battle=p.plan.battleId;");\n  expect(html).toContain("removeHand(p,battle)");'
+          if stale not in t: raise SystemExit('stale Battle source assertion not found')
+          t=t.replace(stale,semantic,1)
+          anchor="async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}\n"
+          helper="""async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}\nasync function physicalTap(page,locator){\n  const box=await locator.boundingBox();\n  expect(box).not.toBeNull();\n  await page.mouse.click(box.x+box.width/2,box.y+box.height/2);\n}\n"""
+          if anchor not in t: raise SystemExit('snapshot helper anchor missing')
+          t=t.replace(anchor,helper,1)
+          t=t.replace('await next.click();','await physicalTap(page,next);')
+          t=t.replace('await target.click();','await physicalTap(page,target);')
+          spec.write_text(t)
+          PY
+          git diff --check
+          node --test tests/road-move-compatibility-core.test.mjs
+          printf 'base=%s\nhtml_blob_before=%s\n' "8001a76e2d44724f017ef228a62162ae1ea30200" "$(git rev-parse 8001a76e2d44724f017ef228a62162ae1ea30200:browser/GAMEROAD.html)" > r13-evidence.txt
+          printf 'candidate_html=%s\n' "$(git hash-object browser/GAMEROAD.html)" >> r13-evidence.txt
+          grep -F "const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0],moveLimit=draftMoveLimitForPlayer(me);" browser/GAMEROAD.html >/dev/null
+          grep -F "page.mouse.click(box.x+box.width/2,box.y+box.height/2)" tests/road-move-bidirectional-live-r13.spec.mjs >/dev/null
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Run focused physical-input prevalidation
+        shell: bash
+        run: |
+          set -o pipefail
+          cat > .road-r13-playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir: './tests',
+            testMatch: 'road-move-bidirectional-live-r13.spec.mjs',
+            timeout: 45000,
+            expect: { timeout: 8000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            reporter: [['line']],
+            use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true, viewport: { width: 1280, height: 720 }, trace: 'off', screenshot: 'off', video: 'off' },
+            webServer: { command: 'python3 -m http.server 4173 --bind 127.0.0.1', url: 'http://127.0.0.1:4173/browser/GAMEROAD.html', reuseExistingServer: false, timeout: 120000 }
+          });
+          EOF
+          set +e
+          npx playwright test --config=.road-r13-playwright.config.mjs --workers=1 --grep "R13 source contract|move-first exposes|card-first still moves|compatible Road card taps" 2>&1 | tee -a r13-evidence.txt
+          code=${PIPESTATUS[0]}
+          set -e
+          printf 'playwright_exit=%s\n' "$code" >> r13-evidence.txt
+          rm -f .road-r13-playwright.config.mjs
+          exit "$code"
+      - name: Verify branch product bytes remain unchanged
+        if: always()
+        shell: bash
+        run: |
+          git reset --hard HEAD
+          test "$(git rev-parse HEAD:browser/GAMEROAD.html)" = "$(git rev-parse 8001a76e2d44724f017ef228a62162ae1ea30200:browser/GAMEROAD.html)"
+      - name: Upload compact evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: road-r13-prevalidation
+          path: r13-evidence.txt
+          if-no-files-found: warn

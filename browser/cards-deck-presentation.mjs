@@ -901,8 +901,122 @@ export function installFanartLocalSkinCards({ document: doc = globalThis.documen
   fanartInstallations.set(doc, installation); return installation;
 }
 
+const fanartPublicBattleProjectionInstallations = new WeakMap();
+
+export const FANART_PUBLIC_BATTLE_CARD_CONTRACT = Object.freeze({
+  schema: 'gameroad.fanart-public-battle-card.v1',
+  source: 'viewer-local-cardId-only',
+  publicCardsOnly: true,
+  allOwnersSameViewerProjection: true,
+  opponentSpecificToggle: false,
+  secondStorage: false,
+  networkSync: false,
+  gameplayMutation: false,
+  hiddenCardLookup: false,
+});
+
+export function installFanartPublicBattleCardProjection({
+  document: doc = globalThis.document,
+  window: win = globalThis.window,
+  global: runtimeGlobal = globalThis,
+  indexedDB: idb = globalThis.indexedDB,
+  readLocalSkin = null,
+} = {}) {
+  const renderer = runtimeGlobal?.renderBattlePlayerCards;
+  if (!doc?.createElement || typeof renderer !== 'function' || !win?.URL?.createObjectURL) {
+    return Object.freeze({ installed: false, destroy() {} });
+  }
+  const existing = fanartPublicBattleProjectionInstallations.get(runtimeGlobal);
+  if (existing) return existing;
+
+  if (!doc.getElementById?.('gameroad-fanart-public-battle-card-style')) {
+    const style = doc.createElement('style');
+    style.id = 'gameroad-fanart-public-battle-card-style';
+    style.textContent = '.resolutionCard[data-fanart-local-public-card="1"]{position:relative!important;overflow:hidden!important}.resolutionCard>[data-role="fanart-public-battle-card-art"]{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;pointer-events:none;z-index:1}.resolutionCard[data-fanart-local-public-card="1"]>b{position:relative!important;z-index:2!important;padding:1px 2px!important;border-radius:3px!important;background:rgba(0,0,0,.66)!important;color:#fff!important;text-shadow:0 1px 2px #000!important}';
+    (doc.head || doc.documentElement)?.appendChild?.(style);
+  }
+
+  const urls = new Set();
+  let generation = 0;
+  let destroyed = false;
+  const revokeAll = () => {
+    for (const url of urls) win.URL.revokeObjectURL?.(url);
+    urls.clear();
+  };
+  const read = typeof readLocalSkin === 'function'
+    ? readLocalSkin
+    : async (cardId) => fanartReadSkin(idb, cardId);
+
+  const project = async (root, players, ticket) => {
+    const playerNodes = [...(root?.querySelectorAll?.('.resolutionPlayer') ?? [])];
+    for (let playerIndex = 0; playerIndex < players.length; playerIndex += 1) {
+      const cards = Array.isArray(players[playerIndex]?.cards) ? players[playerIndex].cards : [];
+      if (!cards.length) continue;
+      const cardNodes = [...(playerNodes[playerIndex]?.querySelectorAll?.('.resolutionCard') ?? [])];
+      for (let cardIndex = 0; cardIndex < cards.length; cardIndex += 1) {
+        const card = cards[cardIndex];
+        const node = cardNodes[cardIndex];
+        const cardId = normalizeLocalSkinCardId(String(card?.cardId ?? ''));
+        if (!node || !cardId) continue;
+        node.dataset.cardId = cardId;
+        let record = null;
+        try { record = await read(cardId); } catch {}
+        if (destroyed || ticket !== generation) return;
+        const blob = record?.asset?.blob ?? record?.blob ?? null;
+        if (!blob) continue;
+        const url = win.URL.createObjectURL(blob);
+        if (destroyed || ticket !== generation) {
+          win.URL.revokeObjectURL?.(url);
+          return;
+        }
+        urls.add(url);
+        const image = doc.createElement('img');
+        image.dataset.role = 'fanart-public-battle-card-art';
+        image.alt = '';
+        image.src = url;
+        image.setAttribute?.('aria-hidden', 'true');
+        node.dataset.fanartLocalPublicCard = '1';
+        node.dataset.artSource = 'viewer_local';
+        node.setAttribute?.('aria-label', `${String(card?.label ?? cardId)} ${String(card?.value ?? '')}`.trim());
+        node.appendChild?.(image);
+      }
+    }
+  };
+
+  function wrappedRenderBattlePlayerCards(root, players = [], laneGains = [], presentationEvents = []) {
+    generation += 1;
+    const ticket = generation;
+    revokeAll();
+    const result = renderer.apply(this, arguments);
+    void project(root, Array.isArray(players) ? players : [], ticket);
+    return result;
+  }
+
+  runtimeGlobal.renderBattlePlayerCards = wrappedRenderBattlePlayerCards;
+  const installation = Object.freeze({
+    installed: true,
+    contract: FANART_PUBLIC_BATTLE_CARD_CONTRACT,
+    destroy() {
+      if (destroyed) return false;
+      destroyed = true;
+      generation += 1;
+      revokeAll();
+      if (runtimeGlobal.renderBattlePlayerCards === wrappedRenderBattlePlayerCards) {
+        runtimeGlobal.renderBattlePlayerCards = renderer;
+      }
+      fanartPublicBattleProjectionInstallations.delete(runtimeGlobal);
+      return true;
+    },
+  });
+  fanartPublicBattleProjectionInstallations.set(runtimeGlobal, installation);
+  return installation;
+}
+
 function autoInstallFanart(doc, win) {
-  const install = () => installFanartLocalSkinCards({ document: doc, window: win, indexedDB: win?.indexedDB });
+  const install = () => {
+    installFanartLocalSkinCards({ document: doc, window: win, indexedDB: win?.indexedDB });
+    installFanartPublicBattleCardProjection({ document: doc, window: win, global: globalThis, indexedDB: win?.indexedDB });
+  };
   if (doc?.readyState === 'loading') doc.addEventListener?.('DOMContentLoaded', install, { once: true }); else install();
 }
 

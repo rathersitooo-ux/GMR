@@ -1,0 +1,69 @@
+name: HYURIE Saasuna Monolith Census R12
+
+on:
+  push:
+    branches:
+      - sol/hyurie-saasuna-census-r12-20260908
+
+permissions:
+  contents: read
+
+jobs:
+  census:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+
+      - name: Read current canonical card registry evidence
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('browser/GAMEROAD.html', 'utf8');
+
+          const assignmentPositions = [...html.matchAll(/window\.__CARD_DATA__\s*=/g)].map(m => m.index);
+
+          function allPositions(needle) {
+            const out = [];
+            let cursor = 0;
+            while (true) {
+              const index = html.indexOf(needle, cursor);
+              if (index < 0) return out;
+              out.push(index);
+              cursor = index + needle.length;
+            }
+          }
+
+          function inspect(needle) {
+            const positions = allPositions(needle);
+            const first = positions[0] ?? -1;
+            if (first < 0) return { needle, count: 0, positions: [], sameScriptAsCardDataAssignment: false, context: null };
+            const scriptStart = html.lastIndexOf('<script', first);
+            const scriptEnd = html.indexOf('</script>', first);
+            const sameScriptAsCardDataAssignment = assignmentPositions.some(pos => pos > scriptStart && (scriptEnd < 0 || pos < scriptEnd));
+            return {
+              needle,
+              count: positions.length,
+              positions: positions.slice(0, 8),
+              sameScriptAsCardDataAssignment,
+              context: html.slice(Math.max(0, first - 520), Math.min(html.length, first + needle.length + 1250)).replace(/\s+/g, ' ').slice(0, 2000),
+            };
+          }
+
+          const report = {
+            sourceCommit: process.env.GITHUB_SHA,
+            htmlBytes: Buffer.byteLength(html),
+            cardDataAssignments: assignmentPositions,
+            evidence: [
+              inspect('DCG_SAASUNA_HYURIE'),
+              inspect('ヒュリー'),
+              inspect('DCG_SAASUNA'),
+              inspect('サースナー'),
+              inspect('drawFromDeck'),
+              inspect('drawAndReduceCost'),
+            ],
+          };
+          console.log(`CARD_REGISTRY_CENSUS=${JSON.stringify(report)}`);
+          if (assignmentPositions.length === 0) process.exitCode = 2;
+          NODE

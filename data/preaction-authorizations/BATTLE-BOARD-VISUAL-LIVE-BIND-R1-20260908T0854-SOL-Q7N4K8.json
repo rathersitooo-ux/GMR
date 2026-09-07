@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-VISUAL-LIVE-BIND-R1-20260908T0854-SOL-Q7N4K8",
+  "taskId": "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001",
+  "workUnitKey": "BATTLE_BOARD_VISUAL_LIVE_BOOTSTRAP_BINDING_R1",
+  "acquireKey": "BATTLE-BOARD-VISUAL-LIVE-BIND-R1-20260908T0854-SOL-Q7N4K8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "EXISTING_LIVE_BOOTSTRAP_AND_PACKAGED_BATTLE_VISUAL_RUNTIME_DIRECT_READBACK_20260908",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "STATIC_IMPORT_CHAIN_PLUS_EXISTING_RUNTIME_BEHAVIOR_TESTS",
+  "proceedToken": "PROCEED|BATTLE-BOARD-VISUAL-LIVE-BIND-R1-20260908T0854-SOL-Q7N4K8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|COMPOSE_EXISTING_RUNTIME",
+  "authorizationBaseSha": "3e77c804e38dd4314d8d5d7fce6493c4ef91886c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_BOARD_VISUAL_LIVE_BOOTSTRAP_BINDING_R1",
+  "leaseAcquireKey": "BATTLE-BOARD-VISUAL-LIVE-BIND-R1-20260908T0854-SOL-Q7N4K8",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 08:54 JST",
+  "leaseUntilJst": "2026-09-08 09:34 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A607:L607",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-board-visual-live-bind-r1-20260908; browser/board-facility-runtime-mount.mjs; tests/board-facility-battle-visual-live-binding.test.mjs; transient data/preaction-authorizations/BATTLE-BOARD-VISUAL-LIVE-BIND-R1-20260908T0854-SOL-Q7N4K8.json",
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-battle-visual-live-binding.test.mjs"
+  ],
+  "solutionSignature": "Make the already-packaged Battle board visual explanation runtime execute in the current public Browser journey without changing Battle rules, HTML, board authority, or persistence.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "browser/GAMEROAD.html live-imports board-facility-runtime-mount.mjs",
+    "battle-board-visual-explanation-runtime-mount.mjs already implements the player-facing board summary/highlight/pinch behavior",
+    "deploy/cloudflare/scripts/build.mjs already packages the battle-board visual runtime"
+  ],
+  "reuseDecisionEvidenceId": "BATTLE_BOARD_VISUAL_EXISTING_BOOTSTRAP_COMPOSITION_20260908"
+}

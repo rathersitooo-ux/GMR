@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BIGDATA-CTX-INDEX-R18B-20260908T0809-SOL-K7N4Q8",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "BIGDATA_CONTEXT_MANIFEST_INDEX_R18B",
+  "acquireKey": "BIGDATA-CTX-INDEX-R18B-20260908T0809-SOL-K7N4Q8",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BIGDATA_R18B_EXACT_OR_GLOBAL_RETRIEVAL_GAP_20260908T0809",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BIGDATA_R18B_COMPOSE_EXISTING_EVALUATOR_RUNTIME_MANIFEST",
+  "proceedToken": "PROCEED|BIGDATA-CTX-INDEX-R18B-20260908T0809-SOL-K7N4Q8|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|aggregate-only-index|caller-owned-context|no-second-ranker",
+  "authorizationBaseSha": "52474324c4aebf1027e8f9a6b21db4cfed8fcb4e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "BIGDATA_CONTEXT_MANIFEST_INDEX_R18B",
+  "leaseAcquireKey": "BIGDATA-CTX-INDEX-R18B-20260908T0809-SOL-K7N4Q8",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 08:09 JST",
+  "leaseUntilJst": "2026-09-08 08:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A592:L592",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean branch sol/bigdata-context-index-r18b-20260908 from exact main 52474324c4aebf1027e8f9a6b21db4cfed8fcb4e; tools/advice-context-subset-index.mjs; tests/advice-context-subset-index.test.mjs; transient data/preaction-authorizations/BIGDATA-CTX-INDEX-R18B-20260908T0809-SOL-K7N4Q8.json; own PR/check/merge/main readback; GAMEROAD 全作業一覧 row1358 Y:AB checkpoint.",
+  "scope": [
+    "tools/advice-context-subset-index.mjs",
+    "tests/advice-context-subset-index.test.mjs"
+  ],
+  "leaseScope": [
+    "tools/advice-context-subset-index.mjs",
+    "tests/advice-context-subset-index.test.mjs"
+  ],
+  "solutionSignature": "Compose the existing approved-event evaluator into a bounded aggregate-only contextual backoff index whose situation dimensions are explicitly supplied by the caller, then compile only Human-approved aggregate recommendations for constant-time runtime lookup.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "BIGDATA_R18B_REUSE_EXISTING_EVALUATOR_20260908T0809",
+  "solutionSearchEvidence": [
+    "tools/advice-collective-eval.mjs already owns event eligibility, reward/regret ranking, holdout promotion and Human-gated runtime manifest compilation",
+    "the existing evaluator's runtime retrieval is exact-state then global fallback, leaving no partial-context lookup path",
+    "deploy/cloudflare/relay/src/partner-report-store.mjs remains the existing durable receipt/data-flywheel store and is read-only in this work"
+  ],
+  "buildResidualReason": "The existing evaluator has no reusable partial-context index artifact. The residual is limited to an isolated composer and focused tests; ranking, legality, storage and data collection remain owned by existing components."
+}

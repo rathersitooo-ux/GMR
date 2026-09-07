@@ -1,76 +1,65 @@
 export const TUTORIAL_EXPERIENCE_PROFILE_SCHEMA = 'gameroad.tutorial-experience-profile.v1';
 export const TUTORIAL_EXPERIENCE_HELP_SCHEMA = 'gameroad.tutorial-experience-help.v1';
 export const TUTORIAL_EXPERIENCE_PROMPT_SCHEMA = 'gameroad.tutorial-experience-prompt.v1';
+export const TUTORIAL_EXPERIENCE_CONVERSATION_SCHEMA = 'gameroad.tutorial-experience-conversation.v1';
+export const TUTORIAL_SHARED_CONTEXT_SCHEMA = 'gameroad.tutorial-shared-context.v1';
 
 const AUDIENCE_BEGINNER = 'beginner';
 const AUDIENCE_EXPERIENCED = 'experienced';
 const TRANSLATION_BEGINNER = 'plain-beginner';
 const TRANSLATION_SOURCE_GAME = 'source-game-bridge';
 const TRANSLATION_GENERAL_EXPERIENCED = 'general-experienced';
+const RELATIONSHIP_FRAME = 'familiar-peer';
 
 export const TUTORIAL_EXPERIENCE_AUDIENCES = Object.freeze([
-  Object.freeze({ id: AUDIENCE_BEGINNER, label: 'カードゲーム初心者' }),
-  Object.freeze({ id: AUDIENCE_EXPERIENCED, label: 'カードゲーム経験者' }),
+  Object.freeze({ id: AUDIENCE_BEGINNER, label: 'カードゲームはほとんどやらない' }),
+  Object.freeze({ id: AUDIENCE_EXPERIENCED, label: 'カードゲームをやる' }),
 ]);
 
 export const TUTORIAL_EXPERIENCE_SOURCE_GAMES = Object.freeze([
   Object.freeze({
-    id: 'shadowverse',
-    label: 'シャドウバース／シャドウバース ワールズビヨンド',
-    bridge: 'シャドウバースで「このターンに何を使うか」を決める感覚は使える',
-    difference: 'ただしPPやフォロワーをそのまま置き換える操作ではなく、GAMEROADではロードとバトルを別に決める',
-  }),
-  Object.freeze({
     id: 'master-duel',
-    label: '遊戯王 マスターデュエル',
+    label: '遊戯王／マスターデュエル',
     bridge: '遊戯王で役割の違うカードを見分ける感覚は使える',
     difference: 'ただし召喚・魔法・罠のどれかと1対1対応する操作ではない',
   }),
   Object.freeze({
-    id: 'pokemon-pocket',
-    label: 'Pokémon Trading Card Game Pocket（ポケポケ）',
-    bridge: 'ポケポケで今の盤面から次の1手を決める感覚は使える',
-    difference: 'ただしエネルギーを付ける操作やワザを使う操作の置き換えではない',
-  }),
-  Object.freeze({
-    id: 'mtg-arena',
-    label: 'マジック：ザ・ギャザリング アリーナ',
-    bridge: 'MTG Arenaで今使うカードと後に残すカードを分けて考える感覚は使える',
-    difference: 'ただし土地からマナを得て呪文を使う手順を置き換えたものではない',
-  }),
-  Object.freeze({
-    id: 'hearthstone',
-    label: 'ハースストーン',
-    bridge: 'ハースストーンで今のターンに使う手段を選ぶ感覚は使える',
-    difference: 'ただしマナクリスタルを支払ってカードを使う操作の置き換えではない',
-  }),
-  Object.freeze({
     id: 'duel-masters-plays',
-    label: 'デュエル・マスターズ プレイス',
-    bridge: 'デュエプレでカードの役割を分けて見る感覚は使える',
-    difference: 'ただしカードをマナゾーンへ置く操作の置き換えではない',
+    label: 'デュエル・マスターズ／デュエプレ',
+    bridge: 'デュエマでカードの役割や今使う札を分けて見る感覚は使える',
+    difference: 'ただしカードをマナゾーンへ置く操作やシールドの仕組みをそのまま置き換えたものではない',
   }),
   Object.freeze({
-    id: 'one-piece-card-game',
-    label: 'ONE PIECEカードゲーム',
-    bridge: 'ONE PIECEカードゲームで今の役割に合わせてカードを選ぶ感覚は使える',
-    difference: 'ただしドン!!を付与したり支払ったりする操作の置き換えではない',
+    id: 'pokemon-pocket',
+    label: 'ポケモンカードゲーム／ポケポケ',
+    bridge: 'ポケカで今の盤面から次の1手を決める感覚は使える',
+    difference: 'ただしエネルギーを付ける操作やワザを使う操作、サイドを取る勝ち方の置き換えではない',
   }),
   Object.freeze({
-    id: 'marvel-snap',
-    label: 'MARVEL SNAP',
-    bridge: 'MARVEL SNAPで短い判断単位ごとにカードの置き先を決める感覚は使える',
-    difference: 'ただしロケーションへカードを配置する操作の置き換えではない',
+    id: 'shadowverse',
+    label: 'シャドウバース／ワールズビヨンド',
+    bridge: 'シャドバで「このターンに何を使うか」を決める感覚は使える',
+    difference: 'ただしPPやフォロワーをそのまま置き換える操作ではなく、GAMEROADではロードとバトルを別に決める',
   }),
   Object.freeze({
     id: 'other',
-    label: 'その他',
+    label: 'その他のカードゲーム',
     bridge: null,
     difference: null,
   }),
 ]);
 
+export const TUTORIAL_SHARED_INTERESTS = Object.freeze([
+  Object.freeze({ id: 'pachinko-slots', label: 'パチンコ／スロット', commonGroundOnly: true }),
+  Object.freeze({ id: 'horse-racing', label: '競馬', commonGroundOnly: true }),
+  Object.freeze({ id: 'mahjong', label: '麻雀', commonGroundOnly: true }),
+  Object.freeze({ id: 'video-games', label: 'ゲーム全般', commonGroundOnly: true }),
+  Object.freeze({ id: 'other', label: 'ほかにある', commonGroundOnly: true }),
+  Object.freeze({ id: 'none', label: '特にない', commonGroundOnly: true }),
+]);
+
 const SOURCE_GAME_BY_ID = new Map(TUTORIAL_EXPERIENCE_SOURCE_GAMES.map((game) => [game.id, game]));
+const SHARED_INTEREST_BY_ID = new Map(TUTORIAL_SHARED_INTERESTS.map((interest) => [interest.id, interest]));
 const AUDIENCE_IDS = new Set(TUTORIAL_EXPERIENCE_AUDIENCES.map((audience) => audience.id));
 
 function exactToken(value, maxLength = 160) {
@@ -124,6 +113,34 @@ function normalizedProfileStatus(value) {
   return profileSnapshot(audience, SOURCE_GAME_BY_ID.has(sourceGameId) ? sourceGameId : null);
 }
 
+function sharedContextSnapshot(sharedInterestId) {
+  const interest = sharedInterestId ? SHARED_INTEREST_BY_ID.get(sharedInterestId) || null : null;
+  return Object.freeze({
+    schema: TUTORIAL_SHARED_CONTEXT_SCHEMA,
+    sharedInterestId: interest?.id ?? null,
+    sharedInterestLabel: interest?.label ?? null,
+    commonGroundOnly: Boolean(interest?.commonGroundOnly),
+    relationshipFrame: RELATIONSHIP_FRAME,
+    relationshipQuestionnaireRequired: false,
+    requiredForTutorial: false,
+    persistenceOwned: false,
+    tutorialRunOwned: false,
+    saveMutated: false,
+    gameplayAuthorityMutated: false,
+  });
+}
+
+function normalizedSharedContext(value) {
+  if (value == null) return sharedContextSnapshot(null);
+  if (typeof value === 'string') {
+    const id = exactToken(value);
+    return sharedContextSnapshot(SHARED_INTEREST_BY_ID.has(id) ? id : null);
+  }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return sharedContextSnapshot(null);
+  const id = exactToken(value.sharedInterestId);
+  return sharedContextSnapshot(SHARED_INTEREST_BY_ID.has(id) ? id : null);
+}
+
 export function createTutorialExperienceProfileControl({ onChange } = {}) {
   if (onChange !== undefined && typeof onChange !== 'function') {
     throw new TypeError('onChange must be a function when provided');
@@ -166,6 +183,106 @@ export function createTutorialExperienceProfileControl({ onChange } = {}) {
   });
 }
 
+export function createTutorialSharedContextControl({ onChange } = {}) {
+  if (onChange !== undefined && typeof onChange !== 'function') {
+    throw new TypeError('onChange must be a function when provided');
+  }
+  let sharedInterestId = null;
+  const changed = () => { if (typeof onChange === 'function') onChange(); };
+
+  return Object.freeze({
+    chooseSharedInterest(nextSharedInterestId) {
+      const next = exactToken(nextSharedInterestId);
+      if (!SHARED_INTEREST_BY_ID.has(next)) return false;
+      sharedInterestId = next;
+      changed();
+      return true;
+    },
+    clear() {
+      sharedInterestId = null;
+      changed();
+      return true;
+    },
+    status() {
+      return sharedContextSnapshot(sharedInterestId);
+    },
+  });
+}
+
+function conversationOption(id, label) {
+  return Object.freeze({ id, label });
+}
+
+const CONVERSATION_AUDIENCE_OPTIONS = Object.freeze([
+  conversationOption(AUDIENCE_EXPERIENCED, 'やるよ'),
+  conversationOption(AUDIENCE_BEGINNER, 'ほとんどやらない'),
+]);
+
+export function projectTutorialExperienceConversation({
+  experienceStatus = null,
+  sharedContext = null,
+} = {}) {
+  const status = normalizedProfileStatus(experienceStatus);
+  const context = normalizedSharedContext(sharedContext);
+  let stage;
+  let partnerText;
+  let options;
+  let optional = false;
+
+  if (!status.audience) {
+    stage = 'experience-opener';
+    partnerText = 'そういえば、カードゲームって普段やる？';
+    options = CONVERSATION_AUDIENCE_OPTIONS;
+  } else if (status.audience === AUDIENCE_EXPERIENCED && !status.ready) {
+    stage = 'source-game-follow-up';
+    partnerText = '何やってる？ いちばん話が通じるやつに合わせて説明するよ。';
+    options = TUTORIAL_EXPERIENCE_SOURCE_GAMES;
+  } else if (status.audience === AUDIENCE_BEGINNER && !context.sharedInterestId) {
+    stage = 'common-ground-optional';
+    partnerText = 'カードゲームはあんまりなんだ。普段は何やる？ 近い話があればそこから説明できるよ。';
+    options = TUTORIAL_SHARED_INTERESTS;
+    optional = true;
+  } else {
+    stage = 'ready';
+    options = Object.freeze([]);
+    if (status.audience === AUDIENCE_BEGINNER) {
+      partnerText = context.sharedInterestLabel && context.sharedInterestId !== 'none'
+        ? `${context.sharedInterestLabel}の話なら通じそうだね。無理にカードゲーム用語へ寄せず、触りながら説明するよ。`
+        : 'じゃあカードゲーム用語は前提にしないで、触りながら一緒に見ていこ。';
+    } else if (status.sourceGameId === 'other') {
+      partnerText = 'カードゲームは分かるんだね。作品ごとのルールを決めつけず、GAMEROADで違うところから見ていこ。';
+    } else {
+      partnerText = `${status.sourceGameLabel}やってるなら話は早いね。似てるところは使って、違うところだけ先に見よ。`;
+    }
+  }
+
+  return Object.freeze({
+    schema: TUTORIAL_EXPERIENCE_CONVERSATION_SCHEMA,
+    stage,
+    partnerText,
+    options,
+    optional,
+    readyForGameplayExplanation: status.ready,
+    canContinueWithoutSharedInterest: status.ready,
+    audience: status.audience,
+    sourceGameId: status.sourceGameId,
+    sourceGameLabel: status.sourceGameLabel,
+    sharedInterestId: context.sharedInterestId,
+    sharedInterestLabel: context.sharedInterestLabel,
+    commonGroundOnly: context.commonGroundOnly,
+    relationshipFrame: RELATIONSHIP_FRAME,
+    relationshipQuestionnaireRequired: false,
+    presentationOnly: true,
+    persistenceOwned: false,
+    tutorialRunOwned: false,
+    saveMutated: false,
+    gameplayAuthorityMutated: false,
+    autoExecute: false,
+  });
+}
+
+// Compatibility surface for existing callers. New first-Tutorial presentation should prefer
+// projectTutorialExperienceConversation so the same state is expressed as dialogue, not a survey screen.
 export function projectTutorialExperiencePrompt(experienceStatus = null) {
   const status = normalizedProfileStatus(experienceStatus);
   let stage;

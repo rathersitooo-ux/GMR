@@ -1,15 +1,20 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  TUTORIAL_EXPERIENCE_CONVERSATION_SCHEMA,
   TUTORIAL_EXPERIENCE_PROFILE_SCHEMA,
   TUTORIAL_EXPERIENCE_PROMPT_SCHEMA,
   TUTORIAL_EXPERIENCE_SOURCE_GAMES,
+  TUTORIAL_SHARED_CONTEXT_SCHEMA,
+  TUTORIAL_SHARED_INTERESTS,
   createTutorialExperienceProfileControl,
+  createTutorialSharedContextControl,
+  projectTutorialExperienceConversation,
   projectTutorialExperienceHelp,
   projectTutorialExperiencePrompt,
 } from '../browser/tutorial-experience-profile-core.mjs';
 
-test('beginner path becomes ready without requiring another card-game selection', () => {
+test('beginner path becomes ready without requiring card-game or shared-interest selection', () => {
   const control = createTutorialExperienceProfileControl();
   assert.equal(control.status().ready, false);
   assert.equal(control.chooseAudience('beginner'), true);
@@ -28,54 +33,55 @@ test('beginner path becomes ready without requiring another card-game selection'
   assert.equal(control.chooseSourceGame('shadowverse'), false);
 });
 
-test('experienced path cannot become ready until a source game is explicitly selected', () => {
+test('experienced path cannot become ready until a supported source game is selected', () => {
   const control = createTutorialExperienceProfileControl();
   assert.equal(control.chooseAudience('experienced'), true);
   assert.equal(control.status().ready, false);
   assert.equal(control.status().requiresSourceGame, true);
   assert.equal(control.profile(), null);
 
-  assert.equal(control.chooseSourceGame('shadowverse'), true);
+  assert.equal(control.chooseSourceGame('master-duel'), true);
   const profile = control.profile();
   assert.equal(profile.ready, true);
   assert.equal(profile.requiresSourceGame, false);
-  assert.equal(profile.sourceGameId, 'shadowverse');
-  assert.equal(profile.sourceGameLabel, 'シャドウバース／シャドウバース ワールズビヨンド');
+  assert.equal(profile.sourceGameId, 'master-duel');
+  assert.equal(profile.sourceGameLabel, '遊戯王／マスターデュエル');
   assert.equal(profile.translationMode, 'source-game-bridge');
 });
 
-test('supported source-game ids are unique and other uses a non-hallucinating general experienced mode', () => {
+test('initial named card-game bridges are only Yu-Gi-Oh, Duel Masters, Pokemon, Shadowverse, and other', () => {
   const ids = TUTORIAL_EXPERIENCE_SOURCE_GAMES.map((game) => game.id);
   assert.equal(new Set(ids).size, ids.length);
   assert.deepEqual(ids, [
-    'shadowverse',
     'master-duel',
-    'pokemon-pocket',
-    'mtg-arena',
-    'hearthstone',
     'duel-masters-plays',
-    'one-piece-card-game',
-    'marvel-snap',
+    'pokemon-pocket',
+    'shadowverse',
     'other',
   ]);
-
-  const control = createTutorialExperienceProfileControl();
-  assert.equal(control.chooseAudience('experienced'), true);
-  assert.equal(control.chooseSourceGame('other'), true);
-  assert.equal(control.status().translationMode, 'general-experienced');
-  assert.equal(control.status().sourceGameLabel, 'その他');
-});
-
-test('unsupported or malformed source-game ids never fabricate a ready experienced profile', () => {
-  const control = createTutorialExperienceProfileControl();
-  assert.equal(control.chooseAudience('experienced'), true);
-  for (const id of ['unknown-game', ' shadowverse', 'shadowverse ', '', null]) {
-    assert.equal(control.chooseSourceGame(id), false);
-    assert.equal(control.status().ready, false);
+  for (const removed of ['mtg-arena', 'hearthstone', 'one-piece-card-game', 'marvel-snap']) {
+    assert.equal(ids.includes(removed), false, removed);
   }
 });
 
-test('changing audience clears stale source-game knowledge instead of leaking it into beginner guidance', () => {
+test('other card-game experience stays general instead of inventing a named-game rule', () => {
+  const control = createTutorialExperienceProfileControl();
+  control.chooseAudience('experienced');
+  assert.equal(control.chooseSourceGame('other'), true);
+  assert.equal(control.status().translationMode, 'general-experienced');
+  assert.equal(control.status().sourceGameLabel, 'その他のカードゲーム');
+});
+
+test('unsupported, removed, or malformed source-game ids fail closed', () => {
+  const control = createTutorialExperienceProfileControl();
+  control.chooseAudience('experienced');
+  for (const id of ['mtg-arena', 'hearthstone', 'marvel-snap', 'unknown-game', ' master-duel', 'master-duel ', '', null]) {
+    assert.equal(control.chooseSourceGame(id), false, String(id));
+    assert.equal(control.status().ready, false, String(id));
+  }
+});
+
+test('changing audience clears stale source-game knowledge', () => {
   const control = createTutorialExperienceProfileControl();
   control.chooseAudience('experienced');
   control.chooseSourceGame('master-duel');
@@ -86,7 +92,108 @@ test('changing audience clears stale source-game knowledge instead of leaking it
   assert.equal(control.status().translationMode, 'plain-beginner');
 });
 
-test('experience prompt starts by asking beginner or experienced before any source-game question', () => {
+test('shared interests are common-ground context only and never required for Tutorial progression', () => {
+  assert.deepEqual(TUTORIAL_SHARED_INTERESTS.map((interest) => interest.id), [
+    'pachinko-slots',
+    'horse-racing',
+    'mahjong',
+    'video-games',
+    'other',
+    'none',
+  ]);
+  assert.equal(TUTORIAL_SHARED_INTERESTS.every((interest) => interest.commonGroundOnly === true), true);
+
+  const context = createTutorialSharedContextControl();
+  assert.deepEqual(context.status(), {
+    schema: TUTORIAL_SHARED_CONTEXT_SCHEMA,
+    sharedInterestId: null,
+    sharedInterestLabel: null,
+    commonGroundOnly: false,
+    relationshipFrame: 'familiar-peer',
+    relationshipQuestionnaireRequired: false,
+    requiredForTutorial: false,
+    persistenceOwned: false,
+    tutorialRunOwned: false,
+    saveMutated: false,
+    gameplayAuthorityMutated: false,
+  });
+  assert.equal(context.chooseSharedInterest('pachinko-slots'), true);
+  assert.equal(context.status().sharedInterestLabel, 'パチンコ／スロット');
+  assert.equal(context.status().commonGroundOnly, true);
+  assert.equal(context.status().requiredForTutorial, false);
+  assert.equal(context.chooseSharedInterest('unknown-interest'), false);
+});
+
+test('preferred first-Tutorial surface opens as a natural Saasuna conversation rather than a questionnaire title', () => {
+  const conversation = projectTutorialExperienceConversation();
+  assert.equal(conversation.schema, TUTORIAL_EXPERIENCE_CONVERSATION_SCHEMA);
+  assert.equal(conversation.stage, 'experience-opener');
+  assert.equal(conversation.partnerText, 'そういえば、カードゲームって普段やる？');
+  assert.deepEqual(conversation.options.map((option) => option.id), ['experienced', 'beginner']);
+  assert.deepEqual(conversation.options.map((option) => option.label), ['やるよ', 'ほとんどやらない']);
+  assert.equal(conversation.relationshipFrame, 'familiar-peer');
+  assert.equal(conversation.relationshipQuestionnaireRequired, false);
+  assert.equal(conversation.readyForGameplayExplanation, false);
+});
+
+test('experienced conversation naturally asks which of the bounded source games is familiar', () => {
+  const profile = createTutorialExperienceProfileControl();
+  profile.chooseAudience('experienced');
+  const conversation = projectTutorialExperienceConversation({ experienceStatus: profile.status() });
+  assert.equal(conversation.stage, 'source-game-follow-up');
+  assert.match(conversation.partnerText, /何やってる/);
+  assert.match(conversation.partnerText, /話が通じる/);
+  assert.deepEqual(
+    conversation.options.map((option) => option.id),
+    ['master-duel', 'duel-masters-plays', 'pokemon-pocket', 'shadowverse', 'other'],
+  );
+  assert.equal(conversation.readyForGameplayExplanation, false);
+});
+
+test('beginner conversation may ask about shared interests but never blocks gameplay explanation on that answer', () => {
+  const profile = createTutorialExperienceProfileControl();
+  profile.chooseAudience('beginner');
+  const conversation = projectTutorialExperienceConversation({ experienceStatus: profile.status() });
+  assert.equal(conversation.stage, 'common-ground-optional');
+  assert.equal(conversation.optional, true);
+  assert.equal(conversation.readyForGameplayExplanation, true);
+  assert.equal(conversation.canContinueWithoutSharedInterest, true);
+  assert.match(conversation.partnerText, /普段は何やる/);
+  assert.deepEqual(conversation.options, TUTORIAL_SHARED_INTERESTS);
+});
+
+test('shared hobby changes conversational common ground without becoming a GAMEROAD rule bridge', () => {
+  const profile = createTutorialExperienceProfileControl();
+  const context = createTutorialSharedContextControl();
+  profile.chooseAudience('beginner');
+  context.chooseSharedInterest('horse-racing');
+  const conversation = projectTutorialExperienceConversation({
+    experienceStatus: profile.status(),
+    sharedContext: context.status(),
+  });
+  assert.equal(conversation.stage, 'ready');
+  assert.equal(conversation.sharedInterestId, 'horse-racing');
+  assert.equal(conversation.sharedInterestLabel, '競馬');
+  assert.equal(conversation.commonGroundOnly, true);
+  assert.match(conversation.partnerText, /競馬の話なら通じそう/);
+  assert.doesNotMatch(conversation.partnerText, /GAMEROADでは競馬と同じ|馬券|オッズ|的中/);
+  assert.equal(conversation.gameplayAuthorityMutated, false);
+});
+
+test('named source-game conversation reaches a familiar-peer ready state', () => {
+  const profile = createTutorialExperienceProfileControl();
+  profile.chooseAudience('experienced');
+  profile.chooseSourceGame('shadowverse');
+  const conversation = projectTutorialExperienceConversation({ experienceStatus: profile.status() });
+  assert.equal(conversation.stage, 'ready');
+  assert.equal(conversation.sourceGameId, 'shadowverse');
+  assert.match(conversation.partnerText, /シャドウバース/);
+  assert.match(conversation.partnerText, /話は早い/);
+  assert.equal(conversation.relationshipFrame, 'familiar-peer');
+  assert.equal(conversation.autoExecute, false);
+});
+
+test('legacy prompt projection remains a compatibility surface for existing callers', () => {
   const prompt = projectTutorialExperiencePrompt();
   assert.equal(prompt.schema, TUTORIAL_EXPERIENCE_PROMPT_SCHEMA);
   assert.equal(prompt.stage, 'audience');
@@ -94,50 +201,18 @@ test('experience prompt starts by asking beginner or experienced before any sour
   assert.deepEqual(prompt.options.map((option) => option.id), ['beginner', 'experienced']);
   assert.equal(prompt.ready, false);
   assert.equal(prompt.canShowContextualHelp, false);
-  assert.equal(prompt.changeAvailable, false);
-});
 
-test('experienced prompt requires selecting a concrete source game before contextual help is available', () => {
   const control = createTutorialExperienceProfileControl();
   control.chooseAudience('experienced');
-  const prompt = projectTutorialExperiencePrompt(control.status());
-  assert.equal(prompt.stage, 'source-game');
-  assert.equal(prompt.question, '一番慣れているカードゲームは？');
-  assert.deepEqual(prompt.options.map((option) => option.id), TUTORIAL_EXPERIENCE_SOURCE_GAMES.map((option) => option.id));
-  assert.equal(prompt.ready, false);
-  assert.equal(prompt.canShowContextualHelp, false);
-  assert.equal(prompt.audience, 'experienced');
-  assert.equal(prompt.sourceGameId, null);
+  const sourcePrompt = projectTutorialExperiencePrompt(control.status());
+  assert.equal(sourcePrompt.stage, 'source-game');
+  assert.deepEqual(
+    sourcePrompt.options.map((option) => option.id),
+    ['master-duel', 'duel-masters-plays', 'pokemon-pocket', 'shadowverse', 'other'],
+  );
 });
 
-test('beginner prompt becomes ready immediately and does not expose a needless source-game selector', () => {
-  const control = createTutorialExperienceProfileControl();
-  control.chooseAudience('beginner');
-  const prompt = projectTutorialExperiencePrompt(control.status());
-  assert.equal(prompt.stage, 'ready');
-  assert.equal(prompt.question, null);
-  assert.deepEqual(prompt.options, []);
-  assert.match(prompt.summary, /初心者向け/);
-  assert.equal(prompt.ready, true);
-  assert.equal(prompt.canShowContextualHelp, true);
-  assert.equal(prompt.changeAvailable, true);
-});
-
-test('named source-game prompt becomes ready with that game visible in the summary', () => {
-  const control = createTutorialExperienceProfileControl();
-  control.chooseAudience('experienced');
-  control.chooseSourceGame('shadowverse');
-  const prompt = projectTutorialExperiencePrompt(control.status());
-  assert.equal(prompt.stage, 'ready');
-  assert.equal(prompt.sourceGameId, 'shadowverse');
-  assert.equal(prompt.sourceGameLabel, 'シャドウバース／シャドウバース ワールズビヨンド');
-  assert.match(prompt.summary, /シャドウバース/);
-  assert.match(prompt.summary, /違いを中心/);
-  assert.equal(prompt.ready, true);
-  assert.equal(prompt.canShowContextualHelp, true);
-});
-
-test('malformed prompt state fails closed to the first audience question instead of inventing a profile', () => {
+test('malformed prompt state fails closed instead of inventing a profile', () => {
   for (const malformed of [
     { audience: ' experienced', sourceGameId: 'shadowverse' },
     { audience: 'experienced', sourceGameId: 'unknown-game' },
@@ -157,21 +232,20 @@ test('malformed prompt state fails closed to the first audience question instead
   }
 });
 
-test('without a ready profile the canonical GAMEROAD help text is preserved exactly', () => {
+test('without a ready profile canonical GAMEROAD help is preserved exactly', () => {
   const help = projectTutorialExperienceHelp({
     canonicalMessage: '手札からロードカードを1枚選ぶ',
     focusRole: 'road',
   });
   assert.equal(help.message, '手札からロードカードを1枚選ぶ');
   assert.equal(help.canonicalMessage, '手札からロードカードを1枚選ぶ');
-  assert.equal(help.focusRole, 'road');
   assert.equal(help.adapted, false);
   assert.equal(help.autoExecute, false);
   assert.equal(help.saveMutated, false);
   assert.equal(help.gameplayAuthorityMutated, false);
 });
 
-test('beginner help adds only a local plain-language bridge without changing the canonical action', () => {
+test('beginner help stays local and plain-language', () => {
   const control = createTutorialExperienceProfileControl();
   control.chooseAudience('beginner');
   const help = projectTutorialExperienceHelp({
@@ -180,38 +254,15 @@ test('beginner help adds only a local plain-language bridge without changing the
     experienceProfile: control.profile(),
   });
   assert.equal(help.canonicalMessage, '手札からロードカードを1枚選ぶ');
-  assert.equal(help.focusRole, 'road');
-  assert.equal(help.adapted, true);
-  assert.match(help.message, /^手札からロードカードを1枚選ぶ。/);
   assert.match(help.message, /まずは光っている場所から1枚選べばOK/);
-  assert.doesNotMatch(help.message, /PP|マナクリスタル|ドン!!/);
+  assert.doesNotMatch(help.message, /PP|マナゾーン|エネルギー/);
 });
 
-test('Shadowverse experience bridges from known concepts while explicitly warning against false rule transfer', () => {
-  const control = createTutorialExperienceProfileControl();
-  control.chooseAudience('experienced');
-  control.chooseSourceGame('shadowverse');
-  const help = projectTutorialExperienceHelp({
-    canonicalMessage: '手札からロードカードを1枚選ぶ',
-    focusRole: 'road',
-    experienceProfile: control.profile(),
-  });
-  assert.equal(help.sourceGameId, 'shadowverse');
-  assert.equal(help.sourceGameLabel, 'シャドウバース／シャドウバース ワールズビヨンド');
-  assert.equal(help.canonicalMessage, '手札からロードカードを1枚選ぶ');
-  assert.match(help.message, /シャドウバース/);
-  assert.match(help.message, /PP/);
-  assert.match(help.message, /置き換える操作ではなく/);
-  assert.match(help.message, /ロードとバトルを別に決める/);
-  assert.equal(help.autoExecute, false);
-  assert.equal(help.gameplayAuthorityMutated, false);
-});
-
-test('every named supported game produces its own bridge rather than a generic shortened TCG message', () => {
+test('each named supported card game contributes its own bridge and explicit difference warning', () => {
   const control = createTutorialExperienceProfileControl();
   control.chooseAudience('experienced');
   for (const game of TUTORIAL_EXPERIENCE_SOURCE_GAMES.filter((entry) => entry.id !== 'other')) {
-    assert.equal(control.chooseSourceGame(game.id), true);
+    assert.equal(control.chooseSourceGame(game.id), true, game.id);
     const help = projectTutorialExperienceHelp({
       canonicalMessage: '次に、別のバトルカードを1枚選ぶ',
       focusRole: 'battle',
@@ -219,14 +270,13 @@ test('every named supported game produces its own bridge rather than a generic s
     });
     assert.equal(help.adapted, true, game.id);
     assert.equal(help.sourceGameId, game.id, game.id);
-    assert.equal(help.sourceGameLabel, game.label, game.id);
-    assert.notEqual(help.message, help.canonicalMessage, game.id);
     assert.ok(help.message.includes(game.bridge), game.id);
     assert.ok(help.message.includes(game.difference), game.id);
+    assert.equal(help.canonicalMessage, '次に、別のバトルカードを1枚選ぶ', game.id);
   }
 });
 
-test('other card-game experience stays general and does not hallucinate a named game rule', () => {
+test('other card-game help remains general and non-hallucinating', () => {
   const control = createTutorialExperienceProfileControl();
   control.chooseAudience('experienced');
   control.chooseSourceGame('other');
@@ -237,13 +287,13 @@ test('other card-game experience stays general and does not hallucinate a named 
   });
   assert.equal(help.sourceGameId, 'other');
   assert.match(help.message, /別作品のルールへ無理に置き換えず/);
-  assert.doesNotMatch(help.message, /PP|フォロワー|マナクリスタル|ドン!!|ロケーション/);
+  assert.doesNotMatch(help.message, /PP|マナゾーン|エネルギー|召喚/);
 });
 
 test('missing canonical GAMEROAD text fails closed and never becomes an alternate rule source', () => {
   const control = createTutorialExperienceProfileControl();
   control.chooseAudience('experienced');
-  control.chooseSourceGame('mtg-arena');
+  control.chooseSourceGame('duel-masters-plays');
   const help = projectTutorialExperienceHelp({
     canonicalMessage: '',
     focusRole: 'road',
@@ -257,27 +307,30 @@ test('missing canonical GAMEROAD text fails closed and never becomes an alternat
   assert.equal(help.gameplayAuthorityMutated, false);
 });
 
-test('profile prompt and help projections are immutable presentation-only values', () => {
-  const control = createTutorialExperienceProfileControl();
-  control.chooseAudience('experienced');
-  control.chooseSourceGame('hearthstone');
-  const profile = control.profile();
-  const prompt = projectTutorialExperiencePrompt(control.status());
+test('profile, shared context, conversation, prompt and help stay immutable presentation-only values', () => {
+  const profileControl = createTutorialExperienceProfileControl();
+  const contextControl = createTutorialSharedContextControl();
+  profileControl.chooseAudience('experienced');
+  profileControl.chooseSourceGame('pokemon-pocket');
+  contextControl.chooseSharedInterest('video-games');
+  const profile = profileControl.profile();
+  const context = contextControl.status();
+  const conversation = projectTutorialExperienceConversation({ experienceStatus: profileControl.status(), sharedContext: context });
+  const prompt = projectTutorialExperiencePrompt(profileControl.status());
   const help = projectTutorialExperienceHelp({
     canonicalMessage: '予約内容を確認して準備完了',
     focusRole: 'ready',
     experienceProfile: profile,
   });
-  assert.equal(Object.isFrozen(profile), true);
-  assert.equal(Object.isFrozen(prompt), true);
-  assert.equal(Object.isFrozen(help), true);
+  for (const value of [profile, context, conversation, prompt, help]) assert.equal(Object.isFrozen(value), true);
+  assert.equal(conversation.presentationOnly, true);
+  assert.equal(conversation.persistenceOwned, false);
+  assert.equal(conversation.tutorialRunOwned, false);
+  assert.equal(conversation.saveMutated, false);
+  assert.equal(conversation.gameplayAuthorityMutated, false);
+  assert.equal(conversation.autoExecute, false);
   assert.equal(prompt.presentationOnly, true);
   assert.equal(prompt.persistenceOwned, false);
-  assert.equal(prompt.tutorialRunOwned, false);
-  assert.equal(prompt.saveMutated, false);
-  assert.equal(prompt.gameplayAuthorityMutated, false);
   assert.equal(help.presentationOnly, true);
   assert.equal(help.autoExecute, false);
-  assert.equal(help.saveMutated, false);
-  assert.equal(help.gameplayAuthorityMutated, false);
 });

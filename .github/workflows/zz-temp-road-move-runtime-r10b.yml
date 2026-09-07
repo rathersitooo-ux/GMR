@@ -1,0 +1,115 @@
+name: TEMP Road Move Bidirectional Live R10B
+on:
+  push:
+    branches:
+      - sol/road-move-bidirectional-live-r10b-20260908
+permissions:
+  contents: write
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/road-move-bidirectional-live-r10b-20260908
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Adapt existing Road donor onto exact current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='2b1b12d842ad07cc193a58e6e721b6b8908dd488'
+          HTML_BLOB='35f9203e2be95ba07b44c875e26bfe2047a3cee5'
+          test "$(git merge-base HEAD "$BASE")" = "$BASE"
+          test "$(git rev-parse "$BASE:browser/GAMEROAD.html")" = "$HTML_BLOB"
+          if grep -q 'ROAD-MOVE-BIDIRECTIONAL-R10B' browser/GAMEROAD.html; then
+            echo 'R10B product marker already present; validation-only rerun.'
+          else
+            git fetch origin sol/road-move-bidirectional-live-r5-20260906 sol/road-move-bidirectional-live-r6-20260906
+            git show origin/sol/road-move-bidirectional-live-r5-20260906:tools/zz-temp-road-move-runtime-r5.py > /tmp/r10b-base.py
+            git show origin/sol/road-move-bidirectional-live-r6-20260906:tools/zz-temp-road-move-runtime-r6.py > /tmp/r10b-post.py
+            python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('/tmp/r10b-base.py')
+          s=p.read_text()
+          s=s.replace("BASE = '0be3a466b55cbd0af23244bc9fc90b2f5f6640fd'", "BASE = '2b1b12d842ad07cc193a58e6e721b6b8908dd488'")
+          s=re.sub(r"ALLOWED_PRE = \{.*?\}\n", "ALLOWED_PRE = {\n    'data/preaction-authorizations/ROAD-MOVE-RUNTIME-R10B-20260908T0136-SOL-Q7M4N8.json',\n    '.github/workflows/zz-temp-road-move-runtime-r10b.yml',\n}\n", s, count=1, flags=re.S)
+          s=s.replace('road-move-bidirectional-live-r5.spec.mjs','road-move-bidirectional-live-r10b.spec.mjs')
+          s=s.replace('ROAD-MOVE-BIDIRECTIONAL-R5','ROAD-MOVE-BIDIRECTIONAL-R10B')
+          s=s.replace('gameroad-road-move-bidirectional-r5','gameroad-road-move-bidirectional-r10b')
+          s=s.replace('R5 source contract','R10B source contract').replace('R5_PATCH_READY','R10B_PATCH_READY')
+          p.write_text(s)
+          p=Path('/tmp/r10b-post.py')
+          s=p.read_text().replace('road-move-bidirectional-live-r6.spec.mjs','road-move-bidirectional-live-r10b.spec.mjs').replace('R6_POSTPATCH_READY','R10B_POSTPATCH_READY')
+          p.write_text(s)
+          PY
+            python3 /tmp/r10b-base.py
+            python3 /tmp/r10b-post.py
+          fi
+          cat > tests/road-move-bidirectional-live-r10b.spec.mjs <<'EOF'
+          import { test, expect } from '@playwright/test';
+          import fs from 'node:fs';
+          const html=fs.readFileSync(new URL('../browser/GAMEROAD.html',import.meta.url),'utf8');
+
+          test('R10B source keeps one Road draft and leaves Battle selection semantics separate',()=>{
+            expect(html).toContain('ROAD-MOVE-BIDIRECTIONAL-R10B');
+            expect(html).toContain("steps<=normalMoveLimitForRoad(id)");
+            expect(html).toContain('data-road-move-state');
+            expect(html).toContain("compatibleRoadIds.length>1?'使用するロードカードを選択してください'");
+            expect(html).toContain("if(me.plan.roadId===me.plan.battleId){toast('別の札を選択してください')");
+            expect(html).not.toContain('CARD_FIRST');
+            expect(html).not.toContain('MOVE_FIRST');
+          });
+
+          async function boot(page,lowPerf=false){
+            const response=await page.goto('/browser/GAMEROAD.html',{waitUntil:'domcontentloaded'});expect(response?.ok()).toBeTruthy();
+            await page.waitForTimeout(700);await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+            if(lowPerf){const toggle=page.locator('#lowPerf');await expect(toggle).toHaveCount(1);await toggle.evaluate(el=>{el.checked=true;el.dispatchEvent(new Event('change',{bubbles:true}))});}
+          }
+          async function installRoadHeavyDeck(page){return page.evaluate(()=>{const t=window.__GAMEROAD_TEST__;const publicMain=new Set(t.deckPublic().filter(c=>c.slot==='main').map(c=>c.id));const standard=window.__CARD_DATA__.filter(c=>publicMain.has(c.id)&&/^(SP|HT|DI|CL)$/.test(c.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c=>c.id);const royal=standard.filter(id=>t.isRoyalCard(id)).slice(0,3);const nonRoyal=standard.filter(id=>!t.isRoyalCard(id));const road=nonRoyal.filter(id=>{const v=normalMoveLimitForRoad(id);return v>=1&&v<=6});const rest=nonRoyal.filter(id=>!road.includes(id));const main=[...road,...rest].slice(0,37).concat(royal);t.deckSetDraft(main,[]);return {ok:t.deckCommit(),roadCount:road.length}})}
+          async function openRoadBattle(page,lowPerf=false){await boot(page,lowPerf);const deck=await installRoadHeavyDeck(page);expect(deck.ok).toBeTruthy();expect(deck.roadCount).toBeGreaterThanOrEqual(6);const setupGo=page.locator('[data-home-target="setup"]:visible,[data-go="setup"]:visible').first();await expect(setupGo).toBeVisible({timeout:15000});await setupGo.click();const setup=page.locator('section[data-screen="setup"]');await expect(setup).toBeVisible();await setup.locator('[data-content="road_shield"]').click();await setup.locator('[data-mode="2p"]').click();await expect(setup.locator('#startMatch')).toBeEnabled();await setup.locator('#startMatch').click();const battle=page.locator('section[data-screen="battle"]');await expect(battle).toBeVisible();await expect(battle.locator('#phaseTitle')).toContainText('行動を計画');await page.waitForTimeout(250);return battle}
+          async function snap(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}
+          async function limits(page,ids){return page.evaluate(ids=>Object.fromEntries(ids.map(id=>[id,normalMoveLimitForRoad(id)])),ids)}
+
+          test('Road card and movement stay bidirectional with Elastic Focus and undo recomputation',async({page},testInfo)=>{
+            const battle=await openRoadBattle(page,testInfo.project.name.includes('lowperf'));let start=await snap(page);expect(start.battleId).toBeNull();expect(start.draftMoveLimit).toBeGreaterThan(0);expect(start.ordinaryRoadIds.length).toBeGreaterThan(0);
+            const step1=battle.locator('.node.reachable[data-move-distance="1"]').first();await expect(step1).toBeEnabled();await step1.click();let moved=await snap(page);expect(moved.path.length).toBe(2);expect(moved.roadId).toBeNull();expect(moved.battleId).toBeNull();expect(moved.compatibleRoadIds.length).toBeGreaterThan(0);
+            const values=await limits(page,moved.compatibleRoadIds);for(const id of moved.compatibleRoadIds)expect(values[id]).toBeGreaterThanOrEqual(1);
+            const candidate=moved.compatibleRoadIds[0];const beforePath=JSON.stringify(moved.path);await battle.locator(`#hand .handCard[data-card-id="${candidate}"]`).click();await expect.poll(async()=> (await snap(page)).roadId).toBe(candidate);let focused=await snap(page);expect(JSON.stringify(focused.path)).toBe(beforePath);expect(focused.battleId).toBeNull();await expect(battle.locator(`#hand .handCard[data-card-id="${candidate}"]`)).toHaveAttribute('data-road-move-state','FOCUSED');
+
+            while((await snap(page)).path.length>1)await battle.locator('#clearPath').click();start=await snap(page);const startValues=await limits(page,start.ordinaryRoadIds);const ordered=start.ordinaryRoadIds.map(id=>({id,value:startValues[id]})).filter(x=>x.value>0).sort((a,b)=>a.value-b.value);let elastic=null;for(const low of ordered){if(!ordered.some(x=>x.value>low.value))continue;const target=battle.locator(`.node.reachable[data-move-distance="${low.value+1}"]`).first();if(await target.count()){elastic={low,target};break}}expect(elastic,'opening hand must expose a lower Road plus a longer held Road').toBeTruthy();
+            await battle.locator(`#hand .handCard[data-card-id="${elastic.low.id}"]`).click();await expect.poll(async()=> (await snap(page)).roadId).toBe(elastic.low.id);const preElastic=await snap(page);expect(preElastic.path.length).toBe(1);await elastic.target.click();const extended=await snap(page);expect(extended.path.length-1).toBe(elastic.low.value+1);expect(extended.roadId).toBe(elastic.low.id);expect(extended.battleId).toBeNull();expect(extended.compatibleRoadIds).not.toContain(elastic.low.id);expect(extended.compatibleRoadIds.length).toBeGreaterThan(0);await expect(battle.locator(`#hand .handCard[data-card-id="${elastic.low.id}"]`)).toHaveAttribute('data-road-move-state','INVALID_FOCUS');
+            const switchId=extended.compatibleRoadIds[0];const elasticPath=JSON.stringify(extended.path);await battle.locator(`#hand .handCard[data-card-id="${switchId}"]`).click();await expect.poll(async()=> (await snap(page)).roadId).toBe(switchId);const switched=await snap(page);expect(JSON.stringify(switched.path)).toBe(elasticPath);expect(switched.battleId).toBeNull();await expect(battle.locator(`#hand .handCard[data-card-id="${switchId}"]`)).toHaveAttribute('data-road-move-state','FOCUSED');
+            const beforeUndoCount=switched.compatibleRoadIds.length;await battle.locator('#clearPath').click();const backed=await snap(page);expect(backed.path.length).toBe(switched.path.length-1);expect(backed.compatibleRoadIds.length).toBeGreaterThanOrEqual(beforeUndoCount);expect(backed.battleId).toBeNull();
+          });
+          EOF
+          git diff --check
+          node --test tests/road-move-compatibility-core.test.mjs
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Run bounded live Road acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > .road-r10b-playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({testDir:'./tests',testMatch:'road-move-bidirectional-live-r10b.spec.mjs',timeout:50000,expect:{timeout:8000},workers:1,retries:0,reporter:[['line']],use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,trace:'off',screenshot:'off',video:'off'},projects:[{name:'desktop-1280x720',use:{viewport:{width:1280,height:720}}},{name:'portrait-390x844',use:{viewport:{width:390,height:844}}},{name:'landscape-844x390',use:{viewport:{width:844,height:390}}},{name:'reduced-motion-844x390',use:{viewport:{width:844,height:390},reducedMotion:'reduce'}},{name:'lowperf-844x390',use:{viewport:{width:844,height:390}}}],webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1',url:'http://127.0.0.1:4173/browser/GAMEROAD.html',reuseExistingServer:false,timeout:120000}});
+          EOF
+          npx playwright test --config=.road-r10b-playwright.config.mjs --workers=1
+          rm -f .road-r10b-playwright.config.mjs
+      - name: Commit only accepted product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add browser/GAMEROAD.html tests/road-move-bidirectional-live-r10b.spec.mjs
+          if git diff --cached --quiet; then echo 'No product delta to commit.'; exit 0; fi
+          git config user.name 'gameroad-road-r10b'
+          git config user.email 'actions@users.noreply.github.com'
+          git commit -m 'Battle: make Road card and movement bidirectional'
+          git push origin HEAD:sol/road-move-bidirectional-live-r10b-20260908

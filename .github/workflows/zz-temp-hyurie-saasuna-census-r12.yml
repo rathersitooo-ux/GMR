@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - sol/hyurie-saasuna-census-r12-20260908
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -68,4 +71,4 @@ jobs:
           if (assignmentPositions.length === 0) process.exitCode = 2;
           NODE
 
-# Trigger commit for branch-local evidence runner; delete after readback.
+# Branch-only evidence runner; delete after readback.

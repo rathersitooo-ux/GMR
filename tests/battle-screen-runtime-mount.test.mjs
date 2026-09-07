@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { createBattleScreenModel } from '../browser/battle-screen-presentation-core.mjs';
 import {
   BATTLE_SCREEN_RUNTIME,
-  mountBattleScreenExternalSurface
+  mountBattleScreenExternalSurface,
+  resolveViewerLocalPlayedCardArt
 } from '../browser/battle-screen-runtime-mount.mjs';
 
 class FakeElement {
@@ -41,6 +42,12 @@ class FakeElement {
   getAttribute(name) {
     return this.attributes.has(name) ? this.attributes.get(name) : null;
   }
+  querySelector(selector) {
+    if (selector === '[data-role="fanart-local-skin-overlay"]') {
+      return walk(this, node => node !== this && node.dataset?.role === 'fanart-local-skin-overlay');
+    }
+    return null;
+  }
   get firstChild() {
     return this.children[0] ?? null;
   }
@@ -72,6 +79,11 @@ class FakeDocument {
     }
     return null;
   }
+  querySelectorAll(selector) {
+    if (selector !== '#collectionGrid [data-id]') return [];
+    const grid = this.getElementById('collectionGrid');
+    return grid?.children?.filter(node => typeof node.dataset?.id === 'string') ?? [];
+  }
 }
 
 const participants = [
@@ -82,6 +94,22 @@ const participants = [
 ];
 
 const document = new FakeDocument();
+const collectionGrid = document.createElement('section');
+collectionGrid.id = 'collectionGrid';
+const collectionC1 = document.createElement('article');
+collectionC1.dataset.id = 'C1';
+const localC1Art = document.createElement('img');
+localC1Art.dataset.role = 'fanart-local-skin-overlay';
+localC1Art.src = 'blob:gameroad-local-c1';
+collectionC1.appendChild(localC1Art);
+collectionGrid.appendChild(collectionC1);
+document.body.appendChild(collectionGrid);
+assert.deepEqual(resolveViewerLocalPlayedCardArt(document, 'C1'), {
+  src: 'blob:gameroad-local-c1',
+  source: 'viewer_local'
+});
+assert.equal(resolveViewerLocalPlayedCardArt(document, 'C2'), null);
+
 const root = document.createElement('main');
 root.setAttribute('data-gr-battle-screen-root', '');
 document.body.appendChild(root);
@@ -148,6 +176,7 @@ assert.ok(runtimeStyle.textContent.includes('[data-gr-battle-screen="1"] #battle
 assert.ok(runtimeStyle.textContent.includes('.grBattleHudSettings{pointer-events:auto'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleHudChainArrow'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleHudLoad'));
+assert.ok(runtimeStyle.textContent.includes('.grBattleHudPlayedCardArt'));
 assert.ok(runtimeStyle.textContent.includes('[data-battle-current-action]'));
 assert.ok(runtimeStyle.textContent.includes('max-width:min(42vw,420px)'));
 assert.ok(runtimeStyle.textContent.includes('[data-battle-progress-guide]'));
@@ -235,10 +264,16 @@ assert.equal(runtime.hud.turnValue.dataset.resolved, 'true');
 assert.equal(runtime.hud.loadValue.dataset.resolved, 'true');
 assert.equal(runtime.hud.root.dataset.playedCardCount, '3');
 assert.equal(runtime.hud.chain.children.length, 5);
-assert.deepEqual(
-  runtime.hud.chain.children.filter(node => node.className === 'grBattleHudPlayedCard').map(node => node.dataset.cardId),
-  ['C1', 'C2', 'C3']
-);
+const playedCardNodes = runtime.hud.chain.children.filter(node => node.className === 'grBattleHudPlayedCard');
+assert.deepEqual(playedCardNodes.map(node => node.dataset.cardId), ['C1', 'C2', 'C3']);
+assert.equal(playedCardNodes[0].dataset.artSource, 'viewer_local');
+assert.equal(playedCardNodes[0].getAttribute('aria-label'), 'CARD-1');
+assert.equal(playedCardNodes[0].children.length, 1);
+assert.equal(playedCardNodes[0].children[0].tagName, 'IMG');
+assert.equal(playedCardNodes[0].children[0].src, 'blob:gameroad-local-c1');
+assert.equal(playedCardNodes[0].children[0].getAttribute('aria-hidden'), 'true');
+assert.equal(playedCardNodes[1].textContent, 'CARD-2');
+assert.equal(playedCardNodes[1].dataset.artSource, undefined);
 assert.deepEqual(
   runtime.hud.chain.children.filter(node => node.className === 'grBattleHudChainArrow').map(node => node.textContent),
   ['▷', '▷']

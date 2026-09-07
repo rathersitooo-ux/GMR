@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-BOARD-HIERARCHY-R1-20260908T0849-SOL-K7N4Q2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_BOARD_DOMINANCE_PERIPHERAL_STATUS_R1",
+  "acquireKey": "BATTLE-BOARD-HIERARCHY-R1-20260908T0849-SOL-K7N4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BATTLE-HIERARCHY-CURRENT-CSS-AUDIT-20260908",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BATTLE-SCREEN-FOCUSED-NODE-TEST",
+  "proceedToken": "PROCEED|BATTLE-BOARD-HIERARCHY-R1-20260908T0849-SOL-K7N4Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|presentation-only|board-first",
+  "authorizationBaseSha": "2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_BOARD_DOMINANCE_PERIPHERAL_STATUS_R1",
+  "leaseAcquireKey": "BATTLE-BOARD-HIERARCHY-R1-20260908T0849-SOL-K7N4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 08:49 JST",
+  "leaseUntilJst": "2026-09-08 09:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A603:L603",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean branch sol/battle-board-hierarchy-r1-20260908 from exact main 2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; transient data/preaction-authorizations/BATTLE-BOARD-HIERARCHY-R1-20260908T0849-SOL-K7N4Q2.json; own PR/check/merge/main/public readback. READ_ONLY: browser/GAMEROAD.html; browser/battle-janken-slidepad-runtime-mount.mjs; browser/battle-playable-hand-row-roulette-runtime.mjs; Battle rules/state/save/economy/network.",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "prohibitedScope": [
+    "browser/GAMEROAD.html",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "browser/battle-playable-hand-row-roulette-runtime.mjs",
+    "Battle rules/state/save/economy/network"
+  ],
+  "intendedDiff": "Reduce the presentation-only four-player public causal/status surface from a dominant right-half 2x2 panel to a compact peripheral rail/strip so the underlying Battle board remains the primary visual surface, while preserving all four participants, role cues, Shield L/C/R rails, public afterstate, HUD and current-action semantics.",
+  "idempotency": "Fresh-read main and exact target blobs before mutation and merge; if current main already makes the four-player public surface compact/peripheral without losing semantics, stop without duplication.",
+  "rollback": "Do not merge on failed focused tests or Required Gate; an unmerged isolated branch leaves current main unchanged."
+}

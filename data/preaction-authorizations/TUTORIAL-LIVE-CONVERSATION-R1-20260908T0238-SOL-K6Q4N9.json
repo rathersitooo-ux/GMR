@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "TUTORIAL-LIVE-CONVERSATION-R1-20260908T0238-SOL-K6Q4N9",
+  "taskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "workUnitKey": "TUTORIAL_EXPERIENCE_CONVERSATION_LIVE_BATTLE_R1",
+  "acquireKey": "TUTORIAL-LIVE-CONVERSATION-R1-20260908T0238-SOL-K6Q4N9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "current-main-partner-battle-mount-bounded-owner-target-readback-no-first-tutorial-authority",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing-partner-runtime-focused-node-tests-plus-fail-closed-eligibility-contract",
+  "proceedToken": "PROCEED|TUTORIAL-LIVE-CONVERSATION-R1-20260908T0238-SOL-K6Q4N9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|adapt-existing-partner-battle-mount-and-tutorial-core",
+  "authorizationBaseSha": "38acd925a55ec0f19c38b23ced17f683f6d48dd0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "TUTORIAL_EXPERIENCE_CONVERSATION_LIVE_BATTLE_R1",
+  "leaseAcquireKey": "TUTORIAL-LIVE-CONVERSATION-R1-20260908T0238-SOL-K6Q4N9",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 02:48 JST",
+  "leaseUntilJst": "2026-09-08 03:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A560:L560",
+  "leaseExactMutableResources": "browser/partner-advice-runtime-mount.mjs; tests/partner-advice-runtime-mount.test.mjs; data/preaction-authorizations/TUTORIAL-LIVE-CONVERSATION-R1-20260908T0238-SOL-K6Q4N9.json",
+  "scope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "data/preaction-authorizations/TUTORIAL-LIVE-CONVERSATION-R1-20260908T0238-SOL-K6Q4N9.json"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "data/preaction-authorizations/TUTORIAL-LIVE-CONVERSATION-R1-20260908T0238-SOL-K6Q4N9.json"
+  ],
+  "solutionSignature": "tutorial-live-battle-saasuna-experience-conversation-contextual-help",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "current-main-partner-battle-mount-and-tutorial-conversation-core",
+  "solutionSearchEvidence": [
+    "browser/partner-advice-runtime-mount.mjs:mountPartnerAdviceChatPresentation",
+    "browser/partner-advice-runtime-mount.mjs:createBattleContextualTutorialReplayControl",
+    "browser/tutorial-experience-profile-core.mjs:projectTutorialExperienceConversation",
+    "browser/tutorial-experience-profile-core.mjs:projectTutorialExperienceHelp",
+    "CURRENT:Y1242:FIRST_BATTLE_LAYER_REPRIORITIZATION_USER_EXPLICIT"
+  ]
+}

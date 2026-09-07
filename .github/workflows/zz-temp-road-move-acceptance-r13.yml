@@ -64,11 +64,11 @@ jobs:
           if stale not in t: raise SystemExit('stale Battle source assertion not found')
           t=t.replace(stale,semantic,1)
           anchor="async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}\n"
-          helper="""async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}\nasync function physicalTap(page,locator){\n  const box=await locator.boundingBox();\n  expect(box).not.toBeNull();\n  await page.mouse.click(box.x+box.width/2,box.y+box.height/2);\n}\n"""
+          helper="""async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}\nasync function physicalTapReachable(page,distance=1){\n  const point=await page.evaluate((distance)=>{\n    const nodes=[...document.querySelectorAll(`.node.reachable[data-move-distance=\"${distance}\"]`)];\n    for(const node of nodes){\n      const r=node.getBoundingClientRect(),style=getComputedStyle(node);\n      if(!(r.width>0&&r.height>0)||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)continue;\n      const x=r.left+r.width/2,y=r.top+r.height/2,hit=document.elementFromPoint(x,y);\n      if(hit&&(hit===node||node.contains(hit)))return{x,y,pos:node.dataset.pos};\n    }\n    return null;\n  },String(distance));\n  expect(point).not.toBeNull();\n  await page.mouse.click(point.x,point.y);\n}\n"""
           if anchor not in t: raise SystemExit('snapshot helper anchor missing')
           t=t.replace(anchor,helper,1)
-          t=t.replace('await next.click();','await physicalTap(page,next);')
-          t=t.replace('await target.click();','await physicalTap(page,target);')
+          t=t.replace('await next.click();','await physicalTapReachable(page,1);')
+          t=t.replace('await target.click();','await physicalTapReachable(page,targetDistance);')
           spec.write_text(t)
           PY
           git diff --check
@@ -76,7 +76,8 @@ jobs:
           printf 'base=%s\nhtml_blob_before=%s\n' "8001a76e2d44724f017ef228a62162ae1ea30200" "$(git rev-parse 8001a76e2d44724f017ef228a62162ae1ea30200:browser/GAMEROAD.html)" > r13-evidence.txt
           printf 'candidate_html=%s\n' "$(git hash-object browser/GAMEROAD.html)" >> r13-evidence.txt
           grep -F "const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0],moveLimit=draftMoveLimitForPlayer(me);" browser/GAMEROAD.html >/dev/null
-          grep -F "page.mouse.click(box.x+box.width/2,box.y+box.height/2)" tests/road-move-bidirectional-live-r13.spec.mjs >/dev/null
+          grep -F "document.elementFromPoint(x,y)" tests/road-move-bidirectional-live-r13.spec.mjs >/dev/null
+          grep -F "page.mouse.click(point.x,point.y)" tests/road-move-bidirectional-live-r13.spec.mjs >/dev/null
       - name: Install Playwright Chromium
         run: |
           npm install --no-save --no-package-lock @playwright/test@1.62.0

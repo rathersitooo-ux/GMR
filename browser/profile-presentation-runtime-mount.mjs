@@ -1,4 +1,4 @@
-const PROFILE_PRESENTATION_VERSION = 'PROFILE_IDENTITY_PRESENTATION_R1B';
+const PROFILE_PRESENTATION_VERSION = 'PROFILE_IDENTITY_PRESENTATION_R1C';
 const ALLOWED_PUBLIC_FIELDS = Object.freeze(['rank', 'rating', 'publicPlayerId', 'mode']);
 
 function cleanText(value, max = 80) {
@@ -66,9 +66,9 @@ export function readCurrentProfileAuthority(win = globalThis) {
 }
 
 function ensureStyle(doc) {
-  if (doc.getElementById('gameroad-profile-identity-r1b-style')) return;
+  if (doc.getElementById('gameroad-profile-presentation-r1c-style')) return;
   const style = doc.createElement('style');
-  style.id = 'gameroad-profile-identity-r1b-style';
+  style.id = 'gameroad-profile-presentation-r1c-style';
   style.textContent = `
 [data-screen="profile"] .profileLegacyMetrics{display:none!important}
 [data-screen="profile"] .profileStats{display:flex;flex-direction:column;gap:12px}
@@ -81,8 +81,17 @@ function ensureStyle(doc) {
 [data-screen="profile"] .profileIdentityCopy b{display:block;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px}
 [data-screen="profile"] .profileRecordsNote{border-left:3px solid var(--a);background:rgba(154,240,213,.06);padding:9px 10px;color:#c9ddd6;font-size:12px;line-height:1.45}
 [data-screen="profile"] .profileActions{margin-top:auto}
-@media(max-width:540px) and (orientation:portrait){[data-screen="profile"] .profileIdentitySummary{grid-template-columns:1fr}[data-screen="profile"] .profileIdentityCard{min-height:72px}}
-@media(max-height:470px) and (orientation:landscape){[data-screen="profile"] .profileStats{gap:6px;padding:8px}[data-screen="profile"] .profileIdentityCard{min-height:58px;padding:6px;grid-template-columns:36px minmax(0,1fr);gap:7px}[data-screen="profile"] .profileIdentityMark{width:36px;height:36px;font-size:16px}[data-screen="profile"] .profileIdentityCopy b{font-size:12px}[data-screen="profile"] .profileRecordsNote{padding:5px 7px;font-size:10px;line-height:1.35}.profileActions{margin-top:0}}
+[data-screen="records"] #recordsList .record[data-records-selectable="true"]{cursor:pointer;outline:1px solid transparent;outline-offset:2px;transition:transform .14s ease,outline-color .14s ease,background-color .14s ease}
+[data-screen="records"] #recordsList .record[data-records-selectable="true"]:focus-visible{outline:2px solid var(--a);outline-offset:3px}
+[data-screen="records"] #recordsList .record[data-records-selected="true"]{outline:2px solid var(--a);outline-offset:2px;transform:translateY(-2px);background:rgba(154,240,213,.08)}
+[data-screen="records"] .recordsMatchDetail{margin-top:10px;border:1px solid var(--line);border-left:4px solid var(--a);background:linear-gradient(145deg,rgba(14,47,39,.88),rgba(6,20,17,.9));padding:12px;display:grid;gap:7px}
+[data-screen="records"] .recordsMatchDetail[hidden]{display:none!important}
+[data-screen="records"] .recordsMatchDetail h3{margin:0;font-size:14px;color:var(--a);letter-spacing:.03em}
+[data-screen="records"] .recordsMatchDetailSummary{margin:0;font-size:13px;line-height:1.55;color:#eef7f3}
+[data-screen="records"] .recordsMatchDetailDeck{margin:0;padding-top:7px;border-top:1px solid rgba(255,255,255,.12);font-size:12px;line-height:1.45;color:var(--muted)}
+@media(max-width:540px) and (orientation:portrait){[data-screen="profile"] .profileIdentitySummary{grid-template-columns:1fr}[data-screen="profile"] .profileIdentityCard{min-height:72px}[data-screen="records"] .recordsMatchDetail{padding:10px}}
+@media(max-height:470px) and (orientation:landscape){[data-screen="profile"] .profileStats{gap:6px;padding:8px}[data-screen="profile"] .profileIdentityCard{min-height:58px;padding:6px;grid-template-columns:36px minmax(0,1fr);gap:7px}[data-screen="profile"] .profileIdentityMark{width:36px;height:36px;font-size:16px}[data-screen="profile"] .profileIdentityCopy b{font-size:12px}[data-screen="profile"] .profileRecordsNote{padding:5px 7px;font-size:10px;line-height:1.35}.profileActions{margin-top:0}[data-screen="records"] .recordsMatchDetail{margin-top:6px;padding:7px;gap:4px}[data-screen="records"] .recordsMatchDetail h3{font-size:11px}[data-screen="records"] .recordsMatchDetailSummary,[data-screen="records"] .recordsMatchDetailDeck{font-size:10px;line-height:1.35}}
+@media(prefers-reduced-motion:reduce){[data-screen="records"] #recordsList .record[data-records-selectable="true"]{transition:none}[data-screen="records"] #recordsList .record[data-records-selected="true"]{transform:none}}
 `;
   doc.head?.appendChild(style);
 }
@@ -108,6 +117,104 @@ function identityCard(doc, role, label, identity) {
   copy.append(kicker, name);
   card.append(mark, copy);
   return card;
+}
+
+function recordSummaryText(row) {
+  if (!row) return '';
+  const source = typeof row.innerText === 'string' ? row.innerText : row.textContent;
+  return cleanText(source, 280);
+}
+
+function ensureRecordsDetailPanel(doc, screen, list) {
+  let panel = screen.querySelector('.recordsMatchDetail');
+  if (panel) return panel;
+
+  panel = doc.createElement('section');
+  panel.className = 'recordsMatchDetail';
+  panel.id = 'recordsMatchDetail';
+  panel.hidden = true;
+  panel.setAttribute('aria-live', 'polite');
+  panel.setAttribute('aria-labelledby', 'recordsMatchDetailTitle');
+
+  const title = doc.createElement('h3');
+  title.id = 'recordsMatchDetailTitle';
+  title.textContent = '選択した対戦';
+
+  const summary = doc.createElement('p');
+  summary.className = 'recordsMatchDetailSummary';
+
+  const deck = doc.createElement('p');
+  deck.className = 'recordsMatchDetailDeck';
+  deck.textContent = '使用デッキ：この対戦履歴では未記録です。';
+
+  panel.append(title, summary, deck);
+  list.insertAdjacentElement('afterend', panel);
+  return panel;
+}
+
+function selectRecordRow(row, list, panel) {
+  if (!row || !list || !panel) return;
+  for (const candidate of list.querySelectorAll('.record')) {
+    const selected = candidate === row;
+    candidate.dataset.recordsSelected = selected ? 'true' : 'false';
+    candidate.setAttribute('aria-expanded', selected ? 'true' : 'false');
+  }
+
+  const summary = recordSummaryText(row);
+  const summaryNode = panel.querySelector('.recordsMatchDetailSummary');
+  if (summaryNode) summaryNode.textContent = summary || '対戦内容を確認できませんでした。';
+  panel.hidden = false;
+}
+
+function bindRecordsInteraction(list, panel) {
+  if (list.dataset.recordsInteractionBound === 'true') return;
+  list.dataset.recordsInteractionBound = 'true';
+
+  list.addEventListener('click', (event) => {
+    const row = event.target?.closest?.('.record');
+    if (!row || !list.contains(row)) return;
+    selectRecordRow(row, list, panel);
+  });
+
+  list.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const row = event.target?.closest?.('.record');
+    if (!row || event.target !== row || !list.contains(row)) return;
+    event.preventDefault();
+    selectRecordRow(row, list, panel);
+  });
+}
+
+export function mountRecordsPresentation(doc = globalThis.document) {
+  if (!doc?.querySelector) return Object.freeze({ ok: false, reason: 'document_unavailable' });
+  const screen = doc.querySelector('section[data-screen="records"]');
+  const list = screen?.querySelector('#recordsList');
+  if (!screen || !list) return Object.freeze({ ok: false, reason: 'records_surface_missing' });
+
+  ensureStyle(doc);
+  const panel = ensureRecordsDetailPanel(doc, screen, list);
+  const rows = Array.from(list.querySelectorAll('.record'));
+
+  for (const row of rows) {
+    const summary = recordSummaryText(row);
+    row.dataset.recordsSelectable = 'true';
+    if (!row.hasAttribute('role')) row.setAttribute('role', 'button');
+    if (!row.hasAttribute('tabindex')) row.tabIndex = 0;
+    row.setAttribute('aria-controls', panel.id);
+    if (!row.hasAttribute('aria-expanded')) row.setAttribute('aria-expanded', 'false');
+    if (summary) row.setAttribute('aria-label', `${summary} 詳細を開く`);
+  }
+
+  bindRecordsInteraction(list, panel);
+  screen.dataset.recordsPresentation = PROFILE_PRESENTATION_VERSION;
+
+  return Object.freeze({
+    ok: true,
+    version: PROFILE_PRESENTATION_VERSION,
+    recordCount: rows.length,
+    selectableCount: rows.filter((row) => row.dataset.recordsSelectable === 'true').length,
+    detailVisible: !panel.hidden,
+  });
 }
 
 export function mountProfilePresentation(doc = globalThis.document, win = globalThis) {
@@ -165,19 +272,31 @@ export function mountProfilePresentation(doc = globalThis.document, win = global
 
 function installRuntime(doc = globalThis.document, win = globalThis) {
   if (!doc?.querySelector || !win?.MutationObserver) return;
-  const screen = doc.querySelector('section[data-screen="profile"]');
-  if (!screen) return;
+  const profileScreen = doc.querySelector('section[data-screen="profile"]');
+  const recordsScreen = doc.querySelector('section[data-screen="records"]');
+  if (!profileScreen && !recordsScreen) return;
+
   const refresh = () => {
-    if (screen.classList.contains('active')) mountProfilePresentation(doc, win);
+    if (profileScreen?.classList.contains('active')) mountProfilePresentation(doc, win);
+    if (recordsScreen?.classList.contains('active')) mountRecordsPresentation(doc);
   };
-  const observer = new win.MutationObserver(refresh);
-  observer.observe(screen, { attributes: true, attributeFilter: ['class'] });
+
+  if (profileScreen) {
+    const profileObserver = new win.MutationObserver(refresh);
+    profileObserver.observe(profileScreen, { attributes: true, attributeFilter: ['class'] });
+  }
+  if (recordsScreen) {
+    const recordsObserver = new win.MutationObserver(refresh);
+    recordsObserver.observe(recordsScreen, { attributes: true, attributeFilter: ['class'], childList: true, subtree: true });
+  }
+
   win.addEventListener?.('pageshow', refresh);
   refresh();
   win.GAMEROAD_PROFILE_PRESENTATION = Object.freeze({
     version: PROFILE_PRESENTATION_VERSION,
     refresh,
     snapshot: () => mountProfilePresentation(doc, win),
+    recordsSnapshot: () => mountRecordsPresentation(doc),
   });
 }
 
@@ -186,11 +305,13 @@ if (typeof document !== 'undefined' && typeof window !== 'undefined') installRun
 export const PROFILE_PRESENTATION_CONTRACT = Object.freeze({
   version: PROFILE_PRESENTATION_VERSION,
   source: 'GAMEROAD_PARTNER_STATE',
+  recordsSurfaceSource: '#recordsList .record',
   publicFieldAllowlist: ALLOWED_PUBLIC_FIELDS,
   favoriteCardsRequireOwnershipAuthority: true,
   maxFavoriteCards: 3,
   publicDeck: false,
   freeComment: false,
   detailedRecordsRoute: 'records',
+  recordsPersistence: 'existing-history-only',
   persistence: 'none',
 });

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "FANART-PUBLIC-ALL-CARDS-R2-20260908T0810-SOL-M7Q4N6",
+  "taskId": "FANART-LOCAL-CARD-CREATOR-BROWSER-001",
+  "workUnitKey": "FANART_PUBLIC_REVEAL_SAME_LOCAL_ART_R2",
+  "acquireKey": "FANART-PUBLIC-ALL-CARDS-R2-20260908T0810-SOL-M7Q4N6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_USER_CORRECTION_PLUS_EXISTING_LOCAL_SKIN_AND_PUBLIC_BATTLE_RENDERER",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_FOCUSED_CARDS_DECK_TEST_33_OF_33_PASS_WITH_SELF_AND_OPPONENT_SAME_CARDID",
+  "proceedToken": "PROCEED|FANART-PUBLIC-ALL-CARDS-R2-20260908T0810-SOL-M7Q4N6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ADAPT_EXISTING_LOCAL_ART_TO_EXISTING_PUBLIC_BATTLE_RENDERER",
+  "authorizationBaseSha": "52474324c4aebf1027e8f9a6b21db4cfed8fcb4e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "FANART-LOCAL-CARD-CREATOR-BROWSER-001",
+  "leaseWorkUnitKey": "FANART_PUBLIC_REVEAL_SAME_LOCAL_ART_R2",
+  "leaseAcquireKey": "FANART-PUBLIC-ALL-CARDS-R2-20260908T0810-SOL-M7Q4N6",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 08:10 JST",
+  "leaseUntilJst": "2026-09-08 09:09 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A593:L593",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean branch sol/fanart-public-all-cards-r2-20260908 from exact main 52474324c4aebf1027e8f9a6b21db4cfed8fcb4e; browser/cards-deck-presentation.mjs; tests/cards-deck-presentation.test.mjs; data/preaction-authorizations/FANART-PUBLIC-ALL-CARDS-R2-20260908T0810-SOL-M7Q4N6.json; own PR/check/merge/main/public/readback. READ_ONLY: browser/GAMEROAD.html; browser/battle-screen-runtime-mount.mjs; Battle rules/state/save/economy/network.",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "data/preaction-authorizations/FANART-PUBLIC-ALL-CARDS-R2-20260908T0810-SOL-M7Q4N6.json"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "data/preaction-authorizations/FANART-PUBLIC-ALL-CARDS-R2-20260908T0810-SOL-M7Q4N6.json"
+  ],
+  "solutionSignature": "viewer-local-cardid-art-on-existing-public-battle-card-renderer",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_R2_ADAPT_EXISTING_INDEXEDDB_LOCAL_SKIN_AND_RENDERBATTLEPLAYERCARDS",
+  "solutionSearchEvidence": [
+    "main:browser/cards-deck-presentation.mjs:existing viewer-local IndexedDB cardId skin storage and overlay",
+    "main:browser/GAMEROAD.html:existing public renderBattlePlayerCards(root,players,...) with players[].cards[].cardId",
+    "main:browser/battle-screen-runtime-mount.mjs:existing viewer-local self played-card art projection proves local cardId art seam",
+    "GitHub:PR#1042:historical viewer-local opponent preference intent without live Battle consumer",
+    "GitHub:PR#1290:R1 tested implementation 33/33 before v1 PREACTION schema rejection"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "FANART-OPPONENT-HOST-CENSUS-R1-20260908T0656",
+  "taskId": "FANART-LOCAL-CARD-CREATOR-BROWSER-001",
+  "workUnitKey": "FANART_OPPONENT_REAL_CARD_HOST_AUTHORITY_CENSUS_R1",
+  "acquireKey": "FANART-OPPONENT-HOST-CENSUS-R1-20260908T0656-SOL-K8N4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ROW111_OPPONENT_REAL_HOST_REQUIRED",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "READ_ONLY_MONOLITH_CENSUS_NO_PRODUCT_WRITE",
+  "proceedToken": "PROCEED|FANART-OPPONENT-HOST-CENSUS-R1-20260908T0656|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|read-only-monolith|opponent-host-census",
+  "authorizationBaseSha": "ca1fac5106140b7faf3e82701988c3d33b112720",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "FANART-LOCAL-CARD-CREATOR-BROWSER-001",
+  "leaseWorkUnitKey": "FANART_OPPONENT_REAL_CARD_HOST_AUTHORITY_CENSUS_R1",
+  "leaseAcquireKey": "FANART-OPPONENT-HOST-CENSUS-R1-20260908T0656-SOL-K8N4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 06:56 JST",
+  "leaseUntilJst": "2026-09-08 07:36 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A565:L565",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/fanart-opponent-host-census-r1-20260908; transient .github/workflows/zz-temp-fanart-opponent-host-census-r1.yml; transient data/preaction-authorizations/FANART-OPPONENT-HOST-CENSUS-R1-20260908T0656.json; own evidence PR/check/readback/cleanup only. READ_ONLY: browser/GAMEROAD.html; browser/battle-screen-runtime-mount.mjs; browser/card-skin-opponent-precedence-core.mjs; Cards local-skin storage/runtime; gameplay/rules/save/economy/network.",
+  "scope": [
+    ".github/workflows/zz-temp-fanart-opponent-host-census-r1.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/zz-temp-fanart-opponent-host-census-r1.yml"
+  ]
+}

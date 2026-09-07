@@ -1,0 +1,184 @@
+name: TEMP Cards Gesture Double Apply R8
+
+on:
+  push:
+    branches:
+      - sol/cards-gesture-hint-doubleapply-r8-20260907
+    paths:
+      - '.github/workflows/zz-temp-cards-gesture-doubleapply-r8.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/cards-gesture-hint-doubleapply-r8-20260907
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply bounded duplicate-application repair and focused regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          module = Path('browser/cards-deck-presentation.mjs')
+          source = module.read_text()
+
+          old = """export function isNeutralizedDeckEditorSwipe(intent) {
+            return intent?.action === 'none' && intent?.consumed === true;
+          }
+
+          export function presentDeckAddSwipe"""
+          new = """export function isNeutralizedDeckEditorSwipe(intent) {
+            return intent?.action === 'none' && intent?.consumed === true;
+          }
+
+          function countDeckCardCopies(deckCardIds, cardId) {
+            const id = String(cardId ?? '');
+            if (!id || !Array.isArray(deckCardIds)) return 0;
+            return deckCardIds.reduce((count, value) => count + (String(value) === id ? 1 : 0), 0);
+          }
+
+          export function recognizeAlreadyAppliedDeckEditorSwipe({
+            intent,
+            cardId,
+            beforeDeckCardIds = [],
+            afterDeckCardIds = [],
+          } = {}) {
+            const action = intent?.action;
+            if (action !== 'deck-add' && action !== 'deck-remove') return null;
+            const beforeCount = countDeckCardCopies(beforeDeckCardIds, cardId);
+            const afterCount = countDeckCardCopies(afterDeckCardIds, cardId);
+            if (action === 'deck-add' && afterCount > beforeCount) {
+              return Object.freeze({ ok: true, action: 'deck-add', reusedExisting: true });
+            }
+            if (action === 'deck-remove' && afterCount < beforeCount) {
+              return Object.freeze({ ok: true, action: 'deck-remove', reusedExisting: true });
+            }
+            return null;
+          }
+
+          export function presentDeckAddSwipe"""
+          if source.count(old) != 1:
+            raise SystemExit(f'helper anchor count={source.count(old)}')
+          source = source.replace(old, new, 1)
+
+          old = """      startX: Number(event.clientX),
+                startY: Number(event.clientY),
+                card,
+              };"""
+          new = """      startX: Number(event.clientX),
+                startY: Number(event.clientY),
+                card,
+                beforeDeckCardIds: bridge.getDeck(),
+              };"""
+          if source.count(old) != 1:
+            raise SystemExit(f'pointerdown anchor count={source.count(old)}')
+          source = source.replace(old, new, 1)
+
+          old = """    const result = controller.applySwipe({
+                surface: current.surface,
+                cardId: current.cardId,
+                deltaX: dx,
+                deltaY: dy,
+                thresholdPx: 56,
+              });"""
+          new = """    const alreadyApplied = recognizeAlreadyAppliedDeckEditorSwipe({
+                intent,
+                cardId: current.cardId,
+                beforeDeckCardIds: current.beforeDeckCardIds,
+                afterDeckCardIds: bridge.getDeck(),
+              });
+              const result = alreadyApplied ?? controller.applySwipe({
+                surface: current.surface,
+                cardId: current.cardId,
+                deltaX: dx,
+                deltaY: dy,
+                thresholdPx: 56,
+              });"""
+          if source.count(old) != 1:
+            raise SystemExit(f'pointerup anchor count={source.count(old)}')
+          source = source.replace(old, new, 1)
+          module.write_text(source)
+
+          test = Path('tests/cards-deck-presentation.test.mjs')
+          suite = test.read_text()
+          old = """  createDeckSwipeSfxPlayer,
+            isNeutralizedDeckEditorSwipe,
+            presentDeckAddSwipe,"""
+          new = """  createDeckSwipeSfxPlayer,
+            isNeutralizedDeckEditorSwipe,
+            recognizeAlreadyAppliedDeckEditorSwipe,
+            presentDeckAddSwipe,"""
+          if suite.count(old) != 1:
+            raise SystemExit(f'import anchor count={suite.count(old)}')
+          suite = suite.replace(old, new, 1)
+
+          old = """test('neutralized card left-swipe is explicitly recognized for follow-up click suppression', () => {
+            assert.equal(isNeutralizedDeckEditorSwipe({ action: 'none', consumed: true }), true);
+            assert.equal(isNeutralizedDeckEditorSwipe({ action: 'none' }), false);
+            assert.equal(isNeutralizedDeckEditorSwipe({ action: 'deck-add', consumed: true }), false);
+          });
+"""
+          new = old + """
+          test('same-gesture deck count transitions are reused instead of applying the swipe twice', () => {
+            assert.deepEqual(recognizeAlreadyAppliedDeckEditorSwipe({
+              intent: { action: 'deck-add' },
+              cardId: 'c7',
+              beforeDeckCardIds: ['c7'],
+              afterDeckCardIds: ['c7', 'c7'],
+            }), { ok: true, action: 'deck-add', reusedExisting: true });
+            assert.equal(recognizeAlreadyAppliedDeckEditorSwipe({
+              intent: { action: 'deck-add' },
+              cardId: 'c7',
+              beforeDeckCardIds: ['c7'],
+              afterDeckCardIds: ['c7'],
+            }), null);
+            assert.deepEqual(recognizeAlreadyAppliedDeckEditorSwipe({
+              intent: { action: 'deck-remove' },
+              cardId: 'c7',
+              beforeDeckCardIds: ['c7', 'c7'],
+              afterDeckCardIds: ['c7'],
+            }), { ok: true, action: 'deck-remove', reusedExisting: true });
+            assert.equal(recognizeAlreadyAppliedDeckEditorSwipe({
+              intent: { action: 'none' },
+              cardId: 'c7',
+              beforeDeckCardIds: [],
+              afterDeckCardIds: ['c7'],
+            }), null);
+          });
+"""
+          if suite.count(old) != 1:
+            raise SystemExit(f'test anchor count={suite.count(old)}')
+          suite = suite.replace(old, new, 1)
+          test.write_text(suite)
+          PY
+
+          node --check browser/cards-deck-presentation.mjs
+          node --test tests/cards-deck-presentation.test.mjs
+          git diff --check
+          git diff -- browser/cards-deck-presentation.mjs tests/cards-deck-presentation.test.mjs
+
+      - name: Commit bounded product and regression changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- browser/cards-deck-presentation.mjs tests/cards-deck-presentation.test.mjs; then
+            echo '::error::Expected bounded product/test diff is empty'
+            exit 1
+          fi
+          git config user.name 'gameroad-r8-bounded-runner'
+          git config user.email 'gameroad-r8-bounded-runner@users.noreply.github.com'
+          git add browser/cards-deck-presentation.mjs tests/cards-deck-presentation.test.mjs
+          git commit -m 'Cards: avoid duplicate apply on existing swipe success'
+          git push origin HEAD:sol/cards-gesture-hint-doubleapply-r8-20260907

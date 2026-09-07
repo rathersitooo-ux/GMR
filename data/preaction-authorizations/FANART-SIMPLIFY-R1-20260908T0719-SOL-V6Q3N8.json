@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "FANART-SIMPLIFY-R1-20260908T0719-SOL-V6Q3N8",
+  "taskId": "FANART-LOCAL-CARD-CREATOR-BROWSER-001",
+  "workUnitKey": "FANART_REMOVE_UNUSED_OPPONENT_PREF_R1",
+  "acquireKey": "FANART-SIMPLIFY-R1-20260908T0719-SOL-V6Q3N8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_HORIZONTAL_SIMPLIFICATION_PLUS_PR1042_EXACT_PATCH_PLUS_PR1035_UNUSED_CORE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXACT_PR1042_REVERSE_PATCH_AND_EXISTING_SELF_SKIN_REGRESSION_TEST",
+  "proceedToken": "PROCEED|FANART-SIMPLIFY-R1-20260908T0719-SOL-V6Q3N8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|REMOVE_UNUSED_OPPONENT_SPECIFIC_LOCAL_SKIN_LAYER",
+  "authorizationBaseSha": "94735220974c8f21f195f627c0c7d2751f920536",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "FANART-LOCAL-CARD-CREATOR-BROWSER-001",
+  "leaseWorkUnitKey": "FANART_REMOVE_UNUSED_OPPONENT_PREF_R1",
+  "leaseAcquireKey": "FANART-SIMPLIFY-R1-20260908T0719-SOL-V6Q3N8",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 07:19 JST",
+  "leaseUntilJst": "2026-09-08 08:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A568:L568",
+  "leaseExactMutableResources": "browser/cards-deck-presentation.mjs; browser/card-skin-opponent-precedence-core.mjs; tests/card-skin-opponent-precedence-core.test.mjs; .github/workflows/zz-temp-fanart-simplify-r1.yml; data/preaction-authorizations/FANART-SIMPLIFY-R1-20260908T0719-SOL-V6Q3N8.json. READ_ONLY: tests/cards-deck-presentation.test.mjs; browser/GAMEROAD.html; browser/battle-screen-runtime-mount.mjs; gameplay/rules/save/economy/network; canonical card identity.",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "browser/card-skin-opponent-precedence-core.mjs",
+    "tests/card-skin-opponent-precedence-core.test.mjs",
+    ".github/workflows/zz-temp-fanart-simplify-r1.yml",
+    "data/preaction-authorizations/FANART-SIMPLIFY-R1-20260908T0719-SOL-V6Q3N8.json"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "browser/card-skin-opponent-precedence-core.mjs",
+    "tests/card-skin-opponent-precedence-core.test.mjs",
+    ".github/workflows/zz-temp-fanart-simplify-r1.yml",
+    "data/preaction-authorizations/FANART-SIMPLIFY-R1-20260908T0719-SOL-V6Q3N8.json"
+  ],
+  "solutionSignature": "fanart-self-local-skin-only-remove-unused-opponent-preference-and-precedence",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_R3_SIMPLIFY_PLUS_PR1042_AND_PR1035_EXACT_HISTORY",
+  "solutionSearchEvidence": [
+    "Drive:GAMEROAD 全作業一覧!G111:AB111:R3_SIMPLIFY",
+    "GitHub:PR#1042:exact opponent-specific additions in browser/cards-deck-presentation.mjs",
+    "GitHub:PR#1035:unused opponent precedence module and focused test",
+    "GitHub:PR#1039:self viewer-local Cards skin remains authorized and merged",
+    "GitHub:PR#1278:real public card host exists but actual opponent equipped-skin authority absent",
+    "main:tests/cards-deck-presentation.test.mjs:existing self local-skin regression path",
+    "main:browser/battle-screen-runtime-mount.mjs:self played-card local-art projection remains READ_ONLY"
+  ]
+}

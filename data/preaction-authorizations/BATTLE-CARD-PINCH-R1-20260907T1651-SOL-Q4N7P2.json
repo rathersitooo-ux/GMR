@@ -6,9 +6,9 @@
   "acquireKey": "BATTLE-CARD-PINCH-R1-20260907T1651-SOL-Q4N7P2",
   "riskClass": "MATERIAL_STANDARD",
   "predictionStatus": "PASS",
-  "predictionEvidenceId": "USER_ADOPTED_COMMON_GESTURE_PLUS_CURRENT_BATTLE_POINTER_OWNER",
+  "predictionEvidenceId": "USER_ADOPTED_COMMON_GESTURE_PLUS_CURRENT_BATTLE_VISUAL_RUNTIME_OWNER",
   "rehearsalStatus": "N_A_ALT_ORACLE",
-  "rehearsalEvidenceId": "EXISTING_BATTLE_JANKEN_RUNTIME_FOCUSED_TEST_PLUS_PUBLIC_CARD_DOM_ONLY",
+  "rehearsalEvidenceId": "EXISTING_BATTLE_BOARD_VISUAL_RUNTIME_FOCUSED_TEST_PLUS_PUBLIC_CARD_DOM_ONLY",
   "proceedToken": "PROCEED|BATTLE-CARD-PINCH-R1-20260907T1651-SOL-Q4N7P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|USER_ADOPTED_SCOPE",
   "authorizationBaseSha": "e8084627cd7f59cdeffe9022e16003d76425c96d",
   "stateModelVersion": "STATE_MODEL_V1",
@@ -20,7 +20,7 @@
   "leaseSnapshotReadbackAtJst": "2026-09-07 16:51 JST",
   "leaseUntilJst": "2026-09-07 17:46 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A532:L532",
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-card-pinch-zoom-r1-20260907; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient data/preaction-authorizations/BATTLE-CARD-PINCH-R1-20260907T1651-SOL-Q4N7P2.json; own PR/check/merge/readback only.",
-  "scope": ["browser/battle-janken-slidepad-runtime-mount.mjs", "tests/battle-janken-slidepad-runtime-mount.test.mjs"],
-  "leaseScope": ["browser/battle-janken-slidepad-runtime-mount.mjs", "tests/battle-janken-slidepad-runtime-mount.test.mjs"]
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-card-pinch-zoom-r1-20260907; browser/battle-board-visual-explanation-runtime-mount.mjs; tests/battle-board-visual-explanation-runtime-mount.test.mjs; transient data/preaction-authorizations/BATTLE-CARD-PINCH-R1-20260907T1651-SOL-Q4N7P2.json; own PR/check/merge/readback only.",
+  "scope": ["browser/battle-board-visual-explanation-runtime-mount.mjs", "tests/battle-board-visual-explanation-runtime-mount.test.mjs"],
+  "leaseScope": ["browser/battle-board-visual-explanation-runtime-mount.mjs", "tests/battle-board-visual-explanation-runtime-mount.test.mjs"]
 }

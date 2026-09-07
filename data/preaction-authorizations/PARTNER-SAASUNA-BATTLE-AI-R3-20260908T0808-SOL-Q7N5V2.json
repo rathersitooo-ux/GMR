@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "gameroad.preaction.v3",
+  "taskId": "PARTNER-CHARACTER-DIALOGUE-SOURCE-MANIFEST-001",
+  "workUnitKey": "SAASUNA_BATTLE_AI_CONTEXTUAL_REACTION_R3",
+  "acquireKey": "PARTNER-SAASUNA-BATTLE-AI-R3-20260908T0808-SOL-Q7N5V2",
+  "baseCommit": "52474324c4aebf1027e8f9a6b21db4cfed8fcb4e",
+  "branch": "sol/saasuna-battle-ai-contextual-reaction-r3-20260908",
+  "intent": "Cleanly reuse the already-tested existing Saasuna AI conversation edge for confirmed Battle reactions, keeping deterministic gameplay and approved fixed reaction fallback.",
+  "durablePaths": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-battle-ai-contextual-reaction.test.mjs"
+  ],
+  "transientPaths": [
+    "data/preaction-authorizations/PARTNER-SAASUNA-BATTLE-AI-R3-20260908T0808-SOL-Q7N5V2.json"
+  ],
+  "donorBlobs": {
+    "browser/partner-advice-runtime-mount.mjs": "c01ee2424425e757e7ed14dfe45c83bf245c4e67",
+    "tests/partner-battle-ai-contextual-reaction.test.mjs": "efa355658f2df4f1b13bbfd29d443126eeb55635"
+  },
+  "acceptance": [
+    "Final product diff is exactly the two declared durable files.",
+    "Confirmed Saasuna Battle-card resolution attempts the existing provider at most once per event fingerprint.",
+    "Valid provider speech remains ephemeral presentation only.",
+    "Unavailable, failed, or invalid provider falls back to the existing approved fixed Battle utterance.",
+    "Other Partners retain existing approved-source behavior.",
+    "Primed reconnect state does not replay an already-settled reaction.",
+    "Required Gate passes on the exact final head."
+  ],
+  "doNotChange": [
+    "Battle rules, card choice, legality, save, economy, network",
+    "Human-authored dialogue wording",
+    "Existing provider/server secret handling",
+    "Partner canon, relationship, or memory authority"
+  ]
+}

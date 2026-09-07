@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-MULTI-CHAR-R6-20260907T1651-SOL-P6N4Q8",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_MULTI_CHARACTER_SELECTION_R3",
+  "acquireKey": "PARTNER-MULTI-CHAR-R6-20260907T1651-SOL-P6N4Q8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_DESTRUCTIVE_SAASUNA_MOUNT_DIRECT_REPRO_R6",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_MAIN_DIRECT_SOURCE_CURRENT_BFI_STALE_ASSERTION_PR1232_ACCEPTANCE_AND_R5_DONOR_DIFF",
+  "proceedToken": "PROCEED|PARTNER-MULTI-CHAR-R6-20260907T1651-SOL-P6N4Q8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|restore-existing-normal-partner-picker|public-role-independence",
+  "authorizationBaseSha": "e8084627cd7f59cdeffe9022e16003d76425c96d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_MULTI_CHARACTER_SELECTION_R3",
+  "leaseAcquireKey": "PARTNER-MULTI-CHAR-R6-20260907T1651-SOL-P6N4Q8",
+  "leaseSnapshotReadbackAtJst": "2026-09-07 16:51 JST",
+  "leaseUntilJst": "2026-09-07 17:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A531:M531",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR existing PR#1249 / branch sol/partner-multi-character-r5-20260907 reconstructed from fresh main only: browser/board-facility-runtime-mount.mjs; tests/browser-full-interaction.spec.mjs; .github/workflows/browser-full-interaction.yml; deploy/cloudflare/tests/build.test.mjs; transient data/preaction-authorizations/PARTNER-MULTI-CHAR-R6-20260907T1651-SOL-P6N4Q8.json; own PR/check/merge/public same-SHA evidence. READ_ONLY: browser/GAMEROAD.html; browser/partner-advice-runtime-mount.mjs; browser/partner-dialogue-source-registry.mjs; gameplay/rules/save/economy/network.",
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/browser-full-interaction.yml",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/browser-full-interaction.yml",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "RESTORE_EXISTING_NORMAL_PARTNER_PICKER_WITH_NONDESTRUCTIVE_SAASUNA_CONVERSATION_AND_PUBLIC_ROLE_INDEPENDENCE_R6",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_EXISTING_PICKER_PR1232_CURRENT_BFI_BUILD_PROVENANCE_AND_R5_DONOR_RECONCILIATION_R6",
+  "solutionSearchEvidence": [
+    "Current ADVICE_PARTNER-01 explicitly requires normal Partner and Advice Partner to remain independently selectable from the existing runtime roster.",
+    "Current main board-facility-runtime-mount directly replaces the existing roster with the Saasuna surface and forces the visible character name, destroying the normal Partner picker in the actual consumer path.",
+    "Current browser-full-interaction.spec.mjs still asserts that the normal Partner role tabs/cards are absent, so those stale regression assertions must be repaired rather than suppressed.",
+    "Merged PR #1232 already provides independent Advice Partner selection using existing settings.advicePartnerId and the existing runtime roster; no second roster/save authority is needed.",
+    "Existing PR #1249 contains a bounded donor repair for the destructive board-facility consumer and a public-origin role-independence scenario; it is reused only as donor diff after rebasing from the exact current main.",
+    "Current Cloudflare package provenance test pins the pre-repair board-facility runtime blob and must be advanced only to the repaired runtime blob while preserving its existing provenance convention.",
+    "The current public Browser interaction workflow already binds stable origin to the exact deployed build and can execute the repaired existing Partner interaction path without a second test authority."
+  ]
+}

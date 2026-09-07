@@ -62,6 +62,15 @@ const SOURCE_GAME_BY_ID = new Map(TUTORIAL_EXPERIENCE_SOURCE_GAMES.map((game) =>
 const SHARED_INTEREST_BY_ID = new Map(TUTORIAL_SHARED_INTERESTS.map((interest) => [interest.id, interest]));
 const AUDIENCE_IDS = new Set(TUTORIAL_EXPERIENCE_AUDIENCES.map((audience) => audience.id));
 
+const SHARED_INTEREST_FAMILIAR_REPLY = Object.freeze({
+  'pachinko-slots': 'パチンコ／スロットもやるんだ。前からそういう話は合いそうだと思ってた。ここでは無理に似た仕組みへ置き換えず、触りながら一緒に覚えよ。',
+  'horse-racing': '競馬見るんだ。前からそういう話は合いそうだと思ってた。競馬の仕組みに置き換えたりはせず、こっちは触りながら一緒に覚えよ。',
+  mahjong: '麻雀もやるんだ。前から勝負ものの話は合いそうだと思ってた。麻雀のルールに置き換えたりはせず、こっちは触りながら一緒に覚えよ。',
+  'video-games': 'ゲームはやるんだ。じゃあ前から遊び方の話はしやすそうだね。説明を全部先に詰め込まず、こっちは触りながら一緒に覚えよ。',
+  other: 'ほかにも好きなものあるんだ。今度その話も聞かせて。今は変な例えを足さず、こっちは触りながら一緒に覚えよ。',
+  none: 'じゃあ無理に何かへ例えないで、触りながら一緒に見ていこ。分からないところだけその場で聞いて。',
+});
+
 const SOURCE_GAME_STAGE_COACHING = Object.freeze({
   'master-duel': Object.freeze({
     road: '遊戯王でいうなら、まず「このターンの展開の軸を決める」感覚に近い。ただし召喚でも魔法・罠でもなく、GAMEROADでは先にロードを1枚選ぶ',
@@ -241,6 +250,11 @@ const CONVERSATION_AUDIENCE_OPTIONS = Object.freeze([
   conversationOption(AUDIENCE_BEGINNER, 'ほとんどやらない'),
 ]);
 
+function familiarPeerReadyText(context) {
+  return SHARED_INTEREST_FAMILIAR_REPLY[context.sharedInterestId]
+    || SHARED_INTEREST_FAMILIAR_REPLY.none;
+}
+
 export function projectTutorialExperienceConversation({
   experienceStatus = null,
   sharedContext = null,
@@ -269,9 +283,7 @@ export function projectTutorialExperienceConversation({
     stage = 'ready';
     options = Object.freeze([]);
     if (status.audience === AUDIENCE_BEGINNER) {
-      partnerText = context.sharedInterestLabel && context.sharedInterestId !== 'none'
-        ? `${context.sharedInterestLabel}の話なら通じそうだね。無理にカードゲーム用語へ寄せず、触りながら説明するよ。`
-        : 'じゃあカードゲーム用語は前提にしないで、触りながら一緒に見ていこ。';
+      partnerText = familiarPeerReadyText(context);
     } else if (status.sourceGameId === 'other') {
       partnerText = 'カードゲームは分かるんだね。作品ごとのルールを決めつけず、GAMEROADで違うところから見ていこ。';
     } else {

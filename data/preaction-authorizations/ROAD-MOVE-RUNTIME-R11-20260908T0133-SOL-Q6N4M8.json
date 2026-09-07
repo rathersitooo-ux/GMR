@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-MOVE-RUNTIME-R11-20260908T0133-SOL-Q6N4M8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE_R11",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R11-20260908T0133-SOL-Q6N4M8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_CARD_FIRST_ONLY_PLUS_R6_R9_ROAD_DONOR_RECOVERY",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_HTML_SEAMS_READBACK_AND_PRIOR_R6_PATCH_ACCEPTANCE_REUSE",
+  "proceedToken": "PROCEED|ROAD-MOVE-RUNTIME-R11-20260908T0133-SOL-Q6N4M8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|same-road-outcome-minimal-live-binding",
+  "authorizationBaseSha": "2b1b12d842ad07cc193a58e6e721b6b8908dd488",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE_R11",
+  "leaseAcquireKey": "ROAD-MOVE-RUNTIME-R11-20260908T0133-SOL-Q6N4M8",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 01:33 JST",
+  "leaseUntilJst": "2026-09-08 02:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A555:L555",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean branch sol/road-move-bidirectional-live-r11-20260908 from exact fresh main only: browser/GAMEROAD.html; tests/road-move-bidirectional-live-r11.spec.mjs; bounded transient workflow/tool + data/preaction authorization only if current gate requires; own PR/check/merge/readback. READ_ONLY: browser/road-move-compatibility-core.mjs; 109 topology/reachable/stoppability; all Battle-card selection/reservation/submission/order/resolve semantics; save/economy/network.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r11.spec.mjs",
+    ".github/workflows/zz-temp-road-move-runtime-r11.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r11.spec.mjs",
+    ".github/workflows/zz-temp-road-move-runtime-r11.yml"
+  ],
+  "solutionSignature": "ROAD_MOVE_BIDIRECTIONAL_LIVE_R11_REUSE_R6_CONSUMER_SEAMS",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R6_R9_DONOR_AND_CURRENT_MAIN_SEAM_DIFF",
+  "solutionSearchEvidence": [
+    "existing browser/road-move-compatibility-core.mjs on main",
+    "prior R6 live patch donor with Battle-card noninterference acceptance",
+    "current main actual shows card-first-only movement and first10 hand routing"
+  ]
+}

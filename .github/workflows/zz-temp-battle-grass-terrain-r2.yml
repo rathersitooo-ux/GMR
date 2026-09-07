@@ -1,6 +1,9 @@
 name: TEMP Battle Grass Terrain R2
 
 on:
+  push:
+    branches:
+      - sol/battle-grass-terrain-r2-20260907
   workflow_dispatch:
 
 permissions:

@@ -20,6 +20,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - name: Disambiguate exact event-binding target
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('tools/zz-temp-tutorial-visible-conversation-r3.py')
+          text = p.read_text(encoding='utf-8')
+          old = "replace_once(partner, \"  const switchButton = root.querySelector('.partnerAdvicePartnerSwitch');\\n\", event_bind + \"  const switchButton = root.querySelector('.partnerAdvicePartnerSwitch');\\n\", 'bind Tutorial conversation choices')"
+          new = "replace_once(partner, \"  const switchButton = root.querySelector('.partnerAdvicePartnerSwitch');\\n  if (switchButton && switchButton.dataset.partnerAdviceRoleBound !== 'true') {\\n\", event_bind + \"  const switchButton = root.querySelector('.partnerAdvicePartnerSwitch');\\n  if (switchButton && switchButton.dataset.partnerAdviceRoleBound !== 'true') {\\n\", 'bind Tutorial conversation choices')"
+          if text.count(old) != 1:
+              raise SystemExit(f'event-binding patch script target count={text.count(old)}')
+          p.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
       - name: Apply exact patch
         run: python tools/zz-temp-tutorial-visible-conversation-r3.py
       - name: Validate focused implementation

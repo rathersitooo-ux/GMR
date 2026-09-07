@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CODEQL-MJS-COVERAGE-R1-20260907T1705-SOL-N6Q4P8",
+  "taskId": "GITHUB-CI-BROWSER-NODE-001",
+  "workUnitKey": "CODEQL_MJS_TRIGGER_COVERAGE_R1",
+  "acquireKey": "CODEQL-MJS-COVERAGE-R1-20260907T1705-SOL-N6Q4P8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-CODEQL-MJS-TRIGGER-DIRECT-READ-20260907",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "STATIC-WORKFLOW-DIFF-PLUS-SELF-PR-ACTIONS",
+  "proceedToken": "PROCEED|CODEQL-MJS-COVERAGE-R1-20260907T1705-SOL-N6Q4P8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-07T1705JST",
+  "authorizationBaseSha": "e8084627cd7f59cdeffe9022e16003d76425c96d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-CI-BROWSER-NODE-001",
+  "leaseWorkUnitKey": "CODEQL_MJS_TRIGGER_COVERAGE_R1",
+  "leaseAcquireKey": "CODEQL-MJS-COVERAGE-R1-20260907T1705-SOL-N6Q4P8",
+  "leaseSnapshotReadbackAtJst": "2026-09-07 17:05 JST",
+  "leaseUntilJst": "2026-09-07 17:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A16:L16",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR new branch sol/codeql-mjs-trigger-r1-20260907 from exact main e8084627cd7f59cdeffe9022e16003d76425c96d only: .github/workflows/browser-node-ci.yml; unique transient data/preaction-authorizations/CODEQL-MJS-COVERAGE-R1-20260907T1705-SOL-N6Q4P8.json; own PR/check/merge evidence. READ_ONLY: browser/**; tools/**; deploy/**; tests/** except workflow trigger matching; all product/runtime/game/save/economy/network semantics.",
+  "scope": [
+    ".github/workflows/browser-node-ci.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/browser-node-ci.yml"
+  ]
+}

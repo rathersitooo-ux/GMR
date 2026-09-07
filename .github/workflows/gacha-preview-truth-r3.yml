@@ -1,0 +1,146 @@
+name: Gacha Preview Truth Public R3
+
+on:
+  push:
+    branches:
+      - sol/gacha-preview-truth-public-r3-20260907
+    paths:
+      - '.github/workflows/gacha-preview-truth-r3.yml'
+      - 'data/preaction-authorizations/GACHA-PREVIEW-TRUTH-R3-20260907T1255-SOL-C7M4Q9.json'
+
+permissions:
+  contents: write
+
+jobs:
+  reuse-and-package:
+    if: ${{ github.ref == 'refs/heads/sol/gacha-preview-truth-public-r3-20260907' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: sol/gacha-preview-truth-public-r3-20260907
+          fetch-depth: 0
+
+      - name: Verify current authorization and donor compatibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=7af2f1c373a9917cf6b477b006b3a09c14fc2ab8
+          DONOR_BRANCH=sol/gacha-preview-truth-r1-20260906
+          DONOR_BASE=f27a3ab8e1a8ea4e6a4db2faf657ae2a6b4c6136
+          PACKAGE_BASE=e12a0191656f066c4a66577269c8c26096d2e7ce
+          AUTH=data/preaction-authorizations/GACHA-PREVIEW-TRUTH-R3-20260907T1255-SOL-C7M4Q9.json
+          test "$(git merge-base HEAD "$BASE")" = "$BASE"
+          test -f "$AUTH"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('data/preaction-authorizations/GACHA-PREVIEW-TRUTH-R3-20260907T1255-SOL-C7M4Q9.json')
+          d=json.loads(p.read_text(encoding='utf-8'))
+          assert d['authorizationBaseSha']=='7af2f1c373a9917cf6b477b006b3a09c14fc2ab8'
+          assert d['leaseState']=='ACTIVE'
+          assert d['predictionStatus']=='PASS'
+          assert d['reuseDisposition']=='ADAPT'
+          assert d['leaseSnapshotReadbackRef']=='CURRENT_ACTIVE_LEASES!A525:N525'
+          assert d['proceedToken'].startswith('PROCEED|GACHA-PREVIEW-TRUTH-R3-20260907T1255-SOL-C7M4Q9|')
+          PY
+          git fetch origin "$DONOR_BRANCH":refs/remotes/origin/gacha-preview-r1
+          cmp <(git show "$BASE":browser/screen-navigation-core.mjs) <(git show "$DONOR_BASE":browser/screen-navigation-core.mjs)
+          cmp <(git show "$BASE":deploy/cloudflare/scripts/build.mjs) <(git show "$PACKAGE_BASE":deploy/cloudflare/scripts/build.mjs)
+          test "$(git rev-parse "$BASE:browser/screen-navigation-core.mjs")" = b6bfc5d4001916796e87d901986493adb5ae809c
+          test "$(git rev-parse "$BASE:deploy/cloudflare/scripts/build.mjs")" = 3072f77356f9cdcd30cacaea025af568d3f32bbd
+          git show origin/gacha-preview-r1:browser/gacha-preview-disclosure-runtime.mjs >/dev/null
+          git show origin/gacha-preview-r1:tests/gacha-preview-disclosure-runtime.test.mjs >/dev/null
+
+      - name: Reuse tested disclosure and preserve current package provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=7af2f1c373a9917cf6b477b006b3a09c14fc2ab8
+          DONOR=origin/gacha-preview-r1
+          git show "$DONOR":browser/gacha-preview-disclosure-runtime.mjs > browser/gacha-preview-disclosure-runtime.mjs
+          git show "$DONOR":browser/screen-navigation-core.mjs > browser/screen-navigation-core.mjs
+          git show "$DONOR":tests/gacha-preview-disclosure-runtime.test.mjs > tests/gacha-preview-disclosure-runtime.test.mjs
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('deploy/cloudflare/scripts/build.mjs')
+          text=p.read_text(encoding='utf-8')
+          anchor="  { option: 'navigationCoreSource', expected: 'expectedNavigationCoreBlob', source: 'browser/screen-navigation-core.mjs', output: 'screen-navigation-core.mjs', artifact: 'screen_navigation_core', label: 'Screen navigation core', sourceFlag: '--navigation-core-source', expectedFlag: '--expected-navigation-core-blob' },\n"
+          line="  { source: 'browser/gacha-preview-disclosure-runtime.mjs', output: 'gacha-preview-disclosure-runtime.mjs', artifact: 'gacha_preview_disclosure_runtime', label: 'Gacha preview disclosure runtime' },\n"
+          if line not in text:
+              assert text.count(anchor)==1, f'package anchor mismatch: {text.count(anchor)}'
+              text=text.replace(anchor, anchor+line)
+              p.write_text(text, encoding='utf-8')
+          PY
+          NAV_BLOB=$(git hash-object browser/screen-navigation-core.mjs)
+          export NAV_BLOB
+          python - <<'PY'
+          import os, re, subprocess
+          from pathlib import Path
+          base='7af2f1c373a9917cf6b477b006b3a09c14fc2ab8'
+          path='deploy/cloudflare/tests/build.test.mjs'
+          p=Path(path)
+          current=p.read_text(encoding='utf-8')
+          base_text=subprocess.check_output(['git','show',f'{base}:{path}'], text=True)
+          assert current==base_text, 'build.test changed before provenance sync'
+          nav_blob=os.environ['NAV_BLOB']
+          pattern=r"(\{ file: 'screen-navigation-core\.mjs'.*?currentBlob: ')[0-9a-f]{40}(' \},)"
+          updated, count=re.subn(pattern, lambda m: m.group(1)+nav_blob+m.group(2), current, count=1)
+          assert count==1, f'screen-navigation provenance row mismatch: {count}'
+          assert updated!=current, 'screen-navigation provenance hash did not change'
+          p.write_text(updated, encoding='utf-8')
+          PY
+          python - <<'PY'
+          import subprocess
+          from pathlib import Path
+          base='7af2f1c373a9917cf6b477b006b3a09c14fc2ab8'
+          path='deploy/cloudflare/tests/build.test.mjs'
+          before=subprocess.check_output(['git','show',f'{base}:{path}'], text=True)
+          after=Path(path).read_text(encoding='utf-8')
+          before_deck=next(line for line in before.splitlines() if "file: 'deck-save-recovery-core.mjs'" in line)
+          after_deck=next(line for line in after.splitlines() if "file: 'deck-save-recovery-core.mjs'" in line)
+          assert before_deck==after_deck, 'current Deck provenance was altered'
+          before_nav=next(line for line in before.splitlines() if "file: 'screen-navigation-core.mjs'" in line)
+          after_nav=next(line for line in after.splitlines() if "file: 'screen-navigation-core.mjs'" in line)
+          assert before_nav!=after_nav, 'navigation provenance was not updated'
+          normalized=after.replace(after_nav, before_nav)
+          assert normalized==before, 'build.test has changes beyond navigation provenance hash'
+          PY
+          git diff --check
+
+      - name: Run focused and public-package tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/gacha-preview-disclosure-runtime.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+
+      - name: Commit clean product diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=7af2f1c373a9917cf6b477b006b3a09c14fc2ab8
+          AUTH=data/preaction-authorizations/GACHA-PREVIEW-TRUTH-R3-20260907T1255-SOL-C7M4Q9.json
+          git rm .github/workflows/gacha-preview-truth-r3.yml "$AUTH"
+          git diff --check
+          python - <<'PY'
+          import subprocess
+          expected={
+            'browser/gacha-preview-disclosure-runtime.mjs',
+            'browser/screen-navigation-core.mjs',
+            'tests/gacha-preview-disclosure-runtime.test.mjs',
+            'deploy/cloudflare/scripts/build.mjs',
+            'deploy/cloudflare/tests/build.test.mjs',
+            '.github/workflows/gacha-preview-truth-r3.yml',
+            'data/preaction-authorizations/GACHA-PREVIEW-TRUTH-R3-20260907T1255-SOL-C7M4Q9.json',
+          }
+          actual=set(subprocess.check_output(['git','diff','--name-only','7af2f1c373a9917cf6b477b006b3a09c14fc2ab8'], text=True).splitlines())
+          assert actual==expected, f'bounded scope mismatch: {sorted(actual ^ expected)}'
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/gacha-preview-disclosure-runtime.mjs browser/screen-navigation-core.mjs tests/gacha-preview-disclosure-runtime.test.mjs deploy/cloudflare/scripts/build.mjs deploy/cloudflare/tests/build.test.mjs
+          git commit -m 'Gacha: rebase truthful preview-only disclosure'
+          git push origin HEAD:sol/gacha-preview-truth-public-r3-20260907

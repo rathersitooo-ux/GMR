@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-MOVE-RUNTIME-R10-20260908T0122-SOL-Q7M4N8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE_R10",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R10-20260908T0122-SOL-Q7M4N8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-row1374-plus-main-2b1b12d-road-r9-build-step-success-product0",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R9-patch-build-success-against-identical-GAMEROAD-html-blob-35f9203",
+  "proceedToken": "PROCEED|ROAD-MOVE-RUNTIME-R10-20260908T0122-SOL-Q7M4N8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_AND_ACTUAL_READBACK",
+  "authorizationBaseSha": "2b1b12d842ad07cc193a58e6e721b6b8908dd488",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r10.spec.mjs",
+    ".github/workflows/zz-temp-road-move-runtime-r10.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE_R10",
+  "leaseAcquireKey": "ROAD-MOVE-RUNTIME-R10-20260908T0122-SOL-Q7M4N8",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 01:22 JST",
+  "leaseUntilJst": "2026-09-08 02:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A553:L553",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/road-move-bidirectional-live-r10-20260908; browser/GAMEROAD.html; tests/road-move-bidirectional-live-r10.spec.mjs; .github/workflows/zz-temp-road-move-runtime-r10.yml transient branch-only patch/test runner; data/preaction-authorizations/ROAD-MOVE-RUNTIME-R10-20260908T0122-SOL-Q7M4N8.json transient manifest; own PR/check/merge/readback. READ_ONLY: 109 topology/reachable/stoppability; Battle-card selection/reservation/submission/order/resolve; save/economy/network.",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r10.spec.mjs",
+    ".github/workflows/zz-temp-road-move-runtime-r10.yml"
+  ],
+  "solutionSignature": "ROAD_DRAFT_BIDIRECTIONAL_SINGLE_MODEL_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "existing-road-r5-r6-donor-plus-r9-successful-patch-build",
+  "solutionSearchEvidence": [
+    "sol/road-move-bidirectional-live-r5-20260906:tools/zz-temp-road-move-runtime-r5.py",
+    "sol/road-move-bidirectional-live-r6-20260906:tools/zz-temp-road-move-runtime-r6.py",
+    "R9 workflow run 34081072481 patch-build step SUCCESS before live-acceptance failure"
+  ]
+}

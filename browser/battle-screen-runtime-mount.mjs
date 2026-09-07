@@ -80,6 +80,7 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"] .grBattleHudCenter{min-width:0;display:flex;justify-content:center;align-items:flex-start;gap:clamp(6px,.8vw,10px)}
 [${SHELL_ATTR}="1"] .grBattleHudChain{min-width:0;display:flex;align-items:center;justify-content:center;gap:3px;padding-top:1px;overflow:hidden}
 [${SHELL_ATTR}="1"] .grBattleHudPlayedCard{display:flex;align-items:center;justify-content:center;flex:0 0 auto;width:clamp(28px,4.2vw,42px);height:clamp(36px,5.6vw,54px);padding:2px;border-radius:6px;border:1px solid rgba(235,247,226,.38);background:rgba(9,35,30,.82);font-size:clamp(8px,.8vw,11px);font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+[${SHELL_ATTR}="1"] .grBattleHudPlayedCardArt{display:block;width:100%;height:100%;object-fit:cover;border-radius:4px}
 [${SHELL_ATTR}="1"] .grBattleHudPlayedCard:nth-of-type(4n+1){transform:translateY(4px) rotate(-4deg)}
 [${SHELL_ATTR}="1"] .grBattleHudPlayedCard:nth-of-type(4n+3){transform:translateY(4px) rotate(4deg)}
 [${SHELL_ATTR}="1"] .grBattleHudChainArrow{flex:0 0 auto;font-weight:900;opacity:.78}
@@ -323,6 +324,38 @@ function authoritativeText(value, unresolvedToken) {
   return { text: unresolvedToken, resolved: false };
 }
 
+export function resolveViewerLocalPlayedCardArt(document, cardId) {
+  if (!document || typeof document.querySelectorAll !== 'function' || typeof cardId !== 'string' || !cardId) return null;
+  const nodes = document.querySelectorAll('#collectionGrid [data-id]') ?? [];
+  let sourceCard = null;
+  for (const node of nodes) {
+    if (String(node?.dataset?.id ?? '') === cardId) {
+      sourceCard = node;
+      break;
+    }
+  }
+  const localArt = sourceCard?.querySelector?.('[data-role="fanart-local-skin-overlay"]');
+  const src = typeof localArt?.src === 'string' ? localArt.src.trim() : '';
+  if (!src) return null;
+  return deepFreeze({ src, source: 'viewer_local' });
+}
+
+function writePlayedCard(document, cardNode, card) {
+  const art = resolveViewerLocalPlayedCardArt(document, card.cardId);
+  if (!art) {
+    cardNode.textContent = card.label;
+    return 'label';
+  }
+  const image = createNode(document, 'img', 'grBattleHudPlayedCardArt');
+  image.src = art.src;
+  image.alt = '';
+  image.setAttribute?.('aria-hidden', 'true');
+  cardNode.setAttribute?.('aria-label', card.label);
+  cardNode.appendChild(image);
+  setData(cardNode, 'artSource', art.source);
+  return art.source;
+}
+
 function normalizeHudSnapshot(snapshot = {}) {
   const source = snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot) ? snapshot : {};
   const score = authoritativeText(source.score, 'X');
@@ -405,9 +438,10 @@ function writeHud(document, hud, snapshot) {
   clearChildren(hud.chain);
   model.playedCards.forEach((card, index) => {
     if (index > 0) hud.chain.appendChild(createNode(document, 'span', 'grBattleHudChainArrow', '▷'));
-    const cardNode = createNode(document, 'span', 'grBattleHudPlayedCard', card.label);
+    const cardNode = createNode(document, 'span', 'grBattleHudPlayedCard');
     cardNode.dataset.cardId = card.cardId;
     cardNode.dataset.order = String(index + 1);
+    writePlayedCard(document, cardNode, card);
     hud.chain.appendChild(cardNode);
   });
   setData(hud.root, 'scoreResolved', model.score.resolved);

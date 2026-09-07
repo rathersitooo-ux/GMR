@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CI-NODE-SETUP-DEDUP-R1-20260907T2022-SOL-N4Q7M2",
+  "taskId": "GITHUB-CI-BROWSER-NODE-001",
+  "workUnitKey": "REQUIRED_GATE_DUPLICATE_NODE_SETUP_REMOVAL_R1",
+  "acquireKey": "CI-NODE-SETUP-DEDUP-R1-20260907T2022-SOL-N4Q7M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "current-required-gate-direct-readback-identical-node22-setup-steps",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "single-existing-unconditional-node22-setup-precedes-all-three-focused-node-tests",
+  "proceedToken": "PROCEED|CI-NODE-SETUP-DEDUP-R1-20260907T2022-SOL-N4Q7M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|remove-identical-node-setup-duplicates",
+  "authorizationBaseSha": "ac6b52777c141a31742b0c3aebfb42c84ca1736f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-CI-BROWSER-NODE-001",
+  "leaseWorkUnitKey": "REQUIRED_GATE_DUPLICATE_NODE_SETUP_REMOVAL_R1",
+  "leaseAcquireKey": "CI-NODE-SETUP-DEDUP-R1-20260907T2022-SOL-N4Q7M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-07 20:22 JST",
+  "leaseUntilJst": "2026-09-07 21:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A545:L545",
+  "leaseExactMutableResources": ".github/workflows/gameroad-required-gate.yml; data/preaction-authorizations/CI-NODE-SETUP-DEDUP-R1-20260907T2022-SOL-N4Q7M2.json",
+  "scope": [
+    ".github/workflows/gameroad-required-gate.yml",
+    "data/preaction-authorizations/CI-NODE-SETUP-DEDUP-R1-20260907T2022-SOL-N4Q7M2.json"
+  ],
+  "leaseScope": [
+    ".github/workflows/gameroad-required-gate.yml",
+    "data/preaction-authorizations/CI-NODE-SETUP-DEDUP-R1-20260907T2022-SOL-N4Q7M2.json"
+  ],
+  "solutionSignature": "reuse-single-unconditional-node22-setup-in-required-gate-job",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "required-gate-existing-set-up-node-node22-before-all-node-tests",
+  "solutionSearchEvidence": [
+    ".github/workflows/gameroad-required-gate.yml:Set up Node",
+    ".github/workflows/gameroad-required-gate.yml:Set up Node for Fossil",
+    ".github/workflows/gameroad-required-gate.yml:Set up Node for BASE52",
+    ".github/workflows/gameroad-required-gate.yml:Set up Node for Battle Conveyor",
+    "CURRENT:GITHUB-CI-BROWSER-NODE-001:R7-control-plane-dedup-precedent"
+  ]
+}

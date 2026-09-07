@@ -62,12 +62,24 @@ jobs:
           if old not in s:
               raise SystemExit('elastic target selector block mismatch')
           s=s.replace(old,new,1)
-          s += r'''\n\ntest('LowPerf keeps Road compatibility and Battle-card noninterference',async({page})=>{\n  const battle=await openRoadBattle(page);\n  await page.evaluate(()=>document.querySelector('#lowPerf')?.click());\n  const before=await snapshot(page);expect(before.roadId).toBeNull();expect(before.battleId).toBeNull();\n  const next=battle.locator('.node.reachable').first();await expect(next).toBeEnabled();await next.click();\n  const moved=await snapshot(page);expect(moved.compatibleRoadIds.length).toBeGreaterThan(0);expect(moved.battleId).toBeNull();\n  const candidate=battle.locator('#hand .handCard[data-road-move-state="COMPATIBLE"],#hand .handCard.roadMoveSoft').first();await expect(candidate).toBeVisible();\n  await candidate.click();const focused=await snapshot(page);expect(focused.roadId).not.toBeNull();expect(focused.battleId).toBeNull();expect(focused.path).toEqual(moved.path);\n});\n'''
+          s += """
+
+          test('LowPerf keeps Road compatibility and Battle-card noninterference',async({page})=>{
+            const battle=await openRoadBattle(page);
+            await page.evaluate(()=>document.querySelector('#lowPerf')?.click());
+            const before=await snapshot(page);expect(before.roadId).toBeNull();expect(before.battleId).toBeNull();
+            const next=battle.locator('.node.reachable').first();await expect(next).toBeEnabled();await next.click();
+            const moved=await snapshot(page);expect(moved.compatibleRoadIds.length).toBeGreaterThan(0);expect(moved.battleId).toBeNull();
+            const candidate=battle.locator('#hand .handCard[data-road-move-state="COMPATIBLE"],#hand .handCard.roadMoveSoft').first();await expect(candidate).toBeVisible();
+            await candidate.click();const focused=await snapshot(page);expect(focused.roadId).not.toBeNull();expect(focused.battleId).toBeNull();expect(focused.path).toEqual(moved.path);
+          });
+          """
           p.write_text(s)
           PY
           fi
           git diff --check
           node --test tests/road-move-compatibility-core.test.mjs
+          node --check tests/road-move-bidirectional-live-r11.spec.mjs
       - name: Install Playwright Chromium
         run: |
           npm install --no-save --no-package-lock @playwright/test@1.62.0

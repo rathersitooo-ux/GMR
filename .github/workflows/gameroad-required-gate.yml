@@ -510,24 +510,6 @@ jobs:
             node --test "${test_path}"
           done
 
-      - name: Set up Node for Fossil
-        if: steps.classify.outputs.fossil == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Set up Node for BASE52
-        if: steps.classify.outputs.base52_face == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Set up Node for Battle Conveyor
-        if: steps.classify.outputs.battle_conveyor == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
       - name: Run Public package provenance invariant
         run: node --test deploy/cloudflare/tests/build.test.mjs
 

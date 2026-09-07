@@ -11,6 +11,7 @@ import {
   createDeckSwipePresentationController,
   createDeckSwipeSfxPlayer,
   isNeutralizedDeckEditorSwipe,
+  recognizeAlreadyAppliedDeckEditorSwipe,
   presentDeckAddSwipe,
 } from '../browser/cards-deck-presentation.mjs';
 
@@ -143,6 +144,33 @@ test('neutralized card left-swipe is explicitly recognized for follow-up click s
   assert.equal(isNeutralizedDeckEditorSwipe({ action: 'none', consumed: true }), true);
   assert.equal(isNeutralizedDeckEditorSwipe({ action: 'none' }), false);
   assert.equal(isNeutralizedDeckEditorSwipe({ action: 'deck-add', consumed: true }), false);
+});
+
+test('same-gesture deck count transitions are reused instead of applying the swipe twice', () => {
+  assert.deepEqual(recognizeAlreadyAppliedDeckEditorSwipe({
+    intent: { action: 'deck-add' },
+    cardId: 'c7',
+    beforeDeckCardIds: ['c7'],
+    afterDeckCardIds: ['c7', 'c7'],
+  }), { ok: true, action: 'deck-add', reusedExisting: true });
+  assert.equal(recognizeAlreadyAppliedDeckEditorSwipe({
+    intent: { action: 'deck-add' },
+    cardId: 'c7',
+    beforeDeckCardIds: ['c7'],
+    afterDeckCardIds: ['c7'],
+  }), null);
+  assert.deepEqual(recognizeAlreadyAppliedDeckEditorSwipe({
+    intent: { action: 'deck-remove' },
+    cardId: 'c7',
+    beforeDeckCardIds: ['c7', 'c7'],
+    afterDeckCardIds: ['c7'],
+  }), { ok: true, action: 'deck-remove', reusedExisting: true });
+  assert.equal(recognizeAlreadyAppliedDeckEditorSwipe({
+    intent: { action: 'none' },
+    cardId: 'c7',
+    beforeDeckCardIds: [],
+    afterDeckCardIds: ['c7'],
+  }), null);
 });
 
 test('rect normalization preserves usable centers without trusting right/bottom', () => {

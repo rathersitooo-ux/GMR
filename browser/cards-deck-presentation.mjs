@@ -474,6 +474,31 @@ export function isNeutralizedDeckEditorSwipe(intent) {
   return intent?.action === 'none' && intent?.consumed === true;
 }
 
+function countDeckCardCopies(deckCardIds, cardId) {
+  const id = String(cardId ?? '');
+  if (!id || !Array.isArray(deckCardIds)) return 0;
+  return deckCardIds.reduce((count, value) => count + (String(value) === id ? 1 : 0), 0);
+}
+
+export function recognizeAlreadyAppliedDeckEditorSwipe({
+  intent,
+  cardId,
+  beforeDeckCardIds = [],
+  afterDeckCardIds = [],
+} = {}) {
+  const action = intent?.action;
+  if (action !== 'deck-add' && action !== 'deck-remove') return null;
+  const beforeCount = countDeckCardCopies(beforeDeckCardIds, cardId);
+  const afterCount = countDeckCardCopies(afterDeckCardIds, cardId);
+  if (action === 'deck-add' && afterCount > beforeCount) {
+    return Object.freeze({ ok: true, action: 'deck-add', reusedExisting: true });
+  }
+  if (action === 'deck-remove' && afterCount < beforeCount) {
+    return Object.freeze({ ok: true, action: 'deck-remove', reusedExisting: true });
+  }
+  return null;
+}
+
 export function presentDeckAddSwipe({ doc, presentation, result, sourceElement, cardId }) {
   if (result?.action !== 'deck-add' || !sourceElement) return false;
   try {
@@ -584,6 +609,7 @@ export function installDeckStorageLiveMount({
       startX: Number(event.clientX),
       startY: Number(event.clientY),
       card,
+      beforeDeckCardIds: bridge.getDeck(),
     };
   };
 
@@ -604,7 +630,13 @@ export function installDeckStorageLiveMount({
       suppressClick = { cardId: current.cardId, until: now() + 450 };
       return;
     }
-    const result = controller.applySwipe({
+    const alreadyApplied = recognizeAlreadyAppliedDeckEditorSwipe({
+      intent,
+      cardId: current.cardId,
+      beforeDeckCardIds: current.beforeDeckCardIds,
+      afterDeckCardIds: bridge.getDeck(),
+    });
+    const result = alreadyApplied ?? controller.applySwipe({
       surface: current.surface,
       cardId: current.cardId,
       deltaX: dx,

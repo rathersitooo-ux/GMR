@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   PROFILE_PRESENTATION_CONTRACT,
+  dismissRecordsMatchDetail,
   projectProfilePresentation,
   readCurrentProfileAuthority,
 } from '../browser/profile-presentation-runtime-mount.mjs';
@@ -105,4 +106,31 @@ test('Profile secondary copy keeps the bounded phone legibility floor', () => {
   assert.match(source, /\.profileIdentityCopy span\{[^}]*font-size:11px;[^}]*line-height:1\.35/);
   assert.match(source, /\.profileRecordsNote\{[^}]*font-size:12px;line-height:1\.45/);
   assert.match(source, /@media\(max-height:470px\)[\s\S]*?\.profileRecordsNote\{[^}]*font-size:10px;line-height:1\.35/);
+});
+
+
+test('Records detail dismiss clears transient selection and restores its opener focus', () => {
+  const focusCalls = [];
+  const opener = { focus: (options) => focusCalls.push(options) };
+  const rows = [
+    { dataset: { recordsSelected: 'true' }, setAttribute(name, value) { this[name] = value; } },
+    { dataset: { recordsSelected: 'false' }, setAttribute(name, value) { this[name] = value; } },
+  ];
+  const list = { querySelectorAll: () => rows };
+  const panel = { hidden: false, __gameroadRecordsOpener: opener };
+
+  assert.equal(dismissRecordsMatchDetail(list, panel), true);
+  assert.equal(panel.hidden, true);
+  assert.equal(panel.__gameroadRecordsOpener, null);
+  assert.deepEqual(rows.map((row) => row.dataset.recordsSelected), ['false', 'false']);
+  assert.deepEqual(rows.map((row) => row['aria-expanded']), ['false', 'false']);
+  assert.deepEqual(focusCalls, [{ preventScroll: true }]);
+  assert.equal(dismissRecordsMatchDetail(list, panel), false);
+});
+
+test('Records detail consumes safe outside click and Escape without a second state authority', () => {
+  const source = readFileSync(new URL('../browser/profile-presentation-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /doc\.addEventListener\('click',[\s\S]*?panel\.contains\(event\.target\)[\s\S]*?event\.preventDefault\(\);[\s\S]*?event\.stopPropagation\(\);[\s\S]*?dismissRecordsMatchDetail\(list, panel\);[\s\S]*?}, true\);/);
+  assert.match(source, /doc\.addEventListener\('keydown',[\s\S]*?event\.key !== 'Escape'[\s\S]*?dismissRecordsMatchDetail\(list, panel\);[\s\S]*?}, true\);/);
+  assert.doesNotMatch(source, /localStorage|sessionStorage/);
 });

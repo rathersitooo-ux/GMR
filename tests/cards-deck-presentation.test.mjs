@@ -587,3 +587,94 @@ test('favorite action commits visible state only after local persistence succeed
   assert.ok(handler.indexOf('favoriteIds = nextFavoriteIds') < handler.indexOf('render();'));
   assert.equal(handler.includes('favoriteIds = toggleCardsFavoriteId('), false);
 });
+
+test('viewer-local card art projects to every already-public Battle card with the same cardId', async () => {
+  const mod = await import('../browser/cards-deck-presentation.mjs');
+  const makeNode = () => ({
+    dataset: {},
+    children: [],
+    attributes: new Map(),
+    appendChild(child) { this.children.push(child); child.parentNode = this; return child; },
+    setAttribute(name, value) { this.attributes.set(name, String(value)); },
+    getAttribute(name) { return this.attributes.get(name) ?? null; },
+  });
+  const doc = {
+    head: makeNode(),
+    createElement(tag) { const node = makeNode(); node.tagName = String(tag).toUpperCase(); node.id = ''; node.src = ''; node.alt = ''; return node; },
+    getElementById() { return null; },
+  };
+  const createdUrls = [];
+  const revokedUrls = [];
+  const win = {
+    URL: {
+      createObjectURL(blob) { const url = `blob:fanart-${createdUrls.length + 1}`; createdUrls.push([url, blob]); return url; },
+      revokeObjectURL(url) { revokedUrls.push(url); },
+    },
+  };
+  const runtimeGlobal = { renderBattlePlayerCards(root, players) {
+    root.players = players.map((player) => {
+      const cardNodes = (player.cards ?? []).map(() => makeNode());
+      return { cardNodes, querySelectorAll: (selector) => selector === '.resolutionCard' ? cardNodes : [] };
+    });
+    root.querySelectorAll = (selector) => selector === '.resolutionPlayer' ? root.players : [];
+    return 'legacy-render-result';
+  } };
+  const blob = { local: true };
+  const installation = mod.installFanartPublicBattleCardProjection({
+    document: doc,
+    window: win,
+    global: runtimeGlobal,
+    indexedDB: null,
+    readLocalSkin: async (cardId) => cardId === 'C1' ? { asset: { blob } } : null,
+  });
+  assert.equal(installation.installed, true);
+  assert.equal(installation.contract.publicCardsOnly, true);
+  assert.equal(installation.contract.allOwnersSameViewerProjection, true);
+  assert.equal(installation.contract.opponentSpecificToggle, false);
+  assert.equal(installation.contract.networkSync, false);
+  assert.equal(installation.contract.hiddenCardLookup, false);
+
+  const root = {};
+  const players = [
+    { id: 'SELF', cards: [{ cardId: 'C1', label: 'CARD ONE', value: 4 }] },
+    { id: 'OPPONENT', cards: [{ cardId: 'C1', label: 'CARD ONE', value: 4 }, { cardId: 'C2', label: 'CARD TWO', value: 7 }] },
+  ];
+  assert.equal(runtimeGlobal.renderBattlePlayerCards(root, players, [], []), 'legacy-render-result');
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  const selfC1 = root.players[0].cardNodes[0];
+  const opponentC1 = root.players[1].cardNodes[0];
+  const opponentC2 = root.players[1].cardNodes[1];
+  for (const node of [selfC1, opponentC1]) {
+    assert.equal(node.dataset.cardId, 'C1');
+    assert.equal(node.dataset.fanartLocalPublicCard, '1');
+    assert.equal(node.dataset.artSource, 'viewer_local');
+    assert.equal(node.children.length, 1);
+    assert.equal(node.children[0].dataset.role, 'fanart-public-battle-card-art');
+    assert.equal(node.children[0].getAttribute('aria-hidden'), 'true');
+  }
+  assert.equal(opponentC2.dataset.cardId, 'C2');
+  assert.equal(opponentC2.dataset.artSource, undefined);
+  assert.equal(opponentC2.children.length, 0);
+  assert.equal(createdUrls.length, 2);
+  assert.equal(installation.destroy(), true);
+  assert.equal(revokedUrls.length, 2);
+});
+
+test('public Battle local-art projection wraps only the existing public renderer and has no transport or opponent-state path', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('export function installFanartPublicBattleCardProjection');
+  const end = source.indexOf('function autoInstallFanart');
+  const slice = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.ok(slice.includes('runtimeGlobal?.renderBattlePlayerCards'));
+  assert.ok(slice.includes("node.dataset.cardId = cardId"));
+  assert.ok(slice.includes("record?.asset?.blob"));
+  assert.equal(slice.includes('state.match'), false);
+  assert.equal(slice.includes('opponentEnabled'), false);
+  assert.equal(slice.includes('opponentEquippedSkin'), false);
+  for (const forbidden of ['fetch(', 'XMLHttpRequest', 'WebSocket', 'localStorage', 'sessionStorage']) {
+    assert.equal(slice.includes(forbidden), false, `forbidden transport/storage path: ${forbidden}`);
+  }
+});

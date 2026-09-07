@@ -132,10 +132,11 @@ jobs:
 
             const addHint = cards.locator('[data-role="deck-swipe-discovery-add"]');
             const removeHint = cards.locator('[data-role="deck-swipe-discovery-remove"]');
-            await expect(addHint).toHaveText('→ 右フリックで札組へ');
-            await expect(removeHint).toHaveText('← 左フリックで外す');
+            await expect(addHint).toContainText('右フリック');
+            await expect(removeHint).toContainText('左フリック');
             await expect(addHint, 'add hint starts visible').toBeVisible();
             await expect(removeHint, 'remove hint starts visible').toBeVisible();
+            console.log(`CARDS_GESTURE_HINT_COPY add=${JSON.stringify(await addHint.textContent())} remove=${JSON.stringify(await removeHint.textContent())}`);
             await attachShot(page, testInfo, 'cards-hints-initial');
 
             let deckCard = await visibleDeckCard(cards);

@@ -76,31 +76,24 @@ export function normalizeDoppelgangerFieldSnapshot(entries) {
 }
 
 /**
- * Resolve the normal Doppelganger common continuous rule exactly once for one
- * authoritative whole-field snapshot.
+ * Resolve the Doppelganger common game rule exactly once for one authoritative
+ * whole-field snapshot.
  *
  * Rules owned here:
+ * - every eligible field card receives the common-rule result; there is no
+ *   card identity, ability-registry, deck-membership, or activation predicate
  * - same-number comparison uses printed/base value
  * - same-number effect activates at 2+ matching cards
- * - same-number count includes the target Doppelganger itself
- * - same-name extra count excludes the target itself
- * - one census pass is shared by all four players; no per-player reapplication
+ * - same-number count includes the target physical card itself
+ * - same-name extra count excludes the target physical card itself
+ * - one census pass is shared by all players; no per-player reapplication
  * - no current-value feedback loop
  *
- * Identity is deliberately supplied by the authoritative caller. This core must
- * not infer activation from an ability registry, deck membership, or a hard-coded
- * card ID. It returns only negative deltas and does not own generic modifier
+ * This core returns only negative deltas. It does not own generic modifier
  * order, below-zero clamping, destruction, movement legality, battle settlement,
  * or display state.
  */
-export function resolveDoppelgangerContinuousOnce(
-  entries,
-  { isNormalDoppelganger } = {},
-) {
-  if (typeof isNormalDoppelganger !== 'function') {
-    throw new TypeError('DOPPELGANGER_PREDICATE_REQUIRED');
-  }
-
+export function resolveDoppelgangerContinuousOnce(entries) {
   const snapshot = normalizeDoppelgangerFieldSnapshot(entries);
   const numberCounts = new Map();
   const nameCounts = new Map();
@@ -112,8 +105,6 @@ export function resolveDoppelgangerContinuousOnce(
 
   const deltas = {};
   for (const entry of snapshot) {
-    if (!isNormalDoppelganger(entry)) continue;
-
     const sameNumberCount = numberCounts.get(entry.printedValue) || 0;
     const sameNameOtherCount = Math.max(0, (nameCounts.get(entry.name) || 0) - 1);
     const active = sameNumberCount >= 2;
@@ -133,7 +124,7 @@ export function resolveDoppelgangerContinuousOnce(
   }
 
   return deepFreeze({
-    schema: 'gameroad.doppelganger-continuous-resolution.v2',
+    schema: 'gameroad.doppelganger-common-rule-resolution.v3',
     evaluationPasses: 1,
     snapshotSize: snapshot.length,
     deltas,

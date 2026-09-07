@@ -52,6 +52,6 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add -A
           git diff --cached --check
-          test "$(git diff --cached --name-only | sort)" = "$(printf '%s\n' 'browser/cards-deck-presentation.mjs' 'tests/cards-deck-presentation.test.mjs' | sort)"
           git commit -m "Cards: show local art on all public Battle cards"
+          test "$(git diff --name-only 65877b226bb6d34841940492bd65dee2fa93e5cb...HEAD | sort)" = "$(printf '%s\n' 'browser/cards-deck-presentation.mjs' 'tests/cards-deck-presentation.test.mjs' | sort)"
           git push origin HEAD:${{ github.head_ref }}

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-STATE-FEEDBACK-RUNTIME-001|SETUP-PASSIVE-AFFORDANCE-R4|20260908T0848JST-SOL-M4K7P2",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "SETUP-PASSIVE-AFFORDANCE-R4",
+  "acquireKey": "UI-STATE-FEEDBACK-RUNTIME-001|SETUP-PASSIVE-AFFORDANCE-R4|20260908T0848JST-SOL-M4K7P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-R1336-CANCELBACK-KN3-SETUP-FALSE-AFFORDANCE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BFI-ARTIFACT-9988121813-SETUP-3VIEWPORT",
+  "proceedToken": "PROCEED|UI-STATE-FEEDBACK-RUNTIME-001|SETUP-PASSIVE-AFFORDANCE-R4|20260908T0848JST-SOL-M4K7P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-08T08:49:00+09:00",
+  "authorizationBaseSha": "2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb",
+  "scope": [
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "data/preaction-authorizations/UI-STATE-SETUP-PASSIVE-AFFORDANCE-R4-20260908T0848-SOL-M4K7P2.json"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "SETUP-PASSIVE-AFFORDANCE-R4",
+  "leaseAcquireKey": "UI-STATE-FEEDBACK-RUNTIME-001|SETUP-PASSIVE-AFFORDANCE-R4|20260908T0848JST-SOL-M4K7P2",
+  "leaseScope": [
+    "branch sol/setup-passive-affordance-r4-20260908",
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    "data/preaction-authorizations/UI-STATE-SETUP-PASSIVE-AFFORDANCE-R4-20260908T0848-SOL-M4K7P2.json"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-09-08 08:48 JST",
+  "leaseUntilJst": "2026-09-08 09:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A604:L604",
+  "leaseExactMutableResources": "branch sol/setup-passive-affordance-r4-20260908; browser/home-shell-presentation-core.mjs; tests/home-boot-presentation.test.mjs; data/preaction-authorizations/UI-STATE-SETUP-PASSIVE-AFFORDANCE-R4-20260908T0848-SOL-M4K7P2.json",
+  "solutionSignature": "setup-passive-settingrow-status-chrome-r4",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT-R1336-KN-CANCELBACK-002-ACT-CANCELBACK-001",
+  "solutionSearchEvidence": [
+    "CURRENT row1336 classifies Setup passive settingRow as false affordance",
+    "public BFI artifact 9988121813 reproduces Setup passive opponent status inside the staging panel",
+    "existing SETUP_STAGING_CSS already owns Setup presentation and preserves data-content/data-mode/start semantics"
+  ]
+}

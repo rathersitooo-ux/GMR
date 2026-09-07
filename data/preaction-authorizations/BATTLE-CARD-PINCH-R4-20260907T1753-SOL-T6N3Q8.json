@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CARD-PINCH-R4-20260907T1753-SOL-T6N3Q8",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "BATTLE_CARD_PINCH_ZOOM_R1",
+  "acquireKey": "BATTLE-CARD-PINCH-R4-20260907T1753-SOL-T6N3Q8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1257_PREACTION_AND_FOCUSED_NODE_GREEN_PACKAGE_PIN_ONLY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1257_RUN34102755445_FOCUSED_NODE_6_OF_6",
+  "proceedToken": "PROCEED|BATTLE-CARD-PINCH-R4-20260907T1753-SOL-T6N3Q8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CLEAN_CONTINUATION",
+  "authorizationBaseSha": "306b849df7f65ade55ea0ec24d580ff1d15c059e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "BATTLE_CARD_PINCH_ZOOM_R1",
+  "leaseAcquireKey": "BATTLE-CARD-PINCH-R4-20260907T1753-SOL-T6N3Q8",
+  "leaseSnapshotReadbackAtJst": "2026-09-07 17:53 JST",
+  "leaseUntilJst": "2026-09-07 18:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A537:L537",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean branch sol/battle-card-pinch-zoom-r4-20260907 from fresh main 306b849df7f65ade55ea0ec24d580ff1d15c059e only: browser/battle-board-visual-explanation-runtime-mount.mjs; tests/battle-board-visual-explanation-runtime-mount.test.mjs; deploy/cloudflare/tests/build.test.mjs; transient data/preaction-authorizations/BATTLE-CARD-PINCH-R4-20260907T1753-SOL-T6N3Q8.json; own PR/check/merge/readback only. READ_ONLY: browser/GAMEROAD.html; browser/battle-janken-slidepad-runtime-mount.mjs; browser/cards-deck-presentation.mjs; deploy/cloudflare/scripts/build.mjs; gameplay/rules/save/network/economy.",
+  "scope": [
+    "browser/battle-board-visual-explanation-runtime-mount.mjs",
+    "tests/battle-board-visual-explanation-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-board-visual-explanation-runtime-mount.mjs",
+    "tests/battle-board-visual-explanation-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

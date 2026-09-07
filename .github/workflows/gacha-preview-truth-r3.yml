@@ -124,10 +124,12 @@ jobs:
           BASE=7af2f1c373a9917cf6b477b006b3a09c14fc2ab8
           AUTH=data/preaction-authorizations/GACHA-PREVIEW-TRUTH-R3-20260907T1255-SOL-C7M4Q9.json
           git rm .github/workflows/gacha-preview-truth-r3.yml "$AUTH"
-          git diff --check
+          git add browser/gacha-preview-disclosure-runtime.mjs browser/screen-navigation-core.mjs tests/gacha-preview-disclosure-runtime.test.mjs deploy/cloudflare/scripts/build.mjs deploy/cloudflare/tests/build.test.mjs
+          git diff --check --cached
           python - <<'PY'
           import subprocess
-          expected={
+          base='7af2f1c373a9917cf6b477b006b3a09c14fc2ab8'
+          expected_from_head={
             'browser/gacha-preview-disclosure-runtime.mjs',
             'browser/screen-navigation-core.mjs',
             'tests/gacha-preview-disclosure-runtime.test.mjs',
@@ -136,11 +138,19 @@ jobs:
             '.github/workflows/gacha-preview-truth-r3.yml',
             'data/preaction-authorizations/GACHA-PREVIEW-TRUTH-R3-20260907T1255-SOL-C7M4Q9.json',
           }
-          actual=set(subprocess.check_output(['git','diff','--name-only','7af2f1c373a9917cf6b477b006b3a09c14fc2ab8'], text=True).splitlines())
-          assert actual==expected, f'bounded scope mismatch: {sorted(actual ^ expected)}'
+          actual_from_head=set(subprocess.check_output(['git','diff','--cached','--name-only','HEAD'], text=True).splitlines())
+          assert actual_from_head==expected_from_head, f'HEAD-bounded scope mismatch: {sorted(actual_from_head ^ expected_from_head)}'
+          expected_final_tree={
+            'browser/gacha-preview-disclosure-runtime.mjs',
+            'browser/screen-navigation-core.mjs',
+            'tests/gacha-preview-disclosure-runtime.test.mjs',
+            'deploy/cloudflare/scripts/build.mjs',
+            'deploy/cloudflare/tests/build.test.mjs',
+          }
+          actual_final_tree=set(subprocess.check_output(['git','diff','--cached','--name-only',base], text=True).splitlines())
+          assert actual_final_tree==expected_final_tree, f'BASE-final-tree mismatch: {sorted(actual_final_tree ^ expected_final_tree)}'
           PY
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add browser/gacha-preview-disclosure-runtime.mjs browser/screen-navigation-core.mjs tests/gacha-preview-disclosure-runtime.test.mjs deploy/cloudflare/scripts/build.mjs deploy/cloudflare/tests/build.test.mjs
           git commit -m 'Gacha: rebase truthful preview-only disclosure'
           git push origin HEAD:sol/gacha-preview-truth-public-r3-20260907

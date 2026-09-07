@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BIGDATA-PLAYER-ADVICE-EVIDENCE-R19-20260908T0830-SOL-M4Q7K2",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "PLAYER_FACING_ADVICE_EVIDENCE_R19",
+  "acquireKey": "BIGDATA-PLAYER-ADVICE-EVIDENCE-R19-20260908T0830-SOL-M4Q7K2",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BIGDATA_R19_USER_VISIBLE_ADVICE_SOURCE_GAP_20260908T0830",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BIGDATA_R19_COMPOSE_EXISTING_ADVICE_RESULT_AND_CHAT_MOUNT",
+  "proceedToken": "PROCEED|BIGDATA-PLAYER-ADVICE-EVIDENCE-R19-20260908T0830-SOL-M4Q7K2|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|user-visible-advice|source-distinct|no-best-move-claim",
+  "authorizationBaseSha": "9f6b95ff31edeb129011b03c9f71f662245751df",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "PLAYER_FACING_ADVICE_EVIDENCE_R19",
+  "leaseAcquireKey": "BIGDATA-PLAYER-ADVICE-EVIDENCE-R19-20260908T0830-SOL-M4Q7K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 08:30 JST",
+  "leaseUntilJst": "2026-09-08 09:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A593:L593",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean branch sol/player-advice-evidence-r19-20260908 from exact main 9f6b95ff31edeb129011b03c9f71f662245751df; browser/partner-advice-evidence-presentation.mjs; browser/partner-advice-runtime-mount.mjs; tests/partner-advice-evidence-presentation.test.mjs; transient data/preaction-authorizations/BIGDATA-PLAYER-ADVICE-EVIDENCE-R19-20260908T0830-SOL-M4Q7K2.json; own PR/check/merge/main readback; GAMEROAD 全作業一覧 row1358 Y:AB checkpoint. READ_ONLY: tools/advice-context-subset-index.mjs; browser/partner-legal-action-adapter.mjs; deploy/cloudflare/relay/src/partner-report-store.mjs; gameplay/rules/save/network.",
+  "scope": [
+    "browser/partner-advice-evidence-presentation.mjs",
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-evidence-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-evidence-presentation.mjs",
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-evidence-presentation.test.mjs"
+  ],
+  "solutionSignature": "Compose the existing Partner advice result into a compact player-facing evidence model and reuse the existing battle chat mount so every visible recommendation says what is suggested and whether it came from approved collective evidence, the player's strategy rule, or legacy fallback, without claiming optimality.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "BIGDATA_R19_REUSE_EXISTING_PARTNER_RUNTIME_20260908T0830",
+  "solutionSearchEvidence": [
+    "browser/partner-advice-runtime-mount.mjs already owns the live Partner advice bridge and mounted battle chat presentation",
+    "browser/partner-legal-action-adapter.mjs already distinguishes approved-runtime-manifest from shared-legal-action-core while enforcing legal public candidates",
+    "tools/advice-context-subset-index.mjs already marks approved aggregate manifests as non-optimal and exposes bounded support metadata without raw logs"
+  ],
+  "buildResidualReason": "The existing live chat shows Partner speech but has no reusable compact source/evidence projection. The residual is limited to a presentation-only projector plus integration and tests; ranking, legality, storage, gameplay, and learning authority remain unchanged."
+}

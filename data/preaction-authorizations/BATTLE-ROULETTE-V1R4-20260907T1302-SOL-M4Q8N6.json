@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ROULETTE-V1R4-20260907T1302-SOL-M4Q8N6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_ROULETTE_OPTIONAL_HAND_PRESENTATION_V1",
+  "acquireKey": "BATTLE-ROULETTE-V1R4-20260907T1302-SOL-M4Q8N6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-PLAYABLE-HAND-DOM-SEAM-PLUS-V1-PURE-CORE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "V1-PURE-CORE-TESTS-PLUS-CURRENT-SLOT-ROLL-API",
+  "proceedToken": "PROCEED|BATTLE-ROULETTE-V1R4-20260907T1302-SOL-M4Q8N6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|fresh-main-reviewed|exact-lease-readback",
+  "authorizationBaseSha": "7af2f1c373a9917cf6b477b006b3a09c14fc2ab8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_ROULETTE_OPTIONAL_HAND_PRESENTATION_V1",
+  "leaseAcquireKey": "BATTLE-ROULETTE-V1R4-20260907T1302-SOL-M4Q8N6",
+  "leaseSnapshotReadbackAtJst": "2026-09-07 13:02 JST",
+  "leaseUntilJst": "2026-09-07 14:02 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES AcquireKey exact lookup",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-hand-roulette-v1r4-20260907 only: browser/battle-hand-roulette-core.mjs; tests/battle-hand-roulette-core.test.mjs; browser/battle-hand-roulette-runtime-mount.mjs; tests/battle-hand-roulette-runtime-mount.test.mjs; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; this transient authorization; own PR/check/merge evidence; own lease tuple. READ_ONLY old roulette branches; browser/slidepad-slot-roll-core.mjs; browser/GAMEROAD.html; deploy build files; gameplay/rules/save/network/economy; Road/Shield resources.",
+  "scope": [
+    "browser/battle-hand-roulette-core.mjs",
+    "tests/battle-hand-roulette-core.test.mjs",
+    "browser/battle-hand-roulette-runtime-mount.mjs",
+    "tests/battle-hand-roulette-runtime-mount.test.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

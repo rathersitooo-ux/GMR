@@ -1,0 +1,204 @@
+name: TEMP Road Move Bidirectional Live R12
+on:
+  push:
+    branches:
+      - sol/road-move-bidirectional-live-r12-20260908
+    paths:
+      - .github/workflows/zz-temp-road-move-runtime-r12.yml
+permissions:
+  contents: write
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/road-move-bidirectional-live-r12-20260908
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch only the contradictory contextual endpoint wrapper
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='ca1fac5106140b7faf3e82701988c3d33b112720'
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "$BASE"
+          test "$(git merge-base HEAD "$BASE")" = "$BASE"
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('browser/GAMEROAD.html')
+          s=p.read_text()
+          old="const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0];if(!me?.plan?.roadId){ctxSet('PLAN_CARD_MISSING',{message:'先にロードカードを選ぶと移動範囲を決められます。'});return}const path=shortest(me.position,id,normalMoveLimitForRoad(me.plan.roadId),me);if(!path){ctxSet('MOVE_PATH_INVALID');return}const r=__ctxBaseSelectEndpoint(id);ctxClear();return r};"
+          new="const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0],r=__ctxBaseSelectEndpoint(id),path=me?.plan?.path||[];if(path.at(-1)===id)ctxClear();else ctxSet('MOVE_PATH_INVALID');return r};"
+          if s.count(old)!=1:
+              raise SystemExit(f'context endpoint wrapper mismatch: {s.count(old)}')
+          s=s.replace(old,new,1)
+          if "if(!me?.plan?.roadId){ctxSet('PLAN_CARD_MISSING'" in s:
+              raise SystemExit('card-first contextual gate still present')
+          p.write_text(s)
+          PY
+          cat > tests/road-move-bidirectional-live-r12.spec.mjs <<'EOF'
+          import { test, expect } from '@playwright/test';
+          import fs from 'node:fs';
+          const html=fs.readFileSync(new URL('../browser/GAMEROAD.html',import.meta.url),'utf8');
+
+          test('R12 source delegates endpoint legality to the existing single DraftMove selector',()=>{
+            expect(html).toContain("const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0],r=__ctxBaseSelectEndpoint(id),path=me?.plan?.path||[];if(path.at(-1)===id)ctxClear();else ctxSet('MOVE_PATH_INVALID');return r};");
+            expect(html).not.toContain("if(!me?.plan?.roadId){ctxSet('PLAN_CARD_MISSING'");
+            expect(html).toContain('function compatibleRoadCandidatesForPath');
+            expect(html).toContain('function roadMoveDecisionCard');
+            expect(html).toContain('roadMoveSoft');
+            expect(html).not.toContain('CARD_FIRST');
+            expect(html).not.toContain('MOVE_FIRST');
+          });
+
+          async function boot(page){
+            const response=await page.goto('/browser/GAMEROAD.html',{waitUntil:'domcontentloaded'});
+            expect(response?.ok()).toBeTruthy();
+            await page.waitForTimeout(500);
+            await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+            const mode=test.info().project.name;
+            if(mode.includes('reduced-setting')||mode.includes('lowperf-setting')){
+              await page.evaluate(()=>window.__GAMEROAD_TEST__.show('settings'));
+              if(mode.includes('reduced-setting')){const b=page.locator('#reduceMotion');if((await b.textContent())?.trim()!=='ON')await b.click();}
+              if(mode.includes('lowperf-setting')){const b=page.locator('#lowPerf');if((await b.textContent())?.trim()!=='ON')await b.click();}
+              await page.evaluate(()=>window.__GAMEROAD_TEST__.show('home'));
+            }
+          }
+
+          async function openRoadBattle(page){
+            await boot(page);
+            const deck=await page.evaluate(()=>{
+              const t=window.__GAMEROAD_TEST__;
+              const publicMain=new Set(t.deckPublic().filter(c=>c.slot==='main').map(c=>c.id));
+              const standard=window.__CARD_DATA__.filter(c=>publicMain.has(c.id)&&/^(SP|HT|DI|CL)$/.test(c.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c=>c.id);
+              const royal=standard.filter(id=>t.isRoyalCard(id)).slice(0,3);
+              const nonRoyal=standard.filter(id=>!t.isRoyalCard(id));
+              const road=nonRoyal.filter(id=>{const v=normalMoveLimitForRoad(id);return v>=1&&v<=6});
+              const rest=nonRoyal.filter(id=>!road.includes(id));
+              const main=[...road,...rest].slice(0,37).concat(royal);
+              t.deckSetDraft(main,[]);
+              return {ok:t.deckCommit(),roadCount:road.length};
+            });
+            expect(deck.ok).toBeTruthy();
+            expect(deck.roadCount).toBeGreaterThanOrEqual(6);
+            await page.evaluate(()=>{const t=window.__GAMEROAD_TEST__;t.start('2p','road_shield');t.show('battle')});
+            await expect(page.locator('section[data-screen="battle"]')).toBeVisible();
+            await expect(page.locator('#phaseTitle')).toContainText('行動を計画');
+            const fixture=await page.evaluate(()=>{
+              const t=window.__GAMEROAD_TEST__,p=t.state.match.players[0];
+              const pool=[...p.hand,...p.deck];
+              const rows=pool.map(id=>({id,value:normalMoveLimitForRoad(id)})).filter(x=>x.value>=1&&x.value<=6);
+              const values=[...new Set(rows.map(x=>x.value))].sort((a,b)=>a-b);
+              let lowValue=values.find(v=>v>=2&&values.some(h=>h>v));
+              if(lowValue==null)lowValue=values.find(v=>values.some(h=>h>v));
+              const highValue=values.find(v=>v>lowValue);
+              if(lowValue==null||highValue==null)throw Error('road-value-pair-missing');
+              const low=rows.find(x=>x.value===lowValue).id;
+              const high=rows.find(x=>x.value===highValue).id;
+              const extras=rows.filter(x=>x.value>=2&&x.id!==low&&x.id!==high).slice(0,2).map(x=>x.id);
+              const wanted=[low,high,...extras];
+              const bring=id=>{if(p.hand.includes(id))return;const di=p.deck.indexOf(id);if(di<0)throw Error('fixture-card-not-in-deck:'+id);const hi=p.hand.findIndex(x=>!wanted.includes(x));if(hi<0)throw Error('fixture-no-swap-slot');const old=p.hand[hi];p.hand[hi]=id;p.deck[di]=old};
+              wanted.forEach(bring);
+              renderBattle();
+              return {low:{id:low,value:lowValue},high:{id:high,value:highValue},wanted};
+            });
+            await page.waitForTimeout(80);
+            return fixture;
+          }
+          async function snap(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}
+          async function nativeMove(page,distance){
+            const r=await page.evaluate(distance=>{const el=document.querySelector(`#board .node.reachable[data-move-distance="${distance}"]`);if(!el)return false;el.click();return true},distance);
+            expect(r,`reachable ${distance}-step endpoint exists`).toBeTruthy();
+            await expect.poll(async()=> (await snap(page)).path.length-1).toBe(distance);
+          }
+          async function nativeCard(page,id){
+            const ok=await page.evaluate(id=>{const el=document.querySelector(`#hand .handCard[data-card-id="${id}"]`);if(!el)return false;el.click();return true},id);
+            expect(ok).toBeTruthy();
+          }
+
+          test('card-first remains valid and Road value is an upper bound',async({page})=>{
+            const f=await openRoadBattle(page);
+            const before=await snap(page);expect(before.battleId).toBeNull();
+            await nativeCard(page,f.low.id);
+            await expect.poll(async()=> (await snap(page)).roadId).toBe(f.low.id);
+            const d=Math.min(2,f.low.value);
+            await nativeMove(page,d);
+            const after=await snap(page);
+            expect(after.roadId).toBe(f.low.id);
+            expect(after.battleId).toBeNull();
+            expect(after.path.length-1).toBeLessThanOrEqual(f.low.value);
+            await expect(page.locator(`#hand .handCard[data-card-id="${f.low.id}"]`)).toHaveAttribute('data-road-move-state','FOCUSED');
+          });
+
+          test('move-first surfaces all candidates, never auto-picks, Elastic Focus keeps path, undo recomputes',async({page})=>{
+            const f=await openRoadBattle(page);
+            let s=await snap(page);expect(s.roadId).toBeNull();expect(s.battleId).toBeNull();
+            const firstDistance=Math.min(2,f.low.value);
+            await nativeMove(page,firstDistance);
+            s=await snap(page);
+            expect(s.roadId).toBeNull();
+            expect(s.battleId).toBeNull();
+            expect(s.compatibleRoadIds.length).toBeGreaterThan(1);
+            for(const id of s.compatibleRoadIds)await expect(page.locator(`#hand .handCard[data-card-id="${id}"]`)).toHaveAttribute('data-road-move-state','COMPATIBLE');
+            expect(s.compatibleRoadIds).toContain(f.low.id);
+            expect(s.compatibleRoadIds).toContain(f.high.id);
+            const pathBeforeFocus=JSON.stringify(s.path);
+            await nativeCard(page,f.low.id);
+            await expect.poll(async()=> (await snap(page)).roadId).toBe(f.low.id);
+            s=await snap(page);expect(JSON.stringify(s.path)).toBe(pathBeforeFocus);expect(s.battleId).toBeNull();
+            const elasticDistance=f.low.value+1;
+            await nativeMove(page,elasticDistance);
+            const extended=await snap(page);
+            expect(extended.roadId).toBe(f.low.id);
+            expect(extended.battleId).toBeNull();
+            expect(extended.compatibleRoadIds).not.toContain(f.low.id);
+            expect(extended.compatibleRoadIds).toContain(f.high.id);
+            await expect(page.locator(`#hand .handCard[data-card-id="${f.low.id}"]`)).toHaveAttribute('data-road-move-state','INVALID_FOCUS');
+            const keep=JSON.stringify(extended.path);
+            await nativeCard(page,f.high.id);
+            await expect.poll(async()=> (await snap(page)).roadId).toBe(f.high.id);
+            const switched=await snap(page);expect(JSON.stringify(switched.path)).toBe(keep);expect(switched.battleId).toBeNull();
+            await expect(page.locator(`#hand .handCard[data-card-id="${f.high.id}"]`)).toHaveAttribute('data-road-move-state','FOCUSED');
+            await page.locator('#clearPath').click();
+            const backed=await snap(page);
+            expect(backed.path.length-1).toBe(f.low.value);
+            expect(backed.compatibleRoadIds).toContain(f.low.id);
+            expect(backed.battleId).toBeNull();
+          });
+          EOF
+          git diff --check
+          node --test tests/road-move-compatibility-core.test.mjs
+          DIFF="$(git diff -U0 "$BASE" -- browser/GAMEROAD.html)"
+          printf '%s\n' "$DIFF" | grep -q '__ctxBaseSelectEndpoint'
+          if printf '%s\n' "$DIFF" | grep -E 'selectBattleCard|battleId|removeHand|resolveBattle|attack|winningTeam|winner' >/dev/null; then
+            echo 'Battle-card lifecycle symbol entered Road product diff' >&2
+            exit 1
+          fi
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Run Road live acceptance across required surfaces
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > .road-r12-playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({testDir:'./tests',testMatch:'road-move-bidirectional-live-r12.spec.mjs',timeout:50000,expect:{timeout:8000},workers:1,retries:0,reporter:[['line']],use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,trace:'off',screenshot:'off',video:'off'},projects:[{name:'desktop-1280x720',use:{viewport:{width:1280,height:720}}},{name:'portrait-390x844',use:{viewport:{width:390,height:844}}},{name:'landscape-844x390',use:{viewport:{width:844,height:390}}},{name:'reduced-setting-844x390',use:{viewport:{width:844,height:390}}},{name:'lowperf-setting-844x390',use:{viewport:{width:844,height:390}}}],webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1',url:'http://127.0.0.1:4173/browser/GAMEROAD.html',reuseExistingServer:false,timeout:120000}});
+          EOF
+          npx playwright test --config=.road-r12-playwright.config.mjs --workers=1
+          rm -f .road-r12-playwright.config.mjs
+      - name: Commit accepted product delta and remove transient execution files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add browser/GAMEROAD.html tests/road-move-bidirectional-live-r12.spec.mjs
+          git rm .github/workflows/zz-temp-road-move-runtime-r12.yml data/preaction-authorizations/ROAD-MOVE-BIDIRECTIONAL-R12-20260908T0659-SOL-M8Q4N7.json
+          git config user.name 'gameroad-road-r12'
+          git config user.email 'actions@users.noreply.github.com'
+          git commit -m 'Battle: restore bidirectional Road movement input'
+          git push origin HEAD:sol/road-move-bidirectional-live-r12-20260908

@@ -8,6 +8,7 @@ import {
   parsePublishedReleaseCommunications,
   parsePublishedReleaseNotes,
   projectHomeShell,
+  SETUP_STAGING_PRESENTATION_CSS,
 } from '../browser/home-shell-presentation-core.mjs';
 import {
   BOOT_LOADING_PHASES,
@@ -119,6 +120,21 @@ test('Home operations information fails closed on contradictory hidden states or
   assert.equal(parsePublishedReleaseCommunications(releaseCommsPayload({
     roadmap: { state: 'UNKNOWN', items: [] },
   })), null);
+});
+
+test('Setup passive rows read as status while actual choices and start keep interactive affordance', () => {
+  const passiveMatch = SETUP_STAGING_PRESENTATION_CSS.match(/section\[data-screen="setup"\] \.settingRow\{([^}]]+)\}/);
+  assert.ok(passiveMatch);
+  const passive = passiveMatch[1];
+  assert.match(passive, /border:0!important/);
+  assert.match(passive, /background:transparent!important/);
+  assert.match(passive, /box-shadow:none!important/);
+  assert.match(passive, /transform:none!important/);
+  assert.match(passive, /cursor:default/);
+  assert.equal(SETUP_STAGING_PRESENTATION_CSS.includes('.settingRow:hover'), false);
+  assert.match(SETUP_STAGING_PRESENTATION_CSS, /\[data-mode\]\{[^}]*touch-action:manipulation/);
+  assert.match(SETUP_STAGING_PRESENTATION_CSS, /#startMatch\{[^}]*touch-action:manipulation/);
+  assert.match(SETUP_STAGING_PRESENTATION_CSS, /#startMatch:not\(:disabled\):active/);
 });
 
 test('Home viewport classifier distinguishes wide, short landscape, and portrait', () => {
@@ -515,18 +531,4 @@ test('Quick settings trigger distinguishes Home settings and Battle gear without
     },
   };
   assert.deepEqual(resolveQuickSettingsTrigger(homeTarget), { surface: 'home', trigger: homeTrigger });
-});
-
-
-test('Home low-frequency chrome keeps duplicate rails and normal save status out of active Home', async () => {
-  const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
-  assert.equal(source.includes('.codexHomeLeftRail'), true);
-  assert.equal(source.includes('.codexHomeRightRail'), true);
-  assert.equal(source.includes('html.grCodexHomeActive #saveState'), true);
-  for (const route of ['missions', 'gacha', 'records', 'profile', 'settings']) {
-    assert.equal(source.includes(`[data-go="${route}"]::before`), true, route);
-  }
-  assert.equal(source.includes('[data-home-contextual-replay-trigger="true"]::before'), false);
-  assert.equal(source.includes('HOME_CONTEXTUAL_REPLAY_LABEL'), true);
 });

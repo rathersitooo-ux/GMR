@@ -67,3 +67,5 @@ jobs:
           console.log(`CARD_REGISTRY_CENSUS=${JSON.stringify(report)}`);
           if (assignmentPositions.length === 0) process.exitCode = 2;
           NODE
+
+# Trigger commit for branch-local evidence runner; delete after readback.

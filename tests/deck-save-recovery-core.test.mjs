@@ -564,3 +564,12 @@ test('atomic snapshot is blocked before mutation when baseline storage cannot be
   assert.equal(result.status, 'blocked');
   assert.equal(result.reason, 'ATOMIC_BASELINE_READ_FAILED');
 });
+
+
+test('live Cards/Deck presentation imports the existing verified deck-save guard', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const mount = "import './deck-save-recovery-core.mjs';";
+  assert.equal(source.split(mount).length - 1, 1);
+  assert.match(source, /^import '\.\/deck-save-recovery-core\.mjs';$/m);
+});

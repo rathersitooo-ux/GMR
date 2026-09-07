@@ -1,5 +1,6 @@
 import { createSaasunaConversationEntry } from './partner-conversation-core.mjs';
 import { projectPartnerTeaQuickChoices } from './partner-tea-runtime-mount.mjs';
+import './battle-board-visual-explanation-runtime-mount.mjs';
 
 const CLASSIC_BRIDGE_NAME = 'GAMEROAD_BOARD_FACILITY_STATE_CORE';
 const RUNTIME_NAME = 'GAMEROAD_BOARD_FACILITY_RUNTIME';

@@ -6,6 +6,12 @@ on:
       - main
     paths:
       - 'browser/GAMEROAD.html'
+      - 'browser/**/*.mjs'
+      - 'browser/**/*.js'
+      - 'tools/**/*.mjs'
+      - 'scripts/**/*.mjs'
+      - 'deploy/**/*.mjs'
+      - 'deploy/**/*.js'
       - 'tests/browser-static-check.mjs'
       - '.github/workflows/browser-node-ci.yml'
   schedule:

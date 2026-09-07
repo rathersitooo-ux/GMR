@@ -6,6 +6,7 @@ on:
       - sol/cards-gesture-hint-doubleapply-r8-20260907
     paths:
       - '.github/workflows/zz-temp-cards-gesture-doubleapply-r8.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write

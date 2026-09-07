@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RECORDS-DETAIL-DISMISS-R3-20260908T0856-SOL-Q6N4V8",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "RECORDS_MATCH_DETAIL_SAFE_DISMISS_R1",
+  "acquireKey": "RECORDS-DETAIL-DISMISS-R3-20260908T0856-SOL-Q6N4V8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R2_PRODUCT_PATCH_FOCUSED_TEST_PASS_AND_CURRENT_TARGET_BLOBS_UNCHANGED",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R2_GUARDED_FOCUSED_TEST_PASS_PLUS_CURRENT_CANCEL_BACK_KNOWLEDGE",
+  "proceedToken": "PROCEED|RECORDS-DETAIL-DISMISS-R3-20260908T0856-SOL-Q6N4V8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|REAPPLY_VERIFIED_RECORDS_PRESENTATION_PATCH",
+  "authorizationBaseSha": "3e77c804e38dd4314d8d5d7fce6493c4ef91886c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "RECORDS_MATCH_DETAIL_SAFE_DISMISS_R1",
+  "leaseAcquireKey": "RECORDS-DETAIL-DISMISS-R3-20260908T0856-SOL-Q6N4V8",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 08:56 JST",
+  "leaseUntilJst": "2026-09-08 09:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A571:L571",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean branch sol/records-detail-safe-dismiss-r3-20260908 from exact fresh main 3e77c804e38dd4314d8d5d7fce6493c4ef91886c; browser/profile-presentation-runtime-mount.mjs; tests/profile-presentation-runtime-mount.test.mjs; transient data/preaction-authorizations/RECORDS-DETAIL-DISMISS-R3-20260908T0856-SOL-Q6N4V8.json; transient .github/workflows/zz-temp-records-detail-safe-dismiss-r3.yml; own PR/check/merge/main/public readback. READ_ONLY: browser/GAMEROAD.html; gameplay/rules/save/economy/network; Records history producer/data.",
+  "scope": [
+    "browser/profile-presentation-runtime-mount.mjs",
+    "tests/profile-presentation-runtime-mount.test.mjs",
+    "data/preaction-authorizations/RECORDS-DETAIL-DISMISS-R3-20260908T0856-SOL-Q6N4V8.json",
+    ".github/workflows/zz-temp-records-detail-safe-dismiss-r3.yml"
+  ],
+  "leaseScope": [
+    "browser/profile-presentation-runtime-mount.mjs",
+    "tests/profile-presentation-runtime-mount.test.mjs",
+    "data/preaction-authorizations/RECORDS-DETAIL-DISMISS-R3-20260908T0856-SOL-Q6N4V8.json",
+    ".github/workflows/zz-temp-records-detail-safe-dismiss-r3.yml"
+  ],
+  "solutionSignature": "records-detail-frontmost-safe-dismiss-outside-click-escape-focus-return-no-history-mutation",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_PROFILE_PRESENTATION_OWNS_RECORDS_DETAIL_AND_R2_PATCH_IS_VERIFIED_DONOR",
+  "solutionSearchEvidence": [
+    "R2:browser/profile-presentation-runtime-mount.mjs patch donor b451423287c4fc421a0799a40e57839cca075788",
+    "R2:guarded workflow run 34171435591 focused test PASS",
+    "current-main:target blobs fd9fbf5a8566e88e0024ef21b33f697dc34cd596 and b243238ac2ae28f374b5f94b5bf4f15900d08257 unchanged",
+    "Drive:UI-STATE-FEEDBACK-RUNTIME-001 KN-CANCELBACK-001/002"
+  ]
+}

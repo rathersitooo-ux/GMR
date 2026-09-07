@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "CARD-USAGE-TIER-R1-20260908T0750-SOL-P7N4V6",
+  "taskId": "OPS-PRODUCT-EXPERIMENT-FUNNEL-BI-001",
+  "workUnitKey": "CARD_USAGE_TIER_AGGREGATE_VIEWMODEL_R1",
+  "acquireKey": "CARD-USAGE-TIER-R1-20260908T0750-SOL-P7N4V6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CARD_USAGE_TIER_R1_PURE_AGGREGATE_BOUNDARY_20260908T0750",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CARD_USAGE_TIER_R1_EXISTING_SNAPSHOT_AND_FAILCLOSED_CODE_CENSUS",
+  "proceedToken": "PROCEED|CARD-USAGE-TIER-R1-20260908T0750-SOL-P7N4V6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|pure-aggregate|no-store|no-gameplay-authority",
+  "authorizationBaseSha": "65877b226bb6d34841940492bd65dee2fa93e5cb",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "OPS-PRODUCT-EXPERIMENT-FUNNEL-BI-001",
+  "leaseWorkUnitKey": "CARD_USAGE_TIER_AGGREGATE_VIEWMODEL_R1",
+  "leaseAcquireKey": "CARD-USAGE-TIER-R1-20260908T0750-SOL-P7N4V6",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 07:50 JST",
+  "leaseUntilJst": "2026-09-08 08:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A588:L588",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean branch sol/card-usage-tier-aggregate-r1-20260908 from exact fresh main; browser/card-usage-tier-core.mjs; tests/card-usage-tier-core.test.mjs; transient data/preaction-authorizations/CARD-USAGE-TIER-R1-20260908T0750-SOL-P7N4V6.json; own PR/check/merge/main readback; GAMEROAD 全作業一覧 row1290 Y:AB checkpoint.",
+  "scope": [
+    "browser/card-usage-tier-core.mjs",
+    "tests/card-usage-tier-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/card-usage-tier-core.mjs",
+    "tests/card-usage-tier-core.test.mjs"
+  ],
+  "solutionSignature": "Build a deterministic privacy-safe card adoption aggregate and viewer projection from authoritative match-start deck snapshots, counting card presence once per deck, version/cohort scoped, with explicit externally supplied support and tier policy and no strength inference.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CARD_USAGE_TIER_R1_REUSE_CENSUS_20260908T0750",
+  "solutionSearchEvidence": [
+    "browser/deck-save-ack-core.mjs#createDeckMatchStartSnapshot provides the existing immutable match-start deck source",
+    "tools/advice-collective-eval.mjs provides existing exact-version and minimum-support fail-closed patterns",
+    "browser/partner-decision-outcome-join-core.mjs preserves no-optimal-inference boundaries",
+    "default-branch search returned no existing card adoption or usage-tier aggregate implementation"
+  ]
+}

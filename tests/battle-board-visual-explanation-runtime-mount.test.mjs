@@ -198,7 +198,7 @@ test('one pointer remains non-destructive while two-pointer pinch zooms and rese
   assert.equal(runtime.snapshot().active, true);
   assert.equal(h.attributes.get('data-battle-card-pinch-active'), 'true');
 
-  const pinchMove = h.fire('pointermove', { pointerId: 2, x: 180, y: 0 });
+  const pinchMove = h.fire('pointermove', { pointerId: 2, x: 164, y: 0 });
   assert.equal(pinchMove.prevented, true);
   assert.equal(pinchMove.stopped, true);
   assert.equal(runtime.snapshot().scale, 1.8);

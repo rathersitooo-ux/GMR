@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "FANART-BATTLE-SELF-CHAIN-R2-20260908T0239",
+  "taskId": "FANART-LOCAL-CARD-CREATOR-BROWSER-001",
+  "workUnitKey": "FANART_BATTLE_SELF_PLAYED_CARD_CHAIN_R1",
+  "acquireKey": "FANART-BATTLE-SELF-CHAIN-R1-20260908T0228-SOL-Q7M4K9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "EXISTING_BATTLE_PLAYED_CHAIN_PLUS_EXISTING_VIEWER_LOCAL_OVERLAY_READBACK",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R1_BOUNDED_DIFF_REVIEW_WITH_TEXT_FALLBACK_AND_NO_STORAGE_NETWORK_MUTATION",
+  "proceedToken": "PROCEED|FANART-BATTLE-SELF-CHAIN-R2-20260908T0239|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-chain|viewer-local-only",
+  "authorizationBaseSha": "ae5ec30b6ac76031b6865fe9d7be428781ff7a57",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "FANART-LOCAL-CARD-CREATOR-BROWSER-001",
+  "leaseWorkUnitKey": "FANART_BATTLE_SELF_PLAYED_CARD_CHAIN_R1",
+  "leaseAcquireKey": "FANART-BATTLE-SELF-CHAIN-R1-20260908T0228-SOL-Q7M4K9",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 02:39 JST",
+  "leaseUntilJst": "2026-09-08 03:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A556:L556",
+  "leaseExactMutableResources": "branch sol/fanart-battle-self-chain-r2-20260908; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; GAMEROAD 全作業一覧 row 111",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

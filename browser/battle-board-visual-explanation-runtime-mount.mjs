@@ -5,6 +5,12 @@ const NODE = '#board .node[data-pos]';
 const ROLES = 'data-board-visual-roles';
 const SUMMARY = 'battleBoardVisualExplanationSummary';
 const PROVIDER = '__GAMEROAD_BOARD_PARTNER_ADVICE_AUTHORITY__';
+const HAND_CARD = '#hand .handCard[data-card-id]';
+const PINCH_ATTR = 'data-battle-card-pinch-active';
+const PINCH_MIN_SCALE = 1;
+const PINCH_MAX_SCALE = 2.2;
+const PINCH_MIN_DISTANCE_PX = 8;
+const PINCH_CLICK_SUPPRESS_MS = 350;
 
 function token(value) {
   if (typeof value !== 'string') return null;
@@ -51,11 +57,25 @@ export function projectBattleBoardRuntimeExplanation(authority = {}) {
   return projectBattleBoardVisualExplanation(authority);
 }
 
+export function projectBattleCardPinchScale({
+  startDistance,
+  currentDistance,
+  minScale = PINCH_MIN_SCALE,
+  maxScale = PINCH_MAX_SCALE,
+} = {}) {
+  const start = Number(startDistance);
+  const current = Number(currentDistance);
+  const minimum = Number(minScale);
+  const maximum = Number(maxScale);
+  if (![start, current, minimum, maximum].every(Number.isFinite) || start < PINCH_MIN_DISTANCE_PX || current <= 0 || minimum <= 0 || maximum < minimum) return null;
+  return Math.min(maximum, Math.max(minimum, current / start));
+}
+
 function installStyle(doc) {
   if (doc.getElementById?.('gameroad-board-visual-explanation-runtime-style')) return;
   const style = doc.createElement('style');
   style.id = 'gameroad-board-visual-explanation-runtime-style';
-  style.textContent = `#${SUMMARY}{display:inline-flex;gap:5px;margin-inline-start:5px;padding:2px 5px;border:1px solid rgba(255,255,255,.24);border-radius:999px;background:rgba(3,16,15,.64);font-size:9px;font-weight:900;pointer-events:none}#${SUMMARY}[hidden],#${SUMMARY} [hidden]{display:none!important}${NODE}[${ROLES}~="selected"]{outline:2px solid rgba(255,255,255,.92);outline-offset:2px}${NODE}[${ROLES}~="partner-recommendation"]{box-shadow:0 0 0 2px rgba(255,222,130,.9)}@media(max-width:540px),(max-height:420px){#${SUMMARY}{font-size:8px;padding:2px 4px}}@media(prefers-reduced-motion:reduce){#${SUMMARY},${NODE}[${ROLES}]{transition:none!important;animation:none!important}}`;
+  style.textContent = `#${SUMMARY}{display:inline-flex;gap:5px;margin-inline-start:5px;padding:2px 5px;border:1px solid rgba(255,255,255,.24);border-radius:999px;background:rgba(3,16,15,.64);font-size:9px;font-weight:900;pointer-events:none}#${SUMMARY}[hidden],#${SUMMARY} [hidden]{display:none!important}${NODE}[${ROLES}~="selected"]{outline:2px solid rgba(255,255,255,.92);outline-offset:2px}${NODE}[${ROLES}~="partner-recommendation"]{box-shadow:0 0 0 2px rgba(255,222,130,.9)}section[data-screen="battle"] ${HAND_CARD}{touch-action:none}section[data-screen="battle"] ${HAND_CARD}[${PINCH_ATTR}="true"]{position:relative;z-index:120!important;filter:drop-shadow(0 16px 24px rgba(0,0,0,.42))}@media(max-width:540px),(max-height:420px){#${SUMMARY}{font-size:8px;padding:2px 4px}}@media(prefers-reduced-motion:reduce){#${SUMMARY},${NODE}[${ROLES}],section[data-screen="battle"] ${HAND_CARD}{transition:none!important;animation:none!important}}`;
   doc.head?.appendChild(style);
 }
 
@@ -95,6 +115,188 @@ function render(doc, root, projection) {
   root.dataset.gameplayAuthority = 'false';
 }
 
+function pointerDistance(left, right) {
+  if (!left || !right) return NaN;
+  return Math.hypot(Number(left.x) - Number(right.x), Number(left.y) - Number(right.y));
+}
+
+function snapshotInlinePinchStyle(card) {
+  const style = card?.style;
+  if (!style) return null;
+  return Object.freeze({
+    scale: style.scale || '',
+    transformOrigin: style.transformOrigin || '',
+    zIndex: style.zIndex || '',
+    willChange: style.willChange || '',
+  });
+}
+
+function restoreInlinePinchStyle(card, prior) {
+  if (!card?.style || !prior) return;
+  card.style.scale = prior.scale;
+  card.style.transformOrigin = prior.transformOrigin;
+  card.style.zIndex = prior.zIndex;
+  card.style.willChange = prior.willChange;
+  card.removeAttribute?.(PINCH_ATTR);
+}
+
+function cancelSinglePointerDrag(win, card, pointerId) {
+  if (!card?.dispatchEvent || typeof win?.PointerEvent !== 'function') return false;
+  try {
+    const cancel = new win.PointerEvent('pointercancel', { pointerId, bubbles: false, cancelable: false });
+    Object.defineProperty(cancel, '__gameroadPinchAbort', { value: true });
+    card.dispatchEvent(cancel);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function installBattleCardPinchZoomRuntime(win = globalThis) {
+  const doc = win?.document;
+  const hand = doc?.querySelector?.('#hand');
+  if (!doc || !hand || typeof hand.addEventListener !== 'function') return null;
+  const current = win.__GAMEROAD_BATTLE_CARD_PINCH_ZOOM_RUNTIME__;
+  if (current?.destroy) return current;
+
+  const pointers = new Map();
+  let gesture = null;
+  let dead = false;
+  let suppressedCard = null;
+  let suppressUntil = 0;
+
+  function targetCard(event) {
+    return event?.target?.closest?.(HAND_CARD) ?? null;
+  }
+
+  function point(event, card) {
+    const x = Number(event?.clientX);
+    const y = Number(event?.clientY);
+    const pointerId = Number(event?.pointerId);
+    if (!card || ![x, y, pointerId].every(Number.isFinite)) return null;
+    return { pointerId, x, y, card };
+  }
+
+  function matchingPoints(card) {
+    return [...pointers.values()].filter((entry) => entry.card === card);
+  }
+
+  function finishGesture(card = gesture?.card) {
+    if (!gesture || (card && gesture.card !== card)) return false;
+    const finishedCard = gesture.card;
+    restoreInlinePinchStyle(finishedCard, gesture.priorStyle);
+    suppressedCard = finishedCard;
+    suppressUntil = Date.now() + PINCH_CLICK_SUPPRESS_MS;
+    gesture = null;
+    return true;
+  }
+
+  function beginGesture(card) {
+    if (gesture || !card) return false;
+    const matches = matchingPoints(card);
+    if (matches.length < 2) return false;
+    const first = matches[0];
+    const second = matches[1];
+    const startDistance = pointerDistance(first, second);
+    if (!Number.isFinite(startDistance) || startDistance < PINCH_MIN_DISTANCE_PX) return false;
+    const priorStyle = snapshotInlinePinchStyle(card);
+    if (!priorStyle) return false;
+    cancelSinglePointerDrag(win, card, first.pointerId);
+    gesture = { card, pointerIds: new Set([first.pointerId, second.pointerId]), startDistance, priorStyle, scale: 1 };
+    card.setAttribute?.(PINCH_ATTR, 'true');
+    card.style.transformOrigin = '50% 50%';
+    card.style.willChange = 'scale';
+    card.style.zIndex = '120';
+    card.style.scale = '1';
+    return true;
+  }
+
+  function onPointerDown(event) {
+    if (dead || gesture) return;
+    const card = targetCard(event);
+    const entry = point(event, card);
+    if (!entry) return;
+    pointers.set(entry.pointerId, entry);
+    if (beginGesture(card)) {
+      event.preventDefault?.();
+      event.stopPropagation?.();
+    }
+  }
+
+  function onPointerMove(event) {
+    if (dead) return;
+    const pointerId = Number(event?.pointerId);
+    const existing = pointers.get(pointerId);
+    if (!existing) return;
+    const x = Number(event?.clientX);
+    const y = Number(event?.clientY);
+    if (![x, y].every(Number.isFinite)) return;
+    pointers.set(pointerId, { ...existing, x, y });
+    if (!gesture || !gesture.pointerIds.has(pointerId)) return;
+    const points = [...gesture.pointerIds].map((id) => pointers.get(id)).filter(Boolean);
+    if (points.length < 2) return;
+    const scale = projectBattleCardPinchScale({ startDistance: gesture.startDistance, currentDistance: pointerDistance(points[0], points[1]) });
+    if (scale == null) return;
+    gesture.scale = scale;
+    gesture.card.style.scale = String(scale);
+    event.preventDefault?.();
+    event.stopPropagation?.();
+  }
+
+  function onPointerEnd(event) {
+    if (event?.__gameroadPinchAbort === true) return;
+    const pointerId = Number(event?.pointerId);
+    if (!Number.isFinite(pointerId)) return;
+    const wasGesturePointer = gesture?.pointerIds?.has(pointerId) === true;
+    pointers.delete(pointerId);
+    if (!wasGesturePointer) return;
+    event.preventDefault?.();
+    event.stopPropagation?.();
+    finishGesture();
+  }
+
+  function onClick(event) {
+    if (!suppressedCard || Date.now() > suppressUntil) {
+      suppressedCard = null;
+      suppressUntil = 0;
+      return;
+    }
+    if (targetCard(event) !== suppressedCard) return;
+    event.preventDefault?.();
+    event.stopImmediatePropagation?.();
+    suppressedCard = null;
+    suppressUntil = 0;
+  }
+
+  hand.addEventListener('pointerdown', onPointerDown, true);
+  hand.addEventListener('pointermove', onPointerMove, true);
+  hand.addEventListener('pointerup', onPointerEnd, true);
+  hand.addEventListener('pointercancel', onPointerEnd, true);
+  hand.addEventListener('lostpointercapture', onPointerEnd, true);
+  hand.addEventListener('click', onClick, true);
+
+  const control = Object.freeze({
+    snapshot: () => Object.freeze({ active: !!gesture, cardId: gesture?.card?.dataset?.cardId ?? null, scale: gesture?.scale ?? 1, pointerCount: pointers.size }),
+    destroy() {
+      if (dead) return false;
+      dead = true;
+      finishGesture();
+      pointers.clear();
+      hand.removeEventListener('pointerdown', onPointerDown, true);
+      hand.removeEventListener('pointermove', onPointerMove, true);
+      hand.removeEventListener('pointerup', onPointerEnd, true);
+      hand.removeEventListener('pointercancel', onPointerEnd, true);
+      hand.removeEventListener('lostpointercapture', onPointerEnd, true);
+      hand.removeEventListener('click', onClick, true);
+      suppressedCard = null;
+      suppressUntil = 0;
+      return true;
+    },
+  });
+  win.__GAMEROAD_BATTLE_CARD_PINCH_ZOOM_RUNTIME__ = control;
+  return control;
+}
+
 export function installBattleBoardVisualExplanationRuntime(win = globalThis) {
   const doc = win?.document;
   const board = doc?.querySelector?.('#board');
@@ -122,9 +324,25 @@ export function installBattleBoardVisualExplanationRuntime(win = globalThis) {
 function autoInstall(win = globalThis) {
   const doc = win?.document;
   if (!doc) return;
-  const run = () => { if (!win.__GAMEROAD_BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME__) installBattleBoardVisualExplanationRuntime(win); };
+  const run = () => {
+    if (!win.__GAMEROAD_BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME__) installBattleBoardVisualExplanationRuntime(win);
+    if (!win.__GAMEROAD_BATTLE_CARD_PINCH_ZOOM_RUNTIME__) installBattleCardPinchZoomRuntime(win);
+  };
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', run, { once: true }); else run();
 }
 autoInstall();
 
-export const BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME = Object.freeze({ actualPositionSelector: NODE, selectedAuthority: '#endpointText', reachableAuthority: `${NODE}.reachable`, partnerProvider: PROVIDER, summaryRoot: `#${SUMMARY}`, presentationOnly: true, gameplayAuthority: false, topologyInference: false, automaticExecution: false });
+export const BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME = Object.freeze({
+  actualPositionSelector: NODE,
+  selectedAuthority: '#endpointText',
+  reachableAuthority: `${NODE}.reachable`,
+  partnerProvider: PROVIDER,
+  summaryRoot: `#${SUMMARY}`,
+  presentationOnly: true,
+  gameplayAuthority: false,
+  topologyInference: false,
+  automaticExecution: false,
+  cardPinchZoom: true,
+  cardPinchSelector: HAND_CARD,
+  cardPinchScaleRange: Object.freeze([PINCH_MIN_SCALE, PINCH_MAX_SCALE]),
+});

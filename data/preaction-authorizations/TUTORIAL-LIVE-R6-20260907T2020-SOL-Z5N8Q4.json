@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "TUTORIAL-LIVE-R6-20260907T2020-SOL-Z5N8Q4",
+  "taskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "workUnitKey": "TUTORIAL_EXPERIENCE_LIVE_BATTLE_R1",
+  "acquireKey": "TUTORIAL-LIVE-R6-20260907T2020-SOL-Z5N8Q4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "main-ac6b527-existing-live-contextual-replay-plus-merged-experience-profile-prompt-core",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing-partner-advice-live-mount-and-context-help-focus-callbacks-plus-green-core-tests",
+  "proceedToken": "PROCEED|TUTORIAL-LIVE-R6-20260907T2020-SOL-Z5N8Q4|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|adapt-existing-live-contextual-tutorial",
+  "authorizationBaseSha": "ac6b52777c141a31742b0c3aebfb42c84ca1736f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "TUTORIAL_EXPERIENCE_LIVE_BATTLE_R1",
+  "leaseAcquireKey": "TUTORIAL-LIVE-R6-20260907T2020-SOL-Z5N8Q4",
+  "leaseSnapshotReadbackAtJst": "2026-09-07 20:20 JST",
+  "leaseUntilJst": "2026-09-07 21:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A546:L546",
+  "leaseExactMutableResources": "browser/partner-advice-runtime-mount.mjs; tests/partner-advice-runtime-mount.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; data/preaction-authorizations/TUTORIAL-LIVE-R6-20260907T2020-SOL-Z5N8Q4.json",
+  "scope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/TUTORIAL-LIVE-R6-20260907T2020-SOL-Z5N8Q4.json"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/TUTORIAL-LIVE-R6-20260907T2020-SOL-Z5N8Q4.json"
+  ],
+  "solutionSignature": "existing-battle-contextual-tutorial-live-mount-plus-experience-profile-adapter-and-public-package",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "pr1110-live-contextual-replay-and-main-ac6b-experience-core",
+  "solutionSearchEvidence": [
+    "browser/partner-advice-runtime-mount.mjs:createBattleContextualTutorialReplayControl",
+    "browser/partner-advice-runtime-mount.mjs:mountPartnerAdviceChatPresentation",
+    "browser/partner-advice-runtime-mount.mjs:setBattleContextualTutorialFocus",
+    "browser/tutorial-experience-profile-core.mjs:createTutorialExperienceProfileControl",
+    "browser/tutorial-experience-profile-core.mjs:projectTutorialExperiencePrompt",
+    "browser/tutorial-experience-profile-core.mjs:projectTutorialExperienceHelp",
+    "deploy/cloudflare/scripts/build.mjs:ARTIFACT_SPECS",
+    "CURRENT:Y1242:FIRST_BATTLE_LAYER_REPRIORITIZATION_USER_EXPLICIT"
+  ]
+}

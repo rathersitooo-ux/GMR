@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-REMAINING-DECK-PUBLIC-R1-20260908T0848-SOL-N7Q4M6",
+  "taskId": "BATTLE-SELF-REMAINING-DECK-INSPECT-001",
+  "workUnitKey": "BATTLE_REMAINING_DECK_PUBLIC_PACKAGE_CLOSURE_R1",
+  "acquireKey": "BATTLE-REMAINING-DECK-PUBLIC-R1-20260908T0848-SOL-N7Q4M6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1161-viewer-safe-bridge-plus-current-main-core-and-build-contract-20260908",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1161-focused-52-pass-plus-current-build-dependency-contract",
+  "proceedToken": "PROCEED|BATTLE-REMAINING-DECK-PUBLIC-R1-20260908T0848-SOL-N7Q4M6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-08T08:48+09:00",
+  "authorizationBaseSha": "2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb",
+  "scope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-SELF-REMAINING-DECK-INSPECT-001",
+  "leaseWorkUnitKey": "BATTLE_REMAINING_DECK_PUBLIC_PACKAGE_CLOSURE_R1",
+  "leaseAcquireKey": "BATTLE-REMAINING-DECK-PUBLIC-R1-20260908T0848-SOL-N7Q4M6",
+  "leaseScope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-09-08 08:48 JST",
+  "leaseUntilJst": "2026-09-08 09:48 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A592:N592",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-remaining-deck-public-r1-20260908; browser/battle-replay-live-adapter.mjs; tests/battle-replay-live-adapter.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; transient data/preaction-authorizations/BATTLE-REMAINING-DECK-PUBLIC-R1-20260908T0848-SOL-N7Q4M6.json. READ_ONLY browser/GAMEROAD.html and battle-self-deck-inspect-core.mjs.",
+  "solutionSignature": "Reuse PR1161 count-only viewer-safe remaining-Deck projection and package its existing core dependency without touching active HTML or gameplay authority",
+  "reuseDisposition": "PORT_AND_CLOSE_DEPENDENCY",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1161-plus-current-main-battle-self-deck-inspect-core-plus-build-artifact-contract",
+  "solutionSearchEvidence": [
+    "PR#1161 head 234f203cbd6fa049a6b4a07265ce0e669097f3eb changed only battle-replay-live-adapter and its focused test; prior focused suite 52/52 PASS",
+    "current main 2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb retains browser/battle-self-deck-inspect-core.mjs count-only and viewer-knowledge fail-closed projection",
+    "current build packages battle-replay-live-adapter.mjs but dependencyContract does not yet include battle-self-deck-inspect-core.mjs",
+    "browser/GAMEROAD.html remains READ_ONLY under concurrent owner; no player-visible end-to-end claim without direct live caller proof"
+  ]
+}

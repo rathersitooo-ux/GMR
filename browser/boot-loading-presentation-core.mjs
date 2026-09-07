@@ -31,12 +31,16 @@ export function createBootLoadingState({
   canContinue = false,
   canRetry = false,
   canGoBack = false,
+  canCancel = false,
   statusCode = null,
   errorCode = null,
 } = {}) {
   if (!PHASES.has(phase)) throw new Error('phase is invalid');
   if (phase === BOOT_LOADING_PHASES.READY && canContinue !== true) {
     throw new Error('READY phase requires canContinue=true');
+  }
+  if (canCancel === true && phase !== BOOT_LOADING_PHASES.RECOVERY) {
+    throw new Error('canCancel=true is only valid during RECOVERY');
   }
   return Object.freeze({
     schema: SCHEMA,
@@ -45,6 +49,7 @@ export function createBootLoadingState({
     canContinue: Boolean(canContinue),
     canRetry: Boolean(canRetry),
     canGoBack: Boolean(canGoBack),
+    canCancel: Boolean(canCancel),
     statusCode: optionalString(statusCode, 'statusCode'),
     errorCode: optionalString(errorCode, 'errorCode'),
   });
@@ -55,6 +60,7 @@ function actionIds(state) {
   if (state.canContinue) ids.push('CONTINUE');
   if (state.canRetry) ids.push('RETRY');
   if (state.canGoBack) ids.push('BACK');
+  if (state.canCancel) ids.push('CANCEL');
   return Object.freeze(ids);
 }
 
@@ -70,7 +76,7 @@ export function projectBootLoadingPresentation({ state, reducedMotion = false, l
     actionIds: actionIds(state),
     presentationProfile: profile,
     liveSlots: Object.freeze(['progress', 'statusCode', 'errorCode']),
-    semanticKey: `${state.phase}|${state.progress ?? 'none'}|${state.statusCode ?? 'none'}|${state.errorCode ?? 'none'}|${state.canContinue ? 1 : 0}${state.canRetry ? 1 : 0}${state.canGoBack ? 1 : 0}`,
+    semanticKey: `${state.phase}|${state.progress ?? 'none'}|${state.statusCode ?? 'none'}|${state.errorCode ?? 'none'}|${state.canContinue ? 1 : 0}${state.canRetry ? 1 : 0}${state.canGoBack ? 1 : 0}${state.canCancel ? 1 : 0}`,
   });
 }
 

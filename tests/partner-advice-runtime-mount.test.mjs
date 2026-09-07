@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   createBattleContextualTutorialReplayControl,
+  createBattleTutorialExperienceConversationControl,
   createPartnerAdviceReplayBridge,
   createPartnerAdviceRuntimeControl,
   createPartnerBattleCharacterReactionControl,
@@ -323,6 +324,73 @@ test('priming an already-settled resolution prevents stale reconnect reaction', 
   assert.equal(control.prime(resolution), true);
   assert.equal(control.consume({ partnerId: 'partner.saasuna', resolution }), null);
   assert.deepEqual(control.status().consumedEventFingerprints, ['turn-6|score-9|card-gamma']);
+});
+
+
+test('Tutorial experience conversation fails closed until a caller supplies explicit eligibility', () => {
+  const control = createBattleTutorialExperienceConversationControl();
+  const status = control.status();
+  assert.equal(status.eligible, false);
+  assert.equal(status.active, false);
+  assert.equal(status.reason, 'TUTORIAL_ELIGIBILITY_REQUIRED');
+  assert.equal(status.conversation.partnerText, null);
+  assert.equal(control.chooseAudience('experienced'), false);
+  assert.equal(control.profile(), null);
+  const help = control.adaptHelp({ canonicalMessage: '正式GAMEROAD操作', focusRole: 'road' });
+  assert.equal(help.message, '正式GAMEROAD操作');
+  assert.equal(help.adapted, false);
+});
+
+test('eligible Tutorial experience is a natural Saasuna conversation and adapts only after a known game is chosen', () => {
+  const control = createBattleTutorialExperienceConversationControl({ isEligible: () => true });
+  assert.equal(control.conversation().partnerText, 'そういえば、カードゲームって普段やる？');
+  assert.deepEqual(control.conversation().options.map((option) => option.label), ['やるよ', 'ほとんどやらない']);
+  assert.equal(control.chooseAudience('experienced'), true);
+  assert.equal(control.conversation().stage, 'source-game-follow-up');
+  assert.deepEqual(control.conversation().options.map((option) => option.id), ['master-duel', 'duel-masters-plays', 'pokemon-pocket', 'shadowverse', 'other']);
+  assert.equal(control.chooseSourceGame('master-duel'), true);
+  assert.equal(control.conversation().stage, 'ready');
+  const help = control.adaptHelp({ canonicalMessage: '正式GAMEROAD操作', focusRole: 'road' });
+  assert.equal(help.adapted, true);
+  assert.match(help.message, /遊戯王/);
+  assert.match(help.message, /1対1対応/);
+  assert.equal(help.canonicalMessage, '正式GAMEROAD操作');
+  assert.equal(control.status().saveMutated, false);
+  assert.equal(control.status().gameplayAuthorityMutated, false);
+});
+
+test('beginner common-ground branch is optional and skip never becomes a gameplay rule mapping', () => {
+  const control = createBattleTutorialExperienceConversationControl({ isEligible: () => true });
+  assert.equal(control.chooseAudience('beginner'), true);
+  assert.equal(control.conversation().stage, 'common-ground-optional');
+  assert.equal(control.conversation().optional, true);
+  assert.equal(control.conversation().readyForGameplayExplanation, true);
+  assert.equal(control.skipSharedInterest(), true);
+  assert.equal(control.status().sharedInterestId, 'none');
+  assert.equal(control.conversation().stage, 'ready');
+  const help = control.adaptHelp({ canonicalMessage: '正式GAMEROAD操作', focusRole: 'ready' });
+  assert.equal(help.canonicalMessage, '正式GAMEROAD操作');
+  assert.doesNotMatch(help.message, /パチンコ|競馬|麻雀/);
+});
+
+test('contextual help keeps canonical text before a profile is ready and uses the selected-game bridge afterward', () => {
+  let profile = null;
+  const shown = [];
+  const control = createBattleContextualTutorialReplayControl({
+    getSnapshot: () => ({ screen: 'battle', phase: 'plan', busy: false, roadId: null, battleId: null }),
+    getExperienceProfile: () => profile,
+    showHelp: (payload) => { shown.push(payload); return true; },
+    clearHelp: () => true,
+  });
+  assert.equal(control.open(), true);
+  assert.equal(shown.at(-1).message, '手札からロードカードを1枚選ぶ');
+  const experience = createBattleTutorialExperienceConversationControl({ isEligible: () => true });
+  experience.chooseAudience('experienced');
+  experience.chooseSourceGame('shadowverse');
+  profile = experience.profile();
+  control.refresh();
+  assert.match(shown.at(-1).message, /シャドバ/);
+  assert.match(shown.at(-1).message, /PP/);
 });
 
 test('Tutorial Battle starts Saasuna auto guide on and disabling it never disables on-demand conversation', () => {

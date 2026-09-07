@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const CORE_SCREENS = ['home', 'cards', 'characters', 'setup', 'battle', 'result', 'shop'];
 const NAV_TARGETS = ['home', 'cards', 'characters', 'setup', 'battle', 'shop'];
+const TITLE_BOOT_SMOKE_TEST = 'GAMEROAD boots and core navigation runs without JS errors';
 
 async function installLegalBattleDeck(page) {
   return page.evaluate(() => {
@@ -20,7 +21,33 @@ async function installLegalBattleDeck(page) {
   });
 }
 
-test('GAMEROAD boots and core navigation runs without JS errors', async ({ page }) => {
+test.beforeEach(async ({ page }, testInfo) => {
+  if (testInfo.title === TITLE_BOOT_SMOKE_TEST) return;
+  await page.addInitScript(() => {
+    const enterHomeFromTitle = () => {
+      const button = document.querySelector('[data-title-boot-action="GO_HOME"]');
+      if (!(button instanceof HTMLButtonElement) || button.disabled) return false;
+      button.click();
+      return true;
+    };
+    const run = () => {
+      if (enterHomeFromTitle()) return;
+      const root = document.documentElement;
+      if (!root) return;
+      const observer = new MutationObserver(() => {
+        if (enterHomeFromTitle()) observer.disconnect();
+      });
+      observer.observe(root, { childList: true, subtree: true });
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', run, { once: true });
+    } else {
+      run();
+    }
+  });
+});
+
+test(TITLE_BOOT_SMOKE_TEST, async ({ page }) => {
   const pageErrors = [];
   const consoleErrors = [];
   const unexpectedHttpErrors = [];
@@ -46,10 +73,15 @@ test('GAMEROAD boots and core navigation runs without JS errors', async ({ page 
   expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
 
   const firstVisibleControl = page
-    .locator('[data-go]:visible, [data-screen="home"] .homePadChoice[data-home-target]:visible')
+    .locator('[data-title-boot-action="GO_HOME"]:visible')
     .first();
   await firstVisibleControl.waitFor({ state: 'visible', timeout: 5_000 });
   const firstVisibleControlWallMs = Date.now() - navigationWallStart;
+  await firstVisibleControl.click({ timeout: 5_000 });
+  await expect(
+    page.locator('section[data-screen="home"].screen.active:visible').first(),
+    'Title Home destination becomes active',
+  ).toBeVisible({ timeout: 5_000 });
 
   await page.waitForLoadState('load');
   const bootTiming = await page.evaluate(() => {
@@ -89,7 +121,7 @@ test('GAMEROAD boots and core navigation runs without JS errors', async ({ page 
   const dataGoCount = await page.locator('[data-go]').count();
   expect(dataGoCount, 'runtime data-go controls').toBeGreaterThan(0);
 
-  let pointerClicks = 0;
+  let pointerClicks = 1;
   for (const target of NAV_TARGETS) {
     const activeScreens = page.locator('section.screen.active:visible');
     expect(await activeScreens.count(), `one active screen before ${target}`).toBe(1);

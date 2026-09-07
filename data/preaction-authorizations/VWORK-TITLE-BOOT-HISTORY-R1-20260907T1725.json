@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-TITLE-BOOT-HISTORY-R1-20260907T1725",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "TITLE_BOOT_PR_PREACTION_HISTORY_RECONSTRUCTION_R1",
+  "acquireKey": "TITLE-BOOT-HISTORY-R1-20260907T1725-SOL-Q7V4M8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1253-PREACTION-FAIL-34100079566-FULL-PR-SCOPE-MISMATCH",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "VALIDATOR-FIRST-COMMIT-CONTRACT-PLUS-EXACT-FINAL-TREE-3610F35",
+  "proceedToken": "PROCEED|VWORK-TITLE-BOOT-HISTORY-R1-20260907T1725|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|history-only|exact-tree-preservation|fail-closed",
+  "authorizationBaseSha": "e8084627cd7f59cdeffe9022e16003d76425c96d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "TITLE_BOOT_PR_PREACTION_HISTORY_RECONSTRUCTION_R1",
+  "leaseAcquireKey": "TITLE-BOOT-HISTORY-R1-20260907T1725-SOL-Q7V4M8",
+  "leaseSnapshotReadbackAtJst": "2026-09-07 17:25 JST",
+  "leaseUntilJst": "2026-09-07 18:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A14:L14",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR PR#1253 branch sol/title-boot-live-binding-r2; force-update branch ref ONLY from exact observed head 2c2a25ec9674f839955ad8823ba239d0e38f369e to a reconstructed history rooted at exact base e8084627cd7f59cdeffe9022e16003d76425c96d; create Git blobs/trees/commits needed for reconstruction; transient data/preaction-authorizations/VWORK-TITLE-BOOT-HISTORY-R1-20260907T1725.json; preserve exact final content/tree for browser/home-cards-2p5d-presentation.mjs, browser/title-boot-runtime-mount.mjs, deploy/cloudflare/scripts/build.mjs, tests/browser-runtime-smoke.spec.mjs, tests/title-boot-runtime-mount.test.mjs; own PR#1253 metadata/checks/merge/public same-SHA readback. READ_ONLY: main; browser/GAMEROAD.html; match/session authority; all product semantics. Fail closed if branch head/main/base/tree differ before ref update.",
+  "scope": [
+    "browser/home-cards-2p5d-presentation.mjs",
+    "browser/title-boot-runtime-mount.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/browser-runtime-smoke.spec.mjs",
+    "tests/title-boot-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-cards-2p5d-presentation.mjs",
+    "browser/title-boot-runtime-mount.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/browser-runtime-smoke.spec.mjs",
+    "tests/title-boot-runtime-mount.test.mjs"
+  ],
+  "solutionSignature": "Reconstruct only PR history so the mandatory first manifest-only commit authorizes the complete five-file final material scope, then reuse the exact already-reviewed final tree without changing product or test contents.",
+  "reuseDisposition": "REUSE_AS_IS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PREACTION-VALIDATOR-EVALUATEAUTHORIZATION-FIRST-COMMIT-EXACT-TREE-REUSE",
+  "solutionSearchEvidence": [
+    "tools/preaction-authorization-validator.mjs: first branch commit must be manifest-only and its scope must cover all material history paths",
+    "PR#1253 exact head 2c2a25ec9674f839955ad8823ba239d0e38f369e final tree 3610f35c2cb32b638d5812a28c3d53b118d81d40",
+    "Required Gate run 34100079566 failed only PREACTION material_path_out_of_scope:tests/browser-runtime-smoke.spec.mjs"
+  ]
+}

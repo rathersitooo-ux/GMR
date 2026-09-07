@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "TUTORIAL-CONVERSATION-R2-20260908T0219-SOL-F8Q3N6",
+  "taskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "workUnitKey": "TUTORIAL_CONVERSATION_BRANCH_CORE_R1",
+  "acquireKey": "TUTORIAL-CONVERSATION-R2-20260908T0219-SOL-F8Q3N6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "pr1268-product-donor-preserved-after-control-plane-only-failure",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "reuse-exact-pr1268-product-donor-with-focused-node-test-pair",
+  "proceedToken": "PROCEED|TUTORIAL-CONVERSATION-R2-20260908T0219-SOL-F8Q3N6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|reuse-exact-closed-pr1268-product-donor",
+  "authorizationBaseSha": "ae0f671b5ec374505433b5f8d576f1ac5a945395",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "TUTORIAL_CONVERSATION_BRANCH_CORE_R1",
+  "leaseAcquireKey": "TUTORIAL-CONVERSATION-R2-20260908T0219-SOL-F8Q3N6",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 02:19 JST",
+  "leaseUntilJst": "2026-09-08 03:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A559:L559",
+  "leaseExactMutableResources": "browser/tutorial-experience-profile-core.mjs; tests/tutorial-experience-profile-core.test.mjs; data/preaction-authorizations/TUTORIAL-CONVERSATION-R2-20260908T0219-SOL-F8Q3N6.json",
+  "scope": [
+    "browser/tutorial-experience-profile-core.mjs",
+    "tests/tutorial-experience-profile-core.test.mjs",
+    "data/preaction-authorizations/TUTORIAL-CONVERSATION-R2-20260908T0219-SOL-F8Q3N6.json"
+  ],
+  "leaseScope": [
+    "browser/tutorial-experience-profile-core.mjs",
+    "tests/tutorial-experience-profile-core.test.mjs",
+    "data/preaction-authorizations/TUTORIAL-CONVERSATION-R2-20260908T0219-SOL-F8Q3N6.json"
+  ],
+  "solutionSignature": "tutorial-natural-conversation-experience-common-ground-branch",
+  "reuseDisposition": "REUSE_AS_IS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "closed-pr1268-exact-product-donor",
+  "solutionSearchEvidence": [
+    "PR#1268:source-blob:bed4a3f1fcf252e83373a5327e846c306b2a55b9",
+    "PR#1268:test-blob:86c223dd5154c95f76bf4fcf0cfa03191d3bfd87",
+    "CURRENT:Y1242:TUTORIAL_CONVERSATION_BRANCH_USER_EXPLICIT"
+  ]
+}

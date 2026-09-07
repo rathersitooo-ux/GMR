@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ROW-ROULETTE-MOUNT-R2-20260908T0838-SOL-K8N4Q6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_MOUNT_R2",
+  "acquireKey": "BATTLE-ROW-ROULETTE-MOUNT-R2-20260908T0838-SOL-K8N4Q6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1299-main-plus-current-battle-janken-live-projection-20260908",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "merged-row-roulette-11-tests-plus-existing-janken-runtime-tests",
+  "proceedToken": "PROCEED|BATTLE-ROW-ROULETTE-MOUNT-R2-20260908T0838-SOL-K8N4Q6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-08T08:38+09:00",
+  "authorizationBaseSha": "2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_MOUNT_R2",
+  "leaseAcquireKey": "BATTLE-ROW-ROULETTE-MOUNT-R2-20260908T0838-SOL-K8N4Q6",
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-09-08 08:38 JST",
+  "leaseUntilJst": "2026-09-08 09:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A599:L599",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-playable-hand-row-roulette-live-r2-20260908; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs",
+  "solutionSignature": "Mount merged remaining-hand stacked-row roulette inside existing auto-mounted Battle janken runtime using only projectBattlePlayableHandAffordance candidates and existing hand-card click authority",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1299-row-roulette-plus-existing-syncPlayableHandAffordance",
+  "solutionSearchEvidence": [
+    "browser/battle-playable-hand-row-roulette-runtime.mjs merged main 2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb",
+    "browser/battle-janken-slidepad-runtime-mount.mjs syncPlayableHandAffordance and clickExistingHandCard",
+    "CURRENT BATTLE_ROULETTE_V1 gate: same playable ordinary-hand candidate IDs; ordinary hand remains; no second execution engine"
+  ]
+}

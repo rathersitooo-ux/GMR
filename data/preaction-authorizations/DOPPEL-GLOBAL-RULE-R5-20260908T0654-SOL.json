@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DOPPEL-GLOBAL-RULE-R5-20260908T0654-SOL",
+  "taskId": "DOPPELGANGER-NORMAL-RULE-RUNTIME-001",
+  "workUnitKey": "DOPPELGANGER_COMMON_RULE_SCOPE_FIX_R5",
+  "acquireKey": "DOPPEL-RUNTIME-R5-20260908T0654-SOL-N7K4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "DOPPEL-R5-R4-SCOPE-TEST-MISMATCH",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "DOPPEL-R5-FOCUSED-COMMON-RULE-TESTS",
+  "proceedToken": "PROCEED|DOPPEL-GLOBAL-RULE-R5-20260908T0654-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|whole-field-common-rule|fresh-main",
+  "authorizationBaseSha": "ca1fac5106140b7faf3e82701988c3d33b112720",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DOPPELGANGER-NORMAL-RULE-RUNTIME-001",
+  "leaseWorkUnitKey": "DOPPELGANGER_COMMON_RULE_SCOPE_FIX_R5",
+  "leaseAcquireKey": "DOPPEL-RUNTIME-R5-20260908T0654-SOL-N7K4M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 06:54 JST",
+  "leaseUntilJst": "2026-09-08 07:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A569:N569",
+  "leaseExactMutableResources": "branch sol/doppelganger-global-rule-r5-20260908; browser/doppelganger-continuous-rule-core.mjs; tests/doppelganger-continuous-rule-core.test.mjs; this preaction witness; own PR/check/merge/main readback; GAMEROAD 全作業一覧!Y47:AB47",
+  "scope": [
+    "browser/doppelganger-continuous-rule-core.mjs",
+    "tests/doppelganger-continuous-rule-core.test.mjs"
+  ],
+  "prohibitedScope": [
+    "browser/GAMEROAD.html",
+    "Road card selection/movement",
+    "Battle card selection/reservation/submission",
+    "second value engine",
+    "runtime wiring"
+  ],
+  "intendedDiff": "The shared Doppelganger game rule resolves once over the authoritative eligible whole-field snapshot and emits a delta for every eligible physical card; tests must assert that scope rather than a per-Doppelganger identity predicate.",
+  "idempotency": "Fresh-read main before mutation and merge; if common-rule v3 semantics already exist on main, do not duplicate.",
+  "rollback": "Do not merge on failed checks; an unmerged isolated branch leaves main unchanged."
+}

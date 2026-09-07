@@ -1,5 +1,6 @@
 export const TUTORIAL_EXPERIENCE_PROFILE_SCHEMA = 'gameroad.tutorial-experience-profile.v1';
 export const TUTORIAL_EXPERIENCE_HELP_SCHEMA = 'gameroad.tutorial-experience-help.v1';
+export const TUTORIAL_EXPERIENCE_PROMPT_SCHEMA = 'gameroad.tutorial-experience-prompt.v1';
 
 const AUDIENCE_BEGINNER = 'beginner';
 const AUDIENCE_EXPERIENCED = 'experienced';
@@ -114,6 +115,15 @@ function normalizedReadyProfile(value) {
   return profile.ready ? profile : null;
 }
 
+function normalizedProfileStatus(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return profileSnapshot(null, null);
+  const audience = exactToken(value.audience);
+  if (!AUDIENCE_IDS.has(audience)) return profileSnapshot(null, null);
+  if (audience === AUDIENCE_BEGINNER) return profileSnapshot(audience, null);
+  const sourceGameId = exactToken(value.sourceGameId);
+  return profileSnapshot(audience, SOURCE_GAME_BY_ID.has(sourceGameId) ? sourceGameId : null);
+}
+
 export function createTutorialExperienceProfileControl({ onChange } = {}) {
   if (onChange !== undefined && typeof onChange !== 'function') {
     throw new TypeError('onChange must be a function when provided');
@@ -153,6 +163,52 @@ export function createTutorialExperienceProfileControl({ onChange } = {}) {
       const current = profileSnapshot(audience, sourceGameId);
       return current.ready ? current : null;
     },
+  });
+}
+
+export function projectTutorialExperiencePrompt(experienceStatus = null) {
+  const status = normalizedProfileStatus(experienceStatus);
+  let stage;
+  let question;
+  let options;
+  let summary = null;
+
+  if (!status.audience) {
+    stage = 'audience';
+    question = 'カードゲームの経験は？';
+    options = TUTORIAL_EXPERIENCE_AUDIENCES;
+  } else if (status.audience === AUDIENCE_EXPERIENCED && !status.ready) {
+    stage = 'source-game';
+    question = '一番慣れているカードゲームは？';
+    options = TUTORIAL_EXPERIENCE_SOURCE_GAMES;
+  } else {
+    stage = 'ready';
+    question = null;
+    options = Object.freeze([]);
+    summary = status.audience === AUDIENCE_BEGINNER
+      ? '初心者向けに、操作しながら短く説明します'
+      : status.sourceGameId === 'other'
+        ? 'カードゲーム経験を前提に、GAMEROAD固有の違いだけ説明します'
+        : `${status.sourceGameLabel}との違いを中心に説明します`;
+  }
+
+  return Object.freeze({
+    schema: TUTORIAL_EXPERIENCE_PROMPT_SCHEMA,
+    stage,
+    question,
+    options,
+    summary,
+    ready: status.ready,
+    canShowContextualHelp: status.ready,
+    audience: status.audience,
+    sourceGameId: status.sourceGameId,
+    sourceGameLabel: status.sourceGameLabel,
+    changeAvailable: status.ready,
+    presentationOnly: true,
+    persistenceOwned: false,
+    tutorialRunOwned: false,
+    saveMutated: false,
+    gameplayAuthorityMutated: false,
   });
 }
 

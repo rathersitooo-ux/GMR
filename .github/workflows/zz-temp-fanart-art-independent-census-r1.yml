@@ -14,7 +14,7 @@ jobs:
       - name: Checkout evidence branch
         uses: actions/checkout@v4
 
-      - name: Read current Browser card registry
+      - name: Read Browser-only card objects
         shell: bash
         run: |
           node <<'NODE'
@@ -23,17 +23,10 @@ jobs:
           const html = fs.readFileSync('browser/GAMEROAD.html', 'utf8');
           const marker = 'window.__CARD_DATA__';
           const markerPos = html.indexOf(marker);
-          if (markerPos < 0) throw new Error('window.__CARD_DATA__ assignment is missing');
+          if (markerPos < 0) throw new Error('window.__CARD_DATA__ missing');
           const eqPos = html.indexOf('=', markerPos + marker.length);
-          if (eqPos < 0) throw new Error('card-data assignment operator is missing');
-
           function expressionEnd(source, start) {
-            let quote = null;
-            let escape = false;
-            let round = 0;
-            let square = 0;
-            let curly = 0;
-            let began = false;
+            let quote = null, escape = false, round = 0, square = 0, curly = 0, began = false;
             for (let i = start; i < source.length; i += 1) {
               const ch = source[i];
               if (quote) {
@@ -52,51 +45,14 @@ jobs:
               else if (ch === '{') curly += 1;
               else if (ch === '}') curly -= 1;
               else if (ch === ';' && round === 0 && square === 0 && curly === 0) return i;
-              if (round < 0 || square < 0 || curly < 0) throw new Error('unbalanced card-data expression');
             }
-            throw new Error('card-data assignment terminator is missing');
+            throw new Error('unterminated card-data expression');
           }
-
-          const endPos = expressionEnd(html, eqPos + 1);
-          const rhs = html.slice(eqPos + 1, endPos).trim();
-          let data;
-          try {
-            data = vm.runInNewContext(`(${rhs})`, Object.create(null), { timeout: 1500 });
-          } catch (error) {
-            console.log('CARD_DATA_RHS_PREFIX=' + JSON.stringify(rhs.slice(0, 800)));
-            throw error;
-          }
-          const cards = Array.isArray(data)
-            ? data
-            : (data && Array.isArray(data.cards) ? data.cards : null);
-          if (!cards) throw new Error(`unsupported card-data shape: ${Object.prototype.toString.call(data)}`);
-          const ids = cards.map(card => String(card?.id ?? '')).filter(Boolean);
-          const idSet = new Set(ids);
-          const duplicates = ids.filter((id, index) => ids.indexOf(id) !== index);
-
-          const expected = [
-            'SP_A','SP_2','SP_3','SP_4','SP_5','SP_6','SP_7','SP_8','SP_9','SP_10','SP_J','SP_Q','SP_K',
-            'HT_A','HT_2','HT_3','HT_4','HT_5','HT_6','HT_7','HT_8','HT_9','HT_10','HT_J','HT_Q','HT_K',
-            'DI_A','DI_2','DI_3','DI_4','DI_5','DI_6','DI_7','DI_8','DI_9','DI_10','DI_J','DI_Q','DI_K',
-            'CL_A','CL_2','CL_3','CL_4','CL_5','CL_6','CL_7','CL_8','CL_9','CL_10','CL_J','CL_Q','CL_K',
-            'DCG_C_01','DCG_C_02','DCG_C_03','DCG_U_01','DCG_U_02',
-            'DCG_LIGHT','DCG_RED','DCG_GAIYASH','DCG_BELL','DCG_BAROM','DCG_ONIMARU','DCG_GIGAN','DCG_ULT_ASTRA','DCG_ULT_MILFY',
-            'DCG_AB_DRAW','DCG_AB_MANA_WAKE','DCG_AB_DECK_CHIP','DCG_AB_POWER_BOOST','DCG_AB_COST_DOWN',
-            'DCG_SAASUNA_FROST_STRIKE','DCG_SAASUNA_ICICLE_DAGGER','DCG_SAASUNA_HYURIE','DCG_SAASUNA_FROZEN','DCG_SAASUNA_ICICLE_LANCE','DCG_SAASUNA',
-            'DCG_ZE_KUU','DCG_SAASUNA_FROZEN_SECOND','DCG_SAASUNA_DELETE_METEOR','DCG_SAASUNA_ICE_CHAIN_STORM','DCG_KERUKERU','TICKET_SPECIAL_01'
-          ];
-          const missing = expected.filter(id => !idSet.has(id));
-          const extra = ids.filter(id => !expected.includes(id));
-          const report = {
-            sourceCommit: process.env.GITHUB_SHA,
-            htmlBytes: Buffer.byteLength(html),
-            registryCount: ids.length,
-            uniqueRegistryCount: idSet.size,
-            duplicateIds: [...new Set(duplicates)],
-            expectedCount: expected.length,
-            missing,
-            extra,
-            registryIds: ids
-          };
-          console.log('ART_INDEPENDENT_CARD_CENSUS=' + JSON.stringify(report));
+          const rhs = html.slice(eqPos + 1, expressionEnd(html, eqPos + 1)).trim();
+          const data = vm.runInNewContext(`(${rhs})`, Object.create(null), { timeout: 1500 });
+          const cards = Array.isArray(data) ? data : data.cards;
+          const targets = new Set(['DCG_AB_SHIELD','DCG_SLAYKIA','GED']);
+          const found = cards.filter(card => targets.has(String(card?.id ?? '')));
+          console.log('BROWSER_ONLY_CARD_OBJECTS=' + JSON.stringify(found));
+          if (found.length !== 3) throw new Error(`expected 3 Browser-only card objects, got ${found.length}`);
           NODE

@@ -71,3 +71,10 @@ test('runtime keeps variable 0/1/N candidate counts and reduced-motion meaning w
   assert.match(source, /prefers-reduced-motion:reduce/);
   assert.equal(/requestAnimationFrame|setInterval/.test(source), false);
 });
+
+test('existing Battle runtime chain imports the optional roulette runtime exactly once', async () => {
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const matches = source.match(/import '\.\/battle-hand-roulette-runtime-mount\.mjs';/g) ?? [];
+  assert.equal(matches.length, 1);
+  assert.equal(source.startsWith("import './battle-hand-roulette-runtime-mount.mjs';\n"), true);
+});

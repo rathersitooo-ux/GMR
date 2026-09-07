@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-MANA-SCAFFOLD-PRUNE-R1-20260908T0755-SOL-Q6M3N8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "NEW_BASE_UNUSED_MANA_RECOVERY_SCAFFOLD_PRUNE_R1",
+  "acquireKey": "BATTLE-MANA-SCAFFOLD-PRUNE-R1-20260908T0755-SOL-Q6M3N8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "current-main-no-production-consumer-plus-row1374-existing-battle-authority",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "direct-current-source-census-four-unused-files-no-gameroad-html-import",
+  "proceedToken": "PROCEED|BATTLE-MANA-SCAFFOLD-PRUNE-R1-20260908T0755-SOL-Q6M3N8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|delete-unused-unmounted-future-mana-recovery-seam",
+  "authorizationBaseSha": "88b5aa6f82f3f1f0f82dc1ae1f15fad648b82edb",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "NEW_BASE_UNUSED_MANA_RECOVERY_SCAFFOLD_PRUNE_R1",
+  "leaseAcquireKey": "BATTLE-MANA-SCAFFOLD-PRUNE-R1-20260908T0755-SOL-Q6M3N8",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 07:55 JST",
+  "leaseUntilJst": "2026-09-08 08:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A589:L589",
+  "leaseExactMutableResources": "browser/new-base-mana-recovery-config.mjs; browser/new-base-turn-start-mana-recovery-core.mjs; tests/new-base-mana-recovery-config.test.mjs; tests/new-base-turn-start-mana-recovery-core.test.mjs; data/preaction-authorizations/BATTLE-MANA-SCAFFOLD-PRUNE-R1-20260908T0755-SOL-Q6M3N8.json",
+  "scope": [
+    "browser/new-base-mana-recovery-config.mjs",
+    "browser/new-base-turn-start-mana-recovery-core.mjs",
+    "tests/new-base-mana-recovery-config.test.mjs",
+    "tests/new-base-turn-start-mana-recovery-core.test.mjs",
+    "data/preaction-authorizations/BATTLE-MANA-SCAFFOLD-PRUNE-R1-20260908T0755-SOL-Q6M3N8.json"
+  ],
+  "leaseScope": [
+    "browser/new-base-mana-recovery-config.mjs",
+    "browser/new-base-turn-start-mana-recovery-core.mjs",
+    "tests/new-base-mana-recovery-config.test.mjs",
+    "tests/new-base-turn-start-mana-recovery-core.test.mjs",
+    "data/preaction-authorizations/BATTLE-MANA-SCAFFOLD-PRUNE-R1-20260908T0755-SOL-Q6M3N8.json"
+  ],
+  "solutionSignature": "remove-unmounted-undecided-new-base-mana-recovery-scaffold",
+  "reuseDisposition": "NOT_APPLICABLE",
+  "solutionSearchStatus": "NOT_APPLICABLE",
+  "reuseNotApplicableReason": "This change removes an unused future abstraction; it does not construct a new implementation.",
+  "reuseDecisionEvidenceId": "row1374-current-existing-battle-turn-authority-and-no-runtime-consumer"
+}

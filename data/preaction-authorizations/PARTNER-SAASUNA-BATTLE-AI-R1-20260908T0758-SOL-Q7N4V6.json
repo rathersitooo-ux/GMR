@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad.preaction.v3",
+  "taskId": "PARTNER-CHARACTER-DIALOGUE-SOURCE-MANIFEST-001",
+  "workUnitKey": "SAASUNA_BATTLE_AI_CONTEXTUAL_REACTION_R1",
+  "acquireKey": "PARTNER-SAASUNA-BATTLE-AI-R1-20260908T0758-SOL-Q7N4V6",
+  "baseCommit": "88b5aa6f82f3f1f0f82dc1ae1f15fad648b82edb",
+  "branch": "sol/saasuna-battle-ai-contextual-reaction-r1-20260908",
+  "intent": "Reuse the existing Saasuna AI conversation edge for confirmed Battle character reactions without creating a second provider, memory layer, router, or gameplay authority.",
+  "durablePaths": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs"
+  ],
+  "transientPaths": [
+    "data/preaction-authorizations/PARTNER-SAASUNA-BATTLE-AI-R1-20260908T0758-SOL-Q7N4V6.json"
+  ],
+  "readOnlyDependencies": [
+    "browser/board-facility-runtime-mount.mjs",
+    "browser/partner-conversation-core.mjs",
+    "browser/partner-saasuna-conversation-source.mjs",
+    "deploy/cloudflare/functions/ws.js"
+  ],
+  "acceptance": [
+    "A confirmed self Battle-card resolution causes at most one AI provider attempt per event fingerprint when the selected Partner is Saasuna.",
+    "A valid provider utterance is presentation-only and does not mutate canon, relationship, or gameplay.",
+    "Provider unavailable, invalid, or failed falls back to the existing approved fixed Battle utterance.",
+    "Other Partners keep their existing approved-source behavior.",
+    "Primed reconnect state does not replay already-settled reactions.",
+    "Focused tests pass."
+  ],
+  "doNotChange": [
+    "Battle rules, legality, state, save, economy, network",
+    "Human-authored dialogue wording",
+    "Convai secret handling or server transport",
+    "Partner memory or canon authority"
+  ]
+}

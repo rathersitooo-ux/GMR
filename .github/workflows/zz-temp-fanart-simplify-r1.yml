@@ -1,0 +1,73 @@
+name: FanArt Simplify R1
+
+on:
+  push:
+    branches:
+      - sol/fanart-simplify-remove-opponent-pref-r1-20260908
+
+permissions:
+  contents: write
+
+jobs:
+  simplify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: sol/fanart-simplify-remove-opponent-pref-r1-20260908
+          fetch-depth: 0
+
+      - name: Reverse only the unused opponent-specific FanArt additions
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const file = 'browser/cards-deck-presentation.mjs';
+          let source = fs.readFileSync(file, 'utf8');
+          if (!source.includes('fanart-opponent-skin-button') && !source.includes('readFanartLocalOpponentSkinPreference')) {
+            console.log('FanArt opponent preference already absent; no product edit needed.');
+            process.exit(0);
+          }
+          const replaceExact = (before, after, label) => {
+            const count = source.split(before).length - 1;
+            if (count !== 1) throw new Error(`${label}: expected exactly 1 match, got ${count}`);
+            source = source.replace(before, after);
+          };
+
+          replaceExact('  opponentPreferenceLocalOnly: true,\n', '', 'contract flag');
+          replaceExact(`async function fanartSetOpponentUsage(idb, record, enabled) {\n  if (!record?.skin || !record?.asset) return false;\n  await fanartWriteSkin(idb, {\n    ...record.skin,\n    opponentEnabled: enabled === true,\n    updatedAt: Date.now(),\n  }, record.asset);\n  return true;\n}\n\nexport async function readFanartLocalOpponentSkinPreference({\n  indexedDB: idb = globalThis.indexedDB,\n  cardId,\n} = {}) {\n  const id = normalizeLocalSkinCardId(cardId);\n  if (!id) return null;\n  let record = null;\n  try { record = await fanartReadSkin(idb, id); }\n  catch { return null; }\n  if (!record || record.skin?.opponentEnabled !== true) return null;\n  return Object.freeze({\n    source: 'viewer_local',\n    cardId: id,\n    assetHash: record.skin.assetHash,\n    blob: record.asset.blob,\n    mime: record.asset.mime ?? record.asset.blob?.type ?? '',\n    width: record.asset.width ?? null,\n    height: record.asset.height ?? null,\n  });\n}\n\n`, '', 'opponent preference reader');
+          replaceExact(`  const opponentButton = doc.createElement('button');\n  opponentButton.type = 'button'; opponentButton.dataset.role = 'fanart-opponent-skin-button'; opponentButton.textContent = '相手用スキン';\n  opponentButton.setAttribute('aria-label', '選択したカードの端末内画像を自分の画面で相手カードにも使用');\n`, '', 'opponent button creation');
+          replaceExact(`  button.after?.(opponentButton); if (!opponentButton.parentNode) screen.appendChild(opponentButton);\n  opponentButton.after?.(input); if (!input.parentNode) screen.appendChild(input);\n`, `  button.after?.(input); if (!input.parentNode) screen.appendChild(input);\n`, 'opponent button placement');
+          replaceExact(`[data-role="fanart-local-skin-button"],[data-role="fanart-opponent-skin-button"]{min-height:44px}`, `[data-role="fanart-local-skin-button"]{min-height:44px}`, 'opponent button style');
+          replaceExact(`    if (selected) {\n      let record = null; try { record = await fanartReadSkin(idb, selected); } catch {}\n      if (!destroyed && currentTicket === ticket) {\n        button.textContent = record ? 'スキン解除' : '自分用スキン';\n        opponentButton.textContent = record?.skin?.opponentEnabled === true ? '相手用:使用中' : '相手用スキン';\n      }\n    }\n`, `    if (selected) { let record = null; try { record = await fanartReadSkin(idb, selected); } catch {} if (!destroyed && currentTicket === ticket) button.textContent = record ? 'スキン解除' : '自分用スキン'; }\n`, 'opponent refresh state');
+          replaceExact(`  const chooseOpponent = async () => {\n    if (!selected) { opponentButton.textContent = '先にカードを選択'; return; }\n    let current = null; try { current = await fanartReadSkin(idb, selected); } catch {}\n    if (!current) { opponentButton.textContent = '先に自分用スキンを設定'; return; }\n    await fanartSetOpponentUsage(idb, current, current.skin?.opponentEnabled !== true);\n    await refresh();\n  };\n`, '', 'opponent chooser');
+          replaceExact(`{ baseCardId: selected, assetHash: asset.hash, label: '自分用skin', localOnly: true, opponentEnabled: false, updatedAt: Date.now() }`, `{ baseCardId: selected, assetHash: asset.hash, label: '自分用skin', localOnly: true, updatedAt: Date.now() }`, 'opponentEnabled write');
+          replaceExact(`  opponentButton.addEventListener('click', () => chooseOpponent().catch(() => { opponentButton.textContent = '端末保存を確認できません'; }));\n`, '', 'opponent button listener');
+          replaceExact(`button.remove?.(); opponentButton.remove?.(); input.remove?.();`, `button.remove?.(); input.remove?.();`, 'opponent button destroy');
+
+          for (const forbidden of ['fanart-opponent-skin-button', 'readFanartLocalOpponentSkinPreference', 'fanartSetOpponentUsage', 'opponentPreferenceLocalOnly']) {
+            if (source.includes(forbidden)) throw new Error(`opponent-only residue remains: ${forbidden}`);
+          }
+          fs.writeFileSync(file, source);
+          NODE
+          rm -f browser/card-skin-opponent-precedence-core.mjs tests/card-skin-opponent-precedence-core.test.mjs
+          node --check browser/cards-deck-presentation.mjs
+          node tests/cards-deck-presentation.test.mjs
+          grep -q "自分用スキン" browser/cards-deck-presentation.mjs
+          grep -q "fanart-local-skin-overlay" browser/cards-deck-presentation.mjs
+          test ! -e browser/card-skin-opponent-precedence-core.mjs
+          test ! -e tests/card-skin-opponent-precedence-core.test.mjs
+
+      - name: Commit simplification when needed
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No diff to commit"
+            exit 0
+          fi
+          git config user.name "gameroad-ci"
+          git config user.email "actions@users.noreply.github.com"
+          git add browser/cards-deck-presentation.mjs browser/card-skin-opponent-precedence-core.mjs tests/card-skin-opponent-precedence-core.test.mjs
+          git commit -m "Cards: remove unused opponent skin layer"
+          git push origin HEAD:sol/fanart-simplify-remove-opponent-pref-r1-20260908

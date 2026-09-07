@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DECK-SAVE-LIVE-MOUNT-R2-20260908T0703-SOL-Q8N4K6",
+  "taskId": "DECK-UNSAVED-SAVE-ACK-INTEGRATE-001",
+  "workUnitKey": "DECK_SAVE_LOCAL_DURABLE_LIVE_MOUNT_R2",
+  "acquireKey": "DECK-SAVE-LIVE-MOUNT-R2-20260908T0703-SOL-Q8N4K6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_PACKAGED_VERIFIED_SAVE_CORE_PLUS_LIVE_CARDS_ENTRY_MISSING_IMPORT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_DECK_SAVE_RECOVERY_TEST_PLUS_EXACT_TWO_REPLACEMENT_RUNNER",
+  "proceedToken": "PROCEED|DECK-SAVE-LIVE-MOUNT-R2-20260908T0703-SOL-Q8N4K6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|MOUNT_EXISTING_VERIFIED_LOCAL_SAVE_GUARD",
+  "authorizationBaseSha": "ca1fac5106140b7faf3e82701988c3d33b112720",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DECK-UNSAVED-SAVE-ACK-INTEGRATE-001",
+  "leaseWorkUnitKey": "DECK_SAVE_LOCAL_DURABLE_LIVE_MOUNT_R2",
+  "leaseAcquireKey": "DECK-SAVE-LIVE-MOUNT-R2-20260908T0703-SOL-Q8N4K6",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 07:08 JST",
+  "leaseUntilJst": "2026-09-08 07:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A580:N580",
+  "leaseExactMutableResources": "browser/cards-deck-presentation.mjs; tests/deck-save-recovery-core.test.mjs; .github/workflows/zz-temp-deck-save-live-mount-r2.yml transient; data/preaction-authorizations/DECK-SAVE-LIVE-MOUNT-R2-20260908T0703-SOL-Q8N4K6.json transient. READ_ONLY: browser/deck-save-recovery-core.mjs; tests/cards-deck-presentation.test.mjs; browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs/tests; gameplay/rules/save/economy/network.",
+  "scope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/deck-save-recovery-core.test.mjs",
+    ".github/workflows/zz-temp-deck-save-live-mount-r2.yml",
+    "data/preaction-authorizations/DECK-SAVE-LIVE-MOUNT-R2-20260908T0703-SOL-Q8N4K6.json"
+  ],
+  "leaseScope": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/deck-save-recovery-core.test.mjs",
+    ".github/workflows/zz-temp-deck-save-live-mount-r2.yml",
+    "data/preaction-authorizations/DECK-SAVE-LIVE-MOUNT-R2-20260908T0703-SOL-Q8N4K6.json"
+  ],
+  "solutionSignature": "cards-live-entry-side-effect-import-existing-deck-save-recovery-guard-with-classified-mount-regression",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_VERIFIED_READBACK_ROLLBACK_CORE_ALREADY_PACKAGED_NO_SECOND_SAVE_AUTHORITY",
+  "solutionSearchEvidence": [
+    "main:browser/deck-save-recovery-core.mjs:64f87734076b57c209bb832aec2361417c4df0c2",
+    "main:browser/cards-deck-presentation.mjs:30a76bcaec2405b13e6ee89600edbd36fd7f0a26",
+    "main:tests/deck-save-recovery-core.test.mjs:daa9fd83d3bf01ffc32d1a5b655591b28fab3dcf",
+    "main:deploy/cloudflare/scripts/build.mjs:ARTIFACT_SPECS already packages deck-save-recovery-core and cards-deck-presentation",
+    "Drive:GAMEROAD 全作業一覧 row1341 CURRENT_BROWSER_LOCAL_VERIFIED_SAVE_REBASE_READY"
+  ]
+}

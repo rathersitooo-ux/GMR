@@ -152,8 +152,28 @@ function ensureRecordsDetailPanel(doc, screen, list) {
   return panel;
 }
 
+export function dismissRecordsMatchDetail(list, panel, { restoreFocus = true } = {}) {
+  if (!list || !panel || panel.hidden) return false;
+  const opener = panel.__gameroadRecordsOpener ?? null;
+  for (const candidate of list.querySelectorAll('.record')) {
+    candidate.dataset.recordsSelected = 'false';
+    candidate.setAttribute('aria-expanded', 'false');
+  }
+  panel.hidden = true;
+  panel.__gameroadRecordsOpener = null;
+  if (restoreFocus && typeof opener?.focus === 'function') {
+    try {
+      opener.focus({ preventScroll: true });
+    } catch {
+      opener.focus();
+    }
+  }
+  return true;
+}
+
 function selectRecordRow(row, list, panel) {
   if (!row || !list || !panel) return;
+  panel.__gameroadRecordsOpener = row;
   for (const candidate of list.querySelectorAll('.record')) {
     const selected = candidate === row;
     candidate.dataset.recordsSelected = selected ? 'true' : 'false';
@@ -166,9 +186,9 @@ function selectRecordRow(row, list, panel) {
   panel.hidden = false;
 }
 
-function bindRecordsInteraction(list, panel) {
-  if (list.dataset.recordsInteractionBound === 'true') return;
-  list.dataset.recordsInteractionBound = 'true';
+function bindRecordsInteraction(screen, list, panel, doc) {
+  if (screen.dataset.recordsInteractionBound === 'true') return;
+  screen.dataset.recordsInteractionBound = 'true';
 
   list.addEventListener('click', (event) => {
     const row = event.target?.closest?.('.record');
@@ -183,6 +203,20 @@ function bindRecordsInteraction(list, panel) {
     event.preventDefault();
     selectRecordRow(row, list, panel);
   });
+
+  doc.addEventListener('click', (event) => {
+    if (panel.hidden || !screen.classList.contains('active') || panel.contains(event.target)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dismissRecordsMatchDetail(list, panel);
+  }, true);
+
+  doc.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape' || panel.hidden || !screen.classList.contains('active')) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dismissRecordsMatchDetail(list, panel);
+  }, true);
 }
 
 export function mountRecordsPresentation(doc = globalThis.document) {
@@ -205,7 +239,7 @@ export function mountRecordsPresentation(doc = globalThis.document) {
     if (summary) row.setAttribute('aria-label', `${summary} 詳細を開く`);
   }
 
-  bindRecordsInteraction(list, panel);
+  bindRecordsInteraction(screen, list, panel, doc);
   screen.dataset.recordsPresentation = PROFILE_PRESENTATION_VERSION;
 
   return Object.freeze({

@@ -10,6 +10,70 @@ import {
 const deckStorageLiveInstallations = new WeakMap();
 const cardsDeckFindabilityInstallations = new WeakMap();
 const CARDS_FAVORITE_STORAGE_KEY = 'gameroad.cards.favorite.v1';
+const DECK_SWIPE_DISCOVERY_STORAGE_KEY = 'gameroad.cards.deckSwipeDiscovery.v1';
+
+export const DECK_SWIPE_DISCOVERY_CONTRACT = Object.freeze({
+  schema: 'gameroad.cards-deck-swipe-discovery.v1',
+  storageKey: DECK_SWIPE_DISCOVERY_STORAGE_KEY,
+  localUiOnly: true,
+  dismissOn: 'matching-success-only',
+  motion: 'none',
+  ownsDeck: false,
+  mutatesDeckRules: false,
+});
+
+export function normalizeDeckSwipeDiscoveryState(value = {}) {
+  return Object.freeze({
+    add: value?.add === true,
+    remove: value?.remove === true,
+  });
+}
+
+export function parseDeckSwipeDiscoveryState(raw) {
+  if (typeof raw !== 'string' || !raw) return normalizeDeckSwipeDiscoveryState();
+  try { return normalizeDeckSwipeDiscoveryState(JSON.parse(raw)); }
+  catch { return normalizeDeckSwipeDiscoveryState(); }
+}
+
+export function readDeckSwipeDiscoveryState({ storage, key = DECK_SWIPE_DISCOVERY_STORAGE_KEY } = {}) {
+  try { return parseDeckSwipeDiscoveryState(storage?.getItem?.(key) ?? null); }
+  catch { return normalizeDeckSwipeDiscoveryState(); }
+}
+
+export function writeDeckSwipeDiscoveryState({ storage, value, key = DECK_SWIPE_DISCOVERY_STORAGE_KEY } = {}) {
+  try {
+    if (typeof storage?.setItem !== 'function') return false;
+    storage.setItem(key, JSON.stringify(normalizeDeckSwipeDiscoveryState(value)));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function createDeckSwipeDiscoveryController({ storage, key = DECK_SWIPE_DISCOVERY_STORAGE_KEY } = {}) {
+  let state = readDeckSwipeDiscoveryState({ storage, key });
+  const hints = () => Object.freeze({
+    add: Object.freeze({ visible: !state.add, text: '→ 右フリックで札組へ' }),
+    remove: Object.freeze({ visible: !state.remove, text: '← 左フリックで外す' }),
+  });
+  const recordSuccessfulSwipe = ({ surface, result } = {}) => {
+    const learnedKey = surface === 'collection' && result?.action === 'deck-add'
+      ? 'add'
+      : surface === 'deck' && result?.action === 'deck-remove'
+        ? 'remove'
+        : null;
+    if (result?.ok !== true || !learnedKey || state[learnedKey]) return false;
+    state = normalizeDeckSwipeDiscoveryState({ ...state, [learnedKey]: true });
+    writeDeckSwipeDiscoveryState({ storage, value: state, key });
+    return true;
+  };
+  return Object.freeze({
+    contract: DECK_SWIPE_DISCOVERY_CONTRACT,
+    state: () => state,
+    hints,
+    recordSuccessfulSwipe,
+  });
+}
 
 export const CARDS_DECK_FINDABILITY_CONTRACT = Object.freeze({
   schema: 'gameroad.cards-deck-findability.v2',
@@ -477,6 +541,34 @@ export function installDeckStorageLiveMount({
   });
   const presentation = createDeckSwipePresentationController({ document: doc, window: win });
 
+  const discovery = createDeckSwipeDiscoveryController({ storage: cardsFavoriteStorage(win) });
+  const discoveryHost = doc.createElement('div');
+  discoveryHost.setAttribute?.('data-role', 'deck-swipe-discovery-hints');
+  discoveryHost.setAttribute?.('aria-label', 'カードのフリック操作ヒント');
+  const addDiscoveryHint = doc.createElement('span');
+  addDiscoveryHint.setAttribute?.('data-role', 'deck-swipe-discovery-add');
+  const removeDiscoveryHint = doc.createElement('span');
+  removeDiscoveryHint.setAttribute?.('data-role', 'deck-swipe-discovery-remove');
+  discoveryHost.appendChild?.(addDiscoveryHint);
+  discoveryHost.appendChild?.(removeDiscoveryHint);
+  host.after?.(discoveryHost);
+  if (!discoveryHost.parentNode) screen.appendChild?.(discoveryHost);
+  if (!doc.getElementById?.('gameroad-deck-swipe-discovery-style')) {
+    const style = doc.createElement('style');
+    style.id = 'gameroad-deck-swipe-discovery-style';
+    style.textContent = '[data-role="deck-swipe-discovery-hints"]{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0;font:700 12px/1.25 system-ui;opacity:.82}[data-role="deck-swipe-discovery-hints"][hidden],[data-role="deck-swipe-discovery-hints"]>span[hidden]{display:none}[data-role="deck-swipe-discovery-hints"]>span{padding:5px 8px;border-radius:999px;border:1px solid currentColor}';
+    (doc.head ?? doc.documentElement)?.appendChild?.(style);
+  }
+  const renderDiscoveryHints = () => {
+    const model = discovery.hints();
+    addDiscoveryHint.textContent = model.add.text;
+    addDiscoveryHint.hidden = !model.add.visible;
+    removeDiscoveryHint.textContent = model.remove.text;
+    removeDiscoveryHint.hidden = !model.remove.visible;
+    discoveryHost.hidden = !model.add.visible && !model.remove.visible;
+  };
+  renderDiscoveryHints();
+
   let gesture = null;
   let suppressClick = null;
   const now = () => Number(win?.performance?.now?.() ?? Date.now());
@@ -527,6 +619,8 @@ export function installDeckStorageLiveMount({
       cardId: current.cardId,
     });
     if (!result?.ok) return;
+    discovery.recordSuccessfulSwipe({ surface: current.surface, result });
+    renderDiscoveryHints();
     suppressClick = { cardId: current.cardId, until: now() + 450 };
     mounted?.render?.();
   };
@@ -559,6 +653,7 @@ export function installDeckStorageLiveMount({
       doc.removeEventListener('pointercancel', onPointerCancel, false);
       doc.removeEventListener('click', onClickCapture, true);
       presentation?.dispose?.();
+      discoveryHost.remove?.();
       mounted?.dispose?.();
       host.remove?.();
       deckStorageLiveInstallations.delete(doc);

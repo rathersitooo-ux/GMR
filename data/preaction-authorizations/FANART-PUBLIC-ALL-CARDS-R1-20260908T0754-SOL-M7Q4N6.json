@@ -1,0 +1,35 @@
+{
+  "schema": "gameroad.preaction-authorization.v1",
+  "taskId": "FANART-LOCAL-CARD-CREATOR-BROWSER-001",
+  "workUnitKey": "FANART_PUBLIC_REVEAL_SAME_LOCAL_ART_R1",
+  "acquireKey": "FANART-PUBLIC-ALL-CARDS-R1-20260908T0754-SOL-M7Q4N6",
+  "owner": "ChatGPT GPT-5.6 Sol / current conversation",
+  "baseMainSha": "65877b226bb6d34841940492bd65dee2fa93e5cb",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A589:N589",
+  "sourceBlobs": {
+    "browser/cards-deck-presentation.mjs": "85924a51dc342458ae156cb32b516551766a6dfe",
+    "tests/cards-deck-presentation.test.mjs": "0f979566de6a2f9fd228895cc369bca6eafebbf1",
+    "browser/GAMEROAD.html_read_only": "35f9203e2be95ba07b44c875e26bfe2047a3cee5"
+  },
+  "exactMutableResources": [
+    "browser/cards-deck-presentation.mjs",
+    "tests/cards-deck-presentation.test.mjs",
+    "data/preaction-authorizations/FANART-PUBLIC-ALL-CARDS-R1-20260908T0754-SOL-M7Q4N6.json",
+    ".github/workflows/zz-temp-fanart-public-all-cards-r1.yml",
+    "tools/zz-temp-fanart-public-all-cards-r1.py"
+  ],
+  "readOnly": [
+    "browser/GAMEROAD.html",
+    "browser/battle-screen-runtime-mount.mjs",
+    "gameplay/rules/state/save/economy/network"
+  ],
+  "productIntent": "A viewer-local image for canonical cardId is reused on that viewer's device for every already-public Battle resolution card with the same cardId, regardless of owner.",
+  "prohibitions": [
+    "no opponent-specific toggle",
+    "no second storage",
+    "no opponent equipped-skin authority",
+    "no hidden/private card lookup",
+    "no gameplay mutation",
+    "no network transmission of local image or selection"
+  ]
+}

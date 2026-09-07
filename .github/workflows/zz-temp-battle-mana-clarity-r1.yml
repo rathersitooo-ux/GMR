@@ -7,7 +7,6 @@ permissions:
   contents: write
 jobs:
   patch-and-test:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,35 +30,37 @@ jobs:
           text = text.replace(mana_markup_old, mana_markup_new, 1)
 
           hand_pattern = re.compile(r"function battleHandFaceMarkup\(id\)\{.*?\}\nfunction renderHand\(\)\{.*?\}\nfunction updatePlanFromSelect", re.S)
-          match = hand_pattern.search(text)
-          if not match:
+          if not hand_pattern.search(text):
               raise SystemExit('hand renderer anchor missing')
-          hand_new = r'''function battleAbilityManaStatus(me,c){if(!me||!c||c.effect_type==='none')return null;const cost=effectiveAbilityCost(me,c),awake=Math.max(0,Number(me.awake)||0),due=Math.max(0,Number(cost.due)||0),short=Math.max(0,due-awake);return{due,awake,short,ready:short===0}}
-function battleHandFaceMarkup(id,me){const c=CARDS[id]||{},info=deckSuitInfo(c),glyph=info[0],rank=String(c.rank??c.power??cardRank(id)??'?'),name=String(c.display_name||id),rawType=String(c.ability_type||'Vanilla'),type=rawType==='Vanilla'?'通常':rawType,mana=battleAbilityManaStatus(me,c),right=mana?`<span class="handCardType handCardManaCost ${mana.ready?'ready':'short'}">マナ ${mana.due}${mana.ready?' ✓':` 不足${mana.short}`}</span>`:`<span class="handCardType">${type}</span>`;return `<span class="handCardTop"><span class="handCardSuit" aria-hidden="true">${glyph}</span>${right}</span><strong class="handCardRank">${rank}</strong><span class="handCardName">${name}</span>`}
-function renderHand(){const me=state.match.players[0],h=$('#hand');h.innerHTML='';me.hand.forEach(id=>{const c=CARDS[id]||{},b=document.createElement('button'),info=deckSuitInfo(c),type=String(c.ability_type||'Vanilla')==='Vanilla'?'通常':String(c.ability_type||'Vanilla'),mana=battleAbilityManaStatus(me,c);b.className='handCard';b.innerHTML=battleHandFaceMarkup(id,me);b.disabled=state.match.phase!=='plan';b.dataset.cardId=id;b.dataset.suit=c.suit||'DCG';b.dataset.abilityType=c.ability_type||'Vanilla';b.classList.toggle('manaAbilityReady',!!mana?.ready);b.classList.toggle('manaAbilityShort',!!mana&&!mana.ready);const manaText=mana?`能力マナ ${mana.due} / 使える ${mana.awake}${mana.ready?'':' / 不足 '+mana.short}`:'';b.title=`${cardLabel(id)}｜${info[0]} ${cardRank(id)}｜${type}${manaText?'｜'+manaText:''}`;if(mana&&!mana.ready)b.setAttribute('aria-label',`${cardLabel(id)}。能力マナ${mana.due}、使えるマナ${mana.awake}、不足${mana.short}。このまま出すと能力はマナ不足で発動しません。カード自体は出せます。`);else if(mana)b.setAttribute('aria-label',`${cardLabel(id)}。能力マナ${mana.due}、使えるマナ${mana.awake}。能力を発動できます。`);h.appendChild(b)});const rs=$('#roadSelect'),bs=$('#battleSelect');rs.innerHTML='<option value="">ロードカードを選択</option>';bs.innerHTML='<option value="">バトルカードを選択</option>';me.hand.forEach(id=>{if(!roadSelectable(id))return;const o=document.createElement('option');o.value=id;o.textContent=cardLabel(id);rs.appendChild(o);const ob=document.createElement('option');ob.value=id;ob.textContent=cardLabel(id);bs.appendChild(ob)});if(me.plan?.roadId)rs.value=me.plan.roadId;if(me.plan?.battleId)bs.value=me.plan.battleId;syncDirectPlanRoleUi()}
-function updatePlanFromSelect'''
-          text, n = hand_pattern.subn(hand_new, text, count=1)
+          hand_new = (
+              "function battleAbilityManaStatus(me,c){if(!me||!c||c.effect_type==='none')return null;const cost=effectiveAbilityCost(me,c),awake=Math.max(0,Number(me.awake)||0),due=Math.max(0,Number(cost.due)||0),short=Math.max(0,due-awake);return{due,awake,short,ready:short===0}}\n"
+              "function battleHandFaceMarkup(id,me){const c=CARDS[id]||{},info=deckSuitInfo(c),glyph=info[0],rank=String(c.rank??c.power??cardRank(id)??'?'),name=String(c.display_name||id),rawType=String(c.ability_type||'Vanilla'),type=rawType==='Vanilla'?'通常':rawType,mana=battleAbilityManaStatus(me,c),right=mana?`<span class=\"handCardType handCardManaCost ${mana.ready?'ready':'short'}\">マナ ${mana.due}${mana.ready?' ✓':` 不足${mana.short}`}</span>`:`<span class=\"handCardType\">${type}</span>`;return `<span class=\"handCardTop\"><span class=\"handCardSuit\" aria-hidden=\"true\">${glyph}</span>${right}</span><strong class=\"handCardRank\">${rank}</strong><span class=\"handCardName\">${name}</span>`}\n"
+              "function renderHand(){const me=state.match.players[0],h=$('#hand');h.innerHTML='';me.hand.forEach(id=>{const c=CARDS[id]||{},b=document.createElement('button'),info=deckSuitInfo(c),type=String(c.ability_type||'Vanilla')==='Vanilla'?'通常':String(c.ability_type||'Vanilla'),mana=battleAbilityManaStatus(me,c);b.className='handCard';b.innerHTML=battleHandFaceMarkup(id,me);b.disabled=state.match.phase!=='plan';b.dataset.cardId=id;b.dataset.suit=c.suit||'DCG';b.dataset.abilityType=c.ability_type||'Vanilla';b.classList.toggle('manaAbilityReady',!!mana?.ready);b.classList.toggle('manaAbilityShort',!!mana&&!mana.ready);const manaText=mana?`能力マナ ${mana.due} / 使える ${mana.awake}${mana.ready?'':' / 不足 '+mana.short}`:'';b.title=`${cardLabel(id)}｜${info[0]} ${cardRank(id)}｜${type}${manaText?'｜'+manaText:''}`;if(mana&&!mana.ready)b.setAttribute('aria-label',`${cardLabel(id)}。能力マナ${mana.due}、使えるマナ${mana.awake}、不足${mana.short}。このまま出すと能力はマナ不足で発動しません。カード自体は出せます。`);else if(mana)b.setAttribute('aria-label',`${cardLabel(id)}。能力マナ${mana.due}、使えるマナ${mana.awake}。能力を発動できます。`);h.appendChild(b)});const rs=$('#roadSelect'),bs=$('#battleSelect');rs.innerHTML='<option value=\"\">ロードカードを選択</option>';bs.innerHTML='<option value=\"\">バトルカードを選択</option>';me.hand.forEach(id=>{if(!roadSelectable(id))return;const o=document.createElement('option');o.value=id;o.textContent=cardLabel(id);rs.appendChild(o);const ob=document.createElement('option');ob.value=id;ob.textContent=cardLabel(id);bs.appendChild(ob)});if(me.plan?.roadId)rs.value=me.plan.roadId;if(me.plan?.battleId)bs.value=me.plan.battleId;syncDirectPlanRoleUi()}\n"
+              "function updatePlanFromSelect"
+          )
+          text, n = hand_pattern.subn(lambda _m: hand_new, text, count=1)
           if n != 1:
               raise SystemExit(f'hand renderer replacement count={n}')
 
           css_anchor = '#battleManaArtR8 .r8ManaSlot.awake{opacity:1;filter:none;box-shadow:0 0 0 2px rgba(255,255,255,.82),0 0 12px rgba(94,203,255,.8)}'
           if text.count(css_anchor) != 1:
               raise SystemExit(f'mana css anchor count={text.count(css_anchor)}')
-          css_patch = r'''
-/* BATTLE-MANA-CLARITY-R1: presentation/decision clarity only; no refresh or legality rule changes. */
-#battleManaArtR8 .r8ManaRole{position:absolute;z-index:4;left:50%;top:-18%;transform:translateX(-50%);padding:3px 7px;border:1px solid rgba(226,248,255,.62);border-radius:999px;background:rgba(3,20,30,.82);color:#f4fbff;font-size:clamp(8px,.8vw,11px);font-weight:1000;letter-spacing:.08em;white-space:nowrap;text-shadow:0 1px 4px rgba(0,0,0,.75)}
-#battleManaArtR8 .r8ManaLegend{position:absolute;z-index:4;left:50%;bottom:-22%;width:190%;transform:translateX(-50%);padding:3px 6px;border-radius:5px;background:rgba(3,16,23,.78);color:#e5f3f6;font-size:clamp(6px,.58vw,8px);font-weight:800;line-height:1.2;text-align:center;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.8)}
-#battleManaArtR8 .r8ManaSlot.awake{transform:translate(-50%,-50%) scale(1.06);box-shadow:0 0 0 2px rgba(255,255,255,.94),0 0 15px rgba(94,203,255,.92)}
-#battleManaArtR8 .r8ManaSlot.sleep{opacity:.38;filter:grayscale(.72) saturate(.32) brightness(.52);transform:translate(-50%,-50%) scale(.74);box-shadow:0 0 0 1px rgba(225,248,255,.20)}
-#battleManaArtR8 .r8ManaSlot.sleep:after{left:12%;right:12%;height:3px;background:rgba(255,255,255,.9);box-shadow:0 1px 3px rgba(0,0,0,.75)}
-#battleManaArtR8 .r8ManaSlot.sleep:before{content:'済';position:absolute;z-index:2;inset:0;display:grid;place-items:center;color:#fff;font-size:clamp(7px,.72vw,10px);font-weight:1000;text-shadow:0 1px 4px #000}
-#hand .handCard .handCardManaCost{display:inline-flex!important;align-items:center;justify-content:center;max-width:none;padding:2px 4px;border-radius:999px;border:1px solid currentColor;background:rgba(2,15,13,.82);font-size:7px;font-weight:1000;line-height:1;letter-spacing:0;white-space:nowrap}
-#hand .handCard .handCardManaCost.ready{color:#eafff2;border-style:solid}
-#hand .handCard .handCardManaCost.short{color:#fff0cc;border-style:dashed;background:rgba(46,27,7,.9)}
-#hand .handCard.manaAbilityReady{box-shadow:0 7px 16px rgba(0,0,0,.25),inset 0 3px 0 rgba(192,255,220,.72)}
-#hand .handCard.manaAbilityShort{border-style:dashed;box-shadow:0 7px 16px rgba(0,0,0,.25),inset 0 3px 0 rgba(255,218,143,.72)}
-@media(max-width:540px) and (orientation:portrait){#battleManaArtR8 .r8ManaRole{top:-14%;font-size:8px}#battleManaArtR8 .r8ManaLegend{bottom:-18%;width:165%;font-size:6px}#hand .handCard .handCardManaCost{font-size:6px!important;padding:2px 3px;max-width:48px;overflow:hidden;text-overflow:ellipsis}}
-'''
+          css_patch = """
+          /* BATTLE-MANA-CLARITY-R1: presentation/decision clarity only; no refresh or legality rule changes. */
+          #battleManaArtR8 .r8ManaRole{position:absolute;z-index:4;left:50%;top:-18%;transform:translateX(-50%);padding:3px 7px;border:1px solid rgba(226,248,255,.62);border-radius:999px;background:rgba(3,20,30,.82);color:#f4fbff;font-size:clamp(8px,.8vw,11px);font-weight:1000;letter-spacing:.08em;white-space:nowrap;text-shadow:0 1px 4px rgba(0,0,0,.75)}
+          #battleManaArtR8 .r8ManaLegend{position:absolute;z-index:4;left:50%;bottom:-22%;width:190%;transform:translateX(-50%);padding:3px 6px;border-radius:5px;background:rgba(3,16,23,.78);color:#e5f3f6;font-size:clamp(6px,.58vw,8px);font-weight:800;line-height:1.2;text-align:center;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+          #battleManaArtR8 .r8ManaSlot.awake{transform:translate(-50%,-50%) scale(1.06);box-shadow:0 0 0 2px rgba(255,255,255,.94),0 0 15px rgba(94,203,255,.92)}
+          #battleManaArtR8 .r8ManaSlot.sleep{opacity:.38;filter:grayscale(.72) saturate(.32) brightness(.52);transform:translate(-50%,-50%) scale(.74);box-shadow:0 0 0 1px rgba(225,248,255,.20)}
+          #battleManaArtR8 .r8ManaSlot.sleep:after{left:12%;right:12%;height:3px;background:rgba(255,255,255,.9);box-shadow:0 1px 3px rgba(0,0,0,.75)}
+          #battleManaArtR8 .r8ManaSlot.sleep:before{content:'済';position:absolute;z-index:2;inset:0;display:grid;place-items:center;color:#fff;font-size:clamp(7px,.72vw,10px);font-weight:1000;text-shadow:0 1px 4px #000}
+          #hand .handCard .handCardManaCost{display:inline-flex!important;align-items:center;justify-content:center;max-width:none;padding:2px 4px;border-radius:999px;border:1px solid currentColor;background:rgba(2,15,13,.82);font-size:7px;font-weight:1000;line-height:1;letter-spacing:0;white-space:nowrap}
+          #hand .handCard .handCardManaCost.ready{color:#eafff2;border-style:solid}
+          #hand .handCard .handCardManaCost.short{color:#fff0cc;border-style:dashed;background:rgba(46,27,7,.9)}
+          #hand .handCard.manaAbilityReady{box-shadow:0 7px 16px rgba(0,0,0,.25),inset 0 3px 0 rgba(192,255,220,.72)}
+          #hand .handCard.manaAbilityShort{border-style:dashed;box-shadow:0 7px 16px rgba(0,0,0,.25),inset 0 3px 0 rgba(255,218,143,.72)}
+          @media(max-width:540px) and (orientation:portrait){#battleManaArtR8 .r8ManaRole{top:-14%;font-size:8px}#battleManaArtR8 .r8ManaLegend{bottom:-18%;width:165%;font-size:6px}#hand .handCard .handCardManaCost{font-size:6px!important;padding:2px 3px;max-width:48px;overflow:hidden;text-overflow:ellipsis}}
+          """
+          css_patch = '\n' + '\n'.join(line.strip() for line in css_patch.splitlines() if line.strip()) + '\n'
           text = text.replace(css_anchor, css_anchor + css_patch, 1)
 
           path.write_text(text, encoding='utf-8')

@@ -101,8 +101,18 @@ function fakeBattleLogDocument() {
       click() { listeners.get('click')?.({ currentTarget: this }); }
     };
   }
-  const shell = node('section');
-  return { document: { createElement: tag => node(tag), getElementById: id => id === 'battleLog' ? shell : null }, shell };
+  const battleMap = node('section');
+  const battleLog = node('section');
+  battleLog.textContent = '既存フルログ';
+  return {
+    document: {
+      createElement: tag => node(tag),
+      getElementById: id => id === 'battleMap' ? battleMap : id === 'battleLog' ? battleLog : null
+    },
+    shell: battleMap,
+    battleMap,
+    battleLog
+  };
 }
 
 test('production session still requires all exact version authorities; capture never invents them', () => {
@@ -406,30 +416,45 @@ test('production Browser mounts replay at the canonical accepted Battle seam wit
   assert.ok(replayAppend >= 0 && presentationAccept > replayAppend);
 });
 
-test('Battle recent public history stays compact, expands inline, deduplicates, reconnects, and rejects stale match data', () => {
+test('Battle recent public history stays always visible on battleMap, compact, expandable, deduplicated, reconnect-safe, and leaves the full drawer log untouched', () => {
   const fake = fakeBattleLogDocument();
   const bridge = createPartnerBattleEventLogPresentationBridge({ document: fake.document, partnerBattleLogRecentRows: 2, partnerBattleLogIncludePublicCards: true });
   let session = createLiveReplaySession({ matchId: 'M-HISTORY', versions }, { presentationBridge: null, partnerBattleEventLogBridge: bridge });
   for (let serial = 1; serial <= 3; serial += 1) session = appendAcceptedBattleResolution(session, resolution(serial), { presentationBridge: null, partnerBattleEventLogBridge: bridge });
-  const host = fake.shell.querySelector('[data-partner-battle-event-log]');
-  const toggle = fake.shell.querySelector('[data-partner-battle-event-log-toggle]');
-  assert.ok(host); assert.ok(toggle); assert.equal(host.children.length, 3);
-  assert.deepEqual(host.children.map(row => row.hidden), [true, false, false]);
+  const host = fake.battleMap.querySelector('[data-partner-battle-event-log]');
+  let toggle = host?.querySelector('[data-partner-battle-event-log-toggle]');
+  const rows = () => host.children.filter(child => child.getAttribute?.('data-partner-battle-event-log-row') !== null);
+  assert.ok(host); assert.ok(toggle); assert.equal(rows().length, 3);
+  assert.equal(fake.battleLog.querySelector('[data-partner-battle-event-log]'), null);
+  assert.equal(fake.battleLog.textContent, '既存フルログ');
+  assert.equal(host.dataset.partnerBattleEventLogSurface, 'battle_map_always_visible');
+  assert.equal(host.style.position, 'absolute');
+  assert.equal(host.style.left, '8px');
+  assert.equal(host.style.pointerEvents, 'none');
+  assert.equal(toggle.style.pointerEvents, 'auto');
+  assert.deepEqual(rows().map(row => row.hidden), [true, false, false]);
   assert.equal(host.dataset.partnerBattleEventLogRecentRows, '2');
   assert.equal(toggle.getAttribute('aria-expanded'), 'false');
-  assert.match(host.children[0].textContent, /対象C列/);
-  assert.match(host.children[0].textContent, /公開カード C1\(6\) \/ C2\(4\)/);
+  assert.match(rows()[0].textContent, /対象C列/);
+  assert.match(rows()[0].textContent, /公開カード C1\(6\) \/ C2\(4\)/);
   toggle.click();
-  assert.deepEqual(host.children.map(row => row.hidden), [false, false, false]);
+  assert.deepEqual(rows().map(row => row.hidden), [false, false, false]);
   assert.equal(toggle.getAttribute('aria-expanded'), 'true');
-  const before = host.children.map(row => row.textContent);
+  const before = rows().map(row => row.textContent);
   assert.equal(bridge.acceptSession(session).ok, true);
-  assert.equal(host.children.length, 3); assert.deepEqual(host.children.map(row => row.textContent), before);
-  assert.equal(bridge.begin('M-HISTORY'), true); assert.equal(host.children.length, 0);
+  assert.equal(rows().length, 3); assert.deepEqual(rows().map(row => row.textContent), before);
+
+  assert.equal(bridge.begin('M-HISTORY'), true);
+  toggle = host.querySelector('[data-partner-battle-event-log-toggle]');
+  assert.ok(toggle); assert.equal(rows().length, 0); assert.equal(toggle.hidden, true);
   assert.equal(bridge.acceptSession(session).eventCount, 3);
-  assert.deepEqual(host.children.map(row => row.hidden), [true, false, false]);
-  assert.equal(bridge.begin('M-NEXT'), true); assert.equal(host.children.length, 0); assert.equal(toggle.hidden, true);
+  assert.deepEqual(rows().map(row => row.hidden), [true, false, false]);
+
+  assert.equal(bridge.begin('M-NEXT'), true);
+  toggle = host.querySelector('[data-partner-battle-event-log-toggle]');
+  assert.ok(toggle); assert.equal(rows().length, 0); assert.equal(toggle.hidden, true);
   assert.deepEqual(bridge.acceptSession(session), { ok: false, consumed: false, reason: 'PARTNER_BATTLE_LOG_MATCH_STALE' });
+  assert.equal(fake.battleLog.textContent, '既存フルログ');
 });
 
 function replayMatchEndPublicData(matchId, command) {

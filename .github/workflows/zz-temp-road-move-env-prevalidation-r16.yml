@@ -1,0 +1,160 @@
+name: TEMP Road Move Environment Prevalidation R16
+on:
+  push:
+    branches:
+      - sol/road-move-env-prevalidation-r16-20260908
+permissions:
+  contents: read
+jobs:
+  prevalidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 32
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/road-move-env-prevalidation-r16-20260908
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build ephemeral Road candidate from current main and proven donors
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin \
+            sol/road-move-bidirectional-live-r5-20260906:refs/remotes/origin/road-r5-donor \
+            sol/road-move-bidirectional-live-r6-20260906:refs/remotes/origin/road-r6-donor
+          git show refs/remotes/origin/road-r5-donor:tools/zz-temp-road-move-runtime-r5.py > /tmp/road-r16-base.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/road-r16-base.py')
+          s=p.read_text()
+          s=s.replace("BASE = '0be3a466b55cbd0af23244bc9fc90b2f5f6640fd'", "BASE = '2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb'")
+          s=s.replace('ROAD-MOVE-RUNTIME-R5-20260906T2113-SOL-P8N4V6','ROAD-MOVE-ENV-PREVALIDATION-R16-20260908T0850-SOL-Q8N4M6')
+          s=s.replace('.github/workflows/zz-temp-road-move-runtime-r5.yml','.github/workflows/zz-temp-road-move-env-prevalidation-r16.yml')
+          s=s.replace("    'tools/zz-temp-road-move-runtime-r5.py',\n",'')
+          s=s.replace('road-move-bidirectional-live-r5.spec.mjs','road-move-bidirectional-live-r16.spec.mjs')
+          s=s.replace('ROAD-MOVE-BIDIRECTIONAL-R5','ROAD-MOVE-BIDIRECTIONAL-R16')
+          s=s.replace('R5 source contract','R16 source contract').replace('R5_PATCH_READY','R16_PATCH_READY')
+          p.write_text(s)
+          PY
+          python3 /tmp/road-r16-base.py
+          git show refs/remotes/origin/road-r6-donor:tools/zz-temp-road-move-runtime-r6.py > /tmp/road-r16-post.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/road-r16-post.py')
+          s=p.read_text().replace('tests/road-move-bidirectional-live-r6.spec.mjs','tests/road-move-bidirectional-live-r16.spec.mjs').replace('R6_POSTPATCH_READY','R16_POSTPATCH_READY')
+          p.write_text(s)
+          PY
+          python3 /tmp/road-r16-post.py
+          python3 - <<'PY'
+          from pathlib import Path
+          html=Path('browser/GAMEROAD.html')
+          s=html.read_text()
+          old="const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0];if(!me?.plan?.roadId){ctxSet('PLAN_CARD_MISSING',{message:'先にロードカードを選ぶと移動範囲を決められます。'});return}const path=shortest(me.position,id,normalMoveLimitForRoad(me.plan.roadId),me);if(!path){ctxSet('MOVE_PATH_INVALID');return}const r=__ctxBaseSelectEndpoint(id);ctxClear();return r};"
+          new="const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0],moveLimit=draftMoveLimitForPlayer(me);if(moveLimit<1){ctxSet('PLAN_CARD_MISSING',{message:'移動に使えるロードカードがありません。'});return}const path=shortest(me.position,id,moveLimit,me);if(!path){ctxSet('MOVE_PATH_INVALID');return}const r=__ctxBaseSelectEndpoint(id);ctxClear();return r};"
+          if s.count(old)!=1: raise SystemExit(f'context endpoint wrapper mismatch: {s.count(old)}')
+          s=s.replace(old,new,1)
+          html.write_text(s)
+
+          spec=Path('tests/road-move-bidirectional-live-r16.spec.mjs')
+          t=spec.read_text()
+          stale='  expect(html).toContain("removeHand(p,p.plan.battleId)");'
+          semantic='  expect(html).toContain("let battle=p.plan.battleId;");\n  expect(html).toContain("removeHand(p,battle)");'
+          if stale not in t: raise SystemExit('stale Battle source assertion not found')
+          t=t.replace(stale,semantic,1)
+          anchor="async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}\n"
+          helper="""async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}\nasync function physicalTapReachable(page,distance=1){\n  const point=await page.evaluate((distance)=>{\n    const nodes=[...document.querySelectorAll(`.node.reachable[data-move-distance=\"${distance}\"]`)];\n    for(const node of nodes){\n      const r=node.getBoundingClientRect(),style=getComputedStyle(node);\n      if(!(r.width>0&&r.height>0)||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)continue;\n      const x=r.left+r.width/2,y=r.top+r.height/2,hit=document.elementFromPoint(x,y);\n      if(hit&&(hit===node||node.contains(hit)))return{x,y,pos:node.dataset.pos};\n    }\n    return null;\n  },String(distance));\n  expect(point).not.toBeNull();\n  await page.mouse.click(point.x,point.y);\n}\n"""
+          if anchor not in t: raise SystemExit('snapshot helper anchor missing')
+          t=t.replace(anchor,helper,1)
+          t=t.replace('await next.click();','await physicalTapReachable(page,1);')
+          t=t.replace('await target.click();','await physicalTapReachable(page,targetDistance);')
+          t += r'''
+
+test('LowPerf through visible Battle quick settings keeps Road draft and Battle-card noninterference',async({page})=>{
+  const battle=await openRoadBattle(page);
+  const settings=battle.locator('.grBattleHudSettings,[data-battle-r75-hud] [data-action="settings"]').first();
+  await expect(settings).toBeVisible();
+  await settings.click();
+  const overlay=page.locator('[data-gameroad-quick-settings][data-surface="battle"]');
+  await expect(overlay).toBeVisible();
+  const low=overlay.locator('[data-quick-toggle="lowPerf"]');
+  await expect(low).toBeVisible();
+  await low.click();
+  await expect.poll(async()=>page.locator('#lowPerf').textContent()).toContain('ON');
+  await overlay.locator('.grSharedQuickSettingsClose').click();
+  const before=await snapshot(page);
+  expect(before.roadId).toBeNull();
+  expect(before.battleId).toBeNull();
+  await physicalTapReachable(page,1);
+  const moved=await snapshot(page);
+  expect(moved.compatibleRoadIds.length).toBeGreaterThan(0);
+  expect(moved.battleId).toBeNull();
+  const candidate=battle.locator('#hand .handCard[data-road-move-state="COMPATIBLE"],#hand .handCard.roadMoveSoft').first();
+  await expect(candidate).toBeVisible();
+  await candidate.click();
+  const focused=await snapshot(page);
+  expect(focused.roadId).not.toBeNull();
+  expect(focused.battleId).toBeNull();
+  expect(focused.path).toEqual(moved.path);
+  await expect(candidate).toHaveAttribute('data-road-move-state','FOCUSED');
+});
+'''
+          spec.write_text(t)
+          PY
+          git diff --check
+          node --test tests/road-move-compatibility-core.test.mjs
+          printf 'base=%s\nhtml_blob_before=%s\n' "2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb" "$(git rev-parse 2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb:browser/GAMEROAD.html)" > r16-evidence.txt
+          printf 'candidate_html=%s\n' "$(git hash-object browser/GAMEROAD.html)" >> r16-evidence.txt
+          grep -F "const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0],moveLimit=draftMoveLimitForPlayer(me);" browser/GAMEROAD.html >/dev/null
+          grep -F "document.elementFromPoint(x,y)" tests/road-move-bidirectional-live-r16.spec.mjs >/dev/null
+          grep -F "page.mouse.click(point.x,point.y)" tests/road-move-bidirectional-live-r16.spec.mjs >/dev/null
+          grep -F "data-quick-toggle=\"lowPerf\"" tests/road-move-bidirectional-live-r16.spec.mjs >/dev/null
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Run remaining environment prevalidation
+        shell: bash
+        run: |
+          set -o pipefail
+          cat > .road-r16-playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir: './tests',
+            testMatch: 'road-move-bidirectional-live-r16.spec.mjs',
+            timeout: 60000,
+            expect: { timeout: 10000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            reporter: [['line']],
+            use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true, trace: 'off', screenshot: 'off', video: 'off' },
+            projects: [
+              { name: 'phone-390x844', use: { viewport: { width: 390, height: 844 } } },
+              { name: 'landscape-844x390', use: { viewport: { width: 844, height: 390 } } },
+              { name: 'reduced-motion-844x390', use: { viewport: { width: 844, height: 390 }, reducedMotion: 'reduce' } }
+            ],
+            webServer: { command: 'python3 -m http.server 4173 --bind 127.0.0.1', url: 'http://127.0.0.1:4173/browser/GAMEROAD.html', reuseExistingServer: false, timeout: 120000 }
+          });
+          EOF
+          set +e
+          npx playwright test --config=.road-r16-playwright.config.mjs --workers=1 --grep "R16 source contract|move-first exposes|card-first still moves|compatible Road card taps|LowPerf through visible Battle quick settings" 2>&1 | tee -a r16-evidence.txt
+          code=${PIPESTATUS[0]}
+          set -e
+          printf 'playwright_exit=%s\n' "$code" >> r16-evidence.txt
+          rm -f .road-r16-playwright.config.mjs
+          exit "$code"
+      - name: Verify branch product bytes remain unchanged
+        if: always()
+        shell: bash
+        run: |
+          git reset --hard HEAD
+          test "$(git rev-parse HEAD:browser/GAMEROAD.html)" = "$(git rev-parse 2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb:browser/GAMEROAD.html)"
+      - name: Upload compact evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: road-r16-env-prevalidation
+          path: r16-evidence.txt
+          if-no-files-found: warn

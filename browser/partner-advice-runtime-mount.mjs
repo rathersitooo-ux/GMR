@@ -16,12 +16,19 @@ import {
   selectApprovedPartnerBattleUtterance,
 } from './partner-dialogue-source-registry.mjs';
 import { readBattleR75SelfHudDom } from './partner-battle-event-log-projection.mjs';
+import {
+  createTutorialExperienceProfileControl,
+  createTutorialSharedContextControl,
+  projectTutorialExperienceConversation,
+  projectTutorialExperienceHelp,
+} from './tutorial-experience-profile-core.mjs';
 
 const VERSION_KEYS = Object.freeze(['rulesVersion', 'cardVersion', 'stateVersion']);
 const PARTNER_STRATEGY_RULES = new Set(['left', 'right', 'max', 'min']);
 const BOARD_PROJECTION_SCHEMA = 'gameroad.partner-advice-board-projection.v1';
 const TUTORIAL_GUIDE_SCHEMA = 'gameroad.tutorial-partner-guide-control.v1';
 const CONTEXTUAL_TUTORIAL_REPLAY_SCHEMA = 'gameroad.tutorial-contextual-replay-control.v1';
+const TUTORIAL_EXPERIENCE_BRIDGE_SCHEMA = 'gameroad.tutorial-experience-battle-bridge.v1';
 const QUICK_REPLY_SCHEMA = 'gameroad.partner-advice-quick-reply.v1';
 const CHARACTER_REACTION_SCHEMA = 'gameroad.partner-battle-character-reaction.v1';
 const CHARACTER_REACTION_TRIGGER_ID = 'battle_card_submit';
@@ -316,6 +323,94 @@ export function createTutorialPartnerGuideControl({
   });
 }
 
+export function createBattleTutorialExperienceConversationControl({
+  isEligible = () => false,
+  onChange,
+} = {}) {
+  if (typeof isEligible !== 'function') throw new TypeError('isEligible must be a function');
+  if (onChange !== undefined && typeof onChange !== 'function') throw new TypeError('onChange must be a function when provided');
+
+  const changed = () => { if (typeof onChange === 'function') onChange(); };
+  const experience = createTutorialExperienceProfileControl({ onChange: changed });
+  const sharedContext = createTutorialSharedContextControl({ onChange: changed });
+  const eligible = () => {
+    try {
+      return isEligible() === true;
+    } catch {
+      return false;
+    }
+  };
+  const status = () => {
+    if (!eligible()) {
+      return Object.freeze({
+        schema: TUTORIAL_EXPERIENCE_BRIDGE_SCHEMA,
+        active: false,
+        reason: 'TUTORIAL_ELIGIBILITY_REQUIRED',
+        experienceStatus: null,
+        sharedContext: null,
+        conversation: null,
+        readyForGameplayExplanation: false,
+        presentationOnly: true,
+        persistenceOwned: false,
+        tutorialRunOwned: false,
+        saveMutated: false,
+        gameplayAuthorityMutated: false,
+        autoExecute: false,
+      });
+    }
+    const experienceStatus = experience.status();
+    const contextStatus = sharedContext.status();
+    const conversation = projectTutorialExperienceConversation({
+      experienceStatus,
+      sharedContext: contextStatus,
+    });
+    return Object.freeze({
+      schema: TUTORIAL_EXPERIENCE_BRIDGE_SCHEMA,
+      active: true,
+      reason: null,
+      experienceStatus,
+      sharedContext: contextStatus,
+      conversation,
+      readyForGameplayExplanation: conversation.readyForGameplayExplanation,
+      presentationOnly: true,
+      persistenceOwned: false,
+      tutorialRunOwned: false,
+      saveMutated: false,
+      gameplayAuthorityMutated: false,
+      autoExecute: false,
+    });
+  };
+
+  return Object.freeze({
+    chooseAudience(audienceId) {
+      return eligible() ? experience.chooseAudience(audienceId) : false;
+    },
+    chooseSourceGame(sourceGameId) {
+      return eligible() ? experience.chooseSourceGame(sourceGameId) : false;
+    },
+    chooseSharedInterest(sharedInterestId) {
+      return eligible() ? sharedContext.chooseSharedInterest(sharedInterestId) : false;
+    },
+    clearSharedInterest() {
+      return eligible() ? sharedContext.clear() : false;
+    },
+    profile() {
+      return eligible() ? experience.profile() : null;
+    },
+    conversation() {
+      return status().conversation;
+    },
+    adaptHelp({ canonicalMessage, focusRole = null } = {}) {
+      return projectTutorialExperienceHelp({
+        canonicalMessage,
+        focusRole,
+        experienceProfile: eligible() ? experience.profile() : null,
+      });
+    },
+    status,
+  });
+}
+
 export function projectBattleContextualTutorialReplay(snapshot = {}) {
   if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot) || snapshot.screen !== 'battle') {
     return Object.freeze({
@@ -362,12 +457,14 @@ export function projectBattleContextualTutorialReplay(snapshot = {}) {
 
 export function createBattleContextualTutorialReplayControl({
   getSnapshot = () => null,
+  getExperienceProfile = () => null,
   showHelp = null,
   clearHelp = null,
   setFocus = null,
   onChange,
 } = {}) {
   if (typeof getSnapshot !== 'function') throw new TypeError('getSnapshot must be a function');
+  if (typeof getExperienceProfile !== 'function') throw new TypeError('getExperienceProfile must be a function');
   if (showHelp !== null && typeof showHelp !== 'function') throw new TypeError('showHelp must be a function or null');
   if (clearHelp !== null && typeof clearHelp !== 'function') throw new TypeError('clearHelp must be a function or null');
   if (setFocus !== null && typeof setFocus !== 'function') throw new TypeError('setFocus must be a function or null');
@@ -375,11 +472,28 @@ export function createBattleContextualTutorialReplayControl({
   let active = false;
   const changed = () => { if (typeof onChange === 'function') onChange(); };
   const projection = () => {
+    let canonical;
     try {
-      return projectBattleContextualTutorialReplay(getSnapshot());
+      canonical = projectBattleContextualTutorialReplay(getSnapshot());
     } catch {
-      return projectBattleContextualTutorialReplay(null);
+      canonical = projectBattleContextualTutorialReplay(null);
     }
+    if (!canonical.active) return canonical;
+    try {
+      const help = projectTutorialExperienceHelp({
+        canonicalMessage: canonical.message,
+        focusRole: canonical.focusRole,
+        experienceProfile: getExperienceProfile(),
+      });
+      if (help?.active && help.message) {
+        return Object.freeze({
+          ...canonical,
+          message: help.message,
+          focusRole: help.focusRole ?? canonical.focusRole,
+        });
+      }
+    } catch {}
+    return canonical;
   };
   const available = () => projection().active && typeof showHelp === 'function' && typeof clearHelp === 'function';
   const status = () => {
@@ -713,10 +827,14 @@ function ensureBattleChatStyle(doc) {
   doc.head?.append(style);
 }
 
-export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.window } = {}) {
+export function mountPartnerAdviceChatPresentation({
+  windowRef = globalThis.window,
+  tutorialExperienceEligibility = () => false,
+} = {}) {
   const win = windowRef;
   const doc = win?.document;
   if (!doc) return null;
+  if (typeof tutorialExperienceEligibility !== 'function') return null;
   const host = doc.getElementById('partnerDecisionBox');
   if (!host) return null;
   ensureBattleChatStyle(doc);
@@ -740,8 +858,21 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
   });
   const characterReaction = createPartnerBattleCharacterReactionControl();
   characterReaction.prime(readBattleR75SelfHudDom(doc)?.resolution);
+  const tutorialExperience = createBattleTutorialExperienceConversationControl({
+    isEligible: () => {
+      try {
+        return tutorialExperienceEligibility(Object.freeze({
+          snapshot: currentBattleTutorialReplaySnapshot(win),
+          partnerId: currentAdvicePartnerId(win),
+        })) === true;
+      } catch {
+        return false;
+      }
+    },
+  });
   const tutorialReplay = createBattleContextualTutorialReplayControl({
     getSnapshot: () => currentBattleTutorialReplaySnapshot(win),
+    getExperienceProfile: () => tutorialExperience.profile(),
     showHelp: ({ code, message, kind, ttl }) => win.__GAMEROAD_CONTEXT_HELP_TEST__?.set?.(code, { message, kind, ttl }) ?? false,
     clearHelp: (code) => win.__GAMEROAD_CONTEXT_HELP_TEST__?.clear?.(code),
     setFocus: (role) => setBattleContextualTutorialFocus(doc, role),
@@ -805,7 +936,7 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
       tutorialButton.setAttribute('aria-pressed', tutorialStatus.active ? 'true' : 'false');
       tutorialButton.textContent = tutorialStatus.active ? '説明を閉じる' : '操作を再確認';
     }
-    return Object.freeze({ projection, tutorial: tutorialStatus, characterReaction: lastCharacterReaction, advicePartnerId: current?.partnerId || null, roster });
+    return Object.freeze({ projection, tutorial: tutorialStatus, tutorialExperience: tutorialExperience.status(), characterReaction: lastCharacterReaction, advicePartnerId: current?.partnerId || null, roster });
   };
 
   const switchButton = root.querySelector('.partnerAdvicePartnerSwitch');
@@ -860,7 +991,7 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
     doc.getElementById('partnerAdviceBtn')?.addEventListener('click', () => queueMicrotask(render));
   }
   render();
-  return Object.freeze({ root, render, tutorialReplay, characterReaction });
+  return Object.freeze({ root, render, tutorialReplay, tutorialExperience, characterReaction });
 }
 
 function schedulePartnerAdviceChatMount(win) {

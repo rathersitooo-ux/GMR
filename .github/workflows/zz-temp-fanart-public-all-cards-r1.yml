@@ -24,7 +24,13 @@ jobs:
           test "$(git merge-base HEAD origin/main)" = "65877b226bb6d34841940492bd65dee2fa93e5cb"
           test -f data/preaction-authorizations/FANART-PUBLIC-ALL-CARDS-R1-20260908T0754-SOL-M7Q4N6.json
       - name: Apply bounded product patch
-        run: python3 tools/zz-temp-fanart-public-all-cards-r1.py
+        run: |
+          python3 tools/zz-temp-fanart-public-all-cards-r1.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('tests/cards-deck-presentation.test.mjs')
+          p.write_text(p.read_text(encoding='utf-8').rstrip() + '\n', encoding='utf-8')
+          PY
       - name: Focused regression
         run: node --test tests/cards-deck-presentation.test.mjs
       - name: Static boundary checks

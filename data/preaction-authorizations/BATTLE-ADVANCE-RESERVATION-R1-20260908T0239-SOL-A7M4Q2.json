@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ADVANCE-RESERVATION-R1-20260908T0239-SOL-A7M4Q2",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "BATTLE_ADVANCE_RESERVATION_SURFACE_R1",
+  "acquireKey": "BATTLE-ADVANCE-RESERVATION-R1-20260908T0239-SOL-A7M4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_RESERVATION_SPEC_PLUS_LIVE_READY_PLAN_DOM_BRIDGE_MAIN_AE5EC30B",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_LIVE_ROADSELECT_BATTLESELECT_READYPLAN_AND_FOCUSED_TEST_LANE",
+  "proceedToken": "PROCEED|BATTLE-ADVANCE-RESERVATION-R1-20260908T0239-SOL-A7M4Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ADAPT_EXISTING_READY_PLAN_SURFACE",
+  "authorizationBaseSha": "ae5ec30b6ac76031b6865fe9d7be428781ff7a57",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "BATTLE_ADVANCE_RESERVATION_SURFACE_R1",
+  "leaseAcquireKey": "BATTLE-ADVANCE-RESERVATION-R1-20260908T0239-SOL-A7M4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 02:39 JST",
+  "leaseUntilJst": "2026-09-08 03:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A561:L561",
+  "leaseExactMutableResources": "browser/ui-state-feedback-ready-plan-adapter.mjs; tests/ui-state-feedback-ready-plan-adapter.test.mjs; deploy/cloudflare/tests/build.test.mjs; data/preaction-authorizations/BATTLE-ADVANCE-RESERVATION-R1-20260908T0239-SOL-A7M4Q2.json. READ_ONLY: browser/GAMEROAD.html; browser/battle-janken-slidepad-runtime-mount.mjs; browser/battle-screen-runtime-mount.mjs; gameplay/rules/save/economy/network; Road/new-base turn authority.",
+  "scope": [
+    "browser/ui-state-feedback-ready-plan-adapter.mjs",
+    "tests/ui-state-feedback-ready-plan-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/BATTLE-ADVANCE-RESERVATION-R1-20260908T0239-SOL-A7M4Q2.json"
+  ],
+  "leaseScope": [
+    "browser/ui-state-feedback-ready-plan-adapter.mjs",
+    "tests/ui-state-feedback-ready-plan-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/BATTLE-ADVANCE-RESERVATION-R1-20260908T0239-SOL-A7M4Q2.json"
+  ],
+  "solutionSignature": "battle-advance-reservation-visible-summary-existing-road-janken-ready-live-path",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_CANONICAL_ADVANCE_RESERVATION_PLUS_PR1131_LIVE_READY_PLAN_DOM_BRIDGE",
+  "solutionSearchEvidence": [
+    "Drive:GAMEROAD_初回一括計画・先行予約・ヘイト待ち時間仕様_CURRENT_20260719",
+    "main:browser/ui-state-feedback-ready-plan-adapter.mjs:createBattleAutoDomBridge",
+    "main:browser/ui-state-feedback-ready-plan-adapter.mjs:bindReadyPlanFeedbackControl",
+    "main:browser/battle-janken-slidepad-runtime-mount.mjs:existing-hand-click-through",
+    "CURRENT:UI-STATE-FEEDBACK-RUNTIME-001"
+  ]
+}

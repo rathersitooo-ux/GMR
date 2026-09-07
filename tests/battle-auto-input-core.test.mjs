@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   BATTLE_AUTO_INPUT,
   createBattleAutoInputController,
+  projectBattleAdvanceReservationSummary,
 } from '../browser/battle-auto-input-core.mjs';
 
 function candidate(inputId, overrides = {}) {
@@ -22,6 +23,53 @@ function candidate(inputId, overrides = {}) {
 function frame(frameKey, candidates) {
   return { frameKey, candidates };
 }
+
+test('advance reservation summary exposes only the existing road, first janken card, and Ready surface', () => {
+  const summary = projectBattleAdvanceReservationSummary({
+    roadValue: 'road-4',
+    roadLabel: '森の道 4',
+    battleValue: 'battle-7',
+    battleLabel: 'ハルニア 7',
+    readyLabel: '準備完了',
+    readyAvailable: true,
+  });
+
+  assert.equal(summary.schema, 'gameroad.battle.advance-reservation-summary.v1');
+  assert.deepEqual(summary.rows, [
+    { role: 'road', label: '道札', value: '森の道 4', state: 'reserved' },
+    { role: 'battle', label: 'じゃんけん札', value: 'ハルニア 7', state: 'reserved' },
+    { role: 'ready', label: '準備完了', value: '準備完了', state: 'available' },
+  ]);
+  assert.equal(summary.rows.some((row) => row.role === 'additionalBattle'), false);
+});
+
+test('advance reservation summary stays visible while incomplete and never invents a Ready authority', () => {
+  const empty = projectBattleAdvanceReservationSummary();
+  assert.deepEqual(empty.rows.map(({ role, value, state }) => ({ role, value, state })), [
+    { role: 'road', value: '未選択', state: 'unset' },
+    { role: 'battle', value: '未選択', state: 'unset' },
+    { role: 'ready', value: '準備完了', state: 'unavailable' },
+  ]);
+
+  const roadOnly = projectBattleAdvanceReservationSummary({
+    roadValue: 'road-2',
+    roadLabel: '道札 2',
+    readyLabel: 'READY',
+    readyAvailable: true,
+  });
+  assert.equal(roadOnly.rows[0].state, 'reserved');
+  assert.equal(roadOnly.rows[1].state, 'unset');
+  assert.equal(roadOnly.rows[2].state, 'waiting');
+  assert.equal(roadOnly.rows[2].value, 'READY');
+
+  const disabled = projectBattleAdvanceReservationSummary({
+    roadValue: 'road-2',
+    battleValue: 'battle-5',
+    readyAvailable: true,
+    readyDisabled: true,
+  });
+  assert.equal(disabled.rows[2].state, 'blocked');
+});
 
 test('Auto defaults to manual and never commits until the user enables a mode', async () => {
   let commits = 0;

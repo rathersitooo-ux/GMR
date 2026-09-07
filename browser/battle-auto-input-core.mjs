@@ -1,5 +1,7 @@
 const AUTO_MODES = new Set(['manual', 'left', 'right', 'max', 'min', 'situation']);
 const BLOCKED_KINDS = new Set(['target', 'column', 'shield']);
+const ADVANCE_RESERVATION_SURFACE_SCHEMA = 'gameroad.battle.advance-reservation-summary.v1';
+const ADVANCE_RESERVATION_SURFACE_ID = 'battleAdvanceReservation';
 
 function exactToken(value, max = 160) {
   if (typeof value !== 'string') return null;
@@ -101,6 +103,116 @@ function sameCandidateBoundary(left, right) {
     && left.comparisonValue === right.comparisonValue;
 }
 
+function displayText(value, fallback) {
+  const text = typeof value === 'string' ? value.trim() : '';
+  return text || fallback;
+}
+
+export function projectBattleAdvanceReservationSummary({
+  roadValue = '', roadLabel = '', battleValue = '', battleLabel = '',
+  readyLabel = '', readyAvailable = false, readyDisabled = false,
+} = {}) {
+  const roadReserved = typeof roadValue === 'string' && roadValue.trim() !== '';
+  const battleReserved = typeof battleValue === 'string' && battleValue.trim() !== '';
+  return Object.freeze({
+    schema: ADVANCE_RESERVATION_SURFACE_SCHEMA,
+    rows: Object.freeze([
+      Object.freeze({ role: 'road', label: '道札', value: roadReserved ? displayText(roadLabel, roadValue.trim()) : '未選択', state: roadReserved ? 'reserved' : 'unset' }),
+      Object.freeze({ role: 'battle', label: 'じゃんけん札', value: battleReserved ? displayText(battleLabel, battleValue.trim()) : '未選択', state: battleReserved ? 'reserved' : 'unset' }),
+      Object.freeze({
+        role: 'ready', label: '準備完了', value: displayText(readyLabel, '準備完了'),
+        state: !readyAvailable ? 'unavailable' : readyDisabled ? 'blocked' : roadReserved && battleReserved ? 'available' : 'waiting',
+      }),
+    ]),
+  });
+}
+
+function selectedOptionLabel(select) {
+  if (!select?.value) return '';
+  const option = [...(select.options || [])].find((candidate) => candidate?.value === select.value);
+  return displayText(option?.textContent, select.value);
+}
+
+function findReadyControl(rail) {
+  const candidates = [...(rail?.querySelectorAll?.('[data-gmr-material],button,[role="button"]') || [])]
+    .filter((node) => node?.id !== 'battleAutoMode' && node?.id !== ADVANCE_RESERVATION_SURFACE_ID);
+  const semantic = candidates.find((node) => /準備|ready/i.test(`${node.textContent || ''} ${node.getAttribute?.('aria-label') || ''}`));
+  if (semantic) return semantic;
+  const material = candidates.filter((node) => node?.dataset?.gmrMaterial);
+  return material.length === 1 ? material[0] : null;
+}
+
+export function mountBattleAdvanceReservationSurface(globalRef = globalThis) {
+  const documentRef = globalRef?.document;
+  const rail = documentRef?.querySelector?.('.battleRail');
+  const road = documentRef?.getElementById?.('roadSelect');
+  const battle = documentRef?.getElementById?.('battleSelect');
+  if (!documentRef || !rail || !road || !battle || typeof documentRef.createElement !== 'function') return null;
+
+  const existing = documentRef.getElementById?.(ADVANCE_RESERVATION_SURFACE_ID);
+  if (existing) return existing;
+  const ready = findReadyControl(rail);
+
+  if (!documentRef.getElementById?.(`${ADVANCE_RESERVATION_SURFACE_ID}Style`)) {
+    const style = documentRef.createElement('style');
+    style.id = `${ADVANCE_RESERVATION_SURFACE_ID}Style`;
+    style.textContent = `
+#${ADVANCE_RESERVATION_SURFACE_ID}{display:grid;gap:4px;min-width:124px;padding:6px;border:1px solid #ffffff38;border-radius:12px;background:#080c1eb8;color:#f7fbff;font:700 10px/1.2 system-ui;pointer-events:auto}
+#${ADVANCE_RESERVATION_SURFACE_ID} .arTitle{padding:1px 3px;opacity:.75;letter-spacing:.08em}
+#${ADVANCE_RESERVATION_SURFACE_ID} .arRow{display:grid;grid-template-columns:auto 1fr;gap:6px;align-items:center;min-height:30px;padding:4px 7px;border:1px solid #ffffff24;border-radius:9px;background:#ffffff12;color:inherit;text-align:left;font:inherit}
+#${ADVANCE_RESERVATION_SURFACE_ID} button.arRow:disabled{opacity:.45} #${ADVANCE_RESERVATION_SURFACE_ID} .arValue{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right} #${ADVANCE_RESERVATION_SURFACE_ID} [data-state="available"],#${ADVANCE_RESERVATION_SURFACE_ID} [data-state="reserved"]{border-color:#8be1ff70}
+`;
+    documentRef.head?.appendChild?.(style);
+  }
+
+  const host = documentRef.createElement('section');
+  host.id = ADVANCE_RESERVATION_SURFACE_ID;
+  host.setAttribute('aria-label', '先行予約');
+  host.innerHTML = '<div class="arTitle">先行予約</div><button type="button" class="arRow" data-role="road"><span>道札</span><span class="arValue"></span></button><button type="button" class="arRow" data-role="battle"><span>じゃんけん札</span><span class="arValue"></span></button><div class="arRow" data-role="ready"><span>準備完了</span><span class="arValue"></span></div>';
+  rail.appendChild(host);
+
+  const roadRow = host.querySelector('[data-role="road"]');
+  const battleRow = host.querySelector('[data-role="battle"]');
+  const readyRow = host.querySelector('[data-role="ready"]');
+  const focus = (control) => {
+    if (!control || control.disabled || typeof control.focus !== 'function') return;
+    try { control.focus({ preventScroll: true }); } catch { control.focus(); }
+  };
+  roadRow?.addEventListener?.('click', () => focus(road));
+  battleRow?.addEventListener?.('click', () => focus(battle));
+
+  const render = () => {
+    const summary = projectBattleAdvanceReservationSummary({
+      roadValue: road.value || '', roadLabel: selectedOptionLabel(road),
+      battleValue: battle.value || '', battleLabel: selectedOptionLabel(battle),
+      readyLabel: ready?.getAttribute?.('aria-label') || ready?.textContent || '',
+      readyAvailable: !!ready,
+      readyDisabled: ready?.disabled === true || ready?.getAttribute?.('aria-disabled') === 'true',
+    });
+    for (const item of summary.rows) {
+      const row = item.role === 'road' ? roadRow : item.role === 'battle' ? battleRow : readyRow;
+      if (!row) continue;
+      const value = row.querySelector?.('.arValue');
+      if (value) value.textContent = item.value;
+      row.dataset.state = item.state;
+    }
+    if (roadRow) roadRow.disabled = road.disabled === true;
+    if (battleRow) battleRow.disabled = battle.disabled === true;
+    return summary;
+  };
+
+  road.addEventListener?.('change', render);
+  battle.addEventListener?.('change', render);
+  road.addEventListener?.('input', render);
+  battle.addEventListener?.('input', render);
+  if (ready && typeof globalRef?.MutationObserver === 'function') {
+    new globalRef.MutationObserver(render).observe(ready, { attributes: true, childList: true, characterData: true, subtree: true });
+  }
+  host.__gameroadAdvanceReservationRender = render;
+  render();
+  return host;
+}
+
 export function createBattleAutoInputController({
   readHumanLegalInputs,
   commitHumanInput,
@@ -111,6 +223,8 @@ export function createBattleAutoInputController({
   if (selectSituationCandidate !== null && typeof selectSituationCandidate !== 'function') {
     throw new TypeError('selectSituationCandidate must be a function or null');
   }
+
+  mountBattleAdvanceReservationSurface(globalThis);
 
   let mode = 'manual';
   let inFlightFrameKey = null;

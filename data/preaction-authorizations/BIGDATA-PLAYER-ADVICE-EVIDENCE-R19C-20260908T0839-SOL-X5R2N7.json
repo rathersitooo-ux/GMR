@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BIGDATA-PLAYER-ADVICE-EVIDENCE-R19C-20260908T0839-SOL-X5R2N7",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "PLAYER_FACING_ADVICE_EVIDENCE_R19C",
+  "acquireKey": "BIGDATA-PLAYER-ADVICE-EVIDENCE-R19C-20260908T0839-SOL-X5R2N7",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BIGDATA_R19C_USER_VISIBLE_ADVICE_SOURCE_GAP_20260908T0839",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BIGDATA_R19C_REUSE_EXACT_RUNTIME_BLOB_PLUS_SMALL_WRAPPER",
+  "proceedToken": "PROCEED|BIGDATA-PLAYER-ADVICE-EVIDENCE-R19C-20260908T0839-SOL-X5R2N7|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|exact-runtime-move|small-entry-wrapper|no-best-move-claim",
+  "authorizationBaseSha": "2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "PLAYER_FACING_ADVICE_EVIDENCE_R19C",
+  "leaseAcquireKey": "BIGDATA-PLAYER-ADVICE-EVIDENCE-R19C-20260908T0839-SOL-X5R2N7",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 08:39 JST",
+  "leaseUntilJst": "2026-09-08 09:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A600:L600",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean branch sol/player-advice-evidence-r19c-20260908 from exact main 2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb; browser/partner-advice-runtime-base.mjs; browser/partner-advice-evidence-presentation.mjs; browser/partner-advice-runtime-mount.mjs; tests/partner-advice-evidence-presentation.test.mjs; transient data/preaction-authorizations/BIGDATA-PLAYER-ADVICE-EVIDENCE-R19C-20260908T0839-SOL-X5R2N7.json; own PR/check/merge/main readback; GAMEROAD 全作業一覧 row1358 Y:AB checkpoint. READ_ONLY: tools/advice-context-subset-index.mjs; browser/partner-legal-action-adapter.mjs; deploy/cloudflare/relay/src/partner-report-store.mjs; gameplay/rules/save/network.",
+  "scope": [
+    "browser/partner-advice-runtime-base.mjs",
+    "browser/partner-advice-evidence-presentation.mjs",
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-evidence-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-runtime-base.mjs",
+    "browser/partner-advice-evidence-presentation.mjs",
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-evidence-presentation.test.mjs"
+  ],
+  "solutionSignature": "Move the exact current Partner runtime blob to a base path, keep the production entrypoint as a thin compatibility wrapper, and compose a compact evidence sidecar that labels each recommendation as approved collective evidence, strategy-rule advice, or legacy fallback without altering ranking or gameplay.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "BIGDATA_R19C_REUSE_EXACT_RUNTIME_BLOB_20260908T0839",
+  "solutionSearchEvidence": [
+    "browser/partner-advice-runtime-mount.mjs already owns the live advice bridge and chat mount, so its current blob can be reused byte-for-byte rather than connector-rewritten",
+    "browser/partner-legal-action-adapter.mjs already distinguishes approved-runtime-manifest from shared-legal-action-core and is not modified",
+    "tools/advice-context-subset-index.mjs keeps collective recommendations explicitly non-optimal and is not modified"
+  ],
+  "buildResidualReason": "No existing player-facing projection explains the recommendation source. The residual is a thin wrapper and presentation-only sidecar; the exact prior runtime implementation is preserved unchanged under the base path."
+}

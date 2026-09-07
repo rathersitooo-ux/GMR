@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BIGDATA-CTX-INDEX-R18-20260908T0805-SOL-V7N4Q9",
+  "taskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "workUnitKey": "BIGDATA_CONTEXT_SUBSET_INDEX_R18",
+  "acquireKey": "BIGDATA-CTX-INDEX-R18-20260908T0805-SOL-V7N4Q9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BIGDATA_R18_EXACT_OR_GLOBAL_RETRIEVAL_GAP_20260908T0805",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BIGDATA_R18_EXISTING_EVALUATOR_FAILCLOSED_CENSUS",
+  "proceedToken": "PROCEED|BIGDATA-CTX-INDEX-R18-20260908T0805-SOL-V7N4Q9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|bounded-subset-index|no-second-db|no-optimal-inference",
+  "authorizationBaseSha": "52474324c4aebf1027e8f9a6b21db4cfed8fcb4e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COLLECTIVE-DATA-SYNERGY-FLYWHEEL-001",
+  "leaseWorkUnitKey": "BIGDATA_CONTEXT_SUBSET_INDEX_R18",
+  "leaseAcquireKey": "BIGDATA-CTX-INDEX-R18-20260908T0805-SOL-V7N4Q9",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 08:05 JST",
+  "leaseUntilJst": "2026-09-08 08:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A591:L591",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/bigdata-context-subset-index-r18-20260908; tools/advice-collective-eval.mjs; tests/advice-collective-eval.test.mjs; transient data/preaction-authorizations/BIGDATA-CTX-INDEX-R18-20260908T0805-SOL-V7N4Q9.json; own PR/check/merge/main readback; GAMEROAD 全作業一覧 row1358 Y:AB checkpoint.",
+  "scope": [
+    "tools/advice-collective-eval.mjs",
+    "tests/advice-collective-eval.test.mjs"
+  ],
+  "leaseScope": [
+    "tools/advice-collective-eval.mjs",
+    "tests/advice-collective-eval.test.mjs"
+  ],
+  "solutionSignature": "Reuse the approved-event collective evaluator and add a bounded aggregate-only context subset index so callers can retrieve evidence by explicit situation dimensions without scanning raw logs or inventing strategic weights.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "BIGDATA_R18_REUSE_EXISTING_EVALUATOR_20260908T0805",
+  "solutionSearchEvidence": [
+    "tools/advice-collective-eval.mjs already owns approved-event eligibility, reward/regret scoring and exact/global recommendation",
+    "tools/advice-collective-eval.mjs currently stores exact state fingerprints and a global aggregate but no reusable partial-context aggregate index",
+    "deploy/cloudflare/relay/src/partner-report-store.mjs already provides the existing server receipt/data-flywheel storage boundary, so this work does not create another recorder or database"
+  ]
+}

@@ -22,9 +22,13 @@ jobs:
           set -euo pipefail
           BASE='5e2730ce6ce772769fd02efeaaa3da6b61157320'
           MANIFEST='data/preaction-authorizations/PARTNER-CLOSE-COMPANION-R2-20260908T1125-SOL-N7Q4M8.json'
-          test "$(git rev-parse HEAD~2)" = "$BASE"
-          test "$(git diff --name-only HEAD~2..HEAD^ | tr -d '\r')" = "$MANIFEST"
-          test "$(git diff --name-only HEAD^..HEAD | tr -d '\r')" = '.github/workflows/zz-temp-partner-close-companion-r2.yml'
+          WORKFLOW='.github/workflows/zz-temp-partner-close-companion-r2.yml'
+          mapfile -t commits < <(git rev-list --reverse "$BASE"..HEAD)
+          test "${#commits[@]}" -ge 2
+          test "$(git diff-tree --no-commit-id --name-only -r "${commits[0]}" | tr -d '\r')" = "$MANIFEST"
+          for c in "${commits[@]:1}"; do
+            test "$(git diff-tree --no-commit-id --name-only -r "$c" | tr -d '\r')" = "$WORKFLOW"
+          done
           test "$(git hash-object browser/partner-conversation-core.mjs)" = '7ec1af5ffa9f8255a4b64eb5ecc2905d999a59a8'
           test "$(git hash-object tests/partner-conversation-core.test.mjs)" = '9ec21f59e8945eb8c13d8d15321ec19d8bb51360'
           test "$(git hash-object deploy/cloudflare/scripts/build.mjs)" = 'df3e214fdedc336d004734d0eab55db6e2653e65'
@@ -73,7 +77,7 @@ jobs:
             assert.match(guidance, /固定台詞/);
           });
           '''
-          test_path.write_text(s.rstrip() + addition + '\n')
+          test_path.write_text(s.rstrip() + addition.rstrip() + '\n')
 
           build_path = Path('deploy/cloudflare/scripts/build.mjs')
           b = build_path.read_text()

@@ -1,0 +1,245 @@
+name: TEMP Road Move R23 Product Acceptance
+
+on:
+  push:
+    branches:
+      - sol/road-move-bidirectional-r23-20260909
+
+permissions:
+  contents: write
+
+jobs:
+  accept:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/road-move-bidirectional-r23-20260909
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build bounded Road R23 candidate from accepted donors
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=a59332356dbe5f70e3afaf350bfae8fdcbb3ea6d
+          HTML_BLOB=d7ae9d0532df7e66ebbf29f1e7eecb3f352d346d
+          test "$(git rev-parse "$BASE":browser/GAMEROAD.html)" = "$HTML_BLOB"
+          git fetch origin \
+            sol/road-move-bidirectional-live-r5-20260906:refs/remotes/origin/road-r5-donor \
+            sol/road-move-bidirectional-live-r6-20260906:refs/remotes/origin/road-r6-donor
+          git show refs/remotes/origin/road-r5-donor:tools/zz-temp-road-move-runtime-r5.py > /tmp/road-r23-base.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/road-r23-base.py'); s=p.read_text()
+          replacements=[
+            ("BASE = '0be3a466b55cbd0af23244bc9fc90b2f5f6640fd'","BASE = 'a59332356dbe5f70e3afaf350bfae8fdcbb3ea6d'"),
+            ("EXPECTED_HTML_BLOB = '35f9203e2be95ba07b44c875e26bfe2047a3cee5'","EXPECTED_HTML_BLOB = 'd7ae9d0532df7e66ebbf29f1e7eecb3f352d346d'"),
+            ('ROAD-MOVE-RUNTIME-R5-20260906T2113-SOL-P8N4V6','ROAD-MOVE-RUNTIME-R23-20260909T0542-SOL-Q7N4V3'),
+            ('.github/workflows/zz-temp-road-move-runtime-r5.yml','.github/workflows/zz-temp-road-move-r23-diagnose.yml'),
+            ("    'tools/zz-temp-road-move-runtime-r5.py',\n",''),
+            ('road-move-bidirectional-live-r5.spec.mjs','road-move-bidirectional-live-r23.spec.mjs'),
+            ('ROAD-MOVE-BIDIRECTIONAL-R5','ROAD-MOVE-BIDIRECTIONAL-R23'),
+            ('R5 source contract','R23 source contract'),
+            ('R5_PATCH_READY','R23_PATCH_READY'),
+          ]
+          for old,new in replacements:
+            if old not in s: raise SystemExit('R5 donor adaptation anchor missing: '+old)
+            s=s.replace(old,new)
+          p.write_text(s)
+          PY
+          python3 /tmp/road-r23-base.py
+          git show refs/remotes/origin/road-r6-donor:tools/zz-temp-road-move-runtime-r6.py > /tmp/road-r23-post.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/road-r23-post.py'); s=p.read_text(); old='tests/road-move-bidirectional-live-r6.spec.mjs'
+          if old not in s: raise SystemExit('R6 spec anchor missing')
+          p.write_text(s.replace(old,'tests/road-move-bidirectional-live-r23.spec.mjs').replace('R6_POSTPATCH_READY','R23_POSTPATCH_READY'))
+          PY
+          python3 /tmp/road-r23-post.py
+      - name: Adapt late contextual wrapper and current physical-input tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          html=Path('browser/GAMEROAD.html'); s=html.read_text()
+          old="const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0];if(!me?.plan?.roadId){ctxSet('PLAN_CARD_MISSING',{message:'先にロードカードを選ぶと移動範囲を決められます。'});return}const path=shortest(me.position,id,normalMoveLimitForRoad(me.plan.roadId),me);if(!path){ctxSet('MOVE_PATH_INVALID');return}const r=__ctxBaseSelectEndpoint(id);ctxClear();return r};"
+          new="const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0],moveLimit=draftMoveLimitForPlayer(me);if(moveLimit<1){ctxSet('PLAN_CARD_MISSING',{message:'移動に使えるロードカードがありません。'});return}const path=shortest(me.position,id,moveLimit,me);if(!path){ctxSet('MOVE_PATH_INVALID');return}const r=__ctxBaseSelectEndpoint(id);ctxClear();return r};"
+          if s.count(old)!=1: raise SystemExit(f'context endpoint wrapper mismatch: {s.count(old)}')
+          s=s.replace(old,new,1)
+          html.write_text(s)
+
+          spec=Path('tests/road-move-bidirectional-live-r23.spec.mjs'); t=spec.read_text()
+          stale='  expect(html).toContain("removeHand(p,p.plan.battleId)");'
+          semantic='  expect(html).toContain("let battle=p.plan.battleId;");\n  expect(html).toContain("removeHand(p,battle)");'
+          if stale not in t: raise SystemExit('stale Battle source assertion not found')
+          t=t.replace(stale,semantic,1)
+          anchor="async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}\n"
+          helper=r'''async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}
+async function roadNodeIds(page){return page.locator('.node.reachable[data-pos]').evaluateAll(ns=>[...new Set(ns.map(n=>n.dataset.pos).filter(Boolean))])}
+async function physicalTapReachableId(page,id){
+  const point=await page.evaluate((id)=>{
+    const node=[...document.querySelectorAll('.node.reachable[data-pos]')].find(n=>n.dataset.pos===id);if(!node)return null;
+    const r=node.getBoundingClientRect(),style=getComputedStyle(node);if(!(r.width>0&&r.height>0)||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)return null;
+    const samples=[[.5,.5],[.3,.3],[.7,.3],[.3,.7],[.7,.7],[.5,.2],[.5,.8],[.2,.5],[.8,.5]];
+    for(const [fx,fy] of samples){const x=r.left+r.width*fx,y=r.top+r.height*fy;if(x<0||y<0||x>=innerWidth||y>=innerHeight)continue;const hit=document.elementFromPoint(x,y);if(hit&&(hit===node||node.contains(hit)))return{x,y}}
+    return null;
+  },id);
+  if(!point)return false;await page.mouse.click(point.x,point.y);return true;
+}
+async function physicalTapReachable(page,distance=1){
+  const ids=await roadNodeIds(page);expect(ids.length).toBeGreaterThan(0);
+  for(const id of ids){if(!(await physicalTapReachableId(page,id)))continue;await page.waitForTimeout(24);const after=await snapshot(page);if(Math.max(0,after.path.length-1)===Number(distance))return id}
+  throw new Error(`no current human-hittable .node.reachable produced path distance ${distance}`);
+}
+async function physicalTapCard(page,id){
+  const point=await page.evaluate((id)=>{
+    const node=[...document.querySelectorAll('#hand .handCard[data-card-id]')].find(n=>n.dataset.cardId===id);if(!node)return null;
+    const r=node.getBoundingClientRect(),style=getComputedStyle(node);if(!(r.width>0&&r.height>0)||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)return null;
+    const samples=[[.5,.18],[.3,.18],[.7,.18],[.5,.35],[.3,.35],[.7,.35],[.5,.65],[.3,.65],[.7,.65]];
+    for(const [fx,fy] of samples){const x=r.left+r.width*fx,y=r.top+r.height*fy;if(x<0||y<0||x>=innerWidth||y>=innerHeight)continue;const hit=document.elementFromPoint(x,y);if(hit&&(hit===node||node.contains(hit)))return{x,y}}
+    return null;
+  },id);
+  expect(point).not.toBeNull();await page.mouse.click(point.x,point.y);
+}
+'''
+          if anchor not in t: raise SystemExit('snapshot helper anchor missing')
+          t=t.replace(anchor,helper,1)
+          t=t.replace('.node.reachable[data-move-distance="1"]','.node.reachable')
+          t=t.replace('`.node.reachable[data-move-distance="${targetDistance}"]`',"'.node.reachable'")
+          t=t.replace('await expect(next).toBeEnabled();','')
+          t=t.replace('await expect(target).toBeEnabled();','')
+          if 'await next.click();' not in t: raise SystemExit('reachable click anchor missing')
+          t=t.replace('await next.click();','await physicalTapReachable(page,1);')
+          if 'await target.click();' not in t: raise SystemExit('Elastic target click anchor missing')
+          t=t.replace('await target.click();','await physicalTapReachable(page,targetDistance);')
+          if 'await card.click();' not in t: raise SystemExit('card-first click anchor missing')
+          t=t.replace('await card.click();','await physicalTapCard(page,id);',1)
+          t=t.replace('await candidate.click();','await physicalTapCard(page,await candidate.getAttribute(\'data-card-id\'));')
+          t=t.replace('await battle.locator(`#hand .handCard[data-card-id="${a}"]`).click();','await physicalTapCard(page,a);')
+          t=t.replace('await battle.locator(`#hand .handCard[data-card-id="${b}"]`).click();','await physicalTapCard(page,b);')
+          t=t.replace('await battle.locator(`#hand .handCard[data-card-id="${low.id}"]`).click();','await physicalTapCard(page,low.id);')
+          t=t.replace('await battle.locator(`#hand .handCard[data-card-id="${switchId}"]`).click();','await physicalTapCard(page,switchId);')
+          if 'data-move-distance' in t: raise SystemExit('stale data-move-distance selector survived R23 test adaptation')
+          spec.write_text(t)
+          PY
+          cat >> tests/road-move-bidirectional-live-r23.spec.mjs <<'EOF'
+
+          test('R23 probe Road hand physical exposure at short landscape',async({page})=>{
+            await openRoadBattle(page);const current=await snapshot(page);expect(current.ordinaryRoadIds.length).toBeGreaterThan(0);
+            const result=await page.evaluate((ids)=>{
+              const samples=[[.5,.18],[.3,.18],[.7,.18],[.5,.35],[.3,.35],[.7,.35],[.5,.65],[.3,.65],[.7,.65]];
+              const detail=[];
+              for(const id of ids){const node=[...document.querySelectorAll('#hand .handCard[data-card-id]')].find(n=>n.dataset.cardId===id);if(!node){detail.push({id,hittable:false,allPlanBox:false,reason:'missing'});continue}const r=node.getBoundingClientRect();let hittable=false,considered=0,blocked=0,planBoxBlocked=0;for(const [fx,fy] of samples){const x=r.left+r.width*fx,y=r.top+r.height*fy;if(x<0||y<0||x>=innerWidth||y>=innerHeight)continue;considered++;const hit=document.elementFromPoint(x,y);if(hit&&(hit===node||node.contains(hit))){hittable=true;continue}blocked++;if(hit?.closest?.('.planBox'))planBoxBlocked++}detail.push({id,hittable,considered,blocked,planBoxBlocked,allPlanBox:!hittable&&considered>0&&blocked===considered&&planBoxBlocked===considered})}
+              return{detail,planBoxBlocked:detail.some(x=>x.allPlanBox),unexpectedBlocked:detail.some(x=>!x.hittable&&!x.allPlanBox)};
+            },current.ordinaryRoadIds);
+            const fs=await import('node:fs');fs.writeFileSync('.road-r23-planbox.json',JSON.stringify(result));
+            expect(result.unexpectedBlocked).toBe(false);
+          });
+
+          test('LowPerf keeps move-first Road matching and Battle-card noninterference',async({page})=>{
+            const battle=await openRoadBattle(page);
+            const enabled=await page.evaluate(()=>{const e=document.querySelector('#lowPerf');if(!e)return false;if(!/ON/.test(e.textContent||''))e.click();return /ON/.test(e.textContent||'')});
+            expect(enabled).toBe(true);
+            const before=await snapshot(page);expect(before.roadId).toBeNull();expect(before.battleId).toBeNull();
+            await physicalTapReachable(page,1);const moved=await snapshot(page);expect(moved.compatibleRoadIds.length).toBeGreaterThan(0);expect(moved.battleId).toBeNull();
+            const id=moved.compatibleRoadIds[0];await physicalTapCard(page,id);const focused=await snapshot(page);expect(focused.roadId).toBe(id);expect(focused.battleId).toBeNull();expect(focused.path).toEqual(moved.path);
+            await expect(battle.locator(`#hand .handCard[data-card-id="${id}"]`)).toHaveAttribute('data-road-move-state','FOCUSED');
+          });
+          EOF
+      - name: Static noninterference and common-core gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          node --test tests/road-move-compatibility-core.test.mjs
+          test "$(git hash-object browser/road-move-compatibility-core.mjs)" = "$(git rev-parse a59332356dbe5f70e3afaf350bfae8fdcbb3ea6d:browser/road-move-compatibility-core.mjs)"
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('browser/GAMEROAD.html').read_text();t=Path('tests/road-move-bidirectional-live-r23.spec.mjs').read_text()
+          required=['ROAD-MOVE-BIDIRECTIONAL-R23',"let battle=p.plan.battleId;","removeHand(p,battle)",'data-road-move-state="COMPATIBLE"','data-road-move-state="FOCUSED"','data-road-move-state="INVALID_FOCUS"','draftMoveLimitForPlayer(me)']
+          missing=[x for x in required if x not in s]
+          if missing: raise SystemExit('source gate missing: '+repr(missing))
+          if 'data-move-distance' in t: raise SystemExit('stale distance test authority survived')
+          PY
+          changed=$(git diff --name-only a59332356dbe5f70e3afaf350bfae8fdcbb3ea6d --)
+          test "$(printf '%s\n' "$changed" | grep -Ev '^(browser/GAMEROAD\.html|tests/road-move-bidirectional-live-r23\.spec\.mjs|data/preaction-authorizations/ROAD-MOVE-RUNTIME-R23-20260909T0542-SOL-Q7N4V3\.json|\.github/workflows/zz-temp-road-move-r23-diagnose\.yml)$' || true)" = ""
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Probe real 844x390 Road-card interception before CSS mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > .road-r23-probe.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          const common={baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,trace:'off',screenshot:'off',video:'off',viewport:{width:844,height:390}};
+          export default defineConfig({testDir:'./tests',testMatch:'road-move-bidirectional-live-r23.spec.mjs',timeout:60000,expect:{timeout:10000},workers:1,retries:0,reporter:[['line']],use:common,webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1',url:'http://127.0.0.1:4173/browser/GAMEROAD.html',reuseExistingServer:false,timeout:120000}});
+          EOF
+          npx playwright test --config=.road-r23-probe.config.mjs --grep "R23 probe Road hand physical exposure" --workers=1
+          test -f .road-r23-planbox.json
+          cat .road-r23-planbox.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          result=json.loads(Path('.road-r23-planbox.json').read_text())
+          if result.get('unexpectedBlocked'): raise SystemExit('Road hand has non-planBox physical blocker; fail closed')
+          if result.get('planBoxBlocked'):
+              html=Path('browser/GAMEROAD.html');s=html.read_text();old='grid-template-columns:142px minmax(0,1fr)'
+              if s.count(old)!=1: raise SystemExit(f'planBox reproduced but bounded short-landscape column anchor count={s.count(old)}')
+              html.write_text(s.replace(old,'grid-template-columns:146px minmax(0,1fr)',1))
+              print('PLANBOX_INTERCEPT_REPRODUCED_APPLIED_146PX')
+          else:
+              print('PLANBOX_INTERCEPT_NOT_REPRODUCED_CSS_WRITE0')
+          PY
+          rm -f .road-r23-probe.config.mjs .road-r23-planbox.json
+      - name: Run Road R23 physical-input acceptance matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > .road-r23.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          const common={baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,trace:'off',screenshot:'off',video:'off'};
+          export default defineConfig({testDir:'./tests',testMatch:'road-move-bidirectional-live-r23.spec.mjs',timeout:60000,expect:{timeout:10000},workers:1,retries:0,reporter:[['line']],use:common,projects:[{name:'desktop-1280x720',use:{...common,viewport:{width:1280,height:720}}},{name:'portrait-390x844',use:{...common,viewport:{width:390,height:844}}},{name:'landscape-844x390',use:{...common,viewport:{width:844,height:390}}},{name:'reduced-motion-844x390',use:{...common,viewport:{width:844,height:390},reducedMotion:'reduce'}}],webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1:4173',url:'http://127.0.0.1:4173/browser/GAMEROAD.html',reuseExistingServer:false,timeout:120000}});
+          EOF
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.road-r23.config.mjs');s=p.read_text();s=s.replace("python3 -m http.server 4173 --bind 127.0.0.1:4173","python3 -m http.server 4173 --bind 127.0.0.1");p.write_text(s)
+          PY
+          npx playwright test --config=.road-r23.config.mjs --workers=1
+          npx playwright test --config=.road-r23.config.mjs --project=landscape-844x390 --grep "LowPerf keeps move-first Road matching" --workers=1
+          rm -f .road-r23.config.mjs
+      - name: Final product noninterference gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          node --test tests/road-move-compatibility-core.test.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('browser/GAMEROAD.html').read_text()
+          prohibited=['CARD_FIRST','MOVE_FIRST']
+          for x in prohibited:
+              if x in s: raise SystemExit('forbidden dual-mode marker introduced: '+x)
+          if 'data-move-distance' in Path('tests/road-move-bidirectional-live-r23.spec.mjs').read_text(): raise SystemExit('stale selector reintroduced')
+          PY
+      - name: Commit only accepted product bytes and retire transient executor
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH=sol/road-move-bidirectional-r23-20260909
+          git fetch origin "$BRANCH"
+          test "$(git rev-parse "origin/$BRANCH")" = "$GITHUB_SHA"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/zz-temp-road-move-r23-diagnose.yml
+          git rm data/preaction-authorizations/ROAD-MOVE-RUNTIME-R23-20260909T0542-SOL-Q7N4V3.json
+          git add browser/GAMEROAD.html tests/road-move-bidirectional-live-r23.spec.mjs
+          git diff --cached --check
+          git commit -m 'fix(road): enable bidirectional Road movement drafting [road-r23-product]'
+          git push origin "HEAD:$BRANCH"

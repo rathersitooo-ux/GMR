@@ -5,6 +5,13 @@ import {
 export const NEW_BASE_ROUND_START_JANKEN_SLOT_ASSIGNMENT_SCHEMA =
   'gameroad.new-base-round-start-janken-slot-assignment.v1';
 
+export const NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE = Object.freeze({
+  CURRENT_HAND3_POLICY: 'CURRENT_HAND3_POLICY',
+  LEGACY_SUIT_BOUND: 'LEGACY_SUIT_BOUND',
+});
+
+// Compatibility-only mapping for the currently mounted legacy caller. The
+// current new-base rule does not use native suit to decide janken membership.
 export const NEW_BASE_JANKEN_SUIT_BY_HAND = Object.freeze({
   ROCK: 'CL',
   SCISSORS: 'DI',
@@ -23,6 +30,11 @@ function requireNonEmptyString(value, label) {
     throw new TypeError(`${label} must be a non-empty canonical string`);
   }
   return value;
+}
+
+function requireAssignmentMode(value) {
+  if (Object.values(NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE).includes(value)) return value;
+  throw new RangeError('assignmentMode must be CURRENT_HAND3_POLICY or LEGACY_SUIT_BOUND');
 }
 
 function requireHand(hand) {
@@ -111,33 +123,13 @@ function freezeSlot(slot) {
   });
 }
 
-/**
- * Creates the immutable card-bearing ROCK / SCISSORS / PAPER snapshot for one
- * round start.
- *
- * Membership is current suit authority, not the retired exact-hand3 assignment:
- * CL -> ROCK, DI -> SCISSORS, SP -> PAPER. A slot can remain empty. If a suit
- * has duplicate candidates, the caller must inject an authoritative integer
- * chooser. This core never calls Math.random() and never owns entropy.
- *
- * A selected physical card belongs to exactly one player-facing zone at a time:
- * selectedJankenCardIds are reserved by the fixed janken slots and are excluded
- * from ordinaryHandCardIds. sourceHandCardIds keeps the immutable round-start
- * source identities so slot input can still reach the same authoritative card
- * action without duplicating ordinary-hand membership. This snapshot never
- * auto-refills or reassigns a slot later in the round.
- */
-export function createRoundStartJankenSlotAssignment({
-  roundId,
-  hand,
+function createLegacySuitBoundSlots({
+  canonicalRoundId,
+  currentHand,
+  fixedSlots,
   pickDuplicateIndex,
-  fixedSlotState = NEW_BASE_FIXED_JANKEN_SLOT_STATE,
-} = {}) {
-  const canonicalRoundId = requireNonEmptyString(roundId, 'roundId');
-  const currentHand = requireHand(hand);
-  const fixedSlots = requireFixedSlots(fixedSlotState);
-
-  const slots = fixedSlots.map((slot) => {
+}) {
+  return fixedSlots.map((slot) => {
     const suit = NEW_BASE_JANKEN_SUIT_BY_HAND[slot.jankenHand];
     const candidateCardIds = currentHand
       .filter((card) => card.suit === suit)
@@ -172,6 +164,107 @@ export function createRoundStartJankenSlotAssignment({
       candidateCardIds,
     });
   });
+}
+
+function requireCurrentHand3PolicyResult(assignedCardIdsByJankenHand, currentHand) {
+  if (currentHand.length !== JANKEN_HAND_ORDER.length) {
+    throw new RangeError('CURRENT_HAND3_POLICY requires exactly 3 current hand cards');
+  }
+  if (
+    assignedCardIdsByJankenHand == null
+    || typeof assignedCardIdsByJankenHand !== 'object'
+    || Array.isArray(assignedCardIdsByJankenHand)
+  ) {
+    throw new TypeError(
+      'assignedCardIdsByJankenHand must be supplied by the external auto-assignment policy',
+    );
+  }
+
+  const currentIds = new Set(currentHand.map((card) => card.id));
+  const assignedIds = JANKEN_HAND_ORDER.map((jankenHand) => requireNonEmptyString(
+    assignedCardIdsByJankenHand[jankenHand],
+    `assignedCardIdsByJankenHand.${jankenHand}`,
+  ));
+  const uniqueAssigned = new Set(assignedIds);
+  if (uniqueAssigned.size !== JANKEN_HAND_ORDER.length) {
+    throw new RangeError('CURRENT_HAND3_POLICY must assign three distinct physical cards');
+  }
+  for (const cardId of assignedIds) {
+    if (!currentIds.has(cardId)) {
+      throw new RangeError(`assigned janken card is not in the current hand: ${cardId}`);
+    }
+  }
+  if (assignedIds.some((cardId) => !currentIds.has(cardId)) || currentIds.size !== uniqueAssigned.size) {
+    throw new RangeError('CURRENT_HAND3_POLICY must assign every current hand card exactly once');
+  }
+
+  return Object.freeze(Object.fromEntries(
+    JANKEN_HAND_ORDER.map((jankenHand, index) => [jankenHand, assignedIds[index]]),
+  ));
+}
+
+function createCurrentHand3PolicySlots({ currentHand, fixedSlots, assignedCardIdsByJankenHand }) {
+  const assignment = requireCurrentHand3PolicyResult(assignedCardIdsByJankenHand, currentHand);
+  const cardById = new Map(currentHand.map((card) => [card.id, card]));
+  return fixedSlots.map((slot) => {
+    const cardId = assignment[slot.jankenHand];
+    const card = cardById.get(cardId);
+    return freezeSlot({
+      slotId: slot.slotId,
+      jankenHand: slot.jankenHand,
+      status: NEW_BASE_ROUND_START_JANKEN_SLOT_STATUS.OCCUPIED,
+      selectable: true,
+      cardId,
+      nativeSuit: card.suit,
+      candidateCardIds: [cardId],
+    });
+  });
+}
+
+/**
+ * Creates the immutable card-bearing ROCK / SCISSORS / PAPER snapshot for one
+ * round start.
+ *
+ * CURRENT_HAND3_POLICY is the current new-base contract surface: the current
+ * hand must contain exactly three physical cards, all three fixed janken slots
+ * must be occupied, and every source card must be assigned exactly once. Native
+ * card suit is preserved as nativeSuit and does not determine slot membership.
+ * The exact auto-assignment policy is intentionally external: this core only
+ * validates the policy result and does not invent order/suit/random/strength
+ * semantics that the user has not fixed.
+ *
+ * LEGACY_SUIT_BOUND remains only as a migration seam for the already-mounted
+ * caller until that caller can be switched without breaking the live Battle.
+ * It preserves the previous CL/DI/SP membership, empty-slot and duplicate-choice
+ * behavior and must not be treated as the current new-base game rule.
+ *
+ * A selected physical card belongs to exactly one player-facing zone at a time.
+ * sourceHandCardIds keeps the immutable round source identities so slot input can
+ * reach the same authoritative card action without creating a second hand or
+ * execution engine. This snapshot never auto-refills or reassigns later in the
+ * same round.
+ */
+export function createRoundStartJankenSlotAssignment({
+  roundId,
+  hand,
+  assignmentMode = NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.LEGACY_SUIT_BOUND,
+  assignedCardIdsByJankenHand = null,
+  pickDuplicateIndex,
+  fixedSlotState = NEW_BASE_FIXED_JANKEN_SLOT_STATE,
+} = {}) {
+  const canonicalRoundId = requireNonEmptyString(roundId, 'roundId');
+  const currentHand = requireHand(hand);
+  const fixedSlots = requireFixedSlots(fixedSlotState);
+  const mode = requireAssignmentMode(assignmentMode);
+
+  const slots = mode === NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY
+    ? createCurrentHand3PolicySlots({ currentHand, fixedSlots, assignedCardIdsByJankenHand })
+    : createLegacySuitBoundSlots({
+      canonicalRoundId,
+      currentHand,
+      fixedSlots,
+      pickDuplicateIndex,
+    });
 
   const sourceHandCardIds = currentHand.map((card) => card.id);
   const selectedJankenCardIds = slots
@@ -182,6 +275,7 @@ export function createRoundStartJankenSlotAssignment({
 
   return Object.freeze({
     schema: NEW_BASE_ROUND_START_JANKEN_SLOT_ASSIGNMENT_SCHEMA,
+    assignmentMode: mode,
     roundId: canonicalRoundId,
     slots: Object.freeze(slots),
     sourceHandCardIds: Object.freeze(sourceHandCardIds),
@@ -206,26 +300,38 @@ function requireExistingSnapshot(snapshot) {
 
 /**
  * Stable projection helper for render/input code. Repeated calls for the same
- * round return the existing snapshot verbatim, so hover/redraw/drag-start cannot
- * reroll a duplicate suit or backfill an empty slot. A new round creates a new
- * snapshot from that round's hand.
+ * round return the existing snapshot verbatim. A caller may not silently switch
+ * assignment modes inside the same round; that would reassign physical cards
+ * after the immutable round snapshot has already been established.
  */
 export function ensureRoundStartJankenSlotAssignment({
   currentSnapshot = null,
   roundId,
   hand,
+  assignmentMode = NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.LEGACY_SUIT_BOUND,
+  assignedCardIdsByJankenHand = null,
   pickDuplicateIndex,
   fixedSlotState = NEW_BASE_FIXED_JANKEN_SLOT_STATE,
 } = {}) {
   const canonicalRoundId = requireNonEmptyString(roundId, 'roundId');
+  const mode = requireAssignmentMode(assignmentMode);
   if (currentSnapshot !== null) {
     const existing = requireExistingSnapshot(currentSnapshot);
-    if (existing.roundId === canonicalRoundId) return existing;
+    if (existing.roundId === canonicalRoundId) {
+      const existingMode = existing.assignmentMode
+        ?? NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.LEGACY_SUIT_BOUND;
+      if (existingMode !== mode) {
+        throw new RangeError('assignmentMode cannot change inside an existing round snapshot');
+      }
+      return existing;
+    }
   }
 
   return createRoundStartJankenSlotAssignment({
     roundId: canonicalRoundId,
     hand,
+    assignmentMode: mode,
+    assignedCardIdsByJankenHand,
     pickDuplicateIndex,
     fixedSlotState,
   });

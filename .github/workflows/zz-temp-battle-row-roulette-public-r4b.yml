@@ -1,0 +1,73 @@
+name: TEMP Battle Row Roulette Public R4B
+
+on:
+  push:
+    branches:
+      - sol/battle-playable-hand-row-roulette-public-r4b-20260908
+
+permissions:
+  contents: write
+
+jobs:
+  replay-validated-product:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact successor branch
+        uses: actions/checkout@v4
+        with:
+          ref: sol/battle-playable-hand-row-roulette-public-r4b-20260908
+          fetch-depth: 0
+
+      - name: Verify first PRE_ACTION and fresh donor base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f data/preaction-authorizations/BATTLE-ROW-ROULETTE-PUBLIC-R4B-20260908T0915-SOL-J8N4Q5.json
+          test "$(git rev-parse HEAD^)" = "98fabbcb15a0c9d3c273090d45bd973a8584ccbb"
+          test "$(git rev-parse 98fabbcb15a0c9d3c273090d45bd973a8584ccbb^)" = "d7de8b87420ba0c1015ba444b0cda734167c62a1"
+          git cat-file -e 9a4a51993fd6490f969582cb70dffe5906927332^{commit}
+
+      - name: Replay exact validated R4 product files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git checkout 9a4a51993fd6490f969582cb70dffe5906927332 -- \
+            browser/battle-janken-slidepad-runtime-mount.mjs \
+            tests/battle-janken-slidepad-runtime-mount.test.mjs \
+            deploy/cloudflare/scripts/build.mjs
+          grep -q "createBattlePlayableHandRowRouletteController" browser/battle-janken-slidepad-runtime-mount.mjs
+          grep -q "battle_playable_hand_row_roulette_runtime" deploy/cloudflare/scripts/build.mjs
+
+      - name: Run focused Battle tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/battle-playable-hand-row-roulette-runtime.test.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs
+
+      - name: Run public package provenance tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test deploy/cloudflare/tests/build.test.mjs
+
+      - name: Verify exact three-file product boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          changed="$(git diff --name-only d7de8b87420ba0c1015ba444b0cda734167c62a1 -- browser/battle-janken-slidepad-runtime-mount.mjs deploy/cloudflare/scripts/build.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs | sort | tr '\n' ' ')"
+          test "$changed" = "browser/battle-janken-slidepad-runtime-mount.mjs deploy/cloudflare/scripts/build.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs "
+          test "$(git diff --name-only d7de8b87420ba0c1015ba444b0cda734167c62a1 -- browser/GAMEROAD.html | wc -l)" -eq 0
+
+      - name: Commit product and remove transient controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/zz-temp-battle-row-roulette-public-r4b.yml
+          rm -f data/preaction-authorizations/BATTLE-ROW-ROULETTE-PUBLIC-R4B-20260908T0915-SOL-J8N4Q5.json
+          git config user.name "gameroad-runtime-bot"
+          git config user.email "gameroad-runtime-bot@users.noreply.github.com"
+          git add -A
+          git commit -m "Battle: publish live remaining-hand row roulette"
+          git push origin HEAD:sol/battle-playable-hand-row-roulette-public-r4b-20260908

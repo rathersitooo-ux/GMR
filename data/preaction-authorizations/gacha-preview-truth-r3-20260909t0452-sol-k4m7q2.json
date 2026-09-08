@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "gacha-preview-truth-r3-20260909t0452-sol-k4m7q2",
+  "taskId": "GACHA-RESULT-PERSISTENCE-COLLECTION-DECK-AUDIT-001",
+  "workUnitKey": "GACHA_PREVIEW_TRUTH_PUBLIC_CLOSURE_R2",
+  "acquireKey": "GACHA-PREVIEW-TRUTH-R3-20260909T0452-SOL-K4M7Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_TASK_ROW_1245_PLUS_DONOR_PR1215_PLUS_PACK_ACQUISITION_CONVENTION",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "DONOR_PR1215_FOCUSED_LOGIC_VALID_PUBLIC_PROVENANCE_WAS_ONLY_KNOWN_BLOCKER",
+  "proceedToken": "PROCEED|gacha-preview-truth-r3-20260909t0452-sol-k4m7q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-09T04:52+09:00",
+  "authorizationBaseSha": "a4dae48a539fee754b938217ca059d2b596400ba",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GACHA-RESULT-PERSISTENCE-COLLECTION-DECK-AUDIT-001",
+  "leaseWorkUnitKey": "GACHA_PREVIEW_TRUTH_PUBLIC_CLOSURE_R2",
+  "leaseAcquireKey": "GACHA-PREVIEW-TRUTH-R3-20260909T0452-SOL-K4M7Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 04:52 JST",
+  "leaseUntilJst": "2026-09-09 05:52 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A635:L635",
+  "leaseExactMutableResources": "browser/screen-navigation-core.mjs; tests/screen-navigation-core.test.mjs",
+  "scope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs"
+  ],
+  "reuseDisposition": "ADAPT",
+  "solutionSignature": "gacha-preview-truth-via-existing-packaged-navigation-consumer",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "DONOR_PR1215_PLUS_EXISTING_ARTIFACT_SPECS_SCREEN_NAVIGATION_CORE",
+  "solutionSearchEvidence": [
+    "PR#1215 donor behavior",
+    "deploy/cloudflare/scripts/build.mjs screen_navigation_core artifact registration"
+  ]
+}

@@ -1,0 +1,46 @@
+name: TEMP Road Move R21 Diagnose
+
+on:
+  push:
+    branches:
+      - sol/road-move-bidirectional-head-r21-20260909
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/road-move-bidirectional-head-r21-20260909
+          fetch-depth: 0
+      - name: Inspect current Road blockers
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse 5d2e1d5c596e5400a727264d3b3eee1517b8d9c0:browser/GAMEROAD.html)" = "d7ae9d0532df7e66ebbf29f1e7eecb3f352d346d"
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('browser/GAMEROAD.html').read_text()
+          needles=[
+            '.planBox',
+            'class="planBox"',
+            'const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0];if(!me?.plan?.roadId)',
+            'function selectEndpoint(',
+            'function normalMoveLimitForRoad(',
+          ]
+          for needle in needles:
+            print(f'=== {needle} count={s.count(needle)} ===')
+            start=0
+            shown=0
+            while shown<12:
+              i=s.find(needle,start)
+              if i<0: break
+              lo=max(0,i-900); hi=min(len(s),i+1800)
+              print(f'--- occurrence {shown+1} @ {i} ---')
+              print(s[lo:hi])
+              start=i+len(needle); shown+=1
+          PY

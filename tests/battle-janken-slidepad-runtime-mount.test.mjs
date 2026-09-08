@@ -347,10 +347,10 @@ test('remaining-hand row roulette bridge owns no draw refill Mana Honey score or
   }
 });
 
-test('short-landscape Battle controls deconflict the fixed janken fan from the right utility rail', async () => {
+test('short-landscape Battle controls keep the compact janken fan on the non-occluding right-edge anchor', async () => {
   const { readFile } = await import('node:fs/promises');
   const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
-  assert.match(source, /@media\(max-height:430px\) and \(orientation:landscape\)\{[^\n]*\[\$\{HOST_ATTR\}=\"1\"\]\{width:188px;height:146px;right:58px;bottom:7px/);
+  assert.match(source, /@media\(max-height:430px\) and \(orientation:landscape\)\{[^\n]*\[\$\{HOST_ATTR\}=\"1\"\]\{width:188px;height:146px;right:7px;bottom:7px/);
   assert.match(source, /max-height:430px[^\n]*\.grJankenSlidePadHandle\{width:58px;height:58px\}/,
     'the primary bottom-right touch target stays at the existing short-landscape size');
   assert.match(source, /max-height:430px[^\n]*\.grJankenSlidePadSlot\{width:60px;height:80px;padding:4px\}/);

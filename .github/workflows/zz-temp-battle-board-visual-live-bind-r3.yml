@@ -1,0 +1,78 @@
+name: TEMP Battle Board Visual Live Bind R3
+on:
+  push:
+    branches:
+      - sol/battle-board-visual-live-bind-r3-20260908
+permissions:
+  contents: write
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-board-visual-live-bind-r3-20260908
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fail closed on authorization and exact source bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=a18ea1f5474eaa55152865e8c951b01afe1e071c
+          PREACTION=data/preaction-authorizations/BATTLE-BOARD-VISUAL-LIVE-BIND-R3-20260908T1114-SOL-M8Q4N3.json
+          test "$(git merge-base HEAD "$BASE")" = "$BASE"
+          test -f "$PREACTION"
+          first_commit="$(git rev-list --reverse "$BASE"..HEAD | head -n1)"
+          test "$first_commit" = "11bf21052a40cc7443dc8cdc13d3fcf47fae7297"
+          test "$(git diff-tree --no-commit-id --name-only -r "$first_commit")" = "$PREACTION"
+          test "$(git hash-object browser/board-facility-runtime-mount.mjs)" = "def54903a77c5914f2df11d98362b0f4e8eaf77c"
+          test "$(git hash-object deploy/cloudflare/tests/build.test.mjs)" = "ba59c5a595bd246c638441f2374f00b7befe59b8"
+      - name: Apply exact existing-runtime live binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          runtime = Path('browser/board-facility-runtime-mount.mjs')
+          text = runtime.read_text()
+          if "import './battle-board-visual-explanation-runtime-mount.mjs';" in text:
+              raise SystemExit('board visual live import already present; fail closed')
+          anchor = "import { projectPartnerTeaQuickChoices } from './partner-tea-runtime-mount.mjs';\n"
+          if text.count(anchor) != 1:
+              raise SystemExit(f'runtime import anchor mismatch: {text.count(anchor)}')
+          text = text.replace(anchor, anchor + "import './battle-board-visual-explanation-runtime-mount.mjs';\n", 1)
+          runtime.write_text(text)
+
+          build_test = Path('deploy/cloudflare/tests/build.test.mjs')
+          bt = build_test.read_text()
+          old = "{ file: 'board-facility-runtime-mount.mjs', source: 'browser/board-facility-runtime-mount.mjs', sourceArg: 'boardFacilityRuntimeMountSource', expectedArg: 'expectedBoardFacilityRuntimeMountBlob', artifact: 'board_facility_runtime_mount', fixture: \"import './board-facility-state-core.mjs';\\nexport const BOARD_FACILITY_RUNTIME_MOUNT = Object.freeze({});\\n\", currentBlob: 'def54903a77c5914f2df11d98362b0f4e8eaf77c' }"
+          new = old.replace("def54903a77c5914f2df11d98362b0f4e8eaf77c", "99153e1b1e222ed68a57578cd4af9bc83e1a5a3a")
+          if bt.count(old) != 1:
+              raise SystemExit(f'build provenance row mismatch: {bt.count(old)}')
+          bt = bt.replace(old, new, 1)
+          build_test.write_text(bt)
+          PY
+          test "$(git hash-object browser/board-facility-runtime-mount.mjs)" = "99153e1b1e222ed68a57578cd4af9bc83e1a5a3a"
+          git diff --check
+      - name: Run focused Board runtime and public package tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/board-facility-runtime-mount.test.mjs
+          node --test tests/battle-board-visual-explanation-runtime-mount.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Persist product delta and remove transient authorization files
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/zz-temp-battle-board-visual-live-bind-r3.yml
+          rm -f data/preaction-authorizations/BATTLE-BOARD-VISUAL-LIVE-BIND-R3-20260908T1114-SOL-M8Q4N3.json
+          git add browser/board-facility-runtime-mount.mjs deploy/cloudflare/tests/build.test.mjs .github/workflows/zz-temp-battle-board-visual-live-bind-r3.yml data/preaction-authorizations/BATTLE-BOARD-VISUAL-LIVE-BIND-R3-20260908T1114-SOL-M8Q4N3.json
+          git config user.name "gameroad-bot"
+          git config user.email "gameroad-bot@users.noreply.github.com"
+          git commit -m "Battle: bind existing board visual runtime into live bootstrap"
+          git push origin HEAD:sol/battle-board-visual-live-bind-r3-20260908

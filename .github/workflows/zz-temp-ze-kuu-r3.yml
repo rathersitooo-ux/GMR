@@ -1,0 +1,227 @@
+name: zz-temp-ze-kuu-r3
+on:
+  push:
+    branches:
+      - sol/ze-kuu-card-art-r1-20260908
+permissions:
+  contents: write
+jobs:
+  exact-r3-repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/ze-kuu-card-art-r1-20260908
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact authorized R3 repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p assets/visual/cards
+          curl -fL --retry 3 --retry-delay 1 'https://d2ol7oe51mr4n9.cloudfront.net/user_3I8QWmERVB8vCXEYPg2da43g4zR/72c5a63c-63b0-4676-95db-1b540b1a606c.png' -o assets/visual/cards/dcg-ze-kuu.jpg
+          test "$(wc -c < assets/visual/cards/dcg-ze-kuu.jpg | tr -d ' ')" = '726664'
+          echo 'f95232b8f1f45154d8644ce350abeffff22e7f5c3fe777df58066841dd2b37d0  assets/visual/cards/dcg-ze-kuu.jpg' | sha256sum -c -
+          test "$(git hash-object assets/visual/cards/dcg-ze-kuu.jpg)" = '79cc243ed23b86a658fed66277fc2cb77c1e9975'
+          cat > browser/ze-kuu-formal-card-art-runtime.mjs <<'EOF'
+          export const ZE_KUU_FORMAL_CARD_ART = Object.freeze({
+            schema: 'gameroad.formal-card-art.v1',
+            cardId: 'DCG_ZE_KUU',
+            name: 'ゼ・クウ',
+            assetPath: '../assets/visual/cards/dcg-ze-kuu.jpg',
+            publicAssetPath: './assets/visual/cards/dcg-ze-kuu.jpg',
+            source: 'user-provided-authoritative-art',
+            generated: false,
+          });
+
+          function assetPathForModuleUrl(moduleUrl) {
+            try {
+              const url = new URL(String(moduleUrl));
+              return url.pathname.includes('/browser/')
+                ? ZE_KUU_FORMAL_CARD_ART.assetPath
+                : ZE_KUU_FORMAL_CARD_ART.publicAssetPath;
+            } catch {
+              return ZE_KUU_FORMAL_CARD_ART.assetPath;
+            }
+          }
+
+          export function resolveZeKuuFormalCardArt(cardId, { moduleUrl = import.meta.url } = {}) {
+            if (String(cardId ?? '').trim() !== ZE_KUU_FORMAL_CARD_ART.cardId) return null;
+            const assetPath = assetPathForModuleUrl(moduleUrl);
+            return Object.freeze({
+              ...ZE_KUU_FORMAL_CARD_ART,
+              assetUrl: new URL(assetPath, moduleUrl).href,
+            });
+          }
+
+          const installations = new WeakMap();
+
+          function nodeCardId(node) {
+            return String(node?.dataset?.id ?? node?.dataset?.cardId ?? '').trim();
+          }
+
+          function isSupportedHost(node) {
+            if (!node?.matches) return false;
+            return node.matches('#collectionGrid [data-id], #deckSlots [data-id], #exDeckSlots [data-id], .resolutionCard[data-card-id]');
+          }
+
+          export function installZeKuuFormalCardArt({
+            document: doc = globalThis.document,
+            window: win = globalThis.window,
+          } = {}) {
+            if (!doc?.querySelectorAll || !doc?.createElement) {
+              return Object.freeze({ installed: false, refresh() {}, destroy() {} });
+            }
+            const prior = installations.get(doc);
+            if (prior) return prior;
+
+            const resolved = resolveZeKuuFormalCardArt(ZE_KUU_FORMAL_CARD_ART.cardId);
+            const styleId = 'gameroad-ze-kuu-formal-card-art-style';
+            let style = doc.getElementById?.(styleId) ?? null;
+            let ownsStyle = false;
+            if (!style) {
+              style = doc.createElement('style');
+              style.id = styleId;
+              style.textContent = `[data-ze-kuu-formal-art="1"]{position:relative!important;overflow:hidden!important;isolation:isolate}[data-ze-kuu-formal-art="1"]::before{content:"";position:absolute;inset:0;background-image:url("${resolved.assetUrl}");background-size:cover;background-position:center;background-repeat:no-repeat;pointer-events:none;z-index:0}[data-ze-kuu-formal-art="1"]>*:not([data-role="fanart-local-skin-overlay"]):not([data-role="fanart-public-battle-card-art"]){position:relative;z-index:1}.resolutionCard[data-ze-kuu-formal-art="1"]>b{position:relative!important;z-index:2!important;padding:1px 2px!important;border-radius:3px!important;background:rgba(0,0,0,.66)!important;color:#fff!important;text-shadow:0 1px 2px #000!important}`;
+              (doc.head || doc.documentElement)?.appendChild?.(style);
+              ownsStyle = true;
+            }
+
+            let destroyed = false;
+            const refresh = () => {
+              if (destroyed) return;
+              const marked = [...doc.querySelectorAll('[data-ze-kuu-formal-art="1"]')];
+              for (const node of marked) {
+                if (!isSupportedHost(node) || nodeCardId(node) !== ZE_KUU_FORMAL_CARD_ART.cardId) {
+                  node.removeAttribute?.('data-ze-kuu-formal-art');
+                  node.removeAttribute?.('data-formal-art-source');
+                }
+              }
+              const hosts = [...doc.querySelectorAll(
+                '#collectionGrid [data-id="DCG_ZE_KUU"], #deckSlots [data-id="DCG_ZE_KUU"], #exDeckSlots [data-id="DCG_ZE_KUU"], .resolutionCard[data-card-id="DCG_ZE_KUU"]',
+              )];
+              for (const node of hosts) {
+                node.dataset.zeKuuFormalArt = '1';
+                node.dataset.formalArtSource = 'official';
+              }
+            };
+
+            const Observer = win?.MutationObserver ?? globalThis.MutationObserver;
+            const observer = typeof Observer === 'function'
+              ? new Observer(() => refresh())
+              : null;
+            observer?.observe?.(doc.documentElement || doc, {
+              childList: true,
+              subtree: true,
+              attributes: true,
+              attributeFilter: ['data-id', 'data-card-id'],
+            });
+            refresh();
+
+            const installation = Object.freeze({
+              installed: true,
+              contract: ZE_KUU_FORMAL_CARD_ART,
+              assetUrl: resolved.assetUrl,
+              refresh,
+              destroy() {
+                if (destroyed) return false;
+                destroyed = true;
+                observer?.disconnect?.();
+                for (const node of [...doc.querySelectorAll('[data-ze-kuu-formal-art="1"]')]) {
+                  node.removeAttribute?.('data-ze-kuu-formal-art');
+                  node.removeAttribute?.('data-formal-art-source');
+                }
+                if (ownsStyle) style?.remove?.();
+                installations.delete(doc);
+                return true;
+              },
+            });
+            installations.set(doc, installation);
+            return installation;
+          }
+
+          function autoInstall() {
+            const doc = globalThis.document;
+            if (!doc?.querySelectorAll) return;
+            const run = () => installZeKuuFormalCardArt({ document: doc, window: globalThis.window });
+            if (doc.readyState === 'loading') doc.addEventListener?.('DOMContentLoaded', run, { once: true });
+            else run();
+          }
+
+          autoInstall();
+          EOF
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('browser/deck-storage-corner-core.mjs')
+          s = p.read_text()
+          imp = "import './ze-kuu-formal-card-art-runtime.mjs';\n\n"
+          if imp not in s:
+              p.write_text(imp + s)
+          p = Path('deploy/cloudflare/scripts/build.mjs')
+          s = p.read_text()
+          needle = "  { source: 'browser/deck-storage-corner-core.mjs', output: 'deck-storage-corner-core.mjs', artifact: 'deck_storage_corner_core', label: 'Deck Storage corner core' },\n"
+          add = needle + "  { source: 'browser/ze-kuu-formal-card-art-runtime.mjs', output: 'ze-kuu-formal-card-art-runtime.mjs', artifact: 'ze_kuu_formal_card_art_runtime', label: 'Ze-Kuu formal card art runtime' },\n  { source: 'assets/visual/cards/dcg-ze-kuu.jpg', output: 'assets/visual/cards/dcg-ze-kuu.jpg', artifact: 'ze_kuu_formal_card_art', label: 'Ze-Kuu formal card art' },\n"
+          if needle not in s:
+              raise SystemExit('ARTIFACT_SPECS insertion point missing')
+          if "artifact: 'ze_kuu_formal_card_art_runtime'" not in s:
+              s = s.replace(needle, add, 1)
+          p.write_text(s)
+          PY
+          cat > tests/ze-kuu-formal-card-art-runtime.test.mjs <<'EOF'
+          import test from 'node:test';
+          import assert from 'node:assert/strict';
+          import { createHash } from 'node:crypto';
+          import { readFile } from 'node:fs/promises';
+          import { fileURLToPath } from 'node:url';
+          import {
+            ZE_KUU_FORMAL_CARD_ART,
+            resolveZeKuuFormalCardArt,
+          } from '../browser/ze-kuu-formal-card-art-runtime.mjs';
+
+          test('Ze-Kuu formal art contract is exact and non-generated', () => {
+            assert.equal(ZE_KUU_FORMAL_CARD_ART.cardId, 'DCG_ZE_KUU');
+            assert.equal(ZE_KUU_FORMAL_CARD_ART.name, 'ゼ・クウ');
+            assert.equal(ZE_KUU_FORMAL_CARD_ART.source, 'user-provided-authoritative-art');
+            assert.equal(ZE_KUU_FORMAL_CARD_ART.generated, false);
+            assert.equal(resolveZeKuuFormalCardArt('OTHER'), null);
+          });
+
+          test('Ze-Kuu asset URL resolves in repo and public package layouts', () => {
+            const sourceResolved = resolveZeKuuFormalCardArt('DCG_ZE_KUU', {
+              moduleUrl: 'https://example.test/browser/ze-kuu-formal-card-art-runtime.mjs',
+            });
+            assert.equal(sourceResolved.assetUrl, 'https://example.test/assets/visual/cards/dcg-ze-kuu.jpg');
+            const publicResolved = resolveZeKuuFormalCardArt('DCG_ZE_KUU', {
+              moduleUrl: 'https://example.test/ze-kuu-formal-card-art-runtime.mjs',
+            });
+            assert.equal(publicResolved.assetUrl, 'https://example.test/assets/visual/cards/dcg-ze-kuu.jpg');
+          });
+
+          test('committed Ze-Kuu formal art remains byte-identical to supplied source', async () => {
+            const assetUrl = new URL('../assets/visual/cards/dcg-ze-kuu.jpg', import.meta.url);
+            const bytes = await readFile(fileURLToPath(assetUrl));
+            assert.equal(bytes.byteLength, 726664);
+            assert.equal(
+              createHash('sha256').update(bytes).digest('hex'),
+              'f95232b8f1f45154d8644ce350abeffff22e7f5c3fe777df58066841dd2b37d0',
+            );
+          });
+          EOF
+      - name: Focused test
+        run: node --test tests/ze-kuu-formal-card-art-runtime.test.mjs
+      - name: Public package build tests
+        run: node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Commit verified implementation and clean transient authorization
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/zz-temp-ze-kuu-r3.yml
+          git rm data/preaction-authorizations/ZE-KUU-CARD-ART-R3-20260908T1529-SOL.json
+          git add assets/visual/cards/dcg-ze-kuu.jpg browser/deck-storage-corner-core.mjs browser/ze-kuu-formal-card-art-runtime.mjs tests/ze-kuu-formal-card-art-runtime.test.mjs deploy/cloudflare/scripts/build.mjs
+          git commit -m 'feat: apply exact Ze-Kuu formal card art R3'
+          git push origin HEAD:sol/ze-kuu-card-art-r1-20260908

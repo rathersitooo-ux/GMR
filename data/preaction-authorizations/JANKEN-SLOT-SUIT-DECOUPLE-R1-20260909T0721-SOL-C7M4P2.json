@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "JANKEN-SLOT-SUIT-DECOUPLE-R1-20260909T0721-SOL-C7M4P2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "JANKEN_SLOT_SUIT_SEMANTIC_DECOUPLE_R1",
+  "acquireKey": "JANKEN-SLOT-SUIT-DECOUPLE-R1-20260909T0721-SOL-C7M4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_USER_EXPLICIT_NATIVE_SUIT_SEPARATE_FIXED_RSP_20260909__main_633c940__runtime_287f492",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing_battle_janken_runtime_focused_test_is_postchange_oracle",
+  "proceedToken": "PROCEED|JANKEN-SLOT-SUIT-DECOUPLE-R1-20260909T0721-SOL-C7M4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_LEASE_READBACK",
+  "authorizationBaseSha": "633c940ace9940632d40716113c7961abd300033",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/temp-janken-slot-suit-decouple-r1.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "JANKEN_SLOT_SUIT_SEMANTIC_DECOUPLE_R1",
+  "leaseAcquireKey": "JANKEN-SLOT-SUIT-DECOUPLE-R1-20260909T0721-SOL-C7M4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 07:21 JST",
+  "leaseUntilJst": "2026-09-09 08:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A638:L638",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/janken-slot-suit-decouple-r1-20260909; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient .github/workflows/temp-janken-slot-suit-decouple-r1.yml; own transient PREACTION/PR/check/readback only. GAMEROAD.html, dice/movement, battle-screen, roulette semantics, rules/save/economy/network READ_ONLY.",
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/temp-janken-slot-suit-decouple-r1.yml"
+  ],
+  "solutionSignature": "reuse-live-janken-runtime-decouple-visible-slot-hand-from-native-suit",
+  "reuseDisposition": "NOT_APPLICABLE",
+  "solutionSearchStatus": "NOT_APPLICABLE",
+  "reuseDecisionEvidenceId": "transient_executor_only_no_new_product_engine",
+  "reuseNotApplicableReason": "The only new construction path is a transient self-deleting workflow used as a bounded text-patch carrier because the connector cannot apply partial updates to the existing large runtime file. The product solution itself reuses the existing live janken runtime and existing focused test; no second runtime, resolver, or state authority is built."
+}

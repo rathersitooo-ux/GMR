@@ -1017,3 +1017,117 @@ test('Battle conveyor environment advances only on accepted non-duplicate resolu
     assert.equal(profileFrames.at(-1).segments.length, 8);
   }
 });
+
+
+test('Battle details drawer safe dismiss consumes outside/Escape, preserves inside input, and restores opener focus', async () => {
+  const { mountBattleDetailsSafeDismiss } = await import('../browser/battle-replay-live-adapter.mjs');
+  const classes = new Set(['battleDrawer', 'on']);
+  let ariaHidden = 'false';
+  let focusCount = 0;
+  const insideTarget = {};
+  const outsideTarget = {};
+  const listeners = new Map();
+  const closeListeners = [];
+  const microtasks = [];
+  const opener = {
+    focus() { focusCount += 1; },
+    contains(target) { return target === this; }
+  };
+  const closeButton = {
+    addEventListener(type, handler) { if (type === 'click') closeListeners.push(handler); }
+  };
+  const drawer = {
+    classList: {
+      contains(name) { return classes.has(name); },
+      remove(name) { classes.delete(name); },
+      add(name) { classes.add(name); }
+    },
+    getAttribute(name) { return name === 'aria-hidden' ? ariaHidden : null; },
+    setAttribute(name, value) { if (name === 'aria-hidden') ariaHidden = String(value); },
+    contains(target) { return target === this || target === insideTarget || target === closeButton; }
+  };
+  const documentRef = {
+    getElementById(id) {
+      if (id === 'battleDrawer') return drawer;
+      if (id === 'detailsBtn') return opener;
+      if (id === 'detailsClose') return closeButton;
+      return null;
+    },
+    addEventListener(type, handler, options) {
+      if (!listeners.has(type)) listeners.set(type, []);
+      listeners.get(type).push({ handler, options });
+    }
+  };
+  const queueMicrotaskRef = callback => microtasks.push(callback);
+  const first = mountBattleDetailsSafeDismiss({ documentRef, queueMicrotaskRef });
+  assert.equal(first.mounted, true);
+  assert.equal(first.idempotent, false);
+  assert.equal(listeners.get('click').length, 1);
+  assert.equal(listeners.get('keydown').length, 1);
+  assert.equal(listeners.get('click')[0].options, true);
+  assert.equal(listeners.get('keydown')[0].options, true);
+  assert.equal(closeListeners.length, 1);
+
+  const insideEvent = {
+    target: insideTarget,
+    prevented: false,
+    stopped: false,
+    preventDefault() { this.prevented = true; },
+    stopPropagation() { this.stopped = true; }
+  };
+  listeners.get('click')[0].handler(insideEvent);
+  assert.equal(classes.has('on'), true);
+  assert.equal(insideEvent.prevented, false);
+  assert.equal(insideEvent.stopped, false);
+
+  const outsideEvent = {
+    target: outsideTarget,
+    prevented: false,
+    stopped: false,
+    preventDefault() { this.prevented = true; },
+    stopPropagation() { this.stopped = true; }
+  };
+  listeners.get('click')[0].handler(outsideEvent);
+  assert.equal(classes.has('on'), false);
+  assert.equal(ariaHidden, 'true');
+  assert.equal(outsideEvent.prevented, true);
+  assert.equal(outsideEvent.stopped, true);
+  assert.equal(focusCount, 1);
+
+  classes.add('on');
+  ariaHidden = 'false';
+  const otherKey = { key: 'Enter', preventDefault() { throw new Error('must not consume'); } };
+  listeners.get('keydown')[0].handler(otherKey);
+  assert.equal(classes.has('on'), true);
+  const escapeEvent = {
+    key: 'Escape',
+    prevented: false,
+    stopped: false,
+    preventDefault() { this.prevented = true; },
+    stopPropagation() { this.stopped = true; }
+  };
+  listeners.get('keydown')[0].handler(escapeEvent);
+  assert.equal(classes.has('on'), false);
+  assert.equal(escapeEvent.prevented, true);
+  assert.equal(escapeEvent.stopped, true);
+  assert.equal(focusCount, 2);
+
+  classes.add('on');
+  ariaHidden = 'false';
+  closeListeners[0]();
+  classes.delete('on');
+  ariaHidden = 'true';
+  assert.equal(microtasks.length, 1);
+  microtasks.shift()();
+  assert.equal(focusCount, 3);
+
+  const second = mountBattleDetailsSafeDismiss({ documentRef, queueMicrotaskRef });
+  assert.equal(second.mounted, true);
+  assert.equal(second.idempotent, true);
+  assert.equal(listeners.get('click').length, 1);
+  assert.equal(listeners.get('keydown').length, 1);
+  assert.equal(closeListeners.length, 1);
+  assert.equal(first.presentationOnly, true);
+  assert.equal(first.gameplayAuthority, false);
+  assert.equal(first.gameStateWrite, false);
+});

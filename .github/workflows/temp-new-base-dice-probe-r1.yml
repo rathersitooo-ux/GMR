@@ -1,0 +1,65 @@
+name: TEMP New Base Dice Probe R1
+
+on:
+  push:
+    branches:
+      - sol/new-base-dice-movement-live-r1-20260909
+    paths:
+      - '.github/workflows/temp-new-base-dice-probe-r1.yml'
+      - 'browser/GAMEROAD.html'
+      - 'tests/new-base-dice-live-integration.test.mjs'
+      - 'tools/temp-new-base-dice-patch-r1.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Locate current turn and movement seams
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json, re
+          p = Path('browser/GAMEROAD.html')
+          s = p.read_text(encoding='utf-8')
+          lines = s.splitlines()
+          patterns = [
+            r'function\s+nextRound\b',
+            r'function\s+newRound\b',
+            r'function\s+startRound\b',
+            r'function\s+commitPlans\b',
+            r'function\s+selectEndpoint\b',
+            r'__ctxBaseSelectEndpoint',
+            r'moveLimit',
+            r'movementBudget',
+            r'moveDistance',
+            r'data-move-distance',
+            r'roundNo',
+            r'round\s*\+=\s*1',
+            r'round\+\+',
+            r'Math\.random',
+            r'crypto\.getRandomValues',
+          ]
+          out = {'bytes': len(s.encode('utf-8')), 'lineCount': len(lines), 'matches': {}}
+          for pat in patterns:
+            rx = re.compile(pat)
+            found=[]
+            for i,line in enumerate(lines,1):
+              if rx.search(line):
+                lo=max(1,i-4); hi=min(len(lines),i+6)
+                found.append({'line':i,'context':'\n'.join(f'{n}: {lines[n-1]}' for n in range(lo,hi+1))})
+                if len(found)>=12: break
+            out['matches'][pat]=found
+          Path('/tmp/dice-probe.json').write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(Path('/tmp/dice-probe.json').read_text(encoding='utf-8'))
+          PY
+      - name: Upload bounded probe
+        uses: actions/upload-artifact@v4
+        with:
+          name: new-base-dice-probe-r1-${{ github.run_id }}
+          path: /tmp/dice-probe.json
+          retention-days: 3

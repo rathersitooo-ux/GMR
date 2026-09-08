@@ -1,0 +1,336 @@
+name: TEMP Player Advice Evidence R19F
+
+on:
+  push:
+    branches:
+      - sol/player-advice-evidence-r19f-20260908
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/player-advice-evidence-r19f-20260908
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply fail-closed exact patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object browser/partner-advice-runtime-mount.mjs)" = "7f057a2d89b566b27350f0c65fa6809e1895e455"
+          test "$(git hash-object tests/partner-advice-runtime-mount.test.mjs)" = "bb7be0affeaff9c6abe78c0cc0c871be5455c937"
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+
+          runtime_path = Path('browser/partner-advice-runtime-mount.mjs')
+          test_path = Path('tests/partner-advice-runtime-mount.test.mjs')
+          build_test_path = Path('deploy/cloudflare/tests/build.test.mjs')
+          runtime = runtime_path.read_text()
+          tests = test_path.read_text()
+          build_test = build_test_path.read_text()
+
+          def once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, got {count}')
+              return text.replace(old, new, 1)
+
+          marker = "const DELEGATE_REPLY_TEXT = 'まかせた！';\n"
+          evidence_code = r'''
+          const ADVICE_EVIDENCE_SCHEMA = 'gameroad.partner-advice-evidence-presentation.v1';
+          const ADVICE_EVIDENCE_REASON = Object.freeze({
+            LEFTMOST: '左側を優先する作戦設定から',
+            RIGHTMOST: '右側を優先する作戦設定から',
+            MAXIMUM: '比較値が高い候補を優先する作戦設定から',
+            MINIMUM: '比較値が低い候補を優先する作戦設定から',
+          });
+          const adviceEvidenceListeners = new Set();
+
+          function inactivePartnerAdviceEvidence(reason) {
+            return Object.freeze({
+              schema: ADVICE_EVIDENCE_SCHEMA,
+              active: false,
+              reason,
+              suggestion: null,
+              badge: null,
+              sourceKind: null,
+              why: null,
+              support: null,
+              detailLines: Object.freeze([]),
+              collectiveEvidenceUsed: false,
+              optimalActionProven: false,
+              goodMisplaySignal: false,
+              autoExecute: false,
+              presentationOnly: true,
+            });
+          }
+
+          let latestPartnerAdviceEvidence = inactivePartnerAdviceEvidence('NOT_RENDERED');
+
+          function publicEvidenceCandidate(adviceResult, candidates) {
+            const id = exactPresentationToken(adviceResult?.selected?.candidateId);
+            if (!id) return null;
+            const candidate = Array.isArray(candidates)
+              ? candidates.find((entry) => String(entry?.candidateId || '') === id && entry?.publicScope === true)
+              : null;
+            if (adviceResult?.containsPrivate !== false && !candidate) return null;
+            const payload = adviceResult?.selected?.payload || candidate?.payload;
+            const label = exactPresentationToken(payload?.label)
+              || exactPresentationToken(payload?.name)
+              || exactPresentationToken(payload?.title)
+              || null;
+            return Object.freeze({ id, label });
+          }
+
+          export function projectPartnerAdviceEvidencePresentation({ adviceResult, candidates = null } = {}) {
+            if (!adviceResult?.ok) return inactivePartnerAdviceEvidence('ADVICE_UNAVAILABLE');
+            const candidate = publicEvidenceCandidate(adviceResult, candidates);
+            if (!candidate) return inactivePartnerAdviceEvidence('PUBLIC_SCOPE_UNVERIFIED');
+            const source = exactPresentationToken(adviceResult.source);
+            let descriptor = null;
+            if (source === 'approved-runtime-manifest' && adviceResult.manifestUsed === true) {
+              const rawSupport = Number(adviceResult.manifestSupport);
+              const support = Number.isSafeInteger(rawSupport) && rawSupport > 0 ? rawSupport : null;
+              descriptor = {
+                badge: '集合知',
+                sourceKind: 'collective',
+                why: '似た局面の承認済み対戦記録を参照',
+                support,
+                detailLines: Object.freeze([
+                  support === null ? '承認済みの集合知を参照' : `参照 ${support}件の局面データ`,
+                  '公開可能な情報と現行版だけを使用',
+                  '最適解の断定ではなく、現在の助言候補',
+                ]),
+                collectiveEvidenceUsed: true,
+              };
+            } else if (source === 'shared-legal-action-core' && adviceResult.manifestUsed !== true) {
+              descriptor = {
+                badge: '作戦設定',
+                sourceKind: 'strategy',
+                why: ADVICE_EVIDENCE_REASON[exactPresentationToken(adviceResult.reason)] || '現在の作戦設定から',
+                support: null,
+                detailLines: Object.freeze(['現在の合法な候補だけから選択', '集合知の採用結果ではありません']),
+                collectiveEvidenceUsed: false,
+              };
+            } else if (source === 'legacy') {
+              descriptor = {
+                badge: '通常助言',
+                sourceKind: 'legacy',
+                why: '現在の対戦ロジックから',
+                support: null,
+                detailLines: Object.freeze(['集合知の採用結果ではありません', '自動操作は行いません']),
+                collectiveEvidenceUsed: false,
+              };
+            }
+            if (!descriptor) return inactivePartnerAdviceEvidence('SOURCE_AUTHORITY_UNVERIFIED');
+            return Object.freeze({
+              schema: ADVICE_EVIDENCE_SCHEMA,
+              active: true,
+              reason: null,
+              suggestion: candidate.label ? `提案：${candidate.label}` : '提案を盤面に表示中',
+              ...descriptor,
+              optimalActionProven: false,
+              goodMisplaySignal: false,
+              autoExecute: false,
+              presentationOnly: true,
+            });
+          }
+
+          export function readLatestPartnerAdviceEvidencePresentation() {
+            return latestPartnerAdviceEvidence;
+          }
+
+          function publishPartnerAdviceEvidence(result, candidates) {
+            latestPartnerAdviceEvidence = projectPartnerAdviceEvidencePresentation({ adviceResult: result, candidates });
+            for (const listener of adviceEvidenceListeners) {
+              try { listener(latestPartnerAdviceEvidence); } catch {}
+            }
+            return result;
+          }
+          '''.strip('\n') + '\n'
+          runtime = once(runtime, marker, marker + evidence_code, 'insert evidence projector')
+
+          runtime = once(
+              runtime,
+              "    const fallback = () => legacyReplay({ rule: effectiveRule, candidates });\n",
+              "    const fallback = () => publishPartnerAdviceEvidence(legacyReplay({ rule: effectiveRule, candidates }), candidates);\n",
+              'publish legacy evidence',
+          )
+          runtime = once(
+              runtime,
+              "      return preservePublicPayload(result, candidates);\n",
+              "      return publishPartnerAdviceEvidence(preservePublicPayload(result, candidates), candidates);\n",
+              'publish selected evidence',
+          )
+
+          evidence_css = "#${CHAT_ROOT_ID} .partnerAdviceEvidence{display:grid;gap:4px;padding:7px 8px;border:1px solid rgba(185,226,214,.28);border-radius:9px;background:rgba(5,25,22,.78)}#${CHAT_ROOT_ID} .partnerAdviceEvidence[hidden]{display:none}#${CHAT_ROOT_ID} .partnerAdviceEvidenceTop{display:flex;align-items:center;gap:6px;min-width:0}#${CHAT_ROOT_ID} .partnerAdviceEvidenceSuggestion{min-width:0;flex:1;font-size:11px;font-weight:950;line-height:1.3;overflow-wrap:anywhere}#${CHAT_ROOT_ID} .partnerAdviceEvidenceBadge{flex:none;padding:3px 6px;border:1px solid rgba(198,236,224,.34);border-radius:999px;font-size:8px;font-weight:950}#${CHAT_ROOT_ID} .partnerAdviceEvidence[data-source-kind=\"collective\"] .partnerAdviceEvidenceBadge{border-color:rgba(255,221,133,.58);background:rgba(87,61,14,.52);color:#fff0be}#${CHAT_ROOT_ID} .partnerAdviceEvidenceWhy{font-size:9px;font-weight:800;line-height:1.4;color:#c8ddd6}#${CHAT_ROOT_ID} .partnerAdviceEvidence details{font-size:9px;line-height:1.45;color:#aebfba}#${CHAT_ROOT_ID} .partnerAdviceEvidence summary{min-height:32px;display:flex;align-items:center;cursor:pointer;font-weight:900;color:#c8ddd6}"
+          runtime = once(
+              runtime,
+              "@media(max-width:540px){#${CHAT_ROOT_ID}",
+              evidence_css + "@media(max-width:540px){#${CHAT_ROOT_ID}",
+              'insert evidence css',
+          )
+
+          evidence_html = '<section class="partnerAdviceEvidence" data-role="partner-advice-evidence" data-source-kind="" aria-label="パートナーの提案根拠" hidden><div class="partnerAdviceEvidenceTop"><strong class="partnerAdviceEvidenceSuggestion"></strong><span class="partnerAdviceEvidenceBadge"></span></div><div class="partnerAdviceEvidenceWhy"></div><details><summary>根拠を見る</summary><div class="partnerAdviceEvidenceDetails"></div></details></section>'
+          runtime = once(
+              runtime,
+              '<div class="partnerAdviceLaneProgress" aria-label="3列の現在進行値">',
+              evidence_html + '<div class="partnerAdviceLaneProgress" aria-label="3列の現在進行値">',
+              'insert evidence html',
+          )
+
+          runtime = once(
+              runtime,
+              "    const tutorialStatus = tutorialReplay.refresh();\n",
+              "    const adviceEvidence = latestPartnerAdviceEvidence;\n    const tutorialStatus = tutorialReplay.refresh();\n",
+              'read evidence in render',
+          )
+          runtime = once(
+              runtime,
+              "    root.hidden = !projection.active && !tutorialStatus.available && !tutorialExperienceStatus.active && !reactionActive && !roleControlActive;\n",
+              "    root.hidden = !projection.active && !adviceEvidence.active && !tutorialStatus.available && !tutorialExperienceStatus.active && !reactionActive && !roleControlActive;\n",
+              'keep root visible for evidence',
+          )
+
+          role_marker = "    const switchButton = root.querySelector('.partnerAdvicePartnerSwitch');\n    if (switchButton) switchButton.disabled = !roleControlActive;\n"
+          render_evidence = r'''    const evidenceNode = root.querySelector('[data-role="partner-advice-evidence"]');
+              if (evidenceNode) {
+                evidenceNode.hidden = !adviceEvidence.active;
+                evidenceNode.dataset.sourceKind = adviceEvidence.active ? adviceEvidence.sourceKind || '' : '';
+                const evidenceSuggestion = evidenceNode.querySelector('.partnerAdviceEvidenceSuggestion');
+                const evidenceBadge = evidenceNode.querySelector('.partnerAdviceEvidenceBadge');
+                const evidenceWhy = evidenceNode.querySelector('.partnerAdviceEvidenceWhy');
+                const evidenceDetails = evidenceNode.querySelector('.partnerAdviceEvidenceDetails');
+                if (evidenceSuggestion) evidenceSuggestion.textContent = adviceEvidence.active ? adviceEvidence.suggestion || '' : '';
+                if (evidenceBadge) evidenceBadge.textContent = adviceEvidence.active ? adviceEvidence.badge || '' : '';
+                if (evidenceWhy) evidenceWhy.textContent = adviceEvidence.active ? adviceEvidence.why || '' : '';
+                if (evidenceDetails) {
+                  evidenceDetails.replaceChildren();
+                  for (const line of adviceEvidence.active ? adviceEvidence.detailLines || [] : []) {
+                    const row = doc.createElement('div');
+                    row.textContent = line;
+                    evidenceDetails.append(row);
+                  }
+                }
+              }
+          '''.rstrip() + '\n'
+          runtime = once(runtime, role_marker, role_marker + render_evidence, 'render evidence')
+
+          runtime = once(
+              runtime,
+              "  render();\n  return Object.freeze({ root, render, tutorialReplay, tutorialExperience, characterReaction });\n",
+              "  const adviceEvidenceListener = () => queueMicrotask(render);\n  adviceEvidenceListeners.add(adviceEvidenceListener);\n  render();\n  return Object.freeze({ root, render, tutorialReplay, tutorialExperience, characterReaction, adviceEvidence: () => latestPartnerAdviceEvidence });\n",
+              'bind evidence rerender',
+          )
+
+          tests = once(
+              tests,
+              "  createPartnerAdviceRuntimeControl,\n",
+              "  createPartnerAdviceRuntimeControl,\n  projectPartnerAdviceEvidencePresentation,\n  readLatestPartnerAdviceEvidencePresentation,\n",
+              'extend test imports',
+          )
+
+          appended = r'''
+
+          test('player-facing evidence distinguishes strategy from collective result without claiming optimality', () => {
+            const rows = [candidate('a', 0, 3, { label: '左の一手' }), candidate('b', 1, 5, { label: '右の一手' })];
+            const strategyBridge = createPartnerAdviceReplayBridge({ legacyReplay, getVersions: () => V });
+            const strategyResult = strategyBridge(rows, 'right');
+            assert.equal(strategyResult.source, 'shared-legal-action-core');
+            const strategy = readLatestPartnerAdviceEvidencePresentation();
+            assert.equal(strategy.active, true);
+            assert.equal(strategy.badge, '作戦設定');
+            assert.equal(strategy.sourceKind, 'strategy');
+            assert.equal(strategy.suggestion, '提案：右の一手');
+            assert.equal(strategy.collectiveEvidenceUsed, false);
+            assert.equal(strategy.optimalActionProven, false);
+            assert.equal(strategy.goodMisplaySignal, false);
+
+            const manifest = {
+              schema: 'gameroad.partner-advice-runtime-manifest.v1',
+              targetVersions: { ...V },
+              approval: { gateId: 'HUMAN-HOLDOUT-ACCEPTANCE', approvalId: 'approval-evidence', humanGate: 'approved', privacyScope: 'shared' },
+              promotionSafe: true,
+              defaultActionId: 'a',
+              minContextSupport: 8,
+              contexts: [{ fingerprint: FINGERPRINT, actionId: 'b', support: 12 }],
+              sourceEvidence: 'offline-approved-aggregate-only',
+              containsRawEvents: false,
+              containsPrivate: false,
+              livePlayerPerformanceProven: false,
+            };
+            const collectiveBridge = createPartnerAdviceReplayBridge({ legacyReplay, getVersions: () => V, getManifest: () => manifest, getRuntimeState: () => RUNTIME_STATE });
+            const collectiveResult = collectiveBridge(rows, 'left');
+            assert.equal(collectiveResult.source, 'approved-runtime-manifest');
+            const collective = readLatestPartnerAdviceEvidencePresentation();
+            assert.equal(collective.active, true);
+            assert.equal(collective.badge, '集合知');
+            assert.equal(collective.sourceKind, 'collective');
+            assert.equal(collective.suggestion, '提案：右の一手');
+            assert.equal(collective.collectiveEvidenceUsed, true);
+            assert.equal(collective.optimalActionProven, false);
+            assert.equal(collective.goodMisplaySignal, false);
+            assert.ok(collective.detailLines.includes('最適解の断定ではなく、現在の助言候補'));
+          });
+
+          test('legacy public candidate remains explainable while private or spoofed evidence fails closed', () => {
+            const rows = [candidate('a', 0, 3, { label: '公開候補' })];
+            const bridge = createPartnerAdviceReplayBridge({ legacyReplay });
+            bridge(rows, 'left');
+            const legacy = readLatestPartnerAdviceEvidencePresentation();
+            assert.equal(legacy.active, true);
+            assert.equal(legacy.badge, '通常助言');
+            assert.equal(legacy.sourceKind, 'legacy');
+            assert.equal(legacy.suggestion, '提案：公開候補');
+
+            const privateModel = projectPartnerAdviceEvidencePresentation({
+              adviceResult: { ok: true, containsPrivate: true, source: 'approved-runtime-manifest', manifestUsed: true, selected: { candidateId: 'secret', payload: { label: '秘密' } } },
+              candidates: [],
+            });
+            assert.equal(privateModel.active, false);
+            assert.equal(privateModel.reason, 'PUBLIC_SCOPE_UNVERIFIED');
+
+            const spoofed = projectPartnerAdviceEvidencePresentation({
+              adviceResult: { ok: true, containsPrivate: false, source: 'claimed-best-move', selected: { candidateId: 'a', payload: { label: '公開候補' } } },
+              candidates: rows,
+            });
+            assert.equal(spoofed.active, false);
+            assert.equal(spoofed.reason, 'SOURCE_AUTHORITY_UNVERIFIED');
+          });
+          '''
+          if "player-facing evidence distinguishes strategy from collective result" in tests:
+              raise SystemExit('focused evidence tests already present')
+          tests = tests.rstrip() + appended + '\n'
+
+          runtime_path.write_text(runtime)
+          test_path.write_text(tests)
+
+          runtime_bytes = runtime.encode()
+          runtime_blob = hashlib.sha1(f'blob {len(runtime_bytes)}\\0'.encode() + runtime_bytes).hexdigest()
+          old_pin = "{ file: 'partner-advice-runtime-mount.mjs', source: 'browser/partner-advice-runtime-mount.mjs', sourceArg: 'partnerAdviceRuntimeMountSource', expectedArg: 'expectedPartnerAdviceRuntimeMountBlob', artifact: 'partner_advice_runtime_mount', fixture: \"import './partner-legal-action-adapter.mjs';\\nimport './tutorial-experience-profile-core.mjs';\\nexport const PARTNER_ADVICE_RUNTIME = Object.freeze({});\\n\", currentBlob: '7f057a2d89b566b27350f0c65fa6809e1895e455' }"
+          new_pin = old_pin.replace("7f057a2d89b566b27350f0c65fa6809e1895e455", runtime_blob)
+          build_test = once(build_test, old_pin, new_pin, 'refresh partner runtime package pin')
+          build_test_path.write_text(build_test)
+          print(f'R19F runtime blob {runtime_blob}')
+          PY
+          node --test tests/partner-advice-runtime-mount.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Commit product delta and self-clean transient authorization carrier
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "gameroad-r19f-bot"
+          git config user.email "gameroad-r19f-bot@users.noreply.github.com"
+          git rm .github/workflows/zz-temp-player-advice-evidence-r19f.yml
+          git rm data/preaction-authorizations/BIGDATA-PLAYER-ADVICE-EVIDENCE-R19F-20260908T0925-SOL-B8Q4M7.json
+          git add browser/partner-advice-runtime-mount.mjs tests/partner-advice-runtime-mount.test.mjs deploy/cloudflare/tests/build.test.mjs
+          git commit -m "Partner: show truthful advice source and reason"
+          git push origin HEAD:sol/player-advice-evidence-r19f-20260908

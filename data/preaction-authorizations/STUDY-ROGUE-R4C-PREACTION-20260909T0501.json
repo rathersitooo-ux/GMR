@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "STUDY-ROGUE-R4C-PREACTION-20260909T0501",
+  "taskId": "STUDY-ROGUELIKE-PROBLEM-PACK-RUNTIME-001",
+  "workUnitKey": "STUDY_RUNTIME_VERTICAL_SLICE_R3",
+  "acquireKey": "STUDY-RUNTIME-R4-20260909T0450-SOL-Q8M4V3",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "STUDY-R4C-FRESH-MAIN-PACKAGE-PREDICTION-20260909",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "STUDY-R3-FOCUSED-TESTS-PASS-HOME-BLOB-IDENTITY-PACKAGE-DELTA-ONLY-VERIFIED-20260909",
+  "proceedToken": "PROCEED|STUDY-ROGUE-R4C-PREACTION-20260909T0501|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|current-lease|fresh-main-1455d1a|package-closure",
+  "authorizationBaseSha": "1455d1a672c1608eec3c8ce5e3b0df7d16ccaccc",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "STUDY-ROGUELIKE-PROBLEM-PACK-RUNTIME-001",
+  "leaseWorkUnitKey": "STUDY_RUNTIME_VERTICAL_SLICE_R3",
+  "leaseAcquireKey": "STUDY-RUNTIME-R4-20260909T0450-SOL-Q8M4V3",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 04:50 JST",
+  "leaseUntilJst": "2026-09-09 05:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A634:L634",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch study-rogue-r3-runtime-r1; browser/home-boot-runtime-base-r3.mjs; browser/home-boot-runtime-mount.mjs; browser/study-run-runtime-mount.mjs; tests/home-boot-runtime-base-r3.test.mjs; tests/study-run-runtime-mount.test.mjs; deploy/cloudflare/scripts/build.mjs; own PR#1335/checks/readback/merge/public-package evidence only. GAMEROAD.html, Battle/Road/Janken, active BATTLE_NEW_INTERACTIVE_VISUAL_R1 and BATTLE_UI_FIRST_NEXT_GATE resources READ_ONLY.",
+  "scope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "browser/study-run-runtime-mount.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs",
+    "tests/study-run-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "browser/study-run-runtime-mount.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs",
+    "tests/study-run-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "solutionSignature": "最新main 1455d1aを親に、現main Homeとbyte-identicalなbase blob、既存R3 composition shim/Study runtime、公開package artifact 4点だけを再利用して接続する。最新main側のrelease-comms更新はそのまま保持する。",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "STUDY-R4C-NONINTERSECTING-MAIN-ADVANCE-AND-LEASE-READBACK-20260909",
+  "solutionSearchEvidence": [
+    "google-drive:CURRENT_ACTIVE_LEASES!A634:L634",
+    "github:main:browser/home-boot-runtime-mount.mjs#1cd3edb354cd1797a03f3d957d9950b2d350a6a3",
+    "github:study-rogue-r3-runtime-r1:browser/home-boot-runtime-base-r3.mjs#1cd3edb354cd1797a03f3d957d9950b2d350a6a3",
+    "github:temporary-diff:562d52d:build-delta-only-four-artifact-additions"
+  ]
+}

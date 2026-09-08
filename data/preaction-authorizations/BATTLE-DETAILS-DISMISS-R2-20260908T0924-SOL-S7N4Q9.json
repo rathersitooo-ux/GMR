@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-DETAILS-DISMISS-R2-20260908T0924-SOL-S7N4Q9",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "BATTLE_DETAILS_DRAWER_SAFE_DISMISS_R1",
+  "acquireKey": "BATTLE-DETAILS-DISMISS-R2-20260908T0924-SOL-S7N4Q9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-row1336-user-fixed-outside-dismiss-plus-current-html-battle-details-close-only",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "current-profile-records-safe-dismiss-pattern-plus-focused-fake-dom-tests",
+  "proceedToken": "PROCEED|BATTLE-DETAILS-DISMISS-R2-20260908T0924-SOL-S7N4Q9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-08T09:24+09:00",
+  "authorizationBaseSha": "d7a2b6e872f5fdea8f41c022e6f93400f1a01409",
+  "scope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-battle-details-safe-dismiss-r2.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "BATTLE_DETAILS_DRAWER_SAFE_DISMISS_R1",
+  "leaseAcquireKey": "BATTLE-DETAILS-DISMISS-R2-20260908T0924-SOL-S7N4Q9",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 09:24 JST",
+  "leaseUntilJst": "2026-09-08 10:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A611:L611",
+  "leaseScope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-battle-details-safe-dismiss-r2.yml"
+  ],
+  "leaseExactMutableResources": "browser/battle-replay-live-adapter.mjs; tests/battle-replay-live-adapter.test.mjs; deploy/cloudflare/tests/build.test.mjs; .github/workflows/zz-temp-battle-details-safe-dismiss-r2.yml; data/preaction-authorizations/BATTLE-DETAILS-DISMISS-R2-20260908T0924-SOL-S7N4Q9.json; own PR/check/merge/main/public readback",
+  "solutionSignature": "existing-crossscreen-safe-dismiss-capture-consume-focus-return-adapted-to-battle-details-drawer",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "current-profile-presentation-runtime-mount-records-safe-dismiss",
+  "solutionSearchEvidence": [
+    "browser/profile-presentation-runtime-mount.mjs current Records match-detail safe-dismiss capture pattern",
+    "browser/GAMEROAD.html current setupBattleDetails close-button-only drawer",
+    "UI-STATE-FEEDBACK-RUNTIME-001 fixed outside-dismiss underlay-consume focus-return contract",
+    "R1 PRE_ACTION-only transport proved whole-file replacement is avoidable by in-scope transient workflow"
+  ]
+}

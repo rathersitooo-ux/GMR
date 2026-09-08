@@ -505,3 +505,56 @@ test('Storage outside-dismiss consumes the dismissing pointer so Cards underlay 
   assert.equal(inside.stopped, false);
   mounted.dispose();
 });
+
+test('Storage Escape dismiss consumes cancel, restores opener focus, and dispose does not steal focus', () => {
+  const { controller } = fixture();
+  const { document } = discoveryDocument();
+  const mounted = mountDeckStorageCorner({ controller, buttonHost: fakeElement(), document });
+  let focusCalls = 0;
+  mounted.button.focus = () => { focusCalls += 1; };
+
+  mounted.open();
+  const unrelated = {
+    key: 'Enter',
+    prevented: false,
+    stopped: false,
+    immediate: false,
+    preventDefault() { this.prevented = true; },
+    stopPropagation() { this.stopped = true; },
+    stopImmediatePropagation() { this.immediate = true; },
+  };
+  document.emit('keydown', unrelated);
+  assert.equal(controller.view().open, true);
+  assert.equal(unrelated.prevented, false);
+  assert.equal(focusCalls, 0);
+
+  const escape = {
+    key: 'Escape',
+    prevented: false,
+    stopped: false,
+    immediate: false,
+    preventDefault() { this.prevented = true; },
+    stopPropagation() { this.stopped = true; },
+    stopImmediatePropagation() { this.immediate = true; },
+  };
+  document.emit('keydown', escape);
+  assert.equal(controller.view().open, false);
+  assert.equal(escape.prevented, true);
+  assert.equal(escape.stopped, true);
+  assert.equal(escape.immediate, true);
+  assert.equal(focusCalls, 1);
+
+  mounted.open();
+  mounted.dispose();
+  assert.equal(controller.view().open, false);
+  assert.equal(focusCalls, 1);
+
+  const afterDispose = {
+    key: 'Escape',
+    prevented: false,
+    preventDefault() { this.prevented = true; },
+  };
+  document.emit('keydown', afterDispose);
+  assert.equal(afterDispose.prevented, false);
+  assert.equal(focusCalls, 1);
+});

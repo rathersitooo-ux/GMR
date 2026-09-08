@@ -1,0 +1,43 @@
+name: TEMP Battle details safe dismiss R2
+
+on:
+  push:
+    branches:
+      - sol/battle-details-safe-dismiss-r2-20260908
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-details-safe-dismiss-r2-20260908
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Recover authorized patch, test, and self-clean
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git hash-object browser/battle-replay-live-adapter.mjs)" = "591c4b3a5104f43832d9ed3e1e561c59deb75c83"
+          test "$(git hash-object tests/battle-replay-live-adapter.test.mjs)" = "deee7cdb9dfafebba935ecf052404e9312c86ee9"
+          test "$(git hash-object deploy/cloudflare/tests/build.test.mjs)" = "934b54475683c0d34885c986716cb0f6b4ad428b"
+          git show d56381b739d65d2817fa07e5f76d0631c310a884:.github/workflows/zz-temp-battle-details-safe-dismiss-r2.yml > /tmp/authorized-old.yml
+          start="$(grep -n -m1 \"python - <<'PY'\" /tmp/authorized-old.yml | cut -d: -f1)"
+          test -n "$start"
+          tail -n "+$((start + 1))" /tmp/authorized-old.yml | sed -n '/^          PY$/q;p' | sed 's/^          //' > /tmp/patch.py
+          test -s /tmp/patch.py
+          python /tmp/patch.py
+          node --test tests/battle-replay-live-adapter.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+          rm -f .github/workflows/zz-temp-battle-details-safe-dismiss-r2.yml
+          rm -f data/preaction-authorizations/BATTLE-DETAILS-DISMISS-R2-20260908T0924-SOL-S7N4Q9.json
+          git add browser/battle-replay-live-adapter.mjs tests/battle-replay-live-adapter.test.mjs deploy/cloudflare/tests/build.test.mjs .github/workflows/zz-temp-battle-details-safe-dismiss-r2.yml data/preaction-authorizations/BATTLE-DETAILS-DISMISS-R2-20260908T0924-SOL-S7N4Q9.json
+          git config user.name 'gameroad-north-star-bot'
+          git config user.email 'gameroad-north-star-bot@users.noreply.github.com'
+          git commit -m 'Battle: dismiss details drawer safely'
+          git push origin HEAD:sol/battle-details-safe-dismiss-r2-20260908

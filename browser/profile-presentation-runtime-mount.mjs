@@ -88,7 +88,7 @@ function ensureStyle(doc) {
 [data-screen="records"] .recordsMatchDetail[hidden]{display:none!important}
 [data-screen="records"] .recordsMatchDetail h3{margin:0;font-size:14px;color:var(--a);letter-spacing:.03em}
 [data-screen="records"] .recordsMatchDetailSummary{margin:0;font-size:13px;line-height:1.55;color:#eef7f3}
-[data-screen="records"] .recordsMatchDetailDeck{margin:0;padding-top:7px;border-top:1px solid rgba(255,255,255,.12);font-size:12px;line-height:1.45;color:var(--muted)}
+[data-screen="records"] .recordsMatchDetailDeck{margin:0;padding-top:7px;border-top:1px solid rgba(255,255,255,.12);font-size:12px;line-height:1.45;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
 @media(max-width:540px) and (orientation:portrait){[data-screen="profile"] .profileIdentitySummary{grid-template-columns:1fr}[data-screen="profile"] .profileIdentityCard{min-height:72px}[data-screen="records"] .recordsMatchDetail{padding:10px}}
 @media(max-height:470px) and (orientation:landscape){[data-screen="profile"] .profileStats{gap:6px;padding:8px}[data-screen="profile"] .profileIdentityCard{min-height:58px;padding:6px;grid-template-columns:36px minmax(0,1fr);gap:7px}[data-screen="profile"] .profileIdentityMark{width:36px;height:36px;font-size:16px}[data-screen="profile"] .profileIdentityCopy b{font-size:12px}[data-screen="profile"] .profileRecordsNote{padding:5px 7px;font-size:10px;line-height:1.35}.profileActions{margin-top:0}[data-screen="records"] .recordsMatchDetail{margin-top:6px;padding:7px;gap:4px}[data-screen="records"] .recordsMatchDetail h3{font-size:11px}[data-screen="records"] .recordsMatchDetailSummary,[data-screen="records"] .recordsMatchDetailDeck{font-size:10px;line-height:1.35}}
 @media(prefers-reduced-motion:reduce){[data-screen="records"] #recordsList .record[data-records-selectable="true"]{transition:none}[data-screen="records"] #recordsList .record[data-records-selected="true"]{transform:none}}
@@ -123,6 +123,50 @@ function recordSummaryText(row) {
   if (!row) return '';
   const source = typeof row.innerText === 'string' ? row.innerText : row.textContent;
   return cleanText(source, 280);
+}
+
+function historicalCardLabel(id, win = globalThis) {
+  const key = cleanText(id, 120);
+  if (!key) return '';
+  const cardData = win?.__CARD_DATA__;
+  const card = cardData?.get?.(id) ?? cardData?.[id] ?? cardData?.[key] ?? null;
+  const name = cleanText(card?.name, 80);
+  return name ? `${name}（${key}）` : key;
+}
+
+function historicalDeckPart(cards, win = globalThis) {
+  if (!Array.isArray(cards) || cards.length === 0) return 'なし';
+  const counts = new Map();
+  for (const raw of cards) {
+    const id = cleanText(raw, 120);
+    if (!id) continue;
+    counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  if (counts.size === 0) return 'なし';
+  return Array.from(counts, ([id, count]) => {
+    const label = historicalCardLabel(id, win);
+    return `${label}${count > 1 ? ` ×${count}` : ''}`;
+  }).join(' / ');
+}
+
+export function projectHistoricalDeckText(historyEntry, win = globalThis) {
+  const snapshot = historyEntry?.deckStartSnapshot;
+  const deck = snapshot?.deck;
+  if (!deck || typeof deck !== 'object' || (!Array.isArray(deck.main) && !Array.isArray(deck.ex))) {
+    return '使用デッキ：この対戦履歴では未記録です。';
+  }
+
+  const main = Array.isArray(deck.main) ? deck.main : [];
+  const ex = Array.isArray(deck.ex) ? deck.ex : [];
+  const slotName = cleanText(snapshot?.deckRef?.deckSlotName, 80);
+  const slotId = cleanText(snapshot?.deckRef?.deckSlotId, 120);
+  const identity = slotName ? `「${slotName}」` : slotId ? `（${slotId}）` : '';
+
+  return [
+    `使用デッキ${identity}`,
+    `メイン ${main.length}枚：${historicalDeckPart(main, win)}`,
+    `EX ${ex.length}枚：${historicalDeckPart(ex, win)}`,
+  ].join('\n');
 }
 
 function ensureRecordsDetailPanel(doc, screen, list) {
@@ -183,6 +227,8 @@ function selectRecordRow(row, list, panel) {
   const summary = recordSummaryText(row);
   const summaryNode = panel.querySelector('.recordsMatchDetailSummary');
   if (summaryNode) summaryNode.textContent = summary || '対戦内容を確認できませんでした。';
+  const deckNode = panel.querySelector('.recordsMatchDetailDeck');
+  if (deckNode) deckNode.textContent = projectHistoricalDeckText(row.__gameroadHistoryEntry);
   panel.hidden = false;
 }
 

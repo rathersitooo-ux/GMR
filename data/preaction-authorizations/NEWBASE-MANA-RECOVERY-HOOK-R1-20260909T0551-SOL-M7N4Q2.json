@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-NEWBASE-MANA-RECOVERY-HOOK-R1-20260909T0551",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "TURN_START_MANA_RECOVERY_HOOK_R1",
+  "acquireKey": "NEWBASE-MANA-RECOVERY-HOOK-R1-20260909T0551-SOL-M7N4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_USER_NEWBASE_MANA_RECOVERY_UNDECIDED_AMOUNT_PLUS_CURRENT_BROWSER_CENSUS",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "THIN_CALLER_INJECTED_HOOK_NO_STATE_NO_DEFAULT",
+  "proceedToken": "PROCEED|VWORK-NEWBASE-MANA-RECOVERY-HOOK-R1-20260909T0551|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-09T05:52+09:00",
+  "authorizationBaseSha": "ef4ef17a35bab996e56292bf62760136a655121a",
+  "scope": [
+    "browser/new-base-turn-start-mana-recovery-hook.mjs",
+    "tests/new-base-turn-start-mana-recovery-hook.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "TURN_START_MANA_RECOVERY_HOOK_R1",
+  "leaseAcquireKey": "NEWBASE-MANA-RECOVERY-HOOK-R1-20260909T0551-SOL-M7N4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 05:51 JST",
+  "leaseUntilJst": "2026-09-09 06:51 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A636:N636",
+  "solutionSignature": "turn-start mana recovery hook that keeps recovery amount opaque and caller-owned",
+  "reuseDisposition": "THIN_ADAPTER",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "NO_EXISTING_MANA_NAMED_BROWSER_CORE_AND_NO_INDEXED_GITHUB_MANA_HIT",
+  "solutionSearchEvidence": [
+    "Current user authority fixes turn-start mana recovery but explicitly leaves recovery amount undecided and replaceable.",
+    "Current browser tree exposes no mana-named shared core; indexed repository search for mana returned no result.",
+    "The hook therefore must not create mana storage or cap semantics; it can only delegate the configured amount unchanged to caller-owned mana authority.",
+    "External game research cannot determine GAMEROAD's undecided recovery value or internal mana authority and would not change this bounded implementation decision."
+  ],
+  "nonInterference": [
+    "No default recovery amount",
+    "No max-mana/cap/clamp rule",
+    "No mana store or persistence",
+    "No turn engine or Battle HTML mutation",
+    "No pursuit-specific mana behavior",
+    "No second Battle/movement/janken engine"
+  ]
+}

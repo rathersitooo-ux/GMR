@@ -28,6 +28,8 @@ const SLIDEPAD_DOWN_REJECT_RATIO = 1.15;
 const SLIDEPAD_LOCAL_FEEDBACK_MAX_PX = 144;
 const SLIDEPAD_TARGET_PULL_MAX_PX = 18;
 const SLIDEPAD_SWITCH_ADVANTAGE = 0.22;
+export const HOME_QUICKSET_CANCEL_LABEL = 'キャンセル';
+const HOME_QUICKSET_BUTTON_SIZE_PX = 56;
 const SLIDEPAD_ROUTE_IDS = Object.freeze({
   battle: Object.freeze(['setup', 'battle']),
   shop: Object.freeze(['shop']),
@@ -86,6 +88,9 @@ const runtime = {
     lastX: 0,
     detentPx: 0,
     previewNode: null,
+    quickSetNode: null,
+    cancelNode: null,
+    cancelArmed: false,
   },
 };
 
@@ -276,6 +281,13 @@ ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${ROUTE_SELECTOR}[data-home-sli
   filter:brightness(1.16) saturate(1.08) drop-shadow(0 0 9px currentColor);
   outline:3px solid currentColor;
   outline-offset:2px;
+}
+/* Idle Home gummies remain direct buttons. While the SlidePad is held, Quick Set owns the
+   gesture and the normal gummies disappear instead of doubling as the active selector. */
+${HOME_SELECTOR}[data-home-shell-mounted="true"][data-home-quick-set-active="true"] ${ROUTE_SELECTOR}{
+  opacity:0!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
 }
 ${HOME_SELECTOR}[data-home-shell-mounted="true"] ${SLIDEPAD_CENTER_SELECTOR}{
   touch-action:none;
@@ -503,6 +515,97 @@ function clearPreview() {
   runtime.slidepad.previewButton = null;
 }
 
+export function resolveHomeQuickSetCancelHit({ pointerX, pointerY, cancelRect } = {}) {
+  const x = Number(pointerX);
+  const y = Number(pointerY);
+  const left = Number(cancelRect?.left);
+  const top = Number(cancelRect?.top);
+  const width = Number(cancelRect?.width);
+  const height = Number(cancelRect?.height);
+  if (![x, y, left, top, width, height].every(Number.isFinite) || width <= 0 || height <= 0) return false;
+  return x >= left && x <= left + width && y >= top && y <= top + height;
+}
+
+function clearHomeQuickSetProjection() {
+  runtime.slotRoll.quickSetNode?.remove?.();
+  runtime.slotRoll.cancelNode?.remove?.();
+  runtime.slotRoll.quickSetNode = null;
+  runtime.slotRoll.cancelNode = null;
+  runtime.slotRoll.cancelArmed = false;
+}
+
+function setHomeQuickSetCancelArmed(armed) {
+  const next = armed === true;
+  runtime.slotRoll.cancelArmed = next;
+  const node = runtime.slotRoll.cancelNode;
+  if (!(node instanceof HTMLElement)) return next;
+  node.dataset.homeQuickSetCancelArmed = next ? 'true' : 'false';
+  node.style.filter = next ? 'brightness(1.18) saturate(1.08)' : 'brightness(.9) saturate(.78)';
+  node.style.outline = next ? '3px solid currentColor' : '1px solid currentColor';
+  return next;
+}
+
+function renderHomeQuickSetProjection(home, center) {
+  const state = runtime.slotRoll.state;
+  if (!(home instanceof HTMLElement) || !(center instanceof HTMLElement) || !state) return null;
+
+  let node = runtime.slotRoll.quickSetNode;
+  if (!(node instanceof HTMLElement)) {
+    node = document.createElement('div');
+    node.dataset.homeQuickSetPreview = 'true';
+    node.setAttribute('aria-live', 'polite');
+    node.style.cssText = 'position:fixed;z-index:86;display:flex;gap:8px;align-items:center;justify-content:center;pointer-events:none;transform:translate(-50%,-100%);';
+    home.appendChild(node);
+    runtime.slotRoll.quickSetNode = node;
+  }
+
+  const windowItems = projectSlotRollWindow(state, { radius: 1 });
+  node.replaceChildren(...windowItems.map((entry) => {
+    const item = document.createElement('div');
+    item.dataset.homeQuickSetItem = entry.item.id;
+    item.dataset.homeQuickSetSelected = entry.selected ? 'true' : 'false';
+    item.textContent = entry.item.label;
+    item.style.cssText = `box-sizing:border-box;width:${HOME_QUICKSET_BUTTON_SIZE_PX}px;height:${HOME_QUICKSET_BUTTON_SIZE_PX}px;border-radius:50%;display:grid;place-items:center;text-align:center;padding:5px;background:rgba(9,13,30,.9);border:${entry.selected ? 3 : 1}px solid currentColor;box-shadow:0 7px 20px rgba(0,0,0,.3);font-size:10px;font-weight:800;line-height:1.05;overflow:hidden;filter:${entry.selected ? 'brightness(1.16) saturate(1.06)' : 'brightness(.82) saturate(.72)'};`;
+    return item;
+  }));
+
+  const rect = center.getBoundingClientRect();
+  const viewportWidth = Math.max(HOME_QUICKSET_BUTTON_SIZE_PX, Number(globalThis.innerWidth) || document.documentElement.clientWidth || 0);
+  const previewHalfWidth = Math.max(HOME_QUICKSET_BUTTON_SIZE_PX, windowItems.length * (HOME_QUICKSET_BUTTON_SIZE_PX + 8) / 2);
+  const previewX = Math.min(viewportWidth - previewHalfWidth - 8, Math.max(previewHalfWidth + 8, rect.left + rect.width / 2));
+  node.style.left = `${previewX}px`;
+  node.style.top = `${Math.max(HOME_QUICKSET_BUTTON_SIZE_PX + 12, rect.top - 12)}px`;
+
+  let cancel = runtime.slotRoll.cancelNode;
+  if (!(cancel instanceof HTMLElement)) {
+    cancel = document.createElement('div');
+    cancel.dataset.homeQuickSetCancel = 'true';
+    cancel.textContent = HOME_QUICKSET_CANCEL_LABEL;
+    cancel.setAttribute('aria-label', HOME_QUICKSET_CANCEL_LABEL);
+    cancel.style.cssText = `box-sizing:border-box;position:fixed;z-index:87;width:${HOME_QUICKSET_BUTTON_SIZE_PX}px;height:${HOME_QUICKSET_BUTTON_SIZE_PX}px;border-radius:50%;display:grid;place-items:center;text-align:center;padding:4px;background:rgba(20,20,24,.88);border:1px solid currentColor;box-shadow:0 7px 20px rgba(0,0,0,.3);font-size:10px;font-weight:800;line-height:1.05;pointer-events:none;transform:translate(-50%,-50%);`;
+    home.appendChild(cancel);
+    runtime.slotRoll.cancelNode = cancel;
+  }
+  const viewportHeight = Math.max(HOME_QUICKSET_BUTTON_SIZE_PX, Number(globalThis.innerHeight) || document.documentElement.clientHeight || 0);
+  const half = HOME_QUICKSET_BUTTON_SIZE_PX / 2;
+  const cancelX = Math.min(viewportWidth - half - 8, Math.max(half + 8, rect.left - half - 10));
+  const cancelY = Math.min(viewportHeight - half - 8, Math.max(half + 8, rect.top + rect.height / 2));
+  cancel.style.left = `${cancelX}px`;
+  cancel.style.top = `${cancelY}px`;
+  setHomeQuickSetCancelArmed(runtime.slotRoll.cancelArmed);
+  return node;
+}
+
+function updateHomeQuickSetCancelFromPointer(event) {
+  const cancel = runtime.slotRoll.cancelNode;
+  if (!(cancel instanceof HTMLElement)) return setHomeQuickSetCancelArmed(false);
+  return setHomeQuickSetCancelArmed(resolveHomeQuickSetCancelHit({
+    pointerX: Number(event.clientX),
+    pointerY: Number(event.clientY),
+    cancelRect: cancel.getBoundingClientRect(),
+  }));
+}
+
 export function normalizeHomeSetupModeItems(items = []) {
   if (!Array.isArray(items)) return Object.freeze([]);
   const normalized = [];
@@ -570,6 +673,7 @@ function currentSetupModeItems() {
 }
 
 function clearSlotRollProjection() {
+  clearHomeQuickSetProjection();
   runtime.slotRoll.previewNode?.remove?.();
   if (runtime.slotRoll.routeButton instanceof HTMLElement) {
     delete runtime.slotRoll.routeButton.dataset.homeSlotRollActive;
@@ -857,7 +961,9 @@ function bindSlidepad(home) {
     runtime.slotRoll.lastX = Number(event.clientX);
     runtime.slotRoll.detentPx = created.detentPx;
     home.dataset.homeQuickSetActive = 'true';
-    return setQuickSetButton(buttons, created.anchorId);
+    const button = setQuickSetButton(buttons, created.anchorId);
+    renderHomeQuickSetProjection(home, center);
+    return button;
   };
 
   const updateFromPointer = (event) => {
@@ -875,9 +981,11 @@ function bindSlidepad(home) {
       });
       runtime.slotRoll.state = advanced.state;
       setQuickSetButton(buttons, runtime.slotRoll.state.itemId);
+      renderHomeQuickSetProjection(home, center);
     }
+    const cancelArmed = updateHomeQuickSetCancelFromPointer(event);
     moveKnobWithGesture(center, dx, dy);
-    return { dx, dy, button: runtime.slidepad.previewButton };
+    return { dx, dy, button: runtime.slidepad.previewButton, cancelArmed };
   };
 
   const handlers = {
@@ -910,8 +1018,8 @@ function bindSlidepad(home) {
     },
     pointerup(event) {
       if (event.pointerId !== runtime.slidepad.pointerId) return;
-      updateFromPointer(event);
-      const commit = runtime.slotRoll.state ? resolveSlotRollCommit(runtime.slotRoll.state) : null;
+      const { cancelArmed } = updateFromPointer(event);
+      const commit = !cancelArmed && runtime.slotRoll.state ? resolveSlotRollCommit(runtime.slotRoll.state) : null;
       const button = commit?.itemId
         ? routeButtons(home).find((candidate) => routeId(candidate) === commit.itemId) || null
         : null;

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ADVICE-VISIBLE-R1-20260908T1412-SOL-N8Q4M6",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "BATTLE_ADVICE_VISIBLE_COMPOSITION_R1",
+  "acquireKey": "BATTLE-ADVICE-VISIBLE-R1-20260908T1412-SOL-N8Q4M6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLIC_BFI_34171992024_PLUS_CURRENT_PARTNER_ADVICE_RUNTIME_DIRECT_AUDIT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "Existing current Advice module already owns role/L-C-R/advice/quick-reply semantics; this slice changes only Battle placement/compact presentation with focused source/runtime tests and public viewport acceptance",
+  "proceedToken": "PROCEED|BATTLE-ADVICE-VISIBLE-R1-20260908T1412-SOL-N8Q4M6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_LEASE_AND_EXACT_BLOB_READBACK",
+  "authorizationBaseSha": "06ce792c1c3c1e1ad5b98b80a9df7f891c233bc5",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "BATTLE_ADVICE_VISIBLE_COMPOSITION_R1",
+  "leaseAcquireKey": "BATTLE-ADVICE-VISIBLE-R1-20260908T1412-SOL-N8Q4M6",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 14:14 JST",
+  "leaseUntilJst": "2026-09-08 15:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A621:L621",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean branch sol/battle-advice-visible-composition-r1-20260908 from exact main 06ce792c1c3c1e1ad5b98b80a9df7f891c233bc5; browser/partner-advice-runtime-mount.mjs@7f057a2d89b566b27350f0c65fa6809e1895e455; tests/partner-advice-runtime-mount.test.mjs@bb7be0affeaff9c6abe78c0cc0c871be5455c937; deploy/cloudflare/tests/build.test.mjs@70c2663cbf874dad8acdb4bf68c2d545e41b1308 only for exact partner-advice blob provenance pin; transient .github/workflows/zz-temp-battle-advice-visible-r1.yml; transient data/preaction-authorizations/BATTLE-ADVICE-VISIBLE-R1-20260908T1412-SOL-N8Q4M6.json; own branch/PR/focused tests/Required Gate/main/public readback. READ_ONLY: browser/GAMEROAD.html; browser/battle-janken-slidepad-runtime-mount.mjs; browser/battle-playable-hand-row-roulette-runtime.mjs; Battle gameplay/rules/state/save/economy/network; Codex Astra BATTLE_UI_RIGHT_THUMB_COMPOSITION_R1 resources.",
+  "scope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-battle-advice-visible-r1.yml",
+    "data/preaction-authorizations/BATTLE-ADVICE-VISIBLE-R1-20260908T1412-SOL-N8Q4M6.json"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-battle-advice-visible-r1.yml",
+    "data/preaction-authorizations/BATTLE-ADVICE-VISIBLE-R1-20260908T1412-SOL-N8Q4M6.json"
+  ],
+  "solutionSignature": "BATTLE_ADVICE_EXISTING_ROOT_REPARENT_COMPACT_PERIPHERAL_COMPOSITION_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_EXISTING_ADVICE_CHAT_ROOT_AND_PUBLIC_BFI_VISIBILITY_GAP"
+}

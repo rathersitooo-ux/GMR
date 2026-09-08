@@ -14,6 +14,7 @@ import {
 import {
   cancelStoredMatchTicket,
   createStoredMatchTicket,
+  NEW_BASE_MATCH_RULESET,
   serviceStoredMatchTimeout,
   storedMatchTicketStatus,
 } from './match-store.mjs';
@@ -99,6 +100,7 @@ async function refreshMatchAlarm(ctx, nowMs = Date.now()) {
   const service = await serviceStoredMatchTimeout(ctx.storage, {
     nowMs,
     generatedMatchId: `m-${crypto.randomUUID()}`,
+    ruleset: NEW_BASE_MATCH_RULESET,
   });
   if (!service.ok) throw new Error(service.reason || 'match_alarm_service_failed');
 
@@ -155,10 +157,12 @@ async function handleMatchRequest(ctx, request, url) {
       secret: randomMatchSecret(),
       matchId: `m-${crypto.randomUUID()}`,
       nowMs,
+      ruleset: NEW_BASE_MATCH_RULESET,
     };
     const preCreateTimeout = await serviceStoredMatchTimeout(ctx.storage, {
       nowMs,
       generatedMatchId: generated.matchId,
+      ruleset: NEW_BASE_MATCH_RULESET,
     });
     if (!preCreateTimeout.ok) {
       return matchJson({ ok: false, reason: preCreateTimeout.reason }, matchErrorStatus(preCreateTimeout.reason));
@@ -180,6 +184,7 @@ async function handleMatchRequest(ctx, request, url) {
     const result = await storedMatchTicketStatus(ctx.storage, body, {
       nowMs,
       generatedMatchId: `m-${crypto.randomUUID()}`,
+      ruleset: NEW_BASE_MATCH_RULESET,
     });
     if (!result.ok) return matchJson({ ok: false, reason: result.reason }, matchErrorStatus(result.reason));
     await refreshMatchAlarm(ctx, nowMs);

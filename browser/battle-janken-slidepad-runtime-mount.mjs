@@ -16,9 +16,9 @@ export const BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA = 'gameroad.battle-janken-sli
 
 const SLOT_ORDER = Object.freeze(['ROCK', 'SCISSORS', 'PAPER']);
 const SLOT_VIEW = Object.freeze({
-  ROCK: Object.freeze({ symbol: '♣', hand: 'グー', className: 'rock' }),
-  SCISSORS: Object.freeze({ symbol: '♦', hand: 'チョキ', className: 'scissors' }),
-  PAPER: Object.freeze({ symbol: '♠', hand: 'パー', className: 'paper' }),
+  ROCK: Object.freeze({ symbol: '✊', hand: 'グー', className: 'rock' }),
+  SCISSORS: Object.freeze({ symbol: '✌', hand: 'チョキ', className: 'scissors' }),
+  PAPER: Object.freeze({ symbol: '✋', hand: 'パー', className: 'paper' }),
 });
 const STYLE_ID = 'gameroad-battle-janken-slidepad-live-r1-style';
 const HOST_ATTR = 'data-battle-janken-slidepad';

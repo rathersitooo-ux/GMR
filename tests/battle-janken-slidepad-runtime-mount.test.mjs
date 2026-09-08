@@ -38,6 +38,16 @@ test('projects fixed janken slots while keeping selected physical cards out of o
   );
 });
 
+test('fixed janken slot presentation identifies the hand instead of reusing native suit glyphs', () => {
+  const model = buildBattleJankenSlidePadModel({ roundId: '1', hand, pickDuplicateIndex: () => 1 });
+  assert.deepEqual(model.slots.map((slot) => [slot.jankenHand, slot.symbol, slot.hand]), [
+    ['ROCK', '✊', 'グー'],
+    ['SCISSORS', '✌', 'チョキ'],
+    ['PAPER', '✋', 'パー'],
+  ]);
+  assert.equal(model.slots.some((slot) => ['♣', '♦', '♠'].includes(slot.symbol)), false);
+});
+
 test('janken slot can still reach its round-source card action without restoring ordinary-hand membership', () => {
   const model = buildBattleJankenSlidePadModel({ roundId: '1', hand, pickDuplicateIndex: () => 1 });
   assert.equal(
@@ -189,7 +199,7 @@ test('R75 preview projects only the actually armed selectable janken slot', () =
     cardId: 'club-b',
     cardLabel: 'Club B',
     jankenHand: 'ROCK',
-    symbol: '♣',
+    symbol: '✊',
     hand: 'グー',
   });
 });

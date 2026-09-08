@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import {
   PROFILE_PRESENTATION_CONTRACT,
   dismissRecordsMatchDetail,
+  projectHistoricalDeckText,
   projectProfilePresentation,
   readCurrentProfileAuthority,
 } from '../browser/profile-presentation-runtime-mount.mjs';
@@ -96,9 +97,40 @@ test('Records enhancement stays on the current rendered history and does not add
   assert.match(source, /querySelectorAll\('\.record'\)/);
   assert.match(source, /setAttribute\('role', 'button'\)/);
   assert.match(source, /setAttribute\('aria-expanded', selected \? 'true' : 'false'\)/);
+  assert.match(source, /row\.__gameroadHistoryEntry/);
+  assert.match(source, /deckStartSnapshot/);
   assert.match(source, /使用デッキ：この対戦履歴では未記録です。/);
   assert.match(source, /@media\(prefers-reduced-motion:reduce\)/);
   assert.doesNotMatch(source, /localStorage|sessionStorage|__GAMEROAD_TEST__/);
+});
+
+test('Historical record deck text uses the frozen match-start snapshot with exact multiplicity', () => {
+  const historyEntry = {
+    deckStartSnapshot: {
+      deckRef: { deckSlotId: 'deck-1', deckSlotName: '森のデッキ' },
+      deck: {
+        main: ['A', 'B', 'A'],
+        ex: ['EX1'],
+      },
+    },
+  };
+  const fakeWindow = {
+    __CARD_DATA__: {
+      A: { name: '森の札' },
+      B: { name: '音の札' },
+      EX1: { name: 'EX札' },
+    },
+  };
+
+  assert.equal(
+    projectHistoricalDeckText(historyEntry, fakeWindow),
+    '使用デッキ「森のデッキ」\nメイン 3枚：森の札（A） ×2 / 音の札（B）\nEX 1枚：EX札（EX1）',
+  );
+});
+
+test('Historical record deck text keeps legacy entries explicitly unrecorded', () => {
+  assert.equal(projectHistoricalDeckText(null), '使用デッキ：この対戦履歴では未記録です。');
+  assert.equal(projectHistoricalDeckText({ deckStartSnapshot: {} }), '使用デッキ：この対戦履歴では未記録です。');
 });
 
 test('Profile secondary copy keeps the bounded phone legibility floor', () => {

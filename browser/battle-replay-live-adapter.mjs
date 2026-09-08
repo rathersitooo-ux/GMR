@@ -1386,3 +1386,110 @@ export const BATTLE_MOVIE_SURFACE_BINDING = Object.freeze({
   authority: 'presentation_only_no_game_state_write',
   actualDomSurface: 'battleResolution'
 });
+
+
+const BATTLE_DETAILS_SAFE_DISMISS_BOUND = new WeakSet();
+
+function battleDetailsDrawerOpen(drawer) {
+  return drawer?.classList?.contains?.('on') === true &&
+    drawer.getAttribute?.('aria-hidden') !== 'true';
+}
+
+function battleDetailsTargetInside(node, target) {
+  return node === target || node?.contains?.(target) === true;
+}
+
+export function mountBattleDetailsSafeDismiss({
+  documentRef = browserGlobal('document'),
+  queueMicrotaskRef = browserGlobal('queueMicrotask')
+} = {}) {
+  const drawer = documentRef?.getElementById?.('battleDrawer');
+  const opener = documentRef?.getElementById?.('detailsBtn');
+  const closeButton = documentRef?.getElementById?.('detailsClose');
+  if (!drawer?.classList || !opener || !closeButton ||
+      typeof documentRef?.addEventListener !== 'function') {
+    return deepFreeze({
+      mounted: false,
+      reason: 'BATTLE_DETAILS_SURFACE_UNAVAILABLE',
+      presentationOnly: true,
+      gameplayAuthority: false,
+      gameStateWrite: false
+    });
+  }
+  if (BATTLE_DETAILS_SAFE_DISMISS_BOUND.has(drawer)) {
+    return deepFreeze({
+      mounted: true,
+      idempotent: true,
+      presentationOnly: true,
+      gameplayAuthority: false,
+      gameStateWrite: false
+    });
+  }
+
+  const focusOpener = () => {
+    try {
+      opener.focus?.({ preventScroll: true });
+    } catch {
+      try { opener.focus?.(); } catch { /* presentation-only */ }
+    }
+  };
+  const closeDrawer = () => {
+    if (!battleDetailsDrawerOpen(drawer)) return false;
+    drawer.classList.remove('on');
+    drawer.setAttribute?.('aria-hidden', 'true');
+    focusOpener();
+    return true;
+  };
+  const consume = event => {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+  };
+  const onDocumentClick = event => {
+    if (!battleDetailsDrawerOpen(drawer)) return;
+    const target = event?.target;
+    if (battleDetailsTargetInside(drawer, target) ||
+        battleDetailsTargetInside(opener, target)) return;
+    consume(event);
+    closeDrawer();
+  };
+  const onDocumentKeydown = event => {
+    if (!battleDetailsDrawerOpen(drawer) || event?.key !== 'Escape') return;
+    consume(event);
+    closeDrawer();
+  };
+  const schedule = typeof queueMicrotaskRef === 'function'
+    ? queueMicrotaskRef
+    : callback => Promise.resolve().then(callback);
+  const onExplicitClose = () => {
+    schedule(() => {
+      if (!battleDetailsDrawerOpen(drawer)) focusOpener();
+    });
+  };
+
+  documentRef.addEventListener('click', onDocumentClick, true);
+  documentRef.addEventListener('keydown', onDocumentKeydown, true);
+  closeButton.addEventListener?.('click', onExplicitClose);
+  BATTLE_DETAILS_SAFE_DISMISS_BOUND.add(drawer);
+  return deepFreeze({
+    mounted: true,
+    idempotent: false,
+    presentationOnly: true,
+    gameplayAuthority: false,
+    gameStateWrite: false
+  });
+}
+
+function autoMountBattleDetailsSafeDismiss() {
+  const documentRef = browserGlobal('document');
+  if (!documentRef) return;
+  const mount = () => {
+    try { mountBattleDetailsSafeDismiss({ documentRef }); } catch { /* presentation-only */ }
+  };
+  if (documentRef.readyState === 'loading' && typeof documentRef.addEventListener === 'function') {
+    documentRef.addEventListener('DOMContentLoaded', mount, { once: true });
+  } else {
+    mount();
+  }
+}
+
+autoMountBattleDetailsSafeDismiss();

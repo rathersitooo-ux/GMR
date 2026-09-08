@@ -636,3 +636,29 @@ test('feedback rejects unknown turns, invalid ratings, and cross-session targets
   const second = createSaasunaConversationEntry({ createSessionId: () => 'session-feedback-b' });
   assert.deepEqual(second.feedback('turn-1', 'good'), { ok: false, reason: 'FEEDBACK_TARGET_NOT_FOUND' });
 });
+
+test('provider request carries close-companion fictional exaggeration guidance without fabricated-history license', async () => {
+  let seen = null;
+  const output = await runSaasunaConversationTurn(base(), {
+    provider: {
+      async sendMessage(request) {
+        seen = request;
+        return {
+          kind: 'utterance_candidate',
+          partnerId: request.partnerId,
+          dialogueVersion: request.dialogueVersion,
+          sourceId: request.sourceId,
+          text: '了解。',
+        };
+      },
+    },
+  });
+  assert.equal(output.ok, true);
+  assert.ok(Array.isArray(seen?.personaGuidance));
+  const guidance = seen.personaGuidance.join('\n');
+  assert.match(guidance, /距離の近い相棒/);
+  assert.match(guidance, /都合の良い彼女|ラノベ/);
+  assert.match(guidance, /利用者の心理/);
+  assert.match(guidance, /こじつけ/);
+  assert.match(guidance, /固定台詞/);
+});

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 
 import {
   approvedPartnerDialogueDescriptor,
@@ -59,6 +60,25 @@ test('advice partner is independently selected and saved through the existing ma
   assert.equal(cycleAdvicePartner(win), 'partner.mato');
   assert.equal(state.selectedPartnerId, 'partner.naki');
   assert.equal(currentAdvicePartnerId(win), 'partner.mato');
+});
+
+test('Battle switch consumer and public package stay wired to the existing Advice selection authority', () => {
+  const runtimeSource = readFileSync(new URL('../browser/partner-advice-runtime-mount.mjs', import.meta.url), 'utf8');
+  const buildSource = readFileSync(new URL('../deploy/cloudflare/scripts/build.mjs', import.meta.url), 'utf8');
+
+  assert.match(runtimeSource, /aria-label="アドバイスパートナーを変更"/);
+  assert.match(
+    runtimeSource,
+    /switchButton\.addEventListener\('click', \(\) => \{[\s\S]*?const before = currentAdvicePartnerId\(win\);[\s\S]*?const next = cycleAdvicePartner\(win, 1\);[\s\S]*?if \(!next \|\| next === before\) return;[\s\S]*?lastReceipt = null;[\s\S]*?lastCharacterReaction = null;[\s\S]*?render\(\);[\s\S]*?\}\);/,
+  );
+  assert.match(
+    buildSource,
+    /source: 'browser\/partner-dialogue-source-registry\.mjs', output: 'partner-dialogue-source-registry\.mjs'/,
+  );
+  assert.match(
+    buildSource,
+    /source: 'browser\/partner-advice-runtime-mount\.mjs', output: 'partner-advice-runtime-mount\.mjs'/,
+  );
 });
 
 test('unknown partner ids never become a second identity authority', () => {

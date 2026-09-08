@@ -652,7 +652,7 @@ function animateHandAuraLaunch(globalRef, documentRef, battleRoot, handle, ghost
   return true;
 }
 
-export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battleRoot = null } = {}) {
+export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battleRoot = null, rouletteEnabled = false } = {}) {
   const documentRef = globalRef?.document;
   const root = battleRoot ?? documentRef?.querySelector?.('section[data-screen="battle"]');
   if (!documentRef || !root) return null;
@@ -712,11 +712,13 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     reducedMotion: globalRef?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true,
     lowPerf: root.dataset?.lowPerf === 'true',
   });
-  const rowRouletteRuntime = mountBattlePlayableHandRowRoulette({
-    document: documentRef,
-    host: rowRouletteHost,
-    controller: rowRouletteController,
-  });
+  const rowRouletteRuntime = rouletteEnabled === true
+    ? mountBattlePlayableHandRowRoulette({
+      document: documentRef,
+      host: rowRouletteHost,
+      controller: rowRouletteController,
+    })
+    : null;
 
   let assignment = null;
   let model = null;
@@ -1072,7 +1074,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     assignment = model.assignment;
     syncHandZoneProjection(root, model);
     syncPlayableHandAffordance(root);
-    rowRouletteHost.hidden = false;
+    rowRouletteHost.hidden = rouletteEnabled !== true;
     rowRouletteRuntime?.refresh?.();
     const currentSourceHandIds = hand.map((card) => card.id);
     for (const slot of model.slots) {

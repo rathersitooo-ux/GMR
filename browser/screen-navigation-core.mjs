@@ -55,6 +55,53 @@ const HOME_ROUTE_SELECTOR = '.homePadChoice[data-home-target]';
 const HOME_SLIDEPAD_CENTER_SELECTOR = '#homePadCenter';
 const HOME_VISUAL_LAYER_SELECTOR = '.codexHomeVisualLayer';
 
+
+export const GACHA_PREVIEW_NOTICE_ID = 'gachaPreviewAuthorityNotice';
+export const GACHA_PREVIEW_NOTICE_TEXT = '※ 現在は演出プレビューです。表示されたカードは所持・保存には反映されません。';
+
+export function ensureGachaPreviewDisclosure(documentSource = globalThis.document) {
+  if (!documentSource || typeof documentSource.getElementById !== 'function' || typeof documentSource.createElement !== 'function') return null;
+  try {
+    const screen = documentSource.getElementById('gachaScreen');
+    if (!screen) return null;
+    const existing = documentSource.getElementById(GACHA_PREVIEW_NOTICE_ID);
+    if (existing) return existing;
+
+    const note = documentSource.createElement('p');
+    note.id = GACHA_PREVIEW_NOTICE_ID;
+    note.className = 'gachaPreviewAuthorityNotice';
+    note.textContent = GACHA_PREVIEW_NOTICE_TEXT;
+    note.setAttribute?.('role', 'note');
+    note.setAttribute?.('data-gacha-authority', 'preview-only');
+    if (note.style) {
+      note.style.margin = '8px 0 4px';
+      note.style.fontSize = '12px';
+      note.style.lineHeight = '1.45';
+      note.style.fontWeight = '700';
+      note.style.textAlign = 'center';
+      note.style.letterSpacing = '.01em';
+      note.style.pointerEvents = 'none';
+    }
+
+    const openButton = documentSource.getElementById('openPack');
+    if (openButton?.parentNode?.insertBefore) {
+      openButton.parentNode.insertBefore(note, openButton);
+      return note;
+    }
+    if (typeof screen.prepend === 'function') {
+      screen.prepend(note);
+      return note;
+    }
+    if (typeof screen.appendChild === 'function') {
+      screen.appendChild(note);
+      return note;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export function resolveScreenMotionIntent(from, to, reason = 'navigation') {
   const destinationKey = String(to || '').trim().toLowerCase();
   const family = SCREEN_MOTION_FAMILY_BY_SCREEN[destinationKey] || SCREEN_MOTION_FAMILY.ROUTE;
@@ -415,6 +462,7 @@ export function createScreenTransitionRuntimeAdapter({
       applySwap: (context) => {
         const applied = applyScreen(decision.to, Object.freeze({from: decision.from, to: decision.to, reason, revision: context.revision}));
         if (applied && typeof applied.then === 'function') throw new Error('applyScreen must be synchronous');
+        if (decision.to === 'gacha') ensureGachaPreviewDisclosure(globalThis.document);
       }
     });
     presentationDriver.finishRevision?.(result.revision, result.status);

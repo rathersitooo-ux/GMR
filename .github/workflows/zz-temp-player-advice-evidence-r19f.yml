@@ -237,6 +237,12 @@ jobs:
               "  createPartnerAdviceRuntimeControl,\n  projectPartnerAdviceEvidencePresentation,\n  readLatestPartnerAdviceEvidencePresentation,\n",
               'extend test imports',
           )
+          tests = once(
+              tests,
+              "  assert.match(help.message, /1対1対応/);\n",
+              "  assert.match(help.message, /このターンの展開の軸を決める/);\n  assert.match(help.message, /先にロードを1枚選ぶ/);\n",
+              'repair stale tutorial stage-coaching expectation',
+          )
 
           appended = r'''
 

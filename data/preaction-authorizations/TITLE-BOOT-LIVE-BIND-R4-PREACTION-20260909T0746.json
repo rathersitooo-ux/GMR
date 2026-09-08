@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "TITLE-BOOT-LIVE-BIND-R4-PREACTION-20260909T0746",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "TITLE_BOOT_LIVE_BINDING_R4",
+  "acquireKey": "TITLE-BOOT-LIVE-BIND-R4-20260909T0746-SOL-Q8N4V3",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "TITLE-BOOT-R4-FRESH-MAIN-NONOVERLAP-PREDICTION-20260909",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "TITLE-BOOT-R4-PR1346-BOUNDED-REHEARSAL-20260909",
+  "proceedToken": "PROCEED|TITLE-BOOT-LIVE-BIND-R4-PREACTION-20260909T0746|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|current-lease|fresh-main-3176d910|live-binding",
+  "authorizationBaseSha": "3176d910db54f09ae5b93821e71a05653f3be3a2",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "TITLE_BOOT_LIVE_BINDING_R4",
+  "leaseAcquireKey": "TITLE-BOOT-LIVE-BIND-R4-20260909T0746-SOL-Q8N4V3",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 07:46 JST",
+  "leaseUntilJst": "2026-09-09 08:46 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A641:L641",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/title-boot-live-binding-r4-20260909; browser/title-boot-runtime-mount.mjs; browser/home-cards-2p5d-presentation.mjs; tests/title-boot-runtime-mount.test.mjs; deploy/cloudflare/scripts/build.mjs; own transient PREACTION/PR/check/readback/merge only. READ_ONLY browser/title-boot-router-core.mjs, browser/GAMEROAD.html, gameplay/rules/save/economy/network and all active Road/Battle resources.",
+  "scope": [
+    "browser/title-boot-runtime-mount.mjs",
+    "browser/home-cards-2p5d-presentation.mjs",
+    "tests/title-boot-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "leaseScope": [
+    "browser/title-boot-runtime-mount.mjs",
+    "browser/home-cards-2p5d-presentation.mjs",
+    "tests/title-boot-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "solutionSignature": "Reuse the existing title-boot-router-core and rebuild the already-reviewed PR#1346 live mount on fresh main without a second router or Home transit. Preserve normal Title fallback when authoritative active-match information is unavailable and do not invent reconnect authority.",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "TITLE-BOOT-R4-PR1346-AND-NO-INTERVENING-TARGET-FILE-CHANGES-20260909",
+  "solutionSearchEvidence": [
+    "google-drive:CURRENT_ACTIVE_LEASES!A641:L641",
+    "google-drive:GAMEROAD 全作業一覧!A2:AH2#TITLE_BOOT_ROUTER",
+    "github:pr1346:head-367a30398a658b7c7e95638ebf6d1b2e2d85d4c9",
+    "github:compare:a61977cbae9c480c43137b0b9a667bb6be4de8b2...3176d910db54f09ae5b93821e71a05653f3be3a2"
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DICE-MOVEMENT-LIVE-R1-20260909T0717-SOL-Q8N4V3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "DICE_TO_EXISTING_MOVEMENT_BUDGET_LIVE_R1",
+  "acquireKey": "DICE-MOVEMENT-LIVE-R1-20260909T0717-SOL-Q8N4V3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_DICE_AND_MOVEMENT_CORES_PLUS_SINGLE_LIVE_HTML_CONTROLLER",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "REMOVED_GENERIC_TURN_BINDING_DOCUMENTS_EXACT_REUSE_SEAM_WITHOUT_SECOND_CONTROLLER",
+  "proceedToken": "PROCEED|DICE-MOVEMENT-LIVE-R1-20260909T0717-SOL-Q8N4V3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-09T07:18+09:00",
+  "authorizationBaseSha": "633c940ace9940632d40716113c7961abd300033",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/new-base-dice-live-integration.test.mjs",
+    "data/preaction-authorizations/DICE-MOVEMENT-LIVE-R1-20260909T0717-SOL-Q8N4V3.json",
+    ".github/workflows/temp-new-base-dice-probe-r1.yml",
+    "tools/temp-new-base-dice-patch-r1.py"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "DICE_TO_EXISTING_MOVEMENT_BUDGET_LIVE_R1",
+  "leaseAcquireKey": "DICE-MOVEMENT-LIVE-R1-20260909T0717-SOL-Q8N4V3",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/new-base-dice-live-integration.test.mjs",
+    "data/preaction-authorizations/DICE-MOVEMENT-LIVE-R1-20260909T0717-SOL-Q8N4V3.json",
+    ".github/workflows/temp-new-base-dice-probe-r1.yml",
+    "tools/temp-new-base-dice-patch-r1.py"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-09-09 07:17 JST",
+  "leaseUntilJst": "2026-09-09 08:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A636:N636",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/new-base-dice-movement-live-r1-20260909; browser/GAMEROAD.html; one focused test; own transient PREACTION/probe/patch files. Existing authoritative dice and movement-budget cores are read-only reuse inputs. Battle screen/janken/roulette/Road core/save/economy/network remain read-only.",
+  "solutionSignature": "ADAPT the existing GAMEROAD.html turn/movement authority so exactly one caller-authoritative dice roll per new-base turn contributes diceDelta through the existing composeTurnMovementBudget core before the current movement reservation/revalidation path. Reuse rollAuthoritativeNewBaseDice and composeTurnMovementBudget verbatim; do not mount the retired generic turn controller or create a second movement/RNG authority.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_DICE_MOVEMENT_CORES_AND_SINGLE_HTML_LIVE_CONTROLLER",
+  "solutionSearchEvidence": [
+    "Current main retains browser/new-base-authoritative-dice-core.mjs and browser/new-base-movement-budget-core.mjs with focused passing contracts and no live controller ownership.",
+    "Commit 306b849df7f65ade55ea0ec24d580ff1d15c059e intentionally removed the unmounted generic new-base orchestrator/runtime binding and states GAMEROAD.html remains the only live controller.",
+    "The removed binding provides historical composition evidence only: read authoritative dice request, inject authoritative integer source, then compose upstream base movement plus diceDelta before current reservation/revalidation. It is not to be restored as a second controller.",
+    "User-fixed CURRENT requires a dice roll every turn and addition to the existing movement budget, while die side count, card-plus-dice special formulas, caps and stop rules remain unfixed unless supplied by current authority."
+  ]
+}

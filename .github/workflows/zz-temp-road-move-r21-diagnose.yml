@@ -12,101 +12,26 @@ jobs:
   inspect:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
           ref: sol/road-move-bidirectional-head-r21-20260909
           fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Build ephemeral current-main Road candidate
+      - name: Inspect short-landscape hand collision styles
         shell: bash
         run: |
           set -euo pipefail
-          BASE=5d2e1d5c596e5400a727264d3b3eee1517b8d9c0
-          test "$(git rev-parse "$BASE":browser/GAMEROAD.html)" = "d7ae9d0532df7e66ebbf29f1e7eecb3f352d346d"
-          git fetch origin \
-            sol/road-move-bidirectional-live-r5-20260906:refs/remotes/origin/road-r5-donor \
-            sol/road-move-bidirectional-live-r6-20260906:refs/remotes/origin/road-r6-donor
-          git show refs/remotes/origin/road-r5-donor:tools/zz-temp-road-move-runtime-r5.py > /tmp/road-r21-base.py
+          test "$(git rev-parse 5d2e1d5c596e5400a727264d3b3eee1517b8d9c0:browser/GAMEROAD.html)" = "d7ae9d0532df7e66ebbf29f1e7eecb3f352d346d"
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('/tmp/road-r21-base.py'); s=p.read_text()
-          reps={
-            "BASE = '0be3a466b55cbd0af23244bc9fc90b2f5f6640fd'":"BASE = '5d2e1d5c596e5400a727264d3b3eee1517b8d9c0'",
-            "EXPECTED_HTML_BLOB = '35f9203e2be95ba07b44c875e26bfe2047a3cee5'":"EXPECTED_HTML_BLOB = 'd7ae9d0532df7e66ebbf29f1e7eecb3f352d346d'",
-            'ROAD-MOVE-RUNTIME-R5-20260906T2113-SOL-P8N4V6':'ROAD-MOVE-HEAD-R21-20260909T0446-SOL-Q8M4V3',
-            '.github/workflows/zz-temp-road-move-runtime-r5.yml':'.github/workflows/zz-temp-road-move-r21-diagnose.yml',
-            'road-move-bidirectional-live-r5.spec.mjs':'road-move-bidirectional-live-r21.spec.mjs',
-            'ROAD-MOVE-BIDIRECTIONAL-R5':'ROAD-MOVE-BIDIRECTIONAL-R21',
-            'R5 source contract':'R21 source contract',
-            'R5_PATCH_READY':'R21_PATCH_READY',
-          }
-          for a,b in reps.items():
-            if a not in s: raise SystemExit('donor adaptation anchor missing: '+a)
-            s=s.replace(a,b)
-          s=s.replace("    'tools/zz-temp-road-move-runtime-r5.py',\n",'')
-          p.write_text(s)
+          s=Path('browser/GAMEROAD.html').read_text()
+          for needle in ['grPlayableHandCandidate','first10Focus','.first10Focus','playableHand','.handCard{','@media(max-height:470px) and (orientation:landscape)']:
+            print(f'=== {needle} count={s.count(needle)} ===')
+            start=0
+            for n in range(min(s.count(needle),16)):
+              i=s.find(needle,start)
+              if i<0: break
+              print(f'--- {n+1} @ {i} ---')
+              print(s[max(0,i-700):min(len(s),i+1500)])
+              start=i+len(needle)
           PY
-          python3 /tmp/road-r21-base.py
-          git show refs/remotes/origin/road-r6-donor:tools/zz-temp-road-move-runtime-r6.py > /tmp/road-r21-post.py
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('/tmp/road-r21-post.py'); s=p.read_text()
-          if 'tests/road-move-bidirectional-live-r6.spec.mjs' not in s: raise SystemExit('R6 spec anchor missing')
-          p.write_text(s.replace('tests/road-move-bidirectional-live-r6.spec.mjs','tests/road-move-bidirectional-live-r21.spec.mjs').replace('R6_POSTPATCH_READY','R21_POSTPATCH_READY'))
-          PY
-          python3 /tmp/road-r21-post.py
-          python3 - <<'PY'
-          from pathlib import Path
-          html=Path('browser/GAMEROAD.html'); s=html.read_text()
-          old="const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0];if(!me?.plan?.roadId){ctxSet('PLAN_CARD_MISSING',{message:'先にロードカードを選ぶと移動範囲を決められます。'});return}const path=shortest(me.position,id,normalMoveLimitForRoad(me.plan.roadId),me);if(!path){ctxSet('MOVE_PATH_INVALID');return}const r=__ctxBaseSelectEndpoint(id);ctxClear();return r};"
-          new="const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0],moveLimit=draftMoveLimitForPlayer(me);if(moveLimit<1){ctxSet('PLAN_CARD_MISSING',{message:'移動に使えるロードカードがありません。'});return}const path=shortest(me.position,id,moveLimit,me);if(!path){ctxSet('MOVE_PATH_INVALID');return}const r=__ctxBaseSelectEndpoint(id);ctxClear();return r};"
-          if s.count(old)!=1: raise SystemExit(f'context endpoint wrapper mismatch: {s.count(old)}')
-          html.write_text(s.replace(old,new,1))
-          spec=Path('tests/road-move-bidirectional-live-r21.spec.mjs'); t=spec.read_text()
-          stale='  expect(html).toContain("removeHand(p,p.plan.battleId)");'
-          semantic='  expect(html).toContain("let battle=p.plan.battleId;");\n  expect(html).toContain("removeHand(p,battle)");'
-          if stale in t: t=t.replace(stale,semantic,1)
-          t += r'''
-
-test('R21 diagnosis: 844x390 Road-card hit geometry',async({page})=>{
-  await openRoadBattle(page);
-  const snap=await snapshot(page);
-  const id=snap.ordinaryRoadIds[0];
-  expect(id).toBeTruthy();
-  const info=await page.evaluate((id)=>{
-    const card=document.querySelector(`#hand .handCard[data-card-id="${CSS.escape(id)}"]`),plan=document.querySelector('.planBox'),hand=document.querySelector('#hand'),battleInfo=document.querySelector('.battleInfo');
-    const rect=e=>{const r=e.getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom}};
-    const cr=rect(card),pr=rect(plan),hr=rect(hand),br=rect(battleInfo),samples=[];
-    for(const [name,fx,fy] of [['center',.5,.5],['upper',.5,.18],['upperL',.3,.18],['upperR',.7,.18],['midL',.3,.35],['midR',.7,.35]]){const x=cr.x+cr.width*fx,y=cr.y+cr.height*fy,hit=document.elementFromPoint(x,y);samples.push({name,x,y,tag:hit?.tagName,cls:hit?.className||'',id:hit?.id||'',owns:!!hit&&(hit===card||card.contains(hit))})}
-    return{id,card:cr,plan:pr,hand:hr,battleInfo:br,samples,viewport:{w:innerWidth,h:innerHeight}};
-  },id);
-  console.log('R21_GEOMETRY '+JSON.stringify(info));
-  expect(info.samples.some(s=>s.owns)).toBe(true);
-});
-'''
-          spec.write_text(t)
-          PY
-          git diff --check
-          node --test tests/road-move-compatibility-core.test.mjs
-      - name: Install Playwright Chromium
-        run: |
-          npm install --no-save --no-package-lock @playwright/test@1.62.0
-          npx playwright install --with-deps chromium
-      - name: Measure real 844x390 pointer geometry
-        shell: bash
-        run: |
-          cat > .road-r21.config.mjs <<'EOF'
-          import { defineConfig } from '@playwright/test';
-          export default defineConfig({testDir:'./tests',testMatch:'road-move-bidirectional-live-r21.spec.mjs',timeout:60000,expect:{timeout:10000},workers:1,retries:0,reporter:[['line']],use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,viewport:{width:844,height:390},trace:'off',screenshot:'off',video:'off'},webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1',url:'http://127.0.0.1:4173/browser/GAMEROAD.html',reuseExistingServer:false,timeout:120000}});
-          EOF
-          npx playwright test --config=.road-r21.config.mjs --grep 'R21 diagnosis' --workers=1
-      - name: Prove diagnostic branch product remained unchanged
-        if: always()
-        shell: bash
-        run: |
-          git reset --hard HEAD
-          test "$(git rev-parse HEAD:browser/GAMEROAD.html)" = "d7ae9d0532df7e66ebbf29f1e7eecb3f352d346d"

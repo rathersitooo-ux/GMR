@@ -761,3 +761,76 @@ test('Home route takeover preserves low-perf and reduced-motion spatial suppress
   assert.equal(reduced.homeVisual.animations.length, 0);
   assert.equal(reduced.cards.animations.length, 0);
 });
+
+
+test('successful Gacha navigation adds one truthful preview-only notice and never stacks it', async () => {
+  const originalDocument = Object.getOwnPropertyDescriptor(globalThis, 'document');
+  const byId = new Map();
+  const controls = {
+    children: [],
+    insertBefore(node, before) {
+      const index = this.children.indexOf(before);
+      this.children.splice(index < 0 ? this.children.length : index, 0, node);
+      node.parentNode = this;
+      byId.set(node.id, node);
+    }
+  };
+  const openButton = {id: 'openPack', parentNode: controls};
+  controls.children.push(openButton);
+  const gachaScreen = {
+    id: 'gachaScreen', children: [],
+    prepend(node) { this.children.unshift(node); byId.set(node.id, node); },
+    appendChild(node) { this.children.push(node); byId.set(node.id, node); }
+  };
+  byId.set('openPack', openButton);
+  byId.set('gachaScreen', gachaScreen);
+  const fakeDocument = {
+    getElementById(id) { return byId.get(id) || null; },
+    createElement(tagName) {
+      return {
+        tagName: String(tagName).toUpperCase(), style: {}, attributes: {},
+        setAttribute(key, value) { this.attributes[key] = value; }
+      };
+    }
+  };
+  Object.defineProperty(globalThis, 'document', {value: fakeDocument, configurable: true});
+
+  let currentScreen = 'shop';
+  const presentationDriver = {
+    async runPhase() {},
+    finishRevision() {},
+    getState() { return Object.freeze({activeRevisions: Object.freeze([]), events: Object.freeze([])}); }
+  };
+  const runtime = createScreenTransitionRuntimeAdapter({
+    getCurrentScreen: () => currentScreen,
+    applyScreen: (next) => { currentScreen = next; },
+    presentationDriver
+  });
+
+  try {
+    const first = await runtime.navigate('gacha');
+    assert.equal(first.status, 'completed');
+    assert.equal(currentScreen, 'gacha');
+    const note = byId.get('gachaPreviewAuthorityNotice');
+    assert.ok(note);
+    assert.equal(note.textContent, '※ 現在は演出プレビューです。表示されたカードは所持・保存には反映されません。');
+    assert.equal(note.attributes.role, 'note');
+    assert.equal(note.attributes['data-gacha-authority'], 'preview-only');
+    assert.deepEqual(controls.children, [note, openButton]);
+
+    currentScreen = 'shop';
+    const second = await runtime.navigate('gacha');
+    assert.equal(second.status, 'completed');
+    assert.equal(controls.children.filter((node) => node.id === 'gachaPreviewAuthorityNotice').length, 1);
+  } finally {
+    if (originalDocument) Object.defineProperty(globalThis, 'document', originalDocument);
+    else delete globalThis.document;
+  }
+});
+
+test('Gacha preview disclosure fails soft when the Gacha surface is absent', async () => {
+  const {ensureGachaPreviewDisclosure} = await import('../browser/screen-navigation-core.mjs');
+  assert.equal(ensureGachaPreviewDisclosure(undefined), null);
+  assert.equal(ensureGachaPreviewDisclosure({}), null);
+  assert.equal(ensureGachaPreviewDisclosure({getElementById: () => null, createElement: () => ({})}), null);
+});

@@ -1,0 +1,30 @@
+name: zz-temp-ze-kuu-test-r2
+on:
+  push:
+    branches:
+      - sol/ze-kuu-card-art-r1-20260908
+permissions:
+  contents: write
+jobs:
+  focused-test:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/ze-kuu-card-art-r1-20260908
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run focused Ze-Kuu test
+        run: node --test tests/ze-kuu-formal-card-art.test.mjs
+      - name: Remove temporary workflow after pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/zz-temp-ze-kuu-test-r2.yml
+          git commit -m 'chore: remove temporary Ze-Kuu test workflow'
+          git push origin HEAD:sol/ze-kuu-card-art-r1-20260908

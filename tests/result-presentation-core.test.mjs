@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   RESULT_PRESENTATION_CORE,
   applyResultPresentationEvent,
@@ -250,4 +251,10 @@ test('live input fails closed for invalid input and illegal stage transitions wi
   assert.equal(illegal.reason, 'STAGE_MISMATCH');
   assert.equal(illegal.state, state);
   assert.deepEqual(projectResultPresentation(state).finalizedResult, finalizedResult);
+});
+
+
+test('normal ranked Result character presentation never requests the defeated state', () => {
+  const source = readFileSync(new URL('../browser/GAMEROAD.html', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /r\.grade===1\?'joy':'defeated'/);
 });

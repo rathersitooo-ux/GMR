@@ -1,0 +1,195 @@
+name: TEMP Road Move Bidirectional Live R17
+
+on:
+  push:
+    branches:
+      - sol/road-move-bidirectional-live-r17-20260908
+
+permissions:
+  contents: write
+
+jobs:
+  apply-validate-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: sol/road-move-bidirectional-live-r17-20260908
+          fetch-depth: 0
+
+      - name: Verify PRE_ACTION, lease scope and exact product base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=a18ea1f5474eaa55152865e8c951b01afe1e071c
+          MANIFEST=data/preaction-authorizations/ROAD-MOVE-RUNTIME-R17-20260908T1107-SOL-Q8N4M7.json
+          test -f "$MANIFEST"
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git rev-parse "$BASE":browser/GAMEROAD.html)" = "35f9203e2be95ba07b44c875e26bfe2047a3cee5"
+          test "$(git hash-object browser/GAMEROAD.html)" = "35f9203e2be95ba07b44c875e26bfe2047a3cee5"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('data/preaction-authorizations/ROAD-MOVE-RUNTIME-R17-20260908T1107-SOL-Q8N4M7.json')
+          d=json.loads(p.read_text())
+          assert d['authorizationBaseSha']=='a18ea1f5474eaa55152865e8c951b01afe1e071c'
+          assert d['leaseSnapshotReadbackRef']=='CURRENT_ACTIVE_LEASES!A618:L618'
+          assert d['leaseAcquireKey']=='ROAD-MOVE-RUNTIME-R17-20260908T1107-SOL-Q8N4M7'
+          assert 'browser/GAMEROAD.html' in d['scope']
+          PY
+
+      - name: Build proven R17 product candidate from R5/R6/R16 donors
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin \
+            sol/road-move-bidirectional-live-r5-20260906:refs/remotes/origin/road-r5-donor \
+            sol/road-move-bidirectional-live-r6-20260906:refs/remotes/origin/road-r6-donor
+
+          git show refs/remotes/origin/road-r5-donor:tools/zz-temp-road-move-runtime-r5.py > /tmp/road-r17-base.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/road-r17-base.py')
+          s=p.read_text()
+          s=s.replace("BASE = '0be3a466b55cbd0af23244bc9fc90b2f5f6640fd'", "BASE = 'a18ea1f5474eaa55152865e8c951b01afe1e071c'")
+          s=s.replace('ROAD-MOVE-RUNTIME-R5-20260906T2113-SOL-P8N4V6','ROAD-MOVE-RUNTIME-R17-20260908T1107-SOL-Q8N4M7')
+          s=s.replace('.github/workflows/zz-temp-road-move-runtime-r5.yml','.github/workflows/zz-temp-road-move-runtime-r17.yml')
+          s=s.replace("    'tools/zz-temp-road-move-runtime-r5.py',\n",'')
+          s=s.replace('road-move-bidirectional-live-r5.spec.mjs','road-move-bidirectional-live-r17.spec.mjs')
+          s=s.replace('ROAD-MOVE-BIDIRECTIONAL-R5','ROAD-MOVE-BIDIRECTIONAL-R17')
+          s=s.replace('R5 source contract','R17 source contract').replace('R5_PATCH_READY','R17_PATCH_READY')
+          p.write_text(s)
+          PY
+          python3 /tmp/road-r17-base.py
+
+          git show refs/remotes/origin/road-r6-donor:tools/zz-temp-road-move-runtime-r6.py > /tmp/road-r17-post.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/road-r17-post.py')
+          s=p.read_text().replace('tests/road-move-bidirectional-live-r6.spec.mjs','tests/road-move-bidirectional-live-r17.spec.mjs').replace('R6_POSTPATCH_READY','R17_POSTPATCH_READY')
+          p.write_text(s)
+          PY
+          python3 /tmp/road-r17-post.py
+
+          python3 - <<'PY'
+          from pathlib import Path
+          html=Path('browser/GAMEROAD.html')
+          s=html.read_text()
+          old="const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0];if(!me?.plan?.roadId){ctxSet('PLAN_CARD_MISSING',{message:'先にロードカードを選ぶと移動範囲を決められます。'});return}const path=shortest(me.position,id,normalMoveLimitForRoad(me.plan.roadId),me);if(!path){ctxSet('MOVE_PATH_INVALID');return}const r=__ctxBaseSelectEndpoint(id);ctxClear();return r};"
+          new="const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0],moveLimit=draftMoveLimitForPlayer(me);if(moveLimit<1){ctxSet('PLAN_CARD_MISSING',{message:'移動に使えるロードカードがありません。'});return}const path=shortest(me.position,id,moveLimit,me);if(!path){ctxSet('MOVE_PATH_INVALID');return}const r=__ctxBaseSelectEndpoint(id);ctxClear();return r};"
+          if s.count(old)!=1: raise SystemExit(f'context endpoint wrapper mismatch: {s.count(old)}')
+          s=s.replace(old,new,1)
+          html.write_text(s)
+
+          spec=Path('tests/road-move-bidirectional-live-r17.spec.mjs')
+          t=spec.read_text()
+          stale='  expect(html).toContain("removeHand(p,p.plan.battleId)");'
+          semantic='  expect(html).toContain("let battle=p.plan.battleId;");\n  expect(html).toContain("removeHand(p,battle)");'
+          if stale not in t: raise SystemExit('stale Battle source assertion not found')
+          t=t.replace(stale,semantic,1)
+
+          anchor="async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}\n"
+          helper="""async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}\nasync function physicalTapReachable(page,distance=1){\n  const point=await page.evaluate((distance)=>{\n    const nodes=[...document.querySelectorAll(`.node.reachable[data-move-distance=\"${distance}\"]`)];\n    for(const node of nodes){\n      const r=node.getBoundingClientRect(),style=getComputedStyle(node);\n      if(!(r.width>0&&r.height>0)||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)continue;\n      const x=r.left+r.width/2,y=r.top+r.height/2,hit=document.elementFromPoint(x,y);\n      if(hit&&(hit===node||node.contains(hit)))return{x,y,pos:node.dataset.pos};\n    }\n    return null;\n  },String(distance));\n  expect(point).not.toBeNull();\n  await page.mouse.click(point.x,point.y);\n}\nasync function physicalTapCard(page,id){\n  const point=await page.evaluate((id)=>{\n    const node=document.querySelector(`#hand .handCard[data-card-id=\"${CSS.escape(id)}\"]`);\n    if(!node)return null;\n    const r=node.getBoundingClientRect(),style=getComputedStyle(node);\n    if(!(r.width>0&&r.height>0)||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)return null;\n    const samples=[[.5,.18],[.3,.18],[.7,.18],[.5,.35],[.3,.35],[.7,.35],[.5,.65],[.3,.65],[.7,.65]];\n    for(const [fx,fy] of samples){\n      const x=r.left+r.width*fx,y=r.top+r.height*fy,hit=document.elementFromPoint(x,y);\n      if(hit&&(hit===node||node.contains(hit)))return{x,y};\n    }\n    return null;\n  },id);\n  expect(point).not.toBeNull();\n  await page.mouse.click(point.x,point.y);\n}\n"""
+          if anchor not in t: raise SystemExit('snapshot helper anchor missing')
+          t=t.replace(anchor,helper,1)
+          t=t.replace('await next.click();','await physicalTapReachable(page,1);')
+          t=t.replace('await target.click();','await physicalTapReachable(page,targetDistance);')
+          if 'await card.click();' not in t: raise SystemExit('card-first click anchor missing')
+          t=t.replace('await card.click();','await physicalTapCard(page,id);',1)
+          spec.write_text(t)
+          PY
+
+          cat >> tests/road-move-bidirectional-live-r17.spec.mjs <<'EOF'
+
+          test('LowPerf keeps move-first Road matching and Battle-card noninterference',async({page})=>{
+            const battle=await openRoadBattle(page);
+            const enabled=await page.evaluate(()=>{const e=document.querySelector('#lowPerf');if(!e)return false;if(!/ON/.test(e.textContent||''))e.click();return /ON/.test(e.textContent||'')});
+            expect(enabled).toBe(true);
+            const before=await snapshot(page);
+            expect(before.roadId).toBeNull();
+            expect(before.battleId).toBeNull();
+            await physicalTapReachable(page,1);
+            const moved=await snapshot(page);
+            expect(moved.compatibleRoadIds.length).toBeGreaterThan(0);
+            expect(moved.battleId).toBeNull();
+            const id=moved.compatibleRoadIds[0];
+            await physicalTapCard(page,id);
+            const focused=await snapshot(page);
+            expect(focused.roadId).toBe(id);
+            expect(focused.battleId).toBeNull();
+            expect(focused.path).toEqual(moved.path);
+            await expect(battle.locator(`#hand .handCard[data-card-id="${id}"]`)).toHaveAttribute('data-road-move-state','FOCUSED');
+          });
+          EOF
+
+          git diff --check
+          test "$(git hash-object browser/battle-janken-slidepad-runtime-mount.mjs)" = "$(git rev-parse a18ea1f5474eaa55152865e8c951b01afe1e071c:browser/battle-janken-slidepad-runtime-mount.mjs)"
+          test "$(git hash-object browser/road-move-compatibility-core.mjs)" = "$(git rev-parse a18ea1f5474eaa55152865e8c951b01afe1e071c:browser/road-move-compatibility-core.mjs)"
+          test "$(git hash-object tests/road-move-compatibility-core.test.mjs)" = "$(git rev-parse a18ea1f5474eaa55152865e8c951b01afe1e071c:tests/road-move-compatibility-core.test.mjs)"
+
+      - name: Run pure Road compatibility regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/road-move-compatibility-core.test.mjs
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+
+      - name: Run live Road acceptance on required environments
+        shell: bash
+        run: |
+          set -euo pipefail
+          run_env(){
+            name="$1"; width="$2"; height="$3"; reduced="$4"
+            cat > ".road-r17-${name}.config.mjs" <<EOF
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir: './tests',
+            testMatch: 'road-move-bidirectional-live-r17.spec.mjs',
+            timeout: 60000,
+            expect: { timeout: 10000 },
+            workers: 1,
+            retries: 0,
+            reporter: [['line']],
+            use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true, viewport: { width: ${width}, height: ${height} }, reducedMotion: '${reduced}', trace: 'off', screenshot: 'off', video: 'off' },
+            webServer: { command: 'python3 -m http.server 4173 --bind 127.0.0.1', url: 'http://127.0.0.1:4173/browser/GAMEROAD.html', reuseExistingServer: false, timeout: 120000 }
+          });
+          EOF
+            npx playwright test --config=".road-r17-${name}.config.mjs" --workers=1
+            rm -f ".road-r17-${name}.config.mjs"
+          }
+          run_env desktop 1280 720 no-preference
+          run_env phone 390 844 no-preference
+          run_env landscape 844 390 no-preference
+          run_env reduced 844 390 reduce
+
+      - name: Verify bounded product diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=a18ea1f5474eaa55152865e8c951b01afe1e071c
+          changed="$(git diff --name-only "$BASE" -- browser/GAMEROAD.html tests/road-move-bidirectional-live-r17.spec.mjs | sort | tr '\n' ' ')"
+          test "$changed" = "browser/GAMEROAD.html tests/road-move-bidirectional-live-r17.spec.mjs "
+          test "$(git diff --name-only "$BASE" -- browser/battle-janken-slidepad-runtime-mount.mjs browser/battle-screen-runtime-mount.mjs browser/road-move-compatibility-core.mjs tests/road-move-compatibility-core.test.mjs | wc -l)" -eq 0
+          grep -F 'ROAD-MOVE-BIDIRECTIONAL-R17' browser/GAMEROAD.html >/dev/null
+          grep -F 'data-road-move-state="COMPATIBLE"' browser/GAMEROAD.html >/dev/null
+          grep -F "compatible Road card taps stay Road-side" tests/road-move-bidirectional-live-r17.spec.mjs >/dev/null
+          grep -F "Battle-card noninterference" tests/road-move-bidirectional-live-r17.spec.mjs >/dev/null
+
+      - name: Commit product and remove transient controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/zz-temp-road-move-runtime-r17.yml
+          rm -f data/preaction-authorizations/ROAD-MOVE-RUNTIME-R17-20260908T1107-SOL-Q8N4M7.json
+          rm -f tools/zz-temp-road-move-runtime-r17.py
+          git config user.name "gameroad-runtime-bot"
+          git config user.email "gameroad-runtime-bot@users.noreply.github.com"
+          git add -A
+          git commit -m "Road: enable bidirectional card and movement planning"
+          git push origin HEAD:sol/road-move-bidirectional-live-r17-20260908

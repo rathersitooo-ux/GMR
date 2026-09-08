@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DOPPEL-RUNTIME-R7-20260909T0042-SOL-Q8N5V3",
+  "taskId": "DOPPELGANGER-NORMAL-RULE-RUNTIME-001",
+  "workUnitKey": "DOPPELGANGER_COMMON_VALUE_LIVE_WIRING_R7",
+  "acquireKey": "DOPPEL-RUNTIME-R7-20260909T0042-SOL-Q8N5V3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_DOPPEL_CORE_V3_PLUS_ROAD_VALUE_CONSUMER",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FAIL_CLOSED_GIANT_HTML_INSPECTOR_BEFORE_PRODUCT_PATCH",
+  "proceedToken": "PROCEED|DOPPEL-RUNTIME-R7-20260909T0042-SOL-Q8N5V3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-09T00:42+09:00",
+  "authorizationBaseSha": "322d27f53247d48ebd16f0ece215e81f92a6ea5b",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/doppelganger-continuous-rule-core.test.mjs",
+    ".github/workflows/zz-temp-doppel-runtime-r7.yml",
+    "tools/zz-temp-doppel-runtime-r7.py"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DOPPELGANGER-NORMAL-RULE-RUNTIME-001",
+  "leaseWorkUnitKey": "DOPPELGANGER_COMMON_VALUE_LIVE_WIRING_R7",
+  "leaseAcquireKey": "DOPPEL-RUNTIME-R7-20260909T0042-SOL-Q8N5V3",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/doppelganger-continuous-rule-core.test.mjs",
+    ".github/workflows/zz-temp-doppel-runtime-r7.yml",
+    "tools/zz-temp-doppel-runtime-r7.py"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-09-09 00:42 JST",
+  "leaseUntilJst": "2026-09-09 01:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A629:L629",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean branch sol/doppel-runtime-r7-20260909 from exact main 322d27f53247d48ebd16f0ece215e81f92a6ea5b; browser/GAMEROAD.html; tests/doppelganger-continuous-rule-core.test.mjs; transient .github/workflows/zz-temp-doppel-runtime-r7.yml; transient tools/zz-temp-doppel-runtime-r7.py; transient data/preaction-authorizations/DOPPEL-RUNTIME-R7-20260909T0042-SOL-Q8N5V3.json; own PR/check/merge/main/public readback. READ_ONLY: browser/doppelganger-continuous-rule-core.mjs; browser/road-move-compatibility-core.mjs; Road/Battle topology/card lifecycle/rules/save/economy/network; Study R3 resources.",
+  "solutionSignature": "Adapt the already-merged global Doppelganger delta resolver into the one existing live current-value seam used by Road/Battle, only if bounded inspection proves that seam; otherwise make no product change.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "DOPPEL_CORE_V3_AND_ROAD_VALUEOF_EXISTING_SEAM",
+  "solutionSearchEvidence": [
+    "Current task authority states the common-rule core is merged and only live current-value wiring remains.",
+    "Current browser/doppelganger-continuous-rule-core.mjs v3 resolves one whole-field printed-value census and returns negative deltas without owning generic modifier order or clamping.",
+    "Current browser/road-move-compatibility-core.mjs consumes an injected boardState.roadValueOf(card), proving Road already expects a reusable current-value seam rather than a Doppelganger-specific engine.",
+    "Current active lease authority has no product owner for browser/GAMEROAD.html or the Doppelganger core; Study R3 owns separate Home/Study/build resources.",
+    "No card-ID trigger, ability registry, second numeric engine, save schema, network schema, or new game rule is required or permitted."
+  ]
+}

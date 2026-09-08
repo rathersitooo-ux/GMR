@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SHORT-LANDSCAPE-DECONFLICT-R2-20260908T1049-SOL-L7Q4N8",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_SHORT_LANDSCAPE_POINTER_OCCLUSION_R2",
+  "acquireKey": "BATTLE-SHORT-LANDSCAPE-DECONFLICT-R2-20260908T1049-SOL-L7Q4N8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BFI-34175531926-short-landscape-readyPlan-pointer-occlusion",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "exact-public-build-bfc1258-visible-four-player-short-landscape-failure-log",
+  "proceedToken": "PROCEED|BATTLE-SHORT-LANDSCAPE-DECONFLICT-R2-20260908T1049-SOL-L7Q4N8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-08T10:50+09:00",
+  "authorizationBaseSha": "bfc125842eab5a51cf327df184fa9dd040578e4b",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-short-landscape-deconflict-r2.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_SHORT_LANDSCAPE_POINTER_OCCLUSION_R2",
+  "leaseAcquireKey": "BATTLE-SHORT-LANDSCAPE-DECONFLICT-R2-20260908T1049-SOL-L7Q4N8",
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-short-landscape-deconflict-r2.yml"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-09-08 10:49 JST",
+  "leaseUntilJst": "2026-09-08 11:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A616:N616",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean branch from exact fresh main bfc125842eab5a51cf327df184fa9dd040578e4b; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient .github/workflows/zz-temp-battle-short-landscape-deconflict-r2.yml; transient data/preaction-authorizations/BATTLE-SHORT-LANDSCAPE-DECONFLICT-R2-20260908T1049-SOL-L7Q4N8.json; own PR/check/merge/main/public/readback and Browser Full Interaction evidence. READ_ONLY: browser/GAMEROAD.html; browser/battle-playable-hand-row-roulette-runtime.mjs; browser/battle-screen-runtime-mount.mjs; Battle rules/state/save/economy/network; Road/109/Partner authority.",
+  "solutionSignature": "Minimal short-landscape geometry correction that moves the compact janken host away from the visible 準備完了 control while preserving compact slots, 58px primary handle, roulette compaction and all Battle semantics",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "exact-public-BFI-34175531926-plus-pre-R1-passing-short-landscape-path",
+  "solutionSearchEvidence": [
+    "Exact public build bfc125842eab5a51cf327df184fa9dd040578e4b reproduces a 667x375 timeout because the expanded janken SlidePad handle/suit intercepts #readyPlan pointer events",
+    "The preceding public interaction run on main 528f0b09e124f7bc3df1b4404b832fb395ad3a80 completed the same short-landscape path before R1 shifted the host from right:7px to right:58px",
+    "R1 already achieved the desired compact visual scale using width:188px, height:146px, 60x80 slots and a 58x58 primary handle, so the smallest repair is to preserve those values and restore a non-occluding right-edge host position",
+    "Fresh CURRENT_ACTIVE_LEASES readback shows this conversation owns the exact runtime and focused test through 11:45 JST"
+  ]
+}

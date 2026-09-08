@@ -1,0 +1,39 @@
+name: TEMP Gacha preview truth R4
+
+on:
+  push:
+    branches:
+      - sol/gacha-preview-truth-r4-20260909
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/gacha-preview-truth-r4-20260909
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply bounded product patch
+        run: python tools/zz-temp-gacha-preview-truth-r4.py
+      - name: Focused screen-navigation regression
+        run: node --test tests/screen-navigation-core.test.mjs
+      - name: Public package provenance regression
+        run: node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Commit bounded product patch once
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- browser/screen-navigation-core.mjs tests/screen-navigation-core.test.mjs deploy/cloudflare/tests/build.test.mjs; then
+            echo 'No product diff remains; nothing to commit.'
+            exit 0
+          fi
+          git config user.name 'gameroad-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add browser/screen-navigation-core.mjs tests/screen-navigation-core.test.mjs deploy/cloudflare/tests/build.test.mjs
+          git commit -m 'Gacha: preview-only表示を既存画面遷移へ接続'
+          git push origin HEAD:sol/gacha-preview-truth-r4-20260909

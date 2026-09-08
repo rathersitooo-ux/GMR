@@ -43,8 +43,71 @@ jobs:
       - name: Install Chromium and OS dependencies
         run: npx playwright install --with-deps chromium
 
-      - name: Run GAMEROAD full interaction evidence R1
-        run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
+      - name: Run bounded Deck save and recovery evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 \
+            --grep 'persists a legal 40-card deck across save and page reload through visible UI|deck recovery preserves blocked raw saves, repairs legacy only on explicit legal commit, rolls back failures, and resets without reseeding'
+
+      - name: Prove current Deck save guard single mount identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .deck-save-actual
+          cat > .deck-save-actual/deck-save-single-install.spec.mjs <<'EOF'
+          import { test, expect } from '@playwright/test';
+
+          test('current Deck save guard has one mounted module identity and idempotent install', async ({ page }) => {
+            const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
+            expect(response?.ok()).toBeTruthy();
+            await page.waitForTimeout(1_000);
+            const evidence = await page.evaluate(() => {
+              const guard = globalThis.GAMEROAD_DECK_SAVE_ATOMICITY_GUARD;
+              const directScripts = [...document.scripts]
+                .map((node) => node.src)
+                .filter((src) => src.includes('deck-save-recovery-core.mjs'));
+              const resourceUrls = performance.getEntriesByType('resource')
+                .map((entry) => entry.name)
+                .filter((url) => url.includes('deck-save-recovery-core.mjs'));
+              const first = guard?.install?.({ document, window }) ?? null;
+              const second = guard?.install?.({ document, window }) ?? null;
+              return {
+                directScripts,
+                resourceUrls,
+                guardSnapshot: guard?.snapshot?.() ?? null,
+                sameInstallation: first !== null && first === second,
+              };
+            });
+            expect(evidence.directScripts).toHaveLength(1);
+            expect(new Set(evidence.resourceUrls.map((url) => new URL(url).pathname)).size).toBe(1);
+            expect(evidence.guardSnapshot?.status).toBe('ready');
+            expect(evidence.guardSnapshot?.reason).toBe('LIVE_GUARD_INSTALLED');
+            expect(evidence.sameInstallation).toBe(true);
+          });
+          EOF
+          cat > .deck-save-actual/playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          import baseConfig from '../playwright.full-interaction.config.mjs';
+
+          const projects = (baseConfig.projects ?? [])
+            .filter((project) => !project.grep)
+            .map((project) => ({ name: project.name, use: project.use }));
+
+          export default defineConfig({
+            testDir: '.',
+            testMatch: 'deck-save-single-install.spec.mjs',
+            timeout: 30_000,
+            expect: { timeout: 7_000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            use: baseConfig.use,
+            projects,
+            webServer: baseConfig.webServer,
+          });
+          EOF
+          npx playwright test --config=.deck-save-actual/playwright.config.mjs --workers=1
 
       - name: Upload interaction evidence
         if: ${{ !cancelled() }}

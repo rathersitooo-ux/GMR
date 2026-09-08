@@ -45,6 +45,11 @@ write/update/delete/commit/push/merge/deploy等の直前に、少なくとも次
 
 materialな矛盾があれば推測補完せず、その影響範囲だけ止める。mutation結果がtimeout/disconnect等でUNKNOWNなら盲目的に再送せず、fresh-readして `NOT_APPLIED / APPLIED_AND_VERIFIED / PARTIALLY_APPLIED / UNKNOWN` へ収束してからretry/repair/rollbackを選ぶ。
 
+### GitHub writerのpush前門
+Gitを実行できるlocal/Codex writerは、最初のmaterial Git作業前に `git config core.hooksPath .githooks` を設定し、readbackが `.githooks` であることを確認する。material pushはcommitted `.githooks/pre-push` を通し、`--no-verify` で迂回しない。
+
+PRE_ACTION authorizationは、検証済みmanifestだけのfirst commitをbootstrapとして先に送り、その後のimplementationを積み、最終push前にmanifestをcleanupする。hookを実行できないGitHub API等のwriterは、同じbase/lease/scope/commit-order/path-classification/focused-test/public-package preflightをpush前に再現できる場合だけwriteする。再現できない場合はCIに失敗発見を委ねてpushせず `WRITE0` / handoffへ戻す。Required Gateは最後のserver fail-closeであり、このpre-push門で置換しない。
+
 ## 6. testと完成判定
 failed / pending / skipped / unrun / unknownをPASSにしない。commit / PR / merge / green CIだけをruntime/product完成証拠にしない。player-visible変更はactual player route / use-siteで確認する。
 

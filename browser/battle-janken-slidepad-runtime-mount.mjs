@@ -7,6 +7,10 @@ import {
   createSlotRollState,
   resolveSlotRollCommit,
 } from './slidepad-slot-roll-core.mjs';
+import {
+  createBattlePlayableHandRowRouletteController,
+  mountBattlePlayableHandRowRoulette,
+} from './battle-playable-hand-row-roulette-runtime.mjs';
 
 export const BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA = 'gameroad.battle-janken-slidepad-runtime.v1';
 
@@ -29,6 +33,12 @@ const HAND_AURA_RELEASE_DURATION_MS = 520;
 const SLOT_ROLL_DETENT_FEEDBACK_DURATION_MS = 110;
 export const BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS = 'section[data-screen="battle"] #targetBox.on,section[data-screen="battle"] #targetBox.vfTargetProxyOn{z-index:60!important}';
 export const BATTLE_HAND_PLAYABLE_AFFORDANCE_SCHEMA = 'gameroad.battle-hand-playable-affordance.v1';
+export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR = 'data-battle-playable-hand-row-roulette-live';
+export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_PLACEMENT_CSS = `
+section[data-screen="battle"] [${BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR}="1"]{position:absolute;left:var(--gameroad-battle-partner-right-x,clamp(112px,14vw,174px));bottom:var(--gameroad-battle-partner-upper-y,clamp(92px,16vh,142px));z-index:39;pointer-events:auto;max-width:min(236px,36vw)}
+@media(max-height:430px) and (orientation:landscape){section[data-screen="battle"] [${BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR}="1"]{left:var(--gameroad-battle-partner-right-x,104px);bottom:var(--gameroad-battle-partner-upper-y,84px);transform:scale(.86);transform-origin:left bottom}}
+@media(max-width:540px) and (orientation:portrait){section[data-screen="battle"] [${BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR}="1"]{left:10px;bottom:220px;max-width:46vw}}
+`;
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -323,6 +333,7 @@ section[data-screen="battle"] #hand.grPlayableHandActionBase{position:relative;i
 section[data-screen="battle"] #hand.grPlayableHandActionBase::before{content:"";position:absolute;left:50%;bottom:-7px;width:min(270px,88%);height:30px;transform:translateX(-50%);border-top:2px solid rgba(255,216,74,.92);border-radius:50% 50% 8px 8px/100% 100% 8px 8px;background:radial-gradient(ellipse at 50% 0%,rgba(255,216,74,.18),rgba(255,216,74,.06) 54%,transparent 72%);box-shadow:0 -4px 16px rgba(255,216,74,.10);pointer-events:none;z-index:0}
 section[data-screen="battle"] #hand .handCard.grPlayableHandCandidate{position:relative;overflow:visible!important;z-index:1}
 section[data-screen="battle"] #hand .grPlayableHandTriangle{position:absolute;left:50%;bottom:-14px;transform:translateX(-50%);color:#ffd84a;font:1000 13px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 7px rgba(255,216,74,.58);pointer-events:none;user-select:none;z-index:3}
+${BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_PLACEMENT_CSS}
 ${BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS}
 [${HOST_ATTR}="1"][data-hand-aura-active="true"] .grJankenSlidePadHandle{filter:brightness(1.3) saturate(1.35);box-shadow:0 8px 22px rgba(0,0,0,.38),0 0 0 5px rgba(132,255,213,.18),0 0 28px rgba(108,255,205,.45),inset 0 0 0 4px rgba(255,255,255,.15)}
 [${HOST_ATTR}="1"][data-hand-aura-armed="true"] .grJankenSlidePadHandle{filter:brightness(1.75) saturate(1.55);box-shadow:0 8px 22px rgba(0,0,0,.34),0 0 0 8px rgba(214,255,239,.25),0 0 44px rgba(115,255,208,.9),inset 0 0 20px rgba(255,255,255,.42)}
@@ -381,7 +392,7 @@ function clearPlayableHandAffordance(battleRoot) {
   }
 }
 
-function syncPlayableHandAffordance(battleRoot) {
+function currentPlayableHandAffordance(battleRoot) {
   const handRoot = battleRoot.querySelector?.('#hand');
   if (!handRoot) return null;
   const nodes = handCardNodes(battleRoot);
@@ -389,11 +400,19 @@ function syncPlayableHandAffordance(battleRoot) {
   const reservedCardIds = nodes.flatMap((node) => node.dataset?.jankenReserved === 'true'
     ? [node.dataset?.cardId ?? '']
     : []);
-  const state = projectBattlePlayableHandAffordance({
+  return projectBattlePlayableHandAffordance({
     handCardIds: nodes.map((node) => node.dataset?.cardId ?? ''),
     reservedCardIds,
     ...projection,
   });
+}
+
+function syncPlayableHandAffordance(battleRoot) {
+  const handRoot = battleRoot.querySelector?.('#hand');
+  if (!handRoot) return null;
+  const nodes = handCardNodes(battleRoot);
+  const state = currentPlayableHandAffordance(battleRoot);
+  if (!state) return null;
   const candidates = new Set(state.candidateCardIds);
   handRoot.classList?.toggle?.('grPlayableHandActionBase', state.showActionBase);
   for (const node of nodes) {
@@ -677,6 +696,27 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
   handle.setAttribute('aria-label', 'じゃんけん SlidePad / カード発射オーラ');
   host.appendChild(handle);
   root.appendChild(host);
+
+  const rowRouletteHost = documentRef.createElement('aside');
+  rowRouletteHost.setAttribute(BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR, '1');
+  rowRouletteHost.setAttribute('aria-label', '残り手札ルーレット');
+  rowRouletteHost.hidden = true;
+  root.appendChild(rowRouletteHost);
+  const rowRouletteController = createBattlePlayableHandRowRouletteController({
+    getCandidateProjection: () => currentPlayableHandAffordance(root) ?? { candidateCardIds: [] },
+    getCardPresentation: (cardId) => {
+      const card = readHand(globalRef, root).find((entry) => entry.id === cardId);
+      return card ? { label: card.label, shortLabel: card.label, suit: card.suit } : null;
+    },
+    delegateHandCardAction: (cardId) => clickExistingHandCard(root, cardId),
+    reducedMotion: globalRef?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true,
+    lowPerf: root.dataset?.lowPerf === 'true',
+  });
+  const rowRouletteRuntime = mountBattlePlayableHandRowRoulette({
+    document: documentRef,
+    host: rowRouletteHost,
+    controller: rowRouletteController,
+  });
 
   let assignment = null;
   let model = null;
@@ -1019,6 +1059,8 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     const hand = readHand(globalRef, root);
     if (!String(roundText ?? '').trim() || hand.length === 0) {
       clearPlayableHandAffordance(root);
+      rowRouletteHost.hidden = true;
+      rowRouletteRuntime?.refresh?.();
       return;
     }
     model = buildBattleJankenSlidePadModel({
@@ -1030,6 +1072,8 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     assignment = model.assignment;
     syncHandZoneProjection(root, model);
     syncPlayableHandAffordance(root);
+    rowRouletteHost.hidden = false;
+    rowRouletteRuntime?.refresh?.();
     const currentSourceHandIds = hand.map((card) => card.id);
     for (const slot of model.slots) {
       const node = slotNodes.get(slot.jankenHand);
@@ -1104,6 +1148,8 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
   const runtime = Object.freeze({
     render,
     snapshot: () => model,
+    rowRouletteHost,
+    rowRouletteSnapshot: () => rowRouletteController.snapshot(),
     loadPreviewSnapshot: () => projectBattleLoadCardPreview(model, armedHand),
     isExpanded: () => expanded,
     destroy() {
@@ -1121,6 +1167,8 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
         input.removeEventListener?.('change', schedule);
         input.removeEventListener?.('focus', schedule);
       }
+      rowRouletteRuntime?.destroy?.();
+      rowRouletteHost.remove?.();
       clearPlayableHandAffordance(root);
       for (const node of handCardNodes(root)) restoreHandNode(node);
       for (const observer of observers) observer.disconnect();

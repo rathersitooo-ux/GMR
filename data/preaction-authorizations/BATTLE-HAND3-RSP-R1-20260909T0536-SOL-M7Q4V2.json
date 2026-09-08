@@ -11,22 +11,14 @@
   "rehearsalEvidenceId": "FOCUSED_CORE_TESTS_PLUS_BACKWARD_COMPATIBILITY",
   "proceedToken": "PROCEED|BATTLE-HAND3-RSP-R1-20260909T0536-SOL-M7Q4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-09T05:36+09:00",
   "authorizationBaseSha": "a59332356dbe5f70e3afaf350bfae8fdcbb3ea6d",
-  "scope": [
-    "browser/new-base-round-start-janken-slot-assignment-core.mjs",
-    "tests/new-base-round-start-janken-slot-assignment-core.test.mjs",
-    "data/preaction-authorizations/BATTLE-HAND3-RSP-R1-20260909T0536-SOL-M7Q4V2.json"
-  ],
+  "scope": ["browser/new-base-round-start-janken-slot-assignment-core.mjs","tests/new-base-round-start-janken-slot-assignment-core.test.mjs","data/preaction-authorizations/BATTLE-HAND3-RSP-R1-20260909T0536-SOL-M7Q4V2.json"],
   "stateModelVersion": "STATE_MODEL_V1",
   "leaseAuthority": "CURRENT_ACTIVE_LEASES",
   "leaseState": "ACTIVE",
   "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
   "leaseWorkUnitKey": "HAND3_RSP_AUTO_ASSIGN_CORE_R1",
   "leaseAcquireKey": "BATTLE-HAND3-RSP-R1-20260909T0536-SOL-M7Q4V2",
-  "leaseScope": [
-    "browser/new-base-round-start-janken-slot-assignment-core.mjs",
-    "tests/new-base-round-start-janken-slot-assignment-core.test.mjs",
-    "data/preaction-authorizations/BATTLE-HAND3-RSP-R1-20260909T0536-SOL-M7Q4V2.json"
-  ],
+  "leaseScope": ["browser/new-base-round-start-janken-slot-assignment-core.mjs","tests/new-base-round-start-janken-slot-assignment-core.test.mjs","data/preaction-authorizations/BATTLE-HAND3-RSP-R1-20260909T0536-SOL-M7Q4V2.json"],
   "leaseSnapshotReadbackAtJst": "2026-09-09 05:36 JST",
   "leaseUntilJst": "2026-09-09 06:30 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A638:L638",
@@ -35,10 +27,5 @@
   "reuseDisposition": "ADAPT",
   "solutionSearchStatus": "PASS",
   "reuseDecisionEvidenceId": "EXISTING_FIXED_SLOT_STATE_AND_IMMUTABLE_SNAPSHOT_CORE",
-  "solutionSearchEvidence": [
-    "The existing core already owns fixed R/S/P slot identity, immutable same-round snapshot reuse, source-card identity, and ordinary-hand exclusion.",
-    "Latest USER_EXPLICIT supersedes arbitrary-hand suit-bound membership: every turn hand=3, all three cards autoassign to fixed R/S/P, native suit remains separate.",
-    "The exact mapping policy among the three positions is not USER-fixed; the core validates an externally supplied policy result rather than inventing card-order, suit, random, or strength semantics.",
-    "Keeping the old mode behind an explicit compatibility path prevents the current live caller from breaking before its separate owner-free migration."
-  ]
+  "solutionSearchEvidence": ["The existing core already owns fixed R/S/P slot identity, immutable same-round snapshot reuse, source-card identity, and ordinary-hand exclusion.","Latest USER_EXPLICIT supersedes arbitrary-hand suit-bound membership: every turn hand=3, all three cards autoassign to fixed R/S/P, native suit remains separate.","The exact mapping policy among the three positions is not USER-fixed; the core validates an externally supplied policy result rather than inventing card-order, suit, random, or strength semantics.","Keeping the old mode behind an explicit compatibility path prevents the current live caller from breaking before its separate owner-free migration."]
 }

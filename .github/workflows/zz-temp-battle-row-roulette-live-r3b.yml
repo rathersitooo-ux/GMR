@@ -36,37 +36,35 @@ jobs:
           python - <<'PY'
           from pathlib import Path
 
-          module_path = Path('browser/battle-janken-slidepad-runtime-mount.mjs')
-          module = module_path.read_text()
+          path = Path('browser/battle-janken-slidepad-runtime-mount.mjs')
+          source = path.read_text()
 
-          def replace_once(text, old, new, label):
-              count = text.count(old)
+          def one(old, new, label):
+              global source
+              count = source.count(old)
               if count != 1:
                   raise SystemExit(f'{label}: expected exactly one match, got {count}')
-              return text.replace(old, new, 1)
+              source = source.replace(old, new, 1)
 
-          module = replace_once(
-              module,
+          one(
               "import {\n  advanceSlotRollDrag,\n  createSlotRollState,\n  resolveSlotRollCommit,\n} from './slidepad-slot-roll-core.mjs';\n",
               "import {\n  advanceSlotRollDrag,\n  createSlotRollState,\n  resolveSlotRollCommit,\n} from './slidepad-slot-roll-core.mjs';\nimport {\n  createBattlePlayableHandRowRouletteController,\n  mountBattlePlayableHandRowRoulette,\n} from './battle-playable-hand-row-roulette-runtime.mjs';\n",
               'row roulette import',
           )
 
-          module = replace_once(
-              module,
+          one(
               "export const BATTLE_HAND_PLAYABLE_AFFORDANCE_SCHEMA = 'gameroad.battle-hand-playable-affordance.v1';\n",
               "export const BATTLE_HAND_PLAYABLE_AFFORDANCE_SCHEMA = 'gameroad.battle-hand-playable-affordance.v1';\nexport const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR = 'data-battle-playable-hand-row-roulette-live';\nexport const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_PLACEMENT_CSS = `\nsection[data-screen=\"battle\"] [${BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR}=\"1\"]{position:absolute;left:var(--gameroad-battle-partner-right-x,clamp(112px,14vw,174px));bottom:var(--gameroad-battle-partner-upper-y,clamp(92px,16vh,142px));z-index:39;pointer-events:auto;max-width:min(236px,36vw)}\n@media(max-height:430px) and (orientation:landscape){section[data-screen=\"battle\"] [${BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR}=\"1\"]{left:var(--gameroad-battle-partner-right-x,104px);bottom:var(--gameroad-battle-partner-upper-y,84px);transform:scale(.86);transform-origin:left bottom}}\n@media(max-width:540px) and (orientation:portrait){section[data-screen=\"battle\"] [${BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR}=\"1\"]{left:10px;bottom:220px;max-width:46vw}}\n`;\n",
               'live placement constants',
           )
 
-          module = replace_once(
-              module,
+          one(
               "${BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS}\n",
               "${BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_PLACEMENT_CSS}\n${BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS}\n",
               'placement css mount',
           )
 
-          old_affordance = """function syncPlayableHandAffordance(battleRoot) {
+          old = """function syncPlayableHandAffordance(battleRoot) {
             const handRoot = battleRoot.querySelector?.('#hand');
             if (!handRoot) return null;
             const nodes = handCardNodes(battleRoot);
@@ -100,8 +98,8 @@ jobs:
             return state;
           }
           """
-          old_affordance = '\n'.join(line[12:] if line.startswith('            ') else line for line in old_affordance.splitlines()) + '\n'
-          new_affordance = """function currentPlayableHandAffordance(battleRoot) {
+          old = '\n'.join(line[12:] if line.startswith('            ') else line for line in old.splitlines()) + '\n'
+          new = """function currentPlayableHandAffordance(battleRoot) {
             const handRoot = battleRoot.querySelector?.('#hand');
             if (!handRoot) return null;
             const nodes = handCardNodes(battleRoot);
@@ -143,101 +141,40 @@ jobs:
             return state;
           }
           """
-          new_affordance = '\n'.join(line[10:] if line.startswith('          ') else line for line in new_affordance.splitlines()) + '\n'
-          module = replace_once(module, old_affordance, new_affordance, 'playable hand projection split')
+          new = '\n'.join(line[10:] if line.startswith('          ') else line for line in new.splitlines()) + '\n'
+          one(old, new, 'playable hand projection split')
 
-          module = replace_once(
-              module,
+          one(
               "  root.appendChild(host);\n\n  let assignment = null;\n",
-              """  root.appendChild(host);
-
-          const rowRouletteHost = documentRef.createElement('aside');
-          rowRouletteHost.setAttribute(BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR, '1');
-          rowRouletteHost.setAttribute('aria-label', '残り手札ルーレット');
-          rowRouletteHost.hidden = true;
-          root.appendChild(rowRouletteHost);
-          const rowRouletteController = createBattlePlayableHandRowRouletteController({
-            getCandidateProjection: () => currentPlayableHandAffordance(root) ?? { candidateCardIds: [] },
-            getCardPresentation: (cardId) => {
-              const card = readHand(globalRef, root).find((entry) => entry.id === cardId);
-              return card ? { label: card.label, shortLabel: card.label, suit: card.suit } : null;
-            },
-            delegateHandCardAction: (cardId) => clickExistingHandCard(root, cardId),
-            reducedMotion: globalRef?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true,
-            lowPerf: root.dataset?.lowPerf === 'true',
-          });
-          const rowRouletteRuntime = mountBattlePlayableHandRowRoulette({
-            document: documentRef,
-            host: rowRouletteHost,
-            controller: rowRouletteController,
-          });
-
-          let assignment = null;
-          """.replace('          ', '', 1),
+              "  root.appendChild(host);\n\n  const rowRouletteHost = documentRef.createElement('aside');\n  rowRouletteHost.setAttribute(BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR, '1');\n  rowRouletteHost.setAttribute('aria-label', '残り手札ルーレット');\n  rowRouletteHost.hidden = true;\n  root.appendChild(rowRouletteHost);\n  const rowRouletteController = createBattlePlayableHandRowRouletteController({\n    getCandidateProjection: () => currentPlayableHandAffordance(root) ?? { candidateCardIds: [] },\n    getCardPresentation: (cardId) => {\n      const card = readHand(globalRef, root).find((entry) => entry.id === cardId);\n      return card ? { label: card.label, shortLabel: card.label, suit: card.suit } : null;\n    },\n    delegateHandCardAction: (cardId) => clickExistingHandCard(root, cardId),\n    reducedMotion: globalRef?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true,\n    lowPerf: root.dataset?.lowPerf === 'true',\n  });\n  const rowRouletteRuntime = mountBattlePlayableHandRowRoulette({\n    document: documentRef,\n    host: rowRouletteHost,\n    controller: rowRouletteController,\n  });\n\n  let assignment = null;\n",
               'live mount insertion',
           )
 
-          module = replace_once(
-              module,
-              """    if (!String(roundText ?? '').trim() || hand.length === 0) {
-                clearPlayableHandAffordance(root);
-                return;
-              }
-          """.replace('              ', ''),
-              """    if (!String(roundText ?? '').trim() || hand.length === 0) {
-                clearPlayableHandAffordance(root);
-                rowRouletteHost.hidden = true;
-                rowRouletteRuntime?.refresh?.();
-                return;
-              }
-          """.replace('              ', ''),
+          one(
+              "    if (!String(roundText ?? '').trim() || hand.length === 0) {\n      clearPlayableHandAffordance(root);\n      return;\n    }\n",
+              "    if (!String(roundText ?? '').trim() || hand.length === 0) {\n      clearPlayableHandAffordance(root);\n      rowRouletteHost.hidden = true;\n      rowRouletteRuntime?.refresh?.();\n      return;\n    }\n",
               'empty live refresh',
           )
 
-          module = replace_once(
-              module,
-              """    syncHandZoneProjection(root, model);
-                syncPlayableHandAffordance(root);
-                const currentSourceHandIds = hand.map((card) => card.id);
-          """.replace('                ', ''),
-              """    syncHandZoneProjection(root, model);
-                syncPlayableHandAffordance(root);
-                rowRouletteHost.hidden = false;
-                rowRouletteRuntime?.refresh?.();
-                const currentSourceHandIds = hand.map((card) => card.id);
-          """.replace('                ', ''),
+          one(
+              "    syncHandZoneProjection(root, model);\n    syncPlayableHandAffordance(root);\n    const currentSourceHandIds = hand.map((card) => card.id);\n",
+              "    syncHandZoneProjection(root, model);\n    syncPlayableHandAffordance(root);\n    rowRouletteHost.hidden = false;\n    rowRouletteRuntime?.refresh?.();\n    const currentSourceHandIds = hand.map((card) => card.id);\n",
               'normal live refresh',
           )
 
-          module = replace_once(
-              module,
-              """  const runtime = Object.freeze({
-                render,
-                snapshot: () => model,
-          """.replace('                ', ''),
-              """  const runtime = Object.freeze({
-                render,
-                snapshot: () => model,
-                rowRouletteHost,
-                rowRouletteSnapshot: () => rowRouletteController.snapshot(),
-          """.replace('                ', ''),
+          one(
+              "  const runtime = Object.freeze({\n    render,\n    snapshot: () => model,\n",
+              "  const runtime = Object.freeze({\n    render,\n    snapshot: () => model,\n    rowRouletteHost,\n    rowRouletteSnapshot: () => rowRouletteController.snapshot(),\n",
               'runtime row roulette readback',
           )
 
-          module = replace_once(
-              module,
-              """      clearPlayableHandAffordance(root);
-                  for (const node of handCardNodes(root)) restoreHandNode(node);
-          """.replace('                  ', ''),
-              """      rowRouletteRuntime?.destroy?.();
-                  rowRouletteHost.remove?.();
-                  clearPlayableHandAffordance(root);
-                  for (const node of handCardNodes(root)) restoreHandNode(node);
-          """.replace('                  ', ''),
+          one(
+              "      clearPlayableHandAffordance(root);\n      for (const node of handCardNodes(root)) restoreHandNode(node);\n",
+              "      rowRouletteRuntime?.destroy?.();\n      rowRouletteHost.remove?.();\n      clearPlayableHandAffordance(root);\n      for (const node of handCardNodes(root)) restoreHandNode(node);\n",
               'runtime row roulette destroy',
           )
 
-          module_path.write_text(module)
+          path.write_text(source)
           PY
 
       - name: Add focused integration tests

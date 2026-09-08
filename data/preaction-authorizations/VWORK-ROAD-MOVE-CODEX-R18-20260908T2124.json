@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-ROAD-MOVE-CODEX-R18-20260908T2124",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "acquireKey": "ROAD-MOVE-CODEX-R18-20260908T2124-SOL-Q8M4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_C2C0D0A_GAMEROAD_BLOB_35F9203_EQUALS_R17_PROVEN_INPUT",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R13_PHYSICAL_HIT_INPUT_PLUS_R16_3VIEWPORT_REDUCEDMOTION_LOWPERF",
+  "proceedToken": "PROCEED|VWORK-ROAD-MOVE-CODEX-R18-20260908T2124|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-08T21:24+09:00",
+  "authorizationBaseSha": "c2c0d0abaebdc16602e8f7e6808166fbb1e94862",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-compatibility-core.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "leaseAcquireKey": "ROAD-MOVE-CODEX-R18-20260908T2124-SOL-Q8M4V2",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-compatibility-core.test.mjs"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-09-08 21:24 JST",
+  "leaseUntilJst": "2026-09-08 22:24 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A621:N621",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch codex/road-move-bidirectional-r18-20260908; browser/GAMEROAD.html; tests/road-move-compatibility-core.test.mjs; transient data/preaction-authorizations/VWORK-ROAD-MOVE-CODEX-R18-20260908T2124.json; own PR/comments/checks/readback only. READ_ONLY road-move-compatibility-core.mjs, 109 graph/reachable/authority, Battle-card semantics and all unrelated files.",
+  "solutionSignature": "Adapt the already-proven one-draft bidirectional Road movement behavior into the unchanged current GAMEROAD.html consumer, preserving Road1-6 upper-bound compatibility, Elastic Focus, no automatic candidate choice, current 109 authority, and complete Battle-card noninterference.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R13_R16_R17_DONOR_PLUS_CURRENT_CORE_REUSE",
+  "solutionSearchEvidence": [
+    "Fresh current main c2c0d0abaebdc16602e8f7e6808166fbb1e94862 has browser/GAMEROAD.html blob 35f9203e2be95ba07b44c875e26bfe2047a3cee5, identical to the R17/R16 proven input blob.",
+    "Current tests/road-move-compatibility-core.test.mjs already parameterizes Road1-6 upper-bound behavior, multiple candidates, Elastic Focus, backtracking recomputation, board legality/stoppability, and Battle-card rejection.",
+    "Historical R13/R16 acceptance already proved physical hit input and the required mobile/reduced-motion/low-performance lanes against this unchanged HTML blob; this run must consume rather than duplicate that implementation model.",
+    "No CARD_FIRST/MOVE_FIRST second state machine, Road1-6 copy handlers, temporary workflow, or Battle-card behavior is required."
+  ]
+}

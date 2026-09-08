@@ -1,0 +1,20 @@
+name: TEMP Doppelganger live-value inspection R7
+
+on:
+  push:
+    branches:
+      - sol/doppel-runtime-r7-20260909
+    paths:
+      - .github/workflows/zz-temp-doppel-runtime-r7.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect exact live value seams
+        run: python3 tools/zz-temp-doppel-runtime-r7.py

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GACHA-PREVIEW-TRUTH-R5-20260909T0650-SOL-Q8N4V4",
+  "taskId": "GACHA-RESULT-PERSISTENCE-COLLECTION-DECK-AUDIT-001",
+  "workUnitKey": "GACHA_PREVIEW_TRUTH_PUBLIC_CLOSURE_R2",
+  "acquireKey": "GACHA-PREVIEW-TRUTH-R5-20260909T0650-SOL-Q8N4V4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R4-FOCUSED-PUBLIC-PASS-REQUIRED-GATE-WITNESS-ONLY",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R4-RUN-34278161639-FOCUSED-AND-PUBLIC-PACKAGE-SUCCESS",
+  "proceedToken": "PROCEED|GACHA-PREVIEW-TRUTH-R5-20260909T0650-SOL-Q8N4V4|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-09T06:50:00+09:00",
+  "authorizationBaseSha": "bcab734c64d403cde973f16192af6439a40d6e69",
+  "scope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GACHA-RESULT-PERSISTENCE-COLLECTION-DECK-AUDIT-001",
+  "leaseWorkUnitKey": "GACHA_PREVIEW_TRUTH_PUBLIC_CLOSURE_R2",
+  "leaseAcquireKey": "GACHA-PREVIEW-TRUTH-R5-20260909T0650-SOL-Q8N4V4",
+  "leaseScope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-09-09 06:50 JST",
+  "leaseUntilJst": "2026-09-09 07:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A634:L634",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/gacha-preview-truth-r5-20260909; browser/screen-navigation-core.mjs; tests/screen-navigation-core.test.mjs; deploy/cloudflare/tests/build.test.mjs; transient data/preaction-authorizations/GACHA-PREVIEW-TRUTH-R5-20260909T0650-SOL-Q8N4V4.json; own PR/check/merge/main/public readback. READ_ONLY browser/GAMEROAD.html; browser/gacha-presentation-core.mjs; deploy/cloudflare/scripts/build.mjs; economy/price/rate/ownership/save/Collection/result semantics.",
+  "solutionSignature": "gacha-preview-truth-inline-existing-screen-navigation-r5-byte-replay",
+  "reuseDisposition": "REUSE_AS_IS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R4-EXACT-BLOBS-FOCUSED-AND-PUBLIC-PASS",
+  "solutionSearchEvidence": [
+    "R4 exact product/test/provenance blobs already passed focused screen-navigation and public package provenance run 34278161639",
+    "R4 Required Gate failed before product tests solely because leaseSnapshotReadbackRef used A634:N634 while validator requires A:L",
+    "Fresh main remains exactly bcab734c64d403cde973f16192af6439a40d6e69, so replaying the already-tested blobs introduces no new product design",
+    "No authoritative nonRoblox ownership/save source exists; this repair remains preview-truth only and creates no ownership/save semantics"
+  ]
+}

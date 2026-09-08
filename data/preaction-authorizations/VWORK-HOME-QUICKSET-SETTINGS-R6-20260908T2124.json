@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-HOME-QUICKSET-SETTINGS-R6-20260908T2124",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_QUICKSET_SETTINGS_INLINE_R5",
+  "acquireKey": "HOME-QUICKSET-SETTINGS-R6-20260908T2124-CODEX-H7N4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_C2C0D0A_EXISTING_HOME_QUICKSET_PLUS_SETTINGS_SEAM",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "HOME_R2_EXISTING_RUNTIME_PLUS_MAPPED_PRESENTATION_TEST",
+  "proceedToken": "PROCEED|VWORK-HOME-QUICKSET-SETTINGS-R6-20260908T2124|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-08T21:24+09:00",
+  "authorizationBaseSha": "c2c0d0abaebdc16602e8f7e6808166fbb1e94862",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_QUICKSET_SETTINGS_INLINE_R5",
+  "leaseAcquireKey": "HOME-QUICKSET-SETTINGS-R6-20260908T2124-CODEX-H7N4M2",
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-09-08 21:24 JST",
+  "leaseUntilJst": "2026-09-08 22:24 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A622:N622",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch codex/home-quickset-settings-r6-20260908; browser/home-boot-runtime-mount.mjs; tests/home-boot-presentation.test.mjs; transient data/preaction-authorizations/VWORK-HOME-QUICKSET-SETTINGS-R6-20260908T2124.json; own PR/comments/checks/readback only. No new persistence authority, workflow/module/test path, or unrelated Home/Battle files.",
+  "solutionSignature": "Extend the existing Home Quick Set and existing Settings seam in-place so the user can reorder current real routes and choose the zero-move/default anchor while preserving direct idle gummies, held-hide, cyclic Quick Set, explicit cancel, route semantics, sizes, and existing persistence boundaries.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "HOME_R5_EXISTING_RUNTIME_REUSE_WITHOUT_TEMP_WORKFLOW",
+  "solutionSearchEvidence": [
+    "Fresh current main c2c0d0abaebdc16602e8f7e6808166fbb1e94862 already contains Home Quick Set inside browser/home-boot-runtime-mount.mjs and the shared Settings overlay in the same runtime.",
+    "Current createHomeQuickSetSlotRoll already selects an anchor from the current real route set and falls back to the existing Battle role; the missing user-configurable order/anchor can therefore be adapted without a second navigation authority.",
+    "tests/home-boot-presentation.test.mjs is the existing mapped Home presentation test, so no new test path or temporary workflow is required.",
+    "If no current durable Settings authority exists for these values, the bounded implementation must remain session-only rather than invent a new save store."
+  ]
+}

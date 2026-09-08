@@ -315,3 +315,34 @@ test('portrait reserved janken fan compacts without changing desktop slot geomet
   assert.match(source, /@media\(max-width:540px\) and \(orientation:portrait\)\{[^\n]*\.grJankenSlidePadSlot\{width:64px;height:88px/);
   assert.match(source, /orientation:portrait[^\n]*rock\{transform:translate\(-126px,12px\)[^\n]*scissors\{transform:translate\(-96px,-43px\)[^\n]*paper\{transform:translate\(-38px,-72px\)/);
 });
+
+test('remaining-hand row roulette live mount reuses the current playable projection and hand-card action', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /createBattlePlayableHandRowRouletteController/);
+  assert.match(source, /getCandidateProjection: \(\) => currentPlayableHandAffordance\(root\)/);
+  assert.match(source, /delegateHandCardAction: \(cardId\) => clickExistingHandCard\(root, cardId\)/);
+  assert.match(source, /syncHandZoneProjection\(root, model\);[\s\S]*syncPlayableHandAffordance\(root\);[\s\S]*rowRouletteRuntime\?\.refresh\?\.\(\)/);
+  assert.match(source, /rowRouletteRuntime\?\.destroy\?\.\(\);[\s\S]*rowRouletteHost\.remove\?\.\(\)/);
+});
+
+test('remaining-hand row roulette live placement stays left of the board beside the Partner region', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /data-battle-playable-hand-row-roulette-live/);
+  assert.match(source, /left:var\(--gameroad-battle-partner-right-x/);
+  assert.match(source, /bottom:var\(--gameroad-battle-partner-upper-y/);
+  assert.match(source, /z-index:39/);
+});
+
+test('remaining-hand row roulette bridge owns no draw refill Mana Honey score or result path', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('const rowRouletteController = createBattlePlayableHandRowRouletteController({');
+  const end = source.indexOf('\n\n  let assignment = null;', start);
+  assert.ok(start >= 0 && end > start);
+  const bridge = source.slice(start, end).toLowerCase();
+  for (const forbidden of ['draw', 'refill', 'mana', 'honey', 'score', 'result', 'removehand']) {
+    assert.equal(bridge.includes(forbidden), false, `roulette bridge must not own ${forbidden}`);
+  }
+});

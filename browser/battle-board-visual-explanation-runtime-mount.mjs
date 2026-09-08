@@ -11,6 +11,9 @@ const PINCH_MIN_SCALE = 1;
 const PINCH_MAX_SCALE = 2.2;
 const PINCH_MIN_DISTANCE_PX = 8;
 const PINCH_CLICK_SUPPRESS_MS = 350;
+const PARTNER_ADVICE_ROOT_ID = 'partnerAdviceChatPresentation';
+const PARTNER_ADVICE_COLLAPSED_ATTR = 'data-player-focus-collapsed';
+const PARTNER_ADVICE_DISCLOSURE_CLASS = 'partnerAdvicePeripheralDisclosure';
 
 function token(value) {
   if (typeof value !== 'string') return null;
@@ -75,7 +78,7 @@ function installStyle(doc) {
   if (doc.getElementById?.('gameroad-board-visual-explanation-runtime-style')) return;
   const style = doc.createElement('style');
   style.id = 'gameroad-board-visual-explanation-runtime-style';
-  style.textContent = `#${SUMMARY}{display:inline-flex;gap:5px;margin-inline-start:5px;padding:2px 5px;border:1px solid rgba(255,255,255,.24);border-radius:999px;background:rgba(3,16,15,.64);font-size:9px;font-weight:900;pointer-events:none}#${SUMMARY}[hidden],#${SUMMARY} [hidden]{display:none!important}${NODE}[${ROLES}~="selected"]{outline:2px solid rgba(255,255,255,.92);outline-offset:2px}${NODE}[${ROLES}~="partner-recommendation"]{box-shadow:0 0 0 2px rgba(255,222,130,.9)}section[data-screen="battle"] ${HAND_CARD}{touch-action:none}section[data-screen="battle"] ${HAND_CARD}[${PINCH_ATTR}="true"]{position:relative;z-index:120!important;filter:drop-shadow(0 16px 24px rgba(0,0,0,.42))}@media(max-width:540px),(max-height:420px){#${SUMMARY}{font-size:8px;padding:2px 4px}}@media(prefers-reduced-motion:reduce){#${SUMMARY},${NODE}[${ROLES}],section[data-screen="battle"] ${HAND_CARD}{transition:none!important;animation:none!important}}`;
+  style.textContent = `#${SUMMARY}{display:inline-flex;gap:5px;margin-inline-start:5px;padding:2px 5px;border:1px solid rgba(255,255,255,.24);border-radius:999px;background:rgba(3,16,15,.64);font-size:9px;font-weight:900;pointer-events:none}#${SUMMARY}[hidden],#${SUMMARY} [hidden]{display:none!important}${NODE}[${ROLES}~="selected"]{outline:2px solid rgba(255,255,255,.92);outline-offset:2px}${NODE}[${ROLES}~="partner-recommendation"]{box-shadow:0 0 0 2px rgba(255,222,130,.9)}section[data-screen="battle"] ${HAND_CARD}{touch-action:none}section[data-screen="battle"] ${HAND_CARD}[${PINCH_ATTR}="true"]{position:relative;z-index:120!important;filter:drop-shadow(0 16px 24px rgba(0,0,0,.42))}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[data-battle-advice-overlay="true"][${PARTNER_ADVICE_COLLAPSED_ATTR}="true"]{width:min(164px,46vw)!important;max-height:52px!important;overflow:hidden!important;padding:4px!important;gap:4px!important;grid-template-columns:minmax(0,1fr) auto!important;backdrop-filter:blur(4px)!important}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceRoleControl{grid-column:1!important;min-height:44px!important;overflow:hidden}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceRoleControl span,section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdvicePartnerSwitch,section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceLaneProgress,section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceSpeech,section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceTutorialConversation,section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceTutorialReplay,section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceQuickReply{display:none!important}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID} .${PARTNER_ADVICE_DISCLOSURE_CLASS}{grid-column:2;grid-row:1;align-self:start;justify-self:end;min-width:44px;min-height:44px;padding:0 8px;border:1px solid rgba(255,216,120,.56);border-radius:10px;background:rgba(69,49,19,.84);color:#fff1c9;font-size:10px;font-weight:950;line-height:1;pointer-events:auto;touch-action:manipulation}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="false"] .${PARTNER_ADVICE_DISCLOSURE_CLASS}{position:sticky;top:0;z-index:2}@media(max-width:540px),(max-height:420px){#${SUMMARY}{font-size:8px;padding:2px 4px}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[data-battle-advice-overlay="true"][${PARTNER_ADVICE_COLLAPSED_ATTR}="true"]{width:min(154px,46vw)!important}}@media(prefers-reduced-motion:reduce){#${SUMMARY},${NODE}[${ROLES}],section[data-screen="battle"] ${HAND_CARD},section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}{transition:none!important;animation:none!important}}`;
   doc.head?.appendChild(style);
 }
 
@@ -113,6 +116,69 @@ function render(doc, root, projection) {
   if (p) { p.hidden = !partner; if (partner) p.querySelector('b').textContent = partner; }
   root.hidden = reachable === 0 && !selected && !partner;
   root.dataset.gameplayAuthority = 'false';
+}
+
+function hasUrgentPartnerAdvice(root) {
+  if (!root?.querySelector) return false;
+  if (root.querySelector('.partnerAdviceSpeech.characterReaction.on')) return true;
+  if (root.querySelector('.partnerAdviceSpeech.player.on')) return true;
+  const tutorialConversation = root.querySelector('.partnerAdviceTutorialConversation');
+  return tutorialConversation?.hidden === false;
+}
+
+export function installPartnerAdvicePeripheralDisclosure(win = globalThis) {
+  const doc = win?.document;
+  const battleSurface = doc?.querySelector?.('section[data-screen="battle"]');
+  if (!doc || !battleSurface || typeof doc.createElement !== 'function') return null;
+  let dead = false;
+
+  const sync = () => {
+    if (dead) return Object.freeze({ active: false, collapsed: null });
+    const root = doc.getElementById?.(PARTNER_ADVICE_ROOT_ID);
+    if (!root || root?.dataset?.battleAdviceOverlay !== 'true') return Object.freeze({ active: false, collapsed: null });
+
+    if (root.getAttribute?.(PARTNER_ADVICE_COLLAPSED_ATTR) == null) root.setAttribute?.(PARTNER_ADVICE_COLLAPSED_ATTR, 'true');
+    let button = root.querySelector?.(`.${PARTNER_ADVICE_DISCLOSURE_CLASS}`);
+    if (!button) {
+      button = doc.createElement('button');
+      button.type = 'button';
+      button.className = PARTNER_ADVICE_DISCLOSURE_CLASS;
+      button.setAttribute?.('data-player-focus-disclosure', 'true');
+      root.appendChild?.(button);
+    }
+    if (button?.getAttribute?.('data-player-focus-bound') !== 'true') {
+      button?.setAttribute?.('data-player-focus-bound', 'true');
+      button?.addEventListener?.('click', () => {
+        const collapsed = root.getAttribute?.(PARTNER_ADVICE_COLLAPSED_ATTR) !== 'false';
+        root.setAttribute?.(PARTNER_ADVICE_COLLAPSED_ATTR, collapsed ? 'false' : 'true');
+        sync();
+      });
+    }
+
+    if (hasUrgentPartnerAdvice(root)) root.setAttribute?.(PARTNER_ADVICE_COLLAPSED_ATTR, 'false');
+    const collapsed = root.getAttribute?.(PARTNER_ADVICE_COLLAPSED_ATTR) !== 'false';
+    if (button) {
+      button.textContent = collapsed ? '助言' : '閉じる';
+      button.setAttribute?.('aria-expanded', collapsed ? 'false' : 'true');
+      button.setAttribute?.('aria-label', collapsed ? '相棒の助言を開く' : '相棒の助言を閉じる');
+    }
+    root.dataset.playerFocusDisclosure = 'presentation-only';
+    return Object.freeze({ active: true, collapsed, autoExpanded: !collapsed && hasUrgentPartnerAdvice(root) });
+  };
+
+  const observer = typeof win.MutationObserver === 'function' ? new win.MutationObserver(() => queueMicrotask(sync)) : null;
+  observer?.observe?.(battleSurface, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'hidden', 'aria-pressed'] });
+  sync();
+  return Object.freeze({
+    sync,
+    snapshot: sync,
+    destroy() {
+      if (dead) return false;
+      dead = true;
+      observer?.disconnect?.();
+      return true;
+    },
+  });
 }
 
 function pointerDistance(left, right) {
@@ -303,12 +369,14 @@ export function installBattleBoardVisualExplanationRuntime(win = globalThis) {
   if (!doc?.getElementById?.('battleMap') || !board || typeof doc.createElement !== 'function') return null;
   installStyle(doc);
   const root = installSummary(doc);
+  const partnerAdviceDisclosure = installPartnerAdvicePeripheralDisclosure(win);
   let dead = false;
   const sync = () => {
     if (dead) return Object.freeze({ active: false, projection: null });
     const authority = collectBattleBoardRuntimeAuthority(win);
     const projection = authority ? projectBattleBoardRuntimeExplanation(authority) : null;
     render(doc, root, projection);
+    partnerAdviceDisclosure?.sync?.();
     return Object.freeze({ active: projection?.ok === true, projection });
   };
   const observer = typeof win.MutationObserver === 'function' ? new win.MutationObserver(() => queueMicrotask(sync)) : null;
@@ -316,7 +384,7 @@ export function installBattleBoardVisualExplanationRuntime(win = globalThis) {
   const endpoint = doc.getElementById?.('endpointText');
   if (observer && endpoint) observer.observe(endpoint, { childList: true, characterData: true, subtree: true });
   sync();
-  const control = Object.freeze({ sync, snapshot: sync, destroy() { if (dead) return false; dead = true; observer?.disconnect?.(); render(doc, root, null); root?.remove?.(); return true; } });
+  const control = Object.freeze({ sync, snapshot: sync, destroy() { if (dead) return false; dead = true; observer?.disconnect?.(); partnerAdviceDisclosure?.destroy?.(); render(doc, root, null); root?.remove?.(); return true; } });
   win.__GAMEROAD_BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME__ = control;
   return control;
 }
@@ -345,4 +413,5 @@ export const BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME = Object.freeze({
   cardPinchZoom: true,
   cardPinchSelector: HAND_CARD,
   cardPinchScaleRange: Object.freeze([PINCH_MIN_SCALE, PINCH_MAX_SCALE]),
+  partnerAdvicePeripheralDisclosure: true,
 });

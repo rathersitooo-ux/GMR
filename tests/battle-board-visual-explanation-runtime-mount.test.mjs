@@ -5,6 +5,7 @@ import {
   projectBattleBoardRuntimeExplanation,
   projectBattleCardPinchScale,
   installBattleCardPinchZoomRuntime,
+  installPartnerAdvicePeripheralDisclosure,
   BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME,
 } from '../browser/battle-board-visual-explanation-runtime-mount.mjs';
 
@@ -35,6 +36,63 @@ function fakeGlobal({ endpoint = '', adviceResult = null, isCurrent = true, reso
       isCurrent: () => isCurrent,
       resolveTarget,
     } : null,
+  };
+}
+
+function disclosureHarness() {
+  const rootAttributes = new Map();
+  let reactionOn = false;
+  let playerReplyOn = false;
+  let tutorialVisible = false;
+  let button = null;
+  let observerDisconnected = false;
+
+  const root = {
+    dataset: { battleAdviceOverlay: 'true' },
+    getAttribute(name) { return rootAttributes.has(name) ? rootAttributes.get(name) : null; },
+    setAttribute(name, value) { rootAttributes.set(name, String(value)); },
+    querySelector(selector) {
+      if (selector === '.partnerAdvicePeripheralDisclosure') return button;
+      if (selector === '.partnerAdviceSpeech.characterReaction.on') return reactionOn ? {} : null;
+      if (selector === '.partnerAdviceSpeech.player.on') return playerReplyOn ? {} : null;
+      if (selector === '.partnerAdviceTutorialConversation') return { hidden: !tutorialVisible };
+      return null;
+    },
+    appendChild(node) { button = node; return node; },
+  };
+  const battleSurface = {};
+  class FakeMutationObserver {
+    constructor(callback) { this.callback = callback; }
+    observe() {}
+    disconnect() { observerDisconnected = true; }
+  }
+  const document = {
+    querySelector(selector) { return selector === 'section[data-screen="battle"]' ? battleSurface : null; },
+    getElementById(id) { return id === 'partnerAdviceChatPresentation' ? root : null; },
+    createElement(tag) {
+      assert.equal(tag, 'button');
+      const attributes = new Map();
+      const listeners = new Map();
+      return {
+        type: '',
+        className: '',
+        textContent: '',
+        setAttribute(name, value) { attributes.set(name, String(value)); },
+        getAttribute(name) { return attributes.has(name) ? attributes.get(name) : null; },
+        addEventListener(type, handler) { listeners.set(type, handler); },
+        click() { listeners.get('click')?.(); },
+      };
+    },
+  };
+  return {
+    win: { document, MutationObserver: FakeMutationObserver },
+    root,
+    rootAttributes,
+    button: () => button,
+    setReactionOn(value) { reactionOn = value; },
+    setPlayerReplyOn(value) { playerReplyOn = value; },
+    setTutorialVisible(value) { tutorialVisible = value; },
+    get observerDisconnected() { return observerDisconnected; },
   };
 }
 
@@ -158,6 +216,43 @@ test('unknown selection and private advice fail closed instead of inventing boar
   assert.equal(projection.rolesByPosition.A, undefined);
 });
 
+test('Partner Advice starts compact, expands only on player request, and auto-expands urgent replies', () => {
+  const h = disclosureHarness();
+  const runtime = installPartnerAdvicePeripheralDisclosure(h.win);
+  assert.ok(runtime);
+  assert.equal(runtime.snapshot().active, true);
+  assert.equal(runtime.snapshot().collapsed, true);
+  assert.equal(h.rootAttributes.get('data-player-focus-collapsed'), 'true');
+  assert.equal(h.button().textContent, '助言');
+  assert.equal(h.button().getAttribute('aria-expanded'), 'false');
+  assert.equal(h.button().getAttribute('aria-label'), '相棒の助言を開く');
+
+  h.button().click();
+  assert.equal(runtime.snapshot().collapsed, false);
+  assert.equal(h.button().textContent, '閉じる');
+  assert.equal(h.button().getAttribute('aria-expanded'), 'true');
+
+  h.button().click();
+  assert.equal(runtime.snapshot().collapsed, true);
+  h.setReactionOn(true);
+  const urgent = runtime.sync();
+  assert.equal(urgent.collapsed, false);
+  assert.equal(urgent.autoExpanded, true);
+
+  h.setReactionOn(false);
+  h.setPlayerReplyOn(true);
+  h.root.setAttribute('data-player-focus-collapsed', 'true');
+  assert.equal(runtime.sync().collapsed, false);
+  h.setPlayerReplyOn(false);
+  h.setTutorialVisible(true);
+  h.root.setAttribute('data-player-focus-collapsed', 'true');
+  assert.equal(runtime.sync().collapsed, false);
+
+  assert.equal(runtime.destroy(), true);
+  assert.equal(runtime.destroy(), false);
+  assert.equal(h.observerDisconnected, true);
+});
+
 test('runtime contract is presentation-only with no topology inference or auto execution', () => {
   assert.equal(BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME.presentationOnly, true);
   assert.equal(BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME.gameplayAuthority, false);
@@ -167,6 +262,7 @@ test('runtime contract is presentation-only with no topology inference or auto e
   assert.equal(BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME.cardPinchZoom, true);
   assert.equal(BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME.cardPinchSelector, '#hand .handCard[data-card-id]');
   assert.deepEqual(BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME.cardPinchScaleRange, [1, 2.2]);
+  assert.equal(BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME.partnerAdvicePeripheralDisclosure, true);
 });
 
 test('pinch scale is proportional, clamped, and fails closed for unusable input', () => {

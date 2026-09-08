@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SHORT-LANDSCAPE-DECONFLICT-R1-20260908T0952-SOL-L7Q4N8",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BATTLE_SHORT_LANDSCAPE_JANKEN_ROULETTE_DECONFLICT_R1",
+  "acquireKey": "BATTLE-SHORT-LANDSCAPE-DECONFLICT-R1-20260908T0952-SOL-L7Q4N8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BFI-34174232942-short-landscape-current-public-visual-defect",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "current-public-short-landscape-667x375-screenshot-plus-existing-responsive-seam",
+  "proceedToken": "PROCEED|BATTLE-SHORT-LANDSCAPE-DECONFLICT-R1-20260908T0952-SOL-L7Q4N8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-08T09:53+09:00",
+  "authorizationBaseSha": "528f0b09e124f7bc3df1b4404b832fb395ad3a80",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-short-landscape-deconflict-r1.yml"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BATTLE_SHORT_LANDSCAPE_JANKEN_ROULETTE_DECONFLICT_R1",
+  "leaseAcquireKey": "BATTLE-SHORT-LANDSCAPE-DECONFLICT-R1-20260908T0952-SOL-L7Q4N8",
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-short-landscape-deconflict-r1.yml"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-09-08 09:52 JST",
+  "leaseUntilJst": "2026-09-08 10:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A615:L615",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean branch from exact fresh main 528f0b09e124f7bc3df1b4404b832fb395ad3a80; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient .github/workflows/zz-temp-battle-short-landscape-deconflict-r1.yml; transient data/preaction-authorizations/BATTLE-SHORT-LANDSCAPE-DECONFLICT-R1-20260908T0952-SOL-L7Q4N8.json; own PR/check/merge/main/public/readback and Browser Full Interaction screenshot evidence. READ_ONLY: browser/GAMEROAD.html; browser/battle-playable-hand-row-roulette-runtime.mjs; browser/battle-screen-runtime-mount.mjs; Battle rules/state/save/economy/network; Road/109/Partner authority.",
+  "solutionSignature": "Presentation-only short-landscape compaction of the existing Battle janken fan and mounted ordinary-hand row roulette, preserving the bottom-right SlidePad touch target and central board dominance",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "current-public-BFI-34174232942-plus-existing-short-landscape-CSS-seam",
+  "solutionSearchEvidence": [
+    "Current public BFI run 34174232942 is exact main 528f0b09 and its 667x375 Battle screenshot shows the reserved-janken fan dominating the right side while the row roulette crowds the partner/hand cluster",
+    "Current battle-janken-slidepad-runtime-mount.mjs already owns a max-height:430px landscape responsive seam, so the defect can be repaired without changing gameplay or GAMEROAD.html",
+    "The existing row-roulette placement contract forbids board occlusion and keeps ordinary hand visible; this repair preserves that contract",
+    "No ACTIVE lease currently owns browser/battle-janken-slidepad-runtime-mount.mjs or its focused test"
+  ]
+}

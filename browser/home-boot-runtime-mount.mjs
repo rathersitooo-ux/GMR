@@ -10,6 +10,7 @@ import {
   projectSlotRollWindow,
   resolveSlotRollCommit,
 } from './slidepad-slot-roll-core.mjs';
+import { resolveHomeQuickSetConfiguration } from './home-quickset-settings-core.mjs';
 
 const GLOBAL_KEY = 'GAMEROAD_HOME_BOOT_PRESENTATION';
 const STYLE_ID = 'gameroad-home-shell-runtime-style';
@@ -947,9 +948,13 @@ function bindSlidepad(home) {
   const beginQuickSet = (event) => {
     const buttons = routeButtons(home);
     const centerRect = center.getBoundingClientRect();
-    const created = createHomeQuickSetSlotRoll({
+    const configuredQuickSet = resolveHomeQuickSetConfiguration({
       items: quickSetItems(buttons),
-      selectedRouteId: selectedRouteId(buttons),
+      fallbackSelectedId: selectedRouteId(buttons),
+    });
+    const created = createHomeQuickSetSlotRoll({
+      items: configuredQuickSet.items,
+      selectedRouteId: configuredQuickSet.selectedRouteId,
       centerWidth: centerRect.width,
     });
     clearSlotRollProjection();

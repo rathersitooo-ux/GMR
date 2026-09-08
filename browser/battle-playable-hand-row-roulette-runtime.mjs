@@ -8,8 +8,8 @@ import {
 
 export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_SCHEMA = 'gameroad.battle-playable-hand-row-roulette.v1';
 export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_PLACEMENT = Object.freeze({
-  side: 'LEFT',
-  anchor: 'PARTNER_UPPER_RIGHT',
+  side: 'RIGHT',
+  anchor: 'BOTTOM_RIGHT_THUMB_CLUSTER',
   orientation: 'VERTICAL_STACKED_ROWS',
   boardOcclusion: 'FORBIDDEN',
   ordinaryHandRemainsVisible: true,
@@ -358,6 +358,15 @@ export function createBattlePlayableHandRowRouletteController({
 }
 
 export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_CSS = `
+section[data-screen="battle"] [data-battle-playable-hand-row-roulette-live="1"][data-battle-playable-hand-row-roulette="1"]{
+  position:absolute;
+  left:auto;
+  right:268px;
+  bottom:max(12px,env(safe-area-inset-bottom));
+  z-index:41;
+  max-width:min(236px,36vw);
+  transform-origin:right bottom;
+}
 [data-battle-playable-hand-row-roulette]{
   --gr-row-h:40px;
   --gr-row-gap:5px;
@@ -428,13 +437,17 @@ export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_CSS = `
 [data-battle-playable-hand-row-roulette][data-low-perf="true"] .grBattleHandRouletteRow{
   box-shadow:none!important;filter:none!important;
 }
-@media (orientation:landscape) and (max-height:420px){
+@media (orientation:landscape) and (max-height:430px){
+  section[data-screen="battle"] [data-battle-playable-hand-row-roulette-live="1"][data-battle-playable-hand-row-roulette="1"]{right:202px;bottom:9px;left:auto;transform:scale(.72);transform-origin:right bottom}
   [data-battle-playable-hand-row-roulette]{--gr-row-h:34px;--gr-row-gap:3px;width:clamp(148px,23vw,206px)}
   [data-battle-playable-hand-row-roulette] .grBattleHandRouletteRail{padding:3px 7px 3px 4px;border-radius:14px}
   [data-battle-playable-hand-row-roulette] .grBattleHandRouletteRow{grid-template-columns:25px minmax(0,1fr) auto;gap:5px;padding:3px 10px 3px 6px}
   [data-battle-playable-hand-row-roulette] .grBattleHandRouletteThumb{width:24px;height:24px;border-radius:6px}
   [data-battle-playable-hand-row-roulette] .grBattleHandRouletteLabel{font-size:11px}
   [data-battle-playable-hand-row-roulette] .grBattleHandRouletteMeta{font-size:9px}
+}
+@media (orientation:portrait) and (max-width:540px){
+  section[data-screen="battle"] [data-battle-playable-hand-row-roulette-live="1"][data-battle-playable-hand-row-roulette="1"]{right:12px;bottom:392px;left:auto;max-width:46vw;transform:scale(.86);transform-origin:right bottom}
 }
 @media (prefers-reduced-motion:reduce){
   [data-battle-playable-hand-row-roulette] .grBattleHandRouletteRow{transition:none}

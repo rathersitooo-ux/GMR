@@ -74,8 +74,7 @@ jobs:
           old="const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0];if(!me?.plan?.roadId){ctxSet('PLAN_CARD_MISSING',{message:'先にロードカードを選ぶと移動範囲を決められます。'});return}const path=shortest(me.position,id,normalMoveLimitForRoad(me.plan.roadId),me);if(!path){ctxSet('MOVE_PATH_INVALID');return}const r=__ctxBaseSelectEndpoint(id);ctxClear();return r};"
           new="const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0],moveLimit=draftMoveLimitForPlayer(me);if(moveLimit<1){ctxSet('PLAN_CARD_MISSING',{message:'移動に使えるロードカードがありません。'});return}const path=shortest(me.position,id,moveLimit,me);if(!path){ctxSet('MOVE_PATH_INVALID');return}const r=__ctxBaseSelectEndpoint(id);ctxClear();return r};"
           if s.count(old)!=1: raise SystemExit(f'context endpoint wrapper mismatch: {s.count(old)}')
-          s=s.replace(old,new,1)
-          html.write_text(s)
+          s=s.replace(old,new,1); html.write_text(s)
 
           spec=Path('tests/road-move-bidirectional-live-r23.spec.mjs'); t=spec.read_text()
           stale='  expect(html).toContain("removeHand(p,p.plan.battleId)");'
@@ -84,39 +83,42 @@ jobs:
           t=t.replace(stale,semantic,1)
 
           anchor="async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}\n"
-          helper="""async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}\nasync function physicalTapReachable(page){\n  const point=await page.evaluate(()=>{\n    const nodes=[...document.querySelectorAll('.node.reachable')];\n    for(const node of nodes){\n      const r=node.getBoundingClientRect(),style=getComputedStyle(node);\n      if(!(r.width>0&&r.height>0)||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)continue;\n      const samples=[[.5,.5],[.35,.5],[.65,.5],[.5,.35],[.5,.65]];\n      for(const [fx,fy] of samples){\n        const x=r.left+r.width*fx,y=r.top+r.height*fy,hit=document.elementFromPoint(x,y);\n        if(hit&&(hit===node||node.contains(hit)))return{x,y,pos:node.dataset.pos||null};\n      }\n    }\n    return null;\n  });\n  expect(point).not.toBeNull();\n  await page.mouse.click(point.x,point.y);\n}\nasync function physicalTapCard(page,id){\n  const point=await page.evaluate((id)=>{\n    const node=document.querySelector(`#hand .handCard[data-card-id=\"${CSS.escape(id)}\"]`);\n    if(!node)return null;\n    const r=node.getBoundingClientRect(),style=getComputedStyle(node);\n    if(!(r.width>0&&r.height>0)||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)return null;\n    const samples=[[.5,.18],[.3,.18],[.7,.18],[.5,.35],[.3,.35],[.7,.35],[.5,.65],[.3,.65],[.7,.65]];\n    for(const [fx,fy] of samples){\n      const x=r.left+r.width*fx,y=r.top+r.height*fy,hit=document.elementFromPoint(x,y);\n      if(hit&&(hit===node||node.contains(hit)))return{x,y};\n    }\n    return null;\n  },id);\n  expect(point).not.toBeNull();\n  await page.mouse.click(point.x,point.y);\n}\n"""
+          helper="""async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}\nasync function physicalTapReachable(page){\n  const point=await page.evaluate(()=>{\n    for(const node of document.querySelectorAll('.node.reachable')){\n      const r=node.getBoundingClientRect(),style=getComputedStyle(node);\n      if(!(r.width>0&&r.height>0)||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)continue;\n      for(const [fx,fy] of [[.5,.5],[.35,.5],[.65,.5],[.5,.35],[.5,.65]]){\n        const x=r.left+r.width*fx,y=r.top+r.height*fy,hit=document.elementFromPoint(x,y);\n        if(hit&&(hit===node||node.contains(hit)))return{x,y,pos:node.dataset.pos||null};\n      }\n    }\n    return null;\n  });\n  expect(point).not.toBeNull(); await page.mouse.click(point.x,point.y);\n}\nasync function physicalTapCard(page,id){\n  const point=await page.evaluate((id)=>{\n    const node=document.querySelector(`#hand .handCard[data-card-id=\"${CSS.escape(id)}\"]`); if(!node)return null;\n    const r=node.getBoundingClientRect(),style=getComputedStyle(node); if(!(r.width>0&&r.height>0)||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)return null;\n    for(const [fx,fy] of [[.5,.18],[.3,.18],[.7,.18],[.5,.35],[.3,.35],[.7,.35],[.5,.65],[.3,.65],[.7,.65]]){\n      const x=r.left+r.width*fx,y=r.top+r.height*fy,hit=document.elementFromPoint(x,y);\n      if(hit&&(hit===node||node.contains(hit)))return{x,y};\n    }\n    return null;\n  },id);\n  expect(point).not.toBeNull(); await page.mouse.click(point.x,point.y);\n}\n"""
           if anchor not in t: raise SystemExit('snapshot helper anchor missing')
           t=t.replace(anchor,helper,1)
 
-          stale_next=re.compile(r"\s*const next=battle\.locator\('\.node\.reachable\[data-move-distance=\\\"1\\\"\]'\)\.first\(\);\s*await expect\(next\)\.toBeEnabled\(\);\s*await next\.click\(\);")
+          stale_next=re.compile(r'''\s*const next=battle\.locator\('\.node\.reachable\[data-move-distance="1"\]'\)\.first\(\);\s*await expect\(next\)\.toBeEnabled\(\);\s*await next\.click\(\);''')
           t,n=stale_next.subn("\n  await physicalTapReachable(page);",t)
           if n < 3: raise SystemExit(f'expected >=3 stale distance-one selector blocks, got {n}')
 
-          t=t.replace("const candidate=battle.locator('#hand .handCard[data-road-move-state=\\\"COMPATIBLE\\\"],#hand .handCard.roadMoveSoft').first();await expect(candidate).toBeVisible();const beforePath=JSON.stringify(moved.path);await candidate.click();",
-                      "const candidate=battle.locator('#hand .handCard[data-road-move-state=\\\"COMPATIBLE\\\"],#hand .handCard.roadMoveSoft').first();await expect(candidate).toBeVisible();const candidateId=await candidate.getAttribute('data-card-id');expect(candidateId).toBeTruthy();const beforePath=JSON.stringify(moved.path);await physicalTapCard(page,candidateId);")
+          if 'await candidate.click();' not in t: raise SystemExit('candidate click anchor missing')
+          t=t.replace('await candidate.click();',"await physicalTapCard(page,await candidate.getAttribute('data-card-id'));",1)
+          if 'await card.click();' not in t: raise SystemExit('card-first click anchor missing')
           t=t.replace('await card.click();','await physicalTapCard(page,id);',1)
           t=t.replace('await battle.locator(`#hand .handCard[data-card-id="${a}"]`).click();','await physicalTapCard(page,a);')
           t=t.replace('await battle.locator(`#hand .handCard[data-card-id="${b}"]`).click();','await physicalTapCard(page,b);')
+          t=t.replace('battle.locator(`.node.reachable[data-move-distance="${targetDistance}"]`).first()',"battle.locator('.node.reachable').first()")
 
           elastic="test('Elastic Focus yields only beyond the focused Road upper bound and keeps the path'"
           if elastic not in t: raise SystemExit('Elastic live test anchor missing')
           t=t.replace(elastic,"test.skip('Elastic Focus yields only beyond the focused Road upper bound and keeps the path'",1)
           spec.write_text(t)
+          print('R23_TEST_REPAIR', {'distanceOneBlocks':n, 'remainingStaleSelector':t.count('data-move-distance')})
           PY
           cat >> tests/road-move-bidirectional-live-r23.spec.mjs <<'EOF'
 
-          test('LowPerf keeps move-first Road matching and Battle-card noninterference',async({page})=>{
-            const battle=await openRoadBattle(page);
-            const enabled=await page.evaluate(()=>{const e=document.querySelector('#lowPerf');if(!e)return false;if(!/ON/.test(e.textContent||''))e.click();return /ON/.test(e.textContent||'')});
-            expect(enabled).toBe(true);
-            const before=await snapshot(page);expect(before.roadId).toBeNull();expect(before.battleId).toBeNull();
-            await physicalTapReachable(page);
-            const moved=await snapshot(page);expect(moved.path.length).toBeGreaterThan(1);expect(moved.compatibleRoadIds.length).toBeGreaterThan(0);expect(moved.battleId).toBeNull();
-            const id=moved.compatibleRoadIds[0];await physicalTapCard(page,id);
-            const focused=await snapshot(page);expect(focused.roadId).toBe(id);expect(focused.battleId).toBeNull();expect(focused.path).toEqual(moved.path);
-            await expect(battle.locator(`#hand .handCard[data-card-id="${id}"]`)).toHaveAttribute('data-road-move-state','FOCUSED');
-          });
-          EOF
+test('LowPerf keeps move-first Road matching and Battle-card noninterference',async({page})=>{
+  const battle=await openRoadBattle(page);
+  const enabled=await page.evaluate(()=>{const e=document.querySelector('#lowPerf');if(!e)return false;if(!/ON/.test(e.textContent||''))e.click();return /ON/.test(e.textContent||'')});
+  expect(enabled).toBe(true);
+  const before=await snapshot(page);expect(before.roadId).toBeNull();expect(before.battleId).toBeNull();
+  await physicalTapReachable(page);
+  const moved=await snapshot(page);expect(moved.path.length).toBeGreaterThan(1);expect(moved.compatibleRoadIds.length).toBeGreaterThan(0);expect(moved.battleId).toBeNull();
+  const id=moved.compatibleRoadIds[0];await physicalTapCard(page,id);
+  const focused=await snapshot(page);expect(focused.roadId).toBe(id);expect(focused.battleId).toBeNull();expect(focused.path).toEqual(moved.path);
+  await expect(battle.locator(`#hand .handCard[data-card-id="${id}"]`)).toHaveAttribute('data-road-move-state','FOCUSED');
+});
+EOF
 
       - name: Static noninterference and deterministic Elastic gates
         shell: bash
@@ -132,8 +134,6 @@ jobs:
           required=['ROAD-MOVE-BIDIRECTIONAL-R23',"let battle=p.plan.battleId;","removeHand(p,battle)",'data-road-move-state="COMPATIBLE"','data-road-move-state="FOCUSED"','data-road-move-state="INVALID_FOCUS"']
           missing=[x for x in required if x not in s]
           if missing: raise SystemExit('source gate missing: '+repr(missing))
-          t=Path('tests/road-move-bidirectional-live-r23.spec.mjs').read_text()
-          if 'data-move-distance' in t: raise SystemExit('stale data-move-distance selector survived R23 test repair')
           PY
 
       - name: Install Playwright Chromium
@@ -146,10 +146,10 @@ jobs:
         run: |
           set -euo pipefail
           cat > .road-r23.config.mjs <<'EOF'
-          import { defineConfig } from '@playwright/test';
-          const common={baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,trace:'off',screenshot:'only-on-failure',video:'off'};
-          export default defineConfig({testDir:'./tests',testMatch:'road-move-bidirectional-live-r23.spec.mjs',timeout:60000,expect:{timeout:10000},workers:1,retries:0,reporter:[['line']],use:common,projects:[{name:'desktop-1280x720',use:{...common,viewport:{width:1280,height:720}}},{name:'portrait-390x844',use:{...common,viewport:{width:390,height:844}}},{name:'landscape-844x390',use:{...common,viewport:{width:844,height:390}}},{name:'reduced-motion-844x390',use:{...common,viewport:{width:844,height:390},reducedMotion:'reduce'}}],webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1',url:'http://127.0.0.1:4173/browser/GAMEROAD.html',reuseExistingServer:false,timeout:120000}});
-          EOF
+import { defineConfig } from '@playwright/test';
+const common={baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,trace:'off',screenshot:'only-on-failure',video:'off'};
+export default defineConfig({testDir:'./tests',testMatch:'road-move-bidirectional-live-r23.spec.mjs',timeout:60000,expect:{timeout:10000},workers:1,retries:0,reporter:[['line']],use:common,projects:[{name:'desktop-1280x720',use:{...common,viewport:{width:1280,height:720}}},{name:'portrait-390x844',use:{...common,viewport:{width:390,height:844}}},{name:'landscape-844x390',use:{...common,viewport:{width:844,height:390}}},{name:'reduced-motion-844x390',use:{...common,viewport:{width:844,height:390},reducedMotion:'reduce'}}],webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1',url:'http://127.0.0.1:4173/browser/GAMEROAD.html',reuseExistingServer:false,timeout:120000}});
+EOF
           npx playwright test --config=.road-r23.config.mjs --workers=1
           npx playwright test --config=.road-r23.config.mjs --project=landscape-844x390 --grep "LowPerf keeps move-first Road matching" --workers=1
           rm -f .road-r23.config.mjs

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   NEW_BASE_JANKEN_SUIT_BY_HAND,
+  NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE,
   NEW_BASE_ROUND_START_JANKEN_SLOT_ASSIGNMENT_SCHEMA,
   NEW_BASE_ROUND_START_JANKEN_SLOT_STATUS,
   createRoundStartJankenSlotAssignment,
@@ -13,7 +14,179 @@ function slotByHand(snapshot, jankenHand) {
   return snapshot.slots.find((slot) => slot.jankenHand === jankenHand);
 }
 
-test('binds CL/DI/SP to fixed ROCK/SCISSORS/PAPER and removes selected physical cards from ordinary hand membership', () => {
+test('CURRENT_HAND3_POLICY assigns all three current cards to fixed RSP slots without using native suit as membership', () => {
+  const snapshot = createRoundStartJankenSlotAssignment({
+    roundId: 'round-current-1',
+    hand: [
+      { id: 'HEART_9', suit: 'HT' },
+      { id: 'CLUB_A', suit: 'CL' },
+      { id: 'SPADE_2', suit: 'SP' },
+    ],
+    assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
+    assignedCardIdsByJankenHand: {
+      ROCK: 'SPADE_2',
+      SCISSORS: 'HEART_9',
+      PAPER: 'CLUB_A',
+    },
+  });
+
+  assert.equal(snapshot.schema, NEW_BASE_ROUND_START_JANKEN_SLOT_ASSIGNMENT_SCHEMA);
+  assert.equal(snapshot.assignmentMode, NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY);
+  assert.equal(snapshot.roundId, 'round-current-1');
+  assert.deepEqual(snapshot.sourceHandCardIds, ['HEART_9', 'CLUB_A', 'SPADE_2']);
+  assert.deepEqual(snapshot.selectedJankenCardIds, ['SPADE_2', 'HEART_9', 'CLUB_A']);
+  assert.deepEqual(snapshot.ordinaryHandCardIds, []);
+  assert.equal(snapshot.slots.length, 3);
+
+  assert.deepEqual(slotByHand(snapshot, 'ROCK'), {
+    slotId: 'ROCK',
+    jankenHand: 'ROCK',
+    status: NEW_BASE_ROUND_START_JANKEN_SLOT_STATUS.OCCUPIED,
+    selectable: true,
+    cardId: 'SPADE_2',
+    nativeSuit: 'SP',
+    candidateCardIds: ['SPADE_2'],
+  });
+  assert.deepEqual(slotByHand(snapshot, 'SCISSORS'), {
+    slotId: 'SCISSORS',
+    jankenHand: 'SCISSORS',
+    status: NEW_BASE_ROUND_START_JANKEN_SLOT_STATUS.OCCUPIED,
+    selectable: true,
+    cardId: 'HEART_9',
+    nativeSuit: 'HT',
+    candidateCardIds: ['HEART_9'],
+  });
+  assert.deepEqual(slotByHand(snapshot, 'PAPER'), {
+    slotId: 'PAPER',
+    jankenHand: 'PAPER',
+    status: NEW_BASE_ROUND_START_JANKEN_SLOT_STATUS.OCCUPIED,
+    selectable: true,
+    cardId: 'CLUB_A',
+    nativeSuit: 'CL',
+    candidateCardIds: ['CLUB_A'],
+  });
+
+  for (const slot of snapshot.slots) {
+    assert.equal(Object.hasOwn(slot, 'suit'), false,
+      'current assignment keeps native suit separate from fixed janken position');
+  }
+});
+
+test('CURRENT_HAND3_POLICY rejects non-three-card hands instead of inventing empty slots or leftovers', () => {
+  for (const hand of [
+    [],
+    [{ id: 'A', suit: 'CL' }],
+    [{ id: 'A', suit: 'CL' }, { id: 'B', suit: 'DI' }],
+    [
+      { id: 'A', suit: 'CL' },
+      { id: 'B', suit: 'DI' },
+      { id: 'C', suit: 'SP' },
+      { id: 'D', suit: 'HT' },
+    ],
+  ]) {
+    assert.throws(
+      () => createRoundStartJankenSlotAssignment({
+        roundId: `round-${hand.length}`,
+        hand,
+        assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
+        assignedCardIdsByJankenHand: { ROCK: 'A', SCISSORS: 'B', PAPER: 'C' },
+      }),
+      /requires exactly 3 current hand cards/,
+    );
+  }
+});
+
+test('CURRENT_HAND3_POLICY validates an external policy result as an exact three-card bijection', () => {
+  const hand = [
+    { id: 'A', suit: 'CL' },
+    { id: 'B', suit: 'DI' },
+    { id: 'C', suit: 'HT' },
+  ];
+  const base = {
+    roundId: 'round-policy',
+    hand,
+    assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
+  };
+
+  assert.throws(
+    () => createRoundStartJankenSlotAssignment(base),
+    /must be supplied by the external auto-assignment policy/,
+  );
+  assert.throws(
+    () => createRoundStartJankenSlotAssignment({
+      ...base,
+      assignedCardIdsByJankenHand: { ROCK: 'A', SCISSORS: 'A', PAPER: 'C' },
+    }),
+    /must assign three distinct physical cards/,
+  );
+  assert.throws(
+    () => createRoundStartJankenSlotAssignment({
+      ...base,
+      assignedCardIdsByJankenHand: { ROCK: 'A', SCISSORS: 'B', PAPER: 'MISSING' },
+    }),
+    /assigned janken card is not in the current hand: MISSING/,
+  );
+  assert.throws(
+    () => createRoundStartJankenSlotAssignment({
+      ...base,
+      assignedCardIdsByJankenHand: { ROCK: 'A', SCISSORS: 'B' },
+    }),
+    /assignedCardIdsByJankenHand.PAPER must be a non-empty canonical string/,
+  );
+});
+
+test('CURRENT_HAND3_POLICY keeps the exact same immutable assignment within a round', () => {
+  const first = ensureRoundStartJankenSlotAssignment({
+    roundId: 'round-stable-current',
+    hand: [
+      { id: 'A', suit: 'CL' },
+      { id: 'B', suit: 'DI' },
+      { id: 'C', suit: 'SP' },
+    ],
+    assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
+    assignedCardIdsByJankenHand: { ROCK: 'B', SCISSORS: 'C', PAPER: 'A' },
+  });
+
+  const repeated = ensureRoundStartJankenSlotAssignment({
+    currentSnapshot: first,
+    roundId: 'round-stable-current',
+    hand: [
+      { id: 'A', suit: 'CL' },
+      { id: 'B', suit: 'DI' },
+      { id: 'C', suit: 'SP' },
+    ],
+    assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
+    assignedCardIdsByJankenHand: { ROCK: 'A', SCISSORS: 'B', PAPER: 'C' },
+  });
+
+  assert.strictEqual(repeated, first);
+  assert.deepEqual(repeated.selectedJankenCardIds, ['B', 'C', 'A']);
+  assert.equal(Object.isFrozen(first), true);
+  assert.equal(Object.isFrozen(first.slots), true);
+});
+
+test('does not allow a live round snapshot to silently switch assignment modes', () => {
+  const legacy = ensureRoundStartJankenSlotAssignment({
+    roundId: 'round-mode',
+    hand: [{ id: 'CL_A', suit: 'CL' }],
+  });
+  assert.throws(
+    () => ensureRoundStartJankenSlotAssignment({
+      currentSnapshot: legacy,
+      roundId: 'round-mode',
+      hand: [
+        { id: 'CL_A', suit: 'CL' },
+        { id: 'DI_A', suit: 'DI' },
+        { id: 'SP_A', suit: 'SP' },
+      ],
+      assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
+      assignedCardIdsByJankenHand: { ROCK: 'CL_A', SCISSORS: 'DI_A', PAPER: 'SP_A' },
+    }),
+    /assignmentMode cannot change inside an existing round snapshot/,
+  );
+});
+
+test('legacy compatibility mode keeps CL/DI/SP fixed membership until the live caller is migrated', () => {
   const requests = [];
   const snapshot = createRoundStartJankenSlotAssignment({
     roundId: 'round-7',
@@ -30,8 +203,7 @@ test('binds CL/DI/SP to fixed ROCK/SCISSORS/PAPER and removes selected physical 
     },
   });
 
-  assert.equal(snapshot.schema, NEW_BASE_ROUND_START_JANKEN_SLOT_ASSIGNMENT_SCHEMA);
-  assert.equal(snapshot.roundId, 'round-7');
+  assert.equal(snapshot.assignmentMode, NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.LEGACY_SUIT_BOUND);
   assert.deepEqual(NEW_BASE_JANKEN_SUIT_BY_HAND, {
     ROCK: 'CL',
     SCISSORS: 'DI',
@@ -47,7 +219,7 @@ test('binds CL/DI/SP to fixed ROCK/SCISSORS/PAPER and removes selected physical 
     assert.equal(snapshot.ordinaryHandCardIds.includes(selectedCardId), false);
   }
 
-  assert.equal(requests.length, 1, 'authoritative chooser is called only for duplicate suits');
+  assert.equal(requests.length, 1, 'legacy authoritative chooser is called only for duplicate suits');
   assert.deepEqual(requests[0], {
     roundId: 'round-7',
     slotId: 'ROCK',
@@ -59,7 +231,7 @@ test('binds CL/DI/SP to fixed ROCK/SCISSORS/PAPER and removes selected physical 
   });
 });
 
-test('keeps missing-suit directions present as empty disabled slots without duplicating the occupied card', () => {
+test('legacy compatibility mode keeps missing-suit directions empty and disabled', () => {
   const snapshot = createRoundStartJankenSlotAssignment({
     roundId: 'round-empty',
     hand: [
@@ -100,7 +272,7 @@ test('keeps missing-suit directions present as empty disabled slots without dupl
   assert.deepEqual(snapshot.ordinaryHandCardIds, ['HT_K']);
 });
 
-test('supports arbitrary source hand size and partitions selected janken cards from ordinary cards', () => {
+test('legacy compatibility mode still supports arbitrary source hand size without duplicating cards', () => {
   for (const hand of [
     [],
     [{ id: 'HT_A', suit: 'HT' }],
@@ -128,7 +300,7 @@ test('supports arbitrary source hand size and partitions selected janken cards f
   }
 });
 
-test('returns the exact same immutable snapshot within a round and never rerolls on redraw/focus/drag projection', () => {
+test('legacy compatibility snapshot remains stable within a round and never rerolls on redraw/focus/drag projection', () => {
   let chooserCalls = 0;
   const first = ensureRoundStartJankenSlotAssignment({
     roundId: 'round-stable',
@@ -167,7 +339,7 @@ test('returns the exact same immutable snapshot within a round and never rerolls
   assert.equal(Object.isFrozen(first.slots), true);
 });
 
-test('creates a fresh assignment for a new round and can choose a different duplicate candidate', () => {
+test('legacy compatibility mode creates a fresh assignment for a new round', () => {
   let chooserCalls = 0;
   const first = ensureRoundStartJankenSlotAssignment({
     roundId: 'round-1',
@@ -201,7 +373,7 @@ test('creates a fresh assignment for a new round and can choose a different dupl
   assert.equal(chooserCalls, 2);
 });
 
-test('fails closed when duplicate selection has no authoritative chooser or returns an invalid index', () => {
+test('legacy compatibility mode fails closed when duplicate selection has no authoritative chooser or returns an invalid index', () => {
   const duplicateHand = [
     { id: 'SP_2', suit: 'SP' },
     { id: 'SP_6', suit: 'SP' },

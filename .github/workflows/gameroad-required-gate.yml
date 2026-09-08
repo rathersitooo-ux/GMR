@@ -376,6 +376,7 @@ jobs:
                 ;;
               .github/workflows/gameroad-required-gate.yml|\
               .github/workflows/gameroad-observability-ci.yml|\
+              .github/workflows/post-merge-branch-cleanup.yml|\
               tools/preaction-authorization-validator.mjs|\
               tests/preaction-authorization-validator.test.mjs|\
               tools/jit-evidence-compiler.mjs|\

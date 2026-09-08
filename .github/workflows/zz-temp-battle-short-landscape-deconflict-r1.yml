@@ -59,24 +59,24 @@ jobs:
               raise SystemExit('focused regression test already exists')
           addition = r'''
 
-test('short-landscape Battle controls deconflict the fixed janken fan from the right utility rail', async () => {
-  const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
-  assert.match(source, /@media\(max-height:430px\) and \(orientation:landscape\)\{[^\n]*\[\$\{HOST_ATTR\}=\"1\"\]\{width:188px;height:146px;right:58px;bottom:7px/);
-  assert.match(source, /max-height:430px[^\n]*\.grJankenSlidePadHandle\{width:58px;height:58px\}/,
-    'the primary bottom-right touch target stays at the existing short-landscape size');
-  assert.match(source, /max-height:430px[^\n]*\.grJankenSlidePadSlot\{width:60px;height:80px;padding:4px\}/);
-  assert.match(source, /max-height:430px[^\n]*rock\{transform:translate\(-124px,10px\)[^\n]*scissors\{transform:translate\(-92px,-40px\)[^\n]*paper\{transform:translate\(-48px,-62px\)/);
-});
+          test('short-landscape Battle controls deconflict the fixed janken fan from the right utility rail', async () => {
+            const { readFile } = await import('node:fs/promises');
+            const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+            assert.match(source, /@media\(max-height:430px\) and \(orientation:landscape\)\{[^\n]*\[\$\{HOST_ATTR\}=\"1\"\]\{width:188px;height:146px;right:58px;bottom:7px/);
+            assert.match(source, /max-height:430px[^\n]*\.grJankenSlidePadHandle\{width:58px;height:58px\}/,
+              'the primary bottom-right touch target stays at the existing short-landscape size');
+            assert.match(source, /max-height:430px[^\n]*\.grJankenSlidePadSlot\{width:60px;height:80px;padding:4px\}/);
+            assert.match(source, /max-height:430px[^\n]*rock\{transform:translate\(-124px,10px\)[^\n]*scissors\{transform:translate\(-92px,-40px\)[^\n]*paper\{transform:translate\(-48px,-62px\)/);
+          });
 
-test('short-landscape remaining-hand roulette compacts beside Partner without changing its board-occlusion contract', async () => {
-  const { readFile } = await import('node:fs/promises');
-  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
-  assert.match(source, /max-height:430px[^\n]*BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR[^\n]*bottom:var\(--gameroad-battle-partner-upper-y,92px\);transform:scale\(\.72\)/);
-  assert.match(source, /left:var\(--gameroad-battle-partner-right-x,clamp\(112px,14vw,174px\)\)/,
-    'desktop placement remains anchored beside Partner rather than moving into the board');
-});
-'''
+          test('short-landscape remaining-hand roulette compacts beside Partner without changing its board-occlusion contract', async () => {
+            const { readFile } = await import('node:fs/promises');
+            const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+            assert.match(source, /max-height:430px[^\n]*BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR[^\n]*bottom:var\(--gameroad-battle-partner-upper-y,92px\);transform:scale\(\.72\)/);
+            assert.match(source, /left:var\(--gameroad-battle-partner-right-x,clamp\(112px,14vw,174px\)\)/,
+              'desktop placement remains anchored beside Partner rather than moving into the board');
+          });
+          '''
           test_file.write_text(test_text.rstrip() + addition.rstrip() + '\n')
           PY
           git diff --check

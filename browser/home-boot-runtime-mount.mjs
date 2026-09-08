@@ -528,6 +528,34 @@ export function createHomeSetupModeSlotRoll({ items = [], centerWidth = 0 } = {}
   });
 }
 
+export function createHomeQuickSetSlotRoll({
+  items = [],
+  selectedRouteId = null,
+  centerWidth = HOME_TOUCH_TARGET_MIN_PX,
+} = {}) {
+  if (!Array.isArray(items)) return null;
+  const normalized = [];
+  const seen = new Set();
+  for (const source of items) {
+    const id = String(source?.id ?? '').trim();
+    if (!id || seen.has(id)) return null;
+    seen.add(id);
+    const label = String(source?.label ?? id).trim() || id;
+    normalized.push(Object.freeze({ id, label }));
+  }
+  const width = Number(centerWidth);
+  if (!normalized.length || !Number.isFinite(width) || width <= 0) return null;
+  const requested = String(selectedRouteId ?? '').trim();
+  let anchorIndex = requested ? normalized.findIndex((item) => item.id === requested) : -1;
+  if (anchorIndex < 0) anchorIndex = normalized.findIndex((item) => roleForRouteId(item.id) === 'battle');
+  if (anchorIndex < 0) anchorIndex = 0;
+  return Object.freeze({
+    state: createSlotRollState({ items: normalized, anchorIndex }),
+    detentPx: Math.max(HOME_TOUCH_TARGET_MIN_PX, width),
+    anchorId: normalized[anchorIndex].id,
+  });
+}
+
 function currentSetupModeItems() {
   const setup = document.querySelector(SETUP_SELECTOR);
   if (!(setup instanceof HTMLElement)) return Object.freeze([]);
@@ -752,6 +780,8 @@ function resetGesture({ releaseCapture = true } = {}) {
   runtime.slidepad.originX = 0;
   runtime.slidepad.originY = 0;
   runtime.slidepad.moved = false;
+  if (runtime.slidepad.home instanceof HTMLElement) delete runtime.slidepad.home.dataset.homeQuickSetActive;
+  clearSlotRollProjection();
   clearPreview();
   resetKnob(center);
   if (releaseCapture && center instanceof HTMLElement && pointerId != null) {
@@ -797,25 +827,57 @@ function bindSlidepad(home) {
     dy: Number(event.clientY) - runtime.slidepad.originY,
   });
 
+  const quickSetItems = (buttons) => buttons.map((button) => ({
+    id: routeId(button),
+    label: String(button.getAttribute('aria-label') || button.textContent || routeId(button) || '').trim() || routeId(button),
+  }));
+
+  const setQuickSetButton = (buttons, itemId) => {
+    const button = buttons.find((candidate) => routeId(candidate) === itemId) || null;
+    runtime.slotRoll.routeButton = button;
+    setPreview(button);
+    if (button) applyTargetAdhesion(button);
+    return button;
+  };
+
+  const beginQuickSet = (event) => {
+    const buttons = routeButtons(home);
+    const centerRect = center.getBoundingClientRect();
+    const created = createHomeQuickSetSlotRoll({
+      items: quickSetItems(buttons),
+      selectedRouteId: selectedRouteId(buttons),
+      centerWidth: centerRect.width,
+    });
+    clearSlotRollProjection();
+    if (!created) {
+      setPreview(null);
+      return null;
+    }
+    runtime.slotRoll.state = created.state;
+    runtime.slotRoll.lastX = Number(event.clientX);
+    runtime.slotRoll.detentPx = created.detentPx;
+    home.dataset.homeQuickSetActive = 'true';
+    return setQuickSetButton(buttons, created.anchorId);
+  };
+
   const updateFromPointer = (event) => {
     const { dx, dy } = pointerVector(event);
     const distance = Math.hypot(dx, dy);
     if (distance >= SLIDEPAD_DEAD_ZONE_PX) runtime.slidepad.moved = true;
     const buttons = routeButtons(home);
-    const currentRouteId = routeId(runtime.slidepad.previewButton);
-    const target = resolveHomeSlidepadRayTarget({
-      originX: runtime.slidepad.originX,
-      originY: runtime.slidepad.originY,
-      pointerX: Number(event.clientX),
-      pointerY: Number(event.clientY),
-      currentRouteId,
-      targets: buttons.map((button) => ({ routeId: routeId(button), rect: button.getBoundingClientRect() })),
-    });
-    const button = target ? buttons.find((candidate) => routeId(candidate) === target.routeId) || null : null;
-    setPreview(button);
-    if (button) applyTargetAdhesion(button);
+    if (runtime.slotRoll.state) {
+      const nextX = Number(event.clientX);
+      const deltaPx = nextX - runtime.slotRoll.lastX;
+      runtime.slotRoll.lastX = nextX;
+      const advanced = advanceSlotRollDrag(runtime.slotRoll.state, {
+        deltaPx,
+        detentPx: runtime.slotRoll.detentPx,
+      });
+      runtime.slotRoll.state = advanced.state;
+      setQuickSetButton(buttons, runtime.slotRoll.state.itemId);
+    }
     moveKnobWithGesture(center, dx, dy);
-    return { dx, dy, role: button ? roleForRouteId(routeId(button)) : null, button };
+    return { dx, dy, button: runtime.slidepad.previewButton };
   };
 
   const handlers = {
@@ -838,6 +900,7 @@ function bindSlidepad(home) {
       runtime.slidepad.moved = false;
       center.dataset.homeSlidepadDragging = 'true';
       try { center.setPointerCapture?.(event.pointerId); } catch {}
+      beginQuickSet(event);
       updateFromPointer(event);
     },
     pointermove(event) {
@@ -847,16 +910,15 @@ function bindSlidepad(home) {
     },
     pointerup(event) {
       if (event.pointerId !== runtime.slidepad.pointerId) return;
-      const { button } = updateFromPointer(event);
-      const moved = runtime.slidepad.moved;
+      updateFromPointer(event);
+      const commit = runtime.slotRoll.state ? resolveSlotRollCommit(runtime.slotRoll.state) : null;
+      const button = commit?.itemId
+        ? routeButtons(home).find((candidate) => routeId(candidate) === commit.itemId) || null
+        : null;
       resetGesture();
       event.preventDefault();
       event.stopPropagation();
       if (!runtime.active) return;
-      if (!moved) {
-        center.click();
-        return;
-      }
       if (button) button.click();
     },
     pointercancel(event) {
@@ -918,8 +980,8 @@ export function refreshHomeBootPresentation() {
     routeIds: state.routeIds,
     selectedRouteId: state.selectedRouteId,
   });
+  unbindHomeModeSlotRoll();
   bindSlidepad(home);
-  bindHomeModeSlotRoll(home);
   if (active) mountHomeContextualTutorialReplay(home);
   else {
     home.removeAttribute('data-home-contextual-replay-active');
@@ -1009,11 +1071,14 @@ export function snapshot() {
     slidepadGestureBound: Boolean(runtime.slidepad.center && runtime.slidepad.handlers),
     slidepadBlankDoubleClickDismissBound: Boolean(runtime.slidepad.home && runtime.slidepad.handlers),
     slidepadPointerActive: runtime.slidepad.pointerId != null,
-    slidepadTargeting: 'straight-ray-target-side-adhesion',
-    slotRollModeBranchBound: Boolean(runtime.slotRoll.center && runtime.slotRoll.handlers),
-    slotRollModeBranchActive: Boolean(runtime.slotRoll.state),
-    slotRollModeItemId: runtime.slotRoll.state?.itemId ?? null,
-    slotRollModeSource: 'setup-data-mode-current-dom',
+    slidepadTargeting: 'cyclic-home-route-quickset',
+    quickSetRouteRollActive: Boolean(runtime.slotRoll.state),
+    quickSetRouteItemId: runtime.slotRoll.state?.itemId ?? null,
+    quickSetRouteSource: 'existing-home-route-buttons',
+    slotRollModeBranchBound: false,
+    slotRollModeBranchActive: false,
+    slotRollModeItemId: null,
+    slotRollModeSource: 'disabled-home-child-mode-branch',
     projectionStatus: 'scene-target-projection-mounted',
     lastError: runtime.lastError,
   });

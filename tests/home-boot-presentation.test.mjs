@@ -14,8 +14,10 @@ import {
   createBootLoadingState,
   projectBootLoadingPresentation,
 } from '../browser/boot-loading-presentation-core.mjs';
+import { advanceSlotRollDrag, resolveSlotRollCommit } from '../browser/slidepad-slot-roll-core.mjs';
 import {
   HOME_CONTEXTUAL_REPLAY_LABEL,
+  createHomeQuickSetSlotRoll,
   QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS,
   containSharedQuickSettingsTabFocus,
   projectHomeContextualTutorialReplay,
@@ -286,6 +288,57 @@ test('Home compatibility direction map keeps the four fixed responsibilities for
   assert.equal(resolveHomeSlidepadRole({ dx: 48, dy: 0 }), 'shop');
   assert.equal(resolveHomeSlidepadRole({ dx: -42, dy: -34 }), 'partner');
   assert.equal(resolveHomeSlidepadRole({ dx: -42, dy: 20 }), 'cards');
+});
+
+test('Home Quick Set press starts on a real route and zero-move release can commit that anchor', () => {
+  const quickSet = createHomeQuickSetSlotRoll({
+    items: [
+      { id: 'setup', label: 'Battle' },
+      { id: 'shop', label: 'Shop' },
+      { id: 'partner', label: 'Partner' },
+      { id: 'cards', label: 'Deck' },
+    ],
+    centerWidth: 64,
+  });
+  assert.ok(quickSet);
+  assert.equal(quickSet.anchorId, 'setup');
+  assert.equal(resolveSlotRollCommit(quickSet.state)?.itemId, 'setup');
+  assert.equal(resolveSlotRollCommit(quickSet.state)?.totalSteps, 0);
+});
+
+test('Home Quick Set preserves an existing selected route as the no-move anchor', () => {
+  const quickSet = createHomeQuickSetSlotRoll({
+    items: [
+      { id: 'setup', label: 'Battle' },
+      { id: 'shop', label: 'Shop' },
+      { id: 'partner', label: 'Partner' },
+      { id: 'cards', label: 'Deck' },
+    ],
+    selectedRouteId: 'partner',
+    centerWidth: 64,
+  });
+  assert.equal(quickSet?.anchorId, 'partner');
+  assert.equal(resolveSlotRollCommit(quickSet.state)?.itemId, 'partner');
+});
+
+test('Home Quick Set cycles both directions and wraps through the existing route gummies', () => {
+  const quickSet = createHomeQuickSetSlotRoll({
+    items: [
+      { id: 'setup', label: 'Battle' },
+      { id: 'shop', label: 'Shop' },
+      { id: 'partner', label: 'Partner' },
+      { id: 'cards', label: 'Deck' },
+    ],
+    centerWidth: 64,
+  });
+  let state = quickSet.state;
+  state = advanceSlotRollDrag(state, { deltaPx: 64, detentPx: quickSet.detentPx }).state;
+  assert.equal(state.itemId, 'shop');
+  state = advanceSlotRollDrag(state, { deltaPx: 64 * 3, detentPx: quickSet.detentPx }).state;
+  assert.equal(state.itemId, 'setup');
+  state = advanceSlotRollDrag(state, { deltaPx: -64, detentPx: quickSet.detentPx }).state;
+  assert.equal(state.itemId, 'cards');
+  assert.equal(resolveSlotRollCommit(state)?.itemId, 'cards');
 });
 
 test('Home pointer targeting follows the straight drag ray and actual target geometry, not a quadrant label', () => {

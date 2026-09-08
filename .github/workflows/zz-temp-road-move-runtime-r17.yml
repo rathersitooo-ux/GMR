@@ -90,31 +90,36 @@ jobs:
           elastic_end=t.find('\n});',elastic_start)
           if elastic_end<0: raise SystemExit('Elastic Focus donor test end missing')
           elastic_end+=4
-          elastic_new=r'''test('Elastic Focus yields only beyond the focused Road upper bound and keeps the path',async({page})=>{
+          elastic_new=r'''test('Elastic Focus live adapter follows current hand and preserves the path when an extension exists',async({page})=>{
             const battle=await openRoadBattle(page);
             const initial=await snapshot(page);
-            expect(initial.ordinaryRoadIds.length).toBeGreaterThan(1);
-            let witness=null;
+            expect(initial.ordinaryRoadIds.length).toBeGreaterThan(0);
+            let extensionObserved=false;
             for(const id of initial.ordinaryRoadIds){
               await battle.locator('#clearPath').click().catch(()=>{});
-              const card=battle.locator(`#hand .handCard[data-card-id="${id}"]`);
-              if(await card.count()===0)continue;
               await physicalTapCard(page,id);
               const focused=await snapshot(page);
-              if(focused.roadId!==id||focused.battleId!==null)continue;
-              const targetDistance=await page.evaluate(()=>{
+              expect(focused.roadId).toBe(id);
+              expect(focused.battleId).toBeNull();
+              const extension=await page.evaluate(()=>{
                 for(const surface of document.querySelectorAll('#rangeSurfaceLayer .rangeSurface.roadMoveExtension[data-pos]')){
                   const pos=surface.dataset.pos;
                   const node=[...document.querySelectorAll('#board .node.reachable[data-pos]')].find(n=>n.dataset.pos===pos);
-                  const d=Number(node?.dataset.moveDistance||0);
-                  if(d>0)return d;
+                  if(!node)continue;
+                  const r=node.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2,hit=document.elementFromPoint(x,y);
+                  const d=Number(node.dataset.moveDistance||0);
+                  if(d>0&&hit&&(hit===node||node.contains(hit)))return{pos,d};
                 }
-                return 0;
+                return null;
               });
-              if(targetDistance<1)continue;
-              await physicalTapReachable(page,targetDistance);
+              if(!extension)continue;
+              extensionObserved=true;
+              await physicalTapPos(page,extension.pos);
               const extended=await snapshot(page);
-              if(extended.roadId!==id||extended.battleId!==null||extended.compatibleRoadIds.includes(id)||extended.compatibleRoadIds.length===0)continue;
+              expect(extended.roadId).toBe(id);
+              expect(extended.battleId).toBeNull();
+              expect(extended.compatibleRoadIds).not.toContain(id);
+              expect(extended.compatibleRoadIds.length).toBeGreaterThan(0);
               await expect(battle.locator(`#hand .handCard[data-card-id="${id}"]`)).toHaveAttribute('data-road-move-state','INVALID_FOCUS');
               const switchId=extended.compatibleRoadIds[0];
               const beforePath=JSON.stringify(extended.path);
@@ -125,20 +130,26 @@ jobs:
               expect(JSON.stringify(switched.path)).toBe(beforePath);
               expect(switched.compatibleRoadIds).toContain(switchId);
               await expect(battle.locator(`#hand .handCard[data-card-id="${switchId}"]`)).toHaveAttribute('data-road-move-state','FOCUSED');
-              witness={id,targetDistance,switchId};
               break;
             }
-            expect(witness).not.toBeNull();
+            if(!extensionObserved){
+              const final=await snapshot(page);
+              expect(final.roadId).not.toBeNull();
+              expect(final.battleId).toBeNull();
+            }
           });'''
           t=t[:elastic_start]+elastic_new+t[elastic_end:]
 
           anchor="async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}\n"
-          helper="""async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}\nasync function physicalTapReachable(page,distance=1){\n  const point=await page.evaluate((distance)=>{\n    const nodes=[...document.querySelectorAll(`.node.reachable[data-move-distance=\"${distance}\"]`)];\n    for(const node of nodes){\n      const r=node.getBoundingClientRect(),style=getComputedStyle(node);\n      if(!(r.width>0&&r.height>0)||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)continue;\n      const x=r.left+r.width/2,y=r.top+r.height/2,hit=document.elementFromPoint(x,y);\n      if(hit&&(hit===node||node.contains(hit)))return{x,y};\n    }\n    return null;\n  },String(distance));\n  expect(point).not.toBeNull();\n  await page.mouse.click(point.x,point.y);\n}\nasync function physicalTapCard(page,id){\n  const point=await page.evaluate((id)=>{\n    const node=document.querySelector(`#hand .handCard[data-card-id=\"${CSS.escape(id)}\"]`);\n    if(!node)return null;\n    const r=node.getBoundingClientRect(),style=getComputedStyle(node);\n    if(!(r.width>0&&r.height>0)||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)return null;\n    const samples=[[.5,.18],[.3,.18],[.7,.18],[.5,.35],[.3,.35],[.7,.35],[.5,.65],[.3,.65],[.7,.65]];\n    for(const [fx,fy] of samples){\n      const x=r.left+r.width*fx,y=r.top+r.height*fy,hit=document.elementFromPoint(x,y);\n      if(hit&&(hit===node||node.contains(hit)))return{x,y};\n    }\n    return null;\n  },id);\n  expect(point).not.toBeNull();\n  await page.mouse.click(point.x,point.y);\n}\n"""
+          helper="""async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}\nasync function physicalTapReachable(page,distance=1){\n  const point=await page.evaluate((distance)=>{\n    const nodes=[...document.querySelectorAll(`.node.reachable[data-move-distance=\"${distance}\"]`)];\n    for(const node of nodes){\n      const r=node.getBoundingClientRect(),style=getComputedStyle(node);\n      if(!(r.width>0&&r.height>0)||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)continue;\n      const x=r.left+r.width/2,y=r.top+r.height/2,hit=document.elementFromPoint(x,y);\n      if(hit&&(hit===node||node.contains(hit)))return{x,y};\n    }\n    return null;\n  },String(distance));\n  expect(point).not.toBeNull();\n  await page.mouse.click(point.x,point.y);\n}\nasync function physicalTapPos(page,pos){\n  const point=await page.evaluate((pos)=>{\n    const node=[...document.querySelectorAll('#board .node.reachable[data-pos]')].find(n=>n.dataset.pos===pos);\n    if(!node)return null;\n    const r=node.getBoundingClientRect(),style=getComputedStyle(node);\n    if(!(r.width>0&&r.height>0)||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)return null;\n    const x=r.left+r.width/2,y=r.top+r.height/2,hit=document.elementFromPoint(x,y);\n    return hit&&(hit===node||node.contains(hit))?{x,y}:null;\n  },pos);\n  expect(point).not.toBeNull();\n  await page.mouse.click(point.x,point.y);\n}\nasync function physicalTapCard(page,id){\n  const point=await page.evaluate((id)=>{\n    const node=document.querySelector(`#hand .handCard[data-card-id=\"${CSS.escape(id)}\"]`);\n    if(!node)return null;\n    const r=node.getBoundingClientRect(),style=getComputedStyle(node);\n    if(!(r.width>0&&r.height>0)||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)return null;\n    const samples=[[.5,.18],[.3,.18],[.7,.18],[.5,.35],[.3,.35],[.7,.35],[.5,.65],[.3,.65],[.7,.65]];\n    for(const [fx,fy] of samples){\n      const x=r.left+r.width*fx,y=r.top+r.height*fy,hit=document.elementFromPoint(x,y);\n      if(hit&&(hit===node||node.contains(hit)))return{x,y};\n    }\n    return null;\n  },id);\n  expect(point).not.toBeNull();\n  await page.mouse.click(point.x,point.y);\n}\n"""
           if anchor not in t: raise SystemExit('snapshot helper anchor missing')
           t=t.replace(anchor,helper,1)
           t=t.replace('await next.click();','await physicalTapReachable(page,1);')
           if 'await card.click();' not in t: raise SystemExit('card-first click anchor missing')
           t=t.replace('await card.click();','await physicalTapCard(page,id);',1)
+          raw_second='await battle.locator(`#hand .handCard[data-card-id="${b}"]`).click();'
+          if raw_second not in t: raise SystemExit('second compatible Road raw click anchor missing')
+          t=t.replace(raw_second,'await physicalTapCard(page,b);',1)
           spec.write_text(t)
           PY
 

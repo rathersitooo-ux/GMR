@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import {
   classifyHomeViewport,
   createHomeShellState,
@@ -17,12 +18,14 @@ import {
 import { advanceSlotRollDrag, resolveSlotRollCommit } from '../browser/slidepad-slot-roll-core.mjs';
 import {
   HOME_CONTEXTUAL_REPLAY_LABEL,
+  HOME_QUICKSET_CANCEL_LABEL,
   createHomeQuickSetSlotRoll,
   QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS,
   containSharedQuickSettingsTabFocus,
   projectHomeContextualTutorialReplay,
   readExistingQuickSettings,
   removeLegacyHomeNodes,
+  resolveHomeQuickSetCancelHit,
   resolveHomeSlidepadFeedbackTranslation,
   resolveHomeSlidepadRayTarget,
   resolveHomeSlidepadRelease,
@@ -339,6 +342,30 @@ test('Home Quick Set cycles both directions and wraps through the existing route
   state = advanceSlotRollDrag(state, { deltaPx: -64, detentPx: quickSet.detentPx }).state;
   assert.equal(state.itemId, 'cards');
   assert.equal(resolveSlotRollCommit(state)?.itemId, 'cards');
+});
+
+test('Home Quick Set cancel uses one explicit displayed target and does not replace zero-move commit', () => {
+  assert.equal(HOME_QUICKSET_CANCEL_LABEL, 'キャンセル');
+  const cancelRect = { left: 40, top: 60, width: 56, height: 56 };
+  assert.equal(resolveHomeQuickSetCancelHit({ pointerX: 68, pointerY: 88, cancelRect }), true);
+  assert.equal(resolveHomeQuickSetCancelHit({ pointerX: 39, pointerY: 88, cancelRect }), false);
+  assert.equal(resolveHomeQuickSetCancelHit({ pointerX: 68, pointerY: 117, cancelRect }), false);
+  assert.equal(resolveHomeQuickSetCancelHit({ pointerX: 68, pointerY: 88, cancelRect: { ...cancelRect, width: 0 } }), false);
+
+  const quickSet = createHomeQuickSetSlotRoll({
+    items: [{ id: 'setup', label: 'Battle' }, { id: 'shop', label: 'Shop' }],
+    centerWidth: 64,
+  });
+  assert.equal(resolveSlotRollCommit(quickSet.state)?.itemId, 'setup');
+  assert.equal(resolveSlotRollCommit(quickSet.state)?.totalSteps, 0);
+});
+
+test('Home held Quick Set hides idle route gummies and renders a separate cancel place', () => {
+  const source = fs.readFileSync(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.ok(source.includes('[data-home-quick-set-active=\"true\"] ${ROUTE_SELECTOR}'));
+  assert.ok(source.includes('visibility:hidden!important'));
+  assert.ok(source.includes('dataset.homeQuickSetActive'));
+  assert.ok(source.includes('dataset.homeQuickSetCancel'));
 });
 
 test('Home pointer targeting follows the straight drag ray and actual target geometry, not a quadrant label', () => {

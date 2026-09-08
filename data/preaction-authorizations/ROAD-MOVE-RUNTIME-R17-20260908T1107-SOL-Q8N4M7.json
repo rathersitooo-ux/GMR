@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-MOVE-RUNTIME-R17-20260908T1107-SOL-Q8N4M7",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE_R17",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R17-20260908T1107-SOL-Q8N4M7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R16_RUN_34171901388_12_OF_12_PLUS_34172063115_LOWPERF_PASS",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R13_RUN_34166060239_PHYSICAL_HIT_INPUT_PLUS_R16_3VIEWPORT_REDUCEDMOTION_LOWPERF",
+  "proceedToken": "PROCEED|ROAD-MOVE-RUNTIME-R17-20260908T1107-SOL-Q8N4M7|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-08T11:09+09:00",
+  "authorizationBaseSha": "a18ea1f5474eaa55152865e8c951b01afe1e071c",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r17.spec.mjs",
+    ".github/workflows/zz-temp-road-move-runtime-r17.yml",
+    "tools/zz-temp-road-move-runtime-r17.py"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE_R17",
+  "leaseAcquireKey": "ROAD-MOVE-RUNTIME-R17-20260908T1107-SOL-Q8N4M7",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r17.spec.mjs",
+    ".github/workflows/zz-temp-road-move-runtime-r17.yml",
+    "tools/zz-temp-road-move-runtime-r17.py"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-09-08 11:07 JST",
+  "leaseUntilJst": "2026-09-08 12:07 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A618:L618",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean branch sol/road-move-bidirectional-live-r17-20260908 from exact fresh main; browser/GAMEROAD.html; tests/road-move-bidirectional-live-r17.spec.mjs; transient .github/workflows/zz-temp-road-move-runtime-r17.yml; transient tools/zz-temp-road-move-runtime-r17.py; transient data/preaction-authorizations/ROAD-MOVE-RUNTIME-R17-20260908T1107-SOL-Q8N4M7.json; own PR/check/merge/main/public readback. READ_ONLY: browser/road-move-compatibility-core.mjs; tests/road-move-compatibility-core.test.mjs; browser/battle-janken-slidepad-runtime-mount.mjs and its active R2B test/workflow; 109 topology/reachable/stoppability; all Battle-card selection/reservation/submission/order/resolve; save/economy/network.",
+  "solutionSignature": "Reuse the already-proven R5/R6 one-draft Road movement integration plus the R16 late selectEndpoint adaptation on the unchanged GAMEROAD.html blob; no second movement mode, no Road1-6 copy handlers, no Battle-card semantics",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R5_R6_DONORS_PLUS_R13_R16_ACCEPTANCE",
+  "solutionSearchEvidence": [
+    "Current main a18ea1f5474eaa55152865e8c951b01afe1e071c still has browser/GAMEROAD.html blob 35f9203e2be95ba07b44c875e26bfe2047a3cee5, identical to R16 prevalidation input",
+    "R13 run 34166060239 passed exact candidate physical hit-input acceptance at 1280x720",
+    "R16 run 34171901388 passed 12/12 at 390x844, 844x390 and Reduced Motion using elementFromPoint plus physical mouse input",
+    "R16 run 34172063115 passed LowPerf move-first candidates, Road focus/path retention and Battle-card noninterference",
+    "PR #1283 already merged deterministic Elastic Road3/Road5/Road6 pure compatibility behavior; this WorkUnit consumes that existing authority rather than creating another state machine",
+    "External current card-game patch histories continue to treat accidental navigation/overlap/first-attempt UI failures as localized interaction defects rather than reasons to change underlying game rules"
+  ]
+}

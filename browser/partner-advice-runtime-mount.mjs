@@ -32,6 +32,116 @@ const QUICK_REPLY_SCHEMA = 'gameroad.partner-advice-quick-reply.v1';
 const CHARACTER_REACTION_SCHEMA = 'gameroad.partner-battle-character-reaction.v1';
 const CHARACTER_REACTION_TRIGGER_ID = 'battle_card_submit';
 const DELEGATE_REPLY_TEXT = 'まかせた！';
+const ADVICE_EVIDENCE_SCHEMA = 'gameroad.partner-advice-evidence-presentation.v1';
+const ADVICE_EVIDENCE_REASON = Object.freeze({
+  LEFTMOST: '左側を優先する作戦設定から',
+  RIGHTMOST: '右側を優先する作戦設定から',
+  MAXIMUM: '比較値が高い候補を優先する作戦設定から',
+  MINIMUM: '比較値が低い候補を優先する作戦設定から',
+});
+const adviceEvidenceListeners = new Set();
+
+function inactivePartnerAdviceEvidence(reason) {
+  return Object.freeze({
+    schema: ADVICE_EVIDENCE_SCHEMA,
+    active: false,
+    reason,
+    suggestion: null,
+    badge: null,
+    sourceKind: null,
+    why: null,
+    support: null,
+    detailLines: Object.freeze([]),
+    collectiveEvidenceUsed: false,
+    optimalActionProven: false,
+    goodMisplaySignal: false,
+    autoExecute: false,
+    presentationOnly: true,
+  });
+}
+
+let latestPartnerAdviceEvidence = inactivePartnerAdviceEvidence('NOT_RENDERED');
+
+function publicEvidenceCandidate(adviceResult, candidates) {
+  const id = exactPresentationToken(adviceResult?.selected?.candidateId);
+  if (!id) return null;
+  const candidate = Array.isArray(candidates)
+    ? candidates.find((entry) => String(entry?.candidateId || '') === id && entry?.publicScope === true)
+    : null;
+  if (adviceResult?.containsPrivate !== false && !candidate) return null;
+  const payload = adviceResult?.selected?.payload || candidate?.payload;
+  const label = exactPresentationToken(payload?.label)
+    || exactPresentationToken(payload?.name)
+    || exactPresentationToken(payload?.title)
+    || null;
+  return Object.freeze({ id, label });
+}
+
+export function projectPartnerAdviceEvidencePresentation({ adviceResult, candidates = null } = {}) {
+  if (!adviceResult?.ok) return inactivePartnerAdviceEvidence('ADVICE_UNAVAILABLE');
+  const candidate = publicEvidenceCandidate(adviceResult, candidates);
+  if (!candidate) return inactivePartnerAdviceEvidence('PUBLIC_SCOPE_UNVERIFIED');
+  const source = exactPresentationToken(adviceResult.source);
+  let descriptor = null;
+  if (source === 'approved-runtime-manifest' && adviceResult.manifestUsed === true) {
+    const rawSupport = Number(adviceResult.manifestSupport);
+    const support = Number.isSafeInteger(rawSupport) && rawSupport > 0 ? rawSupport : null;
+    descriptor = {
+      badge: '集合知',
+      sourceKind: 'collective',
+      why: '似た局面の承認済み対戦記録を参照',
+      support,
+      detailLines: Object.freeze([
+        support === null ? '承認済みの集合知を参照' : `参照 ${support}件の局面データ`,
+        '公開可能な情報と現行版だけを使用',
+        '最適解の断定ではなく、現在の助言候補',
+      ]),
+      collectiveEvidenceUsed: true,
+    };
+  } else if (source === 'shared-legal-action-core' && adviceResult.manifestUsed !== true) {
+    descriptor = {
+      badge: '作戦設定',
+      sourceKind: 'strategy',
+      why: ADVICE_EVIDENCE_REASON[exactPresentationToken(adviceResult.reason)] || '現在の作戦設定から',
+      support: null,
+      detailLines: Object.freeze(['現在の合法な候補だけから選択', '集合知の採用結果ではありません']),
+      collectiveEvidenceUsed: false,
+    };
+  } else if (source === 'legacy') {
+    descriptor = {
+      badge: '通常助言',
+      sourceKind: 'legacy',
+      why: '現在の対戦ロジックから',
+      support: null,
+      detailLines: Object.freeze(['集合知の採用結果ではありません', '自動操作は行いません']),
+      collectiveEvidenceUsed: false,
+    };
+  }
+  if (!descriptor) return inactivePartnerAdviceEvidence('SOURCE_AUTHORITY_UNVERIFIED');
+  return Object.freeze({
+    schema: ADVICE_EVIDENCE_SCHEMA,
+    active: true,
+    reason: null,
+    suggestion: candidate.label ? `提案：${candidate.label}` : '提案を盤面に表示中',
+    ...descriptor,
+    optimalActionProven: false,
+    goodMisplaySignal: false,
+    autoExecute: false,
+    presentationOnly: true,
+  });
+}
+
+export function readLatestPartnerAdviceEvidencePresentation() {
+  return latestPartnerAdviceEvidence;
+}
+
+function publishPartnerAdviceEvidence(result, candidates) {
+  latestPartnerAdviceEvidence = projectPartnerAdviceEvidencePresentation({ adviceResult: result, candidates });
+  for (const listener of adviceEvidenceListeners) {
+    try { listener(latestPartnerAdviceEvidence); } catch {}
+  }
+  return result;
+}
 
 function exactVersionTuple(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -158,7 +268,7 @@ export function createPartnerAdviceReplayBridge({
 
   return function partnerAdviceReplay(candidates, rule) {
     const effectiveRule = resolvePartnerStrategyRule(rule, getPartnerId, getStrategyPreference);
-    const fallback = () => legacyReplay({ rule: effectiveRule, candidates });
+    const fallback = () => publishPartnerAdviceEvidence(legacyReplay({ rule: effectiveRule, candidates }), candidates);
     const versions = exactVersionTuple(getVersions());
     if (!versions) return fallback();
 
@@ -181,7 +291,7 @@ export function createPartnerAdviceReplayBridge({
           });
 
       if (!result?.ok) return fallback();
-      return preservePublicPayload(result, candidates);
+      return publishPartnerAdviceEvidence(preservePublicPayload(result, candidates), candidates);
     } catch {
       return fallback();
     }
@@ -825,7 +935,7 @@ function ensureBattleChatStyle(doc) {
   if (doc.getElementById(CHAT_STYLE_ID)) return;
   const style = doc.createElement('style');
   style.id = CHAT_STYLE_ID;
-  style.textContent = `#${CHAT_ROOT_ID}{display:grid;gap:6px;margin:7px 0;padding:7px;border:1px solid rgba(190,225,214,.28);border-radius:10px;background:rgba(3,18,16,.72)}#${CHAT_ROOT_ID} .partnerAdviceRoleControl{display:flex;align-items:center;gap:7px;min-height:34px}#${CHAT_ROOT_ID} .partnerAdviceRoleControl span{font-size:8px;color:#9eb7af;font-weight:900}#${CHAT_ROOT_ID} .partnerAdviceRoleControl strong{font-size:11px;font-weight:950;flex:1}#${CHAT_ROOT_ID} .partnerAdvicePartnerSwitch{width:34px;height:34px;min-width:34px;padding:0;border-radius:999px;border:1px solid rgba(173,235,214,.38);background:rgba(10,45,38,.78);color:#e4fff6;font-size:18px;font-weight:950;line-height:1}#${CHAT_ROOT_ID} .partnerAdviceLaneProgress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}#${CHAT_ROOT_ID} .partnerAdviceLane{display:grid;place-items:center;min-height:38px;border:1px solid rgba(205,239,228,.22);border-radius:8px;background:rgba(8,35,29,.72)}#${CHAT_ROOT_ID} .partnerAdviceLane span{font-size:8px;color:#9eb7af;font-weight:900}#${CHAT_ROOT_ID} .partnerAdviceLane b{font-size:15px;line-height:1;font-variant-numeric:tabular-nums}.partnerAdviceSpeech{display:none;max-width:92%;padding:8px 10px;border:1px solid rgba(173,235,214,.38);font-size:11px;font-weight:850;line-height:1.4}.partnerAdviceSpeech.on{display:block}.partnerAdviceSpeech.partner{border-radius:10px 10px 10px 3px;background:#143e34}.partnerAdviceSpeech.characterReaction{border-color:rgba(255,224,150,.42);background:rgba(31,45,31,.9)}.partnerAdviceSpeech.player{justify-self:end;border-radius:10px 10px 3px 10px;background:rgba(69,49,19,.72);border-color:rgba(255,211,126,.56);color:#fff1c9}.partnerAdviceQuickReply,.partnerAdviceTutorialReplay,.partnerAdviceTutorialChoice,.partnerAdviceTutorialSkip{min-height:44px;padding:9px 14px;border-radius:12px;font-size:11px;font-weight:950}.partnerAdviceTutorialConversation{display:grid;gap:6px;padding:8px;border:1px solid rgba(173,235,214,.3);border-radius:10px;background:rgba(7,31,27,.86)}.partnerAdviceTutorialConversation[hidden]{display:none}.partnerAdviceTutorialQuestion{font-size:11px;font-weight:850;line-height:1.45}.partnerAdviceTutorialChoices{display:flex;flex-wrap:wrap;gap:6px}.partnerAdviceTutorialChoice,.partnerAdviceTutorialSkip{border:1px solid rgba(173,235,214,.38);background:rgba(10,45,38,.78);color:#e4fff6}.partnerAdviceTutorialSkip{justify-self:start}.partnerAdviceQuickReply{justify-self:end;border:1px solid rgba(255,211,126,.56);background:rgba(69,49,19,.72);color:#fff1c9}.partnerAdviceTutorialReplay{justify-self:start;border:1px solid rgba(173,235,214,.38);background:rgba(10,45,38,.78);color:#e4fff6}.contextualTutorialFocus{outline:2px solid rgba(255,216,120,.78)!important;outline-offset:2px!important;box-shadow:0 0 0 2px rgba(255,216,120,.24),0 0 18px rgba(255,216,120,.22)!important}@media(max-width:540px){#${CHAT_ROOT_ID}{padding:5px;gap:4px}.partnerAdviceSpeech{font-size:10px}.partnerAdviceQuickReply,.partnerAdviceTutorialReplay{font-size:10px}}@media(prefers-reduced-motion:reduce){#${CHAT_ROOT_ID} *,.contextualTutorialFocus{transition:none!important;animation:none!important}}`;
+  style.textContent = `#${CHAT_ROOT_ID}{display:grid;gap:6px;margin:7px 0;padding:7px;border:1px solid rgba(190,225,214,.28);border-radius:10px;background:rgba(3,18,16,.72)}#${CHAT_ROOT_ID} .partnerAdviceRoleControl{display:flex;align-items:center;gap:7px;min-height:34px}#${CHAT_ROOT_ID} .partnerAdviceRoleControl span{font-size:8px;color:#9eb7af;font-weight:900}#${CHAT_ROOT_ID} .partnerAdviceRoleControl strong{font-size:11px;font-weight:950;flex:1}#${CHAT_ROOT_ID} .partnerAdvicePartnerSwitch{width:34px;height:34px;min-width:34px;padding:0;border-radius:999px;border:1px solid rgba(173,235,214,.38);background:rgba(10,45,38,.78);color:#e4fff6;font-size:18px;font-weight:950;line-height:1}#${CHAT_ROOT_ID} .partnerAdviceLaneProgress{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}#${CHAT_ROOT_ID} .partnerAdviceLane{display:grid;place-items:center;min-height:38px;border:1px solid rgba(205,239,228,.22);border-radius:8px;background:rgba(8,35,29,.72)}#${CHAT_ROOT_ID} .partnerAdviceLane span{font-size:8px;color:#9eb7af;font-weight:900}#${CHAT_ROOT_ID} .partnerAdviceLane b{font-size:15px;line-height:1;font-variant-numeric:tabular-nums}.partnerAdviceSpeech{display:none;max-width:92%;padding:8px 10px;border:1px solid rgba(173,235,214,.38);font-size:11px;font-weight:850;line-height:1.4}.partnerAdviceSpeech.on{display:block}.partnerAdviceSpeech.partner{border-radius:10px 10px 10px 3px;background:#143e34}.partnerAdviceSpeech.characterReaction{border-color:rgba(255,224,150,.42);background:rgba(31,45,31,.9)}.partnerAdviceSpeech.player{justify-self:end;border-radius:10px 10px 3px 10px;background:rgba(69,49,19,.72);border-color:rgba(255,211,126,.56);color:#fff1c9}.partnerAdviceQuickReply,.partnerAdviceTutorialReplay,.partnerAdviceTutorialChoice,.partnerAdviceTutorialSkip{min-height:44px;padding:9px 14px;border-radius:12px;font-size:11px;font-weight:950}.partnerAdviceTutorialConversation{display:grid;gap:6px;padding:8px;border:1px solid rgba(173,235,214,.3);border-radius:10px;background:rgba(7,31,27,.86)}.partnerAdviceTutorialConversation[hidden]{display:none}.partnerAdviceTutorialQuestion{font-size:11px;font-weight:850;line-height:1.45}.partnerAdviceTutorialChoices{display:flex;flex-wrap:wrap;gap:6px}.partnerAdviceTutorialChoice,.partnerAdviceTutorialSkip{border:1px solid rgba(173,235,214,.38);background:rgba(10,45,38,.78);color:#e4fff6}.partnerAdviceTutorialSkip{justify-self:start}.partnerAdviceQuickReply{justify-self:end;border:1px solid rgba(255,211,126,.56);background:rgba(69,49,19,.72);color:#fff1c9}.partnerAdviceTutorialReplay{justify-self:start;border:1px solid rgba(173,235,214,.38);background:rgba(10,45,38,.78);color:#e4fff6}.contextualTutorialFocus{outline:2px solid rgba(255,216,120,.78)!important;outline-offset:2px!important;box-shadow:0 0 0 2px rgba(255,216,120,.24),0 0 18px rgba(255,216,120,.22)!important}#${CHAT_ROOT_ID} .partnerAdviceEvidence{display:grid;gap:4px;padding:7px 8px;border:1px solid rgba(185,226,214,.28);border-radius:9px;background:rgba(5,25,22,.78)}#${CHAT_ROOT_ID} .partnerAdviceEvidence[hidden]{display:none}#${CHAT_ROOT_ID} .partnerAdviceEvidenceTop{display:flex;align-items:center;gap:6px;min-width:0}#${CHAT_ROOT_ID} .partnerAdviceEvidenceSuggestion{min-width:0;flex:1;font-size:11px;font-weight:950;line-height:1.3;overflow-wrap:anywhere}#${CHAT_ROOT_ID} .partnerAdviceEvidenceBadge{flex:none;padding:3px 6px;border:1px solid rgba(198,236,224,.34);border-radius:999px;font-size:8px;font-weight:950}#${CHAT_ROOT_ID} .partnerAdviceEvidence[data-source-kind="collective"] .partnerAdviceEvidenceBadge{border-color:rgba(255,221,133,.58);background:rgba(87,61,14,.52);color:#fff0be}#${CHAT_ROOT_ID} .partnerAdviceEvidenceWhy{font-size:9px;font-weight:800;line-height:1.4;color:#c8ddd6}#${CHAT_ROOT_ID} .partnerAdviceEvidence details{font-size:9px;line-height:1.45;color:#aebfba}#${CHAT_ROOT_ID} .partnerAdviceEvidence summary{min-height:32px;display:flex;align-items:center;cursor:pointer;font-weight:900;color:#c8ddd6}@media(max-width:540px){#${CHAT_ROOT_ID}{padding:5px;gap:4px}.partnerAdviceSpeech{font-size:10px}.partnerAdviceQuickReply,.partnerAdviceTutorialReplay{font-size:10px}}@media(prefers-reduced-motion:reduce){#${CHAT_ROOT_ID} *,.contextualTutorialFocus{transition:none!important;animation:none!important}}`;
   doc.head?.append(style);
 }
 
@@ -842,7 +952,7 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
     root = doc.createElement('section');
     root.id = CHAT_ROOT_ID;
     root.setAttribute('aria-label', 'パートナーとの対戦チャット');
-    root.innerHTML = '<div class="partnerAdviceRoleControl"><span>アドバイスパートナー</span><strong data-role="advice-partner-name">パートナー</strong><button type="button" class="partnerAdvicePartnerSwitch" aria-label="アドバイスパートナーを変更">↻</button></div><div class="partnerAdviceLaneProgress" aria-label="3列の現在進行値"><div class="partnerAdviceLane" data-lane="L"><span>左列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="C"><span>中央列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="R"><span>右列</span><b>—</b></div></div><div class="partnerAdviceSpeech partner characterReaction" data-role="character-reaction" aria-live="polite"></div><div class="partnerAdviceSpeech partner" aria-live="polite"></div><div class="partnerAdviceSpeech player" aria-live="polite"></div><section class="partnerAdviceTutorialConversation" data-role="tutorial-experience-conversation" aria-live="polite" hidden><div class="partnerAdviceTutorialQuestion" data-role="tutorial-experience-question"></div><div class="partnerAdviceTutorialChoices" data-role="tutorial-experience-choices"></div><button type="button" class="partnerAdviceTutorialSkip" data-role="tutorial-experience-skip" hidden>このまま進む</button></section><button type="button" class="partnerAdviceTutorialReplay" aria-pressed="false">操作を再確認</button><button type="button" class="partnerAdviceQuickReply">まかせた！</button>';
+    root.innerHTML = '<div class="partnerAdviceRoleControl"><span>アドバイスパートナー</span><strong data-role="advice-partner-name">パートナー</strong><button type="button" class="partnerAdvicePartnerSwitch" aria-label="アドバイスパートナーを変更">↻</button></div><section class="partnerAdviceEvidence" data-role="partner-advice-evidence" data-source-kind="" aria-label="パートナーの提案根拠" hidden><div class="partnerAdviceEvidenceTop"><strong class="partnerAdviceEvidenceSuggestion"></strong><span class="partnerAdviceEvidenceBadge"></span></div><div class="partnerAdviceEvidenceWhy"></div><details><summary>根拠を見る</summary><div class="partnerAdviceEvidenceDetails"></div></details></section><div class="partnerAdviceLaneProgress" aria-label="3列の現在進行値"><div class="partnerAdviceLane" data-lane="L"><span>左列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="C"><span>中央列</span><b>—</b></div><div class="partnerAdviceLane" data-lane="R"><span>右列</span><b>—</b></div></div><div class="partnerAdviceSpeech partner characterReaction" data-role="character-reaction" aria-live="polite"></div><div class="partnerAdviceSpeech partner" aria-live="polite"></div><div class="partnerAdviceSpeech player" aria-live="polite"></div><section class="partnerAdviceTutorialConversation" data-role="tutorial-experience-conversation" aria-live="polite" hidden><div class="partnerAdviceTutorialQuestion" data-role="tutorial-experience-question"></div><div class="partnerAdviceTutorialChoices" data-role="tutorial-experience-choices"></div><button type="button" class="partnerAdviceTutorialSkip" data-role="tutorial-experience-skip" hidden>このまま進む</button></section><button type="button" class="partnerAdviceTutorialReplay" aria-pressed="false">操作を再確認</button><button type="button" class="partnerAdviceQuickReply">まかせた！</button>';
     const statusNode = host.querySelector('.partnerDecisionStatus');
     host.insertBefore(root, statusNode || host.firstChild);
   }
@@ -881,17 +991,38 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
       partnerText: lastReceipt?.partnerUtterance || current?.partnerText || null,
       playerText: lastReceipt?.playerText || null,
     });
+    const adviceEvidence = latestPartnerAdviceEvidence;
     const tutorialStatus = tutorialReplay.refresh();
     const tutorialExperienceStatus = tutorialExperience.status();
     const tutorialConversation = tutorialExperienceStatus.conversation;
     const reactionActive = Boolean(lastCharacterReaction?.partnerText);
-    root.hidden = !projection.active && !tutorialStatus.available && !tutorialExperienceStatus.active && !reactionActive && !roleControlActive;
+    root.hidden = !projection.active && !adviceEvidence.active && !tutorialStatus.available && !tutorialExperienceStatus.active && !reactionActive && !roleControlActive;
     const roleControl = root.querySelector('.partnerAdviceRoleControl');
     if (roleControl) roleControl.hidden = !roleControlActive;
     const roleName = root.querySelector('[data-role="advice-partner-name"]');
     if (roleName) roleName.textContent = current?.partnerId ? partnerDisplayName(current.partnerId) : 'パートナー';
     const switchButton = root.querySelector('.partnerAdvicePartnerSwitch');
     if (switchButton) switchButton.disabled = !roleControlActive;
+    const evidenceNode = root.querySelector('[data-role="partner-advice-evidence"]');
+    if (evidenceNode) {
+      evidenceNode.hidden = !adviceEvidence.active;
+      evidenceNode.dataset.sourceKind = adviceEvidence.active ? adviceEvidence.sourceKind || '' : '';
+      const evidenceSuggestion = evidenceNode.querySelector('.partnerAdviceEvidenceSuggestion');
+      const evidenceBadge = evidenceNode.querySelector('.partnerAdviceEvidenceBadge');
+      const evidenceWhy = evidenceNode.querySelector('.partnerAdviceEvidenceWhy');
+      const evidenceDetails = evidenceNode.querySelector('.partnerAdviceEvidenceDetails');
+      if (evidenceSuggestion) evidenceSuggestion.textContent = adviceEvidence.active ? adviceEvidence.suggestion || '' : '';
+      if (evidenceBadge) evidenceBadge.textContent = adviceEvidence.active ? adviceEvidence.badge || '' : '';
+      if (evidenceWhy) evidenceWhy.textContent = adviceEvidence.active ? adviceEvidence.why || '' : '';
+      if (evidenceDetails) {
+        evidenceDetails.replaceChildren();
+        for (const line of adviceEvidence.active ? adviceEvidence.detailLines || [] : []) {
+          const row = doc.createElement('div');
+          row.textContent = line;
+          evidenceDetails.append(row);
+        }
+      }
+    }
     const lanes = root.querySelector('.partnerAdviceLaneProgress');
     if (lanes) lanes.hidden = !projection.active;
     if (projection.active) {
@@ -1028,8 +1159,10 @@ export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.wind
     }
     doc.getElementById('partnerAdviceBtn')?.addEventListener('click', () => queueMicrotask(render));
   }
+  const adviceEvidenceListener = () => queueMicrotask(render);
+  adviceEvidenceListeners.add(adviceEvidenceListener);
   render();
-  return Object.freeze({ root, render, tutorialReplay, tutorialExperience, characterReaction });
+  return Object.freeze({ root, render, tutorialReplay, tutorialExperience, characterReaction, adviceEvidence: () => latestPartnerAdviceEvidence });
 }
 
 function schedulePartnerAdviceChatMount(win) {

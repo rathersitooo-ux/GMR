@@ -5,6 +5,8 @@ import {
   createBattleTutorialExperienceConversationControl,
   createPartnerAdviceReplayBridge,
   createPartnerAdviceRuntimeControl,
+  projectPartnerAdviceEvidencePresentation,
+  readLatestPartnerAdviceEvidencePresentation,
   createPartnerBattleCharacterReactionControl,
   createTutorialPartnerGuideControl,
   isPartnerAdviceQuickReplyAvailable,
@@ -353,7 +355,8 @@ test('eligible Tutorial experience is a natural Saasuna conversation and adapts 
   const help = control.adaptHelp({ canonicalMessage: '正式GAMEROAD操作', focusRole: 'road' });
   assert.equal(help.adapted, true);
   assert.match(help.message, /遊戯王/);
-  assert.match(help.message, /1対1対応/);
+  assert.match(help.message, /このターンの展開の軸を決める/);
+  assert.match(help.message, /先にロードを1枚選ぶ/);
   assert.equal(help.canonicalMessage, '正式GAMEROAD操作');
   assert.equal(control.status().saveMutated, false);
   assert.equal(control.status().gameplayAuthorityMutated, false);
@@ -567,3 +570,70 @@ test('contextual Battle replay aborts its presentation when the caller leaves Ba
   assert.equal(status.available, false);
   assert.equal(focused.at(-1), null);
 });
+
+test('player-facing evidence distinguishes strategy from collective result without claiming optimality', () => {
+  const rows = [candidate('a', 0, 3, { label: '左の一手' }), candidate('b', 1, 5, { label: '右の一手' })];
+  const strategyBridge = createPartnerAdviceReplayBridge({ legacyReplay, getVersions: () => V });
+  const strategyResult = strategyBridge(rows, 'right');
+  assert.equal(strategyResult.source, 'shared-legal-action-core');
+  const strategy = readLatestPartnerAdviceEvidencePresentation();
+  assert.equal(strategy.active, true);
+  assert.equal(strategy.badge, '作戦設定');
+  assert.equal(strategy.sourceKind, 'strategy');
+  assert.equal(strategy.suggestion, '提案：右の一手');
+  assert.equal(strategy.collectiveEvidenceUsed, false);
+  assert.equal(strategy.optimalActionProven, false);
+  assert.equal(strategy.goodMisplaySignal, false);
+
+  const manifest = {
+    schema: 'gameroad.partner-advice-runtime-manifest.v1',
+    targetVersions: { ...V },
+    approval: { gateId: 'HUMAN-HOLDOUT-ACCEPTANCE', approvalId: 'approval-evidence', humanGate: 'approved', privacyScope: 'shared' },
+    promotionSafe: true,
+    defaultActionId: 'a',
+    minContextSupport: 8,
+    contexts: [{ fingerprint: FINGERPRINT, actionId: 'b', support: 12 }],
+    sourceEvidence: 'offline-approved-aggregate-only',
+    containsRawEvents: false,
+    containsPrivate: false,
+    livePlayerPerformanceProven: false,
+  };
+  const collectiveBridge = createPartnerAdviceReplayBridge({ legacyReplay, getVersions: () => V, getManifest: () => manifest, getRuntimeState: () => RUNTIME_STATE });
+  const collectiveResult = collectiveBridge(rows, 'left');
+  assert.equal(collectiveResult.source, 'approved-runtime-manifest');
+  const collective = readLatestPartnerAdviceEvidencePresentation();
+  assert.equal(collective.active, true);
+  assert.equal(collective.badge, '集合知');
+  assert.equal(collective.sourceKind, 'collective');
+  assert.equal(collective.suggestion, '提案：右の一手');
+  assert.equal(collective.collectiveEvidenceUsed, true);
+  assert.equal(collective.optimalActionProven, false);
+  assert.equal(collective.goodMisplaySignal, false);
+  assert.ok(collective.detailLines.includes('最適解の断定ではなく、現在の助言候補'));
+});
+
+test('legacy public candidate remains explainable while private or spoofed evidence fails closed', () => {
+  const rows = [candidate('a', 0, 3, { label: '公開候補' })];
+  const bridge = createPartnerAdviceReplayBridge({ legacyReplay });
+  bridge(rows, 'left');
+  const legacy = readLatestPartnerAdviceEvidencePresentation();
+  assert.equal(legacy.active, true);
+  assert.equal(legacy.badge, '通常助言');
+  assert.equal(legacy.sourceKind, 'legacy');
+  assert.equal(legacy.suggestion, '提案：公開候補');
+
+  const privateModel = projectPartnerAdviceEvidencePresentation({
+    adviceResult: { ok: true, containsPrivate: true, source: 'approved-runtime-manifest', manifestUsed: true, selected: { candidateId: 'secret', payload: { label: '秘密' } } },
+    candidates: [],
+  });
+  assert.equal(privateModel.active, false);
+  assert.equal(privateModel.reason, 'PUBLIC_SCOPE_UNVERIFIED');
+
+  const spoofed = projectPartnerAdviceEvidencePresentation({
+    adviceResult: { ok: true, containsPrivate: false, source: 'claimed-best-move', selected: { candidateId: 'a', payload: { label: '公開候補' } } },
+    candidates: rows,
+  });
+  assert.equal(spoofed.active, false);
+  assert.equal(spoofed.reason, 'SOURCE_AUTHORITY_UNVERIFIED');
+});
+

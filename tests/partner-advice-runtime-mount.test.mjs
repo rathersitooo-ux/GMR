@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
   createBattleContextualTutorialReplayControl,
@@ -353,7 +354,8 @@ test('eligible Tutorial experience is a natural Saasuna conversation and adapts 
   const help = control.adaptHelp({ canonicalMessage: '正式GAMEROAD操作', focusRole: 'road' });
   assert.equal(help.adapted, true);
   assert.match(help.message, /遊戯王/);
-  assert.match(help.message, /1対1対応/);
+  assert.match(help.message, /展開の軸/);
+  assert.match(help.message, /先にロード/);
   assert.equal(help.canonicalMessage, '正式GAMEROAD操作');
   assert.equal(control.status().saveMutated, false);
   assert.equal(control.status().gameplayAuthorityMutated, false);
@@ -566,4 +568,14 @@ test('contextual Battle replay aborts its presentation when the caller leaves Ba
   assert.equal(status.active, false);
   assert.equal(status.available, false);
   assert.equal(focused.at(-1), null);
+});
+
+test('Battle Advice chat reuses the existing root as a compact peripheral overlay', () => {
+  const source = readFileSync(new URL('../browser/partner-advice-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /battleSurface\.appendChild\(root\)/);
+  assert.match(source, /root\.dataset\.battleAdviceOverlay = 'true'/);
+  assert.match(source, /data-battle-advice-overlay/);
+  assert.match(source, /max-height:126px/);
+  assert.match(source, /orientation:portrait/);
+  assert.doesNotMatch(source, /createPartnerAdviceStore|new PartnerAdviceStore/);
 });

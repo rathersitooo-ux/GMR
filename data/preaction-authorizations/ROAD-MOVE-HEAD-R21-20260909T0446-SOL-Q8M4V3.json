@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-ROAD-MOVE-HEAD-R21-20260909T0446",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "acquireKey": "ROAD-MOVE-HEAD-R21-20260909T0446-SOL-Q8M4V3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R13_R16_R19_PLUS_CURRENT_MAIN_5D2E1D5",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R13_PHYSICAL_HIT_INPUT_R16_ENV_MATRIX_R19_BOUNDED_PATCH_MODEL",
+  "proceedToken": "PROCEED|VWORK-ROAD-MOVE-HEAD-R21-20260909T0446|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-09T04:46+09:00",
+  "authorizationBaseSha": "5d2e1d5c596e5400a727264d3b3eee1517b8d9c0",
+  "authorizationProductBlob": "d7ae9d0532df7e66ebbf29f1e7eecb3f352d346d",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "existing Road live acceptance spec/test required by this WorkUnit",
+    "one bounded transient executor workflow/script if direct monolith patch is unsafe"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "leaseAcquireKey": "ROAD-MOVE-HEAD-R21-20260909T0446-SOL-Q8M4V3",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 04:46 JST",
+  "leaseUntilJst": "2026-09-09 05:46 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A632:N632",
+  "solutionSignature": "Apply only the proven bidirectional Road DraftMove live adaptation plus the confirmed 844x390 real-pointer occlusion repair, preserving current 109 authority and Battle-card semantics.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R13_R16_R19_CURRENT_RESIDUAL",
+  "solutionSearchEvidence": [
+    "R13 proved the late contextual selectEndpoint wrapper adaptation using draftMoveLimitForPlayer with human-semantic hit-test input.",
+    "R16 proved 11/12 required environment checks and isolated the sole physical defect to .planBox intercepting Road-card pointer input at 844x390.",
+    "PR #1283 already supplies deterministic Elastic Focus/Road1-6 compatibility coverage; do not duplicate its core.",
+    "R19 failed before any job/product commit; PR #1332 contains PREACTION only, so the live product gap remains open.",
+    "Current main changed GAMEROAD.html for unrelated Result work after R19 base; patch must pattern-check current blob and fail closed rather than overwrite unrelated bytes."
+  ],
+  "nonInterference": [
+    "No CARD_FIRST/MOVE_FIRST dual mode machine",
+    "No second Road compatibility core",
+    "No 109 topology/reachable/stoppability rebuild",
+    "No Battle-card selection/reservation/submission/order/resolve changes",
+    "No force/programmatic gameplay click used to hide pointer occlusion"
+  ]
+}

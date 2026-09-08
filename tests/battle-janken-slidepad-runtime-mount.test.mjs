@@ -326,6 +326,15 @@ test('portrait reserved janken fan compacts without changing desktop slot geomet
   assert.match(source, /orientation:portrait[^\n]*rock\{transform:translate\(-126px,12px\)[^\n]*scissors\{transform:translate\(-96px,-43px\)[^\n]*paper\{transform:translate\(-38px,-72px\)/);
 });
 
+test('basic Battle does not mount or show the optional remaining-hand roulette by default', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /rouletteEnabled = false/);
+  assert.match(source, /const rowRouletteRuntime = rouletteEnabled === true/);
+  assert.match(source, /rowRouletteHost\.hidden = rouletteEnabled !== true;/);
+  assert.match(source, /const runtime = mountBattleJankenSlidePadRuntime\(globalThis\);/);
+});
+
 test('remaining-hand row roulette live mount reuses the current playable projection and hand-card action', async () => {
   const { readFile } = await import('node:fs/promises');
   const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');

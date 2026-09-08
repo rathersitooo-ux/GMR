@@ -549,12 +549,22 @@ export function mountDeckStorageCorner({
       })
     : () => {};
 
-  const close = () => {
+  const restoreOpenerFocus = () => {
+    try { button.focus?.({ preventScroll: true }); }
+    catch {
+      try { button.focus?.(); } catch {}
+    }
+  };
+
+  const close = ({ restoreFocus = true } = {}) => {
+    const wasOpen = Boolean(panel);
     backdrop?.remove?.();
     backdrop = null;
     panel = null;
     controller.closeStorage();
     renderButton();
+    if (wasOpen && restoreFocus) restoreOpenerFocus();
+    return wasOpen;
   };
 
   const cloneStorageVisual = (id) => {
@@ -647,7 +657,7 @@ export function mountDeckStorageCorner({
     x.type = 'button';
     x.className = 'gr-storage-close';
     x.textContent = '閉じる';
-    x.addEventListener('click', close);
+    x.addEventListener('click', () => close());
     head.append(title, x);
     const cols = doc.createElement('div');
     cols.className = 'gr-storage-columns';
@@ -662,10 +672,19 @@ export function mountDeckStorageCorner({
     if (!panel || panel.contains?.(event?.target) || button.contains?.(event?.target)) return;
     event?.preventDefault?.();
     event?.stopPropagation?.();
+    event?.stopImmediatePropagation?.();
+    close();
+  };
+  const onCancelKeyDown = (event) => {
+    if (!panel || event?.key !== 'Escape') return;
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+    event?.stopImmediatePropagation?.();
     close();
   };
   button.addEventListener('click', open);
   doc.addEventListener?.('pointerdown', onOutsidePointerDown, true);
+  doc.addEventListener?.('keydown', onCancelKeyDown, true);
   const discovery = installDeckStorageCardsDiscovery({ document: doc, openStorage: open });
   const swipeHints = installDeckSwipeFirstSuccessHints({ document: doc, window: win, controller });
   render();
@@ -678,9 +697,10 @@ export function mountDeckStorageCorner({
       unsubscribe();
       ghostTransfer.dispose();
       doc.removeEventListener?.('pointerdown', onOutsidePointerDown, true);
+      doc.removeEventListener?.('keydown', onCancelKeyDown, true);
       swipeHints.destroy();
       discovery.destroy();
-      close();
+      close({ restoreFocus: false });
       button.remove?.();
     },
   });

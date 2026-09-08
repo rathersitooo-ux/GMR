@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-OPTIONAL-ROULETTE-R1-20260909T0732-SOL-Q8N4V5",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_OPTIONAL_ROULETTE_DISABLED_DEFAULT_R1",
+  "acquireKey": "BATTLE-OPTIONAL-ROULETTE-R1-20260909T0732-SOL-Q8N4V5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-OPTIONAL-RULE-DISABLED-NO-DELTA-20260909",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "GHA-34286827030-FOCUSED-NODE-SCOPE-GATE-PASS",
+  "proceedToken": "PROCEED|BATTLE-OPTIONAL-ROULETTE-R1-20260909T0732-SOL-Q8N4V5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-correction|focused-rehearsal|active-lease",
+  "authorizationBaseSha": "6faa86bb08a72d50f0316bd824189b41aeb90731",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_OPTIONAL_ROULETTE_DISABLED_DEFAULT_R1",
+  "leaseAcquireKey": "BATTLE-OPTIONAL-ROULETTE-R1-20260909T0732-SOL-Q8N4V5",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 07:34 JST",
+  "leaseUntilJst": "2026-09-09 08:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; .github/workflows/zz-temp-battle-optional-roulette-r1.yml; branch sol/battle-optional-roulette-r1-20260909; PRE_ACTION manifest only",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

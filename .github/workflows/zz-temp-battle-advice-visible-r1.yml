@@ -1,0 +1,204 @@
+name: temp-battle-advice-visible-r1
+
+on:
+  push:
+    branches:
+      - sol/battle-advice-visible-composition-r1-20260908
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-advice-visible-composition-r1-20260908
+          fetch-depth: 0
+      - name: Apply presentation-only Advice Partner placement
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+
+          source_path = Path('browser/partner-advice-runtime-mount.mjs')
+          test_path = Path('tests/partner-advice-runtime-mount.test.mjs')
+          build_test_path = Path('deploy/cloudflare/tests/build.test.mjs')
+          source = source_path.read_text(encoding='utf-8')
+
+          constant_anchor = "const CHAT_ROOT_ID = 'partnerAdviceChatPresentation';\n"
+          constant_replacement = constant_anchor + "const CHAT_VISUAL_ANCHOR_ID = 'partnerAdviceVisualAnchor';\n"
+          if 'CHAT_VISUAL_ANCHOR_ID' not in source:
+              if constant_anchor not in source:
+                  raise SystemExit('constant anchor not found')
+              source = source.replace(constant_anchor, constant_replacement, 1)
+
+          helper_anchor = "function ensureBattleChatStyle(doc) {\n"
+          helper_code = r'''function selectPartnerVisualCandidate(host, root) {
+            if (!host) return null;
+            const explicitSelectors = [
+              '[data-role="partner-portrait"]',
+              '[data-role="partner-avatar"]',
+              '.partnerDecisionPortrait',
+              '.partnerDecisionCharacter',
+              '.partnerPortrait',
+              '.partnerAvatar',
+              'img[data-partner-id]',
+              'canvas[data-partner-id]',
+            ];
+            for (const selector of explicitSelectors) {
+              const node = host.querySelector(selector);
+              if (node && !root?.contains(node)) return node;
+            }
+            const media = [...host.querySelectorAll('img,picture,canvas,video')].filter((node) =>
+              !root?.contains(node) && !node.closest('button'),
+            );
+            return media.length === 1 ? media[0] : null;
+          }
+
+          function ensureBattlePartnerVisualAnchor(doc, battleSurface, host, root) {
+            if (!battleSurface) return null;
+            let anchor = doc.getElementById(CHAT_VISUAL_ANCHOR_ID);
+            if (!anchor) {
+              anchor = doc.createElement('div');
+              anchor.id = CHAT_VISUAL_ANCHOR_ID;
+              anchor.setAttribute('aria-hidden', 'true');
+              anchor.dataset.role = 'battle-advice-partner-visual-anchor';
+            }
+            if (anchor.parentNode !== battleSurface) battleSurface.appendChild(anchor);
+            anchor.dataset.battleAdviceVisualAnchor = 'true';
+            anchor.dataset.presentationOnly = 'true';
+
+            if (!anchor.firstElementChild) {
+              const visual = selectPartnerVisualCandidate(host, root);
+              if (visual) {
+                anchor.appendChild(visual);
+                anchor.dataset.visualState = 'reused-existing';
+              } else {
+                anchor.dataset.visualState = 'awaiting-existing-visual';
+              }
+            } else {
+              anchor.dataset.visualState = 'reused-existing';
+            }
+            return anchor;
+          }
+
+          '''
+          if 'function selectPartnerVisualCandidate' not in source:
+              if helper_anchor not in source:
+                  raise SystemExit('helper anchor not found')
+              source = source.replace(helper_anchor, helper_code + helper_anchor, 1)
+
+          reduced_anchor = '@media(prefers-reduced-motion:reduce){#${CHAT_ROOT_ID} *,.contextualTutorialFocus'
+          layout_css = r'''section[data-screen="battle"] #${CHAT_VISUAL_ANCHOR_ID}[data-battle-advice-visual-anchor="true"]{position:absolute;z-index:37;left:clamp(52px,8vw,96px);bottom:clamp(72px,18vh,126px);width:clamp(112px,18vw,156px);height:clamp(128px,40vh,158px);overflow:hidden;display:grid;align-items:end;justify-items:center;pointer-events:none;contain:layout paint;isolation:isolate}section[data-screen="battle"] #${CHAT_VISUAL_ANCHOR_ID}[data-battle-advice-visual-anchor="true"] img,section[data-screen="battle"] #${CHAT_VISUAL_ANCHOR_ID}[data-battle-advice-visual-anchor="true"] picture,section[data-screen="battle"] #${CHAT_VISUAL_ANCHOR_ID}[data-battle-advice-visual-anchor="true"] canvas,section[data-screen="battle"] #${CHAT_VISUAL_ANCHOR_ID}[data-battle-advice-visual-anchor="true"] video{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;object-position:50% 100%;pointer-events:none}section[data-screen="battle"] #${CHAT_ROOT_ID}[data-battle-advice-overlay="true"]{left:clamp(154px,23vw,214px);right:auto;top:auto;bottom:clamp(92px,22vh,136px);width:clamp(170px,18vw,224px);max-height:min(40vh,230px)}@media(max-height:430px) and (orientation:landscape){section[data-screen="battle"] #${CHAT_VISUAL_ANCHOR_ID}[data-battle-advice-visual-anchor="true"]{left:54px;bottom:62px;width:118px;height:142px}section[data-screen="battle"] #${CHAT_ROOT_ID}[data-battle-advice-overlay="true"]{left:160px;right:auto;top:auto;bottom:88px;width:168px;max-height:120px}}@media(max-width:540px) and (orientation:portrait){section[data-screen="battle"] #${CHAT_VISUAL_ANCHOR_ID}[data-battle-advice-visual-anchor="true"]{left:12px;bottom:clamp(120px,18vh,170px);width:min(34vw,148px);height:min(28vh,168px)}section[data-screen="battle"] #${CHAT_ROOT_ID}[data-battle-advice-overlay="true"]{left:min(35vw,154px);top:auto;bottom:clamp(128px,19vh,180px);width:min(56vw,214px);max-height:31vh}}'''
+          if 'data-battle-advice-visual-anchor' not in source.split('style.textContent = `', 1)[-1]:
+              if reduced_anchor not in source:
+                  raise SystemExit('CSS anchor not found')
+              source = source.replace(reduced_anchor, layout_css + reduced_anchor, 1)
+
+          mount_anchor = '''  const battleSurface = doc.querySelector('section[data-screen="battle"]');
+          if (battleSurface) {
+            if (root.parentNode !== battleSurface) battleSurface.appendChild(root);
+            root.dataset.battleAdviceOverlay = 'true';
+            root.dataset.presentationOnly = 'true';
+          } else {
+            delete root.dataset.battleAdviceOverlay;
+          }
+          '''
+          # Existing branch has historical unindented inner block. Normalize both forms.
+          mount_anchor_alt = '''  const battleSurface = doc.querySelector('section[data-screen="battle"]');
+          if (battleSurface) {
+            if (root.parentNode !== battleSurface) battleSurface.appendChild(root);
+            root.dataset.battleAdviceOverlay = 'true';
+            root.dataset.presentationOnly = 'true';
+          } else {
+            delete root.dataset.battleAdviceOverlay;
+          }
+          '''
+          raw_mount = '''  const battleSurface = doc.querySelector('section[data-screen="battle"]');
+          if (battleSurface) {
+            if (root.parentNode !== battleSurface) battleSurface.appendChild(root);
+            root.dataset.battleAdviceOverlay = 'true';
+            root.dataset.presentationOnly = 'true';
+          } else {
+            delete root.dataset.battleAdviceOverlay;
+          }
+          '''
+          # Match actual source irrespective of indentation around if block.
+          old_mount = '''  const battleSurface = doc.querySelector('section[data-screen="battle"]');
+          if (battleSurface) {
+            if (root.parentNode !== battleSurface) battleSurface.appendChild(root);
+            root.dataset.battleAdviceOverlay = 'true';
+            root.dataset.presentationOnly = 'true';
+          } else {
+            delete root.dataset.battleAdviceOverlay;
+          }
+          '''
+          actual_old = "  const battleSurface = doc.querySelector('section[data-screen=\"battle\"]');\nif (battleSurface) {\n  if (root.parentNode !== battleSurface) battleSurface.appendChild(root);\n  root.dataset.battleAdviceOverlay = 'true';\n  root.dataset.presentationOnly = 'true';\n} else {\n  delete root.dataset.battleAdviceOverlay;\n}\n"
+          new_mount = "  const battleSurface = doc.querySelector('section[data-screen=\"battle\"]');\n  let visualAnchor = null;\n  if (battleSurface) {\n    if (root.parentNode !== battleSurface) battleSurface.appendChild(root);\n    root.dataset.battleAdviceOverlay = 'true';\n    root.dataset.presentationOnly = 'true';\n    visualAnchor = ensureBattlePartnerVisualAnchor(doc, battleSurface, host, root);\n  } else {\n    delete root.dataset.battleAdviceOverlay;\n  }\n"
+          if 'let visualAnchor = null;' not in source:
+              if actual_old not in source:
+                  raise SystemExit('battle mount anchor not found')
+              source = source.replace(actual_old, new_mount, 1)
+
+          old_return = '  return Object.freeze({ root, render, tutorialReplay, tutorialExperience, characterReaction });\n'
+          new_return = '  return Object.freeze({ root, visualAnchor, render, tutorialReplay, tutorialExperience, characterReaction });\n'
+          if new_return not in source:
+              if old_return not in source:
+                  raise SystemExit('return anchor not found')
+              source = source.replace(old_return, new_return, 1)
+
+          source_path.write_text(source, encoding='utf-8')
+
+          tests = test_path.read_text(encoding='utf-8')
+          marker = "test('Battle Advice reserves a bust-up visual anchor above the mana-side region'"
+          if marker not in tests:
+              tests += r'''
+
+test('Battle Advice reserves a bust-up visual anchor above the mana-side region', () => {
+  const source = readFileSync(new URL('../browser/partner-advice-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /CHAT_VISUAL_ANCHOR_ID = 'partnerAdviceVisualAnchor'/);
+  assert.match(source, /data-battle-advice-visual-anchor/);
+  assert.match(source, /data-role[^\n]*battle-advice-partner-visual-anchor|dataset\.role = 'battle-advice-partner-visual-anchor'/);
+  assert.match(source, /height:clamp\(128px,40vh,158px\)/);
+  assert.match(source, /pointer-events:none/);
+  assert.match(source, /selectPartnerVisualCandidate/);
+  assert.match(source, /media\.length === 1 \? media\[0\] : null/);
+  assert.match(source, /visualState = 'awaiting-existing-visual'/);
+  assert.match(source, /left:160px;right:auto;top:auto;bottom:88px/);
+  assert.doesNotMatch(source, /createPartnerAdviceStore|new PartnerAdviceStore/);
+});
+'''
+              test_path.write_text(tests, encoding='utf-8')
+
+          data = source_path.read_bytes()
+          blob = hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
+          build = build_test_path.read_text(encoding='utf-8')
+          old_blob = '395613e3162d07b5d21f0d07b2c63c0add5e8927'
+          if old_blob in build:
+              build = build.replace(old_blob, blob, 1)
+          elif blob not in build:
+              raise SystemExit('partner advice provenance blob anchor not found')
+          build_test_path.write_text(build, encoding='utf-8')
+          print('partner-advice blob', blob)
+          PY
+      - name: Focused tests
+        run: |
+          node --test tests/partner-advice-runtime-mount.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Commit patch
+        shell: bash
+        run: |
+          if git diff --quiet -- browser/partner-advice-runtime-mount.mjs tests/partner-advice-runtime-mount.test.mjs deploy/cloudflare/tests/build.test.mjs; then
+            echo 'No product diff to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/partner-advice-runtime-mount.mjs tests/partner-advice-runtime-mount.test.mjs deploy/cloudflare/tests/build.test.mjs
+          git commit -m 'fix(battle): anchor Advice Partner above mana area'
+          git push origin HEAD:sol/battle-advice-visible-composition-r1-20260908

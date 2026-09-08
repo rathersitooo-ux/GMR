@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-MOVE-RUNTIME-R23-20260909T0542-SOL-Q7N4V3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R23-20260909T0542-SOL-Q7N4V3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-MAIN-A593323-HTML-D7AE9D-R21-FAILURE-ROOT-CAUSE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "ROAD-R13-HUMAN-POINTER-PLUS-R21-CANDIDATE-PURE9OF9",
+  "proceedToken": "PROCEED|ROAD-MOVE-RUNTIME-R23-20260909T0542-SOL-Q7N4V3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-09T05:42:00+09:00",
+  "authorizationBaseSha": "a59332356dbe5f70e3afaf350bfae8fdcbb3ea6d",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r23.spec.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "leaseAcquireKey": "ROAD-MOVE-RUNTIME-R23-20260909T0542-SOL-Q7N4V3",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r23.spec.mjs"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-09-09 05:43 JST",
+  "leaseUntilJst": "2026-09-09 06:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A8:L8",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/road-move-bidirectional-r23-20260909; browser/GAMEROAD.html; tests/road-move-bidirectional-live-r23.spec.mjs; own transient PREACTION/workflow/PR/check/readback only. Existing Road compatibility core/test READ_ONLY.",
+  "solutionSignature": "road-move-bidirectional-live-r23-current-selector-repair",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "ROAD-R13-R16-R21-PR1283-CURRENT-RECOVERY",
+  "solutionSearchEvidence": [
+    "R21 candidate construction and pure Road compatibility checks already pass; the first move-first failure is a stale test-only data-move-distance selector absent from current source",
+    "R13 already proves the late contextual selectEndpoint wrapper adaptation using human-semantic elementFromPoint plus mouse input",
+    "R16 and R21 identify the bounded 844x390 planBox interception repair as a short-landscape column change from 142px to 146px, to be applied only if current actual reproduces the interception",
+    "PR #1283 already supplies deterministic Road1-6 and Elastic compatibility evidence; do not create another Road core or topology"
+  ]
+}

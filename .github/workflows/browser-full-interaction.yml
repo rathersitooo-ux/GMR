@@ -12,6 +12,7 @@ on:
   push:
     branches:
       - main
+      - sol/deck-save-actual-r3-20260909
     paths:
       - 'browser/GAMEROAD.html'
       - 'tests/browser-full-interaction.spec.mjs'

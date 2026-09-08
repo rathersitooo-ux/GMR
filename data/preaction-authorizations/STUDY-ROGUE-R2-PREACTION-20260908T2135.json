@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "STUDY-ROGUE-R2-PREACTION-20260908T2135",
+  "taskId": "STUDY-ROGUELIKE-PROBLEM-PACK-RUNTIME-001",
+  "workUnitKey": "STUDY_RUNTIME_VERTICAL_SLICE_R2",
+  "acquireKey": "STUDY-ROGUE-R2-20260908T2105-SOL-Q8M4N2",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "STUDY-R2-SCOPE-PREDICTION-20260908",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1331-DIAG-PLUS-LOCAL-NODE-11OF11",
+  "proceedToken": "PROCEED|STUDY-ROGUE-R2-PREACTION-20260908T2135|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|scope-release|lease-readback|rehearsal",
+  "authorizationBaseSha": "c2c0d0abaebdc16602e8f7e6808166fbb1e94862",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "STUDY-ROGUELIKE-PROBLEM-PACK-RUNTIME-001",
+  "leaseWorkUnitKey": "STUDY_RUNTIME_VERTICAL_SLICE_R2",
+  "leaseAcquireKey": "STUDY-ROGUE-R2-20260908T2105-SOL-Q8M4N2",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 21:35 JST",
+  "leaseUntilJst": "2026-09-08 22:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A7:L7",
+  "leaseExactMutableResources": "Drive: GAMEROAD 全作業一覧 row1376 G,N:T,Y:AB,AH; Drive Doc 1ppyYl1dapUll0IOtQn48B1awm2aQHb5DZSfB7WerLoc Section17 execution-boundary paragraph; R23 event-history append. GitHub:rathersitooo-ux/GMR clean branch=study-rogue-r2-core-r2 mutable only: browser/study-problem-pack-core.mjs; browser/study-manual-problem-pack.mjs; tests/study-problem-pack-core.test.mjs; tests/study-manual-problem-pack.test.mjs. PREACTION manifest under data/preaction-authorizations is transient authorization transport and must be cleanup-deleted before merge. Base main=c2c0d0abaebdc16602e8f7e6808166fbb1e94862. All existing Battle/Rogue/Partner/card/save/workflow files READ_ONLY.",
+  "scope": [
+    "browser/study-problem-pack-core.mjs",
+    "browser/study-manual-problem-pack.mjs",
+    "tests/study-problem-pack-core.test.mjs",
+    "tests/study-manual-problem-pack.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/study-problem-pack-core.mjs",
+    "browser/study-manual-problem-pack.mjs",
+    "tests/study-problem-pack-core.test.mjs",
+    "tests/study-manual-problem-pack.test.mjs"
+  ],
+  "solutionSignature": "Study専用の問題パック、回答手札、複数slot投下順、採点、正答後の行動変換、版付き最小sessionを通常Battle規則から分離して成立させる。未決の難度powerと時間倍率はcaller-owned policyのまま保持する。",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "STUDY-R2-REUSE-DECISION-BRAINTRAINING-CARDLEARNING-CROSSCHECK",
+  "solutionSearchEvidence": [
+    "github:main:browser/brain-training-core.mjs",
+    "github:main:browser/brain-training-exercise-bank.mjs",
+    "github:main:browser/card-presentation-core.mjs",
+    "github:main:browser/learning-event-core.mjs"
+  ],
+  "buildResidualReason": "既存brain-trainingは四択中心で、Study固定要件の複数空欄、入力回答、sequence、カード投下順によるslot対応、問題版に結びつくStudy session、正答後だけのdifficulty/time action変換を一つの純粋coreとして持たない。通常Battle controllerへ学習意味を混入することは禁止されているため、専用coreが残余実装となる。"
+}

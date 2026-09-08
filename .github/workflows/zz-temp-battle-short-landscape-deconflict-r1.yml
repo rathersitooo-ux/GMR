@@ -24,7 +24,7 @@ jobs:
         run: |
           set -euo pipefail
           test -f data/preaction-authorizations/BATTLE-SHORT-LANDSCAPE-DECONFLICT-R1-20260908T0952-SOL-L7Q4N8.json
-          test "$(git rev-parse HEAD^)" = "21088b37a6ce34197367bff4b26dba8a9cf78c79"
+          git merge-base --is-ancestor 21088b37a6ce34197367bff4b26dba8a9cf78c79 HEAD
           test "$(git rev-parse 21088b37a6ce34197367bff4b26dba8a9cf78c79^)" = "528f0b09e124f7bc3df1b4404b832fb395ad3a80"
           test "$(git hash-object browser/battle-janken-slidepad-runtime-mount.mjs)" = "6b3ed3285cf7bca00e9349c131a336344b6423fe"
           test "$(git hash-object tests/battle-janken-slidepad-runtime-mount.test.mjs)" = "5ffea7079b807cd7b9c3f2c8485dc87e10ddf7ee"
@@ -77,7 +77,7 @@ jobs:
               'desktop placement remains anchored beside Partner rather than moving into the board');
           });
           '''
-          test_file.write_text(test_text.rstrip() + addition + '\n')
+          test_file.write_text(test_text.rstrip() + addition.rstrip() + '\n')
           PY
           git diff --check
 

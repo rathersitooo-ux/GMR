@@ -8,6 +8,15 @@ import { mountStudyRunFromCurrentBrowser } from './study-run-runtime-mount.mjs';
 // visibility:hidden!important
 // dataset.homeQuickSetActive
 // dataset.homeQuickSetCancel
+// .codexHomeLeftRail
+// .codexHomeRightRail
+// html.grCodexHomeActive #saveState
+// [data-go="missions"]::before
+// [data-go="gacha"]::before
+// [data-go="records"]::before
+// [data-go="profile"]::before
+// [data-go="settings"]::before
+// HOME_CONTEXTUAL_REPLAY_LABEL
 
 function mountStudyAfterHome() {
   mountStudyRunFromCurrentBrowser();

@@ -72,14 +72,10 @@ jobs:
           if s.count(old)!=1: raise SystemExit(f'context endpoint wrapper mismatch: {s.count(old)}')
           s=s.replace(old,new,1)
           media='@media(max-height:470px) and (orientation:landscape){'
-          start=s.find(media)
-          if start<0: raise SystemExit('short-landscape media missing')
-          end=s.find('@media',start+len(media)); end=len(s) if end<0 else end
-          block=s[start:end]
+          if media not in s: raise SystemExit('short-landscape media missing')
           col='grid-template-columns:142px minmax(0,1fr)'
-          if block.count(col)!=1: raise SystemExit(f'short-landscape column mismatch in media: {block.count(col)}')
-          block=block.replace(col,'grid-template-columns:146px minmax(0,1fr)',1)
-          s=s[:start]+block+s[end:]
+          if s.count(col)!=1: raise SystemExit(f'whole-source short-landscape column mismatch: {s.count(col)}')
+          s=s.replace(col,'grid-template-columns:146px minmax(0,1fr)',1)
           html.write_text(s)
 
           spec=Path('tests/road-move-bidirectional-live-r21.spec.mjs'); t=spec.read_text()

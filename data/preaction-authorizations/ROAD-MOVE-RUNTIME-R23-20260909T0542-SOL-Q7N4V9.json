@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-ROAD-MOVE-RUNTIME-R23-20260909T0542",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R23-20260909T0542-SOL-Q7N4V9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R13_R16_R21_PLUS_CURRENT_MAIN_A593323",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R13_PHYSICAL_HIT_INPUT_R16_ENV_MATRIX_R21_STALE_SELECTOR_ROOT_CAUSE",
+  "proceedToken": "PROCEED|VWORK-ROAD-MOVE-RUNTIME-R23-20260909T0542|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-09T05:43+09:00",
+  "authorizationBaseSha": "a59332356dbe5f70e3afaf350bfae8fdcbb3ea6d",
+  "authorizationProductBlob": "d7ae9d0532df7e66ebbf29f1e7eecb3f352d346d",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r23.spec.mjs",
+    "one bounded transient executor workflow if direct monolith replacement is unsafe"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "leaseAcquireKey": "ROAD-MOVE-RUNTIME-R23-20260909T0542-SOL-Q7N4V9",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 05:43 JST",
+  "leaseUntilJst": "2026-09-09 06:42 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A642:N642",
+  "solutionSignature": "Adapt the already-proven bidirectional Road DraftMove live repair, correct R21's stale test selector without product changes for that selector, and repair the confirmed 844x390 real-pointer planBox occlusion only if actual physical-input acceptance requires it.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R13_R16_R21_CURRENT_RESIDUAL",
+  "solutionSearchEvidence": [
+    "R13 proved the late contextual selectEndpoint wrapper adaptation with human-semantic hit-test input.",
+    "R16 isolated a real 844x390 pointer occlusion where .planBox intercepted an actual Road hand card.",
+    "PR #1283 supplies deterministic Road1-6 and Elastic Focus compatibility coverage; do not duplicate its core.",
+    "R21 pure road-move compatibility 9/9 passed and live card-first reached move commit.",
+    "R21 move-first failure used .node.reachable[data-move-distance], an attribute absent from current repository code; fix the test selector, not the product for that stale attribute.",
+    "Fresh current main is a59332356dbe5f70e3afaf350bfae8fdcbb3ea6d and the Road product HTML blob remains d7ae9d0532df7e66ebbf29f1e7eecb3f352d346d."
+  ],
+  "nonInterference": [
+    "No CARD_FIRST/MOVE_FIRST dual mode machine",
+    "No second Road compatibility core",
+    "No 109 topology/reachable/stoppability rebuild",
+    "No Battle-card selection/reservation/submission/order/resolve changes",
+    "No force/programmatic gameplay click used to hide pointer occlusion",
+    "No data-move-distance product attribute invented for the test"
+  ]
+}

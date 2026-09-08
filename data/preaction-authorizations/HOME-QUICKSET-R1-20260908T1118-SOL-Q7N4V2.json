@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-QUICKSET-R1-20260908T1118-SOL-Q7N4V2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_QUICKSET_CURRENT_INTEGRATION_R1",
+  "acquireKey": "HOME-QUICKSET-R1-20260908T1115-SOL-Q7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "fresh-current-home-actual-3view-20260908-existing-four-gummies-no-parallel-layer",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing-slidepad-slot-roll-core-plus-current-home-route-controls-direct-code-readback",
+  "proceedToken": "PROCEED|HOME-QUICKSET-R1-20260908T1118-SOL-Q7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|reuse-current-home-gummies-and-cyclic-core",
+  "authorizationBaseSha": "a18ea1f5474eaa55152865e8c951b01afe1e071c",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_QUICKSET_CURRENT_INTEGRATION_R1",
+  "leaseAcquireKey": "HOME-QUICKSET-R1-20260908T1115-SOL-Q7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 11:15 JST",
+  "leaseUntilJst": "2026-09-08 12:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR browser/home-boot-runtime-mount.mjs; tests/home-boot-presentation.test.mjs; own branch/PR/check/merge/public readback only. READ_ONLY browser/GAMEROAD.html; browser/slidepad-slot-roll-core.mjs; settings/save/economy/gameplay/rules.",
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ]
+}

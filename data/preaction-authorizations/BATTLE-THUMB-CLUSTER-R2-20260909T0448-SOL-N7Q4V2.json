@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-THUMB-CLUSTER-R2-20260909T0448-SOL-N7Q4V2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_UI_FIRST_NEXT_GATE",
+  "acquireKey": "BATTLE-THUMB-CLUSTER-R2-20260909T0448-SOL-N7Q4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_BATTLE_ROULETTE_PARTNER_LEFT_VS_SLIDEPAD_BOTTOM_RIGHT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_EXISTING_ROULETTE_CONTROLLER_PLUS_TOUCH_UI_EXTERNAL_CROSSCHECK",
+  "proceedToken": "PROCEED|BATTLE-THUMB-CLUSTER-R2-20260909T0448-SOL-N7Q4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-09T04:52+09:00",
+  "authorizationBaseSha": "a4dae48a539fee754b938217ca059d2b596400ba",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    "data/preaction-authorizations/BATTLE-THUMB-CLUSTER-R2-20260909T0448-SOL-N7Q4V2.json"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_UI_FIRST_NEXT_GATE",
+  "leaseAcquireKey": "BATTLE-THUMB-CLUSTER-R2-20260909T0448-SOL-N7Q4V2",
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    "data/preaction-authorizations/BATTLE-THUMB-CLUSTER-R2-20260909T0448-SOL-N7Q4V2.json"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-09-09 04:51 JST",
+  "leaseUntilJst": "2026-09-09 05:38 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:N5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-ui-first-thumb-cluster-r2-20260909 from exact main a4dae48a539fee754b938217ca059d2b596400ba; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient data/preaction-authorizations/BATTLE-THUMB-CLUSTER-R2-20260909T0448-SOL-N7Q4V2.json. No GAMEROAD.html, gameplay, save, economy, network or second controller.",
+  "solutionSignature": "ADAPT the existing remaining-hand roulette live-placement CSS so it joins the existing bottom-right SlidePad thumb cluster across desktop, short landscape, and phone portrait while keeping the existing roulette controller, candidate IDs, direct hand action delegation, janken selection authority, and z-index precedence unchanged.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_ROULETTE_AND_SLIDEPAD_LIVE_CONSUMERS",
+  "solutionSearchEvidence": [
+    "Current main directly mounts the remaining-hand roulette from battle-playable-hand-row-roulette-runtime.mjs but positions its live host with Partner-left CSS variables while the SlidePad host is bottom-right.",
+    "Existing roulette controller already owns candidate refresh, detent movement, stale-selection rejection, and delegates commit to the existing hand-card action; replacing it would create a prohibited second controller.",
+    "Recent Marvel Snap patch notes treat overlapping, off-screen, and accidental UI hit areas as product defects; Hearthstone mobile history likewise adapted interaction UI for touch instead of copying desktop input. These are cross-checks only, not GAMEROAD rule authority.",
+    "A CSS-only live placement change plus the existing paired test is sufficient for this WorkUnit; no Battle rule, save, economy, network, or HTML mutation is required."
+  ]
+}

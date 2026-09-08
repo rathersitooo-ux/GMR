@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-MOVE-RUNTIME-R22-20260909T0536-SOL-Q7N4V2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R22-20260909T0536-SOL-Q7N4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-MAIN-A593323-HTML-D7AE9D-R21-ORPHAN-UNCHANGED",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "ROAD-R13-HUMAN-SEMANTIC-POINTER-PREVALIDATION-PLUS-PR1283-ELASTIC",
+  "proceedToken": "PROCEED|ROAD-MOVE-RUNTIME-R22-20260909T0536-SOL-Q7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-09T05:36:00+09:00",
+  "authorizationBaseSha": "a59332356dbe5f70e3afaf350bfae8fdcbb3ea6d",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-compatibility-core.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "leaseAcquireKey": "ROAD-MOVE-RUNTIME-R22-20260909T0536-SOL-Q7N4V2",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-compatibility-core.test.mjs"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-09-09 05:36 JST",
+  "leaseUntilJst": "2026-09-09 06:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/road-move-bidirectional-r22-20260909 + browser/GAMEROAD.html + tests/road-move-compatibility-core.test.mjs + own transient PREACTION/PR/check/readback only.",
+  "solutionSignature": "road-move-bidirectional-live-r22-current-html-recovery",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "ROAD-R13-PR1283-CURRENT-R21-ORPHAN-RECOVERY",
+  "solutionSearchEvidence": [
+    "Current main retains the exact GAMEROAD.html blob that orphaned R21 had already classified as missing the live Road bidirectional residuals",
+    "R13 already proved the late contextual endpoint-wrapper adaptation with human-semantic pointer input, so no second Road engine or new movement mode is needed",
+    "PR #1283 already supplies deterministic Elastic Focus compatibility coverage, so this slice reuses it rather than adding another compatibility core",
+    "Battle-card selection/reservation/submission/order/resolve and BOARD109 topology remain outside this repair and must stay unchanged"
+  ]
+}

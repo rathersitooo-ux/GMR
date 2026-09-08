@@ -90,6 +90,56 @@ jobs:
           if stale not in t: raise SystemExit('stale Battle source assertion not found')
           t=t.replace(stale,semantic,1)
 
+          elastic_start=t.find("test('Elastic Focus yields only beyond the focused Road upper bound and keeps the path'")
+          if elastic_start<0: raise SystemExit('Elastic Focus donor test start missing')
+          elastic_end=t.find('\n});',elastic_start)
+          if elastic_end<0: raise SystemExit('Elastic Focus donor test end missing')
+          elastic_end+=4
+          elastic_new=r'''test('Elastic Focus yields only beyond the focused Road upper bound and keeps the path',async({page})=>{
+            const seedBattle=await openRoadBattle(page);
+            await physicalTapReachable(page,1);
+            const seed=await snapshot(page);
+            expect(seed.battleId).toBeNull();
+            expect(seed.compatibleRoadIds.length).toBeGreaterThan(1);
+            let witness=null;
+            for(const id of seed.compatibleRoadIds){
+              const battle=await openRoadBattle(page);
+              await physicalTapReachable(page,1);
+              const atOne=await snapshot(page);
+              if(!atOne.compatibleRoadIds.includes(id))continue;
+              await physicalTapCard(page,id);
+              await expect.poll(async()=> (await snapshot(page)).roadId).toBe(id);
+              const focused=await snapshot(page);
+              expect(focused.battleId).toBeNull();
+              const maxDistance=focused.draftMoveLimit;
+              for(let distance=2;distance<=maxDistance;distance++){
+                const target=battle.locator(`.node.reachable[data-move-distance="${distance}"]`).first();
+                if(await target.count()===0)continue;
+                await physicalTapReachable(page,distance);
+                const extended=await snapshot(page);
+                expect(extended.roadId).toBe(id);
+                expect(extended.battleId).toBeNull();
+                if(!extended.compatibleRoadIds.includes(id)&&extended.compatibleRoadIds.length>0){
+                  witness={id,distance,path:extended.path,candidates:extended.compatibleRoadIds};
+                  await expect(battle.locator(`#hand .handCard[data-card-id="${id}"]`)).toHaveAttribute('data-road-move-state','INVALID_FOCUS');
+                  const switchId=extended.compatibleRoadIds[0];
+                  const beforeSwitch=JSON.stringify(extended.path);
+                  await physicalTapCard(page,switchId);
+                  await expect.poll(async()=> (await snapshot(page)).roadId).toBe(switchId);
+                  const switched=await snapshot(page);
+                  expect(switched.battleId).toBeNull();
+                  expect(JSON.stringify(switched.path)).toBe(beforeSwitch);
+                  expect(switched.compatibleRoadIds).toContain(switchId);
+                  await expect(battle.locator(`#hand .handCard[data-card-id="${switchId}"]`)).toHaveAttribute('data-road-move-state','FOCUSED');
+                  break;
+                }
+              }
+              if(witness)break;
+            }
+            expect(witness).not.toBeNull();
+          });'''
+          t=t[:elastic_start]+elastic_new+t[elastic_end:]
+
           anchor="async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}\n"
           helper="""async function snapshot(page){return page.evaluate(()=>window.__GAMEROAD_DIRECT_CARD_TEST__.snapshot())}\nasync function physicalTapReachable(page,distance=1){\n  const point=await page.evaluate((distance)=>{\n    const nodes=[...document.querySelectorAll(`.node.reachable[data-move-distance=\"${distance}\"]`)];\n    for(const node of nodes){\n      const r=node.getBoundingClientRect(),style=getComputedStyle(node);\n      if(!(r.width>0&&r.height>0)||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)continue;\n      const x=r.left+r.width/2,y=r.top+r.height/2,hit=document.elementFromPoint(x,y);\n      if(hit&&(hit===node||node.contains(hit)))return{x,y,pos:node.dataset.pos};\n    }\n    return null;\n  },String(distance));\n  expect(point).not.toBeNull();\n  await page.mouse.click(point.x,point.y);\n}\nasync function physicalTapCard(page,id){\n  const point=await page.evaluate((id)=>{\n    const node=document.querySelector(`#hand .handCard[data-card-id=\"${CSS.escape(id)}\"]`);\n    if(!node)return null;\n    const r=node.getBoundingClientRect(),style=getComputedStyle(node);\n    if(!(r.width>0&&r.height>0)||style.display==='none'||style.visibility==='hidden'||Number(style.opacity)===0)return null;\n    const samples=[[.5,.18],[.3,.18],[.7,.18],[.5,.35],[.3,.35],[.7,.35],[.5,.65],[.3,.65],[.7,.65]];\n    for(const [fx,fy] of samples){\n      const x=r.left+r.width*fx,y=r.top+r.height*fy,hit=document.elementFromPoint(x,y);\n      if(hit&&(hit===node||node.contains(hit)))return{x,y};\n    }\n    return null;\n  },id);\n  expect(point).not.toBeNull();\n  await page.mouse.click(point.x,point.y);\n}\n"""
           if anchor not in t: raise SystemExit('snapshot helper anchor missing')

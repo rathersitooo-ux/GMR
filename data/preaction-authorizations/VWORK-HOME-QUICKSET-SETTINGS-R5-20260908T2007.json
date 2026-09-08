@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-HOME-QUICKSET-SETTINGS-R5-20260908T2007",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_QUICKSET_SETTINGS_INLINE_R5",
+  "acquireKey": "HOME-QUICKSET-SETTINGS-R5-20260908T2007-SOL-K8M4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "HOME-QUICKSET-R5-current-main-R2-plus-existing-Home-quick-settings",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "HOME-QUICKSET-R5-inline-existing-runtime-and-mapped-test",
+  "proceedToken": "PROCEED|VWORK-HOME-QUICKSET-SETTINGS-R5-20260908T2007|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-r2|inline-settings",
+  "authorizationBaseSha": "c2c0d0abaebdc16602e8f7e6808166fbb1e94862",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_QUICKSET_SETTINGS_INLINE_R5",
+  "leaseAcquireKey": "HOME-QUICKSET-SETTINGS-R5-20260908T2007-SOL-K8M4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 20:07 JST",
+  "leaseUntilJst": "2026-09-08 21:07 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A625:N625",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/home-quickset-settings-r5-20260908 only: browser/home-boot-runtime-mount.mjs; tests/home-boot-presentation.test.mjs; .github/workflows/zz-temp-home-quickset-settings-r5.yml; data/preaction-authorizations/VWORK-HOME-QUICKSET-SETTINGS-R5-20260908T2007.json; own PR/check/merge/main readback",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    ".github/workflows/zz-temp-home-quickset-settings-r5.yml"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs",
+    ".github/workflows/zz-temp-home-quickset-settings-r5.yml"
+  ],
+  "solutionSignature": "Inline user-configurable existing Home Quick Set order and zero-move anchor into the already-classified Home runtime and existing mapped test, preserving R2 interaction semantics and creating no second save authority.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "HOME-QUICKSET-R5-existing-runtime-reuse",
+  "solutionSearchEvidence": [
+    "Current main browser/home-boot-runtime-mount.mjs already owns R2 cyclic Quick Set and Home quick-settings overlay",
+    "Current tests/home-boot-presentation.test.mjs is the existing mapped test for Home runtime",
+    "R4 Required Gate proved a new browser runtime module introduces unnecessary package classification work"
+  ]
+}

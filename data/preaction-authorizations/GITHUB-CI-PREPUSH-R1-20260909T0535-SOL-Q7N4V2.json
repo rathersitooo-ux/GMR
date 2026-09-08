@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GITHUB-CI-PREPUSH-R1-20260909T0535-SOL-Q7N4V2",
+  "taskId": "GITHUB-CI-BROWSER-NODE-001",
+  "workUnitKey": "GITHUB_PREPUSH_ENFORCEMENT_R1",
+  "acquireKey": "GITHUB-CI-PREPUSH-R1-20260909T0535-SOL-Q7N4V2",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "GITHUB-CI-R8-ROOT-GAP-WRITER-SIDE-ENFORCEMENT-20260909",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING-PREACTION-VALIDATOR-AND-REQUIRED-GATE-ARE-CURRENT-ORACLES-20260909",
+  "proceedToken": "PROCEED|GITHUB-CI-PREPUSH-R1-20260909T0535-SOL-Q7N4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|current-lease-narrowed|fresh-main-ef4ef17|writer-prepush",
+  "authorizationBaseSha": "ef4ef17a35bab996e56292bf62760136a655121a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-CI-BROWSER-NODE-001",
+  "leaseWorkUnitKey": "GITHUB_PREPUSH_ENFORCEMENT_R1",
+  "leaseAcquireKey": "GITHUB-CI-PREPUSH-R1-20260909T0535-SOL-Q7N4V2",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 05:52 JST",
+  "leaseUntilJst": "2026-09-09 06:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A633:L633",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/github-prepush-enforcement-r1-20260909; AGENTS.md; .githooks/pre-push; tools/prepush-required-gate.mjs; tests/prepush-required-gate.test.mjs; transient data/preaction-authorizations/GITHUB-CI-PREPUSH-R1-20260909T0535-SOL-Q7N4V2.json; own PR/check/readback/merge evidence only. Product/browser gameplay/runtime/save/economy/network and .github/workflows/gameroad-required-gate.yml READ_ONLY.",
+  "scope": [
+    "AGENTS.md",
+    ".githooks/pre-push",
+    "tools/prepush-required-gate.mjs",
+    "tests/prepush-required-gate.test.mjs"
+  ],
+  "leaseScope": [
+    "AGENTS.md",
+    ".githooks/pre-push",
+    "tools/prepush-required-gate.mjs",
+    "tests/prepush-required-gate.test.mjs"
+  ],
+  "solutionSignature": "既存PREACTION validatorとRequired Gateを正本のまま再利用し、writer側のcommitted pre-push hookで同じ失敗をremote push前にfail-closeする。新CI/第二routerを作らない。",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "GITHUB-CI-R8-EXISTING-VALIDATOR-COMPOSE-20260909",
+  "solutionSearchEvidence": [
+    "google-drive:GITHUB-CI-BROWSER-NODE-001:R7-process-defect-root",
+    "google-drive:CURRENT_ACTIVE_LEASES!A633:L633",
+    "github:main:tools/preaction-authorization-validator.mjs#d911979b01d5a990dbd975ad4209b3da0faa280e",
+    "github:main:.github/workflows/gameroad-required-gate.yml#f3e6e8f135e3996b28280c603c2db09ba04660e5",
+    "github:main:AGENTS.md#b1689eb75c1931e2113ba33b1bd5f0d4e801d7f9"
+  ]
+}

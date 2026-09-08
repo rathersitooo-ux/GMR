@@ -1,3 +1,5 @@
+import './ze-kuu-formal-card-art-runtime.mjs';
+
 export const DECK_STORAGE_DEFAULTS = Object.freeze({ maxDeckSize: 40 });
 
 function cardId(value) {

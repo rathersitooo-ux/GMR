@@ -41,6 +41,8 @@ const ARTIFACT_SPECS = Object.freeze([
   { source: 'browser/cards-deck-presentation-core.mjs', output: 'cards-deck-presentation-core.mjs', artifact: 'cards_deck_presentation_core', label: 'Cards deck presentation core' },
   { source: 'browser/deck-storage-corner-runtime.mjs', output: 'deck-storage-corner-runtime.mjs', artifact: 'deck_storage_corner_runtime', label: 'Deck Storage corner runtime' },
   { source: 'browser/deck-storage-corner-core.mjs', output: 'deck-storage-corner-core.mjs', artifact: 'deck_storage_corner_core', label: 'Deck Storage corner core' },
+  { source: 'browser/ze-kuu-formal-card-art-runtime.mjs', output: 'ze-kuu-formal-card-art-runtime.mjs', artifact: 'ze_kuu_formal_card_art_runtime', label: 'Ze-Kuu formal card art runtime' },
+  { source: 'assets/visual/cards/dcg-ze-kuu.jpg', output: 'assets/visual/cards/dcg-ze-kuu.jpg', artifact: 'ze_kuu_formal_card_art', label: 'Ze-Kuu formal card art' },
   { source: 'browser/battle-janken-slidepad-runtime-mount.mjs', output: 'battle-janken-slidepad-runtime-mount.mjs', artifact: 'battle_janken_slidepad_runtime_mount', label: 'Battle janken SlidePad runtime mount' },
   { source: 'browser/battle-playable-hand-row-roulette-runtime.mjs', output: 'battle-playable-hand-row-roulette-runtime.mjs', artifact: 'battle_playable_hand_row_roulette_runtime', label: 'Battle playable hand row roulette runtime' },
   { source: 'browser/new-base-round-start-janken-slot-assignment-core.mjs', output: 'new-base-round-start-janken-slot-assignment-core.mjs', artifact: 'new_base_round_start_janken_slot_assignment_core', label: 'Round-start janken slot assignment core' },

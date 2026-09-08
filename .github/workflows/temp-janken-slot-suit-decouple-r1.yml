@@ -1,0 +1,104 @@
+name: Temp Janken Slot Suit Decouple R1
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  patch-owned-scope:
+    if: github.event.pull_request.head.ref == 'sol/janken-slot-suit-decouple-r1-20260909'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout owned branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Apply bounded semantic-decoupling patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          runtime_path = Path('browser/battle-janken-slidepad-runtime-mount.mjs')
+          runtime = runtime_path.read_text(encoding='utf-8')
+          old_view = """const SLOT_VIEW = Object.freeze({
+            ROCK: Object.freeze({ symbol: '♣', hand: 'グー', className: 'rock' }),
+            SCISSORS: Object.freeze({ symbol: '♦', hand: 'チョキ', className: 'scissors' }),
+            PAPER: Object.freeze({ symbol: '♠', hand: 'パー', className: 'paper' }),
+          });"""
+          new_view = """const SLOT_VIEW = Object.freeze({
+            ROCK: Object.freeze({ symbol: '✊', hand: 'グー', className: 'rock' }),
+            SCISSORS: Object.freeze({ symbol: '✌', hand: 'チョキ', className: 'scissors' }),
+            PAPER: Object.freeze({ symbol: '✋', hand: 'パー', className: 'paper' }),
+          });"""
+          if runtime.count(old_view) != 1:
+              raise SystemExit('runtime SLOT_VIEW anchor mismatch; refusing broad patch')
+          runtime = runtime.replace(old_view, new_view, 1)
+          runtime_path.write_text(runtime, encoding='utf-8')
+
+          test_path = Path('tests/battle-janken-slidepad-runtime-mount.test.mjs')
+          test_source = test_path.read_text(encoding='utf-8')
+          preview_anchor = "    symbol: '♣',\n    hand: 'グー',"
+          if test_source.count(preview_anchor) != 1:
+              raise SystemExit('preview symbol anchor mismatch; refusing broad patch')
+          test_source = test_source.replace(
+              preview_anchor,
+              "    symbol: '✊',\n    hand: 'グー',",
+              1,
+          )
+          insert_anchor = "test('janken slot can still reach its round-source card action without restoring ordinary-hand membership', () => {"
+          if test_source.count(insert_anchor) != 1:
+              raise SystemExit('focused test insertion anchor mismatch; refusing broad patch')
+          new_test = """test('fixed janken slot presentation identifies the hand instead of reusing native suit glyphs', () => {
+            const model = buildBattleJankenSlidePadModel({ roundId: '1', hand, pickDuplicateIndex: () => 1 });
+            assert.deepEqual(model.slots.map((slot) => [slot.jankenHand, slot.symbol, slot.hand]), [
+              ['ROCK', '✊', 'グー'],
+              ['SCISSORS', '✌', 'チョキ'],
+              ['PAPER', '✋', 'パー'],
+            ]);
+            assert.equal(model.slots.some((slot) => ['♣', '♦', '♠'].includes(slot.symbol)), false);
+          });
+
+          """
+          test_source = test_source.replace(insert_anchor, new_test + insert_anchor, 1)
+          test_path.write_text(test_source, encoding='utf-8')
+          PY
+
+      - name: Run focused janken runtime tests
+        run: node --test tests/battle-janken-slidepad-runtime-mount.test.mjs
+
+      - name: Verify bounded diff and clean transient authorization
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git diff --name-only
+          git rm -f data/preaction-authorizations/JANKEN-SLOT-SUIT-DECOUPLE-R1-20260909T0721-SOL-C7M4P2.json
+          git rm -f .github/workflows/temp-janken-slot-suit-decouple-r1.yml
+          changed="$(git diff --name-only --cached; git diff --name-only)"
+          printf '%s\n' "$changed" | sort -u
+          for path in $(printf '%s\n' "$changed" | sort -u); do
+            case "$path" in
+              browser/battle-janken-slidepad-runtime-mount.mjs|tests/battle-janken-slidepad-runtime-mount.test.mjs|data/preaction-authorizations/JANKEN-SLOT-SUIT-DECOUPLE-R1-20260909T0721-SOL-C7M4P2.json|.github/workflows/temp-janken-slot-suit-decouple-r1.yml) ;;
+              *) echo "unexpected changed path: $path"; exit 1 ;;
+            esac
+          done
+
+      - name: Commit bounded product patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-bounded-executor'
+          git config user.email 'actions@users.noreply.github.com'
+          git add browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs
+          git add -u data/preaction-authorizations .github/workflows
+          git commit -m 'Battle: 固定じゃんけん枠をスート表示から分離'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}

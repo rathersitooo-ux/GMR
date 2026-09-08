@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-QUICKSET-R1C-20260908T1320-SOL-M8Q4V1",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_QUICKSET_CURRENT_INTEGRATION_R1",
+  "acquireKey": "HOME-QUICKSET-R1-20260908T1305-SOL-M8Q4V1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "fresh-main-target-blobs-unchanged-home-four-routes-cyclic-core",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing-slidepad-slot-roll-core-plus-current-home-route-buttons",
+  "proceedToken": "PROCEED|HOME-QUICKSET-R1C-20260908T1320-SOL-M8Q4V1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|reuse-route-gummies-and-slot-roll-core",
+  "authorizationBaseSha": "5e2730ce6ce772769fd02efeaaa3da6b61157320",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_QUICKSET_CURRENT_INTEGRATION_R1",
+  "leaseAcquireKey": "HOME-QUICKSET-R1-20260908T1305-SOL-M8Q4V1",
+  "leaseSnapshotReadbackAtJst": "2026-09-08 13:05 JST",
+  "leaseUntilJst": "2026-09-08 14:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR browser/home-boot-runtime-mount.mjs; tests/home-boot-presentation.test.mjs; own branch/PR/check/merge/public readback only. READ_ONLY browser/GAMEROAD.html; browser/slidepad-slot-roll-core.mjs; settings/save/economy/gameplay/rules.",
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ]
+}

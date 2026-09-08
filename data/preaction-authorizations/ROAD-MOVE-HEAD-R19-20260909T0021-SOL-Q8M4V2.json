@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-MOVE-HEAD-R19-20260909T0021-SOL-Q8M4V2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "acquireKey": "ROAD-MOVE-HEAD-R19-20260909T0021-SOL-Q8M4V2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R17_PROVEN_DONOR_R16_12_OF_12_PLUS_LOWPERF",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R17_DONOR_PATCH_ON_IDENTICAL_HTML_BLOB_35f9203e",
+  "proceedToken": "PROCEED|ROAD-MOVE-HEAD-R19-20260909T0021-SOL-Q8M4V2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-09T00:21+09:00",
+  "authorizationBaseSha": "39f5ff14aba04e7aa421b34fc1af4006f164e979",
+  "scope": [
+    "browser/GAMEROAD.html"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "leaseAcquireKey": "ROAD-MOVE-HEAD-R19-20260909T0021-SOL-Q8M4V2",
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "data/preaction-authorizations/ROAD-MOVE-HEAD-R19-20260909T0021-SOL-Q8M4V2.json"
+  ],
+  "leaseSnapshotReadbackAtJst": "2026-09-09 00:21 JST",
+  "leaseUntilJst": "2026-09-09 01:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:N5",
+  "leaseExactMutableResources": "GitHub rathersitooo-ux/GMR branch sol/road-move-bidirectional-head-r19-20260909; browser/GAMEROAD.html; transient data/preaction-authorizations/ROAD-MOVE-HEAD-R19-20260909T0021-SOL-Q8M4V2.json only. Battle-card semantics, 109 topology, other files READ_ONLY.",
+  "solutionSignature": "Adapt the already-proven R5 plus R6 one-draft Road movement integration and R17 late selectEndpoint wrapper fix onto the exact unchanged GAMEROAD.html blob; no second movement mode, no Road1-6 copy handlers, no Battle-card semantic changes",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R5_R6_R17_DONORS_PLUS_IDENTICAL_CURRENT_TARGET_BLOB",
+  "solutionSearchEvidence": [
+    "Current main 39f5ff14aba04e7aa421b34fc1af4006f164e979 has browser/GAMEROAD.html blob 35f9203e2be95ba07b44c875e26bfe2047a3cee5, identical to R17 donor input",
+    "R17 donor workflow composes R5 and R6 and replaces the late card-first selectEndpoint wrapper",
+    "R16/R17 evidence recorded 12/12 required viewport/reduced-motion acceptance plus LowPerf pass",
+    "Existing pure Road compatibility test already parameterizes Road1-6 upper-bound behavior and no implicit multi-candidate choice"
+  ]
+}

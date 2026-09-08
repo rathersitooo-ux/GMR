@@ -8,7 +8,7 @@ permissions:
 jobs:
   prevalidate:
     runs-on: ubuntu-latest
-    timeout-minutes: 32
+    timeout-minutes: 24
     steps:
       - uses: actions/checkout@v4
         with:
@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Build ephemeral Road candidate from current main and existing donors
+      - name: Build ephemeral Road candidate and LowPerf acceptance
         shell: bash
         run: |
           set -euo pipefail
@@ -73,47 +73,61 @@ jobs:
           t=t.replace('await card.click();','await physicalTapCard(page,id);',1)
           spec.write_text(t)
           PY
+          cat >> tests/road-move-bidirectional-live-r16.spec.mjs <<'EOF'
+
+          test('LowPerf keeps move-first Road matching and Battle-card noninterference',async({page})=>{
+            const battle=await openRoadBattle(page);
+            const enabled=await page.evaluate(()=>{const e=document.querySelector('#lowPerf');if(!e)return false;if(!/ON/.test(e.textContent||''))e.click();return /ON/.test(e.textContent||'')});
+            expect(enabled).toBe(true);
+            const before=await snapshot(page);
+            expect(before.roadId).toBeNull();
+            expect(before.battleId).toBeNull();
+            await physicalTapReachable(page,1);
+            const moved=await snapshot(page);
+            expect(moved.compatibleRoadIds.length).toBeGreaterThan(0);
+            expect(moved.battleId).toBeNull();
+            const id=moved.compatibleRoadIds[0];
+            await physicalTapCard(page,id);
+            const focused=await snapshot(page);
+            expect(focused.roadId).toBe(id);
+            expect(focused.battleId).toBeNull();
+            expect(focused.path).toEqual(moved.path);
+            await expect(battle.locator(`#hand .handCard[data-card-id="${id}"]`)).toHaveAttribute('data-road-move-state','FOCUSED');
+          });
+          EOF
           git diff --check
           node --test tests/road-move-compatibility-core.test.mjs
-          printf 'base=%s\nhtml_blob_before=%s\n' "2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb" "$(git rev-parse 2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb:browser/GAMEROAD.html)" > r16-evidence.txt
-          printf 'candidate_html=%s\n' "$(git hash-object browser/GAMEROAD.html)" >> r16-evidence.txt
-          grep -F "const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0],moveLimit=draftMoveLimitForPlayer(me);" browser/GAMEROAD.html >/dev/null
-          grep -F "document.elementFromPoint(x,y)" tests/road-move-bidirectional-live-r16.spec.mjs >/dev/null
-          grep -F "physicalTapCard(page,id)" tests/road-move-bidirectional-live-r16.spec.mjs >/dev/null
+          printf 'base=%s\nhtml_blob_before=%s\n' "2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb" "$(git rev-parse 2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb:browser/GAMEROAD.html)" > r16-lowperf-evidence.txt
+          printf 'candidate_html=%s\n' "$(git hash-object browser/GAMEROAD.html)" >> r16-lowperf-evidence.txt
+          grep -F "test('LowPerf keeps move-first Road matching and Battle-card noninterference'" tests/road-move-bidirectional-live-r16.spec.mjs >/dev/null
       - name: Install Playwright Chromium
         run: |
           npm install --no-save --no-package-lock @playwright/test@1.62.0
           npx playwright install --with-deps chromium
-      - name: Run remaining environment prevalidation
+      - name: Run LowPerf Road prevalidation
         shell: bash
         run: |
           set -o pipefail
-          cat > .road-r16-playwright.config.mjs <<'EOF'
+          cat > .road-r16-lowperf.config.mjs <<'EOF'
           import { defineConfig } from '@playwright/test';
           export default defineConfig({
             testDir: './tests',
             testMatch: 'road-move-bidirectional-live-r16.spec.mjs',
             timeout: 60000,
             expect: { timeout: 10000 },
-            fullyParallel: false,
             workers: 1,
             retries: 0,
             reporter: [['line']],
-            use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true, trace: 'off', screenshot: 'off', video: 'off' },
-            projects: [
-              { name: 'phone-390x844', use: { viewport: { width: 390, height: 844 } } },
-              { name: 'landscape-844x390', use: { viewport: { width: 844, height: 390 } } },
-              { name: 'reduced-motion-844x390', use: { viewport: { width: 844, height: 390 }, reducedMotion: 'reduce' } }
-            ],
+            use: { baseURL: 'http://127.0.0.1:4173', browserName: 'chromium', headless: true, viewport: { width: 844, height: 390 }, trace: 'off', screenshot: 'off', video: 'off' },
             webServer: { command: 'python3 -m http.server 4173 --bind 127.0.0.1', url: 'http://127.0.0.1:4173/browser/GAMEROAD.html', reuseExistingServer: false, timeout: 120000 }
           });
           EOF
           set +e
-          npx playwright test --config=.road-r16-playwright.config.mjs --workers=1 --grep "R16 source contract|move-first exposes|card-first still moves|compatible Road card taps" 2>&1 | tee -a r16-evidence.txt
+          npx playwright test --config=.road-r16-lowperf.config.mjs --workers=1 --grep "LowPerf keeps move-first Road matching" 2>&1 | tee -a r16-lowperf-evidence.txt
           code=${PIPESTATUS[0]}
           set -e
-          printf 'playwright_exit=%s\n' "$code" >> r16-evidence.txt
-          rm -f .road-r16-playwright.config.mjs
+          printf 'playwright_exit=%s\n' "$code" >> r16-lowperf-evidence.txt
+          rm -f .road-r16-lowperf.config.mjs
           exit "$code"
       - name: Verify branch product bytes remain unchanged
         if: always()
@@ -121,10 +135,10 @@ jobs:
         run: |
           git reset --hard HEAD
           test "$(git rev-parse HEAD:browser/GAMEROAD.html)" = "$(git rev-parse 2cd8c32133350b2f41aeabf8f3a7efdd9cb32efb:browser/GAMEROAD.html)"
-      - name: Upload compact evidence
+      - name: Upload LowPerf evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: road-r16-env-prevalidation
-          path: r16-evidence.txt
+          name: road-r16-lowperf-prevalidation
+          path: r16-lowperf-evidence.txt
           if-no-files-found: warn

@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  diagnose-html-seams:
+  diagnose-authority-shape:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,62 +19,53 @@ jobs:
         run: |
           test -f data/preaction-authorizations/BATTLE-JANKEN-ORDER-LIVE-MOUNT-R1-20260910T0315-SOL-U3-Q6M4P5.json
           grep -F 'PREACTION_PROCEED_ALLOWED' data/preaction-authorizations/BATTLE-JANKEN-ORDER-LIVE-MOUNT-R1-20260910T0315-SOL-U3-Q6M4P5.json
-      - name: Extract bounded GAMEROAD boot and Battle seams
+      - name: Inspect legacy Battle authority producers
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
 
           text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          print('HTML_BYTES', len(text.encode('utf-8')))
-          print('HTML_CHARS', len(text))
-
-          print('\n=== SCRIPT SOURCES ===')
-          for m in re.finditer(r'<script\b[^>]*>', text, re.I):
-              tag = m.group(0)
-              src = re.search(r'\bsrc=["\']([^"\']+)', tag, re.I)
-              typ = re.search(r'\btype=["\']([^"\']+)', tag, re.I)
-              if src or typ:
-                  print(m.start(), 'SRC=', src.group(1) if src else '', 'TYPE=', typ.group(1) if typ else '', tag[:500])
-          print('\n=== MODULE-LIKE REFERENCES ===')
-          refs = []
-          for pat in [r'import\s*\(\s*["\']([^"\']+)', r'from\s+["\']([^"\']+\.mjs[^"\']*)', r'["\']([^"\']+\.mjs(?:\?[^"\']*)?)["\']']:
-              refs += re.findall(pat, text)
-          for ref in sorted(set(refs))[:500]:
-              print(ref)
-          print('MODULE_REF_COUNT', len(set(refs)))
-
           terms = [
-              'publicCardPresentationBuild',
-              'publicCardPresentationManifest',
-              'publicCard',
-              'battleMap',
-              'data-screen="battle"',
-              "data-screen='battle'",
-              'Battle',
-              'janken',
-              'Janken',
-              'ROCK',
-              'SCISSORS',
-              'PAPER',
-              'じゃんけん',
-              'グー',
-              'チョキ',
-              'パー',
-              'battle-new-base',
-              'battle-screen',
-              'battle-janken',
-              'live-runtime',
+            'lastBattleResolution',
+            'battlePresentationRuntime',
+            'battlePresentation',
+            'buildPublicCardPresentationInputs',
+            'FORMAL_CARD_PRESENTATION_MANIFEST',
+            'advanceBattlePresentation',
           ]
           for term in terms:
-              positions = [m.start() for m in re.finditer(re.escape(term), text)]
-              print(f'\n=== TERM {term!r} COUNT {len(positions)} POS {positions[:20]} ===')
-              for idx, pos in enumerate(positions[:8]):
-                  lo = max(0, pos - 1000)
-                  hi = min(len(text), pos + len(term) + 1600)
-                  print(f'--- HIT {idx+1} [{lo}:{hi}] ---')
-                  print(text[lo:hi].replace('\r', ''))
+            hits=[m.start() for m in re.finditer(re.escape(term),text)]
+            print(f'\n=== {term} COUNT {len(hits)} POS {hits[:30]} ===')
+            for i,p in enumerate(hits[:16]):
+              lo=max(0,p-1800); hi=min(len(text),p+len(term)+3000)
+              print(f'--- HIT {i+1} [{lo}:{hi}] ---')
+              print(text[lo:hi].replace('\r',''))
 
-          print('\n=== TAIL 18000 ===')
-          print(text[-18000:].replace('\r', ''))
+          print('\n=== ASSIGNMENTS / OBJECT-KEY NEIGHBORS ===')
+          pats=[
+            r'lastBattleResolution\s*[:=]',
+            r'battlePresentation\s*[:=]',
+            r'\bprocessingOrder\b',
+            r'\bresolvedWinners\b',
+            r'\bunresolvedSurvivors\b',
+            r'\binvalidated\b',
+            r'\bpublicCards\b',
+            r'\bwinningHand\b',
+            r'\bprocessedPlayerId\b',
+          ]
+          for pat in pats:
+            hits=list(re.finditer(pat,text,re.I))
+            print(f'\nPAT {pat!r} COUNT {len(hits)}')
+            for i,m in enumerate(hits[:20]):
+              p=m.start(); lo=max(0,p-900); hi=min(len(text),p+2200)
+              print(f'--- {i+1} [{lo}:{hi}] ---')
+              print(text[lo:hi].replace('\r',''))
+
+          print('\n=== LIKELY RESOLVE/REVEAL FUNCTION DECLARATIONS ===')
+          for m in re.finditer(r'(?:async\s+)?function\s+([A-Za-z_$][\w$]*(?:resolve|reveal|battle|round|presentation)[A-Za-z0-9_$]*)\s*\(', text, re.I):
+            name=m.group(1)
+            if len(name)>120: continue
+            p=m.start(); print('FUNC',name,'POS',p)
+            print(text[max(0,p-300):min(len(text),p+2600)].replace('\r',''))
           PY

@@ -127,6 +127,13 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="target"]{border-color:rgba(246,198,145,.58);background:linear-gradient(180deg,rgba(105,67,38,.74),rgba(31,32,20,.62))}
 [${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="winner"]{transform:translateY(-2.2%);border-color:rgba(255,232,145,.72);background:linear-gradient(180deg,rgba(111,91,35,.78),rgba(27,38,23,.58));box-shadow:0 0 28px rgba(237,202,102,.18),0 10px 22px rgba(2,20,17,.20),inset 0 0 0 1px rgba(255,245,196,.10)}
 [${SHELL_ATTR}="1"] .grBattleLaneIdentity{min-width:0}.grBattleLaneIdentity b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(13px,1.25vw,16px);letter-spacing:.04em}.grBattleLaneIdentity small{display:block;margin-top:2px;opacity:.72;font-size:clamp(11px,.9vw,13px)}
+[${SHELL_ATTR}="1"] [${LANE_ATTR}][data-public-card-visible="true"] .grBattleLaneIdentity{padding-right:clamp(30px,4.8vw,46px)}
+[${SHELL_ATTR}="1"] .grBattleLanePublicCard{position:absolute;z-index:3;right:5px;top:5px;width:clamp(28px,4.1vw,42px);height:clamp(38px,5.6vw,56px);display:block;overflow:hidden;border-radius:6px;border:1px solid rgba(255,236,167,.72);background:linear-gradient(160deg,rgba(242,246,220,.96),rgba(70,103,88,.94) 48%,rgba(13,42,37,.98));box-shadow:0 5px 12px rgba(0,0,0,.30),0 0 0 1px rgba(255,255,255,.08);pointer-events:none}
+[${SHELL_ATTR}="1"] .grBattleLanePublicCard[hidden]{display:none!important}
+[${SHELL_ATTR}="1"] .grBattleLanePublicCardArt{display:block;width:100%;height:100%;object-fit:cover}
+[${SHELL_ATTR}="1"] .grBattleLanePublicCardFallback{position:absolute;inset:0;display:grid;place-items:center;padding:2px;text-align:center;font-size:clamp(7px,.65vw,9px);font-weight:900;line-height:1.05;overflow:hidden}
+[${SHELL_ATTR}="1"] .grBattleLanePublicCardNumber,[${SHELL_ATTR}="1"] .grBattleLanePublicCardHand{position:absolute;z-index:2;min-width:13px;padding:1px 2px;border-radius:4px;background:rgba(3,17,16,.88);color:#fff6c9;font-size:clamp(7px,.62vw,9px);font-weight:1000;line-height:1.15;text-align:center}
+[${SHELL_ATTR}="1"] .grBattleLanePublicCardNumber{left:2px;top:2px}.grBattleLanePublicCardHand{right:2px;bottom:2px}
 [${SHELL_ATTR}="1"] [${SHIELD_RAIL_ATTR}]{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;width:min(100%,220px);margin-top:5px;pointer-events:none}
 [${SHELL_ATTR}="1"] [${SHIELD_SLOT_ATTR}]{min-width:0;display:grid;grid-template-columns:auto auto minmax(8px,1fr);align-items:center;gap:3px;padding:2px 4px;border:1px solid rgba(255,226,129,.32);border-radius:7px;background:linear-gradient(180deg,rgba(78,68,35,.46),rgba(6,28,24,.42));box-shadow:inset 0 0 0 1px rgba(255,255,255,.025)}
 [${SHELL_ATTR}="1"] .grBattleShieldToken{display:grid;place-items:center;width:13px;height:15px;clip-path:polygon(50% 0,92% 15%,82% 72%,50% 100%,18% 72%,8% 15%);background:linear-gradient(180deg,#ffe28a,#9d7c32);color:#17352f;font-size:8px;font-weight:1000;line-height:1;text-shadow:none}
@@ -157,6 +164,9 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"] [${GRID_ATTR}]::before{display:none!important}
 [${SHELL_ATTR}="1"] [${LANE_ATTR}]{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto!important;column-gap:0!important;row-gap:1px!important;padding:3px!important;transform:none!important;min-height:0!important}
 [${SHELL_ATTR}="1"] .grBattleLaneIdentity{grid-column:1!important;grid-row:1!important}
+[${SHELL_ATTR}="1"] [${LANE_ATTR}][data-public-card-visible="true"] .grBattleLaneIdentity{padding-right:25px!important}
+[${SHELL_ATTR}="1"] .grBattleLanePublicCard{right:3px!important;top:3px!important;width:22px!important;height:30px!important;border-radius:4px!important}
+[${SHELL_ATTR}="1"] .grBattleLanePublicCardNumber,[${SHELL_ATTR}="1"] .grBattleLanePublicCardHand{font-size:6px!important;min-width:9px!important;padding:0 1px!important}
 [${SHELL_ATTR}="1"] .grBattleLaneRole,[${SHELL_ATTR}="1"] .grBattleLaneAfterstate{display:none!important}
 [${SHELL_ATTR}="1"] #battleResolution{left:8px!important;right:8px!important;bottom:12px!important;transform:none!important;max-width:none!important}
 [${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}]{display:none!important}
@@ -219,10 +229,16 @@ function createLane(document, participantIndex) {
   const role = createNode(document, 'div', 'grBattleLaneRole');
   role.hidden = true;
   const afterstate = createNode(document, 'div', 'grBattleLaneAfterstate');
+  const publicCard = createNode(document, 'div', 'grBattleLanePublicCard');
+  publicCard.hidden = true;
+  publicCard.setAttribute?.('aria-hidden', 'true');
+  publicCard.dataset.presentationOnly = 'true';
+  publicCard.dataset.authority = 'accepted-public-model-only';
   lane.appendChild(identity);
   lane.appendChild(role);
   lane.appendChild(afterstate);
-  return { lane, name, team, shieldRail, role, afterstate };
+  lane.appendChild(publicCard);
+  return { lane, name, team, shieldRail, role, afterstate, publicCard };
 }
 
 function readBattleFieldId(...nodes) {
@@ -376,6 +392,44 @@ function writePlayedCard(document, cardNode, card) {
   cardNode.appendChild(image);
   setData(cardNode, 'artSource', art.source);
   return art.source;
+}
+
+function writePublicLaneCard(document, cardNode, card) {
+  clearChildren(cardNode);
+  setData(cardNode, 'playerId', null);
+  setData(cardNode, 'cardId', null);
+  setData(cardNode, 'displayNumber', null);
+  setData(cardNode, 'hand', null);
+  setData(cardNode, 'artSource', null);
+  if (!card) {
+    cardNode.hidden = true;
+    cardNode.setAttribute?.('aria-hidden', 'true');
+    return null;
+  }
+  const handKey = typeof card.hand === 'string' ? card.hand.toLowerCase() : '';
+  const handLabel = LOAD_JANKEN_LABELS[handKey] ?? card.hand ?? '';
+  const numberLabel = card.displayNumber == null ? '' : String(card.displayNumber);
+  cardNode.hidden = false;
+  cardNode.setAttribute?.('aria-hidden', 'false');
+  cardNode.setAttribute?.('aria-label', `公開カード ${card.cardId}${numberLabel ? ` / ${numberLabel}` : ''}${handLabel ? ` / ${handLabel}` : ''}`);
+  setData(cardNode, 'playerId', card.playerId);
+  setData(cardNode, 'cardId', card.cardId);
+  setData(cardNode, 'displayNumber', numberLabel || null);
+  setData(cardNode, 'hand', card.hand ?? null);
+  const art = resolveViewerLocalPlayedCardArt(document, card.cardId);
+  if (art) {
+    const image = createNode(document, 'img', 'grBattleLanePublicCardArt');
+    image.src = art.src;
+    image.alt = '';
+    image.setAttribute?.('aria-hidden', 'true');
+    cardNode.appendChild(image);
+    setData(cardNode, 'artSource', art.source);
+  } else {
+    cardNode.appendChild(createNode(document, 'span', 'grBattleLanePublicCardFallback', card.cardId));
+  }
+  if (numberLabel) cardNode.appendChild(createNode(document, 'span', 'grBattleLanePublicCardNumber', numberLabel));
+  if (handLabel) cardNode.appendChild(createNode(document, 'span', 'grBattleLanePublicCardHand', handLabel));
+  return cardNode;
 }
 
 function normalizeHudSnapshot(snapshot = {}) {
@@ -602,6 +656,8 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
       }
       view.name.textContent = lane.label;
       view.team.textContent = lane.team ? `TEAM ${lane.team}` : '';
+      setData(view.lane, 'publicCardVisible', lane.publicCard ? 'true' : null);
+      writePublicLaneCard(document, view.publicCard, lane.publicCard);
       const playerRoleLabel = PLAYER_ROLE_LABELS[lane.role] || '';
       view.role.hidden = !playerRoleLabel;
       view.role.textContent = playerRoleLabel;
@@ -640,6 +696,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     hud,
     grid,
     laneSurfaces: lanes.map(view => view.lane),
+    publicCardSurfaces: lanes.map(view => view.publicCard),
     shieldRails: lanes.map(view => view.shieldRail),
     renderHud,
     render,

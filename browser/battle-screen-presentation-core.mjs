@@ -4,6 +4,7 @@ import { projectBattleResolutionWithActionOrder } from './battle-resolution-acti
 const MODEL_SCHEMA = 'gameroad.battle-screen-presentation.v1';
 const TIMELINE_SCHEMA = 'gameroad.battle-screen-timeline.v1';
 const COMPOUND_ATTACK_SCHEMA = 'gameroad.battle-janken-compound-attack-package.v1';
+const FOUR_PUBLIC_CARD_SCHEMA = 'gameroad.battle-four-public-card-state.v1';
 const RETURN_INTENTS = new Set(['MATCH_PLAN', 'RESULT']);
 const PLAN_KINDS = new Set(['partner_cutin', 'reveal', 'attack', 'ability', 'compare4', 'finisher', 'settle']);
 const LANE_ROLES = new Set(['idle', 'source', 'target', 'winner', 'revealed']);
@@ -61,6 +62,58 @@ function normalizeParticipants(participants) {
     throw new TypeError('BATTLE_SCREEN_PARTICIPANT_IDS_NOT_UNIQUE');
   }
   return normalized;
+}
+
+export function projectBattleFourPublicCardState({ participants, publicCards } = {}) {
+  const normalizedParticipants = normalizeParticipants(participants);
+  const participantIds = new Set(normalizedParticipants.map(row => row.id));
+  if (!Array.isArray(publicCards) || publicCards.length !== 4) {
+    throw new TypeError('BATTLE_SCREEN_PUBLIC_CARDS_REQUIRE_FOUR');
+  }
+  const byPlayer = new Map();
+  for (const raw of publicCards) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      throw new TypeError('BATTLE_SCREEN_PUBLIC_CARD_INVALID');
+    }
+    const playerId = nonEmptyString(raw.playerId, 'BATTLE_SCREEN_PUBLIC_CARD_PLAYER_INVALID');
+    if (!participantIds.has(playerId)) throw new TypeError(`BATTLE_SCREEN_PUBLIC_CARD_PLAYER_UNKNOWN:${playerId}`);
+    if (byPlayer.has(playerId)) throw new TypeError(`BATTLE_SCREEN_PUBLIC_CARD_PLAYER_DUPLICATE:${playerId}`);
+    const cardId = nonEmptyString(raw.cardId, 'BATTLE_SCREEN_PUBLIC_CARD_ID_INVALID');
+    let displayNumber = null;
+    if (raw.displayNumber != null) {
+      if (typeof raw.displayNumber === 'number' && Number.isFinite(raw.displayNumber)) {
+        displayNumber = raw.displayNumber;
+      } else if (typeof raw.displayNumber === 'string' && raw.displayNumber.trim()) {
+        displayNumber = raw.displayNumber.trim();
+      } else {
+        throw new TypeError('BATTLE_SCREEN_PUBLIC_CARD_NUMBER_INVALID');
+      }
+    }
+    byPlayer.set(playerId, deepFreeze({
+      playerId,
+      cardId,
+      displayNumber,
+      hand: optionalString(raw.hand, 'BATTLE_SCREEN_PUBLIC_CARD_HAND_INVALID')
+    }));
+  }
+  const cards = normalizedParticipants.map(participant => {
+    const card = byPlayer.get(participant.id);
+    if (!card) throw new TypeError(`BATTLE_SCREEN_PUBLIC_CARD_PLAYER_MISSING:${participant.id}`);
+    return card;
+  });
+  return deepFreeze({
+    schema: FOUR_PUBLIC_CARD_SCHEMA,
+    presentationOnly: true,
+    authorityBoundary: 'caller_authoritative_public_cards_only',
+    gameplayAuthority: false,
+    gameStateWrite: false,
+    secretProjectionAuthority: false,
+    orderCalculation: false,
+    winnerCalculation: false,
+    targetCalculation: false,
+    playerCount: 4,
+    cards
+  });
 }
 
 function normalizeAfterstate(rows, participantIds) {
@@ -250,13 +303,22 @@ export function createBattleScreenModel({
   returnIntent = null,
   reducedMotion = false,
   lowPerf = false,
-  actionOrder = null
+  actionOrder = null,
+  publicCards = null
 } = {}) {
   const normalizedParticipants = normalizeParticipants(participants);
   const participantIds = new Set(normalizedParticipants.map(row => row.id));
   const normalizedPlan = normalizePlan(plan);
   if (normalizedPlan) assertPlanParticipantsKnown(normalizedPlan, participantIds);
   const boardReturn = normalizeBoardReturn(normalizedPlan, participantIds);
+  const acceptedPlanPublicCards = (normalizedPlan?.kind === 'reveal' || normalizedPlan?.kind === 'compare4')
+    ? normalizedPlan.publicData?.publicCards ?? null
+    : null;
+  const publicCardSource = publicCards ?? acceptedPlanPublicCards;
+  const publicCardState = publicCardSource == null
+    ? null
+    : projectBattleFourPublicCardState({ participants: normalizedParticipants, publicCards: publicCardSource });
+  const publicCardByPlayer = new Map((publicCardState?.cards ?? []).map(card => [card.playerId, card]));
   const normalizedAfterstate = normalizeAfterstate(persistentAfterstate, participantIds);
   if (returnIntent != null && !RETURN_INTENTS.has(returnIntent)) {
     throw new TypeError('BATTLE_SCREEN_RETURN_INTENT_INVALID');
@@ -276,6 +338,7 @@ export function createBattleScreenModel({
   const lanes = normalizedParticipants.map(participant => deepFreeze({
     ...participant,
     role: roles.get(participant.id),
+    publicCard: publicCardByPlayer.get(participant.id) ?? null,
     afterstate: afterstateByParticipant.get(participant.id)
   }));
 
@@ -309,6 +372,7 @@ export function createBattleScreenModel({
       shieldSlotAttr: 'data-battle-shield-slot'
     },
     focus: focusForPlan(normalizedPlan, boardReturn),
+    publicCardState,
     boardReturn,
     causalReturn,
     lanes,
@@ -331,15 +395,23 @@ export function projectAcceptedBattleEventsToScreen({
   actionOrderByEventId = null
 } = {}) {
   const conveyor = planBattleConveyor(events, { reducedMotion, lowPerf });
-  const models = conveyor.plans.map(plan => createBattleScreenModel({
-    participants,
-    plan,
-    persistentAfterstate,
-    returnIntent,
-    reducedMotion,
-    lowPerf,
-    actionOrder: actionOrderForEvent(actionOrderByEventId, plan.eventId)
-  }));
+  let carriedPublicCards = null;
+  const models = conveyor.plans.map(plan => {
+    if ((plan.kind === 'reveal' || plan.kind === 'compare4')
+      && Object.prototype.hasOwnProperty.call(plan.publicData ?? {}, 'publicCards')) {
+      carriedPublicCards = plan.publicData.publicCards;
+    }
+    return createBattleScreenModel({
+      participants,
+      plan,
+      persistentAfterstate,
+      returnIntent,
+      reducedMotion,
+      lowPerf,
+      publicCards: carriedPublicCards,
+      actionOrder: actionOrderForEvent(actionOrderByEventId, plan.eventId)
+    });
+  });
   return deepFreeze({
     schema: TIMELINE_SCHEMA,
     presentationOnly: true,
@@ -356,6 +428,18 @@ export function auditBattleScreenModel(model) {
   if (model?.presentationOnly !== true || model?.gameplayAuthority !== false || model?.gameStateWrite !== false) defects.push('AUTHORITY');
   if (model?.winnerCalculation !== false || model?.targetCalculation !== false || model?.secretProjectionAuthority !== false || model?.boardEffectCalculation !== false) defects.push('RECALCULATION');
   if (model?.fourLaneCausalStructure !== true || !Array.isArray(model?.lanes) || model.lanes.length !== 4) defects.push('FOUR_LANES');
+  if (model?.publicCardState != null) {
+    const publicState = model.publicCardState;
+    if (publicState.schema !== FOUR_PUBLIC_CARD_SCHEMA || publicState.presentationOnly !== true
+      || publicState.gameplayAuthority !== false || publicState.gameStateWrite !== false
+      || publicState.secretProjectionAuthority !== false || publicState.playerCount !== 4
+      || !Array.isArray(publicState.cards) || publicState.cards.length !== 4) defects.push('FOUR_PUBLIC_CARDS');
+    if (publicState.orderCalculation !== false || publicState.winnerCalculation !== false || publicState.targetCalculation !== false) defects.push('FOUR_PUBLIC_CARD_RECALCULATION');
+    const cardByPlayer = new Map((publicState.cards ?? []).map(card => [card.playerId, card]));
+    if (Array.isArray(model?.lanes) && model.lanes.some(lane => lane.publicCard !== (cardByPlayer.get(lane.id) ?? null))) defects.push('FOUR_PUBLIC_CARD_LANE_BINDING');
+  } else if (Array.isArray(model?.lanes) && model.lanes.some(lane => lane.publicCard != null)) {
+    defects.push('FOUR_PUBLIC_CARD_GHOST');
+  }
   if (Array.isArray(model?.lanes)) {
     if (new Set(model.lanes.map(row => row.id)).size !== model.lanes.length) defects.push('LANE_IDENTITY');
     if (model.lanes.some(row => !LANE_ROLES.has(row.role))) defects.push('LANE_ROLE');
@@ -393,6 +477,8 @@ export const BATTLE_SCREEN_PRESENTATION = deepFreeze({
   timelineSchema: TIMELINE_SCHEMA,
   authority: 'NONE_PRESENTATION_ONLY',
   laneCount: 4,
+  fourPublicCardSchema: FOUR_PUBLIC_CARD_SCHEMA,
+  fourPublicCardAuthority: 'CALLER_AUTHORITATIVE_ACCEPTED_PUBLIC_CARDS_ONLY',
   planOwner: 'CALLER',
   battleEventAuthority: 'battle-conveyor-presentation-core accepted public events',
   compoundAttackPackageSchema: COMPOUND_ATTACK_SCHEMA,

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RESOURCE-HUD-R1-20260909T2102-SOL-H5N8Q3",
+  "taskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "workUnitKey": "BATTLE_CRITICAL_RESOURCE_HUD_R1",
+  "acquireKey": "BATTLE-RESOURCE-HUD-R1-20260909T2102-SOL-H5N8Q3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-BATTLE-RESOURCE-HONEY-CHIP-HUD-GAP-20260909",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING-R75-HUD-FOCUSED-TEST-AND-RESOURCE-AUTHORITY-READBACK",
+  "proceedToken": "PROCEED|BATTLE-RESOURCE-HUD-R1-20260909T2102-SOL-H5N8Q3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-battle-hud|authoritative-resource-values-only|active-lease",
+  "authorizationBaseSha": "ace3932fc2007e72a6398f1aa97b88c42645ca98",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "leaseWorkUnitKey": "BATTLE_CRITICAL_RESOURCE_HUD_R1",
+  "leaseAcquireKey": "BATTLE-RESOURCE-HUD-R1-20260909T2102-SOL-H5N8Q3",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 21:02 JST",
+  "leaseUntilJst": "2026-09-09 22:02 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A752:L752",
+  "leaseExactMutableResources": "browser/battle-screen-runtime-mount.mjs; tests/battle-screen-resource-hud.focused.test.mjs (new); own transient data/preaction-authorizations/BATTLE-RESOURCE-HUD-R1-20260909T2102-SOL-H5N8Q3.json only. browser/GAMEROAD.html, partner/replay runtimes, gameplay/rules/Honey/Chip/Mana/HATE/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-resource-hud.focused.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-resource-hud.focused.test.mjs"
+  ]
+}

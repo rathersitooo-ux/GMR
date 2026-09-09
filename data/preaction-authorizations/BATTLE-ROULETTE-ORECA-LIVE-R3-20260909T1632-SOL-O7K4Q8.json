@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ROULETTE-ORECA-LIVE-R3-20260909T1632-SOL-O7K4Q8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_ROULETTE_ORECA_LIVE_RUNTIME_R3",
+  "acquireKey": "BATTLE-ROULETTE-ORECA-LIVE-R3-20260909T1632-SOL-O7K4Q8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ROW700_PLUS_MAIN_1726A860_PLUS_PR1403_PRESENTATION_CORE_PLUS_USER_REMAINING_HAND_RULE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_CLASSIFIED_ROULETTE_RUNTIME_TEST_PATH",
+  "proceedToken": "PROCEED|BATTLE-ROULETTE-ORECA-LIVE-R3-20260909T1632-SOL-O7K4Q8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "1726a860c15a1b2298492b3b69f358ddb38716c7",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_ROULETTE_ORECA_LIVE_RUNTIME_R3",
+  "leaseAcquireKey": "BATTLE-ROULETTE-ORECA-LIVE-R3-20260909T1632-SOL-O7K4Q8",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 16:32 JST",
+  "leaseUntilJst": "2026-09-09 17:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A700:L700",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-roulette-oreca-live-r3-20260909; browser/battle-playable-hand-row-roulette-runtime.mjs; tests/battle-playable-hand-row-roulette-runtime.test.mjs; own transient data/preaction-authorizations/BATTLE-ROULETTE-ORECA-LIVE-R3-20260909T1632-SOL-O7K4Q8.json only. Oreca presentation core and janken SlidePad runtime READ_ONLY reuse. GAMEROAD.html/optional gate/gameplay/rules/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/battle-playable-hand-row-roulette-runtime.mjs",
+    "tests/battle-playable-hand-row-roulette-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-playable-hand-row-roulette-runtime.mjs",
+    "tests/battle-playable-hand-row-roulette-runtime.test.mjs"
+  ],
+  "solutionSignature": "At render time only, project exactly-six authoritative remaining-hand roulette candidates through the merged Oreca-inspired six-row presentation; retain the existing rolling-window renderer for all other candidate counts and preserve existing controller/commit authority.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1403_MERGED_CORE_PLUS_EXISTING_ROULETTE_RUNTIME_PLUS_USER_REMAINING_HAND_EXCLUSION",
+  "solutionSearchEvidence": [
+    "browser/battle-playable-hand-row-roulette-runtime.mjs already owns selection, drag, stale revalidation and delegated commit",
+    "browser/battle-playable-hand-row-roulette-oreca-presentation-core.mjs already owns six-row visual projection only",
+    "browser/battle-janken-slidepad-runtime-mount.mjs already excludes janken-reserved cards before roulette candidate projection",
+    "tests/battle-playable-hand-row-roulette-runtime.test.mjs is the existing classified roulette test path",
+    "User explicitly clarified roulette uses remaining hand and janken cards never participate"
+  ]
+}

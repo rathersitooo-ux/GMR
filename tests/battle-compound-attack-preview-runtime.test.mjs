@@ -5,6 +5,7 @@ import {
   mountBattleCompoundAttackPreview,
   normalizeCompoundAttackPreviewPackage
 } from '../browser/battle-compound-attack-preview-runtime.mjs';
+import { BATTLE_JANKEN_COMPOUND_PREVIEW_SCHEMA } from '../browser/battle-janken-compound-attack-package-core.mjs';
 
 class FakeNode {
   constructor(tagName = 'div') {
@@ -68,67 +69,119 @@ function makeScreenRuntime(document) {
   return Object.freeze({ shell, laneSurfaces, shieldRails });
 }
 
+function candidate(overrides = {}) {
+  return {
+    jankenHand: 'ROCK',
+    cardId: 'CARD-17',
+    path: ['NODE-A', { nodeId: 'NODE-B' }],
+    direction: 'NE',
+    roadId: 'ROAD-P2-R',
+    battleId: 'BATTLE-1',
+    opponentId: 'P2',
+    shieldLane: 'R',
+    shieldRef: 'SHIELD-P2-R',
+    ...overrides
+  };
+}
+
 function targetLinks(runtime) {
   return runtime.shieldRails.flatMap((rail) => rail.children).filter((link) => link.dataset.compoundPreviewTarget === 'true');
 }
 
-test('normalizer requires the complete caller package and preserves opaque route/direction tokens', () => {
-  const value = normalizeCompoundAttackPreviewPackage({
-    jankenHand: '✊', cardId: 'CARD-17', route: 'ROAD-P2-R', direction: 'NE', opponentId: 'P2', shieldLane: 'r'
+test('normalizer delegates package semantics to the authoritative compound-package core', () => {
+  const value = normalizeCompoundAttackPreviewPackage(candidate());
+  assert.equal(value.schema, BATTLE_JANKEN_COMPOUND_PREVIEW_SCHEMA);
+  assert.equal(value.jankenHand, 'ROCK');
+  assert.equal(value.cardId, 'CARD-17');
+  assert.deepEqual(value.route, {
+    path: ['NODE-A', { nodeId: 'NODE-B' }],
+    direction: 'NE',
+    roadId: 'ROAD-P2-R',
+    battleId: 'BATTLE-1'
   });
-  assert.deepEqual(value, {
-    jankenHand: '✊', cardId: 'CARD-17', route: 'ROAD-P2-R', direction: 'NE', opponentId: 'P2', shieldLane: 'R'
-  });
+  assert.equal(value.opponentId, 'P2');
+  assert.equal(value.shieldLane, 'R');
   assert.equal(Object.isFrozen(value), true);
-  assert.equal(normalizeCompoundAttackPreviewPackage({ jankenHand: '✊', cardId: 'CARD-17', opponentId: 'P2', shieldLane: 'R' }), null);
-  assert.equal(normalizeCompoundAttackPreviewPackage({ jankenHand: '✊', cardId: 'CARD-17', route: 'R1', opponentId: 'P2', shieldLane: 'X' }), null);
+  assert.equal(normalizeCompoundAttackPreviewPackage(candidate({ path: [] })), null);
+  assert.equal(normalizeCompoundAttackPreviewPackage(candidate({ jankenHand: '✊' })), null);
+  assert.equal(normalizeCompoundAttackPreviewPackage(candidate({ shieldLane: 'X' })), null);
 });
 
-test('projects exactly one caller-selected opponent, Shield and Shield-linked ROAD track', () => {
+test('projects exactly one core-preview opponent, Shield and Shield-linked ROAD track', () => {
   const document = new FakeDocument();
   const screen = makeScreenRuntime(document);
   const preview = mountBattleCompoundAttackPreview({ document, battleScreenRuntime: screen });
-  const result = preview.render({ jankenHand: '✌', cardId: 'CARD-22', route: 'route-alpha', opponentId: 'P3', shieldLane: 'C' });
+  const pkg = candidate({
+    jankenHand: 'SCISSORS',
+    cardId: 'CARD-22',
+    path: ['A', 'B', 'C'],
+    roadId: 'route-alpha',
+    direction: null,
+    opponentId: 'P3',
+    shieldLane: 'C',
+    shieldRef: 'SHIELD-P3-C'
+  });
+  const result = preview.render(pkg);
   assert.equal(result.active, true);
+  assert.equal(result.reason, 'package_core_preview_projected');
   assert.equal(screen.shell.dataset.compoundPreviewOpponentId, 'P3');
   assert.equal(screen.shell.dataset.compoundPreviewShieldLane, 'C');
+  assert.equal(screen.shell.dataset.compoundPreviewRoadId, 'route-alpha');
+  assert.equal(screen.shell.dataset.compoundPreviewPath, JSON.stringify(['A', 'B', 'C']));
   assert.equal(screen.laneSurfaces[2].dataset.compoundPreviewTarget, 'true');
   assert.equal(screen.shieldRails[2].dataset.compoundPreviewTarget, 'true');
   const links = targetLinks(screen);
   assert.equal(links.length, 1);
   assert.equal(links[0].getAttribute('data-battle-shield-slot'), 'C');
   assert.equal(links[0].getAttribute('aria-current'), 'true');
-  assert.match(preview.cue.textContent, /P3 \/ Shield C \/ 経路 route-alpha/);
+  assert.match(preview.cue.textContent, /P3 \/ Shield C \/ ROAD route-alpha \/ 経路 3点/);
+  assert.equal(preview.cue.getAttribute('title'), JSON.stringify(['A', 'B', 'C']));
 });
 
 test('switching package clears the previous target before projecting the next target', () => {
   const document = new FakeDocument();
   const screen = makeScreenRuntime(document);
   const preview = mountBattleCompoundAttackPreview({ document, battleScreenRuntime: screen });
-  preview.render({ jankenHand: '✊', cardId: 'A', route: 'r1', opponentId: 'P2', shieldLane: 'L' });
-  preview.render({ jankenHand: '✋', cardId: 'B', direction: 'south-east', opponentId: 'P4', shieldLane: 'R' });
+  preview.render(candidate({ opponentId: 'P2', shieldLane: 'L', roadId: 'r1' }));
+  preview.render(candidate({ jankenHand: 'PAPER', cardId: 'B', path: ['Z'], direction: 'south-east', roadId: null, opponentId: 'P4', shieldLane: 'R' }));
   assert.equal(screen.laneSurfaces[1].dataset.compoundPreviewTarget, undefined);
   assert.equal(screen.laneSurfaces[3].dataset.compoundPreviewTarget, 'true');
   const links = targetLinks(screen);
   assert.equal(links.length, 1);
   assert.equal(links[0].getAttribute('data-battle-shield-slot'), 'R');
-  assert.equal(screen.shell.dataset.compoundPreviewRoute, undefined);
+  assert.equal(screen.shell.dataset.compoundPreviewRoadId, undefined);
   assert.equal(screen.shell.dataset.compoundPreviewDirection, 'south-east');
+  assert.equal(screen.shell.dataset.compoundPreviewPath, JSON.stringify(['Z']));
+});
+
+test('refresh reprojects the same frozen core preview after lane surfaces are rebound', () => {
+  const document = new FakeDocument();
+  const screen = makeScreenRuntime(document);
+  const preview = mountBattleCompoundAttackPreview({ document, battleScreenRuntime: screen });
+  preview.render(candidate({ opponentId: 'P2', shieldLane: 'C' }));
+  screen.laneSurfaces[1].dataset.participantId = 'P9';
+  screen.shieldRails[1].dataset.participantId = 'P9';
+  screen.laneSurfaces[3].dataset.participantId = 'P2';
+  screen.shieldRails[3].dataset.participantId = 'P2';
+  const refreshed = preview.refresh();
+  assert.equal(refreshed.active, true);
+  assert.equal(screen.laneSurfaces[1].dataset.compoundPreviewTarget, undefined);
+  assert.equal(screen.laneSurfaces[3].dataset.compoundPreviewTarget, 'true');
 });
 
 test('invalid or unresolved packages fail closed with no partial target highlight', () => {
   const document = new FakeDocument();
   const screen = makeScreenRuntime(document);
   const preview = mountBattleCompoundAttackPreview({ document, battleScreenRuntime: screen });
-  preview.render({ jankenHand: '✊', cardId: 'A', route: 'r1', opponentId: 'P2', shieldLane: 'L' });
-  const missingOpponent = preview.render({ jankenHand: '✌', cardId: 'B', route: 'r2', opponentId: 'P9', shieldLane: 'C' });
+  preview.render(candidate({ opponentId: 'P2', shieldLane: 'L' }));
+  const missingOpponent = preview.render(candidate({ opponentId: 'P9', shieldLane: 'C' }));
   assert.equal(missingOpponent.active, false);
   assert.equal(missingOpponent.reason, 'opponent_surface_not_found');
   assert.equal(targetLinks(screen).length, 0);
   assert.equal(screen.shell.dataset.compoundPreviewActive, undefined);
   assert.equal(preview.cue.hidden, true);
 
-  const incomplete = preview.render({ jankenHand: '✋', cardId: 'C', opponentId: 'P1', shieldLane: 'R' });
+  const incomplete = preview.render(candidate({ path: [] }));
   assert.equal(incomplete.active, false);
   assert.equal(incomplete.reason, 'invalid_or_incomplete_package');
   assert.equal(targetLinks(screen).length, 0);
@@ -140,5 +193,6 @@ test('adapter is presentation-only and does not claim legality, targeting or sta
   assert.equal(BATTLE_COMPOUND_ATTACK_PREVIEW_RUNTIME.legalTargetRecompute, false);
   assert.equal(BATTLE_COMPOUND_ATTACK_PREVIEW_RUNTIME.targetInference, false);
   assert.equal(BATTLE_COMPOUND_ATTACK_PREVIEW_RUNTIME.gameStateWrite, false);
+  assert.equal(BATTLE_COMPOUND_ATTACK_PREVIEW_RUNTIME.packageAuthority, 'BATTLE_JANKEN_COMPOUND_ATTACK_PACKAGE_CORE_PREVIEW_ONLY');
   assert.equal(BATTLE_COMPOUND_ATTACK_PREVIEW_RUNTIME.invalidPackagePolicy, 'FAIL_CLOSED_CLEAR_ALL');
 });

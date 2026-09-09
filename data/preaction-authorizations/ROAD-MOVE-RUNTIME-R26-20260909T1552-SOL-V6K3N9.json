@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R26-20260909T1552-SOL-V6K3N9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R25-HARNESS-ROOT-FALSE-LEAD-CLEARED-R26-REENTRY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R24-CANDIDATE-STATIC-PLANBOX-PASS-R25-HARNESS-TIMEOUT",
+  "authorizationBaseSha": "071d54bd0135754a8b2ce2bbaa29c1b620902a38",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A692:L692",
+  "leaseUntilJST": "2026-09-09 16:52 JST",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r26.spec.mjs",
+    ".github/workflows/zz-temp-road-move-r26.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r26.spec.mjs",
+    ".github/workflows/zz-temp-road-move-r26.yml"
+  ],
+  "note": "Fresh CURRENT/no-overlap at 15:51 JST. main and browser/GAMEROAD.html blob re-read. R25 page.goto timeout is treated as harness evidence after merged Playwright repo-root fix, not product evidence. Re-run Road physical acceptance before any product persistence; no second movement engine/core/mode."
+}

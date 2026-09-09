@@ -34,8 +34,13 @@ def require_once(source: str, marker: str, label: str) -> None:
         raise SystemExit(f'fail-closed: expected exactly one {label}, found {count}')
 
 
-def donor_block(donor: str, start: str, end: str, label: str) -> str:
-    require_once(donor, start, f'donor {label} start')
+def donor_block(donor: str, start: str, end: str, label: str, *, start_unique: bool = True) -> str:
+    start_count = donor.count(start)
+    if start_unique:
+        if start_count != 1:
+            raise SystemExit(f'fail-closed: expected exactly one donor {label} start, found {start_count}')
+    elif start_count < 1:
+        raise SystemExit(f'fail-closed: donor {label} start not found')
     require_once(donor, end, f'donor {label} end')
     start_index = donor.index(start)
     end_index = donor.index(end, start_index)
@@ -83,6 +88,7 @@ def apply_runtime_donor() -> None:
                 '[${HOST_ATTR}="1"] .grJankenOrderPresenter{',
                 '${BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS}',
                 'presenter CSS',
+                start_unique=False,
             ),
             'presenter CSS',
         ),

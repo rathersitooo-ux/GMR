@@ -1,0 +1,39 @@
+name: zz-temp-battle-camera-live-r2
+on:
+  push:
+    branches:
+      - sol/battle-camera-live-r2-20260909
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect current Battle camera and world-input seams
+        shell: python
+        run: |
+          from pathlib import Path
+          text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          needles = [
+            'fieldCameraState', 'setFieldCamera', 'renderField3D', 'function project3',
+            'nodeWorld(', "$('#battleMap')", 'battleMap.addEventListener',
+            "addEventListener('pointerdown'", "addEventListener('pointermove'",
+            "addEventListener('wheel'", "addEventListener('touchstart'",
+            'updateBattleAvatar', 'renderBoardPlayers', 'fieldCamera', 'camera'
+          ]
+          for needle in needles:
+              count = text.count(needle)
+              print('\n===== NEEDLE', repr(needle), 'COUNT', count, '=====')
+              start = 0
+              for hit in range(min(count, 10)):
+                  idx = text.find(needle, start)
+                  if idx < 0: break
+                  line = text.count('\n', 0, idx) + 1
+                  col = idx - (text.rfind('\n', 0, idx) + 1)
+                  print('HIT', hit + 1, 'OFFSET', idx, 'LINE', line, 'COL', col)
+                  print(text[max(0, idx-1800):min(len(text), idx+len(needle)+3000)].replace('\r',''))
+                  print('-----')
+                  start = idx + len(needle)
+          print('\n===== MODULE TAIL =====')
+          print(text[-13000:].replace('\r',''))

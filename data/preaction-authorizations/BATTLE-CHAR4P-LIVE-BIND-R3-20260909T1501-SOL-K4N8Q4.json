@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CHAR4P-LIVE-BIND-R3-20260909T1501-SOL-K4N8Q4",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CONTROLLED_CHARACTER_MOTION_LIVE_BIND_R3",
+  "acquireKey": "BATTLE-CHAR4P-LIVE-BIND-R3-20260909T1501-SOL-K4N8Q4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-CHAR4P-LIVE-BIND-R3-20260909T1501",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1381-REQUIRED-GATE-SUCCESS-PLUS-PR1358-FAILCLOSED-COUNTEREVIDENCE",
+  "proceedToken": "PROCEED|BATTLE-CHAR4P-LIVE-BIND-R3-20260909T1501-SOL-K4N8Q4|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260909T1501JST",
+  "authorizationBaseSha": "ddcee8bd1bd75aa03348e738aa9cf44eddb19221",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CONTROLLED_CHARACTER_MOTION_LIVE_BIND_R3",
+  "leaseAcquireKey": "BATTLE-CHAR4P-LIVE-BIND-R3-20260909T1501-SOL-K4N8Q4",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 15:01 JST",
+  "leaseUntilJst": "2026-09-09 16:01 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A667:L667",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-controlled-character-motion-live-r3-20260909; browser/battle-board-naki-4p-visual-binding.mjs; tests/battle-board-naki-4p-visual-binding.test.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; own transient data/preaction-authorizations/BATTLE-CHAR4P-LIVE-BIND-R3-20260909T1501-SOL-K4N8Q4.json only. Existing browser/battle-controlled-character-4p-motion-director.mjs and browser/battle-controlled-character-motion-core.mjs are READ_ONLY source modules but may be added to public artifact packaging by build manifest. browser/GAMEROAD.html, Road/movement topology, Advice Partner, Battle screen/janken/gameplay/rules/save/economy/network READ_ONLY while row648 owner active.",
+  "scope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "solutionSignature": "battle-controlled-character/identity-correct-explicit-event-motion-binding",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-PR1381-MOTION-DIRECTOR-AND-EXISTING-BOARD-MARKER-BINDING-20260909",
+  "solutionSearchEvidence": [
+    "merged PR1381 provides the four-participant motion director over the existing single-character motion core",
+    "released PR1358 proves data-character identity recovery but also proves hiding #battleRuntime causes a visible movement regression and must not be reused",
+    "current binding is already a public-package artifact, so replacing its hardcoded partner.naki semantics is the shortest consumer repair",
+    "GAMEROAD.html remains separately owned by Road R25; this slice accepts explicit motion events only and does not infer movement/path/legality from marker jumps"
+  ]
+}

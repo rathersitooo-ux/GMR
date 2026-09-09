@@ -1,0 +1,43 @@
+name: Temp Battle Janken Focus Package R4
+on:
+  push:
+    branches:
+      - sol/battle-janken-focus-package-r4-20260910
+permissions:
+  contents: write
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify authorization lineage
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 9761e10273edf2800940579d8252fb237c81f226 HEAD
+          test -f data/preaction-authorizations/BATTLE-JANKEN-FOCUS-PACKAGE-R4-20260910T0320-SOL-Q8M4N6.json
+      - name: Patch package manifest
+        run: python3 tools/temp-battle-janken-focus-package-r4.py
+      - name: Run focused focus and package tests
+        run: node --test tests/battle-janken-focus-presentation-core.test.mjs tests/battle-janken-focus-runtime-surface.test.mjs deploy/cloudflare/tests/build.test.mjs
+      - name: Verify exact product scope
+        run: |
+          set -euo pipefail
+          git diff --check
+          git diff -- deploy/cloudflare/scripts/build.mjs
+          test "$(git diff --name-only | tr '\n' ' ')" = "deploy/cloudflare/scripts/build.mjs "
+      - name: Commit durable build delta and clean transient artifacts
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add deploy/cloudflare/scripts/build.mjs
+          git rm .github/workflows/zz-temp-battle-janken-focus-package-r4.yml
+          git rm tools/temp-battle-janken-focus-package-r4.py
+          git rm data/preaction-authorizations/BATTLE-JANKEN-FOCUS-PACKAGE-R4-20260910T0320-SOL-Q8M4N6.json
+          git commit -m "Battle: package janken focus surfaces"
+          git push

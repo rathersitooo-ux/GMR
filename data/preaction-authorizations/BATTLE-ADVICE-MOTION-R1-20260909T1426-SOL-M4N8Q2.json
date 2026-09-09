@@ -20,15 +20,17 @@
   "leaseSnapshotReadbackAtJst": "2026-09-09 14:26 JST",
   "leaseUntilJst": "2026-09-09 15:26 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A654:M654",
-  "leaseExactMutableResources": "browser/battle-board-visual-explanation-runtime-mount.mjs; tests/battle-board-visual-explanation-runtime-mount.test.mjs; deploy/cloudflare/tests/build.test.mjs; data/preaction-authorizations/BATTLE-ADVICE-MOTION-R1-20260909T1426-SOL-M4N8Q2.json; branch sol/battle-advice-motion-r1-20260909; own PR/check/readback evidence",
+  "leaseExactMutableResources": "browser/battle-board-visual-explanation-runtime-mount.mjs; tests/battle-board-visual-explanation-runtime-mount.test.mjs; tests/battle-advice-peripheral-motion.test.mjs; deploy/cloudflare/tests/build.test.mjs; data/preaction-authorizations/BATTLE-ADVICE-MOTION-R1-20260909T1426-SOL-M4N8Q2.json; branch sol/battle-advice-motion-r1-20260909; own PR/check/readback evidence",
   "scope": [
     "browser/battle-board-visual-explanation-runtime-mount.mjs",
     "tests/battle-board-visual-explanation-runtime-mount.test.mjs",
+    "tests/battle-advice-peripheral-motion.test.mjs",
     "deploy/cloudflare/tests/build.test.mjs"
   ],
   "leaseScope": [
     "browser/battle-board-visual-explanation-runtime-mount.mjs",
     "tests/battle-board-visual-explanation-runtime-mount.test.mjs",
+    "tests/battle-advice-peripheral-motion.test.mjs",
     "deploy/cloudflare/tests/build.test.mjs"
   ]
 }

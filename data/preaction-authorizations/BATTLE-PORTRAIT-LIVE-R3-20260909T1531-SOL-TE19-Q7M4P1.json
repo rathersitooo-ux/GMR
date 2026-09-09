@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PORTRAIT-LIVE-R3-20260909T1531-SOL-TE19-Q7M4P1",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PORTRAIT_390x844_LIVE_INTEGRATION_R3",
+  "acquireKey": "BATTLE-PORTRAIT-LIVE-R3-20260909T1531-SOL-TE19-Q7M4P1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "WU19_R2_CORE_PLUS_CURRENT_RUNTIME_EXACT_STRING_AUDIT_20260909",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXACT_CSS_REPLACEMENT_COUNTS_AND_FOCUSED_NODE_TEST_PLAN_20260909",
+  "proceedToken": "PROCEED|BATTLE-PORTRAIT-LIVE-R3-20260909T1531-SOL-TE19-Q7M4P1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|workunit19-live|existing-runtime-compose|active-lease",
+  "authorizationBaseSha": "9ea43596f856a6918e384386d6264c14bbc53c7d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PORTRAIT_390x844_LIVE_INTEGRATION_R3",
+  "leaseAcquireKey": "BATTLE-PORTRAIT-LIVE-R3-20260909T1531-SOL-TE19-Q7M4P1",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 15:31 JST",
+  "leaseUntilJst": "2026-09-09 16:31 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A676:L676",
+  "leaseExactMutableResources": "browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; .github/workflows/zz-temp-battle-portrait-live-r3.yml (transient); branch sol/battle-portrait-live-r3-20260909; PRE_ACTION manifest only",
+  "solutionSignature": "BATTLE_PHONE_PORTRAIT_EXISTING_RUNTIME_COMPOSITION_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "WU19_PR1400_WU24_PR1379_CURRENT_SCREEN_JANKEN_RUNTIME_COMPOSE_20260909",
+  "solutionSearchEvidence": [
+    "main 8fe59318 / PR#1400: merged 390x844 screen-space recomposition contract",
+    "PR#1379: merged bottom-right thumb-cluster presentation authority; live geometry remains existing janken runtime concern",
+    "current main battle-screen-runtime-mount.mjs: portrait still overrides compact rail into stale 4-row stack",
+    "current main battle-janken-slidepad-runtime-mount.mjs: basic roulette already defaults false; portrait still moves SlidePad upward and optional roulette to left:10px/bottom:220px",
+    "expired card-focus branch is 55 commits behind current main and is intentionally not copied over current runtime"
+  ],
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-portrait-live-r3.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-portrait-live-r3.yml"
+  ]
+}

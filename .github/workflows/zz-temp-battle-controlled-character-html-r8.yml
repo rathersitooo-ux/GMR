@@ -1,0 +1,41 @@
+name: zz-temp-battle-controlled-character-html-r8
+on:
+  push:
+    branches:
+      - sol/battle-controlled-character-html-handoff-r8-20260909
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect live Battle identity and motion seams
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('browser/GAMEROAD.html')
+          text = p.read_text(encoding='utf-8')
+          lines = text.splitlines()
+          needles = [
+              'player.character', '.character', 'selectedPartnerId',
+              'boardPlayerToken', 'battleRuntime', 'p.position',
+              'position =', 'position=', 'facing', 'renderBoard',
+              'renderMap', 'renderPlayers', 'renderGame',
+          ]
+          print('FILE_LINES', len(lines))
+          for needle in needles:
+              hits = [i for i, line in enumerate(lines, 1) if needle in line]
+              print(f'=== {needle!r} hits={len(hits)} first={hits[:20]} ===')
+              for i in hits[:12]:
+                  lo=max(1,i-3); hi=min(len(lines),i+4)
+                  for n in range(lo,hi+1):
+                      print(f'{n}: {lines[n-1]}')
+                  print('---')
+          imports = [
+              'battle-board-naki-4p-visual-binding.mjs',
+              'battle-controlled-character-4p-motion-director.mjs',
+              'battle-controlled-character-motion-core.mjs',
+          ]
+          for token in imports:
+              print('IMPORT_CHECK', token, token in text)

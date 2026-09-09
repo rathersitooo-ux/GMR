@@ -11,6 +11,10 @@ import {
   createBattlePlayableHandRowRouletteController,
   mountBattlePlayableHandRowRoulette,
 } from './battle-playable-hand-row-roulette-runtime.mjs';
+import {
+  captureBattleCardReleaseFlightEffect,
+  playBattleCardReleaseFlightEffect,
+} from './battle-card-release-flight-runtime-effect.mjs';
 
 export const BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA = 'gameroad.battle-janken-slidepad-runtime.v1';
 export const BATTLE_JANKEN_FOCUS_LIVE_MOUNT_SCHEMA = 'gameroad.battle-janken-focus-live-mount.v1';
@@ -45,7 +49,6 @@ export const BATTLE_JANKEN_ORDER_SLIDEPAD_PRESENTER_SCHEMA = 'gameroad.battle-ja
 const GESTURE_DEAD_ZONE_PX = 10;
 const GESTURE_MIN_DIRECTION_COSINE = 0.45;
 const GESTURE_STICK_TRAVEL_PX = 30;
-const RELEASE_FLIGHT_DURATION_MS = 560;
 const HAND_DRAG_DEAD_ZONE_PX = 8;
 const HAND_AURA_ARM_PADDING_PX = 18;
 const HAND_AURA_RELEASE_DURATION_MS = 520;
@@ -623,78 +626,22 @@ function spatialSlotRole(slotNodes, selectedHand) {
 }
 
 function captureReleasedJankenCardFlight(globalRef, battleRoot, slotNodes, selectedHand) {
-  if (globalRef?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) return null;
   const sourceNode = slotNodes.get(selectedHand);
-  const sourceRect = sourceNode?.getBoundingClientRect?.();
   const start = elementCenter(sourceNode);
   const target = launchTargetCenter(battleRoot);
-  if (!sourceNode || !sourceRect || !start || !target || typeof sourceNode.animate !== 'function') return null;
-  return {
-    clone: sourceNode.cloneNode(true),
-    sourceRect,
+  if (!sourceNode || !start || !target) return null;
+  return captureBattleCardReleaseFlightEffect({
+    sourceNode,
     start,
     target,
     role: spatialSlotRole(slotNodes, selectedHand),
-  };
+    reducedMotion: globalRef?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true,
+    lowPerf: battleRoot?.dataset?.lowPerf === 'true',
+  });
 }
 
-function animateReleasedJankenCard(host, flight) {
-  if (!flight) return false;
-  const { clone, sourceRect, start, target, role } = flight;
-  clone.disabled = false;
-  clone.dataset.armed = 'false';
-  clone.dataset.jankenFlight = '1';
-  clone.setAttribute('aria-hidden', 'true');
-  clone.style.position = 'fixed';
-  clone.style.left = `${sourceRect.left}px`;
-  clone.style.top = `${sourceRect.top}px`;
-  clone.style.right = 'auto';
-  clone.style.bottom = 'auto';
-  clone.style.width = `${sourceRect.width}px`;
-  clone.style.height = `${sourceRect.height}px`;
-  clone.style.margin = '0';
-  clone.style.opacity = '1';
-  clone.style.pointerEvents = 'none';
-  clone.style.zIndex = '160';
-  clone.style.transition = 'none';
-  clone.style.transformOrigin = '50% 50%';
-  clone.style.willChange = 'transform,opacity,filter';
-  host.appendChild(clone);
-
-  const dx = target.x - start.x;
-  const dy = target.y - start.y;
-  const flightDistance = Math.max(1, Math.hypot(dx, dy));
-  const outwardSign = role === 'top' ? -1 : role === 'bottom' ? 1 : 0;
-  const spin = role === 'top' ? -720 : role === 'bottom' ? 720 : 0;
-  const bend = outwardSign === 0 ? 0 : Math.min(230, Math.max(96, flightDistance * 0.34));
-  const p1 = { x: dx * 0.16, y: (dy * 0.14) + (outwardSign * bend) };
-  const p2 = { x: dx * 0.76, y: (dy * 0.76) + (outwardSign * bend * 0.12) };
-  const pointAt = (t) => {
-    const inv = 1 - t;
-    return {
-      x: (3 * inv * inv * t * p1.x) + (3 * inv * t * t * p2.x) + (t * t * t * dx),
-      y: (3 * inv * inv * t * p1.y) + (3 * inv * t * t * p2.y) + (t * t * t * dy),
-    };
-  };
-  const sampleOffsets = [0, 0.12, 0.28, 0.46, 0.64, 0.82, 1];
-  const frames = sampleOffsets.map((t) => {
-    const point = pointAt(t);
-    const depth = t * t * (3 - (2 * t));
-    const scale = 1 - (0.66 * depth);
-    return {
-      offset: t,
-      opacity: 1 - (0.42 * depth),
-      filter: `blur(${(0.7 * depth).toFixed(2)}px) brightness(${(1 - (0.12 * depth)).toFixed(3)})`,
-      transform: `translate3d(${point.x.toFixed(2)}px,${point.y.toFixed(2)}px,0) rotate(${(spin * t).toFixed(2)}deg) scale(${scale.toFixed(3)})`,
-    };
-  });
-  const animation = clone.animate(frames, {
-    duration: RELEASE_FLIGHT_DURATION_MS,
-    easing: 'cubic-bezier(.16,.74,.18,1)',
-    fill: 'forwards',
-  });
-  animation.finished.then(() => clone.remove(), () => clone.remove());
-  return true;
+function playReleasedJankenCardFlight(host, flight) {
+  return playBattleCardReleaseFlightEffect({ host, flight });
 }
 
 function animateHandAuraLaunch(globalRef, documentRef, battleRoot, handle, ghost) {
@@ -1062,7 +1009,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
         onAccepted: (result, readyPackage) => {
           const hand = readyPackage?.jankenHand;
           const flight = hand ? captureReleasedJankenCardFlight(globalRef, root, slotNodes, hand) : null;
-          if (flight) animateReleasedJankenCard(host, flight);
+          if (flight) playReleasedJankenCardFlight(host, flight);
           const settle = () => {
             if (focusSurfaceRuntime === runtime) closeDedicatedFocusSurface();
           };
@@ -1301,7 +1248,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     const currentSourceHandIds = readHand(globalRef, root).map((card) => card.id);
     const cardId = resolveBattleJankenSlotCardAction(model, selectedHand, currentSourceHandIds);
     const flight = cardId ? captureReleasedJankenCardFlight(globalRef, root, slotNodes, selectedHand) : null;
-    if (cardId && clickExistingHandCard(root, cardId)) animateReleasedJankenCard(host, flight);
+    if (cardId && clickExistingHandCard(root, cardId)) playReleasedJankenCardFlight(host, flight);
   }
 
   function clearAuraHostState() {

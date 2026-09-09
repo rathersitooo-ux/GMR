@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-THUMB-CLUSTER-R1-20260909T1440-SOL-NE24-Q7M4N8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_THUMB_CLUSTER_PRESENTATION_R1",
+  "acquireKey": "BATTLE-THUMB-CLUSTER-R1-20260909T1440-SOL-NE24-Q7M4N8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-BATTLE-THUMB-CLUSTER-R1-20260909T1440",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REHEARSE-BATTLE-THUMB-CLUSTER-FAIL-CLOSED-R1",
+  "proceedToken": "PROCEED|BATTLE-THUMB-CLUSTER-R1-20260909T1440-SOL-NE24-Q7M4N8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260909T1440JST",
+  "authorizationBaseSha": "b90da7b0a8612be47bb1cabea7b53d25ffd1b736",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_THUMB_CLUSTER_PRESENTATION_R1",
+  "leaseAcquireKey": "BATTLE-THUMB-CLUSTER-R1-20260909T1440-SOL-NE24-Q7M4N8",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 14:40 JST",
+  "leaseUntilJst": "2026-09-09 15:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A660:L660",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-thumb-cluster-r1-20260909; browser/battle-thumb-cluster-presentation-core.mjs (new); tests/battle-thumb-cluster-presentation-core.test.mjs (new); own transient data/preaction-authorizations/BATTLE-THUMB-CLUSTER-R1-20260909T1440-SOL-NE24-Q7M4N8.json only. browser/battle-janken-slidepad-runtime-mount.mjs, browser/battle-compound-attack-preview-runtime.mjs, browser/GAMEROAD.html, battle-screen runtime, gameplay/rules/target legality/hand assignment/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/battle-thumb-cluster-presentation-core.mjs",
+    "tests/battle-thumb-cluster-presentation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-thumb-cluster-presentation-core.mjs",
+    "tests/battle-thumb-cluster-presentation-core.test.mjs"
+  ],
+  "solutionSignature": "battle-thumb-cluster/current-slidepad-geometry-plus-compound-stage-presentation",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-BATTLE-JANKEN-SLIDEPAD-AND-COMPOUND-PREVIEW-20260909",
+  "solutionSearchEvidence": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs already defines the bottom-right handle, three-slot bloom geometry, gesture semantics, short-landscape and portrait sizing",
+    "browser/battle-janken-compound-attack-package-core.mjs plus browser/battle-compound-attack-preview-runtime.mjs already provide fail-closed authoritative package preview; presentation must not recompute legality or targets",
+    "BATTLE_CARD_FOCUS_PRESENTATION_R1 actively owns the live SlidePad runtime, so this WorkUnit writes only a new pure presentation core and focused test until owner convergence"
+  ]
+}

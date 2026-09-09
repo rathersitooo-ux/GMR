@@ -1,12 +1,21 @@
 import { PARTNER_TEA_QUICK_CHOICES } from './partner-tea-quick-choice-core.mjs';
+import { nextPartnerShellView } from './partner-shell-presentation-core.mjs';
+import { mountPartnerShellRuntime } from './partner-shell-runtime-mount.mjs';
 
 const RUNTIME_NAME = 'GAMEROAD_PARTNER_TEA_QUICK_CHOICE_RUNTIME';
 const RUNTIME_VERSION = 'gameroad.partner-tea-quick-choice-runtime.v1';
 const STYLE_ID = 'gameroad-partner-tea-quick-choice-style';
 const CONVERSATION_SELECTOR = '[data-gr-partner-conversation="1"]';
 const TEA_BAR_SELECTOR = '[data-gr-partner-tea-quick-choice="1"]';
+const HUB_TRIGGER_SELECTOR = '[data-partner-hub-trigger="1"]';
+const HUB_OVERLAY_SELECTOR = '[data-partner-hub-overlay="1"]';
 const PRESS_STATE_KEY = 'grPartnerTeaPressState';
 const PRESS_KEYS = new Set(['Enter', ' ']);
+const PARTNER_HUB_MOUNTED_KEY = 'partnerHubOverlayMounted';
+const PARTNER_HUB_ALLOWED_ACTION_SET = new Set(['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'BACK_HUB']);
+const partnerHubMounts = new WeakMap();
+
+export const PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS = Object.freeze([...PARTNER_HUB_ALLOWED_ACTION_SET]);
 
 function freezeDeep(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -29,6 +38,41 @@ export function partnerTeaQuickChoiceProjectionPlan() {
   });
 }
 
+export function partnerConversationHubProjectionPlan() {
+  return freezeDeep({
+    presentation: 'secondary_nonblocking_overlay',
+    useSite: 'partner-conversation',
+    activePartnerId: 'partner.saasuna',
+    directConversationDefault: true,
+    conversationDomPreserved: true,
+    allowedActions: [...PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS],
+    minimumTargetPx: 44,
+    createsConversationSession: false,
+    relationshipMutationAllowed: false,
+    rewardMutationAllowed: false,
+    saveMutationAllowed: false,
+    gameplayMutationAllowed: false,
+    canonMutationAllowed: false,
+  });
+}
+
+export function partnerConversationHubCanDispatch(action) {
+  return PARTNER_HUB_ALLOWED_ACTION_SET.has(String(action || ''));
+}
+
+export function createPartnerConversationHubInput(view = 'hub') {
+  return Object.freeze({
+    activePartnerId: 'partner.saasuna',
+    roster: Object.freeze([
+      Object.freeze({ partnerId: 'partner.saasuna', displayName: 'サースナー', portraitRef: null }),
+    ]),
+    view,
+    detailPartnerId: 'partner.saasuna',
+    formationPartnerIds: Object.freeze([]),
+    strategyId: null,
+  });
+}
+
 function ensureStyle(document) {
   if (document.getElementById?.(STYLE_ID)) return;
   const style = document.createElement('style');
@@ -41,7 +85,18 @@ function ensureStyle(document) {
 .grPartnerTeaQuickChoiceButton:focus-visible{outline:2px solid rgba(159,190,255,.8);outline-offset:2px}
 .grPartnerTeaQuickChoiceButton[data-gr-partner-tea-press-state="pressed"]:not(:disabled){background:rgba(46,62,110,.58);border-color:rgba(178,204,255,.42);transform:translateY(1px) scale(.98);box-shadow:0 2px 7px rgba(8,14,36,.34) inset}
 .grPartnerTeaQuickChoiceButton:disabled{opacity:.48;cursor:default;transform:none;box-shadow:none}
-@media(max-width:540px){.grPartnerTeaQuickChoice{padding:8px 10px 0;gap:6px}.grPartnerTeaQuickChoiceButton{flex:1 1 112px}}
+[data-gr-partner-conversation="1"][data-partner-hub-overlay-mounted="1"]{position:relative}
+.grPartnerHubTrigger{min-width:44px;min-height:44px;padding:7px 10px;border:1px solid rgba(158,188,255,.35);border-radius:11px;background:rgba(31,45,88,.72);color:inherit;font:inherit;font-size:10px;font-weight:900;touch-action:manipulation}
+.grPartnerHubOverlay{position:absolute;inset:0;z-index:30;display:grid;place-items:center;padding:14px;background:rgba(5,8,20,.72);backdrop-filter:blur(4px)}
+.grPartnerHubOverlay[hidden]{display:none!important}
+.grPartnerHubPanel{width:min(430px,94%);max-height:92%;overflow:auto;border:1px solid rgba(190,211,255,.3);border-radius:16px;background:linear-gradient(160deg,#111a36,#0b1024);box-shadow:0 18px 55px rgba(0,0,0,.45);padding:12px;color:#f7f8ff}
+.grPartnerHubPanelHead{display:flex;align-items:center;justify-content:flex-end;min-height:44px}
+.grPartnerHubClose,.grPartnerHubPanel .partner-shell-action{min-width:44px;min-height:44px;border:1px solid rgba(190,211,255,.25);border-radius:11px;background:rgba(34,48,90,.74);color:inherit;font:inherit;font-weight:900}
+.grPartnerHubClose{padding:7px 11px}
+.grPartnerHubShell{padding:0 4px 6px}
+.grPartnerHubPanel .partner-shell-menu,.grPartnerHubPanel .partner-shell-navigation{display:grid;gap:8px}
+.grPartnerHubPanel .partner-shell-idle-readable{margin:10px 0 12px;padding:10px 12px;border-radius:12px;background:rgba(73,96,164,.18);line-height:1.55}
+@media(max-width:540px){.grPartnerTeaQuickChoice{padding:8px 10px 0;gap:6px}.grPartnerTeaQuickChoiceButton{flex:1 1 112px}.grPartnerHubOverlay{padding:8px}.grPartnerHubPanel{width:96%;padding:9px}}
 `;
   document.head?.appendChild?.(style);
 }
@@ -104,6 +159,160 @@ function syncQuickChoiceBusyState(bar, input, send) {
   return busy;
 }
 
+function isConversationSurface(surface) {
+  return Boolean(
+    surface
+    && surface.dataset?.grPartnerConversation === '1'
+    && surface.ownerDocument?.createElement
+    && typeof surface.querySelector === 'function'
+    && typeof surface.appendChild === 'function'
+  );
+}
+
+function mountPartnerConversationHubOnSurface(surface) {
+  if (!isConversationSurface(surface)) return null;
+  const existing = partnerHubMounts.get(surface);
+  if (existing) return existing;
+  if (surface.querySelector(HUB_TRIGGER_SELECTOR) || surface.querySelector(HUB_OVERLAY_SELECTOR)) return null;
+
+  const document = surface.ownerDocument;
+  const header = surface.querySelector('.grPartnerConversationHead');
+  if (!header || typeof header.appendChild !== 'function') return null;
+
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.className = 'grPartnerHubTrigger';
+  trigger.dataset.partnerHubTrigger = '1';
+  trigger.textContent = 'パートナー';
+  trigger.setAttribute?.('aria-haspopup', 'dialog');
+  trigger.setAttribute?.('aria-expanded', 'false');
+  trigger.setAttribute?.('aria-label', 'パートナーメニューを開く');
+
+  const overlay = document.createElement('section');
+  overlay.className = 'grPartnerHubOverlay';
+  overlay.dataset.partnerHubOverlay = '1';
+  overlay.hidden = true;
+  overlay.tabIndex = -1;
+  overlay.setAttribute?.('role', 'dialog');
+  overlay.setAttribute?.('aria-modal', 'true');
+  overlay.setAttribute?.('aria-label', 'パートナー');
+
+  const panel = document.createElement('div');
+  panel.className = 'grPartnerHubPanel';
+  const panelHead = document.createElement('div');
+  panelHead.className = 'grPartnerHubPanelHead';
+  const closeButton = document.createElement('button');
+  closeButton.type = 'button';
+  closeButton.className = 'grPartnerHubClose';
+  closeButton.dataset.partnerHubClose = '1';
+  closeButton.textContent = '会話へ戻る';
+  const shellRoot = document.createElement('div');
+  shellRoot.className = 'grPartnerHubShell';
+
+  panelHead.appendChild(closeButton);
+  panel.append(panelHead, shellRoot);
+  overlay.appendChild(panel);
+  header.appendChild(trigger);
+  surface.appendChild(overlay);
+  surface.dataset[PARTNER_HUB_MOUNTED_KEY] = '1';
+
+  let destroyed = false;
+  let open = false;
+  let view = 'hub';
+
+  const shell = mountPartnerShellRuntime({
+    root: shellRoot,
+    getInput: () => createPartnerConversationHubInput(view),
+    canDispatch: partnerConversationHubCanDispatch,
+    onAction: ({ action }) => {
+      if (action === 'OPEN_CONVERSATION') {
+        close();
+        return;
+      }
+      const next = nextPartnerShellView(view, action);
+      if (next !== view) {
+        view = next;
+        shell.render();
+      }
+    },
+  });
+
+  function snapshot() {
+    return Object.freeze({
+      mounted: !destroyed,
+      open,
+      view,
+      activePartnerId: 'partner.saasuna',
+      directConversationDefault: true,
+      conversationDomPreserved: true,
+      allowedActions: PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS,
+    });
+  }
+
+  function openHub() {
+    if (destroyed) return snapshot();
+    view = 'hub';
+    const result = shell.render();
+    if (!result.ok) return snapshot();
+    open = true;
+    overlay.hidden = false;
+    trigger.setAttribute?.('aria-expanded', 'true');
+    closeButton.focus?.();
+    return snapshot();
+  }
+
+  function close() {
+    if (destroyed) return snapshot();
+    open = false;
+    overlay.hidden = true;
+    trigger.setAttribute?.('aria-expanded', 'false');
+    trigger.focus?.();
+    return snapshot();
+  }
+
+  trigger.addEventListener?.('click', openHub);
+  closeButton.addEventListener?.('click', close);
+  overlay.addEventListener?.('click', (event = {}) => {
+    if (event.target !== overlay) return;
+    event.preventDefault?.();
+    event.stopPropagation?.();
+    close();
+  });
+  overlay.addEventListener?.('keydown', (event = {}) => {
+    if (!open || event.key !== 'Escape') return;
+    event.preventDefault?.();
+    event.stopPropagation?.();
+    close();
+  });
+  panel.addEventListener?.('click', (event = {}) => event.stopPropagation?.());
+
+  function destroy() {
+    if (destroyed) return false;
+    destroyed = true;
+    shell.destroy();
+    trigger.remove?.();
+    overlay.remove?.();
+    delete surface.dataset[PARTNER_HUB_MOUNTED_KEY];
+    partnerHubMounts.delete(surface);
+    return true;
+  }
+
+  const api = Object.freeze({ open: openHub, close, destroy, snapshot });
+  partnerHubMounts.set(surface, api);
+  return api;
+}
+
+export function projectPartnerConversationHubOverlay(global = globalThis) {
+  const document = global?.document;
+  if (!document?.querySelectorAll || !document?.createElement) return 0;
+  ensureStyle(document);
+  let mounted = 0;
+  for (const surface of document.querySelectorAll(CONVERSATION_SELECTOR)) {
+    if (!partnerHubMounts.has(surface) && mountPartnerConversationHubOnSurface(surface)) mounted += 1;
+  }
+  return mounted;
+}
+
 export function projectPartnerTeaQuickChoices(global = globalThis) {
   const document = global?.document;
   if (!document?.querySelectorAll || !document?.createElement) return 0;
@@ -111,6 +320,8 @@ export function projectPartnerTeaQuickChoices(global = globalThis) {
 
   let mounted = 0;
   for (const surface of document.querySelectorAll(CONVERSATION_SELECTOR)) {
+    if (!partnerHubMounts.has(surface)) mountPartnerConversationHubOnSurface(surface);
+
     const existingBar = surface?.querySelector?.(TEA_BAR_SELECTOR);
     const form = surface?.querySelector?.('form.grPartnerConversationComposer');
     const input = surface?.querySelector?.('.grPartnerConversationInput');
@@ -179,6 +390,7 @@ export function mountPartnerTeaQuickChoiceRuntime(global = globalThis) {
   const runtime = Object.freeze({
     version: RUNTIME_VERSION,
     plan: partnerTeaQuickChoiceProjectionPlan(),
+    partnerHubPlan: partnerConversationHubProjectionPlan(),
     project,
     disconnect: () => observer.disconnect?.(),
   });

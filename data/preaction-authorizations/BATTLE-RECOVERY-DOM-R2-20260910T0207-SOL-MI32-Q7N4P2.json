@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RECOVERY-DOM-R2-20260910T0207-SOL-MI32-Q7N4P2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_WAIT_RECONNECT_STALE_INPUT_RUNTIME_SURFACE_R2",
+  "acquireKey": "BATTLE-RECOVERY-DOM-R2-20260910T0207-SOL-MI32-Q7N4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_A84A3C_RECOVERY_CORE_MERGED_RUNTIME_SURFACE_ABSENT_20260910T0207JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PURE_CALLER_STATUS_TO_EXISTING_RECOVERY_PROJECTION_TO_COMPACT_DOM_AND_INPUT_LOCK_CALLBACK",
+  "proceedToken": "PROCEED|BATTLE-RECOVERY-DOM-R2-20260910T0207-SOL-MI32-Q7N4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-recovery|runtime-surface|active-lease",
+  "authorizationBaseSha": "a84a3c877be133901dec969a6e67a54deb6da0c9",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_WAIT_RECONNECT_STALE_INPUT_RUNTIME_SURFACE_R2",
+  "leaseAcquireKey": "BATTLE-RECOVERY-DOM-R2-20260910T0207-SOL-MI32-Q7N4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 02:07 JST",
+  "leaseUntilJst": "2026-09-10 03:07 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A770:L770",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-recovery-dom-r2-20260910; NEW browser/battle-recovery-runtime-surface.mjs; NEW tests/battle-recovery-runtime-surface.test.mjs; own transient data/preaction-authorizations/BATTLE-RECOVERY-DOM-R2-20260910T0207-SOL-MI32-Q7N4P2.json only. Existing browser/battle-recovery-presentation-core.mjs READ_ONLY reuse. browser/GAMEROAD.html, deploy/cloudflare/scripts/build.mjs, battle-screen/janken runtimes, reconnect/HATE/READY authorities, gameplay/rules/target/legality/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_RECOVERY_EXISTING_CORE_CALLER_DRIVEN_DOM_SURFACE_R2",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1390_CORE_REUSE_PLUS_CURRENT_MAIN_NO_RUNTIME_SURFACE_AND_ACTIVE_HTML_BUILD_OWNERS_20260910T0207JST",
+  "solutionSearchEvidence": [
+    "PR#1390 already merged the pure recovery presentation core; recreating status semantics is forbidden.",
+    "Fresh main a84a3c877be133901dec969a6e67a54deb6da0c9 contains browser/battle-recovery-presentation-core.mjs but no battle-recovery runtime surface consumer.",
+    "Current HTML authority-seam owner and deploy-build owner are active, so this slice deliberately does not touch browser/GAMEROAD.html or deploy/cloudflare/scripts/build.mjs.",
+    "The runtime surface will accept caller-authoritative status/localStage only, project through the existing core, render a compact nonblocking status, and delegate local input locking/clear only through caller callbacks.",
+    "No WAIT/RECONNECT/STALE inference, timeout/retry rule, control ownership, legality, result, network, or game-state authority is added."
+  ],
+  "scope": [
+    "browser/battle-recovery-runtime-surface.mjs",
+    "tests/battle-recovery-runtime-surface.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-recovery-runtime-surface.mjs",
+    "tests/battle-recovery-runtime-surface.test.mjs"
+  ]
+}

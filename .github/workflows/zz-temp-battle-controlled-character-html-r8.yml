@@ -10,43 +10,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect exact live Battle handoff seams by character offsets
+      - name: Inspect exact live Battle marker and movement seams
         shell: python
         run: |
           from pathlib import Path
           text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          lines = text.splitlines()
-          print('TEXT_CHARS', len(text), 'LINES', len(lines), 'MAX_LINE', max(map(len, lines)))
           needles = [
-              'character: characterId',
-              'p.character == null',
-              'player?.character ?? null',
-              "el.className = 'battleBoardPlayerToken'",
-              'p.position = { type: step.type',
-              'p.position = finalPos',
-              'setBattleRuntimeMotionState(el, { state:\'move\'',
-              'function renderBoard',
-              'const prevRenderBoardRef = renderBoard',
-              'createBattleBoardNakiFourPlayerVisualBinding',
-              'battle-board-naki-4p-visual-binding.mjs',
+              'function renderBoardPlayers()',
+              "el.className='boardPlayerToken'",
+              'p.position=step',
+              'p.position=finalPos',
+              "setBattleRuntimeMotionState(el,{state:'move'",
+              'setBattleRuntimeMotionState',
+              'renderBoardPlayers()',
+              "document.getElementById('battleRuntime')",
+              '#battleRuntime',
+              '.boardPlayerToken',
           ]
           for needle in needles:
               print('\n===== NEEDLE', repr(needle), '=====')
-              start = 0
-              count = 0
+              start=0; shown=0
               while True:
-                  idx = text.find(needle, start)
-                  if idx < 0: break
-                  count += 1
-                  line = text.count('\n', 0, idx) + 1
-                  col = idx - (text.rfind('\n', 0, idx) + 1)
-                  lo = max(0, idx - 1100); hi = min(len(text), idx + len(needle) + 1500)
-                  print('HIT', count, 'OFFSET', idx, 'LINE', line, 'COL', col)
+                  idx=text.find(needle,start)
+                  if idx<0: break
+                  shown+=1
+                  line=text.count('\n',0,idx)+1
+                  col=idx-(text.rfind('\n',0,idx)+1)
+                  lo=max(0,idx-2200); hi=min(len(text),idx+len(needle)+3200)
+                  print('HIT',shown,'OFFSET',idx,'LINE',line,'COL',col)
                   print(text[lo:hi].replace('\r',''))
                   print('-----')
-                  start = idx + len(needle)
-                  if count >= 4: break
-              print('COUNT_SHOWN', count)
-          build = Path('deploy/cloudflare/scripts/build.mjs').read_text(encoding='utf-8')
-          for needle in ['battle-board-naki-4p-visual-binding.mjs','battle-controlled-character-4p-motion-director.mjs','battle-controlled-character-motion-core.mjs']:
-              print('BUILD', needle, build.count(needle))
+                  start=idx+len(needle)
+                  if shown>=6: break
+              print('COUNT_SHOWN',shown)

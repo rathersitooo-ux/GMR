@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PORTRAIT-LIVE-R4-20260909T1636-SOL-TE19-Q7M4P2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PORTRAIT_390x844_LIVE_INTEGRATION_R4",
+  "acquireKey": "BATTLE-PORTRAIT-LIVE-R4-20260909T1636-SOL-TE19-Q7M4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "WU19_R3_PRODUCT0_FAILURE_ANALYSIS_PLUS_CURRENT_RUNTIME_OWNER_CLEAR_20260909",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R4_DIRECT_EXISTING_FILE_EDIT_NO_TRANSIENT_WORKFLOW_FOCUSED_TEST_PLAN_20260909",
+  "proceedToken": "PROCEED|BATTLE-PORTRAIT-LIVE-R4-20260909T1636-SOL-TE19-Q7M4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|workunit19-live|existing-runtime-compose|active-lease",
+  "authorizationBaseSha": "1726a860c15a1b2298492b3b69f358ddb38716c7",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PORTRAIT_390x844_LIVE_INTEGRATION_R4",
+  "leaseAcquireKey": "BATTLE-PORTRAIT-LIVE-R4-20260909T1636-SOL-TE19-Q7M4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 16:36 JST",
+  "leaseUntilJst": "2026-09-09 17:36 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A701:L701",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-portrait-live-r4-20260909; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; own transient data/preaction-authorizations/BATTLE-PORTRAIT-LIVE-R4-20260909T1636-SOL-TE19-Q7M4P2.json only. browser/GAMEROAD.html, Advice, controlled-character/world/camera authority, gameplay/rules/target legality/Hand3/Mana/hidden-hand/save/economy/network READ_ONLY. No transient workflow in final or intermediate scope.",
+  "solutionSignature": "BATTLE_PHONE_PORTRAIT_EXISTING_RUNTIME_COMPOSITION_V2",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "WU19_PR1400_WU24_PR1379_CURRENT_MAIN_RUNTIME_DIRECT_EDIT_20260909",
+  "solutionSearchEvidence": [
+    "PR#1400 merged the 390x844 screen-space recomposition contract",
+    "PR#1379 merged the bottom-right thumb-cluster presentation contract",
+    "PR#1409 changed only PRE_ACTION and transient workflow; runtime product bytes remained zero",
+    "Required Gate run 34322518729 failed before product tests because PRE_ACTION was not cleanup-deleted and the transient workflow was unclassified",
+    "R4 therefore edits only the existing screen and SlidePad runtimes plus their focused tests and introduces no temporary workflow"
+  ],
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

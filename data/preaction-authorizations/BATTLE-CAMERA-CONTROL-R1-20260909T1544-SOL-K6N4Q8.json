@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CAMERA-CONTROL-R1-20260909T1544-SOL-K6N4Q8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CAMERA_CONTROL_CORE_R1",
+  "acquireKey": "BATTLE-CAMERA-CONTROL-R1-20260909T1544-SOL-K6N4Q8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-BATTLE-CAMERA-CONTROL-R1-20260909T1544",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REUSE-CURRENT-CAMERA-REQUIREMENT-NO-EXISTING-CAMERA-CODE",
+  "proceedToken": "PROCEED|BATTLE-CAMERA-CONTROL-R1-20260909T1544-SOL-K6N4Q8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260909T1544JST",
+  "authorizationBaseSha": "bfa173bebe582410a3623606673cec283245eb59",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CAMERA_CONTROL_CORE_R1",
+  "leaseAcquireKey": "BATTLE-CAMERA-CONTROL-R1-20260909T1544-SOL-K6N4Q8",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 15:44 JST",
+  "leaseUntilJst": "2026-09-09 16:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A688:L688",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-camera-control-r1-20260909; browser/battle-camera-control-core.mjs (new); tests/battle-camera-control-core.test.mjs (new); own transient PREACTION/PR/check/readback only. browser/GAMEROAD.html, battle-screen runtime, janken runtime, controlled-character binding, Flanora surface, gameplay/rules/target/movement/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/battle-camera-control-core.mjs",
+    "tests/battle-camera-control-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-camera-control-core.mjs",
+    "tests/battle-camera-control-core.test.mjs"
+  ],
+  "solutionSignature": "battle-camera/follow-manual-inspect-return/presentation-only",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT-CAMERA-R1-NO-REPO-CAMERA-HIT-20260909",
+  "solutionSearchEvidence": [
+    "row1374 current user correction requires controlled-character/local-field follow plus manual pan/zoom/angle inspection and one-action return",
+    "GitHub default-branch code search returned no existing camera implementation to adapt",
+    "active portrait runtime explicitly treats world/camera authorities as read-only and no active lease owns a camera core",
+    "this slice keeps all world/gameplay legality, movement, target and result authority outside the camera state"
+  ]
+}

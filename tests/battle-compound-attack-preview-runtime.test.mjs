@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {
   BATTLE_COMPOUND_ATTACK_PREVIEW_RUNTIME,
   mountBattleCompoundAttackPreview,
-  normalizeCompoundAttackPreviewPackage
+  normalizeCompoundAttackPreviewPackage,
+  projectCompoundAttackPreviewIdentity
 } from '../browser/battle-compound-attack-preview-runtime.mjs';
 import { BATTLE_JANKEN_COMPOUND_PREVIEW_SCHEMA } from '../browser/battle-janken-compound-attack-package-core.mjs';
 
@@ -107,7 +108,28 @@ test('normalizer delegates package semantics to the authoritative compound-packa
   assert.equal(normalizeCompoundAttackPreviewPackage(candidate({ shieldLane: 'X' })), null);
 });
 
-test('projects exactly one core-preview opponent, Shield and Shield-linked ROAD track', () => {
+test('target identity composes the current player/state semantic namespace without becoming target authority', () => {
+  const normalized = normalizeCompoundAttackPreviewPackage(candidate({ opponentId: 'P3', shieldLane: 'C' }));
+  const identity = projectCompoundAttackPreviewIdentity(normalized, 'P3');
+  assert.equal(identity.target.opponentId, 'P3');
+  assert.equal(identity.target.shieldLane, 'C');
+  assert.equal(identity.target.package, normalized);
+  assert.equal(identity.player.label, '3P');
+  assert.equal(identity.player.notchCount, 3);
+  assert.equal(identity.player.strokePattern, 'DASHED');
+  assert.equal(identity.player.hueRole, null);
+  assert.equal(identity.interaction.outlineRole, 'FOCUS');
+  assert.equal(identity.interaction.depthRole, 'RAISED');
+  assert.equal(identity.interaction.luminanceRole, 'BRIGHTER');
+  assert.equal(identity.colorOnlyIdentity, false);
+  assert.equal(identity.strongHueOwner, 'SUIT_ONLY');
+
+  const unknownPlayerIdentity = projectCompoundAttackPreviewIdentity(normalized, 'enemy-alpha');
+  assert.equal(unknownPlayerIdentity.player, null);
+  assert.equal(unknownPlayerIdentity.target.opponentId, 'P3');
+});
+
+test('projects exactly one core-preview opponent, Shield and Shield-linked ROAD track with redundant neutral target identity', () => {
   const document = new FakeDocument();
   const screen = makeScreenRuntime(document);
   const preview = mountBattleCompoundAttackPreview({ document, battleScreenRuntime: screen });
@@ -124,28 +146,44 @@ test('projects exactly one core-preview opponent, Shield and Shield-linked ROAD 
   const result = preview.render(pkg);
   assert.equal(result.active, true);
   assert.equal(result.reason, 'package_core_preview_projected');
+  assert.equal(result.identity.player.label, '3P');
   assert.equal(screen.shell.dataset.compoundPreviewOpponentId, 'P3');
   assert.equal(screen.shell.dataset.compoundPreviewShieldLane, 'C');
   assert.equal(screen.shell.dataset.compoundPreviewRoadId, 'route-alpha');
   assert.equal(screen.shell.dataset.compoundPreviewPath, JSON.stringify(['A', 'B', 'C']));
   assert.equal(screen.laneSurfaces[2].dataset.compoundPreviewTarget, 'true');
+  assert.equal(screen.laneSurfaces[2].dataset.compoundPreviewPlayerLabel, '3P');
+  assert.equal(screen.laneSurfaces[2].dataset.compoundPreviewPlayerNotchCount, '3');
+  assert.equal(screen.laneSurfaces[2].dataset.compoundPreviewPlayerStrokePattern, 'DASHED');
+  assert.equal(screen.laneSurfaces[2].dataset.compoundPreviewStateOutline, 'FOCUS');
+  assert.equal(screen.laneSurfaces[2].dataset.compoundPreviewStateDepth, 'RAISED');
+  assert.equal(screen.laneSurfaces[2].dataset.compoundPreviewStateLuminance, 'BRIGHTER');
   assert.equal(screen.shieldRails[2].dataset.compoundPreviewTarget, 'true');
   const links = targetLinks(screen);
   assert.equal(links.length, 1);
   assert.equal(links[0].getAttribute('data-battle-shield-slot'), 'C');
   assert.equal(links[0].getAttribute('aria-current'), 'true');
-  assert.match(preview.cue.textContent, /P3 \/ Shield C \/ ROAD route-alpha \/ 経路 3点/);
+  assert.equal(links[0].dataset.compoundPreviewPlayerLabel, '3P');
+  assert.match(preview.cue.textContent, /3P \(P3\) \/ Shield C \/ ROAD route-alpha \/ 経路 3点/);
   assert.equal(preview.cue.getAttribute('title'), JSON.stringify(['A', 'B', 'C']));
+  assert.equal(preview.cue.dataset.colorOnlyIdentity, 'false');
+  assert.equal(preview.cue.dataset.strongHueOwner, 'suit-only');
+  assert.doesNotMatch(preview.style.textContent, /255\s*,\s*225\s*,\s*70/);
+  assert.match(preview.style.textContent, /data-compound-preview-player-stroke-pattern/);
 });
 
-test('switching package clears the previous target before projecting the next target', () => {
+test('switching package clears the previous target and identity before projecting the next target', () => {
   const document = new FakeDocument();
   const screen = makeScreenRuntime(document);
   const preview = mountBattleCompoundAttackPreview({ document, battleScreenRuntime: screen });
   preview.render(candidate({ opponentId: 'P2', shieldLane: 'L', roadId: 'r1' }));
+  assert.equal(screen.laneSurfaces[1].dataset.compoundPreviewPlayerLabel, '2P');
   preview.render(candidate({ jankenHand: 'PAPER', cardId: 'B', path: ['Z'], direction: 'south-east', roadId: null, opponentId: 'P4', shieldLane: 'R' }));
   assert.equal(screen.laneSurfaces[1].dataset.compoundPreviewTarget, undefined);
+  assert.equal(screen.laneSurfaces[1].dataset.compoundPreviewPlayerLabel, undefined);
   assert.equal(screen.laneSurfaces[3].dataset.compoundPreviewTarget, 'true');
+  assert.equal(screen.laneSurfaces[3].dataset.compoundPreviewPlayerLabel, '4P');
+  assert.equal(screen.laneSurfaces[3].dataset.compoundPreviewPlayerStrokePattern, 'DASH_DOT');
   const links = targetLinks(screen);
   assert.equal(links.length, 1);
   assert.equal(links[0].getAttribute('data-battle-shield-slot'), 'R');
@@ -166,10 +204,12 @@ test('refresh reprojects the same frozen core preview after lane surfaces are re
   const refreshed = preview.refresh();
   assert.equal(refreshed.active, true);
   assert.equal(screen.laneSurfaces[1].dataset.compoundPreviewTarget, undefined);
+  assert.equal(screen.laneSurfaces[1].dataset.compoundPreviewPlayerLabel, undefined);
   assert.equal(screen.laneSurfaces[3].dataset.compoundPreviewTarget, 'true');
+  assert.equal(screen.laneSurfaces[3].dataset.compoundPreviewPlayerLabel, '2P');
 });
 
-test('invalid or unresolved packages fail closed with no partial target highlight', () => {
+test('invalid or unresolved packages fail closed with no partial target highlight or identity residue', () => {
   const document = new FakeDocument();
   const screen = makeScreenRuntime(document);
   const preview = mountBattleCompoundAttackPreview({ document, battleScreenRuntime: screen });
@@ -179,6 +219,8 @@ test('invalid or unresolved packages fail closed with no partial target highligh
   assert.equal(missingOpponent.reason, 'opponent_surface_not_found');
   assert.equal(targetLinks(screen).length, 0);
   assert.equal(screen.shell.dataset.compoundPreviewActive, undefined);
+  assert.equal(screen.shell.dataset.compoundPreviewPlayerLabel, undefined);
+  assert.equal(screen.laneSurfaces[1].dataset.compoundPreviewPlayerLabel, undefined);
   assert.equal(preview.cue.hidden, true);
 
   const incomplete = preview.render(candidate({ path: [] }));
@@ -187,7 +229,7 @@ test('invalid or unresolved packages fail closed with no partial target highligh
   assert.equal(targetLinks(screen).length, 0);
 });
 
-test('adapter is presentation-only and does not claim legality, targeting or state authority', () => {
+test('adapter is presentation-only and uses suit hues only for suit meaning', () => {
   assert.equal(BATTLE_COMPOUND_ATTACK_PREVIEW_RUNTIME.presentationOnly, true);
   assert.equal(BATTLE_COMPOUND_ATTACK_PREVIEW_RUNTIME.authority, 'NONE');
   assert.equal(BATTLE_COMPOUND_ATTACK_PREVIEW_RUNTIME.legalTargetRecompute, false);
@@ -195,4 +237,8 @@ test('adapter is presentation-only and does not claim legality, targeting or sta
   assert.equal(BATTLE_COMPOUND_ATTACK_PREVIEW_RUNTIME.gameStateWrite, false);
   assert.equal(BATTLE_COMPOUND_ATTACK_PREVIEW_RUNTIME.packageAuthority, 'BATTLE_JANKEN_COMPOUND_ATTACK_PACKAGE_CORE_PREVIEW_ONLY');
   assert.equal(BATTLE_COMPOUND_ATTACK_PREVIEW_RUNTIME.invalidPackagePolicy, 'FAIL_CLOSED_CLEAR_ALL');
+  assert.equal(BATTLE_COMPOUND_ATTACK_PREVIEW_RUNTIME.colorSemanticNamespace, 'BATTLE_COLOR_IDENTITY_PRESENTATION_CORE');
+  assert.equal(BATTLE_COMPOUND_ATTACK_PREVIEW_RUNTIME.strongHueOwner, 'SUIT_ONLY');
+  assert.equal(BATTLE_COMPOUND_ATTACK_PREVIEW_RUNTIME.colorOnlyIdentity, false);
+  assert.match(BATTLE_COMPOUND_ATTACK_PREVIEW_RUNTIME.targetIdentity, /AUTHORITATIVE_SPATIAL_PACKAGE/);
 });

@@ -29,6 +29,8 @@
     "Recovery presentation/runtime/adapter are already merged; another state machine or runtime bridge would duplicate existing work.",
     "The current production HTML is concurrently owned, so this WorkUnit only reads it and never mutates it.",
     "Title boot recovery provider remains unmerged and cannot be assumed to be the in-match 2v2 producer.",
+    "Pass 1: current HTML contains no create/disconnect/reconnect/isCurrent 2v2 reconnect APIs and no recovery UI mount; controlGeneration hits are controlled-character motion with generation fixed at zero.",
+    "Pass 1: HATE peer presence is production-used only through friendApplyTransportPresence / FRIEND_PRESENCE in the discovered seam; pass 2 traces whether that transport identity survives into live Battle.",
     "The diagnostic checks exact source symbols and global seams before any player-visible recovery mount is attempted."
   ],
   "scope": [

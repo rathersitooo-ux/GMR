@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-BATTLE-ACCEPTED-FEEDBACK-R1-20260910T0347-SOL-Q7M4N1",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "BATTLE_ACCEPTED_ACTION_FEEDBACK_RUNTIME_R1",
+  "acquireKey": "UI-BATTLE-ACCEPTED-FEEDBACK-R1-20260910T0347-SOL-Q7M4N1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-row1336-battle-feedback-plus-main-cue-core-and-invalid-adapter-20260910T0347",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "existing-cue-contract-plus-merged-invalid-action-delivery-pattern",
+  "proceedToken": "PROCEED|UI-BATTLE-ACCEPTED-FEEDBACK-R1-20260910T0347-SOL-Q7M4N1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|accepted-presentation-only",
+  "authorizationBaseSha": "102c53af1e32ee8b6876cc1f944287c42abde4e2",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "BATTLE_ACCEPTED_ACTION_FEEDBACK_RUNTIME_R1",
+  "leaseAcquireKey": "UI-BATTLE-ACCEPTED-FEEDBACK-R1-20260910T0347-SOL-Q7M4N1",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:47 JST",
+  "leaseUntilJst": "2026-09-10 04:47 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A908:L908",
+  "leaseExactMutableResources": "browser/battle-interaction-feedback-runtime.mjs; tests/battle-interaction-feedback-runtime.test.mjs; data/preaction-authorizations/UI-BATTLE-ACCEPTED-FEEDBACK-R1-20260910T0347-SOL-Q7M4N1.json; branch work/battle-accepted-action-feedback-runtime-r1. browser/battle-interaction-feedback-cue-core.mjs, browser/battle-invalid-action-feedback-live-adapter.mjs, formal SFX assets, deploy/cloudflare/scripts/build.mjs, browser/GAMEROAD.html and gameplay/shared runtimes are READ_ONLY.",
+  "scope": [
+    "browser/battle-interaction-feedback-runtime.mjs",
+    "tests/battle-interaction-feedback-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-interaction-feedback-runtime.mjs",
+    "tests/battle-interaction-feedback-runtime.test.mjs"
+  ],
+  "solutionSignature": "battle-accepted-action/existing-feedback-cue-to-caller-owned-presentation-delivery",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "browser/battle-interaction-feedback-cue-core.mjs already owns accepted-stage symbolic audio-haptic-visual feedback semantics",
+    "browser/battle-invalid-action-feedback-live-adapter.mjs already proves the caller-owned fail-soft delivery boundary and must not be generalized into a second authority",
+    "deploy/cloudflare/scripts/build.mjs already packages the formal click/cardSlide/cardPlace SFX assets, so no new asset registry is required"
+  ],
+  "reuseDecisionEvidenceId": "reuse-current-cue-core-invalid-adapter-pattern-formal-sfx-20260910T0347"
+}

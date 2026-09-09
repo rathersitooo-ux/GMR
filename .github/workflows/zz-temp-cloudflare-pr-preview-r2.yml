@@ -6,7 +6,7 @@ on:
       - sol/cloudflare-pr-preview-r2-20260909
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   patch:
@@ -35,17 +35,10 @@ jobs:
           set -euo pipefail
           node --test deploy/cloudflare/tests/build.test.mjs deploy/cloudflare/tests/version-manifest.test.mjs
 
-      - name: Commit product workflow and remove transients
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -f \
-            .github/workflows/zz-temp-cloudflare-pr-preview-r2.yml \
-            tools/temp-cloudflare-pr-preview-r2.py \
-            data/preaction-authorizations/PUBLICHOST-PR-PREVIEW-R2-20260909T1602-SOL-Q7M4V3.json
-          git config user.name gameroad-ci
-          git config user.email gameroad-ci@users.noreply.github.com
-          git add -A
-          git diff --cached --check
-          git commit -m "Public host: add same-PR Cloudflare preview"
-          git push origin HEAD:sol/cloudflare-pr-preview-r2-20260909
+      - name: Export patched workflow for direct writer
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloudflare-pr-preview-r2-patched-workflow
+          path: .github/workflows/cloudflare-public-deploy.yml
+          if-no-files-found: error
+          retention-days: 1

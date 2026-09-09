@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-ORDER-LIVE-MOUNT-R1-20260910T0315-SOL-U3-Q6M4P5",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_PROCESSING_ORDER_PLAYER_VISIBLE_LIVE_MOUNT_R1",
+  "acquireKey": "BATTLE-JANKEN-ORDER-LIVE-MOUNT-R1-20260910T0315-SOL-U3-Q6M4P5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_9761E102_FREE_HTML_AND_NONOVERLAP_FOCUS_DELTA_20260910T0317JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1459_ORDER_PRESENTER_PLUS_PR1462_FOUR_PUBLIC_CARDS_EXISTING_COMPONENT_COMPOSITION",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-ORDER-LIVE-MOUNT-R1-20260910T0315-SOL-U3-Q6M4P5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|janken-order-live-html-mount|html-only|active-lease",
+  "authorizationBaseSha": "9761e10273edf2800940579d8252fb237c81f226",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_PROCESSING_ORDER_PLAYER_VISIBLE_LIVE_MOUNT_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-ORDER-LIVE-MOUNT-R1-20260910T0315-SOL-U3-Q6M4P5",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:17 JST",
+  "leaseUntilJst": "2026-09-10 04:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A880:L880",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-janken-order-live-mount-r1-20260910; browser/GAMEROAD.html; NEW tests/battle-janken-order-live-mount.test.mjs; transient .github/workflows/zz-temp-battle-janken-order-live-mount-r1.yml; transient tools/temp-battle-janken-order-live-mount-r1.py; own transient data/preaction-authorizations/BATTLE-JANKEN-ORDER-LIVE-MOUNT-R1-20260910T0315-SOL-U3-Q6M4P5.json only. READ_ONLY reuse browser/battle-janken-order-live-adapter.mjs, browser/battle-janken-slidepad-runtime-mount.mjs, browser/battle-screen-presentation-core.mjs, browser/battle-screen-runtime-mount.mjs. deploy build/gameplay/rules/target/legality/Hand3/hidden-hand/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_JANKEN_ORDER_EXISTING_COMPONENTS_HTML_LIVE_COMPOSITION_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_ORDER_ADAPTER_PRESENTER_AND_FOUR_PUBLIC_CARD_LANES_MAIN_PRESENT_LIVE_CALL_SEAM_ONLY_OPEN",
+  "solutionSearchEvidence": [
+    "PR #1459 already supplies the SlidePad order presenter and explicitly keeps sorting, comparison, winner, target and gameplay authority outside presentation.",
+    "PR #1462 already supplies accepted-public-event four-participant public-card projection with exactly-four, unique and known-player fail-closed validation.",
+    "The existing battle-janken-order-live-adapter consumes caller-authoritative publicCards plus resolution and projects presentation without gameplay writes.",
+    "Fresh current live-consumer and SlidePad-input audits found no player-visible call from the authoritative Battle result seam into presentOrderMotion.",
+    "The SlidePad runtime is actively owned by another WorkUnit and remains READ_ONLY; this slice will compose existing APIs from GAMEROAD.html only and will not duplicate gameplay or presentation logic.",
+    "Main advanced from a74374d1 to 9761e102 only in battle-janken-focus-runtime-surface.mjs and its test, with no GAMEROAD.html overlap; the branch was fast-forwarded before product work."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-janken-order-live-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-order-live-mount-r1.yml",
+    "tools/temp-battle-janken-order-live-mount-r1.py"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-janken-order-live-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-order-live-mount-r1.yml",
+    "tools/temp-battle-janken-order-live-mount-r1.py"
+  ]
+}

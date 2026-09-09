@@ -1,0 +1,64 @@
+name: temp-battle-camera-package-r6
+
+on:
+  push:
+    branches:
+      - sol/battle-camera-package-r6-20260910
+
+permissions:
+  contents: write
+
+jobs:
+  package-camera:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: sol/battle-camera-package-r6-20260910
+      - name: Confirm PRE_ACTION
+        run: |
+          test -f data/preaction-authorizations/BATTLE-CAMERA-PACKAGE-R6-20260910T0319-SOL-K6N4Q17.json
+          grep -F 'PREACTION_PROCEED_ALLOWED' data/preaction-authorizations/BATTLE-CAMERA-PACKAGE-R6-20260910T0319-SOL-K6N4Q17.json
+          grep -F 'CURRENT_ACTIVE_LEASES!A882:L882' data/preaction-authorizations/BATTLE-CAMERA-PACKAGE-R6-20260910T0319-SOL-K6N4Q17.json
+      - name: Apply bounded camera package patch
+        run: python tools/temp-battle-camera-package-r6.py
+      - name: Run focused camera and Cloudflare build tests
+        run: |
+          node --test tests/battle-camera-control-core.test.mjs tests/battle-camera-input-router.test.mjs tests/battle-camera-live-runtime.test.mjs deploy/cloudflare/tests/build.test.mjs
+      - name: Build public package and verify camera artifacts
+        run: |
+          rm -rf /tmp/gameroad-camera-package-r6
+          node deploy/cloudflare/scripts/build.mjs --dist /tmp/gameroad-camera-package-r6 --source-commit "$GITHUB_SHA" --published-at '2026-09-10T03:19:00+09:00' > /tmp/gameroad-camera-package-r6.out
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const path='/tmp/gameroad-camera-package-r6';
+          const manifest=JSON.parse(fs.readFileSync(`${path}/manifest.json`,'utf8'));
+          const expected={
+            battle_camera_control_core:'battle-camera-control-core.mjs',
+            battle_camera_input_router:'battle-camera-input-router.mjs',
+            battle_camera_live_runtime:'battle-camera-live-runtime.mjs',
+          };
+          for(const [artifact,file] of Object.entries(expected)){
+            if(!manifest.artifacts?.[artifact]) throw new Error(`missing manifest artifact ${artifact}`);
+            if(manifest.artifacts[artifact].output!==file) throw new Error(`wrong output for ${artifact}`);
+            if(!fs.existsSync(`${path}/${file}`)) throw new Error(`missing dist file ${file}`);
+          }
+          console.log('camera public package closure PASS');
+          NODE
+      - name: Verify bounded product diff
+        run: |
+          git diff --check
+          git diff -- deploy/cloudflare/scripts/build.mjs
+          test "$(git diff --name-only | sort)" = 'deploy/cloudflare/scripts/build.mjs'
+      - name: Commit product patch
+        run: |
+          if git diff --quiet -- deploy/cloudflare/scripts/build.mjs; then
+            echo 'No product diff to commit'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deploy/cloudflare/scripts/build.mjs
+          git commit -m 'Build: package Battle camera runtime dependencies'
+          git push origin HEAD:sol/battle-camera-package-r6-20260910

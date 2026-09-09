@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-FINAL-QA-R6B-20260909T1725-SOL-Q8M4N9",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FINAL_QA_PUBLIC_HUMAN_R1",
+  "acquireKey": "BATTLE-FINAL-QA-R6B-20260909T1725-SOL-Q8M4N9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "W46-R5-ARTIFACT-34322055371-HOME-BLOCKED-BEFORE-PLAYER-PATH",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1413-PATCH-PLUS-W46-R5-TRACE-ARTIFACT",
+  "proceedToken": "PROCEED|BATTLE-FINAL-QA-R6B-20260909T1725-SOL-Q8M4N9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-bfi-workflow|player-path-harness-repair|active-lease",
+  "authorizationBaseSha": "e98a6a19a9826251639b5130776a00d7160a10ab",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_FINAL_QA_PUBLIC_HUMAN_R1",
+  "leaseAcquireKey": "BATTLE-FINAL-QA-R6B-20260909T1725-SOL-Q8M4N9",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 17:29 JST",
+  "leaseUntilJst": "2026-09-09 18:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A722:L722",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-final-qa-r6b-20260909; .github/workflows/browser-full-interaction.yml; transient .github/workflows/zz-temp-battle-final-qa-r6b.yml; own transient data/preaction-authorizations/BATTLE-FINAL-QA-R6B-20260909T1725-SOL-Q8M4N9.json only. PR#1413 branch is READ_ONLY donor. browser/GAMEROAD.html, browser/battle-*.mjs, browser/new-base-*.mjs, gameplay/rules/save/network/economy READ_ONLY.",
+  "scope": [
+    ".github/workflows/browser-full-interaction.yml",
+    ".github/workflows/zz-temp-battle-final-qa-r6b.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/browser-full-interaction.yml",
+    ".github/workflows/zz-temp-battle-final-qa-r6b.yml"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-COMPOUND-HTML-AUTH-SEAM-R2-20260910T0203-SOL-W4K8Q5",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_COMPOUND_HTML_AUTHORITY_SEAM_R2",
+  "acquireKey": "BATTLE-COMPOUND-HTML-AUTH-SEAM-R2-20260910T0203-SOL-W4K8Q5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_FOCUS_COMPONENTS_MERGED_HTML_SEAM_ABSENT_20260910T0203JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_HTML_AUTHORITY_TO_EXISTING_NEW_BASE_LIVE_CONSUMER_ADAPT_ONLY",
+  "proceedToken": "PROCEED|BATTLE-COMPOUND-HTML-AUTH-SEAM-R2-20260910T0203-SOL-W4K8Q5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|compound-html-authority-seam-r2|existing-html-plus-static-check|active-lease",
+  "authorizationBaseSha": "a84a3c877be133901dec969a6e67a54deb6da0c9",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_COMPOUND_HTML_AUTHORITY_SEAM_R2",
+  "leaseAcquireKey": "BATTLE-COMPOUND-HTML-AUTH-SEAM-R2-20260910T0203-SOL-W4K8Q5",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 02:03 JST",
+  "leaseUntilJst": "2026-09-10 03:03 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A769:L769",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-compound-html-seam-r2-20260910; browser/GAMEROAD.html; tests/browser-static-check.mjs; transient .github/workflows/zz-temp-battle-compound-html-seam-r2.yml; transient tools/temp-battle-compound-html-seam-r2.py; own transient data/preaction-authorizations/BATTLE-COMPOUND-HTML-AUTH-SEAM-R2-20260910T0203-SOL-W4K8Q5.json only. Existing battle-new-base-live-consumer-adapter/compound-package/preview/bridge/coordinator/live-stack/focus core+surface are READ_ONLY reuse. battle-janken-slidepad runtime owned by row765 and deploy build owned by row766 are READ_ONLY; battle-screen/gameplay/rules/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_EXISTING_HTML_AUTHORITY_SEAM_TO_MERGED_NEW_BASE_LIVE_CONSUMER_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "HORIZONTAL_CROSSCHECK_COMPONENTS_READY_BUT_PLAYER_AUTHORITY_HANDOFF_MISSING_20260910",
+  "solutionSearchEvidence": [
+    "Current main a84a3c877be133901dec969a6e67a54deb6da0c9 contains the merged compound package, live consumer adapter, preview bridge, latest-focus coordinator, compound live input stack, Focus presentation core and Focus DOM surface.",
+    "Current battle-janken-slidepad-runtime-mount.mjs still resolves a slot and directly clicks the existing hand card; it does not mount the Focus DOM surface or consume the compound live input stack.",
+    "Current Cloudflare ARTIFACT_SPECS packages the shared consumer, preview bridge and coordinator but not the compound live stack or Focus surface; build is separately owned through 03:00 JST and is excluded from this WorkUnit.",
+    "The latest browser/GAMEROAD.html path history has no current Janken Focus/compound authority-seam product commit; the most recent HTML change is controlled-character presentation.",
+    "Row765 currently owns the Janken runtime and row766 owns deploy build, so this WorkUnit deliberately limits mutation to the existing HTML authority handoff plus the already-classified browser static gate and does not create a second Battle, target, janken, route or legality engine."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs"
+  ]
+}

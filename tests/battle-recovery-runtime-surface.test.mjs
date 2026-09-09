@@ -166,7 +166,7 @@ test('committed local stage is never exposed as clearable after stale rejection'
 
   assert.equal(projection.clearUncommittedLocalStage, false);
   assert.equal(projection.rollbackAuthoritativeCommit, false);
-  assert.equal(runtime.root.dataset.clearUncommittedLocalStage, undefined);
+  assert.equal(runtime.root.dataset.clearUncommittedLocalStage, 'false');
 });
 
 test('reduced-motion and low-performance modes preserve semantic status with static cues', () => {

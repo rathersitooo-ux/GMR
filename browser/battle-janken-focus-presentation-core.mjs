@@ -32,8 +32,11 @@ function unavailable(reason, { generationId = null, reducedMotion = false, lowPe
     focusedHand: null,
     focusedPackage: null,
     focusedPreview: null,
+    focusedLock: null,
     previewReady: false,
     boardPeek: false,
+    peekReturnSurface: null,
+    loadFocus: false,
     committing: false,
     motionMode: reducedMotion || lowPerf ? 'STATIC' : 'FULL',
     presentationOnly: true,
@@ -65,12 +68,26 @@ function canonicalChoices(packages) {
   });
 }
 
+function projectFocusedLock(focusedChoice) {
+  if (!focusedChoice?.preview) return null;
+  const { preview } = focusedChoice;
+  return freeze({
+    jankenHand: focusedChoice.jankenHand,
+    cardId: preview.cardId,
+    opponentId: preview.opponentId,
+    shieldLane: preview.shieldLane,
+    shieldRef: preview.shieldRef,
+    route: preview.route,
+  });
+}
+
 function project({
   choices,
   surface,
   generationId,
   focusedHand = null,
   previewReady = false,
+  peekReturnSurface = null,
   reducedMotion = false,
   lowPerf = false,
 } = {}) {
@@ -79,6 +96,12 @@ function project({
     : null;
   const loadSurface = surface === BATTLE_JANKEN_FOCUS_SURFACE.LOAD_FOCUS
     || surface === BATTLE_JANKEN_FOCUS_SURFACE.COMMITTING;
+  const boardPeek = surface === BATTLE_JANKEN_FOCUS_SURFACE.BOARD_PEEK;
+  const returnSurface = boardPeek && peekReturnSurface === BATTLE_JANKEN_FOCUS_SURFACE.LOAD_FOCUS
+    ? BATTLE_JANKEN_FOCUS_SURFACE.LOAD_FOCUS
+    : boardPeek
+      ? BATTLE_JANKEN_FOCUS_SURFACE.JANKEN_FOCUS
+      : null;
   return freeze({
     schema: BATTLE_JANKEN_FOCUS_PRESENTATION_SCHEMA,
     surface,
@@ -89,8 +112,10 @@ function project({
     focusedHand: focusedChoice?.jankenHand ?? null,
     focusedPackage: focusedChoice?.package ?? null,
     focusedPreview: focusedChoice?.preview ?? null,
+    focusedLock: projectFocusedLock(focusedChoice),
     previewReady: focusedChoice ? previewReady === true : false,
-    boardPeek: surface === BATTLE_JANKEN_FOCUS_SURFACE.BOARD_PEEK,
+    boardPeek,
+    peekReturnSurface: returnSurface,
     loadFocus: loadSurface,
     committing: surface === BATTLE_JANKEN_FOCUS_SURFACE.COMMITTING,
     motionMode: reducedMotion || lowPerf ? 'STATIC' : 'FULL',
@@ -154,28 +179,36 @@ export function focusBattleJankenPackage(state, jankenHand, { previewReady = fal
     surface: BATTLE_JANKEN_FOCUS_SURFACE.JANKEN_FOCUS,
     focusedHand: jankenHand,
     previewReady,
+    peekReturnSurface: null,
     reducedMotion: state.motionMode === 'STATIC',
   });
 }
 
 export function enterBattleJankenBoardPeek(state) {
-  if (!state?.available || state.surface !== BATTLE_JANKEN_FOCUS_SURFACE.JANKEN_FOCUS) return state;
+  if (!state?.available) return state;
+  if (state.surface !== BATTLE_JANKEN_FOCUS_SURFACE.JANKEN_FOCUS
+    && state.surface !== BATTLE_JANKEN_FOCUS_SURFACE.LOAD_FOCUS) return state;
   return project({
     ...state,
     surface: BATTLE_JANKEN_FOCUS_SURFACE.BOARD_PEEK,
     focusedHand: state.focusedHand,
     previewReady: state.previewReady,
+    peekReturnSurface: state.surface,
     reducedMotion: state.motionMode === 'STATIC',
   });
 }
 
 export function returnBattleJankenFocus(state) {
   if (!state?.available || state.surface !== BATTLE_JANKEN_FOCUS_SURFACE.BOARD_PEEK) return state;
+  const returnSurface = state.peekReturnSurface === BATTLE_JANKEN_FOCUS_SURFACE.LOAD_FOCUS
+    ? BATTLE_JANKEN_FOCUS_SURFACE.LOAD_FOCUS
+    : BATTLE_JANKEN_FOCUS_SURFACE.JANKEN_FOCUS;
   return project({
     ...state,
-    surface: BATTLE_JANKEN_FOCUS_SURFACE.JANKEN_FOCUS,
+    surface: returnSurface,
     focusedHand: state.focusedHand,
     previewReady: state.previewReady,
+    peekReturnSurface: null,
     reducedMotion: state.motionMode === 'STATIC',
   });
 }
@@ -188,6 +221,7 @@ export function enterBattleLoadFocus(state) {
     surface: BATTLE_JANKEN_FOCUS_SURFACE.LOAD_FOCUS,
     focusedHand: state.focusedHand,
     previewReady: true,
+    peekReturnSurface: null,
     reducedMotion: state.motionMode === 'STATIC',
   });
 }
@@ -200,6 +234,7 @@ export function beginBattleJankenCommitPresentation(state) {
     surface: BATTLE_JANKEN_FOCUS_SURFACE.COMMITTING,
     focusedHand: state.focusedHand,
     previewReady: true,
+    peekReturnSurface: null,
     reducedMotion: state.motionMode === 'STATIC',
   });
 }
@@ -222,7 +257,13 @@ export const BATTLE_JANKEN_FOCUS_PRESENTATION_CONTRACT = freeze({
     BATTLE_JANKEN_FOCUS_SURFACE.LOAD_FOCUS,
     BATTLE_JANKEN_FOCUS_SURFACE.COMMITTING,
   ]),
+  lockProjectionFromExistingPreviewOnly: true,
   boardPeekPreservesFocusedPackage: true,
+  boardPeekReturnsToOriginFocusSurface: true,
+  boardPeekAllowedFrom: Object.freeze([
+    BATTLE_JANKEN_FOCUS_SURFACE.JANKEN_FOCUS,
+    BATTLE_JANKEN_FOCUS_SURFACE.LOAD_FOCUS,
+  ]),
   loadFocusRequiresExistingVisiblePreview: true,
   commitTransportDelegatedToExistingLiveStack: true,
   freeTargetPicker: false,

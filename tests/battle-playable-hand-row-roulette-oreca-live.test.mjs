@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 
 import {
   createBattlePlayableHandRowRouletteModel,
-  projectBattlePlayableHandRowRouletteRenderRows,
 } from '../browser/battle-playable-hand-row-roulette-runtime.mjs';
+import {
+  projectBattlePlayableHandRouletteOrecaPresentation,
+} from '../browser/battle-playable-hand-row-roulette-oreca-presentation-core.mjs';
 import { projectBattlePlayableHandAffordance } from '../browser/battle-janken-slidepad-runtime-mount.mjs';
 
 const hand = ['j-rock', 'j-scissors', 'j-paper', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6'];
@@ -23,7 +25,7 @@ test('roulette candidates are remaining ordinary hand only and exclude all janke
   assert.equal(projection.candidateCardIds.some((id) => id.startsWith('j-')), false);
 });
 
-test('Oreca-inspired six-row render receives exactly the six remaining-hand candidates, never janken cards', () => {
+test('Oreca-inspired six-row presentation receives exactly the six remaining-hand candidates, never janken cards', () => {
   const projection = projectBattlePlayableHandAffordance({
     handCardIds: hand,
     activeRole: 'road',
@@ -36,7 +38,7 @@ test('Oreca-inspired six-row render receives exactly the six remaining-hand cand
     cardPresentationById: presentations,
     anchorCardId: 'r3',
   });
-  const render = projectBattlePlayableHandRowRouletteRenderRows(model);
+  const render = projectBattlePlayableHandRouletteOrecaPresentation(model, { phase: 'IDLE' });
 
   assert.equal(render.mode, 'ORECA_SIX_ROW');
   assert.deepEqual(render.rows.map((row) => row.cardId), ['r1', 'r2', 'r3', 'r4', 'r5', 'r6']);
@@ -45,14 +47,14 @@ test('Oreca-inspired six-row render receives exactly the six remaining-hand cand
   assert.equal(render.rows.some((row) => row.cardId.startsWith('j-')), false);
 });
 
-test('non-six remaining hand preserves existing rolling-window fallback without filler cards', () => {
+test('non-six remaining hand keeps the existing fallback contract without filler cards', () => {
   const model = createBattlePlayableHandRowRouletteModel({
     candidateCardIds: ['r1', 'r2', 'r3', 'r4', 'r5'],
     cardPresentationById: presentations,
   });
-  const render = projectBattlePlayableHandRowRouletteRenderRows(model);
+  const render = projectBattlePlayableHandRouletteOrecaPresentation(model, { phase: 'IDLE' });
 
   assert.equal(render.mode, 'EXISTING_RUNTIME_FALLBACK');
-  assert.deepEqual(render.rows.map((row) => row.cardId), model.rows.map((row) => row.cardId));
-  assert.equal(render.rows.length, 5);
+  assert.equal(render.slotCount, 5);
+  assert.deepEqual(render.candidateCardIds, ['r1', 'r2', 'r3', 'r4', 'r5']);
 });

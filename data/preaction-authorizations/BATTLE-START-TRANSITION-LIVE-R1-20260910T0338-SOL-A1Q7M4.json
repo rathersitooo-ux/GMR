@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-START-TRANSITION-LIVE-R1-20260910T0338-SOL-A1Q7M4",
+  "taskId": "CROSSSCREEN-MOTION-ASSET-PRODUCTION-REMAINDER-001",
+  "workUnitKey": "BATTLE_START_TRANSITION_LIVE_BRIDGE_R1",
+  "acquireKey": "BATTLE-START-TRANSITION-LIVE-R1-20260910T0338-SOL-A1Q7M4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_CURRENT_FREE_SCREEN_NAV_AND_LIVE_IMPORT_20260910T0338JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_CONVEYOR_START_STATE_MACHINE_TESTS_PLUS_SCREEN_TRANSITION_VISUAL_PHASE_HOOK",
+  "proceedToken": "PROCEED|BATTLE-START-TRANSITION-LIVE-R1-20260910T0338-SOL-A1Q7M4|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-start-transition-live|screen-navigation|active-lease",
+  "authorizationBaseSha": "4623814ebb3858216a2dd97324dfd0c58abcad9a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "CROSSSCREEN-MOTION-ASSET-PRODUCTION-REMAINDER-001",
+  "leaseWorkUnitKey": "BATTLE_START_TRANSITION_LIVE_BRIDGE_R1",
+  "leaseAcquireKey": "BATTLE-START-TRANSITION-LIVE-R1-20260910T0338-SOL-A1Q7M4",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:38 JST",
+  "leaseUntilJst": "2026-09-10 04:38 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A895:L895",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-start-transition-live-r1-20260910; browser/screen-navigation-core.mjs; NEW browser/screen-navigation-core-base-battle-start-r1.mjs (byte-identical current canonical blob reference); NEW tests/battle-start-transition-live.test.mjs; own transient data/preaction-authorizations/BATTLE-START-TRANSITION-LIVE-R1-20260910T0338-SOL-A1Q7M4.json only. READ_ONLY reuse: browser/battle-conveyor-presentation-core.mjs, browser/GAMEROAD.html, deploy/cloudflare/scripts/build.mjs, battle-screen/SlidePad/camera/controlled-character/recovery/gameplay/rules/target/save/economy/network.",
+  "solutionSignature": "BATTLE_START_EXISTING_CONVEYOR_VIA_EXISTING_SCREEN_TRANSITION_LIVE_WRAPPER_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_CROSSSCREEN_PARENT_PLUS_EXISTING_CONVEYOR_CORE_PLUS_EXISTING_HTML_SCREEN_NAV_IMPORT",
+  "solutionSearchEvidence": [
+    "Current CROSSSCREEN parent explicitly retains Board animation chain -> all READY -> BATTLE START title/entry -> Battle Movie -> Battle Phase as an open presentation residual.",
+    "browser/battle-conveyor-presentation-core.mjs already owns the BATTLE START title/entry and live handoff state machine including readiness, stale-generation, fallback and cancellation semantics; it must be reused rather than reimplemented.",
+    "Current browser/GAMEROAD.html already imports createScreenTransitionRuntimeAdapter from browser/screen-navigation-core.mjs and calls it for the real screen route, so this is an actual live use-site rather than a test-only module.",
+    "Fresh CURRENT_ACTIVE_LEASES exact-target search found no ACTIVE owner for browser/screen-navigation-core.mjs; current HTML, Battle screen, SlidePad and build writers remain READ_ONLY and are not overlapped.",
+    "The canonical navigation blob will be preserved byte-identically as a base module and the canonical path changed to a thin wrapper, avoiding giant-file reconstruction and preserving all existing navigation behavior."
+  ],
+  "scope": [
+    "browser/screen-navigation-core.mjs",
+    "browser/screen-navigation-core-base-battle-start-r1.mjs",
+    "tests/battle-start-transition-live.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/screen-navigation-core.mjs",
+    "browser/screen-navigation-core-base-battle-start-r1.mjs",
+    "tests/battle-start-transition-live.test.mjs"
+  ]
+}

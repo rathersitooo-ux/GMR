@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-FOCUS-CONTEXT-R1-20260910T0336-SOL-A1-Q7M4N8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_FOCUS_THREE_PACKAGE_CONTEXT_R1",
+  "acquireKey": "BATTLE-JANKEN-FOCUS-CONTEXT-R1-20260910T0336-SOL-A1-Q7M4N8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FOCUS_EXACT_THREE_REQUIRED_VS_EXISTING_SINGLE_HAND_STAGE_AUDIT_20260910",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PURE_AUTHORITY_CONTEXT_READER_NO_SHARED_RUNTIME_MUTATION_20260910",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-FOCUS-CONTEXT-R1-20260910T0336-SOL-A1-Q7M4N8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|focus-three-package-context|compose-existing-authorities|active-lease",
+  "authorizationBaseSha": "03910ec5c228281563f8b4d71a4d59c135ec5316",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_FOCUS_THREE_PACKAGE_CONTEXT_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-FOCUS-CONTEXT-R1-20260910T0336-SOL-A1-Q7M4N8",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:36 JST",
+  "leaseUntilJst": "2026-09-10 04:36 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A893:L893",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-janken-focus-context-r1-20260910; NEW browser/battle-janken-focus-authority-context.mjs; NEW tests/battle-janken-focus-authority-context.test.mjs; own transient data/preaction-authorizations/BATTLE-JANKEN-FOCUS-CONTEXT-R1-20260910T0336-SOL-A1-Q7M4N8.json only. READ_ONLY reuse: browser/battle-new-base-live-consumer-adapter.mjs, browser/battle-janken-compound-attack-package-core.mjs. browser/GAMEROAD.html, browser/battle-janken-slidepad-runtime-mount.mjs, deploy/cloudflare/scripts/build.mjs, battle-screen/gameplay/rules/target/legality/Shield/Hand3/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_JANKEN_FOCUS_EXISTING_HAND3_TO_EXACT_THREE_PACKAGE_CONTEXT_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1392_SHARED_CONSUMER_PR1434_LIVE_STACK_PR1463_FOCUS_SURFACE_PR1468_SLIDEPAD_LIVE_20260910",
+  "solutionSearchEvidence": [
+    "Existing Focus presentation requires exactly one complete ROCK, SCISSORS and PAPER compound package before opening",
+    "Existing shared live consumer already owns immutable CURRENT_HAND3_POLICY round assignment and exposes syncRoundStart",
+    "Existing live input stack stages and commits only the chosen hand, so it is not an exact-three context source",
+    "Existing compound package core validates caller-supplied target, Shield, route and card identity without computing them",
+    "No current module was found that composes the immutable round slots with the same caller-supplied compound candidate reader into the exact-three Focus context"
+  ],
+  "scope": [
+    "browser/battle-janken-focus-authority-context.mjs",
+    "tests/battle-janken-focus-authority-context.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-focus-authority-context.mjs",
+    "tests/battle-janken-focus-authority-context.test.mjs"
+  ]
+}

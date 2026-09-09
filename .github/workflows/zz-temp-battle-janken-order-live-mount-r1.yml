@@ -19,44 +19,62 @@ jobs:
         run: |
           test -f data/preaction-authorizations/BATTLE-JANKEN-ORDER-LIVE-MOUNT-R1-20260910T0315-SOL-U3-Q6M4P5.json
           grep -F 'PREACTION_PROCEED_ALLOWED' data/preaction-authorizations/BATTLE-JANKEN-ORDER-LIVE-MOUNT-R1-20260910T0315-SOL-U3-Q6M4P5.json
-      - name: Extract bounded GAMEROAD HTML seams
+      - name: Extract bounded GAMEROAD boot and Battle seams
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
 
-          path = Path('browser/GAMEROAD.html')
-          text = path.read_text(encoding='utf-8')
+          text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
           print('HTML_BYTES', len(text.encode('utf-8')))
           print('HTML_CHARS', len(text))
+
+          print('\n=== SCRIPT SOURCES ===')
+          for m in re.finditer(r'<script\b[^>]*>', text, re.I):
+              tag = m.group(0)
+              src = re.search(r'\bsrc=["\']([^"\']+)', tag, re.I)
+              typ = re.search(r'\btype=["\']([^"\']+)', tag, re.I)
+              if src or typ:
+                  print(m.start(), 'SRC=', src.group(1) if src else '', 'TYPE=', typ.group(1) if typ else '', tag[:500])
+          print('\n=== MODULE-LIKE REFERENCES ===')
+          refs = []
+          for pat in [r'import\s*\(\s*["\']([^"\']+)', r'from\s+["\']([^"\']+\.mjs[^"\']*)', r'["\']([^"\']+\.mjs(?:\?[^"\']*)?)["\']']:
+              refs += re.findall(pat, text)
+          for ref in sorted(set(refs))[:500]:
+              print(ref)
+          print('MODULE_REF_COUNT', len(set(refs)))
+
           terms = [
-              'mountBattleJankenSlidePadRuntime',
-              'battleJankenSlidePad',
-              'battle-janken-slidepad-runtime-mount',
-              'battle-janken-order-live-adapter',
-              'projectBattleJankenOrderSnapshot',
-              'presentOrderMotion',
-              'processingOrder',
-              'resolvedWinners',
-              'unresolvedSurvivors',
-              'publicCards',
-              'createBattleScreenModel',
-              'mountBattleScreenRuntime',
+              'publicCardPresentationBuild',
+              'publicCardPresentationManifest',
+              'publicCard',
+              'battleMap',
+              'data-screen="battle"',
+              "data-screen='battle'",
+              'Battle',
+              'janken',
+              'Janken',
+              'ROCK',
+              'SCISSORS',
+              'PAPER',
+              'じゃんけん',
+              'グー',
+              'チョキ',
+              'パー',
+              'battle-new-base',
+              'battle-screen',
+              'battle-janken',
+              'live-runtime',
           ]
           for term in terms:
               positions = [m.start() for m in re.finditer(re.escape(term), text)]
-              print(f'\n=== TERM {term!r} COUNT {len(positions)} POS {positions[:12]} ===')
-              for idx, pos in enumerate(positions[:6]):
-                  lo = max(0, pos - 1100)
-                  hi = min(len(text), pos + len(term) + 1500)
-                  snippet = text[lo:hi].replace('\r', '')
+              print(f'\n=== TERM {term!r} COUNT {len(positions)} POS {positions[:20]} ===')
+              for idx, pos in enumerate(positions[:8]):
+                  lo = max(0, pos - 1000)
+                  hi = min(len(text), pos + len(term) + 1600)
                   print(f'--- HIT {idx+1} [{lo}:{hi}] ---')
-                  print(snippet)
+                  print(text[lo:hi].replace('\r', ''))
 
-          print('\n=== BOUNDED JANKEN IDENTIFIER INVENTORY ===')
-          ids = sorted(set(re.findall(r'\b[A-Za-z_$][A-Za-z0-9_$]{2,}\b', text)))
-          picked = [x for x in ids if 'janken' in x.lower() or 'battleScreen' in x or 'publicCard' in x or 'processingOrder' in x]
-          for x in picked[:300]:
-              print(x)
-          print('INVENTORY_COUNT', len(picked))
+          print('\n=== TAIL 18000 ===')
+          print(text[-18000:].replace('\r', ''))
           PY

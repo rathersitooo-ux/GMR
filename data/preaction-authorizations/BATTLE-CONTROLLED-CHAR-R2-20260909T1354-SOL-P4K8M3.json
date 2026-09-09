@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CONTROLLED-CHAR-R2-20260909T1354-SOL-P4K8M3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CONTROLLED_CHARACTER_IDENTITY_R2",
+  "acquireKey": "BATTLE-CONTROLLED-CHAR-R2-20260909T1354-SOL-P4K8M3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-CONTROLLED-CHARACTER-MARKER-AUTHORITY-AND-FRESH-MAIN-20260909",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1358-TARGET-6-OF-6-GATE-ONLY-PROVENANCE-PIN-MISMATCH",
+  "proceedToken": "PROCEED|BATTLE-CONTROLLED-CHAR-R2-20260909T1354-SOL-P4K8M3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|fresh-main-readback|focused-r1-rehearsal|active-r2-lease",
+  "authorizationBaseSha": "9d9b1706c8da9e848449dfbe92a06b5f9e99d72e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CONTROLLED_CHARACTER_IDENTITY_R2",
+  "leaseAcquireKey": "BATTLE-CONTROLLED-CHAR-R2-20260909T1354-SOL-P4K8M3",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 13:54 JST",
+  "leaseUntilJst": "2026-09-09 14:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A646:L646",
+  "leaseExactMutableResources": "browser/battle-board-naki-4p-visual-binding.mjs; tests/battle-board-naki-4p-visual-binding.test.mjs; deploy/cloudflare/tests/build.test.mjs; own transient preaction manifest only",
+  "scope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

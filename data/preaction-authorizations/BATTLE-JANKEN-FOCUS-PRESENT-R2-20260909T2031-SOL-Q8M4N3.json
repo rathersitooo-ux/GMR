@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-FOCUS-PRESENT-R2-20260909T2031-SOL-Q8M4N3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_FOCUS_PRESENTATION_CORE_R2",
+  "acquireKey": "BATTLE-JANKEN-FOCUS-PRESENT-R2-20260909T2031-SOL-Q8M4N3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R1_DIRECT_ACTUAL_BOARD_PEEK_ORIGIN_GAP_20260909",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PURE_PRESENTATION_STATE_TRANSITION_FOCUSED_TEST_ORACLE",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-FOCUS-PRESENT-R2-20260909T2031-SOL-Q8M4N3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|BOARD_PEEK_ORIGIN_AND_LOCK_PROJECTION",
+  "authorizationBaseSha": "4ce488ccd7b85a6b61cae19b919624de0cf2eb33",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_FOCUS_PRESENTATION_CORE_R2",
+  "leaseAcquireKey": "BATTLE-JANKEN-FOCUS-PRESENT-R2-20260909T2031-SOL-Q8M4N3",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 20:31 JST",
+  "leaseUntilJst": "2026-09-09 21:31 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A747:L747",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-janken-focus-present-r2-20260909; browser/battle-janken-focus-presentation-core.mjs; tests/battle-janken-focus-presentation-core.test.mjs; data/preaction-authorizations/BATTLE-JANKEN-FOCUS-PRESENT-R2-20260909T2031-SOL-Q8M4N3.json only",
+  "scope": [
+    "browser/battle-janken-focus-presentation-core.mjs",
+    "tests/battle-janken-focus-presentation-core.test.mjs",
+    "data/preaction-authorizations/BATTLE-JANKEN-FOCUS-PRESENT-R2-20260909T2031-SOL-Q8M4N3.json"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-focus-presentation-core.mjs",
+    "tests/battle-janken-focus-presentation-core.test.mjs",
+    "data/preaction-authorizations/BATTLE-JANKEN-FOCUS-PRESENT-R2-20260909T2031-SOL-Q8M4N3.json"
+  ]
+}

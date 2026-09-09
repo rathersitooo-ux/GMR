@@ -1,0 +1,80 @@
+name: TEMP Battle current action R1
+
+on:
+  push:
+    branches:
+      - sol/battle-current-action-live-r1-20260909
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply exact presentation-only patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          runtime_path = Path('browser/battle-screen-runtime-mount.mjs')
+          test_path = Path('tests/battle-screen-runtime-mount.test.mjs')
+
+          runtime = runtime_path.read_text(encoding='utf-8')
+          label_anchor = "const CURRENT_ACTION_PHASE_LABELS = Object.freeze({\n"
+          label_insertion = "const CURRENT_ACTION_PHASE_LABELS = Object.freeze({\n  plan: '行動を選ぶ',\n"
+          if runtime.count(label_anchor) != 1:
+              raise SystemExit(f'runtime label anchor count={runtime.count(label_anchor)}')
+          if "  plan: '行動を選ぶ'," in runtime:
+              raise SystemExit('plan cue already present before patch')
+          runtime = runtime.replace(label_anchor, label_insertion, 1)
+
+          render_anchor = "    writeCurrentActionCue(currentActionCue, battle ? model : null);"
+          render_replacement = "    writeCurrentActionCue(currentActionCue, battle || (!resultExit && model.screenMode === 'MATCH_PLAN') ? model : null);"
+          if runtime.count(render_anchor) != 1:
+              raise SystemExit(f'runtime render anchor count={runtime.count(render_anchor)}')
+          runtime = runtime.replace(render_anchor, render_replacement, 1)
+          runtime_path.write_text(runtime, encoding='utf-8')
+
+          test = test_path.read_text(encoding='utf-8')
+          old = "assert.equal(runtime.hud.root.hidden, true);\nassert.equal(runtime.currentActionCue.hidden, true);\nassert.equal(runtime.currentActionCue.textContent, '');\nassert.equal(runtime.currentActionCue.dataset.boardReturnDestination, undefined);"
+          new = "assert.equal(runtime.hud.root.hidden, true);\nassert.equal(runtime.currentActionCue.hidden, false);\nassert.equal(runtime.currentActionCue.textContent, '今：行動を選ぶ');\nassert.equal(runtime.currentActionCue.dataset.boardReturnDestination, undefined);"
+          if test.count(old) != 1:
+              raise SystemExit(f'test anchor count={test.count(old)}')
+          test = test.replace(old, new, 1)
+          test_path.write_text(test, encoding='utf-8')
+          PY
+
+      - name: Verify exact scope and tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          node --check browser/battle-screen-runtime-mount.mjs
+          node --test tests/battle-screen-runtime-mount.test.mjs
+          mapfile -t changed < <(git diff --name-only | sort)
+          expected=$(printf '%s\n' \
+            browser/battle-screen-runtime-mount.mjs \
+            tests/battle-screen-runtime-mount.test.mjs | sort)
+          actual=$(printf '%s\n' "${changed[@]}")
+          test "$actual" = "$expected"
+
+      - name: Commit bounded product patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add browser/battle-screen-runtime-mount.mjs tests/battle-screen-runtime-mount.test.mjs
+          git diff --cached --check
+          test "$(git diff --cached --name-only | wc -l)" -eq 2
+          git commit -m 'Battle: show current action during planning'
+          git push origin HEAD:sol/battle-current-action-live-r1-20260909

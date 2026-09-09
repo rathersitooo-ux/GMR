@@ -35,6 +35,7 @@ jobs:
           p.write_text(s, encoding='utf-8')
           PY
           python tools/temp-battle-camera-html-r5c.py
+          node --test tests/battle-camera-input-router.test.mjs tests/battle-camera-live-runtime.test.mjs tests/battle-camera-live-integration.test.mjs
           if git diff --quiet -- tools/temp-battle-camera-html-r5c.py browser/GAMEROAD.html tests/battle-camera-live-integration.test.mjs; then
             echo "No bounded changes"
             exit 0

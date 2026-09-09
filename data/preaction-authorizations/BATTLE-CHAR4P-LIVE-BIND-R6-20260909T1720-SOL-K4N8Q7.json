@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CHAR4P-LIVE-BIND-R6-20260909T1720-SOL-K4N8Q7",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CONTROLLED_CHARACTER_MOTION_LIVE_BIND_R6",
+  "acquireKey": "BATTLE-CHAR4P-LIVE-BIND-R6-20260909T1720-SOL-K4N8Q7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_HARDCODED_NAKI_PLUS_R5_PRODUCT_TEST_EVIDENCE_20260909T1720JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R5_TARGET_BASE_BLOBS_EQUAL_CURRENT_MAIN_AND_DONOR_DIFF_PRESENTATION_ONLY",
+  "proceedToken": "PROCEED|BATTLE-CHAR4P-LIVE-BIND-R6-20260909T1720-SOL-K4N8Q7|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|workunit33-live|controlled-character|active-lease",
+  "authorizationBaseSha": "4c4e7973bb8be70b800b5ea2c4a08e97bab98358",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CONTROLLED_CHARACTER_MOTION_LIVE_BIND_R6",
+  "leaseAcquireKey": "BATTLE-CHAR4P-LIVE-BIND-R6-20260909T1720-SOL-K4N8Q7",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 17:20 JST",
+  "leaseUntilJst": "2026-09-09 18:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A719:L719",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-controlled-character-motion-live-r6-20260909; browser/battle-board-naki-4p-visual-binding.mjs; tests/battle-board-naki-4p-visual-binding.test.mjs; deploy/cloudflare/tests/build.test.mjs; own transient PREACTION/PR/check/readback only. READ_ONLY browser/battle-controlled-character-4p-motion-director.mjs, browser/battle-controlled-character-motion-core.mjs, browser/GAMEROAD.html, battle-screen/janken/advice/gameplay/rules/save/economy/network.",
+  "solutionSignature": "BATTLE_CONTROLLED_CHARACTER_4P_EXPLICIT_IDENTITY_MOTION_PROJECTION_NO_ADVICE_CONFLATION_R6",
+  "reuseDisposition": "COMPOSE_REVALIDATED_R5_PRODUCT_DIFF",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R5_PR1424_PRODUCT_DIFF_TEST_PASS_BUT_PREACTION_INVALID_CURRENT_BASE_BLOBS_UNCHANGED",
+  "solutionSearchEvidence": [
+    "Current main binding blob 01df2262bfe894638ebaa16d7f4834acc550d552 still hardcodes partner.naki for all four board participants.",
+    "Current main test blob fb79fdb2c012e681062a8867178393cbc51eb54e equals the R5 audited base test blob; current build test blob c9e893bb695aa92b676a1f7fdb31f574727dbd16 equals the R5 audited base build-test blob.",
+    "R5 PR#1424 was closed unmerged because PRE_ACTION lacked leaseExactMutableResources; product focused tests/build test had passed and its final product diff was limited to the three owned files.",
+    "R6 reuses only the revalidated product blobs: caller-supplied opaque characterId and motion projection, parent marker position authority, fail-visible marker fallback, Advice Partner coupling false, gameplay/movement authority zero.",
+    "browser/GAMEROAD.html remains read-only under the current predecessor omission owner, so this slice does not invent a second live movement/identity producer."
+  ],
+  "scope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

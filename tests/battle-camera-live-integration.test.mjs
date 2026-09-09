@@ -35,9 +35,13 @@ test('camera follows authoritative controlled position without becoming movement
   assert.match(html,/syncControlledPoint\(source\.controlledWorldPoint\)/);
 });
 
-test('camera bounds are finite and preserve an inspectable world without moving world objects',()=>{
+test('camera bounds are finite and preserve an inspectable world without gameplay-state writes',()=>{
   assert.match(html,/x:\{min:-13,max:13\},y:\{min:-13,max:13\},zoom:\{min:\.5,max:1\.25\},angle:\{min:28,max:62\}/);
   assert.match(html,/panWorldUnitsPerPixelX:-26\/mw/);
   assert.match(html,/panWorldUnitsPerPixelY:-26\/mh/);
-  assert.doesNotMatch(html,/camera.*(?:reachable\(|legalOpponents\(|state\.match\.target\s*=)/i);
+  const start=html.indexOf('function grBattleCameraSource()');
+  const end=html.indexOf('function fieldProject',start);
+  assert.ok(start>=0&&end>start,'camera adapter block must exist');
+  const cameraAdapter=html.slice(start,end);
+  assert.doesNotMatch(cameraAdapter,/(?:state\.match\.target|me\.position|me\.plan\.path)\s*=/);
 });

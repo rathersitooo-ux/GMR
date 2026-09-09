@@ -1,0 +1,37 @@
+name: TEMP Study cartridge persistence R1
+
+on:
+  push:
+    branches:
+      - sol/study-cartridge-persist-r1-20260910
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'TEMP: run Study cartridge persistence R1 patcher'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/study-cartridge-persist-r1-20260910
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply bounded Study cartridge persistence patch
+        run: python tools/temp-study-cartridge-persist-r1.py
+      - name: Run focused Study and cartridge storage tests
+        run: node --test tests/study-run-runtime-mount.test.mjs tests/study-problem-pack-core.test.mjs tests/cartridge-storage-core.test.mjs
+      - name: Verify patch and commit product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git add browser/study-run-runtime-mount.mjs tests/study-run-runtime-mount.test.mjs
+          git diff --cached --exit-code --quiet && { echo 'expected product diff missing'; exit 1; }
+          git config user.name 'gameroad-study-bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git commit -m 'Study: connect safe resume to caller-owned cartridge storage'
+          git push origin HEAD:sol/study-cartridge-persist-r1-20260910

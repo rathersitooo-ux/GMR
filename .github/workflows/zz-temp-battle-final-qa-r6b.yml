@@ -15,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
-      - name: Checkout fresh current product
+      - name: Checkout exact Home refresh R2 product candidate
         uses: actions/checkout@v4
         with:
-          ref: 5bf4e7a6963b7f005958dd03d59c89c9eb229fa9
+          ref: 78b453e3246ccd45bee21e47bad81aead9e5f9cc
           fetch-depth: 1
 
       - name: Set up Node

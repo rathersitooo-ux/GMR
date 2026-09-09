@@ -64,6 +64,15 @@ test('runtime model fail-closes hub actions that have no concrete dispatcher', (
   assert.deepEqual(model.menuActions, []);
   assert.equal(model.deadButtonAllowed, false);
   assert.equal(model.readOnlyProjection, true);
+  assert.equal(model.idleReadableLine?.partnerId, 'partner.saasuna');
+  assert.equal(model.idleReadableLine?.sourceState, 'approved_current');
+  assert.equal(model.idleReadableLine?.presentationOnly, true);
+  assert.equal(model.idleReadableLine?.automaticGameMutationAllowed, false);
+});
+
+test('hub idle readable content stays silent for Partner without approved source', () => {
+  const model = buildPartnerShellRuntimeModel({ activePartnerId: 'partner.other', roster });
+  assert.equal(model.idleReadableLine, null);
 });
 
 test('runtime model exposes only explicitly connected hub actions', () => {
@@ -123,6 +132,11 @@ test('mount renders connected actions and dispatches intent without local naviga
   const result = runtime.render();
   assert.equal(result.ok, true);
   assert.equal(root.children[0].dataset.partnerShellView, 'hub');
+  const idleLines = allNodes(root).filter((node) => node.className === 'partner-shell-idle-readable');
+  assert.equal(idleLines.length, 1);
+  assert.equal(idleLines[0].dataset.partnerId, 'partner.saasuna');
+  assert.equal(idleLines[0].dataset.sourceState, 'approved_current');
+  assert.equal(idleLines[0].dataset.presentationOnly, 'true');
   const buttons = allNodes(root).filter((node) => node.tagName === 'BUTTON');
   assert.equal(buttons.length, 1);
   assert.equal(buttons[0].textContent, '人物詳細');

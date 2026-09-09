@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-COMPOUND-PREVIEW-CORE-R1-DEDUP-20260909T1518-SOL-N6K4Q8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_COMPOUND_ATTACK_PREVIEW_CORE_R1",
+  "acquireKey": "BATTLE-COMPOUND-PREVIEW-CORE-R1-20260909T1420-SOL-N6K4Q8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-DEDUP-COMPOUND-PREVIEW-20260909T1518",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "DIRECT-MAIN-OVERLAP-PR1366-PACKAGE-CORE-RUNTIME-ADAPTER",
+  "proceedToken": "PROCEED|BATTLE-COMPOUND-PREVIEW-CORE-R1-DEDUP-20260909T1518-SOL-N6K4Q8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260909T1518JST",
+  "authorizationBaseSha": "c8e050b401f838dbc674a9f8623770165b1671ca",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_COMPOUND_ATTACK_PREVIEW_CORE_R1",
+  "leaseAcquireKey": "BATTLE-COMPOUND-PREVIEW-CORE-R1-20260909T1420-SOL-N6K4Q8",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 15:12 JST",
+  "leaseUntilJst": "2026-09-09 16:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A648:L648",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-janken-compound-preview-core-r1-20260909; browser/battle-janken-compound-attack-preview-core.mjs; tests/battle-janken-compound-attack-preview-core.test.mjs; own transient PREACTION/check/PR/readback only. browser/battle-janken-slidepad-runtime-mount.mjs, browser/battle-screen-runtime-mount.mjs, browser/GAMEROAD.html, gameplay/rules/target-legality/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/battle-janken-compound-attack-preview-core.mjs",
+    "tests/battle-janken-compound-attack-preview-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-compound-attack-preview-core.mjs",
+    "tests/battle-janken-compound-attack-preview-core.test.mjs"
+  ],
+  "solutionSignature": "battle-janken/compound-preview/deduplicate-to-existing-package-core-plus-runtime-adapter",
+  "reuseDisposition": "REUSE_AS_IS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "DIRECT-CODE-COMPARE-PR1366-VS-PR1391-20260909",
+  "solutionSearchEvidence": [
+    "battle-janken-compound-attack-package-core.mjs already exports the same preview schema and caller-supplied complete package projection",
+    "battle-compound-attack-preview-runtime.mjs already consumes that projection and highlights exact opponent plus Shield without target or legality recomputation",
+    "the newly added battle-janken-compound-attack-preview-core.mjs has no live consumer and duplicates the existing package-core preview responsibility",
+    "safe outcome is deletion of the new isolated module/test pair while retaining PR1366 and its existing package/runtime path"
+  ]
+}

@@ -8,10 +8,12 @@ import {
   createBattlePlayableHandRowRouletteController,
   createBattlePlayableHandRowRouletteModel,
   prepareBattlePlayableHandRowRouletteCommit,
+  projectBattlePlayableHandRowRouletteRenderState,
   reconcileBattlePlayableHandRowRouletteModel,
   selectBattlePlayableHandRowRouletteCard,
   stepBattlePlayableHandRowRoulette,
 } from '../browser/battle-playable-hand-row-roulette-runtime.mjs';
+import { projectBattlePlayableHandAffordance } from '../browser/battle-janken-slidepad-runtime-mount.mjs';
 
 const presentations = {
   a: { label: 'Aカード', suit: '♣', number: 3 },
@@ -218,4 +220,40 @@ test('reconcile preserves a still-valid focus and fails over to the first fresh 
     cardPresentationById: presentations,
   });
   assert.equal(model.selectedCardId, 'c');
+});
+
+
+test('exact-six live render is the remaining ordinary hand only and never includes janken-reserved cards', () => {
+  const hand = ['j-rock', 'j-scissors', 'j-paper', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6'];
+  const projection = projectBattlePlayableHandAffordance({
+    handCardIds: hand,
+    activeRole: 'road',
+    activeOptionValues: hand,
+    reservedCardIds: ['j-rock', 'j-scissors', 'j-paper'],
+    phasePlayable: true,
+  });
+  const cardPresentationById = Object.fromEntries(hand.map((id) => [id, { label: id }]));
+  const model = createBattlePlayableHandRowRouletteModel({
+    candidateCardIds: projection.candidateCardIds,
+    cardPresentationById,
+    anchorCardId: 'r3',
+  });
+  const render = projectBattlePlayableHandRowRouletteRenderState(model);
+
+  assert.deepEqual(projection.candidateCardIds, ['r1', 'r2', 'r3', 'r4', 'r5', 'r6']);
+  assert.equal(render.mode, 'ORECA_SIX_ROW');
+  assert.deepEqual(render.rows.map((row) => row.cardId), ['r1', 'r2', 'r3', 'r4', 'r5', 'r6']);
+  assert.equal(render.rows.find((row) => row.selected)?.cardId, 'r3');
+  assert.equal(render.rows.some((row) => row.cardId.startsWith('j-')), false);
+});
+
+test('non-six live render preserves the existing rolling-window rows without filler cards', () => {
+  const model = createBattlePlayableHandRowRouletteModel({
+    candidateCardIds: ['a', 'b', 'c', 'd', 'e'],
+    cardPresentationById: presentations,
+    anchorCardId: 'c',
+  });
+  const render = projectBattlePlayableHandRowRouletteRenderState(model);
+  assert.equal(render.mode, 'EXISTING_RUNTIME_FALLBACK');
+  assert.deepEqual(render.rows, model.rows);
 });

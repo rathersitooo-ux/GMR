@@ -5,6 +5,9 @@ import {
   stepSlotRoll,
   wrapSlotRollIndex,
 } from './slidepad-slot-roll-core.mjs';
+import {
+  projectBattlePlayableHandRouletteOrecaPresentation,
+} from './battle-playable-hand-row-roulette-oreca-presentation-core.mjs';
 
 export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_SCHEMA = 'gameroad.battle-playable-hand-row-roulette.v1';
 export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_PLACEMENT = Object.freeze({
@@ -357,6 +360,28 @@ export function createBattlePlayableHandRowRouletteController({
   });
 }
 
+export function projectBattlePlayableHandRowRouletteRenderState(model) {
+  if (!model || model.schema !== BATTLE_PLAYABLE_HAND_ROW_ROULETTE_SCHEMA) {
+    throw new TypeError('model must be a Battle playable-hand row roulette model');
+  }
+  const oreca = projectBattlePlayableHandRouletteOrecaPresentation(model, { phase: 'IDLE' });
+  if (oreca.mode !== 'ORECA_SIX_ROW') {
+    return deepFreeze({
+      mode: 'EXISTING_RUNTIME_FALLBACK',
+      rows: model.rows,
+    });
+  }
+  const selectedIndex = Math.max(0, oreca.rows.findIndex((row) => row.selected));
+  const rows = oreca.rows.map((row, index) => Object.freeze({
+    ...row,
+    position: row.selected ? 'SELECTED' : index < selectedIndex ? 'BEFORE' : 'AFTER',
+  }));
+  return deepFreeze({
+    mode: 'ORECA_SIX_ROW',
+    rows: Object.freeze(rows),
+  });
+}
+
 export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_CSS = `
 section[data-screen="battle"] [data-battle-playable-hand-row-roulette-live="1"][data-battle-playable-hand-row-roulette="1"]{
   position:absolute;
@@ -416,6 +441,14 @@ section[data-screen="battle"] [data-battle-playable-hand-row-roulette-live="1"][
 [data-battle-playable-hand-row-roulette] .grBattleHandRouletteRow[data-position="BEFORE"],
 [data-battle-playable-hand-row-roulette] .grBattleHandRouletteRow[data-position="AFTER"]{
   opacity:.72;
+}
+[data-battle-playable-hand-row-roulette][data-oreca-six-row="true"] .grBattleHandRouletteRow{
+  opacity:var(--gr-oreca-row-opacity,.68);
+  transform:scale(var(--gr-oreca-row-scale,1));
+}
+[data-battle-playable-hand-row-roulette][data-oreca-six-row="true"] .grBattleHandRouletteRow[data-selected="true"]{
+  opacity:1;
+  transform:translateX(var(--gr-row-shift)) scale(var(--gr-oreca-row-scale,1.06));
 }
 [data-battle-playable-hand-row-roulette] .grBattleHandRouletteThumb{
   width:28px;height:28px;border-radius:7px;overflow:hidden;
@@ -477,8 +510,12 @@ export function renderBattlePlayableHandRowRoulette(host, model, {
 } = {}) {
   if (!host || !documentSource || !model || model.schema !== BATTLE_PLAYABLE_HAND_ROW_ROULETTE_SCHEMA) return false;
   installBattlePlayableHandRowRouletteStyle(documentSource);
+  const renderState = projectBattlePlayableHandRowRouletteRenderState(model);
+  const renderRows = renderState.rows;
   host.setAttribute('data-battle-playable-hand-row-roulette', '1');
-  host.setAttribute('data-empty', model.rows.length ? 'false' : 'true');
+  host.setAttribute('data-presentation-mode', renderState.mode);
+  host.setAttribute('data-oreca-six-row', renderState.mode === 'ORECA_SIX_ROW' ? 'true' : 'false');
+  host.setAttribute('data-empty', renderRows.length ? 'false' : 'true');
   host.setAttribute('data-reduced-motion', model.reducedMotion ? 'true' : 'false');
   host.setAttribute('data-low-perf', model.lowPerf ? 'true' : 'false');
   host.setAttribute('role', 'listbox');
@@ -488,13 +525,18 @@ export function renderBattlePlayableHandRowRoulette(host, model, {
   const rail = documentSource.createElement('div');
   rail.className = 'grBattleHandRouletteRail';
 
-  for (const row of model.rows) {
+  for (const row of renderRows) {
     const button = documentSource.createElement('button');
     button.type = 'button';
     button.className = 'grBattleHandRouletteRow';
     button.dataset.cardId = row.cardId;
     button.dataset.selected = row.selected ? 'true' : 'false';
     button.dataset.position = row.position;
+    if (renderState.mode === 'ORECA_SIX_ROW') {
+      button.dataset.motion = row.motion ?? 'STATIC';
+      button.style.setProperty('--gr-oreca-row-opacity', String(row.opacity ?? 1));
+      button.style.setProperty('--gr-oreca-row-scale', String(row.scale ?? 1));
+    }
     button.setAttribute('role', 'option');
     button.setAttribute('aria-selected', row.selected ? 'true' : 'false');
     button.setAttribute('aria-label', row.label);

@@ -28,6 +28,7 @@ jobs:
           test -s /tmp/card-focus-r1-runtime.patch
           git apply --3way /tmp/card-focus-r1-runtime.patch
           git show origin/sol/battle-card-focus-r1-20260909:tests/battle-card-focus-presentation.test.mjs > tests/battle-card-focus-presentation.test.mjs
+          git add -N tests/battle-card-focus-presentation.test.mjs
           mapfile -t changed < <(git diff --name-only | sort)
           printf '%s\n' "${changed[@]}"
           test "${#changed[@]}" -eq 2

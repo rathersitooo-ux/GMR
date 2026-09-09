@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-QUICK-SETTINGS-R1-20260910T0350-SOL-Q7M4N3",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_QUICK_SETTINGS_EXISTING_AUTHORITY_R1",
+  "acquireKey": "HOME-QUICK-SETTINGS-R1-20260910T0350-SOL-Q7M4N3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_HOME_SETTINGS_USER_EXPLICIT_AND_LIVE_HOME_SELECTOR_20260910T0350JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "FRESH_HOME_SHELL_LIVE_IMPORT_AND_OWNER_FREE_EXACT_TARGET_20260910T0350JST",
+  "proceedToken": "PROCEED|HOME-QUICK-SETTINGS-R1-20260910T0350-SOL-Q7M4N3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|home-quick-settings|existing-authority|active-lease",
+  "authorizationBaseSha": "dbcda432ea6b8b63d0b277191b17f4eefa41727e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_QUICK_SETTINGS_EXISTING_AUTHORITY_R1",
+  "leaseAcquireKey": "HOME-QUICK-SETTINGS-R1-20260910T0350-SOL-Q7M4N3",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:50 JST",
+  "leaseUntilJst": "2026-09-10 04:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A912:L912",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/home-quick-settings-r1-20260910; browser/home-shell-presentation-core.mjs; NEW tests/home-quick-settings-live.focused.test.mjs; transient .github/workflows/zz-temp-home-quick-settings-r1.yml; transient tools/temp-home-quick-settings-r1.py; own transient data/preaction-authorizations/HOME-QUICK-SETTINGS-R1-20260910T0350-SOL-Q7M4N3.json only. READ_ONLY: browser/GAMEROAD.html, browser/home-boot-runtime-base-r3.mjs, browser/home-boot-runtime-mount.mjs, deploy/cloudflare/scripts/build.mjs, detailed settings persistence/state, gameplay/rules/save/economy/network.",
+  "solutionSignature": "HOME_QUICK_SETTINGS_EXISTING_CANONICAL_CONTROLS_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "HOME_SETTINGS_EXISTING_NAVIGATION_AND_HOME_SHELL_LIVE_USE_SITE",
+  "solutionSearchEvidence": [
+    "The current Home utility already exposes a visible Settings control at .codexHomeUtilities .homeUtilityBtn[data-go=settings].",
+    "The current Home boot runtime imports createHomeShellState from browser/home-shell-presentation-core.mjs, so the existing packaged Home shell is an actual player-facing use site.",
+    "The user explicitly requires a compact Settings surface first while retaining the same full Settings authority and forbids a second settings store.",
+    "The repair will mirror and mutate only discovered canonical detailed-settings controls by dispatching their existing input/change path; it will not persist its own settings values.",
+    "Any required setting without a canonical control remains visibly unavailable rather than being silently omitted or invented.",
+    "Detailed Settings will reuse the existing Settings navigation by re-triggering the original Home control under a one-shot bypass, not by defining a new route.",
+    "browser/GAMEROAD.html, Home boot runtimes, public build configuration, gameplay, save, economy and network remain read-only."
+  ],
+  "scope": [
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-quick-settings-live.focused.test.mjs",
+    ".github/workflows/zz-temp-home-quick-settings-r1.yml",
+    "tools/temp-home-quick-settings-r1.py"
+  ],
+  "leaseScope": [
+    "browser/home-shell-presentation-core.mjs",
+    "tests/home-quick-settings-live.focused.test.mjs",
+    ".github/workflows/zz-temp-home-quick-settings-r1.yml",
+    "tools/temp-home-quick-settings-r1.py"
+  ]
+}

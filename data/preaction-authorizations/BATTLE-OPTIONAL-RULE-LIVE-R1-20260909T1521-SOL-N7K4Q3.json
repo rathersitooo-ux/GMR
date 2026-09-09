@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-OPTIONAL-RULE-LIVE-R1-20260909T1521-SOL-N7K4Q3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_OPTIONAL_RULE_LIVE_CONSUMER_R1",
+  "acquireKey": "BATTLE-OPTIONAL-RULE-LIVE-R1-20260909T1521-SOL-N7K4Q3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ROW1374_PLUS_MAIN_44E346_OPTIONAL_LIVE_GAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "STATIC_EXISTING_SLIDEPAD_ROULETTE_GATE_AND_OPTIONAL_AUTHORITY_CORE",
+  "proceedToken": "PROCEED|BATTLE-OPTIONAL-RULE-LIVE-R1-20260909T1521-SOL-N7K4Q3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "44e346759d71326ce1126dd309b2f223bd644311",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_OPTIONAL_RULE_LIVE_CONSUMER_R1",
+  "leaseAcquireKey": "BATTLE-OPTIONAL-RULE-LIVE-R1-20260909T1521-SOL-N7K4Q3",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 15:21 JST",
+  "leaseUntilJst": "2026-09-09 16:21 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A678:L678",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-optional-rule-live-r1-20260909; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-optional-rule-live-gate.test.mjs (new); own transient data/preaction-authorizations/BATTLE-OPTIONAL-RULE-LIVE-R1-20260909T1521-SOL-N7K4Q3.json only. browser/GAMEROAD.html, browser/battle-new-base-live-consumer-adapter.mjs, browser/battle-playable-hand-row-roulette-runtime.mjs, dice/movement cores, gameplay/rules/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-optional-rule-live-gate.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-optional-rule-live-gate.test.mjs"
+  ],
+  "solutionSignature": "Make the existing SlidePad roulette mount consume the merged optional-rule authority gate so Basic remains zero-delta and explicit resolved authority is required for live roulette enablement.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MAIN_44E346_EXISTING_OPTIONAL_GATE_AND_ROULETTE_RUNTIME_20260909",
+  "solutionSearchEvidence": [
+    "browser/battle-optional-rule-activation-core.mjs: merged explicit authoritative enablement gate",
+    "browser/battle-janken-slidepad-runtime-mount.mjs: rouletteEnabled defaults false and currently gates the existing mount",
+    "browser/battle-playable-hand-row-roulette-runtime.mjs: existing candidate/card action authority reuse",
+    "Drive GAMEROAD 全作業一覧 row1374 OPTIONAL_RULE_LAYER_USER_CORRECTION_20260909",
+    "Drive current enabled-rule search: no concrete current dice/roulette-enabled regulation or map authority found"
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-ORDER-SLIDEPAD-PRESENTER-R3-20260910T0250-SOL-RE-Q6M4P4",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_ORDER_SLIDEPAD_PRESENTER_R3",
+  "acquireKey": "BATTLE-JANKEN-ORDER-SLIDEPAD-PRESENTER-R3-20260910T0250-SOL-RE-Q6M4P4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R1_PRODUCT_TESTS_PASS_REQUIRED_GATE_FAILED_ONLY_UNCLASSIFIED_FOCUSED_TEST_PATH_34356104137",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_SURGICAL_EXECUTOR_34355881014_FOCUSED_PLUS_EXISTING_SLIDEPAD_TESTS_PASS",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-ORDER-SLIDEPAD-PRESENTER-R3-20260910T0250-SOL-RE-Q6M4P4|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|same-workunit-clean-rebuild|existing-classified-test-pair|active-lease",
+  "authorizationBaseSha": "c0451f77d2195374fd6e8edcd51c3c8cadf0a772",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_ORDER_SLIDEPAD_PRESENTER_R3",
+  "leaseAcquireKey": "BATTLE-JANKEN-ORDER-SLIDEPAD-PRESENTER-R3-20260910T0250-SOL-RE-Q6M4P4",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 02:52 JST",
+  "leaseUntilJst": "2026-09-10 03:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A875:L875",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-janken-order-slidepad-presenter-r3-20260910; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient .github/workflows/zz-temp-battle-janken-order-presenter-r3.yml; transient tools/temp-battle-janken-order-presenter-r3.py; own transient data/preaction-authorizations/BATTLE-JANKEN-ORDER-SLIDEPAD-PRESENTER-R3-20260910T0250-SOL-RE-Q6M4P4.json only. PR#1449/R1 branch READ_ONLY donor. Existing battle-janken-order-live-adapter/order-chain/order-motion/action-order/triad-resolver READ_ONLY. browser/GAMEROAD.html, deploy/cloudflare/scripts/build.mjs, battle-screen runtime, gameplay/rules/target/Shield/Hand3/save/network/economy READ_ONLY.",
+  "solutionSignature": "BATTLE_JANKEN_ORDER_SLIDEPAD_PRESENTATION_TRANSPORT_V1_CLEAN_CLASSIFIED_TEST_REBUILD",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R1_ACCEPTED_PRESENTATION_IMPLEMENTATION_PLUS_EXISTING_CONVENTIONAL_SLIDEPAD_TEST_PAIR_20260909",
+  "solutionSearchEvidence": [
+    "R1 product implementation was not merged; its surgical executor focused test and existing SlidePad regression both passed",
+    "R1 Required Gate passed PRE_ACTION, conventional Node tests, package provenance and JIT evidence, failing only because a separately named new test path was unclassified",
+    "fresh main c0451f77 includes later card-focus integration but still has no BATTLE_JANKEN_ORDER_SLIDEPAD_PRESENTER_SCHEMA, so the order presenter is not already applied",
+    "existing tests/battle-janken-slidepad-runtime-mount.test.mjs is the conventional same-name test pair for browser/battle-janken-slidepad-runtime-mount.mjs",
+    "R3 keeps the same presentation-only product semantics and moves focused assertions into the existing classified test file instead of widening the gate",
+    "no sorting/comparison/winner/target/Shield/gameplay/timing authority is added"
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-order-presenter-r3.yml",
+    "tools/temp-battle-janken-order-presenter-r3.py",
+    "data/preaction-authorizations/BATTLE-JANKEN-ORDER-SLIDEPAD-PRESENTER-R3-20260910T0250-SOL-RE-Q6M4P4.json"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-order-presenter-r3.yml",
+    "tools/temp-battle-janken-order-presenter-r3.py",
+    "data/preaction-authorizations/BATTLE-JANKEN-ORDER-SLIDEPAD-PRESENTER-R3-20260910T0250-SOL-RE-Q6M4P4.json"
+  ]
+}

@@ -2,6 +2,7 @@ import { planBattleConveyor } from './battle-conveyor-presentation-core.mjs';
 
 const MODEL_SCHEMA = 'gameroad.battle-screen-presentation.v1';
 const TIMELINE_SCHEMA = 'gameroad.battle-screen-timeline.v1';
+const COMPOUND_ATTACK_SCHEMA = 'gameroad.battle-janken-compound-attack-package.v1';
 const RETURN_INTENTS = new Set(['MATCH_PLAN', 'RESULT']);
 const PLAN_KINDS = new Set(['partner_cutin', 'reveal', 'attack', 'ability', 'compare4', 'finisher', 'settle']);
 const LANE_ROLES = new Set(['idle', 'source', 'target', 'winner', 'revealed']);
@@ -21,6 +22,15 @@ function nonEmptyString(value, code) {
 function optionalString(value, code) {
   if (value == null) return null;
   return nonEmptyString(value, code);
+}
+
+function cloneAcceptedPath(path) {
+  if (!Array.isArray(path) || path.length === 0) throw new TypeError('BATTLE_SCREEN_BOARD_RETURN_PATH_REQUIRED');
+  try {
+    return JSON.parse(JSON.stringify(path));
+  } catch {
+    throw new TypeError('BATTLE_SCREEN_BOARD_RETURN_PATH_INVALID');
+  }
 }
 
 function normalizeParticipants(participants) {
@@ -79,6 +89,9 @@ function normalizeBoardReturn(plan, participantIds) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     throw new TypeError('BATTLE_SCREEN_BOARD_RETURN_PACKAGE_INVALID');
   }
+  if (raw.schema !== COMPOUND_ATTACK_SCHEMA) {
+    throw new TypeError('BATTLE_SCREEN_BOARD_RETURN_PACKAGE_SCHEMA');
+  }
 
   const cardId = nonEmptyString(raw.cardId, 'BATTLE_SCREEN_BOARD_RETURN_CARD_INVALID');
   const jankenHand = nonEmptyString(raw.jankenHand, 'BATTLE_SCREEN_BOARD_RETURN_HAND_INVALID');
@@ -87,18 +100,19 @@ function normalizeBoardReturn(plan, participantIds) {
 
   const shieldLane = nonEmptyString(raw.shieldLane, 'BATTLE_SCREEN_BOARD_RETURN_SHIELD_INVALID').toUpperCase();
   if (!SHIELD_LANES.has(shieldLane)) throw new TypeError('BATTLE_SCREEN_BOARD_RETURN_SHIELD_UNKNOWN');
-  const route = optionalString(raw.route, 'BATTLE_SCREEN_BOARD_RETURN_ROUTE_INVALID');
-  const direction = optionalString(raw.direction, 'BATTLE_SCREEN_BOARD_RETURN_DIRECTION_INVALID');
-  if (!route && !direction) throw new TypeError('BATTLE_SCREEN_BOARD_RETURN_PATH_REQUIRED');
 
   return deepFreeze({
     eventId: plan.eventId,
+    compoundPackageSchema: COMPOUND_ATTACK_SCHEMA,
     cardId,
     jankenHand,
-    route,
-    direction,
+    path: cloneAcceptedPath(raw.path),
+    direction: optionalString(raw.direction, 'BATTLE_SCREEN_BOARD_RETURN_DIRECTION_INVALID'),
+    roadId: optionalString(raw.roadId, 'BATTLE_SCREEN_BOARD_RETURN_ROAD_INVALID'),
+    battleId: optionalString(raw.battleId, 'BATTLE_SCREEN_BOARD_RETURN_BATTLE_INVALID'),
     opponentId,
     shieldLane,
+    shieldRef: optionalString(raw.shieldRef, 'BATTLE_SCREEN_BOARD_RETURN_SHIELD_REF_INVALID'),
     destinationKey: `${opponentId}:${shieldLane}`,
     source: 'accepted_public_compound_attack_package',
     visualIntent: 'resolution_to_committed_shield',
@@ -287,6 +301,7 @@ export function auditBattleScreenModel(model) {
   }
   if (model?.boardReturn != null) {
     if (model.phase !== 'settle') defects.push('BOARD_RETURN_PHASE');
+    if (model.boardReturn.compoundPackageSchema !== COMPOUND_ATTACK_SCHEMA) defects.push('BOARD_RETURN_PACKAGE_SCHEMA');
     if (!SHIELD_LANES.has(model.boardReturn.shieldLane)) defects.push('BOARD_RETURN_SHIELD');
     if (!model.lanes.some(row => row.id === model.boardReturn.opponentId && row.role === 'target')) defects.push('BOARD_RETURN_TARGET');
     if (model.boardReturn.effectMutationClaimed !== false) defects.push('BOARD_RETURN_EFFECT_AUTHORITY');
@@ -307,7 +322,8 @@ export const BATTLE_SCREEN_PRESENTATION = deepFreeze({
   laneCount: 4,
   planOwner: 'CALLER',
   battleEventAuthority: 'battle-conveyor-presentation-core accepted public events',
-  boardReturnAuthority: 'EXPLICIT_COMPOUND_ATTACK_PACKAGE_FROM_ACCEPTED_SETTLE_EVENT_ONLY',
+  compoundAttackPackageSchema: COMPOUND_ATTACK_SCHEMA,
+  boardReturnAuthority: 'NORMALIZED_COMPOUND_ATTACK_PACKAGE_FROM_ACCEPTED_SETTLE_EVENT_ONLY',
   boardReturnEffectPolicy: 'NO_EFFECT_INFERENCE_OR_GAME_STATE_WRITE',
   shieldLanes: Object.freeze([...SHIELD_LANES]),
   requiredAnchors: ['battlePhaseSurface', 'battleResolution'],

@@ -13,6 +13,9 @@ import {
 import {
   clearBattlePrecommitSelection,
 } from './battle-precommit-clear-core.mjs';
+import {
+  projectBattleOptionalRuleActivation,
+} from './battle-optional-rule-activation-core.mjs';
 
 const JANKEN_HANDS = new Set(['ROCK', 'SCISSORS', 'PAPER']);
 
@@ -101,7 +104,9 @@ function precommitClearResult({
  * - the existing Battle transport performs the authoritative commit;
  * - the existing precommit-clear policy projects caller-owned plan/target draft
  *   cancellation while this adapter owns only its local staged compound package;
- * - Mana recovery is an opaque caller-owned operation, including its amount.
+ * - Mana recovery is an opaque caller-owned operation, including its amount;
+ * - optional dice/roulette activation is projected only from a caller-resolved
+ *   canonical authority context by the existing optional-rule activation core.
  *
  * The adapter composes those existing authorities, preserves one immutable round
  * slot snapshot, stages the complete compound package, re-reads it immediately
@@ -116,6 +121,7 @@ export function createBattleNewBaseLiveConsumerAdapter({
   applyExistingPrecommitDraft = null,
   readManaRecoveryOperation = null,
   applyExistingManaRecovery = null,
+  readResolvedOptionalRuleAuthority = null,
 } = {}) {
   requiredFunction(readRoundAuthority, 'readRoundAuthority');
   requiredFunction(readAuthoritativeHand3Uint32, 'readAuthoritativeHand3Uint32');
@@ -134,6 +140,9 @@ export function createBattleNewBaseLiveConsumerAdapter({
   if (readManaRecoveryOperation !== null) {
     requiredFunction(readManaRecoveryOperation, 'readManaRecoveryOperation');
     requiredFunction(applyExistingManaRecovery, 'applyExistingManaRecovery');
+  }
+  if (readResolvedOptionalRuleAuthority !== null) {
+    requiredFunction(readResolvedOptionalRuleAuthority, 'readResolvedOptionalRuleAuthority');
   }
 
   let roundSnapshot = null;
@@ -322,6 +331,13 @@ export function createBattleNewBaseLiveConsumerAdapter({
       });
     },
 
+    async projectOptionalRuleActivation() {
+      const resolvedAuthorityContext = readResolvedOptionalRuleAuthority === null
+        ? null
+        : await readResolvedOptionalRuleAuthority();
+      return projectBattleOptionalRuleActivation(resolvedAuthorityContext);
+    },
+
     status() {
       return Object.freeze({
         roundId: roundSnapshot?.roundId ?? null,
@@ -330,6 +346,7 @@ export function createBattleNewBaseLiveConsumerAdapter({
         commitInFlight,
         precommitClearConnected: readExistingPrecommitState !== null,
         manaRecoveryConnected: readManaRecoveryOperation !== null,
+        optionalRuleAuthorityConnected: readResolvedOptionalRuleAuthority !== null,
       });
     },
   });
@@ -354,6 +371,17 @@ export const BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT = Object.freeze({
   manaRecoveryAmountAuthority: 'CALLER',
   computesManaRecoveryAmount: false,
   schedulesManaRecovery: false,
+  optionalRuleActivationPolicy: 'EXISTING_BATTLE_OPTIONAL_RULE_ACTIVATION_CORE',
+  optionalRuleAuthority: 'CALLER_RESOLVED_CONTEXT',
+  basicDiceEnabled: false,
+  basicRouletteEnabled: false,
+  resolvesOptionalRulePrecedence: false,
+  executesDice: false,
+  executesRoulette: false,
+  computesMovementFromOptionalRules: false,
+  computesRouletteMembership: false,
+  optionalRuleGameStateWrite: false,
+  optionalRuleUiWrite: false,
   hiddenHandSemantics: 'NOT_IMPLEMENTED_UNRESOLVED',
   diceRequiredForCoreBattle: false,
   rouletteRequiredForCoreBattle: false,

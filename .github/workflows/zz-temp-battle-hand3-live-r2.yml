@@ -9,44 +9,132 @@ permissions:
   contents: write
 
 jobs:
-  inspect:
+  apply:
+    if: github.event.head_commit.message != 'Battle: Hand3 external snapshot seam'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: sol/battle-hand3-live-r2-20260910
           fetch-depth: 0
-      - name: Inspect bounded current HTML seams
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply bounded SlidePad seam
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          import re
-          p = Path('browser/GAMEROAD.html')
-          lines = p.read_text(encoding='utf-8').splitlines()
-          patterns = [
-            r'battle-janken-slidepad-runtime-mount',
-            r'mountBattleJankenSlidePadRuntime',
-            r'battle-new-base-live-consumer-adapter',
-            r'createBattleNewBaseLiveConsumerAdapter',
-            r'roundNo',
-            r'player\.hand|\.hand\b|hand:',
-            r'crypto\.getRandomValues|getRandomValues',
-            r'rawMatch|matchState|currentMatch|battleState',
-            r'sendExistingBattleAction|sendBattle|battleAction|submitBattle|commitBattle',
-            r'battleSelect|roadSelect|targetBox|shield',
-          ]
-          seen = set()
-          for pat in patterns:
-            rx = re.compile(pat, re.I)
-            hits = [i for i, line in enumerate(lines) if rx.search(line)]
-            print(f'=== {pat} hits={len(hits)} ===')
-            for i in hits[:16]:
-              start=max(0,i-3); end=min(len(lines),i+4)
-              key=(start,end)
-              if key in seen: continue
-              seen.add(key)
-              for j in range(start,end): print(f'{j+1}:{lines[j][:1200]}')
-              print('---')
+
+          runtime = Path('browser/battle-janken-slidepad-runtime-mount.mjs')
+          s = runtime.read_text(encoding='utf-8')
+          marker = 'BATTLE_HAND3_EXTERNAL_SNAPSHOT_R2'
+          if marker not in s:
+              old = "  ensureRoundStartJankenSlotAssignment,\n  NEW_BASE_ROUND_START_JANKEN_SLOT_STATUS,\n"
+              new = "  ensureRoundStartJankenSlotAssignment,\n  NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE,\n  NEW_BASE_ROUND_START_JANKEN_SLOT_STATUS,\n"
+              if old not in s: raise SystemExit('missing assignment import anchor')
+              s = s.replace(old, new, 1)
+
+              old = "  const canonical = canonicalRoundId(roundId);\n  const cards = normalizedHand(hand);\n"
+              new = "  const canonical = canonicalRoundId(roundId);\n  const cards = normalizedHand(hand);\n  const assignmentMode = currentSnapshot?.assignmentMode\n    ?? NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.LEGACY_SUIT_BOUND;\n"
+              if old not in s: raise SystemExit('missing build model anchor')
+              s = s.replace(old, new, 1)
+
+              old = "    currentSnapshot,\n    roundId: canonical,\n    hand: cards.map(({ id, suit }) => ({ id, suit })),\n    pickDuplicateIndex,\n"
+              new = "    currentSnapshot,\n    roundId: canonical,\n    hand: cards.map(({ id, suit }) => ({ id, suit })),\n    assignmentMode,\n    pickDuplicateIndex,\n"
+              if old not in s: raise SystemExit('missing ensure call anchor')
+              s = s.replace(old, new, 1)
+
+              old = "export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battleRoot = null, rouletteEnabled = false } = {}) {\n  const documentRef = globalRef?.document;\n"
+              new = "export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {\n  battleRoot = null,\n  rouletteEnabled = false,\n  readCurrentJankenAssignmentSnapshot = null,\n} = {}) {\n  // BATTLE_HAND3_EXTERNAL_SNAPSHOT_R2: when the current authority provider is connected,\n  // this runtime consumes only its immutable CURRENT_HAND3_POLICY snapshot. It never\n  // invents entropy or falls back to the legacy native-suit mapping while waiting.\n  const externalAssignmentConnected = readCurrentJankenAssignmentSnapshot !== null;\n  if (externalAssignmentConnected && typeof readCurrentJankenAssignmentSnapshot !== 'function') {\n    throw new TypeError('readCurrentJankenAssignmentSnapshot must be a function or null');\n  }\n  const documentRef = globalRef?.document;\n"
+              if old not in s: raise SystemExit('missing mount signature anchor')
+              s = s.replace(old, new, 1)
+
+              old = "  function render() {\n    if (destroyed) return;\n    bindHandInput();\n    const roundText = root.querySelector?.('#roundNo')?.textContent;\n    const hand = readHand(globalRef, root);\n"
+              new = "  function setJankenAssignmentUnavailable() {\n    assignment = null;\n    model = null;\n    host.dataset.assignmentReady = 'false';\n    host.dataset.assignmentMode = NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY;\n    setArmed(null);\n    renderLoadPreview(null);\n    clearPlayableHandAffordance(root);\n    rowRouletteHost.hidden = true;\n    rowRouletteRuntime?.refresh?.();\n    for (const node of handCardNodes(root)) restoreHandNode(node);\n    for (const [handName, node] of slotNodes) {\n      node.disabled = true;\n      node.dataset.cardId = '';\n      node.setAttribute('aria-label', `${SLOT_VIEW[handName].symbol} ${SLOT_VIEW[handName].hand} 割当待機`);\n      const cardText = node.querySelector('.grJankenSlidePadCard');\n      if (cardText) cardText.textContent = '待機';\n    }\n    return null;\n  }\n\n  function render() {\n    if (destroyed) return;\n    bindHandInput();\n    const roundText = root.querySelector?.('#roundNo')?.textContent;\n    const hand = readHand(globalRef, root);\n"
+              if old not in s: raise SystemExit('missing render anchor')
+              s = s.replace(old, new, 1)
+
+              old = "    model = buildBattleJankenSlidePadModel({\n      roundId: roundText,\n      hand,\n      currentSnapshot: assignment,\n      pickDuplicateIndex: (request) => entropyIndex(globalRef, request),\n    });\n    assignment = model.assignment;\n"
+              new = "    const canonical = canonicalRoundId(roundText);\n    let renderSnapshot = assignment;\n    if (externalAssignmentConnected) {\n      let suppliedSnapshot = null;\n      try {\n        suppliedSnapshot = readCurrentJankenAssignmentSnapshot(Object.freeze({\n          roundId: canonical,\n          hand: Object.freeze(hand.map(({ id, suit }) => Object.freeze({ id, suit }))),\n        }));\n      } catch {}\n      const validCurrentSnapshot = suppliedSnapshot\n        && suppliedSnapshot.roundId === canonical\n        && suppliedSnapshot.assignmentMode === NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY\n        && Object.isFrozen(suppliedSnapshot);\n      if (!validCurrentSnapshot) {\n        setJankenAssignmentUnavailable();\n        return;\n      }\n      renderSnapshot = assignment?.roundId === canonical\n        && assignment.assignmentMode === NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY\n        ? assignment\n        : suppliedSnapshot;\n    }\n    try {\n      model = buildBattleJankenSlidePadModel({\n        roundId: roundText,\n        hand,\n        currentSnapshot: renderSnapshot,\n        pickDuplicateIndex: externalAssignmentConnected\n          ? undefined\n          : (request) => entropyIndex(globalRef, request),\n      });\n    } catch (error) {\n      if (!externalAssignmentConnected) throw error;\n      setJankenAssignmentUnavailable();\n      return;\n    }\n    assignment = model.assignment;\n    host.dataset.assignmentReady = 'true';\n    host.dataset.assignmentMode = assignment?.assignmentMode ?? '';\n"
+              if old not in s: raise SystemExit('missing model render anchor')
+              s = s.replace(old, new, 1)
+
+              runtime.write_text(s, encoding='utf-8')
+
+          test_path = Path('tests/battle-janken-slidepad-runtime-mount.test.mjs')
+          t = test_path.read_text(encoding='utf-8')
+          test_marker = '// BATTLE_HAND3_EXTERNAL_SNAPSHOT_R2_TESTS'
+          if test_marker not in t:
+              t += r'''
+
+// BATTLE_HAND3_EXTERNAL_SNAPSHOT_R2_TESTS
+
+test('CURRENT_HAND3_POLICY snapshot drives fixed RSP slots without consulting native suit', async () => {
+  const {
+    createRoundStartJankenSlotAssignment,
+    NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE,
+  } = await import('../browser/new-base-round-start-janken-slot-assignment-core.mjs');
+  const currentHand = [
+    { id: 'alpha', suit: 'SP', label: 'Alpha' },
+    { id: 'beta', suit: 'CL', label: 'Beta' },
+    { id: 'gamma', suit: 'DI', label: 'Gamma' },
+  ];
+  const snapshot = createRoundStartJankenSlotAssignment({
+    roundId: 'battle-round:21',
+    hand: currentHand.map(({ id, suit }) => ({ id, suit })),
+    assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
+    assignedCardIdsByJankenHand: {
+      ROCK: 'gamma',
+      SCISSORS: 'alpha',
+      PAPER: 'beta',
+    },
+  });
+  const model = buildBattleJankenSlidePadModel({
+    roundId: '21',
+    hand: currentHand,
+    currentSnapshot: snapshot,
+    pickDuplicateIndex: () => { throw new Error('legacy entropy must not be consulted'); },
+  });
+  assert.strictEqual(model.assignment, snapshot);
+  assert.equal(model.assignment.assignmentMode, 'CURRENT_HAND3_POLICY');
+  assert.deepEqual(model.slots.map((slot) => [slot.jankenHand, slot.cardId]), [
+    ['ROCK', 'gamma'],
+    ['SCISSORS', 'alpha'],
+    ['PAPER', 'beta'],
+  ]);
+  assert.deepEqual(model.ordinaryHandCardIds, []);
+});
+
+test('connected external Hand3 snapshot provider fails closed instead of using SlidePad entropy fallback', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /readCurrentJankenAssignmentSnapshot = null/);
+  assert.match(source, /externalAssignmentConnected[\s\S]*setJankenAssignmentUnavailable\(\);[\s\S]*return;/);
+  assert.match(source, /suppliedSnapshot\.assignmentMode === NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE\.CURRENT_HAND3_POLICY/);
+  assert.match(source, /pickDuplicateIndex: externalAssignmentConnected[\s\S]*\? undefined[\s\S]*: \(request\) => entropyIndex/);
+  assert.match(source, /host\.dataset\.assignmentReady = 'false'/);
+});
+'''
+              test_path.write_text(t, encoding='utf-8')
           PY
+          node --check browser/battle-janken-slidepad-runtime-mount.mjs
+          node --test tests/battle-janken-slidepad-runtime-mount.test.mjs
+          git diff --check
+          mapfile -t changed < <(git diff --name-only | sort)
+          printf '%s\n' "${changed[@]}"
+          test "${#changed[@]}" -eq 2
+          test "${changed[0]}" = 'browser/battle-janken-slidepad-runtime-mount.mjs'
+          test "${changed[1]}" = 'tests/battle-janken-slidepad-runtime-mount.test.mjs'
+      - name: Commit product delta only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs
+          git diff --cached --check
+          git diff --cached --quiet && exit 1 || true
+          git commit -m 'Battle: Hand3 external snapshot seam'
+          git push origin HEAD:sol/battle-hand3-live-r2-20260910

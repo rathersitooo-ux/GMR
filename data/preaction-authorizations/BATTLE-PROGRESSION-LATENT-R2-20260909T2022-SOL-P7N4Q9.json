@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PROGRESSION-LATENT-R2-20260909T2022-SOL-P7N4Q9",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PROGRESSION_LATENT_PRESENTATION_R2",
+  "acquireKey": "BATTLE-PROGRESSION-LATENT-R2-20260909T2022-SOL-P7N4Q9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_GOAL_PATH_AND_FLANORA_SEVEN_STAGE_PRESENTATION_SEAMS_20260909T2022JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PURE_TWO_FILE_PRESENTATION_CORE_NO_LIVE_RUNTIME_MUTATION",
+  "proceedToken": "PROCEED|BATTLE-PROGRESSION-LATENT-R2-20260909T2022-SOL-P7N4Q9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|progression-seven-stage|latent-future-stages|active-lease",
+  "authorizationBaseSha": "a7059915e710482efc6d7afe4adf2f6114e77a06",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PROGRESSION_LATENT_PRESENTATION_R2",
+  "leaseAcquireKey": "BATTLE-PROGRESSION-LATENT-R2-20260909T2022-SOL-P7N4Q9",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 20:22 JST",
+  "leaseUntilJst": "2026-09-09 21:22 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A742:L742",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-progression-latent-r2-20260909; browser/new-base-progression-lane-presentation-core.mjs (new); tests/new-base-progression-lane-presentation-core.test.mjs (new); own transient data/preaction-authorizations/BATTLE-PROGRESSION-LATENT-R2-20260909T2022-SOL-P7N4Q9.json only. browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs; battle-screen/janken/camera/controlled-character/GOAL/Road/Flanora live runtimes; gameplay/rules/target/movement/save/economy/network READ_ONLY. Existing new-base-goal-path-presentation-core.mjs and new-base-flanora-board-surface-runtime.mjs READ_ONLY reuse inputs.",
+  "solutionSignature": "BATTLE_PROGRESSION_LATENT_PRESENTATION_COMPOSE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_GOAL_PATH_PRESENTATION_PLUS_FLANORA_SEVEN_STEP_IDS_AND_EXPIRED_R1_ABSENCE_20260909T2022JST",
+  "solutionSearchEvidence": [
+    "Current browser/new-base-goal-path-presentation-core.mjs already carries caller-authoritative straightCardCount and connectedToGoal while explicitly owning no movement, legality, result, or game-state authority.",
+    "Current browser/new-base-flanora-board-surface-runtime.mjs already defines exactly seven presentation ROAD step identities per participant lane as road:<participantId>:<laneIndex>:<1..7>.",
+    "The existing Flanora surface currently renders all seven step nodes with the same open-looking dot treatment, so a pure projection layer is sufficient to distinguish established progress from future latent stages without creating a second board engine.",
+    "Expired R1 lease BATTLE-PROGRESSION-LATENT-R1-20260909T1652-SOL-P7N4Q8 has no surviving branch and current main has no browser/new-base-progression-lane-presentation-core.mjs, so this is recovery of an omitted slice rather than duplicate construction.",
+    "Current camera live owner controls browser/GAMEROAD.html and deploy/cloudflare/scripts/build.mjs, therefore R2 deliberately stops at a pure reusable component and focused test with live mount deferred."
+  ],
+  "scope": [
+    "browser/new-base-progression-lane-presentation-core.mjs",
+    "tests/new-base-progression-lane-presentation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-progression-lane-presentation-core.mjs",
+    "tests/new-base-progression-lane-presentation-core.test.mjs"
+  ]
+}

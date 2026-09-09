@@ -19,9 +19,9 @@ env:
 
 jobs:
   preview:
-    name: Build and deploy exact shared preview
+    name: Build, deploy, and capture exact shared preview
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Checkout exact target source
         uses: actions/checkout@v4
@@ -108,10 +108,10 @@ jobs:
             --branch "$PREVIEW_BRANCH" \
             --commit-hash "$TARGET_SHA" 2>&1)"
           printf '%s\n' "$OUTPUT"
-          URL="$(printf '%s\n' "$OUTPUT" | grep -Eo 'https://[^[:space:]]+\.pages\.dev' | tail -n 1 || true)"
-          test -n "$URL" || { echo '::error::Preview deployment URL missing'; exit 1; }
+          ATOMIC_URL="$(printf '%s\n' "$OUTPUT" | grep -Eo 'https://[0-9a-f]+\.[^[:space:]]+\.pages\.dev' | head -n 1 || true)"
           ALIAS_URL="https://${PREVIEW_BRANCH}.${PAGES_PROJECT}.pages.dev"
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          test -n "$ATOMIC_URL" || { echo '::error::Atomic preview deployment URL missing'; exit 1; }
+          echo "url=$ATOMIC_URL" >> "$GITHUB_OUTPUT"
           echo "alias_url=$ALIAS_URL" >> "$GITHUB_OUTPUT"
 
       - name: Probe exact preview bytes and build identity
@@ -157,6 +157,136 @@ jobs:
           verify_preview "$PREVIEW_URL" atomic
           verify_preview "$PREVIEW_ALIAS_URL" alias
 
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Capture rendered Battle pixels from shared alias
+        shell: bash
+        env:
+          PREVIEW_ALIAS_URL: ${{ steps.pages.outputs.alias_url }}
+        run: |
+          set -euo pipefail
+          mkdir -p preview-visual
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import { chromium } from '@playwright/test';
+
+          const baseUrl = process.env.PREVIEW_ALIAS_URL;
+          const targetSha = process.env.TARGET_SHA;
+          const consoleErrors = [];
+          const pageErrors = [];
+          const httpErrors = [];
+          const browser = await chromium.launch({ headless: true });
+          const context = await browser.newContext({ viewport: { width: 667, height: 375 }, deviceScaleFactor: 1 });
+          const page = await context.newPage();
+          page.on('console', (message) => {
+            if (message.type() === 'error') consoleErrors.push(message.text());
+          });
+          page.on('pageerror', (error) => pageErrors.push(String(error?.message ?? error)));
+          page.on('response', (response) => {
+            if (response.status() >= 400) httpErrors.push(`${response.status()} ${new URL(response.url()).pathname}`);
+          });
+
+          const response = await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+          if (!response?.ok()) throw new Error(`shared preview navigation failed: ${response?.status()}`);
+          await page.waitForFunction(() => Boolean(window.__GAMEROAD_TEST__) && Array.isArray(window.__CARD_DATA__), null, { timeout: 60_000 });
+          await page.locator('section[data-screen="home"]').waitFor({ state: 'visible', timeout: 30_000 });
+
+          const deckSetup = await page.evaluate(() => {
+            const t = window.__GAMEROAD_TEST__;
+            const publicMain = new Set(t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
+            const standard = window.__CARD_DATA__
+              .filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)))
+              .map((card) => card.id);
+            const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
+            const nonRoyal = standard.filter((id) => !t.isRoyalCard(id));
+            const main = [...nonRoyal.slice(0, 37), ...royalIds];
+            const setValidation = t.deckSetDraft(main, []);
+            const draftValidation = t.deckValidate(t.state.deckDraft, { forBattle: true });
+            const committed = draftValidation.ok ? t.deckCommit() : false;
+            const savedValidation = t.deckValidate(t.state.savedDeck, { forBattle: true });
+            return { count: main.length, setValidation, draftValidation, committed, savedValidation };
+          });
+          if (deckSetup.count !== 40 || !deckSetup.committed || !deckSetup.savedValidation?.ok) {
+            throw new Error(`legal Battle deck setup failed: ${JSON.stringify(deckSetup)}`);
+          }
+
+          const setupControl = page.locator('[data-home-target="setup"]:visible, [data-go="setup"]:visible').first();
+          await setupControl.waitFor({ state: 'visible', timeout: 20_000 });
+          await setupControl.click();
+          const setup = page.locator('section[data-screen="setup"]');
+          await setup.waitFor({ state: 'visible', timeout: 20_000 });
+          await setup.locator('[data-content="road_shield"]').click();
+          await setup.locator('[data-mode="2v2"]').click();
+          const startMatch = setup.locator('#startMatch');
+          await startMatch.waitFor({ state: 'visible', timeout: 20_000 });
+          if (!(await startMatch.isEnabled())) throw new Error('2v2 Battle start control is disabled');
+          await startMatch.click();
+
+          const battle = page.locator('section[data-screen="battle"]');
+          await battle.waitFor({ state: 'visible', timeout: 30_000 });
+          await page.waitForTimeout(1_200);
+          await page.screenshot({ path: 'preview-visual/battle-667x375.png', animations: 'disabled', fullPage: false });
+
+          const small = await page.evaluate(() => ({
+            width: innerWidth,
+            height: innerHeight,
+            activeScreen: [...document.querySelectorAll('section[data-screen]')].find((node) => {
+              const style = getComputedStyle(node);
+              return style.display !== 'none' && style.visibility !== 'hidden' && node.getClientRects().length > 0;
+            })?.dataset?.screen ?? null,
+            publicPlayers: document.querySelectorAll('#publicPlayerStrip .publicPlayerChip').length,
+            jankenPads: document.querySelectorAll('[data-battle-janken-slidepad="1"]').length,
+            phaseTitle: document.querySelector('#phaseTitle')?.textContent?.trim() ?? null,
+          }));
+
+          await page.setViewportSize({ width: 1280, height: 720 });
+          await page.waitForTimeout(700);
+          await page.screenshot({ path: 'preview-visual/battle-1280x720.png', animations: 'disabled', fullPage: false });
+          const large = await page.evaluate(() => ({
+            width: innerWidth,
+            height: innerHeight,
+            activeScreen: [...document.querySelectorAll('section[data-screen]')].find((node) => {
+              const style = getComputedStyle(node);
+              return style.display !== 'none' && style.visibility !== 'hidden' && node.getClientRects().length > 0;
+            })?.dataset?.screen ?? null,
+            publicPlayers: document.querySelectorAll('#publicPlayerStrip .publicPlayerChip').length,
+            jankenPads: document.querySelectorAll('[data-battle-janken-slidepad="1"]').length,
+            phaseTitle: document.querySelector('#phaseTitle')?.textContent?.trim() ?? null,
+          }));
+
+          const manifestResponse = await context.request.get(`${baseUrl}/gameroad-version.json`);
+          const manifest = manifestResponse.ok() ? await manifestResponse.json() : null;
+          if (manifest?.build_id !== targetSha) throw new Error(`visual capture build mismatch: ${manifest?.build_id ?? 'missing'} != ${targetSha}`);
+
+          fs.writeFileSync('preview-visual/receipt.json', JSON.stringify({
+            schema: 'gameroad.codex-shared-visual-evidence.v1',
+            source_sha: targetSha,
+            shared_url: baseUrl,
+            build_id: manifest?.build_id ?? null,
+            small,
+            large,
+            consoleErrors,
+            pageErrors,
+            httpErrors,
+            production_touched: false,
+            relay_touched: false,
+          }, null, 2));
+          console.log(JSON.stringify({ source_sha: targetSha, shared_url: baseUrl, small, large, consoleErrors: consoleErrors.length, pageErrors: pageErrors.length, httpErrors: httpErrors.length }));
+          await browser.close();
+          NODE
+
+      - name: Upload rendered visual evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: gameroad-codex-shared-visual-evidence
+          path: preview-visual/
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Publish preview receipt artifact
         shell: bash
         env:
@@ -173,6 +303,7 @@ jobs:
           production_touched=false
           relay_touched=false
           exact_probe=PASS
+          rendered_visual_evidence=PASS
           EOF
           cat preview-receipt/result.txt
           {
@@ -181,6 +312,8 @@ jobs:
             echo "- source SHA: \`${TARGET_SHA}\`"
             echo "- shared URL: ${PREVIEW_ALIAS_URL}"
             echo "- atomic URL: ${PREVIEW_URL}"
+            echo '- exact-byte probe: PASS'
+            echo '- rendered screenshots: 667×375 / 1280×720'
             echo '- production / relay: untouched'
           } >> "$GITHUB_STEP_SUMMARY"
 

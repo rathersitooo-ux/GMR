@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-FOCUS-CONTEXT-PACKAGE-R1-20260910T0344-SOL-PKG-Q8N4M9",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_FOCUS_AUTHORITY_CONTEXT_PUBLIC_PACKAGE_R1",
+  "acquireKey": "BATTLE-FOCUS-CONTEXT-PACKAGE-R1-20260910T0344-SOL-PKG-Q8N4M9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_AA46_CONTEXT_MERGED_BUILD_OMITS_EXACT_MODULE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "READ_ONLY_IMPORT_CLOSURE_CONTEXT_TO_ALREADY_PACKAGED_COMPOUND_AND_ROUND_SLOT_CORE",
+  "proceedToken": "PROCEED|BATTLE-FOCUS-CONTEXT-PACKAGE-R1-20260910T0344-SOL-PKG-Q8N4M9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|focus-context-public-package|build-only|active-lease",
+  "authorizationBaseSha": "aa46f8b2e7cd951c3cb95e477a68da113554cfab",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_FOCUS_AUTHORITY_CONTEXT_PUBLIC_PACKAGE_R1",
+  "leaseAcquireKey": "BATTLE-FOCUS-CONTEXT-PACKAGE-R1-20260910T0344-SOL-PKG-Q8N4M9",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:44 JST",
+  "leaseUntilJst": "2026-09-10 04:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A903:L903",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-focus-context-package-r1-20260910; deploy/cloudflare/scripts/build.mjs; transient .github/workflows/zz-temp-battle-focus-context-package-r1.yml; transient tools/temp-battle-focus-context-package-r1.py; own transient data/preaction-authorizations/BATTLE-FOCUS-CONTEXT-PACKAGE-R1-20260910T0344-SOL-PKG-Q8N4M9.json only. Existing browser/battle-janken-focus-authority-context.mjs and its imported dependencies plus deploy/cloudflare/tests/build.test.mjs READ_ONLY. browser/GAMEROAD.html, battle-screen, SlidePad, gameplay/rules/target/legality/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_EXISTING_FOCUS_AUTHORITY_CONTEXT_PUBLIC_PACKAGE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1474_MERGED_CONTEXT_EXISTS_BUILD_ARTIFACT_SPEC_OMITS_IT",
+  "solutionSearchEvidence": [
+    "Fresh main already contains browser/battle-janken-focus-authority-context.mjs.",
+    "That module imports only battle-janken-compound-attack-package-core.mjs and new-base-round-start-janken-slot-assignment-core.mjs, both already present in Cloudflare ARTIFACT_SPECS.",
+    "Fresh current Cloudflare ARTIFACT_SPECS omits battle-janken-focus-authority-context.mjs itself.",
+    "This slice adds only the existing module to the public package and does not mutate HTML, SlidePad, battle screen, gameplay, target, legality, save, economy or network authority."
+  ],
+  "scope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-focus-context-package-r1.yml",
+    "tools/temp-battle-focus-context-package-r1.py"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-focus-context-package-r1.yml",
+    "tools/temp-battle-focus-context-package-r1.py"
+  ]
+}

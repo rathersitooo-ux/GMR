@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ROULETTE-ORECA-LIVE-R1-20260909T1536-SOL-O7K4Q6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_ROULETTE_ORECA_LIVE_RUNTIME_R1",
+  "acquireKey": "BATTLE-ROULETTE-ORECA-LIVE-R1-20260909T1536-SOL-O7K4Q6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_EXPLICIT_REMAINING_HAND_ONLY_JANKEN_EXCLUDED_20260909_PLUS_CURRENT_ROW686",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING_CURRENT_PLAYABLE_HAND_AFFORDANCE_RESERVED_JANKEN_EXCLUSION_PLUS_FOCUSED_NODE_TEST",
+  "proceedToken": "PROCEED|BATTLE-ROULETTE-ORECA-LIVE-R1-20260909T1536-SOL-O7K4Q6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_LEASE_READBACK",
+  "authorizationBaseSha": "937047690f35b549dc8a0419b29026d298cc8749",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_ROULETTE_ORECA_LIVE_RUNTIME_R1",
+  "leaseAcquireKey": "BATTLE-ROULETTE-ORECA-LIVE-R1-20260909T1536-SOL-O7K4Q6",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 15:47 JST",
+  "leaseUntilJst": "2026-09-09 16:36 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A686:L686",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-roulette-oreca-live-r1-20260909; browser/battle-playable-hand-row-roulette-runtime.mjs; tests/battle-playable-hand-row-roulette-oreca-live.test.mjs; transient .github/workflows/zz-temp-battle-roulette-oreca-live-r1.yml; own transient data/preaction-authorizations/BATTLE-ROULETTE-ORECA-LIVE-R1-20260909T1536-SOL-O7K4Q6.json only. Merged Oreca presentation core and janken SlidePad runtime are READ_ONLY reuse inputs. GAMEROAD.html/optional gate/gameplay/rules/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/battle-playable-hand-row-roulette-runtime.mjs",
+    "tests/battle-playable-hand-row-roulette-oreca-live.test.mjs",
+    ".github/workflows/zz-temp-battle-roulette-oreca-live-r1.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-playable-hand-row-roulette-runtime.mjs",
+    "tests/battle-playable-hand-row-roulette-oreca-live.test.mjs",
+    ".github/workflows/zz-temp-battle-roulette-oreca-live-r1.yml"
+  ],
+  "solutionSignature": "Reuse existing playable-hand roulette consumer; render Oreca-inspired six rows only from the already-filtered remaining ordinary-hand candidate projection, with janken-reserved cards excluded upstream.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MAIN_SLIDEPAD_CURRENT_PLAYABLE_HAND_AFFORDANCE_EXCLUDES_DATASET_JANKEN_RESERVED_AND_PR1403_PROJECTOR",
+  "solutionSearchEvidence": [
+    "currentPlayableHandAffordance passes jankenReserved card IDs as reservedCardIds",
+    "projectBattlePlayableHandAffordance filters reserved IDs before candidateCardIds are exposed",
+    "row roulette controller consumes currentPlayableHandAffordance candidateCardIds",
+    "PR#1403 presentation projector consumes candidateCardIds without adding membership"
+  ]
+}

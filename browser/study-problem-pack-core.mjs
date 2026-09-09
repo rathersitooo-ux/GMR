@@ -307,6 +307,99 @@ function assertSessionMatchesPack(session, pack) {
   }
 }
 
+
+function normalizeResumeHistoryAction(raw, question, result, index) {
+  if (!plainObject(raw)) throw new TypeError(`session.history[${index}].action must be an object`);
+  if (result === 'VERIFIED_CORRECT') {
+    if (raw.issued !== true) throw new TypeError(`session.history[${index}].action must be issued for verified correct`);
+    const actionKind = code(raw.actionKind, `session.history[${index}].action.actionKind`);
+    if (!ACTION_KINDS.includes(actionKind)) throw new TypeError(`session.history[${index}].action.actionKind unsupported`);
+    const difficulty = code(raw.difficulty, `session.history[${index}].action.difficulty`);
+    if (difficulty !== question.difficulty) throw new TypeError(`session.history[${index}].action difficulty mismatch`);
+    const basePower = finiteNumber(raw.basePower, `session.history[${index}].action.basePower`, { min: 0 });
+    const timeMultiplier = finiteNumber(raw.timeMultiplier, `session.history[${index}].action.timeMultiplier`, { min: 1 });
+    const power = finiteNumber(raw.power, `session.history[${index}].action.power`, { min: 0 });
+    if (typeof raw.boundedTimeBonus !== 'boolean') {
+      throw new TypeError(`session.history[${index}].action.boundedTimeBonus must be boolean`);
+    }
+    return deepFreeze({
+      issued: true,
+      actionKind,
+      difficulty,
+      basePower,
+      timeMultiplier,
+      power,
+      boundedTimeBonus: raw.boundedTimeBonus,
+    });
+  }
+  if (raw.issued !== false || raw.reason !== 'CORRECT_ACTION_NOT_ISSUED' || raw.result !== result) {
+    throw new TypeError(`session.history[${index}].action does not match non-correct result`);
+  }
+  return deepFreeze({ issued: false, reason: 'CORRECT_ACTION_NOT_ISSUED', result });
+}
+
+function normalizeResumeHistoryEntry(raw, index, question) {
+  if (!plainObject(raw)) throw new TypeError(`session.history[${index}] must be an object`);
+  const questionId = code(raw.questionId, `session.history[${index}].questionId`);
+  if (questionId !== question.questionId) throw new TypeError('session history question order mismatch');
+  const result = code(raw.result, `session.history[${index}].result`);
+  if (!RESULTS.includes(result) || result === 'UNKNOWN') {
+    throw new TypeError(`session.history[${index}].result is not a resolved Study result`);
+  }
+  const elapsedMs = finiteNumber(raw.elapsedMs, `session.history[${index}].elapsedMs`, { min: 0 });
+  const action = normalizeResumeHistoryAction(raw.action, question, result, index);
+  return deepFreeze({ questionId, result, elapsedMs, action });
+}
+
+/**
+ * Strictly validate a Study session that crossed a persistence/transport boundary.
+ * This is a data-integrity gate only: it owns no storage, entitlement, economy,
+ * curriculum, Battle, or timing policy. Resume is intentionally accepted only at
+ * a stable question boundary (no half-thrown or resolved-but-not-advanced state).
+ */
+export function normalizeStudySessionForResume(sessionInput, packInput) {
+  const pack = normalizeStudyProblemPack(packInput);
+  if (!plainObject(sessionInput) || sessionInput.schemaVersion !== SESSION_SCHEMA) {
+    throw new TypeError('resume session must use the Study session schema');
+  }
+  const sessionId = code(sessionInput.sessionId, 'session.sessionId');
+  const packId = code(sessionInput.packId, 'session.packId');
+  const contentVersion = code(sessionInput.contentVersion, 'session.contentVersion');
+  if (packId !== pack.packId || contentVersion !== pack.contentVersion) {
+    throw new TypeError('pack identity/version does not match session');
+  }
+  if (!Number.isInteger(sessionInput.questionIndex) || sessionInput.questionIndex < 0 || sessionInput.questionIndex > pack.questions.length) {
+    throw new TypeError('session.questionIndex out of range');
+  }
+  const status = code(sessionInput.status, 'session.status');
+  if (status !== 'active' && status !== 'complete') throw new TypeError('session.status unsupported');
+  const startedAtMs = finiteNumber(sessionInput.startedAtMs, 'session.startedAtMs', { min: 0 });
+  if (!Array.isArray(sessionInput.history) || sessionInput.history.length > pack.questions.length) {
+    throw new TypeError('session.history must be a bounded array');
+  }
+  if (status === 'active') {
+    if (sessionInput.questionIndex >= pack.questions.length) throw new TypeError('active session must point at a current question');
+    if (sessionInput.history.length !== sessionInput.questionIndex) {
+      throw new TypeError('resume session must be saved at an unanswered question boundary');
+    }
+  } else {
+    if (sessionInput.questionIndex !== pack.questions.length || sessionInput.history.length !== pack.questions.length) {
+      throw new TypeError('complete session must contain the complete ordered history');
+    }
+  }
+  const history = sessionInput.history.map((entry, index) => normalizeResumeHistoryEntry(entry, index, pack.questions[index]));
+  return deepFreeze({
+    schemaVersion: SESSION_SCHEMA,
+    sessionId,
+    packId,
+    contentVersion,
+    questionIndex: sessionInput.questionIndex,
+    status,
+    startedAtMs,
+    history,
+  });
+}
+
 export function getCurrentStudyQuestion(session, packInput) {
   const pack = normalizeStudyProblemPack(packInput);
   assertSessionMatchesPack(session, pack);

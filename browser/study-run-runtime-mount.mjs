@@ -3,6 +3,7 @@ import {
   createStudySession,
   getCurrentStudyQuestion,
   getStudyHint,
+  normalizeStudySessionForResume,
   resolveCurrentStudyQuestion,
 } from './study-problem-pack-core.mjs';
 import { STUDY_MANUAL_PROBLEM_PACK } from './study-manual-problem-pack.mjs';
@@ -12,6 +13,7 @@ const STYLE_ID = 'gameroad-study-run-runtime-r1-style';
 const HOME_SELECTOR = '.screen.home[data-screen="home"]';
 const APP_SELECTOR = '.app';
 const ACTION_KINDS = new Set(['attack', 'counter']);
+const RESUME_SCHEMA = 'gameroad.study-run-resume.v1';
 
 export const STUDY_MANUAL_SMOKE_ACTION_POLICY = Object.freeze({
   authority: 'PROVISIONAL_SMOKE_ONLY',
@@ -54,6 +56,7 @@ export function createStudyRunConsumerController({
   actionPolicy = STUDY_MANUAL_SMOKE_ACTION_POLICY,
   now = () => Date.now(),
   createSessionId = defaultSessionId,
+  resumeCheckpoint = null,
 } = {}) {
   assertActionPolicy(actionPolicy);
   if (typeof now !== 'function' || typeof createSessionId !== 'function') {
@@ -66,6 +69,52 @@ export function createStudyRunConsumerController({
   let actionKind = 'attack';
   let questionStartedAtMs = 0;
   let hint = null;
+
+  function normalizeResumeCheckpoint(raw) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw) || raw.schemaVersion !== RESUME_SCHEMA) {
+      throw new TypeError('STUDY_RUNTIME_RESUME_CHECKPOINT_INVALID');
+    }
+    const restoredSession = normalizeStudySessionForResume(raw.session, pack);
+    if (!ACTION_KINDS.has(raw.actionKind)) throw new TypeError('STUDY_RUNTIME_RESUME_ACTION_KIND_INVALID');
+    const started = Number(raw.questionStartedAtMs);
+    if (!Number.isFinite(started) || started < 0) throw new TypeError('STUDY_RUNTIME_RESUME_QUESTION_TIME_INVALID');
+    return Object.freeze({
+      schemaVersion: RESUME_SCHEMA,
+      session: restoredSession,
+      actionKind: raw.actionKind,
+      questionStartedAtMs: started,
+    });
+  }
+
+  function resumeFromCheckpoint(raw) {
+    const restored = normalizeResumeCheckpoint(raw);
+    if (session?.status === 'active' && session.sessionId !== restored.session.sessionId) {
+      throw new Error('STUDY_RUNTIME_ACTIVE_SESSION_REPLACEMENT_REFUSED');
+    }
+    session = restored.session;
+    throws = [];
+    resolved = null;
+    hint = null;
+    actionKind = restored.actionKind;
+    questionStartedAtMs = restored.questionStartedAtMs;
+    return snapshot();
+  }
+
+  function exportResumeCheckpoint() {
+    if (!session) throw new Error('STUDY_RUNTIME_SESSION_NOT_STARTED');
+    if (throws.length !== 0 || resolved !== null) {
+      throw new Error('STUDY_RUNTIME_RESUME_CHECKPOINT_REQUIRES_STABLE_BOUNDARY');
+    }
+    const safeSession = normalizeStudySessionForResume(session, pack);
+    return Object.freeze({
+      schemaVersion: RESUME_SCHEMA,
+      session: cloneJson(safeSession),
+      actionKind,
+      questionStartedAtMs,
+      persistenceAuthority: 'CALLER',
+      storageBackendCreated: false,
+    });
+  }
 
   function currentQuestion() {
     return session ? getCurrentStudyQuestion(session, pack) : null;
@@ -179,6 +228,8 @@ export function createStudyRunConsumerController({
     });
   }
 
+  if (resumeCheckpoint !== null) resumeFromCheckpoint(resumeCheckpoint);
+
   return Object.freeze({
     start,
     restart,
@@ -188,6 +239,8 @@ export function createStudyRunConsumerController({
     revealHint,
     resolve,
     advance,
+    exportResumeCheckpoint,
+    resumeFromCheckpoint,
     getSnapshot: snapshot,
   });
 }

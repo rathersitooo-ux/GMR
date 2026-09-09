@@ -11,6 +11,7 @@ import {
   getStudyHint,
   gradeStudyAnswer,
   normalizeStudyProblemPack,
+  normalizeStudySessionForResume,
   resolveCurrentStudyQuestion,
 } from '../browser/study-problem-pack-core.mjs';
 import { STUDY_MANUAL_PROBLEM_PACK } from '../browser/study-manual-problem-pack.mjs';
@@ -191,4 +192,42 @@ test('session refuses a different pack content version on resume', () => {
   const session = createStudySession({ sessionId: 'study.session.version', pack: STUDY_MANUAL_PROBLEM_PACK });
   const drifted = { ...STUDY_MANUAL_PROBLEM_PACK, contentVersion: 'v2.unknown' };
   assert.throws(() => getCurrentStudyQuestion(session, drifted), /does not match session/);
+});
+
+
+test('persisted Study session resume accepts only a stable ordered question boundary', () => {
+  let session = createStudySession({ sessionId: 'study.session.resume.boundary', pack: STUDY_MANUAL_PROBLEM_PACK, startedAtMs: 100 });
+  const question = getCurrentStudyQuestion(session, STUDY_MANUAL_PROBLEM_PACK);
+  const correct = question.answerHand.find(card => card.candidateId === 'c');
+  const resolved = resolveCurrentStudyQuestion(session, STUDY_MANUAL_PROBLEM_PACK, {
+    throws: [{ cardId: correct.cardId }],
+    elapsedMs: 4200,
+    actionKind: 'counter',
+    actionPolicy: ACTION_POLICY,
+  });
+  assert.throws(
+    () => normalizeStudySessionForResume(resolved.session, STUDY_MANUAL_PROBLEM_PACK),
+    /unanswered question boundary/,
+  );
+  session = advanceStudySession(resolved.session, STUDY_MANUAL_PROBLEM_PACK);
+  const restored = normalizeStudySessionForResume(JSON.parse(JSON.stringify(session)), STUDY_MANUAL_PROBLEM_PACK);
+  assert.equal(restored.sessionId, 'study.session.resume.boundary');
+  assert.equal(restored.questionIndex, 1);
+  assert.equal(restored.history.length, 1);
+  assert.equal(restored.history[0].questionId, 'study.manual.q01');
+  assert.equal(restored.history[0].action.actionKind, 'counter');
+  assert.equal(JSON.stringify(restored).includes('acceptedAnswers'), false);
+});
+
+test('persisted Study session resume rejects forged progress and pack drift', () => {
+  const session = createStudySession({ sessionId: 'study.session.resume.reject', pack: STUDY_MANUAL_PROBLEM_PACK });
+  assert.throws(
+    () => normalizeStudySessionForResume({ ...session, questionIndex: 2 }, STUDY_MANUAL_PROBLEM_PACK),
+    /unanswered question boundary/,
+  );
+  const drifted = { ...STUDY_MANUAL_PROBLEM_PACK, contentVersion: 'v2.unknown' };
+  assert.throws(
+    () => normalizeStudySessionForResume(session, drifted),
+    /does not match session/,
+  );
 });

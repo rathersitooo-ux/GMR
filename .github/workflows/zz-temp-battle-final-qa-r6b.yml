@@ -1,71 +1,100 @@
-name: TEMP Battle final QA R6B donor import
+name: TEMP Battle final QA R6B player path
 
 on:
   push:
     branches:
       - sol/battle-final-qa-r6b-20260909
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch:
+  w46-player-path:
     if: github.actor == 'rathersitooo-ux'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - name: Checkout R6B
+      - name: Checkout R6B current product
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Import W46 donor and remove false Battle precondition
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Materialize corrected W46 visible player path
         shell: bash
         run: |
           set -euo pipefail
           git fetch origin pull/1413/head:r6b-donor
-          git checkout r6b-donor -- .github/workflows/browser-full-interaction.yml
+          git show r6b-donor:.github/workflows/browser-full-interaction.yml > /tmp/w46-donor.yml
+          mkdir -p .w46-battle
           python - <<'PY'
           from pathlib import Path
 
-          p = Path('.github/workflows/browser-full-interaction.yml')
-          s = p.read_text(encoding='utf-8')
+          donor = Path('/tmp/w46-donor.yml').read_text(encoding='utf-8')
 
-          bad = "            expect(await page.locator('section[data-screen=\"battle\"]' ).count(), 'Battle screen exists').toBeGreaterThan(0);\n"
-          # Donor has no space before ). Keep both exact spellings fail-closed.
-          exact = "            expect(await page.locator('section[data-screen=\"battle\"]').count(), 'Battle screen exists').toBeGreaterThan(0);\n"
-          count = s.count(exact)
+          def extract(marker):
+              if marker not in donor:
+                  raise SystemExit(f'marker missing: {marker}')
+              tail = donor.split(marker, 1)[1]
+              end = '          EOF\n'
+              if end not in tail:
+                  raise SystemExit(f'EOF missing after: {marker}')
+              block = tail.split(end, 1)[0]
+              lines = block.splitlines()
+              normalized = [line[10:] if line.startswith('          ') else line for line in lines]
+              return '\n'.join(normalized) + '\n'
+
+          spec_marker = "          cat > .w46-battle/battle-final.spec.mjs <<'EOF'\n"
+          config_marker = "          cat > .w46-battle/playwright.local.config.mjs <<'EOF'\n"
+          spec = extract(spec_marker)
+          config = extract(config_marker)
+
+          bad = "expect(await page.locator('section[data-screen=\"battle\"]').count(), 'Battle screen exists').toBeGreaterThan(0);\n"
+          count = spec.count(bad)
           if count != 1:
-              raise SystemExit(f'expected exactly one premature Battle assertion, found {count}')
-          s = s.replace(exact, '', 1)
-
-          donor_manifest = "          OBSERVED_BUILD_ID=\"$(MANIFEST=\"$MANIFEST\" node -e \"const fs=require('node:fs');const m=JSON.parse(fs.readFileSync(0,'utf8'));if(!m.build_id)process.exit(2);process.stdout.write(String(m.build_id));\" < \"$MANIFEST\")\""
-          current_manifest = "          OBSERVED_BUILD_ID=\"$(MANIFEST=\"$MANIFEST\" node -e \"const fs=require('node:fs');const m=JSON.parse(fs.readFileSync(process.env.MANIFEST,'utf8'));if(!m.build_id)process.exit(2);process.stdout.write(String(m.build_id));\")\""
-          if donor_manifest not in s:
-              raise SystemExit('donor manifest-binding line missing')
-          s = s.replace(donor_manifest, current_manifest, 1)
+              raise SystemExit(f'expected one premature Battle assertion, found {count}')
+          spec = spec.replace(bad, '', 1)
 
           required = [
               'enterVisibleBasicBattle',
+              'Home exposes visible Battle setup control',
               'desktop-1280x720',
               'phone-390x844',
               'short-landscape-667x375',
-              'Run WorkUnit46 Battle final acceptance locally',
           ]
-          missing = [item for item in required if item not in s]
+          missing = [item for item in required if item not in spec and item not in config]
           if missing:
-              raise SystemExit(f'W46 donor contract missing: {missing}')
-          if 'Battle screen exists' in s:
-              raise SystemExit('premature Battle assertion still present')
+              raise SystemExit(f'corrected W46 contract missing: {missing}')
+          if 'Battle screen exists' in spec:
+              raise SystemExit('premature hidden-DOM assertion survived')
 
-          p.write_text(s, encoding='utf-8')
+          Path('.w46-battle/battle-final.spec.mjs').write_text(spec, encoding='utf-8')
+          Path('.w46-battle/playwright.local.config.mjs').write_text(config, encoding='utf-8')
           PY
+          grep -F "enterVisibleBasicBattle" .w46-battle/battle-final.spec.mjs
+          ! grep -F "Battle screen exists" .w46-battle/battle-final.spec.mjs
 
-          git diff --check
-          git rm .github/workflows/zz-temp-battle-final-qa-r6b.yml
-          git rm data/preaction-authorizations/BATTLE-FINAL-QA-R6B-20260909T1725-SOL-Q8M4N9.json
-          git config user.name rathersitooo-ux
-          git config user.email rathersitooo@gmail.com
-          git add .github/workflows/browser-full-interaction.yml
-          git diff --cached --name-only
-          git commit -m "test: make Battle acceptance follow visible player path"
-          git push origin HEAD:sol/battle-final-qa-r6b-20260909
+      - name: Run corrected WorkUnit46 three-viewport player path
+        run: npx playwright test --config=.w46-battle/playwright.local.config.mjs --workers=1
+
+      - name: Upload W46 evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: battle-final-qa-r6b-${{ github.run_id }}
+          path: |
+            playwright-report-w46-battle-local/
+            test-results/w46-battle-local/
+          if-no-files-found: error
+          retention-days: 14

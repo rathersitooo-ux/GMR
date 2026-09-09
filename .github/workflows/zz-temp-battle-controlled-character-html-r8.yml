@@ -10,25 +10,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect participant identity and Battle chrome seams
+      - name: Inspect module insertion and top-bar preservation seams
         shell: python
         run: |
           from pathlib import Path
           text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          needles = ['function makePlayer(', '.top{', 'const PROD_CHARS=', 'character:', 'playerCharacterId', 'selectedPartnerId']
-          for needle in needles:
-              print('\n===== NEEDLE', repr(needle), '=====')
-              start=0; shown=0
-              while True:
+          for needle in ['body:has(.battle.active) .top','type="module" src="./','</body>','</html>','battle-board-naki-4p-visual-binding.mjs']:
+              print('\n===== ',repr(needle),' count=',text.count(needle),' =====')
+              start=0
+              for hit in range(min(text.count(needle),12)):
                   idx=text.find(needle,start)
                   if idx<0: break
-                  shown+=1
-                  line=text.count('\n',0,idx)+1
-                  col=idx-(text.rfind('\n',0,idx)+1)
-                  lo=max(0,idx-1500); hi=min(len(text),idx+len(needle)+2600)
-                  print('HIT',shown,'OFFSET',idx,'LINE',line,'COL',col)
-                  print(text[lo:hi].replace('\r',''))
-                  print('-----')
+                  print('OFFSET',idx,'LINE',text.count('\n',0,idx)+1)
+                  print(text[max(0,idx-900):min(len(text),idx+len(needle)+1200)].replace('\r',''))
+                  print('---')
                   start=idx+len(needle)
-                  if shown>=8: break
-              print('COUNT_SHOWN',shown)
+          print('\n===== TAIL =====')
+          print(text[-7000:].replace('\r',''))

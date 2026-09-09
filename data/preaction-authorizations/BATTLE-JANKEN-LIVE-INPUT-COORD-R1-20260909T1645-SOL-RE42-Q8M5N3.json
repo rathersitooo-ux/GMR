@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-LIVE-INPUT-COORD-R1-20260909T1645-SOL-RE42-Q8M5N3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_R1",
+  "acquireKey": "BATTLE-JANKEN-LIVE-INPUT-COORD-R1-20260909T1645-SOL-RE42-Q8M5N3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_SHARED_CONSUMER_PREVIEW_BRIDGE_PLUS_SLIDEPAD_DIRECT_CLICK_GAP_20260909",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "NEW_TWO_FILE_NONOVERLAP_SERIAL_ASYNC_FOCUS_COORDINATOR_TEST_PLAN_20260909",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-LIVE-INPUT-COORD-R1-20260909T1645-SOL-RE42-Q8M5N3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|workunit42|nonoverlap-input-compose|active-lease",
+  "authorizationBaseSha": "b9fc20dbe5aa574c1110776cbb7c256a7d279408",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-LIVE-INPUT-COORD-R1-20260909T1645-SOL-RE42-Q8M5N3",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 16:45 JST",
+  "leaseUntilJst": "2026-09-09 17:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A709:L709",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-janken-live-input-coord-r1-20260909; browser/battle-janken-slidepad-live-input-coordinator.mjs (new); tests/battle-janken-slidepad-live-input-coordinator.test.mjs (new); own transient data/preaction-authorizations/BATTLE-JANKEN-LIVE-INPUT-COORD-R1-20260909T1645-SOL-RE42-Q8M5N3.json only. Existing battle-new-base-live-consumer-adapter.mjs and battle-compound-preview-live-consumer-bridge.mjs READ_ONLY reuse. browser/battle-janken-slidepad-runtime-mount.mjs, browser/GAMEROAD.html, deploy/cloudflare/scripts/build.mjs, battle-screen runtime, gameplay/rules/target/legality/hand assignment/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_JANKEN_LATEST_FOCUS_SERIAL_PREVIEW_COMMIT_COORDINATOR_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MAIN_BATTLE_NEW_BASE_LIVE_CONSUMER_PLUS_COMPOUND_PREVIEW_BRIDGE_20260909",
+  "solutionSearchEvidence": [
+    "main already contains battle-new-base-live-consumer-adapter.mjs with current Hand3 assignment and unchanged existing Battle transport",
+    "main already contains battle-compound-preview-live-consumer-bridge.mjs which requires an exact visible preview before commit",
+    "current battle-janken-slidepad-runtime-mount.mjs still delegates selected janken cards through existing DOM card clicks and is actively owned by another WorkUnit",
+    "the missing non-overlap seam is presentation/input sequencing so rapid async focus changes cannot leave a stale staged preview commit-capable",
+    "this WorkUnit adds only a bridge-object coordinator and focused tests; DOM/runtime/HTML/build remain read-only"
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-live-input-coordinator.mjs",
+    "tests/battle-janken-slidepad-live-input-coordinator.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-live-input-coordinator.mjs",
+    "tests/battle-janken-slidepad-live-input-coordinator.test.mjs"
+  ]
+}

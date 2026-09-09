@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RESOURCE-HUD-LIVE-ADAPTER-R2-20260910T0358-SOL-H5N8Q11",
+  "taskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "workUnitKey": "BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_R2",
+  "acquireKey": "BATTLE-RESOURCE-HUD-LIVE-ADAPTER-R2-20260910T0358-SOL-H5N8Q11",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1492_MERGED_PLUS_SCREEN_RESOURCEHUD_DIRECT_SYNC_EXPOSED",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "RESOURCEHUD_SYNC_ONLY_AVOIDS_GENERIC_HUD_CLOBBER",
+  "proceedToken": "PROCEED|BATTLE-RESOURCE-HUD-LIVE-ADAPTER-R2-20260910T0358-SOL-H5N8Q11|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-resource-hud|direct-sync|active-lease",
+  "authorizationBaseSha": "9c4483be13b8a2b89cadb82dcd8dc4792173da6e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "leaseWorkUnitKey": "BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_R2",
+  "leaseAcquireKey": "BATTLE-RESOURCE-HUD-LIVE-ADAPTER-R2-20260910T0358-SOL-H5N8Q11",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:58 JST",
+  "leaseUntilJst": "2026-09-10 04:58 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A923:L923",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-resource-hud-live-adapter-r2-20260910; browser/battle-critical-resource-hud-live-adapter.mjs; tests/battle-critical-resource-hud-live-adapter.test.mjs; own transient data/preaction-authorizations/BATTLE-RESOURCE-HUD-LIVE-ADAPTER-R2-20260910T0358-SOL-H5N8Q11.json only. READ_ONLY: browser/GAMEROAD.html, browser/battle-screen-runtime-mount.mjs, browser/battle-critical-resource-hud-runtime.mjs, deploy/cloudflare/scripts/build.mjs, gameplay/rules/target/legality/save/economy/network.",
+  "solutionSignature": "BATTLE_RESOURCE_HUD_EXPLICIT_PLAYER_DIRECT_RESOURCEHUD_SYNC_V2",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1492_PROJECTION_PLUS_PR1471_EXPOSED_RESOURCEHUD_SYNC",
+  "solutionSearchEvidence": [
+    "PR #1492 is merged and already owns explicit caller player -> Honey/Chip snapshot projection.",
+    "Current Battle screen runtime returns resourceHud directly and resourceHud owns a dedicated sync(snapshot) method.",
+    "Calling screen renderHud with a resource-only snapshot would also rewrite SCORE/HATE/TURN/LOAD to unresolved values, so downstream must use the dedicated resourceHud sync path.",
+    "This change adds only one fail-closed composition helper around the existing projection and caller-owned resourceHud.sync method.",
+    "The helper must call resourceHud.sync exactly once and must never call screen renderHud, select a player, calculate/store resources, expose Chip identities, or write gameplay state.",
+    "Shared browser/GAMEROAD.html and deploy/cloudflare/scripts/build.mjs remain under other active owners and are not mutated here."
+  ],
+  "scope": [
+    "browser/battle-critical-resource-hud-live-adapter.mjs",
+    "tests/battle-critical-resource-hud-live-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-critical-resource-hud-live-adapter.mjs",
+    "tests/battle-critical-resource-hud-live-adapter.test.mjs"
+  ]
+}

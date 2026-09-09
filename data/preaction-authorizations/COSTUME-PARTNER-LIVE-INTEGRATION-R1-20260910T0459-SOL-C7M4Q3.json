@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "COSTUME-PARTNER-LIVE-INTEGRATION-R1-20260910T0459-SOL-C7M4Q3",
+  "taskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "workUnitKey": "PARTNER_COSTUME_PARTNER_SHELL_PUBLIC_INTEGRATION_R1",
+  "acquireKey": "COSTUME-PARTNER-LIVE-INTEGRATION-R1-20260910T0459-SOL-C7M4Q3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1501_PR1504_PR1505_CURRENT_MAIN_COMPONENTS_PLUS_RUNTIME_GAP",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_MAIN_PARTNER_SHELL_AND_BUILD_DIRECT_READBACK_20260910T0459JST",
+  "proceedToken": "PROCEED|COSTUME-PARTNER-LIVE-INTEGRATION-R1-20260910T0459-SOL-C7M4Q3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-costume|partner-shell|public-package",
+  "authorizationBaseSha": "d8852bcfd94ebf538b5c74ee2b56c084b46d4349",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "leaseWorkUnitKey": "PARTNER_COSTUME_PARTNER_SHELL_PUBLIC_INTEGRATION_R1",
+  "leaseAcquireKey": "COSTUME-PARTNER-LIVE-INTEGRATION-R1-20260910T0459-SOL-C7M4Q3",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 04:59 JST",
+  "leaseUntilJst": "2026-09-10 05:59 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A928:L928",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from current main; browser/partner-shell-runtime-mount.mjs; tests/partner-shell-runtime-mount.test.mjs; deploy/cloudflare/scripts/build.mjs; own transient PRE_ACTION manifest only. READ_ONLY browser/partner-costume-core.mjs; browser/partner-costume-browser-session-runtime.mjs; browser/partner-costume-screen-runtime-mount.mjs; browser/partner-shell-presentation-core.mjs; formal costume catalog/assets/entitlements; browser/GAMEROAD.html; gameplay/rules/save/economy/network.",
+  "solutionSignature": "PARTNER_COSTUME_EXISTING_SESSION_SCREEN_TO_PARTNER_SHELL_PUBLIC_PACKAGE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1501_PR1504_PR1505_REUSE_CURRENT_MAIN",
+  "solutionSearchEvidence": [
+    "Current main already contains the costume core, caller-owned browser session, three-category screen component, and OPEN_COSTUME Partner route.",
+    "Current partner-shell runtime does not render the costume view, so the route has no concrete body yet.",
+    "Current Cloudflare build has no partner-costume artifact entries, so a static public dependency would not be complete without packaging.",
+    "The stale PR1464 is not merged and duplicates superseded pre-screen architecture; it is evidence only, not a merge donor.",
+    "No formal costume catalog, asset, entitlement, or second production save authority will be created."
+  ],
+  "scope": [
+    "browser/partner-shell-runtime-mount.mjs",
+    "tests/partner-shell-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-shell-runtime-mount.mjs",
+    "tests/partner-shell-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ]
+}

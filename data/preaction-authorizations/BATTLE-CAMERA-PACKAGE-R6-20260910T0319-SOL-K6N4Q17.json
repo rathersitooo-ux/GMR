@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CAMERA-PACKAGE-R6-20260910T0319-SOL-K6N4Q17",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CAMERA_PUBLIC_PACKAGE_R6",
+  "acquireKey": "BATTLE-CAMERA-PACKAGE-R6-20260910T0319-SOL-K6N4Q17",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_POST_0319_BUILD_OWNER_FREE_MAIN_9761E102_CAMERA_IMPORT_CLOSURE_3FILES",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R5D_FOCUSED_CAMERA_TESTS_SUCCESS_PLUS_EXISTING_PUBLIC_DEPENDENCY_FAIL_CLOSED_VERIFIER",
+  "proceedToken": "PROCEED|BATTLE-CAMERA-PACKAGE-R6-20260910T0319-SOL-K6N4Q17|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-camera-public-package|build-only|active-lease",
+  "authorizationBaseSha": "9761e10273edf2800940579d8252fb237c81f226",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CAMERA_PUBLIC_PACKAGE_R6",
+  "leaseAcquireKey": "BATTLE-CAMERA-PACKAGE-R6-20260910T0319-SOL-K6N4Q17",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:19 JST",
+  "leaseUntilJst": "2026-09-10 04:19 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A882:L882",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-camera-package-r6-20260910; deploy/cloudflare/scripts/build.mjs; transient .github/workflows/zz-temp-battle-camera-package-r6.yml; transient tools/temp-battle-camera-package-r6.py; own transient data/preaction-authorizations/BATTLE-CAMERA-PACKAGE-R6-20260910T0319-SOL-K6N4Q17.json only. Existing browser/battle-camera-control-core.mjs, browser/battle-camera-input-router.mjs, browser/battle-camera-live-runtime.mjs and deploy/cloudflare/tests/build.test.mjs READ_ONLY reuse/execution. browser/GAMEROAD.html and tests/battle-camera-live-integration.test.mjs READ_ONLY donor while current HTML owner remains ACTIVE through 04:15 JST. All gameplay/rules/movement/target/state authorities READ_ONLY.",
+  "solutionSignature": "BATTLE_CAMERA_EXISTING_RUNTIME_PUBLIC_PACKAGE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MERGED_PR1453_RUNTIME_PLUS_TESTED_R5D_HTML_DONOR_PACKAGE_IMPORT_CLOSURE_ONLY",
+  "solutionSearchEvidence": [
+    "PR #1453 already merged the camera live runtime and its focused test; no second camera runtime is required.",
+    "The live runtime imports only battle-camera-control-core.mjs and battle-camera-input-router.mjs; the router imports only the control core, so the public import closure is exactly three existing Browser modules.",
+    "R5D donor run 34387500477 already passed camera input-router, live-runtime and HTML integration tests on fresh main with no build mutation.",
+    "Cloudflare build ARTIFACT_SPECS copies Browser runtime modules and assertBrowserRuntimeDependencyCompleteness recursively fails closed when an imported output is absent.",
+    "Fresh post-03:19 CURRENT scan found the prior costume build lease expired with no later build writer; a different WorkUnit owns GAMEROAD.html through 04:15 JST, so this slice is build-only and does not overlap HTML.",
+    "Camera module publication does not alter gameplay, movement, targeting, legality, result or game-state authority."
+  ],
+  "scope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-camera-package-r6.yml",
+    "tools/temp-battle-camera-package-r6.py"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-camera-package-r6.yml",
+    "tools/temp-battle-camera-package-r6.py"
+  ]
+}

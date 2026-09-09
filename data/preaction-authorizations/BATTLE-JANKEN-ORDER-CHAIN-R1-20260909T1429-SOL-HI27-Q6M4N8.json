@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-ORDER-CHAIN-R1-20260909T1429-SOL-HI27-Q6M4N8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_PROCESSING_ORDER_CHAIN_R1",
+  "acquireKey": "BATTLE-JANKEN-ORDER-CHAIN-R1-20260909T1429-SOL-HI27-Q6M4N8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-JANKEN-ORDER-CHAIN-R1-20260909T1504",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REHEARSE-JANKEN-ORDER-CHAIN-FOCUSED-NODE-R1",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-ORDER-CHAIN-R1-20260909T1429-SOL-HI27-Q6M4N8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260909T1504JST",
+  "authorizationBaseSha": "a6c9e576db5f4824d12da7eaad4cc86ed362a294",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_PROCESSING_ORDER_CHAIN_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-ORDER-CHAIN-R1-20260909T1429-SOL-HI27-Q6M4N8",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 15:04 JST",
+  "leaseUntilJst": "2026-09-09 15:24 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A642:L642",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-janken-order-chain-r1-20260909; browser/battle-janken-order-chain-presentation-core.mjs (new); tests/battle-janken-order-chain-presentation-core.test.mjs (new); data/preaction-authorizations/BATTLE-JANKEN-ORDER-CHAIN-R1-20260909T1429-SOL-HI27-Q6M4N8.json transient only. triad-resolver READ_ONLY; janken runtime, battle-screen, GAMEROAD.html, gameplay/rules/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/battle-janken-order-chain-presentation-core.mjs",
+    "tests/battle-janken-order-chain-presentation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-order-chain-presentation-core.mjs",
+    "tests/battle-janken-order-chain-presentation-core.test.mjs"
+  ],
+  "solutionSignature": "battle-janken/authoritative-processing-order-to-order-chain-presentation",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-TRIAD-RESOLVER-OUTPUT-AND-BATTLE-PRESENTATION-20260909-R2",
+  "solutionSearchEvidence": [
+    "browser/triad-resolver-core.mjs already owns processingOrder/steps/resolved winners/invalidated semantics and remains read-only",
+    "fresh main a6c9e576db5f4824d12da7eaad4cc86ed362a294 has no battle-janken-order-chain-presentation-core.mjs, so this remains a non-duplicate projection",
+    "active janken runtime remains read-only and is the named downstream consumer after owner convergence"
+  ]
+}

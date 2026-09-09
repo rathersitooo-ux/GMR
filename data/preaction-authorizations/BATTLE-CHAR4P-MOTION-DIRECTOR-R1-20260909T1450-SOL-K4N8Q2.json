@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CHAR4P-MOTION-DIRECTOR-R1-20260909T1450-SOL-K4N8Q2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CONTROLLED_CHARACTER_4P_MOTION_DIRECTOR_R1",
+  "acquireKey": "BATTLE-CHAR4P-MOTION-DIRECTOR-R1-20260909T1450-SOL-K4N8Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-CHAR4P-MOTION-DIRECTOR-R1-20260909T1450",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REUSE-EXISTING-CONTROLLED-CHARACTER-MOTION-CORE-TESTS-PASS",
+  "proceedToken": "PROCEED|BATTLE-CHAR4P-MOTION-DIRECTOR-R1-20260909T1450-SOL-K4N8Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260909T1450JST",
+  "authorizationBaseSha": "82c51c89d390205b8b569f6adfd38dc7d6c33b8e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CONTROLLED_CHARACTER_4P_MOTION_DIRECTOR_R1",
+  "leaseAcquireKey": "BATTLE-CHAR4P-MOTION-DIRECTOR-R1-20260909T1450-SOL-K4N8Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 14:50 JST",
+  "leaseUntilJst": "2026-09-09 15:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A663:L663",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-controlled-character-4p-motion-director-r1-20260909; browser/battle-controlled-character-4p-motion-director.mjs (new); tests/battle-controlled-character-4p-motion-director.test.mjs (new); own transient data/preaction-authorizations/BATTLE-CHAR4P-MOTION-DIRECTOR-R1-20260909T1450-SOL-K4N8Q2.json only. Existing battle-controlled-character-motion-core.mjs READ_ONLY reuse. battle-board-naki-4p-visual-binding.mjs, GAMEROAD.html, Battle screen/janken/advice/gameplay/rules/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/battle-controlled-character-4p-motion-director.mjs",
+    "tests/battle-controlled-character-4p-motion-director.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-controlled-character-4p-motion-director.mjs",
+    "tests/battle-controlled-character-4p-motion-director.test.mjs"
+  ],
+  "solutionSignature": "battle-controlled-character/four-independent-presentation-motion-states",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-BATTLE-CONTROLLED-CHARACTER-MOTION-CORE-20260909",
+  "solutionSearchEvidence": [
+    "existing battle-controlled-character-motion-core already owns MOVE_ACCEPTED, facing, stale-sequence, reconnect, ReducedMotion and LowPerf presentation semantics",
+    "failed controlled-character R2 proved the missing gap is four-participant orchestration without hiding or replacing authoritative board movement",
+    "new director owns no coordinates, path, budget, route, legality, target or gameplay state and keeps existing binding/GAMEROAD.html read-only",
+    "same-node multiplicity and opaque caller-owned character identity are preserved so later live binding can render all four controlled characters independently"
+  ]
+}

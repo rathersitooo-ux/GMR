@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-COMPOUND-PREVIEW-R1-20260909T1420-SOL-K7M4Q2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_COMPOUND_ATTACK_PREVIEW_R1",
+  "acquireKey": "BATTLE-COMPOUND-PREVIEW-R1-20260909T1420-SOL-K7M4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-COMPOUND-PREVIEW-R1-20260909T1420",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REHEARSE-COMPOUND-PREVIEW-FAIL-CLOSED-R1",
+  "proceedToken": "PROCEED|BATTLE-COMPOUND-PREVIEW-R1-20260909T1420-SOL-K7M4Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260909T1420JST",
+  "authorizationBaseSha": "3176d910db54f09ae5b93821e71a05653f3be3a2",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_COMPOUND_ATTACK_PREVIEW_R1",
+  "leaseAcquireKey": "BATTLE-COMPOUND-PREVIEW-R1-20260909T1420-SOL-K7M4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 14:20 JST",
+  "leaseUntilJst": "2026-09-09 15:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A649:L649",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-janken-compound-preview-r1-20260909; browser/battle-compound-attack-preview-runtime.mjs (new); tests/battle-compound-attack-preview-runtime.test.mjs (new); data/preaction-authorizations/BATTLE-COMPOUND-PREVIEW-R1-20260909T1420-SOL-K7M4Q2.json (transient, cleanup before merge) only. browser/battle-screen-runtime-mount.mjs, browser/battle-janken-slidepad-runtime-mount.mjs, browser/GAMEROAD.html, gameplay rules/state, target/legal-target calculation, hand assignment, save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/battle-compound-attack-preview-runtime.mjs",
+    "tests/battle-compound-attack-preview-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-compound-attack-preview-runtime.mjs",
+    "tests/battle-compound-attack-preview-runtime.test.mjs"
+  ],
+  "solutionSignature": "battle-compound-attack-preview/caller-package-to-existing-shield-rail-presentation",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-BATTLE-SCREEN-SHIELD-RAILS-20260909",
+  "solutionSearchEvidence": [
+    "browser/battle-screen-runtime-mount.mjs exposes laneSurfaces/shieldRails with participantId and Shield L/C/R structure",
+    "browser/battle-janken-slidepad-runtime-mount.mjs is active-owned and remains read-only; producer hookup deferred to owner convergence"
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CONTROLLED_CHARACTER_HTML_PRODUCER_DIAG_R8",
+  "acquireKey": "BATTLE-CHAR4P-DIAG-R8-20260910T0312-SOL-K4N8Q9",
+  "authorizationBaseSha": "9761e10273edf2800940579d8252fb237c81f226",
+  "branch": "sol/battle-controlled-character-diag-r8-20260910",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A879:L879",
+  "leaseExactMutableResources": [
+    "sol/battle-controlled-character-diag-r8-20260910",
+    ".github/workflows/zz-temp-battle-controlled-character-diag-r8.yml",
+    "data/preaction-authorizations/BATTLE-CHAR4P-DIAG-R8-20260910T0312-SOL-K4N8Q9.json"
+  ],
+  "readOnlyResources": [
+    "browser/GAMEROAD.html",
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "browser/battle-controlled-character-4p-motion-director.mjs",
+    "browser/battle-controlled-character-motion-core.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "all gameplay/rules/movement/target/save/economy/network resources"
+  ],
+  "currentHtmlOwner": "BATTLE-JANKEN-ORDER-LIVE-MOUNT-R1-20260910T0315-SOL-U3-Q6M4P5 through 2026-09-10 04:15 JST",
+  "reuseDisposition": "COMPOSE",
+  "solutionSignature": "BATTLE_CHAR4P_HTML_PRODUCER_DIAG_R8|READ_ONLY_BOUND_CONTEXT|NO_PRODUCT_WRITE",
+  "purpose": "Extract exact current HTML participant-character identity, human/CPU per-step movement/facing, reconnect and render anchors needed to wire the already-merged four-participant controlled-character director/binding later without inventing a second actor or movement engine.",
+  "intendedProductDiff": "0",
+  "lastConfirmedStep": "CURRENT_ACTIVE_LEASES!A879:N879 persisted/read back at 2026-09-10 03:16 JST; diagnostic branch created from exact main 9761e10273edf2800940579d8252fb237c81f226.",
+  "nextExpectedAction": "Add one transient push-trigger read-only diagnostic workflow, run bounded context extraction against browser/GAMEROAD.html and package manifest, persist findings, clean transient files, release diagnostic lease.",
+  "failClosed": "Any product/runtime file mutation, lease drift that makes diagnostic branch scope ambiguous, or workflow attempt to modify checked-out product files aborts this WorkUnit. browser/GAMEROAD.html remains READ_ONLY.",
+  "rollback": "Discard diagnostic branch; main remains unchanged."
+}

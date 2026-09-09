@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SELF-DECK-KNOWLEDGE-R1B-20260910T0348-SOL-SD1",
+  "taskId": "BATTLE-SELF-REMAINING-DECK-INSPECT-001",
+  "workUnitKey": "BATTLE_SELF_DECK_OWNER_KNOWLEDGE_ADAPTER_R1",
+  "acquireKey": "BATTLE-SELF-DECK-OWNER-KNOWLEDGE-R1-20260910T0338-SOL-SD1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_102C53_OWNER_SELF_DECK_NONOVERLAP_20260910T0348JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_PREACTION_FAILURE_DIAGNOSED_PLUS_CURRENT_VALIDATOR_DIRECT_READ",
+  "proceedToken": "PROCEED|BATTLE-SELF-DECK-KNOWLEDGE-R1B-20260910T0348-SOL-SD1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|owner-self-remaining-composition|new-pair-only|active-lease",
+  "authorizationBaseSha": "102c53af1e32ee8b6876cc1f944287c42abde4e2",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-SELF-REMAINING-DECK-INSPECT-001",
+  "leaseWorkUnitKey": "BATTLE_SELF_DECK_OWNER_KNOWLEDGE_ADAPTER_R1",
+  "leaseAcquireKey": "BATTLE-SELF-DECK-OWNER-KNOWLEDGE-R1-20260910T0338-SOL-SD1",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:48 JST",
+  "leaseUntilJst": "2026-09-10 04:38 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A896:L896",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR repair branch work/battle-self-deck-owner-knowledge-r1b-20260910T0348JST; browser/battle-self-deck-owner-knowledge-adapter.mjs; tests/battle-self-deck-owner-knowledge-adapter.test.mjs; own transient PRE_ACTION manifest only.",
+  "solutionSignature": "BATTLE_OWNER_SELF_REMAINING_COMPOSITION_VIEWER_KNOWLEDGE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_MAIN_CORE_AND_LIVE_ADAPTER_PLUS_R8_DONOR_AUDIT",
+  "solutionSearchEvidence": [
+    "Current live Battle already owns remaining deck state at state.match.players[].deck; no second deck authority is needed.",
+    "Current battle-self-deck-inspect-core already accepts exact revision-matched caller-authorized viewerKnowledge and hides authoritative deck order.",
+    "Current battle-replay-live-adapter already accepts remainingCount plus viewerKnowledge and renders the resulting counts into the existing Battle log surface.",
+    "Old R8 runtime-mount branch was inspected but is not blind-merged because it predates the current caller-authorized viewerKnowledge privacy boundary.",
+    "R1 gate failure occurred before product tests and was limited to PRE_ACTION readback range plus conventional test placement; R1B fixes only those packaging defects."
+  ],
+  "scope": [
+    "browser/battle-self-deck-owner-knowledge-adapter.mjs",
+    "tests/battle-self-deck-owner-knowledge-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-self-deck-owner-knowledge-adapter.mjs",
+    "tests/battle-self-deck-owner-knowledge-adapter.test.mjs"
+  ]
+}

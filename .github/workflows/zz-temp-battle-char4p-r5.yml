@@ -1,0 +1,50 @@
+name: TEMP Battle Char4P R5 surgical patch
+
+on:
+  push:
+    branches:
+      - sol/battle-controlled-character-motion-live-r5-20260909
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    if: startsWith(github.event.head_commit.message, 'TEMP_EXECUTOR_START:')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch exact public-package provenance pin
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('deploy/cloudflare/tests/build.test.mjs')
+          text = path.read_text()
+          old = "{ file: 'battle-board-naki-4p-visual-binding.mjs', source: 'browser/battle-board-naki-4p-visual-binding.mjs', sourceArg: 'naki4pBoardVisualBindingSource', expectedArg: 'expectedNaki4pBoardVisualBindingBlob', artifact: 'battle_board_naki_4p_visual_binding', fixture: \"export const NAKI_4P_BOARD_VISUAL_BINDING = Object.freeze({});\\n\", currentBlob: '01df2262bfe894638ebaa16d7f4834acc550d552' }"
+          new = "{ file: 'battle-board-naki-4p-visual-binding.mjs', source: 'browser/battle-board-naki-4p-visual-binding.mjs', sourceArg: 'naki4pBoardVisualBindingSource', expectedArg: 'expectedNaki4pBoardVisualBindingBlob', artifact: 'battle_board_naki_4p_visual_binding', fixture: \"export const NAKI_4P_BOARD_VISUAL_BINDING = Object.freeze({});\\n\", currentBlob: 'f985f48bcd6891164740ff3cba18544c359863cf' }"
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'expected exactly one old provenance row, found {count}')
+          path.write_text(text.replace(old, new))
+          PY
+      - name: Run focused binding and package tests
+        shell: bash
+        run: |
+          node --test tests/battle-board-naki-4p-visual-binding.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Commit durable product changes and remove transient executor
+        shell: bash
+        run: |
+          git config user.name 'gameroad-r5-bot'
+          git config user.email 'gameroad-r5-bot@users.noreply.github.com'
+          git rm .github/workflows/zz-temp-battle-char4p-r5.yml
+          git rm data/preaction-authorizations/BATTLE-CHAR4P-LIVE-BIND-R5-20260909T1644-SOL-RE-K4N8Q6.json
+          git add deploy/cloudflare/tests/build.test.mjs
+          git commit -m 'Battle: 4P操作キャラbindingのprovenanceを同期'
+          git push origin HEAD:sol/battle-controlled-character-motion-live-r5-20260909

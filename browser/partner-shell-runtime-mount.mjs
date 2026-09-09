@@ -9,6 +9,7 @@ import {
 } from './partner-saasuna-voice-runtime.mjs';
 import { createPartnerCostumeBrowserSessionRuntime } from './partner-costume-browser-session-runtime.mjs';
 import { mountPartnerCostumeScreen } from './partner-costume-screen-runtime-mount.mjs';
+import { selectApprovedPartnerIdleUtterance } from './partner-dialogue-source-registry.mjs';
 
 const NAV_LABELS = Object.freeze({
   OPEN_DETAIL: '詳細',
@@ -75,6 +76,13 @@ export function buildPartnerShellRuntimeModel(input = {}, { canDispatch } = {}) 
     ) ? frozenAction('OPEN_DETAIL', '詳細', { targetView: 'detail', partnerId: partner.partnerId }) : null,
   })));
 
+  const idleReadableLine = view.view === 'hub' && view.activePartnerId
+    ? selectApprovedPartnerIdleUtterance({
+        partnerId: view.activePartnerId,
+        seed: `partner-shell:${view.activePartnerId}`,
+      })
+    : null;
+
   return Object.freeze({
     view: view.view,
     title: view.viewTitle,
@@ -86,6 +94,7 @@ export function buildPartnerShellRuntimeModel(input = {}, { canDispatch } = {}) 
     formationPartnerIds: view.formationPartnerIds,
     strategyId: view.strategyId,
     postBattleLine: view.postBattleLine,
+    idleReadableLine,
     voiceTuning: normalizePartnerVoiceTuning(input.partnerVoiceTuning),
     menuActions,
     navigationActions,
@@ -241,6 +250,13 @@ function renderBody(doc, section, model, emit, services) {
   }
 
   if (model.view === 'hub') {
+    if (model.idleReadableLine?.text) {
+      const idle = element(doc, 'p', 'partner-shell-idle-readable', model.idleReadableLine.text);
+      idle.dataset.partnerId = model.idleReadableLine.partnerId;
+      idle.dataset.sourceState = model.idleReadableLine.sourceState;
+      idle.dataset.presentationOnly = 'true';
+      section.append(idle);
+    }
     const menu = element(doc, 'div', 'partner-shell-menu');
     for (const spec of model.menuActions) menu.append(actionButton(doc, spec, emit));
     section.append(menu);

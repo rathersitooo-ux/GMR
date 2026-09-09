@@ -1,4 +1,7 @@
 import {
+  createFlanoraMapLayout,
+} from './new-base-flanora-map-layout-core.mjs';
+import {
   createNewBaseGoalPathLayout,
   projectNewBaseGoalPathConnections,
 } from './new-base-goal-path-core.mjs';
@@ -66,11 +69,21 @@ export function mountBattleNewBaseBoardLivePresentation({
   if (!host || typeof host.appendChild !== 'function') return fail('DOM_HOST_REQUIRED');
   if (!documentLike || typeof documentLike.createElement !== 'function') return fail('DOM_DOCUMENT_REQUIRED');
 
+  let flanoraLayout;
   let goalPathLayout;
   try {
-    goalPathLayout = createNewBaseGoalPathLayout(layoutInput);
+    // Normalize one caller-owned layout through the existing Flanora core first,
+    // then feed that exact normalized participant/L-C-R mapping to GOAL-path.
+    // This prevents the two existing presentation/rule projections from
+    // interpreting a noncanonical caller column order differently.
+    flanoraLayout = createFlanoraMapLayout(layoutInput);
+    goalPathLayout = createNewBaseGoalPathLayout({
+      participantIds: flanoraLayout.participantIds,
+      horizontalCellCount: flanoraLayout.horizontalCellCount,
+      shieldLinkedLaneColumnsByParticipant: flanoraLayout.shieldLinkedLaneColumnsByParticipant,
+    });
   } catch (error) {
-    return fail(error?.message || 'GOAL_PATH_LAYOUT_INVALID');
+    return fail(error?.message || 'BOARD_LAYOUT_INVALID');
   }
 
   const initialGoal = projectGoalPath(goalPathLayout, straightCardIdsByColumn);
@@ -81,7 +94,7 @@ export function mountBattleNewBaseBoardLivePresentation({
     boardSurfaceRuntime = mountFlanoraBoardSurface({
       host,
       documentLike,
-      layoutInput,
+      layout: flanoraLayout,
       reducedMotion,
       lowPerf,
     });
@@ -163,9 +176,9 @@ export function mountBattleNewBaseBoardLivePresentation({
     currentGoalProjection = nextGoal.projection;
     currentGoalPresentation = nextGoal.presentation;
     return deepFreeze({
+      ...snapshotState(),
       ok: true,
       reason: 'AUTHORITATIVE_PRESENTATION_SYNCED',
-      ...snapshotState(),
     });
   }
 
@@ -178,6 +191,7 @@ export function mountBattleNewBaseBoardLivePresentation({
     movementAuthority: false,
     legalityAuthority: false,
     resultAuthority: false,
+    flanoraLayout,
     boardSurfaceRuntime,
     gateCueRuntime,
     syncAuthoritativeSnapshot,
@@ -210,7 +224,8 @@ export function mountBattleNewBaseBoardLivePresentation({
 
 export const BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT = deepFreeze({
   schema: SCHEMA,
-  layoutAuthority: 'CALLER_INPUT_VALIDATED_BY_EXISTING_FLANORA_AND_GOAL_PATH_CORES',
+  layoutAuthority: 'CALLER_INPUT_NORMALIZED_BY_EXISTING_FLANORA_CORE',
+  laneIdentityBridge: 'NORMALIZED_FLANORA_LAYOUT_TO_EXISTING_GOAL_PATH_CORE',
   straightCardSnapshotAuthority: 'CALLER',
   goalPathProjectionAuthority: 'EXISTING_NEW_BASE_GOAL_PATH_CORE',
   goalPathPresentationAuthority: 'EXISTING_NEW_BASE_GOAL_PATH_PRESENTATION_CORE',

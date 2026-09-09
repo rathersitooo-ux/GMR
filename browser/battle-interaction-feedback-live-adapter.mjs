@@ -25,10 +25,10 @@ function normalizedGuard(value) {
   return requiredText(value);
 }
 
-function deliveryStatus(callback, payload) {
+function deliveryStatus(callback, ...args) {
   if (typeof callback !== 'function') return 'UNAVAILABLE';
   try {
-    callback(payload);
+    callback(...args);
     return 'DELIVERED';
   } catch {
     return 'FAILED_SOFT';
@@ -44,6 +44,7 @@ export function projectBattleInteractionFeedbackEvent(event, options = {}) {
   if (!event || typeof event !== 'object' || Array.isArray(event)) {
     return fail('EVENT_REQUIRED');
   }
+  if (event.rejected === true) return fail('REJECTED_EVENT_NOT_OWNED');
 
   const receiptId = requiredText(event.receiptId);
   if (!receiptId) return fail('RECEIPT_ID_REQUIRED');
@@ -153,37 +154,26 @@ export function createBattleInteractionFeedbackLiveAdapter({
     sequence += 1;
 
     const cue = feedback.cue;
+    const deliveryContext = deepFreeze({
+      schema: SCHEMA,
+      sequence,
+      receiptId: feedback.receiptId,
+      stage: feedback.stage,
+      intensity: cue.intensity,
+      semanticGuard: cue.semanticGuard,
+    });
     const visual = cue.visualCue
       ? deliveryStatus(renderVisual, deepFreeze({
-          schema: SCHEMA,
-          sequence,
-          receiptId: feedback.receiptId,
-          stage: feedback.stage,
+          ...deliveryContext,
           visualCue: cue.visualCue,
-          intensity: cue.intensity,
           motionProfile: cue.motionProfile,
-          semanticGuard: cue.semanticGuard,
         }))
       : 'DISABLED';
     const audio = cue.formalSfxKey
-      ? deliveryStatus(playFormalSfx, deepFreeze({
-          schema: SCHEMA,
-          sequence,
-          receiptId: feedback.receiptId,
-          stage: feedback.stage,
-          formalSfxKey: cue.formalSfxKey,
-          intensity: cue.intensity,
-        }))
+      ? deliveryStatus(playFormalSfx, cue.formalSfxKey, deliveryContext)
       : 'DISABLED';
     const haptic = cue.hapticClass
-      ? deliveryStatus(emitHaptic, deepFreeze({
-          schema: SCHEMA,
-          sequence,
-          receiptId: feedback.receiptId,
-          stage: feedback.stage,
-          hapticClass: cue.hapticClass,
-          intensity: cue.intensity,
-        }))
+      ? deliveryStatus(emitHaptic, cue.hapticClass, deliveryContext)
       : 'DISABLED';
 
     return deepFreeze({
@@ -218,6 +208,7 @@ export const BATTLE_INTERACTION_FEEDBACK_LIVE_ADAPTER_CONTRACT = Object.freeze({
   exactlyOncePerReceiptStage: true,
   authoritativeAcceptanceDelegatedToCueCore: true,
   semanticGuardExactMatchRequired: true,
+  rejectedEventOwned: false,
   rejectReasonPresentationOwned: false,
   soundAssetRegistryOwned: false,
   numericHapticTimingOwned: false,

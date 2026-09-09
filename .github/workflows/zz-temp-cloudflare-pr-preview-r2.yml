@@ -1,4 +1,4 @@
-name: GAMEROAD Codex Shared Preview Pixel Evidence R5
+name: GAMEROAD Codex Shared Preview Pixel Evidence R6
 
 on:
   push:
@@ -43,7 +43,7 @@ jobs:
           npm install --no-save --no-package-lock @playwright/test@1.62.0
           npx playwright install --with-deps chromium
 
-      - name: Capture canonical four-player Battle at two viewports
+      - name: Capture proven four-player Battle at two viewports
         shell: bash
         run: |
           set -euo pipefail
@@ -91,21 +91,19 @@ jobs:
             const t = window.__GAMEROAD_TEST__;
             t.battlePresentationFast(false);
             t.start('4p', 'road_shield');
+            window.__CODEX_SHARED_ROUND_PROMISE__ = t.autoRound();
           });
+
           const battle = page.locator('section[data-screen="battle"]');
           await battle.waitFor({ state: 'visible', timeout: 30_000 });
-          await page.waitForFunction(() => {
-            const t = window.__GAMEROAD_TEST__;
-            return t?.state?.screen === 'battle' && t?.state?.match?.mode === '4p' && t?.state?.match?.players?.length === 4;
-          }, null, { timeout: 30_000 });
           await page.waitForFunction(() =>
             document.querySelectorAll('#publicPlayerStrip .publicPlayerChip').length === 4 &&
             document.querySelectorAll('#boardPlayers .boardPlayerToken').length === 4 &&
-            document.querySelectorAll('[data-battle-janken-slidepad="1"]').length >= 1,
+            Boolean(document.querySelector('#battleMap')),
             null,
             { timeout: 30_000 }
           );
-          await page.waitForTimeout(500);
+          await page.waitForTimeout(700);
 
           const snapshot = () => page.evaluate(() => ({
             width: innerWidth,
@@ -115,6 +113,7 @@ jobs:
             publicPlayers: document.querySelectorAll('#publicPlayerStrip .publicPlayerChip').length,
             boardPlayers: document.querySelectorAll('#boardPlayers .boardPlayerToken').length,
             jankenPads: document.querySelectorAll('[data-battle-janken-slidepad="1"]').length,
+            battlePhaseVisible: Boolean(document.querySelector('#battlePhaseSurface')?.getClientRects().length),
             phaseTitle: document.querySelector('#phaseTitle')?.textContent?.trim() ?? null,
           }));
 

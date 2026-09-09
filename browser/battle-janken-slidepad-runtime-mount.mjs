@@ -1,5 +1,6 @@
 import {
   ensureRoundStartJankenSlotAssignment,
+  NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE,
   NEW_BASE_ROUND_START_JANKEN_SLOT_STATUS,
 } from './new-base-round-start-janken-slot-assignment-core.mjs';
 import {
@@ -108,7 +109,8 @@ export function projectBattlePlayableHandAffordance({
 
 function canonicalRoundId(value) {
   const text = String(value ?? '').trim();
-  return text ? `battle-round:${text}` : null;
+  if (!text) return null;
+  return text.startsWith('battle-round:') ? text : `battle-round:${text}`;
 }
 
 function normalizedHand(hand) {
@@ -153,10 +155,13 @@ export function buildBattleJankenSlidePadModel({
     });
   }
 
+  const assignmentMode = currentSnapshot?.assignmentMode
+    ?? NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.LEGACY_SUIT_BOUND;
   const assignment = ensureRoundStartJankenSlotAssignment({
     currentSnapshot,
     roundId: canonical,
     hand: cards.map(({ id, suit }) => ({ id, suit })),
+    assignmentMode,
     pickDuplicateIndex,
   });
   const byId = new Map(cards.map((card) => [card.id, card]));
@@ -963,6 +968,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
   let focusedCardId = null;
   let focusSurfaceRuntime = null;
   let focusSurfaceVersion = 0;
+  let focusAssignmentSyncPending = false;
 
   function closeDedicatedFocusSurface() {
     focusSurfaceVersion += 1;
@@ -976,14 +982,27 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     if (!dedicatedFocus || !model) return null;
     let context = null;
     try {
+      const callerAssignment = model.assignment?.assignmentMode
+        === NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY
+        ? model.assignment
+        : null;
       context = await dedicatedFocus.readContext(Object.freeze({
         roundId: model.roundId,
-        assignment: model.assignment,
+        assignment: callerAssignment,
       }));
     } catch {
       return null;
     }
     if (!context || typeof context !== 'object' || !Array.isArray(context.packages)) return null;
+    const currentAssignment = context.assignment;
+    if (currentAssignment?.assignmentMode !== NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY) {
+      return null;
+    }
+    if (currentAssignment.roundId !== model.roundId) return null;
+    if (assignment !== currentAssignment) {
+      assignment = currentAssignment;
+      render();
+    }
     return Object.freeze({
       packages: context.packages,
       generationId: context.generationId ?? model.roundId,
@@ -1476,6 +1495,8 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       rowRouletteRuntime?.refresh?.();
       return;
     }
+    const canonical = canonicalRoundId(roundText);
+    if (assignment?.roundId && assignment.roundId !== canonical) assignment = null;
     model = buildBattleJankenSlidePadModel({
       roundId: roundText,
       hand,
@@ -1483,6 +1504,31 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       pickDuplicateIndex: (request) => entropyIndex(globalRef, request),
     });
     assignment = model.assignment;
+    const awaitingCurrentHand3 = dedicatedFocus
+      && assignment?.assignmentMode !== NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY;
+    if (awaitingCurrentHand3) {
+      clearPlayableHandAffordance(root);
+      rowRouletteHost.hidden = true;
+      rowRouletteRuntime?.refresh?.();
+      for (const jankenHand of SLOT_ORDER) {
+        const node = slotNodes.get(jankenHand);
+        const cardText = node?.querySelector?.('.grJankenSlidePadCard');
+        if (!node) continue;
+        node.disabled = true;
+        node.dataset.cardId = '';
+        node.setAttribute('aria-label', `${SLOT_VIEW[jankenHand].symbol} ${SLOT_VIEW[jankenHand].hand} 読み込み中`);
+        if (cardText) cardText.textContent = '—';
+        node.onclick = null;
+      }
+      openForRound(model.roundId);
+      if (!focusAssignmentSyncPending) {
+        focusAssignmentSyncPending = true;
+        void readDedicatedFocusContext().finally(() => {
+          focusAssignmentSyncPending = false;
+        });
+      }
+      return;
+    }
     syncHandZoneProjection(root, model);
     syncPlayableHandAffordance(root);
     syncHandCardFocusPresentation();

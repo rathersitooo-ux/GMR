@@ -20,6 +20,10 @@ import {
   projectBattleJankenOrderSlidePadPresentation,
 } from '../browser/battle-janken-slidepad-runtime-mount.mjs';
 import { projectBattleJankenOrderSnapshot } from '../browser/battle-janken-order-live-adapter.mjs';
+import {
+  createRoundStartJankenSlotAssignment,
+  NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE,
+} from '../browser/new-base-round-start-janken-slot-assignment-core.mjs';
 
 const hand = [
   { id: 'club-a', suit: 'CL', label: 'Club A' },
@@ -27,6 +31,64 @@ const hand = [
   { id: 'spade-a', suit: 'SP', label: 'Spade A' },
   { id: 'club-b', suit: 'CL', label: 'Club B' },
 ];
+
+
+test('current Hand3 snapshot projects the exact immutable three-card mapping without native-suit reassignment', () => {
+  const currentHand = [
+    { id: 'heart-3', suit: 'HE', label: 'Heart 3' },
+    { id: 'club-4', suit: 'CL', label: 'Club 4' },
+    { id: 'diamond-5', suit: 'DI', label: 'Diamond 5' },
+  ];
+  const snapshot = createRoundStartJankenSlotAssignment({
+    roundId: 'battle-round:current-1',
+    hand: currentHand,
+    assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
+    assignedCardIdsByJankenHand: {
+      ROCK: 'diamond-5',
+      SCISSORS: 'heart-3',
+      PAPER: 'club-4',
+    },
+  });
+  const first = buildBattleJankenSlidePadModel({
+    roundId: 'current-1',
+    hand: currentHand,
+    currentSnapshot: snapshot,
+  });
+  const redraw = buildBattleJankenSlidePadModel({
+    roundId: 'battle-round:current-1',
+    hand: currentHand,
+    currentSnapshot: snapshot,
+  });
+  assert.strictEqual(first.assignment, snapshot);
+  assert.strictEqual(redraw.assignment, snapshot);
+  assert.deepEqual(first.slots.map((slot) => [slot.jankenHand, slot.cardId]), [
+    ['ROCK', 'diamond-5'],
+    ['SCISSORS', 'heart-3'],
+    ['PAPER', 'club-4'],
+  ]);
+  assert.deepEqual(first.ordinaryHandCardIds, []);
+});
+
+test('dedicated Focus projection proactively replaces the legacy display snapshot with current Hand3 authority', () => {
+  const runtimeSource = readFileSync(
+    new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
+    'utf8',
+  );
+  assert.match(runtimeSource, /const callerAssignment = model\.assignment\?\.assignmentMode[\s\S]*CURRENT_HAND3_POLICY[\s\S]*\? model\.assignment[\s\S]*: null/);
+  assert.match(runtimeSource, /assignment = currentAssignment;\n      render\(\);/);
+  assert.match(runtimeSource, /focusAssignmentSyncPending = true;[\s\S]*readDedicatedFocusContext\(\)\.finally/);
+});
+
+
+test('dedicated Focus never paints the legacy suit-bound mapping while current Hand3 authority is loading', () => {
+  const runtimeSource = readFileSync(
+    new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
+    'utf8',
+  );
+  assert.match(runtimeSource, /const awaitingCurrentHand3 = dedicatedFocus[\s\S]*CURRENT_HAND3_POLICY/);
+  assert.match(runtimeSource, /if \(awaitingCurrentHand3\) \{[\s\S]*node\.disabled = true;[\s\S]*node\.dataset\.cardId = '';[\s\S]*cardText\.textContent = '—';[\s\S]*readDedicatedFocusContext\(\)\.finally[\s\S]*return;/);
+  assert.equal((runtimeSource.match(/readDedicatedFocusContext\(\)\.finally/g) ?? []).length, 1);
+});
 
 test('projects fixed janken slots while keeping selected physical cards out of ordinary hand membership', () => {
   const model = buildBattleJankenSlidePadModel({ roundId: '1', hand, pickDuplicateIndex: () => 1 });
@@ -433,7 +495,7 @@ test('configured dedicated focus blocks legacy direct hand-card commit and deleg
   assert.match(source, /const dedicatedFocus = normalizeBattleJankenFocusIntegration\(focusIntegration\);/);
   assert.equal((source.match(/if \(dedicatedFocus\) \{\s*void openDedicatedFocusSurface\(\);\s*return;\s*\}/g) ?? []).length, 2,
     'both gesture release and direct slot click must enter the same dedicated focus surface');
-  assert.match(source, /context = await dedicatedFocus\.readContext\(Object\.freeze\(\{[\s\S]*roundId: model\.roundId,[\s\S]*assignment: model\.assignment/);
+  assert.match(source, /const callerAssignment = model\.assignment\?\.assignmentMode[\s\S]*CURRENT_HAND3_POLICY[\s\S]*\? model\.assignment[\s\S]*: null[\s\S]*context = await dedicatedFocus\.readContext\(Object\.freeze\(\{[\s\S]*roundId: model\.roundId,[\s\S]*assignment: callerAssignment/);
   assert.match(source, /runtime = dedicatedFocus\.mountSurface\(\{[\s\S]*liveInputStack: dedicatedFocus\.liveInputStack,[\s\S]*packages: context\.packages,[\s\S]*generationId: context\.generationId/);
   assert.doesNotMatch(source, /from '\.\/battle-janken-focus-runtime-surface\.mjs'/,
     'SlidePad must not invent a second static mount authority; the current caller supplies the merged surface');

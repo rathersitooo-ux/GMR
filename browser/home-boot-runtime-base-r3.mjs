@@ -21,6 +21,26 @@ const ROUTE_SELECTOR = '.homePadChoice[data-home-target]';
 const SECONDARY_UTILITY_SELECTOR = '.codexHomeUtilities';
 const SECONDARY_UTILITY_BUTTON_SELECTOR = '.homeUtilityBtn';
 export const HOME_CONTEXTUAL_REPLAY_LABEL = '操作を再確認';
+
+export function setHomeObservedAttributeIfChanged(node, name, value) {
+  if (!node || typeof node.getAttribute !== 'function' || typeof node.setAttribute !== 'function') {
+    throw new TypeError('HOME_OBSERVED_ATTRIBUTE_NODE_REQUIRED');
+  }
+  const attributeName = String(name || '').trim();
+  if (!attributeName) throw new TypeError('HOME_OBSERVED_ATTRIBUTE_NAME_REQUIRED');
+  const nextValue = String(value);
+  if (node.getAttribute(attributeName) === nextValue) return false;
+  node.setAttribute(attributeName, nextValue);
+  return true;
+}
+
+export function setHomeObservedTextContentIfChanged(node, value) {
+  if (!node || !('textContent' in node)) throw new TypeError('HOME_OBSERVED_TEXT_NODE_REQUIRED');
+  const nextValue = String(value);
+  if (node.textContent === nextValue) return false;
+  node.textContent = nextValue;
+  return true;
+}
 const HOME_CONTEXTUAL_REPLAY_SCHEMA = 'gameroad.tutorial-contextual-replay-home.v1';
 const SLIDEPAD_CENTER_SELECTOR = '#homePadCenter';
 const SLIDEPAD_DEAD_ZONE_PX = 18;
@@ -1094,7 +1114,7 @@ export function refreshHomeBootPresentation() {
   else {
     home.removeAttribute('data-home-contextual-replay-active');
     const replayTrigger = home.querySelector('[data-home-contextual-replay-trigger="true"]');
-    if (replayTrigger instanceof HTMLElement) replayTrigger.setAttribute('aria-pressed', 'false');
+    if (replayTrigger instanceof HTMLElement) setHomeObservedAttributeIfChanged(replayTrigger, 'aria-pressed', 'false');
   }
 
   const entering = active && !runtime.active;
@@ -1685,11 +1705,11 @@ ${HOME_SELECTOR}[data-home-contextual-replay-active="true"] ${SLIDEPAD_CENTER_SE
     trigger.dataset.homeContextualReplayTrigger = 'true';
     host.appendChild(trigger);
   }
-  trigger.textContent = HOME_CONTEXTUAL_REPLAY_LABEL;
+  setHomeObservedTextContentIfChanged(trigger, HOME_CONTEXTUAL_REPLAY_LABEL);
   trigger.title = HOME_CONTEXTUAL_REPLAY_LABEL;
   trigger.setAttribute('aria-label', HOME_CONTEXTUAL_REPLAY_LABEL);
-  trigger.setAttribute('aria-pressed', home.getAttribute('data-home-contextual-replay-active') === 'true' ? 'true' : 'false');
-  trigger.hidden = false;
+  setHomeObservedAttributeIfChanged(trigger, 'aria-pressed', home.getAttribute('data-home-contextual-replay-active') === 'true' ? 'true' : 'false');
+  if (trigger.hidden) trigger.hidden = false;
   trigger.onclick = () => {
     const currentIds = routeButtons(home).map(routeId).filter(Boolean);
     const current = projectHomeContextualTutorialReplay({ routeIds: currentIds });

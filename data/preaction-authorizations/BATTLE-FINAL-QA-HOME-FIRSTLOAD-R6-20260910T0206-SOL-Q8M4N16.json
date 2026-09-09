@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-FINAL-QA-HOME-FIRSTLOAD-R6-20260910T0206-SOL-Q8M4N16",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FINAL_QA_HOME_REFRESH_IDEMPOTENCE_R1",
+  "acquireKey": "BATTLE-FINAL-QA-HOME-FIRSTLOAD-R6-20260910T0206-SOL-Q8M4N16",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "W46_THREE_VIEWPORT_HOME_RESPONSIVE_RENDER_BUT_MAIN_THREAD_STALL_PLUS_PR1438_CAUSAL_PATCH",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1432_AND_PR1438_FOCUSED_HOME_IDEMPOTENCE_TESTS_PASS",
+  "proceedToken": "PROCEED|BATTLE-FINAL-QA-HOME-FIRSTLOAD-R6-20260910T0206-SOL-Q8M4N16|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|home-refresh-idempotence|two-file-clean-transplant|active-lease",
+  "authorizationBaseSha": "a84a3c877be133901dec969a6e67a54deb6da0c9",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_FINAL_QA_HOME_REFRESH_IDEMPOTENCE_R1",
+  "leaseAcquireKey": "BATTLE-FINAL-QA-HOME-FIRSTLOAD-R6-20260910T0206-SOL-Q8M4N16",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 02:06 JST",
+  "leaseUntilJst": "2026-09-10 03:06 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A771:L771",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR existing safe branch sol/battle-final-qa-home-firstload-r5-20260910 at exact base a84a3c877be133901dec969a6e67a54deb6da0c9; browser/home-boot-runtime-base-r3.mjs; tests/home-boot-presentation.test.mjs; own data/preaction-authorizations/BATTLE-FINAL-QA-HOME-FIRSTLOAD-R6-20260910T0206-SOL-Q8M4N16.json only. tests/browser-runtime-smoke.spec.mjs, PR#1438 donor, browser/GAMEROAD.html, deploy build, Battle screen/janken/camera/controlled-character/GOAL/Road/gameplay/rules/save/economy/network READ_ONLY.",
+  "solutionSignature": "HOME_CONTEXTUAL_REPLAY_OBSERVER_IDEMPOTENT_WRITE_R6",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1438_TWO_FILE_PATCH_CURRENT_MAIN_HELPERS_ABSENT",
+  "solutionSearchEvidence": [
+    "Corrected WorkUnit46 player-path evidence reached a fully rendered Home on all three required viewports, but a tiny page.evaluate did not return within the test budget before any Battle navigation.",
+    "PR#1438 isolates Home contextual replay MutationObserver self-retriggering: refresh writes observed aria-pressed and child text even when the values are unchanged.",
+    "The donor repair makes only observed attribute/text writes idempotent and includes focused regression tests; prior bounded runs passed those focused tests.",
+    "Fresh current main a84a3c877be133901dec969a6e67a54deb6da0c9 still lacks the donor idempotent observed-write helpers, so the repair has not been absorbed.",
+    "This slice keeps GAMEROAD.html and every Battle gameplay/presentation authority read-only; only the Home observer writer and its focused tests may change."
+  ],
+  "scope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ]
+}

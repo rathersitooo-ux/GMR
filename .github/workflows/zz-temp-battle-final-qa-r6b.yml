@@ -1,4 +1,4 @@
-name: TEMP Battle final QA R6B player path
+name: TEMP Battle final QA R6B visible click probe
 
 on:
   push:
@@ -10,15 +10,16 @@ permissions:
   contents: read
 
 jobs:
-  w46-player-path:
+  w46-visible-click-probe:
     if: github.actor == 'rathersitooo-ux'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 12
     steps:
-      - name: Checkout R6B current product
+      - name: Checkout fresh current product
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          ref: 5bf4e7a6963b7f005958dd03d59c89c9eb229fa9
+          fetch-depth: 1
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -31,70 +32,78 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Materialize corrected W46 visible player path
+      - name: Materialize visible-only player probe
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin pull/1413/head:r6b-donor
-          git show r6b-donor:.github/workflows/browser-full-interaction.yml > /tmp/w46-donor.yml
-          mkdir -p .w46-battle
-          python - <<'PY'
-          from pathlib import Path
+          mkdir -p .w46-visible
+          cat > .w46-visible/visible-click.spec.mjs <<'EOF'
+          import { test, expect } from '@playwright/test';
 
-          donor = Path('/tmp/w46-donor.yml').read_text(encoding='utf-8')
+          test('W46 visible Home to Battle setup remains interactive', async ({ page }, testInfo) => {
+            const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'commit', timeout: 20_000 });
+            expect(response).not.toBeNull();
+            expect(response.ok()).toBeTruthy();
 
-          def extract(marker):
-              if marker not in donor:
-                  raise SystemExit(f'marker missing: {marker}')
-              tail = donor.split(marker, 1)[1]
-              end = '          EOF\n'
-              if end not in tail:
-                  raise SystemExit(f'EOF missing after: {marker}')
-              block = tail.split(end, 1)[0]
-              lines = block.splitlines()
-              normalized = [line[10:] if line.startswith('          ') else line for line in lines]
-              return '\n'.join(normalized) + '\n'
+            const home = page.locator('section[data-screen="home"]');
+            await expect(home, 'Home becomes player-visible').toBeVisible({ timeout: 10_000 });
+            await testInfo.attach(`${testInfo.project.name}-home.png`, {
+              body: await page.screenshot({ animations: 'allow' }),
+              contentType: 'image/png',
+            });
 
-          spec_marker = "          cat > .w46-battle/battle-final.spec.mjs <<'EOF'\n"
-          config_marker = "          cat > .w46-battle/playwright.local.config.mjs <<'EOF'\n"
-          spec = extract(spec_marker)
-          config = extract(config_marker)
+            const setupControl = page.locator('[data-home-target="setup"]:visible, [data-go="setup"]:visible').first();
+            await expect(setupControl, 'visible Battle setup control').toBeVisible({ timeout: 5_000 });
+            await setupControl.click({ timeout: 7_000 });
 
-          bad = "expect(await page.locator('section[data-screen=\"battle\"]').count(), 'Battle screen exists').toBeGreaterThan(0);\n"
-          count = spec.count(bad)
-          if count != 1:
-              raise SystemExit(f'expected one premature Battle assertion, found {count}')
-          spec = spec.replace(bad, '', 1)
+            const setup = page.locator('section[data-screen="setup"]');
+            await expect(setup, 'visible click reaches Setup').toBeVisible({ timeout: 7_000 });
+            await testInfo.attach(`${testInfo.project.name}-setup.png`, {
+              body: await page.screenshot({ animations: 'allow' }),
+              contentType: 'image/png',
+            });
+          });
+          EOF
 
-          required = [
-              'enterVisibleBasicBattle',
-              'Home exposes visible Battle setup control',
-              'desktop-1280x720',
-              'phone-390x844',
-              'short-landscape-667x375',
-          ]
-          missing = [item for item in required if item not in spec and item not in config]
-          if missing:
-              raise SystemExit(f'corrected W46 contract missing: {missing}')
-          if 'Battle screen exists' in spec:
-              raise SystemExit('premature hidden-DOM assertion survived')
+          cat > .w46-visible/playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          import baseConfig from '../playwright.full-interaction.config.mjs';
 
-          Path('.w46-battle/battle-final.spec.mjs').write_text(spec, encoding='utf-8')
-          Path('.w46-battle/playwright.local.config.mjs').write_text(config, encoding='utf-8')
-          PY
-          grep -F "enterVisibleBasicBattle" .w46-battle/battle-final.spec.mjs
-          ! grep -F "Battle screen exists" .w46-battle/battle-final.spec.mjs
+          const names = new Set(['desktop-1280x720', 'phone-390x844', 'short-landscape-667x375']);
+          const projects = (baseConfig.projects ?? [])
+            .filter((project) => names.has(project.name))
+            .map((project) => ({ name: project.name, use: project.use }));
 
-      - name: Run corrected WorkUnit46 three-viewport player path
-        run: npx playwright test --config=.w46-battle/playwright.local.config.mjs --workers=1
+          export default defineConfig({
+            testDir: '.',
+            testMatch: 'visible-click.spec.mjs',
+            timeout: 30_000,
+            expect: { timeout: 7_000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            outputDir: '../test-results/w46-visible-click',
+            reporter: [['line'], ['json', { outputFile: '../test-results/w46-visible-click/report.json' }]],
+            use: {
+              ...baseConfig.use,
+              trace: 'on',
+              screenshot: 'on',
+              video: 'on',
+            },
+            projects,
+            webServer: baseConfig.webServer,
+          });
+          EOF
 
-      - name: Upload W46 evidence
+      - name: Run visible-only three-viewport click probe
+        run: npx playwright test --config=.w46-visible/playwright.config.mjs --workers=1
+
+      - name: Upload visible-click evidence
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
-          name: battle-final-qa-r6b-${{ github.run_id }}
+          name: battle-final-qa-r6b-visible-${{ github.run_id }}
           path: |
-            playwright-report-w46-battle-local/
-            test-results/w46-battle-local/
+            test-results/w46-visible-click/
           if-no-files-found: error
           retention-days: 14

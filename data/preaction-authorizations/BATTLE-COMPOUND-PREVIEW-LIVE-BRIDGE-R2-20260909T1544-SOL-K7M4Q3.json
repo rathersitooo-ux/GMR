@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-COMPOUND-PREVIEW-LIVE-BRIDGE-R2-20260909T1544-SOL-K7M4Q3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_COMPOUND_ATTACK_PREVIEW_LIVE_BRIDGE_R2",
+  "acquireKey": "BATTLE-COMPOUND-PREVIEW-LIVE-BRIDGE-R2-20260909T1544-SOL-K7M4Q3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ROW688_PLUS_MERGED_COMPOUND_PACKAGE_LIVE_CONSUMER_AND_PREVIEW_RUNTIME_ACTUAL",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "THIN_COMPOSITION_ONLY_WITH_FOCUSED_NODE_CONTRACT_TESTS_AND_NO_SHARED_RUNTIME_MUTATION",
+  "proceedToken": "PROCEED|BATTLE-COMPOUND-PREVIEW-LIVE-BRIDGE-R2-20260909T1544-SOL-K7M4Q3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|prediction|lease-snapshot",
+  "authorizationBaseSha": "1726a860c15a1b2298492b3b69f358ddb38716c7",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_COMPOUND_ATTACK_PREVIEW_LIVE_BRIDGE_R2",
+  "leaseAcquireKey": "BATTLE-COMPOUND-PREVIEW-LIVE-BRIDGE-R2-20260909T1544-SOL-K7M4Q3",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 15:44 JST",
+  "leaseUntilJst": "2026-09-09 16:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A688:L688",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-compound-preview-live-bridge-r2-20260909; browser/battle-compound-preview-live-consumer-bridge.mjs (new); tests/battle-compound-preview-live-consumer-bridge.test.mjs (new); own transient data/preaction-authorizations/BATTLE-COMPOUND-PREVIEW-LIVE-BRIDGE-R2-20260909T1544-SOL-K7M4Q3.json only. Existing battle-new-base-live-consumer-adapter.mjs, battle-compound-attack-preview-runtime.mjs, battle-janken-compound-attack-package-core.mjs READ_ONLY reuse. browser/GAMEROAD.html, battle-screen/janken runtimes, gameplay/rules/target-legality/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/battle-compound-preview-live-consumer-bridge.mjs",
+    "tests/battle-compound-preview-live-consumer-bridge.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-compound-preview-live-consumer-bridge.mjs",
+    "tests/battle-compound-preview-live-consumer-bridge.test.mjs"
+  ],
+  "solutionSignature": "Compose the existing new-base live consumer stage/clear/commit lifecycle with the existing compound preview runtime so the exact caller-authoritative card/hand/path/opponent/Shield package must have a renderable precommit preview before bridge commit; clear presentation on explicit clear, accepted commit, or observed round change; never recompute target, legality, route, or gameplay state.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MAIN_1726A860_EXISTING_LIVE_CONSUMER_PLUS_COMPOUND_PACKAGE_CORE_PLUS_PREVIEW_RUNTIME_READBACK",
+  "solutionSearchEvidence": [
+    "battle-new-base-live-consumer-adapter stageCompoundAttack already produces an immutable staged package from caller-authoritative target/path/Shield candidate",
+    "battle-compound-attack-preview-runtime render already projects an exact package to exact participant and Shield L/C/R without target or legality recomputation",
+    "battle-janken-compound-attack-package-core already owns package validation, preview projection, clear semantics, and fresh exact-match commit preparation",
+    "No existing main bridge was found that composes the live consumer stage lifecycle with the preview runtime",
+    "Current ACTIVE owners retain GAMEROAD.html and Battle/SlidePad runtimes, so this slice is limited to two new non-overlapping composition/test files"
+  ]
+}

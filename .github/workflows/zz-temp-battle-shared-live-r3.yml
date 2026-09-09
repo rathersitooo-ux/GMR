@@ -1,0 +1,37 @@
+name: TEMP Battle Shared Live R3
+
+on:
+  push:
+    branches:
+      - sol/battle-shared-live-mount-r3-20260909
+    paths:
+      - tools/temp-battle-shared-live-r3.py
+
+permissions:
+  contents: write
+
+jobs:
+  probe_or_patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: sol/battle-shared-live-mount-r3-20260909
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run bounded Battle shared live executor
+        run: python tools/temp-battle-shared-live-r3.py
+      - name: Commit executor result
+        shell: bash
+        run: |
+          if git diff --quiet && git diff --cached --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
+            echo "No executor changes"
+            exit 0
+          fi
+          git config user.name "gameroad-bounded-executor"
+          git config user.email "actions@users.noreply.github.com"
+          git add browser/GAMEROAD.html deploy/cloudflare/scripts/build.mjs tests/battle-new-base-live-consumer-html.test.mjs data/battle-shared-live-r3-probe.txt 2>/dev/null || true
+          git commit -m "Battle shared live R3 bounded executor result"
+          git push origin HEAD:sol/battle-shared-live-mount-r3-20260909

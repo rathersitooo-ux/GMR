@@ -132,18 +132,23 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"] .grBattleShieldToken{display:grid;place-items:center;width:13px;height:15px;clip-path:polygon(50% 0,92% 15%,82% 72%,50% 100%,18% 72%,8% 15%);background:linear-gradient(180deg,#ffe28a,#9d7c32);color:#17352f;font-size:8px;font-weight:1000;line-height:1;text-shadow:none}
 [${SHELL_ATTR}="1"] .grBattleShieldSlot{font-size:9px;font-weight:1000;line-height:1;letter-spacing:.04em;color:#fff4bd}
 [${SHELL_ATTR}="1"] .grBattleShieldTrack{display:block;min-width:8px;height:2px;border-radius:999px;background:linear-gradient(90deg,rgba(255,226,129,.80),rgba(219,241,207,.24))}
+[${SHELL_ATTR}="1"] [${SHIELD_SLOT_ATTR}][data-board-return-target="true"]{position:relative;border-color:rgba(255,240,174,.96);background:linear-gradient(180deg,rgba(145,105,37,.92),rgba(30,46,26,.84));box-shadow:0 0 0 1px rgba(255,249,204,.42),0 0 18px rgba(255,211,105,.58),inset 0 0 10px rgba(255,238,154,.20);animation:grBattleShieldReturn 520ms ease-out 1}
+[${SHELL_ATTR}="1"] [${SHIELD_SLOT_ATTR}][data-board-return-target="true"] .grBattleShieldTrack{height:3px;background:linear-gradient(90deg,rgba(255,248,198,1),rgba(255,211,105,.98));box-shadow:0 0 9px rgba(255,222,123,.86)}
+[${SHELL_ATTR}="1"] [${SHIELD_SLOT_ATTR}][data-board-return-target="true"]::after{content:"";position:absolute;inset:-3px;border:1px solid rgba(255,248,198,.54);border-radius:9px;pointer-events:none}
+@keyframes grBattleShieldReturn{0%{transform:scale(.94);filter:brightness(1.7)}100%{transform:scale(1);filter:brightness(1)}}
 [${SHELL_ATTR}="1"] [${LANE_ATTR}][data-role="target"] [${SHIELD_RAIL_ATTR}]{filter:drop-shadow(0 0 6px rgba(255,205,139,.22))}
 [${SHELL_ATTR}="1"] .grBattleLaneRole{align-self:center;justify-self:center;padding:5px 7px;border-radius:999px;border:1px solid rgba(230,248,218,.24);background:rgba(3,20,17,.54);font-size:clamp(11px,.9vw,13px);font-weight:800;letter-spacing:.08em;text-transform:uppercase}
 [${SHELL_ATTR}="1"] .grBattleLaneAfterstate{align-self:end;display:grid;gap:4px;min-height:20px;font-size:clamp(11px,.92vw,13px);line-height:1.35;color:#e8f1df}
 [${SHELL_ATTR}="1"] .grBattleLaneAfterstate span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 5px;border-radius:6px;background:rgba(2,19,16,.60);border:1px solid rgba(225,244,215,.12)}
 [${SHELL_ATTR}="1"] #battleResolution{position:absolute;z-index:7;left:50%;bottom:clamp(8px,2vh,18px);transform:translateX(-50%);max-width:min(72vw,760px);min-height:24px;pointer-events:none;text-align:center}
 [${SHELL_ATTR}="1"][data-motion="static_only"] [${LANE_ATTR}]{transition:none!important;transform:none!important}
+[${SHELL_ATTR}="1"][data-motion="static_only"] [${SHIELD_SLOT_ATTR}][data-board-return-target="true"]{animation:none!important;transform:none!important}
 @media(max-width:720px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{left:38%;right:3%}}
 @media(max-width:540px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{left:4px;right:4px;gap:3px;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr)}[${SHELL_ATTR}="1"] [${LANE_ATTR}]{left:0!important;top:0!important;padding:7px 6px;border-radius:8px}.grBattleLaneRole{max-width:100%;overflow:hidden;text-overflow:ellipsis}[${SHELL_ATTR}="1"] [${SHIELD_RAIL_ATTR}]{gap:2px;margin-top:3px}[${SHELL_ATTR}="1"] [${SHIELD_SLOT_ATTR}]{gap:2px;padding:2px 3px}[${SHELL_ATTR}="1"] .grBattleShieldToken{width:11px;height:13px;font-size:7px}[${SHELL_ATTR}="1"] .grBattleShieldSlot{font-size:8px}[${SHELL_ATTR}="1"] .grBattleHudMetric{min-width:42px;padding:3px 5px}[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{width:26px;height:34px}[${SHELL_ATTR}="1"] .grBattleHudLoad{width:44px;height:38px}[${SHELL_ATTR}="1"] [${CURRENT_ACTION_ATTR}]{top:58px;left:8px;right:8px;transform:none;max-width:none;font-size:11px;padding:4px 8px}}
 @media(max-width:540px) and (orientation:portrait){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:88px;right:8px;bottom:96px;left:8px;height:auto;gap:6px;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(4,minmax(0,1fr))}[${SHELL_ATTR}="1"] [${GRID_ATTR}]::before{display:none}[${SHELL_ATTR}="1"] [${LANE_ATTR}]{grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(20px,auto);column-gap:8px;row-gap:3px;padding:8px 10px;transform:none!important}[${SHELL_ATTR}="1"] .grBattleLaneIdentity{grid-column:1;grid-row:1}[${SHELL_ATTR}="1"] .grBattleLaneRole{grid-column:2;grid-row:1 / span 2;align-self:center;justify-self:end}[${SHELL_ATTR}="1"] .grBattleLaneAfterstate{grid-column:1;grid-row:2;align-self:end;min-height:0}[${SHELL_ATTR}="1"] #battleResolution{left:8px;right:8px;bottom:12px;transform:none;max-width:none}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}]{left:8px;top:22%;bottom:27%;width:auto;height:auto;flex-direction:column;justify-content:space-between;gap:5px;font-size:10px;letter-spacing:.09em}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}] .grBattleProgressArrow{width:2px;min-width:2px;min-height:42px;flex:1 1 auto;background:linear-gradient(180deg,rgba(255,226,129,.88),rgba(219,241,207,.30))}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}] .grBattleProgressArrow::before{content:"▲";left:50%;top:-2px;transform:translate(-50%,-45%)}}
 @media(max-height:420px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:78px;bottom:auto;height:72px;left:36%;right:4px;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr)}[${SHELL_ATTR}="1"] .grBattleScreenTop{height:46px;padding-top:3px}.grBattleLaneAfterstate{gap:2px}[${SHELL_ATTR}="1"] [${SHIELD_RAIL_ATTR}]{margin-top:2px}[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{height:32px}[${SHELL_ATTR}="1"] .grBattleHudLoad{height:34px}[${SHELL_ATTR}="1"] [${CURRENT_ACTION_ATTR}]{top:158px;left:50%;right:auto;transform:translateX(-50%);max-width:min(46vw,320px);padding:3px 7px;font-size:10px}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}]{top:82px;left:10px;width:min(30vw,200px);font-size:9px}}
 @media(max-height:470px) and (orientation:landscape){.battle .royalUsageStrip{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;width:151px!important;gap:2px!important}}
-@media(prefers-reduced-motion:reduce){[${SHELL_ATTR}="1"] [${LANE_ATTR}]{transition:none!important;transform:none!important}[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{transform:none!important}}
+@media(prefers-reduced-motion:reduce){[${SHELL_ATTR}="1"] [${LANE_ATTR}]{transition:none!important;transform:none!important}[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{transform:none!important}[${SHELL_ATTR}="1"] [${SHIELD_SLOT_ATTR}][data-board-return-target="true"]{animation:none!important;transform:none!important}}
 `;
   document.head?.appendChild(style);
 }
@@ -288,6 +293,9 @@ function writeCurrentActionCue(cue, model) {
     detail = targets.length ? `${source} → ${targets.join('・')}` : source;
   } else if ((phase === 'finisher' || phase === 'compare4') && winners.length) {
     detail = winners.join('・');
+  } else if (phase === 'settle' && model?.boardReturn) {
+    const target = targets[0] || participantLabelById(model, model.boardReturn.opponentId);
+    detail = [target, `Shield ${model.boardReturn.shieldLane}`].filter(Boolean).join(' / ');
   }
 
   const text = phaseLabel ? `今：${phaseLabel}${detail ? ` ${detail}` : ''}` : '';
@@ -295,6 +303,7 @@ function writeCurrentActionCue(cue, model) {
   cue.hidden = !text;
   setData(cue, 'phase', text ? phase : null);
   setData(cue, 'eventId', text ? model?.eventId : null);
+  setData(cue, 'boardReturnDestination', model?.boardReturn?.destinationKey ?? null);
   return text;
 }
 
@@ -537,16 +546,21 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     if (!audit.ok) throw new TypeError(`BATTLE_SCREEN_MODEL_REJECTED:${audit.defects.join(',')}`);
     if (hudSnapshot !== null) renderHud(hudSnapshot);
 
+    const boardReturn = model.boardReturn ?? null;
     setData(shell, 'mode', model.screenMode);
     setData(shell, 'eventId', model.eventId);
     setData(shell, 'phase', model.phase);
     setData(shell, 'transition', model.transition);
     setData(shell, 'motion', model.motion);
     setData(shell, 'returnIntent', model.returnIntent);
+    setData(shell, 'boardReturnDestination', boardReturn?.destinationKey ?? null);
     setData(phaseSurface, 'battleScreenEventId', model.eventId);
     setData(phaseSurface, 'battleScreenPhase', model.phase);
     setData(phaseSurface, 'battleScreenInput', model.battlePhaseInputPolicy.join('|'));
+    setData(phaseSurface, 'battleBoardReturnDestination', boardReturn?.destinationKey ?? null);
     setData(resolutionSurface, 'battleScreenEventId', model.eventId);
+    setData(resolutionSurface, 'battleBoardReturnDestination', boardReturn?.destinationKey ?? null);
+    setData(resolutionSurface, 'battleBoardReturnShieldRef', boardReturn?.shieldRef ?? null);
 
     const battle = model.screenMode === 'BATTLE_PHASE';
     const resultExit = !battle && model.returnIntent === 'RESULT';
@@ -563,8 +577,17 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
       view.lane.dataset.participantId = lane.id;
       view.lane.dataset.role = lane.role;
       view.shieldRail.dataset.participantId = lane.id;
+      setData(view.shieldRail, 'boardReturnParticipant', boardReturn?.opponentId === lane.id ? 'true' : null);
       view.shieldRail.setAttribute?.('aria-label', `${lane.label}: Shield L/C/R と対応ROAD`);
-      for (const link of view.shieldRail.children ?? []) link.dataset.participantId = lane.id;
+      for (const link of view.shieldRail.children ?? []) {
+        link.dataset.participantId = lane.id;
+        const slot = link.getAttribute?.(SHIELD_SLOT_ATTR) || link.dataset.roadLane;
+        const activeReturn = Boolean(boardReturn && boardReturn.opponentId === lane.id && boardReturn.shieldLane === slot);
+        setData(link, 'boardReturnTarget', activeReturn ? 'true' : null);
+        setData(link, 'boardReturnEventId', activeReturn ? boardReturn.eventId : null);
+        setData(link, 'boardReturnDestination', activeReturn ? boardReturn.destinationKey : null);
+        link.setAttribute?.('aria-label', `Shield ${slot} → ROAD ${slot}${activeReturn ? '、解決結果の帰着先' : ''}`);
+      }
       view.name.textContent = lane.label;
       view.team.textContent = lane.team ? `TEAM ${lane.team}` : '';
       const playerRoleLabel = PLAYER_ROLE_LABELS[lane.role] || '';
@@ -624,7 +647,8 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   existingAnchorPolicy: 'EXPLICIT_PHASE_GETS_RUNTIME_OVERLAY__ANCESTOR_NEVER_DECORATED',
   externalPhaseShellOwner: 'CALLER',
   planSurfaceOwner: 'CALLER',
-  shieldLanePresentation: 'STRUCTURE_ONLY_NO_SHIELD_STATE_INFERENCE',
+  shieldLanePresentation: 'STRUCTURE_PLUS_EXACT_ACCEPTED_BOARD_RETURN_CUE_NO_SHIELD_STATE_INFERENCE',
+  boardReturnAuthority: 'MODEL_ONLY_EXACT_OPPONENT_PLUS_SHIELD_LANE',
   shieldSlots: SHIELD_SLOTS,
   laneCount: 4,
   productionHtmlMutationOwnedHere: false,

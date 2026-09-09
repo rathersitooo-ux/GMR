@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "DECK-SAVE-SINGLE-INSTALL-ACTUAL-R1-20260910T0353-SOL-Q8N4K7",
+  "taskId": "DECK-UNSAVED-SAVE-ACK-INTEGRATE-001",
+  "workUnitKey": "DECK_SAVE_SINGLE_INSTALL_ACTUAL_GAME_R1",
+  "acquireKey": "DECK-SAVE-SINGLE-INSTALL-ACTUAL-R1-20260910T0353-SOL-Q8N4K7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "TASK1341_EXPLICIT_NEXT_ACTUAL_GAME_SINGLE_INSTALL_ONLY",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "READ_ONLY_CURRENT_MAIN_HTML_CORE_AND_EXISTING_BFI_SAVE_RELOAD_CONTRACT_VERIFIED",
+  "proceedToken": "PROCEED|DECK-SAVE-SINGLE-INSTALL-ACTUAL-R1-20260910T0353-SOL-Q8N4K7|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|deck-save-single-install-actual-game|evidence-only|active-lease",
+  "authorizationBaseSha": "aed6367624c6e92e39946e5a02541ada75fd0b60",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "DECK-UNSAVED-SAVE-ACK-INTEGRATE-001",
+  "leaseWorkUnitKey": "DECK_SAVE_SINGLE_INSTALL_ACTUAL_GAME_R1",
+  "leaseAcquireKey": "DECK-SAVE-SINGLE-INSTALL-ACTUAL-R1-20260910T0353-SOL-Q8N4K7",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:53 JST",
+  "leaseUntilJst": "2026-09-10 04:53 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A916:L916",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/deck-save-single-install-actual-r1-20260910; transient .github/workflows/zz-temp-deck-save-single-install-actual-r1.yml; own transient data/preaction-authorizations/DECK-SAVE-SINGLE-INSTALL-ACTUAL-R1-20260910T0353-SOL-Q8N4K7.json only. Runtime-generated temp Playwright spec is untracked. browser/GAMEROAD.html, browser/deck-save-recovery-core.mjs, existing tests/config, deck/game/save product files, deploy build, gameplay/network/economy READ_ONLY.",
+  "solutionSignature": "CURRENT_MAIN_ACTUAL_GAME_SINGLE_SAVE_GUARD_INSTALL_AND_RELOAD_PROOF_V1",
+  "reuseDisposition": "VERIFY_EXISTING",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_PRODUCTION_MOUNT_AND_BFI_SAVE_RELOAD_PATH_CONFIRMED_NO_PRODUCT_PATCH_AUTHORIZED_ABSENT_FAILURE",
+  "solutionSearchEvidence": [
+    "Task row1341 says the existing production mount is already reflected and the only remaining AI-side condition is current-main ACTUAL_GAME proof of one install/one capture path.",
+    "Current browser/deck-save-recovery-core.mjs auto-installs once per Document using a module-local WeakMap and registers #saveDeck click onCapture in capture phase.",
+    "Current existing browser-full-interaction spec already exercises visible Save, asserts 保存済み, reload, 40-card invariant and exact localStorage raw equality.",
+    "Fresh main aed6367624c6e92e39946e5a02541ada75fd0b60 has no intervening GAMEROAD.html or deck-save-recovery-core changes relative to the last inspected public-package lineage.",
+    "This slice instruments the real current page before scripts to count the exact named onCapture listener registration, then performs a real save+reload. No product file may change unless this exact seam actually fails and is separately re-authorized."
+  ],
+  "scope": [
+    ".github/workflows/zz-temp-deck-save-single-install-actual-r1.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/zz-temp-deck-save-single-install-actual-r1.yml"
+  ]
+}

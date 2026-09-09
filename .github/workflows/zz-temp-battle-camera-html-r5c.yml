@@ -4,52 +4,15 @@ on:
     branches:
       - sol/battle-camera-html-r5c-20260910
 permissions:
-  contents: write
+  contents: read
 jobs:
   run:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Capture exact focused-test failure
-        shell: bash
+      - name: Run focused Battle camera tests
         run: |
           set -euo pipefail
-          marker='# --- R5C TEST DIAGNOSTIC ---'
-          if grep -Fq "$marker" tools/temp-battle-camera-html-r5c.py; then
-            echo 'Diagnostic already captured; no recursive commit.'
-            exit 0
-          fi
-          set +e
-          : > /tmp/r5c-camera-diag.txt
-          overall=0
-          for test_file in \
-            tests/battle-camera-input-router.test.mjs \
-            tests/battle-camera-live-runtime.test.mjs \
-            tests/battle-camera-live-integration.test.mjs
-          do
-            echo "===== ${test_file} =====" >> /tmp/r5c-camera-diag.txt
-            node --test "$test_file" >> /tmp/r5c-camera-diag.txt 2>&1
-            status=$?
-            echo "EXIT=${status}" >> /tmp/r5c-camera-diag.txt
-            echo >> /tmp/r5c-camera-diag.txt
-            if [ "$status" -ne 0 ]; then overall=1; fi
-          done
-          set -e
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('tools/temp-battle-camera-html-r5c.py')
-          diag = Path('/tmp/r5c-camera-diag.txt').read_text(encoding='utf-8', errors='replace')
-          s = p.read_text(encoding='utf-8')
-          marker = '\n# --- R5C TEST DIAGNOSTIC ---\n'
-          s = s.split(marker)[0]
-          s += marker + ''.join('# ' + line + '\n' for line in diag.splitlines())
-          p.write_text(s, encoding='utf-8')
-          PY
-          git config user.name 'gameroad-bounded-writer'
-          git config user.email 'gameroad-bounded-writer@users.noreply.github.com'
-          git add -- tools/temp-battle-camera-html-r5c.py
-          git commit -m 'camera R5C: capture exact focused-test diagnostic'
-          git push origin HEAD:sol/battle-camera-html-r5c-20260910
-          exit "$overall"
+          node --test tests/battle-camera-input-router.test.mjs
+          node --test tests/battle-camera-live-runtime.test.mjs
+          node --test tests/battle-camera-live-integration.test.mjs

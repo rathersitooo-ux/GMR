@@ -1,17 +1,15 @@
 name: TEMP Battle Portrait Live R3
 
-on:
-  pull_request:
-    branches: [main]
+'on':
   push:
-    branches: [sol/battle-portrait-live-r3-20260909]
+    branches:
+      - sol/battle-portrait-live-r3-20260909
 
 permissions:
   contents: write
 
 jobs:
   surgical-patch:
-    if: github.ref_name == 'sol/battle-portrait-live-r3-20260909' || github.event.pull_request.head.ref == 'sol/battle-portrait-live-r3-20260909'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

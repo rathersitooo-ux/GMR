@@ -523,3 +523,16 @@ assert.equal(BATTLE_SCREEN_RUNTIME.currentActionAuthority, 'ACCEPTED_PUBLIC_MODE
 assert.equal(BATTLE_SCREEN_RUNTIME.shieldLanePresentation, 'STRUCTURE_PLUS_EXACT_ACCEPTED_BOARD_RETURN_CUE_NO_SHIELD_STATE_INFERENCE');
 assert.equal(BATTLE_SCREEN_RUNTIME.boardReturnAuthority, 'MODEL_ONLY_EXACT_OPPONENT_PLUS_SHIELD_LANE');
 assert.equal(BATTLE_SCREEN_RUNTIME.productionHtmlMutationOwnedHere, false);
+
+const { readFile: readPortraitScreenSource } = await import('node:fs/promises');
+const portraitScreenSource = await readPortraitScreenSource(new URL('../browser/battle-screen-runtime-mount.mjs', import.meta.url), 'utf8');
+assert.match(portraitScreenSource, /BATTLE_PORTRAIT_390X844_R7B/);
+assert.match(portraitScreenSource, /@media\(max-width:430px\) and \(orientation:portrait\)/);
+assert.match(portraitScreenSource, /grBattleScreenTop\{height:56px!important/);
+assert.match(portraitScreenSource, /bottom:248px!important/);
+assert.match(portraitScreenSource, /height:52px!important/);
+assert.match(portraitScreenSource, /grid-template-columns:repeat\(4,minmax\(0,1fr\)\)!important/);
+assert.match(portraitScreenSource, /grBattleLaneRole,.*grBattleLaneAfterstate\{display:none!important\}/s);
+assert.match(portraitScreenSource, /#battleResolution\{left:8px!important;right:8px!important;bottom:12px!important/);
+assert.match(portraitScreenSource, /\[\$\{PROGRESS_GUIDE_ATTR\}\]\{display:none!important\}/);
+assert.doesNotMatch(portraitScreenSource, /battle-screen-runtime-mount-base\.mjs/);

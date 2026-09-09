@@ -343,6 +343,11 @@ ${BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS}
 @media(orientation:landscape){section[data-screen="battle"] #hand.grPlayableHandActionBase::before{bottom:0}section[data-screen="battle"] #hand .grPlayableHandTriangle{top:-14px;bottom:auto}}
 @media(max-height:430px) and (orientation:landscape){section[data-screen="battle"] #hand.grPlayableHandActionBase{overflow:visible!important}[${HOST_ATTR}="1"]{width:188px;height:146px;right:7px;bottom:7px}[${HOST_ATTR}="1"] .grJankenSlidePadHandle{width:58px;height:58px}[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:60px;height:80px;padding:4px}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-124px,10px) rotate(-16deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-92px,-40px) rotate(-7deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-48px,-62px) rotate(4deg)}[${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:20px}[${HOST_ATTR}="1"] .grJankenSlidePadCard{font-size:8px;line-height:1.05}[${HOST_ATTR}="1"] .grJankenSlidePadHand{font-size:8px}[${HOST_ATTR}="1"] .grJankenLoadPreview{width:82px;height:108px;left:2px;top:2px}}
 @media(prefers-reduced-motion:reduce){[${HOST_ATTR}="1"] .grJankenSlidePadSlot,[${HOST_ATTR}="1"] .grJankenSlidePadHandle,[${HOST_ATTR}="1"] .grJankenLoadPreview{transition:none!important}}
+/* BATTLE_PORTRAIT_390X844_R7B: right-thumb family; optional row follows same dock */
+@media(max-width:430px) and (orientation:portrait){
+[${HOST_ATTR}="1"]{right:max(12px,env(safe-area-inset-right))!important;bottom:max(12px,env(safe-area-inset-bottom))!important}
+section[data-screen="battle"] [${BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR}="1"]{right:176px!important;left:auto!important;bottom:max(12px,env(safe-area-inset-bottom))!important;max-width:min(164px,42vw)!important;transform-origin:right bottom!important}
+}
 `;
   documentRef.head?.appendChild(style);
 }

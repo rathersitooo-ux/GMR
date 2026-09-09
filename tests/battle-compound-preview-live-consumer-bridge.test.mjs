@@ -22,11 +22,12 @@ function packageFor(overrides = {}) {
   });
 }
 
-function harness({ previewActive = true, commitResult = null } = {}) {
+function harness({ previewActive = true, commitResult = null, precommitClearResult = null } = {}) {
   const calls = {
     sync: 0,
     stage: [],
     clearConsumer: 0,
+    clearPrecommit: 0,
     commit: 0,
     render: [],
     clearPreview: 0,
@@ -59,6 +60,20 @@ function harness({ previewActive = true, commitResult = null } = {}) {
       const hadStage = Boolean(staged);
       staged = null;
       return Object.freeze({ cleared: hadStage });
+    },
+    async clearPrecommitSelection() {
+      calls.clearPrecommit += 1;
+      const result = precommitClearResult ?? Object.freeze({
+        ok: true,
+        cleared: true,
+        reason: 'CLEARED_PRECOMMIT_SELECTION',
+        existingDraftCleared: true,
+        compoundCleared: Boolean(staged),
+        authoritativeRollback: false,
+        gameStateWrite: false,
+      });
+      if (result.cleared === true) staged = null;
+      return result;
     },
     async commitCompoundAttack() {
       calls.commit += 1;
@@ -186,21 +201,72 @@ test('observing a new authoritative round clears stale preview presentation', as
   assert.equal(bridge.status().visiblePreviewReady, false);
 });
 
-test('explicit clear clears both existing consumer stage and preview without gaining authority', async () => {
+test('local compound clear clears only existing consumer stage and preview', async () => {
   const h = harness();
   const bridge = createBattleCompoundPreviewLiveConsumerBridge(h);
 
   await bridge.stageCompoundAttack('PAPER');
   const beforeConsumerClear = h.calls.clearConsumer;
+  const beforeGlobalClear = h.calls.clearPrecommit;
   const beforePreviewClear = h.calls.clearPreview;
   const result = bridge.clearCompoundAttack();
 
   assert.equal(result.ok, true);
   assert.equal(h.calls.clearConsumer, beforeConsumerClear + 1);
+  assert.equal(h.calls.clearPrecommit, beforeGlobalClear);
   assert.equal(h.calls.clearPreview, beforePreviewClear + 1);
   assert.equal(bridge.status().visiblePreviewReady, false);
+});
 
+test('explicit global precommit clear removes caller draft plus stage and then clears preview', async () => {
+  const h = harness();
+  const bridge = createBattleCompoundPreviewLiveConsumerBridge(h);
+
+  await bridge.stageCompoundAttack('PAPER');
+  const beforeLocalClear = h.calls.clearConsumer;
+  const beforePreviewClear = h.calls.clearPreview;
+  const result = await bridge.clearPrecommitSelection();
+
+  assert.equal(result.ok, true);
+  assert.equal(result.cleared, true);
+  assert.equal(result.previewCleared, true);
+  assert.equal(h.calls.clearPrecommit, 1);
+  assert.equal(h.calls.clearConsumer, beforeLocalClear);
+  assert.equal(h.calls.clearPreview, beforePreviewClear + 1);
+  assert.equal(bridge.status().visiblePreviewReady, false);
+});
+
+test('rejected global precommit clear preserves visible preview and staged decision for retry', async () => {
+  const rejected = Object.freeze({
+    ok: false,
+    cleared: false,
+    reason: 'EXISTING_PRECOMMIT_CLEAR_REJECTED',
+    authoritativeRollback: false,
+    gameStateWrite: false,
+  });
+  const h = harness({ precommitClearResult: rejected });
+  const bridge = createBattleCompoundPreviewLiveConsumerBridge(h);
+
+  await bridge.stageCompoundAttack('ROCK');
+  const beforePreviewClear = h.calls.clearPreview;
+  const result = await bridge.clearPrecommitSelection();
+
+  assert.equal(result.ok, false);
+  assert.equal(result.cleared, false);
+  assert.equal(result.reason, 'EXISTING_PRECOMMIT_CLEAR_REJECTED');
+  assert.equal(result.previewCleared, false);
+  assert.equal(h.calls.clearPrecommit, 1);
+  assert.equal(h.calls.clearConsumer, 0);
+  assert.equal(h.calls.clearPreview, beforePreviewClear);
+  assert.equal(bridge.status().visiblePreviewReady, true);
+});
+
+test('contract keeps explicit global cancel separate from stale-focus local cleanup', () => {
   assert.equal(BATTLE_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_CONTRACT.authority, 'NONE');
+  assert.equal(BATTLE_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_CONTRACT.explicitCancelPolicy, 'EXISTING_SHARED_GLOBAL_PRECOMMIT_CLEAR');
+  assert.equal(BATTLE_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_CONTRACT.staleFocusClearPolicy, 'COMPOUND_STAGE_ONLY');
+  assert.equal(BATTLE_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_CONTRACT.globalClearRejectPolicy, 'KEEP_VISIBLE_PREVIEW_AND_STAGE');
+  assert.equal(BATTLE_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_CONTRACT.authoritativeRollback, false);
   assert.equal(BATTLE_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_CONTRACT.computesTarget, false);
   assert.equal(BATTLE_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_CONTRACT.computesLegality, false);
   assert.equal(BATTLE_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_CONTRACT.computesRoute, false);

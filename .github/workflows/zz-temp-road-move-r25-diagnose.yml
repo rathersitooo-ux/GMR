@@ -74,23 +74,28 @@ jobs:
       - name: Run and always capture output
         shell: bash
         run: |
+          set +e
           set -uo pipefail
           npm install --no-save --no-package-lock @playwright/test@1.62.0 >/tmp/r25-install.log 2>&1
+          install_status=$?
           npx playwright install --with-deps chromium >>/tmp/r25-install.log 2>&1
+          chromium_status=$?
           npx playwright test --config=.r25.config.mjs --grep 'R25 fail-safe physical diagnosis' --workers=1 >/tmp/r25-test.log 2>&1
-          status=$?
-          if [ ! -s .road-r25-diagnosis.txt ]; then node -e "const fs=require('fs');fs.writeFileSync('.road-r25-diagnosis.txt',JSON.stringify({browserReportMissing:true,status:Number(process.argv[1]),testLog:fs.readFileSync('/tmp/r25-test.log','utf8').slice(-16000),installLog:fs.readFileSync('/tmp/r25-install.log','utf8').slice(-4000)},null,2))" "$status"; fi
+          test_status=$?
+          if [ ! -s .road-r25-diagnosis.txt ]; then node -e "const fs=require('fs');fs.writeFileSync('.road-r25-diagnosis.txt',JSON.stringify({browserReportMissing:true,installStatus:Number(process.argv[1]),chromiumStatus:Number(process.argv[2]),testStatus:Number(process.argv[3]),testLog:fs.readFileSync('/tmp/r25-test.log','utf8').slice(-16000),installLog:fs.readFileSync('/tmp/r25-install.log','utf8').slice(-4000)},null,2))" "$install_status" "$chromium_status" "$test_status"; fi
           exit 0
       - name: Persist diagnosis only
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
-          git restore browser/GAMEROAD.html
+          if [ ! -s .road-r25-diagnosis.txt ]; then printf '%s\n' '{"diagnosis":"no-report-after-failsafe"}' > .road-r25-diagnosis.txt; fi
+          git restore browser/GAMEROAD.html || true
           rm -f tests/road-move-bidirectional-live-r25.spec.mjs .r25.config.mjs
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git rm .github/workflows/zz-temp-road-move-r25-diagnose.yml
           git add .road-r25-diagnosis.txt
           git diff --cached --check
-          git commit -m 'chore(road): capture fail-safe R25 diagnosis'
+          git commit -m 'chore(road): capture guaranteed R25 diagnosis'
           git push origin HEAD:sol/road-move-bidirectional-r24-20260909

@@ -67,6 +67,7 @@ const ARTIFACT_SPECS = Object.freeze([
   { source: 'browser/battle-janken-focus-presentation-core.mjs', output: 'battle-janken-focus-presentation-core.mjs', artifact: 'battle_janken_focus_presentation_core', label: 'Battle janken focus presentation core' },
   { source: 'browser/battle-janken-focus-runtime-surface.mjs', output: 'battle-janken-focus-runtime-surface.mjs', artifact: 'battle_janken_focus_runtime_surface', label: 'Battle janken focus runtime surface' },
   { source: 'browser/battle-janken-focus-authority-context.mjs', output: 'battle-janken-focus-authority-context.mjs', artifact: 'battle_janken_focus_authority_context', label: 'Battle janken focus authority context' },
+  { source: 'browser/battle-janken-focus-live-integration.mjs', output: 'battle-janken-focus-live-integration.mjs', artifact: 'battle_janken_focus_live_integration', label: 'Battle janken focus live integration' },
   { source: 'browser/battle-janken-order-live-adapter.mjs', output: 'battle-janken-order-live-adapter.mjs', artifact: 'battle_janken_order_live_adapter', label: 'Battle janken processing-order live adapter' },
   { source: 'browser/battle-janken-order-chain-presentation-core.mjs', output: 'battle-janken-order-chain-presentation-core.mjs', artifact: 'battle_janken_order_chain_presentation_core', label: 'Battle janken processing-order chain presentation core' },
   { source: 'browser/battle-janken-order-motion-core.mjs', output: 'battle-janken-order-motion-core.mjs', artifact: 'battle_janken_order_motion_core', label: 'Battle janken processing-order motion core' },

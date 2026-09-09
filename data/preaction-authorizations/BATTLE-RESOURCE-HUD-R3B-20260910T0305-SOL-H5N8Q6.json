@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RESOURCE-HUD-R3B-20260910T0305-SOL-H5N8Q6",
+  "taskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "workUnitKey": "BATTLE_CRITICAL_RESOURCE_HUD_R3",
+  "acquireKey": "BATTLE-RESOURCE-HUD-R3B-20260910T0305-SOL-H5N8Q6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_RESOURCE_HUD_FILES_ABSENT_AND_CURRENT_ROW1375_REQUIRES_HONEY_CHIP_VISIBILITY_20260910",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1448_EXACT_TWO_FILE_DONOR_REQUIRED_GATE_SUCCESS_34350205622_PRODUCT_UNMERGED_20260910",
+  "proceedToken": "PROCEED|BATTLE-RESOURCE-HUD-R3B-20260910T0305-SOL-H5N8Q6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|critical-resource-hud|compose-existing-authority|active-lease",
+  "authorizationBaseSha": "1a002bae2b3eb309e373e0e985445e1809b04644",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "leaseWorkUnitKey": "BATTLE_CRITICAL_RESOURCE_HUD_R3",
+  "leaseAcquireKey": "BATTLE-RESOURCE-HUD-R3B-20260910T0305-SOL-H5N8Q6",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:05 JST",
+  "leaseUntilJst": "2026-09-10 04:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A877:L877",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-resource-hud-r3b-20260910; browser/battle-critical-resource-hud-runtime.mjs (new); tests/battle-critical-resource-hud-runtime.test.mjs (new); own transient data/preaction-authorizations/BATTLE-RESOURCE-HUD-R3B-20260910T0305-SOL-H5N8Q6.json only. Prior PR#1448/R3 product is READ_ONLY donor. browser/GAMEROAD.html, battle-screen runtime, janken/camera/partner/replay runtimes, gameplay/rules/Honey/Chip/Mana/HATE/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_CRITICAL_RESOURCE_HONEY_CHIP_CALLER_ONLY_HUD_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_MAIN_ABSENCE_PLUS_PR1448_VALIDATED_DONOR_AND_CURRENT_HONEY_CHIP_AUTHORITY_20260910",
+  "solutionSearchEvidence": [
+    "fresh main 1a002bae2b3eb309e373e0e985445e1809b04644 does not contain browser/battle-critical-resource-hud-runtime.mjs or its focused test",
+    "current row1375 keeps Honey current value/delta and Chip current state visibility as non-droppable Battle information while forbidding a second resource authority",
+    "prior PR#1448 implements exactly a caller-authoritative Honey/Chip presentation consumer and focused test; Required Gate run 34350205622 completed SUCCESS but the PR remains open/unmerged on stale base",
+    "prior row756 lease expired; fresh exact-target scan found no current valid owner, so this acquire resumes the same WorkUnit rather than creating a duplicate responsibility",
+    "R3B therefore replays only the validated two-file donor onto fresh main and keeps GAMEROAD.html, battle-screen, gameplay, save, economy and network read-only"
+  ],
+  "scope": [
+    "browser/battle-critical-resource-hud-runtime.mjs",
+    "tests/battle-critical-resource-hud-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-critical-resource-hud-runtime.mjs",
+    "tests/battle-critical-resource-hud-runtime.test.mjs"
+  ]
+}

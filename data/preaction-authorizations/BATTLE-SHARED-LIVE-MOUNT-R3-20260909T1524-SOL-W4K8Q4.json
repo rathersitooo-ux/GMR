@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SHARED-LIVE-MOUNT-R3-20260909T1524-SOL-W4K8Q4",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_SHARED_HTML_GAME_CONSUMER_R3",
+  "acquireKey": "BATTLE-SHARED-LIVE-MOUNT-R3-20260909T1524-SOL-W4K8Q4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-BATTLE-SHARED-LIVE-MOUNT-R3-20260909T1524",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REHEARSE-WU44-PR1392-PLUS-BOUNDED-HTML-EXECUTOR",
+  "proceedToken": "PROCEED|BATTLE-SHARED-LIVE-MOUNT-R3-20260909T1524-SOL-W4K8Q4|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260909T1524JST",
+  "authorizationBaseSha": "8fe59318e270f6373f1182e61b4aff8820687d9f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_SHARED_HTML_GAME_CONSUMER_R3",
+  "leaseAcquireKey": "BATTLE-SHARED-LIVE-MOUNT-R3-20260909T1524-SOL-W4K8Q4",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 15:24 JST",
+  "leaseUntilJst": "2026-09-09 16:24 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A683:L683",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-shared-live-mount-r3-20260909; browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs; tests/battle-new-base-live-consumer-html.test.mjs (new); transient .github/workflows/zz-temp-battle-shared-live-r3.yml; transient tools/temp-battle-shared-live-r3.py; transient data/battle-shared-live-r3-probe.txt; own transient data/preaction-authorizations/BATTLE-SHARED-LIVE-MOUNT-R3-20260909T1524-SOL-W4K8Q4.json only. Existing shared adapter/policy/round-start/fixed-slot/compound-package cores READ_ONLY. deploy/cloudflare/tests/build.test.mjs, janken/battle-screen presentation, Road/dice, gameplay/rules/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/battle-new-base-live-consumer-html.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/battle-new-base-live-consumer-html.test.mjs",
+    ".github/workflows/zz-temp-battle-shared-live-r3.yml",
+    "tools/temp-battle-shared-live-r3.py",
+    "data/battle-shared-live-r3-probe.txt"
+  ],
+  "solutionSignature": "battle-new-base-live-consumer/mount-existing-adapter-into-existing-html-authorities",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-PR1392-ADAPTER-PR1377-HAND3-POLICY-EXISTING-HTML-TURN-BATTLE-SEAMS",
+  "solutionSearchEvidence": [
+    "PR#1392 already composes the canonical six-permutation Hand3 policy with immutable same-round snapshot and existing compound-attack transport boundary",
+    "row673 explicitly rejects a second HTML mapping store and routes the live authority producer into the WorkUnit44 adapter",
+    "current GAMEROAD.html remains the single live plan/reveal/move/target/battle progression and must be adapted rather than replaced",
+    "direct GitHub partial fetch of the large HTML returns empty and Remote Desktop is unavailable, so one bounded transient executor is the minimum safe exact-patch transport"
+  ]
+}

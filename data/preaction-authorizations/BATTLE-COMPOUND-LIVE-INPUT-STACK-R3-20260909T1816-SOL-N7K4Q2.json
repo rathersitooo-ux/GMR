@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-COMPOUND-LIVE-INPUT-STACK-R3-20260909T1816-SOL-N7K4Q2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_COMPOUND_LIVE_INPUT_STACK_R3",
+  "acquireKey": "BATTLE-COMPOUND-LIVE-INPUT-STACK-R3-20260909T1816-SOL-N7K4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_EXISTING_BRIDGE_COORDINATOR_NO_SHARED_MUTATION_20260909T1816JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "COMPOSITION_ONLY_PRIVATE_BRIDGE_TO_EXISTING_INPUT_COORDINATOR",
+  "proceedToken": "PROCEED|BATTLE-COMPOUND-LIVE-INPUT-STACK-R3-20260909T1816-SOL-N7K4Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|compound-live-input-stack|new-files-only|active-lease",
+  "authorizationBaseSha": "a8248b609656436394a73b9a32acc3fd4f11d762",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_COMPOUND_LIVE_INPUT_STACK_R3",
+  "leaseAcquireKey": "BATTLE-COMPOUND-LIVE-INPUT-STACK-R3-20260909T1816-SOL-N7K4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 18:16 JST",
+  "leaseUntilJst": "2026-09-09 19:16 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A736:L736",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-compound-live-input-stack-r3-20260909; NEW browser/battle-janken-compound-live-input-stack.mjs; NEW tests/battle-janken-compound-live-input-stack.test.mjs; own transient data/preaction-authorizations/BATTLE-COMPOUND-LIVE-INPUT-STACK-R3-20260909T1816-SOL-N7K4Q2.json only. READ_ONLY reuse: browser/battle-new-base-live-consumer-adapter.mjs, browser/battle-compound-attack-preview-runtime.mjs, browser/battle-compound-preview-live-consumer-bridge.mjs, browser/battle-janken-slidepad-live-input-coordinator.mjs. browser/GAMEROAD.html, battle-screen/janken runtime(+base), deploy/cloudflare/scripts/build.mjs, gameplay/rules/target/legality/Hand3/Mana/hidden-hand/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_COMPOUND_EXISTING_BRIDGE_COORDINATOR_COMPOSITION_STACK_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "FRESH_MAIN_BRIDGE_COORDINATOR_BUILD_READBACK_20260909T1816JST",
+  "solutionSearchEvidence": [
+    "The merged live consumer already owns authoritative Hand3 assignment, compound candidate reads, existing precommit clear, and existing Battle transport.",
+    "The merged compound preview bridge already forwards the exact immutable staged package and fail-closes when a visible preview cannot be produced.",
+    "The merged SlidePad live input coordinator already serializes focus, cancel, and commit with latest-focus-wins and visible-preview-before-commit semantics.",
+    "Current SlidePad and GAMEROAD.html live mount surfaces are owned by active leases, so this WorkUnit does not mutate or duplicate them.",
+    "The new stack is only a private construction boundary; it computes no target, legality, route, hand assignment, or gameplay state."
+  ],
+  "scope": [
+    "browser/battle-janken-compound-live-input-stack.mjs",
+    "tests/battle-janken-compound-live-input-stack.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-compound-live-input-stack.mjs",
+    "tests/battle-janken-compound-live-input-stack.test.mjs"
+  ]
+}

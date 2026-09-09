@@ -1,0 +1,52 @@
+name: TEMP Battle Hand3 Live R2
+
+on:
+  push:
+    branches:
+      - sol/battle-hand3-live-r2-20260910
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-hand3-live-r2-20260910
+          fetch-depth: 0
+      - name: Inspect bounded current HTML seams
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('browser/GAMEROAD.html')
+          lines = p.read_text(encoding='utf-8').splitlines()
+          patterns = [
+            r'battle-janken-slidepad-runtime-mount',
+            r'mountBattleJankenSlidePadRuntime',
+            r'battle-new-base-live-consumer-adapter',
+            r'createBattleNewBaseLiveConsumerAdapter',
+            r'roundNo',
+            r'player\.hand|\.hand\b|hand:',
+            r'crypto\.getRandomValues|getRandomValues',
+            r'rawMatch|matchState|currentMatch|battleState',
+            r'sendExistingBattleAction|sendBattle|battleAction|submitBattle|commitBattle',
+            r'battleSelect|roadSelect|targetBox|shield',
+          ]
+          seen = set()
+          for pat in patterns:
+            rx = re.compile(pat, re.I)
+            hits = [i for i, line in enumerate(lines) if rx.search(line)]
+            print(f'=== {pat} hits={len(hits)} ===')
+            for i in hits[:16]:
+              start=max(0,i-3); end=min(len(lines),i+4)
+              key=(start,end)
+              if key in seen: continue
+              seen.add(key)
+              for j in range(start,end): print(f'{j+1}:{lines[j][:1200]}')
+              print('---')
+          PY

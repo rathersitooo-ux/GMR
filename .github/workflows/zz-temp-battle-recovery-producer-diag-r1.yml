@@ -22,69 +22,60 @@ jobs:
           set -euo pipefail
           test -f data/preaction-authorizations/BATTLE-RECOVERY-PRODUCER-DIAG-R1-20260910T0330-SOL-Q8N4D2.json
           grep -F 'PREACTION_PROCEED_ALLOWED' data/preaction-authorizations/BATTLE-RECOVERY-PRODUCER-DIAG-R1-20260910T0330-SOL-Q8N4D2.json
-      - name: Inspect exact production recovery sources
+      - name: Trace production presence through Battle lifecycle
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
           import re
-          text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          print('HTML_BYTES', len(text.encode('utf-8')))
-          exact = [
-            'create2v2ReconnectState',
-            'disconnect2v2Player',
-            'reconnect2v2Player',
-            'expire2v2ReconnectGrace',
-            'isCurrent2v2ControlEnvelope',
-            'controlGeneration',
-            'temporary_partner',
-            'permanent_partner',
-            'reconnectInFlight',
-            'STALE_INPUT_REJECTED',
-            'GAMEROAD_MATCH_RECOVERY',
-            'GAMEROAD_TITLE_BOOT_CONTEXT_PROVIDER',
-            'createHatePeerPresenceState',
-            'applyHatePeerPresenceEvent',
-            'projectHateHumanWaitSourceEligibility',
-            'HATE_PEER_PRESENCE',
-            'matchSessionHandoff',
-            'credentialsPersisted',
+          text=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          print('HTML_BYTES',len(text.encode('utf-8')))
+          terms=[
+            'friendApplyTransportPresence(',
+            'friendPresenceEligible(',
+            'FRIEND_PRESENCE',
+            "kind==='disconnect'",
+            "kind==='rejoin'",
+            "kind==='sync'",
+            "kind:'disconnect'",
+            "kind:'rejoin'",
+            "kind:'sync'",
+            'new WebSocket',
+            'WebSocket(',
+            'friend-room-match',
+            'friendRoomIneligible',
+            'startMatch()',
+            'startMatch(',
+            'FR.sessionId',
+            'FR.clientId',
+            'FR.room',
+            'FR.match',
           ]
-          for term in exact:
-            hits = [m.start() for m in re.finditer(re.escape(term), text)]
-            print(f'EXACT {term} COUNT {len(hits)} POS {hits[:12]}')
-            for p in hits[:3]:
-              lo=max(0,p-520); hi=min(len(text),p+len(term)+780)
-              print('SNIP', term, text[lo:hi].replace('\r',' ').replace('\n',' ')[:1400])
+          for term in terms:
+            hits=[m.start() for m in re.finditer(re.escape(term),text)]
+            print(f'TERM {term} COUNT {len(hits)} POS {hits[:20]}')
+            for i,p in enumerate(hits[:8]):
+              lo=max(0,p-1100);hi=min(len(text),p+len(term)+1900)
+              sn=text[lo:hi].replace('\r',' ').replace('\n',' ')
+              print(f'SNIP {term} #{i+1}',sn[:3200])
 
-          imports = sorted(set(re.findall(r"(?:import\s*\(\s*|from\s+|src=)[\"']([^\"']+)[\"']", text)))
-          print('RECOVERY_IMPORTS')
-          for item in imports:
-            low=item.lower()
-            if any(k in low for k in ('reconnect','recovery','presence','session','match')):
-              print('IMPORT', item)
+          # Identify the concrete transport-message handler(s) that call presence.
+          for m in re.finditer(r'friendApplyTransportPresence\s*\(',text):
+            p=m.start();lo=max(0,p-2600);hi=min(len(text),p+4600)
+            print('PRESENCE_CALL_CONTEXT',text[lo:hi].replace('\r',' ').replace('\n',' ')[:7600])
 
-          globals_found = sorted(set(re.findall(r'(?:globalThis|window)\.([A-Za-z0-9_$]*(?:RECONNECT|RECOVERY|PRESENCE|SESSION|MATCH)[A-Za-z0-9_$]*)', text, re.I)))
-          print('RECOVERY_GLOBALS_COUNT', len(globals_found))
-          for name in globals_found[:200]: print('GLOBAL', name)
+          # Look for any Battle state fields carrying friend-room / transport identity.
+          battleish=sorted(set(re.findall(r'state\.match\?*\.([A-Za-z0-9_$]*(?:friend|room|session|client|peer|transport)[A-Za-z0-9_$]*)',text,re.I)))
+          print('BATTLE_IDENTITY_FIELDS',battleish)
+          matchkeys=sorted(set(re.findall(r'(?:match|state\.match)\.([A-Za-z0-9_$]+)',text)))
+          print('MATCH_KEYS_WITH_IDENTITY_HINT',[k for k in matchkeys if any(x in k.lower() for x in ('friend','room','session','client','peer','transport'))])
 
-          patterns = [
-            r'function\s+([A-Za-z_$][\w$]*(?:reconnect|disconnect|rejoin|recovery|session)[\w$]*)\s*\(',
-            r'([A-Za-z_$][\w$]*(?:reconnect|disconnect|rejoin|recovery|session)[\w$]*)\s*=\s*(?:async\s*)?\([^)]*\)\s*=>',
-          ]
-          funcs=[]
-          for pat in patterns:
-            funcs.extend(m.group(1) for m in re.finditer(pat,text,re.I))
-          funcs=sorted(set(funcs))
-          print('RECOVERY_FUNCTIONS_COUNT', len(funcs))
-          for name in funcs[:200]: print('FUNCTION', name)
-
-          # A mount is only considered source-ready if exact 2v2 control authority is actually present.
-          exact_authority = all(term in text for term in ('create2v2ReconnectState','isCurrent2v2ControlEnvelope','controlGeneration'))
-          exact_reconnect_transition = 'reconnect2v2Player' in text and 'disconnect2v2Player' in text
-          recovery_ui_already_mounted = 'battle-recovery-live-adapter.mjs' in text or 'battle-recovery-runtime-surface.mjs' in text
-          print('VERDICT_EXACT_2V2_AUTHORITY_PRESENT', int(exact_authority))
-          print('VERDICT_EXACT_2V2_TRANSITIONS_PRESENT', int(exact_reconnect_transition))
-          print('VERDICT_RECOVERY_UI_ALREADY_MOUNTED', int(recovery_ui_already_mounted))
+          # Existing friend-presence is sufficient for Battle only if an explicit post-start consumer exists.
+          call_count=len(re.findall(r'friendApplyTransportPresence\s*\(',text))
+          has_exact_2v2=all(x in text for x in ('create2v2ReconnectState','reconnect2v2Player','disconnect2v2Player'))
+          has_match_identity=bool(battleish) or any(any(x in k.lower() for x in ('friend','room','session','client','peer','transport')) for k in matchkeys)
+          print('VERDICT_PRESENCE_CALL_COUNT',call_count)
+          print('VERDICT_EXACT_2V2_CORE_CONSUMER',int(has_exact_2v2))
+          print('VERDICT_MATCH_CARRIES_TRANSPORT_IDENTITY',int(has_match_identity))
           PY

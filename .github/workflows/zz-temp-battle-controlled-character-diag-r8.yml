@@ -1,0 +1,107 @@
+name: TEMP Battle controlled-character HTML diagnostic R8
+
+on:
+  push:
+    branches:
+      - sol/battle-controlled-character-diag-r8-20260910
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify diagnostic-only branch scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "HEAD=$(git rev-parse HEAD)"
+          echo "BASE=9761e10273edf2800940579d8252fb237c81f226"
+          mapfile -t changed < <(git diff --name-only 9761e10273edf2800940579d8252fb237c81f226..HEAD)
+          printf 'CHANGED=%s\n' "${changed[@]}"
+          for p in "${changed[@]}"; do
+            case "$p" in
+              .github/workflows/zz-temp-battle-controlled-character-diag-r8.yml|data/preaction-authorizations/BATTLE-CHAR4P-DIAG-R8-20260910T0312-SOL-K4N8Q9.json) ;;
+              *) echo "UNAUTHORIZED_PATH=$p"; exit 41 ;;
+            esac
+          done
+
+      - name: Extract exact controlled-character producer contexts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('browser/GAMEROAD.html')
+          text = path.read_text(encoding='utf-8')
+          lines = text.splitlines()
+          print(f'HTML_BYTES={path.stat().st_size}')
+          print(f'HTML_LINES={len(lines)}')
+
+          patterns = [
+              r'selectedPartnerId',
+              r'characterId',
+              r'\.character\b',
+              r'makePlayer',
+              r'battleRuntime',
+              r'\bp\.position\b',
+              r'\.position\s*=',
+              r'renderBoard',
+              r'renderBattle',
+              r'\bfacing\b',
+              r'sleep\s*\(\s*145',
+              r'setTimeout\s*\([^\n]{0,120}145',
+              r'\breconnect\b',
+              r'\bresume\b',
+              r'\brestore\b',
+              r'__GAMEROAD_CONTROLLED_CHARACTER_4P_PROJECTION__',
+              r'battle-board-naki-4p-visual-binding',
+              r'battle-controlled-character-4p-motion-director',
+              r'battle-controlled-character-motion-core',
+          ]
+          rx = re.compile('|'.join(f'(?:{p})' for p in patterns), re.I)
+          hits = [i for i,line in enumerate(lines) if rx.search(line)]
+          print(f'RAW_MATCH_LINES={len(hits)}')
+
+          clusters = []
+          for i in hits:
+              start, end = max(0, i-12), min(len(lines), i+13)
+              if clusters and start <= clusters[-1][1] + 3:
+                  clusters[-1] = (clusters[-1][0], max(clusters[-1][1], end))
+              else:
+                  clusters.append((start,end))
+          # Prefer complete bounded evidence over huge logs.
+          clusters = clusters[:45]
+          print(f'CONTEXT_CLUSTERS={len(clusters)}')
+          for n,(start,end) in enumerate(clusters,1):
+              print(f'=== CONTEXT {n} L{start+1}-L{end} ===')
+              for j in range(start,end):
+                  print(f'{j+1:06d}: {lines[j]}')
+
+          print('=== DIRECT TOKEN COUNTS ===')
+          for token in [
+              'selectedPartnerId','characterId','battleRuntime','p.position',
+              'renderBoard','renderBattle','reconnect','resume',
+              '__GAMEROAD_CONTROLLED_CHARACTER_4P_PROJECTION__',
+              'battle-controlled-character-4p-motion-director'
+          ]:
+              print(f'{token}={text.count(token)}')
+          PY
+
+      - name: Inspect package presence and prove no working-tree mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== PACKAGE MATCHES ==='
+          grep -nE 'battle-(board-naki-4p-visual-binding|controlled-character-4p-motion-director|controlled-character-motion-core)' deploy/cloudflare/scripts/build.mjs || true
+          echo '=== WORKTREE ==='
+          git status --short
+          git diff --exit-code

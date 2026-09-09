@@ -1,4 +1,4 @@
-name: GAMEROAD Codex Shared Preview Pixel Evidence R3
+name: GAMEROAD Codex Shared Preview Pixel Evidence R4
 
 on:
   push:
@@ -16,7 +16,7 @@ env:
 
 jobs:
   capture:
-    name: Verify exact shared build and capture Battle pixels
+    name: Verify exact shared build and capture four-player Battle pixels
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -43,7 +43,7 @@ jobs:
           npm install --no-save --no-package-lock @playwright/test@1.62.0
           npx playwright install --with-deps chromium
 
-      - name: Capture canonical 2v2 Battle at two viewports
+      - name: Capture canonical four-player Battle at two viewports
         shell: bash
         run: |
           set -euo pipefail
@@ -89,15 +89,15 @@ jobs:
 
           const started = await page.evaluate(() => {
             const t = window.__GAMEROAD_TEST__;
-            t.start('2v2', 'road_shield');
+            t.start('4p', 'road_shield');
             return {
               screen: t.state.screen,
               mode: t.state.match?.mode ?? null,
               playerCount: t.state.match?.players?.length ?? 0,
             };
           });
-          if (started.screen !== 'battle' || started.mode !== '2v2' || started.playerCount !== 4) {
-            throw new Error(`canonical Battle start mismatch: ${JSON.stringify(started)}`);
+          if (started.screen !== 'battle' || started.mode !== '4p' || started.playerCount !== 4) {
+            throw new Error(`canonical four-player Battle start mismatch: ${JSON.stringify(started)}`);
           }
 
           await page.locator('section[data-screen="battle"]').waitFor({ state: 'visible', timeout: 30_000 });
@@ -114,6 +114,7 @@ jobs:
             width: innerWidth,
             height: innerHeight,
             activeScreen: document.querySelector('.screen.active')?.dataset?.screen ?? null,
+            mode: window.__GAMEROAD_TEST__?.state?.match?.mode ?? null,
             publicPlayers: document.querySelectorAll('#publicPlayerStrip .publicPlayerChip').length,
             boardPlayers: document.querySelectorAll('#boardPlayers .boardPlayerToken').length,
             jankenPads: document.querySelectorAll('[data-battle-janken-slidepad="1"]').length,

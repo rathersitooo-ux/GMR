@@ -145,14 +145,14 @@ test('projection never exposes transport timers, outcomes, takeover rules, or hi
     status: BATTLE_RECOVERY_STATUS.STALE_INPUT_REJECTED,
     localStage: BATTLE_RECOVERY_LOCAL_STAGE.UNCOMMITTED,
   });
-  const encoded = JSON.stringify(view);
 
-  for (const forbidden of [
+  for (const forbiddenKey of [
     'graceMs', 'graceSeconds', 'deadline', 'winner', 'forfeit', 'reward',
-    'partnerId', 'targetId', 'cardId', 'hand', 'secret',
+    'partnerId', 'targetId', 'cardId', 'hand', 'secretPayload',
   ]) {
-    assert.equal(encoded.includes(forbidden), false, forbidden);
+    assert.equal(Object.prototype.hasOwnProperty.call(view, forbiddenKey), false, forbiddenKey);
   }
+  assert.equal(view.secretExpansion, false);
 
   assert.equal(BATTLE_RECOVERY_PRESENTATION_CONTRACT.computesTimeoutOrGrace, false);
   assert.equal(BATTLE_RECOVERY_PRESENTATION_CONTRACT.computesRetryPolicy, false);

@@ -125,6 +125,28 @@ test('JANKEN_FOCUS renders all three exact authoritative choices including targe
   assert.equal(runtime.snapshot().gameplayAuthority, false);
 });
 
+test('JANKEN_FOCUS exposes exactly one target-rail switch for each authoritative package and no free target', async () => {
+  const liveInputStack = createLiveStack();
+  const { runtime } = mount({ liveInputStack });
+  const html = runtime.host.innerHTML;
+  const railActions = html.match(/class="grJankenTargetChip/g) ?? [];
+  assert.equal(railActions.length, 3);
+  assert.match(html, /aria-label="ロックオン対象切替"/);
+  assert.match(html, /data-opponent-id="opponent-rock-g1"/);
+  assert.match(html, /data-shield-lane="LEFT"/);
+  assert.match(html, /data-opponent-id="opponent-scissors-g1"/);
+  assert.match(html, /data-shield-lane="CENTER"/);
+  assert.match(html, /data-opponent-id="opponent-paper-g1"/);
+  assert.match(html, /data-shield-lane="RIGHT"/);
+
+  const result = await runtime.focus('PAPER');
+  assert.equal(result.ok, true);
+  assert.deepEqual(liveInputStack.calls.focus, ['PAPER']);
+  assert.equal(runtime.snapshot().presentation.focusedPackage.opponentId, 'opponent-paper-g1');
+  assert.equal(runtime.snapshot().presentation.focusedPackage.shieldLane, 'RIGHT');
+  assert.equal(runtime.snapshot().presentation.surface, 'LOAD_FOCUS');
+});
+
 test('focus delegates to the existing live stack and enters enlarged LOAD_FOCUS only after its visible preview is ready', async () => {
   const liveInputStack = createLiveStack();
   const { runtime } = mount({ liveInputStack });
@@ -135,6 +157,7 @@ test('focus delegates to the existing live stack and enters enlarged LOAD_FOCUS 
   assert.equal(runtime.snapshot().presentation.surface, 'LOAD_FOCUS');
   assert.equal(runtime.snapshot().presentation.focusedHand, 'SCISSORS');
   assert.match(runtime.host.innerHTML, /ロード確認/);
+  assert.match(runtime.host.innerHTML, /ロックオン固定/);
   assert.match(runtime.host.innerHTML, /scissors-card-g1/);
   assert.match(runtime.host.innerHTML, /opponent-scissors-g1/);
   assert.match(runtime.host.innerHTML, /CENTER \/ shield-scissors-g1/);
@@ -211,6 +234,7 @@ test('authoritative sync invalidates local focus so a stale preview cannot commi
   assert.equal(runtime.snapshot().presentation.surface, 'JANKEN_FOCUS');
   assert.equal(runtime.snapshot().presentation.focusedHand, null);
   assert.match(runtime.host.innerHTML, /rock-card-g2/);
+  assert.match(runtime.host.innerHTML, /data-opponent-id="opponent-rock-g2"/);
   const result = await runtime.commit();
   assert.equal(result.committed, false);
   assert.equal(liveInputStack.calls.commit, 0);
@@ -218,6 +242,9 @@ test('authoritative sync invalidates local focus so a stale preview cannot commi
 
 test('surface contract stays presentation-only and exposes no rule or transport authority', () => {
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.authority, 'NONE');
+  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.authoritativeTargetRail, true);
+  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.targetRailSource, 'EXISTING_THREE_COMPOUND_PACKAGES_ONLY');
+  assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.targetRailMayCreateTarget, false);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.selectionCommitsImmediately, false);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.commitTransportDelegatedToExistingLiveStack, true);
   assert.equal(BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT.computesTarget, false);

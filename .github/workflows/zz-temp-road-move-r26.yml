@@ -1,0 +1,89 @@
+name: TEMP Road Move R26 Physical Recheck
+on:
+  push:
+    branches: [sol/road-move-bidirectional-r26-20260909]
+permissions:
+  contents: write
+jobs:
+  recheck:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/road-move-bidirectional-r26-20260909
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Build bounded Road candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin sol/road-move-bidirectional-live-r5-20260906:refs/remotes/origin/road-r5-donor sol/road-move-bidirectional-live-r6-20260906:refs/remotes/origin/road-r6-donor
+          git show refs/remotes/origin/road-r5-donor:tools/zz-temp-road-move-runtime-r5.py > /tmp/r26.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/r26.py');s=p.read_text();reps=[
+          ("BASE = '0be3a466b55cbd0af23244bc9fc90b2f5f6640fd'","BASE = '071d54bd0135754a8b2ce2bbaa29c1b620902a38'"),
+          ("EXPECTED_HTML_BLOB = '35f9203e2be95ba07b44c875e26bfe2047a3cee5'","EXPECTED_HTML_BLOB = 'd7ae9d0532df7e66ebbf29f1e7eecb3f352d346d'"),
+          ('ROAD-MOVE-RUNTIME-R5-20260906T2113-SOL-P8N4V6','ROAD-MOVE-RUNTIME-R26-20260909T1552-SOL-V6K3N9'),
+          ('.github/workflows/zz-temp-road-move-runtime-r5.yml','.github/workflows/zz-temp-road-move-r26.yml'),
+          ("    'tools/zz-temp-road-move-runtime-r5.py',\n",''),
+          ('road-move-bidirectional-live-r5.spec.mjs','road-move-bidirectional-live-r26.spec.mjs'),
+          ('ROAD-MOVE-BIDIRECTIONAL-R5','ROAD-MOVE-BIDIRECTIONAL-R26'),
+          ('R5 source contract','R26 source contract'),('R5_PATCH_READY','R26_PATCH_READY')]
+          for a,b in reps:
+            if a not in s: raise SystemExit('anchor '+a)
+            s=s.replace(a,b)
+          p.write_text(s)
+          PY
+          python3 /tmp/r26.py
+          git show refs/remotes/origin/road-r6-donor:tools/zz-temp-road-move-runtime-r6.py > /tmp/r26post.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/r26post.py');s=p.read_text();p.write_text(s.replace('tests/road-move-bidirectional-live-r6.spec.mjs','tests/road-move-bidirectional-live-r26.spec.mjs').replace('R6_POSTPATCH_READY','R26_POSTPATCH_READY'))
+          PY
+          python3 /tmp/r26post.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('browser/GAMEROAD.html');s=p.read_text()
+          a="const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0];if(!me?.plan?.roadId){ctxSet('PLAN_CARD_MISSING',{message:'先にロードカードを選ぶと移動範囲を決められます。'});return}const path=shortest(me.position,id,normalMoveLimitForRoad(me.plan.roadId),me);if(!path){ctxSet('MOVE_PATH_INVALID');return}const r=__ctxBaseSelectEndpoint(id);ctxClear();return r};"
+          b="const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0],moveLimit=draftMoveLimitForPlayer(me);if(moveLimit<1){ctxSet('PLAN_CARD_MISSING',{message:'移動に使えるロードカードがありません。'});return}const path=shortest(me.position,id,moveLimit,me);if(!path){ctxSet('MOVE_PATH_INVALID');return}const r=__ctxBaseSelectEndpoint(id);ctxClear();return r};"
+          if s.count(a)!=1: raise SystemExit('late wrapper mismatch')
+          p.write_text(s.replace(a,b,1))
+          PY
+          git diff --check
+      - name: Road compatibility core
+        run: node --test tests/road-move-card-compatibility-core.test.mjs
+      - name: Install Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Physical matrix 1280x720
+        run: |
+          cat > .r26.config.mjs <<'EOF'
+          import{defineConfig}from'@playwright/test';export default defineConfig({testDir:'./tests',testMatch:'road-move-bidirectional-live-r26.spec.mjs',timeout:90000,workers:1,retries:0,reporter:[['line']],use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,viewport:{width:1280,height:720}},webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1 --directory .',url:'http://127.0.0.1:4173/browser/GAMEROAD.html',reuseExistingServer:false,timeout:120000}})
+          EOF
+          npx playwright test --config=.r26.config.mjs --workers=1
+      - name: Physical matrix 844x390
+        run: |
+          sed -i 's/width:1280,height:720/width:844,height:390/' .r26.config.mjs
+          npx playwright test --config=.r26.config.mjs --workers=1
+      - name: Physical matrix 390x844
+        run: |
+          sed -i 's/width:844,height:390/width:390,height:844/' .r26.config.mjs
+          npx playwright test --config=.r26.config.mjs --workers=1
+      - name: Persist product only after full PASS
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f tests/road-move-bidirectional-live-r26.spec.mjs .r26.config.mjs
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm .github/workflows/zz-temp-road-move-r26.yml data/preaction-authorizations/ROAD-MOVE-RUNTIME-R26-20260909T1552-SOL-V6K3N9.json
+          git add browser/GAMEROAD.html
+          git diff --cached --check
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = "browser/GAMEROAD.html "
+          git commit -m 'feat(battle): complete bidirectional Road move input'
+          git push origin HEAD:sol/road-move-bidirectional-r26-20260909

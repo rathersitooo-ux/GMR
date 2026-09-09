@@ -12,6 +12,7 @@ const participants = [
   { id: 'P3', label: 'PLAYER 3', team: 'B' },
   { id: 'P4', label: 'PLAYER 4', team: 'B' }
 ];
+const COMPOUND_SCHEMA = 'gameroad.battle-janken-compound-attack-package.v1';
 
 const planModel = createBattleScreenModel({ participants });
 assert.equal(planModel.presentationOnly, true);
@@ -31,27 +32,28 @@ assert.deepEqual(planModel.lanes.map(row => row.id), ['P1', 'P2', 'P3', 'P4']);
 assert.deepEqual(planModel.lanes.map(row => row.role), ['idle', 'idle', 'idle', 'idle']);
 assert.equal(auditBattleScreenModel(planModel).ok, true);
 
+const compoundAttackPackage = {
+  schema: COMPOUND_SCHEMA,
+  jankenHand: 'ROCK',
+  cardId: 'C-009',
+  path: [
+    { nodeId: 'ROAD-A', order: 1 },
+    { nodeId: 'ROAD-B', order: 2 }
+  ],
+  direction: 'LEFT',
+  roadId: 'ROAD-01',
+  battleId: 'BATTLE-01',
+  opponentId: 'P3',
+  shieldLane: 'R',
+  shieldRef: 'shield:P3:R'
+};
 const events = [
   { accepted: true, eventId: 'r1', kind: 'reveal', publicData: { playerIds: ['P1', 'P2', 'P3', 'P4'] } },
   { accepted: true, eventId: 'a1', kind: 'attack', publicData: { sourceId: 'P1', targetIds: ['P3'], importance: 'normal' } },
   { accepted: true, eventId: 'a2', kind: 'ability', publicData: { sourceId: 'P3', targetIds: ['P1', 'P2'], simultaneous: true } },
   { accepted: true, eventId: 'c1', kind: 'compare4', publicData: { playerIds: ['P1', 'P2', 'P3', 'P4'], winnerIds: ['P4'] } },
   { accepted: true, eventId: 'f1', kind: 'finisher', publicData: { winnerId: 'P4', loserIds: ['P1', 'P2', 'P3'] } },
-  {
-    accepted: true,
-    eventId: 's1',
-    kind: 'settle',
-    publicData: {
-      compoundAttackPackage: {
-        jankenHand: 'rock',
-        cardId: 'C-009',
-        route: 'upper-arc',
-        direction: 'left',
-        opponentId: 'P3',
-        shieldLane: 'R'
-      }
-    }
-  }
+  { accepted: true, eventId: 's1', kind: 'settle', publicData: { compoundAttackPackage } }
 ];
 
 const timeline = projectAcceptedBattleEventsToScreen({
@@ -110,12 +112,17 @@ const settle = timeline.models.find(model => model.eventId === 's1');
 assert.equal(settle.phase, 'settle');
 assert.equal(settle.boardEffectCalculation, false);
 assert.equal(settle.boardReturn.eventId, 's1');
+assert.equal(settle.boardReturn.compoundPackageSchema, COMPOUND_SCHEMA);
 assert.equal(settle.boardReturn.cardId, 'C-009');
-assert.equal(settle.boardReturn.jankenHand, 'rock');
-assert.equal(settle.boardReturn.route, 'upper-arc');
-assert.equal(settle.boardReturn.direction, 'left');
+assert.equal(settle.boardReturn.jankenHand, 'ROCK');
+assert.deepEqual(settle.boardReturn.path, compoundAttackPackage.path);
+assert.notEqual(settle.boardReturn.path, compoundAttackPackage.path);
+assert.equal(settle.boardReturn.direction, 'LEFT');
+assert.equal(settle.boardReturn.roadId, 'ROAD-01');
+assert.equal(settle.boardReturn.battleId, 'BATTLE-01');
 assert.equal(settle.boardReturn.opponentId, 'P3');
 assert.equal(settle.boardReturn.shieldLane, 'R');
+assert.equal(settle.boardReturn.shieldRef, 'shield:P3:R');
 assert.equal(settle.boardReturn.destinationKey, 'P3:R');
 assert.equal(settle.boardReturn.source, 'accepted_public_compound_attack_package');
 assert.equal(settle.boardReturn.visualIntent, 'resolution_to_committed_shield');
@@ -132,7 +139,7 @@ assert.equal(lowPerf.models.every(model => model.motion === 'static_only'), true
 assert.equal(lowPerf.models.find(model => model.eventId === 's1').boardReturn.destinationKey, 'P3:R');
 assert.ok(reduced.timelineEnd < timeline.timelineEnd);
 
-function settlePlan(compoundAttackPackage) {
+function settlePlan(overrides = {}) {
   return {
     presentationOnly: true,
     authorityBoundary: 'accepted_public_event_only',
@@ -141,7 +148,7 @@ function settlePlan(compoundAttackPackage) {
     transition: 'CONTINUE',
     groupTargets: [],
     importance: 'ambient',
-    publicData: { compoundAttackPackage }
+    publicData: { compoundAttackPackage: { ...compoundAttackPackage, ...overrides } }
   };
 }
 
@@ -176,31 +183,27 @@ assert.throws(
   /BATTLE_SCREEN_PLAN_PARTICIPANT_UNKNOWN:PX/
 );
 assert.throws(
-  () => createBattleScreenModel({
-    participants,
-    plan: settlePlan({ jankenHand: 'rock', cardId: 'C1', route: 'r', opponentId: 'PX', shieldLane: 'L' })
-  }),
+  () => createBattleScreenModel({ participants, plan: settlePlan({ opponentId: 'PX' }) }),
   /BOARD_RETURN_OPPONENT_UNKNOWN/
 );
 assert.throws(
-  () => createBattleScreenModel({
-    participants,
-    plan: settlePlan({ jankenHand: 'rock', cardId: 'C1', route: 'r', opponentId: 'P3', shieldLane: 'X' })
-  }),
+  () => createBattleScreenModel({ participants, plan: settlePlan({ shieldLane: 'X' }) }),
   /BOARD_RETURN_SHIELD_UNKNOWN/
 );
 assert.throws(
-  () => createBattleScreenModel({
-    participants,
-    plan: settlePlan({ jankenHand: 'rock', cardId: 'C1', opponentId: 'P3', shieldLane: 'C' })
-  }),
+  () => createBattleScreenModel({ participants, plan: settlePlan({ path: [] }) }),
   /BOARD_RETURN_PATH_REQUIRED/
+);
+assert.throws(
+  () => createBattleScreenModel({ participants, plan: settlePlan({ schema: 'wrong.schema' }) }),
+  /BOARD_RETURN_PACKAGE_SCHEMA/
 );
 
 assert.equal(BATTLE_SCREEN_PRESENTATION.authority, 'NONE_PRESENTATION_ONLY');
 assert.equal(BATTLE_SCREEN_PRESENTATION.laneCount, 4);
 assert.equal(BATTLE_SCREEN_PRESENTATION.planOwner, 'CALLER');
-assert.equal(BATTLE_SCREEN_PRESENTATION.boardReturnAuthority, 'EXPLICIT_COMPOUND_ATTACK_PACKAGE_FROM_ACCEPTED_SETTLE_EVENT_ONLY');
+assert.equal(BATTLE_SCREEN_PRESENTATION.compoundAttackPackageSchema, COMPOUND_SCHEMA);
+assert.equal(BATTLE_SCREEN_PRESENTATION.boardReturnAuthority, 'NORMALIZED_COMPOUND_ATTACK_PACKAGE_FROM_ACCEPTED_SETTLE_EVENT_ONLY');
 assert.equal(BATTLE_SCREEN_PRESENTATION.boardReturnEffectPolicy, 'NO_EFFECT_INFERENCE_OR_GAME_STATE_WRITE');
 assert.deepEqual(BATTLE_SCREEN_PRESENTATION.shieldLanes, ['L', 'C', 'R']);
 assert.equal(BATTLE_SCREEN_PRESENTATION.formalArtOwnedHere, false);
@@ -208,7 +211,7 @@ assert.deepEqual(BATTLE_SCREEN_PRESENTATION.requiredAnchors, ['battlePhaseSurfac
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 84,
+  tests: 91,
   timelineEnd: timeline.timelineEnd,
   phases: timeline.models.map(model => [model.eventId, model.phase, model.transition]),
   boardReturn: settle.boardReturn,

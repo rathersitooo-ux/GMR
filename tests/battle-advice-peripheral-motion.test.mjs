@@ -22,10 +22,12 @@ test('Advice Partner motion stays short, presentation-only, and does not animate
   assert.equal(BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME.automaticExecution, false);
 });
 
-test('Battle Advice CSS binds motion to the existing disclosure state and keeps reduced-motion fail-safe', async () => {
+test('Battle Advice CSS uses separate expand/collapse timing and keeps reduced-motion fail-safe', async () => {
   const source = await readFile(sourcePath, 'utf8');
   assert.match(source, /data-player-focus-motion-ready/);
-  assert.match(source, /transition:width \$\{PARTNER_ADVICE_EXPAND_MS\}ms/);
+  assert.match(source, /--gameroad-partner-advice-motion-ms:\$\{PARTNER_ADVICE_EXPAND_MS\}ms/);
+  assert.match(source, /--gameroad-partner-advice-motion-ms:\$\{PARTNER_ADVICE_COLLAPSE_MS\}ms/);
+  assert.match(source, /transition:width var\(--gameroad-partner-advice-motion-ms\)/);
   assert.match(source, /@keyframes gameroadPartnerAdviceReveal/);
   assert.match(source, /@keyframes gameroadPartnerAdviceReaction/);
   assert.match(source, /@keyframes gameroadPartnerAdvicePlayerReply/);
@@ -33,4 +35,5 @@ test('Battle Advice CSS binds motion to the existing disclosure state and keeps 
   assert.match(source, /transition:none!important;animation:none!important/);
   assert.match(source, /if \(!motionReady\) root\.setAttribute\?\.\(PARTNER_ADVICE_MOTION_READY_ATTR, 'true'\)/);
   assert.doesNotMatch(source, /setTimeout\(|setInterval\(/);
+  assert.doesNotMatch(source, /transition:[^`]*backdrop-filter/);
 });

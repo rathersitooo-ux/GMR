@@ -142,3 +142,57 @@ test('Study runtime source marks provisional balance and does not contain defeat
   assert.equal(source.includes('敗北'), false);
   assert.equal(source.includes('負け'), false);
 });
+
+
+test('Study resume checkpoint restores the same run without resetting elapsed-time advantage', () => {
+  let nowMs = 1000;
+  const first = createStudyRunConsumerController({
+    now: () => nowMs,
+    createSessionId: () => 'study.runtime.session.resume',
+  });
+  let view = first.start();
+  first.setActionKind('counter');
+  const checkpoint = first.exportResumeCheckpoint();
+  assert.equal(checkpoint.persistenceAuthority, 'CALLER');
+  assert.equal(checkpoint.storageBackendCreated, false);
+  assert.equal(JSON.stringify(checkpoint).includes('acceptedAnswers'), false);
+
+  nowMs = 7000;
+  const resumed = createStudyRunConsumerController({
+    now: () => nowMs,
+    createSessionId: () => { throw new Error('new session id must not be requested while resuming'); },
+    resumeCheckpoint: checkpoint,
+  });
+  view = resumed.getSnapshot();
+  assert.equal(view.session.sessionId, 'study.runtime.session.resume');
+  assert.equal(view.question.questionId, 'study.manual.q01');
+  assert.equal(view.actionKind, 'counter');
+  const correct = view.question.answerHand.find(card => card.candidateId === 'c');
+  resumed.throwAnswer(correct.cardId);
+  view = resumed.resolve();
+  assert.equal(view.resolution.action.actionKind, 'counter');
+  assert.equal(view.resolution.action.timeMultiplier, 1.1);
+});
+
+test('Study resume checkpoint is refused mid-answer and rejects pack-version drift', () => {
+  const controller = createStudyRunConsumerController({
+    now: () => 1000,
+    createSessionId: () => 'study.runtime.session.resume.reject',
+  });
+  const view = controller.start();
+  const card = view.question.answerHand[0];
+  controller.throwAnswer(card.cardId);
+  assert.throws(() => controller.exportResumeCheckpoint(), /REQUIRES_STABLE_BOUNDARY/);
+
+  const clean = createStudyRunConsumerController({
+    now: () => 1000,
+    createSessionId: () => 'study.runtime.session.resume.clean',
+  });
+  clean.start();
+  const checkpoint = clean.exportResumeCheckpoint();
+  const driftedPack = { ...STUDY_MANUAL_PROBLEM_PACK, contentVersion: 'v2.unknown' };
+  assert.throws(
+    () => createStudyRunConsumerController({ pack: driftedPack, resumeCheckpoint: checkpoint }),
+    /does not match session/,
+  );
+});

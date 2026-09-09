@@ -1,0 +1,48 @@
+name: temp battle card focus r1 fixer
+
+on:
+  push:
+    branches:
+      - sol/battle-card-focus-r1-20260909
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-card-focus-r1-20260909
+          fetch-depth: 0
+      - name: Repair one-shot writer
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/temp-battle-card-focus-r1.yml')
+          s = p.read_text(encoding='utf-8')
+          old_if = "    if: github.actor != 'github-actions[bot]'"
+          new_if = "    if: github.event.head_commit.message != 'battle card focus product delta'"
+          if old_if not in s:
+              raise SystemExit('writer actor guard anchor missing')
+          s = s.replace(old_if, new_if, 1)
+          replacements = {
+              r'/data-card-focus=\\\"true\\\"/': r'/data-card-focus=\"true\"/',
+              r'/data-card-focus-legal=\\\"true\\\"/': r'/data-card-focus-legal=\"true\"/',
+              r'/data-card-staged=\\\"true\\\"/': r'/data-card-staged=\"true\"/',
+          }
+          for old, new in replacements.items():
+              if old not in s:
+                  raise SystemExit(f'regex anchor missing: {old}')
+              s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/temp-battle-card-focus-r1.yml
+          git commit -m "repair temp battle card focus runner"
+          git push origin HEAD:sol/battle-card-focus-r1-20260909

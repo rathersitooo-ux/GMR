@@ -1,0 +1,137 @@
+name: temp battle card focus r3
+
+on:
+  push:
+    branches:
+      - sol/battle-card-focus-r3-20260910
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.head_commit.message != 'battle card focus R3 product delta'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-card-focus-r3-20260910
+          fetch-depth: 0
+
+      - name: Apply validated focus runtime and classified tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin sol/battle-card-focus-r2-20260910
+          git diff --binary a84a3c877be133901dec969a6e67a54deb6da0c9..origin/sol/battle-card-focus-r2-20260910 -- \
+            browser/battle-janken-slidepad-runtime-mount.mjs > /tmp/card-focus-r2-runtime.patch
+          test -s /tmp/card-focus-r2-runtime.patch
+          git apply --3way /tmp/card-focus-r2-runtime.patch
+
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('tests/battle-janken-slidepad-runtime-mount.test.mjs')
+          s = p.read_text(encoding='utf-8')
+          marker = '// BATTLE_CARD_FOCUS_PRESENTATION_R3_BEGIN'
+          if marker in s:
+              raise SystemExit('focus R3 test marker already present')
+          block = r'''
+
+// BATTLE_CARD_FOCUS_PRESENTATION_R3_BEGIN
+
+test('card focus keeps legal candidates delegated to the existing active option authority', async () => {
+  const {
+    BATTLE_CARD_FOCUS_PRESENTATION_SCHEMA,
+    projectBattlePlayableHandAffordance,
+  } = await import('../browser/battle-janken-slidepad-runtime-mount.mjs');
+  const state = projectBattlePlayableHandAffordance({
+    handCardIds: ['a', 'b', 'c', 'd'],
+    activeRole: 'battle',
+    activeOptionValues: ['a', 'b', 'c'],
+    oppositeSelectedCardId: 'b',
+    reservedCardIds: ['c'],
+    phasePlayable: true,
+  });
+  assert.equal(BATTLE_CARD_FOCUS_PRESENTATION_SCHEMA, 'gameroad.battle-card-focus-presentation.v1');
+  assert.deepEqual(state.candidateCardIds, ['a']);
+  assert.equal(state.showActionBase, true);
+});
+
+test('card focus visual snap is bounded and preserves raw projection when unarmed or invalid', async () => {
+  const { projectBattleCardFocusSnapPosition } = await import('../browser/battle-janken-slidepad-runtime-mount.mjs');
+  const snapped = projectBattleCardFocusSnapPosition({
+    ghostPosition: { left: 100, top: 100 },
+    cardSize: { width: 80, height: 120 },
+    snapRect: { left: 260, top: 180, width: 60, height: 60 },
+    armed: true,
+    maxPullPx: 28,
+  });
+  const dx = snapped.left - 100;
+  const dy = snapped.top - 100;
+  assert.ok(Math.hypot(dx, dy) <= 28.000001);
+  assert.ok(snapped.left > 100);
+  assert.ok(snapped.top > 100);
+
+  assert.deepEqual(projectBattleCardFocusSnapPosition({
+    ghostPosition: { left: 42, top: 77 },
+    cardSize: { width: 80, height: 120 },
+    snapRect: { left: 260, top: 180, width: 60, height: 60 },
+    armed: false,
+  }), { left: 42, top: 77 });
+  assert.deepEqual(projectBattleCardFocusSnapPosition({
+    ghostPosition: { left: 42, top: 77 },
+    cardSize: { width: 0, height: 120 },
+    snapRect: { left: 260, top: 180, width: 60, height: 60 },
+    armed: true,
+  }), { left: 42, top: 77 });
+});
+
+test('card focus live drag uses existing legality and raw pointer authority before commit', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /const legalCandidate = currentPlayableHandAffordance\(root\)\?\.candidateCardIds\?\.includes\?\.\(state\.cardId\) === true;/);
+  assert.match(source, /const armed = legalCandidate && isBattleHandAuraLaunchArmed\(\{\s*pointer: \{ x, y \},\s*auraRect,/);
+  assert.match(source, /const commit = !cancelled && moved && state\.armed && state\.legalCandidate === true && sourceStillOrdinary;/);
+  assert.match(source, /projectBattleCardFocusSnapPosition\(\{[\s\S]*ghostPosition,[\s\S]*snapRect: auraRect,[\s\S]*armed,/);
+});
+
+test('card focus has distinct focused, legal and staged presentation states with cleanup', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /data-card-focus="true"/);
+  assert.match(source, /data-card-focus-legal="true"/);
+  assert.match(source, /data-card-staged="true"/);
+  assert.match(source, /delete node\.dataset\.cardFocus;/);
+  assert.match(source, /delete node\.dataset\.cardFocusLegal;/);
+  assert.match(source, /delete node\.dataset\.cardStaged;/);
+});
+
+// BATTLE_CARD_FOCUS_PRESENTATION_R3_END
+'''
+          p.write_text(s + block, encoding='utf-8')
+          PY
+
+          mapfile -t changed < <({ git diff --name-only; git diff --cached --name-only; } | sort -u)
+          printf '%s\n' "${changed[@]}"
+          test "${#changed[@]}" -eq 2
+          test "${changed[0]}" = 'browser/battle-janken-slidepad-runtime-mount.mjs'
+          test "${changed[1]}" = 'tests/battle-janken-slidepad-runtime-mount.test.mjs'
+
+      - name: Classified runtime tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/battle-janken-slidepad-runtime-mount.test.mjs
+          git diff --check
+
+      - name: Commit product delta only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs
+          git diff --cached --check
+          git diff --cached --quiet && exit 1 || true
+          git commit -m 'battle card focus R3 product delta'
+          git push origin HEAD:sol/battle-card-focus-r3-20260910

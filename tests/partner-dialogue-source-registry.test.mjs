@@ -8,6 +8,7 @@ import {
   partnerDisplayName,
   partnerRosterIdsFromRuntime,
   selectApprovedPartnerBattleUtterance,
+  selectApprovedPartnerIdleUtterance,
   setAdvicePartnerId,
   PARTNER_DIALOGUE_SOURCE_REGISTRY_CONTRACT,
 } from '../browser/partner-dialogue-source-registry.mjs';
@@ -91,4 +92,19 @@ test('current display labels remain Japanese while roster authority remains exte
   assert.equal(partnerDisplayName('partner.mato'), '泊愛まと');
   assert.equal(partnerDisplayName('partner.creator.miku'), '初音ミク');
   assert.equal(partnerDisplayName('partner.future'), 'パートナー');
+});
+
+test('idle readable dialogue uses only the approved current source and stays deterministic for one seed', () => {
+  assert.equal(selectApprovedPartnerIdleUtterance({ partnerId: 'partner.naki', seed: 'idle-1' }), null);
+  const first = selectApprovedPartnerIdleUtterance({ partnerId: 'partner.saasuna', seed: 'idle-1' });
+  const same = selectApprovedPartnerIdleUtterance({ partnerId: 'partner.saasuna', seed: 'idle-1' });
+  assert.ok(first);
+  assert.equal(first.partnerId, 'partner.saasuna');
+  assert.equal(first.sourceState, 'approved_current');
+  assert.equal(first.triggerId, 'idle_readable');
+  assert.equal(first.text, same.text);
+  assert.equal(first.presentationOnly, true);
+  assert.equal(first.automaticCanonMutationAllowed, false);
+  assert.equal(first.automaticRelationshipMutationAllowed, false);
+  assert.equal(first.automaticGameMutationAllowed, false);
 });

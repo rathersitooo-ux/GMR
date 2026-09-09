@@ -7,40 +7,34 @@ permissions:
   contents: read
 jobs:
   probe:
-    if: github.event.head_commit.message == 'Probe Battle Focus HTML seam R1'
+    if: github.event.head_commit.message == 'Probe Battle HTML module topology R1'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect current Battle HTML seams
+      - name: Inspect current Battle HTML module topology
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          p = Path('browser/GAMEROAD.html')
-          lines = p.read_text(encoding='utf-8').splitlines()
-          pats = [
-            'battle-janken-slidepad-runtime-mount.mjs',
-            'mountBattleJankenSlidePadRuntime',
-            'battle-janken-compound-live-input-stack.mjs',
-            'createBattleJankenCompoundLiveInputStack',
-            'battle-new-base-live-consumer',
-            'previewRuntime',
-            'readCompoundAttackCandidate',
-            'createBattleJankenFocusAuthorityContextReader',
-            'mountBattleJankenFocusRuntimeSurface',
-          ]
-          seen=[]
+          lines = Path('browser/GAMEROAD.html').read_text(encoding='utf-8').splitlines()
+          candidates=[]
           for i,line in enumerate(lines,1):
-            if any(pat in line for pat in pats):
-              if all(abs(i-s)>45 for s in seen):
-                seen.append(i)
-          print('HTML_SHA_SOURCE_LINES', len(lines))
-          print('MATCH_CENTERS', seen)
-          for center in seen:
-            lo=max(1,center-35); hi=min(len(lines),center+80)
-            print(f'===== L{lo}-L{hi} center={center} =====')
+            low=line.lower()
+            if ('<script' in low or '.mjs' in low or 'import(' in low or 'type="module"' in low or
+                'battleruntime' in low or 'battle runtime' in low or 'data-screen="battle"' in low or
+                '__gameroad' in low or 'battle-screen' in low or 'slidepad' in low or 'janken' in low):
+              candidates.append(i)
+          print('HTML_LINES', len(lines))
+          print('CANDIDATE_LINES', candidates)
+          groups=[]
+          for i in candidates:
+            if not groups or i-groups[-1][-1] > 18:
+              groups.append([i])
+            else:
+              groups[-1].append(i)
+          for group in groups:
+            lo=max(1,group[0]-18); hi=min(len(lines),group[-1]+35)
+            print(f'===== L{lo}-L{hi} =====')
             for n in range(lo,hi+1):
               print(f'{n:06d}: {lines[n-1]}')
-          if not seen:
-            raise SystemExit('No expected Battle seam found; fail closed')
           PY

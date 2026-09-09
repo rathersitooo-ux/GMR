@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RESOURCE-HUD-SCREEN-R4-20260910T0318-SOL-H5N8Q7",
+  "taskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "workUnitKey": "BATTLE_CRITICAL_RESOURCE_HUD_SCREEN_MOUNT_R4",
+  "acquireKey": "BATTLE-RESOURCE-HUD-SCREEN-R4-20260910T0318-SOL-H5N8Q7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1460_RESOURCE_HUD_MERGED_SCREEN_CALLER_HUD_SEAM_OWNER_FREE_20260910",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_SCREEN_RUNTIME_RENDERHUD_CALLER_SNAPSHOT_PLUS_PR1460_FOCUSED_TESTS_20260910",
+  "proceedToken": "PROCEED|BATTLE-RESOURCE-HUD-SCREEN-R4-20260910T0318-SOL-H5N8Q7|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-screen-resource-hud|compose-existing-authority|active-lease",
+  "authorizationBaseSha": "9761e10273edf2800940579d8252fb237c81f226",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "leaseWorkUnitKey": "BATTLE_CRITICAL_RESOURCE_HUD_SCREEN_MOUNT_R4",
+  "leaseAcquireKey": "BATTLE-RESOURCE-HUD-SCREEN-R4-20260910T0318-SOL-H5N8Q7",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:18 JST",
+  "leaseUntilJst": "2026-09-10 04:18 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A881:L881",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-resource-hud-screen-r4-20260910; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; own transient data/preaction-authorizations/BATTLE-RESOURCE-HUD-SCREEN-R4-20260910T0318-SOL-H5N8Q7.json only. READ_ONLY reuse: browser/battle-critical-resource-hud-runtime.mjs and its focused test. browser/GAMEROAD.html, deploy/cloudflare/scripts/build.mjs, browser/battle-screen-presentation-core.mjs, janken/camera/controlled-character/GOAL/Road/Flanora/recovery/gameplay/rules/target/movement/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_CRITICAL_RESOURCE_HUD_TSCREEN_CALLER_FORWARD_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1460_MERGED_RESOURCE_COMPONENT_PLUS_EXISTING_BATTLE_SCREEN_CALLER_HUD_HOST_20260910",
+  "solutionSearchEvidence": [
+    "PR#1460 merged the caller-authoritative Honey/Chip presentation component and focused authority-boundary tests into current main",
+    "current battle-screen-runtime-mount already owns the compact top HUD and exposes renderHud(snapshot) plus render(model,hudSnapshot), so no second HUD controller is needed",
+    "current GAMEROAD.html authoritative match player state contains honey:number and chip:array, but current visible strip shows board Honey total and no constant Chip count",
+    "current GAMEROAD.html is actively owned by the processing-order live-mount WorkUnit through 04:15 JST and deploy build has a separate owner, so this slice is limited to owner-free T-SCREEN composition only",
+    "screen integration will forward only caller-supplied honey, chipCount, honeyDelta and honeyDeltaSource; it will not calculate resources, inspect Chip identities, or write gameplay state"
+  ],
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

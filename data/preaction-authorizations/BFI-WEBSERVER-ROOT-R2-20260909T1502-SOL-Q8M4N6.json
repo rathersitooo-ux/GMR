@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BFI-WEBSERVER-ROOT-R2-20260909T1502-SOL-Q8M4N6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FINAL_QA_PUBLIC_HUMAN_R1",
+  "acquireKey": "BFI-WEBSERVER-ROOT-R2-20260909T1502-SOL-Q8M4N6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BFI-NESTED-CONFIG-SERVE-ROOT-20260909T1502-JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1378-RUN34316085050-REPEATED-404-/browser/GAMEROAD.html-FROM-NESTED-CONFIG",
+  "proceedToken": "PROCEED|BFI-WEBSERVER-ROOT-R2-20260909T1502-SOL-Q8M4N6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|workunit46-root-cause|shared-bfi-config-only|product-read-only",
+  "authorizationBaseSha": "07270a1594aae27719f74761a678446820901a67",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_FINAL_QA_PUBLIC_HUMAN_R1",
+  "leaseAcquireKey": "BFI-WEBSERVER-ROOT-R2-20260909T1502-SOL-Q8M4N6",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 15:02 JST",
+  "leaseUntilJst": "2026-09-09 16:02 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A668:L668",
+  "leaseExactMutableResources": "playwright.full-interaction.config.mjs; own transient data/preaction-authorizations/BFI-WEBSERVER-ROOT-R2-20260909T1502-SOL-Q8M4N6.json only. tests/browser-full-interaction*.spec.mjs, .github/workflows/browser-full-interaction.yml, browser/GAMEROAD.html, product/runtime/rules/save/network READ_ONLY.",
+  "scope": [
+    "playwright.full-interaction.config.mjs"
+  ],
+  "leaseScope": [
+    "playwright.full-interaction.config.mjs"
+  ]
+}

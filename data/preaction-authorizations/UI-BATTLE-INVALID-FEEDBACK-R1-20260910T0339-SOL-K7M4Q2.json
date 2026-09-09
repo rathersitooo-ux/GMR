@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-BATTLE-INVALID-FEEDBACK-R1-20260910T0339-SOL-K7M4Q2",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "BATTLE_INVALID_ACTION_FEEDBACK_LIVE_ADAPTER_R1",
+  "acquireKey": "UI-BATTLE-INVALID-FEEDBACK-R1-20260910T0339-SOL-K7M4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-row1336-invalid-action-multimodal-plus-main-battle-feedback-core-20260910T0339",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "pure-adapter-fail-closed-contract-existing-cue-core-tests",
+  "proceedToken": "PROCEED|UI-BATTLE-INVALID-FEEDBACK-R1-20260910T0339-SOL-K7M4Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|caller-owned-reject-only",
+  "authorizationBaseSha": "bbf76e8616791266e606c94d09e03cfcd87fdc50",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "BATTLE_INVALID_ACTION_FEEDBACK_LIVE_ADAPTER_R1",
+  "leaseAcquireKey": "UI-BATTLE-INVALID-FEEDBACK-R1-20260910T0339-SOL-K7M4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:39 JST",
+  "leaseUntilJst": "2026-09-10 04:39 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A897:L897",
+  "leaseExactMutableResources": "browser/battle-invalid-action-feedback-live-adapter.mjs; tests/battle-invalid-action-feedback-live-adapter.test.mjs; data/preaction-authorizations/UI-BATTLE-INVALID-FEEDBACK-R1-20260910T0339-SOL-K7M4Q2.json; branch work/battle-invalid-action-feedback-live-adapter-r1. Shared GAMEROAD.html / battle-janken-slidepad-runtime-mount.mjs / deploy build are READ_ONLY and excluded.",
+  "scope": [
+    "browser/battle-invalid-action-feedback-live-adapter.mjs",
+    "tests/battle-invalid-action-feedback-live-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-invalid-action-feedback-live-adapter.mjs",
+    "tests/battle-invalid-action-feedback-live-adapter.test.mjs"
+  ],
+  "solutionSignature": "battle-invalid-action/caller-canonical-reject-to-existing-feedback-cue",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "browser/battle-interaction-feedback-cue-core.mjs already owns symbolic audio-haptic-visual feedback semantics",
+    "browser/ui-state-feedback-ready-plan-adapter.mjs already owns generic press material feedback and must not be duplicated",
+    "CURRENT UI-STATE-FEEDBACK-RUNTIME-001 requires canonical reject reason and forbids UI inference"
+  ],
+  "reuseDecisionEvidenceId": "reuse-existing-battle-cue-and-caller-reject-authority-20260910T0339"
+}

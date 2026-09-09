@@ -484,7 +484,7 @@ test('configured dedicated focus blocks legacy direct hand-card commit and deleg
   assert.match(source, /const dedicatedFocus = normalizeBattleJankenFocusIntegration\(focusIntegration\);/);
   assert.equal((source.match(/if \(dedicatedFocus\) \{\s*void openDedicatedFocusSurface\(\);\s*return;\s*\}/g) ?? []).length, 2,
     'both gesture release and direct slot click must enter the same dedicated focus surface');
-  assert.match(source, /context = await dedicatedFocus\.readContext\(Object\.freeze\(\{[\s\S]*roundId: model\.roundId,[\s\S]*assignment: model\.assignment/);
+  assert.match(source, /const callerAssignment = model\.assignment\?\.assignmentMode[\s\S]*CURRENT_HAND3_POLICY[\s\S]*\? model\.assignment[\s\S]*: null[\s\S]*context = await dedicatedFocus\.readContext\(Object\.freeze\(\{[\s\S]*roundId: model\.roundId,[\s\S]*assignment: callerAssignment/);
   assert.match(source, /runtime = dedicatedFocus\.mountSurface\(\{[\s\S]*liveInputStack: dedicatedFocus\.liveInputStack,[\s\S]*packages: context\.packages,[\s\S]*generationId: context\.generationId/);
   assert.doesNotMatch(source, /from '\.\/battle-janken-focus-runtime-surface\.mjs'/,
     'SlidePad must not invent a second static mount authority; the current caller supplies the merged surface');

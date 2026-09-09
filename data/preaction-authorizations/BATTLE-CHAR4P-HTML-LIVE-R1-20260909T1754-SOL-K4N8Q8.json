@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CHAR4P-HTML-LIVE-R1-20260909T1754-SOL-K4N8Q8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CONTROLLED_CHARACTER_MOTION_HTML_LIVE_R1",
+  "acquireKey": "BATTLE-CHAR4P-HTML-LIVE-R1-20260909T1754-SOL-K4N8Q8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDECESSOR_AUDIT_TERMINAL_PLUS_R6_BINDING_MERGED_HTML_OWNER_RELEASED_20260909T1754JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R6_BINDING_GATE_SUCCESS_AND_EXISTING_HTML_PER_STEP_MOVEMENT_EVIDENCE_FAILCLOSED_TO_PRESENTATION_ONLY",
+  "proceedToken": "PROCEED|BATTLE-CHAR4P-HTML-LIVE-R1-20260909T1754-SOL-K4N8Q8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|controlled-character|html-live|active-lease",
+  "authorizationBaseSha": "a8248b609656436394a73b9a32acc3fd4f11d762",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CONTROLLED_CHARACTER_MOTION_HTML_LIVE_R1",
+  "leaseAcquireKey": "BATTLE-CHAR4P-HTML-LIVE-R1-20260909T1754-SOL-K4N8Q8",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 17:54 JST",
+  "leaseUntilJst": "2026-09-09 18:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A730:L730",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-char4p-html-live-r1-20260909; browser/GAMEROAD.html; tests/battle-controlled-character-html-live.test.mjs; transient .github/workflows/zz-temp-battle-char4p-html-live-r1.yml; transient tools/temp-battle-char4p-html-live-r1.py; own transient data/preaction-authorizations/BATTLE-CHAR4P-HTML-LIVE-R1-20260909T1754-SOL-K4N8Q8.json only. Existing browser/battle-board-naki-4p-visual-binding.mjs, browser/battle-controlled-character-4p-motion-director.mjs and browser/battle-controlled-character-motion-core.mjs READ_ONLY reuse. battle-screen/janken/advice/camera/goal/Road/gameplay/rules/save/economy/network READ_ONLY. deploy/cloudflare/scripts/build.mjs READ_ONLY while current package owner active.",
+  "solutionSignature": "BATTLE_CONTROLLED_CHARACTER_4P_EXISTING_POSITION_IDENTITY_TO_MERGED_BINDING_HTML_LIVE_R1",
+  "reuseDisposition": "COMPOSE_EXISTING_HTML_POSITION_AUTHORITY_WITH_MERGED_R6_BINDING_AND_MOTION_DIRECTOR",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PREDECESSOR_AUDIT_34327834203_PLUS_R6_PR1428_REQUIRED_GATE_34329305428",
+  "solutionSearchEvidence": [
+    "The completed predecessor audit found Quick30, HATE, reconnect, READY feedback, self-deck inspect, replay/history and Advice Partner preserved; Controlled Character is a current live-mount residual, not a predecessor core regression.",
+    "PR#1428 merged the four-participant controlled-character binding requiring caller-supplied opaque characterId plus motion projection and explicitly leaves parent board markers as position authority.",
+    "Existing Battle HTML already advances authoritative p.position along accepted movement paths and preserves the legacy human #battleRuntime mover; this WorkUnit may only project those accepted steps to the merged presentation layer.",
+    "Advice Partner and partner.naki are forbidden identity fallbacks. Missing authoritative four-participant identity must fail visible to board markers rather than invent identity.",
+    "No second movement, path, legality, gameplay, camera, GOAL, save, economy or network engine is permitted."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-controlled-character-html-live.test.mjs",
+    ".github/workflows/zz-temp-battle-char4p-html-live-r1.yml",
+    "tools/temp-battle-char4p-html-live-r1.py",
+    "data/preaction-authorizations/BATTLE-CHAR4P-HTML-LIVE-R1-20260909T1754-SOL-K4N8Q8.json"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-controlled-character-html-live.test.mjs",
+    ".github/workflows/zz-temp-battle-char4p-html-live-r1.yml",
+    "tools/temp-battle-char4p-html-live-r1.py",
+    "data/preaction-authorizations/BATTLE-CHAR4P-HTML-LIVE-R1-20260909T1754-SOL-K4N8Q8.json"
+  ]
+}

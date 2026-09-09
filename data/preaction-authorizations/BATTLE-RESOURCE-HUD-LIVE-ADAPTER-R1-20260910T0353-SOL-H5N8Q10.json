@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RESOURCE-HUD-LIVE-ADAPTER-R1-20260910T0353-SOL-H5N8Q10",
+  "taskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "workUnitKey": "BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_R1",
+  "acquireKey": "BATTLE-RESOURCE-HUD-LIVE-ADAPTER-R1-20260910T0353-SOL-H5N8Q10",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1471_SCREEN_RESOURCE_HUD_MERGED_PLUS_HTML_AUTHORITATIVE_PLAYER_FIELDS_20260910",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PLAYER_HONEY_AND_CHIP_EXISTING_STATE_READONLY_PROJECTION",
+  "proceedToken": "PROCEED|BATTLE-RESOURCE-HUD-LIVE-ADAPTER-R1-20260910T0353-SOL-H5N8Q10|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-resource-hud|live-adapter|active-lease",
+  "authorizationBaseSha": "aed6367624c6e92e39946e5a02541ada75fd0b60",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "leaseWorkUnitKey": "BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_R1",
+  "leaseAcquireKey": "BATTLE-RESOURCE-HUD-LIVE-ADAPTER-R1-20260910T0353-SOL-H5N8Q10",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:53 JST",
+  "leaseUntilJst": "2026-09-10 04:53 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A918:L918",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-resource-hud-live-adapter-r1-20260910; NEW browser/battle-critical-resource-hud-live-adapter.mjs; NEW tests/battle-critical-resource-hud-live-adapter.test.mjs; own transient data/preaction-authorizations/BATTLE-RESOURCE-HUD-LIVE-ADAPTER-R1-20260910T0353-SOL-H5N8Q10.json only. READ_ONLY: browser/GAMEROAD.html, browser/battle-screen-runtime-mount.mjs, browser/battle-critical-resource-hud-runtime.mjs, deploy/cloudflare/scripts/build.mjs, gameplay/rules/target/legality/save/economy/network.",
+  "solutionSignature": "BATTLE_RESOURCE_HUD_EXPLICIT_PLAYER_TO_CALLER_SNAPSHOT_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1471_EXISTING_SCREEN_HUD_EXPECTS_CALLER_SNAPSHOT_NO_SECOND_RESOURCE_SYSTEM",
+  "solutionSearchEvidence": [
+    "PR #1471 already mounts the existing caller-authoritative Honey/Chip HUD into the Battle screen and syncs it from renderHud snapshots.",
+    "Current game state already owns player.honey as a nonnegative accumulated value and player.chip as the existing chip-card array.",
+    "The existing #honeyMeter is board-Honey total and must remain separate from player Honey.",
+    "This adapter accepts the explicit caller-selected player object; it does not choose a player, rank resources, award Honey, move Chip cards, or write game state.",
+    "Optional honeyDelta and honeyDeltaSource are forwarded only when explicitly supplied by the caller; no history or latest-delta store is created.",
+    "Shared browser/GAMEROAD.html and deploy/cloudflare/scripts/build.mjs are currently owned by other valid leases, so this slice mutates neither."
+  ],
+  "scope": [
+    "browser/battle-critical-resource-hud-live-adapter.mjs",
+    "tests/battle-critical-resource-hud-live-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-critical-resource-hud-live-adapter.mjs",
+    "tests/battle-critical-resource-hud-live-adapter.test.mjs"
+  ]
+}

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createFlanoraMapLayout } from '../browser/new-base-flanora-map-layout-core.mjs';
+import { projectNewBaseProgressionLanePresentation } from '../browser/new-base-progression-lane-presentation-core.mjs';
 import {
   FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT,
   createFlanoraBoardSurfaceModel,
@@ -132,4 +133,97 @@ test('mount fails soft without a DOM host and contract denies a second board eng
   assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.mount, 'explicit_caller_mount_only');
   assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.secondBoardEngine, false);
   assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.optionalRuleGeometryIncluded, false);
+});
+
+test('BATTLE_PROGRESSION_LATENT_LIVE_R3 syncs existing seven-step nodes without turning future stages into open cells', () => {
+  const documentLike = makeFakeDom();
+  const host = documentLike.createElement('div');
+  const runtime = mountFlanoraBoardSurface({ host, documentLike, layout: standardLayout() });
+
+  const unresolved = runtime.resolveRoadStep('P1', 0, 1);
+  assert.equal(unresolved.dataset.progressionStageState, 'UNRESOLVED');
+  assert.equal(unresolved.dataset.progressionActionable, 'false');
+  assert.equal(unresolved.dataset.progressionTraversable, 'false');
+  assert.equal(unresolved.getAttribute('aria-label'), '進行状態未確定 1/7');
+
+  const goalPathPresentation = {
+    schema: 'GAMEROAD_NEW_BASE_GOAL_PATH_PRESENTATION_V1',
+    ok: true,
+    terminalWin: false,
+    presentationOnly: true,
+    gameplayAuthority: false,
+    gameStateWrite: false,
+    movementAuthority: false,
+    legalityAuthority: false,
+    resultAuthority: false,
+    lanePresentations: runtime.model.lanes.map((lane) => {
+      const straightCardCount = lane.key === 'P1:0' ? 3 : lane.key === 'P2:1' ? 7 : 0;
+      return {
+        participantId: lane.participantId,
+        laneIndex: lane.laneIndex,
+        straightCardCount,
+        connectedToGoal: lane.key === 'P2:1',
+      };
+    }),
+  };
+  const progression = projectNewBaseProgressionLanePresentation(goalPathPresentation);
+  assert.equal(progression.ok, true);
+  assert.equal(progression.totalBuiltStageCount, 10);
+  assert.equal(progression.totalLatentStageCount, 74);
+
+  const applied = runtime.syncProgressionPresentation(progression);
+  assert.deepEqual(applied, {
+    applied: true,
+    reason: 'PROGRESSION_PRESENTATION_APPLIED',
+    builtStageCount: 10,
+    latentStageCount: 74,
+    presentationOnly: true,
+    gameplayAuthority: false,
+    movementAuthority: false,
+    legalityAuthority: false,
+    gameStateWrite: false,
+  });
+  assert.equal(runtime.resolveRoadStep('P1', 0, 1).dataset.progressionStageState, 'BUILT');
+  assert.equal(runtime.resolveRoadStep('P1', 0, 3).dataset.progressionEstablished, 'true');
+  assert.equal(runtime.resolveRoadStep('P1', 0, 4).dataset.progressionStageState, 'LATENT');
+  assert.equal(runtime.resolveRoadStep('P1', 0, 4).dataset.progressionLatent, 'true');
+  assert.equal(runtime.resolveRoadStep('P1', 0, 4).dataset.progressionActionable, 'false');
+  assert.equal(runtime.resolveRoadStep('P1', 0, 4).dataset.progressionTraversable, 'false');
+  assert.equal(runtime.resolveRoadStep('P2', 1, 7).dataset.progressionStageState, 'BUILT');
+  assert.equal(runtime.resolveRoadStep('P3', 2, 7).dataset.progressionStageState, 'LATENT');
+
+  const beforeInvalid = runtime.resolveRoadStep('P1', 0, 1).dataset.progressionStageState;
+  const refused = runtime.syncProgressionPresentation(null);
+  assert.equal(refused.applied, false);
+  assert.equal(refused.reason, 'PROGRESSION_PRESENTATION_REQUIRED');
+  assert.equal(runtime.resolveRoadStep('P1', 0, 1).dataset.progressionStageState, beforeInvalid);
+  assert.equal(runtime.gameplayAuthority, false);
+  assert.equal(runtime.gameStateWrite, false);
+  assert.equal(runtime.movementAuthority, false);
+});
+
+test('progression runtime refuses partial authoritative projections instead of leaving mixed stale lane state', () => {
+  const documentLike = makeFakeDom();
+  const runtime = mountFlanoraBoardSurface({ host: documentLike.createElement('div'), documentLike, layout: standardLayout() });
+  const oneLaneGoalPath = {
+    schema: 'GAMEROAD_NEW_BASE_GOAL_PATH_PRESENTATION_V1',
+    ok: true,
+    terminalWin: false,
+    presentationOnly: true,
+    gameplayAuthority: false,
+    gameStateWrite: false,
+    movementAuthority: false,
+    legalityAuthority: false,
+    resultAuthority: false,
+    lanePresentations: [{ participantId: 'P1', laneIndex: 0, straightCardCount: 2, connectedToGoal: false }],
+  };
+  const partial = projectNewBaseProgressionLanePresentation(oneLaneGoalPath);
+  assert.equal(partial.ok, true);
+  const refused = runtime.syncProgressionPresentation(partial);
+  assert.equal(refused.applied, false);
+  assert.equal(refused.reason, 'FULL_FLANORA_PROGRESSION_REQUIRED');
+  assert.equal(runtime.resolveRoadStep('P1', 0, 1).dataset.progressionStageState, 'UNRESOLVED');
+  assert.equal(runtime.resolveRoadStep('P1', 0, 3).dataset.progressionStageState, 'UNRESOLVED');
+  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.progressionSyncWritesGameState, false);
+  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.secondBoardEngine, false);
 });

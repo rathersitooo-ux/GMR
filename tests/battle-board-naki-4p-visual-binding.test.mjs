@@ -2,94 +2,101 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING,
   NAKI_4P_BOARD_VISUAL_BINDING,
-  projectFourParticipantNakiBoardMarkers
+  projectFourParticipantControlledCharacters,
+  projectFourParticipantNakiBoardMarkers,
 } from '../browser/battle-board-naki-4p-visual-binding.mjs';
 
-function marker(participantId, left, top, ox, oy, groupCount = 4) {
+function marker(participantId, character, groupCount = 4) {
   return {
-    dataset: { player: participantId, groupCount: String(groupCount) },
-    style: {
-      left,
-      top,
-      getPropertyValue(name) {
-        if (name === '--ox') return `${ox}px`;
-        if (name === '--oy') return `${oy}px`;
-        return '';
-      }
-    }
+    dataset: {
+      player: participantId,
+      character: character ?? '',
+      groupCount: String(groupCount),
+    },
   };
 }
 
-test('projects four distinct Naki identities without creating independent board coordinates', () => {
+test('uses each authoritative board marker character instead of hardcoding one Advice Partner', () => {
   const input = [
-    marker('P1', '50%', '50%', -54, -34),
-    marker('P2', '50%', '50%', 54, -34),
-    marker('P3', '50%', '50%', -54, 34),
-    marker('P4', '50%', '50%', 54, 34)
+    marker('P1', 'partner.naki'),
+    marker('P2', 'partner.saasuna'),
+    marker('P3', 'partner.mato'),
+    marker('P4', 'partner.creator.miku'),
   ];
 
-  const projected = projectFourParticipantNakiBoardMarkers(input);
+  const projected = projectFourParticipantControlledCharacters(input);
   assert.equal(projected.length, 4);
   assert.deepEqual(projected.map(row => row.participantId), ['P1', 'P2', 'P3', 'P4']);
-  assert.equal(new Set(projected.map(row => row.participantId)).size, 4);
+  assert.deepEqual(projected.map(row => row.characterId), [
+    'partner.naki',
+    'partner.saasuna',
+    'partner.mato',
+    'partner.creator.miku',
+  ]);
+  assert.equal(new Set(projected.map(row => row.characterId)).size, 4);
+  assert.ok(projected.every(row => row.identityState === 'authoritative-marker-character'));
 
-  for (const [index, participantId] of ['P1', 'P2', 'P3', 'P4'].entries()) {
-    const row = projected[index];
-    assert.equal(row.participantId, participantId);
-    assert.equal(row.characterId, 'partner.naki');
+  for (const row of projected) {
     assert.equal(row.visible, true);
     assert.equal(Object.hasOwn(row, 'left'), false);
     assert.equal(Object.hasOwn(row, 'top'), false);
     assert.equal(Object.hasOwn(row, 'offsetX'), false);
     assert.equal(Object.hasOwn(row, 'offsetY'), false);
   }
-
-  assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.actualBoardMarkerRoot, '#boardPlayers');
-  assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.actualBoardMarkerSelector, '.boardPlayerToken[data-player]');
-  assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.battleFocusChromeSelector, 'body:has(.battle.active) .top');
-  assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.battleFocusChromePolicy, 'SUPPRESS_GLOBAL_BANNER_DURING_ACTIVE_BATTLE_ONLY');
-  assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.positionAuthority, 'PARENT_BOARD_PLAYER_MARKER');
-  assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.coordinateProjection, 'NONE__VISUAL_IS_CHILD_OF_AUTHORITATIVE_MARKER');
-  assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.presentationOnly, true);
-  assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.gameplayAuthority, false);
-  assert.equal(NAKI_4P_BOARD_VISUAL_BINDING.failVisible, true);
 });
 
-test('keeps four-character identity visible inside a board-first footprint budget', () => {
-  const footprint = NAKI_4P_BOARD_VISUAL_BINDING.visualFootprint;
+test('does not impersonate Naki when one participant character identity is missing', () => {
+  const projected = projectFourParticipantControlledCharacters([
+    marker('P1', 'partner.naki'),
+    marker('P2', ''),
+    marker('P3', 'partner.mato'),
+    marker('P4', 'partner.creator.miku'),
+  ]);
+  assert.equal(projected[1].participantId, 'P2');
+  assert.equal(projected[1].characterId, null);
+  assert.equal(projected[1].identityState, 'participant-generic');
+});
+
+test('preserves actual parent board marker as movement coordinate authority', () => {
+  assert.equal(CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING.actualBoardMarkerRoot, '#boardPlayers');
+  assert.equal(CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING.actualBoardMarkerSelector, '.boardPlayerToken[data-player]');
+  assert.equal(CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING.markerCharacterDataset, 'data-character');
+  assert.equal(CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING.positionAuthority, 'PARENT_BOARD_PLAYER_MARKER');
+  assert.equal(CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING.coordinateProjection, 'NONE__VISUAL_IS_CHILD_OF_AUTHORITATIVE_MARKER');
+  assert.equal(CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING.identityAuthority, 'AUTHORITATIVE_BOARD_MARKER_CHARACTER');
+  assert.equal(CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING.advicePartnerRole, 'SEPARATE_NOT_A_FALLBACK');
+  assert.equal(CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING.presentationOnly, true);
+  assert.equal(CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING.gameplayAuthority, false);
+  assert.equal(CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING.failVisible, true);
+});
+
+test('keeps four controlled-character visuals inside the existing board-first footprint budget', () => {
+  const footprint = CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING.visualFootprint;
   assert.deepEqual(footprint.desktop, { surfaceWidth: 44, surfaceHeight: 56, fallbackWidth: 34, fallbackHeight: 44 });
   assert.deepEqual(footprint.compact, { surfaceWidth: 38, surfaceHeight: 48, fallbackWidth: 30, fallbackHeight: 38 });
   assert.deepEqual(footprint.shortLandscape, { surfaceWidth: 32, surfaceHeight: 40, fallbackWidth: 26, fallbackHeight: 32 });
   assert.deepEqual(footprint.portrait, { surfaceWidth: 34, surfaceHeight: 44, fallbackWidth: 28, fallbackHeight: 36 });
-
-  const maximumSurface = {
-    desktop: { width: 44, height: 56 },
-    compact: { width: 38, height: 48 },
-    shortLandscape: { width: 32, height: 40 },
-    portrait: { width: 34, height: 44 }
-  };
-  for (const [viewport, dimensions] of Object.entries(footprint)) {
-    assert.ok(dimensions.surfaceWidth <= maximumSurface[viewport].width);
-    assert.ok(dimensions.surfaceHeight <= maximumSurface[viewport].height);
-    assert.ok(dimensions.fallbackWidth < dimensions.surfaceWidth);
-    assert.ok(dimensions.fallbackHeight < dimensions.surfaceHeight);
-  }
 });
 
-test('rejects incomplete or duplicate participant projections instead of inventing board identity', () => {
-  const incomplete = [
-    marker('P1', '20%', '20%', 0, 0, 1),
-    marker('P2', '40%', '40%', 0, 0, 1),
-    marker('P3', '60%', '60%', 0, 0, 1)
-  ];
-  assert.deepEqual(projectFourParticipantNakiBoardMarkers(incomplete), []);
+test('keeps compatibility exports without retaining Naki-specific identity semantics', () => {
+  assert.equal(projectFourParticipantNakiBoardMarkers, projectFourParticipantControlledCharacters);
+  assert.equal(NAKI_4P_BOARD_VISUAL_BINDING, CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING);
+  assert.equal(Object.hasOwn(CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING, 'characterId'), false);
+});
 
-  const duplicate = [
-    marker('P1', '20%', '20%', 0, 0, 1),
-    marker('P1', '30%', '30%', 0, 0, 1),
-    marker('P3', '60%', '60%', 0, 0, 1),
-    marker('P4', '80%', '80%', 0, 0, 1)
-  ];
-  assert.deepEqual(projectFourParticipantNakiBoardMarkers(duplicate), []);
+test('rejects incomplete or duplicate participant sets instead of inventing controlled-character slots', () => {
+  assert.deepEqual(projectFourParticipantControlledCharacters([
+    marker('P1', 'partner.naki'),
+    marker('P2', 'partner.saasuna'),
+    marker('P3', 'partner.mato'),
+  ]), []);
+
+  assert.deepEqual(projectFourParticipantControlledCharacters([
+    marker('P1', 'partner.naki'),
+    marker('P1', 'partner.saasuna'),
+    marker('P3', 'partner.mato'),
+    marker('P4', 'partner.creator.miku'),
+  ]), []);
 });

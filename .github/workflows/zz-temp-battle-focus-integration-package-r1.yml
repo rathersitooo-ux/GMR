@@ -1,0 +1,57 @@
+name: temp-battle-focus-integration-package-r1
+
+on:
+  push:
+    branches:
+      - sol/battle-focus-integration-package-r1-20260910
+
+permissions:
+  contents: write
+
+jobs:
+  package-focus-integration:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: sol/battle-focus-integration-package-r1-20260910
+      - name: Confirm PRE_ACTION
+        run: |
+          test -f data/preaction-authorizations/BATTLE-FOCUS-INTEGRATION-PACKAGE-R1-20260910T0403-SOL-Q8N4M10.json
+          grep -F 'PREACTION_PROCEED_ALLOWED' data/preaction-authorizations/BATTLE-FOCUS-INTEGRATION-PACKAGE-R1-20260910T0403-SOL-Q8N4M10.json
+          grep -F 'CURRENT_ACTIVE_LEASES!A6:L6' data/preaction-authorizations/BATTLE-FOCUS-INTEGRATION-PACKAGE-R1-20260910T0403-SOL-Q8N4M10.json
+      - name: Apply bounded Focus integration package patch
+        run: python tools/temp-battle-focus-integration-package-r1.py
+      - name: Run Focus integration and Cloudflare build tests
+        run: |
+          node --test tests/battle-janken-focus-live-integration.test.mjs deploy/cloudflare/tests/build.test.mjs
+      - name: Build public package and verify Focus integration artifact
+        run: |
+          rm -rf /tmp/gameroad-focus-integration-package-r1
+          node deploy/cloudflare/scripts/build.mjs --dist /tmp/gameroad-focus-integration-package-r1 --source-commit "$GITHUB_SHA" --published-at '2026-09-10T04:05:00+09:00' > /tmp/gameroad-focus-integration-package-r1.out
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const path='/tmp/gameroad-focus-integration-package-r1';
+          const manifest=JSON.parse(fs.readFileSync(`${path}/manifest.json`,'utf8'));
+          const artifact='battle_janken_focus_live_integration';
+          const file='battle-janken-focus-live-integration.mjs';
+          if(!manifest.artifacts?.[artifact]) throw new Error(`missing manifest artifact ${artifact}`);
+          if(manifest.artifacts[artifact].output!==file) throw new Error(`wrong output for ${artifact}`);
+          if(!fs.existsSync(`${path}/${file}`)) throw new Error(`missing dist file ${file}`);
+          console.log('Battle Focus live integration public artifact PASS');
+          NODE
+      - name: Verify bounded product diff
+        run: |
+          git diff --check
+          test "$(git diff --name-only | sort)" = 'deploy/cloudflare/scripts/build.mjs'
+          git diff -- deploy/cloudflare/scripts/build.mjs
+      - name: Commit product patch
+        run: |
+          if git diff --quiet -- deploy/cloudflare/scripts/build.mjs; then echo 'No product diff to commit'; exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deploy/cloudflare/scripts/build.mjs
+          git commit -m 'Build: package Battle Focus live integration'
+          git push origin HEAD:sol/battle-focus-integration-package-r1-20260910

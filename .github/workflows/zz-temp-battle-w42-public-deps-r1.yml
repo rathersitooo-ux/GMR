@@ -1,0 +1,48 @@
+name: TEMP Battle W42 public deps R1
+
+on:
+  push:
+    branches:
+      - sol/battle-w42-public-deps-r1-20260909
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-w42-public-deps-r1-20260909
+          fetch-depth: 0
+      - name: Apply exact package dependency patch
+        run: python3 tools/temp-battle-w42-public-deps-r1.py
+      - name: Verify package dependency entries
+        run: |
+          for f in \
+            browser/battle-janken-compound-attack-package-core.mjs \
+            browser/new-base-hand3-uniform-assignment-policy.mjs \
+            browser/battle-optional-rule-activation-core.mjs \
+            browser/battle-new-base-live-consumer-adapter.mjs \
+            browser/battle-compound-attack-preview-runtime.mjs \
+            browser/battle-compound-preview-live-consumer-bridge.mjs \
+            browser/battle-janken-slidepad-live-input-coordinator.mjs \
+            browser/battle-thumb-cluster-presentation-core.mjs; do
+            grep -F "source: '$f'" deploy/cloudflare/scripts/build.mjs >/dev/null
+          done
+      - name: Run Cloudflare build contract tests
+        run: node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Cleanup transient control files
+        run: |
+          rm -f .github/workflows/zz-temp-battle-w42-public-deps-r1.yml
+          rm -f tools/temp-battle-w42-public-deps-r1.py
+          rm -f data/preaction-authorizations/BATTLE-W42-PUBLIC-DEPS-R1-20260909T1713-SOL-RE42-Q8M5N4.json
+      - name: Commit verified durable diff
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deploy/cloudflare/scripts/build.mjs .github/workflows/zz-temp-battle-w42-public-deps-r1.yml tools/temp-battle-w42-public-deps-r1.py data/preaction-authorizations/BATTLE-W42-PUBLIC-DEPS-R1-20260909T1713-SOL-RE42-Q8M5N4.json
+          git commit -m 'Battle: package W42 live dependency chain'
+          git push origin HEAD:sol/battle-w42-public-deps-r1-20260909

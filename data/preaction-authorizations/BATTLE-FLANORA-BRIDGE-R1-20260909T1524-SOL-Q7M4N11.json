@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-FLANORA-BRIDGE-R1-20260909T1524-SOL-Q7M4N11",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FLANORA_LEGACY_BOARD_BRIDGE_R1",
+  "acquireKey": "BATTLE-FLANORA-BRIDGE-R1-20260909T1524-SOL-Q7M4N11",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FLANORA_BRIDGE_PRESENTATION_ONLY_NO_RULE_WRITE_R1",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PURE_BRIDGE_FOCUSED_TESTS_BEFORE_LIVE_HTML_MOUNT",
+  "proceedToken": "PROCEED|BATTLE-FLANORA-BRIDGE-R1-20260909T1524-SOL-Q7M4N11|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-09T15:24+09:00",
+  "authorizationBaseSha": "8fe59318e270f6373f1182e61b4aff8820687d9f",
+  "scope": [
+    "browser/battle-flanora-legacy-board-bridge.mjs",
+    "tests/battle-flanora-legacy-board-bridge.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_FLANORA_LEGACY_BOARD_BRIDGE_R1",
+  "leaseAcquireKey": "BATTLE-FLANORA-BRIDGE-R1-20260909T1524-SOL-Q7M4N11",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 15:24 JST",
+  "leaseUntilJst": "2026-09-09 16:24 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A680:L680",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-flanora-legacy-board-bridge-r1-20260909; browser/battle-flanora-legacy-board-bridge.mjs (new); tests/battle-flanora-legacy-board-bridge.test.mjs (new); own transient data/preaction-authorizations/BATTLE-FLANORA-BRIDGE-R1-20260909T1524-SOL-Q7M4N11.json only. GAMEROAD.html, road movement, controlled-character binding, Advice Partner runtime, battle-screen runtime, janken runtime, live consumer adapter, rules/save/economy/network READ_ONLY.",
+  "leaseScope": [
+    "browser/battle-flanora-legacy-board-bridge.mjs",
+    "tests/battle-flanora-legacy-board-bridge.test.mjs"
+  ],
+  "solutionSignature": "compose_existing_authority_position_ids_into_flannora_surface_resolvers_without_rule_recompute",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MERGED_FLANORA_SURFACE_PLUS_EXISTING_BOARD_AUTHORITY_REUSE_R1",
+  "solutionSearchEvidence": [
+    "browser/new-base-flanora-board-surface-runtime.mjs exposes goal/shield/road/clearing resolvers and movementAuthority=false",
+    "browser/battle-board-visual-explanation-runtime-mount.mjs already consumes caller-owned #board data-pos authority rather than recomputing movement",
+    "CURRENT owner lock keeps browser/GAMEROAD.html read-only under ROAD R25, so bridge is extracted as a non-overlap presentation adapter"
+  ]
+}

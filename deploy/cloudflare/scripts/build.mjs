@@ -99,6 +99,23 @@ const ARTIFACT_SPECS = Object.freeze([
   { option: 'clickSfxSource', source: 'assets/audio/sfx/click_002.ogg', output: 'click_002.ogg', artifact: 'sfx_click_002', label: 'Formal click SFX', formalBlob: FORMAL_SELECTED3_SFX_BLOBS.click },
   { option: 'cardSlideSfxSource', source: 'assets/audio/sfx/cardSlide6.ogg', output: 'cardSlide6.ogg', artifact: 'sfx_card_slide_6', label: 'Formal card-slide SFX', formalBlob: FORMAL_SELECTED3_SFX_BLOBS.cardSlide },
   { option: 'cardPlaceSfxSource', source: 'assets/audio/sfx/cardPlace1.ogg', output: 'cardPlace1.ogg', artifact: 'sfx_card_place_1', label: 'Formal card-place SFX', formalBlob: FORMAL_SELECTED3_SFX_BLOBS.cardPlace },
+  { source: 'browser/battle-2v2-reconnect-core.mjs', output: 'battle-2v2-reconnect-core.mjs', artifact: 'battle_2v2_reconnect_core', label: 'Battle package dependency battle-2v2-reconnect-core.mjs' },
+  { source: 'browser/battle-camera-control-core.mjs', output: 'battle-camera-control-core.mjs', artifact: 'battle_camera_control_core', label: 'Battle package dependency battle-camera-control-core.mjs' },
+  { source: 'browser/battle-camera-input-router.mjs', output: 'battle-camera-input-router.mjs', artifact: 'battle_camera_input_router', label: 'Battle package dependency battle-camera-input-router.mjs' },
+  { source: 'browser/battle-camera-live-runtime.mjs', output: 'battle-camera-live-runtime.mjs', artifact: 'battle_camera_live_runtime', label: 'Battle package dependency battle-camera-live-runtime.mjs' },
+  { source: 'browser/battle-critical-resource-hud-runtime.mjs', output: 'battle-critical-resource-hud-runtime.mjs', artifact: 'battle_critical_resource_hud_runtime', label: 'Battle package dependency battle-critical-resource-hud-runtime.mjs' },
+  { source: 'browser/battle-janken-focus-presentation-core.mjs', output: 'battle-janken-focus-presentation-core.mjs', artifact: 'battle_janken_focus_presentation_core', label: 'Battle package dependency battle-janken-focus-presentation-core.mjs' },
+  { source: 'browser/battle-janken-focus-runtime-surface.mjs', output: 'battle-janken-focus-runtime-surface.mjs', artifact: 'battle_janken_focus_runtime_surface', label: 'Battle package dependency battle-janken-focus-runtime-surface.mjs' },
+  { source: 'browser/battle-new-base-board-live-presentation-composer.mjs', output: 'battle-new-base-board-live-presentation-composer.mjs', artifact: 'battle_new_base_board_live_presentation_composer', label: 'Battle package dependency battle-new-base-board-live-presentation-composer.mjs' },
+  { source: 'browser/battle-recovery-live-adapter.mjs', output: 'battle-recovery-live-adapter.mjs', artifact: 'battle_recovery_live_adapter', label: 'Battle package dependency battle-recovery-live-adapter.mjs' },
+  { source: 'browser/battle-recovery-presentation-core.mjs', output: 'battle-recovery-presentation-core.mjs', artifact: 'battle_recovery_presentation_core', label: 'Battle package dependency battle-recovery-presentation-core.mjs' },
+  { source: 'browser/battle-recovery-runtime-surface.mjs', output: 'battle-recovery-runtime-surface.mjs', artifact: 'battle_recovery_runtime_surface', label: 'Battle package dependency battle-recovery-runtime-surface.mjs' },
+  { source: 'browser/new-base-flanora-board-surface-runtime.mjs', output: 'new-base-flanora-board-surface-runtime.mjs', artifact: 'new_base_flanora_board_surface_runtime', label: 'Battle package dependency new-base-flanora-board-surface-runtime.mjs' },
+  { source: 'browser/new-base-flanora-map-layout-core.mjs', output: 'new-base-flanora-map-layout-core.mjs', artifact: 'new_base_flanora_map_layout_core', label: 'Battle package dependency new-base-flanora-map-layout-core.mjs' },
+  { source: 'browser/new-base-goal-entry-gate-cue-runtime.mjs', output: 'new-base-goal-entry-gate-cue-runtime.mjs', artifact: 'new_base_goal_entry_gate_cue_runtime', label: 'Battle package dependency new-base-goal-entry-gate-cue-runtime.mjs' },
+  { source: 'browser/new-base-goal-path-core.mjs', output: 'new-base-goal-path-core.mjs', artifact: 'new_base_goal_path_core', label: 'Battle package dependency new-base-goal-path-core.mjs' },
+  { source: 'browser/new-base-goal-path-presentation-core.mjs', output: 'new-base-goal-path-presentation-core.mjs', artifact: 'new_base_goal_path_presentation_core', label: 'Battle package dependency new-base-goal-path-presentation-core.mjs' },
+  { source: 'browser/new-base-progression-lane-presentation-core.mjs', output: 'new-base-progression-lane-presentation-core.mjs', artifact: 'new_base_progression_lane_presentation_core', label: 'Battle package dependency new-base-progression-lane-presentation-core.mjs' },
 ]);
 
 function gitBlobSha1(buffer) {

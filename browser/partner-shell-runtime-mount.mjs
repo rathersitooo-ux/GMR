@@ -7,6 +7,8 @@ import {
   listSaasunaSystemVoices,
   previewSaasunaVoice,
 } from './partner-saasuna-voice-runtime.mjs';
+import { createPartnerCostumeBrowserSessionRuntime } from './partner-costume-browser-session-runtime.mjs';
+import { mountPartnerCostumeScreen } from './partner-costume-screen-runtime-mount.mjs';
 
 const NAV_LABELS = Object.freeze({
   OPEN_DETAIL: '詳細',
@@ -29,6 +31,25 @@ function frozenAction(action, label, context = {}) {
     label,
     targetView: context.targetView ?? null,
     partnerId: context.partnerId ?? null,
+  });
+}
+
+function normalizePartnerCostumeServices(value) {
+  if (value === null || value === undefined) return null;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new TypeError('costume must be an object');
+  if (!value.catalog || typeof value.catalog !== 'object' || Array.isArray(value.catalog)) throw new TypeError('costume.catalog must be an object');
+  for (const name of ['loadAuthoritativeSnapshot', 'saveAuthoritativeSelection', 'createSaveRequestId']) {
+    if (typeof value[name] !== 'function') throw new TypeError(`costume.${name} must be a function`);
+  }
+  if (value.getRecommendedSet !== undefined && typeof value.getRecommendedSet !== 'function') throw new TypeError('costume.getRecommendedSet must be a function');
+  if (value.renderPreview !== undefined && typeof value.renderPreview !== 'function') throw new TypeError('costume.renderPreview must be a function');
+  return Object.freeze({
+    catalog: value.catalog,
+    loadAuthoritativeSnapshot: value.loadAuthoritativeSnapshot,
+    saveAuthoritativeSelection: value.saveAuthoritativeSelection,
+    createSaveRequestId: value.createSaveRequestId,
+    getRecommendedSet: value.getRecommendedSet ?? (() => null),
+    renderPreview: value.renderPreview ?? (() => false),
   });
 }
 
@@ -273,6 +294,7 @@ export function mountPartnerShellRuntime({
   previewVoice = previewSaasunaVoice,
   listVoices = listSaasunaSystemVoices,
   onFeedbackResult,
+  costume = null,
 } = {}) {
   if (!root || typeof root.replaceChildren !== 'function' || !root.ownerDocument?.createElement) {
     throw new TypeError('root must be a DOM element with ownerDocument');
@@ -282,9 +304,12 @@ export function mountPartnerShellRuntime({
   if (typeof submitFeedback !== 'function') throw new TypeError('submitFeedback must be a function');
   if (typeof previewVoice !== 'function') throw new TypeError('previewVoice must be a function');
   if (typeof listVoices !== 'function') throw new TypeError('listVoices must be a function');
+  const costumeServices = normalizePartnerCostumeServices(costume);
 
   let destroyed = false;
   let lastModel = null;
+  let activeCostumeScreen = null;
+  let costumeRenderVersion = 0;
 
   const emit = (spec) => {
     if (destroyed || typeof onAction !== 'function') return;
@@ -297,23 +322,102 @@ export function mountPartnerShellRuntime({
   };
 
   const services = Object.freeze({ submitFeedback, previewVoice, listVoices, onFeedbackResult });
+  const runtimeCanDispatch = (action, context) => {
+    if (action === 'OPEN_COSTUME') {
+      if (!costumeServices) return false;
+      const backContext = Object.freeze({ view: 'costume', activePartnerId: context?.activePartnerId ?? null });
+      if (!dispatchAllowed(canDispatch, 'BACK_HUB', backContext)) return false;
+    }
+    return dispatchAllowed(canDispatch, action, context);
+  };
+
+  function clearCostumeScreen() {
+    costumeRenderVersion += 1;
+    const current = activeCostumeScreen;
+    activeCostumeScreen = null;
+    try { current?.destroy?.(); } catch {}
+  }
+
+  async function mountCostumeView(host, model, doc, version) {
+    if (!costumeServices || destroyed || version !== costumeRenderVersion) return false;
+    let latestSnapshot = null;
+    const sessionRuntime = createPartnerCostumeBrowserSessionRuntime({
+      catalog: costumeServices.catalog,
+      loadAuthoritativeSnapshot: async () => {
+        const snapshot = await costumeServices.loadAuthoritativeSnapshot();
+        latestSnapshot = snapshot;
+        return snapshot;
+      },
+      saveAuthoritativeSelection: async (request) => {
+        const snapshot = await costumeServices.saveAuthoritativeSelection(request);
+        latestSnapshot = snapshot;
+        return snapshot;
+      },
+    });
+    const backSpec = model.navigationActions.find((item) => item.action === 'BACK_HUB') ?? null;
+    const screen = mountPartnerCostumeScreen({
+      root: host,
+      document: doc,
+      sessionRuntime,
+      catalog: costumeServices.catalog,
+      getOwnedItemIds: (partnerId) => {
+        const ids = latestSnapshot?.partners?.[partnerId]?.ownedItemIds;
+        return Array.isArray(ids) ? [...ids] : [];
+      },
+      getRecommendedSet: costumeServices.getRecommendedSet,
+      renderPreview: costumeServices.renderPreview,
+      createSaveRequestId: costumeServices.createSaveRequestId,
+      onClose: () => { if (backSpec) emit(backSpec); },
+    });
+    activeCostumeScreen = screen;
+    try {
+      const view = await screen.start();
+      if (destroyed || version !== costumeRenderVersion || activeCostumeScreen !== screen) return false;
+      if (view?.partnerId !== model.activePartnerId) throw new Error('COSTUME_ACTIVE_PARTNER_MISMATCH');
+      return true;
+    } catch {
+      if (activeCostumeScreen === screen) activeCostumeScreen = null;
+      try { screen.destroy(); } catch {}
+      if (destroyed || version !== costumeRenderVersion) return false;
+      host.replaceChildren(element(doc, 'p', 'partner-costume-unavailable', '着せ替えを開けませんでした'));
+      if (backSpec) host.append(actionButton(doc, backSpec, emit));
+      return false;
+    }
+  }
 
   function render() {
     if (destroyed) return Object.freeze({ ok: false, reason: 'DESTROYED', model: null });
     let model;
     try {
-      model = buildPartnerShellRuntimeModel(getInput(), { canDispatch });
+      model = buildPartnerShellRuntimeModel(getInput(), { canDispatch: runtimeCanDispatch });
     } catch {
       lastModel = null;
       root.replaceChildren();
       return Object.freeze({ ok: false, reason: 'INVALID_INPUT', model: null });
     }
 
+    clearCostumeScreen();
     const doc = root.ownerDocument;
     const section = element(doc, 'section', 'partner-shell-runtime');
     section.dataset.partnerShellView = model.view;
     section.dataset.partnerShellSurfaceKind = model.surfaceKind;
     section.append(element(doc, 'h2', 'partner-shell-title', model.title));
+    if (model.view === 'costume') {
+      if (model.activePartner) {
+        const active = element(doc, 'p', 'partner-shell-active');
+        active.dataset.partnerId = model.activePartner.partnerId;
+        active.textContent = model.activePartner.displayName ?? model.activePartner.partnerId;
+        section.append(active);
+      }
+      const host = element(doc, 'div', 'partner-costume-shell-host');
+      host.dataset.partnerCostumeShellHost = 'true';
+      section.append(host);
+      root.replaceChildren(section);
+      lastModel = model;
+      const version = costumeRenderVersion;
+      void mountCostumeView(host, model, doc, version);
+      return Object.freeze({ ok: true, reason: null, model });
+    }
     renderBody(doc, section, model, emit, services);
     root.replaceChildren(section);
     lastModel = model;
@@ -323,6 +427,7 @@ export function mountPartnerShellRuntime({
   function destroy() {
     if (destroyed) return false;
     destroyed = true;
+    clearCostumeScreen();
     lastModel = null;
     root.replaceChildren();
     return true;

@@ -15,11 +15,22 @@ class FakeElement {
     this.textContent = '';
     this.type = '';
     this.listeners = new Map();
+    this.parentNode = null;
+    this.hidden = false;
+    this.disabled = false;
+    this.open = false;
   }
-  append(...children) { this.children.push(...children); }
-  replaceChildren(...children) { this.children = [...children]; }
+  append(...children) { for (const child of children) { child.parentNode = this; this.children.push(child); } }
+  replaceChildren(...children) { this.children = []; this.append(...children); }
   addEventListener(type, handler) { this.listeners.set(type, handler); }
-  click() { this.listeners.get('click')?.(); }
+  click() { return this.listeners.get('click')?.({ target: this }); }
+  showModal() { this.open = true; }
+  close() { this.open = false; }
+  remove() {
+    if (!this.parentNode) return;
+    this.parentNode.children = this.parentNode.children.filter((child) => child !== this);
+    this.parentNode = null;
+  }
 }
 
 class FakeDocument {
@@ -162,4 +173,90 @@ test('destroy removes rendered shell and makes later renders inert', () => {
   assert.equal(runtime.destroy(), true);
   assert.equal(root.children.length, 0);
   assert.deepEqual(runtime.render(), { ok: false, reason: 'DESTROYED', model: null });
+});
+
+
+test('runtime hides costume entry when no canonical costume services are connected', () => {
+  const root = makeRoot();
+  const runtime = mountPartnerShellRuntime({
+    root,
+    getInput: () => ({ activePartnerId: 'partner.saasuna', roster, view: 'hub' }),
+    canDispatch: () => true,
+  });
+  assert.equal(runtime.render().ok, true);
+  const actions = allNodes(root).filter((node) => node.dataset?.partnerShellAction).map((node) => node.dataset.partnerShellAction);
+  assert.equal(actions.includes('OPEN_COSTUME'), false);
+});
+
+test('costume view composes current session and three-category screen without changing active partner', async () => {
+  const root = makeRoot();
+  const events = [];
+  const saves = [];
+  const catalog = {
+    shoe_a: { id: 'shoe_a', category: 'shoes', label: '靴A', layers: [] },
+    coord_a: { id: 'coord_a', category: 'coord', label: 'コーデA', layers: [] },
+    acc_a: { id: 'acc_a', category: 'accessory', label: 'アクセA', layers: [] },
+  };
+  const snapshot = (selection = { shoes: null, coord: null, accessory: null }) => ({
+    selectedPartnerId: 'partner.saasuna',
+    partners: {
+      'partner.saasuna': {
+        ownedItemIds: ['shoe_a', 'coord_a', 'acc_a'],
+        savedSelection: selection,
+      },
+    },
+  });
+  const runtime = mountPartnerShellRuntime({
+    root,
+    getInput: () => ({ activePartnerId: 'partner.saasuna', roster, view: 'costume' }),
+    canDispatch: (action) => action === 'BACK_HUB' || action === 'OPEN_COSTUME',
+    onAction: (event) => events.push(event),
+    costume: {
+      catalog,
+      loadAuthoritativeSnapshot: async () => snapshot(),
+      saveAuthoritativeSelection: async (request) => {
+        saves.push(request);
+        return snapshot(request.selection);
+      },
+      createSaveRequestId: () => 'save-shell-1',
+    },
+  });
+  const rendered = runtime.render();
+  assert.equal(rendered.ok, true);
+  assert.equal(rendered.model.activePartnerId, 'partner.saasuna');
+  await new Promise((resolve) => setImmediate(resolve));
+  const categories = allNodes(root).filter((node) => node.dataset?.costumeCategory).map((node) => node.dataset.costumeCategory);
+  assert.deepEqual(categories, ['shoes', 'coord', 'accessory']);
+  assert.ok(allNodes(root).some((node) => node.textContent === '基本の姿を表示中'));
+  const coord = allNodes(root).find((node) => node.dataset?.costumeItemId === 'coord_a');
+  coord.click();
+  const save = allNodes(root).find((node) => node.textContent === '保存');
+  await save.click();
+  assert.equal(saves.length, 1);
+  assert.equal(saves[0].partnerId, 'partner.saasuna');
+  assert.equal(saves[0].selection.coord, 'coord_a');
+  assert.equal(saves[0].requestId, 'save-shell-1');
+  const back = allNodes(root).find((node) => node.textContent === '戻る');
+  back.click();
+  assert.equal(events.at(-1).action, 'BACK_HUB');
+  assert.equal(events.at(-1).sourceView, 'costume');
+});
+
+test('costume provider selecting another partner fails closed without rendering fake inventory', async () => {
+  const root = makeRoot();
+  const runtime = mountPartnerShellRuntime({
+    root,
+    getInput: () => ({ activePartnerId: 'partner.saasuna', roster, view: 'costume' }),
+    canDispatch: () => true,
+    costume: {
+      catalog: {},
+      loadAuthoritativeSnapshot: async () => ({ selectedPartnerId: 'partner.other', partners: { 'partner.other': { ownedItemIds: [], savedSelection: {} } } }),
+      saveAuthoritativeSelection: async () => { throw new Error('must not save'); },
+      createSaveRequestId: () => 'unused',
+    },
+  });
+  assert.equal(runtime.render().ok, true);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.ok(allNodes(root).some((node) => node.textContent === '着せ替えを開けませんでした'));
+  assert.equal(allNodes(root).some((node) => node.dataset?.costumeItemId), false);
 });

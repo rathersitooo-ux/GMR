@@ -34,7 +34,9 @@ function readLocalOwner(match) {
   if (localHumans.length !== 1) return unavailable('LOCAL_OWNER_AMBIGUOUS');
   const owner = localHumans[0];
   if (!validCanonicalString(owner?.id)) return unavailable('OWNER_PLAYER_ID_INVALID');
-  return deepFreeze({ ok: true, status: 'ready', owner });
+  // Do not freeze/clone the live gameplay object here. The caller only reads it,
+  // then copies the allowed owner-self data into a separate frozen projection.
+  return { ok: true, status: 'ready', owner };
 }
 
 /**

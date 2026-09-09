@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CARD-FLIGHT-PUBLIC-DEPS-R1-20260909T1745-SOL-MO35-Q4N9K4",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CARD_RELEASE_FLIGHT_PUBLIC_PACKAGE_R1",
+  "acquireKey": "BATTLE-CARD-FLIGHT-PUBLIC-DEPS-R1-20260909T1745-SOL-MO35-Q4N9K4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_PACKAGE_GAP_DIRECT_READ_20260909T1745JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_CLOUDFLARE_ARTIFACT_SPEC_PATTERN_AND_BUILD_TEST_CONTRACT",
+  "proceedToken": "PROCEED|BATTLE-CARD-FLIGHT-PUBLIC-DEPS-R1-20260909T1745-SOL-MO35-Q4N9K4|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|workunit35-public-deps-r1|build-plus-transient-executor|active-lease",
+  "authorizationBaseSha": "5bf4e7a6963b7f005958dd03d59c89c9eb229fa9",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CARD_RELEASE_FLIGHT_PUBLIC_PACKAGE_R1",
+  "leaseAcquireKey": "BATTLE-CARD-FLIGHT-PUBLIC-DEPS-R1-20260909T1745-SOL-MO35-Q4N9K4",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 17:45 JST",
+  "leaseUntilJst": "2026-09-09 18:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A724:L724",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-card-flight-public-deps-r1-20260909; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; transient .github/workflows/zz-temp-battle-card-flight-public-deps-r1.yml; transient tools/temp-battle-card-flight-public-deps-r1.py; own transient data/preaction-authorizations/BATTLE-CARD-FLIGHT-PUBLIC-DEPS-R1-20260909T1745-SOL-MO35-Q4N9K4.json only. Existing browser/battle-card-release-flight-runtime-effect.mjs and browser/battle-card-release-flight-motion-core.mjs READ_ONLY. battle-janken runtime/base, GAMEROAD.html, battle-screen, gameplay/rules/target/legality/hand/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_CARD_RELEASE_FLIGHT_EXISTING_EFFECT_CORE_PUBLIC_ARTIFACT_CLOSURE_V1",
+  "reuseDisposition": "COMPOSE_EXISTING_MODULES",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MERGED_WU35_EFFECT_AND_CORE_PLUS_CURRENT_BUILD_ARTIFACT_GAP",
+  "solutionSearchEvidence": [
+    "browser/battle-card-release-flight-runtime-effect.mjs is already merged and imports the existing motion core.",
+    "browser/battle-card-release-flight-motion-core.mjs is already merged and focused-tested.",
+    "current Cloudflare ARTIFACT_SPECS packages battle-janken-slidepad-runtime-mount.mjs but does not package either flight dependency, so live import would otherwise fail on the public package.",
+    "This slice changes public packaging only; runtime/gameplay authority stays untouched while the current portrait runtime owner finishes."
+  ],
+  "scope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-battle-card-flight-public-deps-r1.yml",
+    "tools/temp-battle-card-flight-public-deps-r1.py"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-battle-card-flight-public-deps-r1.yml",
+    "tools/temp-battle-card-flight-public-deps-r1.py"
+  ]
+}

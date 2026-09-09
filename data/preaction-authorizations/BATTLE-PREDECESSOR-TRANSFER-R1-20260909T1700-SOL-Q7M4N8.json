@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PREDECESSOR-TRANSFER-R1-20260909T1700-SOL-Q7M4N8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PREDECESSOR_COMPLETE_TRANSFER_RECOVERY_R1",
+  "acquireKey": "BATTLE-PREDECESSOR-TRANSFER-R1-20260909T1700-SOL-Q7M4N8",
+  "riskClass": "HIGH_CONSEQUENCE",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT+PREDECESSOR_DIRECT_AUDIT_20260909_TIMER_HATE_SPLIT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "READ_ONLY_PREDECESSOR_CURRENT_DIFF_BEFORE_ANY_PRODUCT_MUTATION",
+  "proceedToken": "PROCEED|BATTLE-PREDECESSOR-TRANSFER-R1-20260909T1700-SOL-Q7M4N8|PREACTION_PROCEED_ALLOWED|HIGH_CONSEQUENCE|predecessor-transfer|lease-snapshot",
+  "authorizationBaseSha": "4c4e7973bb8be70b800b5ea2c4a08e97bab98358",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PREDECESSOR_COMPLETE_TRANSFER_RECOVERY_R1",
+  "leaseAcquireKey": "BATTLE-PREDECESSOR-TRANSFER-R1-20260909T1700-SOL-Q7M4N8",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 17:07 JST",
+  "leaseUntilJst": "2026-09-09 18:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A714:L714",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-predecessor-transfer-r1-20260909; browser/GAMEROAD.html; tests/battle-predecessor-transfer-live.test.mjs (new if needed); transient .github/workflows/zz-temp-battle-predecessor-transfer-r1.yml; transient tools/temp-battle-predecessor-transfer-r1.py; own transient data/preaction-authorizations/BATTLE-PREDECESSOR-TRANSFER-R1-20260909T1700-SOL-Q7M4N8.json only. browser/battle-screen-runtime-mount.mjs and browser/battle-janken-slidepad-runtime-mount.mjs READ_ONLY while current portrait owner holds them. Existing HATE/presence/reconnect/Quick semantics and Battle predecessor docs are READ_ONLY authority inputs. gameplay/rules/new-base current overrides/save/economy/network READ_ONLY except exact inherited existing behavior restoration proven from predecessor.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-predecessor-transfer-live.test.mjs",
+    ".github/workflows/zz-temp-battle-predecessor-transfer-r1.yml",
+    "tools/temp-battle-predecessor-transfer-r1.py"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-predecessor-transfer-live.test.mjs",
+    ".github/workflows/zz-temp-battle-predecessor-transfer-r1.yml",
+    "tools/temp-battle-predecessor-transfer-r1.py"
+  ],
+  "solutionSignature": "Recover the predecessor Battle transfer set by direct old/current actual comparison, preserving current explicit overrides and reusing existing live authorities instead of adding another Battle/timer/HATE engine.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PREDECESSOR_ACTUAL+CURRENT_BATTLE_MASTER+EXISTING_HATE_CORES",
+  "solutionSearchEvidence": [
+    "Drive:W108 timer/HATE responsibility split",
+    "Drive:Browser Quick timer/BattlePoints R15",
+    "Drive:Battle master compose-or-retire predecessor rule",
+    "GitHub:existing hate-forced-delegation-core and hate-peer-presence-core",
+    "GitHub:current GAMEROAD.html live Battle progression"
+  ]
+}

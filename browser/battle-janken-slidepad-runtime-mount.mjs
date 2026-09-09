@@ -13,6 +13,23 @@ import {
 } from './battle-playable-hand-row-roulette-runtime.mjs';
 
 export const BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA = 'gameroad.battle-janken-slidepad-runtime.v1';
+export const BATTLE_JANKEN_FOCUS_LIVE_MOUNT_SCHEMA = 'gameroad.battle-janken-focus-live-mount.v1';
+
+export function normalizeBattleJankenFocusIntegration(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  if (typeof value.mountSurface !== 'function' || typeof value.readContext !== 'function') return null;
+  const liveInputStack = value.liveInputStack;
+  if (!liveInputStack || typeof liveInputStack !== 'object') return null;
+  for (const name of ['focus', 'cancel', 'commit', 'status']) {
+    if (typeof liveInputStack[name] !== 'function') return null;
+  }
+  return Object.freeze({
+    schema: BATTLE_JANKEN_FOCUS_LIVE_MOUNT_SCHEMA,
+    mountSurface: value.mountSurface,
+    readContext: value.readContext,
+    liveInputStack,
+  });
+}
 
 const SLOT_ORDER = Object.freeze(['ROCK', 'SCISSORS', 'PAPER']);
 const SLOT_VIEW = Object.freeze({
@@ -896,10 +913,15 @@ export function presentBattleJankenOrderMotionToSlidePad(orderHost, motion, meta
   return true;
 }
 
-export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battleRoot = null, rouletteEnabled = false } = {}) {
+export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
+  battleRoot = null,
+  rouletteEnabled = false,
+  focusIntegration = null,
+} = {}) {
   const documentRef = globalRef?.document;
   const root = battleRoot ?? documentRef?.querySelector?.('section[data-screen="battle"]');
   if (!documentRef || !root) return null;
+  const dedicatedFocus = normalizeBattleJankenFocusIntegration(focusIntegration);
   const existing = root.querySelector?.(`[${HOST_ATTR}="1"]`);
   if (existing?.__gameroadRuntime) return existing.__gameroadRuntime;
   addStyle(documentRef);
@@ -992,6 +1014,95 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
   let allowAuraProgrammaticClick = false;
   let suppressClickTimer = null;
   let focusedCardId = null;
+  let focusSurfaceRuntime = null;
+  let focusSurfaceVersion = 0;
+
+  function closeDedicatedFocusSurface() {
+    focusSurfaceVersion += 1;
+    const current = focusSurfaceRuntime;
+    focusSurfaceRuntime = null;
+    try { current?.destroy?.(); } catch {}
+    return current !== null;
+  }
+
+  async function readDedicatedFocusContext() {
+    if (!dedicatedFocus || !model) return null;
+    let context = null;
+    try {
+      context = await dedicatedFocus.readContext(Object.freeze({
+        roundId: model.roundId,
+        assignment: model.assignment,
+      }));
+    } catch {
+      return null;
+    }
+    if (!context || typeof context !== 'object' || !Array.isArray(context.packages)) return null;
+    return Object.freeze({
+      packages: context.packages,
+      generationId: context.generationId ?? model.roundId,
+    });
+  }
+
+  async function openDedicatedFocusSurface() {
+    if (!dedicatedFocus || destroyed || !model) return false;
+    if (focusSurfaceRuntime) return true;
+    const version = ++focusSurfaceVersion;
+    const context = await readDedicatedFocusContext();
+    if (!context || destroyed || version !== focusSurfaceVersion || !model) return false;
+    let runtime = null;
+    try {
+      runtime = dedicatedFocus.mountSurface({
+        documentRef,
+        mountRoot: root,
+        liveInputStack: dedicatedFocus.liveInputStack,
+        packages: context.packages,
+        generationId: context.generationId,
+        reducedMotion: globalRef?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true,
+        lowPerf: root.dataset?.lowPerf === 'true',
+        onAccepted: (result, readyPackage) => {
+          const hand = readyPackage?.jankenHand;
+          const flight = hand ? captureReleasedJankenCardFlight(globalRef, root, slotNodes, hand) : null;
+          if (flight) animateReleasedJankenCard(host, flight);
+          const settle = () => {
+            if (focusSurfaceRuntime === runtime) closeDedicatedFocusSurface();
+          };
+          if (typeof globalRef?.queueMicrotask === 'function') globalRef.queueMicrotask(settle);
+          else Promise.resolve().then(settle);
+          return result;
+        },
+      });
+    } catch {
+      runtime = null;
+    }
+    if (destroyed || version !== focusSurfaceVersion || !runtime) {
+      try { runtime?.destroy?.(); } catch {}
+      return false;
+    }
+    const snapshot = (() => { try { return runtime.snapshot?.(); } catch { return null; } })();
+    if (snapshot?.presentation?.available !== true) {
+      try { runtime.destroy?.(); } catch {}
+      return false;
+    }
+    focusSurfaceRuntime = runtime;
+    return true;
+  }
+
+  async function syncDedicatedFocusSurface() {
+    if (!dedicatedFocus || !focusSurfaceRuntime || destroyed || !model) return null;
+    const runtime = focusSurfaceRuntime;
+    const version = ++focusSurfaceVersion;
+    const context = await readDedicatedFocusContext();
+    if (!context || destroyed || runtime !== focusSurfaceRuntime || version !== focusSurfaceVersion) {
+      closeDedicatedFocusSurface();
+      return null;
+    }
+    try {
+      return runtime.sync?.({ packages: context.packages, generationId: context.generationId }) ?? null;
+    } catch {
+      closeDedicatedFocusSurface();
+      return null;
+    }
+  }
 
   function currentStagedCardIds() {
     const staged = new Set();
@@ -1183,6 +1294,10 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
       return;
     }
     if (!selectedHand || !model) return;
+    if (dedicatedFocus) {
+      void openDedicatedFocusSurface();
+      return;
+    }
     const currentSourceHandIds = readHand(globalRef, root).map((card) => card.id);
     const cardId = resolveBattleJankenSlotCardAction(model, selectedHand, currentSourceHandIds);
     const flight = cardId ? captureReleasedJankenCardFlight(globalRef, root, slotNodes, selectedHand) : null;
@@ -1393,6 +1508,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
 
   function openForRound(roundId) {
     if (!roundId || roundId === lastRoundId) return;
+    closeDedicatedFocusSurface();
     lastRoundId = roundId;
     setExpanded(false);
     if (roundOpenTimer !== null) globalRef.clearTimeout?.(roundOpenTimer);
@@ -1436,6 +1552,10 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
         : `${slot.symbol} ${slot.hand} 空き`);
       cardText.textContent = slot.occupied ? slot.cardLabel : '空き';
       node.onclick = () => {
+        if (dedicatedFocus) {
+          void openDedicatedFocusSurface();
+          return;
+        }
         const cardId = resolveBattleJankenSlotCardAction(model, slot.jankenHand, currentSourceHandIds);
         if (cardId) clickExistingHandCard(root, cardId);
       };
@@ -1503,6 +1623,10 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     rowRouletteSnapshot: () => rowRouletteController.snapshot(),
     loadPreviewSnapshot: () => projectBattleLoadCardPreview(model, armedHand),
     cardFocusSnapshot: () => syncHandCardFocusPresentation(),
+    dedicatedFocusConnected: () => dedicatedFocus !== null,
+    focusSurfaceSnapshot: () => focusSurfaceRuntime?.snapshot?.() ?? null,
+    openFocusSurface: () => openDedicatedFocusSurface(),
+    syncFocusSurface: () => syncDedicatedFocusSurface(),
     presentOrderMotion: (motion, metadata = {}) => destroyed ? false : presentBattleJankenOrderMotionToSlidePad(orderPresenterHost, motion, metadata),
     orderPresentationSnapshot: () => orderPresenterHost.__gameroadOrderPresentation ?? null,
     isExpanded: () => expanded,
@@ -1512,6 +1636,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
       if (timer !== null) globalRef.clearTimeout?.(timer);
       if (roundOpenTimer !== null) globalRef.clearTimeout?.(roundOpenTimer);
       if (suppressClickTimer !== null) globalRef.clearTimeout?.(suppressClickTimer);
+      closeDedicatedFocusSurface();
       if (handDrag) cleanupHandDrag(handDrag);
       if (boundHandRoot) {
         boundHandRoot.removeEventListener?.('pointerdown', beginHandDrag);

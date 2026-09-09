@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA,
+  BATTLE_JANKEN_FOCUS_LIVE_MOUNT_SCHEMA,
+  normalizeBattleJankenFocusIntegration,
   BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS,
   advanceBattleJankenSlotRollState,
   buildBattleJankenSlidePadModel,
@@ -401,6 +403,58 @@ test('390x844 portrait keeps SlidePad and optional roulette in the right-thumb d
   assert.doesNotMatch(source, /battle-janken-slidepad-runtime-mount-base\.mjs/);
 });
 
+
+
+// BATTLE_JANKEN_FOCUS_SLIDEPAD_LIVE_MOUNT_R1_BEGIN
+
+test('dedicated janken focus integration requires the existing surface and live-stack contract', () => {
+  const stack = {
+    focus() {},
+    cancel() {},
+    commit() {},
+    status() {},
+  };
+  const mountSurface = () => null;
+  const readContext = () => ({ packages: [] });
+  const normalized = normalizeBattleJankenFocusIntegration({ mountSurface, readContext, liveInputStack: stack });
+  assert.equal(normalized.schema, BATTLE_JANKEN_FOCUS_LIVE_MOUNT_SCHEMA);
+  assert.equal(normalized.mountSurface, mountSurface);
+  assert.equal(normalized.readContext, readContext);
+  assert.equal(normalized.liveInputStack, stack);
+  assert.equal(normalizeBattleJankenFocusIntegration(null), null);
+  assert.equal(normalizeBattleJankenFocusIntegration({ mountSurface, readContext, liveInputStack: { focus() {} } }), null);
+});
+
+test('configured dedicated focus blocks legacy direct hand-card commit and delegates exact packages to the existing surface', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /focusIntegration = null/);
+  assert.match(source, /const dedicatedFocus = normalizeBattleJankenFocusIntegration\(focusIntegration\);/);
+  assert.equal((source.match(/if \(dedicatedFocus\) \{\s*void openDedicatedFocusSurface\(\);\s*return;\s*\}/g) ?? []).length, 2,
+    'both gesture release and direct slot click must enter the same dedicated focus surface');
+  assert.match(source, /context = await dedicatedFocus\.readContext\(Object\.freeze\(\{[\s\S]*roundId: model\.roundId,[\s\S]*assignment: model\.assignment/);
+  assert.match(source, /runtime = dedicatedFocus\.mountSurface\(\{[\s\S]*liveInputStack: dedicatedFocus\.liveInputStack,[\s\S]*packages: context\.packages,[\s\S]*generationId: context\.generationId/);
+  assert.doesNotMatch(source, /from '\.\/battle-janken-focus-runtime-surface\.mjs'/,
+    'SlidePad must not invent a second static mount authority; the current caller supplies the merged surface');
+});
+
+test('dedicated focus commit keeps release flight presentation-only and invalidates on round or explicit sync failure', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  const acceptedStart = source.indexOf('onAccepted: (result, readyPackage) => {');
+  const acceptedEnd = source.indexOf('\n        },\n      });', acceptedStart);
+  assert.ok(acceptedStart >= 0 && acceptedEnd > acceptedStart);
+  const accepted = source.slice(acceptedStart, acceptedEnd);
+  assert.match(accepted, /captureReleasedJankenCardFlight\(globalRef, root, slotNodes, hand\)/);
+  assert.match(accepted, /animateReleasedJankenCard\(host, flight\)/);
+  assert.equal(accepted.includes('clickExistingHandCard'), false,
+    'authoritative compound commit already happened inside the existing live stack');
+  assert.match(source, /function openForRound\(roundId\) \{[\s\S]*closeDedicatedFocusSurface\(\);[\s\S]*lastRoundId = roundId;/);
+  assert.match(source, /syncFocusSurface: \(\) => syncDedicatedFocusSurface\(\)/);
+  assert.match(source, /if \(!context \|\| destroyed[\s\S]*closeDedicatedFocusSurface\(\);\s*return null;/);
+});
+
+// BATTLE_JANKEN_FOCUS_SLIDEPAD_LIVE_MOUNT_R1_END
 
 // BATTLE_CARD_FOCUS_PRESENTATION_R3_BEGIN
 

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-ORDER-PACKAGE-R1-20260909T1742-SOL-RE-Q6M4N9",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_ORDER_PUBLIC_PACKAGE_R1",
+  "acquireKey": "BATTLE-JANKEN-ORDER-PACKAGE-R1-20260909T1742-SOL-RE-Q6M4N9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_ORDER_COMPONENTS_EXIST_BUT_CLOUDFLARE_ARTIFACT_SPECS_OMIT_THEM_20260909",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PACKAGE_ONLY_ADD_FOUR_EXISTING_BROWSER_MODULES_AND_PROVENANCE_TEST_20260909",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-ORDER-PACKAGE-R1-20260909T1742-SOL-RE-Q6M4N9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|omission-recovery|public-package-only|active-lease",
+  "authorizationBaseSha": "5bf4e7a6963b7f005958dd03d59c89c9eb229fa9",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_ORDER_PUBLIC_PACKAGE_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-ORDER-PACKAGE-R1-20260909T1742-SOL-RE-Q6M4N9",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 17:44 JST",
+  "leaseUntilJst": "2026-09-09 18:42 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A725:L725",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-janken-order-package-r1-20260909; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs only. Existing processing-order modules READ_ONLY. Battle-screen/SlidePad/GAMEROAD.html/gameplay/rules/state/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_JANKEN_ORDER_PUBLIC_PACKAGE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MAIN_ORDER_LIVE_ADAPTER_CHAIN_MOTION_ACTION_ORDER_COMPONENTS_ALREADY_MERGED_20260909",
+  "solutionSearchEvidence": [
+    "browser/battle-janken-order-live-adapter.mjs exists on current main and composes caller-authoritative public resolution with existing chain and motion cores",
+    "browser/battle-janken-order-chain-presentation-core.mjs exists on current main",
+    "browser/battle-janken-order-motion-core.mjs exists on current main",
+    "browser/battle-action-order-presentation-core.mjs exists on current main",
+    "deploy/cloudflare/scripts/build.mjs currently packages adjacent W42 Battle inputs but omits all four processing-order modules",
+    "this slice changes package reachability only and does not mount or modify Battle runtime/gameplay authority"
+  ],
+  "scope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

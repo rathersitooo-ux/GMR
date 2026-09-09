@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-GLOBAL-PRECLEAR-LIVE-R1-20260909T1716-SOL-RE-W4K8Q8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_GLOBAL_PRECOMMIT_CLEAR_LIVE_BRIDGE_R1",
+  "acquireKey": "BATTLE-GLOBAL-PRECLEAR-LIVE-R1-20260909T1716-SOL-RE-W4K8Q8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_SHARED_CONSUMER_GLOBAL_CLEAR_EXISTS_BUT_PREVIEW_COORDINATOR_CANCEL_IS_COMPOUND_ONLY_20260909",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "BRIDGE_EXPLICIT_GLOBAL_CLEAR_PLUS_COORDINATOR_REJECT_PRESERVES_READY_PREVIEW_TEST_PLAN_20260909",
+  "proceedToken": "PROCEED|BATTLE-GLOBAL-PRECLEAR-LIVE-R1-20260909T1716-SOL-RE-W4K8Q8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|omission-recovery|global-precommit-clear-compose|active-lease",
+  "authorizationBaseSha": "4c4e7973bb8be70b800b5ea2c4a08e97bab98358",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_GLOBAL_PRECOMMIT_CLEAR_LIVE_BRIDGE_R1",
+  "leaseAcquireKey": "BATTLE-GLOBAL-PRECLEAR-LIVE-R1-20260909T1716-SOL-RE-W4K8Q8",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 17:16 JST",
+  "leaseUntilJst": "2026-09-09 18:16 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A718:L718",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-global-preclear-live-r1-20260909; browser/battle-compound-preview-live-consumer-bridge.mjs; browser/battle-janken-slidepad-live-input-coordinator.mjs; tests/battle-compound-preview-live-consumer-bridge.test.mjs; tests/battle-janken-slidepad-live-input-coordinator.test.mjs; own transient data/preaction-authorizations/BATTLE-GLOBAL-PRECLEAR-LIVE-R1-20260909T1716-SOL-RE-W4K8Q8.json only. Existing battle-new-base-live-consumer-adapter.mjs and battle-precommit-clear-core.mjs READ_ONLY. GAMEROAD.html, battle-janken-slidepad-runtime-mount.mjs, battle-screen runtime, build packaging, gameplay/rules/target/legality/Hand3/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_GLOBAL_PRECOMMIT_CLEAR_BRIDGE_COORDINATOR_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MAIN_SHARED_CONSUMER_CLEAR_PRECOMMIT_SELECTION_PLUS_EXISTING_PREVIEW_BRIDGE_AND_COORDINATOR_20260909",
+  "solutionSearchEvidence": [
+    "main shared live consumer already owns clearPrecommitSelection() and composes the existing precommit-clear core with the adapter-owned compound stage",
+    "main preview bridge currently exposes clearCompoundAttack() only, so explicit cancel cannot reach caller plan/target draft clearing",
+    "main input coordinator cancel() currently routes through compound-only clearBridgeFailSoft()",
+    "stale async focus cleanup must remain compound-only so focus churn cannot erase an unrelated caller draft",
+    "the repair changes only existing composition surfaces and focused tests; no gameplay authority or runtime HTML is added"
+  ],
+  "scope": [
+    "browser/battle-compound-preview-live-consumer-bridge.mjs",
+    "browser/battle-janken-slidepad-live-input-coordinator.mjs",
+    "tests/battle-compound-preview-live-consumer-bridge.test.mjs",
+    "tests/battle-janken-slidepad-live-input-coordinator.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-compound-preview-live-consumer-bridge.mjs",
+    "browser/battle-janken-slidepad-live-input-coordinator.mjs",
+    "tests/battle-compound-preview-live-consumer-bridge.test.mjs",
+    "tests/battle-janken-slidepad-live-input-coordinator.test.mjs"
+  ]
+}

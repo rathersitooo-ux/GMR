@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-PARTNER-REPORT-RETRY-R1-20260910T0352-SOL-Q7M4N2",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "PARTNER_DIALOGUE_REPORT_FAILURE_SETTLE_R1",
+  "acquireKey": "UI-PARTNER-REPORT-RETRY-R1-20260910T0352-SOL-Q7M4N2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PARTNER_REPORT_REJECTED_PROMISE_STUCK_DISABLED_20260910T0352JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_OK_FALSE_FAILURE_PATH_PLUS_FOCUSED_TEST_SEAM",
+  "proceedToken": "PROCEED|UI-PARTNER-REPORT-RETRY-R1-20260910T0352-SOL-Q7M4N2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-dialogue-report-failure-settle|partner-shell|active-lease",
+  "authorizationBaseSha": "9b9663e11e56269a8039cc7248f3801c657d1e76",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "PARTNER_DIALOGUE_REPORT_FAILURE_SETTLE_R1",
+  "leaseAcquireKey": "UI-PARTNER-REPORT-RETRY-R1-20260910T0352-SOL-Q7M4N2",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:52 JST",
+  "leaseUntilJst": "2026-09-10 04:52 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A914:L914",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/partner-dialogue-report-failure-settle-r1-20260910; browser/partner-shell-runtime-mount.mjs; tests/partner-shell-runtime-mount.test.mjs; own transient data/preaction-authorizations/UI-PARTNER-REPORT-RETRY-R1-20260910T0352-SOL-Q7M4N2.json only. Shared GAMEROAD.html, Battle/Home/Costume/Partner provider-source-save-network, deploy build READ_ONLY.",
+  "solutionSignature": "PARTNER_DIALOGUE_REPORT_ASYNC_FAILURE_SETTLE_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_REPORT_FORM_AND_STATUS_TEXT_REUSE",
+  "solutionSearchEvidence": [
+    "The existing Partner report form already owns submit disabled state and the Japanese success/failure status text.",
+    "The existing ok:false provider result path already shows failure and re-enables the submit button, so no second feedback mechanism is needed.",
+    "The uncovered residual is only a rejected or thrown submitFeedback promise, which can bypass the current final re-enable statement.",
+    "The focused Partner shell test already exercises the same real report form seam and can prove retryability without changing provider, save, network, dialogue source, or gameplay semantics."
+  ],
+  "scope": [
+    "browser/partner-shell-runtime-mount.mjs",
+    "tests/partner-shell-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-shell-runtime-mount.mjs",
+    "tests/partner-shell-runtime-mount.test.mjs"
+  ]
+}

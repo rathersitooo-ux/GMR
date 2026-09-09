@@ -16,6 +16,24 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('tools/temp-battle-camera-html-r5c.py')
+          s = p.read_text(encoding='utf-8')
+          old_anchor = 'adapter_anchor = "return{eye,center,r,moveFocus:false,battleFocus:false,...profile}} function fieldProject(id,viewer)"'
+          new_anchor = 'adapter_anchor = "function fieldProject(id,viewer)"'
+          old_adapter = "adapter = r'''return{eye,center,r,moveFocus:false,battleFocus:false,...profile}}\nfunction grBattleCameraSource()"
+          new_adapter = "adapter = r'''function grBattleCameraSource()"
+          if old_anchor in s:
+              s = s.replace(old_anchor, new_anchor, 1)
+          elif new_anchor not in s:
+              raise SystemExit('camera adapter anchor declaration not found')
+          if old_adapter in s:
+              s = s.replace(old_adapter, new_adapter, 1)
+          elif new_adapter not in s:
+              raise SystemExit('camera adapter payload start not found')
+          p.write_text(s, encoding='utf-8')
+          PY
           python tools/temp-battle-camera-html-r5c.py
           if git diff --quiet -- tools/temp-battle-camera-html-r5c.py browser/GAMEROAD.html tests/battle-camera-live-integration.test.mjs; then
             echo "No bounded changes"
@@ -30,5 +48,5 @@ jobs:
           done
           git diff --cached --name-only
           git diff --cached --quiet && { echo "No staged bounded changes"; exit 0; }
-          git commit -m "camera R5C: bounded HTML probe or live adapt"
+          git commit -m "camera R5C: bounded HTML live adapt"
           git push origin HEAD:sol/battle-camera-html-r5c-20260910

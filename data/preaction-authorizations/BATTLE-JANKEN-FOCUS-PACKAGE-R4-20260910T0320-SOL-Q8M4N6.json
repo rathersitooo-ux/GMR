@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-FOCUS-PACKAGE-R4-20260910T0320-SOL-Q8M4N6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_FOCUS_PUBLIC_PACKAGE_R4",
+  "acquireKey": "BATTLE-JANKEN-FOCUS-PACKAGE-R4-20260910T0320-SOL-Q8M4N6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FOCUS_RUNTIME_PRESENTATION_MERGED_BUILD_MISSING_20260910T0320JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_ARTIFACT_SPECS_PATTERN_AND_BUILD_TEST_CURRENT_ACTUAL",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-FOCUS-PACKAGE-R4-20260910T0320-SOL-Q8M4N6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|focus-public-package|build-only|active-lease",
+  "authorizationBaseSha": "9761e10273edf2800940579d8252fb237c81f226",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_FOCUS_PUBLIC_PACKAGE_R4",
+  "leaseAcquireKey": "BATTLE-JANKEN-FOCUS-PACKAGE-R4-20260910T0320-SOL-Q8M4N6",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:20 JST",
+  "leaseUntilJst": "2026-09-10 04:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A883:L883",
+  "leaseExactMutableResources": "deploy/cloudflare/scripts/build.mjs; transient .github/workflows/zz-temp-battle-janken-focus-package-r4.yml; transient tools/temp-battle-janken-focus-package-r4.py; own transient PRE_ACTION manifest only. All focus/runtime/HTML/SlidePad/gameplay modules READ_ONLY.",
+  "solutionSignature": "BATTLE_JANKEN_FOCUS_PUBLIC_PACKAGE_IMPORT_CLOSURE_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_BUILD_ARTIFACT_SPECS_IMPORT_CLOSURE",
+  "solutionSearchEvidence": [
+    "Merged focus runtime imports only the merged focus presentation core plus existing browser dependencies already present in the public package chain.",
+    "Current build ARTIFACT_SPECS already packages compound package/live consumer/preview bridge/coordinator but not the focus presentation core or focus runtime surface.",
+    "The prior costume build lease expired at 03:19 JST and fresh post-expiry scan found no later mutable build owner before this acquire.",
+    "This slice adds only the two missing focus modules to the existing package manifest and does not mount or alter gameplay/runtime authority."
+  ],
+  "scope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-janken-focus-package-r4.yml",
+    "tools/temp-battle-janken-focus-package-r4.py"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-janken-focus-package-r4.yml",
+    "tools/temp-battle-janken-focus-package-r4.py"
+  ]
+}

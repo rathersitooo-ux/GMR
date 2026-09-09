@@ -1,0 +1,53 @@
+name: TEMP Battle Home Refresh R2 childList repair
+
+on:
+  push:
+    branches:
+      - sol/battle-final-qa-home-refresh-r2-20260909
+    paths:
+      - '.github/workflows/zz-temp-battle-home-refresh-r2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor == 'rathersitooo-ux'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout R2
+        uses: actions/checkout@v4
+        with:
+          ref: sol/battle-final-qa-home-refresh-r2-20260909
+          fetch-depth: 0
+
+      - name: Apply exact childList self-trigger repair
+        run: python tools/temp-battle-home-refresh-r2.py
+
+      - name: Verify bounded diff and focused tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          CHANGED="$(git diff --name-only | sort)"
+          EXPECTED=$'browser/home-boot-runtime-base-r3.mjs\ntests/home-boot-presentation.test.mjs'
+          if [[ "$CHANGED" != "$EXPECTED" ]]; then
+            echo "::error::Unexpected product diff"
+            printf 'changed:\n%s\n' "$CHANGED"
+            exit 1
+          fi
+          node --test tests/home-boot-presentation.test.mjs
+          node --check browser/home-boot-runtime-base-r3.mjs
+          node --check tests/home-boot-presentation.test.mjs
+
+      - name: Commit product repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name gameroad-bot
+          git config user.email actions@users.noreply.github.com
+          git add browser/home-boot-runtime-base-r3.mjs tests/home-boot-presentation.test.mjs
+          git commit -m "Home: stop contextual replay childList self-trigger"
+          git push origin HEAD:sol/battle-final-qa-home-refresh-r2-20260909

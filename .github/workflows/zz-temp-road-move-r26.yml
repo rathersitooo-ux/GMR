@@ -55,7 +55,7 @@ jobs:
           PY
           git diff --check
       - name: Road compatibility core
-        run: node --test tests/road-move-card-compatibility-core.test.mjs
+        run: node --test tests/road-move-compatibility-core.test.mjs
       - name: Install Chromium
         run: |
           npm install --no-save --no-package-lock @playwright/test@1.62.0

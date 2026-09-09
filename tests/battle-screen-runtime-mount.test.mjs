@@ -180,6 +180,8 @@ assert.ok(runtimeStyle.textContent.includes('.grBattleHudSettings{pointer-events
 assert.ok(runtimeStyle.textContent.includes('.grBattleHudChainArrow'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleHudLoad'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleHudPlayedCardArt'));
+assert.ok(runtimeStyle.textContent.includes('.grBattleLanePublicCard'));
+assert.ok(runtimeStyle.textContent.includes('[data-public-card-visible'));
 assert.ok(runtimeStyle.textContent.includes('[data-battle-current-action]'));
 assert.ok(runtimeStyle.textContent.includes('max-width:min(42vw,420px)'));
 assert.ok(runtimeStyle.textContent.includes('[data-battle-progress-guide]'));
@@ -214,6 +216,40 @@ assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['idle', '
 const roleSurfaces = runtime.laneSurfaces.map(node => node.children[1]);
 assert.deepEqual(roleSurfaces.map(node => node.hidden), [true, true, true, true]);
 assert.deepEqual(roleSurfaces.map(node => node.textContent), ['', '', '', '']);
+assert.equal(runtime.publicCardSurfaces.length, 4);
+assert.deepEqual(runtime.publicCardSurfaces.map(node => node.hidden), [true, true, true, true]);
+
+const fourPublicCards = [
+  { playerId: 'P1', cardId: 'C1', displayNumber: 5, hand: 'PAPER' },
+  { playerId: 'P2', cardId: 'C2', displayNumber: 2, hand: 'ROCK' },
+  { playerId: 'P3', cardId: 'C3', displayNumber: 9, hand: null },
+  { playerId: 'P4', cardId: 'C4', displayNumber: 7, hand: 'SCISSORS' }
+];
+const revealPublicPlan = {
+  presentationOnly: true,
+  authorityBoundary: 'accepted_public_event_only',
+  eventId: 'reveal-public-1',
+  kind: 'reveal',
+  transition: 'ENTRY',
+  groupTargets: [],
+  importance: 'ambient',
+  publicData: { playerIds: ['P1', 'P2', 'P3', 'P4'], publicCards: fourPublicCards }
+};
+const revealPublic = createBattleScreenModel({ participants, plan: revealPublicPlan });
+runtime.render(revealPublic);
+assert.deepEqual(runtime.publicCardSurfaces.map(node => node.hidden), [false, false, false, false]);
+assert.deepEqual(runtime.publicCardSurfaces.map(node => node.dataset.playerId), ['P1', 'P2', 'P3', 'P4']);
+assert.deepEqual(runtime.publicCardSurfaces.map(node => node.dataset.cardId), ['C1', 'C2', 'C3', 'C4']);
+assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.publicCardVisible), ['true', 'true', 'true', 'true']);
+assert.equal(runtime.publicCardSurfaces[0].dataset.artSource, 'viewer_local');
+assert.equal(runtime.publicCardSurfaces[0].children[0].tagName, 'IMG');
+assert.equal(runtime.publicCardSurfaces[0].children[0].src, 'blob:gameroad-local-c1');
+assert.equal(runtime.publicCardSurfaces[0].dataset.displayNumber, '5');
+assert.equal(runtime.publicCardSurfaces[0].dataset.hand, 'PAPER');
+assert.equal(runtime.publicCardSurfaces[0].getAttribute('aria-label'), '公開カード C1 / 5 / パー');
+assert.equal(runtime.publicCardSurfaces[1].children[0].className, 'grBattleLanePublicCardFallback');
+assert.equal(runtime.publicCardSurfaces[1].children[0].textContent, 'C2');
+assert.equal(runtime.publicCardSurfaces[1].getAttribute('aria-label'), '公開カード C2 / 2 / グー');
 
 const attackPlan = {
   presentationOnly: true,

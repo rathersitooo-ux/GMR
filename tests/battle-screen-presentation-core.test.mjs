@@ -3,7 +3,8 @@ import {
   BATTLE_SCREEN_PRESENTATION,
   auditBattleScreenModel,
   createBattleScreenModel,
-  projectAcceptedBattleEventsToScreen
+  projectAcceptedBattleEventsToScreen,
+  projectBattleFourPublicCardState
 } from '../browser/battle-screen-presentation-core.mjs';
 
 const participants = [
@@ -302,6 +303,60 @@ assert.throws(
   () => projectAcceptedBattleEventsToScreen({ participants, events, actionOrderByEventId: [] }),
   /BATTLE_SCREEN_ACTION_ORDER_BY_EVENT_INVALID/
 );
+
+
+
+const fourPublicCards = [
+  { playerId: 'P1', cardId: 'C-101', displayNumber: 5, hand: 'PAPER' },
+  { playerId: 'P2', cardId: 'C-202', displayNumber: 2, hand: 'ROCK' },
+  { playerId: 'P3', cardId: 'C-303', displayNumber: 9, hand: null },
+  { playerId: 'P4', cardId: 'C-404', displayNumber: '7', hand: 'SCISSORS' }
+];
+const fourPublicState = projectBattleFourPublicCardState({ participants, publicCards: fourPublicCards });
+assert.equal(fourPublicState.schema, 'gameroad.battle-four-public-card-state.v1');
+assert.equal(fourPublicState.presentationOnly, true);
+assert.equal(fourPublicState.gameplayAuthority, false);
+assert.equal(fourPublicState.gameStateWrite, false);
+assert.equal(fourPublicState.secretProjectionAuthority, false);
+assert.equal(fourPublicState.orderCalculation, false);
+assert.equal(fourPublicState.winnerCalculation, false);
+assert.equal(fourPublicState.targetCalculation, false);
+assert.deepEqual(fourPublicState.cards.map(card => card.playerId), ['P1', 'P2', 'P3', 'P4']);
+assert.deepEqual(fourPublicState.cards.map(card => card.cardId), ['C-101', 'C-202', 'C-303', 'C-404']);
+
+const fourPublicTimeline = projectAcceptedBattleEventsToScreen({
+  participants,
+  events: [
+    { accepted: true, eventId: 'public-r1', kind: 'reveal', publicData: { playerIds: ['P1', 'P2', 'P3', 'P4'], publicCards: fourPublicCards } },
+    { accepted: true, eventId: 'public-a1', kind: 'attack', publicData: { sourceId: 'P2', targetIds: ['P4'] } },
+    { accepted: true, eventId: 'public-c1', kind: 'compare4', publicData: { playerIds: ['P1', 'P2', 'P3', 'P4'], winnerIds: ['P2'] } }
+  ]
+});
+assert.equal(fourPublicTimeline.models.length, 3);
+for (const model of fourPublicTimeline.models) {
+  assert.equal(model.publicCardState.schema, 'gameroad.battle-four-public-card-state.v1');
+  assert.deepEqual(model.lanes.map(lane => lane.publicCard?.playerId), ['P1', 'P2', 'P3', 'P4']);
+  assert.deepEqual(model.lanes.map(lane => lane.publicCard?.cardId), ['C-101', 'C-202', 'C-303', 'C-404']);
+  assert.equal(auditBattleScreenModel(model).ok, true);
+}
+assert.equal(fourPublicTimeline.models[1].focus.causeId, 'P2');
+assert.deepEqual(fourPublicTimeline.models[1].focus.targetIds, ['P4']);
+assert.deepEqual(fourPublicTimeline.models[2].focus.winnerIds, ['P2']);
+
+assert.throws(
+  () => projectBattleFourPublicCardState({ participants, publicCards: fourPublicCards.slice(0, 3) }),
+  /PUBLIC_CARDS_REQUIRE_FOUR/
+);
+assert.throws(
+  () => projectBattleFourPublicCardState({ participants, publicCards: [...fourPublicCards.slice(0, 3), { ...fourPublicCards[3], playerId: 'PX' }] }),
+  /PUBLIC_CARD_PLAYER_UNKNOWN:PX/
+);
+assert.throws(
+  () => projectBattleFourPublicCardState({ participants, publicCards: [...fourPublicCards.slice(0, 3), { ...fourPublicCards[3], playerId: 'P3' }] }),
+  /PUBLIC_CARD_PLAYER_DUPLICATE:P3/
+);
+assert.equal(BATTLE_SCREEN_PRESENTATION.fourPublicCardSchema, 'gameroad.battle-four-public-card-state.v1');
+assert.equal(BATTLE_SCREEN_PRESENTATION.fourPublicCardAuthority, 'CALLER_AUTHORITATIVE_ACCEPTED_PUBLIC_CARDS_ONLY');
 
 const tampered = {
   ...settle,

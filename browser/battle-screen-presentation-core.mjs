@@ -2,9 +2,11 @@ import { planBattleConveyor } from './battle-conveyor-presentation-core.mjs';
 
 const MODEL_SCHEMA = 'gameroad.battle-screen-presentation.v1';
 const TIMELINE_SCHEMA = 'gameroad.battle-screen-timeline.v1';
+const COMPOUND_ATTACK_SCHEMA = 'gameroad.battle-janken-compound-attack-package.v1';
 const RETURN_INTENTS = new Set(['MATCH_PLAN', 'RESULT']);
 const PLAN_KINDS = new Set(['partner_cutin', 'reveal', 'attack', 'ability', 'compare4', 'finisher', 'settle']);
 const LANE_ROLES = new Set(['idle', 'source', 'target', 'winner', 'revealed']);
+const SHIELD_LANES = new Set(['L', 'C', 'R']);
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -20,6 +22,15 @@ function nonEmptyString(value, code) {
 function optionalString(value, code) {
   if (value == null) return null;
   return nonEmptyString(value, code);
+}
+
+function cloneAcceptedPath(path) {
+  if (!Array.isArray(path) || path.length === 0) throw new TypeError('BATTLE_SCREEN_BOARD_RETURN_PATH_REQUIRED');
+  try {
+    return JSON.parse(JSON.stringify(path));
+  } catch {
+    throw new TypeError('BATTLE_SCREEN_BOARD_RETURN_PATH_INVALID');
+  }
 }
 
 function normalizeParticipants(participants) {
@@ -71,6 +82,44 @@ function normalizePlan(plan) {
   return plan;
 }
 
+function normalizeBoardReturn(plan, participantIds) {
+  if (!plan || plan.kind !== 'settle') return null;
+  const raw = plan.publicData?.compoundAttackPackage;
+  if (raw == null) return null;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new TypeError('BATTLE_SCREEN_BOARD_RETURN_PACKAGE_INVALID');
+  }
+  if (raw.schema !== COMPOUND_ATTACK_SCHEMA) {
+    throw new TypeError('BATTLE_SCREEN_BOARD_RETURN_PACKAGE_SCHEMA');
+  }
+
+  const cardId = nonEmptyString(raw.cardId, 'BATTLE_SCREEN_BOARD_RETURN_CARD_INVALID');
+  const jankenHand = nonEmptyString(raw.jankenHand, 'BATTLE_SCREEN_BOARD_RETURN_HAND_INVALID');
+  const opponentId = nonEmptyString(raw.opponentId, 'BATTLE_SCREEN_BOARD_RETURN_OPPONENT_INVALID');
+  if (!participantIds.has(opponentId)) throw new TypeError('BATTLE_SCREEN_BOARD_RETURN_OPPONENT_UNKNOWN');
+
+  const shieldLane = nonEmptyString(raw.shieldLane, 'BATTLE_SCREEN_BOARD_RETURN_SHIELD_INVALID').toUpperCase();
+  if (!SHIELD_LANES.has(shieldLane)) throw new TypeError('BATTLE_SCREEN_BOARD_RETURN_SHIELD_UNKNOWN');
+
+  return deepFreeze({
+    eventId: plan.eventId,
+    compoundPackageSchema: COMPOUND_ATTACK_SCHEMA,
+    cardId,
+    jankenHand,
+    path: cloneAcceptedPath(raw.path),
+    direction: optionalString(raw.direction, 'BATTLE_SCREEN_BOARD_RETURN_DIRECTION_INVALID'),
+    roadId: optionalString(raw.roadId, 'BATTLE_SCREEN_BOARD_RETURN_ROAD_INVALID'),
+    battleId: optionalString(raw.battleId, 'BATTLE_SCREEN_BOARD_RETURN_BATTLE_INVALID'),
+    opponentId,
+    shieldLane,
+    shieldRef: optionalString(raw.shieldRef, 'BATTLE_SCREEN_BOARD_RETURN_SHIELD_REF_INVALID'),
+    destinationKey: `${opponentId}:${shieldLane}`,
+    source: 'accepted_public_compound_attack_package',
+    visualIntent: 'resolution_to_committed_shield',
+    effectMutationClaimed: false
+  });
+}
+
 function idsFromPlan(plan) {
   const data = plan?.publicData ?? {};
   if (!plan) return [];
@@ -92,7 +141,7 @@ function assertPlanParticipantsKnown(plan, participantIds) {
   }
 }
 
-function rolesForPlan(plan, participants) {
+function rolesForPlan(plan, participants, boardReturn = null) {
   const roles = new Map(participants.map(row => [row.id, 'idle']));
   if (!plan) return roles;
   const data = plan.publicData ?? {};
@@ -107,11 +156,13 @@ function rolesForPlan(plan, participants) {
     for (const id of data.winnerIds ?? []) roles.set(id, 'winner');
   } else if (plan.kind === 'finisher') {
     roles.set(data.winnerId, 'winner');
+  } else if (plan.kind === 'settle' && boardReturn) {
+    roles.set(boardReturn.opponentId, 'target');
   }
   return roles;
 }
 
-function focusForPlan(plan) {
+function focusForPlan(plan, boardReturn = null) {
   if (!plan) return deepFreeze({ causeId: null, targetIds: [], winnerIds: [] });
   const data = plan.publicData ?? {};
   if (plan.kind === 'attack' || plan.kind === 'ability') {
@@ -135,6 +186,9 @@ function focusForPlan(plan) {
       winnerIds: data.winnerId ? [data.winnerId] : []
     });
   }
+  if (plan.kind === 'settle' && boardReturn) {
+    return deepFreeze({ causeId: null, targetIds: [boardReturn.opponentId], winnerIds: [] });
+  }
   return deepFreeze({ causeId: null, targetIds: [], winnerIds: [] });
 }
 
@@ -150,13 +204,14 @@ export function createBattleScreenModel({
   const participantIds = new Set(normalizedParticipants.map(row => row.id));
   const normalizedPlan = normalizePlan(plan);
   if (normalizedPlan) assertPlanParticipantsKnown(normalizedPlan, participantIds);
+  const boardReturn = normalizeBoardReturn(normalizedPlan, participantIds);
   const normalizedAfterstate = normalizeAfterstate(persistentAfterstate, participantIds);
   if (returnIntent != null && !RETURN_INTENTS.has(returnIntent)) {
     throw new TypeError('BATTLE_SCREEN_RETURN_INTENT_INVALID');
   }
 
   const inBattlePhase = normalizedPlan !== null;
-  const roles = rolesForPlan(normalizedPlan, normalizedParticipants);
+  const roles = rolesForPlan(normalizedPlan, normalizedParticipants, boardReturn);
   const afterstateByParticipant = new Map(normalizedParticipants.map(row => [row.id, []]));
   for (const row of normalizedAfterstate) afterstateByParticipant.get(row.participantId).push(row);
 
@@ -174,6 +229,7 @@ export function createBattleScreenModel({
     winnerCalculation: false,
     targetCalculation: false,
     secretProjectionAuthority: false,
+    boardEffectCalculation: false,
     screenMode: inBattlePhase ? 'BATTLE_PHASE' : 'MATCH_PLAN',
     phase: inBattlePhase ? normalizedPlan.kind : 'plan',
     eventId: normalizedPlan?.eventId ?? null,
@@ -191,9 +247,11 @@ export function createBattleScreenModel({
       phaseSurfaceId: 'battlePhaseSurface',
       resolutionId: 'battleResolution',
       planSlotAttr: 'data-battle-plan-slot',
-      laneAttr: 'data-battle-screen-lane'
+      laneAttr: 'data-battle-screen-lane',
+      shieldSlotAttr: 'data-battle-shield-slot'
     },
-    focus: focusForPlan(normalizedPlan),
+    focus: focusForPlan(normalizedPlan, boardReturn),
+    boardReturn,
     lanes,
     persistentAfterstate: normalizedAfterstate,
     returnIntent,
@@ -235,11 +293,18 @@ export function auditBattleScreenModel(model) {
   const defects = [];
   if (!model || model.schema !== MODEL_SCHEMA) defects.push('SCHEMA');
   if (model?.presentationOnly !== true || model?.gameplayAuthority !== false || model?.gameStateWrite !== false) defects.push('AUTHORITY');
-  if (model?.winnerCalculation !== false || model?.targetCalculation !== false || model?.secretProjectionAuthority !== false) defects.push('RECALCULATION');
+  if (model?.winnerCalculation !== false || model?.targetCalculation !== false || model?.secretProjectionAuthority !== false || model?.boardEffectCalculation !== false) defects.push('RECALCULATION');
   if (model?.fourLaneCausalStructure !== true || !Array.isArray(model?.lanes) || model.lanes.length !== 4) defects.push('FOUR_LANES');
   if (Array.isArray(model?.lanes)) {
     if (new Set(model.lanes.map(row => row.id)).size !== model.lanes.length) defects.push('LANE_IDENTITY');
     if (model.lanes.some(row => !LANE_ROLES.has(row.role))) defects.push('LANE_ROLE');
+  }
+  if (model?.boardReturn != null) {
+    if (model.phase !== 'settle') defects.push('BOARD_RETURN_PHASE');
+    if (model.boardReturn.compoundPackageSchema !== COMPOUND_ATTACK_SCHEMA) defects.push('BOARD_RETURN_PACKAGE_SCHEMA');
+    if (!SHIELD_LANES.has(model.boardReturn.shieldLane)) defects.push('BOARD_RETURN_SHIELD');
+    if (!model.lanes.some(row => row.id === model.boardReturn.opponentId && row.role === 'target')) defects.push('BOARD_RETURN_TARGET');
+    if (model.boardReturn.effectMutationClaimed !== false) defects.push('BOARD_RETURN_EFFECT_AUTHORITY');
   }
   if (model?.screenMode === 'BATTLE_PHASE') {
     if (model.battlePhaseBoardInteractionAllowed !== false || model.boardInteractionOwnedByCaller !== false) defects.push('BATTLE_INPUT_SCOPE');
@@ -257,6 +322,10 @@ export const BATTLE_SCREEN_PRESENTATION = deepFreeze({
   laneCount: 4,
   planOwner: 'CALLER',
   battleEventAuthority: 'battle-conveyor-presentation-core accepted public events',
+  compoundAttackPackageSchema: COMPOUND_ATTACK_SCHEMA,
+  boardReturnAuthority: 'NORMALIZED_COMPOUND_ATTACK_PACKAGE_FROM_ACCEPTED_SETTLE_EVENT_ONLY',
+  boardReturnEffectPolicy: 'NO_EFFECT_INFERENCE_OR_GAME_STATE_WRITE',
+  shieldLanes: Object.freeze([...SHIELD_LANES]),
   requiredAnchors: ['battlePhaseSurface', 'battleResolution'],
   formalArtOwnedHere: false
 });

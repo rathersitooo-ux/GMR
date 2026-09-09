@@ -1,4 +1,5 @@
 import { planBattleConveyor } from './battle-conveyor-presentation-core.mjs';
+import { projectBattleResolutionWithActionOrder } from './battle-resolution-action-order-adapter.mjs';
 
 const MODEL_SCHEMA = 'gameroad.battle-screen-presentation.v1';
 const TIMELINE_SCHEMA = 'gameroad.battle-screen-timeline.v1';
@@ -7,6 +8,14 @@ const RETURN_INTENTS = new Set(['MATCH_PLAN', 'RESULT']);
 const PLAN_KINDS = new Set(['partner_cutin', 'reveal', 'attack', 'ability', 'compare4', 'finisher', 'settle']);
 const LANE_ROLES = new Set(['idle', 'source', 'target', 'winner', 'revealed']);
 const SHIELD_LANES = new Set(['L', 'C', 'R']);
+const JANKEN_LABELS = new Map([
+  ['ROCK', 'グー'],
+  ['SCISSORS', 'チョキ'],
+  ['PAPER', 'パー'],
+  ['グー', 'グー'],
+  ['チョキ', 'チョキ'],
+  ['パー', 'パー']
+]);
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -192,13 +201,56 @@ function focusForPlan(plan, boardReturn = null) {
   return deepFreeze({ causeId: null, targetIds: [], winnerIds: [] });
 }
 
+function jankenLabel(hand) {
+  const value = nonEmptyString(hand, 'BATTLE_SCREEN_CAUSAL_HAND_INVALID');
+  return JANKEN_LABELS.get(value.toUpperCase()) ?? JANKEN_LABELS.get(value) ?? value;
+}
+
+function causalAfterstateRows(causalReturn, participants) {
+  if (!causalReturn) return [];
+  const destinationParticipantId = causalReturn.destination.opponentId;
+  const hand = jankenLabel(causalReturn.sourceCard.jankenHand);
+  const rows = [];
+  if (causalReturn.processing) {
+    rows.push({
+      id: `causal-cause:${causalReturn.eventId}`,
+      participantId: destinationParticipantId,
+      text: `使用札（${hand}） → 処理開始`
+    });
+    const labelById = new Map(participants.map(row => [row.id, row.label]));
+    const order = causalReturn.processing.processingOrder.map(id => labelById.get(id) ?? id);
+    rows.push({
+      id: `causal-order:${causalReturn.eventId}`,
+      participantId: destinationParticipantId,
+      text: `処理順 ${order.join(' → ')} → 解決 → Shield ${causalReturn.destination.shieldLane}`
+    });
+    return rows;
+  }
+  rows.push({
+    id: `causal-return:${causalReturn.eventId}`,
+    participantId: destinationParticipantId,
+    text: `使用札（${hand}） → 解決 → Shield ${causalReturn.destination.shieldLane}`
+  });
+  return rows;
+}
+
+function actionOrderForEvent(actionOrderByEventId, eventId) {
+  if (actionOrderByEventId == null) return null;
+  if (actionOrderByEventId instanceof Map) return actionOrderByEventId.get(eventId) ?? null;
+  if (!actionOrderByEventId || typeof actionOrderByEventId !== 'object' || Array.isArray(actionOrderByEventId)) {
+    throw new TypeError('BATTLE_SCREEN_ACTION_ORDER_BY_EVENT_INVALID');
+  }
+  return actionOrderByEventId[eventId] ?? null;
+}
+
 export function createBattleScreenModel({
   participants,
   plan = null,
   persistentAfterstate = [],
   returnIntent = null,
   reducedMotion = false,
-  lowPerf = false
+  lowPerf = false,
+  actionOrder = null
 } = {}) {
   const normalizedParticipants = normalizeParticipants(participants);
   const participantIds = new Set(normalizedParticipants.map(row => row.id));
@@ -210,10 +262,16 @@ export function createBattleScreenModel({
     throw new TypeError('BATTLE_SCREEN_RETURN_INTENT_INVALID');
   }
 
+  const causalReturn = boardReturn
+    ? projectBattleResolutionWithActionOrder({ boardReturn, actionOrder, reducedMotion, lowPerf })
+    : null;
   const inBattlePhase = normalizedPlan !== null;
   const roles = rolesForPlan(normalizedPlan, normalizedParticipants, boardReturn);
   const afterstateByParticipant = new Map(normalizedParticipants.map(row => [row.id, []]));
   for (const row of normalizedAfterstate) afterstateByParticipant.get(row.participantId).push(row);
+  for (const row of causalAfterstateRows(causalReturn, normalizedParticipants)) {
+    afterstateByParticipant.get(row.participantId).push(row);
+  }
 
   const lanes = normalizedParticipants.map(participant => deepFreeze({
     ...participant,
@@ -252,6 +310,7 @@ export function createBattleScreenModel({
     },
     focus: focusForPlan(normalizedPlan, boardReturn),
     boardReturn,
+    causalReturn,
     lanes,
     persistentAfterstate: normalizedAfterstate,
     returnIntent,
@@ -268,7 +327,8 @@ export function projectAcceptedBattleEventsToScreen({
   persistentAfterstate = [],
   returnIntent = null,
   reducedMotion = false,
-  lowPerf = false
+  lowPerf = false,
+  actionOrderByEventId = null
 } = {}) {
   const conveyor = planBattleConveyor(events, { reducedMotion, lowPerf });
   const models = conveyor.plans.map(plan => createBattleScreenModel({
@@ -277,7 +337,8 @@ export function projectAcceptedBattleEventsToScreen({
     persistentAfterstate,
     returnIntent,
     reducedMotion,
-    lowPerf
+    lowPerf,
+    actionOrder: actionOrderForEvent(actionOrderByEventId, plan.eventId)
   }));
   return deepFreeze({
     schema: TIMELINE_SCHEMA,
@@ -306,6 +367,18 @@ export function auditBattleScreenModel(model) {
     if (!model.lanes.some(row => row.id === model.boardReturn.opponentId && row.role === 'target')) defects.push('BOARD_RETURN_TARGET');
     if (model.boardReturn.effectMutationClaimed !== false) defects.push('BOARD_RETURN_EFFECT_AUTHORITY');
   }
+  if ((model?.boardReturn == null) !== (model?.causalReturn == null)) defects.push('CAUSAL_RETURN_PRESENCE');
+  if (model?.causalReturn != null) {
+    const causal = model.causalReturn;
+    if (causal.presentationOnly !== true || causal.gameplayAuthority !== false || causal.gameStateWrite !== false) defects.push('CAUSAL_RETURN_AUTHORITY');
+    if (causal.targetCalculation !== false || causal.winnerCalculation !== false || causal.effectCalculation !== false || causal.legalityCalculation !== false || causal.routeCalculation !== false) defects.push('CAUSAL_RETURN_RECALCULATION');
+    if (causal.eventId !== model.boardReturn.eventId) defects.push('CAUSAL_RETURN_EVENT');
+    if (causal.sourceCard?.cardId !== model.boardReturn.cardId || causal.sourceCard?.jankenHand !== model.boardReturn.jankenHand) defects.push('CAUSAL_RETURN_CAUSE');
+    if (causal.destination?.destinationKey !== model.boardReturn.destinationKey || causal.destination?.shieldLane !== model.boardReturn.shieldLane) defects.push('CAUSAL_RETURN_DESTINATION');
+    const targetLane = model.lanes.find(row => row.id === model.boardReturn.opponentId);
+    const causalRowPrefix = causal.processing ? 'causal-order:' : 'causal-return:';
+    if (!targetLane?.afterstate?.some(row => row.id === `${causalRowPrefix}${causal.eventId}`)) defects.push('CAUSAL_RETURN_VISIBLE_ROW');
+  }
   if (model?.screenMode === 'BATTLE_PHASE') {
     if (model.battlePhaseBoardInteractionAllowed !== false || model.boardInteractionOwnedByCaller !== false) defects.push('BATTLE_INPUT_SCOPE');
     if (!Array.isArray(model.battlePhaseInputPolicy) || model.battlePhaseInputPolicy.join('|') !== 'skip|public_info|accessibility') defects.push('BATTLE_INPUT_POLICY');
@@ -325,6 +398,9 @@ export const BATTLE_SCREEN_PRESENTATION = deepFreeze({
   compoundAttackPackageSchema: COMPOUND_ATTACK_SCHEMA,
   boardReturnAuthority: 'NORMALIZED_COMPOUND_ATTACK_PACKAGE_FROM_ACCEPTED_SETTLE_EVENT_ONLY',
   boardReturnEffectPolicy: 'NO_EFFECT_INFERENCE_OR_GAME_STATE_WRITE',
+  causalReturnAuthority: 'MERGED_CAUSAL_RETURN_PROJECTOR_ACCEPTED_BOARD_RETURN_ONLY',
+  causalOrderAuthority: 'OPTIONAL_CALLER_AUTHORITATIVE_ACTION_ORDER_PRESENTATION_ONLY',
+  causalPathGeometryPolicy: 'ACCEPTED_PATH_DATA_ONLY_NO_GEOMETRY_INFERENCE',
   shieldLanes: Object.freeze([...SHIELD_LANES]),
   requiredAnchors: ['battlePhaseSurface', 'battleResolution'],
   formalArtOwnedHere: false

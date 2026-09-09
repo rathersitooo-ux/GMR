@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-GOAL-ARRIVAL-LIVE-BIND-R2-20260909T1459-SOL-M7K3Q9",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_GOAL_ARRIVAL_PRESENTATION_R1",
+  "acquireKey": "BATTLE-GOAL-ARRIVAL-LIVE-BIND-R2-20260909T1459-SOL-M7K3Q9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "WORKUNIT31_GOAL_CONSUMER_RUNTIME_CURRENT_07270A1",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PURE_PRESENTATION_HANDOFF_FAILSOFT_EXISTING_RUNTIME_ORACLE",
+  "proceedToken": "PROCEED|BATTLE-GOAL-ARRIVAL-LIVE-BIND-R2-20260909T1459-SOL-M7K3Q9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|2026-09-09T1459JST",
+  "authorizationBaseSha": "07270a1594aae27719f74761a678446820901a67",
+  "scope": [
+    "browser/battle-goal-arrival-live-adapter.mjs",
+    "tests/battle-goal-arrival-live-adapter.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_GOAL_ARRIVAL_PRESENTATION_R1",
+  "leaseAcquireKey": "BATTLE-GOAL-ARRIVAL-LIVE-BIND-R2-20260909T1459-SOL-M7K3Q9",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 14:59 JST",
+  "leaseUntilJst": "2026-09-09 15:59 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A666:L666",
+  "leaseScope": [
+    "browser/battle-goal-arrival-live-adapter.mjs",
+    "tests/battle-goal-arrival-live-adapter.test.mjs"
+  ],
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-goal-arrival-live-bind-r2-20260909; browser/battle-goal-arrival-live-adapter.mjs (new); tests/battle-goal-arrival-live-adapter.test.mjs (new); own transient data/preaction-authorizations/BATTLE-GOAL-ARRIVAL-LIVE-BIND-R2-20260909T1459-SOL-M7K3Q9.json only. Existing new-base-goal-arrival consumer/runtime/result core, battle-screen-runtime-mount.mjs, browser/GAMEROAD.html, gameplay/rules/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_GOAL_ARRIVAL_RESULT_HANDOFF_COMPOSITION_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_WORKUNIT31_CONSUMER_PLUS_RUNTIME_CURRENT_MAIN",
+  "solutionSearchEvidence": [
+    "browser/new-base-goal-arrival-consumer.mjs@07270a1594aae27719f74761a678446820901a67",
+    "browser/new-base-goal-arrival-runtime-mount.mjs@07270a1594aae27719f74761a678446820901a67",
+    "browser/new-base-goal-result-core.mjs@07270a1594aae27719f74761a678446820901a67"
+  ]
+}

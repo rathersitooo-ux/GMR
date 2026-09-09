@@ -1,6 +1,7 @@
 const MENU_ITEMS = Object.freeze([
   Object.freeze({ id: 'detail', label: '人物詳細', action: 'OPEN_ACTIVE_DETAIL', targetView: 'detail' }),
   Object.freeze({ id: 'list', label: 'パートナー変更', action: 'OPEN_LIST', targetView: 'list' }),
+  Object.freeze({ id: 'costume', label: '着せ替え', action: 'OPEN_COSTUME', targetView: 'costume' }),
   Object.freeze({ id: 'formation', label: '編成', action: 'OPEN_FORMATION', targetView: 'formation' }),
   Object.freeze({ id: 'strategy', label: '作戦', action: 'OPEN_STRATEGY', targetView: 'strategy' }),
   Object.freeze({ id: 'conversation', label: '話す', action: 'OPEN_CONVERSATION', targetView: 'conversation' }),
@@ -12,6 +13,7 @@ const VIEW_META = Object.freeze({
   hub: Object.freeze({ title: 'パートナー', surfaceKind: 'hub' }),
   list: Object.freeze({ title: 'パートナー変更', surfaceKind: 'panel' }),
   detail: Object.freeze({ title: '人物詳細', surfaceKind: 'panel' }),
+  costume: Object.freeze({ title: '着せ替え', surfaceKind: 'panel' }),
   formation: Object.freeze({ title: '編成', surfaceKind: 'panel' }),
   strategy: Object.freeze({ title: '作戦', surfaceKind: 'panel' }),
   conversation: Object.freeze({ title: '話す', surfaceKind: 'mode_entry' }),

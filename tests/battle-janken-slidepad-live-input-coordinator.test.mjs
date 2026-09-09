@@ -27,7 +27,7 @@ function readyStage(hand) {
   };
 }
 
-function createFakeBridge({ stageImpl, commitImpl, clearImpl } = {}) {
+function createFakeBridge({ stageImpl, commitImpl, clearImpl, precommitClearImpl } = {}) {
   const calls = [];
   let activeHand = null;
   const bridge = {
@@ -47,6 +47,14 @@ function createFakeBridge({ stageImpl, commitImpl, clearImpl } = {}) {
       activeHand = null;
       return result;
     },
+    async clearPrecommitSelection() {
+      calls.push('clear-precommit');
+      const result = precommitClearImpl
+        ? await precommitClearImpl(calls)
+        : { ok: true, cleared: true, reason: 'CLEARED_PRECOMMIT_SELECTION' };
+      if (result?.cleared === true) activeHand = null;
+      return result;
+    },
     async commitCompoundAttack() {
       calls.push(`commit:${activeHand ?? 'none'}`);
       return commitImpl
@@ -60,10 +68,21 @@ function createFakeBridge({ stageImpl, commitImpl, clearImpl } = {}) {
   return { bridge, calls };
 }
 
-test('requires the existing live preview bridge surface', () => {
+test('requires the existing live preview bridge surface including global precommit clear', () => {
   assert.throws(
     () => createBattleJankenSlidePadLiveInputCoordinator({ liveBridge: {} }),
     /stageCompoundAttack/,
+  );
+  assert.throws(
+    () => createBattleJankenSlidePadLiveInputCoordinator({
+      liveBridge: {
+        stageCompoundAttack() {},
+        clearCompoundAttack() {},
+        commitCompoundAttack() {},
+        status() {},
+      },
+    }),
+    /clearPrecommitSelection/,
   );
 });
 
@@ -91,7 +110,7 @@ test('latest focus with a visible preview becomes commit-ready without computing
   assert.equal(status.gameStateWrite, false);
 });
 
-test('rapid focus change clears an older in-flight preview before staging the latest hand', async () => {
+test('rapid focus change uses compound-only cleanup before staging the latest hand', async () => {
   const rock = deferred();
   const { bridge, calls } = createFakeBridge({
     stageImpl: (hand) => hand === 'ROCK' ? rock.promise : readyStage(hand),
@@ -119,9 +138,9 @@ test('rapid focus change clears an older in-flight preview before staging the la
 test('focus superseded before its queued mutation never stages the stale hand', async () => {
   const gate = deferred();
   const { bridge, calls } = createFakeBridge({
-    clearImpl: async () => {
+    precommitClearImpl: async () => {
       await gate.promise;
-      return { ok: true, cleared: true };
+      return { ok: true, cleared: true, reason: 'CLEARED_PRECOMMIT_SELECTION' };
     },
   });
   const coordinator = createBattleJankenSlidePadLiveInputCoordinator({ liveBridge: bridge });
@@ -136,10 +155,10 @@ test('focus superseded before its queued mutation never stages the stale hand', 
   const latestResult = await latest;
   assert.equal(firstResult.stale, true);
   assert.equal(latestResult.ok, true);
-  assert.deepEqual(calls, ['clear', 'stage:PAPER']);
+  assert.deepEqual(calls, ['clear-precommit', 'stage:PAPER']);
 });
 
-test('cancel during an in-flight stage waits for it, clears it, and leaves no preview ready', async () => {
+test('explicit cancel during in-flight stage uses stale local cleanup then one global precommit clear', async () => {
   const stage = deferred();
   const { bridge, calls } = createFakeBridge({ stageImpl: () => stage.promise });
   const coordinator = createBattleJankenSlidePadLiveInputCoordinator({ liveBridge: bridge });
@@ -153,10 +172,34 @@ test('cancel during an in-flight stage waits for it, clears it, and leaves no pr
   const cancelResult = await cancelling;
   assert.equal(focusResult.stale, true);
   assert.equal(cancelResult.ok, true);
+  assert.equal(cancelResult.cleared, true);
   assert.equal(coordinator.status().phase, 'IDLE');
   assert.equal(coordinator.status().previewReady, false);
   assert.equal(coordinator.status().desiredHand, null);
-  assert.deepEqual(calls, ['stage:PAPER', 'clear', 'clear']);
+  assert.deepEqual(calls, ['stage:PAPER', 'clear', 'clear-precommit']);
+});
+
+test('failed explicit global clear restores the current ready focus instead of half-clearing locally', async () => {
+  const { bridge, calls } = createFakeBridge({
+    precommitClearImpl: async () => ({
+      ok: false,
+      cleared: false,
+      reason: 'EXISTING_PRECOMMIT_CLEAR_REJECTED',
+    }),
+  });
+  const coordinator = createBattleJankenSlidePadLiveInputCoordinator({ liveBridge: bridge });
+
+  await coordinator.focus('ROCK');
+  const result = await coordinator.cancel();
+
+  assert.equal(result.ok, false);
+  assert.equal(result.cleared, false);
+  assert.equal(result.reason, 'EXISTING_PRECOMMIT_CLEAR_REJECTED');
+  assert.deepEqual(calls, ['stage:ROCK', 'clear-precommit']);
+  assert.equal(coordinator.status().phase, 'READY');
+  assert.equal(coordinator.status().readyHand, 'ROCK');
+  assert.equal(coordinator.status().previewReady, true);
+  assert.equal(coordinator.status().desiredHand, 'ROCK');
 });
 
 test('commit queued behind focus waits for the exact visible preview then forwards once', async () => {
@@ -215,7 +258,7 @@ test('focus and cancel are rejected while an authoritative commit is in flight',
   assert.deepEqual(calls, ['stage:ROCK', 'commit:ROCK']);
 });
 
-test('rejected commit preserves the ready preview for explicit retry or cancel', async () => {
+test('rejected commit preserves ready preview and explicit cancel then uses global precommit clear', async () => {
   const { bridge, calls } = createFakeBridge({
     commitImpl: async () => ({ ok: false, committed: false, reason: 'EXISTING_BATTLE_ACTION_REJECTED' }),
   });
@@ -232,10 +275,10 @@ test('rejected commit preserves the ready preview for explicit retry or cancel',
 
   await coordinator.cancel();
   assert.equal(coordinator.status().phase, 'IDLE');
-  assert.deepEqual(calls, ['stage:PAPER', 'commit:PAPER', 'clear']);
+  assert.deepEqual(calls, ['stage:PAPER', 'commit:PAPER', 'clear-precommit']);
 });
 
-test('stage failure clears fail-soft and never leaves a preview commit-capable', async () => {
+test('stage failure uses compound-only cleanup and never invokes global draft clear', async () => {
   const { bridge, calls } = createFakeBridge({
     stageImpl: async () => { throw new Error('preview source unavailable'); },
   });
@@ -250,7 +293,7 @@ test('stage failure clears fail-soft and never leaves a preview commit-capable',
   assert.equal((await coordinator.commit()).reason, 'LATEST_FOCUS_PREVIEW_REQUIRED');
 });
 
-test('destroy serializes a final clear and prevents later focus or commit', async () => {
+test('destroy serializes a final compound-only clear and prevents later focus or commit', async () => {
   const { bridge, calls } = createFakeBridge();
   const coordinator = createBattleJankenSlidePadLiveInputCoordinator({ liveBridge: bridge });
   await coordinator.focus('SCISSORS');
@@ -263,10 +306,14 @@ test('destroy serializes a final clear and prevents later focus or commit', asyn
   assert.deepEqual(calls, ['stage:SCISSORS', 'clear']);
 });
 
-test('contract states that the coordinator owns sequencing only', () => {
+test('contract states global explicit cancel and local stale cleanup are separate', () => {
   assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.authority, 'NONE');
+  assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.explicitCancelPolicy, 'EXISTING_SHARED_GLOBAL_PRECOMMIT_CLEAR_THROUGH_BRIDGE');
+  assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.staleFocusClearPolicy, 'COMPOUND_STAGE_ONLY');
+  assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.failedExplicitCancelPolicy, 'RESTORE_LOCAL_READY_STATE_IF_STILL_CURRENT');
   assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.asyncMutationPolicy, 'SERIAL_LATEST_FOCUS_WINS');
   assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.commitRequiresLatestVisiblePreview, true);
+  assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.authoritativeRollback, false);
   assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.computesTarget, false);
   assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.computesLegality, false);
   assert.equal(BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT.computesRoute, false);

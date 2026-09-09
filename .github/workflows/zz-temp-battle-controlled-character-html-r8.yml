@@ -36,7 +36,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node deploy/cloudflare/scripts/build.mjs
+          node deploy/cloudflare/scripts/build.mjs \
+            --source-commit "$(git rev-parse HEAD)" \
+            --published-at "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
       - name: Verify exact product scope
         shell: bash
         run: |

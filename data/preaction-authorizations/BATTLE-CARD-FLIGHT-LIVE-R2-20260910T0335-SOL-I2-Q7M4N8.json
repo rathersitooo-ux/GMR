@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CARD-FLIGHT-LIVE-R2-20260910T0335-SOL-I2-Q7M4N8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CARD_RELEASE_FLIGHT_MOTION_LIVE_R2",
+  "acquireKey": "BATTLE-CARD-FLIGHT-LIVE-R2-20260910T0335-SOL-I2-Q7M4N8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_SLIDEPAD_SINGLE_WRITER_20260910T0338JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "MERGED_RELEASE_FLIGHT_EFFECT_PLUS_CURRENT_INLINE_DUPLICATE_AUDIT",
+  "proceedToken": "PROCEED|BATTLE-CARD-FLIGHT-LIVE-R2-20260910T0335-SOL-I2-Q7M4N8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|card-release-flight-live-adapter|slidepad|active-lease",
+  "authorizationBaseSha": "4cd126b3f6e30a680a8a60c48ca7b3787755ba17",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CARD_RELEASE_FLIGHT_MOTION_LIVE_R2",
+  "leaseAcquireKey": "BATTLE-CARD-FLIGHT-LIVE-R2-20260910T0335-SOL-I2-Q7M4N8",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:38 JST",
+  "leaseUntilJst": "2026-09-10 04:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A892:L892",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-card-flight-live-r2-20260910; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient .github/workflows/zz-temp-battle-card-flight-live-r2.yml; transient tools/temp-battle-card-flight-live-r2.py; own transient data/preaction-authorizations/BATTLE-CARD-FLIGHT-LIVE-R2-20260910T0335-SOL-I2-Q7M4N8.json only. READ_ONLY reuse: browser/battle-card-release-flight-motion-core.mjs; browser/battle-card-release-flight-runtime-effect.mjs. browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs; battle-screen/gameplay/rules/target/legality/Hand3/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_CARD_RELEASE_FLIGHT_EXISTING_EFFECT_SLIDEPAD_ADAPTER_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MERGED_RUNTIME_EFFECT_AND_LIVE_TRIGGER_AUDIT_20260910",
+  "solutionSearchEvidence": [
+    "Current SlidePad still contains a legacy inline release-flight engine with its own duration, Bezier sampling, spin and cleanup.",
+    "browser/battle-card-release-flight-runtime-effect.mjs already owns the release-flight visual effect and delegates motion semantics to battle-card-release-flight-motion-core.mjs.",
+    "The existing runtime effect preserves ReducedMotion through semantic destination pulse and accepts lowPerf without creating gameplay writes.",
+    "Dedicated Focus onAccepted is an accepted-commit callback; legacy slot click captures before the existing card action and only plays after click success.",
+    "This WorkUnit replaces duplicate inline flight presentation only; gameplay, rules, target, legality, Hand3 and public package remain unchanged."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-card-flight-live-r2.yml",
+    "tools/temp-battle-card-flight-live-r2.py"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-card-flight-live-r2.yml",
+    "tools/temp-battle-card-flight-live-r2.py"
+  ]
+}

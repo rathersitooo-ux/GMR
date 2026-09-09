@@ -48,6 +48,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'python3 -m http.server 4173 --bind 127.0.0.1',
+    cwd: new URL('.', import.meta.url).pathname,
     url: 'http://127.0.0.1:4173/browser/GAMEROAD.html',
     reuseExistingServer: false,
     timeout: 120_000,

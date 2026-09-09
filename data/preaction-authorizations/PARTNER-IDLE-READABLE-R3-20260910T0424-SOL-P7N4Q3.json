@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-IDLE-READABLE-R3-20260910T0424-SOL-P7N4Q3",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_IDLE_APPROVED_READABLE_PUBLIC_PROVENANCE_R3",
+  "acquireKey": "PARTNER-IDLE-READABLE-R3-20260910T0424-SOL-P7N4Q3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1491_FOCUSED_PRODUCT_PASS_STALE_PUBLIC_PROVENANCE_PIN_ONLY",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_MAIN_TARGET_BLOBS_AND_BUILD_CONTRACT_DIRECT_READBACK_20260910T0424JST",
+  "proceedToken": "PROCEED|PARTNER-IDLE-READABLE-R3-20260910T0424-SOL-P7N4Q3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-idle-readable|public-provenance|active-lease",
+  "authorizationBaseSha": "f8d8839d040378f912f856a7ec1730cb1ba01aed",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_IDLE_APPROVED_READABLE_PUBLIC_PROVENANCE_R3",
+  "leaseAcquireKey": "PARTNER-IDLE-READABLE-R3-20260910T0424-SOL-P7N4Q3",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 04:24 JST",
+  "leaseUntilJst": "2026-09-10 05:24 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A927:L927",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/partner-idle-readable-r3-20260910; browser/partner-dialogue-source-registry.mjs; browser/partner-advice-runtime-mount.mjs; tests/partner-dialogue-source-registry.test.mjs; tests/partner-advice-runtime-mount.test.mjs; deploy/cloudflare/tests/build.test.mjs; own transient data/preaction-authorizations/PARTNER-IDLE-READABLE-R3-20260910T0424-SOL-P7N4Q3.json only. READ_ONLY: deploy/cloudflare/scripts/build.mjs; browser/GAMEROAD.html; browser/partner-saasuna-conversation-source.mjs; gameplay/rules/legality/target/save/economy/network; unrelated shared runtimes.",
+  "solutionSignature": "PARTNER_APPROVED_IDLE_READABLE_EXISTING_CHAT_SURFACE_PUBLIC_PROVENANCE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1491_PROVEN_FEATURE_BLOBS_PLUS_CURRENT_BUILD_DEPENDENCY_CONTRACT",
+  "solutionSearchEvidence": [
+    "The four idle-readable feature/test blobs already passed the focused product tests on PR#1491.",
+    "Current main still contains the predecessor blobs on all four target files, so no concurrent product overlap must be reconciled.",
+    "Current deploy/cloudflare/tests/build.test.mjs still pins partner-advice-runtime-mount.mjs to predecessor blob 395613e3162d07b5d21f0d07b2c63c0add5e8927.",
+    "PR#1491 Required Gate failed only because the proposed runtime blob 363cefd1f4ac20fe352060cb834a34bb949d59fe did not match that stale provenance pin; PRE_ACTION and conventional Node tests passed.",
+    "No deploy/cloudflare/scripts/build.mjs change is required; dependency traversal already packages the Partner advice runtime.",
+    "The implementation remains presentation-only, approved-source-only, deterministic, timer-free, and yields to advice/tutorial/confirmed reaction."
+  ],
+  "scope": [
+    "browser/partner-dialogue-source-registry.mjs",
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-dialogue-source-registry.test.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-dialogue-source-registry.mjs",
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-dialogue-source-registry.test.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

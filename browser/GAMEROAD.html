@@ -1753,9 +1753,13 @@ function awakeManaFromHoney(p,count){const before=p.awake,wake=Math.max(0,Math.m
 function honeySourceNodesForPower(power){if(!state.match||power<1||power>6)return[];const out=[];for(const p of state.match.players){for(const l of ['L','C','R']){p.lanes[l].forEach((cid,ix)=>{if(CARDS[cid]?.power===power)out.push(roadId(p.id,l,ix+1))})}}return out}
 function spawnHoneyFromRoads(){const m=state.match;if(m?.contentId!=='honey_hunt')return;for(const p of m.players){const power=CARDS[p.plan?.roadId]?.power||0;if(power<1||power>6)continue;for(const id of honeySourceNodesForPower(power))m.honey.byNode[id]=(m.honey.byNode[id]||0)+1}m.honey.generatedRounds.add(m.round)}
 function collectEndpointHoney(p){const m=state.match;if(m?.contentId!=='honey_hunt')return{status:'not-honey'};const id=p.position,count=m.honey.byNode[id]||0,key=`${m.round}:${p.id}:${id}`;if(m.honey.receipts.has(key))return{status:'duplicate',count:0};m.honey.receipts.add(key);if(count<=0)return{status:'none',count:0};m.honey.byNode[id]=0;const w=awakeManaFromHoney(p,count);const excess=w.excess>0?`／起床上限超過${w.excess}は持ち越さない`:'';log(`${p.name}：終点のハニー${count}個を全量取得。寝ているマナを${w.wake}枚起こした${excess}。`);if(p.human)window.GAMEROAD_PARTNER_COMMENT?.emit?.({eventId:`${m.id}:honey:${m.round}:${p.id}:${id}`,kind:'dialogue',speechIntent:'honey_collected',count,loggable:false,ttlMs:9000});return{status:'collected-all',count,...w}}
+const grControlledCharacter4pLiveState={warningShown:false};
+function grControlledCharacter4pSource(){const m=state.match;if(!m||!Array.isArray(m.players)||m.players.length!==4)return null;const participants=m.players.map(p=>({participantId:p.id,characterId:String(p.character||''),positionKey:p.position}));if(participants.some(row=>!row.participantId||!row.characterId))return null;return{matchId:String(m.id||''),participants,reducedMotion:!!state.settings.reduceMotion,lowPerformance:!!state.settings.lowPerf}}
+window.__GAMEROAD_CONTROLLED_CHARACTER_4P_SOURCE__=grControlledCharacter4pSource;
+function grControlledCharacter4pEvent(p,type,detail={}){const emit=window.__GAMEROAD_CONTROLLED_CHARACTER_4P_EVENT__;if(typeof emit!=='function')return null;try{return emit(p?.id,{type,...detail})}catch(e){if(!grControlledCharacter4pLiveState.warningShown){grControlledCharacter4pLiveState.warningShown=true;console.warn('controlled-character-4p-live-event',e)}return null}}
 function movementFacing(fromId,toId,p){try{const a=project3(nodeWorld(fromId,p)),b=project3(nodeWorld(toId,p));if(a&&b&&Math.abs(b.x-a.x)>.35)return b.x<a.x?'left':'right'}catch(e){}return battleMount?.facingName||'right'}
 async function setBattleRuntimeState(name,facing){if(!battleMount||!window.GameRoadThreeCharRuntime)return;try{await window.GameRoadThreeCharRuntime.setState(battleMount,name,{facing:facing||battleMount.facingName||'right',performance:(state.settings.lowPerf||state.settings.reduceMotion)?'low':'normal'})}catch(e){console.warn('battle-runtime-state',name,e)}}
-async function animateResolvedPath(p){const path=p.plan?.path||[p.position],human=p.human,dur=(state.settings.reduceMotion||state.settings.lowPerf)?0:145;if(path.length<2){p.position=path.at(-1)||p.position;collectEndpointHoney(p);if(human)await setBattleRuntimeState('idle');return}let facing=battleMount?.facingName||'right';if(human){facing=movementFacing(path[0],path[1],p);await setBattleRuntimeState('move',facing)}for(let i=1;i<path.length;i++){const from=path[i-1],to=path[i];p.position=to;if(human){const nextFacing=movementFacing(from,to,p);if(nextFacing!==facing){facing=nextFacing;await setBattleRuntimeState('move',facing)}renderField3D();renderBoard();await updateBattleAvatar();if(dur)await new Promise(r=>setTimeout(r,dur))}}collectEndpointHoney(p);if(human)await setBattleRuntimeState('idle',facing)}
+async function animateResolvedPath(p){const path=p.plan?.path||[p.position],human=p.human,dur=(state.settings.reduceMotion||state.settings.lowPerf)?0:145;if(path.length<2){p.position=path.at(-1)||p.position;collectEndpointHoney(p);grControlledCharacter4pEvent(p,'SETTLE',{positionKey:p.position});if(human)await setBattleRuntimeState('idle');else{renderField3D();renderBoard()}return}let facing=battleMount?.facingName||'right';if(human){facing=movementFacing(path[0],path[1],p);await setBattleRuntimeState('move',facing)}for(let i=1;i<path.length;i++){const from=path[i-1],to=path[i],nextFacing=movementFacing(from,to,p);p.position=to;if(human&&nextFacing!==facing)await setBattleRuntimeState('move',nextFacing);facing=nextFacing;grControlledCharacter4pEvent(p,'MOVE_ACCEPTED',{toPositionKey:to,facing});renderField3D();renderBoard();if(human)await updateBattleAvatar();if(dur)await new Promise(r=>setTimeout(r,dur))}collectEndpointHoney(p);grControlledCharacter4pEvent(p,'SETTLE',{positionKey:p.position});if(human)await setBattleRuntimeState('idle',facing);else{renderField3D();renderBoard()}}
 function setupBattleDetails(){const btn=$('#detailsBtn'),close=$('#detailsClose'),drawer=$('#battleDrawer');if(btn&&!btn.dataset.bound){btn.dataset.bound='1';btn.onclick=()=>{drawer.classList.add('on');drawer.setAttribute('aria-hidden','false')};close.onclick=()=>{drawer.classList.remove('on');drawer.setAttribute('aria-hidden','true')};$('#dangerBtn').onclick=()=>{$('#battleMap').classList.toggle('showRange');toast($('#battleMap').classList.contains('showRange')?'移動可能範囲を表示':'範囲表示を戻しました')}}}
 window.addEventListener('resize',()=>{if(fieldResizeQueued)return;fieldResizeQueued=true;requestAnimationFrame(()=>{fieldResizeQueued=false;if(state.screen==='battle'){renderField3D();renderBoard();updateBattleAvatar()}})});
 
@@ -4299,6 +4303,99 @@ import { createHomeThemeProfile, createHomePresentationState, resolveHomeProject
     }),
   });
 })();
+</script>
+<style id="gameroad-controlled-character-4p-live-r8-style">
+/* Preserve current Battle chrome and P1's existing continuous #battleRuntime while projecting P2-P4 on authoritative board markers. */
+html body:has(.battle.active) .top{display:flex!important}
+#boardPlayers .boardPlayerToken.human [data-board-controlled-character]{display:none!important}
+</style>
+<script type="module" id="gameroad-controlled-character-4p-live-r8">
+import {
+  createFourParticipantControlledCharacterMotionState,
+  applyFourParticipantControlledCharacterEvent,
+  projectFourParticipantControlledCharacterMotion,
+} from './battle-controlled-character-4p-motion-director.mjs';
+import './battle-board-naki-4p-visual-binding.mjs';
+
+let directorState = null;
+let activeMatchId = null;
+let revision = 0;
+
+function readSource() {
+  const reader = globalThis.__GAMEROAD_CONTROLLED_CHARACTER_4P_SOURCE__;
+  if (typeof reader !== 'function') return null;
+  const source = reader();
+  if (!source || !Array.isArray(source.participants) || source.participants.length !== 4) return null;
+  return source;
+}
+
+function resetDirector(source) {
+  directorState = createFourParticipantControlledCharacterMotionState({ participants: source.participants });
+  activeMatchId = source.matchId;
+  revision = 0;
+}
+
+function ensureDirector(source) {
+  if (!source) {
+    directorState = null;
+    activeMatchId = null;
+    revision = 0;
+    return false;
+  }
+  const identityChanged = directorState && source.participants.some((row) => (
+    directorState.stateByParticipant?.[row.participantId]?.characterId !== row.characterId
+  ));
+  if (!directorState || activeMatchId !== source.matchId || identityChanged) resetDirector(source);
+  return true;
+}
+
+function projectCurrent() {
+  const source = readSource();
+  if (!ensureDirector(source)) return null;
+  for (const row of source.participants) {
+    const current = directorState.stateByParticipant?.[row.participantId];
+    if (current && current.positionKey !== row.positionKey) {
+      revision += 1;
+      const reconciled = applyFourParticipantControlledCharacterEvent(directorState, row.participantId, {
+        type: 'RECONNECT',
+        revision,
+        controlGeneration: 0,
+        positionKey: row.positionKey,
+      });
+      directorState = reconciled.state;
+    }
+  }
+  return projectFourParticipantControlledCharacterMotion(directorState, {
+    reducedMotion: source.reducedMotion,
+    lowPerformance: source.lowPerformance,
+  });
+}
+
+function syncVisuals() {
+  const projection = projectCurrent();
+  const binding = globalThis.__GAMEROAD_CONTROLLED_CHARACTER_4P_BOARD_VISUAL_BINDING__;
+  if (binding && typeof binding.applyProjection === 'function') binding.applyProjection(projection);
+  return projection;
+}
+
+globalThis.__GAMEROAD_CONTROLLED_CHARACTER_4P_PROJECTION__ = projectCurrent;
+globalThis.__GAMEROAD_CONTROLLED_CHARACTER_4P_EVENT__ = (participantId, event = {}) => {
+  const source = readSource();
+  if (!ensureDirector(source) || !directorState.stateByParticipant?.[participantId]) {
+    return Object.freeze({ accepted: false, reason: 'FOUR_PARTICIPANT_SOURCE_UNAVAILABLE' });
+  }
+  revision += 1;
+  const result = applyFourParticipantControlledCharacterEvent(directorState, participantId, {
+    ...event,
+    revision,
+    controlGeneration: 0,
+  });
+  directorState = result.state;
+  syncVisuals();
+  return result;
+};
+globalThis.__GAMEROAD_CONTROLLED_CHARACTER_4P_SYNC__ = syncVisuals;
+queueMicrotask(syncVisuals);
 </script>
 <script type="module" src="./profile-presentation-runtime-mount.mjs"></script>
 </body></html>

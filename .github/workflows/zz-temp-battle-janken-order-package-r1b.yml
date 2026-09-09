@@ -1,0 +1,44 @@
+name: TEMP Battle janken order package R1B
+
+on:
+  push:
+    branches:
+      - sol/battle-janken-order-package-r1b-20260909
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-janken-order-package-r1b-20260909
+          fetch-depth: 0
+      - name: Apply exact processing-order package patch
+        run: python3 tools/temp-battle-janken-order-package-r1b.py
+      - name: Verify processing-order package entries
+        run: |
+          for f in \
+            browser/battle-janken-order-live-adapter.mjs \
+            browser/battle-janken-order-chain-presentation-core.mjs \
+            browser/battle-janken-order-motion-core.mjs \
+            browser/battle-action-order-presentation-core.mjs; do
+            test "$(grep -Fc "source: '$f'" deploy/cloudflare/scripts/build.mjs)" -eq 1
+          done
+      - name: Run Cloudflare build contract tests
+        run: node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Cleanup transient control files
+        run: |
+          rm -f .github/workflows/zz-temp-battle-janken-order-package-r1b.yml
+          rm -f tools/temp-battle-janken-order-package-r1b.py
+          rm -f data/preaction-authorizations/BATTLE-JANKEN-ORDER-PACKAGE-R1B-20260909T1749-SOL-RE-Q6M4P1.json
+      - name: Commit verified durable diff
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add deploy/cloudflare/scripts/build.mjs .github/workflows/zz-temp-battle-janken-order-package-r1b.yml tools/temp-battle-janken-order-package-r1b.py data/preaction-authorizations/BATTLE-JANKEN-ORDER-PACKAGE-R1B-20260909T1749-SOL-RE-Q6M4P1.json
+          git commit -m 'Battle: package processing-order chain R1B'
+          git push origin HEAD:sol/battle-janken-order-package-r1b-20260909

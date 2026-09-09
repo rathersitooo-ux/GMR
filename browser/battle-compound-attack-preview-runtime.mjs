@@ -1,8 +1,9 @@
+import { projectBattleJankenCompoundAttackPreview } from './battle-janken-compound-attack-package-core.mjs';
+
 const PREVIEW_SCHEMA = 'gameroad.battle-compound-attack-preview-runtime.v1';
 const STYLE_ID = 'gameroad-battle-compound-attack-preview-r1-style';
 const CUE_ATTR = 'data-battle-compound-preview-cue';
 const TARGET_ATTR = 'data-compound-preview-target';
-const ACTIVE_ATTR = 'data-compound-preview-active';
 const SHIELD_SLOTS = Object.freeze(['L', 'C', 'R']);
 
 function readString(value) {
@@ -89,23 +90,13 @@ function createCue(document, shell) {
 }
 
 export function normalizeCompoundAttackPreviewPackage(value) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  const jankenHand = readString(value.jankenHand);
-  const cardId = readString(value.cardId);
-  const route = readString(value.route);
-  const direction = readString(value.direction);
-  const opponentId = readString(value.opponentId);
-  const shieldLane = readString(value.shieldLane).toUpperCase();
-  if (!jankenHand || !cardId || !opponentId || !SHIELD_SLOTS.includes(shieldLane)) return null;
-  if (!route && !direction) return null;
-  return Object.freeze({
-    jankenHand,
-    cardId,
-    route: route || null,
-    direction: direction || null,
-    opponentId,
-    shieldLane
-  });
+  try {
+    const preview = projectBattleJankenCompoundAttackPreview(value);
+    if (!SHIELD_SLOTS.includes(preview.shieldLane)) return null;
+    return preview;
+  } catch {
+    return null;
+  }
 }
 
 export function mountBattleCompoundAttackPreview({ document = globalThis.document, battleScreenRuntime } = {}) {
@@ -124,7 +115,7 @@ export function mountBattleCompoundAttackPreview({ document = globalThis.documen
 
   function clearMarks() {
     setData(shell, 'compoundPreviewActive', null);
-    for (const key of ['compoundPreviewHand', 'compoundPreviewCardId', 'compoundPreviewRoute', 'compoundPreviewDirection', 'compoundPreviewOpponentId', 'compoundPreviewShieldLane']) {
+    for (const key of ['compoundPreviewHand', 'compoundPreviewCardId', 'compoundPreviewPath', 'compoundPreviewDirection', 'compoundPreviewRoadId', 'compoundPreviewBattleId', 'compoundPreviewOpponentId', 'compoundPreviewShieldLane', 'compoundPreviewShieldRef']) {
       setData(shell, key, null);
     }
     for (let index = 0; index < lanes.length; index += 1) {
@@ -148,15 +139,7 @@ export function mountBattleCompoundAttackPreview({ document = globalThis.documen
     return true;
   }
 
-  function render(packageValue) {
-    if (destroyed) return Object.freeze({ active: false, reason: 'destroyed', package: null });
-    const packageSnapshot = normalizeCompoundAttackPreviewPackage(packageValue);
-    clearMarks();
-    if (!packageSnapshot) {
-      currentPackage = null;
-      return Object.freeze({ active: false, reason: 'invalid_or_incomplete_package', package: null });
-    }
-
+  function projectNormalizedPreview(packageSnapshot) {
     const targetIndex = lanes.findIndex((lane) => readString(lane?.dataset?.participantId) === packageSnapshot.opponentId);
     if (targetIndex < 0) {
       currentPackage = null;
@@ -173,27 +156,48 @@ export function mountBattleCompoundAttackPreview({ document = globalThis.documen
     setData(shell, 'compoundPreviewActive', 'true');
     setData(shell, 'compoundPreviewHand', packageSnapshot.jankenHand);
     setData(shell, 'compoundPreviewCardId', packageSnapshot.cardId);
-    setData(shell, 'compoundPreviewRoute', packageSnapshot.route);
-    setData(shell, 'compoundPreviewDirection', packageSnapshot.direction);
+    setData(shell, 'compoundPreviewPath', JSON.stringify(packageSnapshot.route.path));
+    setData(shell, 'compoundPreviewDirection', packageSnapshot.route.direction);
+    setData(shell, 'compoundPreviewRoadId', packageSnapshot.route.roadId);
+    setData(shell, 'compoundPreviewBattleId', packageSnapshot.route.battleId);
     setData(shell, 'compoundPreviewOpponentId', packageSnapshot.opponentId);
     setData(shell, 'compoundPreviewShieldLane', packageSnapshot.shieldLane);
+    setData(shell, 'compoundPreviewShieldRef', packageSnapshot.shieldRef);
     setData(lanes[targetIndex], 'compoundPreviewTarget', 'true');
     setData(targetRail, 'compoundPreviewTarget', 'true');
     setData(targetLink, 'compoundPreviewTarget', 'true');
     setAttr(targetLink, 'aria-current', 'true');
 
     if (cue) {
-      const routeLabel = packageSnapshot.route || packageSnapshot.direction;
-      cue.textContent = `${packageSnapshot.jankenHand} / ${packageSnapshot.cardId} → ${packageSnapshot.opponentId} / Shield ${packageSnapshot.shieldLane} / 経路 ${routeLabel}`;
+      const routeBits = [
+        packageSnapshot.route.roadId ? `ROAD ${packageSnapshot.route.roadId}` : '',
+        packageSnapshot.route.direction || '',
+        `経路 ${packageSnapshot.route.path.length}点`
+      ].filter(Boolean);
+      cue.textContent = `${packageSnapshot.jankenHand} / ${packageSnapshot.cardId} → ${packageSnapshot.opponentId} / Shield ${packageSnapshot.shieldLane} / ${routeBits.join(' / ')}`;
+      cue.setAttribute?.('title', JSON.stringify(packageSnapshot.route.path));
       cue.hidden = false;
     }
 
-    return Object.freeze({ active: true, reason: 'caller_package_projected', package: packageSnapshot });
+    return Object.freeze({ active: true, reason: 'package_core_preview_projected', package: packageSnapshot });
+  }
+
+  function render(packageValue) {
+    if (destroyed) return Object.freeze({ active: false, reason: 'destroyed', package: null });
+    const packageSnapshot = normalizeCompoundAttackPreviewPackage(packageValue);
+    clearMarks();
+    if (!packageSnapshot) {
+      currentPackage = null;
+      return Object.freeze({ active: false, reason: 'invalid_or_incomplete_package', package: null });
+    }
+    return projectNormalizedPreview(packageSnapshot);
   }
 
   function refresh() {
     if (!currentPackage) return Object.freeze({ active: false, reason: 'no_current_package', package: null });
-    return render(currentPackage);
+    const packageSnapshot = currentPackage;
+    clearMarks();
+    return projectNormalizedPreview(packageSnapshot);
   }
 
   function destroy() {
@@ -211,7 +215,7 @@ export function mountBattleCompoundAttackPreview({ document = globalThis.documen
     gameplayAuthority: false,
     legalTargetRecompute: false,
     gameStateWrite: false,
-    targetSource: 'CALLER_SUPPLIED_COMPOUND_ATTACK_PACKAGE_ONLY',
+    targetSource: 'BATTLE_JANKEN_COMPOUND_ATTACK_PACKAGE_CORE_PREVIEW_ONLY',
     shieldSlots: SHIELD_SLOTS,
     style,
     cue,
@@ -226,14 +230,14 @@ export const BATTLE_COMPOUND_ATTACK_PREVIEW_RUNTIME = Object.freeze({
   schema: PREVIEW_SCHEMA,
   presentationOnly: true,
   authority: 'NONE',
-  packageAuthority: 'CALLER_SUPPLIED_COMPOUND_ATTACK_PACKAGE_ONLY',
+  packageAuthority: 'BATTLE_JANKEN_COMPOUND_ATTACK_PACKAGE_CORE_PREVIEW_ONLY',
   legalTargetRecompute: false,
   targetInference: false,
   gameStateWrite: false,
   invalidPackagePolicy: 'FAIL_CLOSED_CLEAR_ALL',
   opponentLookup: 'EXACT_PARTICIPANT_ID_ONLY',
   shieldLookup: 'EXACT_CALLER_SHIELD_L_C_R_ONLY',
-  routePresentation: 'OPAQUE_CALLER_TOKEN_PLUS_EXISTING_SHIELD_LINKED_ROAD_TRACK',
+  routePresentation: 'AUTHORITY_PATH_EXPOSED_UNCHANGED_PLUS_EXISTING_SHIELD_LINKED_ROAD_TRACK',
   productionHtmlMutationOwnedHere: false,
   jankenInputMutationOwnedHere: false
 });

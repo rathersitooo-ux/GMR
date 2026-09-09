@@ -1,5 +1,6 @@
 import {
   selectSaasunaBattleUtterance,
+  selectSaasunaFallback,
   SAASUNA_PARTNER_ID,
   SAASUNA_DIALOGUE_VERSION,
   SAASUNA_DIALOGUE_SOURCE_ID,
@@ -76,6 +77,33 @@ export function selectApprovedPartnerBattleUtterance({
   } catch {
     return null;
   }
+}
+
+
+export function selectApprovedPartnerIdleUtterance({ partnerId, seed = 'idle' } = {}) {
+  const source = resolveApprovedPartnerDialogueSource(partnerId);
+  if (!source || source.partnerId !== SAASUNA_PARTNER_ID) return null;
+  const stableSeed = exactId(seed) || 'idle';
+  let text;
+  try {
+    text = exactId(selectSaasunaFallback(stableSeed));
+  } catch {
+    return null;
+  }
+  if (!text) return null;
+  return Object.freeze({
+    partnerId: source.partnerId,
+    dialogueVersion: source.dialogueVersion,
+    sourceId: source.sourceId,
+    speechAct: source.battleSpeechAct,
+    triggerId: 'idle_readable',
+    text,
+    sourceState: source.sourceState,
+    presentationOnly: true,
+    automaticCanonMutationAllowed: false,
+    automaticRelationshipMutationAllowed: false,
+    automaticGameMutationAllowed: false,
+  });
 }
 
 export function approvedPartnerDialogueDescriptor(partnerId) {

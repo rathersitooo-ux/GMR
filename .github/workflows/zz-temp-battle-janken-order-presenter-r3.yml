@@ -1,0 +1,67 @@
+name: Temp Battle Janken Order Presenter R3
+
+on:
+  push:
+    branches:
+      - sol/battle-janken-order-slidepad-presenter-r3-20260910
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-janken-order-slidepad-presenter-r3-20260910
+          fetch-depth: 0
+
+      - name: Verify scoped starting state
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git merge-base HEAD c0451f77d2195374fd6e8edcd51c3c8cadf0a772)" = "c0451f77d2195374fd6e8edcd51c3c8cadf0a772"
+          test -f data/preaction-authorizations/BATTLE-JANKEN-ORDER-SLIDEPAD-PRESENTER-R3-20260910T0250-SOL-RE-Q6M4P4.json
+          test -f tools/temp-battle-janken-order-presenter-r3.py
+          ! grep -q "BATTLE_JANKEN_ORDER_SLIDEPAD_PRESENTER_SCHEMA" browser/battle-janken-slidepad-runtime-mount.mjs
+
+      - name: Apply validated donor and classified tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/temp-battle-janken-order-presenter-r3.py
+
+      - name: Focused runtime verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check browser/battle-janken-slidepad-runtime-mount.mjs
+          node --test tests/battle-janken-slidepad-runtime-mount.test.mjs
+          git diff --check
+
+      - name: Remove transient authorization and writer files
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f data/preaction-authorizations/BATTLE-JANKEN-ORDER-SLIDEPAD-PRESENTER-R3-20260910T0250-SOL-RE-Q6M4P4.json
+          rm -f tools/temp-battle-janken-order-presenter-r3.py
+          rm -f .github/workflows/zz-temp-battle-janken-order-presenter-r3.yml
+          git add -A
+          mapfile -t changed < <(git diff --cached --name-only c0451f77d2195374fd6e8edcd51c3c8cadf0a772 | sort)
+          printf '%s\n' "${changed[@]}"
+          test "${#changed[@]}" -eq 2
+          test "${changed[0]}" = "browser/battle-janken-slidepad-runtime-mount.mjs"
+          test "${changed[1]}" = "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+          git diff --cached --check
+
+      - name: Commit exact product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Battle: じゃんけん処理順を分類済みSlidePad testで統合"
+          git push origin HEAD:sol/battle-janken-order-slidepad-presenter-r3-20260910

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PACKAGE-TRAIN-R3-20260910T0334-SOL-PKG-Q8N4M8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_SHARED_PUBLIC_PACKAGE_TRAIN_R3",
+  "acquireKey": "BATTLE-PACKAGE-TRAIN-R3-20260910T0334-SOL-PKG-Q8N4M8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_03910EC5_BUILD_OMITS_RECOVERY4_DEPENDENCY_CLOSURE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "READ_ONLY_IMPORT_CLOSURE_RECOVERY_SURFACE_ADAPTER_CORE_VERIFIED",
+  "proceedToken": "PROCEED|BATTLE-PACKAGE-TRAIN-R3-20260910T0334-SOL-PKG-Q8N4M8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-recovery-public-package|build-only|active-lease",
+  "authorizationBaseSha": "03910ec5c228281563f8b4d71a4d59c135ec5316",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_SHARED_PUBLIC_PACKAGE_TRAIN_R3",
+  "leaseAcquireKey": "BATTLE-PACKAGE-TRAIN-R3-20260910T0334-SOL-PKG-Q8N4M8",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:34 JST",
+  "leaseUntilJst": "2026-09-10 04:34 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A891:L891",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-shared-package-train-r3-20260910; deploy/cloudflare/scripts/build.mjs; transient .github/workflows/zz-temp-battle-shared-package-r3.yml; transient tools/temp-battle-shared-package-r3.py; own data/preaction-authorizations/BATTLE-PACKAGE-TRAIN-R3-20260910T0334-SOL-PKG-Q8N4M8.json only. Existing merged recovery modules and deploy/cloudflare/tests/build.test.mjs READ_ONLY. browser/GAMEROAD.html, battle-screen, SlidePad, camera, gameplay/rules/target/movement/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_EXISTING_RECOVERY_DEPENDENCY_CLOSURE_PUBLIC_PACKAGE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MERGED_RECOVERY_COMPONENTS_EXIST_BUILD_ARTIFACT_SPECS_OMIT_EXACT_CLOSURE",
+  "solutionSearchEvidence": [
+    "Current main already contains battle-2v2-reconnect-core.mjs, battle-recovery-presentation-core.mjs, battle-recovery-runtime-surface.mjs and battle-recovery-live-adapter.mjs.",
+    "The runtime surface imports only the existing recovery presentation core.",
+    "The live adapter imports only the existing 2v2 reconnect core and recovery presentation core.",
+    "Fresh current Cloudflare ARTIFACT_SPECS contains none of the four recovery module names.",
+    "This slice adds only existing Browser modules to the public package and does not mutate HTML, gameplay, target, legality, movement, save, economy or network authority."
+  ],
+  "scope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-shared-package-r3.yml",
+    "tools/temp-battle-shared-package-r3.py"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-shared-package-r3.yml",
+    "tools/temp-battle-shared-package-r3.py"
+  ]
+}

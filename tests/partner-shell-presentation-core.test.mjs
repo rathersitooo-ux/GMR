@@ -11,7 +11,7 @@ const roster = [
   { partnerId: 'partner.other', displayName: 'Other' },
 ];
 
-const expectedHubIds = ['detail', 'list', 'formation', 'strategy', 'conversation', 'dialogue_feedback', 'tea'];
+const expectedHubIds = ['detail', 'list', 'costume', 'formation', 'strategy', 'conversation', 'dialogue_feedback', 'tea'];
 
 test('hub exposes concrete current Partner entries only', () => {
   const view = buildPartnerShellView({ activePartnerId: 'partner.saasuna', roster });
@@ -32,6 +32,16 @@ test('every visible Partner hub button routes to its concrete surface', () => {
     assert.equal(targetView.view, target);
     assert.equal(targetView.availableActions.includes('BACK_HUB') || target === 'detail', true);
   }
+});
+
+test('costume is an explicit Partner hub surface and returns to hub without changing partner', () => {
+  assert.equal(nextPartnerShellView('hub', 'OPEN_COSTUME'), 'costume');
+  const view = buildPartnerShellView({ activePartnerId: 'partner.saasuna', roster, view: 'costume' });
+  assert.equal(view.view, 'costume');
+  assert.equal(view.viewTitle, '着せ替え');
+  assert.equal(view.activePartnerId, 'partner.saasuna');
+  assert.deepEqual(view.availableActions, ['BACK_HUB']);
+  assert.equal(nextPartnerShellView('costume', 'BACK_HUB'), 'hub');
 });
 
 test('dialogue feedback surface only projects caller-provided post-battle line and versions', () => {

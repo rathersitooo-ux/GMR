@@ -1,0 +1,279 @@
+name: temp battle four public cards r1
+
+on:
+  push:
+    branches:
+      - sol/battle-four-public-cards-r1-20260910
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.head_commit.message != 'battle four public cards R1 product delta'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-four-public-cards-r1-20260910
+          fetch-depth: 0
+
+      - name: Apply four-player public-card presentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              s = p.read_text(encoding='utf-8')
+              if s.count(old) != 1:
+                  raise SystemExit(f'{path}: expected one anchor, found {s.count(old)}')
+              p.write_text(s.replace(old, new, 1), encoding='utf-8')
+
+          core = 'browser/battle-screen-presentation-core.mjs'
+          runtime = 'browser/battle-screen-runtime-mount.mjs'
+          core_test = 'tests/battle-screen-presentation-core.test.mjs'
+          runtime_test = 'tests/battle-screen-runtime-mount.test.mjs'
+
+          replace_once(core,
+              "const COMPOUND_ATTACK_SCHEMA = 'gameroad.battle-janken-compound-attack-package.v1';\n",
+              "const COMPOUND_ATTACK_SCHEMA = 'gameroad.battle-janken-compound-attack-package.v1';\nconst FOUR_PUBLIC_CARD_SCHEMA = 'gameroad.battle-four-public-card-state.v1';\n")
+
+          public_projector = r'''export function projectBattleFourPublicCardState({ participants, publicCards } = {}) {
+            const normalizedParticipants = normalizeParticipants(participants);
+            const participantIds = new Set(normalizedParticipants.map(row => row.id));
+            if (!Array.isArray(publicCards) || publicCards.length !== 4) {
+              throw new TypeError('BATTLE_SCREEN_PUBLIC_CARDS_REQUIRE_FOUR');
+            }
+            const byPlayer = new Map();
+            for (const raw of publicCards) {
+              if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+                throw new TypeError('BATTLE_SCREEN_PUBLIC_CARD_INVALID');
+              }
+              const playerId = nonEmptyString(raw.playerId, 'BATTLE_SCREEN_PUBLIC_CARD_PLAYER_INVALID');
+              if (!participantIds.has(playerId)) throw new TypeError(`BATTLE_SCREEN_PUBLIC_CARD_PLAYER_UNKNOWN:${playerId}`);
+              if (byPlayer.has(playerId)) throw new TypeError(`BATTLE_SCREEN_PUBLIC_CARD_PLAYER_DUPLICATE:${playerId}`);
+              const cardId = nonEmptyString(raw.cardId, 'BATTLE_SCREEN_PUBLIC_CARD_ID_INVALID');
+              let displayNumber = null;
+              if (raw.displayNumber != null) {
+                if (typeof raw.displayNumber === 'number' && Number.isFinite(raw.displayNumber)) {
+                  displayNumber = raw.displayNumber;
+                } else if (typeof raw.displayNumber === 'string' && raw.displayNumber.trim()) {
+                  displayNumber = raw.displayNumber.trim();
+                } else {
+                  throw new TypeError('BATTLE_SCREEN_PUBLIC_CARD_NUMBER_INVALID');
+                }
+              }
+              byPlayer.set(playerId, deepFreeze({
+                playerId,
+                cardId,
+                displayNumber,
+                hand: optionalString(raw.hand, 'BATTLE_SCREEN_PUBLIC_CARD_HAND_INVALID')
+              }));
+            }
+            const cards = normalizedParticipants.map(participant => {
+              const card = byPlayer.get(participant.id);
+              if (!card) throw new TypeError(`BATTLE_SCREEN_PUBLIC_CARD_PLAYER_MISSING:${participant.id}`);
+              return card;
+            });
+            return deepFreeze({
+              schema: FOUR_PUBLIC_CARD_SCHEMA,
+              presentationOnly: true,
+              authorityBoundary: 'caller_authoritative_public_cards_only',
+              gameplayAuthority: false,
+              gameStateWrite: false,
+              secretProjectionAuthority: false,
+              orderCalculation: false,
+              winnerCalculation: false,
+              targetCalculation: false,
+              playerCount: 4,
+              cards
+            });
+          }
+
+          '''.replace('          ', '')
+          replace_once(core, 'function normalizeAfterstate(rows, participantIds) {\n', public_projector + 'function normalizeAfterstate(rows, participantIds) {\n')
+
+          replace_once(core,
+              "  lowPerf = false,\n  actionOrder = null\n} = {}) {\n",
+              "  lowPerf = false,\n  actionOrder = null,\n  publicCards = null\n} = {}) {\n")
+          replace_once(core,
+              "  const boardReturn = normalizeBoardReturn(normalizedPlan, participantIds);\n  const normalizedAfterstate = normalizeAfterstate(persistentAfterstate, participantIds);\n",
+              "  const boardReturn = normalizeBoardReturn(normalizedPlan, participantIds);\n  const acceptedPlanPublicCards = (normalizedPlan?.kind === 'reveal' || normalizedPlan?.kind === 'compare4')\n    ? normalizedPlan.publicData?.publicCards ?? null\n    : null;\n  const publicCardSource = publicCards ?? acceptedPlanPublicCards;\n  const publicCardState = publicCardSource == null\n    ? null\n    : projectBattleFourPublicCardState({ participants: normalizedParticipants, publicCards: publicCardSource });\n  const publicCardByPlayer = new Map((publicCardState?.cards ?? []).map(card => [card.playerId, card]));\n  const normalizedAfterstate = normalizeAfterstate(persistentAfterstate, participantIds);\n")
+          replace_once(core,
+              "    role: roles.get(participant.id),\n    afterstate: afterstateByParticipant.get(participant.id)\n",
+              "    role: roles.get(participant.id),\n    publicCard: publicCardByPlayer.get(participant.id) ?? null,\n    afterstate: afterstateByParticipant.get(participant.id)\n")
+          replace_once(core,
+              "    focus: focusForPlan(normalizedPlan, boardReturn),\n    boardReturn,\n",
+              "    focus: focusForPlan(normalizedPlan, boardReturn),\n    publicCardState,\n    boardReturn,\n")
+
+          replace_once(core,
+              "  const conveyor = planBattleConveyor(events, { reducedMotion, lowPerf });\n  const models = conveyor.plans.map(plan => createBattleScreenModel({\n    participants,\n    plan,\n    persistentAfterstate,\n    returnIntent,\n    reducedMotion,\n    lowPerf,\n    actionOrder: actionOrderForEvent(actionOrderByEventId, plan.eventId)\n  }));\n",
+              "  const conveyor = planBattleConveyor(events, { reducedMotion, lowPerf });\n  let carriedPublicCards = null;\n  const models = conveyor.plans.map(plan => {\n    if ((plan.kind === 'reveal' || plan.kind === 'compare4')\n      && Object.prototype.hasOwnProperty.call(plan.publicData ?? {}, 'publicCards')) {\n      carriedPublicCards = plan.publicData.publicCards;\n    }\n    return createBattleScreenModel({\n      participants,\n      plan,\n      persistentAfterstate,\n      returnIntent,\n      reducedMotion,\n      lowPerf,\n      publicCards: carriedPublicCards,\n      actionOrder: actionOrderForEvent(actionOrderByEventId, plan.eventId)\n    });\n  });\n")
+
+          audit_anchor = "  if (model?.fourLaneCausalStructure !== true || !Array.isArray(model?.lanes) || model.lanes.length !== 4) defects.push('FOUR_LANES');\n"
+          audit_add = audit_anchor + "  if (model?.publicCardState != null) {\n    const publicState = model.publicCardState;\n    if (publicState.schema !== FOUR_PUBLIC_CARD_SCHEMA || publicState.presentationOnly !== true\n      || publicState.gameplayAuthority !== false || publicState.gameStateWrite !== false\n      || publicState.secretProjectionAuthority !== false || publicState.playerCount !== 4\n      || !Array.isArray(publicState.cards) || publicState.cards.length !== 4) defects.push('FOUR_PUBLIC_CARDS');\n    if (publicState.orderCalculation !== false || publicState.winnerCalculation !== false || publicState.targetCalculation !== false) defects.push('FOUR_PUBLIC_CARD_RECALCULATION');\n    const cardByPlayer = new Map((publicState.cards ?? []).map(card => [card.playerId, card]));\n    if (Array.isArray(model?.lanes) && model.lanes.some(lane => lane.publicCard !== (cardByPlayer.get(lane.id) ?? null))) defects.push('FOUR_PUBLIC_CARD_LANE_BINDING');\n  } else if (Array.isArray(model?.lanes) && model.lanes.some(lane => lane.publicCard != null)) {\n    defects.push('FOUR_PUBLIC_CARD_GHOST');\n  }\n"
+          replace_once(core, audit_anchor, audit_add)
+          replace_once(core,
+              "  laneCount: 4,\n  planOwner: 'CALLER',\n",
+              "  laneCount: 4,\n  fourPublicCardSchema: FOUR_PUBLIC_CARD_SCHEMA,\n  fourPublicCardAuthority: 'CALLER_AUTHORITATIVE_ACCEPTED_PUBLIC_CARDS_ONLY',\n  planOwner: 'CALLER',\n")
+
+          css_anchor = '[${SHELL_ATTR}=\"1\"] .grBattleLaneIdentity{min-width:0}.grBattleLaneIdentity b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(13px,1.25vw,16px);letter-spacing:.04em}.grBattleLaneIdentity small{display:block;margin-top:2px;opacity:.72;font-size:clamp(11px,.9vw,13px)}\\n'
+          css_add = css_anchor + '[${SHELL_ATTR}=\"1\"] [${LANE_ATTR}][data-public-card-visible=\"true\"] .grBattleLaneIdentity{padding-right:clamp(30px,4.8vw,46px)}\\n[${SHELL_ATTR}=\"1\"] .grBattleLanePublicCard{position:absolute;z-index:3;right:5px;top:5px;width:clamp(28px,4.1vw,42px);height:clamp(38px,5.6vw,56px);display:block;overflow:hidden;border-radius:6px;border:1px solid rgba(255,236,167,.72);background:linear-gradient(160deg,rgba(242,246,220,.96),rgba(70,103,88,.94) 48%,rgba(13,42,37,.98));box-shadow:0 5px 12px rgba(0,0,0,.30),0 0 0 1px rgba(255,255,255,.08);pointer-events:none}\\n[${SHELL_ATTR}=\"1\"] .grBattleLanePublicCard[hidden]{display:none!important}\\n[${SHELL_ATTR}=\"1\"] .grBattleLanePublicCardArt{display:block;width:100%;height:100%;object-fit:cover}\\n[${SHELL_ATTR}=\"1\"] .grBattleLanePublicCardFallback{position:absolute;inset:0;display:grid;place-items:center;padding:2px;text-align:center;font-size:clamp(7px,.65vw,9px);font-weight:900;line-height:1.05;overflow:hidden}\\n[${SHELL_ATTR}=\"1\"] .grBattleLanePublicCardNumber,[${SHELL_ATTR}=\"1\"] .grBattleLanePublicCardHand{position:absolute;z-index:2;min-width:13px;padding:1px 2px;border-radius:4px;background:rgba(3,17,16,.88);color:#fff6c9;font-size:clamp(7px,.62vw,9px);font-weight:1000;line-height:1.15;text-align:center}\\n[${SHELL_ATTR}=\"1\"] .grBattleLanePublicCardNumber{left:2px;top:2px}.grBattleLanePublicCardHand{right:2px;bottom:2px}\\n'
+          replace_once(runtime, css_anchor, css_add)
+          portrait_anchor = '[${SHELL_ATTR}=\"1\"] .grBattleLaneIdentity{grid-column:1!important;grid-row:1!important}\\n'
+          portrait_add = portrait_anchor + '[${SHELL_ATTR}=\"1\"] [${LANE_ATTR}][data-public-card-visible=\"true\"] .grBattleLaneIdentity{padding-right:25px!important}\\n[${SHELL_ATTR}=\"1\"] .grBattleLanePublicCard{right:3px!important;top:3px!important;width:22px!important;height:30px!important;border-radius:4px!important}\\n[${SHELL_ATTR}=\"1\"] .grBattleLanePublicCardNumber,[${SHELL_ATTR}=\"1\"] .grBattleLanePublicCardHand{font-size:6px!important;min-width:9px!important;padding:0 1px!important}\\n'
+          replace_once(runtime, portrait_anchor, portrait_add)
+
+          replace_once(runtime,
+              "  const afterstate = createNode(document, 'div', 'grBattleLaneAfterstate');\n  lane.appendChild(identity);\n  lane.appendChild(role);\n  lane.appendChild(afterstate);\n  return { lane, name, team, shieldRail, role, afterstate };\n",
+              "  const afterstate = createNode(document, 'div', 'grBattleLaneAfterstate');\n  const publicCard = createNode(document, 'div', 'grBattleLanePublicCard');\n  publicCard.hidden = true;\n  publicCard.setAttribute?.('aria-hidden', 'true');\n  publicCard.dataset.presentationOnly = 'true';\n  publicCard.dataset.authority = 'accepted-public-model-only';\n  lane.appendChild(identity);\n  lane.appendChild(role);\n  lane.appendChild(afterstate);\n  lane.appendChild(publicCard);\n  return { lane, name, team, shieldRail, role, afterstate, publicCard };\n")
+
+          public_writer = r'''function writePublicLaneCard(document, cardNode, card) {
+            clearChildren(cardNode);
+            setData(cardNode, 'playerId', null);
+            setData(cardNode, 'cardId', null);
+            setData(cardNode, 'displayNumber', null);
+            setData(cardNode, 'hand', null);
+            setData(cardNode, 'artSource', null);
+            if (!card) {
+              cardNode.hidden = true;
+              cardNode.setAttribute?.('aria-hidden', 'true');
+              return null;
+            }
+            const handKey = typeof card.hand === 'string' ? card.hand.toLowerCase() : '';
+            const handLabel = LOAD_JANKEN_LABELS[handKey] ?? card.hand ?? '';
+            const numberLabel = card.displayNumber == null ? '' : String(card.displayNumber);
+            cardNode.hidden = false;
+            cardNode.setAttribute?.('aria-hidden', 'false');
+            cardNode.setAttribute?.('aria-label', `公開カード ${card.cardId}${numberLabel ? ` / ${numberLabel}` : ''}${handLabel ? ` / ${handLabel}` : ''}`);
+            setData(cardNode, 'playerId', card.playerId);
+            setData(cardNode, 'cardId', card.cardId);
+            setData(cardNode, 'displayNumber', numberLabel || null);
+            setData(cardNode, 'hand', card.hand ?? null);
+            const art = resolveViewerLocalPlayedCardArt(document, card.cardId);
+            if (art) {
+              const image = createNode(document, 'img', 'grBattleLanePublicCardArt');
+              image.src = art.src;
+              image.alt = '';
+              image.setAttribute?.('aria-hidden', 'true');
+              cardNode.appendChild(image);
+              setData(cardNode, 'artSource', art.source);
+            } else {
+              cardNode.appendChild(createNode(document, 'span', 'grBattleLanePublicCardFallback', card.cardId));
+            }
+            if (numberLabel) cardNode.appendChild(createNode(document, 'span', 'grBattleLanePublicCardNumber', numberLabel));
+            if (handLabel) cardNode.appendChild(createNode(document, 'span', 'grBattleLanePublicCardHand', handLabel));
+            return cardNode;
+          }
+
+          '''.replace('          ', '')
+          replace_once(runtime, 'function normalizeHudSnapshot(snapshot = {}) {\n', public_writer + 'function normalizeHudSnapshot(snapshot = {}) {\n')
+          replace_once(runtime,
+              "      view.name.textContent = lane.label;\n      view.team.textContent = lane.team ? `TEAM ${lane.team}` : '';\n      const playerRoleLabel = PLAYER_ROLE_LABELS[lane.role] || '';\n",
+              "      view.name.textContent = lane.label;\n      view.team.textContent = lane.team ? `TEAM ${lane.team}` : '';\n      setData(view.lane, 'publicCardVisible', lane.publicCard ? 'true' : null);\n      writePublicLaneCard(document, view.publicCard, lane.publicCard);\n      const playerRoleLabel = PLAYER_ROLE_LABELS[lane.role] || '';\n")
+          replace_once(runtime,
+              "    laneSurfaces: lanes.map(view => view.lane),\n    shieldRails: lanes.map(view => view.shieldRail),\n",
+              "    laneSurfaces: lanes.map(view => view.lane),\n    publicCardSurfaces: lanes.map(view => view.publicCard),\n    shieldRails: lanes.map(view => view.shieldRail),\n")
+
+          replace_once(core_test,
+              "  createBattleScreenModel,\n  projectAcceptedBattleEventsToScreen\n",
+              "  createBattleScreenModel,\n  projectAcceptedBattleEventsToScreen,\n  projectBattleFourPublicCardState\n")
+          core_test_block = r'''
+
+          const fourPublicCards = [
+            { playerId: 'P1', cardId: 'C-101', displayNumber: 5, hand: 'PAPER' },
+            { playerId: 'P2', cardId: 'C-202', displayNumber: 2, hand: 'ROCK' },
+            { playerId: 'P3', cardId: 'C-303', displayNumber: 9, hand: null },
+            { playerId: 'P4', cardId: 'C-404', displayNumber: '7', hand: 'SCISSORS' }
+          ];
+          const fourPublicState = projectBattleFourPublicCardState({ participants, publicCards: fourPublicCards });
+          assert.equal(fourPublicState.schema, 'gameroad.battle-four-public-card-state.v1');
+          assert.equal(fourPublicState.presentationOnly, true);
+          assert.equal(fourPublicState.gameplayAuthority, false);
+          assert.equal(fourPublicState.gameStateWrite, false);
+          assert.equal(fourPublicState.secretProjectionAuthority, false);
+          assert.equal(fourPublicState.orderCalculation, false);
+          assert.equal(fourPublicState.winnerCalculation, false);
+          assert.equal(fourPublicState.targetCalculation, false);
+          assert.deepEqual(fourPublicState.cards.map(card => card.playerId), ['P1', 'P2', 'P3', 'P4']);
+          assert.deepEqual(fourPublicState.cards.map(card => card.cardId), ['C-101', 'C-202', 'C-303', 'C-404']);
+
+          const fourPublicTimeline = projectAcceptedBattleEventsToScreen({
+            participants,
+            events: [
+              { accepted: true, eventId: 'public-r1', kind: 'reveal', publicData: { playerIds: ['P1', 'P2', 'P3', 'P4'], publicCards: fourPublicCards } },
+              { accepted: true, eventId: 'public-a1', kind: 'attack', publicData: { sourceId: 'P2', targetIds: ['P4'] } },
+              { accepted: true, eventId: 'public-c1', kind: 'compare4', publicData: { playerIds: ['P1', 'P2', 'P3', 'P4'], winnerIds: ['P2'] } }
+            ]
+          });
+          assert.equal(fourPublicTimeline.models.length, 3);
+          for (const model of fourPublicTimeline.models) {
+            assert.equal(model.publicCardState.schema, 'gameroad.battle-four-public-card-state.v1');
+            assert.deepEqual(model.lanes.map(lane => lane.publicCard?.playerId), ['P1', 'P2', 'P3', 'P4']);
+            assert.deepEqual(model.lanes.map(lane => lane.publicCard?.cardId), ['C-101', 'C-202', 'C-303', 'C-404']);
+            assert.equal(auditBattleScreenModel(model).ok, true);
+          }
+          assert.equal(fourPublicTimeline.models[1].focus.causeId, 'P2');
+          assert.deepEqual(fourPublicTimeline.models[1].focus.targetIds, ['P4']);
+          assert.deepEqual(fourPublicTimeline.models[2].focus.winnerIds, ['P2']);
+
+          assert.throws(
+            () => projectBattleFourPublicCardState({ participants, publicCards: fourPublicCards.slice(0, 3) }),
+            /PUBLIC_CARDS_REQUIRE_FOUR/
+          );
+          assert.throws(
+            () => projectBattleFourPublicCardState({ participants, publicCards: [...fourPublicCards.slice(0, 3), { ...fourPublicCards[3], playerId: 'PX' }] }),
+            /PUBLIC_CARD_PLAYER_UNKNOWN:PX/
+          );
+          assert.throws(
+            () => projectBattleFourPublicCardState({ participants, publicCards: [...fourPublicCards.slice(0, 3), { ...fourPublicCards[3], playerId: 'P3' }] }),
+            /PUBLIC_CARD_PLAYER_DUPLICATE:P3/
+          );
+          assert.equal(BATTLE_SCREEN_PRESENTATION.fourPublicCardSchema, 'gameroad.battle-four-public-card-state.v1');
+          assert.equal(BATTLE_SCREEN_PRESENTATION.fourPublicCardAuthority, 'CALLER_AUTHORITATIVE_ACCEPTED_PUBLIC_CARDS_ONLY');
+          '''.replace('          ', '')
+          replace_once(core_test, "const tampered = {\n", core_test_block + "\nconst tampered = {\n")
+
+          replace_once(runtime_test,
+              "assert.ok(runtimeStyle.textContent.includes('.grBattleHudPlayedCardArt'));\n",
+              "assert.ok(runtimeStyle.textContent.includes('.grBattleHudPlayedCardArt'));\nassert.ok(runtimeStyle.textContent.includes('.grBattleLanePublicCard'));\nassert.ok(runtimeStyle.textContent.includes('[data-public-card-visible'));\n")
+          replace_once(runtime_test,
+              "assert.deepEqual(roleSurfaces.map(node => node.textContent), ['', '', '', '']);\n\nconst attackPlan = {\n",
+              "assert.deepEqual(roleSurfaces.map(node => node.textContent), ['', '', '', '']);\nassert.equal(runtime.publicCardSurfaces.length, 4);\nassert.deepEqual(runtime.publicCardSurfaces.map(node => node.hidden), [true, true, true, true]);\n\nconst fourPublicCards = [\n  { playerId: 'P1', cardId: 'C1', displayNumber: 5, hand: 'PAPER' },\n  { playerId: 'P2', cardId: 'C2', displayNumber: 2, hand: 'ROCK' },\n  { playerId: 'P3', cardId: 'C3', displayNumber: 9, hand: null },\n  { playerId: 'P4', cardId: 'C4', displayNumber: 7, hand: 'SCISSORS' }\n];\nconst revealPublicPlan = {\n  presentationOnly: true,\n  authorityBoundary: 'accepted_public_event_only',\n  eventId: 'reveal-public-1',\n  kind: 'reveal',\n  transition: 'ENTRY',\n  groupTargets: [],\n  importance: 'ambient',\n  publicData: { playerIds: ['P1', 'P2', 'P3', 'P4'], publicCards: fourPublicCards }\n};\nconst revealPublic = createBattleScreenModel({ participants, plan: revealPublicPlan });\nruntime.render(revealPublic);\nassert.deepEqual(runtime.publicCardSurfaces.map(node => node.hidden), [false, false, false, false]);\nassert.deepEqual(runtime.publicCardSurfaces.map(node => node.dataset.playerId), ['P1', 'P2', 'P3', 'P4']);\nassert.deepEqual(runtime.publicCardSurfaces.map(node => node.dataset.cardId), ['C1', 'C2', 'C3', 'C4']);\nassert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.publicCardVisible), ['true', 'true', 'true', 'true']);\nassert.equal(runtime.publicCardSurfaces[0].dataset.artSource, 'viewer_local');\nassert.equal(runtime.publicCardSurfaces[0].children[0].tagName, 'IMG');\nassert.equal(runtime.publicCardSurfaces[0].children[0].src, 'blob:gameroad-local-c1');\nassert.equal(runtime.publicCardSurfaces[0].dataset.displayNumber, '5');\nassert.equal(runtime.publicCardSurfaces[0].dataset.hand, 'PAPER');\nassert.equal(runtime.publicCardSurfaces[0].getAttribute('aria-label'), '公開カード C1 / 5 / パー');\nassert.equal(runtime.publicCardSurfaces[1].children[0].className, 'grBattleLanePublicCardFallback');\nassert.equal(runtime.publicCardSurfaces[1].children[0].textContent, 'C2');\nassert.equal(runtime.publicCardSurfaces[1].getAttribute('aria-label'), '公開カード C2 / 2 / グー');\n\nconst attackPlan = {\n")
+
+          for path in (core, runtime, core_test, runtime_test):
+              if 'BATTLE_FOUR_PUBLIC_CARDS_R1_BEGIN' in Path(path).read_text(encoding='utf-8'):
+                  raise SystemExit(f'{path}: unexpected duplicate marker')
+          PY
+
+          mapfile -t changed < <(git diff --name-only | sort)
+          printf '%s\n' "${changed[@]}"
+          test "${#changed[@]}" -eq 4
+          test "${changed[0]}" = 'browser/battle-screen-presentation-core.mjs'
+          test "${changed[1]}" = 'browser/battle-screen-runtime-mount.mjs'
+          test "${changed[2]}" = 'tests/battle-screen-presentation-core.test.mjs'
+          test "${changed[3]}" = 'tests/battle-screen-runtime-mount.test.mjs'
+
+      - name: Classified Battle screen tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check browser/battle-screen-presentation-core.mjs
+          node --check browser/battle-screen-runtime-mount.mjs
+          node --test tests/battle-screen-presentation-core.test.mjs tests/battle-screen-runtime-mount.test.mjs
+          git diff --check
+
+      - name: Commit product delta only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add browser/battle-screen-presentation-core.mjs browser/battle-screen-runtime-mount.mjs tests/battle-screen-presentation-core.test.mjs tests/battle-screen-runtime-mount.test.mjs
+          git diff --cached --check
+          git diff --cached --quiet && exit 1 || true
+          git commit -m 'battle four public cards R1 product delta'
+          git push origin HEAD:sol/battle-four-public-cards-r1-20260910

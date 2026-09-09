@@ -5,15 +5,41 @@ import fs from 'node:fs';
 import {
   STUDY_MANUAL_SMOKE_ACTION_POLICY,
   createStudyPanelOutsideDismissHandler,
+  createStudyRunCartridgeCheckpointStore,
   createStudyRunConsumerController,
 } from '../browser/study-run-runtime-mount.mjs';
 import { STUDY_MANUAL_PROBLEM_PACK } from '../browser/study-manual-problem-pack.mjs';
+import { createCartridgeStorage, createMemoryCartridgeStorageBackend } from '../browser/cartridge-storage-core.mjs';
 
 const singleQuestionPack = (index) => ({
   ...STUDY_MANUAL_PROBLEM_PACK,
   packId: `study.runtime.test.${index}`,
   questions: [STUDY_MANUAL_PROBLEM_PACK.questions[index]],
 });
+
+const studyStorageManifest = Object.freeze({
+  schemaVersion: 'gameroad.cartridge-manifest.v1',
+  id: 'study.runtime.progress',
+  version: '1.0.0',
+  hostApi: 'gameroad.cartridge-host.v1',
+  entry: Object.freeze({ kind: 'module', ref: 'study-run-runtime-mount.mjs' }),
+  capabilities: Object.freeze(['storage.local']),
+  payloadDigest: 'd'.repeat(64),
+});
+const studyStorageBroker = Object.freeze({ decide: () => Object.freeze({ allowed: true, reason: 'study-test' }) });
+
+function createFormalStudyCheckpointStore() {
+  const backend = createMemoryCartridgeStorageBackend();
+  const cartridgeStorage = createCartridgeStorage({
+    manifest: studyStorageManifest,
+    capabilityBroker: studyStorageBroker,
+    backend,
+  });
+  return {
+    cartridgeStorage,
+    checkpointStore: createStudyRunCartridgeCheckpointStore({ cartridgeStorage }),
+  };
+}
 
 test('Study runtime starts from the problem pack and never creates defeat or loss state', () => {
   let nowMs = 1000;
@@ -194,5 +220,84 @@ test('Study resume checkpoint is refused mid-answer and rejects pack-version dri
   assert.throws(
     () => createStudyRunConsumerController({ pack: driftedPack, resumeCheckpoint: checkpoint }),
     /does not match session/,
+  );
+});
+
+
+test('Study stable checkpoints persist through the existing cartridge storage contract and reload automatically', () => {
+  let nowMs = 1000;
+  const { cartridgeStorage, checkpointStore } = createFormalStudyCheckpointStore();
+  const first = createStudyRunConsumerController({
+    now: () => nowMs,
+    createSessionId: () => 'study.runtime.session.cartridge.persist',
+    checkpointStore,
+  });
+  let view = first.start();
+  first.setActionKind('counter');
+
+  const stored = cartridgeStorage.get('study/resume/current');
+  assert.equal(stored.session.sessionId, 'study.runtime.session.cartridge.persist');
+  assert.equal(stored.actionKind, 'counter');
+  assert.equal(stored.persistenceAuthority, 'CALLER');
+  assert.equal(stored.storageBackendCreated, false);
+  assert.equal(JSON.stringify(stored).includes('acceptedAnswers'), false);
+  assert.equal(checkpointStore.authority, 'CARTRIDGE_STORAGE_CALLER_BACKEND');
+  assert.equal(checkpointStore.storageBackendCreated, false);
+
+  nowMs = 7000;
+  const resumed = createStudyRunConsumerController({
+    now: () => nowMs,
+    createSessionId: () => { throw new Error('new session id must not be requested while cartridge checkpoint exists'); },
+    checkpointStore,
+  });
+  view = resumed.getSnapshot();
+  assert.equal(view.session.sessionId, 'study.runtime.session.cartridge.persist');
+  assert.equal(view.actionKind, 'counter');
+  const correct = view.question.answerHand.find((card) => card.candidateId === 'c');
+  resumed.throwAnswer(correct.cardId);
+  view = resumed.resolve();
+  assert.equal(view.resolution.action.actionKind, 'counter');
+  assert.equal(view.resolution.action.timeMultiplier, 1.1);
+
+  resumed.advance();
+  const advanced = cartridgeStorage.get('study/resume/current');
+  assert.equal(advanced.session.questionIndex, 1);
+  assert.equal(advanced.questionStartedAtMs, 7000);
+});
+
+test('Study cartridge checkpoint commit fails closed when write readback does not match', () => {
+  let stored = null;
+  const corruptStorage = {
+    get() {
+      if (stored === null) return null;
+      return { ...stored, actionKind: stored.actionKind === 'attack' ? 'counter' : 'attack' };
+    },
+    set(_key, value) { stored = JSON.parse(JSON.stringify(value)); },
+    delete() { stored = null; return true; },
+  };
+  const checkpointStore = createStudyRunCartridgeCheckpointStore({ cartridgeStorage: corruptStorage });
+  const controller = createStudyRunConsumerController({
+    now: () => 1000,
+    createSessionId: () => 'study.runtime.session.readback.fail',
+    checkpointStore,
+  });
+  assert.throws(() => controller.start(), /CHECKPOINT_COMMIT_READBACK_MISMATCH/);
+});
+
+test('Study persistence bridge creates no browser storage backend and refuses competing resume sources', () => {
+  const { checkpointStore } = createFormalStudyCheckpointStore();
+  const source = fs.readFileSync(new URL('../browser/study-run-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.equal(source.includes('localStorage'), false);
+  assert.equal(checkpointStore.storageBackendCreated, false);
+
+  const seed = createStudyRunConsumerController({
+    now: () => 1000,
+    createSessionId: () => 'study.runtime.session.single.authority',
+  });
+  seed.start();
+  const checkpoint = seed.exportResumeCheckpoint();
+  assert.throws(
+    () => createStudyRunConsumerController({ resumeCheckpoint: checkpoint, checkpointStore }),
+    /MULTIPLE_RESUME_SOURCES_REFUSED/,
   );
 });

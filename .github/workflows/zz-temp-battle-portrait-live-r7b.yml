@@ -1,0 +1,158 @@
+name: TEMP Battle portrait live R7B surgical writer
+
+on:
+  push:
+    branches:
+      - sol/battle-portrait-live-r7-20260909
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply bounded portrait-only patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          SCREEN = Path('browser/battle-screen-runtime-mount.mjs')
+          SCREEN_TEST = Path('tests/battle-screen-runtime-mount.test.mjs')
+          JANKEN = Path('browser/battle-janken-slidepad-runtime-mount.mjs')
+          JANKEN_TEST = Path('tests/battle-janken-slidepad-runtime-mount.test.mjs')
+          MARKER = 'BATTLE_PORTRAIT_390X844_R7B'
+
+          screen_css = r'''
+          /* BATTLE_PORTRAIT_390X844_R7B: presentation-only exact portrait recomposition */
+          @media(max-width:430px) and (orientation:portrait){
+          [${SHELL_ATTR}="1"] .grBattleScreenTop{height:56px!important;padding:4px 6px!important;gap:4px!important}
+          [${SHELL_ATTR}="1"] [${CURRENT_ACTION_ATTR}]{top:auto!important;bottom:248px!important;left:8px!important;right:8px!important;transform:none!important;max-width:none!important;min-height:44px!important;display:flex!important;align-items:center!important;justify-content:center!important;white-space:normal!important;padding:6px 9px!important}
+          [${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:56px!important;right:8px!important;bottom:auto!important;left:8px!important;height:52px!important;gap:4px!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-template-rows:minmax(0,1fr)!important}
+          [${SHELL_ATTR}="1"] [${GRID_ATTR}]::before{display:none!important}
+          [${SHELL_ATTR}="1"] [${LANE_ATTR}]{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto!important;column-gap:0!important;row-gap:1px!important;padding:3px!important;transform:none!important;min-height:0!important}
+          [${SHELL_ATTR}="1"] .grBattleLaneIdentity{grid-column:1!important;grid-row:1!important}
+          [${SHELL_ATTR}="1"] .grBattleLaneRole,[${SHELL_ATTR}="1"] .grBattleLaneAfterstate{display:none!important}
+          [${SHELL_ATTR}="1"] #battleResolution{left:8px!important;right:8px!important;bottom:12px!important;transform:none!important;max-width:none!important}
+          [${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}]{display:none!important}
+          }
+          '''.strip()
+
+          janken_css = r'''
+          /* BATTLE_PORTRAIT_390X844_R7B: right-thumb family; optional row follows same dock */
+          @media(max-width:430px) and (orientation:portrait){
+          [${HOST_ATTR}="1"]{right:max(12px,env(safe-area-inset-right))!important;bottom:max(12px,env(safe-area-inset-bottom))!important}
+          section[data-screen="battle"] [${BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR}="1"]{right:176px!important;left:auto!important;bottom:max(12px,env(safe-area-inset-bottom))!important;max-width:min(164px,42vw)!important;transform-origin:right bottom!important}
+          }
+          '''.strip()
+
+          def inject_css(path: Path, function_anchor: str, close_needle: str, css: str):
+              text = path.read_text()
+              if MARKER in text:
+                  raise SystemExit(f'duplicate marker in {path}')
+              start = text.find(function_anchor)
+              if start < 0:
+                  raise SystemExit(f'missing anchor in {path}: {function_anchor}')
+              close = text.find(close_needle, start)
+              if close < 0:
+                  raise SystemExit(f'missing style close in {path}')
+              text = text[:close] + css + '\n' + text[close:]
+              path.write_text(text)
+
+          inject_css(
+              SCREEN,
+              'function addStyle(document)',
+              '`;\n  document.head?.appendChild(style);',
+              screen_css,
+          )
+          inject_css(
+              JANKEN,
+              'function addStyle(documentRef)',
+              '`;\n  documentRef.head?.appendChild(style);',
+              janken_css,
+          )
+
+          screen_test = r'''
+
+          test('390x844 portrait recomposition stays in canonical screen CSS and preserves world authority', async () => {
+            const { readFile } = await import('node:fs/promises');
+            const source = await readFile(new URL('../browser/battle-screen-runtime-mount.mjs', import.meta.url), 'utf8');
+            assert.match(source, /BATTLE_PORTRAIT_390X844_R7B/);
+            assert.match(source, /@media\(max-width:430px\) and \(orientation:portrait\)/);
+            assert.match(source, /grBattleScreenTop\{height:56px!important/);
+            assert.match(source, /bottom:248px!important/);
+            assert.match(source, /height:52px!important/);
+            assert.match(source, /grid-template-columns:repeat\(4,minmax\(0,1fr\)\)!important/);
+            assert.match(source, /grBattleLaneRole,.*grBattleLaneAfterstate\{display:none!important\}/s);
+            assert.match(source, /#battleResolution\{left:8px!important;right:8px!important;bottom:12px!important/);
+            assert.match(source, /\[\$\{PROGRESS_GUIDE_ATTR\}\]\{display:none!important\}/);
+            assert.doesNotMatch(source, /battle-screen-runtime-mount-base\.mjs/);
+          });
+          '''
+
+          janken_test = r'''
+
+          test('390x844 portrait keeps SlidePad and optional roulette in the right-thumb dock', async () => {
+            const { readFile } = await import('node:fs/promises');
+            const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+            assert.match(source, /BATTLE_PORTRAIT_390X844_R7B/);
+            assert.match(source, /@media\(max-width:430px\) and \(orientation:portrait\)/);
+            assert.match(source, /right:max\(12px,env\(safe-area-inset-right\)\)!important/);
+            assert.match(source, /bottom:max\(12px,env\(safe-area-inset-bottom\)\)!important/);
+            assert.match(source, /right:176px!important;left:auto!important/);
+            assert.match(source, /max-width:min\(164px,42vw\)!important/);
+            assert.match(source, /rouletteEnabled = false/);
+            assert.doesNotMatch(source, /battle-janken-slidepad-runtime-mount-base\.mjs/);
+          });
+          '''
+
+          for path, block in ((SCREEN_TEST, screen_test), (JANKEN_TEST, janken_test)):
+              text = path.read_text()
+              if MARKER in text:
+                  raise SystemExit(f'duplicate test marker in {path}')
+              path.write_text(text.rstrip() + block + '\n')
+          PY
+
+      - name: Enforce exact product scope
+        shell: bash
+        run: |
+          mapfile -t changed < <(git diff --name-only | sort)
+          printf '%s\n' "${changed[@]}"
+          expected=$(printf '%s\n' \
+            browser/battle-janken-slidepad-runtime-mount.mjs \
+            browser/battle-screen-runtime-mount.mjs \
+            tests/battle-janken-slidepad-runtime-mount.test.mjs \
+            tests/battle-screen-runtime-mount.test.mjs | sort)
+          actual=$(printf '%s\n' "${changed[@]}")
+          test "$actual" = "$expected"
+          git diff --check
+          ! git diff -- browser/GAMEROAD.html deploy/cloudflare/scripts/build.mjs | grep -q .
+
+      - name: Check runtime syntax
+        run: |
+          node --check browser/battle-screen-runtime-mount.mjs
+          node --check browser/battle-janken-slidepad-runtime-mount.mjs
+
+      - name: Run focused Battle portrait tests
+        run: node --test tests/battle-screen-runtime-mount.test.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs
+
+      - name: Commit bounded product diff
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            browser/battle-screen-runtime-mount.mjs \
+            tests/battle-screen-runtime-mount.test.mjs \
+            browser/battle-janken-slidepad-runtime-mount.mjs \
+            tests/battle-janken-slidepad-runtime-mount.test.mjs
+          git diff --cached --check
+          test "$(git diff --cached --name-only | wc -l)" -eq 4
+          git commit -m 'Battle: 390x844 portrait runtimeを既存mountへ適用'
+          git push origin HEAD:sol/battle-portrait-live-r7-20260909

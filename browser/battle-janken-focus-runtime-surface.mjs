@@ -62,6 +62,31 @@ function lockRows(preview) {
     <div class="grJankenFocusLockRow"><span>経路</span><strong>${escapeHtml(formatRoute(preview.route))}</strong></div>`;
 }
 
+function targetRailMarkup(state, busy) {
+  return `
+    <div class="grJankenTargetRail" role="group" aria-label="ロックオン対象切替">
+      ${state.choices.map((choice) => {
+        const focused = state.focusedHand === choice.jankenHand;
+        const preview = choice.preview;
+        const hand = HAND_LABEL[choice.jankenHand] ?? choice.jankenHand;
+        return `
+          <button type="button"
+            class="grJankenTargetChip${focused ? ' is-focused' : ''}"
+            data-gr-janken-focus-action="focus"
+            data-janken-hand="${choice.jankenHand}"
+            data-opponent-id="${escapeHtml(preview?.opponentId ?? '')}"
+            data-shield-lane="${escapeHtml(preview?.shieldLane ?? '')}"
+            aria-pressed="${focused ? 'true' : 'false'}"
+            aria-label="${escapeHtml(`${preview?.opponentId ?? '相手'} ${preview?.shieldLane ?? ''} ${hand}`)}"
+            ${busy ? 'disabled' : ''}>
+            <span class="grJankenTargetReticle" aria-hidden="true">◎</span>
+            <span class="grJankenTargetIdentity"><strong>${escapeHtml(preview?.opponentId ?? '—')}</strong><small>${escapeHtml(preview?.shieldLane ?? '—')} シールド</small></span>
+            <span class="grJankenTargetHand">${escapeHtml(hand)}</span>
+          </button>`;
+      }).join('')}
+    </div>`;
+}
+
 function choiceMarkup(choice, state, busy) {
   const focused = state.focusedHand === choice.jankenHand;
   return `
@@ -89,6 +114,16 @@ function installStyle(documentRef) {
 .grJankenFocusHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .grJankenFocusTitle{font-size:clamp(16px,2.4vw,24px);font-weight:900;line-height:1.1}
 .grJankenFocusSub{font-size:12px;font-weight:700;opacity:.68}
+.grJankenTargetRail{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 10px;padding:7px;border:1px solid rgba(16,19,25,.18);border-radius:18px;background:rgba(16,19,25,.045)}
+.grJankenTargetChip{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:7px;align-items:center;min-width:0;min-height:50px;border:2px solid transparent;border-radius:14px;background:rgba(255,255,255,.9);padding:6px 8px;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.grJankenTargetChip.is-focused{border-color:#101319;background:#fff;box-shadow:0 0 0 2px rgba(16,19,25,.11)}
+.grJankenTargetChip:disabled{cursor:default;opacity:.58}
+.grJankenTargetReticle{display:grid;place-items:center;width:26px;height:26px;border:2px solid currentColor;border-radius:50%;font-size:14px;font-weight:900;line-height:1}
+.grJankenTargetChip.is-focused .grJankenTargetReticle{outline:3px double rgba(16,19,25,.5);outline-offset:2px}
+.grJankenTargetIdentity{min-width:0;display:flex;flex-direction:column;line-height:1.08}
+.grJankenTargetIdentity strong{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grJankenTargetIdentity small{font-size:10px;font-weight:800;opacity:.62;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.grJankenTargetHand{font-size:12px;font-weight:900;white-space:nowrap}
 .grJankenFocusChoices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .grJankenFocusChoice{min-width:0;min-height:116px;border:2px solid rgba(16,19,25,.3);border-radius:18px;background:#fff;padding:10px;text-align:left;font:inherit;color:inherit;cursor:pointer}
 .grJankenFocusChoice.is-focused{border-color:#101319;box-shadow:0 0 0 2px rgba(16,19,25,.12)}
@@ -107,8 +142,8 @@ function installStyle(documentRef) {
 .grJankenLoadInfo{border:2px solid rgba(16,19,25,.18);border-radius:18px;background:#fff;padding:12px}
 .grJankenBoardPeekReturn{position:absolute;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));pointer-events:auto;min-height:48px;border:2px solid #101319;border-radius:999px;background:rgba(252,252,250,.96);padding:8px 16px;font:inherit;font-weight:900;color:inherit;box-shadow:0 8px 24px rgba(0,0,0,.18);cursor:pointer}
 .grJankenFocusError{margin-top:8px;border-radius:12px;background:rgba(16,19,25,.08);padding:8px 10px;font-size:12px;font-weight:800}
-@media (max-width:700px){.grJankenFocusPanel{padding:10px;border-radius:18px}.grJankenFocusChoices{gap:6px}.grJankenFocusChoice{min-height:96px;padding:7px;border-radius:14px}.grJankenFocusLockRow{grid-template-columns:42px minmax(0,1fr);font-size:10px}.grJankenFocusHand{font-size:16px}.grJankenLoadHero{grid-template-columns:96px minmax(0,1fr);gap:10px}.grJankenLoadCard{min-height:118px;font-size:15px}.grJankenFocusActions{margin-top:7px}}
-@media (max-width:460px){.grJankenFocusPanel{width:calc(100% - 16px);bottom:8px}.grJankenFocusChoices{grid-template-columns:1fr}.grJankenFocusChoice{min-height:74px}.grJankenFocusChoice .grJankenFocusLockRow{display:none}.grJankenLoadPanel{width:calc(100% - 16px)}.grJankenLoadHero{grid-template-columns:82px minmax(0,1fr)}.grJankenLoadCard{min-height:106px}}
+@media (max-width:700px){.grJankenFocusPanel{padding:10px;border-radius:18px}.grJankenTargetRail{gap:5px;padding:5px}.grJankenTargetChip{grid-template-columns:24px minmax(0,1fr);min-height:46px;padding:5px}.grJankenTargetReticle{width:22px;height:22px}.grJankenTargetHand{grid-column:2;font-size:10px}.grJankenFocusChoices{gap:6px}.grJankenFocusChoice{min-height:96px;padding:7px;border-radius:14px}.grJankenFocusLockRow{grid-template-columns:42px minmax(0,1fr);font-size:10px}.grJankenFocusHand{font-size:16px}.grJankenLoadHero{grid-template-columns:96px minmax(0,1fr);gap:10px}.grJankenLoadCard{min-height:118px;font-size:15px}.grJankenFocusActions{margin-top:7px}}
+@media (max-width:460px){.grJankenFocusPanel{width:calc(100% - 16px);bottom:8px}.grJankenTargetRail{grid-template-columns:1fr 1fr 1fr}.grJankenTargetChip{display:flex;justify-content:center;min-height:48px}.grJankenTargetIdentity{display:none}.grJankenTargetHand{font-size:11px}.grJankenFocusChoices{grid-template-columns:1fr}.grJankenFocusChoice{min-height:74px}.grJankenFocusChoice .grJankenFocusLockRow{display:none}.grJankenLoadPanel{width:calc(100% - 16px)}.grJankenLoadHero{grid-template-columns:82px minmax(0,1fr)}.grJankenLoadCard{min-height:106px}}
 @media (prefers-reduced-motion:reduce){.grJankenFocusSurface *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 `;
   documentRef.head.appendChild(style);
@@ -127,9 +162,10 @@ function renderJanken(state, { busy, errorText }) {
   return `
     <section class="grJankenFocusPanel" aria-label="じゃんけん攻撃選択">
       <div class="grJankenFocusHeader">
-        <div><div class="grJankenFocusTitle">じゃんけん攻撃</div><div class="grJankenFocusSub">3つの攻撃先を見比べて選択</div></div>
+        <div><div class="grJankenFocusTitle">じゃんけん攻撃</div><div class="grJankenFocusSub">ロックオン対象と3つの攻撃を見比べて選択</div></div>
         <button type="button" class="grJankenFocusAction" data-gr-janken-focus-action="peek" ${busy ? 'disabled' : ''}>盤面を見る</button>
       </div>
+      ${targetRailMarkup(state, busy)}
       <div class="grJankenFocusChoices">${state.choices.map((choice) => choiceMarkup(choice, state, busy)).join('')}</div>
       ${busy ? '<div class="grJankenFocusError">攻撃先を確認中…</div>' : errorText ? `<div class="grJankenFocusError">${escapeHtml(errorText)}</div>` : ''}
     </section>`;
@@ -140,7 +176,7 @@ function renderLoad(state, { busy, errorText }) {
   return `
     <section class="grJankenFocusPanel grJankenLoadPanel" role="dialog" aria-modal="false" aria-label="ロード確認">
       <div class="grJankenFocusHeader">
-        <div><div class="grJankenFocusTitle">ロード確認</div><div class="grJankenFocusSub">${escapeHtml(HAND_LABEL[state.focusedHand] ?? state.focusedHand)}</div></div>
+        <div><div class="grJankenFocusTitle">ロード確認</div><div class="grJankenFocusSub">${escapeHtml(HAND_LABEL[state.focusedHand] ?? state.focusedHand)}・ロックオン固定</div></div>
         <button type="button" class="grJankenFocusAction" data-gr-janken-focus-action="peek" ${busy ? 'disabled' : ''}>盤面を見る</button>
       </div>
       <div class="grJankenLoadHero">
@@ -462,6 +498,9 @@ export const BATTLE_JANKEN_FOCUS_RUNTIME_SURFACE_CONTRACT = Object.freeze({
   authority: 'NONE',
   source: 'EXISTING_FOCUS_PRESENTATION_PLUS_CALLER_SUPPLIED_EXISTING_LIVE_INPUT_STACK',
   exactThreeChoices: true,
+  authoritativeTargetRail: true,
+  targetRailSource: 'EXISTING_THREE_COMPOUND_PACKAGES_ONLY',
+  targetRailMayCreateTarget: false,
   visibleLockFields: Object.freeze(['cardId', 'opponentId', 'shieldLane', 'shieldRef', 'route']),
   boardPeekPreservesExistingPresentationFocus: true,
   loadFocusRequiresExistingVisiblePreview: true,

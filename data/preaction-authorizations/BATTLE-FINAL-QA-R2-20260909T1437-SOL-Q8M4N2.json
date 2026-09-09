@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-FINAL-QA-R2-20260909T1437-SOL-Q8M4N2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FINAL_QA_PUBLIC_HUMAN_R1",
+  "acquireKey": "BATTLE-FINAL-QA-R2-20260909T1437-SOL-Q8M4N2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BATTLE-W46-R2-EXISTING-BFI-CLASSIFIER-20260909T1437-JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R1-PR1368-PROVED-NEW-EXECUTABLE-PATHS-FAIL-CLOSED; R2-REUSES-EXISTING-CLASSIFIED-BFI-PATHS",
+  "proceedToken": "PROCEED|BATTLE-FINAL-QA-R2-20260909T1437-SOL-Q8M4N2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|user-explicit-workunit46|existing-bfi-only|product-read-only",
+  "authorizationBaseSha": "27b60fae85cae58622f33de62537bff485b33ec9",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_FINAL_QA_PUBLIC_HUMAN_R1",
+  "leaseAcquireKey": "BATTLE-FINAL-QA-R2-20260909T1437-SOL-Q8M4N2",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 14:37 JST",
+  "leaseUntilJst": "2026-09-09 15:37 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A658:L658",
+  "leaseExactMutableResources": "tests/browser-full-interaction.spec.mjs; .github/workflows/browser-full-interaction.yml; own transient data/preaction-authorizations/BATTLE-FINAL-QA-R2-20260909T1437-SOL-Q8M4N2.json only. browser/GAMEROAD.html, browser/battle-*.mjs, browser/new-base-*.mjs, gameplay/rules/save/economy/network READ_ONLY.",
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/browser-full-interaction.yml"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/browser-full-interaction.yml"
+  ]
+}

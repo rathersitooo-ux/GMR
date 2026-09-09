@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-FOCUS-INTEGRATION-PACKAGE-R1-20260910T0403-SOL-Q8N4M10",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_FOCUS_LIVE_INTEGRATION_PUBLIC_PACKAGE_R1",
+  "acquireKey": "BATTLE-FOCUS-INTEGRATION-PACKAGE-R1-20260910T0403-SOL-Q8N4M10",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_0F11_FOCUS_INTEGRATION_MERGED_BUILD_OMITS_EXACT_MODULE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "READ_ONLY_IMPORT_CLOSURE_INTEGRATION_TO_ALREADY_PACKAGED_FOCUS_AND_COMPOUND_MODULES",
+  "proceedToken": "PROCEED|BATTLE-FOCUS-INTEGRATION-PACKAGE-R1-20260910T0403-SOL-Q8N4M10|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|focus-integration-public-package|build-only|active-lease",
+  "authorizationBaseSha": "0f11e32b250ae9d35140f577247162305172ba7d",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_FOCUS_LIVE_INTEGRATION_PUBLIC_PACKAGE_R1",
+  "leaseAcquireKey": "BATTLE-FOCUS-INTEGRATION-PACKAGE-R1-20260910T0403-SOL-Q8N4M10",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 04:03 JST",
+  "leaseUntilJst": "2026-09-10 05:03 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-focus-integration-package-r1-20260910; deploy/cloudflare/scripts/build.mjs; transient .github/workflows/zz-temp-battle-focus-integration-package-r1.yml; transient tools/temp-battle-focus-integration-package-r1.py; own transient data/preaction-authorizations/BATTLE-FOCUS-INTEGRATION-PACKAGE-R1-20260910T0403-SOL-Q8N4M10.json only. READ_ONLY: browser/battle-janken-focus-live-integration.mjs and its existing imported dependencies; browser/GAMEROAD.html; SlidePad; battle-screen/gameplay/rules/target/legality/Shield/Hand3/save/economy/network.",
+  "solutionSignature": "BATTLE_EXISTING_FOCUS_LIVE_INTEGRATION_PUBLIC_PACKAGE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1485_MERGED_COMPOSER_EXISTS_BUILD_ARTIFACT_SPEC_OMITS_IT",
+  "solutionSearchEvidence": [
+    "Fresh main already contains browser/battle-janken-focus-live-integration.mjs from merged PR#1485.",
+    "The composer reuses the existing focus runtime surface, authority context, and compound live input stack rather than creating a second controller or target engine.",
+    "Fresh current Cloudflare ARTIFACT_SPECS includes the focus presentation/runtime/context modules but omits battle-janken-focus-live-integration.mjs itself.",
+    "Existing active HTML handoff owner remains separate; this slice changes only public packaging and transient bounded writer files."
+  ],
+  "scope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-focus-integration-package-r1.yml",
+    "tools/temp-battle-focus-integration-package-r1.py"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-focus-integration-package-r1.yml",
+    "tools/temp-battle-focus-integration-package-r1.py"
+  ]
+}

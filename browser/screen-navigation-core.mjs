@@ -1,4 +1,5 @@
 import {createTransitionDirector} from './ui-state-feedback-core.mjs';
+import {createBattleStartLiveHandoff, reduceBattleStartLiveHandoff, auditBattleStartLiveHandoff} from './battle-conveyor-presentation-core.mjs';
 
 export const SCREEN_NAVIGATION_REASON = Object.freeze({
   EMPTY_TARGET: 'EMPTY_TARGET',
@@ -231,6 +232,166 @@ function animationDuration(kind, spec) {
   return spec.feedbackMs;
 }
 
+const BATTLE_START_ROUTE_SOURCES = Object.freeze(new Set(['setup', 'friendroom']));
+function isBattleStartTransition(context) {
+  return context?.to === 'battle' && context?.reason !== 'back' && BATTLE_START_ROUTE_SOURCES.has(context?.from);
+}
+function battleStartSpec(context) {
+  return SCREEN_MOTION_PRESENTATION_SPEC[context.motionProfile] || SCREEN_MOTION_PRESENTATION_SPEC[MENU_TRANSITION_MOTION_PROFILE.NORMAL];
+}
+function makeBattleStartNode(documentSource, revision) {
+  const host = documentSource?.body || documentSource?.documentElement;
+  if (!host || typeof host.appendChild !== 'function' || typeof documentSource?.createElement !== 'function') return null;
+  const node = documentSource.createElement('div');
+  node.textContent = 'BATTLE START';
+  node.setAttribute?.('aria-hidden', 'true');
+  node.setAttribute?.('data-battle-start-presentation', 'true');
+  if (node.dataset) {
+    node.dataset.battleStartRevision = String(revision);
+    node.dataset.battleStartPhase = 'prewarm';
+  }
+  if (node.style) {
+    node.style.position = 'fixed';
+    node.style.inset = '0';
+    node.style.display = 'grid';
+    node.style.placeItems = 'center';
+    node.style.pointerEvents = 'none';
+    node.style.zIndex = '9999';
+    node.style.opacity = '0';
+    node.style.color = '#fff';
+    node.style.fontWeight = '900';
+    node.style.fontSize = 'clamp(2rem, 7vw, 5rem)';
+    node.style.letterSpacing = '.12em';
+    node.style.textAlign = 'center';
+    node.style.textShadow = '0 2px 18px rgba(0,0,0,.72)';
+  }
+  host.appendChild(node);
+  return node;
+}
+
+export function createBattleStartTransitionPresentationDriver({document: documentSource = globalThis.document, maxEvents = 24} = {}) {
+  const sessions = new Map();
+  const events = [];
+  const record = (event) => {
+    events.push(Object.freeze({...event}));
+    if (events.length > maxEvents) events.splice(0, events.length - maxEvents);
+  };
+
+  function finishRevision(revision, status = 'finished') {
+    const session = sessions.get(revision);
+    if (!session) return false;
+    sessions.delete(revision);
+    session.signal?.removeEventListener?.('abort', session.onAbort);
+    for (const animation of session.animations) animation.cancel?.();
+    session.animations.clear();
+    session.node?.remove?.();
+    record({revision, phase: 'CLEANUP', status, presentationOnly: true, gameStateWrite: false});
+    return true;
+  }
+
+  async function animate(session, kind, context) {
+    const node = session.node;
+    const spec = battleStartSpec(context);
+    const duration = kind === 'title' ? spec.exitMs : spec.enterMs;
+    if (!node) return;
+    if (kind === 'title') node.style.opacity = '1';
+    if (duration === 0 || typeof node.animate !== 'function' || context.signal?.aborted) {
+      if (kind === 'entry') node.style.opacity = '0';
+      return;
+    }
+    const frames = kind === 'title'
+      ? (context.motionProfile === MENU_TRANSITION_MOTION_PROFILE.NORMAL
+        ? [{opacity: 0, transform: 'scale(.96)'}, {opacity: 1, transform: 'scale(1)'}]
+        : [{opacity: 0}, {opacity: 1}])
+      : (context.motionProfile === MENU_TRANSITION_MOTION_PROFILE.NORMAL
+        ? [{opacity: 1, transform: 'scale(1)'}, {opacity: 0, transform: 'scale(1.04)'}]
+        : [{opacity: 1}, {opacity: 0}]);
+    let animation;
+    try {
+      animation = node.animate(frames, {duration, easing: spec.easing, fill: 'none'});
+    } catch {
+      if (kind === 'entry') node.style.opacity = '0';
+      return;
+    }
+    session.animations.add(animation);
+    const cancel = () => animation.cancel?.();
+    context.signal?.addEventListener?.('abort', cancel, {once: true});
+    try { await Promise.resolve(animation.finished); } catch {} finally {
+      context.signal?.removeEventListener?.('abort', cancel);
+      session.animations.delete(animation);
+      animation.cancel?.();
+      if (kind === 'entry') node.style.opacity = '0';
+    }
+  }
+
+  function advance(session, nowMs, phase) {
+    session.live = reduceBattleStartLiveHandoff(session.live, {
+      type: 'ADVANCE', generationId: session.live.generationId, nowMs
+    });
+    const audit = auditBattleStartLiveHandoff(session.live);
+    if (session.node?.dataset) session.node.dataset.battleStartPhase = session.live.phase.toLowerCase();
+    record({
+      revision: session.revision, phase, livePhase: session.live.phase,
+      disposition: session.live.lastEventDisposition, auditOk: audit.ok,
+      presentationOnly: true, gameStateWrite: false, movieReady: session.live.movieReady
+    });
+  }
+
+  async function runPhase(phase, context) {
+    if (phase === 'PREPARE') {
+      if (!isBattleStartTransition(context)) return;
+      const spec = battleStartSpec(context);
+      const titleDurationMs = Math.max(1, spec.exitMs);
+      const entryDurationMs = Math.max(1, spec.enterMs);
+      const live = createBattleStartLiveHandoff({
+        generationId: `screen-transition-${context.revision}`,
+        prewarmStartMs: 0,
+        readyBarrierMs: 0,
+        titleDurationMs,
+        entryDurationMs,
+        maxBridgeMs: 0,
+        reducedMotion: context.motionProfile === MENU_TRANSITION_MOTION_PROFILE.NONE,
+        lowPerf: context.motionProfile === MENU_TRANSITION_MOTION_PROFILE.REDUCED
+      });
+      const audit = auditBattleStartLiveHandoff(live);
+      if (!audit.ok) {
+        record({revision: context.revision, phase, livePhase: 'INVALID', auditOk: false, presentationOnly: true, gameStateWrite: false});
+        return;
+      }
+      const session = {
+        revision: context.revision, signal: context.signal, live,
+        node: makeBattleStartNode(documentSource, context.revision), animations: new Set(), onAbort: null
+      };
+      session.onAbort = () => finishRevision(context.revision, 'aborted');
+      context.signal?.addEventListener?.('abort', session.onAbort, {once: true});
+      sessions.set(context.revision, session);
+      record({revision: context.revision, phase, livePhase: live.phase, auditOk: true, presentationOnly: true, gameStateWrite: false, movieReady: false});
+      return;
+    }
+    const session = sessions.get(context.revision);
+    if (!session || context.signal?.aborted) return;
+    if (phase === 'EXIT') {
+      advance(session, session.live.timing.readyBarrier, phase);
+      await animate(session, 'title', context);
+    } else if (phase === 'SWAP') {
+      advance(session, session.live.timing.titleEnd, phase);
+    } else if (phase === 'ENTER') {
+      await animate(session, 'entry', context);
+      advance(session, session.live.timing.entryEnd, phase);
+    } else if (phase === 'SETTLE') {
+      finishRevision(context.revision, 'settled');
+    }
+  }
+
+  function getState() {
+    return Object.freeze({
+      activeRevisions: Object.freeze([...sessions.keys()]),
+      events: Object.freeze(events.map((event) => Object.freeze({...event})))
+    });
+  }
+  return Object.freeze({runPhase, finishRevision, getState});
+}
+
 function viewportSize(documentSource) {
   const root = documentSource?.documentElement;
   return {width: Number(root?.clientWidth) || 0, height: Number(root?.clientHeight) || 0};
@@ -433,19 +594,25 @@ export function createScreenMotionPresentationDriver({document: documentSource =
 export function createScreenTransitionRuntimeAdapter({
   getCurrentScreen, applyScreen, runVisualPhase = async () => {},
   presentationDriver = createScreenMotionPresentationDriver(), navigationBridge = createScreenNavigationRuntimeBridge(),
+  battleStartPresentationDriver = createBattleStartTransitionPresentationDriver(),
   reducedMotion = false, lowPerf = false
 } = {}) {
   requireFunction(getCurrentScreen, 'getCurrentScreen');
   requireFunction(applyScreen, 'applyScreen');
   requireFunction(runVisualPhase, 'runVisualPhase');
   if (!presentationDriver || typeof presentationDriver.runPhase !== 'function') throw new Error('presentationDriver must expose runPhase');
+  if (!battleStartPresentationDriver || typeof battleStartPresentationDriver.runPhase !== 'function') throw new Error('battleStartPresentationDriver must expose runPhase');
   if (!navigationBridge || typeof navigationBridge.resolve !== 'function' || typeof navigationBridge.resolveBackTarget !== 'function') throw new Error('navigationBridge must expose resolve and resolveBackTarget');
 
   const director = createTransitionDirector({
     runPhase: async (phase, context) => {
       const motionProfile = resolveMotionProfile(context);
       const visualContext = Object.freeze({...context, motionProfile});
-      await Promise.all([presentationDriver.runPhase(phase, visualContext), runVisualPhase(phase, visualContext)]);
+      await Promise.all([
+        presentationDriver.runPhase(phase, visualContext),
+        battleStartPresentationDriver.runPhase(phase, visualContext),
+        runVisualPhase(phase, visualContext)
+      ]);
     }
   });
 
@@ -466,6 +633,7 @@ export function createScreenTransitionRuntimeAdapter({
       }
     });
     presentationDriver.finishRevision?.(result.revision, result.status);
+    battleStartPresentationDriver.finishRevision?.(result.revision, result.status);
     return freezeTransitionResult({...result, navigationReason: decision.reason});
   }
 

@@ -2,6 +2,7 @@
 // then mount the already-authorized Study runtime beside the existing Rogue runtime.
 export * from './home-boot-runtime-base-r3.mjs';
 import { mountStudyRunFromCurrentBrowser } from './study-run-runtime-mount.mjs';
+import { mountPartnerCostumeRuntime } from './partner-costume-runtime-mount.mjs';
 
 // Source-compatibility markers consumed by the existing Home presentation contract test.
 // [data-home-quick-set-active="true"] ${ROUTE_SELECTOR}
@@ -18,14 +19,15 @@ import { mountStudyRunFromCurrentBrowser } from './study-run-runtime-mount.mjs';
 // [data-go="settings"]::before
 // HOME_CONTEXTUAL_REPLAY_LABEL
 
-function mountStudyAfterHome() {
+function mountCurrentBrowserExtensions() {
   mountStudyRunFromCurrentBrowser();
+  mountPartnerCostumeRuntime();
 }
 
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', mountStudyAfterHome, { once: true });
+    document.addEventListener('DOMContentLoaded', mountCurrentBrowserExtensions, { once: true });
   } else {
-    mountStudyAfterHome();
+    mountCurrentBrowserExtensions();
   }
 }

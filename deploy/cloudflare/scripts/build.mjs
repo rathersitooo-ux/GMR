@@ -75,6 +75,8 @@ const ARTIFACT_SPECS = Object.freeze([
   { source: 'browser/partner-dialogue-source-registry.mjs', output: 'partner-dialogue-source-registry.mjs', artifact: 'partner_dialogue_source_registry', label: 'Partner dialogue source registry' },
   { source: 'browser/partner-tea-quick-choice-core.mjs', output: 'partner-tea-quick-choice-core.mjs', artifact: 'partner_tea_quick_choice_core', label: 'Partner Tea quick-choice core' },
   { source: 'browser/partner-tea-runtime-mount.mjs', output: 'partner-tea-runtime-mount.mjs', artifact: 'partner_tea_runtime_mount', label: 'Partner Tea quick-choice runtime mount' },
+  { source: 'browser/partner-costume-core.mjs', output: 'partner-costume-core.mjs', artifact: 'partner_costume_core', label: 'Partner costume core' },
+  { source: 'browser/partner-costume-runtime-mount.mjs', output: 'partner-costume-runtime-mount.mjs', artifact: 'partner_costume_runtime_mount', label: 'Partner costume runtime mount' },
   { option: 'uiStateFeedbackCoreSource', expected: 'expectedUiStateFeedbackCoreBlob', source: 'browser/ui-state-feedback-core.mjs', output: 'ui-state-feedback-core.mjs', artifact: 'ui_state_feedback_core', label: 'UI state feedback core', sourceFlag: '--ui-state-feedback-core-source', expectedFlag: '--expected-ui-state-feedback-core-blob' },
   { source: 'browser/battle-auto-input-core.mjs', output: 'battle-auto-input-core.mjs', artifact: 'battle_auto_input_core', label: 'Battle Auto input core' },
   { source: 'browser/battle-precommit-clear-core.mjs', output: 'battle-precommit-clear-core.mjs', artifact: 'battle_precommit_clear_core', label: 'Battle precommit clear core' },

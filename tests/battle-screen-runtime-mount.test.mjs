@@ -138,6 +138,11 @@ assert.equal(runtime.hud.hateValue.dataset.resolved, 'false');
 assert.equal(runtime.hud.turnValue.dataset.resolved, 'false');
 assert.equal(runtime.hud.loadValue.dataset.resolved, 'false');
 assert.equal(runtime.hud.chain.children.length, 0);
+assert.ok(runtime.resourceHud);
+assert.equal(runtime.resourceHud.resourceAuthority, 'CALLER_ONLY');
+assert.equal(runtime.resourceHud.gameStateWrite, false);
+assert.equal(runtime.resourceHud.honeyCell.children[1].textContent, '—');
+assert.equal(runtime.resourceHud.chipCell.children[1].textContent, '—');
 assert.ok(runtime.currentActionCue);
 assert.equal(runtime.currentActionCue.getAttribute('data-battle-current-action'), '1');
 assert.equal(runtime.currentActionCue.getAttribute('role'), 'status');
@@ -208,8 +213,9 @@ assert.equal(runtime.shell.dataset.mode, 'MATCH_PLAN');
 assert.equal(runtime.shell.hidden, false);
 assert.equal(runtime.phaseSurface.hidden, true);
 assert.equal(runtime.hud.root.hidden, true);
-assert.equal(runtime.currentActionCue.hidden, true);
-assert.equal(runtime.currentActionCue.textContent, '');
+assert.equal(runtime.currentActionCue.hidden, false);
+assert.equal(runtime.currentActionCue.textContent, '今：選択');
+assert.equal(runtime.currentActionCue.dataset.phase, 'plan');
 assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, undefined);
 assert.equal(runtime.planSlot.hidden, false);
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['idle', 'idle', 'idle', 'idle']);
@@ -275,6 +281,10 @@ runtime.render(attack, {
   hate: '00:18',
   turn: 4,
   loadJanken: 'rock',
+  honey: 3,
+  chipCount: 2,
+  honeyDelta: 1,
+  honeyDeltaSource: 'rank_number',
   playedCards: [
     { cardId: 'C1', label: 'CARD-1' },
     { cardId: 'C2', label: 'CARD-2' },
@@ -308,6 +318,12 @@ assert.equal(runtime.hud.scoreValue.dataset.resolved, 'true');
 assert.equal(runtime.hud.hateValue.dataset.resolved, 'true');
 assert.equal(runtime.hud.turnValue.dataset.resolved, 'true');
 assert.equal(runtime.hud.loadValue.dataset.resolved, 'true');
+assert.equal(runtime.resourceHud.honeyCell.children[1].textContent, '3');
+assert.equal(runtime.resourceHud.chipCell.children[1].textContent, '2');
+assert.equal(runtime.resourceHud.honeyCell.dataset.resolved, 'true');
+assert.equal(runtime.resourceHud.chipCell.dataset.resolved, 'true');
+assert.equal(runtime.resourceHud.honeyCell.children[2].textContent, '+1・rank_number');
+assert.equal(runtime.resourceHud.honeyCell.children[2].hidden, false);
 assert.equal(runtime.hud.root.dataset.playedCardCount, '3');
 assert.equal(runtime.hud.chain.children.length, 5);
 const playedCardNodes = runtime.hud.chain.children.filter(node => node.className === 'grBattleHudPlayedCard');
@@ -405,7 +421,7 @@ assert.equal(runtime.shieldRails[2].dataset.boardReturnParticipant, undefined);
 assert.equal(runtime.shieldRails.flatMap(rail => rail.children).some(node => node.dataset.boardReturnTarget === 'true'), false);
 assert.equal(p3ShieldSlots[2].getAttribute('aria-label'), 'Shield R → ROAD R');
 
-runtime.renderHud({ score: '', hate: null, turn: undefined, loadJanken: 'heart' });
+runtime.renderHud({ score: '', hate: null, turn: undefined, loadJanken: 'heart', honey: -1, chipCount: '2' });
 assert.equal(runtime.hud.scoreValue.textContent, 'X');
 assert.equal(runtime.hud.hateValue.textContent, 'XXX');
 assert.equal(runtime.hud.turnValue.textContent, 'XX');
@@ -413,6 +429,10 @@ assert.equal(runtime.hud.loadValue.textContent, '?');
 assert.equal(runtime.hud.root.dataset.scoreResolved, 'false');
 assert.equal(runtime.hud.root.dataset.loadJankenResolved, 'false');
 assert.equal(runtime.hud.loadValue.textContent.includes('♥'), false);
+assert.equal(runtime.resourceHud.honeyCell.children[1].textContent, '—');
+assert.equal(runtime.resourceHud.chipCell.children[1].textContent, '—');
+assert.equal(runtime.resourceHud.honeyCell.dataset.resolved, 'false');
+assert.equal(runtime.resourceHud.chipCell.dataset.resolved, 'false');
 
 const finisherPlan = {
   presentationOnly: true,
@@ -463,11 +483,13 @@ assert.deepEqual(roleSurfaces.map(node => node.textContent), ['攻撃', '', '', 
 const progressGuide = runtime.progressGuide;
 const fieldLandmark = runtime.fieldLandmark;
 const currentActionCue = runtime.currentActionCue;
+const resourceHudRoot = runtime.resourceHud.root;
 assert.equal(runtime.destroy(), true);
 assert.equal(runtime.destroy(), false);
 assert.equal(progressGuide.parentNode, null);
 assert.equal(fieldLandmark.parentNode, null);
 assert.equal(currentActionCue.parentNode, null);
+assert.equal(resourceHudRoot.parentNode, null);
 assert.equal(root.children.includes(runtime.shell), false);
 assert.throws(() => runtime.render(idle), /RUNTIME_DESTROYED/);
 assert.throws(() => runtime.renderHud({ score: 1 }), /RUNTIME_DESTROYED/);
@@ -501,7 +523,7 @@ assert.equal(adopted.shell.className, 'grBattleScreenAdoptedOverlay');
 assert.equal(adopted.shell.getAttribute('data-gr-battle-screen'), '1');
 assert.equal(adopted.shell.dataset.owner, 'runtime_overlay');
 assert.equal(adopted.hud.root.parentNode, adopted.shell);
-assert.equal(adopted.currentActionCue.parentNode, adopted.shell);
+assert.equal(adopted.currentActionCue.parentNode, existingShell);
 assert.equal(adopted.currentActionCue.dataset.presentationOnly, 'true');
 assert.equal(adopted.progressGuide.parentNode, adopted.shell);
 assert.equal(adopted.progressGuide.dataset.presentationOnly, 'true');
@@ -509,10 +531,17 @@ assert.equal(adopted.fieldLandmark.parentNode, adopted.shell);
 assert.equal(adopted.grid.parentNode, adopted.shell);
 assert.equal(adopted.fieldLandmark.hidden, false);
 assert.equal(adopted.fieldLandmark.getAttribute('data-battle-field-landmark'), 'FIELD-09');
-adopted.render(attack, { score: 'S', hate: 'H', turn: 'T', loadJanken: 'paper' });
+adopted.render(idle);
+assert.equal(existingPhase.hidden, true);
+assert.equal(adopted.currentActionCue.hidden, false);
+assert.equal(adopted.currentActionCue.textContent, '今：選択');
+assert.equal(adopted.currentActionCue.dataset.phase, 'plan');
+adopted.render(attack, { score: 'S', hate: 'H', turn: 'T', loadJanken: 'paper', honey: 0, chipCount: 0 });
 assert.equal(existingResolution.textContent, 'KEEP');
 assert.equal(adopted.laneSurfaces.length, 4);
 assert.equal(adopted.hud.loadValue.textContent, 'パー');
+assert.equal(adopted.resourceHud.honeyCell.children[1].textContent, '0');
+assert.equal(adopted.resourceHud.chipCell.children[1].textContent, '0');
 assert.equal(adopted.currentActionCue.textContent, '今：攻撃 A-1 → B-2');
 adopted.render(settle);
 assert.equal(existingResolution.textContent, 'KEEP');

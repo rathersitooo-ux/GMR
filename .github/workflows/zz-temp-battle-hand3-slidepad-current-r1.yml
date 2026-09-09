@@ -1,0 +1,288 @@
+name: TEMP Battle Hand3 SlidePad current projection R1
+on:
+  push:
+    branches:
+      - sol/battle-hand3-slidepad-current-r1-20260910
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: github.event.head_commit.message == 'TEMP run Hand3 SlidePad current projection R1'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-hand3-slidepad-current-r1-20260910
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply bounded Hand3 SlidePad projection
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          runtime_path = Path('browser/battle-janken-slidepad-runtime-mount.mjs')
+          test_path = Path('tests/battle-janken-slidepad-runtime-mount.test.mjs')
+          source = runtime_path.read_text(encoding='utf-8')
+          tests = test_path.read_text(encoding='utf-8')
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly 1 anchor, found {count}')
+              return text.replace(old, new, 1)
+
+          source = replace_once(source,
+          """import {\n  ensureRoundStartJankenSlotAssignment,\n  NEW_BASE_ROUND_START_JANKEN_SLOT_STATUS,\n} from './new-base-round-start-janken-slot-assignment-core.mjs';""",
+          """import {\n  ensureRoundStartJankenSlotAssignment,\n  NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE,\n  NEW_BASE_ROUND_START_JANKEN_SLOT_ASSIGNMENT_SCHEMA,\n  NEW_BASE_ROUND_START_JANKEN_SLOT_STATUS,\n} from './new-base-round-start-janken-slot-assignment-core.mjs';""",
+          'assignment core import')
+
+          normalized_anchor = """function normalizedHand(hand) {\n  if (!Array.isArray(hand)) return [];\n  const seen = new Set();\n  return hand.flatMap((card) => {\n    const id = typeof card?.id === 'string' ? card.id.trim() : '';\n    if (!id || seen.has(id)) return [];\n    seen.add(id);\n    const suit = typeof card?.suit === 'string' && card.suit.trim() ? card.suit.trim() : 'UNKNOWN';\n    return [Object.freeze({\n      id,\n      suit,\n      label: typeof card?.label === 'string' && card.label.trim() ? card.label.trim() : id,\n      selectable: card?.selectable !== false,\n    })];\n  });\n}\n"""
+          normalized_replacement = normalized_anchor + """
+function sameIdSet(values, expectedIds) {
+  if (!Array.isArray(values) || values.length !== expectedIds.length) return false;
+  const actual = new Set(values);
+  return actual.size === expectedIds.length && expectedIds.every((id) => actual.has(id));
+}
+
+function validateCurrentHand3Snapshot(snapshot, canonicalRoundId, cards) {
+  if (!snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) return null;
+  if (snapshot.schema !== NEW_BASE_ROUND_START_JANKEN_SLOT_ASSIGNMENT_SCHEMA) return null;
+  if (snapshot.assignmentMode !== NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY) return null;
+  if (snapshot.roundId !== canonicalRoundId || !Object.isFrozen(snapshot)) return null;
+  if (cards.length !== SLOT_ORDER.length) return null;
+
+  const currentIds = cards.map((card) => card.id);
+  if (new Set(currentIds).size !== SLOT_ORDER.length) return null;
+  if (!sameIdSet(snapshot.sourceHandCardIds, currentIds)) return null;
+  if (!sameIdSet(snapshot.selectedJankenCardIds, currentIds)) return null;
+  if (!Array.isArray(snapshot.ordinaryHandCardIds) || snapshot.ordinaryHandCardIds.length !== 0) return null;
+  if (!Array.isArray(snapshot.slots) || snapshot.slots.length !== SLOT_ORDER.length) return null;
+
+  const cardById = new Map(cards.map((card) => [card.id, card]));
+  const slotByHand = new Map();
+  for (const slot of snapshot.slots) {
+    if (!slot || !SLOT_ORDER.includes(slot.jankenHand) || slotByHand.has(slot.jankenHand)) return null;
+    slotByHand.set(slot.jankenHand, slot);
+  }
+  const mapped = [];
+  for (const jankenHand of SLOT_ORDER) {
+    const slot = slotByHand.get(jankenHand);
+    const card = slot?.cardId ? cardById.get(slot.cardId) : null;
+    if (!slot || slot.status !== NEW_BASE_ROUND_START_JANKEN_SLOT_STATUS.OCCUPIED) return null;
+    if (slot.selectable !== true || !card) return null;
+    if (slot.nativeSuit !== card.suit) return null;
+    mapped.push(slot.cardId);
+  }
+  if (new Set(mapped).size !== SLOT_ORDER.length || !sameIdSet(mapped, currentIds)) return null;
+  return snapshot;
+}
+"""
+          source = replace_once(source, normalized_anchor, normalized_replacement, 'normalizedHand helper')
+
+          source = replace_once(source,
+          """export function buildBattleJankenSlidePadModel({\n  roundId,\n  hand,\n  currentSnapshot = null,\n  pickDuplicateIndex,\n} = {}) {""",
+          """export function buildBattleJankenSlidePadModel({\n  roundId,\n  hand,\n  currentSnapshot = null,\n  authoritativeSnapshot = undefined,\n  pickDuplicateIndex,\n} = {}) {""",
+          'model signature')
+
+          old_assignment = """  const assignment = ensureRoundStartJankenSlotAssignment({\n    currentSnapshot,\n    roundId: canonical,\n    hand: cards.map(({ id, suit }) => ({ id, suit })),\n    pickDuplicateIndex,\n  });"""
+          new_assignment = """  let assignment = null;
+  if (authoritativeSnapshot !== undefined) {
+    assignment = validateCurrentHand3Snapshot(authoritativeSnapshot, canonical, cards);
+    if (assignment === null) {
+      return deepFreeze({
+        schema: BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA,
+        roundId: canonical,
+        assignment: null,
+        ordinaryHandCardIds: Object.freeze(cards.map((card) => card.id)),
+        slots: Object.freeze(SLOT_ORDER.map((jankenHand) => Object.freeze({
+          jankenHand,
+          ...SLOT_VIEW[jankenHand],
+          cardId: null,
+          cardLabel: null,
+          occupied: false,
+          selectable: false,
+        }))),
+      });
+    }
+  } else {
+    assignment = ensureRoundStartJankenSlotAssignment({
+      currentSnapshot,
+      roundId: canonical,
+      hand: cards.map(({ id, suit }) => ({ id, suit })),
+      pickDuplicateIndex,
+    });
+  }"""
+          source = replace_once(source, old_assignment, new_assignment, 'assignment projection')
+
+          source = replace_once(source,
+          """export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {\n  battleRoot = null,\n  rouletteEnabled = false,\n  focusIntegration = null,\n} = {}) {""",
+          """export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {\n  battleRoot = null,\n  rouletteEnabled = false,\n  focusIntegration = null,\n  readCurrentJankenAssignmentSnapshot = null,\n} = {}) {""",
+          'mount signature')
+
+          source = replace_once(source,
+          """  const dedicatedFocus = normalizeBattleJankenFocusIntegration(focusIntegration);\n  const existing = root.querySelector?.(`[${HOST_ATTR}=\"1\"]`);""",
+          """  const dedicatedFocus = normalizeBattleJankenFocusIntegration(focusIntegration);
+  const currentAssignmentReader = typeof readCurrentJankenAssignmentSnapshot === 'function'
+    ? readCurrentJankenAssignmentSnapshot
+    : null;
+  const existing = root.querySelector?.(`[${HOST_ATTR}=\"1\"]`);""",
+          'mount reader normalization')
+
+          old_render = """    model = buildBattleJankenSlidePadModel({\n      roundId: roundText,\n      hand,\n      currentSnapshot: assignment,\n      pickDuplicateIndex: (request) => entropyIndex(globalRef, request),\n    });"""
+          new_render = """    let authoritativeSnapshot = undefined;
+    if (currentAssignmentReader) {
+      try {
+        authoritativeSnapshot = currentAssignmentReader(Object.freeze({
+          roundId: canonicalRoundId(roundText),
+          hand: Object.freeze(hand.map(({ id, suit }) => Object.freeze({ id, suit }))),
+        })) ?? null;
+      } catch {
+        authoritativeSnapshot = null;
+      }
+    }
+    model = buildBattleJankenSlidePadModel({
+      roundId: roundText,
+      hand,
+      currentSnapshot: currentAssignmentReader ? null : assignment,
+      authoritativeSnapshot,
+      pickDuplicateIndex: currentAssignmentReader ? undefined : (request) => entropyIndex(globalRef, request),
+    });"""
+          source = replace_once(source, old_render, new_render, 'render current snapshot reader')
+
+          tests = replace_once(tests,
+          """import { projectBattleJankenOrderSnapshot } from '../browser/battle-janken-order-live-adapter.mjs';""",
+          """import { projectBattleJankenOrderSnapshot } from '../browser/battle-janken-order-live-adapter.mjs';
+import {
+  createRoundStartJankenSlotAssignment,
+  NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE,
+} from '../browser/new-base-round-start-janken-slot-assignment-core.mjs';""",
+          'test core import')
+
+          marker = "test('current Hand3 authoritative snapshot projects all three cards without suit-bound fallback'"
+          if marker not in tests:
+              tests += r'''
+
+test('current Hand3 authoritative snapshot projects all three cards without suit-bound fallback', () => {
+  const currentHand = [
+    { id: 'alpha', suit: 'SP', label: 'Alpha' },
+    { id: 'beta', suit: 'CL', label: 'Beta' },
+    { id: 'gamma', suit: 'DI', label: 'Gamma' },
+  ];
+  const snapshot = createRoundStartJankenSlotAssignment({
+    roundId: 'battle-round:current-1',
+    hand: currentHand.map(({ id, suit }) => ({ id, suit })),
+    assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
+    assignedCardIdsByJankenHand: {
+      ROCK: 'gamma',
+      SCISSORS: 'alpha',
+      PAPER: 'beta',
+    },
+  });
+  const model = buildBattleJankenSlidePadModel({
+    roundId: 'current-1',
+    hand: currentHand,
+    authoritativeSnapshot: snapshot,
+    pickDuplicateIndex: () => { throw new Error('legacy duplicate chooser must not run'); },
+  });
+  assert.strictEqual(model.assignment, snapshot);
+  assert.deepEqual(model.slots.map((slot) => [slot.jankenHand, slot.cardId]), [
+    ['ROCK', 'gamma'],
+    ['SCISSORS', 'alpha'],
+    ['PAPER', 'beta'],
+  ]);
+  assert.deepEqual(model.ordinaryHandCardIds, []);
+  assert.deepEqual(model.slots.map((slot) => slot.nativeSuit), [undefined, undefined, undefined],
+    'SlidePad presentation does not turn native suit into janken identity');
+});
+
+test('configured current Hand3 path fails closed instead of restoring legacy suit membership', () => {
+  const currentHand = [
+    { id: 'alpha', suit: 'SP', label: 'Alpha' },
+    { id: 'beta', suit: 'CL', label: 'Beta' },
+    { id: 'gamma', suit: 'DI', label: 'Gamma' },
+  ];
+  let legacyChooserCalls = 0;
+  const model = buildBattleJankenSlidePadModel({
+    roundId: 'current-2',
+    hand: currentHand,
+    authoritativeSnapshot: null,
+    pickDuplicateIndex: () => { legacyChooserCalls += 1; return 0; },
+  });
+  assert.equal(model.assignment, null);
+  assert.equal(legacyChooserCalls, 0);
+  assert.deepEqual(model.slots.map((slot) => [slot.jankenHand, slot.cardId, slot.selectable]), [
+    ['ROCK', null, false],
+    ['SCISSORS', null, false],
+    ['PAPER', null, false],
+  ]);
+  assert.deepEqual(model.ordinaryHandCardIds, ['alpha', 'beta', 'gamma']);
+});
+
+test('current Hand3 projection rejects stale round or different physical hand snapshots', () => {
+  const currentHand = [
+    { id: 'alpha', suit: 'SP', label: 'Alpha' },
+    { id: 'beta', suit: 'CL', label: 'Beta' },
+    { id: 'gamma', suit: 'DI', label: 'Gamma' },
+  ];
+  const stale = createRoundStartJankenSlotAssignment({
+    roundId: 'battle-round:old-round',
+    hand: currentHand.map(({ id, suit }) => ({ id, suit })),
+    assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
+    assignedCardIdsByJankenHand: { ROCK: 'alpha', SCISSORS: 'beta', PAPER: 'gamma' },
+  });
+  const staleModel = buildBattleJankenSlidePadModel({
+    roundId: 'new-round',
+    hand: currentHand,
+    authoritativeSnapshot: stale,
+  });
+  assert.equal(staleModel.assignment, null);
+  assert.equal(staleModel.slots.every((slot) => slot.selectable === false), true);
+
+  const wrongHand = createRoundStartJankenSlotAssignment({
+    roundId: 'battle-round:new-round',
+    hand: [
+      { id: 'alpha', suit: 'SP' },
+      { id: 'beta', suit: 'CL' },
+      { id: 'delta', suit: 'DI' },
+    ],
+    assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
+    assignedCardIdsByJankenHand: { ROCK: 'alpha', SCISSORS: 'beta', PAPER: 'delta' },
+  });
+  const wrongHandModel = buildBattleJankenSlidePadModel({
+    roundId: 'new-round',
+    hand: currentHand,
+    authoritativeSnapshot: wrongHand,
+  });
+  assert.equal(wrongHandModel.assignment, null);
+  assert.equal(wrongHandModel.slots.every((slot) => slot.selectable === false), true);
+});
+
+test('SlidePad mount exposes a synchronous current-assignment reader seam and disables local entropy on that path', () => {
+  const source = readFileSync(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /readCurrentJankenAssignmentSnapshot = null/);
+  assert.match(source, /authoritativeSnapshot = currentAssignmentReader\(/);
+  assert.match(source, /pickDuplicateIndex: currentAssignmentReader \? undefined :/);
+});
+'''
+
+          runtime_path.write_text(source, encoding='utf-8')
+          test_path.write_text(tests, encoding='utf-8')
+          PY
+
+          node --test tests/battle-janken-slidepad-runtime-mount.test.mjs
+          git diff --check
+          mapfile -t changed < <(git diff --name-only)
+          printf 'Changed files:\n%s\n' "${changed[*]}"
+          test "${#changed[@]}" -eq 2
+          test "${changed[0]}" = 'browser/battle-janken-slidepad-runtime-mount.mjs'
+          test "${changed[1]}" = 'tests/battle-janken-slidepad-runtime-mount.test.mjs'
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs
+          git commit -m 'Battle Hand3 SlidePad current projection R1'
+          git push origin HEAD:sol/battle-hand3-slidepad-current-r1-20260910

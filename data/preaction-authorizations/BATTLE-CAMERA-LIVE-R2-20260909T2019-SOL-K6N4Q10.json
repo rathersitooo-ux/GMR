@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CAMERA-LIVE-R2-20260909T2019-SOL-K6N4Q10",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CAMERA_LIVE_HTML_MOUNT_R2",
+  "acquireKey": "BATTLE-CAMERA-LIVE-R2-20260909T2019-SOL-K6N4Q10",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CAMERA_CORE_INPUT_ROUTER_MERGED_HTML_OWNER_FREE_20260909T2019JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CAMERA_CORE_AND_INPUT_ROUTER_PRESENTATION_ONLY_CONTRACTS_PLUS_CURRENT_HTML_PROBE_FIRST",
+  "proceedToken": "PROCEED|BATTLE-CAMERA-LIVE-R2-20260909T2019-SOL-K6N4Q10|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|camera-live-html-mount|html-build|active-lease",
+  "authorizationBaseSha": "153f07f0ffe49b4339c8bd1046b9e980d6f37900",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CAMERA_LIVE_HTML_MOUNT_R2",
+  "leaseAcquireKey": "BATTLE-CAMERA-LIVE-R2-20260909T2019-SOL-K6N4Q10",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 20:19 JST",
+  "leaseUntilJst": "2026-09-09 21:19 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A737:L737",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-camera-live-r2-20260909; browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs; tests/battle-camera-live-integration.test.mjs (new); transient .github/workflows/zz-temp-battle-camera-live-r2.yml; transient tools/temp-battle-camera-live-r2.py; own transient data/preaction-authorizations/BATTLE-CAMERA-LIVE-R2-20260909T2019-SOL-K6N4Q10.json only. Existing browser/battle-camera-control-core.mjs and browser/battle-camera-input-router.mjs READ_ONLY reuse. battle-screen/janken runtimes owned by row739 are READ_ONLY; controlled-character/GOAL/Road/gameplay/rules/target/movement/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_CAMERA_EXISTING_CORE_ROUTER_HTML_LIVE_MOUNT_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1407_CAMERA_INPUT_ROUTER_PLUS_EXISTING_CAMERA_CONTROL_CORE",
+  "solutionSearchEvidence": [
+    "Current main contains battle-camera-control-core.mjs with FOLLOW_CONTROLLED, MANUAL_INSPECT, PAN, SET_ZOOM, SET_ANGLE, SYNC_CONTROLLED_POINT and RETURN_TO_CONTROLLED, with gameplay/movement/target/legality/result authority false.",
+    "Current main contains battle-camera-input-router.mjs which routes only WORLD pan/zoom/angle, blocks SCREEN_UI or uiGestureOwned input, and allows one-action return only from camera control source.",
+    "Both existing contracts explicitly state liveRuntimeWiringIncluded=false, so this WorkUnit only mounts them to current Battle world/field seams and packages dependencies if absent.",
+    "Current Cloudflare build inspection found no battle-camera artifact entry.",
+    "Current active lease scan found row739 owns battle-screen/janken runtime only and marks HTML/build read-only; no valid mutable HTML/build owner conflicts with this scope."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/battle-camera-live-integration.test.mjs",
+    ".github/workflows/zz-temp-battle-camera-live-r2.yml",
+    "tools/temp-battle-camera-live-r2.py"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/battle-camera-live-integration.test.mjs",
+    ".github/workflows/zz-temp-battle-camera-live-r2.yml",
+    "tools/temp-battle-camera-live-r2.py"
+  ]
+}

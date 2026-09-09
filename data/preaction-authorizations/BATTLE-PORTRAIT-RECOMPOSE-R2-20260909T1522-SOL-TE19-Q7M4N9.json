@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PORTRAIT-RECOMPOSE-R2-20260909T1522-SOL-TE19-Q7M4N9",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_PORTRAIT_390x844_RECOMPOSE_R2",
+  "acquireKey": "BATTLE-PORTRAIT-RECOMPOSE-R2-20260909T1522-SOL-TE19-Q7M4N9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-WU19-PORTRAIT-RECOMPOSE-R2-DIRECT-AUDIT-20260909",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1-TWO-FILE-DIFF-AND-PREACTION-FAILCLOSED-ISOLATION-20260909",
+  "proceedToken": "PROCEED|BATTLE-PORTRAIT-RECOMPOSE-R2-20260909T1522-SOL-TE19-Q7M4N9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|current-wu19|reuse-gate-compose|active-lease",
+  "authorizationBaseSha": "44e346759d71326ce1126dd309b2f223bd644311",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_PORTRAIT_390x844_RECOMPOSE_R2",
+  "leaseAcquireKey": "BATTLE-PORTRAIT-RECOMPOSE-R2-20260909T1522-SOL-TE19-Q7M4N9",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 15:22 JST",
+  "leaseUntilJst": "2026-09-09 16:22 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A675:L675",
+  "leaseExactMutableResources": "browser/battle-portrait-recompose-presentation-core.mjs; tests/battle-portrait-recompose-presentation-core.test.mjs; branch sol/battle-portrait-recompose-r2-20260909; PRE_ACTION manifest only",
+  "solutionSignature": "BATTLE_PHONE_PORTRAIT_SCREEN_SPACE_RECOMPOSITION_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR971_PR1067_CURRENT_SCREEN_WU24_COMPOSITION_20260909",
+  "solutionSearchEvidence": [
+    "GitHub PR#971 / commit 120282665cc1863b4e774f1c9501c44362375cf5: existing portrait participant stack",
+    "GitHub PR#1067 / commit 9d63fb6893297c188de70069029476b907a949f7: portrait SlidePad clearance",
+    "Current battle-screen-runtime-mount.mjs portrait media query: existing runtime remains read-only",
+    "CURRENT_ACTIVE_LEASES WorkUnit24: existing bottom-right thumb-cluster authority remains read-only and is composed by reference"
+  ],
+  "scope": [
+    "browser/battle-portrait-recompose-presentation-core.mjs",
+    "tests/battle-portrait-recompose-presentation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-portrait-recompose-presentation-core.mjs",
+    "tests/battle-portrait-recompose-presentation-core.test.mjs"
+  ]
+}

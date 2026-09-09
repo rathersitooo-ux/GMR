@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-REPLAY-SCREEN-CAUSAL-R4-20260909T1558-SOL-HE29-Q7M4P9",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_RESOLUTION_CAUSAL_REPLAY_SCREEN_BRIDGE_R4",
+  "acquireKey": "BATTLE-REPLAY-SCREEN-CAUSAL-R4-20260909T1558-SOL-HE29-Q7M4P9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-BATTLE-REPLAY-SCREEN-CAUSAL-R4-20260909T1558",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REHEARSE-BATTLE-REPLAY-SCREEN-CAUSAL-FAIL-CLOSED-R4",
+  "proceedToken": "PROCEED|BATTLE-REPLAY-SCREEN-CAUSAL-R4-20260909T1558-SOL-HE29-Q7M4P9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260909T1558JST",
+  "authorizationBaseSha": "aa281278bf3f8df81300f698b5a3b304e91098ad",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_RESOLUTION_CAUSAL_REPLAY_SCREEN_BRIDGE_R4",
+  "leaseAcquireKey": "BATTLE-REPLAY-SCREEN-CAUSAL-R4-20260909T1558-SOL-HE29-Q7M4P9",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 15:58 JST",
+  "leaseUntilJst": "2026-09-09 16:58 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A696:L696",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-replay-screen-causal-r4-20260909; browser/battle-replay-live-adapter.mjs; tests/battle-replay-live-adapter.test.mjs; own transient data/preaction-authorizations/BATTLE-REPLAY-SCREEN-CAUSAL-R4-20260909T1558-SOL-HE29-Q7M4P9.json only. Existing battle-screen presentation/runtime, causal-return core, action-order/order-live adapters, compound package/live consumer, GAMEROAD.html, janken runtime, gameplay/rules/target/legality/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs"
+  ],
+  "solutionSignature": "battle-replay/forward-caller-exact-causal-presentation-input-to-existing-screen-model-runtime",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-REPLAY-APPEND-SEAM-PR1402-SCREEN-PR1399-ORDER-20260909",
+  "solutionSearchEvidence": [
+    "appendAcceptedBattleResolution is the single production accepted Battle resolution replay seam and already hosts fail-soft presentation bridges",
+    "PR#1402 battle-screen presentation already projects accepted compound boardReturn into lane afterstate and exact Shield semantics; battle-screen runtime already renders those model rows",
+    "aggregate replay resolution does not contain enough authoritative compound/order facts to reconstruct card/janken/path/order safely, so this slice forwards only explicit caller-supplied exact causal presentation input and leaves existing fallback untouched when absent",
+    "parallel BATTLE_JANKEN_PROCESSING_ORDER_LIVE_ADAPTER_R1 owns processing-order live adaptation; this slice does not duplicate it"
+  ]
+}

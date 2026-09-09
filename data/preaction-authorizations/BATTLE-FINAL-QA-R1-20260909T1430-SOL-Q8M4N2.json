@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-FINAL-QA-R1-20260909T1430-SOL-Q8M4N2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FINAL_QA_PUBLIC_HUMAN_R1",
+  "acquireKey": "BATTLE-FINAL-QA-R1-20260909T1430-SOL-Q8M4N2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BATTLE-W46-QA-GAP-20260909T1430-JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING-BFI-HAS-3-VIEWPORTS-BUT-BATTLE-HAND7-STALE-AND-PUBLIC-RUN-HONEY-ONLY",
+  "proceedToken": "PROCEED|BATTLE-FINAL-QA-R1-20260909T1430-SOL-Q8M4N2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|user-explicit-workunit46|read-only-product|active-lease",
+  "authorizationBaseSha": "26f0c0957a9e647c65c908fe7b2eef713f825b6b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_FINAL_QA_PUBLIC_HUMAN_R1",
+  "leaseAcquireKey": "BATTLE-FINAL-QA-R1-20260909T1430-SOL-Q8M4N2",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 14:30 JST",
+  "leaseUntilJst": "2026-09-09 15:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A654:L654",
+  "leaseExactMutableResources": "tests/battle-final-visual-acceptance.spec.mjs; .github/workflows/battle-final-visual-acceptance.yml; branch sol/battle-final-qa-r1-20260909; own PRE_ACTION manifest only",
+  "scope": [
+    "tests/battle-final-visual-acceptance.spec.mjs",
+    ".github/workflows/battle-final-visual-acceptance.yml"
+  ],
+  "leaseScope": [
+    "tests/battle-final-visual-acceptance.spec.mjs",
+    ".github/workflows/battle-final-visual-acceptance.yml"
+  ]
+}

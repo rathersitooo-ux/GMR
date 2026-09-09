@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CARD-FLIGHT-EFFECT-R1-20260909T1514-SOL-MO35-Q4N8K2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CARD_RELEASE_FLIGHT_MOTION_R1",
+  "acquireKey": "BATTLE-CARD-FLIGHT-EFFECT-R1-20260909T1514-SOL-MO35-Q4N8K2",
+  "scope": [
+    "browser/battle-card-release-flight-runtime-effect.mjs",
+    "tests/battle-card-release-flight-runtime-effect.test.mjs"
+  ],
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "WORKUNIT35_MERGED_MOTION_CORE_PLUS_CURRENT_JANKEN_RUNTIME_INTERFACE_20260909",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PURE_MOTION_CORE_ALREADY_REQUIRED_GATE_GREEN_AND_EFFECT_LAYER_HAS_NO_GAMEPLAY_STATE_WRITE",
+  "proceedToken": "PROCEED|BATTLE-CARD-FLIGHT-EFFECT-R1-20260909T1514-SOL-MO35-Q4N8K2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|COMPOSE_EXISTING_CORE_WITH_NATIVE_WEB_ANIMATIONS",
+  "authorizationBaseSha": "2a337ec6db4a6c84a491a517d3ff6e21014cbfa4",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CARD_RELEASE_FLIGHT_MOTION_R1",
+  "leaseAcquireKey": "BATTLE-CARD-FLIGHT-EFFECT-R1-20260909T1514-SOL-MO35-Q4N8K2",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 15:14 JST",
+  "leaseUntilJst": "2026-09-09 16:14 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A675:L675",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-card-flight-effect-r1-20260909; browser/battle-card-release-flight-runtime-effect.mjs (new); tests/battle-card-release-flight-runtime-effect.test.mjs (new); own transient data/preaction-authorizations/BATTLE-CARD-FLIGHT-EFFECT-R1-20260909T1514-SOL-MO35-Q4N8K2.json only. browser/battle-janken-slidepad-runtime-mount.mjs, existing battle-card-release-flight-motion-core.mjs/test, GAMEROAD.html, battle-screen, gameplay/rules/target/legality/save/economy/network READ_ONLY.",
+  "leaseScope": [
+    "browser/battle-card-release-flight-runtime-effect.mjs",
+    "tests/battle-card-release-flight-runtime-effect.test.mjs"
+  ],
+  "solutionSignature": "existing authoritative Battle janken card release snapshot -> visual-only clone flight using merged WorkUnit35 motion projection -> cleanup; preserve reduced-motion destination meaning and low-performance degradation; no gameplay/legality/target writes",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "WU35_CORE_AND_CURRENT_RUNTIME_COMPOSITION_DECISION_20260909",
+  "solutionSearchEvidence": [
+    "browser/battle-card-release-flight-motion-core.mjs already contains the accepted trajectory/reduced/lowPerf projection",
+    "browser/battle-janken-slidepad-runtime-mount.mjs already demonstrates clone + Web Animations as the live browser mechanism",
+    "native Element.animate and DOM clone/remove are sufficient; no external dependency or second animation engine is needed"
+  ]
+}

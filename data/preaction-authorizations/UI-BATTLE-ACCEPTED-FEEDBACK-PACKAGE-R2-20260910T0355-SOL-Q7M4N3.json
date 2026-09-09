@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-BATTLE-ACCEPTED-FEEDBACK-PACKAGE-R2-20260910T0355-SOL-Q7M4N3",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "BATTLE_ACCEPTED_ACTION_FEEDBACK_PUBLIC_PACKAGE_R2",
+  "acquireKey": "UI-BATTLE-ACCEPTED-FEEDBACK-PACKAGE-R2-20260910T0355-SOL-Q7M4N3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1488-merged-runtime-plus-PR1487-public-cue-dependency-20260910T0355",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "same-ARTIFACT_SPECS-package-pattern-proven-by-PR1487",
+  "proceedToken": "PROCEED|UI-BATTLE-ACCEPTED-FEEDBACK-PACKAGE-R2-20260910T0355-SOL-Q7M4N3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|package-existing-runtime-only",
+  "authorizationBaseSha": "aed6367624c6e92e39946e5a02541ada75fd0b60",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "BATTLE_ACCEPTED_ACTION_FEEDBACK_PUBLIC_PACKAGE_R2",
+  "leaseAcquireKey": "UI-BATTLE-ACCEPTED-FEEDBACK-PACKAGE-R2-20260910T0355-SOL-Q7M4N3",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:55 JST",
+  "leaseUntilJst": "2026-09-10 04:55 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A919:L919",
+  "leaseExactMutableResources": "deploy/cloudflare/scripts/build.mjs; transient .github/workflows/zz-temp-battle-accepted-feedback-package-r2.yml; own transient data/preaction-authorizations/UI-BATTLE-ACCEPTED-FEEDBACK-PACKAGE-R2-20260910T0355-SOL-Q7M4N3.json only. READ_ONLY browser/battle-interaction-feedback-runtime.mjs; browser/battle-interaction-feedback-cue-core.mjs; browser/battle-invalid-action-feedback-live-adapter.mjs; deploy/cloudflare/tests/build.test.mjs; browser/GAMEROAD.html; Battle gameplay/rules/save/network.",
+  "scope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-accepted-feedback-package-r2.yml"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-accepted-feedback-package-r2.yml"
+  ],
+  "solutionSignature": "cloudflare-package/existing-battle-accepted-feedback-runtime",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "PR1488 merged browser/battle-interaction-feedback-runtime.mjs and focused tests",
+    "PR1487 already publicly packages the runtime's battle-interaction-feedback-cue-core.mjs dependency",
+    "current deploy/cloudflare/scripts/build.mjs packages Battle modules through ARTIFACT_SPECS and does not yet include battle-interaction-feedback-runtime.mjs"
+  ],
+  "reuseDecisionEvidenceId": "reuse-existing-cloudflare-package-and-PR1488-runtime-20260910T0355"
+}

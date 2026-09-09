@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CHAR4P-HTML-LIVE-R1-20260909T1757-SOL-K4N8Q8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CONTROLLED_CHARACTER_HTML_LIVE_MOUNT_R1",
+  "acquireKey": "BATTLE-CHAR4P-HTML-LIVE-R1-20260909T1757-SOL-K4N8Q8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_A8248B6_HTML_BLOB_D7AE9D0_AND_RELEASED_PREDECESSOR_HTML_OWNER_20260909T1800JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "BOUNDED_READ_FIRST_ACTIONS_INSPECTION_THEN_GUARDED_HTML_PATCH_ONLY_IF_EXISTING_PRODUCER_SEAM_IS_PROVEN",
+  "proceedToken": "PROCEED|BATTLE-CHAR4P-HTML-LIVE-R1-20260909T1757-SOL-K4N8Q8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|controlled-character-html-live|html-only|active-lease",
+  "authorizationBaseSha": "a8248b609656436394a73b9a32acc3fd4f11d762",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CONTROLLED_CHARACTER_HTML_LIVE_MOUNT_R1",
+  "leaseAcquireKey": "BATTLE-CHAR4P-HTML-LIVE-R1-20260909T1757-SOL-K4N8Q8",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 17:57 JST",
+  "leaseUntilJst": "2026-09-09 18:57 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A728:L728",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-controlled-character-html-live-r1-20260909; browser/GAMEROAD.html; tests/battle-controlled-character-html-live.test.mjs (new if needed); transient .github/workflows/zz-temp-battle-char4p-html-live-r1.yml; transient tools/temp-battle-char4p-html-live-r1.py; own transient data/preaction-authorizations/BATTLE-CHAR4P-HTML-LIVE-R1-20260909T1757-SOL-K4N8Q8.json only. Existing browser/battle-board-naki-4p-visual-binding.mjs, browser/battle-controlled-character-4p-motion-director.mjs, browser/battle-controlled-character-motion-core.mjs, Road/movement/topology, Advice Partner, Battle screen/janken/camera/goal, gameplay/rules/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_CONTROLLED_CHARACTER_EXISTING_DIRECTOR_HTML_LIVE_ADAPTER_V1",
+  "reuseDisposition": "COMPOSE_EXISTING_MODULES",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MAIN_CONTROLLED_CHARACTER_STACK_AND_PREDECESSOR_ROOT_REACHABILITY_AUDIT_20260909",
+  "solutionSearchEvidence": [
+    "Current main binding blob f985f48bcd6891164740ff3cba18544c359863cf already consumes complete four-participant caller-authoritative characterId + motion rows and never falls back to Advice/Naki.",
+    "Current main already contains battle-controlled-character-4p-motion-director.mjs blob ce9a294e283cc4542054062be584a954c557873d and motion core blob 2c2062e66c5cc2ae8859a000181f0a2699fd4954; no second actor or movement engine is needed.",
+    "Bounded predecessor audit proved browser/GAMEROAD.html blob d7ae9d0532df7e66ebbf29f1e7eecb3f352d346d has zero live root reachability for the controlled-character stack while Advice remains separately reachable.",
+    "BATTLE_PREDECESSOR_COMPLETE_TRANSFER_RECOVERY_R1 terminal released browser/GAMEROAD.html for same-parent current residual hookup."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-controlled-character-html-live.test.mjs",
+    ".github/workflows/zz-temp-battle-char4p-html-live-r1.yml",
+    "tools/temp-battle-char4p-html-live-r1.py"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-controlled-character-html-live.test.mjs",
+    ".github/workflows/zz-temp-battle-char4p-html-live-r1.yml",
+    "tools/temp-battle-char4p-html-live-r1.py"
+  ]
+}

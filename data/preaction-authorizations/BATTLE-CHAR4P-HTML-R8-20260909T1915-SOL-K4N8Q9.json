@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CHAR4P-HTML-R8-20260909T1915-SOL-K4N8Q9",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CONTROLLED_CHARACTER_LIVE_HTML_HANDOFF_R8",
+  "acquireKey": "BATTLE-CHAR4P-HTML-R8-20260909T1915-SOL-K4N8Q9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_FREE_HTML_AND_BUILD_OWNER_20260909T1915JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R7_PREACTION_ONLY_PLUS_R6_MERGED_BINDING_AND_DIRECTOR_CONTRACT",
+  "proceedToken": "PROCEED|BATTLE-CHAR4P-HTML-R8-20260909T1915-SOL-K4N8Q9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|controlled-character-html-handoff|html-build|active-lease",
+  "authorizationBaseSha": "ccc8a65c535ba7bfeb11137f8af878c6fe4bce37",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CONTROLLED_CHARACTER_LIVE_HTML_HANDOFF_R8",
+  "leaseAcquireKey": "BATTLE-CHAR4P-HTML-R8-20260909T1915-SOL-K4N8Q9",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 19:15 JST",
+  "leaseUntilJst": "2026-09-09 20:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A737:L737",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-controlled-character-html-handoff-r8-20260909; browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs; tests/battle-controlled-character-html-handoff.test.mjs; transient .github/workflows/zz-temp-battle-controlled-character-html-r8.yml; transient tools/temp-battle-controlled-character-html-r8.py; own transient data/preaction-authorizations/BATTLE-CHAR4P-HTML-R8-20260909T1915-SOL-K4N8Q9.json only. Existing browser/battle-board-naki-4p-visual-binding.mjs, browser/battle-controlled-character-4p-motion-director.mjs, browser/battle-controlled-character-motion-core.mjs READ_ONLY reuse. Advice Partner, battle-screen/janken/camera/goal/Road/gameplay/rules/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_CONTROLLED_CHARACTER_EXISTING_BINDING_HTML_HANDOFF_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R6_MAIN_BINDING_PLUS_R7_PREACTION_CURRENT_ACTUAL_RECOVERY",
+  "solutionSearchEvidence": [
+    "R6 merged the four-participant binding to main and removed fabricated partner.naki identity and legacy human mover suppression.",
+    "The existing four-participant motion director owns presentation motion semantics and accepts caller-supplied opaque character identities plus external board positions.",
+    "R7 branch was inspected and contains only its PRE_ACTION commit, so there is no hidden product patch to duplicate.",
+    "This WorkUnit will inspect current GAMEROAD.html producer seams before product mutation and will fail closed if four real participant character identities are not available.",
+    "Advice Partner remains a separate consumer and is READ_ONLY in this slice."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/battle-controlled-character-html-handoff.test.mjs",
+    ".github/workflows/zz-temp-battle-controlled-character-html-r8.yml",
+    "tools/temp-battle-controlled-character-html-r8.py"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/battle-controlled-character-html-handoff.test.mjs",
+    ".github/workflows/zz-temp-battle-controlled-character-html-r8.yml",
+    "tools/temp-battle-controlled-character-html-r8.py"
+  ]
+}

@@ -1,0 +1,90 @@
+name: TEMP Battle recovery producer diagnostic R1
+
+on:
+  push:
+    branches:
+      - sol/battle-recovery-producer-diag-r1-20260910
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Confirm PRE_ACTION
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f data/preaction-authorizations/BATTLE-RECOVERY-PRODUCER-DIAG-R1-20260910T0330-SOL-Q8N4D2.json
+          grep -F 'PREACTION_PROCEED_ALLOWED' data/preaction-authorizations/BATTLE-RECOVERY-PRODUCER-DIAG-R1-20260910T0330-SOL-Q8N4D2.json
+      - name: Inspect exact production recovery sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          print('HTML_BYTES', len(text.encode('utf-8')))
+          exact = [
+            'create2v2ReconnectState',
+            'disconnect2v2Player',
+            'reconnect2v2Player',
+            'expire2v2ReconnectGrace',
+            'isCurrent2v2ControlEnvelope',
+            'controlGeneration',
+            'temporary_partner',
+            'permanent_partner',
+            'reconnectInFlight',
+            'STALE_INPUT_REJECTED',
+            'GAMEROAD_MATCH_RECOVERY',
+            'GAMEROAD_TITLE_BOOT_CONTEXT_PROVIDER',
+            'createHatePeerPresenceState',
+            'applyHatePeerPresenceEvent',
+            'projectHateHumanWaitSourceEligibility',
+            'HATE_PEER_PRESENCE',
+            'matchSessionHandoff',
+            'credentialsPersisted',
+          ]
+          for term in exact:
+            hits = [m.start() for m in re.finditer(re.escape(term), text)]
+            print(f'EXACT {term} COUNT {len(hits)} POS {hits[:12]}')
+            for p in hits[:3]:
+              lo=max(0,p-520); hi=min(len(text),p+len(term)+780)
+              print('SNIP', term, text[lo:hi].replace('\r',' ').replace('\n',' ')[:1400])
+
+          imports = sorted(set(re.findall(r"(?:import\s*\(\s*|from\s+|src=)[\"']([^\"']+)[\"']", text)))
+          print('RECOVERY_IMPORTS')
+          for item in imports:
+            low=item.lower()
+            if any(k in low for k in ('reconnect','recovery','presence','session','match')):
+              print('IMPORT', item)
+
+          globals_found = sorted(set(re.findall(r'(?:globalThis|window)\.([A-Za-z0-9_$]*(?:RECONNECT|RECOVERY|PRESENCE|SESSION|MATCH)[A-Za-z0-9_$]*)', text, re.I)))
+          print('RECOVERY_GLOBALS_COUNT', len(globals_found))
+          for name in globals_found[:200]: print('GLOBAL', name)
+
+          patterns = [
+            r'function\s+([A-Za-z_$][\w$]*(?:reconnect|disconnect|rejoin|recovery|session)[\w$]*)\s*\(',
+            r'([A-Za-z_$][\w$]*(?:reconnect|disconnect|rejoin|recovery|session)[\w$]*)\s*=\s*(?:async\s*)?\([^)]*\)\s*=>',
+          ]
+          funcs=[]
+          for pat in patterns:
+            funcs.extend(m.group(1) for m in re.finditer(pat,text,re.I))
+          funcs=sorted(set(funcs))
+          print('RECOVERY_FUNCTIONS_COUNT', len(funcs))
+          for name in funcs[:200]: print('FUNCTION', name)
+
+          # A mount is only considered source-ready if exact 2v2 control authority is actually present.
+          exact_authority = all(term in text for term in ('create2v2ReconnectState','isCurrent2v2ControlEnvelope','controlGeneration'))
+          exact_reconnect_transition = 'reconnect2v2Player' in text and 'disconnect2v2Player' in text
+          recovery_ui_already_mounted = 'battle-recovery-live-adapter.mjs' in text or 'battle-recovery-runtime-surface.mjs' in text
+          print('VERDICT_EXACT_2V2_AUTHORITY_PRESENT', int(exact_authority))
+          print('VERDICT_EXACT_2V2_TRANSITIONS_PRESENT', int(exact_reconnect_transition))
+          print('VERDICT_RECOVERY_UI_ALREADY_MOUNTED', int(recovery_ui_already_mounted))
+          PY

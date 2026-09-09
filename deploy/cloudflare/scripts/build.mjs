@@ -44,6 +44,8 @@ const ARTIFACT_SPECS = Object.freeze([
   { source: 'browser/ze-kuu-formal-card-art-runtime.mjs', output: 'ze-kuu-formal-card-art-runtime.mjs', artifact: 'ze_kuu_formal_card_art_runtime', label: 'Ze-Kuu formal card art runtime' },
   { source: 'assets/visual/cards/dcg-ze-kuu.jpg', output: 'assets/visual/cards/dcg-ze-kuu.jpg', artifact: 'ze_kuu_formal_card_art', label: 'Ze-Kuu formal card art' },
   { source: 'browser/battle-janken-slidepad-runtime-mount.mjs', output: 'battle-janken-slidepad-runtime-mount.mjs', artifact: 'battle_janken_slidepad_runtime_mount', label: 'Battle janken SlidePad runtime mount' },
+  { source: 'browser/battle-janken-slidepad-runtime-mount-base.mjs', output: 'battle-janken-slidepad-runtime-mount-base.mjs', artifact: 'battle_janken_slidepad_runtime_mount_base', label: 'Battle janken SlidePad runtime mount base' },
+  { source: 'browser/battle-screen-runtime-mount-base.mjs', output: 'battle-screen-runtime-mount-base.mjs', artifact: 'battle_screen_runtime_mount_base', label: 'Battle screen runtime mount base' },
   { source: 'browser/battle-card-release-flight-motion-core.mjs', output: 'battle-card-release-flight-motion-core.mjs', artifact: 'battle_card_release_flight_motion_core', label: 'Battle card release flight motion core' },
   { source: 'browser/battle-card-release-flight-runtime-effect.mjs', output: 'battle-card-release-flight-runtime-effect.mjs', artifact: 'battle_card_release_flight_runtime_effect', label: 'Battle card release flight runtime effect' },
   { source: 'browser/battle-janken-compound-attack-package-core.mjs', output: 'battle-janken-compound-attack-package-core.mjs', artifact: 'battle_janken_compound_attack_package_core', label: 'Battle janken compound attack package core' },

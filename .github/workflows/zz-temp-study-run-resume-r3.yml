@@ -1,0 +1,22 @@
+name: TEMP Study Resume R3
+on:
+  push:
+    branches:
+      - sol/study-run-resume-r3-20260910
+    paths:
+      - .github/workflows/zz-temp-study-run-resume-r3.yml
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: sol/study-run-resume-r3-20260910
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply bounded Study resume patch and focused tests
+        run: python3 tools/temp-study-run-resume-r3.py

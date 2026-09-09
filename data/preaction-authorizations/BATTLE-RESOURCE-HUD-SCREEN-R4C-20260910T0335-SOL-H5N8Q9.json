@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RESOURCE-HUD-SCREEN-R4C-20260910T0335-SOL-H5N8Q9",
+  "taskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "workUnitKey": "BATTLE_CRITICAL_RESOURCE_HUD_SCREEN_MOUNT_R4",
+  "acquireKey": "BATTLE-RESOURCE-HUD-SCREEN-R4C-20260910T0335-SOL-H5N8Q9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "RESOURCE_COMPONENT_MERGED_SCREEN_RUNTIME_OWNER0_CURRENT_BLOB_STABLE_20260910",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "GIT_OBJECT_BYTE_IDENTICAL_BASE_PLUS_THIN_CANONICAL_WRAPPER_REUSES_CURRENT_RUNTIME_20260910",
+  "proceedToken": "PROCEED|BATTLE-RESOURCE-HUD-SCREEN-R4C-20260910T0335-SOL-H5N8Q9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-screen-resource-hud|compose-existing-authority|active-lease",
+  "authorizationBaseSha": "03910ec5c228281563f8b4d71a4d59c135ec5316",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "leaseWorkUnitKey": "BATTLE_CRITICAL_RESOURCE_HUD_SCREEN_MOUNT_R4",
+  "leaseAcquireKey": "BATTLE-RESOURCE-HUD-SCREEN-R4C-20260910T0335-SOL-H5N8Q9",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:35 JST",
+  "leaseUntilJst": "2026-09-10 04:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A894:L894",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-resource-hud-screen-r4c-20260910; browser/battle-screen-runtime-mount.mjs; NEW browser/battle-screen-runtime-mount-base-r4c.mjs (byte-identical current runtime blob reference); tests/battle-screen-runtime-mount.test.mjs; NEW tests/battle-screen-runtime-mount-base-r4c.test.mjs (byte-identical current classified test blob reference); own transient data/preaction-authorizations/BATTLE-RESOURCE-HUD-SCREEN-R4C-20260910T0335-SOL-H5N8Q9.json only. READ_ONLY reuse: browser/battle-critical-resource-hud-runtime.mjs and its focused test. browser/GAMEROAD.html, deploy/cloudflare/scripts/build.mjs, battle-screen-presentation-core, janken/camera/controlled-character/GOAL/Road/recovery/gameplay/rules/target/legality/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_CRITICAL_RESOURCE_HUD_TSCREEN_GIT_OBJECT_THIN_WRAPPER_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_SCREEN_BLOB_STABLE_PR1460_RESOURCE_COMPONENT_MERGED_OWNER0_20260910",
+  "solutionSearchEvidence": [
+    "current main 03910ec5c228281563f8b4d71a4d59c135ec5316 retains battle-screen runtime blob a5bb680aef94ebf4e8f613548f83dccf05cea847 and classified test blob b9a1ba99fe5b7d7f514f62155c63a36759440cb9",
+    "PR#1460 already merged the caller-authoritative Honey/Chip HUD component and focused authority tests",
+    "fresh CURRENT_ACTIVE_LEASES exact-target scan found no extant ACTIVE writer row for battle-screen runtime; earlier status-HUD branch remains PREACTION-only with product bytes zero and its lease row disappeared during concurrent tail append",
+    "the current runtime exposes its existing HUD and renderHud/render/destroy contract; no second screen controller is required",
+    "Git object references preserve the entire current runtime and classified test byte-identically as base-r4c modules, avoiding unsafe large-file transcription",
+    "the thin canonical wrapper delegates all existing behavior and only forwards caller-supplied honey, chipCount, honeyDelta and honeyDeltaSource to the already-merged resource HUD mounted in the existing left HUD",
+    "GAMEROAD.html and package build stay read-only in this slice; live authoritative source hookup and public dependency closure remain downstream"
+  ],
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "browser/battle-screen-runtime-mount-base-r4c.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    "tests/battle-screen-runtime-mount-base-r4c.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "browser/battle-screen-runtime-mount-base-r4c.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    "tests/battle-screen-runtime-mount-base-r4c.test.mjs"
+  ]
+}

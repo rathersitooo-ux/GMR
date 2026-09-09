@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CAMERA-DOM-R5A-20260910T0204-SOL-K6N4Q13",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CAMERA_DOM_RUNTIME_R5A",
+  "acquireKey": "BATTLE-CAMERA-DOM-R5A-20260910T0204-SOL-K6N4Q13",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_CAMERA_CORE_ROUTER_MERGED_PLUS_BUILD_OWNER_CONFLICT_ISOLATED_20260910T0204JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "COMPOSE_DOM_GESTURE_TRANSPORT_OVER_EXISTING_CAMERA_CORE_ROUTER_ONLY",
+  "proceedToken": "PROCEED|BATTLE-CAMERA-DOM-R5A-20260910T0204-SOL-K6N4Q13|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-camera-dom-runtime|existing-camera-compose|active-lease",
+  "authorizationBaseSha": "a84a3c877be133901dec969a6e67a54deb6da0c9",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CAMERA_DOM_RUNTIME_R5A",
+  "leaseAcquireKey": "BATTLE-CAMERA-DOM-R5A-20260910T0204-SOL-K6N4Q13",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 02:04 JST",
+  "leaseUntilJst": "2026-09-10 03:04 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A767:L767",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-camera-dom-r5a-20260910; browser/battle-camera-live-runtime.mjs (new); tests/battle-camera-live-runtime.test.mjs (new); own transient data/preaction-authorizations/BATTLE-CAMERA-DOM-R5A-20260910T0204-SOL-K6N4Q13.json only. Existing browser/battle-camera-control-core.mjs and browser/battle-camera-input-router.mjs READ_ONLY reuse. browser/GAMEROAD.html and deploy/cloudflare/scripts/build.mjs READ_ONLY while current costume build owner remains active; battle-screen/janken/controlled-character/GOAL/Road/Flanora/progression/resource HUD/gameplay/rules/target/movement/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_CAMERA_DOM_GESTURE_TRANSPORT_COMPOSE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CAMERA_CONTROL_CORE_AND_INPUT_ROUTER_MAIN_READBACK_20260910T0204JST",
+  "solutionSearchEvidence": [
+    "battle-camera-control-core.mjs already owns follow/manual camera state, bounded pan/zoom/angle, controlled-point sync and one-action return; liveRuntimeWiringIncluded=false.",
+    "battle-camera-input-router.mjs already owns world-vs-screen input routing and explicitly ignores screen-space UI gestures; DOM listener/pointer capture ownership remains false.",
+    "Current user authority requires touch/desktop manual inspection without camera-driven gameplay, movement, target or legality authority.",
+    "CURRENT_ACTIVE_LEASES row766 owns deploy/cloudflare/scripts/build.mjs for a separate costume live mount through 03:00 JST, so this slice excludes HTML/build and creates no collision.",
+    "A small DOM transport layer is the minimum reusable missing seam; it does not create a second camera engine and leaves actual world projection/numeric limits caller-owned."
+  ],
+  "scope": [
+    "browser/battle-camera-live-runtime.mjs",
+    "tests/battle-camera-live-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-camera-live-runtime.mjs",
+    "tests/battle-camera-live-runtime.test.mjs"
+  ]
+}

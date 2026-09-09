@@ -5,6 +5,7 @@ import {
   BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT,
   BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_SCHEMA,
   projectBattleCriticalResourceHudInput,
+  syncBattleCriticalResourceHudFromPlayer,
 } from '../browser/battle-critical-resource-hud-live-adapter.mjs';
 
 test('projects only explicit caller player Honey and Chip count', () => {
@@ -65,6 +66,51 @@ test('optional Honey delta is forwarded only as a complete caller pair', () => {
   );
 });
 
+test('dedicated sync helper calls only caller resourceHud.sync exactly once', () => {
+  const calls = [];
+  const result = Object.freeze({ ok: true, source: 'resourceHud.sync' });
+  const resourceHud = {
+    sync(snapshot) {
+      calls.push(snapshot);
+      return result;
+    },
+  };
+  const screenRuntime = {
+    resourceHud,
+    renderHud() {
+      throw new Error('generic renderHud must not be used');
+    },
+  };
+
+  const actual = syncBattleCriticalResourceHudFromPlayer({
+    resourceHud: screenRuntime.resourceHud,
+    player: { honey: 11, chip: ['A', 'B'] },
+    honeyDelta: 1,
+    honeyDeltaSource: '順位1位',
+  });
+
+  assert.equal(actual, result);
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0], {
+    honey: 11,
+    chipCount: 2,
+    honeyDelta: 1,
+    honeyDeltaSource: '順位1位',
+  });
+  assert.equal(Object.isFrozen(calls[0]), true);
+});
+
+test('dedicated sync helper fails closed without a caller-owned resource HUD', () => {
+  assert.throws(
+    () => syncBattleCriticalResourceHudFromPlayer({ player: { honey: 1, chip: [] } }),
+    /BATTLE_RESOURCE_HUD_SYNC_REQUIRED/,
+  );
+  assert.throws(
+    () => syncBattleCriticalResourceHudFromPlayer({ resourceHud: {}, player: { honey: 1, chip: [] } }),
+    /BATTLE_RESOURCE_HUD_SYNC_REQUIRED/,
+  );
+});
+
 test('adapter contract owns no gameplay or resource authority', () => {
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_SCHEMA, 'gameroad.battle-critical-resource-hud-live-adapter.v1');
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT.presentationOnly, true);
@@ -74,4 +120,6 @@ test('adapter contract owns no gameplay or resource authority', () => {
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT.chipIdentityProjection, false);
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT.rankCalculationAuthority, false);
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT.gameStateWrite, false);
+  assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT.genericHudRenderUsed, false);
+  assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT.directSyncTarget, 'CALLER_OWNED_RESOURCE_HUD.sync');
 });

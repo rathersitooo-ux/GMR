@@ -24,6 +24,13 @@ function explicitPlayer(value) {
   return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
 }
 
+function requireResourceHud(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || typeof value.sync !== 'function') {
+    throw new TypeError('BATTLE_RESOURCE_HUD_SYNC_REQUIRED');
+  }
+  return value;
+}
+
 /**
  * Project only caller-selected player's already-authoritative resource facts into
  * the input shape consumed by the existing Battle screen resource HUD.
@@ -59,6 +66,27 @@ export function projectBattleCriticalResourceHudInput({
   return deepFreeze(snapshot);
 }
 
+/**
+ * Sync the explicit caller player's resources through the dedicated resource HUD
+ * surface. The caller passes the existing screenRuntime.resourceHud (or an
+ * equivalent caller-owned HUD surface), so generic screen renderHud state is not
+ * rewritten by a resource-only update.
+ */
+export function syncBattleCriticalResourceHudFromPlayer({
+  resourceHud = null,
+  player = null,
+  honeyDelta = null,
+  honeyDeltaSource = null,
+} = {}) {
+  const hud = requireResourceHud(resourceHud);
+  const snapshot = projectBattleCriticalResourceHudInput({
+    player,
+    honeyDelta,
+    honeyDeltaSource,
+  });
+  return hud.sync(snapshot);
+}
+
 export const BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT = deepFreeze({
   schema: BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_SCHEMA,
   presentationOnly: true,
@@ -68,6 +96,8 @@ export const BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT = deepFreeze({
   chipIdentityProjection: false,
   rankCalculationAuthority: false,
   gameStateWrite: false,
+  genericHudRenderUsed: false,
+  directSyncTarget: 'CALLER_OWNED_RESOURCE_HUD.sync',
   source: Object.freeze({
     honey: 'EXPLICIT_CALLER_PLAYER.honey',
     chipCount: 'EXPLICIT_CALLER_PLAYER.chip.length',

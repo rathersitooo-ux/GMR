@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RESOLUTION-RETURN-R2-20260909T1436-SOL-T6Q2V5",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_RESOLUTION_BOARD_RETURN_R1",
+  "acquireKey": "BATTLE-RESOLUTION-RETURN-R1-20260909T1421-SOL-H7M3Q8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-RUNTIME-EXACT-SHIELD-CUE-PRESENTATION-ONLY-R2",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R1-MERGED-MODEL-PLUS-EXISTING-SHIELD-SLOT-DOM-R2",
+  "proceedToken": "PROCEED|BATTLE-RESOLUTION-RETURN-R2-20260909T1436-SOL-T6Q2V5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260909T1436JST",
+  "authorizationBaseSha": "27b60fae85cae58622f33de62537bff485b33ec9",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_RESOLUTION_BOARD_RETURN_R1",
+  "leaseAcquireKey": "BATTLE-RESOLUTION-RETURN-R1-20260909T1421-SOL-H7M3Q8",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 14:21 JST",
+  "leaseUntilJst": "2026-09-09 15:21 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A650:L650",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-resolution-board-return-r1-20260909; browser/battle-screen-presentation-core.mjs; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-presentation-core.test.mjs; tests/battle-screen-runtime-mount.test.mjs; own transient PREACTION only. browser/GAMEROAD.html, battle-janken-slidepad-runtime-mount.mjs, gameplay/rules/target legality/save/economy/network READ_ONLY.",
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

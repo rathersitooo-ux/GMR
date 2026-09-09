@@ -1,0 +1,295 @@
+name: TEMP Battle progression latent live R3 surgical writer
+
+on:
+  push:
+    branches:
+      - sol/battle-progression-latent-live-r3-20260909
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply bounded progression presentation patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          runtime_path = Path('browser/new-base-flanora-board-surface-runtime.mjs')
+          test_path = Path('tests/new-base-flanora-board-surface-runtime.test.mjs')
+          marker = 'BATTLE_PROGRESSION_LATENT_LIVE_R3'
+
+          runtime = runtime_path.read_text()
+          if marker in runtime:
+              raise SystemExit('runtime marker already present')
+
+          import_anchor = "import { createFlanoraMapLayout } from './new-base-flanora-map-layout-core.mjs';\n"
+          import_add = import_anchor + "import { isNewBaseProgressionLanePresentation } from './new-base-progression-lane-presentation-core.mjs';\n"
+          if runtime.count(import_anchor) != 1:
+              raise SystemExit('unexpected runtime import anchor')
+          runtime = runtime.replace(import_anchor, import_add, 1)
+
+          css_anchor = '[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{position:relative;z-index:1;width:clamp(5px,.75vw,10px);height:clamp(5px,.75vw,10px);border:1px solid rgba(244,250,238,.62);border-radius:50%;background:rgba(24,64,54,.92);box-shadow:0 0 0 2px rgba(9,30,25,.24)}\n'
+          css_add = css_anchor + '''/* BATTLE_PROGRESSION_LATENT_LIVE_R3: established progress is visually distinct from future/unresolved slots without granting interaction */
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep[data-progression-stage-state="UNRESOLVED"]{width:clamp(3px,.42vw,6px);height:clamp(3px,.42vw,6px);border-style:dotted;background:transparent;box-shadow:none;opacity:.28}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep[data-progression-stage-state="LATENT"]{width:clamp(4px,.55vw,7px);height:clamp(4px,.55vw,7px);border-style:dashed;background:transparent;box-shadow:none;opacity:.44}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep[data-progression-stage-state="BUILT"]{width:clamp(7px,.9vw,12px);height:clamp(7px,.9vw,12px);border-width:2px;border-style:solid;background:rgba(224,241,218,.92);box-shadow:0 0 0 2px rgba(9,30,25,.28),0 0 8px rgba(224,241,218,.26);opacity:1}
+'''
+          if runtime.count(css_anchor) != 1:
+              raise SystemExit('unexpected runtime css anchor')
+          runtime = runtime.replace(css_anchor, css_add, 1)
+
+          helper_anchor = "export function mountFlanoraBoardSurface({\n"
+          helper_block = '''function writeProgressionStagePresentation(node, { state, stageIndex, established, latent }) {
+  setAttr(node, 'data-progression-stage-state', state);
+  setAttr(node, 'data-progression-established', established ? 'true' : 'false');
+  setAttr(node, 'data-progression-latent', latent ? 'true' : 'false');
+  setAttr(node, 'data-progression-actionable', 'false');
+  setAttr(node, 'data-progression-traversable', 'false');
+  setAttr(node, 'data-progression-authority', 'presentation-only');
+  const label = state === 'BUILT'
+    ? `進行済み ${stageIndex}/7`
+    : state === 'LATENT'
+      ? `未成立 ${stageIndex}/7`
+      : `進行状態未確定 ${stageIndex}/7`;
+  setAttr(node, 'aria-label', label);
+}
+
+function primeUnresolvedProgressionStage(node, stageIndex) {
+  writeProgressionStagePresentation(node, {
+    state: 'UNRESOLVED',
+    stageIndex,
+    established: false,
+    latent: false,
+  });
+}
+
+function syncProgressionLanePresentationToRoadSteps(presentation, roadStepsByKey) {
+  if (!isNewBaseProgressionLanePresentation(presentation) || presentation.ok !== true) {
+    return deepFreeze({
+      applied: false,
+      reason: 'PROGRESSION_PRESENTATION_REQUIRED',
+      builtStageCount: null,
+      latentStageCount: null,
+      presentationOnly: true,
+      gameplayAuthority: false,
+      movementAuthority: false,
+      legalityAuthority: false,
+      gameStateWrite: false,
+    });
+  }
+
+  const assignments = [];
+  const seenRoadStepIds = new Set();
+  for (const lane of presentation.lanePresentations) {
+    if (!Array.isArray(lane?.stages) || lane.stages.length !== ROAD_STEPS.length) {
+      return deepFreeze({ applied: false, reason: 'PROGRESSION_STAGE_SET_INVALID', presentationOnly: true, gameplayAuthority: false, movementAuthority: false, legalityAuthority: false, gameStateWrite: false });
+    }
+    for (const stage of lane.stages) {
+      const node = roadStepsByKey.get(stage?.roadStepId);
+      const built = stage?.visualState === 'BUILT';
+      const latent = stage?.visualState === 'LATENT';
+      if (!node || seenRoadStepIds.has(stage?.roadStepId) || (!built && !latent)
+          || stage?.established !== built || stage?.latent !== latent
+          || stage?.actionable !== false || stage?.traversable !== false
+          || stage?.legalityAuthority !== false || stage?.movementAuthority !== false) {
+        return deepFreeze({ applied: false, reason: 'PROGRESSION_STAGE_ASSIGNMENT_INVALID', presentationOnly: true, gameplayAuthority: false, movementAuthority: false, legalityAuthority: false, gameStateWrite: false });
+      }
+      seenRoadStepIds.add(stage.roadStepId);
+      assignments.push({
+        node,
+        state: stage.visualState,
+        stageIndex: stage.stageIndex,
+        established: built,
+        latent,
+      });
+    }
+  }
+
+  if (assignments.length !== roadStepsByKey.size || seenRoadStepIds.size !== roadStepsByKey.size) {
+    return deepFreeze({ applied: false, reason: 'FULL_FLANORA_PROGRESSION_REQUIRED', presentationOnly: true, gameplayAuthority: false, movementAuthority: false, legalityAuthority: false, gameStateWrite: false });
+  }
+
+  for (const assignment of assignments) writeProgressionStagePresentation(assignment.node, assignment);
+  return deepFreeze({
+    applied: true,
+    reason: 'PROGRESSION_PRESENTATION_APPLIED',
+    builtStageCount: presentation.totalBuiltStageCount,
+    latentStageCount: presentation.totalLatentStageCount,
+    presentationOnly: true,
+    gameplayAuthority: false,
+    movementAuthority: false,
+    legalityAuthority: false,
+    gameStateWrite: false,
+  });
+}
+
+'''
+          if runtime.count(helper_anchor) != 1:
+              raise SystemExit('unexpected runtime helper anchor')
+          runtime = runtime.replace(helper_anchor, helper_block + helper_anchor, 1)
+
+          step_anchor = "      setAttr(stepNode, 'data-row-index', step.rowIndex);\n"
+          step_add = step_anchor + "      primeUnresolvedProgressionStage(stepNode, step.roadIndex);\n"
+          if runtime.count(step_anchor) != 1:
+              raise SystemExit('unexpected road-step anchor')
+          runtime = runtime.replace(step_anchor, step_add, 1)
+
+          method_anchor = "    resolveClearingCell(cellId) {\n      return nonEmptyString(cellId) ? clearingByCellId.get(cellId) ?? null : null;\n    },\n"
+          method_add = "    syncProgressionPresentation(presentation) {\n      if (destroyed) return deepFreeze({ applied: false, reason: 'RUNTIME_DESTROYED', presentationOnly: true, gameplayAuthority: false, movementAuthority: false, legalityAuthority: false, gameStateWrite: false });\n      return syncProgressionLanePresentationToRoadSteps(presentation, roadStepsByKey);\n    },\n" + method_anchor
+          if runtime.count(method_anchor) != 1:
+              raise SystemExit('unexpected runtime method anchor')
+          runtime = runtime.replace(method_anchor, method_add, 1)
+
+          contract_anchor = "  roadStepsPerLane: 7,\n"
+          contract_add = contract_anchor + "  progressionPresentationSource: 'EXISTING_NEW_BASE_PROGRESSION_LANE_PRESENTATION',\n  unresolvedStageDefault: 'VISUALLY_SUBDUED_NOT_OPEN',\n  progressionSyncWritesGameState: false,\n"
+          if runtime.count(contract_anchor) != 1:
+              raise SystemExit('unexpected runtime contract anchor')
+          runtime = runtime.replace(contract_anchor, contract_add, 1)
+          runtime_path.write_text(runtime)
+
+          tests = test_path.read_text()
+          if marker in tests:
+              raise SystemExit('test marker already present')
+          test_import_anchor = "import { createFlanoraMapLayout } from '../browser/new-base-flanora-map-layout-core.mjs';\n"
+          test_import_add = test_import_anchor + "import { projectNewBaseProgressionLanePresentation } from '../browser/new-base-progression-lane-presentation-core.mjs';\n"
+          if tests.count(test_import_anchor) != 1:
+              raise SystemExit('unexpected test import anchor')
+          tests = tests.replace(test_import_anchor, test_import_add, 1)
+
+          test_block = r'''
+
+test('BATTLE_PROGRESSION_LATENT_LIVE_R3 syncs existing seven-step nodes without turning future stages into open cells', () => {
+  const documentLike = makeFakeDom();
+  const host = documentLike.createElement('div');
+  const runtime = mountFlanoraBoardSurface({ host, documentLike, layout: standardLayout() });
+
+  const unresolved = runtime.resolveRoadStep('P1', 0, 1);
+  assert.equal(unresolved.dataset.progressionStageState, 'UNRESOLVED');
+  assert.equal(unresolved.dataset.progressionActionable, 'false');
+  assert.equal(unresolved.dataset.progressionTraversable, 'false');
+  assert.equal(unresolved.getAttribute('aria-label'), '進行状態未確定 1/7');
+
+  const goalPathPresentation = {
+    schema: 'GAMEROAD_NEW_BASE_GOAL_PATH_PRESENTATION_V1',
+    ok: true,
+    terminalWin: false,
+    presentationOnly: true,
+    gameplayAuthority: false,
+    gameStateWrite: false,
+    movementAuthority: false,
+    legalityAuthority: false,
+    resultAuthority: false,
+    lanePresentations: runtime.model.lanes.map((lane) => {
+      const straightCardCount = lane.key === 'P1:0' ? 3 : lane.key === 'P2:1' ? 7 : 0;
+      return {
+        participantId: lane.participantId,
+        laneIndex: lane.laneIndex,
+        straightCardCount,
+        connectedToGoal: lane.key === 'P2:1',
+      };
+    }),
+  };
+  const progression = projectNewBaseProgressionLanePresentation(goalPathPresentation);
+  assert.equal(progression.ok, true);
+  assert.equal(progression.totalBuiltStageCount, 10);
+  assert.equal(progression.totalLatentStageCount, 74);
+
+  const applied = runtime.syncProgressionPresentation(progression);
+  assert.deepEqual(applied, {
+    applied: true,
+    reason: 'PROGRESSION_PRESENTATION_APPLIED',
+    builtStageCount: 10,
+    latentStageCount: 74,
+    presentationOnly: true,
+    gameplayAuthority: false,
+    movementAuthority: false,
+    legalityAuthority: false,
+    gameStateWrite: false,
+  });
+  assert.equal(runtime.resolveRoadStep('P1', 0, 1).dataset.progressionStageState, 'BUILT');
+  assert.equal(runtime.resolveRoadStep('P1', 0, 3).dataset.progressionEstablished, 'true');
+  assert.equal(runtime.resolveRoadStep('P1', 0, 4).dataset.progressionStageState, 'LATENT');
+  assert.equal(runtime.resolveRoadStep('P1', 0, 4).dataset.progressionLatent, 'true');
+  assert.equal(runtime.resolveRoadStep('P1', 0, 4).dataset.progressionActionable, 'false');
+  assert.equal(runtime.resolveRoadStep('P1', 0, 4).dataset.progressionTraversable, 'false');
+  assert.equal(runtime.resolveRoadStep('P2', 1, 7).dataset.progressionStageState, 'BUILT');
+  assert.equal(runtime.resolveRoadStep('P3', 2, 7).dataset.progressionStageState, 'LATENT');
+
+  const beforeInvalid = runtime.resolveRoadStep('P1', 0, 1).dataset.progressionStageState;
+  const refused = runtime.syncProgressionPresentation(null);
+  assert.equal(refused.applied, false);
+  assert.equal(refused.reason, 'PROGRESSION_PRESENTATION_REQUIRED');
+  assert.equal(runtime.resolveRoadStep('P1', 0, 1).dataset.progressionStageState, beforeInvalid);
+  assert.equal(runtime.gameplayAuthority, false);
+  assert.equal(runtime.gameStateWrite, false);
+  assert.equal(runtime.movementAuthority, false);
+});
+
+test('progression runtime refuses partial authoritative projections instead of leaving mixed stale lane state', () => {
+  const documentLike = makeFakeDom();
+  const runtime = mountFlanoraBoardSurface({ host: documentLike.createElement('div'), documentLike, layout: standardLayout() });
+  const oneLaneGoalPath = {
+    schema: 'GAMEROAD_NEW_BASE_GOAL_PATH_PRESENTATION_V1',
+    ok: true,
+    terminalWin: false,
+    presentationOnly: true,
+    gameplayAuthority: false,
+    gameStateWrite: false,
+    movementAuthority: false,
+    legalityAuthority: false,
+    resultAuthority: false,
+    lanePresentations: [{ participantId: 'P1', laneIndex: 0, straightCardCount: 2, connectedToGoal: false }],
+  };
+  const partial = projectNewBaseProgressionLanePresentation(oneLaneGoalPath);
+  assert.equal(partial.ok, true);
+  const refused = runtime.syncProgressionPresentation(partial);
+  assert.equal(refused.applied, false);
+  assert.equal(refused.reason, 'FULL_FLANORA_PROGRESSION_REQUIRED');
+  assert.equal(runtime.resolveRoadStep('P1', 0, 1).dataset.progressionStageState, 'UNRESOLVED');
+  assert.equal(runtime.resolveRoadStep('P1', 0, 3).dataset.progressionStageState, 'UNRESOLVED');
+  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.progressionSyncWritesGameState, false);
+  assert.equal(FLANORA_BOARD_SURFACE_RUNTIME_CONTRACT.secondBoardEngine, false);
+});
+'''
+          tests = tests.rstrip() + test_block + '\n'
+          test_path.write_text(tests)
+          PY
+
+      - name: Enforce exact product scope
+        shell: bash
+        run: |
+          mapfile -t changed < <(git diff --name-only | sort)
+          expected=$(printf '%s\n' \
+            browser/new-base-flanora-board-surface-runtime.mjs \
+            tests/new-base-flanora-board-surface-runtime.test.mjs | sort)
+          actual=$(printf '%s\n' "${changed[@]}")
+          printf '%s\n' "${changed[@]}"
+          test "$actual" = "$expected"
+          git diff --check
+          ! git diff -- browser/GAMEROAD.html deploy/cloudflare/scripts/build.mjs | grep -q .
+
+      - name: Check runtime syntax
+        run: node --check browser/new-base-flanora-board-surface-runtime.mjs
+
+      - name: Run focused progression runtime tests
+        run: node --test tests/new-base-progression-lane-presentation-core.test.mjs tests/new-base-flanora-board-surface-runtime.test.mjs
+
+      - name: Commit bounded product diff
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add browser/new-base-flanora-board-surface-runtime.mjs tests/new-base-flanora-board-surface-runtime.test.mjs
+          git diff --cached --check
+          test "$(git diff --cached --name-only | wc -l)" -eq 2
+          git commit -m 'Battle: 未成立の進行段を既存盤面で潜在表示'
+          git push origin HEAD:sol/battle-progression-latent-live-r3-20260909

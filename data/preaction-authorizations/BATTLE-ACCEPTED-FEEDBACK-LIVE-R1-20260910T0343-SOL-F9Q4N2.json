@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ACCEPTED-FEEDBACK-LIVE-R1-20260910T0343-SOL-F9Q4N2",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "BATTLE_ACCEPTED_INTERACTION_FEEDBACK_LIVE_ADAPTER_R1",
+  "acquireKey": "BATTLE-ACCEPTED-FEEDBACK-LIVE-R1-20260910T0343-SOL-F9Q4N2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-row1336-accepted-lifecycle-feedback-plus-main-battle-feedback-core-20260910T0343",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "pure-adapter-fail-closed-existing-cue-core-no-authority-write",
+  "proceedToken": "PROCEED|BATTLE-ACCEPTED-FEEDBACK-LIVE-R1-20260910T0343-SOL-F9Q4N2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|accepted-lifecycle-only",
+  "authorizationBaseSha": "4cd126b3f6e30a680a8a60c48ca7b3787755ba17",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "BATTLE_ACCEPTED_INTERACTION_FEEDBACK_LIVE_ADAPTER_R1",
+  "leaseAcquireKey": "BATTLE-ACCEPTED-FEEDBACK-LIVE-R1-20260910T0343-SOL-F9Q4N2",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:43 JST",
+  "leaseUntilJst": "2026-09-10 04:43 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A901:N901",
+  "leaseExactMutableResources": "browser/battle-interaction-feedback-live-adapter.mjs; tests/battle-interaction-feedback-live-adapter.test.mjs; data/preaction-authorizations/BATTLE-ACCEPTED-FEEDBACK-LIVE-R1-20260910T0343-SOL-F9Q4N2.json; branch sol/battle-accepted-feedback-live-r1-20260910. Shared browser/GAMEROAD.html / battle-janken-slidepad-runtime-mount.mjs / battle-screen-runtime-mount.mjs / deploy build / formal SFX asset registry are READ_ONLY and excluded.",
+  "scope": [
+    "browser/battle-interaction-feedback-live-adapter.mjs",
+    "tests/battle-interaction-feedback-live-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-interaction-feedback-live-adapter.mjs",
+    "tests/battle-interaction-feedback-live-adapter.test.mjs"
+  ],
+  "solutionSignature": "battle-accepted-lifecycle/exactly-once-to-injected-feedback-consumers",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "browser/battle-interaction-feedback-cue-core.mjs already owns accepted/public/resolution stage to symbolic SFX/haptic/visual meaning",
+    "browser/battle-invalid-action-feedback-live-adapter.mjs owns rejected-action presentation and remains separate",
+    "CURRENT ACT-BATTLE-INTERACTION-FEEDBACK-001 explicitly leaves live binding, exactly-once/accepted-only and formal consumer delivery open",
+    "formal SFX asset registry adoption remains outside this work unit"
+  ],
+  "reuseDecisionEvidenceId": "reuse-existing-battle-cue-accepted-stages-only-20260910T0343"
+}

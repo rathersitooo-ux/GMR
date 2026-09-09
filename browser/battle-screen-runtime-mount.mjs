@@ -19,6 +19,7 @@ const PLAYER_ROLE_LABELS = Object.freeze({
   target: '対象'
 });
 const CURRENT_ACTION_PHASE_LABELS = Object.freeze({
+  plan: '行動を選ぶ',
   partner_cutin: '相棒',
   reveal: '公開',
   attack: '攻撃',
@@ -579,7 +580,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     if (shellCreated) shell.hidden = resultExit;
     phaseSurface.hidden = !battle;
     hud.root.hidden = !battle;
-    writeCurrentActionCue(currentActionCue, battle ? model : null);
+    writeCurrentActionCue(currentActionCue, battle || (!resultExit && model.screenMode === 'MATCH_PLAN') ? model : null);
     if (planSlot) planSlot.hidden = battle || resultExit;
     syncFieldLandmark(fieldLandmark, phaseSurface, shell, root);
 

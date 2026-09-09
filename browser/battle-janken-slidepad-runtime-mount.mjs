@@ -31,8 +31,10 @@ const HAND_DRAG_DEAD_ZONE_PX = 8;
 const HAND_AURA_ARM_PADDING_PX = 18;
 const HAND_AURA_RELEASE_DURATION_MS = 520;
 const SLOT_ROLL_DETENT_FEEDBACK_DURATION_MS = 110;
+const HAND_FOCUS_SNAP_MAX_PX = 28;
 export const BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS = 'section[data-screen="battle"] #targetBox.on,section[data-screen="battle"] #targetBox.vfTargetProxyOn{z-index:60!important}';
 export const BATTLE_HAND_PLAYABLE_AFFORDANCE_SCHEMA = 'gameroad.battle-hand-playable-affordance.v1';
+export const BATTLE_CARD_FOCUS_PRESENTATION_SCHEMA = 'gameroad.battle-card-focus-presentation.v1';
 export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR = 'data-battle-playable-hand-row-roulette-live';
 export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_PLACEMENT_CSS = `
 section[data-screen="battle"] [${BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_HOST_ATTR}="1"]{position:absolute;left:var(--gameroad-battle-partner-right-x,clamp(112px,14vw,174px));bottom:var(--gameroad-battle-partner-upper-y,clamp(92px,16vh,142px));z-index:39;pointer-events:auto;max-width:min(236px,36vw)}
@@ -303,6 +305,43 @@ export function projectBattleHandDragGhostPosition({
   return deepFreeze({ left, top });
 }
 
+export function projectBattleCardFocusSnapPosition({
+  ghostPosition,
+  cardSize,
+  snapRect,
+  armed = false,
+  maxPullPx = HAND_FOCUS_SNAP_MAX_PX,
+} = {}) {
+  const left = Number(ghostPosition?.left);
+  const top = Number(ghostPosition?.top);
+  if (![left, top].every(Number.isFinite)) return null;
+  if (armed !== true) return deepFreeze({ left, top });
+  const width = Number(cardSize?.width);
+  const height = Number(cardSize?.height);
+  const snapLeft = Number(snapRect?.left);
+  const snapTop = Number(snapRect?.top);
+  const snapWidth = Number(snapRect?.width);
+  const snapHeight = Number(snapRect?.height);
+  if (![width, height, snapLeft, snapTop, snapWidth, snapHeight].every(Number.isFinite)
+    || width <= 0 || height <= 0 || snapWidth <= 0 || snapHeight <= 0) {
+    return deepFreeze({ left, top });
+  }
+  const centerX = left + (width / 2);
+  const centerY = top + (height / 2);
+  const targetX = snapLeft + (snapWidth / 2);
+  const targetY = snapTop + (snapHeight / 2);
+  const dx = targetX - centerX;
+  const dy = targetY - centerY;
+  const distance = Math.hypot(dx, dy);
+  const limit = Math.max(0, Number(maxPullPx) || 0);
+  if (!Number.isFinite(distance) || distance <= 0 || limit <= 0) return deepFreeze({ left, top });
+  const pull = Math.min(limit, distance);
+  return deepFreeze({
+    left: left + ((dx / distance) * pull),
+    top: top + ((dy / distance) * pull),
+  });
+}
+
 function addStyle(documentRef) {
   if (documentRef.getElementById?.(STYLE_ID)) return;
   const style = documentRef.createElement('style');
@@ -332,6 +371,9 @@ section[data-screen="battle"] #hand .handCard[data-hand-aura-dragging="true"]{op
 section[data-screen="battle"] #hand.grPlayableHandActionBase{position:relative;isolation:isolate}
 section[data-screen="battle"] #hand.grPlayableHandActionBase::before{content:"";position:absolute;left:50%;bottom:-7px;width:min(270px,88%);height:30px;transform:translateX(-50%);border-top:2px solid rgba(255,216,74,.92);border-radius:50% 50% 8px 8px/100% 100% 8px 8px;background:radial-gradient(ellipse at 50% 0%,rgba(255,216,74,.18),rgba(255,216,74,.06) 54%,transparent 72%);box-shadow:0 -4px 16px rgba(255,216,74,.10);pointer-events:none;z-index:0}
 section[data-screen="battle"] #hand .handCard.grPlayableHandCandidate{position:relative;overflow:visible!important;z-index:1}
+section[data-screen="battle"] #hand .handCard[data-card-focus="true"]{translate:0 -8px;filter:brightness(1.08) saturate(1.06);z-index:5!important;box-shadow:0 0 0 2px rgba(232,242,255,.62),0 10px 24px rgba(5,8,28,.35)!important}
+section[data-screen="battle"] #hand .handCard[data-card-focus="true"][data-card-focus-legal="true"]{translate:0 -11px;filter:brightness(1.16) saturate(1.12);box-shadow:0 0 0 3px rgba(255,216,74,.78),0 0 18px rgba(255,216,74,.24),0 12px 26px rgba(5,8,28,.38)!important}
+section[data-screen="battle"] #hand .handCard[data-card-staged="true"]{translate:0 -14px;filter:brightness(1.14) saturate(1.08);z-index:6!important;box-shadow:0 0 0 3px rgba(207,243,255,.94),0 0 0 6px rgba(87,211,255,.18),0 0 26px rgba(91,213,255,.34)!important}
 section[data-screen="battle"] #hand .grPlayableHandTriangle{position:absolute;left:50%;bottom:-14px;transform:translateX(-50%);color:#ffd84a;font:1000 13px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 7px rgba(255,216,74,.58);pointer-events:none;user-select:none;z-index:3}
 ${BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_PLACEMENT_CSS}
 ${BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS}
@@ -457,6 +499,9 @@ function restoreHandNode(node) {
   delete node.dataset.jankenReserved;
   delete node.dataset.handAuraDraggable;
   delete node.dataset.handAuraDragging;
+  delete node.dataset.cardFocus;
+  delete node.dataset.cardFocusLegal;
+  delete node.dataset.cardStaged;
   node.classList?.remove?.('grPlayableHandCandidate');
   node.querySelector?.('.grPlayableHandTriangle')?.remove?.();
   if (node.dataset.jankenReservedAriaOwned === '1') {
@@ -740,6 +785,79 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
   let suppressNativeClickCardId = null;
   let allowAuraProgrammaticClick = false;
   let suppressClickTimer = null;
+  let focusedCardId = null;
+
+  function currentStagedCardIds() {
+    const staged = new Set();
+    for (const select of [root.querySelector?.('#roadSelect'), root.querySelector?.('#battleSelect')]) {
+      const cardId = typeof select?.value === 'string' ? select.value.trim() : '';
+      if (cardId) staged.add(cardId);
+    }
+    return staged;
+  }
+
+  function syncHandCardFocusPresentation() {
+    const nodes = handCardNodes(root);
+    const visibleIds = new Set(nodes.map((node) => node.dataset?.cardId ?? '').filter(Boolean));
+    if (focusedCardId && !visibleIds.has(focusedCardId)) focusedCardId = null;
+    const affordance = currentPlayableHandAffordance(root);
+    const legal = new Set(affordance?.candidateCardIds ?? []);
+    const staged = currentStagedCardIds();
+    for (const node of nodes) {
+      const cardId = node.dataset?.cardId ?? '';
+      const focusValue = String(!!cardId && cardId === focusedCardId);
+      const legalValue = String(!!cardId && legal.has(cardId));
+      const stagedValue = String(!!cardId && staged.has(cardId));
+      if (node.dataset.cardFocus !== focusValue) node.dataset.cardFocus = focusValue;
+      if (node.dataset.cardFocusLegal !== legalValue) node.dataset.cardFocusLegal = legalValue;
+      if (node.dataset.cardStaged !== stagedValue) node.dataset.cardStaged = stagedValue;
+    }
+    return deepFreeze({
+      schema: BATTLE_CARD_FOCUS_PRESENTATION_SCHEMA,
+      focusedCardId,
+      legalCandidateCardIds: Object.freeze([...legal]),
+      stagedCardIds: Object.freeze([...staged]),
+    });
+  }
+
+  function setFocusedCardId(nextCardId) {
+    const next = typeof nextCardId === 'string' ? nextCardId.trim() : '';
+    focusedCardId = next || null;
+    return syncHandCardFocusPresentation();
+  }
+
+  function handCardFromEvent(event) {
+    return event?.target?.closest?.('#hand .handCard[data-card-id]') ?? null;
+  }
+
+  function handleHandPointerOver(event) {
+    const card = handCardFromEvent(event);
+    if (!card || card.dataset?.jankenReserved === 'true') return;
+    setFocusedCardId(card.dataset?.cardId ?? null);
+  }
+
+  function handleHandPointerOut(event) {
+    if (handDrag) return;
+    const card = handCardFromEvent(event);
+    if (!card) return;
+    const relatedCard = event?.relatedTarget?.closest?.('#hand .handCard[data-card-id]') ?? null;
+    if (relatedCard === card) return;
+    if (focusedCardId === (card.dataset?.cardId ?? null)) setFocusedCardId(null);
+  }
+
+  function handleHandFocusIn(event) {
+    const card = handCardFromEvent(event);
+    if (!card || card.dataset?.jankenReserved === 'true') return;
+    setFocusedCardId(card.dataset?.cardId ?? null);
+  }
+
+  function handleHandFocusOut(event) {
+    const card = handCardFromEvent(event);
+    if (!card) return;
+    const relatedCard = event?.relatedTarget?.closest?.('#hand .handCard[data-card-id]') ?? null;
+    if (relatedCard === card) return;
+    if (!handDrag && focusedCardId === (card.dataset?.cardId ?? null)) setFocusedCardId(null);
+  }
 
   function renderLoadPreview(nextHand) {
     const preview = projectBattleLoadCardPreview(model, nextHand);
@@ -918,13 +1036,24 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
       viewportHeight: globalRef?.innerHeight,
     });
     if (!ghostPosition) return false;
-    state.ghost.style.left = `${ghostPosition.left.toFixed(2)}px`;
-    state.ghost.style.top = `${ghostPosition.top.toFixed(2)}px`;
-    const armed = isBattleHandAuraLaunchArmed({
+    const auraRect = handle.getBoundingClientRect?.();
+    const legalCandidate = currentPlayableHandAffordance(root)?.candidateCardIds?.includes?.(state.cardId) === true;
+    const armed = legalCandidate && isBattleHandAuraLaunchArmed({
       pointer: { x, y },
-      auraRect: handle.getBoundingClientRect?.(),
+      auraRect,
     });
+    const focusPosition = projectBattleCardFocusSnapPosition({
+      ghostPosition,
+      cardSize: state.cardSize,
+      snapRect: auraRect,
+      armed,
+    });
+    if (!focusPosition) return false;
+    state.ghost.style.left = `${focusPosition.left.toFixed(2)}px`;
+    state.ghost.style.top = `${focusPosition.top.toFixed(2)}px`;
+    state.legalCandidate = legalCandidate;
     state.armed = armed;
+    state.ghost.dataset.cardFocusLegal = String(legalCandidate);
     host.dataset.handAuraArmed = String(armed);
     state.ghost.dataset.auraCharged = String(armed);
     event.preventDefault?.();
@@ -947,7 +1076,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     const cardId = state.cardId;
     const sourceStillOrdinary = !isReservedCardId(cardId)
       && state.source?.dataset?.jankenReserved !== 'true';
-    const commit = !cancelled && moved && state.armed && sourceStillOrdinary;
+    const commit = !cancelled && moved && state.armed && state.legalCandidate === true && sourceStillOrdinary;
     if (moved) {
       event.preventDefault?.();
       event.stopPropagation?.();
@@ -964,10 +1093,12 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     if (commit && clicked) {
       const ghost = state.ghost;
       cleanupHandDrag(state, { keepGhost: true });
+      setFocusedCardId(null);
       animateHandAuraLaunch(globalRef, documentRef, root, handle, ghost);
       return;
     }
     cleanupHandDrag(state);
+    setFocusedCardId(null);
   }
 
   function beginHandDrag(event) {
@@ -977,6 +1108,8 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     const cardId = source.dataset?.cardId?.trim?.() ?? '';
     const pointerId = event?.pointerId;
     if (!cardId || !Number.isFinite(pointerId) || isReservedCardId(cardId)) return;
+    const legalCandidate = currentPlayableHandAffordance(root)?.candidateCardIds?.includes?.(cardId) === true;
+    setFocusedCardId(cardId);
     const rect = source.getBoundingClientRect?.();
     const x = Number(event.clientX);
     const y = Number(event.clientY);
@@ -1002,6 +1135,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
       offset: { x: x - Number(rect.left), y: y - Number(rect.top) },
       cardSize: { width: Number(rect.width), height: Number(rect.height) },
       moved: false,
+      legalCandidate,
       armed: false,
       handlers: null,
     };
@@ -1034,11 +1168,19 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     if (handDrag) cleanupHandDrag(handDrag);
     if (boundHandRoot) {
       boundHandRoot.removeEventListener?.('pointerdown', beginHandDrag);
+      boundHandRoot.removeEventListener?.('pointerover', handleHandPointerOver);
+      boundHandRoot.removeEventListener?.('pointerout', handleHandPointerOut);
+      boundHandRoot.removeEventListener?.('focusin', handleHandFocusIn);
+      boundHandRoot.removeEventListener?.('focusout', handleHandFocusOut);
       boundHandRoot.removeEventListener?.('click', captureHandClick, true);
     }
     boundHandRoot = next ?? null;
     if (boundHandRoot) {
       boundHandRoot.addEventListener?.('pointerdown', beginHandDrag);
+      boundHandRoot.addEventListener?.('pointerover', handleHandPointerOver);
+      boundHandRoot.addEventListener?.('pointerout', handleHandPointerOut);
+      boundHandRoot.addEventListener?.('focusin', handleHandFocusIn);
+      boundHandRoot.addEventListener?.('focusout', handleHandFocusOut);
       boundHandRoot.addEventListener?.('click', captureHandClick, true);
     }
   }
@@ -1074,6 +1216,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     assignment = model.assignment;
     syncHandZoneProjection(root, model);
     syncPlayableHandAffordance(root);
+    syncHandCardFocusPresentation();
     rowRouletteHost.hidden = rouletteEnabled !== true;
     rowRouletteRuntime?.refresh?.();
     const currentSourceHandIds = hand.map((card) => card.id);
@@ -1153,6 +1296,7 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
     rowRouletteHost,
     rowRouletteSnapshot: () => rowRouletteController.snapshot(),
     loadPreviewSnapshot: () => projectBattleLoadCardPreview(model, armedHand),
+    cardFocusSnapshot: () => syncHandCardFocusPresentation(),
     isExpanded: () => expanded,
     destroy() {
       if (destroyed) return false;
@@ -1163,6 +1307,10 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, { battl
       if (handDrag) cleanupHandDrag(handDrag);
       if (boundHandRoot) {
         boundHandRoot.removeEventListener?.('pointerdown', beginHandDrag);
+        boundHandRoot.removeEventListener?.('pointerover', handleHandPointerOver);
+        boundHandRoot.removeEventListener?.('pointerout', handleHandPointerOut);
+        boundHandRoot.removeEventListener?.('focusin', handleHandFocusIn);
+        boundHandRoot.removeEventListener?.('focusout', handleHandFocusOut);
         boundHandRoot.removeEventListener?.('click', captureHandClick, true);
       }
       for (const input of planInputs) {

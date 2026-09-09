@@ -12,17 +12,27 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo "HEAD=$(git rev-parse HEAD)"
-          wc -c browser/GAMEROAD.html
-          echo '=== module/script tags ==='
-          grep -nE '<script|type="module"|battle-new-base-live-consumer|compound|janken-focus|janken-slidepad' browser/GAMEROAD.html | head -n 160 || true
-          echo '=== round/hand/player state anchors ==='
-          grep -nE 'function (makePlayer|renderHand|startRound|nextRound|beginRound|startMatch|newMatch)|roundNo|state\.match\.players|\.hand\b|currentPlayer|activePlayer|turnIndex|roundIndex' browser/GAMEROAD.html | head -n 260 || true
-          echo '=== target/shield/lane/path anchors ==='
-          grep -nEi 'targetBox|targetId|legalTarget|shield|lane|roadSelect|battleSelect|path|route|reachable|currentTarget|selectedTarget|pendingTarget' browser/GAMEROAD.html | head -n 340 || true
-          echo '=== battle card/action/commit anchors ==='
-          grep -nE 'function (resolveBattle|submitPlan|commit|confirm|playCard|useCard|selectCard)|resolveBattle\(|submitPlan\(|battleSelect|planSubmitted|phase.?=.*plan|sendExisting|BattleAction' browser/GAMEROAD.html | head -n 320 || true
-          echo '=== public helper/global anchors ==='
-          grep -nE '__GAMEROAD|window\.|globalThis\.|Object\.assign\(window|TEST__|BATTLE_' browser/GAMEROAD.html | tail -n 260 || true
-          echo '=== static-check relevant anchors ==='
-          grep -nE 'GAMEROAD\.html|battle-janken|new-base-live|compound|hand3|targetBox' tests/browser-static-check.mjs | head -n 220 || true
+          OUT=/tmp/battle-compound-html-seam-r2.txt
+          {
+            echo "HEAD=$(git rev-parse HEAD)"
+            wc -c browser/GAMEROAD.html
+            echo '=== module/script tags ==='
+            grep -nE '<script|type="module"|battle-new-base-live-consumer|compound|janken-focus|janken-slidepad' browser/GAMEROAD.html | head -n 220 || true
+            echo '=== round/hand/player state anchors ==='
+            grep -nE 'function (makePlayer|renderHand|startRound|nextRound|beginRound|startMatch|newMatch)|roundNo|state\.match\.players|\.hand\b|currentPlayer|activePlayer|turnIndex|roundIndex' browser/GAMEROAD.html | head -n 420 || true
+            echo '=== target/shield/lane/path anchors ==='
+            grep -nEi 'targetBox|targetId|legalTarget|shield|lane|roadSelect|battleSelect|path|route|reachable|currentTarget|selectedTarget|pendingTarget' browser/GAMEROAD.html | head -n 560 || true
+            echo '=== battle card/action/commit anchors ==='
+            grep -nE 'function (resolveBattle|submitPlan|commit|confirm|playCard|useCard|selectCard)|resolveBattle\(|submitPlan\(|battleSelect|planSubmitted|phase.?=.*plan|sendExisting|BattleAction' browser/GAMEROAD.html | head -n 520 || true
+            echo '=== public helper/global anchors ==='
+            grep -nE '__GAMEROAD|window\.|globalThis\.|Object\.assign\(window|TEST__|BATTLE_' browser/GAMEROAD.html | tail -n 420 || true
+            echo '=== static-check relevant anchors ==='
+            grep -nE 'GAMEROAD\.html|battle-janken|new-base-live|compound|hand3|targetBox' tests/browser-static-check.mjs | head -n 320 || true
+          } > "$OUT"
+          cat "$OUT"
+      - name: Upload probe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: battle-compound-html-seam-r2
+          path: /tmp/battle-compound-html-seam-r2.txt
+          if-no-files-found: error

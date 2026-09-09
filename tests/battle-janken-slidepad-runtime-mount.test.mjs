@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA,
   BATTLE_JANKEN_FOCUS_LIVE_MOUNT_SCHEMA,
@@ -446,7 +447,7 @@ test('dedicated focus commit keeps release flight presentation-only and invalida
   assert.ok(acceptedStart >= 0 && acceptedEnd > acceptedStart);
   const accepted = source.slice(acceptedStart, acceptedEnd);
   assert.match(accepted, /captureReleasedJankenCardFlight\(globalRef, root, slotNodes, hand\)/);
-  assert.match(accepted, /animateReleasedJankenCard\(host, flight\)/);
+  assert.match(accepted, /playReleasedJankenCardFlight\(host, flight\)/);
   assert.equal(accepted.includes('clickExistingHandCard'), false,
     'authoritative compound commit already happened inside the existing live stack');
   assert.match(source, /function openForRound\(roundId\) \{[\s\S]*closeDedicatedFocusSurface\(\);[\s\S]*lastRoundId = roundId;/);
@@ -644,4 +645,20 @@ test('presentation leaves authoritative projection untouched', () => {
   assert.equal(presentBattleJankenOrderMotionToSlidePad(makeOrderPresenterHost(), projected.motion, { chain: projected.chain }), true);
   assert.deepEqual(projected.motion, beforeMotion);
   assert.deepEqual(projected.chain, beforeChain);
+});
+
+
+test('release-flight live adapter delegates to the canonical effect and keeps success-only triggers', () => {
+  const source = readFileSync(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.equal(source.includes("from './battle-card-release-flight-runtime-effect.mjs';"), true);
+  assert.equal(source.includes('captureBattleCardReleaseFlightEffect({'), true);
+  assert.equal(source.includes('return playBattleCardReleaseFlightEffect({ host, flight });'), true);
+  assert.equal(source.includes('RELEASE_FLIGHT_DURATION_MS'), false);
+  assert.equal(source.includes('sampleOffsets = [0, 0.12, 0.28'), false);
+  assert.equal(source.includes("reducedMotion: globalRef?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true"), true);
+  assert.equal(source.includes("lowPerf: battleRoot?.dataset?.lowPerf === 'true'"), true);
+  assert.equal(source.includes('if (cardId && clickExistingHandCard(root, cardId)) playReleasedJankenCardFlight(host, flight);'), true);
+  assert.equal(source.includes('onAccepted: (result, readyPackage) => {'), true);
+  assert.equal(source.includes('const hand = readyPackage?.jankenHand;'), true);
+  assert.equal(source.includes('if (flight) playReleasedJankenCardFlight(host, flight);'), true);
 });

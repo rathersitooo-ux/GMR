@@ -18,16 +18,16 @@ jobs:
           ref: sol/battle-card-focus-r2-20260910
           fetch-depth: 0
 
-      - name: Apply validated R1 product delta onto fresh main lineage
+      - name: Apply validated R1 runtime delta onto fresh main lineage
         shell: bash
         run: |
           set -euo pipefail
           git fetch origin sol/battle-card-focus-r1-20260909
           git diff --binary 3176d910db54f09ae5b93821e71a05653f3be3a2..origin/sol/battle-card-focus-r1-20260909 -- \
-            browser/battle-janken-slidepad-runtime-mount.mjs \
-            tests/battle-card-focus-presentation.test.mjs > /tmp/card-focus-r1.patch
-          test -s /tmp/card-focus-r1.patch
-          git apply --3way /tmp/card-focus-r1.patch
+            browser/battle-janken-slidepad-runtime-mount.mjs > /tmp/card-focus-r1-runtime.patch
+          test -s /tmp/card-focus-r1-runtime.patch
+          git apply --3way /tmp/card-focus-r1-runtime.patch
+          git show origin/sol/battle-card-focus-r1-20260909:tests/battle-card-focus-presentation.test.mjs > tests/battle-card-focus-presentation.test.mjs
           mapfile -t changed < <(git diff --name-only | sort)
           printf '%s\n' "${changed[@]}"
           test "${#changed[@]}" -eq 2

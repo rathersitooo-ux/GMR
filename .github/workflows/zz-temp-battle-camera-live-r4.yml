@@ -23,7 +23,12 @@ jobs:
           fi
           git config user.name "gameroad-bounded-writer"
           git config user.email "gameroad-bounded-writer@users.noreply.github.com"
-          git add tools/temp-battle-camera-live-r4.py browser/GAMEROAD.html deploy/cloudflare/scripts/build.mjs tests/battle-camera-live-integration.test.mjs 2>/dev/null || true
+          for p in tools/temp-battle-camera-live-r4.py browser/GAMEROAD.html deploy/cloudflare/scripts/build.mjs tests/battle-camera-live-integration.test.mjs; do
+            if [ -e "$p" ] || git ls-files --error-unmatch "$p" >/dev/null 2>&1; then
+              git add -- "$p"
+            fi
+          done
           git diff --cached --name-only
+          git diff --cached --quiet && { echo "No staged bounded changes"; exit 0; }
           git commit -m "camera R4: bounded seam probe or live adapt"
           git push origin HEAD:sol/battle-camera-live-r4-20260909

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-COMPOUND-PREVIEW-COLOR-R1-20260910T0331-SOL-E4-Q6M2P1",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_COMPOUND_PREVIEW_COLOR_SEMANTIC_R1",
+  "acquireKey": "BATTLE-COMPOUND-PREVIEW-COLOR-R1-20260910T0331-SOL-E4-Q6M2P1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "EXISTING_COMPOUND_PREVIEW_PR1366_PLUS_COLOR_POLICY_PR1440_20260910",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "OWNER_FREE_STRICT_SUBSET_EXISTING_RUNTIME_AND_CLASSIFIED_TEST_20260910",
+  "proceedToken": "PROCEED|BATTLE-COMPOUND-PREVIEW-COLOR-R1-20260910T0331-SOL-E4-Q6M2P1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|compound-preview-color|adapt|active-lease",
+  "authorizationBaseSha": "03910ec5c228281563f8b4d71a4d59c135ec5316",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_COMPOUND_PREVIEW_COLOR_SEMANTIC_R1",
+  "leaseAcquireKey": "BATTLE-COMPOUND-PREVIEW-COLOR-R1-20260910T0331-SOL-E4-Q6M2P1",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:31 JST",
+  "leaseUntilJst": "2026-09-10 04:31 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A890:L890",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-compound-preview-color-r1-20260910; browser/battle-compound-attack-preview-runtime.mjs; tests/battle-compound-attack-preview-runtime.test.mjs; own transient data/preaction-authorizations/BATTLE-COMPOUND-PREVIEW-COLOR-R1-20260910T0331-SOL-E4-Q6M2P1.json only. browser/battle-color-identity-presentation-core.mjs READ_ONLY reuse. browser/battle-janken-slidepad-runtime-mount.mjs, browser/GAMEROAD.html, battle-screen runtime, gameplay/rules/target/legality/Hand3/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_COMPOUND_PREVIEW_COLOR_SEMANTIC_ADAPT_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_PREVIEW_RUNTIME_AND_CURRENT_COLOR_IDENTITY_CORE_20260910",
+  "solutionSearchEvidence": [
+    "Existing battle-compound-attack-preview-runtime already projects exact caller-authoritative opponent, Shield L/C/R and route without recomputation",
+    "Existing battle-color-identity-presentation-core already owns the current suit/player/interaction semantic namespace",
+    "Current preview uses a strong fixed yellow target highlight that can collide with the current DIAMOND yellow suit namespace",
+    "This slice adapts the existing preview only; SlidePad, target legality, gameplay, Hand3 and transport remain read-only"
+  ],
+  "scope": [
+    "browser/battle-compound-attack-preview-runtime.mjs",
+    "tests/battle-compound-attack-preview-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-compound-attack-preview-runtime.mjs",
+    "tests/battle-compound-attack-preview-runtime.test.mjs"
+  ]
+}

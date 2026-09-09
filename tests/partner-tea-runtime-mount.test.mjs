@@ -2,12 +2,48 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS,
+  createPartnerConversationHubInput,
   mountPartnerTeaQuickChoiceRuntime,
+  partnerConversationHubCanDispatch,
+  partnerConversationHubProjectionPlan,
   partnerTeaQuickChoiceProjectionPlan,
+  projectPartnerConversationHubOverlay,
   projectPartnerTeaQuickChoices,
 } from '../browser/partner-tea-runtime-mount.mjs';
 
-function element(tag = 'div') {
+function datasetKey(attribute) {
+  return attribute.slice(5).replace(/-([a-z])/g, (_, char) => char.toUpperCase());
+}
+
+function classTokens(node) {
+  return String(node?.className || '').split(/\s+/).filter(Boolean);
+}
+
+function matches(node, selector) {
+  if (!node || typeof selector !== 'string') return false;
+  if (selector.startsWith('.')) return classTokens(node).includes(selector.slice(1));
+  if (selector.startsWith('form.')) {
+    return node.tag === 'form' && classTokens(node).includes(selector.slice(5));
+  }
+  const attr = selector.match(/^\[data-([a-z0-9-]+)="([^"]*)"\]$/i);
+  if (attr) return String(node.dataset?.[datasetKey(`data-${attr[1]}`)] ?? '') === attr[2];
+  return false;
+}
+
+function descendants(root) {
+  const out = [];
+  const visit = (node) => {
+    for (const child of node?.children || []) {
+      out.push(child);
+      visit(child);
+    }
+  };
+  visit(root);
+  return out;
+}
+
+function element(tag = 'div', ownerDocument = null) {
   return {
     tag,
     id: '',
@@ -17,27 +53,112 @@ function element(tag = 'div') {
     type: '',
     value: '',
     disabled: false,
+    hidden: false,
+    tabIndex: 0,
     children: [],
     listeners: new Map(),
     attributes: new Map(),
-    appendChild(child) { this.children.push(child); child.parent = this; return child; },
-    setAttribute(name, value) { this.attributes.set(name, value); },
-    addEventListener(type, listener) { this.listeners.set(type, listener); },
-    dispatch(type, event = {}) { this.listeners.get(type)?.(event); },
+    ownerDocument,
+    parent: null,
+    parentNode: null,
+    focused: false,
+    appendChild(child) {
+      if (!child) return child;
+      child.parent = this;
+      child.parentNode = this;
+      if (!child.ownerDocument) child.ownerDocument = this.ownerDocument;
+      this.children.push(child);
+      return child;
+    },
+    append(...children) { for (const child of children) this.appendChild(child); },
+    replaceChildren(...children) {
+      for (const child of this.children) {
+        child.parent = null;
+        child.parentNode = null;
+      }
+      this.children = [];
+      this.append(...children);
+    },
+    before(node) {
+      this.insertedBefore = node;
+      if (!this.parent) return;
+      const index = this.parent.children.indexOf(this);
+      if (index < 0) return;
+      node.parent = this.parent;
+      node.parentNode = this.parent;
+      if (!node.ownerDocument) node.ownerDocument = this.ownerDocument;
+      this.parent.children.splice(index, 0, node);
+    },
+    remove() {
+      if (!this.parent) return;
+      const index = this.parent.children.indexOf(this);
+      if (index >= 0) this.parent.children.splice(index, 1);
+      this.parent = null;
+      this.parentNode = null;
+    },
+    setAttribute(name, value) { this.attributes.set(name, String(value)); },
+    getAttribute(name) { return this.attributes.get(name) ?? null; },
+    addEventListener(type, listener) {
+      if (!this.listeners.has(type)) this.listeners.set(type, []);
+      this.listeners.get(type).push(listener);
+    },
+    dispatch(type, event = {}) {
+      const normalized = {
+        target: this,
+        preventDefault() {},
+        stopPropagation() {},
+        ...event,
+      };
+      for (const listener of this.listeners.get(type) || []) listener(normalized);
+    },
     click() {
       if (this.disabled) return;
-      this.listeners.get('click')?.({ preventDefault() {} });
+      this.dispatch('click');
+    },
+    focus() { this.focused = true; },
+    querySelector(selector) {
+      return descendants(this).find((node) => matches(node, selector)) || null;
+    },
+    querySelectorAll(selector) {
+      return descendants(this).filter((node) => matches(node, selector));
     },
   };
 }
 
 function teaFixture({ draft = '下書き' } = {}) {
-  const input = element('textarea');
+  const document = {
+    head: null,
+    body: null,
+    documentElement: null,
+    getElementById(id) {
+      return [this.head, ...descendants(this.head), this.body, ...descendants(this.body)]
+        .find((node) => node?.id === id) || null;
+    },
+    createElement(tag) { return element(tag, this); },
+    querySelectorAll(selector) {
+      const roots = [this.body, this.head].filter(Boolean);
+      const nodes = roots.flatMap((root) => [root, ...descendants(root)]);
+      return nodes.filter((node) => matches(node, selector));
+    },
+  };
+  document.head = element('head', document);
+  document.body = element('body', document);
+  document.documentElement = element('html', document);
+
+  const surface = document.createElement('section');
+  surface.dataset.grPartnerConversation = '1';
+  surface.className = 'grPartnerConversation';
+
+  const head = document.createElement('div');
+  head.className = 'grPartnerConversationHead';
+  surface.appendChild(head);
+
+  const input = document.createElement('textarea');
   input.className = 'grPartnerConversationInput';
   input.value = draft;
-  const send = element('button');
+  const send = document.createElement('button');
   send.className = 'grPartnerConversationSend';
-  const form = element('form');
+  const form = document.createElement('form');
   form.className = 'grPartnerConversationComposer';
   form.submittedValues = [];
   form.requestSubmit = () => {
@@ -46,28 +167,15 @@ function teaFixture({ draft = '下書き' } = {}) {
     input.disabled = true;
     send.disabled = true;
   };
-  form.before = (node) => { form.insertedBefore = node; };
+  form.append(input, send);
+  surface.appendChild(form);
+  document.body.appendChild(surface);
 
-  const surface = element('section');
-  surface.querySelector = (selector) => {
-    if (selector === '[data-gr-partner-tea-quick-choice="1"]') return form.insertedBefore || null;
-    if (selector === 'form.grPartnerConversationComposer') return form;
-    if (selector === '.grPartnerConversationInput') return input;
-    if (selector === '.grPartnerConversationSend') return send;
-    return null;
-  };
+  return { document, surface, head, form, input, send };
+}
 
-  const head = element('head');
-  const document = {
-    head,
-    body: element('body'),
-    documentElement: element('html'),
-    getElementById(id) { return head.children.find((child) => child.id === id) || null; },
-    createElement(tag) { return element(tag); },
-    querySelectorAll(selector) { return selector === '[data-gr-partner-conversation="1"]' ? [surface] : []; },
-  };
-
-  return { document, surface, form, input, send };
+function allNodes(root) {
+  return [root, ...descendants(root)];
 }
 
 test('Tea runtime plan exposes only the approved two choices and no mutation authority', () => {
@@ -83,6 +191,33 @@ test('Tea runtime plan exposes only the approved two choices and no mutation aut
   assert.equal(plan.rewardMutationAllowed, false);
   assert.equal(plan.saveMutationAllowed, false);
   assert.equal(Object.isFrozen(plan), true);
+});
+
+test('Partner Hub plan composes the current Shell without inventing conversation or mutation authority', () => {
+  const plan = partnerConversationHubProjectionPlan();
+  assert.equal(plan.presentation, 'secondary_nonblocking_overlay');
+  assert.equal(plan.useSite, 'partner-conversation');
+  assert.equal(plan.activePartnerId, 'partner.saasuna');
+  assert.equal(plan.directConversationDefault, true);
+  assert.equal(plan.conversationDomPreserved, true);
+  assert.equal(plan.createsConversationSession, false);
+  assert.equal(plan.relationshipMutationAllowed, false);
+  assert.equal(plan.rewardMutationAllowed, false);
+  assert.equal(plan.saveMutationAllowed, false);
+  assert.equal(plan.gameplayMutationAllowed, false);
+  assert.equal(plan.canonMutationAllowed, false);
+  assert.deepEqual(plan.allowedActions, ['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'BACK_HUB']);
+  assert.equal(Object.isFrozen(plan), true);
+});
+
+test('Partner Hub dispatcher exposes only detail, conversation and return-to-hub actions', () => {
+  assert.deepEqual(PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS, ['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'BACK_HUB']);
+  for (const action of PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS) assert.equal(partnerConversationHubCanDispatch(action), true);
+  for (const action of ['OPEN_LIST', 'OPEN_COSTUME', 'OPEN_FORMATION', 'OPEN_STRATEGY', 'OPEN_DIALOGUE_FEEDBACK', 'OPEN_TEA']) {
+    assert.equal(partnerConversationHubCanDispatch(action), false);
+  }
+  assert.equal(createPartnerConversationHubInput().activePartnerId, 'partner.saasuna');
+  assert.equal(createPartnerConversationHubInput().roster.length, 1);
 });
 
 test('mount is a no-op when browser DOM lifecycle is unavailable', () => {
@@ -105,6 +240,94 @@ test('projects two touch-sized Tea actions into the existing conversation form',
   ]);
   assert.deepEqual(buttons.map((button) => button.disabled), [false, false]);
   assert.deepEqual(buttons.map((button) => button.dataset.grPartnerTeaPressState), ['idle', 'idle']);
+});
+
+test('live conversation projection adds one Partner trigger without replacing the direct conversation DOM', () => {
+  const fixture = teaFixture({ draft: '残す下書き' });
+  const originalForm = fixture.form;
+  const originalInput = fixture.input;
+  assert.equal(projectPartnerConversationHubOverlay({ document: fixture.document }), 1);
+  const trigger = fixture.surface.querySelector('[data-partner-hub-trigger="1"]');
+  const overlay = fixture.surface.querySelector('[data-partner-hub-overlay="1"]');
+  assert.ok(trigger);
+  assert.ok(overlay);
+  assert.equal(trigger.textContent, 'パートナー');
+  assert.equal(overlay.hidden, true);
+  assert.equal(fixture.surface.querySelector('form.grPartnerConversationComposer'), originalForm);
+  assert.equal(fixture.surface.querySelector('.grPartnerConversationInput'), originalInput);
+  assert.equal(originalInput.value, '残す下書き');
+  assert.equal(projectPartnerConversationHubOverlay({ document: fixture.document }), 0);
+  assert.equal(fixture.surface.querySelectorAll('[data-partner-hub-trigger="1"]').length, 1);
+});
+
+test('Partner trigger opens the existing Shell hub with approved idle line and no dead unsupported actions', () => {
+  const fixture = teaFixture();
+  projectPartnerTeaQuickChoices({ document: fixture.document });
+  const trigger = fixture.surface.querySelector('[data-partner-hub-trigger="1"]');
+  const overlay = fixture.surface.querySelector('[data-partner-hub-overlay="1"]');
+  trigger.click();
+  assert.equal(overlay.hidden, false);
+
+  const nodes = allNodes(overlay);
+  const shell = nodes.find((node) => node.dataset?.partnerShellView === 'hub');
+  assert.ok(shell);
+  const idle = nodes.find((node) => node.className === 'partner-shell-idle-readable');
+  assert.ok(idle);
+  assert.equal(idle.dataset.partnerId, 'partner.saasuna');
+  assert.equal(idle.dataset.sourceState, 'approved_current');
+  assert.equal(idle.dataset.presentationOnly, 'true');
+  assert.ok(idle.textContent.length > 0);
+
+  const actions = nodes
+    .filter((node) => node.dataset?.partnerShellAction)
+    .map((node) => node.dataset.partnerShellAction);
+  assert.deepEqual(actions, ['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION']);
+  assert.equal(actions.includes('OPEN_COSTUME'), false);
+  assert.equal(actions.includes('OPEN_LIST'), false);
+  assert.equal(fixture.input.value, '下書き');
+});
+
+test('Partner Shell detail and conversation actions stay inside the current conversation surface', () => {
+  const fixture = teaFixture();
+  projectPartnerTeaQuickChoices({ document: fixture.document });
+  const trigger = fixture.surface.querySelector('[data-partner-hub-trigger="1"]');
+  const overlay = fixture.surface.querySelector('[data-partner-hub-overlay="1"]');
+  trigger.click();
+
+  const detail = allNodes(overlay).find((node) => node.dataset?.partnerShellAction === 'OPEN_ACTIVE_DETAIL');
+  detail.click();
+  assert.ok(allNodes(overlay).some((node) => node.dataset?.partnerShellView === 'detail'));
+  assert.ok(allNodes(overlay).some((node) => node.textContent === 'サースナー'));
+  const back = allNodes(overlay).find((node) => node.dataset?.partnerShellAction === 'BACK_HUB');
+  back.click();
+  assert.ok(allNodes(overlay).some((node) => node.dataset?.partnerShellView === 'hub'));
+
+  const talk = allNodes(overlay).find((node) => node.dataset?.partnerShellAction === 'OPEN_CONVERSATION');
+  talk.click();
+  assert.equal(overlay.hidden, true);
+  assert.equal(fixture.surface.querySelector('form.grPartnerConversationComposer'), fixture.form);
+});
+
+test('Partner Hub close, backdrop and Escape only close the overlay', () => {
+  const fixture = teaFixture();
+  projectPartnerTeaQuickChoices({ document: fixture.document });
+  const trigger = fixture.surface.querySelector('[data-partner-hub-trigger="1"]');
+  const overlay = fixture.surface.querySelector('[data-partner-hub-overlay="1"]');
+  const close = fixture.surface.querySelector('[data-partner-hub-close="1"]');
+
+  trigger.click();
+  close.click();
+  assert.equal(overlay.hidden, true);
+  assert.equal(fixture.surface.querySelector('form.grPartnerConversationComposer'), fixture.form);
+
+  trigger.click();
+  overlay.dispatch('keydown', { key: 'Escape' });
+  assert.equal(overlay.hidden, true);
+
+  trigger.click();
+  overlay.dispatch('click', { target: overlay });
+  assert.equal(overlay.hidden, true);
+  assert.equal(fixture.input.value, '下書き');
 });
 
 test('Tea pointer press feedback is visible before commit and clears on release or cancel', () => {
@@ -190,6 +413,8 @@ test('projection is idempotent on an already-mounted conversation surface', () =
   const fixture = teaFixture();
   assert.equal(projectPartnerTeaQuickChoices({ document: fixture.document }), 1);
   assert.equal(projectPartnerTeaQuickChoices({ document: fixture.document }), 0);
+  assert.equal(fixture.surface.querySelectorAll('[data-partner-hub-trigger="1"]').length, 1);
+  assert.equal(fixture.surface.querySelectorAll('[data-partner-hub-overlay="1"]').length, 1);
 });
 
 test('runtime observes future surfaces and disabled-state changes and fails closed on global collision', () => {
@@ -205,6 +430,7 @@ test('runtime observes future surfaces and disabled-state changes and fails clos
   const global = { document: fixture.document, MutationObserver: FakeObserver };
   const runtime = mountPartnerTeaQuickChoiceRuntime(global);
   assert.equal(runtime.version, 'gameroad.partner-tea-quick-choice-runtime.v1');
+  assert.equal(runtime.partnerHubPlan.directConversationDefault, true);
   assert.equal(typeof observerCallback, 'function');
   assert.deepEqual(observedOptions, {
     childList: true,

@@ -1,0 +1,45 @@
+name: TEMP Battle predecessor transfer R1
+
+on:
+  push:
+    branches:
+      - sol/battle-predecessor-transfer-r1-20260909
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Exact branch/head witness
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD
+          git rev-parse HEAD:browser/GAMEROAD.html
+          test -f data/preaction-authorizations/BATTLE-PREDECESSOR-TRANSFER-R1-20260909T1700-SOL-Q7M4N8.json
+      - name: Predecessor transfer reachability audit
+        run: |
+          set -euo pipefail
+          python3 tools/temp-battle-predecessor-transfer-r1.py | tee /tmp/battle-predecessor-transfer-r1.json
+      - name: Compact high-signal summary
+        run: |
+          python3 - <<'PY'
+          import json
+          p='/tmp/battle-predecessor-transfer-r1.json'
+          x=json.load(open(p,encoding='utf-8'))
+          print('AUDIT_HEAD',x['head'])
+          print('HTML_BLOB',x['html_blob'])
+          for a in x['atoms']:
+              print('ATOM',a['atom'],a['state'],'REACHABLE',','.join(a['reachable_files']) or '-', 'TERMS',json.dumps(a['html_term_counts'],ensure_ascii=False))
+          print('UNREACHABLE_COUNT',x['battle_or_hate_unreachable_count'])
+          print('UNREACHABLE',','.join(x['battle_or_hate_unreachable']))
+          print('TERM_HISTORY')
+          for k,v in x['term_history'].items():
+              print(k, ' :: ', ' || '.join(v))
+          PY

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "COSTUME-BROWSER-LIVE-MOUNT-R2-20260910T0219-SOL-C7M4Q2",
+  "taskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "workUnitKey": "PARTNER_COSTUME_BROWSER_LIVE_MOUNT_R1",
+  "acquireKey": "COSTUME-BROWSER-LIVE-MOUNT-R2-20260910T0219-SOL-C7M4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-COSTUME-BROWSER-LIVE-R2-20260910T0219",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REHEARSE-R1-PRODUCT-DIFF-CLEAN-R2-PREACTION-REBUILD",
+  "proceedToken": "PROCEED|COSTUME-BROWSER-LIVE-MOUNT-R2-20260910T0219-SOL-C7M4Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260910T0219JST",
+  "authorizationBaseSha": "c0451f77d2195374fd6e8edcd51c3c8cadf0a772",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "leaseWorkUnitKey": "PARTNER_COSTUME_BROWSER_LIVE_MOUNT_R1",
+  "leaseAcquireKey": "COSTUME-BROWSER-LIVE-MOUNT-R2-20260910T0219-SOL-C7M4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 02:19 JST",
+  "leaseUntilJst": "2026-09-10 03:19 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A771:L771",
+  "scope": [
+    "browser/partner-costume-runtime-mount.mjs",
+    "tests/partner-costume-runtime-mount.test.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-costume-runtime-mount.mjs",
+    "tests/partner-costume-runtime-mount.test.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "leaseExactMutableResources": [
+    "browser/partner-costume-runtime-mount.mjs",
+    "tests/partner-costume-runtime-mount.test.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "solutionSignature": "partner-costume/browser-live-mount-existing-core-caller-owned-authority-failclosed-no-formal-asset-invention",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-MERGED-PARTNER-COSTUME-CORE-26F0C095-PLUS-CURRENT-HOME-BOOT-SEAM-R2",
+  "solutionSearchEvidence": [
+    "current main contains browser/partner-costume-core.mjs and browser/partner-costume-durable-store.mjs from merged PR #1362",
+    "current costume authority requires stable partner identity, three user-facing categories, provisional equip/revert/save and shared saved appearance without mixing CardSkins",
+    "browser/home-boot-runtime-mount.mjs is the existing public bootstrap seam and avoids concurrent mutation of browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs uses explicit ARTIFACT_SPECS so the new imported costume runtime and existing core must be packaged explicitly",
+    "formal costume art, catalog acceptance, entitlement authority, gameplay, save authority, economy and network remain outside mutable scope",
+    "runtime remains inert when caller-owned canonical costume provider/data is absent and never fabricates owned items or formal assets",
+    "R1 PR #1456 was closed unmerged because its first PRE_ACTION omitted leaseExactMutableResources; R2 rebuilds the same product diff on fresh main with corrected schema"
+  ]
+}

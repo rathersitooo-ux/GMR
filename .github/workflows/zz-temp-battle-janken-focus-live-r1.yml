@@ -4,13 +4,14 @@ on:
   push:
     branches:
       - sol/battle-janken-focus-live-r1-20260910
+    paths:
+      - .github/workflows/zz-temp-battle-janken-focus-live-r1.yml
 
 permissions:
   contents: write
 
 jobs:
   patch-and-test:
-    if: github.event.head_commit.message == 'chore: run Battle janken focus live writer'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

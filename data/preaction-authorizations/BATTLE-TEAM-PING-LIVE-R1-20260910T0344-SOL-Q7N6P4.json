@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-TEAM-PING-LIVE-R1-20260910T0344-SOL-Q7N6P4",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_TEAM_PING_LIVE_CONSUMER_R1",
+  "acquireKey": "BATTLE-TEAM-PING-LIVE-R1-20260910T0344-SOL-Q7N6P4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_TEAM_PING_CORE_PRESENT_LIVE_CONSUMER_MISSING_20260910",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PURE_ADAPTER_SCOPE_NO_SHARED_WRITER_OVERLAP_20260910",
+  "proceedToken": "PROCEED|BATTLE-TEAM-PING-LIVE-R1-20260910T0344-SOL-Q7N6P4|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|team-ping-live-r1|compose-existing-core|active-lease",
+  "authorizationBaseSha": "4cd126b3f6e30a680a8a60c48ca7b3787755ba17",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_TEAM_PING_LIVE_CONSUMER_R1",
+  "leaseAcquireKey": "BATTLE-TEAM-PING-LIVE-R1-20260910T0344-SOL-Q7N6P4",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:44 JST",
+  "leaseUntilJst": "2026-09-10 04:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A905:N905",
+  "solutionSignature": "BATTLE_TEAM_PING_CORE_TO_LIVE_PUBLIC_BRIDGE_V1",
+  "reuseDisposition": "COMPOSE",
+  "scope": [
+    "browser/battle-team-ping-live-adapter.mjs",
+    "tests/battle-team-ping-live-adapter.test.mjs",
+    ".github/workflows/zz-temp-battle-team-ping-live-r1.yml"
+  ],
+  "authorityBoundary": {
+    "pingCore": "EXISTING_BATTLE_TEAM_PING_CORE",
+    "identityTargetAdmissionRead": "CALLER_ONLY",
+    "transport": "CALLER_ONLY_CALLBACK",
+    "presentation": "CALLER_ONLY_CALLBACK",
+    "takeover": "NONE",
+    "gameplayStateWrite": false,
+    "legalActionInference": false,
+    "targetInference": false,
+    "resultInference": false
+  }
+}

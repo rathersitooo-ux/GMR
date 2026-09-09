@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   apply:
-    if: github.event.head_commit.message != 'Battle: Hand3 external snapshot seam'
+    if: github.event.head_commit.message != 'battle hand3 external snapshot seam R2'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -136,5 +136,5 @@ test('connected external Hand3 snapshot provider fails closed instead of using S
           git add browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs
           git diff --cached --check
           git diff --cached --quiet && exit 1 || true
-          git commit -m 'Battle: Hand3 external snapshot seam'
+          git commit -m 'battle hand3 external snapshot seam R2'
           git push origin HEAD:sol/battle-hand3-live-r2-20260910

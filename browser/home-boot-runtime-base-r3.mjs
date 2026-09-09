@@ -33,6 +33,14 @@ export function setHomeObservedAttributeIfChanged(node, name, value) {
   node.setAttribute(attributeName, nextValue);
   return true;
 }
+
+export function setHomeObservedTextContentIfChanged(node, value) {
+  if (!node || !('textContent' in node)) throw new TypeError('HOME_OBSERVED_TEXT_NODE_REQUIRED');
+  const nextValue = String(value);
+  if (node.textContent === nextValue) return false;
+  node.textContent = nextValue;
+  return true;
+}
 const HOME_CONTEXTUAL_REPLAY_SCHEMA = 'gameroad.tutorial-contextual-replay-home.v1';
 const SLIDEPAD_CENTER_SELECTOR = '#homePadCenter';
 const SLIDEPAD_DEAD_ZONE_PX = 18;
@@ -1697,7 +1705,7 @@ ${HOME_SELECTOR}[data-home-contextual-replay-active="true"] ${SLIDEPAD_CENTER_SE
     trigger.dataset.homeContextualReplayTrigger = 'true';
     host.appendChild(trigger);
   }
-  trigger.textContent = HOME_CONTEXTUAL_REPLAY_LABEL;
+  setHomeObservedTextContentIfChanged(trigger, HOME_CONTEXTUAL_REPLAY_LABEL);
   trigger.title = HOME_CONTEXTUAL_REPLAY_LABEL;
   trigger.setAttribute('aria-label', HOME_CONTEXTUAL_REPLAY_LABEL);
   setHomeObservedAttributeIfChanged(trigger, 'aria-pressed', home.getAttribute('data-home-contextual-replay-active') === 'true' ? 'true' : 'false');

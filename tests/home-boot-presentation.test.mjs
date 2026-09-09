@@ -20,6 +20,7 @@ import {
   HOME_CONTEXTUAL_REPLAY_LABEL,
   HOME_QUICKSET_CANCEL_LABEL,
   setHomeObservedAttributeIfChanged,
+  setHomeObservedTextContentIfChanged,
   createHomeQuickSetSlotRoll,
   QUICK_SETTINGS_KNOWN_AUTHORITY_GAPS,
   containSharedQuickSettingsTabFocus,
@@ -638,4 +639,30 @@ test('Home refresh observed-attribute writes are idempotent and do not retrigger
   const runtimeSource = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
   assert.ok(runtimeSource.includes("setHomeObservedAttributeIfChanged(trigger, 'aria-pressed'"));
   assert.ok(runtimeSource.includes("setHomeObservedAttributeIfChanged(replayTrigger, 'aria-pressed', 'false')"));
+});
+
+
+test('Home contextual replay child text refresh is idempotent under the childList observer', () => {
+  let current = HOME_CONTEXTUAL_REPLAY_LABEL;
+  let writes = 0;
+  const node = {
+    get textContent() { return current; },
+    set textContent(value) {
+      current = String(value);
+      writes += 1;
+    },
+  };
+
+  assert.equal(setHomeObservedTextContentIfChanged(node, HOME_CONTEXTUAL_REPLAY_LABEL), false);
+  assert.equal(writes, 0);
+  assert.equal(setHomeObservedTextContentIfChanged(node, '別表示'), true);
+  assert.equal(writes, 1);
+  assert.equal(setHomeObservedTextContentIfChanged(node, '別表示'), false);
+  assert.equal(writes, 1);
+
+  const runtimeSource = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
+  assert.ok(runtimeSource.includes("setHomeObservedTextContentIfChanged(trigger, HOME_CONTEXTUAL_REPLAY_LABEL);"));
+  assert.equal(runtimeSource.includes("trigger.textContent = HOME_CONTEXTUAL_REPLAY_LABEL;"), false);
+  assert.ok(runtimeSource.includes('subtree: true'));
+  assert.ok(runtimeSource.includes('childList: true'));
 });

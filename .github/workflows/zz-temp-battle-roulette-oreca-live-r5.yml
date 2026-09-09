@@ -1,0 +1,53 @@
+name: Temp Battle Roulette Oreca Live R5
+
+on:
+  push:
+    branches:
+      - sol/battle-roulette-oreca-live-r5-20260909
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-roulette-oreca-live-r5-20260909
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reuse proven R4 runtime and patch missing public dependency
+        shell: bash
+        run: |
+          git fetch origin sol/battle-roulette-oreca-live-r4-20260909
+          git show 730c4ea3c5e2428df95a05a567f43d437de78326:browser/battle-playable-hand-row-roulette-runtime.mjs > browser/battle-playable-hand-row-roulette-runtime.mjs
+          git show 730c4ea3c5e2428df95a05a567f43d437de78326:tests/battle-playable-hand-row-roulette-runtime.test.mjs > tests/battle-playable-hand-row-roulette-runtime.test.mjs
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('deploy/cloudflare/scripts/build.mjs')
+          text = p.read_text(encoding='utf-8')
+          anchor = "  { source: 'browser/battle-playable-hand-row-roulette-runtime.mjs', output: 'battle-playable-hand-row-roulette-runtime.mjs', artifact: 'battle_playable_hand_row_roulette_runtime', label: 'Battle playable hand row roulette runtime' },\n"
+          addition = anchor + "  { source: 'browser/battle-playable-hand-row-roulette-oreca-presentation-core.mjs', output: 'battle-playable-hand-row-roulette-oreca-presentation-core.mjs', artifact: 'battle_playable_hand_row_roulette_oreca_presentation_core', label: 'Battle playable hand row roulette Oreca presentation core' },\n"
+          if text.count(anchor) != 1:
+              raise SystemExit(f'expected one roulette artifact anchor, found {text.count(anchor)}')
+          if 'battle_playable_hand_row_roulette_oreca_presentation_core' in text:
+              raise SystemExit('Oreca presentation artifact already present; fresh diagnosis required')
+          p.write_text(text.replace(anchor, addition, 1), encoding='utf-8')
+          PY
+      - name: Run focused roulette tests
+        run: node --test tests/battle-playable-hand-row-roulette-runtime.test.mjs
+      - name: Run Cloudflare package tests
+        run: node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Commit bounded product diff and remove transient control files
+        shell: bash
+        run: |
+          rm -f data/preaction-authorizations/BATTLE-ROULETTE-ORECA-LIVE-R5-20260909T1641-SOL-O7K5Q1.json
+          rm -f .github/workflows/zz-temp-battle-roulette-oreca-live-r5.yml
+          git config user.name "gameroad-bot"
+          git config user.email "gameroad-bot@users.noreply.github.com"
+          git add browser/battle-playable-hand-row-roulette-runtime.mjs tests/battle-playable-hand-row-roulette-runtime.test.mjs deploy/cloudflare/scripts/build.mjs data/preaction-authorizations/BATTLE-ROULETTE-ORECA-LIVE-R5-20260909T1641-SOL-O7K5Q1.json .github/workflows/zz-temp-battle-roulette-oreca-live-r5.yml
+          git commit -m "Battle: 残り手札ルーレットの公開依存まで接続"
+          git push origin HEAD:sol/battle-roulette-oreca-live-r5-20260909

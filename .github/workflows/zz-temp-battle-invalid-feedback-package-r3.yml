@@ -1,0 +1,67 @@
+name: temp invalid feedback package r3
+
+on:
+  push:
+    branches:
+      - work/battle-invalid-feedback-package-r3
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/battle-invalid-feedback-package-r3
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify authorization lineage and absorbed main package line
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor dbcda432ea6b8b63d0b277191b17f4eefa41727e HEAD
+          test -f data/preaction-authorizations/UI-BATTLE-INVALID-FEEDBACK-PACKAGE-R3-20260910T0348-SOL-K7M4Q4.json
+          grep -F "browser/battle-janken-focus-authority-context.mjs" deploy/cloudflare/scripts/build.mjs
+      - name: Patch public artifact specs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('deploy/cloudflare/scripts/build.mjs')
+          s = p.read_text()
+          cue = "  { source: 'browser/battle-interaction-feedback-cue-core.mjs', output: 'battle-interaction-feedback-cue-core.mjs', artifact: 'battle_interaction_feedback_cue_core', label: 'Battle interaction feedback cue core' },"
+          invalid = "  { source: 'browser/battle-invalid-action-feedback-live-adapter.mjs', output: 'battle-invalid-action-feedback-live-adapter.mjs', artifact: 'battle_invalid_action_feedback_live_adapter', label: 'Battle invalid-action feedback live adapter' },"
+          if cue in s or invalid in s:
+              raise SystemExit('feedback artifact spec unexpectedly already present')
+          anchor = "  { source: 'browser/battle-recovery-live-adapter.mjs', output: 'battle-recovery-live-adapter.mjs', artifact: 'battle_recovery_live_adapter', label: 'Battle recovery live adapter' },"
+          if s.count(anchor) != 1:
+              raise SystemExit(f'anchor count != 1: {s.count(anchor)}')
+          s = s.replace(anchor, anchor + '\n' + cue + '\n' + invalid, 1)
+          p.write_text(s)
+          PY
+          git diff --check
+      - name: Focused tests and package tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/battle-invalid-action-feedback-live-adapter.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Commit product and clean transient control files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-bot'
+          git config user.email 'gameroad-bot@users.noreply.github.com'
+          git add deploy/cloudflare/scripts/build.mjs
+          git commit -m 'Battle: package invalid-action feedback runtime R3'
+          git rm .github/workflows/zz-temp-battle-invalid-feedback-package-r3.yml
+          git rm data/preaction-authorizations/UI-BATTLE-INVALID-FEEDBACK-PACKAGE-R3-20260910T0348-SOL-K7M4Q4.json
+          git commit -m 'PRE_ACTION: clean invalid feedback package R3 authorization'
+          test "$(git diff dbcda432ea6b8b63d0b277191b17f4eefa41727e...HEAD --name-only | sort)" = "deploy/cloudflare/scripts/build.mjs"
+          git push origin HEAD:work/battle-invalid-feedback-package-r3

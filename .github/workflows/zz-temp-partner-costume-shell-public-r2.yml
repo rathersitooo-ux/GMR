@@ -1,0 +1,44 @@
+name: Temp Partner Costume Shell Public R2
+
+on:
+  push:
+    branches:
+      - sol/partner-costume-shell-public-r2-20260910
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-clean:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Configure repository hooks
+        run: |
+          git config core.hooksPath .githooks
+          test "$(git config --get core.hooksPath)" = ".githooks"
+      - name: Apply bounded Partner costume patch
+        run: python3 tools/temp-partner-costume-shell-public-r2.py
+      - name: Run focused costume and Partner tests
+        run: |
+          node --test tests/partner-shell-runtime-mount.test.mjs tests/partner-costume-browser-session-runtime.test.mjs tests/partner-costume-screen-runtime-mount.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+          git diff --check
+      - name: Commit product change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add browser/partner-shell-runtime-mount.mjs tests/partner-shell-runtime-mount.test.mjs deploy/cloudflare/scripts/build.mjs
+          git commit -m "Partner: 着せ替え画面を実ランタイムへ接続"
+      - name: Remove transient execution files
+        run: |
+          git rm .github/workflows/zz-temp-partner-costume-shell-public-r2.yml tools/temp-partner-costume-shell-public-r2.py data/preaction-authorizations/COSTUME-PARTNER-LIVE-INTEGRATION-R2-20260910T0503-SOL-C7M4Q4.json
+          git commit -m "chore: remove transient costume integration preaction"
+      - name: Push exact branch
+        run: git push origin HEAD:sol/partner-costume-shell-public-r2-20260910

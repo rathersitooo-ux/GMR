@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-FLANORA-SURFACE-R1-20260909T1444-SOL-Q7M4N9",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FLANORA_BOARD_SURFACE_RUNTIME_R1",
+  "acquireKey": "BATTLE-FLANORA-SURFACE-R1-20260909T1444-SOL-Q7M4N9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-BATTLE-FLANORA-SURFACE-R1-20260909T1444",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REHEARSE-BATTLE-FLANORA-SURFACE-FAIL-CLOSED-R1",
+  "proceedToken": "PROCEED|BATTLE-FLANORA-SURFACE-R1-20260909T1444-SOL-Q7M4N9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260909T1444JST",
+  "authorizationBaseSha": "82c51c89d390205b8b569f6adfd38dc7d6c33b8e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_FLANORA_BOARD_SURFACE_RUNTIME_R1",
+  "leaseAcquireKey": "BATTLE-FLANORA-SURFACE-R1-20260909T1444-SOL-Q7M4N9",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 14:44 JST",
+  "leaseUntilJst": "2026-09-09 15:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A661:L661",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-flanora-surface-r1-20260909; browser/new-base-flanora-board-surface-runtime.mjs (new); tests/new-base-flanora-board-surface-runtime.test.mjs (new); own transient data/preaction-authorizations/BATTLE-FLANORA-SURFACE-R1-20260909T1444-SOL-Q7M4N9.json only. browser/GAMEROAD.html, battle-screen runtime/presentation, janken runtime, controlled-character binding, gameplay/rules/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs"
+  ],
+  "solutionSignature": "battle-flanora-board/live-surface-from-current-layout-core",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-FLANORA-LAYOUT-AND-EXISTING-BATTLE-SURFACES-20260909",
+  "solutionSearchEvidence": [
+    "browser/new-base-flanora-map-layout-core.mjs is the merged current geometry authority for the shared horizontal-zero clearing, 12 Shield roots, seven upper progress rows and top GOAL row",
+    "browser/battle-screen-runtime-mount.mjs already exposes 4P/Shield presentation surfaces but does not consume the Flanora layout and is held by another active owner, so this WorkUnit does not mutate it",
+    "browser/GAMEROAD.html remains owned by ROAD_MOVE_BIDIRECTIONAL_LIVE through 15:20 JST; this slice therefore builds only an explicit-caller presentation surface in new files for later exact live mounting"
+  ]
+}

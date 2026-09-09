@@ -3,18 +3,20 @@ name: TEMP Battle Portrait Live R3
 on:
   pull_request:
     branches: [main]
+  push:
+    branches: [sol/battle-portrait-live-r3-20260909]
 
 permissions:
   contents: write
 
 jobs:
   surgical-patch:
-    if: github.event.pull_request.head.ref == 'sol/battle-portrait-live-r3-20260909'
+    if: github.ref_name == 'sol/battle-portrait-live-r3-20260909' || github.event.pull_request.head.ref == 'sol/battle-portrait-live-r3-20260909'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: sol/battle-portrait-live-r3-20260909
           fetch-depth: 0
       - name: Apply exact portrait runtime replacements
         shell: bash
@@ -24,9 +26,11 @@ jobs:
 
           def replace_once(text, old, new, label):
               count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f'{label}: expected exactly 1 match, got {count}')
-              return text.replace(old, new, 1)
+              if count == 1:
+                  return text.replace(old, new, 1)
+              if count == 0 and new in text:
+                  return text
+              raise SystemExit(f'{label}: expected exactly 1 old match or an already-applied new match, got {count}')
 
           screen_path = Path('browser/battle-screen-runtime-mount.mjs')
           screen = screen_path.read_text()
@@ -129,4 +133,4 @@ test('portrait keeps SlidePad and optional roulette in the same bottom-right thu
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add browser/battle-screen-runtime-mount.mjs tests/battle-screen-runtime-mount.test.mjs browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs
           git commit -m 'Battle: wire 390x844 portrait recomposition into live runtimes'
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+          git push origin HEAD:sol/battle-portrait-live-r3-20260909

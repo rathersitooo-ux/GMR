@@ -1,0 +1,41 @@
+name: Temp Battle Resource HUD HTML R3
+on:
+  push:
+    branches:
+      - sol/battle-resource-hud-html-r3-20260910
+
+permissions:
+  contents: write
+
+jobs:
+  bounded-html-r3:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify authorization base did not change HTML
+        run: |
+          git diff --exit-code d8852bcfd94ebf538b5c74ee2b56c084b46d4349 -- browser/GAMEROAD.html
+      - name: Run bounded probe or patch
+        run: python tools/temp-battle-resource-hud-html-r3.py
+      - name: Diff check
+        run: git diff --check
+      - name: Focused HTML test when present
+        run: |
+          if [ -f tests/battle-critical-resource-hud-html-live.test.mjs ]; then
+            node --test tests/battle-critical-resource-hud-html-live.test.mjs
+          fi
+      - name: Commit bounded product changes when present
+        run: |
+          git add browser/GAMEROAD.html
+          if [ -f tests/battle-critical-resource-hud-html-live.test.mjs ]; then git add tests/battle-critical-resource-hud-html-live.test.mjs; fi
+          if git diff --cached --quiet; then
+            echo "PRODUCT_CHANGE=0"
+            exit 0
+          fi
+          git config user.name "gameroad-direct-writer"
+          git config user.email "actions@users.noreply.github.com"
+          git commit -m "Battle: Honey/Chipを実Battle playerへ接続"
+          git push origin HEAD:sol/battle-resource-hud-html-r3-20260910

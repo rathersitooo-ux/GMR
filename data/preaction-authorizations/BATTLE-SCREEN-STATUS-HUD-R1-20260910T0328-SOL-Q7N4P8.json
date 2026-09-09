@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SCREEN-STATUS-HUD-R1-20260910T0328-SOL-Q7N4P8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_SCREEN_STATUS_RESOURCE_HUD_R1",
+  "acquireKey": "BATTLE-SCREEN-STATUS-HUD-R1-20260910T0328-SOL-Q7N4P8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_BATTLE_SCREEN_PLAN_CUE_GAP_PLUS_EXISTING_RESOURCE_HUD_COMPONENT_20260910",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_RUNTIME_CALLSITE_AND_EXISTING_CLASSIFIED_SCREEN_TEST_NONOVERLAP_20260910",
+  "proceedToken": "PROCEED|BATTLE-SCREEN-STATUS-HUD-R1-20260910T0328-SOL-Q7N4P8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|screen-status-hud-r1|compose-existing-resource-hud|active-lease",
+  "authorizationBaseSha": "5106845bd21cd0e9836e5562394cd09157775efa",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_SCREEN_STATUS_RESOURCE_HUD_R1",
+  "leaseAcquireKey": "BATTLE-SCREEN-STATUS-HUD-R1-20260910T0328-SOL-Q7N4P8",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:28 JST",
+  "leaseUntilJst": "2026-09-10 04:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A887:L887",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-screen-status-hud-r1-20260910; browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; transient .github/workflows/zz-temp-battle-screen-status-hud-r1.yml; own transient data/preaction-authorizations/BATTLE-SCREEN-STATUS-HUD-R1-20260910T0328-SOL-Q7N4P8.json only. READ_ONLY reuse: browser/battle-screen-presentation-core.mjs, browser/battle-critical-resource-hud-runtime.mjs. browser/GAMEROAD.html, deploy/cloudflare/scripts/build.mjs, janken/Hand3/camera/controlled-character/GOAL/Road/recovery/gameplay/rules/target/legality/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_SCREEN_EXISTING_CURRENT_ACTION_CUE_PLUS_EXISTING_RESOURCE_HUD_COMPOSE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_SCREEN_CURRENT_ACTION_CALLSITE_AND_MERGED_RESOURCE_HUD_RUNTIME_20260910",
+  "solutionSearchEvidence": [
+    "Current battle-screen runtime already owns the current-action status node and writeCurrentActionCue but CURRENT_ACTION_PHASE_LABELS omits plan",
+    "Current merged battle-critical-resource-hud-runtime.mjs already provides caller-authoritative Honey and Chip presentation with unresolved fail-closed semantics",
+    "The Battle screen runtime currently does not import or mount that resource HUD component",
+    "The repair therefore extends the existing screen surface and composes the existing resource HUD instead of creating a second HUD, resource store, action engine or gameplay authority"
+  ],
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-screen-status-hud-r1.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-screen-status-hud-r1.yml"
+  ]
+}

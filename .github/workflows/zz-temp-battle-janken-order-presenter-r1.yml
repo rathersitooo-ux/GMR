@@ -1,0 +1,37 @@
+name: temp-battle-janken-order-presenter-r1
+
+on:
+  push:
+    branches:
+      - sol/battle-janken-order-slidepad-presenter-r1-20260909
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: sol/battle-janken-order-slidepad-presenter-r1-20260909
+      - name: Apply bounded presenter patch
+        run: python tools/temp-battle-janken-order-presenter-r1.py
+      - name: Focused presenter regression
+        run: node --test tests/battle-janken-order-slidepad-presenter.test.mjs
+      - name: Existing SlidePad runtime regression
+        run: node --test tests/battle-janken-slidepad-runtime-mount.test.mjs
+      - name: Commit bounded product diff
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-order-slidepad-presenter.test.mjs
+          if git diff --cached --quiet; then
+            echo 'No product changes to commit.'
+            exit 0
+          fi
+          git commit -m 'Battle: じゃんけん処理順を既存SlidePadへ投影'
+          git push origin HEAD:sol/battle-janken-order-slidepad-presenter-r1-20260909

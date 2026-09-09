@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-IDLE-SHELL-R1-20260910T0520-SOL-P7N4Q6",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_IDLE_APPROVED_READABLE_SHELL_R1",
+  "acquireKey": "PARTNER-IDLE-SHELL-R1-20260910T0520-SOL-P7N4Q6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_PARTNER_SHELL_HUB_HAS_NO_IDLE_READABLE_LINE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "MERGED_APPROVED_IDLE_SELECTOR_PLUS_CURRENT_SHELL_TEST_SEAM",
+  "proceedToken": "PROCEED|PARTNER-IDLE-SHELL-R1-20260910T0520-SOL-P7N4Q6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-idle-shell|approved-source-only|active-lease",
+  "authorizationBaseSha": "46dcb174d13eef1e700db6d9c129438af42c1f13",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_IDLE_APPROVED_READABLE_SHELL_R1",
+  "leaseAcquireKey": "PARTNER-IDLE-SHELL-R1-20260910T0520-SOL-P7N4Q6",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 05:20 JST",
+  "leaseUntilJst": "2026-09-10 06:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A933:L933",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/partner-idle-shell-r1-20260910; browser/partner-shell-runtime-mount.mjs; tests/partner-shell-runtime-mount.test.mjs; transient .github/workflows/zz-temp-partner-idle-shell-r1.yml; own transient data/preaction-authorizations/PARTNER-IDLE-SHELL-R1-20260910T0520-SOL-P7N4Q6.json only. READ_ONLY browser/partner-dialogue-source-registry.mjs, browser/partner-saasuna-conversation-source.mjs, deploy/cloudflare/scripts/build.mjs, deploy/cloudflare/tests/build.test.mjs, browser/GAMEROAD.html, gameplay/rules/save/economy/network.",
+  "solutionSignature": "PARTNER_APPROVED_IDLE_READABLE_EXISTING_SHELL_HUB_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1509_IDLE_SELECTOR_PLUS_PR1507_EXISTING_PARTNER_SHELL",
+  "solutionSearchEvidence": [
+    "Current main 46dcb174d13eef1e700db6d9c129438af42c1f13 already contains selectApprovedPartnerIdleUtterance in the existing Partner dialogue source registry and Battle public use-site.",
+    "Current Partner shell runtime already provides the actual Partner hub/list/detail/formation/strategy/dialogue-feedback/costume presentation but its hub renders no readable approved Partner line.",
+    "The smallest non-duplicating change is to COMPOSE the existing approved idle selector into the existing shell runtime model and hub renderer.",
+    "The selected idle utterance is approved-current source only; non-Saasuna/unsupported source returns null and must remain silent.",
+    "No timer, loop, random runtime source, LLM, second conversation store, game legality, gameplay state, relationship state, canon, or save authority is introduced.",
+    "The existing partner-shell focused test is the classified test surface; Cloudflare build test is executed read-only to verify current public packaging still accepts the changed runtime."
+  ],
+  "scope": [
+    "browser/partner-shell-runtime-mount.mjs",
+    "tests/partner-shell-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-partner-idle-shell-r1.yml"
+  ],
+  "leaseScope": [
+    "browser/partner-shell-runtime-mount.mjs",
+    "tests/partner-shell-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-partner-idle-shell-r1.yml"
+  ]
+}

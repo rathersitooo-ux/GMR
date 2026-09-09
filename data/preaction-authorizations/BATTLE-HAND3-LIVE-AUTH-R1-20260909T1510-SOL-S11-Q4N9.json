@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HAND3-LIVE-AUTH-R1-20260909T1510-SOL-S11-Q4N9",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_HAND3_LIVE_AUTHORITY_PRODUCER_R1",
+  "acquireKey": "BATTLE-HAND3-LIVE-AUTH-R1-20260909T1510-SOL-S11-Q4N9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_EXACT_HTML_ROUND_AND_RNG_SEAMS_20260909T1510",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "READONLY_EXACT_SOURCE_CONTRACT_AND_MERGED_POLICY_REUSE",
+  "proceedToken": "PROCEED|BATTLE-HAND3-LIVE-AUTH-R1-20260909T1510-SOL-S11-Q4N9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260909T1510JST",
+  "authorizationBaseSha": "6ad0277b3d6dca12d55bfe7e031f74ad6ef5611e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_HAND3_LIVE_AUTHORITY_PRODUCER_R1",
+  "leaseAcquireKey": "BATTLE-HAND3-LIVE-AUTH-R1-20260909T1510-SOL-S11-Q4N9",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 15:10 JST",
+  "leaseUntilJst": "2026-09-09 16:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A673:L673",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-hand3-live-authority-r1-20260909; browser/GAMEROAD.html; own transient data/preaction-authorizations/BATTLE-HAND3-LIVE-AUTH-R1-20260909T1510-SOL-S11-Q4N9.json; own transient .github/workflows/zz-temp-battle-hand3-live-auth-r1.yml; own transient tools/temp-battle-hand3-live-auth-r1.py; own branch/PR/check/readback only. browser/new-base-hand3-uniform-assignment-policy.mjs, browser/new-base-round-start-janken-slot-assignment-core.mjs, browser/battle-new-base-live-consumer-adapter.mjs, browser/battle-janken-slidepad-runtime-mount.mjs, battle-screen/runtime, target/legal, Road/dice, save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "data/preaction-authorizations/BATTLE-HAND3-LIVE-AUTH-R1-20260909T1510-SOL-S11-Q4N9.json",
+    ".github/workflows/zz-temp-battle-hand3-live-auth-r1.yml",
+    "tools/temp-battle-hand3-live-auth-r1.py"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "data/preaction-authorizations/BATTLE-HAND3-LIVE-AUTH-R1-20260909T1510-SOL-S11-Q4N9.json",
+    ".github/workflows/zz-temp-battle-hand3-live-auth-r1.yml",
+    "tools/temp-battle-hand3-live-auth-r1.py"
+  ],
+  "solutionSignature": "ADAPT the sole live GAMEROAD.html round-start authority to produce/store the current Hand3 assignment exactly once per round using the already merged uniform-six-permutation policy and the existing match-scoped abilityRng stream; expose no second turn, RNG, janken, target, or legality engine. Absorb the concurrent WorkUnit44 adapter contract before product mutation and abort/narrow if its final interface makes this producer redundant.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MERGED_HAND3_POLICY_PLUS_EXISTING_HTML_MODULE_BRIDGE_AND_MATCH_RNG",
+  "solutionSearchEvidence": [
+    "Current main browser/GAMEROAD.html already has ES-module-to-global bridge patterns, so the merged Hand3 policy can be reused instead of copied into the monolith.",
+    "Current initRoundRuntime(m) is the single live once-per-round boundary invoked at match start and nextRound; no generic new-base turn controller should be restored.",
+    "Current matchRnd(n) advances the existing state.match.abilityRng xorshift stream already used by Battle tie resolution; a raw uint32 seam can preserve the existing stream rather than create a second RNG.",
+    "Current battle-new-base-live-consumer-adapter expects current hand plus an external Hand3 mapping; concurrent row671 is explicitly binding the same merged policy into that adapter, so its final interface must be consumed before HTML product mutation.",
+    "Current SlidePad runtime remains separately owned through 15:17 JST and is read-only in this WorkUnit."
+  ]
+}

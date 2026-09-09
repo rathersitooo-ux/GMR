@@ -1,4 +1,5 @@
 import { auditBattleScreenModel } from './battle-screen-presentation-core.mjs';
+import { mountBattleCriticalResourceHud } from './battle-critical-resource-hud-runtime.mjs';
 
 const RUNTIME_SCHEMA = 'gameroad.battle-screen-runtime-mount.v1';
 const STYLE_ID = 'gameroad-battle-screen-runtime-r1-style';
@@ -19,6 +20,7 @@ const PLAYER_ROLE_LABELS = Object.freeze({
   target: '対象'
 });
 const CURRENT_ACTION_PHASE_LABELS = Object.freeze({
+  plan: '選択',
   partner_cutin: '相棒',
   reveal: '公開',
   attack: '攻撃',
@@ -87,7 +89,7 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"] .grBattleHudLoad{flex:0 0 auto;display:grid;place-items:center;align-content:center;width:clamp(50px,6.8vw,70px);height:clamp(40px,6vw,62px);border-radius:8px;border:1px solid rgba(255,233,158,.66);background:linear-gradient(180deg,rgba(108,88,38,.86),rgba(35,42,26,.80));box-shadow:0 5px 16px rgba(0,0,0,.22)}
 [${SHELL_ATTR}="1"] .grBattleHudLoad small{font-size:clamp(8px,.72vw,10px);font-weight:900;letter-spacing:.12em;opacity:.72}
 [${SHELL_ATTR}="1"] .grBattleHudLoad b{font-size:clamp(14px,1.6vw,20px);line-height:1.1}
-[${SHELL_ATTR}="1"] [${CURRENT_ACTION_ATTR}]{position:absolute;z-index:8;top:clamp(206px,34vh,264px);left:50%;transform:translateX(-50%);max-width:min(42vw,420px);padding:5px 10px;border:1px solid rgba(245,248,225,.48);border-radius:999px;background:rgba(4,28,24,.80);box-shadow:0 6px 18px rgba(0,0,0,.24);pointer-events:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f8fbeb;text-shadow:0 2px 8px rgba(0,0,0,.72);font-size:clamp(11px,1vw,14px);font-weight:900;letter-spacing:.05em}
+[${CURRENT_ACTION_ATTR}]{position:absolute;z-index:8;top:clamp(206px,34vh,264px);left:50%;transform:translateX(-50%);max-width:min(42vw,420px);padding:5px 10px;border:1px solid rgba(245,248,225,.48);border-radius:999px;background:rgba(4,28,24,.80);box-shadow:0 6px 18px rgba(0,0,0,.24);pointer-events:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f8fbeb;text-shadow:0 2px 8px rgba(0,0,0,.72);font-size:clamp(11px,1vw,14px);font-weight:900;letter-spacing:.05em}
 [${SHELL_ATTR}="1"] [${PLAN_SLOT_ATTR}]{position:absolute;inset:0;z-index:2;min-width:0;min-height:0}
 [${SHELL_ATTR}="1"] #battlePhaseSurface{position:absolute;inset:0;z-index:3;overflow:hidden;background:radial-gradient(ellipse at 16% 17%,rgba(238,249,221,.27),transparent 35%),radial-gradient(ellipse at 79% 25%,rgba(176,211,176,.13),transparent 34%),linear-gradient(180deg,rgba(130,188,178,.42) 0%,rgba(111,168,129,.32) 35%,rgba(69,130,84,.42) 59%,rgba(31,79,56,.69) 100%)}
 [${SHELL_ATTR}="1"] #battlePhaseSurface::before{content:"";position:absolute;z-index:-2;left:-9%;right:-8%;top:36%;bottom:-29%;clip-path:polygon(0 45%,9% 39%,18% 35%,28% 38%,39% 31%,49% 26%,60% 30%,71% 25%,81% 29%,91% 24%,100% 30%,100% 100%,0 100%);background:radial-gradient(ellipse at 19% 27%,rgba(150,190,111,.31),transparent 31%),radial-gradient(ellipse at 68% 24%,rgba(129,174,101,.20),transparent 30%),linear-gradient(180deg,rgba(113,162,92,.73),rgba(65,119,72,.89) 48%,rgba(31,77,55,.98));border-top:1px solid rgba(232,251,216,.18);transform:perspective(700px) rotateX(4deg);transform-origin:50% 0}
@@ -498,7 +500,7 @@ function createHud(document, shell) {
   root.appendChild(center);
   root.appendChild(right);
   shell.appendChild(root);
-  return { root, settingsButton, scoreValue, chain, loadValue, hateValue, turnValue };
+  return { root, right, settingsButton, scoreValue, chain, loadValue, hateValue, turnValue };
 }
 
 function writeHud(document, hud, snapshot) {
@@ -562,6 +564,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
 
   const hud = createHud(document, shell);
   let lastHudSnapshot = writeHud(document, hud, options.hud);
+  const resourceHud = mountBattleCriticalResourceHud(global, { host: hud.right, snapshot: options.hud ?? {} });
 
   let planSlot = null;
   if (shellCreated && !adoptingExistingPhase) {
@@ -583,7 +586,8 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   syncFieldLandmark(fieldLandmark, phaseSurface, shell, root);
 
   const currentActionCue = createCurrentActionCue(document);
-  visualHost.appendChild(currentActionCue);
+  const currentActionHost = adoptingExistingPhase && validRoot(root) ? root : shell;
+  currentActionHost.appendChild(currentActionCue);
 
   const progressGuide = createProgressGuide(document);
   visualHost.appendChild(progressGuide);
@@ -603,6 +607,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   function renderHud(snapshot = {}) {
     if (destroyed) throw new Error('BATTLE_SCREEN_RUNTIME_DESTROYED');
     lastHudSnapshot = writeHud(document, hud, snapshot);
+    resourceHud.sync(snapshot);
     return lastHudSnapshot;
   }
 
@@ -633,7 +638,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     if (shellCreated) shell.hidden = resultExit;
     phaseSurface.hidden = !battle;
     hud.root.hidden = !battle;
-    writeCurrentActionCue(currentActionCue, battle ? model : null);
+    writeCurrentActionCue(currentActionCue, resultExit ? null : model);
     if (planSlot) planSlot.hidden = battle || resultExit;
     syncFieldLandmark(fieldLandmark, phaseSurface, shell, root);
 
@@ -673,6 +678,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     if (currentActionCue?.parentNode && typeof currentActionCue.parentNode.removeChild === 'function') currentActionCue.parentNode.removeChild(currentActionCue);
     if (progressGuide?.parentNode && typeof progressGuide.parentNode.removeChild === 'function') progressGuide.parentNode.removeChild(progressGuide);
     if (grid?.parentNode && typeof grid.parentNode.removeChild === 'function') grid.parentNode.removeChild(grid);
+    resourceHud.destroy();
     if (hud.root?.parentNode && typeof hud.root.parentNode.removeChild === 'function') hud.root.parentNode.removeChild(hud.root);
     if (shellCreated && shell?.parentNode && typeof shell.parentNode.removeChild === 'function') shell.parentNode.removeChild(shell);
     return true;
@@ -694,6 +700,7 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     currentActionCue,
     progressGuide,
     hud,
+    resourceHud,
     grid,
     laneSurfaces: lanes.map(view => view.lane),
     publicCardSurfaces: lanes.map(view => view.publicCard),
@@ -711,7 +718,9 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   presentationOnly: true,
   authority: 'NONE',
   currentActionAuthority: 'ACCEPTED_PUBLIC_MODEL_ONLY',
+  planCurrentActionPolicy: 'GENERIC_SELECTION_LABEL_ONLY_NO_LEGAL_ACTION_INFERENCE',
   hudAuthority: 'CALLER_ONLY_FAIL_CLOSED_PLACEHOLDERS',
+  resourceHudAuthority: 'CALLER_ONLY_EXISTING_RESOURCE_HUD',
   hudUnresolvedTokens: Object.freeze({ score: 'X', hate: 'XXX', turn: 'XX', loadJanken: '?' }),
   existingAnchorPolicy: 'EXPLICIT_PHASE_GETS_RUNTIME_OVERLAY__ANCESTOR_NEVER_DECORATED',
   externalPhaseShellOwner: 'CALLER',

@@ -7,6 +7,7 @@ import subprocess
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 BROWSER = ROOT / 'browser'
 HTML = BROWSER / 'GAMEROAD.html'
+BASELINE_SHA = 'd074d56a3344bb90afd628465436ec047adcc771'
 
 IMPORT_RE = re.compile(r'''(?:from\s*|import\s*\(\s*)["']([^"']+\.mjs)["']''')
 HTML_MJS_RE = re.compile(r'''["'](?:\./)?([^"']+\.mjs)["']''')
@@ -41,12 +42,12 @@ def collect_graph():
         for spec in specs:
             dep = norm_browser_import(rel, spec)
             if dep and dep.startswith('browser/'):
-                # PurePosixPath doesn't collapse .., resolve manually.
                 dep = pathlib.PurePosixPath(dep)
                 parts = []
                 for part in dep.parts:
                     if part == '..':
-                        if parts: parts.pop()
+                        if parts:
+                            parts.pop()
                     elif part != '.':
                         parts.append(part)
                 deps.append('/'.join(parts))
@@ -82,6 +83,10 @@ def git(*args):
         return ''
 
 
+def git_show_text(sha, path):
+    return git('show', f'{sha}:{path}')
+
+
 def count(text, needle):
     return text.count(needle)
 
@@ -89,6 +94,24 @@ def count(text, needle):
 def history_for_term(term):
     rows = git('log', '--all', '-S', term, '--format=%H|%cI|%s', '--', 'browser/GAMEROAD.html').splitlines()
     return rows[:8]
+
+
+def contexts(text, terms, radius=2, max_hits_per_term=3):
+    lines = text.splitlines()
+    out = {}
+    for term in terms:
+        hits = []
+        for i, line in enumerate(lines):
+            if term not in line:
+                continue
+            lo = max(0, i - radius)
+            hi = min(len(lines), i + radius + 1)
+            snippet = '\n'.join(f'{j+1}: {lines[j][:420]}' for j in range(lo, hi))
+            hits.append(snippet)
+            if len(hits) >= max_hits_per_term:
+                break
+        out[term] = hits
+    return out
 
 
 def live_atom(name, files, html_terms, graph_reachable, html):
@@ -112,6 +135,7 @@ def live_atom(name, files, html_terms, graph_reachable, html):
 
 def main():
     html = read(HTML)
+    baseline_html = git_show_text(BASELINE_SHA, 'browser/GAMEROAD.html')
     graph = collect_graph()
     roots = html_roots(html)
     live = reachable(graph, roots)
@@ -156,6 +180,16 @@ def main():
     ]
     history = {t: history_for_term(t) for t in watched_terms}
 
+    high_signal_terms = [
+        'quickPoints', 'PERFECT!', 'hateTime', 'friendExplode',
+        'hate-forced-delegation-core.mjs', 'battle-screen-runtime-mount.mjs',
+        'battle-controlled-character-motion-core.mjs', 'battle-camera-presentation-runtime.mjs',
+    ]
+    current_context = contexts(html, high_signal_terms, radius=3, max_hits_per_term=4)
+    baseline_context = contexts(baseline_html, ['quickPoints', 'PERFECT!', 'hateTime', 'friendExplode'], radius=3, max_hits_per_term=3)
+    baseline_counts = {t: count(baseline_html, t) for t in watched_terms}
+    current_counts = {t: count(html, t) for t in watched_terms}
+
     battle_files = sorted(
         p.relative_to(ROOT).as_posix()
         for p in BROWSER.glob('*.mjs')
@@ -164,14 +198,19 @@ def main():
     orphaned = [f for f in battle_files if f not in live]
 
     report = {
-        'schema': 'gameroad.battle-predecessor-transfer-audit.r1',
+        'schema': 'gameroad.battle-predecessor-transfer-audit.r2',
         'head': git('rev-parse', 'HEAD'),
         'html_blob': git('rev-parse', 'HEAD:browser/GAMEROAD.html'),
         'html_bytes': HTML.stat().st_size,
+        'baseline_sha': BASELINE_SHA,
         'html_module_roots': roots,
         'reachable_browser_modules_count': len(live),
         'atoms': atoms,
         'term_history': history,
+        'baseline_term_counts': baseline_counts,
+        'current_term_counts': current_counts,
+        'current_context': current_context,
+        'baseline_context': baseline_context,
         'battle_or_hate_module_count': len(battle_files),
         'battle_or_hate_unreachable_count': len(orphaned),
         'battle_or_hate_unreachable': orphaned,
@@ -179,6 +218,7 @@ def main():
             'Reachability means HTML root -> static/dynamic .mjs import graph only; inline HTML behavior is additionally detected by semantic term counts.',
             'A missing literal may be renamed; DROPPED_OR_RENAMED_REQUIRES_HISTORY is intentionally fail-closed.',
             'Current explicit new-base supersessions must be applied before any predecessor restoration.',
+            'Baseline is the exact initial Browser baseline import commit, used only to locate predecessor implementation; later current user overrides remain higher authority.',
         ],
     }
     print(json.dumps(report, ensure_ascii=False, indent=2))

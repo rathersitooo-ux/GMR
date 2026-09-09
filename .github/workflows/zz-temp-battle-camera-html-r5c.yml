@@ -1,0 +1,34 @@
+name: zz-temp-battle-camera-html-r5c
+on:
+  push:
+    branches:
+      - sol/battle-camera-html-r5c-20260910
+permissions:
+  contents: write
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run bounded Battle camera HTML probe/patcher
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/temp-battle-camera-html-r5c.py
+          if git diff --quiet -- tools/temp-battle-camera-html-r5c.py browser/GAMEROAD.html tests/battle-camera-live-integration.test.mjs; then
+            echo "No bounded changes"
+            exit 0
+          fi
+          git config user.name "gameroad-bounded-writer"
+          git config user.email "gameroad-bounded-writer@users.noreply.github.com"
+          for p in tools/temp-battle-camera-html-r5c.py browser/GAMEROAD.html tests/battle-camera-live-integration.test.mjs; do
+            if [ -e "$p" ] || git ls-files --error-unmatch "$p" >/dev/null 2>&1; then
+              git add -- "$p"
+            fi
+          done
+          git diff --cached --name-only
+          git diff --cached --quiet && { echo "No staged bounded changes"; exit 0; }
+          git commit -m "camera R5C: bounded HTML probe or live adapt"
+          git push origin HEAD:sol/battle-camera-html-r5c-20260910

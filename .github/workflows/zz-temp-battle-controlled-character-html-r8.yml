@@ -10,36 +10,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect exact live Battle handoff seams
+      - name: Inspect exact live Battle handoff seams by character offsets
         shell: python
         run: |
           from pathlib import Path
-          html = Path('browser/GAMEROAD.html').read_text(encoding='utf-8').splitlines()
-          ranges = [
-              (16320,16410),
-              (17920,18020),
-              (20820,21090),
-              (24070,24130),
-              (24890,25230),
-              (27570,28130),
-          ]
-          for lo, hi in ranges:
-              print(f'===== HTML {lo}:{hi} =====')
-              for n in range(lo, min(hi, len(html)) + 1):
-                  print(f'{n}: {html[n-1]}')
-          exact = [
-              'createBattleBoardNakiFourPlayerVisualBinding',
-              'createBattleControlledCharacterFourPlayerMotionDirector',
-              'battle-board-naki-4p-visual-binding',
-              'battle-controlled-character-4p-motion-director',
-              'battle-controlled-character-motion-core',
+          text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          lines = text.splitlines()
+          print('TEXT_CHARS', len(text), 'LINES', len(lines), 'MAX_LINE', max(map(len, lines)))
+          needles = [
+              'character: characterId',
+              'p.character == null',
+              'player?.character ?? null',
+              "el.className = 'battleBoardPlayerToken'",
+              'p.position = { type: step.type',
+              'p.position = finalPos',
+              'setBattleRuntimeMotionState(el, { state:\'move\'',
               'function renderBoard',
+              'const prevRenderBoardRef = renderBoard',
+              'createBattleBoardNakiFourPlayerVisualBinding',
+              'battle-board-naki-4p-visual-binding.mjs',
           ]
-          for needle in exact:
-              hits=[i for i,line in enumerate(html,1) if needle in line]
-              print('EXACT', needle, hits)
-          build = Path('deploy/cloudflare/scripts/build.mjs').read_text(encoding='utf-8').splitlines()
-          print('===== BUILD controlled-character refs =====')
-          for i,line in enumerate(build,1):
-              if any(k in line for k in ['battle-board-naki-4p-visual-binding','battle-controlled-character-4p-motion-director','battle-controlled-character-motion-core']):
-                  print(f'{i}: {line}')
+          for needle in needles:
+              print('\n===== NEEDLE', repr(needle), '=====')
+              start = 0
+              count = 0
+              while True:
+                  idx = text.find(needle, start)
+                  if idx < 0: break
+                  count += 1
+                  line = text.count('\n', 0, idx) + 1
+                  col = idx - (text.rfind('\n', 0, idx) + 1)
+                  lo = max(0, idx - 1100); hi = min(len(text), idx + len(needle) + 1500)
+                  print('HIT', count, 'OFFSET', idx, 'LINE', line, 'COL', col)
+                  print(text[lo:hi].replace('\r',''))
+                  print('-----')
+                  start = idx + len(needle)
+                  if count >= 4: break
+              print('COUNT_SHOWN', count)
+          build = Path('deploy/cloudflare/scripts/build.mjs').read_text(encoding='utf-8')
+          for needle in ['battle-board-naki-4p-visual-binding.mjs','battle-controlled-character-4p-motion-director.mjs','battle-controlled-character-motion-core.mjs']:
+              print('BUILD', needle, build.count(needle))

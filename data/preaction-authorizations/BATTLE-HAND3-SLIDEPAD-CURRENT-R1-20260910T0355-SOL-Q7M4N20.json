@@ -25,6 +25,7 @@
   "reuseDisposition": "COMPOSE",
   "solutionSearchStatus": "PASS",
   "reuseDecisionEvidenceId": "CURRENT_LIVE_CONSUMER_UNIFORM_HAND3_PLUS_SLIDEPAD_LEGACY_DEFAULT_DIRECT_READ",
+  "diagnosticRetry": "RUN2_AFTER_FOCUSED_TEST_FAILURE_CAPTURE",
   "solutionSearchEvidence": [
     "Current battle-new-base-live-consumer-adapter already creates the exact uniform six-permutation Hand3 mapping from caller-authoritative entropy and stores it in one immutable round snapshot.",
     "Current new-base-round-start-janken-slot-assignment core already validates CURRENT_HAND3_POLICY and keeps native suit separate from slot membership.",

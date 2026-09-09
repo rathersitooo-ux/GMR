@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PUBLIC-BOOT-READINESS-R1-20260910T0345-SOL-P8N4Q2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FINAL_QA_PUBLIC_BOOT_READINESS_R1",
+  "acquireKey": "BATTLE-PUBLIC-BOOT-READINESS-R1-20260910T0345-SOL-P8N4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLIC_BFI_TRACE_DOMCONTENTLOADED_STALL_20260910",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "TEST_ONLY_BOOT_READINESS_CHANGE_NO_PRODUCT_RUNTIME_MUTATION_20260910",
+  "proceedToken": "PROCEED|BATTLE-PUBLIC-BOOT-READINESS-R1-20260910T0345-SOL-P8N4Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|public-bfi|boot-readiness|active-lease",
+  "authorizationBaseSha": "4cd126b3f6e30a680a8a60c48ca7b3787755ba17",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_FINAL_QA_PUBLIC_BOOT_READINESS_R1",
+  "leaseAcquireKey": "BATTLE-PUBLIC-BOOT-READINESS-R1-20260910T0345-SOL-P8N4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:45 JST",
+  "leaseUntilJst": "2026-09-10 04:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A904:L904",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-public-boot-readiness-r1-20260910; tests/browser-full-interaction.spec.mjs; own transient data/preaction-authorizations/BATTLE-PUBLIC-BOOT-READINESS-R1-20260910T0345-SOL-P8N4Q2.json only. .github/workflows/browser-full-interaction.yml, browser/GAMEROAD.html, browser/battle-*.mjs, deploy/cloudflare/scripts/build.mjs, gameplay/rules/save/network/economy READ_ONLY.",
+  "solutionSignature": "PUBLIC_BFI_COMMIT_RESPONSE_PLUS_EXPLICIT_SCREEN_READINESS_V1",
+  "reuseDisposition": "REPAIR_EXISTING_TEST_HARNESS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PUBLIC_BFI_RUN34388352895_PENDING_MODULE_REQUESTS_PLUS_CURRENT_BOOT_HELPER_20260910",
+  "solutionSearchEvidence": [
+    "The failed public run reached a rendered page but page.goto(..., waitUntil: domcontentloaded) did not resolve before the navigation timeout",
+    "The failing artifact showed several module requests still pending rather than a missing main HTML response",
+    "The current helper already performs explicit main-response status, doctype, core-screen existence and Home visibility checks after navigation",
+    "Changing only navigation completion semantics preserves those real readiness assertions and does not weaken HTTP/page/console error collection",
+    "No product/runtime file needs to change to distinguish a harness navigation stall from a true boot failure"
+  ],
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

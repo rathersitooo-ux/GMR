@@ -14,6 +14,10 @@ const PINCH_CLICK_SUPPRESS_MS = 350;
 const PARTNER_ADVICE_ROOT_ID = 'partnerAdviceChatPresentation';
 const PARTNER_ADVICE_COLLAPSED_ATTR = 'data-player-focus-collapsed';
 const PARTNER_ADVICE_DISCLOSURE_CLASS = 'partnerAdvicePeripheralDisclosure';
+const PARTNER_ADVICE_MOTION_READY_ATTR = 'data-player-focus-motion-ready';
+const PARTNER_ADVICE_EXPAND_MS = 180;
+const PARTNER_ADVICE_COLLAPSE_MS = 140;
+const PARTNER_ADVICE_CONTENT_REVEAL_MS = 120;
 
 function token(value) {
   if (typeof value !== 'string') return null;
@@ -78,7 +82,7 @@ function installStyle(doc) {
   if (doc.getElementById?.('gameroad-board-visual-explanation-runtime-style')) return;
   const style = doc.createElement('style');
   style.id = 'gameroad-board-visual-explanation-runtime-style';
-  style.textContent = `#${SUMMARY}{display:inline-flex;gap:5px;margin-inline-start:5px;padding:2px 5px;border:1px solid rgba(255,255,255,.24);border-radius:999px;background:rgba(3,16,15,.64);font-size:9px;font-weight:900;pointer-events:none}#${SUMMARY}[hidden],#${SUMMARY} [hidden]{display:none!important}${NODE}[${ROLES}~="selected"]{outline:2px solid rgba(255,255,255,.92);outline-offset:2px}${NODE}[${ROLES}~="partner-recommendation"]{box-shadow:0 0 0 2px rgba(255,222,130,.9)}section[data-screen="battle"] ${HAND_CARD}{touch-action:none}section[data-screen="battle"] ${HAND_CARD}[${PINCH_ATTR}="true"]{position:relative;z-index:120!important;filter:drop-shadow(0 16px 24px rgba(0,0,0,.42))}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[data-battle-advice-overlay="true"][${PARTNER_ADVICE_COLLAPSED_ATTR}="true"]{width:min(164px,46vw)!important;max-height:52px!important;overflow:hidden!important;padding:4px!important;gap:4px!important;grid-template-columns:minmax(0,1fr) auto!important;backdrop-filter:blur(4px)!important}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceRoleControl{grid-column:1!important;min-height:44px!important;overflow:hidden}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceRoleControl span,section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdvicePartnerSwitch,section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceLaneProgress,section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceSpeech,section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceTutorialConversation,section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceTutorialReplay,section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceQuickReply{display:none!important}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID} .${PARTNER_ADVICE_DISCLOSURE_CLASS}{grid-column:2;grid-row:1;align-self:start;justify-self:end;min-width:44px;min-height:44px;padding:0 8px;border:1px solid rgba(255,216,120,.56);border-radius:10px;background:rgba(69,49,19,.84);color:#fff1c9;font-size:10px;font-weight:950;line-height:1;pointer-events:auto;touch-action:manipulation}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="false"] .${PARTNER_ADVICE_DISCLOSURE_CLASS}{position:sticky;top:0;z-index:2}@media(max-width:540px),(max-height:420px){#${SUMMARY}{font-size:8px;padding:2px 4px}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[data-battle-advice-overlay="true"][${PARTNER_ADVICE_COLLAPSED_ATTR}="true"]{width:min(154px,46vw)!important}}@media(prefers-reduced-motion:reduce){#${SUMMARY},${NODE}[${ROLES}],section[data-screen="battle"] ${HAND_CARD},section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}{transition:none!important;animation:none!important}}`;
+  style.textContent = `#${SUMMARY}{display:inline-flex;gap:5px;margin-inline-start:5px;padding:2px 5px;border:1px solid rgba(255,255,255,.24);border-radius:999px;background:rgba(3,16,15,.64);font-size:9px;font-weight:900;pointer-events:none}#${SUMMARY}[hidden],#${SUMMARY} [hidden]{display:none!important}${NODE}[${ROLES}~="selected"]{outline:2px solid rgba(255,255,255,.92);outline-offset:2px}${NODE}[${ROLES}~="partner-recommendation"]{box-shadow:0 0 0 2px rgba(255,222,130,.9)}section[data-screen="battle"] ${HAND_CARD}{touch-action:none}section[data-screen="battle"] ${HAND_CARD}[${PINCH_ATTR}="true"]{position:relative;z-index:120!important;filter:drop-shadow(0 16px 24px rgba(0,0,0,.42))}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_MOTION_READY_ATTR}="true"]{--gameroad-partner-advice-motion-ms:${PARTNER_ADVICE_EXPAND_MS}ms;transform-origin:left top;transition:width var(--gameroad-partner-advice-motion-ms) cubic-bezier(.2,.8,.2,1),max-height var(--gameroad-partner-advice-motion-ms) cubic-bezier(.2,.8,.2,1),padding var(--gameroad-partner-advice-motion-ms) cubic-bezier(.2,.8,.2,1),gap var(--gameroad-partner-advice-motion-ms) cubic-bezier(.2,.8,.2,1)}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_MOTION_READY_ATTR}="true"][${PARTNER_ADVICE_COLLAPSED_ATTR}="true"]{--gameroad-partner-advice-motion-ms:${PARTNER_ADVICE_COLLAPSE_MS}ms}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[data-battle-advice-overlay="true"][${PARTNER_ADVICE_COLLAPSED_ATTR}="true"]{width:min(164px,46vw)!important;max-height:52px!important;overflow:hidden!important;padding:4px!important;gap:4px!important;grid-template-columns:minmax(0,1fr) auto!important;backdrop-filter:blur(4px)!important}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceRoleControl{grid-column:1!important;min-height:44px!important;overflow:hidden}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceRoleControl span,section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdvicePartnerSwitch,section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceLaneProgress,section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceSpeech,section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceTutorialConversation,section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceTutorialReplay,section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="true"] .partnerAdviceQuickReply{display:none!important}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID} .${PARTNER_ADVICE_DISCLOSURE_CLASS}{grid-column:2;grid-row:1;align-self:start;justify-self:end;min-width:44px;min-height:44px;padding:0 8px;border:1px solid rgba(255,216,120,.56);border-radius:10px;background:rgba(69,49,19,.84);color:#fff1c9;font-size:10px;font-weight:950;line-height:1;pointer-events:auto;touch-action:manipulation}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_COLLAPSED_ATTR}="false"] .${PARTNER_ADVICE_DISCLOSURE_CLASS}{position:sticky;top:0;z-index:2}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_MOTION_READY_ATTR}="true"][${PARTNER_ADVICE_COLLAPSED_ATTR}="false"] .partnerAdviceLaneProgress{animation:gameroadPartnerAdviceReveal ${PARTNER_ADVICE_CONTENT_REVEAL_MS}ms 45ms both cubic-bezier(.2,.8,.2,1)}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_MOTION_READY_ATTR}="true"][${PARTNER_ADVICE_COLLAPSED_ATTR}="false"] .partnerAdviceSpeech.partner.on{animation:gameroadPartnerAdviceReveal ${PARTNER_ADVICE_CONTENT_REVEAL_MS}ms 65ms both cubic-bezier(.2,.8,.2,1)}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_MOTION_READY_ATTR}="true"][${PARTNER_ADVICE_COLLAPSED_ATTR}="false"] .partnerAdviceSpeech.characterReaction.on{animation:gameroadPartnerAdviceReaction 200ms both cubic-bezier(.2,.8,.2,1)}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[${PARTNER_ADVICE_MOTION_READY_ATTR}="true"][${PARTNER_ADVICE_COLLAPSED_ATTR}="false"] .partnerAdviceSpeech.player.on{animation:gameroadPartnerAdvicePlayerReply ${PARTNER_ADVICE_CONTENT_REVEAL_MS}ms both cubic-bezier(.2,.8,.2,1)}@keyframes gameroadPartnerAdviceReveal{from{opacity:0;transform:translate3d(-4px,0,0) scale(.985)}to{opacity:1;transform:none}}@keyframes gameroadPartnerAdviceReaction{0%{opacity:.72;transform:translate3d(-5px,0,0) scale(.985)}68%{opacity:1;transform:translate3d(1px,0,0) scale(1.008)}100%{opacity:1;transform:none}}@keyframes gameroadPartnerAdvicePlayerReply{from{opacity:0;transform:translate3d(4px,0,0) scale(.985)}to{opacity:1;transform:none}}@media(max-width:540px),(max-height:420px){#${SUMMARY}{font-size:8px;padding:2px 4px}section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID}[data-battle-advice-overlay="true"][${PARTNER_ADVICE_COLLAPSED_ATTR}="true"]{width:min(154px,46vw)!important}}@media(prefers-reduced-motion:reduce){#${SUMMARY},${NODE}[${ROLES}],section[data-screen="battle"] ${HAND_CARD},section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID},section[data-screen="battle"] #${PARTNER_ADVICE_ROOT_ID} *{transition:none!important;animation:none!important}}`;
   doc.head?.appendChild(style);
 }
 
@@ -131,12 +135,14 @@ export function installPartnerAdvicePeripheralDisclosure(win = globalThis) {
   const battleSurface = doc?.querySelector?.('section[data-screen="battle"]');
   if (!doc || !battleSurface || typeof doc.createElement !== 'function') return null;
   let dead = false;
+  let suppressUrgentUntilClear = false;
 
   const sync = () => {
     if (dead) return Object.freeze({ active: false, collapsed: null });
     const root = doc.getElementById?.(PARTNER_ADVICE_ROOT_ID);
     if (!root || root?.dataset?.battleAdviceOverlay !== 'true') return Object.freeze({ active: false, collapsed: null });
 
+    const motionReady = root.getAttribute?.(PARTNER_ADVICE_MOTION_READY_ATTR) === 'true';
     if (root.getAttribute?.(PARTNER_ADVICE_COLLAPSED_ATTR) == null) root.setAttribute?.(PARTNER_ADVICE_COLLAPSED_ATTR, 'true');
     let button = root.querySelector?.(`.${PARTNER_ADVICE_DISCLOSURE_CLASS}`);
     if (!button) {
@@ -150,12 +156,20 @@ export function installPartnerAdvicePeripheralDisclosure(win = globalThis) {
       button?.setAttribute?.('data-player-focus-bound', 'true');
       button?.addEventListener?.('click', () => {
         const collapsed = root.getAttribute?.(PARTNER_ADVICE_COLLAPSED_ATTR) !== 'false';
-        root.setAttribute?.(PARTNER_ADVICE_COLLAPSED_ATTR, collapsed ? 'false' : 'true');
+        if (collapsed) {
+          suppressUrgentUntilClear = false;
+          root.setAttribute?.(PARTNER_ADVICE_COLLAPSED_ATTR, 'false');
+        } else {
+          suppressUrgentUntilClear = hasUrgentPartnerAdvice(root);
+          root.setAttribute?.(PARTNER_ADVICE_COLLAPSED_ATTR, 'true');
+        }
         sync();
       });
     }
 
-    if (hasUrgentPartnerAdvice(root)) root.setAttribute?.(PARTNER_ADVICE_COLLAPSED_ATTR, 'false');
+    const urgent = hasUrgentPartnerAdvice(root);
+    if (!urgent) suppressUrgentUntilClear = false;
+    if (urgent && !suppressUrgentUntilClear) root.setAttribute?.(PARTNER_ADVICE_COLLAPSED_ATTR, 'false');
     const collapsed = root.getAttribute?.(PARTNER_ADVICE_COLLAPSED_ATTR) !== 'false';
     if (button) {
       button.textContent = collapsed ? '助言' : '閉じる';
@@ -163,7 +177,14 @@ export function installPartnerAdvicePeripheralDisclosure(win = globalThis) {
       button.setAttribute?.('aria-label', collapsed ? '相棒の助言を開く' : '相棒の助言を閉じる');
     }
     root.dataset.playerFocusDisclosure = 'presentation-only';
-    return Object.freeze({ active: true, collapsed, autoExpanded: !collapsed && hasUrgentPartnerAdvice(root) });
+    if (!motionReady) root.setAttribute?.(PARTNER_ADVICE_MOTION_READY_ATTR, 'true');
+    return Object.freeze({
+      active: true,
+      collapsed,
+      autoExpanded: !collapsed && urgent && !suppressUrgentUntilClear,
+      motionReady: true,
+      urgentDismissedByPlayer: urgent && suppressUrgentUntilClear,
+    });
   };
 
   const observer = typeof win.MutationObserver === 'function' ? new win.MutationObserver(() => queueMicrotask(sync)) : null;
@@ -414,4 +435,13 @@ export const BATTLE_BOARD_VISUAL_EXPLANATION_RUNTIME = Object.freeze({
   cardPinchSelector: HAND_CARD,
   cardPinchScaleRange: Object.freeze([PINCH_MIN_SCALE, PINCH_MAX_SCALE]),
   partnerAdvicePeripheralDisclosure: true,
+  partnerAdvicePeripheralMotion: Object.freeze({
+    initialMotion: false,
+    expandMs: PARTNER_ADVICE_EXPAND_MS,
+    collapseMs: PARTNER_ADVICE_COLLAPSE_MS,
+    contentRevealMs: PARTNER_ADVICE_CONTENT_REVEAL_MS,
+    restartOnSameStateSync: false,
+    reducedMotionPreservesState: true,
+    presentationOnly: true,
+  }),
 });

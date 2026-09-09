@@ -3,7 +3,7 @@ import json, re
 
 SCRIPT = Path('tools/temp-battle-camera-live-r4.py')
 MARK = '# CAMERA_PROBE_RESULT='
-if MARK in SCRIPT.read_text(encoding='utf-8'):
+if any(line.startswith(MARK) for line in SCRIPT.read_text(encoding='utf-8').splitlines()):
     raise SystemExit(0)
 
 html_path = Path('browser/GAMEROAD.html')
@@ -30,7 +30,6 @@ for needle in needles:
     out['needles'][needle]={'count':text.count(needle),'hits':hits}
 for needle in ['battle-camera-control-core.mjs','battle-camera-input-router.mjs','ARTIFACT_SPECS','GAMEROAD.html']:
     out['build'][needle]={'count':build.count(needle)}
-# Find likely world/board element identifiers near battle setup and transforms.
 ids=[]
 for m in re.finditer(r'id=["\']([^"\']*(?:battle|board|field|map|world|runtime)[^"\']*)["\']', text, re.I):
     v=m.group(1)

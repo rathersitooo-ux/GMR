@@ -1,0 +1,51 @@
+name: TEMP Cloudflare PR Preview R2
+
+on:
+  push:
+    branches:
+      - sol/cloudflare-pr-preview-r2-20260909
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: sol/cloudflare-pr-preview-r2-20260909
+          fetch-depth: 0
+
+      - name: Apply bounded patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/temp-cloudflare-pr-preview-r2.py
+          grep -Fq "pull_request:" .github/workflows/cloudflare-public-deploy.yml
+          grep -Fq "GAMEROAD_PR_PREVIEW_R2" .github/workflows/cloudflare-public-deploy.yml
+          grep -Fq "if: github.event_name != 'pull_request'" .github/workflows/cloudflare-public-deploy.yml
+          grep -Fq 'PREVIEW_BRANCH: pr-${{ github.event.pull_request.number }}' .github/workflows/cloudflare-public-deploy.yml
+          git diff --check
+
+      - name: Run unchanged public package tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test deploy/cloudflare/tests/build.test.mjs deploy/cloudflare/tests/version-manifest.test.mjs
+
+      - name: Commit product workflow and remove transients
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f \
+            .github/workflows/zz-temp-cloudflare-pr-preview-r2.yml \
+            tools/temp-cloudflare-pr-preview-r2.py \
+            data/preaction-authorizations/PUBLICHOST-PR-PREVIEW-R2-20260909T1602-SOL-Q7M4V3.json
+          git config user.name gameroad-ci
+          git config user.email gameroad-ci@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "Public host: add same-PR Cloudflare preview"
+          git push origin HEAD:sol/cloudflare-pr-preview-r2-20260909

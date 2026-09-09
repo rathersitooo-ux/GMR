@@ -15,8 +15,6 @@ function nonEmptyString(value) {
 function normalizeColor(value) {
   if (!nonEmptyString(value)) return null;
   const trimmed = value.trim();
-  // Caller owns the actual participant-color identity. This presentation layer
-  // only accepts an explicit CSS color token/string and never invents a palette.
   if (trimmed.length > 96 || /[;{}]/.test(trimmed)) return null;
   return trimmed;
 }
@@ -34,6 +32,20 @@ function createNode(documentLike, tagName, className = '') {
   const node = documentLike.createElement(tagName);
   if (className) node.className = className;
   return node;
+}
+
+function removeNode(node) {
+  if (!node) return;
+  node.remove?.();
+  if (node.parentNode && typeof node.parentNode.removeChild === 'function') {
+    node.parentNode.removeChild(node);
+  }
+}
+
+function setCueColor(node, color) {
+  if (!node || !color) return;
+  if (node.style?.setProperty) node.style.setProperty('--gameroad-goal-entry-cue-color', color);
+  else if (node.style) node.style['--gameroad-goal-entry-cue-color'] = color;
 }
 
 function resolveProfile({ reducedMotion = false, lowPerf = false } = {}) {
@@ -118,6 +130,40 @@ function laneKey(participantId, laneIndex) {
   return `${participantId}:${laneIndex}`;
 }
 
+function normalizeLaneStates(goalPathPresentation) {
+  if (!validGoalPathPresentation(goalPathPresentation)) return null;
+  const byKey = new Map();
+  for (const lane of goalPathPresentation.lanePresentations) {
+    if (!lane || !nonEmptyString(lane.participantId) || !Number.isSafeInteger(lane.laneIndex)) return null;
+    const participantId = lane.participantId.trim();
+    const key = nonEmptyString(lane.key) ? lane.key.trim() : laneKey(participantId, lane.laneIndex);
+    if (key !== laneKey(participantId, lane.laneIndex) || byKey.has(key)) return null;
+    byKey.set(key, {
+      key,
+      participantId,
+      laneIndex: lane.laneIndex,
+      connectedToGoal: lane.connectedToGoal === true,
+    });
+  }
+  return byKey;
+}
+
+function createArrowStack(documentLike, key, entryCellId, cueColor) {
+  const arrowStack = createNode(documentLike, 'span', 'grGoalEntryArrowStack');
+  setAttr(arrowStack, 'data-goal-entry-arrow-stack', key);
+  setAttr(arrowStack, 'data-clearing-entry-cell-id', entryCellId);
+  setAttr(arrowStack, 'data-cue-color-authority', 'caller-participant-color');
+  setAttr(arrowStack, 'aria-label', '上方向へ進める入口');
+  setCueColor(arrowStack, cueColor);
+  for (let index = 0; index < 3; index += 1) {
+    const arrow = createNode(documentLike, 'span', 'grGoalEntryArrow');
+    arrow.textContent = '↑';
+    setAttr(arrow, 'aria-hidden', 'true');
+    arrowStack.appendChild(arrow);
+  }
+  return arrowStack;
+}
+
 export function mountNewBaseGoalEntryGateCue({
   boardSurfaceRuntime,
   goalPathPresentation,
@@ -133,19 +179,20 @@ export function mountNewBaseGoalEntryGateCue({
   if (!validBoardSurface(boardSurfaceRuntime)) {
     return failSoft('BOARD_SURFACE_RUNTIME_INVALID', profile);
   }
-  if (!validGoalPathPresentation(goalPathPresentation)) {
+  const initialLaneStates = normalizeLaneStates(goalPathPresentation);
+  if (!initialLaneStates) {
     return failSoft('GOAL_PATH_PRESENTATION_INVALID', profile);
   }
 
   ensureStyle(documentLike);
   const mountedByLaneKey = new Map();
-  const unresolvedOpenLaneKeys = [];
-  const cleanup = [];
+  let unresolvedOpenLaneKeys = new Set();
+  let activeParticipantColors = participantColors && typeof participantColors === 'object'
+    ? participantColors
+    : {};
   let destroyed = false;
 
-  for (const lane of goalPathPresentation.lanePresentations) {
-    if (!lane || !nonEmptyString(lane.participantId) || !Number.isSafeInteger(lane.laneIndex)) continue;
-    const key = nonEmptyString(lane.key) ? lane.key.trim() : laneKey(lane.participantId.trim(), lane.laneIndex);
+  for (const lane of initialLaneStates.values()) {
     const shieldNode = boardSurfaceRuntime.resolveShield(lane.participantId, lane.laneIndex);
     const entryCellId = shieldNode?.dataset?.clearingEntryCellId
       ?? shieldNode?.getAttribute?.('data-clearing-entry-cell-id')
@@ -159,11 +206,11 @@ export function mountNewBaseGoalEntryGateCue({
     setAttr(entryCell, 'data-goal-entry-cue-profile', profile);
 
     const gate = createNode(documentLike, 'span', 'grGoalEntryGate');
-    setAttr(gate, 'data-goal-entry-gate', key);
-    setAttr(gate, 'data-participant-id', lane.participantId.trim());
+    setAttr(gate, 'data-goal-entry-gate', lane.key);
+    setAttr(gate, 'data-participant-id', lane.participantId);
     setAttr(gate, 'data-lane-index', lane.laneIndex);
     setAttr(gate, 'data-clearing-entry-cell-id', entryCellId);
-    setAttr(gate, 'data-goal-path-open', lane.connectedToGoal === true ? '1' : '0');
+    setAttr(gate, 'data-goal-path-open', '0');
     setAttr(gate, 'aria-hidden', 'true');
 
     const leftPost = createNode(documentLike, 'span', 'grGoalEntryGatePost');
@@ -176,51 +223,92 @@ export function mountNewBaseGoalEntryGateCue({
     gate.appendChild(lintel);
     entryCell.appendChild(gate);
 
-    let arrowStack = null;
-    const cueColor = normalizeColor(participantColors?.[lane.participantId]);
-    if (lane.connectedToGoal === true) {
-      if (!cueColor) {
-        unresolvedOpenLaneKeys.push(key);
+    mountedByLaneKey.set(lane.key, {
+      key: lane.key,
+      participantId: lane.participantId,
+      laneIndex: lane.laneIndex,
+      entryCellId,
+      entryCell,
+      connectedToGoal: false,
+      cueColor: null,
+      gate,
+      arrowStack: null,
+    });
+  }
+
+  function snapshotState() {
+    const records = [...mountedByLaneKey.values()];
+    return deepFreeze({
+      laneGateCount: records.length,
+      openLaneCount: records.filter((item) => item.connectedToGoal).length,
+      activeArrowCount: records.filter((item) => item.arrowStack !== null).length,
+      unresolvedOpenLaneKeys: [...unresolvedOpenLaneKeys],
+      activeArrowEntryCellIds: records.filter((item) => item.arrowStack !== null).map((item) => item.entryCellId),
+      profile,
+      animationMode: profile === 'standard' ? 'UPWARD_SCROLL_FADE' : 'STATIC_UPWARD_ARROW',
+      presentationOnly: true,
+      gameplayAuthority: false,
+      gameStateWrite: false,
+      movementAuthority: false,
+      legalityAuthority: false,
+      resultAuthority: false,
+    });
+  }
+
+  function syncGoalPathPresentation(nextGoalPathPresentation, { participantColors: nextParticipantColors } = {}) {
+    if (destroyed) return Object.freeze({ ok: false, reason: 'RUNTIME_DESTROYED' });
+    const nextLaneStates = normalizeLaneStates(nextGoalPathPresentation);
+    if (!nextLaneStates) return Object.freeze({ ok: false, reason: 'GOAL_PATH_PRESENTATION_INVALID' });
+    if (nextLaneStates.size !== mountedByLaneKey.size) {
+      return Object.freeze({ ok: false, reason: 'GOAL_PATH_LANE_SET_MISMATCH' });
+    }
+    for (const key of mountedByLaneKey.keys()) {
+      if (!nextLaneStates.has(key)) return Object.freeze({ ok: false, reason: 'GOAL_PATH_LANE_SET_MISMATCH' });
+    }
+
+    const colors = nextParticipantColors && typeof nextParticipantColors === 'object'
+      ? nextParticipantColors
+      : activeParticipantColors;
+    const desired = [];
+    for (const [key, record] of mountedByLaneKey.entries()) {
+      const lane = nextLaneStates.get(key);
+      desired.push({
+        record,
+        connectedToGoal: lane.connectedToGoal === true,
+        cueColor: normalizeColor(colors?.[record.participantId]),
+      });
+    }
+
+    const nextUnresolved = new Set();
+    for (const item of desired) {
+      const { record, connectedToGoal, cueColor } = item;
+      record.connectedToGoal = connectedToGoal;
+      record.cueColor = cueColor;
+      setAttr(record.gate, 'data-goal-path-open', connectedToGoal ? '1' : '0');
+
+      if (connectedToGoal && cueColor) {
+        setCueColor(record.gate, cueColor);
+        if (!record.arrowStack) {
+          record.arrowStack = createArrowStack(documentLike, record.key, record.entryCellId, cueColor);
+          record.entryCell.appendChild(record.arrowStack);
+        } else {
+          setCueColor(record.arrowStack, cueColor);
+        }
       } else {
-        gate.style?.setProperty?.('--gameroad-goal-entry-cue-color', cueColor);
-        if (gate.style && typeof gate.style.setProperty !== 'function') {
-          gate.style['--gameroad-goal-entry-cue-color'] = cueColor;
+        if (record.arrowStack) {
+          removeNode(record.arrowStack);
+          record.arrowStack = null;
         }
-        arrowStack = createNode(documentLike, 'span', 'grGoalEntryArrowStack');
-        setAttr(arrowStack, 'data-goal-entry-arrow-stack', key);
-        setAttr(arrowStack, 'data-clearing-entry-cell-id', entryCellId);
-        setAttr(arrowStack, 'data-cue-color-authority', 'caller-participant-color');
-        setAttr(arrowStack, 'aria-label', '上方向へ進める入口');
-        if (arrowStack.style?.setProperty) arrowStack.style.setProperty('--gameroad-goal-entry-cue-color', cueColor);
-        else if (arrowStack.style) arrowStack.style['--gameroad-goal-entry-cue-color'] = cueColor;
-        for (let index = 0; index < 3; index += 1) {
-          const arrow = createNode(documentLike, 'span', 'grGoalEntryArrow');
-          arrow.textContent = '↑';
-          setAttr(arrow, 'aria-hidden', 'true');
-          arrowStack.appendChild(arrow);
-        }
-        entryCell.appendChild(arrowStack);
+        if (connectedToGoal && !cueColor) nextUnresolved.add(record.key);
       }
     }
 
-    const record = {
-      key,
-      participantId: lane.participantId.trim(),
-      laneIndex: lane.laneIndex,
-      entryCellId,
-      connectedToGoal: lane.connectedToGoal === true,
-      cueColor,
-      gate,
-      arrowStack,
-    };
-    mountedByLaneKey.set(key, record);
-    cleanup.push(() => {
-      arrowStack?.remove?.();
-      if (arrowStack?.parentNode && typeof arrowStack.parentNode.removeChild === 'function') {
-        arrowStack.parentNode.removeChild(arrowStack);
-      }
-      gate.remove?.();
-      if (gate.parentNode && typeof gate.parentNode.removeChild === 'function') gate.parentNode.removeChild(gate);
+    activeParticipantColors = colors;
+    unresolvedOpenLaneKeys = nextUnresolved;
+    return deepFreeze({
+      ok: true,
+      reason: 'GOAL_ENTRY_CUES_SYNCED',
+      ...snapshotState(),
     });
   }
 
@@ -238,31 +326,27 @@ export function mountNewBaseGoalEntryGateCue({
       if (!nonEmptyString(participantId) || !Number.isSafeInteger(laneIndex)) return null;
       return mountedByLaneKey.get(laneKey(participantId.trim(), laneIndex)) ?? null;
     },
+    syncGoalPathPresentation,
     snapshot() {
-      const records = [...mountedByLaneKey.values()];
-      return deepFreeze({
-        laneGateCount: records.length,
-        openLaneCount: records.filter((item) => item.connectedToGoal).length,
-        activeArrowCount: records.filter((item) => item.arrowStack !== null).length,
-        unresolvedOpenLaneKeys: [...unresolvedOpenLaneKeys],
-        activeArrowEntryCellIds: records.filter((item) => item.arrowStack !== null).map((item) => item.entryCellId),
-        profile,
-        animationMode: profile === 'standard' ? 'UPWARD_SCROLL_FADE' : 'STATIC_UPWARD_ARROW',
-        presentationOnly: true,
-        gameplayAuthority: false,
-        gameStateWrite: false,
-        movementAuthority: false,
-        legalityAuthority: false,
-        resultAuthority: false,
-      });
+      return snapshotState();
     },
     destroy() {
       if (destroyed) return false;
       destroyed = true;
-      cleanup.reverse().forEach((dispose) => dispose());
+      for (const record of [...mountedByLaneKey.values()].reverse()) {
+        removeNode(record.arrowStack);
+        record.arrowStack = null;
+        removeNode(record.gate);
+      }
       return true;
     },
   };
+
+  const initialSync = syncGoalPathPresentation(goalPathPresentation, { participantColors: activeParticipantColors });
+  if (initialSync.ok !== true) {
+    runtime.destroy();
+    return failSoft(initialSync.reason, profile);
+  }
 
   return Object.freeze(runtime);
 }
@@ -276,6 +360,8 @@ export const NEW_BASE_GOAL_ENTRY_GATE_CUE_CONTRACT = deepFreeze({
   activeArrowColorAuthority: 'CALLER_PARTICIPANT_COLOR',
   closedLaneArrowVisible: false,
   multipleOpenLanesSupported: true,
+  statefulGoalPathSync: true,
+  repeatedSyncIdempotent: true,
   standardMotion: 'UPWARD_SCROLL_FADE',
   reducedMotion: 'STATIC_UPWARD_ARROW',
   lowPerf: 'STATIC_UPWARD_ARROW',

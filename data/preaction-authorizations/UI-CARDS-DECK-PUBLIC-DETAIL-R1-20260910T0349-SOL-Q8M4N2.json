@@ -17,10 +17,10 @@
   "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
   "leaseWorkUnitKey": "CARDS_DECK_VISIBLE_CARD_DETAIL_R1",
   "leaseAcquireKey": "UI-CARDS-DECK-PUBLIC-DETAIL-R1-20260910T0349-SOL-Q8M4N2",
-  "leaseSnapshotReadbackAtJst": "2026-09-10 03:49 JST",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:52 JST",
   "leaseUntilJst": "2026-09-10 04:49 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A909:L909",
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/cards-deck-public-detail-r1-20260910; browser/cards-deck-presentation.mjs; NEW tests/cards-deck-public-detail-live.test.mjs; own transient data/preaction-authorizations/UI-CARDS-DECK-PUBLIC-DETAIL-R1-20260910T0349-SOL-Q8M4N2.json only. browser/GAMEROAD.html, Deck authority/rules/save/economy/network, Battle detail/pin, deploy/cloudflare/scripts/build.mjs READ_ONLY.",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/cards-deck-public-detail-r1-20260910; browser/cards-deck-presentation.mjs; NEW tests/cards-deck-public-detail-live.test.mjs; transient .github/workflows/zz-temp-cards-deck-public-detail-r1.yml; own transient data/preaction-authorizations/UI-CARDS-DECK-PUBLIC-DETAIL-R1-20260910T0349-SOL-Q8M4N2.json only. browser/GAMEROAD.html, Deck authority/rules/save/economy/network, Battle detail/pin, deploy/cloudflare/scripts/build.mjs READ_ONLY.",
   "solutionSignature": "CARDS_DECK_VISIBLE_CARD_TAP_REUSE_EXISTING_COLLECTION_DETAIL_V1",
   "reuseDisposition": "REUSE_EXISTING_DETAIL",
   "solutionSearchStatus": "PASS",
@@ -30,14 +30,17 @@
     "Current Deck and EX slot normal click instead removes the card immediately, even though the card is already public and visible",
     "cards-deck-presentation.mjs is already imported by current GAMEROAD.html and already auto-installs Cards-specific runtime helpers",
     "The smallest non-conflicting repair is to consume the matching Collection card click as the existing detail seam for Deck/EX normal clicks, without a second renderer or HTML mutation",
-    "Left-swipe removal remains the existing removal gesture; Battle pin behavior and secret/private card information are outside this scope"
+    "Left-swipe removal remains the existing removal gesture; Battle pin behavior and secret/private card information are outside this scope",
+    "A transient branch-only Actions writer is authorized because direct GitHub replacement of the large existing file would require unsafe full-file reconstruction; the writer must exact-match the intended insertion and fail closed otherwise"
   ],
   "scope": [
     "browser/cards-deck-presentation.mjs",
-    "tests/cards-deck-public-detail-live.test.mjs"
+    "tests/cards-deck-public-detail-live.test.mjs",
+    ".github/workflows/zz-temp-cards-deck-public-detail-r1.yml"
   ],
   "leaseScope": [
     "browser/cards-deck-presentation.mjs",
-    "tests/cards-deck-public-detail-live.test.mjs"
+    "tests/cards-deck-public-detail-live.test.mjs",
+    ".github/workflows/zz-temp-cards-deck-public-detail-r1.yml"
   ]
 }

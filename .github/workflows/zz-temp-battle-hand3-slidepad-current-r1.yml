@@ -1,0 +1,100 @@
+name: zz-temp-battle-hand3-slidepad-current-r1
+on:
+  push:
+    branches:
+      - sol/battle-hand3-slidepad-current-r1-20260910
+permissions:
+  contents: write
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-hand3-slidepad-current-r1-20260910
+          fetch-depth: 0
+      - name: Verify authorization base
+        run: |
+          git merge-base --is-ancestor aed6367624c6e92e39946e5a02541ada75fd0b60 HEAD
+          test -f data/preaction-authorizations/BATTLE-HAND3-SLIDEPAD-CURRENT-R1-20260910T0355-SOL-Q7M4N20.json
+      - name: Apply bounded Hand3 projection repair
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          runtime = Path('browser/battle-janken-slidepad-runtime-mount.mjs')
+          source = runtime.read_text()
+
+          def replace_once(old, new, label):
+              global source
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 match, got {count}')
+              source = source.replace(old, new, 1)
+
+          replace_once(
+          """import {\n  ensureRoundStartJankenSlotAssignment,\n  NEW_BASE_ROUND_START_JANKEN_SLOT_STATUS,\n} from './new-base-round-start-janken-slot-assignment-core.mjs';""",
+          """import {\n  ensureRoundStartJankenSlotAssignment,\n  NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE,\n  NEW_BASE_ROUND_START_JANKEN_SLOT_STATUS,\n} from './new-base-round-start-janken-slot-assignment-core.mjs';""",
+          'assignment-mode import')
+
+          replace_once(
+          """function canonicalRoundId(value) {\n  const text = String(value ?? '').trim();\n  return text ? `battle-round:${text}` : null;\n}""",
+          """function canonicalRoundId(value) {\n  const text = String(value ?? '').trim();\n  if (!text) return null;\n  return text.startsWith('battle-round:') ? text : `battle-round:${text}`;\n}""",
+          'idempotent canonical round id')
+
+          replace_once(
+          """  const assignment = ensureRoundStartJankenSlotAssignment({\n    currentSnapshot,\n    roundId: canonical,\n    hand: cards.map(({ id, suit }) => ({ id, suit })),\n    pickDuplicateIndex,\n  });""",
+          """  const assignmentMode = currentSnapshot?.assignmentMode\n    ?? NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.LEGACY_SUIT_BOUND;\n  const assignment = ensureRoundStartJankenSlotAssignment({\n    currentSnapshot,\n    roundId: canonical,\n    hand: cards.map(({ id, suit }) => ({ id, suit })),\n    assignmentMode,\n    pickDuplicateIndex,\n  });""",
+          'current snapshot mode projection')
+
+          replace_once(
+          """  let focusSurfaceRuntime = null;\n  let focusSurfaceVersion = 0;""",
+          """  let focusSurfaceRuntime = null;\n  let focusSurfaceVersion = 0;\n  let focusAssignmentSyncPending = false;""",
+          'focus assignment sync state')
+
+          replace_once(
+          """  async function readDedicatedFocusContext() {\n    if (!dedicatedFocus || !model) return null;\n    let context = null;\n    try {\n      context = await dedicatedFocus.readContext(Object.freeze({\n        roundId: model.roundId,\n        assignment: model.assignment,\n      }));\n    } catch {\n      return null;\n    }\n    if (!context || typeof context !== 'object' || !Array.isArray(context.packages)) return null;\n    return Object.freeze({\n      packages: context.packages,\n      generationId: context.generationId ?? model.roundId,\n    });\n  }""",
+          """  async function readDedicatedFocusContext() {\n    if (!dedicatedFocus || !model) return null;\n    let context = null;\n    try {\n      const callerAssignment = model.assignment?.assignmentMode\n        === NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY\n        ? model.assignment\n        : null;\n      context = await dedicatedFocus.readContext(Object.freeze({\n        roundId: model.roundId,\n        assignment: callerAssignment,\n      }));\n    } catch {\n      return null;\n    }\n    if (!context || typeof context !== 'object' || !Array.isArray(context.packages)) return null;\n    const currentAssignment = context.assignment;\n    if (currentAssignment?.assignmentMode !== NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY) {\n      return null;\n    }\n    if (currentAssignment.roundId !== model.roundId) return null;\n    if (assignment !== currentAssignment) {\n      assignment = currentAssignment;\n      render();\n    }\n    return Object.freeze({\n      packages: context.packages,\n      generationId: context.generationId ?? model.roundId,\n    });\n  }""",
+          'focus reads current immutable assignment')
+
+          replace_once(
+          """    model = buildBattleJankenSlidePadModel({\n      roundId: roundText,\n      hand,\n      currentSnapshot: assignment,\n      pickDuplicateIndex: (request) => entropyIndex(globalRef, request),\n    });""",
+          """    const canonical = canonicalRoundId(roundText);\n    if (assignment?.roundId && assignment.roundId !== canonical) assignment = null;\n    model = buildBattleJankenSlidePadModel({\n      roundId: roundText,\n      hand,\n      currentSnapshot: assignment,\n      pickDuplicateIndex: (request) => entropyIndex(globalRef, request),\n    });""",
+          'round-change stale snapshot clear')
+
+          replace_once(
+          """    if (armedHand) renderLoadPreview(armedHand);\n    openForRound(model.roundId);\n  }""",
+          """    if (armedHand) renderLoadPreview(armedHand);\n    openForRound(model.roundId);\n    if (\n      dedicatedFocus\n      && assignment?.assignmentMode !== NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY\n      && !focusAssignmentSyncPending\n    ) {\n      focusAssignmentSyncPending = true;\n      void readDedicatedFocusContext().finally(() => {\n        focusAssignmentSyncPending = false;\n      });\n    }\n  }""",
+          'proactive current Hand3 sync')
+
+          runtime.write_text(source)
+
+          tests = Path('tests/battle-janken-slidepad-runtime-mount.test.mjs')
+          test_source = tests.read_text()
+          import_anchor = "import { projectBattleJankenOrderSnapshot } from '../browser/battle-janken-order-live-adapter.mjs';\n"
+          import_block = """import { projectBattleJankenOrderSnapshot } from '../browser/battle-janken-order-live-adapter.mjs';\nimport {\n  createRoundStartJankenSlotAssignment,\n  NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE,\n} from '../browser/new-base-round-start-janken-slot-assignment-core.mjs';\n"""
+          if test_source.count(import_anchor) != 1:
+              raise SystemExit('test import anchor mismatch')
+          test_source = test_source.replace(import_anchor, import_block, 1)
+          test_anchor = """const hand = [\n  { id: 'club-a', suit: 'CL', label: 'Club A' },\n  { id: 'diamond-a', suit: 'DI', label: 'Diamond A' },\n  { id: 'spade-a', suit: 'SP', label: 'Spade A' },\n  { id: 'club-b', suit: 'CL', label: 'Club B' },\n];\n"""
+          new_tests = test_anchor + """\n\ntest('current Hand3 snapshot projects the exact immutable three-card mapping without native-suit reassignment', () => {\n  const currentHand = [\n    { id: 'heart-3', suit: 'HE', label: 'Heart 3' },\n    { id: 'club-4', suit: 'CL', label: 'Club 4' },\n    { id: 'diamond-5', suit: 'DI', label: 'Diamond 5' },\n  ];\n  const snapshot = createRoundStartJankenSlotAssignment({\n    roundId: 'battle-round:current-1',\n    hand: currentHand,\n    assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,\n    assignedCardIdsByJankenHand: {\n      ROCK: 'diamond-5',\n      SCISSORS: 'heart-3',\n      PAPER: 'club-4',\n    },\n  });\n  const first = buildBattleJankenSlidePadModel({\n    roundId: 'current-1',\n    hand: currentHand,\n    currentSnapshot: snapshot,\n  });\n  const redraw = buildBattleJankenSlidePadModel({\n    roundId: 'battle-round:current-1',\n    hand: currentHand,\n    currentSnapshot: snapshot,\n  });\n  assert.strictEqual(first.assignment, snapshot);\n  assert.strictEqual(redraw.assignment, snapshot);\n  assert.deepEqual(first.slots.map((slot) => [slot.jankenHand, slot.cardId]), [\n    ['ROCK', 'diamond-5'],\n    ['SCISSORS', 'heart-3'],\n    ['PAPER', 'club-4'],\n  ]);\n  assert.deepEqual(first.ordinaryHandCardIds, []);\n});\n\ntest('dedicated Focus projection proactively replaces the legacy display snapshot with current Hand3 authority', () => {\n  const runtimeSource = readFileSync(\n    new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),\n    'utf8',\n  );\n  assert.match(runtimeSource, /const callerAssignment = model\.assignment\?\.assignmentMode[\\s\\S]*CURRENT_HAND3_POLICY[\\s\\S]*\? model\.assignment[\\s\\S]*: null/);\n  assert.match(runtimeSource, /assignment = currentAssignment;\\n      render\(\);/);\n  assert.match(runtimeSource, /focusAssignmentSyncPending = true;[\\s\\S]*readDedicatedFocusContext\(\)\.finally/);\n});\n"""
+          if test_source.count(test_anchor) != 1:
+              raise SystemExit('test anchor mismatch')
+          test_source = test_source.replace(test_anchor, new_tests, 1)
+          tests.write_text(test_source)
+          PY
+          git diff --check
+          git diff -- browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs
+      - name: Focused tests
+        run: |
+          node --test tests/battle-janken-slidepad-runtime-mount.test.mjs tests/new-base-hand3-uniform-assignment-policy.test.mjs tests/new-base-round-start-janken-slot-assignment-core.test.mjs
+      - name: Commit bounded product delta and remove transient authorization
+        run: |
+          git config user.name gameroad-bounded-writer
+          git config user.email gameroad-bounded-writer@users.noreply.github.com
+          git rm .github/workflows/zz-temp-battle-hand3-slidepad-current-r1.yml
+          git rm data/preaction-authorizations/BATTLE-HAND3-SLIDEPAD-CURRENT-R1-20260910T0355-SOL-Q7M4N20.json
+          git add browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs
+          git diff --cached --check
+          git commit -m 'Battle: current Hand3割当をSlidePad表示へ接続'
+          git push origin HEAD:sol/battle-hand3-slidepad-current-r1-20260910

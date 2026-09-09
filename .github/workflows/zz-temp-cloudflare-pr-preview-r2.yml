@@ -1,4 +1,4 @@
-name: GAMEROAD Codex Shared Preview Pixel Evidence R6
+name: GAMEROAD Codex Shared Preview Diagnostic R2
 
 on:
   push:
@@ -15,26 +15,25 @@ env:
   PREVIEW_ALIAS_URL: https://codex-shared.gameroad-browser-r5.pages.dev
 
 jobs:
-  capture:
-    name: Verify exact shared build and capture four-player Battle pixels
+  diagnose:
+    name: Diagnose shared-root runtime/path behavior
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Verify shared alias build identity
+      - name: Probe public routes
         shell: bash
         run: |
           set -euo pipefail
-          body="$RUNNER_TEMP/gameroad-version.json"
-          code="$(curl --silent --show-error --location --header 'Cache-Control: no-cache' --output "$body" --write-out '%{http_code}' "$PREVIEW_ALIAS_URL/gameroad-version.json")"
-          test "$code" = 200
-          build_id="$(node -e 'const fs=require("node:fs");const m=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));process.stdout.write(m.build_id||"")' "$body")"
-          test "$build_id" = "$TARGET_SHA"
-          echo "Exact shared build verified: $build_id"
+          for path in / /gameroad-version.json /browser/GAMEROAD.html; do
+            code="$(curl --silent --show-error --location --header 'Cache-Control: no-cache' --output "$RUNNER_TEMP/route-body" --write-out '%{http_code}' "$PREVIEW_ALIAS_URL$path" || true)"
+            bytes="$(wc -c < "$RUNNER_TEMP/route-body" 2>/dev/null || echo 0)"
+            echo "ROUTE path=$path code=$code bytes=$bytes"
+          done
 
       - name: Install Playwright and Chromium
         shell: bash
@@ -43,30 +42,58 @@ jobs:
           npm install --no-save --no-package-lock @playwright/test@1.62.0
           npx playwright install --with-deps chromium
 
-      - name: Capture proven four-player Battle at two viewports
+      - name: Trace root runtime before and after start
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p preview-visual
+          mkdir -p preview-diagnostic
           node --input-type=module <<'NODE'
           import fs from 'node:fs';
           import { chromium } from '@playwright/test';
 
           const baseUrl = process.env.PREVIEW_ALIAS_URL;
-          const targetSha = process.env.TARGET_SHA;
-          const consoleErrors = [];
-          const pageErrors = [];
-          const httpErrors = [];
           const browser = await chromium.launch({ headless: true });
           const context = await browser.newContext({ viewport: { width: 667, height: 375 }, deviceScaleFactor: 1 });
           const page = await context.newPage();
-          page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text()); });
+          const consoleMessages = [];
+          const pageErrors = [];
+          const responses = [];
+          page.on('console', (m) => consoleMessages.push({ type: m.type(), text: m.text() }));
           page.on('pageerror', (e) => pageErrors.push(String(e?.message ?? e)));
-          page.on('response', (r) => { if (r.status() >= 400) httpErrors.push(`${r.status()} ${new URL(r.url()).pathname}`); });
+          page.on('response', (r) => {
+            if (r.status() >= 400) responses.push({ status: r.status(), url: r.url() });
+          });
 
           const response = await page.goto(`${baseUrl}/`, { waitUntil: 'commit', timeout: 30_000 });
-          if (!response?.ok()) throw new Error(`shared preview navigation failed: ${response?.status()}`);
           await page.waitForFunction(() => Boolean(window.__GAMEROAD_TEST__) && Array.isArray(window.__CARD_DATA__), null, { timeout: 180_000 });
+          await page.waitForTimeout(1000);
+
+          const inspect = async (label) => ({
+            label,
+            ...(await page.evaluate(() => {
+              const t = window.__GAMEROAD_TEST__;
+              return {
+                href: location.href,
+                pathname: location.pathname,
+                baseURI: document.baseURI,
+                readyState: document.readyState,
+                activeScreen: document.querySelector('.screen.active')?.dataset?.screen ?? null,
+                homeVisible: Boolean(document.querySelector('section[data-screen="home"]')?.getClientRects().length),
+                setupVisible: Boolean(document.querySelector('section[data-screen="setup"]')?.getClientRects().length),
+                battleVisible: Boolean(document.querySelector('section[data-screen="battle"]')?.getClientRects().length),
+                stateScreen: t?.state?.screen ?? null,
+                matchMode: t?.state?.match?.mode ?? null,
+                playerCount: t?.state?.match?.players?.length ?? 0,
+                testKeys: t ? Object.keys(t).sort() : [],
+                startSource: typeof t?.start === 'function' ? String(t.start).slice(0, 2000) : null,
+                moduleScripts: [...document.querySelectorAll('script[type="module"]')].map((s) => s.src || '<inline>'),
+                scripts: [...document.scripts].map((s) => s.src || '<inline>').slice(-30),
+              };
+            }))
+          });
+
+          const snapshots = [];
+          snapshots.push(await inspect('boot'));
 
           const deckSetup = await page.evaluate(() => {
             const t = window.__GAMEROAD_TEST__;
@@ -81,75 +108,63 @@ jobs:
             const draftValidation = t.deckValidate(t.state.deckDraft, { forBattle: true });
             const committed = draftValidation.ok ? t.deckCommit() : false;
             const savedValidation = t.deckValidate(t.state.savedDeck, { forBattle: true });
-            return { count: main.length, committed, savedValidation };
+            return { count: main.length, setValidation, draftValidation, committed, savedValidation };
           });
-          if (deckSetup.count !== 40 || !deckSetup.committed || !deckSetup.savedValidation?.ok) {
-            throw new Error(`legal deck precondition failed: ${JSON.stringify(deckSetup)}`);
-          }
+          snapshots.push(await inspect('deck-committed'));
 
-          await page.evaluate(() => {
+          const startResult = await page.evaluate(() => {
             const t = window.__GAMEROAD_TEST__;
-            t.battlePresentationFast(false);
-            t.start('4p', 'road_shield');
-            window.__CODEX_SHARED_ROUND_PROMISE__ = t.autoRound();
+            let startReturn = null;
+            let startError = null;
+            try { startReturn = t.start('4p', 'road_shield'); } catch (e) { startError = String(e?.stack ?? e); }
+            return { startReturn, startError };
           });
+          snapshots.push(await inspect('immediately-after-start'));
+          await page.waitForTimeout(2000);
+          snapshots.push(await inspect('two-seconds-after-start'));
 
-          const battle = page.locator('section[data-screen="battle"]');
-          await battle.waitFor({ state: 'visible', timeout: 30_000 });
-          await page.waitForFunction(() =>
-            document.querySelectorAll('#publicPlayerStrip .publicPlayerChip').length === 4 &&
-            document.querySelectorAll('#boardPlayers .boardPlayerToken').length === 4 &&
-            Boolean(document.querySelector('#battleMap')),
-            null,
-            { timeout: 30_000 }
-          );
-          await page.waitForTimeout(700);
+          const autoRoundResult = await page.evaluate(() => {
+            const t = window.__GAMEROAD_TEST__;
+            let autoRoundType = null;
+            let autoRoundError = null;
+            try {
+              const p = t.autoRound();
+              autoRoundType = Object.prototype.toString.call(p);
+              window.__CODEX_DIAG_ROUND_PROMISE__ = p;
+            } catch (e) { autoRoundError = String(e?.stack ?? e); }
+            return { autoRoundType, autoRoundError };
+          });
+          await page.waitForTimeout(3000);
+          snapshots.push(await inspect('three-seconds-after-autoRound'));
 
-          const snapshot = () => page.evaluate(() => ({
-            width: innerWidth,
-            height: innerHeight,
-            activeScreen: document.querySelector('.screen.active')?.dataset?.screen ?? null,
-            mode: window.__GAMEROAD_TEST__?.state?.match?.mode ?? null,
-            publicPlayers: document.querySelectorAll('#publicPlayerStrip .publicPlayerChip').length,
-            boardPlayers: document.querySelectorAll('#boardPlayers .boardPlayerToken').length,
-            jankenPads: document.querySelectorAll('[data-battle-janken-slidepad="1"]').length,
-            battlePhaseVisible: Boolean(document.querySelector('#battlePhaseSurface')?.getClientRects().length),
-            phaseTitle: document.querySelector('#phaseTitle')?.textContent?.trim() ?? null,
-          }));
-
-          await page.screenshot({ path: 'preview-visual/battle-667x375.png', animations: 'disabled', fullPage: false });
-          const small = await snapshot();
-          await page.setViewportSize({ width: 1280, height: 720 });
-          await page.waitForTimeout(500);
-          await page.screenshot({ path: 'preview-visual/battle-1280x720.png', animations: 'disabled', fullPage: false });
-          const large = await snapshot();
-
-          const manifestResponse = await context.request.get(`${baseUrl}/gameroad-version.json`);
-          const manifest = manifestResponse.ok() ? await manifestResponse.json() : null;
-          if (manifest?.build_id !== targetSha) throw new Error(`build mismatch: ${manifest?.build_id ?? 'missing'} != ${targetSha}`);
-
+          await page.screenshot({ path: 'preview-diagnostic/root-after-start.png', animations: 'disabled', fullPage: false });
+          const browserRouteStatus = await context.request.get(`${baseUrl}/browser/GAMEROAD.html`).then((r) => ({ status: r.status(), ok: r.ok(), url: r.url() })).catch((e) => ({ error: String(e) }));
           const receipt = {
-            schema: 'gameroad.codex-shared-visual-evidence.v1',
-            source_sha: targetSha,
+            schema: 'gameroad.codex-shared-preview-diagnostic.v2',
+            target_sha: process.env.TARGET_SHA,
             shared_url: baseUrl,
-            build_id: manifest.build_id,
-            small,
-            large,
-            consoleErrors,
+            navigationStatus: response?.status() ?? null,
+            browserRouteStatus,
+            deckSetup,
+            startResult,
+            autoRoundResult,
+            snapshots,
+            consoleMessages,
             pageErrors,
-            httpErrors,
-            production_touched: false,
-            relay_touched: false,
+            httpErrors: responses,
           };
-          fs.writeFileSync('preview-visual/receipt.json', `${JSON.stringify(receipt, null, 2)}\n`);
+          fs.writeFileSync('preview-diagnostic/diagnostic.json', `${JSON.stringify(receipt, null, 2)}\n`);
+          console.log('DIAGNOSTIC_JSON_START');
           console.log(JSON.stringify(receipt));
+          console.log('DIAGNOSTIC_JSON_END');
           await browser.close();
           NODE
 
-      - name: Upload rendered visual evidence
+      - name: Upload diagnostic evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: gameroad-codex-shared-visual-evidence
-          path: preview-visual/
-          if-no-files-found: error
+          name: gameroad-codex-shared-preview-diagnostic
+          path: preview-diagnostic/
+          if-no-files-found: warn
           retention-days: 7

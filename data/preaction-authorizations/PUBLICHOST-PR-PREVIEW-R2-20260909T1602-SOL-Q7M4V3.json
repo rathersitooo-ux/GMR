@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PUBLICHOST-PR-PREVIEW-R2-20260909T1602-SOL-Q7M4V3",
+  "taskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "workUnitKey": "BROWSER_CLOUDFLARE_PR_PREVIEW_R2",
+  "acquireKey": "PUBLICHOST-PR-PREVIEW-R2-20260909T1602-SOL-Q7M4V3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-CLOUDFLARE-DIRECT-UPLOAD-BRANCH-PREVIEW-20260909",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING-PUBLICHOST-BUILD-AND-EXACT-BYTE-PROBE-REUSE",
+  "proceedToken": "PROCEED|PUBLICHOST-PR-PREVIEW-R2-20260909T1602-SOL-Q7M4V3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-cloudflare-workflow|same-repo-pr-preview|active-lease",
+  "authorizationBaseSha": "a06651165c7026391b8b9b18e3ad5276c256f0cc",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-CLOUDFLARE-PUBLIC-HOST-TRANSPORT-001",
+  "leaseWorkUnitKey": "BROWSER_CLOUDFLARE_PR_PREVIEW_R2",
+  "leaseAcquireKey": "PUBLICHOST-PR-PREVIEW-R2-20260909T1602-SOL-Q7M4V3",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 16:02 JST",
+  "leaseUntilJst": "2026-09-09 17:02 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A697:L697",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/cloudflare-pr-preview-r2-20260909; .github/workflows/cloudflare-public-deploy.yml; own transient data/preaction-authorizations/PUBLICHOST-PR-PREVIEW-R2-20260909T1602-SOL-Q7M4V3.json only. deploy/cloudflare/scripts/build.mjs, deploy/cloudflare/tests/build.test.mjs, browser/**, assets/**, tools/** READ_ONLY reuse inputs.",
+  "scope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/cloudflare-public-deploy.yml"
+  ]
+}

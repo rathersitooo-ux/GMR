@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-PROCESSING-ORDER-AUTHORITY-R2-20260910T0413-SOL-Q6M4P8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_PROCESSING_ORDER_AUTHORITY_SEAM_R2",
+  "acquireKey": "BATTLE-JANKEN-PROCESSING-ORDER-AUTHORITY-R2-20260910T0413-SOL-Q6M4P8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ORDER_CHAIN_BUILD_ASCENDING_PLUS_EXISTING_TRIAD_FIRST_WIN_LOCK",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_PRODUCT_DIFF_ISOLATED_AND_PREACTION_FAILURE_IDENTIFIED_AS_READBACK_REF_FORMAT_ONLY",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-PROCESSING-ORDER-AUTHORITY-R2-20260910T0413-SOL-Q6M4P8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-janken-order|authority-seam|active-lease",
+  "authorizationBaseSha": "2722168883dfb466c1fcc04b1c17fc3dffed5533",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_PROCESSING_ORDER_AUTHORITY_SEAM_R2",
+  "leaseAcquireKey": "BATTLE-JANKEN-PROCESSING-ORDER-AUTHORITY-R2-20260910T0413-SOL-Q6M4P8",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 04:13 JST",
+  "leaseUntilJst": "2026-09-10 05:13 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A924:L924",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-janken-processing-order-authority-r2-20260910; NEW browser/battle-janken-processing-order-authority-adapter.mjs; NEW tests/battle-janken-processing-order-authority-adapter.test.mjs; own transient data/preaction-authorizations/BATTLE-JANKEN-PROCESSING-ORDER-AUTHORITY-R2-20260910T0413-SOL-Q6M4P8.json only. READ_ONLY reuse: browser/triad-resolver-core.mjs, browser/battle-action-order-presentation-core.mjs, browser/battle-screen-presentation-core.mjs, browser/battle-janken-order-live-adapter.mjs. browser/GAMEROAD.html, browser/battle-janken-slidepad-runtime-mount.mjs, battle-screen runtime/presentation, build, gameplay/target/legality/Shield/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_JANKEN_PRINTED_NUMBER_ASCENDING_AUTHORITY_SEAM_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_JANKEN_ORDER_GATE_PLUS_TRIAD_RESOLVER_PLUS_ORDER_LIVE_ADAPTER",
+  "solutionSearchEvidence": [
+    "CURRENT ORDER_CHAIN_BUILD defines printed-number ascending processing order.",
+    "CURRENT TIE_NUMBER_POLICY leaves equal printed-number processing order unresolved and forbids an invented tie-break.",
+    "Existing resolveCyclicTriadByProcessingOrder owns the first-win-lock comparison only after caller-supplied authoritative order.",
+    "Existing battle-janken-order-live-adapter consumes atomic publicCards plus resolution and owns no sorting, comparison, or winner calculation.",
+    "R1 Required Gate failed before product tests only because leaseSnapshotReadbackRef used A:N instead of the validator-required A:L format.",
+    "This R2 change remains isolated to two new files and performs no gameplay, target, Shield, destination, transport, HTML, or SlidePad write."
+  ],
+  "scope": [
+    "browser/battle-janken-processing-order-authority-adapter.mjs",
+    "tests/battle-janken-processing-order-authority-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-processing-order-authority-adapter.mjs",
+    "tests/battle-janken-processing-order-authority-adapter.test.mjs"
+  ]
+}

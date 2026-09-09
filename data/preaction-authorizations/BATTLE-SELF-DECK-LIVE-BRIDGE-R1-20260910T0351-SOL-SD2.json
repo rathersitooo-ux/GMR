@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SELF-DECK-LIVE-BRIDGE-R1-20260910T0351-SOL-SD2",
+  "taskId": "BATTLE-SELF-REMAINING-DECK-INSPECT-001",
+  "workUnitKey": "BATTLE_SELF_DECK_LIVE_PRESENTATION_BRIDGE_R1",
+  "acquireKey": "BATTLE-SELF-DECK-LIVE-BRIDGE-R1-20260910T0351-SOL-SD2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_AED6367_OWNER_SAFE_BRIDGE_NONOVERLAP_20260910T0351JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1484_OWNER_KNOWLEDGE_SUCCESS_PLUS_CURRENT_REPLAY_PROJECT_RENDER_DIRECT_READ",
+  "proceedToken": "PROCEED|BATTLE-SELF-DECK-LIVE-BRIDGE-R1-20260910T0351-SOL-SD2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|owner-self-live-presentation-bridge|new-pair-only|active-lease",
+  "authorizationBaseSha": "aed6367624c6e92e39946e5a02541ada75fd0b60",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-SELF-REMAINING-DECK-INSPECT-001",
+  "leaseWorkUnitKey": "BATTLE_SELF_DECK_LIVE_PRESENTATION_BRIDGE_R1",
+  "leaseAcquireKey": "BATTLE-SELF-DECK-LIVE-BRIDGE-R1-20260910T0351-SOL-SD2",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:51 JST",
+  "leaseUntilJst": "2026-09-10 04:51 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A915:L915",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/battle-self-deck-live-presentation-bridge-r1-20260910T0351JST; browser/battle-self-deck-live-presentation-bridge.mjs; tests/battle-self-deck-live-presentation-bridge.test.mjs; own transient PRE_ACTION manifest only.",
+  "solutionSignature": "BATTLE_OWNER_SELF_EXISTING_PROJECTION_RENDER_BRIDGE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1484_MAIN_ADAPTER_PLUS_EXISTING_REPLAY_PRESENTATION_EXPORTS",
+  "solutionSearchEvidence": [
+    "PR#1484 merged the owner-only state.match.players[].deck to caller-authorized viewerKnowledge boundary into current main.",
+    "Current battle-replay-live-adapter already owns both projectLiveBattleRemainingDeckPresentation and renderLiveBattleRemainingDeckPresentation; no second projector or renderer is needed.",
+    "Current shared GAMEROAD.html and deploy build are separately ACTIVE, so this WorkUnit deliberately avoids those resources and closes only the reusable one-call composition seam.",
+    "The bridge will require caller-provided authoritative state, authenticated viewer, revision and optional card labels; it will not infer revision, identity or game state.",
+    "Rendering failures remain presentation-only and fail soft without mutating gameplay state or exposing upstream viewerKnowledge events."
+  ],
+  "scope": [
+    "browser/battle-self-deck-live-presentation-bridge.mjs",
+    "tests/battle-self-deck-live-presentation-bridge.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-self-deck-live-presentation-bridge.mjs",
+    "tests/battle-self-deck-live-presentation-bridge.test.mjs"
+  ]
+}

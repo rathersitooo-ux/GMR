@@ -383,3 +383,16 @@ test('short-landscape remaining-hand roulette compacts beside Partner without ch
   assert.match(source, /left:var\(--gameroad-battle-partner-right-x,clamp\(112px,14vw,174px\)\)/,
     'desktop placement remains anchored beside Partner rather than moving into the board');
 });
+
+test('390x844 portrait keeps SlidePad and optional roulette in the right-thumb dock', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /BATTLE_PORTRAIT_390X844_R7B/);
+  assert.match(source, /@media\(max-width:430px\) and \(orientation:portrait\)/);
+  assert.match(source, /right:max\(12px,env\(safe-area-inset-right\)\)!important/);
+  assert.match(source, /bottom:max\(12px,env\(safe-area-inset-bottom\)\)!important/);
+  assert.match(source, /right:176px!important;left:auto!important/);
+  assert.match(source, /max-width:min\(164px,42vw\)!important/);
+  assert.match(source, /rouletteEnabled = false/);
+  assert.doesNotMatch(source, /battle-janken-slidepad-runtime-mount-base\.mjs/);
+});

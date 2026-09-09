@@ -149,6 +149,18 @@ function addStyle(document) {
 @media(max-height:420px){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:78px;bottom:auto;height:72px;left:36%;right:4px;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr)}[${SHELL_ATTR}="1"] .grBattleScreenTop{height:46px;padding-top:3px}.grBattleLaneAfterstate{gap:2px}[${SHELL_ATTR}="1"] [${SHIELD_RAIL_ATTR}]{margin-top:2px}[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{height:32px}[${SHELL_ATTR}="1"] .grBattleHudLoad{height:34px}[${SHELL_ATTR}="1"] [${CURRENT_ACTION_ATTR}]{top:158px;left:50%;right:auto;transform:translateX(-50%);max-width:min(46vw,320px);padding:3px 7px;font-size:10px}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}]{top:82px;left:10px;width:min(30vw,200px);font-size:9px}}
 @media(max-height:470px) and (orientation:landscape){.battle .royalUsageStrip{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;width:151px!important;gap:2px!important}}
 @media(prefers-reduced-motion:reduce){[${SHELL_ATTR}="1"] [${LANE_ATTR}]{transition:none!important;transform:none!important}[${SHELL_ATTR}="1"] .grBattleHudPlayedCard{transform:none!important}[${SHELL_ATTR}="1"] [${SHIELD_SLOT_ATTR}][data-board-return-target="true"]{animation:none!important;transform:none!important}}
+/* BATTLE_PORTRAIT_390X844_R7B: presentation-only exact portrait recomposition */
+@media(max-width:430px) and (orientation:portrait){
+[${SHELL_ATTR}="1"] .grBattleScreenTop{height:56px!important;padding:4px 6px!important;gap:4px!important}
+[${SHELL_ATTR}="1"] [${CURRENT_ACTION_ATTR}]{top:auto!important;bottom:248px!important;left:8px!important;right:8px!important;transform:none!important;max-width:none!important;min-height:44px!important;display:flex!important;align-items:center!important;justify-content:center!important;white-space:normal!important;padding:6px 9px!important}
+[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:56px!important;right:8px!important;bottom:auto!important;left:8px!important;height:52px!important;gap:4px!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-template-rows:minmax(0,1fr)!important}
+[${SHELL_ATTR}="1"] [${GRID_ATTR}]::before{display:none!important}
+[${SHELL_ATTR}="1"] [${LANE_ATTR}]{grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto!important;column-gap:0!important;row-gap:1px!important;padding:3px!important;transform:none!important;min-height:0!important}
+[${SHELL_ATTR}="1"] .grBattleLaneIdentity{grid-column:1!important;grid-row:1!important}
+[${SHELL_ATTR}="1"] .grBattleLaneRole,[${SHELL_ATTR}="1"] .grBattleLaneAfterstate{display:none!important}
+[${SHELL_ATTR}="1"] #battleResolution{left:8px!important;right:8px!important;bottom:12px!important;transform:none!important;max-width:none!important}
+[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}]{display:none!important}
+}
 `;
   document.head?.appendChild(style);
 }

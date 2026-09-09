@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "COSTUME-PARTNER-LIVE-INTEGRATION-R2-20260910T0503-SOL-C7M4Q4",
+  "taskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "workUnitKey": "PARTNER_COSTUME_PARTNER_SHELL_PUBLIC_INTEGRATION_R2",
+  "acquireKey": "COSTUME-PARTNER-LIVE-INTEGRATION-R2-20260910T0503-SOL-C7M4Q4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1501_PR1504_PR1505_CURRENT_MAIN_COMPONENTS_PLUS_RUNTIME_GAP",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_MAIN_PARTNER_SHELL_BUILD_AND_R1_SCOPE_REPLAN_20260910T0503JST",
+  "proceedToken": "PROCEED|COSTUME-PARTNER-LIVE-INTEGRATION-R2-20260910T0503-SOL-C7M4Q4|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-costume|partner-shell|public-package",
+  "authorizationBaseSha": "d8852bcfd94ebf538b5c74ee2b56c084b46d4349",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "leaseWorkUnitKey": "PARTNER_COSTUME_PARTNER_SHELL_PUBLIC_INTEGRATION_R2",
+  "leaseAcquireKey": "COSTUME-PARTNER-LIVE-INTEGRATION-R2-20260910T0503-SOL-C7M4Q4",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 05:03 JST",
+  "leaseUntilJst": "2026-09-10 06:03 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A930:L930",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/partner-costume-shell-public-r2-20260910; browser/partner-shell-runtime-mount.mjs; tests/partner-shell-runtime-mount.test.mjs; deploy/cloudflare/scripts/build.mjs; transient .github/workflows/zz-temp-partner-costume-shell-public-r2.yml; transient tools/temp-partner-costume-shell-public-r2.py; own transient data/preaction-authorizations/COSTUME-PARTNER-LIVE-INTEGRATION-R2-20260910T0503-SOL-C7M4Q4.json only. READ_ONLY browser/partner-costume-core.mjs; browser/partner-costume-browser-session-runtime.mjs; browser/partner-costume-screen-runtime-mount.mjs; browser/partner-shell-presentation-core.mjs; deploy/cloudflare/tests/build.test.mjs; formal costume catalog/assets/entitlements; browser/GAMEROAD.html; gameplay/rules/save/economy/network.",
+  "solutionSignature": "PARTNER_COSTUME_EXISTING_SESSION_SCREEN_TO_PARTNER_SHELL_PUBLIC_PACKAGE_V2",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1501_PR1504_PR1505_REUSE_CURRENT_MAIN_R1_DIRECT_WRITER_UNSAFE_FOR_LARGE_BUILD",
+  "solutionSearchEvidence": [
+    "Current main already contains the costume core, caller-owned browser session, three-category screen component, and OPEN_COSTUME Partner route.",
+    "Current partner-shell runtime does not render the costume view, so the route has no concrete body yet.",
+    "Current Cloudflare build has no partner-costume artifact entries.",
+    "R1 was released before product mutation because whole-file replacement of the large build script would be an avoidable integrity risk.",
+    "R2 uses one bounded transient workflow/script to apply exact text anchors, run focused tests, and remove all transient files before merge.",
+    "No formal costume catalog, asset, entitlement, or second production save authority will be created."
+  ],
+  "scope": [
+    "browser/partner-shell-runtime-mount.mjs",
+    "tests/partner-shell-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-partner-costume-shell-public-r2.yml",
+    "tools/temp-partner-costume-shell-public-r2.py"
+  ],
+  "leaseScope": [
+    "browser/partner-shell-runtime-mount.mjs",
+    "tests/partner-shell-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-partner-costume-shell-public-r2.yml",
+    "tools/temp-partner-costume-shell-public-r2.py"
+  ]
+}

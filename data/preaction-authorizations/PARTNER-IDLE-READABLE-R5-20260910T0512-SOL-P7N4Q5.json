@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-IDLE-READABLE-R5-20260910T0512-SOL-P7N4Q5",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_IDLE_APPROVED_READABLE_PUBLIC_PROVENANCE_R5",
+  "acquireKey": "PARTNER-IDLE-READABLE-R5-20260910T0512-SOL-P7N4Q5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1508_PRODUCT_BLOBS_TESTED_CONTROL_PLANE_ONLY_FAIL",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_MAIN_601C_FIVE_TARGET_BLOBS_READBACK_NONOVERLAP",
+  "proceedToken": "PROCEED|PARTNER-IDLE-READABLE-R5-20260910T0512-SOL-P7N4Q5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-idle-readable|clean-git-object-history|active-lease",
+  "authorizationBaseSha": "601c552547019b7f13f73914229fb44f7186c269",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_IDLE_APPROVED_READABLE_PUBLIC_PROVENANCE_R5",
+  "leaseAcquireKey": "PARTNER-IDLE-READABLE-R5-20260910T0512-SOL-P7N4Q5",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 05:12 JST",
+  "leaseUntilJst": "2026-09-10 06:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A932:L932",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/partner-idle-readable-r5-20260910; browser/partner-dialogue-source-registry.mjs; browser/partner-advice-runtime-mount.mjs; tests/partner-dialogue-source-registry.test.mjs; tests/partner-advice-runtime-mount.test.mjs; deploy/cloudflare/tests/build.test.mjs; own transient data/preaction-authorizations/PARTNER-IDLE-READABLE-R5-20260910T0512-SOL-P7N4Q5.json only. NO transient workflow/script. READ_ONLY deploy/cloudflare/scripts/build.mjs, browser/GAMEROAD.html, browser/partner-saasuna-conversation-source.mjs, gameplay/rules/legality/target/save/economy/network.",
+  "solutionSignature": "PARTNER_APPROVED_IDLE_READABLE_EXISTING_CHAT_SURFACE_PUBLIC_PROVENANCE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1508_R4_EXACT_PRODUCT_BLOBS_PLUS_CURRENT_MAIN_TARGET_READBACK",
+  "solutionSearchEvidence": [
+    "R4 bounded writer mechanically applied the reviewed R2 four feature/test blobs and one Cloudflare provenance pin update; focused Partner tests and Cloudflare build test passed before PR creation.",
+    "PR#1508 Required Gate failed before product tests only at PREACTION material_path_out_of_scope for the transient writer workflow; PR#1508 was closed unmerged and main received no R4 product bytes.",
+    "Fresh current main 601c552547019b7f13f73914229fb44f7186c269 retains predecessor target blobs for partner-dialogue-source-registry, partner-advice-runtime, both focused tests, and Cloudflare build test; the concurrent costume merge touched separate Partner shell/build-script resources.",
+    "R5 uses Git tree/blob object composition only: no transient workflow or script is created anywhere in branch history.",
+    "The exact reviewed R4 final blobs are reused: dialogue registry e1a38fb2d6a3d112476951fcc6afcfc718d7a6ec, advice runtime 363cefd1f4ac20fe352060cb834a34bb949d59fe, registry test bad0b2a60c6048dbd0e75c67802039de255b41f3, advice test b828663680dd16d0e8e50adc22272e126931209e, build test 060f725b14379517289aa9603488a1e4f3a0d278.",
+    "No deploy build-script change is required because existing dependency traversal already packages the Partner advice runtime.",
+    "Semantics remain presentation-only, approved-source-only, deterministic, timer-free, and subordinate to advice/tutorial/confirmed reaction; gameplay/save/canon writes remain zero."
+  ],
+  "scope": [
+    "browser/partner-dialogue-source-registry.mjs",
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-dialogue-source-registry.test.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-dialogue-source-registry.mjs",
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-dialogue-source-registry.test.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

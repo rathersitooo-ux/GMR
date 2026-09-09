@@ -243,6 +243,173 @@ test('clear drops the complete staged package without rolling back authoritative
   assert.equal(adapter.status().stagedCompoundAttack, null);
 });
 
+test('precommit clear callbacks must be connected as a pair', () => {
+  assert.throws(
+    () => createHarness({ readExistingPrecommitState: async () => ({}) }),
+    /Precommit state reader and draft applier must be supplied together or both omitted/,
+  );
+  assert.throws(
+    () => createHarness({ applyExistingPrecommitDraft: async () => true }),
+    /Precommit state reader and draft applier must be supplied together or both omitted/,
+  );
+});
+
+test('one-operation clear removes caller target draft and local compound stage together', async () => {
+  let applied = null;
+  const { adapter } = createHarness({
+    readExistingPrecommitState: async () => ({
+      phase: 'target',
+      position: 'P1',
+      plan: { roadId: 'road-2', battleId: 'battle-9', path: ['P1', 'road-2'] },
+      targetDraft: { defenderId: 'P3', lane: 'CENTER', shield: 'P3:CENTER' },
+      targetCommitted: false,
+      busy: false,
+    }),
+    applyExistingPrecommitDraft: async (next) => {
+      applied = next;
+      return true;
+    },
+  });
+
+  await adapter.stageCompoundAttack('ROCK');
+  const result = await adapter.clearPrecommitSelection();
+
+  assert.equal(result.ok, true);
+  assert.equal(result.cleared, true);
+  assert.equal(result.existingDraftCleared, true);
+  assert.equal(result.compoundCleared, true);
+  assert.equal(result.complete, true);
+  assert.equal(result.authoritativeRollback, false);
+  assert.equal(result.gameStateWrite, false);
+  assert.deepEqual(applied.targetDraft, null);
+  assert.equal(adapter.status().stagedCompoundAttack, null);
+});
+
+test('existing draft rejection preserves the local compound stage instead of half-clearing', async () => {
+  const { adapter } = createHarness({
+    readExistingPrecommitState: async () => ({
+      phase: 'target',
+      position: 'P1',
+      plan: { roadId: 'road-2', battleId: 'battle-9', path: ['P1', 'road-2'] },
+      targetDraft: { defenderId: 'P3', lane: 'CENTER', shield: 'P3:CENTER' },
+      targetCommitted: false,
+      busy: false,
+    }),
+    applyExistingPrecommitDraft: async () => false,
+  });
+
+  await adapter.stageCompoundAttack('ROCK');
+  const result = await adapter.clearPrecommitSelection();
+
+  assert.equal(result.ok, false);
+  assert.equal(result.cleared, false);
+  assert.equal(result.reason, 'EXISTING_PRECOMMIT_CLEAR_REJECTED');
+  assert.equal(result.compoundCleared, false);
+  assert.notEqual(adapter.status().stagedCompoundAttack, null);
+});
+
+test('busy or committed precommit state blocks local compound clear as one atomic semantic', async () => {
+  for (const state of [
+    {
+      phase: 'target',
+      position: 'P1',
+      plan: { path: ['P1'] },
+      targetDraft: { defenderId: 'P3', lane: 'CENTER', shield: 'P3:CENTER' },
+      targetCommitted: false,
+      busy: true,
+    },
+    {
+      phase: 'target',
+      position: 'P1',
+      plan: { path: ['P1'] },
+      targetDraft: { defenderId: 'P3', lane: 'CENTER', shield: 'P3:CENTER' },
+      targetCommitted: true,
+      busy: false,
+    },
+  ]) {
+    const { adapter } = createHarness({
+      readExistingPrecommitState: async () => state,
+      applyExistingPrecommitDraft: async () => true,
+    });
+    await adapter.stageCompoundAttack('ROCK');
+    const result = await adapter.clearPrecommitSelection();
+    assert.equal(result.cleared, false);
+    assert.equal(result.authoritativeRollback, false);
+    assert.notEqual(adapter.status().stagedCompoundAttack, null);
+  }
+});
+
+test('connected empty caller draft may still clear the adapter-owned local precommit compound stage', async () => {
+  let applyCalls = 0;
+  const { adapter } = createHarness({
+    readExistingPrecommitState: async () => ({
+      phase: 'target',
+      position: 'P1',
+      plan: { path: ['P1'] },
+      targetDraft: null,
+      targetCommitted: false,
+      busy: false,
+    }),
+    applyExistingPrecommitDraft: async () => {
+      applyCalls += 1;
+      return true;
+    },
+  });
+
+  await adapter.stageCompoundAttack('ROCK');
+  const result = await adapter.clearPrecommitSelection();
+
+  assert.equal(result.ok, true);
+  assert.equal(result.existingDraftCleared, false);
+  assert.equal(result.compoundCleared, true);
+  assert.equal(applyCalls, 0);
+  assert.equal(adapter.status().stagedCompoundAttack, null);
+});
+
+test('global precommit clear fails closed when the existing caller draft seam is not connected', async () => {
+  const { adapter } = createHarness();
+  await adapter.stageCompoundAttack('ROCK');
+
+  const result = await adapter.clearPrecommitSelection();
+  assert.equal(result.ok, false);
+  assert.equal(result.cleared, false);
+  assert.equal(result.reason, 'PRECOMMIT_CLEAR_NOT_CONNECTED');
+  assert.equal(result.complete, false);
+  assert.notEqual(adapter.status().stagedCompoundAttack, null);
+});
+
+test('commit in flight blocks precommit clear without rolling back the accepted transport', async () => {
+  let releaseTransport;
+  const transportWait = new Promise((resolve) => { releaseTransport = resolve; });
+  const { adapter } = createHarness({
+    readExistingPrecommitState: async () => ({
+      phase: 'target',
+      position: 'P1',
+      plan: { path: ['P1'] },
+      targetDraft: { defenderId: 'P3', lane: 'CENTER', shield: 'P3:CENTER' },
+      targetCommitted: false,
+      busy: false,
+    }),
+    applyExistingPrecommitDraft: async () => true,
+    sendExistingBattleAction: async () => {
+      await transportWait;
+      return true;
+    },
+  });
+
+  await adapter.stageCompoundAttack('ROCK');
+  const commitPromise = adapter.commitCompoundAttack();
+  await Promise.resolve();
+  const clearResult = await adapter.clearPrecommitSelection();
+  assert.equal(clearResult.ok, false);
+  assert.equal(clearResult.reason, 'COMMIT_IN_FLIGHT');
+  assert.notEqual(adapter.status().stagedCompoundAttack, null);
+  releaseTransport();
+  const commitResult = await commitPromise;
+  assert.equal(commitResult.committed, true);
+  assert.equal(adapter.status().stagedCompoundAttack, null);
+});
+
 test('Mana recovery remains an opaque authority operation and its amount is never inferred', async () => {
   const authorityOperation = Object.freeze({
     schema: 'caller-owned-mana-op.v1',
@@ -278,7 +445,17 @@ test('Mana seam is fail-closed when it is intentionally not connected', async ()
   );
 });
 
-test('contract records canonical hand3 composition and keeps optional rules outside core Battle', () => {
+test('status reports whether the shared precommit seam is actually connected', () => {
+  const disconnected = createHarness().adapter;
+  const connected = createHarness({
+    readExistingPrecommitState: async () => ({ phase: 'plan' }),
+    applyExistingPrecommitDraft: async () => true,
+  }).adapter;
+  assert.equal(disconnected.status().precommitClearConnected, false);
+  assert.equal(connected.status().precommitClearConnected, true);
+});
+
+test('contract records canonical hand3 and reused precommit-clear boundaries while keeping optional rules outside core Battle', () => {
   assert.deepEqual(
     {
       hand3MappingAuthority: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.hand3MappingAuthority,
@@ -289,6 +466,10 @@ test('contract records canonical hand3 composition and keeps optional rules outs
       computesTarget: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.computesTarget,
       computesLegality: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.computesLegality,
       computesHand3Mapping: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.computesHand3Mapping,
+      precommitClearPolicy: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.precommitClearPolicy,
+      precommitClearDraftAuthority: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.precommitClearDraftAuthority,
+      precommitClearAuthoritativeRollback: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.precommitClearAuthoritativeRollback,
+      precommitClearGameStateWrite: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.precommitClearGameStateWrite,
       computesManaRecoveryAmount: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.computesManaRecoveryAmount,
       schedulesManaRecovery: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.schedulesManaRecovery,
       hiddenHandSemantics: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.hiddenHandSemantics,
@@ -305,6 +486,10 @@ test('contract records canonical hand3 composition and keeps optional rules outs
       computesTarget: false,
       computesLegality: false,
       computesHand3Mapping: false,
+      precommitClearPolicy: 'EXISTING_BATTLE_PRECOMMIT_CLEAR_CORE',
+      precommitClearDraftAuthority: 'CALLER',
+      precommitClearAuthoritativeRollback: false,
+      precommitClearGameStateWrite: false,
       computesManaRecoveryAmount: false,
       schedulesManaRecovery: false,
       hiddenHandSemantics: 'NOT_IMPLEMENTED_UNRESOLVED',

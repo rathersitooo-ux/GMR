@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ADVICE-MOTION-R1-20260909T1426-SOL-M4N8Q2",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "BATTLE_ADVICE_PARTNER_MOTION_R1",
+  "acquireKey": "BATTLE-ADVICE-MOTION-R1-20260909T1426-SOL-M4N8Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-BATTLE-ADVICE-COMPACT-MOTION-GAP-20260909",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "FOCUSED-DISCLOSURE-STATE-CONTRACT-20260909",
+  "proceedToken": "PROCEED|BATTLE-ADVICE-MOTION-R1-20260909T1426-SOL-M4N8Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-advice-disclosure|presentation-only-motion|active-lease",
+  "authorizationBaseSha": "9d9b1706c8da9e848449dfbe92a06b5f9e99d72e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "BATTLE_ADVICE_PARTNER_MOTION_R1",
+  "leaseAcquireKey": "BATTLE-ADVICE-MOTION-R1-20260909T1426-SOL-M4N8Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 14:26 JST",
+  "leaseUntilJst": "2026-09-09 15:26 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A654:M654",
+  "leaseExactMutableResources": "browser/battle-board-visual-explanation-runtime-mount.mjs; tests/battle-board-visual-explanation-runtime-mount.test.mjs; deploy/cloudflare/tests/build.test.mjs; data/preaction-authorizations/BATTLE-ADVICE-MOTION-R1-20260909T1426-SOL-M4N8Q2.json; branch sol/battle-advice-motion-r1-20260909; own PR/check/readback evidence",
+  "scope": [
+    "browser/battle-board-visual-explanation-runtime-mount.mjs",
+    "tests/battle-board-visual-explanation-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-board-visual-explanation-runtime-mount.mjs",
+    "tests/battle-board-visual-explanation-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

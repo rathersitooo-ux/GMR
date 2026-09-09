@@ -1,0 +1,28 @@
+name: TEMP Battle compound HTML seam R2
+on:
+  push:
+    branches:
+      - sol/battle-compound-html-seam-r2-20260910
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe exact current Battle authority seams
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "HEAD=$(git rev-parse HEAD)"
+          wc -c browser/GAMEROAD.html
+          echo '=== module/script tags ==='
+          grep -nE '<script|type="module"|battle-new-base-live-consumer|compound|janken-focus|janken-slidepad' browser/GAMEROAD.html | head -n 160 || true
+          echo '=== round/hand/player state anchors ==='
+          grep -nE 'function (makePlayer|renderHand|startRound|nextRound|beginRound|startMatch|newMatch)|roundNo|state\.match\.players|\.hand\b|currentPlayer|activePlayer|turnIndex|roundIndex' browser/GAMEROAD.html | head -n 260 || true
+          echo '=== target/shield/lane/path anchors ==='
+          grep -nEi 'targetBox|targetId|legalTarget|shield|lane|roadSelect|battleSelect|path|route|reachable|currentTarget|selectedTarget|pendingTarget' browser/GAMEROAD.html | head -n 340 || true
+          echo '=== battle card/action/commit anchors ==='
+          grep -nE 'function (resolveBattle|submitPlan|commit|confirm|playCard|useCard|selectCard)|resolveBattle\(|submitPlan\(|battleSelect|planSubmitted|phase.?=.*plan|sendExisting|BattleAction' browser/GAMEROAD.html | head -n 320 || true
+          echo '=== public helper/global anchors ==='
+          grep -nE '__GAMEROAD|window\.|globalThis\.|Object\.assign\(window|TEST__|BATTLE_' browser/GAMEROAD.html | tail -n 260 || true
+          echo '=== static-check relevant anchors ==='
+          grep -nE 'GAMEROAD\.html|battle-janken|new-base-live|compound|hand3|targetBox' tests/browser-static-check.mjs | head -n 220 || true

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SHARED-OPTIONAL-RULE-R1-20260909T1609-SOL-RE-W4K8Q6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_SHARED_OPTIONAL_RULE_BIND_R1",
+  "acquireKey": "BATTLE-SHARED-OPTIONAL-RULE-R1-20260909T1609-SOL-RE-W4K8Q6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-SHARED-OPTIONAL-RULE-R1-20260909T1609",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REHEARSE-MERGED-OPTIONAL-RULE-CORE-PLUS-SHARED-CONSUMER-BOUNDARY",
+  "proceedToken": "PROCEED|BATTLE-SHARED-OPTIONAL-RULE-R1-20260909T1609-SOL-RE-W4K8Q6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260909T1609JST",
+  "authorizationBaseSha": "a06651165c7026391b8b9b18e3ad5276c256f0cc",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_SHARED_OPTIONAL_RULE_BIND_R1",
+  "leaseAcquireKey": "BATTLE-SHARED-OPTIONAL-RULE-R1-20260909T1609-SOL-RE-W4K8Q6",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 16:09 JST",
+  "leaseUntilJst": "2026-09-09 17:09 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A699:L699",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-shared-optional-rule-r1-20260909; browser/battle-new-base-live-consumer-adapter.mjs; tests/battle-new-base-live-consumer-adapter.test.mjs; own transient data/preaction-authorizations/BATTLE-SHARED-OPTIONAL-RULE-R1-20260909T1609-SOL-RE-W4K8Q6.json only. Existing browser/battle-optional-rule-activation-core.mjs READ_ONLY. browser/GAMEROAD.html, battle-janken-slidepad-runtime-mount.mjs, battle-screen-runtime-mount.mjs, dice/roulette executors, gameplay/rules/target/movement/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/battle-new-base-live-consumer-adapter.mjs",
+    "tests/battle-new-base-live-consumer-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-new-base-live-consumer-adapter.mjs",
+    "tests/battle-new-base-live-consumer-adapter.test.mjs"
+  ],
+  "solutionSignature": "battle-new-base-live-consumer/compose-existing-optional-rule-activation-projection",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-BATTLE-OPTIONAL-RULE-ACTIVATION-CORE-MAIN-7BD705-AND-SHARED-CONSUMER-20260909",
+  "solutionSearchEvidence": [
+    "browser/battle-optional-rule-activation-core.mjs is already merged current authority-safe projection and must be reused rather than reimplemented",
+    "the core already fail-closes missing or malformed authority to Basic Battle dice/roulette OFF and never resolves precedence or invents parameters",
+    "browser/battle-new-base-live-consumer-adapter.mjs is the existing shared caller-authority seam and is currently free of mutable overlap after prior precommit-clear terminal release",
+    "HTML, SlidePad, battle-screen, dice/roulette execution, movement and gameplay remain read-only; this slice only exposes activation projection/opaque parameters"
+  ]
+}

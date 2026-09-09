@@ -10,33 +10,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect current Battle camera and world-input seams
+      - name: Inspect exact Battle camera seams compactly
         shell: python
         run: |
           from pathlib import Path
+          import json, re
           text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
           needles = [
-            'fieldCameraState', 'setFieldCamera', 'renderField3D', 'function project3',
-            'nodeWorld(', "$('#battleMap')", 'battleMap.addEventListener',
-            "addEventListener('pointerdown'", "addEventListener('pointermove'",
-            "addEventListener('pointerup'", "addEventListener('wheel'",
-            "addEventListener('touchstart'", "addEventListener('touchmove'",
-            'updateBattleAvatar', 'renderBoardPlayers', 'fieldCamera', 'camera',
-            'battleViewport', 'battleField', 'battleBoard', 'phaseSurface',
-            'prefers-reduced-motion', 'reduceMotion', 'reducedMotion'
+            'fieldCameraState','setFieldCamera','renderField3D','project3','nodeWorld(',
+            'battleMap','pointerdown','pointermove','pointerup','wheel','touchstart','touchmove',
+            'updateBattleAvatar','renderBoardPlayers','battleViewport','battleField','battleBoard',
+            'phaseSurface','prefers-reduced-motion','reduceMotion','reducedMotion'
           ]
+          out = {'htmlBytes': len(text), 'needles': {}}
           for needle in needles:
-              count = text.count(needle)
-              print('\n===== NEEDLE', repr(needle), 'COUNT', count, '=====')
-              start = 0
-              for hit in range(min(count, 12)):
-                  idx = text.find(needle, start)
-                  if idx < 0: break
-                  line = text.count('\n', 0, idx) + 1
-                  col = idx - (text.rfind('\n', 0, idx) + 1)
-                  print('HIT', hit + 1, 'OFFSET', idx, 'LINE', line, 'COL', col)
-                  print(text[max(0, idx-2200):min(len(text), idx+len(needle)+3600)].replace('\r',''))
-                  print('-----')
-                  start = idx + len(needle)
-          print('\n===== MODULE TAIL =====')
-          print(text[-16000:].replace('\r',''))
+              starts=[]; pos=0
+              while len(starts)<5:
+                  idx=text.find(needle,pos)
+                  if idx<0: break
+                  starts.append(idx); pos=idx+len(needle)
+              out['needles'][needle] = {
+                'count': text.count(needle),
+                'hits': [re.sub(r'\\s+',' ',text[max(0,i-420):min(len(text),i+len(needle)+620)]) for i in starts]
+              }
+          # Common numeric/state literals only when directly adjacent to camera terms.
+          candidates=[]
+          for m in re.finditer(r'(?i).{0,160}(?:fieldCameraState|setFieldCamera|camera).{0,260}', text):
+              s=re.sub(r'\\s+',' ',m.group(0))
+              if any(ch.isdigit() for ch in s): candidates.append(s)
+              if len(candidates)>=20: break
+          out['cameraNumericContexts']=candidates
+          print('CAMERA_PROBE_JSON='+json.dumps(out,ensure_ascii=False,separators=(',',':')))

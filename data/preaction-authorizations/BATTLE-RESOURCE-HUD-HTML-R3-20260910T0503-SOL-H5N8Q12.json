@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RESOURCE-HUD-HTML-R3-20260910T0503-SOL-H5N8Q12",
+  "taskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "workUnitKey": "BATTLE_CRITICAL_RESOURCE_HUD_HTML_LIVE_R3",
+  "acquireKey": "BATTLE-RESOURCE-HUD-HTML-R3-20260910T0503-SOL-H5N8Q12",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "RESOURCE_HUD_SCREEN_AND_LIVE_ADAPTER_MERGED_HTML_OWNER_EXPIRED_20260910",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "DIRECT_EXISTING_RESOURCEHUD_SYNC_FROM_AUTHORITATIVE_ME_PLAYER_NO_GENERIC_HUD_RENDER_20260910",
+  "proceedToken": "PROCEED|BATTLE-RESOURCE-HUD-HTML-R3-20260910T0503-SOL-H5N8Q12|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-resource-hud-html|compose-existing-authority|active-lease",
+  "authorizationBaseSha": "d8852bcfd94ebf538b5c74ee2b56c084b46d4349",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "leaseWorkUnitKey": "BATTLE_CRITICAL_RESOURCE_HUD_HTML_LIVE_R3",
+  "leaseAcquireKey": "BATTLE-RESOURCE-HUD-HTML-R3-20260910T0503-SOL-H5N8Q12",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 05:03 JST",
+  "leaseUntilJst": "2026-09-10 06:03 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A929:L929",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch; browser/GAMEROAD.html; NEW tests/battle-critical-resource-hud-html-live.test.mjs only if needed; transient .github/workflows/zz-temp-battle-resource-hud-html-r3.yml; transient tools/temp-battle-resource-hud-html-r3.py; own transient data/preaction-authorizations/BATTLE-RESOURCE-HUD-HTML-R3-20260910T0503-SOL-H5N8Q12.json only. READ_ONLY reuse browser/battle-critical-resource-hud-live-adapter.mjs, browser/battle-screen-runtime-mount.mjs, browser/battle-critical-resource-hud-runtime.mjs. deploy/cloudflare/scripts/build.mjs READ_ONLY while COSTUME-PARTNER-LIVE-INTEGRATION-R1 owns it through 05:59 JST. gameplay/rules/target/legality/save/economy/network READ_ONLY. No Codex/subagent. No image generation.",
+  "solutionSignature": "BATTLE_CRITICAL_RESOURCE_HUD_HTML_DIRECT_RESOURCEHUD_SYNC_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1471_SCREEN_RESOURCEHUD_PLUS_PR1494_DIRECT_PLAYER_ADAPTER_CURRENT_20260910",
+  "solutionSearchEvidence": [
+    "PR#1471 already mounts the existing caller-authoritative Honey/Chip HUD inside battle-screen runtime and returns runtime.resourceHud",
+    "PR#1494 already provides syncBattleCriticalResourceHudFromPlayer that projects only player.honey and player.chip count plus an explicit atomic Honey delta/source pair",
+    "current Task authority forbids replacing the separate board Honey meter, inventing Chip detail/semantics, resource recomputation, or generic HUD writes",
+    "previous browser/GAMEROAD.html owner expired at 04:50 JST and no later mutable HTML owner was found before acquire",
+    "current build/package target is separately ACTIVE-owned through 05:59 JST and remains read-only in this slice",
+    "the intended player-visible hookup is battleScreenRuntime.resourceHud plus the actual local me player, avoiding renderHud so SCORE/HATE/TURN/LOAD are not clobbered"
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-critical-resource-hud-html-live.test.mjs",
+    ".github/workflows/zz-temp-battle-resource-hud-html-r3.yml",
+    "tools/temp-battle-resource-hud-html-r3.py"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-critical-resource-hud-html-live.test.mjs",
+    ".github/workflows/zz-temp-battle-resource-hud-html-r3.yml",
+    "tools/temp-battle-resource-hud-html-r3.py"
+  ]
+}

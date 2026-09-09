@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PUBLIC-BOOT-READINESS-R2-20260910T0347-SOL-P8N4Q3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FINAL_QA_PUBLIC_BOOT_READINESS_R2",
+  "acquireKey": "BATTLE-PUBLIC-BOOT-READINESS-R2-20260910T0347-SOL-P8N4Q3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R1_TRACE_NARROWED_TO_PUBLIC_TEMP_RUNNER_20260910",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "WORKFLOW_TEMP_COPY_ONLY_NAVIGATION_COMPLETION_PATCH_20260910",
+  "proceedToken": "PROCEED|BATTLE-PUBLIC-BOOT-READINESS-R2-20260910T0347-SOL-P8N4Q3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|public-bfi|temporary-runner|active-lease",
+  "authorizationBaseSha": "4cd126b3f6e30a680a8a60c48ca7b3787755ba17",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_FINAL_QA_PUBLIC_BOOT_READINESS_R2",
+  "leaseAcquireKey": "BATTLE-PUBLIC-BOOT-READINESS-R2-20260910T0347-SOL-P8N4Q3",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:47 JST",
+  "leaseUntilJst": "2026-09-10 04:47 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A906:L906",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-public-boot-readiness-r1-20260910; .github/workflows/browser-full-interaction.yml; own transient data/preaction-authorizations/BATTLE-PUBLIC-BOOT-READINESS-R2-20260910T0347-SOL-P8N4Q3.json only. tests/browser-full-interaction.spec.mjs, browser/GAMEROAD.html, browser/battle-*.mjs, deploy/cloudflare/scripts/build.mjs, gameplay/rules/save/network/economy READ_ONLY.",
+  "solutionSignature": "PUBLIC_BFI_TEMP_RUNNER_COMMIT_NAVIGATION_V1",
+  "reuseDisposition": "REPAIR_EXISTING_PUBLIC_WORKFLOW",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R1_PUBLIC_TRACE_PLUS_CURRENT_R19_WORKFLOW_TEMP_COPY_20260910",
+  "solutionSearchEvidence": [
+    "The public job already creates a bounded temporary copy of the current full-interaction test before running R19",
+    "The failed public trace reached rendered HTML while page.goto waited indefinitely for DOMContentLoaded because several module requests remained pending",
+    "The copied test already validates the main HTML response, doctype, all core screens, Home visibility and runtime errors after navigation",
+    "Replacing only waitUntil domcontentloaded with commit in the temporary public copy preserves all functional readiness checks while avoiding a harness-only event dependency",
+    "The durable test file and all product/runtime files can remain byte-for-byte unchanged"
+  ],
+  "scope": [
+    ".github/workflows/browser-full-interaction.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/browser-full-interaction.yml"
+  ]
+}

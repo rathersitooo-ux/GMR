@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: '17 18 * * 2'
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/browser-full-interaction.yml'
   workflow_run:
     workflows:
       - GAMEROAD Cloudflare Public Deploy
@@ -42,6 +45,218 @@ jobs:
       - name: Install Chromium and OS dependencies
         run: npx playwright install --with-deps chromium
 
+      - name: Prepare WorkUnit46 Battle final acceptance runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .w46-battle
+          cat > .w46-battle/battle-final.spec.mjs <<'EOF'
+          import { test, expect } from '@playwright/test';
+
+          const STANDARD_PROJECTS = new Set(['desktop-1280x720', 'phone-390x844', 'short-landscape-667x375']);
+          const ENTRY_PATH = process.env.W46_BATTLE_ENTRY_PATH || '/browser/GAMEROAD.html';
+
+          function observeRuntimeErrors(page) {
+            const pageErrors = [];
+            const consoleErrors = [];
+            const httpErrors = [];
+            page.on('pageerror', (error) => pageErrors.push(error.message));
+            page.on('console', (message) => {
+              if (message.type() === 'error') consoleErrors.push(message.text());
+            });
+            page.on('response', (response) => {
+              if (response.status() < 400) return;
+              const url = new URL(response.url());
+              if (response.status() === 404 && url.pathname.endsWith('/browser/gameroad-version.json')) return;
+              if (response.status() === 404 && url.pathname === '/ws' && url.searchParams.get('partnerOp') === 'visual') return;
+              httpErrors.push(`${response.status()} ${url.pathname}`);
+            });
+            return () => {
+              const remainingConsoleErrors = [...consoleErrors];
+              for (let index = remainingConsoleErrors.length - 1; index >= 0; index -= 1) {
+                const message = remainingConsoleErrors[index];
+                if (message.includes('Failed to load resource') && message.includes('404')) remainingConsoleErrors.splice(index, 1);
+              }
+              expect(pageErrors, `page errors:\n${pageErrors.join('\n')}`).toEqual([]);
+              expect(httpErrors, `unexpected HTTP errors:\n${httpErrors.join('\n')}`).toEqual([]);
+              expect(remainingConsoleErrors, `console errors:\n${remainingConsoleErrors.join('\n')}`).toEqual([]);
+            };
+          }
+
+          async function attachPng(page, testInfo, name) {
+            await testInfo.attach(`${testInfo.project.name}-${name}.png`, {
+              body: await page.screenshot({ fullPage: true, animations: 'allow' }),
+              contentType: 'image/png',
+            });
+          }
+
+          async function boot(page) {
+            const response = await page.goto(ENTRY_PATH, { waitUntil: 'domcontentloaded' });
+            expect(response, 'GAMEROAD HTML response').not.toBeNull();
+            expect(response.ok(), `GAMEROAD HTML status ${response.status()}`).toBeTruthy();
+            await page.waitForTimeout(700);
+            await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+            expect(await page.locator('section[data-screen="battle"]').count(), 'Battle screen exists').toBeGreaterThan(0);
+          }
+
+          async function installLegalDeck(page) {
+            return page.evaluate(() => {
+              const t = window.__GAMEROAD_TEST__;
+              if (!t) throw new Error('__GAMEROAD_TEST__ is unavailable');
+              const publicMain = new Set(t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
+              const standard = window.__CARD_DATA__
+                .filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)))
+                .map((card) => card.id);
+              const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
+              const nonRoyal = standard.filter((id) => !t.isRoyalCard(id));
+              const main = [...nonRoyal.slice(0, 37), ...royalIds];
+              const setValidation = t.deckSetDraft(main, []);
+              const draftValidation = t.deckValidate(t.state.deckDraft, { forBattle: true });
+              const committed = draftValidation.ok ? t.deckCommit() : false;
+              const savedValidation = t.deckValidate(t.state.savedDeck, { forBattle: true });
+              return { mainLength: main.length, setValidation, draftValidation, committed, savedValidation };
+            });
+          }
+
+          async function enterVisibleBasicBattle(page) {
+            const deck = await installLegalDeck(page);
+            expect(deck.mainLength).toBe(40);
+            expect(deck.committed, JSON.stringify(deck)).toBeTruthy();
+            expect(deck.savedValidation.ok, JSON.stringify(deck.savedValidation)).toBeTruthy();
+
+            const setupControl = page.locator('[data-home-target="setup"]:visible, [data-go="setup"]:visible').first();
+            await expect(setupControl, 'Home exposes visible Battle setup control').toBeVisible();
+            await setupControl.click();
+            const setup = page.locator('section[data-screen="setup"]');
+            await expect(setup).toBeVisible();
+
+            const roadShield = setup.locator('[data-content="road_shield"]');
+            if ((await roadShield.count()) > 0) await roadShield.click();
+            const twoPlayer = setup.locator('[data-mode="2p"]');
+            if ((await twoPlayer.count()) > 0) await twoPlayer.click();
+            const start = setup.locator('#startMatch');
+            await expect(start).toBeVisible();
+            await expect(start).toBeEnabled();
+            await start.click();
+
+            const battle = page.locator('section[data-screen="battle"]');
+            await expect(battle).toBeVisible();
+            await expect(battle.locator('#phaseTitle')).toContainText('行動を計画');
+            return battle;
+          }
+
+          async function assertViewportFit(page, battle) {
+            const geometry = await page.evaluate(() => ({
+              innerWidth: window.innerWidth,
+              innerHeight: window.innerHeight,
+              scrollWidth: document.documentElement.scrollWidth,
+            }));
+            expect(geometry.scrollWidth, `horizontal overflow: ${JSON.stringify(geometry)}`).toBeLessThanOrEqual(geometry.innerWidth + 1);
+            for (const [label, locator] of [
+              ['phase title', battle.locator('#phaseTitle')],
+              ['ready plan', battle.locator('#readyPlan')],
+            ]) {
+              await expect(locator, `${label} visible`).toBeVisible();
+              const box = await locator.boundingBox();
+              expect(box, `${label} geometry`).not.toBeNull();
+              expect(box.x, `${label} left`).toBeGreaterThanOrEqual(-1);
+              expect(box.y, `${label} top`).toBeGreaterThanOrEqual(-1);
+              expect(box.x + box.width, `${label} right`).toBeLessThanOrEqual(geometry.innerWidth + 1);
+              expect(box.y + box.height, `${label} bottom`).toBeLessThanOrEqual(geometry.innerHeight + 1);
+            }
+          }
+
+          async function visibleOptionalRuleControls(battle) {
+            return battle.locator('button:visible, [role="button"]:visible, input:visible, select:visible').evaluateAll((nodes) => nodes
+              .map((node) => [node.textContent || '', node.getAttribute('aria-label') || '', node.id || '', node.getAttribute('data-action') || ''].join(' '))
+              .filter((text) => /サイコロ|ルーレット|dice|roulette/i.test(text)));
+          }
+
+          test('W46 Battle final acceptance: CURRENT three-card Basic across required viewport', async ({ page }, testInfo) => {
+            test.skip(!STANDARD_PROJECTS.has(testInfo.project.name), 'WorkUnit46 standard viewport only');
+            const assertRuntimeClean = observeRuntimeErrors(page);
+            await boot(page);
+            const battle = await enterVisibleBasicBattle(page);
+
+            const snapshot = await page.evaluate(() => {
+              const t = window.__GAMEROAD_TEST__;
+              return {
+                screen: t.state.screen,
+                handLengths: t.state.match.players.map((player) => player.hand.length),
+                setupMode: t.state.setupMode,
+                setupContent: t.state.setupContent,
+              };
+            });
+            await testInfo.attach(`${testInfo.project.name}-battle-current-state.json`, {
+              body: Buffer.from(`${JSON.stringify(snapshot, null, 2)}\n`),
+              contentType: 'application/json',
+            });
+            expect(snapshot.screen).toBe('battle');
+            expect(snapshot.handLengths.length, 'match has participants').toBeGreaterThan(0);
+            expect(snapshot.handLengths, 'CURRENT Basic starts every participant at exactly three cards').toEqual(snapshot.handLengths.map(() => 3));
+            expect(await visibleOptionalRuleControls(battle), 'Basic exposes no dice/roulette control').toEqual([]);
+            await assertViewportFit(page, battle);
+            await attachPng(page, testInfo, 'battle-basic-start');
+
+            const slidePad = battle.locator('[data-battle-janken-slidepad="1"]').first();
+            if ((await slidePad.count()) > 0) {
+              const slots = slidePad.locator('[data-janken-slot]');
+              await expect(slots, 'Janken projection has three fixed slots').toHaveCount(3);
+              const cardIds = await slots.evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-card-id')).filter(Boolean));
+              expect(new Set(cardIds).size, 'three distinct physical cards occupy the fixed Janken slots').toBe(3);
+              const handle = slidePad.locator('.grJankenSlidePadHandle');
+              await expect(handle).toBeVisible();
+              await attachPng(page, testInfo, 'janken-before-open');
+              await handle.click();
+              await page.waitForTimeout(120);
+              await attachPng(page, testInfo, 'janken-opening');
+              await page.waitForTimeout(260);
+              await attachPng(page, testInfo, 'janken-open-settled');
+              await expect(slidePad).toHaveAttribute('data-expanded', 'true');
+              expect(await visibleOptionalRuleControls(battle), 'Janken expansion does not expose optional dice/roulette controls').toEqual([]);
+            }
+
+            assertRuntimeClean();
+          });
+          EOF
+
+          cat > .w46-battle/playwright.local.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          import baseConfig from '../playwright.full-interaction.config.mjs';
+
+          const names = new Set(['desktop-1280x720', 'phone-390x844', 'short-landscape-667x375']);
+          const projects = (baseConfig.projects ?? [])
+            .filter((project) => names.has(project.name))
+            .map((project) => ({ name: project.name, use: project.use }));
+
+          export default defineConfig({
+            testDir: '.',
+            testMatch: 'battle-final.spec.mjs',
+            timeout: 90_000,
+            expect: { timeout: 7_000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            outputDir: '../test-results/w46-battle-local',
+            reporter: [
+              ['line'],
+              ['html', { outputFolder: '../playwright-report-w46-battle-local', open: 'never' }],
+              ['json', { outputFile: '../test-results/w46-battle-local/report.json' }],
+            ],
+            use: {
+              ...baseConfig.use,
+              trace: 'on',
+              screenshot: 'on',
+              video: 'on',
+            },
+            projects,
+            webServer: baseConfig.webServer,
+          });
+          EOF
+
+      - name: Run WorkUnit46 Battle final acceptance locally
+        run: npx playwright test --config=.w46-battle/playwright.local.config.mjs --workers=1
+
       - name: Run GAMEROAD full interaction evidence R1
         run: npx playwright test --config=playwright.full-interaction.config.mjs --workers=1
 
@@ -53,6 +268,8 @@ jobs:
           path: |
             playwright-report-full-interaction/
             test-results/full-interaction/
+            playwright-report-w46-battle-local/
+            test-results/w46-battle-local/
           if-no-files-found: error
           retention-days: 14
 
@@ -103,6 +320,59 @@ jobs:
 
       - name: Install Chromium and OS dependencies
         run: npx playwright install --with-deps chromium
+
+      - name: Prepare WorkUnit46 public Battle acceptance runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .w46-battle-public
+          cp .w46-battle/battle-final.spec.mjs .w46-battle-public/battle-final.spec.mjs 2>/dev/null || true
+          if [[ ! -s .w46-battle-public/battle-final.spec.mjs ]]; then
+            mkdir -p .w46-battle
+            awk '/^          cat > \.w46-battle\/battle-final\.spec\.mjs <<'"'"'EOF'"'"'$/,/^          EOF$/' .github/workflows/browser-full-interaction.yml | sed '1d;$d;s/^          //' > .w46-battle-public/battle-final.spec.mjs
+          fi
+          if [[ ! -s .w46-battle-public/battle-final.spec.mjs ]]; then
+            echo '::error::Unable to materialize WorkUnit46 Battle acceptance spec'
+            exit 1
+          fi
+          cat > .w46-battle-public/playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          import baseConfig from '../playwright.full-interaction.config.mjs';
+
+          const names = new Set(['desktop-1280x720', 'phone-390x844', 'short-landscape-667x375']);
+          const projects = (baseConfig.projects ?? [])
+            .filter((project) => names.has(project.name))
+            .map((project) => ({ name: project.name, use: project.use }));
+
+          export default defineConfig({
+            testDir: '.',
+            testMatch: 'battle-final.spec.mjs',
+            timeout: 90_000,
+            expect: { timeout: 7_000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            outputDir: '../test-results/w46-battle-public',
+            reporter: [
+              ['line'],
+              ['html', { outputFolder: '../playwright-report-w46-battle-public', open: 'never' }],
+              ['json', { outputFile: '../test-results/w46-battle-public/report.json' }],
+            ],
+            use: {
+              ...baseConfig.use,
+              baseURL: process.env.GAMEROAD_PUBLIC_BASE_URL,
+              trace: 'on',
+              screenshot: 'on',
+              video: 'on',
+            },
+            projects,
+          });
+          EOF
+
+      - name: Run WorkUnit46 Battle final acceptance on canonical public origin
+        env:
+          W46_BATTLE_ENTRY_PATH: /
+        run: npx playwright test --config=.w46-battle-public/playwright.config.mjs --workers=1
 
       - name: Prepare bounded public-origin R19 runner
         shell: bash
@@ -178,6 +448,8 @@ jobs:
           path: |
             playwright-report-public-origin/
             test-results/public-origin/
+            playwright-report-w46-battle-public/
+            test-results/w46-battle-public/
             public-origin-metadata/
           if-no-files-found: error
           retention-days: 14

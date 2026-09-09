@@ -20,7 +20,7 @@
   "leaseSnapshotReadbackAtJst": "2026-09-10 03:55 JST",
   "leaseUntilJst": "2026-09-10 04:55 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A917:L917",
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-hand3-slidepad-current-r1-20260910; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; own transient PRE_ACTION manifest only. READ_ONLY reuse: browser/battle-new-base-live-consumer-adapter.mjs, browser/new-base-hand3-uniform-assignment-policy.mjs, browser/new-base-round-start-janken-slot-assignment-core.mjs. browser/GAMEROAD.html, deploy/cloudflare/scripts/build.mjs, battle-screen, gameplay/rules/target/legality/Shield/save/economy/network READ_ONLY.",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-hand3-slidepad-current-r1-20260910; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient .github/workflows/zz-temp-battle-hand3-slidepad-current-r1.yml; own transient data/preaction-authorizations/BATTLE-HAND3-SLIDEPAD-CURRENT-R1-20260910T0355-SOL-Q7M4N20.json only. READ_ONLY reuse: browser/battle-new-base-live-consumer-adapter.mjs, browser/new-base-hand3-uniform-assignment-policy.mjs, browser/new-base-round-start-janken-slot-assignment-core.mjs. browser/GAMEROAD.html, deploy/cloudflare/scripts/build.mjs, battle-screen, gameplay/rules/target/legality/Shield/save/economy/network READ_ONLY.",
   "solutionSignature": "BATTLE_HAND3_CURRENT_IMMUTABLE_ASSIGNMENT_SLIDEPAD_PROJECTION_V1",
   "reuseDisposition": "COMPOSE",
   "solutionSearchStatus": "PASS",
@@ -34,10 +34,12 @@
   ],
   "scope": [
     "browser/battle-janken-slidepad-runtime-mount.mjs",
-    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-hand3-slidepad-current-r1.yml"
   ],
   "leaseScope": [
     "browser/battle-janken-slidepad-runtime-mount.mjs",
-    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-hand3-slidepad-current-r1.yml"
   ]
 }

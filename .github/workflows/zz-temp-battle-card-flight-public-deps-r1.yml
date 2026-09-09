@@ -27,15 +27,15 @@ jobs:
           path = Path('deploy/cloudflare/scripts/build.mjs')
           text = path.read_text()
           anchor = "  { source: 'browser/battle-janken-slidepad-runtime-mount.mjs', output: 'battle-janken-slidepad-runtime-mount.mjs', artifact: 'battle_janken_slidepad_runtime_mount', label: 'Battle janken SlidePad runtime mount' },\n"
-          additions = (
-              "  { source: 'browser/battle-card-release-flight-motion-core.mjs', output: 'battle-card-release-flight-motion-core.mjs', artifact: 'battle_card_release_flight_motion_core', label: 'Battle card release flight motion core' },\n"
-              "  { source: 'browser/battle-card-release-flight-runtime-effect.mjs', output: 'battle-card-release-flight-runtime-effect.mjs', artifact: 'battle_card_release_flight_runtime_effect', label: 'Battle card release flight runtime effect' },\n"
-          )
+          additions = [
+              "  { source: 'browser/battle-card-release-flight-motion-core.mjs', output: 'battle-card-release-flight-motion-core.mjs', artifact: 'battle_card_release_flight_motion_core', label: 'Battle card release flight motion core' },\n",
+              "  { source: 'browser/battle-card-release-flight-runtime-effect.mjs', output: 'battle-card-release-flight-runtime-effect.mjs', artifact: 'battle_card_release_flight_runtime_effect', label: 'Battle card release flight runtime effect' },\n",
+          ]
           if text.count(anchor) != 1:
               raise SystemExit(f'expected exactly one janken runtime artifact anchor, found {text.count(anchor)}')
-          for line in additions:
-              if line in text:
-                  raise SystemExit('flight dependency already packaged; abort rather than duplicate')
+          already = [line for line in additions if line in text]
+          if already:
+              raise SystemExit(f'flight dependency already packaged; abort rather than duplicate: {len(already)}')
           path.write_text(text.replace(anchor, anchor + ''.join(additions), 1))
           PY
       - name: Run focused motion/effect and Cloudflare build tests
@@ -46,8 +46,8 @@ jobs:
       - name: Assert exact package entries
         shell: bash
         run: |
-          grep -F "browser/battle-card-release-flight-motion-core.mjs" deploy/cloudflare/scripts/build.mjs
-          grep -F "browser/battle-card-release-flight-runtime-effect.mjs" deploy/cloudflare/scripts/build.mjs
+          test "$(grep -Fc "browser/battle-card-release-flight-motion-core.mjs" deploy/cloudflare/scripts/build.mjs)" -eq 1
+          test "$(grep -Fc "browser/battle-card-release-flight-runtime-effect.mjs" deploy/cloudflare/scripts/build.mjs)" -eq 1
       - name: Commit durable package change and remove transient executor
         shell: bash
         run: |

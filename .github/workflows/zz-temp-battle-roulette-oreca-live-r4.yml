@@ -1,0 +1,189 @@
+name: Temp Battle Roulette Oreca Live R4
+
+on:
+  push:
+    branches:
+      - sol/battle-roulette-oreca-live-r4-20260909
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-roulette-oreca-live-r4-20260909
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply bounded Oreca live-render patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          runtime_path = Path('browser/battle-playable-hand-row-roulette-runtime.mjs')
+          test_path = Path('tests/battle-playable-hand-row-roulette-runtime.test.mjs')
+          runtime = runtime_path.read_text(encoding='utf-8')
+          tests = test_path.read_text(encoding='utf-8')
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one anchor, found {count}')
+              return text.replace(old, new, 1)
+
+          runtime = replace_once(
+              runtime,
+              "} from './slidepad-slot-roll-core.mjs';\n\nexport const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_SCHEMA",
+              "} from './slidepad-slot-roll-core.mjs';\nimport {\n  projectBattlePlayableHandRouletteOrecaPresentation,\n} from './battle-playable-hand-row-roulette-oreca-presentation-core.mjs';\n\nexport const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_SCHEMA",
+              'runtime import',
+          )
+
+          helper = """export function projectBattlePlayableHandRowRouletteRenderState(model) {
+            if (!model || model.schema !== BATTLE_PLAYABLE_HAND_ROW_ROULETTE_SCHEMA) {
+              throw new TypeError('model must be a Battle playable-hand row roulette model');
+            }
+            const oreca = projectBattlePlayableHandRouletteOrecaPresentation(model, { phase: 'IDLE' });
+            if (oreca.mode !== 'ORECA_SIX_ROW') {
+              return deepFreeze({
+                mode: 'EXISTING_RUNTIME_FALLBACK',
+                rows: model.rows,
+              });
+            }
+            const selectedIndex = Math.max(0, oreca.rows.findIndex((row) => row.selected));
+            const rows = oreca.rows.map((row, index) => Object.freeze({
+              ...row,
+              position: row.selected ? 'SELECTED' : index < selectedIndex ? 'BEFORE' : 'AFTER',
+            }));
+            return deepFreeze({
+              mode: 'ORECA_SIX_ROW',
+              rows: Object.freeze(rows),
+            });
+          }
+
+          """
+          runtime = replace_once(
+              runtime,
+              "export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_CSS = `",
+              helper + "export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_CSS = `",
+              'render-state helper',
+          )
+
+          css_anchor = """[data-battle-playable-hand-row-roulette] .grBattleHandRouletteRow[data-position=\"BEFORE\"],
+          [data-battle-playable-hand-row-roulette] .grBattleHandRouletteRow[data-position=\"AFTER\"]{
+            opacity:.72;
+          }
+          """
+          css_replacement = css_anchor + """[data-battle-playable-hand-row-roulette][data-oreca-six-row=\"true\"] .grBattleHandRouletteRow{
+            opacity:var(--gr-oreca-row-opacity,.68);
+            transform:scale(var(--gr-oreca-row-scale,1));
+          }
+          [data-battle-playable-hand-row-roulette][data-oreca-six-row=\"true\"] .grBattleHandRouletteRow[data-selected=\"true\"]{
+            opacity:1;
+            transform:translateX(var(--gr-row-shift)) scale(var(--gr-oreca-row-scale,1.06));
+          }
+          """
+          runtime = replace_once(runtime, css_anchor, css_replacement, 'Oreca CSS')
+
+          render_anchor = """  installBattlePlayableHandRowRouletteStyle(documentSource);
+            host.setAttribute('data-battle-playable-hand-row-roulette', '1');
+            host.setAttribute('data-empty', model.rows.length ? 'false' : 'true');
+            host.setAttribute('data-reduced-motion', model.reducedMotion ? 'true' : 'false');
+          """
+          render_replacement = """  installBattlePlayableHandRowRouletteStyle(documentSource);
+            const renderState = projectBattlePlayableHandRowRouletteRenderState(model);
+            const renderRows = renderState.rows;
+            host.setAttribute('data-battle-playable-hand-row-roulette', '1');
+            host.setAttribute('data-presentation-mode', renderState.mode);
+            host.setAttribute('data-oreca-six-row', renderState.mode === 'ORECA_SIX_ROW' ? 'true' : 'false');
+            host.setAttribute('data-empty', renderRows.length ? 'false' : 'true');
+            host.setAttribute('data-reduced-motion', model.reducedMotion ? 'true' : 'false');
+          """
+          runtime = replace_once(runtime, render_anchor, render_replacement, 'render setup')
+          runtime = replace_once(runtime, "  for (const row of model.rows) {", "  for (const row of renderRows) {", 'render rows')
+          runtime = replace_once(
+              runtime,
+              """    button.dataset.position = row.position;
+              button.setAttribute('role', 'option');
+          """,
+              """    button.dataset.position = row.position;
+              if (renderState.mode === 'ORECA_SIX_ROW') {
+                button.dataset.motion = row.motion ?? 'STATIC';
+                button.style.setProperty('--gr-oreca-row-opacity', String(row.opacity ?? 1));
+                button.style.setProperty('--gr-oreca-row-scale', String(row.scale ?? 1));
+              }
+              button.setAttribute('role', 'option');
+          """,
+              'row Oreca tokens',
+          )
+
+          tests = replace_once(
+              tests,
+              "  prepareBattlePlayableHandRowRouletteCommit,\n",
+              "  prepareBattlePlayableHandRowRouletteCommit,\n  projectBattlePlayableHandRowRouletteRenderState,\n",
+              'test runtime import',
+          )
+          tests = replace_once(
+              tests,
+              "} from '../browser/battle-playable-hand-row-roulette-runtime.mjs';\n\nconst presentations",
+              "} from '../browser/battle-playable-hand-row-roulette-runtime.mjs';\nimport { projectBattlePlayableHandAffordance } from '../browser/battle-janken-slidepad-runtime-mount.mjs';\n\nconst presentations",
+              'test janken import',
+          )
+
+          tests += """
+
+          test('exact-six live render is the remaining ordinary hand only and never includes janken-reserved cards', () => {
+            const hand = ['j-rock', 'j-scissors', 'j-paper', 'r1', 'r2', 'r3', 'r4', 'r5', 'r6'];
+            const projection = projectBattlePlayableHandAffordance({
+              handCardIds: hand,
+              activeRole: 'road',
+              activeOptionValues: hand,
+              reservedCardIds: ['j-rock', 'j-scissors', 'j-paper'],
+              phasePlayable: true,
+            });
+            const cardPresentationById = Object.fromEntries(hand.map((id) => [id, { label: id }]));
+            const model = createBattlePlayableHandRowRouletteModel({
+              candidateCardIds: projection.candidateCardIds,
+              cardPresentationById,
+              anchorCardId: 'r3',
+            });
+            const render = projectBattlePlayableHandRowRouletteRenderState(model);
+
+            assert.deepEqual(projection.candidateCardIds, ['r1', 'r2', 'r3', 'r4', 'r5', 'r6']);
+            assert.equal(render.mode, 'ORECA_SIX_ROW');
+            assert.deepEqual(render.rows.map((row) => row.cardId), ['r1', 'r2', 'r3', 'r4', 'r5', 'r6']);
+            assert.equal(render.rows.find((row) => row.selected)?.cardId, 'r3');
+            assert.equal(render.rows.some((row) => row.cardId.startsWith('j-')), false);
+          });
+
+          test('non-six live render preserves the existing rolling-window rows without filler cards', () => {
+            const model = createBattlePlayableHandRowRouletteModel({
+              candidateCardIds: ['a', 'b', 'c', 'd', 'e'],
+              cardPresentationById: presentations,
+              anchorCardId: 'c',
+            });
+            const render = projectBattlePlayableHandRowRouletteRenderState(model);
+            assert.equal(render.mode, 'EXISTING_RUNTIME_FALLBACK');
+            assert.deepEqual(render.rows, model.rows);
+          });
+          """
+
+          runtime_path.write_text(runtime, encoding='utf-8')
+          test_path.write_text(tests, encoding='utf-8')
+          PY
+      - name: Run focused roulette tests
+        run: node --test tests/battle-playable-hand-row-roulette-runtime.test.mjs
+      - name: Commit bounded product diff and remove transient control files
+        shell: bash
+        run: |
+          rm -f data/preaction-authorizations/BATTLE-ROULETTE-ORECA-LIVE-R4-20260909T1635-SOL-O7K4Q9.json
+          rm -f .github/workflows/zz-temp-battle-roulette-oreca-live-r4.yml
+          git config user.name "gameroad-bot"
+          git config user.email "gameroad-bot@users.noreply.github.com"
+          git add browser/battle-playable-hand-row-roulette-runtime.mjs tests/battle-playable-hand-row-roulette-runtime.test.mjs data/preaction-authorizations/BATTLE-ROULETTE-ORECA-LIVE-R4-20260909T1635-SOL-O7K4Q9.json .github/workflows/zz-temp-battle-roulette-oreca-live-r4.yml
+          git commit -m "Battle: オレカ型6段ルーレットを既存runtimeへ接続"
+          git push origin HEAD:sol/battle-roulette-oreca-live-r4-20260909

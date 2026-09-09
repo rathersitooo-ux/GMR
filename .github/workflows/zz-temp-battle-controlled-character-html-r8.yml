@@ -10,23 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect exact live Battle marker and movement seams
+      - name: Inspect accepted position mutation seams
         shell: python
         run: |
           from pathlib import Path
           text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          needles = [
-              'function renderBoardPlayers()',
-              "el.className='boardPlayerToken'",
-              'p.position=step',
-              'p.position=finalPos',
-              "setBattleRuntimeMotionState(el,{state:'move'",
-              'setBattleRuntimeMotionState',
-              'renderBoardPlayers()',
-              "document.getElementById('battleRuntime')",
-              '#battleRuntime',
-              '.boardPlayerToken',
-          ]
+          needles = ['p.position=', '.position=', 'for(const step', 'for(let step', 'await sleep(', 'await wait(', 'renderBoard();updateBattleAvatar()', 'updateBattleAvatar();renderBoard()']
           for needle in needles:
               print('\n===== NEEDLE', repr(needle), '=====')
               start=0; shown=0
@@ -36,10 +25,10 @@ jobs:
                   shown+=1
                   line=text.count('\n',0,idx)+1
                   col=idx-(text.rfind('\n',0,idx)+1)
-                  lo=max(0,idx-2200); hi=min(len(text),idx+len(needle)+3200)
+                  lo=max(0,idx-1700); hi=min(len(text),idx+len(needle)+2600)
                   print('HIT',shown,'OFFSET',idx,'LINE',line,'COL',col)
                   print(text[lo:hi].replace('\r',''))
                   print('-----')
                   start=idx+len(needle)
-                  if shown>=6: break
+                  if shown>=12: break
               print('COUNT_SHOWN',shown)

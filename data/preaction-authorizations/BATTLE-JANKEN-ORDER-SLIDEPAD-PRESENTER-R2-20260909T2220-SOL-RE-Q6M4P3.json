@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-ORDER-SLIDEPAD-PRESENTER-R2-20260909T2220-SOL-RE-Q6M4P3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_ORDER_SLIDEPAD_PRESENTER_R2",
+  "acquireKey": "BATTLE-JANKEN-ORDER-SLIDEPAD-PRESENTER-R2-20260909T2220-SOL-RE-Q6M4P3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R1_PRODUCT_TESTS_PASS_REQUIRED_GATE_FAILED_ONLY_UNCLASSIFIED_FOCUSED_TEST_PATH_34356104137",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_SURGICAL_EXECUTOR_34355881014_FOCUSED_PLUS_EXISTING_SLIDEPAD_TESTS_PASS",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-ORDER-SLIDEPAD-PRESENTER-R2-20260909T2220-SOL-RE-Q6M4P3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|same-workunit-clean-rebuild|existing-classified-test-pair|active-lease",
+  "authorizationBaseSha": "a84a3c877be133901dec969a6e67a54deb6da0c9",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_ORDER_SLIDEPAD_PRESENTER_R2",
+  "leaseAcquireKey": "BATTLE-JANKEN-ORDER-SLIDEPAD-PRESENTER-R2-20260909T2220-SOL-RE-Q6M4P3",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 22:20 JST",
+  "leaseUntilJst": "2026-09-09 23:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A762:L762",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-janken-order-slidepad-presenter-r2-20260909; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient .github/workflows/zz-temp-battle-janken-order-presenter-r2.yml; transient tools/temp-battle-janken-order-presenter-r2.py; own transient data/preaction-authorizations/BATTLE-JANKEN-ORDER-SLIDEPAD-PRESENTER-R2-20260909T2220-SOL-RE-Q6M4P3.json only. PR1449/R1 branch and existing order live adapter/order chain/order motion/action-order/triad resolver READ_ONLY. GAMEROAD.html/build/battle-screen/gameplay/rules/target/Shield/Hand3/save/network/economy READ_ONLY.",
+  "solutionSignature": "BATTLE_JANKEN_ORDER_SLIDEPAD_PRESENTATION_TRANSPORT_V1_CLEAN_CLASSIFIED_TEST_REBUILD",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R1_ACCEPTED_PRESENTATION_IMPLEMENTATION_PLUS_EXISTING_CONVENTIONAL_SLIDEPAD_TEST_PAIR_20260909",
+  "solutionSearchEvidence": [
+    "R1 product implementation was not merged; its surgical executor focused test and existing SlidePad regression both passed",
+    "R1 Required Gate passed PRE_ACTION, conventional Node tests, package provenance and JIT evidence, failing only because a separately named new test path was unclassified",
+    "existing tests/battle-janken-slidepad-runtime-mount.test.mjs is the conventional same-name test pair for browser/battle-janken-slidepad-runtime-mount.mjs",
+    "R2 therefore keeps the same presentation-only product semantics and appends focused assertions into the existing classified test file instead of widening the gate",
+    "no sorting/comparison/winner/target/Shield/gameplay/timing authority is added"
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-order-presenter-r2.yml",
+    "tools/temp-battle-janken-order-presenter-r2.py",
+    "data/preaction-authorizations/BATTLE-JANKEN-ORDER-SLIDEPAD-PRESENTER-R2-20260909T2220-SOL-RE-Q6M4P3.json"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-order-presenter-r2.yml",
+    "tools/temp-battle-janken-order-presenter-r2.py",
+    "data/preaction-authorizations/BATTLE-JANKEN-ORDER-SLIDEPAD-PRESENTER-R2-20260909T2220-SOL-RE-Q6M4P3.json"
+  ]
+}

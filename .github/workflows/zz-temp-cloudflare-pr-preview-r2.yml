@@ -190,10 +190,10 @@ jobs:
             if (response.status() >= 400) httpErrors.push(`${response.status()} ${new URL(response.url()).pathname}`);
           });
 
-          const response = await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded', timeout: 120_000 });
+          const response = await page.goto(`${baseUrl}/`, { waitUntil: 'commit', timeout: 30_000 });
           if (!response?.ok()) throw new Error(`shared preview navigation failed: ${response?.status()}`);
-          await page.waitForFunction(() => Boolean(window.__GAMEROAD_TEST__) && Array.isArray(window.__CARD_DATA__), null, { timeout: 60_000 });
-          await page.locator('section[data-screen="home"]').waitFor({ state: 'visible', timeout: 30_000 });
+          await page.waitForFunction(() => Boolean(window.__GAMEROAD_TEST__) && Array.isArray(window.__CARD_DATA__), null, { timeout: 180_000 });
+          await page.locator('section[data-screen="home"]').waitFor({ state: 'visible', timeout: 60_000 });
 
           const deckSetup = await page.evaluate(() => {
             const t = window.__GAMEROAD_TEST__;

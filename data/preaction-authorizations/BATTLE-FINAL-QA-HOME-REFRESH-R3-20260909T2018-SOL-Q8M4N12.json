@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-FINAL-QA-HOME-REFRESH-R3-20260909T2018-SOL-Q8M4N12",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FINAL_QA_HOME_REFRESH_IDEMPOTENCE_R1",
+  "acquireKey": "BATTLE-FINAL-QA-HOME-REFRESH-R3-20260909T2018-SOL-Q8M4N12",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R6B_THREE_VIEWPORT_HOME_MAIN_THREAD_STALL_PLUS_PR1432_CAUSAL_PATCH",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1432_BOUNDED_EXECUTOR_FOCUSED_HOME_TESTS_PASS",
+  "proceedToken": "PROCEED|BATTLE-FINAL-QA-HOME-REFRESH-R3-20260909T2018-SOL-Q8M4N12|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|home-refresh-idempotence|two-file-clean-transplant|active-lease",
+  "authorizationBaseSha": "a7059915e710482efc6d7afe4adf2f6114e77a06",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_FINAL_QA_HOME_REFRESH_IDEMPOTENCE_R1",
+  "leaseAcquireKey": "BATTLE-FINAL-QA-HOME-REFRESH-R3-20260909T2018-SOL-Q8M4N12",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 20:28 JST",
+  "leaseUntilJst": "2026-09-09 21:18 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A741:L741",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-final-qa-home-refresh-r3-20260909; browser/home-boot-runtime-base-r3.mjs; tests/home-boot-presentation.test.mjs; own data/preaction-authorizations/BATTLE-FINAL-QA-HOME-REFRESH-R3-20260909T2018-SOL-Q8M4N12.json only. PR#1432 branch READ_ONLY donor. browser/GAMEROAD.html, Battle screen/janken/camera/goal/controlled-character/gameplay/rules/save/economy/network READ_ONLY.",
+  "solutionSignature": "HOME_CONTEXTUAL_REPLAY_OBSERVER_IDEMPOTENT_WRITE_R3",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1432_TWO_FILE_PATCH_NO_CURRENT_MAIN_OVERLAP",
+  "solutionSearchEvidence": [
+    "Corrected W46 R6B reached visible Home on all three required viewports but then page.evaluate timed out for the full 120 second test budget before any Battle navigation.",
+    "PR#1432 isolated the cause to Home contextual replay MutationObserver observing aria-pressed/childList while refresh wrote the same aria/text values unconditionally, producing self-triggering refresh work.",
+    "PR#1432 bounded executor already passed the focused Home tests for idempotent same-value writes, but the PR remained unmergeable because transient workflow/tool files were left in its diff and GitHub marked Required Gate action_required with zero jobs.",
+    "Compare from PR#1432 base 5bf4e7a... through current main a7059915... shows neither browser/home-boot-runtime-base-r3.mjs nor tests/home-boot-presentation.test.mjs changed, so the proven two-file patch can be cleanly transplanted without overwriting concurrent Battle work.",
+    "GAMEROAD.html and all Battle gameplay/presentation runtimes are read-only in this slice; this repair changes only Home observer write idempotence and its regression tests."
+  ],
+  "scope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "tests/home-boot-presentation.test.mjs"
+  ]
+}

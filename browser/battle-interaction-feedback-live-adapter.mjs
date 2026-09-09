@@ -1,7 +1,6 @@
 import { projectBattleInteractionFeedbackCue } from './battle-interaction-feedback-cue-core.mjs';
 
 const SCHEMA = 'gameroad.battle-interaction-feedback-live-adapter.v1';
-const DEFAULT_RECEIPT_LIMIT = 512;
 
 function deepFreeze(value) {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
@@ -33,11 +32,6 @@ function deliveryStatus(callback, ...args) {
   } catch {
     return 'FAILED_SOFT';
   }
-}
-
-function boundedReceiptLimit(value) {
-  if (!Number.isInteger(value) || value < 16 || value > 4096) return DEFAULT_RECEIPT_LIMIT;
-  return value;
 }
 
 export function projectBattleInteractionFeedbackEvent(event, options = {}) {
@@ -102,7 +96,6 @@ export function createBattleInteractionFeedbackLiveAdapter({
   renderVisual,
   playFormalSfx,
   emitHaptic,
-  receiptLimit = DEFAULT_RECEIPT_LIMIT,
 } = {}) {
   if (
     typeof renderVisual !== 'function'
@@ -112,21 +105,8 @@ export function createBattleInteractionFeedbackLiveAdapter({
     throw new Error('at least one feedback consumer callback is required');
   }
 
-  const maxReceipts = boundedReceiptLimit(receiptLimit);
   const seen = new Set();
-  const order = [];
   let sequence = 0;
-
-  function remember(key) {
-    if (seen.has(key)) return false;
-    seen.add(key);
-    order.push(key);
-    while (order.length > maxReceipts) {
-      const oldest = order.shift();
-      seen.delete(oldest);
-    }
-    return true;
-  }
 
   function publish(event, options = {}) {
     const projected = projectBattleInteractionFeedbackEvent(event, options);
@@ -150,7 +130,7 @@ export function createBattleInteractionFeedbackLiveAdapter({
 
     // Consume the presentation receipt before callbacks so a re-entrant or failing
     // presentation consumer cannot cause the same confirmed event to fire twice.
-    remember(feedback.receiptStageKey);
+    seen.add(feedback.receiptStageKey);
     sequence += 1;
 
     const cue = feedback.cue;
@@ -205,7 +185,7 @@ export const BATTLE_INTERACTION_FEEDBACK_LIVE_ADAPTER_CONTRACT = Object.freeze({
   schema: SCHEMA,
   confirmedEventRequired: true,
   stableReceiptIdRequired: true,
-  exactlyOncePerReceiptStage: true,
+  exactlyOncePerReceiptStageForAdapterLifetime: true,
   authoritativeAcceptanceDelegatedToCueCore: true,
   semanticGuardExactMatchRequired: true,
   rejectedEventOwned: false,

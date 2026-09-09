@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-PACKAGE-TRAIN-R1-20260910T0319-SOL-PKG-Q8N4M6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_SHARED_PUBLIC_PACKAGE_TRAIN_R1",
+  "acquireKey": "BATTLE-PACKAGE-TRAIN-R1-20260910T0319-SOL-PKG-Q8N4M6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_9761E102_BUILD_OWNER_EXPIRED_NO_SUCCESSOR_SINGLE_PACKAGE_TRAIN_20260910T0319JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "IDEMPOTENT_ARTIFACT_SPEC_INSERT_FULL_BUILD_REREAD_BUILD_TEST_FAIL_CLOSED",
+  "proceedToken": "PROCEED|BATTLE-PACKAGE-TRAIN-R1-20260910T0319-SOL-PKG-Q8N4M6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-package|single-writer-train|active-lease",
+  "authorizationBaseSha": "9761e10273edf2800940579d8252fb237c81f226",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_SHARED_PUBLIC_PACKAGE_TRAIN_R1",
+  "leaseAcquireKey": "BATTLE-PACKAGE-TRAIN-R1-20260910T0319-SOL-PKG-Q8N4M6",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:19 JST",
+  "leaseUntilJst": "2026-09-10 04:19 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A882:L882",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-shared-package-train-r1-20260910; deploy/cloudflare/scripts/build.mjs; transient .github/workflows/zz-temp-battle-shared-package-r1.yml; transient tools/temp-battle-shared-package-r1.py; own transient data/preaction-authorizations/BATTLE-PACKAGE-TRAIN-R1-20260910T0319-SOL-PKG-Q8N4M6.json only. Stable merged camera/recovery/janken-focus/resource-HUD/progression modules READ_ONLY sources. deploy/cloudflare/tests/build.test.mjs READ_ONLY execution. browser/GAMEROAD.html, battle-janken-slidepad-runtime-mount.mjs, battle-screen runtime, composer active product file, gameplay/rules/target/movement/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_SHARED_PUBLIC_PACKAGE_SINGLE_WRITER_TRAIN_R1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_DUPLICATE_FREE_PACKAGE_TRAIN_PLUS_MERGED_COMPONENT_IMPORT_CLOSURE_20260910T0319JST",
+  "solutionSearchEvidence": [
+    "CURRENT requires one shared build.mjs writer train rather than feature-specific package branches.",
+    "Camera, recovery, janken-focus, resource HUD and progression components are merged or stable read-only inputs; package work must not reimplement them.",
+    "The bounded writer re-reads the complete current build file and inserts only missing ARTIFACT_SPECS entries, so already packaged modules are not duplicated.",
+    "browser/GAMEROAD.html, SlidePad, Battle screen, active composer and all gameplay/state authorities remain read-only under their current owners.",
+    "Cloudflare build tests and recursive import closure are the fail-closed oracle; unresolved or missing dependency means no merge."
+  ],
+  "scope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-shared-package-r1.yml",
+    "tools/temp-battle-shared-package-r1.py"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-shared-package-r1.yml",
+    "tools/temp-battle-shared-package-r1.py"
+  ]
+}

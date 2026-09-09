@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-FOCUS-LIVE-R1-20260910T0311-SOL-A1-Q7M4N7",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_FOCUS_SLIDEPAD_LIVE_MOUNT_R1",
+  "acquireKey": "BATTLE-JANKEN-FOCUS-LIVE-R1-20260910T0311-SOL-A1-Q7M4N7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_D8B5BB1_SLIDEPAD_OWNER_FREE_20260910T0311JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "MERGED_FOCUS_SURFACE_PLUS_EXISTING_LIVE_STACK_COORDINATOR_DIRECT_ACTUAL",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-FOCUS-LIVE-R1-20260910T0311-SOL-A1-Q7M4N7|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|janken-focus-live-mount|existing-stack-only|active-lease",
+  "authorizationBaseSha": "d8b5bb1c0e22282ba4492d447c21cb62216f43b8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_FOCUS_SLIDEPAD_LIVE_MOUNT_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-FOCUS-LIVE-R1-20260910T0311-SOL-A1-Q7M4N7",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:11 JST",
+  "leaseUntilJst": "2026-09-10 04:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A880:L880",
+  "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; own transient PRE_ACTION; optional bounded transient .github/workflows/zz-temp-battle-janken-focus-live-r1.yml and tools/temp-battle-janken-focus-live-r1.py only if required. Focus surface/HTML/build/Battle screen/gameplay authorities READ_ONLY.",
+  "prepEvidencePointer": "Drive:1rZontZaVVXaJlSWFq93WNg8PZejlyT11mCKi44TVDC4",
+  "solutionSignature": "BATTLE_JANKEN_FOCUS_EXISTING_STACK_SLIDEPAD_LIVE_MOUNT_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_SLIDEPAD_PLUS_MERGED_FOCUS_SURFACE_PLUS_MERGED_LIVE_COORDINATOR",
+  "solutionSearchEvidence": [
+    "Current SlidePad runtime has card focus and processing-order presenter merged but does not import or mount battle-janken-focus-runtime-surface.mjs.",
+    "Merged focus runtime surface already owns JANKEN_FOCUS, BOARD_PEEK, LOAD_FOCUS and COMMITTING presentation and delegates focus/cancel/commit to a caller-supplied existing live input stack.",
+    "Merged battle-janken-compound-live-input-stack and SlidePad coordinator already serialize latest focus, require exact visible preview before commit, route cancel through global precommit clear, and add no target/legality/route/Hand3/gameplay authority.",
+    "This slice modifies only the SlidePad runtime and its existing classified test. The concurrent focus visual owner modifies only the focus surface/test and is non-overlap.",
+    "Cloudflare build does not yet package the focus runtime surface, so this slice must not claim public/player-visible completion and must not mutate build outside its lease."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-focus-live-r1.yml",
+    "tools/temp-battle-janken-focus-live-r1.py"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-focus-live-r1.yml",
+    "tools/temp-battle-janken-focus-live-r1.py"
+  ]
+}

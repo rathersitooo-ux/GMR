@@ -3,6 +3,9 @@ import {
   ensureRoundStartJankenSlotAssignment,
 } from './new-base-round-start-janken-slot-assignment-core.mjs';
 import {
+  createUniformHand3Assignment,
+} from './new-base-hand3-uniform-assignment-policy.mjs';
+import {
   clearBattleJankenCompoundAttackStage,
   prepareBattleJankenCompoundAttackCommit,
   stageBattleJankenCompoundAttack,
@@ -54,28 +57,38 @@ function requireCandidateIdentity(candidate, expected) {
   return authoritative;
 }
 
+function requireCurrentHandCardIds(hand) {
+  return hand.map((card, index) => {
+    const authoritativeCard = requiredObject(card, `roundAuthority.hand[${index}]`);
+    return requiredString(authoritativeCard.id, `roundAuthority.hand[${index}].id`);
+  });
+}
+
 /**
  * Thin production-consumer boundary for the NEW BASE migration.
  *
- * It deliberately owns no game-rule decisions:
+ * It deliberately owns no independent game-rule decisions:
  * - the hand authority supplies the exact three physical cards;
- * - an external policy supplies the card -> ROCK/SCISSORS/PAPER mapping;
+ * - the merged uniform Hand3 policy maps them to ROCK/SCISSORS/PAPER from a
+ *   caller-authoritative uint32 source exactly once for a new round snapshot;
  * - public board/legal-target authority supplies the complete compound attack;
  * - the existing Battle transport performs the authoritative commit;
  * - Mana recovery is an opaque caller-owned operation, including its amount.
  *
- * The adapter only validates those boundaries, preserves one immutable round
+ * The adapter composes those existing authorities, preserves one immutable round
  * slot snapshot, stages the complete compound package, re-reads it immediately
  * before commit, and forwards the unchanged payload to the existing live path.
  */
 export function createBattleNewBaseLiveConsumerAdapter({
   readRoundAuthority,
+  readAuthoritativeHand3Uint32,
   readCompoundAttackCandidate,
   sendExistingBattleAction,
   readManaRecoveryOperation = null,
   applyExistingManaRecovery = null,
 } = {}) {
   requiredFunction(readRoundAuthority, 'readRoundAuthority');
+  requiredFunction(readAuthoritativeHand3Uint32, 'readAuthoritativeHand3Uint32');
   requiredFunction(readCompoundAttackCandidate, 'readCompoundAttackCandidate');
   requiredFunction(sendExistingBattleAction, 'sendExistingBattleAction');
   if ((readManaRecoveryOperation === null) !== (applyExistingManaRecovery === null)) {
@@ -96,20 +109,33 @@ export function createBattleNewBaseLiveConsumerAdapter({
     if (!Array.isArray(authority.hand)) {
       throw new TypeError('roundAuthority.hand must be the current hand authority array');
     }
-    if (!authority.assignedCardIdsByJankenHand || typeof authority.assignedCardIdsByJankenHand !== 'object') {
-      throw new TypeError(
-        'roundAuthority.assignedCardIdsByJankenHand must be supplied by the external hand3 mapping authority',
-      );
-    }
+
+    // Same-round render/reconnect/retry must reuse the immutable snapshot and
+    // must not consume new entropy or reassign physical cards.
+    if (roundSnapshot?.roundId === roundId) return roundSnapshot;
+
+    // A newly observed round invalidates any uncommitted package from the prior
+    // round even if assignment then fails closed because entropy/state is absent.
+    if (roundSnapshot !== null) stagedCompoundAttack = null;
+
+    const handCardIds = requireCurrentHandCardIds(authority.hand);
+    const entropyRequest = Object.freeze({
+      assignmentEpochId: roundId,
+      sampleKind: 'HAND3_UNIFORM_PERMUTATION_UINT32',
+    });
+    const uniformAssignment = createUniformHand3Assignment({
+      assignmentEpochId: roundId,
+      handCardIds,
+      readUint32: () => readAuthoritativeHand3Uint32(entropyRequest),
+    });
 
     const next = ensureRoundStartJankenSlotAssignment({
       currentSnapshot: roundSnapshot,
       roundId,
       hand: authority.hand,
       assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
-      assignedCardIdsByJankenHand: authority.assignedCardIdsByJankenHand,
+      assignedCardIdsByJankenHand: uniformAssignment.assignedCardIdsByJankenHand,
     });
-    if (roundSnapshot && next !== roundSnapshot) stagedCompoundAttack = null;
     roundSnapshot = next;
     return roundSnapshot;
   }
@@ -205,7 +231,10 @@ export function createBattleNewBaseLiveConsumerAdapter({
 
 export const BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT = Object.freeze({
   handSizeAuthority: 'CALLER',
-  hand3MappingAuthority: 'CALLER_EXTERNAL_POLICY',
+  hand3MappingAuthority: 'CANONICAL_UNIFORM_SIX_PERMUTATION_POLICY',
+  hand3EntropyAuthority: 'CALLER_UINT32',
+  hand3AssignmentEpoch: 'ROUND_ID',
+  hand3RerollWithinRound: false,
   nativeSuitDeterminesJankenSlot: false,
   targetAuthority: 'CALLER_PUBLIC_BOARD_LEGAL_TARGET_STATE',
   computesTarget: false,

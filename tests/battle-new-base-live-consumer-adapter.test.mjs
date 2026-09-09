@@ -17,11 +17,6 @@ function roundAuthority(overrides = {}) {
       { id: 'card-b', suit: 'CL' },
       { id: 'card-c', suit: 'DI' },
     ],
-    assignedCardIdsByJankenHand: {
-      ROCK: 'card-c',
-      SCISSORS: 'card-a',
-      PAPER: 'card-b',
-    },
     ...overrides,
   };
 }
@@ -44,8 +39,13 @@ function compoundCandidate(overrides = {}) {
 function createHarness(overrides = {}) {
   let candidate = compoundCandidate();
   const sent = [];
+  const entropyRequests = [];
   const adapter = createBattleNewBaseLiveConsumerAdapter({
     readRoundAuthority: async () => roundAuthority(),
+    readAuthoritativeHand3Uint32: (request) => {
+      entropyRequests.push(request);
+      return 4;
+    },
     readCompoundAttackCandidate: async () => candidate,
     sendExistingBattleAction: async (payload) => {
       sent.push(payload);
@@ -56,12 +56,13 @@ function createHarness(overrides = {}) {
   return {
     adapter,
     sent,
+    entropyRequests,
     setCandidate(next) { candidate = next; },
   };
 }
 
-test('CURRENT hand3 consumes the external mapping exactly and keeps native suit separate', async () => {
-  const { adapter } = createHarness();
+test('CURRENT hand3 derives the six-way uniform mapping and keeps native suit separate', async () => {
+  const { adapter, entropyRequests } = createHarness();
   const snapshot = await adapter.syncRoundStart();
 
   assert.equal(snapshot.assignmentMode, NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY);
@@ -75,22 +76,96 @@ test('CURRENT hand3 consumes the external mapping exactly and keeps native suit 
     ],
   );
   assert.deepEqual(snapshot.ordinaryHandCardIds, []);
+  assert.deepEqual(entropyRequests, [{
+    assignmentEpochId: 'round-7',
+    sampleKind: 'HAND3_UNIFORM_PERMUTATION_UINT32',
+  }]);
 });
 
-test('fails closed when the external hand3 mapping authority has not supplied a mapping', async () => {
-  const adapter = createBattleNewBaseLiveConsumerAdapter({
-    readRoundAuthority: async () => roundAuthority({ assignedCardIdsByJankenHand: null }),
+test('same-round sync, reconnect-style resync, and stage do not reroll the hand3 snapshot', async () => {
+  let entropyReads = 0;
+  const { adapter } = createHarness({
+    readAuthoritativeHand3Uint32: () => {
+      entropyReads += 1;
+      return 4;
+    },
+  });
+
+  const first = await adapter.syncRoundStart();
+  const second = await adapter.syncRoundStart();
+  await adapter.stageCompoundAttack('ROCK');
+
+  assert.strictEqual(second, first);
+  assert.equal(entropyReads, 1);
+});
+
+test('same authoritative entropy gives the same mapping regardless of player-facing hand order', async () => {
+  const makeAdapter = (hand) => createBattleNewBaseLiveConsumerAdapter({
+    readRoundAuthority: async () => roundAuthority({ hand }),
+    readAuthoritativeHand3Uint32: () => 4,
     readCompoundAttackCandidate: async () => compoundCandidate(),
     sendExistingBattleAction: async () => true,
   });
 
-  await assert.rejects(
-    () => adapter.syncRoundStart(),
-    /must be supplied by the external hand3 mapping authority/,
+  const first = await makeAdapter([
+    { id: 'card-a', suit: 'SP' },
+    { id: 'card-b', suit: 'CL' },
+    { id: 'card-c', suit: 'DI' },
+  ]).syncRoundStart();
+  const second = await makeAdapter([
+    { id: 'card-c', suit: 'DI' },
+    { id: 'card-a', suit: 'SP' },
+    { id: 'card-b', suit: 'CL' },
+  ]).syncRoundStart();
+
+  assert.deepEqual(
+    first.slots.map(({ jankenHand, cardId }) => ({ jankenHand, cardId })),
+    second.slots.map(({ jankenHand, cardId }) => ({ jankenHand, cardId })),
   );
 });
 
-test('stages only a complete authority-supplied package matching the externally assigned physical card', async () => {
+test('fails closed when the authoritative hand3 uint32 source is not connected', () => {
+  assert.throws(
+    () => createBattleNewBaseLiveConsumerAdapter({
+      readRoundAuthority: async () => roundAuthority(),
+      readCompoundAttackCandidate: async () => compoundCandidate(),
+      sendExistingBattleAction: async () => true,
+    }),
+    /readAuthoritativeHand3Uint32 must be a function/,
+  );
+});
+
+test('fails closed when the authoritative hand3 uint32 source returns an invalid value', async () => {
+  const { adapter } = createHarness({
+    readAuthoritativeHand3Uint32: () => 0x1_0000_0000,
+  });
+
+  await assert.rejects(
+    () => adapter.syncRoundStart(),
+    /readUint32 must return an integer in \[0, 4294967295\]/,
+  );
+});
+
+test('observing a new round clears the prior uncommitted compound package before a failed redraw', async () => {
+  let currentRound = roundAuthority();
+  let entropyValue = 4;
+  const adapter = createBattleNewBaseLiveConsumerAdapter({
+    readRoundAuthority: async () => currentRound,
+    readAuthoritativeHand3Uint32: () => entropyValue,
+    readCompoundAttackCandidate: async () => compoundCandidate(),
+    sendExistingBattleAction: async () => true,
+  });
+
+  await adapter.stageCompoundAttack('ROCK');
+  assert.notEqual(adapter.status().stagedCompoundAttack, null);
+
+  currentRound = roundAuthority({ roundId: 'round-8' });
+  entropyValue = 0x1_0000_0000;
+  await assert.rejects(() => adapter.syncRoundStart(), /readUint32 must return/);
+  assert.equal(adapter.status().stagedCompoundAttack, null);
+});
+
+test('stages only a complete authority-supplied package matching the uniformly assigned physical card', async () => {
   const { adapter } = createHarness();
   const stage = await adapter.stageCompoundAttack('ROCK');
 
@@ -119,6 +194,7 @@ test('fresh authority mismatch blocks the whole commit before existing transport
   const sent = [];
   const adapter = createBattleNewBaseLiveConsumerAdapter({
     readRoundAuthority: async () => roundAuthority(),
+    readAuthoritativeHand3Uint32: () => 4,
     readCompoundAttackCandidate: async () => {
       reads += 1;
       return reads === 1
@@ -176,6 +252,7 @@ test('Mana recovery remains an opaque authority operation and its amount is neve
   let applied = null;
   const adapter = createBattleNewBaseLiveConsumerAdapter({
     readRoundAuthority: async () => roundAuthority(),
+    readAuthoritativeHand3Uint32: () => 4,
     readCompoundAttackCandidate: async () => compoundCandidate(),
     sendExistingBattleAction: async () => true,
     readManaRecoveryOperation: async () => authorityOperation,
@@ -201,9 +278,13 @@ test('Mana seam is fail-closed when it is intentionally not connected', async ()
   );
 });
 
-test('contract records the non-authority boundaries and keeps optional rules outside core Battle', () => {
+test('contract records canonical hand3 composition and keeps optional rules outside core Battle', () => {
   assert.deepEqual(
     {
+      hand3MappingAuthority: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.hand3MappingAuthority,
+      hand3EntropyAuthority: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.hand3EntropyAuthority,
+      hand3AssignmentEpoch: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.hand3AssignmentEpoch,
+      hand3RerollWithinRound: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.hand3RerollWithinRound,
       nativeSuitDeterminesJankenSlot: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.nativeSuitDeterminesJankenSlot,
       computesTarget: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.computesTarget,
       computesLegality: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.computesLegality,
@@ -216,6 +297,10 @@ test('contract records the non-authority boundaries and keeps optional rules out
       secondBattleEngine: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.secondBattleEngine,
     },
     {
+      hand3MappingAuthority: 'CANONICAL_UNIFORM_SIX_PERMUTATION_POLICY',
+      hand3EntropyAuthority: 'CALLER_UINT32',
+      hand3AssignmentEpoch: 'ROUND_ID',
+      hand3RerollWithinRound: false,
       nativeSuitDeterminesJankenSlot: false,
       computesTarget: false,
       computesLegality: false,

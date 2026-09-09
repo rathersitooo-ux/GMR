@@ -1,0 +1,32 @@
+name: TEMP Battle controlled character HTML live R1
+
+on:
+  push:
+    branches:
+      - sol/battle-char4p-html-live-r1-20260909
+    paths:
+      - 'tools/temp-battle-char4p-html-live-r1.py'
+      - '.github/workflows/zz-temp-battle-char4p-html-live-r1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Exact branch witness
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD
+          git rev-parse HEAD:browser/GAMEROAD.html
+          test -f data/preaction-authorizations/BATTLE-CHAR4P-HTML-LIVE-R1-20260909T1754-SOL-K4N8Q8.json
+      - name: Probe current controlled-character seams
+        run: |
+          set -euo pipefail
+          python3 tools/temp-battle-char4p-html-live-r1.py

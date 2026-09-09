@@ -264,7 +264,7 @@ test('normalizes the caller lane blocks once so Flanora, progression and GOAL-pa
   assert.deepEqual(runtime.flanoraLayout.shieldLinkedLaneColumnsByParticipant.P1, [0, 1, 2]);
   assert.deepEqual(runtime.snapshot().connectedLaneKeys, ['P1:0']);
   assert.equal(runtime.progressionPresentation().lanePresentations[0].key, 'P1:0');
-  assert.equal(runtime.progressionPresentation().lanePresentations[0].establishedStageCount, 7);
+  assert.equal(runtime.progressionPresentation().lanePresentations[0].builtStageCount, 7);
   assert.equal(roadState(runtime, 'P1', 0, 7).state, 'BUILT');
   assert.equal(runtime.resolveGateCueLane('P1', 0).entryCellId, 'clearing:top:0');
   assert.equal(runtime.resolveGateCueLane('P1', 1).arrowStack, null);

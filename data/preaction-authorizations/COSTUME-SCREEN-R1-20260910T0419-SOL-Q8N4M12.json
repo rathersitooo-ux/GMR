@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "COSTUME-SCREEN-R1-20260910T0419-SOL-Q8N4M12",
+  "taskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "workUnitKey": "PARTNER_COSTUME_BROWSER_SCREEN_R1",
+  "acquireKey": "COSTUME-SCREEN-R1-20260910T0419-SOL-Q8N4M12",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_COSTUME_SCREEN_ADOPTED_SEMANTICS_FORMAL_ASSET_HOLD",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "MERGED_BROWSER_SESSION_RUNTIME_CALLER_MOUNT_BOUNDARY",
+  "proceedToken": "PROCEED|COSTUME-SCREEN-R1-20260910T0419-SOL-Q8N4M12|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-costume-screen|new-module-only|active-lease",
+  "authorizationBaseSha": "b314b25dd6008bfaa0d7e55eeea8be240751277b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "leaseWorkUnitKey": "PARTNER_COSTUME_BROWSER_SCREEN_R1",
+  "leaseAcquireKey": "COSTUME-SCREEN-R1-20260910T0419-SOL-Q8N4M12",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 04:19 JST",
+  "leaseUntilJst": "2026-09-10 05:19 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A926:L926",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/partner-costume-screen-r1-20260910; NEW browser/partner-costume-screen-runtime-mount.mjs; NEW tests/partner-costume-screen-runtime-mount.test.mjs; own transient data/preaction-authorizations/COSTUME-SCREEN-R1-20260910T0419-SOL-Q8N4M12.json only. READ_ONLY reuse: browser/partner-costume-browser-session-runtime.mjs; browser/partner-costume-core.mjs. browser/partner-shell-runtime-mount.mjs; browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs; formal costume assets; save/economy/network READ_ONLY.",
+  "solutionSignature": "PARTNER_COSTUME_CALLER_MOUNTED_SCREEN_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_SCREEN_CONTRACT_PLUS_MERGED_SESSION_RUNTIME",
+  "solutionSearchEvidence": [
+    "The adopted costume screen contract already fixes the three user categories, local provisional equip, same-item detail, revert, recommended set and authoritative save boundary.",
+    "The merged browser costume session runtime already owns draft/save orchestration and is reused rather than duplicated.",
+    "The current Partner shell is actively owned by another WorkUnit, so this slice is a standalone caller-mounted screen and does not mutate shared shell or HTML.",
+    "Formal costume art and entitlement catalog remain caller-owned; missing art must render a truthful base/fallback preview instead of fabricated assets."
+  ],
+  "scope": [
+    "browser/partner-costume-screen-runtime-mount.mjs",
+    "tests/partner-costume-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-costume-screen-runtime-mount.mjs",
+    "tests/partner-costume-screen-runtime-mount.test.mjs"
+  ]
+}

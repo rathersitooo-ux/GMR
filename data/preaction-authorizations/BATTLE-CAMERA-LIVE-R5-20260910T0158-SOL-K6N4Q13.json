@@ -1,0 +1,22 @@
+{
+  "schema": "gameroad.preaction.v3",
+  "acquireKey": "BATTLE-CAMERA-LIVE-R5-20260910T0158-SOL-K6N4Q13",
+  "parentTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CAMERA_LIVE_HTML_MOUNT_R5",
+  "userReason": "USER_DELEGATED_MAKASETA_20260910 / R4_EXPIRED_PRODUCT0 / SAME_CAMERA_OUTCOME_CONTINUATION",
+  "leaseExactMutableResources": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/battle-camera-live-integration.test.mjs"
+  ],
+  "readOnlyInputs": [
+    "browser/battle-camera-control-core.mjs",
+    "browser/battle-camera-input-router.mjs"
+  ],
+  "prohibitions": [
+    "no second camera/gameplay/movement/target engine",
+    "no camera transform on HUD/hand/SlidePad/Advice",
+    "no gameplay or legality writes from camera",
+    "no world relayout merely to fit overview"
+  ]
+}

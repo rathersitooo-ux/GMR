@@ -1,0 +1,200 @@
+name: temp-deck-save-single-install-actual-r1
+
+on:
+  push:
+    branches:
+      - sol/deck-save-single-install-actual-r1-20260910
+
+permissions:
+  contents: read
+
+jobs:
+  actual-game-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/deck-save-single-install-actual-r1-20260910
+
+      - name: Confirm PRE_ACTION and exact unchanged product base
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f data/preaction-authorizations/DECK-SAVE-SINGLE-INSTALL-ACTUAL-R1-20260910T0353-SOL-Q8N4K7.json
+          grep -F 'PREACTION_PROCEED_ALLOWED' data/preaction-authorizations/DECK-SAVE-SINGLE-INSTALL-ACTUAL-R1-20260910T0353-SOL-Q8N4K7.json
+          grep -F 'CURRENT_ACTIVE_LEASES!A916:L916' data/preaction-authorizations/DECK-SAVE-SINGLE-INSTALL-ACTUAL-R1-20260910T0353-SOL-Q8N4K7.json
+          test "$(git merge-base HEAD aed6367624c6e92e39946e5a02541ada75fd0b60)" = 'aed6367624c6e92e39946e5a02541ada75fd0b60'
+          git diff --quiet aed6367624c6e92e39946e5a02541ada75fd0b60..HEAD -- browser/GAMEROAD.html browser/deck-save-recovery-core.mjs
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+
+      - name: Serve exact current product
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/deck-save-http.log 2>&1 &
+          echo $! > /tmp/deck-save-http.pid
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/browser/GAMEROAD.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/deck-save-http.log
+          exit 1
+
+      - name: Run current-main actual save and reload proof
+        shell: bash
+        run: |
+          cat > /tmp/deck-save-single-install-proof.mjs <<'NODE'
+          import fs from 'node:fs';
+          import { chromium } from '@playwright/test';
+
+          const fail = (message, detail = null) => {
+            const suffix = detail === null ? '' : `\n${JSON.stringify(detail, null, 2)}`;
+            throw new Error(`${message}${suffix}`);
+          };
+          const expectEqual = (actual, expected, label) => {
+            if (actual !== expected) fail(`${label}: expected ${JSON.stringify(expected)} got ${JSON.stringify(actual)}`);
+          };
+          const browser = await chromium.launch({ headless: true });
+          const context = await browser.newContext({ viewport: { width: 1536, height: 864 } });
+          const page = await context.newPage();
+
+          await page.addInitScript(() => {
+            globalThis.__deckSaveCaptureAdds = 0;
+            const original = EventTarget.prototype.addEventListener;
+            EventTarget.prototype.addEventListener = function(type, listener, options) {
+              const capture = options === true || (options && typeof options === 'object' && options.capture === true);
+              if (type === 'click' && this?.id === 'saveDeck' && listener?.name === 'onCapture' && capture) {
+                globalThis.__deckSaveCaptureAdds += 1;
+              }
+              return original.call(this, type, listener, options);
+            };
+          });
+
+          const boot = async () => {
+            const response = await page.goto('http://127.0.0.1:4173/browser/GAMEROAD.html', { waitUntil: 'commit', timeout: 30_000 });
+            if (!response?.ok()) fail('main HTML failed', { status: response?.status() });
+            await page.locator('section[data-screen="home"]').waitFor({ state: 'visible', timeout: 30_000 });
+            await page.waitForFunction(() => globalThis.GAMEROAD_DECK_SAVE_ATOMICITY_GUARD?.snapshot?.().status === 'ready', null, { timeout: 10_000 });
+            const install = await page.evaluate(() => ({
+              captureAdds: globalThis.__deckSaveCaptureAdds,
+              scriptCount: [...document.scripts].filter((node) => (node.getAttribute('src') || '').includes('deck-save-recovery-core.mjs')).length,
+              resourceCount: performance.getEntriesByType('resource').filter((entry) => entry.name.includes('deck-save-recovery-core.mjs')).length,
+              guard: globalThis.GAMEROAD_DECK_SAVE_ATOMICITY_GUARD?.snapshot?.() ?? null,
+            }));
+            expectEqual(install.captureAdds, 1, 'single #saveDeck onCapture capture registration');
+            expectEqual(install.scriptCount, 1, 'single recovery script tag');
+            expectEqual(install.resourceCount, 1, 'single recovery module resource load');
+            expectEqual(install.guard?.status, 'ready', 'guard ready after boot');
+            return install;
+          };
+
+          const enterCards = async () => {
+            const control = page.locator('[data-home-target="cards"]:visible, [data-go="cards"]:visible').first();
+            await control.waitFor({ state: 'visible', timeout: 10_000 });
+            await control.click();
+            const cards = page.locator('section[data-screen="cards"]');
+            await cards.waitFor({ state: 'visible', timeout: 10_000 });
+            return cards;
+          };
+
+          const firstInstall = await boot();
+          let cards = await enterCards();
+          const prepared = await page.evaluate(() => {
+            const t = globalThis.__GAMEROAD_TEST__;
+            if (!t) throw new Error('__GAMEROAD_TEST__ missing');
+            const publicMain = new Set(t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
+            const standard = globalThis.__CARD_DATA__
+              .filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)))
+              .map((card) => card.id);
+            const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
+            const nonRoyal = standard.filter((id) => !t.isRoyalCard(id));
+            const main = [...nonRoyal.slice(0, 37), ...royalIds];
+            const setValidation = t.deckSetDraft(main, []);
+            const draftValidation = t.deckValidate(t.state.deckDraft, { forBattle: true });
+            return { mainCount: main.length, setValidation, draftValidation };
+          });
+          expectEqual(prepared.mainCount, 40, 'prepared legal main deck size');
+          if (!prepared.draftValidation?.ok) fail('prepared draft is not battle-legal', prepared);
+          await page.waitForTimeout(100);
+          expectEqual((await cards.locator('#deckCount').textContent())?.trim(), '40', 'visible deck count before save');
+          expectEqual((await cards.locator('#exDeckCount').textContent())?.trim(), '0', 'visible EX count before save');
+          const validationClass = await cards.locator('#deckValidation').getAttribute('class');
+          if (!String(validationClass).split(/\s+/).includes('ok')) fail('visible deck validation is not ok', { validationClass });
+
+          const save = cards.locator('#saveDeck');
+          await save.waitFor({ state: 'visible', timeout: 10_000 });
+          if (await save.isDisabled()) fail('visible Save button is disabled');
+          await save.click();
+          await page.locator('#deckSaveState').waitFor({ state: 'visible', timeout: 10_000 });
+          await page.waitForFunction(() => document.querySelector('#deckSaveState')?.textContent?.trim() === '保存済み', null, { timeout: 10_000 });
+          await page.waitForFunction(() => globalThis.GAMEROAD_DECK_SAVE_ATOMICITY_GUARD?.snapshot?.().status === 'saved', null, { timeout: 10_000 });
+
+          const afterSave = await page.evaluate(() => ({
+            captureAdds: globalThis.__deckSaveCaptureAdds,
+            guard: globalThis.GAMEROAD_DECK_SAVE_ATOMICITY_GUARD?.snapshot?.() ?? null,
+            rootRaw: localStorage.getItem('gameroad.browser.v10.core.1'),
+          }));
+          expectEqual(afterSave.captureAdds, 1, 'single capture registration remains after save');
+          expectEqual(afterSave.guard?.status, 'saved', 'atomic save guard result');
+          if (!afterSave.rootRaw) fail('durable root save missing after visible Save');
+
+          await page.reload({ waitUntil: 'commit', timeout: 30_000 });
+          await page.locator('section[data-screen="home"]').waitFor({ state: 'visible', timeout: 30_000 });
+          await page.waitForFunction(() => globalThis.GAMEROAD_DECK_SAVE_ATOMICITY_GUARD?.snapshot?.().status === 'ready', null, { timeout: 10_000 });
+          const secondInstall = await page.evaluate(() => ({
+            captureAdds: globalThis.__deckSaveCaptureAdds,
+            scriptCount: [...document.scripts].filter((node) => (node.getAttribute('src') || '').includes('deck-save-recovery-core.mjs')).length,
+            resourceCount: performance.getEntriesByType('resource').filter((entry) => entry.name.includes('deck-save-recovery-core.mjs')).length,
+            guard: globalThis.GAMEROAD_DECK_SAVE_ATOMICITY_GUARD?.snapshot?.() ?? null,
+          }));
+          expectEqual(secondInstall.captureAdds, 1, 'single capture registration after reload');
+          expectEqual(secondInstall.scriptCount, 1, 'single recovery script tag after reload');
+          expectEqual(secondInstall.resourceCount, 1, 'single recovery resource after reload');
+
+          cards = await enterCards();
+          expectEqual((await cards.locator('#deckCount').textContent())?.trim(), '40', 'visible deck count after reload');
+          expectEqual((await cards.locator('#exDeckCount').textContent())?.trim(), '0', 'visible EX count after reload');
+          expectEqual((await cards.locator('#deckSaveState').textContent())?.trim(), '保存済み', 'visible save state after reload');
+          const rootAfterReload = await page.evaluate(() => localStorage.getItem('gameroad.browser.v10.core.1'));
+          expectEqual(rootAfterReload, afterSave.rootRaw, 'durable root byte equality across reload');
+
+          const evidence = {
+            schema: 'gameroad.deck-save-single-install-actual-game.v1',
+            sourceBaseSha: 'aed6367624c6e92e39946e5a02541ada75fd0b60',
+            firstInstall,
+            afterSave: { captureAdds: afterSave.captureAdds, guard: afterSave.guard, rootBytes: afterSave.rootRaw.length },
+            secondInstall,
+            afterReload: { deckCount: 40, exDeckCount: 0, saveState: '保存済み', rootByteEqual: true },
+            verdict: 'PASS_ALREADY_REFLECTED',
+          };
+          fs.writeFileSync('/tmp/deck-save-single-install-evidence.json', JSON.stringify(evidence, null, 2));
+          console.log(JSON.stringify(evidence, null, 2));
+          await browser.close();
+          NODE
+          node /tmp/deck-save-single-install-proof.mjs
+
+      - name: Verify product remained byte-identical
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --exit-code -- browser/GAMEROAD.html browser/deck-save-recovery-core.mjs
+          git diff --quiet aed6367624c6e92e39946e5a02541ada75fd0b60..HEAD -- browser/GAMEROAD.html browser/deck-save-recovery-core.mjs
+
+      - name: Upload actual-game evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deck-save-single-install-actual-r1-${{ github.run_id }}
+          path: /tmp/deck-save-single-install-evidence.json
+          if-no-files-found: warn
+          retention-days: 14

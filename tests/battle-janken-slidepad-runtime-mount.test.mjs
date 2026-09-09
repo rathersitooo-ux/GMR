@@ -79,6 +79,17 @@ test('dedicated Focus projection proactively replaces the legacy display snapsho
   assert.match(runtimeSource, /focusAssignmentSyncPending = true;[\s\S]*readDedicatedFocusContext\(\)\.finally/);
 });
 
+
+test('dedicated Focus never paints the legacy suit-bound mapping while current Hand3 authority is loading', () => {
+  const runtimeSource = readFileSync(
+    new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
+    'utf8',
+  );
+  assert.match(runtimeSource, /const awaitingCurrentHand3 = dedicatedFocus[\s\S]*CURRENT_HAND3_POLICY/);
+  assert.match(runtimeSource, /if \(awaitingCurrentHand3\) \{[\s\S]*node\.disabled = true;[\s\S]*node\.dataset\.cardId = '';[\s\S]*cardText\.textContent = '—';[\s\S]*readDedicatedFocusContext\(\)\.finally[\s\S]*return;/);
+  assert.equal((runtimeSource.match(/readDedicatedFocusContext\(\)\.finally/g) ?? []).length, 1);
+});
+
 test('projects fixed janken slots while keeping selected physical cards out of ordinary hand membership', () => {
   const model = buildBattleJankenSlidePadModel({ roundId: '1', hand, pickDuplicateIndex: () => 1 });
   assert.equal(model.schema, BATTLE_JANKEN_SLIDEPAD_RUNTIME_SCHEMA);

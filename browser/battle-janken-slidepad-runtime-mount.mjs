@@ -1504,6 +1504,31 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
       pickDuplicateIndex: (request) => entropyIndex(globalRef, request),
     });
     assignment = model.assignment;
+    const awaitingCurrentHand3 = dedicatedFocus
+      && assignment?.assignmentMode !== NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY;
+    if (awaitingCurrentHand3) {
+      clearPlayableHandAffordance(root);
+      rowRouletteHost.hidden = true;
+      rowRouletteRuntime?.refresh?.();
+      for (const jankenHand of SLOT_ORDER) {
+        const node = slotNodes.get(jankenHand);
+        const cardText = node?.querySelector?.('.grJankenSlidePadCard');
+        if (!node) continue;
+        node.disabled = true;
+        node.dataset.cardId = '';
+        node.setAttribute('aria-label', `${SLOT_VIEW[jankenHand].symbol} ${SLOT_VIEW[jankenHand].hand} 読み込み中`);
+        if (cardText) cardText.textContent = '—';
+        node.onclick = null;
+      }
+      openForRound(model.roundId);
+      if (!focusAssignmentSyncPending) {
+        focusAssignmentSyncPending = true;
+        void readDedicatedFocusContext().finally(() => {
+          focusAssignmentSyncPending = false;
+        });
+      }
+      return;
+    }
     syncHandZoneProjection(root, model);
     syncPlayableHandAffordance(root);
     syncHandCardFocusPresentation();
@@ -1530,16 +1555,6 @@ export function mountBattleJankenSlidePadRuntime(globalRef = globalThis, {
     }
     if (armedHand) renderLoadPreview(armedHand);
     openForRound(model.roundId);
-    if (
-      dedicatedFocus
-      && assignment?.assignmentMode !== NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY
-      && !focusAssignmentSyncPending
-    ) {
-      focusAssignmentSyncPending = true;
-      void readDedicatedFocusContext().finally(() => {
-        focusAssignmentSyncPending = false;
-      });
-    }
   }
 
   function schedule() {

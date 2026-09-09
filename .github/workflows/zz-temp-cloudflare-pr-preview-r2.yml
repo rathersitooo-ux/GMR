@@ -1,4 +1,4 @@
-name: GAMEROAD Codex Shared Preview Pixel Evidence R4
+name: GAMEROAD Codex Shared Preview Pixel Evidence R5
 
 on:
   push:
@@ -87,20 +87,17 @@ jobs:
             throw new Error(`legal deck precondition failed: ${JSON.stringify(deckSetup)}`);
           }
 
-          const started = await page.evaluate(() => {
+          await page.evaluate(() => {
             const t = window.__GAMEROAD_TEST__;
+            t.battlePresentationFast(false);
             t.start('4p', 'road_shield');
-            return {
-              screen: t.state.screen,
-              mode: t.state.match?.mode ?? null,
-              playerCount: t.state.match?.players?.length ?? 0,
-            };
           });
-          if (started.screen !== 'battle' || started.mode !== '4p' || started.playerCount !== 4) {
-            throw new Error(`canonical four-player Battle start mismatch: ${JSON.stringify(started)}`);
-          }
-
-          await page.locator('section[data-screen="battle"]').waitFor({ state: 'visible', timeout: 30_000 });
+          const battle = page.locator('section[data-screen="battle"]');
+          await battle.waitFor({ state: 'visible', timeout: 30_000 });
+          await page.waitForFunction(() => {
+            const t = window.__GAMEROAD_TEST__;
+            return t?.state?.screen === 'battle' && t?.state?.match?.mode === '4p' && t?.state?.match?.players?.length === 4;
+          }, null, { timeout: 30_000 });
           await page.waitForFunction(() =>
             document.querySelectorAll('#publicPlayerStrip .publicPlayerChip').length === 4 &&
             document.querySelectorAll('#boardPlayers .boardPlayerToken').length === 4 &&

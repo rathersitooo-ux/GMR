@@ -10,6 +10,9 @@ import {
   prepareBattleJankenCompoundAttackCommit,
   stageBattleJankenCompoundAttack,
 } from './battle-janken-compound-attack-package-core.mjs';
+import {
+  clearBattlePrecommitSelection,
+} from './battle-precommit-clear-core.mjs';
 
 const JANKEN_HANDS = new Set(['ROCK', 'SCISSORS', 'PAPER']);
 
@@ -64,6 +67,29 @@ function requireCurrentHandCardIds(hand) {
   });
 }
 
+function precommitClearResult({
+  ok,
+  cleared,
+  reason,
+  existingDraftCleared = false,
+  compoundCleared = false,
+  existingDraftConnected,
+  projection = null,
+}) {
+  return Object.freeze({
+    ok,
+    cleared,
+    reason,
+    existingDraftCleared,
+    compoundCleared,
+    existingDraftConnected,
+    complete: existingDraftConnected === true,
+    projection,
+    authoritativeRollback: false,
+    gameStateWrite: false,
+  });
+}
+
 /**
  * Thin production-consumer boundary for the NEW BASE migration.
  *
@@ -73,6 +99,8 @@ function requireCurrentHandCardIds(hand) {
  *   caller-authoritative uint32 source exactly once for a new round snapshot;
  * - public board/legal-target authority supplies the complete compound attack;
  * - the existing Battle transport performs the authoritative commit;
+ * - the existing precommit-clear policy projects caller-owned plan/target draft
+ *   cancellation while this adapter owns only its local staged compound package;
  * - Mana recovery is an opaque caller-owned operation, including its amount.
  *
  * The adapter composes those existing authorities, preserves one immutable round
@@ -84,6 +112,8 @@ export function createBattleNewBaseLiveConsumerAdapter({
   readAuthoritativeHand3Uint32,
   readCompoundAttackCandidate,
   sendExistingBattleAction,
+  readExistingPrecommitState = null,
+  applyExistingPrecommitDraft = null,
   readManaRecoveryOperation = null,
   applyExistingManaRecovery = null,
 } = {}) {
@@ -91,6 +121,13 @@ export function createBattleNewBaseLiveConsumerAdapter({
   requiredFunction(readAuthoritativeHand3Uint32, 'readAuthoritativeHand3Uint32');
   requiredFunction(readCompoundAttackCandidate, 'readCompoundAttackCandidate');
   requiredFunction(sendExistingBattleAction, 'sendExistingBattleAction');
+  if ((readExistingPrecommitState === null) !== (applyExistingPrecommitDraft === null)) {
+    throw new TypeError('Precommit state reader and draft applier must be supplied together or both omitted');
+  }
+  if (readExistingPrecommitState !== null) {
+    requiredFunction(readExistingPrecommitState, 'readExistingPrecommitState');
+    requiredFunction(applyExistingPrecommitDraft, 'applyExistingPrecommitDraft');
+  }
   if ((readManaRecoveryOperation === null) !== (applyExistingManaRecovery === null)) {
     throw new TypeError('Mana recovery reader and applier must be supplied together or both omitted');
   }
@@ -169,6 +206,74 @@ export function createBattleNewBaseLiveConsumerAdapter({
       return cleared;
     },
 
+    async clearPrecommitSelection() {
+      if (commitInFlight) {
+        return precommitClearResult({
+          ok: false,
+          cleared: false,
+          reason: 'COMMIT_IN_FLIGHT',
+          existingDraftConnected: readExistingPrecommitState !== null,
+        });
+      }
+      if (readExistingPrecommitState === null) {
+        return precommitClearResult({
+          ok: false,
+          cleared: false,
+          reason: 'PRECOMMIT_CLEAR_NOT_CONNECTED',
+          existingDraftConnected: false,
+        });
+      }
+
+      const state = requiredObject(
+        await readExistingPrecommitState(),
+        'authority-supplied existing precommit state',
+      );
+      const projection = clearBattlePrecommitSelection(state);
+      const hasCompoundStage = Boolean(stagedCompoundAttack?.package);
+
+      if (!projection.cleared && projection.reason !== 'NOTHING_TO_CLEAR') {
+        return precommitClearResult({
+          ok: false,
+          cleared: false,
+          reason: projection.reason,
+          existingDraftConnected: true,
+          projection,
+        });
+      }
+
+      if (projection.cleared) {
+        const accepted = await applyExistingPrecommitDraft(projection.next);
+        if (accepted !== true) {
+          return precommitClearResult({
+            ok: false,
+            cleared: false,
+            reason: 'EXISTING_PRECOMMIT_CLEAR_REJECTED',
+            existingDraftConnected: true,
+            projection,
+          });
+        }
+      }
+
+      let compoundCleared = false;
+      if (hasCompoundStage) {
+        const clearedCompound = clearBattleJankenCompoundAttackStage(stagedCompoundAttack);
+        compoundCleared = clearedCompound.cleared === true;
+        stagedCompoundAttack = null;
+      }
+
+      const existingDraftCleared = projection.cleared === true;
+      const cleared = existingDraftCleared || compoundCleared;
+      return precommitClearResult({
+        ok: cleared,
+        cleared,
+        reason: cleared ? 'CLEARED_PRECOMMIT_SELECTION' : 'NOTHING_TO_CLEAR',
+        existingDraftCleared,
+        compoundCleared,
+        existingDraftConnected: true,
+        projection,
+      });
+    },
+
     async commitCompoundAttack() {
       if (commitInFlight) {
         return Object.freeze({ ok: false, committed: false, reason: 'COMMIT_IN_FLIGHT' });
@@ -223,6 +328,7 @@ export function createBattleNewBaseLiveConsumerAdapter({
         assignmentMode: roundSnapshot?.assignmentMode ?? null,
         stagedCompoundAttack: stagedCompoundAttack?.preview ?? null,
         commitInFlight,
+        precommitClearConnected: readExistingPrecommitState !== null,
         manaRecoveryConnected: readManaRecoveryOperation !== null,
       });
     },
@@ -241,6 +347,10 @@ export const BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT = Object.freeze({
   computesLegality: false,
   computesHand3Mapping: false,
   compoundCommitTransport: 'EXISTING_BATTLE_ACTION_CALLBACK',
+  precommitClearPolicy: 'EXISTING_BATTLE_PRECOMMIT_CLEAR_CORE',
+  precommitClearDraftAuthority: 'CALLER',
+  precommitClearAuthoritativeRollback: false,
+  precommitClearGameStateWrite: false,
   manaRecoveryAmountAuthority: 'CALLER',
   computesManaRecoveryAmount: false,
   schedulesManaRecovery: false,

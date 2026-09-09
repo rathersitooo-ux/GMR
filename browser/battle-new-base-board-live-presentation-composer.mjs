@@ -9,6 +9,9 @@ import {
   projectNewBaseGoalPathPresentation,
 } from './new-base-goal-path-presentation-core.mjs';
 import {
+  projectNewBaseProgressionLanePresentation,
+} from './new-base-progression-lane-presentation-core.mjs';
+import {
   mountFlanoraBoardSurface,
 } from './new-base-flanora-board-surface-runtime.mjs';
 import {
@@ -49,7 +52,11 @@ function projectGoalPath(goalPathLayout, straightCardIdsByColumn) {
   if (!presentation?.ok) {
     return { ok: false, reason: presentation?.reason ?? 'GOAL_PATH_PRESENTATION_FAILED' };
   }
-  return { ok: true, projection, presentation };
+  const progression = projectNewBaseProgressionLanePresentation(presentation);
+  if (!progression?.ok) {
+    return { ok: false, reason: progression?.reason ?? 'PROGRESSION_PRESENTATION_FAILED' };
+  }
+  return { ok: true, projection, presentation, progression };
 }
 
 function copyStraightSnapshot(value) {
@@ -105,6 +112,12 @@ export function mountBattleNewBaseBoardLivePresentation({
     return fail(boardSurfaceRuntime?.reason ?? 'FLANORA_BOARD_SURFACE_MOUNT_FAILED');
   }
 
+  const initialProgressionSync = boardSurfaceRuntime.syncProgressionPresentation(initialGoal.progression);
+  if (initialProgressionSync?.applied !== true) {
+    boardSurfaceRuntime.destroy?.();
+    return fail(initialProgressionSync?.reason ?? 'PROGRESSION_PRESENTATION_SYNC_FAILED');
+  }
+
   const gateCueRuntime = mountNewBaseGoalEntryGateCue({
     boardSurfaceRuntime,
     goalPathPresentation: initialGoal.presentation,
@@ -122,6 +135,7 @@ export function mountBattleNewBaseBoardLivePresentation({
   let currentStraightCardIdsByColumn = copyStraightSnapshot(straightCardIdsByColumn);
   let currentGoalProjection = initialGoal.projection;
   let currentGoalPresentation = initialGoal.presentation;
+  let currentProgressionPresentation = initialGoal.progression;
 
   function snapshotState() {
     const connectedLaneKeys = currentGoalPresentation.lanePresentations
@@ -134,6 +148,8 @@ export function mountBattleNewBaseBoardLivePresentation({
       reason: destroyed ? 'RUNTIME_DESTROYED' : 'LIVE_PRESENTATION_READY',
       openGoalPathCount: currentGoalPresentation.openGoalPathCount,
       connectedLaneKeys,
+      progressionBuiltStageCount: currentProgressionPresentation.totalBuiltStageCount,
+      progressionLatentStageCount: currentProgressionPresentation.totalLatentStageCount,
       boardSurface: boardSurfaceRuntime.snapshot(),
       gateCue: gateCueRuntime.snapshot(),
       presentationOnly: true,
@@ -160,21 +176,32 @@ export function mountBattleNewBaseBoardLivePresentation({
       });
     }
 
+    const progressionResult = boardSurfaceRuntime.syncProgressionPresentation(nextGoal.progression);
+    if (progressionResult?.applied !== true) {
+      return deepFreeze({
+        ...fail(progressionResult?.reason ?? 'PROGRESSION_PRESENTATION_SYNC_FAILED'),
+        mounted: true,
+        priorStatePreserved: true,
+      });
+    }
+
     const cueResult = gateCueRuntime.syncGoalPathPresentation(
       nextGoal.presentation,
       nextParticipantColors === undefined ? {} : { participantColors: nextParticipantColors },
     );
     if (cueResult?.ok !== true) {
+      const rollback = boardSurfaceRuntime.syncProgressionPresentation(currentProgressionPresentation);
       return deepFreeze({
         ...fail(cueResult?.reason ?? 'GOAL_ENTRY_GATE_CUE_SYNC_FAILED'),
         mounted: true,
-        priorStatePreserved: true,
+        priorStatePreserved: rollback?.applied === true,
       });
     }
 
     currentStraightCardIdsByColumn = copyStraightSnapshot(nextStraightCardIdsByColumn);
     currentGoalProjection = nextGoal.projection;
     currentGoalPresentation = nextGoal.presentation;
+    currentProgressionPresentation = nextGoal.progression;
     return deepFreeze({
       ...snapshotState(),
       ok: true,
@@ -207,6 +234,9 @@ export function mountBattleNewBaseBoardLivePresentation({
     goalPathPresentation() {
       return currentGoalPresentation;
     },
+    progressionPresentation() {
+      return currentProgressionPresentation;
+    },
     snapshot() {
       return snapshotState();
     },
@@ -229,10 +259,12 @@ export const BATTLE_NEW_BASE_BOARD_LIVE_PRESENTATION_COMPOSER_CONTRACT = deepFre
   straightCardSnapshotAuthority: 'CALLER',
   goalPathProjectionAuthority: 'EXISTING_NEW_BASE_GOAL_PATH_CORE',
   goalPathPresentationAuthority: 'EXISTING_NEW_BASE_GOAL_PATH_PRESENTATION_CORE',
+  progressionPresentationAuthority: 'EXISTING_NEW_BASE_PROGRESSION_LANE_PRESENTATION_CORE',
   boardSurfaceAuthority: 'EXISTING_FLANORA_PRESENTATION_RUNTIME',
   goalEntryCueAuthority: 'EXISTING_STATEFUL_GOAL_ENTRY_GATE_CUE_RUNTIME',
   participantColorAuthority: 'CALLER',
   ownsSevenCardRule: false,
+  ownsProgressionRule: false,
   ownsBoardGeometryRule: false,
   computesMovementLegality: false,
   computesTargetLegality: false,

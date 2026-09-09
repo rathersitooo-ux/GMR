@@ -14,6 +14,7 @@ const HOME_SELECTOR = '.screen.home[data-screen="home"]';
 const APP_SELECTOR = '.app';
 const ACTION_KINDS = new Set(['attack', 'counter']);
 const RESUME_SCHEMA = 'gameroad.study-run-resume.v1';
+const STUDY_CHECKPOINT_STORAGE_KEY = 'study/resume/current';
 
 export const STUDY_MANUAL_SMOKE_ACTION_POLICY = Object.freeze({
   authority: 'PROVISIONAL_SMOKE_ONLY',
@@ -51,16 +52,69 @@ function assertActionPolicy(policy) {
   return policy;
 }
 
+function assertCheckpointStore(store) {
+  if (store === null) return null;
+  if (!store || typeof store.load !== 'function' || typeof store.commit !== 'function') {
+    throw new TypeError('STUDY_RUNTIME_CHECKPOINT_STORE_REQUIRED');
+  }
+  return store;
+}
+
+export function createStudyRunCartridgeCheckpointStore({
+  cartridgeStorage,
+  key = STUDY_CHECKPOINT_STORAGE_KEY,
+} = {}) {
+  if (!cartridgeStorage || typeof cartridgeStorage.get !== 'function' || typeof cartridgeStorage.set !== 'function' || typeof cartridgeStorage.delete !== 'function') {
+    throw new TypeError('STUDY_RUNTIME_CARTRIDGE_STORAGE_REQUIRED');
+  }
+  if (typeof key !== 'string' || key !== key.trim() || !key) {
+    throw new TypeError('STUDY_RUNTIME_CHECKPOINT_STORAGE_KEY_INVALID');
+  }
+
+  function load() {
+    const saved = cartridgeStorage.get(key);
+    return saved === null ? null : cloneJson(saved);
+  }
+
+  function commit(checkpoint) {
+    const candidate = cloneJson(checkpoint);
+    cartridgeStorage.set(key, candidate);
+    const readback = cartridgeStorage.get(key);
+    if (readback === null || JSON.stringify(readback) !== JSON.stringify(candidate)) {
+      throw new Error('STUDY_RUNTIME_CHECKPOINT_COMMIT_READBACK_MISMATCH');
+    }
+    return Object.freeze(cloneJson(readback));
+  }
+
+  function clear() {
+    return cartridgeStorage.delete(key);
+  }
+
+  return Object.freeze({
+    authority: 'CARTRIDGE_STORAGE_CALLER_BACKEND',
+    storageBackendCreated: false,
+    key,
+    load,
+    commit,
+    clear,
+  });
+}
+
 export function createStudyRunConsumerController({
   pack = STUDY_MANUAL_PROBLEM_PACK,
   actionPolicy = STUDY_MANUAL_SMOKE_ACTION_POLICY,
   now = () => Date.now(),
   createSessionId = defaultSessionId,
   resumeCheckpoint = null,
+  checkpointStore = null,
 } = {}) {
   assertActionPolicy(actionPolicy);
   if (typeof now !== 'function' || typeof createSessionId !== 'function') {
     throw new TypeError('STUDY_RUNTIME_CLOCK_AND_ID_REQUIRED');
+  }
+  const persistence = assertCheckpointStore(checkpointStore);
+  if (resumeCheckpoint !== null && persistence !== null) {
+    throw new Error('STUDY_RUNTIME_MULTIPLE_RESUME_SOURCES_REFUSED');
   }
 
   let session = null;
@@ -116,6 +170,18 @@ export function createStudyRunConsumerController({
     });
   }
 
+  function persistStableBoundary() {
+    if (!persistence) return null;
+    return persistence.commit(exportResumeCheckpoint());
+  }
+
+  function loadSavedCheckpoint() {
+    if (!persistence) throw new Error('STUDY_RUNTIME_CHECKPOINT_STORE_NOT_CONFIGURED');
+    const saved = persistence.load();
+    if (saved === null) return snapshot();
+    return resumeFromCheckpoint(saved);
+  }
+
   function currentQuestion() {
     return session ? getCurrentStudyQuestion(session, pack) : null;
   }
@@ -129,6 +195,7 @@ export function createStudyRunConsumerController({
     hint = null;
     actionKind = 'attack';
     questionStartedAtMs = startedAtMs;
+    persistStableBoundary();
     return snapshot();
   }
 
@@ -141,6 +208,7 @@ export function createStudyRunConsumerController({
     if (!ACTION_KINDS.has(nextKind)) throw new TypeError('STUDY_RUNTIME_ACTION_KIND_INVALID');
     if (resolved) throw new Error('STUDY_RUNTIME_QUESTION_ALREADY_RESOLVED');
     actionKind = nextKind;
+    if (throws.length === 0) persistStableBoundary();
     return snapshot();
   }
 
@@ -196,6 +264,7 @@ export function createStudyRunConsumerController({
     resolved = null;
     hint = null;
     questionStartedAtMs = Math.max(0, Number(now()) || 0);
+    persistStableBoundary();
     return snapshot();
   }
 
@@ -229,6 +298,10 @@ export function createStudyRunConsumerController({
   }
 
   if (resumeCheckpoint !== null) resumeFromCheckpoint(resumeCheckpoint);
+  else if (persistence) {
+    const saved = persistence.load();
+    if (saved !== null) resumeFromCheckpoint(saved);
+  }
 
   return Object.freeze({
     start,
@@ -241,6 +314,8 @@ export function createStudyRunConsumerController({
     advance,
     exportResumeCheckpoint,
     resumeFromCheckpoint,
+    saveStableCheckpoint: persistStableBoundary,
+    loadSavedCheckpoint,
     getSnapshot: snapshot,
   });
 }
@@ -294,7 +369,7 @@ function actionText(action) {
   return `正解 → ${kind} ${Number(action.power).toFixed(2)}`;
 }
 
-export function mountStudyRunRuntime({ document: documentSource = globalThis.document } = {}) {
+export function mountStudyRunRuntime({ document: documentSource = globalThis.document, checkpointStore = null } = {}) {
   if (!documentSource?.createElement) throw new TypeError('STUDY_RUNTIME_DOCUMENT_REQUIRED');
   const existing = globalThis[GLOBAL_KEY];
   if (existing?.getSnapshot) return existing;
@@ -303,7 +378,7 @@ export function mountStudyRunRuntime({ document: documentSource = globalThis.doc
   if (!home || !app) throw new Error('STUDY_RUNTIME_SURFACE_MISSING');
 
   installStyle(documentSource);
-  const controller = createStudyRunConsumerController();
+  const controller = createStudyRunConsumerController({ checkpointStore });
   const entry = element(documentSource, 'button', {
     type: 'button', class: 'studyRunEntry', 'data-study-action': 'open', 'aria-haspopup': 'dialog',
   }, '勉強スレスパ');
@@ -418,10 +493,10 @@ export function mountStudyRunRuntime({ document: documentSource = globalThis.doc
   return api;
 }
 
-export function mountStudyRunFromCurrentBrowser() {
+export function mountStudyRunFromCurrentBrowser({ checkpointStore = null } = {}) {
   if (typeof document === 'undefined') return null;
   try {
-    return mountStudyRunRuntime({ document });
+    return mountStudyRunRuntime({ document, checkpointStore });
   } catch (error) {
     globalThis.__GAMEROAD_STUDY_RUN_MOUNT_ERROR__ = String(error?.message || error);
     return null;

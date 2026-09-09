@@ -1,0 +1,151 @@
+name: Temp Battle Roulette Oreca Live R1
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  patch-owned-runtime:
+    if: github.event.pull_request.head.ref == 'sol/battle-roulette-oreca-live-r1-20260909'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout owned branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Apply bounded Oreca live render patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('browser/battle-playable-hand-row-roulette-runtime.mjs')
+          source = path.read_text(encoding='utf-8')
+
+          import_anchor = """} from './slidepad-slot-roll-core.mjs';
+
+export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_SCHEMA"""
+          import_replacement = """} from './slidepad-slot-roll-core.mjs';
+import {
+  projectBattlePlayableHandRouletteOrecaPresentation,
+} from './battle-playable-hand-row-roulette-oreca-presentation-core.mjs';
+
+export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_SCHEMA"""
+          if source.count(import_anchor) != 1:
+              raise SystemExit('import anchor mismatch')
+          source = source.replace(import_anchor, import_replacement, 1)
+
+          helper_anchor = "export const BATTLE_PLAYABLE_HAND_ROW_ROULETTE_CSS = `"
+          helper = """export function projectBattlePlayableHandRowRouletteRenderRows(model) {
+  if (!model || model.schema !== BATTLE_PLAYABLE_HAND_ROW_ROULETTE_SCHEMA) {
+    return deepFreeze({ mode: 'INVALID', rows: Object.freeze([]) });
+  }
+  const oreca = projectBattlePlayableHandRouletteOrecaPresentation(model, { phase: 'IDLE' });
+  if (oreca.mode !== 'ORECA_SIX_ROW') {
+    return deepFreeze({ mode: 'EXISTING_RUNTIME_FALLBACK', rows: model.rows });
+  }
+  const selectedIndex = oreca.rows.findIndex((row) => row.selected);
+  const rows = oreca.rows.map((row, index) => Object.freeze({
+    ...row,
+    position: row.selected
+      ? 'SELECTED'
+      : selectedIndex < 0
+        ? 'COMMAND'
+        : index < selectedIndex
+          ? 'BEFORE'
+          : 'AFTER',
+  }));
+  return deepFreeze({ mode: 'ORECA_SIX_ROW', rows: Object.freeze(rows) });
+}
+
+"""
+          if source.count(helper_anchor) != 1:
+              raise SystemExit('helper anchor mismatch')
+          source = source.replace(helper_anchor, helper + helper_anchor, 1)
+
+          render_anchor = """  if (!host || !documentSource || !model || model.schema !== BATTLE_PLAYABLE_HAND_ROW_ROULETTE_SCHEMA) return false;
+  installBattlePlayableHandRowRouletteStyle(documentSource);
+  host.setAttribute('data-battle-playable-hand-row-roulette', '1');
+  host.setAttribute('data-empty', model.rows.length ? 'false' : 'true');"""
+          render_replacement = """  if (!host || !documentSource || !model || model.schema !== BATTLE_PLAYABLE_HAND_ROW_ROULETTE_SCHEMA) return false;
+  const renderProjection = projectBattlePlayableHandRowRouletteRenderRows(model);
+  const renderRows = renderProjection.rows;
+  installBattlePlayableHandRowRouletteStyle(documentSource);
+  host.setAttribute('data-battle-playable-hand-row-roulette', '1');
+  host.setAttribute('data-oreca-six-row', renderProjection.mode === 'ORECA_SIX_ROW' ? 'true' : 'false');
+  host.setAttribute('data-empty', renderRows.length ? 'false' : 'true');"""
+          if source.count(render_anchor) != 1:
+              raise SystemExit('render anchor mismatch')
+          source = source.replace(render_anchor, render_replacement, 1)
+
+          loop_anchor = "  for (const row of model.rows) {"
+          if source.count(loop_anchor) != 1:
+              raise SystemExit('row loop anchor mismatch')
+          source = source.replace(loop_anchor, "  for (const row of renderRows) {", 1)
+
+          position_anchor = "    button.dataset.position = row.position;"
+          position_replacement = """    button.dataset.position = row.position ?? (row.selected ? 'SELECTED' : 'COMMAND');
+    button.dataset.emphasis = row.emphasis ?? (row.selected ? 'PRIMARY' : 'SECONDARY');"""
+          if source.count(position_anchor) != 1:
+              raise SystemExit('position anchor mismatch')
+          source = source.replace(position_anchor, position_replacement, 1)
+
+          css_anchor = """[data-battle-playable-hand-row-roulette] .grBattleHandRouletteRow[data-position=\"BEFORE\"],
+[data-battle-playable-hand-row-roulette] .grBattleHandRouletteRow[data-position=\"AFTER\"]{
+  opacity:.72;
+}
+"""
+          css_replacement = css_anchor + """[data-battle-playable-hand-row-roulette][data-oreca-six-row=\"true\"] .grBattleHandRouletteRow{
+  opacity:.68;
+}
+[data-battle-playable-hand-row-roulette][data-oreca-six-row=\"true\"] .grBattleHandRouletteRow[data-selected=\"true\"]{
+  opacity:1;
+  transform:translateX(var(--gr-row-shift)) scale(1.06);
+}
+"""
+          if source.count(css_anchor) != 1:
+              raise SystemExit('css anchor mismatch')
+          source = source.replace(css_anchor, css_replacement, 1)
+
+          path.write_text(source, encoding='utf-8')
+          PY
+
+      - name: Run focused roulette tests
+        run: |
+          node --test tests/battle-playable-hand-row-roulette-runtime.test.mjs
+          node --test tests/battle-playable-hand-row-roulette-oreca-presentation-core.test.mjs
+          node --test tests/battle-playable-hand-row-roulette-oreca-live.test.mjs
+
+      - name: Verify bounded diff and remove transient files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          git rm -f data/preaction-authorizations/BATTLE-ROULETTE-ORECA-LIVE-R1-20260909T1536-SOL-O7K4Q6.json
+          git rm -f .github/workflows/zz-temp-battle-roulette-oreca-live-r1.yml
+          changed="$(git diff --name-only --cached; git diff --name-only)"
+          for path in $(printf '%s\n' "$changed" | sort -u); do
+            case "$path" in
+              browser/battle-playable-hand-row-roulette-runtime.mjs|tests/battle-playable-hand-row-roulette-oreca-live.test.mjs|data/preaction-authorizations/BATTLE-ROULETTE-ORECA-LIVE-R1-20260909T1536-SOL-O7K4Q6.json|.github/workflows/zz-temp-battle-roulette-oreca-live-r1.yml) ;;
+              *) echo "unexpected changed path: $path"; exit 1 ;;
+            esac
+          done
+
+      - name: Commit live product patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-bounded-executor'
+          git config user.email 'actions@users.noreply.github.com'
+          git add browser/battle-playable-hand-row-roulette-runtime.mjs tests/battle-playable-hand-row-roulette-oreca-live.test.mjs
+          git add -u data/preaction-authorizations .github/workflows
+          git commit -m 'Battle: 残り手札だけを6段ルーレットへ接続'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}

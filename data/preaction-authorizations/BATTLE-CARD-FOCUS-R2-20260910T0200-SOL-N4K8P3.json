@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CARD-FOCUS-R2-20260910T0200-SOL-N4K8P3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CARD_FOCUS_PRESENTATION_R2",
+  "acquireKey": "BATTLE-CARD-FOCUS-R2-20260910T0200-SOL-N4K8P3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_A84A3C_CARD_FOCUS_MISSING_R1_BRANCH_ONLY_20260910T0200JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "THREE_WAY_APPLY_VALIDATED_R1_FOCUS_DELTA_TO_FRESH_MAIN_FAIL_CLOSED_ON_CONFLICT",
+  "proceedToken": "PROCEED|BATTLE-CARD-FOCUS-R2-20260910T0200-SOL-N4K8P3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-card-focus|r1-donor-three-way|active-lease",
+  "authorizationBaseSha": "a84a3c877be133901dec969a6e67a54deb6da0c9",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CARD_FOCUS_PRESENTATION_R2",
+  "leaseAcquireKey": "BATTLE-CARD-FOCUS-R2-20260910T0200-SOL-N4K8P3",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 02:00 JST",
+  "leaseUntilJst": "2026-09-10 03:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A765:N765",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-card-focus-r2-20260910; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-card-focus-presentation.test.mjs; transient .github/workflows/zz-temp-battle-card-focus-r2.yml; own transient data/preaction-authorizations/BATTLE-CARD-FOCUS-R2-20260910T0200-SOL-N4K8P3.json only. Existing tests/battle-janken-slidepad-runtime-mount.test.mjs READ_ONLY execution. Old sol/battle-card-focus-r1-20260909 branch READ_ONLY donor. browser/GAMEROAD.html, deploy build, battle-screen runtime, gameplay/rules/target/legality/Hand3/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_CARD_FOCUS_R1_VALIDATED_DELTA_FRESH_MAIN_THREE_WAY_R2",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R1_FOCUSED_TESTS_PASS_CURRENT_MAIN_MISSING_FOCUS_IDENTIFIERS_20260910T0200JST",
+  "solutionSearchEvidence": [
+    "The validated R1 branch contains the intended presentation-only focus/legal/staged/snap delta, but it was never merged to main.",
+    "Fresh current main a84a3c877be133901dec969a6e67a54deb6da0c9 contains no BATTLE_CARD_FOCUS_PRESENTATION_SCHEMA, projectBattleCardFocusSnapPosition, data-card-focus, or cardFocusSnapshot.",
+    "All prior mutable leases for browser/battle-janken-slidepad-runtime-mount.mjs expired before 2026-09-10 02:00 JST; today's remaining camera lease owns GAMEROAD.html/build only.",
+    "R2 will apply only the R1 product diff through git three-way merge onto fresh main and fail closed on conflict; no blind old-branch merge.",
+    "Legal candidate authority remains currentPlayableHandAffordance; raw pointer remains aura hit-test authority; presentation must not calculate gameplay legality or target state."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-card-focus-presentation.test.mjs",
+    ".github/workflows/zz-temp-battle-card-focus-r2.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-card-focus-presentation.test.mjs",
+    ".github/workflows/zz-temp-battle-card-focus-r2.yml"
+  ]
+}

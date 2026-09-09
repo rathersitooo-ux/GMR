@@ -10,12 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Inspect accepted position mutation seams
+      - name: Inspect participant identity and Battle chrome seams
         shell: python
         run: |
           from pathlib import Path
           text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          needles = ['p.position=', '.position=', 'for(const step', 'for(let step', 'await sleep(', 'await wait(', 'renderBoard();updateBattleAvatar()', 'updateBattleAvatar();renderBoard()']
+          needles = ['function makePlayer(', '.top{', 'const PROD_CHARS=', 'character:', 'playerCharacterId', 'selectedPartnerId']
           for needle in needles:
               print('\n===== NEEDLE', repr(needle), '=====')
               start=0; shown=0
@@ -25,10 +25,10 @@ jobs:
                   shown+=1
                   line=text.count('\n',0,idx)+1
                   col=idx-(text.rfind('\n',0,idx)+1)
-                  lo=max(0,idx-1700); hi=min(len(text),idx+len(needle)+2600)
+                  lo=max(0,idx-1500); hi=min(len(text),idx+len(needle)+2600)
                   print('HIT',shown,'OFFSET',idx,'LINE',line,'COL',col)
                   print(text[lo:hi].replace('\r',''))
                   print('-----')
                   start=idx+len(needle)
-                  if shown>=12: break
+                  if shown>=8: break
               print('COUNT_SHOWN',shown)

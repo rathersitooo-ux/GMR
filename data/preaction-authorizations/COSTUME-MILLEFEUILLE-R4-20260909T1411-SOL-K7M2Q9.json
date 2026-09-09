@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "COSTUME-MILLEFEUILLE-R4-20260909T1411-SOL-K7M2Q9",
+  "taskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "workUnitKey": "PARTNER_COSTUME_CORE_DURABLE_LAYER_R1",
+  "acquireKey": "COSTUME-MILLEFEUILLE-R4-20260909T1411-SOL-K7M2Q9",
+  "riskClass": "MATERIAL_NOVEL",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-20260909-COSTUME-STATE-MODEL-CHECK",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "NODE-TEST-16-OF-16-PASS",
+  "proceedToken": "PROCEED|COSTUME-MILLEFEUILLE-R4-20260909T1411-SOL-K7M2Q9|PREACTION_PROCEED_ALLOWED|MATERIAL_NOVEL|current|lease|tests|reuse",
+  "authorizationBaseSha": "3176d910db54f09ae5b93821e71a05653f3be3a2",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "leaseWorkUnitKey": "PARTNER_COSTUME_CORE_DURABLE_LAYER_R1",
+  "leaseAcquireKey": "COSTUME-MILLEFEUILLE-R4-20260909T1411-SOL-K7M2Q9",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 14:11 JST",
+  "leaseUntilJst": "2026-09-09 15:11 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "browser/partner-costume-core.mjs; browser/partner-costume-durable-store.mjs; tests/partner-costume-core.test.mjs; tests/partner-costume-durable-store.test.mjs",
+  "scope": [
+    "browser/partner-costume-core.mjs",
+    "browser/partner-costume-durable-store.mjs",
+    "tests/partner-costume-core.test.mjs",
+    "tests/partner-costume-durable-store.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-costume-core.mjs",
+    "browser/partner-costume-durable-store.mjs",
+    "tests/partner-costume-core.test.mjs",
+    "tests/partner-costume-durable-store.test.mjs"
+  ],
+  "solutionSignature": "Reusable 2D partner costume state, provisional equip, per-partner save, and ordered layer projection without replacing GAMEROAD ownership or production storage authority.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT-20260909-COSTUME-OSS-ADAPT",
+  "solutionSearchEvidence": [
+    "https://github.com/ksadov/hackrew - ordered transparent layer/parts architecture",
+    "browser/pursuit-triad-durable-store.mjs - caller-owned durable key and exact readback pattern"
+  ]
+}

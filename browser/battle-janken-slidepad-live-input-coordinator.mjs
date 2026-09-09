@@ -41,6 +41,10 @@ function frozenResult(value) {
  * resolving. The SlidePad must never leave that older async result staged and
  * commit-capable after the user's thumb has moved elsewhere. This coordinator
  * serializes bridge mutations and accepts only the latest focus intent.
+ *
+ * Stale-focus cleanup remains compound-only. Explicit player cancel is routed
+ * through the bridge's global precommit clear so card/target/selection clear as
+ * one semantic without rolling back authoritative committed gameplay.
  */
 export function createBattleJankenSlidePadLiveInputCoordinator({
   liveBridge,
@@ -48,6 +52,7 @@ export function createBattleJankenSlidePadLiveInputCoordinator({
   requiredObject(liveBridge, 'liveBridge');
   const stageCompoundAttack = requiredMethod(liveBridge, 'stageCompoundAttack', 'liveBridge');
   const clearCompoundAttack = requiredMethod(liveBridge, 'clearCompoundAttack', 'liveBridge');
+  const clearPrecommitSelection = requiredMethod(liveBridge, 'clearPrecommitSelection', 'liveBridge');
   const commitCompoundAttack = requiredMethod(liveBridge, 'commitCompoundAttack', 'liveBridge');
   const bridgeStatus = requiredMethod(liveBridge, 'status', 'liveBridge');
 
@@ -87,6 +92,14 @@ export function createBattleJankenSlidePadLiveInputCoordinator({
     } catch {
       return null;
     }
+  }
+
+  function restoreCancelledLocalState({ version, hand, focus }) {
+    if (destroyed || version !== intentVersion || desiredHand !== null) return false;
+    desiredHand = hand;
+    readyFocus = focus;
+    phase = focus ? 'READY' : 'IDLE';
+    return true;
   }
 
   function statusSnapshot() {
@@ -163,7 +176,8 @@ export function createBattleJankenSlidePadLiveInputCoordinator({
         // Bridge mutations are serialized. If intent changed while the
         // authoritative preview was resolving, this just-resolved stage is the
         // most recent bridge mutation and is therefore safe to clear before the
-        // newer focus operation begins.
+        // newer focus operation begins. This is intentionally compound-only and
+        // must not erase caller plan/target drafts merely because focus moved.
         if (destroyed || version !== intentVersion || desiredHand !== jankenHand) {
           await clearBridgeFailSoft();
           return staleResult(jankenHand, version, destroyed ? 'DESTROYED' : 'FOCUS_SUPERSEDED');
@@ -214,18 +228,51 @@ export function createBattleJankenSlidePadLiveInputCoordinator({
         return Promise.resolve(frozenResult({ ok: false, cleared: false, reason: 'COMMIT_IN_FLIGHT' }));
       }
 
-      ++intentVersion;
+      const previousHand = desiredHand;
+      const previousReadyFocus = readyFocus;
+      const version = ++intentVersion;
       desiredHand = null;
       readyFocus = null;
       phase = 'CLEARING';
+
       return enqueue(async () => {
-        const cleared = await clearBridgeFailSoft();
-        if (!destroyed && desiredHand === null) phase = 'IDLE';
+        let result;
+        try {
+          result = await clearPrecommitSelection();
+        } catch {
+          restoreCancelledLocalState({
+            version,
+            hand: previousHand,
+            focus: previousReadyFocus,
+          });
+          return frozenResult({
+            ok: false,
+            cleared: false,
+            reason: 'PRECOMMIT_CLEAR_FAILED',
+            bridge: null,
+          });
+        }
+
+        if (result?.cleared === true) {
+          if (!destroyed && version === intentVersion && desiredHand === null) phase = 'IDLE';
+          return frozenResult({
+            ok: true,
+            cleared: true,
+            reason: result.reason ?? 'PRECOMMIT_SELECTION_CLEARED',
+            bridge: result,
+          });
+        }
+
+        restoreCancelledLocalState({
+          version,
+          hand: previousHand,
+          focus: previousReadyFocus,
+        });
         return frozenResult({
-          ok: true,
-          cleared: true,
-          reason: 'FOCUS_CANCELLED',
-          bridge: cleared,
+          ok: false,
+          cleared: false,
+          reason: result?.reason ?? 'PRECOMMIT_CLEAR_REJECTED',
+          bridge: result ?? null,
         });
       });
     },
@@ -330,11 +377,15 @@ export const BATTLE_JANKEN_SLIDEPAD_LIVE_INPUT_COORDINATOR_CONTRACT = Object.fre
   focusSource: 'CALLER_SLIDEPAD_INPUT',
   stageAndPreview: 'EXISTING_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_ONLY',
   commitTransport: 'EXISTING_COMPOUND_PREVIEW_LIVE_CONSUMER_BRIDGE_ONLY',
+  explicitCancelPolicy: 'EXISTING_SHARED_GLOBAL_PRECOMMIT_CLEAR_THROUGH_BRIDGE',
+  staleFocusClearPolicy: 'COMPOUND_STAGE_ONLY',
+  failedExplicitCancelPolicy: 'RESTORE_LOCAL_READY_STATE_IF_STILL_CURRENT',
   asyncMutationPolicy: 'SERIAL_LATEST_FOCUS_WINS',
   staleFocusPolicy: 'CLEAR_BEFORE_NEXT_FOCUS_STAGE',
   commitRequiresLatestVisiblePreview: true,
   commitInFlightFocusMutation: false,
   commitRejectKeepsPreview: true,
+  authoritativeRollback: false,
   computesTarget: false,
   computesLegality: false,
   computesRoute: false,

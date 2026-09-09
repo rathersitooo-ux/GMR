@@ -79,20 +79,18 @@ jobs:
           )
 
           screen_test = r'''
-          test('390x844 portrait recomposition stays in canonical screen CSS and preserves world authority', async () => {
-            const { readFile } = await import('node:fs/promises');
-            const source = await readFile(new URL('../browser/battle-screen-runtime-mount.mjs', import.meta.url), 'utf8');
-            assert.match(source, /BATTLE_PORTRAIT_390X844_R7B/);
-            assert.match(source, /@media\(max-width:430px\) and \(orientation:portrait\)/);
-            assert.match(source, /grBattleScreenTop\{height:56px!important/);
-            assert.match(source, /bottom:248px!important/);
-            assert.match(source, /height:52px!important/);
-            assert.match(source, /grid-template-columns:repeat\(4,minmax\(0,1fr\)\)!important/);
-            assert.match(source, /grBattleLaneRole,.*grBattleLaneAfterstate\{display:none!important\}/s);
-            assert.match(source, /#battleResolution\{left:8px!important;right:8px!important;bottom:12px!important/);
-            assert.match(source, /\[\$\{PROGRESS_GUIDE_ATTR\}\]\{display:none!important\}/);
-            assert.doesNotMatch(source, /battle-screen-runtime-mount-base\.mjs/);
-          });
+          const { readFile: readPortraitScreenSource } = await import('node:fs/promises');
+          const portraitScreenSource = await readPortraitScreenSource(new URL('../browser/battle-screen-runtime-mount.mjs', import.meta.url), 'utf8');
+          assert.match(portraitScreenSource, /BATTLE_PORTRAIT_390X844_R7B/);
+          assert.match(portraitScreenSource, /@media\(max-width:430px\) and \(orientation:portrait\)/);
+          assert.match(portraitScreenSource, /grBattleScreenTop\{height:56px!important/);
+          assert.match(portraitScreenSource, /bottom:248px!important/);
+          assert.match(portraitScreenSource, /height:52px!important/);
+          assert.match(portraitScreenSource, /grid-template-columns:repeat\(4,minmax\(0,1fr\)\)!important/);
+          assert.match(portraitScreenSource, /grBattleLaneRole,.*grBattleLaneAfterstate\{display:none!important\}/s);
+          assert.match(portraitScreenSource, /#battleResolution\{left:8px!important;right:8px!important;bottom:12px!important/);
+          assert.match(portraitScreenSource, /\[\$\{PROGRESS_GUIDE_ATTR\}\]\{display:none!important\}/);
+          assert.doesNotMatch(portraitScreenSource, /battle-screen-runtime-mount-base\.mjs/);
           '''.strip()
 
           janken_test = r'''

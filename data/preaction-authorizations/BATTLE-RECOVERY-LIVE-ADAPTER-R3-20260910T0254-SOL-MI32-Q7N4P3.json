@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RECOVERY-LIVE-ADAPTER-R3-20260910T0254-SOL-MI32-Q7N4P3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_WAIT_RECONNECT_STALE_INPUT_LIVE_ADAPTER_R3",
+  "acquireKey": "BATTLE-RECOVERY-LIVE-ADAPTER-R3-20260910T0254-SOL-MI32-Q7N4P3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_C0451F77_RECONNECT_AUTHORITY_AND_RECOVERY_SURFACE_PRESENT_HTML_BUILD_OWNED_20260910T0254JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PURE_EXISTING_2V2_CONTROL_FACTS_TO_EXISTING_RECOVERY_STATUS_FAIL_CLOSED_ON_AMBIGUITY",
+  "proceedToken": "PROCEED|BATTLE-RECOVERY-LIVE-ADAPTER-R3-20260910T0254-SOL-MI32-Q7N4P3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-recovery|authority-adapter|active-lease",
+  "authorizationBaseSha": "c0451f77d2195374fd6e8edcd51c3c8cadf0a772",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_WAIT_RECONNECT_STALE_INPUT_LIVE_ADAPTER_R3",
+  "leaseAcquireKey": "BATTLE-RECOVERY-LIVE-ADAPTER-R3-20260910T0254-SOL-MI32-Q7N4P3",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 02:54 JST",
+  "leaseUntilJst": "2026-09-10 03:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A876:L876",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-recovery-live-adapter-r3-20260910; NEW browser/battle-recovery-live-adapter.mjs; NEW tests/battle-recovery-live-adapter.test.mjs; own transient data/preaction-authorizations/BATTLE-RECOVERY-LIVE-ADAPTER-R3-20260910T0254-SOL-MI32-Q7N4P3.json only. Existing browser/battle-recovery-presentation-core.mjs, browser/battle-recovery-runtime-surface.mjs, browser/battle-2v2-reconnect-core.mjs, browser/hate-peer-presence-core.mjs READ_ONLY reuse. browser/GAMEROAD.html, deploy/cloudflare/scripts/build.mjs, battle-screen/janken runtimes, gameplay/rules/target/legality/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_RECOVERY_EXISTING_2V2_CONTROL_AUTHORITY_ADAPTER_R3",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "BATTLE_2V2_RECONNECT_CORE_CONTROL_GENERATION_GUARD_PLUS_RECOVERY_CORE_SURFACE_REUSE_20260910T0254JST",
+  "solutionSearchEvidence": [
+    "Existing battle-2v2-reconnect-core is the authority for local seat controlMode/controlGeneration and exposes isCurrent2v2ControlEnvelope; no duplicate reconnect state is needed.",
+    "Existing recovery presentation core and runtime surface already own READY/WAITING/RECONNECTING/STALE presentation and input-lock projection; this adapter must not recreate those semantics.",
+    "SELF can map to READY and TEMPORARY_PARTNER to WAITING for the explicitly identified local human seat; PERMANENT_PARTNER and UNCONTROLLED are not guessed and must fail closed.",
+    "RECONNECTING is allowed only from caller-explicit reconnectInFlight while the local seat is TEMPORARY_PARTNER; the reconnect core has no intermediate in-flight state, so the adapter never invents one.",
+    "STALE_INPUT_REJECTED is allowed only when caller explicitly identifies a control-envelope rejection and the existing current-envelope guard proves a well-formed local-seat envelope is no longer current.",
+    "browser/GAMEROAD.html, deploy build, SlidePad, Battle screen and gameplay/network authorities are concurrently owned elsewhere and remain READ_ONLY."
+  ],
+  "scope": [
+    "browser/battle-recovery-live-adapter.mjs",
+    "tests/battle-recovery-live-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-recovery-live-adapter.mjs",
+    "tests/battle-recovery-live-adapter.test.mjs"
+  ]
+}

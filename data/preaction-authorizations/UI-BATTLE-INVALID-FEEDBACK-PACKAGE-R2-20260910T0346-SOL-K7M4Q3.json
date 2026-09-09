@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-BATTLE-INVALID-FEEDBACK-PACKAGE-R2-20260910T0346-SOL-K7M4Q3",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "BATTLE_INVALID_ACTION_FEEDBACK_PUBLIC_PACKAGE_R2",
+  "acquireKey": "UI-BATTLE-INVALID-FEEDBACK-PACKAGE-R2-20260910T0346-SOL-K7M4Q3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1475-merged-plus-current-build-missing-feedback-artifacts-20260910T0346",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "exact-artifact-spec-insertion-plus-existing-build-tests",
+  "proceedToken": "PROCEED|UI-BATTLE-INVALID-FEEDBACK-PACKAGE-R2-20260910T0346-SOL-K7M4Q3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|package-existing-modules-only",
+  "authorizationBaseSha": "4cd126b3f6e30a680a8a60c48ca7b3787755ba17",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "BATTLE_INVALID_ACTION_FEEDBACK_PUBLIC_PACKAGE_R2",
+  "leaseAcquireKey": "UI-BATTLE-INVALID-FEEDBACK-PACKAGE-R2-20260910T0346-SOL-K7M4Q3",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:46 JST",
+  "leaseUntilJst": "2026-09-10 04:46 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A901:L901",
+  "leaseExactMutableResources": "deploy/cloudflare/scripts/build.mjs; transient .github/workflows/zz-temp-battle-invalid-feedback-package-r2.yml; own transient data/preaction-authorizations/UI-BATTLE-INVALID-FEEDBACK-PACKAGE-R2-20260910T0346-SOL-K7M4Q3.json only. READ_ONLY browser/battle-invalid-action-feedback-live-adapter.mjs; browser/battle-interaction-feedback-cue-core.mjs; deploy/cloudflare/tests/build.test.mjs; browser/GAMEROAD.html; Battle gameplay/rules/save/network.",
+  "scope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-invalid-feedback-package-r2.yml"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-invalid-feedback-package-r2.yml"
+  ],
+  "solutionSignature": "cloudflare-package/existing-battle-invalid-feedback-plus-existing-cue-dependency",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "deploy/cloudflare/scripts/build.mjs already packages Battle runtime modules via ARTIFACT_SPECS",
+    "browser/battle-invalid-action-feedback-live-adapter.mjs is merged by PR1475 and imports battle-interaction-feedback-cue-core.mjs",
+    "current ARTIFACT_SPECS contains neither battle-interaction-feedback module"
+  ],
+  "reuseDecisionEvidenceId": "reuse-current-cloudflare-artifact-specs-20260910T0346"
+}

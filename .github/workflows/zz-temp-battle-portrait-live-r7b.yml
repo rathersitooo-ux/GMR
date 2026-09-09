@@ -79,7 +79,6 @@ jobs:
           )
 
           screen_test = r'''
-
           test('390x844 portrait recomposition stays in canonical screen CSS and preserves world authority', async () => {
             const { readFile } = await import('node:fs/promises');
             const source = await readFile(new URL('../browser/battle-screen-runtime-mount.mjs', import.meta.url), 'utf8');
@@ -94,10 +93,9 @@ jobs:
             assert.match(source, /\[\$\{PROGRESS_GUIDE_ATTR\}\]\{display:none!important\}/);
             assert.doesNotMatch(source, /battle-screen-runtime-mount-base\.mjs/);
           });
-          '''
+          '''.strip()
 
           janken_test = r'''
-
           test('390x844 portrait keeps SlidePad and optional roulette in the right-thumb dock', async () => {
             const { readFile } = await import('node:fs/promises');
             const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
@@ -110,13 +108,13 @@ jobs:
             assert.match(source, /rouletteEnabled = false/);
             assert.doesNotMatch(source, /battle-janken-slidepad-runtime-mount-base\.mjs/);
           });
-          '''
+          '''.strip()
 
           for path, block in ((SCREEN_TEST, screen_test), (JANKEN_TEST, janken_test)):
               text = path.read_text()
               if MARKER in text:
                   raise SystemExit(f'duplicate test marker in {path}')
-              path.write_text(text.rstrip() + block + '\n')
+              path.write_text(text.rstrip() + '\n\n' + block + '\n')
           PY
 
       - name: Enforce exact product scope

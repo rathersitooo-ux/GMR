@@ -185,6 +185,9 @@ assert.ok(runtimeStyle.textContent.includes('max-width:min(42vw,420px)'));
 assert.ok(runtimeStyle.textContent.includes('[data-battle-progress-guide]'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleProgressArrow::before{content:"◀"'));
 assert.ok(runtimeStyle.textContent.includes('.grBattleProgressArrow::before{content:"▲"'));
+assert.ok(runtimeStyle.textContent.includes('[data-battle-shield-slot][data-board-return-target="true"]'));
+assert.ok(runtimeStyle.textContent.includes('@keyframes grBattleShieldReturn'));
+assert.ok(runtimeStyle.textContent.includes('[data-motion="static_only"] [data-battle-shield-slot][data-board-return-target="true"]{animation:none!important;transform:none!important}'));
 for (const fieldId of ['FIELD-01', 'FIELD-02', 'FIELD-03', 'FIELD-04', 'FIELD-05', 'FIELD-08', 'FIELD-09']) {
   assert.ok(runtimeStyle.textContent.includes(`[data-battle-field-landmark=\"${fieldId}\"]`));
 }
@@ -205,6 +208,7 @@ assert.equal(runtime.phaseSurface.hidden, true);
 assert.equal(runtime.hud.root.hidden, true);
 assert.equal(runtime.currentActionCue.hidden, true);
 assert.equal(runtime.currentActionCue.textContent, '');
+assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, undefined);
 assert.equal(runtime.planSlot.hidden, false);
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['idle', 'idle', 'idle', 'idle']);
 const roleSurfaces = runtime.laneSurfaces.map(node => node.children[1]);
@@ -247,9 +251,11 @@ assert.equal(runtime.currentActionCue.hidden, false);
 assert.equal(runtime.currentActionCue.textContent, '今：攻撃 A-1 → B-2');
 assert.equal(runtime.currentActionCue.dataset.phase, 'attack');
 assert.equal(runtime.currentActionCue.dataset.eventId, 'attack-1');
+assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, undefined);
 assert.equal(runtime.planSlot.hidden, true);
 assert.equal(runtime.shell.dataset.mode, 'BATTLE_PHASE');
 assert.equal(runtime.shell.dataset.eventId, 'attack-1');
+assert.equal(runtime.shell.dataset.boardReturnDestination, undefined);
 assert.equal(runtime.phaseSurface.dataset.battleScreenInput, 'skip|public_info|accessibility');
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.participantId), ['P1', 'P2', 'P3', 'P4']);
 assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['source', 'idle', 'idle', 'target']);
@@ -257,6 +263,7 @@ assert.deepEqual(roleSurfaces.map(node => node.hidden), [false, true, true, fals
 assert.deepEqual(roleSurfaces.map(node => node.textContent), ['攻撃', '', '', '対象']);
 assert.equal(runtime.resolutionSurface.textContent, 'EXISTING LIVE ADAPTER OWNS THIS CONTENT');
 assert.equal(runtime.resolutionSurface.dataset.battleScreenEventId, 'attack-1');
+assert.equal(runtime.resolutionSurface.dataset.battleBoardReturnDestination, undefined);
 assert.equal(runtime.hud.scoreValue.textContent, '12');
 assert.equal(runtime.hud.hateValue.textContent, '00:18');
 assert.equal(runtime.hud.turnValue.textContent, '4');
@@ -302,6 +309,65 @@ const p4Afterstate = p4View.children[2];
 assert.equal(p4Afterstate.children.length, 1);
 assert.equal(p4Afterstate.children[0].textContent, '列進行 4');
 assert.equal(p4Afterstate.children[0].dataset.afterstateId, 'p4-lane');
+
+const settlePlan = {
+  presentationOnly: true,
+  authorityBoundary: 'accepted_public_event_only',
+  eventId: 'settle-1',
+  kind: 'settle',
+  transition: 'CONTINUE',
+  groupTargets: [],
+  importance: 'ambient',
+  publicData: {
+    compoundAttackPackage: {
+      schema: 'gameroad.battle-janken-compound-attack-package.v1',
+      jankenHand: 'ROCK',
+      cardId: 'C1',
+      path: [{ nodeId: 'ROAD-A' }, { nodeId: 'ROAD-B' }],
+      direction: 'LEFT',
+      roadId: 'ROAD-01',
+      battleId: 'BATTLE-01',
+      opponentId: 'P3',
+      shieldLane: 'R',
+      shieldRef: 'shield:P3:R'
+    }
+  }
+};
+const settle = createBattleScreenModel({ participants, plan: settlePlan, returnIntent: 'MATCH_PLAN' });
+runtime.render(settle);
+assert.equal(runtime.currentActionCue.textContent, '今：盤面反映 B-1 / Shield R');
+assert.equal(runtime.currentActionCue.dataset.phase, 'settle');
+assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, 'P3:R');
+assert.equal(runtime.shell.dataset.boardReturnDestination, 'P3:R');
+assert.equal(runtime.phaseSurface.dataset.battleBoardReturnDestination, 'P3:R');
+assert.equal(runtime.resolutionSurface.dataset.battleBoardReturnDestination, 'P3:R');
+assert.equal(runtime.resolutionSurface.dataset.battleBoardReturnShieldRef, 'shield:P3:R');
+assert.deepEqual(runtime.laneSurfaces.map(node => node.dataset.role), ['idle', 'idle', 'target', 'idle']);
+assert.equal(runtime.shieldRails[2].dataset.boardReturnParticipant, 'true');
+assert.equal(runtime.shieldRails[0].dataset.boardReturnParticipant, undefined);
+const p3ShieldSlots = runtime.shieldRails[2].children;
+assert.deepEqual(p3ShieldSlots.map(node => node.getAttribute('data-battle-shield-slot')), ['L', 'C', 'R']);
+assert.deepEqual(p3ShieldSlots.map(node => node.dataset.boardReturnTarget), [undefined, undefined, 'true']);
+assert.equal(p3ShieldSlots[2].dataset.boardReturnEventId, 'settle-1');
+assert.equal(p3ShieldSlots[2].dataset.boardReturnDestination, 'P3:R');
+assert.equal(p3ShieldSlots[2].getAttribute('aria-label'), 'Shield R → ROAD R、解決結果の帰着先');
+assert.equal(runtime.shieldRails[3].children[2].dataset.boardReturnTarget, undefined);
+
+const reducedSettle = createBattleScreenModel({ participants, plan: settlePlan, returnIntent: 'MATCH_PLAN', reducedMotion: true });
+runtime.render(reducedSettle);
+assert.equal(runtime.shell.dataset.motion, 'static_only');
+assert.equal(runtime.shieldRails[2].children[2].dataset.boardReturnTarget, 'true');
+assert.equal(runtime.currentActionCue.textContent, '今：盤面反映 B-1 / Shield R');
+
+runtime.render(attack);
+assert.equal(runtime.shell.dataset.boardReturnDestination, undefined);
+assert.equal(runtime.phaseSurface.dataset.battleBoardReturnDestination, undefined);
+assert.equal(runtime.resolutionSurface.dataset.battleBoardReturnDestination, undefined);
+assert.equal(runtime.resolutionSurface.dataset.battleBoardReturnShieldRef, undefined);
+assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, undefined);
+assert.equal(runtime.shieldRails[2].dataset.boardReturnParticipant, undefined);
+assert.equal(runtime.shieldRails.flatMap(rail => rail.children).some(node => node.dataset.boardReturnTarget === 'true'), false);
+assert.equal(p3ShieldSlots[2].getAttribute('aria-label'), 'Shield R → ROAD R');
 
 runtime.renderHud({ score: '', hate: null, turn: undefined, loadJanken: 'heart' });
 assert.equal(runtime.hud.scoreValue.textContent, 'X');
@@ -412,12 +478,18 @@ assert.equal(existingResolution.textContent, 'KEEP');
 assert.equal(adopted.laneSurfaces.length, 4);
 assert.equal(adopted.hud.loadValue.textContent, 'パー');
 assert.equal(adopted.currentActionCue.textContent, '今：攻撃 A-1 → B-2');
+adopted.render(settle);
+assert.equal(existingResolution.textContent, 'KEEP');
+assert.equal(adopted.currentActionCue.textContent, '今：盤面反映 B-1 / Shield R');
+assert.equal(adopted.resolutionSurface.dataset.battleBoardReturnDestination, 'P3:R');
+assert.equal(adopted.shieldRails[2].children[2].dataset.boardReturnTarget, 'true');
 adopted.render(terminalResult);
 assert.equal(existingShell.hidden, false);
 assert.equal(existingPhase.hidden, true);
 assert.equal(adopted.shell.hidden, true);
 assert.equal(adopted.hud.root.hidden, true);
 assert.equal(adopted.currentActionCue.hidden, true);
+assert.equal(adopted.resolutionSurface.dataset.battleBoardReturnDestination, undefined);
 const adoptedOverlay = adopted.shell;
 const adoptedCurrentActionCue = adopted.currentActionCue;
 const adoptedProgressGuide = adopted.progressGuide;
@@ -448,4 +520,6 @@ assert.throws(
 assert.equal(BATTLE_SCREEN_RUNTIME.presentationOnly, true);
 assert.equal(BATTLE_SCREEN_RUNTIME.authority, 'NONE');
 assert.equal(BATTLE_SCREEN_RUNTIME.currentActionAuthority, 'ACCEPTED_PUBLIC_MODEL_ONLY');
+assert.equal(BATTLE_SCREEN_RUNTIME.shieldLanePresentation, 'STRUCTURE_PLUS_EXACT_ACCEPTED_BOARD_RETURN_CUE_NO_SHIELD_STATE_INFERENCE');
+assert.equal(BATTLE_SCREEN_RUNTIME.boardReturnAuthority, 'MODEL_ONLY_EXACT_OPPONENT_PLUS_SHIELD_LANE');
 assert.equal(BATTLE_SCREEN_RUNTIME.productionHtmlMutationOwnedHere, false);

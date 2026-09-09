@@ -20,22 +20,22 @@
   "leaseSnapshotReadbackAtJst": "2026-09-09 14:16 JST",
   "leaseUntilJst": "2026-09-09 15:16 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A655:L655",
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-hand3-uniform-assign-r1-20260909; browser/new-base-round-start-janken-slot-assignment-core.mjs; tests/new-base-round-start-janken-slot-assignment-core.test.mjs; own transient PREACTION/PR/check/readback only. browser/battle-janken-slidepad-runtime-mount.mjs and tests are READ_ONLY because BATTLE_CARD_FOCUS_PRESENTATION_R1 owns the runtime; GAMEROAD.html, resolver, target mapping, Road/dice, save/economy/network READ_ONLY.",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-hand3-uniform-assign-r1-20260909; browser/new-base-hand3-uniform-assignment-policy.mjs (new); tests/new-base-hand3-uniform-assignment-policy.test.mjs (new); own transient PREACTION/PR/check/readback only. Existing new-base-round-start-janken-slot-assignment-core.mjs and tests are READ_ONLY reuse inputs. browser/battle-janken-slidepad-runtime-mount.mjs and tests are READ_ONLY because BATTLE_CARD_FOCUS_PRESENTATION_R1 owns the runtime; GAMEROAD.html, resolver, target mapping, Road/dice, save/economy/network READ_ONLY.",
   "scope": [
-    "browser/new-base-round-start-janken-slot-assignment-core.mjs",
-    "tests/new-base-round-start-janken-slot-assignment-core.test.mjs"
+    "browser/new-base-hand3-uniform-assignment-policy.mjs",
+    "tests/new-base-hand3-uniform-assignment-policy.test.mjs"
   ],
   "leaseScope": [
-    "browser/new-base-round-start-janken-slot-assignment-core.mjs",
-    "tests/new-base-round-start-janken-slot-assignment-core.test.mjs"
+    "browser/new-base-hand3-uniform-assignment-policy.mjs",
+    "tests/new-base-hand3-uniform-assignment-policy.test.mjs"
   ],
   "solutionSignature": "new-base-hand3/uniform-six-permutation-once-per-turn",
-  "reuseDisposition": "ADAPT",
+  "reuseDisposition": "COMPOSE",
   "solutionSearchStatus": "PASS",
   "reuseDecisionEvidenceId": "REUSE-EXISTING-ROUND-SNAPSHOT-AND-CURRENT-HAND3-VALIDATOR-20260909",
   "solutionSearchEvidence": [
-    "browser/new-base-round-start-janken-slot-assignment-core.mjs already owns current exact-hand3 bijection validation and immutable same-round snapshot reuse",
+    "browser/new-base-round-start-janken-slot-assignment-core.mjs already owns current exact-hand3 bijection validation and immutable same-round snapshot reuse; it remains read-only",
     "current USER_DELEGATION resolved the only missing mapping atom to a uniform 1-of-6 permutation once per turn",
-    "battle-janken-slidepad-runtime-mount.mjs is actively owned by BATTLE_CARD_FOCUS_PRESENTATION_R1 and therefore remains read-only in this slice"
+    "fresh CURRENT_ACTIVE_LEASES shows BATTLE_CARD_FOCUS_PRESENTATION_R1 owns battle-janken-slidepad-runtime-mount.mjs from 14:17 JST, so runtime integration is explicitly deferred and read-only in this slice"
   ]
 }

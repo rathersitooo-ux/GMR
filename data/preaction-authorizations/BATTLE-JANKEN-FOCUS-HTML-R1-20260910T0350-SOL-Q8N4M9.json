@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-FOCUS-HTML-R1-20260910T0350-SOL-Q8N4M9",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_FOCUS_HTML_AUTHORITY_HANDOFF_R1",
+  "acquireKey": "BATTLE-JANKEN-FOCUS-HTML-R1-20260910T0350-SOL-Q8N4M9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FOCUS_SURFACE_SLIDEPAD_MERGED_PLUS_EXACT3_CONTEXT_PUBLIC_20260910",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1468_MERGED_CALLER_FOCUS_INTEGRATION_CONTRACT_AND_PR1479_PUBLIC_CONTEXT",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-FOCUS-HTML-R1-20260910T0350-SOL-Q8N4M9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|janken-focus-html|live-handoff|active-lease",
+  "authorizationBaseSha": "dbcda432ea6b8b63d0b277191b17f4eefa41727e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_FOCUS_HTML_AUTHORITY_HANDOFF_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-FOCUS-HTML-R1-20260910T0350-SOL-Q8N4M9",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:50 JST",
+  "leaseUntilJst": "2026-09-10 04:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A911:L911",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-janken-focus-html-r1-20260910; browser/GAMEROAD.html; NEW browser/battle-janken-focus-html-handoff.mjs; NEW tests/battle-janken-focus-html-handoff.test.mjs; transient .github/workflows/zz-temp-battle-janken-focus-html-r1.yml; transient tools/temp-battle-janken-focus-html-r1.py; own transient data/preaction-authorizations/BATTLE-JANKEN-FOCUS-HTML-R1-20260910T0350-SOL-Q8N4M9.json only. READ_ONLY reuse: browser/battle-janken-focus-authority-context.mjs, browser/battle-janken-focus-runtime-surface.mjs, browser/battle-janken-compound-live-input-stack.mjs, browser/battle-janken-slidepad-runtime-mount.mjs. deploy build, battle-screen, gameplay/rules/target/legality/Shield/Hand3/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_JANKEN_EXISTING_FOCUS_EXACT3_CONTEXT_HTML_HANDOFF_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MERGED_FOCUS_SURFACE_AND_CONTEXT_REUSE_NO_SECOND_CONTROLLER",
+  "solutionSearchEvidence": [
+    "PR #1468 is merged and proves SlidePad already accepts a caller-supplied focusIntegration containing mountSurface, readContext, and the existing liveInputStack.",
+    "PR #1479 is merged and its exact-three authority context is publicly packaged, so the missing delta is caller wiring rather than another Focus implementation.",
+    "The current 2026-09-10 lease tail has no mutable owner for browser/GAMEROAD.html; active SlidePad, Battle-screen, build, navigation, feedback, and Partner work are read-only with respect to this HTML slice.",
+    "The handoff must reuse caller-authoritative Hand3/order/compound package readers and fail closed when those inputs are absent, stale, or mismatched.",
+    "The handoff owns no target, legality, route, Shield mapping, Hand3 assignment, gameplay write, save, economy, or network behavior.",
+    "A branch-only transient surgical writer is authorized because direct connector replacement cannot safely rewrite the large HTML file; it must be removed before the final diff."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "browser/battle-janken-focus-html-handoff.mjs",
+    "tests/battle-janken-focus-html-handoff.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-focus-html-r1.yml",
+    "tools/temp-battle-janken-focus-html-r1.py"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "browser/battle-janken-focus-html-handoff.mjs",
+    "tests/battle-janken-focus-html-handoff.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-focus-html-r1.yml",
+    "tools/temp-battle-janken-focus-html-r1.py"
+  ]
+}

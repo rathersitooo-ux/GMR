@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CAMERA-PACKAGE-R6B-20260910T0324-SOL-K6N4Q18",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CAMERA_PUBLIC_PACKAGE_R6B",
+  "acquireKey": "BATTLE-CAMERA-PACKAGE-R6B-20260910T0324-SOL-K6N4Q18",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_A4855C5B_PRESERVE_PLUS2_BUILD_AND_ADD_EXACT_CAMERA3",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R6_RUN34388594529_SAME_PATCH_ALL_CAMERA_BUILD_PACKAGE_CHECKS_PASS",
+  "proceedToken": "PROCEED|BATTLE-CAMERA-PACKAGE-R6B-20260910T0324-SOL-K6N4Q18|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-camera-public-package|build-only|active-lease",
+  "authorizationBaseSha": "a4855c5b8044980f88c04edee32ddfc1505e511f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CAMERA_PUBLIC_PACKAGE_R6B",
+  "leaseAcquireKey": "BATTLE-CAMERA-PACKAGE-R6B-20260910T0324-SOL-K6N4Q18",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 03:24 JST",
+  "leaseUntilJst": "2026-09-10 04:24 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A885:L885",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-camera-package-r6b-20260910; deploy/cloudflare/scripts/build.mjs; transient .github/workflows/zz-temp-battle-camera-package-r6b.yml; transient tools/temp-battle-camera-package-r6b.py; own transient data/preaction-authorizations/BATTLE-CAMERA-PACKAGE-R6B-20260910T0324-SOL-K6N4Q18.json only. Existing browser/battle-camera-control-core.mjs, browser/battle-camera-input-router.mjs, browser/battle-camera-live-runtime.mjs and deploy/cloudflare/tests/build.test.mjs READ_ONLY reuse/execution. browser/GAMEROAD.html and tests/battle-camera-live-integration.test.mjs READ_ONLY donor; all gameplay/rules/movement/target/state authorities READ_ONLY.",
+  "solutionSignature": "BATTLE_CAMERA_EXISTING_RUNTIME_PUBLIC_PACKAGE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R6_EXACT_PATCH_TESTED_THEN_STALE_MAIN_CLEAN_REBUILD_ON_A4855C5B",
+  "solutionSearchEvidence": [
+    "R6 run 34388594529 already proved this exact three-artifact build patch with camera control/input/live tests, Cloudflare build test, generated package manifest and bounded-diff checks all passing.",
+    "R6 was intentionally not merged because main advanced before PR and included a +2 build delta; R6B starts from exact fresh main a4855c5b and preserves that current build state.",
+    "The live runtime import closure remains exactly battle-camera-live-runtime.mjs -> battle-camera-input-router.mjs -> battle-camera-control-core.mjs.",
+    "The current HTML is separately owned, so this package-only slice does not mutate GAMEROAD.html or gameplay authority.",
+    "Cloudflare ARTIFACT_SPECS is additive; this change adds three existing Browser modules and does not replace or remove any current public artifact."
+  ],
+  "scope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-camera-package-r6b.yml",
+    "tools/temp-battle-camera-package-r6b.py"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-camera-package-r6b.yml",
+    "tools/temp-battle-camera-package-r6b.py"
+  ]
+}

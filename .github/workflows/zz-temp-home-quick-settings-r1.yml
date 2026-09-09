@@ -1,0 +1,107 @@
+name: temp-home-quick-settings-r1
+on:
+  push:
+    branches:
+      - sol/home-quick-settings-r1-20260910
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: sol/home-quick-settings-r1-20260910
+      - name: Verify authorization base and target
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git merge-base HEAD origin/main)" = "dbcda432ea6b8b63d0b277191b17f4eefa41727e"
+          test "$(git show origin/main:browser/home-shell-presentation-core.mjs | git hash-object --stdin)" = "5639d47a9bcb0aceef1e27ca5502d30e5b91a994"
+          test "$(git hash-object browser/home-shell-presentation-core.mjs)" = "5639d47a9bcb0aceef1e27ca5502d30e5b91a994"
+      - name: Apply bounded patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('tools/temp-home-quick-settings-r1.py')
+          s = p.read_text(encoding='utf-8')
+          needle = "subprocess.run(['node', '--test', str(TEST), 'tests/home-boot-presentation.test.mjs', 'tests/home-boot-runtime-base-r3.test.mjs'], check=True)"
+          if needle not in s:
+              raise SystemExit('transient test runner anchor missing')
+          p.write_text(s.replace(needle, "print('DEFER_TESTS_TO_WORKFLOW')", 1), encoding='utf-8')
+          PY
+          python tools/temp-home-quick-settings-r1.py
+          cat > tests/home-quick-settings-live.focused.test.mjs <<'EOF'
+          import test from 'node:test';
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+
+          const source = fs.readFileSync(new URL('../browser/home-shell-presentation-core.mjs', import.meta.url), 'utf8');
+          const start = source.indexOf('// HOME QUICK SETTINGS START');
+          const end = source.indexOf('// HOME QUICK SETTINGS END');
+          const quick = source.slice(start, end);
+
+          test('Homeの既存設定ボタンを簡易設定が先に受ける', () => {
+            assert.ok(start >= 0 && end > start);
+            assert.ok(quick.includes('section[data-screen="home"] .codexHomeUtilities .homeUtilityBtn[data-go="settings"]'));
+            assert.match(source, /ensureHomeUpdateDetailsConsumer\(\);\s*ensureHomeQuickSettingsConsumer\(\);/);
+            assert.ok(quick.includes("addEventListener('click', intercept, true)"));
+          });
+
+          test('必要な6項目を常に並べ、元設定が無い項目は未対応と明示する', () => {
+            for (const label of ['全体音量', 'BGM', '効果音', 'Voice', '動き軽減', '軽量表示']) {
+              assert.ok(quick.includes(`label: '${label}'`), label);
+            }
+            assert.ok(quick.includes("unavailable.textContent = '未対応'"));
+          });
+
+          test('簡易設定は第二保存先を作らず詳細設定の変更処理を使う', () => {
+            assert.doesNotMatch(quick, /localStorage|sessionStorage|indexedDB|fetch\(/);
+            assert.ok(quick.includes('dispatchCanonicalSettingChange(canonical'));
+            assert.ok(quick.includes("dispatchEvent(new Event('input'"));
+            assert.ok(quick.includes("dispatchEvent(new Event('change'"));
+          });
+
+          test('詳細設定と閉じ方は既存導線を保持する', () => {
+            assert.ok(quick.includes('homeQuickSettingsRuntime.bypassNext = true'));
+            assert.ok(quick.includes('trigger.click()'));
+            assert.ok(quick.includes('event.target === root'));
+            assert.ok(quick.includes("event.key === 'Escape'"));
+            assert.ok(quick.includes('restoreFocus'));
+          });
+
+          test('簡易設定差分にゲーム状態や通信の権限を持ち込まない', () => {
+            assert.doesNotMatch(quick, /gameState|matchState|saveData|economy|network|WebSocket/);
+            assert.doesNotMatch(quick, /data-go="quick|data-screen="quick/);
+          });
+          EOF
+          node --check browser/home-shell-presentation-core.mjs
+          node --test tests/home-quick-settings-live.focused.test.mjs tests/home-boot-presentation.test.mjs tests/home-boot-runtime-base-r3.test.mjs
+      - name: Verify bounded durable diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check
+          mapfile -t changed < <(git status --short | awk '{print $2}' | sort)
+          printf '%s\n' "${changed[@]}"
+          printf '%s\n' "${changed[@]}" | grep -Fx 'browser/home-shell-presentation-core.mjs'
+          printf '%s\n' "${changed[@]}" | grep -Fx 'tests/home-quick-settings-live.focused.test.mjs'
+          test "${#changed[@]}" -eq 3
+          printf '%s\n' "${changed[@]}" | grep -Fx 'tools/temp-home-quick-settings-r1.py'
+      - name: Commit product and remove transient runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add browser/home-shell-presentation-core.mjs tests/home-quick-settings-live.focused.test.mjs
+          git commit -m 'Home: 設定ボタンから簡易設定を先に開く'
+          git rm .github/workflows/zz-temp-home-quick-settings-r1.yml tools/temp-home-quick-settings-r1.py data/preaction-authorizations/HOME-QUICK-SETTINGS-R1-20260910T0350-SOL-Q7M4N3.json
+          git commit -m 'PRE_ACTION: Home簡易設定の一時実行物を整理'
+          git push origin HEAD:sol/home-quick-settings-r1-20260910

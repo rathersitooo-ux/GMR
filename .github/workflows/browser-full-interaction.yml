@@ -121,6 +121,21 @@ jobs:
             echo '::error::Temporary public-origin spec still contains the local Browser entry path'
             exit 1
           fi
+          NAV_WAIT_BEFORE="$(grep -oF "waitUntil: 'domcontentloaded'" "$TARGET" | wc -l | tr -d ' ')"
+          if [[ "$NAV_WAIT_BEFORE" -lt 1 ]]; then
+            echo '::error::Expected current DOMContentLoaded navigation wait was not found in temporary public-origin spec'
+            exit 1
+          fi
+          sed -i "s/waitUntil: 'domcontentloaded'/waitUntil: 'commit'/g" "$TARGET"
+          if grep -Fq "waitUntil: 'domcontentloaded'" "$TARGET"; then
+            echo '::error::Temporary public-origin spec still waits for DOMContentLoaded'
+            exit 1
+          fi
+          NAV_WAIT_AFTER="$(grep -oF "waitUntil: 'commit'" "$TARGET" | wc -l | tr -d ' ')"
+          if [[ "$NAV_WAIT_AFTER" -ne "$NAV_WAIT_BEFORE" ]]; then
+            echo "::error::Public navigation wait replacement mismatch: before=${NAV_WAIT_BEFORE} after=${NAV_WAIT_AFTER}"
+            exit 1
+          fi
           cat > .r37-public/playwright.config.mjs <<'EOF'
           import { defineConfig } from '@playwright/test';
           import baseConfig from '../playwright.full-interaction.config.mjs';

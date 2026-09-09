@@ -1,0 +1,212 @@
+name: Battle Final Visual Acceptance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/battle-final-visual-acceptance.spec.mjs'
+      - '.github/workflows/battle-final-visual-acceptance.yml'
+      - 'browser/GAMEROAD.html'
+      - 'browser/battle-*.mjs'
+      - 'browser/new-base-*.mjs'
+  push:
+    branches:
+      - main
+    paths:
+      - 'tests/battle-final-visual-acceptance.spec.mjs'
+      - '.github/workflows/battle-final-visual-acceptance.yml'
+      - 'browser/GAMEROAD.html'
+      - 'browser/battle-*.mjs'
+      - 'browser/new-base-*.mjs'
+  workflow_run:
+    workflows:
+      - GAMEROAD Cloudflare Public Deploy
+    types:
+      - completed
+
+permissions:
+  contents: read
+
+jobs:
+  local-candidate:
+    if: ${{ github.event_name != 'workflow_run' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Prepare Battle final acceptance runner
+        shell: bash
+        run: |
+          cat > playwright.battle-final.generated.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          import baseConfig from './playwright.full-interaction.config.mjs';
+
+          const names = new Set(['desktop-1280x720', 'short-landscape-667x375', 'phone-390x844']);
+          const projects = (baseConfig.projects ?? [])
+            .filter((project) => names.has(project.name))
+            .map((project) => ({ name: project.name, use: project.use }));
+
+          export default defineConfig({
+            testDir: './tests',
+            testMatch: 'battle-final-visual-acceptance.spec.mjs',
+            timeout: 90_000,
+            expect: { timeout: 7_000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            outputDir: 'test-results/battle-final-local',
+            reporter: [
+              ['line'],
+              ['html', { outputFolder: 'playwright-report-battle-final-local', open: 'never' }],
+              ['json', { outputFile: 'test-results/battle-final-local/report.json' }],
+            ],
+            use: {
+              ...baseConfig.use,
+              trace: 'on',
+              screenshot: 'on',
+              video: 'on',
+            },
+            projects,
+            webServer: baseConfig.webServer,
+          });
+          EOF
+
+      - name: Run Battle final acceptance locally
+        run: npx playwright test --config=playwright.battle-final.generated.config.mjs --workers=1
+
+      - name: Upload local Battle evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: battle-final-local-${{ github.run_id }}
+          path: |
+            playwright-report-battle-final-local/
+            test-results/battle-final-local/
+          if-no-files-found: error
+          retention-days: 14
+
+  public-deployed:
+    if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GAMEROAD_PUBLIC_BASE_URL: https://gameroad-browser-r5.pages.dev
+      EXPECTED_BUILD_ID: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Checkout source under evidence
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Bind canonical public origin to deployed build
+        id: public_manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p battle-final-public-metadata
+          MANIFEST='battle-final-public-metadata/gameroad-version.json'
+          curl --fail --silent --show-error --location \
+            --header 'Accept-Encoding: identity' \
+            --retry 4 --retry-delay 2 --retry-connrefused \
+            --max-time 30 \
+            --output "$MANIFEST" \
+            "${GAMEROAD_PUBLIC_BASE_URL}/gameroad-version.json"
+          OBSERVED_BUILD_ID="$(MANIFEST="$MANIFEST" node -e "const fs=require('node:fs');const m=JSON.parse(fs.readFileSync(process.env.MANIFEST,'utf8'));if(!m.build_id)process.exit(2);process.stdout.write(String(m.build_id));")"
+          echo "observed_build_id=${OBSERVED_BUILD_ID}" >> "$GITHUB_OUTPUT"
+          if [[ "$OBSERVED_BUILD_ID" != "$EXPECTED_BUILD_ID" ]]; then
+            echo "::error::Public build mismatch: expected=${EXPECTED_BUILD_ID} observed=${OBSERVED_BUILD_ID}"
+            exit 1
+          fi
+          printf 'expected_build_id=%s\nobserved_build_id=%s\npublic_origin=%s\n' \
+            "$EXPECTED_BUILD_ID" "$OBSERVED_BUILD_ID" "$GAMEROAD_PUBLIC_BASE_URL" \
+            > battle-final-public-metadata/binding.txt
+
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Prepare public Battle final acceptance runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .battle-final-public
+          sed "s#'/browser/GAMEROAD.html'#'/'#g" tests/battle-final-visual-acceptance.spec.mjs > .battle-final-public/battle-final-visual-acceptance.spec.mjs
+          cat > playwright.battle-final.public.generated.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          import baseConfig from './playwright.full-interaction.config.mjs';
+
+          const names = new Set(['desktop-1280x720', 'short-landscape-667x375', 'phone-390x844']);
+          const projects = (baseConfig.projects ?? [])
+            .filter((project) => names.has(project.name))
+            .map((project) => ({ name: project.name, use: project.use }));
+
+          export default defineConfig({
+            testDir: './.battle-final-public',
+            testMatch: 'battle-final-visual-acceptance.spec.mjs',
+            timeout: 90_000,
+            expect: { timeout: 7_000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            outputDir: 'test-results/battle-final-public',
+            reporter: [
+              ['line'],
+              ['html', { outputFolder: 'playwright-report-battle-final-public', open: 'never' }],
+              ['json', { outputFile: 'test-results/battle-final-public/report.json' }],
+            ],
+            use: {
+              ...baseConfig.use,
+              baseURL: process.env.GAMEROAD_PUBLIC_BASE_URL,
+              trace: 'on',
+              screenshot: 'on',
+              video: 'on',
+            },
+            projects,
+          });
+          EOF
+
+      - name: Run Battle final acceptance on canonical public origin
+        run: npx playwright test --config=playwright.battle-final.public.generated.config.mjs --workers=1
+
+      - name: Record public evidence binding
+        if: always()
+        shell: bash
+        env:
+          OBSERVED_BUILD_ID: ${{ steps.public_manifest.outputs.observed_build_id }}
+        run: |
+          mkdir -p battle-final-public-metadata
+          printf 'run_id=%s\nsource_sha=%s\nexpected_build_id=%s\nobserved_build_id=%s\npublic_origin=%s\n' \
+            "$GITHUB_RUN_ID" "${{ github.event.workflow_run.head_sha }}" "$EXPECTED_BUILD_ID" "${OBSERVED_BUILD_ID:-}" "$GAMEROAD_PUBLIC_BASE_URL" \
+            > battle-final-public-metadata/run-binding.txt
+
+      - name: Upload public Battle evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: battle-final-public-${{ github.run_id }}
+          path: |
+            playwright-report-battle-final-public/
+            test-results/battle-final-public/
+            battle-final-public-metadata/
+          if-no-files-found: error
+          retention-days: 14

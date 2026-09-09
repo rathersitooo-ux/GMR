@@ -1,4 +1,4 @@
-name: GAMEROAD Codex Shared Preview Start Diagnostic R4
+name: GAMEROAD Codex Shared Preview Start Diagnostic R5
 
 on:
   push:
@@ -16,31 +16,19 @@ env:
 
 jobs:
   diagnose:
-    name: Inspect shared Battle start contract
+    name: Inspect shared-root Battle start state
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 6
     steps:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-
-      - name: Verify exact shared build
-        shell: bash
-        run: |
-          set -euo pipefail
-          body="$RUNNER_TEMP/version.json"
-          curl --fail --silent --show-error --location --header 'Cache-Control: no-cache' "$PREVIEW_ALIAS_URL/gameroad-version.json" -o "$body"
-          build_id="$(node -e 'const fs=require("node:fs");const m=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));process.stdout.write(m.build_id||"")' "$body")"
-          test "$build_id" = "$TARGET_SHA"
-          echo "build_id=$build_id"
-
       - name: Install Chromium
         shell: bash
         run: |
           npm install --no-save --no-package-lock @playwright/test@1.62.0
           npx playwright install --with-deps chromium
-
-      - name: Inspect start API without waiting for Battle
+      - name: Inspect root start state
         shell: bash
         run: |
           set -euo pipefail
@@ -55,60 +43,45 @@ jobs:
           page.on('console', m => consoleMessages.push({type:m.type(),text:m.text()}));
           page.on('pageerror', e => pageErrors.push(String(e?.message ?? e)));
           page.on('response', r => { if (r.status() >= 400) httpErrors.push({status:r.status(),url:r.url()}); });
-          const url = `${process.env.PREVIEW_ALIAS_URL}/browser/GAMEROAD.html`;
-          const response = await page.goto(url, { waitUntil: 'commit', timeout: 30_000 });
-          await page.waitForFunction(() => Boolean(window.__GAMEROAD_TEST__) && Array.isArray(window.__CARD_DATA__), null, { timeout: 180_000 });
-          await page.waitForTimeout(1000);
-          const result = await page.evaluate(async () => {
+          const response = await page.goto(`${process.env.PREVIEW_ALIAS_URL}/`, { waitUntil:'commit', timeout:30000 });
+          await page.waitForFunction(() => Boolean(window.__GAMEROAD_TEST__) && Array.isArray(window.__CARD_DATA__), null, {timeout:60000});
+          const snap = () => page.evaluate(() => {
             const t = window.__GAMEROAD_TEST__;
-            const snap = (label) => ({
-              label,
-              href: location.href,
-              pathname: location.pathname,
-              baseURI: document.baseURI,
-              activeScreen: document.querySelector('.screen.active')?.dataset?.screen ?? null,
-              homeVisible: Boolean(document.querySelector('section[data-screen="home"]')?.getClientRects().length),
-              setupVisible: Boolean(document.querySelector('section[data-screen="setup"]')?.getClientRects().length),
-              battleVisible: Boolean(document.querySelector('section[data-screen="battle"]')?.getClientRects().length),
-              stateScreen: t?.state?.screen ?? null,
-              matchMode: t?.state?.match?.mode ?? null,
-              playerCount: t?.state?.match?.players?.length ?? 0,
-            });
-            const before = snap('before');
-            const publicMain = new Set(t.deckPublic().filter(c => c.slot === 'main').map(c => c.id));
-            const standard = window.__CARD_DATA__.filter(c => publicMain.has(c.id) && /^(SP|HT|DI|CL)$/.test(c.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c => c.id);
-            const royalIds = ['SP_J','SP_Q','SP_K'];
-            const nonRoyal = standard.filter(id => !t.isRoyalCard(id));
-            const main = [...nonRoyal.slice(0,37), ...royalIds];
-            const setValidation = t.deckSetDraft(main, []);
-            const draftValidation = t.deckValidate(t.state.deckDraft, {forBattle:true});
-            const committed = draftValidation.ok ? t.deckCommit() : false;
-            const savedValidation = t.deckValidate(t.state.savedDeck, {forBattle:true});
-            const afterDeck = snap('afterDeck');
-            let startReturn = null;
-            let startError = null;
-            try { startReturn = t.start('4p','road_shield'); } catch (e) { startError = String(e?.stack ?? e); }
-            const immediatelyAfterStart = snap('immediatelyAfterStart');
-            await new Promise(r => setTimeout(r, 1000));
-            const oneSecondAfterStart = snap('oneSecondAfterStart');
             return {
-              before,
-              deck:{count:main.length,setValidation,draftValidation,committed,savedValidation},
-              afterDeck,
-              startReturn,
-              startError,
-              immediatelyAfterStart,
-              oneSecondAfterStart,
-              startSource: typeof t.start === 'function' ? String(t.start).slice(0,5000) : null,
-              testKeys:Object.keys(t).sort(),
+              href:location.href, pathname:location.pathname, baseURI:document.baseURI,
+              activeScreen:document.querySelector('.screen.active')?.dataset?.screen ?? null,
+              homeVisible:Boolean(document.querySelector('section[data-screen="home"]')?.getClientRects().length),
+              setupVisible:Boolean(document.querySelector('section[data-screen="setup"]')?.getClientRects().length),
+              battleVisible:Boolean(document.querySelector('section[data-screen="battle"]')?.getClientRects().length),
+              stateScreen:t?.state?.screen ?? null,
+              matchMode:t?.state?.match?.mode ?? null,
+              playerCount:t?.state?.match?.players?.length ?? 0,
             };
           });
-          console.log('START_DIAGNOSTIC=' + JSON.stringify({
-            navigationStatus: response?.status() ?? null,
-            result,
-            consoleMessages,
-            pageErrors,
-            httpErrors,
-          }));
+          const before = await snap();
+          const deck = await page.evaluate(() => {
+            const t=window.__GAMEROAD_TEST__;
+            const publicMain=new Set(t.deckPublic().filter(c=>c.slot==='main').map(c=>c.id));
+            const standard=window.__CARD_DATA__.filter(c=>publicMain.has(c.id)&&/^(SP|HT|DI|CL)$/.test(c.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c=>c.id);
+            const royal=['SP_J','SP_Q','SP_K'];
+            const nonRoyal=standard.filter(id=>!t.isRoyalCard(id));
+            const main=[...nonRoyal.slice(0,37),...royal];
+            const setValidation=t.deckSetDraft(main,[]);
+            const draftValidation=t.deckValidate(t.state.deckDraft,{forBattle:true});
+            const committed=draftValidation.ok?t.deckCommit():false;
+            const savedValidation=t.deckValidate(t.state.savedDeck,{forBattle:true});
+            return {count:main.length,setValidation,draftValidation,committed,savedValidation};
+          });
+          const afterDeck = await snap();
+          const start = await page.evaluate(() => {
+            const t=window.__GAMEROAD_TEST__;
+            let returned=null,error=null;
+            try { returned=t.start('4p','road_shield'); } catch(e) { error=String(e?.stack??e); }
+            return {returned,error,startSource:typeof t.start==='function'?String(t.start).slice(0,5000):null,testKeys:Object.keys(t).sort()};
+          });
+          const immediately = await snap();
+          await page.waitForTimeout(1000);
+          const oneSecond = await snap();
+          console.log('START_DIAGNOSTIC=' + JSON.stringify({navigationStatus:response?.status()??null,before,deck,afterDeck,start,immediately,oneSecond,consoleMessages,pageErrors,httpErrors}));
           await browser.close();
           NODE

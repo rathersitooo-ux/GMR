@@ -1,0 +1,46 @@
+name: TEMP Battle Focus HTML seam R1
+on:
+  push:
+    branches:
+      - sol/battle-janken-focus-html-r1-20260910
+permissions:
+  contents: read
+jobs:
+  probe:
+    if: github.event.head_commit.message == 'Probe Battle Focus HTML seam R1'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect current Battle HTML seams
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('browser/GAMEROAD.html')
+          lines = p.read_text(encoding='utf-8').splitlines()
+          pats = [
+            'battle-janken-slidepad-runtime-mount.mjs',
+            'mountBattleJankenSlidePadRuntime',
+            'battle-janken-compound-live-input-stack.mjs',
+            'createBattleJankenCompoundLiveInputStack',
+            'battle-new-base-live-consumer',
+            'previewRuntime',
+            'readCompoundAttackCandidate',
+            'createBattleJankenFocusAuthorityContextReader',
+            'mountBattleJankenFocusRuntimeSurface',
+          ]
+          seen=[]
+          for i,line in enumerate(lines,1):
+            if any(pat in line for pat in pats):
+              if all(abs(i-s)>45 for s in seen):
+                seen.append(i)
+          print('HTML_SHA_SOURCE_LINES', len(lines))
+          print('MATCH_CENTERS', seen)
+          for center in seen:
+            lo=max(1,center-35); hi=min(len(lines),center+80)
+            print(f'===== L{lo}-L{hi} center={center} =====')
+            for n in range(lo,hi+1):
+              print(f'{n:06d}: {lines[n-1]}')
+          if not seen:
+            raise SystemExit('No expected Battle seam found; fail closed')
+          PY

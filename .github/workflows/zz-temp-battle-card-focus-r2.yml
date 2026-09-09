@@ -29,7 +29,7 @@ jobs:
           git apply --3way /tmp/card-focus-r1-runtime.patch
           git show origin/sol/battle-card-focus-r1-20260909:tests/battle-card-focus-presentation.test.mjs > tests/battle-card-focus-presentation.test.mjs
           git add -N tests/battle-card-focus-presentation.test.mjs
-          mapfile -t changed < <(git diff --name-only | sort)
+          mapfile -t changed < <({ git diff --name-only; git diff --cached --name-only; } | sort -u)
           printf '%s\n' "${changed[@]}"
           test "${#changed[@]}" -eq 2
           test "${changed[0]}" = 'browser/battle-janken-slidepad-runtime-mount.mjs'

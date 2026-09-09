@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-ACTION-ORDER-R1-20260909T1428-SOL-F7N4Q2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_ACTION_ORDER_CHAIN_R1",
+  "acquireKey": "BATTLE-ACTION-ORDER-R1-20260909T1428-SOL-F7N4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ROW1374_FIRST_WIN_LOCK__main_26f0c095__triad_resolver_current",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "new_focused_presentation_test_plus_existing_triad_resolver_is_postchange_oracle",
+  "proceedToken": "PROCEED|BATTLE-ACTION-ORDER-R1-20260909T1428-SOL-F7N4Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_LEASE_READBACK",
+  "authorizationBaseSha": "26f0c0957a9e647c65c908fe7b2eef713f825b6b",
+  "scope": [
+    "browser/battle-action-order-presentation-core.mjs",
+    "tests/battle-action-order-presentation-core.test.mjs"
+  ],
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_ACTION_ORDER_CHAIN_R1",
+  "leaseAcquireKey": "BATTLE-ACTION-ORDER-R1-20260909T1428-SOL-F7N4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 14:28 JST",
+  "leaseUntilJst": "2026-09-09 15:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A652:N652",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/battle-action-order-r1-20260909; browser/battle-action-order-presentation-core.mjs (new); tests/battle-action-order-presentation-core.test.mjs (new); own transient data/preaction-authorizations/BATTLE-ACTION-ORDER-R1-20260909T1428-SOL-F7N4Q2.json only. browser/battle-screen-presentation-core.mjs, browser/battle-screen-runtime-mount.mjs, browser/triad-resolver-core.mjs, browser/GAMEROAD.html, janken runtime, gameplay/rules/save/economy/network READ_ONLY.",
+  "leaseScope": [
+    "browser/battle-action-order-presentation-core.mjs",
+    "tests/battle-action-order-presentation-core.test.mjs"
+  ],
+  "solutionSignature": "project-existing-triad-processing-order-steps-to-card-identity",
+  "reuseDisposition": "REUSE_EXISTING",
+  "solutionSearchStatus": "FOUND_CURRENT_REUSE",
+  "reuseDecisionEvidenceId": "browser/triad-resolver-core.mjs@26f0c095::resolveCyclicTriadByProcessingOrder"
+}

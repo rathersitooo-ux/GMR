@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HAND3-SLIDEPAD-CURRENT-R2-20260910T0412-SOL-Q7M4N21",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_HAND3_CURRENT_SLIDEPAD_PROJECTION_R1",
+  "acquireKey": "BATTLE-HAND3-SLIDEPAD-CURRENT-R2-20260910T0412-SOL-Q7M4N21",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R1_PRODUCT_VALIDATED_GATE_HISTORY_ONLY_REBUILD_FRESH_MAIN_20260910T0412JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "COPY_EXACT_VALIDATED_R1_TWO_FILE_BLOBS_NO_TRANSIENT_WORKFLOW",
+  "proceedToken": "PROCEED|BATTLE-HAND3-SLIDEPAD-CURRENT-R2-20260910T0412-SOL-Q7M4N21|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|hand3-slidepad-current-projection|clean-rebuild|active-lease",
+  "authorizationBaseSha": "2722168883dfb466c1fcc04b1c17fc3dffed5533",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_HAND3_CURRENT_SLIDEPAD_PROJECTION_R1",
+  "leaseAcquireKey": "BATTLE-HAND3-SLIDEPAD-CURRENT-R2-20260910T0412-SOL-Q7M4N21",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 04:12 JST",
+  "leaseUntilJst": "2026-09-10 05:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A925:L925",
+  "leaseExactMutableResources": "branch sol/battle-hand3-slidepad-current-r2-20260910; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; own PREACTION manifest only; no transient workflow; GAMEROAD.html/build/gameplay read-only",
+  "solutionSignature": "BATTLE_HAND3_CURRENT_IMMUTABLE_ASSIGNMENT_SLIDEPAD_PROJECTION_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R1_FINAL_TWO_FILE_PRODUCT_STATE_PLUS_CURRENT_UNIFORM_HAND3_AUTHORITIES",
+  "solutionSearchEvidence": [
+    "R1 final two-file product state is already focused-test validated; its Required Gate failed only because transient workflow history was outside the first PRE_ACTION scope.",
+    "Current live consumer remains the canonical uniform six-permutation Hand3 assignment authority; this SlidePad slice only projects its immutable CURRENT_HAND3_POLICY snapshot.",
+    "Clean R2 uses no transient workflow and copies the validated final runtime/test blobs byte-for-byte onto fresh main.",
+    "HTML/network provider, target, legality, route, Shield, gameplay, save, economy, and build remain read-only."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

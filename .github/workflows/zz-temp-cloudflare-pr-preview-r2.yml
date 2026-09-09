@@ -1,44 +1,193 @@
-name: TEMP Cloudflare PR Preview R2
+name: GAMEROAD Codex Shared Preview Bridge R2
 
 on:
   push:
     branches:
       - sol/cloudflare-pr-preview-r2-20260909
+    paths:
+      - .github/workflows/zz-temp-cloudflare-pr-preview-r2.yml
 
 permissions:
   contents: read
 
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  PAGES_PROJECT: gameroad-browser-r5
+  TARGET_SHA: 1726a860c15a1b2298492b3b69f358ddb38716c7
+  PREVIEW_BRANCH: codex-shared
+
 jobs:
-  patch:
+  preview:
+    name: Build and deploy exact shared preview
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - name: Checkout branch
+      - name: Checkout exact target source
         uses: actions/checkout@v4
         with:
-          ref: sol/cloudflare-pr-preview-r2-20260909
-          fetch-depth: 0
+          ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 1
 
-      - name: Apply bounded patch
+      - name: Verify exact target identity
         shell: bash
         run: |
           set -euo pipefail
-          python tools/temp-cloudflare-pr-preview-r2.py
-          grep -Fq "pull_request:" .github/workflows/cloudflare-public-deploy.yml
-          grep -Fq "GAMEROAD_PR_PREVIEW_R2" .github/workflows/cloudflare-public-deploy.yml
-          grep -Fq "if: github.event_name != 'pull_request'" .github/workflows/cloudflare-public-deploy.yml
-          grep -Fq 'PREVIEW_BRANCH: pr-${{ github.event.pull_request.number }}' .github/workflows/cloudflare-public-deploy.yml
-          git diff --check
+          ACTUAL_SHA="$(git rev-parse HEAD)"
+          test "$ACTUAL_SHA" = "$TARGET_SHA"
+          echo "Exact preview source: $ACTUAL_SHA"
 
-      - name: Run unchanged public package tests
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Require Cloudflare credentials
         shell: bash
         run: |
           set -euo pipefail
-          node --test deploy/cloudflare/tests/build.test.mjs deploy/cloudflare/tests/version-manifest.test.mjs
+          test -n "${CLOUDFLARE_API_TOKEN:-}" || { echo '::error::Missing CLOUDFLARE_API_TOKEN'; exit 1; }
+          test -n "${CLOUDFLARE_ACCOUNT_ID:-}" || { echo '::error::Missing CLOUDFLARE_ACCOUNT_ID'; exit 1; }
 
-      - name: Export patched workflow for direct writer
+      - name: Run preview package checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test \
+            deploy/cloudflare/tests/build.test.mjs \
+            deploy/cloudflare/tests/version-manifest.test.mjs
+
+      - name: Build exact preview package
+        shell: bash
+        run: |
+          set -euo pipefail
+          BROWSER_BLOB="$(git hash-object browser/GAMEROAD.html)"
+          PUBLISHED_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          node deploy/cloudflare/scripts/build.mjs \
+            --expected-blob "$BROWSER_BLOB" \
+            --source-commit "$TARGET_SHA" \
+            --published-at "$PUBLISHED_AT"
+          TARGET_SHA="$TARGET_SHA" PUBLISHED_AT="$PUBLISHED_AT" node <<'NODE'
+          const fs = require('node:fs');
+          const source = JSON.parse(fs.readFileSync('deploy/cloudflare/release-comms-source.json', 'utf8'));
+          if (source.schema !== 'gameroad.release-comms.source.v1' || source.channel !== 'public') {
+            throw new Error('Unexpected release comms source');
+          }
+          const manifest = {
+            schema: 'gameroad.release-comms.v1',
+            channel: source.channel,
+            build_id: process.env.TARGET_SHA,
+            published_at: process.env.PUBLISHED_AT,
+            calendar: source.calendar,
+            roadmap: source.roadmap,
+            release_notes: source.release_notes,
+            known_issues: source.known_issues,
+            service_status: source.service_status,
+          };
+          fs.writeFileSync('deploy/cloudflare/dist/gameroad-release-comms.json', `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+          const headersPath = 'deploy/cloudflare/dist/_headers';
+          const headers = fs.readFileSync(headersPath, 'utf8');
+          if (!headers.includes('/gameroad-release-comms.json')) {
+            const marker = '\n/*\n';
+            const stanza = '/gameroad-release-comms.json\n  Cache-Control: no-store\n\n';
+            if (!headers.includes(marker)) throw new Error('dist/_headers generic marker is missing');
+            fs.writeFileSync(headersPath, headers.replace(marker, `\n${stanza}/*\n`), 'utf8');
+          }
+          NODE
+
+      - name: Deploy non-production Pages preview
+        id: pages
+        shell: bash
+        working-directory: deploy/cloudflare
+        run: |
+          set -euo pipefail
+          cp wrangler.pages.toml wrangler.toml
+          trap 'rm -f wrangler.toml' EXIT
+          OUTPUT="$(npx --yes wrangler@4 pages deploy dist \
+            --project-name "$PAGES_PROJECT" \
+            --branch "$PREVIEW_BRANCH" \
+            --commit-hash "$TARGET_SHA" 2>&1)"
+          printf '%s\n' "$OUTPUT"
+          URL="$(printf '%s\n' "$OUTPUT" | grep -Eo 'https://[^[:space:]]+\.pages\.dev' | tail -n 1 || true)"
+          test -n "$URL" || { echo '::error::Preview deployment URL missing'; exit 1; }
+          ALIAS_URL="https://${PREVIEW_BRANCH}.${PAGES_PROJECT}.pages.dev"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "alias_url=$ALIAS_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Probe exact preview bytes and build identity
+        shell: bash
+        env:
+          PREVIEW_URL: ${{ steps.pages.outputs.url }}
+          PREVIEW_ALIAS_URL: ${{ steps.pages.outputs.alias_url }}
+        run: |
+          set -euo pipefail
+          verify_preview() {
+            local base_url="$1"
+            local label="$2"
+            local root_body="$RUNNER_TEMP/${label}-index.html"
+            local manifest_body="$RUNNER_TEMP/${label}-version.json"
+            for attempt in 1 2 3 4 5 6 7 8 9 10; do
+              rm -f "$root_body" "$manifest_body"
+              root_code="$(curl --silent --show-error --location \
+                --header 'Accept-Encoding: identity' \
+                --header 'Cache-Control: no-cache' \
+                --connect-timeout 10 --max-time 30 \
+                --output "$root_body" --write-out '%{http_code}' "${base_url}/" || true)"
+              manifest_code="$(curl --silent --show-error --location \
+                --header 'Accept-Encoding: identity' \
+                --header 'Cache-Control: no-cache' \
+                --connect-timeout 10 --max-time 30 \
+                --output "$manifest_body" --write-out '%{http_code}' "${base_url}/gameroad-version.json" || true)"
+              build_id=""
+              if [[ -s "$manifest_body" ]]; then
+                build_id="$(node -e 'const fs=require("node:fs");try{const m=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));process.stdout.write(m.build_id||"")}catch{}' "$manifest_body")"
+              fi
+              if [[ "$root_code" = 200 && "$manifest_code" = 200 ]] \
+                && cmp --silent deploy/cloudflare/dist/index.html "$root_body" \
+                && cmp --silent deploy/cloudflare/dist/gameroad-version.json "$manifest_body" \
+                && [[ "$build_id" = "$TARGET_SHA" ]]; then
+                echo "Exact preview verified: ${label} ${base_url} ${TARGET_SHA}"
+                return 0
+              fi
+              echo "preview not converged: label=${label} attempt=${attempt} root=${root_code:-none} manifest=${manifest_code:-none} build=${build_id:-none}"
+              [[ "$attempt" -lt 10 ]] && sleep 5
+            done
+            return 1
+          }
+          verify_preview "$PREVIEW_URL" atomic
+          verify_preview "$PREVIEW_ALIAS_URL" alias
+
+      - name: Publish preview receipt artifact
+        shell: bash
+        env:
+          PREVIEW_URL: ${{ steps.pages.outputs.url }}
+          PREVIEW_ALIAS_URL: ${{ steps.pages.outputs.alias_url }}
+        run: |
+          set -euo pipefail
+          mkdir -p preview-receipt
+          cat > preview-receipt/result.txt <<EOF
+          GAMEROAD_CODEX_SHARED_PREVIEW
+          source_sha=${TARGET_SHA}
+          atomic_url=${PREVIEW_URL}
+          shared_url=${PREVIEW_ALIAS_URL}
+          production_touched=false
+          relay_touched=false
+          exact_probe=PASS
+          EOF
+          cat preview-receipt/result.txt
+          {
+            echo '### GAMEROAD Codex共有プレビュー'
+            echo
+            echo "- source SHA: \`${TARGET_SHA}\`"
+            echo "- shared URL: ${PREVIEW_ALIAS_URL}"
+            echo "- atomic URL: ${PREVIEW_URL}"
+            echo '- production / relay: untouched'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload preview receipt
         uses: actions/upload-artifact@v4
         with:
-          name: cloudflare-pr-preview-r2-patched-workflow
-          path: .github/workflows/cloudflare-public-deploy.yml
+          name: gameroad-codex-shared-preview-receipt
+          path: preview-receipt/result.txt
           if-no-files-found: error
-          retention-days: 1
+          retention-days: 7

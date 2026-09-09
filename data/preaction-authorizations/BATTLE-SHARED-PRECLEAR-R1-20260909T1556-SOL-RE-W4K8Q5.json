@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SHARED-PRECLEAR-R1-20260909T1556-SOL-RE-W4K8Q5",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_SHARED_PRECOMMIT_CLEAR_BIND_R1",
+  "acquireKey": "BATTLE-SHARED-PRECLEAR-R1-20260909T1556-SOL-RE-W4K8Q5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-SHARED-PRECLEAR-R1-20260909T1556",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REHEARSE-MERGED-PRECLEAR-CORE-PLUS-SHARED-CONSUMER-BOUNDARY",
+  "proceedToken": "PROCEED|BATTLE-SHARED-PRECLEAR-R1-20260909T1556-SOL-RE-W4K8Q5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260909T1556JST",
+  "authorizationBaseSha": "aa281278bf3f8df81300f698b5a3b304e91098ad",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_SHARED_PRECOMMIT_CLEAR_BIND_R1",
+  "leaseAcquireKey": "BATTLE-SHARED-PRECLEAR-R1-20260909T1556-SOL-RE-W4K8Q5",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 15:56 JST",
+  "leaseUntilJst": "2026-09-09 16:56 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A696:L696",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-shared-preclear-r1-20260909; browser/battle-new-base-live-consumer-adapter.mjs; tests/battle-new-base-live-consumer-adapter.test.mjs; own transient data/preaction-authorizations/BATTLE-SHARED-PRECLEAR-R1-20260909T1556-SOL-RE-W4K8Q5.json only. Existing browser/battle-precommit-clear-core.mjs and compound/hand3 cores READ_ONLY. browser/GAMEROAD.html, battle-janken-slidepad-runtime-mount.mjs, battle-screen-runtime-mount.mjs, gameplay/rules/target/movement/save/economy/network READ_ONLY.",
+  "scope": [
+    "browser/battle-new-base-live-consumer-adapter.mjs",
+    "tests/battle-new-base-live-consumer-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-new-base-live-consumer-adapter.mjs",
+    "tests/battle-new-base-live-consumer-adapter.test.mjs"
+  ],
+  "solutionSignature": "battle-new-base-live-consumer/compose-existing-precommit-clear-with-local-compound-stage",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-BATTLE-PRECOMMIT-CLEAR-CORE-MAIN-A52DF8-AND-SHARED-CONSUMER-20260909",
+  "solutionSearchEvidence": [
+    "browser/battle-precommit-clear-core.mjs is already merged current pure policy for user-approved plan/target precommit cancellation and must be reused rather than duplicated",
+    "browser/battle-new-base-live-consumer-adapter.mjs already owns only the local staged compound package and existing Battle commit boundary, so it is the smallest existing consumer seam for one-operation local staged cancellation",
+    "current HTML, SlidePad, and battle-screen resources are actively owned elsewhere and stay read-only; this bounded slice does not steal player-facing runtime surfaces",
+    "busy, submitted, committed, and existing-draft apply rejection must fail closed with authoritative rollback0 and no game-state write"
+  ]
+}

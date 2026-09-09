@@ -11,6 +11,7 @@ import {
   isPartnerAdviceQuickReplyAvailable,
   projectBattleContextualTutorialReplay,
   projectPartnerAdviceBoardEmphasis,
+  projectPartnerIdleReadableContent,
 } from '../browser/partner-advice-runtime-mount.mjs';
 
 const V = Object.freeze({ rulesVersion: 'rules-r1', cardVersion: 'cards-r1', stateVersion: 'state-r1' });
@@ -578,4 +579,31 @@ test('Battle Advice chat reuses the existing root as a compact peripheral overla
   assert.match(source, /max-height:126px/);
   assert.match(source, /orientation:portrait/);
   assert.doesNotMatch(source, /createPartnerAdviceStore|new PartnerAdviceStore/);
+});
+
+test('idle readable content appears only in battle idle time and yields to higher-priority presentation', () => {
+  const base = {
+    partnerId: 'partner.saasuna',
+    seed: 'match-1:round-2:partner.saasuna:idle',
+    battleActive: true,
+  };
+  const idle = projectPartnerIdleReadableContent(base);
+  const same = projectPartnerIdleReadableContent(base);
+  assert.equal(idle.active, true);
+  assert.ok(idle.text);
+  assert.equal(same.text, idle.text);
+  assert.equal(idle.stableSeed, base.seed);
+  assert.equal(idle.presentationOnly, true);
+  assert.equal(idle.saveMutated, false);
+  assert.equal(idle.gameplayAuthorityMutated, false);
+  assert.equal(idle.autoExecute, false);
+  assert.equal(idle.timerDriven, false);
+
+  for (const flag of ['adviceActive', 'tutorialActive', 'reactionActive']) {
+    const blocked = projectPartnerIdleReadableContent({ ...base, [flag]: true });
+    assert.equal(blocked.active, false);
+    assert.equal(blocked.reason, 'HIGHER_PRIORITY_PRESENTATION');
+  }
+  assert.equal(projectPartnerIdleReadableContent({ ...base, battleActive: false }).active, false);
+  assert.equal(projectPartnerIdleReadableContent({ ...base, partnerId: 'partner.naki' }).active, false);
 });

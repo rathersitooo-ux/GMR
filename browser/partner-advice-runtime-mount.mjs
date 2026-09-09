@@ -14,6 +14,7 @@ import {
   partnerDisplayName,
   partnerRosterIdsFromRuntime,
   selectApprovedPartnerBattleUtterance,
+  selectApprovedPartnerIdleUtterance,
 } from './partner-dialogue-source-registry.mjs';
 import { readBattleR75SelfHudDom } from './partner-battle-event-log-projection.mjs';
 import {
@@ -30,6 +31,7 @@ const TUTORIAL_GUIDE_SCHEMA = 'gameroad.tutorial-partner-guide-control.v1';
 const CONTEXTUAL_TUTORIAL_REPLAY_SCHEMA = 'gameroad.tutorial-contextual-replay-control.v1';
 const QUICK_REPLY_SCHEMA = 'gameroad.partner-advice-quick-reply.v1';
 const CHARACTER_REACTION_SCHEMA = 'gameroad.partner-battle-character-reaction.v1';
+const IDLE_READABLE_SCHEMA = 'gameroad.partner-idle-readable-content.v1';
 const CHARACTER_REACTION_TRIGGER_ID = 'battle_card_submit';
 const DELEGATE_REPLY_TEXT = 'まかせた！';
 
@@ -774,6 +776,85 @@ export function projectPartnerAdviceChatPresentation({ laneProgress, partnerText
   });
 }
 
+
+function inactivePartnerIdleReadable(reason) {
+  return Object.freeze({
+    schema: IDLE_READABLE_SCHEMA,
+    active: false,
+    reason,
+    partnerId: null,
+    text: null,
+    sourceId: null,
+    dialogueVersion: null,
+    speechAct: null,
+    stableSeed: null,
+    presentationOnly: true,
+    saveMutated: false,
+    gameplayAuthorityMutated: false,
+    automaticCanonMutationAllowed: false,
+    automaticRelationshipMutationAllowed: false,
+    automaticGameMutationAllowed: false,
+    autoExecute: false,
+    timerDriven: false,
+  });
+}
+
+export function projectPartnerIdleReadableContent({
+  partnerId,
+  seed = null,
+  battleActive = false,
+  adviceActive = false,
+  tutorialActive = false,
+  reactionActive = false,
+  resolveUtterance = selectApprovedPartnerIdleUtterance,
+} = {}) {
+  if (battleActive !== true) return inactivePartnerIdleReadable('BATTLE_INACTIVE');
+  if (adviceActive || tutorialActive || reactionActive) {
+    return inactivePartnerIdleReadable('HIGHER_PRIORITY_PRESENTATION');
+  }
+  const id = exactPresentationToken(partnerId);
+  if (!id) return inactivePartnerIdleReadable('PARTNER_UNAVAILABLE');
+  if (typeof resolveUtterance !== 'function') return inactivePartnerIdleReadable('APPROVED_SOURCE_UNAVAILABLE');
+  const stableSeed = exactPresentationToken(seed) || `${id}:idle`;
+  let utterance;
+  try {
+    utterance = resolveUtterance({ partnerId: id, seed: stableSeed });
+  } catch {
+    return inactivePartnerIdleReadable('APPROVED_SOURCE_UNAVAILABLE');
+  }
+  const text = exactPresentationToken(utterance?.text);
+  const sourceId = exactPresentationToken(utterance?.sourceId);
+  const dialogueVersion = exactPresentationToken(utterance?.dialogueVersion);
+  const speechAct = exactPresentationToken(utterance?.speechAct);
+  if (
+    utterance?.partnerId !== id ||
+    utterance?.triggerId !== 'idle_readable' ||
+    utterance?.sourceState !== 'approved_current' ||
+    !text || !sourceId || !dialogueVersion || !speechAct
+  ) {
+    return inactivePartnerIdleReadable('APPROVED_SOURCE_UNAVAILABLE');
+  }
+  return Object.freeze({
+    schema: IDLE_READABLE_SCHEMA,
+    active: true,
+    reason: null,
+    partnerId: id,
+    text,
+    sourceId,
+    dialogueVersion,
+    speechAct,
+    stableSeed,
+    presentationOnly: true,
+    saveMutated: false,
+    gameplayAuthorityMutated: false,
+    automaticCanonMutationAllowed: false,
+    automaticRelationshipMutationAllowed: false,
+    automaticGameMutationAllowed: false,
+    autoExecute: false,
+    timerDriven: false,
+  });
+}
+
 function currentBattleChatSnapshot(win) {
   try {
     const raw = win.__GAMEROAD_PARTNER_ADVICE_STATE_VERSION__?.();
@@ -894,7 +975,16 @@ if (battleSurface) {
     const tutorialExperienceStatus = tutorialExperience.status();
     const tutorialConversation = tutorialExperienceStatus.conversation;
     const reactionActive = Boolean(lastCharacterReaction?.partnerText);
-    root.hidden = !projection.active && !tutorialStatus.available && !tutorialExperienceStatus.active && !reactionActive && !roleControlActive;
+    const adviceSpeechActive = Boolean(projection.partnerText || projection.playerText);
+    const idleReadable = projectPartnerIdleReadableContent({
+      partnerId: current?.partnerId,
+      seed: `${current?.matchId || 'battle'}:${current?.round ?? 'x'}:${current?.partnerId || 'partner'}:idle`,
+      battleActive: win.__GAMEROAD_TEST__?.state?.screen === 'battle',
+      adviceActive: adviceSpeechActive,
+      tutorialActive: tutorialStatus.active || tutorialExperienceStatus.active,
+      reactionActive,
+    });
+    root.hidden = !projection.active && !tutorialStatus.available && !tutorialExperienceStatus.active && !reactionActive && !roleControlActive && !idleReadable.active;
     const roleControl = root.querySelector('.partnerAdviceRoleControl');
     if (roleControl) roleControl.hidden = !roleControlActive;
     const roleName = root.querySelector('[data-role="advice-partner-name"]');
@@ -916,8 +1006,10 @@ if (battleSurface) {
     }
     const partner = root.querySelector('.partnerAdviceSpeech.partner:not(.characterReaction)');
     if (partner) {
-      partner.textContent = projection.active ? projection.partnerText || '' : '';
-      partner.classList.toggle('on', projection.active && Boolean(projection.partnerText));
+      const partnerSpeechText = projection.partnerText || idleReadable.text || '';
+      const partnerSpeechActive = Boolean(projection.partnerText) || idleReadable.active;
+      partner.textContent = partnerSpeechText;
+      partner.classList.toggle('on', partnerSpeechActive);
     }
     const player = root.querySelector('.partnerAdviceSpeech.player');
     if (player) {
@@ -960,7 +1052,7 @@ if (battleSurface) {
       tutorialButton.setAttribute('aria-pressed', tutorialStatus.active ? 'true' : 'false');
       tutorialButton.textContent = tutorialStatus.active ? '説明を閉じる' : '操作を再確認';
     }
-    return Object.freeze({ projection, tutorial: tutorialStatus, characterReaction: lastCharacterReaction, advicePartnerId: current?.partnerId || null, roster });
+    return Object.freeze({ projection, tutorial: tutorialStatus, idleReadable, characterReaction: lastCharacterReaction, advicePartnerId: current?.partnerId || null, roster });
   };
 
   const tutorialChoices = root.querySelector('[data-role="tutorial-experience-choices"]');

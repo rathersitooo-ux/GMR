@@ -3,8 +3,8 @@ const FLANORA_MAP_SCHEMA = 'GAMEROAD_FLANORA_MAP_LAYOUT_V1';
 const PLAYER_COUNT = 4;
 const SHIELD_LINKED_LANES_PER_PLAYER = 3;
 const MIN_HORIZONTAL_CELLS = PLAYER_COUNT * SHIELD_LINKED_LANES_PER_PLAYER;
-const CLEARING_CELLS_PER_PLAYER = 5;
-const CLEARING_CELL_COUNT = PLAYER_COUNT * CLEARING_CELLS_PER_PLAYER;
+const CLEARING_LOOP_ROW_COUNT = 3;
+const CLEARING_LOOP_CELL_COUNT = (MIN_HORIZONTAL_CELLS * 2) + 2;
 
 const ROW_INDEX = Object.freeze({
   GOAL: 0,
@@ -14,11 +14,11 @@ const ROW_INDEX = Object.freeze({
   ROAD_4: 4,
   ROAD_5: 5,
   ROAD_6: 6,
-  SHIELD: 7,
-  ROAD_7: 8,
-  CLEARING_ENTRY: 9,
-  CLEARING_NECK: 10,
-  START: 11,
+  ROAD_7: 7,
+  SHIELD: 8,
+  CLEARING_TOP: 9,
+  CLEARING_MIDDLE: 10,
+  CLEARING_BOTTOM: 11,
 });
 
 const VERTICAL_ORDER = Object.freeze([
@@ -29,11 +29,11 @@ const VERTICAL_ORDER = Object.freeze([
   'ROAD_4',
   'ROAD_5',
   'ROAD_6',
-  'SHIELD',
   'ROAD_7',
-  'CLEARING_ENTRY',
-  'CLEARING_NECK',
-  'START',
+  'SHIELD',
+  'CLEARING_TOP',
+  'CLEARING_MIDDLE',
+  'CLEARING_BOTTOM',
 ]);
 
 function nonEmptyString(value) {
@@ -85,14 +85,13 @@ function deepFreeze(value) {
   return value;
 }
 
-function cell(id, participantId, kind, rowIndex, columnIndex, laneIndex = null) {
+function cell(id, kind, rowIndex, columnIndex) {
   return {
     id,
-    participantId,
+    participantId: null,
     kind,
     rowIndex,
     columnIndex,
-    laneIndex,
   };
 }
 
@@ -134,6 +133,46 @@ function projectConnectivity(cells, edges) {
     connected: visited.size === cells.length,
     visitedCellCount: visited.size,
     isolatedCellIds,
+    degreeByCellId: Object.fromEntries(
+      [...adjacency.entries()].map(([id, neighbors]) => [id, neighbors.size]),
+    ),
+  };
+}
+
+function buildClearingLoop(laneColumns) {
+  const minColumn = laneColumns[0];
+  const maxColumn = laneColumns[laneColumns.length - 1];
+  const topCells = laneColumns.map((columnIndex) => (
+    cell(`clearing:top:${columnIndex}`, 'CLEARING_TOP', ROW_INDEX.CLEARING_TOP, columnIndex)
+  ));
+  const rightMiddle = cell(
+    'clearing:middle:right',
+    'CLEARING_MIDDLE',
+    ROW_INDEX.CLEARING_MIDDLE,
+    maxColumn,
+  );
+  const bottomCells = [...laneColumns].reverse().map((columnIndex) => (
+    cell(`clearing:bottom:${columnIndex}`, 'CLEARING_BOTTOM', ROW_INDEX.CLEARING_BOTTOM, columnIndex)
+  ));
+  const leftMiddle = cell(
+    'clearing:middle:left',
+    'CLEARING_MIDDLE',
+    ROW_INDEX.CLEARING_MIDDLE,
+    minColumn,
+  );
+
+  const cycleCells = [...topCells, rightMiddle, ...bottomCells, leftMiddle];
+  const geometryEdges = cycleCells.map((from, index) => {
+    const to = cycleCells[(index + 1) % cycleCells.length];
+    return edge(from.id, to.id, from, to);
+  });
+
+  return {
+    cells: cycleCells,
+    geometryEdges,
+    topCellByColumn: new Map(topCells.map((item) => [item.columnIndex, item])),
+    minColumn,
+    maxColumn,
   };
 }
 
@@ -155,70 +194,46 @@ export function createFlanoraMapLayout({
   );
   if (!laneBlocks) throw new TypeError('FOUR_CONTIGUOUS_THREE_LANE_BLOCKS_REQUIRED');
 
-  const clearingCells = [];
-  const clearingEntryCells = [];
-  const geometryEdges = [];
-  const road7EntryConnections = [];
+  const allLaneColumns = participants
+    .flatMap((participantId) => laneBlocks[participantId])
+    .sort((a, b) => a - b);
+  const clearingLoop = buildClearingLoop(allLaneColumns);
+  const clearingCells = clearingLoop.cells;
+  const geometryEdges = clearingLoop.geometryEdges;
+
   const startCellByParticipant = {};
+  const clearingEntryCellIdsByParticipant = {};
+  const laneRootConnections = [];
 
   for (const participantId of participants) {
     const columns = laneBlocks[participantId];
     const entryCells = columns.map((columnIndex, laneIndex) => {
-      const entry = cell(
-        `${participantId}:clearing-entry:${laneIndex}`,
-        participantId,
-        'CLEARING_ENTRY',
-        ROW_INDEX.CLEARING_ENTRY,
-        columnIndex,
-        laneIndex,
-      );
-      clearingCells.push(entry);
-      clearingEntryCells.push(entry);
-      road7EntryConnections.push({
+      const clearingEntry = clearingLoop.topCellByColumn.get(columnIndex);
+      laneRootConnections.push({
         participantId,
         laneIndex,
         columnIndex,
         road7: { rowIndex: ROW_INDEX.ROAD_7, columnIndex },
-        clearingEntryCellId: entry.id,
-        clearingEntry: { rowIndex: entry.rowIndex, columnIndex: entry.columnIndex },
+        shield: { rowIndex: ROW_INDEX.SHIELD, columnIndex },
+        clearingEntryCellId: clearingEntry.id,
+        clearingEntry: {
+          rowIndex: clearingEntry.rowIndex,
+          columnIndex: clearingEntry.columnIndex,
+        },
+        horizontalEntryOffset: 0,
+        viaShield: true,
       });
-      return entry;
+      return clearingEntry;
     });
-
-    const centerColumnIndex = columns[1];
-    const neck = cell(
-      `${participantId}:clearing-neck`,
-      participantId,
-      'CLEARING_NECK',
-      ROW_INDEX.CLEARING_NECK,
-      centerColumnIndex,
-    );
-    const start = cell(
-      `${participantId}:start`,
-      participantId,
-      'START',
-      ROW_INDEX.START,
-      centerColumnIndex,
-    );
-    clearingCells.push(neck, start);
-    startCellByParticipant[participantId] = start;
-
-    geometryEdges.push(
-      edge(entryCells[1].id, neck.id, entryCells[1], neck),
-      edge(neck.id, start.id, neck, start),
-    );
-  }
-
-  clearingEntryCells.sort((left, right) => left.columnIndex - right.columnIndex);
-  for (let index = 1; index < clearingEntryCells.length; index += 1) {
-    const previous = clearingEntryCells[index - 1];
-    const current = clearingEntryCells[index];
-    geometryEdges.push(edge(previous.id, current.id, previous, current));
+    clearingEntryCellIdsByParticipant[participantId] = entryCells.map((item) => item.id);
+    startCellByParticipant[participantId] = clearingLoop.topCellByColumn.get(columns[1]);
   }
 
   const connectivity = projectConnectivity(clearingCells, geometryEdges);
-  if (!connectivity.connected || connectivity.isolatedCellIds.length > 0) {
-    throw new TypeError('CLEARING_MUST_BE_SINGLE_ORTHOGONAL_COMPONENT');
+  const everyCellHasTwoLoopNeighbors = Object.values(connectivity.degreeByCellId)
+    .every((degree) => degree === 2);
+  if (!connectivity.connected || connectivity.isolatedCellIds.length > 0 || !everyCellHasTwoLoopNeighbors) {
+    throw new TypeError('CLEARING_MUST_BE_SINGLE_CLOSED_LOOP');
   }
 
   return deepFreeze({
@@ -230,18 +245,29 @@ export function createFlanoraMapLayout({
     shieldLinkedLaneColumnsByParticipant: laneBlocks,
     verticalOrder: [...VERTICAL_ORDER],
     rowIndex: { ...ROW_INDEX },
-    clearingCellCount: CLEARING_CELL_COUNT,
-    clearingCellsPerPlayer: CLEARING_CELLS_PER_PLAYER,
+    clearingOwnership: 'SHARED',
+    clearingLoopShape: 'HORIZONTAL_ZERO',
+    clearingLoopRowCount: CLEARING_LOOP_ROW_COUNT,
+    clearingCellCount: clearingCells.length,
     clearingCells,
+    clearingCycleCellIds: clearingCells.map((item) => item.id),
+    clearingLoopColumnSpan: {
+      minColumnIndex: clearingLoop.minColumn,
+      maxColumnIndex: clearingLoop.maxColumn,
+      columnCount: (clearingLoop.maxColumn - clearingLoop.minColumn) + 1,
+    },
+    clearingEntryCellIdsByParticipant,
     startCellByParticipant,
-    road7EntryConnections,
+    laneRootConnections,
     geometryEdges,
     geometryAdjacency: 'ORTHOGONAL_ONLY',
-    clearingConnectivity: 'SINGLE_ORTHOGONAL_COMPONENT',
+    clearingConnectivity: 'SINGLE_CLOSED_LOOP',
     clearingConnected: true,
     isolatedClearingCellIds: [],
     clearingTraversalAxes: ['VERTICAL', 'HORIZONTAL'],
     geometryIsMovementAuthority: false,
+    upperProgressIsPrebuiltMovementField: false,
+    optionalRuleGeometryIncluded: false,
   });
 }
 
@@ -250,12 +276,16 @@ export const FLANORA_MAP_LAYOUT_CORE = Object.freeze({
   playerCount: PLAYER_COUNT,
   shieldLinkedLanesPerPlayer: SHIELD_LINKED_LANES_PER_PLAYER,
   minimumHorizontalCellCount: MIN_HORIZONTAL_CELLS,
-  clearingCellsPerPlayer: CLEARING_CELLS_PER_PLAYER,
-  clearingCellCount: CLEARING_CELL_COUNT,
+  clearingOwnership: 'SHARED',
+  clearingLoopShape: 'HORIZONTAL_ZERO',
+  clearingLoopRowCount: CLEARING_LOOP_ROW_COUNT,
+  clearingCellCount: CLEARING_LOOP_CELL_COUNT,
   verticalOrder: VERTICAL_ORDER,
   rowIndex: ROW_INDEX,
   geometryAdjacency: 'ORTHOGONAL_ONLY',
-  clearingConnectivity: 'SINGLE_ORTHOGONAL_COMPONENT',
+  clearingConnectivity: 'SINGLE_CLOSED_LOOP',
   clearingTraversalAxes: Object.freeze(['VERTICAL', 'HORIZONTAL']),
   geometryIsMovementAuthority: false,
+  upperProgressIsPrebuiltMovementField: false,
+  optionalRuleGeometryIncluded: false,
 });

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RESOURCE-HUD-R3-20260909T2115-SOL-H5N8Q5",
+  "taskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "workUnitKey": "BATTLE_CRITICAL_RESOURCE_HUD_R3",
+  "acquireKey": "BATTLE-RESOURCE-HUD-R3-20260909T2115-SOL-H5N8Q5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_BATTLE_HONEY_CHIP_STATE_EXISTS_BUT_CURRENT_HUD_CONSUMER_MISSING_20260909",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R2_EXACT_TWO_FILE_COMPONENT_PLUS_FOCUSED_TEST_DONOR_FAILCLOSED_ONLY_AT_PREACTION_METADATA_20260909",
+  "proceedToken": "PROCEED|BATTLE-RESOURCE-HUD-R3-20260909T2115-SOL-H5N8Q5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|critical-resource-hud|compose-existing-authority|active-lease",
+  "authorizationBaseSha": "3ea8d29ccdc987c7e46b310671f92491b51c07c3",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "leaseWorkUnitKey": "BATTLE_CRITICAL_RESOURCE_HUD_R3",
+  "leaseAcquireKey": "BATTLE-RESOURCE-HUD-R3-20260909T2115-SOL-H5N8Q5",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 21:15 JST",
+  "leaseUntilJst": "2026-09-09 22:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A756:L756",
+  "leaseExactMutableResources": "browser/battle-critical-resource-hud-runtime.mjs (new); tests/battle-critical-resource-hud-runtime.test.mjs (new); own transient data/preaction-authorizations/BATTLE-RESOURCE-HUD-R3-20260909T2115-SOL-H5N8Q5.json only. Existing gameplay Honey/Chip state and prior R2 component/test are READ_ONLY reuse evidence. browser/GAMEROAD.html, battle-screen runtime, partner/replay runtimes, Mana/HATE/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_CRITICAL_RESOURCE_HONEY_CHIP_CALLER_ONLY_HUD_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_HUD_AND_EXISTING_HONEY_CHIP_GAMEPLAY_AUTHORITY_READBACK_20260909",
+  "solutionSearchEvidence": [
+    "current gameplay already stores authoritative player.honey and player.chip; no new resource calculation or store is required",
+    "current battle-screen HUD exposes SCORE/Turn/Load/HATE/action chain but has no explicit Honey or Chip consumer",
+    "existing friend/public projection already demonstrates that Chip identities may be masked to count while Honey is numeric",
+    "R2 implemented this same two-file caller-only presentation component and focused test; Required Gate stopped before product tests only because its frozen PREACTION omitted required reuse metadata",
+    "R3 therefore composes the existing resource authority into a small presentation-only consumer and does not mutate GAMEROAD.html, gameplay rules, save, economy or network"
+  ],
+  "scope": [
+    "browser/battle-critical-resource-hud-runtime.mjs",
+    "tests/battle-critical-resource-hud-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-critical-resource-hud-runtime.mjs",
+    "tests/battle-critical-resource-hud-runtime.test.mjs"
+  ]
+}

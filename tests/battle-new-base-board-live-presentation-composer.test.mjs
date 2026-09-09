@@ -113,6 +113,7 @@ test('the seventh authoritative card opens only the exact lane and shows its col
   const result = runtime.syncAuthoritativeSnapshot({ straightCardIdsByColumn: seven });
 
   assert.equal(result.ok, true);
+  assert.equal(result.reason, 'AUTHORITATIVE_PRESENTATION_SYNCED');
   assert.equal(host.children[0], originalBoardRoot);
   assert.deepEqual(runtime.snapshot().connectedLaneKeys, ['P2:1']);
   assert.equal(runtime.snapshot().gateCue.activeArrowCount, 1);
@@ -182,6 +183,34 @@ test('multiple OPEN lanes remain independent and late caller color authority can
   assert.equal(runtime.resolveGateCueLane('P4', 0).arrowStack.style.getPropertyValue('--gameroad-goal-entry-cue-color'), COLORS.P4);
   assert.equal(runtime.resolveGateCueLane('P4', 1).arrowStack, null);
   assert.equal(runtime.resolveGateCueLane('P4', 2).arrowStack.style.getPropertyValue('--gameroad-goal-entry-cue-color'), COLORS.P4);
+});
+
+test('normalizes the caller lane blocks once so Flanora and GOAL-path keep the same L/C/R identity', () => {
+  const documentLike = makeFakeDom();
+  const host = documentLike.createElement('div');
+  const unorderedLayout = {
+    participantIds: ['P1', 'P2', 'P3', 'P4'],
+    horizontalCellCount: 12,
+    shieldLinkedLaneColumnsByParticipant: {
+      P1: [2, 0, 1],
+      P2: [5, 3, 4],
+      P3: [8, 6, 7],
+      P4: [11, 9, 10],
+    },
+  };
+  const runtime = mountBattleNewBaseBoardLivePresentation({
+    host,
+    documentLike,
+    layoutInput: unorderedLayout,
+    straightCardIdsByColumn: withStraight(emptyStraights(), 0, 7, 'P1-L'),
+    participantColors: COLORS,
+  });
+
+  assert.equal(runtime.mounted, true);
+  assert.deepEqual(runtime.flanoraLayout.shieldLinkedLaneColumnsByParticipant.P1, [0, 1, 2]);
+  assert.deepEqual(runtime.snapshot().connectedLaneKeys, ['P1:0']);
+  assert.equal(runtime.resolveGateCueLane('P1', 0).entryCellId, 'clearing:top:0');
+  assert.equal(runtime.resolveGateCueLane('P1', 1).arrowStack, null);
 });
 
 test('Reduced Motion keeps the same OPEN meaning with static cue and destroy removes the composed surface', () => {

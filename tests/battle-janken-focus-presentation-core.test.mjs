@@ -59,6 +59,7 @@ test('fails closed unless the authoritative choice set is exactly one ROCK, SCIS
   assert.equal(missing.available, false);
   assert.equal(missing.reason, 'EXACT_ROCK_SCISSORS_PAPER_PACKAGES_REQUIRED');
   assert.deepEqual(missing.choices, []);
+  assert.equal(missing.focusedLock, null);
 
   const duplicate = createBattleJankenFocusPresentation({
     packages: [packageFor('ROCK', 0), packageFor('ROCK', 1), packageFor('PAPER', 2)],
@@ -67,7 +68,7 @@ test('fails closed unless the authoritative choice set is exactly one ROCK, SCIS
   assert.equal(duplicate.focusedPackage, null);
 });
 
-test('focus can select only one of the existing three package identities', () => {
+test('focus can select only one of the existing three package identities and lock mirrors its existing preview', () => {
   const initial = createBattleJankenFocusPresentation({ packages: exactThree() });
   const focused = focusBattleJankenPackage(initial, 'PAPER', { previewReady: true });
 
@@ -76,13 +77,22 @@ test('focus can select only one of the existing three package identities', () =>
   assert.equal(focused.focusedPackage.opponentId, 'P4');
   assert.equal(focused.focusedPackage.shieldLane, 'R');
   assert.equal(focused.previewReady, true);
+  assert.deepEqual(focused.focusedLock, {
+    jankenHand: 'PAPER',
+    cardId: focused.focusedPreview.cardId,
+    opponentId: focused.focusedPreview.opponentId,
+    shieldLane: focused.focusedPreview.shieldLane,
+    shieldRef: focused.focusedPreview.shieldRef,
+    route: focused.focusedPreview.route,
+  });
+  assert.equal(focused.focusedLock.route, focused.focusedPreview.route);
 
   const invalid = focusBattleJankenPackage(initial, 'LIZARD');
   assert.equal(invalid.available, false);
   assert.equal(invalid.reason, 'FOCUS_PACKAGE_NOT_IN_AUTHORITATIVE_THREE');
 });
 
-test('board peek preserves the same focus package and returns without restaging drift', () => {
+test('board peek from janken focus preserves the same package and returns to janken focus', () => {
   const initial = createBattleJankenFocusPresentation({ packages: exactThree(), generationId: 'GEN-A' });
   const focused = focusBattleJankenPackage(initial, 'SCISSORS', { previewReady: true });
   const peek = enterBattleJankenBoardPeek(focused);
@@ -90,11 +100,38 @@ test('board peek preserves the same focus package and returns without restaging 
 
   assert.equal(peek.surface, BATTLE_JANKEN_FOCUS_SURFACE.BOARD_PEEK);
   assert.equal(peek.boardPeek, true);
+  assert.equal(peek.peekReturnSurface, BATTLE_JANKEN_FOCUS_SURFACE.JANKEN_FOCUS);
   assert.equal(peek.focusedPackage, focused.focusedPackage);
+  assert.equal(peek.focusedPreview, focused.focusedPreview);
   assert.equal(peek.generationId, 'GEN-A');
   assert.equal(returned.surface, BATTLE_JANKEN_FOCUS_SURFACE.JANKEN_FOCUS);
+  assert.equal(returned.peekReturnSurface, null);
   assert.equal(returned.focusedPackage, focused.focusedPackage);
+  assert.equal(returned.focusedPreview, focused.focusedPreview);
   assert.equal(returned.previewReady, true);
+});
+
+test('load focus can peek the board and returns to the same enlarged load focus without losing the lock', () => {
+  const initial = createBattleJankenFocusPresentation({ packages: exactThree(), generationId: 'GEN-LOAD' });
+  const focused = focusBattleJankenPackage(initial, 'PAPER', { previewReady: true });
+  const load = enterBattleLoadFocus(focused);
+  const peek = enterBattleJankenBoardPeek(load);
+  const returned = returnBattleJankenFocus(peek);
+
+  assert.equal(load.surface, BATTLE_JANKEN_FOCUS_SURFACE.LOAD_FOCUS);
+  assert.equal(peek.surface, BATTLE_JANKEN_FOCUS_SURFACE.BOARD_PEEK);
+  assert.equal(peek.peekReturnSurface, BATTLE_JANKEN_FOCUS_SURFACE.LOAD_FOCUS);
+  assert.equal(peek.focusedPackage, load.focusedPackage);
+  assert.equal(peek.focusedPreview, load.focusedPreview);
+  assert.equal(peek.previewReady, true);
+  assert.equal(returned.surface, BATTLE_JANKEN_FOCUS_SURFACE.LOAD_FOCUS);
+  assert.equal(returned.loadFocus, true);
+  assert.equal(returned.peekReturnSurface, null);
+  assert.equal(returned.focusedPackage, load.focusedPackage);
+  assert.equal(returned.focusedPreview, load.focusedPreview);
+  assert.equal(returned.previewReady, true);
+  assert.deepEqual(returned.focusedLock, load.focusedLock);
+  assert.equal(returned.focusedLock.route, returned.focusedPreview.route);
 });
 
 test('load focus opens only after the existing exact visible preview is ready', () => {
@@ -109,6 +146,8 @@ test('load focus opens only after the existing exact visible preview is ready', 
   assert.equal(load.focusedPreview.cardId, 'CARD-ROCK');
   assert.equal(load.focusedPreview.opponentId, 'P2');
   assert.equal(load.focusedPreview.shieldRef, 'P2-SHIELD-L');
+  assert.equal(load.focusedLock.opponentId, load.focusedPreview.opponentId);
+  assert.equal(load.focusedLock.shieldRef, load.focusedPreview.shieldRef);
 });
 
 test('commit presentation exposes no payload or transport and only marks the existing staged focus as committing', () => {
@@ -126,7 +165,7 @@ test('commit presentation exposes no payload or transport and only marks the exi
   assert.equal(committing.gameStateWrite, false);
 });
 
-test('stale or version mismatch discards old focus and package presentation fail closed', () => {
+test('stale or version mismatch discards old focus, lock, and package presentation fail closed', () => {
   const initial = createBattleJankenFocusPresentation({ packages: exactThree(), generationId: 'GEN-OLD' });
   const focused = focusBattleJankenPackage(initial, 'ROCK', { previewReady: true });
   const stale = invalidateBattleJankenFocusPresentation(focused, 'STALE_OR_VERSION_MISMATCH');
@@ -135,6 +174,8 @@ test('stale or version mismatch discards old focus and package presentation fail
   assert.equal(stale.available, false);
   assert.equal(stale.focusedHand, null);
   assert.equal(stale.focusedPackage, null);
+  assert.equal(stale.focusedPreview, null);
+  assert.equal(stale.focusedLock, null);
   assert.equal(stale.previewReady, false);
   assert.deepEqual(stale.choices, []);
   assert.equal(stale.generationId, 'GEN-OLD');
@@ -160,6 +201,12 @@ test('reduced motion and low-perf change only motion mode, not package or surfac
   assert.equal(reduced.focusedPackage.shieldLane, lowPerf.focusedPackage.shieldLane);
   assert.equal(BATTLE_JANKEN_FOCUS_PRESENTATION_CONTRACT.authority, 'NONE');
   assert.equal(BATTLE_JANKEN_FOCUS_PRESENTATION_CONTRACT.freeTargetPicker, false);
+  assert.equal(BATTLE_JANKEN_FOCUS_PRESENTATION_CONTRACT.lockProjectionFromExistingPreviewOnly, true);
+  assert.equal(BATTLE_JANKEN_FOCUS_PRESENTATION_CONTRACT.boardPeekReturnsToOriginFocusSurface, true);
+  assert.deepEqual(BATTLE_JANKEN_FOCUS_PRESENTATION_CONTRACT.boardPeekAllowedFrom, [
+    BATTLE_JANKEN_FOCUS_SURFACE.JANKEN_FOCUS,
+    BATTLE_JANKEN_FOCUS_SURFACE.LOAD_FOCUS,
+  ]);
   assert.equal(BATTLE_JANKEN_FOCUS_PRESENTATION_CONTRACT.commitTransportDelegatedToExistingLiveStack, true);
   assert.equal(BATTLE_JANKEN_FOCUS_PRESENTATION_CONTRACT.mutatesProductionRuntime, false);
 });

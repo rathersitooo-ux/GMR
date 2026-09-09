@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SHARED-CONSUMER-R1-20260909T1432-SOL-W4K8Q2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_SHARED_HTML_GAME_CONSUMER_R1",
+  "acquireKey": "BATTLE-SHARED-CONSUMER-R1-20260909T1432-SOL-W4K8Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-CONSUMER-BOUNDARY-NO-RULE-INVENTION-R1",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REHEARSE-CALLER-OWNED-AUTHORITY-AND-TRANSPORT-R1",
+  "proceedToken": "PROCEED|BATTLE-SHARED-CONSUMER-R1-20260909T1432-SOL-W4K8Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260909T1432JST",
+  "authorizationBaseSha": "26f0c0957a9e647c65c908fe7b2eef713f825b6b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_SHARED_HTML_GAME_CONSUMER_R1",
+  "leaseAcquireKey": "BATTLE-SHARED-CONSUMER-R1-20260909T1432-SOL-W4K8Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 14:32 JST",
+  "leaseUntilJst": "2026-09-09 15:32 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A9:L9",
+  "leaseExactMutableResources": "browser/battle-new-base-live-consumer-adapter.mjs; tests/battle-new-base-live-consumer-adapter.test.mjs; data/preaction-authorizations/BATTLE-SHARED-CONSUMER-R1-20260909T1432-SOL-W4K8Q2.json; branch work/battle-shared-consumer-r1",
+  "scope": [
+    "browser/battle-new-base-live-consumer-adapter.mjs",
+    "tests/battle-new-base-live-consumer-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-new-base-live-consumer-adapter.mjs",
+    "tests/battle-new-base-live-consumer-adapter.test.mjs"
+  ],
+  "solutionSignature": "NEW_BASE_HAND3_PLUS_COMPOUND_ATTACK_CALLER_OWNED_LIVE_CONSUMER_ADAPTER_R1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-CURRENT-HAND3-COMPOUND-CORE-AND-EXISTING-LIVE-LOOP-R1",
+  "solutionSearchEvidence": [
+    "browser/new-base-round-start-janken-slot-assignment-core.mjs CURRENT_HAND3_POLICY",
+    "browser/battle-janken-compound-attack-package-core.mjs caller-supplied package contract",
+    "browser/battle-auto-input-core.mjs existing human commit path and manual target boundary",
+    "CURRENT parent BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001 reuse existing live plan-reveal-move-target-battle loop"
+  ]
+}

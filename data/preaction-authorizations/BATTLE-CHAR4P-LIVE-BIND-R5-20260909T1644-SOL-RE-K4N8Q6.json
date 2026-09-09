@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CHAR4P-LIVE-BIND-R5-20260909T1644-SOL-RE-K4N8Q6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CONTROLLED_CHARACTER_MOTION_LIVE_BIND_R5",
+  "acquireKey": "BATTLE-CHAR4P-LIVE-BIND-R5-20260909T1644-SOL-RE-K4N8Q6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PREDICT-CHAR4P-LIVE-R5-20260909T1644",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "REHEARSE-CURRENT-HARDCODED-NAKI-FAILCLOSED-TO-EXPLICIT-DIRECTOR-PROJECTION-SINK",
+  "proceedToken": "PROCEED|BATTLE-CHAR4P-LIVE-BIND-R5-20260909T1644-SOL-RE-K4N8Q6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|20260909T1644JST",
+  "authorizationBaseSha": "8738576d84e61096645f819ec67d00a58f1962cd",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CONTROLLED_CHARACTER_MOTION_LIVE_BIND_R5",
+  "leaseAcquireKey": "BATTLE-CHAR4P-LIVE-BIND-R5-20260909T1644-SOL-RE-K4N8Q6",
+  "leaseSnapshotReadbackAtJst": "2026-09-09 16:44 JST",
+  "leaseUntilJst": "2026-09-09 17:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A708:L708",
+  "scope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-battle-char4p-r5.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-board-naki-4p-visual-binding.mjs",
+    "tests/battle-board-naki-4p-visual-binding.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-battle-char4p-r5.yml"
+  ],
+  "solutionSignature": "battle-controlled-character-4p/live-binding-explicit-director-projection-no-fake-naki-no-legacy-suppression",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE-MERGED-4P-MOTION-DIRECTOR-CE9A294-AND-CURRENT-PARENT-MARKER-BINDING",
+  "solutionSearchEvidence": [
+    "merged browser/battle-controlled-character-4p-motion-director.mjs remains the motion and identity projection authority input",
+    "current main binding blob 01df2262 hardcodes partner.naki and hides #battleRuntime when four surfaces are active; this matches the earlier rejected regression condition",
+    "rejected PR#1358 identity extraction may be read as evidence but its legacy actor suppression and permanent-idle rendering are not accepted donors",
+    "R4 lease expired with no branch/PR/durable main mutation and was terminalized before this acquire",
+    "R5 binding consumes caller-projected character/motion rows only, never computes coordinates/path/movement/rules and never substitutes Advice Partner identity",
+    "deploy/cloudflare/scripts/build.mjs is read-only because this binding is already packaged; only the existing build-test blob pin may change"
+  ]
+}

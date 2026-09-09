@@ -1,0 +1,132 @@
+name: TEMP Battle Portrait Live R3
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  surgical-patch:
+    if: github.event.pull_request.head.ref == 'sol/battle-portrait-live-r3-20260909'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - name: Apply exact portrait runtime replacements
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly 1 match, got {count}')
+              return text.replace(old, new, 1)
+
+          screen_path = Path('browser/battle-screen-runtime-mount.mjs')
+          screen = screen_path.read_text()
+          screen = replace_once(
+              screen,
+              '@media(max-width:540px) and (orientation:portrait){[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:88px;right:8px;bottom:96px;left:8px;height:auto;gap:6px;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(4,minmax(0,1fr))}',
+              '@media(max-width:540px) and (orientation:portrait){[${SHELL_ATTR}="1"] .grBattleScreenTop{height:56px;padding:4px 6px;gap:4px}[${SHELL_ATTR}="1"] [${CURRENT_ACTION_ATTR}]{top:auto;bottom:248px;left:8px;right:8px;transform:none;max-width:none;min-height:44px;display:flex;align-items:center;justify-content:center;white-space:normal;padding:6px 9px}[${SHELL_ATTR}="1"] [${GRID_ATTR}]{top:56px;right:8px;bottom:auto;left:8px;height:52px;gap:4px;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr)}',
+              'screen portrait rail/action',
+          )
+          screen = replace_once(
+              screen,
+              '[${SHELL_ATTR}="1"] [${LANE_ATTR}]{grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(20px,auto);column-gap:8px;row-gap:3px;padding:8px 10px;transform:none!important}',
+              '[${SHELL_ATTR}="1"] [${LANE_ATTR}]{grid-template-columns:minmax(0,1fr);grid-template-rows:auto;column-gap:0;row-gap:1px;padding:3px 3px;transform:none!important;min-height:0}[${SHELL_ATTR}="1"] .grBattleLaneRole,[${SHELL_ATTR}="1"] .grBattleLaneAfterstate{display:none}',
+              'screen portrait compact lanes',
+          )
+          screen = replace_once(
+              screen,
+              '[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}]{left:8px;top:22%;bottom:27%;width:auto;height:auto;flex-direction:column;justify-content:space-between;gap:5px;font-size:10px;letter-spacing:.09em}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}] .grBattleProgressArrow{width:2px;min-width:2px;min-height:42px;flex:1 1 auto;background:linear-gradient(180deg,rgba(255,226,129,.88),rgba(219,241,207,.30))}[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}] .grBattleProgressArrow::before{content:"▲";left:50%;top:-2px;transform:translate(-50%,-45%)}',
+              '[${SHELL_ATTR}="1"] [${PROGRESS_GUIDE_ATTR}]{display:none}',
+              'screen portrait stale progress guide',
+          )
+          screen_path.write_text(screen)
+
+          screen_test_path = Path('tests/battle-screen-runtime-mount.test.mjs')
+          screen_test = screen_test_path.read_text()
+          screen_test = replace_once(
+              screen_test,
+              'top:88px;right:8px;bottom:96px;left:8px;height:auto;gap:6px;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(4,minmax(0,1fr))',
+              'top:56px;right:8px;bottom:auto;left:8px;height:52px;gap:4px;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr)',
+              'screen test portrait rail',
+          )
+          screen_test = replace_once(
+              screen_test,
+              'grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(20px,auto);',
+              'grid-template-columns:minmax(0,1fr);grid-template-rows:auto;column-gap:0;row-gap:1px;padding:3px 3px;transform:none!important;min-height:0',
+              'screen test compact lanes',
+          )
+          screen_test = replace_once(
+              screen_test,
+              '.grBattleProgressArrow::before{content:"▲"',
+              '[data-battle-progress-guide]{display:none}',
+              'screen test hidden portrait guide',
+          )
+          anchor = "assert.ok(runtimeStyle.textContent.includes('[data-gr-battle-screen=\"1\"] [data-battle-screen-causal-grid]::before{display:none}'));"
+          additions = "\n".join([
+              "assert.ok(runtimeStyle.textContent.includes('.grBattleScreenTop{height:56px;padding:4px 6px;gap:4px}'));",
+              "assert.ok(runtimeStyle.textContent.includes('[data-battle-current-action]{top:auto;bottom:248px;left:8px;right:8px;transform:none;max-width:none;min-height:44px'));",
+              "assert.ok(runtimeStyle.textContent.includes('.grBattleLaneRole,[data-gr-battle-screen=\"1\"] .grBattleLaneAfterstate{display:none}'));",
+          ])
+          if additions not in screen_test:
+              if anchor not in screen_test:
+                  raise SystemExit('screen test insertion anchor missing')
+              screen_test = screen_test.replace(anchor, anchor + '\n' + additions, 1)
+          screen_test_path.write_text(screen_test)
+
+          janken_path = Path('browser/battle-janken-slidepad-runtime-mount.mjs')
+          janken = janken_path.read_text()
+          janken = replace_once(
+              janken,
+              'left:10px;bottom:220px;max-width:46vw',
+              'right:176px;left:auto;bottom:max(12px,env(safe-area-inset-bottom));max-width:min(164px,42vw);transform-origin:right bottom',
+              'janken optional roulette portrait placement',
+          )
+          janken = replace_once(
+              janken,
+              '[${HOST_ATTR}="1"]{bottom:185px}',
+              '[${HOST_ATTR}="1"]{bottom:max(12px,env(safe-area-inset-bottom))}',
+              'janken portrait thumb host placement',
+          )
+          janken_path.write_text(janken)
+
+          janken_test_path = Path('tests/battle-janken-slidepad-runtime-mount.test.mjs')
+          janken_test = janken_test_path.read_text()
+          marker = "test('portrait keeps SlidePad and optional roulette in the same bottom-right thumb family'"
+          if marker not in janken_test:
+              janken_test += r'''
+
+test('portrait keeps SlidePad and optional roulette in the same bottom-right thumb family', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /@media\(max-width:540px\) and \(orientation:portrait\)\{\[\$\{HOST_ATTR\}=\"1\"\]\{bottom:max\(12px,env\(safe-area-inset-bottom\)\)\}/);
+  assert.match(source, /right:176px;left:auto;bottom:max\(12px,env\(safe-area-inset-bottom\)\);max-width:min\(164px,42vw\);transform-origin:right bottom/);
+  assert.equal(source.includes('left:10px;bottom:220px;max-width:46vw'), false);
+  assert.match(source, /mountBattleJankenSlidePadRuntime\(globalRef = globalThis, \{ battleRoot = null, rouletteEnabled = false \} = \{\}\)/);
+});
+'''
+          janken_test_path.write_text(janken_test)
+          PY
+      - name: Verify focused Battle portrait runtime tests
+        run: node --test tests/battle-screen-runtime-mount.test.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs tests/battle-portrait-recompose-presentation-core.test.mjs tests/battle-thumb-cluster-presentation-core.test.mjs
+      - name: Verify diff and commit product patch
+        shell: bash
+        run: |
+          git diff --check
+          if git diff --quiet -- browser/battle-screen-runtime-mount.mjs tests/battle-screen-runtime-mount.test.mjs browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs; then
+            echo 'portrait runtime patch already present'
+            exit 0
+          fi
+          git config user.name 'gameroad-actions'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/battle-screen-runtime-mount.mjs tests/battle-screen-runtime-mount.test.mjs browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs
+          git commit -m 'Battle: wire 390x844 portrait recomposition into live runtimes'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}

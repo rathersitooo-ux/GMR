@@ -1,0 +1,87 @@
+name: zz-temp-partner-idle-readable-r4
+
+on:
+  push:
+    branches:
+      - sol/partner-idle-readable-r4-20260910
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.head_commit.message == 'RUN_R4_PARTNER_IDLE_WRITER'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply reviewed donor and provenance repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='d8852bcfd94ebf538b5c74ee2b56c084b46d4349'
+          DONOR='38604eed1e7a6f0b525491d7f1dda4fc1dd23eb8'
+          OLD='395613e3162d07b5d21f0d07b2c63c0add5e8927'
+          NEW='363cefd1f4ac20fe352060cb834a34bb949d59fe'
+          PRE='data/preaction-authorizations/PARTNER-IDLE-READABLE-R4-20260910T0504-SOL-P7N4Q4.json'
+          WF='.github/workflows/zz-temp-partner-idle-readable-r4.yml'
+
+          test "$(git rev-parse HEAD^^)" = "$BASE"
+          git cat-file -e "$DONOR^{commit}"
+
+          for p in \
+            browser/partner-dialogue-source-registry.mjs \
+            browser/partner-advice-runtime-mount.mjs \
+            tests/partner-dialogue-source-registry.test.mjs \
+            tests/partner-advice-runtime-mount.test.mjs
+          do
+            git show "$DONOR:$p" > "$p"
+          done
+
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('deploy/cloudflare/tests/build.test.mjs')
+          text = p.read_text()
+          old = '395613e3162d07b5d21f0d07b2c63c0add5e8927'
+          new = '363cefd1f4ac20fe352060cb834a34bb949d59fe'
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one stale partner-advice blob pin, found {text.count(old)}')
+          text2 = text.replace(old, new)
+          if text2.count(new) != 1:
+              raise SystemExit('new partner-advice blob pin count is not exactly one')
+          p.write_text(text2)
+          PY
+
+          test "$(git hash-object browser/partner-dialogue-source-registry.mjs)" = 'e1a38fb2d6a3d112476951fcc6afcfc718d7a6ec'
+          test "$(git hash-object browser/partner-advice-runtime-mount.mjs)" = '363cefd1f4ac20fe352060cb834a34bb949d59fe'
+          test "$(git hash-object tests/partner-dialogue-source-registry.test.mjs)" = 'bad0b2a60c6048dbd0e75c67802039de255b41f3'
+          test "$(git hash-object tests/partner-advice-runtime-mount.test.mjs)" = 'b828663680dd16d0e8e50adc22272e126931209e'
+
+          node --test tests/partner-dialogue-source-registry.test.mjs tests/partner-advice-runtime-mount.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+          git diff --check
+
+          rm -f "$PRE" "$WF"
+
+          python - <<'PY'
+          import subprocess
+          expected = sorted([
+              'browser/partner-dialogue-source-registry.mjs',
+              'browser/partner-advice-runtime-mount.mjs',
+              'tests/partner-dialogue-source-registry.test.mjs',
+              'tests/partner-advice-runtime-mount.test.mjs',
+              'deploy/cloudflare/tests/build.test.mjs',
+          ])
+          actual = sorted(filter(None, subprocess.check_output(['git','diff','--name-only','d8852bcfd94ebf538b5c74ee2b56c084b46d4349'], text=True).splitlines()))
+          if actual != expected:
+              raise SystemExit(f'unexpected final diff paths: {actual}')
+          PY
+
+          git diff --check
+          git config user.name 'gameroad-bounded-writer'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Partner: 待機中の正式台詞を対戦表示へ接続'
+          git push origin HEAD:sol/partner-idle-readable-r4-20260910

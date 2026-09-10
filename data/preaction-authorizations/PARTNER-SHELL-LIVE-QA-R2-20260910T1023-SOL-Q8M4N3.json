@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-SHELL-LIVE-QA-R2-20260910T1023-SOL-Q8M4N3",
+  "taskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "workUnitKey": "PARTNER_SHELL_LIVE_REACHABILITY_R2",
+  "acquireKey": "PARTNER-SHELL-LIVE-QA-R2-20260910T1023-SOL-Q8M4N3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_PARTNER_SHELL_PUBLIC_MERGED_AND_COSTUME_AUTHORITY_FAIL_CLOSED_20260910T1023JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1512_UNIT_ROUTE_PLUS_CURRENT_BOARD_FACILITY_LIVE_AUTO_PROJECTION",
+  "proceedToken": "PROCEED|PARTNER-SHELL-LIVE-QA-R2-20260910T1023-SOL-Q8M4N3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-shell-live-reachability|dedicated-playwright-spec|active-lease",
+  "authorizationBaseSha": "0f327476fdcc9946d85bb19497c328ef0b1815c9",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "leaseWorkUnitKey": "PARTNER_SHELL_LIVE_REACHABILITY_R2",
+  "leaseAcquireKey": "PARTNER-SHELL-LIVE-QA-R2-20260910T1023-SOL-Q8M4N3",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 10:23 JST",
+  "leaseUntilJst": "2026-09-10 11:23 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A937:L937",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch; tests/partner-shell-live-reachability.spec.mjs; playwright.full-interaction.config.mjs; own transient data/preaction-authorizations/PARTNER-SHELL-LIVE-QA-R2-20260910T1023-SOL-Q8M4N3.json only. browser/GAMEROAD.html, browser/partner-*.mjs, gameplay/rules/save/economy/network READ_ONLY.",
+  "solutionSignature": "PARTNER_SHELL_DEDICATED_BLACKBOX_THREE_VIEWPORT_QA_V1",
+  "reuseDisposition": "VERIFY_EXISTING",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R1_PREACTION_ONLY_SUPERSEDED_BY_SMALLER_TEST_SURFACE",
+  "solutionSearchEvidence": [
+    "PR #1512 already connects the existing Partner Shell to the Saasuna conversation; no product/runtime reconstruction is needed.",
+    "The current board facility runtime projects the Saasuna conversation whenever the visible Characters screen becomes active, allowing real visible navigation without state injection.",
+    "A dedicated Playwright spec plus one registration line is smaller and safer than replacing the large existing state-sequence spec.",
+    "Current authority still lacks verified non-Roblox costume ownership/catalog/load/save, so the test must prove OPEN_COSTUME stays absent instead of inventing a provider."
+  ],
+  "scope": [
+    "tests/partner-shell-live-reachability.spec.mjs",
+    "playwright.full-interaction.config.mjs"
+  ],
+  "leaseScope": [
+    "tests/partner-shell-live-reachability.spec.mjs",
+    "playwright.full-interaction.config.mjs"
+  ]
+}

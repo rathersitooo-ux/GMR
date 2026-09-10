@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "TITLE-BOOT-LIVE-BIND-R6-20260910T2352-SOL-Q8N4V5",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "TITLE_BOOT_LIVE_BINDING_R5",
+  "acquireKey": "TITLE-BOOT-LIVE-BIND-R6-20260910T2352-SOL-Q8N4V5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_TITLE_RUNTIME_ABSENT_EXISTING_CORE_PRESENT_20260910T2352JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "STALE_PR1357_REVIEWED_DONOR_PLUS_CURRENT_CORE_READBACK",
+  "proceedToken": "PROCEED|TITLE-BOOT-LIVE-BIND-R6-20260910T2352-SOL-Q8N4V5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|title-boot-live-binding|home-public-package|active-lease",
+  "authorizationBaseSha": "9253002b4f2fa1fcf092ef7ddb2e7769acad7bb5",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "TITLE_BOOT_LIVE_BINDING_R5",
+  "leaseAcquireKey": "TITLE-BOOT-LIVE-BIND-R6-20260910T2352-SOL-Q8N4V5",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 23:52 JST",
+  "leaseUntilJst": "2026-09-11 00:52 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A982:L982",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main; browser/title-boot-runtime-mount.mjs; browser/home-cards-2p5d-presentation.mjs; tests/title-boot-runtime-mount.test.mjs; tests/browser-runtime-smoke.spec.mjs; tests/home-cards-2p5d-runtime.spec.mjs; deploy/cloudflare/scripts/build.mjs; own transient PRE_ACTION manifest only. browser/GAMEROAD.html, Road/Battle/gameplay/rules/save/economy/network READ_ONLY.",
+  "solutionSignature": "TITLE_BOOT_EXISTING_ROUTER_LIVE_BINDING_REUSE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_ROUTER_PRESENT_RUNTIME_ABSENT_PR1357_DONOR",
+  "solutionSearchEvidence": [
+    "Current main 9253002b4f2fa1fcf092ef7ddb2e7769acad7bb5 directly contains title-boot-router-core.mjs and boot-loading-presentation-core.mjs but browser/title-boot-runtime-mount.mjs returns 404.",
+    "Current Task authority already adopts Title as launch/state boundary, direct destinations without Home transit, and active-match recovery priority.",
+    "Open stale PR#1357 contains the same bounded four-file live binding outcome and is used only as a read-only donor, not merged blindly.",
+    "Horizontal crosscheck rejects new router/store/state schema and selects composition into the existing Home boot import plus existing public package.",
+    "browser/GAMEROAD.html and currently active Records/Battle visual resources remain read-only."
+  ],
+  "scope": [
+    "browser/title-boot-runtime-mount.mjs",
+    "browser/home-cards-2p5d-presentation.mjs",
+    "tests/title-boot-runtime-mount.test.mjs",
+    "tests/browser-runtime-smoke.spec.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "leaseScope": [
+    "browser/title-boot-runtime-mount.mjs",
+    "browser/home-cards-2p5d-presentation.mjs",
+    "tests/title-boot-runtime-mount.test.mjs",
+    "tests/browser-runtime-smoke.spec.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ]
+}

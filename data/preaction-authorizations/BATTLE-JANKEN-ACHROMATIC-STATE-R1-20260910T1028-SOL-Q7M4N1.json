@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-ACHROMATIC-STATE-R1-20260910T1028-SOL-Q7M4N1",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_ACHROMATIC_INTERACTION_STATE_R1",
+  "acquireKey": "BATTLE-JANKEN-ACHROMATIC-STATE-R1-20260910T1028-SOL-Q7M4N1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_RUNTIME_YELLOW_CYAN_STATE_HUE_COLLIDES_WITH_SUIT_NAMESPACE_20260910T1028JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CSS_ONLY_NEUTRAL_STATE_ADAPT_NO_GEOMETRY_INPUT_OR_GAMEPLAY_CHANGE",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-ACHROMATIC-STATE-R1-20260910T1028-SOL-Q7M4N1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-janken-achromatic-state|existing-runtime|active-lease",
+  "authorizationBaseSha": "898b0bd86af66520891396b8ef8d1240e1c8716b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_ACHROMATIC_INTERACTION_STATE_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-ACHROMATIC-STATE-R1-20260910T1028-SOL-Q7M4N1",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 10:28 JST",
+  "leaseUntilJst": "2026-09-10 11:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A937:L937",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-janken-achromatic-state-r1-20260910; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient .github/workflows/zz-temp-battle-janken-achromatic-state-r1.yml; own transient data/preaction-authorizations/BATTLE-JANKEN-ACHROMATIC-STATE-R1-20260910T1028-SOL-Q7M4N1.json only. browser/GAMEROAD.html, deploy/cloudflare/scripts/build.mjs, gameplay/rules/target/legality/Shield/Hand3/native-suit semantics/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_JANKEN_ACHROMATIC_INTERACTION_STATE_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "ADAPT_CURRENT_SLIDEPAD_CSS_TO_ALREADY_MERGED_COLOR_SEMANTIC_NAMESPACE",
+  "solutionSearchEvidence": [
+    "Current parent authority reserves strong hue semantics to suits: spade blue, club green, diamond yellow, heart red.",
+    "Current color-identity core assigns janken to fixed position plus hand symbol, player to number/shape/pattern, and interaction state to outline/depth/luminance/motion.",
+    "Current live SlidePad CSS still uses yellow for playable/legal focus and cyan/blue/purple for armed/staged state, creating direct semantic competition with diamond/spade suit hue.",
+    "UIVIS current evidence rejects color-only state/target identity and slot-style expectation colors; no external search is needed to settle this bounded repair.",
+    "Full achromatic Battle would erase useful suit identity; only non-suit interaction/status chrome is neutralized."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-achromatic-state-r1.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-achromatic-state-r1.yml"
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CONFIG-WIN-LIVE-R2-20260910T1427-SOL-H7M4Q9",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CONFIGURABLE_COMPLETION_LIVE_R2",
+  "acquireKey": "BATTLE-CONFIG-WIN-LIVE-R2-20260910T1427-SOL-H7M4Q9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1514_MERGED_CORE_PLUS_FRESH_FREE_HTML_BUILD_20260910T1427JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_EXACT_HTML_SEAM_PROBE_PLUS_EXISTING_SINGLE_BATTLE_LOOP",
+  "proceedToken": "PROCEED|BATTLE-CONFIG-WIN-LIVE-R2-20260910T1427-SOL-H7M4Q9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|configurable-completion-live|single-engine|active-lease",
+  "authorizationBaseSha": "c44d411b703fb8ee3bcc1519eeab1a4d5a74991a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CONFIGURABLE_COMPLETION_LIVE_R2",
+  "leaseAcquireKey": "BATTLE-CONFIG-WIN-LIVE-R2-20260910T1427-SOL-H7M4Q9",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 14:27 JST",
+  "leaseUntilJst": "2026-09-10 15:27 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES AcquireKey exact lookup",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs; tests/battle-configurable-completion-live.test.mjs; transient .github/workflows/zz-temp-battle-configurable-completion-live-r2.yml; transient tools/temp-battle-configurable-completion-live-r2.py; transient data/preaction-authorizations/BATTLE-CONFIG-WIN-LIVE-R2-20260910T1427-SOL-H7M4Q9.json; branch work/battle-configurable-completion-live-r2. READ_ONLY browser/new-base-legacy-seven-win-gate-core.mjs and existing GOAL modules.",
+  "solutionSignature": "BATTLE_EXISTING_LOOP_CONFIGURABLE_COMPLETION_PROFILE_V2",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1514_EXISTING_COMPLETION_CORE_AND_R1_LIVE_SEAM_PROBE",
+  "solutionSearchEvidence": [
+    "PR #1514 merged resolveCompletionRule/projectCompletionRule with target N separated from completion consequence.",
+    "R1 probe located the single live checkWin, friend-room host authority, lobby projection, match projection, and startMatch seams in browser/GAMEROAD.html.",
+    "Current NEW BASE meaning keeps completion threshold separate from terminal GOAL_REACHED; configurable direct-win is only an explicit room/profile consequence.",
+    "Current GAMEROAD.html remains the single live Battle loop; this WorkUnit adapts it rather than creating another result engine."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/battle-configurable-completion-live.test.mjs",
+    ".github/workflows/zz-temp-battle-configurable-completion-live-r2.yml",
+    "tools/temp-battle-configurable-completion-live-r2.py"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/battle-configurable-completion-live.test.mjs",
+    ".github/workflows/zz-temp-battle-configurable-completion-live-r2.yml",
+    "tools/temp-battle-configurable-completion-live-r2.py"
+  ]
+}

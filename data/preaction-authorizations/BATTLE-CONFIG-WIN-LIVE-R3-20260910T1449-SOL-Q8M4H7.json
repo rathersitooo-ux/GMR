@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CONFIG-WIN-LIVE-R3-20260910T1449-SOL-Q8M4H7",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CONFIGURABLE_COMPLETION_LIVE_R3",
+  "acquireKey": "BATTLE-CONFIG-WIN-LIVE-R3-20260910T1449-SOL-Q8M4H7",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R2_VALIDATED_PRODUCT_DONOR_PLUS_FRESH_FREE_TARGETS_20260910T1449JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R2_RUN34442158745_FOCUSED_STATIC_PACKAGE_SUCCESS",
+  "proceedToken": "PROCEED|BATTLE-CONFIG-WIN-LIVE-R3-20260910T1449-SOL-Q8M4H7|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|configurable-completion-live-r3|single-engine|active-lease",
+  "authorizationBaseSha": "ba55d979771afbc7dde40b0dff05179c49954e09",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CONFIGURABLE_COMPLETION_LIVE_R3",
+  "leaseAcquireKey": "BATTLE-CONFIG-WIN-LIVE-R3-20260910T1449-SOL-Q8M4H7",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 14:49 JST",
+  "leaseUntilJst": "2026-09-10 15:49 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A21:L21",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs; tests/browser-static-check.mjs; transient tests/battle-configurable-completion-live.test.mjs; transient .github/workflows/zz-temp-battle-configurable-completion-live-r3.yml; transient tools/temp-battle-configurable-completion-live-r3.py; transient data/preaction-authorizations/BATTLE-CONFIG-WIN-LIVE-R3-20260910T1449-SOL-Q8M4H7.json; branch work/battle-configurable-completion-live-r3. READ_ONLY browser/new-base-legacy-seven-win-gate-core.mjs and existing GOAL modules.",
+  "solutionSignature": "BATTLE_EXISTING_LOOP_CONFIGURABLE_COMPLETION_PROFILE_V3",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R2_PRODUCT_COMMIT_1e9d4f0485514e959e09be357e59a5936dd0f3eb_PLUS_PR1514_CORE",
+  "solutionSearchEvidence": [
+    "PR #1514 already supplies the reusable completion threshold/consequence core.",
+    "R2 bounded workflow run 34442158745 proved the intended live HTML/build wiring with focused 5/5, Browser static PASS, and exact-provenance package PASS.",
+    "R2 PR #1520 was closed unmerged solely for PRE_ACTION witness formatting and Required Gate test-path classification; product semantics were not rejected.",
+    "R3 reuses the validated product shape but moves persistent wiring assertions into the already-recognized browser-static-check path and keeps the standalone focused test transient."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/browser-static-check.mjs",
+    "tests/battle-configurable-completion-live.test.mjs",
+    ".github/workflows/zz-temp-battle-configurable-completion-live-r3.yml",
+    "tools/temp-battle-configurable-completion-live-r3.py"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/browser-static-check.mjs",
+    "tests/battle-configurable-completion-live.test.mjs",
+    ".github/workflows/zz-temp-battle-configurable-completion-live-r3.yml",
+    "tools/temp-battle-configurable-completion-live-r3.py"
+  ]
+}

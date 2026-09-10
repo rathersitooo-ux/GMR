@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-THUMB-ARC-R1-20260910T2336-SOL-Q8M4N4",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_THUMB_ARC_VISUAL_REFINEMENT_R1",
+  "acquireKey": "BATTLE-JANKEN-THUMB-ARC-R1-20260910T2336-SOL-Q8M4N4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_VISUAL_AUTHORITY_PLUS_SLIDEPAD_ACTUAL_20260910T2336JST",
+  "rehearsalStatus": "PASS_EXISTING_PROVISIONAL_R5",
+  "rehearsalEvidenceId": "R5_667_390_TOUCH_HIT_GEOMETRY_AND_COMMIT_CHAIN_PASS",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-THUMB-ARC-R1-20260910T2336-SOL-Q8M4N4|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-slidepad-visual-refinement|candidate-only|active-lease",
+  "authorizationBaseSha": "9253002b4f2fa1fcf092ef7ddb2e7769acad7bb5",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_THUMB_ARC_VISUAL_REFINEMENT_R1",
+  "leaseAcquireKey": "BATTLE-JANKEN-THUMB-ARC-R1-20260910T2336-SOL-Q8M4N4",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 23:36 JST",
+  "leaseUntilJst": "2026-09-11 00:36 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A979:L979",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; own transient data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R1-20260910T2336-SOL-Q8M4N4.json only. browser/GAMEROAD.html, build, gameplay/rules/target/legality/Shield/Hand3/native-suit/save/economy/network READ_ONLY. Standalone battle-visual R6 resources READ_ONLY/no-touch.",
+  "solutionSignature": "BATTLE_JANKEN_EXISTING_SLIDEPAD_THUMB_ARC_GEOMETRY_V1",
+  "reuseDisposition": "ADAPT_EXISTING",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_SLIDEPAD_ACHROMATIC_RUNTIME_PLUS_R5_TOUCH_GEOMETRY",
+  "solutionSearchEvidence": [
+    "Current runtime already owns the right-bottom SlidePad, fixed ROCK/SCISSORS/PAPER identities, gesture resolution, Focus, order presentation and ReducedMotion behavior; no second controller or adapter is needed.",
+    "Current visual authority requires a central origin, large three hands, thick ring, hand icons, right-thumb reach, and rejects generic unsupported styling; operation-state styling remains achromatic.",
+    "Prior standalone R5 direct Chrome evidence proved three separate large thumb targets and confirm reach at 667x375 and 390x844; its colored skin, large portrait and placeholder board are not production donors.",
+    "This candidate changes only existing slot shape/geometry and focused tests; gameplay, Hand3 mapping, target, Shield, commit, native suit, HTML, packaging and standalone R6 remain read-only."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ]
+}

@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   patch-and-test:
-    if: github.actor != 'github-actions[bot]'
+    if: ${{ github.actor != 'github-actions[bot]' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,6 +22,7 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          from textwrap import dedent
           import re
 
           runtime_path = Path('browser/battle-janken-slidepad-runtime-mount.mjs')
@@ -76,35 +77,35 @@ jobs:
           test_source = test_path.read_text(encoding='utf-8')
           marker = "test('non-suit janken interaction chrome keeps hard-coded state color achromatic'"
           if marker not in test_source:
-              test_source += r'''
+              test_source += dedent(r'''
 
-test('non-suit janken interaction chrome keeps hard-coded state color achromatic', () => {
-  const runtimeSource = readFileSync(
-    new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
-    'utf8',
-  );
-  const rgbTriplets = [...runtimeSource.matchAll(/rgba?\((\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})/g)]
-    .map((match) => match.slice(1, 4).map(Number));
-  assert.ok(rgbTriplets.length > 0);
-  assert.deepEqual(
-    rgbTriplets.filter(([red, green, blue]) => red !== green || green !== blue),
-    [],
-    'non-suit SlidePad/state chrome must not compete with suit hue semantics',
-  );
+              test('non-suit janken interaction chrome keeps hard-coded state color achromatic', () => {
+                const runtimeSource = readFileSync(
+                  new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
+                  'utf8',
+                );
+                const rgbTriplets = [...runtimeSource.matchAll(/rgba?\((\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})/g)]
+                  .map((match) => match.slice(1, 4).map(Number));
+                assert.ok(rgbTriplets.length > 0);
+                assert.deepEqual(
+                  rgbTriplets.filter(([red, green, blue]) => red !== green || green !== blue),
+                  [],
+                  'non-suit SlidePad/state chrome must not compete with suit hue semantics',
+                );
 
-  const hexColors = [...runtimeSource.matchAll(/#([0-9a-fA-F]{6})\b/g)]
-    .map((match) => match[1].match(/../g).map((pair) => Number.parseInt(pair, 16)));
-  assert.deepEqual(
-    hexColors.filter(([red, green, blue]) => red !== green || green !== blue),
-    [],
-    'hard-coded six-digit colors in the non-suit runtime stay achromatic',
-  );
-  assert.doesNotMatch(runtimeSource, /filter:\s*saturate\(|\s+saturate\(/);
-  assert.match(runtimeSource, /\.grJankenSlidePadSlot\.rock\{transform:translate\(-162px,15px\) rotate\(-18deg\)\}/);
-  assert.match(runtimeSource, /\.grJankenSlidePadSlot\.scissors\{transform:translate\(-124px,-55px\) rotate\(-8deg\)/);
-  assert.match(runtimeSource, /\.grJankenSlidePadSlot\.paper\{transform:translate\(-48px,-92px\) rotate\(5deg\)/);
-});
-'''
+                const hexColors = [...runtimeSource.matchAll(/#([0-9a-fA-F]{6})\b/g)]
+                  .map((match) => match[1].match(/../g).map((pair) => Number.parseInt(pair, 16)));
+                assert.deepEqual(
+                  hexColors.filter(([red, green, blue]) => red !== green || green !== blue),
+                  [],
+                  'hard-coded six-digit colors in the non-suit runtime stay achromatic',
+                );
+                assert.doesNotMatch(runtimeSource, /filter:\s*saturate\(|\s+saturate\(/);
+                assert.match(runtimeSource, /\.grJankenSlidePadSlot\.rock\{transform:translate\(-162px,15px\) rotate\(-18deg\)\}/);
+                assert.match(runtimeSource, /\.grJankenSlidePadSlot\.scissors\{transform:translate\(-124px,-55px\) rotate\(-8deg\)/);
+                assert.match(runtimeSource, /\.grJankenSlidePadSlot\.paper\{transform:translate\(-48px,-92px\) rotate\(5deg\)/);
+              });
+              ''')
               test_path.write_text(test_source, encoding='utf-8')
           PY
       - name: Run focused tests

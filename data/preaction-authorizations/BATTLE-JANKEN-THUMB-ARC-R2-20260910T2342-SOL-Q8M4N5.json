@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-THUMB-ARC-R2-20260910T2342-SOL-Q8M4N5",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_THUMB_ARC_VISUAL_REFINEMENT_R2",
+  "acquireKey": "BATTLE-JANKEN-THUMB-ARC-R2-20260910T2342-SOL-Q8M4N5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_VISUAL_AUTHORITY_SLIDEPAD_ACTUAL_AND_R5_TOUCH_EVIDENCE_20260910T2342JST",
+  "rehearsalStatus": "PASS_EXISTING_PROVISIONAL_R5",
+  "rehearsalEvidenceId": "R5_667_390_TOUCH_HIT_GEOMETRY_AND_COMMIT_CHAIN_PASS",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-THUMB-ARC-R2-20260910T2342-SOL-Q8M4N5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-slidepad-thumb-arc|surgical-writer|active-lease",
+  "authorizationBaseSha": "9253002b4f2fa1fcf092ef7ddb2e7769acad7bb5",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_THUMB_ARC_VISUAL_REFINEMENT_R2",
+  "leaseAcquireKey": "BATTLE-JANKEN-THUMB-ARC-R2-20260910T2342-SOL-Q8M4N5",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 23:42 JST",
+  "leaseUntilJst": "2026-09-11 00:42 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A980:L980",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-janken-thumb-arc-r2-20260910; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient .github/workflows/zz-temp-battle-janken-thumb-arc-r2.yml; own transient data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R2-20260910T2342-SOL-Q8M4N5.json only. browser/GAMEROAD.html, deploy/build, gameplay/rules/target/legality/Shield/Hand3/native-suit/save/economy/network READ_ONLY. Standalone battle-visual R6 READ_ONLY/no-touch.",
+  "solutionSignature": "BATTLE_JANKEN_EXISTING_SLIDEPAD_THUMB_ARC_GEOMETRY_R2",
+  "reuseDisposition": "ADAPT_EXISTING_WITH_BOUNDED_SURGICAL_WRITER",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_SLIDEPAD_ACHROMATIC_RUNTIME_PLUS_R5_TOUCH_GEOMETRY_AND_R1_CAPABILITY_SPLIT",
+  "solutionSearchEvidence": [
+    "Current runtime already owns SlidePad state, fixed RPS identities, Focus, gesture resolution, order presentation and ReducedMotion; no second controller or adapter is permitted or needed.",
+    "Current visual authority fixes central origin, large three hands, thick ring, hand icons and right-thumb reach while operation-state styling remains achromatic and unsupported final skin remains unresolved.",
+    "Standalone R5 direct Chrome evidence proved separated thumb targets and short confirm reach at 667x375 and 390x844; its colored skin, portrait and placeholder board are explicitly excluded from production reuse.",
+    "R1 stopped before product bytes because direct whole-file replacement is disproportionate for narrow CSS/test edits; this R2 authorizes one branch-only exact-anchor workflow to perform the bounded change and focused test."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-thumb-arc-r2.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-thumb-arc-r2.yml"
+  ]
+}

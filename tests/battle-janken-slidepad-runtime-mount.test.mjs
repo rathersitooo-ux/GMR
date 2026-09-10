@@ -724,3 +724,31 @@ test('release-flight live adapter delegates to the canonical effect and keeps su
   assert.equal(source.includes('const hand = readyPackage?.jankenHand;'), true);
   assert.equal(source.includes('if (flight) playReleasedJankenCardFlight(host, flight);'), true);
 });
+
+
+test('non-suit janken interaction chrome keeps hard-coded state color achromatic', () => {
+  const runtimeSource = readFileSync(
+    new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url),
+    'utf8',
+  );
+  const rgbTriplets = [...runtimeSource.matchAll(/rgba?\((\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})/g)]
+    .map((match) => match.slice(1, 4).map(Number));
+  assert.ok(rgbTriplets.length > 0);
+  assert.deepEqual(
+    rgbTriplets.filter(([red, green, blue]) => red !== green || green !== blue),
+    [],
+    'non-suit SlidePad/state chrome must not compete with suit hue semantics',
+  );
+
+  const hexColors = [...runtimeSource.matchAll(/#([0-9a-fA-F]{6})\b/g)]
+    .map((match) => match[1].match(/../g).map((pair) => Number.parseInt(pair, 16)));
+  assert.deepEqual(
+    hexColors.filter(([red, green, blue]) => red !== green || green !== blue),
+    [],
+    'hard-coded six-digit colors in the non-suit runtime stay achromatic',
+  );
+  assert.doesNotMatch(runtimeSource, /filter:\s*saturate\(|\s+saturate\(/);
+  assert.match(runtimeSource, /\.grJankenSlidePadSlot\.rock\{transform:translate\(-162px,15px\) rotate\(-18deg\)\}/);
+  assert.match(runtimeSource, /\.grJankenSlidePadSlot\.scissors\{transform:translate\(-124px,-55px\) rotate\(-8deg\)/);
+  assert.match(runtimeSource, /\.grJankenSlidePadSlot\.paper\{transform:translate\(-48px,-92px\) rotate\(5deg\)/);
+});

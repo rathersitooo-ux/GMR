@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-MULTI-CHAR-R8-20260910T2354-SOL-P6N4Q10",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_MULTI_CHARACTER_SELECTION_R3",
+  "acquireKey": "PARTNER-MULTI-CHAR-R8-20260910T2354-SOL-P6N4Q10",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_PICKER_DESTRUCTIVE_REPLACEMENT_REPRODUCED_20260910T2354JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_HTML_EXISTING_ROLE_PICKER_PLUS_PR1249_DONOR_AND_DIRECT_RUNTIME_READBACK",
+  "proceedToken": "PROCEED|PARTNER-MULTI-CHAR-R8-20260910T2354-SOL-P6N4Q10|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-multi-character-selection|board-runtime-bfi|active-lease",
+  "authorizationBaseSha": "9253002b4f2fa1fcf092ef7ddb2e7769acad7bb5",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_MULTI_CHARACTER_SELECTION_R3",
+  "leaseAcquireKey": "PARTNER-MULTI-CHAR-R8-20260910T2354-SOL-P6N4Q10",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 23:54 JST",
+  "leaseUntilJst": "2026-09-11 00:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A985:L985",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/partner-multi-char-r8-20260910 from exact current main; browser/board-facility-runtime-mount.mjs; tests/browser-full-interaction.spec.mjs; .github/workflows/browser-full-interaction.yml; deploy/cloudflare/tests/build.test.mjs; own data/preaction-authorizations/PARTNER-MULTI-CHAR-R8-20260910T2354-SOL-P6N4Q10.json only. READ_ONLY browser/GAMEROAD.html; partner dialogue/advice authority; gameplay/rules/save/economy/network.",
+  "solutionSignature": "PARTNER_EXISTING_PICKER_COEXISTING_SAASUNA_CONVERSATION_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_HTML_NORMAL_PARTNER_PICKER_PLUS_CURRENT_BOARD_RUNTIME_DESTRUCTIVE_REPLACEMENT_PLUS_PR1249_DONOR",
+  "solutionSearchEvidence": [
+    "Current main HTML already owns the normal Partner / player role tabs, PROD_CHARS roster, selectedPartnerId persistence, and renderCharacters selection behavior.",
+    "Current board-facility runtime destructively calls roster.replaceChildren(surface) and forces #charName to サースナー whenever Characters is active, erasing the existing picker.",
+    "Old PR#1249 is donor-only evidence for append/remove coexistence and is not transplanted wholesale because current board runtime contains newer collective-context and retry behavior.",
+    "Horizontal cross-check rejected a second picker, a second roster/store, HTML rewrite, and wholesale donor replacement; the smallest repair is consumer-side projection of the existing Saasuna conversation only when selected.",
+    "Advice Partner authority, gameplay/rules/save/economy/network, and browser/GAMEROAD.html remain READ_ONLY."
+  ],
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/browser-full-interaction.yml",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/browser-full-interaction.yml",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

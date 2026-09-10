@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-SHELL-LIVE-QA-R4-20260910T1432-SOL-Q8M4N5",
+  "taskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "workUnitKey": "PARTNER_SHELL_LIVE_REACHABILITY_R4",
+  "acquireKey": "PARTNER-SHELL-LIVE-QA-R4-20260910T1432-SOL-Q8M4N5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1516_GATE_DIAG_LEASE_REF_FORMAT_CONFIRMED_20260910T1432JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1512_LIVE_ROUTE_PLUS_PR1516_BFI_CLASSIFICATION_SUCCESS",
+  "proceedToken": "PROCEED|PARTNER-SHELL-LIVE-QA-R4-20260910T1432-SOL-Q8M4N5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-shell-live-reachability|existing-allowlisted-state-sequence|fresh-active-lease",
+  "authorizationBaseSha": "c44d411b703fb8ee3bcc1519eeab1a4d5a74991a",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "leaseWorkUnitKey": "PARTNER_SHELL_LIVE_REACHABILITY_R4",
+  "leaseAcquireKey": "PARTNER-SHELL-LIVE-QA-R4-20260910T1432-SOL-Q8M4N5",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 14:32 JST",
+  "leaseUntilJst": "2026-09-10 15:32 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A941:L941",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/partner-shell-live-qa-r4-20260910 from main c44d411b703fb8ee3bcc1519eeab1a4d5a74991a; tests/browser-full-interaction-state-sequence.spec.mjs; own transient data/preaction-authorizations/PARTNER-SHELL-LIVE-QA-R4-20260910T1432-SOL-Q8M4N5.json only. browser/GAMEROAD.html, browser/partner-*.mjs, gameplay/rules/save/economy/network READ_ONLY.",
+  "solutionSignature": "PARTNER_SHELL_ALLOWLISTED_STATE_SEQUENCE_BLACKBOX_QA_V1",
+  "reuseDisposition": "REUSE_AS_IS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1516_EXISTING_ALLOWLISTED_BFI_TEST_RECOVERY",
+  "solutionSearchEvidence": [
+    "PR #1516 already demonstrated Browser Full Interaction path classification succeeds for the existing state-sequence file.",
+    "PR #1512 already supplies the production Partner Shell route; this work only verifies it through the visible player path.",
+    "Current authority still lacks verified non-Roblox costume ownership/catalog/load/save; unsupported costume entry must remain absent."
+  ],
+  "scope": [
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
+  ]
+}

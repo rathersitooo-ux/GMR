@@ -52,6 +52,7 @@ const ARTIFACT_SPECS = Object.freeze([
   { source: 'browser/battle-resolution-board-return-presentation-core.mjs', output: 'battle-resolution-board-return-presentation-core.mjs', artifact: 'battle_resolution_board_return_presentation_core', label: 'Battle resolution board-return presentation core' },
   { source: 'browser/battle-screen-runtime-mount.mjs', output: 'battle-screen-runtime-mount.mjs', artifact: 'battle_screen_runtime_mount', label: 'Battle screen runtime mount' },
   { source: 'browser/battle-critical-resource-hud-live-adapter.mjs', output: 'battle-critical-resource-hud-live-adapter.mjs', artifact: 'battle_critical_resource_hud_live_adapter', label: 'Battle critical resource HUD live adapter' },
+  { source: 'browser/new-base-legacy-seven-win-gate-core.mjs', output: 'new-base-legacy-seven-win-gate-core.mjs', artifact: 'new_base_legacy_seven_win_gate_core', label: 'Battle configurable completion rule core' },
   { source: 'browser/new-base-goal-result-core.mjs', output: 'new-base-goal-result-core.mjs', artifact: 'new_base_goal_result_core', label: 'New Base GOAL result authority core' },
   { source: 'browser/new-base-goal-arrival-presentation-core.mjs', output: 'new-base-goal-arrival-presentation-core.mjs', artifact: 'new_base_goal_arrival_presentation_core', label: 'New Base GOAL arrival presentation core' },
   { source: 'browser/new-base-goal-arrival-runtime-mount.mjs', output: 'new-base-goal-arrival-runtime-mount.mjs', artifact: 'new_base_goal_arrival_runtime_mount', label: 'New Base GOAL arrival runtime mount' },

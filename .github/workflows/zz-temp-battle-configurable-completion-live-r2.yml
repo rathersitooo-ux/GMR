@@ -1,0 +1,77 @@
+name: TEMP Battle configurable completion live R2
+
+on:
+  push:
+    branches:
+      - work/battle-configurable-completion-live-r2
+    paths:
+      - .github/workflows/zz-temp-battle-configurable-completion-live-r2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: work/battle-configurable-completion-live-r2
+
+      - name: Fence current main and exact source blobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "c44d411b703fb8ee3bcc1519eeab1a4d5a74991a"
+          test "$(git hash-object browser/GAMEROAD.html)" = "7332302a5a15f67a5d6c889e1998405156b1364c"
+          test "$(git hash-object deploy/cloudflare/scripts/build.mjs)" = "8e82ab30e05d3caa6173f91c53afc08bff13b94c"
+          test "$(git log --reverse --format=%H origin/main..HEAD | head -n1)" = "75a6815c6d7f5cfbf6bb020ba5ab30f4328dbc94"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Apply bounded exact patch
+        run: python tools/temp-battle-configurable-completion-live-r2.py
+
+      - name: Focused configurable-completion tests
+        run: node --test tests/battle-configurable-completion-live.test.mjs
+
+      - name: Existing browser static regression
+        run: node tests/browser-static-check.mjs
+
+      - name: Package public build
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/gameroad-config-win-build
+          node deploy/cloudflare/scripts/build.mjs --dist /tmp/gameroad-config-win-build
+          test -s /tmp/gameroad-config-win-build/new-base-legacy-seven-win-gate-core.mjs
+          cmp browser/new-base-legacy-seven-win-gate-core.mjs /tmp/gameroad-config-win-build/new-base-legacy-seven-win-gate-core.mjs
+
+      - name: Commit bounded product diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add browser/GAMEROAD.html deploy/cloudflare/scripts/build.mjs tests/battle-configurable-completion-live.test.mjs
+          git diff --cached --quiet && { echo "No product diff"; exit 1; }
+          git commit -m "Battle: フレンドルームで任意枚数勝利を設定"
+          git push origin HEAD:work/battle-configurable-completion-live-r2
+
+      - name: Cleanup transient executor and PRE_ACTION material
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/zz-temp-battle-configurable-completion-live-r2.yml
+          git rm tools/temp-battle-configurable-completion-live-r2.py
+          git rm data/preaction-authorizations/BATTLE-CONFIG-WIN-LIVE-R2-20260910T1427-SOL-H7M4Q9.json
+          git commit -m "TEMP: Battle任意枚数勝利の実行資材を清掃"
+          git push origin HEAD:work/battle-configurable-completion-live-r2

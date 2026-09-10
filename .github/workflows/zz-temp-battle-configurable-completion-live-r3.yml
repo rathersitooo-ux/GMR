@@ -1,0 +1,122 @@
+name: TEMP Battle configurable completion live R3
+
+on:
+  push:
+    branches:
+      - work/battle-configurable-completion-live-r3
+    paths:
+      - .github/workflows/zz-temp-battle-configurable-completion-live-r3.yml
+
+permissions:
+  contents: write
+
+jobs:
+  donor-static-package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: work/battle-configurable-completion-live-r3
+
+      - name: Fence current base and exact mutable sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          test "$(git rev-parse origin/main)" = "ba55d979771afbc7dde40b0dff05179c49954e09"
+          test "$(git hash-object browser/GAMEROAD.html)" = "7332302a5a15f67a5d6c889e1998405156b1364c"
+          test "$(git hash-object deploy/cloudflare/scripts/build.mjs)" = "8e82ab30e05d3caa6173f91c53afc08bff13b94c"
+          test "$(git log --reverse --format=%H origin/main..HEAD | head -n1)" = "b8489a3c299adc8ee17342e237b8d61adf028d4b"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Reuse R2 validated product diff without importing its PRE_ACTION history
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cherry-pick --no-commit 1e9d4f0485514e959e09be357e59a5936dd0f3eb
+          test -f tests/battle-configurable-completion-live.test.mjs
+
+      - name: Fold persistent live wiring regression into recognized Browser static gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/browser-static-check.mjs')
+          text = path.read_text(encoding='utf-8')
+          anchor = "  const dedicatedScriptMatch = html.match(\n"
+          if text.count(anchor) != 1:
+              raise SystemExit(f'expected one static-check insertion anchor, found {text.count(anchor)}')
+          block = """  const configurableCompletionContracts = [
+            [/completionTargetCount:7,slots:/, 'friend-room completion target default is missing'],
+            [/function setFriendCompletionTarget\\(value\\)/, 'host-owned friend-room completion target setter is missing'],
+            [/id=\\\"friendWinCount\\\" type=\\\"number\\\" min=\\\"1\\\" step=\\\"1\\\"/, 'friend-room arbitrary positive integer win input is missing'],
+            [/completionConsequence:'DIRECT_COMPLETION_WIN'/, 'friend-room direct-completion consequence is not frozen into live match'],
+            [/completionRule:clone\\(m\\.completionRule\\|\\|null\\)/, 'friend-room snapshot drops completion rule'],
+            [/completionRule:clone\\(pr\\.completionRule\\|\\|null\\)/, 'guest projected match drops completion rule'],
+            [/async function checkWin\\(\\)/, 'live winner seam is not completion-rule aware'],
+            [/await import\\('\\.\\/new-base-legacy-seven-win-gate-core\\.mjs'\\)/, 'live winner seam does not consume merged completion core'],
+            [/completionConsequence!==COMPLETION_CONSEQUENCE\\.DIRECT_COMPLETION_WIN\\)return\\[\\]/, 'nonterminal completion consequence is not fail-closed at live winner seam'],
+            [/:await checkWin\\(\\)/, 'Battle resolution does not await the configurable completion projection'],
+            [/setWinCount:setFriendCompletionTarget/, 'friend-room QA does not expose host win-count control'],
+          ];
+          for (const [pattern, message] of configurableCompletionContracts) {
+            if (!pattern.test(html)) errors.push(message);
+          }
+
+"""
+          path.write_text(text.replace(anchor, block + anchor, 1), encoding='utf-8')
+          PY
+
+      - name: Re-run R2 focused completion semantics and live wiring tests
+        run: node --test tests/battle-configurable-completion-live.test.mjs
+
+      - name: Existing completion-core regression
+        run: node --test tests/new-base-legacy-seven-win-gate-core.test.mjs
+
+      - name: Recognized Browser static regression including persistent wiring assertions
+        run: node tests/browser-static-check.mjs
+
+      - name: Remove standalone focused test before durable product commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm tests/battle-configurable-completion-live.test.mjs
+          git add browser/GAMEROAD.html deploy/cloudflare/scripts/build.mjs tests/browser-static-check.mjs
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = "browser/GAMEROAD.html deploy/cloudflare/scripts/build.mjs tests/browser-static-check.mjs "
+
+      - name: Create exact product commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Battle: フレンドルームの勝利枚数を任意設定"
+
+      - name: Exact-provenance Cloudflare package build
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/gameroad-config-win-r3-build
+          SOURCE_COMMIT="$(git rev-parse HEAD)"
+          PUBLISHED_AT="$(git show -s --format=%cI HEAD)"
+          node deploy/cloudflare/scripts/build.mjs --dist /tmp/gameroad-config-win-r3-build --source-commit "$SOURCE_COMMIT" --published-at "$PUBLISHED_AT"
+          test -s /tmp/gameroad-config-win-r3-build/new-base-legacy-seven-win-gate-core.mjs
+          cmp browser/new-base-legacy-seven-win-gate-core.mjs /tmp/gameroad-config-win-r3-build/new-base-legacy-seven-win-gate-core.mjs
+          grep -F "\"build_id\": \"$SOURCE_COMMIT\"" /tmp/gameroad-config-win-r3-build/gameroad-version.json
+
+      - name: Push verified product commit
+        run: git push origin HEAD:work/battle-configurable-completion-live-r3
+
+      - name: Cleanup transient workflow and PRE_ACTION material
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/zz-temp-battle-configurable-completion-live-r3.yml
+          git rm data/preaction-authorizations/BATTLE-CONFIG-WIN-LIVE-R3-20260910T1449-SOL-Q8M4H7.json
+          git commit -m "TEMP: Battle任意枚数勝利R3の実行資材を清掃"
+          git push origin HEAD:work/battle-configurable-completion-live-r3

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R27-20260911T0006-SOL-Q7N4V4",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R27-CURRENT-MAIN-LIVE-CARD-FIRST-ANCHORS-CONFIRMED",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R26-LIVE-MATRIX-PLUS-CURRENT-USESITE-READBACK",
+  "authorizationBaseSha": "9253002b4f2fa1fcf092ef7ddb2e7769acad7bb5",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A987:L987",
+  "leaseUntilJST": "2026-09-11 01:06 JST",
+  "scope": [
+    "tests/road-move-bidirectional-live-r27.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/road-move-bidirectional-live-r27.spec.mjs"
+  ],
+  "note": "Test-first disjoint slice only. Fresh main=9253002b4f2fa1fcf092ef7ddb2e7769acad7bb5 and HTML blob=7332302a5a15f67a5d6c889e1998405156b1364c were re-read. Current live use-site still requires Road focus in renderBoard/selectEndpoint/beginRouteDrag and resets path in updatePlanFromSelect. browser/GAMEROAD.html remains READ_ONLY under active Records owner until fresh lease release/expiry. This commit may only add a focused regression that proves current failure; no Battle/Janken/gameplay/rule/save/economy/network mutation."
+}

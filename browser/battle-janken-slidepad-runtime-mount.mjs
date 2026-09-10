@@ -270,18 +270,18 @@ export function projectBattleJankenSlotRollDetents(slotNodes, detents) {
     node.animate([
       {
         offset: 0,
-        filter: 'brightness(1.12) saturate(1.08)',
-        boxShadow: '0 10px 28px rgba(3,5,24,.5),0 0 0 4px rgba(92,205,255,.2),0 0 24px rgba(135,105,255,.26)',
+        filter: 'brightness(1.12)',
+        boxShadow: '0 10px 28px rgba(6,6,6,.5),0 0 0 4px rgba(185,185,185,.2),0 0 24px rgba(122,122,122,.26)',
       },
       {
         offset: 0.42,
-        filter: 'brightness(1.42) saturate(1.22)',
-        boxShadow: '0 8px 24px rgba(3,5,24,.46),0 0 0 7px rgba(194,238,255,.34),0 0 34px rgba(135,105,255,.42)',
+        filter: 'brightness(1.42)',
+        boxShadow: '0 8px 24px rgba(6,6,6,.46),0 0 0 7px rgba(230,230,230,.34),0 0 34px rgba(122,122,122,.42)',
       },
       {
         offset: 1,
-        filter: 'brightness(1.12) saturate(1.08)',
-        boxShadow: '0 10px 28px rgba(3,5,24,.5),0 0 0 4px rgba(92,205,255,.2),0 0 24px rgba(135,105,255,.26)',
+        filter: 'brightness(1.12)',
+        boxShadow: '0 10px 28px rgba(6,6,6,.5),0 0 0 4px rgba(185,185,185,.2),0 0 24px rgba(122,122,122,.26)',
       },
     ], {
       duration: SLOT_ROLL_DETENT_FEEDBACK_DURATION_MS,
@@ -375,18 +375,18 @@ function addStyle(documentRef) {
   style.id = STYLE_ID;
   style.textContent = `
 [${HOST_ATTR}="1"]{position:absolute;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:42;width:248px;height:196px;pointer-events:none;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-[${HOST_ATTR}="1"] .grJankenSlidePadHandle{position:absolute;right:0;bottom:0;width:68px;height:68px;border-radius:50%;border:2px solid rgba(255,255,255,.82);background:radial-gradient(circle at 34% 26%,rgba(239,248,255,.98) 0 9%,rgba(105,210,255,.88) 10% 27%,rgba(86,74,176,.92) 50%,rgba(20,24,72,.98) 78%,rgba(7,10,32,1) 100%);box-shadow:0 10px 28px rgba(3,5,24,.54),0 0 20px rgba(99,200,255,.2),inset 0 0 0 4px rgba(225,241,255,.12);color:#f7fbff;font-weight:900;font-size:10px;letter-spacing:.08em;pointer-events:auto;touch-action:none;transition:transform 80ms cubic-bezier(.2,.8,.2,1),filter 100ms ease,box-shadow 100ms ease;will-change:transform,filter,box-shadow}
-[${HOST_ATTR}="1"] .grJankenSlidePadSlot{position:absolute;right:2px;bottom:2px;width:82px;height:112px;border-radius:12px;border:2px solid rgba(210,230,255,.72);background:linear-gradient(160deg,rgba(232,244,255,.94) 0%,rgba(121,151,223,.9) 42%,rgba(71,55,145,.94) 72%,rgba(25,29,82,.98) 100%);box-shadow:0 11px 28px rgba(3,5,24,.46),inset 0 1px 0 rgba(255,255,255,.24);color:#f8fbff;padding:7px 6px;display:grid;grid-template-rows:auto 1fr auto;align-items:center;text-align:center;opacity:0;transform-origin:calc(100% - 32px) calc(100% - 25px);transform:translate(0,0) rotate(22deg) scale(.66);transition:transform 190ms cubic-bezier(.2,.8,.2,1),opacity 150ms ease,filter 90ms ease,box-shadow 90ms ease;pointer-events:none;touch-action:none}
+[${HOST_ATTR}="1"] .grJankenSlidePadHandle{position:absolute;right:0;bottom:0;width:68px;height:68px;border-radius:50%;border:2px solid rgba(255,255,255,.82);background:radial-gradient(circle at 34% 26%,rgba(247,247,247,.98) 0 9%,rgba(191,191,191,.88) 10% 27%,rgba(84,84,84,.92) 50%,rgba(27,27,27,.98) 78%,rgba(11,11,11,1) 100%);box-shadow:0 10px 28px rgba(6,6,6,.54),0 0 20px rgba(182,182,182,.2),inset 0 0 0 4px rgba(239,239,239,.12);color:#fafafa;font-weight:900;font-size:10px;letter-spacing:.08em;pointer-events:auto;touch-action:none;transition:transform 80ms cubic-bezier(.2,.8,.2,1),filter 100ms ease,box-shadow 100ms ease;will-change:transform,filter,box-shadow}
+[${HOST_ATTR}="1"] .grJankenSlidePadSlot{position:absolute;right:2px;bottom:2px;width:82px;height:112px;border-radius:12px;border:2px solid rgba(228,228,228,.72);background:linear-gradient(160deg,rgba(242,242,242,.94) 0%,rgba(150,150,150,.9) 42%,rgba(65,65,65,.94) 72%,rgba(32,32,32,.98) 100%);box-shadow:0 11px 28px rgba(6,6,6,.46),inset 0 1px 0 rgba(255,255,255,.24);color:#fbfbfb;padding:7px 6px;display:grid;grid-template-rows:auto 1fr auto;align-items:center;text-align:center;opacity:0;transform-origin:calc(100% - 32px) calc(100% - 25px);transform:translate(0,0) rotate(22deg) scale(.66);transition:transform 190ms cubic-bezier(.2,.8,.2,1),opacity 150ms ease,filter 90ms ease,box-shadow 90ms ease;pointer-events:none;touch-action:none}
 [${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot{opacity:1;pointer-events:auto}
 [${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-162px,15px) rotate(-18deg)}
 [${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-124px,-55px) rotate(-8deg);transition-delay:35ms}
 [${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-48px,-92px) rotate(5deg);transition-delay:70ms}
-[${HOST_ATTR}="1"] .grJankenSlidePadSlot[data-armed="true"]{filter:brightness(1.12) saturate(1.08);border-color:rgba(194,238,255,.98);box-shadow:0 10px 28px rgba(3,5,24,.5),0 0 0 4px rgba(92,205,255,.2),0 0 24px rgba(135,105,255,.26)}
-[${HOST_ATTR}="1"] .grJankenSlidePadSlot:disabled{filter:saturate(.15);background:linear-gradient(160deg,rgba(77,87,132,.84),rgba(39,42,79,.92));border-color:rgba(184,197,228,.42);color:rgba(224,231,247,.58);box-shadow:0 6px 16px rgba(3,5,24,.32);cursor:default;pointer-events:none}
+[${HOST_ATTR}="1"] .grJankenSlidePadSlot[data-armed="true"]{filter:brightness(1.12);border-color:rgba(230,230,230,.98);box-shadow:0 10px 28px rgba(6,6,6,.5),0 0 0 4px rgba(185,185,185,.2),0 0 24px rgba(122,122,122,.26)}
+[${HOST_ATTR}="1"] .grJankenSlidePadSlot:disabled{filter:brightness(.68);background:linear-gradient(160deg,rgba(88,88,88,.84),rgba(44,44,44,.92));border-color:rgba(196,196,196,.42);color:rgba(231,231,231,.58);box-shadow:0 6px 16px rgba(6,6,6,.32);cursor:default;pointer-events:none}
 [${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:25px;line-height:1;font-weight:900}
 [${HOST_ATTR}="1"] .grJankenSlidePadCard{font-size:10px;line-height:1.15;font-weight:850;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
 [${HOST_ATTR}="1"] .grJankenSlidePadHand{font-size:9px;font-weight:900;letter-spacing:.08em;opacity:.72}
-[${HOST_ATTR}="1"] .grJankenLoadPreview{position:absolute;left:8px;top:8px;width:106px;height:142px;border-radius:16px;border:2px solid rgba(255,255,255,.92);background:linear-gradient(155deg,rgba(224,242,255,.98),rgba(90,113,196,.96) 52%,rgba(44,38,105,.98));box-shadow:0 16px 38px rgba(3,5,24,.54),0 0 0 3px rgba(147,214,255,.12),0 0 26px rgba(121,87,255,.18);color:#f8fbff;padding:9px 8px;display:grid;grid-template-rows:auto auto 1fr auto;gap:4px;align-items:center;text-align:center;opacity:0;transform:translateY(8px) scale(.88);transition:opacity 90ms ease,transform 120ms cubic-bezier(.2,.8,.2,1);pointer-events:none}
+[${HOST_ATTR}="1"] .grJankenLoadPreview{position:absolute;left:8px;top:8px;width:106px;height:142px;border-radius:16px;border:2px solid rgba(255,255,255,.92);background:linear-gradient(155deg,rgba(239,239,239,.98),rgba(114,114,114,.96) 52%,rgba(44,44,44,.98));box-shadow:0 16px 38px rgba(6,6,6,.54),0 0 0 3px rgba(203,203,203,.12),0 0 26px rgba(106,106,106,.18);color:#fbfbfb;padding:9px 8px;display:grid;grid-template-rows:auto auto 1fr auto;gap:4px;align-items:center;text-align:center;opacity:0;transform:translateY(8px) scale(.88);transition:opacity 90ms ease,transform 120ms cubic-bezier(.2,.8,.2,1);pointer-events:none}
 [${HOST_ATTR}="1"] .grJankenLoadPreview[data-visible="true"]{opacity:1;transform:translateY(0) scale(1)}
 [${HOST_ATTR}="1"] .grJankenLoadPreviewLabel{font-size:9px;font-weight:950;letter-spacing:.12em;opacity:.62}
 [${HOST_ATTR}="1"] .grJankenLoadPreviewSuit{font-size:34px;line-height:1;font-weight:950}
@@ -396,30 +396,30 @@ section[data-screen="battle"] #hand .handCard[data-janken-reserved="true"]{displ
 section[data-screen="battle"] #hand .handCard[data-hand-aura-draggable="true"]{touch-action:none}
 section[data-screen="battle"] #hand .handCard[data-hand-aura-dragging="true"]{opacity:.22!important}
 section[data-screen="battle"] #hand.grPlayableHandActionBase{position:relative;isolation:isolate}
-section[data-screen="battle"] #hand.grPlayableHandActionBase::before{content:"";position:absolute;left:50%;bottom:-7px;width:min(270px,88%);height:30px;transform:translateX(-50%);border-top:2px solid rgba(255,216,74,.92);border-radius:50% 50% 8px 8px/100% 100% 8px 8px;background:radial-gradient(ellipse at 50% 0%,rgba(255,216,74,.18),rgba(255,216,74,.06) 54%,transparent 72%);box-shadow:0 -4px 16px rgba(255,216,74,.10);pointer-events:none;z-index:0}
+section[data-screen="battle"] #hand.grPlayableHandActionBase::before{content:"";position:absolute;left:50%;bottom:-7px;width:min(270px,88%);height:30px;transform:translateX(-50%);border-top:2px solid rgba(214,214,214,.92);border-radius:50% 50% 8px 8px/100% 100% 8px 8px;background:radial-gradient(ellipse at 50% 0%,rgba(214,214,214,.18),rgba(214,214,214,.06) 54%,transparent 72%);box-shadow:0 -4px 16px rgba(214,214,214,.10);pointer-events:none;z-index:0}
 section[data-screen="battle"] #hand .handCard.grPlayableHandCandidate{position:relative;overflow:visible!important;z-index:1}
-section[data-screen="battle"] #hand .handCard[data-card-focus="true"]{translate:0 -8px;filter:brightness(1.08) saturate(1.06);z-index:5!important;box-shadow:0 0 0 2px rgba(232,242,255,.62),0 10px 24px rgba(5,8,28,.35)!important}
-section[data-screen="battle"] #hand .handCard[data-card-focus="true"][data-card-focus-legal="true"]{translate:0 -11px;filter:brightness(1.16) saturate(1.12);box-shadow:0 0 0 3px rgba(255,216,74,.78),0 0 18px rgba(255,216,74,.24),0 12px 26px rgba(5,8,28,.38)!important}
-section[data-screen="battle"] #hand .handCard[data-card-staged="true"]{translate:0 -14px;filter:brightness(1.14) saturate(1.08);z-index:6!important;box-shadow:0 0 0 3px rgba(207,243,255,.94),0 0 0 6px rgba(87,211,255,.18),0 0 26px rgba(91,213,255,.34)!important}
-section[data-screen="battle"] #hand .grPlayableHandTriangle{position:absolute;left:50%;bottom:-14px;transform:translateX(-50%);color:#ffd84a;font:1000 13px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 7px rgba(255,216,74,.58);pointer-events:none;user-select:none;z-index:3}
+section[data-screen="battle"] #hand .handCard[data-card-focus="true"]{translate:0 -8px;filter:brightness(1.08);z-index:5!important;box-shadow:0 0 0 2px rgba(241,241,241,.62),0 10px 24px rgba(9,9,9,.35)!important}
+section[data-screen="battle"] #hand .handCard[data-card-focus="true"][data-card-focus-legal="true"]{translate:0 -11px;filter:brightness(1.16);box-shadow:0 0 0 3px rgba(214,214,214,.78),0 0 18px rgba(214,214,214,.24),0 12px 26px rgba(9,9,9,.38)!important}
+section[data-screen="battle"] #hand .handCard[data-card-staged="true"]{translate:0 -14px;filter:brightness(1.14);z-index:6!important;box-shadow:0 0 0 3px rgba(236,236,236,.94),0 0 0 6px rgba(188,188,188,.18),0 0 26px rgba(190,190,190,.34)!important}
+section[data-screen="battle"] #hand .grPlayableHandTriangle{position:absolute;left:50%;bottom:-14px;transform:translateX(-50%);color:#d6d6d6;font:1000 13px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 7px rgba(214,214,214,.58);pointer-events:none;user-select:none;z-index:3}
 ${BATTLE_PLAYABLE_HAND_ROW_ROULETTE_LIVE_PLACEMENT_CSS}
 [${HOST_ATTR}="1"] .grJankenOrderPresenter{position:absolute;right:0;top:-43px;width:248px;min-height:36px;display:flex;align-items:center;justify-content:flex-end;pointer-events:none;opacity:1;z-index:4}
-[${HOST_ATTR}="1"] .grJankenOrderRail{display:flex;align-items:center;justify-content:flex-end;gap:3px;max-width:100%;padding:4px 6px;border-radius:12px;background:rgba(7,10,32,.74);border:1px solid rgba(210,230,255,.46);box-shadow:0 7px 20px rgba(3,5,24,.3);backdrop-filter:blur(3px)}
-[${HOST_ATTR}="1"] .grJankenOrderItem{min-width:38px;height:28px;padding:2px 4px;border-radius:8px;display:grid;grid-template-columns:auto 1fr;grid-template-rows:1fr auto;column-gap:3px;align-items:center;background:rgba(36,44,92,.92);border:1px solid rgba(213,231,255,.48);color:#f7fbff;box-sizing:border-box;transform-origin:50% 80%}
+[${HOST_ATTR}="1"] .grJankenOrderRail{display:flex;align-items:center;justify-content:flex-end;gap:3px;max-width:100%;padding:4px 6px;border-radius:12px;background:rgba(11,11,11,.74);border:1px solid rgba(228,228,228,.46);box-shadow:0 7px 20px rgba(6,6,6,.3);backdrop-filter:blur(3px)}
+[${HOST_ATTR}="1"] .grJankenOrderItem{min-width:38px;height:28px;padding:2px 4px;border-radius:8px;display:grid;grid-template-columns:auto 1fr;grid-template-rows:1fr auto;column-gap:3px;align-items:center;background:rgba(46,46,46,.92);border:1px solid rgba(229,229,229,.48);color:#fafafa;box-sizing:border-box;transform-origin:50% 80%}
 [${HOST_ATTR}="1"] .grJankenOrderOrdinal{grid-row:1 / span 2;font-size:9px;font-weight:950;opacity:.62}
 [${HOST_ATTR}="1"] .grJankenOrderIdentity{font-size:11px;font-weight:950;line-height:1;white-space:nowrap}
 [${HOST_ATTR}="1"] .grJankenOrderState{font-size:7px;font-weight:900;line-height:1;letter-spacing:.04em;opacity:.72;white-space:nowrap}
-[${HOST_ATTR}="1"] .grJankenOrderItem[data-final-state="invalidated"]{opacity:.5;filter:saturate(.2)}
-[${HOST_ATTR}="1"] .grJankenOrderItem[data-final-state="resolved-win"]{border-color:rgba(233,248,255,.92);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
+[${HOST_ATTR}="1"] .grJankenOrderItem[data-final-state="invalidated"]{opacity:.5;filter:brightness(.72)}
+[${HOST_ATTR}="1"] .grJankenOrderItem[data-final-state="resolved-win"]{border-color:rgba(245,245,245,.92);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
 [${HOST_ATTR}="1"] .grJankenOrderArrow{font-size:10px;font-weight:950;opacity:.5}
 @media(max-height:430px) and (orientation:landscape){[${HOST_ATTR}="1"] .grJankenOrderPresenter{top:-35px;width:188px}[${HOST_ATTR}="1"] .grJankenOrderRail{padding:3px 4px;gap:2px;border-radius:9px}[${HOST_ATTR}="1"] .grJankenOrderItem{min-width:30px;height:23px;padding:1px 3px;border-radius:6px}[${HOST_ATTR}="1"] .grJankenOrderIdentity{font-size:9px}[${HOST_ATTR}="1"] .grJankenOrderState{font-size:6px}}
 @media(max-width:430px) and (orientation:portrait){[${HOST_ATTR}="1"] .grJankenOrderPresenter{top:-42px;width:220px}}
 @media(prefers-reduced-motion:reduce){[${HOST_ATTR}="1"] .grJankenOrderItem{animation:none!important;transition:none!important}}
 ${BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS}
-[${HOST_ATTR}="1"][data-hand-aura-active="true"] .grJankenSlidePadHandle{filter:brightness(1.3) saturate(1.35);box-shadow:0 8px 22px rgba(0,0,0,.38),0 0 0 5px rgba(132,255,213,.18),0 0 28px rgba(108,255,205,.45),inset 0 0 0 4px rgba(255,255,255,.15)}
-[${HOST_ATTR}="1"][data-hand-aura-armed="true"] .grJankenSlidePadHandle{filter:brightness(1.75) saturate(1.55);box-shadow:0 8px 22px rgba(0,0,0,.34),0 0 0 8px rgba(214,255,239,.25),0 0 44px rgba(115,255,208,.9),inset 0 0 20px rgba(255,255,255,.42)}
+[${HOST_ATTR}="1"][data-hand-aura-active="true"] .grJankenSlidePadHandle{filter:brightness(1.3);box-shadow:0 8px 22px rgba(0,0,0,.38),0 0 0 5px rgba(226,226,226,.18),0 0 28px rgba(220,220,220,.45),inset 0 0 0 4px rgba(255,255,255,.15)}
+[${HOST_ATTR}="1"][data-hand-aura-armed="true"] .grJankenSlidePadHandle{filter:brightness(1.75);box-shadow:0 8px 22px rgba(0,0,0,.34),0 0 0 8px rgba(245,245,245,.25),0 0 44px rgba(222,222,222,.9),inset 0 0 20px rgba(255,255,255,.42)}
 .grHandAuraDragGhost{position:fixed!important;right:auto!important;bottom:auto!important;margin:0!important;z-index:220!important;pointer-events:none!important;transition:none!important;transform:none!important;transform-origin:50% 50%!important;will-change:left,top,transform,opacity,filter;box-sizing:border-box}
-.grHandAuraDragGhost[data-aura-charged="true"]{filter:brightness(1.35) saturate(1.3) drop-shadow(0 0 7px rgba(222,255,244,.98)) drop-shadow(0 0 18px rgba(89,255,199,.9))!important;box-shadow:0 0 0 3px rgba(231,255,247,.62),0 0 26px rgba(75,255,191,.8)!important}
+.grHandAuraDragGhost[data-aura-charged="true"]{filter:brightness(1.35) drop-shadow(0 0 7px rgba(247,247,247,.98)) drop-shadow(0 0 18px rgba(216,216,216,.9))!important;box-shadow:0 0 0 3px rgba(249,249,249,.62),0 0 26px rgba(212,212,212,.8)!important}
 @media(max-width:540px) and (orientation:portrait){[${HOST_ATTR}="1"]{bottom:185px}[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:64px;height:88px;padding:5px 4px;border-radius:10px}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-126px,12px) rotate(-15deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-96px,-43px) rotate(-7deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-38px,-72px) rotate(4deg)}[${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:20px}[${HOST_ATTR}="1"] .grJankenSlidePadCard{font-size:9px;line-height:1.1}[${HOST_ATTR}="1"] .grJankenSlidePadHand{font-size:8px}[${HOST_ATTR}="1"] .grJankenLoadPreview{width:98px;height:132px}}
 @media(orientation:landscape){section[data-screen="battle"] #hand.grPlayableHandActionBase::before{bottom:0}section[data-screen="battle"] #hand .grPlayableHandTriangle{top:-14px;bottom:auto}}
 @media(max-height:430px) and (orientation:landscape){section[data-screen="battle"] #hand.grPlayableHandActionBase{overflow:visible!important}[${HOST_ATTR}="1"]{width:188px;height:146px;right:7px;bottom:7px}[${HOST_ATTR}="1"] .grJankenSlidePadHandle{width:58px;height:58px}[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:60px;height:80px;padding:4px}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-124px,10px) rotate(-16deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-92px,-40px) rotate(-7deg)}[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-48px,-62px) rotate(4deg)}[${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:20px}[${HOST_ATTR}="1"] .grJankenSlidePadCard{font-size:8px;line-height:1.05}[${HOST_ATTR}="1"] .grJankenSlidePadHand{font-size:8px}[${HOST_ATTR}="1"] .grJankenLoadPreview{width:82px;height:108px;left:2px;top:2px}}
@@ -671,10 +671,10 @@ function animateHandAuraLaunch(globalRef, documentRef, battleRoot, handle, ghost
   const targetDx = target.x - start.x;
   const targetDy = target.y - start.y;
   const frames = [
-    { offset: 0, opacity: 1, filter: 'brightness(1.25) saturate(1.2) drop-shadow(0 0 8px rgba(116,255,209,.8))', transform: 'translate3d(0,0,0) scale(1)' },
-    { offset: 0.2, opacity: 1, filter: 'brightness(1.75) saturate(1.45) drop-shadow(0 0 14px rgba(223,255,244,1)) drop-shadow(0 0 28px rgba(82,255,194,.95))', transform: `translate3d(${auraDx.toFixed(2)}px,${auraDy.toFixed(2)}px,0) scale(.82)` },
-    { offset: 0.34, opacity: 1, filter: 'brightness(2.05) saturate(1.55) drop-shadow(0 0 18px rgba(238,255,249,1)) drop-shadow(0 0 38px rgba(76,255,189,1))', transform: `translate3d(${auraDx.toFixed(2)}px,${auraDy.toFixed(2)}px,0) scale(1.03)` },
-    { offset: 1, opacity: 0.56, filter: 'brightness(1.05) saturate(.95) blur(.65px) drop-shadow(0 0 9px rgba(104,255,205,.55))', transform: `translate3d(${targetDx.toFixed(2)}px,${targetDy.toFixed(2)}px,0) scale(.32)` },
+    { offset: 0, opacity: 1, filter: 'brightness(1.25) drop-shadow(0 0 8px rgba(222,222,222,.8))', transform: 'translate3d(0,0,0) scale(1)' },
+    { offset: 0.2, opacity: 1, filter: 'brightness(1.75) drop-shadow(0 0 14px rgba(247,247,247,1)) drop-shadow(0 0 28px rgba(214,214,214,.95))', transform: `translate3d(${auraDx.toFixed(2)}px,${auraDy.toFixed(2)}px,0) scale(.82)` },
+    { offset: 0.34, opacity: 1, filter: 'brightness(2.05) drop-shadow(0 0 18px rgba(251,251,251,1)) drop-shadow(0 0 38px rgba(212,212,212,1))', transform: `translate3d(${auraDx.toFixed(2)}px,${auraDy.toFixed(2)}px,0) scale(1.03)` },
+    { offset: 1, opacity: 0.56, filter: 'brightness(1.05) blur(.65px) drop-shadow(0 0 9px rgba(219,219,219,.55))', transform: `translate3d(${targetDx.toFixed(2)}px,${targetDy.toFixed(2)}px,0) scale(.32)` },
   ];
   const animation = ghost.animate(frames, {
     duration: HAND_AURA_RELEASE_DURATION_MS,
@@ -830,8 +830,8 @@ export function presentBattleJankenOrderMotionToSlidePad(orderHost, motion, meta
           ];
         } else if (entry.action === 'invalidated-stay-skip') {
           keyframes = [
-            { filter: 'saturate(1)', opacity: 1 },
-            { filter: 'saturate(.18)', opacity: .5 },
+            { filter: 'brightness(1)', opacity: 1 },
+            { filter: 'brightness(.72)', opacity: .5 },
           ];
         }
         if (keyframes) {

@@ -43,7 +43,6 @@ jobs:
           const base='http://127.0.0.1:4173';
           const out='evidence/battle-janken-thumb-arc-r3';
           const cases=[['1280x720',1280,720],['667x375',667,375],['390x844',390,844]];
-          const rect=(r)=>r?{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}:null;
           const overlap=(a,b)=>{if(!a||!b)return null;const l=Math.max(a.left,b.left),t=Math.max(a.top,b.top),r=Math.min(a.right,b.right),d=Math.min(a.bottom,b.bottom);return r>l&&d>t?{area:(r-l)*(d-t),width:r-l,height:d-t}:{area:0,width:0,height:0}};
 
           async function legalDeck(page){
@@ -53,8 +52,8 @@ jobs:
               const standard=window.__CARD_DATA__.filter(c=>pub.has(c.id)&&/^(SP|HT|DI|CL)$/.test(c.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c=>c.id);
               const royals=['SP_J','SP_Q','SP_K'];
               const main=[...standard.filter(id=>!t.isRoyalCard(id)).slice(0,37),...royals];
-              const set=t.deckSetDraft(main,[]), draft=t.deckValidate(t.state.deckDraft,{forBattle:true});
-              const committed=draft.ok?t.deckCommit():false, saved=t.deckValidate(t.state.savedDeck,{forBattle:true});
+              const set=t.deckSetDraft(main,[]),draft=t.deckValidate(t.state.deckDraft,{forBattle:true});
+              const committed=draft.ok?t.deckCommit():false,saved=t.deckValidate(t.state.savedDeck,{forBattle:true});
               return {count:main.length,setOk:set?.ok===true,draftOk:draft?.ok===true,committed,savedOk:saved?.ok===true};
             });
           }
@@ -63,9 +62,21 @@ jobs:
             const response=await page.goto(`${base}/browser/GAMEROAD.html`,{waitUntil:'commit',timeout:10000});
             if(!response||response.status()>=400) throw new Error(`HTML response ${response?.status()}`);
             await page.waitForFunction(()=>!!window.__GAMEROAD_TEST__&&Array.isArray(window.__CARD_DATA__),null,{timeout:45000});
-            const home=page.locator('section[data-screen="home"]'); await home.waitFor({state:'visible',timeout:20000});
+            const home=page.locator('section[data-screen="home"]');
+            await home.waitFor({state:'visible',timeout:20000});
             const deck=await legalDeck(page); if(deck.count!==40||!deck.committed||!deck.savedOk) throw new Error(`deck ${JSON.stringify(deck)}`);
-            const go=page.locator('[data-home-target="setup"]:visible, [data-go="setup"]:visible').first(); await go.waitFor({state:'visible',timeout:20000}); await go.click();
+            const center=page.locator('#homePadCenter:visible');
+            await center.waitFor({state:'visible',timeout:20000});
+            const homeState=await home.getAttribute('data-home-state');
+            if(homeState==='HOME_COLLAPSED'){
+              await center.click();
+              await page.waitForFunction(()=>document.querySelector('section[data-screen="home"]')?.dataset.homeState==='HOME_EXPANDED',null,{timeout:5000});
+            }
+            const setupChoice=page.locator('.homePadChoice[data-home-target="setup"]:visible').first();
+            await setupChoice.waitFor({state:'visible',timeout:10000});
+            const pointerEvents=await setupChoice.evaluate(el=>getComputedStyle(el).pointerEvents);
+            if(pointerEvents==='none') throw new Error(`setup choice still non-interactive in home state ${await home.getAttribute('data-home-state')}`);
+            await setupChoice.click();
             const setup=page.locator('section[data-screen="setup"]'); await setup.waitFor({state:'visible',timeout:20000});
             await setup.locator('[data-content="road_shield"]').click(); await setup.locator('[data-mode="2v2"]').click();
             const start=setup.locator('#startMatch'); await start.waitFor({state:'visible',timeout:20000}); if(await start.isDisabled()) throw new Error('start disabled'); await start.click();
@@ -76,7 +87,7 @@ jobs:
 
           async function capture(page,name){
             await enter(page);
-            const host=page.locator('[data-battle-janken-slidepad="1"]').first(), handle=host.locator('.grJankenSlidePadHandle');
+            const host=page.locator('[data-battle-janken-slidepad="1"]').first(),handle=host.locator('.grJankenSlidePadHandle');
             if(await host.getAttribute('data-expanded')!=='true') await handle.click();
             await page.waitForFunction(()=>document.querySelector('[data-battle-janken-slidepad="1"]')?.dataset.expanded==='true',null,{timeout:5000}); await page.waitForTimeout(260);
             if(await host.locator('[data-janken-slot]').count()!==3) throw new Error(`${name}: slot count`);
@@ -107,7 +118,7 @@ jobs:
         run: |
           set -euo pipefail
           git merge-base --is-ancestor "$BASE" HEAD
-          rm -f .r3-capture.mjs .github/workflows/zz-temp-battle-janken-thumb-arc-evidence-r3.yml data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R3-20260910T2351-SOL-M8Q4N6.json
+          rm -f .r3-capture.mjs .github/workflows/zz-temp-battle-janken-thumb-arc-evidence-r3.yml data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R3-20260910T2351-SOL-M8Q4N6.json data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R4-20260911T0051-SOL-M8Q4N7.json
           git add -A
           mapfile -t a < <(git diff --cached --name-only "$BASE" | sort)
           e=(evidence/battle-janken-thumb-arc-r3/1280x720-expanded.png evidence/battle-janken-thumb-arc-r3/390x844-expanded.png evidence/battle-janken-thumb-arc-r3/667x375-expanded.png evidence/battle-janken-thumb-arc-r3/geometry.json)

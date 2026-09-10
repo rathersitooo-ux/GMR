@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SELF-DECK-LIVE-R1-20260911T0017-SOL-Q8N4V9",
+  "taskId": "BATTLE-SELF-REMAINING-DECK-INSPECT-001",
+  "workUnitKey": "BATTLE_SELF_DECK_LIVE_DIRECT_CONSUMER_R1",
+  "acquireKey": "BATTLE-SELF-DECK-LIVE-R1-20260911T0017-SOL-Q8N4V9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_9253002_AND_FREE_EXACT_SELF_DECK_CONSUMER_20260911T0017JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "MERGED_OWNER_SAFE_ADAPTER_AND_REMAINING_DECK_PRESENTATION_CONTRACTS",
+  "proceedToken": "PROCEED|BATTLE-SELF-DECK-LIVE-R1-20260911T0017-SOL-Q8N4V9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|self-deck-live-direct-consumer|new-module-focused-test|active-lease",
+  "authorizationBaseSha": "9253002b4f2fa1fcf092ef7ddb2e7769acad7bb5",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-SELF-REMAINING-DECK-INSPECT-001",
+  "leaseWorkUnitKey": "BATTLE_SELF_DECK_LIVE_DIRECT_CONSUMER_R1",
+  "leaseAcquireKey": "BATTLE-SELF-DECK-LIVE-R1-20260911T0017-SOL-Q8N4V9",
+  "leaseSnapshotReadbackAtJst": "2026-09-11 00:17 JST",
+  "leaseUntilJst": "2026-09-11 01:12 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A999:N999",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-self-deck-live-r1-20260911; browser/battle-self-deck-live-consumer.mjs; tests/battle-self-deck-live-consumer.test.mjs; own transient data/preaction-authorizations/BATTLE-SELF-DECK-LIVE-R1-20260911T0017-SOL-Q8N4V9.json only. READ_ONLY browser/GAMEROAD.html; battle-replay-live-adapter.mjs; battle-self-deck-owner-knowledge-adapter.mjs; battle-self-deck-inspect-core.mjs; Battle gameplay/rules/save/network/economy; active visual/janken/title/records resources.",
+  "solutionSignature": "BATTLE_SELF_DECK_EXISTING_OWNER_PROJECTION_DIRECT_CONSUMER_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "TASK_1342_EXISTING_OWNER_ADAPTER_PLUS_EXISTING_REPLAY_PRESENTATION_NO_BRIDGE",
+  "solutionSearchEvidence": [
+    "Current main already contains battle-self-deck-owner-knowledge-adapter.mjs, which reads only the unique local human owner's state.match.players[].deck, sorts card ids, authenticates viewer equality, and emits the existing presentation input shape.",
+    "Current main already contains projectLiveBattleRemainingDeckPresentation and renderLiveBattleRemainingDeckPresentation in battle-replay-live-adapter.mjs.",
+    "Prior task history explicitly cut a pass-through live-presentation bridge as overengineering and requires the final player-visible consumer to call the existing privacy/owner projection and presentation directly.",
+    "External digital-card-game precedent supports on-demand self-deck inspection while keeping hidden order hidden; this WorkUnit adds no new gameplay, save, network, or deck authority.",
+    "The public-device ACTUAL probe is currently capability-blocked because the Remote Desktop connector became unavailable; therefore this slice will not claim public/player-visible completion and will stop before shared HTML/build mutation unless actual verification and a fresh free lease become available."
+  ],
+  "scope": [
+    "browser/battle-self-deck-live-consumer.mjs",
+    "tests/battle-self-deck-live-consumer.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-self-deck-live-consumer.mjs",
+    "tests/battle-self-deck-live-consumer.test.mjs"
+  ]
+}

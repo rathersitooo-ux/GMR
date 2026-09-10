@@ -51,7 +51,7 @@ jobs:
             exit 1
           fi
           mkdir -p evidence/battle-janken-thumb-arc-r3
-          cat > /tmp/capture-r3.mjs <<'NODE'
+          cat > .r3-capture.mjs <<'NODE'
           import { chromium } from '@playwright/test';
           import fs from 'node:fs/promises';
 
@@ -221,7 +221,8 @@ jobs:
           }
           await fs.writeFile(`${outDir}/geometry.json`, `${JSON.stringify(output, null, 2)}\n`);
           NODE
-          node /tmp/capture-r3.mjs
+          node .r3-capture.mjs
+          rm -f .r3-capture.mjs
           test -s evidence/battle-janken-thumb-arc-r3/1280x720-expanded.png
           test -s evidence/battle-janken-thumb-arc-r3/667x375-expanded.png
           test -s evidence/battle-janken-thumb-arc-r3/390x844-expanded.png
@@ -235,6 +236,7 @@ jobs:
         run: |
           set -euo pipefail
           git merge-base --is-ancestor "$SOURCE_CANDIDATE_SHA" HEAD
+          rm -f .r3-capture.mjs
           rm -f .github/workflows/zz-temp-battle-janken-thumb-arc-evidence-r3.yml
           rm -f data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R3-20260910T2351-SOL-M8Q4N6.json
           git add -A

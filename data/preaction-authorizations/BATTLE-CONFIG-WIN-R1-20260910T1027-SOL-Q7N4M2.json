@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CONFIG-WIN-R1-20260910T1027-SOL-Q7N4M2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "CONFIGURABLE_CARD_WIN_CONSEQUENCE_R1",
+  "acquireKey": "BATTLE-CONFIG-WIN-R1-20260910T1027-SOL-Q7N4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_USER_EXPLICIT_CONFIGURABLE_N_PLUS_COMPLETION_CONSEQUENCE_20260910",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_LEGACY_GATE_COMPATIBILITY_PLUS_FOCUSED_NODE_TEST_PLAN",
+  "proceedToken": "PROCEED|BATTLE-CONFIG-WIN-R1-20260910T1027-SOL-Q7N4M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|configurable-completion-rule|existing-core|active-lease",
+  "authorizationBaseSha": "0f327476fdcc9946d85bb19497c328ef0b1815c9",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "CONFIGURABLE_CARD_WIN_CONSEQUENCE_R1",
+  "leaseAcquireKey": "BATTLE-CONFIG-WIN-R1-20260910T1027-SOL-Q7N4M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 10:27 JST",
+  "leaseUntilJst": "2026-09-10 11:27 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "browser/new-base-legacy-seven-win-gate-core.mjs; tests/new-base-legacy-seven-win-gate-core.test.mjs; data/preaction-authorizations/BATTLE-CONFIG-WIN-R1-20260910T1027-SOL-Q7N4M2.json; branch work/battle-configurable-win-r1",
+  "scope": [
+    "browser/new-base-legacy-seven-win-gate-core.mjs",
+    "tests/new-base-legacy-seven-win-gate-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-legacy-seven-win-gate-core.mjs",
+    "tests/new-base-legacy-seven-win-gate-core.test.mjs"
+  ]
+}

@@ -1,0 +1,105 @@
+name: temp Battle Janken thumb arc R2
+on:
+  push:
+    branches:
+      - sol/battle-janken-thumb-arc-r2-20260910
+permissions:
+  contents: write
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Exact-anchor visual patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          runtime_path = Path('browser/battle-janken-slidepad-runtime-mount.mjs')
+          test_path = Path('tests/battle-janken-slidepad-runtime-mount.test.mjs')
+          runtime = runtime_path.read_text(encoding='utf-8')
+          test = test_path.read_text(encoding='utf-8')
+
+          def one(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 anchor, got {count}')
+              return text.replace(old, new, 1)
+
+          def many(text, old, new, expected, label):
+              count = text.count(old)
+              if count != expected:
+                  raise SystemExit(f'{label}: expected {expected} anchors, got {count}')
+              return text.replace(old, new)
+
+          old_host = '[${HOST_ATTR}="1"]{position:absolute;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:42;width:248px;height:196px;pointer-events:none;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}'
+          new_host = old_host[:-1] + ';isolation:isolate}\n[${HOST_ATTR}="1"]::before{content:"";position:absolute;right:13px;bottom:10px;width:198px;height:160px;border:9px solid rgba(218,218,218,.20);border-left-color:rgba(218,218,218,.05);border-bottom-color:rgba(218,218,218,.08);border-radius:58% 52% 54% 50%;transform:rotate(-8deg);box-shadow:0 0 22px rgba(208,208,208,.12),inset 0 0 18px rgba(238,238,238,.06);pointer-events:none;z-index:0}'
+          runtime = one(runtime, old_host, new_host, 'host-ring')
+
+          old_slot = '[${HOST_ATTR}="1"] .grJankenSlidePadSlot{position:absolute;right:2px;bottom:2px;width:82px;height:112px;border-radius:12px;border:2px solid rgba(228,228,228,.72);background:linear-gradient(160deg,rgba(242,242,242,.94) 0%,rgba(150,150,150,.9) 42%,rgba(65,65,65,.94) 72%,rgba(32,32,32,.98) 100%);box-shadow:0 11px 28px rgba(6,6,6,.46),inset 0 1px 0 rgba(255,255,255,.24);color:#fbfbfb;padding:7px 6px;display:grid;grid-template-rows:auto 1fr auto;align-items:center;text-align:center;opacity:0;transform-origin:calc(100% - 32px) calc(100% - 25px);transform:translate(0,0) rotate(22deg) scale(.66);transition:transform 190ms cubic-bezier(.2,.8,.2,1),opacity 150ms ease,filter 90ms ease,box-shadow 90ms ease;pointer-events:none;touch-action:none}'
+          new_slot = '[${HOST_ATTR}="1"] .grJankenSlidePadSlot{position:absolute;right:4px;bottom:4px;width:86px;height:86px;border-radius:42% 58% 56% 44%/48% 42% 58% 52%;border:2px solid rgba(228,228,228,.72);background:linear-gradient(160deg,rgba(242,242,242,.94) 0%,rgba(150,150,150,.9) 42%,rgba(65,65,65,.94) 72%,rgba(32,32,32,.98) 100%);box-shadow:0 11px 28px rgba(6,6,6,.46),inset 0 1px 0 rgba(255,255,255,.24);color:#fbfbfb;padding:6px;display:grid;grid-template-rows:1fr auto auto;align-items:center;text-align:center;opacity:0;transform-origin:calc(100% - 31px) calc(100% - 31px);transform:translate(0,0) rotate(18deg) scale(.58);transition:transform 190ms cubic-bezier(.2,.8,.2,1),opacity 150ms ease,filter 90ms ease,box-shadow 90ms ease;pointer-events:none;touch-action:none;z-index:1}'
+          runtime = one(runtime, old_slot, new_slot, 'slot-shape')
+          runtime = one(runtime, '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-162px,15px) rotate(-18deg)}', '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-150px,4px) rotate(-15deg)}', 'rock-geometry')
+          runtime = one(runtime, '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-124px,-55px) rotate(-8deg);transition-delay:35ms}', '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-96px,-66px) rotate(-4deg);transition-delay:35ms}', 'scissors-geometry')
+          runtime = one(runtime, '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-48px,-92px) rotate(5deg);transition-delay:70ms}', '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-14px,-96px) rotate(9deg);transition-delay:70ms}', 'paper-geometry')
+          runtime = one(runtime, '[${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:25px;line-height:1;font-weight:900}', '[${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:32px;line-height:1;font-weight:900}', 'hand-icon-size')
+          runtime = one(runtime, '[${HOST_ATTR}="1"] .grJankenSlidePadCard{font-size:10px;line-height:1.15;font-weight:850;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}', '[${HOST_ATTR}="1"] .grJankenSlidePadCard{font-size:9px;line-height:1.08;font-weight:850;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}', 'slot-card-copy')
+
+          runtime = one(runtime, '[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:64px;height:88px;padding:5px 4px;border-radius:10px}', '[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:76px;height:76px;padding:5px;border-radius:42% 58% 56% 44%/48% 42% 58% 52%}', 'portrait-slot-size')
+          runtime = one(runtime, '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-126px,12px) rotate(-15deg)}', '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-118px,2px) rotate(-13deg)}', 'portrait-rock')
+          runtime = one(runtime, '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-96px,-43px) rotate(-7deg)}', '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-70px,-60px) rotate(-3deg)}', 'portrait-scissors')
+          runtime = one(runtime, '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-38px,-72px) rotate(4deg)}', '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-4px,-92px) rotate(8deg)}', 'portrait-paper')
+
+          runtime = one(runtime, '[${HOST_ATTR}="1"]{width:188px;height:146px;right:7px;bottom:7px}', '[${HOST_ATTR}="1"]{width:208px;height:160px;right:7px;bottom:7px}', 'short-host')
+          runtime = one(runtime, '[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:60px;height:80px;padding:4px}', '[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:74px;height:74px;padding:4px}', 'short-slot-size')
+          runtime = one(runtime, '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-124px,10px) rotate(-16deg)}', '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-132px,2px) rotate(-13deg)}', 'short-rock')
+          runtime = one(runtime, '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-92px,-40px) rotate(-7deg)}', '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-78px,-62px) rotate(-3deg)}', 'short-scissors')
+          runtime = one(runtime, '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-48px,-62px) rotate(4deg)}', '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-2px,-78px) rotate(8deg)}', 'short-paper')
+          runtime = many(runtime, '[${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:20px}', '[${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:26px}', 2, 'compact-hand-icon-size')
+          reduced_anchor = '@media(prefers-reduced-motion:reduce){[${HOST_ATTR}="1"] .grJankenSlidePadSlot,[${HOST_ATTR}="1"] .grJankenSlidePadHandle,[${HOST_ATTR}="1"] .grJankenLoadPreview{transition:none!important}}'
+          reduced_new = '@media(max-height:430px) and (orientation:landscape){[${HOST_ATTR}="1"]::before{right:12px;bottom:8px;width:176px;height:138px;border-width:7px}}\n' + reduced_anchor
+          runtime = one(runtime, reduced_anchor, reduced_new, 'compact-ring')
+
+          test = one(test, "test('portrait reserved janken fan compacts without changing desktop slot geometry', async () => {", "test('portrait reserved janken fan keeps large thumb targets in the same radial family', async () => {", 'portrait-test-title')
+          test = one(test, "assert.match(source, /\\.grJankenSlidePadSlot\\{position:absolute;right:2px;bottom:2px;width:82px;height:112px/);", "assert.match(source, /\\.grJankenSlidePadSlot\\{position:absolute;right:4px;bottom:4px;width:86px;height:86px/);", 'test-base-slot')
+          test = one(test, "assert.match(source, /@media\\(max-width:540px\\) and \\(orientation:portrait\\)\\{[^\\n]*\\.grJankenSlidePadSlot\\{width:64px;height:88px/);", "assert.match(source, /@media\\(max-width:540px\\) and \\(orientation:portrait\\)\\{[^\\n]*\\.grJankenSlidePadSlot\\{width:76px;height:76px/);", 'test-portrait-size')
+          test = one(test, "assert.match(source, /orientation:portrait[^\\n]*rock\\{transform:translate\\(-126px,12px\\)[^\\n]*scissors\\{transform:translate\\(-96px,-43px\\)[^\\n]*paper\\{transform:translate\\(-38px,-72px\\)/);", "assert.match(source, /orientation:portrait[^\\n]*rock\\{transform:translate\\(-118px,2px\\)[^\\n]*scissors\\{transform:translate\\(-70px,-60px\\)[^\\n]*paper\\{transform:translate\\(-4px,-92px\\)/);", 'test-portrait-geometry')
+          test = one(test, "assert.match(source, /@media\\(max-height:430px\\) and \\(orientation:landscape\\)\\{[^\\n]*\\[\\$\\{HOST_ATTR\\}=\\\"1\\\"\\]\\{width:188px;height:146px;right:7px;bottom:7px/);", "assert.match(source, /@media\\(max-height:430px\\) and \\(orientation:landscape\\)\\{[^\\n]*\\[\\$\\{HOST_ATTR\\}=\\\"1\\\"\\]\\{width:208px;height:160px;right:7px;bottom:7px/);", 'test-short-host')
+          test = one(test, "assert.match(source, /max-height:430px[^\\n]*\\.grJankenSlidePadSlot\\{width:60px;height:80px;padding:4px\\}/);", "assert.match(source, /max-height:430px[^\\n]*\\.grJankenSlidePadSlot\\{width:74px;height:74px;padding:4px\\}/);", 'test-short-size')
+          test = one(test, "assert.match(source, /max-height:430px[^\\n]*rock\\{transform:translate\\(-124px,10px\\)[^\\n]*scissors\\{transform:translate\\(-92px,-40px\\)[^\\n]*paper\\{transform:translate\\(-48px,-62px\\)/);", "assert.match(source, /max-height:430px[^\\n]*rock\\{transform:translate\\(-132px,2px\\)[^\\n]*scissors\\{transform:translate\\(-78px,-62px\\)[^\\n]*paper\\{transform:translate\\(-2px,-78px\\)/);", 'test-short-geometry')
+          test = one(test, "  assert.doesNotMatch(runtimeSource, /filter:\\s*saturate\\(|\\s+saturate\\(/);", "  assert.doesNotMatch(runtimeSource, /filter:\\s*saturate\\(|\\s+saturate\\(/);\n  assert.equal(runtimeSource.includes('border:9px solid rgba(218,218,218,.20)'), true,\n    'the thumb family keeps a thick achromatic ring without borrowing suit hue');", 'test-ring')
+          test = one(test, "assert.match(runtimeSource, /\\.grJankenSlidePadSlot\\.rock\\{transform:translate\\(-162px,15px\\) rotate\\(-18deg\\)\\}/);", "assert.match(runtimeSource, /\\.grJankenSlidePadSlot\\.rock\\{transform:translate\\(-150px,4px\\) rotate\\(-15deg\\)\\}/);", 'test-achromatic-rock')
+          test = one(test, "assert.match(runtimeSource, /\\.grJankenSlidePadSlot\\.scissors\\{transform:translate\\(-124px,-55px\\) rotate\\(-8deg\\)/);", "assert.match(runtimeSource, /\\.grJankenSlidePadSlot\\.scissors\\{transform:translate\\(-96px,-66px\\) rotate\\(-4deg\\)/);", 'test-achromatic-scissors')
+          test = one(test, "assert.match(runtimeSource, /\\.grJankenSlidePadSlot\\.paper\\{transform:translate\\(-48px,-92px\\) rotate\\(5deg\\)/);", "assert.match(runtimeSource, /\\.grJankenSlidePadSlot\\.paper\\{transform:translate\\(-14px,-96px\\) rotate\\(9deg\\)/);", 'test-achromatic-paper')
+
+          runtime_path.write_text(runtime, encoding='utf-8')
+          test_path.write_text(test, encoding='utf-8')
+          PY
+      - name: Focused checks
+        shell: bash
+        run: |
+          node --check browser/battle-janken-slidepad-runtime-mount.mjs
+          node --test tests/battle-janken-slidepad-runtime-mount.test.mjs
+          git diff --check
+      - name: Final diff fence and commit
+        shell: bash
+        run: |
+          git rm .github/workflows/zz-temp-battle-janken-thumb-arc-r2.yml
+          git rm data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R2-20260910T2342-SOL-Q8M4N5.json
+          python3 - <<'PY'
+          import subprocess
+          base='9253002b4f2fa1fcf092ef7ddb2e7769acad7bb5'
+          names=subprocess.check_output(['git','diff','--name-only',base],text=True).splitlines()
+          expected=['browser/battle-janken-slidepad-runtime-mount.mjs','tests/battle-janken-slidepad-runtime-mount.test.mjs']
+          if sorted(names)!=sorted(expected):
+              raise SystemExit(f'final diff fence failed: {names}')
+          PY
+          git diff --check
+          git config user.name 'gameroad-actions'
+          git config user.email 'actions@users.noreply.github.com'
+          git add browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs
+          git commit -m 'Battle SlidePad: thumb arc visual candidate R2'
+          git push origin HEAD:sol/battle-janken-thumb-arc-r2-20260910

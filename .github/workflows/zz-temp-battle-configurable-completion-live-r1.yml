@@ -1,0 +1,40 @@
+name: TEMP Battle configurable completion live probe
+
+on:
+  push:
+    branches:
+      - work/battle-configurable-completion-live-r1
+    paths:
+      - '.github/workflows/zz-temp-battle-configurable-completion-live-r1.yml'
+      - 'tools/temp-battle-configurable-completion-live-r1.py'
+      - 'browser/GAMEROAD.html'
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Probe exact current HTML seams
+        run: python tools/temp-battle-configurable-completion-live-r1.py
+      - name: Commit bounded probe evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/battle-configurable-completion-live-r1-probe.txt
+          if git diff --cached --quiet; then
+            echo 'Probe unchanged.'
+            exit 0
+          fi
+          git commit -m 'Probe Battle completion live seams'
+          git push origin HEAD:work/battle-configurable-completion-live-r1

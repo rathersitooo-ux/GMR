@@ -1,0 +1,35 @@
+{
+  "schema": "gameroad.preaction.v1",
+  "acquireKey": "BATTLE-JANKEN-THUMB-ARC-R3-20260910T2351-SOL-M8Q4N6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_THUMB_ARC_USESITE_EVIDENCE_R3",
+  "sourceCandidateHead": "32d5e9a4a54ef85099211df374fa0edd5ef22d63",
+  "branch": "sol/battle-janken-thumb-arc-evidence-r3-20260910",
+  "intent": "Render the already-tested R2 SlidePad candidate on the current GAMEROAD.html use-site at 1280x720, 667x375 and 390x844, expand it through the real visible handle, capture screenshots and bounded geometry/hit-ownership evidence only.",
+  "mutableTargets": [
+    ".github/workflows/zz-temp-battle-janken-thumb-arc-evidence-r3.yml",
+    "evidence/battle-janken-thumb-arc-r3/1280x720-expanded.png",
+    "evidence/battle-janken-thumb-arc-r3/667x375-expanded.png",
+    "evidence/battle-janken-thumb-arc-r3/390x844-expanded.png",
+    "evidence/battle-janken-thumb-arc-r3/geometry.json",
+    "data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R3-20260910T2351-SOL-M8Q4N6.json"
+  ],
+  "readOnly": [
+    "browser/GAMEROAD.html",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "playwright.full-interaction.config.mjs",
+    "gameplay/rules/state/save/economy/network",
+    "main",
+    "standalone Battle visual R6 resources"
+  ],
+  "acceptance": [
+    "Use current visible Setup->Battle path without direct match-state injection.",
+    "Capture one expanded SlidePad screenshot at each required viewport.",
+    "Record bounding boxes for SlidePad host, handle, three slots, hand, planBox, battleRail, board, targetBox plus center hit ownership.",
+    "Do not mutate product/runtime/gameplay/main.",
+    "Final evidence branch differs from candidate only by the three PNGs and geometry.json; transient workflow and PREACTION are removed before final evidence commit."
+  ],
+  "rollback": "Ignore or delete this unmerged evidence branch. Main and candidate branch remain untouched.",
+  "unknownMutationPolicy": "On timeout/disconnect/unknown result, fresh-read branch and exact path before any retry."
+}

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-SHELL-LIVE-QA-R1-20260910T1015-SOL-Q8M4N2",
+  "taskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "workUnitKey": "PARTNER_SHELL_LIVE_REACHABILITY_R1",
+  "acquireKey": "PARTNER-SHELL-LIVE-QA-R1-20260910T1015-SOL-Q8M4N2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_PARTNER_SHELL_PUBLIC_MERGED_AND_COSTUME_AUTHORITY_FAIL_CLOSED_20260910T1015JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1512_SYNTHETIC_PARTNER_HUB_TESTS_PLUS_LIVE_CONVERSATION_MOUNT_DIRECT_READ",
+  "proceedToken": "PROCEED|PARTNER-SHELL-LIVE-QA-R1-20260910T1015-SOL-Q8M4N2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-shell-live-reachability|test-only|active-lease",
+  "authorizationBaseSha": "0f327476fdcc9946d85bb19497c328ef0b1815c9",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "leaseWorkUnitKey": "PARTNER_SHELL_LIVE_REACHABILITY_R1",
+  "leaseAcquireKey": "PARTNER-SHELL-LIVE-QA-R1-20260910T1015-SOL-Q8M4N2",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 10:15 JST",
+  "leaseUntilJst": "2026-09-10 11:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A936:L936",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch; tests/browser-full-interaction-state-sequence.spec.mjs; own transient data/preaction-authorizations/PARTNER-SHELL-LIVE-QA-R1-20260910T1015-SOL-Q8M4N2.json only. browser/GAMEROAD.html, browser/partner-*.mjs, gameplay/rules/save/economy/network READ_ONLY.",
+  "solutionSignature": "PARTNER_SHELL_EXISTING_LIVE_ROUTE_BLACKBOX_QA_V1",
+  "reuseDisposition": "VERIFY_EXISTING",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1512_MERGED_PUBLIC_PLUS_CURRENT_COSTUME_AUTHORITY_CENSUS",
+  "solutionSearchEvidence": [
+    "PR #1512 already connected the existing Partner Shell to the current Saasuna conversation surface and preserved direct conversation and Tea actions.",
+    "The current board facility runtime mounts the Saasuna conversation automatically when the Characters screen is active, so the black-box test can use visible navigation without hidden state injection.",
+    "Current central authority still requires authoritative non-Roblox costume ownership/catalog/load/save before OPEN_COSTUME may be exposed; no second ownership/save authority is allowed.",
+    "This slice mutates only existing full-interaction evidence and leaves product/runtime/gameplay/rules/save/economy/network bytes read-only."
+  ],
+  "scope": [
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction-state-sequence.spec.mjs"
+  ]
+}

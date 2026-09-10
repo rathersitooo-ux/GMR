@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CONFIG-WIN-LIVE-R1-20260910T1036-SOL-N6Q4M8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CONFIGURABLE_COMPLETION_LIVE_R1",
+  "acquireKey": "BATTLE-CONFIG-WIN-LIVE-R1-20260910T1036-SOL-N6Q4M8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1514_MERGED_CORE_PLUS_FRESH_FREE_HTML_BUILD_20260910T1036JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXISTING_SINGLE_BATTLE_LOOP_PLUS_SURGICAL_PROBE_PATCH_PATTERN",
+  "proceedToken": "PROCEED|BATTLE-CONFIG-WIN-LIVE-R1-20260910T1036-SOL-N6Q4M8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|configurable-completion-live|single-engine|active-lease",
+  "authorizationBaseSha": "898b0bd86af66520891396b8ef8d1240e1c8716b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CONFIGURABLE_COMPLETION_LIVE_R1",
+  "leaseAcquireKey": "BATTLE-CONFIG-WIN-LIVE-R1-20260910T1036-SOL-N6Q4M8",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 10:36 JST",
+  "leaseUntilJst": "2026-09-10 11:36 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A6:L6",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs; NEW tests/battle-configurable-completion-live.test.mjs; transient .github/workflows/zz-temp-battle-configurable-completion-live-r1.yml; transient tools/temp-battle-configurable-completion-live-r1.py; transient data/battle-configurable-completion-live-r1-probe.txt; own transient data/preaction-authorizations/BATTLE-CONFIG-WIN-LIVE-R1-20260910T1036-SOL-N6Q4M8.json; branch work/battle-configurable-completion-live-r1. READ_ONLY browser/new-base-legacy-seven-win-gate-core.mjs and existing GOAL presentation/arrival modules.",
+  "solutionSignature": "BATTLE_EXISTING_LOOP_CONFIGURABLE_COMPLETION_PROFILE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1514_EXISTING_COMPLETION_CORE_AND_CURRENT_HTML_SINGLE_ENGINE",
+  "solutionSearchEvidence": [
+    "PR #1514 merged resolveCompletionRule/projectCompletionRule with target N separated from completion consequence.",
+    "Existing NEW BASE live consumer already treats optional rules as caller-resolved authority rather than creating another resolver.",
+    "Existing GOAL path/arrival modules remain presentation and terminal consumers; this WorkUnit must not manufacture GOAL_REACHED.",
+    "Current GAMEROAD.html is the single live turn/movement/win loop and will be surgically adapted rather than replaced."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/battle-configurable-completion-live.test.mjs",
+    ".github/workflows/zz-temp-battle-configurable-completion-live-r1.yml",
+    "tools/temp-battle-configurable-completion-live-r1.py",
+    "data/battle-configurable-completion-live-r1-probe.txt"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/battle-configurable-completion-live.test.mjs",
+    ".github/workflows/zz-temp-battle-configurable-completion-live-r1.yml",
+    "tools/temp-battle-configurable-completion-live-r1.py",
+    "data/battle-configurable-completion-live-r1-probe.txt"
+  ]
+}

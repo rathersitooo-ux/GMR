@@ -274,3 +274,47 @@ test('costume provider selecting another partner fails closed without rendering 
   assert.ok(allNodes(root).some((node) => node.textContent === '着せ替えを開けませんでした'));
   assert.equal(allNodes(root).some((node) => node.dataset?.costumeItemId), false);
 });
+
+test('dialogue feedback rejection settles UI and allows retry without changing provider authority', async () => {
+  const root = makeRoot();
+  let calls = 0;
+  const runtime = mountPartnerShellRuntime({
+    root,
+    getInput: () => ({
+      activePartnerId: 'partner.saasuna',
+      roster,
+      view: 'dialogue_feedback',
+      postBattleLine: {
+        sourceLineId: 'battle.line.1',
+        text: '元のセリフ',
+        sourceStateIdentity: 'battle.state.1',
+        versions: { rules: 'rules.1', content: 'content.1', state: 'state.1' },
+      },
+    }),
+    canDispatch: (action) => action === 'BACK_HUB',
+    listVoices: () => [],
+    submitFeedback: async () => {
+      calls += 1;
+      if (calls === 1) throw new Error('provider unavailable');
+      return { ok: true, disposition: 'stored' };
+    },
+  });
+
+  assert.equal(runtime.render().ok, true);
+  const editor = allNodes(root).find((node) => node.dataset?.partnerDialogueEditor === 'proposedText');
+  const submit = allNodes(root).find((node) => node.dataset?.partnerDialogueAction === 'submit');
+  const status = allNodes(root).find((node) => node.dataset?.partnerDialogueStatus === 'true');
+  editor.value = '変更したセリフ';
+
+  const first = submit.click();
+  assert.equal(submit.disabled, true);
+  await first;
+  assert.equal(calls, 1);
+  assert.equal(submit.disabled, false);
+  assert.equal(status.textContent, '送信できませんでした');
+
+  await submit.click();
+  assert.equal(calls, 2);
+  assert.equal(submit.disabled, false);
+  assert.equal(status.textContent, '改善要望として蓄積しました');
+});

@@ -220,22 +220,31 @@ function renderDialogueFeedback(doc, section, model, services) {
   submit.addEventListener('click', async () => {
     submit.disabled = true;
     status.textContent = '送信中';
-    const result = await services.submitFeedback({
-      partnerId: model.activePartnerId,
-      sourceLineId: line.sourceLineId,
-      sourceStateIdentity: line.sourceStateIdentity,
-      versions: line.versions,
-      originalText: line.text,
-      proposedText: textarea.value,
-      voiceTuning: readTuning(),
-    });
-    if (result?.ok) {
-      status.textContent = result.disposition === 'duplicate' ? '同じ要望は蓄積済みです' : '改善要望として蓄積しました';
-      services.onFeedbackResult?.(Object.freeze({ ...result, sourceLineId: line.sourceLineId, partnerId: model.activePartnerId }));
-    } else {
-      status.textContent = result?.reason === 'dialogue_feedback_invalid' ? 'セリフを変更してから送ってください' : '送信できませんでした';
+    try {
+      let result;
+      try {
+        result = await services.submitFeedback({
+          partnerId: model.activePartnerId,
+          sourceLineId: line.sourceLineId,
+          sourceStateIdentity: line.sourceStateIdentity,
+          versions: line.versions,
+          originalText: line.text,
+          proposedText: textarea.value,
+          voiceTuning: readTuning(),
+        });
+      } catch {
+        status.textContent = '送信できませんでした';
+        return;
+      }
+      if (result?.ok) {
+        status.textContent = result.disposition === 'duplicate' ? '同じ要望は蓄積済みです' : '改善要望として蓄積しました';
+        services.onFeedbackResult?.(Object.freeze({ ...result, sourceLineId: line.sourceLineId, partnerId: model.activePartnerId }));
+      } else {
+        status.textContent = result?.reason === 'dialogue_feedback_invalid' ? 'セリフを変更してから送ってください' : '送信できませんでした';
+      }
+    } finally {
+      submit.disabled = false;
     }
-    submit.disabled = false;
   });
   panel.append(submit, status);
   section.append(panel);

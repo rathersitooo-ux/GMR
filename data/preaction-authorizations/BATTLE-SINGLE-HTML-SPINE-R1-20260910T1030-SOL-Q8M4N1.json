@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SINGLE-HTML-SPINE-R1-20260910T1030-SOL-Q8M4N1",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_SINGLE_HTML_PLAYER_PATH_INTEGRATION_R1",
+  "acquireKey": "BATTLE-SINGLE-HTML-SPINE-R1-20260910T1030-SOL-Q8M4N1",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_PACKAGE_PUBLIC_HTML_PLAYER_PATH_RESIDUAL_20260910T1030JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "ONE_HTML_SPINE_DIRECT_EXISTING_COMPONENT_REUSE_NO_NEW_RUNTIME_LAYER",
+  "proceedToken": "PROCEED|BATTLE-SINGLE-HTML-SPINE-R1-20260910T1030-SOL-Q8M4N1|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-single-html-spine|existing-components|active-lease",
+  "authorizationBaseSha": "0f327476fdcc9946d85bb19497c328ef0b1815c9",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_SINGLE_HTML_PLAYER_PATH_INTEGRATION_R1",
+  "leaseAcquireKey": "BATTLE-SINGLE-HTML-SPINE-R1-20260910T1030-SOL-Q8M4N1",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 10:30 JST",
+  "leaseUntilJst": "2026-09-10 11:30 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A938:L938",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact main; browser/GAMEROAD.html; tests/battle-single-html-player-path-integration.test.mjs; at most one transient .github/workflows/zz-temp-battle-single-html-spine-r1.yml + tools/temp-battle-single-html-spine-r1.py only if direct surgical patch is unavailable; own transient data/preaction-authorizations/BATTLE-SINGLE-HTML-SPINE-R1-20260910T1030-SOL-Q8M4N1.json. READ_ONLY existing Battle ResourceHUD/Hand3/Focus/Camera/GOAL/Recovery/order components; deploy/cloudflare/scripts/build.mjs; gameplay/rules/target/legality/Shield/save/economy/network. No new runtime/controller/adapter/html-handoff module. No image generation.",
+  "solutionSignature": "BATTLE_SINGLE_HTML_PLAYER_PATH_INTEGRATION_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "REUSE_PUBLIC_PACKAGED_EXISTING_BATTLE_COMPONENTS_IN_SINGLE_HTML_SPINE",
+  "solutionSearchEvidence": [
+    "Shared Battle package train PR1511 already packaged and publicly deployed the relevant existing components; packaging is not the current gap.",
+    "Current parent authority requires Focus/GOAL/resource HUD player-visible hookup through existing runtime surfaces and forbids second controller/state authority.",
+    "Current Hand3-to-SlidePad projection is already merged via PR1503 and must not be reimplemented.",
+    "Resource HUD has a settled direct sync seam through battleScreenRuntime.resourceHud and caller-owned player fields; generic renderHud must not be used for resource-only sync.",
+    "Feature-specific HTML handoff modules and one-component package branches were previously identified as overengineering and are not reused."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-single-html-player-path-integration.test.mjs",
+    ".github/workflows/zz-temp-battle-single-html-spine-r1.yml",
+    "tools/temp-battle-single-html-spine-r1.py"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-single-html-player-path-integration.test.mjs",
+    ".github/workflows/zz-temp-battle-single-html-spine-r1.yml",
+    "tools/temp-battle-single-html-spine-r1.py"
+  ]
+}

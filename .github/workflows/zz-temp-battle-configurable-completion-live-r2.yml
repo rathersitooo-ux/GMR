@@ -1,4 +1,4 @@
-name: TEMP Battle configurable completion live R2 retry 1
+name: TEMP Battle configurable completion live R2 retry 2
 
 on:
   push:
@@ -67,24 +67,33 @@ jobs:
       - name: Existing browser static regression
         run: node tests/browser-static-check.mjs
 
-      - name: Package public build
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -rf /tmp/gameroad-config-win-build
-          node deploy/cloudflare/scripts/build.mjs --dist /tmp/gameroad-config-win-build
-          test -s /tmp/gameroad-config-win-build/new-base-legacy-seven-win-gate-core.mjs
-          cmp browser/new-base-legacy-seven-win-gate-core.mjs /tmp/gameroad-config-win-build/new-base-legacy-seven-win-gate-core.mjs
-
-      - name: Commit bounded product diff
+      - name: Create local product commit for exact package provenance
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add browser/GAMEROAD.html deploy/cloudflare/scripts/build.mjs tests/battle-configurable-completion-live.test.mjs
+          test "$(git diff --cached --name-only | wc -l | tr -d ' ')" = "3"
           git diff --cached --quiet && { echo "No product diff"; exit 1; }
           git commit -m "Battle: フレンドルームで任意枚数勝利を設定"
+
+      - name: Package public build from exact local product commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/gameroad-config-win-build
+          SOURCE_COMMIT="$(git rev-parse HEAD)"
+          PUBLISHED_AT="$(git show -s --format=%cI HEAD)"
+          node deploy/cloudflare/scripts/build.mjs --dist /tmp/gameroad-config-win-build --source-commit "$SOURCE_COMMIT" --published-at "$PUBLISHED_AT"
+          test -s /tmp/gameroad-config-win-build/new-base-legacy-seven-win-gate-core.mjs
+          cmp browser/new-base-legacy-seven-win-gate-core.mjs /tmp/gameroad-config-win-build/new-base-legacy-seven-win-gate-core.mjs
+          grep -F "\"build_id\": \"$SOURCE_COMMIT\"" /tmp/gameroad-config-win-build/gameroad-version.json
+
+      - name: Push verified product commit
+        shell: bash
+        run: |
+          set -euo pipefail
           git push origin HEAD:work/battle-configurable-completion-live-r2
 
       - name: Cleanup transient executor and PRE_ACTION material

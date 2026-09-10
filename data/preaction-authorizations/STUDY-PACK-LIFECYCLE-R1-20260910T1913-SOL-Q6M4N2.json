@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "STUDY-PACK-LIFECYCLE-R1-20260910T1913-SOL-Q6M4N2",
+  "taskId": "STUDY-ROGUELIKE-PROBLEM-PACK-RUNTIME-001",
+  "workUnitKey": "STUDY_PACK_LOGICAL_LIFECYCLE_R1",
+  "acquireKey": "STUDY-PACK-LIFECYCLE-R1-20260910T1913-SOL-Q6M4N2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_STUDY_RUNTIME_AND_STORAGE_CONTRACT_20260910T1913JST",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "DIRECT_CURRENT_CODE_READBACK_PLUS_EXISTING_FOCUSED_STUDY_TEST_CONTRACT",
+  "proceedToken": "PROCEED|STUDY-PACK-LIFECYCLE-R1-20260910T1913-SOL-Q6M4N2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|study-pack-logical-lifecycle|consumer-side-reuse|active-lease",
+  "authorizationBaseSha": "ba55d979771afbc7dde40b0dff05179c49954e09",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "STUDY-ROGUELIKE-PROBLEM-PACK-RUNTIME-001",
+  "leaseWorkUnitKey": "STUDY_PACK_LOGICAL_LIFECYCLE_R1",
+  "leaseAcquireKey": "STUDY-PACK-LIFECYCLE-R1-20260910T1913-SOL-Q6M4N2",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 19:13 JST",
+  "leaseUntilJst": "2026-09-10 20:13 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A955:L955",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main; browser/study-run-runtime-mount.mjs; tests/study-run-runtime-mount.test.mjs; own transient data/preaction-authorizations/STUDY-PACK-LIFECYCLE-R1-20260910T1913-SOL-Q6M4N2.json only. READ_ONLY browser/cartridge-storage-core.mjs; cartridge-install-executor.mjs; cartridge-install-receipt.mjs; study problem-pack content/core; browser/GAMEROAD.html; Battle/save backend/economy/network. No second storage/ledger/controller.",
+  "solutionSignature": "STUDY_PACK_LOGICAL_REMOVE_REACQUIRE_EXISTING_STORAGE_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_STUDY_RUNTIME_CHECKPOINT_PLUS_GENERIC_CARTRIDGE_STORAGE_REUSE_20260910",
+  "solutionSearchEvidence": [
+    "Current Study runtime already persists its resume checkpoint through caller-owned cartridge storage and must not gain a second storage system.",
+    "Generic cartridge uninstall deletes its namespace, so changing that shared generic semantic would risk unrelated cartridges and is not needed for the Study acceptance condition.",
+    "The Study WorkUnit acceptance explicitly requires logical pack uninstall to preserve entitlement/history and same-pack re-acquire, so the missing behavior belongs at the Study consumer boundary.",
+    "Existing Study gameplay, problem-pack truth, Battle runtime, save backend, economy, and network remain read-only for this repair."
+  ],
+  "scope": [
+    "browser/study-run-runtime-mount.mjs",
+    "tests/study-run-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/study-run-runtime-mount.mjs",
+    "tests/study-run-runtime-mount.test.mjs"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "schema": "gameroad.preaction.v1",
+  "acquireKey": "BATTLE-JANKEN-THUMB-ARC-R4-20260911T0051-SOL-M8Q4N7",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_THUMB_ARC_USESITE_EVIDENCE_R4",
+  "continuationOf": "BATTLE-JANKEN-THUMB-ARC-R3-20260910T2351-SOL-M8Q4N6",
+  "sourceCandidateSha": "32d5e9a4a54ef85099211df374fa0edd5ef22d63",
+  "observedEvidenceBranchHead": "22fa641548ebcabbb77512aba518fb7288779571",
+  "branch": "sol/battle-janken-thumb-arc-evidence-r3-20260910",
+  "intent": "Recover the same use-site evidence outcome after R3 expiry. Use the actual current collapsed Home path by clicking the visible center to expand, then the visible setup choice, then current Setup to Battle. Capture the already-tested R2 SlidePad candidate at 1280x720, 667x375 and 390x844 only.",
+  "mutableTargets": [
+    ".github/workflows/zz-temp-battle-janken-thumb-arc-evidence-r3.yml",
+    "evidence/battle-janken-thumb-arc-r3/1280x720-expanded.png",
+    "evidence/battle-janken-thumb-arc-r3/667x375-expanded.png",
+    "evidence/battle-janken-thumb-arc-r3/390x844-expanded.png",
+    "evidence/battle-janken-thumb-arc-r3/geometry.json",
+    "data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R3-20260910T2351-SOL-M8Q4N6.json",
+    "data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R4-20260911T0051-SOL-M8Q4N7.json"
+  ],
+  "readOnly": [
+    "browser/GAMEROAD.html",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/browser-full-interaction.spec.mjs",
+    "playwright.full-interaction.config.mjs",
+    "gameplay/rules/state/save/economy/network",
+    "main",
+    "standalone Battle visual R6 resources"
+  ],
+  "acceptance": [
+    "Navigate through visible Home center -> expanded setup choice -> visible Setup -> Battle without direct match-state injection.",
+    "Capture one expanded SlidePad screenshot at each required viewport.",
+    "Record bounding boxes for SlidePad host, handle, three slots, hand, planBox, battleRail, board and targetBox plus center hit ownership.",
+    "Do not mutate product/runtime/gameplay/main.",
+    "Final evidence branch differs from candidate only by three PNGs and geometry.json; transient workflow and both R3/R4 PREACTION files are absent from final branch diff."
+  ],
+  "rollback": "Ignore/delete the unmerged evidence branch. Main and the tested R2 candidate remain untouched.",
+  "unknownMutationPolicy": "On timeout, disconnect or unknown result, fresh-read branch and exact path before retry."
+}

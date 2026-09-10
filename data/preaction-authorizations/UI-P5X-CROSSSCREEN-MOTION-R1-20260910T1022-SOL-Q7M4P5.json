@@ -20,7 +20,7 @@
   "leaseSnapshotReadbackAtJst": "2026-09-10 10:22 JST",
   "leaseUntilJst": "2026-09-10 11:22 JST",
   "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A939:L939",
-  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/p5x-crossscreen-piece-motion-r1-20260910; browser/screen-navigation-core.mjs; tests/screen-navigation-core.test.mjs; own data/preaction-authorizations/UI-P5X-CROSSSCREEN-MOTION-R1-20260910T1022-SOL-Q7M4P5.json only. READ_ONLY browser/profile-presentation-runtime-mount.mjs; browser/partner-shell-runtime-mount.mjs; browser/GAMEROAD.html; Battle/gameplay/rules/save/economy/network; deploy build.",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/p5x-crossscreen-piece-motion-r1-20260910; browser/screen-navigation-core.mjs; tests/screen-navigation-core.test.mjs; transient .github/workflows/zz-temp-p5x-crossscreen-piece-motion-r1.yml; own data/preaction-authorizations/UI-P5X-CROSSSCREEN-MOTION-R1-20260910T1022-SOL-Q7M4P5.json only. READ_ONLY browser/profile-presentation-runtime-mount.mjs; browser/partner-shell-runtime-mount.mjs; browser/GAMEROAD.html; Battle/gameplay/rules/save/economy/network; deploy build.",
   "solutionSignature": "EXISTING_SCREEN_TRANSITION_PROFILE_PARTNER_MULTI_SURFACE_V1",
   "reuseDisposition": "ADAPT",
   "solutionSearchStatus": "PASS",
@@ -30,14 +30,17 @@
     "Current piece selectors cover Cards, Characters, Setup, Shop and Gacha but not Profile or Partner, although both are registered motion destinations.",
     "Current Profile runtime exposes stable profileIdentitySummary/profileRecordsNote/profileActions regions; current Partner shell exposes stable title plus active/menu/list/detail/formation/strategy/dialogue/costume/navigation regions.",
     "P5X cross-screen source scope is stored in existing UIVIS and requires reuse across materially relevant screens, not a Home-only or second-engine implementation.",
-    "Battle is deliberately excluded from this slice because it already has specialized presentation motion and adding generic screen pieces risks double animation."
+    "Battle is deliberately excluded from this slice because it already has specialized presentation motion and adding generic screen pieces risks double animation.",
+    "A branch-only transient workflow is permitted only to apply bounded string replacements and run the existing screen-navigation Node test; it must be deleted before PR review so durable product diff remains two existing files."
   ],
   "scope": [
     "browser/screen-navigation-core.mjs",
-    "tests/screen-navigation-core.test.mjs"
+    "tests/screen-navigation-core.test.mjs",
+    ".github/workflows/zz-temp-p5x-crossscreen-piece-motion-r1.yml"
   ],
   "leaseScope": [
     "browser/screen-navigation-core.mjs",
-    "tests/screen-navigation-core.test.mjs"
+    "tests/screen-navigation-core.test.mjs",
+    ".github/workflows/zz-temp-p5x-crossscreen-piece-motion-r1.yml"
   ]
 }

@@ -1,4 +1,4 @@
-name: TEMP Battle configurable completion live R2
+name: TEMP Battle configurable completion live R2 retry 1
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
         run: |
           set -euo pipefail
           git fetch origin main
-          test "$(git rev-parse origin/main)" = "c44d411b703fb8ee3bcc1519eeab1a4d5a74991a"
+          test "$(git rev-parse origin/main)" = "ba55d979771afbc7dde40b0dff05179c49954e09"
           test "$(git hash-object browser/GAMEROAD.html)" = "7332302a5a15f67a5d6c889e1998405156b1364c"
           test "$(git hash-object deploy/cloudflare/scripts/build.mjs)" = "8e82ab30e05d3caa6173f91c53afc08bff13b94c"
           test "$(git log --reverse --format=%H origin/main..HEAD | head -n1)" = "75a6815c6d7f5cfbf6bb020ba5ab30f4328dbc94"
@@ -39,6 +39,27 @@ jobs:
 
       - name: Apply bounded exact patch
         run: python tools/temp-battle-configurable-completion-live-r2.py
+
+      - name: Correct generated focused UI assertion
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/battle-configurable-completion-live.test.mjs')
+          lines = path.read_text(encoding='utf-8').splitlines()
+          changed = 0
+          out = []
+          for line in lines:
+              if 'assert.match(html' in line and 'friendWinCount' in line:
+                  out.append('  assert.match(html, /id="friendWinCount" type="number" min="1" step="1"/);')
+                  changed += 1
+              else:
+                  out.append(line)
+          if changed != 1:
+              raise SystemExit(f'expected one friendWinCount assertion, found {changed}')
+          path.write_text('\n'.join(out) + '\n', encoding='utf-8')
+          PY
 
       - name: Focused configurable-completion tests
         run: node --test tests/battle-configurable-completion-live.test.mjs

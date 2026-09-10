@@ -62,24 +62,32 @@ jobs:
             const response=await page.goto(`${base}/browser/GAMEROAD.html`,{waitUntil:'commit',timeout:10000});
             if(!response||response.status()>=400) throw new Error(`HTML response ${response?.status()}`);
             await page.waitForFunction(()=>!!window.__GAMEROAD_TEST__&&Array.isArray(window.__CARD_DATA__),null,{timeout:45000});
-            const home=page.locator('section[data-screen="home"]');
-            await home.waitFor({state:'visible',timeout:20000});
-            const deck=await legalDeck(page); if(deck.count!==40||!deck.committed||!deck.savedOk) throw new Error(`deck ${JSON.stringify(deck)}`);
             const center=page.locator('#homePadCenter:visible');
             await center.waitFor({state:'visible',timeout:20000});
-            const homeState=await home.getAttribute('data-home-state');
-            if(homeState==='HOME_COLLAPSED'){
+            const setupChoice=page.locator('.homePadChoice[data-home-target="setup"]').first();
+            await setupChoice.waitFor({state:'attached',timeout:10000});
+            let pointerEvents=await setupChoice.evaluate(el=>getComputedStyle(el).pointerEvents);
+            if(pointerEvents==='none'){
               await center.click();
-              await page.waitForFunction(()=>document.querySelector('section[data-screen="home"]')?.dataset.homeState==='HOME_EXPANDED',null,{timeout:5000});
+              await page.waitForFunction(()=>{
+                const el=document.querySelector('.homePadChoice[data-home-target="setup"]');
+                return !!el&&getComputedStyle(el).pointerEvents!=='none';
+              },null,{timeout:5000});
             }
-            const setupChoice=page.locator('.homePadChoice[data-home-target="setup"]:visible').first();
-            await setupChoice.waitFor({state:'visible',timeout:10000});
-            const pointerEvents=await setupChoice.evaluate(el=>getComputedStyle(el).pointerEvents);
-            if(pointerEvents==='none') throw new Error(`setup choice still non-interactive in home state ${await home.getAttribute('data-home-state')}`);
+            await page.waitForTimeout(250);
+            pointerEvents=await setupChoice.evaluate(el=>getComputedStyle(el).pointerEvents);
+            if(pointerEvents==='none') throw new Error('setup choice remained non-interactive after visible Home center expansion');
             await setupChoice.click();
-            const setup=page.locator('section[data-screen="setup"]'); await setup.waitFor({state:'visible',timeout:20000});
-            await setup.locator('[data-content="road_shield"]').click(); await setup.locator('[data-mode="2v2"]').click();
-            const start=setup.locator('#startMatch'); await start.waitFor({state:'visible',timeout:20000}); if(await start.isDisabled()) throw new Error('start disabled'); await start.click();
+            const setup=page.locator('section[data-screen="setup"]');
+            await setup.waitFor({state:'visible',timeout:20000});
+            const deck=await legalDeck(page);
+            if(deck.count!==40||!deck.committed||!deck.savedOk) throw new Error(`deck ${JSON.stringify(deck)}`);
+            await setup.locator('[data-content="road_shield"]').click();
+            await setup.locator('[data-mode="2v2"]').click();
+            const start=setup.locator('#startMatch');
+            await start.waitFor({state:'visible',timeout:20000});
+            if(await start.isDisabled()) throw new Error('start disabled');
+            await start.click();
             await page.locator('section[data-screen="battle"]').waitFor({state:'visible',timeout:20000});
             await page.locator('[data-battle-janken-slidepad="1"]').waitFor({state:'visible',timeout:20000});
             await page.waitForFunction(()=>!!window.__GAMEROAD_BATTLE_JANKEN_SLIDEPAD__?.snapshot?.()?.roundId,null,{timeout:20000});
@@ -89,7 +97,8 @@ jobs:
             await enter(page);
             const host=page.locator('[data-battle-janken-slidepad="1"]').first(),handle=host.locator('.grJankenSlidePadHandle');
             if(await host.getAttribute('data-expanded')!=='true') await handle.click();
-            await page.waitForFunction(()=>document.querySelector('[data-battle-janken-slidepad="1"]')?.dataset.expanded==='true',null,{timeout:5000}); await page.waitForTimeout(260);
+            await page.waitForFunction(()=>document.querySelector('[data-battle-janken-slidepad="1"]')?.dataset.expanded==='true',null,{timeout:5000});
+            await page.waitForTimeout(260);
             if(await host.locator('[data-janken-slot]').count()!==3) throw new Error(`${name}: slot count`);
             const g=await page.evaluate(()=>{
               const snap=(el)=>{if(!el)return null;const r=el.getBoundingClientRect(),s=getComputedStyle(el);return{rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height},display:s.display,visibility:s.visibility,pointerEvents:s.pointerEvents,zIndex:s.zIndex,disabled:'disabled'in el?!!el.disabled:null}};
@@ -98,13 +107,28 @@ jobs:
               const h=document.querySelector('[data-battle-janken-slidepad="1"]'),handle=h?.querySelector('.grJankenSlidePadHandle');
               return{viewport:{width:innerWidth,height:innerHeight,devicePixelRatio},expanded:h?.dataset.expanded==='true',host:snap(h),handle:{element:snap(handle),hitCenter:hit(handle)},slots:[...(h?.querySelectorAll('[data-janken-slot]')??[])].map(el=>({hand:el.getAttribute('data-janken-slot'),cardId:el.getAttribute('data-card-id')||null,element:snap(el),hitCenter:hit(el)})),hand:snap(document.querySelector('#hand')),planBox:snap(document.querySelector('.planBox')),battleRail:snap(document.querySelector('.battleRail')),board:snap(document.querySelector('#board')),targetBox:snap(document.querySelector('#targetBox'))};
             });
-            for(const s of g.slots){s.intersections={};for(const k of ['hand','planBox','battleRail','board','targetBox'])s.intersections[k]=overlap(s.element?.rect,g[k]?.rect);s.centerHitOwnsSelectableSlot=s.element?.disabled===false?s.hitCenter?.owner?.jankenSlot===s.hand:null;if(s.element?.disabled===false&&!s.centerHitOwnsSelectableSlot)throw new Error(`${name}: ${s.hand} hit owner ${JSON.stringify(s.hitCenter?.owner)}`)}
-            g.handle.centerHitOwnsHandle=!!g.handle.hitCenter?.owner?.className?.includes('grJankenSlidePadHandle'); if(!g.handle.centerHitOwnsHandle)throw new Error(`${name}: handle hit owner`); if(!g.expanded)throw new Error(`${name}: collapsed`);
-            await page.screenshot({path:`${out}/${name}-expanded.png`,fullPage:true,animations:'disabled'}); return g;
+            for(const s of g.slots){
+              s.intersections={};
+              for(const k of ['hand','planBox','battleRail','board','targetBox']) s.intersections[k]=overlap(s.element?.rect,g[k]?.rect);
+              s.centerHitOwnsSelectableSlot=s.element?.disabled===false?s.hitCenter?.owner?.jankenSlot===s.hand:null;
+              if(s.element?.disabled===false&&!s.centerHitOwnsSelectableSlot) throw new Error(`${name}: ${s.hand} hit owner ${JSON.stringify(s.hitCenter?.owner)}`);
+            }
+            g.handle.centerHitOwnsHandle=!!g.handle.hitCenter?.owner?.className?.includes('grJankenSlidePadHandle');
+            if(!g.handle.centerHitOwnsHandle) throw new Error(`${name}: handle hit owner`);
+            if(!g.expanded) throw new Error(`${name}: collapsed`);
+            await page.screenshot({path:`${out}/${name}-expanded.png`,fullPage:true,animations:'disabled'});
+            return g;
           }
 
-          const browser=await chromium.launch({headless:true}); const result={schema:'gameroad.battle-janken-thumb-arc-use-site-evidence.r3',sourceCandidateSha:'32d5e9a4a54ef85099211df374fa0edd5ef22d63',productHtmlMutation:false,runtimeMutation:false,gameplayMutation:false,captures:[]};
-          try{for(const [name,width,height] of cases){const context=await browser.newContext({viewport:{width,height}}),page=await context.newPage();result.captures.push({name,...await capture(page,name)});await context.close()}}finally{await browser.close()}
+          const browser=await chromium.launch({headless:true});
+          const result={schema:'gameroad.battle-janken-thumb-arc-use-site-evidence.r3',sourceCandidateSha:'32d5e9a4a54ef85099211df374fa0edd5ef22d63',productHtmlMutation:false,runtimeMutation:false,gameplayMutation:false,captures:[]};
+          try{
+            for(const [name,width,height] of cases){
+              const context=await browser.newContext({viewport:{width,height}}),page=await context.newPage();
+              result.captures.push({name,...await capture(page,name)});
+              await context.close();
+            }
+          }finally{await browser.close()}
           await fs.writeFile(`${out}/geometry.json`,JSON.stringify(result,null,2)+'\n');
           NODE
           node .r3-capture.mjs
@@ -124,6 +148,7 @@ jobs:
           e=(evidence/battle-janken-thumb-arc-r3/1280x720-expanded.png evidence/battle-janken-thumb-arc-r3/390x844-expanded.png evidence/battle-janken-thumb-arc-r3/667x375-expanded.png evidence/battle-janken-thumb-arc-r3/geometry.json)
           [ "${#a[@]}" -eq 4 ] || { printf 'bad count: %s\n' "${a[*]}"; exit 1; }
           for i in 0 1 2 3; do [ "${a[$i]}" = "${e[$i]}" ] || { printf 'bad diff: %s\n' "${a[*]}"; exit 1; }; done
-          git config user.name gameroad-actions; git config user.email actions@users.noreply.github.com
+          git config user.name gameroad-actions
+          git config user.email actions@users.noreply.github.com
           git commit -m 'Battle SlidePad: capture R3 use-site visual evidence'
           git push origin "HEAD:$BRANCH"

@@ -2,8 +2,7 @@ name: temp Battle Janken thumb arc evidence R3
 
 on:
   push:
-    branches:
-      - sol/battle-janken-thumb-arc-evidence-r3-20260910
+    branches: [sol/battle-janken-thumb-arc-evidence-r3-20260910]
 
 permissions:
   contents: write
@@ -20,244 +19,100 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-
-      - name: Install focused browser runner
-        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
-
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Capture expanded SlidePad on current Battle use-site
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Capture current Battle use-site
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m http.server 4173 --bind 127.0.0.1 > /tmp/gameroad-r3-http.log 2>&1 &
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/r3-http.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          ready=0
-          for i in $(seq 1 60); do
-            if curl -fsS http://127.0.0.1:4173/browser/GAMEROAD.html >/dev/null; then
-              ready=1
-              break
-            fi
-            sleep 0.25
-          done
-          if [ "$ready" != 1 ]; then
-            cat /tmp/gameroad-r3-http.log || true
-            exit 1
-          fi
+          for i in $(seq 1 60); do curl -fsS http://127.0.0.1:4173/browser/GAMEROAD.html >/dev/null && break || sleep .25; done
+          curl -fsS http://127.0.0.1:4173/browser/GAMEROAD.html >/dev/null
           mkdir -p evidence/battle-janken-thumb-arc-r3
           cat > .r3-capture.mjs <<'NODE'
           import { chromium } from '@playwright/test';
           import fs from 'node:fs/promises';
 
-          const base = 'http://127.0.0.1:4173';
-          const outDir = 'evidence/battle-janken-thumb-arc-r3';
-          const sourceCandidateSha = '32d5e9a4a54ef85099211df374fa0edd5ef22d63';
-          const cases = [
-            { name: '1280x720', width: 1280, height: 720 },
-            { name: '667x375', width: 667, height: 375 },
-            { name: '390x844', width: 390, height: 844 },
-          ];
+          const base='http://127.0.0.1:4173';
+          const out='evidence/battle-janken-thumb-arc-r3';
+          const cases=[['1280x720',1280,720],['667x375',667,375],['390x844',390,844]];
+          const rect=(r)=>r?{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height}:null;
+          const overlap=(a,b)=>{if(!a||!b)return null;const l=Math.max(a.left,b.left),t=Math.max(a.top,b.top),r=Math.min(a.right,b.right),d=Math.min(a.bottom,b.bottom);return r>l&&d>t?{area:(r-l)*(d-t),width:r-l,height:d-t}:{area:0,width:0,height:0}};
 
-          function intersection(a, b) {
-            if (!a || !b) return null;
-            const left = Math.max(a.left, b.left);
-            const top = Math.max(a.top, b.top);
-            const right = Math.min(a.right, b.right);
-            const bottom = Math.min(a.bottom, b.bottom);
-            if (right <= left || bottom <= top) return { area: 0, width: 0, height: 0 };
-            return { area: (right - left) * (bottom - top), width: right - left, height: bottom - top };
-          }
-
-          async function installLegalDeck(page) {
-            return page.evaluate(() => {
-              const t = window.__GAMEROAD_TEST__;
-              if (!t) throw new Error('__GAMEROAD_TEST__ unavailable');
-              const publicMain = new Set(t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
-              const standard = window.__CARD_DATA__
-                .filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)))
-                .map((card) => card.id);
-              const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
-              const nonRoyal = standard.filter((id) => !t.isRoyalCard(id));
-              const main = [...nonRoyal.slice(0, 37), ...royalIds];
-              const setValidation = t.deckSetDraft(main, []);
-              const draftValidation = t.deckValidate(t.state.deckDraft, { forBattle: true });
-              const committed = draftValidation.ok ? t.deckCommit() : false;
-              const savedValidation = t.deckValidate(t.state.savedDeck, { forBattle: true });
-              return { mainCount: main.length, setValidation, draftValidation, committed, savedValidation };
+          async function legalDeck(page){
+            return page.evaluate(()=>{
+              const t=window.__GAMEROAD_TEST__; if(!t) throw new Error('test API missing');
+              const pub=new Set(t.deckPublic().filter(c=>c.slot==='main').map(c=>c.id));
+              const standard=window.__CARD_DATA__.filter(c=>pub.has(c.id)&&/^(SP|HT|DI|CL)$/.test(c.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c=>c.id);
+              const royals=['SP_J','SP_Q','SP_K'];
+              const main=[...standard.filter(id=>!t.isRoyalCard(id)).slice(0,37),...royals];
+              const set=t.deckSetDraft(main,[]), draft=t.deckValidate(t.state.deckDraft,{forBattle:true});
+              const committed=draft.ok?t.deckCommit():false, saved=t.deckValidate(t.state.savedDeck,{forBattle:true});
+              return {count:main.length,setOk:set?.ok===true,draftOk:draft?.ok===true,committed,savedOk:saved?.ok===true};
             });
           }
 
-          async function enterVisibleBattle(page) {
-            const response = await page.goto(`${base}/browser/GAMEROAD.html`, { waitUntil: 'domcontentloaded' });
-            if (!response?.ok()) throw new Error(`GAMEROAD.html status ${response?.status()}`);
-            await page.waitForFunction(() => !!window.__GAMEROAD_TEST__ && Array.isArray(window.__CARD_DATA__), null, { timeout: 12000 });
-            await page.locator('section[data-screen="home"]').waitFor({ state: 'visible', timeout: 12000 });
-            const deck = await installLegalDeck(page);
-            if (deck.mainCount !== 40 || deck.committed !== true || deck.savedValidation?.ok !== true) {
-              throw new Error(`legal deck precondition failed: ${JSON.stringify(deck)}`);
-            }
-            const setupControl = page.locator('[data-home-target="setup"]:visible, [data-go="setup"]:visible').first();
-            await setupControl.waitFor({ state: 'visible', timeout: 12000 });
-            await setupControl.click();
-            const setup = page.locator('section[data-screen="setup"]');
-            await setup.waitFor({ state: 'visible', timeout: 12000 });
-            await setup.locator('[data-content="road_shield"]').click();
-            await setup.locator('[data-mode="2v2"]').click();
-            const start = setup.locator('#startMatch');
-            await start.waitFor({ state: 'visible', timeout: 12000 });
-            if (await start.isDisabled()) throw new Error('startMatch disabled after legal deck setup');
-            await start.click();
-            const battle = page.locator('section[data-screen="battle"]');
-            await battle.waitFor({ state: 'visible', timeout: 12000 });
-            await page.locator('[data-battle-janken-slidepad="1"]').waitFor({ state: 'visible', timeout: 12000 });
-            await page.waitForFunction(() => window.__GAMEROAD_BATTLE_JANKEN_SLIDEPAD__?.snapshot?.()?.roundId, null, { timeout: 12000 });
+          async function enter(page){
+            const response=await page.goto(`${base}/browser/GAMEROAD.html`,{waitUntil:'commit',timeout:10000});
+            if(!response||response.status()>=400) throw new Error(`HTML response ${response?.status()}`);
+            await page.waitForFunction(()=>!!window.__GAMEROAD_TEST__&&Array.isArray(window.__CARD_DATA__),null,{timeout:45000});
+            const home=page.locator('section[data-screen="home"]'); await home.waitFor({state:'visible',timeout:20000});
+            const deck=await legalDeck(page); if(deck.count!==40||!deck.committed||!deck.savedOk) throw new Error(`deck ${JSON.stringify(deck)}`);
+            const go=page.locator('[data-home-target="setup"]:visible, [data-go="setup"]:visible').first(); await go.waitFor({state:'visible',timeout:20000}); await go.click();
+            const setup=page.locator('section[data-screen="setup"]'); await setup.waitFor({state:'visible',timeout:20000});
+            await setup.locator('[data-content="road_shield"]').click(); await setup.locator('[data-mode="2v2"]').click();
+            const start=setup.locator('#startMatch'); await start.waitFor({state:'visible',timeout:20000}); if(await start.isDisabled()) throw new Error('start disabled'); await start.click();
+            await page.locator('section[data-screen="battle"]').waitFor({state:'visible',timeout:20000});
+            await page.locator('[data-battle-janken-slidepad="1"]').waitFor({state:'visible',timeout:20000});
+            await page.waitForFunction(()=>!!window.__GAMEROAD_BATTLE_JANKEN_SLIDEPAD__?.snapshot?.()?.roundId,null,{timeout:20000});
           }
 
-          async function collectEvidence(page, c) {
-            await enterVisibleBattle(page);
-            const host = page.locator('[data-battle-janken-slidepad="1"]').first();
-            const handle = host.locator('.grJankenSlidePadHandle');
-            if ((await host.getAttribute('data-expanded')) !== 'true') await handle.click();
-            await page.waitForFunction(() => document.querySelector('[data-battle-janken-slidepad="1"]')?.dataset.expanded === 'true');
-            await page.waitForTimeout(260);
-            const slotCount = await host.locator('[data-janken-slot]').count();
-            if (slotCount !== 3) throw new Error(`${c.name}: expected 3 janken slots, got ${slotCount}`);
-
-            const geom = await page.evaluate(() => {
-              const compact = (el) => {
-                if (!el) return null;
-                const r = el.getBoundingClientRect();
-                const s = getComputedStyle(el);
-                return {
-                  rect: { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height },
-                  display: s.display,
-                  visibility: s.visibility,
-                  pointerEvents: s.pointerEvents,
-                  zIndex: s.zIndex,
-                  disabled: 'disabled' in el ? !!el.disabled : null,
-                };
-              };
-              const identify = (el) => el ? {
-                tag: el.tagName.toLowerCase(),
-                id: el.id || null,
-                className: typeof el.className === 'string' ? el.className : null,
-                jankenSlot: el.getAttribute?.('data-janken-slot') || null,
-                cardId: el.getAttribute?.('data-card-id') || null,
-              } : null;
-              const hitCenter = (el) => {
-                if (!el) return null;
-                const r = el.getBoundingClientRect();
-                const x = Math.max(0, Math.min(innerWidth - 1, r.left + r.width / 2));
-                const y = Math.max(0, Math.min(innerHeight - 1, r.top + r.height / 2));
-                return { x, y, owner: identify(document.elementFromPoint(x, y)) };
-              };
-              const host = document.querySelector('[data-battle-janken-slidepad="1"]');
-              const handle = host?.querySelector('.grJankenSlidePadHandle');
-              const slots = [...(host?.querySelectorAll('[data-janken-slot]') ?? [])].map((el) => ({
-                hand: el.getAttribute('data-janken-slot'),
-                cardId: el.getAttribute('data-card-id') || null,
-                element: compact(el),
-                hitCenter: hitCenter(el),
-              }));
-              return {
-                viewport: { width: innerWidth, height: innerHeight, devicePixelRatio },
-                expanded: host?.dataset.expanded === 'true',
-                host: compact(host),
-                handle: { element: compact(handle), hitCenter: hitCenter(handle) },
-                slots,
-                hand: compact(document.querySelector('#hand')),
-                planBox: compact(document.querySelector('.planBox')),
-                battleRail: compact(document.querySelector('.battleRail')),
-                board: compact(document.querySelector('#board')),
-                targetBox: compact(document.querySelector('#targetBox')),
-              };
+          async function capture(page,name){
+            await enter(page);
+            const host=page.locator('[data-battle-janken-slidepad="1"]').first(), handle=host.locator('.grJankenSlidePadHandle');
+            if(await host.getAttribute('data-expanded')!=='true') await handle.click();
+            await page.waitForFunction(()=>document.querySelector('[data-battle-janken-slidepad="1"]')?.dataset.expanded==='true',null,{timeout:5000}); await page.waitForTimeout(260);
+            if(await host.locator('[data-janken-slot]').count()!==3) throw new Error(`${name}: slot count`);
+            const g=await page.evaluate(()=>{
+              const snap=(el)=>{if(!el)return null;const r=el.getBoundingClientRect(),s=getComputedStyle(el);return{rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height},display:s.display,visibility:s.visibility,pointerEvents:s.pointerEvents,zIndex:s.zIndex,disabled:'disabled'in el?!!el.disabled:null}};
+              const id=(el)=>el?{tag:el.tagName.toLowerCase(),id:el.id||null,className:typeof el.className==='string'?el.className:null,jankenSlot:el.getAttribute?.('data-janken-slot')||null}:null;
+              const hit=(el)=>{if(!el)return null;const r=el.getBoundingClientRect(),x=Math.max(0,Math.min(innerWidth-1,r.left+r.width/2)),y=Math.max(0,Math.min(innerHeight-1,r.top+r.height/2));return{x,y,owner:id(document.elementFromPoint(x,y))}};
+              const h=document.querySelector('[data-battle-janken-slidepad="1"]'),handle=h?.querySelector('.grJankenSlidePadHandle');
+              return{viewport:{width:innerWidth,height:innerHeight,devicePixelRatio},expanded:h?.dataset.expanded==='true',host:snap(h),handle:{element:snap(handle),hitCenter:hit(handle)},slots:[...(h?.querySelectorAll('[data-janken-slot]')??[])].map(el=>({hand:el.getAttribute('data-janken-slot'),cardId:el.getAttribute('data-card-id')||null,element:snap(el),hitCenter:hit(el)})),hand:snap(document.querySelector('#hand')),planBox:snap(document.querySelector('.planBox')),battleRail:snap(document.querySelector('.battleRail')),board:snap(document.querySelector('#board')),targetBox:snap(document.querySelector('#targetBox'))};
             });
-
-            const blockers = ['hand', 'planBox', 'battleRail', 'board', 'targetBox'];
-            for (const slot of geom.slots) {
-              slot.intersections = {};
-              for (const key of blockers) slot.intersections[key] = intersection(slot.element?.rect, geom[key]?.rect);
-              const owner = slot.hitCenter?.owner;
-              slot.centerHitOwnsSelectableSlot = slot.element?.disabled === false
-                ? owner?.jankenSlot === slot.hand
-                : null;
-              if (slot.element?.disabled === false && slot.centerHitOwnsSelectableSlot !== true) {
-                throw new Error(`${c.name}: selectable ${slot.hand} center hit owned by ${JSON.stringify(owner)}`);
-              }
-            }
-            const handleOwner = geom.handle?.hitCenter?.owner;
-            geom.handle.centerHitOwnsHandle = !!handleOwner?.className?.includes('grJankenSlidePadHandle');
-            if (!geom.handle.centerHitOwnsHandle) throw new Error(`${c.name}: handle center hit ownership failed`);
-            if (geom.expanded !== true) throw new Error(`${c.name}: SlidePad did not remain expanded`);
-
-            await page.screenshot({ path: `${outDir}/${c.name}-expanded.png`, fullPage: true, animations: 'disabled' });
-            return geom;
+            for(const s of g.slots){s.intersections={};for(const k of ['hand','planBox','battleRail','board','targetBox'])s.intersections[k]=overlap(s.element?.rect,g[k]?.rect);s.centerHitOwnsSelectableSlot=s.element?.disabled===false?s.hitCenter?.owner?.jankenSlot===s.hand:null;if(s.element?.disabled===false&&!s.centerHitOwnsSelectableSlot)throw new Error(`${name}: ${s.hand} hit owner ${JSON.stringify(s.hitCenter?.owner)}`)}
+            g.handle.centerHitOwnsHandle=!!g.handle.hitCenter?.owner?.className?.includes('grJankenSlidePadHandle'); if(!g.handle.centerHitOwnsHandle)throw new Error(`${name}: handle hit owner`); if(!g.expanded)throw new Error(`${name}: collapsed`);
+            await page.screenshot({path:`${out}/${name}-expanded.png`,fullPage:true,animations:'disabled'}); return g;
           }
 
-          const browser = await chromium.launch({ headless: true });
-          const output = {
-            schema: 'gameroad.battle-janken-thumb-arc-use-site-evidence.r3',
-            sourceCandidateSha,
-            productHtmlMutation: false,
-            runtimeMutation: false,
-            gameplayMutation: false,
-            captures: [],
-          };
-          try {
-            for (const c of cases) {
-              const context = await browser.newContext({ viewport: { width: c.width, height: c.height } });
-              const page = await context.newPage();
-              output.captures.push({ name: c.name, ...(await collectEvidence(page, c)) });
-              await context.close();
-            }
-          } finally {
-            await browser.close();
-          }
-          await fs.writeFile(`${outDir}/geometry.json`, `${JSON.stringify(output, null, 2)}\n`);
+          const browser=await chromium.launch({headless:true}); const result={schema:'gameroad.battle-janken-thumb-arc-use-site-evidence.r3',sourceCandidateSha:'32d5e9a4a54ef85099211df374fa0edd5ef22d63',productHtmlMutation:false,runtimeMutation:false,gameplayMutation:false,captures:[]};
+          try{for(const [name,width,height] of cases){const context=await browser.newContext({viewport:{width,height}}),page=await context.newPage();result.captures.push({name,...await capture(page,name)});await context.close()}}finally{await browser.close()}
+          await fs.writeFile(`${out}/geometry.json`,JSON.stringify(result,null,2)+'\n');
           NODE
           node .r3-capture.mjs
           rm -f .r3-capture.mjs
-          test -s evidence/battle-janken-thumb-arc-r3/1280x720-expanded.png
-          test -s evidence/battle-janken-thumb-arc-r3/667x375-expanded.png
-          test -s evidence/battle-janken-thumb-arc-r3/390x844-expanded.png
-          test -s evidence/battle-janken-thumb-arc-r3/geometry.json
-
+          for f in 1280x720-expanded.png 667x375-expanded.png 390x844-expanded.png geometry.json; do test -s "evidence/battle-janken-thumb-arc-r3/$f"; done
       - name: Final evidence fence and commit
         shell: bash
         env:
-          SOURCE_CANDIDATE_SHA: 32d5e9a4a54ef85099211df374fa0edd5ef22d63
-          EVIDENCE_BRANCH: sol/battle-janken-thumb-arc-evidence-r3-20260910
+          BASE: 32d5e9a4a54ef85099211df374fa0edd5ef22d63
+          BRANCH: sol/battle-janken-thumb-arc-evidence-r3-20260910
         run: |
           set -euo pipefail
-          git merge-base --is-ancestor "$SOURCE_CANDIDATE_SHA" HEAD
-          rm -f .r3-capture.mjs
-          rm -f .github/workflows/zz-temp-battle-janken-thumb-arc-evidence-r3.yml
-          rm -f data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R3-20260910T2351-SOL-M8Q4N6.json
+          git merge-base --is-ancestor "$BASE" HEAD
+          rm -f .r3-capture.mjs .github/workflows/zz-temp-battle-janken-thumb-arc-evidence-r3.yml data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R3-20260910T2351-SOL-M8Q4N6.json
           git add -A
-          mapfile -t actual < <(git diff --cached --name-only "$SOURCE_CANDIDATE_SHA" | sort)
-          expected=(
-            evidence/battle-janken-thumb-arc-r3/1280x720-expanded.png
-            evidence/battle-janken-thumb-arc-r3/390x844-expanded.png
-            evidence/battle-janken-thumb-arc-r3/667x375-expanded.png
-            evidence/battle-janken-thumb-arc-r3/geometry.json
-          )
-          if [ "${#actual[@]}" -ne "${#expected[@]}" ]; then
-            printf 'unexpected final file count\nactual:\n%s\n' "${actual[*]}"
-            exit 1
-          fi
-          for i in "${!expected[@]}"; do
-            if [ "${actual[$i]}" != "${expected[$i]}" ]; then
-              printf 'unexpected final diff at %s: got=%s expected=%s\n' "$i" "${actual[$i]}" "${expected[$i]}"
-              exit 1
-            fi
-          done
-          git config user.name gameroad-actions
-          git config user.email actions@users.noreply.github.com
+          mapfile -t a < <(git diff --cached --name-only "$BASE" | sort)
+          e=(evidence/battle-janken-thumb-arc-r3/1280x720-expanded.png evidence/battle-janken-thumb-arc-r3/390x844-expanded.png evidence/battle-janken-thumb-arc-r3/667x375-expanded.png evidence/battle-janken-thumb-arc-r3/geometry.json)
+          [ "${#a[@]}" -eq 4 ] || { printf 'bad count: %s\n' "${a[*]}"; exit 1; }
+          for i in 0 1 2 3; do [ "${a[$i]}" = "${e[$i]}" ] || { printf 'bad diff: %s\n' "${a[*]}"; exit 1; }; done
+          git config user.name gameroad-actions; git config user.email actions@users.noreply.github.com
           git commit -m 'Battle SlidePad: capture R3 use-site visual evidence'
-          git push origin "HEAD:$EVIDENCE_BRANCH"
+          git push origin "HEAD:$BRANCH"

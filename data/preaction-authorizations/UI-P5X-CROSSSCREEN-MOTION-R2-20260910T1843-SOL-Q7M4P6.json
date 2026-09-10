@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-P5X-CROSSSCREEN-MOTION-R2-20260910T1843-SOL-Q7M4P6",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "P5X_CROSSSCREEN_PROFILE_PARTNER_PIECE_MOTION_R1",
+  "acquireKey": "UI-P5X-CROSSSCREEN-MOTION-R2-20260910T1843-SOL-Q7M4P6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_PROFILE_PARTNER_MULTI_SURFACE_GAP_20260910T1843JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_SCREEN_NAV_DRIVER_PLUS_PROFILE_PARTNER_DOM_AND_PR1518_DONOR_READBACK",
+  "proceedToken": "PROCEED|UI-P5X-CROSSSCREEN-MOTION-R2-20260910T1843-SOL-Q7M4P6|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|p5x-crossscreen-piece-motion-r2|screen-navigation-core|active-lease",
+  "authorizationBaseSha": "ba55d979771afbc7dde40b0dff05179c49954e09",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "P5X_CROSSSCREEN_PROFILE_PARTNER_PIECE_MOTION_R1",
+  "leaseAcquireKey": "UI-P5X-CROSSSCREEN-MOTION-R2-20260910T1843-SOL-Q7M4P6",
+  "leaseSnapshotReadbackAtJst": "2026-09-10 18:43 JST",
+  "leaseUntilJst": "2026-09-10 19:43 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A951:L951",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/p5x-crossscreen-piece-motion-r2-20260910; browser/screen-navigation-core.mjs; tests/screen-navigation-core.test.mjs; own data/preaction-authorizations/UI-P5X-CROSSSCREEN-MOTION-R2-20260910T1843-SOL-Q7M4P6.json only. READ_ONLY PR#1518 donor; browser/profile-presentation-runtime-mount.mjs; browser/partner-shell-runtime-mount.mjs; browser/GAMEROAD.html; Battle/gameplay/rules/save/economy/network; active Partner/Title/HTML owner resources.",
+  "solutionSignature": "EXISTING_SCREEN_TRANSITION_PROFILE_PARTNER_MULTI_SURFACE_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1518_PRODUCT_DONOR_CURRENT_DOM_AND_EXTERNAL_DCCG_TRANSITION_REVIEW_20260910",
+  "solutionSearchEvidence": [
+    "Current screen-navigation-core already owns destination-aware transition families, reduced-motion/low-perf handling, multi-surface ENTER animation, and whole-screen fallback; no second transition system is needed.",
+    "Current Profile runtime still exposes profileIdentitySummary, profileRecordsNote and profileActions; current Partner shell still exposes title, active, idle, menu, roster, detail, formation, strategy, dialogue, costume and navigation regions.",
+    "PR #1518 contains the same bounded two-file product diff and failed Required Gate before product tests because transient branch history exceeded the first PRE_ACTION scope; the product donor itself is reusable.",
+    "Current MARVEL SNAP 2026 patch history explicitly treats transition flashing, overlapping UI and VFX-performance regressions as player-facing defects, supporting bounded nonblocking transition polish rather than heavier animation machinery.",
+    "Hearthstone community-maintained screen history shows profile and central menu surfaces are long-lived first-class navigation destinations; this slice changes presentation only and does not import external game semantics."
+  ],
+  "scope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/screen-navigation-core.mjs",
+    "tests/screen-navigation-core.test.mjs"
+  ]
+}

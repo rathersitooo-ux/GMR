@@ -33,11 +33,49 @@ jobs:
           npm install --no-save @playwright/test@1.55.0
           npx playwright install --with-deps chromium
 
+      - name: Build bounded Road-only Playwright config
+        shell: bash
+        run: |
+          cat > .road-r29-playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir: './tests',
+            testMatch: ['road-move-bidirectional-live-r27.spec.mjs'],
+            timeout: 90_000,
+            expect: { timeout: 7_000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            outputDir: 'test-results/road-r29',
+            reporter: [['line']],
+            use: {
+              baseURL: 'http://127.0.0.1:4173',
+              browserName: 'chromium',
+              headless: true,
+              trace: 'retain-on-failure',
+              screenshot: 'only-on-failure',
+              video: 'off',
+            },
+            projects: [
+              { name: 'desktop-1280x720', use: { viewport: { width: 1280, height: 720 } } },
+              { name: 'phone-390x844', use: { viewport: { width: 390, height: 844 } } },
+              { name: 'landscape-844x390', use: { viewport: { width: 844, height: 390 } } },
+            ],
+            webServer: {
+              command: 'python3 -m http.server 4173 --bind 127.0.0.1',
+              cwd: new URL('.', import.meta.url).pathname,
+              url: 'http://127.0.0.1:4173/browser/GAMEROAD.html',
+              reuseExistingServer: false,
+              timeout: 120_000,
+            },
+          });
+          EOF
+
       - name: Run fixed Road bidirectional regression
         shell: bash
         run: |
           set -uo pipefail
-          npx playwright test tests/road-move-bidirectional-live-r27.spec.mjs --config=playwright.full-interaction.config.mjs --reporter=line 2>&1 | tee road-move-r29.log
+          npx playwright test --config=.road-r29-playwright.config.mjs 2>&1 | tee road-move-r29.log
           exit ${PIPESTATUS[0]}
 
       - name: Upload Road evidence

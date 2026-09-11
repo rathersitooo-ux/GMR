@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PLAYTEST-BATTLE-FIRST-ACTION-R5-20260911T2151-SOL-Q7M4N11-PREACTION",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "PLAYTEST_BATTLE_FIRST_DECISION_FOCUS_R1",
+  "acquireKey": "PLAYTEST-BATTLE-FIRST-ACTION-R5-20260911T2151-SOL-Q7M4N11",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R3_GATE_PREACTION_PASS_PACKAGE_PIN_ONLY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R3_EXACT_PATCH_AND_PACKAGE_INVARIANT_FAILURE",
+  "proceedToken": "PROCEED|PLAYTEST-BATTLE-FIRST-ACTION-R5-20260911T2151-SOL-Q7M4N11-PREACTION|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|same-pr|bounded-writer",
+  "authorizationBaseSha": "ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "PLAYTEST_BATTLE_FIRST_DECISION_FOCUS_R1",
+  "leaseAcquireKey": "PLAYTEST-BATTLE-FIRST-ACTION-R5-20260911T2151-SOL-Q7M4N11",
+  "leaseSnapshotReadbackAtJst": "2026-09-11 21:51 JST",
+  "leaseUntilJst": "2026-09-11 22:51 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1031:L1031",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR existing PR#1546 branch sol/playtest-battle-first-action-r2-20260911 from exact current main; browser/battle-board-visual-explanation-runtime-mount.mjs; deploy/cloudflare/tests/build.test.mjs exact runtime provenance pin only; transient .github/workflows/zz-temp-playtest-battle-first-action-r5.yml; own PRE_ACTION/branch/PR/check/readback. READ_ONLY browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs; partner advice authority; gameplay/rules/save/economy/network. Final durable diff must exclude transient workflow/PRE_ACTION and contain only runtime+build.test.",
+  "scope": [
+    "browser/battle-board-visual-explanation-runtime-mount.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-playtest-battle-first-action-r5.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-board-visual-explanation-runtime-mount.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-playtest-battle-first-action-r5.yml"
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-MULTI-CHAR-R11-20260911T2007-SOL-P6N2K9",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_MULTI_CHARACTERS_SCREEN_REPAIR_R9",
+  "acquireKey": "PARTNER-MULTI-CHAR-R11-20260911T2007-SOL-P6N2K9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_DESTRUCTIVE_PARTNER_ROSTER_REPLACE_AND_FORCED_SAASUNA_NAME",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R10_DONOR_PATCH_BLOB_D40C1FEA_REBASED_ON_MAIN_EA1DF495",
+  "proceedToken": "PROCEED|PARTNER-MULTI-CHAR-R11-20260911T2007-SOL-P6N2K9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-multi-char-r11|reuse-r10-donor|active-lease",
+  "authorizationBaseSha": "ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_MULTI_CHARACTERS_SCREEN_REPAIR_R9",
+  "leaseAcquireKey": "PARTNER-MULTI-CHAR-R11-20260911T2007-SOL-P6N2K9",
+  "leaseSnapshotReadbackAtJst": "2026-09-11 20:07 JST",
+  "leaseUntilJst": "2026-09-11 21:06 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1022:N1022",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR existing branch work/partner-multi-char-r10-20260911 + PR#1536; browser/board-facility-runtime-mount.mjs; tests/board-facility-runtime-mount.test.mjs; deploy/cloudflare/tests/build.test.mjs; own transient PRE_ACTION manifest. READ_ONLY browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs; browser/partner-tea-runtime-mount.mjs; Partner advice/dialogue authority; gameplay/rules/save/economy/network.",
+  "solutionSignature": "PARTNER_MULTI_CHARACTER_PICKER_PRESERVE_EXISTING_CONSUMER_R11",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R10_DONOR_PRODUCT_BLOB_PLUS_FRESH_MAIN_PROVENANCE_ABSORPTION",
+  "solutionSearchEvidence": [
+    "Current main still destructively replaces #charRoster with the Saasuna conversation surface and forces #charName to Saasuna.",
+    "Existing multi-character Partner selection is the current formal consumer and must be preserved; a second picker/store/router would duplicate authority.",
+    "R10 donor changes only the existing consumer to preserve the roster and conditionally append/remove the existing Saasuna conversation for the selected partner.",
+    "Fresh main already carries the current tutorial build provenance pin; R11 changes only the board-facility provenance pin after applying the proven product blob."
+  ],
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    "data/preaction-authorizations/PARTNER-MULTI-CHAR-R11-20260911T2007-SOL-P6N2K9.json"
+  ]
+}

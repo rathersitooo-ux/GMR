@@ -5,29 +5,12 @@ async function bootRoadBattle(page) {
   expect(response?.ok(), 'GAMEROAD.html loads').toBeTruthy();
   await page.waitForTimeout(300);
 
-  const setup = page.locator('[data-home-target="setup"]:visible, [data-go="setup"]:visible').first();
-  await expect(setup).toBeVisible();
-  await setup.click();
-  await page.locator('[data-content="road_shield"]').click();
-  await page.locator('[data-mode="2p"]').click();
+  await expect.poll(
+    () => page.evaluate(() => typeof window.__GAMEROAD_TEST__?.start === 'function'),
+    { timeout: 100000 },
+  ).toBe(true);
+  await page.evaluate(() => window.__GAMEROAD_TEST__.start('2p', 'road_shield'));
 
-  await page.evaluate(() => {
-    const t = window.__GAMEROAD_TEST__;
-    const publicMain = new Set(t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
-    const standard = window.__CARD_DATA__
-      .filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)))
-      .map((card) => card.id);
-    const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
-    const nonRoyal = standard.filter((id) => !t.isRoyalCard(id));
-    const main = [...nonRoyal.slice(0, 37), ...royalIds];
-    t.deckSetDraft(main, []);
-    if (!t.deckValidate(t.state.deckDraft, { forBattle: true }).ok) throw new Error('legal deck fixture failed');
-    if (!t.deckCommit()) throw new Error('legal deck fixture commit failed');
-  });
-
-  const start = page.locator('#startMatch');
-  await expect(start).toBeEnabled();
-  await start.click();
   const battle = page.locator('section[data-screen="battle"]');
   await expect(battle).toBeVisible();
 

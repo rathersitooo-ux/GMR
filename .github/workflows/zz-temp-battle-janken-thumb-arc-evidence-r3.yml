@@ -62,32 +62,29 @@ jobs:
             const response=await page.goto(`${base}/browser/GAMEROAD.html`,{waitUntil:'commit',timeout:10000});
             if(!response||response.status()>=400) throw new Error(`HTML response ${response?.status()}`);
             await page.waitForFunction(()=>!!window.__GAMEROAD_TEST__&&Array.isArray(window.__CARD_DATA__),null,{timeout:45000});
-            const center=page.locator('#homePadCenter:visible');
-            await center.waitFor({state:'visible',timeout:20000});
-            const setupChoice=page.locator('.homePadChoice[data-home-target="setup"]').first();
-            await setupChoice.waitFor({state:'attached',timeout:10000});
-            let pointerEvents=await setupChoice.evaluate(el=>getComputedStyle(el).pointerEvents);
-            if(pointerEvents==='none'){
-              await center.click();
-              await page.waitForFunction(()=>{
-                const el=document.querySelector('.homePadChoice[data-home-target="setup"]');
-                return !!el&&getComputedStyle(el).pointerEvents!=='none';
-              },null,{timeout:5000});
-            }
-            await page.waitForTimeout(250);
-            pointerEvents=await setupChoice.evaluate(el=>getComputedStyle(el).pointerEvents);
-            if(pointerEvents==='none') throw new Error('setup choice remained non-interactive after visible Home center expansion');
-            await setupChoice.click();
             const setup=page.locator('section[data-screen="setup"]');
+            const battleChoice=()=>page.getByRole('button',{name:'バトルへ'}).first();
+            await battleChoice().waitFor({state:'visible',timeout:20000});
+            try{
+              await battleChoice().click({timeout:1800});
+            }catch(error){
+              if(!(await setup.isVisible())){
+                const center=page.locator('#homePadCenter:visible');
+                await center.waitFor({state:'visible',timeout:5000});
+                await center.click({timeout:5000});
+                await page.waitForTimeout(250);
+                await battleChoice().click({timeout:10000});
+              }
+            }
             await setup.waitFor({state:'visible',timeout:20000});
             const deck=await legalDeck(page);
             if(deck.count!==40||!deck.committed||!deck.savedOk) throw new Error(`deck ${JSON.stringify(deck)}`);
-            await setup.locator('[data-content="road_shield"]').click();
-            await setup.locator('[data-mode="2v2"]').click();
+            await setup.locator('[data-content="road_shield"]').click({timeout:10000});
+            await setup.locator('[data-mode="2v2"]').click({timeout:10000});
             const start=setup.locator('#startMatch');
             await start.waitFor({state:'visible',timeout:20000});
             if(await start.isDisabled()) throw new Error('start disabled');
-            await start.click();
+            await start.click({timeout:10000});
             await page.locator('section[data-screen="battle"]').waitFor({state:'visible',timeout:20000});
             await page.locator('[data-battle-janken-slidepad="1"]').waitFor({state:'visible',timeout:20000});
             await page.waitForFunction(()=>!!window.__GAMEROAD_BATTLE_JANKEN_SLIDEPAD__?.snapshot?.()?.roundId,null,{timeout:20000});
@@ -142,7 +139,7 @@ jobs:
         run: |
           set -euo pipefail
           git merge-base --is-ancestor "$BASE" HEAD
-          rm -f .r3-capture.mjs .github/workflows/zz-temp-battle-janken-thumb-arc-evidence-r3.yml data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R3-20260910T2351-SOL-M8Q4N6.json data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R4-20260911T0051-SOL-M8Q4N7.json
+          rm -f .r3-capture.mjs .github/workflows/zz-temp-battle-janken-thumb-arc-evidence-r3.yml data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R3-20260910T2351-SOL-M8Q4N6.json data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R4-20260911T0051-SOL-M8Q4N7.json data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R5-20260911T1202-SOL-M8Q4N8.json
           git add -A
           mapfile -t a < <(git diff --cached --name-only "$BASE" | sort)
           e=(evidence/battle-janken-thumb-arc-r3/1280x720-expanded.png evidence/battle-janken-thumb-arc-r3/390x844-expanded.png evidence/battle-janken-thumb-arc-r3/667x375-expanded.png evidence/battle-janken-thumb-arc-r3/geometry.json)

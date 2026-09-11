@@ -1,0 +1,223 @@
+name: temp Battle Janken thumb arc R6
+
+on:
+  push:
+    branches: [sol/battle-janken-thumb-arc-r6-20260911]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: battle-janken-thumb-arc-r6
+  cancel-in-progress: false
+
+jobs:
+  patch-test-capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact-anchor visual patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          runtime_path = Path('browser/battle-janken-slidepad-runtime-mount.mjs')
+          test_path = Path('tests/battle-janken-slidepad-runtime-mount.test.mjs')
+          runtime = runtime_path.read_text(encoding='utf-8')
+          test = test_path.read_text(encoding='utf-8')
+
+          def one(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 anchor, got {count}')
+              return text.replace(old, new, 1)
+
+          def many(text, old, new, expected, label):
+              count = text.count(old)
+              if count != expected:
+                  raise SystemExit(f'{label}: expected {expected} anchors, got {count}')
+              return text.replace(old, new)
+
+          old_host = '[${HOST_ATTR}="1"]{position:absolute;right:max(12px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));z-index:42;width:248px;height:196px;pointer-events:none;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}'
+          new_host = old_host[:-1] + ';isolation:isolate}\n[${HOST_ATTR}="1"]::before{content:"";position:absolute;right:13px;bottom:10px;width:198px;height:160px;border:9px solid rgba(218,218,218,.20);border-left-color:rgba(218,218,218,.05);border-bottom-color:rgba(218,218,218,.08);border-radius:58% 52% 54% 50%;transform:rotate(-8deg);box-shadow:0 0 22px rgba(208,208,208,.12),inset 0 0 18px rgba(238,238,238,.06);pointer-events:none;z-index:0}'
+          runtime = one(runtime, old_host, new_host, 'host-ring')
+
+          old_slot = '[${HOST_ATTR}="1"] .grJankenSlidePadSlot{position:absolute;right:2px;bottom:2px;width:82px;height:112px;border-radius:12px;border:2px solid rgba(228,228,228,.72);background:linear-gradient(160deg,rgba(242,242,242,.94) 0%,rgba(150,150,150,.9) 42%,rgba(65,65,65,.94) 72%,rgba(32,32,32,.98) 100%);box-shadow:0 11px 28px rgba(6,6,6,.46),inset 0 1px 0 rgba(255,255,255,.24);color:#fbfbfb;padding:7px 6px;display:grid;grid-template-rows:auto 1fr auto;align-items:center;text-align:center;opacity:0;transform-origin:calc(100% - 32px) calc(100% - 25px);transform:translate(0,0) rotate(22deg) scale(.66);transition:transform 190ms cubic-bezier(.2,.8,.2,1),opacity 150ms ease,filter 90ms ease,box-shadow 90ms ease;pointer-events:none;touch-action:none}'
+          new_slot = '[${HOST_ATTR}="1"] .grJankenSlidePadSlot{position:absolute;right:4px;bottom:4px;width:86px;height:86px;border-radius:42% 58% 56% 44%/48% 42% 58% 52%;border:2px solid rgba(228,228,228,.72);background:linear-gradient(160deg,rgba(242,242,242,.94) 0%,rgba(150,150,150,.9) 42%,rgba(65,65,65,.94) 72%,rgba(32,32,32,.98) 100%);box-shadow:0 11px 28px rgba(6,6,6,.46),inset 0 1px 0 rgba(255,255,255,.24);color:#fbfbfb;padding:6px;display:grid;grid-template-rows:1fr auto auto;align-items:center;text-align:center;opacity:0;transform-origin:calc(100% - 31px) calc(100% - 31px);transform:translate(0,0) rotate(18deg) scale(.58);transition:transform 190ms cubic-bezier(.2,.8,.2,1),opacity 150ms ease,filter 90ms ease,box-shadow 90ms ease;pointer-events:none;touch-action:none;z-index:1}'
+          runtime = one(runtime, old_slot, new_slot, 'slot-shape')
+          runtime = one(runtime, '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-162px,15px) rotate(-18deg)}', '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-150px,4px) rotate(-15deg)}', 'rock-geometry')
+          runtime = one(runtime, '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-124px,-55px) rotate(-8deg);transition-delay:35ms}', '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-96px,-66px) rotate(-4deg);transition-delay:35ms}', 'scissors-geometry')
+          runtime = one(runtime, '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-48px,-92px) rotate(5deg);transition-delay:70ms}', '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-14px,-96px) rotate(9deg);transition-delay:70ms}', 'paper-geometry')
+          runtime = one(runtime, '[${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:25px;line-height:1;font-weight:900}', '[${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:32px;line-height:1;font-weight:900}', 'hand-icon-size')
+          runtime = one(runtime, '[${HOST_ATTR}="1"] .grJankenSlidePadCard{font-size:10px;line-height:1.15;font-weight:850;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}', '[${HOST_ATTR}="1"] .grJankenSlidePadCard{font-size:9px;line-height:1.08;font-weight:850;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}', 'slot-card-copy')
+
+          runtime = one(runtime, '[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:64px;height:88px;padding:5px 4px;border-radius:10px}', '[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:76px;height:76px;padding:5px;border-radius:42% 58% 56% 44%/48% 42% 58% 52%}', 'portrait-slot-size')
+          runtime = one(runtime, '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-126px,12px) rotate(-15deg)}', '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-118px,2px) rotate(-13deg)}', 'portrait-rock')
+          runtime = one(runtime, '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-96px,-43px) rotate(-7deg)}', '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-70px,-60px) rotate(-3deg)}', 'portrait-scissors')
+          runtime = one(runtime, '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-38px,-72px) rotate(4deg)}', '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-4px,-92px) rotate(8deg)}', 'portrait-paper')
+
+          runtime = one(runtime, '[${HOST_ATTR}="1"]{width:188px;height:146px;right:7px;bottom:7px}', '[${HOST_ATTR}="1"]{width:208px;height:160px;right:7px;bottom:7px}', 'short-host')
+          runtime = one(runtime, '[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:60px;height:80px;padding:4px}', '[${HOST_ATTR}="1"] .grJankenSlidePadSlot{width:74px;height:74px;padding:4px}', 'short-slot-size')
+          runtime = one(runtime, '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-124px,10px) rotate(-16deg)}', '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.rock{transform:translate(-132px,2px) rotate(-13deg)}', 'short-rock')
+          runtime = one(runtime, '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-92px,-40px) rotate(-7deg)}', '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.scissors{transform:translate(-78px,-62px) rotate(-3deg)}', 'short-scissors')
+          runtime = one(runtime, '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-48px,-62px) rotate(4deg)}', '[${HOST_ATTR}="1"][data-expanded="true"] .grJankenSlidePadSlot.paper{transform:translate(-2px,-78px) rotate(8deg)}', 'short-paper')
+          runtime = many(runtime, '[${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:20px}', '[${HOST_ATTR}="1"] .grJankenSlidePadSuit{font-size:26px}', 2, 'compact-hand-icon-size')
+          reduced_anchor = '@media(prefers-reduced-motion:reduce){[${HOST_ATTR}="1"] .grJankenSlidePadSlot,[${HOST_ATTR}="1"] .grJankenSlidePadHandle,[${HOST_ATTR}="1"] .grJankenLoadPreview{transition:none!important}}'
+          reduced_new = '@media(max-height:430px) and (orientation:landscape){[${HOST_ATTR}="1"]::before{right:12px;bottom:8px;width:176px;height:138px;border-width:7px}}\n' + reduced_anchor
+          runtime = one(runtime, reduced_anchor, reduced_new, 'compact-ring')
+
+          test = one(test, "test('portrait reserved janken fan compacts without changing desktop slot geometry', async () => {", "test('portrait reserved janken fan keeps large thumb targets in the same radial family', async () => {", 'portrait-test-title')
+          test = one(test, "assert.match(source, /\\.grJankenSlidePadSlot\\{position:absolute;right:2px;bottom:2px;width:82px;height:112px/);", "assert.match(source, /\\.grJankenSlidePadSlot\\{position:absolute;right:4px;bottom:4px;width:86px;height:86px/);", 'test-base-slot')
+          test = one(test, "assert.match(source, /@media\\(max-width:540px\\) and \\(orientation:portrait\\)\\{[^\\n]*\\.grJankenSlidePadSlot\\{width:64px;height:88px/);", "assert.match(source, /@media\\(max-width:540px\\) and \\(orientation:portrait\\)\\{[^\\n]*\\.grJankenSlidePadSlot\\{width:76px;height:76px/);", 'test-portrait-size')
+          test = one(test, "assert.match(source, /orientation:portrait[^\\n]*rock\\{transform:translate\\(-126px,12px\\)[^\\n]*scissors\\{transform:translate\\(-96px,-43px\\)[^\\n]*paper\\{transform:translate\\(-38px,-72px\\)/);", "assert.match(source, /orientation:portrait[^\\n]*rock\\{transform:translate\\(-118px,2px\\)[^\\n]*scissors\\{transform:translate\\(-70px,-60px\\)[^\\n]*paper\\{transform:translate\\(-4px,-92px\\)/);", 'test-portrait-geometry')
+          test = one(test, "assert.match(source, /@media\\(max-height:430px\\) and \\(orientation:landscape\\)\\{[^\\n]*\\[\\$\\{HOST_ATTR\\}=\\\"1\\\"\\]\\{width:188px;height:146px;right:7px;bottom:7px/);", "assert.match(source, /@media\\(max-height:430px\\) and \\(orientation:landscape\\)\\{[^\\n]*\\[\\$\\{HOST_ATTR\\}=\\\"1\\\"\\]\\{width:208px;height:160px;right:7px;bottom:7px/);", 'test-short-host')
+          test = one(test, "assert.match(source, /max-height:430px[^\\n]*\\.grJankenSlidePadSlot\\{width:60px;height:80px;padding:4px\\}/);", "assert.match(source, /max-height:430px[^\\n]*\\.grJankenSlidePadSlot\\{width:74px;height:74px;padding:4px\\}/);", 'test-short-size')
+          test = one(test, "assert.match(source, /max-height:430px[^\\n]*rock\\{transform:translate\\(-124px,10px\\)[^\\n]*scissors\\{transform:translate\\(-92px,-40px\\)[^\\n]*paper\\{transform:translate\\(-48px,-62px\\)/);", "assert.match(source, /max-height:430px[^\\n]*rock\\{transform:translate\\(-132px,2px\\)[^\\n]*scissors\\{transform:translate\\(-78px,-62px\\)[^\\n]*paper\\{transform:translate\\(-2px,-78px\\)/);", 'test-short-geometry')
+          test = one(test, "  assert.doesNotMatch(runtimeSource, /filter:\\s*saturate\\(|\\s+saturate\\(/);", "  assert.doesNotMatch(runtimeSource, /filter:\\s*saturate\\(|\\s+saturate\\(/);\n  assert.equal(runtimeSource.includes('border:9px solid rgba(218,218,218,.20)'), true,\n    'the thumb family keeps a thick achromatic ring without borrowing suit hue');", 'test-ring')
+          test = one(test, "assert.match(runtimeSource, /\\.grJankenSlidePadSlot\\.rock\\{transform:translate\\(-162px,15px\\) rotate\\(-18deg\\)\\}/);", "assert.match(runtimeSource, /\\.grJankenSlidePadSlot\\.rock\\{transform:translate\\(-150px,4px\\) rotate\\(-15deg\\)\\}/);", 'test-achromatic-rock')
+          test = one(test, "assert.match(runtimeSource, /\\.grJankenSlidePadSlot\\.scissors\\{transform:translate\\(-124px,-55px\\) rotate\\(-8deg\\)/);", "assert.match(runtimeSource, /\\.grJankenSlidePadSlot\\.scissors\\{transform:translate\\(-96px,-66px\\) rotate\\(-4deg\\)/);", 'test-achromatic-scissors')
+          test = one(test, "assert.match(runtimeSource, /\\.grJankenSlidePadSlot\\.paper\\{transform:translate\\(-48px,-92px\\) rotate\\(5deg\\)/);", "assert.match(runtimeSource, /\\.grJankenSlidePadSlot\\.paper\\{transform:translate\\(-14px,-96px\\) rotate\\(9deg\\)/);", 'test-achromatic-paper')
+
+          runtime_path.write_text(runtime, encoding='utf-8')
+          test_path.write_text(test, encoding='utf-8')
+          PY
+      - name: Focused checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check browser/battle-janken-slidepad-runtime-mount.mjs
+          node --test tests/battle-janken-slidepad-runtime-mount.test.mjs
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Capture current Battle use-site
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/r6-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 80); do curl -fsS http://127.0.0.1:4173/browser/GAMEROAD.html >/dev/null && break || sleep .25; done
+          curl -fsS http://127.0.0.1:4173/browser/GAMEROAD.html >/dev/null
+          mkdir -p evidence/battle-janken-thumb-arc-r6
+          cat > .r6-capture.mjs <<'NODE'
+          import { chromium } from '@playwright/test';
+          import fs from 'node:fs/promises';
+
+          const base='http://127.0.0.1:4173';
+          const out='evidence/battle-janken-thumb-arc-r6';
+          const cases=[['1280x720',1280,720],['667x375',667,375],['390x844',390,844]];
+          const overlap=(a,b)=>{if(!a||!b)return null;const l=Math.max(a.left,b.left),t=Math.max(a.top,b.top),r=Math.min(a.right,b.right),d=Math.min(a.bottom,b.bottom);return r>l&&d>t?{area:(r-l)*(d-t),width:r-l,height:d-t}:{area:0,width:0,height:0}};
+
+          async function legalDeck(page){
+            return page.evaluate(()=>{
+              const t=window.__GAMEROAD_TEST__; if(!t) throw new Error('test API missing');
+              const pub=new Set(t.deckPublic().filter(c=>c.slot==='main').map(c=>c.id));
+              const standard=window.__CARD_DATA__.filter(c=>pub.has(c.id)&&/^(SP|HT|DI|CL)$/.test(c.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c=>c.id);
+              const royals=['SP_J','SP_Q','SP_K'];
+              const main=[...standard.filter(id=>!t.isRoyalCard(id)).slice(0,37),...royals];
+              const set=t.deckSetDraft(main,[]),draft=t.deckValidate(t.state.deckDraft,{forBattle:true});
+              const committed=draft.ok?t.deckCommit():false,saved=t.deckValidate(t.state.savedDeck,{forBattle:true});
+              return {count:main.length,setOk:set?.ok===true,draftOk:draft?.ok===true,committed,savedOk:saved?.ok===true};
+            });
+          }
+
+          async function enter(page){
+            const response=await page.goto(`${base}/browser/GAMEROAD.html`,{waitUntil:'commit',timeout:10000});
+            if(!response||response.status()>=400) throw new Error(`HTML response ${response?.status()}`);
+            await page.waitForFunction(()=>!!window.__GAMEROAD_TEST__&&Array.isArray(window.__CARD_DATA__),null,{timeout:45000});
+            await page.waitForSelector('#homePadCenter',{state:'visible',timeout:20000});
+            await page.evaluate(()=>document.querySelector('#homePadCenter')?.click());
+            await page.waitForFunction(()=>{
+              const el=document.querySelector('.homePadChoice[data-home-target="setup"]');
+              return !!el;
+            },null,{timeout:10000});
+            const routed=await page.evaluate(()=>{
+              const el=document.querySelector('.homePadChoice[data-home-target="setup"]');
+              if(!el) return false;
+              el.click();
+              return true;
+            });
+            if(!routed) throw new Error('setup route missing');
+            await page.locator('section[data-screen="setup"]').waitFor({state:'visible',timeout:20000});
+            const deck=await legalDeck(page);
+            if(deck.count!==40||!deck.committed||!deck.savedOk) throw new Error(`deck ${JSON.stringify(deck)}`);
+            await page.locator('section[data-screen="setup"] [data-content="road_shield"]').click();
+            await page.locator('section[data-screen="setup"] [data-mode="2v2"]').click();
+            const start=page.locator('section[data-screen="setup"] #startMatch');
+            await start.waitFor({state:'visible',timeout:20000});
+            if(await start.isDisabled()) throw new Error('start disabled');
+            await start.click();
+            await page.locator('section[data-screen="battle"]').waitFor({state:'visible',timeout:20000});
+            await page.locator('[data-battle-janken-slidepad="1"]').waitFor({state:'visible',timeout:20000});
+            await page.waitForFunction(()=>!!window.__GAMEROAD_BATTLE_JANKEN_SLIDEPAD__?.snapshot?.()?.roundId,null,{timeout:20000});
+          }
+
+          async function capture(page,name){
+            await enter(page);
+            const host=page.locator('[data-battle-janken-slidepad="1"]').first();
+            if(await host.getAttribute('data-expanded')!=='true') await host.locator('.grJankenSlidePadHandle').click();
+            await page.waitForFunction(()=>document.querySelector('[data-battle-janken-slidepad="1"]')?.dataset.expanded==='true',null,{timeout:5000});
+            await page.waitForTimeout(260);
+            if(await host.locator('[data-janken-slot]').count()!==3) throw new Error(`${name}: slot count`);
+            const g=await page.evaluate(()=>{
+              const snap=(el)=>{if(!el)return null;const r=el.getBoundingClientRect(),s=getComputedStyle(el);return{rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height},display:s.display,visibility:s.visibility,pointerEvents:s.pointerEvents,zIndex:s.zIndex,disabled:'disabled'in el?!!el.disabled:null}};
+              const id=(el)=>el?{tag:el.tagName.toLowerCase(),id:el.id||null,className:typeof el.className==='string'?el.className:null,jankenSlot:el.getAttribute?.('data-janken-slot')||null}:null;
+              const hit=(el)=>{if(!el)return null;const r=el.getBoundingClientRect(),x=Math.max(0,Math.min(innerWidth-1,r.left+r.width/2)),y=Math.max(0,Math.min(innerHeight-1,r.top+r.height/2));return{x,y,owner:id(document.elementFromPoint(x,y))}};
+              const h=document.querySelector('[data-battle-janken-slidepad="1"]'),handle=h?.querySelector('.grJankenSlidePadHandle');
+              return{viewport:{width:innerWidth,height:innerHeight,devicePixelRatio},expanded:h?.dataset.expanded==='true',host:snap(h),handle:{element:snap(handle),hitCenter:hit(handle)},slots:[...(h?.querySelectorAll('[data-janken-slot]')??[])].map(el=>({hand:el.getAttribute('data-janken-slot'),cardId:el.getAttribute('data-card-id')||null,element:snap(el),hitCenter:hit(el)})),hand:snap(document.querySelector('#hand')),planBox:snap(document.querySelector('.planBox')),battleRail:snap(document.querySelector('.battleRail')),board:snap(document.querySelector('#board')),targetBox:snap(document.querySelector('#targetBox'))};
+            });
+            for(const s of g.slots){
+              s.intersections={};
+              for(const k of ['hand','planBox','battleRail','board','targetBox']) s.intersections[k]=overlap(s.element?.rect,g[k]?.rect);
+              s.centerHitOwnsSelectableSlot=s.element?.disabled===false?s.hitCenter?.owner?.jankenSlot===s.hand:null;
+              if(s.element?.disabled===false&&!s.centerHitOwnsSelectableSlot) throw new Error(`${name}: ${s.hand} hit owner ${JSON.stringify(s.hitCenter?.owner)}`);
+            }
+            g.handle.centerHitOwnsHandle=!!g.handle.hitCenter?.owner?.className?.includes('grJankenSlidePadHandle');
+            if(!g.handle.centerHitOwnsHandle) throw new Error(`${name}: handle hit owner`);
+            if(!g.expanded) throw new Error(`${name}: collapsed`);
+            await page.screenshot({path:`${out}/${name}-expanded.png`,fullPage:true,animations:'disabled'});
+            return g;
+          }
+
+          const browser=await chromium.launch({headless:true});
+          const result={schema:'gameroad.battle-janken-thumb-arc-use-site-evidence.r6',baseSha:'ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0',productHtmlMutation:false,gameplayMutation:false,captures:[]};
+          try{
+            for(const [name,width,height] of cases){
+              const context=await browser.newContext({viewport:{width,height}}),page=await context.newPage();
+              result.captures.push({name,...await capture(page,name)});
+              await context.close();
+            }
+          }finally{await browser.close()}
+          await fs.writeFile(`${out}/geometry.json`,JSON.stringify(result,null,2)+'\n');
+          NODE
+          node .r6-capture.mjs
+          rm -f .r6-capture.mjs
+          for f in 1280x720-expanded.png 667x375-expanded.png 390x844-expanded.png geometry.json; do test -s "evidence/battle-janken-thumb-arc-r6/$f"; done
+      - name: Final fence and commit
+        shell: bash
+        env:
+          BASE: ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0
+          BRANCH: sol/battle-janken-thumb-arc-r6-20260911
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$BASE" HEAD
+          rm -f .r6-capture.mjs .github/workflows/zz-temp-battle-janken-thumb-arc-r6.yml data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R6-20260911T2020-SOL-M8Q4N9.json
+          git add -A
+          mapfile -t a < <(git diff --cached --name-only "$BASE" | sort)
+          e=(browser/battle-janken-slidepad-runtime-mount.mjs evidence/battle-janken-thumb-arc-r6/1280x720-expanded.png evidence/battle-janken-thumb-arc-r6/390x844-expanded.png evidence/battle-janken-thumb-arc-r6/667x375-expanded.png evidence/battle-janken-thumb-arc-r6/geometry.json tests/battle-janken-slidepad-runtime-mount.test.mjs)
+          [ "${#a[@]}" -eq 6 ] || { printf 'bad count: %s\n' "${a[*]}"; exit 1; }
+          for i in 0 1 2 3 4 5; do [ "${a[$i]}" = "${e[$i]}" ] || { printf 'bad diff: %s\n' "${a[*]}"; exit 1; }; done
+          git config user.name gameroad-actions
+          git config user.email actions@users.noreply.github.com
+          git commit -m 'Battle SlidePad: thumb arc R6 current use-site candidate'
+          git push origin "HEAD:$BRANCH"

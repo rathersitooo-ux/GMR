@@ -1,0 +1,147 @@
+name: TEMP Battle self-deck live bind R3
+on:
+  push:
+    branches:
+      - sol/battle-self-deck-live-r3-20260911
+permissions:
+  contents: write
+jobs:
+  patch-test-commit:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify authorization lineage
+        run: |
+          set -euo pipefail
+          test "$(git merge-base HEAD 82e6bc10e52a7c1d176a7aaf3145ef58c1efab59)" = "82e6bc10e52a7c1d176a7aaf3145ef58c1efab59"
+          test -f data/preaction-authorizations/BATTLE-SELF-DECK-LIVE-R3-20260911T1350-SOL-Q8N4V12.json
+      - name: Apply bounded existing-consumer live bind
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          html_path = Path('browser/GAMEROAD.html')
+          html = html_path.read_text(encoding='utf-8')
+          summary_old = '<summary>対戦ログ</summary>'
+          if html.count(summary_old) != 1:
+              raise SystemExit(f'expected exactly one Battle log summary, got {html.count(summary_old)}')
+          if 'id="gameroadBattleSelfDeckLiveR3"' in html:
+              raise SystemExit('self-deck live R3 script already present')
+          if html.count('</body>') != 1:
+              raise SystemExit(f'expected exactly one body close, got {html.count("</body>")}')
+
+          html = html.replace(summary_old, '<summary>対戦ログ・残りデッキ</summary>', 1)
+          live_block = r'''
+<style id="gameroadBattleSelfDeckLiveR3Style">
+#battleLog [data-battle-remaining-deck]{display:grid;gap:4px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+#battleLog [data-battle-remaining-deck] b,#battleLog [data-battle-remaining-deck] span{display:block}
+</style>
+<script type="module" id="gameroadBattleSelfDeckLiveR3">
+import { renderOwnerSelfRemainingDeckFromLiveState } from './battle-self-deck-live-consumer.mjs';
+
+const details = document.getElementById('battleLogDetails');
+const logHost = document.getElementById('battleLog');
+if (details && logHost && details.dataset.selfDeckLiveBound !== '1') {
+  details.dataset.selfDeckLiveBound = '1';
+  let presentationRevision = 0;
+  const cardLabels = new Map((Array.isArray(window.__CARD_DATA__) ? window.__CARD_DATA__ : [])
+    .filter(card => card && card.id != null)
+    .map(card => [String(card.id), String(card.display_name || card.name || card.label || card.id)]));
+  const cardLabel = cardId => cardLabels.get(String(cardId)) || String(cardId);
+  const readState = () => window.__GAMEROAD_TEST__?.state || null;
+  const readViewer = state => {
+    const localPlayer = state?.match?.players?.[0];
+    if (localPlayer?.human !== true || typeof localPlayer?.id !== 'string' || !localPlayer.id) {
+      return { authenticated: false, id: '' };
+    }
+    return { authenticated: true, id: localPlayer.id };
+  };
+  const renderRequestedDeck = () => {
+    if (!details.open) return false;
+    const state = readState();
+    presentationRevision += 1;
+    return renderOwnerSelfRemainingDeckFromLiveState({
+      state,
+      viewer: readViewer(state),
+      revision: presentationRevision,
+      document,
+      hostId: 'battleLog',
+      cardLabel
+    });
+  };
+  details.addEventListener('toggle', () => {
+    if (details.open) queueMicrotask(renderRequestedDeck);
+  });
+  const logResetObserver = new MutationObserver(records => {
+    if (!details.open) return;
+    const publicLogWasReset = records.some(record =>
+      [...record.addedNodes].some(node => node.nodeType === Node.TEXT_NODE) ||
+      [...record.removedNodes].some(node => node.nodeType === Node.ELEMENT_NODE && node.matches?.('[data-battle-remaining-deck]'))
+    );
+    if (publicLogWasReset) queueMicrotask(renderRequestedDeck);
+  });
+  logResetObserver.observe(logHost, { childList: true });
+}
+</script>
+'''
+          html = html.replace('</body>', live_block + '\n</body>', 1)
+          html_path.write_text(html, encoding='utf-8')
+
+          build_path = Path('deploy/cloudflare/scripts/build.mjs')
+          build = build_path.read_text(encoding='utf-8')
+          owner_path = 'browser/battle-self-deck-owner-knowledge-adapter.mjs'
+          consumer_path = 'browser/battle-self-deck-live-consumer.mjs'
+          if owner_path in build or consumer_path in build:
+              raise SystemExit('one of the self-deck live dependencies is already packaged; fresh reconciliation required')
+          anchor = "  { option: 'remainingDeckInspectCoreSource', expected: 'expectedRemainingDeckInspectCoreBlob', source: 'browser/battle-self-deck-inspect-core.mjs', output: 'battle-self-deck-inspect-core.mjs', artifact: 'battle_self_deck_inspect_core', label: 'Battle viewer-safe remaining Deck inspect core', sourceFlag: '--remaining-deck-inspect-core-source', expectedFlag: '--expected-remaining-deck-inspect-core-blob' },\n"
+          if build.count(anchor) != 1:
+              raise SystemExit(f'expected exactly one remaining-deck package anchor, got {build.count(anchor)}')
+          additions = (
+              "  { source: 'browser/battle-self-deck-owner-knowledge-adapter.mjs', output: 'battle-self-deck-owner-knowledge-adapter.mjs', artifact: 'battle_self_deck_owner_knowledge_adapter', label: 'Battle owner-safe remaining Deck knowledge adapter' },\n"
+              "  { source: 'browser/battle-self-deck-live-consumer.mjs', output: 'battle-self-deck-live-consumer.mjs', artifact: 'battle_self_deck_live_consumer', label: 'Battle owner-safe remaining Deck live consumer' },\n"
+          )
+          build = build.replace(anchor, anchor + additions, 1)
+          build_path.write_text(build, encoding='utf-8')
+          PY
+      - name: Verify bounded behavior and package
+        run: |
+          set -euo pipefail
+          node --test tests/battle-self-deck-live-consumer.test.mjs
+          node tests/browser-static-check.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+          python - <<'PY'
+          from pathlib import Path
+          html=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          assert html.count('id="gameroadBattleSelfDeckLiveR3"') == 1
+          assert html.count('<summary>対戦ログ・残りデッキ</summary>') == 1
+          assert "details.addEventListener('toggle'" in html
+          assert "if (!details.open) return false" in html
+          assert "hostId: 'battleLog'" in html
+          assert "state?.match?.players?.[0]" in html
+          assert "localPlayer?.human !== true" in html
+          assert "opponent" not in html[html.index('id="gameroadBattleSelfDeckLiveR3"'):html.index('</script>', html.index('id="gameroadBattleSelfDeckLiveR3"'))]
+          build=Path('deploy/cloudflare/scripts/build.mjs').read_text(encoding='utf-8')
+          assert build.count('browser/battle-self-deck-owner-knowledge-adapter.mjs') == 1
+          assert build.count('browser/battle-self-deck-live-consumer.mjs') == 1
+          PY
+          git diff --check
+      - name: Final fence and commit product only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          rm .github/workflows/zz-temp-battle-self-deck-live-r3.yml
+          rm data/preaction-authorizations/BATTLE-SELF-DECK-LIVE-R3-20260911T1350-SOL-Q8N4V12.json
+          git add -A
+          changed="$(git diff --cached --name-only | sort)"
+          expected="$(printf '%s\n' browser/GAMEROAD.html deploy/cloudflare/scripts/build.mjs | sort)"
+          test "${changed}" = "${expected}"
+          git diff --cached --check
+          git config user.name gameroad-actions
+          git config user.email actions@users.noreply.github.com
+          git commit -m 'Battle: 残り山札を対戦ログから確認可能にする'
+          git push origin HEAD:sol/battle-self-deck-live-r3-20260911

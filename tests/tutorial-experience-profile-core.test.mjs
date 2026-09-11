@@ -272,7 +272,7 @@ test('without a ready profile canonical GAMEROAD help is preserved exactly', () 
   assert.equal(help.gameplayAuthorityMutated, false);
 });
 
-test('beginner help stays local and plain-language', () => {
+test('beginner Road help teaches bidirectional planning without changing Battle guidance', () => {
   const control = createTutorialExperienceProfileControl();
   control.chooseAudience('beginner');
   const help = projectTutorialExperienceHelp({
@@ -281,8 +281,21 @@ test('beginner help stays local and plain-language', () => {
     experienceProfile: control.profile(),
   });
   assert.equal(help.canonicalMessage, '手札からロードカードを1枚選ぶ');
-  assert.match(help.message, /まずは光っている場所から1枚選べばOK/);
+  assert.match(help.message, /順番は固定じゃない/);
+  assert.match(help.message, /ロードカードを先に触っても、移動から始めてもOK/);
+  assert.match(help.message, /使えるロードカードが光って浮く/);
+  assert.match(help.message, /ロードを触ればそのカードで進める範囲が分かる/);
+  assert.match(help.message, /最後に使う1枚は自分で選べばいい/);
+  assert.equal(help.autoExecute, false);
   assert.doesNotMatch(help.message, /PP|マナゾーン|エネルギー/);
+
+  const battleHelp = projectTutorialExperienceHelp({
+    canonicalMessage: '次に、別のバトルカードを1枚選ぶ',
+    focusRole: 'battle',
+    experienceProfile: control.profile(),
+  });
+  assert.match(battleHelp.message, /まずは光っている場所から1枚選べばOK/);
+  assert.doesNotMatch(battleHelp.message, /移動から始めても|使えるロードカード/);
 });
 
 test('each named supported card game adapts road, battle, and ready with different source-game coaching', () => {
@@ -314,6 +327,14 @@ test('each named supported card game adapts road, battle, and ready with differe
       assert.equal(help.sourceGameId, game.id, `${game.id}:${focusRole}`);
       assert.equal(help.canonicalMessage, canonicalMessage, `${game.id}:${focusRole}`);
       assert.match(help.message, stageSignals[game.id][index], `${game.id}:${focusRole}`);
+      if (focusRole === 'road') {
+        assert.match(help.message, /順番は固定じゃない/, game.id);
+        assert.match(help.message, /ロードを先に触っても移動から始めても/, game.id);
+        assert.match(help.message, /進むと使えるロードが絞られ/, game.id);
+        assert.match(help.message, /ロードを触るとそのカードで進める範囲が分かる/, game.id);
+        assert.match(help.message, /最後に使う1枚は自分で決める/, game.id);
+        assert.doesNotMatch(help.message, /先にロードを1枚選ぶ/, game.id);
+      }
       messages.push(help.message);
     }
     assert.equal(new Set(messages).size, 3, game.id);

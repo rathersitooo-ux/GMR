@@ -1,0 +1,20 @@
+{
+  "schema": "gameroad.preaction.v1",
+  "acquireKey": "BATTLE-SELF-DECK-LIVE-R2-20260911T1338-SOL-Q8N4V11",
+  "parentTask": "BATTLE-SELF-REMAINING-DECK-INSPECT-001",
+  "workUnit": "BATTLE_SELF_DECK_LIVE_DIRECT_CONSUMER_R1",
+  "classification": "EXISTING_REPAIR",
+  "baseSha": "8af2c9f887b47a09fbbb972cffd2463dae454f87",
+  "mutablePaths": [
+    "browser/GAMEROAD.html"
+  ],
+  "readOnlyAuthorities": [
+    "browser/battle-self-deck-live-consumer.mjs",
+    "browser/battle-self-deck-owner-knowledge-adapter.mjs",
+    "browser/battle-replay-live-adapter.mjs",
+    "browser/battle-self-deck-inspect-core.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "intent": "Reuse the already-merged PR#1530 owner-safe live consumer and bind it once to the existing explicit/on-demand Battle information log path. Do not create a second Deck store, privacy authority, renderer, or always-open panel. Build/package remains read-only while the current Title owner holds it.",
+  "acceptance": "The current local human owner can explicitly request remaining card identity x count from live state; order is hidden; opponent deck is never read; stale/unauthorized views clear; gameplay/rules/save/network/economy are unchanged. If exact HTML anchors are not uniquely proven, fail closed with product bytes 0."
+}

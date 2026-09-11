@@ -67,10 +67,12 @@ async function attachStateScreenshot(page, testInfo, stateName) {
 }
 
 async function bootCurrentBrowser(page) {
-  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'domcontentloaded' });
+  const response = await page.goto('/browser/GAMEROAD.html', { waitUntil: 'commit' });
   expect(response, 'main HTML response').not.toBeNull();
   expect(response.ok(), `main HTML status ${response.status()}`).toBeTruthy();
-  await page.waitForTimeout(1_000);
+
+  const home = page.locator('section[data-screen="home"]');
+  await expect(home).toBeVisible({ timeout: 15_000 });
 
   const doctype = await page.evaluate(() => document.doctype?.name?.toLowerCase() ?? '');
   expect(doctype).toBe('html');
@@ -79,8 +81,6 @@ async function bootCurrentBrowser(page) {
     const count = await page.locator(`section[data-screen="${screen}"]`).count();
     expect(count, `core screen ${screen}`).toBeGreaterThan(0);
   }
-
-  await expect(page.locator('section[data-screen="home"]')).toBeVisible();
 }
 
 function visibleHomeControl(page, target) {

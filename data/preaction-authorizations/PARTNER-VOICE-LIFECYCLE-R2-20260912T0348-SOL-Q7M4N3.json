@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-VOICE-LIFECYCLE-R2-20260912T0348-SOL-Q7M4N3",
+  "taskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "workUnitKey": "PARTNER_VOICE_RESPONSE_LIFECYCLE_R1",
+  "acquireKey": "PARTNER-VOICE-LIFECYCLE-R2-20260912T0348-SOL-Q7M4N3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R1_LARGE_SHELL_WHOLE_FILE_WRITE_UNSAFE_PC_OFFLINE_20260912",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXACT_STRING_ANCHORED_BOUNDED_ACTIONS_WRITER_PLUS_FOCUSED_NODE_TESTS",
+  "proceedToken": "PROCEED|PARTNER-VOICE-LIFECYCLE-R2-20260912T0348-SOL-Q7M4N3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-voice-lifecycle|bounded-actions-writer|active-lease",
+  "authorizationBaseSha": "a4f819ef5d1fda3e4e2efe0181e77ed5b19fae18",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-VTUBER-PRODUCTION-INTEGRATION-001",
+  "leaseWorkUnitKey": "PARTNER_VOICE_RESPONSE_LIFECYCLE_R1",
+  "leaseAcquireKey": "PARTNER-VOICE-LIFECYCLE-R2-20260912T0348-SOL-Q7M4N3",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 03:48 JST",
+  "leaseUntilJst": "2026-09-12 04:48 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1034:L1034",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR existing branch sol/partner-voice-response-lifecycle-r1-20260912; browser/partner-saasuna-voice-runtime.mjs; tests/partner-saasuna-voice-runtime.test.mjs; browser/partner-shell-runtime-mount.mjs; tests/partner-shell-runtime-mount.test.mjs; transient .github/workflows/zz-temp-partner-voice-lifecycle-r2.yml; own transient data/preaction-authorizations/PARTNER-VOICE-LIFECYCLE-R2-20260912T0348-SOL-Q7M4N3.json; cleanup prior R1 PRE_ACTION manifest. READ_ONLY browser/partner-conversation-core.mjs; browser/partner-vtuber-public-context-core.mjs; provider/source/memory/persona/gameplay/rules/save/economy/network; browser/GAMEROAD.html; deploy build.",
+  "solutionSignature": "PARTNER_EXISTING_VOICE_PREVIEW_RESPONSE_LIFECYCLE_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "AIAVATARKIT_AITUBERKIT_CROSSCHECK_PLUS_CURRENT_RUNTIME_ACTUAL_20260912",
+  "solutionSearchEvidence": [
+    "Existing Saasuna browser voice preview is the actual voice consumer and already owns synthesis/cancel behavior.",
+    "Existing Partner shell is the actual UI consumer and currently lacks completion/error settlement.",
+    "Existing VTuber public transport already owns session/order/retry/dedup and remains read-only.",
+    "Connected local device is unavailable, so a branch-only exact-anchor GitHub Actions writer is the narrow safe transport for the large shell file.",
+    "No AITuberKit v2 code is copied; behavior is independently implemented against GAMEROAD current seams."
+  ],
+  "scope": [
+    "browser/partner-saasuna-voice-runtime.mjs",
+    "tests/partner-saasuna-voice-runtime.test.mjs",
+    "browser/partner-shell-runtime-mount.mjs",
+    "tests/partner-shell-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-partner-voice-lifecycle-r2.yml"
+  ],
+  "leaseScope": [
+    "browser/partner-saasuna-voice-runtime.mjs",
+    "tests/partner-saasuna-voice-runtime.test.mjs",
+    "browser/partner-shell-runtime-mount.mjs",
+    "tests/partner-shell-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-partner-voice-lifecycle-r2.yml"
+  ]
+}

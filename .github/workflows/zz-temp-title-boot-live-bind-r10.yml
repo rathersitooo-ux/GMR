@@ -22,14 +22,15 @@ jobs:
         run: |
           set -euo pipefail
           AUTH_BASE='ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0'
-          EXPECTED_PARENT='489068c17176d6dc04053a2595bf55e89d531709'
+          EXPECTED_PARENT='8b3d9bc6201130c9c4ecf4014a6320b78d81f4e0'
           BRANCH='sol/title-boot-live-bind-r10-20260911'
           test "$(git rev-parse HEAD^)" = "$EXPECTED_PARENT"
           git fetch origin main "$BRANCH"
           test "$(git rev-parse origin/main)" = "$AUTH_BASE"
           test "$(git rev-parse origin/$BRANCH)" = "$(git rev-parse HEAD)"
-          git diff --name-only "$AUTH_BASE" HEAD > /tmp/preaction-changed.txt
-          node tools/preaction-authorization-validator.mjs --base "$AUTH_BASE" --head HEAD --changed /tmp/preaction-changed.txt
+          HEAD_SHA="$(git rev-parse HEAD)"
+          git diff --name-only "$AUTH_BASE" "$HEAD_SHA" > /tmp/preaction-changed.txt
+          node tools/preaction-authorization-validator.mjs --base "$AUTH_BASE" --head "$HEAD_SHA" --changed /tmp/preaction-changed.txt
 
       - name: Apply bounded existing-runtime repair
         shell: bash

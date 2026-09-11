@@ -1,0 +1,50 @@
+name: TEMP Battle self-deck live bind R2
+on:
+  push:
+    branches:
+      - sol/battle-self-deck-live-r2-20260911
+permissions:
+  contents: read
+jobs:
+  inspect:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify exact base lineage and PRE_ACTION
+        run: |
+          test "$(git merge-base HEAD 8af2c9f887b47a09fbbb972cffd2463dae454f87)" = "8af2c9f887b47a09fbbb972cffd2463dae454f87"
+          test -f data/preaction-authorizations/BATTLE-SELF-DECK-LIVE-R2-20260911T1338-SOL-Q8N4V11.json
+      - name: Inspect exact live HTML anchors
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('browser/GAMEROAD.html')
+          text=p.read_text(encoding='utf-8')
+          print('HTML_BYTES', len(text.encode('utf-8')))
+          patterns=[
+            'battleLog',
+            'renderBattle',
+            'battleScreenRuntime',
+            'state.match',
+            'const me',
+            'let me',
+            'human===true',
+            'human === true',
+            'battle-self-deck',
+            'type="module"',
+          ]
+          for pat in patterns:
+            hits=[]; start=0
+            while True:
+              i=text.find(pat,start)
+              if i<0: break
+              hits.append(i); start=i+len(pat)
+            print(f'PATTERN {pat!r} COUNT {len(hits)} HITS {hits[:20]}')
+            for n,i in enumerate(hits[:8]):
+              lo=max(0,i-700); hi=min(len(text),i+1200)
+              snippet=text[lo:hi].replace('\x00','')
+              print(f'--- {pat} #{n+1} @{i} ---')
+              print(snippet)
+              print('--- END ---')
+          PY

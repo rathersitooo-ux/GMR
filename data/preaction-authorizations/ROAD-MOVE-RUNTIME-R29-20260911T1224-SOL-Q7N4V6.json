@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R29-20260911T1224-SOL-Q7N4V6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R29-FRESH-MAIN-TEST-ONLY-REBUILD",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R27-PINNED-LIVE-REGRESSION",
+  "authorizationBaseSha": "3cbdab7b834728c0733459e4bda2d2523bd38e3e",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1003:L1003",
+  "leaseUntilJST": "2026-09-11 13:24 JST",
+  "scope": [
+    "tests/road-move-bidirectional-live-r27.spec.mjs",
+    ".github/workflows/zz-temp-road-move-r29.yml",
+    "data/preaction-authorizations/ROAD-MOVE-RUNTIME-R29-20260911T1224-SOL-Q7N4V6.json"
+  ],
+  "leaseScope": [
+    "tests/road-move-bidirectional-live-r27.spec.mjs",
+    ".github/workflows/zz-temp-road-move-r29.yml",
+    "data/preaction-authorizations/ROAD-MOVE-RUNTIME-R29-20260911T1224-SOL-Q7N4V6.json"
+  ],
+  "leaseExactMutableResources": [
+    "tests/road-move-bidirectional-live-r27.spec.mjs",
+    ".github/workflows/zz-temp-road-move-r29.yml",
+    "data/preaction-authorizations/ROAD-MOVE-RUNTIME-R29-20260911T1224-SOL-Q7N4V6.json"
+  ],
+  "reuseDiscovery": {
+    "status": "REUSE_EXISTING_TEST",
+    "evidence": "R27 test blob 5b027908a5b60c7c5c3810e06687584284f4a999; R28 branch Actions runs=0"
+  },
+  "note": "Evidence-only continuation on fresh main. browser/GAMEROAD.html and Road core are READ_ONLY due current shared HTML owners. No Battle-card/Janken/gameplay/rules/save/economy/network mutation."
+}

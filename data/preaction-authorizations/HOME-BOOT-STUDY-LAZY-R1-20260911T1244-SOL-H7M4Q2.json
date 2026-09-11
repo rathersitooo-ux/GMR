@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "HOME-BOOT-STUDY-LAZY-R1-20260911T1244-SOL-H7M4Q2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "HOME_BOOT_OPTIONAL_STUDY_LAZYLOAD_R1",
+  "acquireKey": "HOME-BOOT-STUDY-LAZY-R1-20260911T1244-SOL-H7M4Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BFI_CURRENT_RUN34557957267_3VIEW_STALL_PLUS_HISTORICAL_SUCCESS_RUN33984044454",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_TRACE_PENDING_STUDY_GRAPH_AND_SUCCESS_BASELINE_BEFORE_STATIC_STUDY_BOOT_DEPENDENCY",
+  "proceedToken": "PROCEED|HOME-BOOT-STUDY-LAZY-R1-20260911T1244-SOL-H7M4Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|home-boot-study-lazy-r1|reuse-existing-home-shim|active-lease",
+  "authorizationBaseSha": "8af2c9f887b47a09fbbb972cffd2463dae454f87",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "HOME_BOOT_OPTIONAL_STUDY_LAZYLOAD_R1",
+  "leaseAcquireKey": "HOME-BOOT-STUDY-LAZY-R1-20260911T1244-SOL-H7M4Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-11 12:44 JST",
+  "leaseUntilJst": "2026-09-11 13:44 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1008:L1008",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch work/home-boot-study-lazy-r1-20260911; browser/home-boot-runtime-mount.mjs; transient data/preaction-authorizations/HOME-BOOT-STUDY-LAZY-R1-20260911T1244-SOL-H7M4Q2.json only. Study/Rogue/Home base/GAMEROAD.html/gameplay/rules/save/economy/network READ_ONLY.",
+  "solutionSignature": "HOME_BOOT_OPTIONAL_STUDY_LAZY_MOUNT_EXISTING_SHIM_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_HOME_SHIM_STATIC_STUDY_IMPORT_AND_R88_SUCCESS_BASELINE",
+  "solutionSearchEvidence": [
+    "Current Home shim already owns the Study mount seam; no second Home or Study runtime is introduced.",
+    "Historical public BFI run 33984044454 passed the same three-viewport Home to four-player Honey to Result to Home path before Study became a static boot dependency.",
+    "Current exact-public BFI run 34557957267 stalls in all three viewports while Study graph modules remain pending, so the existing mount seam is adapted rather than rebuilding gameplay or UI."
+  ],
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs"
+  ]
+}

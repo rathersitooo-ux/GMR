@@ -1,0 +1,53 @@
+name: TEMP Browser BFI Home Legacy R6
+
+on:
+  push:
+    branches:
+      - repair/browser-home-legacy-r6-20260911
+    paths:
+      - .github/workflows/zz-temp-browser-bfi-home-legacy-r6.yml
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect exact retired producer contexts
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('browser/GAMEROAD.html')
+          s = p.read_text(encoding='utf-8')
+          targets = ['codexHomeVisualLayer', 'codexPartnerChip', 'codexBattleCta']
+          print('FILE_BYTES', len(s.encode('utf-8')))
+          for target in targets:
+              variants = [f'id="{target}"', f"id='{target}'"]
+              hits = []
+              for needle in variants:
+                  start = 0
+                  while True:
+                      i = s.find(needle, start)
+                      if i < 0:
+                          break
+                      hits.append(i)
+                      start = i + len(needle)
+              hits = sorted(set(hits))
+              print(f'TARGET {target} COUNT {len(hits)} POS {hits}')
+              for n, i in enumerate(hits, 1):
+                  a = max(0, i - 900)
+                  b = min(len(s), i + 1500)
+                  print(f'--- {target} HIT {n} CONTEXT START ---')
+                  print(s[a:b])
+                  print(f'--- {target} HIT {n} CONTEXT END ---')
+          print('SLIDEPAD_COUNT', s.count('SlidePad'))
+          print('DATA_HOME_TARGET_COUNT', s.count('data-home-target'))
+          if not all(sum(s.count(v) for v in [f'id="{t}"', f"id='{t}'"]) == 1 for t in targets):
+              raise SystemExit('FAIL_CLOSED: each retired producer id must occur exactly once before mutation')
+          if s.count('SlidePad') < 1 or s.count('data-home-target') < 1:
+              raise SystemExit('FAIL_CLOSED: canonical Home route markers missing')
+          PY

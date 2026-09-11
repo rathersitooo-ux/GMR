@@ -16,7 +16,7 @@ jobs:
         with:
           ref: sol/records-used-deck-r12-20260911
 
-      - name: Apply exact candidate and runner-only self-stop harness
+      - name: Apply exact candidate and delayed runner-only self-stop harness
         shell: bash
         run: |
           set -euo pipefail
@@ -29,10 +29,9 @@ jobs:
           d="d.className='record';d.__gameroadHistoryEntry=h;d.innerHTML=`<b>${h.mode.toUpperCase()} / ${h.rank}位</b><span>${h.rounds}巡</span>`"
           if s.count(a)!=1 or s.count(c)!=1: raise SystemExit(f'anchors producer={s.count(a)} row={s.count(c)}')
           s=s.replace(a,b,1).replace(c,d,1)
-          marker='<script data-records-r12-proof>setTimeout(()=>window.stop(),0)</script>'
+          marker='<script data-records-r12-proof>setTimeout(()=>window.stop(),3500)</script>'
           if '</body>' not in s: raise SystemExit('body close missing')
-          s=s.replace('</body>',marker+'</body>',1)
-          p.write_text(s,encoding='utf-8')
+          p.write_text(s.replace('</body>',marker+'</body>',1),encoding='utf-8')
           PY
           git diff --check
           node tests/browser-static-check.mjs
@@ -57,7 +56,7 @@ jobs:
             await page.route('**/gameroad-version.json*', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({build_id:'records-r12-evidence'})}));
             const response=await page.goto('http://127.0.0.1:4173/browser/GAMEROAD.html',{waitUntil:'commit'});
             expect(response?.ok()).toBeTruthy();
-            await page.waitForTimeout(1200);
+            await page.waitForTimeout(4500);
             const boot=await page.evaluate(()=>({readyState:document.readyState,hasTestApi:Boolean(window.__GAMEROAD_TEST__),screenCount:document.querySelectorAll('section[data-screen]').length,proofHarness:Boolean(document.querySelector('[data-records-r12-proof]'))}));
             expect(boot.hasTestApi,JSON.stringify(boot)).toBeTruthy(); expect(boot.screenCount,JSON.stringify(boot)).toBeGreaterThan(0); expect(boot.proofHarness).toBeTruthy();
             const driven=await page.evaluate(async()=>{
@@ -69,7 +68,7 @@ jobs:
               const before=[...(t.state.history?.[0]?.deckStartSnapshot?.deck?.main??[])]; let b=null;
               for(let o=1;o<=8;o++){const x=make(o);if(x.length===40&&JSON.stringify(x)!==JSON.stringify(a)&&t.deckValidate({main:x,ex:[]},{forBattle:true}).ok){b=x;break}}
               if(!b)return{ok:false,stage:'b',reached}; t.deckSetDraft(b,[]); const committedB=t.deckCommit(); const after=[...(t.state.history?.[0]?.deckStartSnapshot?.deck?.main??[])],current=[...t.deckSaved().main];
-              const aOnly=a.find(id=>!b.includes(id))??null,bOnly=b.find(id=>!a.includes(id))??null; t.show('records'); const row=document.querySelector('#recordsList .record'), selectable=row?.dataset.recordsSelectable??null,bound=Boolean(row?.__gameroadHistoryEntry); row?.click(); const detail=document.querySelector('#recordsMatchDetail'),text=detail?.innerText??'';
+              const aOnly=a.find(id=>!b.includes(id))??null,bOnly=b.find(id=>!a.includes(id))??null; t.show('records'); await new Promise(r=>setTimeout(r,120)); const row=document.querySelector('#recordsList .record'), selectable=row?.dataset.recordsSelectable??null,bound=Boolean(row?.__gameroadHistoryEntry); row?.click(); await new Promise(r=>setTimeout(r,50)); const detail=document.querySelector('#recordsMatchDetail'),text=detail?.innerText??'';
               return{ok:true,reached,matchId:match?.id??null,committedB,a,b,before,after,current,aOnly,bOnly,selectable,bound,detailHidden:detail?.hidden??true,text};
             });
             expect(driven.ok,JSON.stringify(driven)).toBeTruthy(); expect(driven.reached,JSON.stringify(driven)).toBeTruthy(); expect(driven.committedB).toBeTruthy();

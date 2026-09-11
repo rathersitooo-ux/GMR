@@ -14,20 +14,38 @@ permissions:
   contents: read
 
 jobs:
-  road-current-home-seam-diagnosis:
+  road-bidirectional-regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 12
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract exact current Home Battle entry markup
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Playwright runner
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== home action markup 6250-6365 ==='
-          nl -ba browser/GAMEROAD.html | sed -n '6250,6365p'
-          echo '=== goSetup occurrences with context ==='
-          grep -n -B8 -A12 'goSetup' browser/GAMEROAD.html | head -120 || true
-          echo '=== visible Battle-labelled controls with context ==='
-          grep -n -B5 -A8 -E '>[^<]*(バトル|対戦)[^<]*<' browser/GAMEROAD.html | head -180 || true
+          npm install --no-save @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run fixed Road bidirectional regression
+        shell: bash
+        run: |
+          set -uo pipefail
+          npx playwright test tests/road-move-bidirectional-live-r27.spec.mjs --config=playwright.full-interaction.config.mjs --reporter=line 2>&1 | tee road-move-r29.log
+          exit ${PIPESTATUS[0]}
+
+      - name: Upload Road evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: road-move-r29-${{ github.run_id }}
+          path: |
+            road-move-r29.log
+            test-results
+          if-no-files-found: warn

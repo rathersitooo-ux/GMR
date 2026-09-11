@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SELF-DECK-LIVE-R3-20260911T1350-SOL-Q8N4V12",
+  "taskId": "BATTLE-SELF-REMAINING-DECK-INSPECT-001",
+  "workUnitKey": "BATTLE_SELF_DECK_LIVE_DIRECT_CONSUMER_R1",
+  "acquireKey": "BATTLE-SELF-DECK-LIVE-R3-20260911T1350-SOL-Q8N4V12",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R2_EXACT_HTML_SEAM_AND_PR1530_CONSUMER_READBACK",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "ACTIONS_RUN_34563591809_EXACT_CURRENT_HTML_INSPECTION_SUCCESS",
+  "proceedToken": "PROCEED|BATTLE-SELF-DECK-LIVE-R3-20260911T1350-SOL-Q8N4V12|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|EXISTING_REPAIR_REUSE_ONLY",
+  "authorizationBaseSha": "82e6bc10e52a7c1d176a7aaf3145ef58c1efab59",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-SELF-REMAINING-DECK-INSPECT-001",
+  "leaseWorkUnitKey": "BATTLE_SELF_DECK_LIVE_DIRECT_CONSUMER_R1",
+  "leaseAcquireKey": "BATTLE-SELF-DECK-LIVE-R3-20260911T1350-SOL-Q8N4V12",
+  "leaseSnapshotReadbackAtJst": "2026-09-11 13:50 JST",
+  "leaseUntilJst": "2026-09-11 14:50 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1014:L1014",
+  "leaseExactMutableResources": "browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs; .github/workflows/zz-temp-battle-self-deck-live-r3.yml",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-self-deck-live-r3.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-self-deck-live-r3.yml"
+  ],
+  "solutionSignature": "PR1530_OWNER_SAFE_CONSUMER__EXISTING_BATTLE_LOG_DISCLOSURE__EXISTING_CLOUDFLARE_ARTIFACT_SPECS",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R2_CURRENT_ACTUAL_REUSE_CENSUS",
+  "solutionSearchEvidence": [
+    "browser/battle-self-deck-live-consumer.mjs already merged on main",
+    "browser/GAMEROAD.html already has battleLogDetails and battleLog",
+    "deploy/cloudflare/scripts/build.mjs already packages underlying remaining-deck core/replay adapter"
+  ]
+}

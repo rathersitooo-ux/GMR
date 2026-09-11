@@ -89,6 +89,10 @@ jobs:
           p=Path("tests/partner-tea-runtime-mount.test.mjs")
           s=p.read_text(encoding="utf-8")
           s=s.replace("  createPartnerConversationHubInput,","  createPartnerConversationHubInput,\n  currentPartnerCostumeServices,",1)
+          s=s.replace("assert.deepEqual(plan.allowedActions, ['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'BACK_HUB']);","assert.deepEqual(plan.allowedActions, ['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'OPEN_COSTUME', 'BACK_HUB']);",1)
+          s=s.replace("test('Partner Hub dispatcher exposes only detail, conversation and return-to-hub actions', () => {","test('Partner Hub dispatcher exposes detail, conversation, costume gate and return-to-hub actions', () => {",1)
+          s=s.replace("assert.deepEqual(PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS, ['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'BACK_HUB']);","assert.deepEqual(PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS, ['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'OPEN_COSTUME', 'BACK_HUB']);",1)
+          s=s.replace("for (const action of ['OPEN_LIST', 'OPEN_COSTUME', 'OPEN_FORMATION', 'OPEN_STRATEGY', 'OPEN_DIALOGUE_FEEDBACK', 'OPEN_TEA']) {","for (const action of ['OPEN_LIST', 'OPEN_FORMATION', 'OPEN_STRATEGY', 'OPEN_DIALOGUE_FEEDBACK', 'OPEN_TEA']) {",1)
           if "costume services fail closed without explicit catalog and owned authority" not in s:
             s += """\n\ntest('costume services fail closed without explicit catalog and owned authority', () => {
             assert.equal(currentPartnerCostumeServices({}), null);

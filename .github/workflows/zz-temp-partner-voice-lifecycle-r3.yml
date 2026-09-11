@@ -1,0 +1,47 @@
+name: temp-partner-voice-lifecycle-r3-format
+
+on:
+  push:
+    branches:
+      - sol/partner-voice-response-lifecycle-r3-20260912
+    paths:
+      - .github/workflows/zz-temp-partner-voice-lifecycle-r3.yml
+
+permissions:
+  contents: write
+
+jobs:
+  format-test-cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Configure repository hooks
+        run: |
+          git config core.hooksPath .githooks
+          test "$(git config --get core.hooksPath)" = ".githooks"
+      - name: Normalize Partner shell indentation
+        run: |
+          sed -i '211,235 s/^/  /' browser/partner-shell-runtime-mount.mjs
+          sed -i '373,379 s/^/  /' browser/partner-shell-runtime-mount.mjs
+          sed -i '397,417 s/^/  /' browser/partner-shell-runtime-mount.mjs
+          sed -i '419 s/^/  /' browser/partner-shell-runtime-mount.mjs
+          sed -i '467,468 s/^/  /' browser/partner-shell-runtime-mount.mjs
+      - name: Focused Partner voice lifecycle tests
+        run: node --test tests/partner-saasuna-voice-runtime.test.mjs tests/partner-shell-runtime-mount.test.mjs
+      - name: Commit formatting repair
+        run: |
+          git config user.name "gameroad-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add browser/partner-shell-runtime-mount.mjs
+          git diff --cached --quiet && { echo "no formatting diff"; exit 1; }
+          git commit -m "Partner: 音声ライフサイクル差分の整形を正規化"
+      - name: Cleanup transient formatter
+        run: |
+          rm -f .github/workflows/zz-temp-partner-voice-lifecycle-r3.yml
+          git add -A
+          git commit -m "chore: cleanup Partner voice lifecycle formatter"
+      - name: Push authorized branch
+        run: git push origin "HEAD:${GITHUB_REF_NAME}"

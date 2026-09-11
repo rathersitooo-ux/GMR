@@ -195,7 +195,7 @@ test('isolated rollback drill restores a validated package and rejects corruptio
   const options = { source, dist: snapshot, expectedBlob: gitBlobSha1(browserBytes), sourceCommit: SOURCE_COMMIT, publishedAt: PUBLISHED_AT };
   for (const dep of dependencyContract) {
     const depPath = path.join(dir, `snapshot-${dep.file}`); const bytes = Buffer.from(dep.fixture, 'utf8'); await mkdir(path.dirname(depPath), { recursive: true }); await writeFile(depPath, bytes);
-    options[dep.sourceArg] = dep.currentBlob; currentBytes.set(dep.file, bytes);
+    options[dep.sourceArg] = depPath; options[dep.expectedArg] = gitBlobSha1(bytes);
   }
   await buildPackage(options);
   const trustedManifestBytes = await readFile(path.join(snapshot, 'manifest.json')); const trustedHeadersBytes = await readFile(path.join(snapshot, '_headers'));

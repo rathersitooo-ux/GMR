@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "RECORDS-HISTORY-DECK-R12-20260911T1202-SOL-H7Q4N5",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "RECORDS_MATCH_HISTORY_DECK_SNAPSHOT_LIVE",
+  "acquireKey": "RECORDS-HISTORY-DECK-R12-20260911T1202-SOL-H7Q4N5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_HTML_AND_BFI_BLOBS_UNCHANGED_FROM_R9_BASE_20260911T1202JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R9_LOCAL_EXACT_TWO_HTML_REPLACEMENTS_PLUS_FOCUSED_BFI_TEST_DISCOVERY",
+  "proceedToken": "PROCEED|RECORDS-HISTORY-DECK-R12-20260911T1202-SOL-H7Q4N5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|records-history-deck|adapt|active-lease",
+  "authorizationBaseSha": "454b742024115e57c6c6bc89c3b6972fcd94703b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "RECORDS_MATCH_HISTORY_DECK_SNAPSHOT_LIVE",
+  "leaseAcquireKey": "RECORDS-HISTORY-DECK-R12-20260911T1202-SOL-H7Q4N5",
+  "leaseSnapshotReadbackAtJst": "2026-09-11 12:02 JST",
+  "leaseUntilJst": "2026-09-11 13:02 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1001:L1001",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/records-used-deck-r12-20260911 from exact current main; browser/GAMEROAD.html; tests/browser-full-interaction-state-sequence.spec.mjs; transient .github/workflows/zz-temp-records-history-deck-r12.yml; own data/preaction-authorizations/RECORDS-HISTORY-DECK-R12-20260911T1202-SOL-H7Q4N5.json; Issue#1353 result/comment. browser/profile-presentation-runtime-mount.mjs READ_ONLY.",
+  "solutionSignature": "RECORDS_HISTORY_EXISTING_MATCH_START_DECK_TO_EXISTING_DETAIL_VIEWER_BRIDGE_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_DECK_START_SNAPSHOT_AND_RECORDS_DETAIL_VIEWER_REUSE_20260911",
+  "solutionSearchEvidence": [
+    "Current match start already captures the authoritative Deck into state.match.deckStartSnapshot.",
+    "Existing Records detail viewer already consumes historyEntry.deckStartSnapshot and must remain the sole presentation consumer.",
+    "Only the existing endMatch history producer and existing Records row handoff are disconnected; no second history store or current-Deck inference is needed.",
+    "The temporary workflow reuses the repository's established bounded Actions surgical-writer pattern because Remote Desktop is offline and the 11.9 MB HTML cannot be safely round-tripped through the connector."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction-state-sequence.spec.mjs",
+    ".github/workflows/zz-temp-records-history-deck-r12.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction-state-sequence.spec.mjs",
+    ".github/workflows/zz-temp-records-history-deck-r12.yml"
+  ]
+}

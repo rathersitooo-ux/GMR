@@ -1,0 +1,126 @@
+name: TEMP Browser BFI Canonical Player Path R3
+
+on:
+  push:
+    branches:
+      - work/browser-bfi-canonical-r3-20260911
+    paths:
+      - '.github/workflows/zz-temp-browser-bfi-canonical-r3.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  public-player-path:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GAMEROAD_PUBLIC_BASE_URL: https://gameroad-browser-r5.pages.dev
+    steps:
+      - name: Checkout exact evidence branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Bind current public build
+        id: public_manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public-origin-metadata
+          curl --fail --silent --show-error --location \
+            --header 'Accept-Encoding: identity' \
+            --retry 4 --retry-delay 2 --retry-connrefused \
+            --max-time 30 \
+            --output public-origin-metadata/gameroad-version.json \
+            "${GAMEROAD_PUBLIC_BASE_URL}/gameroad-version.json"
+          OBSERVED_BUILD_ID="$(node -e "const fs=require('node:fs');const m=JSON.parse(fs.readFileSync('public-origin-metadata/gameroad-version.json','utf8'));if(!m.build_id)process.exit(2);process.stdout.write(String(m.build_id));")"
+          echo "observed_build_id=${OBSERVED_BUILD_ID}" >> "$GITHUB_OUTPUT"
+          printf 'source_sha=%s\nobserved_build_id=%s\npublic_origin=%s\n' "$GITHUB_SHA" "$OBSERVED_BUILD_ID" "$GAMEROAD_PUBLIC_BASE_URL" > public-origin-metadata/binding.txt
+          echo "Public GAMEROAD build_id=${OBSERVED_BUILD_ID}"
+
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+
+      - name: Prepare temporary canonical-player R19 runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .r3-public
+          node <<'NODE'
+          const fs = require('node:fs');
+          const sourcePath = 'tests/browser-full-interaction.spec.mjs';
+          const targetPath = '.r3-public/browser-full-interaction.spec.mjs';
+          let source = fs.readFileSync(sourcePath, 'utf8');
+          if (!source.includes("'/browser/GAMEROAD.html'")) throw new Error('current Browser entry path missing');
+          source = source.replaceAll("'/browser/GAMEROAD.html'", "'/'");
+
+          const installNeedle = "async function installLegalBattleDeck(page) {\n  return page.evaluate(() => {";
+          const installReplacement = "async function installLegalBattleDeck(page) {\n  await page.waitForFunction(() => Boolean(window.__GAMEROAD_TEST__?.deckPublic && Array.isArray(window.__CARD_DATA__)), null, { timeout: 15000 });\n  return page.evaluate(() => {";
+          if (!source.includes(installNeedle)) throw new Error('installLegalBattleDeck anchor missing');
+          source = source.replace(installNeedle, installReplacement);
+
+          const testAnchor = "test('R19 reaches Result from visible four-player Honey Hunt and returns Home'";
+          const testAt = source.indexOf(testAnchor);
+          if (testAt < 0) throw new Error('R19 anchor missing');
+          const setupNeedle = "const setupGo = visibleOperationGo(page, 'setup');";
+          const setupAt = source.indexOf(setupNeedle, testAt);
+          if (setupAt < 0) throw new Error('R19 setup locator anchor missing');
+          const setupReplacement = "const setupGo = page.locator('[data-home-target=\"setup\"]:visible').first();";
+          source = source.slice(0, setupAt) + setupReplacement + source.slice(setupAt + setupNeedle.length);
+          fs.writeFileSync(targetPath, source);
+          NODE
+
+          cat > .r3-public/playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          import baseConfig from '../playwright.full-interaction.config.mjs';
+
+          const publicProjects = (baseConfig.projects ?? [])
+            .filter((project) => !project.grep)
+            .map((project) => ({ name: project.name, use: project.use }));
+
+          export default defineConfig({
+            testDir: '.',
+            testMatch: 'browser-full-interaction.spec.mjs',
+            grep: /R19 reaches Result from visible four-player Honey Hunt and returns Home/,
+            timeout: 240_000,
+            expect: { timeout: 7_000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            outputDir: '../test-results/r3-public',
+            reporter: [
+              ['line'],
+              ['html', { outputFolder: '../playwright-report-r3-public', open: 'never' }],
+              ['json', { outputFile: '../test-results/r3-public/report.json' }],
+            ],
+            use: {
+              ...baseConfig.use,
+              baseURL: process.env.GAMEROAD_PUBLIC_BASE_URL,
+              trace: 'retain-on-failure',
+              screenshot: 'only-on-failure',
+              video: 'off',
+            },
+            projects: publicProjects,
+          });
+          EOF
+
+      - name: Run current public player path through canonical Home Battle control
+        run: npx playwright test --config=.r3-public/playwright.config.mjs --workers=1
+
+      - name: Upload same-path evidence
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-bfi-canonical-r3-${{ github.run_id }}
+          path: |
+            playwright-report-r3-public/
+            test-results/r3-public/
+            public-origin-metadata/
+          if-no-files-found: error
+          retention-days: 7

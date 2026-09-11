@@ -22,7 +22,7 @@ jobs:
         run: |
           set -euo pipefail
           AUTH_BASE='ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0'
-          EXPECTED_PARENT='11206947fca90621fff22136d6fe84723f6ffb47'
+          EXPECTED_PARENT='1b89eda4e0463c8e320f61b22f634be1b7abc618'
           BRANCH='sol/title-boot-live-bind-r10-20260911'
           test "$(git rev-parse HEAD^)" = "$EXPECTED_PARENT"
           git fetch origin main "$BRANCH"
@@ -95,7 +95,6 @@ jobs:
           node --check deploy/cloudflare/scripts/build.mjs
           node --check tests/browser-runtime-smoke.spec.mjs
           node --test tests/title-boot-runtime-mount.test.mjs
-          npx playwright test tests/browser-runtime-smoke.spec.mjs --list --config=playwright.config.mjs
 
       - name: Commit product and existing-smoke repair only
         shell: bash

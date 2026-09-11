@@ -1,0 +1,18 @@
+{
+  "schema": "gameroad.preaction.v1",
+  "acquireKey": "BROWSER-BFI-CANONICAL-PATH-R3-20260911T1345-SOL-H6K2P1",
+  "parentTask": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnit": "BROWSER_PUBLIC_PLAYER_PATH_BOOT_READINESS_R1",
+  "classification": "EXISTING_REPAIR",
+  "baseSha": "8af2c9f887b47a09fbbb972cffd2463dae454f87",
+  "mutablePaths": [
+    ".github/workflows/zz-temp-browser-bfi-canonical-r3.yml"
+  ],
+  "readOnlyAuthorities": [
+    "tests/browser-full-interaction.spec.mjs",
+    "browser/GAMEROAD.html",
+    ".github/workflows/browser-full-interaction.yml"
+  ],
+  "intent": "Continue the same canonical public player path without masking the discovered product defect. Use the current Browser Full Interaction R19 test only as a read-only donor, patch only a temporary runner copy so Setup is entered through the canonical visible Home SlidePad control [data-home-target=setup], and observe the next actual public player-facing blocker. The duplicate legacy codexBattleCta remains explicitly unresolved because browser/GAMEROAD.html has a valid active owner.",
+  "acceptance": "On the exact current public build, execute Home -> Setup -> visible 4-player Honey Hunt -> Result -> Home across the existing desktop, phone and short-landscape viewports as far as current product behavior permits; preserve screenshots/traces for the first actual failure. Product/runtime/gameplay bytes remain unchanged."
+}

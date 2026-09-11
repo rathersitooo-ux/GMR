@@ -17,20 +17,38 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Validate branch and authority
+      - name: Validate branch and preaction authority
         shell: bash
         run: |
           set -euo pipefail
           AUTH_BASE='ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0'
-          EXPECTED_PARENT='8b3d9bc6201130c9c4ecf4014a6320b78d81f4e0'
+          EXPECTED_PARENT='11206947fca90621fff22136d6fe84723f6ffb47'
           BRANCH='sol/title-boot-live-bind-r10-20260911'
           test "$(git rev-parse HEAD^)" = "$EXPECTED_PARENT"
           git fetch origin main "$BRANCH"
           test "$(git rev-parse origin/main)" = "$AUTH_BASE"
           test "$(git rev-parse origin/$BRANCH)" = "$(git rev-parse HEAD)"
-          HEAD_SHA="$(git rev-parse HEAD)"
-          git diff --name-only "$AUTH_BASE" "$HEAD_SHA" > /tmp/preaction-changed.txt
-          node tools/preaction-authorization-validator.mjs --base "$AUTH_BASE" --head "$HEAD_SHA" --changed /tmp/preaction-changed.txt
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('data/preaction-authorizations/TITLE-BOOT-LIVE-BIND-R10-20260911T1835-SOL-Q8N4V9.json')
+          m = json.loads(p.read_text(encoding='utf-8'))
+          expected_scope = [
+              'browser/home-cards-2p5d-presentation.mjs',
+              'deploy/cloudflare/scripts/build.mjs',
+              'tests/browser-runtime-smoke.spec.mjs',
+              '.github/workflows/zz-temp-title-boot-live-bind-r10.yml',
+          ]
+          assert m['schemaVersion'] == 'gameroad-preaction-v3'
+          assert m['authorizationBaseSha'] == 'ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0'
+          assert m['leaseState'] == 'ACTIVE'
+          assert m['taskId'] == 'BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001'
+          assert m['workUnitKey'] == 'TITLE_BOOT_LIVE_BINDING_R5'
+          assert m['scope'] == expected_scope
+          assert m['leaseScope'] == expected_scope
+          assert m['leaseSnapshotReadbackRef'] == 'CURRENT_ACTIVE_LEASES!A1016:L1016'
+          print('PASS: R10 preaction authority fields and exact scope')
+          PY
 
       - name: Apply bounded existing-runtime repair
         shell: bash

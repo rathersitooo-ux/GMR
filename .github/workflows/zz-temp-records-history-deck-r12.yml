@@ -1,0 +1,238 @@
+name: TEMP Records Historical Deck R12
+
+on:
+  push:
+    branches:
+      - sol/records-used-deck-r12-20260911
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: sol/records-used-deck-r12-20260911
+
+      - name: Patch exact existing seams and focused acceptance
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html_path = Path('browser/GAMEROAD.html')
+          html = html_path.read_text(encoding='utf-8')
+          old_producer = "partner:state.selectedPartnerId,battlePointsEarned:points.earned"
+          new_producer = "partner:state.selectedPartnerId,deckStartSnapshot:safeClone(m.deckStartSnapshot),battlePointsEarned:points.earned"
+          if html.count(old_producer) != 1:
+              raise SystemExit(f'producer anchor count={html.count(old_producer)}')
+          html = html.replace(old_producer, new_producer, 1)
+
+          old_row = "d.className='record';d.innerHTML=`<b>${h.mode.toUpperCase()} / ${h.rank}位</b><span>${h.rounds}巡</span>`"
+          new_row = "d.className='record';d.__gameroadHistoryEntry=h;d.innerHTML=`<b>${h.mode.toUpperCase()} / ${h.rank}位</b><span>${h.rounds}巡</span>`"
+          if html.count(old_row) != 1:
+              raise SystemExit(f'record row anchor count={html.count(old_row)}')
+          html = html.replace(old_row, new_row, 1)
+          html_path.write_text(html, encoding='utf-8')
+
+          test_path = Path('tests/browser-full-interaction-state-sequence.spec.mjs')
+          text = test_path.read_text(encoding='utf-8')
+          title = "Records keeps the completed-match Deck after the current Deck changes"
+          if title in text:
+              raise SystemExit('Records acceptance already exists unexpectedly')
+          anchor = "test('Partner Shell is reachable through the live Saasuna conversation and stays fail-closed for unsupported actions'"
+          if text.count(anchor) != 1:
+              raise SystemExit(f'test insertion anchor count={text.count(anchor)}')
+          block = r"""test('Records keeps the completed-match Deck after the current Deck changes', async ({ page }, testInfo) => {
+            test.skip(testInfo.project.name !== 'desktop-1280x720', 'single-project historical Deck evidence');
+            test.setTimeout(120_000);
+            const runtime = observeRuntimeErrors(page);
+            await bootCurrentBrowser(page);
+
+            const driven = await page.evaluate(async () => {
+              const t = window.__GAMEROAD_TEST__;
+              const publicMain = new Set(t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
+              const standard = window.__CARD_DATA__
+                .filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)))
+                .map((card) => card.id);
+              const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
+              const nonRoyal = standard.filter((id) => !t.isRoyalCard(id));
+              const makeDeck = (offset) => [...nonRoyal.slice(offset, offset + 37), ...royalIds];
+              const deckA = makeDeck(0);
+              const validationA = t.deckValidate({ main: deckA, ex: [] }, { forBattle: true });
+              t.deckSetDraft(deckA, []);
+              const committedA = validationA.ok ? t.deckCommit() : false;
+              if (!committedA) return { reached: false, reason: 'DECK_A_COMMIT_FAILED', validationA };
+
+              t.battlePresentationFast(true);
+              const match = t.start('2p', 'road_shield');
+              window.__V105_ABILITY_TEST__?.setAutoChoices?.(true);
+              const reached = await t.autoToResult(30);
+              const historicalBefore = [...(t.state.history?.[0]?.deckStartSnapshot?.deck?.main ?? [])];
+
+              let deckB = null;
+              let validationB = null;
+              for (let offset = 1; offset <= 8; offset += 1) {
+                const candidate = makeDeck(offset);
+                if (candidate.length !== 40 || JSON.stringify(candidate) === JSON.stringify(deckA)) continue;
+                const validation = t.deckValidate({ main: candidate, ex: [] }, { forBattle: true });
+                if (validation.ok) {
+                  deckB = candidate;
+                  validationB = validation;
+                  break;
+                }
+              }
+              if (!deckB) return { reached, reason: 'LEGAL_DECK_B_NOT_FOUND', nonRoyalCount: nonRoyal.length, validationB };
+              t.deckSetDraft(deckB, []);
+              const committedB = t.deckCommit();
+              const historicalAfter = [...(t.state.history?.[0]?.deckStartSnapshot?.deck?.main ?? [])];
+              const currentDeck = [...t.deckSaved().main];
+              const deckAOnly = deckA.find((id) => !deckB.includes(id)) ?? null;
+              const deckBOnly = deckB.find((id) => !deckA.includes(id)) ?? null;
+              t.show('records');
+              return {
+                reached,
+                screen: t.state.screen,
+                matchId: match?.id ?? null,
+                committedB,
+                deckA,
+                deckB,
+                deckAOnly,
+                deckBOnly,
+                historicalBefore,
+                historicalAfter,
+                currentDeck,
+              };
+            });
+
+            expect(driven.reached, JSON.stringify(driven)).toBeTruthy();
+            expect(driven.committedB, JSON.stringify(driven)).toBeTruthy();
+            expect(driven.historicalBefore).toEqual(driven.deckA);
+            expect(driven.historicalAfter).toEqual(driven.deckA);
+            expect(driven.currentDeck).toEqual(driven.deckB);
+            expect(driven.historicalAfter).not.toEqual(driven.currentDeck);
+            expect(driven.deckAOnly).not.toBeNull();
+            expect(driven.deckBOnly).not.toBeNull();
+            expect(driven.screen).toBe('records');
+
+            const records = page.locator('section[data-screen="records"]');
+            await expect(records).toBeVisible();
+            const firstRecord = records.locator('#recordsList .record').first();
+            await expect(firstRecord).toHaveAttribute('data-records-selectable', 'true');
+            await firstRecord.click();
+            const detail = records.locator('#recordsMatchDetail');
+            await expect(detail).toBeVisible();
+            const deckText = await detail.locator('.recordsMatchDetailDeck').innerText();
+            expect(deckText).toContain(driven.deckAOnly);
+            expect(deckText).not.toContain(driven.deckBOnly);
+
+            const recordsPng = await page.screenshot({ fullPage: true, animations: 'disabled' });
+            await testInfo.attach(`${testInfo.project.name}-records-historical-deck-r12.png`, { body: recordsPng, contentType: 'image/png' });
+            testInfo.annotations.push({
+              type: 'records-historical-deck-evidence',
+              description: `match=${driven.matchId}; historical Deck A stayed frozen after current Deck B commit and the selectable Records detail rendered Deck A`,
+            });
+            runtime.assertClean(testInfo);
+          });
+          """
+          text = text.replace(anchor, block + anchor, 1)
+          test_path.write_text(text, encoding='utf-8')
+
+          assert new_producer in html_path.read_text(encoding='utf-8')
+          assert "d.__gameroadHistoryEntry=h" in html_path.read_text(encoding='utf-8')
+          assert title in test_path.read_text(encoding='utf-8')
+          print('exact patches applied')
+          PY
+          git diff --check
+          git diff --stat
+
+      - name: Static and focused Node regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/browser-static-check.mjs
+          node --test tests/cards-deck-presentation.test.mjs tests/profile-presentation-runtime-mount.test.mjs
+
+      - name: Install Playwright Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+
+      - name: Run focused Records browser acceptance with known navigation harness workaround
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .tmp-records
+          mkdir -p .tmp-records
+          cp tests/browser-full-interaction-state-sequence.spec.mjs .tmp-records/records.spec.mjs
+          sed -i "s/waitUntil: 'domcontentloaded'/waitUntil: 'commit'/g" .tmp-records/records.spec.mjs
+          cat > .tmp-records/playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir: '.',
+            testMatch: 'records.spec.mjs',
+            grep: /Records keeps the completed-match Deck after the current Deck changes/,
+            timeout: 120000,
+            expect: { timeout: 7000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            outputDir: 'test-results',
+            reporter: [['line']],
+            use: {
+              baseURL: 'http://127.0.0.1:4173',
+              browserName: 'chromium',
+              headless: true,
+              trace: 'retain-on-failure',
+              screenshot: 'only-on-failure',
+              video: 'off',
+            },
+            projects: [{ name: 'desktop-1280x720', use: { viewport: { width: 1280, height: 720 } } }],
+          });
+          EOF
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/records-r12-http.log 2>&1 &
+          HTTP_PID=$!
+          trap 'kill $HTTP_PID || true' EXIT
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/browser/GAMEROAD.html >/dev/null; then break; fi
+            sleep 1
+          done
+          npx playwright test --config=.tmp-records/playwright.config.mjs --workers=1
+
+      - name: Upload focused browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: records-historical-deck-r12-${{ github.run_id }}
+          path: .tmp-records/test-results/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Commit only proven product and acceptance files
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-r12-writer'
+          git config user.email 'actions@users.noreply.github.com'
+          git add browser/GAMEROAD.html tests/browser-full-interaction-state-sequence.spec.mjs
+          git diff --cached --check
+          git commit -m 'fix(records): preserve completed-match Deck snapshot'
+
+      - name: Cleanup transient authorization and writer then push
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/zz-temp-records-history-deck-r12.yml
+          rm -f data/preaction-authorizations/RECORDS-HISTORY-DECK-R12-20260911T1202-SOL-H7Q4N5.json
+          git add -u .github/workflows/zz-temp-records-history-deck-r12.yml data/preaction-authorizations/RECORDS-HISTORY-DECK-R12-20260911T1202-SOL-H7Q4N5.json
+          git commit -m 'chore: cleanup Records R12 authorization'
+          git push origin HEAD:sol/records-used-deck-r12-20260911

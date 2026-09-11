@@ -1,0 +1,181 @@
+name: temp-partner-voice-lifecycle-r3-format
+
+on:
+  push:
+    branches:
+      - sol/partner-voice-response-lifecycle-r3-20260912
+    paths:
+      - .github/workflows/zz-temp-partner-voice-lifecycle-r3.yml
+
+permissions:
+  contents: write
+
+jobs:
+  format-test-cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Configure repository hooks
+        run: |
+          git config core.hooksPath .githooks
+          test "$(git config --get core.hooksPath)" = ".githooks"
+      - name: Normalize bounded Partner shell formatting
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('browser/partner-shell-runtime-mount.mjs')
+          s = p.read_text()
+          replacements = [
+          ("""    preview.addEventListener('click', () => {
+    let result;
+    try {
+      result = services.previewVoice({ text: textarea.value, tuning: readTuning() });
+    } catch {
+      status.textContent = '音声試聴に失敗しました';
+      return;
+    }
+    if (!result?.ok) {
+      status.textContent = 'この端末では音声試聴を使えません';
+      return;
+    }
+    status.textContent = '試聴中';
+    if (!result.done || typeof result.done.then !== 'function') return;
+    void result.done.then((outcome) => {
+      if (!services.isVoicePreviewActive(result)) return;
+      services.settleVoicePreview(result);
+      if (outcome?.status === 'completed') status.textContent = '試聴完了';
+      else if (outcome?.status === 'cancelled') status.textContent = '試聴を中断しました';
+      else status.textContent = '音声試聴に失敗しました';
+    }, () => {
+      if (!services.isVoicePreviewActive(result)) return;
+      services.settleVoicePreview(result);
+      status.textContent = '音声試聴に失敗しました';
+    });
+  });""",
+          """    preview.addEventListener('click', () => {
+      let result;
+      try {
+        result = services.previewVoice({ text: textarea.value, tuning: readTuning() });
+      } catch {
+        status.textContent = '音声試聴に失敗しました';
+        return;
+      }
+      if (!result?.ok) {
+        status.textContent = 'この端末では音声試聴を使えません';
+        return;
+      }
+      status.textContent = '試聴中';
+      if (!result.done || typeof result.done.then !== 'function') return;
+      void result.done.then((outcome) => {
+        if (!services.isVoicePreviewActive(result)) return;
+        services.settleVoicePreview(result);
+        if (outcome?.status === 'completed') status.textContent = '試聴完了';
+        else if (outcome?.status === 'cancelled') status.textContent = '試聴を中断しました';
+        else status.textContent = '音声試聴に失敗しました';
+      }, () => {
+        if (!services.isVoicePreviewActive(result)) return;
+        services.settleVoicePreview(result);
+        status.textContent = '音声試聴に失敗しました';
+      });
+    });"""),
+          ("""  const services = Object.freeze({
+  submitFeedback,
+  previewVoice: startVoicePreview,
+  listVoices,
+  onFeedbackResult,
+  isVoicePreviewActive,
+  settleVoicePreview,
+});""",
+          """  const services = Object.freeze({
+    submitFeedback,
+    previewVoice: startVoicePreview,
+    listVoices,
+    onFeedbackResult,
+    isVoicePreviewActive,
+    settleVoicePreview,
+  });"""),
+          ("""  function cancelVoicePreview() {
+  const current = activeVoicePreview;
+  activeVoicePreview = null;
+  try { current?.cancel?.(); } catch {}
+}
+
+function startVoicePreview(input) {
+  cancelVoicePreview();
+  const result = previewVoice(input);
+  if (result?.ok) activeVoicePreview = result;
+  return result;
+}
+
+function isVoicePreviewActive(result) {
+  return !destroyed && activeVoicePreview === result;
+}
+
+function settleVoicePreview(result) {
+  if (activeVoicePreview !== result) return false;
+  activeVoicePreview = null;
+  return true;
+}
+
+async function mountCostumeView(host, model, doc, version) {""",
+          """  function cancelVoicePreview() {
+    const current = activeVoicePreview;
+    activeVoicePreview = null;
+    try { current?.cancel?.(); } catch {}
+  }
+
+  function startVoicePreview(input) {
+    cancelVoicePreview();
+    const result = previewVoice(input);
+    if (result?.ok) activeVoicePreview = result;
+    return result;
+  }
+
+  function isVoicePreviewActive(result) {
+    return !destroyed && activeVoicePreview === result;
+  }
+
+  function settleVoicePreview(result) {
+    if (activeVoicePreview !== result) return false;
+    activeVoicePreview = null;
+    return true;
+  }
+
+  async function mountCostumeView(host, model, doc, version) {"""),
+          ("""  function render() {
+  if (destroyed) return Object.freeze({ ok: false, reason: 'DESTROYED', model: null });
+  cancelVoicePreview();""",
+          """  function render() {
+    if (destroyed) return Object.freeze({ ok: false, reason: 'DESTROYED', model: null });
+    cancelVoicePreview();"""),
+          ]
+          for old, new in replacements:
+              if s.count(old) != 1:
+                  raise SystemExit('format anchor mismatch')
+              s = s.replace(old, new, 1)
+          p.write_text(s)
+
+          t = Path('tests/partner-shell-runtime-mount.test.mjs')
+          ts = t.read_text()
+          ts = ts.replace("\n\n\ntest('voice preview settles completion", "\n\ntest('voice preview settles completion", 1)
+          t.write_text(ts)
+          PY
+      - name: Focused Partner voice lifecycle tests
+        run: node --test tests/partner-saasuna-voice-runtime.test.mjs tests/partner-shell-runtime-mount.test.mjs
+      - name: Commit formatting repair
+        run: |
+          git config user.name "gameroad-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add browser/partner-shell-runtime-mount.mjs tests/partner-shell-runtime-mount.test.mjs
+          git diff --cached --quiet && { echo "no formatting diff"; exit 1; }
+          git commit -m "Partner: 音声ライフサイクル差分の整形を正規化"
+      - name: Cleanup transient formatter
+        run: |
+          rm -f .github/workflows/zz-temp-partner-voice-lifecycle-r3.yml
+          git add -A
+          git commit -m "chore: cleanup Partner voice lifecycle formatter"
+      - name: Push authorized branch
+        run: git push origin "HEAD:${GITHUB_REF_NAME}"

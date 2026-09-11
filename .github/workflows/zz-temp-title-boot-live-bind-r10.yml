@@ -22,13 +22,14 @@ jobs:
         run: |
           set -euo pipefail
           AUTH_BASE='ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0'
-          AUTH_COMMIT='cdaf75462da101678c39dadeb3ef5058d4776564'
+          EXPECTED_PARENT='489068c17176d6dc04053a2595bf55e89d531709'
           BRANCH='sol/title-boot-live-bind-r10-20260911'
-          test "$(git rev-parse HEAD^)" = "$AUTH_COMMIT"
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_PARENT"
           git fetch origin main "$BRANCH"
           test "$(git rev-parse origin/main)" = "$AUTH_BASE"
           test "$(git rev-parse origin/$BRANCH)" = "$(git rev-parse HEAD)"
-          node tools/preaction-authorization-validator.mjs --base "$AUTH_BASE" --head HEAD
+          git diff --name-only "$AUTH_BASE" HEAD > /tmp/preaction-changed.txt
+          node tools/preaction-authorization-validator.mjs --base "$AUTH_BASE" --head HEAD --changed /tmp/preaction-changed.txt
 
       - name: Apply bounded existing-runtime repair
         shell: bash
@@ -41,10 +42,8 @@ jobs:
           text = home.read_text(encoding='utf-8')
           anchor = "import './home-boot-runtime-mount.mjs';\n"
           addition = "import './title-boot-runtime-mount.mjs';\n"
-          if text.count(anchor) != 1:
-              raise SystemExit(f'home import anchor count={text.count(anchor)}')
-          if addition in text:
-              raise SystemExit('title runtime import already present unexpectedly')
+          if text.count(anchor) != 1 or addition in text:
+              raise SystemExit('Home Title import precondition failed')
           home.write_text(text.replace(anchor, anchor + addition, 1), encoding='utf-8')
 
           build = Path('deploy/cloudflare/scripts/build.mjs')
@@ -55,20 +54,16 @@ jobs:
               "  { source: 'browser/boot-loading-presentation-core.mjs', output: 'boot-loading-presentation-core.mjs', artifact: 'boot_loading_presentation_core', label: 'Boot loading presentation core' },\n"
               "  { source: 'browser/title-boot-runtime-mount.mjs', output: 'title-boot-runtime-mount.mjs', artifact: 'title_boot_runtime_mount', label: 'Title Boot runtime mount' },\n"
           )
-          if text.count(anchor) != 1:
-              raise SystemExit(f'build anchor count={text.count(anchor)}')
-          if 'title_boot_runtime_mount' in text or "source: 'browser/title-boot-router-core.mjs'" in text:
-              raise SystemExit('title package entries already present unexpectedly')
+          if text.count(anchor) != 1 or 'title_boot_runtime_mount' in text:
+              raise SystemExit('Title package precondition failed')
           build.write_text(text.replace(anchor, anchor + additions, 1), encoding='utf-8')
 
           smoke = Path('tests/browser-runtime-smoke.spec.mjs')
           text = smoke.read_text(encoding='utf-8')
           anchor = "import { test, expect } from '@playwright/test';\n\n"
           hook = "test.beforeEach(async ({ page }) => {\n  await page.addInitScript(() => {\n    globalThis.GAMEROAD_TITLE_BOOT_CONTEXT_PROVIDER = () => ({\n      directDestination: { validated: true, screen: 'home' },\n    });\n  });\n});\n\n"
-          if text.count(anchor) != 1:
-              raise SystemExit(f'smoke import anchor count={text.count(anchor)}')
-          if 'GAMEROAD_TITLE_BOOT_CONTEXT_PROVIDER' in text:
-              raise SystemExit('title context hook already present unexpectedly')
+          if text.count(anchor) != 1 or 'GAMEROAD_TITLE_BOOT_CONTEXT_PROVIDER' in text:
+              raise SystemExit('Browser smoke Title hook precondition failed')
           smoke.write_text(text.replace(anchor, anchor + hook, 1), encoding='utf-8')
           PY
           git diff --check

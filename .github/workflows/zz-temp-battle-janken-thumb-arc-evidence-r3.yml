@@ -66,11 +66,22 @@ jobs:
             const deck=await legalDeck(page);
             if(deck.count!==40||!deck.committed||!deck.savedOk) throw new Error(`deck ${JSON.stringify(deck)}`);
 
-            const setupControl=page.locator('[data-home-target="setup"]:visible, [data-go="setup"]:visible').first();
-            await setupControl.waitFor({state:'visible',timeout:20000});
-            await setupControl.click({timeout:10000});
-
             const setup=page.locator('section[data-screen="setup"]');
+            const homeChoice=()=>page.locator('.homePadChoice[data-home-target="setup"]:visible').first();
+            await homeChoice().waitFor({state:'visible',timeout:20000});
+            try{
+              await homeChoice().click({timeout:1500});
+            }catch(error){
+              if(!(await setup.isVisible())){
+                const center=page.locator('#homePadCenter:visible');
+                await center.waitFor({state:'visible',timeout:5000});
+                await center.click({timeout:5000});
+                await page.waitForTimeout(250);
+                await homeChoice().waitFor({state:'visible',timeout:5000});
+                await homeChoice().click({timeout:10000});
+              }
+            }
+
             await setup.waitFor({state:'visible',timeout:20000});
             await setup.locator('[data-content="road_shield"]').click({timeout:10000});
             await setup.locator('[data-mode="2v2"]').click({timeout:10000});

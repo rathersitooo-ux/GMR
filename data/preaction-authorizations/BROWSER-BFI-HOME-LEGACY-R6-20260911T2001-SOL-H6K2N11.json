@@ -1,0 +1,42 @@
+{
+  "schema": "GAMEROAD_PRE_ACTION_V1",
+  "leaseKey": "BROWSER-BFI-HOME-LEGACY-R6-20260911T2001-SOL-H6K2N11",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnit": "BROWSER_PUBLIC_PLAYER_PATH_BOOT_READINESS_R1",
+  "classification": "EXISTING_REPAIR",
+  "acquiredAtJst": "2026-09-11 20:01 JST",
+  "leaseUntilJst": "2026-09-11 21:01 JST",
+  "authorityReadback": "CURRENT_ACTIVE_LEASES!A1020:N1020=PASS",
+  "baseMainSha": "ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0",
+  "mutableProductPath": "browser/GAMEROAD.html",
+  "transientMutationPath": ".github/workflows/zz-temp-browser-bfi-home-legacy-r6.yml",
+  "target": {
+    "removeInitialRetiredDuplicateProducers": [
+      "codexHomeVisualLayer",
+      "codexPartnerChip",
+      "codexBattleCta"
+    ],
+    "preserve": [
+      "canonical SlidePad routes",
+      "current data-home-target routes",
+      "Battle/current gameplay, rules, save, economy and network formal meaning"
+    ]
+  },
+  "horizontalCrosscheck": {
+    "selected": "DELETE retired initial duplicate markup and REUSE canonical current routes",
+    "rejected": [
+      "ADD new Home UI/router/store",
+      "parallel owner",
+      "whole-file connector rewrite",
+      "NO_CHANGE while duplicate initial producers remain"
+    ]
+  },
+  "acceptance": [
+    "exact retired initial producer occurrences are inspected before mutation",
+    "ambiguous or multiple target markup causes fail-closed with no product write",
+    "browser/GAMEROAD.html no longer contains the retired initial producer elements after mutation",
+    "canonical SlidePad/data-home-target routes remain present",
+    "existing relevant browser regression path is run without adding a duplicate test suite",
+    "final main/branch CAS and product diff are read back before completion claim"
+  ]
+}

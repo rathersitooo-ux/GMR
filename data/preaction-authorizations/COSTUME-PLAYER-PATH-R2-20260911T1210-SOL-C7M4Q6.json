@@ -1,0 +1,32 @@
+{
+  "schema": "gameroad.preaction-authorization.v1",
+  "acquireKey": "COSTUME-PLAYER-PATH-R2-20260911T1210-SOL-C7M4Q6",
+  "taskId": "COSTUME-MILLEFEUILLE-ADDITIVE-REBASE-BUNDLE-006",
+  "workUnitKey": "PARTNER_COSTUME_ACTUAL_PLAYER_PATH_LIVE_R2",
+  "intent": "Connect the existing Partner Costume runtime to the actual Browser Partner player path through the existing main-save authority without inventing costume ownership or a second store.",
+  "baseCandidateSha": "3cbdab7b834728c0733459e4bda2d2523bd38e3e",
+  "branchHeadBefore": "3cbdab7b834728c0733459e4bda2d2523bd38e3e",
+  "mutable": [
+    "browser/GAMEROAD.html",
+    "browser/partner-tea-runtime-mount.mjs",
+    "tests/partner-tea-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "data/preaction-authorizations/COSTUME-PLAYER-PATH-R2-20260911T1210-SOL-C7M4Q6.json"
+  ],
+  "readOnly": [
+    "browser/partner-costume-main-save-profile-adapter.mjs",
+    "browser/partner-shell-runtime-mount.mjs",
+    "browser/partner-costume-browser-session-runtime.mjs",
+    "browser/partner-costume-screen-runtime-mount.mjs",
+    "browser/partner-costume-core.mjs",
+    "formal assets",
+    "gameplay/rules/economy/network"
+  ],
+  "expectedFinalDiffFromCandidate": [
+    "browser/GAMEROAD.html",
+    "browser/partner-tea-runtime-mount.mjs",
+    "tests/partner-tea-runtime-mount.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "safety": "Fail closed when an authoritative costume catalog/owned-item provider is unavailable; never synthesize ownership; save only through existing Browser main-save authority."
+}

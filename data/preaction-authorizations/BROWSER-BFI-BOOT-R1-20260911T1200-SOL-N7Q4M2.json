@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BROWSER-BFI-BOOT-R1-20260911T1200-SOL-N7Q4M2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BROWSER_PUBLIC_PLAYER_PATH_BOOT_READINESS_R1",
+  "acquireKey": "BROWSER-BFI-BOOT-R1-20260911T1200-SOL-N7Q4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLIC_BFI_RUN34501091275_TRACE_HOME_VISIBLE_DCL_STALLED_ALL3",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "TRACE_PROVES_HOME_RENDERED_BEFORE_DCL_TIMEOUT_AND_EXISTING_PRIOR_COMMIT_WAIT_PATTERN",
+  "proceedToken": "PROCEED|BROWSER-BFI-BOOT-R1-20260911T1200-SOL-N7Q4M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|public-player-path|boot-readiness|active-lease",
+  "authorizationBaseSha": "454b742024115e57c6c6bc89c3b6972fcd94703b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BROWSER_PUBLIC_PLAYER_PATH_BOOT_READINESS_R1",
+  "leaseAcquireKey": "BROWSER-BFI-BOOT-R1-20260911T1200-SOL-N7Q4M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-11 12:00 JST",
+  "leaseUntilJst": "2026-09-11 13:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A5:L5",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/browser-public-player-boot-r1-20260911; tests/browser-full-interaction.spec.mjs; own transient data/preaction-authorizations/BROWSER-BFI-BOOT-R1-20260911T1200-SOL-N7Q4M2.json only. READ_ONLY browser/GAMEROAD.html; .github/workflows/browser-full-interaction.yml; gameplay/rules/save/economy/network/formal assets.",
+  "solutionSignature": "BFI_EXISTING_BOOT_HELPER_COMMIT_PLUS_VISIBLE_HOME_READINESS_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_BFI_BOOT_HELPER_PLUS_CURRENT_PUBLIC_TRACE_AND_PRIOR_RUNNER_FAILURES",
+  "solutionSearchEvidence": [
+    "Current public exact-build trace visibly renders Home while page.goto waits indefinitely for DOMContentLoaded.",
+    "The existing BFI bootCurrentBrowser helper is the single shared wait seam used by the player-path evidence.",
+    "Prior current evidence runs independently identified the same DOMContentLoaded wait seam and recovered by commit plus explicit runtime readiness.",
+    "No game runtime change is needed to make the already-visible player surface interactable for evidence."
+  ],
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs"
+  ]
+}

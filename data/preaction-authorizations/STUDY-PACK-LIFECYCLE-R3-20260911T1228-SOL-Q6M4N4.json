@@ -1,0 +1,36 @@
+{
+  "schema": "gameroad.preaction.v1",
+  "acquireKey": "STUDY-PACK-LIFECYCLE-R3-20260911T1228-SOL-Q6M4N4",
+  "taskId": "STUDY-ROGUELIKE-PROBLEM-PACK-RUNTIME-001",
+  "workUnitKey": "STUDY_PACK_LOGICAL_LIFECYCLE_R3",
+  "baseMain": "3cbdab7b834728c0733459e4bda2d2523bd38e3e",
+  "mutable": [
+    "browser/study-run-runtime-mount.mjs",
+    "tests/study-run-runtime-mount.test.mjs",
+    "data/preaction-authorizations/STUDY-PACK-LIFECYCLE-R3-20260911T1228-SOL-Q6M4N4.json"
+  ],
+  "readOnly": [
+    "browser/cartridge-storage-core.mjs",
+    "browser/cartridge-install-executor.mjs",
+    "browser/study-problem-pack-core.mjs",
+    "browser/study-manual-problem-pack.mjs",
+    "browser/GAMEROAD.html",
+    "Battle",
+    "save-backend",
+    "economy",
+    "network"
+  ],
+  "userEndState": "Study教材を端末単位で論理アンインストールでき、利用権・学習履歴・途中runを消さず、同じpackを再取得して再開できる。",
+  "realOutputTarget": "既存caller-owned cartridge storageにStudy pack availabilityだけを追加し、第二store/entitlement/history authorityを作らない。",
+  "acceptance": [
+    "既存keyなしはmigration-safeにinstalled扱い",
+    "logical uninstallでStudy startを拒否する",
+    "logical uninstallでresume checkpointを削除しない",
+    "same-pack reacquireでavailabilityを復元しcheckpointから再開できる",
+    "Battle/save backend/economy/network変更0"
+  ],
+  "humanDirectionLock": "Section17 USER_APPROVED boundary内の既存repair。新機能・新規数値・rights/privacy/provider意味は追加しない。",
+  "actualGamePass": "current main Study runtime/cartridge storage actualを直接readback済み。Remote端末はofflineのため物理操作証拠は別残差。",
+  "deepResearchPass": "既存正式repairで方向はSection17が固定済み。外部比較を追加しても採否を反転しないため反復DeepSearchなし。",
+  "lateralCrosscheck": "削除/第二store/entitlement統合/汎用cartridge変更を却下し、既存Study runtimeの同一storage key追加が最短・最小衝突。"
+}

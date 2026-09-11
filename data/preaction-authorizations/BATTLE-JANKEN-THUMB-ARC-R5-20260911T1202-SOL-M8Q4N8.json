@@ -1,0 +1,32 @@
+{
+  "schema": "gameroad.preaction-authorization.v1",
+  "acquireKey": "BATTLE-JANKEN-THUMB-ARC-R5-20260911T1202-SOL-M8Q4N8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_THUMB_ARC_USESITE_EVIDENCE_R5",
+  "intent": "Recover use-site visual evidence for the already-tested Battle Janken thumb-arc candidate without changing product/runtime/gameplay.",
+  "baseCandidateSha": "32d5e9a4a54ef85099211df374fa0edd5ef22d63",
+  "branchHeadBefore": "44de76b7c74a085279b3c8b6d57038f449dcda30",
+  "mutable": [
+    ".github/workflows/zz-temp-battle-janken-thumb-arc-evidence-r3.yml",
+    "evidence/battle-janken-thumb-arc-r3/1280x720-expanded.png",
+    "evidence/battle-janken-thumb-arc-r3/667x375-expanded.png",
+    "evidence/battle-janken-thumb-arc-r3/390x844-expanded.png",
+    "evidence/battle-janken-thumb-arc-r3/geometry.json",
+    "data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R5-20260911T1202-SOL-M8Q4N8.json"
+  ],
+  "readOnly": [
+    "browser/GAMEROAD.html",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    "gameplay/rules/state/save/economy/network",
+    "main",
+    "standalone Battle visual R8"
+  ],
+  "expectedFinalDiffFromCandidate": [
+    "evidence/battle-janken-thumb-arc-r3/1280x720-expanded.png",
+    "evidence/battle-janken-thumb-arc-r3/390x844-expanded.png",
+    "evidence/battle-janken-thumb-arc-r3/667x375-expanded.png",
+    "evidence/battle-janken-thumb-arc-r3/geometry.json"
+  ],
+  "safety": "Fail closed on any unexpected diff, product mutation, missing current Battle surface, or unresolved hit ownership."
+}

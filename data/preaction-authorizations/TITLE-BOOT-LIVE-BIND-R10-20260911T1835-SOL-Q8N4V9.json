@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "TITLE-BOOT-LIVE-BIND-R10-20260911T1835-SOL-Q8N4V9",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "TITLE_BOOT_LIVE_BINDING_R5",
+  "acquireKey": "TITLE-BOOT-LIVE-BIND-R10-20260911T1835-SOL-Q8N4V9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "REQUIRED_GATE_PROVED_NEW_WRAPPER_UNCLASSIFIED_EXISTING_SMOKE_IS_CLASSIFIED_20260911T1920JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R10_EXISTING_SMOKE_MINIMAL_TITLE_HOME_INIT_NO_GATE_WIDENING",
+  "proceedToken": "PROCEED|TITLE-BOOT-LIVE-BIND-R10-20260911T1835-SOL-Q8N4V9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-title-runtime-compose|existing-smoke-minimal-home-init|active-lease",
+  "authorizationBaseSha": "ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "TITLE_BOOT_LIVE_BINDING_R5",
+  "leaseAcquireKey": "TITLE-BOOT-LIVE-BIND-R10-20260911T1835-SOL-Q8N4V9",
+  "leaseSnapshotReadbackAtJst": "2026-09-11 19:20 JST",
+  "leaseUntilJst": "2026-09-11 20:19 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1016:L1016",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0; browser/home-cards-2p5d-presentation.mjs; deploy/cloudflare/scripts/build.mjs; tests/browser-runtime-smoke.spec.mjs; transient .github/workflows/zz-temp-title-boot-live-bind-r10.yml only for bounded exact patch+tests+cleanup; own transient data/preaction-authorizations/TITLE-BOOT-LIVE-BIND-R10-20260911T1835-SOL-Q8N4V9.json; own branch/PR/check/readback only. READ_ONLY playwright.config.mjs; tests/browser-runtime-smoke-title-entry.spec.mjs; browser/title-boot-runtime-mount.mjs; browser/title-boot-router-core.mjs; browser/boot-loading-presentation-core.mjs; tests/title-boot-runtime-mount.test.mjs; tests/home-cards-2p5d-runtime.spec.mjs; deploy/cloudflare/tests/build.test.mjs; browser/GAMEROAD.html; gameplay/rules/save/economy/network/Battle/Road.",
+  "solutionSignature": "TITLE_BOOT_EXISTING_RUNTIME_HOME_PACKAGE_WITH_EXISTING_CLASSIFIED_SMOKE_INIT_V2",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_GATE_CLASSIFICATION_AND_EXISTING_TITLE_RUNTIME_REUSE_20260911T1920JST",
+  "solutionSearchEvidence": [
+    "Fresh main already contains the adopted Title router, loading presentation, and runtime modules.",
+    "Fresh main Home presentation imports Home boot but does not yet import the existing Title runtime.",
+    "Fresh main public package contains the Home closure but not the existing Title runtime closure.",
+    "Actual Required Gate proved a newly named Playwright wrapper fails closed as an unclassified executable path.",
+    "Widening the Required Gate classifier would be broader than adapting the already-classified existing smoke entry.",
+    "The existing browser-runtime-smoke.spec.mjs can preserve all 852 existing test cases and add only a page init hook that supplies the current Title router a validated Home destination.",
+    "The temporary workflow exists only to patch the large current smoke file exactly, run focused checks, then delete itself and this authorization before pushing the product/test-only final tree.",
+    "No new product router, store, provider, session authority, gameplay authority, or control-plane rule is introduced."
+  ],
+  "scope": [
+    "browser/home-cards-2p5d-presentation.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/browser-runtime-smoke.spec.mjs",
+    ".github/workflows/zz-temp-title-boot-live-bind-r10.yml"
+  ],
+  "leaseScope": [
+    "browser/home-cards-2p5d-presentation.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/browser-runtime-smoke.spec.mjs",
+    ".github/workflows/zz-temp-title-boot-live-bind-r10.yml"
+  ]
+}

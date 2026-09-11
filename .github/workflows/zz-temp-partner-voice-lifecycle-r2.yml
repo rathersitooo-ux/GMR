@@ -27,14 +27,15 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
-          def replace_once(path, old, new):
+          def sub_once(path, pattern, replacement, flags=0, label='anchor'):
               p = Path(path)
               text = p.read_text()
-              count = text.count(old)
+              updated, count = re.subn(pattern, replacement, text, count=1, flags=flags)
               if count != 1:
-                  raise SystemExit(f'{path}: expected exactly one anchor, got {count}')
-              p.write_text(text.replace(old, new, 1))
+                  raise SystemExit(f'{path}: {label} expected exactly one match, got {count}')
+              p.write_text(updated)
 
           voice_path = Path('browser/partner-saasuna-voice-runtime.mjs')
           voice_text = voice_path.read_text()
@@ -198,50 +199,46 @@ jobs:
           """
           voice_test.write_text(voice_tests)
 
-          shell_preview_old = """    preview.addEventListener('click', () => {
-                const result = services.previewVoice({ text: textarea.value, tuning: readTuning() });
-                status.textContent = result?.ok ? '試聴中' : 'この端末では音声試聴を使えません';
-              });"""
-          shell_preview_new = """    preview.addEventListener('click', () => {
-                let result;
-                try {
-                  result = services.previewVoice({ text: textarea.value, tuning: readTuning() });
-                } catch {
-                  status.textContent = '音声試聴に失敗しました';
-                  return;
-                }
-                if (!result?.ok) {
-                  status.textContent = 'この端末では音声試聴を使えません';
-                  return;
-                }
-                status.textContent = '試聴中';
-                if (!result.done || typeof result.done.then !== 'function') return;
-                void result.done.then((outcome) => {
-                  if (!services.isVoicePreviewActive(result)) return;
-                  services.settleVoicePreview(result);
-                  if (outcome?.status === 'completed') status.textContent = '試聴完了';
-                  else if (outcome?.status === 'cancelled') status.textContent = '試聴を中断しました';
-                  else status.textContent = '音声試聴に失敗しました';
-                }, () => {
-                  if (!services.isVoicePreviewActive(result)) return;
-                  services.settleVoicePreview(result);
-                  status.textContent = '音声試聴に失敗しました';
-                });
-              });"""
-          replace_once('browser/partner-shell-runtime-mount.mjs', shell_preview_old, shell_preview_new)
+          shell = 'browser/partner-shell-runtime-mount.mjs'
+          preview_pattern = r"(?m)^    preview\.addEventListener\('click', \(\) => \{\n      const result = services\.previewVoice\(\{ text: textarea\.value, tuning: readTuning\(\) \}\);\n      status\.textContent = result\?\.ok \? '試聴中' : 'この端末では音声試聴を使えません';\n    \}\);$"
+          preview_replacement = """    preview.addEventListener('click', () => {
+              let result;
+              try {
+                result = services.previewVoice({ text: textarea.value, tuning: readTuning() });
+              } catch {
+                status.textContent = '音声試聴に失敗しました';
+                return;
+              }
+              if (!result?.ok) {
+                status.textContent = 'この端末では音声試聴を使えません';
+                return;
+              }
+              status.textContent = '試聴中';
+              if (!result.done || typeof result.done.then !== 'function') return;
+              void result.done.then((outcome) => {
+                if (!services.isVoicePreviewActive(result)) return;
+                services.settleVoicePreview(result);
+                if (outcome?.status === 'completed') status.textContent = '試聴完了';
+                else if (outcome?.status === 'cancelled') status.textContent = '試聴を中断しました';
+                else status.textContent = '音声試聴に失敗しました';
+              }, () => {
+                if (!services.isVoicePreviewActive(result)) return;
+                services.settleVoicePreview(result);
+                status.textContent = '音声試聴に失敗しました';
+              });
+            });"""
+          sub_once(shell, preview_pattern, preview_replacement, label='preview click')
 
-          replace_once(
-              'browser/partner-shell-runtime-mount.mjs',
-              """  let activeCostumeScreen = null;
-            let costumeRenderVersion = 0;""",
-              """  let activeCostumeScreen = null;
-            let costumeRenderVersion = 0;
-            let activeVoicePreview = null;""",
+          sub_once(
+              shell,
+              r"(?m)^  let activeCostumeScreen = null;\n  let costumeRenderVersion = 0;$",
+              "  let activeCostumeScreen = null;\n  let costumeRenderVersion = 0;\n  let activeVoicePreview = null;",
+              label='voice owner state',
           )
 
-          replace_once(
-              'browser/partner-shell-runtime-mount.mjs',
-              """  const services = Object.freeze({ submitFeedback, previewVoice, listVoices, onFeedbackResult });""",
+          sub_once(
+              shell,
+              r"(?m)^  const services = Object\.freeze\(\{ submitFeedback, previewVoice, listVoices, onFeedbackResult \}\);$",
               """  const services = Object.freeze({
             submitFeedback,
             previewVoice: startVoicePreview,
@@ -250,11 +247,12 @@ jobs:
             isVoicePreviewActive,
             settleVoicePreview,
           });""",
+              label='voice services wrapper',
           )
 
-          replace_once(
-              'browser/partner-shell-runtime-mount.mjs',
-              """  async function mountCostumeView(host, model, doc, version) {""",
+          sub_once(
+              shell,
+              r"(?m)^  async function mountCostumeView\(host, model, doc, version\) \{$",
               """  function cancelVoicePreview() {
             const current = activeVoicePreview;
             activeVoicePreview = null;
@@ -279,39 +277,23 @@ jobs:
           }
 
           async function mountCostumeView(host, model, doc, version) {""",
+              label='voice lifecycle helpers',
           )
 
-          replace_once(
-              'browser/partner-shell-runtime-mount.mjs',
-              """    } catch {
-                lastModel = null;
-                root.replaceChildren();
-                return Object.freeze({ ok: false, reason: 'INVALID_INPUT', model: null });
-              }
-
-              clearCostumeScreen();
-              const doc = root.ownerDocument;""",
-              """    } catch {
-                cancelVoicePreview();
-                lastModel = null;
-                root.replaceChildren();
-                return Object.freeze({ ok: false, reason: 'INVALID_INPUT', model: null });
-              }
-
-              cancelVoicePreview();
-              clearCostumeScreen();
-              const doc = root.ownerDocument;""",
+          sub_once(
+              shell,
+              r"(?m)^  function render\(\) \{\n    if \(destroyed\) return Object\.freeze\(\{ ok: false, reason: 'DESTROYED', model: null \}\);$",
+              """  function render() {
+            if (destroyed) return Object.freeze({ ok: false, reason: 'DESTROYED', model: null });
+            cancelVoicePreview();""",
+              label='rerender cancellation',
           )
 
-          replace_once(
-              'browser/partner-shell-runtime-mount.mjs',
-              """    destroyed = true;
-                clearCostumeScreen();
-                lastModel = null;""",
-              """    destroyed = true;
-                cancelVoicePreview();
-                clearCostumeScreen();
-                lastModel = null;""",
+          sub_once(
+              shell,
+              r"(?m)^    destroyed = true;\n    clearCostumeScreen\(\);$",
+              "    destroyed = true;\n    cancelVoicePreview();\n    clearCostumeScreen();",
+              label='destroy cancellation',
           )
 
           shell_test = Path('tests/partner-shell-runtime-mount.test.mjs')

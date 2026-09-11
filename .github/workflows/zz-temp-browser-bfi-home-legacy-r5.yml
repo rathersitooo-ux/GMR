@@ -1,0 +1,94 @@
+name: TEMP Browser BFI Home Legacy R5
+
+on:
+  push:
+    branches:
+      - sol/browser-bfi-home-legacy-r5-20260911
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair-home-legacy-producers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact branch head
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Remove only retired initial Home producer markup
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('browser/GAMEROAD.html')
+          src = path.read_text(encoding='utf-8')
+
+          patterns = {
+              'codexHomeVisualLayer': re.compile(
+                  r'\n?[ \t]*<div class="codexHomeVisualLayer" data-formal-background="missing">\s*'
+                  r'<div class="codexHalo codexHaloOuter" aria-hidden="true"></div>\s*'
+                  r'<div class="codexHalo codexHaloInner" aria-hidden="true"></div>\s*'
+                  r'</div>'
+              ),
+              'codexPartnerChip': re.compile(
+                  r'\n?[ \t]*<button type="button" class="codexPartnerChip" data-go="characters">'
+                  r'<span>パートナー</span></button>'
+              ),
+              'codexBattleCta': re.compile(
+                  r'\n?[ \t]*<button type="button" class="codexBattleCta" data-go="setup">バトルへ →</button>'
+              ),
+          }
+
+          out = src
+          for name, pattern in patterns.items():
+              matches = list(pattern.finditer(out))
+              if len(matches) != 1:
+                  raise SystemExit(f'{name}: expected exactly 1 retired markup block, found {len(matches)}')
+              out = pattern.sub('', out, count=1)
+
+          for name in patterns:
+              if re.search(rf'<[^>]+class="[^"]*\b{re.escape(name)}\b[^"]*"', out):
+                  raise SystemExit(f'{name}: retired initial markup still present after repair')
+
+          if 'data-home-target="setup"' not in out:
+              raise SystemExit('canonical Home setup route disappeared')
+          if 'class="codexBattleCrest"' not in out or 'class="codexRankLabel"' not in out:
+              raise SystemExit('preserved Battle crest/rank presentation disappeared')
+
+          path.write_text(out, encoding='utf-8')
+          print('PASS: removed exactly the three retired initial Home producer blocks')
+          PY
+
+      - name: Run focused existing Home presentation test
+        run: node --test tests/home-boot-presentation.test.mjs
+
+      - name: Verify bounded durable diff
+        shell: bash
+        run: |
+          git diff --check
+          python3 - <<'PY'
+          import subprocess
+          changed = subprocess.check_output(['git','diff','--name-only']).decode().splitlines()
+          if changed != ['browser/GAMEROAD.html']:
+              raise SystemExit(f'unexpected durable diff before cleanup: {changed}')
+          print('PASS: durable product diff is browser/GAMEROAD.html only')
+          PY
+
+      - name: Commit product repair and remove transient authorization/workflow
+        shell: bash
+        run: |
+          git config user.name "gameroad-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add browser/GAMEROAD.html
+          git commit -m "Home: 旧初期導線を正本から削除"
+          rm -f .github/workflows/zz-temp-browser-bfi-home-legacy-r5.yml
+          rm -f data/preaction-authorizations/BROWSER-BFI-HOME-LEGACY-R5-20260911T1840-SOL-H6K2N10.json
+          git add -A
+          git commit -m "chore: remove temporary Home repair authorization"
+          git push origin HEAD:sol/browser-bfi-home-legacy-r5-20260911

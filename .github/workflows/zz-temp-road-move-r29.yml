@@ -21,13 +21,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Extract current Home to Setup/Battle anchors
+      - name: Extract exact current Home Battle entry markup
         shell: bash
         run: |
           set -euo pipefail
-          echo '=== data-home-target / data-go setup|battle ==='
-          grep -nE 'data-(home-target|go)="(setup|battle)"' browser/GAMEROAD.html | head -80 || true
-          echo '=== setup/battle navigation literals ==='
-          grep -nE "(showScreen|goScreen|navigate|data-go|data-home-target).{0,100}(setup|battle)|(setup|battle).{0,100}(showScreen|goScreen|navigate|data-go|data-home-target)" browser/GAMEROAD.html | head -120 || true
-          echo '=== home primary labels nearby ==='
-          grep -nE 'ホーム|バトル|設定|ショップ|デッキ|パートナー' browser/GAMEROAD.html | head -120 || true
+          echo '=== home action markup 6250-6365 ==='
+          nl -ba browser/GAMEROAD.html | sed -n '6250,6365p'
+          echo '=== goSetup occurrences with context ==='
+          grep -n -B8 -A12 'goSetup' browser/GAMEROAD.html | head -120 || true
+          echo '=== visible Battle-labelled controls with context ==='
+          grep -n -B5 -A8 -E '>[^<]*(バトル|対戦)[^<]*<' browser/GAMEROAD.html | head -180 || true

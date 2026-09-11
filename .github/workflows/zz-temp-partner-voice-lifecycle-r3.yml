@@ -1,0 +1,66 @@
+name: temp-partner-voice-lifecycle-r3
+
+on:
+  push:
+    branches:
+      - sol/partner-voice-response-lifecycle-r3-20260912
+    paths:
+      - .github/workflows/zz-temp-partner-voice-lifecycle-r3.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Configure repository hooks
+        run: |
+          git config core.hooksPath .githooks
+          test "$(git config --get core.hooksPath)" = ".githooks"
+      - name: Recover previously rehearsed bounded patch only
+        shell: bash
+        run: |
+          git fetch origin sol/partner-voice-response-lifecycle-r1-20260912
+          git show origin/sol/partner-voice-response-lifecycle-r1-20260912:.github/workflows/zz-temp-partner-voice-lifecycle-r2.yml > /tmp/r2.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          src = Path('/tmp/r2.yml').read_text()
+          start_marker = "          python3 - <<'PY'\n"
+          end_marker = "\n          PY\n"
+          start = src.find(start_marker)
+          if start < 0:
+              raise SystemExit('rehearsed patch start marker missing')
+          start += len(start_marker)
+          end = src.find(end_marker, start)
+          if end < 0:
+              raise SystemExit('rehearsed patch end marker missing')
+          body = src[start:end]
+          lines = body.splitlines()
+          if not lines or any(line and not line.startswith('          ') for line in lines):
+              raise SystemExit('rehearsed patch indentation mismatch')
+          patch = '\n'.join(line[10:] if line else '' for line in lines) + '\n'
+          Path('/tmp/partner_voice_patch.py').write_text(patch)
+          PY
+          python3 /tmp/partner_voice_patch.py
+      - name: Focused Partner voice lifecycle tests
+        run: node --test tests/partner-saasuna-voice-runtime.test.mjs tests/partner-shell-runtime-mount.test.mjs
+      - name: Commit product repair
+        run: |
+          git config user.name "gameroad-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add browser/partner-saasuna-voice-runtime.mjs tests/partner-saasuna-voice-runtime.test.mjs browser/partner-shell-runtime-mount.mjs tests/partner-shell-runtime-mount.test.mjs
+          git diff --cached --quiet && { echo "no product diff"; exit 1; }
+          git commit -m "Partner: 音声試聴の完了・中断・失敗を終端まで管理"
+      - name: Cleanup transient authorization and writer
+        run: |
+          rm -f .github/workflows/zz-temp-partner-voice-lifecycle-r3.yml
+          rm -f data/preaction-authorizations/PARTNER-VOICE-LIFECYCLE-R3-20260912T0355-SOL-Q7M4N4.json
+          git add -A
+          git commit -m "chore: cleanup Partner voice lifecycle preaction transport"
+      - name: Push authorized durable branch
+        run: git push origin "HEAD:${GITHUB_REF_NAME}"

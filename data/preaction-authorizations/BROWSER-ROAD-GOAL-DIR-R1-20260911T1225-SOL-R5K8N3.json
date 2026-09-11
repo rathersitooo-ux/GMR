@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BROWSER-ROAD-GOAL-DIR-R1-20260911T1225-SOL-R5K8N3",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BROWSER_ROAD_GOAL_DIRECTION_VISUAL_R1",
+  "acquireKey": "BROWSER-ROAD-GOAL-DIR-R1-20260911T1225-SOL-R5K8N3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_EXACT_SURFACE_BLOB_PLUS_FREE_TARGET_LEASES_20260911T1225JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "ACTUAL_PUBLIC_BLOB_IDENTITY_AND_CURRENT_UNIT_CONTRACT",
+  "proceedToken": "PROCEED|BROWSER-ROAD-GOAL-DIR-R1-20260911T1225-SOL-R5K8N3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|road-goal-direction-presentation|board-surface|active-lease",
+  "authorizationBaseSha": "3cbdab7b834728c0733459e4bda2d2523bd38e3e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BROWSER_ROAD_GOAL_DIRECTION_VISUAL_R1",
+  "leaseAcquireKey": "BROWSER-ROAD-GOAL-DIR-R1-20260911T1225-SOL-R5K8N3",
+  "leaseSnapshotReadbackAtJst": "2026-09-11 12:25 JST",
+  "leaseUntilJst": "2026-09-11 13:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1005:L1005",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/browser-road-goal-direction-r1-20260911 from exact main 3cbdab7b834728c0733459e4bda2d2523bd38e3e: browser/new-base-flanora-board-surface-runtime.mjs; tests/new-base-flanora-board-surface-runtime.test.mjs; own transient data/preaction-authorizations/BROWSER-ROAD-GOAL-DIR-R1-20260911T1225-SOL-R5K8N3.json only. browser/GAMEROAD.html, Browser Full Interaction spec, gameplay/state/rules/save/economy/network, Shield/roulette/player-deck and field art are excluded.",
+  "solutionSignature": "FLANORA_EXISTING_BOARD_SURFACE_HORIZONTAL_ROAD_TO_GOAL_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_FLANORA_SURFACE_IS_ALREADY_PRESENTATION_ONLY_AND_PUBLIC_ACTUAL_BLOB_MATCHES",
+  "solutionSearchEvidence": [
+    "Current main already owns the 12-lane/7-stage Flanora surface in browser/new-base-flanora-board-surface-runtime.mjs; no second board engine is required.",
+    "The current regression test explicitly encodes top GOALs, which conflicts with the recovered user lock GOAL-left / ROAD-right and explains why the wrong presentation persisted.",
+    "The previously verified public build and current main use the exact same board-surface blob, so the prior actual observation that progression direction is unreadable remains valid for this consumer.",
+    "Official Shadowverse: Worlds Beyond material keeps the active play field visually primary; official Mario Party Jamboree material preserves route readability while using landmarks for board identity. Only those layout principles are transferred, not proprietary visual design.",
+    "The minimal reversible fix is to adapt the existing presentation CSS/DOM semantics to left GOAL, seven horizontal ROAD stages, and right Shield/entry while preserving all logical identities and gameplay authority boundaries."
+  ],
+  "scope": [
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs"
+  ]
+}

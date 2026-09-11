@@ -208,31 +208,31 @@ function renderDialogueFeedback(doc, section, model, services) {
     preview.type = 'button';
     preview.dataset.partnerDialogueAction = 'preview';
     preview.addEventListener('click', () => {
-    let result;
-    try {
-      result = services.previewVoice({ text: textarea.value, tuning: readTuning() });
-    } catch {
-      status.textContent = '音声試聴に失敗しました';
-      return;
-    }
-    if (!result?.ok) {
-      status.textContent = 'この端末では音声試聴を使えません';
-      return;
-    }
-    status.textContent = '試聴中';
-    if (!result.done || typeof result.done.then !== 'function') return;
-    void result.done.then((outcome) => {
-      if (!services.isVoicePreviewActive(result)) return;
-      services.settleVoicePreview(result);
-      if (outcome?.status === 'completed') status.textContent = '試聴完了';
-      else if (outcome?.status === 'cancelled') status.textContent = '試聴を中断しました';
-      else status.textContent = '音声試聴に失敗しました';
-    }, () => {
-      if (!services.isVoicePreviewActive(result)) return;
-      services.settleVoicePreview(result);
-      status.textContent = '音声試聴に失敗しました';
+      let result;
+      try {
+        result = services.previewVoice({ text: textarea.value, tuning: readTuning() });
+      } catch {
+        status.textContent = '音声試聴に失敗しました';
+        return;
+      }
+      if (!result?.ok) {
+        status.textContent = 'この端末では音声試聴を使えません';
+        return;
+      }
+      status.textContent = '試聴中';
+      if (!result.done || typeof result.done.then !== 'function') return;
+      void result.done.then((outcome) => {
+        if (!services.isVoicePreviewActive(result)) return;
+        services.settleVoicePreview(result);
+        if (outcome?.status === 'completed') status.textContent = '試聴完了';
+        else if (outcome?.status === 'cancelled') status.textContent = '試聴を中断しました';
+        else status.textContent = '音声試聴に失敗しました';
+      }, () => {
+        if (!services.isVoicePreviewActive(result)) return;
+        services.settleVoicePreview(result);
+        status.textContent = '音声試聴に失敗しました';
+      });
     });
-  });
     panel.append(preview);
   }
 
@@ -370,13 +370,13 @@ export function mountPartnerShellRuntime({
   };
 
   const services = Object.freeze({
-  submitFeedback,
-  previewVoice: startVoicePreview,
-  listVoices,
-  onFeedbackResult,
-  isVoicePreviewActive,
-  settleVoicePreview,
-});
+    submitFeedback,
+    previewVoice: startVoicePreview,
+    listVoices,
+    onFeedbackResult,
+    isVoicePreviewActive,
+    settleVoicePreview,
+  });
   const runtimeCanDispatch = (action, context) => {
     if (action === 'OPEN_COSTUME') {
       if (!costumeServices) return false;
@@ -394,29 +394,29 @@ export function mountPartnerShellRuntime({
   }
 
   function cancelVoicePreview() {
-  const current = activeVoicePreview;
-  activeVoicePreview = null;
-  try { current?.cancel?.(); } catch {}
-}
+    const current = activeVoicePreview;
+    activeVoicePreview = null;
+    try { current?.cancel?.(); } catch {}
+  }
+  
+  function startVoicePreview(input) {
+    cancelVoicePreview();
+    const result = previewVoice(input);
+    if (result?.ok) activeVoicePreview = result;
+    return result;
+  }
+  
+  function isVoicePreviewActive(result) {
+    return !destroyed && activeVoicePreview === result;
+  }
+  
+  function settleVoicePreview(result) {
+    if (activeVoicePreview !== result) return false;
+    activeVoicePreview = null;
+    return true;
+  }
 
-function startVoicePreview(input) {
-  cancelVoicePreview();
-  const result = previewVoice(input);
-  if (result?.ok) activeVoicePreview = result;
-  return result;
-}
-
-function isVoicePreviewActive(result) {
-  return !destroyed && activeVoicePreview === result;
-}
-
-function settleVoicePreview(result) {
-  if (activeVoicePreview !== result) return false;
-  activeVoicePreview = null;
-  return true;
-}
-
-async function mountCostumeView(host, model, doc, version) {
+  async function mountCostumeView(host, model, doc, version) {
     if (!costumeServices || destroyed || version !== costumeRenderVersion) return false;
     let latestSnapshot = null;
     const sessionRuntime = createPartnerCostumeBrowserSessionRuntime({
@@ -464,8 +464,8 @@ async function mountCostumeView(host, model, doc, version) {
   }
 
   function render() {
-  if (destroyed) return Object.freeze({ ok: false, reason: 'DESTROYED', model: null });
-  cancelVoicePreview();
+    if (destroyed) return Object.freeze({ ok: false, reason: 'DESTROYED', model: null });
+    cancelVoicePreview();
     let model;
     try {
       model = buildPartnerShellRuntimeModel(getInput(), { canDispatch: runtimeCanDispatch });

@@ -1,0 +1,73 @@
+name: temp Tutorial public package repair R2
+
+on:
+  push:
+    branches: [gameroad/tutorial-road-bidir-coaching-r2]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tutorial-public-package-repair-r2
+  cancel-in-progress: true
+
+jobs:
+  repair-package-pin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Replace only stale Tutorial package blob pin
+        shell: bash
+        env:
+          OLD_BLOB: 80a92852cbbb93412b35e3b30d5e88ac653326f9
+          NEW_BLOB: be5f8fb0e1494601276cdd666ab64502414614ca
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('deploy/cloudflare/tests/build.test.mjs')
+          s = p.read_text()
+          old = '80a92852cbbb93412b35e3b30d5e88ac653326f9'
+          new = 'be5f8fb0e1494601276cdd666ab64502414614ca'
+          if s.count(old) != 1:
+              raise SystemExit(f'expected exactly one stale Tutorial blob pin, found {s.count(old)}')
+          if new in s:
+              raise SystemExit('current Tutorial blob pin already present before repair')
+          p.write_text(s.replace(old, new))
+          PY
+          grep -F "currentBlob: '$NEW_BLOB'" deploy/cloudflare/tests/build.test.mjs
+          ! grep -F "$OLD_BLOB" deploy/cloudflare/tests/build.test.mjs
+      - name: Verify package contract and Tutorial source
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test deploy/cloudflare/tests/build.test.mjs
+          node --test tests/tutorial-experience-profile-core.test.mjs
+      - name: Final diff fence and commit
+        shell: bash
+        env:
+          BASE: 8af2c9f887b47a09fbbb972cffd2463dae454f87
+          BRANCH: gameroad/tutorial-road-bidir-coaching-r2
+          AUTH: data/preaction-authorizations/TUTORIAL-ROAD-BIDIR-COACHING-R2-20260911T1338-SOL-N8Q4M8.json
+          SELF: .github/workflows/zz-temp-tutorial-public-repair-r2.yml
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor "$BASE" HEAD
+          rm -f "$AUTH" "$SELF"
+          git add -A
+          mapfile -t changed < <(git diff --cached --name-only "$BASE" | sort)
+          [ "${#changed[@]}" -eq 1 ] || { printf 'unexpected final paths: %s\n' "${changed[*]}"; exit 1; }
+          [ "${changed[0]}" = 'deploy/cloudflare/tests/build.test.mjs' ] || { printf 'unexpected final path: %s\n' "${changed[*]}"; exit 1; }
+          git diff --cached --numstat "$BASE" -- deploy/cloudflare/tests/build.test.mjs | grep -E '^1[[:space:]]+1[[:space:]]+'
+          git diff --cached "$BASE" -- deploy/cloudflare/tests/build.test.mjs | grep -F -- "-  { file: 'tutorial-experience-profile-core.mjs'"
+          git diff --cached "$BASE" -- deploy/cloudflare/tests/build.test.mjs | grep -F -- "+  { file: 'tutorial-experience-profile-core.mjs'"
+          git config user.name gameroad-actions
+          git config user.email actions@users.noreply.github.com
+          git commit -m 'Public: update Tutorial package provenance pin'
+          git push origin "HEAD:$BRANCH"

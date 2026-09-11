@@ -17,36 +17,28 @@ jobs:
         run: |
           test "$(git merge-base HEAD 8af2c9f887b47a09fbbb972cffd2463dae454f87)" = "8af2c9f887b47a09fbbb972cffd2463dae454f87"
           test -f data/preaction-authorizations/BATTLE-SELF-DECK-LIVE-R2-20260911T1338-SOL-Q8N4V11.json
-      - name: Inspect exact live HTML anchors
+      - name: Inspect exact live seams
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('browser/GAMEROAD.html')
-          text=p.read_text(encoding='utf-8')
-          print('HTML_BYTES', len(text.encode('utf-8')))
-          patterns=[
-            'battleLog',
-            'renderBattle',
-            'battleScreenRuntime',
-            'state.match',
-            'const me',
-            'let me',
-            'human===true',
-            'human === true',
-            'battle-self-deck',
-            'type="module"',
-          ]
+          text=Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          patterns=['__GAMEROAD_TEST__','function setupBattleDetails','setupBattleDetails=',"getElementById('battleLogDetails')",'battleLogDetails','GAMEROAD_BATTLE']
           for pat in patterns:
             hits=[]; start=0
             while True:
               i=text.find(pat,start)
               if i<0: break
               hits.append(i); start=i+len(pat)
-            print(f'PATTERN {pat!r} COUNT {len(hits)} HITS {hits[:20]}')
-            for n,i in enumerate(hits[:8]):
-              lo=max(0,i-700); hi=min(len(text),i+1200)
-              snippet=text[lo:hi].replace('\x00','')
+            print(f'PATTERN {pat!r} COUNT {len(hits)} HITS {hits[:30]}')
+            for n,i in enumerate(hits[:12]):
+              lo=max(0,i-900); hi=min(len(text),i+1800)
               print(f'--- {pat} #{n+1} @{i} ---')
-              print(snippet)
+              print(text[lo:hi])
               print('--- END ---')
           PY
+          echo '--- replay adapter remaining deck symbols ---'
+          grep -n -C 8 -E 'projectLiveBattleRemainingDeckPresentation|renderLiveBattleRemainingDeckPresentation|remainingDeck' browser/battle-replay-live-adapter.mjs | head -n 260
+          echo '--- consumer source ---'
+          cat browser/battle-self-deck-live-consumer.mjs
+          echo '--- focused test relevant expectations ---'
+          grep -n -C 8 -E 'remaining|battleLog|revision|cardLabel|authenticated' tests/battle-self-deck-live-consumer.test.mjs | head -n 320

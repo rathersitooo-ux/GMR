@@ -1,0 +1,412 @@
+name: temp-partner-voice-lifecycle-r2
+
+on:
+  push:
+    branches:
+      - sol/partner-voice-response-lifecycle-r1-20260912
+    paths:
+      - .github/workflows/zz-temp-partner-voice-lifecycle-r2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Configure repository hooks
+        run: |
+          git config core.hooksPath .githooks
+          test "$(git config --get core.hooksPath)" = ".githooks"
+      - name: Apply bounded lifecycle repair
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected exactly one anchor, got {count}')
+              p.write_text(text.replace(old, new, 1))
+
+          voice_path = Path('browser/partner-saasuna-voice-runtime.mjs')
+          voice_text = voice_path.read_text()
+          marker = 'export function previewSaasunaVoice(input = {}, {'
+          if voice_text.count(marker) != 1:
+              raise SystemExit('voice runtime preview function anchor mismatch')
+          prefix = voice_text.split(marker, 1)[0]
+          new_voice = """export function previewSaasunaVoice(input = {}, {
+            synth = globalThis.speechSynthesis,
+            Utterance = globalThis.SpeechSynthesisUtterance,
+            setTimer = globalThis.setTimeout,
+            clearTimer = globalThis.clearTimeout,
+          } = {}) {
+            const terminalResult = (reason) => Object.freeze({
+              ok: false,
+              reason,
+              done: Promise.resolve(Object.freeze({ status: 'error', reason })),
+              cancel() {},
+            });
+            const plan = buildSaasunaVoicePreviewPlan(input);
+            if (!plan) return terminalResult('saasuna_voice_text_invalid');
+            if (!synth || typeof synth.speak !== 'function' || typeof synth.cancel !== 'function' || typeof Utterance !== 'function') {
+              return terminalResult('saasuna_voice_unsupported');
+            }
+
+            let cancelled = false;
+            let settled = false;
+            let timer = null;
+            let resolveDone;
+            const done = new Promise((resolve) => { resolveDone = resolve; });
+            const chosenVoice = findVoice(synth, plan.tuning.voiceURI);
+
+            const finish = (status, reason = null) => {
+              if (settled) return false;
+              settled = true;
+              if (timer !== null && typeof clearTimer === 'function') {
+                try { clearTimer(timer); } catch {}
+                timer = null;
+              }
+              resolveDone(Object.freeze({ status, reason }));
+              return true;
+            };
+
+            try {
+              synth.cancel();
+            } catch {
+              return terminalResult('saasuna_voice_start_failed');
+            }
+
+            const speakIndex = (index) => {
+              if (cancelled || settled || index >= plan.segments.length) return;
+              try {
+                const utterance = new Utterance(plan.segments[index]);
+                utterance.lang = SAASUNA_VOICE_RUNTIME.language;
+                utterance.rate = plan.tuning.rate;
+                utterance.pitch = plan.tuning.pitch;
+                utterance.volume = plan.tuning.volume;
+                if (chosenVoice) utterance.voice = chosenVoice;
+                utterance.onend = () => {
+                  if (cancelled || settled) return;
+                  if (index + 1 >= plan.segments.length) {
+                    finish('completed');
+                    return;
+                  }
+                  if (typeof setTimer !== 'function') {
+                    cancelled = true;
+                    finish('error', 'saasuna_voice_timer_unavailable');
+                    return;
+                  }
+                  timer = setTimer(() => {
+                    timer = null;
+                    speakIndex(index + 1);
+                  }, plan.tuning.pauseMs);
+                };
+                utterance.onerror = () => {
+                  if (cancelled || settled) return;
+                  cancelled = true;
+                  try { synth.cancel(); } catch {}
+                  finish('error', 'saasuna_voice_playback_error');
+                };
+                synth.speak(utterance);
+              } catch {
+                if (cancelled || settled) return;
+                cancelled = true;
+                try { synth.cancel(); } catch {}
+                finish('error', 'saasuna_voice_playback_error');
+              }
+            };
+
+            speakIndex(0);
+            return Object.freeze({
+              ok: true,
+              reason: null,
+              plan,
+              done,
+              cancel() {
+                if (cancelled || settled) return;
+                cancelled = true;
+                try { synth.cancel(); } catch {}
+                finish('cancelled', 'saasuna_voice_cancelled');
+              },
+            });
+          }
+          """
+          voice_path.write_text(prefix + new_voice)
+
+          voice_test = Path('tests/partner-saasuna-voice-runtime.test.mjs')
+          voice_tests = voice_test.read_text()
+          voice_marker = "test('preview lifecycle resolves completion, cancellation and playback errors exactly once'"
+          if voice_marker in voice_tests:
+              raise SystemExit('voice lifecycle test already present unexpectedly')
+          voice_tests += """
+
+          test('preview lifecycle resolves completion, cancellation and playback errors exactly once', async () => {
+            const spoken = [];
+            const timers = [];
+            const cleared = [];
+            class Utterance {
+              constructor(text) { this.text = text; this.onend = null; this.onerror = null; }
+            }
+            const synth = {
+              cancelled: 0,
+              getVoices: () => [],
+              cancel() { this.cancelled += 1; },
+              speak(utterance) { spoken.push(utterance); },
+            };
+            const options = {
+              synth,
+              Utterance,
+              setTimer(fn, ms) {
+                const id = timers.length + 1;
+                timers.push({ id, fn, ms });
+                return id;
+              },
+              clearTimer(id) { cleared.push(id); },
+            };
+
+            const completed = previewSaasunaVoice({ text: '完了。' }, options);
+            spoken.at(-1).onend();
+            assert.deepEqual(await completed.done, { status: 'completed', reason: null });
+            completed.cancel();
+            assert.equal(synth.cancelled, 1);
+
+            const beforeCancelSpoken = spoken.length;
+            const cancelled = previewSaasunaVoice({ text: '一文目。二文目。', tuning: { pauseMs: 180 } }, options);
+            spoken.at(-1).onend();
+            assert.equal(timers.at(-1).ms, 180);
+            const pending = timers.at(-1);
+            cancelled.cancel();
+            assert.deepEqual(await cancelled.done, { status: 'cancelled', reason: 'saasuna_voice_cancelled' });
+            assert.deepEqual(cleared, [pending.id]);
+            pending.fn();
+            assert.equal(spoken.length, beforeCancelSpoken + 1);
+
+            const failed = previewSaasunaVoice({ text: '失敗。' }, options);
+            spoken.at(-1).onerror({ error: 'network' });
+            assert.deepEqual(await failed.done, { status: 'error', reason: 'saasuna_voice_playback_error' });
+            spoken.at(-1).onend();
+            assert.equal((await failed.done).status, 'error');
+          });
+          """
+          voice_test.write_text(voice_tests)
+
+          shell_preview_old = """    preview.addEventListener('click', () => {
+                const result = services.previewVoice({ text: textarea.value, tuning: readTuning() });
+                status.textContent = result?.ok ? '試聴中' : 'この端末では音声試聴を使えません';
+              });"""
+          shell_preview_new = """    preview.addEventListener('click', () => {
+                let result;
+                try {
+                  result = services.previewVoice({ text: textarea.value, tuning: readTuning() });
+                } catch {
+                  status.textContent = '音声試聴に失敗しました';
+                  return;
+                }
+                if (!result?.ok) {
+                  status.textContent = 'この端末では音声試聴を使えません';
+                  return;
+                }
+                status.textContent = '試聴中';
+                if (!result.done || typeof result.done.then !== 'function') return;
+                void result.done.then((outcome) => {
+                  if (!services.isVoicePreviewActive(result)) return;
+                  services.settleVoicePreview(result);
+                  if (outcome?.status === 'completed') status.textContent = '試聴完了';
+                  else if (outcome?.status === 'cancelled') status.textContent = '試聴を中断しました';
+                  else status.textContent = '音声試聴に失敗しました';
+                }, () => {
+                  if (!services.isVoicePreviewActive(result)) return;
+                  services.settleVoicePreview(result);
+                  status.textContent = '音声試聴に失敗しました';
+                });
+              });"""
+          replace_once('browser/partner-shell-runtime-mount.mjs', shell_preview_old, shell_preview_new)
+
+          replace_once(
+              'browser/partner-shell-runtime-mount.mjs',
+              """  let activeCostumeScreen = null;
+            let costumeRenderVersion = 0;""",
+              """  let activeCostumeScreen = null;
+            let costumeRenderVersion = 0;
+            let activeVoicePreview = null;""",
+          )
+
+          replace_once(
+              'browser/partner-shell-runtime-mount.mjs',
+              """  const services = Object.freeze({ submitFeedback, previewVoice, listVoices, onFeedbackResult });""",
+              """  const services = Object.freeze({
+            submitFeedback,
+            previewVoice: startVoicePreview,
+            listVoices,
+            onFeedbackResult,
+            isVoicePreviewActive,
+            settleVoicePreview,
+          });""",
+          )
+
+          replace_once(
+              'browser/partner-shell-runtime-mount.mjs',
+              """  async function mountCostumeView(host, model, doc, version) {""",
+              """  function cancelVoicePreview() {
+            const current = activeVoicePreview;
+            activeVoicePreview = null;
+            try { current?.cancel?.(); } catch {}
+          }
+
+          function startVoicePreview(input) {
+            cancelVoicePreview();
+            const result = previewVoice(input);
+            if (result?.ok) activeVoicePreview = result;
+            return result;
+          }
+
+          function isVoicePreviewActive(result) {
+            return !destroyed && activeVoicePreview === result;
+          }
+
+          function settleVoicePreview(result) {
+            if (activeVoicePreview !== result) return false;
+            activeVoicePreview = null;
+            return true;
+          }
+
+          async function mountCostumeView(host, model, doc, version) {""",
+          )
+
+          replace_once(
+              'browser/partner-shell-runtime-mount.mjs',
+              """    } catch {
+                lastModel = null;
+                root.replaceChildren();
+                return Object.freeze({ ok: false, reason: 'INVALID_INPUT', model: null });
+              }
+
+              clearCostumeScreen();
+              const doc = root.ownerDocument;""",
+              """    } catch {
+                cancelVoicePreview();
+                lastModel = null;
+                root.replaceChildren();
+                return Object.freeze({ ok: false, reason: 'INVALID_INPUT', model: null });
+              }
+
+              cancelVoicePreview();
+              clearCostumeScreen();
+              const doc = root.ownerDocument;""",
+          )
+
+          replace_once(
+              'browser/partner-shell-runtime-mount.mjs',
+              """    destroyed = true;
+                clearCostumeScreen();
+                lastModel = null;""",
+              """    destroyed = true;
+                cancelVoicePreview();
+                clearCostumeScreen();
+                lastModel = null;""",
+          )
+
+          shell_test = Path('tests/partner-shell-runtime-mount.test.mjs')
+          shell_tests = shell_test.read_text()
+          shell_marker = "test('voice preview settles completion and ignores cancelled stale runs'"
+          if shell_marker in shell_tests:
+              raise SystemExit('shell voice lifecycle test already present unexpectedly')
+          shell_tests += """
+
+          test('voice preview settles completion and ignores cancelled stale runs', async () => {
+            const root = makeRoot();
+            const previews = [];
+            const previewVoice = () => {
+              let resolveDone;
+              let settled = false;
+              const done = new Promise((resolve) => { resolveDone = resolve; });
+              const handle = {
+                ok: true,
+                done,
+                cancelled: 0,
+                finish(status) {
+                  if (settled) return;
+                  settled = true;
+                  resolveDone({ status, reason: status === 'error' ? 'test_error' : null });
+                },
+                cancel() {
+                  this.cancelled += 1;
+                  if (settled) return;
+                  settled = true;
+                  resolveDone({ status: 'cancelled', reason: 'test_cancelled' });
+                },
+              };
+              previews.push(handle);
+              return handle;
+            };
+            const runtime = mountPartnerShellRuntime({
+              root,
+              getInput: () => ({
+                activePartnerId: 'partner.saasuna',
+                roster,
+                view: 'dialogue_feedback',
+                postBattleLine: {
+                  sourceLineId: 'battle.voice.1',
+                  text: '試聴セリフ',
+                  sourceStateIdentity: 'battle.voice.state.1',
+                  versions: { rules: 'rules.1', content: 'content.1', state: 'state.1' },
+                },
+              }),
+              canDispatch: (action) => action === 'BACK_HUB',
+              listVoices: () => [],
+              previewVoice,
+            });
+
+            assert.equal(runtime.render().ok, true);
+            const preview = allNodes(root).find((node) => node.dataset?.partnerDialogueAction === 'preview');
+            const status = allNodes(root).find((node) => node.dataset?.partnerDialogueStatus === 'true');
+
+            preview.click();
+            assert.equal(status.textContent, '試聴中');
+            preview.click();
+            assert.equal(previews[0].cancelled, 1);
+            await new Promise((resolve) => setImmediate(resolve));
+            assert.equal(status.textContent, '試聴中');
+
+            previews[1].finish('completed');
+            await new Promise((resolve) => setImmediate(resolve));
+            assert.equal(status.textContent, '試聴完了');
+
+            preview.click();
+            previews[2].finish('error');
+            await new Promise((resolve) => setImmediate(resolve));
+            assert.equal(status.textContent, '音声試聴に失敗しました');
+
+            preview.click();
+            assert.equal(runtime.destroy(), true);
+            assert.equal(previews[3].cancelled, 1);
+          });
+          """
+          shell_test.write_text(shell_tests)
+          PY
+      - name: Focused Partner voice lifecycle tests
+        run: node --test tests/partner-saasuna-voice-runtime.test.mjs tests/partner-shell-runtime-mount.test.mjs
+      - name: Commit product repair
+        run: |
+          git config user.name "gameroad-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add browser/partner-saasuna-voice-runtime.mjs tests/partner-saasuna-voice-runtime.test.mjs browser/partner-shell-runtime-mount.mjs tests/partner-shell-runtime-mount.test.mjs
+          git diff --cached --quiet && { echo "no product diff"; exit 1; }
+          git commit -m "Partner: 音声試聴の完了・中断・失敗を終端まで管理"
+      - name: Cleanup transient authorization and writer
+        run: |
+          rm -f .github/workflows/zz-temp-partner-voice-lifecycle-r2.yml
+          rm -f data/preaction-authorizations/PARTNER-VOICE-LIFECYCLE-R1-20260912T0337-SOL-Q7M4N2.json
+          rm -f data/preaction-authorizations/PARTNER-VOICE-LIFECYCLE-R2-20260912T0348-SOL-Q7M4N3.json
+          git add -A
+          git commit -m "chore: cleanup Partner voice lifecycle preaction transport"
+      - name: Push bounded branch
+        run: git push origin "HEAD:${GITHUB_REF_NAME}"

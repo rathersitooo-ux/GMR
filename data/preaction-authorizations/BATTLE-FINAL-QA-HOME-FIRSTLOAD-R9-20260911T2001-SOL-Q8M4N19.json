@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-FINAL-QA-HOME-FIRSTLOAD-R9-20260911T2001-SOL-Q8M4N19",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_FINAL_QA_HOME_REFRESH_IDEMPOTENCE_R1",
+  "acquireKey": "BATTLE-FINAL-QA-HOME-FIRSTLOAD-R9-20260911T2001-SOL-Q8M4N19",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_SYNC_DCL_PLUS_PR1542_PR1543_BROWSER_RUNTIME_SMOKE_TIMEOUT",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R9_BASE_DCL_BOUNDED_REPAIR_PASS_RUN34592583557_PLUS_WRAPPER_ORDER_CROSSCHECK",
+  "proceedToken": "PROCEED|BATTLE-FINAL-QA-HOME-FIRSTLOAD-R9-20260911T2001-SOL-Q8M4N19|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|home-study-firstload-yield|paired-boot-timing-regression|active-lease",
+  "authorizationBaseSha": "ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_FINAL_QA_HOME_REFRESH_IDEMPOTENCE_R1",
+  "leaseAcquireKey": "BATTLE-FINAL-QA-HOME-FIRSTLOAD-R9-20260911T2001-SOL-Q8M4N19",
+  "leaseSnapshotReadbackAtJst": "2026-09-11 20:15 JST",
+  "leaseUntilJst": "2026-09-11 21:01 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1021:L1021",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR same branch sol/battle-final-qa-home-firstload-r9-20260911 rebuilt from exact current main ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0; browser/home-boot-runtime-base-r3.mjs; browser/home-boot-runtime-mount.mjs; NEW tests/home-boot-runtime-base-r3.test.mjs; transient .github/workflows/zz-temp-battle-final-qa-home-firstload-r9.yml bounded writer; own transient PRE_ACTION; own branch/PR/check/readback only. .github/workflows/gameroad-required-gate.yml, tests/browser-runtime-smoke.spec.mjs, browser/GAMEROAD.html, deploy/cloudflare/scripts/build.mjs, gameplay/rules/save/economy/network/Battle/Road READ_ONLY.",
+  "solutionSignature": "HOME_AND_STUDY_FIRSTLOAD_DCL_YIELD_R9",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1455_R7_DIAGNOSIS_CURRENT_MAIN_BASE_AND_WRAPPER_READBACK",
+  "solutionSearchEvidence": [
+    "Current live Home base registers synchronous DOMContentLoaded mounting while repeated Browser runtime smoke evidence times out waiting for domcontentloaded.",
+    "A bounded first R9 base-only repair already passed exact replacement, syntax check, and the existing Home presentation tests.",
+    "The wrapper registers Study mounting on DOMContentLoaded after static base-module evaluation; deferring only Home would reverse the existing Home-before-Study mount order.",
+    "Deferring both existing listeners by one task preserves registration order without adding a router, loader, store, session, or gameplay meaning.",
+    "A focused paired boot-timing regression test covers this bootstrap timing contract and maps the existing base runtime through the repository's current conventional test classifier without changing the gate."
+  ],
+  "scope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs",
+    ".github/workflows/zz-temp-battle-final-qa-home-firstload-r9.yml"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-base-r3.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "tests/home-boot-runtime-base-r3.test.mjs",
+    ".github/workflows/zz-temp-battle-final-qa-home-firstload-r9.yml"
+  ]
+}

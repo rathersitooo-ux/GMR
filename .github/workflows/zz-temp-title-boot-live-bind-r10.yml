@@ -1,0 +1,104 @@
+name: TEMP Title Boot Live Bind R10
+
+on:
+  push:
+    branches:
+      - sol/title-boot-live-bind-r10-20260911
+
+permissions:
+  contents: write
+
+jobs:
+  patch-title-boot-live-bind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact trigger commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate branch and authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          AUTH_BASE='ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0'
+          AUTH_COMMIT='cdaf75462da101678c39dadeb3ef5058d4776564'
+          BRANCH='sol/title-boot-live-bind-r10-20260911'
+          test "$(git rev-parse HEAD^)" = "$AUTH_COMMIT"
+          git fetch origin main "$BRANCH"
+          test "$(git rev-parse origin/main)" = "$AUTH_BASE"
+          test "$(git rev-parse origin/$BRANCH)" = "$(git rev-parse HEAD)"
+          node tools/preaction-authorization-validator.mjs --base "$AUTH_BASE" --head HEAD
+
+      - name: Apply bounded existing-runtime repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          home = Path('browser/home-cards-2p5d-presentation.mjs')
+          text = home.read_text(encoding='utf-8')
+          anchor = "import './home-boot-runtime-mount.mjs';\n"
+          addition = "import './title-boot-runtime-mount.mjs';\n"
+          if text.count(anchor) != 1:
+              raise SystemExit(f'home import anchor count={text.count(anchor)}')
+          if addition in text:
+              raise SystemExit('title runtime import already present unexpectedly')
+          home.write_text(text.replace(anchor, anchor + addition, 1), encoding='utf-8')
+
+          build = Path('deploy/cloudflare/scripts/build.mjs')
+          text = build.read_text(encoding='utf-8')
+          anchor = "  { option: 'homeBootRuntimeMountSource', expected: 'expectedHomeBootRuntimeMountBlob', source: 'browser/home-boot-runtime-mount.mjs', output: 'home-boot-runtime-mount.mjs', artifact: 'home_boot_runtime_mount', label: 'Home Boot runtime mount', sourceFlag: '--home-boot-runtime-mount-source', expectedFlag: '--expected-home-boot-runtime-mount-blob' },\n"
+          additions = (
+              "  { source: 'browser/title-boot-router-core.mjs', output: 'title-boot-router-core.mjs', artifact: 'title_boot_router_core', label: 'Title Boot router core' },\n"
+              "  { source: 'browser/boot-loading-presentation-core.mjs', output: 'boot-loading-presentation-core.mjs', artifact: 'boot_loading_presentation_core', label: 'Boot loading presentation core' },\n"
+              "  { source: 'browser/title-boot-runtime-mount.mjs', output: 'title-boot-runtime-mount.mjs', artifact: 'title_boot_runtime_mount', label: 'Title Boot runtime mount' },\n"
+          )
+          if text.count(anchor) != 1:
+              raise SystemExit(f'build anchor count={text.count(anchor)}')
+          if 'title_boot_runtime_mount' in text or "source: 'browser/title-boot-router-core.mjs'" in text:
+              raise SystemExit('title package entries already present unexpectedly')
+          build.write_text(text.replace(anchor, anchor + additions, 1), encoding='utf-8')
+
+          smoke = Path('tests/browser-runtime-smoke.spec.mjs')
+          text = smoke.read_text(encoding='utf-8')
+          anchor = "import { test, expect } from '@playwright/test';\n\n"
+          hook = "test.beforeEach(async ({ page }) => {\n  await page.addInitScript(() => {\n    globalThis.GAMEROAD_TITLE_BOOT_CONTEXT_PROVIDER = () => ({\n      directDestination: { validated: true, screen: 'home' },\n    });\n  });\n});\n\n"
+          if text.count(anchor) != 1:
+              raise SystemExit(f'smoke import anchor count={text.count(anchor)}')
+          if 'GAMEROAD_TITLE_BOOT_CONTEXT_PROVIDER' in text:
+              raise SystemExit('title context hook already present unexpectedly')
+          smoke.write_text(text.replace(anchor, anchor + hook, 1), encoding='utf-8')
+          PY
+          git diff --check
+
+      - name: Run focused current regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check browser/home-cards-2p5d-presentation.mjs
+          node --check deploy/cloudflare/scripts/build.mjs
+          node --check tests/browser-runtime-smoke.spec.mjs
+          node --test tests/title-boot-runtime-mount.test.mjs
+          npx playwright test tests/browser-runtime-smoke.spec.mjs --list --config=playwright.config.mjs
+
+      - name: Commit product and existing-smoke repair only
+        shell: bash
+        run: |
+          set -euo pipefail
+          BRANCH='sol/title-boot-live-bind-r10-20260911'
+          rm -f .github/workflows/zz-temp-title-boot-live-bind-r10.yml
+          rm -f data/preaction-authorizations/TITLE-BOOT-LIVE-BIND-R10-20260911T1835-SOL-Q8N4V9.json
+          mapfile -t changed < <(git diff --name-only origin/main)
+          printf '%s\n' "${changed[@]}"
+          test "${#changed[@]}" -eq 3
+          test "${changed[0]}" = 'browser/home-cards-2p5d-presentation.mjs'
+          test "${changed[1]}" = 'deploy/cloudflare/scripts/build.mjs'
+          test "${changed[2]}" = 'tests/browser-runtime-smoke.spec.mjs'
+          git diff --check
+          git config user.name 'rathersitooo-ux'
+          git config user.email 'rathersitooo@gmail.com'
+          git add -A
+          git commit -m 'fix: connect Title boot through existing Home smoke path'
+          git push origin "HEAD:$BRANCH"

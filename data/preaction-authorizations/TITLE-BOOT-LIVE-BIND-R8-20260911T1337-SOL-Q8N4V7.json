@@ -1,0 +1,23 @@
+{
+  "schema": "gameroad.preaction.v1",
+  "acquireKey": "TITLE-BOOT-LIVE-BIND-R8-20260911T1337-SOL-Q8N4V7",
+  "parentTask": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnit": "TITLE_BOOT_LIVE_BINDING_R5",
+  "classification": "EXISTING_REPAIR",
+  "baseSha": "8af2c9f887b47a09fbbb972cffd2463dae454f87",
+  "mutablePaths": [
+    "browser/home-cards-2p5d-presentation.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/browser-runtime-smoke.spec.mjs",
+    "tests/home-cards-2p5d-runtime.spec.mjs"
+  ],
+  "readOnlyAuthorities": [
+    "browser/title-boot-runtime-mount.mjs",
+    "browser/title-boot-router-core.mjs",
+    "browser/boot-loading-presentation-core.mjs",
+    "browser/home-boot-runtime-mount.mjs",
+    "browser/GAMEROAD.html"
+  ],
+  "intent": "Reuse the merged Title runtime; connect the existing Home bootstrap import and public package entries; change only tests actually broken by the adopted Title launch surface; do not create a second router/store/session authority.",
+  "acceptance": "Focused tests, repository required gate, exact-main readback, and public package/deploy evidence when available. Active-match recovery producer absence remains a residual blocker rather than an invented provider."
+}

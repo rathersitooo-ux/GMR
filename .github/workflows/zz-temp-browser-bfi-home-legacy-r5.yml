@@ -9,77 +9,84 @@ permissions:
   contents: write
 
 jobs:
-  surgical-home-source-cleanup:
+  finalize-home-legacy-cleanup:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout exact trigger commit
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Validate frozen authorization and current-main overlap
+
+      - name: Validate current R5 product state and branch ownership
         shell: bash
         run: |
           set -euo pipefail
           AUTH_BASE='ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0'
-          PREACTION='cfc37035bcf87334f77a26f899f992772c3be6f8'
-          EXPECTED_HTML_BLOB='7332302ae385d3492755c65381928896decdac56'
-          test "$(git rev-parse HEAD^)" = "$PREACTION"
-          test "$(git hash-object browser/GAMEROAD.html)" = "$EXPECTED_HTML_BLOB"
-          git fetch origin main
-          git merge-base --is-ancestor "$AUTH_BASE" origin/main
-          test "$(git rev-parse "$AUTH_BASE:browser/GAMEROAD.html")" = "$EXPECTED_HTML_BLOB"
-          test "$(git rev-parse "origin/main:browser/GAMEROAD.html")" = "$EXPECTED_HTML_BLOB"
-      - name: Remove retired initial Home producers
+          EXPECTED_PARENT='801917e70a7e1f4751f055258a523ea57c6efa3c'
+          test "$(git rev-parse HEAD^)" = "$EXPECTED_PARENT"
+          git fetch origin main sol/browser-bfi-home-legacy-r5-20260911
+          test "$(git rev-parse origin/sol/browser-bfi-home-legacy-r5-20260911)" = "$(git rev-parse HEAD)"
+          test "$(git rev-parse origin/main)" = "$AUTH_BASE"
+          python3 - <<'PY'
+          from pathlib import Path
+          text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          retired = [
+              'class="codexHomeVisualLayer"',
+              'class="codexPartnerChip ',
+              'class="codexBattleCta"',
+          ]
+          for needle in retired:
+              if needle in text:
+                  raise SystemExit(f'retired Home producer unexpectedly present: {needle}')
+          old = "home:{primary:this.rect('.codexBattleCta'),character:null,live:this.rect('.codexHomeCenterStage')}"
+          new = "home:{primary:this.rect('.homePadChoice[data-home-target=\"setup\"]'),character:null,live:this.rect('.codexHomeCenterStage')}"
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one stale QA locator, found {text.count(old)}')
+          if text.count(new) != 0:
+              raise SystemExit('canonical QA locator already present unexpectedly')
+          if 'data-home-target="setup"' not in text:
+              raise SystemExit('canonical Home setup route missing')
+          print('PASS: retired producers are gone; only stale QA locator remains')
+          PY
+
+      - name: Point existing QA geometry at canonical Home SlidePad target
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
+          python3 - <<'PY'
           from pathlib import Path
           p = Path('browser/GAMEROAD.html')
           text = p.read_text(encoding='utf-8')
-          visual = '''  <div class="codexHomeVisualLayer" data-formal-background="missing">\n    <div class="codexHalo codexHaloOuter" aria-hidden="true"></div>\n    <div class="codexHalo codexHaloInner" aria-hidden="true"></div>\n  </div>\n'''
-          partner = '''  <button type="button" class="codexPartnerChip quickItem quickItemBtn" data-go="characters" aria-label="パートナー画面へ">\n    <span class="codexPartnerBadge">AP</span>\n    <span class="codexPartnerText"><strong data-partner-name>パートナー</strong><small>ルーム</small></span>\n    <span class="codexPartnerChevron">›</span>\n  </button>\n'''
-          battle = '''  <button type="button" class="codexBattleCta" data-go="setup">バトルへ →</button>\n'''
-          old_qa = "home:{primary:this.rect('.codexBattleCta'),character:null,live:this.rect('.codexHomeCenterStage')}"
-          new_qa = "home:{primary:this.rect('.homePadChoice[data-home-target=\"setup\"]'),character:null,live:this.rect('.codexHomeCenterStage')}"
-          for label, needle in [('visual', visual), ('partner', partner), ('battle', battle), ('qa', old_qa)]:
-              count = text.count(needle)
-              if count != 1:
-                  raise SystemExit(f'{label} exact-count mismatch: {count}')
-          text = text.replace(visual, '', 1)
-          text = text.replace(partner, '', 1)
-          text = text.replace(battle, '', 1)
-          text = text.replace(old_qa, new_qa, 1)
-          if 'class="codexHomeVisualLayer"' in text or 'class="codexPartnerChip ' in text or 'class="codexBattleCta"' in text:
-              raise SystemExit('retired initial Home producer remains')
-          if 'data-home-target="setup"' not in text:
-              raise SystemExit('canonical Home setup target missing')
-          if new_qa not in text:
-              raise SystemExit('canonical Home QA selector missing')
+          old = "home:{primary:this.rect('.codexBattleCta'),character:null,live:this.rect('.codexHomeCenterStage')}"
+          new = "home:{primary:this.rect('.homePadChoice[data-home-target=\"setup\"]'),character:null,live:this.rect('.codexHomeCenterStage')}"
+          if text.count(old) != 1:
+              raise SystemExit(f'stale QA locator exact-count mismatch: {text.count(old)}')
+          text = text.replace(old, new, 1)
           p.write_text(text, encoding='utf-8')
           PY
           git diff --check
-      - name: Run existing focused regression
+
+      - name: Run existing focused Home regressions
         shell: bash
         run: |
           set -euo pipefail
           node --test tests/home-boot-runtime-prune-static.test.mjs
           node --test tests/home-boot-runtime-r3-regression.test.mjs
           node tests/browser-static-check.mjs
+
       - name: Commit product-only final tree
         shell: bash
         run: |
           set -euo pipefail
           AUTH_BASE='ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0'
           git rm .github/workflows/zz-temp-browser-bfi-home-legacy-r5.yml
-          git rm data/preaction-authorizations/BROWSER-BFI-HOME-LEGACY-R5-20260911T1840-SOL-H6K2N10.json
           mapfile -t changed < <(git diff --name-only "$AUTH_BASE")
           test "${#changed[@]}" -eq 1
           test "${changed[0]}" = 'browser/GAMEROAD.html'
+          git diff --check "$AUTH_BASE"
           git config user.name 'gameroad-bounded-writer'
           git config user.email 'actions@users.noreply.github.com'
           git add browser/GAMEROAD.html
-          git commit -m 'fix: remove retired Home producers from initial source'
+          git commit -m 'fix: point Home QA at canonical SlidePad target'
           git push origin HEAD:sol/browser-bfi-home-legacy-r5-20260911

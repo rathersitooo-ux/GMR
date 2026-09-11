@@ -172,7 +172,8 @@ export function installPartnerAdvicePeripheralDisclosure(win = globalThis) {
     if (urgent && !suppressUrgentUntilClear) root.setAttribute?.(PARTNER_ADVICE_COLLAPSED_ATTR, 'false');
     const collapsed = root.getAttribute?.(PARTNER_ADVICE_COLLAPSED_ATTR) !== 'false';
     if (button) {
-      button.textContent = collapsed ? '助言' : '閉じる';
+      const nextText = collapsed ? '助言' : '閉じる';
+      if (button.textContent !== nextText) button.textContent = nextText;
       button.setAttribute?.('aria-expanded', collapsed ? 'false' : 'true');
       button.setAttribute?.('aria-label', collapsed ? '相棒の助言を開く' : '相棒の助言を閉じる');
     }

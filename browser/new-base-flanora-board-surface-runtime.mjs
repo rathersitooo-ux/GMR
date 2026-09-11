@@ -141,23 +141,23 @@ function ensureStyle(documentLike) {
   style.id = STYLE_ID;
   style.textContent = `
 [data-new-base-flanora-board-surface="1"]{position:relative;display:grid;grid-template-rows:minmax(0,1fr) minmax(72px,28%);gap:clamp(5px,1vh,10px);width:100%;height:100%;min-width:0;min-height:0;box-sizing:border-box;padding:clamp(5px,1vw,10px);isolation:isolate;overflow:hidden}
-[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:clamp(2px,.35vw,6px);min-width:0;min-height:0;align-items:stretch}
-[data-new-base-flanora-board-surface="1"] .grFlanoraLane{display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:3px;min-width:0;min-height:0;align-items:stretch;justify-items:center}
-[data-new-base-flanora-board-surface="1"] .grFlanoraGoal{display:grid;place-items:center;width:min(100%,34px);aspect-ratio:1;border:1px solid rgba(255,235,154,.78);border-radius:50%;background:rgba(88,70,23,.78);font-size:clamp(7px,.7vw,10px);font-weight:900;line-height:1;color:#fff6c4}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoad{position:relative;display:grid;grid-template-rows:repeat(7,minmax(3px,1fr));gap:2px;width:100%;min-height:0;align-items:center;justify-items:center}
-[data-new-base-flanora-board-surface="1"] .grFlanoraRoad::before{content:"";position:absolute;top:3%;bottom:3%;left:50%;width:2px;transform:translateX(-50%);border-radius:99px;background:rgba(231,244,229,.42)}
+[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(12,minmax(0,1fr));gap:clamp(2px,.35vh,4px);min-width:0;min-height:0;align-items:stretch}
+[data-new-base-flanora-board-surface="1"] .grFlanoraLane{display:grid;grid-template-columns:clamp(28px,4.6vw,42px) minmax(0,1fr) clamp(32px,5.4vw,48px);grid-template-rows:minmax(0,1fr);gap:clamp(3px,.55vw,7px);min-width:0;min-height:0;align-items:center;justify-items:stretch}
+[data-new-base-flanora-board-surface="1"] .grFlanoraGoal{display:grid;place-items:center;justify-self:start;width:clamp(24px,3.8vh,34px);height:clamp(24px,3.8vh,34px);border:1px solid rgba(255,235,154,.78);border-radius:50%;background:rgba(88,70,23,.78);font-size:clamp(7px,.7vw,10px);font-weight:900;line-height:1;color:#fff6c4}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoad{position:relative;display:grid;grid-template-columns:repeat(7,minmax(4px,1fr));grid-template-rows:minmax(0,1fr);direction:rtl;gap:2px;width:100%;height:100%;min-width:0;min-height:0;align-items:center;justify-items:center}
+[data-new-base-flanora-board-surface="1"] .grFlanoraRoad::before{content:"";position:absolute;left:3%;right:3%;top:50%;height:2px;transform:translateY(-50%);border-radius:99px;background:rgba(231,244,229,.42)}
 [data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep{position:relative;z-index:1;width:clamp(5px,.75vw,10px);height:clamp(5px,.75vw,10px);border:1px solid rgba(244,250,238,.62);border-radius:50%;background:rgba(24,64,54,.92);box-shadow:0 0 0 2px rgba(9,30,25,.24)}
 /* BATTLE_PROGRESSION_LATENT_LIVE_R3: established progress is visually distinct from future/unresolved slots without granting interaction */
 [data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep[data-progression-stage-state="UNRESOLVED"]{width:clamp(3px,.42vw,6px);height:clamp(3px,.42vw,6px);border-style:dotted;background:transparent;box-shadow:none;opacity:.28}
 [data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep[data-progression-stage-state="LATENT"]{width:clamp(4px,.55vw,7px);height:clamp(4px,.55vw,7px);border-style:dashed;background:transparent;box-shadow:none;opacity:.44}
 [data-new-base-flanora-board-surface="1"] .grFlanoraRoadStep[data-progression-stage-state="BUILT"]{width:clamp(7px,.9vw,12px);height:clamp(7px,.9vw,12px);border-width:2px;border-style:solid;background:rgba(224,241,218,.92);box-shadow:0 0 0 2px rgba(9,30,25,.28),0 0 8px rgba(224,241,218,.26);opacity:1}
-[data-new-base-flanora-board-surface="1"] .grFlanoraShield{display:grid;place-items:center;width:min(100%,38px);min-height:clamp(15px,2.4vh,23px);border:1px solid rgba(188,229,241,.78);border-radius:8px;background:rgba(26,68,83,.88);font-size:clamp(8px,.8vw,11px);font-weight:950;color:#e8f8ff}
+[data-new-base-flanora-board-surface="1"] .grFlanoraShield{display:grid;place-items:center;justify-self:end;width:clamp(32px,5vw,44px);min-height:clamp(15px,2.4vh,23px);border:1px solid rgba(188,229,241,.78);border-radius:8px;background:rgba(26,68,83,.88);font-size:clamp(8px,.8vw,11px);font-weight:950;color:#e8f8ff}
 [data-new-base-flanora-board-surface="1"] .grFlanoraClearing{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:clamp(3px,.5vw,7px);min-width:0;min-height:0;padding:clamp(2px,.4vw,5px)}
 [data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell{place-self:center;width:clamp(15px,2.6vw,30px);height:clamp(15px,2.6vw,30px);border:1px solid rgba(238,247,232,.7);border-radius:50%;background:rgba(47,91,66,.88);box-shadow:0 2px 7px rgba(0,0,0,.22)}
 [data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell[data-start-participant]{outline:2px solid rgba(255,224,134,.88);outline-offset:2px}
 [data-new-base-flanora-board-surface="1"][data-performance-profile="reduced_motion"] *,[data-new-base-flanora-board-surface="1"][data-performance-profile="low_perf"] *{animation:none!important;transition:none!important;filter:none!important}
-@media(max-height:420px){[data-new-base-flanora-board-surface="1"]{grid-template-rows:minmax(0,1fr) minmax(58px,26%);gap:3px;padding:4px}[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{gap:2px}[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{gap:2px}}
-@media(max-width:540px) and (orientation:portrait){[data-new-base-flanora-board-surface="1"]{grid-template-rows:minmax(0,1fr) minmax(110px,30%)}[data-new-base-flanora-board-surface="1"] .grFlanoraGoal{font-size:7px}}
+@media(max-height:420px){[data-new-base-flanora-board-surface="1"]{grid-template-rows:minmax(0,1fr) minmax(58px,26%);gap:3px;padding:4px}[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{gap:1px}[data-new-base-flanora-board-surface="1"] .grFlanoraLane{grid-template-columns:26px minmax(0,1fr) 30px;gap:3px}[data-new-base-flanora-board-surface="1"] .grFlanoraGoal{width:20px;height:20px;font-size:6px}[data-new-base-flanora-board-surface="1"] .grFlanoraShield{width:28px;min-height:16px;font-size:7px}[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{gap:2px}}
+@media(max-width:540px) and (orientation:portrait){[data-new-base-flanora-board-surface="1"]{grid-template-rows:minmax(0,1fr) minmax(110px,30%)}[data-new-base-flanora-board-surface="1"] .grFlanoraLane{grid-template-columns:28px minmax(0,1fr) 34px;gap:3px}[data-new-base-flanora-board-surface="1"] .grFlanoraGoal{width:24px;height:24px;font-size:7px}[data-new-base-flanora-board-surface="1"] .grFlanoraShield{width:32px}}
 `;
   documentLike.head.appendChild(style);
 }
@@ -280,7 +280,10 @@ export function mountFlanoraBoardSurface({
   setAttr(root, 'data-performance-profile', performanceProfile({ reducedMotion, lowPerf }));
   setAttr(root, 'data-presentation-only', 'true');
   setAttr(root, 'data-gameplay-authority', 'false');
-  setAttr(root, 'aria-label', '共有移動フィールド、Shield、7段進行、GOAL');
+  setAttr(root, 'data-goal-edge', 'left');
+  setAttr(root, 'data-road-entry-edge', 'right');
+  setAttr(root, 'data-progression-direction', 'right-to-left');
+  setAttr(root, 'aria-label', 'GOAL左端、ROAD開始側右端。右から左のGOALへ進む12レーン盤面');
 
   const upper = createNode(documentLike, 'div', 'grFlanoraUpper');
   const clearing = createNode(documentLike, 'div', 'grFlanoraClearing');
@@ -299,7 +302,7 @@ export function mountFlanoraBoardSurface({
     setAttr(laneNode, 'data-participant-id', lane.participantId);
     setAttr(laneNode, 'data-lane-index', lane.laneIndex);
     setAttr(laneNode, 'data-lane-label', lane.laneLabel);
-    laneNode.style.gridColumn = String(lane.relativeColumn + 1);
+    laneNode.style.gridRow = String(lane.relativeColumn + 1);
 
     const goal = createNode(documentLike, 'span', 'grFlanoraGoal');
     goal.textContent = 'GOAL';

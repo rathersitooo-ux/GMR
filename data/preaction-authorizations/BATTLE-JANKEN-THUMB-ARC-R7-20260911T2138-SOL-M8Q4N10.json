@@ -1,0 +1,51 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-THUMB-ARC-R7-20260911T2138-SOL-M8Q4N10",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_THUMB_ARC_USESITE_EVIDENCE_R5",
+  "acquireKey": "BATTLE-JANKEN-THUMB-ARC-R7-20260911T2138-SOL-M8Q4N10",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "EXPIRED_R6_FOCUSED_PATCH_TEST_PASS_PLUS_CURRENT_OWNER_FREE_READBACK_20260911T2138JST",
+  "rehearsalStatus": "PASS_EXISTING_R2_CANDIDATE",
+  "rehearsalEvidenceId": "R6_RUN34593834251_EXACT_PATCH_AND_FOCUSED_CHECKS_SUCCESS_CAPTURE_ONLY_FAILURE",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-THUMB-ARC-R7-20260911T2138-SOL-M8Q4N10|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-slidepad-thumb-arc|evidence-runner-repair|active-lease",
+  "authorizationBaseSha": "747136e5c9e79a7f17cb5323c7f3d0f7eadb5e0c",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_THUMB_ARC_USESITE_EVIDENCE_R5",
+  "leaseAcquireKey": "BATTLE-JANKEN-THUMB-ARC-R7-20260911T2138-SOL-M8Q4N10",
+  "leaseSnapshotReadbackAtJst": "2026-09-11 21:38 JST",
+  "leaseUntilJst": "2026-09-11 22:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1029:N1029",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR existing branch sol/battle-janken-thumb-arc-r6-20260911; mutable .github/workflows/zz-temp-battle-janken-thumb-arc-r6.yml; candidate browser/battle-janken-slidepad-runtime-mount.mjs + tests/battle-janken-slidepad-runtime-mount.test.mjs only after evidence; evidence/battle-janken-thumb-arc-r6/{1280x720-expanded.png,667x375-expanded.png,390x844-expanded.png,geometry.json}; own R7 PRE_ACTION. READ_ONLY main/browser/GAMEROAD.html/battle-board-visual-explanation-runtime-mount.mjs/freeze PR#1546/gameplay/rules/state/save/economy/network.",
+  "solutionSignature": "BATTLE_JANKEN_EXISTING_SLIDEPAD_THUMB_ARC_GEOMETRY_USESITE_R7",
+  "reuseDisposition": "REUSE_R6_EXACT_PATCH_AND_REPAIR_CAPTURE_ONLY",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R6_EXACT_PATCH_FOCUSED_CHECKS_PASS_AND_NO_VISUAL_REJECTION",
+  "solutionSearchEvidence": [
+    "The existing SlidePad remains the sole state/input controller and the candidate changes geometry/style only.",
+    "R6 exact-anchor patch and focused checks passed before capture; no new controller, gameplay rule, store, renderer, or test suite is needed.",
+    "The exact WorkUnit had no unexpired owner at fresh acquisition readback; R5/R6 leases were expired.",
+    "The separate Browser main-thread freeze repair is currently owned by PLAYTEST-BATTLE-FIRST-ACTION-R3/PR#1546 and remains read-only for this WorkUnit."
+  ],
+  "scope": [
+    ".github/workflows/zz-temp-battle-janken-thumb-arc-r6.yml",
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    "evidence/battle-janken-thumb-arc-r6/1280x720-expanded.png",
+    "evidence/battle-janken-thumb-arc-r6/667x375-expanded.png",
+    "evidence/battle-janken-thumb-arc-r6/390x844-expanded.png",
+    "evidence/battle-janken-thumb-arc-r6/geometry.json"
+  ],
+  "doNotMutate": [
+    "main",
+    "browser/GAMEROAD.html",
+    "browser/battle-board-visual-explanation-runtime-mount.mjs",
+    "PR#1546",
+    "gameplay/rules/state/save/economy/network"
+  ],
+  "acceptance": "Capture actual Battle use-site with the existing thumb-arc candidate at 1280x720, 667x375 and 390x844; all three selectable slots and handle retain center hit ownership; inspect screenshots before any main adoption; final candidate diff must exclude any temporary dependency used only to unblock capture."
+}

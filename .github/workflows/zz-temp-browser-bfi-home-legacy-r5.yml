@@ -23,7 +23,7 @@ jobs:
         run: |
           set -euo pipefail
           AUTH_BASE='ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0'
-          EXPECTED_PARENT='801917e70a7e1f4751f055258a523ea57c6efa3c'
+          EXPECTED_PARENT='412b4354cd24e2a2fd14a3dd1ad7a133ce898f45'
           test "$(git rev-parse HEAD^)" = "$EXPECTED_PARENT"
           git fetch origin main sol/browser-bfi-home-legacy-r5-20260911
           test "$(git rev-parse origin/sol/browser-bfi-home-legacy-r5-20260911)" = "$(git rev-parse HEAD)"
@@ -31,11 +31,7 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           text = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
-          retired = [
-              'class="codexHomeVisualLayer"',
-              'class="codexPartnerChip ',
-              'class="codexBattleCta"',
-          ]
+          retired = ['class="codexHomeVisualLayer"', 'class="codexPartnerChip ', 'class="codexBattleCta"']
           for needle in retired:
               if needle in text:
                   raise SystemExit(f'retired Home producer unexpectedly present: {needle}')
@@ -47,7 +43,7 @@ jobs:
               raise SystemExit('canonical QA locator already present unexpectedly')
           if 'data-home-target="setup"' not in text:
               raise SystemExit('canonical Home setup route missing')
-          print('PASS: retired producers are gone; only stale QA locator remains')
+          print('PASS: retired producers are gone; stale QA locator is the only remaining R5 source cleanup')
           PY
 
       - name: Point existing QA geometry at canonical Home SlidePad target
@@ -62,8 +58,7 @@ jobs:
           new = "home:{primary:this.rect('.homePadChoice[data-home-target=\"setup\"]'),character:null,live:this.rect('.codexHomeCenterStage')}"
           if text.count(old) != 1:
               raise SystemExit(f'stale QA locator exact-count mismatch: {text.count(old)}')
-          text = text.replace(old, new, 1)
-          p.write_text(text, encoding='utf-8')
+          p.write_text(text.replace(old, new, 1), encoding='utf-8')
           PY
           git diff --check
 
@@ -71,8 +66,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node --test tests/home-boot-runtime-prune-static.test.mjs
-          node --test tests/home-boot-runtime-r3-regression.test.mjs
+          node --test tests/home-boot-presentation.test.mjs
           node tests/browser-static-check.mjs
 
       - name: Commit product-only final tree

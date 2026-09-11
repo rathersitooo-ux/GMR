@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "VWORK-TITLE-BOOT-RUNTIME-COMP-R7-20260911T1235",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "TITLE_BOOT_LIVE_BINDING_R5",
+  "acquireKey": "TITLE-BOOT-RUNTIME-COMP-R7-20260911T1235-SOL-Q8N4V6",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-MAIN-TITLE-CORE-PRESENT-RUNTIME-ABSENT-DONOR-PR1253-REVIEWED",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1253-REVIEWED-RUNTIME-TEST-DONOR-PLUS-CURRENT-CORE-API-READBACK",
+  "proceedToken": "PROCEED|VWORK-TITLE-BOOT-RUNTIME-COMP-R7-20260911T1235|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|reuse-reviewed-runtime|no-live-mount-yet|fail-closed",
+  "authorizationBaseSha": "3cbdab7b834728c0733459e4bda2d2523bd38e3e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "TITLE_BOOT_LIVE_BINDING_R5",
+  "leaseAcquireKey": "TITLE-BOOT-RUNTIME-COMP-R7-20260911T1235-SOL-Q8N4V6",
+  "leaseSnapshotReadbackAtJst": "2026-09-11 12:37 JST",
+  "leaseUntilJst": "2026-09-11 13:35 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1007:L1007",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main; NEW browser/title-boot-runtime-mount.mjs; NEW tests/title-boot-runtime-mount.test.mjs; own transient data/preaction-authorizations/VWORK-TITLE-BOOT-RUNTIME-COMP-R7-20260911T1235.json only. READ_ONLY browser/home-cards-2p5d-presentation.mjs; deploy/cloudflare/scripts/build.mjs while COSTUME-PLAYER-PATH-R2 owns build through 13:10; browser/GAMEROAD.html; title-boot-router-core.mjs; boot-loading-presentation-core.mjs; match/session authority; gameplay/rules/save/economy/network.",
+  "scope": [
+    "browser/title-boot-runtime-mount.mjs",
+    "tests/title-boot-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/title-boot-runtime-mount.mjs",
+    "tests/title-boot-runtime-mount.test.mjs"
+  ],
+  "solutionSignature": "Reuse the already-reviewed Title runtime and focused test from PR#1253 byte-for-byte on fresh current main, while deliberately withholding Home import and public-package mutation until the current build owner releases.",
+  "reuseDisposition": "REUSE_AS_IS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1253-DONOR-RUNTIME-PLUS-CURRENT-TITLE-ROUTER-BOOT-PRESENTATION-UNCHANGED-CONTRACT",
+  "solutionSearchEvidence": [
+    "Current main contains browser/title-boot-router-core.mjs and browser/boot-loading-presentation-core.mjs but no browser/title-boot-runtime-mount.mjs",
+    "PR#1253 reviewed runtime composes only existing screen-transition and caller-owned match-recovery/context-provider seams",
+    "CURRENT package uses explicit ARTIFACT_SPECS and deploy/cloudflare/scripts/build.mjs is concurrently owned, so live import/package is intentionally out of this lease"
+  ]
+}

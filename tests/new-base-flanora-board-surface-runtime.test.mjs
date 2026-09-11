@@ -44,7 +44,7 @@ function makeFakeDom() {
 
 function standardLayout() { return createFlanoraMapLayout(INPUT); }
 
-test('projects current board core into 12 Shield lanes, seven-step tracks, top GOALs and 26 shared clearing cells', () => {
+test('projects current board core into 12 Shield lanes, seven-step tracks, left GOALs and 26 shared clearing cells', () => {
   const model = createFlanoraBoardSurfaceModel(INPUT);
   assert.equal(model.lanes.length, 12);
   assert.equal(model.clearingCells.length, 26);
@@ -77,7 +77,7 @@ test('preserves same-column clearing entry and the four current start anchors', 
   });
 });
 
-test('mount exposes stable DOM hooks for later authoritative actor/advice/result consumers without owning game state', () => {
+test('mount exposes left GOAL and right ROAD-entry presentation without owning game state', () => {
   const documentLike = makeFakeDom();
   const host = documentLike.createElement('div');
   const runtime = mountFlanoraBoardSurface({ host, documentLike, layout: standardLayout() });
@@ -92,6 +92,19 @@ test('mount exposes stable DOM hooks for later authoritative actor/advice/result
     performanceProfile: 'standard',
     movementAuthority: false,
   });
+  assert.equal(runtime.root.dataset.goalEdge, 'left');
+  assert.equal(runtime.root.dataset.roadEntryEdge, 'right');
+  assert.equal(runtime.root.dataset.progressionDirection, 'right-to-left');
+  assert.match(runtime.root.getAttribute('aria-label'), /GOAL左端.*ROAD開始側右端.*右から左/);
+  assert.equal(runtime.upper.children.length, 12);
+  assert.equal(runtime.upper.children[0].style.gridRow, '1');
+  assert.equal(runtime.upper.children[11].style.gridRow, '12');
+  assert.deepEqual(runtime.upper.children[0].children.map((node) => node.className), ['grFlanoraGoal','grFlanoraRoad','grFlanoraShield']);
+  const styleText = documentLike.head.children[0].textContent;
+  assert.match(styleText, /\.grFlanoraUpper\{[^}]*grid-template-rows:repeat\(12,minmax\(0,1fr\)\)/);
+  assert.match(styleText, /\.grFlanoraLane\{[^}]*grid-template-columns:/);
+  assert.match(styleText, /\.grFlanoraRoad\{[^}]*grid-template-columns:repeat\(7,minmax\(4px,1fr\)\)[^}]*direction:rtl/);
+  assert.match(styleText, /\.grFlanoraRoad::before\{[^}]*left:3%;right:3%;top:50%;height:2px/);
   assert.equal(runtime.resolveGoal('P1', 0).dataset.flanoraGoal, 'P1:0');
   assert.equal(runtime.resolveShield('P4', 2).dataset.clearingEntryCellId, 'clearing:top:11');
   assert.equal(runtime.resolveRoadStep('P2', 1, 7).dataset.flanoraRoadStepId, 'road:P2:1:7');

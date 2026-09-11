@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-THUMB-ARC-R6-20260911T2020-SOL-M8Q4N9",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_THUMB_ARC_USESITE_EVIDENCE_R5",
+  "acquireKey": "BATTLE-JANKEN-THUMB-ARC-R6-20260911T2020-SOL-M8Q4N9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_SLIDEPAD_EXACT_ANCHORS_PLUS_R2_TESTED_CANDIDATE_20260911T2020JST",
+  "rehearsalStatus": "PASS_EXISTING_R2_CANDIDATE",
+  "rehearsalEvidenceId": "RUN34491325127_FOCUSED_CHECKS_SUCCESS_AND_R3_R5_HARNESS_ONLY_FAILURES",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-THUMB-ARC-R6-20260911T2020-SOL-M8Q4N9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-slidepad-thumb-arc|surgical-visual-evidence|active-lease",
+  "authorizationBaseSha": "ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_THUMB_ARC_USESITE_EVIDENCE_R5",
+  "leaseAcquireKey": "BATTLE-JANKEN-THUMB-ARC-R6-20260911T2020-SOL-M8Q4N9",
+  "leaseSnapshotReadbackAtJst": "2026-09-11 20:20 JST",
+  "leaseUntilJst": "2026-09-11 21:20 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1026:L1026",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-janken-thumb-arc-r6-20260911 from exact main ea1df495fa3e9b13a97ad8b3aaa2f793a0f85ca0; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; transient bounded visual-evidence workflow; evidence/battle-janken-thumb-arc-r6/{1280x720-expanded.png,667x375-expanded.png,390x844-expanded.png,geometry.json}; own PRE_ACTION/PR/check/readback only. browser/GAMEROAD.html, deploy/cloudflare/scripts/build.mjs, gameplay/rules/state/save/economy/network, active privacy/Home/Partner owner resources READ_ONLY.",
+  "solutionSignature": "BATTLE_JANKEN_EXISTING_SLIDEPAD_THUMB_ARC_GEOMETRY_USESITE_R6",
+  "reuseDisposition": "ADAPT_EXISTING_R2_CANDIDATE_ON_FRESH_MAIN_AND_VERIFY_ACTUAL_USESITE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_SLIDEPAD_EXACT_LEGACY_GEOMETRY_PLUS_EXISTING_R2_PATCH_AND_R5_HARNESS_DIAGNOSIS",
+  "solutionSearchEvidence": [
+    "Fresh main runtime still contains the exact R2 visual anchors; existing SlidePad remains the sole state/input controller.",
+    "R2 candidate changed geometry/style only and passed focused checks while preserving Hand3, target, commit, roulette default-off, gameplay and native-suit semantics.",
+    "R3-R5 attempts failed only before visual evidence because of page navigation or Home rerender harness waits; no visual rejection was recorded.",
+    "Horizontal crosscheck rejects a second controller, new UI authority, gameplay rewrite, or NO_CHANGE; the shortest reversible repair is the existing SlidePad geometry candidate plus actual 1280x720, 667x375 and 390x844 use-site evidence."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-thumb-arc-r6.yml",
+    "evidence/battle-janken-thumb-arc-r6/1280x720-expanded.png",
+    "evidence/battle-janken-thumb-arc-r6/667x375-expanded.png",
+    "evidence/battle-janken-thumb-arc-r6/390x844-expanded.png",
+    "evidence/battle-janken-thumb-arc-r6/geometry.json"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-thumb-arc-r6.yml",
+    "evidence/battle-janken-thumb-arc-r6/1280x720-expanded.png",
+    "evidence/battle-janken-thumb-arc-r6/667x375-expanded.png",
+    "evidence/battle-janken-thumb-arc-r6/390x844-expanded.png",
+    "evidence/battle-janken-thumb-arc-r6/geometry.json"
+  ]
+}

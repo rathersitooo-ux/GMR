@@ -14,78 +14,20 @@ permissions:
   contents: read
 
 jobs:
-  road-bidirectional-regression:
+  road-current-home-seam-diagnosis:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install Playwright test runner
-        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
-
-      - name: Install Chromium and OS dependencies
-        run: npx playwright install --with-deps chromium
-
-      - name: Prepare commit-wait Road runner
+      - name: Extract current Home to Setup/Battle anchors
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p .r29-road
-          sed "s/waitUntil: 'domcontentloaded'/waitUntil: 'commit'/" \
-            tests/road-move-bidirectional-live-r27.spec.mjs \
-            > .r29-road/road.spec.mjs
-          cat > .r29-road/playwright.config.mjs <<'EOF'
-          import { defineConfig } from '@playwright/test';
-          export default defineConfig({
-            testDir: '.',
-            testMatch: 'road.spec.mjs',
-            timeout: 90_000,
-            expect: { timeout: 8_000 },
-            fullyParallel: false,
-            workers: 1,
-            retries: 0,
-            outputDir: '../test-results/road-r29',
-            reporter: [
-              ['line'],
-              ['json', { outputFile: '../test-results/road-r29/report.json' }],
-            ],
-            use: {
-              baseURL: 'http://127.0.0.1:4173',
-              browserName: 'chromium',
-              headless: true,
-              trace: 'retain-on-failure',
-              screenshot: 'only-on-failure',
-              video: 'off',
-            },
-            projects: [{
-              name: 'road-844x390',
-              use: { viewport: { width: 844, height: 390 } },
-            }],
-            webServer: {
-              command: 'python3 -m http.server 4173 --bind 127.0.0.1',
-              cwd: new URL('../', import.meta.url).pathname,
-              url: 'http://127.0.0.1:4173/browser/GAMEROAD.html',
-              reuseExistingServer: false,
-              timeout: 120_000,
-            },
-          });
-          EOF
-
-      - name: Run Road bidirectional regression
-        run: npx playwright test --config=.r29-road/playwright.config.mjs --workers=1
-
-      - name: Upload Road evidence
-        if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: road-move-r29-${{ github.run_id }}
-          path: |
-            test-results/road-r29/
-          if-no-files-found: warn
-          retention-days: 7
+          echo '=== data-home-target / data-go setup|battle ==='
+          grep -nE 'data-(home-target|go)="(setup|battle)"' browser/GAMEROAD.html | head -80 || true
+          echo '=== setup/battle navigation literals ==='
+          grep -nE "(showScreen|goScreen|navigate|data-go|data-home-target).{0,100}(setup|battle)|(setup|battle).{0,100}(showScreen|goScreen|navigate|data-go|data-home-target)" browser/GAMEROAD.html | head -120 || true
+          echo '=== home primary labels nearby ==='
+          grep -nE 'ホーム|バトル|設定|ショップ|デッキ|パートナー' browser/GAMEROAD.html | head -120 || true

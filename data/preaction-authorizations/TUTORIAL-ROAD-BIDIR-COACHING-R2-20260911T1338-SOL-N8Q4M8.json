@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "TUTORIAL-ROAD-BIDIR-COACHING-R2-20260911T1338-SOL-N8Q4M8",
+  "taskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "workUnitKey": "ROAD_BIDIRECTIONAL_TUTORIAL_COACHING_R1",
+  "acquireKey": "TUTORIAL-ROAD-BIDIR-COACHING-R2-20260911T1338-SOL-N8Q4M8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_PR1534_DEPLOY_FAILURE_AND_OWNER_FREE_PACKAGE_TEST_20260911T1338JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PUBLIC_DEPLOY_RUN34559355681_EXACT_STALE_PIN_PLUS_PRIOR_MANIFEST_SCHEMA_FAILURE",
+  "proceedToken": "PROCEED|TUTORIAL-ROAD-BIDIR-COACHING-R2-20260911T1338-SOL-N8Q4M8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|tutorial-road-public-repair|package-pin|active-lease",
+  "authorizationBaseSha": "8af2c9f887b47a09fbbb972cffd2463dae454f87",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "TUTORIAL-CONTENT-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "ROAD_BIDIRECTIONAL_TUTORIAL_COACHING_R1",
+  "leaseAcquireKey": "TUTORIAL-ROAD-BIDIR-COACHING-R2-20260911T1338-SOL-N8Q4M8",
+  "leaseSnapshotReadbackAtJst": "2026-09-11 13:38 JST",
+  "leaseUntilJst": "2026-09-11 14:38 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1013:L1013",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact main@8af2c9f887b47a09fbbb972cffd2463dae454f87; deploy/cloudflare/tests/build.test.mjs; transient .github/workflows/zz-temp-tutorial-public-repair-r2.yml; own data/preaction-authorizations/TUTORIAL-ROAD-BIDIR-COACHING-R2-20260911T1338-SOL-N8Q4M8.json only. READ_ONLY browser/tutorial-experience-profile-core.mjs; tests/tutorial-experience-profile-core.test.mjs; deploy/cloudflare/tests/version-manifest.test.mjs; browser/GAMEROAD.html; gameplay/rules/save/economy/network.",
+  "solutionSignature": "TUTORIAL_ROAD_CURRENT_CONTENT_PUBLIC_PACKAGE_PIN_REPAIR_V1",
+  "reuseDisposition": "REUSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1534_CONTENT_ACCEPTED_PUBLIC_DEPLOY_STALE_PIN_ONLY_NO_SECOND_TUTORIAL_IMPLEMENTATION",
+  "solutionSearchEvidence": [
+    "Current main retains the accepted bidirectional Road tutorial source and focused test from PR#1534.",
+    "Public deploy run 34559355681 proves the package contract still pins the prior tutorial blob while the current source blob is be5f8fb0e1494601276cdd666ab64502414614ca.",
+    "PR#1534 Required Gate failed before product checks because its authorization manifest used the obsolete schema field; the current v3 shape is reused from a known accepted manifest.",
+    "Reverting tutorial content would restore stale player guidance; weakening deploy admission would remove a safety gate; the minimal repair is the existing strict package pin plus valid authorization only.",
+    "Tutorial source/test, Browser HTML, gameplay, save, economy, and network remain read-only in this repair."
+  ],
+  "scope": [
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-tutorial-public-repair-r2.yml"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-tutorial-public-repair-r2.yml"
+  ]
+}

@@ -9,7 +9,7 @@ permissions:
 
 concurrency:
   group: battle-janken-thumb-arc-evidence-r3
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   capture-use-site:
@@ -62,23 +62,16 @@ jobs:
             const response=await page.goto(`${base}/browser/GAMEROAD.html`,{waitUntil:'commit',timeout:10000});
             if(!response||response.status()>=400) throw new Error(`HTML response ${response?.status()}`);
             await page.waitForFunction(()=>!!window.__GAMEROAD_TEST__&&Array.isArray(window.__CARD_DATA__),null,{timeout:45000});
-            const setup=page.locator('section[data-screen="setup"]');
-            const battleChoice=()=>page.getByRole('button',{name:'バトルへ'}).first();
-            await battleChoice().waitFor({state:'visible',timeout:20000});
-            try{
-              await battleChoice().click({timeout:1800});
-            }catch(error){
-              if(!(await setup.isVisible())){
-                const center=page.locator('#homePadCenter:visible');
-                await center.waitFor({state:'visible',timeout:5000});
-                await center.click({timeout:5000});
-                await page.waitForTimeout(250);
-                await battleChoice().click({timeout:10000});
-              }
-            }
-            await setup.waitFor({state:'visible',timeout:20000});
+
             const deck=await legalDeck(page);
             if(deck.count!==40||!deck.committed||!deck.savedOk) throw new Error(`deck ${JSON.stringify(deck)}`);
+
+            const setupControl=page.locator('[data-home-target="setup"]:visible, [data-go="setup"]:visible').first();
+            await setupControl.waitFor({state:'visible',timeout:20000});
+            await setupControl.click({timeout:10000});
+
+            const setup=page.locator('section[data-screen="setup"]');
+            await setup.waitFor({state:'visible',timeout:20000});
             await setup.locator('[data-content="road_shield"]').click({timeout:10000});
             await setup.locator('[data-mode="2v2"]').click({timeout:10000});
             const start=setup.locator('#startMatch');
@@ -93,7 +86,7 @@ jobs:
           async function capture(page,name){
             await enter(page);
             const host=page.locator('[data-battle-janken-slidepad="1"]').first(),handle=host.locator('.grJankenSlidePadHandle');
-            if(await host.getAttribute('data-expanded')!=='true') await handle.click();
+            if(await host.getAttribute('data-expanded')!=='true') await handle.click({timeout:10000});
             await page.waitForFunction(()=>document.querySelector('[data-battle-janken-slidepad="1"]')?.dataset.expanded==='true',null,{timeout:5000});
             await page.waitForTimeout(260);
             if(await host.locator('[data-janken-slot]').count()!==3) throw new Error(`${name}: slot count`);

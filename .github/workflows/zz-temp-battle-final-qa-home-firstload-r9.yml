@@ -1,0 +1,73 @@
+name: TEMP Home first-load R9 surgical repair
+on:
+  push:
+    branches:
+      - sol/battle-final-qa-home-firstload-r9-20260911
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply Home and Study first-load yield repair
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          base = Path('browser/home-boot-runtime-base-r3.mjs')
+          text = base.read_text()
+          old = """  if (document.readyState === 'loading') {\n    document.addEventListener('DOMContentLoaded', () => mountHomeBootPresentation(), { once: true });\n  } else {\n    mountHomeBootPresentation();\n  }\n"""
+          new = """  if (document.readyState === 'loading') {\n    document.addEventListener('DOMContentLoaded', () => {\n      setTimeout(() => mountHomeBootPresentation(), 0);\n    }, { once: true });\n  } else {\n    mountHomeBootPresentation();\n  }\n"""
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one Home DCL mount site, found {text.count(old)}')
+          base.write_text(text.replace(old, new, 1))
+
+          mount = Path('browser/home-boot-runtime-mount.mjs')
+          text = mount.read_text()
+          old = """  if (document.readyState === 'loading') {\n    document.addEventListener('DOMContentLoaded', mountStudyAfterHome, { once: true });\n  } else {\n    mountStudyAfterHome();\n  }\n"""
+          new = """  if (document.readyState === 'loading') {\n    document.addEventListener('DOMContentLoaded', () => {\n      setTimeout(mountStudyAfterHome, 0);\n    }, { once: true });\n  } else {\n    mountStudyAfterHome();\n  }\n"""
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one Study DCL mount site, found {text.count(old)}')
+          mount.write_text(text.replace(old, new, 1))
+          PY
+          cat > tests/home-boot-runtime-base-r3.test.mjs <<'EOF'
+          import test from 'node:test';
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+
+          const baseSource = fs.readFileSync(new URL('../browser/home-boot-runtime-base-r3.mjs', import.meta.url), 'utf8');
+          const mountSource = fs.readFileSync(new URL('../browser/home-boot-runtime-mount.mjs', import.meta.url), 'utf8');
+
+          test('loading-state Home auto-mount yields until after DOMContentLoaded dispatch', () => {
+            assert.ok(baseSource.includes("document.addEventListener('DOMContentLoaded', () => {\n      setTimeout(() => mountHomeBootPresentation(), 0);\n    }, { once: true });"));
+            assert.equal(baseSource.includes("document.addEventListener('DOMContentLoaded', () => mountHomeBootPresentation(), { once: true });"), false);
+            assert.ok(baseSource.includes("  } else {\n    mountHomeBootPresentation();\n  }"));
+          });
+
+          test('Study wrapper yields on the same boundary while preserving base-first registration', () => {
+            assert.ok(mountSource.includes("export * from './home-boot-runtime-base-r3.mjs';"));
+            assert.ok(mountSource.includes("document.addEventListener('DOMContentLoaded', () => {\n      setTimeout(mountStudyAfterHome, 0);\n    }, { once: true });"));
+            assert.equal(mountSource.includes("document.addEventListener('DOMContentLoaded', mountStudyAfterHome, { once: true });"), false);
+            assert.ok(mountSource.includes("  } else {\n    mountStudyAfterHome();\n  }"));
+          });
+          EOF
+          git diff --check
+          node --check browser/home-boot-runtime-base-r3.mjs
+          node --check browser/home-boot-runtime-mount.mjs
+          node --test tests/home-boot-runtime-base-r3.test.mjs
+          node --test tests/home-boot-presentation.test.mjs
+      - name: Commit bounded bootstrap repair
+        run: |
+          git config user.name "gameroad-bounded-writer"
+          git config user.email "actions@users.noreply.github.com"
+          git add browser/home-boot-runtime-base-r3.mjs browser/home-boot-runtime-mount.mjs tests/home-boot-runtime-base-r3.test.mjs
+          git diff --cached --exit-code && exit 1 || true
+          git commit -m "fix: yield Home bootstrap after DOMContentLoaded"
+          git push origin HEAD:sol/battle-final-qa-home-firstload-r9-20260911

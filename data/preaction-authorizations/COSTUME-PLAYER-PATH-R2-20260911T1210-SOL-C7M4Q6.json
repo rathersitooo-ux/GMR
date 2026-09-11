@@ -8,6 +8,7 @@
   "branchHeadBefore": "3cbdab7b834728c0733459e4bda2d2523bd38e3e",
   "mutable": [
     "browser/GAMEROAD.html",
+    ".github/workflows/zz-temp-partner-costume-player-path-r2.yml",
     "browser/partner-tea-runtime-mount.mjs",
     "tests/partner-tea-runtime-mount.test.mjs",
     "deploy/cloudflare/scripts/build.mjs",

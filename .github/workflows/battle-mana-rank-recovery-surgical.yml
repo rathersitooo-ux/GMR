@@ -33,21 +33,8 @@ jobs:
           html = html_path.read_text(encoding='utf-8')
           test = test_path.read_text(encoding='utf-8')
 
-          old_fn = '''function awardRoundStartHoney(m){
-          for(const row of currentPlacementRanks(m)){
-            const gain=Math.max(1,Number(row.rank)||1);
-            row.player.honey=Math.max(0,Number(row.player.honey)||0)+gain;
-            log(`${row.player.name}：${gain}位のためハニー+${gain}。`)
-          }
-          }'''
-          new_fn = '''function recoverRoundStartManaByPlacement(m){
-          for(const row of currentPlacementRanks(m)){
-            const gain=Math.max(1,Number(row.rank)||1),p=row.player,max=Math.max(0,Number(row.player.manaMax)||10);
-            const before=Math.max(0,Math.min(max,Number(p.manaCurrent)||0)),after=Math.min(max,before+gain);
-            p.manaCurrent=after;
-            log(`${p.name}：${gain}位のためマナ回復+${after-before}（${after}/${max}）。`)
-          }
-          }'''
+          old_fn = 'function awardRoundStartHoney(m){for(const row of currentPlacementRanks(m)){const gain=Math.max(1,Number(row.rank)||1);row.player.honey=Math.max(0,Number(row.player.honey)||0)+gain;log(`${row.player.name}：${gain}位のためハニー+${gain}。`)}}'
+          new_fn = 'function recoverRoundStartManaByPlacement(m){for(const row of currentPlacementRanks(m)){const gain=Math.max(1,Number(row.rank)||1),p=row.player,max=Math.max(0,Number(p.manaMax)||10);const before=Math.max(0,Math.min(max,Number(p.manaCurrent)||0)),after=Math.min(max,before+gain);p.manaCurrent=after;log(`${p.name}：${gain}位のためマナ回復+${after-before}（${after}/${max}）。`)}}'
           old_round_one = 'grBattleReplayBegin(state.match);awardRoundStartHoney(state.match);initRoundRuntime(state.match)'
           new_round_one = 'grBattleReplayBegin(state.match);recoverRoundStartManaByPlacement(state.match);initRoundRuntime(state.match)'
           old_later = 'm.players.forEach(p=>p.plan=null);awardRoundStartHoney(m);initRoundRuntime(m)'
@@ -64,12 +51,12 @@ jobs:
               html = html.replace(old, new, 1)
 
           old_contracts = '''    [/function awardRoundStartHoney\\(m\\)/, 'round-start Honey income is not mounted'],
-          [/grBattleReplayBegin\\(state\\.match\\);awardRoundStartHoney\\(state\\.match\\);initRoundRuntime\\(state\\.match\\)/, 'round one does not award current-rank Honey before play'],
-          [/m\\.players\\.forEach\\(p=>p\\.plan=null\\);awardRoundStartHoney\\(m\\);initRoundRuntime\\(m\\)/, 'later rounds do not award current-rank Honey'],'''
+    [/grBattleReplayBegin\\(state\\.match\\);awardRoundStartHoney\\(state\\.match\\);initRoundRuntime\\(state\\.match\\)/, 'round one does not award current-rank Honey before play'],
+    [/m\\.players\\.forEach\\(p=>p\\.plan=null\\);awardRoundStartHoney\\(m\\);initRoundRuntime\\(m\\)/, 'later rounds do not award current-rank Honey'],'''
           new_contracts = '''    [/function recoverRoundStartManaByPlacement\\(m\\)/, 'round-start placement Mana recovery is not mounted'],
-          [/function recoverRoundStartManaByPlacement\\(m\\)\\{[\\s\\S]{0,700}p\\.manaCurrent=after;/, 'round-start placement Mana recovery does not clamp and write numeric Mana'],
-          [/grBattleReplayBegin\\(state\\.match\\);recoverRoundStartManaByPlacement\\(state\\.match\\);initRoundRuntime\\(state\\.match\\)/, 'round one does not recover current-rank Mana before play'],
-          [/m\\.players\\.forEach\\(p=>p\\.plan=null\\);recoverRoundStartManaByPlacement\\(m\\);initRoundRuntime\\(m\\)/, 'later rounds do not recover current-rank Mana'],'''
+    [/function recoverRoundStartManaByPlacement\\(m\\)\\{[\\s\\S]{0,700}p\\.manaCurrent=after;/, 'round-start placement Mana recovery does not clamp and write numeric Mana'],
+    [/grBattleReplayBegin\\(state\\.match\\);recoverRoundStartManaByPlacement\\(state\\.match\\);initRoundRuntime\\(state\\.match\\)/, 'round one does not recover current-rank Mana before play'],
+    [/m\\.players\\.forEach\\(p=>p\\.plan=null\\);recoverRoundStartManaByPlacement\\(m\\);initRoundRuntime\\(m\\)/, 'later rounds do not recover current-rank Mana'],'''
           if test.count(old_contracts) != 1:
               raise SystemExit(f'static resource contracts: expected exactly 1 match, found {test.count(old_contracts)}')
           test = test.replace(old_contracts, new_contracts, 1)

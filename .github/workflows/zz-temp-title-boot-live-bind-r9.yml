@@ -1,0 +1,75 @@
+name: temp-title-boot-live-bind-r9b
+
+on:
+  push:
+    branches:
+      - sol/title-boot-live-bind-r9b-20260912
+    paths:
+      - .github/workflows/zz-temp-title-boot-live-bind-r9.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Configure repository hooks
+        run: |
+          git config core.hooksPath .githooks
+          test "$(git config --get core.hooksPath)" = ".githooks"
+      - name: Patch exact Cloudflare artifact seam only
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          build = Path('deploy/cloudflare/scripts/build.mjs')
+          text = build.read_text()
+          title_paths = (
+              'browser/title-boot-runtime-mount.mjs',
+              'browser/title-boot-router-core.mjs',
+              'browser/boot-loading-presentation-core.mjs',
+          )
+          if any(path in text for path in title_paths):
+              raise SystemExit('Title artifact spec already present or partially present; fail closed')
+
+          anchor = "  { option: 'homeBootRuntimeMountSource', expected: 'expectedHomeBootRuntimeMountBlob', source: 'browser/home-boot-runtime-mount.mjs', output: 'home-boot-runtime-mount.mjs', artifact: 'home_boot_runtime_mount', label: 'Home Boot runtime mount', sourceFlag: '--home-boot-runtime-mount-source', expectedFlag: '--expected-home-boot-runtime-mount-blob' },\n  { source: 'browser/home-boot-runtime-base-r3.mjs', output: 'home-boot-runtime-base-r3.mjs', artifact: 'home_boot_runtime_base_r3', label: 'Home Boot runtime base R3' },"
+          if text.count(anchor) != 1:
+              raise SystemExit(f'expected one Home artifact anchor, got {text.count(anchor)}')
+
+          replacement = "  { option: 'homeBootRuntimeMountSource', expected: 'expectedHomeBootRuntimeMountBlob', source: 'browser/home-boot-runtime-mount.mjs', output: 'home-boot-runtime-mount.mjs', artifact: 'home_boot_runtime_mount', label: 'Home Boot runtime mount', sourceFlag: '--home-boot-runtime-mount-source', expectedFlag: '--expected-home-boot-runtime-mount-blob' },\n  { source: 'browser/title-boot-runtime-mount.mjs', output: 'title-boot-runtime-mount.mjs', artifact: 'title_boot_runtime_mount', label: 'Title Boot runtime mount' },\n  { source: 'browser/title-boot-router-core.mjs', output: 'title-boot-router-core.mjs', artifact: 'title_boot_router_core', label: 'Title Boot router core' },\n  { source: 'browser/boot-loading-presentation-core.mjs', output: 'boot-loading-presentation-core.mjs', artifact: 'boot_loading_presentation_core', label: 'Boot loading presentation core' },\n  { source: 'browser/home-boot-runtime-base-r3.mjs', output: 'home-boot-runtime-base-r3.mjs', artifact: 'home_boot_runtime_base_r3', label: 'Home Boot runtime base R3' },"
+          text = text.replace(anchor, replacement, 1)
+          build.write_text(text)
+
+          home = Path('browser/home-boot-runtime-mount.mjs').read_text()
+          if "import './title-boot-runtime-mount.mjs';" not in home:
+              raise SystemExit('Home Title import missing')
+          patched = build.read_text()
+          for path in title_paths:
+              if patched.count(path) != 1:
+                  raise SystemExit(f'expected exactly one artifact spec for {path}')
+          PY
+      - name: Focused Title runtime test
+        run: node --test tests/title-boot-runtime-mount.test.mjs
+      - name: Syntax-check package builder
+        run: node --check deploy/cloudflare/scripts/build.mjs
+      - name: Commit public-package binding
+        run: |
+          git config user.name "gameroad-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git add deploy/cloudflare/scripts/build.mjs
+          git diff --cached --quiet && { echo "no package diff"; exit 1; }
+          git commit -m "Title: 公開packageへ起動router依存を収録"
+      - name: Cleanup transient authorization and writer
+        run: |
+          rm -f .github/workflows/zz-temp-title-boot-live-bind-r9.yml
+          rm -f data/preaction-authorizations/TITLE-BOOT-LIVE-BIND-R9-20260912T1000-SOL-Q7M4N15.json
+          git add -A
+          git commit -m "chore: cleanup Title boot live-binding transport"
+      - name: Push authorized durable branch
+        run: git push origin "HEAD:${GITHUB_REF_NAME}"

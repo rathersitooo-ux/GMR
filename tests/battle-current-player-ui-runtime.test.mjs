@@ -196,6 +196,12 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.roulette[0], '[data-battle-playa
   assert.match(document.head.children[0].textContent, /data-battle-janken-slidepad/);
   assert.match(document.head.children[0].textContent, /data-battle-playable-hand-row-roulette-live/);
   assert.match(document.head.children[0].textContent, /backdrop-filter:none/);
+  const styleText = document.head.children[0].textContent;
+  assert.match(styleText, /\.planBox\{[^}]*transform:none!important/);
+  assert.match(styleText, /\.battleRail\{[^}]*max-width:min\(28vw,340px\)!important[^}]*transform:none!important/);
+  assert.match(styleText, /data-battle-janken-slidepad=\"1\"\]\{[^}]*width:var\(--gr-thumb-w\)!important[^}]*height:var\(--gr-thumb-h\)!important/);
+  assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\.battleInfo\{[^}]*right:calc\(var\(--gr-thumb-w\) \+ var\(--gr-ui-edge\) \+ var\(--gr-ui-gap\)\)!important/);
+  assert.match(styleText, /@media\(max-width:520px\)[\s\S]*\.battleRail\{[^}]*top:118px!important[^}]*max-width:none!important/);
 
   const snapshot = runtime.inspect();
   assert.deepEqual(snapshot.resolvedLiveConsumers, {

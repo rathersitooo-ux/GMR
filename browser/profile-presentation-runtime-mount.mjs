@@ -252,6 +252,8 @@ function bindRecordsInteraction(screen, list, panel, doc) {
 
   doc.addEventListener('click', (event) => {
     if (panel.hidden || !screen.classList.contains('active') || panel.contains(event.target)) return;
+    const row = event.target?.closest?.('.record');
+    if (row && list.contains(row)) return;
     event.preventDefault();
     event.stopPropagation();
     dismissRecordsMatchDetail(list, panel);

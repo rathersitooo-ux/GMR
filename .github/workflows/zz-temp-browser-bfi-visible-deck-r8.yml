@@ -123,7 +123,18 @@ jobs:
           node --check tests/browser-full-interaction.spec.mjs
           git diff --check
           grep -n "saveBattleDeckThroughVisibleCards\|visible-precondition" tests/browser-full-interaction.spec.mjs
-          awk '/FULLREG R19 visible four-player Honey Hunt route/{flag=1} flag{print} /const setupGo = visibleOperationGo\(page, .setup.\);/{exit}' tests/browser-full-interaction.spec.mjs | grep -qv '__GAMEROAD_TEST__'
+          python3 - <<'PY'
+          from pathlib import Path
+          s = Path('tests/browser-full-interaction.spec.mjs').read_text(encoding='utf-8')
+          start = s.index('// FULLREG R19 visible four-player Honey Hunt route')
+          end = s.index("  const setupGo = visibleOperationGo(page, 'setup');", start)
+          r19_precondition = s[start:end]
+          if '__GAMEROAD_TEST__' in r19_precondition:
+              raise SystemExit('private test API remains in R19 precondition')
+          if 'saveBattleDeckThroughVisibleCards' not in r19_precondition:
+              raise SystemExit('visible deck helper missing from R19 precondition')
+          print('R19 visible deck precondition verified')
+          PY
       - name: Commit bounded patch and remove transient workflow
         shell: bash
         run: |

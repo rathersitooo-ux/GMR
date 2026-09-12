@@ -67,11 +67,11 @@ jobs:
 
             await expect(deckCount, 'visible Deck construction reaches 40 cards').toHaveText('40');
             const trayToggle = cards.locator('#r4DeckTrayToggle:visible');
-            const saveDeck = cards.locator('#saveDeck');
-            if (!(await saveDeck.isVisible()) && (await trayToggle.count()) > 0) {
+            if ((await trayToggle.count()) > 0) {
               await trayToggle.click();
               await page.waitForTimeout(120);
             }
+            const saveDeck = cards.locator('#saveDeck:visible');
             await expect(saveDeck, 'visible Save control is available after Deck construction').toBeVisible();
             await expect(saveDeck).toBeEnabled();
             await saveDeck.click();

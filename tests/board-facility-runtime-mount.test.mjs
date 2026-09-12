@@ -94,11 +94,11 @@ test('failed Partner conversation send restores the retry draft without keeping 
   assert.equal(removals, 1);
 });
 
-test('active Partner screen projects straight to conversation with no picker state', () => {
-  assert.equal(partnerConversationProjectionDecision({ screenActive: false }), 'idle');
-  assert.equal(partnerConversationProjectionDecision({ screenActive: true }), 'conversation');
-  assert.equal(partnerConversationProjectionDecision({ screenActive: true, partnerRoleActive: false }), 'conversation');
-  assert.equal(partnerConversationProjectionDecision({ screenActive: true, saasunaSelected: false }), 'conversation');
+test('Partner conversation only projects for Saasuna in the active normal Partner role', () => {
+  assert.equal(partnerConversationProjectionDecision({ screenActive: false, activeRole: 'partner', selectedPartnerId: 'partner.saasuna' }), 'idle');
+  assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'player', selectedPartnerId: 'partner.saasuna' }), 'idle');
+  assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'partner', selectedPartnerId: 'partner.honoka' }), 'idle');
+  assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'partner', selectedPartnerId: 'partner.saasuna' }), 'conversation');
 });
 
 test('provisional Saasuna visual is explicitly static and outside character production', () => {

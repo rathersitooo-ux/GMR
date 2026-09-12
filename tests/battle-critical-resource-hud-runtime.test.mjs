@@ -49,8 +49,10 @@ function makeGlobal() {
   return { document };
 }
 
-test('projects zero Honey and zero Chip as resolved authoritative values', () => {
-  const result = projectBattleCriticalResourceSnapshot({ honey: 0, chipCount: 0 });
+test('projects numeric Mana plus zero Honey and zero Chip as resolved authoritative values', () => {
+  const result = projectBattleCriticalResourceSnapshot({ manaCurrent: 7, manaMax: 10, honey: 0, chipCount: 0 });
+  assert.equal(result.mana.resolved, true);
+  assert.equal(result.mana.text, '7/10');
   assert.equal(result.honey.resolved, true);
   assert.equal(result.honey.text, '0');
   assert.equal(result.chip.resolved, true);
@@ -60,6 +62,9 @@ test('projects zero Honey and zero Chip as resolved authoritative values', () =>
 test('fails closed instead of inventing invalid resource values', () => {
   for (const snapshot of [
     {},
+    { manaCurrent: 11, manaMax: 10, honey: 0, chipCount: 0 },
+    { manaCurrent: 7, manaMax: 0, honey: 0, chipCount: 0 },
+    { manaCurrent: '7', manaMax: 10, honey: 0, chipCount: 0 },
     { honey: -1, chipCount: 2 },
     { honey: 3, chipCount: -1 },
     { honey: '3', chipCount: '2' },
@@ -67,6 +72,13 @@ test('fails closed instead of inventing invalid resource values', () => {
     { honey: Number.NaN, chipCount: Number.POSITIVE_INFINITY }
   ]) {
     const result = projectBattleCriticalResourceSnapshot(snapshot);
+    const manaValid = Number.isSafeInteger(snapshot.manaCurrent) && snapshot.manaCurrent >= 0
+      && Number.isSafeInteger(snapshot.manaMax) && snapshot.manaMax > 0
+      && snapshot.manaCurrent <= snapshot.manaMax;
+    if (!manaValid) {
+      assert.equal(result.mana.resolved, false);
+      assert.equal(result.mana.text, '—');
+    }
     if (!Number.isSafeInteger(snapshot.honey) || snapshot.honey < 0) {
       assert.equal(result.honey.resolved, false);
       assert.equal(result.honey.text, '—');
@@ -98,41 +110,54 @@ test('mounts a compact caller-owned HUD and updates without resource calculation
   const host = new FakeNode('div');
   const runtime = mountBattleCriticalResourceHud(global, {
     host,
-    snapshot: { honey: 7, chipCount: 3, honeyDelta: 2, honeyDeltaSource: '2位' }
+    snapshot: { manaCurrent: 7, manaMax: 10, honey: 7, chipCount: 3, honeyDelta: 2, honeyDeltaSource: '2位' }
   });
 
   assert.equal(host.children.length, 1);
   assert.equal(runtime.root.dataset.presentationOnly, 'true');
   assert.equal(runtime.root.dataset.authority, 'caller_authoritative_resource_snapshot_only');
+  assert.equal(runtime.manaCell.children[1].textContent, '7/10');
   assert.equal(runtime.honeyCell.children[1].textContent, '7');
   assert.equal(runtime.chipCell.children[1].textContent, '3');
   assert.equal(runtime.honeyCell.children[2].textContent, '+2・2位');
   assert.equal(runtime.honeyCell.children[2].hidden, false);
 
-  const next = runtime.sync({ honey: 8, chipCount: 0 });
+  const next = runtime.sync({ manaCurrent: 5, manaMax: 10, honey: 8, chipCount: 0 });
+  assert.equal(next.mana.text, '5/10');
   assert.equal(next.honey.text, '8');
   assert.equal(next.chip.text, '0');
   assert.equal(runtime.honeyCell.children[2].hidden, true);
+  assert.equal(runtime.root.dataset.manaResolved, 'true');
   assert.equal(runtime.root.dataset.honeyResolved, 'true');
   assert.equal(runtime.root.dataset.chipResolved, 'true');
   assert.equal(runtime.gameStateWrite, false);
 });
 
-test('does not expose Chip card identities or create a resource authority', () => {
-  const model = projectBattleCriticalResourceSnapshot({ honey: 4, chipCount: 5, chipCardIds: ['secret-card'] });
+test('does not expose physical Mana or Chip card identities or create a resource authority', () => {
+  const model = projectBattleCriticalResourceSnapshot({
+    manaCurrent: 7,
+    manaMax: 10,
+    manaCardIds: ['legacy-mana-card'],
+    honey: 4,
+    chipCount: 5,
+    chipCardIds: ['secret-card']
+  });
+  assert.deepEqual(Object.keys(model.mana).sort(), ['current', 'max', 'resolved', 'text']);
+  assert.equal(JSON.stringify(model).includes('legacy-mana-card'), false);
   assert.deepEqual(Object.keys(model.chip).sort(), ['count', 'resolved', 'text']);
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.resourceAuthority, 'CALLER_ONLY');
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.resourceCalculationOwnedHere, false);
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.resourceStoreOwnedHere, false);
+  assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.physicalManaIdentityProjection, false);
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.chipIdentityPublicityOwnedHere, false);
 });
 
 test('destroy is idempotent and blocks later sync', () => {
   const global = makeGlobal();
   const host = new FakeNode('div');
-  const runtime = mountBattleCriticalResourceHud(global, { host, snapshot: { honey: 1, chipCount: 1 } });
+  const runtime = mountBattleCriticalResourceHud(global, { host, snapshot: { manaCurrent: 7, manaMax: 10, honey: 1, chipCount: 1 } });
   assert.equal(runtime.destroy(), true);
   assert.equal(runtime.destroy(), false);
   assert.equal(host.children.length, 0);
-  assert.throws(() => runtime.sync({ honey: 2, chipCount: 2 }), /BATTLE_RESOURCE_HUD_DESTROYED/);
+  assert.throws(() => runtime.sync({ manaCurrent: 6, manaMax: 10, honey: 2, chipCount: 2 }), /BATTLE_RESOURCE_HUD_DESTROYED/);
 });

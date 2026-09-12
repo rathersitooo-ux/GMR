@@ -1,0 +1,144 @@
+name: TEMP Road Move R32 Product Closure
+
+on:
+  push:
+    branches:
+      - sol/road-move-bidirectional-r32-20260912
+    paths:
+      - 'tests/road-move-bidirectional-live-r27.spec.mjs'
+      - '.github/workflows/zz-temp-road-move-r32.yml'
+      - 'data/preaction-authorizations/ROAD-MOVE-RUNTIME-R32-20260912T1118-SOL-Q7N4V10.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  road-bidirectional-product:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Guard untouched Road product base
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=d8ea1e6cbdaf056c7e02e28a2a5c765128d3e407
+          git cat-file -e "$BASE^{commit}"
+          git diff --exit-code "$BASE" -- browser/GAMEROAD.html browser/road-move-compatibility-core.mjs
+
+      - name: Apply exact Road DraftMove live adapter
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('browser/GAMEROAD.html')
+          s=p.read_text(encoding='utf-8')
+          def rep(old,new,label,expected=1):
+              global s
+              n=s.count(old)
+              if n!=expected:
+                  raise SystemExit(f'{label}: expected {expected} anchor(s), found {n}')
+              s=s.replace(old,new)
+
+          reachable="function reachable(p,steps){const q=[[p.position,0]],dist=new Map([[p.position,0]]);while(q.length){const [x,d]=q.shift();if(d>=steps)continue;for(const n of neighbors(x,p)){if(!dist.has(n)){dist.set(n,d+1);q.push([n,d+1])}}}return dist}"
+          helpers=r'''function reachable(p,steps){const q=[[p.position,0]],dist=new Map([[p.position,0]]);while(q.length){const [x,d]=q.shift();if(d>=steps)continue;for(const n of neighbors(x,p)){if(!dist.has(n)){dist.set(n,d+1);q.push([n,d+1])}}}return dist}
+let grRoadMoveCompatibilityCore=null;
+void import('./road-move-compatibility-core.mjs').then(api=>{grRoadMoveCompatibilityCore=api}).catch(error=>console.warn('road move compatibility unavailable',error?.message||error));
+function grRoadHandIds(me){return(me?.hand||[]).filter(id=>roadSelectable(id)&&id!==me.plan?.battleId)}
+function grRoadPathIsLegal(me,path){if(!me||!Array.isArray(path)||path.length<2||path[0]!==me.position)return false;const seen=new Set([path[0]]);for(let i=1;i<path.length;i++){const id=path[i];if(seen.has(id)||!neighbors(path[i-1],me).includes(id))return false;seen.add(id)}return true}
+function grRoadBoardState(me){return{roadValueOf:id=>normalMoveLimitForRoad(typeof id==='string'?id:id?.id),pathStepCountOf:path=>Array.isArray(path)?path.length-1:null,isPathLegal:path=>grRoadPathIsLegal(me,path),isPathStoppable:path=>grRoadPathIsLegal(me,path)&&activeNodes().has(path.at(-1))}}
+function grRoadCompatibleIds(me){const path=me?.plan?.path||[me?.position],ids=grRoadHandIds(me);if(!me||path.length<2)return[];const boardState=grRoadBoardState(me);if(grRoadMoveCompatibilityCore?.compatibleRoadCards)return grRoadMoveCompatibilityCore.compatibleRoadCards(ids,path,boardState);const steps=path.length-1;if(!grRoadPathIsLegal(me,path)||!activeNodes().has(path.at(-1)))return[];return ids.filter(id=>{const v=normalMoveLimitForRoad(id);return Number.isSafeInteger(v)&&v>=1&&v<=6&&steps<=v})}
+function grRoadDraftMoveLimit(me){const limits=grRoadHandIds(me).map(normalMoveLimitForRoad).filter(v=>Number.isSafeInteger(v)&&v>=1&&v<=6),focused=normalMoveLimitForRoad(me?.plan?.roadId);if(Number.isSafeInteger(focused)&&focused>=1&&focused<=6)limits.push(focused);return limits.length?Math.max(...limits):0}
+function grRoadEnsureStyles(){if(document.getElementById('gameroad-road-move-bidirectional-style'))return;const style=document.createElement('style');style.id='gameroad-road-move-bidirectional-style';style.textContent=`#hand .handCard[data-road-move-state="COMPATIBLE"]{outline:2px solid rgba(226,255,244,.78);outline-offset:2px;translate:0 -8px;scale:1.02;z-index:4;box-shadow:0 0 0 3px rgba(160,239,213,.14),0 12px 26px rgba(0,0,0,.32)}#hand .handCard[data-road-move-state="FOCUSED"]{outline:3px double rgba(255,255,255,.96);outline-offset:2px;translate:0 -14px;scale:1.05;z-index:6;box-shadow:0 0 0 5px rgba(160,239,213,.20),0 16px 32px rgba(0,0,0,.38)}#hand .handCard[data-road-move-state="INVALID_FOCUS"]{outline:2px dashed rgba(255,210,126,.92);outline-offset:2px;translate:0 -5px;scale:1.01;filter:saturate(.72) brightness(.82);z-index:5}#hand .handCard[data-road-soft-focus="1"]{outline-style:double;outline-width:3px}#board .node[data-road-move-range="EXPANDABLE"]{outline:2px dashed rgba(226,255,244,.56);outline-offset:3px}#board .node[data-road-move-range="FOCUSED"]{outline:2px solid rgba(255,255,255,.68);outline-offset:2px}@media(prefers-reduced-motion:reduce){#hand .handCard[data-road-move-state]{transition:none!important}}`;document.head.appendChild(style)}
+function grRoadDecorateHand(me=state.match?.players?.[0]){if(!me)return;grRoadEnsureStyles();const ids=grRoadCompatibleIds(me),set=new Set(ids),focus=me.plan?.roadId||null,hasPath=(me.plan?.path?.length||1)>1,soft=!focus&&ids.length===1?ids[0]:null;$$('#hand .handCard[data-card-id]').forEach(b=>{const id=b.dataset.cardId;let st=null;if(id===focus)st=!hasPath||set.has(id)?'FOCUSED':'INVALID_FOCUS';else if(set.has(id))st='COMPATIBLE';if(st)b.dataset.roadMoveState=st;else delete b.dataset.roadMoveState;if(id===soft)b.dataset.roadSoftFocus='1';else delete b.dataset.roadSoftFocus})}
+function grRoadResolveUniqueAtDecision(me){if(me?.plan?.roadId)return me.plan.roadId;const ids=grRoadCompatibleIds(me);if(ids.length!==1)return null;me.plan.roadId=ids[0];const rs=$('#roadSelect');if(rs)rs.value=ids[0];grRoadDecorateHand(me);return ids[0]}
+'''
+          rep(reachable,helpers,'road helper insertion')
+
+          rep("if(m.phase==='plan'&&me.plan?.roadId)for(const id of reachable(me,normalMoveLimitForRoad(me.plan.roadId)).keys())s.add(id);","if(m.phase==='plan'){const limit=grRoadDraftMoveLimit(me);if(limit>0)for(const id of reachable(me,limit).keys())s.add(id);}",'field focus move range')
+          rep("function fieldMoveFocusNodes(){const m=state.match,me=m?.players?.[0];if(!m||!me||m.phase!=='plan'||!me.plan?.roadId)return null;const moveLimit=normalMoveLimitForRoad(me.plan.roadId);if(moveLimit<=0)return null;const s=new Set([me.position,...reachable(me,moveLimit).keys(),...(me.plan?.path||[])]);return[...s]}","function fieldMoveFocusNodes(){const m=state.match,me=m?.players?.[0];if(!m||!me||m.phase!=='plan')return null;const moveLimit=grRoadDraftMoveLimit(me);if(moveLimit<=0)return null;const s=new Set([me.position,...reachable(me,moveLimit).keys(),...(me.plan?.path||[])]);return[...s]}",'field move focus')
+          rep("function nearestProjectedNode(clientX,clientY,onlyReach=true){const map=$('#battleMap'),r=map.getBoundingClientRect(),me=state.match?.players?.[0];if(!me)return null;const reach=me.plan?.roadId?reachable(me,normalMoveLimitForRoad(me.plan.roadId)):new Map();let best=null,bd=1e9;for(const [id,p] of fieldProjection){if(onlyReach&&!reach.has(id))continue;const x=r.left+p.x/100*r.width,y=r.top+p.y/100*r.height,d=Math.hypot(clientX-x,clientY-y);if(d<bd){bd=d;best=id}}return bd<=Math.max(27,Math.min(44,r.width*.055))?best:null}","function nearestProjectedNode(clientX,clientY,onlyReach=true){const map=$('#battleMap'),r=map.getBoundingClientRect(),me=state.match?.players?.[0];if(!me)return null;const limit=grRoadDraftMoveLimit(me),reach=limit>0?reachable(me,limit):new Map();let best=null,bd=1e9;for(const [id,p] of fieldProjection){if(onlyReach&&!reach.has(id))continue;const x=r.left+p.x/100*r.width,y=r.top+p.y/100*r.height,d=Math.hypot(clientX-x,clientY-y);if(d<bd){bd=d;best=id}}return bd<=Math.max(27,Math.min(44,r.width*.055))?best:null}",'nearest projected Road node')
+          rep("if(!m||m.phase!=='plan'||m.busy||!me.plan?.roadId)return;const power=normalMoveLimitForRoad(me.plan.roadId);","if(!m||m.phase!=='plan'||m.busy)return;const power=grRoadDraftMoveLimit(me);",'move-first drag begin')
+          rep("path.length-1<normalMoveLimitForRoad(me.plan.roadId)","path.length-1<grRoadDraftMoveLimit(me)",'elastic drag extension')
+
+          rep("const moveLimit=normalMoveLimitForRoad(me.plan?.roadId),reach=m.phase==='plan'&&me.plan?.roadId&&moveLimit>0?reachable(me,moveLimit):new Map();","const focusedLimit=normalMoveLimitForRoad(me.plan?.roadId),moveLimit=m.phase==='plan'?grRoadDraftMoveLimit(me):0,reach=m.phase==='plan'&&moveLimit>0?reachable(me,moveLimit):new Map();",'board move limit')
+          rep("if(reach.has(id)&&moveDistance<=moveLimit){e.classList.add('reachable');e.dataset.moveDistance=String(moveDistance);e.setAttribute('aria-label',`${id} 移動可能 ${moveDistance}歩`);e.title=`移動可能 ${moveDistance}歩`}","if(reach.has(id)&&moveDistance<=moveLimit){e.classList.add('reachable');e.dataset.moveDistance=String(moveDistance);e.dataset.roadMoveRange=focusedLimit>0?(moveDistance<=focusedLimit?'FOCUSED':'EXPANDABLE'):'COMPATIBLE';e.setAttribute('aria-label',`${id} 移動可能 ${moveDistance}歩`);e.title=`移動可能 ${moveDistance}歩`}",'board elastic range state')
+          rep("});renderBoardPlayers();renderRouteLine()}","});grRoadDecorateHand(me);renderBoardPlayers();renderRouteLine()}",'board candidate refresh')
+          rep("h.appendChild(b)});const rs=$('#roadSelect')","h.appendChild(b)});grRoadDecorateHand(me);const rs=$('#roadSelect')",'hand candidate decoration')
+          rep("if(r!==me.plan.roadId){me.plan.roadId=r||null;me.plan.path=[me.position]}","if(r!==me.plan.roadId){me.plan.roadId=r||null;if(!Array.isArray(me.plan.path)||!me.plan.path.length)me.plan.path=[me.position]}",'preserve path on Road focus change')
+          rep("$('#clearPath').onclick=()=>{const me=state.match.players[0];if(me.plan?.path?.length>1)me.plan.path.pop();else if(me.plan)me.plan.path=[me.position];$('#endpointText').textContent=me.plan?.path?.at(-1)||me.position;renderBoard();updateBattleAvatar()};","$('#clearPath').onclick=()=>{const me=state.match.players[0];if(me.plan?.path?.length>1)me.plan.path.pop();else if(me.plan)me.plan.path=[me.position];$('#endpointText').textContent=me.plan?.path?.at(-1)||me.position;renderBoard();grRoadDecorateHand(me);updateBattleAvatar()};",'backtrack candidate recompute')
+          rep("function selectEndpoint(id){const me=state.match.players[0];if(!me.plan?.roadId)return;const path=shortest(me.position,id,normalMoveLimitForRoad(me.plan.roadId),me);if(!path)return;me.plan.path=path;$('#endpointText').textContent=id;renderBoard();updateBattleAvatar()}","function selectEndpoint(id){const me=state.match.players[0],limit=grRoadDraftMoveLimit(me);if(limit<1)return;const path=shortest(me.position,id,limit,me);if(!path)return;me.plan=me.plan||{roadId:null,battleId:null,path:[me.position]};me.plan.path=path;$('#endpointText').textContent=id;renderBoard();grRoadDecorateHand(me);updateBattleAvatar()}",'move-first endpoint')
+          rep("if(!road.value)setDirectPlanRole('road');else if(!battle.value)setDirectPlanRole('battle');","const roadCandidates=grRoadCompatibleIds(me),hasDraftPath=(me.plan?.path?.length||1)>1;if(hasDraftPath&&roadCandidates.includes(id)&&id!==battle.value)setDirectPlanRole('road');else if(!road.value)setDirectPlanRole('road');else if(!battle.value)setDirectPlanRole('battle');",'candidate card touch chooses Road focus')
+          rep("updatePlanFromSelect();if(!me.plan?.roadId||!me.plan?.battleId)","updatePlanFromSelect();if(!me.plan?.roadId)grRoadResolveUniqueAtDecision(me);if(!me.plan?.roadId||!me.plan?.battleId)",'unique Road resolution at decision',expected=2)
+          rep("const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0];if(!me?.plan?.roadId){ctxSet('PLAN_CARD_MISSING',{message:'先にロードカードを選ぶと移動範囲を決められます。'});return}const path=shortest(me.position,id,normalMoveLimitForRoad(me.plan.roadId),me);if(!path){ctxSet('MOVE_PATH_INVALID');return}const r=__ctxBaseSelectEndpoint(id);ctxClear();return r};","const __ctxBaseSelectEndpoint=selectEndpoint;selectEndpoint=function(id){const me=state.match?.players?.[0],limit=grRoadDraftMoveLimit(me);if(!me||limit<1){ctxSet('ROAD_CARD_ILLEGAL',{message:'移動に使えるロードカードが手札にありません。'});return}const path=shortest(me.position,id,limit,me);if(!path){ctxSet('MOVE_PATH_INVALID');return}const r=__ctxBaseSelectEndpoint(id);ctxClear();return r};",'context help move-first truth')
+          rep("if(step==='road'){cue.textContent='手札からロードカードを1枚選ぶ';","if(step==='road'){cue.textContent=(me.plan?.path?.length||1)>1?'移動経路に合うロードカードを選ぶ':'手札からロードカードを1枚選ぶ';",'first-cycle Road cue')
+
+          p.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Validate Road core and static Browser contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/road-move-compatibility-core.test.mjs
+          node tests/browser-static-check.mjs
+
+      - name: Install focused Playwright runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save @playwright/test@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Build bounded Road-only Playwright config
+        shell: bash
+        run: |
+          cat > .road-r32-playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir: './tests',
+            testMatch: ['road-move-bidirectional-live-r27.spec.mjs'],
+            timeout: 90_000,
+            expect: { timeout: 7_000 },
+            fullyParallel: false,
+            workers: 1,
+            retries: 0,
+            outputDir: 'test-results/road-r32',
+            reporter: [['line']],
+            use: { baseURL:'http://127.0.0.1:4173', browserName:'chromium', headless:true, trace:'retain-on-failure', screenshot:'only-on-failure', video:'off' },
+            projects: [
+              { name:'desktop-1280x720', use:{viewport:{width:1280,height:720}} },
+              { name:'phone-390x844', use:{viewport:{width:390,height:844}} },
+              { name:'landscape-844x390', use:{viewport:{width:844,height:390}} },
+            ],
+            webServer: { command:'python3 -m http.server 4173 --bind 127.0.0.1', cwd:new URL('.',import.meta.url).pathname, url:'http://127.0.0.1:4173/browser/GAMEROAD.html', reuseExistingServer:false, timeout:120_000 },
+          });
+          EOF
+          npx playwright test --config=.road-r32-playwright.config.mjs 2>&1 | tee road-move-r32.log
+
+      - name: Commit exact product repair after green evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-road-r32'
+          git config user.email 'actions@users.noreply.github.com'
+          git add browser/GAMEROAD.html
+          git diff --cached --check
+          git commit -m 'Battle: Roadと移動を双方向Draftへ接続'
+          git push origin HEAD:sol/road-move-bidirectional-r32-20260912
+
+      - name: Upload Road evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: road-move-r32-${{ github.run_id }}
+          path: |
+            road-move-r32.log
+            test-results/road-r32
+          if-no-files-found: warn

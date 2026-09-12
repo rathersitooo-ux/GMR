@@ -94,6 +94,6 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add browser/GAMEROAD.html tests/browser-static-check.mjs .github/workflows/battle-mana-rank-recovery-surgical.yml
+          git add -A
           git commit -m 'fix(browser): recover mana by placement at round start'
           git push origin HEAD:fix/battle-mana-rank-recovery-r1

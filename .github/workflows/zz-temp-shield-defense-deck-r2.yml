@@ -1,0 +1,43 @@
+name: Temp Shield Defense Deck R2
+
+on:
+  push:
+    branches:
+      - sol/battle-shield-defense-deck-r2-20260913
+    paths:
+      - .github/workflows/zz-temp-shield-defense-deck-r2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-shield-defense-deck-r2-20260913
+          fetch-depth: 0
+      - name: Verify expected base lineage
+        run: |
+          git merge-base --is-ancestor cff4d7ac2882cb097347822df246d315938b1016 HEAD
+      - name: Apply exact Shield patch
+        run: python3 tools/temp-shield-defense-deck-r2.py
+      - name: Run Browser static regression
+        run: node tests/browser-static-check.mjs
+      - name: Diff safety
+        run: git diff --check
+      - name: Remove transient authorization and writer
+        run: |
+          rm -f .github/workflows/zz-temp-shield-defense-deck-r2.yml
+          rm -f tools/temp-shield-defense-deck-r2.py
+          rm -f data/preaction-authorizations/BATTLE-SHIELD-DEFENSE-DECK-R2-20260913T0005-SOL-Q8N4V24.json
+      - name: Commit product delta
+        run: |
+          git config user.name "gameroad-shield-writer"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = "browser/GAMEROAD.html tests/browser-static-check.mjs "
+          git commit -m "Battle: Shield札を通常4人札への追加参加へ変更"
+          git push origin HEAD:sol/battle-shield-defense-deck-r2-20260913

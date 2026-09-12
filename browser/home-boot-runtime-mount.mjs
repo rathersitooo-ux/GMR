@@ -1,6 +1,7 @@
 // R3 composition shim: preserve the current Home implementation byte-for-byte in the base module,
 // then mount the already-authorized Study runtime beside the existing Rogue runtime.
 export * from './home-boot-runtime-base-r3.mjs';
+import './title-boot-runtime-mount.mjs';
 import { mountStudyRunFromCurrentBrowser } from './study-run-runtime-mount.mjs';
 
 // Source-compatibility markers consumed by the existing Home presentation contract test.

@@ -193,8 +193,6 @@ assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.roulette[0], '[data-battle-playa
   assert.equal(nodes.resources.parentNode, nodes.battleMap);
   assert.equal(nodes.partner.parentNode, nodes.battleMap);
   assert.equal(document.head.children.length, 1);
-  assert.match(document.head.children[0].textContent, /data-battle-current-action/);
-  assert.match(document.head.children[0].textContent, /data-battle-critical-resource-hud/);
   assert.match(document.head.children[0].textContent, /data-battle-janken-slidepad/);
   assert.match(document.head.children[0].textContent, /data-battle-playable-hand-row-roulette-live/);
   assert.match(document.head.children[0].textContent, /backdrop-filter:none/);

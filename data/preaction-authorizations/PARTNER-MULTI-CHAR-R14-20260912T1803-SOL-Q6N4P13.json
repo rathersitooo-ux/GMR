@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-MULTI-CHAR-R14-20260912T1803-SOL-Q6N4P13",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_MULTI_CHARACTERS_SCREEN_REPAIR_R9",
+  "acquireKey": "PARTNER-MULTI-CHAR-R14-20260912T1803-SOL-Q6N4P13",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_022C1D2_PARTNER_ROSTER_DESTRUCTIVE_PROJECTION_DIRECT_ACTUAL",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R13_EXACT_THREE_FILE_DELTA_27_OF_27_PASS_PLUS_CURRENT_BLOBS_UNCHANGED",
+  "proceedToken": "PROCEED|PARTNER-MULTI-CHAR-R14-20260912T1803-SOL-Q6N4P13|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-roster-preservation|fresh-main-replay|active-lease",
+  "authorizationBaseSha": "022c1d2d3b35c692e6b07758e871c7429cdc7c41",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_MULTI_CHARACTERS_SCREEN_REPAIR_R9",
+  "leaseAcquireKey": "PARTNER-MULTI-CHAR-R14-20260912T1803-SOL-Q6N4P13",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 18:03 JST",
+  "leaseUntilJst": "2026-09-12 19:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1086:L1086",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/partner-multi-char-r14-20260912 from exact current main 022c1d2d3b35c692e6b07758e871c7429cdc7c41; browser/board-facility-runtime-mount.mjs current blob 083fcb3198d44b2548c430fe204f45f1b8e596ce; tests/board-facility-runtime-mount.test.mjs current blob d3b33031effe4e3af728757de697b881678d0965; deploy/cloudflare/tests/build.test.mjs current blob 82c671911d8b92911bed83f963c6389dfc8d578c board-facility provenance pin only; transient .github/workflows/zz-temp-partner-multi-char-r14.yml; transient data/preaction-authorizations/PARTNER-MULTI-CHAR-R14-20260912T1803-SOL-Q6N4P13.json; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs; partner-conversation-core.mjs; partner-tea-runtime-mount.mjs; Partner dialogue/persona authority; gameplay/rules/save/economy/network.",
+  "solutionSignature": "PARTNER_MULTI_CHARACTER_PICKER_PRESERVED_WITH_CONDITIONAL_SAASUNA_CONVERSATION_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_HTML_ALREADY_OWNS_MULTI_CHARACTER_PICKER_AND_PARTNER_STATE",
+  "solutionSearchEvidence": [
+    "Current Characters screen already renders the adopted multi-character picker and independently tracks normal Partner and Player roles; a second picker or store would duplicate authority.",
+    "Current board-facility runtime still destroys that picker with roster.replaceChildren(surface) and forces #charName to Saasuna on current main.",
+    "Current production-facing GAMEROAD_PARTNER_STATE.partner() exposes the selected normal Partner id, so the conversation projection can reuse existing state instead of introducing another authority.",
+    "R13 already exercised the minimal conditional append/remove implementation with the focused Partner projection and Cloudflare package tests passing 27/27.",
+    "Current main advanced only unrelated Battle initial-hand/static-check paths and all three authorized Partner/build blobs are unchanged, so replaying the exact tested delta is the shortest safe path."
+  ],
+  "scope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-partner-multi-char-r14.yml"
+  ],
+  "leaseScope": [
+    "browser/board-facility-runtime-mount.mjs",
+    "tests/board-facility-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-partner-multi-char-r14.yml"
+  ]
+}

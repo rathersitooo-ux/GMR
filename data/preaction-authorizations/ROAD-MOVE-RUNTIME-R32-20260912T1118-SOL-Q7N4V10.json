@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-MOVE-RUNTIME-R32-20260912T1118-SOL-Q7N4V10",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R32-20260912T1118-SOL-Q7N4V10",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R30_CURRENT_PRODUCT_RED_12_OF_12_PLUS_CURRENT_OWNER_FREE_HTML_20260912T1118JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R30_EXECUTABLE_A_D_THREE_VIEWPORT_RED_AND_EXISTING_COMPATIBILITY_CORE_CURRENT",
+  "proceedToken": "PROCEED|ROAD-MOVE-RUNTIME-R32-20260912T1118-SOL-Q7N4V10|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-road-compatibility-core|current-html-live-adapt|active-lease",
+  "authorizationBaseSha": "d8ea1e6cbdaf056c7e02e28a2a5c765128d3e407",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "leaseAcquireKey": "ROAD-MOVE-RUNTIME-R32-20260912T1118-SOL-Q7N4V10",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 11:18 JST",
+  "leaseUntilJst": "2026-09-12 12:18 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1051:L1051",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/road-move-bidirectional-r32-20260912 from exact current main d8ea1e6cbdaf056c7e02e28a2a5c765128d3e407; browser/GAMEROAD.html; tests/road-move-bidirectional-live-r27.spec.mjs; transient .github/workflows/zz-temp-road-move-r32.yml; own data/preaction-authorizations/ROAD-MOVE-RUNTIME-R32-20260912T1118-SOL-Q7N4V10.json only. browser/road-move-compatibility-core.mjs; Battle card/Janken/target/Shield/gameplay/rules/save/economy/network; tests/browser-full-interaction.spec.mjs; deploy/cloudflare/scripts/build.mjs READ_ONLY.",
+  "solutionSignature": "ROAD_BIDIRECTIONAL_DRAFTMOVE_EXISTING_COMPATIBILITY_CORE_LIVE_ADAPT_R32",
+  "reuseDisposition": "REUSE_EXISTING_R30_RED_REGRESSION_AND_CURRENT_COMPATIBILITY_CORE_MINIMAL_LIVE_ADAPT",
+  "solutionSearchStatus": "PASS",
+  "solutionSearchEvidence": [
+    "R30 executed the pinned A-D Road regression on desktop 1280x720, phone 390x844 and short landscape 844x390: all 12 current-product cases failed before product mutation.",
+    "Current browser/road-move-compatibility-core.mjs already implements compatible(card,path,boardState), Road 1..6 upper-bound semantics, legality/stoppability delegation and candidate derivation without owning game state.",
+    "Fresh current GAMEROAD.html still gates reachable(), selectEndpoint(), drag and context-help on me.plan.roadId; updatePlanFromSelect still discards the path on Road changes; renderHand exposes no derived Road state.",
+    "R31 and competing Cards/Battle HTML leases were serialized and released; Battle HTML R8 merged its bounded phase cleanup, and current main then advanced only the non-HTML Janken SlidePad runtime/test.",
+    "Minimal repair is one existing DraftMove/live adapter inside GAMEROAD.html plus the already-pinned Road regression; no second movement engine, topology, Battle-card logic or Road1-6 handlers are required."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r27.spec.mjs",
+    ".github/workflows/zz-temp-road-move-r32.yml"
+  ]
+}

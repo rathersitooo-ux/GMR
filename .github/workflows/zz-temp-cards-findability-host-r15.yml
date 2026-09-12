@@ -1,0 +1,64 @@
+name: cards-findability-host-r15
+on:
+  push:
+    branches: [sol/cards-findability-host-r15-20260912]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Patch findability host geometry
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('browser/cards-deck-presentation.mjs')
+          s = p.read_text(encoding='utf-8')
+          old = """  grid.before?.(host);\n  if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);\n"""
+          new = """  const collectionTools = screen.querySelector?.('.r4CollectionTools');\n  if (collectionTools) {\n    collectionTools.appendChild?.(host);\n  } else {\n    grid.before?.(host);\n    if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);\n  }\n"""
+          if s.count(old) != 1:
+              raise SystemExit(f'expected exactly one host placement block, found {s.count(old)}')
+          p.write_text(s.replace(old, new), encoding='utf-8')
+
+          t = Path('tests/cards-deck-presentation.test.mjs')
+          ts = t.read_text(encoding='utf-8')
+          marker = "test('favorite action reuses existing card-detail action area instead of overlaying swipe card surfaces', async () => {"
+          if marker not in ts:
+              raise SystemExit('findability regression insertion marker missing')
+          test = r'''
+
+test('Cards findability reuses existing Collection tools host before falling back to grid placement', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/cards-deck-presentation.mjs', import.meta.url), 'utf8');
+  const start = source.indexOf('export function installCardsDeckFindability');
+  const end = source.indexOf('function createExistingDeckAuthorityBridge');
+  const findabilitySource = source.slice(start, end);
+  assert.ok(start >= 0 && end > start);
+  assert.ok(findabilitySource.includes("const collectionTools = screen.querySelector?.('.r4CollectionTools')"));
+  assert.ok(findabilitySource.includes('collectionTools.appendChild?.(host)'));
+  assert.ok(findabilitySource.includes('grid.before?.(host)'));
+  assert.ok(findabilitySource.indexOf('collectionTools.appendChild?.(host)') < findabilitySource.indexOf('grid.before?.(host)'));
+});
+'''
+          if "Cards findability reuses existing Collection tools host" not in ts:
+              ts = ts.replace(marker, test + "\n" + marker, 1)
+              t.write_text(ts, encoding='utf-8')
+          PY
+      - name: Run focused tests
+        run: node --test tests/cards-deck-presentation.test.mjs
+      - name: Commit bounded product diff and self-delete workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm .github/workflows/zz-temp-cards-findability-host-r15.yml
+          git add browser/cards-deck-presentation.mjs tests/cards-deck-presentation.test.mjs .github/workflows/zz-temp-cards-findability-host-r15.yml
+          git diff --cached --stat
+          git diff --cached --quiet && exit 0
+          git commit -m 'Cards: findabilityを既存ツール領域へ統合'
+          git push origin HEAD:${{ github.ref_name }}

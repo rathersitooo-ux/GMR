@@ -135,6 +135,19 @@ function collectStaticErrors(html) {
   for (const [pattern, message] of correctedBattleResourceContracts) {
     if (!pattern.test(html)) errors.push(message);
   }
+  const shieldDefenseContracts = [
+    [/const usedDefenseBattle=defender\.shields\[m\.target\.shield\]/, 'Shield-linked defense Battle slot is not consumed from the targeted L/C/R slot'],
+    [/const replenishDefenseBattle=defender\.deck\.shift\(\)/, 'Shield-linked defense Battle slot is not replenished from deck'],
+    [/defender\.shields\[m\.target\.shield\]=replenishDefenseBattle/, 'targeted Shield-linked defense Battle slot is not replenished in place'],
+    [/shield-defense-deck-exhausted/, 'Shield defense deck exhaustion is not fail-closed'],
+    [/battleReveals\.push\(makeParticipant\(p,usedDefenseBattle,'auto_defense'\)\)/, 'defender Battle reveal is not sourced from the Shield-linked defense Battle slot'],
+  ];
+  for (const [pattern, message] of shieldDefenseContracts) {
+    if (!pattern.test(html)) errors.push(message);
+  }
+  if (html.includes("使用シールドの同位置補充に使う札を1枚選びます。")) errors.push('legacy hand-selected Shield replenishment remains');
+  if (html.includes('let replenish=defender.plan.battleId')) errors.push('defender planned Battle card is still reused as Shield replenishment');
+  if (html.includes('removeHand(defender,replenish)')) errors.push('Shield defense replenishment still consumes defender hand');
   if (/recoverRoundStartManaByPlacement/.test(html) || /位のためマナ回復\+/.test(html)) {
     errors.push('superseded rank-based turn-start Mana recovery remains');
   }

@@ -387,9 +387,12 @@ const settlePlan = {
 };
 const settle = createBattleScreenModel({ participants, plan: settlePlan, returnIntent: 'MATCH_PLAN' });
 runtime.render(settle);
-assert.equal(runtime.currentActionCue.textContent, '今：盤面反映 B-1 / Shield R');
+assert.equal(runtime.currentActionCue.textContent, '今：盤面反映 C1（グー） → 解決 → B-1 / Shield R');
 assert.equal(runtime.currentActionCue.dataset.phase, 'settle');
 assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, 'P3:R');
+assert.equal(runtime.currentActionCue.dataset.causalTraceKey, 'settle-1:P3:R');
+assert.equal(runtime.currentActionCue.dataset.causalCardId, 'C1');
+assert.equal(runtime.currentActionCue.dataset.causalJanken, 'ROCK');
 assert.equal(runtime.shell.dataset.boardReturnDestination, 'P3:R');
 assert.equal(runtime.phaseSurface.dataset.battleBoardReturnDestination, 'P3:R');
 assert.equal(runtime.resolutionSurface.dataset.battleBoardReturnDestination, 'P3:R');
@@ -409,7 +412,22 @@ const reducedSettle = createBattleScreenModel({ participants, plan: settlePlan, 
 runtime.render(reducedSettle);
 assert.equal(runtime.shell.dataset.motion, 'static_only');
 assert.equal(runtime.shieldRails[2].children[2].dataset.boardReturnTarget, 'true');
-assert.equal(runtime.currentActionCue.textContent, '今：盤面反映 B-1 / Shield R');
+assert.equal(runtime.currentActionCue.textContent, '今：盤面反映 C1（グー） → 解決 → B-1 / Shield R');
+
+const lowPerfSettle = createBattleScreenModel({ participants, plan: settlePlan, returnIntent: 'MATCH_PLAN', lowPerf: true });
+runtime.render(lowPerfSettle);
+assert.equal(runtime.shell.dataset.motion, 'static_only');
+assert.equal(runtime.currentActionCue.textContent, '今：盤面反映 C1（グー） → 解決 → B-1 / Shield R');
+assert.equal(runtime.currentActionCue.dataset.causalCardId, 'C1');
+
+const malformedReturn = { ...settle, boardReturn: { ...settle.boardReturn, shieldLane: 'X' } };
+assert.throws(() => runtime.render(malformedReturn), /BATTLE_SCREEN_MODEL_REJECTED/);
+assert.equal(runtime.currentActionCue.hidden, true);
+assert.equal(runtime.currentActionCue.dataset.causalCardId, undefined);
+assert.equal(runtime.shell.dataset.boardReturnDestination, undefined);
+assert.equal(runtime.shieldRails[2].dataset.boardReturnParticipant, undefined);
+assert.equal(runtime.shieldRails.flatMap(rail => rail.children).some(node => node.dataset.boardReturnTarget === 'true'), false);
+assert.equal(p3ShieldSlots[2].getAttribute('aria-label'), 'Shield R → ROAD R');
 
 runtime.render(attack);
 assert.equal(runtime.shell.dataset.boardReturnDestination, undefined);
@@ -417,6 +435,9 @@ assert.equal(runtime.phaseSurface.dataset.battleBoardReturnDestination, undefine
 assert.equal(runtime.resolutionSurface.dataset.battleBoardReturnDestination, undefined);
 assert.equal(runtime.resolutionSurface.dataset.battleBoardReturnShieldRef, undefined);
 assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, undefined);
+assert.equal(runtime.currentActionCue.dataset.causalTraceKey, undefined);
+assert.equal(runtime.currentActionCue.dataset.causalCardId, undefined);
+assert.equal(runtime.currentActionCue.dataset.causalJanken, undefined);
 assert.equal(runtime.shieldRails[2].dataset.boardReturnParticipant, undefined);
 assert.equal(runtime.shieldRails.flatMap(rail => rail.children).some(node => node.dataset.boardReturnTarget === 'true'), false);
 assert.equal(p3ShieldSlots[2].getAttribute('aria-label'), 'Shield R → ROAD R');
@@ -545,7 +566,7 @@ assert.equal(adopted.resourceHud.chipCell.children[1].textContent, '0');
 assert.equal(adopted.currentActionCue.textContent, '今：攻撃 A-1 → B-2');
 adopted.render(settle);
 assert.equal(existingResolution.textContent, 'KEEP');
-assert.equal(adopted.currentActionCue.textContent, '今：盤面反映 B-1 / Shield R');
+assert.equal(adopted.currentActionCue.textContent, '今：盤面反映 C1（グー） → 解決 → B-1 / Shield R');
 assert.equal(adopted.resolutionSurface.dataset.battleBoardReturnDestination, 'P3:R');
 assert.equal(adopted.shieldRails[2].children[2].dataset.boardReturnTarget, 'true');
 adopted.render(terminalResult);

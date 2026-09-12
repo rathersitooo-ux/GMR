@@ -88,7 +88,6 @@ try {
 
   let controls = await snapshot(page, '01-entry');
 
-  // Only cross a genuine title/start surface. Home itself already has the visible Pack entry.
   if (!(await visibleGachaEntry(page))) {
     const start = await clickControlByPatterns(page, [/はじめ|始め|スタート|start|continue|つづき|続き/]);
     if (start) {
@@ -130,14 +129,27 @@ try {
         const clicked = await clickControlByPatterns(page, [new RegExp(patternText, 'i')]);
         report.notes.push({ action: 'obvious_gacha_action', target, clicked });
         controls = await snapshot(page, '05-after-gacha-action');
+
+        const skip = await clickControlByPatterns(page, [/演出をスキップ|スキップ|skip/]);
+        if (skip) {
+          report.notes.push({ action: 'skip_preview_animation', control: skip });
+          await page.waitForTimeout(350);
+          controls = await snapshot(page, '06-after-skip');
+        }
+
         const body = safeLabel(await page.locator('body').innerText().catch(() => ''));
-        const hasResultLike = controls.some((c) => /閉じ|戻|home|skip|スキップ|次|next|完了|ok/i.test(controlLabel(c))) || /結果|result|獲得|入手|reveal|カード/i.test(body);
-        report.outcome = hasResultLike ? 'GACHA_ACTION_GAVE_RESULT_OR_RECOVERY_CONTROL' : 'GACHA_ACTION_FEEDBACK_UNCLEAR';
+        const hasRecovery = controls.some((c) => /閉じ|戻|home|次|next|完了|ok/i.test(controlLabel(c)));
+        const hasReveal = /結果|result|獲得|入手|reveal|カード|通常|希少|上位|最高|特別/i.test(body);
+        report.outcome = hasRecovery && hasReveal
+          ? 'GACHA_PREVIEW_TERMINAL_AND_RECOVERABLE'
+          : hasRecovery
+            ? 'GACHA_PREVIEW_RECOVERABLE_RESULT_UNCLEAR'
+            : 'GACHA_PREVIEW_RECOVERY_UNCLEAR';
 
         const back = await clickControlByPatterns(page, [/←\s*戻る|戻る|ホーム|home|閉じる|close/]);
         if (back) {
           report.notes.push({ action: 'return_or_close', control: back });
-          await snapshot(page, '06-after-return');
+          await snapshot(page, '07-after-return');
         }
       }
     }

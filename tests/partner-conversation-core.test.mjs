@@ -733,3 +733,96 @@ test('invalid blank send does not supersede a pending valid send', async () => {
   assert.equal(first.turn.utterance, '有効な返答');
   assert.equal(entry.feedback('turn-1', 'good').ok, true);
 });
+
+test('server Partner transport aborts a hung upstream and returns bounded non-success', { concurrency: false }, async () => {
+  const { onRequest } = await import('../deploy/cloudflare/functions/ws.js');
+  const originalSetTimeout = globalThis.setTimeout;
+  const originalClearTimeout = globalThis.clearTimeout;
+  const timerToken = Symbol('partner-timeout');
+  let timeoutMs = null;
+  let cleared = false;
+  let observedSignal = null;
+
+  globalThis.setTimeout = (callback, ms) => {
+    timeoutMs = ms;
+    queueMicrotask(callback);
+    return timerToken;
+  };
+  globalThis.clearTimeout = (token) => {
+    if (token === timerToken) cleared = true;
+  };
+
+  try {
+    const response = await onRequest({
+      request: new Request('https://example.test/ws?partnerOp=conversation', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ userMessage: '返答が止まった時も会話へ戻って' }),
+      }),
+      env: {
+        CONVAI_API_KEY: 'test-api-key',
+        CONVAI_SAASUNA_CHARACTER_ID: 'saasuna-current',
+      },
+      fetch: async (_url, options) => {
+        observedSignal = options.signal;
+        return new Promise((_resolve, reject) => {
+          const rejectAbort = () => reject(new Error('aborted upstream'));
+          if (observedSignal.aborted) rejectAbort();
+          else observedSignal.addEventListener('abort', rejectAbort, { once: true });
+        });
+      },
+    });
+    assert.equal(response.status, 502);
+    assert.deepEqual(await response.json(), { ok: false, state: 'provider_unavailable' });
+    assert.equal(timeoutMs, 15_000);
+    assert.equal(observedSignal instanceof AbortSignal, true);
+    assert.equal(observedSignal.aborted, true);
+    assert.equal(cleared, true);
+  } finally {
+    globalThis.setTimeout = originalSetTimeout;
+    globalThis.clearTimeout = originalClearTimeout;
+  }
+});
+
+test('server Partner transport preserves timely valid and missing-config paths', async () => {
+  const { onRequest } = await import('../deploy/cloudflare/functions/ws.js');
+  let observedSignal = null;
+  const makeRequest = () => new Request('https://example.test/ws?partnerOp=conversation', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ userMessage: '今日も一緒に話そう' }),
+  });
+  const env = {
+    CONVAI_API_KEY: 'test-api-key',
+    CONVAI_SAASUNA_CHARACTER_ID: 'saasuna-current',
+  };
+
+  const okResponse = await onRequest({
+    request: makeRequest(),
+    env,
+    fetch: async (_url, options) => {
+      observedSignal = options.signal;
+      return new Response(JSON.stringify({
+        charID: 'saasuna-current',
+        text: 'もちろん。何から話す？',
+        sessionID: 'provider-session-1',
+      }), { status: 200, headers: { 'content-type': 'application/json' } });
+    },
+  });
+  assert.equal(okResponse.status, 200);
+  assert.deepEqual(await okResponse.json(), {
+    ok: true,
+    text: 'もちろん。何から話す？',
+    providerSessionId: 'provider-session-1',
+  });
+  assert.equal(observedSignal instanceof AbortSignal, true);
+  assert.equal(observedSignal.aborted, false);
+
+  const missingConfig = await onRequest({
+    request: makeRequest(),
+    env: {},
+    fetch: async () => { throw new Error('must not call provider'); },
+  });
+  assert.equal(missingConfig.status, 503);
+  assert.deepEqual(await missingConfig.json(), { ok: false, state: 'not_configured' });
+});

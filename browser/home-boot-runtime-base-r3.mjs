@@ -1199,7 +1199,9 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
     snapshot,
   });
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => mountHomeBootPresentation(), { once: true });
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => mountHomeBootPresentation(), 0);
+    }, { once: true });
   } else {
     mountHomeBootPresentation();
   }

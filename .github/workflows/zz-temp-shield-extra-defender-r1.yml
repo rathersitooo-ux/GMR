@@ -1,0 +1,86 @@
+name: Temp Shield Extra Defender Battle R1
+
+on:
+  push:
+    branches:
+      - sol/battle-shield-defense-deck-r2-20260913
+    paths:
+      - .github/workflows/zz-temp-shield-extra-defender-r1.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-shield-defense-deck-r2-20260913
+          fetch-depth: 0
+      - name: Apply exact additional-Shield semantic fix
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          hp = Path('browser/GAMEROAD.html')
+          sp = Path('tests/browser-static-check.mjs')
+          h = hp.read_text(encoding='utf-8')
+          s = sp.read_text(encoding='utf-8')
+
+          old = "for(const p of m.players){if(p.id===defender.id)continue;if(p.battleBlockedRound===m.round)"
+          new = "for(const p of m.players){if(p.battleBlockedRound===m.round)"
+          if h.count(old) != 1:
+              raise SystemExit(f'defender-skip anchor count must be 1, got {h.count(old)}')
+          h = h.replace(old, new, 1)
+
+          anchor = "  if (html.includes('removeHand(defender,replenish)')) errors.push('Shield defense replenishment still consumes defender hand');\n"
+          guard = "  if (html.includes('for(const p of m.players){if(p.id===defender.id)continue;')) errors.push('defender normal Battle submission is still replaced by the additional Shield Battle card');\n"
+          if s.count(anchor) != 1:
+              raise SystemExit(f'static anchor count must be 1, got {s.count(anchor)}')
+          s = s.replace(anchor, anchor + guard, 1)
+
+          required = [
+              "battleReveals.push(makeParticipant(p,usedDefenseBattle,'auto_defense'))",
+              "for(const p of m.players){if(p.battleBlockedRound===m.round)",
+              "const replenishDefenseBattle=defender.deck.shift()",
+              "defender.shields[m.target.shield]=replenishDefenseBattle",
+          ]
+          for token in required:
+              if token not in h:
+                  raise SystemExit(f'missing required Shield semantic: {token}')
+          if "if(p.id===defender.id)continue" in h:
+              raise SystemExit('defender normal Battle submission is still skipped')
+          if "removeHand(defender,replenish)" in h or "let replenish=defender.plan.battleId" in h:
+              raise SystemExit('legacy hand Shield replenishment remains')
+
+          hp.write_text(h, encoding='utf-8')
+          sp.write_text(s, encoding='utf-8')
+          print('Shield extra-participant semantics applied.')
+          PY
+      - name: Browser static regression
+        run: node tests/browser-static-check.mjs
+      - name: Focused semantic readback
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          h = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          assert "battleReveals.push(makeParticipant(p,usedDefenseBattle,'auto_defense'))" in h
+          assert "for(const p of m.players){if(p.battleBlockedRound===m.round)" in h
+          assert "if(p.id===defender.id)continue" not in h
+          assert "const replenishDefenseBattle=defender.deck.shift()" in h
+          assert "removeHand(defender,replenish)" not in h
+          print('SHIELD_EXTRA_BATTLE_READBACK_PASS')
+          PY
+      - name: Diff safety
+        run: git diff --check
+      - name: Remove transient workflow
+        run: rm -f .github/workflows/zz-temp-shield-extra-defender-r1.yml
+      - name: Commit bounded product delta
+        run: |
+          git config user.name "gameroad-shield-writer"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = "browser/GAMEROAD.html tests/browser-static-check.mjs "
+          git commit -m "fix(browser): keep defender Battle card alongside Shield extra"
+          git push origin HEAD:sol/battle-shield-defense-deck-r2-20260913

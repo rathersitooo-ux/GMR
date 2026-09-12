@@ -1,4 +1,5 @@
 name: TEMP Road Move R30 Evidence
+# R30 fixture recovery rerun: execute the same bounded Road acceptance against current HTML.
 
 on:
   push:

@@ -121,6 +121,35 @@ jobs:
             echo '::error::Temporary public-origin spec still contains the local Browser entry path'
             exit 1
           fi
+          python - "$TARGET" <<'PY'
+          from pathlib import Path
+          import sys
+
+          path = Path(sys.argv[1])
+          text = path.read_text()
+          r19 = "test('R19 reaches Result from visible four-player Honey Hunt and returns Home'"
+          start_marker = "  const deck = await installLegalBattleDeck(page);\n"
+          setup_marker = "  const setupGo = visibleOperationGo(page, 'setup');\n"
+          r19_index = text.find(r19)
+          start = text.find(start_marker, r19_index)
+          setup = text.find(setup_marker, start)
+          if r19_index < 0 or start < 0 or setup < 0 or not (r19_index < start < setup):
+              raise SystemExit('public R19 deck precondition markers were not found exactly where expected')
+          replacement = (
+              "  testInfo.annotations.push({ type: 'visible-precondition', "
+              "description: 'Public R19 uses the current saved/default deck exactly as a player receives it; no internal test hook mutates deck state before Setup.' });\n\n"
+          )
+          text = text[:start] + replacement + text[setup:]
+          path.write_text(text)
+          PY
+          if grep -Fq "const deck = await installLegalBattleDeck(page);" "$TARGET"; then
+            echo '::error::Public R19 still contains the local-only deck injection call'
+            exit 1
+          fi
+          if ! grep -Fq "Public R19 uses the current saved/default deck exactly as a player receives it" "$TARGET"; then
+            echo '::error::Public R19 visible-player precondition annotation is missing'
+            exit 1
+          fi
           cat > .r37-public/playwright.config.mjs <<'EOF'
           import { defineConfig } from '@playwright/test';
           import baseConfig from '../playwright.full-interaction.config.mjs';

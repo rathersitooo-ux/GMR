@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-CONVO-LATEST-WINS-R2-20260912T1101-SOL-Q7M4P3",
+  "taskId": "PARTNER-FUTURE-LLM-DIALOGUE-RESEARCH-001",
+  "workUnitKey": "PARTNER_CONVERSATION_LATEST_RESPONSE_R2",
+  "acquireKey": "PARTNER-CONVO-LATEST-WINS-R2-20260912T1101-SOL-Q7M4P3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_STALE_RESPONSE_REPRO_AND_FREE_BUILD_SCOPE_20260912T1101JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1552_CLOSED_UNMERGED_REPAIR_CANDIDATE_PLUS_FRESH_MAIN_REPRO",
+  "proceedToken": "PROCEED|PARTNER-CONVO-LATEST-WINS-R2-20260912T1101-SOL-Q7M4P3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-latest-valid-send|conversation-core-public-pin|active-lease",
+  "authorizationBaseSha": "87eff701a8cf33c15929d1cbcb1ac6e263ec5b50",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-FUTURE-LLM-DIALOGUE-RESEARCH-001",
+  "leaseWorkUnitKey": "PARTNER_CONVERSATION_LATEST_RESPONSE_R2",
+  "leaseAcquireKey": "PARTNER-CONVO-LATEST-WINS-R2-20260912T1101-SOL-Q7M4P3",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 11:01 JST",
+  "leaseUntilJst": "2026-09-12 12:01 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1043:L1043",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/partner-conversation-latest-wins-r2-20260912 from exact current main 87eff701a8cf33c15929d1cbcb1ac6e263ec5b50; browser/partner-conversation-core.mjs; tests/partner-conversation-core.test.mjs; deploy/cloudflare/scripts/build.mjs formal Partner core blob pin only; transient .github/workflows/zz-temp-partner-conversation-latest-wins-r2.yml; own transient data/preaction-authorizations/PARTNER-CONVO-LATEST-WINS-R2-20260912T1101-SOL-Q7M4P3.json only. READ_ONLY deploy/cloudflare/tests/build.test.mjs execution; browser/partner-saasuna-conversation-source.mjs; provider adapters; persona/relationship/memory/gameplay/rules/save/economy/network/public transport; browser/GAMEROAD.html.",
+  "solutionSignature": "PARTNER_CONVERSATION_LATEST_VALID_SEND_GENERATION_FENCE_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_PARTNER_CONVERSATION_SEAM_PLUS_PR1552_REHEARSAL_AND_FRESH_MAIN_REPRO",
+  "solutionSearchEvidence": [
+    "Fresh main directly reproduces the gap: overlapping valid send() calls await independently and each successful completion appends to sessionTurns, so reverse completion can contaminate history.",
+    "Existing createSaasunaConversationEntry already owns session history, feedback targeting, and provider request context; a small generation fence closes the gap without creating a second router, provider, memory, or relationship authority.",
+    "Closed unmerged PR #1552 rehearsed the same bounded core/test repair, but its Required Gate correctly failed because the formal Cloudflare Partner core blob pin was outside that WorkUnit scope.",
+    "R2 includes only the existing conversation core, focused regression test, and the formal public-package core blob pin; provider adapters, persona, relationship, private memory, gameplay, rules, save, economy, network, and browser/GAMEROAD.html remain READ_ONLY.",
+    "No AITuberKit v2 source is copied; the behavior is independently implemented inside the existing GAMEROAD conversation seam."
+  ],
+  "scope": [
+    "browser/partner-conversation-core.mjs",
+    "tests/partner-conversation-core.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-partner-conversation-latest-wins-r2.yml"
+  ],
+  "leaseScope": [
+    "browser/partner-conversation-core.mjs",
+    "tests/partner-conversation-core.test.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-partner-conversation-latest-wins-r2.yml"
+  ]
+}

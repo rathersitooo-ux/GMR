@@ -636,3 +636,68 @@ test('feedback rejects unknown turns, invalid ratings, and cross-session targets
   const second = createSaasunaConversationEntry({ createSessionId: () => 'session-feedback-b' });
   assert.deepEqual(second.feedback('turn-1', 'good'), { ok: false, reason: 'FEEDBACK_TARGET_NOT_FOUND' });
 });
+
+test('entry latest valid send wins and superseded replies never enter session history', async () => {
+  const pending = [];
+  const seen = [];
+  const entry = createSaasunaConversationEntry({
+    createSessionId: () => 'session-latest-wins',
+    provider: {
+      sendMessage(request) {
+        seen.push(request);
+        return new Promise((resolve) => pending.push({ request, resolve }));
+      },
+    },
+  });
+
+  const firstPromise = entry.send('最初の質問');
+  const secondPromise = entry.send('訂正した質問');
+  assert.equal(pending.length, 2);
+  assert.equal(seen[0].sessionContext, null);
+  assert.equal(seen[1].sessionContext, null);
+
+  pending[1].resolve({
+    kind: 'utterance_candidate',
+    partnerId: seen[1].partnerId,
+    dialogueVersion: seen[1].dialogueVersion,
+    sourceId: seen[1].sourceId,
+    text: '新しい返答',
+  });
+  const second = await secondPromise;
+  assert.equal(second.turn.ok, true);
+  assert.equal(second.turn.utterance, '新しい返答');
+
+  pending[0].resolve({
+    kind: 'utterance_candidate',
+    partnerId: seen[0].partnerId,
+    dialogueVersion: seen[0].dialogueVersion,
+    sourceId: seen[0].sourceId,
+    text: '古い返答',
+  });
+  const first = await firstPromise;
+  assert.equal(first.turn.ok, false);
+  assert.equal(first.turn.reason, 'TURN_SUPERSEDED');
+  assert.equal(first.turn.containsCharacterText, false);
+  assert.equal(JSON.stringify(first).includes('古い返答'), false);
+  assert.deepEqual(entry.feedback('turn-1', 'good'), { ok: false, reason: 'FEEDBACK_TARGET_NOT_FOUND' });
+  assert.equal(entry.feedback('turn-2', 'good').ok, true);
+
+  const thirdPromise = entry.send('その続き');
+  assert.equal(pending.length, 3);
+  assert.deepEqual(seen[2].sessionContext.turns, [{
+    turnId: 'turn-2',
+    userMessage: '訂正した質問',
+    assistantUtterance: '新しい返答',
+    responseOrigin: 'provider_candidate',
+  }]);
+  pending[2].resolve({
+    kind: 'utterance_candidate',
+    partnerId: seen[2].partnerId,
+    dialogueVersion: seen[2].dialogueVersion,
+    sourceId: seen[2].sourceId,
+    text: '続きの返答',
+  });
+  const third = await thirdPromise;
+  assert.equal(third.turn.ok, true);
+  assert.equal(third.turn.utterance, '続きの返答');
+});

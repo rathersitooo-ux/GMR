@@ -1,5 +1,6 @@
 import { auditBattleScreenModel } from './battle-screen-presentation-core.mjs';
 import { mountBattleCriticalResourceHud } from './battle-critical-resource-hud-runtime.mjs';
+import { mountBattleCurrentPlayerUi } from './battle-current-player-ui-runtime.mjs';
 
 const RUNTIME_SCHEMA = 'gameroad.battle-screen-runtime-mount.v1';
 const STYLE_ID = 'gameroad-battle-screen-runtime-r1-style';
@@ -614,6 +615,22 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
   const resolutionSurface = resolutionAnchor.node;
   resolutionSurface.dataset.battleScreenResolutionAuthority = 'external_existing_presentation_consumer';
 
+  const currentPlayerUiRoot = options.currentPlayerUiRoot
+    ?? document.querySelector?.('section.screen.battle[data-screen="battle"]')
+    ?? document.querySelector?.('.screen.battle')
+    ?? null;
+  let currentPlayerUi = null;
+  if (currentPlayerUiRoot) {
+    try {
+      currentPlayerUi = mountBattleCurrentPlayerUi(global, {
+        root: currentPlayerUiRoot,
+        initialState: options.currentPlayerUiState ?? null
+      });
+    } catch {
+      currentPlayerUi = null;
+    }
+  }
+
   let destroyed = false;
   function renderHud(snapshot = {}) {
     if (destroyed) throw new Error('BATTLE_SCREEN_RUNTIME_DESTROYED');
@@ -699,9 +716,15 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     return model;
   }
 
+  function syncCurrentPlayerUi(snapshot = {}) {
+    if (destroyed) throw new Error('BATTLE_SCREEN_RUNTIME_DESTROYED');
+    return currentPlayerUi?.sync?.(snapshot) ?? null;
+  }
+
   function destroy() {
     if (destroyed) return false;
     destroyed = true;
+    currentPlayerUi?.destroy?.();
     if (fieldLandmark?.parentNode && typeof fieldLandmark.parentNode.removeChild === 'function') fieldLandmark.parentNode.removeChild(fieldLandmark);
     if (currentActionCue?.parentNode && typeof currentActionCue.parentNode.removeChild === 'function') currentActionCue.parentNode.removeChild(currentActionCue);
     if (progressGuide?.parentNode && typeof progressGuide.parentNode.removeChild === 'function') progressGuide.parentNode.removeChild(progressGuide);
@@ -729,12 +752,14 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
     progressGuide,
     hud,
     resourceHud,
+    currentPlayerUi,
     grid,
     laneSurfaces: lanes.map(view => view.lane),
     publicCardSurfaces: lanes.map(view => view.publicCard),
     shieldRails: lanes.map(view => view.shieldRail),
     renderHud,
     render,
+    syncCurrentPlayerUi,
     destroy
   };
   return Object.freeze(runtime);
@@ -749,6 +774,7 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   planCurrentActionPolicy: 'GENERIC_SELECTION_LABEL_ONLY_NO_LEGAL_ACTION_INFERENCE',
   hudAuthority: 'CALLER_ONLY_FAIL_CLOSED_PLACEHOLDERS',
   resourceHudAuthority: 'CALLER_ONLY_EXISTING_RESOURCE_HUD',
+  currentPlayerUiComposition: 'LIVE_MOUNT_PRESENTATION_ONLY_NO_GAMEPLAY_AUTHORITY',
   hudUnresolvedTokens: Object.freeze({ score: 'X', hate: 'XXX', turn: 'XX', loadJanken: '?' }),
   existingAnchorPolicy: 'EXPLICIT_PHASE_GETS_RUNTIME_OVERLAY__ANCESTOR_NEVER_DECORATED',
   externalPhaseShellOwner: 'CALLER',

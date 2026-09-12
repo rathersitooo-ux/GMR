@@ -51,6 +51,7 @@ const ARTIFACT_SPECS = Object.freeze([
   { source: 'browser/battle-resolution-action-order-adapter.mjs', output: 'battle-resolution-action-order-adapter.mjs', artifact: 'battle_resolution_action_order_adapter', label: 'Battle resolution action-order adapter' },
   { source: 'browser/battle-resolution-board-return-presentation-core.mjs', output: 'battle-resolution-board-return-presentation-core.mjs', artifact: 'battle_resolution_board_return_presentation_core', label: 'Battle resolution board-return presentation core' },
   { source: 'browser/battle-screen-runtime-mount.mjs', output: 'battle-screen-runtime-mount.mjs', artifact: 'battle_screen_runtime_mount', label: 'Battle screen runtime mount' },
+  { source: 'browser/battle-current-player-ui-runtime.mjs', output: 'battle-current-player-ui-runtime.mjs', artifact: 'battle_current_player_ui_runtime', label: 'Battle current player UI compositor' },
   { source: 'browser/battle-critical-resource-hud-live-adapter.mjs', output: 'battle-critical-resource-hud-live-adapter.mjs', artifact: 'battle_critical_resource_hud_live_adapter', label: 'Battle critical resource HUD live adapter' },
   { source: 'browser/new-base-goal-result-core.mjs', output: 'new-base-goal-result-core.mjs', artifact: 'new_base_goal_result_core', label: 'New Base GOAL result authority core' },
   { source: 'browser/new-base-goal-arrival-presentation-core.mjs', output: 'new-base-goal-arrival-presentation-core.mjs', artifact: 'new_base_goal_arrival_presentation_core', label: 'New Base GOAL arrival presentation core' },

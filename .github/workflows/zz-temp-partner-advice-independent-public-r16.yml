@@ -1,0 +1,140 @@
+name: TEMP Advice Partner independent public acceptance R16
+
+on:
+  push:
+    branches:
+      - sol/partner-advice-independent-public-r16-20260912
+
+permissions:
+  contents: read
+
+jobs:
+  public-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      PUBLIC_BASE: https://gameroad-browser-r5.pages.dev
+      EXPECTED_BUILD: 75f4f47c60eb2c478e8314dd1dd1b6e1955571ee
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Bind stable public build
+        shell: bash
+        run: |
+          set -euo pipefail
+          build=$(curl --fail --silent --show-error --max-time 20 "$PUBLIC_BASE/gameroad-version.json" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>process.stdout.write(String(JSON.parse(s).build_id||'')))")
+          echo "PUBLIC_BUILD=$build"
+          test "$build" = "$EXPECTED_BUILD"
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Prove normal Partner and Advice Partner remain independent
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .r16-public
+          cat > .r16-public/partner-advice-r16.mjs <<'NODE'
+          import { chromium } from '@playwright/test';
+          import assert from 'node:assert/strict';
+
+          const browser = await chromium.launch({ headless: true });
+          try {
+            const page = await browser.newPage({ viewport: { width: 667, height: 375 } });
+            const pageErrors = [];
+            page.on('pageerror', e => pageErrors.push(e.message));
+            const gotoRoot = async () => {
+              const response = await page.goto(process.env.PUBLIC_BASE + '/', { waitUntil: 'domcontentloaded', timeout: 30_000 });
+              assert.ok(response?.ok(), `root status=${response?.status()}`);
+              await page.locator('section[data-screen="home"]').waitFor({ state: 'visible', timeout: 12_000 });
+              await page.waitForTimeout(500);
+            };
+            const state = async () => page.evaluate(() => ({
+              screen: window.__GAMEROAD_TEST__?.state?.screen || null,
+              selectedPartnerId: window.__GAMEROAD_TEST__?.state?.selectedPartnerId || null,
+              advicePartnerId: window.__GAMEROAD_TEST__?.state?.settings?.advicePartnerId || null,
+              roster: Object.keys(window.__GAMEROAD_TEST__?.state?.partnerProfiles || {}),
+            }));
+
+            await gotoRoot();
+            const chars = page.locator('[data-home-target="characters"]:visible, [data-go="characters"]:visible').first();
+            assert.equal(await chars.count(), 1, 'Home→Characters missing');
+            await chars.click();
+            const charScreen = page.locator('section[data-screen="characters"]');
+            await charScreen.waitFor({ state: 'visible', timeout: 7_000 });
+            const partnerRole = charScreen.locator('button:visible,[role="button"]:visible').filter({ hasText: /^パートナー/ }).first();
+            if (await partnerRole.count()) await partnerRole.click();
+            const roster = page.locator('#charRoster');
+            await roster.waitFor({ state: 'visible', timeout: 5_000 });
+            const mato = roster.locator('button:visible').filter({ hasText: /泊愛まと/ }).first();
+            assert.equal(await mato.count(), 1, '泊愛まと normal Partner card missing');
+            await mato.click();
+            await page.waitForTimeout(300);
+            const normalSet = await state();
+            console.log('ADVICE_PUBLIC normal_set=' + JSON.stringify(normalSet));
+            assert.equal(normalSet.selectedPartnerId, 'partner.mato', 'normal Partner did not become partner.mato');
+
+            // Reload through the real public entry so only persisted state carries forward.
+            await gotoRoot();
+            const persistedNormal = await state();
+            assert.equal(persistedNormal.selectedPartnerId, 'partner.mato', 'normal Partner did not persist after reload');
+
+            const battleControl = page.locator('[data-home-target="battle"]:visible, [data-go="battle"]:visible').first();
+            assert.equal(await battleControl.count(), 1, 'Home→Battle control missing');
+            await battleControl.click();
+            const battle = page.locator('section[data-screen="battle"]');
+            await battle.waitFor({ state: 'visible', timeout: 7_000 });
+            const switchButton = battle.locator('.partnerAdvicePartnerSwitch:visible').first();
+            await switchButton.waitFor({ state: 'visible', timeout: 7_000 });
+            assert.equal(await switchButton.isEnabled(), true, 'Advice Partner switch disabled');
+            const roleName = battle.locator('[data-role="advice-partner-name"]:visible').first();
+            const before = await state();
+            const beforeName = ((await roleName.textContent()) || '').trim();
+            console.log('ADVICE_PUBLIC before=' + JSON.stringify({ ...before, roleName: beforeName }));
+            assert.equal(before.selectedPartnerId, 'partner.mato', 'normal Partner changed before Advice switch');
+
+            // One visible cycle from the effective current Advice Partner must land on a different roster member.
+            await switchButton.click();
+            await page.waitForTimeout(350);
+            const after = await state();
+            const afterName = ((await roleName.textContent()) || '').trim();
+            const visiblePartnerSpeech = await battle.locator('.partnerAdviceSpeech.partner.on:visible').allTextContents();
+            console.log('ADVICE_PUBLIC after=' + JSON.stringify({ ...after, roleName: afterName, visiblePartnerSpeech }));
+            assert.equal(after.selectedPartnerId, 'partner.mato', 'Advice switch mutated normal selectedPartnerId');
+            assert.ok(after.advicePartnerId, 'Advice switch did not persist advicePartnerId');
+            assert.notEqual(after.advicePartnerId, after.selectedPartnerId, 'Advice Partner was forced equal to normal Partner');
+            assert.notEqual(afterName, '泊愛まと', 'Advice Partner visible label stayed equal to normal Partner');
+
+            // If the selected Advice Partner has no approved source, the current policy is silence, never Saasuna fallback.
+            if (after.advicePartnerId !== 'partner.saasuna') {
+              const leakedSaasuna = visiblePartnerSpeech.some((text) => /優秀なんですよ、私|がっぽり|大氷結|ゆるしてヒヤシンス|バトルカード、セット/.test(text));
+              assert.equal(leakedSaasuna, false, 'unsupported Advice Partner leaked Saasuna dialogue');
+            }
+
+            // Reload again: both independently saved identities must survive.
+            const expectedAdvice = after.advicePartnerId;
+            await gotoRoot();
+            const reloaded = await state();
+            console.log('ADVICE_PUBLIC reloaded=' + JSON.stringify(reloaded));
+            assert.equal(reloaded.selectedPartnerId, 'partner.mato', 'normal Partner did not survive Advice reload');
+            assert.equal(reloaded.advicePartnerId, expectedAdvice, 'Advice Partner did not survive reload');
+
+            const battleAgain = page.locator('[data-home-target="battle"]:visible, [data-go="battle"]:visible').first();
+            await battleAgain.click();
+            await battle.waitFor({ state: 'visible', timeout: 7_000 });
+            const persistedRoleName = ((await battle.locator('[data-role="advice-partner-name"]:visible').first().textContent()) || '').trim();
+            const finalState = await state();
+            console.log('ADVICE_PUBLIC final=' + JSON.stringify({ ...finalState, roleName: persistedRoleName }));
+            assert.equal(finalState.selectedPartnerId, 'partner.mato');
+            assert.equal(finalState.advicePartnerId, expectedAdvice);
+            assert.notEqual(persistedRoleName, '泊愛まと');
+            assert.deepEqual(pageErrors, [], `page errors: ${pageErrors.join(' | ')}`);
+            console.log(`ADVICE_PUBLIC PASS normal=${finalState.selectedPartnerId} advice=${finalState.advicePartnerId} adviceName=${persistedRoleName}`);
+          } finally {
+            await browser.close();
+          }
+          NODE
+          node .r16-public/partner-advice-r16.mjs
+          rm -rf .r16-public

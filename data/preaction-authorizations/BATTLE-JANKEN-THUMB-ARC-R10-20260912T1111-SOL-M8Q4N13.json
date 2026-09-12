@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-THUMB-ARC-R10-20260912T1111-SOL-M8Q4N13",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_THUMB_ARC_USESITE_EVIDENCE_R5",
+  "acquireKey": "BATTLE-JANKEN-THUMB-ARC-R10-20260912T1111-SOL-M8Q4N13",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_E6D825E_SLIDEPAD_UNCHANGED_PLUS_R9_PROVEN_CANDIDATE_20260912T1111JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R9_DONOR_FOCUSED_47_OF_47_PASS_AND_THREE_VIEWPORT_IN_BOUNDS",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-THUMB-ARC-R10-20260912T1111-SOL-M8Q4N13|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-slidepad-thumb-arc|clean-history-recovery|active-lease",
+  "authorizationBaseSha": "e6d825e07f5791c67386d44769613ac2089e0fca",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_THUMB_ARC_USESITE_EVIDENCE_R5",
+  "leaseAcquireKey": "BATTLE-JANKEN-THUMB-ARC-R10-20260912T1111-SOL-M8Q4N13",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 11:11 JST",
+  "leaseUntilJst": "2026-09-12 12:11 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1049:L1049",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean continuation branch from exact current main; browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; own transient data/preaction-authorizations/BATTLE-JANKEN-THUMB-ARC-R10-20260912T1111-SOL-M8Q4N13.json; own branch/PR/check/readback only. READ_ONLY browser/GAMEROAD.html; tests/browser-full-interaction.spec.mjs; deploy/build; gameplay/rules/state/save/economy/network; prior R9 branch is donor evidence only.",
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs"
+  ],
+  "solutionSignature": "BATTLE_JANKEN_EXISTING_SLIDEPAD_THUMB_ARC_GEOMETRY_USESITE_R10",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R9_EXISTING_SLIDEPAD_CANDIDATE_REUSED_NO_SECOND_CONTROLLER_20260912",
+  "solutionSearchEvidence": [
+    "Road bidirectional remains higher player-impact but browser/GAMEROAD.html is currently owned by ROAD-MOVE-RUNTIME-R31 and other active HTML owners, so this run does not steal or duplicate it.",
+    "Current main e6d825e changed independent Battle HTML presentation and left the SlidePad runtime/test scope unchanged from the R9 candidate base.",
+    "R9 donor changes only the existing SlidePad geometry and focused regression expectations; no second UI, controller, gameplay rule, target authority, or roulette default is added.",
+    "R9 focused tests passed 47/47 and three target viewports stayed in bounds; its prior Required Gate red was PRE_ACTION witness formatting, not a product rejection."
+  ]
+}

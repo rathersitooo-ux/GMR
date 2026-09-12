@@ -1,0 +1,163 @@
+name: temp-partner-multi-char-r13
+
+on:
+  push:
+    branches:
+      - sol/partner-multi-char-r13-20260912
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-clean:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/partner-multi-char-r13-20260912
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve Characters picker and gate Saasuna conversation to the selected normal Partner
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          product = Path('browser/board-facility-runtime-mount.mjs')
+          source = product.read_text(encoding='utf-8')
+
+          old_decision = """export function partnerConversationProjectionDecision({ screenActive = false } = {}) {
+            return screenActive ? 'conversation' : 'idle';
+          }"""
+          new_decision = """export function partnerConversationProjectionDecision({
+            screenActive = false,
+            activeRole = null,
+            selectedPartnerId = null,
+          } = {}) {
+            return screenActive && activeRole === 'partner' && selectedPartnerId === 'partner.saasuna'
+              ? 'conversation'
+              : 'idle';
+          }"""
+
+          old_start = """  const project = () => {
+            const screen = document.querySelector('[data-screen=\"characters\"]');
+            const roster = document.querySelector('#charRoster');
+            if (!screen || !roster || !screen.classList.contains('active')) return false;
+            if (roster.querySelector('[data-gr-partner-conversation=\"1\"]')) return true;
+
+            const surface = document.createElement('section');"""
+          new_start = """  const project = () => {
+            const screen = document.querySelector('[data-screen=\"characters\"]');
+            const roster = document.querySelector('#charRoster');
+            const existing = roster?.querySelector?.('[data-gr-partner-conversation=\"1\"]') ?? null;
+            const activeRole = screen?.querySelector?.('.charRoleTab.on[data-role]')?.dataset?.role ?? null;
+            const selectedPartnerId = global?.GAMEROAD_PARTNER_STATE?.partner?.()?.id ?? null;
+            const projection = partnerConversationProjectionDecision({
+              screenActive: Boolean(screen?.classList?.contains?.('active')),
+              activeRole,
+              selectedPartnerId,
+            });
+            if (!screen || !roster || projection !== 'conversation') {
+              existing?.remove?.();
+              return false;
+            }
+            if (existing) return true;
+
+            const surface = document.createElement('section');"""
+
+          old_tail = """    roster.replaceChildren(surface);
+            projectPartnerTeaQuickChoices(global);
+            const charName = document.querySelector('#charName');
+            if (charName) charName.textContent = 'サースナー';
+            return true;
+          };
+
+          const screen = document.querySelector('[data-screen=\"characters\"]');
+          if (screen) {
+            observer = new MutationObserverCtor(project);
+            observer.observe(screen, { attributes: true, attributeFilter: ['class'] });
+          }
+          project();"""
+          new_tail = """    roster.appendChild(surface);
+            projectPartnerTeaQuickChoices(global);
+            return true;
+          };
+
+          const screen = document.querySelector('[data-screen=\"characters\"]');
+          const roster = document.querySelector('#charRoster');
+          if (screen || roster) {
+            observer = new MutationObserverCtor(project);
+            if (screen) observer.observe(screen, { attributes: true, attributeFilter: ['class'] });
+            if (roster) observer.observe(roster, { childList: true });
+          }
+          project();"""
+
+          old_picker_flag = "    pickerRequired: false,"
+          new_picker_flag = "    pickerRequired: true,"
+
+          for label, old, new in (
+            ('decision', old_decision, new_decision),
+            ('project-start', old_start, new_start),
+            ('project-tail', old_tail, new_tail),
+            ('picker-required', old_picker_flag, new_picker_flag),
+          ):
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label} anchor count != 1: {count}')
+              source = source.replace(old, new, 1)
+
+          if 'roster.replaceChildren(surface)' in source:
+              raise SystemExit('destructive roster replacement still present')
+          if "charName.textContent = 'サースナー'" in source:
+              raise SystemExit('forced Saasuna charName still present')
+          if source.count('roster.appendChild(surface)') != 1:
+              raise SystemExit('conversation append contract not unique')
+          product.write_text(source, encoding='utf-8')
+
+          test_file = Path('tests/board-facility-runtime-mount.test.mjs')
+          tests = test_file.read_text(encoding='utf-8')
+          old_test = """test('active Partner screen projects straight to conversation with no picker state', () => {
+            assert.equal(partnerConversationProjectionDecision({ screenActive: false }), 'idle');
+            assert.equal(partnerConversationProjectionDecision({ screenActive: true }), 'conversation');
+            assert.equal(partnerConversationProjectionDecision({ screenActive: true, partnerRoleActive: false }), 'conversation');
+            assert.equal(partnerConversationProjectionDecision({ screenActive: true, saasunaSelected: false }), 'conversation');
+          });"""
+          new_test = """test('Partner conversation only projects for Saasuna in the active normal Partner role', () => {
+            assert.equal(partnerConversationProjectionDecision({ screenActive: false, activeRole: 'partner', selectedPartnerId: 'partner.saasuna' }), 'idle');
+            assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'player', selectedPartnerId: 'partner.saasuna' }), 'idle');
+            assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'partner', selectedPartnerId: 'partner.honoka' }), 'idle');
+            assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'partner', selectedPartnerId: 'partner.saasuna' }), 'conversation');
+          });"""
+          if tests.count(old_test) != 1:
+              raise SystemExit(f'focused decision test anchor count != 1: {tests.count(old_test)}')
+          test_file.write_text(tests.replace(old_test, new_test, 1), encoding='utf-8')
+
+          product_blob = subprocess.check_output(['git', 'hash-object', str(product)], text=True).strip()
+          build_test = Path('deploy/cloudflare/tests/build.test.mjs')
+          build = build_test.read_text(encoding='utf-8')
+          old_blob = "currentBlob: '083fcb3198d44b2548c430fe204f45f1b8e596ce'"
+          new_blob = f"currentBlob: '{product_blob}'"
+          if build.count(old_blob) != 1:
+              raise SystemExit(f'board-facility provenance anchor count != 1: {build.count(old_blob)}')
+          build_test.write_text(build.replace(old_blob, new_blob, 1), encoding='utf-8')
+          print(f'board-facility-runtime-mount git blob: {product_blob}')
+          PY
+          git diff --check
+          test "$(git diff --name-only | sort | tr '\n' ' ')" = "browser/board-facility-runtime-mount.mjs deploy/cloudflare/tests/build.test.mjs tests/board-facility-runtime-mount.test.mjs "
+      - name: Focused Partner projection and public package tests
+        run: node --test tests/board-facility-runtime-mount.test.mjs deploy/cloudflare/tests/build.test.mjs
+      - name: Finalize durable three-file repair
+        shell: bash
+        run: |
+          rm .github/workflows/zz-temp-partner-multi-char-r13.yml
+          rm data/preaction-authorizations/PARTNER-MULTI-CHAR-R13-20260912T1708-SOL-Q6N4P9.json
+          git add -A
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = ".github/workflows/zz-temp-partner-multi-char-r13.yml browser/board-facility-runtime-mount.mjs data/preaction-authorizations/PARTNER-MULTI-CHAR-R13-20260912T1708-SOL-Q6N4P9.json deploy/cloudflare/tests/build.test.mjs tests/board-facility-runtime-mount.test.mjs "
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Partner: preserve multi-character picker for Saasuna conversation'
+          git push origin HEAD:sol/partner-multi-char-r13-20260912

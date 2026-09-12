@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GITHUB-CI-BROWSER-CONTRACT-R8B-20260913T0010-SOL-Q7N4M3",
+  "taskId": "GITHUB-CI-BROWSER-NODE-001",
+  "workUnitKey": "BROWSER_CI_SINGLE_OWNER_BFI_HANDSHAKE_R8B",
+  "acquireKey": "GITHUB-CI-BROWSER-CONTRACT-R8B-20260913T0010-SOL-Q7N4M3",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R7_ACTUAL_REGRESSION_DISTRIBUTED_BFI_OWNER_DRIFT_PLUS_R8B_CAUSAL_CLASSIFIER_ACTUAL",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PR1588_FIRST_PASS_PREACTION_SUCCESS_THEN_UNRELATED_BROWSER_RUNTIME_SMOKE_PROVED_BFI_WORKFLOW_MISCLASSIFICATION",
+  "proceedToken": "PROCEED|GITHUB-CI-BROWSER-CONTRACT-R8B-20260913T0010-SOL-Q7N4M3|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_SINGLE_OWNER_AND_CAUSAL_LANE_REPAIR",
+  "authorizationBaseSha": "cff4d7ac2882cb097347822df246d315938b1016",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-CI-BROWSER-NODE-001",
+  "leaseWorkUnitKey": "BROWSER_CI_SINGLE_OWNER_BFI_HANDSHAKE_R8B",
+  "leaseAcquireKey": "GITHUB-CI-BROWSER-CONTRACT-R8B-20260913T0010-SOL-Q7N4M3",
+  "leaseSnapshotReadbackAtJst": "2026-09-13 00:15 JST",
+  "leaseUntilJst": "2026-09-13 01:10 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1305:L1305",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR same PR#1588 branch work/ci-browser-single-owner-r8b-20260913 rebuilt from exact current main cff4d7ac2882cb097347822df246d315938b1016; .github/workflows/browser-full-interaction.yml; .github/workflows/required-gate-auto-merge.yml; .github/workflows/gameroad-required-gate.yml exact causal classification only; own transient data/preaction-authorizations/GITHUB-CI-BROWSER-CONTRACT-R8B-20260913T0010-SOL-Q7N4M3.json. READ_ONLY browser/GAMEROAD.html; tests/browser-runtime-smoke.spec.mjs; Partner/Mana/Shield/product/runtime/gameplay/rules/save/economy/network/formal assets.",
+  "scope": [
+    ".github/workflows/browser-full-interaction.yml",
+    ".github/workflows/required-gate-auto-merge.yml",
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/browser-full-interaction.yml",
+    ".github/workflows/required-gate-auto-merge.yml",
+    ".github/workflows/gameroad-required-gate.yml"
+  ]
+}

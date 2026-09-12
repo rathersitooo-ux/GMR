@@ -1,0 +1,71 @@
+name: temp records direct switch r2
+
+on:
+  push:
+    branches:
+      - sol/records-detail-direct-switch-r2-20260912
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/records-detail-direct-switch-r2-20260912
+          fetch-depth: 0
+      - name: Patch existing Records interaction only
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          source_path = Path('browser/profile-presentation-runtime-mount.mjs')
+          source = source_path.read_text()
+          old = """  doc.addEventListener('click', (event) => {
+              if (panel.hidden || !screen.classList.contains('active') || panel.contains(event.target)) return;
+              event.preventDefault();
+              event.stopPropagation();
+              dismissRecordsMatchDetail(list, panel);
+            }, true);"""
+          new = """  doc.addEventListener('click', (event) => {
+              if (panel.hidden || !screen.classList.contains('active') || panel.contains(event.target)) return;
+              const row = event.target?.closest?.('.record');
+              if (row && list.contains(row)) return;
+              event.preventDefault();
+              event.stopPropagation();
+              dismissRecordsMatchDetail(list, panel);
+            }, true);"""
+          if source.count(old) != 1:
+              raise SystemExit(f'expected one Records capture block, found {source.count(old)}')
+          source_path.write_text(source.replace(old, new, 1))
+
+          test_path = Path('tests/profile-presentation-runtime-mount.test.mjs')
+          test = test_path.read_text()
+          old_title = "test('Records detail consumes safe outside click and Escape without a second state authority', () => {"
+          new_title = "test('Records detail lets another rendered row switch directly while outside click and Escape still dismiss', () => {"
+          if test.count(old_title) != 1:
+              raise SystemExit(f'expected one Records detail test title, found {test.count(old_title)}')
+          test = test.replace(old_title, new_title, 1)
+          old_assert = r"  assert.match(source, /doc\\.addEventListener\\('click',[\\s\\S]*?panel\\.contains\\(event\\.target\\)[\\s\\S]*?event\\.preventDefault\\(\\);[\\s\\S]*?event\\.stopPropagation\\(\\);[\\s\\S]*?dismissRecordsMatchDetail\\(list, panel\\);[\\s\\S]*?}, true\\);/);"
+          new_assert = r"  assert.match(source, /doc\\.addEventListener\\('click',[\\s\\S]*?panel\\.contains\\(event\\.target\\)[\\s\\S]*?const row = event\\.target\\?\\.closest\\?\\.\\('\\.record'\\);[\\s\\S]*?if \\(row && list\\.contains\\(row\\)\\) return;[\\s\\S]*?event\\.preventDefault\\(\\);[\\s\\S]*?event\\.stopPropagation\\(\\);[\\s\\S]*?dismissRecordsMatchDetail\\(list, panel\\);[\\s\\S]*?}, true\\);/);"
+          if test.count(old_assert) != 1:
+              raise SystemExit(f'expected one Records outside-click assertion, found {test.count(old_assert)}')
+          test_path.write_text(test.replace(old_assert, new_assert, 1))
+          PY
+      - name: Focused existing test
+        run: node --test tests/profile-presentation-runtime-mount.test.mjs
+      - name: Diff safety
+        run: git diff --check
+      - name: Commit final two-file product diff and remove transient writer
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add browser/profile-presentation-runtime-mount.mjs tests/profile-presentation-runtime-mount.test.mjs
+          git rm .github/workflows/zz-temp-records-direct-switch-r2.yml data/preaction-authorizations/UI-RECORDS-DIRECT-SWITCH-R2-20260912T1122-SOL-R7Q4N2.json
+          git commit -m "Records: 履歴詳細を1タップで切り替える"
+          git push origin HEAD:sol/records-detail-direct-switch-r2-20260912

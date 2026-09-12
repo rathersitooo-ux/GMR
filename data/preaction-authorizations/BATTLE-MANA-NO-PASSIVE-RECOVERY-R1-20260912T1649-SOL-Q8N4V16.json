@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-MANA-NO-PASSIVE-RECOVERY-R1-20260912T1649-SOL-Q8N4V16",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_MANA_NO_PASSIVE_RECOVERY_R1",
+  "acquireKey": "BATTLE-MANA-NO-PASSIVE-RECOVERY-R1-20260912T1649-SOL-Q8N4V16",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_EXPLICIT_TURN_START_MANA_ZERO_PLUS_CURRENT_HTML_TWO_RANK_RECOVERY_CALLS",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_MAIN_B754429_EXACT_STARTMATCH_NEXTROUND_AND_RECOVERY_FUNCTION_READBACK",
+  "proceedToken": "PROCEED|BATTLE-MANA-NO-PASSIVE-RECOVERY-R1-20260912T1649-SOL-Q8N4V16|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|mana-zero-turn-start|bounded-transport|active-lease",
+  "authorizationBaseSha": "b754429fcb1cd006517a009f4177ca82dbaafe5f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_MANA_NO_PASSIVE_RECOVERY_R1",
+  "leaseAcquireKey": "BATTLE-MANA-NO-PASSIVE-RECOVERY-R1-20260912T1649-SOL-Q8N4V16",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 17:27 JST",
+  "leaseUntilJst": "2026-09-12 17:49 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1065:L1065",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-mana-no-passive-recovery-r1-20260912 from exact current main b754429fcb1cd006517a009f4177ca82dbaafe5f; browser/GAMEROAD.html; tests/browser-next-round-mana-recovery-check.mjs; transient .github/workflows/zz-temp-battle-mana-no-passive-r1.yml; own transient data/preaction-authorizations/BATTLE-MANA-NO-PASSIVE-RECOVERY-R1-20260912T1649-SOL-Q8N4V16.json; own branch/PR/check/readback. READ_ONLY Shield world/LCR/physical Shield migration; Road/janken/target/109/save/network; deploy build. Honey cross-payment is not mutated in this slice.",
+  "solutionSignature": "NEW_BASE_TURN_START_PASSIVE_MANA_GAIN_ZERO_REMOVE_RANK_RECOVERY_CALLS_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_HTML_HAS_SINGLE_RANK_RECOVERY_HELPER_AND_TWO_TURN_BOUNDARY_CALLS",
+  "solutionSearchEvidence": [
+    "Current live startMatch invokes recoverRoundStartManaByPlacement exactly once.",
+    "Current live nextRound invokes the same recovery helper exactly once.",
+    "The helper is the stale rank-based +1/+2/+3/+4 passive source superseded by the latest user ruling.",
+    "currentPlacementRanks remains independently required by Result ranking and must not be deleted.",
+    "Numeric Mana current/max and explicit cost consumers remain separate and are outside this semantic removal."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-next-round-mana-recovery-check.mjs",
+    ".github/workflows/zz-temp-battle-mana-no-passive-r1.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-next-round-mana-recovery-check.mjs",
+    ".github/workflows/zz-temp-battle-mana-no-passive-r1.yml"
+  ]
+}

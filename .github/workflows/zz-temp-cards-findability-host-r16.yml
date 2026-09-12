@@ -1,0 +1,47 @@
+name: cards-findability-host-r16
+on:
+  push:
+    branches:
+      - sol/cards-findability-host-r16-20260912
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Patch findability host geometry
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('browser/cards-deck-presentation.mjs')
+          s = p.read_text(encoding='utf-8')
+          old = "  grid.before?.(host);\n  if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);\n"
+          new = "  const collectionTools = screen.querySelector?.('.r4CollectionTools');\n  if (collectionTools) {\n    collectionTools.appendChild?.(host);\n  } else {\n    grid.before?.(host);\n    if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);\n  }\n"
+          count = s.count(old)
+          if count != 1:
+              raise SystemExit(f'expected exactly one host placement block, found {count}')
+          p.write_text(s.replace(old, new), encoding='utf-8')
+          PY
+      - name: Run existing Cards presentation tests
+        run: node --test tests/cards-deck-presentation.test.mjs
+      - name: Assert bounded host placement source
+        shell: bash
+        run: |
+          node -e "const fs=require('fs');const s=fs.readFileSync('browser/cards-deck-presentation.mjs','utf8');const a=s.indexOf('export function installCardsDeckFindability');const b=s.indexOf('function createExistingDeckAuthorityBridge');if(a<0||b<=a)process.exit(2);const x=s.slice(a,b);if(!x.includes(\"const collectionTools = screen.querySelector?.('.r4CollectionTools')\")||!x.includes('collectionTools.appendChild?.(host)')||!x.includes('grid.before?.(host)')||x.indexOf('collectionTools.appendChild?.(host)')>=x.indexOf('grid.before?.(host)'))process.exit(3);"
+      - name: Commit bounded diff and clean authorization artifacts
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm .github/workflows/zz-temp-cards-findability-host-r16.yml
+          rm data/preaction-authorizations/CARDS-FINDABILITY-HOST-R16-20260912T1810-SOL-Q8N4V20.json
+          git add browser/cards-deck-presentation.mjs .github/workflows/zz-temp-cards-findability-host-r16.yml data/preaction-authorizations/CARDS-FINDABILITY-HOST-R16-20260912T1810-SOL-Q8N4V20.json
+          git diff --cached --stat
+          git diff --cached --quiet && exit 0
+          git commit -m 'Cards: findabilityを既存ツール領域へ統合'
+          git push origin HEAD:${{ github.ref_name }}

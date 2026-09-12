@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R33-20260912T1124-SOL-Q7N4V11",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R30-12-OF-12-CURRENT-PRODUCT-RED-PLUS-R33-FRESH-MAIN",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R30-EXECUTABLE-A-D-THREE-VIEWPORT-REGRESSION",
+  "authorizationBaseSha": "d8ea1e6cbdaf056c7e02e28a2a5c765128d3e407",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES AcquireKey ROAD-MOVE-RUNTIME-R33-20260912T1124-SOL-Q7N4V11",
+  "leaseUntilJST": "2026-09-12 12:24 JST",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r27.spec.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-road-move-r33.yml",
+    "data/preaction-authorizations/ROAD-MOVE-RUNTIME-R33-20260912T1124-SOL-Q7N4V11.json"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r27.spec.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-road-move-r33.yml",
+    "data/preaction-authorizations/ROAD-MOVE-RUNTIME-R33-20260912T1124-SOL-Q7N4V11.json"
+  ],
+  "leaseExactMutableResources": [
+    "browser/GAMEROAD.html",
+    "tests/road-move-bidirectional-live-r27.spec.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-road-move-r33.yml",
+    "data/preaction-authorizations/ROAD-MOVE-RUNTIME-R33-20260912T1124-SOL-Q7N4V11.json"
+  ],
+  "reuseDiscovery": {
+    "status": "REUSE_EXISTING_COMPONENTS",
+    "evidence": "Reuse current road-move-compatibility-core as sole Road/path compatibility seam and R30 A-D regression; live HTML only adapts current model/reachable/path/hand consumer; build.mjs only packages that existing core."
+  },
+  "note": "EXISTING_REPAIR. R30 proves current product RED. No second movement engine/FSM/store. Current Browser selectable reachable endpoint is the only stoppability adapter for this slice; Honey D06 semantics remain separate/unmounted. Preserve Battle-card/Janken/target/Shield/109/rules/save/economy/network and PR#1549 phase-overlay repair."
+}

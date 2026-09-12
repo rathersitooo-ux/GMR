@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "acquireKey": "ROAD-MOVE-RUNTIME-R30-20260912T1001-SOL-Q7N4V8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R30-FRESH-MAIN-ROAD-REGRESSION-DISCOVERY-RECOVERY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "R29-NO-TESTS-FOUND-ROOT-CAUSE-PLUS-R27-PINNED-A-D",
+  "authorizationBaseSha": "87eff701a8cf33c15929d1cbcb1ac6e263ec5b50",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1038:L1038",
+  "leaseUntilJST": "2026-09-12 11:01 JST",
+  "scope": [
+    "tests/road-move-bidirectional-live-r27.spec.mjs",
+    ".github/workflows/zz-temp-road-move-r30.yml",
+    "data/preaction-authorizations/ROAD-MOVE-RUNTIME-R30-20260912T1001-SOL-Q7N4V8.json"
+  ],
+  "leaseScope": [
+    "tests/road-move-bidirectional-live-r27.spec.mjs",
+    ".github/workflows/zz-temp-road-move-r30.yml",
+    "data/preaction-authorizations/ROAD-MOVE-RUNTIME-R30-20260912T1001-SOL-Q7N4V8.json"
+  ],
+  "leaseExactMutableResources": [
+    "tests/road-move-bidirectional-live-r27.spec.mjs",
+    ".github/workflows/zz-temp-road-move-r30.yml",
+    "data/preaction-authorizations/ROAD-MOVE-RUNTIME-R30-20260912T1001-SOL-Q7N4V8.json"
+  ],
+  "reuseDiscovery": {
+    "status": "REUSE_EXISTING_TEST",
+    "evidence": "R27 pinned A-D live regression reused; R29 red was Playwright discovery only because root playwright.config.mjs excludes this spec by testMatch"
+  },
+  "note": "Strict-subset acceptance recovery while browser/GAMEROAD.html is owned by BROWSER-BFI-HOME-LEGACY-R8. Product/runtime/Road core/Battle-card/gameplay/rules/save/economy/network remain READ_ONLY. Transient workflow uses a dedicated runtime-created Playwright config so the existing Road spec actually executes without broadening global testMatch."
+}

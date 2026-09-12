@@ -59,18 +59,19 @@ async function clickControlByPatterns(page, patterns) {
     const text = safeLabel(await el.innerText().catch(() => ''));
     const aria = safeLabel(await el.getAttribute('aria-label').catch(() => ''));
     const title = safeLabel(await el.getAttribute('title').catch(() => ''));
-    const label = `${text} ${aria} ${title}`.toLowerCase();
+    const dataGo = safeLabel(await el.getAttribute('data-go').catch(() => ''));
+    const label = `${text} ${aria} ${title} ${dataGo}`.toLowerCase();
     if (!patterns.some((p) => p.test(label))) continue;
     await el.click({ timeout: 5000 });
     await page.waitForTimeout(650);
-    return { text, aria, title };
+    return { text, aria, title, dataGo };
   }
   return null;
 }
 
 async function visibleGachaEntry(page) {
   const controls = await visibleControls(page);
-  return controls.find((c) => /ガチャ|gacha|召喚|くじ/.test(controlLabel(c))) || null;
+  return controls.find((c) => /パック|pack|ガチャ|gacha|召喚|くじ/i.test(`${controlLabel(c)} ${c.dataGo}`)) || null;
 }
 
 const browser = await chromium.launch({ headless: true });
@@ -87,9 +88,9 @@ try {
 
   let controls = await snapshot(page, '01-entry');
 
-  // If a title/start surface is blocking Home, only press a clearly start/continue/Home control.
+  // Only cross a genuine title/start surface. Home itself already has the visible Pack entry.
   if (!(await visibleGachaEntry(page))) {
-    const start = await clickControlByPatterns(page, [/はじめ|始め|スタート|start|continue|つづき|続き|ホーム|home/]);
+    const start = await clickControlByPatterns(page, [/はじめ|始め|スタート|start|continue|つづき|続き/]);
     if (start) {
       report.notes.push({ action: 'title_or_start', control: start });
       controls = await snapshot(page, '02-after-start');
@@ -98,7 +99,6 @@ try {
 
   let gacha = await visibleGachaEntry(page);
   if (!gacha) {
-    // Explore only the visible Shop route; do not press purchase/draw controls here.
     const shop = await clickControlByPatterns(page, [/ショップ|shop|ストア|store/]);
     if (shop) {
       report.notes.push({ action: 'open_shop', control: shop });
@@ -109,10 +109,10 @@ try {
 
   if (!gacha) {
     report.outcome = 'NO_VISIBLE_GACHA_ENTRY';
-    report.notes.push('No visible control labeled Gacha/ガチャ/召喚/くじ was reachable from the visible entry/Home and visible Shop route. No private state injection was used.');
+    report.notes.push('No visible Pack/Gacha control was reachable from the visible entry/Home and visible Shop route. No private state injection was used.');
   } else {
     report.notes.push({ visibleGachaEntry: gacha });
-    const entered = await clickControlByPatterns(page, [/ガチャ|gacha|召喚|くじ/]);
+    const entered = await clickControlByPatterns(page, [/パック|pack|ガチャ|gacha|召喚|くじ/]);
     if (!entered) {
       report.outcome = 'VISIBLE_ENTRY_NOT_CLICKABLE';
     } else {
@@ -120,7 +120,7 @@ try {
       const dangerous = /(購入|買う|課金|有償|支払|決済|purchase|buy|paid)/i;
       const obvious = controls.filter((c) => {
         const label = `${c.text} ${c.aria} ${c.title}`;
-        return /(見る|試す|プレビュー|演出|無料|1回|一回|引く|skip|スキップ|start|はじめ|開始)/i.test(label) && !dangerous.test(label);
+        return /(見る|試す|プレビュー|演出|無料|1回|一回|引く|skip|スキップ|start|はじめ|開始|open|開封)/i.test(label) && !dangerous.test(label);
       });
       if (obvious.length === 0) {
         report.outcome = 'GACHA_REACHED_NO_SAFE_OBVIOUS_ACTION';
@@ -130,8 +130,15 @@ try {
         const clicked = await clickControlByPatterns(page, [new RegExp(patternText, 'i')]);
         report.notes.push({ action: 'obvious_gacha_action', target, clicked });
         controls = await snapshot(page, '05-after-gacha-action');
-        const hasResultLike = controls.some((c) => /閉じ|戻|home|skip|スキップ|次|next|完了|ok/i.test(controlLabel(c))) || /結果|result|獲得|入手|reveal/i.test(safeLabel(await page.locator('body').innerText().catch(() => '')));
+        const body = safeLabel(await page.locator('body').innerText().catch(() => ''));
+        const hasResultLike = controls.some((c) => /閉じ|戻|home|skip|スキップ|次|next|完了|ok/i.test(controlLabel(c))) || /結果|result|獲得|入手|reveal|カード/i.test(body);
         report.outcome = hasResultLike ? 'GACHA_ACTION_GAVE_RESULT_OR_RECOVERY_CONTROL' : 'GACHA_ACTION_FEEDBACK_UNCLEAR';
+
+        const back = await clickControlByPatterns(page, [/←\s*戻る|戻る|ホーム|home|閉じる|close/]);
+        if (back) {
+          report.notes.push({ action: 'return_or_close', control: back });
+          await snapshot(page, '06-after-return');
+        }
       }
     }
   }

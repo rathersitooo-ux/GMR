@@ -834,3 +834,27 @@ test('Gacha preview disclosure fails soft when the Gacha surface is absent', asy
   assert.equal(ensureGachaPreviewDisclosure({}), null);
   assert.equal(ensureGachaPreviewDisclosure({getElementById: () => null, createElement: () => ({})}), null);
 });
+
+
+test('P5X cross-screen source uses existing Profile and Partner piece motion without broad Battle takeover', async () => {
+  const {SCREEN_MOTION_PIECE_SELECTORS} = await import('../browser/screen-navigation-core.mjs');
+  assert.deepEqual(SCREEN_MOTION_PIECE_SELECTORS.profile, [
+    '.profileStats > .profileIdentitySummary',
+    '.profileStats > .profileRecordsNote',
+    '.profileStats > .profileActions'
+  ]);
+  assert.deepEqual(SCREEN_MOTION_PIECE_SELECTORS.partner, [
+    '.partner-shell-runtime > .partner-shell-title',
+    '.partner-shell-runtime > .partner-shell-active',
+    '.partner-shell-runtime > .partner-shell-idle-readable',
+    '.partner-shell-runtime > .partner-shell-menu',
+    '.partner-shell-runtime > .partner-shell-roster',
+    '.partner-shell-runtime > .partner-shell-detail',
+    '.partner-shell-runtime > .partner-shell-formation',
+    '.partner-shell-runtime > .partner-shell-strategy',
+    '.partner-shell-runtime > .partner-dialogue-feedback',
+    '.partner-shell-runtime > .partner-costume-shell-host',
+    '.partner-shell-runtime > .partner-shell-navigation'
+  ]);
+  assert.equal(SCREEN_MOTION_PIECE_SELECTORS.battle, undefined);
+});

@@ -44,6 +44,9 @@ export function projectBattleCriticalResourceHudInput({
   honeyDeltaSource = null,
 } = {}) {
   const explicit = explicitPlayer(player);
+  const manaCurrent = explicit ? nonNegativeInteger(explicit.manaCurrent) : null;
+  const manaMax = explicit ? nonNegativeInteger(explicit.manaMax) : null;
+  const numericManaResolved = manaCurrent !== null && manaMax !== null && manaMax > 0 && manaCurrent <= manaMax;
   const honey = explicit ? nonNegativeInteger(explicit.honey) : null;
   const chipCount = explicit && Array.isArray(explicit.chip)
     ? nonNegativeInteger(explicit.chip.length)
@@ -52,6 +55,8 @@ export function projectBattleCriticalResourceHudInput({
   const deltaSource = optionalLabel(honeyDeltaSource);
 
   const snapshot = {
+    manaCurrent: numericManaResolved ? manaCurrent : null,
+    manaMax: numericManaResolved ? manaMax : null,
     honey,
     chipCount,
   };
@@ -99,10 +104,13 @@ export const BATTLE_CRITICAL_RESOURCE_HUD_LIVE_ADAPTER_CONTRACT = deepFreeze({
   genericHudRenderUsed: false,
   directSyncTarget: 'CALLER_OWNED_RESOURCE_HUD.sync',
   source: Object.freeze({
+    manaCurrent: 'EXPLICIT_CALLER_PLAYER.manaCurrent',
+    manaMax: 'EXPLICIT_CALLER_PLAYER.manaMax',
+    physicalManaCardIdentity: 'NOT_PROJECTED',
     honey: 'EXPLICIT_CALLER_PLAYER.honey',
     chipCount: 'EXPLICIT_CALLER_PLAYER.chip.length',
     honeyDelta: 'EXPLICIT_CALLER_OPTIONAL',
     honeyDeltaSource: 'EXPLICIT_CALLER_OPTIONAL',
   }),
-  outputKeys: Object.freeze(['honey', 'chipCount', 'honeyDelta', 'honeyDeltaSource']),
+  outputKeys: Object.freeze(['manaCurrent', 'manaMax', 'honey', 'chipCount', 'honeyDelta', 'honeyDeltaSource']),
 });

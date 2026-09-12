@@ -1,0 +1,18 @@
+name: temp battle numeric mana r1
+on:
+  push:
+    branches:
+      - sol/battle-numeric-mana-r1-20260912
+
+permissions:
+  contents: read
+
+jobs:
+  focused:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/battle-critical-resource-hud-runtime.test.mjs tests/battle-critical-resource-hud-live-adapter.test.mjs

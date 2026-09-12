@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "TITLE-BOOT-LIVE-BIND-R12-PREACTION-20260912T1701",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "TITLE_BOOT_LIVE_BINDING_R5",
+  "acquireKey": "TITLE-BOOT-LIVE-BIND-R12-20260912T1701-SOL-Q8N4V12",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "TITLE_R12_CURRENT_MAIN_79C1644_DIRECT_GAP_READBACK",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1551_TITLE_UNIT_11_OF_11_PLUS_CURRENT_ANCHOR_READBACK",
+  "proceedToken": "PROCEED|TITLE-BOOT-LIVE-BIND-R12-PREACTION-20260912T1701|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_LEASE_AND_EXISTING_REPAIR",
+  "authorizationBaseSha": "79c1644bc864ea41e6725c84d68d10893afd4925",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "TITLE_BOOT_LIVE_BINDING_R5",
+  "leaseAcquireKey": "TITLE-BOOT-LIVE-BIND-R12-20260912T1701-SOL-Q8N4V12",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 17:01 JST",
+  "leaseUntilJst": "2026-09-12 18:01 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1066:L1066",
+  "scope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/browser-runtime-smoke.spec.mjs",
+    ".github/workflows/zz-temp-title-boot-live-bind-r12.yml"
+  ],
+  "leaseScope": [
+    "browser/home-boot-runtime-mount.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    "tests/browser-runtime-smoke.spec.mjs",
+    ".github/workflows/zz-temp-title-boot-live-bind-r12.yml"
+  ],
+  "leaseExactMutableResources": "browser/home-boot-runtime-mount.mjs; deploy/cloudflare/scripts/build.mjs; tests/browser-runtime-smoke.spec.mjs; .github/workflows/zz-temp-title-boot-live-bind-r12.yml; own transient PRE_ACTION/branch/PR/check/readback",
+  "solutionSignature": "TITLE_BOOT_EXISTING_RUNTIME_COMPOSE_CURRENT_SMOKE_ADAPT_R12",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "TITLE_R12_REUSE_EXISTING_ROUTER_RUNTIME_PR1551_DONOR",
+  "solutionSearchEvidence": [
+    "current-main-title-runtime-exists-no-home-import",
+    "current-main-public-build-missing-title-artifacts",
+    "PR1551-two-file-donor-reviewed",
+    "current-browser-smoke-home-immediate-assumption"
+  ]
+}

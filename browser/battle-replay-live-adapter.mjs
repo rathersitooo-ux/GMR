@@ -1,4 +1,5 @@
 import './battle-janken-slidepad-runtime-mount.mjs';
+import './battle-current-player-ui-live-adapter.mjs';
 import {
   appendAcceptedEvent,
   createReplayLog,

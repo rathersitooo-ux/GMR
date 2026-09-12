@@ -14,5 +14,3 @@
 - **公開版の基準:** `main` に統合済みで公開可能な Browser build
 
 > 目的: 新しいURLを毎回探したり、ChatGPTへ最新版リンクを聞いたりせず、このGitHubページから常に現在の公開版へ到達できること。
-
-<!-- Battle R7 validation trigger -->

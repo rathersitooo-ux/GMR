@@ -1,0 +1,120 @@
+name: TEMP BFI visible Deck precondition R7
+
+on:
+  push:
+    branches:
+      - sol/playtest-bfi-public-visible-deck-r7-20260912
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Replace only R19 private Deck precondition with visible Cards flow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/browser-full-interaction.spec.mjs')
+          text = path.read_text()
+          anchor = """async function beginVisibleTwoPlayerRoadShield(page, testInfo, evidencePrefix) {\n"""
+          if text.count(anchor) != 1:
+              raise SystemExit(f'expected one helper anchor, got {text.count(anchor)}')
+          helper = r'''async function prepareVisibleLegalBattleDeck(page, testInfo) {
+            const cards = await enterCardsFromHome(page);
+            const deckCount = cards.locator('#deckCount');
+            const initialCount = await numericText(deckCount);
+            expect(Number.isFinite(initialCount), 'visible main-deck count is numeric').toBeTruthy();
+            expect(initialCount, 'visible Deck does not start above the legal 40-card cap').toBeLessThanOrEqual(40);
+
+            if (initialCount < 40) {
+              const candidateIds = await cards
+                .locator('#collectionGrid button.slot.live.cardFace:not(.inDeck)[data-id]')
+                .evaluateAll((nodes) => [...new Set(nodes.map((node) => node.getAttribute('data-id')).filter(Boolean))]);
+
+              for (const cardId of candidateIds) {
+                const before = await numericText(deckCount);
+                if (before >= 40) break;
+                const candidate = cards
+                  .locator(`#collectionGrid button.slot.live.cardFace:not(.inDeck)[data-id="${cardId}"]:visible`)
+                  .first();
+                if ((await candidate.count()) === 0) continue;
+                await candidate.click();
+                const add = cards.locator('#addSelectedCard');
+                if ((await add.count()) === 0 || !(await add.isVisible()) || !(await add.isEnabled())) {
+                  const closeUnavailable = cards.locator('#r4PreviewClose:visible');
+                  if ((await closeUnavailable.count()) > 0) await closeUnavailable.click();
+                  continue;
+                }
+                await add.click();
+                await page.waitForTimeout(80);
+                const closePreview = cards.locator('#r4PreviewClose:visible');
+                if ((await closePreview.count()) > 0) await closePreview.click();
+              }
+            }
+
+            await expect(deckCount, 'visible Deck construction reaches 40 cards').toHaveText('40');
+            const trayToggle = cards.locator('#r4DeckTrayToggle:visible');
+            const saveDeck = cards.locator('#saveDeck');
+            if (!(await saveDeck.isVisible()) && (await trayToggle.count()) > 0) {
+              await trayToggle.click();
+              await page.waitForTimeout(120);
+            }
+            await expect(saveDeck, 'visible Save control is available after Deck construction').toBeVisible();
+            await expect(saveDeck).toBeEnabled();
+            await saveDeck.click();
+            await expect(cards.locator('#deckSaveState')).toHaveText('保存済み');
+            await attachStateScreenshot(page, testInfo, 'r19-visible-deck-saved-40');
+
+            const back = cards.locator('[data-back]:visible').first();
+            await expect(back, 'visible Deck Back returns to Home').toBeVisible();
+            await back.click();
+            await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+            return Object.freeze({ mainCount: await numericText(deckCount), saved: true });
+          }
+
+          '''
+          text = text.replace(anchor, helper + anchor, 1)
+          old = """  const deck = await installLegalBattleDeck(page);\n  expect(deck.main).toHaveLength(40);\n  expect(deck.committed).toBeTruthy();\n  expect(deck.savedValidation.ok).toBeTruthy();\n  testInfo.annotations.push({ type: 'deterministic-precondition', description: 'A legal 40-card deck is installed only to unlock current visible Setup controls. Match mode/content and all match progression use visible controls.' });\n"""
+          new = """  const deck = await prepareVisibleLegalBattleDeck(page, testInfo);\n  expect(deck.mainCount).toBe(40);\n  expect(deck.saved).toBeTruthy();\n  testInfo.annotations.push({ type: 'visible-precondition', description: 'The public R19 path reaches Cards, builds to 40, saves, and returns Home through visible controls before entering Setup. No private game-state/test API is required.' });\n"""
+          if text.count(old) != 1:
+              raise SystemExit(f'expected one exact R19 deck block, got {text.count(old)}')
+          text = text.replace(old, new, 1)
+          if "const deck = await prepareVisibleLegalBattleDeck(page, testInfo);" not in text:
+              raise SystemExit('R19 visible deck replacement missing')
+          path.write_text(text)
+          PY
+          git diff --check
+          git diff -- tests/browser-full-interaction.spec.mjs
+
+      - name: Run existing R19 on all standard viewports
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+          npx playwright test --config=playwright.full-interaction.config.mjs --workers=1 --grep 'R19 reaches Result from visible four-player Honey Hunt and returns Home'
+
+      - name: Commit durable test-only repair and remove transient control files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'gameroad-sol'
+          git config user.email 'actions@users.noreply.github.com'
+          git add tests/browser-full-interaction.spec.mjs
+          git rm data/preaction-authorizations/PLAYTEST-BFI-PUBLIC-VISIBLE-DECK-R7-20260912T0954-SOL-Q7M4N13.json
+          git rm .github/workflows/zz-temp-playtest-battle-first-action-r7.yml
+          git commit -m 'test: 公開R19のDeck前提を可視操作へ変更'
+          git push origin HEAD:sol/playtest-bfi-public-visible-deck-r7-20260912

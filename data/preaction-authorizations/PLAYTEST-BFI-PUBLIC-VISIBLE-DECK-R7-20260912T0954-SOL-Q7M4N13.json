@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PLAYTEST-BFI-PUBLIC-VISIBLE-DECK-R7-20260912T0954-SOL-Q7M4N13",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "PLAYTEST_BATTLE_FIRST_DECISION_FOCUS_R1",
+  "acquireKey": "PLAYTEST-BATTLE-FIRST-ACTION-R7-20260912T0954-SOL-Q7M4N13",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "BFI-R7-PUBLIC-R19-DECKPUBLIC-UNDEFINED-3VIEWPORT",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "BFI-R7-EXISTING-PR758-VISIBLE-DECK-DONOR-AND-RUN34601701917",
+  "proceedToken": "PROCEED|PLAYTEST-BFI-PUBLIC-VISIBLE-DECK-R7-20260912T0954-SOL-Q7M4N13|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|same-workunit-visible-player-path",
+  "authorizationBaseSha": "63743e7e5d3c552a199d98984fa19ad5b3759929",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "PLAYTEST_BATTLE_FIRST_DECISION_FOCUS_R1",
+  "leaseAcquireKey": "PLAYTEST-BATTLE-FIRST-ACTION-R7-20260912T0954-SOL-Q7M4N13",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 09:54 JST",
+  "leaseUntilJst": "2026-09-12 10:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1036:L1036",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR branch sol/playtest-bfi-public-visible-deck-r7-20260912 only: tests/browser-full-interaction.spec.mjs; .github/workflows/zz-temp-playtest-battle-first-action-r7.yml; CURRENT_ACTIVE_LEASES own AcquireKey row only",
+  "scope": [
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/zz-temp-playtest-battle-first-action-r7.yml"
+  ],
+  "leaseScope": [
+    "tests/browser-full-interaction.spec.mjs",
+    ".github/workflows/zz-temp-playtest-battle-first-action-r7.yml"
+  ],
+  "solutionSignature": "Keep the existing public R19 acceptance but replace only its private deck-state precondition with the existing visible Cards-to-40-Save-Back interaction path.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "BFI-R7-REUSE-PR758-VISIBLE-DECK-UI-PATH",
+  "solutionSearchEvidence": [
+    "GitHub PR#758 closed-unmerged visible Deck donor",
+    "GitHub Actions run34601701917 exact public failure at installLegalBattleDeck before navigation"
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CURRENT-UI-R2-20260913T0316-SOL-GEOMETRY-R6",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CURRENT_PLAYER_UI_COMPOSITION_R1",
+  "acquireKey": "BATTLE-CURRENT-UI-R2-20260913T0316-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLIC_GEOMETRY_R5_RETRY_RUN34715301397_EXACT_MAIN_D96725F_LIVE_MOUNT_ALL_VIEWPORTS_WITH_GEOMETRY_DEFECTS",
+  "rehearsalStatus": "PASS_ALT_ORACLE",
+  "rehearsalEvidenceId": "PUBLIC_GEOMETRY_ARTIFACT_10304578455_1280x720_390x844_667x375",
+  "proceedToken": "PROCEED|BATTLE-CURRENT-UI-R2-20260913T0316-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-current-ui-geometry-repair-r6|same-workunit",
+  "authorizationBaseSha": "d96725f9ee3ff90986d1883cc2813872b1b9beee",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CURRENT_PLAYER_UI_COMPOSITION_R1",
+  "leaseAcquireKey": "BATTLE-CURRENT-UI-R2-20260913T0316-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-13 05:28 JST",
+  "leaseUntilJst": "2026-09-13 06:27 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!F1316:L1316",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main d96725f9ee3ff90986d1883cc2813872b1b9beee; branch sol/battle-current-ui-geometry-repair-r6-20260913; MUTABLE browser/battle-current-player-ui-runtime.mjs; MUTABLE tests/battle-current-player-ui-runtime.test.mjs; MUTABLE .github/workflows/zz-temp-battle-current-ui-geometry-repair-r6.yml; MUTABLE data/preaction-authorizations/BATTLE-CURRENT-UI-R2-20260913T0316-SOL-GEOMETRY-R6.json. READ_ONLY browser/GAMEROAD.html; browser/battle-current-player-ui-live-adapter.mjs; browser/battle-replay-live-adapter.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; all gameplay/rules/card values/save/economy/network/map topology/field generation/Battle resolution authority.",
+  "scope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs",
+    ".github/workflows/zz-temp-battle-current-ui-geometry-repair-r6.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-current-player-ui-runtime.mjs",
+    "tests/battle-current-player-ui-runtime.test.mjs",
+    ".github/workflows/zz-temp-battle-current-ui-geometry-repair-r6.yml"
+  ],
+  "solutionSignature": "battle-current-ui-geometry-repair|neutralize-legacy-transform+bounded-secondary-strip+portrait-thumb-separation|presentation-only",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_PLAYER_COMPOSITOR_ALREADY_LIVE_AND_GEOMETRY_AUDIT_ISOLATED_CSS_ONLY_DEFECTS",
+  "solutionSearchEvidence": [
+    "main:d96725f9ee3ff90986d1883cc2813872b1b9beee",
+    "run34715301397:success-liveMounted-rootDecorated-all-three-viewports",
+    "artifact10304578455:portrait-handVsJanken+thumbActionsVsJanken",
+    "artifact10304578455:desktop+667-plan-bottom-overflow",
+    "artifact10304578455:secondaryActions-top-overflow-all-viewports",
+    "browser/battle-current-player-ui-runtime.mjs@ae3b291aff7bed1214944028a835a955deeca64b",
+    "tests/battle-current-player-ui-runtime.test.mjs@33bfa51650cb3369d44a17b96675d0cb7c72c719"
+  ]
+}

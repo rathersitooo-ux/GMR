@@ -1,5 +1,13 @@
 import { test, expect } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    globalThis.GAMEROAD_TITLE_BOOT_CONTEXT_PROVIDER = () => ({
+      directDestination: { validated: true, screen: 'home' },
+    });
+  });
+});
+
 const CORE_SCREENS = ['home', 'cards', 'characters', 'setup', 'battle', 'result', 'shop'];
 const NAV_TARGETS = ['home', 'cards', 'characters', 'setup', 'battle', 'shop'];
 

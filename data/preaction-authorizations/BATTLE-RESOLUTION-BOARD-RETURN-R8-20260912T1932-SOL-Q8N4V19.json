@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RESOLUTION-BOARD-RETURN-R8-20260912T1932-SOL-Q8N4V19",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_RESOLUTION_CAUSAL_BOARD_RETURN_LIVE_R2",
+  "acquireKey": "BATTLE-RESOLUTION-BOARD-RETURN-R8-20260912T1932-SOL-Q8N4V19",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT-MODEL-CAUSAL-RETURN-ALREADY-PROJECTED-RUNTIME-CARD-ID-GAP",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXISTING-SETTLE-BOARDRETURN-RUNTIME-TEST-PLUS-MERGED-CAUSAL-PROJECTION",
+  "proceedToken": "PROCEED|BATTLE-RESOLUTION-BOARD-RETURN-R8-20260912T1932-SOL-Q8N4V19|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|presentation-only-causal-return|lease-row1205",
+  "authorizationBaseSha": "75f4f47c60eb2c478e8314dd1dd1b6e1955571ee",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_RESOLUTION_CAUSAL_BOARD_RETURN_LIVE_R2",
+  "leaseAcquireKey": "BATTLE-RESOLUTION-BOARD-RETURN-R8-20260912T1932-SOL-Q8N4V19",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 19:32 JST",
+  "leaseUntilJst": "2026-09-12 20:32 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1205:L1205",
+  "leaseExactMutableResources": "browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; transient .github/workflows/zz-temp-battle-resolution-causal-return-r8.yml; own PRE_ACTION; own branch/PR/check/readback. Pure causal/presentation cores, browser/GAMEROAD.html and gameplay authorities READ_ONLY.",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-resolution-causal-return-r8.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-resolution-causal-return-r8.yml"
+  ]
+}

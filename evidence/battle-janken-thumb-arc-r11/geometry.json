@@ -1,1 +1,867 @@
-{"trigger":"R11 current-main recapture"}
+{
+  "schema": "gameroad.battle-janken-thumb-arc-use-site-evidence.r11",
+  "baseSha": "e6d825e07f5791c67386d44769613ac2089e0fca",
+  "captures": [
+    {
+      "name": "1280x720",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "expanded": true,
+      "host": {
+        "rect": {
+          "left": 1020,
+          "top": 479,
+          "right": 1268,
+          "bottom": 675,
+          "width": 248,
+          "height": 196
+        },
+        "display": "block",
+        "visibility": "visible",
+        "pointerEvents": "none",
+        "disabled": null
+      },
+      "handle": {
+        "element": {
+          "rect": {
+            "left": 1200,
+            "top": 607,
+            "right": 1268,
+            "bottom": 675,
+            "width": 68,
+            "height": 68
+          },
+          "display": "block",
+          "visibility": "visible",
+          "pointerEvents": "auto",
+          "disabled": false
+        },
+        "hitCenter": {
+          "x": 1234,
+          "y": 641,
+          "owner": {
+            "tag": "button",
+            "id": null,
+            "className": "grJankenSlidePadHandle",
+            "jankenSlot": null
+          }
+        },
+        "centerHitOwnsHandle": true
+      },
+      "slots": [
+        {
+          "hand": "ROCK",
+          "element": {
+            "rect": {
+              "left": 1015.6390380859375,
+              "top": 576.8507080078125,
+              "right": 1120.967041015625,
+              "bottom": 682.1787109375,
+              "width": 105.3280029296875,
+              "height": 105.3280029296875
+            },
+            "display": "grid",
+            "visibility": "visible",
+            "pointerEvents": "auto",
+            "disabled": false
+          },
+          "hitCenter": {
+            "x": 1068.3030395507812,
+            "y": 629.5147094726562,
+            "owner": {
+              "tag": "button",
+              "id": null,
+              "className": "grJankenSlidePadSlot rock",
+              "jankenSlot": "ROCK"
+            }
+          },
+          "intersections": {
+            "hand": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            },
+            "planBox": {
+              "area": 10864.508929148316,
+              "width": 105.3280029296875,
+              "height": 103.1492919921875
+            },
+            "battleRail": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            },
+            "board": {
+              "area": 11093.988201156259,
+              "width": 105.3280029296875,
+              "height": 105.3280029296875
+            },
+            "targetBox": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            }
+          },
+          "centerHitOwnsSelectableSlot": true
+        },
+        {
+          "hand": "SCISSORS",
+          "element": {
+            "rect": {
+              "left": 1078.29736328125,
+              "top": 516.9715576171875,
+              "right": 1170.0869140625,
+              "bottom": 608.7611083984375,
+              "width": 91.78955078125,
+              "height": 91.78955078125
+            },
+            "display": "grid",
+            "visibility": "visible",
+            "pointerEvents": "auto",
+            "disabled": false
+          },
+          "hitCenter": {
+            "x": 1124.192138671875,
+            "y": 562.8663330078125,
+            "owner": {
+              "tag": "button",
+              "id": null,
+              "className": "grJankenSlidePadSlot scissors",
+              "jankenSlot": "SCISSORS"
+            }
+          },
+          "intersections": {
+            "hand": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            },
+            "planBox": {
+              "area": 3374.2856261134148,
+              "width": 91.78955078125,
+              "height": 36.7611083984375
+            },
+            "battleRail": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            },
+            "board": {
+              "area": 8425.321632623672,
+              "width": 91.78955078125,
+              "height": 91.78955078125
+            },
+            "targetBox": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            }
+          },
+          "centerHitOwnsSelectableSlot": true
+        },
+        {
+          "hand": "PAPER",
+          "element": {
+            "rect": {
+              "left": 1159.913330078125,
+              "top": 481.352294921875,
+              "right": 1258.235107421875,
+              "bottom": 579.6739501953125,
+              "width": 98.32177734375,
+              "height": 98.3216552734375
+            },
+            "display": "grid",
+            "visibility": "visible",
+            "pointerEvents": "auto",
+            "disabled": false
+          },
+          "hitCenter": {
+            "x": 1209.07421875,
+            "y": 530.5131225585938,
+            "owner": {
+              "tag": "button",
+              "id": null,
+              "className": "grJankenSlidePadSlot paper",
+              "jankenSlot": "PAPER"
+            }
+          },
+          "intersections": {
+            "hand": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            },
+            "planBox": {
+              "area": 338.3189092576504,
+              "width": 44.086669921875,
+              "height": 7.6739501953125
+            },
+            "battleRail": {
+              "area": 1358.2010244727135,
+              "width": 33.235107421875,
+              "height": 40.866455078125
+            },
+            "board": {
+              "area": 9667.159897863865,
+              "width": 98.32177734375,
+              "height": 98.3216552734375
+            },
+            "targetBox": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            }
+          },
+          "centerHitOwnsSelectableSlot": true
+        }
+      ],
+      "hand": {
+        "rect": {
+          "left": 244,
+          "top": 572,
+          "right": 414,
+          "bottom": 680,
+          "width": 170,
+          "height": 108
+        },
+        "display": "flex",
+        "visibility": "visible",
+        "pointerEvents": "auto",
+        "disabled": null
+      },
+      "planBox": {
+        "rect": {
+          "left": 420,
+          "top": 572,
+          "right": 1204,
+          "bottom": 680,
+          "width": 784,
+          "height": 108
+        },
+        "display": "grid",
+        "visibility": "visible",
+        "pointerEvents": "auto",
+        "disabled": null
+      },
+      "battleRail": {
+        "rect": {
+          "left": 1225,
+          "top": 206.65625,
+          "right": 1273,
+          "bottom": 522.21875,
+          "width": 48,
+          "height": 315.5625
+        },
+        "display": "grid",
+        "visibility": "visible",
+        "pointerEvents": "auto",
+        "disabled": null
+      },
+      "board": {
+        "rect": {
+          "left": 0,
+          "top": 15,
+          "right": 1280,
+          "bottom": 687,
+          "width": 1280,
+          "height": 672
+        },
+        "display": "block",
+        "visibility": "visible",
+        "pointerEvents": "none",
+        "disabled": null
+      },
+      "targetBox": {
+        "rect": {
+          "left": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "width": 0,
+          "height": 0
+        },
+        "display": "none",
+        "visibility": "visible",
+        "pointerEvents": "auto",
+        "disabled": null
+      },
+      "violations": []
+    },
+    {
+      "name": "667x375",
+      "viewport": {
+        "width": 667,
+        "height": 375
+      },
+      "expanded": true,
+      "host": {
+        "rect": {
+          "left": 452,
+          "top": 187,
+          "right": 660,
+          "bottom": 347,
+          "width": 208,
+          "height": 160
+        },
+        "display": "block",
+        "visibility": "visible",
+        "pointerEvents": "none",
+        "disabled": null
+      },
+      "handle": {
+        "element": {
+          "rect": {
+            "left": 602,
+            "top": 289,
+            "right": 660,
+            "bottom": 347,
+            "width": 58,
+            "height": 58
+          },
+          "display": "block",
+          "visibility": "visible",
+          "pointerEvents": "auto",
+          "disabled": false
+        },
+        "hitCenter": {
+          "x": 631,
+          "y": 318,
+          "owner": {
+            "tag": "button",
+            "id": null,
+            "className": "grJankenSlidePadHandle",
+            "jankenSlot": null
+          }
+        },
+        "centerHitOwnsHandle": true
+      },
+      "slots": [
+        {
+          "hand": "ROCK",
+          "element": {
+            "rect": {
+              "left": 441.42919921875,
+              "top": 265.12860107421875,
+              "right": 530.178955078125,
+              "bottom": 353.87835693359375,
+              "width": 88.749755859375,
+              "height": 88.749755859375
+            },
+            "display": "grid",
+            "visibility": "visible",
+            "pointerEvents": "auto",
+            "disabled": false
+          },
+          "hitCenter": {
+            "x": 485.8040771484375,
+            "y": 309.50347900390625,
+            "owner": {
+              "tag": "button",
+              "id": null,
+              "className": "grJankenSlidePadSlot rock",
+              "jankenSlot": "ROCK"
+            }
+          },
+          "intersections": {
+            "hand": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            },
+            "planBox": {
+              "area": 7532.315934106708,
+              "width": 88.749755859375,
+              "height": 84.87139892578125
+            },
+            "battleRail": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            },
+            "board": {
+              "area": 7876.519165098667,
+              "width": 88.749755859375,
+              "height": 88.749755859375
+            },
+            "targetBox": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            }
+          },
+          "centerHitOwnsSelectableSlot": true
+        },
+        {
+          "hand": "SCISSORS",
+          "element": {
+            "rect": {
+              "left": 501.8084716796875,
+              "top": 205.4365234375,
+              "right": 579.5799560546875,
+              "bottom": 283.20794677734375,
+              "width": 77.771484375,
+              "height": 77.77142333984375
+            },
+            "display": "grid",
+            "visibility": "visible",
+            "pointerEvents": "auto",
+            "disabled": false
+          },
+          "hitCenter": {
+            "x": 540.6942138671875,
+            "y": 244.32223510742188,
+            "owner": {
+              "tag": "button",
+              "id": null,
+              "className": "grJankenSlidePadSlot scissors",
+              "jankenSlot": "SCISSORS"
+            }
+          },
+          "intersections": {
+            "hand": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            },
+            "planBox": {
+              "area": 1493.830532670021,
+              "width": 77.771484375,
+              "height": 19.20794677734375
+            },
+            "battleRail": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            },
+            "board": {
+              "area": 6048.3990350961685,
+              "width": 77.771484375,
+              "height": 77.77142333984375
+            },
+            "targetBox": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            }
+          },
+          "centerHitOwnsSelectableSlot": true
+        },
+        {
+          "hand": "PAPER",
+          "element": {
+            "rect": {
+              "left": 576.1094360351562,
+              "top": 185.46217346191406,
+              "right": 659.6806640625,
+              "bottom": 269.033447265625,
+              "width": 83.57122802734375,
+              "height": 83.57127380371094
+            },
+            "display": "grid",
+            "visibility": "visible",
+            "pointerEvents": "auto",
+            "disabled": false
+          },
+          "hitCenter": {
+            "x": 617.8950500488281,
+            "y": 227.24781036376953,
+            "owner": {
+              "tag": "button",
+              "id": null,
+              "className": "grJankenSlidePadSlot paper",
+              "jankenSlot": "PAPER"
+            }
+          },
+          "intersections": {
+            "hand": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            },
+            "planBox": {
+              "area": 155.48602472245693,
+              "width": 30.89056396484375,
+              "height": 5.033447265625
+            },
+            "battleRail": {
+              "area": 3901.162557706237,
+              "width": 46.6806640625,
+              "height": 83.57127380371094
+            },
+            "board": {
+              "area": 6984.153979585506,
+              "width": 83.57122802734375,
+              "height": 83.57127380371094
+            },
+            "targetBox": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            }
+          },
+          "centerHitOwnsSelectableSlot": true
+        }
+      ],
+      "hand": {
+        "rect": {
+          "left": 200,
+          "top": 264,
+          "right": 330,
+          "bottom": 350,
+          "width": 130,
+          "height": 86
+        },
+        "display": "flex",
+        "visibility": "visible",
+        "pointerEvents": "auto",
+        "disabled": null
+      },
+      "planBox": {
+        "rect": {
+          "left": 336,
+          "top": 264,
+          "right": 607,
+          "bottom": 350,
+          "width": 271,
+          "height": 86
+        },
+        "display": "grid",
+        "visibility": "visible",
+        "pointerEvents": "auto",
+        "disabled": null
+      },
+      "battleRail": {
+        "rect": {
+          "left": 613,
+          "top": -86.5,
+          "right": 661,
+          "bottom": 428.5,
+          "width": 48,
+          "height": 515
+        },
+        "display": "grid",
+        "visibility": "visible",
+        "pointerEvents": "auto",
+        "disabled": null
+      },
+      "board": {
+        "rect": {
+          "left": 0,
+          "top": 27,
+          "right": 667,
+          "bottom": 354,
+          "width": 667,
+          "height": 327
+        },
+        "display": "block",
+        "visibility": "visible",
+        "pointerEvents": "none",
+        "disabled": null
+      },
+      "targetBox": {
+        "rect": {
+          "left": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "width": 0,
+          "height": 0
+        },
+        "display": "none",
+        "visibility": "visible",
+        "pointerEvents": "auto",
+        "disabled": null
+      },
+      "violations": []
+    },
+    {
+      "name": "390x844",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "expanded": true,
+      "host": {
+        "rect": {
+          "left": 130,
+          "top": 615,
+          "right": 378,
+          "bottom": 811,
+          "width": 248,
+          "height": 196
+        },
+        "display": "block",
+        "visibility": "visible",
+        "pointerEvents": "none",
+        "disabled": null
+      },
+      "handle": {
+        "element": {
+          "rect": {
+            "left": 310,
+            "top": 743,
+            "right": 378,
+            "bottom": 811,
+            "width": 68,
+            "height": 68
+          },
+          "display": "block",
+          "visibility": "visible",
+          "pointerEvents": "auto",
+          "disabled": false
+        },
+        "hitCenter": {
+          "x": 344,
+          "y": 777,
+          "owner": {
+            "tag": "button",
+            "id": null,
+            "className": "grJankenSlidePadHandle",
+            "jankenSlot": null
+          }
+        },
+        "centerHitOwnsHandle": true
+      },
+      "slots": [
+        {
+          "hand": "ROCK",
+          "element": {
+            "rect": {
+              "left": 171.03054809570312,
+              "top": 727.1798706054688,
+              "right": 262.178955078125,
+              "bottom": 818.3282470703125,
+              "width": 91.14840698242188,
+              "height": 91.14837646484375
+            },
+            "display": "grid",
+            "visibility": "visible",
+            "pointerEvents": "auto",
+            "disabled": false
+          },
+          "hitCenter": {
+            "x": 216.60475158691406,
+            "y": 772.7540588378906,
+            "owner": {
+              "tag": "button",
+              "id": null,
+              "className": "grJankenSlidePadSlot rock",
+              "jankenSlot": "ROCK"
+            }
+          },
+          "intersections": {
+            "hand": {
+              "area": 3173.7993252333254,
+              "width": 91.14840698242188,
+              "height": 34.82012939453125
+            },
+            "planBox": {
+              "area": 4739.7171630859375,
+              "width": 91.14840698242188,
+              "height": 52
+            },
+            "battleRail": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            },
+            "board": {
+              "area": 8308.029313804582,
+              "width": 91.14840698242188,
+              "height": 91.14837646484375
+            },
+            "targetBox": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            }
+          },
+          "centerHitOwnsSelectableSlot": true
+        },
+        {
+          "hand": "SCISSORS",
+          "element": {
+            "rect": {
+              "left": 225.70654296875,
+              "top": 669.4392700195312,
+              "right": 305.5799255371094,
+              "bottom": 749.3126220703125,
+              "width": 79.87338256835938,
+              "height": 79.87335205078125
+            },
+            "display": "grid",
+            "visibility": "visible",
+            "pointerEvents": "auto",
+            "disabled": false
+          },
+          "hitCenter": {
+            "x": 265.6432342529297,
+            "y": 709.3759460449219,
+            "owner": {
+              "tag": "button",
+              "id": null,
+              "className": "grJankenSlidePadSlot scissors",
+              "jankenSlot": "SCISSORS"
+            }
+          },
+          "intersections": {
+            "hand": {
+              "area": 2820.538572113961,
+              "width": 79.87338256835938,
+              "height": 35.3126220703125
+            },
+            "planBox": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            },
+            "battleRail": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            },
+            "board": {
+              "area": 6379.754805369303,
+              "width": 79.87338256835938,
+              "height": 79.87335205078125
+            },
+            "targetBox": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            }
+          },
+          "centerHitOwnsSelectableSlot": true
+        },
+        {
+          "hand": "PAPER",
+          "element": {
+            "rect": {
+              "left": 290.1728515625,
+              "top": 633.4345703125,
+              "right": 375.95013427734375,
+              "bottom": 719.2118530273438,
+              "width": 85.77728271484375,
+              "height": 85.77728271484375
+            },
+            "display": "grid",
+            "visibility": "visible",
+            "pointerEvents": "auto",
+            "disabled": false
+          },
+          "hitCenter": {
+            "x": 333.0614929199219,
+            "y": 676.3232116699219,
+            "owner": {
+              "tag": "button",
+              "id": null,
+              "className": "grJankenSlidePadSlot paper",
+              "jankenSlot": "PAPER"
+            }
+          },
+          "intersections": {
+            "hand": {
+              "area": 447.0585905946791,
+              "width": 85.77728271484375,
+              "height": 5.21185302734375
+            },
+            "planBox": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            },
+            "battleRail": {
+              "area": 1883.41040879488,
+              "width": 36.95013427734375,
+              "height": 50.9716796875
+            },
+            "board": {
+              "area": 7357.742229942232,
+              "width": 85.77728271484375,
+              "height": 85.77728271484375
+            },
+            "targetBox": {
+              "area": 0,
+              "width": 0,
+              "height": 0
+            }
+          },
+          "centerHitOwnsSelectableSlot": true
+        }
+      ],
+      "hand": {
+        "rect": {
+          "left": 5,
+          "top": 714,
+          "right": 385,
+          "bottom": 762,
+          "width": 380,
+          "height": 48
+        },
+        "display": "flex",
+        "visibility": "visible",
+        "pointerEvents": "auto",
+        "disabled": null
+      },
+      "planBox": {
+        "rect": {
+          "left": 5,
+          "top": 764,
+          "right": 385,
+          "bottom": 816,
+          "width": 380,
+          "height": 52
+        },
+        "display": "grid",
+        "visibility": "visible",
+        "pointerEvents": "auto",
+        "disabled": null
+      },
+      "battleRail": {
+        "rect": {
+          "left": 339,
+          "top": 197.40625,
+          "right": 383,
+          "bottom": 684.40625,
+          "width": 44,
+          "height": 487
+        },
+        "display": "grid",
+        "visibility": "visible",
+        "pointerEvents": "auto",
+        "disabled": null
+      },
+      "board": {
+        "rect": {
+          "left": 0,
+          "top": 27,
+          "right": 390,
+          "bottom": 823,
+          "width": 390,
+          "height": 796
+        },
+        "display": "block",
+        "visibility": "visible",
+        "pointerEvents": "none",
+        "disabled": null
+      },
+      "targetBox": {
+        "rect": {
+          "left": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "width": 0,
+          "height": 0
+        },
+        "display": "none",
+        "visibility": "visible",
+        "pointerEvents": "auto",
+        "disabled": null
+      },
+      "violations": []
+    }
+  ]
+}

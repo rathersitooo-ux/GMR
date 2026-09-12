@@ -207,6 +207,11 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
-          test "$(git diff --cached --name-only | sort)" = $'deploy/cloudflare/functions/ws.js\ntests/partner-conversation-core.test.mjs'
+          git diff --cached --name-only | sort > /tmp/partner-r18-staged.txt
+          test "$(wc -l < /tmp/partner-r18-staged.txt | tr -d ' ')" -eq 4
+          grep -Fxq '.github/workflows/zz-temp-partner-convo-timeout-r18.yml' /tmp/partner-r18-staged.txt
+          grep -Fxq 'data/preaction-authorizations/PARTNER-CONVO-UPSTREAM-TIMEOUT-R18-20260912T1803-SOL-Q6N4P14.json' /tmp/partner-r18-staged.txt
+          grep -Fxq 'deploy/cloudflare/functions/ws.js' /tmp/partner-r18-staged.txt
+          grep -Fxq 'tests/partner-conversation-core.test.mjs' /tmp/partner-r18-staged.txt
           git commit -m 'Partner: bound upstream conversation wait'
           git push origin HEAD:sol/partner-convo-upstream-timeout-r18-20260912

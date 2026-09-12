@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HAND3-CURRENT-LIVE-R1-20260912T1447-SOL-Q8N4V14",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_HAND3_CURRENT_LIVE_R1",
+  "acquireKey": "BATTLE-HAND3-CURRENT-LIVE-R1-20260912T1447-SOL-Q8N4V14",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_ROW1374_HAND3_PLUS_MAIN_STATIC_INITIAL7_CONFLICT",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "EXACT_STATIC_ANCHOR_AND_PRIOR_PR1561_HAND7_UNCHANGED_BOUNDARY",
+  "proceedToken": "PROCEED|BATTLE-HAND3-CURRENT-LIVE-R1-20260912T1447-SOL-Q8N4V14|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-html|hand3-current-live|active-lease",
+  "authorizationBaseSha": "b8165df6bdd6738b8a261700ca8987ffa8ab4ce2",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_HAND3_CURRENT_LIVE_R1",
+  "leaseAcquireKey": "BATTLE-HAND3-CURRENT-LIVE-R1-20260912T1447-SOL-Q8N4V14",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 14:47 JST",
+  "leaseUntilJst": "2026-09-12 15:47 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1061:L1061",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact main b8165df6bdd6738b8a261700ca8987ffa8ab4ce2; browser/GAMEROAD.html; tests/browser-static-check.mjs; .github/workflows/zz-temp-battle-hand3-current-live-r1b.yml; own PRE_ACTION manifest. READ_ONLY numeric Mana HUD/physical-Mana removal result; Honey/Shield/Road/janken/target/109/save/economy/network. No second Hand3/janken engine.",
+  "solutionSignature": "BATTLE_CURRENT_HAND3_SINGLE_LIVE_HAND_SOURCE_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_LIVE_HAND_INITIALIZER_PLUS_CURRENT_HAND3_ASSIGNMENT_POLICY",
+  "solutionSearchEvidence": [
+    "CURRENT row1374 states every turn hand is exactly 3 and old initial7/refill3 authority is superseded.",
+    "Current main b8165df6bdd6738b8a261700ca8987ffa8ab4ce2 static acceptance still requires const hand=deck.splice(0,7), proving the live initializer remains stale.",
+    "PR #1561 intentionally left Hand7/refill3 unchanged while removing physical Mana, so this correction can remain isolated from Mana/Honey semantics.",
+    "Existing new-base Hand3 assignment policy and janken consumers remain the only current three-card assignment path; no new Hand3 or janken engine is needed.",
+    "The existing refill function already targets hand length 3 and is not changed by this slice."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    ".github/workflows/zz-temp-battle-hand3-current-live-r1b.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    ".github/workflows/zz-temp-battle-hand3-current-live-r1b.yml"
+  ]
+}

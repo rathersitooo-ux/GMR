@@ -266,6 +266,7 @@ export function createSaasunaConversationEntry({ provider = null, createSessionI
   const sessionId = exactToken(createSessionId());
   if (!sessionId) throw new TypeError('SESSION_ID_INVALID');
   let turnSequence = 0;
+  let activeGeneration = 0;
   const sessionTurns = [];
   const feedbackByTurn = new Map();
 
@@ -314,6 +315,7 @@ export function createSaasunaConversationEntry({ provider = null, createSessionI
   async function send(message, { knowledgeContext = null, collectiveContext = null } = {}) {
     const turnId = `turn-${++turnSequence}`;
     const text = userMessage(message);
+    const generation = text ? ++activeGeneration : null;
     const sessionContext = createSessionContext(sessionTurns);
     const scopedProvider = provider ? {
       async sendMessage(request) {
@@ -328,6 +330,9 @@ export function createSaasunaConversationEntry({ provider = null, createSessionI
       collectiveContext,
       knowledgeContext,
     }, { provider: scopedProvider });
+    if (generation !== null && generation !== activeGeneration) {
+      return freezeDeep({ ...entryState(), turn: fail('TURN_SUPERSEDED') });
+    }
     if (turn.ok && text) {
       sessionTurns.push(freezeDeep({
         turnId,

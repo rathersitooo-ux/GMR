@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BROWSER-BFI-PHONE-CARDS-SAVE-R7-20260912T1109-SOL-H6K2P5",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BROWSER_PUBLIC_PLAYER_PATH_BOOT_READINESS_R1",
+  "acquireKey": "BROWSER-BFI-PHONE-CARDS-SAVE-R7-20260912T1109-SOL-H6K2P5",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R6_R7_PUBLIC_390X844_SAVE_OFFSCREEN_PLUS_FRESH_OWNER_FREE_READBACK_20260912T1109JST",
+  "rehearsalStatus": "PASS_EXISTING_PUBLIC_EVIDENCE",
+  "rehearsalEvidenceId": "R6_R7_390X844_CARDS_SAVE_REACHABILITY_FAILURE_DESKTOP_LANDSCAPE_CONTINUE",
+  "proceedToken": "PROCEED|BROWSER-BFI-PHONE-CARDS-SAVE-R7-20260912T1109-SOL-H6K2P5|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-deck-editor|phone-save-reachability|active-lease",
+  "authorizationBaseSha": "87eff701a8cf33c15929d1cbcb1ac6e263ec5b50",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BROWSER_PUBLIC_PLAYER_PATH_BOOT_READINESS_R1",
+  "leaseAcquireKey": "BROWSER-BFI-PHONE-CARDS-SAVE-R7-20260912T1109-SOL-H6K2P5",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 11:09 JST",
+  "leaseUntilJst": "2026-09-12 12:09 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1034:N1034",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact main; browser/GAMEROAD.html; at most one transient bounded GitHub Actions diagnostic/surgical workflow if huge-file partial patch requires it; own PRE_ACTION manifest. READ_ONLY tests/browser-full-interaction.spec.mjs; gameplay/rules/save/economy/network/Battle/Road/formal assets. No second Deck editor/store/router/test suite.",
+  "solutionSignature": "BROWSER_EXISTING_DECK_EDITOR_PHONE_SAVE_REACHABILITY_R7",
+  "reuseDisposition": "REUSE_CURRENT_DECK_EDITOR_SCROLL_AND_ACTION_LAYOUT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PUBLIC_BFI_R6_R7_DIRECT_GEOMETRY_AND_OWNER_FREE_CURRENT",
+  "solutionSearchEvidence": [
+    "390x844 current public evidence already isolates the failure to Cards save reachability: saveDeckVisible=false with bodyScrollY=0; desktop and short-landscape continue.",
+    "NO_CHANGE leaves the first-session path blocked on phone; bypassing Save in BFI would hide the real player failure.",
+    "A second Deck editor, store, router, or controller is unnecessary; existing #deckBoard/.deckEditScroll/#deckActions/#saveDeck must be reused.",
+    "The prior browser/GAMEROAD.html owner expired at 11:07 JST and fresh 11:09 owner readback found no renewed conflicting lease."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    ".github/workflows/zz-temp-browser-bfi-phone-cards-save-r7.yml"
+  ],
+  "doNotMutate": [
+    "tests/browser-full-interaction.spec.mjs",
+    "gameplay/rules/save/economy/network",
+    "Battle/Road/formal assets",
+    "any second Deck editor/store/router/test suite"
+  ],
+  "acceptance": "At 390x844 the real Home→Cards path can select the legal 50-card deck, reach and activate #saveDeck without test-only bypass, then continue to Setup; desktop and short-landscape remain functional under the existing Browser Full Interaction journey."
+}

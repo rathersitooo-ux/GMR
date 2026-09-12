@@ -58,9 +58,7 @@ jobs:
           addition = (
               "assert.ok(runtimeStyle.textContent.includes('#battlePhaseSurface{position:static!important;inset:auto!important;z-index:auto!important;overflow:visible!important;background:none!important;pointer-events:none!important;display:contents}'));\n"
               "assert.ok(runtimeStyle.textContent.includes('#battlePhaseSurface[hidden]{display:none!important}'));\n"
-              "assert.ok(runtimeStyle.textContent.includes('#battlePhaseSurface::before,[data-gr-battle-screen=') === false);\n"
-              "assert.ok(runtimeStyle.textContent.includes('#battlePhaseSurface::before,[${SHELL_ATTR}') === false);\n"
-              "assert.ok(runtimeStyle.textContent.includes('#battlePhaseSurface::before') && runtimeStyle.textContent.includes('#battlePhaseSurface::after{content:none!important;display:none!important}'));\n"
+              "assert.ok(runtimeStyle.textContent.includes('[data-gr-battle-screen=\"1\"] #battlePhaseSurface::before,[data-gr-battle-screen=\"1\"] #battlePhaseSurface::after{content:none!important;display:none!important}'));\n"
               "assert.equal(runtimeStyle.textContent.includes('#battlePhaseSurface{position:absolute;inset:0;z-index:3;overflow:hidden;background:'), false);\n"
               "assert.equal(runtimeStyle.textContent.includes('#battlePhaseSurface::before{content:\"\";position:absolute;'), false);\n"
           )

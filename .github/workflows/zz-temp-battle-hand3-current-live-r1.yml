@@ -1,18 +1,22 @@
 name: TEMP Battle Hand3 Current Live R1
 
 on:
+  pull_request:
+    types: [opened]
   workflow_dispatch:
 
 permissions:
   contents: write
+  pull-requests: read
 
 jobs:
   patch:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.ref == 'sol/battle-hand3-current-live-r1-20260912'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
           fetch-depth: 0
       - name: Apply bounded Hand3 correction
         shell: bash
@@ -50,6 +54,8 @@ jobs:
         run: node tests/browser-static-check.mjs
       - name: Commit bounded product delta
         shell: bash
+        env:
+          TARGET_BRANCH: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
         run: |
           if git diff --quiet -- browser/GAMEROAD.html tests/browser-static-check.mjs; then
             echo 'No bounded product diff produced' >&2
@@ -60,4 +66,4 @@ jobs:
           git add browser/GAMEROAD.html tests/browser-static-check.mjs
           git diff --cached --check
           git commit -m 'Battle: current手札を毎ターン3枚へ統一'
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          git push origin "HEAD:${TARGET_BRANCH}"

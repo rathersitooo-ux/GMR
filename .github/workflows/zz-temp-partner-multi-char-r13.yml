@@ -30,80 +30,84 @@ jobs:
           product = Path('browser/board-facility-runtime-mount.mjs')
           source = product.read_text(encoding='utf-8')
 
-          old_decision = """export function partnerConversationProjectionDecision({ screenActive = false } = {}) {
-            return screenActive ? 'conversation' : 'idle';
-          }"""
-          new_decision = """export function partnerConversationProjectionDecision({
-            screenActive = false,
-            activeRole = null,
-            selectedPartnerId = null,
-          } = {}) {
-            return screenActive && activeRole === 'partner' && selectedPartnerId === 'partner.saasuna'
-              ? 'conversation'
-              : 'idle';
-          }"""
+          old_decision = (
+              "export function partnerConversationProjectionDecision({ screenActive = false } = {}) {\n"
+              "  return screenActive ? 'conversation' : 'idle';\n"
+              "}"
+          )
+          new_decision = (
+              "export function partnerConversationProjectionDecision({\n"
+              "  screenActive = false,\n"
+              "  activeRole = null,\n"
+              "  selectedPartnerId = null,\n"
+              "} = {}) {\n"
+              "  return screenActive && activeRole === 'partner' && selectedPartnerId === 'partner.saasuna'\n"
+              "    ? 'conversation'\n"
+              "    : 'idle';\n"
+              "}"
+          )
 
-          old_start = """  const project = () => {
-            const screen = document.querySelector('[data-screen=\"characters\"]');
-            const roster = document.querySelector('#charRoster');
-            if (!screen || !roster || !screen.classList.contains('active')) return false;
-            if (roster.querySelector('[data-gr-partner-conversation=\"1\"]')) return true;
+          old_gate = (
+              "    if (!screen || !roster || !screen.classList.contains('active')) return false;\n"
+              "    if (roster.querySelector('[data-gr-partner-conversation=\"1\"]')) return true;"
+          )
+          new_gate = (
+              "    const existing = roster?.querySelector?.('[data-gr-partner-conversation=\"1\"]') ?? null;\n"
+              "    const activeRole = screen?.querySelector?.('.charRoleTab.on[data-role]')?.dataset?.role ?? null;\n"
+              "    const selectedPartnerId = global?.GAMEROAD_PARTNER_STATE?.partner?.()?.id ?? null;\n"
+              "    const projection = partnerConversationProjectionDecision({\n"
+              "      screenActive: Boolean(screen?.classList?.contains?.('active')),\n"
+              "      activeRole,\n"
+              "      selectedPartnerId,\n"
+              "    });\n"
+              "    if (!screen || !roster || projection !== 'conversation') {\n"
+              "      existing?.remove?.();\n"
+              "      return false;\n"
+              "    }\n"
+              "    if (existing) return true;"
+          )
 
-            const surface = document.createElement('section');"""
-          new_start = """  const project = () => {
-            const screen = document.querySelector('[data-screen=\"characters\"]');
-            const roster = document.querySelector('#charRoster');
-            const existing = roster?.querySelector?.('[data-gr-partner-conversation=\"1\"]') ?? null;
-            const activeRole = screen?.querySelector?.('.charRoleTab.on[data-role]')?.dataset?.role ?? null;
-            const selectedPartnerId = global?.GAMEROAD_PARTNER_STATE?.partner?.()?.id ?? null;
-            const projection = partnerConversationProjectionDecision({
-              screenActive: Boolean(screen?.classList?.contains?.('active')),
-              activeRole,
-              selectedPartnerId,
-            });
-            if (!screen || !roster || projection !== 'conversation') {
-              existing?.remove?.();
-              return false;
-            }
-            if (existing) return true;
+          old_surface_commit = (
+              "    roster.replaceChildren(surface);\n"
+              "    projectPartnerTeaQuickChoices(global);\n"
+              "    const charName = document.querySelector('#charName');\n"
+              "    if (charName) charName.textContent = 'サースナー';\n"
+              "    return true;"
+          )
+          new_surface_commit = (
+              "    roster.appendChild(surface);\n"
+              "    projectPartnerTeaQuickChoices(global);\n"
+              "    return true;"
+          )
 
-            const surface = document.createElement('section');"""
-
-          old_tail = """    roster.replaceChildren(surface);
-            projectPartnerTeaQuickChoices(global);
-            const charName = document.querySelector('#charName');
-            if (charName) charName.textContent = 'サースナー';
-            return true;
-          };
-
-          const screen = document.querySelector('[data-screen=\"characters\"]');
-          if (screen) {
-            observer = new MutationObserverCtor(project);
-            observer.observe(screen, { attributes: true, attributeFilter: ['class'] });
-          }
-          project();"""
-          new_tail = """    roster.appendChild(surface);
-            projectPartnerTeaQuickChoices(global);
-            return true;
-          };
-
-          const screen = document.querySelector('[data-screen=\"characters\"]');
-          const roster = document.querySelector('#charRoster');
-          if (screen || roster) {
-            observer = new MutationObserverCtor(project);
-            if (screen) observer.observe(screen, { attributes: true, attributeFilter: ['class'] });
-            if (roster) observer.observe(roster, { childList: true });
-          }
-          project();"""
+          old_observer = (
+              "  const screen = document.querySelector('[data-screen=\"characters\"]');\n"
+              "  if (screen) {\n"
+              "    observer = new MutationObserverCtor(project);\n"
+              "    observer.observe(screen, { attributes: true, attributeFilter: ['class'] });\n"
+              "  }\n"
+              "  project();"
+          )
+          new_observer = (
+              "  const screen = document.querySelector('[data-screen=\"characters\"]');\n"
+              "  const roster = document.querySelector('#charRoster');\n"
+              "  if (screen || roster) {\n"
+              "    observer = new MutationObserverCtor(project);\n"
+              "    if (screen) observer.observe(screen, { attributes: true, attributeFilter: ['class'] });\n"
+              "    if (roster) observer.observe(roster, { childList: true });\n"
+              "  }\n"
+              "  project();"
+          )
 
           old_picker_flag = "    pickerRequired: false,"
           new_picker_flag = "    pickerRequired: true,"
 
           for label, old, new in (
-            ('decision', old_decision, new_decision),
-            ('project-start', old_start, new_start),
-            ('project-tail', old_tail, new_tail),
-            ('picker-required', old_picker_flag, new_picker_flag),
+              ('decision', old_decision, new_decision),
+              ('projection-gate', old_gate, new_gate),
+              ('surface-commit', old_surface_commit, new_surface_commit),
+              ('observer', old_observer, new_observer),
+              ('picker-required', old_picker_flag, new_picker_flag),
           ):
               count = source.count(old)
               if count != 1:
@@ -116,22 +120,28 @@ jobs:
               raise SystemExit('forced Saasuna charName still present')
           if source.count('roster.appendChild(surface)') != 1:
               raise SystemExit('conversation append contract not unique')
+          if source.count("GAMEROAD_PARTNER_STATE?.partner?.()?.id") != 1:
+              raise SystemExit('production Partner state projection contract not unique')
           product.write_text(source, encoding='utf-8')
 
           test_file = Path('tests/board-facility-runtime-mount.test.mjs')
           tests = test_file.read_text(encoding='utf-8')
-          old_test = """test('active Partner screen projects straight to conversation with no picker state', () => {
-            assert.equal(partnerConversationProjectionDecision({ screenActive: false }), 'idle');
-            assert.equal(partnerConversationProjectionDecision({ screenActive: true }), 'conversation');
-            assert.equal(partnerConversationProjectionDecision({ screenActive: true, partnerRoleActive: false }), 'conversation');
-            assert.equal(partnerConversationProjectionDecision({ screenActive: true, saasunaSelected: false }), 'conversation');
-          });"""
-          new_test = """test('Partner conversation only projects for Saasuna in the active normal Partner role', () => {
-            assert.equal(partnerConversationProjectionDecision({ screenActive: false, activeRole: 'partner', selectedPartnerId: 'partner.saasuna' }), 'idle');
-            assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'player', selectedPartnerId: 'partner.saasuna' }), 'idle');
-            assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'partner', selectedPartnerId: 'partner.honoka' }), 'idle');
-            assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'partner', selectedPartnerId: 'partner.saasuna' }), 'conversation');
-          });"""
+          old_test = (
+              "test('active Partner screen projects straight to conversation with no picker state', () => {\n"
+              "  assert.equal(partnerConversationProjectionDecision({ screenActive: false }), 'idle');\n"
+              "  assert.equal(partnerConversationProjectionDecision({ screenActive: true }), 'conversation');\n"
+              "  assert.equal(partnerConversationProjectionDecision({ screenActive: true, partnerRoleActive: false }), 'conversation');\n"
+              "  assert.equal(partnerConversationProjectionDecision({ screenActive: true, saasunaSelected: false }), 'conversation');\n"
+              "});"
+          )
+          new_test = (
+              "test('Partner conversation only projects for Saasuna in the active normal Partner role', () => {\n"
+              "  assert.equal(partnerConversationProjectionDecision({ screenActive: false, activeRole: 'partner', selectedPartnerId: 'partner.saasuna' }), 'idle');\n"
+              "  assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'player', selectedPartnerId: 'partner.saasuna' }), 'idle');\n"
+              "  assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'partner', selectedPartnerId: 'partner.honoka' }), 'idle');\n"
+              "  assert.equal(partnerConversationProjectionDecision({ screenActive: true, activeRole: 'partner', selectedPartnerId: 'partner.saasuna' }), 'conversation');\n"
+              "});"
+          )
           if tests.count(old_test) != 1:
               raise SystemExit(f'focused decision test anchor count != 1: {tests.count(old_test)}')
           test_file.write_text(tests.replace(old_test, new_test, 1), encoding='utf-8')

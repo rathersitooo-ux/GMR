@@ -381,13 +381,22 @@ test('records build-linked visible Home to Partner and Home return P0 evidence',
 
   const characters = page.locator('section[data-screen="characters"]');
   await expect(characters, 'Characters target reached through visible pointer navigation').toBeVisible();
+
+  const partnerRoleTab = characters.locator('.charRoleTab[data-role="partner"]:visible').first();
+  await expect(partnerRoleTab, 'visible Partner role tab').toBeVisible();
+  await partnerRoleTab.click();
+
+  const candidateName = 'サースナー';
+  const saasunaCard = characters.locator('.charCard:visible').filter({ hasText: candidateName }).first();
+  await expect(saasunaCard, 'visible Saasuna partner card').toBeVisible();
+  await saasunaCard.click();
+
   const conversation = characters.locator('[data-gr-partner-conversation="1"]');
-  await expect(conversation, 'direct Saasuna conversation').toBeVisible();
+  await expect(conversation, 'selected Saasuna conversation').toBeVisible();
   await expect(conversation).toHaveAttribute('aria-label', 'サースナーとの会話');
   await expect(conversation.locator('.grPartnerConversationInput')).toBeVisible();
   await expect(conversation.locator('.grPartnerConversationInput')).toHaveAttribute('aria-label', 'サースナーへのメッセージ');
   await expect(conversation.locator('.grPartnerConversationSend')).toBeVisible();
-  const candidateName = 'サースナー';
   await expect(characters.locator('#charName')).toHaveText(candidateName);
 
   const partnerPng = await page.screenshot({ fullPage: true, animations: 'disabled' });

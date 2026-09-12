@@ -62,31 +62,82 @@ export function previewSaasunaVoice(input = {}, {
   synth = globalThis.speechSynthesis,
   Utterance = globalThis.SpeechSynthesisUtterance,
   setTimer = globalThis.setTimeout,
+  clearTimer = globalThis.clearTimeout,
 } = {}) {
+  const terminalResult = (reason) => Object.freeze({
+    ok: false,
+    reason,
+    done: Promise.resolve(Object.freeze({ status: 'error', reason })),
+    cancel() {},
+  });
   const plan = buildSaasunaVoicePreviewPlan(input);
-  if (!plan) return Object.freeze({ ok: false, reason: 'saasuna_voice_text_invalid', cancel() {} });
+  if (!plan) return terminalResult('saasuna_voice_text_invalid');
   if (!synth || typeof synth.speak !== 'function' || typeof synth.cancel !== 'function' || typeof Utterance !== 'function') {
-    return Object.freeze({ ok: false, reason: 'saasuna_voice_unsupported', cancel() {} });
+    return terminalResult('saasuna_voice_unsupported');
   }
 
   let cancelled = false;
+  let settled = false;
   let timer = null;
+  let resolveDone;
+  const done = new Promise((resolve) => { resolveDone = resolve; });
   const chosenVoice = findVoice(synth, plan.tuning.voiceURI);
-  synth.cancel();
+
+  const finish = (status, reason = null) => {
+    if (settled) return false;
+    settled = true;
+    if (timer !== null && typeof clearTimer === 'function') {
+      try { clearTimer(timer); } catch {}
+      timer = null;
+    }
+    resolveDone(Object.freeze({ status, reason }));
+    return true;
+  };
+
+  try {
+    synth.cancel();
+  } catch {
+    return terminalResult('saasuna_voice_start_failed');
+  }
 
   const speakIndex = (index) => {
-    if (cancelled || index >= plan.segments.length) return;
-    const utterance = new Utterance(plan.segments[index]);
-    utterance.lang = SAASUNA_VOICE_RUNTIME.language;
-    utterance.rate = plan.tuning.rate;
-    utterance.pitch = plan.tuning.pitch;
-    utterance.volume = plan.tuning.volume;
-    if (chosenVoice) utterance.voice = chosenVoice;
-    utterance.onend = () => {
-      if (cancelled || index + 1 >= plan.segments.length) return;
-      timer = setTimer(() => speakIndex(index + 1), plan.tuning.pauseMs);
-    };
-    synth.speak(utterance);
+    if (cancelled || settled || index >= plan.segments.length) return;
+    try {
+      const utterance = new Utterance(plan.segments[index]);
+      utterance.lang = SAASUNA_VOICE_RUNTIME.language;
+      utterance.rate = plan.tuning.rate;
+      utterance.pitch = plan.tuning.pitch;
+      utterance.volume = plan.tuning.volume;
+      if (chosenVoice) utterance.voice = chosenVoice;
+      utterance.onend = () => {
+        if (cancelled || settled) return;
+        if (index + 1 >= plan.segments.length) {
+          finish('completed');
+          return;
+        }
+        if (typeof setTimer !== 'function') {
+          cancelled = true;
+          finish('error', 'saasuna_voice_timer_unavailable');
+          return;
+        }
+        timer = setTimer(() => {
+          timer = null;
+          speakIndex(index + 1);
+        }, plan.tuning.pauseMs);
+      };
+      utterance.onerror = () => {
+        if (cancelled || settled) return;
+        cancelled = true;
+        try { synth.cancel(); } catch {}
+        finish('error', 'saasuna_voice_playback_error');
+      };
+      synth.speak(utterance);
+    } catch {
+      if (cancelled || settled) return;
+      cancelled = true;
+      try { synth.cancel(); } catch {}
+      finish('error', 'saasuna_voice_playback_error');
+    }
   };
 
   speakIndex(0);
@@ -94,10 +145,12 @@ export function previewSaasunaVoice(input = {}, {
     ok: true,
     reason: null,
     plan,
+    done,
     cancel() {
+      if (cancelled || settled) return;
       cancelled = true;
-      if (timer !== null && typeof globalThis.clearTimeout === 'function') globalThis.clearTimeout(timer);
-      synth.cancel();
+      try { synth.cancel(); } catch {}
+      finish('cancelled', 'saasuna_voice_cancelled');
     },
   });
 }

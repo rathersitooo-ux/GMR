@@ -318,3 +318,73 @@ test('dialogue feedback rejection settles UI and allows retry without changing p
   assert.equal(submit.disabled, false);
   assert.equal(status.textContent, '改善要望として蓄積しました');
 });
+
+
+test('voice preview settles completion and ignores cancelled stale runs', async () => {
+  const root = makeRoot();
+  const previews = [];
+  const previewVoice = () => {
+    let resolveDone;
+    let settled = false;
+    const done = new Promise((resolve) => { resolveDone = resolve; });
+    const handle = {
+      ok: true,
+      done,
+      cancelled: 0,
+      finish(status) {
+        if (settled) return;
+        settled = true;
+        resolveDone({ status, reason: status === 'error' ? 'test_error' : null });
+      },
+      cancel() {
+        this.cancelled += 1;
+        if (settled) return;
+        settled = true;
+        resolveDone({ status: 'cancelled', reason: 'test_cancelled' });
+      },
+    };
+    previews.push(handle);
+    return handle;
+  };
+  const runtime = mountPartnerShellRuntime({
+    root,
+    getInput: () => ({
+      activePartnerId: 'partner.saasuna',
+      roster,
+      view: 'dialogue_feedback',
+      postBattleLine: {
+        sourceLineId: 'battle.voice.1',
+        text: '試聴セリフ',
+        sourceStateIdentity: 'battle.voice.state.1',
+        versions: { rules: 'rules.1', content: 'content.1', state: 'state.1' },
+      },
+    }),
+    canDispatch: (action) => action === 'BACK_HUB',
+    listVoices: () => [],
+    previewVoice,
+  });
+
+  assert.equal(runtime.render().ok, true);
+  const preview = allNodes(root).find((node) => node.dataset?.partnerDialogueAction === 'preview');
+  const status = allNodes(root).find((node) => node.dataset?.partnerDialogueStatus === 'true');
+
+  preview.click();
+  assert.equal(status.textContent, '試聴中');
+  preview.click();
+  assert.equal(previews[0].cancelled, 1);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(status.textContent, '試聴中');
+
+  previews[1].finish('completed');
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(status.textContent, '試聴完了');
+
+  preview.click();
+  previews[2].finish('error');
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(status.textContent, '音声試聴に失敗しました');
+
+  preview.click();
+  assert.equal(runtime.destroy(), true);
+  assert.equal(previews[3].cancelled, 1);
+});

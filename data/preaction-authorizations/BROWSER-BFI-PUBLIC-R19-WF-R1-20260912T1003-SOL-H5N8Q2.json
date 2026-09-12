@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BROWSER-BFI-PUBLIC-R19-WF-R1-20260912T1003-SOL-H5N8Q2",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BROWSER_PUBLIC_R19_PRODUCTION_BOUNDARY_RUNNER_R1",
+  "acquireKey": "BROWSER-BFI-PUBLIC-R19-WF-R1-20260912T1003-SOL-H5N8Q2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLIC_BFI_RUN34601701917_EXACT_BUILD_STALE_HOOK",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_R19_VISIBLE_ROUTE_PLUS_DEFAULT_LEGAL_DECK_ASSERTION",
+  "proceedToken": "PROCEED|BROWSER-BFI-PUBLIC-R19-WF-R1-20260912T1003-SOL-H5N8Q2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|public-r19-production-boundary-runner|workflow-only|active-lease",
+  "authorizationBaseSha": "87eff701a8cf33c15929d1cbcb1ac6e263ec5b50",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BROWSER_PUBLIC_R19_PRODUCTION_BOUNDARY_RUNNER_R1",
+  "leaseAcquireKey": "BROWSER-BFI-PUBLIC-R19-WF-R1-20260912T1003-SOL-H5N8Q2",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 10:03 JST",
+  "leaseUntilJst": "2026-09-12 11:03 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1038:L1038",
+  "leaseExactMutableResources": ".github/workflows/browser-full-interaction.yml; data/preaction-authorizations/BROWSER-BFI-PUBLIC-R19-WF-R1-20260912T1003-SOL-H5N8Q2.json; branch sol/bfi-public-r19-runner-r1-20260912. READ_ONLY tests/browser-full-interaction.spec.mjs; browser/GAMEROAD.html; gameplay/rules/save/economy/network/formal assets.",
+  "solutionSignature": "PUBLIC_R19_DERIVED_RUNNER_REMOVE_LOCAL_ONLY_DECK_HOOK_V1",
+  "reuseDisposition": "REUSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_PUBLIC_DERIVATION_BOUNDARY_REUSED_NO_SECOND_TEST_SUITE",
+  "solutionSearchEvidence": [
+    "The existing workflow already derives the canonical full-interaction spec into .r37-public for the public origin, so production-only adaptation belongs at this established boundary rather than in a second test suite.",
+    "Run 34601701917 binds exact public build a4f819 and renders Home at all three target viewports, then fails only because the derived runner retained local-only window.__GAMEROAD_TEST__ deck injection.",
+    "The canonical test already asserts through visible Cards UI that the current default main deck is legal and complete at 40 cards; public R19 should therefore require Setup to work from player-received state instead of fabricating a deck.",
+    "No Browser product runtime, game rule, save, economy, network, or Battle/Road behavior is modified by this workflow-only repair."
+  ],
+  "scope": [
+    ".github/workflows/browser-full-interaction.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/browser-full-interaction.yml"
+  ]
+}

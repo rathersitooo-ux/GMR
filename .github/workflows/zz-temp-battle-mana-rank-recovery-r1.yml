@@ -1,0 +1,90 @@
+name: Temp Battle Mana Rank Recovery R1
+
+on:
+  push:
+    branches:
+      - sol/battle-mana-rank-recovery-current-r1-20260912
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify authorization base lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor cff4d7ac2882cb097347822df246d315938b1016 HEAD
+          test "$(git diff --name-only cff4d7ac2882cb097347822df246d315938b1016...HEAD | sort | tr '\n' ' ')" = ".github/workflows/zz-temp-battle-mana-rank-recovery-r1.yml data/preaction-authorizations/BATTLE-MANA-RANK-RECOVERY-R1-20260912T2328-SOL-KA6Q4N8.json "
+      - name: Apply exact bounded repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html_path = Path('browser/GAMEROAD.html')
+          static_path = Path('tests/browser-static-check.mjs')
+          html = html_path.read_text(encoding='utf-8')
+          static = static_path.read_text(encoding='utf-8')
+
+          if 'recoverRoundStartManaByPlacement' in html:
+              raise SystemExit('HTML already contains rank-recovery helper; refusing non-idempotent patch')
+          if 'grBattleReplayBegin(state.match);recoverRoundStartManaByPlacement(state.match);initRoundRuntime(state.match)' in html:
+              raise SystemExit('match-start rank recovery unexpectedly exists')
+
+          next_old = 'm.players.forEach(p=>p.plan=null);initRoundRuntime(m);log(`第${m.round}巡。行動を予約します。`);renderBattle()}'
+          next_new = 'm.players.forEach(p=>p.plan=null);recoverRoundStartManaByPlacement(m);initRoundRuntime(m);log(`第${m.round}巡。行動を予約します。`);renderBattle()}'
+          if html.count(next_old) != 1:
+              raise SystemExit(f'nextRound anchor count={html.count(next_old)}; expected 1')
+          html = html.replace(next_old, next_new, 1)
+
+          placement = 'function currentPlacementRanks(m=state.match){const ps=m.players.map(p=>({p,depth:Math.max(...Object.values(p.lanes).map(a=>a.length))})).sort((a,b)=>b.depth-a.depth);let prev=null,rank=0;return ps.map((x,i)=>{if(prev===null||x.depth!==prev)rank=i+1;prev=x.depth;return{player:x.p,rank,depth:x.depth}})}'
+          helper = 'function recoverRoundStartManaByPlacement(m){for(const row of currentPlacementRanks(m)){const rank=Math.max(1,Math.min(4,Math.floor(Number(row.rank)||1))),gain=rank,p=row.player,max=Math.max(0,Number(p.manaMax)||10);const before=Math.max(0,Math.min(max,Number(p.manaCurrent)||0)),after=Math.min(max,before+gain);p.manaCurrent=after;log(`${p.name}：${rank}位のためマナ回復+${after-before}（${after}/${max}）。`)}}'
+          if html.count(placement) != 1:
+              raise SystemExit(f'placement anchor count={html.count(placement)}; expected 1')
+          html = html.replace(placement, placement + '\n' + helper, 1)
+
+          static_old = "  if (/recoverRoundStartManaByPlacement/.test(html) || /位のためマナ回復\\+/.test(html)) {\n    errors.push('superseded rank-based turn-start Mana recovery remains');\n  }"
+          static_new = "  if (!html.includes('function recoverRoundStartManaByPlacement(m)')) errors.push('current placement Mana recovery helper is missing');\n  if (!html.includes('const rank=Math.max(1,Math.min(4,Math.floor(Number(row.rank)||1))),gain=rank')) errors.push('placement Mana recovery is not fixed to rank gains 1/2/3/4');\n  if (!html.includes('m.players.forEach(p=>p.plan=null);recoverRoundStartManaByPlacement(m);initRoundRuntime(m)')) errors.push('later rounds do not recover current-rank Mana');\n  if (html.includes('grBattleReplayBegin(state.match);recoverRoundStartManaByPlacement(state.match);initRoundRuntime(state.match)')) {\n    errors.push('match-start Mana incorrectly receives placement recovery');\n  }"
+          if static.count(static_old) != 1:
+              raise SystemExit(f'static gate anchor count={static.count(static_old)}; expected 1')
+          static = static.replace(static_old, static_new, 1)
+
+          html_path.write_text(html, encoding='utf-8')
+          static_path.write_text(static, encoding='utf-8')
+          PY
+      - name: Verify focused contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/browser-static-check.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          html = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          assert html.count('function recoverRoundStartManaByPlacement(m)') == 1
+          assert html.count('recoverRoundStartManaByPlacement(m);initRoundRuntime(m)') == 1
+          assert 'grBattleReplayBegin(state.match);recoverRoundStartManaByPlacement(state.match);initRoundRuntime(state.match)' not in html
+          assert 'manaCurrent:7,manaMax:10,honey:0,chip:' in html
+          assert 'const rank=Math.max(1,Math.min(4,Math.floor(Number(row.rank)||1))),gain=rank' in html
+          PY
+          git diff --check
+          changed="$(git diff --name-only | sort | tr '\n' ' ')"
+          test "$changed" = "browser/GAMEROAD.html tests/browser-static-check.mjs "
+      - name: Commit product repair and clean transient files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add browser/GAMEROAD.html tests/browser-static-check.mjs
+          git rm .github/workflows/zz-temp-battle-mana-rank-recovery-r1.yml
+          git rm data/preaction-authorizations/BATTLE-MANA-RANK-RECOVERY-R1-20260912T2328-SOL-KA6Q4N8.json
+          git commit -m 'fix(browser): restore current rank-based Mana recovery'
+          git push origin HEAD:${GITHUB_REF_NAME}

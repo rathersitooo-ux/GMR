@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-MANA-RANK-RECOVERY-R1-20260912T2328-SOL-KA6Q4N8",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_MANA_RANK_RECOVERY_CURRENT_R1",
+  "acquireKey": "BATTLE-MANA-RANK-RECOVERY-R1-20260912T2328-SOL-KA6Q4N8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_RANK_RECOVERY_CORRECTION_AND_PR1572_REGRESSION_DIFF_20260912T2331JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1572_EXACT_REMOVED_HELPER_AND_CURRENT_MAIN_ANCHORS",
+  "proceedToken": "PROCEED|BATTLE-MANA-RANK-RECOVERY-R1-20260912T2328-SOL-KA6Q4N8|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|mana-rank-recovery-current|existing-turn-boundary|active-lease",
+  "authorizationBaseSha": "cff4d7ac2882cb097347822df246d315938b1016",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_MANA_RANK_RECOVERY_CURRENT_R1",
+  "leaseAcquireKey": "BATTLE-MANA-RANK-RECOVERY-R1-20260912T2328-SOL-KA6Q4N8",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 23:31 JST",
+  "leaseUntilJst": "2026-09-13 00:28 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1297:L1297",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main; browser/GAMEROAD.html; tests/browser-static-check.mjs; own transient data/preaction-authorizations/BATTLE-MANA-RANK-RECOVERY-R1-20260912T2328-SOL-KA6Q4N8.json; own transient .github/workflows/zz-temp-battle-mana-rank-recovery-r1.yml; own branch/PR/check/readback. Honey/Shield/Road/janken/save/economy/network and physical-Mana removal remain READ_ONLY.",
+  "solutionSignature": "BATTLE_MANA_RANK_RECOVERY_NEXTROUND_ONLY_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_MAIN_PLUS_PR1572_EXACT_DIFF",
+  "solutionSearchEvidence": [
+    "Current main initializes manaCurrent=7 and manaMax=10 and does not call rank recovery at match start.",
+    "Current nextRound lacks rank recovery even though latest CURRENT restores placement recovery for subsequent turns only.",
+    "PR #1572 provides the exact prior helper seam but also removed rank recovery at both match start and later rounds; only the later-round seam is valid under the latest correction.",
+    "Current static gate blanket-rejects recoverRoundStartManaByPlacement and must be narrowed so later-round recovery is required while match-start recovery remains forbidden.",
+    "Physical Mana removal, Honey, Shield, Road, janken, save, economy, and network are outside this repair and remain unchanged."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    ".github/workflows/zz-temp-battle-mana-rank-recovery-r1.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    ".github/workflows/zz-temp-battle-mana-rank-recovery-r1.yml"
+  ]
+}

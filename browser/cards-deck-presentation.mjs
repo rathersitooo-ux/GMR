@@ -298,8 +298,13 @@ export function installCardsDeckFindability({ document: doc = globalThis.documen
   host.appendChild(favoriteFilterButton);
   host.appendChild(resetButton);
   host.appendChild(count);
-  grid.before?.(host);
-  if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);
+  const collectionTools = screen.querySelector?.('.r4CollectionTools');
+  if (collectionTools) {
+    collectionTools.appendChild?.(host);
+  } else {
+    grid.before?.(host);
+    if (!host.parentNode) screen.insertBefore?.(host, grid) ?? screen.appendChild?.(host);
+  }
 
   const detailAnchor = doc.querySelector('#addSelectedCard');
   const favoriteAction = detailAnchor ? doc.createElement('button') : null;

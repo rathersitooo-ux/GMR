@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CURRENT-UI-R2-20260913T0316-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CURRENT_PLAYER_UI_COMPOSITION_R1",
+  "acquireKey": "BATTLE-CURRENT-UI-R2-20260913T0316-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1591_COMPONENT_MERGED_REQUIRED_GATE_34713165476_PLUS_RELEASED_SCREEN_RUNTIME_OWNER",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "EXACT_ANCHOR_SURGICAL_PATCH_WITH_RUNTIME_TEST_AND_PUBLIC_BUILD_TEST_ROLLBACK_BRANCH_ONLY",
+  "proceedToken": "PROCEED|BATTLE-CURRENT-UI-R2-20260913T0316-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-current-ui-live-bind-r3|same-workunit",
+  "authorizationBaseSha": "c2c0a38275cba49bd86a4cbf1ae610e5d70c183f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CURRENT_PLAYER_UI_COMPOSITION_R1",
+  "leaseAcquireKey": "BATTLE-CURRENT-UI-R2-20260913T0316-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-13 04:12 JST",
+  "leaseUntilJst": "2026-09-13 05:07 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1316:L1316",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR current main c2c0a38275cba49bd86a4cbf1ae610e5d70c183f; branch sol/battle-current-ui-live-bind-r3-20260913; mutable browser/battle-screen-runtime-mount.mjs; deploy/cloudflare/scripts/build.mjs; transient .github/workflows/zz-temp-battle-current-ui-live-bind-r3.yml; own transient data/preaction-authorizations/BATTLE-CURRENT-UI-R2-20260913T0316-SOL.json; own branch/commit/evidence. READ_ONLY browser/GAMEROAD.html; browser/battle-current-player-ui-runtime.mjs already-merged donor; tests/battle-current-player-ui-runtime.test.mjs; gameplay/rules/card values/save/economy/network/map topology/field generation/Battle resolution authority.",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-current-ui-live-bind-r3.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "deploy/cloudflare/scripts/build.mjs",
+    ".github/workflows/zz-temp-battle-current-ui-live-bind-r3.yml"
+  ],
+  "solutionSignature": "battle-current-ui-live-bind|existing-battle-screen-runtime+existing-cloudflare-artifact-list|presentation-only",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "PR1591_MERGED_COMPONENT_PLUS_BATTLE_SCREEN_RUNTIME_EXISTING_LIVE_USE_SITE",
+  "solutionSearchEvidence": [
+    "main:c2c0a38275cba49bd86a4cbf1ae610e5d70c183f",
+    "browser/battle-screen-runtime-mount.mjs@af5e814065258a00f82e00e50986a737aafb8d18",
+    "browser/battle-current-player-ui-runtime.mjs@main-c2c0",
+    "deploy/cloudflare/scripts/build.mjs@main-c2c0"
+  ]
+}

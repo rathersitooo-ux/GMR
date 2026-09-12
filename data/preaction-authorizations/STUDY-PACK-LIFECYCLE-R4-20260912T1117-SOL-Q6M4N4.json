@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "gameroad.preaction.v1",
+  "acquireKey": "STUDY-PACK-LIFECYCLE-R4-20260912T1117-SOL-Q6M4N4",
+  "taskId": "STUDY-ROGUELIKE-PROBLEM-PACK-RUNTIME-001",
+  "workUnitKey": "STUDY_PACK_LOGICAL_LIFECYCLE_R4",
+  "baseSha": "e6d825e07f5791c67386d44769613ac2089e0fca",
+  "purpose": "Reuse the existing Study runtime and caller-owned Cartridge storage to add logical pack uninstall/reacquire state without creating a second storage, entitlement, history, or gameplay authority.",
+  "mutableResources": [
+    "browser/study-run-runtime-mount.mjs",
+    "tests/study-run-runtime-mount.test.mjs",
+    "data/preaction-authorizations/STUDY-PACK-LIFECYCLE-R4-20260912T1117-SOL-Q6M4N4.json"
+  ],
+  "readOnlyResources": [
+    "browser/cartridge-storage-core.mjs",
+    "browser/study-problem-pack-core.mjs",
+    "browser/study-manual-problem-pack.mjs",
+    "browser/GAMEROAD.html",
+    "deploy/cloudflare/scripts/build.mjs",
+    "entitlement/history/save backend/Battle/economy/network"
+  ],
+  "invariants": [
+    "logical uninstall does not delete entitlement or learning history",
+    "same pack can be reacquired",
+    "run checkpoint remains separate from pack install state",
+    "no defeat/loss state",
+    "no second storage backend or lifecycle ledger",
+    "no generic browser/platform cache deletion claim"
+  ]
+}

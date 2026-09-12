@@ -1,0 +1,190 @@
+name: TEMP Battle Current UI Live Host Repair R4c
+
+on:
+  push:
+    branches:
+      - sol/battle-current-ui-live-host-r4c-20260913
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify PRE_ACTION witness
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f data/preaction-authorizations/BATTLE-CURRENT-UI-R2-20260913T0316-SOL.json
+          node - <<'NODE'
+          const m=require('./data/preaction-authorizations/BATTLE-CURRENT-UI-R2-20260913T0316-SOL.json');
+          const required=['browser/battle-replay-live-adapter.mjs','browser/battle-current-player-ui-live-adapter.mjs','tests/battle-current-player-ui-live-adapter.test.mjs','deploy/cloudflare/scripts/build.mjs','deploy/cloudflare/tests/build.test.mjs','.github/workflows/zz-temp-battle-current-ui-live-host-repair-r4c.yml'];
+          if(m.authorizationBaseSha!=='5b0607fce23f49fe61033708599f743511a5f7df') process.exit(1);
+          if(m.leaseSnapshotReadbackRef!=='CURRENT_ACTIVE_LEASES!A1316:L1316') process.exit(2);
+          if(!required.every(p=>m.scope.includes(p)&&m.leaseScope.includes(p)&&m.leaseExactMutableResources.includes(p))) process.exit(3);
+          if(!m.leaseExactMutableResources.includes('data/preaction-authorizations/BATTLE-CURRENT-UI-R2-20260913T0316-SOL.json')) process.exit(4);
+          NODE
+      - name: Apply bounded live-host repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > browser/battle-current-player-ui-live-adapter.mjs <<'EOF'
+          import { mountBattleCurrentPlayerUi } from './battle-current-player-ui-runtime.mjs';
+
+          export const BATTLE_CURRENT_PLAYER_UI_LIVE_ADAPTER_SCHEMA = 'gameroad.battle-current-player-ui-live-adapter.v1';
+          const ROOT_RUNTIME_PROP = '__gameroadCurrentPlayerUiLiveAdapter';
+          const GLOBAL_RUNTIME_PROP = '__GAMEROAD_BATTLE_CURRENT_PLAYER_UI_LIVE__';
+
+          function resolveBattleRoot(documentRef) {
+            return documentRef?.querySelector?.('section.screen.battle[data-screen="battle"]')
+              ?? documentRef?.querySelector?.('.screen.battle')
+              ?? documentRef?.querySelector?.('section[data-screen="battle"]')
+              ?? null;
+          }
+
+          export function mountBattleCurrentPlayerUiLiveAdapter(globalRef = globalThis, {
+            mountUi = mountBattleCurrentPlayerUi,
+          } = {}) {
+            const documentRef = globalRef?.document;
+            const root = resolveBattleRoot(documentRef);
+            if (!documentRef || !root || typeof mountUi !== 'function') return null;
+            if (root[ROOT_RUNTIME_PROP]) return root[ROOT_RUNTIME_PROP];
+
+            let compositor = null;
+            try { compositor = mountUi(globalRef, { root }); } catch { return null; }
+            if (!compositor) return null;
+
+            let destroyed = false;
+            let runtime = null;
+            runtime = Object.freeze({
+              schema: BATTLE_CURRENT_PLAYER_UI_LIVE_ADAPTER_SCHEMA,
+              root,
+              compositor,
+              presentationOnly: true,
+              gameplayAuthority: false,
+              gameStateWrite: false,
+              mounted: () => !destroyed && root[ROOT_RUNTIME_PROP] === runtime,
+              inspect: () => compositor.inspect?.() ?? null,
+              sync: (snapshot = {}) => compositor.sync?.(snapshot) ?? null,
+              destroy() {
+                if (destroyed) return false;
+                destroyed = true;
+                try { compositor.destroy?.(); } catch {}
+                if (root[ROOT_RUNTIME_PROP] === runtime) delete root[ROOT_RUNTIME_PROP];
+                if (globalRef[GLOBAL_RUNTIME_PROP] === runtime) delete globalRef[GLOBAL_RUNTIME_PROP];
+                return true;
+              },
+            });
+            root[ROOT_RUNTIME_PROP] = runtime;
+            globalRef[GLOBAL_RUNTIME_PROP] = runtime;
+            return runtime;
+          }
+
+          function autoMount() {
+            if (typeof globalThis !== 'object' || !globalThis.document) return null;
+            return mountBattleCurrentPlayerUiLiveAdapter(globalThis);
+          }
+
+          if (typeof globalThis === 'object' && globalThis.document) {
+            if (globalThis.document.readyState === 'loading') {
+              globalThis.document.addEventListener?.('DOMContentLoaded', autoMount, { once: true });
+            } else if (typeof globalThis.queueMicrotask === 'function') {
+              globalThis.queueMicrotask(autoMount);
+            } else {
+              Promise.resolve().then(autoMount);
+            }
+          }
+          EOF
+
+          cat > tests/battle-current-player-ui-live-adapter.test.mjs <<'EOF'
+          import assert from 'node:assert/strict';
+          import { BATTLE_CURRENT_PLAYER_UI_LIVE_ADAPTER_SCHEMA, mountBattleCurrentPlayerUiLiveAdapter } from '../browser/battle-current-player-ui-live-adapter.mjs';
+
+          const root = {};
+          const documentRef = { querySelector(selector) { return selector.includes('battle') ? root : null; } };
+          const globalRef = { document: documentRef };
+          const mounts = [];
+          let destroyCount = 0;
+          const fakeMount = (receivedGlobal, options) => {
+            mounts.push({ receivedGlobal, root: options.root });
+            return {
+              inspect: () => ({ rootDecorated: true, presentationOnly: true }),
+              sync: (snapshot) => ({ snapshot }),
+              destroy: () => { destroyCount += 1; return true; },
+            };
+          };
+
+          const first = mountBattleCurrentPlayerUiLiveAdapter(globalRef, { mountUi: fakeMount });
+          assert.ok(first);
+          assert.equal(first.schema, BATTLE_CURRENT_PLAYER_UI_LIVE_ADAPTER_SCHEMA);
+          assert.equal(first.presentationOnly, true);
+          assert.equal(first.gameplayAuthority, false);
+          assert.equal(first.gameStateWrite, false);
+          assert.equal(first.mounted(), true);
+          assert.equal(mounts.length, 1);
+          assert.equal(mounts[0].receivedGlobal, globalRef);
+          assert.equal(mounts[0].root, root);
+          assert.deepEqual(first.inspect(), { rootDecorated: true, presentationOnly: true });
+          assert.deepEqual(first.sync({ reducedMotion: true }), { snapshot: { reducedMotion: true } });
+
+          const duplicate = mountBattleCurrentPlayerUiLiveAdapter(globalRef, { mountUi: () => { throw new Error('must not remount'); } });
+          assert.equal(duplicate, first);
+          assert.equal(mounts.length, 1);
+          assert.equal(first.destroy(), true);
+          assert.equal(first.destroy(), false);
+          assert.equal(first.mounted(), false);
+          assert.equal(destroyCount, 1);
+
+          const second = mountBattleCurrentPlayerUiLiveAdapter(globalRef, { mountUi: fakeMount });
+          assert.ok(second);
+          assert.notEqual(second, first);
+          assert.equal(mounts.length, 2);
+          assert.equal(second.destroy(), true);
+          assert.equal(destroyCount, 2);
+          assert.equal(mountBattleCurrentPlayerUiLiveAdapter({ document: { querySelector: () => null } }, { mountUi: fakeMount }), null);
+          assert.equal(mountBattleCurrentPlayerUiLiveAdapter({}, { mountUi: fakeMount }), null);
+          console.log('battle-current-player-ui-live-adapter: focused lifecycle tests passed');
+          EOF
+
+          python3 - <<'PY'
+          from pathlib import Path
+          replay=Path('browser/battle-replay-live-adapter.mjs')
+          text=replay.read_text()
+          anchor="import './battle-janken-slidepad-runtime-mount.mjs';\n"
+          if text.count(anchor)!=1 or 'battle-current-player-ui-live-adapter.mjs' in text: raise SystemExit('replay anchor mismatch')
+          replay.write_text(text.replace(anchor, anchor+"import './battle-current-player-ui-live-adapter.mjs';\n",1))
+
+          build=Path('deploy/cloudflare/scripts/build.mjs')
+          text=build.read_text()
+          anchor="  { source: 'browser/battle-current-player-ui-runtime.mjs', output: 'battle-current-player-ui-runtime.mjs', artifact: 'battle_current_player_ui_runtime', label: 'Battle current player UI compositor' },\n"
+          if text.count(anchor)!=1 or 'battle_current_player_ui_live_adapter' in text: raise SystemExit('build anchor mismatch')
+          build.write_text(text.replace(anchor, anchor+"  { source: 'browser/battle-current-player-ui-live-adapter.mjs', output: 'battle-current-player-ui-live-adapter.mjs', artifact: 'battle_current_player_ui_live_adapter', label: 'Battle current player UI live adapter' },\n",1))
+
+          bt=Path('deploy/cloudflare/tests/build.test.mjs')
+          text=bt.read_text()
+          old="currentBlob: '3a86b258a429da1ef280ec103b2fa1026550a100'"
+          new="currentBlob: '68d4da927f3efe1d98e95ead40fc4681d480179d'"
+          if text.count(old)!=1: raise SystemExit('build test replay blob anchor mismatch')
+          bt.write_text(text.replace(old,new,1))
+          PY
+
+          test "$(git hash-object browser/battle-replay-live-adapter.mjs)" = "68d4da927f3efe1d98e95ead40fc4681d480179d"
+          node --check browser/battle-current-player-ui-live-adapter.mjs
+          node --check browser/battle-replay-live-adapter.mjs
+          node --test tests/battle-current-player-ui-live-adapter.test.mjs tests/battle-current-player-ui-runtime.test.mjs tests/battle-replay-live-adapter.test.mjs deploy/cloudflare/tests/build.test.mjs
+
+          git config user.name gameroad-bot
+          git config user.email gameroad-bot@users.noreply.github.com
+          git add browser/battle-current-player-ui-live-adapter.mjs tests/battle-current-player-ui-live-adapter.test.mjs browser/battle-replay-live-adapter.mjs deploy/cloudflare/scripts/build.mjs deploy/cloudflare/tests/build.test.mjs
+          git commit -m 'Battle UI: bind compositor on proven live host R4c'
+          git rm .github/workflows/zz-temp-battle-current-ui-live-host-repair-r4c.yml data/preaction-authorizations/BATTLE-CURRENT-UI-R2-20260913T0316-SOL.json
+          git commit -m 'Battle current UI live host repair cleanup R4c'
+          git push origin HEAD:${GITHUB_REF_NAME}

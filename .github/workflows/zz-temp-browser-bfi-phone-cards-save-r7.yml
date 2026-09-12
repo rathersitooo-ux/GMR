@@ -1,0 +1,103 @@
+name: temp Browser BFI phone Cards save R7
+
+on:
+  push:
+    branches: [sol/browser-bfi-phone-cards-save-r7-20260912]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: browser-bfi-phone-cards-save-r7
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source anchors
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('browser/GAMEROAD.html')
+          lines=p.read_text(encoding='utf-8').splitlines()
+          needles=('deckEditScroll','deckActions','saveDeck','r4DeckTrayToggle','deckBoard')
+          hits=[]
+          for i,line in enumerate(lines):
+            if any(n in line for n in needles): hits.append(i)
+          print('SOURCE_HITS', len(hits))
+          merged=[]
+          for i in hits:
+            lo=max(0,i-7); hi=min(len(lines),i+8)
+            if merged and lo<=merged[-1][1]+1: merged[-1]=(merged[-1][0],max(merged[-1][1],hi))
+            else: merged.append((lo,hi))
+          for lo,hi in merged:
+            print(f'--- SOURCE {lo+1}:{hi} ---')
+            for j in range(lo,hi): print(f'{j+1:06d}: {lines[j]}')
+          PY
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Diagnose 390x844 actual Cards geometry
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/cards-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 80); do curl -fsS http://127.0.0.1:4173/browser/GAMEROAD.html >/dev/null && break || sleep .25; done
+          cat > .cards-diag.mjs <<'NODE'
+          import { chromium } from '@playwright/test';
+          const browser=await chromium.launch({headless:true});
+          try {
+            const context=await browser.newContext({viewport:{width:390,height:844}});
+            const page=await context.newPage();
+            const response=await page.goto('http://127.0.0.1:4173/browser/GAMEROAD.html',{waitUntil:'commit',timeout:10000});
+            if(!response||response.status()>=400) throw new Error(`HTML ${response?.status()}`);
+            await page.waitForSelector('section[data-screen="home"]',{state:'visible',timeout:20000});
+            let cardsControl=page.locator('[data-home-target="cards"]:visible, [data-go="cards"]:visible').first();
+            if(await cardsControl.count()===0){
+              const center=page.locator('#homePadCenter:visible');
+              if(await center.count()) await center.click();
+              await page.waitForTimeout(120);
+              cardsControl=page.locator('[data-home-target="cards"]:visible, [data-go="cards"]:visible').first();
+            }
+            if(await cardsControl.count()===0) throw new Error('visible Cards control missing');
+            await cardsControl.click();
+            await page.waitForSelector('section[data-screen="cards"]',{state:'visible',timeout:10000});
+            await page.waitForTimeout(250);
+            const toggle=page.locator('#r4DeckTrayToggle:visible');
+            if(await toggle.count()){ await toggle.click(); await page.waitForTimeout(160); }
+            const data=await page.evaluate(()=>{
+              const snap=(sel)=>{
+                const el=document.querySelector(sel); if(!el) return null;
+                const r=el.getBoundingClientRect(),s=getComputedStyle(el);
+                return {sel,tag:el.tagName,id:el.id||null,className:typeof el.className==='string'?el.className:null,rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height},display:s.display,visibility:s.visibility,position:s.position,overflow:s.overflow,overflowY:s.overflowY,maxHeight:s.maxHeight,height:s.height,paddingTop:s.paddingTop,paddingBottom:s.paddingBottom,zIndex:s.zIndex,scrollTop:el.scrollTop,scrollHeight:el.scrollHeight,clientHeight:el.clientHeight,disabled:'disabled' in el?!!el.disabled:null};
+              };
+              const tree=(el)=>{const out=[];for(let n=el;n&&out.length<7;n=n.parentElement){const r=n.getBoundingClientRect(),s=getComputedStyle(n);out.push({tag:n.tagName,id:n.id||null,className:typeof n.className==='string'?n.className:null,rect:{top:r.top,bottom:r.bottom,height:r.height},position:s.position,overflowY:s.overflowY,maxHeight:s.maxHeight,scrollTop:n.scrollTop,scrollHeight:n.scrollHeight,clientHeight:n.clientHeight});}return out};
+              const save=document.querySelector('#saveDeck'),r=save?.getBoundingClientRect();
+              const center=r?{x:Math.max(0,Math.min(innerWidth-1,r.left+r.width/2)),y:Math.max(0,Math.min(innerHeight-1,r.top+r.height/2))}:null;
+              const hit=center?document.elementFromPoint(center.x,center.y):null;
+              return {viewport:{innerWidth,innerHeight,visualViewport:{width:visualViewport?.width,height:visualViewport?.height,offsetTop:visualViewport?.offsetTop}},body:{scrollY,scrollHeight:document.body.scrollHeight,clientHeight:document.body.clientHeight,overflowY:getComputedStyle(document.body).overflowY},html:{scrollHeight:document.documentElement.scrollHeight,clientHeight:document.documentElement.clientHeight,overflowY:getComputedStyle(document.documentElement).overflowY},nodes:{cards:snap('section[data-screen="cards"]'),deckBoard:snap('#deckBoard'),deckEditScroll:snap('.deckEditScroll'),deckActions:snap('#deckActions'),saveDeck:snap('#saveDeck'),tray:snap('#r4DeckTrayToggle')},saveIntersectsViewport:!!r&&r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth,saveCenterHit:hit?{tag:hit.tagName,id:hit.id||null,className:typeof hit.className==='string'?hit.className:null}:null,saveAncestors:tree(save)};
+            });
+            console.log('CARDS_GEOMETRY_JSON='+JSON.stringify(data));
+            await page.screenshot({path:'cards-390x844.png',fullPage:true,animations:'disabled'});
+            await context.close();
+          } finally { await browser.close(); }
+          NODE
+          node .cards-diag.mjs
+          rm .cards-diag.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: browser-bfi-phone-cards-save-r7-diagnostic
+          path: cards-390x844.png
+          if-no-files-found: error
+          retention-days: 7

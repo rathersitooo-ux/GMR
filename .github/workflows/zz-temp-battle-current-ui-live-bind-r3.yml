@@ -1,0 +1,95 @@
+name: TEMP Battle Current UI Live Bind R3
+
+on:
+  push:
+    branches:
+      - sol/battle-current-ui-live-bind-r3-20260913
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'LIVE_BIND_TRIGGER Battle current UI R3'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-current-ui-live-bind-r3-20260913
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact-anchor presentation-only live bind
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          runtime = Path('browser/battle-screen-runtime-mount.mjs')
+          text = runtime.read_text()
+
+          def replace_once(source, old, new, label):
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 anchor, found {count}')
+              return source.replace(old, new, 1)
+
+          text = replace_once(
+              text,
+              "import { mountBattleCriticalResourceHud } from './battle-critical-resource-hud-runtime.mjs';\n",
+              "import { mountBattleCriticalResourceHud } from './battle-critical-resource-hud-runtime.mjs';\nimport { mountBattleCurrentPlayerUi } from './battle-current-player-ui-runtime.mjs';\n",
+              'runtime import',
+          )
+
+          mount_anchor = """  const resolutionSurface = resolutionAnchor.node;\n  resolutionSurface.dataset.battleScreenResolutionAuthority = 'external_existing_presentation_consumer';\n\n  let destroyed = false;\n"""
+          mount_block = """  const resolutionSurface = resolutionAnchor.node;\n  resolutionSurface.dataset.battleScreenResolutionAuthority = 'external_existing_presentation_consumer';\n\n  const currentPlayerUiRoot = options.currentPlayerUiRoot\n    ?? document.querySelector?.('section.screen.battle[data-screen=\"battle\"]')\n    ?? document.querySelector?.('.screen.battle')\n    ?? null;\n  let currentPlayerUi = null;\n  if (currentPlayerUiRoot) {\n    try {\n      currentPlayerUi = mountBattleCurrentPlayerUi(global, {\n        root: currentPlayerUiRoot,\n        initialState: options.currentPlayerUiState ?? null\n      });\n    } catch {\n      currentPlayerUi = null;\n    }\n  }\n\n  let destroyed = false;\n"""
+          text = replace_once(text, mount_anchor, mount_block, 'runtime mount')
+
+          destroy_anchor = """  function destroy() {\n    if (destroyed) return false;\n    destroyed = true;\n"""
+          destroy_block = """  function syncCurrentPlayerUi(snapshot = {}) {\n    if (destroyed) throw new Error('BATTLE_SCREEN_RUNTIME_DESTROYED');\n    return currentPlayerUi?.sync?.(snapshot) ?? null;\n  }\n\n  function destroy() {\n    if (destroyed) return false;\n    destroyed = true;\n    currentPlayerUi?.destroy?.();\n"""
+          text = replace_once(text, destroy_anchor, destroy_block, 'runtime destroy')
+
+          text = replace_once(
+              text,
+              "    resourceHud,\n    grid,\n",
+              "    resourceHud,\n    currentPlayerUi,\n    grid,\n",
+              'runtime property',
+          )
+          text = replace_once(
+              text,
+              "    renderHud,\n    render,\n    destroy\n",
+              "    renderHud,\n    render,\n    syncCurrentPlayerUi,\n    destroy\n",
+              'runtime method',
+          )
+          text = replace_once(
+              text,
+              "  resourceHudAuthority: 'CALLER_ONLY_EXISTING_RESOURCE_HUD',\n",
+              "  resourceHudAuthority: 'CALLER_ONLY_EXISTING_RESOURCE_HUD',\n  currentPlayerUiComposition: 'LIVE_MOUNT_PRESENTATION_ONLY_NO_GAMEPLAY_AUTHORITY',\n",
+              'runtime metadata',
+          )
+          runtime.write_text(text)
+
+          build = Path('deploy/cloudflare/scripts/build.mjs')
+          build_text = build.read_text()
+          build_anchor = "  { source: 'browser/battle-screen-runtime-mount.mjs', output: 'battle-screen-runtime-mount.mjs', artifact: 'battle_screen_runtime_mount', label: 'Battle screen runtime mount' },\n"
+          build_insert = build_anchor + "  { source: 'browser/battle-current-player-ui-runtime.mjs', output: 'battle-current-player-ui-runtime.mjs', artifact: 'battle_current_player_ui_runtime', label: 'Battle current player UI compositor' },\n"
+          build_text = replace_once(build_text, build_anchor, build_insert, 'public build artifact')
+          build.write_text(build_text)
+          PY
+
+          node --check browser/battle-screen-runtime-mount.mjs
+          node --test tests/battle-screen-runtime-mount.test.mjs
+          node --test tests/battle-current-player-ui-runtime.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+
+      - name: Commit exact product delta and cleanup transient files
+        shell: bash
+        run: |
+          rm .github/workflows/zz-temp-battle-current-ui-live-bind-r3.yml
+          rm data/preaction-authorizations/BATTLE-CURRENT-UI-R2-20260913T0316-SOL.json
+          git config user.name 'gameroad-bot'
+          git config user.email 'gameroad-bot@users.noreply.github.com'
+          git add -A
+          git commit -m 'Battle UI: live-bind compositor and public package'
+          git push origin HEAD:sol/battle-current-ui-live-bind-r3-20260913

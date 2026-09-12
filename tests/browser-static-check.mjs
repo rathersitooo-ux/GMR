@@ -129,15 +129,14 @@ function collectStaticErrors(html) {
     [/function refill\(p\)\{while\(p\.hand\.length<3&&p\.deck\.length\)p\.hand\.push\(p\.deck\.shift\(\)\)\}/, 'post-use refill target is no longer three'],
     [/manaCurrent:7,manaMax:10,honey:0,chip:/, 'numeric Mana 7/10 and player-owned Honey balance are not initialized'],
     [/function currentPlacementRanks\(m=state\.match\)/, 'current placement ranking was not made reusable for round income'],
-    [/function recoverRoundStartManaByPlacement\(m\)/, 'round-start placement Mana recovery is not mounted'],
-    [/function recoverRoundStartManaByPlacement\(m\)\{[\s\S]{0,700}p\.manaCurrent=after;/, 'round-start placement Mana recovery does not clamp and write numeric Mana'],
-    [/grBattleReplayBegin\(state\.match\);recoverRoundStartManaByPlacement\(state\.match\);initRoundRuntime\(state\.match\)/, 'round one does not recover current-rank Mana before play'],
-    [/m\.players\.forEach\(p=>p\.plan=null\);recoverRoundStartManaByPlacement\(m\);initRoundRuntime\(m\)/, 'later rounds do not recover current-rank Mana'],
     [/position:p\.position,manaCurrent:Number\(p\.manaCurrent\)\|\|0,manaMax:Number\(p\.manaMax\)\|\|10,honey:Number\(p\.honey\)\|\|0,chip:/, 'friend projection drops numeric Mana or player-owned Honey'],
     [/function awakeManaFromHoney\(/, 'Honey Hunt node-Honey Mana wake authority was removed'],
   ];
   for (const [pattern, message] of correctedBattleResourceContracts) {
     if (!pattern.test(html)) errors.push(message);
+  }
+  if (/recoverRoundStartManaByPlacement/.test(html) || /位のためマナ回復\+/.test(html)) {
+    errors.push('superseded rank-based turn-start Mana recovery remains');
   }
   if (/function awardRoundStartHoney\(/.test(html)) errors.push('legacy round-start Honey income remains');
   if (/function takeManaByPower\(/.test(html) || /\.mana\?*\.length/.test(html) || /Array\.isArray\(me\?*\.mana\)/.test(html)) {

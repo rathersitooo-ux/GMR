@@ -1,6 +1,9 @@
 name: Browser Full Interaction Evidence
 
 on:
+  pull_request:
+    branches:
+      - main
   schedule:
     - cron: '17 18 * * 2'
   workflow_dispatch:
@@ -23,8 +26,67 @@ permissions:
   contents: read
 
 jobs:
+  classify-interaction:
+    runs-on: ubuntu-latest
+    outputs:
+      required: ${{ steps.classify.outputs.required }}
+    steps:
+      - name: Checkout PR for path classification
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Decide whether full interaction is required
+        id: classify
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || '' }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_EVENT_NAME}" != "pull_request" ]]; then
+            echo "required=true" >> "$GITHUB_OUTPUT"
+            echo "Non-PR evidence event: keep the existing full interaction lane."
+            exit 0
+          fi
+
+          if [[ -z "${BASE_SHA}" || -z "${HEAD_SHA}" ]]; then
+            echo "::error::Unable to resolve PR comparison SHAs for Browser Full Interaction classification."
+            exit 1
+          fi
+
+          MERGE_BASE_SHA="$(git merge-base "${BASE_SHA}" "${HEAD_SHA}")"
+          if [[ -z "${MERGE_BASE_SHA}" ]]; then
+            echo "::error::Unable to resolve merge base for Browser Full Interaction classification."
+            exit 1
+          fi
+
+          required=false
+          while IFS= read -r path; do
+            case "${path}" in
+              browser/GAMEROAD.html|\
+              tests/browser-full-interaction.spec.mjs|\
+              tests/browser-full-interaction-state-sequence.spec.mjs|\
+              playwright.full-interaction.config.mjs|\
+              .github/workflows/browser-full-interaction.yml)
+                required=true
+                break
+                ;;
+              *) ;;
+            esac
+          done < <(git diff --name-only "${MERGE_BASE_SHA}" "${HEAD_SHA}")
+
+          echo "required=${required}" >> "$GITHUB_OUTPUT"
+          if [[ "${required}" == "true" ]]; then
+            echo "BFI-sensitive PR: run the full interaction evidence lane."
+          else
+            echo "PR is outside BFI-sensitive paths: keep only this lightweight handshake run."
+          fi
+
   chromium-interaction-evidence:
-    if: ${{ github.event_name != 'workflow_run' }}
+    needs: classify-interaction
+    if: ${{ needs.classify-interaction.outputs.required == 'true' && github.event_name != 'workflow_run' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

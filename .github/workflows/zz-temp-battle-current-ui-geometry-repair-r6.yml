@@ -1,0 +1,114 @@
+name: TEMP Battle Current UI Geometry Repair R6
+
+on:
+  push:
+    branches:
+      - sol/battle-current-ui-geometry-repair-r6-20260913
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify PRE_ACTION witness
+        run: |
+          set -euo pipefail
+          test -f data/preaction-authorizations/BATTLE-CURRENT-UI-R2-20260913T0316-SOL-GEOMETRY-R6.json
+          node -e "const p=require('./data/preaction-authorizations/BATTLE-CURRENT-UI-R2-20260913T0316-SOL-GEOMETRY-R6.json'); if(p.authorizationBaseSha!=='d96725f9ee3ff90986d1883cc2813872b1b9beee'||p.predictionStatus!=='PASS') process.exit(1)"
+      - name: Apply bounded geometry repair
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          runtime_path = Path('browser/battle-current-player-ui-runtime.mjs')
+          text = runtime_path.read_text()
+
+          def replace_once(old, new, label):
+              global text
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly one match, got {count}')
+              text = text.replace(old, new, 1)
+
+          replace_once(
+              '.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="current-action"]{position:absolute!important;z-index:32!important;top:calc(var(--gr-ui-edge) + clamp(42px,9vh,72px))!important;left:var(--gr-ui-edge)!important;right:auto!important;bottom:auto!important;max-width:min(38vw,310px)!important;pointer-events:none!important}',
+              '.screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="current-action"]{position:absolute!important;z-index:32!important;top:calc(var(--gr-ui-edge) + clamp(42px,9vh,72px))!important;left:var(--gr-ui-edge)!important;right:auto!important;bottom:auto!important;max-width:min(38vw,310px)!important;transform:none!important;margin:0!important;pointer-events:none!important}',
+              'current-action reset'
+          )
+          replace_once(
+              '.screen.battle[${ROOT_ATTR}="1"] .planBox{position:relative!important;inset:auto!important;width:100%!important;min-width:0!important;max-width:190px!important;justify-self:end!important;align-self:end!important;padding:5px!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important;pointer-events:auto!important}',
+              '.screen.battle[${ROOT_ATTR}="1"] .planBox{position:relative!important;inset:auto!important;width:100%!important;min-width:0!important;max-width:190px!important;justify-self:end!important;align-self:end!important;padding:5px!important;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important;transform:none!important;margin:0!important;box-sizing:border-box!important;pointer-events:auto!important}',
+              'planBox reset'
+          )
+          replace_once(
+              '.screen.battle[${ROOT_ATTR}="1"] [data-battle-janken-slidepad="1"]{z-index:44!important}',
+              '.screen.battle[${ROOT_ATTR}="1"] [data-battle-janken-slidepad="1"]{position:absolute!important;z-index:44!important;width:var(--gr-thumb-w)!important;height:var(--gr-thumb-h)!important;right:var(--gr-ui-edge)!important;left:auto!important;bottom:var(--gr-ui-edge)!important;top:auto!important;transform:none!important;margin:0!important;box-sizing:border-box!important}',
+              'janken bounded geometry'
+          )
+          replace_once(
+              '.screen.battle[${ROOT_ATTR}="1"] .battleRail{position:absolute!important;z-index:34!important;top:var(--gr-ui-edge)!important;right:var(--gr-ui-edge)!important;left:auto!important;bottom:auto!important;width:auto!important;height:auto!important;display:flex!important;flex-direction:row!important;gap:4px!important;padding:0!important;background:none!important;border:0!important;pointer-events:auto!important}',
+              '.screen.battle[${ROOT_ATTR}="1"] .battleRail{position:absolute!important;z-index:34!important;top:var(--gr-ui-edge)!important;right:var(--gr-ui-edge)!important;left:auto!important;bottom:auto!important;width:auto!important;height:auto!important;max-width:min(28vw,340px)!important;max-height:44px!important;display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:flex-end!important;gap:4px!important;padding:0!important;margin:0!important;transform:none!important;overflow-x:auto!important;overflow-y:hidden!important;white-space:nowrap!important;background:none!important;border:0!important;pointer-events:auto!important;scrollbar-width:none!important}',
+              'battleRail compact strip'
+          )
+          replace_once(
+              '.screen.battle[${ROOT_ATTR}="1"] .battleRail .railBtn{min-width:44px!important;min-height:36px!important;width:auto!important;height:auto!important;padding:5px 8px!important;font-size:9px!important}',
+              '.screen.battle[${ROOT_ATTR}="1"] .battleRail .railBtn{min-width:44px!important;min-height:36px!important;width:auto!important;height:36px!important;max-height:36px!important;padding:5px 8px!important;margin:0!important;transform:none!important;box-sizing:border-box!important;flex:0 0 auto!important;font-size:9px!important}',
+              'rail button compact'
+          )
+          replace_once(
+              '  .screen.battle[${ROOT_ATTR}="1"] .planBox{max-width:172px!important;padding:3px!important}\n  .screen.battle[${ROOT_ATTR}="1"] .planBox label,.screen.battle[${ROOT_ATTR}="1"] .endpointChip label{font-size:7px!important}',
+              '  .screen.battle[${ROOT_ATTR}="1"] .planBox{max-width:172px!important;padding:3px!important}\n  .screen.battle[${ROOT_ATTR}="1"] .battleRail{max-width:168px!important}\n  .screen.battle[${ROOT_ATTR}="1"] .planBox label,.screen.battle[${ROOT_ATTR}="1"] .endpointChip label{font-size:7px!important}',
+              'short-landscape rail width'
+          )
+          replace_once(
+              '  .screen.battle[${ROOT_ATTR}="1"] .battleRail .railBtn{min-height:32px!important;padding:3px 6px!important;font-size:8px!important}',
+              '  .screen.battle[${ROOT_ATTR}="1"] .battleRail .railBtn{min-height:32px!important;height:32px!important;max-height:32px!important;padding:3px 6px!important;font-size:8px!important}',
+              'short-landscape rail button height'
+          )
+          replace_once(
+              '  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{max-width:30vw!important}\n  .screen.battle[${ROOT_ATTR}="1"] .battleInfo{left:1.5%!important;right:1.5%!important;height:28vh!important;grid-template-columns:1fr!important;grid-template-rows:minmax(0,1fr) auto!important}',
+              '  .screen.battle[${ROOT_ATTR}="1"] [${ZONE_ATTR}="resources"]{max-width:30vw!important;bottom:calc(28vh + var(--gr-ui-edge) + var(--gr-ui-gap))!important}\n  .screen.battle[${ROOT_ATTR}="1"] .battleInfo{left:1.5%!important;right:calc(var(--gr-thumb-w) + var(--gr-ui-edge) + var(--gr-ui-gap))!important;height:28vh!important;grid-template-columns:1fr!important;grid-template-rows:minmax(0,1fr) auto!important}',
+              'portrait left stack reserve'
+          )
+          replace_once(
+              '  .screen.battle[${ROOT_ATTR}="1"] [data-battle-playable-hand-row-roulette-live="1"]{right:176px!important;bottom:var(--gr-ui-edge)!important;max-width:min(164px,42vw)!important}\n  .screen.battle[${ROOT_ATTR}="1"] #targetBox{width:96vw!important;right:2vw!important;bottom:30vh!important}',
+              '  .screen.battle[${ROOT_ATTR}="1"] [data-battle-janken-slidepad="1"]{width:var(--gr-thumb-w)!important;height:var(--gr-thumb-h)!important;right:var(--gr-ui-edge)!important;bottom:var(--gr-ui-edge)!important}\n  .screen.battle[${ROOT_ATTR}="1"] [data-battle-playable-hand-row-roulette-live="1"]{right:var(--gr-ui-edge)!important;bottom:calc(var(--gr-thumb-h) + var(--gr-ui-edge) + 4px)!important;max-width:min(164px,42vw)!important}\n  .screen.battle[${ROOT_ATTR}="1"] .battleRail{left:var(--gr-ui-edge)!important;right:var(--gr-ui-edge)!important;top:118px!important;width:auto!important;max-width:none!important;justify-content:flex-start!important}\n  .screen.battle[${ROOT_ATTR}="1"] #targetBox{width:96vw!important;right:2vw!important;bottom:30vh!important}',
+              'portrait thumb and rail separation'
+          )
+          runtime_path.write_text(text)
+
+          test_path = Path('tests/battle-current-player-ui-runtime.test.mjs')
+          test = test_path.read_text()
+          anchor = "  assert.match(document.head.children[0].textContent, /backdrop-filter:none/);"
+          replacement = anchor + "\n  const styleText = document.head.children[0].textContent;\n  assert.match(styleText, /\\.planBox\\{[^}]*transform:none!important/);\n  assert.match(styleText, /\\.battleRail\\{[^}]*max-width:min\\(28vw,340px\\)!important[^}]*transform:none!important/);\n  assert.match(styleText, /data-battle-janken-slidepad=\\\"1\\\"\\]\\{[^}]*width:var\\(--gr-thumb-w\\)!important[^}]*height:var\\(--gr-thumb-h\\)!important/);\n  assert.match(styleText, /@media\\(max-width:520px\\)[\\s\\S]*\\.battleInfo\\{[^}]*right:calc\\(var\\(--gr-thumb-w\\) \\+ var\\(--gr-ui-edge\\) \\+ var\\(--gr-ui-gap\\)\\)!important/);\n  assert.match(styleText, /@media\\(max-width:520px\\)[\\s\\S]*\\.battleRail\\{[^}]*top:118px!important[^}]*max-width:none!important/);"
+          if test.count(anchor) != 1:
+              raise SystemExit(f'test anchor expected once, got {test.count(anchor)}')
+          test_path.write_text(test.replace(anchor, replacement, 1))
+          PY
+          node tests/battle-current-player-ui-runtime.test.mjs
+          node tests/battle-current-player-ui-live-adapter.test.mjs
+          node tests/battle-replay-live-adapter.test.mjs
+          git diff --check
+      - name: Commit bounded product repair
+        run: |
+          set -euo pipefail
+          git config user.name gameroad-bot
+          git config user.email gameroad-bot@users.noreply.github.com
+          git add browser/battle-current-player-ui-runtime.mjs tests/battle-current-player-ui-runtime.test.mjs
+          git commit -m 'Battle UI: repair compositor geometry R6'
+          git push origin HEAD:${GITHUB_REF_NAME}
+      - name: Clean transient authorization files
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/zz-temp-battle-current-ui-geometry-repair-r6.yml data/preaction-authorizations/BATTLE-CURRENT-UI-R2-20260913T0316-SOL-GEOMETRY-R6.json
+          git commit -m 'Battle UI geometry R6 cleanup'
+          git push origin HEAD:${GITHUB_REF_NAME}

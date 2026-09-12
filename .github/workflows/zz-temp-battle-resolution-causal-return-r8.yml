@@ -39,104 +39,135 @@ jobs:
           runtime = runtime_path.read_text()
           tests = test_path.read_text()
 
-          def once(text, old, new, label):
+          def replace_once(text, old, new, label):
               count = text.count(old)
               if count != 1:
                   raise SystemExit(f'{label}: expected 1, got {count}')
               return text.replace(old, new, 1)
 
-          settle_old = """  } else if (phase === 'settle' && model?.boardReturn) {
-            const target = targets[0] || participantLabelById(model, model.boardReturn.opponentId);
-            detail = [target, `Shield ${model.boardReturn.shieldLane}`].filter(Boolean).join(' / ');
-          }""".replace('          ', '')
-          settle_new = """  } else if (phase === 'settle' && model?.boardReturn) {
-            const target = targets[0] || participantLabelById(model, model.boardReturn.opponentId);
-            const causal = model?.causalReturn;
-            const handKey = typeof causal?.sourceCard?.jankenHand === 'string'
-              ? causal.sourceCard.jankenHand.trim().toLowerCase()
-              : '';
-            const hand = LOAD_JANKEN_LABELS[handKey] ?? causal?.sourceCard?.jankenHand ?? '';
-            const sourceCard = typeof causal?.sourceCard?.cardId === 'string' ? causal.sourceCard.cardId.trim() : '';
-            const destination = [target, `Shield ${model.boardReturn.shieldLane}`].filter(Boolean).join(' / ');
-            detail = sourceCard ? `${sourceCard}${hand ? `（${hand}）` : ''} → 解決 → ${destination}` : destination;
-          }""".replace('          ', '')
-          runtime = once(runtime, settle_old, settle_new, 'settle cue')
+          settle_old = "\n".join([
+              "  } else if (phase === 'settle' && model?.boardReturn) {",
+              "    const target = targets[0] || participantLabelById(model, model.boardReturn.opponentId);",
+              "    detail = [target, `Shield ${model.boardReturn.shieldLane}`].filter(Boolean).join(' / ');",
+              "  }",
+          ])
+          settle_new = "\n".join([
+              "  } else if (phase === 'settle' && model?.boardReturn) {",
+              "    const target = targets[0] || participantLabelById(model, model.boardReturn.opponentId);",
+              "    const causal = model?.causalReturn;",
+              "    const handKey = typeof causal?.sourceCard?.jankenHand === 'string'",
+              "      ? causal.sourceCard.jankenHand.trim().toLowerCase()",
+              "      : '';",
+              "    const hand = LOAD_JANKEN_LABELS[handKey] ?? causal?.sourceCard?.jankenHand ?? '';",
+              "    const sourceCard = typeof causal?.sourceCard?.cardId === 'string' ? causal.sourceCard.cardId.trim() : '';",
+              "    const destination = [target, `Shield ${model.boardReturn.shieldLane}`].filter(Boolean).join(' / ');",
+              "    detail = sourceCard ? `${sourceCard}${hand ? `（${hand}）` : ''} → 解決 → ${destination}` : destination;",
+              "  }",
+          ])
+          runtime = replace_once(runtime, settle_old, settle_new, 'settle cue')
 
-          runtime = once(
-              runtime,
-              "  setData(cue, 'boardReturnDestination', model?.boardReturn?.destinationKey ?? null);\n  return text;",
-              "  setData(cue, 'boardReturnDestination', model?.boardReturn?.destinationKey ?? null);\n  setData(cue, 'causalTraceKey', model?.causalReturn?.traceKey ?? null);\n  setData(cue, 'causalCardId', model?.causalReturn?.sourceCard?.cardId ?? null);\n  setData(cue, 'causalJanken', model?.causalReturn?.sourceCard?.jankenHand ?? null);\n  return text;",
-              'cue causal datasets',
-          )
+          cue_data_old = "\n".join([
+              "  setData(cue, 'boardReturnDestination', model?.boardReturn?.destinationKey ?? null);",
+              "  return text;",
+          ])
+          cue_data_new = "\n".join([
+              "  setData(cue, 'boardReturnDestination', model?.boardReturn?.destinationKey ?? null);",
+              "  setData(cue, 'causalTraceKey', model?.causalReturn?.traceKey ?? null);",
+              "  setData(cue, 'causalCardId', model?.causalReturn?.sourceCard?.cardId ?? null);",
+              "  setData(cue, 'causalJanken', model?.causalReturn?.sourceCard?.jankenHand ?? null);",
+              "  return text;",
+          ])
+          runtime = replace_once(runtime, cue_data_old, cue_data_new, 'cue causal datasets')
 
-          style_anchor = '[${SHELL_ATTR}="1"] [${PLAN_SLOT_ATTR}]{position:absolute;inset:0;z-index:2;min-width:0;min-height:0}'
-          runtime = once(runtime, style_anchor, '[${CURRENT_ACTION_ATTR}][data-phase="settle"]{max-width:min(76vw,620px)}\n' + style_anchor, 'settle width')
+          style_anchor = '[${CURRENT_ACTION_ATTR}]{position:absolute;z-index:8;top:clamp(206px,34vh,264px);left:50%;transform:translateX(-50%);max-width:min(42vw,420px);padding:5px 10px;border:1px solid rgba(245,248,225,.48);border-radius:999px;background:rgba(4,28,24,.80);box-shadow:0 6px 18px rgba(0,0,0,.24);pointer-events:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f8fbeb;text-shadow:0 2px 8px rgba(0,0,0,.72);font-size:clamp(11px,1vw,14px);font-weight:900;letter-spacing:.05em}'
+          style_new = style_anchor + '\n[${CURRENT_ACTION_ATTR}][data-phase="settle"]{max-width:min(76vw,620px)}'
+          runtime = replace_once(runtime, style_anchor, style_new, 'settle cue width')
 
-          render_anchor = "  function render(model, hudSnapshot = null) {\n    if (destroyed) throw new Error('BATTLE_SCREEN_RUNTIME_DESTROYED');\n"
-          render_insert = render_anchor + """
-            // Fail closed before validating the next model: rejected/stale input must not leave the prior accepted return visible.
-            writeCurrentActionCue(currentActionCue, null);
-            setData(shell, 'boardReturnDestination', null);
-            setData(phaseSurface, 'battleBoardReturnDestination', null);
-            setData(resolutionSurface, 'battleBoardReturnDestination', null);
-            setData(resolutionSurface, 'battleBoardReturnShieldRef', null);
-            for (const view of lanes) {
-              setData(view.shieldRail, 'boardReturnParticipant', null);
-              for (const link of view.shieldRail.children ?? []) {
-                const slot = link.getAttribute?.(SHIELD_SLOT_ATTR) || link.dataset.roadLane;
-                setData(link, 'boardReturnTarget', null);
-                setData(link, 'boardReturnEventId', null);
-                setData(link, 'boardReturnDestination', null);
-                link.setAttribute?.('aria-label', `Shield ${slot} → ROAD ${slot}`);
-              }
-            }
-          """.replace('          ', '')
-          runtime = once(runtime, render_anchor, render_insert, 'render fail-close')
+          render_anchor = "\n".join([
+              "  function render(model, hudSnapshot = null) {",
+              "    if (destroyed) throw new Error('BATTLE_SCREEN_RUNTIME_DESTROYED');",
+          ])
+          clear_lines = "\n".join([
+              "  function render(model, hudSnapshot = null) {",
+              "    if (destroyed) throw new Error('BATTLE_SCREEN_RUNTIME_DESTROYED');",
+              "",
+              "    // Rejected/stale input must not leave the previous accepted return highlighted.",
+              "    writeCurrentActionCue(currentActionCue, null);",
+              "    setData(shell, 'boardReturnDestination', null);",
+              "    setData(phaseSurface, 'battleBoardReturnDestination', null);",
+              "    setData(resolutionSurface, 'battleBoardReturnDestination', null);",
+              "    setData(resolutionSurface, 'battleBoardReturnShieldRef', null);",
+              "    for (const view of lanes) {",
+              "      setData(view.shieldRail, 'boardReturnParticipant', null);",
+              "      for (const link of view.shieldRail.children ?? []) {",
+              "        const slot = link.getAttribute?.(SHIELD_SLOT_ATTR) || link.dataset.roadLane;",
+              "        setData(link, 'boardReturnTarget', null);",
+              "        setData(link, 'boardReturnEventId', null);",
+              "        setData(link, 'boardReturnDestination', null);",
+              "        link.setAttribute?.('aria-label', `Shield ${slot} → ROAD ${slot}`);",
+              "      }",
+              "    }",
+          ])
+          runtime = replace_once(runtime, render_anchor, clear_lines, 'render fail-close')
 
-          old_text = "今：盤面反映 B-1 / Shield R"
-          new_text = "今：盤面反映 C1（グー） → 解決 → B-1 / Shield R"
-          count = tests.count(old_text)
-          if count != 3:
-              raise SystemExit(f'settle text assertions: expected 3, got {count}')
+          old_text = '今：盤面反映 B-1 / Shield R'
+          new_text = '今：盤面反映 C1（グー） → 解決 → B-1 / Shield R'
+          if tests.count(old_text) != 3:
+              raise SystemExit(f'settle text assertions: expected 3, got {tests.count(old_text)}')
           tests = tests.replace(old_text, new_text)
 
-          tests = once(
-              tests,
-              "assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, 'P3:R');\nassert.equal(runtime.shell.dataset.boardReturnDestination, 'P3:R');",
-              "assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, 'P3:R');\nassert.equal(runtime.currentActionCue.dataset.causalTraceKey, 'settle-1:P3:R');\nassert.equal(runtime.currentActionCue.dataset.causalCardId, 'C1');\nassert.equal(runtime.currentActionCue.dataset.causalJanken, 'ROCK');\nassert.equal(runtime.shell.dataset.boardReturnDestination, 'P3:R');",
-              'causal dataset assertions',
-          )
+          settle_dataset_old = "\n".join([
+              "assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, 'P3:R');",
+              "assert.equal(runtime.shell.dataset.boardReturnDestination, 'P3:R');",
+          ])
+          settle_dataset_new = "\n".join([
+              "assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, 'P3:R');",
+              "assert.equal(runtime.currentActionCue.dataset.causalTraceKey, 'settle-1:P3:R');",
+              "assert.equal(runtime.currentActionCue.dataset.causalCardId, 'C1');",
+              "assert.equal(runtime.currentActionCue.dataset.causalJanken, 'ROCK');",
+              "assert.equal(runtime.shell.dataset.boardReturnDestination, 'P3:R');",
+          ])
+          tests = replace_once(tests, settle_dataset_old, settle_dataset_new, 'settle causal datasets')
 
-          reduced_tail = "assert.equal(runtime.currentActionCue.textContent, '今：盤面反映 C1（グー） → 解決 → B-1 / Shield R');\n\nruntime.render(attack);"
-          reduced_insert = """assert.equal(runtime.currentActionCue.textContent, '今：盤面反映 C1（グー） → 解決 → B-1 / Shield R');
+          reduced_anchor = "\n".join([
+              "assert.equal(runtime.currentActionCue.textContent, '今：盤面反映 C1（グー） → 解決 → B-1 / Shield R');",
+              "",
+              "runtime.render(attack);",
+          ])
+          reduced_insert = "\n".join([
+              "assert.equal(runtime.currentActionCue.textContent, '今：盤面反映 C1（グー） → 解決 → B-1 / Shield R');",
+              "",
+              "const lowPerfSettle = createBattleScreenModel({ participants, plan: settlePlan, returnIntent: 'MATCH_PLAN', lowPerf: true });",
+              "runtime.render(lowPerfSettle);",
+              "assert.equal(runtime.shell.dataset.motion, 'static_only');",
+              "assert.equal(runtime.currentActionCue.textContent, '今：盤面反映 C1（グー） → 解決 → B-1 / Shield R');",
+              "assert.equal(runtime.currentActionCue.dataset.causalCardId, 'C1');",
+              "",
+              "const malformedReturn = { ...settle, boardReturn: { ...settle.boardReturn, shieldLane: 'X' } };",
+              "assert.throws(() => runtime.render(malformedReturn), /BATTLE_SCREEN_MODEL_REJECTED/);",
+              "assert.equal(runtime.currentActionCue.hidden, true);",
+              "assert.equal(runtime.currentActionCue.dataset.causalCardId, undefined);",
+              "assert.equal(runtime.shell.dataset.boardReturnDestination, undefined);",
+              "assert.equal(runtime.shieldRails[2].dataset.boardReturnParticipant, undefined);",
+              "assert.equal(runtime.shieldRails.flatMap(rail => rail.children).some(node => node.dataset.boardReturnTarget === 'true'), false);",
+              "assert.equal(p3ShieldSlots[2].getAttribute('aria-label'), 'Shield R → ROAD R');",
+              "",
+              "runtime.render(attack);",
+          ])
+          tests = replace_once(tests, reduced_anchor, reduced_insert, 'reduced/lowperf/rejected regression')
 
-          const lowPerfSettle = createBattleScreenModel({ participants, plan: settlePlan, returnIntent: 'MATCH_PLAN', lowPerf: true });
-          runtime.render(lowPerfSettle);
-          assert.equal(runtime.shell.dataset.motion, 'static_only');
-          assert.equal(runtime.currentActionCue.textContent, '今：盤面反映 C1（グー） → 解決 → B-1 / Shield R');
-          assert.equal(runtime.currentActionCue.dataset.causalCardId, 'C1');
-
-          const malformedReturn = { ...settle, boardReturn: { ...settle.boardReturn, shieldLane: 'X' } };
-          assert.throws(() => runtime.render(malformedReturn), /BATTLE_SCREEN_MODEL_REJECTED/);
-          assert.equal(runtime.currentActionCue.hidden, true);
-          assert.equal(runtime.currentActionCue.dataset.causalCardId, undefined);
-          assert.equal(runtime.shell.dataset.boardReturnDestination, undefined);
-          assert.equal(runtime.shieldRails[2].dataset.boardReturnParticipant, undefined);
-          assert.equal(runtime.shieldRails.flatMap(rail => rail.children).some(node => node.dataset.boardReturnTarget === 'true'), false);
-          assert.equal(p3ShieldSlots[2].getAttribute('aria-label'), 'Shield R → ROAD R');
-
-          runtime.render(attack);""".replace('          ', '')
-          tests = once(tests, reduced_tail, reduced_insert, 'reduced/lowperf/rejected regression')
-
-          tests = once(
-              tests,
-              "assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, undefined);\nassert.equal(runtime.shieldRails[2].dataset.boardReturnParticipant, undefined);",
-              "assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, undefined);\nassert.equal(runtime.currentActionCue.dataset.causalTraceKey, undefined);\nassert.equal(runtime.currentActionCue.dataset.causalCardId, undefined);\nassert.equal(runtime.currentActionCue.dataset.causalJanken, undefined);\nassert.equal(runtime.shieldRails[2].dataset.boardReturnParticipant, undefined);",
-              'attack clear assertions',
-          )
-
-          style_test = "assert.ok(runtimeStyle.textContent.includes('max-width:min(42vw,420px)'));"
-          tests = once(tests, style_test, style_test + "\nassert.ok(runtimeStyle.textContent.includes('[data-battle-current-action][data-phase=\"settle\"]{max-width:min(76vw,620px)}'));", 'style regression')
+          attack_clear_old = "\n".join([
+              "assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, undefined);",
+              "assert.equal(runtime.shieldRails[2].dataset.boardReturnParticipant, undefined);",
+          ])
+          attack_clear_new = "\n".join([
+              "assert.equal(runtime.currentActionCue.dataset.boardReturnDestination, undefined);",
+              "assert.equal(runtime.currentActionCue.dataset.causalTraceKey, undefined);",
+              "assert.equal(runtime.currentActionCue.dataset.causalCardId, undefined);",
+              "assert.equal(runtime.currentActionCue.dataset.causalJanken, undefined);",
+              "assert.equal(runtime.shieldRails[2].dataset.boardReturnParticipant, undefined);",
+          ])
+          tests = replace_once(tests, attack_clear_old, attack_clear_new, 'attack causal clear')
 
           runtime_path.write_text(runtime)
           test_path.write_text(tests)

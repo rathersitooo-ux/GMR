@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SCREEN-LEGACY-SURFACE-RETIRE-R3-20260913T0354-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_SCREEN_LEGACY_FULLSCREEN_RETIRE_R3",
+  "acquireKey": "BATTLE-SCREEN-LEGACY-SURFACE-RETIRE-R3-20260913T0354-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R2_EXACT_TWO_FILE_DONOR_VALIDATED_AND_CURRENT_MAIN_NONOVERLAP",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R2_BOUNDED_RUN_34712409417_NODE_CHECK_AND_FOCUSED_TEST_PASS",
+  "proceedToken": "PROCEED|BATTLE-SCREEN-LEGACY-SURFACE-RETIRE-R3-20260913T0354-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|exact-r2-donor-adoption|wave1-screen",
+  "authorizationBaseSha": "ca6034d75feb77857c7f7837e74afdd01dbb16c9",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_SCREEN_LEGACY_FULLSCREEN_RETIRE_R3",
+  "leaseAcquireKey": "BATTLE-SCREEN-LEGACY-SURFACE-RETIRE-R3-20260913T0354-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-13 03:54 JST",
+  "leaseUntilJst": "2026-09-13 04:54 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1321:L1321",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh current main ca6034d75feb77857c7f7837e74afdd01dbb16c9; exact mutable browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; own PREACTION record BATTLE-SCREEN-LEGACY-SURFACE-RETIRE-R3-20260913T0354-SOL first commit/cleanup only; own branch/PR/check/readback. R2 head c5cd7788013e4b119648674c15809c2d413b5ba6 READ_ONLY donor only. browser/GAMEROAD.html, browser/battle-current-player-ui-runtime.mjs, SlidePad runtime, gameplay/rules/target/legality/Shield/GOAL/Mana/Honey/Hand3/save/economy/network/build READ_ONLY.",
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs"
+  ]
+}

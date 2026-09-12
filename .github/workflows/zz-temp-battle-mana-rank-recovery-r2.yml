@@ -1,0 +1,110 @@
+name: temp-battle-mana-rank-recovery-r2
+
+on:
+  push:
+    branches:
+      - sol/battle-mana-rank-recovery-r2-20260912
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-clean:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-mana-rank-recovery-r2-20260912
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Restore formal later-round rank Mana recovery
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          html_path = Path('browser/GAMEROAD.html')
+          s = html_path.read_text(encoding='utf-8')
+          helper = "function recoverRoundStartManaByPlacement(m){for(const row of currentPlacementRanks(m)){const gain=Math.max(1,Number(row.rank)||1),p=row.player,max=Math.max(0,Number(p.manaMax)||10);const before=Math.max(0,Math.min(max,Number(p.manaCurrent)||0)),after=Math.min(max,before+gain);p.manaCurrent=after;log(`${p.name}：${gain}位のためマナ回復+${after-before}（${after}/${max}）。`)}}"
+          current_next = "function nextRound(){const m=state.match;m.lastBattleResolution=null;m.round++;m.phase='plan';m.activeId=null;m.target=null;m.battlePresentation=null;m.busy=false;m.players.forEach(p=>p.plan=null);initRoundRuntime(m);log(`第${m.round}巡。行動を予約します。`);renderBattle()}"
+          fixed_next = "function nextRound(){const m=state.match;m.lastBattleResolution=null;m.round++;m.phase='plan';m.activeId=null;m.target=null;m.battlePresentation=null;m.busy=false;m.players.forEach(p=>p.plan=null);recoverRoundStartManaByPlacement(m);initRoundRuntime(m);log(`第${m.round}巡。行動を予約します。`);renderBattle()}"
+          rank_anchor = "function currentPlacementRanks(m=state.match){const ps=m.players.map(p=>({p,depth:Math.max(...Object.values(p.lanes).map(a=>a.length))})).sort((a,b)=>b.depth-a.depth);let prev=null,rank=0;return ps.map((x,i)=>{if(prev===null||x.depth!==prev)rank=i+1;prev=x.depth;return{player:x.p,rank,depth:x.depth}})}\n\nfunction ranksFFA()"
+          rank_replacement = rank_anchor.replace("\n\nfunction ranksFFA()", "\n" + helper + "\nfunction ranksFFA()")
+
+          if s.count('recoverRoundStartManaByPlacement') != 0:
+              raise SystemExit('fail closed: rank recovery identifier unexpectedly already present')
+          if s.count(current_next) != 1:
+              raise SystemExit(f'fail closed: current nextRound anchor count={s.count(current_next)}')
+          if s.count(rank_anchor) != 1:
+              raise SystemExit(f'fail closed: currentPlacementRanks anchor count={s.count(rank_anchor)}')
+          if s.count('grBattleReplayBegin(state.match);initRoundRuntime(state.match)') != 1:
+              raise SystemExit('fail closed: round-one initial-Mana anchor changed')
+          if 'manaCurrent:7,manaMax:10' not in s:
+              raise SystemExit('fail closed: numeric Mana 7/10 missing')
+          if 'const hand=deck.splice(0,7);' not in s:
+              raise SystemExit('fail closed: initial ordinary hand7 missing')
+          if 'function refill(p){while(p.hand.length<3&&p.deck.length)p.hand.push(p.deck.shift())}' not in s:
+              raise SystemExit('fail closed: refill3 missing')
+
+          s = s.replace(current_next, fixed_next, 1)
+          s = s.replace(rank_anchor, rank_replacement, 1)
+          if s.count('recoverRoundStartManaByPlacement') != 2:
+              raise SystemExit('fail closed: expected one helper + one later-round call')
+          if 'grBattleReplayBegin(state.match);recoverRoundStartManaByPlacement(state.match)' in s:
+              raise SystemExit('fail closed: first playable Mana must remain initialized 7')
+          html_path.write_text(s, encoding='utf-8')
+
+          static_path = Path('tests/browser-static-check.mjs')
+          t = static_path.read_text(encoding='utf-8')
+          stale_block = "  if (/recoverRoundStartManaByPlacement/.test(html) || /位のためマナ回復\\+/.test(html)) {\n    errors.push('superseded rank-based turn-start Mana recovery remains');\n  }\n"
+          if t.count(stale_block) != 1:
+              raise SystemExit(f'fail closed: stale static rejection count={t.count(stale_block)}')
+          t = t.replace(stale_block, '', 1)
+          anchor = "    [/function currentPlacementRanks\\(m=state\\.match\\)/, 'current placement ranking was not made reusable for round income'],\n"
+          positive = anchor + "    [/function recoverRoundStartManaByPlacement\\(m\\)/, 'formal later-round placement Mana recovery is not mounted'],\n    [/function recoverRoundStartManaByPlacement\\(m\\)\\{[\\s\\S]{0,700}p\\.manaCurrent=after;/, 'placement Mana recovery does not clamp and write numeric Mana'],\n    [/grBattleReplayBegin\\(state\\.match\\);initRoundRuntime\\(state\\.match\\)/, 'round one no longer preserves initialized Mana before first play'],\n    [/m\\.players\\.forEach\\(p=>p\\.plan=null\\);recoverRoundStartManaByPlacement\\(m\\);initRoundRuntime\\(m\\)/, 'later rounds do not recover current-rank Mana'],\n"
+          if t.count(anchor) != 1:
+              raise SystemExit(f'fail closed: static resource-contract anchor count={t.count(anchor)}')
+          t = t.replace(anchor, positive, 1)
+          static_path.write_text(t, encoding='utf-8')
+          PY
+          git diff --check
+      - name: Run existing mapped Browser static acceptance
+        run: node tests/browser-static-check.mjs
+      - name: Verify exact Mana semantics
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          checks = {
+            'helper mounted once': s.count('function recoverRoundStartManaByPlacement(m)') == 1,
+            'later round call once': s.count('recoverRoundStartManaByPlacement(m);') == 1,
+            'round one no rank recovery': 'grBattleReplayBegin(state.match);recoverRoundStartManaByPlacement(state.match)' not in s,
+            'initial numeric Mana 7/10 preserved': 'manaCurrent:7,manaMax:10' in s,
+            'initial ordinary hand7 preserved': 'const hand=deck.splice(0,7);' in s,
+            'refill3 preserved': 'function refill(p){while(p.hand.length<3&&p.deck.length)p.hand.push(p.deck.shift())}' in s,
+            'physical Mana helper absent': 'function takeManaByPower(' not in s,
+            'explicit ability payment preserved': 'function payAbility(p,c)' in s,
+            'Honey wake authority preserved': 'function awakeManaFromHoney(' in s,
+          }
+          failed = [k for k,v in checks.items() if not v]
+          print(checks)
+          if failed:
+              raise SystemExit('semantic preservation failed: ' + ', '.join(failed))
+          PY
+      - name: Finalize two-file durable diff
+        shell: bash
+        run: |
+          rm .github/workflows/zz-temp-battle-mana-rank-recovery-r2.yml
+          rm data/preaction-authorizations/BATTLE-MANA-RANK-RECOVERY-R2-20260912T2319-SOL-Q8N4V22.json
+          git add -A
+          actual="$(git diff --cached --name-only | sort)"
+          expected="$(printf '%s\n' '.github/workflows/zz-temp-battle-mana-rank-recovery-r2.yml' 'browser/GAMEROAD.html' 'data/preaction-authorizations/BATTLE-MANA-RANK-RECOVERY-R2-20260912T2319-SOL-Q8N4V22.json' 'tests/browser-static-check.mjs' | sort)"
+          test "$actual" = "$expected" || { echo 'unexpected staged paths'; printf '%s\n' "$actual"; exit 1; }
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Battle: restore formal later-round Mana rank recovery'
+          git push origin HEAD:sol/battle-mana-rank-recovery-r2-20260912

@@ -1,0 +1,24 @@
+{
+  "acquireKey": "BROWSER-CARDS-MOBILE-SAVE-R1-20260912T1728-SOL-Q8N4V1",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "CARDS_MOBILE_SAVE_VISIBLE_PLAYER_PATH_R1",
+  "baseMain": "b754429fcb1cd006517a009f4177ca82dbaafe5f",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1084:N1084",
+  "mutableResources": [
+    "browser/GAMEROAD.html",
+    "tests/browser-full-interaction.spec.mjs",
+    "transient .github/workflows/zz-temp-cards-mobile-save-r1.yml",
+    "transient tools/temp-cards-mobile-save-r1.py"
+  ],
+  "readOnlyDomains": [
+    "Battle",
+    "Road",
+    "gameplay",
+    "rules",
+    "save",
+    "economy",
+    "network",
+    "formal assets"
+  ],
+  "goal": "Make Cards deck Save/Restore reachable at 390x844 via smallest mobile geometry repair, preserving deck semantics and 44px touch targets."
+}

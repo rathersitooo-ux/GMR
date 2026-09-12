@@ -107,7 +107,9 @@ function collectStaticErrors(html) {
     [/id=["']battlePhaseResolutionSlot["']/, 'missing dedicated battle phase resolution slot'],
     [/BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001-R2-DEDICATED-SURFACE/, 'missing dedicated battle phase R2 marker'],
     [/BATTLE-PHASE-R2-CUTIN-HOLD/, 'missing Naki cut-in secrecy hold'],
-    [/\.battle\.dedicatedBattlePhase\s+\.battleMap[^\{]*\{[^\}]*visibility\s*:\s*hidden\s*!important[^\}]*pointer-events\s*:\s*none\s*!important/i, 'battle board is not disabled during dedicated battle phase'],
+    [/\.battle\.dedicatedBattlePhase\s+\.battlePhaseSurface\{[^}]*pointer-events:none!important[^}]*background:transparent!important[^}]*\}/i, 'dedicated battle phase surface is not presentation-only'],
+    [/\.battle\.dedicatedBattlePhase\s+\.battlePhaseBackdrop\{[^}]*display:none!important[^}]*\}/i, 'dedicated battle phase backdrop is still taking over the board'],
+    [/\.battle\.dedicatedBattlePhase\s+\.battlePhaseResolutionSlot\s+\.battleResolution\{[^}]*pointer-events:auto!important[^}]*\}/i, 'dedicated battle resolution controls are not interactive'],
     [/new\s+MutationObserver\(syncShell\)/, 'dedicated battle phase is not observing public battle-resolution DOM'],
     [/GameRoadThreeCharRuntime/, 'Naki cut-in is not using the public character runtime'],
     [/characterId\s*:\s*["']partner\.naki["']/, 'Naki character is not wired to dedicated battle phase'],
@@ -116,6 +118,9 @@ function collectStaticErrors(html) {
   ];
   for (const [pattern, message] of dedicatedBattleContracts) {
     if (!pattern.test(html)) errors.push(message);
+  }
+  if (/\.battle\.dedicatedBattlePhase\s+\.battleMap[^\{]*\{[^\}]*visibility\s*:\s*hidden\s*!important/i.test(html)) {
+    errors.push('battle board remains hidden during dedicated battle phase');
   }
 
   errors.push(...collectHomeVisualShellErrors(html));

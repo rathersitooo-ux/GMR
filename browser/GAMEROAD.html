@@ -3725,8 +3725,9 @@ window.__GAMEROAD_MANA_PARTNER_R8__={contract:CONTRACT,render,snapshot:()=>{cons
 /* BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001-R2-DEDICATED-SURFACE
    Presentation only. resolveBattle remains the gameplay authority. */
 .battlePhaseSurface[hidden]{display:none!important}
-.battle.dedicatedBattlePhase .battleMap,.battle.dedicatedBattlePhase .battleDrawer{visibility:hidden!important;pointer-events:none!important}
-.battle.dedicatedBattlePhase .battlePhaseSurface{display:block!important;visibility:visible!important;pointer-events:auto!important}
+.battle.dedicatedBattlePhase .battlePhaseSurface{display:block!important;visibility:visible!important;pointer-events:none!important;background:transparent!important}
+.battle.dedicatedBattlePhase .battlePhaseBackdrop{display:none!important}
+.battle.dedicatedBattlePhase .battlePhaseResolutionSlot .battleResolution{pointer-events:auto!important}
 .battlePhaseSurface{position:absolute;inset:0;z-index:120;overflow:hidden;background:radial-gradient(circle at 22% 47%,rgba(117,44,132,.38),transparent 31%),radial-gradient(circle at 78% 50%,rgba(211,168,62,.16),transparent 34%),linear-gradient(118deg,#080914 0%,#171126 42%,#071714 100%);isolation:isolate}
 .battlePhaseBackdrop{position:absolute;inset:-8%;pointer-events:none;background:linear-gradient(105deg,transparent 0 34%,rgba(255,255,255,.045) 34.5% 35%,transparent 35.5% 62%,rgba(213,168,62,.07) 62.5% 63%,transparent 63.5%),repeating-linear-gradient(112deg,transparent 0 38px,rgba(255,255,255,.018) 39px 40px);transform:skewX(-5deg)}
 .battlePhaseHeader{position:absolute;z-index:4;left:4%;right:4%;top:4%;height:54px;display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:14px;border-bottom:1px solid rgba(255,232,173,.38);letter-spacing:.09em}.battlePhaseHeader span{font-size:clamp(17px,2.3vw,32px);font-weight:1000;color:#fff0ae}.battlePhaseHeader b{font-size:12px;color:#f5fff9}.battlePhaseHeader small{justify-self:end;font-size:10px;color:#c9d9d4}

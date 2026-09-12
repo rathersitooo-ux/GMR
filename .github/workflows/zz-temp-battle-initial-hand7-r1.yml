@@ -1,0 +1,85 @@
+name: temp-battle-initial-hand7-r1
+
+on:
+  push:
+    branches:
+      - sol/battle-initial-hand7-live-r1-20260912
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-clean:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-initial-hand7-live-r1-20260912
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply current initial ordinary hand seven
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          html_path = Path('browser/GAMEROAD.html')
+          s = html_path.read_text(encoding='utf-8')
+          old = 'const hand=deck.splice(0,3);'
+          new = 'const hand=deck.splice(0,7);'
+          refill = 'function refill(p){while(p.hand.length<3&&p.deck.length)p.hand.push(p.deck.shift())}'
+          shield = 'const shields=deck.splice(0,3);'
+          if s.count(old) != 1: raise SystemExit(f'fail closed: expected one old initial-hand initializer, got {s.count(old)}')
+          if s.count(new) != 0: raise SystemExit(f'fail closed: current initial-hand seven already present unexpectedly: {s.count(new)}')
+          if s.count(refill) != 1: raise SystemExit(f'fail closed: post-start refill target-three seam count={s.count(refill)}')
+          if s.count(shield) != 1: raise SystemExit(f'fail closed: Shield3 initializer count={s.count(shield)}')
+          if 'recoverRoundStartManaByPlacement' in s or '位のためマナ回復+' in s: raise SystemExit('fail closed: superseded passive Mana recovery reappeared before patch')
+          s = s.replace(old, new, 1)
+          html_path.write_text(s, encoding='utf-8')
+          static_path = Path('tests/browser-static-check.mjs')
+          t = static_path.read_text(encoding='utf-8')
+          old_contract = "    [/const hand=deck\\.splice\\(0,3\\);/, 'fresh Battle ordinary hand is not initialized to three'],"
+          new_contract = "    [/const hand=deck\\.splice\\(0,7\\);/, 'fresh Battle ordinary hand is not initialized to seven'],"
+          if t.count(old_contract) != 1: raise SystemExit(f'fail closed: stale initial-hand static contract count={t.count(old_contract)}')
+          if t.count(new_contract) != 0: raise SystemExit('fail closed: initial-hand seven static contract already exists unexpectedly')
+          t = t.replace(old_contract, new_contract, 1)
+          static_path.write_text(t, encoding='utf-8')
+          PY
+          git diff --check
+      - name: Run existing Browser static acceptance
+        run: node tests/browser-static-check.mjs
+      - name: Verify initial-seven and refill-three separation
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s = Path('browser/GAMEROAD.html').read_text(encoding='utf-8')
+          t = Path('tests/browser-static-check.mjs').read_text(encoding='utf-8')
+          checks = {
+            'match-start ordinary hand seven': s.count('const hand=deck.splice(0,7);') == 1,
+            'old initial hand three removed': 'const hand=deck.splice(0,3);' not in s,
+            'post-start refill remains three': s.count('function refill(p){while(p.hand.length<3&&p.deck.length)p.hand.push(p.deck.shift())}') == 1,
+            'Shield initializer remains three': s.count('const shields=deck.splice(0,3);') == 1,
+            'passive turn-start Mana remains absent': 'recoverRoundStartManaByPlacement' not in s and '位のためマナ回復+' not in s,
+            'static gate expects initial seven': "[/const hand=deck\\.splice\\(0,7\\);/, 'fresh Battle ordinary hand is not initialized to seven']" in t,
+            'static gate retains refill three': "[/function refill\\(p\\)\\{while\\(p\\.hand\\.length<3&&p\\.deck\\.length\\)p\\.hand\\.push\\(p\\.deck\\.shift\\(\\)\\)\\}/, 'post-use refill target is no longer three']" in t,
+          }
+          failed = [k for k,v in checks.items() if not v]
+          print(checks)
+          if failed: raise SystemExit('semantic preservation failed: ' + ', '.join(failed))
+          PY
+      - name: Finalize two-file durable diff
+        shell: bash
+        run: |
+          rm .github/workflows/zz-temp-battle-initial-hand7-r1.yml
+          rm data/preaction-authorizations/BATTLE-INITIAL-HAND7-LIVE-R1-20260912T1740-SOL-Q8N4V21.json
+          git add -A
+          actual="$(git diff --cached --name-only | sort)"
+          expected="$(printf '%s\n' '.github/workflows/zz-temp-battle-initial-hand7-r1.yml' 'browser/GAMEROAD.html' 'data/preaction-authorizations/BATTLE-INITIAL-HAND7-LIVE-R1-20260912T1740-SOL-Q8N4V21.json' 'tests/browser-static-check.mjs' | sort)"
+          test "$actual" = "$expected" || { echo 'unexpected staged paths'; printf '%s\n' "$actual"; exit 1; }
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Battle: match-start ordinary hand to seven'
+          git push origin HEAD:sol/battle-initial-hand7-live-r1-20260912

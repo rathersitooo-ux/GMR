@@ -125,7 +125,7 @@ function collectStaticErrors(html) {
 
   errors.push(...collectHomeVisualShellErrors(html));
   const correctedBattleResourceContracts = [
-    [/const hand=deck\.splice\(0,3\);/, 'fresh Battle ordinary hand is not initialized to three'],
+    [/const hand=deck\.splice\(0,7\);/, 'fresh Battle ordinary hand is not initialized to seven'],
     [/function refill\(p\)\{while\(p\.hand\.length<3&&p\.deck\.length\)p\.hand\.push\(p\.deck\.shift\(\)\)\}/, 'post-use refill target is no longer three'],
     [/manaCurrent:7,manaMax:10,honey:0,chip:/, 'numeric Mana 7/10 and player-owned Honey balance are not initialized'],
     [/function currentPlacementRanks\(m=state\.match\)/, 'current placement ranking was not made reusable for round income'],

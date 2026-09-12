@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ROAD-MOVE-PACKAGE-R34-20260912T1708-SOL-Q7N4V12",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "acquireKey": "ROAD-MOVE-PACKAGE-R34-20260912T1708-SOL-Q7N4V12",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R30_12_OF_12_RED_PLUS_R33_PACKAGE_DEPENDENCY_CURRENT_MAIN_79C1644",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R33_EXISTING_CORE_PACKAGE_SCOPE_AND_CURRENT_BUILD_DIRECT_READBACK",
+  "proceedToken": "PROCEED|ROAD-MOVE-PACKAGE-R34-20260912T1708-SOL-Q7N4V12|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|road-package-prerequisite|build-only|active-lease",
+  "authorizationBaseSha": "79c1644bc864ea41e6725c84d68d10893afd4925",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "ROAD_MOVE_BIDIRECTIONAL_LIVE",
+  "leaseAcquireKey": "ROAD-MOVE-PACKAGE-R34-20260912T1708-SOL-Q7N4V12",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 17:08 JST",
+  "leaseUntilJst": "2026-09-12 18:08 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1067:L1067",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/road-move-package-r34-20260912 from exact current main 79c1644bc864ea41e6725c84d68d10893afd4925; deploy/cloudflare/scripts/build.mjs ONLY existing browser/road-move-compatibility-core.mjs ARTIFACT_SPECS registration; own transient data/preaction-authorizations/ROAD-MOVE-PACKAGE-R34-20260912T1708-SOL-Q7N4V12.json only. READ_ONLY browser/GAMEROAD.html; browser/road-move-compatibility-core.mjs; deploy/cloudflare/tests/build.test.mjs; Battle card/Janken/target/Shield/109/gameplay/rules/save/economy/network.",
+  "solutionSignature": "ROAD_MOVE_EXISTING_COMPATIBILITY_CORE_PUBLIC_PACKAGE_BIND_V1",
+  "reuseDisposition": "REUSE_AS_IS",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R33_EXISTING_CORE_IS_CURRENT_AND_HTML_IMPORT_REQUIRES_PUBLIC_ARTIFACT",
+  "solutionSearchEvidence": [
+    "browser/road-move-compatibility-core.mjs already exists and is current; no second compatibility core is needed.",
+    "Current deploy/cloudflare/scripts/build.mjs has no road-move-compatibility-core artifact entry.",
+    "Current browser/GAMEROAD.html still exhibits the Road-first RED but is actively owned by a separate Mana correction, so this slice mutates build only.",
+    "Packaging the existing core is a direct prerequisite for the later live HTML import and introduces no gameplay authority or state."
+  ],
+  "scope": [
+    "deploy/cloudflare/scripts/build.mjs"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/scripts/build.mjs"
+  ]
+}

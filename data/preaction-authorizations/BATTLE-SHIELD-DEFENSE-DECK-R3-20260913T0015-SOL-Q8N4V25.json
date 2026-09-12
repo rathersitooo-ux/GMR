@@ -1,0 +1,46 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SHIELD-DEFENSE-DECK-R3-20260913T0015-SOL-Q8N4V25",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_SHIELD_DEFENSE_DECK_R1",
+  "acquireKey": "BATTLE-SHIELD-DEFENSE-DECK-R3-20260913T0015-SOL-Q8N4V25",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_SHIELD_DECK_REPLENISH_CORRECTION_PLUS_R2_VALIDATED_PRODUCT_DONOR_20260913T0015JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R2_PRODUCT_HEAD_085D5F57_BOUNDED_WRITER_STATIC_FOCUSED_PASS_WITH_BRANCH_HISTORY_FAILURE_ISOLATED",
+  "proceedToken": "PROCEED|BATTLE-SHIELD-DEFENSE-DECK-R3-20260913T0015-SOL-Q8N4V25|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|shield-defense-deck-replenish|clean-rebuild|active-lease",
+  "authorizationBaseSha": "cff4d7ac2882cb097347822df246d315938b1016",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_SHIELD_DEFENSE_DECK_R1",
+  "leaseAcquireKey": "BATTLE-SHIELD-DEFENSE-DECK-R3-20260913T0015-SOL-Q8N4V25",
+  "leaseSnapshotReadbackAtJst": "2026-09-13 00:15 JST",
+  "leaseUntilJst": "2026-09-13 01:15 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1308:N1308",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main cff4d7ac2882cb097347822df246d315938b1016; browser/GAMEROAD.html blob 7949d3fc56f0010d31543783e126bba7061f23ad; tests/browser-static-check.mjs Shield regression firewall; own transient data/preaction-authorizations/BATTLE-SHIELD-DEFENSE-DECK-R3-20260913T0015-SOL-Q8N4V25.json; own transient .github/workflows/zz-temp-battle-shield-defense-deck-r3.yml; own branch/PR/check/readback. All tools/temp helpers and Mana/Honey/Road/janken/target/GOAL/save/economy/network/deploy build READ_ONLY.",
+  "solutionSignature": "BATTLE_SHIELD_ASSOCIATED_DEFENSE_SLOT_DECK_REPLENISH_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_ROW1374_PLUS_R2_VALIDATED_PRODUCT_DONOR_PLUS_EXACT_MAIN_RESOLVEBATTLE",
+  "solutionSearchEvidence": [
+    "Current authority preserves world Shield L/C/R target identity while superseding physical Shield-card identity as the defender Battle card source.",
+    "Fresh main still uses defender.shields[target] as the auto-defense card and replenishes that slot from defender plan/hand, conflicting with current deck replenishment semantics.",
+    "R2 product donor 085d5f57e5a16a8a6d086177a38bfd2405244c5e passed exact-anchor bounded writer, browser-static-check, focused Shield assertions and diff-check; only later out-of-scope transient branch history invalidated its PRE_ACTION gate.",
+    "Current makePlayer already draws three hidden slot cards from deck before initial ordinary hand; retaining this deck-derived slot initialization preserves card conservation and does not infer a new return-to-deck rule.",
+    "Deck exhaustion behavior remains unresolved; fail closed and do not invent reshuffle or graveyard behavior.",
+    "No second Battle/Shield engine, store, or schema migration is introduced."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    ".github/workflows/zz-temp-battle-shield-defense-deck-r3.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    ".github/workflows/zz-temp-battle-shield-defense-deck-r3.yml"
+  ]
+}

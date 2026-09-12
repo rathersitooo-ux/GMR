@@ -1,4 +1,5 @@
 name: temp-title-boot-live-bind-r9
+# retry transport after correcting the canonical A:L lease readback pointer
 
 on:
   push:

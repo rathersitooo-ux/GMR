@@ -90,6 +90,7 @@ function addStyle(document) {
 [${SHELL_ATTR}="1"] .grBattleHudLoad small{font-size:clamp(8px,.72vw,10px);font-weight:900;letter-spacing:.12em;opacity:.72}
 [${SHELL_ATTR}="1"] .grBattleHudLoad b{font-size:clamp(14px,1.6vw,20px);line-height:1.1}
 [${CURRENT_ACTION_ATTR}]{position:absolute;z-index:8;top:clamp(206px,34vh,264px);left:50%;transform:translateX(-50%);max-width:min(42vw,420px);padding:5px 10px;border:1px solid rgba(245,248,225,.48);border-radius:999px;background:rgba(4,28,24,.80);box-shadow:0 6px 18px rgba(0,0,0,.24);pointer-events:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f8fbeb;text-shadow:0 2px 8px rgba(0,0,0,.72);font-size:clamp(11px,1vw,14px);font-weight:900;letter-spacing:.05em}
+[${CURRENT_ACTION_ATTR}][data-phase="settle"]{max-width:min(76vw,620px)}
 [${SHELL_ATTR}="1"] [${PLAN_SLOT_ATTR}]{position:absolute;inset:0;z-index:2;min-width:0;min-height:0}
 [${SHELL_ATTR}="1"] #battlePhaseSurface{position:absolute;inset:0;z-index:3;overflow:hidden;background:radial-gradient(ellipse at 16% 17%,rgba(238,249,221,.27),transparent 35%),radial-gradient(ellipse at 79% 25%,rgba(176,211,176,.13),transparent 34%),linear-gradient(180deg,rgba(130,188,178,.42) 0%,rgba(111,168,129,.32) 35%,rgba(69,130,84,.42) 59%,rgba(31,79,56,.69) 100%)}
 [${SHELL_ATTR}="1"] #battlePhaseSurface::before{content:"";position:absolute;z-index:-2;left:-9%;right:-8%;top:36%;bottom:-29%;clip-path:polygon(0 45%,9% 39%,18% 35%,28% 38%,39% 31%,49% 26%,60% 30%,71% 25%,81% 29%,91% 24%,100% 30%,100% 100%,0 100%);background:radial-gradient(ellipse at 19% 27%,rgba(150,190,111,.31),transparent 31%),radial-gradient(ellipse at 68% 24%,rgba(129,174,101,.20),transparent 30%),linear-gradient(180deg,rgba(113,162,92,.73),rgba(65,119,72,.89) 48%,rgba(31,77,55,.98));border-top:1px solid rgba(232,251,216,.18);transform:perspective(700px) rotateX(4deg);transform-origin:50% 0}
@@ -325,7 +326,14 @@ function writeCurrentActionCue(cue, model) {
     detail = winners.join('・');
   } else if (phase === 'settle' && model?.boardReturn) {
     const target = targets[0] || participantLabelById(model, model.boardReturn.opponentId);
-    detail = [target, `Shield ${model.boardReturn.shieldLane}`].filter(Boolean).join(' / ');
+    const causal = model?.causalReturn;
+    const handKey = typeof causal?.sourceCard?.jankenHand === 'string'
+      ? causal.sourceCard.jankenHand.trim().toLowerCase()
+      : '';
+    const hand = LOAD_JANKEN_LABELS[handKey] ?? causal?.sourceCard?.jankenHand ?? '';
+    const sourceCard = typeof causal?.sourceCard?.cardId === 'string' ? causal.sourceCard.cardId.trim() : '';
+    const destination = [target, `Shield ${model.boardReturn.shieldLane}`].filter(Boolean).join(' / ');
+    detail = sourceCard ? `${sourceCard}${hand ? `（${hand}）` : ''} → 解決 → ${destination}` : destination;
   }
 
   const text = phaseLabel ? `今：${phaseLabel}${detail ? ` ${detail}` : ''}` : '';
@@ -334,6 +342,9 @@ function writeCurrentActionCue(cue, model) {
   setData(cue, 'phase', text ? phase : null);
   setData(cue, 'eventId', text ? model?.eventId : null);
   setData(cue, 'boardReturnDestination', model?.boardReturn?.destinationKey ?? null);
+  setData(cue, 'causalTraceKey', model?.causalReturn?.traceKey ?? null);
+  setData(cue, 'causalCardId', model?.causalReturn?.sourceCard?.cardId ?? null);
+  setData(cue, 'causalJanken', model?.causalReturn?.sourceCard?.jankenHand ?? null);
   return text;
 }
 
@@ -613,6 +624,23 @@ export function mountBattleScreenExternalSurface(global = globalThis, options = 
 
   function render(model, hudSnapshot = null) {
     if (destroyed) throw new Error('BATTLE_SCREEN_RUNTIME_DESTROYED');
+
+    // Rejected/stale input must not leave the previous accepted return highlighted.
+    writeCurrentActionCue(currentActionCue, null);
+    setData(shell, 'boardReturnDestination', null);
+    setData(phaseSurface, 'battleBoardReturnDestination', null);
+    setData(resolutionSurface, 'battleBoardReturnDestination', null);
+    setData(resolutionSurface, 'battleBoardReturnShieldRef', null);
+    for (const view of lanes) {
+      setData(view.shieldRail, 'boardReturnParticipant', null);
+      for (const link of view.shieldRail.children ?? []) {
+        const slot = link.getAttribute?.(SHIELD_SLOT_ATTR) || link.dataset.roadLane;
+        setData(link, 'boardReturnTarget', null);
+        setData(link, 'boardReturnEventId', null);
+        setData(link, 'boardReturnDestination', null);
+        link.setAttribute?.('aria-label', `Shield ${slot} → ROAD ${slot}`);
+      }
+    }
     const audit = auditBattleScreenModel(model);
     if (!audit.ok) throw new TypeError(`BATTLE_SCREEN_MODEL_REJECTED:${audit.defects.join(',')}`);
     if (hudSnapshot !== null) renderHud(hudSnapshot);

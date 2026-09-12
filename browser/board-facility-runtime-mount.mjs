@@ -131,8 +131,14 @@ export async function resolveSaasunaCollectiveContext(global = globalThis) {
   return context;
 }
 
-export function partnerConversationProjectionDecision({ screenActive = false } = {}) {
-  return screenActive ? 'conversation' : 'idle';
+export function partnerConversationProjectionDecision({
+  screenActive = false,
+  activeRole = null,
+  selectedPartnerId = null,
+} = {}) {
+  return screenActive && activeRole === 'partner' && selectedPartnerId === 'partner.saasuna'
+    ? 'conversation'
+    : 'idle';
 }
 
 export function createSaasunaEdgeProvider(global = globalThis) {
@@ -257,8 +263,19 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
   const project = () => {
     const screen = document.querySelector('[data-screen="characters"]');
     const roster = document.querySelector('#charRoster');
-    if (!screen || !roster || !screen.classList.contains('active')) return false;
-    if (roster.querySelector('[data-gr-partner-conversation="1"]')) return true;
+    const existing = roster?.querySelector?.('[data-gr-partner-conversation="1"]') ?? null;
+    const activeRole = screen?.querySelector?.('.charRoleTab.on[data-role]')?.dataset?.role ?? null;
+    const selectedPartnerId = global?.GAMEROAD_PARTNER_STATE?.partner?.()?.id ?? null;
+    const projection = partnerConversationProjectionDecision({
+      screenActive: Boolean(screen?.classList?.contains?.('active')),
+      activeRole,
+      selectedPartnerId,
+    });
+    if (!screen || !roster || projection !== 'conversation') {
+      existing?.remove?.();
+      return false;
+    }
+    if (existing) return true;
 
     const surface = document.createElement('section');
     surface.className = 'grPartnerConversation';
@@ -318,24 +335,24 @@ export function mountSaasunaConversationProductSurface(global = globalThis) {
       }
     });
 
-    roster.replaceChildren(surface);
+    roster.appendChild(surface);
     projectPartnerTeaQuickChoices(global);
-    const charName = document.querySelector('#charName');
-    if (charName) charName.textContent = 'サースナー';
     return true;
   };
 
   const screen = document.querySelector('[data-screen="characters"]');
-  if (screen) {
+  const roster = document.querySelector('#charRoster');
+  if (screen || roster) {
     observer = new MutationObserverCtor(project);
-    observer.observe(screen, { attributes: true, attributeFilter: ['class'] });
+    if (screen) observer.observe(screen, { attributes: true, attributeFilter: ['class'] });
+    if (roster) observer.observe(roster, { childList: true });
   }
   project();
 
   const runtime = Object.freeze({
     version: 'gameroad.partner-conversation-product-mount.v2',
     partnerId: 'partner.saasuna',
-    pickerRequired: false,
+    pickerRequired: true,
     providerReady: provider !== null,
     persistentTranscript: false,
     staticVisual: true,

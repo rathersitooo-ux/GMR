@@ -67,7 +67,7 @@ jobs:
           c = c.replace(old_friend, new_friend, 1)
 
           # Old Battle HUD orb rack becomes number-only.
-          r10_start = c.index("const total=Array.isArray(me.mana)?me.mana.length:0,")
+          r10_start = c.index("const total=Array.isArray(me.mana)?me.manaMax:0,")
           r10_end = c.index("const ex=document.getElementById('dockEx')", r10_start)
           r10_numeric = "const total=Math.max(1,Number(me.manaMax)||10),current=Math.max(0,Math.min(total,Number(me.manaCurrent)||0)),ml=document.getElementById('dockManaLabel');if(ml)ml.textContent='マナ '+current+'/'+total;\n  "
           c = c[:r10_start] + r10_numeric + c[r10_end:]

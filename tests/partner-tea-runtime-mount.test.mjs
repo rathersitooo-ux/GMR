@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS,
   createPartnerConversationHubInput,
+  currentPartnerCostumeServices,
   mountPartnerTeaQuickChoiceRuntime,
   partnerConversationHubCanDispatch,
   partnerConversationHubProjectionPlan,
@@ -206,14 +207,14 @@ test('Partner Hub plan composes the current Shell without inventing conversation
   assert.equal(plan.saveMutationAllowed, false);
   assert.equal(plan.gameplayMutationAllowed, false);
   assert.equal(plan.canonMutationAllowed, false);
-  assert.deepEqual(plan.allowedActions, ['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'BACK_HUB']);
+  assert.deepEqual(plan.allowedActions, ['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'OPEN_COSTUME', 'BACK_HUB']);
   assert.equal(Object.isFrozen(plan), true);
 });
 
-test('Partner Hub dispatcher exposes only detail, conversation and return-to-hub actions', () => {
-  assert.deepEqual(PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS, ['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'BACK_HUB']);
+test('Partner Hub dispatcher exposes detail, conversation, costume gate and return-to-hub actions', () => {
+  assert.deepEqual(PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS, ['OPEN_ACTIVE_DETAIL', 'OPEN_CONVERSATION', 'OPEN_COSTUME', 'BACK_HUB']);
   for (const action of PARTNER_CONVERSATION_HUB_ALLOWED_ACTIONS) assert.equal(partnerConversationHubCanDispatch(action), true);
-  for (const action of ['OPEN_LIST', 'OPEN_COSTUME', 'OPEN_FORMATION', 'OPEN_STRATEGY', 'OPEN_DIALOGUE_FEEDBACK', 'OPEN_TEA']) {
+  for (const action of ['OPEN_LIST', 'OPEN_FORMATION', 'OPEN_STRATEGY', 'OPEN_DIALOGUE_FEEDBACK', 'OPEN_TEA']) {
     assert.equal(partnerConversationHubCanDispatch(action), false);
   }
   assert.equal(createPartnerConversationHubInput().activePartnerId, 'partner.saasuna');
@@ -447,4 +448,28 @@ test('runtime observes future surfaces and disabled-state changes and fails clos
     MutationObserver: FakeObserver,
     GAMEROAD_PARTNER_TEA_QUICK_CHOICE_RUNTIME: { version: 'foreign' },
   }), /PARTNER_TEA_RUNTIME_GLOBAL_COLLISION/);
+});
+
+
+test('costume services fail closed without explicit catalog and owned authority', () => {
+  assert.equal(currentPartnerCostumeServices({}), null);
+  assert.equal(partnerConversationHubCanDispatch('OPEN_COSTUME'), true);
+});
+
+test('costume services reuse the main-save bridge instead of a second store', async () => {
+  let profiles={p1:{equipment:{shoes:null,coordinate:null,accessory:null}}};
+  const services=currentPartnerCostumeServices({
+    GAMEROAD_PARTNER_COSTUME_MAIN_SAVE:{
+      getSelectedPartnerId:()=> 'p1',
+      getPartnerProfiles:()=> profiles,
+      persistPartnerEquipment:async({partnerId,equipment})=>{profiles={...profiles,[partnerId]:{equipment}};},
+    },
+    GAMEROAD_PARTNER_COSTUME_CATALOG:{c1:{id:'c1',category:'coord',label:'衣装1'}},
+    GAMEROAD_PARTNER_COSTUME_OWNED_ITEM_IDS_BY_PARTNER:{p1:['c1']},
+  });
+  assert.ok(services);
+  const before=await services.loadAuthoritativeSnapshot();
+  assert.deepEqual(before.partners.p1.ownedItemIds,['c1']);
+  const after=await services.saveAuthoritativeSelection({partnerId:'p1',selection:{shoes:null,coord:'c1',accessory:null},requestId:'r1'});
+  assert.equal(after.partners.p1.savedSelection.coord,'c1');
 });

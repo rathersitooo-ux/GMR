@@ -44,23 +44,42 @@ jobs:
           if 'manaCurrent:7,manaMax:10' not in s:
               raise SystemExit('fail closed: numeric Mana 7/10 changed unexpectedly')
           p.write_text(s, encoding='utf-8')
+
+          sp = Path('tests/browser-static-check.mjs')
+          t = sp.read_text(encoding='utf-8')
+          stale_messages = [
+              'round-start placement Mana recovery is not mounted',
+              'round-start placement Mana recovery does not clamp and write numeric Mana',
+              'round one does not recover current-rank Mana before play',
+              'later rounds do not recover current-rank Mana',
+          ]
+          for marker in stale_messages:
+              count = t.count(marker)
+              if count != 1:
+                  raise SystemExit(f'fail closed: static assertion marker {marker!r} count={count}')
+          lines = [line for line in t.splitlines() if not any(marker in line for marker in stale_messages)]
+          t = '\n'.join(lines) + '\n'
+          anchor = "  for (const [pattern, message] of correctedBattleResourceContracts) {\n    if (!pattern.test(html)) errors.push(message);\n  }\n"
+          replacement = anchor + "  if (/recoverRoundStartManaByPlacement/.test(html) || /位のためマナ回復\\+/.test(html)) {\n    errors.push('superseded rank-based turn-start Mana recovery remains');\n  }\n"
+          if t.count(anchor) != 1:
+              raise SystemExit(f'fail closed: static contract anchor count={t.count(anchor)}')
+          t = t.replace(anchor, replacement, 1)
+          sp.write_text(t, encoding='utf-8')
           PY
           git diff --check
       - name: Focused Mana regression and browser static check
         run: |
           node --test tests/browser-next-round-mana-recovery-check.mjs
           node tests/browser-static-check.mjs
-      - name: Finalize durable two-file diff
+      - name: Finalize durable product and acceptance diff
         shell: bash
         run: |
           rm .github/workflows/zz-temp-battle-mana-no-passive-r1.yml
           rm data/preaction-authorizations/BATTLE-MANA-NO-PASSIVE-RECOVERY-R1-20260912T1649-SOL-Q8N4V16.json
           git add -A
-          names="$(git diff --cached --name-only | sort | tr '\n' ' ')"
-          case "$names" in
-            *"browser/GAMEROAD.html"*"data/preaction-authorizations/BATTLE-MANA-NO-PASSIVE-RECOVERY-R1-20260912T1649-SOL-Q8N4V16.json"*".github/workflows/zz-temp-battle-mana-no-passive-r1.yml"*) ;;
-            *) echo "unexpected staged paths: $names"; exit 1;;
-          esac
+          actual="$(git diff --cached --name-only | sort)"
+          expected="$(printf '%s\n' '.github/workflows/zz-temp-battle-mana-no-passive-r1.yml' 'browser/GAMEROAD.html' 'data/preaction-authorizations/BATTLE-MANA-NO-PASSIVE-RECOVERY-R1-20260912T1649-SOL-Q8N4V16.json' 'tests/browser-static-check.mjs' | sort)"
+          test "$actual" = "$expected" || { echo "unexpected staged paths"; printf '%s\n' "$actual"; exit 1; }
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'Battle: turn-start passive Mana recovery to zero'

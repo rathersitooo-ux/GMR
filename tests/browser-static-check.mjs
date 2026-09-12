@@ -148,6 +148,7 @@ function collectStaticErrors(html) {
   if (html.includes("使用シールドの同位置補充に使う札を1枚選びます。")) errors.push('legacy hand-selected Shield replenishment remains');
   if (html.includes('let replenish=defender.plan.battleId')) errors.push('defender planned Battle card is still reused as Shield replenishment');
   if (html.includes('removeHand(defender,replenish)')) errors.push('Shield defense replenishment still consumes defender hand');
+  if (html.includes('for(const p of m.players){if(p.id===defender.id)continue;')) errors.push('defender normal Battle submission is still replaced by the additional Shield Battle card');
   if (/recoverRoundStartManaByPlacement/.test(html) || /位のためマナ回復\+/.test(html)) {
     errors.push('superseded rank-based turn-start Mana recovery remains');
   }

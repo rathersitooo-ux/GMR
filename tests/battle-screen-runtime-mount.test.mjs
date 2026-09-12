@@ -168,6 +168,11 @@ const runtimeStyle = document.getElementById('gameroad-battle-screen-runtime-r1-
 assert.ok(runtimeStyle);
 assert.ok(runtimeStyle.textContent.includes('.grBattleScreenAdoptedOverlay{position:absolute;inset:0;z-index:3'));
 assert.ok(runtimeStyle.textContent.includes('background:transparent;color:inherit;font-family:inherit;pointer-events:none'));
+assert.ok(runtimeStyle.textContent.includes('#battlePhaseSurface{position:static!important;inset:auto!important;z-index:auto!important;overflow:visible!important;background:none!important;pointer-events:none!important;display:contents}'));
+assert.ok(runtimeStyle.textContent.includes('#battlePhaseSurface[hidden]{display:none!important}'));
+assert.ok(runtimeStyle.textContent.includes('[data-gr-battle-screen="1"] #battlePhaseSurface::before,[data-gr-battle-screen="1"] #battlePhaseSurface::after{content:none!important;display:none!important}'));
+assert.equal(runtimeStyle.textContent.includes('#battlePhaseSurface{position:absolute;inset:0;z-index:3;overflow:hidden;background:'), false);
+assert.equal(runtimeStyle.textContent.includes('#battlePhaseSurface::before{content:"";position:absolute;'), false);
 assert.ok(runtimeStyle.textContent.includes('left:40%;height:clamp(86px,15vh,116px);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr)'));
 assert.ok(runtimeStyle.textContent.includes('[data-battle-screen-causal-grid]::before'));
 assert.ok(runtimeStyle.textContent.includes('clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)'));

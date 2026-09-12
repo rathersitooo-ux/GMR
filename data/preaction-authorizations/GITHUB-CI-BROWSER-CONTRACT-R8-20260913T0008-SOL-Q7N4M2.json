@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "GITHUB-CI-BROWSER-CONTRACT-R8-20260913T0008-SOL-Q7N4M2",
+  "taskId": "GITHUB-CI-BROWSER-NODE-001",
+  "workUnitKey": "BROWSER_CI_CONTROL_PLANE_CONTRACT_DRIFT_R8",
+  "acquireKey": "GITHUB-CI-BROWSER-CONTRACT-R8-20260913T0008-SOL-Q7N4M2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R7_ACTUAL_REGRESSION_COMMIT31A78098_AND_CURRENT_IMPOSSIBLE_BFI_PR_HANDSHAKE",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT_R7_CONTROL_PLANE_CONTRACT_PLUS_EXACT_WORKFLOW_READBACK",
+  "proceedToken": "PROCEED|GITHUB-CI-BROWSER-CONTRACT-R8-20260913T0008-SOL-Q7N4M2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|CURRENT_CONTROL_PLANE_CONTRACT_REPAIR",
+  "authorizationBaseSha": "cff4d7ac2882cb097347822df246d315938b1016",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "GITHUB-CI-BROWSER-NODE-001",
+  "leaseWorkUnitKey": "BROWSER_CI_CONTROL_PLANE_CONTRACT_DRIFT_R8",
+  "leaseAcquireKey": "GITHUB-CI-BROWSER-CONTRACT-R8-20260913T0008-SOL-Q7N4M2",
+  "leaseSnapshotReadbackAtJst": "2026-09-13 00:08 JST",
+  "leaseUntilJst": "2026-09-13 01:08 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1303:L1303",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR main@cff4d7ac2882cb097347822df246d315938b1016; new branch work/ci-browser-contract-r8-20260913; mutable only .github/workflows/browser-full-interaction.yml + .github/workflows/gameroad-required-gate.yml + transient data/preaction-authorizations/GITHUB-CI-BROWSER-CONTRACT-R8-20260913T0008-SOL-Q7N4M2.json; own PR/checks/expected-head merge. .github/workflows/required-gate-auto-merge.yml, browser/GAMEROAD.html, tests/browser-runtime-smoke.spec.mjs, product/runtime/gameplay/rules/save/economy/network/formal assets READ_ONLY.",
+  "scope": [
+    ".github/workflows/browser-full-interaction.yml",
+    ".github/workflows/gameroad-required-gate.yml"
+  ],
+  "leaseScope": [
+    ".github/workflows/browser-full-interaction.yml",
+    ".github/workflows/gameroad-required-gate.yml"
+  ]
+}

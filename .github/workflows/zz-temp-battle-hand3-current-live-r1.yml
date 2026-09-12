@@ -1,0 +1,63 @@
+name: TEMP Battle Hand3 Current Live R1
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - name: Apply bounded Hand3 correction
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          html_path = Path('browser/GAMEROAD.html')
+          html = html_path.read_text(encoding='utf-8')
+          old_html = 'const hand=deck.splice(0,7);'
+          new_html = 'const hand=deck.splice(0,3);'
+          if html.count(old_html) != 1:
+              raise SystemExit(f'expected exactly one stale initial7 live anchor, got {html.count(old_html)}')
+          if new_html in html:
+              raise SystemExit('current Hand3 initializer already exists before bounded patch')
+          html = html.replace(old_html, new_html, 1)
+          if old_html in html or html.count(new_html) != 1:
+              raise SystemExit('Hand3 live replacement postcondition failed')
+          html_path.write_text(html, encoding='utf-8')
+
+          test_path = Path('tests/browser-static-check.mjs')
+          test = test_path.read_text(encoding='utf-8')
+          old_test = "    [/const hand=deck\\.splice\\(0,7\\);/, 'fresh Battle ordinary hand is not initialized to seven'],"
+          new_test = "    [/const hand=deck\\.splice\\(0,3\\);/, 'fresh Battle ordinary hand is not initialized to three'],"
+          if test.count(old_test) != 1:
+              raise SystemExit(f'expected exactly one stale initial7 static contract, got {test.count(old_test)}')
+          if new_test in test:
+              raise SystemExit('current Hand3 static contract already exists before bounded patch')
+          test = test.replace(old_test, new_test, 1)
+          if old_test in test or test.count(new_test) != 1:
+              raise SystemExit('Hand3 static replacement postcondition failed')
+          test_path.write_text(test, encoding='utf-8')
+          PY
+      - name: Focused static acceptance
+        run: node tests/browser-static-check.mjs
+      - name: Commit bounded product delta
+        shell: bash
+        run: |
+          if git diff --quiet -- browser/GAMEROAD.html tests/browser-static-check.mjs; then
+            echo 'No bounded product diff produced' >&2
+            exit 1
+          fi
+          git config user.name gameroad-sol
+          git config user.email gameroad-sol@users.noreply.github.com
+          git add browser/GAMEROAD.html tests/browser-static-check.mjs
+          git diff --cached --check
+          git commit -m 'Battle: current手札を毎ターン3枚へ統一'
+          git push origin "HEAD:${GITHUB_REF_NAME}"

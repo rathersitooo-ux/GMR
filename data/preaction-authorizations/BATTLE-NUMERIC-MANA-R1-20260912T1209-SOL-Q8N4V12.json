@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-NUMERIC-MANA-R1-20260912T1209-SOL-Q8N4V12",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_NUMERIC_MANA_RESOURCE_HUD_R1",
+  "acquireKey": "BATTLE-NUMERIC-MANA-R1-20260912T1209-SOL-Q8N4V12",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PR1558_FOCUSED_NUMERIC_MANA_TESTS_PASS_CONTROLPLANE_ONLY_FAILURE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "FOCUSED_RUN_34669743851_JOB_103488731646_PASS",
+  "proceedToken": "PROCEED|BATTLE-NUMERIC-MANA-R1-20260912T1209-SOL-Q8N4V12|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-resource-hud|numeric-mana|active-lease",
+  "authorizationBaseSha": "46976be07b7dc89569c5a9b5eeca0e0068542399",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_NUMERIC_MANA_RESOURCE_HUD_R1",
+  "leaseAcquireKey": "BATTLE-NUMERIC-MANA-R1-20260912T1209-SOL-Q8N4V12",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 12:16 JST",
+  "leaseUntilJst": "2026-09-12 13:09 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1059:L1059",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean recovery branch sol/battle-numeric-mana-r1c-20260912 from exact main 46976be07b7dc89569c5a9b5eeca0e0068542399; browser/battle-critical-resource-hud-runtime.mjs; browser/battle-critical-resource-hud-live-adapter.mjs; tests/battle-critical-resource-hud-runtime.test.mjs; tests/battle-critical-resource-hud-live-adapter.test.mjs; own transient data/preaction-authorizations/BATTLE-NUMERIC-MANA-R1-20260912T1209-SOL-Q8N4V12.json only. Donor PR#1558/#1559 branches READ_ONLY. browser/GAMEROAD.html READ_ONLY while ROAD-MOVE-RUNTIME-R33 owns it through 12:24 JST. gameplay/rules/Shield/Honey/Chip/save/economy/network READ_ONLY.",
+  "solutionSignature": "BATTLE_NUMERIC_MANA_CURRENT_MAX_NO_PHYSICAL_IDENTITY_R1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_RESOURCE_HUD_PLUS_LIVE_ADAPTER_AND_PR1558_FOCUSED_PASS",
+  "solutionSearchEvidence": [
+    "Existing battle-critical-resource-hud runtime is the current Battle critical-resource presentation surface; no second HUD is needed.",
+    "Existing battle-critical-resource-hud live adapter is the current caller-owned projection seam; no second Mana store or engine is needed.",
+    "PR #1558 already exercised the exact intended four-file numeric Mana diff and its two focused Node suites passed.",
+    "The donor failures were control-plane only before conventional product tests: first missing first-commit PRE_ACTION, then an incorrect snapshot witness range.",
+    "Numeric Mana projection accepts only explicit caller manaCurrent/manaMax and does not infer from legacy physical Mana arrays or card identities.",
+    "browser/GAMEROAD.html remains read-only until the current Road owner releases; physical deck extraction removal is a downstream live integration slice."
+  ],
+  "scope": [
+    "browser/battle-critical-resource-hud-runtime.mjs",
+    "browser/battle-critical-resource-hud-live-adapter.mjs",
+    "tests/battle-critical-resource-hud-runtime.test.mjs",
+    "tests/battle-critical-resource-hud-live-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-critical-resource-hud-runtime.mjs",
+    "browser/battle-critical-resource-hud-live-adapter.mjs",
+    "tests/battle-critical-resource-hud-runtime.test.mjs",
+    "tests/battle-critical-resource-hud-live-adapter.test.mjs"
+  ]
+}

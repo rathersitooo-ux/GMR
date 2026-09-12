@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-CONVO-UPSTREAM-TIMEOUT-R18-20260912T1803-SOL-Q6N4P14",
+  "taskId": "PARTNER-FUTURE-LLM-DIALOGUE-RESEARCH-001",
+  "workUnitKey": "PARTNER_CONVERSATION_UPSTREAM_TIMEOUT_R16",
+  "acquireKey": "PARTNER-CONVO-UPSTREAM-TIMEOUT-R18-20260912T1803-SOL-Q6N4P14",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PARTNER-R18-CURRENT-WS-B10A7EA1-NO-ABORT-AND-R17-RESUME",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PARTNER-R18-EXISTING-APPROVED-FALLBACK-PLUS-DETERMINISTIC-ABORT-SIGNAL-TEST",
+  "proceedToken": "PROCEED|PARTNER-CONVO-UPSTREAM-TIMEOUT-R18-20260912T1803-SOL-Q6N4P14|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-path-timeout|lease-snapshot",
+  "authorizationBaseSha": "8d0843e95263f79983b1ed6ca235a6c14df364bf",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-FUTURE-LLM-DIALOGUE-RESEARCH-001",
+  "leaseWorkUnitKey": "PARTNER_CONVERSATION_UPSTREAM_TIMEOUT_R16",
+  "leaseAcquireKey": "PARTNER-CONVO-UPSTREAM-TIMEOUT-R18-20260912T1803-SOL-Q6N4P14",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 18:05 JST",
+  "leaseUntilJst": "2026-09-12 18:48 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1090:L1090",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/partner-convo-upstream-timeout-r18-20260912 from exact current main 8d0843e95263f79983b1ed6ca235a6c14df364bf; deploy/cloudflare/functions/ws.js current blob b10a7ea1d8e71325867cfa7ac92b40d8c23666e8; tests/partner-conversation-core.test.mjs exact timeout transport regression only; transient .github/workflows/zz-temp-partner-convo-timeout-r18.yml; own transient data/preaction-authorizations/PARTNER-CONVO-UPSTREAM-TIMEOUT-R18-20260912T1803-SOL-Q6N4P14.json; own branch/PR/check/readback. READ_ONLY browser/board-facility-runtime-mount.mjs; browser/partner-conversation-core.mjs; deploy/cloudflare/tests/build.test.mjs; Partner persona/dialogue/memory/gameplay/rules/save/economy/network.",
+  "scope": [
+    "deploy/cloudflare/functions/ws.js",
+    "tests/partner-conversation-core.test.mjs",
+    ".github/workflows/zz-temp-partner-convo-timeout-r18.yml"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/functions/ws.js",
+    "tests/partner-conversation-core.test.mjs",
+    ".github/workflows/zz-temp-partner-convo-timeout-r18.yml"
+  ]
+}

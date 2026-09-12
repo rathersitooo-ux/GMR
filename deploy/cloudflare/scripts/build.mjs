@@ -18,7 +18,7 @@ const FORMAL_SELECTED3_SFX_BLOBS = Object.freeze({
   cardPlace: '42bbfa8ea2daaadd237c48287388c7c931cc817e',
 });
 const FORMAL_PARTNER_CONVERSATION_BLOBS = Object.freeze({
-  core: '7ec1af5ffa9f8255a4b64eb5ecc2905d999a59a8',
+  core: '4c389c95de525cffd0a0eafad95ec03dde9d4e90',
   saasunaSource: 'c1fc8e854cd08e3e29649becbc097e83f5ca96c7',
 });
 
@@ -77,6 +77,7 @@ const ARTIFACT_SPECS = Object.freeze([
   { source: 'browser/new-base-hand3-uniform-assignment-policy.mjs', output: 'new-base-hand3-uniform-assignment-policy.mjs', artifact: 'new_base_hand3_uniform_assignment_policy', label: 'New Base Hand3 uniform assignment policy' },
   { source: 'browser/battle-optional-rule-activation-core.mjs', output: 'battle-optional-rule-activation-core.mjs', artifact: 'battle_optional_rule_activation_core', label: 'Battle optional rule activation core' },
   { source: 'browser/battle-new-base-live-consumer-adapter.mjs', output: 'battle-new-base-live-consumer-adapter.mjs', artifact: 'battle_new_base_live_consumer_adapter', label: 'Battle New Base live consumer adapter' },
+  { source: 'browser/road-move-compatibility-core.mjs', output: 'road-move-compatibility-core.mjs', artifact: 'road_move_compatibility_core', label: 'Road move compatibility core' },
   { source: 'browser/battle-compound-attack-preview-runtime.mjs', output: 'battle-compound-attack-preview-runtime.mjs', artifact: 'battle_compound_attack_preview_runtime', label: 'Battle compound attack preview runtime' },
   { source: 'browser/battle-compound-preview-live-consumer-bridge.mjs', output: 'battle-compound-preview-live-consumer-bridge.mjs', artifact: 'battle_compound_preview_live_consumer_bridge', label: 'Battle compound preview live consumer bridge' },
   { source: 'browser/battle-janken-slidepad-live-input-coordinator.mjs', output: 'battle-janken-slidepad-live-input-coordinator.mjs', artifact: 'battle_janken_slidepad_live_input_coordinator', label: 'Battle janken SlidePad live input coordinator' },

@@ -1657,16 +1657,82 @@ test('R13 covers direct plan selectors, reachable-node click, avatar drag, real 
   runtime.assertClean(testInfo);
 });
 
+async function saveBattleDeckThroughVisibleCards(page, testInfo, evidencePrefix) {
+  const cards = await enterCardsFromHome(page);
+  const deckCount = cards.locator('#deckCount');
+  const initialCount = await numericText(deckCount);
+  expect(Number.isFinite(initialCount), 'visible Deck count is numeric').toBeTruthy();
+
+  const candidateIds = await cards
+    .locator('#collectionGrid button.slot.live.cardFace:not(.inDeck)[data-id]')
+    .evaluateAll((nodes) => [...new Set(nodes.map((node) => node.getAttribute('data-id')).filter(Boolean))]);
+  const rejectedCandidateIds = [];
+
+  for (const cardId of candidateIds) {
+    const before = await numericText(deckCount);
+    if (before >= 40) break;
+    const candidate = cards
+      .locator(`#collectionGrid button.slot.live.cardFace:not(.inDeck)[data-id="${cardId}"]:visible`)
+      .first();
+    if ((await candidate.count()) === 0) continue;
+    await candidate.click();
+    const addSelected = cards.locator('#addSelectedCard');
+    await expect(addSelected, `visible add control for ${cardId}`).toBeVisible();
+    await expect(addSelected, `visible add control for ${cardId}`).toBeEnabled();
+    await addSelected.click();
+    await page.waitForTimeout(120);
+    const after = await numericText(deckCount);
+    expect([before, before + 1], `visible deck count after ${cardId}`).toContain(after);
+    if (after === before) rejectedCandidateIds.push(cardId);
+    const closePreview = cards.locator('#r4PreviewClose:visible');
+    if ((await closePreview.count()) > 0) await closePreview.click();
+  }
+
+  if (rejectedCandidateIds.length > 0) {
+    testInfo.annotations.push({
+      type: 'visible-rule-rejection',
+      description: `Current deck rules rejected visible add attempts for ${rejectedCandidateIds.join(', ')}; other visible candidates were used without bypassing rules.`,
+    });
+  }
+
+  await expect(deckCount, 'visible Cards UI reaches a legal 40-card main deck').toHaveText('40');
+  await expect(cards.locator('#exDeckCount')).toHaveText('0');
+
+  const tray = cards.locator('#r4DeckTrayToggle:visible');
+  if ((await tray.count()) > 0 && (await cards.getAttribute('data-deck-drawer')) !== 'open') {
+    await tray.click();
+    await expect(cards).toHaveAttribute('data-deck-drawer', 'open');
+  }
+
+  const saveDeck = cards.locator('#saveDeck');
+  await expect(saveDeck, 'visible Deck Save control').toBeVisible();
+  await expect(saveDeck, 'visible Deck Save control').toBeEnabled();
+  await saveDeck.click();
+  await expect(cards.locator('#deckSaveState')).toHaveText('保存済み');
+  const persisted = await page.evaluate((key) => localStorage.getItem(key) !== null, STORAGE_KEY);
+  expect(persisted, 'visible Deck Save persists through the normal browser storage path').toBeTruthy();
+  await attachStateScreenshot(page, testInfo, `${evidencePrefix}-deck-saved-visible`);
+
+  if ((await tray.count()) > 0 && (await cards.getAttribute('data-deck-drawer')) === 'open') {
+    await tray.click();
+    await expect(cards).not.toHaveAttribute('data-deck-drawer', 'open');
+  }
+  const back = cards.locator('[data-back]:visible').first();
+  await expect(back, 'visible Cards Back control').toBeVisible();
+  await back.click();
+  await expect(page.locator('section[data-screen="home"]')).toBeVisible();
+  return { mainCount: 40, persisted };
+}
+
 // FULLREG R19 visible four-player Honey Hunt route
 test('R19 reaches Result from visible four-player Honey Hunt and returns Home', async ({ page }, testInfo) => {
   test.setTimeout(240_000);
   const runtime = observeRuntimeErrors(page);
   await bootCurrentBrowser(page);
-  const deck = await installLegalBattleDeck(page);
-  expect(deck.main).toHaveLength(40);
-  expect(deck.committed).toBeTruthy();
-  expect(deck.savedValidation.ok).toBeTruthy();
-  testInfo.annotations.push({ type: 'deterministic-precondition', description: 'A legal 40-card deck is installed only to unlock current visible Setup controls. Match mode/content and all match progression use visible controls.' });
+  const deck = await saveBattleDeckThroughVisibleCards(page, testInfo, 'r19-honey-four-player');
+  expect(deck.mainCount).toBe(40);
+  expect(deck.persisted).toBeTruthy();
+  testInfo.annotations.push({ type: 'visible-precondition', description: 'The legal 40-card Deck is reached and saved through visible Cards controls only; no private test API or game-state injection unlocks Setup.' });
 
   const setupGo = visibleOperationGo(page, 'setup');
   await expect(setupGo).toBeVisible();

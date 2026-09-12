@@ -160,9 +160,9 @@ test('Records detail dismiss clears transient selection and restores its opener 
   assert.equal(dismissRecordsMatchDetail(list, panel), false);
 });
 
-test('Records detail consumes safe outside click and Escape without a second state authority', () => {
+test('Records detail lets another rendered row switch directly while outside click and Escape still dismiss', () => {
   const source = readFileSync(new URL('../browser/profile-presentation-runtime-mount.mjs', import.meta.url), 'utf8');
-  assert.match(source, /doc\.addEventListener\('click',[\s\S]*?panel\.contains\(event\.target\)[\s\S]*?event\.preventDefault\(\);[\s\S]*?event\.stopPropagation\(\);[\s\S]*?dismissRecordsMatchDetail\(list, panel\);[\s\S]*?}, true\);/);
+  assert.match(source, /doc\.addEventListener\('click',[\s\S]*?panel\.contains\(event\.target\)[\s\S]*?const row = event\.target\?\.closest\?\.\('\.record'\);[\s\S]*?if \(row && list\.contains\(row\)\) return;[\s\S]*?event\.preventDefault\(\);[\s\S]*?event\.stopPropagation\(\);[\s\S]*?dismissRecordsMatchDetail\(list, panel\);[\s\S]*?}, true\);/);
   assert.match(source, /doc\.addEventListener\('keydown',[\s\S]*?event\.key !== 'Escape'[\s\S]*?dismissRecordsMatchDetail\(list, panel\);[\s\S]*?}, true\);/);
   assert.doesNotMatch(source, /localStorage|sessionStorage/);
 });

@@ -107,7 +107,9 @@ function collectStaticErrors(html) {
     [/id=["']battlePhaseResolutionSlot["']/, 'missing dedicated battle phase resolution slot'],
     [/BROWSER-BATTLE-PHASE-PRESENTATION-INTEGRATION-001-R2-DEDICATED-SURFACE/, 'missing dedicated battle phase R2 marker'],
     [/BATTLE-PHASE-R2-CUTIN-HOLD/, 'missing Naki cut-in secrecy hold'],
-    [/\.battle\.dedicatedBattlePhase\s+\.battleMap[^\{]*\{[^\}]*visibility\s*:\s*hidden\s*!important[^\}]*pointer-events\s*:\s*none\s*!important/i, 'battle board is not disabled during dedicated battle phase'],
+    [/\.battle\.dedicatedBattlePhase\s+\.battlePhaseSurface\{[^}]*pointer-events:none!important[^}]*background:transparent!important[^}]*\}/i, 'dedicated battle phase surface is not presentation-only'],
+    [/\.battle\.dedicatedBattlePhase\s+\.battlePhaseBackdrop\{[^}]*display:none!important[^}]*\}/i, 'dedicated battle phase backdrop is still taking over the board'],
+    [/\.battle\.dedicatedBattlePhase\s+\.battlePhaseResolutionSlot\s+\.battleResolution\{[^}]*pointer-events:auto!important[^}]*\}/i, 'dedicated battle resolution controls are not interactive'],
     [/new\s+MutationObserver\(syncShell\)/, 'dedicated battle phase is not observing public battle-resolution DOM'],
     [/GameRoadThreeCharRuntime/, 'Naki cut-in is not using the public character runtime'],
     [/characterId\s*:\s*["']partner\.naki["']/, 'Naki character is not wired to dedicated battle phase'],
@@ -117,22 +119,33 @@ function collectStaticErrors(html) {
   for (const [pattern, message] of dedicatedBattleContracts) {
     if (!pattern.test(html)) errors.push(message);
   }
+  if (/\.battle\.dedicatedBattlePhase\s+\.battleMap[^\{]*\{[^\}]*visibility\s*:\s*hidden\s*!important/i.test(html)) {
+    errors.push('battle board remains hidden during dedicated battle phase');
+  }
 
   errors.push(...collectHomeVisualShellErrors(html));
   const correctedBattleResourceContracts = [
-    [/const hand=deck\.splice\(0,7\);/, 'fresh Battle ordinary hand is not initialized to seven'],
+    [/const hand=deck\.splice\(0,3\);/, 'fresh Battle ordinary hand is not initialized to three'],
     [/function refill\(p\)\{while\(p\.hand\.length<3&&p\.deck\.length\)p\.hand\.push\(p\.deck\.shift\(\)\)\}/, 'post-use refill target is no longer three'],
-    [/mana,awake:0,honey:0,chip:/, 'player-owned Honey balance is not initialized'],
+    [/manaCurrent:7,manaMax:10,honey:0,chip:/, 'numeric Mana 7/10 and player-owned Honey balance are not initialized'],
     [/function currentPlacementRanks\(m=state\.match\)/, 'current placement ranking was not made reusable for round income'],
-    [/function awardRoundStartHoney\(m\)/, 'round-start Honey income is not mounted'],
-    [/grBattleReplayBegin\(state\.match\);awardRoundStartHoney\(state\.match\);initRoundRuntime\(state\.match\)/, 'round one does not award current-rank Honey before play'],
-    [/m\.players\.forEach\(p=>p\.plan=null\);awardRoundStartHoney\(m\);initRoundRuntime\(m\)/, 'later rounds do not award current-rank Honey'],
-    [/position:p\.position,awake:Number\(p\.awake\)\|\|0,honey:Number\(p\.honey\)\|\|0,mana:/, 'friend projection drops player-owned Honey'],
+    [/function recoverRoundStartManaByPlacement\(m\)/, 'round-start placement Mana recovery is not mounted'],
+    [/function recoverRoundStartManaByPlacement\(m\)\{[\s\S]{0,700}p\.manaCurrent=after;/, 'round-start placement Mana recovery does not clamp and write numeric Mana'],
+    [/grBattleReplayBegin\(state\.match\);recoverRoundStartManaByPlacement\(state\.match\);initRoundRuntime\(state\.match\)/, 'round one does not recover current-rank Mana before play'],
+    [/m\.players\.forEach\(p=>p\.plan=null\);recoverRoundStartManaByPlacement\(m\);initRoundRuntime\(m\)/, 'later rounds do not recover current-rank Mana'],
+    [/position:p\.position,manaCurrent:Number\(p\.manaCurrent\)\|\|0,manaMax:Number\(p\.manaMax\)\|\|10,honey:Number\(p\.honey\)\|\|0,chip:/, 'friend projection drops numeric Mana or player-owned Honey'],
     [/function awakeManaFromHoney\(/, 'Honey Hunt node-Honey Mana wake authority was removed'],
   ];
   for (const [pattern, message] of correctedBattleResourceContracts) {
     if (!pattern.test(html)) errors.push(message);
   }
+  if (/function awardRoundStartHoney\(/.test(html)) errors.push('legacy round-start Honey income remains');
+  if (/function takeManaByPower\(/.test(html) || /\.mana\?*\.length/.test(html) || /Array\.isArray\(me\?*\.mana\)/.test(html)) {
+  errors.push('physical Mana card zone or length-derived Mana remains');
+}
+if (/デッキから置いたトランプカード|show-all-seven-real-mana-slots/.test(html)) {
+  errors.push('physical Mana card identity remains player-facing');
+}
   if (/p\.awake\s*=\s*Math\.min\(\s*p\.mana\.length\s*,\s*p\.awake\s*\+\s*1\s*\)/.test(html)) {
     errors.push('legacy generic no-effect-road Mana +1 wake remains');
   }

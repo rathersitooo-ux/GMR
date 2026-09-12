@@ -46,7 +46,25 @@ const SCREEN_MOTION_KINETICS = Object.freeze({
 export const SCREEN_MOTION_PIECE_SELECTORS = Object.freeze({
   cards: Object.freeze(['.cardsGrid > .collection', '.cardsGrid > .deckBoard']),
   characters: Object.freeze(['.charLayout > .charStage', '.charLayout > .charRoster']),
+  partner: Object.freeze([
+    '.partner-shell-runtime > .partner-shell-title',
+    '.partner-shell-runtime > .partner-shell-active',
+    '.partner-shell-runtime > .partner-shell-idle-readable',
+    '.partner-shell-runtime > .partner-shell-menu',
+    '.partner-shell-runtime > .partner-shell-roster',
+    '.partner-shell-runtime > .partner-shell-detail',
+    '.partner-shell-runtime > .partner-shell-formation',
+    '.partner-shell-runtime > .partner-shell-strategy',
+    '.partner-shell-runtime > .partner-dialogue-feedback',
+    '.partner-shell-runtime > .partner-costume-shell-host',
+    '.partner-shell-runtime > .partner-shell-navigation'
+  ]),
   setup: Object.freeze(['.setupHero', '.setupBox']),
+  profile: Object.freeze([
+    '.profileStats > .profileIdentitySummary',
+    '.profileStats > .profileRecordsNote',
+    '.profileStats > .profileActions'
+  ]),
   shop: Object.freeze(['.shopGrid > .shopCard']),
   gacha: Object.freeze(['.gachaLayout > .gachaStage', '.gachaLayout > .gachaControls'])
 });

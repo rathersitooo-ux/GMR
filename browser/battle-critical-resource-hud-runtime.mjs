@@ -23,6 +23,9 @@ function authorityLabel(value) {
 
 export function projectBattleCriticalResourceSnapshot(snapshot = {}) {
   const source = snapshot && typeof snapshot === 'object' && !Array.isArray(snapshot) ? snapshot : {};
+  const manaCurrent = nonNegativeInteger(source.manaCurrent);
+  const manaMax = nonNegativeInteger(source.manaMax);
+  const manaResolved = manaCurrent !== null && manaMax !== null && manaMax > 0 && manaCurrent <= manaMax;
   const honeyValue = nonNegativeInteger(source.honey);
   const chipCount = nonNegativeInteger(source.chipCount);
   const honeyDelta = signedInteger(source.honeyDelta);
@@ -32,6 +35,12 @@ export function projectBattleCriticalResourceSnapshot(snapshot = {}) {
     schema: RESOURCE_HUD_SCHEMA,
     presentationOnly: true,
     gameStateWrite: false,
+    mana: {
+      resolved: manaResolved,
+      current: manaResolved ? manaCurrent : null,
+      max: manaResolved ? manaMax : null,
+      text: manaResolved ? `${manaCurrent}/${manaMax}` : UNRESOLVED
+    },
     honey: {
       resolved: honeyValue !== null,
       value: honeyValue,
@@ -116,8 +125,10 @@ export function mountBattleCriticalResourceHud(global = globalThis, options = {}
   root.dataset.authority = 'caller_authoritative_resource_snapshot_only';
   root.setAttribute?.('aria-label', '対戦資源');
 
+  const mana = createResourceCell(document, 'マナ', 'mana');
   const honey = createResourceCell(document, 'ハニー', 'honey');
   const chip = createResourceCell(document, 'チップ', 'chip');
+  root.appendChild(mana.cell);
   root.appendChild(honey.cell);
   root.appendChild(chip.cell);
   host.appendChild(root);
@@ -128,16 +139,19 @@ export function mountBattleCriticalResourceHud(global = globalThis, options = {}
   function sync(snapshot = {}) {
     if (destroyed) throw new Error('BATTLE_RESOURCE_HUD_DESTROYED');
     const model = projectBattleCriticalResourceSnapshot(snapshot);
+    mana.value.textContent = model.mana.text;
     honey.value.textContent = model.honey.text;
     chip.value.textContent = model.chip.text;
+    setData(mana.cell, 'resolved', model.mana.resolved);
     setData(honey.cell, 'resolved', model.honey.resolved);
     setData(chip.cell, 'resolved', model.chip.resolved);
+    setData(root, 'manaResolved', model.mana.resolved);
     setData(root, 'honeyResolved', model.honey.resolved);
     setData(root, 'chipResolved', model.chip.resolved);
     honey.delta.textContent = model.honey.deltaText;
     honey.delta.hidden = !model.honey.deltaResolved;
     setData(honey.delta, 'resolved', model.honey.deltaResolved);
-    root.setAttribute?.('aria-label', `対戦資源 ハニー ${model.honey.text}、チップ ${model.chip.text}`);
+    root.setAttribute?.('aria-label', `対戦資源 マナ ${model.mana.text}、ハニー ${model.honey.text}、チップ ${model.chip.text}`);
     lastSnapshot = model;
     return model;
   }
@@ -158,6 +172,7 @@ export function mountBattleCriticalResourceHud(global = globalThis, options = {}
     gameStateWrite: false,
     resourceAuthority: 'CALLER_ONLY',
     root,
+    manaCell: mana.cell,
     honeyCell: honey.cell,
     chipCell: chip.cell,
     sync,
@@ -173,9 +188,10 @@ export const BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME = deepFreeze({
   gameplayAuthority: false,
   gameStateWrite: false,
   resourceAuthority: 'CALLER_ONLY',
-  resources: Object.freeze(['honey', 'chipCount']),
+  resources: Object.freeze(['manaCurrent', 'manaMax', 'honey', 'chipCount']),
   unresolvedToken: UNRESOLVED,
   honeyDeltaAuthority: 'CALLER_ONLY_OPTIONAL',
+  physicalManaIdentityProjection: false,
   chipIdentityPublicityOwnedHere: false,
   resourceCalculationOwnedHere: false,
   resourceStoreOwnedHere: false,

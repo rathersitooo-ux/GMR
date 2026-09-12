@@ -44,17 +44,18 @@ jobs:
           source_path.write_text(source.replace(old, new, 1))
 
           test_path = Path('tests/profile-presentation-runtime-mount.test.mjs')
-          test = test_path.read_text()
+          lines = test_path.read_text().splitlines(keepends=True)
           old_title = "test('Records detail consumes safe outside click and Escape without a second state authority', () => {"
           new_title = "test('Records detail lets another rendered row switch directly while outside click and Escape still dismiss', () => {"
-          if test.count(old_title) != 1:
-              raise SystemExit(f'expected one Records detail test title, found {test.count(old_title)}')
-          test = test.replace(old_title, new_title, 1)
-          old_assert = r"  assert.match(source, /doc\\.addEventListener\\('click',[\\s\\S]*?panel\\.contains\\(event\\.target\\)[\\s\\S]*?event\\.preventDefault\\(\\);[\\s\\S]*?event\\.stopPropagation\\(\\);[\\s\\S]*?dismissRecordsMatchDetail\\(list, panel\\);[\\s\\S]*?}, true\\);/);"
-          new_assert = r"  assert.match(source, /doc\\.addEventListener\\('click',[\\s\\S]*?panel\\.contains\\(event\\.target\\)[\\s\\S]*?const row = event\\.target\\?\\.closest\\?\\.\\('\\.record'\\);[\\s\\S]*?if \\(row && list\\.contains\\(row\\)\\) return;[\\s\\S]*?event\\.preventDefault\\(\\);[\\s\\S]*?event\\.stopPropagation\\(\\);[\\s\\S]*?dismissRecordsMatchDetail\\(list, panel\\);[\\s\\S]*?}, true\\);/);"
-          if test.count(old_assert) != 1:
-              raise SystemExit(f'expected one Records outside-click assertion, found {test.count(old_assert)}')
-          test_path.write_text(test.replace(old_assert, new_assert, 1))
+          title_hits = [i for i, line in enumerate(lines) if line.rstrip('\n') == old_title]
+          assert_hits = [i for i, line in enumerate(lines) if line.startswith("  assert.match(source, /doc\\.addEventListener\\('click',")]
+          if len(title_hits) != 1:
+              raise SystemExit(f'expected one Records detail test title, found {len(title_hits)}')
+          if len(assert_hits) != 1:
+              raise SystemExit(f'expected one Records outside-click assertion line, found {len(assert_hits)}')
+          lines[title_hits[0]] = new_title + '\n'
+          lines[assert_hits[0]] = "  assert.match(source, /doc\\.addEventListener\\('click',[\\s\\S]*?panel\\.contains\\(event\\.target\\)[\\s\\S]*?const row = event\\.target\\?\\.closest\\?\\.\\('\\.record'\\);[\\s\\S]*?if \\(row && list\\.contains\\(row\\)\\) return;[\\s\\S]*?event\\.preventDefault\\(\\);[\\s\\S]*?event\\.stopPropagation\\(\\);[\\s\\S]*?dismissRecordsMatchDetail\\(list, panel\\);[\\s\\S]*?}, true\\);/);\n"
+          test_path.write_text(''.join(lines))
           PY
       - name: Focused existing test
         run: node --test tests/profile-presentation-runtime-mount.test.mjs

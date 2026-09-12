@@ -1,0 +1,44 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "UI-RECORDS-DIRECT-SWITCH-R2-20260912T1122-SOL-R7Q4N2",
+  "taskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "workUnitKey": "RECORDS_DETAIL_DIRECT_SWITCH_R1",
+  "acquireKey": "UI-RECORDS-DIRECT-SWITCH-R2-20260912T1122-SOL-R7Q4N2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_D8EA1E6_RECORDS_CAPTURE_PREVENTS_EXISTING_ROW_SWITCH_20260912T1122JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "STATIC_EVENT_ORDER_REHEARSAL_ROW_CAPTURE_PASS_THROUGH_PRESERVES_OUTSIDE_ESCAPE_DISMISS",
+  "proceedToken": "PROCEED|UI-RECORDS-DIRECT-SWITCH-R2-20260912T1122-SOL-R7Q4N2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-records-detail-interaction|single-tap-direct-switch|active-lease",
+  "authorizationBaseSha": "d8ea1e6cbdaf056c7e02e28a2a5c765128d3e407",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "UI-STATE-FEEDBACK-RUNTIME-001",
+  "leaseWorkUnitKey": "RECORDS_DETAIL_DIRECT_SWITCH_R1",
+  "leaseAcquireKey": "UI-RECORDS-DIRECT-SWITCH-R2-20260912T1122-SOL-R7Q4N2",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 11:22 JST",
+  "leaseUntilJst": "2026-09-12 12:22 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1055:L1055",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/records-detail-direct-switch-r2-20260912 from exact current main; browser/profile-presentation-runtime-mount.mjs; tests/profile-presentation-runtime-mount.test.mjs; transient .github/workflows/zz-temp-records-direct-switch-r2.yml; own transient data/preaction-authorizations/UI-RECORDS-DIRECT-SWITCH-R2-20260912T1122-SOL-R7Q4N2.json; own branch/PR/check/readback only. READ_ONLY browser/GAMEROAD.html; Records history/save authority; deploy/cloudflare/scripts/build.mjs; gameplay/rules/save/economy/network.",
+  "scope": [
+    "browser/profile-presentation-runtime-mount.mjs",
+    "tests/profile-presentation-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-records-direct-switch-r2.yml"
+  ],
+  "leaseScope": [
+    "browser/profile-presentation-runtime-mount.mjs",
+    "tests/profile-presentation-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-records-direct-switch-r2.yml"
+  ],
+  "solutionSignature": "RECORDS_OPEN_DETAIL_DIRECT_SWITCH_EXISTING_ROW_R2",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "EXISTING_RECORDS_LIST_AND_DETAIL_HANDLER_REUSED_NO_SECOND_CONTROLLER_20260912",
+  "solutionSearchEvidence": [
+    "Current Records detail already has the correct list selection, detail projection, outside-dismiss and Escape-dismiss behaviors; the defect is only capture-phase interception of a click on another existing record row.",
+    "Minimal adaptation is to let a contained .record row click pass through to the existing list click handler before preventDefault/stopPropagation/dismiss. No second store, modal, controller, screen or history authority is needed.",
+    "Shared Battle HTML, Road, Cards mobile, Janken and Partner player-path targets are owned by other current chats, so this WorkUnit uses a disjoint Profile/Records runtime target instead of duplicating or stealing those higher-contention repairs.",
+    "External card-game UX examples support preserving visible valid choices and player control, but no external behavior is promoted to GAMEROAD formal rules; this repair follows current GAMEROAD actual and existing Records interaction semantics only."
+  ]
+}

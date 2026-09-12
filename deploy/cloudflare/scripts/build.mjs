@@ -18,7 +18,7 @@ const FORMAL_SELECTED3_SFX_BLOBS = Object.freeze({
   cardPlace: '42bbfa8ea2daaadd237c48287388c7c931cc817e',
 });
 const FORMAL_PARTNER_CONVERSATION_BLOBS = Object.freeze({
-  core: '7ec1af5ffa9f8255a4b64eb5ecc2905d999a59a8',
+  core: '4c389c95de525cffd0a0eafad95ec03dde9d4e90',
   saasunaSource: 'c1fc8e854cd08e3e29649becbc097e83f5ca96c7',
 });
 

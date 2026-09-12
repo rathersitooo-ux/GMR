@@ -135,8 +135,11 @@ function collectStaticErrors(html) {
   for (const [pattern, message] of correctedBattleResourceContracts) {
     if (!pattern.test(html)) errors.push(message);
   }
-  if (/recoverRoundStartManaByPlacement/.test(html) || /位のためマナ回復\+/.test(html)) {
-    errors.push('superseded rank-based turn-start Mana recovery remains');
+  if (!html.includes('function recoverRoundStartManaByPlacement(m)')) errors.push('current placement Mana recovery helper is missing');
+  if (!html.includes('const rank=Math.max(1,Math.min(4,Math.floor(Number(row.rank)||1))),gain=rank')) errors.push('placement Mana recovery is not fixed to rank gains 1/2/3/4');
+  if (!html.includes('m.players.forEach(p=>p.plan=null);recoverRoundStartManaByPlacement(m);initRoundRuntime(m)')) errors.push('later rounds do not recover current-rank Mana');
+  if (html.includes('grBattleReplayBegin(state.match);recoverRoundStartManaByPlacement(state.match);initRoundRuntime(state.match)')) {
+    errors.push('match-start Mana incorrectly receives placement recovery');
   }
   if (/function awardRoundStartHoney\(/.test(html)) errors.push('legacy round-start Honey income remains');
   if (/function takeManaByPower\(/.test(html) || /\.mana\?*\.length/.test(html) || /Array\.isArray\(me\?*\.mana\)/.test(html)) {

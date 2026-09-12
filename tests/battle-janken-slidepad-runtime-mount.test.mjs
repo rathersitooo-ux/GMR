@@ -387,12 +387,12 @@ test('live Battle pointer adapter consumes shared detents instead of discarding 
 });
 
 
-test('portrait reserved janken fan compacts without changing desktop slot geometry', async () => {
+test('portrait reserved janken fan keeps large thumb targets in the same radial family', async () => {
   const { readFile } = await import('node:fs/promises');
   const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
-  assert.match(source, /\.grJankenSlidePadSlot\{position:absolute;right:2px;bottom:2px;width:82px;height:112px/);
-  assert.match(source, /@media\(max-width:540px\) and \(orientation:portrait\)\{[^\n]*\.grJankenSlidePadSlot\{width:64px;height:88px/);
-  assert.match(source, /orientation:portrait[^\n]*rock\{transform:translate\(-126px,12px\)[^\n]*scissors\{transform:translate\(-96px,-43px\)[^\n]*paper\{transform:translate\(-38px,-72px\)/);
+  assert.match(source, /\.grJankenSlidePadSlot\{position:absolute;right:4px;bottom:4px;width:86px;height:86px/);
+  assert.match(source, /@media\(max-width:540px\) and \(orientation:portrait\)\{[^\n]*\.grJankenSlidePadSlot\{width:76px;height:76px/);
+  assert.match(source, /orientation:portrait[^\n]*rock\{transform:translate\(-118px,2px\)[^\n]*scissors\{transform:translate\(-70px,-60px\)[^\n]*paper\{transform:translate\(-4px,-92px\)/);
 });
 
 test('basic Battle does not mount or show the optional remaining-hand roulette by default', async () => {
@@ -438,11 +438,11 @@ test('remaining-hand row roulette bridge owns no draw refill Mana Honey score or
 test('short-landscape Battle controls keep the compact janken fan on the non-occluding right-edge anchor', async () => {
   const { readFile } = await import('node:fs/promises');
   const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
-  assert.match(source, /@media\(max-height:430px\) and \(orientation:landscape\)\{[^\n]*\[\$\{HOST_ATTR\}=\"1\"\]\{width:188px;height:146px;right:7px;bottom:7px/);
+  assert.match(source, /@media\(max-height:430px\) and \(orientation:landscape\)\{[^\n]*\[\$\{HOST_ATTR\}=\"1\"\]\{width:208px;height:160px;right:7px;bottom:7px/);
   assert.match(source, /max-height:430px[^\n]*\.grJankenSlidePadHandle\{width:58px;height:58px\}/,
     'the primary bottom-right touch target stays at the existing short-landscape size');
-  assert.match(source, /max-height:430px[^\n]*\.grJankenSlidePadSlot\{width:60px;height:80px;padding:4px\}/);
-  assert.match(source, /max-height:430px[^\n]*rock\{transform:translate\(-124px,10px\)[^\n]*scissors\{transform:translate\(-92px,-40px\)[^\n]*paper\{transform:translate\(-48px,-62px\)/);
+  assert.match(source, /max-height:430px[^\n]*\.grJankenSlidePadSlot\{width:74px;height:74px;padding:4px\}/);
+  assert.match(source, /max-height:430px[^\n]*rock\{transform:translate\(-132px,2px\)[^\n]*scissors\{transform:translate\(-78px,-62px\)[^\n]*paper\{transform:translate\(-2px,-78px\)/);
 });
 
 test('short-landscape remaining-hand roulette compacts beside Partner without changing its board-occlusion contract', async () => {
@@ -748,7 +748,9 @@ test('non-suit janken interaction chrome keeps hard-coded state color achromatic
     'hard-coded six-digit colors in the non-suit runtime stay achromatic',
   );
   assert.doesNotMatch(runtimeSource, /filter:\s*saturate\(|\s+saturate\(/);
-  assert.match(runtimeSource, /\.grJankenSlidePadSlot\.rock\{transform:translate\(-162px,15px\) rotate\(-18deg\)\}/);
-  assert.match(runtimeSource, /\.grJankenSlidePadSlot\.scissors\{transform:translate\(-124px,-55px\) rotate\(-8deg\)/);
-  assert.match(runtimeSource, /\.grJankenSlidePadSlot\.paper\{transform:translate\(-48px,-92px\) rotate\(5deg\)/);
+  assert.equal(runtimeSource.includes('border:9px solid rgba(218,218,218,.20)'), true,
+    'the thumb family keeps a thick achromatic ring without borrowing suit hue');
+  assert.match(runtimeSource, /\.grJankenSlidePadSlot\.rock\{transform:translate\(-150px,-2px\) rotate\(-15deg\)\}/);
+  assert.match(runtimeSource, /\.grJankenSlidePadSlot\.scissors\{transform:translate\(-96px,-66px\) rotate\(-4deg\)/);
+  assert.match(runtimeSource, /\.grJankenSlidePadSlot\.paper\{transform:translate\(-14px,-96px\) rotate\(9deg\)/);
 });

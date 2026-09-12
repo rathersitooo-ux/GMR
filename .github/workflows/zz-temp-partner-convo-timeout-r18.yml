@@ -22,143 +22,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "d48a97b9da3224bb9cd8a62cac0497ba4b5144a7"
+          git merge-base --is-ancestor d48a97b9da3224bb9cd8a62cac0497ba4b5144a7 HEAD
           test "$(git hash-object deploy/cloudflare/functions/ws.js)" = "b10a7ea1d8e71325867cfa7ac92b40d8c23666e8"
           test "$(git hash-object tests/partner-conversation-core.test.mjs)" = "31c5f1065030a8ad4c408013ca5b3b56f0f93b07"
+          test "$(git diff --name-only d48a97b9da3224bb9cd8a62cac0497ba4b5144a7 HEAD)" = ".github/workflows/zz-temp-partner-convo-timeout-r18.yml"
 
       - name: Apply exact Partner timeout patch
-        shell: python
+        shell: bash
         run: |
-          from pathlib import Path
-
-          ws_path = Path('deploy/cloudflare/functions/ws.js')
-          test_path = Path('tests/partner-conversation-core.test.mjs')
-          ws = ws_path.read_text(encoding='utf-8')
-          tests = test_path.read_text(encoding='utf-8')
-
-          endpoint = "const PARTNER_ENDPOINT = 'https://api.convai.com/character/getResponse';\n"
-          timeout_decl = endpoint + "const PARTNER_UPSTREAM_TIMEOUT_MS = 15_000;\n"
-          assert ws.count(endpoint) == 1, 'PARTNER_ENDPOINT declaration drifted'
-          assert 'PARTNER_UPSTREAM_TIMEOUT_MS' not in ws, 'timeout already present unexpectedly'
-          ws = ws.replace(endpoint, timeout_decl, 1)
-
-          old = """  const upstreamFetch = typeof context?.fetch === 'function' ? context.fetch : fetch;\n  let upstream;\n  try {\n    upstream = await upstreamFetch(PARTNER_ENDPOINT, {\n      method: 'POST',\n      headers: { 'CONVAI-API-KEY': apiKey },\n      body: form,\n    });\n  } catch {\n    return json({ ok: false, state: 'provider_unavailable' }, 502);\n  }\n  if (!upstream?.ok) return json({ ok: false, state: 'provider_unavailable' }, 502);\n\n  let payload;\n  try {\n    payload = await upstream.json();\n  } catch {\n    return json({ ok: false, state: 'provider_invalid' }, 502);\n  }\n"""
-          new = """  const upstreamFetch = typeof context?.fetch === 'function' ? context.fetch : fetch;\n  const abortController = new AbortController();\n  const timeoutId = setTimeout(() => abortController.abort(), PARTNER_UPSTREAM_TIMEOUT_MS);\n  let upstream;\n  let payload;\n  try {\n    upstream = await upstreamFetch(PARTNER_ENDPOINT, {\n      method: 'POST',\n      headers: { 'CONVAI-API-KEY': apiKey },\n      body: form,\n      signal: abortController.signal,\n    });\n    if (!upstream?.ok) return json({ ok: false, state: 'provider_unavailable' }, 502);\n    try {\n      payload = await upstream.json();\n    } catch {\n      return json({\n        ok: false,\n        state: abortController.signal.aborted ? 'provider_unavailable' : 'provider_invalid',\n      }, 502);\n    }\n  } catch {\n    return json({ ok: false, state: 'provider_unavailable' }, 502);\n  } finally {\n    clearTimeout(timeoutId);\n  }\n"""
-          assert ws.count(old) == 1, 'Partner upstream fetch block drifted'
-          ws = ws.replace(old, new, 1)
-
-          marker = "test('server Partner transport aborts a hung upstream and returns bounded non-success'"
-          assert marker not in tests, 'timeout regression already present unexpectedly'
-          tests += r'''
-
-test('server Partner transport aborts a hung upstream and returns bounded non-success', { concurrency: false }, async () => {
-  const { onRequest } = await import('../deploy/cloudflare/functions/ws.js');
-  const originalSetTimeout = globalThis.setTimeout;
-  const originalClearTimeout = globalThis.clearTimeout;
-  const timerToken = Symbol('partner-timeout');
-  let timeoutMs = null;
-  let cleared = false;
-  let observedSignal = null;
-
-  globalThis.setTimeout = (callback, ms) => {
-    timeoutMs = ms;
-    queueMicrotask(callback);
-    return timerToken;
-  };
-  globalThis.clearTimeout = (token) => {
-    if (token === timerToken) cleared = true;
-  };
-
-  try {
-    const response = await onRequest({
-      request: new Request('https://example.test/ws?partnerOp=conversation', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ userMessage: '返答が止まった時も会話へ戻って' }),
-      }),
-      env: {
-        CONVAI_API_KEY: 'test-api-key',
-        CONVAI_SAASUNA_CHARACTER_ID: 'saasuna-current',
-      },
-      fetch: async (_url, options) => {
-        observedSignal = options.signal;
-        return new Promise((_resolve, reject) => {
-          const rejectAbort = () => reject(new Error('aborted upstream'));
-          if (observedSignal.aborted) rejectAbort();
-          else observedSignal.addEventListener('abort', rejectAbort, { once: true });
-        });
-      },
-    });
-    assert.equal(response.status, 502);
-    assert.deepEqual(await response.json(), { ok: false, state: 'provider_unavailable' });
-    assert.equal(timeoutMs, 15_000);
-    assert.equal(observedSignal instanceof AbortSignal, true);
-    assert.equal(observedSignal.aborted, true);
-    assert.equal(cleared, true);
-  } finally {
-    globalThis.setTimeout = originalSetTimeout;
-    globalThis.clearTimeout = originalClearTimeout;
-  }
-});
-
-test('server Partner transport preserves timely valid, invalid, and missing-config paths', async () => {
-  const { onRequest } = await import('../deploy/cloudflare/functions/ws.js');
-  let observedSignal = null;
-  const makeRequest = () => new Request('https://example.test/ws?partnerOp=conversation', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ userMessage: '今日も一緒に話そう' }),
-  });
-  const env = {
-    CONVAI_API_KEY: 'test-api-key',
-    CONVAI_SAASUNA_CHARACTER_ID: 'saasuna-current',
-  };
-
-  const okResponse = await onRequest({
-    request: makeRequest(),
-    env,
-    fetch: async (_url, options) => {
-      observedSignal = options.signal;
-      return new Response(JSON.stringify({
-        charID: 'saasuna-current',
-        text: 'もちろん。何から話す？',
-        sessionID: 'provider-session-1',
-      }), { status: 200, headers: { 'content-type': 'application/json' } });
-    },
-  });
-  assert.equal(okResponse.status, 200);
-  assert.deepEqual(await okResponse.json(), {
-    ok: true,
-    text: 'もちろん。何から話す？',
-    providerSessionId: 'provider-session-1',
-  });
-  assert.equal(observedSignal instanceof AbortSignal, true);
-  assert.equal(observedSignal.aborted, false);
-
-  const invalidResponse = await onRequest({
-    request: makeRequest(),
-    env,
-    fetch: async () => new Response(JSON.stringify({
-      charID: 'someone-else',
-      text: 'wrong identity',
-      sessionID: 'provider-session-2',
-    }), { status: 200, headers: { 'content-type': 'application/json' } }),
-  });
-  assert.equal(invalidResponse.status, 502);
-  assert.deepEqual(await invalidResponse.json(), { ok: false, state: 'provider_invalid' });
-
-  const missingConfig = await onRequest({
-    request: makeRequest(),
-    env: {},
-    fetch: async () => { throw new Error('must not call provider'); },
-  });
-  assert.equal(missingConfig.status, 503);
-  assert.deepEqual(await missingConfig.json(), { ok: false, state: 'not_configured' });
-});
-'''
-
-          ws_path.write_text(ws, encoding='utf-8')
-          test_path.write_text(tests, encoding='utf-8')
+          set -euo pipefail
+          echo 'ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCgp3c19wYXRoID0gUGF0aCgiZGVwbG95L2Nsb3VkZmxhcmUvZnVuY3Rpb25zL3dzLmpzIikKdGVzdF9wYXRoID0gUGF0aCgidGVzdHMvcGFydG5lci1jb252ZXJzYXRpb24tY29yZS50ZXN0Lm1qcyIpCndzID0gd3NfcGF0aC5yZWFkX3RleHQoZW5jb2Rpbmc9InV0Zi04IikKdGVzdHMgPSB0ZXN0X3BhdGgucmVhZF90ZXh0KGVuY29kaW5nPSJ1dGYtOCIpCgplbmRwb2ludCA9ICJjb25zdCBQQVJUTkVSX0VORFBPSU5UID0gJ2h0dHBzOi8vYXBpLmNvbnZhaS5jb20vY2hhcmFjdGVyL2dldFJlc3BvbnNlJztcbiIKdGltZW91dF9kZWNsID0gZW5kcG9pbnQgKyAiY29uc3QgUEFSVE5FUl9VUFNUUkVBTV9USU1FT1VUX01TID0gMTVfMDAwO1xuIgphc3NlcnQgd3MuY291bnQoZW5kcG9pbnQpID09IDEsICJQQVJUTkVSX0VORFBPSU5UIGRlY2xhcmF0aW9uIGRyaWZ0ZWQiCmFzc2VydCAiUEFSVE5FUl9VUFNUUkVBTV9USU1FT1VUX01TIiBub3QgaW4gd3MsICJ0aW1lb3V0IGFscmVhZHkgcHJlc2VudCB1bmV4cGVjdGVkbHkiCndzID0gd3MucmVwbGFjZShlbmRwb2ludCwgdGltZW91dF9kZWNsLCAxKQoKb2xkID0gJycnICBjb25zdCB1cHN0cmVhbUZldGNoID0gdHlwZW9mIGNvbnRleHQ/LmZldGNoID09PSAnZnVuY3Rpb24nID8gY29udGV4dC5mZXRjaCA6IGZldGNoOwogIGxldCB1cHN0cmVhbTsKICB0cnkgewogICAgdXBzdHJlYW0gPSBhd2FpdCB1cHN0cmVhbUZldGNoKFBBUlRORVJfRU5EUE9JTlQsIHsKICAgICAgbWV0aG9kOiAnUE9TVCcsCiAgICAgIGhlYWRlcnM6IHsgJ0NPTlZBSS1BUEktS0VZJzogYXBpS2V5IH0sCiAgICAgIGJvZHk6IGZvcm0sCiAgICB9KTsKICB9IGNhdGNoIHsKICAgIHJldHVybiBqc29uKHsgb2s6IGZhbHNlLCBzdGF0ZTogJ3Byb3ZpZGVyX3VuYXZhaWxhYmxlJyB9LCA1MDIpOwogIH0KICBpZiAoIXVwc3RyZWFtPy5vaykgcmV0dXJuIGpzb24oeyBvazogZmFsc2UsIHN0YXRlOiAncHJvdmlkZXJfdW5hdmFpbGFibGUnIH0sIDUwMik7CgogIGxldCBwYXlsb2FkOwogIHRyeSB7CiAgICBwYXlsb2FkID0gYXdhaXQgdXBzdHJlYW0uanNvbigpOwogIH0gY2F0Y2ggewogICAgcmV0dXJuIGpzb24oeyBvazogZmFsc2UsIHN0YXRlOiAncHJvdmlkZXJfaW52YWxpZCcgfSwgNTAyKTsKICB9CicnJwpuZXcgPSAnJycgIGNvbnN0IHVwc3RyZWFtRmV0Y2ggPSB0eXBlb2YgY29udGV4dD8uZmV0Y2ggPT09ICdmdW5jdGlvbicgPyBjb250ZXh0LmZldGNoIDogZmV0Y2g7CiAgY29uc3QgYWJvcnRDb250cm9sbGVyID0gbmV3IEFib3J0Q29udHJvbGxlcigpOwogIGNvbnN0IHRpbWVvdXRJZCA9IHNldFRpbWVvdXQoKCkgPT4gYWJvcnRDb250cm9sbGVyLmFib3J0KCksIFBBUlRORVJfVVBTVFJFQU1fVElNRU9VVF9NUyk7CiAgbGV0IHVwc3RyZWFtOwogIGxldCBwYXlsb2FkOwogIHRyeSB7CiAgICB1cHN0cmVhbSA9IGF3YWl0IHVwc3RyZWFtRmV0Y2goUEFSVE5FUl9FTkRQT0lOVCwgewogICAgICBtZXRob2Q6ICdQT1NUJywKICAgICAgaGVhZGVyczogeyAnQ09OVkFJLUFQSS1LRVknOiBhcGlLZXkgfSwKICAgICAgYm9keTogZm9ybSwKICAgICAgc2lnbmFsOiBhYm9ydENvbnRyb2xsZXIuc2lnbmFsLAogICAgfSk7CiAgICBpZiAoIXVwc3RyZWFtPy5vaykgcmV0dXJuIGpzb24oeyBvazogZmFsc2UsIHN0YXRlOiAncHJvdmlkZXJfdW5hdmFpbGFibGUnIH0sIDUwMik7CiAgICB0cnkgewogICAgICBwYXlsb2FkID0gYXdhaXQgdXBzdHJlYW0uanNvbigpOwogICAgfSBjYXRjaCB7CiAgICAgIHJldHVybiBqc29uKHsKICAgICAgICBvazogZmFsc2UsCiAgICAgICAgc3RhdGU6IGFib3J0Q29udHJvbGxlci5zaWduYWwuYWJvcnRlZCA/ICdwcm92aWRlcl91bmF2YWlsYWJsZScgOiAncHJvdmlkZXJfaW52YWxpZCcsCiAgICAgIH0sIDUwMik7CiAgICB9CiAgfSBjYXRjaCB7CiAgICByZXR1cm4ganNvbih7IG9rOiBmYWxzZSwgc3RhdGU6ICdwcm92aWRlcl91bmF2YWlsYWJsZScgfSwgNTAyKTsKICB9IGZpbmFsbHkgewogICAgY2xlYXJUaW1lb3V0KHRpbWVvdXRJZCk7CiAgfQonJycKYXNzZXJ0IHdzLmNvdW50KG9sZCkgPT0gMSwgIlBhcnRuZXIgdXBzdHJlYW0gZmV0Y2ggYmxvY2sgZHJpZnRlZCIKd3MgPSB3cy5yZXBsYWNlKG9sZCwgbmV3LCAxKQoKbWFya2VyID0gInRlc3QoJ3NlcnZlciBQYXJ0bmVyIHRyYW5zcG9ydCBhYm9ydHMgYSBodW5nIHVwc3RyZWFtIGFuZCByZXR1cm5zIGJvdW5kZWQgbm9uLXN1Y2Nlc3MnIgphc3NlcnQgbWFya2VyIG5vdCBpbiB0ZXN0cywgInRpbWVvdXQgcmVncmVzc2lvbiBhbHJlYWR5IHByZXNlbnQgdW5leHBlY3RlZGx5Igp0ZXN0cyArPSByJycnCgp0ZXN0KCdzZXJ2ZXIgUGFydG5lciB0cmFuc3BvcnQgYWJvcnRzIGEgaHVuZyB1cHN0cmVhbSBhbmQgcmV0dXJucyBib3VuZGVkIG5vbi1zdWNjZXNzJywgeyBjb25jdXJyZW5jeTogZmFsc2UgfSwgYXN5bmMgKCkgPT4gewogIGNvbnN0IHsgb25SZXF1ZXN0IH0gPSBhd2FpdCBpbXBvcnQoJy4uL2RlcGxveS9jbG91ZGZsYXJlL2Z1bmN0aW9ucy93cy5qcycpOwogIGNvbnN0IG9yaWdpbmFsU2V0VGltZW91dCA9IGdsb2JhbFRoaXMuc2V0VGltZW91dDsKICBjb25zdCBvcmlnaW5hbENsZWFyVGltZW91dCA9IGdsb2JhbFRoaXMuY2xlYXJUaW1lb3V0OwogIGNvbnN0IHRpbWVyVG9rZW4gPSBTeW1ib2woJ3BhcnRuZXItdGltZW91dCcpOwogIGxldCB0aW1lb3V0TXMgPSBudWxsOwogIGxldCBjbGVhcmVkID0gZmFsc2U7CiAgbGV0IG9ic2VydmVkU2lnbmFsID0gbnVsbDsKCiAgZ2xvYmFsVGhpcy5zZXRUaW1lb3V0ID0gKGNhbGxiYWNrLCBtcykgPT4gewogICAgdGltZW91dE1zID0gbXM7CiAgICBxdWV1ZU1pY3JvdGFzayhjYWxsYmFjayk7CiAgICByZXR1cm4gdGltZXJUb2tlbjsKICB9OwogIGdsb2JhbFRoaXMuY2xlYXJUaW1lb3V0ID0gKHRva2VuKSA9PiB7CiAgICBpZiAodG9rZW4gPT09IHRpbWVyVG9rZW4pIGNsZWFyZWQgPSB0cnVlOwogIH07CgogIHRyeSB7CiAgICBjb25zdCByZXNwb25zZSA9IGF3YWl0IG9uUmVxdWVzdCh7CiAgICAgIHJlcXVlc3Q6IG5ldyBSZXF1ZXN0KCdodHRwczovL2V4YW1wbGUudGVzdC93cz9wYXJ0bmVyT3A9Y29udmVyc2F0aW9uJywgewogICAgICAgIG1ldGhvZDogJ1BPU1QnLAogICAgICAgIGhlYWRlcnM6IHsgJ2NvbnRlbnQtdHlwZSc6ICdhcHBsaWNhdGlvbi9qc29uJyB9LAogICAgICAgIGJvZHk6IEpTT04uc3RyaW5naWZ5KHsgdXNlck1lc3NhZ2U6ICfov5TnrZTjgYzmrablrp/jgaPmmYLjgoLkvJroqbHjgbjjgYbjgIIJyB9KSwKICAgICAgfSksCiAgICAgIGVudjogewogICAgICAgIENPTlZBSV9BUElfS0VZOiAndGVzdC1hcGkta2V5JywKICAgICAgICBDT05WQUlfU0FBU1VOQV9DSEFSQUNURVJfSUQ6ICdzYWFzdW5hLWN1cnJlbnQnLAogICAgICB9LAogICAgICBmZXRjaDogYXN5bmMgKF91cmwsIG9wdGlvbnMpID0+IHsKICAgICAgICBvYnNlcnZlZFNpZ25hbCA9IG9wdGlvbnMuc2lnbmFsOwogICAgICAgIHJldHVybiBuZXcgUHJvbWlzZSgoX3Jlc29sdmUsIHJlamVjdCkgPT4gewogICAgICAgICAgY29uc3QgcmVqZWN0QWJvcnQgPSAoKSA9PiByZWplY3QobmV3IEVycm9yKCdhYm9ydGVkIHVwc3RyZWFtJykpOwogICAgICAgICAgaWYgKG9ic2VydmVkU2lnbmFsLmFib3J0ZWQpIHJlamVjdEFib3J0KCk7CiAgICAgICAgICBlbHNlIG9ic2VydmVkU2lnbmFsLmFkZEV2ZW50TGlzdGVuZXIoJ2Fib3J0JywgcmVqZWN0QWJvcnQsIHsgb25jZTogdHJ1ZSB9KTsKICAgICAgICB9KTsKICAgICAgfSwKICAgIH0pOwogICAgYXNzZXJ0LmVxdWFsKHJlc3BvbnNlLnN0YXR1cywgNTAyKTsKICAgIGFzc2VydC5kZWVwRXF1YWwoYXdhaXQgcmVzcG9uc2UuanNvbigpLCB7IG9rOiBmYWxzZSwgc3RhdGU6ICdwcm92aWRlcl91bmF2YWlsYWJsZScgfSk7CiAgICBhc3NlcnQuZXF1YWwodGltZW91dE1zLCAxNV8wMDApOwogICAgYXNzZXJ0LmVxdWFsKG9ic2VydmVkU2lnbmFsIGluc3RhbmNlb2YgQWJvcnRTaWduYWwsIHRydWUpOwogICAgYXNzZXJ0LmVxdWFsKG9ic2VydmVkU2lnbmFsLmFib3J0ZWQsIHRydWUpOwogICAgYXNzZXJ0LmVxdWFsKGNsZWFyZWQsIHRydWUpOwogIH0gZmluYWxseSB7CiAgICBnbG9iYWxUaGlzLnNldFRpbWVvdXQgPSBvcmlnaW5hbFNldFRpbWVvdXQ7CiAgICBnbG9iYWxUaGlzLmNsZWFyVGltZW91dCA9IG9yaWdpbmFsQ2xlYXJUaW1lb3V0OwogIH0KfSk7Cgp0ZXN0KCdzZXJ2ZXIgUGFydG5lciB0cmFuc3BvcnQgcHJlc2VydmVzIHRpbWVseSB2YWxpZCwgaW52YWxpZCwgYW5kIG1pc3NpbmctY29uZmlnIHBhdGhzJywgYXN5bmMgKCkgPT4gewogIGNvbnN0IHsgb25SZXF1ZXN0IH0gPSBhd2FpdCBpbXBvcnQoJy4uL2RlcGxveS9jbG91ZGZsYXJlL2Z1bmN0aW9ucy93cy5qcycpOwogIGxldCBvYnNlcnZlZFNpZ25hbCA9IG51bGw7CiAgY29uc3QgbWFrZVJlcXVlc3QgPSAoKSA9PiBuZXcgUmVxdWVzdCgnaHR0cHM6Ly9leGFtcGxlLnRlc3Qvd3M/cGFydG5lck9wPWNvbnZlcnNhdGlvbicsIHsKICAgIG1ldGhvZDogJ1BPU1QnLAogICAgaGVhZGVyczogeyAnY29udGVudC10eXBlJzogJ2FwcGxpY2F0aW9uL2pzb24nIH0sCiAgICBib2R5OiBKU09OLnN0cmluZ2lmeSh7IHVzZXJNZXNzYWdlOiAn5LuK5pel44KC5LiA57iS44Gr6Kmx44Gd44GGJyB9KSwKICB9KTsKICBjb25zdCBlbnYgPSB7CiAgICBDT05WQUlfQVBJX0tFWTogJ3Rlc3QtYXBpLWtleScsCiAgICBDT05WQUlfU0FBU1VOQV9DSEFSQUNURVJfSUQ6ICdzYWFzdW5hLWN1cnJlbnQnLAogIH07CgogIGNvbnN0IG9rUmVzcG9uc2UgPSBhd2FpdCBvblJlcXVlc3QoewogICAgcmVxdWVzdDogbWFrZVJlcXVlc3QoKSwKICAgIGVudiwKICAgIGZldGNoOiBhc3luYyAoX3VybCwgb3B0aW9ucykgPT4gewogICAgICBvYnNlcnZlZFNpZ25hbCA9IG9wdGlvbnMuc2lnbmFsOwogICAgICByZXR1cm4gbmV3IFJlc3BvbnNlKEpTT04uc3RyaW5naWZ5KHsKICAgICAgICBjaGFySUQ6ICdzYWFzdW5hLWN1cnJlbnQnLAogICAgICAgIHRleHQ6ICfjgoLjgaHjgo3jgpPjgILkvZXjgYvjgonoqbHjgZk77y/JywKICAgICAgICBzZXNzaW9uSUQ6ICdwcm92aWRlci1zZXNzaW9uLTEnLAogICAgICB9KSwgeyBzdGF0dXM6IDIwMCwgaGVhZGVyczogeyAnY29udGVudC10eXBlJzogJ2FwcGxpY2F0aW9uL2pzb24nIH0gfSk7CiAgICB9LAogIH0pOwogIGFzc2VydC5lcXVhbChva1Jlc3BvbnNlLnN0YXR1cywgMjAwKTsKICBhc3NlcnQuZGVlcEVxdWFsKGF3YWl0IG9rUmVzcG9uc2UuanNvbigpLCB7CiAgICBvazogdHJ1ZSwKICAgIHRleHQ6ICfjgoLjgaHjgo3jgpPjgILkvZXjgYvjgonoqbHjgZk77y/JywKICAgIHByb3ZpZGVyU2Vzc2lvbklkOiAncHJvdmlkZXItc2Vzc2lvbi0xJywKICB9KTsKICBhc3NlcnQuZXF1YWwob2JzZXJ2ZWRTaWduYWwgaW5zdGFuY2VvZiBBYm9ydFNpZ25hbCwgdHJ1ZSk7CiAgYXNzZXJ0LmVxdWFsKG9ic2VydmVkU2lnbmFsLmFib3J0ZWQsIGZhbHNlKTsKCiAgY29uc3QgaW52YWxpZFJlc3BvbnNlID0gYXdhaXQgb25SZXF1ZXN0KHsKICAgIHJlcXVlc3Q6IG1ha2VSZXF1ZXN0KCksCiAgICBlbnYsCiAgICBmZXRjaDogYXN5bmMgKCkgPT4gbmV3IFJlc3BvbnNlKEpTT04uc3RyaW5naWZ5KHsKICAgICAgY2hhcklEOiAnc29tZW9uZS1lbHNlJywKICAgICAgdGV4dDogJ3dyb25nIGlkZW50aXR5JywKICAgICAgc2Vzc2lvbklEOiAncHJvdmlkZXItc2Vzc2lvbi0yJywKICAgIH0pLCB7IHN0YXR1czogMjAwLCBoZWFkZXJzOiB7ICdjb250ZW50LXR5cGUnOiAnYXBwbGljYXRpb24vanNvbicgfSB9KSwKICB9KTsKICBhc3NlcnQuZXF1YWwoaW52YWxpZFJlc3BvbnNlLnN0YXR1cywgNTAyKTsKICBhc3NlcnQuZGVlcEVxdWFsKGF3YWl0IGludmFsaWRSZXNwb25zZS5qc29uKCksIHsgb2s6IGZhbHNlLCBzdGF0ZTogJ3Byb3ZpZGVyX2ludmFsaWQnIH0pOwoKICBjb25zdCBtaXNzaW5nQ29uZmlnID0gYXdhaXQgb25SZXF1ZXN0KHsKICAgIHJlcXVlc3Q6IG1ha2VSZXF1ZXN0KCksCiAgICBlbnY6IHt9LAogICAgZmV0Y2g6IGFzeW5jICgpID0+IHsgdGhyb3cgbmV3IEVycm9yKCdtdXN0IG5vdCBjYWxsIHByb3ZpZGVyJyk7IH0sCiAgfSk7CiAgYXNzZXJ0LmVxdWFsKG1pc3NpbmdDb25maWcuc3RhdHVzLCA1MDMpOwogIGFzc2VydC5kZWVwRXF1YWwoYXdhaXQgbWlzc2luZ0NvbmZpZy5qc29uKCksIHsgb2s6IGZhbHNlLCBzdGF0ZTogJ25vdF9jb25maWd1cmVkJyB9KTsKfSk7CicnJwoKd3NfcGF0aC53cml0ZV90ZXh0KHdzLCBlbmNvZGluZz0idXRmLTgiKQp0ZXN0X3BhdGgud3JpdGVfdGV4dCh0ZXN0cywgZW5jb2Rpbmc9InV0Zi04IikK' | base64 -d > /tmp/partner_timeout_patch.py
+          python /tmp/partner_timeout_patch.py
 
       - name: Verify focused behavior
         shell: bash

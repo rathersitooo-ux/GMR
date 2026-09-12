@@ -1,4 +1,4 @@
-name: temp Battle Janken thumb arc R11 refine
+name: temp Battle Janken thumb arc R11 refine product
 
 on:
   push:
@@ -12,9 +12,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  refine-capture:
+  refine-product:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
@@ -52,6 +52,8 @@ jobs:
             (r'translate\(-132px,2px\)',r'translate\(-132px,-90px\)'),
             (r'translate\(-78px,-62px\)',r'translate\(-78px,-94px\)'),
             (r'translate\(-2px,-78px\)',r'translate\(-4px,-100px\)')]
+          # Current JS test source contains one literal backslash before regex metacharacters.
+          pairs_t=[(a.replace('\\\\','\\'),b.replace('\\\\','\\')) for a,b in pairs_t]
           for old,new in pairs_t:
               if t.count(old)!=1: raise SystemExit(f'test anchor count {t.count(old)} for {old}')
               t=t.replace(old,new,1)
@@ -59,46 +61,20 @@ jobs:
           PY
           node --check browser/battle-janken-slidepad-runtime-mount.mjs
           node --test tests/battle-janken-slidepad-runtime-mount.test.mjs
-      - name: Install Playwright
-        run: |
-          npm install --no-save --no-package-lock @playwright/test@1.62.0
-          npx playwright install --with-deps chromium
-      - name: Capture refined current Battle use-site
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/r11-http.log 2>&1 &
-          SERVER_PID=$!
-          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
-          for i in $(seq 1 80); do curl -fsS http://127.0.0.1:4173/browser/GAMEROAD.html >/dev/null && break || sleep .25; done
-          rm -rf evidence/battle-janken-thumb-arc-r11
-          mkdir -p evidence/battle-janken-thumb-arc-r11
-          cat > .r11-capture.mjs <<'NODE'
-          import { chromium } from '@playwright/test';
-          import fs from 'node:fs/promises';
-          const base='http://127.0.0.1:4173'; const out='evidence/battle-janken-thumb-arc-r11';
-          const cases=[['1280x720',1280,720],['667x375',667,375],['390x844',390,844]];
-          const overlap=(a,b)=>{if(!a||!b)return null;const l=Math.max(a.left,b.left),t=Math.max(a.top,b.top),r=Math.min(a.right,b.right),d=Math.min(a.bottom,b.bottom);return r>l&&d>t?{area:(r-l)*(d-t),width:r-l,height:d-t}:{area:0,width:0,height:0}};
-          async function legalDeck(page){return page.evaluate(()=>{const t=window.__GAMEROAD_TEST__;if(!t)throw new Error('test API missing');const pub=new Set(t.deckPublic().filter(c=>c.slot==='main').map(c=>c.id));const standard=window.__CARD_DATA__.filter(c=>pub.has(c.id)&&/^(SP|HT|DI|CL)$/.test(c.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c=>c.id);const royals=['SP_J','SP_Q','SP_K'];const main=[...standard.filter(id=>!t.isRoyalCard(id)).slice(0,37),...royals];const set=t.deckSetDraft(main,[]),draft=t.deckValidate(t.state.deckDraft,{forBattle:true});const committed=draft.ok?t.deckCommit():false,saved=t.deckValidate(t.state.savedDeck,{forBattle:true});return{count:main.length,setOk:set?.ok===true,draftOk:draft?.ok===true,committed,savedOk:saved?.ok===true}})}
-          async function enter(page){const response=await page.goto(`${base}/browser/GAMEROAD.html`,{waitUntil:'commit',timeout:10000});if(!response||response.status()>=400)throw new Error(`HTML response ${response?.status()}`);await page.waitForFunction(()=>!!window.__GAMEROAD_TEST__&&Array.isArray(window.__CARD_DATA__),null,{timeout:45000});await page.locator('section[data-screen="home"]').waitFor({state:'visible',timeout:20000});const deck=await legalDeck(page);if(deck.count!==40||!deck.committed||!deck.savedOk)throw new Error(`deck ${JSON.stringify(deck)}`);const setup=page.locator('[data-home-target="setup"]:visible, [data-go="setup"]:visible').first();await setup.waitFor({state:'visible',timeout:20000});await setup.click();const screen=page.locator('section[data-screen="setup"]');await screen.waitFor({state:'visible',timeout:20000});await screen.locator('[data-content="road_shield"]').click();await screen.locator('[data-mode="2p"]').click();const start=screen.locator('#startMatch');await start.waitFor({state:'visible',timeout:20000});if(await start.isDisabled())throw new Error('start disabled');await start.click();await page.locator('section[data-screen="battle"]').waitFor({state:'visible',timeout:20000});await page.locator('[data-battle-janken-slidepad="1"]').waitFor({state:'visible',timeout:20000});await page.waitForFunction(()=>!!window.__GAMEROAD_BATTLE_JANKEN_SLIDEPAD__?.snapshot?.()?.roundId,null,{timeout:20000})}
-          async function capture(page,name){await enter(page);const host=page.locator('[data-battle-janken-slidepad="1"]').first();if(await host.getAttribute('data-expanded')!=='true')await host.locator('.grJankenSlidePadHandle').click();await page.waitForFunction(()=>document.querySelector('[data-battle-janken-slidepad="1"]')?.dataset.expanded==='true',null,{timeout:5000});await page.waitForTimeout(260);const g=await page.evaluate(()=>{const snap=el=>{if(!el)return null;const r=el.getBoundingClientRect(),s=getComputedStyle(el);return{rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height},display:s.display,visibility:s.visibility,pointerEvents:s.pointerEvents,disabled:'disabled'in el?!!el.disabled:null}};const id=el=>el?{tag:el.tagName.toLowerCase(),id:el.id||null,className:typeof el.className==='string'?el.className:null,jankenSlot:el.getAttribute?.('data-janken-slot')||null}:null;const hit=el=>{if(!el)return null;const r=el.getBoundingClientRect(),x=Math.max(0,Math.min(innerWidth-1,r.left+r.width/2)),y=Math.max(0,Math.min(innerHeight-1,r.top+r.height/2)),raw=document.elementFromPoint(x,y),owner=raw?.closest?.('[data-janken-slot], .grJankenSlidePadHandle')||raw;return{x,y,owner:id(owner)}};const h=document.querySelector('[data-battle-janken-slidepad="1"]'),handle=h?.querySelector('.grJankenSlidePadHandle');return{viewport:{width:innerWidth,height:innerHeight},expanded:h?.dataset.expanded==='true',host:snap(h),handle:{element:snap(handle),hitCenter:hit(handle)},slots:[...(h?.querySelectorAll('[data-janken-slot]')??[])].map(el=>({hand:el.getAttribute('data-janken-slot'),element:snap(el),hitCenter:hit(el)})),hand:snap(document.querySelector('#hand')),planBox:snap(document.querySelector('.planBox')),battleRail:snap(document.querySelector('.battleRail')),board:snap(document.querySelector('#board')),targetBox:snap(document.querySelector('#targetBox'))}});g.violations=[];if(g.slots.length!==3)g.violations.push(`slot-count:${g.slots.length}`);for(const s of g.slots){const r=s.element?.rect;if(!r||r.left<0||r.top<0||r.right>g.viewport.width||r.bottom>g.viewport.height)g.violations.push(`${s.hand}:outside:${JSON.stringify(r)}`);s.intersections={};for(const k of ['hand','planBox','battleRail','board','targetBox'])s.intersections[k]=overlap(r,g[k]?.rect);s.centerHitOwnsSelectableSlot=s.element?.disabled===false?s.hitCenter?.owner?.jankenSlot===s.hand:null;if(s.element?.disabled===false&&!s.centerHitOwnsSelectableSlot)g.violations.push(`${s.hand}:hit:${JSON.stringify(s.hitCenter?.owner)}`);if((s.intersections.hand?.area||0)>0)g.violations.push(`${s.hand}:hand-overlap:${s.intersections.hand.area}`);if((s.intersections.planBox?.area||0)>320)g.violations.push(`${s.hand}:plan-overlap:${s.intersections.planBox.area}`)}g.handle.centerHitOwnsHandle=!!g.handle.hitCenter?.owner?.className?.includes('grJankenSlidePadHandle');if(!g.handle.centerHitOwnsHandle)g.violations.push('handle-hit');if(!g.expanded)g.violations.push('collapsed');await page.screenshot({path:`${out}/${name}-expanded.png`,fullPage:true,animations:'disabled'});return g}
-          const browser=await chromium.launch({headless:true});const result={schema:'gameroad.battle-janken-thumb-arc-use-site-evidence.r11-refined',baseSha:'e6d825e07f5791c67386d44769613ac2089e0fca',captures:[]};try{for(const [name,width,height] of cases){const context=await browser.newContext({viewport:{width,height}}),page=await context.newPage();result.captures.push({name,...await capture(page,name)});await context.close()}}finally{await browser.close()}await fs.writeFile(`${out}/geometry.json`,JSON.stringify(result,null,2)+'\n');const errors=result.captures.flatMap(c=>c.violations.map(v=>`${c.name}:${v}`));if(errors.length)throw new Error(errors.join('\n'));
-          NODE
-          node .r11-capture.mjs
-      - name: Commit refined product and evidence only
+      - name: Commit only product and focused test
         shell: bash
         env:
           AUTH_BASE: e6d825e07f5791c67386d44769613ac2089e0fca
           BRANCH: sol/battle-janken-thumb-arc-r11-20260912
         run: |
           set -euo pipefail
-          rm -f .r11-capture.mjs
+          git rm -rf evidence/battle-janken-thumb-arc-r11
           git rm -f .github/workflows/zz-temp-battle-janken-thumb-arc-r11.yml
-          git add browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs evidence/battle-janken-thumb-arc-r11/1280x720-expanded.png evidence/battle-janken-thumb-arc-r11/667x375-expanded.png evidence/battle-janken-thumb-arc-r11/390x844-expanded.png evidence/battle-janken-thumb-arc-r11/geometry.json
+          git add browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs
           mapfile -t changed < <(git diff --cached --name-only "$AUTH_BASE" | sort)
-          expected=(browser/battle-janken-slidepad-runtime-mount.mjs evidence/battle-janken-thumb-arc-r11/1280x720-expanded.png evidence/battle-janken-thumb-arc-r11/390x844-expanded.png evidence/battle-janken-thumb-arc-r11/667x375-expanded.png evidence/battle-janken-thumb-arc-r11/geometry.json tests/battle-janken-slidepad-runtime-mount.test.mjs)
-          [ "${#changed[@]}" -eq 6 ] || { printf 'bad candidate diff count: %s\n' "${changed[*]}"; exit 1; }
-          for i in 0 1 2 3 4 5; do [ "${changed[$i]}" = "${expected[$i]}" ] || { printf 'bad candidate diff: %s\n' "${changed[*]}"; exit 1; }; done
+          expected=(browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs)
+          [ "${#changed[@]}" -eq 2 ] || { printf 'bad durable diff count: %s\n' "${changed[*]}"; exit 1; }
+          for i in 0 1; do [ "${changed[$i]}" = "${expected[$i]}" ] || { printf 'bad durable diff: %s\n' "${changed[*]}"; exit 1; }; done
           git config user.name gameroad-actions
           git config user.email actions@users.noreply.github.com
           git commit -m 'Battle SlidePad: 手札と確定帯を空ける右親指じゃんけん弧 [skip ci]'

@@ -1,0 +1,32 @@
+name: temp cards mobile save diagnostic
+on:
+  push:
+    branches:
+      - sol/cards-mobile-save-r1-20260912
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Source diagnostics
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("browser/GAMEROAD.html")
+          s=p.read_text(encoding="utf-8")
+          print("BYTES",len(s.encode()))
+          for needle in [".deckBoard",".deckEditScroll",".deckActions","#saveDeck","@media"]:
+              print("\n###",needle)
+              pos=0
+              count=0
+              while True:
+                  i=s.find(needle,pos)
+                  if i<0: break
+                  count+=1
+                  a=max(0,i-900); b=min(len(s),i+2200)
+                  print(f"--- occurrence {count} at {i} ---")
+                  print(s[a:b])
+                  pos=i+len(needle)
+                  if count>=12: break
+              print("COUNT_SHOWN",count)
+          PY

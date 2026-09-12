@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PUZZLE-LINESEG-MAIN-R3-20260912T2210-SOL-X7M4P2",
+  "taskId": "PUZZLE-BOMBING-LINESEG-RECOVERY-CURRENT-001",
+  "workUnitKey": "CANONICAL_CORE_MAIN_INTEGRATION_R3",
+  "acquireKey": "PUZZLE-LINESEG-MAIN-R3-20260912T2210-SOL-X7M4P2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_75F4F47_PLUS_CANONICAL_20260724_LINESEG_SCOPE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "DONOR_R2_FOCUSED_NODE_5_OF_5_PLUS_EXACT_CORE_BLOB_READBACK",
+  "proceedToken": "PROCEED|PUZZLE-LINESEG-MAIN-R3-20260912T2210-SOL-X7M4P2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|canonical-lineseg-core|focused-node-test|active-lease",
+  "authorizationBaseSha": "75f4f47c60eb2c478e8314dd1dd1b6e1955571ee",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PUZZLE-BOMBING-LINESEG-RECOVERY-CURRENT-001",
+  "leaseWorkUnitKey": "CANONICAL_CORE_MAIN_INTEGRATION_R3",
+  "leaseAcquireKey": "PUZZLE-LINESEG-MAIN-R3-20260912T2210-SOL-X7M4P2",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 22:31 JST",
+  "leaseUntilJst": "2026-09-12 23:05 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1293:L1293",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR work/puzzle-lineseg-main-recovery-r3-20260912 ref; data/preaction-authorizations/PUZZLE-LINESEG-MAIN-R3-20260912T2210-SOL-X7M4P2.json transient first-commit authorization; browser/bombing-lineseg-puzzle-core.mjs; tests/bombing-lineseg-puzzle-core.test.mjs; PR #1580 limited to final core+tests paths. main 75f4f47c60eb2c478e8314dd1dd1b6e1955571ee read-only until merge fence.",
+  "solutionSignature": "2026-07-24 canonical 60-segment bombing puzzle pure core + deterministic receipt + focused current-CI regression",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "DONOR_R2_AUDITED_CORE_REUSED_WITH_CURRENT_REQUIRED_GATE_TEST_PATH_ADAPTATION",
+  "solutionSearchEvidence": [
+    "Existing donor branch work/puzzle-bombing-lineseg-recovery-r2-20260912 contains the canonical pure core and focused regression only.",
+    "The donor core blob a2fafa2ae60b5fbb28a42946c31df568de1da626 directly matches the 2026-07-24 corrected 60-segment mechanics and group-power rules.",
+    "Current Required Gate generically pairs browser modules with tests/<module>.test.mjs, so only the test location/import is adapted; gameplay semantics remain unchanged.",
+    "Whole donor branch reuse was rejected because it diverged from current main and was created before formal task/lease registration.",
+    "browser/GAMEROAD.html and Battle timing/numeric application remain outside this slice until current semantics are uniquely resolved."
+  ],
+  "scope": [
+    "browser/bombing-lineseg-puzzle-core.mjs",
+    "tests/bombing-lineseg-puzzle-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/bombing-lineseg-puzzle-core.mjs",
+    "tests/bombing-lineseg-puzzle-core.test.mjs"
+  ]
+}

@@ -1,0 +1,41 @@
+name: TEMP Browser Cards Mobile Save R1
+
+on:
+  push:
+    branches:
+      - sol/browser-cards-mobile-save-r1-20260912
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-current-cards-drawer:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect exact current Cards drawer geometry
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('browser/GAMEROAD.html')
+          s = p.read_text(encoding='utf-8')
+          tokens = ['deckBoard', 'deckEditScroll', 'deckStats', 'deckActions', 'saveDeck']
+          for token in tokens:
+              print(f'===== {token} =====')
+              start = 0
+              hit = 0
+              while True:
+                  i = s.find(token, start)
+                  if i < 0:
+                      break
+                  hit += 1
+                  a = max(0, i - 900)
+                  b = min(len(s), i + 1500)
+                  print(f'--- occurrence {hit} @ byte {i} ---')
+                  print(s[a:b])
+                  start = i + len(token)
+              if hit == 0:
+                  raise SystemExit(f'missing required token: {token}')
+          PY

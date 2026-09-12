@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BROWSER-CARDS-MOBILE-SAVE-R1-20260912T1107-SOL-H6K2N14",
+  "taskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "workUnitKey": "BROWSER_CARDS_MOBILE_SAVE_VISIBILITY_R1",
+  "acquireKey": "BROWSER-CARDS-MOBILE-SAVE-R1-20260912T1107-SOL-H6K2N14",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PUBLIC_BFI_PHONE_SAVE_OUTSIDE_VIEWPORT_34663267954",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "DESKTOP_AND_SHORT_LANDSCAPE_PASS_PHONE_ONLY_GEOMETRY_FAILURE",
+  "proceedToken": "PROCEED|BROWSER-CARDS-MOBILE-SAVE-R1-20260912T1107-SOL-H6K2N14|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|cards-mobile-save-visibility|html-presentation|active-lease",
+  "authorizationBaseSha": "87eff701a8cf33c15929d1cbcb1ac6e263ec5b50",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BROWSER-PLAYGLOBAL-VISUAL-SHELL-REVIEW-001",
+  "leaseWorkUnitKey": "BROWSER_CARDS_MOBILE_SAVE_VISIBILITY_R1",
+  "leaseAcquireKey": "BROWSER-CARDS-MOBILE-SAVE-R1-20260912T1107-SOL-H6K2N14",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 11:07 JST",
+  "leaseUntilJst": "2026-09-12 12:07 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1044:L1044",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main; browser/GAMEROAD.html only as durable product diff; own PRE_ACTION/branch/PR/check/readback; at most one transient bounded surgical workflow/script if giant HTML mutation requires it. READ_ONLY tests/browser-full-interaction.spec.mjs while BROWSER-BFI-BOOT-R6 owns it; deck/game/save authority; gameplay/rules/economy/network/Battle/Road.",
+  "solutionSignature": "BROWSER_CARDS_EXISTING_DRAWER_MOBILE_ACTION_VISIBILITY_V1",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_EXISTING_DECKBOARD_DECKEDITSCROLL_DECKACTIONS_SAVEDECK",
+  "solutionSearchEvidence": [
+    "Current public BFI run 34663267954 passes desktop 1280x720 and short-landscape 667x375 but fails phone 390x844 because visible enabled #saveDeck remains outside viewport.",
+    "Current parent authority identifies the existing Cards drawer geometry in browser/GAMEROAD.html as the responsible presentation surface.",
+    "The repair reuses the existing drawer, inner edit scroll, deck stats/actions, Save and Restore controls; no new dialog, store, route or deck authority is introduced.",
+    "tests/browser-full-interaction.spec.mjs is owned separately and remains READ_ONLY; same-path acceptance will consume that existing owner output rather than duplicate the suite.",
+    "Gameplay, rules, save semantics, economy, network, Battle and Road remain READ_ONLY."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    ".github/workflows/zz-temp-browser-cards-mobile-save-r1.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    ".github/workflows/zz-temp-browser-cards-mobile-save-r1.yml"
+  ]
+}

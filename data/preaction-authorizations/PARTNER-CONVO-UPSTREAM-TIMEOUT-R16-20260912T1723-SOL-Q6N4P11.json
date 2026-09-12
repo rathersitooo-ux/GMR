@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-CONVO-UPSTREAM-TIMEOUT-R16-20260912T1723-SOL-Q6N4P11",
+  "taskId": "PARTNER-FUTURE-LLM-DIALOGUE-RESEARCH-001",
+  "workUnitKey": "PARTNER_CONVERSATION_UPSTREAM_TIMEOUT_R16",
+  "acquireKey": "PARTNER-CONVO-UPSTREAM-TIMEOUT-R16-20260912T1723-SOL-Q6N4P11",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "PARTNER-R16-CURRENT-WS-NO-ABORT-AND-HISTORICAL-HANG-RESIDUAL",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "PARTNER-R16-EXISTING-FALLBACK-AND-INJECTABLE-UPSTREAM-FETCH-ORACLE",
+  "proceedToken": "PROCEED|PARTNER-CONVO-UPSTREAM-TIMEOUT-R16-20260912T1723-SOL-Q6N4P11|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-path-timeout|lease-snapshot",
+  "authorizationBaseSha": "b754429fcb1cd006517a009f4177ca82dbaafe5f",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "PARTNER-FUTURE-LLM-DIALOGUE-RESEARCH-001",
+  "leaseWorkUnitKey": "PARTNER_CONVERSATION_UPSTREAM_TIMEOUT_R16",
+  "leaseAcquireKey": "PARTNER-CONVO-UPSTREAM-TIMEOUT-R16-20260912T1723-SOL-Q6N4P11",
+  "leaseSnapshotReadbackAtJst": "2026-09-12 17:23 JST",
+  "leaseUntilJst": "2026-09-12 18:08 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1079:L1079",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/partner-convo-upstream-timeout-r16-20260912 from exact current main b754429fcb1cd006517a009f4177ca82dbaafe5f; deploy/cloudflare/functions/ws.js; tests/partner-conversation-core.test.mjs exact transport-timeout coverage only; own transient data/preaction-authorizations/PARTNER-CONVO-UPSTREAM-TIMEOUT-R16-20260912T1723-SOL-Q6N4P11.json; own branch/PR/check/readback. READ_ONLY browser/board-facility-runtime-mount.mjs while PARTNER-MULTI-CHAR-R13 owns it through 18:00 JST; browser/partner-conversation-core.mjs; partner persona/content/memory/gameplay/rules/save/economy/network; deploy/cloudflare/tests/build.test.mjs while active Partner multi-char owner holds it.",
+  "scope": [
+    "deploy/cloudflare/functions/ws.js",
+    "tests/partner-conversation-core.test.mjs"
+  ],
+  "leaseScope": [
+    "deploy/cloudflare/functions/ws.js",
+    "tests/partner-conversation-core.test.mjs"
+  ]
+}

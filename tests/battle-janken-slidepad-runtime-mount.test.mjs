@@ -754,3 +754,14 @@ test('non-suit janken interaction chrome keeps hard-coded state color achromatic
   assert.match(runtimeSource, /\.grJankenSlidePadSlot\.scissors\{transform:translate\(-96px,-66px\) rotate\(-4deg\)/);
   assert.match(runtimeSource, /\.grJankenSlidePadSlot\.paper\{transform:translate\(-14px,-96px\) rotate\(9deg\)/);
 });
+
+
+test('ordinary hand focus enlarges the exact physical card face in place for local detail', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /#hand \.handCard\[data-card-focus="true"\]\{translate:0 -15px;scale:1\.38;/, 'local detail reuses the existing focused physical card instead of opening a second surface');
+  assert.match(source, /#hand \.handCard\[data-card-focus="true"\]\[data-card-focus-legal="true"\]\{translate:0 -18px;scale:1\.44;/, 'legal focus may emphasize the same card further without changing identity or legality');
+  assert.equal(source.includes('grBattleHandDetailDrawer'), false, 'address31 must not duplicate address37 shared drawer/detail');
+  assert.match(source, /function handCardFromEvent\(event\)[\s\S]*#hand \.handCard\[data-card-id\]/, 'focus remains bound to the exact cardId-bearing hand element');
+  assert.match(source, /projectBattleHandDragGhostPosition\(/, 'existing finger-occlusion drag projection remains in the same runtime');
+});

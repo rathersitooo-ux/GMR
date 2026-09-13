@@ -16,23 +16,27 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Apply bounded camera visual repair
+      - name: Verify current source and fetch validated donor
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "e935ee9df7a595a2b1fc657152a5d08e6c0984e8" || true
-          test "$(git hash-object browser/GAMEROAD.html)" = "5f06efc5b69b198ac56cb3a502f94f97d8a61880"
-          git fetch origin sol/battle-camera-html-r8-20260913:refs/remotes/origin/sol/battle-camera-html-r8-20260913
+          current_blob="$(git hash-object browser/GAMEROAD.html)"
+          echo "current_html_blob=$current_blob"
+          test "$current_blob" = "5f06efc5b69b198ac56cb3a502f94f97d8a61880"
+          git fetch --force origin refs/heads/sol/battle-camera-html-r8-20260913:refs/remotes/origin/sol/battle-camera-html-r8-20260913
+          git show origin/sol/battle-camera-html-r8-20260913:browser/GAMEROAD.html > /tmp/camera-donor.html
+          grep -Fq 'id="cameraReturnBtn"' /tmp/camera-donor.html
+          grep -Fq '__GAMEROAD_BATTLE_CAMERA_FIELD_ADAPTER__' /tmp/camera-donor.html
+      - name: Apply inspect-only return presentation and static regression
+        shell: bash
+        run: |
+          set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          import subprocess
+          import re
 
           html_path = Path('browser/GAMEROAD.html')
-          donor = subprocess.check_output(
-              ['git','show','origin/sol/battle-camera-html-r8-20260913:browser/GAMEROAD.html'],
-              text=True,
-          )
-          s = donor
+          s = Path('/tmp/camera-donor.html').read_text(encoding='utf-8')
 
           old_btn = '<button class="railBtn" id="cameraReturnBtn" aria-label="操作キャラへカメラを戻す" title="操作キャラへ戻る">自分</button>'
           assert s.count(old_btn) == 1, f'camera rail button count={s.count(old_btn)}'
@@ -43,35 +47,38 @@ jobs:
           assert s.count(anchor) == 1, f'rail close anchor count={s.count(anchor)}'
           s = s.replace(anchor, replacement)
 
-          old_style = '''<style id="gameroad-battle-camera-live-style">
-          #battleMap[data-camera-live="1"]{touch-action:none}
-          #cameraReturnBtn[data-camera-mode="MANUAL_INSPECT"]{box-shadow:0 0 0 2px rgba(176,231,255,.58),0 6px 18px rgba(0,0,0,.28);background:rgba(17,66,82,.92)}
-          </style>'''
+          style_pattern = r'<style id="gameroad-battle-camera-live-style">[\s\S]*?</style>'
+          style_matches = re.findall(style_pattern, s)
+          assert len(style_matches) == 1, f'camera style blocks={len(style_matches)}'
           new_style = '''<style id="gameroad-battle-camera-live-style">
           #battleMap[data-camera-live="1"]{touch-action:none}
           #cameraReturnBtn[hidden]{display:none!important}
           #cameraReturnBtn.cameraReturnControl{position:absolute;right:max(14px,env(safe-area-inset-right));bottom:max(108px,calc(env(safe-area-inset-bottom) + 108px));z-index:34;min-width:52px;min-height:44px;padding:0 14px;border:1px solid rgba(210,238,244,.62);border-radius:999px;background:rgba(17,49,58,.88);color:#fff;font:700 13px/1 system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.26);touch-action:manipulation}
           #cameraReturnBtn.cameraReturnControl[data-camera-mode="MANUAL_INSPECT"]{box-shadow:0 0 0 2px rgba(176,231,255,.58),0 6px 18px rgba(0,0,0,.28);background:rgba(17,66,82,.92)}
           </style>'''
-          assert s.count(old_style) == 1, f'camera style block count={s.count(old_style)}'
-          s = s.replace(old_style, new_style)
+          s = re.sub(style_pattern, lambda _: new_style, s, count=1)
 
-          old_destroy = "function destroy(){runtime?.destroy?.();runtime=null;key='';delete world.dataset.cameraMode;delete returnControl.dataset.cameraMode}"
-          new_destroy = "function syncReturnControl(cameraState){const manual=cameraState?.mode==='MANUAL_INSPECT';returnControl.hidden=!manual;returnControl.setAttribute('aria-hidden',manual?'false':'true');returnControl.tabIndex=manual?0:-1;if(manual)returnControl.dataset.cameraMode='MANUAL_INSPECT';else delete returnControl.dataset.cameraMode}function destroy(){runtime?.destroy?.();runtime=null;key='';delete world.dataset.cameraMode;syncReturnControl(null)}"
-          assert s.count(old_destroy) == 1, f'destroy anchor count={s.count(old_destroy)}'
-          s = s.replace(old_destroy, new_destroy)
+          replacements = [
+            (
+              "function destroy(){runtime?.destroy?.();runtime=null;key='';delete world.dataset.cameraMode;delete returnControl.dataset.cameraMode}",
+              "function syncReturnControl(cameraState){const manual=cameraState?.mode==='MANUAL_INSPECT';returnControl.hidden=!manual;returnControl.setAttribute('aria-hidden',manual?'false':'true');returnControl.tabIndex=manual?0:-1;if(manual)returnControl.dataset.cameraMode='MANUAL_INSPECT';else delete returnControl.dataset.cameraMode}function destroy(){runtime?.destroy?.();runtime=null;key='';delete world.dataset.cameraMode;syncReturnControl(null)}",
+              'destroy',
+            ),
+            (
+              "applyView:(cameraState,meta)=>{adapter.applyView(cameraState,meta);world.dataset.cameraMode=cameraState.mode;returnControl.dataset.cameraMode=cameraState.mode}});",
+              "applyView:(cameraState,meta)=>{adapter.applyView(cameraState,meta);world.dataset.cameraMode=cameraState.mode;syncReturnControl(cameraState)}});",
+              'applyView',
+            ),
+            (
+              "const cameraState=runtime.getState();world.dataset.cameraMode=cameraState.mode;returnControl.dataset.cameraMode=cameraState.mode;return cameraState}",
+              "const cameraState=runtime.getState();world.dataset.cameraMode=cameraState.mode;syncReturnControl(cameraState);return cameraState}",
+              'state-sync',
+            ),
+          ]
+          for old, new, label in replacements:
+            assert s.count(old) == 1, f'{label} anchor count={s.count(old)}'
+            s = s.replace(old, new)
 
-          old_apply = "applyView:(cameraState,meta)=>{adapter.applyView(cameraState,meta);world.dataset.cameraMode=cameraState.mode;returnControl.dataset.cameraMode=cameraState.mode}});"
-          new_apply = "applyView:(cameraState,meta)=>{adapter.applyView(cameraState,meta);world.dataset.cameraMode=cameraState.mode;syncReturnControl(cameraState)}});"
-          assert s.count(old_apply) == 1, f'applyView anchor count={s.count(old_apply)}'
-          s = s.replace(old_apply, new_apply)
-
-          old_state = "const cameraState=runtime.getState();world.dataset.cameraMode=cameraState.mode;returnControl.dataset.cameraMode=cameraState.mode;return cameraState}"
-          new_state = "const cameraState=runtime.getState();world.dataset.cameraMode=cameraState.mode;syncReturnControl(cameraState);return cameraState}"
-          assert s.count(old_state) == 1, f'camera state anchor count={s.count(old_state)}'
-          s = s.replace(old_state, new_state)
-
-          assert '<div class="battleRail">' in s
           rail = s.split('<div class="battleRail">',1)[1].split('</div>',1)[0]
           assert 'cameraReturnBtn' not in rail, 'camera return leaked into persistent battleRail'
           assert s.count('id="cameraReturnBtn"') == 1
@@ -98,9 +105,12 @@ jobs:
           test_path.write_text(t, encoding='utf-8')
           PY
           git diff --check
+      - name: Run camera and Browser static checks
+        shell: bash
+        run: |
+          set -euo pipefail
           node --test tests/battle-camera-control-core.test.mjs tests/battle-camera-input-router.test.mjs tests/battle-camera-live-runtime.test.mjs
           node tests/browser-static-check.mjs --self-test browser/GAMEROAD.html
-          git diff -- browser/GAMEROAD.html tests/browser-static-check.mjs
       - name: Commit clean product delta and self-clean
         shell: bash
         run: |

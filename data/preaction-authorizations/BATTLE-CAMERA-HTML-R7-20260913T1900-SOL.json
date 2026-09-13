@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CAMERA-HTML-R7-20260913T1900-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CAMERA_GAMEROAD_HTML_DONOR_R5D",
+  "acquireKey": "BATTLE-CAMERA-HTML-R7-20260913T1900-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_CAMERA_GATE_PLUS_MERGED_PR1453_RUNTIME_PLUS_PR1469_PUBLIC_PACKAGE_PLUS_TESTED_R5D_DONOR",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "THREE_WAY_APPLY_EXACT_R5D_DONOR_TO_FRESH_MAIN_FAIL_CLOSED_ON_CONTEXT_CONFLICT",
+  "proceedToken": "PROCEED|BATTLE-CAMERA-HTML-R7-20260913T1900-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-camera-html-r7|existing-camera-live-mount",
+  "authorizationBaseSha": "42d76ff5145207964329a67f0048cf9849220dba",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CAMERA_GAMEROAD_HTML_DONOR_R5D",
+  "leaseAcquireKey": "BATTLE-CAMERA-HTML-R7-20260913T1900-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-13 19:00 JST",
+  "leaseUntilJst": "2026-09-13 20:00 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1329:L1329",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main 42d76ff5145207964329a67f0048cf9849220dba; branch sol/battle-camera-html-r7-20260913; mutable browser/GAMEROAD.html; tests/battle-camera-live-integration.test.mjs; own transient .github/workflows/zz-temp-battle-camera-html-r7.yml; own PRE_ACTION/branch/PR/check/readback. READ_ONLY donor sol/battle-camera-html-r5d-20260910@6a87bc5b8f0001d37f42ef3a4337081c149616b6; existing browser/battle-camera-control-core.mjs; browser/battle-camera-input-router.mjs; browser/battle-camera-live-runtime.mjs; deploy/cloudflare/scripts/build.mjs; deploy/cloudflare/tests/build.test.mjs; Battle gameplay/rules/movement/target/Shield/GOAL/Mana/Honey/Hand3/save/network.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-camera-live-integration.test.mjs",
+    ".github/workflows/zz-temp-battle-camera-html-r7.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/battle-camera-live-integration.test.mjs",
+    ".github/workflows/zz-temp-battle-camera-html-r7.yml"
+  ],
+  "solutionSignature": "battle-camera-html-r7|mount-existing-camera-runtime|manual-pan-zoom-angle|one-action-follow-return|gameplay-write0",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "R5D_TESTED_HTML_DONOR_AND_R6B_MERGED_PUBLIC_PACKAGE",
+  "solutionSearchEvidence": [
+    "main:42d76ff5145207964329a67f0048cf9849220dba",
+    "donor:sol/battle-camera-html-r5d-20260910@6a87bc5b8f0001d37f42ef3a4337081c149616b6",
+    "donor delta exactly browser/GAMEROAD.html + tests/battle-camera-live-integration.test.mjs",
+    "merged PR1453 supplies browser/battle-camera-live-runtime.mjs",
+    "merged PR1469 packages camera control-core/input-router/live-runtime publicly",
+    "current main lacks tests/battle-camera-live-integration.test.mjs and code search finds no live mount",
+    "CURRENT_ACTIVE_LEASES!A1329:L1329 ACTIVE readback"
+  ]
+}

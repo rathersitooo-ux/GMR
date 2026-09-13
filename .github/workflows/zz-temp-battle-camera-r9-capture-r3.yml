@@ -1,0 +1,61 @@
+name: TEMP Battle Camera R9 Capture R3
+
+on:
+  push:
+    branches:
+      - sol/battle-camera-visual-r9-final-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium capture runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Run bounded real 667x375 capture
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p visual-evidence
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/gameroad-camera-r9-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          git show 6b64284a9f2d186752e63d0c3435e109de2dcd64:.github/workflows/zz-temp-battle-camera-r9-capture.yml >/tmp/capture-source.yml
+          python3 - <<'PY'
+          from pathlib import Path
+          import textwrap
+          s=Path('/tmp/capture-source.yml').read_text(encoding='utf-8')
+          marker="          cat >/tmp/camera-r9-capture.mjs <<'NODE'\n"
+          start=s.index(marker)+len(marker)
+          end=s.index("\n          NODE\n",start)
+          script=textwrap.dedent(s[start:end])+"\n"
+          needle="const deck=await page.evaluate(()=>{"
+          if script.count(needle)!=1:
+              raise SystemExit(f'deck anchor count={script.count(needle)}')
+          script=script.replace(needle,"await page.waitForFunction(()=>window.__GAMEROAD_TEST__&&window.__CARD_DATA__,null,{timeout:15000});\nconst deck=await page.evaluate(()=>{",1)
+          Path('/tmp/camera-r9-capture.mjs').write_text(script,encoding='utf-8')
+          PY
+          rm -rf /tmp/node_modules
+          ln -s "$PWD/node_modules" /tmp/node_modules
+          node /tmp/camera-r9-capture.mjs
+      - name: Upload 667x375 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: battle-camera-r9-667-evidence-r3
+          path: visual-evidence/
+          if-no-files-found: error
+          retention-days: 14

@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -23,9 +23,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          BASE="$(git rev-parse HEAD^)"
-          test "$BASE" = "9f29ce762c0f5f586209d1eebb9f39b34ccac534"
-          git diff --name-only "$BASE" HEAD | grep -Fx '.github/workflows/zz-temp-battle-camera-wu63-viewports-r1.yml'
+          BASE="9f29ce762c0f5f586209d1eebb9f39b34ccac534"
+          test "$(git merge-base HEAD "$BASE")" = "$BASE"
+          mapfile -t changed < <(git diff --name-only "$BASE" HEAD)
+          test "${#changed[@]}" -eq 1
+          test "${changed[0]}" = '.github/workflows/zz-temp-battle-camera-wu63-viewports-r1.yml'
       - name: Install Playwright
         run: |
           npm install --no-save --no-package-lock @playwright/test@1.62.0

@@ -68,6 +68,15 @@ function styleFlightClone(clone, sourceRect) {
   return true;
 }
 
+function scheduleStaticCueCleanup(cue) {
+  if (typeof globalThis?.setTimeout !== 'function') return;
+  const timer = globalThis.setTimeout(
+    () => removeNode(cue),
+    BATTLE_CARD_RELEASE_DESTINATION_PULSE_DURATION_MS,
+  );
+  timer?.unref?.();
+}
+
 function createDestinationPulse({ documentRef, host, target }) {
   if (!documentRef?.createElement || !host?.appendChild || !finitePoint(target)) return null;
   const cue = documentRef.createElement('span');
@@ -111,6 +120,7 @@ function createDestinationPulse({ documentRef, host, target }) {
     cue.style.opacity = '0.72';
     cue.style.transform = 'translate(-50%,-50%) scale(1)';
     if (cue.dataset) cue.dataset.jankenFlightDestinationFallback = 'static';
+    scheduleStaticCueCleanup(cue);
   }
   return cue;
 }

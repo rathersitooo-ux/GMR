@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "ADVICE-PARTNER-QUICK3-R4-PREACTION-20260914T0008",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_ADVICE_QUICK3_DIRECT_PRODUCT_R4",
+  "acquireKey": "PARTNER-ADVICE-QUICK3-R4-20260914T0008-SOL-A7K8",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "USER_DIRECT_QUICK3_CURRENT_20260913",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "GITHUB_ACTIONS_RUN_34765257302_QUICK3_5OF5_BUILD_7OF7",
+  "proceedToken": "PROCEED|ADVICE-PARTNER-QUICK3-R4-PREACTION-20260914T0008|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|user-approved-quick3|rehearsal-pass",
+  "authorizationBaseSha": "65c96195ca8eaf090fdb29e7253ab55499a18d9e",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_ADVICE_QUICK3_DIRECT_PRODUCT_R4",
+  "leaseAcquireKey": "PARTNER-ADVICE-QUICK3-R4-20260914T0008-SOL-A7K8",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 00:08 JST",
+  "leaseUntilJst": "2026-09-14 01:08 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1347:L1347",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR clean branch from fresh main; browser/partner-advice-runtime-mount.mjs; tests/partner-advice-runtime-mount.test.mjs; deploy/cloudflare/tests/build.test.mjs provenance pin only. READ_ONLY gameplay/rules/save/economy/network/GAMEROAD.html.",
+  "scope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs"
+  ]
+}

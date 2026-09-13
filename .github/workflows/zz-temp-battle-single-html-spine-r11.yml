@@ -1,0 +1,176 @@
+name: TEMP Battle Single HTML Spine R11
+
+on:
+  push:
+    branches:
+      - sol/battle-single-html-spine-r11-20260913
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply bounded presentation and replay-authority repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new, label):
+              p = Path(path)
+              text = p.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly 1 anchor, got {count}')
+              p.write_text(text.replace(old, new, 1))
+
+          # Keep authoritative legacy ids/handlers, but mark the current target-input surface semantically.
+          replace_once(
+              'browser/GAMEROAD.html',
+              '<div class="targetBox floatingTarget" id="targetBox">',
+              '<div class="targetBox floatingTarget" id="targetBox" data-battle-target-input="1" aria-label="攻撃先">',
+              'html-target-input-marker',
+          )
+
+          # Current-player compositor: semantic target input first, #targetBox only as compatibility fallback.
+          replace_once(
+              'browser/battle-current-player-ui-runtime.mjs',
+              "  targetConfirm: Object.freeze(['#targetBox']),",
+              "  targetConfirm: Object.freeze(['[data-battle-target-input=\"1\"]', '#targetBox']),",
+              'current-ui-target-selector',
+          )
+          replace_once(
+              'browser/battle-current-player-ui-runtime.mjs',
+              '.screen.battle[${ROOT_ATTR}="1"] #targetBox{position:absolute!important;z-index:45!important;right:calc(var(--gr-thumb-w) + var(--gr-ui-edge) + var(--gr-ui-gap))!important;left:auto!important;bottom:var(--gr-ui-edge)!important;top:auto!important;width:min(34vw,280px)!important;max-height:44vh!important;overflow:auto!important}',
+              '.screen.battle[${ROOT_ATTR}="1"] [data-battle-target-input="1"]{position:absolute!important;z-index:46!important;right:var(--gr-ui-edge)!important;left:auto!important;bottom:calc(var(--gr-thumb-h) + var(--gr-ui-edge) + 4px)!important;top:auto!important;width:var(--gr-thumb-w)!important;max-height:none!important;overflow:visible!important;box-sizing:border-box!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px!important;padding:5px!important}\n.screen.battle[${ROOT_ATTR}="1"]:has([data-battle-target-input="1"].on) [data-battle-playable-hand-row-roulette-live="1"]{display:none!important}',
+              'current-ui-target-placement',
+          )
+          p = Path('browser/battle-current-player-ui-runtime.mjs')
+          text = p.read_text()
+          for old, new, label in [
+              ('.screen.battle[${ROOT_ATTR}="1"][data-gr-stale="true"] #targetBox,', '.screen.battle[${ROOT_ATTR}="1"][data-gr-stale="true"] [data-battle-target-input="1"],', 'stale-target-selector'),
+              ('.screen.battle[${ROOT_ATTR}="1"][data-gr-reconnecting="true"] #targetBox{pointer-events:none!important;opacity:.55!important}', '.screen.battle[${ROOT_ATTR}="1"][data-gr-reconnecting="true"] [data-battle-target-input="1"]{pointer-events:none!important;opacity:.55!important}', 'reconnect-target-selector'),
+              ('  .screen.battle[${ROOT_ATTR}="1"] #targetBox{width:min(30vw,230px)!important}', '  .screen.battle[${ROOT_ATTR}="1"] [data-battle-target-input="1"]{width:var(--gr-thumb-w)!important}', 'short-target-width'),
+              ('  .screen.battle[${ROOT_ATTR}="1"] #targetBox{width:96vw!important;right:2vw!important;bottom:30vh!important}', '  .screen.battle[${ROOT_ATTR}="1"] [data-battle-target-input="1"]{width:var(--gr-thumb-w)!important;right:var(--gr-ui-edge)!important;bottom:calc(var(--gr-thumb-h) + var(--gr-ui-edge) + 4px)!important}', 'portrait-target-placement'),
+          ]:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected exactly 1 anchor, got {count}')
+              text = text.replace(old, new, 1)
+          p.write_text(text)
+
+          # SlidePad presentation layers the semantic current target-input surface.
+          replace_once(
+              'browser/battle-janken-slidepad-runtime-mount.mjs',
+              "export const BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS = 'section[data-screen=\"battle\"] #targetBox.on,section[data-screen=\"battle\"] #targetBox.vfTargetProxyOn{z-index:60!important}';",
+              "export const BATTLE_JANKEN_TARGET_PROXY_LAYER_CSS = 'section[data-screen=\"battle\"] [data-battle-target-input=\"1\"].on,section[data-screen=\"battle\"] [data-battle-target-input=\"1\"].vfTargetProxyOn{z-index:46!important}';",
+              'slidepad-target-proxy',
+          )
+
+          # Replay must consume caller winnerIds, not infer/reject winners from a >=7 replay threshold.
+          replace_once(
+              'browser/battle-replay-live-adapter.mjs',
+              "  const winnerSet = new Set(winnerIds);\n  const reachedSeven = rows.filter(row => row.maxColumn >= 7).map(row => row.id);\n  if (reachedSeven.length !== winnerSet.size || reachedSeven.some(id => !winnerSet.has(id))) {\n    throw new TypeError('MATCH_END_FORMAL_WINNER_MISMATCH');\n  }\n\n  for (const row of rows) {",
+              "  const winnerSet = new Set(winnerIds);\n\n  for (const row of rows) {",
+              'replay-remove-seven-winner-inference',
+          )
+
+          # Focused tests: semantic target surface and caller-authoritative winner identity.
+          replace_once(
+              'tests/battle-janken-slidepad-runtime-mount.test.mjs',
+              "    'section[data-screen=\"battle\"] #targetBox.on,section[data-screen=\"battle\"] #targetBox.vfTargetProxyOn{z-index:60!important}',",
+              "    'section[data-screen=\"battle\"] [data-battle-target-input=\"1\"].on,section[data-screen=\"battle\"] [data-battle-target-input=\"1\"].vfTargetProxyOn{z-index:46!important}',",
+              'slidepad-target-test',
+          )
+          replace_once(
+              'tests/battle-current-player-ui-runtime.test.mjs',
+              "assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.roulette[0], '[data-battle-playable-hand-row-roulette-live=\"1\"]');",
+              "assert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.roulette[0], '[data-battle-playable-hand-row-roulette-live=\"1\"]');\nassert.equal(BATTLE_CURRENT_PLAYER_UI_SELECTORS.targetConfirm[0], '[data-battle-target-input=\"1\"]');",
+              'current-ui-target-selector-test',
+          )
+          replace_once(
+              'tests/battle-current-player-ui-runtime.test.mjs',
+              "  assert.match(styleText, /data-battle-janken-slidepad=\\\"1\\\"\\]\\{[^}]*width:var\\(--gr-thumb-w\\)!important[^}]*height:var\\(--gr-thumb-h\\)!important/);",
+              "  assert.match(styleText, /data-battle-janken-slidepad=\\\"1\\\"\\]\\{[^}]*width:var\\(--gr-thumb-w\\)!important[^}]*height:var\\(--gr-thumb-h\\)!important/);\n  assert.match(styleText, /data-battle-target-input=\\\"1\\\"\\]\\{[^}]*right:var\\(--gr-ui-edge\\)!important[^}]*bottom:calc\\(var\\(--gr-thumb-h\\) \\+ var\\(--gr-ui-edge\\) \\+ 4px\\)!important[^}]*width:var\\(--gr-thumb-w\\)!important/);\n  assert.match(styleText, /:has\\(\\[data-battle-target-input=\\\"1\\\"\\]\\.on\\)[^}]*data-battle-playable-hand-row-roulette-live/);",
+              'current-ui-target-style-test',
+          )
+
+          replay_test = Path('tests/battle-replay-live-adapter.test.mjs')
+          rt = replay_test.read_text()
+          old_case = "    formalRanking: base.map(row => row.id === 'P2' ? { ...row, maxColumn: 7, rank: 1 } : row)\n  }), /MATCH_END_FORMAL_WINNER_MISMATCH/);"
+          new_case = "    formalRanking: base.map(row => row.id === 'P2' ? { ...row, maxColumn: 7, rank: 1 } : row)\n  }), /MATCH_END_FORMAL_RANK_MISMATCH:P2/);"
+          if rt.count(old_case) != 1:
+              raise SystemExit(f'replay-old-winner-threshold-test: expected 1 anchor, got {rt.count(old_case)}')
+          rt = rt.replace(old_case, new_case, 1)
+          insert_anchor = "test('Free4P replay competition ranking skips after a loser tie and is independent of input or id order', () => {"
+          if rt.count(insert_anchor) != 1:
+              raise SystemExit(f'replay-insert-anchor: expected 1 anchor, got {rt.count(insert_anchor)}')
+          new_test = """test('Free4P winner identity follows caller-authoritative winnerIds without a seven-card replay threshold', () => {\n  const publicData = replayMatchEndPublicData('M-4P-AUTH-WINNER', {\n    winnerIds: ['P1'], round: 10, mode: '4p',\n    formalRanking: [\n      { id: 'P1', rank: 1, maxColumn: 4 },\n      { id: 'P2', rank: 2, maxColumn: 8 },\n      { id: 'P3', rank: 3, maxColumn: 6 },\n      { id: 'P4', rank: 4, maxColumn: 2 }\n    ]\n  });\n  assert.deepEqual(publicData.winnerIds, ['P1']);\n  assert.equal(publicData.formalRanking.find(row => row.id === 'P1').rank, 1);\n  assert.equal(publicData.formalRanking.find(row => row.id === 'P1').maxColumn, 4);\n  assert.equal(publicData.formalRanking.find(row => row.id === 'P2').maxColumn, 8);\n});\n\n"""
+          rt = rt.replace(insert_anchor, new_test + insert_anchor, 1)
+          replay_test.write_text(rt)
+
+          # Guard boundary: gameplay target handlers remain byte-present and untouched in meaning.
+          html = Path('browser/GAMEROAD.html').read_text()
+          required = [
+              "function renderTarget(){const box=$('#targetBox')",
+              "$('#confirmTarget').onclick=async()=>{const act=state.match.players.find(p=>p.id===state.match.activeId)",
+              "state.match.target={defenderId,lane:$('#targetLane').value,shield:$('#targetShield').value}",
+              "const __grOriginalConfirmTarget=$('#confirmTarget').onclick",
+              "const __ctxBaseConfirmTarget=$('#confirmTarget').onclick",
+          ]
+          missing = [anchor for anchor in required if anchor not in html]
+          if missing:
+              raise SystemExit(f'authoritative target handler drifted: {missing}')
+          PY
+
+          node --check browser/battle-current-player-ui-runtime.mjs
+          node --check browser/battle-janken-slidepad-runtime-mount.mjs
+          node --check browser/battle-replay-live-adapter.mjs
+          node --test tests/battle-current-player-ui-runtime.test.mjs
+          node --test tests/battle-janken-slidepad-runtime-mount.test.mjs
+          node --test tests/battle-replay-live-adapter.test.mjs
+          node tests/browser-static-check.mjs
+          git diff --check
+          python - <<'PY'
+          import subprocess
+          allowed = {
+            'browser/GAMEROAD.html',
+            'browser/battle-current-player-ui-runtime.mjs',
+            'browser/battle-janken-slidepad-runtime-mount.mjs',
+            'browser/battle-replay-live-adapter.mjs',
+            'tests/battle-current-player-ui-runtime.test.mjs',
+            'tests/battle-janken-slidepad-runtime-mount.test.mjs',
+            'tests/battle-replay-live-adapter.test.mjs',
+          }
+          changed = set(subprocess.check_output(['git','diff','--name-only'], text=True).split())
+          extra = changed - allowed
+          if extra:
+              raise SystemExit(f'out-of-scope product delta: {sorted(extra)}')
+          if not changed:
+              raise SystemExit('no product delta')
+          print('PRODUCT_DELTA', *sorted(changed), sep='\n')
+          PY
+      - name: Commit tested bounded product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name gameroad-bot
+          git config user.email gameroad-bot@users.noreply.github.com
+          git add browser/GAMEROAD.html browser/battle-current-player-ui-runtime.mjs browser/battle-janken-slidepad-runtime-mount.mjs browser/battle-replay-live-adapter.mjs tests/battle-current-player-ui-runtime.test.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs tests/battle-replay-live-adapter.test.mjs
+          git commit -m 'Battle: target入力表示と正式勝者表示を単一spineへ統合 R11'
+      - name: Cleanup transient authorization and workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/zz-temp-battle-single-html-spine-r11.yml
+          git rm data/preaction-authorizations/BATTLE-SINGLE-HTML-SPINE-R11-20260913T1844-SOL.json
+          git commit -m 'Cleanup Battle single-spine R11 transient authorization'
+          git push origin HEAD:sol/battle-single-html-spine-r11-20260913

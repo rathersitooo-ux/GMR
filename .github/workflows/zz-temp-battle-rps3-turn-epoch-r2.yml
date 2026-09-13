@@ -37,18 +37,8 @@ jobs:
                   raise SystemExit(f'{label}: expected 1 anchor, got {count}')
               return text.replace(old, new, 1)
 
-          old_commit = '''        const staged = stagedCompoundAttack;
-          const fresh = await readCandidateFor(staged.package.jankenHand, staged.package.cardId);'''
-          new_commit = '''        const staged = stagedCompoundAttack;
-          await syncRoundStart();
-          if (stagedCompoundAttack !== staged) {
-            return Object.freeze({
-              ok: false,
-              committed: false,
-              reason: 'TURN_CHANGED_RESTAGE_REQUIRED',
-            });
-          }
-          const fresh = await readCandidateFor(staged.package.jankenHand, staged.package.cardId);'''
+          old_commit = "        const staged = stagedCompoundAttack;\n        const fresh = await readCandidateFor(staged.package.jankenHand, staged.package.cardId);"
+          new_commit = "        const staged = stagedCompoundAttack;\n        await syncRoundStart();\n        if (stagedCompoundAttack !== staged) {\n          return Object.freeze({\n            ok: false,\n            committed: false,\n            reason: 'TURN_CHANGED_RESTAGE_REQUIRED',\n          });\n        }\n        const fresh = await readCandidateFor(staged.package.jankenHand, staged.package.cardId);"
           src = once(src, old_commit, new_commit, 'commit turn guard')
 
           anchor = "test('fresh authority mismatch blocks the whole commit before existing transport is called', async () => {"

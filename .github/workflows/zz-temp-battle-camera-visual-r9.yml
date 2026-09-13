@@ -115,7 +115,7 @@ jobs:
           git add browser/GAMEROAD.html tests/browser-static-check.mjs
           git diff --cached --check
           changed="$(git diff --cached --name-only | sort)"
-          expected="$(printf '%s\n' browser/GAMEROAD.html tests/browser-static-check.mjs | sort)"
+          expected="$(printf '%s\n' .github/workflows/zz-temp-battle-camera-visual-r9.yml browser/GAMEROAD.html data/preaction-authorizations/BATTLE-CAMERA-VISUAL-R9-20260914T0052-SOL.json tests/browser-static-check.mjs | sort)"
           test "$changed" = "$expected"
           git commit -m 'Battle: カメラ復帰を確認中だけ表示 R9'
           git push origin HEAD:sol/battle-camera-visual-r9-20260914

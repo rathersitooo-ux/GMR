@@ -1,0 +1,41 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-OTHER3-PUBLIC-HUD-R1-20260914T0124-SOL-KO10",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_OTHER_THREE_PUBLIC_STATUS_HUD_R1",
+  "acquireKey": "BATTLE-OTHER3-PUBLIC-HUD-R1-20260914T0124-SOL-KO10",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "OTHER3-HUD-CURRENT-ACTUAL-VIEWER-ROLE-BOUNDARY",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "CURRENT-MAIN-HUDRENDER-AND-PRIVACY-DIRECT-READBACK",
+  "proceedToken": "PROCEED|BATTLE-OTHER3-PUBLIC-HUD-R1-20260914T0124-SOL-KO10|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|viewer-relative-existing-hud-only|lease-snapshot-A1357",
+  "authorizationBaseSha": "33fc9551536bc6126c7a75046dd3bc9a0cd38e7b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_OTHER_THREE_PUBLIC_STATUS_HUD_R1",
+  "leaseAcquireKey": "BATTLE-OTHER3-PUBLIC-HUD-R1-20260914T0124-SOL-KO10",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 01:24 JST",
+  "leaseUntilJst": "2026-09-14 02:24 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1357:L1357",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main 33fc9551536bc6126c7a75046dd3bc9a0cd38e7b; mutable browser/GAMEROAD.html; tests/browser-static-check.mjs; own transient data/preaction-authorizations/BATTLE-OTHER3-PUBLIC-HUD-R1-20260914T0124-SOL-KO10.json; own branch/PR/check/merge/readback. READ_ONLY camera core/input/live runtime; battle-screen/janken runtimes; gameplay/rules/target/legality/card identity/save/economy/network/build.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs"
+  ],
+  "solutionSignature": "Repair the existing publicPlayerStrip in place: exclude the viewer self from peer HUD/royal peer strip, fail closed on opponent private hand/deck/chip counts in the detail drawer, and place the same compact public peer HUD at right-top without introducing a second state/store/controller.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CAMERA-R9B-MERGED-NONOVERLAP-PLUS-CURRENT-HUD-DIRECT-READBACK",
+  "solutionSearchEvidence": [
+    "Current hudRender loops over m.players and duplicates the human viewer as a peer chip; current visual relation authority forbids self-peer duplication.",
+    "Current renderPlayers exposes each opponent hand/deck/chip count although viewer-safe publication of those counts is unresolved; fail closed by omitting opponent counts.",
+    "Camera R9b PR 1618 merged as main 33fc9551536bc6126c7a75046dd3bc9a0cd38e7b and does not change publicPlayerStrip viewer filtering or right-top placement."
+  ]
+}

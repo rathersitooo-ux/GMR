@@ -1,4 +1,4 @@
-name: TEMP Partner Advice Quick3 Diagnostic R4
+name: TEMP Partner Advice Quick3 Gate Repair R4
 
 on:
   push:
@@ -8,33 +8,80 @@ on:
       - .github/workflows/zz-temp-partner-advice-quick3-r4.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  inspect:
+  repair-test-push:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
-          fetch-depth: 1
-      - name: Inspect contextual tutorial implementation and source-game coaching
+          ref: sol/partner-advice-quick3-r5-preaction-20260914
+          fetch-depth: 0
+      - name: Repair bounded presentation-only tutorial regressions
         shell: bash
         run: |
           set -euo pipefail
-          start=$(grep -n "export function createBattleContextualTutorialReplayControl" browser/partner-advice-runtime-mount.mjs | head -1 | cut -d: -f1)
-          end=$((start + 150))
-          echo "=== contextual replay control lines ${start}-${end} ==="
-          nl -ba browser/partner-advice-runtime-mount.mjs | sed -n "${start},${end}p"
-          help=$(grep -n "export function projectTutorialExperienceHelp" browser/tutorial-experience-profile-core.mjs | head -1 | cut -d: -f1)
-          help_end=$((help + 90))
-          echo "=== tutorial experience help lines ${help}-${help_end} ==="
-          nl -ba browser/tutorial-experience-profile-core.mjs | sed -n "${help},${help_end}p"
-          echo "=== focused baseline failures ==="
-          set +e
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+
+          runtime = Path('browser/partner-advice-runtime-mount.mjs')
+          tests = Path('tests/partner-advice-runtime-mount.test.mjs')
+          build = Path('deploy/cloudflare/tests/build.test.mjs')
+
+          source = runtime.read_text()
+          old = "      return adapted?.active && exactPresentationToken(adapted.message) ? adapted.message : current?.message ?? null;\n"
+          new = """      const adaptedMessage = typeof adapted?.message === 'string' && adapted.message.trim() === adapted.message && adapted.message.length > 0
+            ? adapted.message
+            : null;
+      return adapted?.active && adaptedMessage ? adaptedMessage : current?.message ?? null;
+"""
+          if source.count(old) != 1:
+              raise RuntimeError(f'help-message guard anchor count={source.count(old)}')
+          source = source.replace(old, new, 1)
+          runtime.write_text(source)
+
+          test_source = tests.read_text()
+          old_test = "  assert.match(help.message, /先にロード/);\n"
+          new_test = "  assert.match(help.message, /順番は固定じゃない/);\n  assert.match(help.message, /ロードを先に触っても移動から始めてもよく/);\n"
+          if test_source.count(old_test) != 1:
+              raise RuntimeError(f'flex-order stale assertion count={test_source.count(old_test)}')
+          test_source = test_source.replace(old_test, new_test, 1)
+          tests.write_text(test_source)
+
+          new_blob = subprocess.check_output(['git', 'hash-object', str(runtime)], text=True).strip()
+          build_source = build.read_text()
+          old_pin = "currentBlob: 'a60e9678e8b1fd4762d4ee6bacdca66ff2d245c0'"
+          if build_source.count(old_pin) != 1:
+              raise RuntimeError(f'build provenance old pin count={build_source.count(old_pin)}')
+          build.write_text(build_source.replace(old_pin, f"currentBlob: '{new_blob}'", 1))
+          print(f'NEW_RUNTIME_BLOB={new_blob}')
+          PY
+      - name: Verify Required Gate subset and build provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check browser/partner-advice-runtime-mount.mjs
           node --test tests/partner-advice-runtime-mount.test.mjs
-          rc=$?
-          set -e
-          echo "BASELINE_RC=$rc"
-          exit 0
+          node --test tests/partner-legal-action-adapter.test.mjs tests/partner-advice-runtime-mount.test.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+          mapfile -t changed < <(git diff --name-only | sort)
+          printf '%s\n' "${changed[@]}"
+          expected=(browser/partner-advice-runtime-mount.mjs deploy/cloudflare/tests/build.test.mjs tests/partner-advice-runtime-mount.test.mjs)
+          [[ "${#changed[@]}" -eq 3 ]]
+          [[ "${changed[*]}" == "${expected[*]}" ]]
+          grep -q "順番は固定じゃない" tests/partner-advice-runtime-mount.test.mjs
+          grep -q "ロードを先に触っても移動から始めてもよく" tests/partner-advice-runtime-mount.test.mjs
+      - name: Commit repair to policy-compliant product branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "gameroad-sol"
+          git config user.email "gameroad-sol@users.noreply.github.com"
+          git add browser/partner-advice-runtime-mount.mjs tests/partner-advice-runtime-mount.test.mjs deploy/cloudflare/tests/build.test.mjs
+          git diff --cached --quiet && { echo 'No repair delta'; exit 1; }
+          git commit -m "Partner: チュートリアル説明の表示回帰を修正"
+          git push origin HEAD:refs/heads/sol/partner-advice-quick3-r5-preaction-20260914
+          echo "REPAIR_COMMIT=$(git rev-parse HEAD)"

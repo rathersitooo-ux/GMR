@@ -1,0 +1,151 @@
+name: TEMP Camera 667 Visual R1
+
+on:
+  push:
+    branches:
+      - sol/battle-camera-html-r8-20260913
+
+permissions:
+  contents: write
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Prepare bounded 667x375 camera evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .camera-667 visual-evidence
+          cat > .camera-667/playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({
+            testDir: '.',
+            testMatch: 'camera-667.spec.mjs',
+            timeout: 90000,
+            expect: { timeout: 7000 },
+            workers: 1,
+            retries: 0,
+            use: {
+              baseURL: 'http://127.0.0.1:4173',
+              browserName: 'chromium',
+              headless: true,
+              viewport: { width: 667, height: 375 },
+              trace: 'retain-on-failure',
+            },
+            webServer: {
+              command: 'python3 -m http.server 4173 --bind 127.0.0.1',
+              cwd: new URL('../', import.meta.url).pathname,
+              url: 'http://127.0.0.1:4173/browser/GAMEROAD.html',
+              reuseExistingServer: false,
+              timeout: 120000,
+            },
+          });
+          EOF
+          cat > .camera-667/camera-667.spec.mjs <<'EOF'
+          import { test, expect } from '@playwright/test';
+
+          const output = new URL('../visual-evidence/', import.meta.url).pathname;
+
+          async function installLegalBattleDeck(page) {
+            return page.evaluate(() => {
+              const t=window.__GAMEROAD_TEST__;
+              const publicMain=new Set(t.deckPublic().filter((card)=>card.slot==='main').map((card)=>card.id));
+              const standard=window.__CARD_DATA__.filter((card)=>publicMain.has(card.id)&&/^(SP|HT|DI|CL)$/.test(card.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank))).map((card)=>card.id);
+              const royalIds=['SP_J','SP_Q','SP_K'];
+              const nonRoyal=standard.filter((id)=>!t.isRoyalCard(id));
+              const main=[...nonRoyal.slice(0,37),...royalIds];
+              t.deckSetDraft(main,[]);
+              const validation=t.deckValidate(t.state.deckDraft,{forBattle:true});
+              const committed=validation.ok?t.deckCommit():false;
+              return {committed,validation,saved:t.deckValidate(t.state.savedDeck,{forBattle:true})};
+            });
+          }
+
+          test('667x375 camera FOLLOW -> MANUAL_INSPECT -> FOLLOW keeps return control transient', async ({page}) => {
+            const response=await page.goto('/browser/GAMEROAD.html',{waitUntil:'commit'});
+            expect(response?.ok()).toBeTruthy();
+            const home=page.locator('section[data-screen="home"]');
+            await expect(home).toBeVisible({timeout:15000});
+
+            const deck=await installLegalBattleDeck(page);
+            expect(deck.committed).toBeTruthy();
+            expect(deck.saved.ok).toBeTruthy();
+
+            const setupControl=page.locator('[data-home-target="setup"]:visible,[data-go="setup"]:visible').first();
+            await expect(setupControl).toBeVisible();
+            await setupControl.click();
+            const setup=page.locator('section[data-screen="setup"]');
+            await expect(setup).toBeVisible();
+            await setup.locator('[data-content="road_shield"]').click();
+            await setup.locator('[data-mode="2p"]').click();
+            await setup.locator('#startMatch').click();
+
+            const battle=page.locator('section[data-screen="battle"]');
+            await expect(battle).toBeVisible();
+            await expect.poll(()=>page.evaluate(()=>window.__GAMEROAD_BATTLE_CAMERA_LIVE__?.snapshot?.().mounted===true)).toBeTruthy();
+
+            const returnBtn=battle.locator('#cameraReturnBtn');
+            await expect(returnBtn).toBeHidden();
+            const follow=await returnBtn.evaluate((el)=>({hidden:el.hidden,display:getComputedStyle(el).display,pointer:getComputedStyle(el).pointerEvents,rects:el.getClientRects().length,mode:el.dataset.cameraMode||null}));
+            expect(follow.hidden).toBeTruthy();
+            expect(follow.display).toBe('none');
+            expect(follow.pointer).toBe('none');
+            expect(follow.rects).toBe(0);
+            expect(follow.mode).toBe('FOLLOW_CONTROLLED');
+            expect(await battle.locator('.battleRail .railBtn:visible').count()).toBe(3);
+            await page.screenshot({path:`${output}/camera-follow-667x375.png`,animations:'disabled'});
+
+            const canvas=battle.locator('#fieldCanvas');
+            const box=await canvas.boundingBox();
+            expect(box).not.toBeNull();
+            await page.mouse.move(box.x+box.width*0.52,box.y+box.height*0.50);
+            await page.mouse.down();
+            await page.mouse.move(box.x+box.width*0.35,box.y+box.height*0.50,{steps:8});
+            await page.mouse.up();
+
+            await expect(returnBtn).toBeVisible();
+            await expect(returnBtn).toHaveAttribute('data-camera-mode','MANUAL_INSPECT');
+            expect(await battle.locator('.battleRail .railBtn:visible').count()).toBe(4);
+            await page.screenshot({path:`${output}/camera-manual-inspect-667x375.png`,animations:'disabled'});
+
+            await returnBtn.click();
+            await expect(returnBtn).toBeHidden();
+            await expect.poll(()=>page.evaluate(()=>window.__GAMEROAD_BATTLE_CAMERA_LIVE__?.snapshot?.().state?.mode)).toBe('FOLLOW_CONTROLLED');
+            expect(await battle.locator('.battleRail .railBtn:visible').count()).toBe(3);
+            await page.screenshot({path:`${output}/camera-returned-667x375.png`,animations:'disabled'});
+          });
+          EOF
+      - name: Run bounded 667x375 evidence
+        run: npx playwright test --config=.camera-667/playwright.config.mjs --workers=1
+      - name: Upload 667x375 screenshots
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: camera-667-visual-${{ github.run_id }}
+          path: |
+            visual-evidence/
+            .camera-667/test-results/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Remove transient workflow from branch
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name gameroad-bot
+          git config user.email gameroad-bot@users.noreply.github.com
+          git rm .github/workflows/zz-temp-camera-667-visual-r1.yml
+          git commit -m 'Cleanup camera 667 visual transient workflow'
+          git push origin HEAD:sol/battle-camera-html-r8-20260913

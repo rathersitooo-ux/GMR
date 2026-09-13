@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-SINGLE-HTML-SPINE-R11-20260913T1845-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_SINGLE_HTML_PLAYER_PATH_INTEGRATION_R1",
+  "acquireKey": "BATTLE-SINGLE-HTML-SPINE-R11-20260913T1845-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_REPLAY_FORMAL_WINNER_MAXCOLUMN7_CONFLICT_20260913T1845JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "BOUNDED_EXISTING_ADAPTER_TEST_SEAM_REMOVE_WINNER_MAXCOLUMN_DEPENDENCY_ONLY",
+  "proceedToken": "PROCEED|BATTLE-SINGLE-HTML-SPINE-R11-20260913T1845-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|replay-formal-winner-seam|existing-adapter|active-lease",
+  "authorizationBaseSha": "42d76ff5145207964329a67f0048cf9849220dba",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_SINGLE_HTML_PLAYER_PATH_INTEGRATION_R1",
+  "leaseAcquireKey": "BATTLE-SINGLE-HTML-SPINE-R11-20260913T1845-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-13 18:49 JST",
+  "leaseUntilJst": "2026-09-13 19:45 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1328:L1328",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact main 42d76ff5145207964329a67f0048cf9849220dba; mutable browser/battle-replay-live-adapter.mjs; tests/battle-replay-live-adapter.test.mjs; own transient data/preaction-authorizations/BATTLE-SINGLE-HTML-SPINE-R11-20260913T1845-SOL.json; own transient .github/workflows/zz-temp-battle-replay-formal-winner-r11.yml; own branch sol/battle-replay-formal-winner-r11-20260913 / PR / check / readback. READ_ONLY browser/GAMEROAD.html; current Battle UI/SlidePad/target/GOAL/gameplay/rules/save/network and all unrelated open PR resources.",
+  "solutionSignature": "BATTLE_REPLAY_FORMAL_WINNER_AUTHORITY_SEAM_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_REPLAY_ADAPTER_ALREADY_ACCEPTS_FORMAL_WINNER_IDS_AND_FORMAL_RANKING",
+  "solutionSearchEvidence": [
+    "Current replay adapter already receives caller/formal winnerIds; no second winner engine is required.",
+    "Current adapter additionally rejects formal winnerIds unless maxColumn>=7 identifies exactly the same players, which revives an obsolete ROAD-completion terminal assumption.",
+    "The bounded repair removes only that winner/maxColumn coupling; formal ranking row identity, winner identity membership, rank validation, and public allowlist remain.",
+    "A temporary push-trigger workflow is the bounded writer because no Remote Desktop device is connected and whole-file replacement from partial connector output is unsafe.",
+    "browser/GAMEROAD.html, GOAL authority, gameplay, rules, save, and network remain read-only."
+  ],
+  "scope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    ".github/workflows/zz-temp-battle-replay-formal-winner-r11.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/battle-replay-live-adapter.test.mjs",
+    ".github/workflows/zz-temp-battle-replay-formal-winner-r11.yml"
+  ]
+}

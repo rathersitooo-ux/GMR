@@ -200,6 +200,9 @@ test('JANKEN_FOCUS uses centered flower-bloom presentation with a reduced-motion
   assert.match(style.textContent, /nth-child\(2\).*animation-delay:35ms/);
   assert.match(style.textContent, /nth-child\(3\).*animation-delay:70ms/);
   assert.match(style.textContent, /prefers-reduced-motion:reduce/);
+  assert.match(style.textContent, /\.grJankenRoleBadge\{position:absolute;[^}]*font-size:10px/);
+  assert.doesNotMatch(style.textContent, /grJankenRoleBadge\{display:block;font-size:18px/);
+  assert.doesNotMatch(style.textContent, /grJankenFocusBloomPanel \.grJankenRoleBadge\{text-align:center;font-size:20px/);
 });
 
 test('focus delegates to the existing live stack and enters enlarged LOAD_FOCUS only after its visible preview is ready', async () => {

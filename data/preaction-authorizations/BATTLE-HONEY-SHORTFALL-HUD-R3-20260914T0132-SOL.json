@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HONEY-SHORTFALL-HUD-R3-20260914T0132-SOL",
+  "taskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "workUnitKey": "BATTLE_HONEY_FORCED_SHORTFALL_PAYMENT_PROJECTION_R2",
+  "acquireKey": "BATTLE-HONEY-SHORTFALL-HUD-R3-20260914T0132-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_RESOURCE_HUD_AND_ADAPTER_UNCHANGED_ON_MAIN_76DF_20260914",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "ATOMIC_CALLER_RECEIPT_THROUGH_EXISTING_ADAPTER_TO_EXISTING_HUD",
+  "proceedToken": "PROCEED|BATTLE-HONEY-SHORTFALL-HUD-R3-20260914T0132-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|forced-shortfall-payment-receipt|existing-resource-hud-adapter|active-lease",
+  "authorizationBaseSha": "76df30a37f686f5bb69839a5f2be4994ac40f992",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "SHORTTERM-IMPLEMENTATION-GAP-CLOSURE-001",
+  "leaseWorkUnitKey": "BATTLE_HONEY_FORCED_SHORTFALL_PAYMENT_PROJECTION_R2",
+  "leaseAcquireKey": "BATTLE-HONEY-SHORTFALL-HUD-R3-20260914T0132-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 01:32 JST",
+  "leaseUntilJst": "2026-09-14 02:32 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1367:L1367",
+  "leaseExactMutableResources": "browser/battle-critical-resource-hud-runtime.mjs; tests/battle-critical-resource-hud-runtime.test.mjs; browser/battle-critical-resource-hud-live-adapter.mjs; tests/battle-critical-resource-hud-live-adapter.test.mjs; own PRE_ACTION only. browser/GAMEROAD.html, battle-screen runtime, gameplay/payment/legality/card cost/rank/Honey/Mana state/save/economy/network/build READ_ONLY.",
+  "solutionSignature": "EXISTING_RESOURCE_HUD_CALLER_AUTH_PAYMENT_RECEIPT_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_HUD_AND_ADAPTER_ALREADY_SINGLE_RESOURCE_PRESENTATION_PATH",
+  "solutionSearchEvidence": [
+    "Current resource HUD already renders caller-authoritative numeric Mana, Honey and Chip count; rebuilding it would duplicate the accepted consumer.",
+    "Current live adapter is the established caller-to-resourceHud.sync seam and must forward payment receipt rather than HTML bypassing it.",
+    "2026-09-13 CURRENT fixes formal Mana payment to Mana-first then exact Honey deficit automatically, with Honey opt-in forbidden.",
+    "This slice receives explicit atomic caller payment facts only and does not calculate card cost, deficit, rank, legality, resource mutation or cancel semantics.",
+    "Shared HTML payment producer remains under another active owner, so live producer hookup is outside this slice."
+  ],
+  "scope": [
+    "browser/battle-critical-resource-hud-runtime.mjs",
+    "tests/battle-critical-resource-hud-runtime.test.mjs",
+    "browser/battle-critical-resource-hud-live-adapter.mjs",
+    "tests/battle-critical-resource-hud-live-adapter.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-critical-resource-hud-runtime.mjs",
+    "tests/battle-critical-resource-hud-runtime.test.mjs",
+    "browser/battle-critical-resource-hud-live-adapter.mjs",
+    "tests/battle-critical-resource-hud-live-adapter.test.mjs"
+  ]
+}

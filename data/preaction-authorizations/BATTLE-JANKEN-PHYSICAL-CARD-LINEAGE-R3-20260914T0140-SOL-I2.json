@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-JANKEN-PHYSICAL-CARD-LINEAGE-R3-20260914T0140-SOL-I2",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_JANKEN_FOCUS_PHYSICAL_CARD_LINEAGE_R3",
+  "acquireKey": "BATTLE-JANKEN-PHYSICAL-CARD-LINEAGE-R3-20260914T0140-SOL-I2",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_B1A754AC_CURRENT_RELATION_GATE_R3_ACTIVE_LEASE_A1372_AND_EXACT_CARD_CATALOG_SCHEMA_20260914T0140JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R2_PRODUCT0_PLUS_EXISTING_FOCUS_TESTS_PLUS_BOUNDED_EXACT_ANCHOR_SURGICAL_PATCH",
+  "proceedToken": "PROCEED|BATTLE-JANKEN-PHYSICAL-CARD-LINEAGE-R3-20260914T0140-SOL-I2|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|physical-card-lineage-r3|surgical-writer|active-lease",
+  "authorizationBaseSha": "b1a754ac126394e15c50e40e2c1b886fc5c429d0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_JANKEN_FOCUS_PHYSICAL_CARD_LINEAGE_R3",
+  "leaseAcquireKey": "BATTLE-JANKEN-PHYSICAL-CARD-LINEAGE-R3-20260914T0140-SOL-I2",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 01:40 JST",
+  "leaseUntilJst": "2026-09-14 02:40 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1372:L1372",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main b1a754ac126394e15c50e40e2c1b886fc5c429d0; mutable browser/battle-janken-focus-runtime-surface.mjs; tests/battle-janken-focus-runtime-surface.test.mjs; transient .github/workflows/zz-temp-battle-janken-physical-card-lineage-r3.yml; own transient PRE_ACTION/branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; browser/battle-janken-slidepad-runtime-mount.mjs; battle-screen runtime; gameplay/rules/target/legality/route/Shield/Hand3 assignment/card identity authority/save/economy/network/build.",
+  "solutionSignature": "BATTLE_JANKEN_EXISTING_FOCUS_PHYSICAL_CARD_LINEAGE_PRESENTATION_ADAPT_V3",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_RPS_PHYSICAL_CARD_LINEAGE_GATE_REUSES_EXISTING_PACKAGE_CARDID_GLOBAL_CARD_DATA_CARDS_FACE_GRAMMAR_AND_R1_BLOOM",
+  "solutionSearchEvidence": [
+    "Fresh CURRENT relation gate requires R/S/P to remain secondary roles on the same physical card identity from reserved slot through JANKEN_FOCUS, LOAD_FOCUS and commit; abstract cardId plus gesture icon is not a valid positive baseline.",
+    "Existing R1 bloom geometry is retained; only the card presentation inside the existing choices and LOAD/COMMITTING surfaces changes.",
+    "Existing authoritative package cardId and globalThis.__CARD_DATA__ exact-id catalog are reused; no second card database, target engine, legality engine, route engine, Shield mapping, Hand3 selector or commit transport is added.",
+    "Current catalog exposes id, display_name, suit, rank and power but no image URL in this presentation path, so the surface shows explicit イラスト未接続 and never invents an image or card identity.",
+    "Opening seven to first RPS3 selection remains unresolved. Test fixtures explicitly model that authoritative selection already happened and this WorkUnit does not choose the three cards."
+  ],
+  "scope": [
+    "browser/battle-janken-focus-runtime-surface.mjs",
+    "tests/battle-janken-focus-runtime-surface.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-physical-card-lineage-r3.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-focus-runtime-surface.mjs",
+    "tests/battle-janken-focus-runtime-surface.test.mjs",
+    ".github/workflows/zz-temp-battle-janken-physical-card-lineage-r3.yml"
+  ]
+}

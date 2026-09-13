@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CAMERA-HTML-R9-20260914T0058-SOL-Q8N4M11",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CAMERA_LIVE_HTML_MOUNT_R9",
+  "acquireKey": "BATTLE-CAMERA-HTML-R9-20260914T0058-SOL-Q8N4M11",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "FRESH_MAIN_E935EE9_AND_ACTIVE_LEASE_A1348_20260914T0058JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "PR1611_AUTO_MERGE_TREE_F9CF0F61_ON_EXACT_MAIN_E935EE9_HTML_BLOB_B8ED650C",
+  "proceedToken": "PROCEED|BATTLE-CAMERA-HTML-R9-20260914T0058-SOL-Q8N4M11|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|battle-camera-live-html-mount|html-static-check|active-lease",
+  "authorizationBaseSha": "e935ee9df7a595a2b1fc657152a5d08e6c0984e8",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CAMERA_LIVE_HTML_MOUNT_R9",
+  "leaseAcquireKey": "BATTLE-CAMERA-HTML-R9-20260914T0058-SOL-Q8N4M11",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 00:58 JST",
+  "leaseUntilJst": "2026-09-14 01:58 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1348:N1348",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-camera-html-r9-20260914 from exact current main e935ee9df7a595a2b1fc657152a5d08e6c0984e8; browser/GAMEROAD.html; tests/browser-static-check.mjs; own transient data/preaction-authorizations/BATTLE-CAMERA-HTML-R9-20260914T0058-SOL-Q8N4M11.json; own branch/PR/check/merge/readback. PR#1611 donor, tests/battle-camera-live-integration.test.mjs, camera core/input/runtime, deploy/cloudflare/scripts/build.mjs, gameplay/movement/target/rules/save/network are READ_ONLY.",
+  "solutionSignature": "BATTLE_CAMERA_EXISTING_RUNTIME_TO_CURRENT_HTML_MINIMAL_MOUNT_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_CAMERA_CORE_RUNTIME_PLUS_PR1611_CURRENT_MAIN_AUTOMERGE_DONOR_PLUS_CI_R3_SIMPLIFIED_ROUTE",
+  "solutionSearchEvidence": [
+    "Existing battle-camera control/input/live runtime modules are already merged and remain the sole camera authority for this slice.",
+    "PR #1611 is an open mixed-history donor and is not merge-ready as-is; GitHub generated a conflict-free test merge commit f9cf0f61 whose first parent is exact current main e935ee9 and whose merged HTML blob is b8ed650c.",
+    "CI classification R3 terminated with no durable CI mutation and explicitly routes this successor to the existing browser-static-check for small HTML seam canaries rather than a dedicated new camera test.",
+    "The product delta is limited to existing HTML presentation seams plus static canaries; gameplay, movement, target, legality, rules, save, network, camera cores and build packaging remain read-only.",
+    "Manual camera remains presentation-only: pan/zoom/angle and one-action return to the controlled character must not mutate gameplay state or steal screen-space UI inputs."
+  ],
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs"
+  ]
+}

@@ -1,3 +1,4 @@
+# trigger bounded writer after workflow exists on branch
 name: temp RPS3 turn epoch R2
 
 on:
@@ -33,193 +34,140 @@ jobs:
                   raise SystemExit(f'{label}: expected 1 anchor, got {count}')
               return text.replace(old, new, 1)
 
-          source = replace_once(
-              source,
-              "  let roundSnapshot = null;\n  let stagedCompoundAttack = null;",
-              "  let roundSnapshot = null;\n  let assignmentTurnId = null;\n  let stagedCompoundAttack = null;",
-              'source state anchor',
-          )
-
+          source = replace_once(source, "  let roundSnapshot = null;\n  let stagedCompoundAttack = null;", "  let roundSnapshot = null;\n  let assignmentTurnId = null;\n  let stagedCompoundAttack = null;", 'source state anchor')
           old_sync = '''  async function syncRoundStart() {
-            const authority = requiredObject(await readRoundAuthority(), 'round authority');
-            const roundId = requiredString(authority.roundId, 'roundAuthority.roundId');
-            if (!Array.isArray(authority.hand)) {
-              throw new TypeError('roundAuthority.hand must be the current hand authority array');
-            }
+    const authority = requiredObject(await readRoundAuthority(), 'round authority');
+    const roundId = requiredString(authority.roundId, 'roundAuthority.roundId');
+    if (!Array.isArray(authority.hand)) {
+      throw new TypeError('roundAuthority.hand must be the current hand authority array');
+    }
 
-            // Same-round render/reconnect/retry must reuse the immutable snapshot and
-            // must not consume new entropy or reassign physical cards.
-            if (roundSnapshot?.roundId === roundId) return roundSnapshot;
+    // Same-round render/reconnect/retry must reuse the immutable snapshot and
+    // must not consume new entropy or reassign physical cards.
+    if (roundSnapshot?.roundId === roundId) return roundSnapshot;
 
-            // A newly observed round invalidates any uncommitted package from the prior
-            // round even if assignment then fails closed because entropy/state is absent.
-            if (roundSnapshot !== null) stagedCompoundAttack = null;
+    // A newly observed round invalidates any uncommitted package from the prior
+    // round even if assignment then fails closed because entropy/state is absent.
+    if (roundSnapshot !== null) stagedCompoundAttack = null;
 
-            const handCardIds = requireCurrentHandCardIds(authority.hand);
-            const entropyRequest = Object.freeze({
-              assignmentEpochId: roundId,
-              sampleKind: 'HAND3_UNIFORM_PERMUTATION_UINT32',
-            });
-            const uniformAssignment = createUniformHand3Assignment({
-              assignmentEpochId: roundId,
-              handCardIds,
-              readUint32: () => readAuthoritativeHand3Uint32(entropyRequest),
-            });
+    const handCardIds = requireCurrentHandCardIds(authority.hand);
+    const entropyRequest = Object.freeze({
+      assignmentEpochId: roundId,
+      sampleKind: 'HAND3_UNIFORM_PERMUTATION_UINT32',
+    });
+    const uniformAssignment = createUniformHand3Assignment({
+      assignmentEpochId: roundId,
+      handCardIds,
+      readUint32: () => readAuthoritativeHand3Uint32(entropyRequest),
+    });
 
-            const next = ensureRoundStartJankenSlotAssignment({
-              currentSnapshot: roundSnapshot,
-              roundId,
-              hand: authority.hand,
-              assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
-              assignedCardIdsByJankenHand: uniformAssignment.assignedCardIdsByJankenHand,
-            });
-            roundSnapshot = next;
-            return roundSnapshot;
-          }'''
+    const next = ensureRoundStartJankenSlotAssignment({
+      currentSnapshot: roundSnapshot,
+      roundId,
+      hand: authority.hand,
+      assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
+      assignedCardIdsByJankenHand: uniformAssignment.assignedCardIdsByJankenHand,
+    });
+    roundSnapshot = next;
+    return roundSnapshot;
+  }'''
           new_sync = '''  async function syncRoundStart() {
-            const authority = requiredObject(await readRoundAuthority(), 'round authority');
-            const roundId = requiredString(authority.roundId, 'roundAuthority.roundId');
-            const turnId = requiredString(authority.turnId, 'roundAuthority.turnId');
-            if (!Array.isArray(authority.hand)) {
-              throw new TypeError('roundAuthority.hand must be the current hand authority array');
-            }
+    const authority = requiredObject(await readRoundAuthority(), 'round authority');
+    const roundId = requiredString(authority.roundId, 'roundAuthority.roundId');
+    const turnId = requiredString(authority.turnId, 'roundAuthority.turnId');
+    if (!Array.isArray(authority.hand)) {
+      throw new TypeError('roundAuthority.hand must be the current hand authority array');
+    }
 
-            // Same-turn render/reconnect/retry must reuse the immutable reservation and
-            // must not consume new entropy or reassign physical cards.
-            if (roundSnapshot !== null && assignmentTurnId === turnId) {
-              if (roundSnapshot.roundId !== roundId) {
-                throw new RangeError('roundAuthority.turnId cannot move between rounds');
-              }
-              return roundSnapshot;
-            }
+    // Same-turn render/reconnect/retry must reuse the immutable reservation and
+    // must not consume new entropy or reassign physical cards.
+    if (roundSnapshot !== null && assignmentTurnId === turnId) {
+      if (roundSnapshot.roundId !== roundId) {
+        throw new RangeError('roundAuthority.turnId cannot move between rounds');
+      }
+      return roundSnapshot;
+    }
 
-            // A newly observed turn invalidates any uncommitted package from the prior
-            // turn even if assignment then fails closed because entropy/state is absent.
-            if (roundSnapshot !== null) stagedCompoundAttack = null;
+    // A newly observed turn invalidates any uncommitted package from the prior
+    // turn even if assignment then fails closed because entropy/state is absent.
+    if (roundSnapshot !== null) stagedCompoundAttack = null;
 
-            const handCardIds = requireCurrentHandCardIds(authority.hand);
-            const entropyRequest = Object.freeze({
-              assignmentEpochId: turnId,
-              sampleKind: 'HAND3_UNIFORM_PERMUTATION_UINT32',
-            });
-            const uniformAssignment = createUniformHand3Assignment({
-              assignmentEpochId: turnId,
-              handCardIds,
-              readUint32: () => readAuthoritativeHand3Uint32(entropyRequest),
-            });
+    const handCardIds = requireCurrentHandCardIds(authority.hand);
+    const entropyRequest = Object.freeze({
+      assignmentEpochId: turnId,
+      sampleKind: 'HAND3_UNIFORM_PERMUTATION_UINT32',
+    });
+    const uniformAssignment = createUniformHand3Assignment({
+      assignmentEpochId: turnId,
+      handCardIds,
+      readUint32: () => readAuthoritativeHand3Uint32(entropyRequest),
+    });
 
-            // The lower slot core is round-shaped for compatibility. This adapter owns
-            // the turn epoch, so a new turn intentionally starts a fresh immutable slot
-            // snapshot even when roundId itself has not changed.
-            const next = ensureRoundStartJankenSlotAssignment({
-              currentSnapshot: null,
-              roundId,
-              hand: authority.hand,
-              assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
-              assignedCardIdsByJankenHand: uniformAssignment.assignedCardIdsByJankenHand,
-            });
-            roundSnapshot = next;
-            assignmentTurnId = turnId;
-            return roundSnapshot;
-          }'''
+    const next = ensureRoundStartJankenSlotAssignment({
+      currentSnapshot: null,
+      roundId,
+      hand: authority.hand,
+      assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
+      assignedCardIdsByJankenHand: uniformAssignment.assignedCardIdsByJankenHand,
+    });
+    roundSnapshot = next;
+    assignmentTurnId = turnId;
+    return roundSnapshot;
+  }'''
           source = replace_once(source, old_sync, new_sync, 'syncRoundStart block')
-          source = replace_once(
-              source,
-              "        roundId: roundSnapshot?.roundId ?? null,\n        assignmentMode:",
-              "        roundId: roundSnapshot?.roundId ?? null,\n        turnId: assignmentTurnId,\n        assignmentMode:",
-              'status turnId anchor',
-          )
-          source = replace_once(
-              source,
-              "  hand3AssignmentEpoch: 'ROUND_ID',\n  hand3RerollWithinRound: false,",
-              "  hand3AssignmentEpoch: 'CALLER_TURN_ID',\n  hand3RerollWithinTurn: false,\n  hand3MayReassignOnNewTurnInSameRound: true,",
-              'contract epoch anchor',
-          )
+          source = replace_once(source, "        roundId: roundSnapshot?.roundId ?? null,\n        assignmentMode:", "        roundId: roundSnapshot?.roundId ?? null,\n        turnId: assignmentTurnId,\n        assignmentMode:", 'status turnId anchor')
+          source = replace_once(source, "  hand3AssignmentEpoch: 'ROUND_ID',\n  hand3RerollWithinRound: false,", "  hand3AssignmentEpoch: 'CALLER_TURN_ID',\n  hand3RerollWithinTurn: false,\n  hand3MayReassignOnNewTurnInSameRound: true,", 'contract epoch anchor')
           source = source.replace('exactly once for a new round snapshot;', 'exactly once for a caller-authoritative turn;')
           source = source.replace('preserves one immutable round\n * slot snapshot', 'preserves one immutable turn\n * slot snapshot')
 
-          test = replace_once(
-              test,
-              "    roundId: 'round-7',\n    hand:",
-              "    roundId: 'round-7',\n    turnId: 'turn-7-a',\n    hand:",
-              'test turnId fixture',
-          )
-          test = replace_once(
-              test,
-              "    assignmentEpochId: 'round-7',",
-              "    assignmentEpochId: 'turn-7-a',",
-              'test entropy epoch',
-          )
-          test = replace_once(
-              test,
-              "test('same-round sync, reconnect-style resync, and stage do not reroll the hand3 snapshot'",
-              "test('same-turn sync, reconnect-style resync, and stage do not reroll the hand3 snapshot'",
-              'same turn title',
-          )
-
+          test = replace_once(test, "    roundId: 'round-7',\n    hand:", "    roundId: 'round-7',\n    turnId: 'turn-7-a',\n    hand:", 'test turnId fixture')
+          test = replace_once(test, "    assignmentEpochId: 'round-7',", "    assignmentEpochId: 'turn-7-a',", 'test entropy epoch')
+          test = replace_once(test, "test('same-round sync, reconnect-style resync, and stage do not reroll the hand3 snapshot'", "test('same-turn sync, reconnect-style resync, and stage do not reroll the hand3 snapshot'", 'same turn title')
           insert_anchor = "test('same authoritative entropy gives the same mapping regardless of player-facing hand order', async () => {"
           inserted = '''test('new turn inside the same round consumes fresh entropy and replaces the immutable turn snapshot', async () => {
-            let authority = roundAuthority();
-            const entropyValues = [0, 1];
-            let entropyReads = 0;
-            const adapter = createBattleNewBaseLiveConsumerAdapter({
-              readRoundAuthority: async () => authority,
-              readAuthoritativeHand3Uint32: () => {
-                const value = entropyValues[entropyReads];
-                entropyReads += 1;
-                return value;
-              },
-              readCompoundAttackCandidate: async () => compoundCandidate(),
-              sendExistingBattleAction: async () => true,
-            });
+  let authority = roundAuthority();
+  const entropyValues = [0, 1];
+  let entropyReads = 0;
+  const adapter = createBattleNewBaseLiveConsumerAdapter({
+    readRoundAuthority: async () => authority,
+    readAuthoritativeHand3Uint32: () => {
+      const value = entropyValues[entropyReads];
+      entropyReads += 1;
+      return value;
+    },
+    readCompoundAttackCandidate: async () => compoundCandidate(),
+    sendExistingBattleAction: async () => true,
+  });
 
-            const first = await adapter.syncRoundStart();
-            authority = roundAuthority({ turnId: 'turn-7-b' });
-            const second = await adapter.syncRoundStart();
+  const first = await adapter.syncRoundStart();
+  authority = roundAuthority({ turnId: 'turn-7-b' });
+  const second = await adapter.syncRoundStart();
 
-            assert.notStrictEqual(second, first);
-            assert.equal(entropyReads, 2);
-            assert.notDeepEqual(
-              second.slots.map(({ jankenHand, cardId }) => ({ jankenHand, cardId })),
-              first.slots.map(({ jankenHand, cardId }) => ({ jankenHand, cardId })),
-            );
-            assert.equal(adapter.status().roundId, 'round-7');
-            assert.equal(adapter.status().turnId, 'turn-7-b');
-          });
+  assert.notStrictEqual(second, first);
+  assert.equal(entropyReads, 2);
+  assert.notDeepEqual(
+    second.slots.map(({ jankenHand, cardId }) => ({ jankenHand, cardId })),
+    first.slots.map(({ jankenHand, cardId }) => ({ jankenHand, cardId })),
+  );
+  assert.equal(adapter.status().roundId, 'round-7');
+  assert.equal(adapter.status().turnId, 'turn-7-b');
+});
 
-          test('missing caller turnId fails closed instead of silently freezing RPS3 for the whole round', async () => {
-            const adapter = createBattleNewBaseLiveConsumerAdapter({
-              readRoundAuthority: async () => roundAuthority({ turnId: null }),
-              readAuthoritativeHand3Uint32: () => 4,
-              readCompoundAttackCandidate: async () => compoundCandidate(),
-              sendExistingBattleAction: async () => true,
-            });
-            await assert.rejects(
-              () => adapter.syncRoundStart(),
-              /roundAuthority.turnId must be a non-empty canonical string/,
-            );
-          });
+test('missing caller turnId fails closed instead of silently freezing RPS3 for the whole round', async () => {
+  const adapter = createBattleNewBaseLiveConsumerAdapter({
+    readRoundAuthority: async () => roundAuthority({ turnId: null }),
+    readAuthoritativeHand3Uint32: () => 4,
+    readCompoundAttackCandidate: async () => compoundCandidate(),
+    sendExistingBattleAction: async () => true,
+  });
+  await assert.rejects(() => adapter.syncRoundStart(), /roundAuthority.turnId must be a non-empty canonical string/);
+});
 
-          ''' + insert_anchor
+''' + insert_anchor
           test = replace_once(test, insert_anchor, inserted, 'new turn test insertion')
-          test = replace_once(
-              test,
-              "  currentRound = roundAuthority({ roundId: 'round-8' });",
-              "  currentRound = roundAuthority({ roundId: 'round-8', turnId: 'turn-8-a' });",
-              'new round fixture',
-          )
-          test = replace_once(
-              test,
-              "      hand3RerollWithinRound: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.hand3RerollWithinRound,",
-              "      hand3RerollWithinTurn: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.hand3RerollWithinTurn,\n      hand3MayReassignOnNewTurnInSameRound: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.hand3MayReassignOnNewTurnInSameRound,",
-              'contract projection fields',
-          )
-          test = replace_once(
-              test,
-              "      hand3AssignmentEpoch: 'ROUND_ID',\n      hand3RerollWithinRound: false,",
-              "      hand3AssignmentEpoch: 'CALLER_TURN_ID',\n      hand3RerollWithinTurn: false,\n      hand3MayReassignOnNewTurnInSameRound: true,",
-              'contract expected fields',
-          )
+          test = replace_once(test, "  currentRound = roundAuthority({ roundId: 'round-8' });", "  currentRound = roundAuthority({ roundId: 'round-8', turnId: 'turn-8-a' });", 'new round fixture')
+          test = replace_once(test, "      hand3RerollWithinRound: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.hand3RerollWithinRound,", "      hand3RerollWithinTurn: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.hand3RerollWithinTurn,\n      hand3MayReassignOnNewTurnInSameRound: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.hand3MayReassignOnNewTurnInSameRound,", 'contract projection fields')
+          test = replace_once(test, "      hand3AssignmentEpoch: 'ROUND_ID',\n      hand3RerollWithinRound: false,", "      hand3AssignmentEpoch: 'CALLER_TURN_ID',\n      hand3RerollWithinTurn: false,\n      hand3MayReassignOnNewTurnInSameRound: true,", 'contract expected fields')
 
           source_path.write_text(source)
           test_path.write_text(test)

@@ -123,6 +123,18 @@ function collectStaticErrors(html) {
     errors.push('battle board remains hidden during dedicated battle phase');
   }
 
+  const cameraReturnIds = html.match(/id=["']cameraReturnBtn["']/g) ?? [];
+if (cameraReturnIds.length !== 1) errors.push(`camera return control count is ${cameraReturnIds.length}, expected 1`);
+const battleRailMatch = html.match(/<div class=["']battleRail["']>([\s\S]*?)<\/div>/i);
+if (battleRailMatch?.[1]?.includes('cameraReturnBtn')) errors.push('camera return control is inside persistent battle rail');
+if (!/<button[^>]*class=["']cameraReturnControl["'][^>]*id=["']cameraReturnBtn["'][^>]*hidden[^>]*aria-hidden=["']true["'][^>]*tabindex=["']-1["']/i.test(html)) {
+  errors.push('camera return control is not default-hidden/non-focusable outside the rail');
+}
+if (!/#cameraReturnBtn\[hidden\]\{display:none!important\}/.test(html)) errors.push('camera return hidden state does not guarantee zero footprint');
+if ((html.match(/cameraState\.mode==='MANUAL_INSPECT';returnControl\.hidden=!manual/g) ?? []).length < 2) errors.push('camera return visibility is not bound to MANUAL_INSPECT at both camera projection points');
+if (!/__GAMEROAD_BATTLE_CAMERA_FIELD_ADAPTER__/.test(html) || !/mountBattleCameraLiveRuntime/.test(html)) errors.push('camera live adapter/runtime mount is missing');
+if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stateWrite:false\}/.test(html)) errors.push('camera field adapter lost gameplay-write firewall');
+  if (!/#battleMap\[data-camera-mode=["']MANUAL_INSPECT["']\] \.battleRail\{opacity:0;pointer-events:none!important;visibility:hidden\}/.test(html)) errors.push('battle rail does not yield visual and input ownership during manual camera inspect');
   errors.push(...collectHomeVisualShellErrors(html));
   const correctedBattleResourceContracts = [
     [/const hand=deck\.splice\(0,7\);/, 'fresh Battle ordinary hand is not initialized to seven'],

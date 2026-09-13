@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-ADVICE-UNIFIED-SURFACE-R1-20260914T0127-SOL-SU13B",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_ADVICE_SINGLE_VISIBLE_SURFACE_R1",
+  "acquireKey": "PARTNER-ADVICE-UNIFIED-SURFACE-R1-20260914T0127-SOL-SU13B",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_9F29CE76_LEGACY_PARTNER_BOX_PLUS_CHAT_OVERLAY_AND_LEASE_ROW1362",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "DOM_REPARENT_PRESERVES_EXISTING_NODE_HANDLERS_AND_IDS_NO_HTML_MUTATION",
+  "proceedToken": "PROCEED|PARTNER-ADVICE-UNIFIED-SURFACE-R1-20260914T0127-SOL-SU13B|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-advice-single-visible-surface|focused-runtime-test|active-lease",
+  "authorizationBaseSha": "9f29ce762c0f5f586209d1eebb9f39b34ccac534",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_ADVICE_SINGLE_VISIBLE_SURFACE_R1",
+  "leaseAcquireKey": "PARTNER-ADVICE-UNIFIED-SURFACE-R1-20260914T0127-SOL-SU13B",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 01:27 JST",
+  "leaseUntilJst": "2026-09-14 02:27 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1362:L1362",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main 9f29ce762c0f5f586209d1eebb9f39b34ccac534; mutable browser/partner-advice-runtime-mount.mjs; tests/partner-advice-runtime-mount.test.mjs; deploy/cloudflare/tests/build.test.mjs partner-advice runtime currentBlob pin only; own transient .github/workflows/zz-temp-partner-advice-unified-surface-r1.yml; own transient data/preaction-authorizations/PARTNER-ADVICE-UNIFIED-SURFACE-R1-20260914T0127-SOL-SU13B.json; own branch/PR/check/merge/readback. READ_ONLY browser/GAMEROAD.html; browser/partner-advice-player-control-core.mjs; normal/Advice Partner identity selection authority; gameplay/rules/legality/target/save/economy/network; formal character art/voice.",
+  "solutionSignature": "PARTNER_ADVICE_SINGLE_VISIBLE_SURFACE_REHOME_EXISTING_CONTROLS_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_LEGACY_CONTROL_AUTHORITY_PLUS_CURRENT_CHAT_OVERLAY_CROSSCHECK",
+  "solutionSearchEvidence": [
+    "Current GAMEROAD.html creates one legacy #partnerDecisionBox plus real #partnerAdviceBtn and #partnerDelegateBtn; renderPartnerRuntime continues to own their live state and event behavior.",
+    "Current partner-advice runtime creates #partnerAdviceChatPresentation and reparents that root directly under the Battle surface, leaving the legacy Partner box visually separate.",
+    "The existing real legacy DOM controls can be reparented without changing their IDs or registered listeners, so the duplicate visual container can be retired without inventing a second controller or store.",
+    "The current chat root still creates a presentation-only partnerAdviceQuickReply labelled まかせた！ even though current user authority defines delegation/reclaim as the main operation and the separate two-choice conversation reply text remains unresolved.",
+    "Normal Partner and Advice Partner are current-independent identities; this repair changes only the Battle presentation topology and does not couple their selections."
+  ],
+  "scope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-partner-advice-unified-surface-r1.yml"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-runtime-mount.mjs",
+    "tests/partner-advice-runtime-mount.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-partner-advice-unified-surface-r1.yml"
+  ]
+}

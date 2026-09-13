@@ -594,6 +594,22 @@ test('Free4P replay accepts at-or-above-seven atomic co-winners and competition-
   ]));
 });
 
+test('Free4P winner identity follows caller-authoritative winnerIds without a seven-card replay threshold', () => {
+  const publicData = replayMatchEndPublicData('M-4P-AUTH-WINNER', {
+    winnerIds: ['P1'], round: 10, mode: '4p',
+    formalRanking: [
+      { id: 'P1', rank: 1, maxColumn: 4 },
+      { id: 'P2', rank: 2, maxColumn: 8 },
+      { id: 'P3', rank: 3, maxColumn: 6 },
+      { id: 'P4', rank: 4, maxColumn: 2 }
+    ]
+  });
+  assert.deepEqual(publicData.winnerIds, ['P1']);
+  assert.equal(publicData.formalRanking.find(row => row.id === 'P1').rank, 1);
+  assert.equal(publicData.formalRanking.find(row => row.id === 'P1').maxColumn, 4);
+  assert.equal(publicData.formalRanking.find(row => row.id === 'P2').maxColumn, 8);
+});
+
 test('Free4P replay competition ranking skips after a loser tie and is independent of input or id order', () => {
   const first = replayMatchEndPublicData('M-4P-ORDER-A', {
     winnerIds: ['ZETA'], round: 9, mode: '4p',
@@ -637,7 +653,7 @@ test('Free4P formal ranking fails closed on rank, winner, duplicate-id, range, a
   assert.throws(() => appendAcceptedMatchEnd(initial(), {
     winnerIds: ['P1'], round: 1, mode: '4p',
     formalRanking: base.map(row => row.id === 'P2' ? { ...row, maxColumn: 7, rank: 1 } : row)
-  }), /MATCH_END_FORMAL_WINNER_MISMATCH/);
+  }), /MATCH_END_FORMAL_RANK_MISMATCH:P2/);
 
   assert.throws(() => appendAcceptedMatchEnd(initial(), {
     winnerIds: ['P1'], round: 1, mode: '4p',

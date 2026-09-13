@@ -176,10 +176,6 @@ function publicFree4pFormalRanking(value, winnerIds) {
   }
 
   const winnerSet = new Set(winnerIds);
-  const reachedSeven = rows.filter(row => row.maxColumn >= 7).map(row => row.id);
-  if (reachedSeven.length !== winnerSet.size || reachedSeven.some(id => !winnerSet.has(id))) {
-    throw new TypeError('MATCH_END_FORMAL_WINNER_MISMATCH');
-  }
 
   for (const row of rows) {
     const expectedRank = winnerSet.has(row.id)

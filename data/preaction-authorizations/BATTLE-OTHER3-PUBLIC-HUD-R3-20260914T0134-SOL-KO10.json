@@ -1,0 +1,23 @@
+{
+  "schemaVersion":"gameroad-preaction-v3",
+  "recordId":"BATTLE-OTHER3-PUBLIC-HUD-R3-20260914T0134-SOL-KO10",
+  "taskId":"BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey":"BATTLE_OTHER_THREE_PUBLIC_STATUS_HUD_R1",
+  "acquireKey":"BATTLE-OTHER3-PUBLIC-HUD-R3-20260914T0134-SOL-KO10",
+  "riskClass":"MATERIAL_STANDARD",
+  "predictionStatus":"PASS",
+  "predictionEvidenceId":"R2-VALIDATED-PRODUCT-DONOR-030843CE",
+  "rehearsalStatus":"PASS",
+  "rehearsalEvidenceId":"R2-STATIC-PASS-TWO-FILE-DIFF",
+  "proceedToken":"PROCEED|BATTLE-OTHER3-PUBLIC-HUD-R3-20260914T0134-SOL-KO10|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|fresh-main-donor-replay|lease-A1368",
+  "authorizationBaseSha":"76df30a37f686f5bb69839a5f2be4994ac40f992",
+  "stateModelVersion":"STATE_MODEL_V1",
+  "leaseAuthority":"CURRENT_ACTIVE_LEASES",
+  "leaseState":"ACTIVE",
+  "leaseUntilJst":"2026-09-14 02:34 JST",
+  "leaseSnapshotReadbackRef":"CURRENT_ACTIVE_LEASES!A1368:L1368",
+  "scope":["browser/GAMEROAD.html","tests/browser-static-check.mjs",".github/workflows/zz-temp-battle-other3-public-hud-r3.yml"],
+  "solutionSignature":"Replay the already validated two-file R2 product patch onto fresh main, preserving viewer-relative peer HUD, privacy fail-close, right-top placement, and existing gameplay/state authority.",
+  "reuseDisposition":"REUSE_VALIDATED_DONOR_PATCH",
+  "donorProductCommit":"030843cea92d74f35ec044e9adae066164a3ec74"
+}

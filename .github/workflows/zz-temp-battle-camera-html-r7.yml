@@ -1,0 +1,87 @@
+name: TEMP Battle Camera HTML R7
+
+on:
+  push:
+    branches:
+      - sol/battle-camera-html-r7-20260913
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply exact tested R5D camera donor onto fresh main
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = "42d76ff5145207964329a67f0048cf9849220dba" || {
+            echo 'PRE_ACTION is not first commit on authorized base' >&2
+            exit 1
+          }
+          git fetch origin sol/battle-camera-html-r5d-20260910:refs/remotes/origin/sol/battle-camera-html-r5d-20260910
+          test "$(git rev-parse refs/remotes/origin/sol/battle-camera-html-r5d-20260910)" = "6a87bc5b8f0001d37f42ef3a4337081c149616b6"
+          git diff d8b5bb1c0e22282ba4492d447c21cb62216f43b8 6a87bc5b8f0001d37f42ef3a4337081c149616b6 -- browser/GAMEROAD.html tests/battle-camera-live-integration.test.mjs > /tmp/camera-r5d.patch
+          test -s /tmp/camera-r5d.patch
+          git apply --3way --index /tmp/camera-r5d.patch
+
+          node --check browser/battle-camera-input-router.mjs
+          node --check browser/battle-camera-live-runtime.mjs
+          node --test tests/battle-camera-input-router.test.mjs tests/battle-camera-live-runtime.test.mjs tests/battle-camera-live-integration.test.mjs
+          node tests/browser-static-check.mjs
+          node --test deploy/cloudflare/tests/build.test.mjs
+          git diff --cached --check
+
+          python - <<'PY'
+          import subprocess
+          allowed={
+            'browser/GAMEROAD.html',
+            'tests/battle-camera-live-integration.test.mjs',
+          }
+          changed=set(subprocess.check_output(['git','diff','--cached','--name-only'],text=True).split())
+          if changed != allowed:
+              raise SystemExit(f'unexpected staged product delta: {sorted(changed)}')
+          html=open('browser/GAMEROAD.html',encoding='utf-8').read()
+          required=[
+            'id="cameraReturnBtn"',
+            "window.__GAMEROAD_BATTLE_CAMERA_LIVE__",
+            "mountBattleCameraLiveRuntime",
+            "syncFromGame",
+            "uPitch",
+          ]
+          missing=[x for x in required if x not in html]
+          if missing:
+              raise SystemExit(f'camera live mount incomplete: {missing}')
+          forbidden=[
+            'state.match.camera=',
+            'state.match.target=window.__GAMEROAD_BATTLE_CAMERA_LIVE__',
+          ]
+          bad=[x for x in forbidden if x in html]
+          if bad:
+              raise SystemExit(f'camera crossed gameplay authority: {bad}')
+          print('CAMERA_HTML_R7_PRODUCT_DELTA_PASS')
+          PY
+
+      - name: Commit tested player-visible camera mount
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name gameroad-bot
+          git config user.email gameroad-bot@users.noreply.github.com
+          git commit -m 'Battle: 既存自由カメラを実画面へ接続 R7'
+      - name: Cleanup transient authorization and workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/zz-temp-battle-camera-html-r7.yml
+          git rm data/preaction-authorizations/BATTLE-CAMERA-HTML-R7-20260913T1900-SOL.json
+          git commit -m 'Cleanup Battle camera HTML R7 transient authorization'
+          git push origin HEAD:sol/battle-camera-html-r7-20260913

@@ -1,6 +1,7 @@
 import { auditBattleScreenModel } from './battle-screen-presentation-core.mjs';
 import { mountBattleCriticalResourceHud } from './battle-critical-resource-hud-runtime.mjs';
 import { mountBattleCurrentPlayerUi } from './battle-current-player-ui-runtime.mjs';
+import { buildBattleLoadCardChainPresentation } from './battle-load-card-chain-presentation-core.mjs';
 
 const RUNTIME_SCHEMA = 'gameroad.battle-screen-runtime-mount.v1';
 const STYLE_ID = 'gameroad-battle-screen-runtime-r1-style';
@@ -451,17 +452,36 @@ function normalizeHudSnapshot(snapshot = {}) {
   const score = authoritativeText(source.score, 'X');
   const hate = authoritativeText(source.hate, 'XXX');
   const turn = authoritativeText(source.turn, 'XX');
-  const hand = LOAD_JANKEN_LABELS[source.loadJanken] ?? '?';
   const playedCards = Array.isArray(source.playedCards)
     ? source.playedCards.filter(card => card && typeof card === 'object').map((card, index) => ({
         cardId: typeof card.cardId === 'string' && card.cardId ? card.cardId : `played-${index + 1}`,
         label: typeof card.label === 'string' && card.label ? card.label : (typeof card.cardId === 'string' ? card.cardId : '?')
       }))
     : [];
+  const lineage = buildBattleLoadCardChainPresentation({
+    loadCard: source.loadCard ?? null,
+    loadJanken: source.loadJanken ?? null,
+    playedCards
+  });
+  const handKey = typeof lineage.loadSlot.jankenHand === 'string'
+    ? lineage.loadSlot.jankenHand.trim().toLowerCase()
+    : '';
+  const hand = LOAD_JANKEN_LABELS[handKey] ?? '?';
+  const lineageLoadCard = lineage.loadSlot.card;
+  const loadCard = lineageLoadCard
+    ? {
+        ...lineageLoadCard,
+        label: typeof lineageLoadCard.label === 'string' && lineageLoadCard.label
+          ? lineageLoadCard.label
+          : (typeof lineageLoadCard.name === 'string' && lineageLoadCard.name ? lineageLoadCard.name : lineageLoadCard.cardId)
+      }
+    : null;
   return {
     score,
     hate,
     turn,
+    loadCard,
+    loadIdentityState: lineage.loadSlot.identityState,
     loadJanken: { text: hand, resolved: hand !== '?' },
     playedCards
   };
@@ -490,8 +510,32 @@ function createHud(document, shell) {
   const chain = createNode(document, 'div', 'grBattleHudChain');
   chain.setAttribute?.('aria-label', '使用済みBattleカード');
   const load = createNode(document, 'div', 'grBattleHudLoad');
-  load.appendChild(createNode(document, 'small', '', 'LOAD'));
+  load.style.position = 'relative';
+  const loadLabel = createNode(document, 'small', '', 'LOAD');
+  loadLabel.style.position = 'absolute';
+  loadLabel.style.left = '3px';
+  loadLabel.style.top = '2px';
+  loadLabel.style.zIndex = '3';
+  load.appendChild(loadLabel);
+  const loadCard = createNode(document, 'span', 'grBattleHudPlayedCard');
+  loadCard.hidden = true;
+  loadCard.setAttribute?.('aria-hidden', 'true');
+  loadCard.dataset.role = 'load-card';
+  loadCard.style.position = 'absolute';
+  loadCard.style.inset = '3px';
+  loadCard.style.width = 'auto';
+  loadCard.style.height = 'auto';
+  loadCard.style.boxSizing = 'border-box';
+  loadCard.style.zIndex = '1';
+  load.appendChild(loadCard);
   const loadValue = createNode(document, 'b');
+  loadValue.style.position = 'absolute';
+  loadValue.style.right = '2px';
+  loadValue.style.bottom = '2px';
+  loadValue.style.zIndex = '3';
+  loadValue.style.padding = '1px 3px';
+  loadValue.style.borderRadius = '4px';
+  loadValue.style.background = 'rgba(3,17,16,.88)';
   load.appendChild(loadValue);
   center.appendChild(chain);
   center.appendChild(load);
@@ -512,7 +556,7 @@ function createHud(document, shell) {
   root.appendChild(center);
   root.appendChild(right);
   shell.appendChild(root);
-  return { root, right, settingsButton, scoreValue, chain, loadValue, hateValue, turnValue };
+  return { root, right, settingsButton, scoreValue, chain, loadCard, loadValue, hateValue, turnValue };
 }
 
 function writeHud(document, hud, snapshot) {
@@ -525,6 +569,44 @@ function writeHud(document, hud, snapshot) {
   setData(hud.hateValue, 'resolved', model.hate.resolved);
   setData(hud.turnValue, 'resolved', model.turn.resolved);
   setData(hud.loadValue, 'resolved', model.loadJanken.resolved);
+
+  clearChildren(hud.loadCard);
+  hud.loadCard.textContent = '';
+  hud.loadCard.hidden = !model.loadCard;
+  hud.loadCard.setAttribute?.('aria-hidden', model.loadCard ? 'false' : 'true');
+  setData(hud.loadCard, 'cardId', null);
+  setData(hud.loadCard, 'displayNumber', null);
+  setData(hud.loadCard, 'nativeSuit', null);
+  setData(hud.loadCard, 'artSource', null);
+  if (model.loadCard) {
+    setData(hud.loadCard, 'cardId', model.loadCard.cardId);
+    setData(hud.loadCard, 'displayNumber', model.loadCard.displayNumber ?? model.loadCard.printedNumber ?? null);
+    setData(hud.loadCard, 'nativeSuit', model.loadCard.nativeSuit ?? model.loadCard.suit ?? null);
+    writePlayedCard(document, hud.loadCard, model.loadCard);
+    const numberLabel = model.loadCard.displayNumber ?? model.loadCard.printedNumber ?? null;
+    const suitLabel = typeof (model.loadCard.nativeSuit ?? model.loadCard.suit) === 'string'
+      ? (model.loadCard.nativeSuit ?? model.loadCard.suit).trim()
+      : '';
+    if (numberLabel != null || suitLabel) {
+      const identityMeta = createNode(document, 'span', 'grBattleHudLoadIdentityMeta', `${suitLabel}${numberLabel ?? ''}`);
+      identityMeta.style.position = 'absolute';
+      identityMeta.style.left = '2px';
+      identityMeta.style.bottom = '2px';
+      identityMeta.style.zIndex = '3';
+      identityMeta.style.padding = '1px 2px';
+      identityMeta.style.borderRadius = '4px';
+      identityMeta.style.background = 'rgba(3,17,16,.88)';
+      identityMeta.style.color = '#fff6c9';
+      identityMeta.style.fontSize = '9px';
+      identityMeta.style.lineHeight = '1.1';
+      identityMeta.style.pointerEvents = 'none';
+      hud.loadCard.appendChild(identityMeta);
+    }
+    hud.loadCard.setAttribute?.('aria-label', `LOAD ${model.loadCard.label} / ${model.loadJanken.text}`);
+  } else {
+    hud.loadCard.removeAttribute?.('aria-label');
+  }
+
   clearChildren(hud.chain);
   model.playedCards.forEach((card, index) => {
     if (index > 0) hud.chain.appendChild(createNode(document, 'span', 'grBattleHudChainArrow', '▷'));
@@ -537,6 +619,8 @@ function writeHud(document, hud, snapshot) {
   setData(hud.root, 'scoreResolved', model.score.resolved);
   setData(hud.root, 'hateResolved', model.hate.resolved);
   setData(hud.root, 'turnResolved', model.turn.resolved);
+  setData(hud.root, 'loadCardResolved', Boolean(model.loadCard));
+  setData(hud.root, 'loadCardId', model.loadCard?.cardId ?? null);
   setData(hud.root, 'loadJankenResolved', model.loadJanken.resolved);
   setData(hud.root, 'playedCardCount', model.playedCards.length);
   return deepFreeze(model);
@@ -776,6 +860,7 @@ export const BATTLE_SCREEN_RUNTIME = deepFreeze({
   resourceHudAuthority: 'CALLER_ONLY_EXISTING_RESOURCE_HUD',
   currentPlayerUiComposition: 'LIVE_MOUNT_PRESENTATION_ONLY_NO_GAMEPLAY_AUTHORITY',
   hudUnresolvedTokens: Object.freeze({ score: 'X', hate: 'XXX', turn: 'XX', loadJanken: '?' }),
+  loadCardIdentityAuthority: 'CALLER_CARD_ID_ONLY__JANKEN_SECONDARY__NO_ID_INFERENCE',
   existingAnchorPolicy: 'EXPLICIT_PHASE_GETS_RUNTIME_OVERLAY__ANCESTOR_NEVER_DECORATED',
   externalPhaseShellOwner: 'CALLER',
   planSurfaceOwner: 'CALLER',

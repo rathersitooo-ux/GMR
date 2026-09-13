@@ -1,0 +1,268 @@
+name: TEMP Battle current-action visual R3
+
+on:
+  push:
+    branches:
+      - sol/battle-current-action-visual-r3-20260914
+    paths:
+      - .github/workflows/zz-temp-battle-current-action-visual-r3.yml
+
+permissions:
+  contents: read
+
+jobs:
+  public-667x375-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GAMEROAD_PUBLIC_BASE_URL: https://gameroad-browser-r5.pages.dev
+    steps:
+      - name: Checkout evidence branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Bind current public build
+        id: bind
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p visual-evidence
+          curl --fail --silent --show-error --location \
+            --header 'Accept-Encoding: identity' \
+            --retry 4 --retry-delay 2 --retry-connrefused \
+            --max-time 30 \
+            --output visual-evidence/gameroad-version-before.json \
+            "${GAMEROAD_PUBLIC_BASE_URL}/gameroad-version.json"
+          OBSERVED_BUILD_ID="$(node -e "const fs=require('node:fs');const m=JSON.parse(fs.readFileSync('visual-evidence/gameroad-version-before.json','utf8'));if(!m.build_id)process.exit(2);process.stdout.write(String(m.build_id));")"
+          echo "observed_build_id=${OBSERVED_BUILD_ID}" >> "$GITHUB_OUTPUT"
+          printf 'public_origin=%s\nobserved_build_id=%s\nauthorization_base=%s\n' \
+            "$GAMEROAD_PUBLIC_BASE_URL" "$OBSERVED_BUILD_ID" '2b2c9aefa9ace0c9c78f56ed293e755b7808806d' \
+            > visual-evidence/binding.txt
+
+      - name: Verify public current-action integration bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            --header 'Accept-Encoding: identity' \
+            --retry 4 --retry-delay 2 --max-time 30 \
+            --output visual-evidence/battle-current-player-ui-live-adapter.mjs \
+            "${GAMEROAD_PUBLIC_BASE_URL}/battle-current-player-ui-live-adapter.mjs"
+          grep -Fq "projectBattleCurrentActionContext" visual-evidence/battle-current-player-ui-live-adapter.mjs
+          grep -Fq "data-battle-current-action" visual-evidence/battle-current-player-ui-live-adapter.mjs
+          grep -Fq "grBattleCurrentActionLive" visual-evidence/battle-current-player-ui-live-adapter.mjs
+
+      - name: Install Playwright test runner
+        run: npm install --no-save --no-package-lock @playwright/test@1.62.0
+
+      - name: Install Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Run targeted public Battle visual probe
+        env:
+          OBSERVED_BUILD_ID: ${{ steps.bind.outputs.observed_build_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > visual-evidence/probe.mjs <<'EOF'
+          import fs from 'node:fs';
+          import { chromium } from '@playwright/test';
+
+          const base = process.env.GAMEROAD_PUBLIC_BASE_URL;
+          const boundBuild = process.env.OBSERVED_BUILD_ID;
+          const viewport = { width: 667, height: 375 };
+          const out = 'visual-evidence/current-action-667x375.json';
+          const screenshot = 'visual-evidence/current-action-667x375.png';
+
+          function fail(message, evidence = {}) {
+            fs.writeFileSync(out, JSON.stringify({ pass: false, message, boundBuild, viewport, ...evidence }, null, 2));
+            throw new Error(message);
+          }
+          function overlap(a, b) {
+            if (!a || !b) return null;
+            const left = Math.max(a.x, b.x);
+            const top = Math.max(a.y, b.y);
+            const right = Math.min(a.x + a.width, b.x + b.width);
+            const bottom = Math.min(a.y + a.height, b.y + b.height);
+            const width = Math.max(0, right - left);
+            const height = Math.max(0, bottom - top);
+            const area = width * height;
+            return { area, width, height, intersects: area > 0 };
+          }
+          async function rectIfVisible(locator) {
+            if (await locator.count() === 0) return null;
+            const node = locator.first();
+            if (!(await node.isVisible().catch(() => false))) return null;
+            return node.boundingBox();
+          }
+          async function currentBuild() {
+            const response = await fetch(`${base}/gameroad-version.json`, { headers: { 'Accept-Encoding': 'identity' } });
+            if (!response.ok) throw new Error(`version manifest HTTP ${response.status}`);
+            const body = await response.json();
+            return String(body.build_id || '');
+          }
+          async function installLegalBattleDeck(page) {
+            return page.evaluate(() => {
+              const t = window.__GAMEROAD_TEST__;
+              if (!t) throw new Error('GAMEROAD test API missing');
+              const publicMain = new Set(t.deckPublic().filter((card) => card.slot === 'main').map((card) => card.id));
+              const standard = window.__CARD_DATA__
+                .filter((card) => publicMain.has(card.id) && /^(SP|HT|DI|CL)$/.test(card.suit) && /^(A|[2-9]|10|J|Q|K)$/.test(String(card.rank)))
+                .map((card) => card.id);
+              const royalIds = ['SP_J', 'SP_Q', 'SP_K'];
+              const nonRoyal = standard.filter((id) => !t.isRoyalCard(id));
+              const main = [...nonRoyal.slice(0, 37), ...royalIds];
+              const setValidation = t.deckSetDraft(main, []);
+              const draftValidation = t.deckValidate(t.state.deckDraft, { forBattle: true });
+              const committed = draftValidation.ok ? t.deckCommit() : false;
+              const savedValidation = t.deckValidate(t.state.savedDeck, { forBattle: true });
+              return { main, setValidation, draftValidation, committed, savedValidation };
+            });
+          }
+
+          const browser = await chromium.launch({ headless: true });
+          const context = await browser.newContext({ viewport, deviceScaleFactor: 1, reducedMotion: 'no-preference' });
+          const page = await context.newPage();
+          const consoleErrors = [];
+          page.on('console', (msg) => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
+          let evidence = {};
+          try {
+            const preBuild = await currentBuild();
+            if (!preBuild || preBuild !== boundBuild) fail(`public build moved before probe: bound=${boundBuild} now=${preBuild}`);
+
+            const response = await page.goto(`${base}/`, { waitUntil: 'commit', timeout: 30_000 });
+            if (!response?.ok()) fail(`main page HTTP ${response?.status?.() ?? 'no-response'}`);
+            const home = page.locator('section[data-screen="home"]');
+            await home.waitFor({ state: 'visible', timeout: 15_000 });
+
+            const deck = await installLegalBattleDeck(page);
+            if (deck.main.length !== 40 || !deck.committed || !deck.savedValidation?.ok) {
+              fail('legal deck precondition failed', { deck });
+            }
+
+            const setupControl = page.locator('[data-home-target="setup"]:visible, [data-go="setup"]:visible').first();
+            await setupControl.waitFor({ state: 'visible', timeout: 7_000 });
+            await setupControl.click();
+            const setup = page.locator('section[data-screen="setup"]');
+            await setup.waitFor({ state: 'visible', timeout: 7_000 });
+            await setup.locator('[data-content="road_shield"]').click();
+            await setup.locator('[data-mode="2p"]').click();
+            const start = setup.locator('#startMatch');
+            await start.waitFor({ state: 'visible', timeout: 7_000 });
+            if (!(await start.isEnabled())) fail('visible startMatch is disabled after legal deck precondition');
+            await start.click();
+
+            const battle = page.locator('section[data-screen="battle"]');
+            await battle.waitFor({ state: 'visible', timeout: 10_000 });
+            const phaseTitle = battle.locator('#phaseTitle');
+            await phaseTitle.waitFor({ state: 'visible', timeout: 7_000 });
+            await page.waitForFunction(() => document.querySelector('#phaseTitle')?.textContent?.includes('行動を計画'), null, { timeout: 10_000 });
+
+            const surfaces = battle.locator('[data-battle-current-action="1"]');
+            await page.waitForFunction(() => {
+              const nodes = [...document.querySelectorAll('section[data-screen="battle"] [data-battle-current-action="1"]')];
+              return nodes.length === 1 && !nodes[0].hidden && nodes[0].getBoundingClientRect().width > 0;
+            }, null, { timeout: 10_000 });
+            const count = await surfaces.count();
+            if (count !== 1) fail(`current-action surface count=${count}, expected 1`);
+            const surface = surfaces.first();
+            const text = (await surface.textContent() || '').trim();
+            const phaseText = (await phaseTitle.textContent() || '').trim();
+            const ownerRelation = await surface.getAttribute('data-owner-relation');
+            const surfaceRect = await surface.boundingBox();
+            if (!surfaceRect) fail('current-action surface has no visible bounding box');
+            const contained = surfaceRect.x >= 0 && surfaceRect.y >= 0 && surfaceRect.x + surfaceRect.width <= viewport.width && surfaceRect.y + surfaceRect.height <= viewport.height;
+            if (!contained) fail('current-action surface escapes 667x375 viewport', { surfaceRect, text, phaseText });
+            if (!text.includes('今：') || !text.includes(phaseText)) fail('current-action text does not reflect visible phase title', { text, phaseText });
+            if (text.includes('待ち：') || text.includes('理由：')) fail('plan SELF state fabricated peer wait/reason text', { text, ownerRelation });
+            if (ownerRelation !== 'SELF') fail(`plan input owner relation=${ownerRelation}, expected SELF`, { text });
+
+            const selectors = {
+              battleMap: '#battleMap',
+              boardPlayers: '#boardPlayers',
+              hand: '#hand',
+              jankenSlidePad: '[data-battle-janken-slidepad="1"]',
+              readyPlan: '#readyPlan',
+              publicPlayerStrip: '#publicPlayerStrip',
+            };
+            const rects = {};
+            for (const [key, selector] of Object.entries(selectors)) rects[key] = await rectIfVisible(battle.locator(selector));
+            const overlaps = Object.fromEntries(Object.entries(rects).map(([key, rect]) => [key, overlap(surfaceRect, rect)]));
+
+            // Thumb controls and the ordinary hand are hard no-cover zones. Central-board
+            // overlap is recorded for screenshot review because battleMap may itself span
+            // HUD chrome on some current layouts.
+            for (const key of ['hand', 'jankenSlidePad', 'readyPlan']) {
+              if (overlaps[key]?.intersects) fail(`current-action surface overlaps ${key}`, { surfaceRect, rects, overlaps, text, phaseText });
+            }
+
+            await page.screenshot({ path: screenshot, fullPage: false });
+            const postBuild = await currentBuild();
+            if (postBuild !== boundBuild) fail(`public build moved during probe: bound=${boundBuild} after=${postBuild}`, { surfaceRect, rects, overlaps, text, phaseText });
+
+            evidence = {
+              pass: true,
+              boundBuild,
+              postBuild,
+              url: page.url(),
+              viewport,
+              phaseText,
+              text,
+              ownerRelation,
+              surfaceRect,
+              contained,
+              rects,
+              overlaps,
+              consoleErrors,
+              assertions: {
+                singularSurface: true,
+                inViewport: true,
+                exactPhaseReflected: true,
+                selfOwnerNoFabricatedWaitReason: true,
+                noHandOverlap: !overlaps.hand?.intersects,
+                noJankenSlidePadOverlap: !overlaps.jankenSlidePad?.intersects,
+                noReadyPlanOverlap: !overlaps.readyPlan?.intersects,
+              },
+            };
+            fs.writeFileSync(out, JSON.stringify(evidence, null, 2));
+          } catch (error) {
+            try { await page.screenshot({ path: screenshot, fullPage: false }); } catch {}
+            if (!fs.existsSync(out)) fs.writeFileSync(out, JSON.stringify({ pass: false, boundBuild, viewport, message: String(error?.stack || error), consoleErrors, ...evidence }, null, 2));
+            throw error;
+          } finally {
+            await browser.close();
+          }
+          EOF
+          node visual-evidence/probe.mjs
+
+      - name: Verify public build remained bound
+        if: always()
+        env:
+          OBSERVED_BUILD_ID: ${{ steps.bind.outputs.observed_build_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            --header 'Accept-Encoding: identity' \
+            --retry 4 --retry-delay 2 --max-time 30 \
+            --output visual-evidence/gameroad-version-after.json \
+            "${GAMEROAD_PUBLIC_BASE_URL}/gameroad-version.json"
+          AFTER="$(node -e "const fs=require('node:fs');const m=JSON.parse(fs.readFileSync('visual-evidence/gameroad-version-after.json','utf8'));process.stdout.write(String(m.build_id||''));")"
+          printf 'after_build_id=%s\n' "$AFTER" >> visual-evidence/binding.txt
+          if [[ -n "${OBSERVED_BUILD_ID:-}" && "$AFTER" != "$OBSERVED_BUILD_ID" ]]; then
+            echo "::error::Public build moved during evidence run: before=${OBSERVED_BUILD_ID} after=${AFTER}"
+            exit 1
+          fi
+
+      - name: Upload targeted visual evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: battle-current-action-visual-r3-${{ github.run_id }}
+          path: visual-evidence/
+          if-no-files-found: error
+          retention-days: 14

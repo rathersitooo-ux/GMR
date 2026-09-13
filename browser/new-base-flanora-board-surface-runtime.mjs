@@ -140,8 +140,8 @@ function ensureStyle(documentLike) {
   const style = createNode(documentLike, 'style');
   style.id = STYLE_ID;
   style.textContent = `
-[data-new-base-flanora-board-surface="1"]{position:relative;display:grid;grid-template-rows:minmax(0,1fr) minmax(72px,28%);gap:clamp(5px,1vh,10px);width:100%;height:100%;min-width:0;min-height:0;box-sizing:border-box;padding:clamp(5px,1vw,10px);isolation:isolate;overflow:hidden}
-[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(12,minmax(0,1fr));gap:clamp(2px,.35vh,4px);min-width:0;min-height:0;align-items:stretch}
+[data-new-base-flanora-board-surface="1"]{position:relative;display:grid;grid-template-rows:minmax(0,1fr) minmax(64px,22%);gap:clamp(4px,.8vh,8px);width:100%;height:100%;min-width:0;min-height:0;box-sizing:border-box;padding:clamp(4px,.7vw,8px);isolation:isolate;overflow:hidden}
+[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr));column-gap:clamp(10px,1.4vw,18px);row-gap:clamp(3px,.5vh,6px);min-width:0;min-height:0;align-items:stretch}
 [data-new-base-flanora-board-surface="1"] .grFlanoraLane{display:grid;grid-template-columns:clamp(28px,4.6vw,42px) minmax(0,1fr) clamp(32px,5.4vw,48px);grid-template-rows:minmax(0,1fr);gap:clamp(3px,.55vw,7px);min-width:0;min-height:0;align-items:center;justify-items:stretch}
 [data-new-base-flanora-board-surface="1"] .grFlanoraGoal{display:grid;place-items:center;justify-self:start;width:clamp(24px,3.8vh,34px);height:clamp(24px,3.8vh,34px);border:1px solid rgba(255,235,154,.78);border-radius:50%;background:rgba(88,70,23,.78);font-size:clamp(7px,.7vw,10px);font-weight:900;line-height:1;color:#fff6c4}
 [data-new-base-flanora-board-surface="1"] .grFlanoraRoad{position:relative;display:grid;grid-template-columns:repeat(7,minmax(4px,1fr));grid-template-rows:minmax(0,1fr);direction:rtl;gap:2px;width:100%;height:100%;min-width:0;min-height:0;align-items:center;justify-items:center}
@@ -156,8 +156,8 @@ function ensureStyle(documentLike) {
 [data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell{place-self:center;width:clamp(15px,2.6vw,30px);height:clamp(15px,2.6vw,30px);border:1px solid rgba(238,247,232,.7);border-radius:50%;background:rgba(47,91,66,.88);box-shadow:0 2px 7px rgba(0,0,0,.22)}
 [data-new-base-flanora-board-surface="1"] .grFlanoraClearingCell[data-start-participant]{outline:2px solid rgba(255,224,134,.88);outline-offset:2px}
 [data-new-base-flanora-board-surface="1"][data-performance-profile="reduced_motion"] *,[data-new-base-flanora-board-surface="1"][data-performance-profile="low_perf"] *{animation:none!important;transition:none!important;filter:none!important}
-@media(max-height:420px){[data-new-base-flanora-board-surface="1"]{grid-template-rows:minmax(0,1fr) minmax(58px,26%);gap:3px;padding:4px}[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{gap:1px}[data-new-base-flanora-board-surface="1"] .grFlanoraLane{grid-template-columns:26px minmax(0,1fr) 30px;gap:3px}[data-new-base-flanora-board-surface="1"] .grFlanoraGoal{width:20px;height:20px;font-size:6px}[data-new-base-flanora-board-surface="1"] .grFlanoraShield{width:28px;min-height:16px;font-size:7px}[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{gap:2px}}
-@media(max-width:540px) and (orientation:portrait){[data-new-base-flanora-board-surface="1"]{grid-template-rows:minmax(0,1fr) minmax(110px,30%)}[data-new-base-flanora-board-surface="1"] .grFlanoraLane{grid-template-columns:28px minmax(0,1fr) 34px;gap:3px}[data-new-base-flanora-board-surface="1"] .grFlanoraGoal{width:24px;height:24px;font-size:7px}[data-new-base-flanora-board-surface="1"] .grFlanoraShield{width:32px}}
+@media(max-height:420px){[data-new-base-flanora-board-surface="1"]{grid-template-rows:minmax(0,1fr) minmax(52px,20%);gap:3px;padding:3px}[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{column-gap:8px;row-gap:2px}[data-new-base-flanora-board-surface="1"] .grFlanoraLane{grid-template-columns:24px minmax(0,1fr) 28px;gap:2px}[data-new-base-flanora-board-surface="1"] .grFlanoraGoal{width:19px;height:19px;font-size:6px}[data-new-base-flanora-board-surface="1"] .grFlanoraShield{width:27px;min-height:15px;font-size:7px}[data-new-base-flanora-board-surface="1"] .grFlanoraClearing{gap:2px;padding:1px}}
+@media(max-width:540px) and (orientation:portrait){[data-new-base-flanora-board-surface="1"]{grid-template-rows:minmax(0,1fr) minmax(110px,30%)}[data-new-base-flanora-board-surface="1"] .grFlanoraUpper{grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(12,minmax(0,1fr));column-gap:0;row-gap:clamp(2px,.35vh,4px)}[data-new-base-flanora-board-surface="1"] .grFlanoraLane{grid-column:1!important;grid-row:auto!important;grid-template-columns:28px minmax(0,1fr) 34px;gap:3px}[data-new-base-flanora-board-surface="1"] .grFlanoraGoal{width:24px;height:24px;font-size:7px}[data-new-base-flanora-board-surface="1"] .grFlanoraShield{width:32px}}
 `;
   documentLike.head.appendChild(style);
 }
@@ -283,7 +283,8 @@ export function mountFlanoraBoardSurface({
   setAttr(root, 'data-goal-edge', 'left');
   setAttr(root, 'data-road-entry-edge', 'right');
   setAttr(root, 'data-progression-direction', 'right-to-left');
-  setAttr(root, 'aria-label', 'GOAL左端、ROAD開始側右端。右から左のGOALへ進む12レーン盤面');
+  setAttr(root, 'data-central-world-layout', 'participant-groups-2x2');
+  setAttr(root, 'aria-label', '4人×各3レーン。GOAL左端、ROAD開始側右端。右から左のGOALへ進む12レーン盤面');
 
   const upper = createNode(documentLike, 'div', 'grFlanoraUpper');
   const clearing = createNode(documentLike, 'div', 'grFlanoraClearing');
@@ -302,7 +303,15 @@ export function mountFlanoraBoardSurface({
     setAttr(laneNode, 'data-participant-id', lane.participantId);
     setAttr(laneNode, 'data-lane-index', lane.laneIndex);
     setAttr(laneNode, 'data-lane-label', lane.laneLabel);
-    laneNode.style.gridRow = String(lane.relativeColumn + 1);
+    const participantSlot = model.participantIds.indexOf(lane.participantId);
+    if (participantSlot < 0) throw new TypeError('FLANORA_LANE_PARTICIPANT_REQUIRED');
+    const participantGroupColumn = (participantSlot % 2) + 1;
+    const participantGroupRow = Math.floor(participantSlot / 2) + 1;
+    setAttr(laneNode, 'data-participant-slot', participantSlot);
+    setAttr(laneNode, 'data-participant-group-column', participantGroupColumn);
+    setAttr(laneNode, 'data-participant-group-row', participantGroupRow);
+    laneNode.style.gridColumn = String(participantGroupColumn);
+    laneNode.style.gridRow = String(((participantGroupRow - 1) * 3) + lane.laneIndex + 1);
 
     const goal = createNode(documentLike, 'span', 'grFlanoraGoal');
     goal.textContent = 'GOAL';

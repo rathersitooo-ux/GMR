@@ -95,13 +95,25 @@ test('mount exposes left GOAL and right ROAD-entry presentation without owning g
   assert.equal(runtime.root.dataset.goalEdge, 'left');
   assert.equal(runtime.root.dataset.roadEntryEdge, 'right');
   assert.equal(runtime.root.dataset.progressionDirection, 'right-to-left');
-  assert.match(runtime.root.getAttribute('aria-label'), /GOAL左端.*ROAD開始側右端.*右から左/);
+  assert.equal(runtime.root.dataset.centralWorldLayout, 'participant-groups-2x2');
+  assert.match(runtime.root.getAttribute('aria-label'), /4人×各3レーン.*GOAL左端.*ROAD開始側右端.*右から左/);
   assert.equal(runtime.upper.children.length, 12);
-  assert.equal(runtime.upper.children[0].style.gridRow, '1');
-  assert.equal(runtime.upper.children[11].style.gridRow, '12');
+  assert.deepEqual(
+    runtime.upper.children.map((node) => [node.dataset.participantSlot, node.style.gridColumn, node.style.gridRow]),
+    [
+      ['0','1','1'], ['0','1','2'], ['0','1','3'],
+      ['1','2','1'], ['1','2','2'], ['1','2','3'],
+      ['2','1','4'], ['2','1','5'], ['2','1','6'],
+      ['3','2','4'], ['3','2','5'], ['3','2','6'],
+    ],
+  );
   assert.deepEqual(runtime.upper.children[0].children.map((node) => node.className), ['grFlanoraGoal','grFlanoraRoad','grFlanoraShield']);
   const styleText = documentLike.head.children[0].textContent;
-  assert.match(styleText, /\.grFlanoraUpper\{[^}]*grid-template-rows:repeat\(12,minmax\(0,1fr\)\)/);
+  assert.match(styleText, /grid-template-rows:minmax\(0,1fr\) minmax\(64px,22%\)/);
+  assert.match(styleText, /\.grFlanoraUpper\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\);grid-template-rows:repeat\(6,minmax\(0,1fr\)\)/);
+  assert.match(styleText, /@media\(max-height:420px\).*minmax\(52px,20%\)/);
+  assert.match(styleText, /@media\(max-width:540px\) and \(orientation:portrait\).*\.grFlanoraUpper\{grid-template-columns:minmax\(0,1fr\);grid-template-rows:repeat\(12,minmax\(0,1fr\)\)/);
+  assert.match(styleText, /@media\(max-width:540px\) and \(orientation:portrait\).*\.grFlanoraLane\{grid-column:1!important;grid-row:auto!important/);
   assert.match(styleText, /\.grFlanoraLane\{[^}]*grid-template-columns:/);
   assert.match(styleText, /\.grFlanoraRoad\{[^}]*grid-template-columns:repeat\(7,minmax\(4px,1fr\)\)[^}]*direction:rtl/);
   assert.match(styleText, /\.grFlanoraRoad::before\{[^}]*left:3%;right:3%;top:50%;height:2px/);

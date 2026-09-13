@@ -23,8 +23,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD^)" = "42d76ff5145207964329a67f0048cf9849220dba" || {
-            echo 'PRE_ACTION is not first commit on authorized base' >&2
+          test "$(git rev-parse 2d86fcaf58cebee11d410b2eb10c99ca4fd3791c^)" = "42d76ff5145207964329a67f0048cf9849220dba" || {
+            echo 'PRE_ACTION parent is not authorized base' >&2
+            exit 1
+          }
+          git merge-base --is-ancestor 2d86fcaf58cebee11d410b2eb10c99ca4fd3791c HEAD || {
+            echo 'PRE_ACTION is not an ancestor of writer head' >&2
             exit 1
           }
           git fetch origin sol/battle-camera-html-r5d-20260910:refs/remotes/origin/sol/battle-camera-html-r5d-20260910

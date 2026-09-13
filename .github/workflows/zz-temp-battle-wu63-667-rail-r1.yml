@@ -14,7 +14,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Extract exact short-landscape rail source context
+      - name: Extract exact advance-reservation and rail contexts
         shell: bash
         run: |
           set -euo pipefail
@@ -22,24 +22,26 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           src=Path('browser/GAMEROAD.html').read_text()
-          needles=['.battleRail','#battleAdvanceReservation','.arRow','@media(max-height','@media (max-height','max-height:430px','max-height: 430px','translateY(-21','top:-21','top: -21']
+          test=Path('tests/browser-static-check.mjs').read_text()
+          needles=['battleAdvanceReservation','advanceReservation','arRow','gameroad-battle-visual-first-r4','.battleRail{top:144px','.battleRail{top:','battleRail{top:']
           chunks=[]
-          seen=set()
-          for needle in needles:
-              start=0
-              while True:
-                  i=src.find(needle,start)
-                  if i<0: break
-                  key=(max(0,i-1400),min(len(src),i+3000))
-                  if key not in seen:
-                      seen.add(key)
-                      chunks.append(f'===== {needle} @ {i} =====\n'+src[key[0]:key[1]])
-                  start=i+len(needle)
-          Path('visual-evidence/wu63-r1/source-context.txt').write_text('\n\n'.join(chunks))
+          for label,text in [('HTML',src),('STATIC',test)]:
+              for needle in needles:
+                  start=0;n=0
+                  while True:
+                      i=text.find(needle,start)
+                      if i<0: break
+                      n+=1
+                      lo=max(0,i-2600);hi=min(len(text),i+5200)
+                      chunks.append(f'===== {label} {needle} occurrence {n} @ {i} =====\n'+text[lo:hi])
+                      start=i+len(needle)
+                      if n>=30: break
+          out='\n\n'.join(chunks)
+          Path('visual-evidence/wu63-r1/advance-source-context.txt').write_text(out)
           print('contexts',len(chunks))
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: battle-wu63-r1-source-${{ github.run_id }}
-          path: visual-evidence/wu63-r1/source-context.txt
+          name: battle-wu63-r1-advance-source-${{ github.run_id }}
+          path: visual-evidence/wu63-r1/advance-source-context.txt
           retention-days: 14

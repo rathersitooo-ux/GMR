@@ -23,36 +23,34 @@ jobs:
         run: |
           npm install --no-save --no-package-lock @playwright/test@1.62.0
           npx playwright install --with-deps chromium
-      - name: Inspect exact 667x375 offscreen DOM
+      - name: Compare 667x375 geometry candidates without product mutation
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p .wu63-r1 visual-evidence/wu63-r1 test-results/wu63-r1
           cat > .wu63-r1/playwright.config.mjs <<'EOF'
           import { defineConfig } from '@playwright/test';
-          export default defineConfig({testDir:'.',testMatch:'diag.spec.mjs',outputDir:'../test-results/wu63-r1',timeout:90000,expect:{timeout:7000},workers:1,retries:0,use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,viewport:{width:667,height:375},hasTouch:true,trace:'retain-on-failure'},webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1',cwd:new URL('../',import.meta.url).pathname,url:'http://127.0.0.1:4173/browser/GAMEROAD.html',reuseExistingServer:false,timeout:120000}});
+          export default defineConfig({testDir:'.',testMatch:'candidate.spec.mjs',outputDir:'../test-results/wu63-r1',timeout:90000,expect:{timeout:7000},workers:1,retries:0,use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,viewport:{width:667,height:375},hasTouch:true,trace:'retain-on-failure'},webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1',cwd:new URL('../',import.meta.url).pathname,url:'http://127.0.0.1:4173/browser/GAMEROAD.html',reuseExistingServer:false,timeout:120000}});
           EOF
-          cat > .wu63-r1/diag.spec.mjs <<'EOF'
+          cat > .wu63-r1/candidate.spec.mjs <<'EOF'
           import { test, expect } from '@playwright/test';
           import fs from 'node:fs'; import path from 'node:path';
           async function installLegalBattleDeck(page){return page.evaluate(()=>{const t=window.__GAMEROAD_TEST__;const publicMain=new Set(t.deckPublic().filter(c=>c.slot==='main').map(c=>c.id));const standard=window.__CARD_DATA__.filter(c=>publicMain.has(c.id)&&/^(SP|HT|DI|CL)$/.test(c.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c=>c.id);const royalIds=['SP_J','SP_Q','SP_K'];const nonRoyal=standard.filter(id=>!t.isRoyalCard(id));const main=[...nonRoyal.slice(0,37),...royalIds];t.deckSetDraft(main,[]);const v=t.deckValidate(t.state.deckDraft,{forBattle:true});const committed=v.ok?t.deckCommit():false;return{committed,saved:t.deckValidate(t.state.savedDeck,{forBattle:true})}})}
-          test('diagnose offscreen controls',async({page})=>{
-            const response=await page.goto('/browser/GAMEROAD.html',{waitUntil:'commit'});expect(response?.ok()).toBeTruthy();
-            await expect(page.locator('section[data-screen="home"]')).toBeVisible({timeout:15000});const deck=await installLegalBattleDeck(page);expect(deck.committed).toBeTruthy();
-            await page.locator('[data-home-target="setup"]:visible,[data-go="setup"]:visible').first().click();const setup=page.locator('section[data-screen="setup"]');await expect(setup).toBeVisible();await setup.locator('[data-content="road_shield"]').click();await setup.locator('[data-mode="2p"]').click();await setup.locator('#startMatch').click();
-            const battle=page.locator('section[data-screen="battle"]');await expect(battle).toBeVisible();await expect.poll(()=>page.evaluate(()=>window.__GAMEROAD_BATTLE_CAMERA_LIVE__?.snapshot?.().mounted===true)).toBeTruthy();
-            const data=await page.evaluate(()=>{
-              const visibleInteractive=[...document.querySelectorAll('section[data-screen="battle"] button,section[data-screen="battle"] [role="button"],section[data-screen="battle"] [tabindex]:not([tabindex="-1"])')].filter(el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return !el.hidden&&s.display!=='none'&&s.visibility!=='hidden'&&s.pointerEvents!=='none'&&r.width>0&&r.height>0});
-              const snap=el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();const parents=[];let p=el.parentElement;for(let i=0;p&&i<6;i++,p=p.parentElement){const ps=getComputedStyle(p),pr=p.getBoundingClientRect();parents.push({tag:p.tagName,id:p.id||null,cls:String(p.className||''),x:pr.x,y:pr.y,w:pr.width,h:pr.height,position:ps.position,top:ps.top,right:ps.right,bottom:ps.bottom,left:ps.left,transform:ps.transform,overflow:ps.overflow,display:ps.display});}return{tag:el.tagName,id:el.id||null,cls:String(el.className||''),outerHTML:el.outerHTML.slice(0,1200),x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,bottom:r.bottom,position:s.position,top:s.top,rightCss:s.right,bottomCss:s.bottom,left:s.left,transform:s.transform,margin:s.margin,padding:s.padding,display:s.display,parents};};
-              const off=visibleInteractive.filter(el=>{const r=el.getBoundingClientRect();return r.x<0||r.y<0||r.right>667||r.bottom>375}).map(snap);
-              const rail=document.querySelector('section[data-screen="battle"] .battleRail');
-              const ar=[...document.querySelectorAll('section[data-screen="battle"] .arRow')].map(snap);
-              return {offscreen:off,rail:rail?snap(rail):null,arRows:ar,camera:window.__GAMEROAD_BATTLE_CAMERA_LIVE__?.snapshot?.().state?.mode};
-            });
-            console.log('WU63_DIAG='+JSON.stringify(data,null,2));
-            fs.writeFileSync(path.resolve('visual-evidence/wu63-r1/diag.json'),JSON.stringify(data,null,2));
-            await page.screenshot({path:path.resolve('visual-evidence/wu63-r1/diag-667x375.png'),animations:'disabled'});
-            expect(data.offscreen.length).toBeGreaterThan(0);
+          const styleSnap=el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return {tag:el.tagName,id:el.id||null,cls:String(el.className||''),x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,bottom:r.bottom,position:s.position,top:s.top,rightCss:s.right,bottomCss:s.bottom,left:s.left,transform:s.transform,margin:s.margin,padding:s.padding,display:s.display,overflow:s.overflow,alignItems:s.alignItems,alignContent:s.alignContent,justifyContent:s.justifyContent,flexDirection:s.flexDirection,flexWrap:s.flexWrap,gap:s.gap,width:s.width,height:s.height,minHeight:s.minHeight,maxHeight:s.maxHeight};};
+          async function metrics(page,label){return page.evaluate((label)=>{const snap=el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return {tag:el.tagName,id:el.id||null,cls:String(el.className||''),x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,bottom:r.bottom,position:s.position,top:s.top,rightCss:s.right,bottomCss:s.bottom,left:s.left,transform:s.transform,margin:s.margin,padding:s.padding,display:s.display,overflow:s.overflow,alignItems:s.alignItems,alignContent:s.alignContent,justifyContent:s.justifyContent,flexDirection:s.flexDirection,flexWrap:s.flexWrap,gap:s.gap,width:s.width,height:s.height,minHeight:s.minHeight,maxHeight:s.maxHeight};};const q=s=>document.querySelector(s);const visible=[...document.querySelectorAll('section[data-screen="battle"] button,section[data-screen="battle"] [role="button"],section[data-screen="battle"] [tabindex]:not([tabindex="-1"])')].filter(el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return !el.hidden&&s.display!=='none'&&s.visibility!=='hidden'&&s.pointerEvents!=='none'&&r.width>0&&r.height>0});const offscreen=visible.filter(el=>{const r=el.getBoundingClientRect();return r.x<0||r.y<0||r.right>667||r.bottom>375}).map(snap);const hand=q('#hand')?.getBoundingClientRect();const overlap=(a,b)=>!!(a&&b&&a.x<b.right&&a.right>b.x&&a.y<b.bottom&&a.bottom>b.y);const handOverlap=visible.filter(el=>overlap(hand,el.getBoundingClientRect())).map(snap);const rootSelectors=['html','body','#app','section[data-screen="battle"]','#battleMap','.battleRail','#battleAdvanceReservation'];const roots=Object.fromEntries(rootSelectors.map(sel=>[sel,q(sel)?snap(q(sel)):null]));return {label,inner:{w:innerWidth,h:innerHeight,scrollX,scrollY,dpr:devicePixelRatio},vv:visualViewport?{width:visualViewport.width,height:visualViewport.height,offsetTop:visualViewport.offsetTop,pageTop:visualViewport.pageTop,scale:visualViewport.scale}:null,roots,offscreen,handOverlap,arRows:[...document.querySelectorAll('#battleAdvanceReservation .arRow')].map(snap)};},label)}
+          test('compare short-landscape candidates',async({page})=>{
+            const response=await page.goto('/browser/GAMEROAD.html',{waitUntil:'commit'});expect(response?.ok()).toBeTruthy();await expect(page.locator('section[data-screen="home"]')).toBeVisible({timeout:15000});const deck=await installLegalBattleDeck(page);expect(deck.committed).toBeTruthy();await page.locator('[data-home-target="setup"]:visible,[data-go="setup"]:visible').first().click();const setup=page.locator('section[data-screen="setup"]');await expect(setup).toBeVisible();await setup.locator('[data-content="road_shield"]').click();await setup.locator('[data-mode="2p"]').click();await setup.locator('#startMatch').click();await expect(page.locator('section[data-screen="battle"]')).toBeVisible();await expect.poll(()=>page.evaluate(()=>window.__GAMEROAD_BATTLE_CAMERA_LIVE__?.snapshot?.().mounted===true)).toBeTruthy();
+            const results=[];results.push(await metrics(page,'base'));
+            const candidates=[
+              ['A_parent_offset_only',`@media (min-width:640px) and (max-width:900px) and (max-height:430px){section.screen.battle.active{top:21px!important;bottom:-21px!important}}`],
+              ['B_rail_down_only',`@media (min-width:640px) and (max-width:900px) and (max-height:430px){section.screen.battle.active .battleRail{top:29px!important}}`],
+              ['C_parent_plus_compact_reservation',`@media (min-width:640px) and (max-width:900px) and (max-height:430px){section.screen.battle.active{top:21px!important;bottom:-21px!important} section.screen.battle.active #battleAdvanceReservation{display:flex!important;align-items:center!important;gap:4px!important;width:auto!important;height:32px!important;min-height:0!important} section.screen.battle.active #battleAdvanceReservation .arRow{width:auto!important;min-width:0!important;height:30px!important;padding:3px 5px!important;grid-template-columns:auto auto!important;gap:3px!important;white-space:nowrap!important}}`],
+              ['D_rail_down_plus_compact_reservation',`@media (min-width:640px) and (max-width:900px) and (max-height:430px){section.screen.battle.active .battleRail{top:29px!important} section.screen.battle.active #battleAdvanceReservation{display:flex!important;align-items:center!important;gap:4px!important;width:auto!important;height:32px!important;min-height:0!important} section.screen.battle.active #battleAdvanceReservation .arRow{width:auto!important;min-width:0!important;height:30px!important;padding:3px 5px!important;grid-template-columns:auto auto!important;gap:3px!important;white-space:nowrap!important}}`]
+            ];
+            for(const [name,css] of candidates){await page.evaluate(()=>document.querySelector('#wu63Trial')?.remove());await page.evaluate(({name,css})=>{const s=document.createElement('style');s.id='wu63Trial';s.dataset.name=name;s.textContent=css;document.head.appendChild(s);},{name,css});await page.waitForTimeout(100);results.push(await metrics(page,name));await page.screenshot({path:path.resolve(`visual-evidence/wu63-r1/${name}.png`),animations:'disabled'});}
+            await page.evaluate(()=>document.querySelector('#wu63Trial')?.remove());
+            console.log('WU63_CANDIDATES='+JSON.stringify(results,null,2));fs.writeFileSync(path.resolve('visual-evidence/wu63-r1/candidates.json'),JSON.stringify(results,null,2));
+            expect(results[0].offscreen.length).toBeGreaterThan(0);
           });
           EOF
           npx playwright test --config=.wu63-r1/playwright.config.mjs --workers=1
@@ -60,7 +58,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: battle-wu63-r1-diag-${{ github.run_id }}
+          name: battle-wu63-r1-candidates-${{ github.run_id }}
           path: |
             visual-evidence/wu63-r1/
             test-results/wu63-r1/

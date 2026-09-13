@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "PARTNER-ADVICE-PLAYER-CONTROL-R1-20260914T0123-SOL-SU13",
+  "taskId": "ADVICE_PARTNER-01",
+  "workUnitKey": "PARTNER_ADVICE_PLAYER_CONTROL_BOUNDARY_R1",
+  "acquireKey": "PARTNER-ADVICE-PLAYER-CONTROL-R1-20260914T0123-SOL-SU13",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_33FC9551_PARTNER_RUNTIME_QUICK3_PLUS_LEASE_ROW1355",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "LOCAL_NODE_TEST_4_OF_4_PASS_PURE_FAIL_CLOSED_CORE",
+  "proceedToken": "PROCEED|PARTNER-ADVICE-PLAYER-CONTROL-R1-20260914T0123-SOL-SU13|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|partner-advice-player-control-boundary|focused-node-test|active-lease",
+  "authorizationBaseSha": "33fc9551536bc6126c7a75046dd3bc9a0cd38e7b",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "ADVICE_PARTNER-01",
+  "leaseWorkUnitKey": "PARTNER_ADVICE_PLAYER_CONTROL_BOUNDARY_R1",
+  "leaseAcquireKey": "PARTNER-ADVICE-PLAYER-CONTROL-R1-20260914T0123-SOL-SU13",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 01:23 JST",
+  "leaseUntilJst": "2026-09-14 02:23 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1355:L1355",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main 33fc9551536bc6126c7a75046dd3bc9a0cd38e7b; mutable browser/partner-advice-player-control-core.mjs; tests/partner-advice-player-control-core.test.mjs; own transient data/preaction-authorizations/PARTNER-ADVICE-PLAYER-CONTROL-R1-20260914T0123-SOL-SU13.json; own branch/PR/check/merge/readback only. READ_ONLY browser/partner-advice-runtime-mount.mjs; browser/GAMEROAD.html; approved Partner dialogue sources; gameplay/rules/legality/target/save/economy/network; formal character art/voice.",
+  "solutionSignature": "PARTNER_ADVICE_DELEGATION_AND_REPLY_PAIR_BOUNDARY_V1",
+  "reuseDisposition": "BUILD",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_RUNTIME_PLUS_DECISION_RECONNECT_HATE_AUTO_SOURCE_CROSSCHECK",
+  "solutionSearchEvidence": [
+    "Current partner-advice runtime already owns the approved Quick3 routes and one presentation-only fixed まかせた！ acknowledgement; those are reused as evidence and are not duplicated.",
+    "partner-decision-control-identity-core binds evidence freshness to 2v2 control identity but does not provide manual delegation gameplay authority.",
+    "battle-2v2-reconnect-core models disconnect/reconnect control modes, so reusing it as manual delegation would conflate connectivity with player intent.",
+    "hate-forced-delegation-core is a one-shot HATE threshold force event, so reusing it as the ordinary delegation toggle would change semantics.",
+    "The approved Saasuna dialogue source contains Partner utterances including delegation acknowledgement, but no approved exact two-choice player reply labels.",
+    "No current repository implementation of まかせろ！ or a source-backed separate Advice two-choice player reply surface was found in the inspected current actual."
+  ],
+  "buildResidualReason": "No existing core safely separates the ordinary manual delegation/reclaim presentation contract from reconnect, HATE-forced delegation, auto-input policy, and the distinct source-backed two-choice player conversation reply surface. A new pure projection boundary is the smallest non-authoritative construction.",
+  "scope": [
+    "browser/partner-advice-player-control-core.mjs",
+    "tests/partner-advice-player-control-core.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/partner-advice-player-control-core.mjs",
+    "tests/partner-advice-player-control-core.test.mjs"
+  ]
+}

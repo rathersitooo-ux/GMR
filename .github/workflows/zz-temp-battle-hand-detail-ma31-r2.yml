@@ -1,0 +1,88 @@
+name: TEMP Battle hand local detail MA31 R2
+
+on:
+  push:
+    branches:
+      - sol/battle-hand-detail-ma31-r2-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-hand-detail-ma31-r2-20260914
+          fetch-depth: 0
+
+      - name: Configure repository hooks
+        run: |
+          git config core.hooksPath .githooks
+          test "$(git config --get core.hooksPath)" = ".githooks"
+
+      - name: Apply bounded ordinary-hand detail patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          runtime = Path('browser/battle-janken-slidepad-runtime-mount.mjs')
+          source = runtime.read_text(encoding='utf-8')
+          old_focus = 'section[data-screen="battle"] #hand .handCard[data-card-focus="true"]{translate:0 -8px;filter:brightness(1.08);z-index:5!important;box-shadow:0 0 0 2px rgba(241,241,241,.62),0 10px 24px rgba(9,9,9,.35)!important}'
+          old_legal = 'section[data-screen="battle"] #hand .handCard[data-card-focus="true"][data-card-focus-legal="true"]{translate:0 -11px;filter:brightness(1.16);box-shadow:0 0 0 3px rgba(214,214,214,.78),0 0 18px rgba(214,214,214,.24),0 12px 26px rgba(9,9,9,.38)!important}'
+          marker = '/* ADDRESS31 ordinary-hand local detail:'
+          if source.count(old_focus) != 1 or source.count(old_legal) != 1:
+              raise SystemExit('expected current focus CSS anchors exactly once')
+          if marker in source:
+              raise SystemExit('detail patch already present unexpectedly')
+          new_focus = marker + ' enlarge the same physical card face in place; shared drawer/detail remains address37. */\n' + 'section[data-screen="battle"] #hand .handCard[data-card-focus="true"]{translate:0 -15px;scale:1.38;filter:brightness(1.08);z-index:5!important;box-shadow:0 0 0 2px rgba(241,241,241,.62),0 10px 24px rgba(9,9,9,.35)!important}'
+          new_legal = 'section[data-screen="battle"] #hand .handCard[data-card-focus="true"][data-card-focus-legal="true"]{translate:0 -18px;scale:1.44;filter:brightness(1.16);box-shadow:0 0 0 3px rgba(214,214,214,.78),0 0 18px rgba(214,214,214,.24),0 12px 26px rgba(9,9,9,.38)!important}'
+          runtime.write_text(source.replace(old_focus, new_focus).replace(old_legal, new_legal), encoding='utf-8')
+
+          test_file = Path('tests/battle-janken-slidepad-runtime-mount.test.mjs')
+          tests = test_file.read_text(encoding='utf-8')
+          marker_test = "ordinary hand focus enlarges the exact physical card face in place for local detail"
+          if marker_test in tests:
+              raise SystemExit('focused test already present unexpectedly')
+          tests += r'''
+
+          test('ordinary hand focus enlarges the exact physical card face in place for local detail', async () => {
+            const { readFile } = await import('node:fs/promises');
+            const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
+            assert.match(source, /#hand \.handCard\[data-card-focus="true"\]\{translate:0 -15px;scale:1\.38;/, 'local detail reuses the existing focused physical card instead of opening a second surface');
+            assert.match(source, /#hand \.handCard\[data-card-focus="true"\]\[data-card-focus-legal="true"\]\{translate:0 -18px;scale:1\.44;/, 'legal focus may emphasize the same card further without changing identity or legality');
+            assert.equal(source.includes('grBattleHandDetailDrawer'), false, 'address31 must not duplicate address37 shared drawer/detail');
+            assert.match(source, /function handCardFromEvent\(event\)[\s\S]*#hand \.handCard\[data-card-id\]/, 'focus remains bound to the exact cardId-bearing hand element');
+            assert.match(source, /projectBattleHandDragGhostPosition\(/, 'existing finger-occlusion drag projection remains in the same runtime');
+          });
+          '''
+          test_file.write_text(tests, encoding='utf-8')
+          PY
+
+      - name: Focused tests
+        run: node --test tests/battle-janken-slidepad-runtime-mount.test.mjs
+
+      - name: Diff gate
+        run: |
+          git diff --check
+          test "$(git diff --name-only | sort | tr '\n' ' ')" = "browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs "
+
+      - name: Commit bounded product patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs
+          git commit -m "Battle: ordinary hand local detail R1"
+
+      - name: Cleanup transient authorization and workflow
+        run: |
+          rm -f data/preaction-authorizations/BATTLE-HAND-DETAIL-R1-20260914T0125-SOL-MA31.json
+          rm -f .github/workflows/zz-temp-battle-hand-detail-ma31-r2.yml
+          git add -A
+          git commit -m "chore: cleanup MA31 R2 transient authorization"
+
+      - name: Push through repository pre-push hook
+        run: git push origin HEAD:sol/battle-hand-detail-ma31-r2-20260914

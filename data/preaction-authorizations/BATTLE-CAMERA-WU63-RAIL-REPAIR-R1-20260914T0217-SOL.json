@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CAMERA-WU63-RAIL-REPAIR-R1-20260914T0217-SOL",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CAMERA_WU63_667_RAIL_REACHABILITY_REPAIR_R1",
+  "acquireKey": "BATTLE-CAMERA-WU63-RAIL-REPAIR-R1-20260914T0217-SOL",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "EXACT-MAIN-B0748EEC-PRODUCT-IDENTICAL-TO-WU63-FAIL-R6-CANDIDATE",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "ACTIONS-34770930576-ACTUAL-BATTLE-667X375-RAIL-OFFSCREEN-REPRODUCED",
+  "proceedToken": "PROCEED|BATTLE-CAMERA-WU63-RAIL-REPAIR-R1-20260914T0217-SOL|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|presentation-only-rail-geometry-adapt|CURRENT_ACTIVE_LEASES!A1382:L1382",
+  "authorizationBaseSha": "b0748eece7a233c1be4813d25cb4ed11c21da696",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CAMERA_WU63_667_RAIL_REACHABILITY_REPAIR_R1",
+  "leaseAcquireKey": "BATTLE-CAMERA-WU63-RAIL-REPAIR-R1-20260914T0217-SOL",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 02:17 JST",
+  "leaseUntilJst": "2026-09-14 03:17 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1382:L1382",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch from exact current main b0748eece7a233c1be4813d25cb4ed11c21da696; mutable browser/GAMEROAD.html; tests/browser-static-check.mjs; transient .github/workflows/zz-temp-battle-wu63-667-rail-r1.yml; own transient data/preaction-authorizations/BATTLE-CAMERA-WU63-RAIL-REPAIR-R1-20260914T0217-SOL.json; own branch/PR/check/merge/readback; own CURRENT_ACTIVE_LEASES row1382 and R23 terminal event. READ_ONLY gameplay/rules/target/legality/card identity/save/economy/network; camera core/input/live runtime; other active WorkUnit files.",
+  "scope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    ".github/workflows/zz-temp-battle-wu63-667-rail-r1.yml"
+  ],
+  "leaseScope": [
+    "browser/GAMEROAD.html",
+    "tests/browser-static-check.mjs",
+    ".github/workflows/zz-temp-battle-wu63-667-rail-r1.yml"
+  ],
+  "solutionSignature": "Adapt the existing Battle rail/auxiliary-row short-landscape presentation in place so all currently visible interactive rail controls remain fully inside 667x375 without overlapping the ordinary hand; preserve existing camera runtime and gameplay semantics.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "WU63-R5-R6-DIRECT-PLAYWRIGHT-EVIDENCE-AND-EXISTING-RAIL-DOM-SEAMS",
+  "solutionSearchEvidence": [
+    "Existing Battle rail and .arRow are already the live player-facing control seams; no second control surface is required.",
+    "R5 direct 667x375 evidence left only .arRow y=-10, proving the existing geometry can be adjusted without replacing the rail.",
+    "R6 direct 667x375 evidence on product-identical current main showed handOverlap=[] but five rail buttons y=-7 and .arRow y=-31, isolating the residual to presentation geometry rather than gameplay or camera state."
+  ]
+}

@@ -93,12 +93,54 @@ jobs:
 
           exec(compile(script, '<quick3-r4-product-patch>', 'exec'), {})
           PY
-      - name: Verify focused product behavior
+      - name: Verify against exact main baseline and build package
         shell: bash
         run: |
           set -euo pipefail
           node --check browser/partner-advice-runtime-mount.mjs
-          node --test tests/partner-advice-runtime-mount.test.mjs
+          git worktree add --detach /tmp/quick3-main origin/main
+          set +e
+          (cd /tmp/quick3-main && node --test tests/partner-advice-runtime-mount.test.mjs) > /tmp/main-partner.tap 2>&1
+          main_rc=$?
+          node --test tests/partner-advice-runtime-mount.test.mjs > /tmp/quick3-partner.tap 2>&1
+          quick_rc=$?
+          set -e
+          cat /tmp/main-partner.tap
+          cat /tmp/quick3-partner.tap
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          def failures(path):
+              text = Path(path).read_text()
+              return [m.group(1).strip() for m in re.finditer(r'^\s*not ok \d+ - (.+?)\s*$', text, re.M)]
+
+          expected = [
+              'eligible Tutorial experience is a natural Saasuna conversation and adapts only after a known game is chosen',
+              'contextual help keeps canonical text before a profile is ready and uses the selected-game bridge afterward',
+          ]
+          main_fail = failures('/tmp/main-partner.tap')
+          quick_fail = failures('/tmp/quick3-partner.tap')
+          if main_fail != expected:
+              raise SystemExit(f'UNEXPECTED_MAIN_BASELINE_FAILURES={main_fail!r}')
+          if quick_fail != expected:
+              raise SystemExit(f'QUICK3_REGRESSION_FAILURES={quick_fail!r}')
+          quick_text = Path('/tmp/quick3-partner.tap').read_text()
+          required_passes = [
+              'Partner Advice quick3 exposes exactly three fixed route families with Idea enabled by default',
+              'Partner Advice composite route speaks registered parts in order and drops stale public-state continuation',
+              'default Situation route summarizes existing viewer-safe log rows and public lane values only',
+              'Idea OFF suppresses only Idea while Casual and Situation remain independent and no gameplay authority is owned',
+              'quick3 UI keeps delegation separate and does not create a permanent fourth 3-options route',
+          ]
+          for name in required_passes:
+              if not re.search(r'^\s*ok \d+ - ' + re.escape(name) + r'\s*$', quick_text, re.M):
+                  raise SystemExit(f'MISSING_QUICK3_PASS={name}')
+          print('BASELINE_EQUIVALENT_FAILURE_SET=PASS')
+          print('QUICK3_FOCUSED_5_OF_5=PASS')
+          PY
+          [[ "$main_rc" -ne 0 ]]
+          [[ "$quick_rc" -ne 0 ]]
           node --test deploy/cloudflare/tests/build.test.mjs
           mapfile -t changed < <(git diff --name-only | sort)
           printf '%s\n' "${changed[@]}"

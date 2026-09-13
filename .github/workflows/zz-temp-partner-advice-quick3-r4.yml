@@ -33,11 +33,7 @@ jobs:
 
           source = runtime.read_text()
           old = "      return adapted?.active && exactPresentationToken(adapted.message) ? adapted.message : current?.message ?? null;\n"
-          new = """      const adaptedMessage = typeof adapted?.message === 'string' && adapted.message.trim() === adapted.message && adapted.message.length > 0
-            ? adapted.message
-            : null;
-      return adapted?.active && adaptedMessage ? adaptedMessage : current?.message ?? null;
-"""
+          new = "      const adaptedMessage = typeof adapted?.message === 'string' && adapted.message.trim() === adapted.message && adapted.message.length > 0\n        ? adapted.message\n        : null;\n      return adapted?.active && adaptedMessage ? adaptedMessage : current?.message ?? null;\n"
           if source.count(old) != 1:
               raise RuntimeError(f'help-message guard anchor count={source.count(old)}')
           source = source.replace(old, new, 1)

@@ -1,0 +1,39 @@
+name: TEMP WU63 667 Rail Repair R1
+
+on:
+  push:
+    branches:
+      - sol/battle-wu63-667-rail-repair-r1-20260914
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Inspect current rail CSS and static canaries
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for p in ['browser/GAMEROAD.html','tests/browser-static-check.mjs']:
+              text=Path(p).read_text()
+              print(f'===== {p} length={len(text)} =====')
+              for needle in ['.battleRail','.arRow','battleRail','arRow','@media (max-height','@media (max-width']:
+                  start=0
+                  n=0
+                  while True:
+                      i=text.find(needle,start)
+                      if i<0: break
+                      n+=1
+                      lo=max(0,i-900); hi=min(len(text),i+1500)
+                      print(f'--- {needle} occurrence {n} offset={i} ---')
+                      print(text[lo:hi])
+                      start=i+len(needle)
+                      if n>=12: break
+          PY

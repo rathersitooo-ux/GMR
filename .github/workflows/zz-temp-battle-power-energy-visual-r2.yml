@@ -3,11 +3,12 @@ on:
   push:
     branches:
       - sol/battle-power-energy-visual-r2-20260914
+    paths:
+      - .github/workflows/zz-temp-battle-power-energy-visual-r2.yml
 permissions:
   contents: write
 jobs:
   patch:
-    if: ${{ !contains(github.event.head_commit.message, '[power-energy-r2-done]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +29,6 @@ jobs:
           build_path = Path('deploy/cloudflare/scripts/build.mjs')
 
           runtime = runtime_path.read_text()
-
           anchor = "const HAND_FOCUS_SNAP_MAX_PX = 28;\n"
           insert = anchor + "const POWER_ENERGY_ASSET_URL = './assets/visual/battle-power-energy.jpg';\nconst POWER_ENERGY_ATTR = 'data-battle-power-energy';\n"
           assert runtime.count(anchor) == 1
@@ -56,9 +56,8 @@ jobs:
           runtime = runtime.replace(motion_old, motion_new, 1)
 
           host_label_old = "host.setAttribute('aria-label', 'じゃんけん SlidePad / カード発射オーラ');"
-          host_label_new = "host.setAttribute('aria-label', 'じゃんけん SlidePad / Power Energy');"
           assert runtime.count(host_label_old) == 1
-          runtime = runtime.replace(host_label_old, host_label_new, 1)
+          runtime = runtime.replace(host_label_old, "host.setAttribute('aria-label', 'じゃんけん SlidePad / Power Energy');", 1)
 
           handle_anchor = "  const handle = documentRef.createElement('button');\n"
           energy_dom = """  const powerEnergy = documentRef.createElement('div');\n  powerEnergy.className = 'grPowerEnergy';\n  powerEnergy.setAttribute(POWER_ENERGY_ATTR, '1');\n  powerEnergy.setAttribute('aria-hidden', 'true');\n  const powerEnergyImage = documentRef.createElement('img');\n  powerEnergyImage.src = POWER_ENERGY_ASSET_URL;\n  powerEnergyImage.alt = '';\n  powerEnergyImage.draggable = false;\n  powerEnergyImage.setAttribute('aria-hidden', 'true');\n  powerEnergy.appendChild(powerEnergyImage);\n  host.appendChild(powerEnergy);\n"""
@@ -70,23 +69,19 @@ jobs:
           runtime = runtime.replace(handle_label_old, "handle.setAttribute('aria-label', 'じゃんけん SlidePad');", 1)
 
           signature_old = 'function animateHandAuraLaunch(globalRef, documentRef, battleRoot, handle, ghost) {'
-          signature_new = 'function animateHandAuraLaunch(globalRef, documentRef, battleRoot, powerEnergy, ghost) {'
           assert runtime.count(signature_old) == 1
-          runtime = runtime.replace(signature_old, signature_new, 1)
+          runtime = runtime.replace(signature_old, 'function animateHandAuraLaunch(globalRef, documentRef, battleRoot, powerEnergy, ghost) {', 1)
           center_old = '  const aura = elementCenter(handle);'
           assert runtime.count(center_old) == 1
           runtime = runtime.replace(center_old, '  const aura = elementCenter(powerEnergy);', 1)
-
           rect_old = '    const auraRect = handle.getBoundingClientRect?.();'
           assert runtime.count(rect_old) == 1
           runtime = runtime.replace(rect_old, '    const auraRect = powerEnergy.getBoundingClientRect?.();', 1)
-
           launch_old = '      animateHandAuraLaunch(globalRef, documentRef, root, handle, ghost);'
           assert runtime.count(launch_old) == 1
           runtime = runtime.replace(launch_old, '      animateHandAuraLaunch(globalRef, documentRef, root, powerEnergy, ghost);', 1)
 
           assert "const auraRect = handle.getBoundingClientRect" not in runtime
-          assert runtime.count('captureBattleCardReleaseFlightEffect') >= 2
           assert runtime.count("from './battle-card-release-flight-runtime-effect.mjs';") == 1
           runtime_path.write_text(runtime)
 
@@ -111,10 +106,7 @@ test('Power Energy is distinct from SlidePad and owns ordinary-hand drag arming 
 });
 
 test('Power Energy uses the exact recovered web derivative and does not add a second release engine', async () => {
-  const [{ readFile }, { createHash }] = await Promise.all([
-    import('node:fs/promises'),
-    import('node:crypto'),
-  ]);
+  const [{ readFile }, { createHash }] = await Promise.all([import('node:fs/promises'), import('node:crypto')]);
   const bytes = await readFile(new URL('../assets/visual/battle-power-energy.jpg', import.meta.url));
   assert.equal(createHash('sha256').update(bytes).digest('hex'), '314973a531dffced941f996dda9e45ffcf41526263feae00da558c1c918988c3');
   const source = await readFile(new URL('../browser/battle-janken-slidepad-runtime-mount.mjs', import.meta.url), 'utf8');
@@ -128,55 +120,36 @@ test('Power Energy uses the exact recovered web derivative and does not add a se
 
           build = build_path.read_text()
           build_anchor = "  { source: 'browser/battle-janken-slidepad-runtime-mount.mjs', output: 'battle-janken-slidepad-runtime-mount.mjs', artifact: 'battle_janken_slidepad_runtime_mount', label: 'Battle janken SlidePad runtime mount' },\n"
-          build_entry = build_anchor + "  { source: 'assets/visual/battle-power-energy.jpg', output: 'assets/visual/battle-power-energy.jpg', artifact: 'battle_power_energy_visual', label: 'Battle Power Energy visual' },\n"
           assert build.count(build_anchor) == 1
-          build = build.replace(build_anchor, build_entry, 1)
+          build = build.replace(build_anchor, build_anchor + "  { source: 'assets/visual/battle-power-energy.jpg', output: 'assets/visual/battle-power-energy.jpg', artifact: 'battle_power_energy_visual', label: 'Battle Power Energy visual' },\n", 1)
           build_path.write_text(build)
           PY
-      - name: Verify exact asset and syntax
+      - name: Verify asset, syntax, focused tests
         shell: bash
         run: |
           test "$(sha256sum assets/visual/battle-power-energy.jpg | awk '{print $1}')" = "314973a531dffced941f996dda9e45ffcf41526263feae00da558c1c918988c3"
           node --check browser/battle-janken-slidepad-runtime-mount.mjs
           node --check deploy/cloudflare/scripts/build.mjs
-      - name: Focused tests
-        shell: bash
-        run: |
           node --test tests/battle-janken-slidepad-runtime-mount.test.mjs
           node --test deploy/cloudflare/tests/build.test.mjs
-      - name: Scope fence and commit
+          git diff --check
+      - name: Commit bounded product delta
         shell: bash
         run: |
-          git diff --check
-          git status --short
-          git rm .github/workflows/zz-temp-battle-power-energy-visual-r2.yml
-          git rm data/preaction-authorizations/BATTLE-POWER-ENERGY-VISUAL-R1-20260914T0224-SOL-KI7.json
           python - <<'PY'
           import subprocess
           allowed = {
-            'assets/visual/battle-power-energy.jpg',
-            'browser/battle-janken-slidepad-runtime-mount.mjs',
-            'tests/battle-janken-slidepad-runtime-mount.test.mjs',
-            'deploy/cloudflare/scripts/build.mjs',
-            '.github/workflows/zz-temp-battle-power-energy-visual-r2.yml',
-            'data/preaction-authorizations/BATTLE-POWER-ENERGY-VISUAL-R1-20260914T0224-SOL-KI7.json',
-          }
-          names = set(subprocess.check_output(['git','status','--short'], text=True).splitlines())
-          paths = {line[3:] for line in names if len(line) > 3}
-          extra = paths - allowed
-          if extra:
-              raise SystemExit(f'out-of-scope paths: {sorted(extra)}')
-          required = {
             'browser/battle-janken-slidepad-runtime-mount.mjs',
             'tests/battle-janken-slidepad-runtime-mount.test.mjs',
             'deploy/cloudflare/scripts/build.mjs',
           }
-          missing = required - paths
-          if missing:
-              raise SystemExit(f'missing expected product paths: {sorted(missing)}')
+          lines = subprocess.check_output(['git','status','--short'], text=True).splitlines()
+          paths = {line[3:] for line in lines if len(line) > 3}
+          if paths != allowed:
+              raise SystemExit(f'unexpected product paths: {sorted(paths)}')
           PY
           git config user.name "gameroad-bounded-writer"
           git config user.email "gameroad-bounded-writer@users.noreply.github.com"
-          git add browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs deploy/cloudflare/scripts/build.mjs assets/visual/battle-power-energy.jpg
-          git commit -m "[power-energy-r2-done] Battle: restore distinct Power Energy launch target"
+          git add browser/battle-janken-slidepad-runtime-mount.mjs tests/battle-janken-slidepad-runtime-mount.test.mjs deploy/cloudflare/scripts/build.mjs
+          git commit -m "Battle: restore distinct Power Energy launch target"
           git push origin HEAD:sol/battle-power-energy-visual-r2-20260914

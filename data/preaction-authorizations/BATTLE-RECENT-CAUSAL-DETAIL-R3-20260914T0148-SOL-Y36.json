@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-RECENT-CAUSAL-DETAIL-R3-20260914T0148-SOL-Y36",
+  "taskId": "BATTLE-REPLAY-RUNTIME-CONTRACT-001",
+  "workUnitKey": "BATTLE_RECENT_PUBLIC_CAUSAL_DETAIL_R1",
+  "acquireKey": "BATTLE-RECENT-CAUSAL-DETAIL-R3-20260914T0148-SOL-Y36",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "R2_PREACTION_PASS_R2_FOCUSED_PRODUCT_PASS_PACKAGE_PIN_ONLY_FAIL",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R2_EXACT_TESTED_PRODUCT_BLOBS_ADAPTER_4047D_TEST_C6540",
+  "proceedToken": "PROCEED|BATTLE-RECENT-CAUSAL-DETAIL-R3-20260914T0148-SOL-Y36|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|focused-tested-donor|lease-snapshot",
+  "authorizationBaseSha": "1aa4205b00ed3bcbf7e29f35c7dc5e8c48c03fef",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-REPLAY-RUNTIME-CONTRACT-001",
+  "leaseWorkUnitKey": "BATTLE_RECENT_PUBLIC_CAUSAL_DETAIL_R1",
+  "leaseAcquireKey": "BATTLE-RECENT-CAUSAL-DETAIL-R3-20260914T0148-SOL-Y36",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 01:48 JST",
+  "leaseUntilJst": "2026-09-14 02:48 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1333:L1333",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR exact current main 1aa4205b00ed3bcbf7e29f35c7dc5e8c48c03fef; fresh branch sol/battle-recent-causal-detail-r3-20260914; mutable browser/battle-replay-live-adapter.mjs; tests/partner-battle-event-log-projection.test.mjs; deploy/cloudflare/tests/build.test.mjs replay-adapter currentBlob pin only; transient .github/workflows/zz-temp-battle-recent-causal-detail-r3.yml; own transient data/preaction-authorizations/BATTLE-RECENT-CAUSAL-DETAIL-R3-20260914T0148-SOL-Y36.json. READ_ONLY browser/GAMEROAD.html; deploy/cloudflare/scripts/build.mjs; canonical replay/event schema; gameplay/rules/identity/privacy/save/economy/network.",
+  "scope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/partner-battle-event-log-projection.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-battle-recent-causal-detail-r3.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-replay-live-adapter.mjs",
+    "tests/partner-battle-event-log-projection.test.mjs",
+    "deploy/cloudflare/tests/build.test.mjs",
+    ".github/workflows/zz-temp-battle-recent-causal-detail-r3.yml"
+  ]
+}

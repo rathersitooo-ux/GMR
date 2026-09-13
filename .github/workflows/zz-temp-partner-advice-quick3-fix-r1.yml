@@ -1,0 +1,41 @@
+name: TEMP Repair Partner Advice Quick3 Writer
+
+on:
+  push:
+    branches:
+      - sol/partner-advice-quick3-r1-20260913
+    paths:
+      - .github/workflows/zz-temp-partner-advice-quick3-fix-r1.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/partner-advice-quick3-r1-20260913
+          fetch-depth: 0
+      - name: Repair proven anchor count and retrigger writer
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/workflows/zz-temp-partner-advice-quick3-r1.yml')
+          text = path.read_text()
+          old = 'assert source.count(anchor) == 2'
+          new = 'assert source.count(anchor) == 1'
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one proven bad anchor count, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1))
+          PY
+          rm .github/workflows/zz-temp-partner-advice-quick3-fix-r1.yml
+          git config user.name gameroad-bot
+          git config user.email gameroad-bot@users.noreply.github.com
+          git add .github/workflows/zz-temp-partner-advice-quick3-r1.yml .github/workflows/zz-temp-partner-advice-quick3-fix-r1.yml
+          git commit -m 'TEMP: repair quick3 writer anchor count'
+          git push origin HEAD:sol/partner-advice-quick3-r1-20260913

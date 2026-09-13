@@ -1,4 +1,4 @@
-name: TEMP Camera 667 Visual R1
+name: TEMP Camera 667 Visual R2
 
 on:
   push:
@@ -19,6 +19,37 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Repair actual FOLLOW footprint and regression contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          hp=Path('browser/GAMEROAD.html')
+          s=hp.read_text(encoding='utf-8')
+          old='#cameraReturnBtn{display:none;pointer-events:none}\n#cameraReturnBtn[data-camera-mode="MANUAL_INSPECT"]{display:flex;pointer-events:auto;'
+          new='#cameraReturnBtn{display:none;pointer-events:none}\n#cameraReturnBtn[hidden]{display:none!important;pointer-events:none!important}\n#cameraReturnBtn[data-camera-mode="MANUAL_INSPECT"]{display:flex;pointer-events:auto;'
+          if s.count(old)!=1:
+              raise SystemExit(f'camera CSS anchor count={s.count(old)}')
+          s=s.replace(old,new,1)
+          hp.write_text(s,encoding='utf-8')
+
+          tp=Path('tests/battle-camera-live-integration.test.mjs')
+          t=tp.read_text(encoding='utf-8')
+          old_test="    assert.match(html,/#cameraReturnBtn\\{display:none;pointer-events:none\\}/);"
+          new_test=old_test+"\n    assert.match(html,/#cameraReturnBtn\\[hidden\\]\\{display:none!important;pointer-events:none!important\\}/);"
+          if t.count(old_test)!=1:
+              raise SystemExit(f'camera regression anchor count={t.count(old_test)}')
+          t=t.replace(old_test,new_test,1)
+          tp.write_text(t,encoding='utf-8')
+          PY
+          node --test tests/battle-camera-live-integration.test.mjs
+          node tests/browser-static-check.mjs
+          git diff --check
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Install Playwright
         run: |
           npm install --no-save --no-package-lock @playwright/test@1.62.0
@@ -33,6 +64,7 @@ jobs:
           export default defineConfig({
             testDir: '.',
             testMatch: 'camera-667.spec.mjs',
+            outputDir: 'test-results',
             timeout: 90000,
             expect: { timeout: 7000 },
             workers: 1,
@@ -76,8 +108,7 @@ jobs:
           test('667x375 camera FOLLOW -> MANUAL_INSPECT -> FOLLOW keeps return control transient', async ({page}) => {
             const response=await page.goto('/browser/GAMEROAD.html',{waitUntil:'commit'});
             expect(response?.ok()).toBeTruthy();
-            const home=page.locator('section[data-screen="home"]');
-            await expect(home).toBeVisible({timeout:15000});
+            await expect(page.locator('section[data-screen="home"]')).toBeVisible({timeout:15000});
 
             const deck=await installLegalBattleDeck(page);
             expect(deck.committed).toBeTruthy();
@@ -99,16 +130,12 @@ jobs:
             const returnBtn=battle.locator('#cameraReturnBtn');
             await expect(returnBtn).toBeHidden();
             const follow=await returnBtn.evaluate((el)=>({hidden:el.hidden,display:getComputedStyle(el).display,pointer:getComputedStyle(el).pointerEvents,rects:el.getClientRects().length,mode:el.dataset.cameraMode||null}));
-            expect(follow.hidden).toBeTruthy();
-            expect(follow.display).toBe('none');
-            expect(follow.pointer).toBe('none');
-            expect(follow.rects).toBe(0);
-            expect(follow.mode).toBe('FOLLOW_CONTROLLED');
+            expect(follow).toEqual({hidden:true,display:'none',pointer:'none',rects:0,mode:'FOLLOW_CONTROLLED'});
             expect(await battle.locator('.battleRail .railBtn:visible').count()).toBe(3);
             await page.screenshot({path:`${output}/camera-follow-667x375.png`,animations:'disabled'});
 
-            const canvas=battle.locator('#fieldCanvas');
-            const box=await canvas.boundingBox();
+            const world=battle.locator('#battleMap');
+            const box=await world.boundingBox();
             expect(box).not.toBeNull();
             await page.mouse.move(box.x+box.width*0.52,box.y+box.height*0.50);
             await page.mouse.down();
@@ -136,16 +163,17 @@ jobs:
           name: camera-667-visual-${{ github.run_id }}
           path: |
             visual-evidence/
-            .camera-667/test-results/
-          if-no-files-found: error
+            test-results/
+          if-no-files-found: warn
           retention-days: 14
-      - name: Remove transient workflow from branch
+      - name: Commit verified repair and remove transient workflow
         if: ${{ success() }}
         shell: bash
         run: |
           set -euo pipefail
           git config user.name gameroad-bot
           git config user.email gameroad-bot@users.noreply.github.com
+          git add browser/GAMEROAD.html tests/battle-camera-live-integration.test.mjs
           git rm .github/workflows/zz-temp-camera-667-visual-r1.yml
-          git commit -m 'Cleanup camera 667 visual transient workflow'
+          git commit -m 'Battle: FOLLOW時のcamera return footprintを実画面で0化'
           git push origin HEAD:sol/battle-camera-html-r8-20260913

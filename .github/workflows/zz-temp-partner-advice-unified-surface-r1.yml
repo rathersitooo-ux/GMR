@@ -1,0 +1,68 @@
+name: TEMP Partner Advice Unified Surface R1 Fix
+
+on:
+  push:
+    branches:
+      - work/13-su-partner-unified-surface-r1
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/13-su-partner-unified-surface-r1
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fix exact typo and strengthen regression
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          runtime = Path('browser/partner-advice-runtime-mount.mjs')
+          source = runtime.read_text()
+          assert source.count('delgateButton') == 1
+          runtime.write_text(source.replace('delgateButton', 'delegateButton', 1))
+          test = Path('tests/partner-advice-runtime-mount.test.mjs')
+          tests = test.read_text()
+          anchor = "  assert.match(source, /actions\\.append\\(button\\)/);"
+          assert tests.count(anchor) == 1
+          test.write_text(tests.replace(anchor, anchor + "\n  assert.doesNotMatch(source, /delgateButton/);", 1))
+          PY
+      - name: Refresh exact public-package blob pin
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess
+          runtime = Path('browser/partner-advice-runtime-mount.mjs')
+          build_path = Path('deploy/cloudflare/tests/build.test.mjs')
+          blob = subprocess.check_output(['git', 'hash-object', str(runtime)], text=True).strip()
+          build = build_path.read_text()
+          pattern = r"(file: 'partner-advice-runtime-mount\.mjs'.*?currentBlob: ')[0-9a-f]{40}(' \},)"
+          build, count = re.subn(pattern, lambda m: m.group(1) + blob + m.group(2), build, count=1)
+          assert count == 1
+          build_path.write_text(build)
+          print(blob)
+          PY
+      - name: Focused Partner regression
+        run: node --test tests/partner-advice-runtime-mount.test.mjs
+      - name: Public package provenance regression
+        run: node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Diff check
+        run: git diff --check
+      - name: Commit exact repair
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "gameroad-bounded-writer"
+          git config user.email "actions@users.noreply.github.com"
+          git add browser/partner-advice-runtime-mount.mjs tests/partner-advice-runtime-mount.test.mjs deploy/cloudflare/tests/build.test.mjs
+          test "$(git diff --cached --name-only | wc -l)" -eq 3
+          git commit -m "fix(partner): repair unified surface runtime typo [partner-unified-typo-done]"
+          git push origin HEAD:work/13-su-partner-unified-surface-r1

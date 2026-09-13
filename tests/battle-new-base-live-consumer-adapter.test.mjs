@@ -12,6 +12,7 @@ import { StaleBattleJankenCompoundAttackPackageError } from '../browser/battle-j
 function roundAuthority(overrides = {}) {
   return {
     roundId: 'round-7',
+    turnId: 'turn-7-a',
     hand: [
       { id: 'card-a', suit: 'SP' },
       { id: 'card-b', suit: 'CL' },
@@ -77,12 +78,12 @@ test('CURRENT hand3 derives the six-way uniform mapping and keeps native suit se
   );
   assert.deepEqual(snapshot.ordinaryHandCardIds, []);
   assert.deepEqual(entropyRequests, [{
-    assignmentEpochId: 'round-7',
+    assignmentEpochId: 'turn-7-a',
     sampleKind: 'HAND3_UNIFORM_PERMUTATION_UINT32',
   }]);
 });
 
-test('same-round sync, reconnect-style resync, and stage do not reroll the hand3 snapshot', async () => {
+test('same-turn sync, reconnect-style resync, and stage do not reroll the hand3 snapshot', async () => {
   let entropyReads = 0;
   const { adapter } = createHarness({
     readAuthoritativeHand3Uint32: () => {
@@ -97,6 +98,39 @@ test('same-round sync, reconnect-style resync, and stage do not reroll the hand3
 
   assert.strictEqual(second, first);
   assert.equal(entropyReads, 1);
+});
+
+test('new turn inside the same round consumes fresh entropy and replaces the immutable turn snapshot', async () => {
+  let authority = roundAuthority();
+  const entropyValues = [0, 1];
+  let entropyReads = 0;
+  const adapter = createBattleNewBaseLiveConsumerAdapter({
+    readRoundAuthority: async () => authority,
+    readAuthoritativeHand3Uint32: () => entropyValues[entropyReads++],
+    readCompoundAttackCandidate: async () => compoundCandidate(),
+    sendExistingBattleAction: async () => true,
+  });
+  const first = await adapter.syncRoundStart();
+  authority = roundAuthority({ turnId: 'turn-7-b' });
+  const second = await adapter.syncRoundStart();
+  assert.notStrictEqual(second, first);
+  assert.equal(entropyReads, 2);
+  assert.notDeepEqual(
+    second.slots.map(({ jankenHand, cardId }) => ({ jankenHand, cardId })),
+    first.slots.map(({ jankenHand, cardId }) => ({ jankenHand, cardId })),
+  );
+  assert.equal(adapter.status().roundId, 'round-7');
+  assert.equal(adapter.status().turnId, 'turn-7-b');
+});
+
+test('missing caller turnId fails closed instead of silently freezing RPS3 for the whole round', async () => {
+  const adapter = createBattleNewBaseLiveConsumerAdapter({
+    readRoundAuthority: async () => roundAuthority({ turnId: null }),
+    readAuthoritativeHand3Uint32: () => 4,
+    readCompoundAttackCandidate: async () => compoundCandidate(),
+    sendExistingBattleAction: async () => true,
+  });
+  await assert.rejects(() => adapter.syncRoundStart(), /roundAuthority.turnId must be a non-empty canonical string/);
 });
 
 test('same authoritative entropy gives the same mapping regardless of player-facing hand order', async () => {
@@ -159,7 +193,7 @@ test('observing a new round clears the prior uncommitted compound package before
   await adapter.stageCompoundAttack('ROCK');
   assert.notEqual(adapter.status().stagedCompoundAttack, null);
 
-  currentRound = roundAuthority({ roundId: 'round-8' });
+  currentRound = roundAuthority({ roundId: 'round-8', turnId: 'turn-8-a' });
   entropyValue = 0x1_0000_0000;
   await assert.rejects(() => adapter.syncRoundStart(), /readUint32 must return/);
   assert.equal(adapter.status().stagedCompoundAttack, null);
@@ -461,7 +495,8 @@ test('contract records canonical hand3 and reused precommit-clear boundaries whi
       hand3MappingAuthority: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.hand3MappingAuthority,
       hand3EntropyAuthority: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.hand3EntropyAuthority,
       hand3AssignmentEpoch: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.hand3AssignmentEpoch,
-      hand3RerollWithinRound: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.hand3RerollWithinRound,
+      hand3RerollWithinTurn: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.hand3RerollWithinTurn,
+      hand3MayReassignOnNewTurnInSameRound: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.hand3MayReassignOnNewTurnInSameRound,
       nativeSuitDeterminesJankenSlot: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.nativeSuitDeterminesJankenSlot,
       computesTarget: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.computesTarget,
       computesLegality: BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT.computesLegality,
@@ -480,8 +515,9 @@ test('contract records canonical hand3 and reused precommit-clear boundaries whi
     {
       hand3MappingAuthority: 'CANONICAL_UNIFORM_SIX_PERMUTATION_POLICY',
       hand3EntropyAuthority: 'CALLER_UINT32',
-      hand3AssignmentEpoch: 'ROUND_ID',
-      hand3RerollWithinRound: false,
+      hand3AssignmentEpoch: 'CALLER_TURN_ID',
+      hand3RerollWithinTurn: false,
+      hand3MayReassignOnNewTurnInSameRound: true,
       nativeSuitDeterminesJankenSlot: false,
       computesTarget: false,
       computesLegality: false,

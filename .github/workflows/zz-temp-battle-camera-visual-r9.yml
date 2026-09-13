@@ -37,7 +37,7 @@ jobs:
           #cameraReturnBtn[hidden]{pointer-events:none!important}
           #cameraReturnBtn.cameraReturnControl{position:absolute;right:max(10px,env(safe-area-inset-right));top:50%;transform:translateY(-50%);z-index:34;display:flex;align-items:center;justify-content:center;min-width:56px;min-height:44px;padding:0 12px;border:1px solid rgba(255,255,255,.58);border-radius:22px;background:rgba(27,31,36,.94);color:#f5f7f8;font:800 13px/1 system-ui,sans-serif;box-shadow:0 6px 18px rgba(0,0,0,.28);touch-action:manipulation;pointer-events:auto}
           #cameraReturnBtn.cameraReturnControl[data-camera-mode="MANUAL_INSPECT"]{box-shadow:0 0 0 2px rgba(255,255,255,.24),0 6px 18px rgba(0,0,0,.28)}
-          #battleMap[data-camera-mode="MANUAL_INSPECT"] .battleRail{opacity:0;pointer-events:none;visibility:hidden}
+          #battleMap[data-camera-mode="MANUAL_INSPECT"] .battleRail{opacity:0;pointer-events:none!important;visibility:hidden}
           </style>'''
           s=re.sub(style_pattern,lambda _:new_style,s,count=1)
           assert s.count('id="cameraReturnBtn"')==1
@@ -50,10 +50,13 @@ jobs:
           t=tp.read_text(encoding='utf-8')
           anchor='  errors.push(...collectHomeVisualShellErrors(html));\n'
           assert t.count(anchor)==1
-          extra="  if (!/#battleMap\\[data-camera-mode=[\"']MANUAL_INSPECT[\"']\\] \\.battleRail\\{opacity:0;pointer-events:none;visibility:hidden\\}/.test(html)) errors.push('battle rail does not yield during manual camera inspect');\n"
-          if 'battle rail does not yield during manual camera inspect' not in t:
-              t=t.replace(anchor,extra+anchor,1)
-              tp.write_text(t,encoding='utf-8')
+          existing="  if (!/#battleMap\\[data-camera-mode=[\"']MANUAL_INSPECT[\"']\\] \\.battleRail\\{opacity:0;pointer-events:none;visibility:hidden\\}/.test(html)) errors.push('battle rail does not yield during manual camera inspect');\n"
+          stronger="  if (!/#battleMap\\[data-camera-mode=[\"']MANUAL_INSPECT[\"']\\] \\.battleRail\\{opacity:0;pointer-events:none!important;visibility:hidden\\}/.test(html)) errors.push('battle rail does not yield visual and input ownership during manual camera inspect');\n"
+          if existing in t:
+              t=t.replace(existing,stronger,1)
+          elif 'battle rail does not yield visual and input ownership during manual camera inspect' not in t:
+              t=t.replace(anchor,stronger+anchor,1)
+          tp.write_text(t,encoding='utf-8')
           PY
           git diff --check
       - name: Run focused camera and static checks

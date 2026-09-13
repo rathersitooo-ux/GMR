@@ -135,6 +135,43 @@ if ((html.match(/cameraState\.mode==='MANUAL_INSPECT';returnControl\.hidden=!man
 if (!/__GAMEROAD_BATTLE_CAMERA_FIELD_ADAPTER__/.test(html) || !/mountBattleCameraLiveRuntime/.test(html)) errors.push('camera live adapter/runtime mount is missing');
 if (!/authority:\{gameplay:false,movement:false,target:false,legality:false,stateWrite:false\}/.test(html)) errors.push('camera field adapter lost gameplay-write firewall');
   if (!/#battleMap\[data-camera-mode=["']MANUAL_INSPECT["']\] \.battleRail\{opacity:0;pointer-events:none!important;visibility:hidden\}/.test(html)) errors.push('battle rail does not yield visual and input ownership during manual camera inspect');
+  const otherThreeHudStart = html.indexOf('function hudPublicPeers(m)');
+  const otherThreeHudEnd = html.indexOf('function hudRenderTelemetryDrawer', otherThreeHudStart);
+  const otherThreeHudBlock = otherThreeHudStart >= 0 && otherThreeHudEnd > otherThreeHudStart
+    ? html.slice(otherThreeHudStart, otherThreeHudEnd)
+    : '';
+  if (!/function hudPublicPeers\(m\)\{const viewers=m\?\.players\?\.filter\(p=>p\.human===true\)\?\?\[\];if\(viewers\.length!==1\)return\[\];const viewerId=viewers\[0\]\.id;return m\.players\.filter\(p=>p\.id!==viewerId\)\}/.test(html)) {
+    errors.push('public peer HUD is not viewer-relative/fail-closed');
+  }
+  if (!/const peers=hudPublicPeers\(m\);root\.innerHTML='';\s*peers\.forEach\(p=>/.test(otherThreeHudBlock)) {
+    errors.push('public player chips are not rendered from viewer-relative peers');
+  }
+  if (!/royalRoot\.replaceChildren\(\);peers\.forEach\(p=>/.test(otherThreeHudBlock)) {
+    errors.push('public royal strip is not rendered from the same viewer-relative peers');
+  }
+  if (otherThreeHudBlock.includes("p.human?' you'")) {
+    errors.push('viewer self peer-role marker remains in other-player HUD renderer');
+  }
+  const renderPlayersStart = html.indexOf('function renderPlayers(){');
+  const renderPlayersEnd = html.indexOf('function resolutionOriginLabel', renderPlayersStart);
+  const renderPlayersBlock = renderPlayersStart >= 0 && renderPlayersEnd > renderPlayersStart
+    ? html.slice(renderPlayersStart, renderPlayersEnd)
+    : '';
+  if (!renderPlayersBlock.includes("${p.human?`<div>手札 ${p.hand.length} / 山札 ${p.deck.length} / チップ ${p.chip.length}</div>`:''}")) {
+    errors.push('Battle detail drawer does not fail closed on opponent hand/deck/chip counts');
+  }
+  if (!/id=["']publicTurnHud["'][^>]*aria-label=["']他プレイヤーの公開状態["']/.test(html)) {
+    errors.push('public peer HUD lacks viewer-relative Japanese accessibility label');
+  }
+  if (!/id=["']royalUsageStrip["'][^>]*aria-label=["']他プレイヤーのロイヤルカード使用数["']/.test(html)) {
+    errors.push('public royal peer strip lacks viewer-relative Japanese accessibility label');
+  }
+  if (!/<style id=["']gameroad-other3-public-hud-r1["']>[\s\S]*?\.battle \.publicTurnHud\{left:auto!important;right:8px!important;top:76px!important;/.test(html)) {
+    errors.push('other-player public HUD is not anchored at the right-top presentation zone');
+  }
+  if (!/peers:\(\)=>state\.match\?hudPublicPeers\(state\.match\)\.map\(p=>p\.id\):\[\]/.test(html)) {
+    errors.push('public HUD QA probe does not expose viewer-relative peer ids');
+  }
   errors.push(...collectHomeVisualShellErrors(html));
   const correctedBattleResourceContracts = [
     [/const hand=deck\.splice\(0,7\);/, 'fresh Battle ordinary hand is not initialized to seven'],

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-HAND-DETAIL-R1-20260914T0125-SOL-MA31",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_ORDINARY_HAND_DIRECT_FINGER_DETAIL_R1",
+  "acquireKey": "BATTLE-HAND-DETAIL-R1-20260914T0125-SOL-MA31",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "CURRENT_MAIN_9F29_HAND_RUNTIME_TARGET_BLOBS_FREE_20260914T0130JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "R1_EPHEMERAL_RUN_FOCUSED_48_OF_48_PASS_DIFFCHECK_PASS_PUSH_BLOCKED_ONLY_BY_WITNESS_FORMAT",
+  "proceedToken": "PROCEED|BATTLE-HAND-DETAIL-R1-20260914T0125-SOL-MA31|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|ordinary-hand-local-detail|slidepad-runtime|active-lease-r2",
+  "authorizationBaseSha": "9f29ce762c0f5f586209d1eebb9f39b34ccac534",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_ORDINARY_HAND_DIRECT_FINGER_DETAIL_R1",
+  "leaseAcquireKey": "BATTLE-HAND-DETAIL-R1-20260914T0125-SOL-MA31",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 01:30 JST",
+  "leaseUntilJst": "2026-09-14 02:25 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1358:L1358",
+  "leaseExactMutableResources": "browser/battle-janken-slidepad-runtime-mount.mjs; tests/battle-janken-slidepad-runtime-mount.test.mjs; .github/workflows/zz-temp-battle-hand-detail-ma31-r2.yml",
+  "solutionSignature": "ORDINARY_HAND_EXISTING_FOCUS_LOCAL_DETAIL_SCALE_V1",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "CURRENT_RUNTIME_ALREADY_HAS_DIRECT_POINTER_FOCUS_AND_LIFTED_DRAG_GHOST",
+  "solutionSearchEvidence": [
+    "Current runtime already binds pointer/focus directly to #hand .handCard[data-card-id] and preserves the same cardId.",
+    "Current runtime already lifts the dragged physical-card ghost above the finger and raw pointer remains the aura hit-test authority.",
+    "Current focus presentation already owns the reversible visual state needed for local hand-card inspection.",
+    "Address37 owns the shared multi-zone drawer/detail, so this WorkUnit must not create a second drawer, card store, rules renderer, or navigation surface.",
+    "R1 ephemeral runner proved the bounded focus-scale patch and focused suite 48/48 before pre-push rejected only the malformed A:N lease witness."
+  ],
+  "scope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-hand-detail-ma31-r2.yml"
+  ],
+  "leaseScope": [
+    "browser/battle-janken-slidepad-runtime-mount.mjs",
+    "tests/battle-janken-slidepad-runtime-mount.test.mjs",
+    ".github/workflows/zz-temp-battle-hand-detail-ma31-r2.yml"
+  ]
+}

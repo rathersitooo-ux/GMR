@@ -1525,18 +1525,40 @@ export function installFanartLocalSkinCards({ document: doc = globalThis.documen
 }
 
 const fanartPublicBattleProjectionInstallations = new WeakMap();
+const BATTLE_CARD_ART_HOST_SELECTOR = [
+  '.resolutionCard[data-card-id]',
+  'section[data-screen="battle"] .handCard[data-card-id]',
+  'section[data-screen="battle"] .placedCard[data-card-id]',
+  'section[data-screen="battle"] .grBattleHandRouletteRow[data-card-id]',
+  '[data-gr-battle-screen="1"] .grBattleHudPlayedCard[data-card-id]',
+  '[data-gr-battle-screen="1"] .grBattleLanePublicCard[data-card-id]',
+].join(',');
+let formalBattleArtModulePromise = null;
 
 export const FANART_PUBLIC_BATTLE_CARD_CONTRACT = Object.freeze({
-  schema: 'gameroad.fanart-public-battle-card.v1',
-  source: 'viewer-local-cardId-only',
+  schema: 'gameroad.fanart-public-battle-card.v2',
+  source: 'viewer-local-cardId-first-with-formal-fallback',
   publicCardsOnly: true,
+  ownerVisibleHandProjection: true,
   allOwnersSameViewerProjection: true,
+  formalArtFallback: true,
+  readableTextFallback: true,
   opponentSpecificToggle: false,
   secondStorage: false,
   networkSync: false,
   gameplayMutation: false,
   hiddenCardLookup: false,
 });
+
+async function resolveFormalBattleCardArt(cardId) {
+  if (!formalBattleArtModulePromise) {
+    formalBattleArtModulePromise = import('./ze-kuu-formal-card-art-runtime.mjs').catch(() => null);
+  }
+  const module = await formalBattleArtModulePromise;
+  const resolve = module?.resolveZeKuuFormalCardArt;
+  if (typeof resolve !== 'function') return null;
+  try { return resolve(cardId); } catch { return null; }
+}
 
 export function installFanartPublicBattleCardProjection({
   document: doc = globalThis.document,
@@ -1545,9 +1567,8 @@ export function installFanartPublicBattleCardProjection({
   indexedDB: idb = globalThis.indexedDB,
   readLocalSkin = null,
 } = {}) {
-  const renderer = runtimeGlobal?.renderBattlePlayerCards;
-  if (!doc?.createElement || typeof renderer !== 'function' || !win?.URL?.createObjectURL) {
-    return Object.freeze({ installed: false, destroy() {} });
+  if (!doc?.createElement || !win?.URL?.createObjectURL) {
+    return Object.freeze({ installed: false, destroy() {}, refresh() {} });
   }
   const existing = fanartPublicBattleProjectionInstallations.get(runtimeGlobal);
   if (existing) return existing;
@@ -1555,22 +1576,98 @@ export function installFanartPublicBattleCardProjection({
   if (!doc.getElementById?.('gameroad-fanart-public-battle-card-style')) {
     const style = doc.createElement('style');
     style.id = 'gameroad-fanart-public-battle-card-style';
-    style.textContent = '.resolutionCard[data-fanart-local-public-card="1"]{position:relative!important;overflow:hidden!important}.resolutionCard>[data-role="fanart-public-battle-card-art"]{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;pointer-events:none;z-index:1}.resolutionCard[data-fanart-local-public-card="1"]>b{position:relative!important;z-index:2!important;padding:1px 2px!important;border-radius:3px!important;background:rgba(0,0,0,.66)!important;color:#fff!important;text-shadow:0 1px 2px #000!important}';
+    style.textContent = '[data-battle-card-art-projection="1"]{position:relative!important;overflow:hidden!important;isolation:isolate}[data-battle-card-art-projection="1"]>[data-role="fanart-public-battle-card-art"],[data-battle-card-art-projection="1"]>[data-role="formal-battle-card-art"]{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit;pointer-events:none;z-index:0}[data-battle-card-art-projection="1"]>*:not([data-role="fanart-public-battle-card-art"]):not([data-role="formal-battle-card-art"]){position:relative;z-index:1}.resolutionCard[data-battle-card-art-projection="1"]>b{padding:1px 2px;border-radius:3px;background:rgba(0,0,0,.66);color:#fff;text-shadow:0 1px 2px #000}';
     (doc.head || doc.documentElement)?.appendChild?.(style);
   }
 
   const urls = new Set();
+  const urlByNode = new WeakMap();
   let generation = 0;
   let destroyed = false;
-  const revokeAll = () => {
-    for (const url of urls) win.URL.revokeObjectURL?.(url);
-    urls.clear();
-  };
+  let legacyRenderer = null;
+  let wrappedRenderer = null;
   const read = typeof readLocalSkin === 'function'
     ? readLocalSkin
     : async (cardId) => fanartReadSkin(idb, cardId);
 
-  const project = async (root, players, ticket) => {
+  const clearProjectedArt = (node) => {
+    const priorUrl = urlByNode.get(node);
+    if (priorUrl) {
+      win.URL.revokeObjectURL?.(priorUrl);
+      urls.delete(priorUrl);
+      urlByNode.delete(node);
+    }
+    for (const image of [...(node?.querySelectorAll?.('[data-role="fanart-public-battle-card-art"], [data-role="formal-battle-card-art"]') ?? [])]) {
+      image.remove?.();
+    }
+    if (node?.dataset?.battleCardArtProjection === '1') {
+      delete node.dataset.battleCardArtProjection;
+      delete node.dataset.battleCardArtCardId;
+      delete node.dataset.artSource;
+    }
+  };
+
+  const projectNode = async (node, cardId, ticket) => {
+    if (!node || !cardId || destroyed || ticket !== generation) return;
+    const currentId = String(node.dataset?.battleCardArtCardId ?? '');
+    const currentImage = node.querySelector?.('[data-role="fanart-public-battle-card-art"], [data-role="formal-battle-card-art"]');
+    if (currentId === cardId && currentImage) return;
+
+    let record = null;
+    try { record = await read(cardId); } catch {}
+    if (destroyed || ticket !== generation) return;
+
+    const blob = record?.asset?.blob ?? record?.blob ?? null;
+    if (blob) {
+      clearProjectedArt(node);
+      const url = win.URL.createObjectURL(blob);
+      if (destroyed || ticket !== generation) {
+        win.URL.revokeObjectURL?.(url);
+        return;
+      }
+      urls.add(url);
+      urlByNode.set(node, url);
+      const image = doc.createElement('img');
+      image.dataset.role = 'fanart-public-battle-card-art';
+      image.alt = '';
+      image.src = url;
+      image.setAttribute?.('aria-hidden', 'true');
+      node.dataset.battleCardArtProjection = '1';
+      node.dataset.battleCardArtCardId = cardId;
+      node.dataset.fanartLocalPublicCard = '1';
+      node.dataset.artSource = 'viewer_local';
+      node.appendChild?.(image);
+      return;
+    }
+
+    const formal = await resolveFormalBattleCardArt(cardId);
+    if (destroyed || ticket !== generation) return;
+    if (formal?.assetUrl) {
+      clearProjectedArt(node);
+      const image = doc.createElement('img');
+      image.dataset.role = 'formal-battle-card-art';
+      image.alt = '';
+      image.src = formal.assetUrl;
+      image.setAttribute?.('aria-hidden', 'true');
+      node.dataset.battleCardArtProjection = '1';
+      node.dataset.battleCardArtCardId = cardId;
+      node.dataset.artSource = 'formal';
+      node.appendChild?.(image);
+      return;
+    }
+
+    clearProjectedArt(node);
+  };
+
+  const projectKnownHosts = async (ticket) => {
+    const nodes = [...(doc.querySelectorAll?.(BATTLE_CARD_ART_HOST_SELECTOR) ?? [])];
+    await Promise.all(nodes.map((node) => {
+      const cardId = normalizeLocalSkinCardId(String(node?.dataset?.cardId ?? ''));
+      return cardId ? projectNode(node, cardId, ticket) : null;
+    }));
+  };
+
+  const projectLegacyRoot = async (root, players, ticket) => {
     const playerNodes = [...(root?.querySelectorAll?.('.resolutionPlayer') ?? [])];
     for (let playerIndex = 0; playerIndex < players.length; playerIndex += 1) {
       const cards = Array.isArray(players[playerIndex]?.cards) ? players[playerIndex].cards : [];
@@ -1582,50 +1679,67 @@ export function installFanartPublicBattleCardProjection({
         const cardId = normalizeLocalSkinCardId(String(card?.cardId ?? ''));
         if (!node || !cardId) continue;
         node.dataset.cardId = cardId;
-        let record = null;
-        try { record = await read(cardId); } catch {}
-        if (destroyed || ticket !== generation) return;
-        const blob = record?.asset?.blob ?? record?.blob ?? null;
-        if (!blob) continue;
-        const url = win.URL.createObjectURL(blob);
-        if (destroyed || ticket !== generation) {
-          win.URL.revokeObjectURL?.(url);
-          return;
-        }
-        urls.add(url);
-        const image = doc.createElement('img');
-        image.dataset.role = 'fanart-public-battle-card-art';
-        image.alt = '';
-        image.src = url;
-        image.setAttribute?.('aria-hidden', 'true');
-        node.dataset.fanartLocalPublicCard = '1';
-        node.dataset.artSource = 'viewer_local';
         node.setAttribute?.('aria-label', `${String(card?.label ?? cardId)} ${String(card?.value ?? '')}`.trim());
-        node.appendChild?.(image);
+        await projectNode(node, cardId, ticket);
+        if (destroyed || ticket !== generation) return;
       }
     }
   };
 
-  function wrappedRenderBattlePlayerCards(root, players = [], laneGains = [], presentationEvents = []) {
+  const refresh = () => {
     generation += 1;
     const ticket = generation;
-    revokeAll();
-    const result = renderer.apply(this, arguments);
-    void project(root, Array.isArray(players) ? players : [], ticket);
-    return result;
-  }
+    void projectKnownHosts(ticket);
+    return ticket;
+  };
 
-  runtimeGlobal.renderBattlePlayerCards = wrappedRenderBattlePlayerCards;
+  const attachLegacyRenderer = () => {
+    if (wrappedRenderer || destroyed) return Boolean(wrappedRenderer);
+    const renderer = runtimeGlobal?.renderBattlePlayerCards;
+    if (typeof renderer !== 'function') return false;
+    legacyRenderer = renderer;
+    wrappedRenderer = function wrappedRenderBattlePlayerCards(root, players = [], laneGains = [], presentationEvents = []) {
+      generation += 1;
+      const ticket = generation;
+      const result = renderer.apply(this, arguments);
+      void projectLegacyRoot(root, Array.isArray(players) ? players : [], ticket);
+      void projectKnownHosts(ticket);
+      return result;
+    };
+    runtimeGlobal.renderBattlePlayerCards = wrappedRenderer;
+    return true;
+  };
+
+  attachLegacyRenderer();
+  const Observer = win?.MutationObserver ?? globalThis.MutationObserver;
+  const observer = typeof Observer === 'function'
+    ? new Observer(() => {
+      attachLegacyRenderer();
+      refresh();
+    })
+    : null;
+  observer?.observe?.(doc.documentElement || doc, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['data-card-id'],
+  });
+  refresh();
+
   const installation = Object.freeze({
     installed: true,
     contract: FANART_PUBLIC_BATTLE_CARD_CONTRACT,
+    refresh,
     destroy() {
       if (destroyed) return false;
       destroyed = true;
       generation += 1;
-      revokeAll();
-      if (runtimeGlobal.renderBattlePlayerCards === wrappedRenderBattlePlayerCards) {
-        runtimeGlobal.renderBattlePlayerCards = renderer;
+      observer?.disconnect?.();
+      for (const node of [...(doc.querySelectorAll?.(BATTLE_CARD_ART_HOST_SELECTOR) ?? [])]) clearProjectedArt(node);
+      for (const url of urls) win.URL.revokeObjectURL?.(url);
+      urls.clear();
+      if (wrappedRenderer && runtimeGlobal.renderBattlePlayerCards === wrappedRenderer) {
+        runtimeGlobal.renderBattlePlayerCards = legacyRenderer;
       }
       fanartPublicBattleProjectionInstallations.delete(runtimeGlobal);
       return true;

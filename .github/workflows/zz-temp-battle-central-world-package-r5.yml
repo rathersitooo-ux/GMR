@@ -1,0 +1,63 @@
+name: TEMP Battle central world package R5
+
+on:
+  push:
+    branches:
+      - sol/battle-central-world-package-r5-20260914
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: sol/battle-central-world-package-r5-20260914
+          fetch-depth: 0
+
+      - name: Patch composer package closure
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          build = Path('deploy/cloudflare/scripts/build.mjs')
+          test = Path('deploy/cloudflare/tests/build.test.mjs')
+          b = build.read_text()
+          t = test.read_text()
+          marker = 'BATTLE_CENTRAL_WORLD_PUBLIC_PACKAGE_R5'
+          if marker not in b:
+              anchor = "  // BATTLE_SHARED_PUBLIC_PACKAGE_TRAIN_R4 — already-merged Battle runtime/public closure.\n"
+              assert b.count(anchor) == 1, f'build anchor count={b.count(anchor)}'
+              insertion = """  // BATTLE_CENTRAL_WORLD_PUBLIC_PACKAGE_R5 — close existing live-composer imports; no HTML/gameplay authority.\n  { option: 'newBaseGoalPathCoreSource', expected: 'expectedNewBaseGoalPathCoreBlob', source: 'browser/new-base-goal-path-core.mjs', output: 'new-base-goal-path-core.mjs', artifact: 'new_base_goal_path_core', label: 'New Base GOAL path core', sourceFlag: '--new-base-goal-path-core-source', expectedFlag: '--expected-new-base-goal-path-core-blob' },\n  { option: 'newBaseGoalEntryGateCueRuntimeSource', expected: 'expectedNewBaseGoalEntryGateCueRuntimeBlob', source: 'browser/new-base-goal-entry-gate-cue-runtime.mjs', output: 'new-base-goal-entry-gate-cue-runtime.mjs', artifact: 'new_base_goal_entry_gate_cue_runtime', label: 'New Base GOAL entry gate cue runtime', sourceFlag: '--new-base-goal-entry-gate-cue-runtime-source', expectedFlag: '--expected-new-base-goal-entry-gate-cue-runtime-blob' },\n  { option: 'battleNewBaseBoardLivePresentationComposerSource', expected: 'expectedBattleNewBaseBoardLivePresentationComposerBlob', source: 'browser/battle-new-base-board-live-presentation-composer.mjs', output: 'battle-new-base-board-live-presentation-composer.mjs', artifact: 'battle_new_base_board_live_presentation_composer', label: 'Battle New Base board live presentation composer', sourceFlag: '--battle-new-base-board-live-presentation-composer-source', expectedFlag: '--expected-battle-new-base-board-live-presentation-composer-blob' },\n"""
+              build.write_text(b.replace(anchor, insertion + anchor))
+          if marker not in t:
+              anchor = "  { file: 'tools/advice-collective-eval.mjs', source: 'tools/advice-collective-eval.mjs', sourceArg: 'adviceCollectiveEvalSource', expectedArg: 'expectedAdviceCollectiveEvalBlob', artifact: 'advice_collective_eval', fixture: 'export const ADVICE_COLLECTIVE_EVAL = Object.freeze({});\\n', currentBlob: '3cc7eb964493eb1e7cc022c420f7d49fad1be420' },\n"
+              assert t.count(anchor) == 1, f'test anchor count={t.count(anchor)}'
+              insertion = """  // BATTLE_CENTRAL_WORLD_PUBLIC_PACKAGE_R5 — exact composer/import provenance.\n  { file: 'new-base-goal-path-core.mjs', source: 'browser/new-base-goal-path-core.mjs', sourceArg: 'newBaseGoalPathCoreSource', expectedArg: 'expectedNewBaseGoalPathCoreBlob', artifact: 'new_base_goal_path_core', fixture: 'export function createNewBaseGoalPathLayout(){ return Object.freeze({}); }\\nexport function projectNewBaseGoalPathConnections(){ return Object.freeze({ ok: true }); }\\n', currentBlob: '01106fd404e9188e98706420546f628fa0f4e6fd' },\n  { file: 'new-base-goal-entry-gate-cue-runtime.mjs', source: 'browser/new-base-goal-entry-gate-cue-runtime.mjs', sourceArg: 'newBaseGoalEntryGateCueRuntimeSource', expectedArg: 'expectedNewBaseGoalEntryGateCueRuntimeBlob', artifact: 'new_base_goal_entry_gate_cue_runtime', fixture: 'export function mountNewBaseGoalEntryGateCue(){ return Object.freeze({ mounted: true }); }\\n', currentBlob: 'c4f950ab6e8f7f6d333972c79dcca7f73b738d89' },\n  { file: 'battle-new-base-board-live-presentation-composer.mjs', source: 'browser/battle-new-base-board-live-presentation-composer.mjs', sourceArg: 'battleNewBaseBoardLivePresentationComposerSource', expectedArg: 'expectedBattleNewBaseBoardLivePresentationComposerBlob', artifact: 'battle_new_base_board_live_presentation_composer', fixture: \"import './new-base-flanora-map-layout-core.mjs';\\nimport './new-base-goal-path-core.mjs';\\nimport './new-base-goal-path-presentation-core.mjs';\\nimport './new-base-progression-lane-presentation-core.mjs';\\nimport './new-base-flanora-board-surface-runtime.mjs';\\nimport './new-base-goal-entry-gate-cue-runtime.mjs';\\nexport function mountBattleNewBaseBoardLivePresentation(){ return Object.freeze({ mounted: true }); }\\n\", currentBlob: 'ffa494458b9a5e03dd93cdc4c0d053bdc21a3339' },\n"""
+              test.write_text(t.replace(anchor, insertion + anchor))
+          PY
+
+      - name: Verify focused public package contract
+        run: node --test deploy/cloudflare/tests/build.test.mjs
+
+      - name: Guard exact product scope
+        shell: bash
+        run: |
+          git diff --check
+          mapfile -t files < <(git diff --name-only | sort)
+          printf '%s\n' "${files[@]}"
+          test "${#files[@]}" -eq 2
+          test "${files[0]}" = "deploy/cloudflare/scripts/build.mjs"
+          test "${files[1]}" = "deploy/cloudflare/tests/build.test.mjs"
+
+      - name: Commit package closure
+        shell: bash
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'gameroad-bot'
+          git config user.email 'gameroad-bot@users.noreply.github.com'
+          git add deploy/cloudflare/scripts/build.mjs deploy/cloudflare/tests/build.test.mjs
+          git commit -m 'build: close central world composer package imports'
+          git push origin HEAD:sol/battle-central-world-package-r5-20260914

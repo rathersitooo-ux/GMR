@@ -592,6 +592,7 @@ test('Battle Partner controls converge into one visible surface without replacin
   assert.match(source, /getElementById\('partnerDecisionStatus'\)/);
   assert.match(source, /button\.classList\.remove\('railBtn'\)/);
   assert.match(source, /actions\.append\(button\)/);
+  assert.doesNotMatch(source, /delgateButton/);
   assert.match(source, /legacyHost\.hidden = true/);
   assert.match(source, /legacyHost\.dataset\.partnerAdviceSourceOnly = 'true'/);
   assert.match(source, /root\.dataset\.partnerAdviceUnifiedSurface = 'true'/);

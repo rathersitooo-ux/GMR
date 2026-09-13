@@ -1197,7 +1197,7 @@ export function unifyBattlePartnerPresentation({ doc, root, legacyHost } = {}) {
   const actions = controls.querySelector('[data-role="partner-primary-actions"]');
   if (!actions) return Object.freeze({ ok: false, reason: 'PRIMARY_ACTION_SURFACE_REQUIRED', legacyRetired: false });
 
-  for (const button of [adviceButton, delgateButton]) {
+  for (const button of [adviceButton, delegateButton]) {
     button.classList.remove('railBtn');
     button.classList.add('partnerAdvicePrimaryAction');
     actions.append(button);

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-LOAD-CARD-LIVE-R2-20260914T0143-SOL-KE9",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_LOAD_CARD_CHAIN_LIVE_HOOK_R2",
+  "acquireKey": "BATTLE-LOAD-CARD-LIVE-R2-20260914T0143-SOL-KE9",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "LOAD_CORE_MERGED_PLUS_EXPIRED_RUNTIME_OWNER_FRESH_NO_OVERLAP_20260914T0143JST",
+  "rehearsalStatus": "PASS",
+  "rehearsalEvidenceId": "CURRENT_RUNTIME_WRITEPLAYEDCARD_AND_LOAD_SURFACE_READBACK_PLUS_FOCUSED_CORE_8_OF_8",
+  "proceedToken": "PROCEED|BATTLE-LOAD-CARD-LIVE-R2-20260914T0143-SOL-KE9|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|existing-load-hud|same-card-identity|live-hook",
+  "authorizationBaseSha": "b1a754ac126394e15c50e40e2c1b886fc5c429d0",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_LOAD_CARD_CHAIN_LIVE_HOOK_R2",
+  "leaseAcquireKey": "BATTLE-LOAD-CARD-LIVE-R2-20260914T0143-SOL-KE9",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 01:45 JST",
+  "leaseUntilJst": "2026-09-14 02:43 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1374:N1374",
+  "leaseExactMutableResources": "browser/battle-screen-runtime-mount.mjs; tests/battle-screen-runtime-mount.test.mjs; tests/battle-load-card-chain-live-hook.test.mjs; own transient PRE_ACTION only.",
+  "solutionSignature": "BATTLE_EXISTING_TOP_HUD_LOAD_REAL_CARD_LIVE_HOOK_V2",
+  "reuseDisposition": "COMPOSE",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "MERGED_LOAD_IDENTITY_AND_PRESENTATION_CORES_PLUS_EXISTING_RUNTIME_WRITEPLAYEDCARD",
+  "solutionSearchEvidence": [
+    "Current runtime already has one top HUD renderer and one writePlayedCard path; LOAD must reuse it rather than create a second renderer.",
+    "Merged battle-load-card-chain-presentation-core accepts authoritative loadCard.cardId, keeps janken secondary, preserves played order and fails closed on missing identity.",
+    "Merged battle-load-card-chain-identity-core proves accepted public replay identity boundaries and forbids heart replacement semantics.",
+    "Previous card-art PR #1625 is open and unmerged; its Required Gate failed at PRE_ACTION. Current main battle-screen-runtime-mount.mjs is unchanged from its old base, so it remains read-only predecessor evidence rather than an implicit merge source.",
+    "Fresh CURRENT_ACTIVE_LEASES readback after 01:40 JST found no newer active owner for browser/battle-screen-runtime-mount.mjs; successor lease row1374 is PASS/ACTIVE."
+  ],
+  "scope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    "tests/battle-load-card-chain-live-hook.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/battle-screen-runtime-mount.mjs",
+    "tests/battle-screen-runtime-mount.test.mjs",
+    "tests/battle-load-card-chain-live-hook.test.mjs"
+  ]
+}

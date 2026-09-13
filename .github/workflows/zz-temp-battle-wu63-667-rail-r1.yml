@@ -11,29 +11,58 @@ permissions:
 jobs:
   inspect:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Inspect current rail CSS and static canaries
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.62.0
+          npx playwright install --with-deps chromium
+      - name: Inspect exact 667x375 offscreen DOM
         shell: bash
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          for p in ['browser/GAMEROAD.html','tests/browser-static-check.mjs']:
-              text=Path(p).read_text()
-              print(f'===== {p} length={len(text)} =====')
-              for needle in ['.battleRail','.arRow','battleRail','arRow','@media (max-height','@media (max-width']:
-                  start=0
-                  n=0
-                  while True:
-                      i=text.find(needle,start)
-                      if i<0: break
-                      n+=1
-                      lo=max(0,i-900); hi=min(len(text),i+1500)
-                      print(f'--- {needle} occurrence {n} offset={i} ---')
-                      print(text[lo:hi])
-                      start=i+len(needle)
-                      if n>=12: break
-          PY
+          set -euo pipefail
+          mkdir -p .wu63-r1 visual-evidence/wu63-r1 test-results/wu63-r1
+          cat > .wu63-r1/playwright.config.mjs <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({testDir:'.',testMatch:'diag.spec.mjs',outputDir:'../test-results/wu63-r1',timeout:90000,expect:{timeout:7000},workers:1,retries:0,use:{baseURL:'http://127.0.0.1:4173',browserName:'chromium',headless:true,viewport:{width:667,height:375},hasTouch:true,trace:'retain-on-failure'},webServer:{command:'python3 -m http.server 4173 --bind 127.0.0.1',cwd:new URL('../',import.meta.url).pathname,url:'http://127.0.0.1:4173/browser/GAMEROAD.html',reuseExistingServer:false,timeout:120000}});
+          EOF
+          cat > .wu63-r1/diag.spec.mjs <<'EOF'
+          import { test, expect } from '@playwright/test';
+          import fs from 'node:fs'; import path from 'node:path';
+          async function installLegalBattleDeck(page){return page.evaluate(()=>{const t=window.__GAMEROAD_TEST__;const publicMain=new Set(t.deckPublic().filter(c=>c.slot==='main').map(c=>c.id));const standard=window.__CARD_DATA__.filter(c=>publicMain.has(c.id)&&/^(SP|HT|DI|CL)$/.test(c.suit)&&/^(A|[2-9]|10|J|Q|K)$/.test(String(c.rank))).map(c=>c.id);const royalIds=['SP_J','SP_Q','SP_K'];const nonRoyal=standard.filter(id=>!t.isRoyalCard(id));const main=[...nonRoyal.slice(0,37),...royalIds];t.deckSetDraft(main,[]);const v=t.deckValidate(t.state.deckDraft,{forBattle:true});const committed=v.ok?t.deckCommit():false;return{committed,saved:t.deckValidate(t.state.savedDeck,{forBattle:true})}})}
+          test('diagnose offscreen controls',async({page})=>{
+            const response=await page.goto('/browser/GAMEROAD.html',{waitUntil:'commit'});expect(response?.ok()).toBeTruthy();
+            await expect(page.locator('section[data-screen="home"]')).toBeVisible({timeout:15000});const deck=await installLegalBattleDeck(page);expect(deck.committed).toBeTruthy();
+            await page.locator('[data-home-target="setup"]:visible,[data-go="setup"]:visible').first().click();const setup=page.locator('section[data-screen="setup"]');await expect(setup).toBeVisible();await setup.locator('[data-content="road_shield"]').click();await setup.locator('[data-mode="2p"]').click();await setup.locator('#startMatch').click();
+            const battle=page.locator('section[data-screen="battle"]');await expect(battle).toBeVisible();await expect.poll(()=>page.evaluate(()=>window.__GAMEROAD_BATTLE_CAMERA_LIVE__?.snapshot?.().mounted===true)).toBeTruthy();
+            const data=await page.evaluate(()=>{
+              const visibleInteractive=[...document.querySelectorAll('section[data-screen="battle"] button,section[data-screen="battle"] [role="button"],section[data-screen="battle"] [tabindex]:not([tabindex="-1"])')].filter(el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return !el.hidden&&s.display!=='none'&&s.visibility!=='hidden'&&s.pointerEvents!=='none'&&r.width>0&&r.height>0});
+              const snap=el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();const parents=[];let p=el.parentElement;for(let i=0;p&&i<6;i++,p=p.parentElement){const ps=getComputedStyle(p),pr=p.getBoundingClientRect();parents.push({tag:p.tagName,id:p.id||null,cls:String(p.className||''),x:pr.x,y:pr.y,w:pr.width,h:pr.height,position:ps.position,top:ps.top,right:ps.right,bottom:ps.bottom,left:ps.left,transform:ps.transform,overflow:ps.overflow,display:ps.display});}return{tag:el.tagName,id:el.id||null,cls:String(el.className||''),outerHTML:el.outerHTML.slice(0,1200),x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,bottom:r.bottom,position:s.position,top:s.top,rightCss:s.right,bottomCss:s.bottom,left:s.left,transform:s.transform,margin:s.margin,padding:s.padding,display:s.display,parents};};
+              const off=visibleInteractive.filter(el=>{const r=el.getBoundingClientRect();return r.x<0||r.y<0||r.right>667||r.bottom>375}).map(snap);
+              const rail=document.querySelector('section[data-screen="battle"] .battleRail');
+              const ar=[...document.querySelectorAll('section[data-screen="battle"] .arRow')].map(snap);
+              return {offscreen:off,rail:rail?snap(rail):null,arRows:ar,camera:window.__GAMEROAD_BATTLE_CAMERA_LIVE__?.snapshot?.().state?.mode};
+            });
+            console.log('WU63_DIAG='+JSON.stringify(data,null,2));
+            fs.writeFileSync(path.resolve('visual-evidence/wu63-r1/diag.json'),JSON.stringify(data,null,2));
+            await page.screenshot({path:path.resolve('visual-evidence/wu63-r1/diag-667x375.png'),animations:'disabled'});
+            expect(data.offscreen.length).toBeGreaterThan(0);
+          });
+          EOF
+          npx playwright test --config=.wu63-r1/playwright.config.mjs --workers=1
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: battle-wu63-r1-diag-${{ github.run_id }}
+          path: |
+            visual-evidence/wu63-r1/
+            test-results/wu63-r1/
+          if-no-files-found: warn
+          retention-days: 14

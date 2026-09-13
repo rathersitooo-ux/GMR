@@ -18,6 +18,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          echo 'R10 exact-anchor inspection trigger'
           python - <<'PY'
           from pathlib import Path
           targets = {

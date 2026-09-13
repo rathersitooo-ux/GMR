@@ -1,0 +1,40 @@
+{
+  "schemaVersion": "gameroad-preaction-v3",
+  "recordId": "BATTLE-CENTRAL-WORLD-LAYOUT-R1-20260914T0126-SOL-TA16",
+  "taskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "workUnitKey": "BATTLE_CENTRAL_WORLD_AREA_DENSITY_PRESENTATION_R1",
+  "acquireKey": "BATTLE-CENTRAL-WORLD-LAYOUT-R1-20260914T0126-SOL-TA16",
+  "riskClass": "MATERIAL_STANDARD",
+  "predictionStatus": "PASS",
+  "predictionEvidenceId": "TA16-CURRENT-SOURCE-12ROW-DENSITY-READBACK",
+  "rehearsalStatus": "N_A_ALT_ORACLE",
+  "rehearsalEvidenceId": "TA16-EXISTING-CLASSIFIED-FLANORA-FOCUSED-TEST",
+  "proceedToken": "PROCEED|BATTLE-CENTRAL-WORLD-LAYOUT-R1-20260914T0126-SOL-TA16|PREACTION_PROCEED_ALLOWED|MATERIAL_STANDARD|presentation-density-only|lease-snapshot-A1359",
+  "authorizationBaseSha": "9f29ce762c0f5f586209d1eebb9f39b34ccac534",
+  "stateModelVersion": "STATE_MODEL_V1",
+  "leaseAuthority": "CURRENT_ACTIVE_LEASES",
+  "leaseState": "ACTIVE",
+  "leaseTaskId": "BATTLE-NEW-BASE-TURN-LOOP-INTEGRATION-001",
+  "leaseWorkUnitKey": "BATTLE_CENTRAL_WORLD_AREA_DENSITY_PRESENTATION_R1",
+  "leaseAcquireKey": "BATTLE-CENTRAL-WORLD-LAYOUT-R1-20260914T0126-SOL-TA16",
+  "leaseSnapshotReadbackAtJst": "2026-09-14 01:26 JST",
+  "leaseUntilJst": "2026-09-14 02:26 JST",
+  "leaseSnapshotReadbackRef": "CURRENT_ACTIVE_LEASES!A1359:L1359",
+  "leaseExactMutableResources": "GitHub:rathersitooo-ux/GMR fresh branch sol/battle-central-world-layout-r1-20260914; mutable browser/new-base-flanora-board-surface-runtime.mjs; tests/new-base-flanora-board-surface-runtime.test.mjs; own transient data/preaction-authorizations/BATTLE-CENTRAL-WORLD-LAYOUT-R1-20260914T0126-SOL-TA16.json; own branch/PR/check/readback only. READ_ONLY browser/GAMEROAD.html (currently owned by BATTLE-OTHER3-PUBLIC-HUD-R1 through 02:24 JST); battle-screen/janken/camera/controlled-character/GOAL/Road gameplay authority; gameplay/rules/target/legality/save/economy/network/build.",
+  "scope": [
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs"
+  ],
+  "leaseScope": [
+    "browser/new-base-flanora-board-surface-runtime.mjs",
+    "tests/new-base-flanora-board-surface-runtime.test.mjs"
+  ],
+  "solutionSignature": "Adapt the existing Flanora presentation surface so four participant lane groups use the central world area efficiently while preserving the exact 12 Shield x 7 ROAD + GOAL identities, right-to-left progression semantics, and presentation-only authority boundary.",
+  "reuseDisposition": "ADAPT",
+  "solutionSearchStatus": "PASS",
+  "reuseDecisionEvidenceId": "TA16-EXISTING-FLANORA-SURFACE-AND-FOCUSED-TEST-REUSE",
+  "solutionSearchEvidence": [
+    "Fresh main readback shows the existing Flanora surface already owns only presentation geometry and currently stacks all 12 lanes as twelve full-width rows.",
+    "Existing classified focused test already fixes 12 Shield lanes, seven ROAD stages, GOAL-left/ROAD-right/right-to-left semantics and presentation-only authority, so this WorkUnit can adapt layout density without creating a second board engine."
+  ]
+}

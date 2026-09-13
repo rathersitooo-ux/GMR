@@ -39,7 +39,7 @@ function fakeAnimatedNode() {
   };
 }
 
-function fixture({ animateClone = true } = {}) {
+function fixture({ animateClone = true, animateCue = true } = {}) {
   const clone = fakeAnimatedNode();
   if (!animateClone) delete clone.animate;
   const source = {
@@ -64,6 +64,7 @@ function fixture({ animateClone = true } = {}) {
   const documentRef = {
     createElement() {
       const cue = fakeAnimatedNode();
+      if (!animateCue) delete cue.animate;
       cues.push(cue);
       return cue;
     },
@@ -150,6 +151,32 @@ test('reduced motion avoids large travel and exposes a destination pulse', () =>
   assert.equal(cues[0].animationCalls[0].options.duration, BATTLE_CARD_RELEASE_DESTINATION_PULSE_DURATION_MS);
 });
 
+test('reduced motion keeps destination causality when the flight clone cannot animate', () => {
+  const { source, clone, host, cues, documentRef } = fixture({ animateClone: false });
+  const flight = capture(source, { role: 'top', reducedMotion: true });
+
+  assert.equal(playBattleCardReleaseFlightEffect({ host, flight, documentRef }), true);
+  assert.equal(clone.removed, true);
+  assert.equal(host.appended.includes(clone), false);
+  assert.equal(cues.length, 1);
+  assert.equal(host.appended.includes(cues[0]), true);
+  assert.equal(cues[0].dataset.jankenFlightDestination, '1');
+  assert.equal(cues[0].style.left, '420px');
+  assert.equal(cues[0].style.top, '180px');
+});
+
+test('reduced motion destination cue remains visibly static when the cue itself cannot animate', () => {
+  const { source, host, cues, documentRef } = fixture({ animateCue: false });
+  const flight = capture(source, { role: 'top', reducedMotion: true });
+
+  assert.equal(playBattleCardReleaseFlightEffect({ host, flight, documentRef }), true);
+  assert.equal(cues.length, 1);
+  assert.equal(cues[0].dataset.jankenFlightDestination, '1');
+  assert.equal(cues[0].dataset.jankenFlightDestinationFallback, 'static');
+  assert.equal(cues[0].style.opacity, '0.72');
+  assert.equal(cues[0].style.transform, 'translate(-50%,-50%) scale(1)');
+});
+
 test('flight clone and reduced-motion cue are removed after completion', async () => {
   const { source, clone, host, cues, documentRef } = fixture();
   const flight = capture(source, { reducedMotion: true });
@@ -173,7 +200,7 @@ test('flight clone is removed when Web Animations rejects', async () => {
   assert.equal(clone.removed, true);
 });
 
-test('effect fails closed when the cloned visual cannot animate', () => {
+test('full-motion effect still fails closed when the cloned visual cannot animate', () => {
   const { source, clone, host, documentRef } = fixture({ animateClone: false });
   const flight = capture(source);
 

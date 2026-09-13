@@ -99,7 +99,7 @@ function precommitClearResult({
  * It deliberately owns no independent game-rule decisions:
  * - the hand authority supplies the exact three physical cards;
  * - the merged uniform Hand3 policy maps them to ROCK/SCISSORS/PAPER from a
- *   caller-authoritative uint32 source exactly once for a new round snapshot;
+ *   caller-authoritative uint32 source exactly once for a caller-authoritative turn;
  * - public board/legal-target authority supplies the complete compound attack;
  * - the existing Battle transport performs the authoritative commit;
  * - the existing precommit-clear policy projects caller-owned plan/target draft
@@ -108,7 +108,7 @@ function precommitClearResult({
  * - optional dice/roulette activation is projected only from a caller-resolved
  *   canonical authority context by the existing optional-rule activation core.
  *
- * The adapter composes those existing authorities, preserves one immutable round
+ * The adapter composes those existing authorities, preserves one immutable turn
  * slot snapshot, stages the complete compound package, re-reads it immediately
  * before commit, and forwards the unchanged payload to the existing live path.
  */
@@ -146,47 +146,53 @@ export function createBattleNewBaseLiveConsumerAdapter({
   }
 
   let roundSnapshot = null;
+  let assignmentTurnId = null;
   let stagedCompoundAttack = null;
   let commitInFlight = false;
 
   async function syncRoundStart() {
-    const authority = requiredObject(await readRoundAuthority(), 'round authority');
-    const roundId = requiredString(authority.roundId, 'roundAuthority.roundId');
-    if (!Array.isArray(authority.hand)) {
-      throw new TypeError('roundAuthority.hand must be the current hand authority array');
+  const authority = requiredObject(await readRoundAuthority(), 'round authority');
+  const roundId = requiredString(authority.roundId, 'roundAuthority.roundId');
+  const turnId = requiredString(authority.turnId, 'roundAuthority.turnId');
+  if (!Array.isArray(authority.hand)) {
+    throw new TypeError('roundAuthority.hand must be the current hand authority array');
+  }
+
+  // Same-turn render/reconnect/retry reuses one immutable reservation.
+  if (roundSnapshot !== null && assignmentTurnId === turnId) {
+    if (roundSnapshot.roundId !== roundId) {
+      throw new RangeError('roundAuthority.turnId cannot move between rounds');
     }
-
-    // Same-round render/reconnect/retry must reuse the immutable snapshot and
-    // must not consume new entropy or reassign physical cards.
-    if (roundSnapshot?.roundId === roundId) return roundSnapshot;
-
-    // A newly observed round invalidates any uncommitted package from the prior
-    // round even if assignment then fails closed because entropy/state is absent.
-    if (roundSnapshot !== null) stagedCompoundAttack = null;
-
-    const handCardIds = requireCurrentHandCardIds(authority.hand);
-    const entropyRequest = Object.freeze({
-      assignmentEpochId: roundId,
-      sampleKind: 'HAND3_UNIFORM_PERMUTATION_UINT32',
-    });
-    const uniformAssignment = createUniformHand3Assignment({
-      assignmentEpochId: roundId,
-      handCardIds,
-      readUint32: () => readAuthoritativeHand3Uint32(entropyRequest),
-    });
-
-    const next = ensureRoundStartJankenSlotAssignment({
-      currentSnapshot: roundSnapshot,
-      roundId,
-      hand: authority.hand,
-      assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
-      assignedCardIdsByJankenHand: uniformAssignment.assignedCardIdsByJankenHand,
-    });
-    roundSnapshot = next;
     return roundSnapshot;
   }
 
-  async function readCandidateFor(jankenHand, cardId) {
+  // A new turn drops only the prior uncommitted local package.
+  if (roundSnapshot !== null) stagedCompoundAttack = null;
+
+  const handCardIds = requireCurrentHandCardIds(authority.hand);
+  const entropyRequest = Object.freeze({
+    assignmentEpochId: turnId,
+    sampleKind: 'HAND3_UNIFORM_PERMUTATION_UINT32',
+  });
+  const uniformAssignment = createUniformHand3Assignment({
+    assignmentEpochId: turnId,
+    handCardIds,
+    readUint32: () => readAuthoritativeHand3Uint32(entropyRequest),
+  });
+
+  const next = ensureRoundStartJankenSlotAssignment({
+    currentSnapshot: null,
+    roundId,
+    hand: authority.hand,
+    assignmentMode: NEW_BASE_ROUND_START_JANKEN_ASSIGNMENT_MODE.CURRENT_HAND3_POLICY,
+    assignedCardIdsByJankenHand: uniformAssignment.assignedCardIdsByJankenHand,
+  });
+  roundSnapshot = next;
+  assignmentTurnId = turnId;
+  return roundSnapshot;
+}
+
+async function readCandidateFor(jankenHand, cardId) {
     const candidate = await readCompoundAttackCandidate(Object.freeze({
       roundId: roundSnapshot.roundId,
       jankenHand,
@@ -294,6 +300,14 @@ export function createBattleNewBaseLiveConsumerAdapter({
       commitInFlight = true;
       try {
         const staged = stagedCompoundAttack;
+        await syncRoundStart();
+        if (stagedCompoundAttack !== staged) {
+          return Object.freeze({
+            ok: false,
+            committed: false,
+            reason: 'TURN_CHANGED_RESTAGE_REQUIRED',
+          });
+        }
         const fresh = await readCandidateFor(staged.package.jankenHand, staged.package.cardId);
         const prepared = prepareBattleJankenCompoundAttackCommit(staged, fresh);
         const accepted = await sendExistingBattleAction(prepared.payload);
@@ -341,6 +355,7 @@ export function createBattleNewBaseLiveConsumerAdapter({
     status() {
       return Object.freeze({
         roundId: roundSnapshot?.roundId ?? null,
+        turnId: assignmentTurnId,
         assignmentMode: roundSnapshot?.assignmentMode ?? null,
         stagedCompoundAttack: stagedCompoundAttack?.preview ?? null,
         commitInFlight,
@@ -356,8 +371,9 @@ export const BATTLE_NEW_BASE_LIVE_CONSUMER_ADAPTER_CONTRACT = Object.freeze({
   handSizeAuthority: 'CALLER',
   hand3MappingAuthority: 'CANONICAL_UNIFORM_SIX_PERMUTATION_POLICY',
   hand3EntropyAuthority: 'CALLER_UINT32',
-  hand3AssignmentEpoch: 'ROUND_ID',
-  hand3RerollWithinRound: false,
+  hand3AssignmentEpoch: 'CALLER_TURN_ID',
+  hand3RerollWithinTurn: false,
+  hand3MayReassignOnNewTurnInSameRound: true,
   nativeSuitDeterminesJankenSlot: false,
   targetAuthority: 'CALLER_PUBLIC_BOARD_LEGAL_TARGET_STATE',
   computesTarget: false,

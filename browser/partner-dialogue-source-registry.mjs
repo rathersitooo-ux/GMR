@@ -14,6 +14,12 @@ const DISPLAY_NAMES = Object.freeze({
   'partner.mato': '泊愛まと',
   'partner.creator.miku': '初音ミク',
 });
+const DELEGATION_PRESENTATION_LABELS = Object.freeze({
+  'まかせた': 'まかせた！',
+  'まかせた！': 'まかせた！',
+  'まかせろ': 'まかせろ！',
+  'まかせろ！': 'まかせろ！',
+});
 
 function exactId(value) {
   if (typeof value !== 'string') return null;
@@ -78,7 +84,6 @@ export function selectApprovedPartnerBattleUtterance({
     return null;
   }
 }
-
 
 export function selectApprovedPartnerIdleUtterance({ partnerId, seed = 'idle' } = {}) {
   const source = resolveApprovedPartnerDialogueSource(partnerId);
@@ -158,10 +163,85 @@ export function cycleAdvicePartner(win = globalThis.window, step = 1) {
   return setAdvicePartnerId(win, next) ? next : null;
 }
 
+export function normalizePartnerDelegationControlPresentation(button) {
+  if (!button || button?.classList?.contains?.('forced')) return false;
+  const current = exactId(button.textContent);
+  const next = current ? DELEGATION_PRESENTATION_LABELS[current] || null : null;
+  if (!next) return false;
+  if (button.textContent !== next) button.textContent = next;
+  if (button.dataset) button.dataset.partnerDelegationLabelPresentationOnly = 'true';
+  return true;
+}
+
+export function installPartnerDelegationLabelPresentation(win = globalThis.window) {
+  const doc = win?.document;
+  const Observer = win?.MutationObserver;
+  if (!doc || typeof doc.getElementById !== 'function' || typeof Observer !== 'function') return null;
+
+  let targetObserver = null;
+  let mountObserver = null;
+  let target = null;
+  const bind = () => {
+    const nextTarget = doc.getElementById('partnerDelegateBtn');
+    if (!nextTarget) return false;
+    if (target === nextTarget && targetObserver) {
+      normalizePartnerDelegationControlPresentation(target);
+      return true;
+    }
+    targetObserver?.disconnect?.();
+    target = nextTarget;
+    normalizePartnerDelegationControlPresentation(target);
+    targetObserver = new Observer(() => normalizePartnerDelegationControlPresentation(target));
+    targetObserver.observe(target, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+    return true;
+  };
+
+  if (!bind() && doc.documentElement) {
+    mountObserver = new Observer(() => {
+      if (!bind()) return;
+      mountObserver?.disconnect?.();
+      mountObserver = null;
+    });
+    mountObserver.observe(doc.documentElement, { childList: true, subtree: true });
+  }
+
+  return Object.freeze({
+    presentationOnly: true,
+    gameplayAuthorityMutated: false,
+    disconnect() {
+      mountObserver?.disconnect?.();
+      targetObserver?.disconnect?.();
+      mountObserver = null;
+      targetObserver = null;
+      target = null;
+    },
+  });
+}
+
 export const PARTNER_DIALOGUE_SOURCE_REGISTRY_CONTRACT = Object.freeze({
   schema: 'gameroad.partner-dialogue-source-registry.v1',
   rosterAuthority: 'existing-runtime-partnerProfiles',
   adviceSelectionStorage: 'existing-main-save.settings.advicePartnerId',
   unknownSourcePolicy: 'fail-closed-silent',
   saasunaFallbackForOtherCharacters: false,
+  delegationLabelPresentation: 'existing-real-button-text-only',
+  delegationGameplayAuthority: 'existing-gameplay-runtime',
 });
+
+function schedulePartnerDelegationLabelPresentation(win) {
+  const doc = win?.document;
+  if (!doc) return;
+  const install = () => installPartnerDelegationLabelPresentation(win);
+  if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', install, { once: true });
+  else queueMicrotask(install);
+}
+
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  schedulePartnerDelegationLabelPresentation(window);
+}

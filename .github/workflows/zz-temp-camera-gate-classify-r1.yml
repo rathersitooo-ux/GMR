@@ -22,19 +22,14 @@ jobs:
           set -euo pipefail
           PRE='2ef7015433ac185cda0a0bab0a1628aa92c5e45f'
           BASE='9c3cb56e7c50bc677f20f3223d8c103ffefa0c2e'
-          test "$(git rev-parse HEAD^)" = "$PRE"
           test "$(git rev-parse ${PRE}^)" = "$BASE"
+          git merge-base --is-ancestor "$PRE" HEAD
           python - <<'PY'
           from pathlib import Path
           p=Path('.github/workflows/gameroad-required-gate.yml')
           s=p.read_text(encoding='utf-8')
-          old="""              tests/browser-runtime-smoke.spec.mjs|\\
-              playwright.config.mjs|\\
-"""
-          new="""              tests/browser-runtime-smoke.spec.mjs|\\
-              tests/battle-camera-live-integration.test.mjs|\\
-              playwright.config.mjs|\\
-"""
+          old="              tests/browser-runtime-smoke.spec.mjs|\\\\\n              playwright.config.mjs|\\\\\n"
+          new="              tests/browser-runtime-smoke.spec.mjs|\\\\\n              tests/battle-camera-live-integration.test.mjs|\\\\\n              playwright.config.mjs|\\\\\n"
           if s.count(old)!=1:
               raise SystemExit(f'expected one browser classification anchor, got {s.count(old)}')
           if 'tests/battle-camera-live-integration.test.mjs' in s:

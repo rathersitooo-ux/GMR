@@ -1,0 +1,172 @@
+name: TEMP Partner Advice Unified Surface R1
+
+on:
+  push:
+    branches:
+      - work/13-su-partner-unified-surface-r1
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    if: ${{ !contains(github.event.head_commit.message, '[partner-unified-done]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/13-su-partner-unified-surface-r1
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch existing Partner presentation into one visible surface
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess
+
+          runtime_path = Path('browser/partner-advice-runtime-mount.mjs')
+          test_path = Path('tests/partner-advice-runtime-mount.test.mjs')
+          build_path = Path('deploy/cloudflare/tests/build.test.mjs')
+          source = runtime_path.read_text()
+          tests = test_path.read_text()
+
+          marker = "export function mountPartnerAdviceChatPresentation({ windowRef = globalThis.window, tutorialExperienceEligibility = () => false } = {}) {"
+          assert source.count(marker) == 1
+          helper = r'''const UNIFIED_PARTNER_STYLE_ID = 'gameroad-partner-advice-unified-surface-r1';
+
+function ensureUnifiedPartnerSurfaceStyle(doc) {
+  if (doc.getElementById(UNIFIED_PARTNER_STYLE_ID)) return;
+  const style = doc.createElement('style');
+  style.id = UNIFIED_PARTNER_STYLE_ID;
+  style.textContent = `#${CHAT_ROOT_ID} .partnerAdviceDecisionControls{grid-column:1/-1;display:grid;gap:4px;padding:5px;border:1px solid rgba(190,225,214,.2);border-radius:9px;background:rgba(4,26,22,.62)}#${CHAT_ROOT_ID} .partnerAdvicePrimaryActions{display:grid;grid-template-columns:1fr 1fr;gap:4px}#${CHAT_ROOT_ID} .partnerAdvicePrimaryAction{min-height:34px;padding:5px 7px;border:1px solid rgba(173,235,214,.38);border-radius:9px;background:rgba(10,45,38,.78);color:#e4fff6;font-size:9px;font-weight:950}#${CHAT_ROOT_ID} #partnerDelegateBtn.forced{border-color:rgba(255,123,102,.72);background:rgba(82,37,30,.9)}#${CHAT_ROOT_ID} .partnerRuleLabel{display:grid;grid-template-columns:auto minmax(0,1fr);gap:5px;align-items:center;font-size:8px;color:#cfe4dd}#${CHAT_ROOT_ID} .partnerRuleLabel select{min-width:0;height:32px;border:1px solid rgba(205,239,228,.22);border-radius:7px;background:rgba(8,35,29,.72);color:#effbf7;font-size:9px}#${CHAT_ROOT_ID} .partnerDecisionStatus{margin:0;font-size:8px;line-height:1.3;color:#d9eee7;white-space:pre-wrap}#${CHAT_ROOT_ID} .partnerAdviceDecisionControls>.sub{font-size:7px;line-height:1.3;color:#91aaa2}@media(max-height:430px) and (orientation:landscape){#${CHAT_ROOT_ID} .partnerAdviceDecisionControls{gap:3px;padding:3px}#${CHAT_ROOT_ID} .partnerAdvicePrimaryAction{min-height:26px;padding:3px 5px;font-size:8px}#${CHAT_ROOT_ID} .partnerRuleLabel select{height:27px;font-size:8px}#${CHAT_ROOT_ID} .partnerDecisionStatus,#${CHAT_ROOT_ID} .partnerAdviceDecisionControls>.sub{font-size:7px}}`;
+  doc.head?.append(style);
+}
+
+export function unifyBattlePartnerPresentation({ doc, root, legacyHost } = {}) {
+  if (!doc || !root || !legacyHost || root === legacyHost) {
+    return Object.freeze({ ok: false, reason: 'SURFACE_REQUIRED', legacyRetired: false });
+  }
+  const adviceButton = doc.getElementById('partnerAdviceBtn');
+  const delegateButton = doc.getElementById('partnerDelegateBtn');
+  const rule = doc.getElementById('partnerRule');
+  const ruleLabel = rule?.closest?.('.partnerRuleLabel') || null;
+  const status = doc.getElementById('partnerDecisionStatus');
+  if (!adviceButton || !delegateButton || !ruleLabel || !status) {
+    return Object.freeze({ ok: false, reason: 'LEGACY_AUTHORITY_CONTROLS_REQUIRED', legacyRetired: false });
+  }
+
+  let controls = root.querySelector('[data-role="partner-decision-controls"]');
+  if (!controls) {
+    controls = doc.createElement('section');
+    controls.className = 'partnerAdviceDecisionControls';
+    controls.dataset.role = 'partner-decision-controls';
+    controls.setAttribute('aria-label', 'パートナー操作');
+    const actions = doc.createElement('div');
+    actions.className = 'partnerAdvicePrimaryActions';
+    actions.dataset.role = 'partner-primary-actions';
+    controls.append(actions);
+    const insertBefore = root.querySelector('.partnerAdviceQuickRoutes') || root.querySelector('[data-role="tutorial-experience-conversation"]') || root.querySelector('.partnerAdviceTutorialReplay');
+    root.insertBefore(controls, insertBefore || null);
+  }
+  const actions = controls.querySelector('[data-role="partner-primary-actions"]');
+  if (!actions) return Object.freeze({ ok: false, reason: 'PRIMARY_ACTION_SURFACE_REQUIRED', legacyRetired: false });
+
+  for (const button of [adviceButton, delegateButton]) {
+    button.classList.remove('railBtn');
+    button.classList.add('partnerAdvicePrimaryAction');
+    actions.append(button);
+  }
+  controls.append(ruleLabel, status);
+  const note = legacyHost.querySelector('.sub');
+  if (note) controls.append(note);
+
+  root.querySelector('.partnerAdviceQuickReply')?.remove();
+  legacyHost.hidden = true;
+  legacyHost.setAttribute('aria-hidden', 'true');
+  legacyHost.dataset.partnerAdviceSourceOnly = 'true';
+  root.dataset.partnerAdviceUnifiedSurface = 'true';
+  return Object.freeze({
+    ok: true,
+    reason: null,
+    legacyRetired: true,
+    adviceButtonId: adviceButton.id,
+    delegateButtonId: delegateButton.id,
+    ruleId: rule.id,
+    statusId: status.id,
+    presentationOnly: true,
+    gameplayAuthorityMutated: false,
+  });
+}
+
+'''
+          source = source.replace(marker, helper + marker, 1)
+
+          style_anchor = "  ensureBattleChatStyle(doc);\n  ensureBattleQuick3Style(doc);"
+          assert source.count(style_anchor) == 1
+          source = source.replace(style_anchor, style_anchor + "\n  ensureUnifiedPartnerSurfaceStyle(doc);", 1)
+
+          quick_markup = '<button type="button" class="partnerAdviceTutorialReplay" aria-pressed="false">操作を再確認</button><button type="button" class="partnerAdviceQuickReply">まかせた！</button>'
+          assert source.count(quick_markup) == 1
+          source = source.replace(quick_markup, '<button type="button" class="partnerAdviceTutorialReplay" aria-pressed="false">操作を再確認</button>', 1)
+
+          battle_anchor = "  root.dataset.presentationOnly = 'true';\n} else {"
+          assert source.count(battle_anchor) == 1
+          battle_replacement = "  root.dataset.presentationOnly = 'true';\n  const unifiedSurface = unifyBattlePartnerPresentation({ doc, root, legacyHost: host });\n  root.dataset.partnerAdviceUnified = unifiedSurface.ok ? 'true' : 'false';\n} else {"
+          source = source.replace(battle_anchor, battle_replacement, 1)
+          runtime_path.write_text(source)
+
+          test_anchor = "test('idle readable content appears only in battle idle time and yields to higher-priority presentation', () => {"
+          assert tests.count(test_anchor) == 1
+          new_test = r'''test('Battle Partner controls converge into one visible surface without replacing their existing authority nodes', () => {
+  const source = readFileSync(new URL('../browser/partner-advice-runtime-mount.mjs', import.meta.url), 'utf8');
+  assert.match(source, /export function unifyBattlePartnerPresentation/);
+  assert.match(source, /getElementById\('partnerAdviceBtn'\)/);
+  assert.match(source, /getElementById\('partnerDelegateBtn'\)/);
+  assert.match(source, /getElementById\('partnerRule'\)/);
+  assert.match(source, /getElementById\('partnerDecisionStatus'\)/);
+  assert.match(source, /button\.classList\.remove\('railBtn'\)/);
+  assert.match(source, /actions\.append\(button\)/);
+  assert.match(source, /legacyHost\.hidden = true/);
+  assert.match(source, /legacyHost\.dataset\.partnerAdviceSourceOnly = 'true'/);
+  assert.match(source, /root\.dataset\.partnerAdviceUnifiedSurface = 'true'/);
+  assert.doesNotMatch(source, /class="partnerAdviceQuickReply">まかせた！<\/button>/);
+  assert.doesNotMatch(source, /state\.selectedPartnerId\s*=|state\.settings\.advicePartnerId\s*=/);
+});
+
+'''
+          tests = tests.replace(test_anchor, new_test + test_anchor, 1)
+
+          old_quick_assert = "  assert.match(source, /partnerAdviceQuickReply/);\n  assert.match(source, /まかせた！/);"
+          assert tests.count(old_quick_assert) == 1
+          new_quick_assert = "  assert.match(source, /getElementById\\('partnerDelegateBtn'\\)/);\n  assert.doesNotMatch(source, /class=\\\"partnerAdviceQuickReply\\\">まかせた！/);"
+          tests = tests.replace(old_quick_assert, new_quick_assert, 1)
+          test_path.write_text(tests)
+
+          blob = subprocess.check_output(['git', 'hash-object', str(runtime_path)], text=True).strip()
+          build = build_path.read_text()
+          pattern = r"(file: 'partner-advice-runtime-mount\.mjs'.*?currentBlob: ')[0-9a-f]{40}(' \},)"
+          build, count = re.subn(pattern, lambda m: m.group(1) + blob + m.group(2), build, count=1)
+          assert count == 1
+          build_path.write_text(build)
+          print('partner runtime blob', blob)
+          PY
+      - name: Focused Partner regression
+        run: node --test tests/partner-advice-runtime-mount.test.mjs
+      - name: Public package provenance regression
+        run: node --test deploy/cloudflare/tests/build.test.mjs
+      - name: Diff check
+        run: git diff --check
+      - name: Commit bounded product delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "gameroad-bounded-writer"
+          git config user.email "actions@users.noreply.github.com"
+          git add browser/partner-advice-runtime-mount.mjs tests/partner-advice-runtime-mount.test.mjs deploy/cloudflare/tests/build.test.mjs
+          git diff --cached --name-only
+          test "$(git diff --cached --name-only | wc -l)" -eq 3
+          git commit -m "fix(partner): unify Battle Partner surface [partner-unified-done]"
+          git push origin HEAD:work/13-su-partner-unified-surface-r1

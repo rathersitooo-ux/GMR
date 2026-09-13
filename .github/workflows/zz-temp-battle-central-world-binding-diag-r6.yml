@@ -21,54 +21,43 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
           p=Path('browser/GAMEROAD.html')
           text=p.read_text()
-          lines=text.splitlines()
           print('HTML_BYTES', p.stat().st_size)
-          print('=== EXACT_IDENTIFIER_MATCHES ===')
           needles=[
             'function makePlayer', 'function getActiveNodes', 'function nodeXY',
             'function neighbors', 'function renderBoard', 'function updateBattleAvatar',
             'roadKey', 'shieldKey', 'roadNodeXY', 'shieldAnchor',
-            'GOAL_REACHED', 'goalReached', 'goal:', 'ROAD_COMPLETED',
-            'p.lanes', 'lanes[', 'projection[', 'state.match.projection',
-            "position:'C:0:0'", 'position:"C:0:0"'
+            'GOAL_REACHED', 'ROAD_COMPLETED', 'goalReached',
+            'state.match.projection', 'projection[', 'p.lanes', '.lanes',
+            "position:'C:0:0'", 'function resolveBattle', 'function renderPlayers',
+            'function animateResolvedPath', 'function getLane', 'function lane'
           ]
           for needle in needles:
-            hits=[i for i,l in enumerate(lines) if needle in l]
-            print(f'\n### NEEDLE {needle!r} COUNT {len(hits)}')
-            for i in hits[:12]:
-              lo=max(0,i-2); hi=min(len(lines),i+3)
-              print(f'--- lines {lo+1}-{hi} ---')
-              for j in range(lo,hi): print(f'{j+1}: {lines[j]}')
+            print(f'\n### NEEDLE {needle!r}')
+            start=0; count=0
+            while count<12:
+              i=text.find(needle,start)
+              if i<0: break
+              lo=max(0,i-900); hi=min(len(text),i+1800)
+              snippet=' '.join(text[lo:hi].split())
+              print(f'AT {i}: {snippet[:2700]}')
+              start=i+len(needle); count+=1
+            print('COUNT_SHOWN',count)
 
-          print('\n=== POSITION_LITERAL_SCAN ===')
-          pats=[r"['\"]([RSCGK]:[^'\"`<>{}\s,;)]{1,40})['\"]", r"`([RSCGK]:[^`]{1,60})`"]
-          seen=set()
-          for pat in pats:
-            for m in re.finditer(pat,text):
-              v=m.group(1)
-              if v not in seen:
-                seen.add(v); print(v)
-          print('POSITION_LITERAL_UNIQUE',len(seen))
+          print('\n=== ROAD_SHIELD_TEMPLATE_FRAGMENTS ===')
+          for token in ['R:${','S:${','C:${','K:${','`R:','`S:','`C:','`K:']:
+            start=0; shown=0
+            while shown<20:
+              i=text.find(token,start)
+              if i<0: break
+              print(token, 'AT', i, '=>', ' '.join(text[max(0,i-300):min(len(text),i+700)].split())[:1000])
+              start=i+len(token); shown+=1
+            print(token,'COUNT_SHOWN',shown)
 
-          print('\n=== PLAYER_ROAD_CONTEXT ===')
-          for rx in [
-            r'.{0,180}(?:road|Road).{0,180}(?:player|participant|P1|P2|P3|P4).{0,180}',
-            r'.{0,180}(?:player|participant|P1|P2|P3|P4).{0,180}(?:road|Road).{0,180}',
-          ]:
-            out=[]
-            for m in re.finditer(rx,text,re.S):
-              s=' '.join(m.group(0).split())
-              if s not in out: out.append(s)
-            for s in out[:30]: print(s[:900])
-
-          print('\n=== GOAL_CONTEXT ===')
-          for m in list(re.finditer(r'.{0,260}(?:GOAL_REACHED|GOAL|goal).{0,320}',text,re.S))[:40]:
-            print(' '.join(m.group(0).split())[:1200])
-
-          print('\n=== LANE_MUTATION_CONTEXT ===')
-          for m in list(re.finditer(r'.{0,220}(?:lanes\.|lanes\[|\.lanes).{0,360}',text,re.S))[:40]:
-            print(' '.join(m.group(0).split())[:1200])
+          print('\n=== PLAYER IDS AND ROAD INDEX NEARBY ===')
+          for token in ["id:'P'+(i+1)", "id:'P1'", "id:'P2'", "id:'P3'", "id:'P4'", 'roadIndex', 'road:', 'shield:']:
+            i=text.find(token)
+            print('\nTOKEN',token,'AT',i)
+            if i>=0: print(' '.join(text[max(0,i-1200):min(len(text),i+2600)].split())[:3800])
           PY

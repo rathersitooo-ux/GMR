@@ -57,6 +57,7 @@ test('projects numeric Mana plus zero Honey and zero Chip as resolved authoritat
   assert.equal(result.honey.text, '0');
   assert.equal(result.chip.resolved, true);
   assert.equal(result.chip.text, '0');
+  assert.equal(result.payment.resolved, false);
 });
 
 test('fails closed instead of inventing invalid resource values', () => {
@@ -105,31 +106,101 @@ test('shows Honey delta only when both caller delta and caller source are author
   assert.equal(missingSource.honey.deltaText, '');
 });
 
+test('projects complete caller-authoritative Mana/Honey payment receipt atomically', () => {
+  const model = projectBattleCriticalResourceSnapshot({
+    manaCurrent: 4,
+    manaMax: 10,
+    honey: 6,
+    chipCount: 1,
+    paymentReceipt: {
+      cost: 5,
+      manaPaid: 3,
+      honeyPaid: 2,
+      manaAfter: 4,
+      honeyAfter: 6,
+      source: '  バトルカード  '
+    }
+  });
+  assert.deepEqual(model.payment, {
+    resolved: true,
+    cost: 5,
+    manaPaid: 3,
+    honeyPaid: 2,
+    manaAfter: 4,
+    honeyAfter: 6,
+    source: 'バトルカード',
+    text: '支払い 5｜マナ3＋ハニー2｜残 マナ4・ハニー6｜バトルカード'
+  });
+  assert.equal(Object.isFrozen(model.payment), true);
+});
+
+test('payment receipt fails closed instead of deriving or repairing missing payment facts', () => {
+  const invalidReceipts = [
+    { cost: 5, manaPaid: 3, honeyPaid: 2, manaAfter: 4, honeyAfter: 6 },
+    { cost: 5, manaPaid: 3, honeyPaid: 1, manaAfter: 4, honeyAfter: 6, source: 'バトルカード' },
+    { cost: '5', manaPaid: 3, honeyPaid: 2, manaAfter: 4, honeyAfter: 6, source: 'バトルカード' },
+    { cost: 5, manaPaid: -1, honeyPaid: 6, manaAfter: 4, honeyAfter: 6, source: 'バトルカード' },
+    { cost: 5, manaPaid: 3, honeyPaid: 2, manaAfter: 4, honeyAfter: 6, source: '   ' }
+  ];
+  for (const paymentReceipt of invalidReceipts) {
+    const model = projectBattleCriticalResourceSnapshot({
+      manaCurrent: 4,
+      manaMax: 10,
+      honey: 6,
+      chipCount: 1,
+      paymentReceipt
+    });
+    assert.equal(model.payment.resolved, false);
+    assert.equal(model.payment.text, '');
+  }
+});
+
 test('mounts a compact caller-owned HUD and updates without resource calculation', () => {
   const global = makeGlobal();
   const host = new FakeNode('div');
   const runtime = mountBattleCriticalResourceHud(global, {
     host,
-    snapshot: { manaCurrent: 7, manaMax: 10, honey: 7, chipCount: 3, honeyDelta: 2, honeyDeltaSource: '2位' }
+    snapshot: {
+      manaCurrent: 4,
+      manaMax: 10,
+      honey: 6,
+      chipCount: 3,
+      honeyDelta: -2,
+      honeyDeltaSource: 'バトル支払い',
+      paymentReceipt: {
+        cost: 5,
+        manaPaid: 3,
+        honeyPaid: 2,
+        manaAfter: 4,
+        honeyAfter: 6,
+        source: 'バトルカード'
+      }
+    }
   });
 
   assert.equal(host.children.length, 1);
   assert.equal(runtime.root.dataset.presentationOnly, 'true');
   assert.equal(runtime.root.dataset.authority, 'caller_authoritative_resource_snapshot_only');
-  assert.equal(runtime.manaCell.children[1].textContent, '7/10');
-  assert.equal(runtime.honeyCell.children[1].textContent, '7');
+  assert.equal(runtime.manaCell.children[1].textContent, '4/10');
+  assert.equal(runtime.honeyCell.children[1].textContent, '6');
   assert.equal(runtime.chipCell.children[1].textContent, '3');
-  assert.equal(runtime.honeyCell.children[2].textContent, '+2・2位');
+  assert.equal(runtime.honeyCell.children[2].textContent, '-2・バトル支払い');
   assert.equal(runtime.honeyCell.children[2].hidden, false);
+  assert.equal(runtime.paymentReceipt.textContent, '支払い 5｜マナ3＋ハニー2｜残 マナ4・ハニー6｜バトルカード');
+  assert.equal(runtime.paymentReceipt.hidden, false);
+  assert.equal(runtime.paymentReceipt.dataset.authority, 'caller_authoritative_payment_receipt_only');
 
   const next = runtime.sync({ manaCurrent: 5, manaMax: 10, honey: 8, chipCount: 0 });
   assert.equal(next.mana.text, '5/10');
   assert.equal(next.honey.text, '8');
   assert.equal(next.chip.text, '0');
   assert.equal(runtime.honeyCell.children[2].hidden, true);
+  assert.equal(runtime.paymentReceipt.hidden, true);
+  assert.equal(runtime.paymentReceipt.textContent, '');
   assert.equal(runtime.root.dataset.manaResolved, 'true');
   assert.equal(runtime.root.dataset.honeyResolved, 'true');
   assert.equal(runtime.root.dataset.chipResolved, 'true');
+  assert.equal(runtime.root.dataset.paymentResolved, 'false');
   assert.equal(runtime.gameStateWrite, false);
 });
 
@@ -150,6 +221,12 @@ test('does not expose physical Mana or Chip card identities or create a resource
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.resourceStoreOwnedHere, false);
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.physicalManaIdentityProjection, false);
   assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.chipIdentityPublicityOwnedHere, false);
+  assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.paymentReceiptAuthority, 'CALLER_ONLY_OPTIONAL_ATOMIC');
+  assert.equal(BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.paymentCalculationOwnedHere, false);
+  assert.deepEqual(
+    BATTLE_CRITICAL_RESOURCE_HUD_RUNTIME.paymentReceiptFields,
+    ['cost', 'manaPaid', 'honeyPaid', 'manaAfter', 'honeyAfter', 'source']
+  );
 });
 
 test('destroy is idempotent and blocks later sync', () => {
